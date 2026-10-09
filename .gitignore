@@ -38,3 +38,7 @@ hs_err_*.log
 replay_*.log
 *.hprof
 *.jfr
+
+# Local Windows launcher and downloaded development runtime
+.launcher/
+/Play Defying The Heavens.exe
