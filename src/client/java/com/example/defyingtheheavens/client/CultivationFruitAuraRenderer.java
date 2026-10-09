@@ -21,7 +21,8 @@ import org.joml.Matrix4f;
  * beams like the Ender Dragon's death rays, and the 10,000-year fruit beats like a heart.
  * <p>
  * Drawn with {@link FruitAuraRenderType#GLOW} (additive, no depth writes), and faded out as the camera comes right up
- * to the fruit so the glow never swamps the screen.
+ * to the fruit so the glow never swamps the screen. Under Qi Sense it goes on the Qi Sense layer instead, keeping its colour
+ * (see {@link QiSenseTreasures}).
  */
 public class CultivationFruitAuraRenderer implements BlockEntityRenderer<CultivationFruitBlockEntity> {
 	private static final int HALO_SEGMENTS = 24;
@@ -46,11 +47,12 @@ public class CultivationFruitAuraRenderer implements BlockEntityRenderer<Cultiva
 	 * ({@code centre} in the world). {@code pos} seeds the beams' layout. Shared with the Spirit Pedestal.
 	 */
 	public static void drawAura(int years, BlockPos pos, Vec3 centre, float clock, PoseStack poseStack, MultiBufferSource buffers) {
+		QiSenseTreasures.seen(pos, centre, years);
 		FruitAura.Tier tier = FruitAura.of(years);
 		if (tier == FruitAura.Tier.NONE) return;
 		Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
 		float near = nearFade(camera, centre);
-		VertexConsumer glow = buffers.getBuffer(FruitAuraRenderType.GLOW);
+		VertexConsumer glow = QiSenseTreasures.glow(buffers); // kept in colour under Qi Sense
 
 		switch (tier) {
 			case HUNDRED_YEAR -> {

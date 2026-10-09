@@ -143,6 +143,12 @@ public final class MeditationFormation {
 	private static void particles(ClientLevel level, Link link, long time) {
 		Vec3 fruit = fruitCentre(link);
 		Vec3 feet = link.player().position();
+		if (QiSenseClientHandler.isActive()) {
+			// Under Qi Sense the treasure's qi is seen as it is: motes drawn off it into the meditator. The particles below
+			// would only show grey.
+			QiSenseTreasures.feed(fruit, link.years(), link.player().getUUID(), time, link.lane());
+			return;
+		}
 		FruitAura.Tier tier = FruitAura.of(link.years());
 		float[] rgb = FruitAura.colour(tier);
 		DustParticleOptions mote = new DustParticleOptions(new Vector3f(rgb[0], rgb[1], rgb[2]), 0.55f + 0.08f * tier.ordinal());

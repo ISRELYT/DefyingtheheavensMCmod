@@ -35,12 +35,15 @@ public class GinsengBlockEntity extends BlockEntity {
         plantedAt = gameTime;
     }
 
-    /** Sets the age and restarts the clock from now. */
+    /** Sets the age and restarts the clock from now; the plant's look (seedling, young, full grown) follows. */
     public void setAge(int years) {
         initialYears = FruitAge.clamp(years);
         plantedAt = level == null ? -1 : level.getGameTime();
         setChanged();
-        if (level != null && !level.isClientSide) level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            GinsengBlock.updateStage(level, worldPosition);
+        }
     }
 
     public int age() {

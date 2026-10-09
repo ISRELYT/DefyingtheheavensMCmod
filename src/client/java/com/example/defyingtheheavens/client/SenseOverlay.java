@@ -12,7 +12,8 @@ import net.minecraft.client.renderer.ShaderInstance;
 /**
  * The layer the cultivator's senses draw on, laid over the finished frame so it keeps its colour. Qi Sense drains the colour
  * from the whole frame (world and hand) with a post effect, so what must stay vivid is drawn here instead of into the world:
- * the qi motes ({@link QiSenseClientHandler}) and the consciousness domains ({@link ConsciousnessRenderer}).
+ * the qi motes ({@link QiSenseClientHandler}), the consciousness domains ({@link ConsciousnessRenderer}) and the glow of
+ * spirit treasures ({@link QiSenseTreasures}).
  * <p>
  * At the end of world rendering this target is cleared and given a copy of the world's depth, so the layer still hides
  * behind terrain and entities. It holds premultiplied colour: domains and the motes' cores are blended in, the motes' halos
@@ -31,11 +32,15 @@ public final class SenseOverlay {
 		ConsciousnessRenderer.captureView(context);
 		boolean motes = QiSenseClientHandler.hasMotes();
 		boolean domains = ConsciousnessRenderer.hasDomains();
-		if (!motes && !domains) return;
+		boolean treasures = QiSenseTreasures.hasGlow();
+		if (!motes && !domains && !treasures) return;
 
 		Minecraft mc = Minecraft.getInstance();
 		RenderTarget main = mc.getMainRenderTarget();
-		if (main.width <= 0 || main.height <= 0) return; // minimised
+		if (main.width <= 0 || main.height <= 0) { // minimised
+			QiSenseTreasures.discard();
+			return;
+		}
 		if (target == null) {
 			target = new TextureTarget(main.width, main.height, true, Minecraft.ON_OSX);
 			target.setClearColor(0, 0, 0, 0);
@@ -62,6 +67,12 @@ public final class SenseOverlay {
 			RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
 					GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
 			QiSenseClientHandler.renderMotes(context, true);
+		}
+		if (treasures) {
+			// The glow of spirit treasures (QiSenseTreasures), added on like the motes' halos.
+			RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
+					GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
+			QiSenseTreasures.render();
 		}
 		RenderSystem.depthMask(true);
 		RenderSystem.enableCull();

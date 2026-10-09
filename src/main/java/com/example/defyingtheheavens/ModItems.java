@@ -20,6 +20,10 @@ public final class ModItems {
 	/** Harvested ginseng roots: ingredients for alchemy, keeping their age (see GinsengItem). */
 	public static final Item GINSENG = register("ginseng", new GinsengItem(new Item.Properties()));
 	public static final Item SPIRIT_GINSENG = register("spirit_ginseng", new GinsengItem(new Item.Properties().rarity(Rarity.RARE)));
+	/** Planted in soil, these grow ginseng (see GinsengSeedsItem); a full-grown plant gives 1-3 when dug up. */
+	public static final Item GINSENG_SEEDS = register("ginseng_seeds", new GinsengSeedsItem(ModBlocks.GINSENG, new Item.Properties()));
+	public static final Item SPIRIT_GINSENG_SEEDS = register("spirit_ginseng_seeds",
+			new GinsengSeedsItem(ModBlocks.SPIRIT_GINSENG, new Item.Properties().rarity(Rarity.UNCOMMON)));
 
 	/** Left over after eating a Cultivation Fruit; plants a Spirit Peach sapling. */
 	public static final Item PEACH_PIT = register("peach_pit", new PeachPitItem(ModBlocks.SPIRIT_PEACH_SAPLING, new Item.Properties()));
@@ -32,7 +36,11 @@ public final class ModItems {
 	public static void register() {
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.FOOD_AND_DRINKS).register(entries ->
 				entries.accept(CultivationFruitItem.create(1)));
-		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.NATURAL_BLOCKS).register(entries -> entries.accept(PEACH_PIT));
+		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.NATURAL_BLOCKS).register(entries -> {
+			entries.accept(PEACH_PIT);
+			entries.accept(GINSENG_SEEDS);
+			entries.accept(SPIRIT_GINSENG_SEEDS);
+		});
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.INGREDIENTS).register(entries -> {
 			entries.accept(GinsengItem.create(GINSENG, 1));
 			entries.accept(GinsengItem.create(SPIRIT_GINSENG, 1));

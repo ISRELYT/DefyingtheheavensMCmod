@@ -51,11 +51,12 @@ public final class ModBlocks {
 			BlockBehaviour.Properties.of().mapColor(MapColor.DEEPSLATE).strength(1.5f, 6.0f).sound(SoundType.POLISHED_DEEPSLATE)
 					.noOcclusion()));
 
-	/** Wild ginseng, aging in the ground (see GinsengBlock). No block item: it is dug up as the ginseng item instead. */
-	public static final Block GINSENG = register("ginseng", new GinsengBlock(() -> ModItems.GINSENG, ginsengProperties(MapColor.PLANT)));
+	/** Ginseng, aging in the ground (see GinsengBlock). Planted from its seeds; dug up as the ginseng root, keeping its age. */
+	public static final Block GINSENG = register("ginseng", new GinsengBlock(() -> ModItems.GINSENG, () -> ModItems.GINSENG_SEEDS,
+			ginsengProperties(MapColor.PLANT)));
 	/** The rarer Spirit Ginseng: pale jade leaves, golden berries. */
 	public static final Block SPIRIT_GINSENG = register("spirit_ginseng", new GinsengBlock(() -> ModItems.SPIRIT_GINSENG,
-			ginsengProperties(MapColor.COLOR_LIGHT_GREEN)));
+			() -> ModItems.SPIRIT_GINSENG_SEEDS, ginsengProperties(MapColor.COLOR_LIGHT_GREEN)));
 
 	/** Spirit Peach Tree (see SpiritPeachTree): the sapling a peach pit grows into, its leaves, and the heart at its base. */
 	public static final Block SPIRIT_PEACH_SAPLING = register("spirit_peach_sapling",

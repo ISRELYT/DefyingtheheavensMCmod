@@ -19,7 +19,8 @@ import net.minecraft.world.phys.HitResult;
  * Operator tools for ginseng (like /cultivationfruit):
  * <pre>
  * /ginseng give &lt;years&gt; [spirit]    a harvested root of that age
- * /ginseng plant &lt;years&gt; [spirit]   plants one, growing, on the soil you are looking at
+ * /ginseng plant &lt;years&gt; [spirit]   plants one, growing, on the soil you are looking at (a seedling under 4
+ *                                    years, young under 10, full grown after)
  * </pre>
  */
 public final class GinsengCommand {

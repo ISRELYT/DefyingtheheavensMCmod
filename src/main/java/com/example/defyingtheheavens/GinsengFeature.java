@@ -46,9 +46,11 @@ public class GinsengFeature extends Feature<NoneFeatureConfiguration> {
             collectSpots(level, x, z, spots);
             if (spots.isEmpty()) continue;
             BlockPos pos = spots.get(random.nextInt(spots.size()));
-            if (!level.setBlock(pos, plant.get().defaultBlockState(), Block.UPDATE_CLIENTS)) continue;
+            int age = FruitAge.natural(random);
+            BlockState state = plant.get().defaultBlockState().setValue(GinsengBlock.STAGE, GinsengBlock.stageFor(age));
+            if (!level.setBlock(pos, state, Block.UPDATE_CLIENTS)) continue;
             if (level.getBlockEntity(pos) instanceof GinsengBlockEntity ginseng) {
-                ginseng.setWildAge(FruitAge.natural(random), level.getLevel().getGameTime());
+                ginseng.setWildAge(age, level.getLevel().getGameTime());
             }
             return true;
         }

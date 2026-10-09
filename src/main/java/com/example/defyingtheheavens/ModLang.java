@@ -137,6 +137,11 @@ public final class ModLang {
 	public static final String GINSENG_INGREDIENT = k("tooltip.ginseng_ingredient");
 	public static final String GINSENG_HARVESTED = k("tooltip.ginseng_harvested");
 	public static final String GINSENG_FULL = k("message.ginseng_full");
+	public static final String GINSENG_SEEDS_TOOLTIP = k("tooltip.ginseng_seeds");
+	public static final String GINSENG_NEED_CORE = k("message.ginseng.need_core");
+	public static final String GINSENG_NOT_ENOUGH = k("message.ginseng.not_enough");
+	public static final String GINSENG_MAX = k("message.ginseng.max");
+	public static final String GINSENG_FED = k("message.ginseng.fed");
 
 	// Spirit Peach Tree
 	public static final String PEACH_PIT_TOOLTIP = k("tooltip.peach_pit");

@@ -58,6 +58,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(SuppressionClient::renderMarkers);
 		// Qi motes and consciousness domains, on the layer Qi Sense's monochrome leaves in colour.
 		WorldRenderEvents.END.register(SenseOverlay::onWorldEnd);
+		QiSenseTreasures.register();
 		ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new SimpleSynchronousResourceReloadListener() {
 			@Override
 			public ResourceLocation getFabricId() {
@@ -79,6 +80,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			ClientSpatialStorms.clear();
 			MeditationFormation.clear();
 			QiSenseClientHandler.clear();
+			QiSenseTreasures.clear();
 			ConsciousnessRenderer.clear();
 			SuppressionClient.clear();
 		}));
@@ -88,6 +90,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			ClientSpatialStorms.tick(client);
 			MeditationFormation.tick(client);
 			QiSenseClientHandler.tick(client);
+			QiSenseTreasures.tick(client); // after the motes' own tick, which clears them when Qi Sense is off
 			ConsciousnessRenderer.tick(client);
 			SuppressionClient.tick(client);
 			while (ModKeybinds.OPEN_MENU.consumeClick()) {

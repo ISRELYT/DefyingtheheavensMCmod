@@ -48,26 +48,13 @@ public class SpiritPeachHeartBlock extends BaseEntityBlock {
         return InteractionResult.CONSUME;
     }
 
+    private static final QiFeeding.Messages MESSAGES = new QiFeeding.Messages(ModLang.PEACH_NEED_CORE, ModLang.PEACH_NOT_ENOUGH, ModLang.PEACH_MAX);
+
     /** Pours as much of the player's qi into the tree as buys whole years. */
     private static void feed(ServerPlayer player, ServerLevel level, BlockPos pos, SpiritPeachHeartBlockEntity heart) {
-        PlayerCultivation c = CultivationManager.get(player);
-        if (c.getEffectiveRealm().ordinal() < Realm.CORE_FORMATION.ordinal()) {
-            player.displayClientMessage(Component.translatable(ModLang.PEACH_NEED_CORE), true);
-            return;
-        }
-        int age = heart.age();
-        if (age >= FruitAge.MAX_YEARS) {
-            player.displayClientMessage(Component.translatable(ModLang.PEACH_MAX), true);
-            return;
-        }
-        int years = SpiritPeachHeartBlockEntity.yearsFor(age, c.getQi());
-        if (years < 1) {
-            player.displayClientMessage(Component.translatable(ModLang.PEACH_NOT_ENOUGH,
-                    (int) Math.ceil(SpiritPeachHeartBlockEntity.qiCost(age, 1))), true);
-            return;
-        }
-        double cost = Math.min(c.getQi(), SpiritPeachHeartBlockEntity.qiCost(age, years));
-        if (!QiManager.trySpend(player, cost)) return;
+        QiFeeding.Fed fed = QiFeeding.pour(player, heart.age(), MESSAGES);
+        if (fed == null) return;
+        int years = fed.years();
         heart.addYears(years);
         for (CultivationFruitBlockEntity fruit : heart.fruit()) fruit.setAge(fruit.age() + years);
 
@@ -78,7 +65,7 @@ public class SpiritPeachHeartBlock extends BaseEntityBlock {
             level.sendParticles(ParticleTypes.END_ROD, pos.getX() + 0.5, pos.getY() + 0.5 + i * 0.8, pos.getZ() + 0.5, 4, 0.3, 0.2, 0.3, 0.02);
         }
         level.sendParticles(ParticleTypes.HAPPY_VILLAGER, pos.getX() + 0.5, pos.getY() + 4.5, pos.getZ() + 0.5, 30, 1.6, 1.0, 1.6, 0.0);
-        player.displayClientMessage(Component.translatable(ModLang.PEACH_FED, (int) Math.round(cost), years, heart.age()), true);
+        player.displayClientMessage(Component.translatable(ModLang.PEACH_FED, (int) Math.round(fed.qi()), years, heart.age()), true);
     }
 
     @Override

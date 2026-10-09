@@ -46,6 +46,13 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.GINSENG_INGREDIENT, "An ingredient for pills and elixirs");
 		t.add(ModLang.GINSENG_HARVESTED, "Harvested: no longer ages and cannot be replanted");
 		t.add(ModLang.GINSENG_FULL, "Your inventory is full. Make room to dig up this ginseng.");
+		t.add(ModItems.GINSENG_SEEDS, "Ginseng Seeds");
+		t.add(ModItems.SPIRIT_GINSENG_SEEDS, "Spirit Ginseng Seeds");
+		t.add(ModLang.GINSENG_SEEDS_TOOLTIP, "Plant in soil. Full grown after %s years, when digging it up also gives seeds");
+		t.add(ModLang.GINSENG_NEED_CORE, "Only a cultivator with a Golden Core (Core Formation) can pour qi into ginseng.");
+		t.add(ModLang.GINSENG_NOT_ENOUGH, "Not enough qi: the ginseng needs %s for its next year.");
+		t.add(ModLang.GINSENG_MAX, "This ginseng has reached 10,000 years. It can grow no older.");
+		t.add(ModLang.GINSENG_FED, "You pour %s qi into the ginseng. It grows %s years (now %s years old).");
 		t.add(ModLang.FRUIT_PEDESTAL_TOOLTIP, "On a Spirit Pedestal: +%s%% cultivation speed while meditating nearby");
 		t.add(ModItems.RING_OF_POWER, "Ring of Power");
 		t.add(ModLang.RING_OF_POWER_TOOLTIP, "When worn: +%s cultivation per second while meditating");

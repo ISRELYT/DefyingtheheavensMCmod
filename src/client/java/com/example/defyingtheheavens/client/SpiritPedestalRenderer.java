@@ -88,7 +88,7 @@ public class SpiritPedestalRenderer implements BlockEntityRenderer<SpiritPedesta
 		if (feeding.isEmpty()) return;
 		Minecraft minecraft = Minecraft.getInstance();
 		Camera camera = minecraft.gameRenderer.getMainCamera();
-		VertexConsumer glow = buffers.getBuffer(FruitAuraRenderType.GLOW);
+		VertexConsumer glow = QiSenseTreasures.glow(buffers); // kept in colour under Qi Sense
 		FruitAura.Tier tier = FruitAura.of(years);
 		float[] rgb = FruitAura.colour(tier);
 		// Young fruit give a faint stream; the oldest a bright one.

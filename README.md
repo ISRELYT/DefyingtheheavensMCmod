@@ -119,13 +119,21 @@ where it counts like a fruit of the same age.
 
 - Right-click a plant to dig it up into your inventory (a full inventory leaves it in the ground). Breaking it, or the
   soil under it, drops it too. Harvested ginseng keeps its age, cannot be replanted and is not food.
+- From its 10th year a plant is full grown: digging it up gives 1-3 **Ginseng Seeds** (or Spirit Ginseng Seeds) and
+  sometimes extra roots (a second root 25% of the time, a third 10%). Younger plants give one root and no seeds.
+- Seeds planted in soil grow a 1-year seedling, a young plant from year 4 and the full bush from year 10
+  (`YOUNG_YEARS`, `MATURE_YEARS`, `EXTRA_ROOT_CHANCE`, `THIRD_ROOT_CHANCE` in `GinsengBlock.java`).
+- A cultivator with a Golden Core (Core Formation or higher) can sneak and right-click a plant with an empty hand to
+  pour qi into it, ageing it at the same rising cost as a Spirit Peach Tree (see `QiFeeding.java`).
 - Ginseng grows only on soil (grass, dirt, podzol, moss...). Wild plants appear on grass or podzol, never in caves.
 - Spawning, on average one plant per this many chunks: Ginseng 8 in Overworld forests, taiga and jungles and 3 in the
   Upper Realm; Spirit Ginseng 64 and 16. These are `GINSENG_CHUNKS_*` and `SPIRIT_GINSENG_CHUNKS_*` in
   `ModPlacedFeatures.java` (and the matching `placed_feature/*ginseng*.json`; re-run `runDatagen` after changing them).
 - The plants are drawn like vanilla's sweet berry bush, whose leaves they reuse: Ginseng in a warm green with one cluster
-  of red berries, Spirit Ginseng in pale jade with golden berries. The harvested items are the forked roots.
-- Code: `GinsengBlock`, `GinsengBlockEntity`, `GinsengItem`, `GinsengFeature`, `client/GinsengAuraRenderer.java`.
+  of red berries, Spirit Ginseng in pale jade with golden berries; seedlings and young plants use the bush's earlier
+  stages. The harvested items are the forked roots; the seeds are red (Spirit: gold).
+- Code: `GinsengBlock`, `GinsengBlockEntity`, `GinsengItem`, `GinsengSeedsItem`, `GinsengFeature`,
+  `client/GinsengAuraRenderer.java`.
 
 With cheats/operator permissions:
 
@@ -188,6 +196,17 @@ arm's length away. Fruit 1,000 years and older also lift wisps of light off thei
 - Balance numbers are in `CultivationBoost.java`. Pedestal code is in `SpiritPedestalBlock(Entity).java`, and the
   visuals are in `client/SpiritPedestalRenderer.java` and `client/MeditationFormation.java`.
 - Model: `models/block/spirit_pedestal.json`; textures `textures/block/spirit_pedestal_{column,trim,top}.png` (32x32).
+
+### Under Qi Sense
+
+Spirit treasures are vessels of qi, so in the grey plane of Qi they keep their colour:
+
+- The auras of Cultivation Fruit, ginseng and whatever a pedestal holds, and a pedestal's streams and orbits around a
+  meditator, are drawn on the Qi Sense layer instead of into the world, so they stay vivid while everything else is grey.
+- Each one breathes out wood-qi motes that rise off it, more of them the older it is, with white-gold metal qi mixed in
+  from 5,000 years.
+- A pedestal feeding a meditator sends its qi into them as motes (in place of the grey particles).
+- Code: `client/QiSenseTreasures.java` (and `QiSenseClientHandler#emit`, `SenseOverlay`).
 
 ## License
 

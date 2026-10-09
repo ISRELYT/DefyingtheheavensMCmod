@@ -251,6 +251,20 @@ public final class QiSenseClientHandler {
 		MOTES.add(new Mote(element, x, y, z, 0.05f + RANDOM.nextFloat() * 0.03f, 140, meditator.getUUID(), RANDOM));
 	}
 
+	/**
+	 * Adds a mote of qi given off by something in the world (a spirit treasure, see {@link QiSenseTreasures}): at (x, y, z),
+	 * moving (vx, vy, vz), living {@code life} ticks; drawn into {@code drawnTo}'s meditation if that isn't null, otherwise
+	 * drifting like the land's own qi of its element. Ignored while Qi Sense is off or the motes are at their limit.
+	 */
+	public static void emit(QiElement element, double x, double y, double z, double vx, double vy, double vz, float size, int life, UUID drawnTo) {
+		if (!isActive() || MOTES.size() >= MAX_MOTES) return;
+		Mote mote = new Mote(element, x, y, z, size, life, drawnTo, RANDOM);
+		mote.vx = vx;
+		mote.vy = vy;
+		mote.vz = vz;
+		MOTES.add(mote);
+	}
+
 	/** No open sky above and below sea level, in a realm that has a sky: caves lean to earth and metal. */
 	private static boolean isUnderground(ClientLevel level, BlockPos pos) {
 		return level.dimensionType().hasSkyLight() && !level.dimensionType().hasCeiling() && pos.getY() < level.getSeaLevel()
