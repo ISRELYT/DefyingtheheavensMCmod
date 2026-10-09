@@ -1,5 +1,6 @@
 package com.example.defyingtheheavens.client;
 
+import com.example.defyingtheheavens.TribulationCloud;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -22,7 +23,11 @@ public class TribulationLightningRenderer extends LightningBoltRenderer {
 
 	@Override
 	public void render(LightningBolt bolt, float entityYaw, float partialTick, PoseStack poseStack, MultiBufferSource buffers, int packedLight) {
+		poseStack.pushPose();
+		// Vanilla's 128-block bolt now runs between the player and their local cloud bank.
+		poseStack.scale(1.0f, TribulationCloud.HEIGHT_ABOVE_PLAYER / 128.0f, 1.0f);
 		super.render(bolt, entityYaw, partialTick, poseStack, type -> new Tinted(buffers.getBuffer(type)), packedLight);
+		poseStack.popPose();
 	}
 
 	/** Passes every vertex through unchanged except its colour (vanilla's alpha is kept). */

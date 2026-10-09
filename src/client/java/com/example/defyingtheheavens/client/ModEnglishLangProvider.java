@@ -24,6 +24,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 
 		// Entities
 		t.add(ModEntities.TRIBULATION_LIGHTNING, "Tribulation Lightning");
+		t.add(ModEntities.TRIBULATION_CLOUD, "Tribulation Cloud");
 
 		// Blocks
 		t.add(ModBlocks.SPATIAL_RIFT, "Spatial Rift");

@@ -20,6 +20,7 @@ public final class CultivationEvents {
 		RealmSuppressionHandler.register();
 
 		ServerLifecycleEvents.SERVER_STARTED.register(SpatialRiftBlock::ensureOverworldRift);
+		ServerLifecycleEvents.SERVER_STOPPING.register(server -> TribulationManager.clear());
 
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
 			// Applies stats from the effective (possibly suppressed) stage and syncs the client.
