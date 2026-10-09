@@ -20,6 +20,8 @@ public final class ModPackets {
 	public static final ResourceLocation MEDITATION_STATE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "meditation_state");
 	/** S2C: tribulation started/ended + strikes still to come, for the HUD overlay. */
 	public static final ResourceLocation TRIBULATION_STATE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "tribulation_state");
+	/** S2C: "player X's tribulation cloud is gathering/gone", for drawing it; to the player and everyone tracking them. */
+	public static final ResourceLocation TRIBULATION_CLOUD = new ResourceLocation(DefyingTheHeavens.MOD_ID, "tribulation_cloud");
 
 	public static void registerServerReceivers() {
 		ServerPlayNetworking.registerGlobalReceiver(TOGGLE_MEDITATION,
@@ -60,6 +62,24 @@ public final class ModPackets {
 		buf.writeVarInt(targetRealm.ordinal());
 		buf.writeVarInt(targetStage.ordinal());
 		ServerPlayNetworking.send(player, TRIBULATION_STATE, buf);
+	}
+
+	/** Tells the player and everyone tracking them; the strike count lets clients flash the cloud on each strike. */
+	public static void broadcastTribulationCloud(ServerPlayer player, boolean active, int strikesLeft, Realm targetRealm, Stage targetStage) {
+		ServerPlayNetworking.send(player, TRIBULATION_CLOUD, cloudBuf(player, active, strikesLeft, targetRealm, targetStage));
+		for (ServerPlayer other : PlayerLookup.tracking(player)) {
+			ServerPlayNetworking.send(other, TRIBULATION_CLOUD, cloudBuf(player, active, strikesLeft, targetRealm, targetStage));
+		}
+	}
+
+	private static FriendlyByteBuf cloudBuf(ServerPlayer player, boolean active, int strikesLeft, Realm targetRealm, Stage targetStage) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeUUID(player.getUUID());
+		buf.writeBoolean(active);
+		buf.writeVarInt(strikesLeft);
+		buf.writeVarInt(targetRealm.ordinal());
+		buf.writeVarInt(targetStage.ordinal());
+		return buf;
 	}
 
 	private static FriendlyByteBuf meditationBuf(ServerPlayer player, boolean meditating) {

@@ -34,6 +34,15 @@ public final class ClientPacketHandlers {
 			int stage = buf.readVarInt();
 			client.execute(() -> ClientTribulationData.update(active, strikesLeft, realm, stage));
 		});
+
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.TRIBULATION_CLOUD, (client, handler, buf, sender) -> {
+			UUID id = buf.readUUID();
+			boolean active = buf.readBoolean();
+			int strikesLeft = buf.readVarInt();
+			int realm = buf.readVarInt();
+			int stage = buf.readVarInt();
+			client.execute(() -> TribulationClouds.update(id, active, strikesLeft, realm, stage));
+		});
 	}
 
 	private ClientPacketHandlers() {}

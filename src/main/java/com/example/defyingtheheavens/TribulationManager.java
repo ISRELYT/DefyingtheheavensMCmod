@@ -2,7 +2,6 @@ package com.example.defyingtheheavens;
 
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ClientboundGameEventPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -22,7 +21,7 @@ import java.util.UUID;
  * State is runtime-only; a tribulation never survives a server restart or a disconnect.
  */
 public final class TribulationManager {
-	private static final int FIRST_STRIKE_DELAY = 60;  // 3 s of darkening sky before the first bolt
+	private static final int FIRST_STRIKE_DELAY = 60;  // 3 s of gathering clouds before the first bolt
 	private static final int STRIKE_INTERVAL = 60;     // 3 s between strikes
 	private static final int FINISH_DELAY = 20;        // 1 s after the last strike before the breakthrough completes
 
@@ -57,7 +56,7 @@ public final class TribulationManager {
 	}
 
 	/*
-	 * Balance. A set number of strikes lands 3 s apart, after 3 s of darkening sky. From Foundation Building on, the Qi
+	 * Balance. A set number of strikes lands 3 s apart, after 3 s of gathering clouds. From Foundation Building on, the Qi
 	 * Sustenance ability (if left switched on) regenerates 6 health between strikes, so only damage above that wears the player down. Lightning is cut by armor
 	 * (up to 80%); the magic part ignores armor but not Protection enchantments, Resistance or absorption.
 	 * Every strike of a tribulation is the same, so the outcome is certain. Tuned (deterministic simulation, starting at full
@@ -104,6 +103,14 @@ public final class TribulationManager {
 		};
 	}
 
+	/**
+	 * Radius in blocks of the tribulation cloud that gathers over the cultivator: wider the higher the realm and stage being
+	 * broken into, from 18 (Foundation Building) to 94 (Four Axis Grand Perfection). Drawn by the client.
+	 */
+	public static float cloudRadius(Realm target, Stage stage) {
+		return 2 + 4 * PlayerCultivation.rank(target, stage);
+	}
+
 	/** Entry point from the Breakthrough button. */
 	public static void start(ServerPlayer player) {
 		if (!player.isAlive()) return; // e.g. a modified client sending the packet from the death screen
@@ -126,9 +133,7 @@ public final class TribulationManager {
 		Trial trial = new Trial(c.breakthroughRealm(), c.breakthroughStage());
 		ACTIVE.put(player.getUUID(), trial);
 
-		forceStorm(player);
-		ModPackets.sendTribulation(player, true, trial.strikesLeft, trial.targetRealm, trial.targetStage);
-		player.playNotifySound(SoundEvents.ENDER_DRAGON_GROWL, SoundSource.AMBIENT, 1.0f, 0.5f);
+		announce(player, trial, true);
 		player.playNotifySound(SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 2.0f, 0.4f);
 		player.sendSystemMessage(trial.strikesLeft == 1
 				? Component.translatable(ModLang.MSG_TRIB_START_SINGLE, trial.targetName())
@@ -158,7 +163,7 @@ public final class TribulationManager {
 					if (ACTIVE.get(id) != t) continue; // died just now
 					t.strikesLeft--;
 					t.nextStrikeIn = STRIKE_INTERVAL;
-					ModPackets.sendTribulation(p, true, t.strikesLeft, t.targetRealm, t.targetStage);
+					announce(p, t, true); // also flashes the cloud
 				}
 			} else if (--t.finishIn <= 0) {
 				survivors.add(p); // the last strike has faded
@@ -166,8 +171,7 @@ public final class TribulationManager {
 			}
 
 			if (t.age % 20 == 0) {
-				forceStorm(p); // re-assert in case real weather tried to override us
-				ModPackets.sendTribulation(p, true, t.strikesLeft, t.targetRealm, t.targetStage);
+				announce(p, t, true); // heartbeat: players who start tracking the cultivator late see the cloud too
 			}
 			if (t.age % 100 == 0) {
 				p.playNotifySound(SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 0.8f, 0.5f);
@@ -201,8 +205,7 @@ public final class TribulationManager {
 		Trial t = ACTIVE.remove(p.getUUID());
 		if (t == null) return;
 
-		restoreWeather(p);
-		ModPackets.sendTribulation(p, false, 0, t.targetRealm, t.targetStage);
+		announce(p, t, false);
 
 		PlayerCultivation c = CultivationManager.get(p);
 		boolean sameTarget = c.breakthroughRealm() == t.targetRealm && c.breakthroughStage() == t.targetStage;
@@ -231,37 +234,33 @@ public final class TribulationManager {
 		c.fallOneStage();
 		CultivationManager.markDirty(p.server);
 
-		restoreWeather(p);
-		ModPackets.sendTribulation(p, false, 0, t.targetRealm, t.targetStage);
+		announce(p, t, false);
 		p.server.getPlayerList().broadcastSystemMessage(Component.translatable(ModLang.MSG_TRIB_FAILED, p.getDisplayName()), false);
 		p.sendSystemMessage(Component.translatable(ModLang.MSG_TRIB_FALL, PlayerCultivation.rankName(c.getRealm(), c.getStage())));
 		// The respawn event re-applies the lowered stats and re-syncs the client.
 	}
 
-	/** Disconnect: the trial is cancelled without reward or penalty. */
+	/** Disconnect: the trial is cancelled without reward or penalty. Watchers' clouds fade once their heartbeat stops. */
 	public static void forget(UUID id) {
 		ACTIVE.remove(id);
 	}
 
-	/** Falling out of the Upper Realm mid-trial: cancelled without reward or penalty, like a disconnect. */
+	/**
+	 * Falling out of the Upper Realm mid-trial: cancelled without reward or penalty, like a disconnect. The cloud stays
+	 * behind in the sky and fades rather than following the cultivator into the void and the Spatial Gap.
+	 */
 	public static void abandon(ServerPlayer p) {
 		Trial t = ACTIVE.remove(p.getUUID());
 		if (t == null) return;
-		restoreWeather(p);
-		ModPackets.sendTribulation(p, false, 0, t.targetRealm, t.targetStage);
+		announce(p, t, false);
 		p.sendSystemMessage(Component.translatable(ModLang.MSG_TRIB_ABANDONED));
 	}
 
-	/** Local-to-the-player weather: vanilla game-event packets only reach this one client. */
-	private static void forceStorm(ServerPlayer p) {
-		p.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.RAIN_LEVEL_CHANGE, 1.0F));
-		p.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.THUNDER_LEVEL_CHANGE, 1.0F));
-	}
-
-	private static void restoreWeather(ServerPlayer p) {
-		ServerLevel level = p.serverLevel();
-		p.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.RAIN_LEVEL_CHANGE, level.getRainLevel(1.0F)));
-		p.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.THUNDER_LEVEL_CHANGE, level.getThunderLevel(1.0F)));
+	/** The cultivator's HUD state, and the cloud over them for them and everyone watching. */
+	private static void announce(ServerPlayer p, Trial t, boolean active) {
+		int strikesLeft = active ? t.strikesLeft : 0;
+		ModPackets.sendTribulation(p, active, strikesLeft, t.targetRealm, t.targetStage);
+		ModPackets.broadcastTribulationCloud(p, active, strikesLeft, t.targetRealm, t.targetStage);
 	}
 
 	private TribulationManager() {}
