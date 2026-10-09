@@ -38,13 +38,15 @@ public final class ClientPacketHandlers {
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SPATIAL_STORMS, (client, handler, buf, sender) -> {
+			int loops = buf.readInt();
+			double playerY = buf.readDouble();
 			int count = buf.readVarInt();
 			List<ClientSpatialStorms.StormState> storms = new ArrayList<>(count);
 			for (int i = 0; i < count; i++) {
 				storms.add(new ClientSpatialStorms.StormState(buf.readVarInt(), buf.readInt(), buf.readDouble(), buf.readDouble(),
 						buf.readDouble(), buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readVarInt(), buf.readVarInt()));
 			}
-			client.execute(() -> ClientSpatialStorms.update(storms));
+			client.execute(() -> ClientSpatialStorms.update(loops, playerY, storms));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SPATIAL_STORM_STRIKE, (client, handler, buf, sender) -> {

@@ -48,11 +48,11 @@ public final class SpatialGapAmbience {
 	private static final float NEAR_MIN = 3.0f;
 	private static final float NEAR_MAX = 24.0f;
 	private static final float FAR_RADIUS = 80.0f;
-	private static final int FAR_PER_TICK = 10;
-	private static final int NEAR_PER_TICK = 4;
+	private static final int FAR_PER_TICK = 5;
+	private static final int NEAR_PER_TICK = 2;
 	/** Motes spawned at once on arrival, and after the gap's loop moves the player 192 blocks, so the void is never empty. */
-	private static final int FAR_BURST = 650;
-	private static final int NEAR_BURST = 150;
+	private static final int FAR_BURST = 325;
+	private static final int NEAR_BURST = 75;
 	private static final double JUMP_DISTANCE = 40.0;
 	private static final int[] MOTE_COLORS = {0xC9A8FF, 0x8FE3FF, 0xF1EAFF, 0xA06BFF};
 	private static final int MOTE_FADE = 0x2A1259;

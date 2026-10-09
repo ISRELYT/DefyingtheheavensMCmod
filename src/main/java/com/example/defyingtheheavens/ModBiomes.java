@@ -80,7 +80,7 @@ public final class ModBiomes {
 
 		context.register(SPATIAL_GAP, biome(false, 0.5f, 0.0f,
 				new BiomeSpecialEffects.Builder().skyColor(0x000000).fogColor(0x02010A).waterColor(WATER).waterFogColor(WATER_FOG)
-						.ambientParticle(new AmbientParticleSettings(ParticleTypes.GLOW, 0.02f)),
+						.ambientParticle(new AmbientParticleSettings(ParticleTypes.GLOW, 0.01f)),
 				new MobSpawnSettings.Builder().build(),
 				new BiomeGenerationSettings.Builder(placed, carvers).build()));
 	}
