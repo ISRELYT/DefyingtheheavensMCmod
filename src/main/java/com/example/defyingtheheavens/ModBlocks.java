@@ -12,6 +12,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 
@@ -62,7 +63,9 @@ public final class ModBlocks {
 	public static final Block SPIRIT_PEACH_LEAVES = registerWithItem("spirit_peach_leaves",
 			new LeavesBlock(BlockBehaviour.Properties.copy(Blocks.FLOWERING_AZALEA_LEAVES)));
 	public static final Block SPIRIT_PEACH_HEART = register("spirit_peach_heart",
-			new SpiritPeachHeartBlock(BlockBehaviour.Properties.copy(Blocks.CHERRY_LOG)));
+			// Its own properties, not a copy of the cherry log's: a log's map colour reads its axis, which the heart doesn't have.
+			new SpiritPeachHeartBlock(BlockBehaviour.Properties.of().mapColor(MapColor.TERRACOTTA_GRAY).instrument(NoteBlockInstrument.BASS)
+					.strength(2.0f).sound(SoundType.CHERRY_WOOD).ignitedByLava()));
 
 	private static BlockBehaviour.Properties ginsengProperties(MapColor colour) {
 		return BlockBehaviour.Properties.of().mapColor(colour).noCollission().noOcclusion().instabreak()
