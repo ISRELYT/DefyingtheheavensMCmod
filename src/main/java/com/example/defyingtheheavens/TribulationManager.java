@@ -8,6 +8,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LightningBolt;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.levelgen.Heightmap;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,6 +39,7 @@ public final class TribulationManager {
 		int nextStrikeIn = FIRST_STRIKE_DELAY;
 		int finishIn = FINISH_DELAY;
 		int age;
+		int ambientStrikeIn;
 		TribulationCloud cloud;
 
 		void removeCloud() {
@@ -129,6 +133,7 @@ public final class TribulationManager {
 
 		MeditationManager.stop(player, false); // no-op if not meditating
 		Trial trial = new Trial(c.breakthroughRealm(), c.breakthroughStage());
+		trial.ambientStrikeIn = 25 + player.getRandom().nextInt(20);
 		ACTIVE.put(player.getUUID(), trial);
 
 		updateCloud(player, trial);
@@ -157,6 +162,11 @@ public final class TribulationManager {
 
 			t.age++;
 			updateCloud(p, t);
+			if (--t.ambientStrikeIn <= 0) {
+				ambientStrike(p, t);
+				int tier = t.cloud == null ? 0 : t.cloud.stormTier();
+				t.ambientStrikeIn = 20 + p.getRandom().nextInt(45 - tier * 6);
+			}
 
 			if (t.strikesLeft > 0) {
 				if (--t.nextStrikeIn <= 0) {
@@ -174,11 +184,30 @@ public final class TribulationManager {
 			if (t.age % 20 == 0) {
 				ModPackets.sendTribulation(p, true, t.strikesLeft, t.targetRealm, t.targetStage);
 			}
-			if (t.age % 100 == 0) {
-				p.playNotifySound(SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 0.8f, 0.5f);
-			}
 		}
 		survivors.forEach(TribulationManager::succeed);
+	}
+
+	/** Atmospheric bolts only: no fire, damage, or terrain/chunk generation. */
+	private static void ambientStrike(ServerPlayer p, Trial t) {
+		ServerLevel level = p.serverLevel();
+		int tier = t.cloud == null ? 0 : t.cloud.stormTier();
+		for (int attempt = 0; attempt < 6; attempt++) {
+			double angle = p.getRandom().nextDouble() * Math.PI * 2;
+			double radius = 28 + p.getRandom().nextDouble() * (20 + tier * 10);
+			int x = Mth.floor(p.getX() + Math.cos(angle) * radius);
+			int z = Mth.floor(p.getZ() + Math.sin(angle) * radius);
+			if (!level.hasChunkAt(new BlockPos(x, p.getBlockY(), z))) continue;
+			int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
+			if (y >= TribulationCloud.cloudBaseY(level, p.getY()) - 8) continue;
+			LightningBolt bolt = ModEntities.TRIBULATION_LIGHTNING.create(level);
+			if (bolt == null) return;
+			bolt.moveTo(x + 0.5, y, z + 0.5);
+			bolt.setVisualOnly(true);
+			level.addFreshEntity(bolt);
+			if (t.cloud != null) t.cloud.flash();
+			return;
+		}
 	}
 
 	private static void strike(ServerPlayer p, Trial t) {
@@ -265,6 +294,7 @@ public final class TribulationManager {
 			trial.removeCloud();
 			trial.cloud = ModEntities.TRIBULATION_CLOUD.create(player.serverLevel());
 			if (trial.cloud == null) return;
+			trial.cloud.configure(trial.targetRealm);
 			trial.cloud.setPos(player.getX(), TribulationCloud.cloudBaseY(player.level(), player.getY()), player.getZ());
 			player.serverLevel().addFreshEntity(trial.cloud);
 		}

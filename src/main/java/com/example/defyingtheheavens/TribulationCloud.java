@@ -11,6 +11,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.AABB;
 
 /** A temporary, non-interactive storm tracked by the server so every nearby client can see it. */
 public class TribulationCloud extends Entity {
@@ -26,6 +27,8 @@ public class TribulationCloud extends Entity {
 	private int interpolationSteps;
 	private static final EntityDataAccessor<Integer> FLASH_TICKS = SynchedEntityData.defineId(TribulationCloud.class, EntityDataSerializers.INT);
 	private static final int FLASH_DURATION = 6;
+	private static final EntityDataAccessor<Integer> STORM_TIER = SynchedEntityData.defineId(TribulationCloud.class, EntityDataSerializers.INT);
+	private static final EntityDataAccessor<Long> FORMED_AT = SynchedEntityData.defineId(TribulationCloud.class, EntityDataSerializers.LONG);
 
 	public TribulationCloud(EntityType<? extends TribulationCloud> type, Level level) {
 		super(type, level);
@@ -37,6 +40,26 @@ public class TribulationCloud extends Entity {
 	@Override
 	protected void defineSynchedData() {
 		entityData.define(FLASH_TICKS, 0);
+		entityData.define(STORM_TIER, 0);
+		entityData.define(FORMED_AT, 0L);
+	}
+
+	public void configure(Realm targetRealm) {
+		entityData.set(STORM_TIER, Math.max(0, targetRealm.ordinal() - Realm.FOUNDATION_BUILDING.ordinal()));
+		entityData.set(FORMED_AT, level().getGameTime());
+	}
+
+	public int stormTier() { return entityData.get(STORM_TIER); }
+	public float stormScale() { return 1.0f + stormTier() * 0.45f; }
+
+	/** Server time prevents the formation animation restarting for late observers. */
+	public float formationAge(float partialTick) {
+		return Math.max(0, level().getGameTime() - entityData.get(FORMED_AT) + partialTick);
+	}
+
+	@Override
+	public AABB getBoundingBoxForCulling() {
+		return getBoundingBox().inflate(36.0 * stormScale(), 12.0, 36.0 * stormScale());
 	}
 
 	@Override
