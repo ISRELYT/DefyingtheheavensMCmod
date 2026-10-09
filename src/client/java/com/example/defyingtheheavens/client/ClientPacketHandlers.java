@@ -1,6 +1,8 @@
 package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.ModPackets;
+import com.example.defyingtheheavens.Realm;
+import com.example.defyingtheheavens.Stage;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 
 import java.util.ArrayList;
@@ -19,8 +21,48 @@ public final class ClientPacketHandlers {
 			boolean lowerRealmBound = buf.readBoolean();
 			boolean inUpperRealm = buf.readBoolean();
 			int disabledAbilities = buf.readVarInt();
+			int pressureStages = buf.readVarInt();
+			double pressurePenalty = buf.readDouble();
 			client.execute(() -> ClientCultivationData.update(realm, stage, cultivation, qi, meditating, lowerRealmBound, inUpperRealm,
-					disabledAbilities));
+					disabledAbilities, pressureStages, pressurePenalty));
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.QI_ABSORPTION, (client, handler, buf, sender) -> {
+			UUID id = buf.readUUID();
+			float rate = buf.readFloat();
+			client.execute(() -> QiSenseClientHandler.absorption(id, rate));
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.CONSCIOUSNESS_DOMAIN, (client, handler, buf, sender) -> {
+			int count = buf.readVarInt();
+			List<ConsciousnessRenderer.Sensed> cultivators = new ArrayList<>(count);
+			for (int i = 0; i < count; i++) {
+				cultivators.add(new ConsciousnessRenderer.Sensed(buf.readVarInt(), Realm.byIndex(buf.readVarInt()), Stage.byIndex(buf.readVarInt()),
+						buf.readBoolean()));
+			}
+			int domainCount = buf.readVarInt();
+			List<ConsciousnessRenderer.Domain> domains = new ArrayList<>(domainCount);
+			for (int i = 0; i < domainCount; i++) {
+				domains.add(new ConsciousnessRenderer.Domain(buf.readVarInt(), buf.readDouble(), buf.readDouble(), buf.readDouble(), buf.readFloat()));
+			}
+			client.execute(() -> ConsciousnessRenderer.update(cultivators, domains));
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.CONSCIOUSNESS_ALERT, (client, handler, buf, sender) -> {
+			int entityId = buf.readVarInt();
+			String name = buf.readUtf();
+			Realm realm = Realm.byIndex(buf.readVarInt());
+			Stage stage = Stage.byIndex(buf.readVarInt());
+			client.execute(() -> ConsciousnessRenderer.alert(entityId, name, realm, stage));
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.PRESSED_ENTITIES, (client, handler, buf, sender) -> {
+			int count = buf.readVarInt();
+			List<SuppressionClient.Pressed> pressed = new ArrayList<>(count);
+			for (int i = 0; i < count; i++) {
+				pressed.add(new SuppressionClient.Pressed(buf.readVarInt(), buf.readFloat(), buf.readBoolean()));
+			}
+			client.execute(() -> SuppressionClient.update(pressed));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.MEDITATION_STATE, (client, handler, buf, sender) -> {

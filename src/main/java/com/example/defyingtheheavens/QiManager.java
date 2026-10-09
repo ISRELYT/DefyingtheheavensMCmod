@@ -4,8 +4,9 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
- * Refills every player's qi pool each tick at their qi gather rate, less what flying on it costs ({@link QiFlight}), and
- * keeps the client's Qi bar in step. Spells and techniques spend qi through {@link #trySpend}.
+ * Refills every player's qi pool each tick at their qi gather rate, less what flying on it ({@link QiFlight}) and pressing
+ * down on others ({@link RealmSuppressSystem}) cost, and keeps the client's Qi bar in step. Spells and techniques spend qi
+ * through {@link #trySpend}.
  */
 public final class QiManager {
 	/** While a pool is filling or draining, its owner is synced this often (in ticks); filling up or running dry syncs at once. */
@@ -18,7 +19,10 @@ public final class QiManager {
 			if (!player.isAlive()) continue;
 			PlayerCultivation c = CultivationManager.get(player);
 			double flightCost = QiFlight.tick(player, c);
-			if (!c.gatherQi(1 / 20.0, flightCost)) continue;
+			QiSense.tick(player, c);
+			// Flight is paid first: running dry should end the pressure, not drop the cultivator out of the sky.
+			double suppressCost = RealmSuppressSystem.upkeep(player, c, flightCost);
+			if (!c.gatherQi(1 / 20.0, flightCost + suppressCost)) continue;
 			changed = true;
 			if (syncTick || c.getQi() >= c.maxQi() || c.getQi() <= 0) {
 				CultivationManager.sync(player);

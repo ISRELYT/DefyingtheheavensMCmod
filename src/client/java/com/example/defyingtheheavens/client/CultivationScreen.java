@@ -6,6 +6,7 @@ import com.example.defyingtheheavens.CultivationStats;
 import com.example.defyingtheheavens.ModLang;
 import com.example.defyingtheheavens.PlayerCultivation;
 import com.example.defyingtheheavens.Realm;
+import com.example.defyingtheheavens.RealmSuppressSystem;
 import com.example.defyingtheheavens.RingOfPowerItem;
 import com.example.defyingtheheavens.Stage;
 import com.example.defyingtheheavens.ModPackets;
@@ -21,6 +22,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -48,6 +50,8 @@ public class CultivationScreen extends Screen {
 	private static final int CONTENT_Y = 34;
 	private static final int SWITCH_W = 30;
 	private static final int SWITCH_H = 14;
+	/** Pixels the Abilities tab moves per mouse-wheel notch. */
+	private static final int SCROLL_STEP = 14;
 	/** Right edges of the Base and Realm columns in the Stats tab (Current ends at the panel's inner margin). */
 	private static final int BASE_RIGHT = 138;
 	private static final int BONUS_RIGHT = 190;
@@ -82,6 +86,9 @@ public class CultivationScreen extends Screen {
 	private Button breakthroughButton;
 	/** Where each ability's switch was drawn this frame, for {@link #mouseClicked}. Empty on other tabs. */
 	private final List<AbilitySwitch> switches = new ArrayList<>();
+	/** How far the Abilities tab is scrolled, in pixels, and how far it can go (0 when everything fits). */
+	private int abilityScroll;
+	private int abilityMaxScroll;
 
 	private record AbilitySwitch(Ability ability, int x, int y) {
 		boolean contains(double mouseX, double mouseY) {
@@ -214,7 +221,16 @@ public class CultivationScreen extends Screen {
 				: Component.translatable(ModLang.CULTIVATION_RATE, one(rate)), cx, y, boost > 1.0 && rate > 0 ? 0x7FE0A0 : 0xA0A0A0);
 		y += 18;
 
-		if (c.isSuppressed()) {
+		if (c.isUnderPressure()) {
+			// Another cultivator's Realm Suppress: what it holds the player to (if a realm), and what it takes.
+			g.drawCenteredString(font, Component.translatable(ModLang.PRESSURE), cx, y, 0xFF6E6E);
+			if (c.getPressureStages() > 0) {
+				y += 11;
+				g.drawCenteredString(font, PlayerCultivation.rankName(c.getEffectiveRealm(), c.getEffectiveStage()), cx, y, 0xFF6E6E);
+			}
+			g.drawCenteredString(font, Component.translatable(ModLang.PRESSURE_DETAIL, Math.round(c.getPressurePenalty() * 100)),
+					cx, y + 11, 0xFF6E6E);
+		} else if (c.isSuppressed()) {
 			g.drawCenteredString(font, Component.translatable(ModLang.SUPPRESSED), cx, y, 0xFF6E6E);
 			g.drawCenteredString(font, Component.translatable(ModLang.SUPPRESSED_TO,
 					PlayerCultivation.rankName(c.getEffectiveRealm(), c.getEffectiveStage())), cx, y + 11, 0xFF6E6E);
@@ -249,7 +265,8 @@ public class CultivationScreen extends Screen {
 
 	private void renderStats(GuiGraphics g, Player player) {
 		PlayerCultivation c = ClientCultivationData.get();
-		boolean suppressed = c.isSuppressed();
+		// The lower realm's cap, or another cultivator's Realm Suppress: either way the stats now fall short of the true ones.
+		boolean suppressed = c.isSuppressed() || c.isUnderPressure();
 		Realm r = c.getEffectiveRealm(); // bonuses follow the (possibly suppressed) effective stage
 		Stage s = c.getEffectiveStage();
 		int cx = left + WIDTH / 2;
@@ -257,12 +274,15 @@ public class CultivationScreen extends Screen {
 		int y = top + CONTENT_Y;
 
 		if (suppressed) {
-			// True cultivation, then what the lower realm holds it to.
+			// True cultivation, then what the lower realm or the pressure holds it to.
 			g.drawCenteredString(font, PlayerCultivation.rankName(c.getRealm(), c.getStage()), cx, y, 0xB39DDB);
 			y += 11;
-			g.drawCenteredString(font, Component.translatable(ModLang.STATS_SUPPRESSED), cx, y, 0xFF6E6E);
+			g.drawCenteredString(font, Component.translatable(c.isUnderPressure() ? ModLang.STATS_PRESSED : ModLang.STATS_SUPPRESSED),
+					cx, y, 0xFF6E6E);
 			y += 11;
-			g.drawCenteredString(font, PlayerCultivation.rankName(r, s), cx, y, 0xFF6E6E);
+			Component held = PlayerCultivation.rankName(r, s);
+			if (c.isUnderPressure()) held = held.copy().append(" (-" + Math.round(c.getPressurePenalty() * 100) + "%)");
+			g.drawCenteredString(font, held, cx, y, 0xFF6E6E);
 		} else {
 			g.drawCenteredString(font, PlayerCultivation.rankName(r, s), cx, y, 0xB39DDB);
 		}
@@ -278,12 +298,12 @@ public class CultivationScreen extends Screen {
 		y += 4;
 
 		for (StatLine line : STAT_LINES) {
-			statRow(g, player, line, c, y);
+			statRow(g, player, line, c, suppressed, y);
 			y += 11;
 		}
-		qiRow(g, ModLang.STAT_NAME_MAX_QI, CultivationStats::maxQi, c.maxQi(), false, c, y);
+		qiRow(g, ModLang.STAT_NAME_MAX_QI, CultivationStats::maxQi, c.maxQi(), false, c, suppressed, y);
 		y += 11;
-		qiRow(g, ModLang.STAT_NAME_QI_GATHER, CultivationStats::qiGather, c.qiGatherPerSecond(), true, c, y);
+		qiRow(g, ModLang.STAT_NAME_QI_GATHER, CultivationStats::qiGather, c.qiGatherPerSecond(), true, c, suppressed, y);
 		y += 11;
 		if (c.isInUpperRealm()) {
 			g.drawString(font, Component.translatable(ModLang.STATS_QI_GATHER_UPPER, (int) PlayerCultivation.UPPER_REALM_QI_MULTIPLIER),
@@ -295,29 +315,45 @@ public class CultivationScreen extends Screen {
 
 	/**
 	 * One entry per awakened ability, top to bottom: its name with an On/Off switch, then what it does (Qi Flight always
-	 * shows its cost, even where gathering covers it: players find out flight is endless there by flying). The list isn't
-	 * scrollable yet; it will need to be once more abilities exist than fit the panel.
+	 * shows its cost, even where gathering covers it: players find out flight is endless there by flying). Scrolls with the
+	 * mouse wheel once the entries outgrow the panel, with a thin gold bar at the right edge showing where the view is.
 	 */
 	private void renderAbilities(GuiGraphics g, int mouseX, int mouseY) {
 		PlayerCultivation c = ClientCultivationData.get();
 		List<Ability> awakened = Arrays.stream(Ability.values()).filter(ability -> ability.isUnlocked(c)).toList();
 		if (awakened.isEmpty()) {
+			abilityMaxScroll = 0;
 			renderPlaceholder(g, ModLang.ABILITIES_TITLE, ModLang.ABILITIES_EMPTY, ModLang.ABILITIES_HINT);
 			return;
 		}
 
 		int x = left + 14;
 		int rightEdge = left + WIDTH - 14;
-		int y = top + CONTENT_Y + 3;
+		int viewTop = top + CONTENT_Y;
+		int viewBottom = top + HEIGHT - 6;
+		List<List<FormattedCharSequence>> descriptions = new ArrayList<>();
+		int contentHeight = 6;
+		for (int i = 0; i < awakened.size(); i++) {
+			List<FormattedCharSequence> lines = font.split(awakened.get(i).getDescription(c), rightEdge - x);
+			descriptions.add(lines);
+			contentHeight += 15 + lines.size() * 10 + (i < awakened.size() - 1 ? 12 : 0);
+		}
+		abilityMaxScroll = Math.max(0, contentHeight - (viewBottom - viewTop));
+		abilityScroll = Mth.clamp(abilityScroll, 0, abilityMaxScroll);
+
+		g.enableScissor(left + 1, viewTop, left + WIDTH - 1, viewBottom);
+		int y = viewTop + 3 - abilityScroll;
 		for (int i = 0; i < awakened.size(); i++) {
 			Ability ability = awakened.get(i);
 			boolean on = c.isAbilityEnabled(ability);
 			AbilitySwitch toggle = new AbilitySwitch(ability, rightEdge - SWITCH_W, y - 3);
-			switches.add(toggle);
+			// Only a switch wholly in view can be clicked.
+			boolean visible = toggle.y() >= viewTop && toggle.y() + SWITCH_H <= viewBottom;
+			if (visible) switches.add(toggle);
 			g.drawString(font, ability.getDisplayName(), x, y, on ? 0xFFD700 : 0x9E9E9E);
-			drawSwitch(g, toggle, on, toggle.contains(mouseX, mouseY));
+			drawSwitch(g, toggle, on, visible && toggle.contains(mouseX, mouseY));
 			y += 15;
-			for (FormattedCharSequence line : font.split(ability.getDescription(c), rightEdge - x)) {
+			for (FormattedCharSequence line : descriptions.get(i)) {
 				g.drawString(font, line, x, y, on ? 0xB0B0B0 : 0x707070);
 				y += 10;
 			}
@@ -327,6 +363,26 @@ public class CultivationScreen extends Screen {
 				y += 8;
 			}
 		}
+		g.disableScissor();
+
+		if (abilityMaxScroll > 0) {
+			int trackX = left + WIDTH - 7;
+			int trackHeight = viewBottom - viewTop - 4;
+			int thumbHeight = Math.max(12, trackHeight * (viewBottom - viewTop) / contentHeight);
+			int thumbY = viewTop + 2 + (trackHeight - thumbHeight) * abilityScroll / abilityMaxScroll;
+			g.fill(trackX, viewTop + 2, trackX + 2, viewTop + 2 + trackHeight, 0xFF2A2A3A);
+			g.fill(trackX, thumbY, trackX + 2, thumbY + thumbHeight, BORDER);
+			g.fill(trackX + 1, thumbY, trackX + 2, thumbY + thumbHeight, 0xFF6E5214); // shaded side, like the Qi bar's trim
+		}
+	}
+
+	@Override
+	public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+		if (tab == Tab.ABILITIES && abilityMaxScroll > 0) {
+			abilityScroll = Mth.clamp(abilityScroll - (int) Math.round(delta * SCROLL_STEP), 0, abilityMaxScroll);
+			return true;
+		}
+		return super.mouseScrolled(mouseX, mouseY, delta);
 	}
 
 	/** An On/Off switch in the panel's colours: green "On", grey "Off". */
@@ -356,18 +412,19 @@ public class CultivationScreen extends Screen {
 	}
 
 	/**
-	 * One stat: the attribute's base value, then either the realm's bonus and the current value, or (while suppressed)
-	 * the value at the true cultivation and the value now. The bonus of a percentage stat is a fraction, shown x100.
+	 * One stat: the attribute's base value, then either the realm's bonus and the current value, or (while suppressed or
+	 * pressed) the value at the true cultivation without the pressure and the value now. The bonus of a percentage stat is
+	 * a fraction, shown x100.
 	 */
-	private void statRow(GuiGraphics g, Player player, StatLine line, PlayerCultivation c, int y) {
+	private void statRow(GuiGraphics g, Player player, StatLine line, PlayerCultivation c, boolean suppressed, int y) {
 		Attribute attribute = line.attribute();
 		double base = player == null ? 0 : player.getAttributeBaseValue(attribute);
 		double bonus = line.bonus().applyAsDouble(c.getEffectiveRealm(), c.getEffectiveStage());
-		double now = valueWith(player, attribute, bonus);
+		double now = valueWith(player, attribute, bonus, true);
 		g.drawString(font, Component.translatable(line.nameKey()), left + 14, y, 0xE0E0E0);
 		right(g, Component.literal(one(base * line.scale()) + line.unit()), left + BASE_RIGHT, y, 0xA0A0A0);
-		if (c.isSuppressed()) {
-			double truth = valueWith(player, attribute, line.bonus().applyAsDouble(c.getRealm(), c.getStage()));
+		if (suppressed) {
+			double truth = valueWith(player, attribute, line.bonus().applyAsDouble(c.getRealm(), c.getStage()), false);
 			right(g, Component.literal(one(truth * line.scale()) + line.unit()), left + BONUS_RIGHT, y, 0xB39DDB);
 			right(g, Component.literal(one(now * line.scale()) + line.unit()), left + WIDTH - 14, y, now < truth ? 0xFF8A80 : 0xFFFFFF);
 		} else {
@@ -382,11 +439,11 @@ public class CultivationScreen extends Screen {
 	 * the Upper Realm's multiplier ({@code now} above the realm's own value is shown in blue).
 	 */
 	private void qiRow(GuiGraphics g, String nameKey, ToDoubleBiFunction<Realm, Stage> value, double now, boolean rate,
-					   PlayerCultivation c, int y) {
+					   PlayerCultivation c, boolean suppressed, int y) {
 		double bonus = value.applyAsDouble(c.getEffectiveRealm(), c.getEffectiveStage());
 		g.drawString(font, Component.translatable(nameKey), left + 14, y, 0xE0E0E0);
 		right(g, Component.literal(qiText(0, rate)), left + BASE_RIGHT, y, 0xA0A0A0);
-		if (c.isSuppressed()) {
+		if (suppressed) {
 			double truth = value.applyAsDouble(c.getRealm(), c.getStage());
 			right(g, Component.literal(qiText(truth, rate)), left + BONUS_RIGHT, y, 0xB39DDB);
 			right(g, Component.literal(qiText(now, rate)), left + WIDTH - 14, y, now < truth ? 0xFF8A80 : 0xFFFFFF);
@@ -428,15 +485,21 @@ public class CultivationScreen extends Screen {
 	 * another stage's bonus it's what they would have there. The server only sends some attributes to clients (max
 	 * health, speed, armor, toughness); for the others (attack damage, knockback resistance) the client sees no
 	 * modifiers, so those come out as the base value plus the bonus (bare-handed, without gear or effects).
+	 * {@code withPressure} false leaves Realm Suppress's modifiers out, for the value the true cultivation would have.
 	 */
-	private static double valueWith(Player player, Attribute attribute, double cultivationBonus) {
+	private static double valueWith(Player player, Attribute attribute, double cultivationBonus, boolean withPressure) {
 		AttributeInstance instance = player == null ? null : player.getAttribute(attribute);
 		if (instance == null) return 0;
 		AttributeModifier.Operation cultivationOp = CultivationStats.operation(attribute);
 		double added = instance.getBaseValue() + (cultivationOp == AttributeModifier.Operation.ADDITION ? cultivationBonus : 0);
-		if (!attribute.isClientSyncable()) return attribute.sanitizeValue(added);
+		if (!attribute.isClientSyncable()) {
+			// Realm Suppress's share is known even so, from the synced pressure.
+			boolean pressed = withPressure && RealmSuppressSystem.lowers(attribute);
+			return attribute.sanitizeValue(added) * (pressed ? 1 - ClientCultivationData.get().getPressurePenalty() : 1);
+		}
 		List<AttributeModifier> others = instance.getModifiers().stream()
 				.filter(modifier -> !CultivationStats.isCultivationModifier(modifier.getId()))
+				.filter(modifier -> withPressure || !RealmSuppressSystem.isPressureModifier(modifier.getId()))
 				.toList();
 		for (AttributeModifier modifier : others) {
 			if (modifier.getOperation() == AttributeModifier.Operation.ADDITION) added += modifier.getAmount();

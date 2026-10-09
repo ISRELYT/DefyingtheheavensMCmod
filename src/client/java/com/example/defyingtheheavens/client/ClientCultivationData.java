@@ -1,5 +1,6 @@
 package com.example.defyingtheheavens.client;
 
+import com.example.defyingtheheavens.Ability;
 import com.example.defyingtheheavens.PlayerCultivation;
 import com.example.defyingtheheavens.Realm;
 import com.example.defyingtheheavens.Stage;
@@ -13,12 +14,13 @@ public final class ClientCultivationData {
 	public static boolean isMeditating() { return meditating; }
 
 	public static void update(int realm, int stage, double cultivation, double qi, boolean meditating, boolean lowerRealmBound,
-							  boolean inUpperRealm, int disabledAbilities) {
+							  boolean inUpperRealm, int disabledAbilities, int pressureStages, double pressurePenalty) {
 		DATA.setState(Realm.byIndex(realm), Stage.byIndex(stage), cultivation);
-		DATA.setQi(qi);
 		DATA.setDisabledAbilityMask(disabledAbilities);
 		DATA.setLowerRealmBound(lowerRealmBound);
 		DATA.setInUpperRealm(inUpperRealm);
+		DATA.setPressure(pressureStages, pressurePenalty);
+		DATA.setQi(qi); // after the pressure, which sets the maximum it is read against
 		ClientCultivationData.meditating = meditating;
 	}
 
@@ -26,9 +28,12 @@ public final class ClientCultivationData {
 	public static void clear() {
 		DATA.setState(Realm.QI_REFINING, Stage.EARLY, 0);
 		DATA.setQi(0);
-		DATA.setDisabledAbilityMask(0);
+		int offByDefault = 0;
+		for (Ability ability : Ability.offByDefault()) offByDefault |= 1 << ability.ordinal();
+		DATA.setDisabledAbilityMask(offByDefault);
 		DATA.setLowerRealmBound(false);
 		DATA.setInUpperRealm(false);
+		DATA.setPressure(0, 0);
 		meditating = false;
 	}
 

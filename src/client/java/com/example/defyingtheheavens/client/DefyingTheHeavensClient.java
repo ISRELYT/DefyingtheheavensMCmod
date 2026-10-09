@@ -1,15 +1,24 @@
 package com.example.defyingtheheavens.client;
 
 
+import com.example.defyingtheheavens.DefyingTheHeavens;
 import com.example.defyingtheheavens.ModEntities;
 import com.example.defyingtheheavens.ModPackets;
+import com.example.defyingtheheavens.ModParticles;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.resources.ResourceManager;
 
 public class DefyingTheHeavensClient implements ClientModInitializer {
 	@Override
@@ -36,24 +45,51 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		QiHud.register();
 		TribulationHud.register();
 		TribulationAtmosphere.register();
+		HudRenderCallback.EVENT.register((graphics, tickDelta) -> {
+			SuppressionClient.renderHud(graphics); // under the Qi bar
+			ConsciousnessRenderer.renderHud(graphics);
+		});
 		EntityRendererRegistry.register(ModEntities.TRIBULATION_LIGHTNING, TribulationLightningRenderer::new);
 		EntityRendererRegistry.register(ModEntities.TRIBULATION_CLOUD, TribulationCloudRenderer::new);
+		ParticleFactoryRegistry.getInstance().register(ModParticles.SUPPRESSION, SuppressionParticle.Provider::new);
 		UpperRealmClient.register();
 
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(ClientSpatialStorms::render);
+		WorldRenderEvents.AFTER_TRANSLUCENT.register(SuppressionClient::renderMarkers);
+		// Qi motes and consciousness domains, on the layer Qi Sense's monochrome leaves in colour.
+		WorldRenderEvents.END.register(SenseOverlay::onWorldEnd);
+		ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new SimpleSynchronousResourceReloadListener() {
+			@Override
+			public ResourceLocation getFabricId() {
+				return DefyingTheHeavens.id("qi_sense_post_effect");
+			}
 
-		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+			@Override
+			public void onResourceManagerReload(ResourceManager manager) {
+				QiSenseClientHandler.closeMonochrome();
+			}
+		});
+
+		// When the connection drops, Fabric fires this on the network thread, while the render thread may be drawing from these
+		// very lists (a ConcurrentModificationException crash): clear them on the client thread.
+		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> client.execute(() -> {
 			ClientTribulationData.clear();
 			ClientCultivationData.clear();
 			SpatialGapAmbience.clear();
 			ClientSpatialStorms.clear();
 			MeditationFormation.clear();
-		});
+			QiSenseClientHandler.clear();
+			ConsciousnessRenderer.clear();
+			SuppressionClient.clear();
+		}));
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			SpatialGapAmbience.tick(client);
 			ClientSpatialStorms.tick(client);
 			MeditationFormation.tick(client);
+			QiSenseClientHandler.tick(client);
+			ConsciousnessRenderer.tick(client);
+			SuppressionClient.tick(client);
 			while (ModKeybinds.OPEN_MENU.consumeClick()) {
 				if (client.player != null && client.screen == null) {
 					client.setScreen(new CultivationScreen());

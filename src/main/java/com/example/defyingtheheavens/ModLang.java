@@ -84,6 +84,16 @@ public final class ModLang {
 	public static final String MSG_BOTTLENECK = k("message.bottleneck");
 	public static final String MSG_QI_FLIGHT_GAINED = k("message.qi_flight.gained");
 	public static final String MSG_QI_FLIGHT_EXHAUSTED = k("message.qi_flight.exhausted");
+	public static final String MSG_QI_SENSE_GAINED = k("message.qi_sense.gained");
+	public static final String MSG_SUPPRESS_EXHAUSTED = k("message.realm_suppress.exhausted");
+	// Consciousness Domain and Realm Suppress (another cultivator's pressure on you)
+	public static final String CONSCIOUSNESS_ALERT_TITLE = k("consciousness.alert.title");
+	public static final String CONSCIOUSNESS_ALERT_DETAIL = k("consciousness.alert.detail");
+	public static final String CONSCIOUSNESS_UNKNOWN = k("consciousness.unknown");
+	public static final String PRESSURE = k("pressure");
+	public static final String PRESSURE_DETAIL = k("pressure.detail");
+	public static final String STATS_PRESSED = k("stats.pressed");
+	public static final String HUD_PRESSURE = k("hud.pressure");
 	public static final String MSG_TRIB_START = k("message.tribulation.start");
 	public static final String MSG_TRIB_START_SINGLE = k("message.tribulation.start_single");
 	public static final String MSG_TRIB_BUSY = k("message.tribulation.busy");

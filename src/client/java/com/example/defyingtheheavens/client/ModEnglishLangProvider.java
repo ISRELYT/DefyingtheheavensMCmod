@@ -154,10 +154,19 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 			t.add(key, switch (ability) {
 				case QI_SUSTENANCE -> "Qi Sustenance";
 				case QI_FLIGHT -> "Qi Flight";
+				case QI_SENSE -> "Qi Sense";
+				case CONSCIOUSNESS_DOMAIN -> "Consciousness Domain";
+				case REALM_SUPPRESS -> "Realm Suppress";
 			});
 			t.add(key + ".description", switch (ability) {
 				case QI_SUSTENANCE -> "Qi sustains your body: hunger and saturation always stay full.";
 				case QI_FLIGHT -> "Double-tap jump to fly, at a cost of %s qi/s.";
+				case QI_SENSE -> "Peer into the plane of Qi: the world loses its colour and the qi of the five elements drifts "
+						+ "through it, drawn into anyone meditating. Costs no qi.";
+				case CONSCIOUSNESS_DOMAIN -> "Your consciousness spreads %s blocks around you. Every living thing inside shows "
+						+ "through walls, cultivators with their realm, and you feel any other domain that touches yours. Costs no qi.";
+				case REALM_SUPPRESS -> "The weight of your realm presses down on every weaker being within %s blocks: mortals "
+						+ "lose half their strength, lower cultivators more the further below you they are. Costs qi for each one.";
 			});
 		}
 		t.add(ModLang.METHODS_TITLE, "Cultivation Methods");
@@ -197,6 +206,15 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_QI_FLIGHT_GAINED, "Your golden core circulates enough Qi through your body to make it tangible. "
 				+ "You can now use it to carry your physical form. Double-tap jump to fly.");
 		t.add(ModLang.MSG_QI_FLIGHT_EXHAUSTED, "Your qi runs dry and you fall! You can fly again at %s%% qi.");
+		t.add(ModLang.MSG_QI_SENSE_GAINED, "You can now peer into the plane of Qi.");
+		t.add(ModLang.MSG_SUPPRESS_EXHAUSTED, "Your qi runs dry and your realm's pressure lifts. It returns at %s%% qi.");
+		t.add(ModLang.CONSCIOUSNESS_ALERT_TITLE, "A foreign consciousness touches yours");
+		t.add(ModLang.CONSCIOUSNESS_ALERT_DETAIL, "%s - %s");
+		t.add(ModLang.CONSCIOUSNESS_UNKNOWN, "Unknown realm");
+		t.add(ModLang.PRESSURE, "A higher realm weighs on you!");
+		t.add(ModLang.PRESSURE_DETAIL, "Strength and qi -%s%%");
+		t.add(ModLang.STATS_PRESSED, "is pressed down to");
+		t.add(ModLang.HUD_PRESSURE, "Suppressed -%s%%");
 		t.add(ModLang.MSG_TRIB_START, "The heavens take notice of your ascent to %s! Survive %s strikes of heavenly lightning!");
 		t.add(ModLang.MSG_TRIB_START_SINGLE, "The heavens take notice of your ascent to %s! Survive a strike of heavenly lightning!");
 		t.add(ModLang.MSG_TRIB_BUSY, "You cannot do that while a tribulation is in progress.");

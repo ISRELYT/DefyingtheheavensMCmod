@@ -14,6 +14,7 @@ public class DefyingTheHeavens implements ModInitializer {
 		ModBlocks.register();
 		ModBlockEntities.register();
 		ModEntities.register();
+		ModParticles.register();
 		ModItems.register();
 		ModFeatures.register();
 		ModPackets.registerServerReceivers();
