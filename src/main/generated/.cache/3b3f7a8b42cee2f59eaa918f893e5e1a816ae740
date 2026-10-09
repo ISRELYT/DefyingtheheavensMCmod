@@ -1,0 +1,9 @@
+// 1.20.1	2026-10-09T12:41:47.956327	Defying The Heavens/Tags for minecraft:block
+254038c27212d829d4fe53016cca02405cac1835 data\minecraft\tags\blocks\stone_ore_replaceables.json
+254038c27212d829d4fe53016cca02405cac1835 data\minecraft\tags\blocks\mineable\pickaxe.json
+35f28a52f3770b3e3026fabb98a5f5fa0cb19ffa data\minecraft\tags\blocks\leaves.json
+b83fe5d8e30895b0522d065d97d82d5b20d1bb8c data\minecraft\tags\blocks\wither_immune.json
+b83fe5d8e30895b0522d065d97d82d5b20d1bb8c data\minecraft\tags\blocks\dragon_immune.json
+254038c27212d829d4fe53016cca02405cac1835 data\minecraft\tags\blocks\base_stone_overworld.json
+35f28a52f3770b3e3026fabb98a5f5fa0cb19ffa data\minecraft\tags\blocks\mineable\hoe.json
+b83fe5d8e30895b0522d065d97d82d5b20d1bb8c data\minecraft\tags\blocks\features_cannot_replace.json

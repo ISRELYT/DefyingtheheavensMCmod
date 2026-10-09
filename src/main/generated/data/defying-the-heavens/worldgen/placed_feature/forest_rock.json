@@ -1,0 +1,20 @@
+{
+  "feature": "minecraft:forest_rock",
+  "placement": [
+    {
+      "type": "minecraft:count",
+      "count": 1
+    },
+    {
+      "type": "minecraft:in_square"
+    },
+    {
+      "type": "defying-the-heavens:island_surface",
+      "max_y": 500,
+      "min_y": 40
+    },
+    {
+      "type": "minecraft:biome"
+    }
+  ]
+}

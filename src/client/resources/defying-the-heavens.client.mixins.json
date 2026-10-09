@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.example.defyingtheheavens.client.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "client": [
+    "CreativeModeInventoryScreenMixin",
+    "FogRendererMixin",
+    "HumanoidModelMixin",
+    "InventoryScreenMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

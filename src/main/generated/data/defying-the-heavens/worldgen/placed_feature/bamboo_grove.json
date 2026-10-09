@@ -1,0 +1,22 @@
+{
+  "feature": "minecraft:bamboo_some_podzol",
+  "placement": [
+    {
+      "type": "minecraft:noise_based_count",
+      "noise_factor": 80.0,
+      "noise_offset": 0.3,
+      "noise_to_count_ratio": 60
+    },
+    {
+      "type": "minecraft:in_square"
+    },
+    {
+      "type": "defying-the-heavens:island_surface",
+      "max_y": 500,
+      "min_y": 40
+    },
+    {
+      "type": "minecraft:biome"
+    }
+  ]
+}

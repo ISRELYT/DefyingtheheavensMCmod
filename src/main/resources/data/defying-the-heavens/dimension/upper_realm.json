@@ -1,0 +1,60 @@
+{
+  "type": "defying-the-heavens:upper_realm",
+  "generator": {
+    "type": "minecraft:noise",
+    "settings": "defying-the-heavens:upper_realm_floating_islands",
+    "biome_source": {
+      "type": "minecraft:multi_noise",
+      "biomes": [
+        {
+          "biome": "defying-the-heavens:dense_qi_peaks",
+          "parameters": {
+            "temperature": [-1.0, 0.25],
+            "humidity": [-1.0, 1.0],
+            "continentalness": 0.0,
+            "erosion": 0.0,
+            "weirdness": 0.0,
+            "depth": [-1.0, -0.35],
+            "offset": 0.0
+          }
+        },
+        {
+          "biome": "defying-the-heavens:thunder_peaks",
+          "parameters": {
+            "temperature": [0.25, 1.0],
+            "humidity": [-1.0, 1.0],
+            "continentalness": 0.0,
+            "erosion": 0.0,
+            "weirdness": 0.0,
+            "depth": [-1.0, -0.35],
+            "offset": 0.0
+          }
+        },
+        {
+          "biome": "defying-the-heavens:spirit_forest",
+          "parameters": {
+            "temperature": [-1.0, 0.0],
+            "humidity": [-1.0, 1.0],
+            "continentalness": 0.0,
+            "erosion": 0.0,
+            "weirdness": 0.0,
+            "depth": [-0.35, 1.0],
+            "offset": 0.0
+          }
+        },
+        {
+          "biome": "defying-the-heavens:peach_blossom_sanctuary",
+          "parameters": {
+            "temperature": [0.0, 1.0],
+            "humidity": [-1.0, 1.0],
+            "continentalness": 0.0,
+            "erosion": 0.0,
+            "weirdness": 0.0,
+            "depth": [-0.35, 1.0],
+            "offset": 0.0
+          }
+        }
+      ]
+    }
+  }
+}

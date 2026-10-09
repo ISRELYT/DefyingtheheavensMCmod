@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "defying-the-heavens",
+  "version": "${version}",
+  "name": "Defying The Heavens",
+  "description": "A Chinese cultivation mod: gather qi, climb the realms, and survive the Heavenly Tribulation.",
+  "license": "CC0-1.0",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["com.example.defyingtheheavens.DefyingTheHeavens"],
+    "client": ["com.example.defyingtheheavens.client.DefyingTheHeavensClient"],
+    "fabric-datagen": ["com.example.defyingtheheavens.client.DefyingTheHeavensDataGenerator"]
+  },
+  "mixins": [
+    "defying-the-heavens.mixins.json",
+    {
+      "config": "defying-the-heavens.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.14.21",
+    "minecraft": "~1.20.1",
+    "java": ">=17",
+    "fabric-api": "*"
+  }
+}

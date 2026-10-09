@@ -1,0 +1,102 @@
+{
+  "carvers": {},
+  "downfall": 0.4,
+  "effects": {
+    "fog_color": 13234922,
+    "foliage_color": 5226374,
+    "grass_color": 7329440,
+    "mood_sound": {
+      "block_search_extent": 8,
+      "offset": 2.0,
+      "sound": "minecraft:ambient.cave",
+      "tick_delay": 6000
+    },
+    "particle": {
+      "options": {
+        "type": "minecraft:end_rod"
+      },
+      "probability": 0.0015
+    },
+    "sky_color": 8380640,
+    "water_color": 4179684,
+    "water_fog_color": 671058
+  },
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "defying-the-heavens:ore_dirt",
+      "defying-the-heavens:ore_gravel",
+      "defying-the-heavens:ore_granite",
+      "defying-the-heavens:ore_diorite",
+      "defying-the-heavens:ore_andesite",
+      "defying-the-heavens:ore_sand",
+      "defying-the-heavens:ore_coal",
+      "defying-the-heavens:ore_iron",
+      "defying-the-heavens:ore_copper",
+      "defying-the-heavens:ore_gold",
+      "defying-the-heavens:ore_redstone",
+      "defying-the-heavens:ore_lapis",
+      "defying-the-heavens:ore_diamond",
+      "defying-the-heavens:ore_diamond_buried",
+      "defying-the-heavens:ore_emerald"
+    ],
+    [],
+    [
+      "defying-the-heavens:spring_water",
+      "defying-the-heavens:spring_lava"
+    ],
+    [
+      "defying-the-heavens:peak_spruces",
+      "defying-the-heavens:patch_grass"
+    ]
+  ],
+  "has_precipitation": false,
+  "spawn_costs": {},
+  "spawners": {
+    "ambient": [],
+    "axolotls": [],
+    "creature": [
+      {
+        "type": "minecraft:sheep",
+        "maxCount": 4,
+        "minCount": 4,
+        "weight": 12
+      },
+      {
+        "type": "minecraft:pig",
+        "maxCount": 4,
+        "minCount": 4,
+        "weight": 10
+      },
+      {
+        "type": "minecraft:chicken",
+        "maxCount": 4,
+        "minCount": 4,
+        "weight": 10
+      },
+      {
+        "type": "minecraft:cow",
+        "maxCount": 4,
+        "minCount": 4,
+        "weight": 8
+      },
+      {
+        "type": "minecraft:goat",
+        "maxCount": 3,
+        "minCount": 1,
+        "weight": 5
+      }
+    ],
+    "misc": [],
+    "monster": [],
+    "underground_water_creature": [],
+    "water_ambient": [],
+    "water_creature": []
+  },
+  "temperature": 0.9
+}

@@ -1,0 +1,162 @@
+{
+  "carvers": {},
+  "downfall": 0.3,
+  "effects": {
+    "fog_color": 10860988,
+    "foliage_color": 8030840,
+    "grass_color": 9083526,
+    "mood_sound": {
+      "block_search_extent": 8,
+      "offset": 2.0,
+      "sound": "minecraft:ambient.cave",
+      "tick_delay": 6000
+    },
+    "particle": {
+      "options": {
+        "type": "minecraft:white_ash"
+      },
+      "probability": 0.02
+    },
+    "sky_color": 9414315,
+    "water_color": 4179684,
+    "water_fog_color": 671058
+  },
+  "features": [
+    [],
+    [],
+    [
+      "defying-the-heavens:forest_rock"
+    ],
+    [],
+    [],
+    [],
+    [
+      "defying-the-heavens:ore_dirt",
+      "defying-the-heavens:ore_gravel",
+      "defying-the-heavens:ore_granite",
+      "defying-the-heavens:ore_diorite",
+      "defying-the-heavens:ore_andesite",
+      "defying-the-heavens:ore_clay",
+      "defying-the-heavens:ore_sand",
+      "defying-the-heavens:ore_coal",
+      "defying-the-heavens:ore_iron",
+      "defying-the-heavens:ore_copper",
+      "defying-the-heavens:ore_gold",
+      "defying-the-heavens:ore_redstone",
+      "defying-the-heavens:ore_lapis",
+      "defying-the-heavens:ore_diamond",
+      "defying-the-heavens:ore_diamond_buried"
+    ],
+    [],
+    [
+      "defying-the-heavens:spring_water",
+      "defying-the-heavens:spring_lava"
+    ],
+    [
+      "defying-the-heavens:flowers_default",
+      "defying-the-heavens:patch_grass",
+      "defying-the-heavens:patch_pumpkin"
+    ]
+  ],
+  "has_precipitation": false,
+  "spawn_costs": {},
+  "spawners": {
+    "ambient": [
+      {
+        "type": "minecraft:bat",
+        "maxCount": 8,
+        "minCount": 8,
+        "weight": 10
+      }
+    ],
+    "axolotls": [],
+    "creature": [
+      {
+        "type": "minecraft:sheep",
+        "maxCount": 4,
+        "minCount": 4,
+        "weight": 12
+      },
+      {
+        "type": "minecraft:pig",
+        "maxCount": 4,
+        "minCount": 4,
+        "weight": 10
+      },
+      {
+        "type": "minecraft:chicken",
+        "maxCount": 4,
+        "minCount": 4,
+        "weight": 10
+      },
+      {
+        "type": "minecraft:cow",
+        "maxCount": 4,
+        "minCount": 4,
+        "weight": 8
+      }
+    ],
+    "misc": [],
+    "monster": [
+      {
+        "type": "minecraft:spider",
+        "maxCount": 4,
+        "minCount": 4,
+        "weight": 100
+      },
+      {
+        "type": "minecraft:zombie",
+        "maxCount": 4,
+        "minCount": 4,
+        "weight": 95
+      },
+      {
+        "type": "minecraft:zombie_villager",
+        "maxCount": 1,
+        "minCount": 1,
+        "weight": 5
+      },
+      {
+        "type": "minecraft:skeleton",
+        "maxCount": 4,
+        "minCount": 4,
+        "weight": 100
+      },
+      {
+        "type": "minecraft:creeper",
+        "maxCount": 4,
+        "minCount": 4,
+        "weight": 100
+      },
+      {
+        "type": "minecraft:slime",
+        "maxCount": 4,
+        "minCount": 4,
+        "weight": 100
+      },
+      {
+        "type": "minecraft:enderman",
+        "maxCount": 4,
+        "minCount": 1,
+        "weight": 10
+      },
+      {
+        "type": "minecraft:witch",
+        "maxCount": 1,
+        "minCount": 1,
+        "weight": 5
+      }
+    ],
+    "underground_water_creature": [
+      {
+        "type": "minecraft:glow_squid",
+        "maxCount": 6,
+        "minCount": 4,
+        "weight": 10
+      }
+    ],
+    "water_ambient": [],
+    "water_creature": []
+  },
+  "temperature": 0.6
+}
