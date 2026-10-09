@@ -15,12 +15,13 @@ import net.minecraft.world.phys.AABB;
 
 /** A temporary, non-interactive storm tracked by the server so every nearby client can see it. */
 public class TribulationCloud extends Entity {
-	public static final float HEIGHT_ABOVE_PLAYER = 64.0f;
+	public static final float HEIGHT_ABOVE_PLAYER = 40.0f;
+	private static final double BELOW_NORMAL_CLOUDS = 64.0;
 
-	/** Leave room for the cloud's thickness and gentle bobbing below the normal layer. */
+	/** Keep even the tallest storm banks clearly beneath the normal cloud layer. */
 	public static double cloudBaseY(Level level, double playerY) {
-		if (level.dimension() == Level.OVERWORLD) return 192.0 - 12.0;
-		if (ModDimensions.isUpperRealm(level.dimension())) return 336.0 - 12.0;
+		if (level.dimension() == Level.OVERWORLD) return 192.0 - BELOW_NORMAL_CLOUDS;
+		if (ModDimensions.isUpperRealm(level.dimension())) return 336.0 - BELOW_NORMAL_CLOUDS;
 		return playerY + HEIGHT_ABOVE_PLAYER;
 	}
 	private Vec3 interpolationTarget;
