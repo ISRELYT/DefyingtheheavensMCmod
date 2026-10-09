@@ -25,8 +25,8 @@ public final class TribulationAtmosphere {
 				Vec3 camera = client.gameRenderer.getMainCamera().getPosition();
 				for (Entity entity : client.level.entitiesForRendering()) {
 					if (!(entity instanceof TribulationCloud) || entity.isRemoved()) continue;
-					Vec3 center = entity.position().add(0, -TribulationCloud.HEIGHT_ABOVE_PLAYER, 0);
-					float distance = (float) camera.distanceTo(center);
+					// The cloud layer has a fixed altitude; proximity is measured beneath it.
+					float distance = (float) Math.hypot(camera.x - entity.getX(), camera.z - entity.getZ());
 					float proximity = Mth.clamp((80.0f - distance) / 56.0f, 0, 1);
 					target = Math.max(target, proximity * proximity * (3 - 2 * proximity));
 				}

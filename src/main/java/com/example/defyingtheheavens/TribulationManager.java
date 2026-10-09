@@ -265,7 +265,7 @@ public final class TribulationManager {
 			trial.removeCloud();
 			trial.cloud = ModEntities.TRIBULATION_CLOUD.create(player.serverLevel());
 			if (trial.cloud == null) return;
-			trial.cloud.setPos(player.getX(), player.getY() + TribulationCloud.HEIGHT_ABOVE_PLAYER, player.getZ());
+			trial.cloud.setPos(player.getX(), TribulationCloud.cloudBaseY(player.level(), player.getY()), player.getZ());
 			player.serverLevel().addFreshEntity(trial.cloud);
 		}
 		trial.cloud.follow(player.position());

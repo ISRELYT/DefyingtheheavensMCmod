@@ -15,6 +15,13 @@ import net.minecraft.world.phys.Vec3;
 /** A temporary, non-interactive storm tracked by the server so every nearby client can see it. */
 public class TribulationCloud extends Entity {
 	public static final float HEIGHT_ABOVE_PLAYER = 64.0f;
+
+	/** Leave room for the cloud's thickness and gentle bobbing below the normal layer. */
+	public static double cloudBaseY(Level level, double playerY) {
+		if (level.dimension() == Level.OVERWORLD) return 192.0 - 12.0;
+		if (ModDimensions.isUpperRealm(level.dimension())) return 336.0 - 12.0;
+		return playerY + HEIGHT_ABOVE_PLAYER;
+	}
 	private Vec3 interpolationTarget;
 	private int interpolationSteps;
 	private static final EntityDataAccessor<Integer> FLASH_TICKS = SynchedEntityData.defineId(TribulationCloud.class, EntityDataSerializers.INT);
@@ -62,8 +69,9 @@ public class TribulationCloud extends Entity {
 	/** Ease toward the cultivator with a slow crosswind, retaining some natural trailing motion. */
 	public void follow(Vec3 playerPosition) {
 		double time = level().getGameTime();
-		Vec3 target = playerPosition.add(Math.sin(time * 0.008) * 4.5,
-				HEIGHT_ABOVE_PLAYER + Math.sin(time * 0.006) * 1.5, Math.cos(time * 0.006) * 3.5);
+		Vec3 target = new Vec3(playerPosition.x + Math.sin(time * 0.008) * 4.5,
+				cloudBaseY(level(), playerPosition.y) + Math.sin(time * 0.006) * 1.5,
+				playerPosition.z + Math.cos(time * 0.006) * 3.5);
 		setPos(position().distanceToSqr(target) > 96 * 96 ? target : position().lerp(target, 0.08));
 	}
 
@@ -77,7 +85,7 @@ public class TribulationCloud extends Entity {
 
 	@Override
 	public boolean shouldRenderAtSqrDistance(double distance) {
-		return distance < 192.0 * 192.0;
+		return distance < 512.0 * 512.0;
 	}
 
 	@Override

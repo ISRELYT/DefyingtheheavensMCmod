@@ -102,7 +102,7 @@ public class TribulationCloudRenderer extends EntityRenderer<TribulationCloud> {
 
 	private static void vertex(VertexConsumer v, PoseStack.Pose pose, float x, float y, float z, float u, float uv,
 			float nx, float ny, float nz, float r, float g, float b) {
-		v.vertex(pose.pose(), x, y, z).color(r, g, b, 0.8f).uv(u, uv)
+		v.vertex(pose.pose(), x, y, z).color(r, g, b, 0.88f).uv(u, uv)
 				.overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT)
 				.normal(pose.normal(), nx, ny, nz).endVertex();
 	}

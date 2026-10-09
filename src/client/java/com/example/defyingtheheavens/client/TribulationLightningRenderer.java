@@ -25,7 +25,8 @@ public class TribulationLightningRenderer extends LightningBoltRenderer {
 	public void render(LightningBolt bolt, float entityYaw, float partialTick, PoseStack poseStack, MultiBufferSource buffers, int packedLight) {
 		poseStack.pushPose();
 		// Vanilla's 128-block bolt now runs between the player and their local cloud bank.
-		poseStack.scale(1.0f, TribulationCloud.HEIGHT_ABOVE_PLAYER / 128.0f, 1.0f);
+		float height = (float) (TribulationCloud.cloudBaseY(bolt.level(), bolt.getY()) - bolt.getY());
+		poseStack.scale(1.0f, height / 128.0f, 1.0f);
 		super.render(bolt, entityYaw, partialTick, poseStack, type -> new Tinted(buffers.getBuffer(type)), packedLight);
 		poseStack.popPose();
 	}
