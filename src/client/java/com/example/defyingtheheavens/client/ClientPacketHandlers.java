@@ -3,6 +3,8 @@ package com.example.defyingtheheavens.client;
 import com.example.defyingtheheavens.ModPackets;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public final class ClientPacketHandlers {
@@ -33,6 +35,29 @@ public final class ClientPacketHandlers {
 			int realm = buf.readVarInt();
 			int stage = buf.readVarInt();
 			client.execute(() -> ClientTribulationData.update(active, strikesLeft, realm, stage));
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SPATIAL_STORMS, (client, handler, buf, sender) -> {
+			int count = buf.readVarInt();
+			List<ClientSpatialStorms.StormState> storms = new ArrayList<>(count);
+			for (int i = 0; i < count; i++) {
+				storms.add(new ClientSpatialStorms.StormState(buf.readVarInt(), buf.readInt(), buf.readDouble(), buf.readDouble(),
+						buf.readDouble(), buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readVarInt(), buf.readVarInt()));
+			}
+			client.execute(() -> ClientSpatialStorms.update(storms));
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SPATIAL_STORM_STRIKE, (client, handler, buf, sender) -> {
+			int storm = buf.readVarInt();
+			double x1 = buf.readDouble();
+			double y1 = buf.readDouble();
+			double z1 = buf.readDouble();
+			double x2 = buf.readDouble();
+			double y2 = buf.readDouble();
+			double z2 = buf.readDouble();
+			long seed = buf.readLong();
+			boolean hit = buf.readBoolean();
+			client.execute(() -> ClientSpatialStorms.strike(storm, x1, y1, z1, x2, y2, z2, seed, hit));
 		});
 	}
 

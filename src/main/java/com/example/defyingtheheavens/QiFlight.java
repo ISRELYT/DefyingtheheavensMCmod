@@ -21,8 +21,8 @@ import java.util.UUID;
  * spectator players are left to vanilla.
  */
 public final class QiFlight {
-	/** After running dry, flight returns at this fraction of the pool: the first notch on the Qi bar. */
-	public static final double RESUME_FRACTION = 0.25;
+	/** After running dry, flight returns (silently) at this fraction of the pool. */
+	public static final double RESUME_FRACTION = 0.05;
 
 	/** Players whose qi ran dry in flight and who haven't gathered back to {@link #RESUME_FRACTION} yet. */
 	private static final Set<UUID> EXHAUSTED = new HashSet<>();
@@ -57,7 +57,6 @@ public final class QiFlight {
 				return 0;
 			}
 			EXHAUSTED.remove(id);
-			p.displayClientMessage(Component.translatable(ModLang.MSG_QI_FLIGHT_RESTORED), true);
 		}
 		// Granted before any flight is paid for: a player flying without mayfly (a flight carried over from a relog, say)
 		// would otherwise be kicked by dedicated servers for "floating too long".

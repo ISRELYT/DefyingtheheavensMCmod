@@ -15,12 +15,14 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(CultivationStats::tickHunger);
 		ServerTickEvents.END_SERVER_TICK.register(QiManager::tick);
 		ServerTickEvents.END_SERVER_TICK.register(SpatialTrialHandler::tick);
+		ServerTickEvents.END_SERVER_TICK.register(SpatialStorms::tick);
 		ServerTickEvents.END_SERVER_TICK.register(VoidFallHandler::tick);
 		ServerTickEvents.END_SERVER_TICK.register(RealmSuppressionHandler::tick);
 		RealmSuppressionHandler.register();
 
 		ServerLifecycleEvents.SERVER_STARTED.register(SpatialRiftBlock::ensureOverworldRift);
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> TribulationManager.clear());
+		ServerLifecycleEvents.SERVER_STOPPED.register(server -> SpatialStorms.clear());
 
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
 			// Applies stats from the effective (possibly suppressed) stage and syncs the client.

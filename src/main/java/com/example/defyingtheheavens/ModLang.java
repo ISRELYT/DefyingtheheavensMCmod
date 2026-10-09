@@ -23,7 +23,8 @@ public final class ModLang {
 	public static final String CULTIVATION_RATE = k("cultivation_rate");
 	public static final String CULTIVATION_RATE_UPPER = k("cultivation_rate_upper");
 	public static final String HUD_QI = k("hud.qi");
-	public static final String HUD_QI_LABEL = k("hud.qi_label");	public static final String BOTTLENECK = k("bottleneck");
+	public static final String HUD_QI_LABEL = k("hud.qi_label");
+	public static final String BOTTLENECK = k("bottleneck");
 	public static final String BOTTLENECK_NEXT = k("bottleneck_next");
 	public static final String PINNACLE = k("pinnacle");
 	// Tabbed menu (tabs left to right).
@@ -83,7 +84,6 @@ public final class ModLang {
 	public static final String MSG_BOTTLENECK = k("message.bottleneck");
 	public static final String MSG_QI_FLIGHT_GAINED = k("message.qi_flight.gained");
 	public static final String MSG_QI_FLIGHT_EXHAUSTED = k("message.qi_flight.exhausted");
-	public static final String MSG_QI_FLIGHT_RESTORED = k("message.qi_flight.restored");
 	public static final String MSG_TRIB_START = k("message.tribulation.start");
 	public static final String MSG_TRIB_START_SINGLE = k("message.tribulation.start_single");
 	public static final String MSG_TRIB_BUSY = k("message.tribulation.busy");

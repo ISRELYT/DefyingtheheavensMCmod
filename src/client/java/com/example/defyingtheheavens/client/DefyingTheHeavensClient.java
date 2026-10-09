@@ -8,6 +8,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 
 public class DefyingTheHeavensClient implements ClientModInitializer {
@@ -27,12 +28,18 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		EntityRendererRegistry.register(ModEntities.TRIBULATION_CLOUD, TribulationCloudRenderer::new);
 		UpperRealmClient.register();
 
+		WorldRenderEvents.AFTER_TRANSLUCENT.register(ClientSpatialStorms::render);
+
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
 			ClientTribulationData.clear();
 			ClientCultivationData.clear();
+			SpatialGapAmbience.clear();
+			ClientSpatialStorms.clear();
 		});
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
+			SpatialGapAmbience.tick(client);
+			ClientSpatialStorms.tick(client);
 			while (ModKeybinds.OPEN_MENU.consumeClick()) {
 				if (client.player != null && client.screen == null) {
 					client.setScreen(new CultivationScreen());

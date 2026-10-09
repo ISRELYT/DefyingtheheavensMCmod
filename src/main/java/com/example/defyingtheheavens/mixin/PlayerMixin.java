@@ -4,17 +4,23 @@ import com.example.defyingtheheavens.RingContainer;
 import com.example.defyingtheheavens.RingHolder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.world.entity.player.Abilities;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.GameRules;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** Gives every player a ring container, saves it with the player and drops it on death like the rest of the inventory. */
+/**
+ * Gives every player a ring container, saves it with the player and drops it on death like the rest of the inventory.
+ * Also keeps Qi Flight from cushioning falls.
+ */
 @Mixin(Player.class)
 public abstract class PlayerMixin implements RingHolder {
 	@Unique
@@ -48,5 +54,16 @@ public abstract class PlayerMixin implements RingHolder {
 				self.drop(stack, true, false);
 			}
 		}
+	}
+
+	/**
+	 * Vanilla spares anyone allowed to fly from fall damage. In survival and adventure that permission only ever comes from
+	 * Qi Flight (it owns the flag there), and a cultivator who stops flying and drops should land as hard as anyone.
+	 * Flying itself keeps resetting the fall distance, so flying down to land stays safe. Creative and spectator (the
+	 * invulnerable modes) are unchanged.
+	 */
+	@Redirect(method = "causeFallDamage", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/player/Abilities;mayfly:Z", opcode = Opcodes.GETFIELD))
+	private boolean dth$qiFlightTakesFallDamage(Abilities abilities) {
+		return abilities.mayfly && abilities.invulnerable;
 	}
 }

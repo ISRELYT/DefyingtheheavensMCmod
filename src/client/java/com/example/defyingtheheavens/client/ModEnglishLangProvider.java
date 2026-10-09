@@ -100,7 +100,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.CULTIVATION_RATE, "Cultivation gain: %s/s");
 		t.add(ModLang.CULTIVATION_RATE_UPPER, "Cultivation gain: %s/s (x%s Upper Realm)");
 		t.add(ModLang.HUD_QI, "%s / %s");
-		t.add(ModLang.HUD_QI_LABEL, "Qi");		t.add(ModLang.BOTTLENECK, "Bottleneck reached! Break through to advance.");
+		t.add(ModLang.HUD_QI_LABEL, "Qi");
+		t.add(ModLang.BOTTLENECK, "Bottleneck reached! Break through to advance.");
 		t.add(ModLang.BOTTLENECK_NEXT, "Next: %s");
 		t.add(ModLang.PINNACLE, "You stand at the pinnacle of cultivation.");
 		t.add(ModLang.TAB_CULTIVATION, "Cultivation");
@@ -171,7 +172,6 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_QI_FLIGHT_GAINED, "Your golden core circulates enough Qi through your body to make it tangible. "
 				+ "You can now use it to carry your physical form. Double-tap jump to fly.");
 		t.add(ModLang.MSG_QI_FLIGHT_EXHAUSTED, "Your qi runs dry and you fall! You can fly again at %s%% qi.");
-		t.add(ModLang.MSG_QI_FLIGHT_RESTORED, "Your qi can bear you aloft again.");
 		t.add(ModLang.MSG_TRIB_START, "The heavens take notice of your ascent to %s! Survive %s strikes of heavenly lightning!");
 		t.add(ModLang.MSG_TRIB_START_SINGLE, "The heavens take notice of your ascent to %s! Survive a strike of heavenly lightning!");
 		t.add(ModLang.MSG_TRIB_BUSY, "You cannot do that while a tribulation is in progress.");

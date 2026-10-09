@@ -1,0 +1,283 @@
+package com.example.defyingtheheavens.client;
+
+import com.example.defyingtheheavens.ModDimensions;
+import com.example.defyingtheheavens.SpatialStorms;
+import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferUploader;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix4f;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+/**
+ * Draws the Spatial Gap's physical storms ({@link SpatialStorms}): a blocky churning cloud mass ({@link StormCloudMesh}) in the
+ * gap's violet, drawn {@link SpatialStorms#SCALE} times larger, repeated every {@link SpatialStorms#PERIOD} blocks up and down as far as the eye reaches, fading into
+ * the dark toward the fog's end, and the violet-white bolts they throw. Fed by the SPATIAL_STORMS packet (every storm
+ * near the player, once a second; positions are carried forward between packets) and SPATIAL_STORM_STRIKE (one bolt).
+ */
+public final class ClientSpatialStorms {
+	private static final int FLASH_TICKS = 8;
+	private static final int BOLT_TICKS = 8;
+	private static final int THUNDER_COOLDOWN = 40;
+	/** Multiplies the cloud's dark grey: a deep violet. */
+	private static final Vec3 TINT = new Vec3(0.85, 0.6, 1.3);
+	/** The bolts' violet-white, lighting the cloud from within in a flash. */
+	private static final float[] LIT = {0.55f, 0.38f, 0.95f};
+
+	/** One storm as the server last described it. */
+	public record StormState(int id, int seed, double x, double baseY, double z, float vx, float vz, float radius, int age, int life) {}
+
+	private static final class Storm {
+		int seed;
+		double x, z, prevX, prevZ, baseY;
+		float vx, vz, radius;
+		int age, life, flash;
+	}
+
+	private static final class Bolt {
+		final double x1, y1, z1, x2, y2, z2;
+		final long seed;
+		int age;
+
+		Bolt(double x1, double y1, double z1, double x2, double y2, double z2, long seed) {
+			this.x1 = x1;
+			this.y1 = y1;
+			this.z1 = z1;
+			this.x2 = x2;
+			this.y2 = y2;
+			this.z2 = z2;
+			this.seed = seed;
+		}
+	}
+
+	private static final Map<Integer, Storm> STORMS = new HashMap<>();
+	private static final List<Bolt> BOLTS = new ArrayList<>();
+	private static final RandomSource RANDOM = RandomSource.create();
+	private static int thunderCooldown;
+
+	/** From the SPATIAL_STORMS packet: the complete list, so storms missing from it are gone. */
+	public static void update(List<StormState> states) {
+		Set<Integer> seen = new HashSet<>();
+		for (StormState state : states) {
+			seen.add(state.id());
+			Storm s = STORMS.get(state.id());
+			if (s == null) {
+				s = new Storm();
+				s.prevX = state.x();
+				s.prevZ = state.z();
+				STORMS.put(state.id(), s);
+			}
+			s.seed = state.seed();
+			s.x = state.x();
+			s.z = state.z();
+			s.baseY = state.baseY();
+			s.vx = state.vx();
+			s.vz = state.vz();
+			s.radius = state.radius();
+			s.age = state.age();
+			s.life = state.life();
+		}
+		STORMS.keySet().retainAll(seen);
+	}
+
+	/** From the SPATIAL_STORM_STRIKE packet. */
+	public static void strike(int stormId, double x1, double y1, double z1, double x2, double y2, double z2, long seed, boolean hit) {
+		Minecraft mc = Minecraft.getInstance();
+		if (mc.level == null || !ModDimensions.isSpatialGap(mc.level.dimension())) return;
+		BOLTS.add(new Bolt(x1, y1, z1, x2, y2, z2, seed));
+		Storm s = STORMS.get(stormId);
+		if (s != null) s.flash = FLASH_TICKS;
+		// A strike on someone always thunders, with the crack of the hit itself; other bolts rumble (out to ~64 blocks) at
+		// most once every THUNDER_COOLDOWN ticks, so a few storms raging nearby don't become a wall of thunder.
+		if (!hit && thunderCooldown > 0) return;
+		thunderCooldown = THUNDER_COOLDOWN;
+		mc.level.playLocalSound(x2, y2, z2, SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 4.0f,
+				0.6f + RANDOM.nextFloat() * 0.3f, false);
+		if (hit) {
+			mc.level.playLocalSound(x2, y2, z2, SoundEvents.LIGHTNING_BOLT_IMPACT, SoundSource.WEATHER, 2.0f,
+					0.5f + RANDOM.nextFloat() * 0.2f, false);
+		}
+	}
+
+	public static void tick(Minecraft mc) {
+		if (STORMS.isEmpty() && BOLTS.isEmpty()) return;
+		if (mc.level == null || !ModDimensions.isSpatialGap(mc.level.dimension())) {
+			clear();
+			return;
+		}
+		if (mc.isPaused()) return;
+		for (Storm s : STORMS.values()) {
+			s.prevX = s.x;
+			s.prevZ = s.z;
+			s.x += s.vx;
+			s.z += s.vz;
+			s.age++;
+			if (s.flash > 0) s.flash--;
+		}
+		BOLTS.removeIf(b -> ++b.age > BOLT_TICKS);
+		if (thunderCooldown > 0) thunderCooldown--;
+	}
+
+	public static void clear() {
+		STORMS.clear();
+		BOLTS.clear();
+		thunderCooldown = 0;
+	}
+
+	// --- Drawing ---
+
+	public static void render(WorldRenderContext context) {
+		if (STORMS.isEmpty() && BOLTS.isEmpty()) return;
+		Minecraft mc = Minecraft.getInstance();
+		if (mc.level == null || !ModDimensions.isSpatialGap(mc.level.dimension())) return;
+		float partial = context.tickDelta();
+		float time = mc.level.getGameTime() + partial;
+		Vec3 camera = context.camera().getPosition();
+		PoseStack pose = context.matrixStack();
+		float sightDistance = Math.max(64.0f, RenderSystem.getShaderFogEnd());
+
+		RenderSystem.enableBlend();
+		RenderSystem.defaultBlendFunc();
+		RenderSystem.enableDepthTest();
+		RenderSystem.depthMask(true); // the depth-only pass must write depth
+		RenderSystem.disableCull();
+		RenderSystem.setShader(GameRenderer::getPositionColorShader);
+		for (Storm s : STORMS.values()) {
+			float form = form(s, partial);
+			if (form <= 0) continue;
+			form = form * form * (3 - 2 * form);
+			// The cloud's shape, worked out at 1/SCALE size and drawn SCALE times larger.
+			StormCloudMesh.Shape shape = StormCloudMesh.shape(s.seed, s.radius / SpatialStorms.SCALE * (0.35f + 0.65f * form), time);
+			float flash = s.flash > 0 ? (s.flash - partial) / FLASH_TICKS : 0;
+			double x = Mth.lerp(partial, s.prevX, s.x);
+			double z = Mth.lerp(partial, s.prevZ, s.z);
+			// Every copy of the storm within sight: they repeat every PERIOD blocks, like the gap itself.
+			int first = Mth.floor((camera.y - sightDistance - s.baseY) / SpatialStorms.PERIOD);
+			int last = Mth.ceil((camera.y + sightDistance - s.baseY) / SpatialStorms.PERIOD);
+			for (int k = first; k <= last; k++) {
+				double y = s.baseY + (double) k * SpatialStorms.PERIOD;
+				// From the cloud's nearest edge, so a storm overhead doesn't fade just because its heart is far off.
+				double outside = Math.max(0.0, Math.sqrt(Mth.square(x - camera.x) + Mth.square(z - camera.z)) - s.radius);
+				double distance = Math.sqrt(Mth.square(outside) + Mth.square(y + SpatialStorms.CLOUD_TOP * 0.5 - camera.y));
+				float sight = Mth.clamp((float) ((sightDistance - distance) / (sightDistance * 0.35)), 0.0f, 1.0f);
+				if (sight <= 0) continue;
+				pose.pushPose();
+				pose.translate(x - camera.x, y - camera.y, z - camera.z);
+				pose.scale(SpatialStorms.SCALE, SpatialStorms.SCALE, SpatialStorms.SCALE);
+				Matrix4f matrix = pose.last().pose();
+				RenderSystem.colorMask(false, false, false, false);
+				StormCloudMesh.draw(matrix, shape, form * sight, flash, TINT, LIT);
+				RenderSystem.colorMask(true, true, true, true);
+				StormCloudMesh.draw(matrix, shape, form * sight, flash, TINT, LIT);
+				pose.popPose();
+			}
+		}
+
+		if (!BOLTS.isEmpty()) {
+			// Additive and not writing depth, but hidden inside the clouds they leave.
+			RenderSystem.depthMask(false);
+			RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
+					GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+			BufferBuilder buffer = Tesselator.getInstance().getBuilder();
+			buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+			Matrix4f matrix = pose.last().pose();
+			for (Bolt b : BOLTS) {
+				if (b.age == BOLT_TICKS / 2) continue; // a flicker mid-strike
+				float alpha = 1.0f - Mth.clamp((b.age + partial) / (BOLT_TICKS + 1), 0.0f, 1.0f);
+				bolt(buffer, matrix, camera, b, alpha);
+			}
+			BufferBuilder.RenderedBuffer rendered = buffer.endOrDiscardIfEmpty();
+			if (rendered != null) BufferUploader.drawWithShader(rendered);
+			RenderSystem.defaultBlendFunc();
+			RenderSystem.depthMask(true);
+		}
+		RenderSystem.enableCull();
+		RenderSystem.disableBlend();
+	}
+
+	/** 0 while the storm gathers or after it has died away, 1 while it rages. */
+	private static float form(Storm s, float partial) {
+		float age = s.age + partial;
+		return Mth.clamp(Math.min(age / SpatialStorms.FORM_TICKS, (s.life - age) / SpatialStorms.FADE_TICKS), 0.0f, 1.0f);
+	}
+
+	/** A jagged channel from the cloud to the end point, with the odd short fork; the same shape every frame. */
+	private static void bolt(BufferBuilder buffer, Matrix4f matrix, Vec3 camera, Bolt b, float alpha) {
+		RandomSource random = RandomSource.create(b.seed);
+		int steps = 10;
+		double px = b.x1, py = b.y1, pz = b.z1;
+		for (int i = 1; i <= steps; i++) {
+			double t = (double) i / steps;
+			double jitter = i == steps ? 0.0 : 2.0;
+			double nx = Mth.lerp(t, b.x1, b.x2) + (random.nextDouble() - 0.5) * 2 * jitter;
+			double ny = Mth.lerp(t, b.y1, b.y2) + (random.nextDouble() - 0.5) * jitter;
+			double nz = Mth.lerp(t, b.z1, b.z2) + (random.nextDouble() - 0.5) * 2 * jitter;
+			segment(buffer, matrix, camera, px, py, pz, nx, ny, nz, 1.0f, alpha);
+			if (i < steps - 1 && random.nextFloat() < 0.25f) {
+				double fx = nx, fy = ny, fz = nz;
+				double dx = (random.nextDouble() - 0.5) * 6.0, dz = (random.nextDouble() - 0.5) * 6.0;
+				double dy = (b.y2 - b.y1) / steps * (0.6 + random.nextDouble() * 0.6);
+				for (int j = 0; j < 3; j++) {
+					double ex = fx + dx + (random.nextDouble() - 0.5) * 1.5;
+					double ey = fy + dy;
+					double ez = fz + dz + (random.nextDouble() - 0.5) * 1.5;
+					segment(buffer, matrix, camera, fx, fy, fz, ex, ey, ez, 0.5f, alpha * 0.8f);
+					fx = ex;
+					fy = ey;
+					fz = ez;
+				}
+			}
+			px = nx;
+			py = ny;
+			pz = nz;
+		}
+	}
+
+	/**
+	 * A glow and a bright core, each a ribbon turned to face the camera, as much wider as the clouds are larger (about a
+	 * block of core), so a bolt still reads from the far side of a storm.
+	 */
+	private static void segment(BufferBuilder buffer, Matrix4f matrix, Vec3 camera, double x1, double y1, double z1,
+			double x2, double y2, double z2, float width, float alpha) {
+		float scaled = width * SpatialStorms.SCALE;
+		ribbon(buffer, matrix, camera, x1, y1, z1, x2, y2, z2, 1.6f * scaled, 0.55f, 0.35f, 1.0f, alpha * 0.35f);
+		ribbon(buffer, matrix, camera, x1, y1, z1, x2, y2, z2, 0.35f * scaled, 0.92f, 0.88f, 1.0f, alpha);
+	}
+
+	private static void ribbon(BufferBuilder buffer, Matrix4f matrix, Vec3 camera, double x1, double y1, double z1,
+			double x2, double y2, double z2, float width, float r, float g, float b, float a) {
+		Vec3 from = new Vec3(x1 - camera.x, y1 - camera.y, z1 - camera.z);
+		Vec3 to = new Vec3(x2 - camera.x, y2 - camera.y, z2 - camera.z);
+		Vec3 side = to.subtract(from).cross(from.add(to).scale(0.5));
+		if (side.lengthSqr() < 1.0e-8) return;
+		side = side.normalize().scale(width * 0.5);
+		vertex(buffer, matrix, from.add(side), r, g, b, a);
+		vertex(buffer, matrix, to.add(side), r, g, b, a);
+		vertex(buffer, matrix, to.subtract(side), r, g, b, a);
+		vertex(buffer, matrix, from.subtract(side), r, g, b, a);
+	}
+
+	private static void vertex(BufferBuilder buffer, Matrix4f matrix, Vec3 at, float r, float g, float b, float a) {
+		buffer.vertex(matrix, (float) at.x, (float) at.y, (float) at.z).color(r, g, b, a).endVertex();
+	}
+
+	private ClientSpatialStorms() {}
+}

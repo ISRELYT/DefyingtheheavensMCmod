@@ -5,6 +5,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
@@ -72,8 +73,9 @@ public class SpatialRiftBlock extends BaseEntityBlock {
 	}
 
 	/**
-	 * Makes sure the Overworld has its rift at X=0, Z=0, floating two blocks above the top solid block. Called on
-	 * server start, so it also appears in existing worlds and comes back if it was removed with commands.
+	 * Makes sure the Overworld has its rift at X=0, Z=0, floating two blocks above the top block, treetops included.
+	 * Called on server start, so it also appears in existing worlds and comes back if it was removed with commands.
+	 * A rift left inside a tree's leaves (placed before leaves counted) is moved up above them.
 	 */
 	public static void ensureOverworldRift(MinecraftServer server) {
 		if (server == null) return;
@@ -83,12 +85,16 @@ public class SpatialRiftBlock extends BaseEntityBlock {
 
 			BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos(RIFT_X, 0, RIFT_Z);
 			for (int y = overworld.getMinBuildHeight(); y < overworld.getMaxBuildHeight(); y++) {
-				if (overworld.getBlockState(cursor.setY(y)).is(ModBlocks.SPATIAL_RIFT)) return; // already there
+				if (!overworld.getBlockState(cursor.setY(y)).is(ModBlocks.SPATIAL_RIFT)) continue;
+				if (!isUnderLeaves(overworld, cursor)) return; // already there
+				overworld.removeBlock(cursor, false);
+				DefyingTheHeavens.LOGGER.info("Spatial rift at {} was inside leaves, moving it up", cursor.toShortString());
+				break;
 			}
 
 			overworld.getChunk(RIFT_X >> 4, RIFT_Z >> 4); // make sure the column is generated
-			// Heightmap value is the first free Y above the top solid block, so "top solid + 2" is that + 1.
-			int firstFree = overworld.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, RIFT_X, RIFT_Z);
+			// Heightmap value is the first free Y above the top block, so "top block + 2" is that + 1.
+			int firstFree = overworld.getHeight(Heightmap.Types.MOTION_BLOCKING, RIFT_X, RIFT_Z);
 			int y = Math.min(firstFree + 1, overworld.getMaxBuildHeight() - 3);
 			BlockPos pos = new BlockPos(RIFT_X, y, RIFT_Z);
 			overworld.setBlock(pos, ModBlocks.SPATIAL_RIFT.defaultBlockState(), 3);
@@ -96,5 +102,14 @@ public class SpatialRiftBlock extends BaseEntityBlock {
 		} catch (Exception e) {
 			DefyingTheHeavens.LOGGER.error("Could not place the spatial rift in the Overworld", e);
 		}
+	}
+
+	/** True if any leaves block sits in the column above the rift. */
+	private static boolean isUnderLeaves(ServerLevel level, BlockPos rift) {
+		BlockPos.MutableBlockPos above = rift.mutable();
+		for (int y = rift.getY() + 1; y < level.getMaxBuildHeight(); y++) {
+			if (level.getBlockState(above.setY(y)).is(BlockTags.LEAVES)) return true;
+		}
+		return false;
 	}
 }

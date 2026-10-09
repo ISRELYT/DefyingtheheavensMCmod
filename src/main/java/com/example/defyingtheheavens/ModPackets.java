@@ -20,6 +20,10 @@ public final class ModPackets {
 	public static final ResourceLocation MEDITATION_STATE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "meditation_state");
 	/** S2C: tribulation started/ended + strikes still to come, for the HUD overlay. */
 	public static final ResourceLocation TRIBULATION_STATE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "tribulation_state");
+	/** S2C: every spatial storm in the gap, once a second, to everyone in the gap (see {@link SpatialStorms}). */
+	public static final ResourceLocation SPATIAL_STORMS = new ResourceLocation(DefyingTheHeavens.MOD_ID, "spatial_storms");
+	/** S2C: one spatial storm bolt, to everyone in the gap within range. */
+	public static final ResourceLocation SPATIAL_STORM_STRIKE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "spatial_storm_strike");
 
 	public static void registerServerReceivers() {
 		ServerPlayNetworking.registerGlobalReceiver(TOGGLE_MEDITATION,

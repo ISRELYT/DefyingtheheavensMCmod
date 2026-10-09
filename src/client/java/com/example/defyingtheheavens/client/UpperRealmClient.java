@@ -19,7 +19,8 @@ import net.minecraft.world.phys.Vec3;
 public final class UpperRealmClient {
 	/** Fog start/end as fractions of the render distance: dense, but the nearer islands stay visible. */
 	private static final float[] UPPER_REALM_FOG = {0.25f, 0.95f};
-	private static final float[] SPATIAL_GAP_FOG = {0.0f, 0.35f};
+	/** Deep enough that SpatialGapAmbience's far motes glow out of the dark instead of vanishing into it. */
+	private static final float[] SPATIAL_GAP_FOG = {0.1f, 1.0f};
 
 	public static void register() {
 		DimensionRenderingRegistry.registerDimensionEffects(ModDimensions.UPPER_REALM_EFFECTS, new UpperRealmEffects());

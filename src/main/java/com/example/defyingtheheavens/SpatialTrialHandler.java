@@ -64,7 +64,8 @@ public final class SpatialTrialHandler {
 	private static final int LOOP_BELOW_Y = 64;
 	/** ...and has no ceiling: above this Y a rising player is dropped back down mid-climb, keeping their speed. */
 	private static final int LOOP_ABOVE_Y = 320;
-	private static final int LOOP_LIFT = 192;
+	/** How far the loop moves a player; the gap repeats every this many blocks (see {@link SpatialStorms}). */
+	public static final int LOOP_LIFT = 192;
 	/**
 	 * Ascending, the gap carries the player up with a hidden Levitation effect of this amplifier (a steady ~1.8 blocks per
 	 * tick). Levitation is how the client is made to rise, and servers don't kick a levitating player for "flying".
@@ -181,6 +182,10 @@ public final class SpatialTrialHandler {
 			RealmSuppressionHandler.update(p);
 			p.sendSystemMessage(Component.translatable(ModLang.MSG_GAP_RESTART, TRIAL_TICKS / 20));
 		}
+
+		// Vanilla shields a player from damage for 3 s after joining while health keeps regenerating, so relogging over
+		// and over would let anyone outlast the gap. The pressure must never pause.
+		((ServerPlayerAccessor) p).dth$setSpawnInvulnerableTime(0);
 
 		t.ticksLeft--;
 		forceDirection(p, t.route);
