@@ -78,6 +78,8 @@ public final class SpatialTrialHandler {
 	private static final class Trial {
 		final Route route;
 		int ticksLeft = TRIAL_TICKS;
+		/** Times the loop has moved the player down (rising) minus times it moved them up (falling). */
+		int loops;
 
 		Trial(Route route) {
 			this.route = route;
@@ -88,6 +90,22 @@ public final class SpatialTrialHandler {
 
 	public static boolean isInTrial(UUID id) {
 		return ACTIVE.containsKey(id);
+	}
+
+	/**
+	 * How many {@link #LOOP_LIFT}s the loop has taken off the player's height this trial, so that
+	 * {@code getY() + loops * LOOP_LIFT} is how far they have really climbed (or fallen): the gap behaves as an endless
+	 * sky. 0 outside a trial, and it starts over with the trial (a relog, say).
+	 */
+	public static int loops(ServerPlayer player) {
+		Trial t = ACTIVE.get(player.getUUID());
+		return t == null ? 0 : t.loops;
+	}
+
+	/** +1 while the gap carries the player up (ascension, and any trial not yet begun), -1 while it drops them. */
+	public static int direction(ServerPlayer player) {
+		Trial t = ACTIVE.get(player.getUUID());
+		return t != null && t.route == Route.DESCEND ? -1 : 1;
 	}
 
 	/** Called by the Spatial Rift. */
@@ -194,9 +212,11 @@ public final class SpatialTrialHandler {
 		if (p.getY() < LOOP_BELOW_Y) {
 			p.connection.teleport(p.getX(), p.getY() + LOOP_LIFT, p.getZ(), p.getYRot(), p.getXRot(), EnumSet.allOf(RelativeMovement.class));
 			resyncMovement(p);
+			t.loops--;
 		} else if (p.getY() > LOOP_ABOVE_Y) {
 			p.connection.teleport(p.getX(), p.getY() - LOOP_LIFT, p.getZ(), p.getYRot(), p.getXRot(), EnumSet.allOf(RelativeMovement.class));
 			resyncMovement(p);
+			t.loops++;
 		}
 
 		if (t.ticksLeft % 20 == 0) {
