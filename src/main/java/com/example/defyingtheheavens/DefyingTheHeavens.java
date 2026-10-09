@@ -19,6 +19,7 @@ public class DefyingTheHeavens implements ModInitializer {
 		ModPackets.registerServerReceivers();
 		CultivationEvents.register();
 		CultivationCommand.register();
+		CultivationFruitCommand.register();
 		LOGGER.info("Defying The Heavens initialised.");
 	}
 

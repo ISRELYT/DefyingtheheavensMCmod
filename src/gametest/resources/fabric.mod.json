@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "defying-the-heavens-tests",
+  "version": "1.0.0",
+  "name": "Cultivation Fruit Tests",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-gametest": ["com.example.defyingtheheavens.CultivationFruitGameTests"]
+  }
+}

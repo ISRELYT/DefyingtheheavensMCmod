@@ -16,6 +16,9 @@ import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 
 public final class ModBlocks {
+	public static final Block CULTIVATION_FRUIT = register("cultivation_fruit", new CultivationFruitBlock(
+			BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_ORANGE).noCollission().noOcclusion()
+					.instabreak().sound(SoundType.CROP).pushReaction(PushReaction.DESTROY)));
 	/** The tear at Overworld X=0, Z=0. Unbreakable, walk-through, no item. */
 	public static final Block SPATIAL_RIFT = register("spatial_rift", new SpatialRiftBlock(BlockBehaviour.Properties.of()
 			.mapColor(MapColor.COLOR_BLACK)

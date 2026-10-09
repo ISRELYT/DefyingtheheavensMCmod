@@ -14,6 +14,8 @@ import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 public class DefyingTheHeavensClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
+		net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE.putBlock(
+				com.example.defyingtheheavens.ModBlocks.CULTIVATION_FRUIT, net.minecraft.client.renderer.RenderType.cutout());
 		ModKeybinds.register();
 		ClientPacketHandlers.register();
 		QiHud.register(); // before the tribulation HUD, whose red tint then covers the Qi bar too
