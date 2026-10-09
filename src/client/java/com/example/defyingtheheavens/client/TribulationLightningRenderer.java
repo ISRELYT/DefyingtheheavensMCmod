@@ -1,6 +1,7 @@
 package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.TribulationCloud;
+import com.example.defyingtheheavens.TribulationLightning;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -24,8 +25,9 @@ public class TribulationLightningRenderer extends LightningBoltRenderer {
 	@Override
 	public void render(LightningBolt bolt, float entityYaw, float partialTick, PoseStack poseStack, MultiBufferSource buffers, int packedLight) {
 		poseStack.pushPose();
-		// Vanilla's 128-block bolt now runs between the player and their local cloud bank.
-		float height = (float) (TribulationCloud.cloudBaseY(bolt.level(), bolt.getY()) - bolt.getY());
+		// Use the owning storm's server-synced height, including bolts striking lower terrain.
+		float height = bolt instanceof TribulationLightning stormBolt
+				? stormBolt.renderHeight() : TribulationCloud.BASE_HEIGHT_ABOVE_PLAYER;
 		poseStack.scale(1.0f, height / 128.0f, 1.0f);
 		super.render(bolt, entityYaw, partialTick, poseStack, type -> new Tinted(buffers.getBuffer(type)), packedLight);
 		poseStack.popPose();

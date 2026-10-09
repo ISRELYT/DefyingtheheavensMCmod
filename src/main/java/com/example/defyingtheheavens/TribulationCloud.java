@@ -15,14 +15,12 @@ import net.minecraft.world.phys.AABB;
 
 /** A temporary, non-interactive storm tracked by the server so every nearby client can see it. */
 public class TribulationCloud extends Entity {
-	public static final float HEIGHT_ABOVE_PLAYER = 40.0f;
-	private static final double BELOW_NORMAL_CLOUDS = 64.0;
+	public static final float BASE_HEIGHT_ABOVE_PLAYER = 32.0f;
+	public static final float HEIGHT_PER_TIER = 6.0f;
 
-	/** Keep even the tallest storm banks clearly beneath the normal cloud layer. */
-	public static double cloudBaseY(Level level, double playerY) {
-		if (level.dimension() == Level.OVERWORLD) return 192.0 - BELOW_NORMAL_CLOUDS;
-		if (ModDimensions.isUpperRealm(level.dimension())) return 336.0 - BELOW_NORMAL_CLOUDS;
-		return playerY + HEIGHT_ABOVE_PLAYER;
+	/** Keep a moderate, realm-scaled gap above the cultivator in every dimension. */
+	public double cloudBaseY(double playerY) {
+		return playerY + heightAbovePlayer();
 	}
 	private Vec3 interpolationTarget;
 	private int interpolationSteps;
@@ -52,6 +50,7 @@ public class TribulationCloud extends Entity {
 
 	public int stormTier() { return entityData.get(STORM_TIER); }
 	public float stormScale() { return 1.0f + stormTier() * 0.45f; }
+	public float heightAbovePlayer() { return BASE_HEIGHT_ABOVE_PLAYER + stormTier() * HEIGHT_PER_TIER; }
 
 	/** Server time prevents the formation animation restarting for late observers. */
 	public float formationAge(float partialTick) {
@@ -90,13 +89,14 @@ public class TribulationCloud extends Entity {
 		}
 	}
 
-	/** Ease toward the cultivator with a slow crosswind, retaining some natural trailing motion. */
+	/** Drift horizontally, but keep the vertical gap fixed even during flight or a fall. */
 	public void follow(Vec3 playerPosition) {
 		double time = level().getGameTime();
 		Vec3 target = new Vec3(playerPosition.x + Math.sin(time * 0.008) * 4.5,
-				cloudBaseY(level(), playerPosition.y) + Math.sin(time * 0.006) * 1.5,
+				cloudBaseY(playerPosition.y),
 				playerPosition.z + Math.cos(time * 0.006) * 3.5);
-		setPos(position().distanceToSqr(target) > 96 * 96 ? target : position().lerp(target, 0.08));
+		Vec3 drift = position().distanceToSqr(target) > 96 * 96 ? target : position().lerp(target, 0.08);
+		setPos(drift.x, target.y, drift.z);
 	}
 
 	public void flash() {

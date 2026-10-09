@@ -19,8 +19,28 @@ public class TribulationCloudGameTests implements FabricGameTest {
             TribulationCloud foundation = cloudFor(helper, player);
             helper.assertTrue(TribulationManager.isActive(player.getUUID()), "Breakthrough starts a trial");
             helper.assertTrue(foundation.stormTier() == 0, "Foundation Building starts the smallest storm");
-            helper.assertTrue(Math.abs(foundation.getY() - 128) <= 1.5,
-                    "Overworld storm stays near Y=128, including its gentle vertical drift");
+            helper.assertTrue(foundation.getY() == player.getY() + 32,
+                    "Foundation Building clouds start 32 blocks above the player");
+            double originalY = player.getY();
+            player.setPos(player.getX(), originalY + 80, player.getZ());
+            TribulationManager.tick(helper.getLevel().getServer());
+            helper.assertTrue(foundation.getY() == player.getY() + 32,
+                    "Climbing keeps the same overhead gap without vertical lag");
+            player.setPos(player.getX(), originalY - 20, player.getZ());
+            TribulationManager.tick(helper.getLevel().getServer());
+            helper.assertTrue(foundation.getY() == player.getY() + 32,
+                    "Descending keeps the cloud at the same relative height");
+            player.setPos(player.getX(), originalY, player.getZ());
+
+            // Advance the trial to its first real strike and verify its synced render length.
+            for (int tick = 0; tick < 60; tick++) TribulationManager.tick(helper.getLevel().getServer());
+            var bolts = helper.getLevel().getEntitiesOfClass(TribulationLightning.class,
+                    new AABB(player.blockPosition()).inflate(2));
+            helper.assertTrue(bolts.size() == 1, "Trial creates its targeted lightning bolt");
+            TribulationLightning bolt = bolts.get(0);
+            helper.assertTrue(bolt.getY() + bolt.renderHeight() == foundation.getY(),
+                    "Targeted lightning reaches the storm's current altitude");
+            bolt.discard();
             TribulationManager.forget(player.getUUID());
             helper.assertTrue(foundation.isRemoved(), "Disconnect cleanup removes the tracked cloud");
 
@@ -33,6 +53,8 @@ public class TribulationCloudGameTests implements FabricGameTest {
             TribulationCloud fourAxis = cloudFor(helper, player);
             helper.assertTrue(fourAxis.stormTier() == 4 && fourAxis.stormScale() > foundation.stormScale(),
                     "Four Axis breakthrough creates the larger realm-scaled storm");
+            helper.assertTrue(fourAxis.getY() == player.getY() + 56,
+                    "Four Axis clouds remain a moderate 56 blocks above the player");
             TribulationManager.abandon(player);
             helper.assertTrue(fourAxis.isRemoved() && !TribulationManager.isActive(player.getUUID()),
                     "Abandoning the trial clears the cloud and trial state");
@@ -42,6 +64,18 @@ public class TribulationCloudGameTests implements FabricGameTest {
             helper.getLevel().getServer().getPlayerList().remove(player);
             player.discard();
         }
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE)
+    public void distantLightningKeepsItsStormHeightWhenSynced(GameTestHelper helper) {
+        TribulationLightning serverBolt = ModEntities.TRIBULATION_LIGHTNING.create(helper.getLevel());
+        TribulationLightning observerBolt = ModEntities.TRIBULATION_LIGHTNING.create(helper.getLevel());
+        serverBolt.setPos(0, 60, 0);
+        serverBolt.setCloudBaseY(144); // Strike lower terrain beneath a higher player's storm.
+        observerBolt.getEntityData().assignValues(serverBolt.getEntityData().getNonDefaultValues());
+        helper.assertTrue(observerBolt.renderHeight() == 84,
+                "Observers receive the actual cloud-to-ground distance, not their own altitude or realm");
+        helper.succeed();
     }
 
     private TribulationCloud cloudFor(GameTestHelper helper, ServerPlayer player) {

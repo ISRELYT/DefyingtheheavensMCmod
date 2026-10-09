@@ -7,7 +7,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -190,8 +189,10 @@ public final class TribulationManager {
 
 	/** Atmospheric bolts only: no fire, damage, or terrain/chunk generation. */
 	private static void ambientStrike(ServerPlayer p, Trial t) {
+		if (t.cloud == null) return;
 		ServerLevel level = p.serverLevel();
-		int tier = t.cloud == null ? 0 : t.cloud.stormTier();
+		int tier = t.cloud.stormTier();
+		double cloudY = t.cloud.getY();
 		for (int attempt = 0; attempt < 6; attempt++) {
 			double angle = p.getRandom().nextDouble() * Math.PI * 2;
 			double radius = 28 + p.getRandom().nextDouble() * (20 + tier * 10);
@@ -199,10 +200,11 @@ public final class TribulationManager {
 			int z = Mth.floor(p.getZ() + Math.sin(angle) * radius);
 			if (!level.hasChunkAt(new BlockPos(x, p.getBlockY(), z))) continue;
 			int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
-			if (y >= TribulationCloud.cloudBaseY(level, p.getY()) - 8) continue;
-			LightningBolt bolt = ModEntities.TRIBULATION_LIGHTNING.create(level);
+			if (y >= cloudY - 8) continue;
+			TribulationLightning bolt = ModEntities.TRIBULATION_LIGHTNING.create(level);
 			if (bolt == null) return;
 			bolt.moveTo(x + 0.5, y, z + 0.5);
+			bolt.setCloudBaseY(cloudY);
 			bolt.setVisualOnly(true);
 			level.addFreshEntity(bolt);
 			if (t.cloud != null) t.cloud.flash();
@@ -212,9 +214,10 @@ public final class TribulationManager {
 
 	private static void strike(ServerPlayer p, Trial t) {
 		ServerLevel level = p.serverLevel();
-		LightningBolt bolt = ModEntities.TRIBULATION_LIGHTNING.create(level); // drawn bright blue by the client
+		TribulationLightning bolt = ModEntities.TRIBULATION_LIGHTNING.create(level); // drawn bright blue by the client
 		if (bolt == null) return;
 		bolt.moveTo(p.getX(), p.getY(), p.getZ());
+		bolt.setCloudBaseY(t.cloud == null ? p.getY() + TribulationCloud.BASE_HEIGHT_ABOVE_PLAYER : t.cloud.getY());
 		bolt.setVisualOnly(true); // 1.20.1 bolts always deal a flat 5, so the tribulation's hit is applied by hand below
 		level.addFreshEntity(bolt);
 		if (t.cloud != null) t.cloud.flash();
@@ -295,7 +298,7 @@ public final class TribulationManager {
 			trial.cloud = ModEntities.TRIBULATION_CLOUD.create(player.serverLevel());
 			if (trial.cloud == null) return;
 			trial.cloud.configure(trial.targetRealm);
-			trial.cloud.setPos(player.getX(), TribulationCloud.cloudBaseY(player.level(), player.getY()), player.getZ());
+			trial.cloud.setPos(player.getX(), trial.cloud.cloudBaseY(player.getY()), player.getZ());
 			player.serverLevel().addFreshEntity(trial.cloud);
 		}
 		trial.cloud.follow(player.position());
