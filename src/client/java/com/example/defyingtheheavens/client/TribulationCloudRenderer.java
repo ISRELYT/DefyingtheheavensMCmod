@@ -1,6 +1,7 @@
 package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.TribulationCloud;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -18,6 +19,20 @@ import net.minecraft.util.Mth;
 /** Realm-scaled storm banks whose individual clusters gather and swell at staggered times. */
 public class TribulationCloudRenderer extends EntityRenderer<TribulationCloud> {
 	private static final ResourceLocation TEXTURE = new ResourceLocation("defying-the-heavens", "textures/entity/tribulation_cloud.png");
+	private static final RenderType CLOUD_LAYER = createCloudLayer();
+
+	private static RenderType createCloudLayer() {
+		RenderType emissive = RenderType.entityTranslucentEmissive(TEXTURE);
+		// Vanilla's emissive layer only writes colour. Clouds render later, so they would
+		// paint over this nearer storm unless its geometry also writes to the depth buffer.
+		// Keep the same shader/blending for our hand-shaded clouds and lightning flashes.
+		return new RenderType("defying_the_heavens_tribulation_cloud", emissive.format(), emissive.mode(),
+				emissive.bufferSize(), emissive.affectsCrumbling(), true,
+				() -> {
+					emissive.setupRenderState();
+					RenderSystem.depthMask(true);
+				}, emissive::clearRenderState) {};
+	}
 
 	public TribulationCloudRenderer(EntityRendererProvider.Context context) {
 		super(context);
@@ -35,7 +50,7 @@ public class TribulationCloudRenderer extends EntityRenderer<TribulationCloud> {
 		poses.pushPose();
 		poses.scale(cloud.stormScale() * 2.0f, 1.5f + tier * 0.18f, cloud.stormScale() * 2.0f);
 		poses.mulPose(Axis.YP.rotationDegrees(Mth.sin(age * 0.0015f) * 8.0f));
-		VertexConsumer vertices = buffers.getBuffer(RenderType.entityTranslucentEmissive(TEXTURE));
+		VertexConsumer vertices = buffers.getBuffer(CLOUD_LAYER);
 
 		// A rounded, irregular silhouette about 17 blocks across. Individual lobes rise and sink slightly.
 		for (int x = -2; x <= 2; x++) {
