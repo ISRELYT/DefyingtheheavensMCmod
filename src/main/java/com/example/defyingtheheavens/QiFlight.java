@@ -26,7 +26,7 @@ public final class QiFlight {
 
 	/** Players whose qi ran dry in flight and who haven't gathered back to {@link #RESUME_FRACTION} yet. */
 	private static final Set<UUID> EXHAUSTED = new HashSet<>();
-	/** Whether each online player's realm allowed flight last tick, to announce the ability when it is first gained. */
+	/** Whether each online player's true realm had awakened flight last tick, to announce the ability when it is first gained. */
 	private static final Map<UUID, Boolean> REALM_ALLOWED = new HashMap<>();
 
 	/**
@@ -37,11 +37,14 @@ public final class QiFlight {
 	 */
 	static double tick(ServerPlayer p, PlayerCultivation c) {
 		UUID id = p.getUUID();
-		boolean realmAllows = c.getEffectiveRealm().canFlyOnQi();
-		Boolean before = REALM_ALLOWED.put(id, realmAllows);
-		if (realmAllows && Boolean.FALSE.equals(before)) {
+		// Announced by the true realm: Realm Suppress can hold a cultivator below Core Formation for a while (grounding them),
+		// and the greeting shouldn't repeat each time that lifts.
+		boolean awakened = c.getRealm().canFlyOnQi();
+		Boolean before = REALM_ALLOWED.put(id, awakened);
+		if (awakened && Boolean.FALSE.equals(before)) {
 			p.sendSystemMessage(Component.translatable(ModLang.MSG_QI_FLIGHT_GAINED));
 		}
+		boolean realmAllows = c.getEffectiveRealm().canFlyOnQi();
 
 		if (p.isCreative() || p.isSpectator()) return 0;
 		boolean inGap = SpatialTrialHandler.isInTrial(id) || p.level().dimension() == ModDimensions.SPATIAL_GAP;

@@ -36,6 +36,8 @@ public final class CultivationManager {
 		c.setAbilityEnabled(ability, !c.isAbilityEnabled(ability));
 		markDirty(player.server);
 		sync(player);
+		// Pressure starts or lifts at once, not at the next scan.
+		if (ability == Ability.REALM_SUPPRESS) RealmSuppressSystem.refreshNow();
 	}
 
 	private CultivationManager() {}

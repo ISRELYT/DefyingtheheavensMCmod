@@ -6,9 +6,14 @@
   "client": [
     "ClientLevelSkyMixin",
     "CreativeModeInventoryScreenMixin",
+    "EntityRendererMixin",
     "FogRendererMixin",
+    "GameRendererMixin",
     "HumanoidModelMixin",
-    "InventoryScreenMixin"
+    "InventoryScreenMixin",
+    "LevelRendererMixin",
+    "MinecraftMixin",
+    "PostChainAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

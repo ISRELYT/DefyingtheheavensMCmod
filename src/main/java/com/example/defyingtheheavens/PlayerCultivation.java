@@ -22,6 +22,11 @@ import java.util.EnumSet;
  * Qi is a separate, spendable pool for spells, flight and other techniques. It refills by itself at the qi gather rate,
  * {@link #UPPER_REALM_QI_MULTIPLIER} times faster in the Upper Realm. Its maximum and gather rate follow the EFFECTIVE
  * stage, so suppression shrinks the pool too.
+ * <p>
+ * Separately, a stronger cultivator's Realm Suppress ability ({@link RealmSuppressSystem}) can put this one under
+ * PRESSURE: the effective stage drops by {@link #getPressureStages()} more, and the qi pool and its gathering shrink by
+ * {@link #getPressurePenalty()}. Pressure is never saved; qi above the shrunken pool is held back, not lost, and returns
+ * when the pressure lifts.
  */
 public class PlayerCultivation {
 	/** The most the lower realms can sustain. */
@@ -39,13 +44,19 @@ public class PlayerCultivation {
 	private Stage stage = Stage.EARLY;
 	/** Progress toward the next stage. */
 	private double cultivation;
-	/** The spendable qi pool; may briefly exceed {@link #maxQi()} after the maximum drops, until {@link #gatherQi} trims it. */
+	/**
+	 * The spendable qi pool; may briefly exceed {@link #maxQi()} after the maximum drops, until {@link #gatherQi} trims it
+	 * (never while under pressure: see {@link #heldQi()}).
+	 */
 	private double qi;
 	private boolean lowerRealmBound;
-	/** Abilities the player switched off on the Abilities tab; everything else is on. */
-	private final EnumSet<Ability> disabledAbilities = EnumSet.noneOf(Ability.class);
+	/** Abilities switched off on the Abilities tab (or never switched on, for those that start off); everything else is on. */
+	private final EnumSet<Ability> disabledAbilities = Ability.offByDefault();
 	/** Synced but not saved: re-evaluated from the player's dimension on every join. */
 	private boolean inUpperRealm;
+	/** Realm Suppress from a stronger cultivator (see {@link RealmSuppressSystem}): synced but never saved. */
+	private int pressureStages;
+	private double pressurePenalty;
 
 	// Server-only bookkeeping for the Spatial Gap (not synced).
 	private SpatialTrialHandler.Route pendingTrial = SpatialTrialHandler.Route.NONE;
@@ -83,8 +94,39 @@ public class PlayerCultivation {
 	/** True cultivation exceeds what the current (lower) realm can sustain. */
 	public boolean isSuppressed() { return lowerRealmBound && rank(realm, stage) > CAP_RANK; }
 
-	public Realm getEffectiveRealm() { return isSuppressed() ? LOWER_REALM_CAP_REALM : realm; }
-	public Stage getEffectiveStage() { return isSuppressed() ? LOWER_REALM_CAP_STAGE : stage; }
+	/**
+	 * The rank the realm the player stands in lets them wield: the true rank, capped by Realm Suppression in the lower
+	 * realms. Another cultivator's pressure doesn't lower it, so Realm Suppress compares cultivators by this (no chains of
+	 * suppressed suppressors).
+	 */
+	public int sustainedRank() {
+		int rank = rank(realm, stage);
+		return lowerRealmBound ? Math.min(rank, CAP_RANK) : rank;
+	}
+
+	/** {@link #sustainedRank()} less the stages another cultivator's pressure takes off; drives stats, qi and the domain. */
+	private int effectiveRank() { return Math.max(0, sustainedRank() - pressureStages); }
+
+	public Realm getEffectiveRealm() { return Realm.byIndex(effectiveRank() / Stage.values().length); }
+	public Stage getEffectiveStage() { return Stage.byIndex(effectiveRank() % Stage.values().length); }
+
+	// --- Realm Suppress pressure (another cultivator's ability) ---
+
+	public boolean isUnderPressure() { return pressureStages > 0 || pressurePenalty > 0; }
+	/** Stages the pressure takes off the effective stage (a whole realm's worth when the suppressor is a realm above). */
+	public int getPressureStages() { return pressureStages; }
+	/** Fraction (0-1) the pressure takes off the qi pool and its gathering; attributes lose the same through modifiers. */
+	public double getPressurePenalty() { return pressurePenalty; }
+
+	/** @return true if anything changed */
+	public boolean setPressure(int stages, double penalty) {
+		stages = Math.max(0, stages);
+		penalty = Math.max(0, Math.min(1, penalty));
+		if (pressureStages == stages && pressurePenalty == penalty) return false;
+		pressureStages = stages;
+		pressurePenalty = penalty;
+		return true;
+	}
 
 	public boolean isInUpperRealm() { return inUpperRealm; }
 
@@ -143,23 +185,31 @@ public class PlayerCultivation {
 
 	public void setQi(double qi) { this.qi = Math.max(0, qi); }
 
-	/** Most qi the pool holds. Follows the effective stage, so a suppressed cultivator holds less. */
-	public double maxQi() { return CultivationStats.maxQi(getEffectiveRealm(), getEffectiveStage()); }
-
-	/** Qi gathered per second where the player is now: {@link #UPPER_REALM_QI_MULTIPLIER} times faster in the Upper Realm. */
-	public double qiGatherPerSecond() {
-		return CultivationStats.qiGather(getEffectiveRealm(), getEffectiveStage()) * (inUpperRealm ? UPPER_REALM_QI_MULTIPLIER : 1.0);
-	}
+	/** Most qi the pool holds. Follows the effective stage, so a suppressed cultivator holds less, and pressure shrinks it. */
+	public double maxQi() { return CultivationStats.maxQi(getEffectiveRealm(), getEffectiveStage()) * (1 - pressurePenalty); }
 
 	/**
-	 * Gathers {@code seconds} worth of qi while spending {@code spendPerSecond} on an ongoing technique (Qi Flight), never
-	 * past the maximum or below zero. Qi above the maximum (left over after it dropped, e.g. when suppression set in) is
-	 * trimmed.
+	 * Qi gathered per second where the player is now: {@link #UPPER_REALM_QI_MULTIPLIER} times faster in the Upper Realm,
+	 * slowed by pressure.
+	 */
+	public double qiGatherPerSecond() {
+		return CultivationStats.qiGather(getEffectiveRealm(), getEffectiveStage()) * (inUpperRealm ? UPPER_REALM_QI_MULTIPLIER : 1.0)
+				* (1 - pressurePenalty);
+	}
+
+	/** Qi above the shrunken pool that pressure holds back; it is back in the pool as soon as the pressure lifts. */
+	private double heldQi() { return isUnderPressure() ? Math.max(0, qi - maxQi()) : 0; }
+
+	/**
+	 * Gathers {@code seconds} worth of qi while spending {@code spendPerSecond} on ongoing techniques (Qi Flight, Realm
+	 * Suppress), never past the maximum or below zero. Qi above the maximum (left over after it dropped, e.g. when
+	 * suppression set in) is trimmed, except what pressure holds back.
 	 *
 	 * @return true if the pool changed
 	 */
 	public boolean gatherQi(double seconds, double spendPerSecond) {
-		double next = Math.max(0, Math.min(maxQi(), qi + (qiGatherPerSecond() - spendPerSecond) * seconds));
+		double max = maxQi();
+		double next = heldQi() + Math.max(0, Math.min(max, getQi() + (qiGatherPerSecond() - spendPerSecond) * seconds));
 		if (next == qi) return false;
 		qi = next;
 		return true;
@@ -177,7 +227,7 @@ public class PlayerCultivation {
 	/** Spends qi for a spell or technique. @return false, spending nothing, if the pool holds less than {@code amount} */
 	public boolean consumeQi(double amount) {
 		if (amount < 0 || getQi() < amount) return false;
-		qi = getQi() - amount;
+		qi = heldQi() + getQi() - amount;
 		return true;
 	}
 
@@ -285,9 +335,14 @@ public class PlayerCultivation {
 		tag.putBoolean("LowerRealmBound", lowerRealmBound);
 		tag.putString("SpatialTrial", pendingTrial.name());
 		tag.putBoolean("FallProtected", fallProtected);
+		// Both lists, so an ability missing from either (one added since the save) takes its default.
 		ListTag disabled = new ListTag();
-		for (Ability ability : disabledAbilities) disabled.add(StringTag.valueOf(ability.getId()));
+		ListTag enabled = new ListTag();
+		for (Ability ability : Ability.values()) {
+			(disabledAbilities.contains(ability) ? disabled : enabled).add(StringTag.valueOf(ability.getId()));
+		}
 		tag.put("DisabledAbilities", disabled);
+		tag.put("EnabledAbilities", enabled);
 		return tag;
 	}
 
@@ -300,10 +355,16 @@ public class PlayerCultivation {
 		c.lowerRealmBound = tag.getBoolean("LowerRealmBound");
 		c.pendingTrial = SpatialTrialHandler.Route.byName(tag.getString("SpatialTrial"));
 		c.fallProtected = tag.getBoolean("FallProtected");
+		// Starts from the defaults (the constructor's), so saves from before an ability existed get its default.
 		ListTag disabled = tag.getList("DisabledAbilities", Tag.TAG_STRING);
 		for (int i = 0; i < disabled.size(); i++) {
 			Ability ability = Ability.byId(disabled.getString(i));
 			if (ability != null) c.disabledAbilities.add(ability); // unknown ids (a removed ability) are dropped
+		}
+		ListTag enabled = tag.getList("EnabledAbilities", Tag.TAG_STRING);
+		for (int i = 0; i < enabled.size(); i++) {
+			Ability ability = Ability.byId(enabled.getString(i));
+			if (ability != null) c.disabledAbilities.remove(ability);
 		}
 		return c;
 	}

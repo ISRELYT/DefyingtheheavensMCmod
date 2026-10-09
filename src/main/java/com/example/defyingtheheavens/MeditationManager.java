@@ -63,6 +63,7 @@ public final class MeditationManager {
 		session.boost = CultivationBoost.of(player);
 		SESSIONS.put(player.getUUID(), session);
 		ModPackets.broadcastMeditation(player, true);
+		broadcastAbsorption(player, session);
 		CultivationManager.sync(player);
 		player.displayClientMessage(Component.translatable(ModLang.MSG_START), true);
 	}
@@ -156,6 +157,7 @@ public final class MeditationManager {
 
 		if (tick % 20 == 0) {
 			ModPackets.broadcastMeditation(p, true); // heartbeat for late joiners / newly tracking players
+			broadcastAbsorption(p, session);
 		}
 	}
 
@@ -190,6 +192,16 @@ public final class MeditationManager {
 			joined.append(parts.get(i));
 		}
 		return joined;
+	}
+
+	/**
+	 * Lets Qi Sense users nearby watch the qi flow into the meditator ({@link QiSense}), as fast as they really gather it:
+	 * a mat, pedestals and the rest of the boost draw in more.
+	 */
+	private static void broadcastAbsorption(ServerPlayer p, Session session) {
+		PlayerCultivation c = CultivationManager.get(p);
+		double perSecond = c.meditationCultivationPerSecond(RingOfPowerItem.cultivationBonus(p)) * session.boost.multiplier();
+		QiSense.broadcastAbsorption(p, c, perSecond);
 	}
 
 	private MeditationManager() {}

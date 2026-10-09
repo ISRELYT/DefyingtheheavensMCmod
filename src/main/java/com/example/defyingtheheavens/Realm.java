@@ -87,6 +87,9 @@ public enum Realm {
 	/** From Core Formation (the golden core) on, the cultivator can fly on their qi (see {@link QiFlight}). */
 	public boolean canFlyOnQi() { return ordinal() >= CORE_FORMATION.ordinal(); }
 
+	/** From Core Formation on, the cultivator can see the plane of Qi (see {@link QiSense}). */
+	public boolean canSenseQi() { return ordinal() >= CORE_FORMATION.ordinal(); }
+
 	/** From Nascent Soul on, every minor stage is a bottleneck that needs its own Heavenly Tribulation. */
 	public boolean hasStageTribulations() { return ordinal() >= NASCENT_SOUL.ordinal(); }
 
