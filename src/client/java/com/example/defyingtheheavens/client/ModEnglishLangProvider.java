@@ -26,10 +26,17 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add("item.defying-the-heavens.cultivation_fruit.full", "Your inventory is full. Make room to harvest this fruit.");
 		t.add(ModBlocks.MEDITATION_MAT, "Meditation Mat");
 		t.add("gui.defying-the-heavens.baubles", "Baubles");
-		t.add("config.jade.plugin_defying-the-heavens.fruit_age", "Cultivation Fruit Age"); // Jade's toggle for the fruit-age tooltip
+		t.add("config.jade.plugin_defying-the-heavens.fruit_age", "Fruit and Ginseng Age"); // Jade's toggle for the fruit-age tooltip
 		t.add(ModBlocks.RED_MEDITATION_MAT, "Red Silk Meditation Mat");
 		t.add(ModBlocks.SPIRIT_PEDESTAL, "Spirit Pedestal");
-		t.add(ModLang.PEDESTAL_TOOLTIP, "Holds a Cultivation Fruit to aid meditation nearby");
+		t.add(ModLang.PEDESTAL_TOOLTIP, "Holds a Cultivation Fruit or ginseng to aid meditation nearby");
+		t.add(ModItems.GINSENG, "Ginseng");
+		t.add(ModBlocks.GINSENG, "Ginseng");
+		t.add(ModItems.SPIRIT_GINSENG, "Spirit Ginseng");
+		t.add(ModBlocks.SPIRIT_GINSENG, "Spirit Ginseng");
+		t.add(ModLang.GINSENG_INGREDIENT, "An ingredient for pills and elixirs");
+		t.add(ModLang.GINSENG_HARVESTED, "Harvested: no longer ages and cannot be replanted");
+		t.add(ModLang.GINSENG_FULL, "Your inventory is full. Make room to dig up this ginseng.");
 		t.add(ModLang.FRUIT_PEDESTAL_TOOLTIP, "On a Spirit Pedestal: +%s%% cultivation speed while meditating nearby");
 		t.add(ModItems.RING_OF_POWER, "Ring of Power");
 		t.add(ModLang.RING_OF_POWER_TOOLTIP, "When worn: +%s cultivation per second while meditating");

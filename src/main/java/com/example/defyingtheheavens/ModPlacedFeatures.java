@@ -91,6 +91,18 @@ public final class ModPlacedFeatures {
 	/** On average one fruit per this many chunks that have trees. The Upper Realm's dense qi bears fruit twice as often. */
 	public static final int FRUIT_CHUNKS_OVERWORLD = 6;
 	public static final int FRUIT_CHUNKS_UPPER_REALM = 3;
+	/**
+	 * Wild ginseng, also appended by ModFeatures#register: in Overworld woods (forests, taiga, jungle) and in every Upper
+	 * Realm biome. On average one per this many chunks; Spirit Ginseng is far rarer.
+	 */
+	public static final ResourceKey<PlacedFeature> GINSENG = key("ginseng");
+	public static final ResourceKey<PlacedFeature> GINSENG_UPPER_REALM = key("ginseng_upper_realm");
+	public static final ResourceKey<PlacedFeature> SPIRIT_GINSENG = key("spirit_ginseng");
+	public static final ResourceKey<PlacedFeature> SPIRIT_GINSENG_UPPER_REALM = key("spirit_ginseng_upper_realm");
+	public static final int GINSENG_CHUNKS_WOODS = 8;
+	public static final int GINSENG_CHUNKS_UPPER_REALM = 3;
+	public static final int SPIRIT_GINSENG_CHUNKS_WOODS = 64;
+	public static final int SPIRIT_GINSENG_CHUNKS_UPPER_REALM = 16;
 
 	public static final List<Entry> ORDER = List.of(
 			new Entry(GenerationStep.Decoration.LAKES, SPRING_BASIN),
@@ -202,6 +214,13 @@ public final class ModPlacedFeatures {
 		// Wild Cultivation Fruit: the feature searches whole columns for canopies itself, so a plain heightmap origin will do.
 		register(context, CULTIVATION_FRUIT, configured.getOrThrow(ModConfiguredFeatures.CULTIVATION_FRUIT), fruit(FRUIT_CHUNKS_OVERWORLD));
 		register(context, CULTIVATION_FRUIT_UPPER_REALM, configured.getOrThrow(ModConfiguredFeatures.CULTIVATION_FRUIT), fruit(FRUIT_CHUNKS_UPPER_REALM));
+
+		// Wild ginseng: the feature searches whole columns for open soil itself, so the same plain origin will do.
+		register(context, GINSENG, configured.getOrThrow(ModConfiguredFeatures.GINSENG), fruit(GINSENG_CHUNKS_WOODS));
+		register(context, GINSENG_UPPER_REALM, configured.getOrThrow(ModConfiguredFeatures.GINSENG), fruit(GINSENG_CHUNKS_UPPER_REALM));
+		register(context, SPIRIT_GINSENG, configured.getOrThrow(ModConfiguredFeatures.SPIRIT_GINSENG), fruit(SPIRIT_GINSENG_CHUNKS_WOODS));
+		register(context, SPIRIT_GINSENG_UPPER_REALM, configured.getOrThrow(ModConfiguredFeatures.SPIRIT_GINSENG),
+				fruit(SPIRIT_GINSENG_CHUNKS_UPPER_REALM));
 	}
 
 	private static List<PlacementModifier> fruit(int chunks) {

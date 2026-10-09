@@ -50,6 +50,17 @@ public final class ModBlocks {
 			BlockBehaviour.Properties.of().mapColor(MapColor.DEEPSLATE).strength(1.5f, 6.0f).sound(SoundType.POLISHED_DEEPSLATE)
 					.noOcclusion()));
 
+	/** Wild ginseng, aging in the ground (see GinsengBlock). No block item: it is dug up as the ginseng item instead. */
+	public static final Block GINSENG = register("ginseng", new GinsengBlock(() -> ModItems.GINSENG, ginsengProperties(MapColor.PLANT)));
+	/** The rarer Spirit Ginseng: pale jade leaves, golden berries. */
+	public static final Block SPIRIT_GINSENG = register("spirit_ginseng", new GinsengBlock(() -> ModItems.SPIRIT_GINSENG,
+			ginsengProperties(MapColor.COLOR_LIGHT_GREEN)));
+
+	private static BlockBehaviour.Properties ginsengProperties(MapColor colour) {
+		return BlockBehaviour.Properties.of().mapColor(colour).noCollission().noOcclusion().instabreak()
+				.sound(SoundType.SWEET_BERRY_BUSH).pushReaction(PushReaction.DESTROY).ignitedByLava();
+	}
+
 	private static Block register(String id, Block block) {
 		return Registry.register(BuiltInRegistries.BLOCK, DefyingTheHeavens.id(id), block);
 	}

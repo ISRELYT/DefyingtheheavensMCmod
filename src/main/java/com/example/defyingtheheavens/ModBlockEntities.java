@@ -17,6 +17,11 @@ public final class ModBlockEntities {
 			DefyingTheHeavens.id("spirit_pedestal"),
 			BlockEntityType.Builder.of(SpiritPedestalBlockEntity::new, ModBlocks.SPIRIT_PEDESTAL).build(null));
 
+	/** A growing ginseng's age clock; shared by Ginseng and Spirit Ginseng. */
+	public static final BlockEntityType<GinsengBlockEntity> GINSENG = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
+			DefyingTheHeavens.id("ginseng"),
+			BlockEntityType.Builder.of(GinsengBlockEntity::new, ModBlocks.GINSENG, ModBlocks.SPIRIT_GINSENG).build(null));
+
 	/** Touching this class registers the block entity types. */
 	public static void register() {
 	}

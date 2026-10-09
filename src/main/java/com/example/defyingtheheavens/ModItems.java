@@ -17,6 +17,10 @@ public final class ModItems {
 	public static final Item RING_OF_TRANSCENDENCE = register("ring_of_transcendence",
 			new RingOfTranscendenceItem(new Item.Properties().rarity(Rarity.EPIC)));
 
+	/** Harvested ginseng roots: ingredients for alchemy, keeping their age (see GinsengItem). */
+	public static final Item GINSENG = register("ginseng", new GinsengItem(new Item.Properties()));
+	public static final Item SPIRIT_GINSENG = register("spirit_ginseng", new GinsengItem(new Item.Properties().rarity(Rarity.RARE)));
+
 	private static Item register(String id, Item item) {
 		return Registry.register(BuiltInRegistries.ITEM, new ResourceLocation(DefyingTheHeavens.MOD_ID, id), item);
 	}
@@ -25,6 +29,10 @@ public final class ModItems {
 	public static void register() {
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.FOOD_AND_DRINKS).register(entries ->
 				entries.accept(CultivationFruitItem.create(1)));
+		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.INGREDIENTS).register(entries -> {
+			entries.accept(GinsengItem.create(GINSENG, 1));
+			entries.accept(GinsengItem.create(SPIRIT_GINSENG, 1));
+		});
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(entries -> {
 			entries.accept(RING_OF_POWER);
 			entries.accept(RING_OF_TRANSCENDENCE);

@@ -123,5 +123,10 @@ public final class ModLang {
 	public static final String BOOST_HEIGHT = k("boost.height");
 	public static final String BOOST_TRANQUIL = k("boost.tranquil");
 
+	// Ginseng
+	public static final String GINSENG_INGREDIENT = k("tooltip.ginseng_ingredient");
+	public static final String GINSENG_HARVESTED = k("tooltip.ginseng_harvested");
+	public static final String GINSENG_FULL = k("message.ginseng_full");
+
 	private ModLang() {}
 }

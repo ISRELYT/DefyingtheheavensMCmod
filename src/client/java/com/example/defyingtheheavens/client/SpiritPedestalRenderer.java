@@ -2,6 +2,7 @@ package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.FruitAura;
 import com.example.defyingtheheavens.ModBlocks;
+import com.example.defyingtheheavens.ModItems;
 import com.example.defyingtheheavens.SpiritPedestalBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -17,6 +18,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
@@ -35,6 +37,11 @@ public class SpiritPedestalRenderer implements BlockEntityRenderer<SpiritPedesta
 	private static final float STREAM_HALF_WIDTH = 0.06f;
 	private static final float ORBIT_HALF_WIDTH = 0.05f;
 
+	/** The pedestal's top surface (20 px). */
+	private static final float PEDESTAL_TOP = 20 / 16f;
+	/** Ginseng on a pedestal is drawn at this size. */
+	private static final float HERB_SCALE = 0.7f;
+
 	private final BlockRenderDispatcher blocks;
 
 	public SpiritPedestalRenderer(BlockEntityRendererProvider.Context context) {
@@ -47,17 +54,28 @@ public class SpiritPedestalRenderer implements BlockEntityRenderer<SpiritPedesta
 		if (level == null || !pedestal.hasFruit()) return;
 		BlockPos pos = pedestal.getBlockPos();
 		float clock = FruitAura.clock(level.getGameTime(), pos) + partialTick;
-		float bob = 0.04f * Mth.sin(clock * 0.08f);
-		float y = FruitAura.PEDESTAL_FRUIT_Y + bob;
-
-		// The fruit, turning slowly about its own centre. Lit by the space it floats in.
-		poseStack.pushPose();
-		poseStack.translate(0.5, y, 0.5);
-		poseStack.mulPose(Axis.YP.rotationDegrees(clock * 1.2f));
-		poseStack.translate(-0.5, -FruitAura.CENTER_Y, -0.5);
-		blocks.renderSingleBlock(ModBlocks.CULTIVATION_FRUIT.defaultBlockState(), poseStack, buffers,
-				LevelRenderer.getLightColor(level, pos.above()), OverlayTexture.NO_OVERLAY);
-		poseStack.popPose();
+		int lightAbove = LevelRenderer.getLightColor(level, pos.above());
+		float y;
+		if (pedestal.isHerb()) {
+			// Ginseng sits on the pedestal's top like a little potted plant, at a smaller size.
+			y = FruitAura.PEDESTAL_HERB_Y;
+			poseStack.pushPose();
+			poseStack.translate(0.5, PEDESTAL_TOP, 0.5);
+			poseStack.scale(HERB_SCALE, HERB_SCALE, HERB_SCALE);
+			poseStack.translate(-0.5, 0, -0.5);
+			Block plant = pedestal.getFruit().is(ModItems.SPIRIT_GINSENG) ? ModBlocks.SPIRIT_GINSENG : ModBlocks.GINSENG;
+			blocks.renderSingleBlock(plant.defaultBlockState(), poseStack, buffers, lightAbove, OverlayTexture.NO_OVERLAY);
+			poseStack.popPose();
+		} else {
+			// The fruit floats, turning slowly about its own centre and bobbing.
+			y = FruitAura.PEDESTAL_FRUIT_Y + 0.04f * Mth.sin(clock * 0.08f);
+			poseStack.pushPose();
+			poseStack.translate(0.5, y, 0.5);
+			poseStack.mulPose(Axis.YP.rotationDegrees(clock * 1.2f));
+			poseStack.translate(-0.5, -FruitAura.CENTER_Y, -0.5);
+			blocks.renderSingleBlock(ModBlocks.CULTIVATION_FRUIT.defaultBlockState(), poseStack, buffers, lightAbove, OverlayTexture.NO_OVERLAY);
+			poseStack.popPose();
+		}
 
 		int years = pedestal.fruitAge();
 		Vec3 fruit = Vec3.atLowerCornerOf(pos).add(0.5, y, 0.5);

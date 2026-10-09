@@ -16,6 +16,13 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE.putBlock(
 				com.example.defyingtheheavens.ModBlocks.CULTIVATION_FRUIT, net.minecraft.client.renderer.RenderType.cutout());
+		// Like vanilla leaves: the gaps between blossoms are see-through (in Fast graphics, leaves draw solid anyway).
+		net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE.putBlock(
+				com.example.defyingtheheavens.ModBlocks.WHITE_BLOSSOM_LEAVES, net.minecraft.client.renderer.RenderType.cutoutMipped());
+		net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE.putBlocks(net.minecraft.client.renderer.RenderType.cutout(),
+				com.example.defyingtheheavens.ModBlocks.GINSENG, com.example.defyingtheheavens.ModBlocks.SPIRIT_GINSENG);
+		net.minecraft.client.renderer.blockentity.BlockEntityRenderers.register(
+				com.example.defyingtheheavens.ModBlockEntities.GINSENG, context -> new GinsengAuraRenderer());
 		net.minecraft.client.renderer.blockentity.BlockEntityRenderers.register(
 				com.example.defyingtheheavens.ModBlockEntities.CULTIVATION_FRUIT, context -> new CultivationFruitAuraRenderer());
 		net.minecraft.client.renderer.blockentity.BlockEntityRenderers.register(

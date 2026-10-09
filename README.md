@@ -109,11 +109,36 @@ meditation (see below).
 Source models are in `Models/MeditationMat` and `Models/RedMeditationMat` (Blockbench project, model JSON and textures);
 the game uses copies under `assets/defying-the-heavens` (`meditation_mat*`, `red_meditation_mat*`).
 
+## Ginseng
+
+**Ginseng** and the rarer **Spirit Ginseng** grow wild on the ground and age like Cultivation Fruit: they start at a
+natural age and gain 10 years per Minecraft day, up to 10,000 years, with the same age auras as fruit. They will be
+ingredients for alchemy (pills and elixirs); for now a harvested root keeps its age and can be set on a Spirit Pedestal,
+where it counts like a fruit of the same age.
+
+- Right-click a plant to dig it up into your inventory (a full inventory leaves it in the ground). Breaking it, or the
+  soil under it, drops it too. Harvested ginseng keeps its age, cannot be replanted and is not food.
+- Ginseng grows only on soil (grass, dirt, podzol, moss...). Wild plants appear on grass or podzol, never in caves.
+- Spawning, on average one plant per this many chunks: Ginseng 8 in Overworld forests, taiga and jungles and 3 in the
+  Upper Realm; Spirit Ginseng 64 and 16. These are `GINSENG_CHUNKS_*` and `SPIRIT_GINSENG_CHUNKS_*` in
+  `ModPlacedFeatures.java` (and the matching `placed_feature/*ginseng*.json`; re-run `runDatagen` after changing them).
+- The plants are drawn like vanilla's sweet berry bush, whose leaves they reuse: Ginseng in a warm green with one cluster
+  of red berries, Spirit Ginseng in pale jade with golden berries. The harvested items are the forked roots.
+- Code: `GinsengBlock`, `GinsengBlockEntity`, `GinsengItem`, `GinsengFeature`, `client/GinsengAuraRenderer.java`.
+
+With cheats/operator permissions:
+
+```text
+/ginseng plant 1000          plants 1,000-year Ginseng on the soil you look at
+/ginseng plant 10000 spirit  the same, Spirit Ginseng
+/ginseng give 500 [spirit]   a harvested root
+```
+
 ## Spirit Pedestals and meditation boosts
 
 A **Spirit Pedestal** (carved grey stone with jade inlays, about 1.25 blocks tall: a base with a jade
 meander band, a column with corner pilasters and a panel bearing a jade medallion, and a flared top with jade nubs, a
-row of jade beads and a polished jade disc under the fruit) displays one Cultivation Fruit. Right-click it with a fruit to set it
+row of jade beads and a polished jade disc under the fruit) displays one Cultivation Fruit or ginseng. Right-click it with one to set it
 down, and right-click again to take it back. Breaking the pedestal gives back both the pedestal and its fruit, in
 creative too. The fruit floats over the
 pedestal, turning slowly, and shows the same age aura it had on the tree. Harvested fruit doesn't age, so a fruit's

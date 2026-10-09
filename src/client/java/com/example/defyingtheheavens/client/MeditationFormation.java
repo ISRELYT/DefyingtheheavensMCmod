@@ -28,8 +28,11 @@ import java.util.Map;
  * The glowing ribbons along the same paths are drawn by {@link SpiritPedestalRenderer}.
  */
 public final class MeditationFormation {
-	/** A pedestal's fruit feeding a meditator on orbit {@code lane} (0 = the oldest fruit's, innermost and lowest). */
-	public record Link(Player player, BlockPos pedestal, int years, int lane) {}
+	/**
+	 * A pedestal's fruit or ginseng feeding a meditator on orbit {@code lane} (0 = the oldest's, innermost and lowest);
+	 * {@code height} is where the treasure's centre sits above the pedestal's block.
+	 */
+	public record Link(Player player, BlockPos pedestal, int years, int lane, float height) {}
 
 	/** Ticks qi takes to travel from a fruit to its orbit. */
 	public static final int FLOW_TICKS = 30;
@@ -74,7 +77,7 @@ public final class MeditationFormation {
 			List<SpiritPedestalBlockEntity> pedestals = CultivationBoost.pedestalsAround(level, player.blockPosition());
 			for (int lane = 0; lane < pedestals.size(); lane++) {
 				SpiritPedestalBlockEntity pedestal = pedestals.get(lane);
-				Link link = new Link(player, pedestal.getBlockPos(), pedestal.fruitAge(), lane);
+				Link link = new Link(player, pedestal.getBlockPos(), pedestal.fruitAge(), lane, pedestal.displayHeight());
 				found.add(link);
 				index.computeIfAbsent(pedestal.getBlockPos().asLong(), k -> new ArrayList<>()).add(link);
 			}
@@ -85,9 +88,9 @@ public final class MeditationFormation {
 
 	// ---- Geometry, shared with the renderer ----
 
-	/** The fruit's centre, floating over its pedestal. */
-	public static Vec3 fruitCentre(BlockPos pedestal) {
-		return Vec3.atLowerCornerOf(pedestal).add(0.5, FruitAura.PEDESTAL_FRUIT_Y, 0.5);
+	/** The centre of what a link's pedestal holds. */
+	public static Vec3 fruitCentre(Link link) {
+		return Vec3.atLowerCornerOf(link.pedestal()).add(0.5, link.height(), 0.5);
 	}
 
 	public static double laneRadius(int lane) { return 1.1 + 0.18 * lane; }
@@ -138,7 +141,7 @@ public final class MeditationFormation {
 	// ---- Particles ----
 
 	private static void particles(ClientLevel level, Link link, long time) {
-		Vec3 fruit = fruitCentre(link.pedestal());
+		Vec3 fruit = fruitCentre(link);
 		Vec3 feet = link.player().position();
 		FruitAura.Tier tier = FruitAura.of(link.years());
 		float[] rgb = FruitAura.colour(tier);

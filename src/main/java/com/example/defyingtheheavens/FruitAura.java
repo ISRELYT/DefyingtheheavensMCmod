@@ -35,6 +35,10 @@ public final class FruitAura {
     public static final float CENTER_Y = 10.5f / 16;
     /** Height of a fruit's centre above a Spirit Pedestal's block: floating a little over the pedestal's top (20 px, nubs 21). */
     public static final float PEDESTAL_FRUIT_Y = 1.675f;
+    /** Height of a growing ginseng's centre within its block (the bush is about 13 px tall). */
+    public static final float HERB_CENTER_Y = 0.45f;
+    /** Height of a ginseng's centre on a Spirit Pedestal, where it sits on the top (20 px) at a smaller size. */
+    public static final float PEDESTAL_HERB_Y = 1.55f;
     /**
      * How far the aura is pushed out to clear the fruit's skin. The aura was tuned on a fruit of about 1.25 px radius;
      * the peach is 4 px, so halos, ripples and motes start this much further out to stay visible around it.
@@ -154,10 +158,15 @@ public final class FruitAura {
         emit(level, pos, fruit.age(), pos.getX() + 0.5, pos.getY() + CENTER_Y, pos.getZ() + 0.5);
     }
 
-    /** Client ticker for a Spirit Pedestal: the fruit on display gives off the same aura as on the tree. */
+    /** Client ticker for growing ginseng: the same aura as a fruit of the same age. */
+    public static void herbClientTick(Level level, BlockPos pos, BlockState state, GinsengBlockEntity ginseng) {
+        emit(level, pos, ginseng.age(), pos.getX() + 0.5, pos.getY() + HERB_CENTER_Y, pos.getZ() + 0.5);
+    }
+
+    /** Client ticker for a Spirit Pedestal: the fruit or ginseng on display gives off the same aura as where it grew. */
     public static void pedestalClientTick(Level level, BlockPos pos, BlockState state, SpiritPedestalBlockEntity pedestal) {
         if (!pedestal.hasFruit()) return;
-        emit(level, pos, pedestal.fruitAge(), pos.getX() + 0.5, pos.getY() + PEDESTAL_FRUIT_Y, pos.getZ() + 0.5);
+        emit(level, pos, pedestal.fruitAge(), pos.getX() + 0.5, pos.getY() + pedestal.displayHeight(), pos.getZ() + 0.5);
     }
 
     /** The aura's particles and sounds for a fruit of {@code years} centred on (x, y, z); {@code pos} keys its clock. */

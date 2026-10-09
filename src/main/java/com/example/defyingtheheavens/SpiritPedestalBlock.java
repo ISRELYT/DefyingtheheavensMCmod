@@ -29,10 +29,10 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
- * A carved stone pedestal with jade inlays, taller than a block, that displays one Cultivation Fruit floating just above
- * its top. Right-click with a fruit to set it down, right-click again to take it back; breaking the pedestal gives back
- * both. A fruit on display
- * shows its age aura (as on the tree) and feeds anyone meditating nearby (see {@link CultivationBoost}).
+ * A carved stone pedestal with jade inlays, taller than a block, that displays one Cultivation Fruit (floating just
+ * above its top) or ginseng (sitting on it). Right-click with one to set it down, right-click again to take it back;
+ * breaking the pedestal gives back both. What is on display shows its age aura (as where it grew) and feeds anyone
+ * meditating nearby (see {@link CultivationBoost}).
  */
 public class SpiritPedestalBlock extends BaseEntityBlock {
     private static final VoxelShape SHAPE = Shapes.or(
@@ -58,7 +58,7 @@ public class SpiritPedestalBlock extends BaseEntityBlock {
         if (!(level.getBlockEntity(pos) instanceof SpiritPedestalBlockEntity pedestal)) return InteractionResult.PASS;
         if (!pedestal.hasFruit()) {
             ItemStack held = player.getItemInHand(hand);
-            if (!held.is(ModItems.CULTIVATION_FRUIT)) return InteractionResult.PASS; // lets the other hand try
+            if (!SpiritPedestalBlockEntity.canDisplay(held)) return InteractionResult.PASS; // lets the other hand try
             if (!level.isClientSide) {
                 ItemStack one = held.copy();
                 one.setCount(1);
