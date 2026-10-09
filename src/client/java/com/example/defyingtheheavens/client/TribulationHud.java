@@ -5,7 +5,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
-/** The strikes still to come while a tribulation is running; the clouds overhead are {@link TribulationClouds}. */
+/** The cultivator's strike counter; storm visuals are shared world entities, with no full-screen tint. */
 public final class TribulationHud {
 	public static void register() {
 		HudRenderCallback.EVENT.register((graphics, tickDelta) -> {
@@ -14,9 +14,10 @@ public final class TribulationHud {
 			if (mc.level == null || mc.options.hideGui) return;
 
 			int w = mc.getWindow().getGuiScaledWidth();
+
 			graphics.drawCenteredString(mc.font,
 					Component.translatable(ModLang.TRIB_HUD, ClientTribulationData.getTargetName(), ClientTribulationData.getStrikesLeft()),
-					w / 2, 24, 0xFF5555);
+					w / 2, 24, 0x8ECFFF);
 		});
 	}
 

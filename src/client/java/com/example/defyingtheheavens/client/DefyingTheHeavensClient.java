@@ -8,7 +8,6 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 
 public class DefyingTheHeavensClient implements ClientModInitializer {
@@ -18,21 +17,19 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 				com.example.defyingtheheavens.ModBlocks.CULTIVATION_FRUIT, net.minecraft.client.renderer.RenderType.cutout());
 		ModKeybinds.register();
 		ClientPacketHandlers.register();
-		QiHud.register(); // before the tribulation HUD, whose red tint then covers the Qi bar too
+		QiHud.register();
 		TribulationHud.register();
+		TribulationAtmosphere.register();
 		EntityRendererRegistry.register(ModEntities.TRIBULATION_LIGHTNING, TribulationLightningRenderer::new);
+		EntityRendererRegistry.register(ModEntities.TRIBULATION_CLOUD, TribulationCloudRenderer::new);
 		UpperRealmClient.register();
-
-		WorldRenderEvents.AFTER_TRANSLUCENT.register(TribulationClouds::render);
 
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
 			ClientTribulationData.clear();
 			ClientCultivationData.clear();
-			TribulationClouds.clear();
 		});
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
-			TribulationClouds.tick(client);
 			while (ModKeybinds.OPEN_MENU.consumeClick()) {
 				if (client.player != null && client.screen == null) {
 					client.setScreen(new CultivationScreen());

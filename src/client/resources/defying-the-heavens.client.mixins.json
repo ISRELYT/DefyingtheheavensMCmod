@@ -4,6 +4,7 @@
   "package": "com.example.defyingtheheavens.client.mixin",
   "compatibilityLevel": "JAVA_17",
   "client": [
+    "ClientLevelSkyMixin",
     "CreativeModeInventoryScreenMixin",
     "FogRendererMixin",
     "HumanoidModelMixin",

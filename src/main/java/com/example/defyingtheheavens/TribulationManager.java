@@ -8,6 +8,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LightningBolt;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.levelgen.Heightmap;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,7 +24,7 @@ import java.util.UUID;
  * State is runtime-only; a tribulation never survives a server restart or a disconnect.
  */
 public final class TribulationManager {
-	private static final int FIRST_STRIKE_DELAY = 60;  // 3 s of gathering clouds before the first bolt
+	private static final int FIRST_STRIKE_DELAY = 60;  // 3 s for the local cloud to gather before the first bolt
 	private static final int STRIKE_INTERVAL = 60;     // 3 s between strikes
 	private static final int FINISH_DELAY = 20;        // 1 s after the last strike before the breakthrough completes
 
@@ -36,6 +39,13 @@ public final class TribulationManager {
 		int nextStrikeIn = FIRST_STRIKE_DELAY;
 		int finishIn = FINISH_DELAY;
 		int age;
+		int ambientStrikeIn;
+		TribulationCloud cloud;
+
+		void removeCloud() {
+			if (cloud != null) cloud.discard();
+			cloud = null;
+		}
 
 		Trial(Realm targetRealm, Stage targetStage) {
 			this.targetRealm = targetRealm;
@@ -103,14 +113,6 @@ public final class TribulationManager {
 		};
 	}
 
-	/**
-	 * Radius in blocks of the tribulation cloud that gathers over the cultivator: wider the higher the realm and stage being
-	 * broken into, from 18 (Foundation Building) to 94 (Four Axis Grand Perfection). Drawn by the client.
-	 */
-	public static float cloudRadius(Realm target, Stage stage) {
-		return 2 + 4 * PlayerCultivation.rank(target, stage);
-	}
-
 	/** Entry point from the Breakthrough button. */
 	public static void start(ServerPlayer player) {
 		if (!player.isAlive()) return; // e.g. a modified client sending the packet from the death screen
@@ -131,9 +133,12 @@ public final class TribulationManager {
 
 		MeditationManager.stop(player, false); // no-op if not meditating
 		Trial trial = new Trial(c.breakthroughRealm(), c.breakthroughStage());
+		trial.ambientStrikeIn = 25 + player.getRandom().nextInt(20);
 		ACTIVE.put(player.getUUID(), trial);
 
-		announce(player, trial, true);
+		updateCloud(player, trial);
+		ModPackets.sendTribulation(player, true, trial.strikesLeft, trial.targetRealm, trial.targetStage);
+		player.playNotifySound(SoundEvents.ENDER_DRAGON_GROWL, SoundSource.AMBIENT, 1.0f, 0.5f);
 		player.playNotifySound(SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 2.0f, 0.4f);
 		player.sendSystemMessage(trial.strikesLeft == 1
 				? Component.translatable(ModLang.MSG_TRIB_START_SINGLE, trial.targetName())
@@ -150,12 +155,18 @@ public final class TribulationManager {
 			Trial t = entry.getValue();
 			ServerPlayer p = server.getPlayerList().getPlayer(id);
 			if (p == null) {
-				ACTIVE.remove(id);
+				forget(id);
 				continue;
 			}
 			if (!p.isAlive()) continue; // onDeath() handles failure
 
 			t.age++;
+			updateCloud(p, t);
+			if (--t.ambientStrikeIn <= 0) {
+				ambientStrike(p, t);
+				int tier = t.cloud == null ? 0 : t.cloud.stormTier();
+				t.ambientStrikeIn = 20 + p.getRandom().nextInt(45 - tier * 6);
+			}
 
 			if (t.strikesLeft > 0) {
 				if (--t.nextStrikeIn <= 0) {
@@ -163,7 +174,7 @@ public final class TribulationManager {
 					if (ACTIVE.get(id) != t) continue; // died just now
 					t.strikesLeft--;
 					t.nextStrikeIn = STRIKE_INTERVAL;
-					announce(p, t, true); // also flashes the cloud
+					ModPackets.sendTribulation(p, true, t.strikesLeft, t.targetRealm, t.targetStage);
 				}
 			} else if (--t.finishIn <= 0) {
 				survivors.add(p); // the last strike has faded
@@ -171,13 +182,32 @@ public final class TribulationManager {
 			}
 
 			if (t.age % 20 == 0) {
-				announce(p, t, true); // heartbeat: players who start tracking the cultivator late see the cloud too
-			}
-			if (t.age % 100 == 0) {
-				p.playNotifySound(SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 0.8f, 0.5f);
+				ModPackets.sendTribulation(p, true, t.strikesLeft, t.targetRealm, t.targetStage);
 			}
 		}
 		survivors.forEach(TribulationManager::succeed);
+	}
+
+	/** Atmospheric bolts only: no fire, damage, or terrain/chunk generation. */
+	private static void ambientStrike(ServerPlayer p, Trial t) {
+		ServerLevel level = p.serverLevel();
+		int tier = t.cloud == null ? 0 : t.cloud.stormTier();
+		for (int attempt = 0; attempt < 6; attempt++) {
+			double angle = p.getRandom().nextDouble() * Math.PI * 2;
+			double radius = 28 + p.getRandom().nextDouble() * (20 + tier * 10);
+			int x = Mth.floor(p.getX() + Math.cos(angle) * radius);
+			int z = Mth.floor(p.getZ() + Math.sin(angle) * radius);
+			if (!level.hasChunkAt(new BlockPos(x, p.getBlockY(), z))) continue;
+			int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
+			if (y >= TribulationCloud.cloudBaseY(level, p.getY()) - 8) continue;
+			LightningBolt bolt = ModEntities.TRIBULATION_LIGHTNING.create(level);
+			if (bolt == null) return;
+			bolt.moveTo(x + 0.5, y, z + 0.5);
+			bolt.setVisualOnly(true);
+			level.addFreshEntity(bolt);
+			if (t.cloud != null) t.cloud.flash();
+			return;
+		}
 	}
 
 	private static void strike(ServerPlayer p, Trial t) {
@@ -187,6 +217,7 @@ public final class TribulationManager {
 		bolt.moveTo(p.getX(), p.getY(), p.getZ());
 		bolt.setVisualOnly(true); // 1.20.1 bolts always deal a flat 5, so the tribulation's hit is applied by hand below
 		level.addFreshEntity(bolt);
+		if (t.cloud != null) t.cloud.flash();
 
 		// Both parts land in the same tick as the bolt. Clearing the hurt cooldown in between stops vanilla from
 		// discarding the second hit; magic goes first so a killing strike usually reads "struck by lightning".
@@ -205,7 +236,8 @@ public final class TribulationManager {
 		Trial t = ACTIVE.remove(p.getUUID());
 		if (t == null) return;
 
-		announce(p, t, false);
+		t.removeCloud();
+		ModPackets.sendTribulation(p, false, 0, t.targetRealm, t.targetStage);
 
 		PlayerCultivation c = CultivationManager.get(p);
 		boolean sameTarget = c.breakthroughRealm() == t.targetRealm && c.breakthroughStage() == t.targetStage;
@@ -234,33 +266,45 @@ public final class TribulationManager {
 		c.fallOneStage();
 		CultivationManager.markDirty(p.server);
 
-		announce(p, t, false);
+		t.removeCloud();
+		ModPackets.sendTribulation(p, false, 0, t.targetRealm, t.targetStage);
 		p.server.getPlayerList().broadcastSystemMessage(Component.translatable(ModLang.MSG_TRIB_FAILED, p.getDisplayName()), false);
 		p.sendSystemMessage(Component.translatable(ModLang.MSG_TRIB_FALL, PlayerCultivation.rankName(c.getRealm(), c.getStage())));
 		// The respawn event re-applies the lowered stats and re-syncs the client.
 	}
 
-	/** Disconnect: the trial is cancelled without reward or penalty. Watchers' clouds fade once their heartbeat stops. */
+	/** Disconnect: the trial is cancelled without reward or penalty. */
 	public static void forget(UUID id) {
-		ACTIVE.remove(id);
+		Trial trial = ACTIVE.remove(id);
+		if (trial != null) trial.removeCloud();
 	}
 
-	/**
-	 * Falling out of the Upper Realm mid-trial: cancelled without reward or penalty, like a disconnect. The cloud stays
-	 * behind in the sky and fades rather than following the cultivator into the void and the Spatial Gap.
-	 */
+	/** Falling out of the Upper Realm mid-trial: cancelled without reward or penalty, like a disconnect. */
 	public static void abandon(ServerPlayer p) {
 		Trial t = ACTIVE.remove(p.getUUID());
 		if (t == null) return;
-		announce(p, t, false);
+		t.removeCloud();
+		ModPackets.sendTribulation(p, false, 0, t.targetRealm, t.targetStage);
 		p.sendSystemMessage(Component.translatable(ModLang.MSG_TRIB_ABANDONED));
 	}
 
-	/** The cultivator's HUD state, and the cloud over them for them and everyone watching. */
-	private static void announce(ServerPlayer p, Trial t, boolean active) {
-		int strikesLeft = active ? t.strikesLeft : 0;
-		ModPackets.sendTribulation(p, active, strikesLeft, t.targetRealm, t.targetStage);
-		ModPackets.broadcastTribulationCloud(p, active, strikesLeft, t.targetRealm, t.targetStage);
+	/** Follows movement and recreates the tracked entity if the player changes dimensions. */
+	private static void updateCloud(ServerPlayer player, Trial trial) {
+		if (trial.cloud == null || trial.cloud.isRemoved() || trial.cloud.level() != player.level()) {
+			trial.removeCloud();
+			trial.cloud = ModEntities.TRIBULATION_CLOUD.create(player.serverLevel());
+			if (trial.cloud == null) return;
+			trial.cloud.configure(trial.targetRealm);
+			trial.cloud.setPos(player.getX(), TribulationCloud.cloudBaseY(player.level(), player.getY()), player.getZ());
+			player.serverLevel().addFreshEntity(trial.cloud);
+		}
+		trial.cloud.follow(player.position());
+	}
+
+	/** Clear references before a world/server is closed, including singleplayer world switches. */
+	public static void clear() {
+		ACTIVE.values().forEach(Trial::removeCloud);
+		ACTIVE.clear();
 	}
 
 	private TribulationManager() {}
