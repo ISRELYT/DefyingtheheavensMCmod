@@ -5,6 +5,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -31,7 +32,14 @@ public class CultivationFruitItem extends Item {
             CultivationManager.get(player).addCultivation(amount);
             CultivationManager.refresh(player);
         }
-        return super.finishUsingItem(stack, level, consumer);
+        ItemStack rest = super.finishUsingItem(stack, level, consumer);
+        // The stone is left in your hand (or pocket), ready to plant a Spirit Peach Tree.
+        if (!level.isClientSide && consumer instanceof Player player) {
+            ItemStack pit = new ItemStack(ModItems.PEACH_PIT);
+            if (rest.isEmpty()) return pit;
+            if (!player.getInventory().add(pit)) player.drop(pit, false);
+        }
+        return rest;
     }
 
     @Override

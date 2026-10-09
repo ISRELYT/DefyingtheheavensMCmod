@@ -26,9 +26,10 @@ Breaking the fruit or removing its supporting leaves drops the fruit with its ag
 
 - Starts at 1 year, gains **10 years per Minecraft day** (one year per 2,400 server ticks), and caps at 10,000 years.
 - Uses elapsed server game time, including time while its chunk is unloaded; it does not age while the server is stopped. Sleeping and `/time` changes do not accelerate the clock.
-- Harvested fruit stores its age permanently, cannot be placed back, and can be eaten even at full hunger.
+- Harvested fruit stores its age permanently, cannot be placed back, and can be eaten even at full hunger. Eating it
+  leaves a Peach Pit that grows a Spirit Peach Tree (see below).
 - Eating grants up to **10 cultivation per year**. Existing suppression, stage caps, and tribulation rules still apply.
-- The creative Food & Drinks tab has a one-year fruit. Saplings, farming, and automatic regrowth are not implemented yet.
+- The creative Food & Drinks tab has a one-year fruit.
 
 ### Wild fruit
 
@@ -133,6 +134,26 @@ With cheats/operator permissions:
 /ginseng plant 10000 spirit  the same, Spirit Ginseng
 /ginseng give 500 [spirit]   a harvested root
 ```
+
+## Spirit Peach Trees
+
+Eating a Cultivation Fruit leaves its **Peach Pit**. Plant the pit in soil and it grows into a **Spirit Peach Sapling**,
+which grows (in light over time, or faster with bone meal, like any sapling) into a small **Spirit Peach Tree**: a
+cherry-wood trunk with green leaves and peach blossoms, about 6 blocks tall.
+
+- The tree's base is its **heart** (it looks like cherry wood). The heart keeps the tree's age, which starts at 1 year
+  and grows 10 years a day like a fruit, and grows fruit under the tree's leaves: up to 3 at a time, one about every
+  5 minutes while there is room. New fruit start at 1 year and age normally, so a tree's fruit is never older than the tree.
+- **Pouring qi into the tree:** sneak and right-click the heart with an empty hand. Only a cultivator with a Golden Core
+  (Core Formation or higher) can do it. It spends as much of your qi as buys whole years, and ages the tree and every
+  fruit on it by that many years. Each year costs more the older the tree is: about 20 qi for a young tree, 180 at 750
+  years, 800 at 5,000 years and 1,300 at 9,000. As a guide, taking a tree from nothing to 1,000 years takes about 4 hours
+  of feeding at Core Formation, 1 hour at Nascent Soul and 25 minutes at Heavenly Being; 10,000 years takes about 9 hours
+  at Four Axis (natural ageing: 33 and 333 hours). The cost curve is `COST_*` in `SpiritPeachHeartBlockEntity.java`.
+- Breaking the heart gives an ordinary cherry log, and the tree no longer bears fruit. Spirit Peach leaves drop only to shears.
+- Code: `SpiritPeachTree` (the shape), `SpiritPeachSaplingBlock`, `SpiritPeachHeartBlock(Entity)`, `PeachPitItem`.
+  Textures: `block/spirit_peach_leaves.png`, `block/spirit_peach_sapling.png`, `item/peach_pit.png`; the wood is vanilla
+  cherry. Run `gradlew.bat runDatagen` once so the heart is cut quickly with an axe.
 
 ## Spirit Pedestals and meditation boosts
 

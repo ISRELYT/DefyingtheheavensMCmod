@@ -9,7 +9,8 @@
       "com.example.defyingtheheavens.CultivationFruitGameTests",
       "com.example.defyingtheheavens.TribulationCloudGameTests",
       "com.example.defyingtheheavens.SpiritPedestalGameTests",
-      "com.example.defyingtheheavens.GinsengGameTests"
+      "com.example.defyingtheheavens.GinsengGameTests",
+      "com.example.defyingtheheavens.SpiritPeachGameTests"
     ]
   }
 }

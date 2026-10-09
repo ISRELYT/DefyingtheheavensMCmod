@@ -20,8 +20,11 @@ public class ModBlockTagProvider extends FabricTagProvider.BlockTagProvider {
 		getOrCreateTagBuilder(BlockTags.STONE_ORE_REPLACEABLES).add(ModBlocks.JADE_STONE);
 		getOrCreateTagBuilder(BlockTags.BASE_STONE_OVERWORLD).add(ModBlocks.JADE_STONE);
 
-		getOrCreateTagBuilder(BlockTags.LEAVES).add(ModBlocks.WHITE_BLOSSOM_LEAVES);
-		getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_HOE).add(ModBlocks.WHITE_BLOSSOM_LEAVES);
+		getOrCreateTagBuilder(BlockTags.LEAVES).add(ModBlocks.WHITE_BLOSSOM_LEAVES).add(ModBlocks.SPIRIT_PEACH_LEAVES);
+		getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_HOE).add(ModBlocks.WHITE_BLOSSOM_LEAVES).add(ModBlocks.SPIRIT_PEACH_LEAVES);
+		// The Spirit Peach Tree's heart counts as a log: its leaves stay alive around it, and an axe cuts it.
+		getOrCreateTagBuilder(BlockTags.LOGS).add(ModBlocks.SPIRIT_PEACH_HEART);
+		getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_AXE).add(ModBlocks.SPIRIT_PEACH_HEART);
 
 		// The rift must survive dragons, withers and feature placement.
 		getOrCreateTagBuilder(BlockTags.DRAGON_IMMUNE).add(ModBlocks.SPATIAL_RIFT);

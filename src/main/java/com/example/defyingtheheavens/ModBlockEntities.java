@@ -22,6 +22,11 @@ public final class ModBlockEntities {
 			DefyingTheHeavens.id("ginseng"),
 			BlockEntityType.Builder.of(GinsengBlockEntity::new, ModBlocks.GINSENG, ModBlocks.SPIRIT_GINSENG).build(null));
 
+	/** A Spirit Peach Tree's heart: its age, its fruit, the qi poured into it. */
+	public static final BlockEntityType<SpiritPeachHeartBlockEntity> SPIRIT_PEACH_HEART = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
+			DefyingTheHeavens.id("spirit_peach_heart"),
+			BlockEntityType.Builder.of(SpiritPeachHeartBlockEntity::new, ModBlocks.SPIRIT_PEACH_HEART).build(null));
+
 	/** Touching this class registers the block entity types. */
 	public static void register() {
 	}

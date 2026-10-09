@@ -21,6 +21,9 @@ public final class ModItems {
 	public static final Item GINSENG = register("ginseng", new GinsengItem(new Item.Properties()));
 	public static final Item SPIRIT_GINSENG = register("spirit_ginseng", new GinsengItem(new Item.Properties().rarity(Rarity.RARE)));
 
+	/** Left over after eating a Cultivation Fruit; plants a Spirit Peach sapling. */
+	public static final Item PEACH_PIT = register("peach_pit", new PeachPitItem(ModBlocks.SPIRIT_PEACH_SAPLING, new Item.Properties()));
+
 	private static Item register(String id, Item item) {
 		return Registry.register(BuiltInRegistries.ITEM, new ResourceLocation(DefyingTheHeavens.MOD_ID, id), item);
 	}
@@ -29,6 +32,7 @@ public final class ModItems {
 	public static void register() {
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.FOOD_AND_DRINKS).register(entries ->
 				entries.accept(CultivationFruitItem.create(1)));
+		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.NATURAL_BLOCKS).register(entries -> entries.accept(PEACH_PIT));
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.INGREDIENTS).register(entries -> {
 			entries.accept(GinsengItem.create(GINSENG, 1));
 			entries.accept(GinsengItem.create(SPIRIT_GINSENG, 1));

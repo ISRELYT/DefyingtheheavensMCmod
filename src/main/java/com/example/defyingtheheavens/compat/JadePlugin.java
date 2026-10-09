@@ -5,6 +5,8 @@ import com.example.defyingtheheavens.CultivationFruitBlockEntity;
 import com.example.defyingtheheavens.DefyingTheHeavens;
 import com.example.defyingtheheavens.GinsengBlock;
 import com.example.defyingtheheavens.GinsengBlockEntity;
+import com.example.defyingtheheavens.SpiritPeachHeartBlock;
+import com.example.defyingtheheavens.SpiritPeachHeartBlockEntity;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -29,6 +31,7 @@ public class JadePlugin implements IWailaPlugin {
 	public void registerClient(IWailaClientRegistration registration) {
 		registration.registerBlockComponent(FruitAge.INSTANCE, CultivationFruitBlock.class);
 		registration.registerBlockComponent(FruitAge.INSTANCE, GinsengBlock.class);
+		registration.registerBlockComponent(FruitAge.INSTANCE, SpiritPeachHeartBlock.class);
 	}
 
 	private enum FruitAge implements IBlockComponentProvider {
@@ -37,7 +40,8 @@ public class JadePlugin implements IWailaPlugin {
 		@Override
 		public void appendTooltip(ITooltip tooltip, BlockAccessor accessor, IPluginConfig config) {
 			int age = accessor.getBlockEntity() instanceof CultivationFruitBlockEntity fruit ? fruit.age()
-					: accessor.getBlockEntity() instanceof GinsengBlockEntity ginseng ? ginseng.age() : -1;
+					: accessor.getBlockEntity() instanceof GinsengBlockEntity ginseng ? ginseng.age()
+					: accessor.getBlockEntity() instanceof SpiritPeachHeartBlockEntity heart ? heart.age() : -1;
 			if (age > 0) {
 				tooltip.add(Component.translatable("item.defying-the-heavens.cultivation_fruit.age", age).withStyle(ChatFormatting.GOLD));
 			}

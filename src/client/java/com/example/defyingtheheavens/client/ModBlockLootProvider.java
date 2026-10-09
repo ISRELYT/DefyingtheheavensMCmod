@@ -15,5 +15,6 @@ public class ModBlockLootProvider extends FabricBlockLootTableProvider {
 		dropSelf(ModBlocks.MEDITATION_MAT);
 		dropSelf(ModBlocks.RED_MEDITATION_MAT);
 		add(ModBlocks.WHITE_BLOSSOM_LEAVES, createShearsOnlyDrop(ModBlocks.WHITE_BLOSSOM_LEAVES));
+		add(ModBlocks.SPIRIT_PEACH_LEAVES, createShearsOnlyDrop(ModBlocks.SPIRIT_PEACH_LEAVES));
 	}
 }

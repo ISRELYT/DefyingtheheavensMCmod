@@ -56,6 +56,14 @@ public final class ModBlocks {
 	public static final Block SPIRIT_GINSENG = register("spirit_ginseng", new GinsengBlock(() -> ModItems.SPIRIT_GINSENG,
 			ginsengProperties(MapColor.COLOR_LIGHT_GREEN)));
 
+	/** Spirit Peach Tree (see SpiritPeachTree): the sapling a peach pit grows into, its leaves, and the heart at its base. */
+	public static final Block SPIRIT_PEACH_SAPLING = register("spirit_peach_sapling",
+			new SpiritPeachSaplingBlock(BlockBehaviour.Properties.copy(Blocks.CHERRY_SAPLING)));
+	public static final Block SPIRIT_PEACH_LEAVES = registerWithItem("spirit_peach_leaves",
+			new LeavesBlock(BlockBehaviour.Properties.copy(Blocks.FLOWERING_AZALEA_LEAVES)));
+	public static final Block SPIRIT_PEACH_HEART = register("spirit_peach_heart",
+			new SpiritPeachHeartBlock(BlockBehaviour.Properties.copy(Blocks.CHERRY_LOG)));
+
 	private static BlockBehaviour.Properties ginsengProperties(MapColor colour) {
 		return BlockBehaviour.Properties.of().mapColor(colour).noCollission().noOcclusion().instabreak()
 				.sound(SoundType.SWEET_BERRY_BUSH).pushReaction(PushReaction.DESTROY).ignitedByLava();
@@ -74,6 +82,8 @@ public final class ModBlocks {
 	/** Touching this class registers the blocks; also wires flammability and creative tabs. */
 	public static void register() {
 		FlammableBlockRegistry.getDefaultInstance().add(WHITE_BLOSSOM_LEAVES, 30, 60);
+		FlammableBlockRegistry.getDefaultInstance().add(SPIRIT_PEACH_LEAVES, 30, 60);
+		FlammableBlockRegistry.getDefaultInstance().add(SPIRIT_PEACH_HEART, 5, 5);
 		FlammableBlockRegistry.getDefaultInstance().add(MEDITATION_MAT, 60, 20);
 		FlammableBlockRegistry.getDefaultInstance().add(RED_MEDITATION_MAT, 60, 20);
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS).register(entries -> {
@@ -84,6 +94,7 @@ public final class ModBlocks {
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.NATURAL_BLOCKS).register(entries -> {
 			entries.accept(JADE_STONE);
 			entries.accept(WHITE_BLOSSOM_LEAVES);
+			entries.accept(SPIRIT_PEACH_LEAVES);
 		});
 	}
 

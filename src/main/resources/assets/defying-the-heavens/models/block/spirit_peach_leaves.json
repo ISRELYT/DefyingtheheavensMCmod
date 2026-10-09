@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/leaves",
+  "textures": {
+    "all": "defying-the-heavens:block/spirit_peach_leaves"
+  }
+}

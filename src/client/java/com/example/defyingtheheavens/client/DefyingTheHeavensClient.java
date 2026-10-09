@@ -20,7 +20,10 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE.putBlock(
 				com.example.defyingtheheavens.ModBlocks.WHITE_BLOSSOM_LEAVES, net.minecraft.client.renderer.RenderType.cutoutMipped());
 		net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE.putBlocks(net.minecraft.client.renderer.RenderType.cutout(),
-				com.example.defyingtheheavens.ModBlocks.GINSENG, com.example.defyingtheheavens.ModBlocks.SPIRIT_GINSENG);
+				com.example.defyingtheheavens.ModBlocks.GINSENG, com.example.defyingtheheavens.ModBlocks.SPIRIT_GINSENG,
+				com.example.defyingtheheavens.ModBlocks.SPIRIT_PEACH_SAPLING);
+		net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE.putBlock(
+				com.example.defyingtheheavens.ModBlocks.SPIRIT_PEACH_LEAVES, net.minecraft.client.renderer.RenderType.cutoutMipped());
 		net.minecraft.client.renderer.blockentity.BlockEntityRenderers.register(
 				com.example.defyingtheheavens.ModBlockEntities.GINSENG, context -> new GinsengAuraRenderer());
 		net.minecraft.client.renderer.blockentity.BlockEntityRenderers.register(

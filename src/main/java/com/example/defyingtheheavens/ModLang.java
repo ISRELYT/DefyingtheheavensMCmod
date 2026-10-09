@@ -128,5 +128,12 @@ public final class ModLang {
 	public static final String GINSENG_HARVESTED = k("tooltip.ginseng_harvested");
 	public static final String GINSENG_FULL = k("message.ginseng_full");
 
+	// Spirit Peach Tree
+	public static final String PEACH_PIT_TOOLTIP = k("tooltip.peach_pit");
+	public static final String PEACH_NEED_CORE = k("message.peach.need_core");
+	public static final String PEACH_NOT_ENOUGH = k("message.peach.not_enough");
+	public static final String PEACH_MAX = k("message.peach.max");
+	public static final String PEACH_FED = k("message.peach.fed");
+
 	private ModLang() {}
 }

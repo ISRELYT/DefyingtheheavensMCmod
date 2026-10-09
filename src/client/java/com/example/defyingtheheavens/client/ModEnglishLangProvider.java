@@ -34,6 +34,15 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModBlocks.GINSENG, "Ginseng");
 		t.add(ModItems.SPIRIT_GINSENG, "Spirit Ginseng");
 		t.add(ModBlocks.SPIRIT_GINSENG, "Spirit Ginseng");
+		t.add(ModItems.PEACH_PIT, "Peach Pit");
+		t.add(ModBlocks.SPIRIT_PEACH_SAPLING, "Spirit Peach Sapling");
+		t.add(ModBlocks.SPIRIT_PEACH_LEAVES, "Spirit Peach Leaves");
+		t.add(ModBlocks.SPIRIT_PEACH_HEART, "Spirit Peach Heart");
+		t.add(ModLang.PEACH_PIT_TOOLTIP, "Plant it in soil to grow a Spirit Peach Tree");
+		t.add(ModLang.PEACH_NEED_CORE, "Only a cultivator with a Golden Core (Core Formation) can pour qi into the tree.");
+		t.add(ModLang.PEACH_NOT_ENOUGH, "Not enough qi: the tree needs %s for its next year.");
+		t.add(ModLang.PEACH_MAX, "This tree has reached 10,000 years. It can grow no older.");
+		t.add(ModLang.PEACH_FED, "You pour %s qi into the tree. It grows %s years (now %s years old).");
 		t.add(ModLang.GINSENG_INGREDIENT, "An ingredient for pills and elixirs");
 		t.add(ModLang.GINSENG_HARVESTED, "Harvested: no longer ages and cannot be replanted");
 		t.add(ModLang.GINSENG_FULL, "Your inventory is full. Make room to dig up this ginseng.");
