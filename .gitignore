@@ -5,6 +5,9 @@ build/
 out/
 classes/
 
+# local launcher downloads, caches, and logs
+/.launcher/
+
 # eclipse
 
 *.launch
