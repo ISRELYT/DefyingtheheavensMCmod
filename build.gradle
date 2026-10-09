@@ -23,6 +23,11 @@ loom {
 }
 
 fabricApi {
+	configureTests {
+		createSourceSet = true
+		modId = "defying-the-heavens-tests"
+		enableClientGameTests = false
+	}
 	configureDataGeneration {
 		client = true
 		modId = "defying-the-heavens"

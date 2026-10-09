@@ -5,6 +5,9 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 
 public final class ModBlockEntities {
+	public static final BlockEntityType<CultivationFruitBlockEntity> CULTIVATION_FRUIT = Registry.register(
+			BuiltInRegistries.BLOCK_ENTITY_TYPE, DefyingTheHeavens.id("cultivation_fruit"),
+			BlockEntityType.Builder.of(CultivationFruitBlockEntity::new, ModBlocks.CULTIVATION_FRUIT).build(null));
 	/** Carries no data; it exists so the client can draw the rift with a block entity renderer. */
 	public static final BlockEntityType<SpatialRiftBlockEntity> SPATIAL_RIFT = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
 			DefyingTheHeavens.id("spatial_rift"),

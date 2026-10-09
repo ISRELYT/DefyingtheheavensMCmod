@@ -17,6 +17,12 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 	@Override
 	public void generateTranslations(TranslationBuilder t) {
 		// Items
+		t.add(ModItems.CULTIVATION_FRUIT, "Cultivation Fruit");
+		t.add(ModBlocks.CULTIVATION_FRUIT, "Cultivation Fruit");
+		t.add("item.defying-the-heavens.cultivation_fruit.age", "Age: %s years");
+		t.add("item.defying-the-heavens.cultivation_fruit.gain", "Eat for up to %s cultivation (stage limits apply)");
+		t.add("item.defying-the-heavens.cultivation_fruit.picked", "Harvested: no longer ages and cannot be replanted");
+		t.add("item.defying-the-heavens.cultivation_fruit.full", "Your inventory is full. Make room to harvest this fruit.");
 		t.add(ModItems.RING_OF_POWER, "Ring of Power");
 		t.add(ModLang.RING_OF_POWER_TOOLTIP, "When worn: +%s cultivation per second while meditating");
 		t.add(ModItems.RING_OF_TRANSCENDENCE, "Ring of Transcendence");

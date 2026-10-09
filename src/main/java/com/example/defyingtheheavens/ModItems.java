@@ -9,6 +9,9 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
 
 public final class ModItems {
+	public static final Item CULTIVATION_FRUIT = register("cultivation_fruit", new CultivationFruitItem(
+			new Item.Properties().food(new net.minecraft.world.food.FoodProperties.Builder()
+					.nutrition(4).saturationMod(0.3f).alwaysEat().build())));
 	public static final Item RING_OF_POWER = register("ring_of_power",
 			new RingOfPowerItem(new Item.Properties().rarity(Rarity.EPIC)));
 	public static final Item RING_OF_TRANSCENDENCE = register("ring_of_transcendence",
@@ -20,6 +23,8 @@ public final class ModItems {
 
 	/** Touching this class registers the items; also lists them in the creative menu. */
 	public static void register() {
+		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.FOOD_AND_DRINKS).register(entries ->
+				entries.accept(CultivationFruitItem.create(1)));
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(entries -> {
 			entries.accept(RING_OF_POWER);
 			entries.accept(RING_OF_TRANSCENDENCE);
