@@ -4,6 +4,20 @@
 
 For setup instructions, please see the [Fabric Documentation page](https://docs.fabricmc.net/develop/getting-started/creating-a-project#setting-up) related to the IDE that you are using.
 
+### Windows launcher
+
+Double-click **Play Defying The Heavens.exe** to build and play this checkout.
+Keep the EXE beside `gradlew.bat` and the entire `launcher` folder. Java downloads,
+Gradle caches, and launcher logs stay in the ignored `.launcher` folder.
+
+To rebuild the EXE, run:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\launcher\Build-Launcher.ps1
+```
+
+See [launcher/README.md](launcher/README.md) for setup and troubleshooting.
+
 ## Cultivation fruit
 
 The Blockbench fruit is available as an edible item and a block hanging directly below leaves.
