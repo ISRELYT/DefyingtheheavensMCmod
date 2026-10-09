@@ -18,6 +18,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		net.minecraft.client.renderer.blockentity.BlockEntityRenderers.register(
 				com.example.defyingtheheavens.ModBlockEntities.CULTIVATION_FRUIT, context -> new CultivationFruitAuraRenderer());
 		ModKeybinds.register();
+		BaublePanel.register();
 		ClientPacketHandlers.register();
 		QiHud.register();
 		TribulationHud.register();

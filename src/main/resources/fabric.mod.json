@@ -9,7 +9,8 @@
   "entrypoints": {
     "main": ["com.example.defyingtheheavens.DefyingTheHeavens"],
     "client": ["com.example.defyingtheheavens.client.DefyingTheHeavensClient"],
-    "fabric-datagen": ["com.example.defyingtheheavens.client.DefyingTheHeavensDataGenerator"]
+    "fabric-datagen": ["com.example.defyingtheheavens.client.DefyingTheHeavensDataGenerator"],
+    "jade": ["com.example.defyingtheheavens.compat.JadePlugin"]
   },
   "mixins": [
     "defying-the-heavens.mixins.json",
@@ -24,5 +25,8 @@
     "minecraft": "~1.20.1",
     "java": ">=17",
     "fabric-api": "*"
+  },
+  "suggests": {
+    "jade": "*"
   }
 }

@@ -24,6 +24,10 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add("item.defying-the-heavens.cultivation_fruit.gain", "Eat for up to %s cultivation (stage limits apply)");
 		t.add("item.defying-the-heavens.cultivation_fruit.picked", "Harvested: no longer ages and cannot be replanted");
 		t.add("item.defying-the-heavens.cultivation_fruit.full", "Your inventory is full. Make room to harvest this fruit.");
+		t.add(ModBlocks.MEDITATION_MAT, "Meditation Mat");
+		t.add("gui.defying-the-heavens.baubles", "Baubles");
+		t.add("config.jade.plugin_defying-the-heavens.fruit_age", "Cultivation Fruit Age"); // Jade's toggle for the fruit-age tooltip
+		t.add(ModBlocks.RED_MEDITATION_MAT, "Red Silk Meditation Mat");
 		t.add(ModItems.RING_OF_POWER, "Ring of Power");
 		t.add(ModLang.RING_OF_POWER_TOOLTIP, "When worn: +%s cultivation per second while meditating");
 		t.add(ModItems.RING_OF_TRANSCENDENCE, "Ring of Transcendence");

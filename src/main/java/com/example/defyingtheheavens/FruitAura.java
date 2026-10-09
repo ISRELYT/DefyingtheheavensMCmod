@@ -31,8 +31,13 @@ import org.joml.Vector3f;
 public final class FruitAura {
     public enum Tier { NONE, HUNDRED_YEAR, FIVE_HUNDRED_YEAR, THOUSAND_YEAR, HEAVENLY, TEN_THOUSAND_YEAR }
 
-    /** Height of the fruit's centre within its block (it hangs from the leaves above). */
-    public static final float CENTER_Y = 0.86f;
+    /** Height of the fruit's centre within its block (it hangs from the leaves above; body spans y 6.5..14.5 px). */
+    public static final float CENTER_Y = 10.5f / 16;
+    /**
+     * How far the aura is pushed out to clear the fruit's skin. The aura was tuned on a fruit of about 1.25 px radius;
+     * the peach is 4 px, so halos, ripples and motes start this much further out to stay visible around it.
+     */
+    public static final float SKIN = (4.0f - 1.25f) / 16;
     /** Jade's slow breath. */
     public static final int BREATH_TICKS = 70;
     /** How often a ripple spreads from an aqua fruit. */
@@ -187,8 +192,15 @@ public final class FruitAura {
 
     /** A mote hovering somewhere near the fruit. */
     private static void mote(Level level, RandomSource random, ParticleOptions particle, double x, double y, double z, double spread) {
-        level.addParticle(particle, x + random.nextGaussian() * spread * 0.5, y + random.nextGaussian() * spread * 0.4,
-                z + random.nextGaussian() * spread * 0.5, 0, 0.01, 0);
+        double dx = random.nextGaussian() * spread * 0.5, dy = random.nextGaussian() * spread * 0.4, dz = random.nextGaussian() * spread * 0.5;
+        // Keep motes outside the fruit: anything that lands inside is pushed out to just beyond the skin.
+        double d = Math.sqrt(dx * dx + dy * dy + dz * dz), min = 0.25 + 0.05;
+        if (d < min) {
+            double scale = d < 1.0e-3 ? 0 : min / d;
+            dx *= scale; dy *= scale; dz *= scale;
+            if (scale == 0) dy = min;
+        }
+        level.addParticle(particle, x + dx, y + dy, z + dz, 0, 0.01, 0);
     }
 
     /** A handful of motes on a small sphere around the fruit, released together. */
@@ -225,7 +237,7 @@ public final class FruitAura {
 
     /** A wisp of light lifting off the fruit. */
     private static void wisp(Level level, RandomSource random, double x, double y, double z, double speed) {
-        level.addParticle(ParticleTypes.END_ROD, x + random.nextGaussian() * 0.15, y + 0.1, z + random.nextGaussian() * 0.15, 0, speed, 0);
+        level.addParticle(ParticleTypes.END_ROD, x + random.nextGaussian() * 0.15, y + 0.3, z + random.nextGaussian() * 0.15, 0, speed, 0);
     }
 
     private static void chime(Level level, double x, double y, double z, float volume, float pitch) {

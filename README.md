@@ -78,13 +78,36 @@ The command accepts any initial age from 1 to 10,000. To test eating an ancient 
 /cultivationfruit give 10000
 ```
 
-Balance constants are in `FruitAge.java`. The game imports copies of the model and textures from
-`Models/CultivationFruit`; source art is unchanged. The block copy is moved upward to hang from the canopy,
-while the item retains the artist's display transforms. Invalid exported resource references and the missing
-upper-bottom face texture are repaired in the imported copies.
+Balance constants are in `FruitAge.java`. The fruit is a peach: cream-gold skin with a red blush on its sun side,
+a cleft down the front, a stem and two leaves, about half a block across and hanging from the leaves above. The game
+uses copies of the model and textures from `Models/CultivationPeach` (`models/block|item/cultivation_fruit.json`,
+`textures/item/cultivation_fruit/`); the item model carries display settings sized for the hand and inventory. The
+original small fruit is still in `Models/CultivationFruit`.
 
 Run `gradlew.bat runGameTest` for server-side fruit integration tests, or `gradlew.bat build` for tests and a distributable JAR.
 Run `gradlew.bat runDatagen` separately before a build when updating generated translations.
+
+## Baubles
+
+Rings are worn in the bauble panel. In the survival inventory, click the small ring button at the top left of the
+player preview to open a panel on the left of the inventory with the bauble slots (two ring slots); click it again to
+close it. Shift-clicking a ring puts it on even while the panel is closed. The panel closes while the recipe book is
+open. In the creative inventory tab the ring slots show right of the armor, as before. Code: `client/BaublePanel.java`,
+`client/mixin/InventoryScreenMixin.java`, `RingSlot.java`.
+
+## Meditation mats
+
+A **Meditation Mat** (a flat, round mat of coiled straw) and a **Red Silk Meditation Mat** (the same mat with a square of
+red silk laid across it) can be placed on any block. Each is drawn one and a half blocks across, overhanging its block by
+a quarter block on every side; only the middle block is solid, so leave a block between mats so they don't overlap. Right-click a mat to sit in its centre and start meditating: the same
+checks, messages and cultivation gain as the meditation key. Right-click again, or move, to stop. The mats give no extra
+bonus yet.
+
+- Meditation Mat: three wheat in a row.
+- Red Silk Meditation Mat: a Meditation Mat and red carpet (shapeless).
+
+Source models are in `Models/MeditationMat` and `Models/RedMeditationMat` (Blockbench project, model JSON and textures);
+the game uses copies under `assets/defying-the-heavens` (`meditation_mat*`, `red_meditation_mat*`).
 
 ## License
 

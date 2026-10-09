@@ -102,6 +102,7 @@ public class CultivationFruitAuraRenderer implements BlockEntityRenderer<Cultiva
 	/** A camera-facing disc, brightest at the centre and fading to nothing at its rim. */
 	private static void halo(PoseStack poseStack, Camera camera, VertexConsumer consumer, float radius, float[] rgb, float alpha) {
 		if (alpha < 0.005f) return;
+		radius += FruitAura.SKIN;
 		poseStack.pushPose();
 		poseStack.mulPose(camera.rotation());
 		Matrix4f pose = poseStack.last().pose();
@@ -115,7 +116,7 @@ public class CultivationFruitAuraRenderer implements BlockEntityRenderer<Cultiva
 	private static void ripple(PoseStack poseStack, Camera camera, VertexConsumer consumer, float phase, float from, float to,
 			float halfWidth, float[] rgb, float alpha) {
 		float eased = 1.0f - (1.0f - phase) * (1.0f - phase);
-		float radius = from + (to - from) * eased;
+		float radius = FruitAura.SKIN + from + (to - from) * eased;
 		float a = alpha * (1.0f - phase) * (1.0f - phase);
 		if (a < 0.005f) return;
 		float inner = Math.max(0.0f, radius - halfWidth), outer = radius + halfWidth;
@@ -136,6 +137,7 @@ public class CultivationFruitAuraRenderer implements BlockEntityRenderer<Cultiva
 		poseStack.mulPose(camera.rotation());
 		poseStack.mulPose(Axis.ZP.rotationDegrees(spinDegrees));
 		Matrix4f pose = poseStack.last().pose();
+		size += FruitAura.SKIN;
 		float width = size * 0.08f;
 		for (int spoke = 0; spoke < 4; spoke++) {
 			float dx = spoke == 0 ? 1 : spoke == 2 ? -1 : 0, dy = spoke == 1 ? 1 : spoke == 3 ? -1 : 0;
@@ -161,7 +163,7 @@ public class CultivationFruitAuraRenderer implements BlockEntityRenderer<Cultiva
 			poseStack.mulPose(Axis.XP.rotationDegrees(random.nextFloat() * 360.0f));
 			poseStack.mulPose(Axis.YP.rotationDegrees(random.nextFloat() * 360.0f));
 			poseStack.mulPose(Axis.ZP.rotationDegrees(random.nextFloat() * 360.0f));
-			float length = surge * maxLength * (0.55f + 0.45f * random.nextFloat()) * (0.8f + 0.2f * Mth.sin(clock * 0.06f + i * 1.7f));
+			float length = FruitAura.SKIN + surge * maxLength * (0.55f + 0.45f * random.nextFloat()) * (0.8f + 0.2f * Mth.sin(clock * 0.06f + i * 1.7f));
 			float width = maxWidth * (0.6f + 0.4f * random.nextFloat());
 			Matrix4f pose = poseStack.last().pose();
 			float ax = -HALF_SQRT_3 * width, az = -0.5f * width, bx = HALF_SQRT_3 * width, bz = -0.5f * width, cz = width;

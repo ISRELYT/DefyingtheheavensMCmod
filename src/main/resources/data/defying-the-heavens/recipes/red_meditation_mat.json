@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "defying-the-heavens:meditation_mat"
+    },
+    {
+      "item": "minecraft:red_carpet"
+    }
+  ],
+  "result": {
+    "item": "defying-the-heavens:red_meditation_mat"
+  }
+}

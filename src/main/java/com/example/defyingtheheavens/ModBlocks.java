@@ -37,6 +37,15 @@ public final class ModBlocks {
 	public static final Block WHITE_BLOSSOM_LEAVES = registerWithItem("white_blossom_leaves",
 			new LeavesBlock(BlockBehaviour.Properties.copy(Blocks.CHERRY_LEAVES).mapColor(MapColor.SNOW)));
 
+	/** A woven straw cushion to sit and meditate on (see MeditationMatBlock). */
+	public static final Block MEDITATION_MAT = registerWithItem("meditation_mat", new MeditationMatBlock(1.5,
+			BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_YELLOW).strength(0.5f).sound(SoundType.GRASS)
+					.noOcclusion().ignitedByLava().pushReaction(PushReaction.DESTROY)));
+	/** The same cushion with a square of red silk laid across it. */
+	public static final Block RED_MEDITATION_MAT = registerWithItem("red_meditation_mat", new MeditationMatBlock(2.0,
+			BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_RED).strength(0.5f).sound(SoundType.WOOL)
+					.noOcclusion().ignitedByLava().pushReaction(PushReaction.DESTROY)));
+
 	private static Block register(String id, Block block) {
 		return Registry.register(BuiltInRegistries.BLOCK, DefyingTheHeavens.id(id), block);
 	}
@@ -50,6 +59,12 @@ public final class ModBlocks {
 	/** Touching this class registers the blocks; also wires flammability and creative tabs. */
 	public static void register() {
 		FlammableBlockRegistry.getDefaultInstance().add(WHITE_BLOSSOM_LEAVES, 30, 60);
+		FlammableBlockRegistry.getDefaultInstance().add(MEDITATION_MAT, 60, 20);
+		FlammableBlockRegistry.getDefaultInstance().add(RED_MEDITATION_MAT, 60, 20);
+		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS).register(entries -> {
+			entries.accept(MEDITATION_MAT);
+			entries.accept(RED_MEDITATION_MAT);
+		});
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.NATURAL_BLOCKS).register(entries -> {
 			entries.accept(JADE_STONE);
 			entries.accept(WHITE_BLOSSOM_LEAVES);

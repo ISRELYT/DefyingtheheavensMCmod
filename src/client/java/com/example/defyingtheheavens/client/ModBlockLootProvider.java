@@ -12,6 +12,8 @@ public class ModBlockLootProvider extends FabricBlockLootTableProvider {
 	@Override
 	public void generate() {
 		dropSelf(ModBlocks.JADE_STONE);
+		dropSelf(ModBlocks.MEDITATION_MAT);
+		dropSelf(ModBlocks.RED_MEDITATION_MAT);
 		add(ModBlocks.WHITE_BLOSSOM_LEAVES, createShearsOnlyDrop(ModBlocks.WHITE_BLOSSOM_LEAVES));
 	}
 }

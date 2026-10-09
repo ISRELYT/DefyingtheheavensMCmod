@@ -27,7 +27,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class CultivationFruitBlock extends BaseEntityBlock {
-    private static final VoxelShape SHAPE = box(5, 11, 5, 11, 16, 11);
+    private static final VoxelShape SHAPE = box(4, 6.5, 4, 12, 16, 12); // the peach (Models/CultivationPeach) and its stem
     public CultivationFruitBlock(Properties properties) { super(properties); }
 
     @Override public BlockEntity newBlockEntity(BlockPos pos, BlockState state) { return new CultivationFruitBlockEntity(pos, state); }
