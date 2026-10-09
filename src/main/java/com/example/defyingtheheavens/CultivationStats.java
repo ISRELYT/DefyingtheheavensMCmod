@@ -11,7 +11,7 @@ import net.minecraft.world.food.FoodData;
 import java.util.Set;
 import java.util.UUID;
 
-/** Converts a realm + stage into attribute bonuses and other bodily perks. */
+/** Converts a realm + stage into attribute bonuses, and runs the Qi Sustenance ability. */
 public final class CultivationStats {
 	private static final UUID HEALTH_ID = UUID.fromString("5f1e2a10-8b3c-4d77-a1e0-0c1d2e3f4a01");
 	private static final UUID DAMAGE_ID = UUID.fromString("5f1e2a10-8b3c-4d77-a1e0-0c1d2e3f4a02");
@@ -61,12 +61,12 @@ public final class CultivationStats {
 	}
 
 	/**
-	 * Every tick, tops up food and saturation for players whose realm is sustained by qi. Full food plus
+	 * Every tick, tops up food and saturation for players with Qi Sustenance active (awakened and switched on). Full food plus
 	 * saturation keeps vanilla's fast natural regen (1 health per half second) running, as if always freshly fed.
 	 */
 	public static void tickHunger(MinecraftServer server) {
 		for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-			if (!player.isAlive() || !CultivationManager.get(player).getRealm().isSustainedByQi()) continue;
+			if (!player.isAlive() || !CultivationManager.get(player).isAbilityActive(Ability.QI_SUSTENANCE)) continue;
 			FoodData food = player.getFoodData();
 			food.setFoodLevel(MAX_FOOD);
 			food.setSaturation(MAX_FOOD); // saturation can't exceed the food level, so 20 is the cap

@@ -1,7 +1,12 @@
 package com.example.defyingtheheavens;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+
+import java.util.EnumSet;
 
 /**
  * One player's cultivation state. Used on the server (authoritative) and as a mirror on the client.
@@ -37,6 +42,8 @@ public class PlayerCultivation {
 	/** The spendable qi pool; may briefly exceed {@link #maxQi()} after the maximum drops, until {@link #gatherQi} trims it. */
 	private double qi;
 	private boolean lowerRealmBound;
+	/** Abilities the player switched off on the Abilities tab; everything else is on. */
+	private final EnumSet<Ability> disabledAbilities = EnumSet.noneOf(Ability.class);
 	/** Synced but not saved: re-evaluated from the player's dimension on every join. */
 	private boolean inUpperRealm;
 
@@ -100,6 +107,35 @@ public class PlayerCultivation {
 	public boolean isFallProtected() { return fallProtected; }
 	public void setFallProtected(boolean value) { fallProtected = value; }
 
+	// --- Abilities ---
+
+	public boolean isAbilityEnabled(Ability ability) { return !disabledAbilities.contains(ability); }
+
+	public void setAbilityEnabled(Ability ability, boolean enabled) {
+		if (enabled) {
+			disabledAbilities.remove(ability);
+		} else {
+			disabledAbilities.add(ability);
+		}
+	}
+
+	/** Awakened by the realm and switched on: the ability takes effect. */
+	public boolean isAbilityActive(Ability ability) { return ability.isUnlocked(this) && isAbilityEnabled(ability); }
+
+	/** Switched-off abilities as a bit mask over their ordinals, for the sync packet. */
+	public int getDisabledAbilityMask() {
+		int mask = 0;
+		for (Ability ability : disabledAbilities) mask |= 1 << ability.ordinal();
+		return mask;
+	}
+
+	public void setDisabledAbilityMask(int mask) {
+		disabledAbilities.clear();
+		for (Ability ability : Ability.values()) {
+			if ((mask & (1 << ability.ordinal())) != 0) disabledAbilities.add(ability);
+		}
+	}
+
 	// --- Qi (the spendable pool) ---
 
 	/** Qi in the pool, never more than {@link #maxQi()}. */
@@ -116,17 +152,27 @@ public class PlayerCultivation {
 	}
 
 	/**
-	 * Gathers {@code seconds} worth of qi, never past the maximum. Qi above the maximum (left over after it dropped, e.g.
-	 * when suppression set in) is trimmed.
+	 * Gathers {@code seconds} worth of qi while spending {@code spendPerSecond} on an ongoing technique (Qi Flight), never
+	 * past the maximum or below zero. Qi above the maximum (left over after it dropped, e.g. when suppression set in) is
+	 * trimmed.
 	 *
 	 * @return true if the pool changed
 	 */
-	public boolean gatherQi(double seconds) {
-		double next = Math.min(maxQi(), qi + qiGatherPerSecond() * seconds);
+	public boolean gatherQi(double seconds, double spendPerSecond) {
+		double next = Math.max(0, Math.min(maxQi(), qi + (qiGatherPerSecond() - spendPerSecond) * seconds));
 		if (next == qi) return false;
 		qi = next;
 		return true;
 	}
+
+	/**
+	 * Qi a second of flight costs. Follows the effective realm, and doesn't grow with the stage, so later stages fly longer on
+	 * their larger pools.
+	 */
+	public double qiFlightCostPerSecond() { return getEffectiveRealm().getQiFlightCost(); }
+
+	/** Gathering here keeps up with Qi Flight, so it can go on forever (always in the Upper Realm, everywhere from Heavenly Being). */
+	public boolean isQiFlightSustained() { return qiGatherPerSecond() >= qiFlightCostPerSecond(); }
 
 	/** Spends qi for a spell or technique. @return false, spending nothing, if the pool holds less than {@code amount} */
 	public boolean consumeQi(double amount) {
@@ -239,6 +285,9 @@ public class PlayerCultivation {
 		tag.putBoolean("LowerRealmBound", lowerRealmBound);
 		tag.putString("SpatialTrial", pendingTrial.name());
 		tag.putBoolean("FallProtected", fallProtected);
+		ListTag disabled = new ListTag();
+		for (Ability ability : disabledAbilities) disabled.add(StringTag.valueOf(ability.getId()));
+		tag.put("DisabledAbilities", disabled);
 		return tag;
 	}
 
@@ -251,6 +300,11 @@ public class PlayerCultivation {
 		c.lowerRealmBound = tag.getBoolean("LowerRealmBound");
 		c.pendingTrial = SpatialTrialHandler.Route.byName(tag.getString("SpatialTrial"));
 		c.fallProtected = tag.getBoolean("FallProtected");
+		ListTag disabled = tag.getList("DisabledAbilities", Tag.TAG_STRING);
+		for (int i = 0; i < disabled.size(); i++) {
+			Ability ability = Ability.byId(disabled.getString(i));
+			if (ability != null) c.disabledAbilities.add(ability); // unknown ids (a removed ability) are dropped
+		}
 		return c;
 	}
 }

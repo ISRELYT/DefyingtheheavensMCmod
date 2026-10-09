@@ -74,7 +74,10 @@ public final class QiHud {
 			Component label = Component.translatable(ModLang.HUD_QI_LABEL);
 			graphics.drawString(mc.font, label, X, Y + 1, TEXT);
 			int barX = X + mc.font.width(label) + LABEL_GAP + 2;
-			bar(graphics, barX, (int) Math.round(INNER * shownRatio), qi < max, now);
+			// The gathering glint shows while the pool is rising: not in a Qi Flight that costs more than gathering brings in.
+			boolean draining = mc.player.getAbilities().flying && !mc.player.isCreative() && c.getEffectiveRealm().canFlyOnQi()
+					&& !c.isQiFlightSustained();
+			bar(graphics, barX, (int) Math.round(INNER * shownRatio), qi < max && !draining, now);
 			Component amount = Component.translatable(ModLang.HUD_QI,
 					Component.literal(whole(qi)).withStyle(style -> style.withColor(TEXT_QI)), whole(max));
 			graphics.drawString(mc.font, amount, barX + TEXT_OFFSET, Y + 1, TEXT);

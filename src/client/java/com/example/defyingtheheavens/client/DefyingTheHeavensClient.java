@@ -15,11 +15,9 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		ModKeybinds.register();
 		ClientPacketHandlers.register();
-		QiHud.register();
+		QiHud.register(); // before the tribulation HUD, whose red tint then covers the Qi bar too
 		TribulationHud.register();
-		TribulationAtmosphere.register();
 		EntityRendererRegistry.register(ModEntities.TRIBULATION_LIGHTNING, TribulationLightningRenderer::new);
-		EntityRendererRegistry.register(ModEntities.TRIBULATION_CLOUD, TribulationCloudRenderer::new);
 		UpperRealmClient.register();
 
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {

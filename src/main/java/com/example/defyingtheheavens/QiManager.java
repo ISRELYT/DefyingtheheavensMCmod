@@ -4,11 +4,11 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
- * Refills every player's qi pool each tick at their qi gather rate and keeps the client's Qi bar in step. Spells and
- * techniques spend qi through {@link #trySpend}.
+ * Refills every player's qi pool each tick at their qi gather rate, less what flying on it costs ({@link QiFlight}), and
+ * keeps the client's Qi bar in step. Spells and techniques spend qi through {@link #trySpend}.
  */
 public final class QiManager {
-	/** While a pool is filling, its owner is synced this often (in ticks); filling up syncs at once. */
+	/** While a pool is filling or draining, its owner is synced this often (in ticks); filling up or running dry syncs at once. */
 	private static final int SYNC_INTERVAL = 4;
 
 	public static void tick(MinecraftServer server) {
@@ -17,9 +17,10 @@ public final class QiManager {
 		for (ServerPlayer player : server.getPlayerList().getPlayers()) {
 			if (!player.isAlive()) continue;
 			PlayerCultivation c = CultivationManager.get(player);
-			if (!c.gatherQi(1 / 20.0)) continue;
+			double flightCost = QiFlight.tick(player, c);
+			if (!c.gatherQi(1 / 20.0, flightCost)) continue;
 			changed = true;
-			if (syncTick || c.getQi() >= c.maxQi()) {
+			if (syncTick || c.getQi() >= c.maxQi() || c.getQi() <= 0) {
 				CultivationManager.sync(player);
 			}
 		}

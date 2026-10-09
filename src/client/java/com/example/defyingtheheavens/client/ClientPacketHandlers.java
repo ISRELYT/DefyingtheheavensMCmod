@@ -16,7 +16,9 @@ public final class ClientPacketHandlers {
 			boolean meditating = buf.readBoolean();
 			boolean lowerRealmBound = buf.readBoolean();
 			boolean inUpperRealm = buf.readBoolean();
-			client.execute(() -> ClientCultivationData.update(realm, stage, cultivation, qi, meditating, lowerRealmBound, inUpperRealm));
+			int disabledAbilities = buf.readVarInt();
+			client.execute(() -> ClientCultivationData.update(realm, stage, cultivation, qi, meditating, lowerRealmBound, inUpperRealm,
+					disabledAbilities));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.MEDITATION_STATE, (client, handler, buf, sender) -> {

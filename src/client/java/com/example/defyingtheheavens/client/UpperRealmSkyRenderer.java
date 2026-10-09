@@ -39,9 +39,8 @@ public class UpperRealmSkyRenderer implements DimensionRenderingRegistry.SkyRend
 			float[] sky = {(float) skyColor.x, (float) skyColor.y, (float) skyColor.z};
 			float day = Mth.clamp(Mth.cos(level.getTimeOfDay(partialTick) * Mth.TWO_PI) * 2.0f + 0.5f, 0.0f, 1.0f);
 
-			float clearSky = 1.0f - TribulationAtmosphere.strength(partialTick);
-			float[] horizon = SkyDome.lerp(sky, GOLD, 0.55f * day * clearSky);
-			float[] nadir = SkyDome.lerp(sky, new float[] {sky[0] * 0.75f, sky[1] * 0.85f, sky[2]}, 0.8f * clearSky);
+			float[] horizon = SkyDome.lerp(sky, GOLD, 0.55f * day);
+			float[] nadir = SkyDome.lerp(sky, new float[] {sky[0] * 0.75f, sky[1] * 0.85f, sky[2]}, 0.8f);
 
 			RenderSystem.depthMask(false);
 			RenderSystem.enableBlend();
@@ -53,7 +52,7 @@ public class UpperRealmSkyRenderer implements DimensionRenderingRegistry.SkyRend
 			poseStack.mulPose(Axis.XP.rotationDegrees(level.getTimeOfDay(partialTick) * 360.0f));
 			Matrix4f celestial = poseStack.last().pose();
 
-			float rainFade = (1.0f - level.getRainLevel(partialTick)) * (0.2f + 0.8f * clearSky);
+			float rainFade = 1.0f - level.getRainLevel(partialTick);
 			SkyDome.drawStars(celestial, level.getStarBrightness(partialTick) * rainFade, 1.0f, 0.95f, 0.85f, level.getGameTime() + partialTick);
 			SkyDome.drawHalo(celestial, 48.0f, GOLD[0], GOLD[1], GOLD[2], 0.45f * rainFade);
 

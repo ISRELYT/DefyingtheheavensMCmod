@@ -51,7 +51,7 @@ public final class SpatialTrialHandler {
 	public static final int TRIAL_TICKS = 60 * 20;
 	/**
 	 * Per second; ignores armor, enchantments and effects (see ModDamageTypes). Health, regen, absorption and healing count.
-	 * Against the qi hunger perk's 2 health/s regen, 60 hits net 131 damage: Heavenly Being - Grand Perfection (137 max
+	 * Against Qi Sustenance's 2 health/s regen (the ability switched on; off, the gap is harder), 60 hits net 131 damage: Heavenly Being - Grand Perfection (137 max
 	 * health), the peak of the lower realms, is the first stage that endures it unaided; Late (128) falls at ~59 s.
 	 * Four Axis (200+) passes with room to spare. A golden apple or two carries a Late cultivator through.
 	 */

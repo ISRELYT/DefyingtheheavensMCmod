@@ -28,5 +28,15 @@ public final class CultivationManager {
 		TribulationManager.start(player);
 	}
 
+	/** Abilities tab switch. Only abilities the player's realm has awakened can be switched. */
+	public static void toggleAbility(ServerPlayer player, int index) {
+		Ability ability = Ability.byIndex(index);
+		PlayerCultivation c = get(player);
+		if (ability == null || !ability.isUnlocked(c)) return;
+		c.setAbilityEnabled(ability, !c.isAbilityEnabled(ability));
+		markDirty(player.server);
+		sync(player);
+	}
+
 	private CultivationManager() {}
 }

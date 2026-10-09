@@ -29,6 +29,7 @@ public final class ModLang {
 	// Tabbed menu (tabs left to right).
 	public static final String TAB_CULTIVATION = k("tab.cultivation");
 	public static final String TAB_STATS = k("tab.stats");
+	public static final String TAB_ABILITIES = k("tab.abilities");
 	public static final String TAB_METHODS = k("tab.methods");
 	public static final String TAB_SPELLS = k("tab.spells");
 	public static final String STATS_SUPPRESSED = k("stats.suppressed");
@@ -47,9 +48,11 @@ public final class ModLang {
 	public static final String STAT_NAME_MAX_QI = k("stats.max_qi");
 	public static final String STAT_NAME_QI_GATHER = k("stats.qi_gather");
 	public static final String STATS_QI_GATHER_UPPER = k("stats.qi_gather_upper");
-	public static final String PERKS = k("stats.perks");
-	public static final String PERK_QI_SUSTAINS = k("stats.perk.qi_sustains");
-	public static final String PERKS_NONE = k("stats.perks.none");
+	public static final String ABILITIES_TITLE = k("abilities.title");
+	public static final String ABILITIES_EMPTY = k("abilities.empty");
+	public static final String ABILITIES_HINT = k("abilities.hint");
+	public static final String ABILITY_ON = k("abilities.on");
+	public static final String ABILITY_OFF = k("abilities.off");
 	public static final String METHODS_TITLE = k("methods.title");
 	public static final String METHODS_EMPTY = k("methods.empty");
 	public static final String METHODS_HINT = k("methods.hint");
@@ -78,6 +81,9 @@ public final class ModLang {
 	public static final String MSG_BREAKTHROUGH = k("message.breakthrough");
 	public static final String MSG_NOT_READY = k("message.not_ready");
 	public static final String MSG_BOTTLENECK = k("message.bottleneck");
+	public static final String MSG_QI_FLIGHT_GAINED = k("message.qi_flight.gained");
+	public static final String MSG_QI_FLIGHT_EXHAUSTED = k("message.qi_flight.exhausted");
+	public static final String MSG_QI_FLIGHT_RESTORED = k("message.qi_flight.restored");
 	public static final String MSG_TRIB_START = k("message.tribulation.start");
 	public static final String MSG_TRIB_START_SINGLE = k("message.tribulation.start_single");
 	public static final String MSG_TRIB_BUSY = k("message.tribulation.busy");
@@ -101,6 +107,8 @@ public final class ModLang {
 	public static final String DEATH_SPATIAL_PRESSURE = "death.attack." + DefyingTheHeavens.MOD_ID + ".spatial_pressure";
 
 	public static String biomeKey(String id) { return "biome." + DefyingTheHeavens.MOD_ID + "." + id; }
+	/** An ability's name; its description is this plus ".description". */
+	public static String abilityKey(String id) { return "ability." + DefyingTheHeavens.MOD_ID + "." + id; }
 
 	public static final String RING_OF_POWER_TOOLTIP = k("tooltip.ring_of_power");
 	public static final String RING_OF_TRANSCENDENCE_TOOLTIP = k("tooltip.ring_of_transcendence");

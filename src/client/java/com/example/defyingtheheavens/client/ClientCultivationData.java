@@ -13,9 +13,10 @@ public final class ClientCultivationData {
 	public static boolean isMeditating() { return meditating; }
 
 	public static void update(int realm, int stage, double cultivation, double qi, boolean meditating, boolean lowerRealmBound,
-							  boolean inUpperRealm) {
+							  boolean inUpperRealm, int disabledAbilities) {
 		DATA.setState(Realm.byIndex(realm), Stage.byIndex(stage), cultivation);
 		DATA.setQi(qi);
+		DATA.setDisabledAbilityMask(disabledAbilities);
 		DATA.setLowerRealmBound(lowerRealmBound);
 		DATA.setInUpperRealm(inUpperRealm);
 		ClientCultivationData.meditating = meditating;
@@ -25,6 +26,7 @@ public final class ClientCultivationData {
 	public static void clear() {
 		DATA.setState(Realm.QI_REFINING, Stage.EARLY, 0);
 		DATA.setQi(0);
+		DATA.setDisabledAbilityMask(0);
 		DATA.setLowerRealmBound(false);
 		DATA.setInUpperRealm(false);
 		meditating = false;

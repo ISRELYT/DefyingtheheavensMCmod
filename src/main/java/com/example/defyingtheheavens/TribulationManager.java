@@ -2,6 +2,7 @@ package com.example.defyingtheheavens;
 
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundGameEventPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -21,7 +22,7 @@ import java.util.UUID;
  * State is runtime-only; a tribulation never survives a server restart or a disconnect.
  */
 public final class TribulationManager {
-	private static final int FIRST_STRIKE_DELAY = 60;  // 3 s for the local cloud to gather before the first bolt
+	private static final int FIRST_STRIKE_DELAY = 60;  // 3 s of darkening sky before the first bolt
 	private static final int STRIKE_INTERVAL = 60;     // 3 s between strikes
 	private static final int FINISH_DELAY = 20;        // 1 s after the last strike before the breakthrough completes
 
@@ -36,12 +37,6 @@ public final class TribulationManager {
 		int nextStrikeIn = FIRST_STRIKE_DELAY;
 		int finishIn = FINISH_DELAY;
 		int age;
-		TribulationCloud cloud;
-
-		void removeCloud() {
-			if (cloud != null) cloud.discard();
-			cloud = null;
-		}
 
 		Trial(Realm targetRealm, Stage targetStage) {
 			this.targetRealm = targetRealm;
@@ -62,8 +57,8 @@ public final class TribulationManager {
 	}
 
 	/*
-	 * Balance. A set number of strikes lands 3 s apart, after 3 s of gathering clouds. From Foundation Building on, the hunger
-	 * perk regenerates 6 health between strikes, so only damage above that wears the player down. Lightning is cut by armor
+	 * Balance. A set number of strikes lands 3 s apart, after 3 s of darkening sky. From Foundation Building on, the Qi
+	 * Sustenance ability (if left switched on) regenerates 6 health between strikes, so only damage above that wears the player down. Lightning is cut by armor
 	 * (up to 80%); the magic part ignores armor but not Protection enchantments, Resistance or absorption.
 	 * Every strike of a tribulation is the same, so the outcome is certain. Tuned (deterministic simulation, starting at full
 	 * health, no potions/apples/totems) so a mortal survives with this full armor set and dies with the step below
@@ -131,7 +126,7 @@ public final class TribulationManager {
 		Trial trial = new Trial(c.breakthroughRealm(), c.breakthroughStage());
 		ACTIVE.put(player.getUUID(), trial);
 
-		updateCloud(player, trial);
+		forceStorm(player);
 		ModPackets.sendTribulation(player, true, trial.strikesLeft, trial.targetRealm, trial.targetStage);
 		player.playNotifySound(SoundEvents.ENDER_DRAGON_GROWL, SoundSource.AMBIENT, 1.0f, 0.5f);
 		player.playNotifySound(SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 2.0f, 0.4f);
@@ -150,13 +145,12 @@ public final class TribulationManager {
 			Trial t = entry.getValue();
 			ServerPlayer p = server.getPlayerList().getPlayer(id);
 			if (p == null) {
-				forget(id);
+				ACTIVE.remove(id);
 				continue;
 			}
 			if (!p.isAlive()) continue; // onDeath() handles failure
 
 			t.age++;
-			updateCloud(p, t);
 
 			if (t.strikesLeft > 0) {
 				if (--t.nextStrikeIn <= 0) {
@@ -172,6 +166,7 @@ public final class TribulationManager {
 			}
 
 			if (t.age % 20 == 0) {
+				forceStorm(p); // re-assert in case real weather tried to override us
 				ModPackets.sendTribulation(p, true, t.strikesLeft, t.targetRealm, t.targetStage);
 			}
 			if (t.age % 100 == 0) {
@@ -188,7 +183,6 @@ public final class TribulationManager {
 		bolt.moveTo(p.getX(), p.getY(), p.getZ());
 		bolt.setVisualOnly(true); // 1.20.1 bolts always deal a flat 5, so the tribulation's hit is applied by hand below
 		level.addFreshEntity(bolt);
-		if (t.cloud != null) t.cloud.flash();
 
 		// Both parts land in the same tick as the bolt. Clearing the hurt cooldown in between stops vanilla from
 		// discarding the second hit; magic goes first so a killing strike usually reads "struck by lightning".
@@ -207,7 +201,7 @@ public final class TribulationManager {
 		Trial t = ACTIVE.remove(p.getUUID());
 		if (t == null) return;
 
-		t.removeCloud();
+		restoreWeather(p);
 		ModPackets.sendTribulation(p, false, 0, t.targetRealm, t.targetStage);
 
 		PlayerCultivation c = CultivationManager.get(p);
@@ -237,7 +231,7 @@ public final class TribulationManager {
 		c.fallOneStage();
 		CultivationManager.markDirty(p.server);
 
-		t.removeCloud();
+		restoreWeather(p);
 		ModPackets.sendTribulation(p, false, 0, t.targetRealm, t.targetStage);
 		p.server.getPlayerList().broadcastSystemMessage(Component.translatable(ModLang.MSG_TRIB_FAILED, p.getDisplayName()), false);
 		p.sendSystemMessage(Component.translatable(ModLang.MSG_TRIB_FALL, PlayerCultivation.rankName(c.getRealm(), c.getStage())));
@@ -246,35 +240,28 @@ public final class TribulationManager {
 
 	/** Disconnect: the trial is cancelled without reward or penalty. */
 	public static void forget(UUID id) {
-		Trial trial = ACTIVE.remove(id);
-		if (trial != null) trial.removeCloud();
+		ACTIVE.remove(id);
 	}
 
 	/** Falling out of the Upper Realm mid-trial: cancelled without reward or penalty, like a disconnect. */
 	public static void abandon(ServerPlayer p) {
 		Trial t = ACTIVE.remove(p.getUUID());
 		if (t == null) return;
-		t.removeCloud();
+		restoreWeather(p);
 		ModPackets.sendTribulation(p, false, 0, t.targetRealm, t.targetStage);
 		p.sendSystemMessage(Component.translatable(ModLang.MSG_TRIB_ABANDONED));
 	}
 
-	/** Follows movement and recreates the tracked entity if the player changes dimensions. */
-	private static void updateCloud(ServerPlayer player, Trial trial) {
-		if (trial.cloud == null || trial.cloud.isRemoved() || trial.cloud.level() != player.level()) {
-			trial.removeCloud();
-			trial.cloud = ModEntities.TRIBULATION_CLOUD.create(player.serverLevel());
-			if (trial.cloud == null) return;
-			trial.cloud.setPos(player.getX(), TribulationCloud.cloudBaseY(player.level(), player.getY()), player.getZ());
-			player.serverLevel().addFreshEntity(trial.cloud);
-		}
-		trial.cloud.follow(player.position());
+	/** Local-to-the-player weather: vanilla game-event packets only reach this one client. */
+	private static void forceStorm(ServerPlayer p) {
+		p.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.RAIN_LEVEL_CHANGE, 1.0F));
+		p.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.THUNDER_LEVEL_CHANGE, 1.0F));
 	}
 
-	/** Clear references before a world/server is closed, including singleplayer world switches. */
-	public static void clear() {
-		ACTIVE.values().forEach(Trial::removeCloud);
-		ACTIVE.clear();
+	private static void restoreWeather(ServerPlayer p) {
+		ServerLevel level = p.serverLevel();
+		p.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.RAIN_LEVEL_CHANGE, level.getRainLevel(1.0F)));
+		p.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.THUNDER_LEVEL_CHANGE, level.getThunderLevel(1.0F)));
 	}
 
 	private TribulationManager() {}

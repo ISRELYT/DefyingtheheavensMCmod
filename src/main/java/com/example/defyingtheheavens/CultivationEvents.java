@@ -20,7 +20,6 @@ public final class CultivationEvents {
 		RealmSuppressionHandler.register();
 
 		ServerLifecycleEvents.SERVER_STARTED.register(SpatialRiftBlock::ensureOverworldRift);
-		ServerLifecycleEvents.SERVER_STOPPING.register(server -> TribulationManager.clear());
 
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
 			// Applies stats from the effective (possibly suppressed) stage and syncs the client.
@@ -32,6 +31,7 @@ public final class CultivationEvents {
 			TribulationManager.forget(handler.getPlayer().getUUID());
 			SpatialTrialHandler.forget(handler.getPlayer().getUUID());
 			PortalRestrictionHandler.forget(handler.getPlayer().getUUID());
+			QiFlight.forget(handler.getPlayer().getUUID());
 		});
 
 		// Rings stay on through the End portal and with keepInventory; on a normal death dropEquipment already emptied them.

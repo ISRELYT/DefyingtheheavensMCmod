@@ -12,6 +12,8 @@ public final class ModPackets {
 	public static final ResourceLocation TOGGLE_MEDITATION = new ResourceLocation(DefyingTheHeavens.MOD_ID, "toggle_meditation");
 	/** C2S: attempt a realm breakthrough. */
 	public static final ResourceLocation BREAKTHROUGH = new ResourceLocation(DefyingTheHeavens.MOD_ID, "breakthrough");
+	/** C2S: switch an ability on or off (its ordinal). */
+	public static final ResourceLocation TOGGLE_ABILITY = new ResourceLocation(DefyingTheHeavens.MOD_ID, "toggle_ability");
 	/** S2C: full cultivation state for the owning player. */
 	public static final ResourceLocation SYNC = new ResourceLocation(DefyingTheHeavens.MOD_ID, "sync");
 	/** S2C: "player X is/isn't meditating", for rendering the lotus pose. */
@@ -24,6 +26,10 @@ public final class ModPackets {
 				(server, player, handler, buf, responseSender) -> server.execute(() -> MeditationManager.toggle(player)));
 		ServerPlayNetworking.registerGlobalReceiver(BREAKTHROUGH,
 				(server, player, handler, buf, responseSender) -> server.execute(() -> CultivationManager.tryBreakthrough(player)));
+		ServerPlayNetworking.registerGlobalReceiver(TOGGLE_ABILITY, (server, player, handler, buf, responseSender) -> {
+			int ability = buf.readVarInt();
+			server.execute(() -> CultivationManager.toggleAbility(player, ability));
+		});
 	}
 
 	public static void sendSync(ServerPlayer player, PlayerCultivation c, boolean meditating) {
@@ -35,6 +41,7 @@ public final class ModPackets {
 		buf.writeBoolean(meditating);
 		buf.writeBoolean(c.isLowerRealmBound());
 		buf.writeBoolean(c.isInUpperRealm());
+		buf.writeVarInt(c.getDisabledAbilityMask());
 		ServerPlayNetworking.send(player, SYNC, buf);
 	}
 

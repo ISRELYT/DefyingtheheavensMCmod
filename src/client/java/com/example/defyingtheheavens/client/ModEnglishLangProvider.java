@@ -1,5 +1,6 @@
 package com.example.defyingtheheavens.client;
 
+import com.example.defyingtheheavens.Ability;
 import com.example.defyingtheheavens.ModBlocks;
 import com.example.defyingtheheavens.ModEntities;
 import com.example.defyingtheheavens.ModItems;
@@ -24,7 +25,6 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 
 		// Entities
 		t.add(ModEntities.TRIBULATION_LIGHTNING, "Tribulation Lightning");
-		t.add(ModEntities.TRIBULATION_CLOUD, "Tribulation Cloud");
 
 		// Blocks
 		t.add(ModBlocks.SPATIAL_RIFT, "Spatial Rift");
@@ -95,6 +95,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.PINNACLE, "You stand at the pinnacle of cultivation.");
 		t.add(ModLang.TAB_CULTIVATION, "Cultivation");
 		t.add(ModLang.TAB_STATS, "Stats");
+		t.add(ModLang.TAB_ABILITIES, "Abilities");
 		t.add(ModLang.TAB_METHODS, "Methods");
 		t.add(ModLang.TAB_SPELLS, "Spells");
 		t.add(ModLang.STATS_SUPPRESSED, "is suppressed to");
@@ -113,9 +114,22 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.STAT_NAME_MAX_QI, "Max Qi");
 		t.add(ModLang.STAT_NAME_QI_GATHER, "Qi Gather");
 		t.add(ModLang.STATS_QI_GATHER_UPPER, "Qi gather x%s in the Upper Realm");
-		t.add(ModLang.PERKS, "Perks");
-		t.add(ModLang.PERK_QI_SUSTAINS, "Qi sustains your body: hunger and saturation always stay full.");
-		t.add(ModLang.PERKS_NONE, "None yet.");
+		t.add(ModLang.ABILITIES_TITLE, "Abilities");
+		t.add(ModLang.ABILITIES_EMPTY, "No abilities awakened yet.");
+		t.add(ModLang.ABILITIES_HINT, "Abilities you awaken through cultivation will appear here.");
+		t.add(ModLang.ABILITY_ON, "On");
+		t.add(ModLang.ABILITY_OFF, "Off");
+		for (Ability ability : Ability.values()) {
+			String key = ModLang.abilityKey(ability.getId());
+			t.add(key, switch (ability) {
+				case QI_SUSTENANCE -> "Qi Sustenance";
+				case QI_FLIGHT -> "Qi Flight";
+			});
+			t.add(key + ".description", switch (ability) {
+				case QI_SUSTENANCE -> "Qi sustains your body: hunger and saturation always stay full.";
+				case QI_FLIGHT -> "Double-tap jump to fly, at a cost of %s qi/s.";
+			});
+		}
 		t.add(ModLang.METHODS_TITLE, "Cultivation Methods");
 		t.add(ModLang.METHODS_EMPTY, "No cultivation methods learned yet.");
 		t.add(ModLang.METHODS_HINT, "Methods you learn will appear here.");
@@ -144,6 +158,10 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_BREAKTHROUGH, "You survived the Heavenly Tribulation and ascended to %s!");
 		t.add(ModLang.MSG_NOT_READY, "You are not ready to break through.");
 		t.add(ModLang.MSG_BOTTLENECK, "You have reached a bottleneck. Open the cultivation menu and break through!");
+		t.add(ModLang.MSG_QI_FLIGHT_GAINED, "Your golden core circulates enough Qi through your body to make it tangible. "
+				+ "You can now use it to carry your physical form. Double-tap jump to fly.");
+		t.add(ModLang.MSG_QI_FLIGHT_EXHAUSTED, "Your qi runs dry and you fall! You can fly again at %s%% qi.");
+		t.add(ModLang.MSG_QI_FLIGHT_RESTORED, "Your qi can bear you aloft again.");
 		t.add(ModLang.MSG_TRIB_START, "The heavens take notice of your ascent to %s! Survive %s strikes of heavenly lightning!");
 		t.add(ModLang.MSG_TRIB_START_SINGLE, "The heavens take notice of your ascent to %s! Survive a strike of heavenly lightning!");
 		t.add(ModLang.MSG_TRIB_BUSY, "You cannot do that while a tribulation is in progress.");

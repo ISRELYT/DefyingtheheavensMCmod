@@ -1,5 +1,6 @@
 package com.example.defyingtheheavens.client;
 
+import com.example.defyingtheheavens.Ability;
 import com.example.defyingtheheavens.CultivationStats;
 import com.example.defyingtheheavens.ModLang;
 import com.example.defyingtheheavens.PlayerCultivation;
@@ -10,11 +11,14 @@ import com.example.defyingtheheavens.ModPackets;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -22,13 +26,15 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.ToDoubleBiFunction;
 
 /**
- * The cultivation menu: one panel with four tabs, left to right Cultivation (progress), Stats, Methods and Spells.
- * The previous single-page layout is kept in backups/cultivation-menu-2026-10-09.
+ * The cultivation menu: one panel with five tabs, left to right Cultivation (progress), Stats, Abilities, Methods and
+ * Spells. The previous single-page layout is kept in backups/cultivation-menu-2026-10-09.
  */
 public class CultivationScreen extends Screen {
 	private static final int WIDTH = 260;
@@ -36,7 +42,11 @@ public class CultivationScreen extends Screen {
 	private static final int TAB_Y = 6;
 	private static final int TAB_HEIGHT = 19;
 	private static final int TAB_GAP = 2;
+	/** Least space between a tab's label and its edges; tabs are as wide as their labels plus a share of what's left. */
+	private static final int TAB_PADDING = 8;
 	private static final int CONTENT_Y = 34;
+	private static final int SWITCH_W = 30;
+	private static final int SWITCH_H = 14;
 	/** Right edges of the Base and Realm columns in the Stats tab (Current ends at the panel's inner margin). */
 	private static final int BASE_RIGHT = 138;
 	private static final int BONUS_RIGHT = 190;
@@ -51,6 +61,7 @@ public class CultivationScreen extends Screen {
 	private enum Tab {
 		CULTIVATION(ModLang.TAB_CULTIVATION),
 		STATS(ModLang.TAB_STATS),
+		ABILITIES(ModLang.TAB_ABILITIES),
 		METHODS(ModLang.TAB_METHODS),
 		SPELLS(ModLang.TAB_SPELLS);
 
@@ -68,6 +79,14 @@ public class CultivationScreen extends Screen {
 	private int top;
 	private Button meditateButton;
 	private Button breakthroughButton;
+	/** Where each ability's switch was drawn this frame, for {@link #mouseClicked}. Empty on other tabs. */
+	private final List<AbilitySwitch> switches = new ArrayList<>();
+
+	private record AbilitySwitch(Ability ability, int x, int y) {
+		boolean contains(double mouseX, double mouseY) {
+			return mouseX >= x && mouseX < x + SWITCH_W && mouseY >= y && mouseY < y + SWITCH_H;
+		}
+	}
 
 	public CultivationScreen() {
 		super(Component.translatable(ModLang.TITLE));
@@ -78,11 +97,21 @@ public class CultivationScreen extends Screen {
 		left = (width - WIDTH) / 2;
 		top = (height - HEIGHT) / 2;
 
+		// Five labels of very different lengths don't fit equal widths, so each tab gets its label's width plus an even share
+		// of the strip that's left.
 		Tab[] tabs = Tab.values();
-		int tabWidth = (WIDTH - 12 - TAB_GAP * (tabs.length - 1)) / tabs.length;
-		int tabsLeft = left + (WIDTH - tabWidth * tabs.length - TAB_GAP * (tabs.length - 1)) / 2;
+		int[] widths = new int[tabs.length];
+		int spare = WIDTH - 12 - TAB_GAP * (tabs.length - 1);
 		for (int i = 0; i < tabs.length; i++) {
-			addRenderableWidget(new TabButton(tabsLeft + i * (tabWidth + TAB_GAP), top + TAB_Y, tabWidth, TAB_HEIGHT, tabs[i]));
+			widths[i] = font.width(Component.translatable(tabs[i].key)) + TAB_PADDING;
+			spare -= widths[i];
+		}
+		int tabX = left + 6;
+		for (int i = 0; i < tabs.length; i++) {
+			// floorDiv/floorMod so a long translation (negative spare) still shares out exactly.
+			int w = widths[i] + Math.floorDiv(spare, tabs.length) + (i < Math.floorMod(spare, tabs.length) ? 1 : 0);
+			addRenderableWidget(new TabButton(tabX, top + TAB_Y, w, TAB_HEIGHT, tabs[i]));
+			tabX += w + TAB_GAP;
 		}
 
 		meditateButton = addRenderableWidget(Button.builder(Component.empty(),
@@ -136,9 +165,11 @@ public class CultivationScreen extends Screen {
 		g.fill(left, top + TAB_Y + TAB_HEIGHT - 1, left + WIDTH, top + TAB_Y + TAB_HEIGHT, BORDER);
 
 		Player player = minecraft == null ? null : minecraft.player;
+		switches.clear();
 		switch (tab) {
 			case CULTIVATION -> renderCultivation(g, player);
 			case STATS -> renderStats(g, player);
+			case ABILITIES -> renderAbilities(g, mouseX, mouseY);
 			case METHODS -> renderPlaceholder(g, ModLang.METHODS_TITLE, ModLang.METHODS_EMPTY, ModLang.METHODS_HINT);
 			case SPELLS -> renderPlaceholder(g, ModLang.SPELLS_TITLE, ModLang.SPELLS_EMPTY, ModLang.SPELLS_HINT);
 		}
@@ -254,17 +285,71 @@ public class CultivationScreen extends Screen {
 		if (c.isInUpperRealm()) {
 			g.drawString(font, Component.translatable(ModLang.STATS_QI_GATHER_UPPER, (int) PlayerCultivation.UPPER_REALM_QI_MULTIPLIER),
 					x, y, QI_UPPER_COLOR);
-			y += 11;
 		}
-		y += 7;
+	}
 
-		g.drawString(font, Component.translatable(ModLang.PERKS), x, y, 0xFFD700);
-		y += 12;
-		if (c.getRealm().isSustainedByQi()) {
-			wrapped(g, Component.translatable(ModLang.PERK_QI_SUSTAINS), x, y, 0x69F0AE);
-		} else {
-			g.drawString(font, Component.translatable(ModLang.PERKS_NONE), x, y, 0x9E9E9E);
+	// --- Abilities: what the realm has awakened, each switchable on and off ---
+
+	/**
+	 * One entry per awakened ability, top to bottom: its name with an On/Off switch, then what it does (Qi Flight always
+	 * shows its cost, even where gathering covers it: players find out flight is endless there by flying). The list isn't
+	 * scrollable yet; it will need to be once more abilities exist than fit the panel.
+	 */
+	private void renderAbilities(GuiGraphics g, int mouseX, int mouseY) {
+		PlayerCultivation c = ClientCultivationData.get();
+		List<Ability> awakened = Arrays.stream(Ability.values()).filter(ability -> ability.isUnlocked(c)).toList();
+		if (awakened.isEmpty()) {
+			renderPlaceholder(g, ModLang.ABILITIES_TITLE, ModLang.ABILITIES_EMPTY, ModLang.ABILITIES_HINT);
+			return;
 		}
+
+		int x = left + 14;
+		int rightEdge = left + WIDTH - 14;
+		int y = top + CONTENT_Y + 3;
+		for (int i = 0; i < awakened.size(); i++) {
+			Ability ability = awakened.get(i);
+			boolean on = c.isAbilityEnabled(ability);
+			AbilitySwitch toggle = new AbilitySwitch(ability, rightEdge - SWITCH_W, y - 3);
+			switches.add(toggle);
+			g.drawString(font, ability.getDisplayName(), x, y, on ? 0xFFD700 : 0x9E9E9E);
+			drawSwitch(g, toggle, on, toggle.contains(mouseX, mouseY));
+			y += 15;
+			for (FormattedCharSequence line : font.split(ability.getDescription(c), rightEdge - x)) {
+				g.drawString(font, line, x, y, on ? 0xB0B0B0 : 0x707070);
+				y += 10;
+			}
+			if (i < awakened.size() - 1) {
+				y += 4;
+				g.fill(x, y, rightEdge, y + 1, 0xFF3A3A4A);
+				y += 8;
+			}
+		}
+	}
+
+	/** An On/Off switch in the panel's colours: green "On", grey "Off". */
+	private void drawSwitch(GuiGraphics g, AbilitySwitch toggle, boolean on, boolean hovered) {
+		int x = toggle.x();
+		int y = toggle.y();
+		g.fill(x, y, x + SWITCH_W, y + SWITCH_H, BORDER);
+		g.fill(x + 1, y + 1, x + SWITCH_W - 1, y + SWITCH_H - 1, hovered ? TAB_HOVER : TAB_IDLE);
+		g.drawCenteredString(font, Component.translatable(on ? ModLang.ABILITY_ON : ModLang.ABILITY_OFF),
+				x + SWITCH_W / 2, y + (SWITCH_H - 8) / 2, on ? 0x69F0AE : 0x9E9E9E);
+	}
+
+	@Override
+	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+		if (button == 0) {
+			for (AbilitySwitch toggle : switches) {
+				if (!toggle.contains(mouseX, mouseY)) continue;
+				// The server flips it and syncs back; the switch shows the synced state.
+				FriendlyByteBuf buf = PacketByteBufs.create();
+				buf.writeVarInt(toggle.ability().ordinal());
+				ClientPlayNetworking.send(ModPackets.TOGGLE_ABILITY, buf);
+				if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+				return true;
+			}
+		}
+		return super.mouseClicked(mouseX, mouseY, button);
 	}
 
 	/**
@@ -327,13 +412,6 @@ public class CultivationScreen extends Screen {
 		for (FormattedCharSequence line : font.split(Component.translatable(hintKey), WIDTH - 28)) {
 			g.drawCenteredString(font, line, cx, y, 0x808080);
 			y += 11;
-		}
-	}
-
-	private void wrapped(GuiGraphics g, Component text, int x, int y, int color) {
-		for (FormattedCharSequence line : font.split(text, WIDTH - 28)) {
-			g.drawString(font, line, x, y, color);
-			y += 10;
 		}
 	}
 
