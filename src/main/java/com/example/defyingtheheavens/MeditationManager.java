@@ -60,6 +60,11 @@ public final class MeditationManager {
 		SESSIONS.remove(id);
 	}
 
+	/** Whether {@link #start} would begin a session right now: no tribulation running, and steady, dry ground. */
+	public static boolean canStart(ServerPlayer player) {
+		return !TribulationManager.isActive(player.getUUID()) && canMeditate(player);
+	}
+
 	private static boolean canMeditate(ServerPlayer p) {
 		return p.isAlive() && !p.isSpectator() && p.onGround() && !p.isInWaterOrBubble()
 				&& !p.isPassenger() && !p.isSleeping() && !p.isFallFlying();

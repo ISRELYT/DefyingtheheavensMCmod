@@ -61,6 +61,11 @@ public class MeditationMatBlock extends Block {
             MeditationManager.stop(serverPlayer, false);
             return InteractionResult.CONSUME;
         }
+        // Can't meditate right now (tribulation, mid-jump, in water...): start() explains why, and nobody gets moved.
+        if (!MeditationManager.canStart(serverPlayer)) {
+            MeditationManager.start(serverPlayer);
+            return InteractionResult.CONSUME;
+        }
         // Settle onto the middle of the mat, keeping the way the player faces, then meditate as usual.
         serverPlayer.connection.teleport(pos.getX() + 0.5, pos.getY() + height / 16.0, pos.getZ() + 0.5,
                 serverPlayer.getYRot(), serverPlayer.getXRot());
