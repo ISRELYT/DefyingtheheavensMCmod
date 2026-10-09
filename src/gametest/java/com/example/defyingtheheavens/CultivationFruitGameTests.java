@@ -6,6 +6,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -126,6 +127,71 @@ public class CultivationFruitGameTests implements FabricGameTest {
         var drops = helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(FRUIT)).inflate(1));
         helper.assertTrue(drops.size() == 1 && CultivationFruitItem.age(drops.get(0).getItem()) == 10_000,
                 "Breaking fruit also preserves the harvested age without duplicate drops");
+        helper.succeed();
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE)
+    public void wildFruitFavoursYoungAges(GameTestHelper helper) {
+        RandomSource random = RandomSource.create(20261009L);
+        int samples = 200_000;
+        int young = 0, hundred = 0, thousand = 0, heavenly = 0, nearForty = 0;
+        for (int i = 0; i < samples; i++) {
+            int years = FruitAge.natural(random);
+            helper.assertTrue(years >= 1 && years <= FruitAge.MAX_YEARS, "Wild age within bounds: " + years);
+            if (years >= FruitAge.HEAVENLY_TIER) heavenly++;
+            else if (years >= FruitAge.THOUSAND_YEAR_TIER) thousand++;
+            else if (years >= FruitAge.HUNDRED_YEAR_TIER) hundred++;
+            else young++;
+            if (years >= 25 && years <= 55) nearForty++;
+        }
+        helper.assertTrue(young > hundred && hundred > thousand && thousand > heavenly && heavenly > 0,
+                "Each older band is rarer: " + young + " / " + hundred + " / " + thousand + " / " + heavenly);
+        helper.assertTrue(nearForty > samples / 2, "Most wild fruit is around forty years old");
+        helper.assertTrue(heavenly < samples / 100, "Heavenly treasures stay very rare");
+        helper.succeed();
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE)
+    public void auraTiersMatchAgeThresholds(GameTestHelper helper) {
+        helper.assertTrue(FruitAura.of(99) == FruitAura.Tier.NONE, "No aura below a hundred years");
+        helper.assertTrue(FruitAura.of(100) == FruitAura.Tier.HUNDRED_YEAR && FruitAura.of(499) == FruitAura.Tier.HUNDRED_YEAR,
+                "Jade aura from a hundred years");
+        helper.assertTrue(FruitAura.of(500) == FruitAura.Tier.FIVE_HUNDRED_YEAR && FruitAura.of(999) == FruitAura.Tier.FIVE_HUNDRED_YEAR,
+                "Aqua aura from five hundred years");
+        helper.assertTrue(FruitAura.of(1_000) == FruitAura.Tier.THOUSAND_YEAR && FruitAura.of(4_999) == FruitAura.Tier.THOUSAND_YEAR,
+                "White aura from a thousand years");
+        helper.assertTrue(FruitAura.of(5_000) == FruitAura.Tier.HEAVENLY && FruitAura.of(9_999) == FruitAura.Tier.HEAVENLY,
+                "White-gold aura from five thousand years");
+        helper.assertTrue(FruitAura.of(FruitAge.MAX_YEARS) == FruitAura.Tier.TEN_THOUSAND_YEAR, "Peak aura at ten thousand years");
+        helper.assertTrue(FruitAura.heavenlyStrength(5_000) == 0.0f && FruitAura.heavenlyStrength(10_000) == 1.0f,
+                "Heavenly strength runs from five to ten thousand years");
+        helper.assertTrue(FruitAura.swell(0, FruitAura.BREATH_TICKS) < 0.01f
+                && FruitAura.swell(FruitAura.BREATH_TICKS / 2.0f, FruitAura.BREATH_TICKS) > 0.99f, "Jade breath swells and settles");
+        float lub = FruitAura.heartbeat(2), dub = FruitAura.heartbeat(FruitAura.SECOND_BEAT + 2), rest = FruitAura.heartbeat(FruitAura.HEARTBEAT_TICKS - 1);
+        helper.assertTrue(lub > 0.99f && dub > 0.5f && dub < lub && rest < 0.05f, "Heartbeat: strong lub, softer dub, then stillness");
+        helper.assertTrue(FruitAura.clock(1_000, new BlockPos(0, 64, 0)) != FruitAura.clock(1_000, new BlockPos(1, 64, 0))
+                || FruitAura.clock(1_000, new BlockPos(0, 64, 0)) != FruitAura.clock(1_000, new BlockPos(0, 64, 1)),
+                "Neighbouring fruit keep different time");
+        helper.succeed();
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE)
+    public void worldgenFruitKeepsAgeAndClockOnLoad(GameTestHelper helper) {
+        // Worldgen creates the block entity with no level and starts its clock from the world's time.
+        long now = helper.getLevel().getGameTime();
+        CultivationFruitBlockEntity generated = new CultivationFruitBlockEntity(helper.absolutePos(FRUIT), ModBlocks.CULTIVATION_FRUIT.defaultBlockState());
+        generated.setWildAge(450, now);
+        CompoundTag saved = generated.saveWithoutMetadata();
+        CultivationFruitBlockEntity loaded = new CultivationFruitBlockEntity(helper.absolutePos(FRUIT), ModBlocks.CULTIVATION_FRUIT.defaultBlockState());
+        loaded.load(saved);
+        loaded.setLevel(helper.getLevel());
+        helper.assertTrue(loaded.age() == 450, "Loaded wild fruit keeps its rolled age");
+        helper.assertTrue(loaded.saveWithoutMetadata().getLong("PlantedAt") == now, "Loading keeps the worldgen clock");
+        CultivationFruitBlockEntity unclocked = new CultivationFruitBlockEntity(helper.absolutePos(FRUIT), ModBlocks.CULTIVATION_FRUIT.defaultBlockState());
+        unclocked.setLevel(helper.getLevel());
+        helper.assertTrue(unclocked.saveWithoutMetadata().getLong("PlantedAt") == now, "Fruit without a clock starts one when it gets a level");
+        CompoundTag sync = loaded.getUpdateTag();
+        helper.assertTrue(sync.getInt("InitialYears") == 450 && sync.contains("PlantedAt"), "Clients receive the age for the aura");
         helper.succeed();
     }
 }

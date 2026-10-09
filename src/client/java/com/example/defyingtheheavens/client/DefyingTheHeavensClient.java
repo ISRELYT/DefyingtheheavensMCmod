@@ -15,6 +15,8 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE.putBlock(
 				com.example.defyingtheheavens.ModBlocks.CULTIVATION_FRUIT, net.minecraft.client.renderer.RenderType.cutout());
+		net.minecraft.client.renderer.blockentity.BlockEntityRenderers.register(
+				com.example.defyingtheheavens.ModBlockEntities.CULTIVATION_FRUIT, context -> new CultivationFruitAuraRenderer());
 		ModKeybinds.register();
 		ClientPacketHandlers.register();
 		QiHud.register();

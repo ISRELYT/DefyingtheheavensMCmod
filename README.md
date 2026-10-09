@@ -28,7 +28,43 @@ Breaking the fruit or removing its supporting leaves drops the fruit with its ag
 - Uses elapsed server game time, including time while its chunk is unloaded; it does not age while the server is stopped. Sleeping and `/time` changes do not accelerate the clock.
 - Harvested fruit stores its age permanently, cannot be placed back, and can be eaten even at full hunger.
 - Eating grants up to **10 cultivation per year**. Existing suppression, stage caps, and tribulation rules still apply.
-- The creative Food & Drinks tab has a one-year fruit. Natural fruit-bearing trees, saplings, and automatic regrowth are not implemented yet.
+- The creative Food & Drinks tab has a one-year fruit. Saplings, farming, and automatic regrowth are not implemented yet.
+
+### Wild fruit
+
+Fruit generates on its own, hanging under the leaves of naturally generated trees in new chunks:
+on average one per **6** tree-bearing chunks in the Overworld, and one per **3** in the Upper Realm.
+Player-placed leaves never get fruit. Wild fruit starts aging from the moment it is generated.
+
+| Starting age | Chance |
+| --- | --- |
+| 10–99 years (mostly around 40) | ~82% |
+| 100–999 years | 15% |
+| 1,000–4,999 years | 2.6% |
+| 5,000–10,000 years | 0.4% |
+
+Within each band the younger end is more common, so a 10,000-year fruit is the rarest of all.
+Spawn rates are `FRUIT_CHUNKS_*` in `ModPlacedFeatures.java` (re-run `runDatagen` after changing them);
+age chances are `NATURAL_*` in `FruitAge.java`.
+
+### Age auras
+
+An attached fruit shows its age (`FruitAura.java` for particles, sounds and timing, `CultivationFruitAuraRenderer.java`
+for the glow). Each tier has its own colour and its own way of moving, and every fruit keeps its own time, so fruit
+side by side never pulse in unison. The glow fades out as your camera gets right up to the fruit.
+
+- **100+ years (jade):** a small glow that breathes slowly in and out; a few jade motes.
+- **500+ years (aqua):** the same size, still like water, with a soft ripple spreading now and then and enchanting
+  glyphs swirling in.
+- **1,000+ years (white, blue tinge):** a steady, crisp glow that glints like ice catching the light; a frost-white
+  ring of qi, a glyph swirl and the odd rising wisp.
+- **5,000+ years (white-gold):** radiant. Short beams of light burst out like the Ender Dragon's death, golden and
+  fruit-sized, each breathing on its own; counter-rotating golden rings and a two-armed glyph swirl.
+- **10,000 years:** a heartbeat. On each slow "lub-dub" the halo swells, the beams surge, the pillar of light flares
+  and a golden ripple leaves the fruit; every fourth beat it chimes on both notes. Rings of qi circle on two planes
+  and light falls slowly around it.
+
+Preview each tier with `/cultivationfruit attach 100`, `500`, `1000`, `5000` and `10000`.
 
 With cheats/operator permissions, look at a leaves block with empty space underneath and run:
 

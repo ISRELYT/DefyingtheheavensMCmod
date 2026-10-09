@@ -82,6 +82,16 @@ public final class ModPlacedFeatures {
 	public static final ResourceKey<PlacedFeature> PATCH_PUMPKIN = key("patch_pumpkin");
 	public static final ResourceKey<PlacedFeature> PATCH_BERRY_BUSH = key("patch_berry_bush");
 
+	/**
+	 * Wild Cultivation Fruit. Not in {@link #ORDER}: ModFeatures#register appends these to the end of vegetal decoration
+	 * with Fabric's biome modifications, so they always run after every biome's trees.
+	 */
+	public static final ResourceKey<PlacedFeature> CULTIVATION_FRUIT = key("cultivation_fruit");
+	public static final ResourceKey<PlacedFeature> CULTIVATION_FRUIT_UPPER_REALM = key("cultivation_fruit_upper_realm");
+	/** On average one fruit per this many chunks that have trees. The Upper Realm's dense qi bears fruit twice as often. */
+	public static final int FRUIT_CHUNKS_OVERWORLD = 6;
+	public static final int FRUIT_CHUNKS_UPPER_REALM = 3;
+
 	public static final List<Entry> ORDER = List.of(
 			new Entry(GenerationStep.Decoration.LAKES, SPRING_BASIN),
 			new Entry(GenerationStep.Decoration.LAKES, LAVA_LAKE),
@@ -188,6 +198,14 @@ public final class ModPlacedFeatures {
 		register(context, PATCH_SUGAR_CANE, configured.getOrThrow(VegetationFeatures.PATCH_SUGAR_CANE), surface(CountPlacement.of(4), null));
 		register(context, PATCH_PUMPKIN, configured.getOrThrow(VegetationFeatures.PATCH_PUMPKIN), surface(RarityFilter.onAverageOnceEvery(8), null));
 		register(context, PATCH_BERRY_BUSH, configured.getOrThrow(VegetationFeatures.PATCH_BERRY_BUSH), surface(CountPlacement.of(1), null));
+
+		// Wild Cultivation Fruit: the feature searches whole columns for canopies itself, so a plain heightmap origin will do.
+		register(context, CULTIVATION_FRUIT, configured.getOrThrow(ModConfiguredFeatures.CULTIVATION_FRUIT), fruit(FRUIT_CHUNKS_OVERWORLD));
+		register(context, CULTIVATION_FRUIT_UPPER_REALM, configured.getOrThrow(ModConfiguredFeatures.CULTIVATION_FRUIT), fruit(FRUIT_CHUNKS_UPPER_REALM));
+	}
+
+	private static List<PlacementModifier> fruit(int chunks) {
+		return List.of(RarityFilter.onAverageOnceEvery(chunks), InSquarePlacement.spread(), PlacementUtils.HEIGHTMAP, BiomeFilter.biome());
 	}
 
 	private static void register(BootstapContext<PlacedFeature> context, ResourceKey<PlacedFeature> key,

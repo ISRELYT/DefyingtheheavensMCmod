@@ -60,6 +60,7 @@ public final class ModConfiguredFeatures {
 	public static final ResourceKey<ConfiguredFeature<?, ?>> WHITE_BLOSSOM_TREE = key("white_blossom_tree");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> PEACH_BLOSSOM_TREES = key("peach_blossom_trees");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> SPRING_BASIN = key("spring_basin");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> CULTIVATION_FRUIT = key("cultivation_fruit");
 
 	private static ResourceKey<ConfiguredFeature<?, ?>> key(String name) {
 		return ResourceKey.create(Registries.CONFIGURED_FEATURE, DefyingTheHeavens.id(name));
@@ -120,6 +121,9 @@ public final class ModConfiguredFeatures {
 		Feature<LakeFeature.Configuration> lake = Feature.LAKE;
 		FeatureUtils.register(context, SPRING_BASIN, lake, new LakeFeature.Configuration(
 				BlockStateProvider.simple(Blocks.WATER), BlockStateProvider.simple(Blocks.STONE)));
+
+		// Wild Cultivation Fruit under tree canopies (Overworld and Upper Realm, added by ModFeatures#register).
+		FeatureUtils.register(context, CULTIVATION_FRUIT, ModFeatures.CULTIVATION_FRUIT);
 	}
 
 	private static void ore(BootstapContext<ConfiguredFeature<?, ?>> context, ResourceKey<ConfiguredFeature<?, ?>> key,

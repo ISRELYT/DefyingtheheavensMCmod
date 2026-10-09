@@ -17,6 +17,8 @@ import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
@@ -29,6 +31,13 @@ public class CultivationFruitBlock extends BaseEntityBlock {
     public CultivationFruitBlock(Properties properties) { super(properties); }
 
     @Override public BlockEntity newBlockEntity(BlockPos pos, BlockState state) { return new CultivationFruitBlockEntity(pos, state); }
+
+    /** Client only: the age aura's particles and sounds (see FruitAura). The server needs no ticking; age is a clock. */
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+        return level.isClientSide ? createTickerHelper(type, ModBlockEntities.CULTIVATION_FRUIT, FruitAura::clientTick) : null;
+    }
+
     @Override public RenderShape getRenderShape(BlockState state) { return RenderShape.MODEL; }
     @Override public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) { return SHAPE; }
     @Override public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) { return level.getBlockState(pos.above()).is(BlockTags.LEAVES); }
