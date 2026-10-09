@@ -13,6 +13,10 @@ public final class ModBlockEntities {
 			DefyingTheHeavens.id("spatial_rift"),
 			BlockEntityType.Builder.of(SpatialRiftBlockEntity::new, ModBlocks.SPATIAL_RIFT).build(null));
 
+	public static final BlockEntityType<SpiritPedestalBlockEntity> SPIRIT_PEDESTAL = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
+			DefyingTheHeavens.id("spirit_pedestal"),
+			BlockEntityType.Builder.of(SpiritPedestalBlockEntity::new, ModBlocks.SPIRIT_PEDESTAL).build(null));
+
 	/** Touching this class registers the block entity types. */
 	public static void register() {
 	}

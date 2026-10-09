@@ -28,6 +28,9 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add("gui.defying-the-heavens.baubles", "Baubles");
 		t.add("config.jade.plugin_defying-the-heavens.fruit_age", "Cultivation Fruit Age"); // Jade's toggle for the fruit-age tooltip
 		t.add(ModBlocks.RED_MEDITATION_MAT, "Red Silk Meditation Mat");
+		t.add(ModBlocks.SPIRIT_PEDESTAL, "Spirit Pedestal");
+		t.add(ModLang.PEDESTAL_TOOLTIP, "Holds a Cultivation Fruit to aid meditation nearby");
+		t.add(ModLang.FRUIT_PEDESTAL_TOOLTIP, "On a Spirit Pedestal: +%s%% cultivation speed while meditating nearby");
 		t.add(ModItems.RING_OF_POWER, "Ring of Power");
 		t.add(ModLang.RING_OF_POWER_TOOLTIP, "When worn: +%s cultivation per second while meditating");
 		t.add(ModItems.RING_OF_TRANSCENDENCE, "Ring of Transcendence");
@@ -164,6 +167,12 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_START, "You sit in the lotus position and begin to gather qi.");
 		t.add(ModLang.MSG_STOP, "You open your eyes, ending your meditation.");
 		t.add(ModLang.MSG_INTERRUPTED, "Your meditation was interrupted!");
+		t.add(ModLang.MSG_BOOST, "Cultivation speed +%s%% (%s)");
+		t.add(ModLang.MSG_BOOST_NONE, "Your surroundings no longer aid your cultivation.");
+		t.add(ModLang.BOOST_PEDESTAL, "1 Spirit Pedestal");
+		t.add(ModLang.BOOST_PEDESTALS, "%s Spirit Pedestals");
+		t.add(ModLang.BOOST_HEIGHT, "High Altitude");
+		t.add(ModLang.BOOST_TRANQUIL, "Tranquil Surroundings");
 		t.add(ModLang.MSG_CANNOT, "You need steady, dry ground to meditate.");
 		t.add(ModLang.MSG_STAGE_UP, "Your cultivation advances: %s - %s!");
 		t.add(ModLang.MSG_BREAKTHROUGH, "You survived the Heavenly Tribulation and ascended to %s!");

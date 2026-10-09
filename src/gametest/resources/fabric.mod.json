@@ -7,7 +7,8 @@
   "entrypoints": {
     "fabric-gametest": [
       "com.example.defyingtheheavens.CultivationFruitGameTests",
-      "com.example.defyingtheheavens.TribulationCloudGameTests"
+      "com.example.defyingtheheavens.TribulationCloudGameTests",
+      "com.example.defyingtheheavens.SpiritPedestalGameTests"
     ]
   }
 }

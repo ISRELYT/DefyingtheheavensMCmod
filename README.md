@@ -100,14 +100,48 @@ open. In the creative inventory tab the ring slots show right of the armor, as b
 A **Meditation Mat** (a flat, round mat of coiled straw) and a **Red Silk Meditation Mat** (the same mat with a square of
 red silk laid across it) can be placed on any block. Each is drawn one and a half blocks across, overhanging its block by
 a quarter block on every side; only the middle block is solid, so leave a block between mats so they don't overlap. Right-click a mat to sit in its centre and start meditating: the same
-checks, messages and cultivation gain as the meditation key. Right-click again, or move, to stop. The mats give no extra
-bonus yet.
+checks, messages and cultivation gain as the meditation key. Right-click again, or move, to stop. Sitting on a mat speeds
+meditation (see below).
 
 - Meditation Mat: three wheat in a row.
 - Red Silk Meditation Mat: a Meditation Mat and red carpet (shapeless).
 
 Source models are in `Models/MeditationMat` and `Models/RedMeditationMat` (Blockbench project, model JSON and textures);
 the game uses copies under `assets/defying-the-heavens` (`meditation_mat*`, `red_meditation_mat*`).
+
+## Spirit Pedestals and meditation boosts
+
+A **Spirit Pedestal** (carved grey stone with jade inlays, about 1.25 blocks tall: a base with a jade
+meander band, a column with corner pilasters and a panel bearing a jade medallion, and a flared top with jade nubs, a
+row of jade beads and a polished jade disc under the fruit) displays one Cultivation Fruit. Right-click it with a fruit to set it
+down, and right-click again to take it back. Breaking the pedestal gives back both the pedestal and its fruit, in
+creative too. The fruit floats over the
+pedestal, turning slowly, and shows the same age aura it had on the tree. Harvested fruit doesn't age, so a fruit's
+age stays the same on a pedestal.
+
+Several things speed up meditation. Their shares add together, and the total multiplies the normal rate:
+
+| Source | Boost |
+| --- | --- |
+| Sitting on a Meditation Mat / Red Silk Meditation Mat | +10% / +20% |
+| Each fruit on a pedestal within 4 blocks (2 up or down); only the 4 oldest count | 1 year +2%, 10 years +14%, 100 years +26%, 1,000 years +38%, 10,000 years +50% (+12% for every tenfold age) |
+| Height, under open sky: from y 120 up to y 250 | up to +15% |
+| Tranquil places: cherry grove, Peach Blossom Sanctuary, snowy slopes, frozen and jagged peaks | +10% |
+
+The best setup today, a red mat and four 10,000-year fruit on a snowy peak, gathers about 3.45 times as fast. When you
+sit down, and whenever the boost changes, the action bar shows the total and where it comes from. The rate in the
+cultivation menu includes the boost and turns jade when it is boosted. A fruit's tooltip says what it would add on a
+pedestal.
+
+While someone meditates, each feeding fruit's qi arcs up off its pedestal and sweeps into its own orbit around them,
+in the fruit's aura colour, with beads of light and glyphs flowing along it. The orbits sit at different heights and
+widths, lean slightly and turn opposite ways like the rings of an armillary sphere, and stay below eye level and an
+arm's length away. Fruit 1,000 years and older also lift wisps of light off their orbit.
+
+- Recipe: polished deepslate in the top and bottom rows, with jade stone or an emerald in the middle.
+- Balance numbers are in `CultivationBoost.java`. Pedestal code is in `SpiritPedestalBlock(Entity).java`, and the
+  visuals are in `client/SpiritPedestalRenderer.java` and `client/MeditationFormation.java`.
+- Model: `models/block/spirit_pedestal.json`; textures `textures/block/spirit_pedestal_{column,trim,top}.png` (32x32).
 
 ## License
 

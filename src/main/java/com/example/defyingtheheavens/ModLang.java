@@ -113,5 +113,15 @@ public final class ModLang {
 	public static final String RING_OF_POWER_TOOLTIP = k("tooltip.ring_of_power");
 	public static final String RING_OF_TRANSCENDENCE_TOOLTIP = k("tooltip.ring_of_transcendence");
 
+	// Spirit Pedestals and what speeds meditation (see CultivationBoost).
+	public static final String PEDESTAL_TOOLTIP = k("tooltip.spirit_pedestal");
+	public static final String FRUIT_PEDESTAL_TOOLTIP = k("tooltip.fruit_on_pedestal");
+	public static final String MSG_BOOST = k("message.boost");
+	public static final String MSG_BOOST_NONE = k("message.boost_none");
+	public static final String BOOST_PEDESTAL = k("boost.pedestal");
+	public static final String BOOST_PEDESTALS = k("boost.pedestals");
+	public static final String BOOST_HEIGHT = k("boost.height");
+	public static final String BOOST_TRANQUIL = k("boost.tranquil");
+
 	private ModLang() {}
 }

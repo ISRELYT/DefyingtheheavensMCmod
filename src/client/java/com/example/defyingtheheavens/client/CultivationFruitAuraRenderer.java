@@ -33,17 +33,25 @@ public class CultivationFruitAuraRenderer implements BlockEntityRenderer<Cultiva
 	@Override
 	public void render(CultivationFruitBlockEntity fruit, float partialTick, PoseStack poseStack, MultiBufferSource buffers, int light, int overlay) {
 		if (fruit.getLevel() == null) return;
-		int years = fruit.age();
-		FruitAura.Tier tier = FruitAura.of(years);
-		if (tier == FruitAura.Tier.NONE) return;
 		BlockPos pos = fruit.getBlockPos();
-		float clock = FruitAura.clock(fruit.getLevel().getGameTime(), pos) + partialTick;
-		Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
-		float near = nearFade(camera, pos);
-		VertexConsumer glow = buffers.getBuffer(FruitAuraRenderType.GLOW);
-
 		poseStack.pushPose();
 		poseStack.translate(0.5, FruitAura.CENTER_Y, 0.5);
+		drawAura(fruit.age(), pos, Vec3.atLowerCornerOf(pos).add(0.5, FruitAura.CENTER_Y, 0.5),
+				FruitAura.clock(fruit.getLevel().getGameTime(), pos) + partialTick, poseStack, buffers);
+		poseStack.popPose();
+	}
+
+	/**
+	 * Draws the glow of a fruit {@code years} old, with {@code poseStack} already moved to the fruit's centre
+	 * ({@code centre} in the world). {@code pos} seeds the beams' layout. Shared with the Spirit Pedestal.
+	 */
+	public static void drawAura(int years, BlockPos pos, Vec3 centre, float clock, PoseStack poseStack, MultiBufferSource buffers) {
+		FruitAura.Tier tier = FruitAura.of(years);
+		if (tier == FruitAura.Tier.NONE) return;
+		Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+		float near = nearFade(camera, centre);
+		VertexConsumer glow = buffers.getBuffer(FruitAuraRenderType.GLOW);
+
 		switch (tier) {
 			case HUNDRED_YEAR -> {
 				// Jade: one slow breath in and out.
@@ -89,12 +97,10 @@ public class CultivationFruitAuraRenderer implements BlockEntityRenderer<Cultiva
 			}
 			default -> {}
 		}
-		poseStack.popPose();
 	}
 
 	/** 0 when the camera is at the fruit, rising smoothly to 1 a block and a half away. */
-	private static float nearFade(Camera camera, BlockPos pos) {
-		Vec3 centre = new Vec3(pos.getX() + 0.5, pos.getY() + FruitAura.CENTER_Y, pos.getZ() + 0.5);
+	static float nearFade(Camera camera, Vec3 centre) {
 		float t = Mth.clamp((float) ((camera.getPosition().distanceTo(centre) - 0.3) / 1.2), 0.0f, 1.0f);
 		return t * t * (3.0f - 2.0f * t);
 	}

@@ -1,6 +1,7 @@
 package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.Ability;
+import com.example.defyingtheheavens.CultivationBoost;
 import com.example.defyingtheheavens.CultivationStats;
 import com.example.defyingtheheavens.ModLang;
 import com.example.defyingtheheavens.PlayerCultivation;
@@ -205,10 +206,12 @@ public class CultivationScreen extends Screen {
 				: Component.translatable(ModLang.CULTIVATION, num(c.getCultivation()), num(required));
 		g.drawCenteredString(font, progressLine, cx, y, 0xFFFFFF);
 		y += 11;
-		double rate = c.meditationCultivationPerSecond(RingOfPowerItem.cultivationBonus(player)); // 0 while suppressed
+		// What meditating here gathers, surroundings included (mats, fruit on pedestals, height, tranquillity); jade when boosted.
+		double boost = player == null ? 1.0 : CultivationBoost.of(player).multiplier();
+		double rate = c.meditationCultivationPerSecond(RingOfPowerItem.cultivationBonus(player)) * boost; // 0 while suppressed
 		g.drawCenteredString(font, c.isInUpperRealm()
 				? Component.translatable(ModLang.CULTIVATION_RATE_UPPER, one(rate), (int) PlayerCultivation.UPPER_REALM_QI_MULTIPLIER)
-				: Component.translatable(ModLang.CULTIVATION_RATE, one(rate)), cx, y, 0xA0A0A0);
+				: Component.translatable(ModLang.CULTIVATION_RATE, one(rate)), cx, y, boost > 1.0 && rate > 0 ? 0x7FE0A0 : 0xA0A0A0);
 		y += 18;
 
 		if (c.isSuppressed()) {

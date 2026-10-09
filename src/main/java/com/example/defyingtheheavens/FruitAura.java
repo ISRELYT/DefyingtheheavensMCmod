@@ -33,6 +33,8 @@ public final class FruitAura {
 
     /** Height of the fruit's centre within its block (it hangs from the leaves above; body spans y 6.5..14.5 px). */
     public static final float CENTER_Y = 10.5f / 16;
+    /** Height of a fruit's centre above a Spirit Pedestal's block: floating a little over the pedestal's top (20 px, nubs 21). */
+    public static final float PEDESTAL_FRUIT_Y = 1.675f;
     /**
      * How far the aura is pushed out to clear the fruit's skin. The aura was tuned on a fruit of about 1.25 px radius;
      * the peach is 4 px, so halos, ripples and motes start this much further out to stay visible around it.
@@ -132,13 +134,37 @@ public final class FruitAura {
 
     // ---- Particles and sounds ----
 
+    /** The colour that stands for a tier: its aura's colour, and the qi it gives a meditator (pale jade below 100 years). */
+    public static float[] colour(Tier tier) {
+        return switch (tier) {
+            case NONE -> PALE_JADE;
+            case HUNDRED_YEAR -> JADE;
+            case FIVE_HUNDRED_YEAR -> AQUA;
+            case THOUSAND_YEAR -> FROST;
+            case HEAVENLY -> WHITE_GOLD;
+            case TEN_THOUSAND_YEAR -> GOLD;
+        };
+    }
+
+    /** Young fruit's qi: no aura of its own, but a meditator still draws a faint, pale stream from it. */
+    public static final float[] PALE_JADE = {0.7f, 0.95f, 0.8f};
+
     /** Client ticker for attached fruit. */
     public static void clientTick(Level level, BlockPos pos, BlockState state, CultivationFruitBlockEntity fruit) {
-        int years = fruit.age();
+        emit(level, pos, fruit.age(), pos.getX() + 0.5, pos.getY() + CENTER_Y, pos.getZ() + 0.5);
+    }
+
+    /** Client ticker for a Spirit Pedestal: the fruit on display gives off the same aura as on the tree. */
+    public static void pedestalClientTick(Level level, BlockPos pos, BlockState state, SpiritPedestalBlockEntity pedestal) {
+        if (!pedestal.hasFruit()) return;
+        emit(level, pos, pedestal.fruitAge(), pos.getX() + 0.5, pos.getY() + PEDESTAL_FRUIT_Y, pos.getZ() + 0.5);
+    }
+
+    /** The aura's particles and sounds for a fruit of {@code years} centred on (x, y, z); {@code pos} keys its clock. */
+    private static void emit(Level level, BlockPos pos, int years, double x, double y, double z) {
         Tier tier = of(years);
         if (tier == Tier.NONE) return;
         RandomSource random = level.random;
-        double x = pos.getX() + 0.5, y = pos.getY() + CENTER_Y, z = pos.getZ() + 0.5;
         long clock = clock(level.getGameTime(), pos);
         switch (tier) {
             case HUNDRED_YEAR -> {

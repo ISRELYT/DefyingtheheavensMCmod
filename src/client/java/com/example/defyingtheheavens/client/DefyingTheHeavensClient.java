@@ -18,6 +18,8 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 				com.example.defyingtheheavens.ModBlocks.CULTIVATION_FRUIT, net.minecraft.client.renderer.RenderType.cutout());
 		net.minecraft.client.renderer.blockentity.BlockEntityRenderers.register(
 				com.example.defyingtheheavens.ModBlockEntities.CULTIVATION_FRUIT, context -> new CultivationFruitAuraRenderer());
+		net.minecraft.client.renderer.blockentity.BlockEntityRenderers.register(
+				com.example.defyingtheheavens.ModBlockEntities.SPIRIT_PEDESTAL, SpiritPedestalRenderer::new);
 		ModKeybinds.register();
 		BaublePanel.register();
 		ClientPacketHandlers.register();
@@ -35,11 +37,13 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			ClientCultivationData.clear();
 			SpatialGapAmbience.clear();
 			ClientSpatialStorms.clear();
+			MeditationFormation.clear();
 		});
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			SpatialGapAmbience.tick(client);
 			ClientSpatialStorms.tick(client);
+			MeditationFormation.tick(client);
 			while (ModKeybinds.OPEN_MENU.consumeClick()) {
 				if (client.player != null && client.screen == null) {
 					client.setScreen(new CultivationScreen());

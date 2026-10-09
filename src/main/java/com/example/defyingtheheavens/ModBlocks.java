@@ -45,6 +45,10 @@ public final class ModBlocks {
 	public static final Block RED_MEDITATION_MAT = registerWithItem("red_meditation_mat", new MeditationMatBlock(2.0,
 			BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_RED).strength(0.5f).sound(SoundType.WOOL)
 					.noOcclusion().ignitedByLava().pushReaction(PushReaction.DESTROY)));
+	/** Displays a Cultivation Fruit; fruit on pedestals near a meditator speeds their cultivation (see SpiritPedestalBlock). */
+	public static final Block SPIRIT_PEDESTAL = registerWithItem("spirit_pedestal", new SpiritPedestalBlock(
+			BlockBehaviour.Properties.of().mapColor(MapColor.DEEPSLATE).strength(1.5f, 6.0f).sound(SoundType.POLISHED_DEEPSLATE)
+					.noOcclusion()));
 
 	private static Block register(String id, Block block) {
 		return Registry.register(BuiltInRegistries.BLOCK, DefyingTheHeavens.id(id), block);
@@ -64,6 +68,7 @@ public final class ModBlocks {
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS).register(entries -> {
 			entries.accept(MEDITATION_MAT);
 			entries.accept(RED_MEDITATION_MAT);
+			entries.accept(SPIRIT_PEDESTAL);
 		});
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.NATURAL_BLOCKS).register(entries -> {
 			entries.accept(JADE_STONE);

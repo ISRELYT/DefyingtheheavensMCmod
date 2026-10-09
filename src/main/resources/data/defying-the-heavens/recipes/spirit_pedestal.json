@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "SSS",
+    " J ",
+    "SSS"
+  ],
+  "key": {
+    "S": {
+      "item": "minecraft:polished_deepslate"
+    },
+    "J": [
+      {
+        "item": "defying-the-heavens:jade_stone"
+      },
+      {
+        "item": "minecraft:emerald"
+      }
+    ]
+  },
+  "result": {
+    "item": "defying-the-heavens:spirit_pedestal"
+  }
+}

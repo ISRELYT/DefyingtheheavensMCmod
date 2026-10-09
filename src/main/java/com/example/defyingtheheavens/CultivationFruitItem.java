@@ -38,6 +38,8 @@ public class CultivationFruitItem extends Item {
     public void appendHoverText(ItemStack stack, Level level, List<Component> lines, TooltipFlag flag) {
         lines.add(Component.translatable("item.defying-the-heavens.cultivation_fruit.age", age(stack)).withStyle(ChatFormatting.GOLD));
         lines.add(Component.translatable("item.defying-the-heavens.cultivation_fruit.gain", FruitAge.cultivation(age(stack))).withStyle(ChatFormatting.GREEN));
+        lines.add(Component.translatable(ModLang.FRUIT_PEDESTAL_TOOLTIP,
+                Math.round(CultivationBoost.pedestalBonus(age(stack)) * 100)).withStyle(ChatFormatting.AQUA));
         lines.add(Component.translatable("item.defying-the-heavens.cultivation_fruit.picked").withStyle(ChatFormatting.GRAY));
     }
 }
