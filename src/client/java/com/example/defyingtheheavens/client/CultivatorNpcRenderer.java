@@ -33,6 +33,8 @@ public class CultivatorNpcRenderer extends HumanoidMobRenderer<CultivatorNpc, Pl
 	private static final double CONCEALED_RANGE = 10;
 	private static final int BAR_WIDTH = 50;
 	private static final int BAR_HEIGHT = 9;
+	/** Depth between the health bar's layers, in plate units (the plate is drawn 1/40 of a block per unit). */
+	private static final float LAYER = 0.6f;
 
 	static {
 		for (int i = 0; i < SKINS.length; i++) SKINS[i] = DefyingTheHeavens.id("textures/entity/cultivator/cultivator_" + i + ".png");
@@ -82,19 +84,26 @@ public class CultivatorNpcRenderer extends HumanoidMobRenderer<CultivatorNpc, Pl
 		font.drawInBatch(title, tx, -24, 0x20FFFFFF, false, matrix, buffers, Font.DisplayMode.SEE_THROUGH, background, light);
 		font.drawInBatch(title, tx, -24, titleColor, false, matrix, buffers, Font.DisplayMode.NORMAL, 0, light);
 
-		// The health bar: a dark track, the red of what's left, the numbers over it.
+		// The health bar: a gold frame, a dark track, the red of what's left, the numbers over it. Each layer sits a whole
+		// LAYER in front of the one behind (in plate units, 1/40 block): any closer and the depth buffer can't tell them
+		// apart at a distance, so the numbers flicker through the red and the font's own shadow shows as a second copy.
 		float health = Math.max(0, npc.getHealth());
 		float max = Math.max(1, npc.getMaxHealth());
 		float x0 = -BAR_WIDTH / 2f, y0 = -13.5f;
+		float fill = BAR_WIDTH * Math.min(1, health / max);
 		VertexConsumer quads = buffers.getBuffer(RenderType.textBackground());
-		quad(quads, matrix, x0 - 1, y0 - 1, x0 + BAR_WIDTH + 1, y0 + BAR_HEIGHT + 1, 0.0f, 0xC0B8860B, light);
-		quad(quads, matrix, x0, y0, x0 + BAR_WIDTH, y0 + BAR_HEIGHT, -0.01f, 0xE0200A0A, light);
-		quad(quads, matrix, x0, y0, x0 + BAR_WIDTH * Math.min(1, health / max), y0 + BAR_HEIGHT, -0.02f, 0xF0C0262B, light);
-		quad(quads, matrix, x0, y0, x0 + BAR_WIDTH * Math.min(1, health / max), y0 + 2, -0.03f, 0xF0E8585C, light);
+		quad(quads, matrix, x0 - 1, y0 - 1, x0 + BAR_WIDTH + 1, y0 + BAR_HEIGHT + 1, 0, 0xC0B8860B, light);
+		quad(quads, matrix, x0, y0, x0 + BAR_WIDTH, y0 + BAR_HEIGHT, -LAYER, 0xE0200A0A, light);
+		quad(quads, matrix, x0, y0, x0 + fill, y0 + BAR_HEIGHT, -2 * LAYER, 0xF0C0262B, light);
+		quad(quads, matrix, x0, y0, x0 + fill, y0 + 2, -3 * LAYER, 0xF0E8585C, light);
 		Component numbers = Component.literal(Mth.ceil(health) + " / " + Mth.ceil(max));
+		float nx = -font.width(numbers) / 2f;
 		poseStack.pushPose();
-		poseStack.translate(0, 0, -0.05f);
-		font.drawInBatch(numbers, -font.width(numbers) / 2f, y0 + 1, 0xFFFFFFFF, true, poseStack.last().pose(), buffers, Font.DisplayMode.NORMAL, 0, light);
+		// A dark shadow one pixel down and right, then the white numbers in front of it.
+		poseStack.translate(0, 0, -4 * LAYER);
+		font.drawInBatch(numbers, nx + 1, y0 + 2, 0xFF3A0A0C, false, poseStack.last().pose(), buffers, Font.DisplayMode.NORMAL, 0, light);
+		poseStack.translate(0, 0, -LAYER);
+		font.drawInBatch(numbers, nx, y0 + 1, 0xFFFFFFFF, false, poseStack.last().pose(), buffers, Font.DisplayMode.NORMAL, 0, light);
 		poseStack.popPose();
 
 		// The path.
