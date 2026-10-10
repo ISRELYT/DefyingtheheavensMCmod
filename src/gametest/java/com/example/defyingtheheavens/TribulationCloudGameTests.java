@@ -12,7 +12,7 @@ import net.minecraft.world.phys.AABB;
 public class TribulationCloudGameTests implements FabricGameTest {
     @GameTest(template = EMPTY_STRUCTURE)
     public void breakthroughsSpawnScaledCloudsAndCleanUp(GameTestHelper helper) {
-        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        ServerPlayer player = isolated(helper);
         try {
             PlayerCultivation cultivation = CultivationManager.get(player);
             cultivation.setState(Realm.QI_REFINING, Stage.GRAND_PERFECTION, 0);
@@ -102,7 +102,7 @@ public class TribulationCloudGameTests implements FabricGameTest {
 
     @GameTest(template = EMPTY_STRUCTURE)
     public void aHitJustBeforeAStrikeDoesNotBluntIt(GameTestHelper helper) {
-        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        ServerPlayer player = isolated(helper);
         try {
             player.setGameMode(GameType.SURVIVAL);
             ((ServerPlayerAccessor) player).dth$setSpawnInvulnerableTime(0);
@@ -145,9 +145,21 @@ public class TribulationCloudGameTests implements FabricGameTest {
         helper.succeed();
     }
 
+    /**
+     * A mock player moved into this test's own area. Mock players all join at the world spawn, so tests running side by side
+     * would otherwise share one spot, and each other's strikes and clouds.
+     */
+    private static ServerPlayer isolated(GameTestHelper helper) {
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        net.minecraft.world.phys.Vec3 at = net.minecraft.world.phys.Vec3.atBottomCenterOf(helper.absolutePos(new net.minecraft.core.BlockPos(1, 2, 1)));
+        player.teleportTo(helper.getLevel(), at.x, at.y, at.z, 0, 0);
+        return player;
+    }
+
+    /** The trial's cloud: the one over the player (it follows them, drifting a few blocks about), not another test's. */
     private TribulationCloud cloudFor(GameTestHelper helper, ServerPlayer player) {
         var clouds = helper.getLevel().getEntitiesOfClass(TribulationCloud.class,
-                new AABB(player.blockPosition()).inflate(300));
+                new AABB(player.blockPosition()).inflate(8, 120, 8));
         helper.assertTrue(clouds.size() == 1, "Exactly one server-tracked cloud exists for the trial");
         return clouds.get(0);
     }

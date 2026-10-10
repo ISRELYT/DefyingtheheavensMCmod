@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
@@ -18,9 +19,23 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.EndGatewayBlock;
+import net.minecraft.world.level.block.EndPortalBlock;
+import net.minecraft.world.level.block.LiquidBlock;
+import net.minecraft.world.level.block.NetherPortalBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BedPart;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -49,7 +64,9 @@ import java.util.UUID;
  *   load. As a last resort, a barrier block that a random tick finds on no raised formation's shell removes itself.</li>
  * </ul>
  * Breaking a barrier block takes a cultivator at least as strong as the formation (see {@link #canBreak}); the ground the
- * shell runs through can't be dug by anyone weaker either ({@link #protectsGround}), so it can't be tunnelled under.
+ * shell runs through can't be dug by anyone weaker either ({@link #protectsGround}), so it can't be tunnelled under, and
+ * anyone weaker found inside it anyway is put out ({@link #guard}). Monsters can't spawn inside, and any that get in are
+ * swept out ({@link #purge}).
  */
 public final class Formations {
 	public static final int MIN_RADIUS = 4;
@@ -158,18 +175,43 @@ public final class Formations {
 		}
 	}
 
-	/** Puts {@code mob} down on the ground just outside {@code formation}, on its own side of it. */
-	private static void expel(ServerLevel level, Formation formation, Mob mob) {
+	/**
+	 * The shell itself has no openings (see {@link #fillFor}), so this is only for what jumps over it: chorus fruit, a Nether
+	 * portal that opened inside, a respawn point or a body left inside. Nobody the barrier would stop stays inside it: a player
+	 * not strong enough to break it (see {@link #canBreak}) is set down just outside it.
+	 */
+	private static void guard(ServerLevel level, Formation formation) {
+		for (ServerPlayer player : level.players()) {
+			if (player.isCreative() || player.isSpectator() || !player.isAlive() || !formation.encloses(player.blockPosition())) continue;
+			if (canBreak(player, formation)) continue;
+			if (expel(level, formation, player)) player.displayClientMessage(Component.translatable(ModLang.MSG_BARRIER_EXPELLED), true);
+		}
+	}
+
+	/**
+	 * Puts {@code entity} down on the ground just outside {@code formation}, on its own side of it. @return false if that
+	 * ground isn't loaded (it is tried again on the next sweep). Package-private for the game tests.
+	 */
+	static boolean expel(ServerLevel level, Formation formation, LivingEntity entity) {
 		Vec3 centre = Vec3.atCenterOf(formation.center);
-		Vec3 out = mob.position().subtract(centre).multiply(1, 0, 1);
+		Vec3 out = entity.position().subtract(centre).multiply(1, 0, 1);
 		out = out.lengthSqr() < 1.0e-4 ? new Vec3(1, 0, 0) : out.normalize();
 		double distance = formation.getRadius() + 3;
 		int x = Mth.floor(centre.x + out.x * distance), z = Mth.floor(centre.z + out.z * distance);
-		if (!level.isLoaded(new BlockPos(x, mob.getBlockY(), z))) return; // tried again on the next sweep
+		if (!level.isLoaded(new BlockPos(x, entity.getBlockY(), z))) return false;
 		int y = surface(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
-		mob.getNavigation().stop();
-		mob.setTarget(null);
-		mob.teleportTo(x + 0.5, y, z + 0.5);
+		if (entity instanceof Mob mob) {
+			mob.getNavigation().stop();
+			mob.setTarget(null);
+		}
+		entity.stopRiding();
+		if (entity instanceof ServerPlayer player) {
+			player.teleportTo(level, x + 0.5, y, z + 0.5, player.getYRot(), player.getXRot());
+		} else {
+			entity.teleportTo(x + 0.5, y, z + 0.5);
+		}
+		entity.fallDistance = 0;
+		return true;
 	}
 
 	/**
@@ -291,6 +333,11 @@ public final class Formations {
 		changed(level);
 	}
 
+	/** The players the formation's owner trusts to pass as they do. */
+	public static void setTrusted(ServerLevel level, Formation formation, java.util.Collection<UUID> players) {
+		if (formation.setTrusted(players)) changed(level);
+	}
+
 	/** The formation is gone for good (its core broken, its cultivator gone): its barrier comes down and its record goes. */
 	public static void dissolve(ServerLevel level, UUID id) {
 		FormationData data = FormationData.get(level);
@@ -306,9 +353,93 @@ public final class Formations {
 		syncSoon = true;
 	}
 
-	private static boolean replaceable(BlockState state) {
-		if (state.isAir()) return true;
-		return state.canBeReplaced() && state.getFluidState().isEmpty() && !(state.getBlock() instanceof SealBlock);
+	/**
+	 * What a shell cell holding {@code state} becomes, so the shell has no opening anywhere: the barrier, holding the cell's
+	 * water or lava if it was a still source; or null to leave the cell as it is, because it is already a wall (a block whose
+	 * collision fills its whole footprint at least half a block high: stone, logs, leaves, stairs, slabs), it can't be moved
+	 * (bedrock, portals), it is a seal (kept, so arrays can cross the shell; SealBlock closes itself instead), or it belongs to
+	 * the sect's own buildings. Anything else in the way (a torch, a fence, a door, a flower, sugar cane, flowing water) is
+	 * displaced (see {@link #displace}).
+	 */
+	private static BlockState fillFor(ServerLevel level, BlockPos pos, BlockState state, Formation formation) {
+		if (state.isAir()) return SectBarrierBlock.holding(SectBarrierBlock.Held.NONE);
+		if (state.getBlock() instanceof SectBarrierBlock || state.getBlock() instanceof SealBlock) return null;
+		if (state.getBlock() instanceof LiquidBlock) return SectBarrierBlock.holding(held(state.getFluidState()));
+		if (state.canBeReplaced()) return SectBarrierBlock.holding(held(state.getFluidState()));
+		if (state.getDestroySpeed(level, pos) < 0 || state.getBlock() instanceof NetherPortalBlock || state.getBlock() instanceof EndPortalBlock
+				|| state.getBlock() instanceof EndGatewayBlock) return null;
+		if (isWall(level, pos, state)) return null;
+		if (formation.getSect() != null) {
+			Sect sect = SectManager.get(level.getServer(), formation.getSect());
+			if (sect != null && sect.bounds.isInside(pos)) return null; // a pagoda's spire through the dome: the sect's own, kept
+		}
+		return SectBarrierBlock.holding(held(state.getFluidState()));
+	}
+
+	/** The barrier keeps a still source of water or lava it closes over; flowing water or lava is simply shut out. */
+	private static SectBarrierBlock.Held held(FluidState fluid) {
+		if (fluid.isEmpty() || !fluid.isSource()) return SectBarrierBlock.Held.NONE;
+		if (fluid.is(FluidTags.WATER)) return SectBarrierBlock.Held.WATER;
+		if (fluid.is(FluidTags.LAVA)) return SectBarrierBlock.Held.LAVA;
+		return SectBarrierBlock.Held.NONE;
+	}
+
+	/** Already closes its cell: its collision covers the whole footprint and stands at least half a block high. */
+	private static boolean isWall(ServerLevel level, BlockPos pos, BlockState state) {
+		VoxelShape shape = state.getCollisionShape(level, pos);
+		if (shape.isEmpty()) return false;
+		AABB bounds = shape.bounds();
+		return bounds.minX <= 0.01 && bounds.maxX >= 0.99 && bounds.minZ <= 0.01 && bounds.maxZ >= 0.99 && bounds.getYsize() >= 0.5;
+	}
+
+	/**
+	 * Clears the way for the barrier: what someone built or placed drops as an item (whole: a door, a bed, a chest and what
+	 * was in it), while wild plants (flowers, saplings, sugar cane, kelp, snow and the like) simply give way, as grass does.
+	 */
+	private static void displace(ServerLevel level, BlockPos pos, BlockState state) {
+		if (isWild(state)) return;
+		// Two-block things drop from the half that holds their loot, so they come out whole, and only once.
+		BlockPos at = pos;
+		BlockState main = state;
+		if (state.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF) && state.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.UPPER) {
+			at = pos.below();
+			main = level.getBlockState(at);
+			if (!main.is(state.getBlock())) return;
+		} else if (state.getBlock() instanceof BedBlock && state.getValue(BedBlock.PART) == BedPart.FOOT) {
+			at = pos.relative(BedBlock.getConnectedDirection(state));
+			main = level.getBlockState(at);
+			if (!main.is(state.getBlock())) return;
+		}
+		BlockEntity entity = level.getBlockEntity(at);
+		if (entity == null) {
+			ItemStack item = main.getBlock().getCloneItemStack(level, at, main);
+			if (!item.isEmpty()) {
+				Block.popResource(level, at, item);
+				return;
+			}
+		}
+		Block.dropResources(main, level, at, entity); // a container's contents spill out as it is replaced
+	}
+
+	/** Plants and snow that grow by themselves: the barrier takes their place without leaving them lying about. */
+	private static boolean isWild(BlockState state) {
+		return state.is(BlockTags.REPLACEABLE_BY_TREES) || state.is(BlockTags.FLOWERS) || state.is(BlockTags.SAPLINGS)
+				|| state.is(BlockTags.CAVE_VINES) || state.is(BlockTags.CORALS) || state.is(BlockTags.SNOW) || state.is(BlockTags.CORAL_PLANTS)
+				|| state.is(Blocks.SUGAR_CANE) || state.is(Blocks.KELP) || state.is(Blocks.KELP_PLANT) || state.is(Blocks.BAMBOO)
+				|| state.is(Blocks.BAMBOO_SAPLING) || state.is(Blocks.CACTUS) || state.is(Blocks.SWEET_BERRY_BUSH) || state.is(Blocks.BROWN_MUSHROOM)
+				|| state.is(Blocks.RED_MUSHROOM) || state.is(Blocks.CRIMSON_FUNGUS) || state.is(Blocks.WARPED_FUNGUS) || state.is(Blocks.POINTED_DRIPSTONE)
+				|| state.is(Blocks.SMALL_DRIPLEAF) || state.is(Blocks.BIG_DRIPLEAF) || state.is(Blocks.BIG_DRIPLEAF_STEM) || state.is(Blocks.MOSS_CARPET)
+				|| state.is(Blocks.SEA_PICKLE) || state.is(Blocks.LILY_PAD) || state.is(Blocks.COBWEB) || state.is(Blocks.SPORE_BLOSSOM)
+				|| state.is(Blocks.AZALEA) || state.is(Blocks.FLOWERING_AZALEA) || state.is(Blocks.SMALL_AMETHYST_BUD) || state.is(Blocks.MEDIUM_AMETHYST_BUD)
+				|| state.is(Blocks.LARGE_AMETHYST_BUD) || state.is(Blocks.AMETHYST_CLUSTER) || state.is(Blocks.TWISTING_VINES)
+				|| state.is(Blocks.TWISTING_VINES_PLANT) || state.is(Blocks.WEEPING_VINES) || state.is(Blocks.WEEPING_VINES_PLANT)
+				|| state.is(Blocks.PINK_PETALS) || state.is(Blocks.CHORUS_PLANT) || state.is(Blocks.CHORUS_FLOWER) || state.is(Blocks.FROGSPAWN);
+	}
+
+	/** A barrier cell comes down: back to air, or to the water or lava it stood in (which then flows on as it did). */
+	private static void clearCell(ServerLevel level, BlockPos pos, BlockState barrier) {
+		BlockState residue = SectBarrierBlock.residue(barrier);
+		level.setBlock(pos, residue, residue.isAir() ? Block.UPDATE_CLIENTS : Block.UPDATE_ALL);
 	}
 
 	/** Clears this formation's barrier blocks on the shell of {@code radius}, remembering the chunks that aren't loaded. */
@@ -324,9 +455,8 @@ public final class Formations {
 				unloaded.add(ChunkPos.asLong(SectionPos.blockToSectionCoord(pos.getX()), SectionPos.blockToSectionCoord(pos.getZ())));
 				continue;
 			}
-			if (level.getBlockState(pos).is(ModBlocks.SECT_BARRIER) && onShell(level, pos, formation) == null) {
-				level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
-			}
+			BlockState state = level.getBlockState(pos);
+			if (state.is(ModBlocks.SECT_BARRIER) && onShell(level, pos, formation) == null) clearCell(level, pos, state);
 		}
 		if (!unloaded.isEmpty()) {
 			data.pendingClear.addAll(unloaded);
@@ -352,7 +482,8 @@ public final class Formations {
 			pos.set(c.getX() + Formation.dx(packed), c.getY() + Formation.dy(packed), c.getZ() + Formation.dz(packed));
 			if (level.isOutsideBuildHeight(pos) || !level.isLoaded(pos)) continue;
 			BlockState state = level.getBlockState(pos);
-			if (state.is(ModBlocks.SECT_BARRIER) || !replaceable(state)) continue;
+			BlockState fill = fillFor(level, pos, state, formation);
+			if (fill == null) continue;
 			if (formation.complete && formation.kind == Formation.Kind.CORE) {
 				// A gap after the first raising: a breach (or newly loaded ground). Mending it costs the core qi.
 				if (!coreLooked) {
@@ -361,7 +492,13 @@ public final class Formations {
 				}
 				if (core == null || !core.payRepair()) continue;
 			}
-			level.setBlock(pos, ModBlocks.SECT_BARRIER.defaultBlockState(), Block.UPDATE_CLIENTS);
+			if (state.isAir()) {
+				level.setBlock(pos, fill, Block.UPDATE_CLIENTS); // most of the shell: open air, nothing around to tell
+			} else {
+				if (!(state.getBlock() instanceof LiquidBlock) && !state.canBeReplaced()) displace(level, pos, state);
+				// Neighbours hear of it: the other half of a door or a tall flower goes, and water around settles.
+				level.setBlock(pos, fill, Block.UPDATE_ALL);
+			}
 		}
 		return steps;
 	}
@@ -383,7 +520,10 @@ public final class Formations {
 			for (Formation formation : data.all()) {
 				if (!formation.isRaised() || !level.isLoaded(formation.center)) continue;
 				if (budget > 0) budget -= build(level, formation, budget);
-				if (purging) purge(level, formation);
+				if (purging) {
+					purge(level, formation);
+					guard(level, formation);
+				}
 				if (heartbeat && formation.kind == Formation.Kind.CONCEALMENT) {
 					Entity owner = formation.getOwner() == null ? null : level.getEntity(formation.getOwner());
 					if (owner instanceof CultivatorNpc npc && npc.isAlive()) {
@@ -426,9 +566,10 @@ public final class Formations {
 			for (int y = 0; y < 16; y++) {
 				for (int z = 0; z < 16; z++) {
 					for (int x = 0; x < 16; x++) {
-						if (!section.getBlockState(x, y, z).is(ModBlocks.SECT_BARRIER)) continue;
+						BlockState state = section.getBlockState(x, y, z);
+						if (!state.is(ModBlocks.SECT_BARRIER)) continue;
 						pos.set(chunk.getPos().getMinBlockX() + x, bottom + y, chunk.getPos().getMinBlockZ() + z);
-						if (onShell(level, pos, null) == null) level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+						if (onShell(level, pos, null) == null) clearCell(level, pos, state);
 					}
 				}
 			}

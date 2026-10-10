@@ -71,8 +71,17 @@ public class SealBlock extends BaseEntityBlock {
 		return Shapes.empty();
 	}
 
+	/**
+	 * Nothing to walk into, except where the seal lies on a raised barrier's shell (an array line crossing it): the barrier
+	 * leaves seals in place so the line still carries qi, and the seal's cell closes in its stead to anyone the barrier
+	 * wouldn't let through.
+	 */
 	@Override
 	public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+		if (context instanceof EntityCollisionContext entityContext && entityContext.getEntity() != null) {
+			Formation formation = Formations.at(entityContext.getEntity().level(), pos);
+			if (formation != null && !formation.allows(entityContext.getEntity())) return Shapes.block();
+		}
 		return Shapes.empty();
 	}
 

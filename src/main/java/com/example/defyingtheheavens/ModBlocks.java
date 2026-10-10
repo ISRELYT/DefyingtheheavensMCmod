@@ -139,7 +139,8 @@ public final class ModBlocks {
 	public static final Block SECT_BARRIER = register("sect_barrier", new SectBarrierBlock(BlockBehaviour.Properties.of()
 			.strength(-1.0f, 3600000.0f).noLootTable().noOcclusion().isValidSpawn((state, level, pos, type) -> false)
 			.isRedstoneConductor((state, level, pos) -> false).isSuffocating((state, level, pos) -> false)
-			.isViewBlocking((state, level, pos) -> false).pushReaction(PushReaction.BLOCK).sound(SoundType.AMETHYST)));
+			.isViewBlocking((state, level, pos) -> false).pushReaction(PushReaction.BLOCK).sound(SoundType.AMETHYST)
+			.lightLevel(state -> state.getValue(SectBarrierBlock.FLUID) == SectBarrierBlock.Held.LAVA ? 15 : 0)));
 	/** Qi ink painted with the Inscription Brush (see SealBlock): only Qi Sense sees it. No item; the brush places it. */
 	public static final Block SEAL = register("seal", new SealBlock(BlockBehaviour.Properties.of().mapColor(MapColor.NONE)
 			.noCollission().instabreak().noLootTable().replaceable().pushReaction(PushReaction.DESTROY).sound(SoundType.WOOL)));

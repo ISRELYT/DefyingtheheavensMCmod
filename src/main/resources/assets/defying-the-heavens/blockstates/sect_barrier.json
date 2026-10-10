@@ -1,6 +1,12 @@
 {
   "variants": {
-    "": {
+    "fluid=none": {
+      "model": "defying-the-heavens:block/sect_barrier"
+    },
+    "fluid=water": {
+      "model": "defying-the-heavens:block/sect_barrier"
+    },
+    "fluid=lava": {
       "model": "defying-the-heavens:block/sect_barrier"
     }
   }

@@ -12,7 +12,7 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * Rogue cultivators turning up in the world, outside the sects: now and then near a player, out of their sight, in the
- * Overworld, the Nether, the End and the Upper Realm (never the Spatial Gap).
+ * Overworld, the Nether, the End and the Upper Realm (never the Spatial Gap or the Inner Realm, and never inside a barrier).
  * <p>
  * Each attempt rolls a rank from {@link #chance}: the weaker, the likelier, from {@link #MORTAL_CHANCE} for a mortal
  * wanderer down to {@link #PEAK_CHANCE} for a Heavenly Being at Grand Perfection, falling evenly (by the same factor) with
@@ -71,7 +71,7 @@ public final class NpcSpawner {
 	}
 
 	private static void trySpawnNear(ServerLevel level, ServerPlayer player) {
-		if (ModDimensions.isSpatialGap(level.dimension())) return;
+		if (ModDimensions.isSpatialGap(level.dimension()) || ModDimensions.isInnerRealm(level.dimension())) return;
 		RandomSource random = level.getRandom();
 		if (CultivatorNpc.countIn(level) >= LEVEL_CAP || CultivatorNpc.countNear(level, player.position(), CROWD_RADIUS) >= CROWD) return;
 		boolean upper = ModDimensions.isUpperRealm(level.dimension());
@@ -86,7 +86,7 @@ public final class NpcSpawner {
 		level.addFreshEntity(npc);
 	}
 
-	/** Solid, dry ground 40-80 blocks from the player, out of every player's close sight and off sect grounds. */
+	/** Solid, dry ground 40-80 blocks from the player, out of every player's close sight, off sect grounds and outside every barrier. */
 	private static BlockPos findSpot(ServerLevel level, ServerPlayer player, RandomSource random) {
 		for (int attempt = 0; attempt < 8; attempt++) {
 			double angle = random.nextDouble() * Math.PI * 2;
@@ -96,7 +96,7 @@ public final class NpcSpawner {
 			BlockPos column = new BlockPos(x, player.getBlockY(), z);
 			if (!level.isLoaded(column) || !level.isPositionEntityTicking(column)) continue;
 			BlockPos feet = ground(level, x, z, player.getBlockY());
-			if (feet == null || SectManager.sectAt(level, feet) != null) continue;
+			if (feet == null || SectManager.sectAt(level, feet) != null || Formations.shelters(level, feet)) continue;
 			Vec3 centre = Vec3.atBottomCenterOf(feet);
 			if (level.getNearestPlayer(centre.x, centre.y, centre.z, 24, false) != null) continue;
 			return feet;

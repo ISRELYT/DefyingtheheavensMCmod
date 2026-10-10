@@ -464,8 +464,23 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_CORE_NOT_YOURS, "This formation answers only to %s.");
 		t.add(ModLang.MSG_BARRIER_TOO_STRONG, "The formation is too strong for your cultivation to break.");
 		t.add(ModLang.MSG_BARRIER_GROUND, "A formation's shell runs through this ground. You are not strong enough to dig through it.");
+		t.add(ModLang.MSG_BARRIER_EXPELLED, "The formation will not suffer one so weak within it. You are cast out.");
 		t.add(ModLang.MSG_SEAL_UNSEEN, "The qi ink sinks into the surface, unseen by mortal eyes. Only Qi Sense reveals it.");
 		t.add(ModLang.BRUSH_TOOLTIP, "Paints seals of qi ink on floors and walls, to join Qi Veins to a Formation Core");
 		t.add(ModLang.BRUSH_TOOLTIP_ERASE, "Sneak to wipe a seal away. Only Qi Sense shows the ink.");
+		t.add(ModLang.MSG_CORE_CLAIMED, "The formation of the fallen %s answers to you now.");
+		t.add(ModLang.CORE_TRUSTED_BUTTON, "Trusted...");
+		t.add(ModLang.CORE_TRUSTED_TITLE, "Trusted Cultivators");
+		t.add(ModLang.CORE_TRUSTED_HINT, "They pass through the barrier as you do.");
+		t.add(ModLang.CORE_TRUSTED_COUNT, "%s of %s");
+		t.add(ModLang.CORE_TRUSTED_NONE, "No one yet: only you may pass.");
+		t.add(ModLang.CORE_TRUST_ADD, "Trust");
+		t.add(ModLang.CORE_TRUST_REMOVE, "Stop trusting %s");
+		t.add(ModLang.CORE_BACK, "Back");
+		t.add(ModLang.MSG_TRUST_ADDED, "%s may now pass through the barrier.");
+		t.add(ModLang.MSG_TRUST_REMOVED, "%s may no longer pass through the barrier.");
+		t.add(ModLang.MSG_TRUST_UNKNOWN, "No cultivator called %s has been seen in this world.");
+		t.add(ModLang.MSG_TRUST_FULL, "A formation can know at most %s cultivators.");
+		t.add(ModLang.MSG_TRUST_SELF, "The formation already answers to you.");
 	}
 }

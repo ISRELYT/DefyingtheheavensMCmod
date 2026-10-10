@@ -34,7 +34,7 @@ import java.util.List;
  * {@link #CULTIVATION_BONUS} times as fruitful. The island is Soul Crystal, see-through so the leylines show beneath it.
  * <p>
  * Where the soul came from is kept in {@link PlayerCultivation} (saved), so logging out, the server stopping, or a crash
- * always end with the player back at their body.
+ * always end with the player back at their body. Every player's island lies in a slot of its own ({@link Islands}).
  */
 public final class InnerRealm {
 	/** Meditating this long (ticks) turns the soul inward, if the Inner Realm ability is on. */
@@ -45,9 +45,10 @@ public final class InnerRealm {
 	private static final int FALL_CATCH_DEPTH = 24;
 	public static final double CULTIVATION_BONUS = 1.5;
 	public static final int ISLAND_Y = 128;
-	/** Each player's island has its own spot along X, this far apart. */
+	/** Each player's island has its own spot, this far apart. */
 	public static final int SLOT_SPACING = 4096;
-	private static final int SLOTS = 2048;
+	/** Islands in a row along X before the next row begins along Z: a compact grid, near the origin for the first players. */
+	private static final int SLOTS_PER_ROW = 64;
 	/** Chunks kept loaded around the body (radius), so whatever is near it keeps moving. */
 	private static final int BODY_TICKET_RADIUS = 2;
 	/** Hostile mobs this close to a body notice it. */
@@ -68,7 +69,62 @@ public final class InnerRealm {
 
 	/** The player's island centre (the top block they sit on). */
 	public static BlockPos islandCentre(ServerPlayer player) {
-		return new BlockPos(Math.floorMod(player.getUUID().hashCode(), SLOTS) * SLOT_SPACING, ISLAND_Y, 0);
+		return islandCentre(player.server, player.getUUID());
+	}
+
+	/**
+	 * Each player's island has a slot of its own, handed out in turn the first time they need one and kept for good (see
+	 * {@link Islands}), so no two players ever share one. Slots fill a grid from the origin, {@link #SLOTS_PER_ROW} to a row.
+	 */
+	public static BlockPos islandCentre(MinecraftServer server, java.util.UUID player) {
+		int slot = Islands.get(server).slotOf(player);
+		return new BlockPos((slot % SLOTS_PER_ROW) * SLOT_SPACING, ISLAND_Y, (slot / SLOTS_PER_ROW) * SLOT_SPACING);
+	}
+
+	/** Who has which island slot, saved with the world (in the Overworld's data). */
+	public static final class Islands extends net.minecraft.world.level.saveddata.SavedData {
+		private static final String NAME = DefyingTheHeavens.MOD_ID + "_inner_islands";
+		private final java.util.Map<java.util.UUID, Integer> slots = new java.util.HashMap<>();
+		private int next;
+
+		public static Islands get(MinecraftServer server) {
+			return server.overworld().getDataStorage().computeIfAbsent(Islands::load, Islands::new, NAME);
+		}
+
+		/** The player's slot, handing them the next free one if they have none yet. */
+		public int slotOf(java.util.UUID player) {
+			Integer slot = slots.get(player);
+			if (slot == null) {
+				slot = next++;
+				slots.put(player, slot);
+				setDirty();
+			}
+			return slot;
+		}
+
+		@Override
+		public CompoundTag save(CompoundTag tag) {
+			net.minecraft.nbt.ListTag list = new net.minecraft.nbt.ListTag();
+			for (java.util.Map.Entry<java.util.UUID, Integer> entry : slots.entrySet()) {
+				CompoundTag one = new CompoundTag();
+				one.putUUID("Player", entry.getKey());
+				one.putInt("Slot", entry.getValue());
+				list.add(one);
+			}
+			tag.put("Islands", list);
+			tag.putInt("Next", next);
+			return tag;
+		}
+
+		public static Islands load(CompoundTag tag) {
+			Islands islands = new Islands();
+			for (net.minecraft.nbt.Tag entry : tag.getList("Islands", net.minecraft.nbt.Tag.TAG_COMPOUND)) {
+				CompoundTag one = (CompoundTag) entry;
+				if (one.hasUUID("Player")) islands.slots.put(one.getUUID("Player"), one.getInt("Slot"));
+			}
+			islands.next = Math.max(tag.getInt("Next"), islands.slots.values().stream().mapToInt(s -> s + 1).max().orElse(0));
+			return islands;
+		}
 	}
 
 	/** The island's radius in blocks, which grows with the realm. */

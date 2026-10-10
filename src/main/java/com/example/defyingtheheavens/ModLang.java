@@ -281,9 +281,25 @@ public final class ModLang {
 	public static final String MSG_CORE_NOT_YOURS = k("message.core.not_yours");
 	public static final String MSG_BARRIER_TOO_STRONG = k("message.barrier.too_strong");
 	public static final String MSG_BARRIER_GROUND = k("message.barrier.ground");
+	public static final String MSG_BARRIER_EXPELLED = k("message.barrier.expelled");
 	public static final String MSG_SEAL_UNSEEN = k("message.seal.unseen");
 	public static final String BRUSH_TOOLTIP = k("tooltip.inscription_brush");
 	public static final String BRUSH_TOOLTIP_ERASE = k("tooltip.inscription_brush.erase");
+	public static final String MSG_CORE_CLAIMED = k("message.core.claimed");
+	// The core's trusted cultivators
+	public static final String CORE_TRUSTED_BUTTON = k("core.trusted.button");
+	public static final String CORE_TRUSTED_TITLE = k("core.trusted.title");
+	public static final String CORE_TRUSTED_HINT = k("core.trusted.hint");
+	public static final String CORE_TRUSTED_COUNT = k("core.trusted.count");
+	public static final String CORE_TRUSTED_NONE = k("core.trusted.none");
+	public static final String CORE_TRUST_ADD = k("core.trusted.add");
+	public static final String CORE_TRUST_REMOVE = k("core.trusted.remove");
+	public static final String CORE_BACK = k("core.back");
+	public static final String MSG_TRUST_ADDED = k("message.trust.added");
+	public static final String MSG_TRUST_REMOVED = k("message.trust.removed");
+	public static final String MSG_TRUST_UNKNOWN = k("message.trust.unknown");
+	public static final String MSG_TRUST_FULL = k("message.trust.full");
+	public static final String MSG_TRUST_SELF = k("message.trust.self");
 
 	private ModLang() {}
 }

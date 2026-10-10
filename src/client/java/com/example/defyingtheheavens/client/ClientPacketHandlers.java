@@ -61,14 +61,26 @@ public final class ClientPacketHandlers {
 				int radius = buf.readVarInt();
 				int rank = buf.readInt();
 				UUID owner = buf.readBoolean() ? buf.readUUID() : null;
-				formations.add(Formation.view(id, kind, center, radius, rank, owner));
+				int trustedCount = buf.readVarInt();
+				List<UUID> trusted = new ArrayList<>(trustedCount);
+				for (int t = 0; t < trustedCount; t++) trusted.add(buf.readUUID());
+				formations.add(Formation.view(id, kind, center, radius, rank, owner, trusted));
 			}
 			client.execute(() -> ClientFormations.update(formations));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.FORMATION_CORE, (client, handler, buf, sender) -> {
-			FormationCoreScreen.State state = new FormationCoreScreen.State(buf.readBlockPos(), buf.readVarInt(), buf.readBoolean(), buf.readBoolean(),
-					buf.readDouble(), buf.readDouble(), buf.readDouble(), buf.readVarInt(), buf.readInt(), buf.readVarInt(), buf.readUtf());
+			BlockPos pos = buf.readBlockPos();
+			int radius = buf.readVarInt();
+			boolean wanted = buf.readBoolean(), raised = buf.readBoolean();
+			double battery = buf.readDouble(), max = buf.readDouble(), supply = buf.readDouble();
+			int veins = buf.readVarInt(), rank = buf.readInt(), cooldown = buf.readVarInt();
+			String owner = buf.readUtf();
+			int trustedCount = buf.readVarInt();
+			List<FormationCoreScreen.Trusted> trusted = new ArrayList<>(trustedCount);
+			for (int t = 0; t < trustedCount; t++) trusted.add(new FormationCoreScreen.Trusted(buf.readUUID(), buf.readUtf()));
+			FormationCoreScreen.State state = new FormationCoreScreen.State(pos, radius, wanted, raised, battery, max, supply, veins, rank,
+					cooldown, owner, trusted);
 			client.execute(() -> FormationCoreScreen.receive(state));
 		});
 

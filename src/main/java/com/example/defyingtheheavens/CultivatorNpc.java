@@ -629,7 +629,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		if (fleeFrom != other || refuge == null) {
 			fleeFrom = other;
 			refuge = level() instanceof ServerLevel server ? pickRefuge(server, other) : null;
-			fleeTicks = FLEE_TIMEOUT;
+			// Nowhere far to run to: it only backs away, for as long as it keeps sensing what it fears and 30 seconds after.
+			fleeTicks = refuge != null ? FLEE_TIMEOUT : 0;
 		}
 		fleeTicks = Math.max(fleeTicks, 600);
 		if (getTarget() == other) setTarget(null);

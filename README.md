@@ -331,7 +331,8 @@ The sky is your cultivation made visible (`InnerRealmSkyRenderer.java`), drawn i
 Code: `InnerRealm.java` (entering, leaving, the island, `ENTER_AFTER_TICKS`, `FADE_TICKS`, `CULTIVATION_BONUS`),
 `InnerBodyEntity.java`, `client/InnerRealmFade.java` (and `client/mixin/ReceivingLevelScreenMixin.java`),
 `client/InnerRealmSkyRenderer.java`, `client/InnerBodyRenderer.java`, `client/LotusPose.java`. The dimension is
-`inner_realm` (each player's island is 4096 blocks apart along X at Y 128).
+`inner_realm` (at Y 128, each player's island in a slot of its own, 4096 blocks apart in a grid from the origin, handed
+out the first time they need one and kept for good, so no two players share an island: `InnerRealm.Islands`).
 
 ## More herbs
 
@@ -420,10 +421,25 @@ of qi, takes the whole barrier down at once.
 
 No monster spawns inside a raised barrier, a sect's or a secluded cultivator's Concealment Barrier: zombies, skeletons,
 spiders, creepers, pillager patrols and the rest pass over it (`mixin/NaturalSpawnerMixin`, `mixin/PatrolSpawnerMixin`).
-Any that get in another way (a phantom, an enderman teleporting, one swimming in where water breaks the shell, one from a
-monster spawner) are swept out every half second: a wild one vanishes in a puff of smoke, and one that has to stay in
+Any that get in another way (a phantom, an enderman teleporting, one from a monster spawner) are swept out every half
+second: a wild one vanishes in a puff of smoke, and one that has to stay in
 the world (named, or carrying something it picked up) is set down on the ground just outside. Bosses are left alone, and
 animals and other peaceful mobs are never touched (`Formations.purge`).
+
+The barrier's shell has no openings (`Formations.fillFor`):
+- **Water and lava.** Still water or lava on the shell is closed by barrier blocks that hold it: the water still looks and
+  flows as before, and comes back when the barrier comes down (`SectBarrierBlock.FLUID`). Flowing water or lava is shut out.
+- **Anything that leaves a gap** (torches, fences, walls, panes, doors, trapdoors, carpets, rails, chests, flowers, sugar
+  cane, kelp, crops and so on) is replaced by the barrier. Whatever was built or placed drops as an item (whole: a door, a
+  bed, a chest with its contents); wild plants and snow simply give way. Solid blocks (stone, logs, leaves, stairs, slabs,
+  anything filling its whole footprint at least half a block high) are kept as part of the wall, and weaker cultivators
+  can't dig them, as before. A sect's own buildings are never touched where they reach the dome (a tall pagoda's spire).
+- **Seals** are kept, so an array line can cross the shell, and a seal on the shell is solid to anyone the barrier keeps out.
+
+Only chorus fruit, a Nether portal that opens inside, or a respawn point inside can still put someone past the shell. A
+player too weak to break the barrier who ends up inside that way is set down just outside within half a second
+(`Formations.guard`). The owner, the players they trust, anyone strong enough to break it, and players in creative or
+spectator stay where they are. Rogue cultivators never spawn inside a barrier either.
 
 - **Power.** The core holds a battery of 2,000 qi. The barrier costs `0.5 + radius² / 80` qi per second (1.3 at radius 8,
   13 at 32, 52 at 64); each **Qi Vein** joined to the core gathers 8 qi per second. A raised barrier stays up while the
@@ -437,6 +453,11 @@ animals and other peaceful mobs are never touched (`Formations.purge`).
 - **The core's screen** (right-click your own core): switch the barrier on or off and set its radius (4-64), and see the
   battery, upkeep and supply. The core is as strong as whoever placed it. Sect cores answer only to their sect; a sect's
   barrier is as strong as its master.
+- **Trusted cultivators.** The screen's **Trusted...** page lists up to 16 players who pass the barrier as
+  its owner does (and may dig the ground it runs through). Type a name and press **Trust** (or Enter) to add one: anyone
+  online, or anyone who has played on the server before. Press the cross beside a name to strike them off.
+- **A fallen sect's core.** When a sect's last member dies, its core answers to no one: the first player to right-click
+  it claims it, as if they had placed it. Its barrier stands until then, as strong as the last Sect Master.
 - Recipes: Formation Core (gold ingot, amethyst shard, gold ingot / lapis block, diamond, lapis block / 3 polished
   deepslate); Inscription Brush (string top right, lapis in the middle, bamboo bottom left).
 - Code: `Formation`, `Formations`, `FormationData`, `FormationCoreBlock(Entity)`, `SectBarrierBlock`, `SealBlock(Entity)`,

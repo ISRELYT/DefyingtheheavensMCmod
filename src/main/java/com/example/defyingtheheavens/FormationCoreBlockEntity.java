@@ -1,8 +1,12 @@
 package com.example.defyingtheheavens;
 
+import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -13,7 +17,10 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -55,6 +62,10 @@ public class FormationCoreBlockEntity extends BlockEntity {
 	private int rank = -1;
 	/** Set at worldgen: the sect to found on the first tick (see SectManager#found). */
 	private CompoundTag blueprint;
+	/** Players the owner trusts to pass the barrier as they do, with the names they had when added. */
+	private final Map<UUID, String> trusted = new LinkedHashMap<>();
+	/** The sect this core served before it fell (its last member dead), for the first to claim it. Empty otherwise. */
+	private String formerSect = "";
 
 	public FormationCoreBlockEntity(BlockPos pos, BlockState state) {
 		super(ModBlockEntities.FORMATION_CORE, pos, state);
@@ -75,6 +86,7 @@ public class FormationCoreBlockEntity extends BlockEntity {
 	public UUID getFormationId() { return formationId; }
 	public String getOwnerName() { return ownerName; }
 	public String getSectName() { return sectName; }
+	public Map<UUID, String> getTrusted() { return Collections.unmodifiableMap(trusted); }
 
 	public boolean isRaised() {
 		if (!(level instanceof ServerLevel server) || formationId == null) return false;
@@ -105,14 +117,31 @@ public class FormationCoreBlockEntity extends BlockEntity {
 		this.radius = Math.max(Formations.MIN_RADIUS, Math.min(Formations.MAX_RADIUS, radius));
 		this.wanted = true;
 		this.owner = null;
+		this.ownerName = "";
 		this.rank = masterRank;
 		this.battery = BATTERY;
+		trusted.clear();
 		setChanged();
 		if (level instanceof ServerLevel server) {
 			Formation formation = formation(server);
 			Formations.resize(server, formation, this.radius);
 			Formations.update(server, formation, rank, null, sect);
 		}
+	}
+
+	/**
+	 * The sect it served is gone (its last member dead): the core answers to no one, and the first to lay hands on it claims
+	 * it (see {@link #canControl}). The barrier stands meanwhile, as strong as the last Sect Master.
+	 */
+	private void releaseFromSect(ServerLevel level) {
+		formerSect = sectName;
+		sect = null;
+		sectName = "";
+		owner = null;
+		ownerName = "";
+		trusted.clear();
+		setChanged();
+		Formations.update(level, formation(level), rank, null, null);
 	}
 
 	/** The sect's master changed: the barrier is as strong as the new one. */
@@ -130,6 +159,7 @@ public class FormationCoreBlockEntity extends BlockEntity {
 		}
 		Formation formation = Formations.create(level, formationId, Formation.Kind.CORE, worldPosition, radius);
 		Formations.update(level, formation, rank, owner, sect);
+		Formations.setTrusted(level, formation, trusted.keySet());
 		return formation;
 	}
 
@@ -150,6 +180,10 @@ public class FormationCoreBlockEntity extends BlockEntity {
 
 	/** Once a second: the veins fill the battery, the barrier draws its upkeep, and it rises or falls accordingly. */
 	private void economy(ServerLevel level) {
+		if (sect != null) {
+			Sect served = SectManager.get(level.getServer(), sect);
+			if (served == null || served.extinct) releaseFromSect(level);
+		}
 		Formation formation = formation(level);
 		double upkeep = formation.isRaised() ? upkeep(formation.getRadius()) : 0;
 		double before = battery;
@@ -245,12 +279,66 @@ public class FormationCoreBlockEntity extends BlockEntity {
 	/** Who may open the screen: the owner (a core nobody owns yet is claimed by the first to open it), or an operator in creative. */
 	public boolean canControl(ServerPlayer player) {
 		if (player.isCreative() && player.hasPermissions(2)) return true;
-		if (sect != null) return false;
+		if (sect != null && level instanceof ServerLevel server) {
+			Sect served = SectManager.get(server.getServer(), sect);
+			if (served != null && !served.extinct) return false;
+			releaseFromSect(server); // its sect fell since the last second's check
+		}
 		if (owner == null) {
 			setOwner(player);
+			if (!formerSect.isEmpty()) {
+				player.displayClientMessage(Component.translatable(ModLang.MSG_CORE_CLAIMED, formerSect), false);
+				formerSect = "";
+			}
+			if (level instanceof ServerLevel server) Formations.update(server, formation(server), rank, owner, null);
 			return true;
 		}
 		return owner.equals(player.getUUID());
+	}
+
+	// --- Trusted cultivators ---
+
+	/** Most players a core can be told to trust. */
+	public static final int MAX_TRUSTED = 16;
+
+	/** From the screen: trust the player called {@code name} (online now, or seen on this server before). */
+	public void trustByName(ServerPlayer by, String name) {
+		if (!(level instanceof ServerLevel server) || !canControl(by) || sect != null || name == null || name.isBlank()) return;
+		MinecraftServer mc = server.getServer();
+		ServerPlayer online = mc.getPlayerList().getPlayerByName(name.trim());
+		GameProfile profile = online != null ? online.getGameProfile() : mc.getProfileCache() == null ? null
+				: mc.getProfileCache().get(name.trim()).orElse(null);
+		if (profile == null || profile.getId() == null) {
+			by.displayClientMessage(Component.translatable(ModLang.MSG_TRUST_UNKNOWN, name.trim()), true);
+			return;
+		}
+		if (profile.getId().equals(owner)) {
+			by.displayClientMessage(Component.translatable(ModLang.MSG_TRUST_SELF), true);
+			return;
+		}
+		if (!trusted.containsKey(profile.getId()) && trusted.size() >= MAX_TRUSTED) {
+			by.displayClientMessage(Component.translatable(ModLang.MSG_TRUST_FULL, MAX_TRUSTED), true);
+			return;
+		}
+		trust(profile.getId(), profile.getName());
+		by.displayClientMessage(Component.translatable(ModLang.MSG_TRUST_ADDED, profile.getName()), true);
+	}
+
+	/** Trusts {@code player} (the tests, and {@link #trustByName}). */
+	public void trust(UUID player, String name) {
+		trusted.put(player, name);
+		setChanged();
+		if (level instanceof ServerLevel server) Formations.setTrusted(server, formation(server), trusted.keySet());
+	}
+
+	/** From the screen: no longer trusts {@code player}. */
+	public void distrust(ServerPlayer by, UUID player) {
+		if (!(level instanceof ServerLevel server) || !canControl(by) || player == null) return;
+		String name = trusted.remove(player);
+		if (name == null) return;
+		setChanged();
+		Formations.setTrusted(server, formation(server), trusted.keySet());
+		by.displayClientMessage(Component.translatable(ModLang.MSG_TRUST_REMOVED, name), true);
 	}
 
 	/** From the screen: the radius to keep the barrier at, and whether it should be up. */
@@ -288,6 +376,15 @@ public class FormationCoreBlockEntity extends BlockEntity {
 		tag.putLong("ShatteredUntil", shatteredUntil);
 		tag.putInt("Rank", rank);
 		if (blueprint != null) tag.put("Blueprint", blueprint);
+		ListTag list = new ListTag();
+		for (Map.Entry<UUID, String> player : trusted.entrySet()) {
+			CompoundTag entry = new CompoundTag();
+			entry.putUUID("Id", player.getKey());
+			entry.putString("Name", player.getValue());
+			list.add(entry);
+		}
+		tag.put("Trusted", list);
+		tag.putString("FormerSect", formerSect);
 	}
 
 	@Override
@@ -305,6 +402,12 @@ public class FormationCoreBlockEntity extends BlockEntity {
 		shatteredUntil = tag.getLong("ShatteredUntil");
 		rank = tag.contains("Rank") ? tag.getInt("Rank") : -1;
 		blueprint = tag.contains("Blueprint") ? tag.getCompound("Blueprint") : null;
+		trusted.clear();
+		for (Tag entry : tag.getList("Trusted", Tag.TAG_COMPOUND)) {
+			CompoundTag player = (CompoundTag) entry;
+			if (player.hasUUID("Id")) trusted.put(player.getUUID("Id"), player.getString("Name"));
+		}
+		formerSect = tag.getString("FormerSect");
 	}
 
 	/** For the screen's status lines. */

@@ -10,6 +10,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public final class ModPackets {
 	/** C2S: toggle meditation. */
@@ -50,6 +52,8 @@ public final class ModPackets {
 	public static final ResourceLocation FORMATION_CORE_QUERY = new ResourceLocation(DefyingTheHeavens.MOD_ID, "formation_core_query");
 	/** C2S: the owner set a core's radius and switch (position, radius, on). */
 	public static final ResourceLocation FORMATION_CORE_CONFIGURE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "formation_core_configure");
+	/** C2S: the owner trusts a player by name (position, true, name) or stops trusting one (position, false, UUID). */
+	public static final ResourceLocation FORMATION_CORE_TRUST = new ResourceLocation(DefyingTheHeavens.MOD_ID, "formation_core_trust");
 	/** Players further than this from a core can't work its screen. */
 	private static final double CORE_REACH = 8;
 
@@ -71,6 +75,20 @@ public final class ModPackets {
 				if (player.distanceToSqr(Vec3.atCenterOf(pos)) <= CORE_REACH * CORE_REACH && player.level().isLoaded(pos)
 						&& player.level().getBlockEntity(pos) instanceof FormationCoreBlockEntity core) {
 					core.configure(player, radius, on);
+					sendFormationCore(player, core);
+				}
+			});
+		});
+		ServerPlayNetworking.registerGlobalReceiver(FORMATION_CORE_TRUST, (server, player, handler, buf, responseSender) -> {
+			BlockPos pos = buf.readBlockPos();
+			boolean add = buf.readBoolean();
+			String name = add ? buf.readUtf(16) : null;
+			UUID id = add ? null : buf.readUUID();
+			server.execute(() -> {
+				if (player.distanceToSqr(Vec3.atCenterOf(pos)) <= CORE_REACH * CORE_REACH && player.level().isLoaded(pos)
+						&& player.level().getBlockEntity(pos) instanceof FormationCoreBlockEntity core) {
+					if (add) core.trustByName(player, name);
+					else core.distrust(player, id);
 					sendFormationCore(player, core);
 				}
 			});
@@ -138,6 +156,8 @@ public final class ModPackets {
 			buf.writeInt(formation.getRank());
 			buf.writeBoolean(formation.getOwner() != null);
 			if (formation.getOwner() != null) buf.writeUUID(formation.getOwner());
+			buf.writeVarInt(formation.getTrusted().size());
+			for (UUID player : formation.getTrusted()) buf.writeUUID(player);
 		}
 		ServerPlayNetworking.send(to, FORMATIONS, buf);
 	}
@@ -155,6 +175,11 @@ public final class ModPackets {
 		buf.writeInt(core.getRank());
 		buf.writeVarInt(core.cooldownSeconds());
 		buf.writeUtf(core.getOwnerName());
+		buf.writeVarInt(core.getTrusted().size());
+		for (Map.Entry<UUID, String> player : core.getTrusted().entrySet()) {
+			buf.writeUUID(player.getKey());
+			buf.writeUtf(player.getValue());
+		}
 		ServerPlayNetworking.send(to, FORMATION_CORE, buf);
 	}
 

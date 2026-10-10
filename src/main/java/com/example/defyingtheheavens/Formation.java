@@ -2,9 +2,17 @@ package com.example.defyingtheheavens;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -34,6 +42,8 @@ public final class Formation {
 	private UUID owner;
 	/** The sect whose members walk through it; null if none. */
 	private UUID sect;
+	/** Players its owner trusts: they walk through it as the owner does (set from the core's screen). */
+	private final Set<UUID> trusted = new LinkedHashSet<>();
 	/** Concealment: the last game time its NPC was seen alive nearby (see Formations#tick). */
 	long heartbeat;
 
@@ -53,6 +63,15 @@ public final class Formation {
 	public int getRank() { return rank; }
 	public UUID getOwner() { return owner; }
 	public UUID getSect() { return sect; }
+	public Set<UUID> getTrusted() { return Collections.unmodifiableSet(trusted); }
+
+	/** @return true if it changed */
+	boolean setTrusted(Collection<UUID> players) {
+		if (trusted.size() == players.size() && trusted.containsAll(players)) return false;
+		trusted.clear();
+		trusted.addAll(players);
+		return true;
+	}
 
 	void setRadius(int radius) {
 		if (this.radius == radius) return;
@@ -88,12 +107,13 @@ public final class Formation {
 	}
 
 	/**
-	 * Walks through the barrier as if it weren't there: the player who owns it, the NPC whose concealment it is, and every
-	 * member of the sect it protects.
+	 * Walks through the barrier as if it weren't there: the player who owns it and those they trust, the NPC whose concealment
+	 * it is, and every member of the sect it protects.
 	 */
 	public boolean allows(Entity entity) {
 		if (entity == null) return false;
 		if (owner != null && owner.equals(entity.getUUID())) return true;
+		if (entity instanceof Player && trusted.contains(entity.getUUID())) return true;
 		return sect != null && entity instanceof CultivatorNpc npc && sect.equals(npc.getSectId());
 	}
 
@@ -108,15 +128,19 @@ public final class Formation {
 		if (owner != null) tag.putUUID("Owner", owner);
 		if (sect != null) tag.putUUID("Sect", sect);
 		tag.putLong("Heartbeat", heartbeat);
+		ListTag list = new ListTag();
+		for (UUID player : trusted) list.add(NbtUtils.createUUID(player));
+		tag.put("Trusted", list);
 		return tag;
 	}
 
 	/** A raised formation as the client hears of it (see ModPackets#sendFormations). */
-	public static Formation view(UUID id, Kind kind, BlockPos center, int radius, int rank, UUID owner) {
+	public static Formation view(UUID id, Kind kind, BlockPos center, int radius, int rank, UUID owner, Collection<UUID> trusted) {
 		Formation f = new Formation(id, kind, center, radius);
 		f.raised = true;
 		f.rank = rank;
 		f.owner = owner;
+		f.trusted.addAll(trusted);
 		return f;
 	}
 
@@ -133,6 +157,7 @@ public final class Formation {
 		if (tag.hasUUID("Owner")) f.owner = tag.getUUID("Owner");
 		if (tag.hasUUID("Sect")) f.sect = tag.getUUID("Sect");
 		f.heartbeat = tag.getLong("Heartbeat");
+		for (Tag entry : tag.getList("Trusted", Tag.TAG_INT_ARRAY)) f.trusted.add(NbtUtils.loadUUID(entry));
 		return f;
 	}
 

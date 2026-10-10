@@ -15,6 +15,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 
 import java.util.ArrayList;
@@ -239,7 +240,8 @@ public class SectGameTests implements FabricGameTest {
 		((FormationCoreBlockEntity) level.getBlockEntity(core)).bindToSect(UUID.randomUUID(), "Test", Formations.MIN_RADIUS, 0);
 		helper.runAfterDelay(45, () -> {
 			helper.assertTrue(Formations.shelters(level, core.above()), "Inside a raised barrier is sheltered ground");
-			helper.assertTrue(!Formations.shelters(level, core.offset(20, 0, 0)), "Outside it is not");
+			// (High above: other tests' barriers stand around it at its own height.)
+			helper.assertTrue(!Formations.shelters(level, core.offset(0, 150, 0)), "Outside it is not");
 			// A wild zombie (the world's own, so not kept), a named one (kept in the world), and a cow (no monster).
 			Zombie wild = EntityType.ZOMBIE.create(level);
 			wild.moveTo(core.getX() + 1.5, core.getY() + 1, core.getZ() + 0.5, 0, 0);
@@ -257,6 +259,141 @@ public class SectGameTests implements FabricGameTest {
 				helper.succeed();
 			});
 		});
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 200)
+	public void theWeakAreCastOutOfABarrier(GameTestHelper helper) {
+		BlockPos coreRel = new BlockPos(4, 2, 4);
+		helper.setBlock(coreRel.below(), Blocks.STONE);
+		helper.setBlock(coreRel, ModBlocks.FORMATION_CORE);
+		ServerLevel level = helper.getLevel();
+		BlockPos core = helper.absolutePos(coreRel);
+		// As strong as a Qi Refining Early master: mortals can't break it, cultivators can.
+		FormationCoreBlockEntity entity = (FormationCoreBlockEntity) level.getBlockEntity(core);
+		entity.bindToSect(UUID.randomUUID(), "Test", Formations.MIN_RADIUS, 0);
+		helper.runAfterDelay(45, () -> {
+			Formation formation = Formations.get(level, entity.getFormationId());
+			// The test's mock players are always in creative, which the guard passes over: its two halves are checked here.
+			ServerPlayer mortal = helper.makeMockServerPlayerInLevel();
+			mortal.teleportTo(core.getX() + 1.5, core.getY() + 1, core.getZ() + 0.5);
+			ServerPlayer cultivator = helper.makeMockServerPlayerInLevel();
+			CultivationManager.get(cultivator).setState(Realm.QI_REFINING, Stage.EARLY, 0);
+			helper.assertTrue(!Formations.canBreak(mortal, formation), "A mortal is too weak for it");
+			helper.assertTrue(Formations.canBreak(cultivator, formation), "A cultivator at its strength may come and go");
+			helper.assertTrue(Formations.expel(level, formation, mortal), "The ground outside is loaded");
+			double limit = Formations.MIN_RADIUS + 0.5;
+			helper.assertTrue(mortal.blockPosition().distSqr(core) > limit * limit,
+					"The one too weak is set down outside (" + mortal.blockPosition().toShortString() + ")");
+			helper.succeed();
+		});
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 200)
+	public void theBarrierClosesEveryGap(GameTestHelper helper) {
+		BlockPos coreRel = new BlockPos(4, 2, 4);
+		helper.setBlock(coreRel.below(), Blocks.STONE);
+		helper.setBlock(coreRel, ModBlocks.FORMATION_CORE);
+		ServerLevel level = helper.getLevel();
+		BlockPos core = helper.absolutePos(coreRel);
+		// Cells on the radius-4 shell, each holding something the old barrier left open (or something it must keep).
+		BlockPos water = core.offset(4, 0, 0), torch = core.offset(0, 0, 4), poppy = core.offset(0, 0, -4), fence = core.offset(-4, 0, 0);
+		BlockPos stone = core.offset(0, 4, 0), slab = core.offset(3, 0, 3), seal = core.offset(-3, 0, -3);
+		for (BlockPos ground : new BlockPos[] {water, torch, seal}) level.setBlockAndUpdate(ground.below(), Blocks.STONE.defaultBlockState());
+		level.setBlockAndUpdate(poppy.below(), Blocks.GRASS_BLOCK.defaultBlockState());
+		level.setBlockAndUpdate(water, Blocks.WATER.defaultBlockState());
+		level.setBlockAndUpdate(torch, Blocks.TORCH.defaultBlockState());
+		level.setBlockAndUpdate(poppy, Blocks.POPPY.defaultBlockState());
+		level.setBlockAndUpdate(fence, Blocks.OAK_FENCE.defaultBlockState());
+		level.setBlockAndUpdate(stone, Blocks.STONE.defaultBlockState());
+		level.setBlockAndUpdate(slab, Blocks.STONE_SLAB.defaultBlockState());
+		level.setBlockAndUpdate(seal, ModBlocks.SEAL.defaultBlockState());
+		FormationCoreBlockEntity entity = (FormationCoreBlockEntity) level.getBlockEntity(core);
+		entity.bindToSect(UUID.randomUUID(), "Test", Formations.MIN_RADIUS, 0);
+		helper.runAfterDelay(45, () -> {
+			BlockState held = level.getBlockState(water);
+			helper.assertTrue(held.is(ModBlocks.SECT_BARRIER) && held.getValue(SectBarrierBlock.FLUID) == SectBarrierBlock.Held.WATER
+					&& held.getFluidState().isSource(), "Still water on the shell is closed by a barrier that holds the water (" + held + ")");
+			for (BlockPos closed : new BlockPos[] {torch, poppy, fence}) {
+				helper.assertTrue(level.getBlockState(closed).is(ModBlocks.SECT_BARRIER), "What stood in the way is replaced: " + closed.toShortString());
+			}
+			helper.assertTrue(itemNear(level, core, Items.TORCH) && itemNear(level, core, Items.OAK_FENCE), "Built things drop as items");
+			helper.assertTrue(!itemNear(level, core, Items.POPPY), "Wild flowers simply give way");
+			helper.assertTrue(level.getBlockState(stone).is(Blocks.STONE) && level.getBlockState(slab).is(Blocks.STONE_SLAB),
+					"Solid ground and slabs already close their cells and are kept");
+			helper.assertTrue(level.getBlockState(seal).is(ModBlocks.SEAL), "Seals are kept, so an array can cross the shell");
+			Zombie zombie = EntityType.ZOMBIE.create(level);
+			zombie.moveTo(Vec3.atCenterOf(seal));
+			helper.assertTrue(!level.getBlockState(seal).getCollisionShape(level, seal, CollisionContext.of(zombie)).isEmpty(),
+					"... and a seal on the shell is solid to those the barrier keeps out");
+			Formations.lower(level, Formations.get(level, entity.getFormationId()));
+			helper.assertTrue(level.getBlockState(water).is(Blocks.WATER), "When the barrier comes down the water is left behind");
+			helper.succeed();
+		});
+	}
+
+	private static boolean itemNear(ServerLevel level, BlockPos pos, net.minecraft.world.item.Item item) {
+		// Anywhere around the test's barrier: an item is pushed out of the cell the barrier takes, and falls.
+		return !level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, new net.minecraft.world.phys.AABB(pos).inflate(9),
+				e -> e.getItem().is(item)).isEmpty();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 200)
+	public void anExtinctSectsCoreCanBeClaimed(GameTestHelper helper) {
+		ServerLevel level = helper.getLevel();
+		Sect sect = newSect(helper, 0);
+		CultivatorNpc last = member(helper, sect, 5, 0);
+		sect.recalculateTitles();
+		BlockPos coreRel = new BlockPos(4, 2, 4);
+		helper.setBlock(coreRel.below(), Blocks.STONE);
+		helper.setBlock(coreRel, ModBlocks.FORMATION_CORE);
+		FormationCoreBlockEntity core = (FormationCoreBlockEntity) level.getBlockEntity(helper.absolutePos(coreRel));
+		core.bindToSect(sect.id, sect.name, Formations.MIN_RADIUS, 5);
+		ServerPlayer player = helper.makeMockServerPlayerInLevel();
+		helper.assertTrue(core.getSect() != null, "A living sect's core answers to the sect");
+		last.hurt(level.damageSources().generic(), 10_000);
+		helper.assertTrue(sect.extinct, "Its last member dead, the sect is gone");
+		helper.runAfterDelay(30, () -> {
+			helper.assertTrue(core.getSect() == null && Formations.get(level, core.getFormationId()).getSect() == null,
+					"Within a second the core lets go of the fallen sect");
+			helper.assertTrue(core.canControl(player), "The first to lay hands on it may take it up");
+			helper.succeed();
+		});
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void trustedCultivatorsPassTheBarrier(GameTestHelper helper) {
+		ServerLevel level = helper.getLevel();
+		BlockPos coreRel = new BlockPos(4, 2, 4);
+		helper.setBlock(coreRel.below(), Blocks.STONE);
+		helper.setBlock(coreRel, ModBlocks.FORMATION_CORE);
+		FormationCoreBlockEntity core = (FormationCoreBlockEntity) level.getBlockEntity(helper.absolutePos(coreRel));
+		ServerPlayer owner = helper.makeMockServerPlayerInLevel();
+		ServerPlayer friend = helper.makeMockServerPlayerInLevel();
+		ServerPlayer stranger = helper.makeMockServerPlayerInLevel();
+		core.setOwner(owner);
+		core.trust(friend.getUUID(), "Friend");
+		Formation formation = Formations.get(level, core.getFormationId());
+		helper.assertTrue(formation.allows(owner) && formation.allows(friend) && !formation.allows(stranger),
+				"The owner and those they trust pass; others don't");
+		helper.assertTrue(Formations.canBreak(friend, formation), "A trusted cultivator is never cast out or kept from digging");
+		helper.assertTrue(Formation.load(formation.save()).getTrusted().contains(friend.getUUID()), "The list is saved with the formation");
+		core.distrust(owner, friend.getUUID());
+		helper.assertTrue(!formation.allows(friend) && core.getTrusted().isEmpty(), "Struck off the list, they pass no more");
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void everyCultivatorHasAnIslandOfTheirOwn(GameTestHelper helper) {
+		net.minecraft.server.MinecraftServer server = helper.getLevel().getServer();
+		// Two players whose ids landed on the same island before islands were handed out (hash modulo 2048).
+		UUID a = UUID.randomUUID(), b;
+		do {
+			b = UUID.randomUUID();
+		} while (Math.floorMod(b.hashCode(), 2048) != Math.floorMod(a.hashCode(), 2048));
+		BlockPos islandA = InnerRealm.islandCentre(server, a);
+		helper.assertTrue(!islandA.equals(InnerRealm.islandCentre(server, b)), "Two cultivators never share an island");
+		helper.assertTrue(islandA.equals(InnerRealm.islandCentre(server, a)), "A cultivator's island stays where it is");
+		helper.succeed();
 	}
 
 	private static int countBarriers(ServerLevel level, BlockPos center, int radius) {
