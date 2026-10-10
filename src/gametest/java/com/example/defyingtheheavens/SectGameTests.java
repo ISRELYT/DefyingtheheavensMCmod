@@ -86,6 +86,30 @@ public class SectGameTests implements FabricGameTest {
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
+	public void eldersHoldTheirGroundWhileDisciplesRun(GameTestHelper helper) {
+		Sect sect = newSect(helper, 0);
+		CultivatorNpc master = member(helper, sect, 10, 0);
+		CultivatorNpc elder = member(helper, sect, 8, 1);
+		CultivatorNpc disciple = member(helper, sect, 1, 2);
+		master.setTitle(NpcTitle.SECT_MASTER);
+		elder.setTitle(NpcTitle.ELDER);
+		disciple.setTitle(NpcTitle.OUTER_DISCIPLE);
+		CultivatorNpc intruder = helper.spawn(ModEntities.CULTIVATOR, new BlockPos(4, 2, 4));
+		intruder.becomeRogue(PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.GRAND_PERFECTION), -150, helper.getLevel().getRandom());
+		intruder.setNoAi(true);
+		for (CultivatorNpc npc : new CultivatorNpc[] {master, elder, disciple}) npc.startFleeing(intruder);
+		helper.assertTrue(!master.shouldFlee() && !elder.shouldFlee(), "The master and its elders stand against a far stronger intruder");
+		helper.assertTrue(disciple.shouldFlee(), "A disciple runs from it");
+		elder.setHealth(elder.getMaxHealth() * 0.1f);
+		elder.setLastHurtByMob(intruder);
+		// Being in a fight is worked out on the elder's own tick.
+		helper.runAfterDelay(5, () -> {
+			helper.assertTrue(elder.shouldFlee(), "Even an elder falls back once it is losing badly");
+			helper.succeed();
+		});
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void playerKillsAreNeverReplacedAndExtinctionIsFinal(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
 		Sect sect = newSect(helper, 0);

@@ -469,7 +469,10 @@ the master is between Core Formation and Nascent Soul Grand Perfection; in the U
   (`NpcSpawner`). At most 3 near any one player and 40 in a level.
 - **In a fight** cultivators use what their realm gives them: a Consciousness Domain (rogues always, sect members only
   in combat), Realm Suppression and Qi Flight, but only while their qi can sustain them. They flee below a quarter of their
-  health or from a domain four or more stages stronger.
+  health, and rogues and disciples also flee from a hostile domain four or more stages stronger once their own domain
+  senses it. The Sect Master and the elders never flee a stronger domain: they stand and fight for their sect. A
+  fleeing cultivator runs (or flies) away from what it fears, out of its sect's grounds if need be, and comes home once
+  the fear passes (about 30 seconds after it last sensed it); struck by its pursuer at close quarters, it strikes back.
 - Every cultivator has a nameplate: title, a red health bar with numbers, and alignment, for example "Righteous (+120)".
   Under Qi Sense, meditating cultivators draw qi motes into themselves.
 

@@ -28,8 +28,9 @@ import java.util.List;
  *   home between rounds.</li>
  *   <li><b>Rogues</b>: wander, and sit to meditate when idle.</li>
  * </ul>
- * Below Heavenly Being, sect members never leave their territory except in a fight, and go straight back to their duty
- * when it ends. Disciples and rogues attack enemies of their path on sight (players included, by alignment) and Outer and
+ * Below Heavenly Being, sect members never leave their territory except in a fight or running from one, and go straight
+ * back to their duty when it ends. Before a cultivator a realm above them, disciples and rogues run, while the Sect
+ * Master and its elders stand and fight for their sect. Disciples and rogues attack enemies of their path on sight (players included, by alignment) and Outer and
  * Inner Disciples clear monsters from the grounds; Elders and the Sect Master only answer their sect's call (SectManager).
  */
 public final class CultivatorGoals {
@@ -74,10 +75,17 @@ public final class CultivatorGoals {
 
 	// --- Movement goals ---
 
-	/** Badly hurt, or a hostile domain far above its own nearby: a sect member falls back to the core, a rogue gets away. */
+	/**
+	 * Badly hurt, or a hostile domain far above its own nearby: it gets away from whatever it fears, on foot or through the
+	 * air, sect members out of their grounds too (the core is no shelter from someone already inside), and comes back once
+	 * the fear has passed (ReturnToTerritoryGoal). Caught (struck by its pursuer with no room to run), it strikes back.
+	 */
 	public static class FleeGoal extends Goal {
+		/** Struck this recently by the one it runs from, with that one in reach: it's cornered. */
+		private static final int CORNERED_TICKS = 40;
 		private final CultivatorNpc npc;
 		private int recheck;
+		private int cooldown;
 
 		public FleeGoal(CultivatorNpc npc) {
 			this.npc = npc;
@@ -94,30 +102,40 @@ public final class CultivatorGoals {
 			recheck = 0;
 		}
 
+		@Override public boolean requiresUpdateEveryTick() { return true; }
+
 		@Override
 		public void tick() {
 			Entity threat = npc.getFleeFrom() != null ? npc.getFleeFrom() : npc.getTarget() != null ? npc.getTarget() : npc.getLastHurtByMob();
-			Sect sect = npc.sect();
-			if (sect != null && npc.level().dimension() == sect.dimension) {
-				// Into the barrier's shelter: the core, where the elders keep watch.
-				if (--recheck <= 0) {
-					recheck = 20;
-					BlockPos core = sect.core;
-					if (npc.blockPosition().distSqr(core) > 25) npc.getNavigation().moveTo(core.getX() + 0.5, core.getY() + 1, core.getZ() + 0.5, 1.35);
-				}
-				return;
-			}
 			if (threat == null) return;
+			if (cooldown > 0) cooldown--;
+			if (threat instanceof LivingEntity pursuer && cornered(pursuer)) {
+				npc.getLookControl().setLookAt(pursuer, 30.0f, 30.0f);
+				if (cooldown <= 0 && npc.getSensing().hasLineOfSight(pursuer)) {
+					npc.swing(InteractionHand.MAIN_HAND);
+					npc.doHurtTarget(pursuer);
+					cooldown = attackCooldown(npc);
+				}
+			}
 			Vec3 away = npc.position().subtract(threat.position());
 			away = away.lengthSqr() < 1.0e-4 ? new Vec3(1, 0, 0) : away.normalize();
 			if (npc.canFlySustainably() || npc.isQiFlying()) {
 				npc.setQiFlying(true);
-				npc.flyToward(npc.position().add(away.scale(12)).add(0, 4, 0), 0.5);
-			} else if (--recheck <= 0) {
+				// Up off the ground and away, no higher than a dozen blocks over whatever is below.
+				int ground = Formations.surface(npc.level(), Heightmap.Types.MOTION_BLOCKING, npc.getBlockX(), npc.getBlockZ());
+				npc.flyToward(npc.position().add(away.scale(12)).add(0, npc.getY() < ground + 12 ? 4 : 0, 0), 0.5);
+			} else if (--recheck <= 0 || npc.getNavigation().isDone()) {
 				recheck = 20;
 				Vec3 spot = DefaultRandomPos.getPosAway(npc, 16, 7, threat.position());
 				if (spot != null) npc.getNavigation().moveTo(spot.x, spot.y, spot.z, 1.4);
 			}
+		}
+
+		/** Its pursuer has just struck it and is close enough to strike back at. */
+		private boolean cornered(LivingEntity pursuer) {
+			return npc.getLastHurtByMob() == pursuer && npc.tickCount - npc.getLastHurtByMobTimestamp() < CORNERED_TICKS
+					&& pursuer.isAlive() && !npc.isAlly(pursuer) && npc.isWithinMeleeAttackRange(pursuer)
+					&& !(pursuer instanceof Player player && (player.isCreative() || player.isSpectator()));
 		}
 	}
 

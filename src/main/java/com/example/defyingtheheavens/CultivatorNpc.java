@@ -598,20 +598,37 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		updateShownRank();
 	}
 
-	/** Its open domain feels every other within reach: a hostile one a realm above its own sends it running. */
+	/**
+	 * Its open domain feels every other within reach: a hostile one a realm above its own sends it running, unless it
+	 * {@link #holdsGround holds its ground}.
+	 */
 	private void senseDomains(ServerLevel level) {
+		if (holdsGround()) return;
 		int mine = sustainedRank();
 		double radius = domainRadius();
 		for (LivingEntity other : ConsciousnessDomainHandler.entitiesIn(this, Math.min(radius, 96), LivingEntity.class,
 				e -> e.isAlive() && CultivatorEntity.isCultivator(e))) {
 			int theirs = rankOf(other);
 			if (theirs >= mine + SUPERIOR_DOMAIN_GAP && isThreat(other)) {
-				fleeFrom = other;
-				fleeTicks = 600;
-				if (getTarget() == other) setTarget(null);
+				startFleeing(other);
 				return;
 			}
 		}
+	}
+
+	/** Runs from {@code other} for the next 30 seconds (renewed while it is still sensed). */
+	void startFleeing(Entity other) {
+		fleeFrom = other;
+		fleeTicks = 600;
+		if (getTarget() == other) setTarget(null);
+	}
+
+	/**
+	 * The Sect Master and its elders defend their sect against anyone, however far above them: no stronger domain sends them
+	 * running, only a beating (see {@link #shouldFlee}). Disciples and rogues have no such duty.
+	 */
+	public boolean holdsGround() {
+		return lifecycle == Lifecycle.SECT && getTitle().isElderOrAbove();
 	}
 
 	/** A player's or NPC's rank as cultivators weigh each other ({@link #MORTAL} for mortals and creative players). */
@@ -670,8 +687,9 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		if (target instanceof Player player) aggressed.add(player.getUUID());
 	}
 
+	/** Running: from a domain a realm above its own (unless it {@link #holdsGround}), or from a fight it is losing badly. */
 	public boolean shouldFlee() {
-		return fleeFrom != null && fleeFrom.isAlive() || getHealth() < getMaxHealth() * FLEE_HEALTH && isInCombat();
+		return fleeFrom != null && fleeFrom.isAlive() && !holdsGround() || getHealth() < getMaxHealth() * FLEE_HEALTH && isInCombat();
 	}
 
 	public Entity getFleeFrom() { return fleeFrom; }
