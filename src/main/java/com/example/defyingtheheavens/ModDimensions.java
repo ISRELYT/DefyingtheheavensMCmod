@@ -20,16 +20,21 @@ import java.util.OptionalLong;
 public final class ModDimensions {
 	public static final ResourceKey<Level> UPPER_REALM = ResourceKey.create(Registries.DIMENSION, DefyingTheHeavens.id("upper_realm"));
 	public static final ResourceKey<Level> SPATIAL_GAP = ResourceKey.create(Registries.DIMENSION, DefyingTheHeavens.id("spatial_gap"));
+	/** Each cultivator's own island in a void, where the soul goes while meditating (see {@link InnerRealm}). */
+	public static final ResourceKey<Level> INNER_REALM = ResourceKey.create(Registries.DIMENSION, DefyingTheHeavens.id("inner_realm"));
 
 	public static final ResourceKey<LevelStem> UPPER_REALM_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("upper_realm"));
 	public static final ResourceKey<LevelStem> SPATIAL_GAP_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("spatial_gap"));
+	public static final ResourceKey<LevelStem> INNER_REALM_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("inner_realm"));
 
 	public static final ResourceKey<DimensionType> UPPER_REALM_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("upper_realm"));
 	public static final ResourceKey<DimensionType> SPATIAL_GAP_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("spatial_gap"));
+	public static final ResourceKey<DimensionType> INNER_REALM_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("inner_realm"));
 
 	/** Dimension effects ids; the client registers the custom sky, fog and cloud behaviour under these. */
 	public static final ResourceLocation UPPER_REALM_EFFECTS = DefyingTheHeavens.id("upper_realm");
 	public static final ResourceLocation SPATIAL_GAP_EFFECTS = DefyingTheHeavens.id("spatial_gap");
+	public static final ResourceLocation INNER_REALM_EFFECTS = DefyingTheHeavens.id("inner_realm");
 
 	public static final int UPPER_REALM_MIN_Y = -64;
 	public static final int UPPER_REALM_HEIGHT = 576; // -64 .. 511
@@ -48,6 +53,10 @@ public final class ModDimensions {
 
 	public static boolean isSpatialGap(ResourceKey<Level> dimension) {
 		return dimension == SPATIAL_GAP;
+	}
+
+	public static boolean isInnerRealm(ResourceKey<Level> dimension) {
+		return dimension == INNER_REALM;
 	}
 
 	public static void bootstrapTypes(BootstapContext<DimensionType> context) {
@@ -83,6 +92,23 @@ public final class ModDimensions {
 				BlockTags.INFINIBURN_OVERWORLD,
 				SPATIAL_GAP_EFFECTS,
 				0.15f,
+				new DimensionType.MonsterSettings(false, false, ConstantInt.of(0), 0)));
+
+		context.register(INNER_REALM_TYPE, new DimensionType(
+				OptionalLong.of(18000L),       // no day or night: the sky follows the cultivator instead
+				false,
+				false,
+				false,
+				false,
+				1.0,
+				false,
+				false,
+				SPATIAL_GAP_MIN_Y,
+				SPATIAL_GAP_HEIGHT,
+				SPATIAL_GAP_HEIGHT,
+				BlockTags.INFINIBURN_OVERWORLD,
+				INNER_REALM_EFFECTS,
+				0.6f,                          // the island stays softly lit in the dark
 				new DimensionType.MonsterSettings(false, false, ConstantInt.of(0), 0)));
 	}
 

@@ -1,0 +1,11 @@
+{
+  "type": "defying-the-heavens:inner_realm",
+  "generator": {
+    "type": "minecraft:noise",
+    "settings": "defying-the-heavens:spatial_gap_empty",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "defying-the-heavens:inner_realm"
+    }
+  }
+}

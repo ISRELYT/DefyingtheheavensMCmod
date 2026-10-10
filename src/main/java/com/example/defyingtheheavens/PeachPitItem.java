@@ -15,6 +15,6 @@ public class PeachPitItem extends ItemNameBlockItem {
 
     @Override
     public void appendHoverText(ItemStack stack, Level level, List<Component> lines, TooltipFlag flag) {
-        lines.add(Component.translatable(ModLang.PEACH_PIT_TOOLTIP).withStyle(ChatFormatting.GRAY));
+        Tooltips.add(lines, Component.translatable(ModLang.PEACH_PIT_TOOLTIP).withStyle(ChatFormatting.GRAY));
     }
 }

@@ -109,12 +109,14 @@ public class CultivationFruitGameTests implements FabricGameTest {
                 .getResult().consumesAction(), "Fruit can be eaten at full hunger");
         ItemStack remaining = food.finishUsingItem(helper.getLevel(), player);
         helper.assertTrue(remaining.getCount() == 1, "Eating consumes exactly one fruit");
-        helper.assertTrue(cultivation.getCultivation() == 20, "Two-year fruit awards 20 cultivation");
+        helper.assertTrue(cultivation.getMedicinalQi() == 20, "Two-year fruit gives 20 unrefined qi");
         helper.assertTrue(CultivationFruitItem.age(remaining) == 2, "Remaining fruit keeps its frozen age");
         cultivation.setState(Realm.QI_REFINING, Stage.GRAND_PERFECTION, 0);
         CultivationFruitItem.create(10_000).finishUsingItem(helper.getLevel(), player);
-        helper.assertTrue(cultivation.getRealm() == Realm.QI_REFINING && cultivation.isAtBottleneck(),
-                "Fruit cannot bypass tribulations");
+        cultivation.addCultivation(cultivation.refine(1_000_000));
+        cultivation.addCultivation(cultivation.refine(1_000_000));
+        helper.assertTrue(cultivation.getRealm() == Realm.QI_REFINING && cultivation.isAtBottleneck() && cultivation.getMedicinalQi() > 0,
+                "Fruit cannot bypass tribulations: the rest waits, unrefined");
         helper.getLevel().getServer().getPlayerList().remove(player);
         player.discard();
         helper.succeed();

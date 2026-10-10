@@ -10,10 +10,12 @@ public final class ModLang {
 
 	public static String realmKey(String id) { return "realm." + DefyingTheHeavens.MOD_ID + "." + id; }
 	public static String stageKey(String id) { return "stage." + DefyingTheHeavens.MOD_ID + "." + id; }
+	public static String mortalStageKey(String id) { return k("mortal_stage." + id); }
 
 	public static final String KEY_CATEGORY = "key.categories." + DefyingTheHeavens.MOD_ID;
 	public static final String KEY_MENU = "key." + DefyingTheHeavens.MOD_ID + ".cultivation_menu";
 	public static final String KEY_MEDITATE = "key." + DefyingTheHeavens.MOD_ID + ".meditate";
+	public static final String KEY_CIRCULATE = "key." + DefyingTheHeavens.MOD_ID + ".circulate";
 
 	public static final String TITLE = k("title");
 	public static final String REALM = k("realm");
@@ -138,6 +140,13 @@ public final class ModLang {
 	public static final String MORTAL_DETAIL = k("mortal.detail");
 	public static final String MORTAL_RECIPE = k("mortal.recipe");
 	public static final String MORTAL_STATS = k("mortal.stats");
+	public static final String MORTAL_HOW = k("mortal.how");
+	public static final String TEMPERING = k("tempering");
+	public static final String MSG_TEMPERED = k("message.tempered");
+	public static final String MSG_TEMPERED_PEAK = k("message.tempered_peak");
+	public static final String MSG_TEMPER_FULL = k("message.temper_full");
+	public static final String MSG_ELIXIR_TOO_WEAK = k("message.elixir_too_weak");
+	public static final String MSG_HERB_EATEN = k("message.herb_eaten");
 	public static final String NEED_PILL = k("need_pill");
 	public static final String PILL_PREPARED = k("pill_prepared");
 	public static final String QI_BOOST_LINE = k("qi_boost_line");
@@ -152,6 +161,13 @@ public final class ModLang {
 	public static final String MSG_PILL_MORTAL = k("message.pill_mortal");
 	public static final String MSG_PILL_BOTTLENECK = k("message.pill_bottleneck");
 	public static final String MSG_PILL_CULTIVATION = k("message.pill_cultivation");
+	public static final String UNREFINED_LINE = k("unrefined_line");
+	public static final String MSG_INNER_ENTER = k("message.inner_enter");
+	public static final String MSG_INNER_PULLED = k("message.inner_pulled");
+	public static final String MSG_INNER_TRIBULATION = k("message.inner_tribulation");
+	public static final String MSG_DEVIATION = k("message.qi_deviation");
+	public static final String CIRCULATION_HINT = k("circulation.hint");
+	public static final String CIRCULATION_STREAK = k("circulation.streak");
 	public static final String MSG_PILL_QI = k("message.pill_qi");
 	public static String pillGradeKey(String id) { return "pill_grade." + DefyingTheHeavens.MOD_ID + "." + id; }
 	public static final String PILL_AGE = k("tooltip.pill_age");

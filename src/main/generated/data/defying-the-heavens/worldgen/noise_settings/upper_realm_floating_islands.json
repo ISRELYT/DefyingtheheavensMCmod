@@ -5888,9 +5888,24 @@
               }
             },
             {
+              "type": "minecraft:condition",
+              "if_true": {
+                "type": "minecraft:noise_threshold",
+                "max_threshold": -0.1,
+                "min_threshold": -0.4,
+                "noise": "minecraft:surface"
+              },
+              "then_run": {
+                "type": "minecraft:block",
+                "result_state": {
+                  "Name": "defying-the-heavens:jade_stone"
+                }
+              }
+            },
+            {
               "type": "minecraft:block",
               "result_state": {
-                "Name": "defying-the-heavens:jade_stone"
+                "Name": "minecraft:stone"
               }
             }
           ]

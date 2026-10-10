@@ -104,6 +104,6 @@ public class SpiritPedestalBlock extends BaseEntityBlock {
 
     @Override
     public void appendHoverText(ItemStack stack, BlockGetter level, List<Component> lines, TooltipFlag flag) {
-        lines.add(Component.translatable(ModLang.PEDESTAL_TOOLTIP).withStyle(ChatFormatting.GRAY));
+        Tooltips.add(lines, Component.translatable(ModLang.PEDESTAL_TOOLTIP).withStyle(ChatFormatting.GRAY));
     }
 }

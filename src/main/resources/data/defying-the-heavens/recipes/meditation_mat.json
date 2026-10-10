@@ -2,11 +2,15 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "WWW"
+    "WWW",
+    "PPP"
   ],
   "key": {
     "W": {
       "item": "minecraft:wheat"
+    },
+    "P": {
+      "item": "defying-the-heavens:blue_spirit_planks"
     }
   },
   "result": {

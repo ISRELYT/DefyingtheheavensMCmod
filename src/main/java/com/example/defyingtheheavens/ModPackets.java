@@ -14,6 +14,8 @@ public final class ModPackets {
 	public static final ResourceLocation TOGGLE_MEDITATION = new ResourceLocation(DefyingTheHeavens.MOD_ID, "toggle_meditation");
 	/** C2S: attempt a realm breakthrough. */
 	public static final ResourceLocation BREAKTHROUGH = new ResourceLocation(DefyingTheHeavens.MOD_ID, "breakthrough");
+	/** C2S: the outcome of the qi circulation game (see MeditationManager#onCirculation): 0 clean circuit, 1 broken, 2 deviation. */
+	public static final ResourceLocation CIRCULATION = new ResourceLocation(DefyingTheHeavens.MOD_ID, "circulation");
 	/** C2S: switch an ability on or off (its ordinal). */
 	public static final ResourceLocation TOGGLE_ABILITY = new ResourceLocation(DefyingTheHeavens.MOD_ID, "toggle_ability");
 	/** S2C: full cultivation state for the owning player. */
@@ -40,6 +42,10 @@ public final class ModPackets {
 				(server, player, handler, buf, responseSender) -> server.execute(() -> MeditationManager.toggle(player)));
 		ServerPlayNetworking.registerGlobalReceiver(BREAKTHROUGH,
 				(server, player, handler, buf, responseSender) -> server.execute(() -> CultivationManager.tryBreakthrough(player)));
+		ServerPlayNetworking.registerGlobalReceiver(CIRCULATION, (server, player, handler, buf, responseSender) -> {
+			int outcome = buf.readVarInt();
+			server.execute(() -> MeditationManager.onCirculation(player, outcome));
+		});
 		ServerPlayNetworking.registerGlobalReceiver(TOGGLE_ABILITY, (server, player, handler, buf, responseSender) -> {
 			int ability = buf.readVarInt();
 			server.execute(() -> CultivationManager.toggleAbility(player, ability));
@@ -59,10 +65,13 @@ public final class ModPackets {
 		buf.writeVarInt(c.getPressureStages());
 		buf.writeDouble(c.getPressurePenalty());
 		buf.writeBoolean(c.isMortal());
+		buf.writeVarInt(c.getMortalStage().ordinal());
+		buf.writeDouble(c.getTempering());
 		buf.writeVarInt(c.getPreparedRealm() == null ? -1 : c.getPreparedRealm().ordinal());
 		buf.writeDouble(c.getPreparedBonus());
 		buf.writeDouble(c.getQiBoost());
 		buf.writeDouble(c.getPillResistance());
+		buf.writeDouble(c.getMedicinalQi());
 		ServerPlayNetworking.send(player, SYNC, buf);
 	}
 

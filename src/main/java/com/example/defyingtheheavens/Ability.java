@@ -21,7 +21,9 @@ public enum Ability {
 	/** From the start: see everything inside the consciousness domain, free of cost ({@link ConsciousnessDomainHandler}). */
 	CONSCIOUSNESS_DOMAIN("consciousness_domain", true, c -> true),
 	/** From the start, off until switched on: weigh down everything weaker in the domain, for qi ({@link RealmSuppressSystem}). */
-	REALM_SUPPRESS("realm_suppress", false, c -> true);
+	REALM_SUPPRESS("realm_suppress", false, c -> true),
+	/** From the start: after meditating a while, the soul turns inward to the Inner Realm ({@link InnerRealm}). */
+	INNER_REALM("inner_realm", true, c -> true);
 
 	private final String id;
 	private final boolean onByDefault;

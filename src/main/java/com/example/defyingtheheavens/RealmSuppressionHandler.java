@@ -30,8 +30,10 @@ public final class RealmSuppressionHandler {
 			boolean wasSealed = c.isAtBottleneck() && c.isBreakthroughLocked();
 			float oldMax = player.getMaxHealth();
 			float oldHealth = player.getHealth();
-			c.setLowerRealmBound(ModDimensions.isLowerRealm(player.level().dimension()));
-			c.setInUpperRealm(ModDimensions.isUpperRealm(player.level().dimension()));
+			// A soul in the Inner Realm is held to whatever holds its body.
+			ResourceKey<Level> where = InnerRealm.bodyDimension(player);
+			c.setLowerRealmBound(ModDimensions.isLowerRealm(where));
+			c.setInUpperRealm(ModDimensions.isUpperRealm(where));
 			CultivationManager.refresh(player); // stats from the effective stage + save + sync, also on every dimension change
 
 			// Keep the same fraction of vitality when the cap toggles, so a restored cultivator enters the
@@ -61,7 +63,7 @@ public final class RealmSuppressionHandler {
 		if (server == null || server.getTickCount() % RECHECK_INTERVAL != 0) return;
 		for (ServerPlayer player : server.getPlayerList().getPlayers()) {
 			PlayerCultivation c = CultivationManager.get(player);
-			ResourceKey<Level> dimension = player.level().dimension();
+			ResourceKey<Level> dimension = InnerRealm.bodyDimension(player);
 			if (c.isLowerRealmBound() != ModDimensions.isLowerRealm(dimension) || c.isInUpperRealm() != ModDimensions.isUpperRealm(dimension)) {
 				update(player);
 			}

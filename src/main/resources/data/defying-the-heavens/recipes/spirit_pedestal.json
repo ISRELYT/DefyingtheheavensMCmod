@@ -10,14 +10,9 @@
     "S": {
       "item": "minecraft:polished_deepslate"
     },
-    "J": [
-      {
-        "item": "defying-the-heavens:jade_stone"
-      },
-      {
-        "item": "minecraft:emerald"
-      }
-    ]
+    "J": {
+      "item": "defying-the-heavens:jade"
+    }
   },
   "result": {
     "item": "defying-the-heavens:spirit_pedestal"

@@ -54,6 +54,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		BaublePanel.register();
 		ClientPacketHandlers.register();
 		QiHud.register();
+		QiCirculationHud.register();
 		TribulationHud.register();
 		TribulationAtmosphere.register();
 		HudRenderCallback.EVENT.register((graphics, tickDelta) -> {
@@ -62,6 +63,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		});
 		EntityRendererRegistry.register(ModEntities.TRIBULATION_LIGHTNING, TribulationLightningRenderer::new);
 		EntityRendererRegistry.register(ModEntities.TRIBULATION_CLOUD, TribulationCloudRenderer::new);
+		EntityRendererRegistry.register(ModEntities.INNER_BODY, InnerBodyRenderer::new);
 		ParticleFactoryRegistry.getInstance().register(ModParticles.SUPPRESSION, SuppressionParticle.Provider::new);
 		UpperRealmClient.register();
 

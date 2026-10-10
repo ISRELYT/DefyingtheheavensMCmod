@@ -15,6 +15,6 @@ public class GinsengSeedsItem extends ItemNameBlockItem {
 
     @Override
     public void appendHoverText(ItemStack stack, Level level, List<Component> lines, TooltipFlag flag) {
-        lines.add(Component.translatable(ModLang.GINSENG_SEEDS_TOOLTIP, GinsengBlock.MATURE_YEARS).withStyle(ChatFormatting.GRAY));
+        Tooltips.add(lines, Component.translatable(ModLang.GINSENG_SEEDS_TOOLTIP, GinsengBlock.MATURE_YEARS).withStyle(ChatFormatting.GRAY));
     }
 }

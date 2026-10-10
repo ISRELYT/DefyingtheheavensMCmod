@@ -30,7 +30,7 @@ public class RingOfTranscendenceItem extends RingItem {
 
 	@Override
 	public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
-		tooltip.add(Component.translatable(ModLang.RING_OF_TRANSCENDENCE_TOOLTIP, String.valueOf(TRIBULATION_DAMAGE_MULTIPLIER))
+		Tooltips.add(tooltip, Component.translatable(ModLang.RING_OF_TRANSCENDENCE_TOOLTIP, String.valueOf(TRIBULATION_DAMAGE_MULTIPLIER))
 				.withStyle(ChatFormatting.BLUE));
 	}
 

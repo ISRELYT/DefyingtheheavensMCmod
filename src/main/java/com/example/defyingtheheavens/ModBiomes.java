@@ -33,6 +33,7 @@ public final class ModBiomes {
 	public static final ResourceKey<Biome> THUNDER_PEAKS = key("thunder_peaks");
 	public static final ResourceKey<Biome> ANCIENT_SWORD_GRAVEYARD = key("ancient_sword_graveyard");
 	public static final ResourceKey<Biome> SPATIAL_GAP = key("spatial_gap");
+	public static final ResourceKey<Biome> INNER_REALM = key("inner_realm");
 
 	private static final int WATER = 0x3FC6E4;
 	private static final int WATER_FOG = 0x0A3D52;
@@ -81,6 +82,12 @@ public final class ModBiomes {
 		context.register(SPATIAL_GAP, biome(false, 0.5f, 0.0f,
 				new BiomeSpecialEffects.Builder().skyColor(0x000000).fogColor(0x02010A).waterColor(WATER).waterFogColor(WATER_FOG)
 						.ambientParticle(new AmbientParticleSettings(ParticleTypes.GLOW, 0.01f)),
+				new MobSpawnSettings.Builder().build(),
+				new BiomeGenerationSettings.Builder(placed, carvers).build()));
+
+		// The Inner Realm: nothing at all but the cultivator's own island and sky.
+		context.register(INNER_REALM, biome(false, 0.5f, 0.0f,
+				new BiomeSpecialEffects.Builder().skyColor(0x000000).fogColor(0x020108).waterColor(WATER).waterFogColor(WATER_FOG),
 				new MobSpawnSettings.Builder().build(),
 				new BiomeGenerationSettings.Builder(placed, carvers).build()));
 	}

@@ -119,6 +119,10 @@ public final class TribulationManager {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_TRIB_BUSY), true);
 			return;
 		}
+		if (ModDimensions.isInnerRealm(player.level().dimension())) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_INNER_TRIBULATION), true);
+			return;
+		}
 		PlayerCultivation c = CultivationManager.get(player);
 		if (c.isAtBottleneck() && c.isBreakthroughLocked()) {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_REALM_LOCKED,

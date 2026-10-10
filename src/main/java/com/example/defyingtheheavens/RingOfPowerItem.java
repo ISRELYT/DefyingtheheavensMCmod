@@ -32,7 +32,7 @@ public class RingOfPowerItem extends RingItem {
 
 	@Override
 	public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
-		tooltip.add(Component.translatable(ModLang.RING_OF_POWER_TOOLTIP, (int) CULTIVATION_BONUS_PER_SECOND).withStyle(ChatFormatting.BLUE));
+		Tooltips.add(tooltip, Component.translatable(ModLang.RING_OF_POWER_TOOLTIP, (int) CULTIVATION_BONUS_PER_SECOND).withStyle(ChatFormatting.BLUE));
 	}
 
 	@Override

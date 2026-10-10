@@ -73,6 +73,17 @@ public final class CultivationBoost {
 	public static Breakdown of(Player player) {
 		Level level = player.level();
 		BlockPos feet = player.blockPosition();
+		double y = player.getY();
+		// A soul in the Inner Realm is still fed by what surrounds its body.
+		if (player instanceof net.minecraft.server.level.ServerPlayer sp && InnerRealm.isInside(sp)) {
+			net.minecraft.nbt.CompoundTag back = CultivationManager.get(sp).getInnerReturn();
+			Level bodyLevel = sp.server.getLevel(InnerRealm.bodyDimension(sp));
+			if (bodyLevel != null) {
+				level = bodyLevel;
+				y = back.getDouble("Y");
+				feet = BlockPos.containing(back.getDouble("X"), y, back.getDouble("Z"));
+			}
+		}
 
 		// The mat's block is where a seated player's feet are (they sit a pixel or two above its floor).
 		Block mat = null;
@@ -91,9 +102,9 @@ public final class CultivationBoost {
 		for (SpiritPedestalBlockEntity pedestal : pedestals) pedestalBonus += pedestalBonus(pedestal.fruitAge());
 
 		double heightBonus = 0;
-		if (level.dimensionType().hasSkyLight() && !level.dimensionType().hasCeiling() && player.getY() > HEIGHT_START
+		if (level.dimensionType().hasSkyLight() && !level.dimensionType().hasCeiling() && y > HEIGHT_START
 				&& level.canSeeSky(feet.above())) {
-			heightBonus = HEIGHT_MAX * Math.min(1.0, (player.getY() - HEIGHT_START) / (HEIGHT_FULL - HEIGHT_START));
+			heightBonus = HEIGHT_MAX * Math.min(1.0, (y - HEIGHT_START) / (HEIGHT_FULL - HEIGHT_START));
 		}
 
 		Holder<Biome> biome = level.getBiome(feet);

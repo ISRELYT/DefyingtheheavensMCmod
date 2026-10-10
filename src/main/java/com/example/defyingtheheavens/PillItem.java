@@ -118,7 +118,8 @@ public class PillItem extends Item {
 	private Component refusal(PlayerCultivation c) {
 		switch (kind) {
 			case MARROW_CLEANSING:
-				return c.isMortal() ? null : Component.translatable(ModLang.MSG_ALREADY_AWAKENED);
+				if (!c.isMortal()) return Component.translatable(ModLang.MSG_ALREADY_AWAKENED);
+				return c.isMortalPeak() ? null : Component.translatable(ModLang.MSG_ELIXIR_TOO_WEAK);
 			case FOUNDATION:
 			case CORE: {
 				Realm target = target();
@@ -214,14 +215,11 @@ public class PillItem extends Item {
 						QI_BOOST_TICKS / 1200), true);
 			}
 			case CULTIVATION -> {
+				// Its qi goes into the unrefined pool, refined into cultivation by meditating.
 				double effectiveness = 1 - c.getPillResistance();
-				double amount = c.cultivationRequired() * cultivationShare(stack) * effectiveness;
-				boolean advanced = c.addCultivation(amount);
-				c.addPillResistance();
+				double amount = c.takeMedicine(c.cultivationRequired() * cultivationShare(stack));
 				CultivationManager.refresh(player);
-				level.playSound(null, player.blockPosition(), advanced ? SoundEvents.PLAYER_LEVELUP : SoundEvents.AMETHYST_BLOCK_CHIME,
-						SoundSource.PLAYERS, 0.8f, 1.1f);
-				if (advanced) player.setHealth(player.getMaxHealth());
+				level.playSound(null, player.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 0.8f, 1.1f);
 				player.displayClientMessage(Component.translatable(ModLang.MSG_PILL_CULTIVATION, Math.round(amount),
 						Math.round(effectiveness * 100)), true);
 			}
@@ -242,35 +240,35 @@ public class PillItem extends Item {
 
 	@Override
 	public void appendHoverText(ItemStack stack, Level level, List<Component> lines, TooltipFlag flag) {
-		lines.add(Component.translatable(ModLang.PILL_AGE, age(stack)).withStyle(ChatFormatting.GOLD));
+		Tooltips.add(lines, Component.translatable(ModLang.PILL_AGE, age(stack)).withStyle(ChatFormatting.GOLD));
 		switch (kind) {
 			case MARROW_CLEANSING -> {
-				lines.add(Component.translatable(ModLang.PILL_EFFECT_AWAKEN).withStyle(ChatFormatting.GREEN));
+				Tooltips.add(lines, Component.translatable(ModLang.PILL_EFFECT_AWAKEN).withStyle(ChatFormatting.GREEN));
 				headStartLine(stack, lines);
 			}
 			case FOUNDATION, CORE -> {
-				lines.add(Component.translatable(ModLang.PILL_EFFECT_BREAKTHROUGH, target().getDisplayName()).withStyle(ChatFormatting.GREEN));
-				lines.add(Component.translatable(ModLang.PILL_WHEN, PlayerCultivation.rankName(target().previous(), Stage.GRAND_PERFECTION))
+				Tooltips.add(lines, Component.translatable(ModLang.PILL_EFFECT_BREAKTHROUGH, target().getDisplayName()).withStyle(ChatFormatting.GREEN));
+				Tooltips.add(lines, Component.translatable(ModLang.PILL_WHEN, PlayerCultivation.rankName(target().previous(), Stage.GRAND_PERFECTION))
 						.withStyle(ChatFormatting.GRAY));
 				headStartLine(stack, lines);
 			}
-			case QI_GATHERING -> lines.add(Component.translatable(ModLang.PILL_EFFECT_QI, Math.round(qiBoost(stack) * 100),
+			case QI_GATHERING -> Tooltips.add(lines, Component.translatable(ModLang.PILL_EFFECT_QI, Math.round(qiBoost(stack) * 100),
 					QI_BOOST_TICKS / 1200).withStyle(ChatFormatting.AQUA));
 			case CULTIVATION -> {
-				lines.add(Component.translatable(ModLang.PILL_EFFECT_CULTIVATION, Math.round(cultivationShare(stack) * 100))
+				Tooltips.add(lines, Component.translatable(ModLang.PILL_EFFECT_CULTIVATION, Math.round(cultivationShare(stack) * 100))
 						.withStyle(ChatFormatting.GREEN));
 				double resistance = CultivationManager.clientMirror.get().getPillResistance();
 				if (resistance > 0.005) {
-					lines.add(Component.translatable(ModLang.PILL_EFFECT_RESISTANCE, Math.round((1 - resistance) * 100))
+					Tooltips.add(lines, Component.translatable(ModLang.PILL_EFFECT_RESISTANCE, Math.round((1 - resistance) * 100))
 							.withStyle(ChatFormatting.RED));
 				}
 			}
 		}
-		lines.add(Component.translatable(ModLang.PILL_RECIPE, AlchemyRecipes.describe(this)).withStyle(ChatFormatting.DARK_GRAY));
+		Tooltips.add(lines, Component.translatable(ModLang.PILL_RECIPE, AlchemyRecipes.describe(this)).withStyle(ChatFormatting.DARK_GRAY));
 	}
 
 	private static void headStartLine(ItemStack stack, List<Component> lines) {
 		long percent = Math.round(headStart(stack) * 100);
-		if (percent > 0) lines.add(Component.translatable(ModLang.PILL_EFFECT_START, percent).withStyle(ChatFormatting.AQUA));
+		if (percent > 0) Tooltips.add(lines, Component.translatable(ModLang.PILL_EFFECT_START, percent).withStyle(ChatFormatting.AQUA));
 	}
 }

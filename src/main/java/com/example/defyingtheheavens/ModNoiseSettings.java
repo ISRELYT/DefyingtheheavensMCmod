@@ -227,7 +227,9 @@ public final class ModNoiseSettings {
 		SurfaceRules.RuleSource denseQiPeaks = SurfaceRules.sequence(
 				SurfaceRules.ifTrue(SurfaceRules.ON_FLOOR, SurfaceRules.ifTrue(SurfaceRules.noiseCondition(Noises.SURFACE, 0.15), block(Blocks.MOSS_BLOCK))),
 				SurfaceRules.ifTrue(SurfaceRules.noiseCondition(Noises.CALCITE, -0.0125, 0.0125), block(Blocks.CALCITE)),
-				block(ModBlocks.JADE_STONE));
+				// Mostly plain stone, with broad patches of jade stone (and more in veins, see ModFeatures#register).
+				SurfaceRules.ifTrue(SurfaceRules.noiseCondition(Noises.SURFACE, -0.4, -0.1), block(ModBlocks.JADE_STONE)),
+				block(Blocks.STONE));
 
 		SurfaceRules.RuleSource spiritForest = SurfaceRules.sequence(
 				SurfaceRules.ifTrue(SurfaceRules.ON_FLOOR, SurfaceRules.sequence(

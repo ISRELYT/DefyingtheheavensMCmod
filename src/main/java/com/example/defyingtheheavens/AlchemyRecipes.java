@@ -51,8 +51,8 @@ public final class AlchemyRecipes {
 					recipe(ModItems.CULTIVATION_PILL, 30, ModItems.GINSENG, 1, ModItems.HUANGJING, 1, Items.GLISTERING_MELON_SLICE, 1),
 					// Breakthrough pills: Qi Refining -> Foundation Building, Foundation Building -> Core Formation.
 					recipe(ModItems.FOUNDATION_PILL, 45, ModItems.GINSENG, 1, ModItems.LINGZHI, 1, ModItems.SPIRIT_GINSENG, 1,
-							Items.AMETHYST_SHARD, 1),
-					recipe(ModItems.CORE_PILL, 60, ModItems.SPIRIT_GINSENG, 1, ModItems.HUANGJING, 1, ModItems.CULTIVATION_FRUIT, 1,
+							ModItems.JADE, 1),
+					recipe(ModItems.CORE_PILL, 60, ModItems.SPIRIT_GINSENG, 1, ModItems.SPIRIT_LOTUS, 1, ModItems.CULTIVATION_FRUIT, 1,
 							Items.BLAZE_POWDER, 1));
 		}
 		return recipes;

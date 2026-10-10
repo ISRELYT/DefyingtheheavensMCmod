@@ -41,8 +41,13 @@ public class CultivationFruitItem extends Item {
     public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity consumer) {
         int amount = FruitAge.cultivation(age(stack));
         if (consumer instanceof ServerPlayer player) {
-            CultivationManager.get(player).addCultivation(amount);
+            // Like a Cultivation Pill: unrefined qi for meditation to refine, weakened by (and adding to) medicinal toxicity.
+            PlayerCultivation c = CultivationManager.get(player);
+            double effectiveness = 1 - c.getPillResistance();
+            double taken = c.takeMedicine(amount);
             CultivationManager.refresh(player);
+            player.displayClientMessage(Component.translatable(ModLang.MSG_PILL_CULTIVATION, Math.round(taken),
+                    Math.round(effectiveness * 100)), true);
         }
         ItemStack rest = super.finishUsingItem(stack, level, consumer);
         // The stone is left in your hand (or pocket), ready to plant a Spirit Peach Tree.
@@ -56,10 +61,14 @@ public class CultivationFruitItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, Level level, List<Component> lines, TooltipFlag flag) {
-        lines.add(Component.translatable("item.defying-the-heavens.cultivation_fruit.age", age(stack)).withStyle(ChatFormatting.GOLD));
-        lines.add(Component.translatable("item.defying-the-heavens.cultivation_fruit.gain", FruitAge.cultivation(age(stack))).withStyle(ChatFormatting.GREEN));
-        lines.add(Component.translatable(ModLang.FRUIT_PEDESTAL_TOOLTIP,
+        Tooltips.add(lines, Component.translatable("item.defying-the-heavens.cultivation_fruit.age", age(stack)).withStyle(ChatFormatting.GOLD));
+        Tooltips.add(lines, Component.translatable("item.defying-the-heavens.cultivation_fruit.gain", FruitAge.cultivation(age(stack))).withStyle(ChatFormatting.GREEN));
+        double toxicity = CultivationManager.clientMirror.get().getPillResistance();
+        if (toxicity > 0.005) {
+            Tooltips.add(lines, Component.translatable(ModLang.PILL_EFFECT_RESISTANCE, Math.round((1 - toxicity) * 100)).withStyle(ChatFormatting.RED));
+        }
+        Tooltips.add(lines, Component.translatable(ModLang.FRUIT_PEDESTAL_TOOLTIP,
                 Math.round(CultivationBoost.pedestalBonus(age(stack)) * 100)).withStyle(ChatFormatting.AQUA));
-        lines.add(Component.translatable("item.defying-the-heavens.cultivation_fruit.picked").withStyle(ChatFormatting.GRAY));
+        Tooltips.add(lines, Component.translatable("item.defying-the-heavens.cultivation_fruit.picked").withStyle(ChatFormatting.GRAY));
     }
 }

@@ -18,12 +18,18 @@ import java.util.UUID;
 /** Runtime-only meditation sessions (not persisted: logging out ends meditation). */
 public final class MeditationManager {
 	private static final class Session {
-		final double x, y, z;
+		double x, y, z;
 		/** What the surroundings add (see CultivationBoost), re-read every {@link #BOOST_REFRESH_TICKS}. */
 		CultivationBoost.Breakdown boost = CultivationBoost.Breakdown.NONE;
 		int ticks;
 		/** The boost percentage last told to the player; -1 before the first. */
 		int shownPercent = -1;
+		/** Qi circulation (see {@link #onCirculation}): clean circuits in a row, and when the last one was made. */
+		int circuitStreak;
+		int lastCircuitTick = -CIRCULATION_LASTS;
+
+		/** Ticks left in which a soul just arrived in the Inner Realm settles onto the island (moving doesn't count yet). */
+		int settling;
 
 		Session(double x, double y, double z) {
 			this.x = x;
@@ -33,6 +39,15 @@ public final class MeditationManager {
 	}
 
 	private static final Map<UUID, Session> SESSIONS = new HashMap<>();
+	/** Each clean circuit in a row speeds meditation by this much more, up to {@link #MAX_STREAK} of them. */
+	public static final double CIRCULATION_BONUS = 0.5;
+	public static final int MAX_STREAK = 2;
+	/** The circulation bonus lasts this long after the last clean circuit (ticks). */
+	public static final int CIRCULATION_LASTS = 600;
+	/** Qi deviation costs this share of the qi pool, and a little health (which also breaks the meditation). */
+	public static final double DEVIATION_QI_LOSS = 0.25;
+	public static final float DEVIATION_DAMAGE = 2.0f;
+	public static final int CIRCUIT_CLEAN = 0, CIRCUIT_BROKEN = 1, CIRCUIT_DEVIATION = 2;
 	private static final double MAX_DRIFT_SQR = 0.25; // half a block
 	private static final int BOOST_REFRESH_TICKS = 20;
 	/** The boost is first announced this long after sitting down, so the "you begin to gather qi" message is read first. */
@@ -74,6 +89,8 @@ public final class MeditationManager {
 
 	public static void stop(ServerPlayer player, boolean interrupted) {
 		if (SESSIONS.remove(player.getUUID()) == null) return;
+		boolean inside = InnerRealm.isInside(player);
+		if (inside) InnerRealm.leave(player); // getting up brings the soul back to the body
 		ModPackets.broadcastMeditation(player, false);
 		CultivationManager.sync(player);
 		player.displayClientMessage(Component.translatable(interrupted ? ModLang.MSG_INTERRUPTED : ModLang.MSG_STOP), true);
@@ -94,6 +111,46 @@ public final class MeditationManager {
 				&& !p.isPassenger() && !p.isSleeping() && !p.isFallFlying();
 	}
 
+	/** How much a run of clean qi circuits speeds meditation right now: x1, then x1.5, then x2. */
+	private static double circulationMultiplier(Session s, int ticks) {
+		if (ticks - s.lastCircuitTick > CIRCULATION_LASTS) s.circuitStreak = 0;
+		return 1 + CIRCULATION_BONUS * Math.min(s.circuitStreak, MAX_STREAK);
+	}
+
+	/** The circulation multiplier for {@code player}'s meditation (1 if they aren't meditating). */
+	public static double circulationMultiplier(UUID player) {
+		Session s = SESSIONS.get(player);
+		return s == null ? 1 : circulationMultiplier(s, s.ticks);
+	}
+
+	/**
+	 * The qi circulation game, played on the client while meditating (see QiCirculationHud): a clean circuit builds the
+	 * streak, a broken one resets it, and three wrong presses in a row are a qi deviation.
+	 */
+	public static void onCirculation(ServerPlayer p, int outcome) {
+		Session s = SESSIONS.get(p.getUUID());
+		if (s == null || CultivationManager.get(p).isMortal()) return;
+		switch (outcome) {
+			case CIRCUIT_CLEAN -> {
+				circulationMultiplier(s, s.ticks); // lapse an expired streak first
+				s.circuitStreak++;
+				s.lastCircuitTick = s.ticks;
+			}
+			case CIRCUIT_BROKEN -> s.circuitStreak = 0;
+			case CIRCUIT_DEVIATION -> {
+				s.circuitStreak = 0;
+				PlayerCultivation c = CultivationManager.get(p);
+				c.setQi(c.getQi() - c.maxQi() * DEVIATION_QI_LOSS);
+				p.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.CONFUSION, 100, 0));
+				p.displayClientMessage(Component.translatable(ModLang.MSG_DEVIATION), true);
+				stop(p, true);
+				CultivationManager.sync(p);
+				p.hurt(p.damageSources().magic(), DEVIATION_DAMAGE);
+			}
+			default -> { }
+		}
+	}
+
 	private static boolean stillValid(ServerPlayer p, Session s) {
 		double dx = p.getX() - s.x;
 		double dz = p.getZ() - s.z;
@@ -111,7 +168,7 @@ public final class MeditationManager {
 			ServerPlayer p = server.getPlayerList().getPlayer(entry.getKey());
 			if (p == null) {
 				gone.add(entry.getKey());
-			} else if (!p.isAlive() || !stillValid(p, entry.getValue())) {
+			} else if (!p.isAlive() || (entry.getValue().settling <= 0 && !stillValid(p, entry.getValue()))) {
 				interrupted.add(p);
 			} else {
 				tickMeditation(p, entry.getValue(), tick);
@@ -126,6 +183,19 @@ public final class MeditationManager {
 		PlayerCultivation c = CultivationManager.get(p);
 
 		session.ticks++;
+		if (session.settling > 0 && --session.settling == 0) { // settled on the island: from here, getting up ends it
+			session.x = p.getX();
+			session.y = p.getY();
+			session.z = p.getZ();
+		}
+		// After a while the soul turns inward (an ability that can be switched off).
+		if (session.ticks == InnerRealm.ENTER_AFTER_TICKS && InnerRealm.enter(p)) {
+			session.settling = 40;
+			session.x = p.getX();
+			session.y = p.getY();
+			session.z = p.getZ();
+			ModPackets.broadcastMeditation(p, true);
+		}
 		if (session.ticks % BOOST_REFRESH_TICKS == 0) session.boost = CultivationBoost.of(p);
 		if (session.ticks >= BOOST_ANNOUNCE_DELAY) announceBoost(p, session);
 
@@ -140,8 +210,11 @@ public final class MeditationManager {
 		if (tick % 10 == 0) {
 			boolean wasBottleneck = c.isAtBottleneck();
 			// Mats, fruit on pedestals, height and tranquillity speed the gain (see CultivationBoost).
-			double perSecond = c.meditationCultivationPerSecond(RingOfPowerItem.cultivationBonus(p)) * session.boost.multiplier();
-			boolean advanced = c.addCultivation(perSecond * 0.5);
+			double perSecond = c.meditationCultivationPerSecond(RingOfPowerItem.cultivationBonus(p)) * session.boost.multiplier()
+					* circulationMultiplier(session, session.ticks) * (InnerRealm.isInside(p) ? InnerRealm.CULTIVATION_BONUS : 1.0);
+			// Unrefined qi from pills and fruit is refined on top, at REFINE_RATE times the meditation rate.
+			double refined = c.refine(perSecond * PlayerCultivation.REFINE_RATE * 0.5);
+			boolean advanced = c.addCultivation(perSecond * 0.5 + refined);
 			CultivationManager.refresh(p); // re-applies stats (cheap), marks dirty, syncs
 
 			if (advanced) {

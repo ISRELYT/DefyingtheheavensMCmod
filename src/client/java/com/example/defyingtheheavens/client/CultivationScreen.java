@@ -7,6 +7,7 @@ import com.example.defyingtheheavens.PillItem;
 import com.example.defyingtheheavens.CultivationBoost;
 import com.example.defyingtheheavens.CultivationStats;
 import com.example.defyingtheheavens.ModLang;
+import com.example.defyingtheheavens.MortalStage;
 import com.example.defyingtheheavens.PlayerCultivation;
 import com.example.defyingtheheavens.Realm;
 import com.example.defyingtheheavens.RealmSuppressSystem;
@@ -218,6 +219,11 @@ public class CultivationScreen extends Screen {
 		g.fill(x - 1, y - 1, x + barW + 1, y + 11, 0xFF000000);
 		g.fill(x, y, x + barW, y + 10, 0xFF2A2A3A);
 		g.fill(x, y, x + (int) (barW * ratio), y + 10, bottleneck ? 0xFFFFC107 : 0xFF4DD0E1);
+		// Unrefined qi from pills and fruit, waiting to be refined: a pale stretch beyond the bar's fill.
+		if (c.getMedicinalQi() > 0 && required > 0 && !bottleneck) {
+			double pending = Math.min(1.0, (c.getCultivation() + c.getMedicinalQi()) / required);
+			g.fill(x + (int) (barW * ratio), y + 3, x + (int) (barW * pending), y + 7, 0x90B2EBF2);
+		}
 		y += 14;
 
 		Component progressLine = c.isMaxed()
@@ -235,6 +241,10 @@ public class CultivationScreen extends Screen {
 		// Pills at work: a Qi Gathering Pill's boost, and how much less the next Cultivation Pill will do.
 		if (c.getQiBoost() > 0) {
 			g.drawCenteredString(font, Component.translatable(ModLang.QI_BOOST_LINE, Math.round(c.getQiBoost() * 100)), cx, y, 0x64B5F6);
+			y += 11;
+		}
+		if (c.getMedicinalQi() >= 0.5) {
+			g.drawCenteredString(font, Component.translatable(ModLang.UNREFINED_LINE, num(c.getMedicinalQi())), cx, y, 0xB2EBF2);
 			y += 11;
 		}
 		if (c.getPillResistance() > 0.005) {
@@ -288,13 +298,33 @@ public class CultivationScreen extends Screen {
 				cx, top + HEIGHT - 46, meditating ? 0x69F0AE : 0x9E9E9E);
 	}
 
-	/** A mortal's Cultivation tab: no realm yet, and how to change that. */
+	/** A mortal's Cultivation tab: the body's tempering stage and progress, then how to open the meridians. */
 	private void renderMortal(GuiGraphics g, int cx, int y) {
-		g.drawCenteredString(font, Component.translatable(ModLang.REALM, Component.translatable(ModLang.MORTAL)), cx, y, 0x7FDBFF);
-		y += 24;
-		for (FormattedCharSequence line : font.split(Component.translatable(ModLang.MORTAL_DETAIL), WIDTH - 28)) {
-			g.drawCenteredString(font, line, cx, y, 0xB0B0B0);
-			y += 11;
+		PlayerCultivation c = ClientCultivationData.get();
+		MortalStage stage = c.getMortalStage();
+		g.drawCenteredString(font, Component.translatable(ModLang.REALM, stage.getDisplayName()), cx, y, 0x7FDBFF);
+		y += 18;
+		int x = left + 14;
+		int barW = WIDTH - 28;
+		double ratio = stage.isLast() ? 1 : Math.min(1, c.getTempering() / c.temperingRequired());
+		g.fill(x - 1, y - 1, x + barW + 1, y + 11, 0xFF000000);
+		g.fill(x, y, x + barW, y + 10, 0xFF2A2A3A);
+		g.fill(x, y, x + (int) (barW * ratio), y + 10, stage.isLast() ? 0xFFFFC107 : 0xFFE57373);
+		y += 14;
+		if (!stage.isLast()) {
+			g.drawCenteredString(font, Component.translatable(ModLang.TEMPERING, Math.round(c.getTempering()),
+					Math.round(c.temperingRequired())), cx, y, 0xE0E0E0);
+			y += 16;
+			for (FormattedCharSequence line : font.split(Component.translatable(ModLang.MORTAL_HOW), WIDTH - 28)) {
+				g.drawCenteredString(font, line, cx, y, 0xB0B0B0);
+				y += 11;
+			}
+		} else {
+			y += 4;
+			for (FormattedCharSequence line : font.split(Component.translatable(ModLang.MORTAL_DETAIL), WIDTH - 28)) {
+				g.drawCenteredString(font, line, cx, y, 0xB0B0B0);
+				y += 11;
+			}
 		}
 		y += 8;
 		for (FormattedCharSequence line : font.split(Component.translatable(ModLang.MORTAL_RECIPE,

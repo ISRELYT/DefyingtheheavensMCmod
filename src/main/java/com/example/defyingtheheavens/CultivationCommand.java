@@ -36,6 +36,7 @@ public final class CultivationCommand {
 									PlayerCultivation c = CultivationManager.get(p);
 									c.setState(Realm.QI_REFINING, Stage.EARLY, 0);
 									c.setMortal(true);
+									c.setMortalState(MortalStage.LOW, 0);
 									c.setQi(0);
 									c.prepareBreakthrough(null, 0);
 									CultivationManager.refresh(p);
@@ -43,6 +44,15 @@ public final class CultivationCommand {
 									ctx.getSource().sendSuccess(() -> Component.literal("You are mortal again."), false);
 									return 1;
 								}))
+						.then(Commands.literal("addtempering")
+								.then(Commands.argument("amount", DoubleArgumentType.doubleArg(0))
+										.executes(ctx -> {
+											ServerPlayer p = ctx.getSource().getPlayerOrException();
+											Tempering.gain(p, DoubleArgumentType.getDouble(ctx, "amount"));
+											CultivationManager.refresh(p);
+											ctx.getSource().sendSuccess(() -> Component.literal("Tempering added."), false);
+											return 1;
+										})))
 						.then(Commands.literal("addcultivation")
 								.then(Commands.argument("amount", DoubleArgumentType.doubleArg(0))
 										.executes(ctx -> {

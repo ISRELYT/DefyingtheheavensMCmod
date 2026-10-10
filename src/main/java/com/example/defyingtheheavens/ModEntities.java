@@ -29,8 +29,18 @@ public final class ModEntities {
 					.updateInterval(Integer.MAX_VALUE)
 					.build("tribulation_lightning"));
 
+	/** A meditator's body, left sitting while their soul is in the Inner Realm (see {@link InnerRealm}). */
+	public static final EntityType<InnerBodyEntity> INNER_BODY = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("inner_body"),
+			EntityType.Builder.<InnerBodyEntity>of(InnerBodyEntity::new, MobCategory.MISC)
+					.noSummon().fireImmune()
+					.sized(0.6f, 1.2f)
+					.clientTrackingRange(10)
+					.build("inner_body"));
+
 	/** Touching this class registers the entity types. */
 	public static void register() {
+		net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry.register(INNER_BODY, InnerBodyEntity.createAttributes());
 	}
 
 	private ModEntities() {}

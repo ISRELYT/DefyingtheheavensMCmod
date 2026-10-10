@@ -88,6 +88,9 @@ public final class ModFeatures {
 
 	/** Jade Ore in Overworld mountains and all through the Upper Realm. */
 	private static void jade(Predicate<BiomeSelectionContext> upperRealm) {
+		// Jade stone blobs first, so Jade Ore can form inside them too.
+		BiomeModifications.addFeature(BiomeSelectors.includeByKey(ModBiomes.DENSE_QI_PEAKS), GenerationStep.Decoration.UNDERGROUND_ORES,
+				ModPlacedFeatures.ORE_JADE_STONE);
 		BiomeModifications.addFeature(BiomeSelectors.foundInOverworld().and(BiomeSelectors.tag(BiomeTags.IS_MOUNTAIN)),
 				GenerationStep.Decoration.UNDERGROUND_ORES, ModPlacedFeatures.ORE_JADE);
 		BiomeModifications.addFeature(upperRealm, GenerationStep.Decoration.UNDERGROUND_ORES, ModPlacedFeatures.ORE_JADE_UPPER_REALM);

@@ -2,6 +2,10 @@ package com.example.defyingtheheavens.mixin;
 
 import com.example.defyingtheheavens.RingContainer;
 import com.example.defyingtheheavens.RingHolder;
+import com.example.defyingtheheavens.Tempering;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.player.Abilities;
@@ -41,6 +45,12 @@ public abstract class PlayerMixin implements RingHolder {
 	@Inject(method = "readAdditionalSaveData", at = @At("TAIL"))
 	private void dth$loadRings(CompoundTag tag, CallbackInfo ci) {
 		dth$getRings().load(tag.getList(RingContainer.NBT_KEY, Tag.TAG_COMPOUND));
+	}
+
+	/** Food tempers a mortal's body (see Tempering). */
+	@Inject(method = "eat", at = @At("HEAD"))
+	private void dth$temperOnEat(Level level, ItemStack stack, CallbackInfoReturnable<ItemStack> cir) {
+		if ((Object) this instanceof ServerPlayer player && stack.isEdible()) Tempering.onEat(player, stack);
 	}
 
 	@Inject(method = "dropEquipment", at = @At("TAIL"))

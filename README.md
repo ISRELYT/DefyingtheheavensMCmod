@@ -104,8 +104,8 @@ a quarter block on every side; only the middle block is solid, so leave a block 
 checks, messages and cultivation gain as the meditation key. Right-click again, or move, to stop. Sitting on a mat speeds
 meditation (see below).
 
-- Meditation Mat: three wheat in a row.
-- Red Silk Meditation Mat: a Meditation Mat and red carpet (shapeless).
+- Meditation Mat: three wheat over three Blue Spirit Planks (three wheat alone would clash with bread).
+- Red Silk Meditation Mat: a Meditation Mat, red carpet and a Jade (shapeless).
 
 Source models are in `Models/MeditationMat` and `Models/RedMeditationMat` (Blockbench project, model JSON and textures);
 the game uses copies under `assets/defying-the-heavens` (`meditation_mat*`, `red_meditation_mat*`).
@@ -193,7 +193,7 @@ in the fruit's aura colour, with beads of light and glyphs flowing along it. The
 widths, lean slightly and turn opposite ways like the rings of an armillary sphere, and stay below eye level and an
 arm's length away. Fruit 1,000 years and older also lift wisps of light off their orbit.
 
-- Recipe: polished deepslate in the top and bottom rows, with jade stone or an emerald in the middle.
+- Recipe: polished deepslate in the top and bottom rows, with a Jade in the middle.
 - Balance numbers are in `CultivationBoost.java`. Pedestal code is in `SpiritPedestalBlock(Entity).java`, and the
   visuals are in `client/SpiritPedestalRenderer.java` and `client/MeditationFormation.java`.
 - Model: `models/block/spirit_pedestal.json`; textures `textures/block/spirit_pedestal_{column,trim,top}.png` (32x32).
@@ -211,9 +211,21 @@ Spirit treasures are vessels of qi, so in the grey plane of Qi they keep their c
 
 ## The mortal path and alchemy
 
-Every new player starts as a **mortal**: no cultivation, no qi, no realm bonuses and no abilities, and meditation does
-nothing. Drinking a **Marrow Cleansing Elixir** opens the meridians and starts the player at Qi Refining Early. Players
-who were already cultivating in an existing world stay cultivators.
+Every new player starts as a **mortal**: no cultivation, no qi and no abilities, and meditation does nothing. First the
+body is tempered through four stages, **Mortal Low, Mid, High and Peak**, by fighting, mining, sprinting and eating:
+
+| Tempering from | Points |
+|---|---|
+| A fully charged melee hit / killing a hostile mob / killing anything else | 0.5 / 4 / 1 |
+| Mining stone or deepslate / an ore | 0.2 / 3 |
+| Sprinting | 0.1 per second |
+| Food | 0.5 per food point (bread 2.5, steak 4) |
+| Spirit Dew / a raw herb (right-click to eat) | 12 / 10 to 20 by age, doubled for rare herbs |
+
+Low to Mid takes 120, Mid to High 200, High to Peak 300. Each stage grows the body toward Qi Refining Early's bonuses
+(a third at Mid, two thirds at High, all of it at Peak), so awakening never weakens you. Only at **Mortal Peak** can a
+**Marrow Cleansing Elixir** open the meridians and start the player at Qi Refining Early. Players who were already
+cultivating in an existing world stay cultivators. Code: `MortalStage.java`, `Tempering.java` (all the amounts).
 
 Pills are brewed in an **Alchemy Cauldron** (shapeless: a cauldron, two copper ingots and a gold ingot). Fill it with a
 water bucket, put a fire under it (fire, soul fire, a lit campfire, lava or a magma block), then right-click the
@@ -227,8 +239,8 @@ ingredients back out); an empty bucket takes the water back.
 | Marrow Cleansing Elixir | Ginseng, Honey Bottle, 2 Bone Meal | 20 s | Mortal to Qi Refining Early |
 | Qi Gathering Pill | Ginseng, Spirit Dew, Glowstone Dust | 20 s | More qi gathered per second for 5 minutes |
 | Cultivation Pill | Ginseng, Huangjing, Glistering Melon Slice | 30 s | A share of the current stage's cultivation |
-| Foundation Pill | Ginseng, Lingzhi, Spirit Ginseng, Amethyst Shard | 45 s | Needed to break into Foundation Building |
-| Core Pill | Spirit Ginseng, Huangjing, Cultivation Fruit, Blaze Powder | 60 s | Needed to break into Core Formation |
+| Foundation Pill | Ginseng, Lingzhi, Spirit Ginseng, Jade | 45 s | Needed to break into Foundation Building |
+| Core Pill | Spirit Ginseng, Spirit Lotus, Cultivation Fruit, Blaze Powder | 60 s | Needed to break into Core Formation |
 
 - **Grade.** Each pill comes out Low, Mid, High, Supreme or Immortal grade (white, green, aqua, purple, gold). The odds
   depend on the average age of the aged ingredients (the herbs, Cultivation Fruit): fresh ones give mostly Low; Immortal
@@ -249,9 +261,53 @@ ingredients back out); an empty bucket takes the water back.
   `ModEffects.java`. Pill tooltips list their ingredients, and the cultivation menu names the pill a breakthrough needs.
 
 ```
-/cultivation mortal                                   back to mortal, to try the elixir
+/cultivation mortal                                   back to Mortal Low
+/cultivation addtempering <amount>                    temper a mortal's body (500+ reaches Peak from Low)
 /give @s defying-the-heavens:core_pill{PillGrade:4,PillAge:10000}   an Immortal-grade pill (grades 0-4)
 ```
+
+## Refining medicine and qi circulation
+
+- **Unrefined qi.** Cultivation Fruit and Cultivation Pills no longer give cultivation at once: their qi goes into an
+  unrefined pool (a pale stretch past the menu's cultivation bar). Meditating refines it at 2x the meditation rate, on top
+  of the meditation itself (`REFINE_RATE`). Nothing is refined at a bottleneck, so nothing is lost there either.
+- **Medicinal toxicity.** Every fruit or Cultivation Pill makes the next one 25% weaker (down to 10%), fading by one dose
+  every 10 minutes. Shown in the menu and on pill and fruit tooltips.
+- **Qi circulation (Small Heavenly Circuit).** While meditating, a ring of acupoints circles the crosshair and a bead of qi
+  travels round it. Press **R** (Circulate Qi) as the bead reaches the lit point; light all of them for a clean circuit.
+  One clean circuit speeds meditation (and refining) x1.5, two or more in a row x2, for 30 seconds after the last one.
+  Letting the bead pass a point breaks the streak; three wrong presses in a row is a **qi deviation** (a quarter of your
+  qi, Nausea, a little damage, and the meditation ends). Ignoring the ring costs nothing. More points and a faster bead
+  at higher realms (6 points / 4 s at Qi Refining, up to 10 / 2 s). Code: `QiCirculationHud.java` (client),
+  `MeditationManager#onCirculation` (server; `CIRCULATION_BONUS`, `CIRCULATION_LASTS`, `DEVIATION_*`).
+
+## The Inner Realm
+
+After **10 seconds of meditation** your soul turns inward: you arrive on your own island in a void, while your body stays
+sitting where you were (other players see it, in your skin). Meditation inside is **x1.5** as fruitful, and still gets
+the mats, pedestals, height and biome bonuses from around your body; suppression and the Upper Realm's x10 also follow the
+body. **Getting up** (moving, sneaking, the meditate key) brings you straight back. Anything that hits your body pulls you
+back to take the blow; being pushed or moved does too. Hostile mobs near the body notice it, and the chunks around it stay
+loaded while you're away. Logging out inside puts you back at your body when you return. It's an ability (on by
+default) that can be switched off on the Abilities tab. No tribulations from inside.
+
+The sky is your cultivation made visible (`InnerRealmSkyRenderer.java`):
+
+- **Leylines** of qi far below the island, with qi pulsing inward along them. Every stage grows more lines and branches,
+  and each player's web is their own (seeded by their UUID), so it grows rather than changes.
+- **Qi Refining**: almost black, a few faint threads. **Foundation Building**: a web, the first stars.
+- **Core Formation**: a solid, faceted golden core at the centre, larger each stage; gold shards orbit and fuse into it
+  (8, 5, 3, then none) and qi motes spiral in.
+- **Nascent Soul**: the core becomes you, in your own skin, see-through and meditating, wrapped in black mist that
+  thins each stage and is gone at Grand Perfection. Nebula colours and a faint aurora appear.
+- **Heavenly Being**: brighter aurora, pillars of light rising from the lines. **Four Axis**: a celestial sky, and the
+  lines rise up and meet far overhead.
+- The island grows (radius 3 to 8) and pales with the realm: polished blackstone, deepslate, andesite, calcite, quartz,
+  white concrete, with a sea lantern at the seat from Core Formation.
+
+Code: `InnerRealm.java` (entering, leaving, the island, `ENTER_AFTER_TICKS`, `CULTIVATION_BONUS`), `InnerBodyEntity.java`,
+`client/InnerRealmSkyRenderer.java`, `client/InnerBodyRenderer.java`, `client/LotusPose.java`. The dimension is
+`inner_realm` (each player's island is 4096 blocks apart along X at Y 128).
 
 ## More herbs
 
@@ -282,7 +338,11 @@ Pedestal). Code: `GinsengBlock` (shared), `SpiritLotusBlock`, `SpiritDewGrassBlo
 Jade Ore and Deepslate Jade Ore drop **Jade** (more with Fortune, the ore itself with Silk Touch) and a little experience,
 like emerald ore, and need an iron pickaxe. Jade Ore spawns in Overworld mountain biomes from Y -48 to 160 (deepslate
 jade below Y 0) and through all the Upper Realm's islands, including the Dense Qi Peaks' jade stone, at about the same
-rarity as diamonds (`JADE_VEINS_*` in `ModPlacedFeatures.java`). Jade has no use yet.
+rarity as diamonds (`JADE_VEINS_*` in `ModPlacedFeatures.java`). Jade goes into the Foundation Pill, the Spirit
+Pedestal and the Red Silk Meditation Mat.
+
+The Dense Qi Peaks themselves are mostly plain stone, with broad patches and veins of Jade Stone running through it
+(the patches are a surface rule in `ModNoiseSettings.java`, the veins `ORE_JADE_STONE` / `JADE_STONE_BLOBS`).
 
 ## Blue Spirit Wood
 

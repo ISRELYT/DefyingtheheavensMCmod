@@ -50,9 +50,14 @@ public class PlayerCultivation {
 	public static final double MAX_PILL_RESISTANCE = 0.9;
 	/** The body clears one pill's worth of resistance every ten minutes. */
 	public static final double PILL_RESISTANCE_DECAY_PER_SECOND = PILL_RESISTANCE_PER_PILL / 600.0;
+	/** Meditation refines unrefined qi at this many times its own cultivation rate, on top of that rate. */
+	public static final double REFINE_RATE = 2.0;
 
 	/** No cultivation at all until a Marrow Cleansing Elixir opens the meridians (see {@link #awaken}). */
 	private boolean mortal = true;
+	/** A mortal's body tempering (see {@link Tempering}): the stage, and progress toward the next one. */
+	private MortalStage mortalStage = MortalStage.LOW;
+	private double tempering;
 	private Realm realm = Realm.QI_REFINING;
 	private Stage stage = Stage.EARLY;
 	/** Progress toward the next stage. */
@@ -77,8 +82,18 @@ public class PlayerCultivation {
 	private double preparedBonus;
 	/** Extra qi gathering from a Qi Gathering Pill (0.5 = +50%), for as long as its effect lasts (see QiManager). */
 	private double qiBoost;
-	/** How much less the next Cultivation Pill does (0 to {@link #MAX_PILL_RESISTANCE}); it wears off over time. */
+	/**
+	 * Medicinal toxicity (stored as pill resistance): how much less the next Cultivation Pill or Cultivation Fruit does (0 to
+	 * {@link #MAX_PILL_RESISTANCE}); it wears off over time.
+	 */
 	private double pillResistance;
+	/**
+	 * Unrefined qi from pills and fruit: it only becomes cultivation while meditating, at {@link #REFINE_RATE} times the
+	 * meditation rate (see MeditationManager).
+	 */
+	private double medicinalQi;
+	/** While the soul is in the Inner Realm: where the body is (see {@link InnerRealm}); null otherwise. Saved. */
+	private net.minecraft.nbt.CompoundTag innerReturn;
 
 	// Server-only bookkeeping for the Spatial Gap (not synced).
 	private SpatialTrialHandler.Route pendingTrial = SpatialTrialHandler.Route.NONE;
@@ -101,6 +116,39 @@ public class PlayerCultivation {
 	public boolean isMortal() { return mortal; }
 
 	public void setMortal(boolean mortal) { this.mortal = mortal; }
+
+	public MortalStage getMortalStage() { return mortalStage; }
+
+	public double getTempering() { return tempering; }
+
+	/** Tempering the current mortal stage needs to reach the next (0 at Peak). */
+	public double temperingRequired() { return mortalStage.getTemperingToNext(); }
+
+	public void setMortalState(MortalStage stage, double tempering) {
+		this.mortalStage = stage;
+		this.tempering = stage.isLast() ? 0 : Math.max(0, tempering);
+	}
+
+	/** Mortal Peak: the body can take a Marrow Cleansing Elixir. */
+	public boolean isMortalPeak() { return mortal && mortalStage.isLast(); }
+
+	/**
+	 * Adds tempering to a mortal's body, moving up through the stages; nothing past Peak.
+	 *
+	 * @return true if at least one stage was gained
+	 */
+	public boolean addTempering(double amount) {
+		if (!mortal || mortalStage.isLast() || amount <= 0) return false;
+		boolean advanced = false;
+		tempering += amount;
+		while (!mortalStage.isLast() && tempering >= temperingRequired()) {
+			tempering -= temperingRequired();
+			mortalStage = mortalStage.next();
+			advanced = true;
+		}
+		if (mortalStage.isLast()) tempering = 0;
+		return advanced;
+	}
 
 	/**
 	 * A Marrow Cleansing Elixir opens a mortal's meridians: they become a Qi Refining Early cultivator, starting with
@@ -146,6 +194,50 @@ public class PlayerCultivation {
 	public void setQiBoost(double boost) { qiBoost = Math.max(0, boost); }
 
 	public double getPillResistance() { return pillResistance; }
+
+	public double getMedicinalQi() { return medicinalQi; }
+
+	public net.minecraft.nbt.CompoundTag getInnerReturn() { return innerReturn; }
+
+	public void setInnerReturn(net.minecraft.nbt.CompoundTag back) { innerReturn = back; }
+
+	public void setMedicinalQi(double amount) { medicinalQi = Math.max(0, amount); }
+
+	/**
+	 * A Cultivation Pill or Fruit: {@code amount} weakened by the current toxicity goes into the unrefined pool, and the
+	 * toxicity rises. Returns what actually went in.
+	 */
+	public double takeMedicine(double amount) {
+		double taken = amount * (1 - pillResistance);
+		medicinalQi += taken;
+		addPillResistance();
+		return taken;
+	}
+
+	/**
+	 * Meditation refines up to {@code max} unrefined qi into cultivation (nothing at a bottleneck, so none is lost there).
+	 * Returns how much was refined.
+	 */
+	public double refine(double max) {
+		if (mortal || medicinalQi <= 0 || isAtBottleneck() || isSuppressed()) return 0;
+		double refined = Math.min(Math.min(medicinalQi, Math.max(0, max)), roomToBottleneck());
+		medicinalQi -= refined;
+		return refined;
+	}
+
+	/** Cultivation that still fits before the next bottleneck (or the lower realm's cap), across minor stages. */
+	private double roomToBottleneck() {
+		double room = cultivationRequired() - cultivation;
+		Realm r = realm;
+		Stage s = stage;
+		while (!(s.isLast() || r.hasStageTribulations())) {
+			s = s.next();
+			if (lowerRealmBound && rank(r, s) > CAP_RANK) break;
+			double required = r.getCultivationBase() * s.getCultivationMultiplier();
+			room += isUpperRealmOnly(r) ? required * UPPER_REALM_QI_MULTIPLIER : required;
+		}
+		return Math.max(0, room);
+	}
 
 	public void setPillResistance(double resistance) { pillResistance = Math.max(0, Math.min(MAX_PILL_RESISTANCE, resistance)); }
 
@@ -438,10 +530,14 @@ public class PlayerCultivation {
 	public CompoundTag save() {
 		CompoundTag tag = new CompoundTag();
 		tag.putBoolean("Mortal", mortal);
+		tag.putInt("MortalStage", mortalStage.ordinal());
+		tag.putDouble("Tempering", tempering);
 		tag.putInt("PreparedRealm", preparedRealm == null ? -1 : preparedRealm.ordinal());
 		tag.putDouble("PreparedBonus", preparedBonus);
 		tag.putDouble("QiBoost", qiBoost);
 		tag.putDouble("PillResistance", pillResistance);
+		tag.putDouble("MedicinalQi", medicinalQi);
+		if (innerReturn != null) tag.put("InnerReturn", innerReturn.copy());
 		tag.putInt("Realm", realm.ordinal());
 		tag.putInt("Stage", stage.ordinal());
 		tag.putDouble("Cultivation", cultivation);
@@ -470,11 +566,14 @@ public class PlayerCultivation {
 		c.setQi(legacy ? 0 : tag.getDouble("Qi"));
 		// Saves from before the mortal path were already cultivating, so a missing flag means "not mortal".
 		c.mortal = tag.contains("Mortal") && tag.getBoolean("Mortal");
+		c.setMortalState(MortalStage.byIndex(tag.getInt("MortalStage")), tag.getDouble("Tempering"));
 		int prepared = tag.contains("PreparedRealm") ? tag.getInt("PreparedRealm") : -1;
 		c.preparedRealm = prepared >= 0 && prepared < Realm.values().length ? Realm.byIndex(prepared) : null;
 		c.preparedBonus = tag.getDouble("PreparedBonus");
 		c.qiBoost = tag.getDouble("QiBoost");
 		c.setPillResistance(tag.getDouble("PillResistance"));
+		c.medicinalQi = Math.max(0, tag.getDouble("MedicinalQi"));
+		c.innerReturn = tag.contains("InnerReturn") ? tag.getCompound("InnerReturn").copy() : null;
 		c.lowerRealmBound = tag.getBoolean("LowerRealmBound");
 		c.pendingTrial = SpatialTrialHandler.Route.byName(tag.getString("SpatialTrial"));
 		c.fallProtected = tag.getBoolean("FallProtected");

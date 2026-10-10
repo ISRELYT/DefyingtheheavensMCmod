@@ -51,6 +51,9 @@ public class AlchemyGameTests implements FabricGameTest {
         helper.assertTrue(pill.getCount() == 1, "A mortal can't take a Cultivation Pill: it isn't eaten");
 
         ItemStack elixir = PillItem.create(ModItems.MARROW_CLEANSING_ELIXIR, PillGrade.IMMORTAL, FruitAge.MAX_YEARS);
+        eat(player, elixir);
+        helper.assertTrue(c.isMortal() && elixir.getCount() == 1, "The elixir waits for Mortal Peak");
+        c.setMortalState(MortalStage.PEAK, 0);
         ItemStack left = eat(player, elixir);
         helper.assertTrue(!c.isMortal() && c.getRealm() == Realm.QI_REFINING && c.getStage() == Stage.EARLY,
                 "The elixir makes a mortal a Qi Refining cultivator");
@@ -142,11 +145,12 @@ public class AlchemyGameTests implements FabricGameTest {
 
         double required = c.cultivationRequired();
         eat(player, PillItem.create(ModItems.CULTIVATION_PILL, PillGrade.LOW, 1));
-        double first = c.getCultivation();
-        helper.assertTrue(Math.abs(first - required * PillItem.CULTIVATION_PER_POTENCY) < 1e-6, "A Low, fresh Cultivation Pill gives 15% of a stage");
+        double first = c.getMedicinalQi();
+        helper.assertTrue(Math.abs(first - required * PillItem.CULTIVATION_PER_POTENCY) < 1e-6,
+                "A Low, fresh Cultivation Pill gives 15% of a stage, as unrefined qi");
         eat(player, PillItem.create(ModItems.CULTIVATION_PILL, PillGrade.LOW, 1));
-        helper.assertTrue(Math.abs((c.getCultivation() - first) - first * (1 - PlayerCultivation.PILL_RESISTANCE_PER_PILL)) < 1e-6,
-                "Pill resistance: the second pill does 25% less");
+        helper.assertTrue(Math.abs((c.getMedicinalQi() - first) - first * (1 - PlayerCultivation.PILL_RESISTANCE_PER_PILL)) < 1e-6,
+                "Medicinal toxicity: the second pill does 25% less");
         helper.assertTrue(c.decayPillResistance(600) && c.getPillResistance() < PlayerCultivation.PILL_RESISTANCE_PER_PILL * 2,
                 "Pill resistance wears off over time");
         helper.succeed();
@@ -247,14 +251,18 @@ public class AlchemyGameTests implements FabricGameTest {
     public void rareHerbsStandInAtTwiceTheirAge(GameTestHelper helper) {
         List<ItemStack> foundation = new java.util.ArrayList<>(List.of(GinsengItem.create(ModItems.GINSENG, 100),
                 GinsengItem.create(ModItems.PURPLE_LINGZHI, 300), GinsengItem.create(ModItems.SPIRIT_GINSENG, 100),
-                new ItemStack(Items.AMETHYST_SHARD)));
+                new ItemStack(ModItems.JADE)));
         helper.assertTrue(AlchemyRecipes.match(foundation) != null && AlchemyRecipes.match(foundation).output() == ModItems.FOUNDATION_PILL,
                 "Purple Lingzhi stands in for Lingzhi in the Foundation Pill");
         helper.assertTrue(AlchemyRecipes.averageAge(foundation) == Math.round((100 + 600 + 100) / 3.0), "...counting as twice its age");
-        List<ItemStack> core = List.of(GinsengItem.create(ModItems.SPIRIT_GINSENG, 1), GinsengItem.create(ModItems.OCHRE_HUANGJING, 1),
-                new ItemStack(ModItems.CULTIVATION_FRUIT), new ItemStack(Items.BLAZE_POWDER));
-        helper.assertTrue(AlchemyRecipes.match(core) != null && AlchemyRecipes.match(core).output() == ModItems.CORE_PILL,
-                "Ochre Huangjing stands in for Huangjing in the Core Pill");
+        List<ItemStack> cultivation = List.of(GinsengItem.create(ModItems.GINSENG, 1), GinsengItem.create(ModItems.OCHRE_HUANGJING, 1),
+                new ItemStack(Items.GLISTERING_MELON_SLICE));
+        helper.assertTrue(AlchemyRecipes.match(cultivation) != null && AlchemyRecipes.match(cultivation).output() == ModItems.CULTIVATION_PILL,
+                "Ochre Huangjing stands in for Huangjing in the Cultivation Pill");
+        // No recipe's ingredients fit inside another's, or the smaller one would brew first and the larger could never be made.
+        for (AlchemyRecipes.Recipe a : AlchemyRecipes.all()) for (AlchemyRecipes.Recipe b : AlchemyRecipes.all()) {
+            if (a != b) helper.assertTrue(!b.couldBecome(a.ingredients()), a.output() + " fits inside " + b.output());
+        }
         helper.assertTrue(GinsengBlock.plantFor(ModItems.SPIRIT_LOTUS) == ModBlocks.SPIRIT_LOTUS
                 && GinsengBlock.plantFor(ModItems.PURPLE_LINGZHI) == ModBlocks.PURPLE_LINGZHI, "Each herb knows the plant it came from");
         helper.succeed();
@@ -308,10 +316,13 @@ public class AlchemyGameTests implements FabricGameTest {
         helper.assertTrue(player.getInventory().countItem(ModItems.SPIRIT_DEW) == 1 && !level.getBlockState(pos).getValue(SpiritDewGrassBlock.DEW)
                 && level.getBlockState(pos).is(ModBlocks.SPIRIT_DEW_GRASS), "Collecting the dew leaves the grass");
 
-        ItemStack mortalDew = new ItemStack(ModItems.SPIRIT_DEW);
-        eat(player, mortalDew);
-        helper.assertTrue(mortalDew.getCount() == 1, "A mortal can't drink it");
         PlayerCultivation c = CultivationManager.get(player);
+        ItemStack mortalDew = new ItemStack(ModItems.SPIRIT_DEW, 2);
+        eat(player, mortalDew);
+        helper.assertTrue(mortalDew.getCount() == 1 && c.getTempering() == Tempering.SPIRIT_DEW, "A mortal drinks it to temper their body");
+        c.setMortalState(MortalStage.PEAK, 0);
+        eat(player, mortalDew);
+        helper.assertTrue(mortalDew.getCount() == 1, "...but not once fully tempered");
         c.setState(Realm.FOUNDATION_BUILDING, Stage.EARLY, 0);
         c.setQi(0);
         ItemStack dew = new ItemStack(ModItems.SPIRIT_DEW);
@@ -319,6 +330,90 @@ public class AlchemyGameTests implements FabricGameTest {
         helper.assertTrue(dew.isEmpty() && Math.abs(c.getQi() - c.maxQi() * SpiritDewItem.QI_RESTORED) < 1e-6, "A drop refills a quarter of the qi pool");
         helper.succeed();
     }
+    @GameTest(template = EMPTY_STRUCTURE)
+    public void mortalsTemperTheirBodiesToPeak(GameTestHelper helper) {
+        ServerPlayer player = survivalPlayer(helper);
+        PlayerCultivation c = CultivationManager.get(player);
+        helper.assertTrue(c.isMortal() && c.getMortalStage() == MortalStage.LOW && c.getTempering() == 0, "New players start at Mortal Low");
+        CultivationManager.refresh(player);
+        helper.assertTrue(player.getMaxHealth() == 20, "Mortal Low: an untempered body");
+
+        player.eat(player.level(), new ItemStack(Items.BREAD));
+        helper.assertTrue(Math.abs(c.getTempering() - 5 * Tempering.PER_FOOD_POINT) < 1e-6, "Food tempers the body");
+        ItemStack ginseng = GinsengItem.create(ModItems.GINSENG, 1);
+        eat(player, ginseng);
+        helper.assertTrue(ginseng.isEmpty() && Math.abs(c.getTempering() - 5 * Tempering.PER_FOOD_POINT - Tempering.HERB) < 1e-6,
+                "A raw herb tempers it more");
+
+        Tempering.gain(player, MortalStage.LOW.getTemperingToNext());
+        helper.assertTrue(c.getMortalStage() == MortalStage.MID, "Enough tempering reaches Mortal Mid");
+        helper.assertTrue(player.getMaxHealth() > 20 && player.getMaxHealth() < 20 + Realm.QI_REFINING.getMaxHealth(),
+                "A tempered body is a little stronger");
+        Tempering.gain(player, 10_000);
+        helper.assertTrue(c.getMortalStage() == MortalStage.PEAK && c.isMortalPeak() && c.getTempering() == 0, "...up to Mortal Peak");
+        helper.assertTrue(Math.abs(player.getMaxHealth() - (20 + Realm.QI_REFINING.getMaxHealth())) < 1e-6,
+                "Mortal Peak's body matches Qi Refining Early's");
+        helper.assertTrue(!Tempering.gain(player, 5), "Nothing past Peak");
+        ItemStack more = GinsengItem.create(ModItems.GINSENG, 1);
+        helper.assertTrue(more.use(player.level(), player, InteractionHand.MAIN_HAND).getResult() == net.minecraft.world.InteractionResult.FAIL,
+                "A fully tempered mortal doesn't eat herbs");
+
+        PlayerCultivation saved = PlayerCultivation.load(c.save());
+        helper.assertTrue(saved.isMortalPeak(), "Tempering is saved");
+        c.awaken(0);
+        helper.assertTrue(!Tempering.gain(player, 5) && GinsengItem.create(ModItems.GINSENG, 1).use(player.level(), player,
+                InteractionHand.MAIN_HAND).getResult() == net.minecraft.world.InteractionResult.PASS, "Cultivators don't temper, or eat herbs");
+        helper.succeed();
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE)
+    public void fruitQiWaitsToBeRefinedAndToxicityBuilds(GameTestHelper helper) {
+        ServerPlayer player = survivalPlayer(helper);
+        PlayerCultivation c = CultivationManager.get(player);
+        c.awaken(0);
+        eat(player, CultivationFruitItem.create(40));
+        helper.assertTrue(c.getCultivation() == 0 && c.getMedicinalQi() == FruitAge.cultivation(40),
+                "A fruit's qi waits, unrefined, instead of becoming cultivation at once");
+        eat(player, CultivationFruitItem.create(40));
+        helper.assertTrue(Math.abs(c.getMedicinalQi() - FruitAge.cultivation(40) * (2 - PlayerCultivation.PILL_RESISTANCE_PER_PILL)) < 1e-6,
+                "Medicinal toxicity weakens the second fruit");
+        double refined = c.refine(30);
+        helper.assertTrue(refined == 30, "Meditation refines it a little at a time");
+        c.setState(Realm.QI_REFINING, Stage.GRAND_PERFECTION, 0);
+        c.addCultivation(10_000);
+        helper.assertTrue(c.isAtBottleneck() && c.refine(30) == 0, "Nothing is refined (or lost) at a bottleneck");
+        helper.assertTrue(PlayerCultivation.load(c.save()).getMedicinalQi() == c.getMedicinalQi(), "Unrefined qi is saved");
+        helper.succeed();
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 200)
+    public void cleanQiCircuitsSpeedMeditation(GameTestHelper helper) {
+        helper.setBlock(new BlockPos(1, 1, 1), Blocks.STONE);
+        ServerPlayer player = survivalPlayer(helper);
+        net.minecraft.world.phys.Vec3 at = net.minecraft.world.phys.Vec3.atBottomCenterOf(helper.absolutePos(new BlockPos(1, 2, 1)));
+        player.moveTo(at.x, at.y, at.z);
+        player.setOnGround(true);
+        PlayerCultivation c = CultivationManager.get(player);
+        c.awaken(0);
+        c.setQi(c.maxQi());
+        MeditationManager.start(player);
+        helper.assertTrue(MeditationManager.isMeditating(player.getUUID()), "A cultivator sits down to meditate");
+        helper.assertTrue(MeditationManager.circulationMultiplier(player.getUUID()) == 1, "No circulation bonus at first");
+        MeditationManager.onCirculation(player, MeditationManager.CIRCUIT_CLEAN);
+        helper.assertTrue(MeditationManager.circulationMultiplier(player.getUUID()) == 1.5, "A clean circuit: x1.5");
+        MeditationManager.onCirculation(player, MeditationManager.CIRCUIT_CLEAN);
+        MeditationManager.onCirculation(player, MeditationManager.CIRCUIT_CLEAN);
+        helper.assertTrue(MeditationManager.circulationMultiplier(player.getUUID()) == 2, "...building to x2, no further");
+        MeditationManager.onCirculation(player, MeditationManager.CIRCUIT_BROKEN);
+        helper.assertTrue(MeditationManager.circulationMultiplier(player.getUUID()) == 1, "A broken circuit resets it");
+        double qi = c.getQi();
+        MeditationManager.onCirculation(player, MeditationManager.CIRCUIT_DEVIATION);
+        helper.assertTrue(c.getQi() < qi && !MeditationManager.isMeditating(player.getUUID()),
+                "Qi deviation costs qi and breaks the meditation");
+        MeditationManager.stop(player, false);
+        helper.succeed();
+    }
+
     @GameTest(template = EMPTY_STRUCTURE)
     public void wildHerbsTakeRootOnTheirGround(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
@@ -372,7 +467,8 @@ public class AlchemyGameTests implements FabricGameTest {
                     && !new ItemStack(Items.STONE_PICKAXE).isCorrectToolForDrops(state), "Jade Ore needs an iron pickaxe");
         }
         var placed = level.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.PLACED_FEATURE);
-        helper.assertTrue(placed.containsKey(ModPlacedFeatures.ORE_JADE.location()) && placed.containsKey(ModPlacedFeatures.ORE_JADE_UPPER_REALM.location()),
+        helper.assertTrue(placed.containsKey(ModPlacedFeatures.ORE_JADE.location()) && placed.containsKey(ModPlacedFeatures.ORE_JADE_UPPER_REALM.location())
+                && placed.containsKey(ModPlacedFeatures.ORE_JADE_STONE.location()),
                 "Jade Ore's placements load");
         helper.succeed();
     }

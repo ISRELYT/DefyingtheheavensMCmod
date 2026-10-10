@@ -21,6 +21,8 @@ public final class UpperRealmClient {
 	private static final float[] UPPER_REALM_FOG = {0.25f, 0.95f};
 	/** Deep enough that SpatialGapAmbience's far motes glow out of the dark instead of vanishing into it. */
 	private static final float[] SPATIAL_GAP_FOG = {0.1f, 1.0f};
+	/** Hardly any: the island is all there is, and the sky is the point. */
+	private static final float[] INNER_REALM_FOG = {0.95f, 1.0f};
 
 	public static void register() {
 		DimensionRenderingRegistry.registerDimensionEffects(ModDimensions.UPPER_REALM_EFFECTS, new UpperRealmEffects());
@@ -28,6 +30,9 @@ public final class UpperRealmClient {
 		DimensionRenderingRegistry.registerSkyRenderer(ModDimensions.UPPER_REALM, new UpperRealmSkyRenderer());
 		DimensionRenderingRegistry.registerSkyRenderer(ModDimensions.SPATIAL_GAP, new SpatialGapSkyRenderer());
 		DimensionRenderingRegistry.registerCloudRenderer(ModDimensions.SPATIAL_GAP, context -> {}); // nothing but void
+		DimensionRenderingRegistry.registerDimensionEffects(ModDimensions.INNER_REALM_EFFECTS, new InnerRealmEffects());
+		DimensionRenderingRegistry.registerSkyRenderer(ModDimensions.INNER_REALM, new InnerRealmSkyRenderer());
+		DimensionRenderingRegistry.registerCloudRenderer(ModDimensions.INNER_REALM, context -> {});
 
 		BlockEntityRenderers.register(ModBlockEntities.SPATIAL_RIFT, context -> new SpatialRiftRenderer());
 		BlockRenderLayerMap.INSTANCE.putBlock(ModBlocks.WHITE_BLOSSOM_LEAVES, RenderType.cutoutMipped());
@@ -37,6 +42,7 @@ public final class UpperRealmClient {
 	public static float[] fogFor(ResourceKey<Level> dimension) {
 		if (ModDimensions.isUpperRealm(dimension)) return UPPER_REALM_FOG;
 		if (ModDimensions.isSpatialGap(dimension)) return SPATIAL_GAP_FOG;
+		if (ModDimensions.isInnerRealm(dimension)) return INNER_REALM_FOG;
 		return null;
 	}
 
@@ -68,6 +74,23 @@ public final class UpperRealmClient {
 		@Override
 		public Vec3 getBrightnessDependentFogColor(Vec3 fogColor, float brightness) {
 			return new Vec3(0.01, 0.005, 0.03);
+		}
+
+		@Override
+		public boolean isFoggyAt(int x, int y) {
+			return false;
+		}
+	}
+
+	/** No clouds and no ground; the sky (InnerRealmSkyRenderer) is everything. */
+	private static final class InnerRealmEffects extends DimensionSpecialEffects {
+		InnerRealmEffects() {
+			super(Float.NaN, false, SkyType.NONE, false, false);
+		}
+
+		@Override
+		public Vec3 getBrightnessDependentFogColor(Vec3 fogColor, float brightness) {
+			return new Vec3(0.02, 0.02, 0.05);
 		}
 
 		@Override

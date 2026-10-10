@@ -50,6 +50,7 @@ public final class ModConfiguredFeatures {
 	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_DIAMOND_BURIED = key("ore_diamond_buried");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_EMERALD = key("ore_emerald");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_JADE = key("ore_jade");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_JADE_STONE = key("ore_jade_stone");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_QUARTZ = key("ore_quartz");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_CLAY = key("ore_clay");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_SAND = key("ore_sand");
@@ -107,6 +108,7 @@ public final class ModConfiguredFeatures {
 		filler(context, ORE_GRANITE, Blocks.GRANITE, 64);
 		filler(context, ORE_DIORITE, Blocks.DIORITE, 64);
 		filler(context, ORE_ANDESITE, Blocks.ANDESITE, 64);
+		filler(context, ORE_JADE_STONE, ModBlocks.JADE_STONE, 64);
 
 		// Spirit Forest: mixed oak / birch / fancy oak.
 		FeatureUtils.register(context, SPIRIT_FOREST_TREES, Feature.RANDOM_SELECTOR, new RandomFeatureConfiguration(List.of(

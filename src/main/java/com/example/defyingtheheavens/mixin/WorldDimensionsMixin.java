@@ -20,7 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class WorldDimensionsMixin {
 	@Inject(method = "checkStability", at = @At("HEAD"), cancellable = true)
 	private static void dth$ourDimensionsAreStable(ResourceKey<LevelStem> key, LevelStem stem, CallbackInfoReturnable<Lifecycle> cir) {
-		if (ModDimensions.UPPER_REALM_STEM.equals(key) || ModDimensions.SPATIAL_GAP_STEM.equals(key)) {
+		if (ModDimensions.UPPER_REALM_STEM.equals(key) || ModDimensions.SPATIAL_GAP_STEM.equals(key) || ModDimensions.INNER_REALM_STEM.equals(key)) {
 			cir.setReturnValue(Lifecycle.stable());
 		}
 	}

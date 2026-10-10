@@ -16,7 +16,10 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
 
-/** A bead of Spirit Dew from Spirit Dew Grass: drunk, it refills part of a cultivator's qi; also an alchemy ingredient. */
+/**
+ * A bead of Spirit Dew from Spirit Dew Grass: drunk, it refills part of a cultivator's qi, or tempers a mortal's body; also
+ * an alchemy ingredient.
+ */
 public class SpiritDewItem extends Item {
     /** Share of the qi pool one drop refills. */
     public static final double QI_RESTORED = 0.25;
@@ -25,7 +28,7 @@ public class SpiritDewItem extends Item {
 
     /** Why it would be wasted right now, or null. */
     private static Component refusal(PlayerCultivation c) {
-        if (c.isMortal()) return Component.translatable(ModLang.MSG_DEW_MORTAL);
+        if (c.isMortal()) return c.isMortalPeak() ? Component.translatable(ModLang.MSG_TEMPER_FULL) : null;
         if (c.getQi() >= c.maxQi()) return Component.translatable(ModLang.MSG_DEW_FULL);
         return null;
     }
@@ -54,6 +57,16 @@ public class SpiritDewItem extends Item {
             player.displayClientMessage(refusal, true);
             return stack;
         }
+        if (c.isMortal()) {
+            MortalStage was = c.getMortalStage();
+            if (!Tempering.gain(player, Tempering.SPIRIT_DEW)) return stack;
+            level.playSound(null, player.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 0.8f, 1.5f);
+            if (c.getMortalStage() == was) { // a new stage has its own message
+                player.displayClientMessage(Component.translatable(ModLang.MSG_HERB_EATEN, Math.round(Tempering.SPIRIT_DEW)), true);
+            }
+            if (!player.getAbilities().instabuild) stack.shrink(1);
+            return stack;
+        }
         double before = c.getQi();
         c.setQi(Math.min(c.maxQi(), before + c.maxQi() * QI_RESTORED));
         CultivationManager.markDirty(player.server);
@@ -66,7 +79,7 @@ public class SpiritDewItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, Level level, List<Component> lines, TooltipFlag flag) {
-        lines.add(Component.translatable(ModLang.DEW_TOOLTIP, Math.round(QI_RESTORED * 100)).withStyle(ChatFormatting.AQUA));
-        lines.add(Component.translatable(ModLang.GINSENG_INGREDIENT).withStyle(ChatFormatting.GREEN));
+        Tooltips.add(lines, Component.translatable(ModLang.DEW_TOOLTIP, Math.round(QI_RESTORED * 100)).withStyle(ChatFormatting.AQUA));
+        Tooltips.add(lines, Component.translatable(ModLang.GINSENG_INGREDIENT).withStyle(ChatFormatting.GREEN));
     }
 }

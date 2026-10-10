@@ -52,7 +52,12 @@ public final class CultivationStats {
 	public static void apply(ServerPlayer player, PlayerCultivation c) {
 		Realm r = c.getEffectiveRealm();
 		Stage s = c.getEffectiveStage();
-		double scale = c.isMortal() ? 0 : 1; // a mortal's body is just a body
+		double scale = 1;
+		if (c.isMortal()) { // a tempered mortal body grows toward Qi Refining Early's bonuses, reaching them at Mortal Peak
+			r = Realm.QI_REFINING;
+			s = Stage.EARLY;
+			scale = c.getMortalStage().bodyShare();
+		}
 		set(player, Attributes.MAX_HEALTH, HEALTH_ID, "Cultivation max health", maxHealth(r, s) * scale);
 		set(player, Attributes.ATTACK_DAMAGE, DAMAGE_ID, "Cultivation attack damage", attackDamage(r, s) * scale);
 		set(player, Attributes.MOVEMENT_SPEED, SPEED_ID, "Cultivation speed", moveSpeed(r, s) * scale);

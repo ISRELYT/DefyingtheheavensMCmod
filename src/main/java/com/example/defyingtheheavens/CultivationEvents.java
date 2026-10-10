@@ -20,6 +20,9 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(RealmSuppressionHandler::tick);
 		ServerTickEvents.END_SERVER_TICK.register(ConsciousnessDomainHandler::tick);
 		ServerTickEvents.END_SERVER_TICK.register(RealmSuppressSystem::tick);
+		ServerTickEvents.END_SERVER_TICK.register(Tempering::tick);
+		ServerTickEvents.END_SERVER_TICK.register(InnerRealm::tick);
+		Tempering.register();
 		RealmSuppressionHandler.register();
 
 		ServerLifecycleEvents.SERVER_STARTED.register(SpatialRiftBlock::ensureOverworldRift);
@@ -30,12 +33,15 @@ public final class CultivationEvents {
 
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
 			// Applies stats from the effective (possibly suppressed) stage and syncs the client.
+			// Back from a crash with the soul still inward: return it to the body first.
+			if (ModDimensions.isInnerRealm(handler.getPlayer().level().dimension())) InnerRealm.leave(handler.getPlayer());
 			RealmSuppressionHandler.update(handler.getPlayer());
 		});
 
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
 			// First, while the player is still in the world: lifts the pressure on and from them before they're saved.
 			RealmSuppressSystem.onDisconnect(handler.getPlayer());
+			InnerRealm.onDisconnect(handler.getPlayer()); // the soul returns to its body when they next join
 			ConsciousnessDomainHandler.forget(handler.getPlayer().getUUID());
 			QiSense.forget(handler.getPlayer().getUUID());
 			MeditationManager.forget(handler.getPlayer().getUUID());
@@ -43,6 +49,7 @@ public final class CultivationEvents {
 			SpatialTrialHandler.forget(handler.getPlayer().getUUID());
 			PortalRestrictionHandler.forget(handler.getPlayer().getUUID());
 			QiFlight.forget(handler.getPlayer().getUUID());
+			Tempering.forget(handler.getPlayer().getUUID());
 		});
 
 		// Rings stay on through the End portal and with keepInventory; on a normal death dropEquipment already emptied them.

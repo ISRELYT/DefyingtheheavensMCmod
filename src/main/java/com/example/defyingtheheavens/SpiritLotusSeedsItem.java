@@ -19,6 +19,6 @@ public class SpiritLotusSeedsItem extends PlaceOnWaterBlockItem {
 
     @Override
     public void appendHoverText(ItemStack stack, Level level, List<Component> lines, TooltipFlag flag) {
-        lines.add(Component.translatable(ModLang.LOTUS_SEEDS_TOOLTIP, GinsengBlock.MATURE_YEARS).withStyle(ChatFormatting.GRAY));
+        Tooltips.add(lines, Component.translatable(ModLang.LOTUS_SEEDS_TOOLTIP, GinsengBlock.MATURE_YEARS).withStyle(ChatFormatting.GRAY));
     }
 }
