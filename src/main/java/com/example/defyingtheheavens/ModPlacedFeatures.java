@@ -135,13 +135,13 @@ public final class ModPlacedFeatures {
 	public static final int SPIRIT_DEW_GRASS_CHUNKS_OVERWORLD = 40;
 	public static final int SPIRIT_DEW_GRASS_CHUNKS_UPPER_REALM = 16;
 	/**
-	 * Blue Spirit Trees: a rare spruce of Blue Spirit Log, in Overworld taiga and anywhere in the Upper Realm, also appended
+	 * Blue Spirit Trees: a spruce of Blue Spirit Log, common in Overworld taiga and anywhere in the Upper Realm, also appended
 	 * by ModFeatures#register (before the herbs, so herbs can grow beneath them). One per this many chunks.
 	 */
 	public static final ResourceKey<PlacedFeature> BLUE_SPIRIT_TREE = key("blue_spirit_tree");
 	public static final ResourceKey<PlacedFeature> BLUE_SPIRIT_TREE_UPPER_REALM = key("blue_spirit_tree_upper_realm");
-	public static final int BLUE_SPIRIT_TREE_CHUNKS_TAIGA = 24;
-	public static final int BLUE_SPIRIT_TREE_CHUNKS_UPPER_REALM = 16;
+	public static final int BLUE_SPIRIT_TREE_CHUNKS_TAIGA = 2;
+	public static final int BLUE_SPIRIT_TREE_CHUNKS_UPPER_REALM = 2;
 
 	public static final List<Entry> ORDER = List.of(
 			new Entry(GenerationStep.Decoration.LAKES, SPRING_BASIN),

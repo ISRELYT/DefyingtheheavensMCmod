@@ -59,7 +59,7 @@ public final class ModFeatures {
 		Predicate<BiomeSelectionContext> woods = BiomeSelectors.foundInOverworld().and(BiomeSelectors.tag(BiomeTags.IS_FOREST)
 				.or(BiomeSelectors.tag(BiomeTags.IS_TAIGA)).or(BiomeSelectors.tag(BiomeTags.IS_JUNGLE)));
 		Predicate<BiomeSelectionContext> upperRealm = context -> context.getBiomeKey().location().getNamespace().equals(DefyingTheHeavens.MOD_ID);
-		// A rare Blue Spirit Tree (a spruce of Blue Spirit Log) in taiga and anywhere in the Upper Realm. Added before the
+		// Blue Spirit Trees (a spruce of Blue Spirit Log) in every taiga and anywhere in the Upper Realm. Added before the
 		// herbs, so they can still take root in its shade.
 		Predicate<BiomeSelectionContext> taiga = BiomeSelectors.foundInOverworld().and(BiomeSelectors.tag(BiomeTags.IS_TAIGA));
 		herb(taiga, upperRealm, ModPlacedFeatures.BLUE_SPIRIT_TREE, ModPlacedFeatures.BLUE_SPIRIT_TREE_UPPER_REALM);

@@ -279,8 +279,9 @@ Pedestal). Code: `GinsengBlock` (shared), `SpiritLotusBlock`, `SpiritDewGrassBlo
 Spruce-dark logs with blue qi flowing up their veins (an animated texture); the planks show faint blue grain. Log, wood
 and planks work like vanilla wood.
 
-It grows wild as the **Blue Spirit Tree**, a rare spruce (vanilla spruce shape and leaves) with a Blue Spirit Log trunk: on
-average one per **24** chunks of Overworld taiga and one per **16** chunks anywhere in the Upper Realm
+It grows wild as the **Blue Spirit Tree**, a spruce (vanilla spruce shape and leaves) with a Blue Spirit Log trunk, in every
+kind of taiga (plain, snowy, old-growth) and anywhere in the Upper Realm: one attempt per **2** chunks in each, which in a
+generated taiga works out to about one Blue Spirit Tree per 4 forested chunks, or one tree in 16
 (`BLUE_SPIRIT_TREE_CHUNKS_*` in `ModPlacedFeatures.java`, `blue_spirit_tree` in `ModConfiguredFeatures.java`). There is
 no sapling: its leaves drop ordinary spruce saplings, so every Blue Spirit Log comes from a tree you find. In the
 Overworld it takes root on the ground beneath the taiga's canopy and grows up through it.
