@@ -22,7 +22,8 @@ import java.util.Set;
  * <li>Spirit Pedestals bearing Cultivation Fruit nearby: older fruit gives more, 2% to 50% (see {@link #pedestalBonus}); only the
  * {@link #MAX_PEDESTALS} strongest count;</li>
  * <li>height, under open sky: from y {@link #HEIGHT_START}, rising to +15% at y {@link #HEIGHT_FULL};</li>
- * <li>tranquillity: a cherry grove, the Peach Blossom Sanctuary or snow-capped peaks (+10%).</li>
+ * <li>tranquillity: a cherry grove, the Peach Blossom Sanctuary or snow-capped peaks (+10%);</li>
+ * <li>cultivator clothing worn: +2% to +12% a piece by its grade (see {@link ClothingTier}).</li>
  * </ul>
  * Everything here reads only blocks, block entities, biome and sky, which the client knows too, so the client works out
  * the same boost for the menu and the meditation visuals without any extra packets.
@@ -51,12 +52,12 @@ public final class CultivationBoost {
 	private static final Set<ResourceKey<Biome>> TRANQUIL_BIOMES = Set.of(Biomes.CHERRY_GROVE, ModBiomes.PEACH_BLOSSOM_SANCTUARY,
 			Biomes.FROZEN_PEAKS, Biomes.JAGGED_PEAKS, Biomes.SNOWY_SLOPES);
 
-	/** What a meditator at one spot gets, source by source. */
+	/** What a meditator at one spot gets, source by source; {@code gearBonus} is the cultivator clothing they wear. */
 	public record Breakdown(Block mat, double matBonus, List<SpiritPedestalBlockEntity> pedestals, double pedestalBonus,
-			double heightBonus, double tranquilBonus) {
-		public static final Breakdown NONE = new Breakdown(null, 0, List.of(), 0, 0, 0);
+			double heightBonus, double tranquilBonus, double gearBonus) {
+		public static final Breakdown NONE = new Breakdown(null, 0, List.of(), 0, 0, 0, 0);
 
-		public double total() { return matBonus + pedestalBonus + heightBonus + tranquilBonus; }
+		public double total() { return matBonus + pedestalBonus + heightBonus + tranquilBonus + gearBonus; }
 
 		/** Multiplies the normal meditation rate. */
 		public double multiplier() { return 1.0 + total(); }
@@ -110,7 +111,10 @@ public final class CultivationBoost {
 		Holder<Biome> biome = level.getBiome(feet);
 		double tranquilBonus = TRANQUIL_BIOMES.stream().anyMatch(key -> biome.is(key)) ? TRANQUIL : 0;
 
-		return new Breakdown(mat, matBonus, pedestals, pedestalBonus, heightBonus, tranquilBonus);
+		// Cultivator clothing (the equipment is known to the client too, so the menu shows the same total).
+		double gearBonus = ClothingItem.meditationBonus(player);
+
+		return new Breakdown(mat, matBonus, pedestals, pedestalBonus, heightBonus, tranquilBonus, gearBonus);
 	}
 
 	/**

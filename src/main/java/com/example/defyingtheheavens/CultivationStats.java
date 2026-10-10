@@ -2,6 +2,7 @@ package com.example.defyingtheheavens;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -67,6 +68,20 @@ public final class CultivationStats {
 	}
 
 	/**
+	 * The same bonuses for an NPC cultivator (see CultivatorNpc), with one difference: a mob's walking speed counts twice in
+	 * its movement (it is both the push and the scale), so its share is the square root of a player's, to move as much faster.
+	 */
+	public static void applyNpc(LivingEntity npc, Realm r, Stage s, boolean mortal) {
+		double scale = mortal ? 0 : 1;
+		set(npc, Attributes.MAX_HEALTH, HEALTH_ID, "Cultivation max health", maxHealth(r, s) * scale);
+		set(npc, Attributes.ATTACK_DAMAGE, DAMAGE_ID, "Cultivation attack damage", attackDamage(r, s) * scale);
+		set(npc, Attributes.MOVEMENT_SPEED, SPEED_ID, "Cultivation speed", (Math.sqrt(1 + moveSpeed(r, s)) - 1) * scale);
+		set(npc, Attributes.ARMOR, ARMOR_ID, "Cultivation armor", armor(r, s) * scale);
+		set(npc, Attributes.ARMOR_TOUGHNESS, TOUGHNESS_ID, "Cultivation toughness", toughness(r, s) * scale);
+		set(npc, Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID, "Cultivation knockback resistance", knockbackResistance(r, s) * scale);
+	}
+
+	/**
 	 * Every tick, tops up food and saturation for players with Qi Sustenance active (awakened and switched on). Full food plus
 	 * saturation keeps vanilla's fast natural regen (1 health per half second) running, as if always freshly fed.
 	 */
@@ -79,8 +94,8 @@ public final class CultivationStats {
 		}
 	}
 
-	private static void set(ServerPlayer player, Attribute attribute, UUID id, String name, double amount) {
-		AttributeInstance instance = player.getAttribute(attribute);
+	private static void set(LivingEntity entity, Attribute attribute, UUID id, String name, double amount) {
+		AttributeInstance instance = entity.getAttribute(attribute);
 		if (instance == null) return;
 		instance.removeModifier(id);
 		if (amount != 0) {

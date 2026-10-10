@@ -23,6 +23,8 @@ public class ModModelProvider extends FabricModelProvider {
 		blocks.createTrivialBlock(ModBlocks.WHITE_BLOSSOM_LEAVES, TexturedModel.LEAVES);
 		blocks.woodProvider(ModBlocks.BLUE_SPIRIT_LOG).logWithHorizontal(ModBlocks.BLUE_SPIRIT_LOG).wood(ModBlocks.BLUE_SPIRIT_WOOD);
 		blocks.createTrivialCube(ModBlocks.BLUE_SPIRIT_PLANKS);
+		blocks.createTrivialCube(ModBlocks.QI_VEIN);
+		blocks.createTrivialCube(ModBlocks.DEEPSLATE_QI_VEIN);
 		// The rift is drawn by its block entity renderer; the model only supplies black particles.
 		blocks.createNonTemplateModelBlock(ModBlocks.SPATIAL_RIFT, Blocks.BLACK_CONCRETE);
 	}
@@ -31,6 +33,7 @@ public class ModModelProvider extends FabricModelProvider {
 	public void generateItemModels(ItemModelGenerators items) {
 		items.generateFlatItem(ModItems.RING_OF_POWER, ModelTemplates.FLAT_ITEM);
 		items.generateFlatItem(ModItems.RING_OF_TRANSCENDENCE, ModelTemplates.FLAT_ITEM);
+		items.generateFlatItem(ModItems.INSCRIPTION_BRUSH, ModelTemplates.FLAT_HANDHELD_ITEM);
 		items.generateFlatItem(ModItems.JADE, ModelTemplates.FLAT_ITEM);
 	}
 }

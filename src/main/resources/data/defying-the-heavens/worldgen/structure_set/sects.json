@@ -1,0 +1,15 @@
+{
+  "structures": [
+    {"structure": "defying-the-heavens:sect", "weight": 1}
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 1874662921,
+    "spacing": 32,
+    "separation": 16,
+    "exclusion_zone": {
+      "other_set": "minecraft:villages",
+      "chunk_count": 6
+    }
+  }
+}

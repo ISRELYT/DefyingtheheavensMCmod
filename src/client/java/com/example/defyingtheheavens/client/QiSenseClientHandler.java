@@ -1,7 +1,9 @@
 package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.Ability;
+import com.example.defyingtheheavens.CultivatorNpc;
 import com.example.defyingtheheavens.DefyingTheHeavens;
+import com.example.defyingtheheavens.Realm;
 import com.example.defyingtheheavens.ModDimensions;
 import com.example.defyingtheheavens.PlayerCultivation;
 import com.example.defyingtheheavens.QiElement;
@@ -21,10 +23,13 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.PostChain;
 import net.minecraft.client.renderer.PostPass;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -85,6 +90,8 @@ public final class QiSenseClientHandler {
 		final int life;
 		/** For inflow motes: whose meditation draws this one in. */
 		final UUID drawnTo;
+		/** For inflow motes drawn into an NPC cultivator: its entity id (-1 for none). */
+		int drawnToEntity = -1;
 		double x, y, z, prevX, prevY, prevZ;
 		double vx, vy, vz;
 		int age;
@@ -112,6 +119,7 @@ public final class QiSenseClientHandler {
 	private static ClientLevel lastLevel;
 	private static float ambientCarry;
 	private static final Map<UUID, Float> INFLOW_CARRY = new HashMap<>();
+	private static final Map<Integer, Float> NPC_INFLOW_CARRY = new HashMap<>();
 
 	private static PostChain monochrome;
 	private static boolean monochromeFailed;
@@ -141,6 +149,7 @@ public final class QiSenseClientHandler {
 			MOTES.clear();
 			ABSORBING.clear();
 			INFLOW_CARRY.clear();
+			NPC_INFLOW_CARRY.clear();
 			return;
 		}
 		if (mc.isPaused()) return;
@@ -182,6 +191,45 @@ public final class QiSenseClientHandler {
 			INFLOW_CARRY.put(entry.getKey(), Math.min(carry, 1));
 		}
 		INFLOW_CARRY.keySet().retainAll(ABSORBING.keySet());
+
+		// NPC cultivators meditating nearby draw the land's qi in just the same (at a tenth of a player's rate, so less of it).
+		java.util.Set<Integer> seen = new java.util.HashSet<>();
+		for (Entity entity : mc.level.entitiesForRendering()) {
+			if (!(entity instanceof CultivatorNpc npc) || !npc.isMeditating() || npc.isMortal() || !npc.isAlive()
+					|| npc.distanceToSqr(eye) > ABSORPTION_RANGE * ABSORPTION_RANGE) continue;
+			seen.add(npc.getId());
+			Realm realm = npc.getDisplayedRealm();
+			double gathering = realm.getCultivationPerSecond() * npc.getDisplayedStage().getPowerMultiplier() * CultivatorNpc.NPC_RATE
+					* (upperRealm ? PlayerCultivation.UPPER_REALM_QI_MULTIPLIER : 1.0);
+			float inflow = Math.min(6f, 0.6f + 0.35f * (float) (Math.log1p(gathering) / Math.log(2)));
+			float carry = NPC_INFLOW_CARRY.getOrDefault(npc.getId(), 0f) + inflow * (upperRealm ? 1 : LOWER_REALM_INFLOW);
+			while (carry >= 1 && MOTES.size() < MAX_MOTES) {
+				carry--;
+				spawnInflow(mc.level, npc);
+			}
+			NPC_INFLOW_CARRY.put(npc.getId(), Math.min(carry, 1));
+		}
+		NPC_INFLOW_CARRY.keySet().retainAll(seen);
+	}
+
+	/**
+	 * QiVeinBlock's client hook (its animateTick): a Qi Vein gathers qi from the air, so under Qi Sense motes of water and
+	 * wood qi drift in toward its open faces.
+	 */
+	public static void veinGathers(Level level, BlockPos pos, RandomSource random) {
+		if (!isActive() || MOTES.size() >= MAX_MOTES) return;
+		for (int i = 0; i < 2; i++) {
+			Direction face = Direction.getRandom(random);
+			if (!level.getBlockState(pos.relative(face)).isAir()) continue;
+			Vec3 centre = Vec3.atCenterOf(pos);
+			Vec3 normal = Vec3.atLowerCornerOf(face.getNormal());
+			double out = 1.2 + random.nextDouble() * 1.4;
+			Vec3 from = centre.add(normal.scale(out)).add((random.nextDouble() - 0.5) * 1.2, (random.nextDouble() - 0.5) * 1.2,
+					(random.nextDouble() - 0.5) * 1.2);
+			Vec3 velocity = centre.subtract(from).normalize().scale(0.05);
+			QiElement element = random.nextFloat() < 0.6f ? QiElement.WATER : QiElement.WOOD;
+			emit(element, from.x, from.y, from.z, velocity.x, velocity.y, velocity.z, 0.05f + random.nextFloat() * 0.03f, 25 + random.nextInt(15), null);
+		}
 	}
 
 	/** One step of a mote's life. @return false once it is spent */
@@ -190,9 +238,9 @@ public final class QiSenseClientHandler {
 		mote.prevY = mote.y;
 		mote.prevZ = mote.z;
 		if (++mote.age >= mote.life) return false;
-		if (mote.drawnTo != null) {
-			Player meditator = level.getPlayerByUUID(mote.drawnTo);
-			if (meditator == null) return false;
+		if (mote.drawnTo != null || mote.drawnToEntity >= 0) {
+			Entity meditator = mote.drawnTo != null ? level.getPlayerByUUID(mote.drawnTo) : level.getEntity(mote.drawnToEntity);
+			if (meditator == null || !meditator.isAlive()) return false;
 			Vec3 core = meditator.position().add(0, 0.7, 0);
 			double dx = core.x - mote.x, dy = core.y - mote.y, dz = core.z - mote.z;
 			double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
@@ -238,7 +286,7 @@ public final class QiSenseClientHandler {
 		MOTES.add(new Mote(element, x, y, z, 0.06f + RANDOM.nextFloat() * 0.05f, 60 + RANDOM.nextInt(60), null, RANDOM));
 	}
 
-	private static void spawnInflow(ClientLevel level, Player meditator) {
+	private static void spawnInflow(ClientLevel level, Entity meditator) {
 		double r = INFLOW_MIN + RANDOM.nextDouble() * (INFLOW_MAX - INFLOW_MIN);
 		double yaw = RANDOM.nextDouble() * Math.PI * 2;
 		double pitch = Math.acos(2 * RANDOM.nextDouble() - 1);
@@ -248,7 +296,10 @@ public final class QiSenseClientHandler {
 		BlockPos pos = BlockPos.containing(x, y, z);
 		if (!level.isLoaded(pos)) return;
 		QiElement element = QiElement.pick(level.getBiome(pos), isUnderground(level, pos), RANDOM);
-		MOTES.add(new Mote(element, x, y, z, 0.05f + RANDOM.nextFloat() * 0.03f, 140, meditator.getUUID(), RANDOM));
+		boolean player = meditator instanceof Player;
+		Mote mote = new Mote(element, x, y, z, 0.05f + RANDOM.nextFloat() * 0.03f, 140, player ? meditator.getUUID() : null, RANDOM);
+		if (!player) mote.drawnToEntity = meditator.getId();
+		MOTES.add(mote);
 	}
 
 	/**
@@ -393,6 +444,7 @@ public final class QiSenseClientHandler {
 		MOTES.clear();
 		ABSORBING.clear();
 		INFLOW_CARRY.clear();
+		NPC_INFLOW_CARRY.clear();
 		ambientCarry = 0;
 		colour = 1;
 		lastLevel = null;

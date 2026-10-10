@@ -18,11 +18,14 @@ public class DefyingTheHeavens implements ModInitializer {
 		ModParticles.register();
 		ModItems.register();
 		ModFeatures.register();
+		ModStructures.register();
+		ClothingRecipes.register();
 		ModPackets.registerServerReceivers();
 		CultivationEvents.register();
 		CultivationCommand.register();
 		CultivationFruitCommand.register();
 		GinsengCommand.register();
+		SectCommand.register();
 		LOGGER.info("Defying The Heavens initialised.");
 	}
 

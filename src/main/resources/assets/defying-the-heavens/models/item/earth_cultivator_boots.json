@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "defying-the-heavens:item/clothing/boots_cloth",
+    "layer1": "defying-the-heavens:item/clothing/boots_accent",
+    "layer2": "defying-the-heavens:item/clothing/boots_trim"
+  }
+}

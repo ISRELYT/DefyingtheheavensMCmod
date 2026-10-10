@@ -2,6 +2,7 @@ package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.Ability;
 import com.example.defyingtheheavens.AlchemyRecipes;
+import com.example.defyingtheheavens.Alignment;
 import com.example.defyingtheheavens.ModItems;
 import com.example.defyingtheheavens.PillItem;
 import com.example.defyingtheheavens.CultivationBoost;
@@ -252,6 +253,9 @@ public class CultivationScreen extends Screen {
 					cx, y, 0x9E9E9E);
 			y += 11;
 		}
+		// The cultivator's path (see Alignment), in its colour.
+		g.drawCenteredString(font, Component.translatable(ModLang.ALIGNMENT_LINE, Alignment.describe(c.getAlignment())), cx, y, 0xA0A0A0);
+		y += 11;
 		y += 7;
 
 		if (c.isUnderPressure()) {

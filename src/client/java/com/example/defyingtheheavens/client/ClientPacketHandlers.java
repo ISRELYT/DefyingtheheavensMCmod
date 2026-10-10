@@ -1,9 +1,11 @@
 package com.example.defyingtheheavens.client;
 
+import com.example.defyingtheheavens.Formation;
 import com.example.defyingtheheavens.ModPackets;
 import com.example.defyingtheheavens.Realm;
 import com.example.defyingtheheavens.Stage;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.core.BlockPos;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,9 +33,11 @@ public final class ClientPacketHandlers {
 			double qiBoost = buf.readDouble();
 			double pillResistance = buf.readDouble();
 			double medicinalQi = buf.readDouble();
+			int alignment = buf.readInt();
+			double gearQiBonus = buf.readDouble();
 			client.execute(() -> ClientCultivationData.update(realm, stage, cultivation, qi, meditating, lowerRealmBound, inUpperRealm,
 					disabledAbilities, pressureStages, pressurePenalty, mortal, mortalStage, tempering, preparedRealm, preparedBonus, qiBoost,
-					pillResistance, medicinalQi));
+					pillResistance, medicinalQi, alignment, gearQiBonus));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SURGE, (client, handler, buf, sender) -> {
@@ -45,6 +49,27 @@ public final class ClientPacketHandlers {
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.INNER_FADE, (client, handler, buf, sender) -> {
 			int ticks = buf.readVarInt();
 			client.execute(() -> InnerRealmFade.begin(ticks));
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.FORMATIONS, (client, handler, buf, sender) -> {
+			int count = buf.readVarInt();
+			List<Formation> formations = new ArrayList<>(count);
+			for (int i = 0; i < count; i++) {
+				UUID id = buf.readUUID();
+				Formation.Kind kind = buf.readEnum(Formation.Kind.class);
+				BlockPos center = buf.readBlockPos();
+				int radius = buf.readVarInt();
+				int rank = buf.readInt();
+				UUID owner = buf.readBoolean() ? buf.readUUID() : null;
+				formations.add(Formation.view(id, kind, center, radius, rank, owner));
+			}
+			client.execute(() -> ClientFormations.update(formations));
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.FORMATION_CORE, (client, handler, buf, sender) -> {
+			FormationCoreScreen.State state = new FormationCoreScreen.State(buf.readBlockPos(), buf.readVarInt(), buf.readBoolean(), buf.readBoolean(),
+					buf.readDouble(), buf.readDouble(), buf.readDouble(), buf.readVarInt(), buf.readInt(), buf.readVarInt(), buf.readUtf());
+			client.execute(() -> FormationCoreScreen.receive(state));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.QI_ABSORPTION, (client, handler, buf, sender) -> {

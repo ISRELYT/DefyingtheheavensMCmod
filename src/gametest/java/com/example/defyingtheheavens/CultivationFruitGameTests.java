@@ -123,6 +123,30 @@ public class CultivationFruitGameTests implements FabricGameTest {
     }
 
     @GameTest(template = EMPTY_STRUCTURE)
+    public void fruitThatWouldBeWastedIsNotEaten(GameTestHelper helper) {
+        var player = helper.makeMockServerPlayerInLevel();
+        try {
+            player.getAbilities().instabuild = false;
+            PlayerCultivation cultivation = CultivationManager.get(player);
+            cultivation.setState(Realm.QI_REFINING, Stage.GRAND_PERFECTION, 0);
+            cultivation.addCultivation(cultivation.cultivationRequired()); // at the bottleneck
+            ItemStack fruit = CultivationFruitItem.create(500);
+            player.setItemInHand(InteractionHand.MAIN_HAND, fruit);
+            helper.assertTrue(!ModItems.CULTIVATION_FRUIT.use(helper.getLevel(), player, InteractionHand.MAIN_HAND).getResult().consumesAction(),
+                    "At a bottleneck the fruit isn't eaten");
+            helper.assertTrue(fruit.finishUsingItem(helper.getLevel(), player) == fruit && fruit.getCount() == 1,
+                    "Nor used up if the bottleneck came while it was being eaten");
+            cultivation.setMortal(true);
+            helper.assertTrue(!ModItems.CULTIVATION_FRUIT.use(helper.getLevel(), player, InteractionHand.MAIN_HAND).getResult().consumesAction(),
+                    "A mortal can't eat it either");
+            helper.succeed();
+        } finally {
+            helper.getLevel().getServer().getPlayerList().remove(player);
+            player.discard();
+        }
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE)
     public void breakingFruitPreservesAge(GameTestHelper helper) {
         plant(helper, 10_000);
         helper.getLevel().destroyBlock(helper.absolutePos(FRUIT), true);

@@ -153,6 +153,15 @@ public final class ModPlacedFeatures {
 	public static final ResourceKey<PlacedFeature> BLUE_SPIRIT_TREE_UPPER_REALM = key("blue_spirit_tree_upper_realm");
 	public static final int BLUE_SPIRIT_TREE_CHUNKS_TAIGA = 2;
 	public static final int BLUE_SPIRIT_TREE_CHUNKS_UPPER_REALM = 2;
+	/**
+	 * Qi Veins, appended to underground ores by ModFeatures#register. In the Overworld placed exactly like vanilla's diamond
+	 * veins (7 tries a chunk, peaking at Y -16, from the bottom of the world up to Y 16); in the Upper Realm as often as its
+	 * own diamond veins, across every island tier.
+	 */
+	public static final ResourceKey<PlacedFeature> QI_VEIN = key("qi_vein");
+	public static final ResourceKey<PlacedFeature> QI_VEIN_UPPER_REALM = key("qi_vein_upper_realm");
+	public static final int QI_VEIN_TRIES_OVERWORLD = 7;
+	public static final int QI_VEIN_TRIES_UPPER_REALM = 22;
 
 	public static final List<Entry> ORDER = List.of(
 			new Entry(GenerationStep.Decoration.LAKES, SPRING_BASIN),
@@ -299,6 +308,12 @@ public final class ModPlacedFeatures {
 				HeightmapPlacement.onHeightmap(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES), BiomeFilter.biome(), PlacementUtils.filteredByBlockSurvival(Blocks.SPRUCE_SAPLING)));
 		register(context, BLUE_SPIRIT_TREE_UPPER_REALM, configured.getOrThrow(ModConfiguredFeatures.BLUE_SPIRIT_TREE),
 				surface(RarityFilter.onAverageOnceEvery(BLUE_SPIRIT_TREE_CHUNKS_UPPER_REALM), Blocks.SPRUCE_SAPLING));
+
+		// Qi Veins: vanilla diamond's placement in the Overworld (see ORE_DIAMOND in OrePlacements); island-wide above.
+		register(context, QI_VEIN, configured.getOrThrow(ModConfiguredFeatures.QI_VEIN), List.of(CountPlacement.of(QI_VEIN_TRIES_OVERWORLD),
+				InSquarePlacement.spread(), HeightRangePlacement.triangle(VerticalAnchor.aboveBottom(-80), VerticalAnchor.aboveBottom(80)),
+				BiomeFilter.biome()));
+		register(context, QI_VEIN_UPPER_REALM, configured.getOrThrow(ModConfiguredFeatures.QI_VEIN), ore(QI_VEIN_TRIES_UPPER_REALM, ISLAND_MIN_Y, ORE_MAX_Y));
 	}
 
 	private static List<PlacementModifier> fruit(int chunks) {

@@ -1,0 +1,33 @@
+{
+  "textures": {
+    "particle": "defying-the-heavens:block/formation_core_crystal",
+    "crystal": "defying-the-heavens:block/formation_core_crystal"
+  },
+  "elements": [
+    {"name": "crystal", "from": [5, 0, 5], "to": [11, 6, 11], "rotation": {"angle": 45, "axis": "y", "origin": [8, 3, 8]},
+      "faces": {
+        "up": {"uv": [5, 5, 11, 11], "texture": "#crystal"},
+        "down": {"uv": [5, 5, 11, 11], "texture": "#crystal"},
+        "north": {"uv": [0, 0, 6, 6], "texture": "#crystal"},
+        "south": {"uv": [10, 10, 16, 16], "texture": "#crystal"},
+        "west": {"uv": [0, 10, 6, 16], "texture": "#crystal"},
+        "east": {"uv": [10, 0, 16, 6], "texture": "#crystal"}
+      }},
+    {"name": "tip", "from": [6.5, 6, 6.5], "to": [9.5, 8, 9.5], "rotation": {"angle": 45, "axis": "y", "origin": [8, 3, 8]},
+      "faces": {
+        "up": {"uv": [7, 7, 10, 10], "texture": "#crystal"},
+        "north": {"uv": [3, 0, 6, 2], "texture": "#crystal"},
+        "south": {"uv": [3, 0, 6, 2], "texture": "#crystal"},
+        "west": {"uv": [3, 0, 6, 2], "texture": "#crystal"},
+        "east": {"uv": [3, 0, 6, 2], "texture": "#crystal"}
+      }},
+    {"name": "root", "from": [6.5, -2, 6.5], "to": [9.5, 0, 9.5], "rotation": {"angle": 45, "axis": "y", "origin": [8, 3, 8]},
+      "faces": {
+        "down": {"uv": [7, 7, 10, 10], "texture": "#crystal"},
+        "north": {"uv": [10, 14, 13, 16], "texture": "#crystal"},
+        "south": {"uv": [10, 14, 13, 16], "texture": "#crystal"},
+        "west": {"uv": [10, 14, 13, 16], "texture": "#crystal"},
+        "east": {"uv": [10, 14, 13, 16], "texture": "#crystal"}
+      }}
+  ]
+}

@@ -20,7 +20,9 @@ import java.util.UUID;
 /**
  * Heavenly Tribulation: the trial a player must survive to cross into the next major realm,
  * and, from Nascent Soul on, into every minor stage.
- * State is runtime-only; a tribulation never survives a server restart or a disconnect.
+ * The trial itself is runtime-only and never survives a server restart or a disconnect, but leaving is no way out: the
+ * player's cultivation is marked (and saved at once) while a trial runs, and a player who returns still marked has failed
+ * it (see {@link #onJoin}).
  */
 public final class TribulationManager {
 	private static final int FIRST_STRIKE_DELAY = 60;  // 3 s for the local cloud to gather before the first bolt
@@ -143,10 +145,13 @@ public final class TribulationManager {
 		Trial trial = new Trial(c.breakthroughRealm(), c.breakthroughStage());
 		trial.ambientStrikeIn = 25 + player.getRandom().nextInt(20);
 		ACTIVE.put(player.getUUID(), trial);
+		// Written to disk now, not at the next autosave, so not even closing the game this instant gets out of the trial.
+		c.setInTribulation(true);
+		CultivationManager.markDirty(player.server);
+		player.server.overworld().getDataStorage().save();
 
 		updateCloud(player, trial);
 		ModPackets.sendTribulation(player, true, trial.strikesLeft, trial.targetRealm, trial.targetStage);
-		player.playNotifySound(SoundEvents.ENDER_DRAGON_GROWL, SoundSource.AMBIENT, 1.0f, 0.5f);
 		player.playNotifySound(SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 2.0f, 0.4f);
 		player.sendSystemMessage(trial.strikesLeft == 1
 				? Component.translatable(ModLang.MSG_TRIB_START_SINGLE, trial.targetName())
@@ -208,7 +213,7 @@ public final class TribulationManager {
 			int x = Mth.floor(p.getX() + Math.cos(angle) * radius);
 			int z = Mth.floor(p.getZ() + Math.sin(angle) * radius);
 			if (!level.hasChunkAt(new BlockPos(x, p.getBlockY(), z))) continue;
-			int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
+			int y = Formations.surface(level, Heightmap.Types.MOTION_BLOCKING, x, z);
 			if (y >= cloudY - 8) continue;
 			TribulationLightning bolt = ModEntities.TRIBULATION_LIGHTNING.create(level);
 			if (bolt == null) return;
@@ -233,8 +238,11 @@ public final class TribulationManager {
 
 		// Both parts land in the same tick as the bolt. Clearing the hurt cooldown in between stops vanilla from
 		// discarding the second hit; magic goes first so a killing strike usually reads "struck by lightning".
+		// It is cleared before the first part too: within half a second of another hit, vanilla only deals what exceeds
+		// that hit, so taking a big blow on purpose (an explosion against Blast Protection, say) would blunt the strike.
 		float multiplier = RingOfTranscendenceItem.damageMultiplier(p);
 		float magic = t.strikes.magic() * multiplier;
+		p.invulnerableTime = 0;
 		if (magic > 0) {
 			p.hurt(level.damageSources().magic(), magic);
 			p.invulnerableTime = 0;
@@ -252,6 +260,8 @@ public final class TribulationManager {
 		ModPackets.sendTribulation(p, false, 0, t.targetRealm, t.targetStage);
 
 		PlayerCultivation c = CultivationManager.get(p);
+		c.setInTribulation(false);
+		CultivationManager.markDirty(p.server);
 		boolean sameTarget = c.breakthroughRealm() == t.targetRealm && c.breakthroughStage() == t.targetStage;
 		if (!sameTarget || !c.breakthrough()) { // state changed mid-trial (e.g. admin command)
 			p.displayClientMessage(Component.translatable(ModLang.MSG_NOT_READY), true);
@@ -275,6 +285,7 @@ public final class TribulationManager {
 		if (t == null) return;
 
 		PlayerCultivation c = CultivationManager.get(p);
+		c.setInTribulation(false);
 		c.fallOneStage();
 		CultivationManager.markDirty(p.server);
 
@@ -285,16 +296,38 @@ public final class TribulationManager {
 		// The respawn event re-applies the lowered stats and re-syncs the client.
 	}
 
-	/** Disconnect: the trial is cancelled without reward or penalty. */
+	/**
+	 * Disconnect: the running trial and its cloud go. The player's cultivation stays marked as mid-tribulation, so they fail
+	 * it when they return ({@link #onJoin}).
+	 */
 	public static void forget(UUID id) {
 		Trial trial = ACTIVE.remove(id);
 		if (trial != null) trial.removeCloud();
 	}
 
-	/** Falling out of the Upper Realm mid-trial: cancelled without reward or penalty, like a disconnect. */
+	/**
+	 * A player has joined. One who left mid-tribulation (logged out, quit, or the game closed) has failed it, just as if
+	 * struck down: they fall one minor stage and lose their cultivation.
+	 *
+	 * @return true if they fell
+	 */
+	public static boolean onJoin(ServerPlayer p) {
+		PlayerCultivation c = CultivationManager.get(p);
+		if (!c.isInTribulation() || isActive(p.getUUID())) return false;
+		c.setInTribulation(false);
+		c.fallOneStage();
+		CultivationManager.markDirty(p.server);
+		p.server.getPlayerList().broadcastSystemMessage(Component.translatable(ModLang.MSG_TRIB_FAILED, p.getDisplayName()), false);
+		p.sendSystemMessage(Component.translatable(ModLang.MSG_TRIB_FLED, PlayerCultivation.rankName(c.getRealm(), c.getStage())));
+		return true;
+	}
+
+	/** Falling out of the Upper Realm mid-trial: cancelled without reward or penalty. */
 	public static void abandon(ServerPlayer p) {
 		Trial t = ACTIVE.remove(p.getUUID());
 		if (t == null) return;
+		CultivationManager.get(p).setInTribulation(false);
+		CultivationManager.markDirty(p.server);
 		t.removeCloud();
 		ModPackets.sendTribulation(p, false, 0, t.targetRealm, t.targetStage);
 		p.sendSystemMessage(Component.translatable(ModLang.MSG_TRIB_ABANDONED));
@@ -313,7 +346,10 @@ public final class TribulationManager {
 		trial.cloud.follow(player.position());
 	}
 
-	/** Clear references before a world/server is closed, including singleplayer world switches. */
+	/**
+	 * Clear references before a world/server is closed, including singleplayer world switches. Anyone mid-trial stays marked
+	 * and fails it on their return ({@link #onJoin}).
+	 */
 	public static void clear() {
 		ACTIVE.values().forEach(Trial::removeCloud);
 		ACTIVE.clear();

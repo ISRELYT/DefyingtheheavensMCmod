@@ -1,9 +1,17 @@
-// 1.20.1	2026-10-09T13:51:04.2538597	Defying The Heavens/Tags for minecraft:block
-254038c27212d829d4fe53016cca02405cac1835 data\minecraft\tags\blocks\stone_ore_replaceables.json
-254038c27212d829d4fe53016cca02405cac1835 data\minecraft\tags\blocks\mineable\pickaxe.json
-35f28a52f3770b3e3026fabb98a5f5fa0cb19ffa data\minecraft\tags\blocks\leaves.json
-b83fe5d8e30895b0522d065d97d82d5b20d1bb8c data\minecraft\tags\blocks\wither_immune.json
-b83fe5d8e30895b0522d065d97d82d5b20d1bb8c data\minecraft\tags\blocks\dragon_immune.json
+// 1.20.1	2026-10-10T19:05:43.0380268	Defying The Heavens/Tags for minecraft:block
+ad76c79319c6e20f0ec2d0f0ab0a911354156430 data\minecraft\tags\blocks\wither_immune.json
+ccd16b71f0cdde8f280b792580382b3fcec56404 data\minecraft\tags\blocks\needs_iron_tool.json
+08257d2c01e57a2f511f6587261ed83ba8548dca data\minecraft\tags\blocks\needs_diamond_tool.json
+0a324e20b80ef43b8a2bf9d7f01f48cbb5103ffd data\minecraft\tags\blocks\logs.json
+9f7ade905a92aef40114baec78dbac5e494b138d data\minecraft\tags\blocks\mineable\pickaxe.json
+893fa32b67b301e16fe6ed62df0e0c615918e083 data\minecraft\tags\blocks\planks.json
+62782ff15eb05618f1095072c8b4a3ff45a20727 data\minecraft\tags\blocks\features_cannot_replace.json
+6eb4b2f86be0c164d7164463761a0b91f496bccb data\minecraft\tags\blocks\leaves.json
+e4a7f08802b5215b19d8c0a804fc5eab4b5385fe data\minecraft\tags\blocks\snow_layer_cannot_survive_on.json
 254038c27212d829d4fe53016cca02405cac1835 data\minecraft\tags\blocks\base_stone_overworld.json
-35f28a52f3770b3e3026fabb98a5f5fa0cb19ffa data\minecraft\tags\blocks\mineable\hoe.json
-b83fe5d8e30895b0522d065d97d82d5b20d1bb8c data\minecraft\tags\blocks\features_cannot_replace.json
+08257d2c01e57a2f511f6587261ed83ba8548dca data\defying-the-heavens\tags\blocks\qi_veins.json
+254038c27212d829d4fe53016cca02405cac1835 data\minecraft\tags\blocks\stone_ore_replaceables.json
+6eb4b2f86be0c164d7164463761a0b91f496bccb data\minecraft\tags\blocks\mineable\hoe.json
+8c63a4ef478a2d1c559b96a5beae4408cb88a4b7 data\minecraft\tags\blocks\mineable\axe.json
+ad76c79319c6e20f0ec2d0f0ab0a911354156430 data\minecraft\tags\blocks\dragon_immune.json
+2f198bee66d85b62c7a57ef06e0a33b402e969bb data\minecraft\tags\blocks\logs_that_burn.json

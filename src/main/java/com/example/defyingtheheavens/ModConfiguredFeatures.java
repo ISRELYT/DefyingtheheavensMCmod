@@ -74,6 +74,7 @@ public final class ModConfiguredFeatures {
 	public static final ResourceKey<ConfiguredFeature<?, ?>> SPIRIT_LOTUS = key("spirit_lotus");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> SPIRIT_DEW_GRASS = key("spirit_dew_grass");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> BLUE_SPIRIT_TREE = key("blue_spirit_tree");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> QI_VEIN = key("qi_vein");
 
 	private static ResourceKey<ConfiguredFeature<?, ?>> key(String name) {
 		return ResourceKey.create(Registries.CONFIGURED_FEATURE, DefyingTheHeavens.id(name));
@@ -148,6 +149,8 @@ public final class ModConfiguredFeatures {
 		FeatureUtils.register(context, OCHRE_HUANGJING, ModFeatures.OCHRE_HUANGJING);
 		FeatureUtils.register(context, SPIRIT_LOTUS, ModFeatures.SPIRIT_LOTUS);
 		FeatureUtils.register(context, SPIRIT_DEW_GRASS, ModFeatures.SPIRIT_DEW_GRASS);
+		// Qi Veins of at most four blocks (added to every Overworld and Upper Realm biome by ModFeatures#register).
+		FeatureUtils.register(context, QI_VEIN, ModFeatures.QI_VEIN);
 
 		// Blue Spirit Tree: a vanilla spruce, trunk and all, grown from Blue Spirit Log (spruce leaves stay on it because the
 		// log is in the logs tag).

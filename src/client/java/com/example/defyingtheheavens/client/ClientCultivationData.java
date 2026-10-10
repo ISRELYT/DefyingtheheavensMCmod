@@ -17,8 +17,10 @@ public final class ClientCultivationData {
 	public static void update(int realm, int stage, double cultivation, double qi, boolean meditating, boolean lowerRealmBound,
 							  boolean inUpperRealm, int disabledAbilities, int pressureStages, double pressurePenalty,
 							  boolean mortal, int mortalStage, double tempering, int preparedRealm, double preparedBonus, double qiBoost,
-							  double pillResistance, double medicinalQi) {
+							  double pillResistance, double medicinalQi, int alignment, double gearQiBonus) {
 		DATA.setState(Realm.byIndex(realm), Stage.byIndex(stage), cultivation);
+		DATA.setAlignment(alignment);
+		DATA.setGearQiBonus(gearQiBonus);
 		DATA.setMortal(mortal); // after setState, which marks a cultivator
 		DATA.setMortalState(MortalStage.byIndex(mortalStage), tempering);
 		DATA.prepareBreakthrough(preparedRealm >= 0 && preparedRealm < Realm.values().length ? Realm.byIndex(preparedRealm) : null,
@@ -44,6 +46,8 @@ public final class ClientCultivationData {
 		DATA.setPillResistance(0);
 		DATA.setMedicinalQi(0);
 		DATA.setQi(0);
+		DATA.setAlignment(0);
+		DATA.setGearQiBonus(0);
 		int offByDefault = 0;
 		for (Ability ability : Ability.offByDefault()) offByDefault |= 1 << ability.ordinal();
 		DATA.setDisabledAbilityMask(offByDefault);

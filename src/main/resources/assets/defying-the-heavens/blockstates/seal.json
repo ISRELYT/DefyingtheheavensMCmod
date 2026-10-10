@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "face=down": {
+      "model": "defying-the-heavens:block/seal"
+    },
+    "face=north": {
+      "model": "defying-the-heavens:block/seal"
+    },
+    "face=south": {
+      "model": "defying-the-heavens:block/seal"
+    },
+    "face=west": {
+      "model": "defying-the-heavens:block/seal"
+    },
+    "face=east": {
+      "model": "defying-the-heavens:block/seal"
+    }
+  }
+}

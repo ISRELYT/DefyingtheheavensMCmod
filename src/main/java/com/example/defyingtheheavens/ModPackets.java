@@ -3,9 +3,11 @@ package com.example.defyingtheheavens;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
@@ -40,8 +42,39 @@ public final class ModPackets {
 	public static final ResourceLocation CONSCIOUSNESS_ALERT = new ResourceLocation(DefyingTheHeavens.MOD_ID, "consciousness_alert");
 	/** S2C: entities near the player under Realm Suppress, for drawing the pressure (see {@link RealmSuppressSystem}). */
 	public static final ResourceLocation PRESSED_ENTITIES = new ResourceLocation(DefyingTheHeavens.MOD_ID, "pressed_entities");
+	/** S2C: the raised formations near the player (see {@link Formations}): drawn under Qi Sense, and walked through by their owner. */
+	public static final ResourceLocation FORMATIONS = new ResourceLocation(DefyingTheHeavens.MOD_ID, "formations");
+	/** S2C: a Formation Core's state, opening (or refreshing) its screen. */
+	public static final ResourceLocation FORMATION_CORE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "formation_core");
+	/** C2S: the open core screen asks for a fresh state (its position). */
+	public static final ResourceLocation FORMATION_CORE_QUERY = new ResourceLocation(DefyingTheHeavens.MOD_ID, "formation_core_query");
+	/** C2S: the owner set a core's radius and switch (position, radius, on). */
+	public static final ResourceLocation FORMATION_CORE_CONFIGURE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "formation_core_configure");
+	/** Players further than this from a core can't work its screen. */
+	private static final double CORE_REACH = 8;
 
 	public static void registerServerReceivers() {
+		ServerPlayNetworking.registerGlobalReceiver(FORMATION_CORE_QUERY, (server, player, handler, buf, responseSender) -> {
+			BlockPos pos = buf.readBlockPos();
+			server.execute(() -> {
+				if (player.distanceToSqr(Vec3.atCenterOf(pos)) <= CORE_REACH * CORE_REACH && player.level().isLoaded(pos)
+						&& player.level().getBlockEntity(pos) instanceof FormationCoreBlockEntity core && core.canControl(player)) {
+					sendFormationCore(player, core);
+				}
+			});
+		});
+		ServerPlayNetworking.registerGlobalReceiver(FORMATION_CORE_CONFIGURE, (server, player, handler, buf, responseSender) -> {
+			BlockPos pos = buf.readBlockPos();
+			int radius = buf.readVarInt();
+			boolean on = buf.readBoolean();
+			server.execute(() -> {
+				if (player.distanceToSqr(Vec3.atCenterOf(pos)) <= CORE_REACH * CORE_REACH && player.level().isLoaded(pos)
+						&& player.level().getBlockEntity(pos) instanceof FormationCoreBlockEntity core) {
+					core.configure(player, radius, on);
+					sendFormationCore(player, core);
+				}
+			});
+		});
 		ServerPlayNetworking.registerGlobalReceiver(TOGGLE_MEDITATION,
 				(server, player, handler, buf, responseSender) -> server.execute(() -> MeditationManager.toggle(player)));
 		ServerPlayNetworking.registerGlobalReceiver(BREAKTHROUGH,
@@ -76,6 +109,8 @@ public final class ModPackets {
 		buf.writeDouble(c.getQiBoost());
 		buf.writeDouble(c.getPillResistance());
 		buf.writeDouble(c.getMedicinalQi());
+		buf.writeInt(c.getAlignment());
+		buf.writeDouble(c.getGearQiBonus());
 		ServerPlayNetworking.send(player, SYNC, buf);
 	}
 
@@ -90,6 +125,47 @@ public final class ModPackets {
 		FriendlyByteBuf buf = PacketByteBufs.create();
 		buf.writeVarInt(InnerRealm.FADE_TICKS);
 		ServerPlayNetworking.send(player, INNER_FADE, buf);
+	}
+
+	public static void sendFormations(ServerPlayer to, List<Formation> formations) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(formations.size());
+		for (Formation formation : formations) {
+			buf.writeUUID(formation.id);
+			buf.writeEnum(formation.kind);
+			buf.writeBlockPos(formation.center);
+			buf.writeVarInt(formation.getRadius());
+			buf.writeInt(formation.getRank());
+			buf.writeBoolean(formation.getOwner() != null);
+			if (formation.getOwner() != null) buf.writeUUID(formation.getOwner());
+		}
+		ServerPlayNetworking.send(to, FORMATIONS, buf);
+	}
+
+	public static void sendFormationCore(ServerPlayer to, FormationCoreBlockEntity core) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeBlockPos(core.getBlockPos());
+		buf.writeVarInt(core.getRadius());
+		buf.writeBoolean(core.isWanted());
+		buf.writeBoolean(core.isRaised());
+		buf.writeDouble(core.getBattery());
+		buf.writeDouble(FormationCoreBlockEntity.BATTERY);
+		buf.writeDouble(core.supply());
+		buf.writeVarInt(core.getVeins());
+		buf.writeInt(core.getRank());
+		buf.writeVarInt(core.cooldownSeconds());
+		buf.writeUtf(core.getOwnerName());
+		ServerPlayNetworking.send(to, FORMATION_CORE, buf);
+	}
+
+	/** Tells {@code to} that an NPC's domain touches theirs: what it is called, and the realm it shows. */
+	public static void sendConsciousnessAlert(ServerPlayer to, int entityId, String name, Realm realm, Stage stage) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(entityId);
+		buf.writeUtf(name);
+		buf.writeVarInt(realm.ordinal());
+		buf.writeVarInt(stage.ordinal());
+		ServerPlayNetworking.send(to, CONSCIOUSNESS_ALERT, buf);
 	}
 
 	public static void sendQiAbsorption(ServerPlayer to, ServerPlayer meditator, double cultivationPerSecond) {

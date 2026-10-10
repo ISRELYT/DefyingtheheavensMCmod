@@ -94,10 +94,31 @@ public final class ConsciousnessDomainHandler {
 				if (isActive(player)) users.add(player);
 			}
 			if (users.isEmpty()) continue;
+			List<CultivatorNpc> npcs = CultivatorNpc.openDomains(level);
 			updateContacts(users, next);
-			for (ServerPlayer viewer : users) sendDomain(viewer, users, next);
+			updateNpcContacts(users, npcs, next);
+			for (ServerPlayer viewer : users) sendDomain(viewer, users, npcs, next);
 		}
 		touching = next; // pairs that split up across dimensions or went inactive are simply not carried over
+	}
+
+	/**
+	 * NPC cultivators' open domains (rogues always, sect members in a fight) touch players' like any other: the player is
+	 * alerted when one first touches theirs. A secluded cultivator's Concealment Barrier hides its domain entirely.
+	 */
+	private static void updateNpcContacts(List<ServerPlayer> users, List<CultivatorNpc> npcs, Map<UUID, Set<UUID>> next) {
+		if (npcs.isEmpty()) return;
+		for (ServerPlayer player : users) {
+			double radius = radius(CultivationManager.get(player));
+			for (CultivatorNpc npc : npcs) {
+				double reach = radius + npc.domainRadius();
+				double distance = center(player).distanceTo(center(npc));
+				boolean was = touching.getOrDefault(player.getUUID(), Set.of()).contains(npc.getUUID());
+				if (distance > reach && (!was || distance > reach + SEPARATION_MARGIN)) continue;
+				next.computeIfAbsent(player.getUUID(), id -> new HashSet<>()).add(npc.getUUID());
+				if (!was) ModPackets.sendConsciousnessAlert(player, npc.getId(), npc.describe().getString(), npc.getDisplayedRealm(), npc.getDisplayedStage());
+			}
+		}
 	}
 
 	/** Which pairs of domains in one level touch now; alerts both sides of each pair that has just met. */
@@ -122,7 +143,7 @@ public final class ConsciousnessDomainHandler {
 	}
 
 	/** The cultivators inside {@code viewer}'s domain, and the domains touching it. */
-	private static void sendDomain(ServerPlayer viewer, List<ServerPlayer> users, Map<UUID, Set<UUID>> contacts) {
+	private static void sendDomain(ServerPlayer viewer, List<ServerPlayer> users, List<CultivatorNpc> npcs, Map<UUID, Set<UUID>> contacts) {
 		double radius = radius(CultivationManager.get(viewer));
 		List<SensedCultivator> cultivators = new ArrayList<>();
 		for (Entity entity : entitiesIn(viewer, radius, Entity.class, e -> CultivatorEntity.isCultivator(e) && e.isAlive() && !e.isSpectator())) {
@@ -131,7 +152,8 @@ public final class ConsciousnessDomainHandler {
 				if (c.isMortal()) continue; // shows as a mortal: an outline, no realm
 				cultivators.add(new SensedCultivator(player.getId(), c.getEffectiveRealm(), c.getEffectiveStage(), c.isUnderPressure()));
 			} else if (entity instanceof CultivatorEntity npc) {
-				cultivators.add(new SensedCultivator(entity.getId(), npc.getCultivationRealm(), npc.getCultivationStage(),
+				if (npc.isConcealed()) continue; // a Concealment Barrier masks it
+				cultivators.add(new SensedCultivator(entity.getId(), npc.getDisplayedRealm(), npc.getDisplayedStage(),
 						RealmSuppressSystem.isPressed(entity)));
 			}
 		}
@@ -141,6 +163,11 @@ public final class ConsciousnessDomainHandler {
 			if (other == viewer || !met.contains(other.getUUID())) continue;
 			Vec3 c = center(other);
 			domains.add(new TouchingDomain(other.getId(), c.x, c.y, c.z, (float) radius(CultivationManager.get(other))));
+		}
+		for (CultivatorNpc npc : npcs) {
+			if (!met.contains(npc.getUUID())) continue;
+			Vec3 c = center(npc);
+			domains.add(new TouchingDomain(npc.getId(), c.x, c.y, c.z, (float) npc.domainRadius()));
 		}
 		ModPackets.sendConsciousness(viewer, cultivators, domains); // the client works its own radius out from its synced stage
 	}

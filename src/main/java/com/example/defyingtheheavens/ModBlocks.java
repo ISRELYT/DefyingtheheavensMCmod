@@ -126,6 +126,24 @@ public final class ModBlocks {
 	public static final Block ALCHEMY_CAULDRON = registerWithItem("alchemy_cauldron",
 			new AlchemyCauldronBlock(BlockBehaviour.Properties.copy(Blocks.CAULDRON).mapColor(MapColor.TERRACOTTA_ORANGE)));
 
+	/** Stone threaded with condensed qi, as rare as diamond: a formation's power (see QiVeinBlock). Needs a diamond pickaxe. */
+	public static final Block QI_VEIN = registerWithItem("qi_vein", new QiVeinBlock(BlockBehaviour.Properties.copy(Blocks.DIAMOND_ORE)
+			.mapColor(MapColor.COLOR_LIGHT_BLUE)));
+	public static final Block DEEPSLATE_QI_VEIN = registerWithItem("deepslate_qi_vein", new QiVeinBlock(BlockBehaviour.Properties
+			.copy(Blocks.DEEPSLATE_DIAMOND_ORE).mapColor(MapColor.COLOR_LIGHT_BLUE)));
+	/** The heart of a protective formation (see FormationCoreBlock). */
+	public static final Block FORMATION_CORE = registerWithItem("formation_core", new FormationCoreBlock(BlockBehaviour.Properties.of()
+			.mapColor(MapColor.COLOR_CYAN).requiresCorrectToolForDrops().strength(30.0f, 1200.0f).sound(SoundType.AMETHYST)
+			.lightLevel(state -> 7).noOcclusion()));
+	/** One cell of a formation's barrier (see SectBarrierBlock): invisible, unpushable, broken only by the strong. No item. */
+	public static final Block SECT_BARRIER = register("sect_barrier", new SectBarrierBlock(BlockBehaviour.Properties.of()
+			.strength(-1.0f, 3600000.0f).noLootTable().noOcclusion().isValidSpawn((state, level, pos, type) -> false)
+			.isRedstoneConductor((state, level, pos) -> false).isSuffocating((state, level, pos) -> false)
+			.isViewBlocking((state, level, pos) -> false).pushReaction(PushReaction.BLOCK).sound(SoundType.AMETHYST)));
+	/** Qi ink painted with the Inscription Brush (see SealBlock): only Qi Sense sees it. No item; the brush places it. */
+	public static final Block SEAL = register("seal", new SealBlock(BlockBehaviour.Properties.of().mapColor(MapColor.NONE)
+			.noCollission().instabreak().noLootTable().replaceable().pushReaction(PushReaction.DESTROY).sound(SoundType.WOOL)));
+
 	private static BlockBehaviour.Properties ginsengProperties(MapColor colour) {
 		return BlockBehaviour.Properties.of().mapColor(colour).noCollission().noOcclusion().instabreak()
 				.sound(SoundType.SWEET_BERRY_BUSH).pushReaction(PushReaction.DESTROY).ignitedByLava();
@@ -156,8 +174,11 @@ public final class ModBlocks {
 			entries.accept(RED_MEDITATION_MAT);
 			entries.accept(SPIRIT_PEDESTAL);
 			entries.accept(ALCHEMY_CAULDRON);
+			entries.accept(FORMATION_CORE);
 		});
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.NATURAL_BLOCKS).register(entries -> {
+			entries.accept(QI_VEIN);
+			entries.accept(DEEPSLATE_QI_VEIN);
 			entries.accept(JADE_STONE);
 			entries.accept(JADE_ORE);
 			entries.accept(DEEPSLATE_JADE_ORE);

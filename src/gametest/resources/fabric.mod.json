@@ -11,7 +11,8 @@
       "com.example.defyingtheheavens.SpiritPedestalGameTests",
       "com.example.defyingtheheavens.GinsengGameTests",
       "com.example.defyingtheheavens.SpiritPeachGameTests",
-      "com.example.defyingtheheavens.AlchemyGameTests"
+      "com.example.defyingtheheavens.AlchemyGameTests",
+      "com.example.defyingtheheavens.SectGameTests"
     ]
   }
 }

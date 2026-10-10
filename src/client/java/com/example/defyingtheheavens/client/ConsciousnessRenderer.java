@@ -145,6 +145,7 @@ public final class ConsciousnessRenderer {
 		double radiusSqr = radius * radius;
 		for (Entity entity : mc.level.entitiesForRendering()) {
 			if (entity == self || !(entity instanceof LivingEntity) || entity instanceof ArmorStand || !entity.isAlive() || entity.isSpectator()) continue;
+			if (entity instanceof CultivatorEntity hidden && hidden.isConcealed()) continue; // masked by a Concealment Barrier
 			if (entity.getBoundingBox().getCenter().distanceToSqr(center) > radiusSqr) continue;
 			// Players count as cultivators only once they've begun (the server lists them in SENSED); mortal players look mortal.
 			boolean cultivator = entity instanceof Player ? SENSED.containsKey(entity.getId()) : CultivatorEntity.isCultivator(entity);
@@ -300,7 +301,9 @@ public final class ConsciousnessRenderer {
 		for (Sensed sensed : SENSED.values()) {
 			Entity entity = mc.level.getEntity(sensed.entityId());
 			if (entity == null || !OUTLINES.containsKey(entity.getId())) continue;
-			Vec3 head = entity.getPosition(viewPartial).add(0, entity.getBbHeight() + 0.5, 0).subtract(viewCamera);
+			// Above an NPC's nameplate (three lines) rather than over it.
+			double above = entity instanceof CultivatorEntity ? 1.35 : 0.5;
+			Vec3 head = entity.getPosition(viewPartial).add(0, entity.getBbHeight() + above, 0).subtract(viewCamera);
 			Vector4f clip = new Vector4f((float) head.x, (float) head.y, (float) head.z, 1).mul(VIEW_PROJECTION);
 			if (clip.w <= 0.05f) continue; // behind the camera
 			float x = (clip.x / clip.w * 0.5f + 0.5f) * width;

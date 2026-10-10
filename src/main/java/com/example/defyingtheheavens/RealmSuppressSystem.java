@@ -186,7 +186,30 @@ public final class RealmSuppressSystem {
 					UPKEEP.remove(suppressor.getUUID());
 				}
 			}
+			// NPC cultivators press down only in a fight, and only on the foes they're fighting (see CultivatorNpc); they pay
+			// the upkeep out of their own pools, reading it back with upkeepOf.
+			for (CultivatorNpc suppressor : CultivatorNpc.suppressors(level)) {
+				int rank = suppressor.sustainedRank();
+				double cost = 0;
+				List<LivingEntity> inReach = ConsciousnessDomainHandler.entitiesIn(suppressor, suppressor.domainRadius(), LivingEntity.class,
+						target -> suppressor.isHostileTo(target) && canBePressed(target, suppressor, leaving));
+				for (LivingEntity target : inReach) {
+					int targetRank = rankOf(target);
+					Pressure pressure = pressureOn(rank, targetRank);
+					if (pressure == null) continue;
+					cost += costOf(rank, targetRank, target);
+					Pressed current = next.get(target.getUUID());
+					if (current == null || pressure.strongerThan(current.pressure())) next.put(target.getUUID(), new Pressed(target, pressure));
+				}
+				if (cost > 0) {
+					UPKEEP.put(suppressor.getUUID(), cost);
+				} else {
+					UPKEEP.remove(suppressor.getUUID());
+				}
+			}
 		}
+		// NPCs that stopped (or left) are no longer charged.
+		UPKEEP.keySet().removeIf(id -> server.getPlayerList().getPlayer(id) == null && !npcSuppressing(server, id));
 
 		for (Iterator<Map.Entry<UUID, Pressed>> it = PRESSED.entrySet().iterator(); it.hasNext(); ) {
 			Map.Entry<UUID, Pressed> entry = it.next();
@@ -206,7 +229,7 @@ public final class RealmSuppressSystem {
 		}
 	}
 
-	private static boolean canBePressed(LivingEntity target, ServerPlayer suppressor, UUID leaving) {
+	private static boolean canBePressed(LivingEntity target, Entity suppressor, UUID leaving) {
 		if (!target.isAlive() || target.isRemoved() || target instanceof ArmorStand || target.getUUID().equals(leaving)) return false;
 		if (target instanceof ServerPlayer player) return !player.isSpectator() && !player.isCreative();
 		// Map makers' invulnerable NPCs stay as they are, and a cultivator's own companions are spared.
@@ -220,8 +243,21 @@ public final class RealmSuppressSystem {
 			PlayerCultivation c = CultivationManager.get(player);
 			return c.isMortal() ? -1 : c.sustainedRank(); // a player who hasn't begun cultivating is weighed as a mortal
 		}
-		if (entity instanceof CultivatorEntity npc) return PlayerCultivation.rank(npc.getCultivationRealm(), npc.getCultivationStage());
+		if (entity instanceof CultivatorEntity npc && !npc.isMortal()) return PlayerCultivation.rank(npc.getCultivationRealm(), npc.getCultivationStage());
 		return -1;
+	}
+
+	/** Qi per second an NPC's Realm Suppress costs it right now (0 when it holds nobody down). */
+	public static double upkeepOf(UUID id) {
+		Double cost = UPKEEP.get(id);
+		return cost == null ? 0 : cost;
+	}
+
+	private static boolean npcSuppressing(MinecraftServer server, UUID id) {
+		for (ServerLevel level : server.getAllLevels()) {
+			if (level.getEntity(id) instanceof CultivatorNpc npc && npc.isSuppressing()) return true;
+		}
+		return false;
 	}
 
 	/** What a suppressor of {@code rank} does to a target of {@code targetRank} (-1: mortal); null if the target is immune. */

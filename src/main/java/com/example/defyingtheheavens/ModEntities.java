@@ -1,5 +1,6 @@
 package com.example.defyingtheheavens;
 
+import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.EntityType;
@@ -29,6 +30,14 @@ public final class ModEntities {
 					.updateInterval(Integer.MAX_VALUE)
 					.build("tribulation_lightning"));
 
+	/** NPC cultivators: sect members and rogues (see CultivatorNpc). Player-sized. */
+	public static final EntityType<CultivatorNpc> CULTIVATOR = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("cultivator"),
+			EntityType.Builder.<CultivatorNpc>of(CultivatorNpc::new, MobCategory.MISC)
+					.sized(0.6f, 1.8f)
+					.clientTrackingRange(10)
+					.build("cultivator"));
+
 	/** A meditator's body, left sitting while their soul is in the Inner Realm (see {@link InnerRealm}). */
 	public static final EntityType<InnerBodyEntity> INNER_BODY = Registry.register(BuiltInRegistries.ENTITY_TYPE,
 			DefyingTheHeavens.id("inner_body"),
@@ -47,10 +56,11 @@ public final class ModEntities {
 					.clientTrackingRange(8)
 					.build("heart_demon"));
 
-	/** Touching this class registers the entity types. */
+	/** Touching this class registers the entity types and their attributes. */
 	public static void register() {
-		net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry.register(INNER_BODY, InnerBodyEntity.createAttributes());
-		net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry.register(HEART_DEMON, HeartDemonEntity.createAttributes());
+		FabricDefaultAttributeRegistry.register(CULTIVATOR, CultivatorNpc.createAttributes());
+		FabricDefaultAttributeRegistry.register(INNER_BODY, InnerBodyEntity.createAttributes());
+		FabricDefaultAttributeRegistry.register(HEART_DEMON, HeartDemonEntity.createAttributes());
 	}
 
 	private ModEntities() {}

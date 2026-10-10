@@ -1,7 +1,12 @@
 package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.Ability;
+import com.example.defyingtheheavens.Alignment;
+import com.example.defyingtheheavens.ClothingStyle;
+import com.example.defyingtheheavens.ClothingTier;
 import com.example.defyingtheheavens.ModBlocks;
+import com.example.defyingtheheavens.NpcTitle;
+import net.minecraft.world.item.ArmorItem;
 import com.example.defyingtheheavens.ModEntities;
 import com.example.defyingtheheavens.ModEffects;
 import com.example.defyingtheheavens.ModItems;
@@ -239,6 +244,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_TRIB_FAILED, "%s failed their breakthrough!");
 		t.add(ModLang.MSG_TRIB_FALL, "Backlash! You fall to %s.");
 		t.add(ModLang.MSG_TRIB_ABANDONED, "You fled the tribulation. Breakthrough abandoned.");
+		t.add(ModLang.MSG_TRIB_FLED, "You fled the tribulation, but the heavens remember. Backlash! You fall to %s.");
 		t.add(ModLang.TRIB_HUD, "Heavenly Tribulation (%s) - strikes left: %s");
 
 		// The mortal path and alchemy
@@ -314,6 +320,9 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_PILL_BOTTLENECK, "Bottleneck: the pill would be wasted.");
 		t.add(ModLang.MSG_PILL_CULTIVATION, "+%s unrefined qi (%s%% effective). Meditate to refine it.");
 		t.add(ModLang.MSG_PILL_QI, "+%s%% qi gathering for %s minutes");
+		t.add(ModLang.MSG_FRUIT_MORTAL, "A mortal body can't hold the fruit's qi. Drink a Marrow Cleansing Elixir first.");
+		t.add(ModLang.MSG_FRUIT_BOTTLENECK, "Your cultivation can't hold any more right now. The fruit would be wasted.");
+		t.add(ModLang.MSG_FRUIT_EATEN, "+%s cultivation");
 		t.add(ModLang.PILL_AGE, "Ingredients: %s years old");
 		t.add(ModLang.PILL_AGE_SHORT, " (%s years)");
 		t.add(ModLang.PILL_RECIPE, "Brewed from: %s");
@@ -360,5 +369,103 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_DEW_FULL, "Your qi is already full.");
 		t.add(ModLang.MSG_DEW_DRUNK, "+%s qi");
 		t.add(ModLang.PILL_SUBSTITUTE, "Replaces %s in recipes, at twice its age");
+
+		// Alignment
+		for (Alignment.Faction faction : Alignment.Faction.values()) {
+			t.add(ModLang.factionKey(faction.getId()), switch (faction) {
+				case RIGHTEOUS -> "Righteous";
+				case NEUTRAL -> "Neutral";
+				case DEMONIC -> "Demonic";
+			});
+		}
+		t.add(ModLang.ALIGNMENT_VALUE, "%s (%s)");
+		t.add(ModLang.ALIGNMENT_LINE, "Path: %s");
+		t.add(ModLang.MSG_ALIGNMENT_UP, "Slaying the wicked strengthens your heart: alignment +%s (%s)");
+		t.add(ModLang.MSG_ALIGNMENT_DOWN, "Innocent blood stains your hands: alignment -%s (%s)");
+
+		// NPC cultivators and sects
+		t.add(ModEntities.CULTIVATOR, "Cultivator");
+		t.add(ModItems.CULTIVATOR_SPAWN_EGG, "Cultivator Spawn Egg");
+		for (NpcTitle title : NpcTitle.values()) {
+			t.add(ModLang.titleKey(title.getId()), switch (title) {
+				case SECT_MASTER -> "Sect Master";
+				case GRAND_ELDER -> "Grand Elder";
+				case ELDER -> "Elder";
+				case INNER_DISCIPLE -> "Inner Disciple";
+				case OUTER_DISCIPLE -> "Outer Disciple";
+				case ROGUE -> "Rogue Cultivator";
+				case WANDERER -> "Wandering Mortal";
+			});
+		}
+		t.add(ModLang.NPC_TITLE_BRACKETS, "[%s]");
+		t.add(ModLang.NPC_OF_SECT, "%s of the %s");
+		t.add(ModLang.NPC_GREET_RIGHTEOUS, "%s nods to you: \"May your path be clear and your heart steady.\"");
+		t.add(ModLang.NPC_GREET_NEUTRAL, "%s regards you calmly and goes back to their own affairs.");
+		t.add(ModLang.NPC_GREET_DEMONIC, "%s smiles thinly: \"Walk carefully, little one.\"");
+		t.add(ModLang.NPC_GREET_HOSTILE, "%s glares at you with open killing intent.");
+		t.add(ModLang.NPC_GREET_SECLUDED, "%s sits in deep seclusion and does not stir.");
+		t.add(ModLang.MSG_SECLUSION_REPULSE, "A concealment barrier pushes you back. Disturbing a secluded cultivator would be unwise.");
+
+		// Cultivator clothing
+		for (ClothingStyle style : ClothingStyle.values()) {
+			t.add(ModLang.clothingStyleKey(style.getId()), switch (style) {
+				case RIGHTEOUS -> "Righteous white";
+				case NEUTRAL -> "Neutral blue";
+				case DEMONIC -> "Demonic red and black";
+			});
+		}
+		for (ClothingTier tier : ClothingTier.values()) {
+			String grade = switch (tier) {
+				case MORTAL -> "Mortal-Grade";
+				case SPIRIT -> "Spirit-Grade";
+				case EARTH -> "Earth-Grade";
+				case HEAVEN -> "Heaven-Grade";
+				case IMMORTAL -> "Immortal-Grade";
+			};
+			for (ArmorItem.Type type : ArmorItem.Type.values()) {
+				String piece = switch (type) {
+					case HELMET -> "Cultivator's Hair Crown";
+					case CHESTPLATE -> "Cultivator's Robe";
+					case LEGGINGS -> "Cultivator's Trousers";
+					case BOOTS -> "Cloud-Stepping Boots";
+				};
+				t.add(ModItems.clothing(tier, type), grade + " " + piece);
+			}
+		}
+		t.add(ModLang.CLOTHING_QI, "+%s%% qi gathering");
+		t.add(ModLang.CLOTHING_MEDITATION, "+%s%% cultivation while meditating");
+		t.add(ModLang.CLOTHING_UPGRADE_HINT, "Dye it, or raise its grade, at a crafting table");
+		t.add(ModLang.BOOST_GARMENTS, "Cultivator's Garments");
+
+		// Formations
+		t.add(ModBlocks.QI_VEIN, "Qi Vein");
+		t.add(ModBlocks.DEEPSLATE_QI_VEIN, "Deepslate Qi Vein");
+		t.add(ModBlocks.FORMATION_CORE, "Formation Core");
+		t.add(ModBlocks.SECT_BARRIER, "Formation Barrier");
+		t.add(ModBlocks.SEAL, "Seal of Qi Ink");
+		t.add(ModItems.INSCRIPTION_BRUSH, "Inscription Brush");
+		t.add(ModLang.CORE_TOOLTIP, "Raises a protective barrier, fed by Qi Veins joined to it with seals");
+		t.add(ModLang.CORE_TITLE, "Formation Core");
+		t.add(ModLang.CORE_OWNER, "Keeper: %s");
+		t.add(ModLang.CORE_RADIUS, "Barrier radius: %s");
+		t.add(ModLang.CORE_SWITCH_ON, "Raise the Barrier");
+		t.add(ModLang.CORE_SWITCH_OFF, "Lower the Barrier");
+		t.add(ModLang.CORE_BATTERY, "Stored qi: %s / %s");
+		t.add(ModLang.CORE_VEINS, "Qi Veins joined: %s (+%s qi/s)");
+		t.add(ModLang.CORE_UPKEEP, "Barrier upkeep: %s qi/s");
+		t.add(ModLang.CORE_SHORTFALL, "The veins fall short: the store runs dry in %s s");
+		t.add(ModLang.CORE_STRENGTH, "Only %s or stronger can break through");
+		t.add(ModLang.CORE_STRENGTH_MORTAL, "Set by a mortal: anyone can break through");
+		t.add(ModLang.CORE_RAISED, "The barrier stands.");
+		t.add(ModLang.CORE_LOWERED, "The barrier is down.");
+		t.add(ModLang.CORE_SHATTERED, "The barrier was shattered. It can rise again in %s s.");
+		t.add(ModLang.CORE_HINT, "Paint seals from the core to Qi Veins with an Inscription Brush (within 64 blocks). Only Qi Sense shows them.");
+		t.add(ModLang.MSG_CORE_SECT, "The formation of the %s refuses your touch.");
+		t.add(ModLang.MSG_CORE_NOT_YOURS, "This formation answers only to %s.");
+		t.add(ModLang.MSG_BARRIER_TOO_STRONG, "The formation is too strong for your cultivation to break.");
+		t.add(ModLang.MSG_BARRIER_GROUND, "A formation's shell runs through this ground. You are not strong enough to dig through it.");
+		t.add(ModLang.MSG_SEAL_UNSEEN, "The qi ink sinks into the surface, unseen by mortal eyes. Only Qi Sense reveals it.");
+		t.add(ModLang.BRUSH_TOOLTIP, "Paints seals of qi ink on floors and walls, to join Qi Veins to a Formation Core");
+		t.add(ModLang.BRUSH_TOOLTIP_ERASE, "Sneak to wipe a seal away. Only Qi Sense shows the ink.");
 	}
 }

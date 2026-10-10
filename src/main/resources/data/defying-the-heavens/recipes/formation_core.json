@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "GAG",
+    "LDL",
+    "PPP"
+  ],
+  "key": {
+    "G": {"item": "minecraft:gold_ingot"},
+    "A": {"item": "minecraft:amethyst_shard"},
+    "L": {"item": "minecraft:lapis_block"},
+    "D": {"item": "minecraft:diamond"},
+    "P": {"item": "minecraft:polished_deepslate"}
+  },
+  "result": {"item": "defying-the-heavens:formation_core"}
+}

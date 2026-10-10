@@ -63,6 +63,18 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		});
 		EntityRendererRegistry.register(ModEntities.TRIBULATION_LIGHTNING, TribulationLightningRenderer::new);
 		EntityRendererRegistry.register(ModEntities.TRIBULATION_CLOUD, TribulationCloudRenderer::new);
+		// Sects and NPC cultivators: the NPCs and their nameplates, clothing, formations and their seals.
+		EntityRendererRegistry.register(ModEntities.CULTIVATOR, CultivatorNpcRenderer::new);
+		net.minecraft.client.renderer.blockentity.BlockEntityRenderers.register(com.example.defyingtheheavens.ModBlockEntities.SEAL, SealRenderer::new);
+		net.minecraft.client.renderer.blockentity.BlockEntityRenderers.register(com.example.defyingtheheavens.ModBlockEntities.FORMATION_CORE,
+				FormationCoreRenderer::new);
+		FormationCoreRenderer.register();
+		net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE.putBlock(
+				com.example.defyingtheheavens.ModBlocks.FORMATION_CORE, net.minecraft.client.renderer.RenderType.cutout());
+		ClothingModels.register();
+		ClothingArmorRenderer.register();
+		ClientFormations.register();
+		com.example.defyingtheheavens.QiVeinBlock.clientEffects = QiSenseClientHandler::veinGathers;
 		EntityRendererRegistry.register(ModEntities.INNER_BODY, InnerBodyRenderer::new);
 		EntityRendererRegistry.register(ModEntities.HEART_DEMON, HeartDemonRenderer::new);
 		// The Inner Realm's floor: see-through, and coloured by the viewer's realm (gold where a sequence lights it).
@@ -103,6 +115,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			QiSenseTreasures.clear();
 			ConsciousnessRenderer.clear();
 			SuppressionClient.clear();
+			ClientFormations.clear();
 			QiSurgeHud.clear();
 			InnerRealmFade.clear();
 		}));

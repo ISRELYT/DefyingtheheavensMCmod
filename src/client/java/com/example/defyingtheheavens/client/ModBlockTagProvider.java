@@ -1,6 +1,7 @@
 package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.ModBlocks;
+import com.example.defyingtheheavens.ModTags;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagProvider;
 import net.minecraft.core.HolderLookup;
@@ -39,5 +40,16 @@ public class ModBlockTagProvider extends FabricTagProvider.BlockTagProvider {
 		getOrCreateTagBuilder(BlockTags.DRAGON_IMMUNE).add(ModBlocks.SPATIAL_RIFT);
 		getOrCreateTagBuilder(BlockTags.WITHER_IMMUNE).add(ModBlocks.SPATIAL_RIFT);
 		getOrCreateTagBuilder(BlockTags.FEATURES_CANNOT_REPLACE).add(ModBlocks.SPATIAL_RIFT);
+
+		// Qi Veins: diamond-hard ore, what formations draw on. The Formation Core takes an iron pickaxe.
+		getOrCreateTagBuilder(ModTags.QI_VEIN_BLOCKS).add(ModBlocks.QI_VEIN).add(ModBlocks.DEEPSLATE_QI_VEIN);
+		getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.QI_VEIN).add(ModBlocks.DEEPSLATE_QI_VEIN).add(ModBlocks.FORMATION_CORE);
+		getOrCreateTagBuilder(BlockTags.NEEDS_DIAMOND_TOOL).add(ModBlocks.QI_VEIN).add(ModBlocks.DEEPSLATE_QI_VEIN);
+		getOrCreateTagBuilder(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.FORMATION_CORE);
+		// Barriers: no dragon or wither breaks them, and snow never settles on the dome (it would show the invisible sphere).
+		getOrCreateTagBuilder(BlockTags.DRAGON_IMMUNE).add(ModBlocks.SECT_BARRIER);
+		getOrCreateTagBuilder(BlockTags.WITHER_IMMUNE).add(ModBlocks.SECT_BARRIER);
+		getOrCreateTagBuilder(BlockTags.SNOW_LAYER_CANNOT_SURVIVE_ON).add(ModBlocks.SECT_BARRIER);
+		getOrCreateTagBuilder(BlockTags.FEATURES_CANNOT_REPLACE).add(ModBlocks.SECT_BARRIER).add(ModBlocks.FORMATION_CORE);
 	}
 }

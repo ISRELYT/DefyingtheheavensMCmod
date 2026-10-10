@@ -102,6 +102,7 @@ public final class ModLang {
 	public static final String MSG_TRIB_FAILED = k("message.tribulation.failed");
 	public static final String MSG_TRIB_FALL = k("message.tribulation.fall");
 	public static final String MSG_TRIB_ABANDONED = k("message.tribulation.abandoned");
+	public static final String MSG_TRIB_FLED = k("message.tribulation.fled");
 	public static final String TRIB_HUD = k("hud.tribulation");
 	public static final String MSG_GAP_ASCEND = k("message.spatial_gap.ascend");
 	public static final String MSG_GAP_DESCEND = k("message.spatial_gap.descend");
@@ -184,6 +185,9 @@ public final class ModLang {
 	public static final String MSG_DEMON_LOSE = k("message.heart_demon_lose");
 	public static final String MSG_DEMON_FADE = k("message.heart_demon_fade");
 	public static final String MSG_PILL_QI = k("message.pill_qi");
+	public static final String MSG_FRUIT_MORTAL = k("message.fruit_mortal");
+	public static final String MSG_FRUIT_BOTTLENECK = k("message.fruit_bottleneck");
+	public static final String MSG_FRUIT_EATEN = k("message.fruit_eaten");
 	public static String pillGradeKey(String id) { return "pill_grade." + DefyingTheHeavens.MOD_ID + "." + id; }
 	public static final String PILL_AGE = k("tooltip.pill_age");
 	public static final String PILL_AGE_SHORT = k("tooltip.pill_age_short");
@@ -229,6 +233,57 @@ public final class ModLang {
 	public static final String PEACH_NOT_ENOUGH = k("message.peach.not_enough");
 	public static final String PEACH_MAX = k("message.peach.max");
 	public static final String PEACH_FED = k("message.peach.fed");
+
+	// Alignment (see Alignment)
+	public static String factionKey(String id) { return "faction." + DefyingTheHeavens.MOD_ID + "." + id; }
+	public static final String ALIGNMENT_VALUE = k("alignment.value");
+	public static final String ALIGNMENT_LINE = k("alignment.line");
+	public static final String MSG_ALIGNMENT_UP = k("message.alignment.up");
+	public static final String MSG_ALIGNMENT_DOWN = k("message.alignment.down");
+
+	// NPC cultivators and sects (see CultivatorNpc, Sect)
+	public static String titleKey(String id) { return "npc_title." + DefyingTheHeavens.MOD_ID + "." + id; }
+	public static final String NPC_TITLE_BRACKETS = k("npc.title_brackets");
+	public static final String NPC_OF_SECT = k("npc.of_sect");
+	public static final String NPC_GREET_RIGHTEOUS = k("npc.greet.righteous");
+	public static final String NPC_GREET_NEUTRAL = k("npc.greet.neutral");
+	public static final String NPC_GREET_DEMONIC = k("npc.greet.demonic");
+	public static final String NPC_GREET_HOSTILE = k("npc.greet.hostile");
+	public static final String NPC_GREET_SECLUDED = k("npc.greet.secluded");
+	public static final String MSG_SECLUSION_REPULSE = k("message.seclusion.repulse");
+
+	// Cultivator clothing (see ClothingItem)
+	public static String clothingStyleKey(String id) { return "clothing_style." + DefyingTheHeavens.MOD_ID + "." + id; }
+	public static final String CLOTHING_QI = k("tooltip.clothing.qi");
+	public static final String CLOTHING_MEDITATION = k("tooltip.clothing.meditation");
+	public static final String CLOTHING_UPGRADE_HINT = k("tooltip.clothing.upgrade");
+	public static final String BOOST_GARMENTS = k("boost.garments");
+
+	// Formations: the core, its barrier, seals and the brush (see FormationCoreBlockEntity, Formations, SealBlock)
+	public static final String CORE_TOOLTIP = k("tooltip.formation_core");
+	public static final String CORE_RAISED = k("core.raised");
+	public static final String CORE_LOWERED = k("core.lowered");
+	public static final String CORE_SHATTERED = k("core.shattered");
+	public static final String CORE_TITLE = k("core.title");
+	public static final String CORE_RADIUS = k("core.radius");
+	public static final String CORE_SWITCH_ON = k("core.switch_on");
+	public static final String CORE_SWITCH_OFF = k("core.switch_off");
+	public static final String CORE_BATTERY = k("core.battery");
+	public static final String CORE_SUPPLY = k("core.supply");
+	public static final String CORE_UPKEEP = k("core.upkeep");
+	public static final String CORE_VEINS = k("core.veins");
+	public static final String CORE_STRENGTH = k("core.strength");
+	public static final String CORE_STRENGTH_MORTAL = k("core.strength_mortal");
+	public static final String CORE_OWNER = k("core.owner");
+	public static final String CORE_SHORTFALL = k("core.shortfall");
+	public static final String CORE_HINT = k("core.hint");
+	public static final String MSG_CORE_SECT = k("message.core.sect");
+	public static final String MSG_CORE_NOT_YOURS = k("message.core.not_yours");
+	public static final String MSG_BARRIER_TOO_STRONG = k("message.barrier.too_strong");
+	public static final String MSG_BARRIER_GROUND = k("message.barrier.ground");
+	public static final String MSG_SEAL_UNSEEN = k("message.seal.unseen");
+	public static final String BRUSH_TOOLTIP = k("tooltip.inscription_brush");
+	public static final String BRUSH_TOOLTIP_ERASE = k("tooltip.inscription_brush.erase");
 
 	private ModLang() {}
 }

@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "defying-the-heavens:item/clothing/guan_hair",
+    "layer1": "defying-the-heavens:item/clothing/guan_cloth",
+    "layer2": "defying-the-heavens:item/clothing/guan_accent",
+    "layer3": "defying-the-heavens:item/clothing/guan_trim"
+  }
+}

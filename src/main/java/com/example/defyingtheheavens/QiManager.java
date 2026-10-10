@@ -4,9 +4,9 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
- * Refills every player's qi pool each tick at their qi gather rate, less what flying on it ({@link QiFlight}) and pressing
- * down on others ({@link RealmSuppressSystem}) cost, and keeps the client's Qi bar in step. Spells and techniques spend qi
- * through {@link #trySpend}.
+ * Refills every player's qi pool each tick at their qi gather rate (cultivator clothing adds to it, see ClothingItem), less
+ * what flying on it ({@link QiFlight}) and pressing down on others ({@link RealmSuppressSystem}) cost, and keeps the client's
+ * Qi bar in step. Spells and techniques spend qi through {@link #trySpend}.
  */
 public final class QiManager {
 	/** While a pool is filling or draining, its owner is synced this often (in ticks); filling up or running dry syncs at once. */
@@ -28,6 +28,8 @@ public final class QiManager {
 				changed = true;
 				if (server.getTickCount() % 20 == 0) CultivationManager.sync(player); // keeps the menu's pill resistance current
 			}
+			// Cultivator clothing gathers qi for its wearer: put on or taken off, the rate follows at once.
+			if (c.setGearQiBonus(ClothingItem.qiGatherBonus(player))) CultivationManager.sync(player);
 			double flightCost = QiFlight.tick(player, c);
 			QiSense.tick(player, c);
 			// Flight is paid first: running dry should end the pressure, not drop the cultivator out of the sky.

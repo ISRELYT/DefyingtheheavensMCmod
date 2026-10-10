@@ -1,9 +1,12 @@
 package com.example.defyingtheheavens;
 
+import com.example.defyingtheheavens.mixin.ServerPlayerAccessor;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.AABB;
 
 public class TribulationCloudGameTests implements FabricGameTest {
@@ -65,6 +68,69 @@ public class TribulationCloudGameTests implements FabricGameTest {
             helper.getLevel().getServer().getPlayerList().remove(player);
             player.discard();
         }
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE)
+    public void leavingMidTribulationFailsItOnReturn(GameTestHelper helper) {
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        try {
+            PlayerCultivation cultivation = CultivationManager.get(player);
+            readyForFoundation(cultivation);
+            TribulationManager.start(player);
+            helper.assertTrue(cultivation.isInTribulation(), "A running tribulation marks the cultivator");
+            TribulationManager.forget(player.getUUID()); // logging out, quitting or the game closing
+            helper.assertTrue(cultivation.isInTribulation() && PlayerCultivation.load(cultivation.save()).isInTribulation(),
+                    "Leaving keeps the mark, and it is saved");
+            helper.assertTrue(TribulationManager.onJoin(player), "Returning still marked fails the tribulation");
+            helper.assertTrue(cultivation.getRealm() == Realm.QI_REFINING && cultivation.getStage() == Stage.LATE
+                    && cultivation.getCultivation() == 0 && cultivation.getPreparedRealm() == null && !cultivation.isInTribulation(),
+                    "Fleeing costs a stage, the cultivation and the pill, like being struck down");
+            helper.assertTrue(!TribulationManager.onJoin(player), "It is paid only once");
+
+            readyForFoundation(cultivation);
+            TribulationManager.start(player);
+            TribulationManager.abandon(player); // falling out of the Upper Realm
+            helper.assertTrue(!cultivation.isInTribulation() && !TribulationManager.onJoin(player),
+                    "A tribulation that ended (here abandoned) leaves no mark behind");
+            helper.succeed();
+        } finally {
+            TribulationManager.forget(player.getUUID());
+            helper.getLevel().getServer().getPlayerList().remove(player);
+            player.discard();
+        }
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE)
+    public void aHitJustBeforeAStrikeDoesNotBluntIt(GameTestHelper helper) {
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        try {
+            player.setGameMode(GameType.SURVIVAL);
+            ((ServerPlayerAccessor) player).dth$setSpawnInvulnerableTime(0);
+            player.getAttribute(Attributes.MAX_HEALTH).setBaseValue(100);
+            player.setHealth(100);
+            PlayerCultivation cultivation = CultivationManager.get(player);
+            cultivation.setState(Realm.FOUNDATION_BUILDING, Stage.GRAND_PERFECTION, 0);
+            cultivation.addCultivation(cultivation.cultivationRequired());
+            cultivation.prepareBreakthrough(Realm.CORE_FORMATION, 0);
+            TribulationManager.start(player);
+            for (int tick = 0; tick < 59; tick++) TribulationManager.tick(helper.getLevel().getServer());
+            helper.assertTrue(player.getHealth() == 100, "No strike has landed yet");
+            player.hurt(helper.getLevel().damageSources().generic(), 10); // a blow taken just before the strike
+            TribulationManager.tick(helper.getLevel().getServer()); // the first Core Formation strike: 5 magic + 13 lightning
+            helper.assertTrue(Math.abs(player.getHealth() - 72) < 0.01f, "The whole strike lands on top of the blow: " + player.getHealth());
+            helper.succeed();
+        } finally {
+            TribulationManager.forget(player.getUUID());
+            helper.getLevel().getServer().getPlayerList().remove(player);
+            player.discard();
+        }
+    }
+
+    /** Qi Refining Grand Perfection, bar full, Foundation Pill taken: ready to break into Foundation Building. */
+    private static void readyForFoundation(PlayerCultivation cultivation) {
+        cultivation.setState(Realm.QI_REFINING, Stage.GRAND_PERFECTION, 0);
+        cultivation.addCultivation(cultivation.cultivationRequired());
+        cultivation.prepareBreakthrough(Realm.FOUNDATION_BUILDING, 0);
     }
 
     @GameTest(template = EMPTY_STRUCTURE)

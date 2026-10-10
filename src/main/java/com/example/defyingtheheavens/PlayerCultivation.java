@@ -95,9 +95,20 @@ public class PlayerCultivation {
 	/** While the soul is in the Inner Realm: where the body is (see {@link InnerRealm}); null otherwise. Saved. */
 	private net.minecraft.nbt.CompoundTag innerReturn;
 
+	/** The cultivator's path, {@link Alignment#MIN} (devil) to {@link Alignment#MAX} (saint); saved and synced. */
+	private int alignment;
+	/** Extra qi gathering from cultivator clothing worn (see ClothingItem#qiGatherBonus): synced, not saved. */
+	private double gearQiBonus;
+
 	// Server-only bookkeeping for the Spatial Gap (not synced).
 	private SpatialTrialHandler.Route pendingTrial = SpatialTrialHandler.Route.NONE;
 	private boolean fallProtected;
+	/**
+	 * Server-only, saved: a Heavenly Tribulation is under way. Set when one starts and cleared when it ends, so a player who
+	 * leaves mid-trial (logging out, quitting, the game closing) still carries it on their return, where it counts as failed
+	 * (see TribulationManager#onJoin).
+	 */
+	private boolean inTribulation;
 
 	public Realm getRealm() { return realm; }
 	public Stage getStage() { return stage; }
@@ -244,6 +255,22 @@ public class PlayerCultivation {
 	/** A Cultivation Pill was taken: the next one works {@link #PILL_RESISTANCE_PER_PILL} less. */
 	public void addPillResistance() { setPillResistance(pillResistance + PILL_RESISTANCE_PER_PILL); }
 
+	// --- Alignment and clothing ---
+
+	public int getAlignment() { return alignment; }
+
+	public void setAlignment(int alignment) { this.alignment = Alignment.clamp(alignment); }
+
+	public double getGearQiBonus() { return gearQiBonus; }
+
+	/** @return true if it changed */
+	public boolean setGearQiBonus(double bonus) {
+		bonus = Math.max(0, bonus);
+		if (Math.abs(bonus - gearQiBonus) < 1.0e-9) return false;
+		gearQiBonus = bonus;
+		return true;
+	}
+
 	/** The body clears pill resistance over {@code seconds}. @return true if it changed */
 	public boolean decayPillResistance(double seconds) {
 		if (pillResistance <= 0) return false;
@@ -328,6 +355,11 @@ public class PlayerCultivation {
 	public boolean isFallProtected() { return fallProtected; }
 	public void setFallProtected(boolean value) { fallProtected = value; }
 
+	// --- Heavenly Tribulation bookkeeping ---
+
+	public boolean isInTribulation() { return inTribulation; }
+	public void setInTribulation(boolean value) { inTribulation = value; }
+
 	// --- Abilities ---
 
 	public boolean isAbilityEnabled(Ability ability) { return !disabledAbilities.contains(ability); }
@@ -375,12 +407,12 @@ public class PlayerCultivation {
 
 	/**
 	 * Qi gathered per second where the player is now: {@link #UPPER_REALM_QI_MULTIPLIER} times faster in the Upper Realm,
-	 * raised by a Qi Gathering Pill, slowed by pressure. A mortal gathers none.
+	 * raised by a Qi Gathering Pill and by cultivator clothing, slowed by pressure. A mortal gathers none.
 	 */
 	public double qiGatherPerSecond() {
 		if (mortal) return 0;
 		return CultivationStats.qiGather(getEffectiveRealm(), getEffectiveStage()) * (inUpperRealm ? UPPER_REALM_QI_MULTIPLIER : 1.0)
-				* (1 + qiBoost) * (1 - pressurePenalty);
+				* (1 + qiBoost) * (1 + gearQiBonus) * (1 - pressurePenalty);
 	}
 
 	/** Qi above the shrunken pool that pressure holds back; it is back in the pool as soon as the pressure lifts. */
@@ -547,6 +579,8 @@ public class PlayerCultivation {
 		tag.putBoolean("LowerRealmBound", lowerRealmBound);
 		tag.putString("SpatialTrial", pendingTrial.name());
 		tag.putBoolean("FallProtected", fallProtected);
+		tag.putBoolean("InTribulation", inTribulation);
+		tag.putInt("Alignment", alignment);
 		// Both lists, so an ability missing from either (one added since the save) takes its default.
 		ListTag disabled = new ListTag();
 		ListTag enabled = new ListTag();
@@ -577,6 +611,8 @@ public class PlayerCultivation {
 		c.lowerRealmBound = tag.getBoolean("LowerRealmBound");
 		c.pendingTrial = SpatialTrialHandler.Route.byName(tag.getString("SpatialTrial"));
 		c.fallProtected = tag.getBoolean("FallProtected");
+		c.inTribulation = tag.getBoolean("InTribulation");
+		c.setAlignment(tag.getInt("Alignment")); // saves from before alignment start neutral (0)
 		// Starts from the defaults (the constructor's), so saves from before an ability existed get its default.
 		ListTag disabled = tag.getList("DisabledAbilities", Tag.TAG_STRING);
 		for (int i = 0; i < disabled.size(); i++) {

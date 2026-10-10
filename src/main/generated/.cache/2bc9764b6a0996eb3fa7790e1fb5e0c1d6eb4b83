@@ -1,3 +1,16 @@
-// 1.20.1	2026-10-09T13:51:04.2538597	Defying The Heavens/Block Loot Tables
+// 1.20.1	2026-10-10T19:05:43.0365012	Defying The Heavens/Block Loot Tables
 04ebb09f67b2087f45c4242724411251bb29bfa1 data\defying-the-heavens\loot_tables\blocks\jade_stone.json
 d6a9b3a779306a1cd27586391e87d940433f4e46 data\defying-the-heavens\loot_tables\blocks\white_blossom_leaves.json
+acfd35aef3d373e63b6f72e54a975eb9956dd14f data\defying-the-heavens\loot_tables\blocks\red_meditation_mat.json
+3300dc4aac9db3ab1905fbff8aef4d6b5af9ce32 data\defying-the-heavens\loot_tables\blocks\spirit_peach_sapling.json
+1faff50a2843b53aa06992afc578cd1685fa9262 data\defying-the-heavens\loot_tables\blocks\blue_spirit_planks.json
+d6f33755bb45d89565bcc67c02d79802fdb3001d data\defying-the-heavens\loot_tables\blocks\jade_ore.json
+dea87fce909ca5a379c5dcf5d29f38b43b7ccffb data\defying-the-heavens\loot_tables\blocks\meditation_mat.json
+13614c0f07e6776ed25b323cb500484b3d3076a6 data\defying-the-heavens\loot_tables\blocks\spirit_peach_leaves.json
+1b232e5c95c1f1ad6fe234c1fc64dc1add954886 data\defying-the-heavens\loot_tables\blocks\qi_vein.json
+4b25a1162f7cebc1ecf3e75964c61b36f4342ea3 data\defying-the-heavens\loot_tables\blocks\blue_spirit_wood.json
+771d43930000d5d17838e3437e0dc81ac22d473c data\defying-the-heavens\loot_tables\blocks\blue_spirit_log.json
+3c912e694a94541911cf7186cd20b8f277f98468 data\defying-the-heavens\loot_tables\blocks\alchemy_cauldron.json
+0e94fb10ad651ca942cd0f9dfda513003025edb6 data\defying-the-heavens\loot_tables\blocks\formation_core.json
+b52f4d37381c416b561a10f644b3c83680926d56 data\defying-the-heavens\loot_tables\blocks\deepslate_qi_vein.json
+7c892c7708ab301a6619ef0f98cc4ee331d0593f data\defying-the-heavens\loot_tables\blocks\deepslate_jade_ore.json

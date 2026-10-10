@@ -1,6 +1,8 @@
 {
   "replace": false,
   "values": [
-    "defying-the-heavens:spatial_rift"
+    "defying-the-heavens:spatial_rift",
+    "defying-the-heavens:sect_barrier",
+    "defying-the-heavens:formation_core"
   ]
 }

@@ -4,9 +4,16 @@ import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
+import net.minecraft.world.item.SpawnEggItem;
+
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
 
 public final class ModItems {
 	public static final Item CULTIVATION_FRUIT = register("cultivation_fruit", new CultivationFruitItem(
@@ -53,6 +60,45 @@ public final class ModItems {
 	public static final Item QI_GATHERING_PILL = register("qi_gathering_pill", new PillItem(PillItem.Kind.QI_GATHERING, new Item.Properties()));
 	public static final Item CULTIVATION_PILL = register("cultivation_pill", new PillItem(PillItem.Kind.CULTIVATION, new Item.Properties()));
 
+	/** Paints seals of qi ink, the lines that carry a Qi Vein's qi to a Formation Core (see InscriptionBrushItem). */
+	public static final Item INSCRIPTION_BRUSH = register("inscription_brush", new InscriptionBrushItem(new Item.Properties().durability(256)));
+	public static final Item CULTIVATOR_SPAWN_EGG = register("cultivator_spawn_egg",
+			new SpawnEggItem(ModEntities.CULTIVATOR, 0xE8E0D0, 0x3D6FC0, new Item.Properties()));
+
+	/** Cultivator clothing, every grade and piece ({@link ClothingItem}): "spirit_cultivator_robe" and so on. */
+	private static final Map<ClothingTier, Map<ArmorItem.Type, Item>> CLOTHING = new EnumMap<>(ClothingTier.class);
+
+	static {
+		for (ClothingTier tier : ClothingTier.values()) {
+			Map<ArmorItem.Type, Item> pieces = new EnumMap<>(ArmorItem.Type.class);
+			for (ArmorItem.Type type : ArmorItem.Type.values()) {
+				Item.Properties properties = new Item.Properties();
+				if (tier == ClothingTier.IMMORTAL) properties.fireResistant();
+				pieces.put(type, register(tier.getId() + "_cultivator_" + clothingPiece(type), new ClothingItem(tier, type, properties)));
+			}
+			CLOTHING.put(tier, pieces);
+		}
+	}
+
+	/** The word for each piece: guan (hair crown), robe, trousers, boots. */
+	public static String clothingPiece(ArmorItem.Type type) {
+		return switch (type) {
+			case HELMET -> "guan";
+			case CHESTPLATE -> "robe";
+			case LEGGINGS -> "trousers";
+			case BOOTS -> "boots";
+		};
+	}
+
+	public static Item clothing(ClothingTier tier, ArmorItem.Type type) {
+		return CLOTHING.get(tier).get(type);
+	}
+
+	public static List<Item> allClothing() {
+		List<Item> all = new ArrayList<>();
+		for (ClothingTier tier : ClothingTier.values()) all.addAll(CLOTHING.get(tier).values());
+		return all;
+	}
 	/** Mined from Jade Ore. */
 	public static final Item JADE = register("jade", new Item(new Item.Properties()));
 
@@ -88,7 +134,16 @@ public final class ModItems {
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(entries -> {
 			entries.accept(RING_OF_POWER);
 			entries.accept(RING_OF_TRANSCENDENCE);
+			entries.accept(INSCRIPTION_BRUSH);
 		});
+		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.COMBAT).register(entries -> {
+			for (ClothingStyle style : ClothingStyle.values()) {
+				for (ClothingTier tier : ClothingTier.values()) {
+					for (ArmorItem.Type type : ArmorItem.Type.values()) entries.accept(ClothingItem.create(clothing(tier, type), style));
+				}
+			}
+		});
+		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.SPAWN_EGGS).register(entries -> entries.accept(CULTIVATOR_SPAWN_EGG));
 	}
 
 	private ModItems() {}

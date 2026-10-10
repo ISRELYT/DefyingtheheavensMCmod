@@ -302,6 +302,7 @@ public final class MeditationManager {
 		else if (pedestals > 1) parts.add(Component.translatable(ModLang.BOOST_PEDESTALS, pedestals));
 		if (boost.heightBonus() > 0) parts.add(Component.translatable(ModLang.BOOST_HEIGHT));
 		if (boost.tranquilBonus() > 0) parts.add(Component.translatable(ModLang.BOOST_TRANQUIL));
+		if (boost.gearBonus() > 0) parts.add(Component.translatable(ModLang.BOOST_GARMENTS));
 		MutableComponent joined = Component.empty();
 		for (int i = 0; i < parts.size(); i++) {
 			if (i > 0) joined.append(", ");

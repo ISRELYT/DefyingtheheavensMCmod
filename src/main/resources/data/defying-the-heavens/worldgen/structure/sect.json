@@ -1,0 +1,7 @@
+{
+  "type": "defying-the-heavens:sect",
+  "biomes": "#defying-the-heavens:has_structure/sect",
+  "spawn_overrides": {},
+  "step": "surface_structures",
+  "terrain_adaptation": "beard_thin"
+}

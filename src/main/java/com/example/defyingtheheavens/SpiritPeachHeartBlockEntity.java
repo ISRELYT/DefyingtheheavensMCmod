@@ -78,14 +78,45 @@ public class SpiritPeachHeartBlockEntity extends BlockEntity {
         return (int) Math.max(0, Math.min(FruitAge.MAX_YEARS - age, Math.floor(reached - age + 1.0e-9)));
     }
 
-    /** The fruit hanging from this tree's leaves. */
+    /**
+     * The fruit hanging from this tree's leaves: under Spirit Peach leaves in its canopy, and nearer this heart than any
+     * other (see {@link #ownerOf}). Feeding ages only these, so trees planted close together, or wild fruit nearby, never
+     * share one tree's qi.
+     */
     public List<CultivationFruitBlockEntity> fruit() {
         List<CultivationFruitBlockEntity> found = new ArrayList<>();
         if (level == null) return found;
         for (BlockPos pos : canopy()) {
-            if (level.getBlockEntity(pos) instanceof CultivationFruitBlockEntity fruit) found.add(fruit);
+            if (level.getBlockEntity(pos) instanceof CultivationFruitBlockEntity fruit
+                    && level.getBlockState(pos.above()).is(ModBlocks.SPIRIT_PEACH_LEAVES) && ownerOf(level, pos) == this) {
+                found.add(fruit);
+            }
         }
         return found;
+    }
+
+    /**
+     * The heart a fruit at {@code fruitPos} belongs to: of the hearts whose canopy reaches it, the nearest sideways, then
+     * the nearest below, then by position, so two hearts never both claim it. Null if none reaches it.
+     */
+    private static SpiritPeachHeartBlockEntity ownerOf(Level level, BlockPos fruitPos) {
+        SpiritPeachHeartBlockEntity owner = null;
+        int bestSideways = Integer.MAX_VALUE, bestBelow = Integer.MAX_VALUE;
+        long bestKey = Long.MAX_VALUE;
+        // A canopy spans 1..REACH_UP above its heart and REACH to each side, so these are the spots a heart can reach from.
+        for (BlockPos pos : BlockPos.betweenClosed(fruitPos.offset(-REACH, -REACH_UP, -REACH), fruitPos.offset(REACH, -1, REACH))) {
+            if (!(level.getBlockEntity(pos) instanceof SpiritPeachHeartBlockEntity heart)) continue;
+            int dx = pos.getX() - fruitPos.getX(), dz = pos.getZ() - fruitPos.getZ();
+            int sideways = dx * dx + dz * dz, below = fruitPos.getY() - pos.getY();
+            long key = pos.asLong();
+            if (sideways < bestSideways || sideways == bestSideways && (below < bestBelow || below == bestBelow && key < bestKey)) {
+                owner = heart;
+                bestSideways = sideways;
+                bestBelow = below;
+                bestKey = key;
+            }
+        }
+        return owner;
     }
 
     private Iterable<BlockPos> canopy() {

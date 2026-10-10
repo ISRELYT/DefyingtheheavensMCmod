@@ -2,11 +2,21 @@ package com.example.defyingtheheavens;
 
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
+import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.Container;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.level.block.state.BlockState;
 
 public final class CultivationEvents {
 	public static void register() {
@@ -20,23 +30,62 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(RealmSuppressionHandler::tick);
 		ServerTickEvents.END_SERVER_TICK.register(ConsciousnessDomainHandler::tick);
 		ServerTickEvents.END_SERVER_TICK.register(RealmSuppressSystem::tick);
+		ServerTickEvents.END_SERVER_TICK.register(Formations::tick);
+		ServerTickEvents.END_SERVER_TICK.register(SectManager::tick);
+		ServerTickEvents.END_SERVER_TICK.register(NpcSpawner::tick);
+		ServerTickEvents.END_SERVER_TICK.register(NpcTravel::tick);
 		ServerTickEvents.END_SERVER_TICK.register(Tempering::tick);
 		ServerTickEvents.END_SERVER_TICK.register(InnerRealm::tick);
 		InnerRealm.registerEvents();
 		Tempering.register();
 		RealmSuppressionHandler.register();
 
+		// Barrier blocks left in a chunk that was unloaded when their formation came down are swept as it loads.
+		ServerChunkEvents.CHUNK_LOAD.register(Formations::onChunkLoad);
+		ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> CultivatorNpc.onLoad(entity));
+		ServerEntityEvents.ENTITY_UNLOAD.register((entity, level) -> CultivatorNpc.onUnload(entity));
+
 		ServerLifecycleEvents.SERVER_STARTED.register(SpatialRiftBlock::ensureOverworldRift);
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> TribulationManager.clear());
 		// Before players and chunks are saved, so nobody is saved with the pressure's lowered health.
 		ServerLifecycleEvents.SERVER_STOPPING.register(RealmSuppressSystem::releaseAll);
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> SpatialStorms.clear());
+		ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+			Formations.clear();
+			CultivatorNpc.clearLoaded();
+		});
+
+		// A formation's shell runs through the ground too: those who couldn't break the barrier can't dig under it either.
+		// Breaking anything on a sect's grounds is trespass (theft, in the treasury), and its disciples answer it.
+		PlayerBlockBreakEvents.BEFORE.register((world, player, pos, state, blockEntity) -> {
+			if (!(world instanceof ServerLevel level) || !(player instanceof ServerPlayer sp)) return true;
+			if (!(state.getBlock() instanceof SectBarrierBlock) && Formations.protectsGround(sp, pos)) return false;
+			SectManager.onTrespass(level, sp, pos);
+			return true;
+		});
+		// Opening the treasury's chests, lifting what its pedestals hold, or harvesting the sect's herbs is theft.
+		UseBlockCallback.EVENT.register((player, world, hand, hit) -> {
+			if (world.isClientSide || !(world instanceof ServerLevel level) || !(player instanceof ServerPlayer sp) || hand != InteractionHand.MAIN_HAND) {
+				return InteractionResult.PASS;
+			}
+			BlockPos pos = hit.getBlockPos();
+			BlockState state = level.getBlockState(pos);
+			boolean valuable = level.getBlockEntity(pos) instanceof Container || state.getBlock() instanceof SpiritPedestalBlock
+					|| state.getBlock() instanceof GinsengBlock || state.getBlock() instanceof CultivationFruitBlock;
+			if (valuable) SectManager.onTrespass(level, sp, pos);
+			return InteractionResult.PASS;
+		});
 
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+			ServerPlayer player = handler.getPlayer();
+			// A tribulation walked out of (logged out, quit, the game closed) fails now, before the stats are applied.
+			boolean fled = TribulationManager.onJoin(player);
 			// Applies stats from the effective (possibly suppressed) stage and syncs the client.
 			// Back from a crash with the soul still inward: return it to the body first.
-			if (ModDimensions.isInnerRealm(handler.getPlayer().level().dimension())) InnerRealm.leave(handler.getPlayer());
-			RealmSuppressionHandler.update(handler.getPlayer());
+			if (ModDimensions.isInnerRealm(player.level().dimension())) InnerRealm.leave(player);
+			RealmSuppressionHandler.update(player);
+			if (fled) player.setHealth(Math.min(player.getHealth(), player.getMaxHealth())); // the lower stage's smaller body
+			Formations.syncSoon(); // the barriers near them, at once
 		});
 
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {

@@ -1,0 +1,130 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "defying-the-heavens:block/formation_core_lacquer",
+    "bronze": "defying-the-heavens:block/formation_core_bronze",
+    "lacquer": "defying-the-heavens:block/formation_core_lacquer",
+    "jade": "defying-the-heavens:block/formation_core_jade",
+    "top": "defying-the-heavens:block/formation_core_top",
+    "pillar": "defying-the-heavens:block/formation_core_pillar",
+    "gold": "defying-the-heavens:block/formation_core_gold",
+    "crystal": "defying-the-heavens:block/formation_core_crystal"
+  },
+  "elements": [
+    {"name": "plinth", "from": [0, 0, 0], "to": [16, 3, 16],
+      "faces": {
+        "down": {"uv": [0, 0, 16, 16], "texture": "#bronze", "cullface": "down"},
+        "up": {"uv": [0, 0, 16, 16], "texture": "#bronze"},
+        "north": {"uv": [0, 13, 16, 16], "texture": "#bronze", "cullface": "north"},
+        "south": {"uv": [0, 13, 16, 16], "texture": "#bronze", "cullface": "south"},
+        "west": {"uv": [0, 13, 16, 16], "texture": "#bronze", "cullface": "west"},
+        "east": {"uv": [0, 13, 16, 16], "texture": "#bronze", "cullface": "east"}
+      }},
+    {"name": "body", "from": [1, 3, 1], "to": [15, 8, 15],
+      "faces": {
+        "up": {"uv": [1, 1, 15, 15], "texture": "#lacquer"},
+        "north": {"uv": [1, 8, 15, 13], "texture": "#lacquer"},
+        "south": {"uv": [1, 8, 15, 13], "texture": "#lacquer"},
+        "west": {"uv": [1, 8, 15, 13], "texture": "#lacquer"},
+        "east": {"uv": [1, 8, 15, 13], "texture": "#lacquer"}
+      }},
+    {"name": "dais", "from": [2, 8, 2], "to": [14, 10, 14],
+      "faces": {
+        "up": {"uv": [0, 0, 16, 16], "texture": "#top"},
+        "north": {"uv": [2, 0, 14, 2], "texture": "#jade"},
+        "south": {"uv": [2, 0, 14, 2], "texture": "#jade"},
+        "west": {"uv": [2, 0, 14, 2], "texture": "#jade"},
+        "east": {"uv": [2, 0, 14, 2], "texture": "#jade"}
+      }},
+    {"name": "post", "from": [1, 8, 1], "to": [3, 13, 3],
+      "faces": {
+        "north": {"uv": [0, 1, 2, 6], "texture": "#pillar"},
+        "south": {"uv": [4, 1, 6, 6], "texture": "#pillar"},
+        "west": {"uv": [8, 1, 10, 6], "texture": "#pillar"},
+        "east": {"uv": [12, 1, 14, 6], "texture": "#pillar"}
+      }},
+    {"name": "cap", "from": [0.5, 13, 0.5], "to": [3.5, 14, 3.5],
+      "faces": {
+        "down": {"uv": [0, 0, 3, 3], "texture": "#gold"},
+        "up": {"uv": [5, 5, 8, 8], "texture": "#gold"},
+        "north": {"uv": [0, 0, 3, 1], "texture": "#gold"},
+        "south": {"uv": [3, 0, 6, 1], "texture": "#gold"},
+        "west": {"uv": [6, 0, 9, 1], "texture": "#gold"},
+        "east": {"uv": [9, 0, 12, 1], "texture": "#gold"}
+      }},
+    {"name": "post", "from": [13, 8, 1], "to": [15, 13, 3],
+      "faces": {
+        "north": {"uv": [0, 1, 2, 6], "texture": "#pillar"},
+        "south": {"uv": [4, 1, 6, 6], "texture": "#pillar"},
+        "west": {"uv": [8, 1, 10, 6], "texture": "#pillar"},
+        "east": {"uv": [12, 1, 14, 6], "texture": "#pillar"}
+      }},
+    {"name": "cap", "from": [12.5, 13, 0.5], "to": [15.5, 14, 3.5],
+      "faces": {
+        "down": {"uv": [0, 0, 3, 3], "texture": "#gold"},
+        "up": {"uv": [5, 5, 8, 8], "texture": "#gold"},
+        "north": {"uv": [0, 0, 3, 1], "texture": "#gold"},
+        "south": {"uv": [3, 0, 6, 1], "texture": "#gold"},
+        "west": {"uv": [6, 0, 9, 1], "texture": "#gold"},
+        "east": {"uv": [9, 0, 12, 1], "texture": "#gold"}
+      }},
+    {"name": "post", "from": [1, 8, 13], "to": [3, 13, 15],
+      "faces": {
+        "north": {"uv": [0, 1, 2, 6], "texture": "#pillar"},
+        "south": {"uv": [4, 1, 6, 6], "texture": "#pillar"},
+        "west": {"uv": [8, 1, 10, 6], "texture": "#pillar"},
+        "east": {"uv": [12, 1, 14, 6], "texture": "#pillar"}
+      }},
+    {"name": "cap", "from": [0.5, 13, 12.5], "to": [3.5, 14, 15.5],
+      "faces": {
+        "down": {"uv": [0, 0, 3, 3], "texture": "#gold"},
+        "up": {"uv": [5, 5, 8, 8], "texture": "#gold"},
+        "north": {"uv": [0, 0, 3, 1], "texture": "#gold"},
+        "south": {"uv": [3, 0, 6, 1], "texture": "#gold"},
+        "west": {"uv": [6, 0, 9, 1], "texture": "#gold"},
+        "east": {"uv": [9, 0, 12, 1], "texture": "#gold"}
+      }},
+    {"name": "post", "from": [13, 8, 13], "to": [15, 13, 15],
+      "faces": {
+        "north": {"uv": [0, 1, 2, 6], "texture": "#pillar"},
+        "south": {"uv": [4, 1, 6, 6], "texture": "#pillar"},
+        "west": {"uv": [8, 1, 10, 6], "texture": "#pillar"},
+        "east": {"uv": [12, 1, 14, 6], "texture": "#pillar"}
+      }},
+    {"name": "cap", "from": [12.5, 13, 12.5], "to": [15.5, 14, 15.5],
+      "faces": {
+        "down": {"uv": [0, 0, 3, 3], "texture": "#gold"},
+        "up": {"uv": [5, 5, 8, 8], "texture": "#gold"},
+        "north": {"uv": [0, 0, 3, 1], "texture": "#gold"},
+        "south": {"uv": [3, 0, 6, 1], "texture": "#gold"},
+        "west": {"uv": [6, 0, 9, 1], "texture": "#gold"},
+        "east": {"uv": [9, 0, 12, 1], "texture": "#gold"}
+      }},
+
+    {"name": "crystal", "from": [5, 12.5, 5], "to": [11, 18.5, 11], "rotation": {"angle": 45, "axis": "y", "origin": [8, 15.5, 8]},
+      "faces": {
+        "up": {"uv": [5, 5, 11, 11], "texture": "#crystal"},
+        "down": {"uv": [5, 5, 11, 11], "texture": "#crystal"},
+        "north": {"uv": [0, 0, 6, 6], "texture": "#crystal"},
+        "south": {"uv": [10, 10, 16, 16], "texture": "#crystal"},
+        "west": {"uv": [0, 10, 6, 16], "texture": "#crystal"},
+        "east": {"uv": [10, 0, 16, 6], "texture": "#crystal"}
+      }},
+    {"name": "tip", "from": [6.5, 18.5, 6.5], "to": [9.5, 20.5, 9.5], "rotation": {"angle": 45, "axis": "y", "origin": [8, 15.5, 8]},
+      "faces": {
+        "up": {"uv": [7, 7, 10, 10], "texture": "#crystal"},
+        "north": {"uv": [3, 0, 6, 2], "texture": "#crystal"},
+        "south": {"uv": [3, 0, 6, 2], "texture": "#crystal"},
+        "west": {"uv": [3, 0, 6, 2], "texture": "#crystal"},
+        "east": {"uv": [3, 0, 6, 2], "texture": "#crystal"}
+      }},
+    {"name": "root", "from": [6.5, 10.5, 6.5], "to": [9.5, 12.5, 9.5], "rotation": {"angle": 45, "axis": "y", "origin": [8, 15.5, 8]},
+      "faces": {
+        "down": {"uv": [7, 7, 10, 10], "texture": "#crystal"},
+        "north": {"uv": [10, 14, 13, 16], "texture": "#crystal"},
+        "south": {"uv": [10, 14, 13, 16], "texture": "#crystal"},
+        "west": {"uv": [10, 14, 13, 16], "texture": "#crystal"},
+        "east": {"uv": [10, 14, 13, 16], "texture": "#crystal"}
+      }}
+  ]
+}

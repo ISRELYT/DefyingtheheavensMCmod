@@ -43,6 +43,9 @@ public final class ModFeatures {
 			DefyingTheHeavens.id("spirit_lotus"), new GinsengFeature(() -> ModBlocks.SPIRIT_LOTUS, GinsengFeature.Ground.WATER, 2, 4));
 	public static final Feature<NoneFeatureConfiguration> SPIRIT_DEW_GRASS = Registry.register(BuiltInRegistries.FEATURE,
 			DefyingTheHeavens.id("spirit_dew_grass"), new GinsengFeature(() -> ModBlocks.SPIRIT_DEW_GRASS, 3, 6));
+	/** A Qi Vein of 1-4 blocks (see QiVeinFeature). */
+	public static final Feature<NoneFeatureConfiguration> QI_VEIN = Registry.register(BuiltInRegistries.FEATURE,
+			DefyingTheHeavens.id("qi_vein"), new QiVeinFeature());
 
 	/**
 	 * Touching this class registers the feature types. Also appends wild Cultivation Fruit to the end of vegetal
@@ -83,6 +86,11 @@ public final class ModFeatures {
 		herb(woods, upperRealm, ModPlacedFeatures.OCHRE_HUANGJING, ModPlacedFeatures.OCHRE_HUANGJING_UPPER_REALM);
 		herb(wetlands, upperRealm, ModPlacedFeatures.SPIRIT_LOTUS, ModPlacedFeatures.SPIRIT_LOTUS_UPPER_REALM);
 		herb(meadows, upperRealm, ModPlacedFeatures.SPIRIT_DEW_GRASS, ModPlacedFeatures.SPIRIT_DEW_GRASS_UPPER_REALM);
+
+		// Qi Veins: as common as diamonds, wherever diamonds can be found (all the Overworld, every Upper Realm island).
+		BiomeModifications.addFeature(BiomeSelectors.foundInOverworld(), GenerationStep.Decoration.UNDERGROUND_ORES, ModPlacedFeatures.QI_VEIN);
+		BiomeModifications.addFeature(upperRealm.and(context -> !context.getBiomeKey().equals(ModBiomes.SPATIAL_GAP)),
+				GenerationStep.Decoration.UNDERGROUND_ORES, ModPlacedFeatures.QI_VEIN_UPPER_REALM);
 		jade(upperRealm);
 	}
 

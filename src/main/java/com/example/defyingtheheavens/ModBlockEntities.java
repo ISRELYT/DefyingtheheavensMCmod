@@ -34,6 +34,16 @@ public final class ModBlockEntities {
 			DefyingTheHeavens.id("alchemy_cauldron"),
 			BlockEntityType.Builder.of(AlchemyCauldronBlockEntity::new, ModBlocks.ALCHEMY_CAULDRON).build(null));
 
+	/** A Formation Core's battery, radius and owner (see FormationCoreBlockEntity). */
+	public static final BlockEntityType<FormationCoreBlockEntity> FORMATION_CORE = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
+			DefyingTheHeavens.id("formation_core"),
+			BlockEntityType.Builder.of(FormationCoreBlockEntity::new, ModBlocks.FORMATION_CORE).build(null));
+
+	/** A seal of qi ink; no data, only drawn (under Qi Sense) by its renderer. */
+	public static final BlockEntityType<SealBlockEntity> SEAL = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
+			DefyingTheHeavens.id("seal"),
+			BlockEntityType.Builder.of(SealBlockEntity::new, ModBlocks.SEAL).build(null));
+
 	/** Touching this class registers the block entity types. */
 	public static void register() {
 	}
