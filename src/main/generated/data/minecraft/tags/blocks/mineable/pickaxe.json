@@ -1,6 +1,8 @@
 {
   "replace": false,
   "values": [
-    "defying-the-heavens:jade_stone"
+    "defying-the-heavens:jade_stone",
+    "defying-the-heavens:spirit_pedestal",
+    "defying-the-heavens:alchemy_cauldron"
   ]
 }

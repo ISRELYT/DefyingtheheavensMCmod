@@ -19,6 +19,8 @@ public class ModModelProvider extends FabricModelProvider {
 	public void generateBlockStateModels(BlockModelGenerators blocks) {
 		blocks.createTrivialCube(ModBlocks.JADE_STONE);
 		blocks.createTrivialBlock(ModBlocks.WHITE_BLOSSOM_LEAVES, TexturedModel.LEAVES);
+		blocks.woodProvider(ModBlocks.BLUE_SPIRIT_LOG).logWithHorizontal(ModBlocks.BLUE_SPIRIT_LOG).wood(ModBlocks.BLUE_SPIRIT_WOOD);
+		blocks.createTrivialCube(ModBlocks.BLUE_SPIRIT_PLANKS);
 		// The rift is drawn by its block entity renderer; the model only supplies black particles.
 		blocks.createNonTemplateModelBlock(ModBlocks.SPATIAL_RIFT, Blocks.BLACK_CONCRETE);
 	}

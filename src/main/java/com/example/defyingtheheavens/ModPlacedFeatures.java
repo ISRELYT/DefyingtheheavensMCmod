@@ -12,16 +12,19 @@ import net.minecraft.world.level.biome.BiomeGenerationSettings;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.GenerationStep;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.VerticalAnchor;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.placement.BiomeFilter;
 import net.minecraft.world.level.levelgen.placement.CountPlacement;
 import net.minecraft.world.level.levelgen.placement.HeightRangePlacement;
+import net.minecraft.world.level.levelgen.placement.HeightmapPlacement;
 import net.minecraft.world.level.levelgen.placement.InSquarePlacement;
 import net.minecraft.world.level.levelgen.placement.NoiseBasedCountPlacement;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import net.minecraft.world.level.levelgen.placement.PlacementModifier;
 import net.minecraft.world.level.levelgen.placement.RarityFilter;
+import net.minecraft.world.level.levelgen.placement.SurfaceWaterDepthFilter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -88,9 +91,9 @@ public final class ModPlacedFeatures {
 	 */
 	public static final ResourceKey<PlacedFeature> CULTIVATION_FRUIT = key("cultivation_fruit");
 	public static final ResourceKey<PlacedFeature> CULTIVATION_FRUIT_UPPER_REALM = key("cultivation_fruit_upper_realm");
-	/** On average one fruit per this many chunks that have trees. The Upper Realm's dense qi bears fruit twice as often. */
-	public static final int FRUIT_CHUNKS_OVERWORLD = 6;
-	public static final int FRUIT_CHUNKS_UPPER_REALM = 3;
+	/** On average one fruit per this many chunks that have trees. The Upper Realm's dense qi bears fruit far more often. */
+	public static final int FRUIT_CHUNKS_OVERWORLD = 64;
+	public static final int FRUIT_CHUNKS_UPPER_REALM = 24;
 	/**
 	 * Wild ginseng, also appended by ModFeatures#register: in Overworld woods (forests, taiga, jungle) and in every Upper
 	 * Realm biome. On average one per this many chunks; Spirit Ginseng is far rarer.
@@ -99,10 +102,46 @@ public final class ModPlacedFeatures {
 	public static final ResourceKey<PlacedFeature> GINSENG_UPPER_REALM = key("ginseng_upper_realm");
 	public static final ResourceKey<PlacedFeature> SPIRIT_GINSENG = key("spirit_ginseng");
 	public static final ResourceKey<PlacedFeature> SPIRIT_GINSENG_UPPER_REALM = key("spirit_ginseng_upper_realm");
-	public static final int GINSENG_CHUNKS_WOODS = 8;
-	public static final int GINSENG_CHUNKS_UPPER_REALM = 3;
-	public static final int SPIRIT_GINSENG_CHUNKS_WOODS = 64;
-	public static final int SPIRIT_GINSENG_CHUNKS_UPPER_REALM = 16;
+	public static final int GINSENG_CHUNKS_WOODS = 80;
+	public static final int GINSENG_CHUNKS_UPPER_REALM = 32;
+	public static final int SPIRIT_GINSENG_CHUNKS_WOODS = 640;
+	public static final int SPIRIT_GINSENG_CHUNKS_UPPER_REALM = 160;
+	/**
+	 * The other wild herbs (see ModFeatures#register for where): on average one per this many chunks in the Overworld biomes
+	 * they grow in, and in the Upper Realm. The rarer variants (Purple Lingzhi, Ochre Huangjing) are far rarer.
+	 */
+	public static final ResourceKey<PlacedFeature> LINGZHI = key("lingzhi");
+	public static final ResourceKey<PlacedFeature> LINGZHI_UPPER_REALM = key("lingzhi_upper_realm");
+	public static final ResourceKey<PlacedFeature> PURPLE_LINGZHI = key("purple_lingzhi");
+	public static final ResourceKey<PlacedFeature> PURPLE_LINGZHI_UPPER_REALM = key("purple_lingzhi_upper_realm");
+	public static final ResourceKey<PlacedFeature> HUANGJING = key("huangjing");
+	public static final ResourceKey<PlacedFeature> HUANGJING_UPPER_REALM = key("huangjing_upper_realm");
+	public static final ResourceKey<PlacedFeature> OCHRE_HUANGJING = key("ochre_huangjing");
+	public static final ResourceKey<PlacedFeature> OCHRE_HUANGJING_UPPER_REALM = key("ochre_huangjing_upper_realm");
+	public static final ResourceKey<PlacedFeature> SPIRIT_LOTUS = key("spirit_lotus");
+	public static final ResourceKey<PlacedFeature> SPIRIT_LOTUS_UPPER_REALM = key("spirit_lotus_upper_realm");
+	public static final ResourceKey<PlacedFeature> SPIRIT_DEW_GRASS = key("spirit_dew_grass");
+	public static final ResourceKey<PlacedFeature> SPIRIT_DEW_GRASS_UPPER_REALM = key("spirit_dew_grass_upper_realm");
+	public static final int LINGZHI_CHUNKS_OVERWORLD = 100;
+	public static final int LINGZHI_CHUNKS_UPPER_REALM = 40;
+	public static final int PURPLE_LINGZHI_CHUNKS_OVERWORLD = 1000;
+	public static final int PURPLE_LINGZHI_CHUNKS_UPPER_REALM = 250;
+	public static final int HUANGJING_CHUNKS_OVERWORLD = 100;
+	public static final int HUANGJING_CHUNKS_UPPER_REALM = 40;
+	public static final int OCHRE_HUANGJING_CHUNKS_OVERWORLD = 1000;
+	public static final int OCHRE_HUANGJING_CHUNKS_UPPER_REALM = 250;
+	public static final int SPIRIT_LOTUS_CHUNKS_OVERWORLD = 160;
+	public static final int SPIRIT_LOTUS_CHUNKS_UPPER_REALM = 64;
+	public static final int SPIRIT_DEW_GRASS_CHUNKS_OVERWORLD = 40;
+	public static final int SPIRIT_DEW_GRASS_CHUNKS_UPPER_REALM = 16;
+	/**
+	 * Blue Spirit Trees: a rare spruce of Blue Spirit Log, in Overworld taiga and anywhere in the Upper Realm, also appended
+	 * by ModFeatures#register (before the herbs, so herbs can grow beneath them). One per this many chunks.
+	 */
+	public static final ResourceKey<PlacedFeature> BLUE_SPIRIT_TREE = key("blue_spirit_tree");
+	public static final ResourceKey<PlacedFeature> BLUE_SPIRIT_TREE_UPPER_REALM = key("blue_spirit_tree_upper_realm");
+	public static final int BLUE_SPIRIT_TREE_CHUNKS_TAIGA = 24;
+	public static final int BLUE_SPIRIT_TREE_CHUNKS_UPPER_REALM = 16;
 
 	public static final List<Entry> ORDER = List.of(
 			new Entry(GenerationStep.Decoration.LAKES, SPRING_BASIN),
@@ -221,6 +260,28 @@ public final class ModPlacedFeatures {
 		register(context, SPIRIT_GINSENG, configured.getOrThrow(ModConfiguredFeatures.SPIRIT_GINSENG), fruit(SPIRIT_GINSENG_CHUNKS_WOODS));
 		register(context, SPIRIT_GINSENG_UPPER_REALM, configured.getOrThrow(ModConfiguredFeatures.SPIRIT_GINSENG),
 				fruit(SPIRIT_GINSENG_CHUNKS_UPPER_REALM));
+		// The other wild herbs, placed the same way.
+		register(context, LINGZHI, configured.getOrThrow(ModConfiguredFeatures.LINGZHI), fruit(LINGZHI_CHUNKS_OVERWORLD));
+		register(context, LINGZHI_UPPER_REALM, configured.getOrThrow(ModConfiguredFeatures.LINGZHI), fruit(LINGZHI_CHUNKS_UPPER_REALM));
+		register(context, PURPLE_LINGZHI, configured.getOrThrow(ModConfiguredFeatures.PURPLE_LINGZHI), fruit(PURPLE_LINGZHI_CHUNKS_OVERWORLD));
+		register(context, PURPLE_LINGZHI_UPPER_REALM, configured.getOrThrow(ModConfiguredFeatures.PURPLE_LINGZHI), fruit(PURPLE_LINGZHI_CHUNKS_UPPER_REALM));
+		register(context, HUANGJING, configured.getOrThrow(ModConfiguredFeatures.HUANGJING), fruit(HUANGJING_CHUNKS_OVERWORLD));
+		register(context, HUANGJING_UPPER_REALM, configured.getOrThrow(ModConfiguredFeatures.HUANGJING), fruit(HUANGJING_CHUNKS_UPPER_REALM));
+		register(context, OCHRE_HUANGJING, configured.getOrThrow(ModConfiguredFeatures.OCHRE_HUANGJING), fruit(OCHRE_HUANGJING_CHUNKS_OVERWORLD));
+		register(context, OCHRE_HUANGJING_UPPER_REALM, configured.getOrThrow(ModConfiguredFeatures.OCHRE_HUANGJING), fruit(OCHRE_HUANGJING_CHUNKS_UPPER_REALM));
+		register(context, SPIRIT_LOTUS, configured.getOrThrow(ModConfiguredFeatures.SPIRIT_LOTUS), fruit(SPIRIT_LOTUS_CHUNKS_OVERWORLD));
+		register(context, SPIRIT_LOTUS_UPPER_REALM, configured.getOrThrow(ModConfiguredFeatures.SPIRIT_LOTUS), fruit(SPIRIT_LOTUS_CHUNKS_UPPER_REALM));
+		register(context, SPIRIT_DEW_GRASS, configured.getOrThrow(ModConfiguredFeatures.SPIRIT_DEW_GRASS), fruit(SPIRIT_DEW_GRASS_CHUNKS_OVERWORLD));
+		register(context, SPIRIT_DEW_GRASS_UPPER_REALM, configured.getOrThrow(ModConfiguredFeatures.SPIRIT_DEW_GRASS), fruit(SPIRIT_DEW_GRASS_CHUNKS_UPPER_REALM));
+
+		// Blue Spirit Trees: placed like vanilla trees in the Overworld, on any island tier in the Upper Realm. They come after
+		// the biome's own trees, so the Overworld spot is the ground under any canopy (a tree may grow up through leaves),
+		// not the top of the leaves, where nearly every spot in a dense taiga would fail.
+		register(context, BLUE_SPIRIT_TREE, configured.getOrThrow(ModConfiguredFeatures.BLUE_SPIRIT_TREE), List.of(
+				RarityFilter.onAverageOnceEvery(BLUE_SPIRIT_TREE_CHUNKS_TAIGA), InSquarePlacement.spread(), SurfaceWaterDepthFilter.forMaxDepth(0),
+				HeightmapPlacement.onHeightmap(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES), BiomeFilter.biome(), PlacementUtils.filteredByBlockSurvival(Blocks.SPRUCE_SAPLING)));
+		register(context, BLUE_SPIRIT_TREE_UPPER_REALM, configured.getOrThrow(ModConfiguredFeatures.BLUE_SPIRIT_TREE),
+				surface(RarityFilter.onAverageOnceEvery(BLUE_SPIRIT_TREE_CHUNKS_UPPER_REALM), Blocks.SPRUCE_SAPLING));
 	}
 
 	private static List<PlacementModifier> fruit(int chunks) {

@@ -1,0 +1,7 @@
+{
+  "parent": "defying-the-heavens:block/spirit_lotus_template",
+  "textures": {
+    "pad": "defying-the-heavens:block/spirit_lotus_pad",
+    "flower": "defying-the-heavens:block/spirit_lotus_stage0"
+  }
+}

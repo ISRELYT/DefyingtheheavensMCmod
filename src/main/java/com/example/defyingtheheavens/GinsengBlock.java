@@ -61,6 +61,8 @@ public class GinsengBlock extends BaseEntityBlock {
 
     private static final VoxelShape[] SHAPES = {box(3, 0, 3, 13, 8, 13), box(2, 0, 2, 14, 13, 14), box(2, 0, 2, 14, 13, 14)};
     private static final QiFeeding.Messages MESSAGES = new QiFeeding.Messages(ModLang.GINSENG_NEED_CORE, ModLang.GINSENG_NOT_ENOUGH, ModLang.GINSENG_MAX);
+    /** Every aging herb, so a harvested root can find the plant it came from (to draw it on a pedestal). */
+    private static final List<GinsengBlock> ALL = new ArrayList<>();
     private final Supplier<Item> harvest;
     private final Supplier<Item> seeds;
 
@@ -72,8 +74,17 @@ public class GinsengBlock extends BaseEntityBlock {
         super(properties);
         this.harvest = harvest;
         this.seeds = seeds;
+        ALL.add(this);
         // Full grown by default: wild plants, and ginseng drawn on a pedestal. Planted seeds start as seedlings.
         registerDefaultState(stateDefinition.any().setValue(STAGE, 2));
+    }
+
+    /** The plant {@code item} is dug up from (Ginseng, Lingzhi, Spirit Lotus...), or null. */
+    public static GinsengBlock plantFor(Item item) {
+        for (GinsengBlock plant : ALL) {
+            if (plant.harvest.get() == item) return plant;
+        }
+        return null;
     }
 
     public static int stageFor(int years) {

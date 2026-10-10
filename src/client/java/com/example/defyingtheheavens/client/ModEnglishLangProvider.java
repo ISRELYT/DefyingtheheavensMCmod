@@ -3,8 +3,10 @@ package com.example.defyingtheheavens.client;
 import com.example.defyingtheheavens.Ability;
 import com.example.defyingtheheavens.ModBlocks;
 import com.example.defyingtheheavens.ModEntities;
+import com.example.defyingtheheavens.ModEffects;
 import com.example.defyingtheheavens.ModItems;
 import com.example.defyingtheheavens.ModLang;
+import com.example.defyingtheheavens.PillGrade;
 import com.example.defyingtheheavens.Realm;
 import com.example.defyingtheheavens.Stage;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
@@ -26,10 +28,10 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add("item.defying-the-heavens.cultivation_fruit.full", "Your inventory is full. Make room to harvest this fruit.");
 		t.add(ModBlocks.MEDITATION_MAT, "Meditation Mat");
 		t.add("gui.defying-the-heavens.baubles", "Baubles");
-		t.add("config.jade.plugin_defying-the-heavens.fruit_age", "Fruit and Ginseng Age"); // Jade's toggle for the fruit-age tooltip
+		t.add("config.jade.plugin_defying-the-heavens.fruit_age", "Fruit and Herb Age"); // Jade's toggle for the fruit-age tooltip
 		t.add(ModBlocks.RED_MEDITATION_MAT, "Red Silk Meditation Mat");
 		t.add(ModBlocks.SPIRIT_PEDESTAL, "Spirit Pedestal");
-		t.add(ModLang.PEDESTAL_TOOLTIP, "Holds a Cultivation Fruit or ginseng to aid meditation nearby");
+		t.add(ModLang.PEDESTAL_TOOLTIP, "Holds a Cultivation Fruit or a herb to aid meditation nearby");
 		t.add(ModItems.GINSENG, "Ginseng");
 		t.add(ModBlocks.GINSENG, "Ginseng");
 		t.add(ModItems.SPIRIT_GINSENG, "Spirit Ginseng");
@@ -43,16 +45,16 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.PEACH_NOT_ENOUGH, "Not enough qi: the tree needs %s for its next year.");
 		t.add(ModLang.PEACH_MAX, "This tree has reached 10,000 years. It can grow no older.");
 		t.add(ModLang.PEACH_FED, "You pour %s qi into the tree. It grows %s years (now %s years old).");
-		t.add(ModLang.GINSENG_INGREDIENT, "An ingredient for pills and elixirs");
+		t.add(ModLang.GINSENG_INGREDIENT, "An ingredient for pills and elixirs: brew it in an Alchemy Cauldron");
 		t.add(ModLang.GINSENG_HARVESTED, "Harvested: no longer ages and cannot be replanted");
-		t.add(ModLang.GINSENG_FULL, "Your inventory is full. Make room to dig up this ginseng.");
+		t.add(ModLang.GINSENG_FULL, "Your inventory is full. Make room to harvest this herb.");
 		t.add(ModItems.GINSENG_SEEDS, "Ginseng Seeds");
 		t.add(ModItems.SPIRIT_GINSENG_SEEDS, "Spirit Ginseng Seeds");
 		t.add(ModLang.GINSENG_SEEDS_TOOLTIP, "Plant in soil. Full grown after %s years, when digging it up also gives seeds");
-		t.add(ModLang.GINSENG_NEED_CORE, "Only a cultivator with a Golden Core (Core Formation) can pour qi into ginseng.");
-		t.add(ModLang.GINSENG_NOT_ENOUGH, "Not enough qi: the ginseng needs %s for its next year.");
-		t.add(ModLang.GINSENG_MAX, "This ginseng has reached 10,000 years. It can grow no older.");
-		t.add(ModLang.GINSENG_FED, "You pour %s qi into the ginseng. It grows %s years (now %s years old).");
+		t.add(ModLang.GINSENG_NEED_CORE, "Only a cultivator with a Golden Core (Core Formation) can pour qi into a spirit herb.");
+		t.add(ModLang.GINSENG_NOT_ENOUGH, "Not enough qi: the herb needs %s for its next year.");
+		t.add(ModLang.GINSENG_MAX, "This herb has reached 10,000 years. It can grow no older.");
+		t.add(ModLang.GINSENG_FED, "You pour %s qi into the herb. It grows %s years (now %s years old).");
 		t.add(ModLang.FRUIT_PEDESTAL_TOOLTIP, "On a Spirit Pedestal: +%s%% cultivation speed while meditating nearby");
 		t.add(ModItems.RING_OF_POWER, "Ring of Power");
 		t.add(ModLang.RING_OF_POWER_TOOLTIP, "When worn: +%s cultivation per second while meditating");
@@ -66,6 +68,9 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModBlocks.SPATIAL_RIFT, "Spatial Rift");
 		t.add(ModBlocks.JADE_STONE, "Jade Stone");
 		t.add(ModBlocks.WHITE_BLOSSOM_LEAVES, "White Blossom Leaves");
+		t.add(ModBlocks.BLUE_SPIRIT_LOG, "Blue Spirit Log");
+		t.add(ModBlocks.BLUE_SPIRIT_WOOD, "Blue Spirit Wood");
+		t.add(ModBlocks.BLUE_SPIRIT_PLANKS, "Blue Spirit Planks");
 
 		// Upper Realm biomes and the Spatial Gap
 		t.add(ModLang.biomeKey("dense_qi_peaks"), "Dense Qi Peaks");
@@ -229,5 +234,88 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_TRIB_FALL, "The backlash shatters your foundation. Your cultivation falls to %s.");
 		t.add(ModLang.MSG_TRIB_ABANDONED, "You fall out of the realm and the tribulation clouds lose you. The breakthrough is abandoned.");
 		t.add(ModLang.TRIB_HUD, "Heavenly Tribulation (%s) - strikes left: %s");
+
+		// The mortal path and alchemy
+		t.add(ModItems.MARROW_CLEANSING_ELIXIR, "Marrow Cleansing Elixir");
+		t.add(ModItems.FOUNDATION_PILL, "Foundation Pill");
+		t.add(ModItems.CORE_PILL, "Core Pill");
+		t.add(ModItems.QI_GATHERING_PILL, "Qi Gathering Pill");
+		t.add(ModItems.CULTIVATION_PILL, "Cultivation Pill");
+		t.add(ModBlocks.ALCHEMY_CAULDRON, "Alchemy Cauldron");
+		t.add(ModEffects.QI_GATHERING, "Qi Gathering");
+		for (PillGrade grade : PillGrade.values()) {
+			t.add(ModLang.pillGradeKey(grade.getId()), switch (grade) {
+				case LOW -> "Low-Grade %s";
+				case MID -> "Mid-Grade %s";
+				case HIGH -> "High-Grade %s";
+				case SUPREME -> "Supreme-Grade %s";
+				case IMMORTAL -> "Immortal-Grade %s";
+			});
+		}
+		t.add(ModLang.MORTAL, "Mortal");
+		t.add(ModLang.MORTAL_DETAIL, "Your meridians are sealed: you can't gather qi, and cultivation can't take hold in you.");
+		t.add(ModLang.MORTAL_RECIPE, "Drink a %s to open them. Brew it in an Alchemy Cauldron over a fire: %s.");
+		t.add(ModLang.MORTAL_STATS, "A mortal's body has no realm to strengthen it.");
+		t.add(ModLang.NEED_PILL, "Bottleneck reached! You need a %s to break into %s.");
+		t.add(ModLang.PILL_PREPARED, "A pill's power waits to carry you into %s.");
+		t.add(ModLang.QI_BOOST_LINE, "Qi Gathering Pill: +%s%% qi gathering");
+		t.add(ModLang.PILL_RESISTANCE_LINE, "Pill resistance: %s%%");
+		t.add(ModLang.MSG_MORTAL_MEDITATE, "Your meridians are sealed. Drink a Marrow Cleansing Elixir before you can gather qi.");
+		t.add(ModLang.MSG_NEED_PILL, "You need a %s to break into %s. Eat it at this bottleneck, then break through.");
+		t.add(ModLang.MSG_AWAKENED, "Black impurities seep from your pores as your meridians open. You have begun to cultivate: %s!");
+		t.add(ModLang.MSG_ALREADY_AWAKENED, "Your meridians are already open.");
+		t.add(ModLang.MSG_PILL_PREPARED, "The %s settles in your dantian: the way into %s is open (+%s%% head start). Break through when ready.");
+		t.add(ModLang.MSG_PILL_WRONG_TIME, "This pill is only of use at %s.");
+		t.add(ModLang.MSG_PILL_ALREADY, "You have already taken a pill for %s.");
+		t.add(ModLang.MSG_PILL_MORTAL, "A mortal body can't absorb this pill. Drink a Marrow Cleansing Elixir first.");
+		t.add(ModLang.MSG_PILL_BOTTLENECK, "Your cultivation can't hold any more right now. The pill would be wasted.");
+		t.add(ModLang.MSG_PILL_CULTIVATION, "+%s cultivation (pill effectiveness %s%%)");
+		t.add(ModLang.MSG_PILL_QI, "+%s%% qi gathering for %s minutes");
+		t.add(ModLang.PILL_AGE, "Ingredients: %s years old");
+		t.add(ModLang.PILL_AGE_SHORT, " (%s years)");
+		t.add(ModLang.PILL_RECIPE, "Brewed from: %s");
+		t.add(ModLang.PILL_EFFECT_AWAKEN, "Opens a mortal's meridians: begin cultivating at Qi Refining");
+		t.add(ModLang.PILL_EFFECT_BREAKTHROUGH, "Opens the way into %s (the tribulation remains)");
+		t.add(ModLang.PILL_EFFECT_START, "Start %s%% of the way into the new stage");
+		t.add(ModLang.PILL_EFFECT_QI, "+%s%% qi gathering for %s minutes");
+		t.add(ModLang.PILL_EFFECT_CULTIVATION, "Grants %s%% of your current stage's cultivation");
+		t.add(ModLang.PILL_EFFECT_RESISTANCE, "Pill resistance: works at %s%% right now");
+		t.add(ModLang.PILL_WHEN, "Take it at %s");
+		t.add(ModLang.CAULDRON_TOOLTIP, "Fill with water, light a fire beneath, then add ingredients");
+		t.add(ModLang.CAULDRON_NEEDS_WATER, "Fill the cauldron with a water bucket first.");
+		t.add(ModLang.CAULDRON_EMPTY, "The water is ready. Add ingredients one at a time.");
+		t.add(ModLang.CAULDRON_CONTENTS, "In the cauldron: %s (sneak with an empty hand to tip them out)");
+		t.add(ModLang.CAULDRON_ADDED, "%s added. In the cauldron: %s");
+		t.add(ModLang.CAULDRON_REJECTED, "%s doesn't fit any recipe with what's already in the cauldron.");
+		t.add(ModLang.CAULDRON_FULL, "The cauldron can't hold any more ingredients.");
+		t.add(ModLang.CAULDRON_EMPTIED, "You tip the ingredients back out.");
+		t.add(ModLang.CAULDRON_BREWING, "Brewing %s... %s%%");
+		t.add(ModLang.CAULDRON_NEEDS_HEAT, "%s is ready to brew. Light a fire beneath the cauldron.");
+		t.add(ModLang.CAULDRON_DONE, "%s is ready!");
+
+		// More herbs (see GinsengBlock, SpiritLotusBlock, SpiritDewGrassBlock)
+		t.add(ModItems.LINGZHI, "Lingzhi");
+		t.add(ModBlocks.LINGZHI, "Lingzhi");
+		t.add(ModItems.PURPLE_LINGZHI, "Purple Lingzhi");
+		t.add(ModBlocks.PURPLE_LINGZHI, "Purple Lingzhi");
+		t.add(ModItems.HUANGJING, "Huangjing");
+		t.add(ModBlocks.HUANGJING, "Huangjing");
+		t.add(ModItems.OCHRE_HUANGJING, "Ochre Huangjing");
+		t.add(ModBlocks.OCHRE_HUANGJING, "Ochre Huangjing");
+		t.add(ModItems.SPIRIT_LOTUS, "Spirit Lotus");
+		t.add(ModBlocks.SPIRIT_LOTUS, "Spirit Lotus");
+		t.add(ModItems.LINGZHI_SPORES, "Lingzhi Spores");
+		t.add(ModItems.PURPLE_LINGZHI_SPORES, "Purple Lingzhi Spores");
+		t.add(ModItems.HUANGJING_SEEDS, "Huangjing Seeds");
+		t.add(ModItems.OCHRE_HUANGJING_SEEDS, "Ochre Huangjing Seeds");
+		t.add(ModItems.SPIRIT_LOTUS_SEEDS, "Spirit Lotus Seeds");
+		t.add(ModItems.SPIRIT_DEW, "Spirit Dew");
+		t.add(ModBlocks.SPIRIT_DEW_GRASS, "Spirit Dew Grass");
+		t.add(ModLang.LOTUS_SEEDS_TOOLTIP, "Place on still water. Full grown after %s years, when picking it also gives seeds");
+		t.add(ModLang.DEW_TOOLTIP, "Drink to restore %s%% of your qi");
+		t.add(ModLang.MSG_DEW_MORTAL, "A mortal body can't hold the dew's qi.");
+		t.add(ModLang.MSG_DEW_FULL, "Your qi is already full.");
+		t.add(ModLang.MSG_DEW_DRUNK, "+%s qi");
+		t.add(ModLang.PILL_SUBSTITUTE, "Stands in for %s in any recipe, counting as twice its age");
 	}
 }

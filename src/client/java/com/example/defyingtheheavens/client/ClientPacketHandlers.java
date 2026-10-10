@@ -23,8 +23,13 @@ public final class ClientPacketHandlers {
 			int disabledAbilities = buf.readVarInt();
 			int pressureStages = buf.readVarInt();
 			double pressurePenalty = buf.readDouble();
+			boolean mortal = buf.readBoolean();
+			int preparedRealm = buf.readVarInt();
+			double preparedBonus = buf.readDouble();
+			double qiBoost = buf.readDouble();
+			double pillResistance = buf.readDouble();
 			client.execute(() -> ClientCultivationData.update(realm, stage, cultivation, qi, meditating, lowerRealmBound, inUpperRealm,
-					disabledAbilities, pressureStages, pressurePenalty));
+					disabledAbilities, pressureStages, pressurePenalty, mortal, preparedRealm, preparedBonus, qiBoost, pillResistance));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.QI_ABSORPTION, (client, handler, buf, sender) -> {

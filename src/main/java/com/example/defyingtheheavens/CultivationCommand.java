@@ -29,6 +29,20 @@ public final class CultivationCommand {
 															.append(r.getDisplayName()).append(" - ").append(s.getDisplayName()), false);
 													return 1;
 												}))))
+						.then(Commands.literal("mortal")
+								.executes(ctx -> {
+									// Back to the start of the path (for testing the Marrow Cleansing Elixir).
+									ServerPlayer p = ctx.getSource().getPlayerOrException();
+									PlayerCultivation c = CultivationManager.get(p);
+									c.setState(Realm.QI_REFINING, Stage.EARLY, 0);
+									c.setMortal(true);
+									c.setQi(0);
+									c.prepareBreakthrough(null, 0);
+									CultivationManager.refresh(p);
+									RealmSuppressSystem.refreshNow();
+									ctx.getSource().sendSuccess(() -> Component.literal("You are mortal again."), false);
+									return 1;
+								}))
 						.then(Commands.literal("addcultivation")
 								.then(Commands.argument("amount", DoubleArgumentType.doubleArg(0))
 										.executes(ctx -> {

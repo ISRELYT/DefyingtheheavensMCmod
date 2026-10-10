@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "defying-the-heavens:block/blue_spirit_planks"
+  }
+}

@@ -34,7 +34,7 @@ Breaking the fruit or removing its supporting leaves drops the fruit with its ag
 ### Wild fruit
 
 Fruit generates on its own, hanging under the leaves of naturally generated trees in new chunks:
-on average one per **6** tree-bearing chunks in the Overworld, and one per **3** in the Upper Realm.
+on average one per **64** tree-bearing chunks in the Overworld, and one per **24** in the Upper Realm.
 Player-placed leaves never get fruit. Wild fruit starts aging from the moment it is generated.
 
 | Starting age | Chance |
@@ -113,9 +113,9 @@ the game uses copies under `assets/defying-the-heavens` (`meditation_mat*`, `red
 ## Ginseng
 
 **Ginseng** and the rarer **Spirit Ginseng** grow wild on the ground and age like Cultivation Fruit: they start at a
-natural age and gain 10 years per Minecraft day, up to 10,000 years, with the same age auras as fruit. They will be
-ingredients for alchemy (pills and elixirs); for now a harvested root keeps its age and can be set on a Spirit Pedestal,
-where it counts like a fruit of the same age.
+natural age and gain 10 years per Minecraft day, up to 10,000 years, with the same age auras as fruit. They are
+ingredients for alchemy (see below): a harvested root keeps its age, which carries into the pills brewed from it. A root can
+also be set on a Spirit Pedestal, where it counts like a fruit of the same age.
 
 - Right-click a plant to dig it up into your inventory (a full inventory leaves it in the ground). Breaking it, or the
   soil under it, drops it too. Harvested ginseng keeps its age, cannot be replanted and is not food.
@@ -126,8 +126,8 @@ where it counts like a fruit of the same age.
 - A cultivator with a Golden Core (Core Formation or higher) can sneak and right-click a plant with an empty hand to
   pour qi into it, ageing it at the same rising cost as a Spirit Peach Tree (see `QiFeeding.java`).
 - Ginseng grows only on soil (grass, dirt, podzol, moss...). Wild plants appear on grass or podzol, never in caves.
-- Spawning, on average one plant per this many chunks: Ginseng 8 in Overworld forests, taiga and jungles and 3 in the
-  Upper Realm; Spirit Ginseng 64 and 16. These are `GINSENG_CHUNKS_*` and `SPIRIT_GINSENG_CHUNKS_*` in
+- Spawning, on average one plant per this many chunks: Ginseng 80 in Overworld forests, taiga and jungles and 32 in the
+  Upper Realm; Spirit Ginseng 640 and 160. These are `GINSENG_CHUNKS_*` and `SPIRIT_GINSENG_CHUNKS_*` in
   `ModPlacedFeatures.java` (and the matching `placed_feature/*ginseng*.json`; re-run `runDatagen` after changing them).
 - The plants are drawn like vanilla's sweet berry bush, whose leaves they reuse: Ginseng in a warm green with one cluster
   of red berries, Spirit Ginseng in pale jade with golden berries; seedlings and young plants use the bush's earlier
@@ -207,6 +207,83 @@ Spirit treasures are vessels of qi, so in the grey plane of Qi they keep their c
   from 5,000 years.
 - A pedestal feeding a meditator sends its qi into them as motes (in place of the grey particles).
 - Code: `client/QiSenseTreasures.java` (and `QiSenseClientHandler#emit`, `SenseOverlay`).
+
+## The mortal path and alchemy
+
+Every new player starts as a **mortal**: no cultivation, no qi, no realm bonuses and no abilities, and meditation does
+nothing. Drinking a **Marrow Cleansing Elixir** opens the meridians and starts the player at Qi Refining Early. Players
+who were already cultivating in an existing world stay cultivators.
+
+Pills are brewed in an **Alchemy Cauldron** (shapeless: a cauldron, two copper ingots and a gold ingot). Fill it with a
+water bucket, put a fire under it (fire, soul fire, a lit campfire, lava or a magma block), then right-click the
+ingredients in one at a time. Anything that doesn't fit a recipe with what's already in is refused, so nothing is lost.
+When the ingredients make a recipe the water turns jade and the brew begins; it pauses while the fire is out. When it's
+done, the pill pops out and the water is used up. Right-click with an empty hand to see what's inside (sneak to tip the
+ingredients back out); an empty bucket takes the water back.
+
+| Pill | Ingredients | Brew | Effect |
+|---|---|---|---|
+| Marrow Cleansing Elixir | Ginseng, Honey Bottle, 2 Bone Meal | 20 s | Mortal to Qi Refining Early |
+| Qi Gathering Pill | Ginseng, Spirit Dew, Glowstone Dust | 20 s | More qi gathered per second for 5 minutes |
+| Cultivation Pill | Ginseng, Huangjing, Glistering Melon Slice | 30 s | A share of the current stage's cultivation |
+| Foundation Pill | Ginseng, Lingzhi, Spirit Ginseng, Amethyst Shard | 45 s | Needed to break into Foundation Building |
+| Core Pill | Spirit Ginseng, Huangjing, Cultivation Fruit, Blaze Powder | 60 s | Needed to break into Core Formation |
+
+- **Grade.** Each pill comes out Low, Mid, High, Supreme or Immortal grade (white, green, aqua, purple, gold). The odds
+  depend on the average age of the aged ingredients (the herbs, Cultivation Fruit): fresh ones give mostly Low; Immortal
+  is only possible from 1,000 years and still rare (the table is `ODDS` in `PillGrade.java`).
+- **Potency** = grade multiplier (1, 1.5, 2, 3, 5) x age factor (1 for fresh ingredients up to 2 at 10,000 years), so 1 to
+  10. It scales every effect: Qi Gathering Pill +25% qi gathering per point; Cultivation Pill 15% of a stage per point;
+  breakthrough pills start the new realm 5% in per point above 1 (up to 50%). The numbers are constants at the top of
+  `PillItem.java`.
+- **Breakthrough pills.** At Qi Refining Grand Perfection the breakthrough waits for a Foundation Pill, and at Foundation
+  Building Grand Perfection for a Core Pill. Eating it opens the way; the tribulation still has to be survived, and dying
+  in it spends the pill. Later realms need no pill.
+- **Pill resistance.** Each Cultivation Pill makes the next one 25% weaker (down to 10%); it wears off at one pill's worth
+  every ten minutes. A pill that would do nothing right now (a cultivation pill at a bottleneck, a breakthrough pill at the
+  wrong stage, anything but the elixir for a mortal) isn't eaten.
+- **Rare herbs.** Purple Lingzhi and Ochre Huangjing stand in for Lingzhi and Huangjing in any recipe and count as twice
+  their age, so they push the grade up.
+- Recipes are in `AlchemyRecipes.java`; the cauldron is `AlchemyCauldronBlock(Entity).java`; the Qi Gathering effect is
+  `ModEffects.java`. Pill tooltips list their ingredients, and the cultivation menu names the pill a breakthrough needs.
+
+```
+/cultivation mortal                                   back to mortal, to try the elixir
+/give @s defying-the-heavens:core_pill{PillGrade:4,PillAge:10000}   an Immortal-grade pill (grades 0-4)
+```
+
+## More herbs
+
+Four more spirit herbs, for alchemy. The first three age exactly like ginseng (10 years per day up to 10,000, the same age
+auras, Golden Core qi feeding, dug up into items that keep their age, seeds from a full-grown plant, can sit on a Spirit
+Pedestal). Code: `GinsengBlock` (shared), `SpiritLotusBlock`, `SpiritDewGrassBlock`, `SpiritDewItem`, `GinsengFeature`
+(wild placement, on soil or water).
+
+| Herb | Grows | Rare variant | Seeds |
+|---|---|---|---|
+| **Lingzhi** (lacquered red shelf fungus) | Soil, in dark and old-growth forests | Purple Lingzhi | Lingzhi Spores |
+| **Huangjing** (Solomon's seal; the item is its yellow root) | Soil, in forests, taiga and jungle | Ochre Huangjing | Huangjing Seeds |
+| **Spirit Lotus** (golden, five-coloured petal tips) | Still water, in swamps and rivers | none | Spirit Lotus Seeds (place on water) |
+| **Spirit Dew Grass** | Soil, in meadows, flower forests, cherry groves | none | shears take the grass |
+
+- All of them grow more often everywhere in the Upper Realm. Spawn rates (one per this many chunks) are the
+  `*_CHUNKS_*` constants in `ModPlacedFeatures.java`: Lingzhi and Huangjing 100 / 40 (Upper Realm), their rare variants
+  1000 / 250, Spirit Lotus 160 / 64, Spirit Dew Grass 40 / 16. If you change them, also change the matching
+  `placed_feature/*.json` (or re-run `runDatagen`).
+- The Spirit Lotus is a lily pad as a seedling, a bud from year 4 and in flower from year 10.
+- Spirit Dew Grass gathers a bead of **Spirit Dew** every few minutes (at once in the Upper Realm). Right-click to collect
+  it; the grass stays. Drinking Spirit Dew refills a quarter of your qi; it is also an ingredient.
+
+## Blue Spirit Wood
+
+Spruce-dark logs with blue qi flowing up their veins (an animated texture); the planks show faint blue grain. Log, wood
+and planks work like vanilla wood.
+
+It grows wild as the **Blue Spirit Tree**, a rare spruce (vanilla spruce shape and leaves) with a Blue Spirit Log trunk: on
+average one per **24** chunks of Overworld taiga and one per **16** chunks anywhere in the Upper Realm
+(`BLUE_SPIRIT_TREE_CHUNKS_*` in `ModPlacedFeatures.java`, `blue_spirit_tree` in `ModConfiguredFeatures.java`). There is
+no sapling: its leaves drop ordinary spruce saplings, so every Blue Spirit Log comes from a tree you find. In the
+Overworld it takes root on the ground beneath the taiga's canopy and grows up through it.
 
 ## License
 

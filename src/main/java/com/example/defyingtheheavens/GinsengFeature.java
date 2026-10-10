@@ -12,12 +12,15 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunkSection;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 
 /**
- * Plants one wild ginseng on open soil near the placement origin, with an age rolled by {@link FruitAge#natural}. Like
+ * Plants one wild herb near the placement origin: on open soil (ginseng, lingzhi, huangjing, Spirit Dew Grass) or on still
+ * water (Spirit Lotus). Herbs that age ({@link GinsengBlock}) get an age rolled by {@link FruitAge#natural}. Like
  * CultivationFruitFeature it scans whole columns, so every Upper Realm island tier qualifies, and runs after trees (it is
  * appended to the end of vegetal decoration), so it grows in the shade of forests that are already there.
  * How often it runs, and where, is set by the placed features (see ModPlacedFeatures) and ModFeatures#register.
@@ -26,11 +29,20 @@ public class GinsengFeature extends Feature<NoneFeatureConfiguration> {
     private static final int ATTEMPTS = 16;
     /** Columns are picked within this many blocks of the origin, keeping writes inside the chunks worldgen allows. */
     private static final int SPREAD = 7;
+    /** Where a herb takes root: open soil, or the surface of still water. */
+    public enum Ground { SOIL, WATER }
+
     private final Supplier<Block> plant;
+    private final Ground ground;
 
     public GinsengFeature(Supplier<Block> plant) {
+        this(plant, Ground.SOIL);
+    }
+
+    public GinsengFeature(Supplier<Block> plant, Ground ground) {
         super(NoneFeatureConfiguration.CODEC);
         this.plant = plant;
+        this.ground = ground;
     }
 
     @Override
@@ -43,11 +55,12 @@ public class GinsengFeature extends Feature<NoneFeatureConfiguration> {
             int x = origin.getX() + random.nextInt(SPREAD * 2 + 1) - SPREAD;
             int z = origin.getZ() + random.nextInt(SPREAD * 2 + 1) - SPREAD;
             spots.clear();
-            collectSpots(level, x, z, spots);
+            collectSpots(level, x, z, ground, spots);
             if (spots.isEmpty()) continue;
             BlockPos pos = spots.get(random.nextInt(spots.size()));
             int age = FruitAge.natural(random);
-            BlockState state = plant.get().defaultBlockState().setValue(GinsengBlock.STAGE, GinsengBlock.stageFor(age));
+            BlockState state = plant.get().defaultBlockState();
+            if (state.hasProperty(GinsengBlock.STAGE)) state = state.setValue(GinsengBlock.STAGE, GinsengBlock.stageFor(age));
             if (!level.setBlock(pos, state, Block.UPDATE_CLIENTS)) continue;
             if (level.getBlockEntity(pos) instanceof GinsengBlockEntity ginseng) {
                 ginseng.setWildAge(age, level.getLevel().getGameTime());
@@ -58,10 +71,10 @@ public class GinsengFeature extends Feature<NoneFeatureConfiguration> {
     }
 
     /**
-     * Every air block in the column resting on grass or podzol, on any island tier. Only those two: they form only under
-     * open sky, so ginseng never sprouts on the dirt of a cave floor.
+     * Every air block in the column resting on grass or podzol (or, for {@link Ground#WATER}, on a still water source), on
+     * any island tier. Only those soils: they form only under open sky, so herbs never sprout on the dirt of a cave floor.
      */
-    private static void collectSpots(WorldGenLevel level, int x, int z, List<BlockPos> spots) {
+    private static void collectSpots(WorldGenLevel level, int x, int z, Ground ground, List<BlockPos> spots) {
         ChunkAccess chunk = level.getChunk(SectionPos.blockToSectionCoord(x), SectionPos.blockToSectionCoord(z));
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         for (int index = chunk.getSectionsCount() - 1; index >= 0; index--) {
@@ -72,7 +85,12 @@ public class GinsengFeature extends Feature<NoneFeatureConfiguration> {
             for (int y = bottom + 15; y >= bottom; y--) {
                 if (y + 1 >= level.getMaxBuildHeight()) continue;
                 BlockState soil = chunk.getBlockState(cursor.set(x, y, z));
-                if (!soil.is(Blocks.GRASS_BLOCK) && !soil.is(Blocks.PODZOL)) continue;
+                if (ground == Ground.WATER) {
+                    FluidState water = soil.getFluidState();
+                    if (!water.is(FluidTags.WATER) || !water.isSource() || !soil.is(Blocks.WATER)) continue;
+                } else if (!soil.is(Blocks.GRASS_BLOCK) && !soil.is(Blocks.PODZOL)) {
+                    continue;
+                }
                 if (chunk.getBlockState(cursor.set(x, y + 1, z)).isAir()) spots.add(new BlockPos(x, y + 1, z));
             }
         }

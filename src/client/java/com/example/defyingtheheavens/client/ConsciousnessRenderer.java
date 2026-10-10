@@ -146,7 +146,9 @@ public final class ConsciousnessRenderer {
 		for (Entity entity : mc.level.entitiesForRendering()) {
 			if (entity == self || !(entity instanceof LivingEntity) || entity instanceof ArmorStand || !entity.isAlive() || entity.isSpectator()) continue;
 			if (entity.getBoundingBox().getCenter().distanceToSqr(center) > radiusSqr) continue;
-			OUTLINES.put(entity.getId(), CultivatorEntity.isCultivator(entity) ? CULTIVATOR_OUTLINE : MORTAL_OUTLINE);
+			// Players count as cultivators only once they've begun (the server lists them in SENSED); mortal players look mortal.
+			boolean cultivator = entity instanceof Player ? SENSED.containsKey(entity.getId()) : CultivatorEntity.isCultivator(entity);
+			OUTLINES.put(entity.getId(), cultivator ? CULTIVATOR_OUTLINE : MORTAL_OUTLINE);
 		}
 	}
 

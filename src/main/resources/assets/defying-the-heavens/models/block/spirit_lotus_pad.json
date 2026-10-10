@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/lily_pad",
+  "textures": {
+    "particle": "defying-the-heavens:block/spirit_lotus_pad",
+    "texture": "defying-the-heavens:block/spirit_lotus_pad"
+  }
+}

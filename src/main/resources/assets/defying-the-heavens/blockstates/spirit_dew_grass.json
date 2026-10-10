@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "dew=false": {
+      "model": "defying-the-heavens:block/spirit_dew_grass_bare"
+    },
+    "dew=true": {
+      "model": "defying-the-heavens:block/spirit_dew_grass"
+    }
+  }
+}

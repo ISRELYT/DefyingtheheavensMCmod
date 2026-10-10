@@ -18,6 +18,16 @@ public final class QiManager {
 		for (ServerPlayer player : server.getPlayerList().getPlayers()) {
 			if (!player.isAlive()) continue;
 			PlayerCultivation c = CultivationManager.get(player);
+			// A Qi Gathering Pill lasts as long as its effect: milk, death or the timer running out ends the boost.
+			if (c.getQiBoost() > 0 && !player.hasEffect(ModEffects.QI_GATHERING)) {
+				c.setQiBoost(0);
+				changed = true;
+				CultivationManager.sync(player);
+			}
+			if (c.decayPillResistance(1 / 20.0)) {
+				changed = true;
+				if (server.getTickCount() % 20 == 0) CultivationManager.sync(player); // keeps the menu's pill resistance current
+			}
 			double flightCost = QiFlight.tick(player, c);
 			QiSense.tick(player, c);
 			// Flight is paid first: running dry should end the pressure, not drop the cultivator out of the sky.

@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cross",
+  "textures": {
+    "cross": "defying-the-heavens:block/huangjing_stage0"
+  }
+}

@@ -63,7 +63,8 @@ public class SpiritPedestalRenderer implements BlockEntityRenderer<SpiritPedesta
 			poseStack.translate(0.5, PEDESTAL_TOP, 0.5);
 			poseStack.scale(HERB_SCALE, HERB_SCALE, HERB_SCALE);
 			poseStack.translate(-0.5, 0, -0.5);
-			Block plant = pedestal.getFruit().is(ModItems.SPIRIT_GINSENG) ? ModBlocks.SPIRIT_GINSENG : ModBlocks.GINSENG;
+			Block plant = com.example.defyingtheheavens.GinsengBlock.plantFor(pedestal.getFruit().getItem()); // the herb it was dug up from
+			if (plant == null) plant = ModBlocks.GINSENG;
 			blocks.renderSingleBlock(plant.defaultBlockState(), poseStack, buffers, lightAbove, OverlayTexture.NO_OVERLAY);
 			poseStack.popPose();
 		} else {

@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "bark",
+  "pattern": [
+    "##",
+    "##"
+  ],
+  "key": {
+    "#": {
+      "item": "defying-the-heavens:blue_spirit_log"
+    }
+  },
+  "result": {
+    "item": "defying-the-heavens:blue_spirit_wood",
+    "count": 3
+  }
+}

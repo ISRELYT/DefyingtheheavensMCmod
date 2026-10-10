@@ -1,0 +1,11 @@
+{
+  "parent": "minecraft:block/template_cauldron_full",
+  "textures": {
+    "particle": "defying-the-heavens:block/alchemy_cauldron_side",
+    "top": "defying-the-heavens:block/alchemy_cauldron_top",
+    "bottom": "defying-the-heavens:block/alchemy_cauldron_bottom",
+    "side": "defying-the-heavens:block/alchemy_cauldron_side",
+    "inside": "defying-the-heavens:block/alchemy_cauldron_inner",
+    "content": "minecraft:block/water_still"
+  }
+}

@@ -216,7 +216,10 @@ public final class RealmSuppressSystem {
 
 	/** A cultivator's rank as Realm Suppress weighs it, or -1 for a mortal. */
 	private static int rankOf(LivingEntity entity) {
-		if (entity instanceof ServerPlayer player) return CultivationManager.get(player).sustainedRank();
+		if (entity instanceof ServerPlayer player) {
+			PlayerCultivation c = CultivationManager.get(player);
+			return c.isMortal() ? -1 : c.sustainedRank(); // a player who hasn't begun cultivating is weighed as a mortal
+		}
 		if (entity instanceof CultivatorEntity npc) return PlayerCultivation.rank(npc.getCultivationRealm(), npc.getCultivationStage());
 		return -1;
 	}

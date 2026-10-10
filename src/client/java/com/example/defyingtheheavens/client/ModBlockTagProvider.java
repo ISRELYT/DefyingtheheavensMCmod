@@ -15,7 +15,8 @@ public class ModBlockTagProvider extends FabricTagProvider.BlockTagProvider {
 
 	@Override
 	protected void addTags(HolderLookup.Provider registries) {
-		getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.JADE_STONE).add(ModBlocks.SPIRIT_PEDESTAL);
+		getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.JADE_STONE).add(ModBlocks.SPIRIT_PEDESTAL)
+				.add(ModBlocks.ALCHEMY_CAULDRON);
 		// Lets vanilla-style ore configurations (and Upper Realm ores) replace jade like stone.
 		getOrCreateTagBuilder(BlockTags.STONE_ORE_REPLACEABLES).add(ModBlocks.JADE_STONE);
 		getOrCreateTagBuilder(BlockTags.BASE_STONE_OVERWORLD).add(ModBlocks.JADE_STONE);
@@ -25,6 +26,13 @@ public class ModBlockTagProvider extends FabricTagProvider.BlockTagProvider {
 		// The Spirit Peach Tree's heart counts as a log: its leaves stay alive around it, and an axe cuts it.
 		getOrCreateTagBuilder(BlockTags.LOGS).add(ModBlocks.SPIRIT_PEACH_HEART);
 		getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_AXE).add(ModBlocks.SPIRIT_PEACH_HEART);
+
+		// Blue Spirit Wood behaves like any vanilla wood.
+		getOrCreateTagBuilder(BlockTags.LOGS).add(ModBlocks.BLUE_SPIRIT_LOG).add(ModBlocks.BLUE_SPIRIT_WOOD);
+		getOrCreateTagBuilder(BlockTags.LOGS_THAT_BURN).add(ModBlocks.BLUE_SPIRIT_LOG).add(ModBlocks.BLUE_SPIRIT_WOOD);
+		getOrCreateTagBuilder(BlockTags.PLANKS).add(ModBlocks.BLUE_SPIRIT_PLANKS);
+		getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_AXE)
+				.add(ModBlocks.BLUE_SPIRIT_LOG).add(ModBlocks.BLUE_SPIRIT_WOOD).add(ModBlocks.BLUE_SPIRIT_PLANKS);
 
 		// The rift must survive dragons, withers and feature placement.
 		getOrCreateTagBuilder(BlockTags.DRAGON_IMMUNE).add(ModBlocks.SPATIAL_RIFT);

@@ -14,6 +14,7 @@ public class TribulationCloudGameTests implements FabricGameTest {
             PlayerCultivation cultivation = CultivationManager.get(player);
             cultivation.setState(Realm.QI_REFINING, Stage.GRAND_PERFECTION, 0);
             cultivation.addCultivation(cultivation.cultivationRequired());
+            cultivation.prepareBreakthrough(Realm.FOUNDATION_BUILDING, 0); // Foundation Building takes a Foundation Pill
             TribulationManager.start(player);
 
             TribulationCloud foundation = cloudFor(helper, player);

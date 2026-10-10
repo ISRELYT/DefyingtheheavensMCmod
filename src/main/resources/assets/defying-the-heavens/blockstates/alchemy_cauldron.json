@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "brewing=false,filled=false": {
+      "model": "defying-the-heavens:block/alchemy_cauldron"
+    },
+    "brewing=true,filled=false": {
+      "model": "defying-the-heavens:block/alchemy_cauldron"
+    },
+    "brewing=false,filled=true": {
+      "model": "defying-the-heavens:block/alchemy_cauldron_full"
+    },
+    "brewing=true,filled=true": {
+      "model": "defying-the-heavens:block/alchemy_cauldron_full"
+    }
+  }
+}

@@ -25,8 +25,10 @@ import net.minecraft.world.level.levelgen.feature.configurations.RandomFeatureCo
 import net.minecraft.world.level.levelgen.feature.configurations.TreeConfiguration;
 import net.minecraft.world.level.levelgen.feature.featuresize.TwoLayersFeatureSize;
 import net.minecraft.world.level.levelgen.feature.foliageplacers.CherryFoliagePlacer;
+import net.minecraft.world.level.levelgen.feature.foliageplacers.SpruceFoliagePlacer;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.feature.trunkplacers.CherryTrunkPlacer;
+import net.minecraft.world.level.levelgen.feature.trunkplacers.StraightTrunkPlacer;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import net.minecraft.world.level.levelgen.structure.templatesystem.BlockMatchTest;
 import net.minecraft.world.level.levelgen.structure.templatesystem.TagMatchTest;
@@ -63,6 +65,13 @@ public final class ModConfiguredFeatures {
 	public static final ResourceKey<ConfiguredFeature<?, ?>> CULTIVATION_FRUIT = key("cultivation_fruit");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> GINSENG = key("ginseng");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> SPIRIT_GINSENG = key("spirit_ginseng");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> LINGZHI = key("lingzhi");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> PURPLE_LINGZHI = key("purple_lingzhi");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> HUANGJING = key("huangjing");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> OCHRE_HUANGJING = key("ochre_huangjing");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> SPIRIT_LOTUS = key("spirit_lotus");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> SPIRIT_DEW_GRASS = key("spirit_dew_grass");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> BLUE_SPIRIT_TREE = key("blue_spirit_tree");
 
 	private static ResourceKey<ConfiguredFeature<?, ?>> key(String name) {
 		return ResourceKey.create(Registries.CONFIGURED_FEATURE, DefyingTheHeavens.id(name));
@@ -128,6 +137,23 @@ public final class ModConfiguredFeatures {
 		FeatureUtils.register(context, CULTIVATION_FRUIT, ModFeatures.CULTIVATION_FRUIT);
 		FeatureUtils.register(context, GINSENG, ModFeatures.GINSENG);
 		FeatureUtils.register(context, SPIRIT_GINSENG, ModFeatures.SPIRIT_GINSENG);
+		FeatureUtils.register(context, LINGZHI, ModFeatures.LINGZHI);
+		FeatureUtils.register(context, PURPLE_LINGZHI, ModFeatures.PURPLE_LINGZHI);
+		FeatureUtils.register(context, HUANGJING, ModFeatures.HUANGJING);
+		FeatureUtils.register(context, OCHRE_HUANGJING, ModFeatures.OCHRE_HUANGJING);
+		FeatureUtils.register(context, SPIRIT_LOTUS, ModFeatures.SPIRIT_LOTUS);
+		FeatureUtils.register(context, SPIRIT_DEW_GRASS, ModFeatures.SPIRIT_DEW_GRASS);
+
+		// Blue Spirit Tree: a vanilla spruce, trunk and all, grown from Blue Spirit Log (spruce leaves stay on it because the
+		// log is in the logs tag).
+		FeatureUtils.register(context, BLUE_SPIRIT_TREE, Feature.TREE, new TreeConfiguration.TreeConfigurationBuilder(
+				BlockStateProvider.simple(ModBlocks.BLUE_SPIRIT_LOG),
+				new StraightTrunkPlacer(5, 2, 1),
+				BlockStateProvider.simple(Blocks.SPRUCE_LEAVES),
+				new SpruceFoliagePlacer(UniformInt.of(2, 3), UniformInt.of(0, 2), UniformInt.of(1, 2)),
+				new TwoLayersFeatureSize(2, 0, 2))
+				.ignoreVines()
+				.build());
 	}
 
 	private static void ore(BootstapContext<ConfiguredFeature<?, ?>> context, ResourceKey<ConfiguredFeature<?, ?>> key,

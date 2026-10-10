@@ -59,6 +59,10 @@ public final class MeditationManager {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_CANNOT), true);
 			return;
 		}
+		if (CultivationManager.get(player).isMortal()) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_MORTAL_MEDITATE), true);
+			return;
+		}
 		Session session = new Session(player.getX(), player.getY(), player.getZ());
 		session.boost = CultivationBoost.of(player);
 		SESSIONS.put(player.getUUID(), session);
@@ -149,6 +153,9 @@ public final class MeditationManager {
 			// Not else-if: a ring can carry a single tick through the last stage-up straight into the bottleneck.
 			if (!wasBottleneck && c.canBreakthrough()) {
 				p.sendSystemMessage(Component.translatable(ModLang.MSG_BOTTLENECK));
+			} else if (!wasBottleneck && c.isAtBottleneck() && c.isMissingBreakthroughPill()) {
+				p.sendSystemMessage(Component.translatable(ModLang.MSG_NEED_PILL, PillItem.breakthroughPillFor(c.breakthroughRealm()).getDescription(),
+						c.breakthroughRealm().getDisplayName()));
 			} else if (!wasBottleneck && c.isAtBottleneck() && c.isBreakthroughLocked()) {
 				p.sendSystemMessage(Component.translatable(ModLang.MSG_REALM_LOCKED,
 						PlayerCultivation.rankName(PlayerCultivation.LOWER_REALM_CAP_REALM, PlayerCultivation.LOWER_REALM_CAP_STAGE)));

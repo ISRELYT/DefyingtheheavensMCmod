@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "group": "planks",
+  "ingredients": [
+    [
+      {
+        "item": "defying-the-heavens:blue_spirit_log"
+      },
+      {
+        "item": "defying-the-heavens:blue_spirit_wood"
+      }
+    ]
+  ],
+  "result": {
+    "item": "defying-the-heavens:blue_spirit_planks",
+    "count": 4
+  }
+}

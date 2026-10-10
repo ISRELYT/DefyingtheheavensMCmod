@@ -52,12 +52,13 @@ public final class CultivationStats {
 	public static void apply(ServerPlayer player, PlayerCultivation c) {
 		Realm r = c.getEffectiveRealm();
 		Stage s = c.getEffectiveStage();
-		set(player, Attributes.MAX_HEALTH, HEALTH_ID, "Cultivation max health", maxHealth(r, s));
-		set(player, Attributes.ATTACK_DAMAGE, DAMAGE_ID, "Cultivation attack damage", attackDamage(r, s));
-		set(player, Attributes.MOVEMENT_SPEED, SPEED_ID, "Cultivation speed", moveSpeed(r, s));
-		set(player, Attributes.ARMOR, ARMOR_ID, "Cultivation armor", armor(r, s));
-		set(player, Attributes.ARMOR_TOUGHNESS, TOUGHNESS_ID, "Cultivation toughness", toughness(r, s));
-		set(player, Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID, "Cultivation knockback resistance", knockbackResistance(r, s));
+		double scale = c.isMortal() ? 0 : 1; // a mortal's body is just a body
+		set(player, Attributes.MAX_HEALTH, HEALTH_ID, "Cultivation max health", maxHealth(r, s) * scale);
+		set(player, Attributes.ATTACK_DAMAGE, DAMAGE_ID, "Cultivation attack damage", attackDamage(r, s) * scale);
+		set(player, Attributes.MOVEMENT_SPEED, SPEED_ID, "Cultivation speed", moveSpeed(r, s) * scale);
+		set(player, Attributes.ARMOR, ARMOR_ID, "Cultivation armor", armor(r, s) * scale);
+		set(player, Attributes.ARMOR_TOUGHNESS, TOUGHNESS_ID, "Cultivation toughness", toughness(r, s) * scale);
+		set(player, Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID, "Cultivation knockback resistance", knockbackResistance(r, s) * scale);
 	}
 
 	/**

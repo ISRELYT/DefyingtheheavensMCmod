@@ -1,6 +1,9 @@
 package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.Ability;
+import com.example.defyingtheheavens.AlchemyRecipes;
+import com.example.defyingtheheavens.ModItems;
+import com.example.defyingtheheavens.PillItem;
 import com.example.defyingtheheavens.CultivationBoost;
 import com.example.defyingtheheavens.CultivationStats;
 import com.example.defyingtheheavens.ModLang;
@@ -147,6 +150,7 @@ public class CultivationScreen extends Screen {
 		meditateButton.setMessage(Component.translatable(
 				ClientCultivationData.isMeditating() ? ModLang.BTN_STOP : ModLang.BTN_MEDITATE));
 		breakthroughButton.active = ClientCultivationData.get().canBreakthrough() && !ClientTribulationData.isActive();
+		meditateButton.active = !ClientCultivationData.get().isMortal(); // a mortal has no qi to gather
 	}
 
 	@Override
@@ -176,7 +180,10 @@ public class CultivationScreen extends Screen {
 		switches.clear();
 		switch (tab) {
 			case CULTIVATION -> renderCultivation(g, player);
-			case STATS -> renderStats(g, player);
+			case STATS -> {
+				if (ClientCultivationData.get().isMortal()) renderPlaceholder(g, ModLang.MORTAL, ModLang.MORTAL_STATS, ModLang.MORTAL_DETAIL);
+				else renderStats(g, player);
+			}
 			case ABILITIES -> renderAbilities(g, mouseX, mouseY);
 			case METHODS -> renderPlaceholder(g, ModLang.METHODS_TITLE, ModLang.METHODS_EMPTY, ModLang.METHODS_HINT);
 			case SPELLS -> renderPlaceholder(g, ModLang.SPELLS_TITLE, ModLang.SPELLS_EMPTY, ModLang.SPELLS_HINT);
@@ -192,6 +199,11 @@ public class CultivationScreen extends Screen {
 		int cx = left + WIDTH / 2;
 		int x = left + 14;
 		int y = top + CONTENT_Y;
+
+		if (c.isMortal()) {
+			renderMortal(g, cx, y);
+			return;
+		}
 
 		g.drawCenteredString(font, Component.translatable(ModLang.REALM, c.getRealm().getDisplayName()), cx, y, 0x7FDBFF);
 		y += 12;
@@ -219,7 +231,18 @@ public class CultivationScreen extends Screen {
 		g.drawCenteredString(font, c.isInUpperRealm()
 				? Component.translatable(ModLang.CULTIVATION_RATE_UPPER, one(rate), (int) PlayerCultivation.UPPER_REALM_QI_MULTIPLIER)
 				: Component.translatable(ModLang.CULTIVATION_RATE, one(rate)), cx, y, boost > 1.0 && rate > 0 ? 0x7FE0A0 : 0xA0A0A0);
-		y += 18;
+		y += 11;
+		// Pills at work: a Qi Gathering Pill's boost, and how much less the next Cultivation Pill will do.
+		if (c.getQiBoost() > 0) {
+			g.drawCenteredString(font, Component.translatable(ModLang.QI_BOOST_LINE, Math.round(c.getQiBoost() * 100)), cx, y, 0x64B5F6);
+			y += 11;
+		}
+		if (c.getPillResistance() > 0.005) {
+			g.drawCenteredString(font, Component.translatable(ModLang.PILL_RESISTANCE_LINE, Math.round(c.getPillResistance() * 100)),
+					cx, y, 0x9E9E9E);
+			y += 11;
+		}
+		y += 7;
 
 		if (c.isUnderPressure()) {
 			// Another cultivator's Realm Suppress: what it holds the player to (if a realm), and what it takes.
@@ -238,15 +261,47 @@ public class CultivationScreen extends Screen {
 			g.drawCenteredString(font, Component.translatable(ModLang.PINNACLE), cx, y, 0xFFD700);
 		} else if (c.isAtBottleneck() && c.isBreakthroughLocked()) {
 			g.drawCenteredString(font, Component.translatable(ModLang.BREAKTHROUGH_SEALED), cx, y, 0xFF6E6E);
+		} else if (c.isAtBottleneck() && c.isMissingBreakthroughPill()) {
+			// The realm ahead needs a pill: name it and how to brew it.
+			var pill = PillItem.breakthroughPillFor(c.breakthroughRealm());
+			for (FormattedCharSequence line : font.split(Component.translatable(ModLang.NEED_PILL, pill.getDescription(),
+					c.breakthroughRealm().getDisplayName()), WIDTH - 28)) {
+				g.drawCenteredString(font, line, cx, y, 0xFFC107);
+				y += 11;
+			}
+			for (FormattedCharSequence line : font.split(Component.translatable(ModLang.PILL_RECIPE, AlchemyRecipes.describe(pill)),
+					WIDTH - 28)) {
+				g.drawCenteredString(font, line, cx, y, 0xA0A0A0);
+				y += 11;
+			}
 		} else if (c.canBreakthrough()) {
 			g.drawCenteredString(font, Component.translatable(ModLang.BOTTLENECK), cx, y, 0xFFC107);
 			g.drawCenteredString(font, Component.translatable(ModLang.BOTTLENECK_NEXT,
 					PlayerCultivation.rankName(c.breakthroughRealm(), c.breakthroughStage())), cx, y + 11, 0xFFC107);
+		} else if (c.getPreparedRealm() != null) {
+			// A breakthrough pill already taken, waiting for the bar to fill.
+			g.drawCenteredString(font, Component.translatable(ModLang.PILL_PREPARED, c.getPreparedRealm().getDisplayName()), cx, y, 0x7FE0A0);
 		}
 
 		boolean meditating = ClientCultivationData.isMeditating();
 		g.drawCenteredString(font, Component.translatable(meditating ? ModLang.STATUS_MEDITATING : ModLang.STATUS_IDLE),
 				cx, top + HEIGHT - 46, meditating ? 0x69F0AE : 0x9E9E9E);
+	}
+
+	/** A mortal's Cultivation tab: no realm yet, and how to change that. */
+	private void renderMortal(GuiGraphics g, int cx, int y) {
+		g.drawCenteredString(font, Component.translatable(ModLang.REALM, Component.translatable(ModLang.MORTAL)), cx, y, 0x7FDBFF);
+		y += 24;
+		for (FormattedCharSequence line : font.split(Component.translatable(ModLang.MORTAL_DETAIL), WIDTH - 28)) {
+			g.drawCenteredString(font, line, cx, y, 0xB0B0B0);
+			y += 11;
+		}
+		y += 8;
+		for (FormattedCharSequence line : font.split(Component.translatable(ModLang.MORTAL_RECIPE,
+				ModItems.MARROW_CLEANSING_ELIXIR.getDescription(), AlchemyRecipes.describe(ModItems.MARROW_CLEANSING_ELIXIR)), WIDTH - 28)) {
+			g.drawCenteredString(font, line, cx, y, 0xFFC107);
+			y += 11;
+		}
 	}
 
 	// --- Stats: base values, what the realm adds, and the current totals (true vs. suppressed when suppressed) ---

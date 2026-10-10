@@ -58,6 +58,7 @@ public final class QiHud {
 			if (mc.level == null || mc.player == null || mc.options.hideGui || mc.options.renderDebug || mc.player.isSpectator()) return;
 
 			PlayerCultivation c = ClientCultivationData.get();
+			if (c.isMortal()) return; // no qi to show until the meridians open
 			double max = c.maxQi();
 			double qi = c.getQi();
 			double ratio = max <= 0 ? 0 : Math.min(1.0, qi / max);

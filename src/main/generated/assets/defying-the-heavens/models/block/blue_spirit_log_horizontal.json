@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column_horizontal",
+  "textures": {
+    "end": "defying-the-heavens:block/blue_spirit_log_top",
+    "side": "defying-the-heavens:block/blue_spirit_log"
+  }
+}

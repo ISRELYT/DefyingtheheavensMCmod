@@ -2,10 +2,21 @@ package com.example.defyingtheheavens;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+
+import java.util.function.Supplier;
 
 public final class CultivationManager {
+	/** The client's mirror of its own player's cultivation; the client sets this, the server never reads it. */
+	public static Supplier<PlayerCultivation> clientMirror = PlayerCultivation::new;
+
 	public static PlayerCultivation get(ServerPlayer player) {
 		return CultivationSavedData.forServer(player.server).getOrCreate(player.getUUID());
+	}
+
+	/** For code that runs on both sides (items): the server's record, or on the client the synced mirror of the local player. */
+	public static PlayerCultivation forPlayer(Player player) {
+		return player instanceof ServerPlayer serverPlayer ? get(serverPlayer) : clientMirror.get();
 	}
 
 	public static void markDirty(MinecraftServer server) {

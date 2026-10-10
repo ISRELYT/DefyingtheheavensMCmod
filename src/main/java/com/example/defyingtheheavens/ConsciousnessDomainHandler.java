@@ -128,6 +128,7 @@ public final class ConsciousnessDomainHandler {
 		for (Entity entity : entitiesIn(viewer, radius, Entity.class, e -> CultivatorEntity.isCultivator(e) && e.isAlive() && !e.isSpectator())) {
 			if (entity instanceof ServerPlayer player) {
 				PlayerCultivation c = CultivationManager.get(player);
+				if (c.isMortal()) continue; // shows as a mortal: an outline, no realm
 				cultivators.add(new SensedCultivator(player.getId(), c.getEffectiveRealm(), c.getEffectiveStage(), c.isUnderPressure()));
 			} else if (entity instanceof CultivatorEntity npc) {
 				cultivators.add(new SensedCultivator(entity.getId(), npc.getCultivationRealm(), npc.getCultivationStage(),

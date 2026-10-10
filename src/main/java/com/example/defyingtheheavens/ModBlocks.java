@@ -10,6 +10,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LeavesBlock;
+import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
@@ -58,6 +59,26 @@ public final class ModBlocks {
 	public static final Block SPIRIT_GINSENG = register("spirit_ginseng", new GinsengBlock(() -> ModItems.SPIRIT_GINSENG,
 			() -> ModItems.SPIRIT_GINSENG_SEEDS, ginsengProperties(MapColor.COLOR_LIGHT_GREEN)));
 
+	/**
+	 * More aging herbs for alchemy, each with a rarer variant (see GinsengBlock): Lingzhi (a lacquered red shelf fungus) and
+	 * Purple Lingzhi; Huangjing (Solomon's seal) and Ochre Huangjing. Like ginseng, dug up as items that keep their age.
+	 */
+	public static final Block LINGZHI = register("lingzhi", new GinsengBlock(() -> ModItems.LINGZHI, () -> ModItems.LINGZHI_SPORES,
+			ginsengProperties(MapColor.COLOR_RED)));
+	public static final Block PURPLE_LINGZHI = register("purple_lingzhi", new GinsengBlock(() -> ModItems.PURPLE_LINGZHI,
+			() -> ModItems.PURPLE_LINGZHI_SPORES, ginsengProperties(MapColor.COLOR_PURPLE)));
+	public static final Block HUANGJING = register("huangjing", new GinsengBlock(() -> ModItems.HUANGJING, () -> ModItems.HUANGJING_SEEDS,
+			ginsengProperties(MapColor.PLANT)));
+	public static final Block OCHRE_HUANGJING = register("ochre_huangjing", new GinsengBlock(() -> ModItems.OCHRE_HUANGJING,
+			() -> ModItems.OCHRE_HUANGJING_SEEDS, ginsengProperties(MapColor.COLOR_ORANGE)));
+	/** The Spirit Lotus: an aging herb that floats on still water (see SpiritLotusBlock). */
+	public static final Block SPIRIT_LOTUS = register("spirit_lotus", new SpiritLotusBlock(() -> ModItems.SPIRIT_LOTUS,
+			() -> ModItems.SPIRIT_LOTUS_SEEDS, ginsengProperties(MapColor.COLOR_YELLOW)));
+	/** Grass that gathers Spirit Dew (see SpiritDewGrassBlock). */
+	public static final Block SPIRIT_DEW_GRASS = registerWithItem("spirit_dew_grass", new SpiritDewGrassBlock(
+			BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_CYAN).noCollission().instabreak().sound(SoundType.GRASS)
+					.pushReaction(PushReaction.DESTROY).randomTicks()));
+
 	/** Spirit Peach Tree (see SpiritPeachTree): the sapling a peach pit grows into, its leaves, and the heart at its base. */
 	public static final Block SPIRIT_PEACH_SAPLING = register("spirit_peach_sapling",
 			new SpiritPeachSaplingBlock(BlockBehaviour.Properties.copy(Blocks.CHERRY_SAPLING)));
@@ -67,6 +88,18 @@ public final class ModBlocks {
 			// Its own properties, not a copy of the cherry log's: a log's map colour reads its axis, which the heart doesn't have.
 			new SpiritPeachHeartBlock(BlockBehaviour.Properties.of().mapColor(MapColor.TERRACOTTA_GRAY).instrument(NoteBlockInstrument.BASS)
 					.strength(2.0f).sound(SoundType.CHERRY_WOOD).ignitedByLava()));
+
+	/** Blue Spirit Wood: spruce-dark timber with blue qi pulsing up its veins (the glow is an animated texture). */
+	public static final Block BLUE_SPIRIT_LOG = registerWithItem("blue_spirit_log",
+			new RotatedPillarBlock(BlockBehaviour.Properties.copy(Blocks.SPRUCE_LOG).mapColor(MapColor.PODZOL)));
+	public static final Block BLUE_SPIRIT_WOOD = registerWithItem("blue_spirit_wood",
+			new RotatedPillarBlock(BlockBehaviour.Properties.copy(Blocks.SPRUCE_WOOD).mapColor(MapColor.PODZOL)));
+	public static final Block BLUE_SPIRIT_PLANKS = registerWithItem("blue_spirit_planks",
+			new Block(BlockBehaviour.Properties.copy(Blocks.SPRUCE_PLANKS).mapColor(MapColor.PODZOL)));
+
+	/** Where pills are brewed: water, a fire beneath, then the ingredients (see AlchemyCauldronBlock). */
+	public static final Block ALCHEMY_CAULDRON = registerWithItem("alchemy_cauldron",
+			new AlchemyCauldronBlock(BlockBehaviour.Properties.copy(Blocks.CAULDRON).mapColor(MapColor.TERRACOTTA_ORANGE)));
 
 	private static BlockBehaviour.Properties ginsengProperties(MapColor colour) {
 		return BlockBehaviour.Properties.of().mapColor(colour).noCollission().noOcclusion().instabreak()
@@ -90,15 +123,26 @@ public final class ModBlocks {
 		FlammableBlockRegistry.getDefaultInstance().add(SPIRIT_PEACH_HEART, 5, 5);
 		FlammableBlockRegistry.getDefaultInstance().add(MEDITATION_MAT, 60, 20);
 		FlammableBlockRegistry.getDefaultInstance().add(RED_MEDITATION_MAT, 60, 20);
+		FlammableBlockRegistry.getDefaultInstance().add(BLUE_SPIRIT_LOG, 5, 5);
+		FlammableBlockRegistry.getDefaultInstance().add(BLUE_SPIRIT_WOOD, 5, 5);
+		FlammableBlockRegistry.getDefaultInstance().add(BLUE_SPIRIT_PLANKS, 5, 20);
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS).register(entries -> {
 			entries.accept(MEDITATION_MAT);
 			entries.accept(RED_MEDITATION_MAT);
 			entries.accept(SPIRIT_PEDESTAL);
+			entries.accept(ALCHEMY_CAULDRON);
 		});
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.NATURAL_BLOCKS).register(entries -> {
 			entries.accept(JADE_STONE);
 			entries.accept(WHITE_BLOSSOM_LEAVES);
 			entries.accept(SPIRIT_PEACH_LEAVES);
+			entries.accept(BLUE_SPIRIT_LOG);
+			entries.accept(SPIRIT_DEW_GRASS);
+		});
+		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.BUILDING_BLOCKS).register(entries -> {
+			entries.accept(BLUE_SPIRIT_LOG);
+			entries.accept(BLUE_SPIRIT_WOOD);
+			entries.accept(BLUE_SPIRIT_PLANKS);
 		});
 	}
 

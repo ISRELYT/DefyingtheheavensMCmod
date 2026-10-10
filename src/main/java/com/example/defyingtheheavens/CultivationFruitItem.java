@@ -5,6 +5,8 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -23,6 +25,16 @@ public class CultivationFruitItem extends Item {
         ItemStack stack = new ItemStack(ModItems.CULTIVATION_FRUIT);
         stack.getOrCreateTag().putInt("FruitAge", FruitAge.clamp(years));
         return stack;
+    }
+
+    /** A mortal can't hold the fruit's qi: it isn't wasted on them. */
+    @Override
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        if (CultivationManager.forPlayer(player).isMortal()) {
+            if (!level.isClientSide) player.displayClientMessage(Component.translatable(ModLang.MSG_PILL_MORTAL), true);
+            return InteractionResultHolder.fail(player.getItemInHand(hand));
+        }
+        return super.use(level, player, hand);
     }
 
     @Override

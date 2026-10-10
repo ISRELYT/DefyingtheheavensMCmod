@@ -125,6 +125,11 @@ public final class TribulationManager {
 					PlayerCultivation.rankName(PlayerCultivation.LOWER_REALM_CAP_REALM, PlayerCultivation.LOWER_REALM_CAP_STAGE)), true);
 			return;
 		}
+		if (c.isAtBottleneck() && c.isMissingBreakthroughPill()) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_NEED_PILL,
+					PillItem.breakthroughPillFor(c.breakthroughRealm()).getDescription(), c.breakthroughRealm().getDisplayName()), true);
+			return;
+		}
 		if (!c.canBreakthrough()) {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_NOT_READY), true);
 			return;

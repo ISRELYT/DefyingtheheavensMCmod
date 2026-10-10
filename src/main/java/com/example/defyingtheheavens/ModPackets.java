@@ -58,6 +58,11 @@ public final class ModPackets {
 		buf.writeVarInt(c.getDisabledAbilityMask());
 		buf.writeVarInt(c.getPressureStages());
 		buf.writeDouble(c.getPressurePenalty());
+		buf.writeBoolean(c.isMortal());
+		buf.writeVarInt(c.getPreparedRealm() == null ? -1 : c.getPreparedRealm().ordinal());
+		buf.writeDouble(c.getPreparedBonus());
+		buf.writeDouble(c.getQiBoost());
+		buf.writeDouble(c.getPillResistance());
 		ServerPlayNetworking.send(player, SYNC, buf);
 	}
 

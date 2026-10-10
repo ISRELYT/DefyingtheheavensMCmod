@@ -30,7 +30,10 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 				com.example.defyingtheheavens.ModBlocks.WHITE_BLOSSOM_LEAVES, net.minecraft.client.renderer.RenderType.cutoutMipped());
 		net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE.putBlocks(net.minecraft.client.renderer.RenderType.cutout(),
 				com.example.defyingtheheavens.ModBlocks.GINSENG, com.example.defyingtheheavens.ModBlocks.SPIRIT_GINSENG,
-				com.example.defyingtheheavens.ModBlocks.SPIRIT_PEACH_SAPLING);
+				com.example.defyingtheheavens.ModBlocks.SPIRIT_PEACH_SAPLING, com.example.defyingtheheavens.ModBlocks.LINGZHI,
+				com.example.defyingtheheavens.ModBlocks.PURPLE_LINGZHI, com.example.defyingtheheavens.ModBlocks.HUANGJING,
+				com.example.defyingtheheavens.ModBlocks.OCHRE_HUANGJING, com.example.defyingtheheavens.ModBlocks.SPIRIT_LOTUS,
+				com.example.defyingtheheavens.ModBlocks.SPIRIT_DEW_GRASS);
 		net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE.putBlock(
 				com.example.defyingtheheavens.ModBlocks.SPIRIT_PEACH_LEAVES, net.minecraft.client.renderer.RenderType.cutoutMipped());
 		net.minecraft.client.renderer.blockentity.BlockEntityRenderers.register(
@@ -39,6 +42,14 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 				com.example.defyingtheheavens.ModBlockEntities.CULTIVATION_FRUIT, context -> new CultivationFruitAuraRenderer());
 		net.minecraft.client.renderer.blockentity.BlockEntityRenderers.register(
 				com.example.defyingtheheavens.ModBlockEntities.SPIRIT_PEDESTAL, SpiritPedestalRenderer::new);
+		// Items used on both sides (pills) read the local player's cultivation from the synced mirror.
+		com.example.defyingtheheavens.CultivationManager.clientMirror = ClientCultivationData::get;
+		// The Alchemy Cauldron's water: the biome's water colour, turning jade while a brew cooks.
+		net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry.BLOCK.register((state, world, pos, tintIndex) -> {
+			if (tintIndex != 0) return -1;
+			if (state.getValue(com.example.defyingtheheavens.AlchemyCauldronBlock.BREWING)) return 0x4FD6A0;
+			return world != null && pos != null ? net.minecraft.client.renderer.BiomeColors.getAverageWaterColor(world, pos) : 0x3F76E4;
+		}, com.example.defyingtheheavens.ModBlocks.ALCHEMY_CAULDRON);
 		ModKeybinds.register();
 		BaublePanel.register();
 		ClientPacketHandlers.register();

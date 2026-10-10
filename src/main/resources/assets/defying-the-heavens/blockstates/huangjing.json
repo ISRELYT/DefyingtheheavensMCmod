@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "stage=0": {
+      "model": "defying-the-heavens:block/huangjing_stage0"
+    },
+    "stage=1": {
+      "model": "defying-the-heavens:block/huangjing_stage1"
+    },
+    "stage=2": {
+      "model": "defying-the-heavens:block/huangjing"
+    }
+  }
+}

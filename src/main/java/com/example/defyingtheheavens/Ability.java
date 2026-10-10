@@ -35,8 +35,8 @@ public enum Ability {
 
 	public String getId() { return id; }
 
-	/** The cultivator's realm has awakened this ability (whether or not it is switched on). */
-	public boolean isUnlocked(PlayerCultivation c) { return unlocked.test(c); }
+	/** The cultivator's realm has awakened this ability (whether or not it is switched on). A mortal has none. */
+	public boolean isUnlocked(PlayerCultivation c) { return !c.isMortal() && unlocked.test(c); }
 
 	public Component getDisplayName() { return Component.translatable(ModLang.abilityKey(id)); }
 

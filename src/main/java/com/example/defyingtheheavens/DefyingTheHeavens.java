@@ -12,6 +12,7 @@ public class DefyingTheHeavens implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		ModBlocks.register();
+		ModEffects.register();
 		ModBlockEntities.register();
 		ModEntities.register();
 		ModParticles.register();

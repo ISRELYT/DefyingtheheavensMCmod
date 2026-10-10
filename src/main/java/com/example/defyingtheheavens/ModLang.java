@@ -133,11 +133,60 @@ public final class ModLang {
 	public static final String BOOST_HEIGHT = k("boost.height");
 	public static final String BOOST_TRANQUIL = k("boost.tranquil");
 
+	// The mortal path and alchemy (see PillItem, AlchemyCauldronBlock)
+	public static final String MORTAL = k("mortal");
+	public static final String MORTAL_DETAIL = k("mortal.detail");
+	public static final String MORTAL_RECIPE = k("mortal.recipe");
+	public static final String MORTAL_STATS = k("mortal.stats");
+	public static final String NEED_PILL = k("need_pill");
+	public static final String PILL_PREPARED = k("pill_prepared");
+	public static final String QI_BOOST_LINE = k("qi_boost_line");
+	public static final String PILL_RESISTANCE_LINE = k("pill_resistance_line");
+	public static final String MSG_MORTAL_MEDITATE = k("message.mortal_meditate");
+	public static final String MSG_NEED_PILL = k("message.need_pill");
+	public static final String MSG_AWAKENED = k("message.awakened");
+	public static final String MSG_ALREADY_AWAKENED = k("message.already_awakened");
+	public static final String MSG_PILL_PREPARED = k("message.pill_prepared");
+	public static final String MSG_PILL_WRONG_TIME = k("message.pill_wrong_time");
+	public static final String MSG_PILL_ALREADY = k("message.pill_already");
+	public static final String MSG_PILL_MORTAL = k("message.pill_mortal");
+	public static final String MSG_PILL_BOTTLENECK = k("message.pill_bottleneck");
+	public static final String MSG_PILL_CULTIVATION = k("message.pill_cultivation");
+	public static final String MSG_PILL_QI = k("message.pill_qi");
+	public static String pillGradeKey(String id) { return "pill_grade." + DefyingTheHeavens.MOD_ID + "." + id; }
+	public static final String PILL_AGE = k("tooltip.pill_age");
+	public static final String PILL_AGE_SHORT = k("tooltip.pill_age_short");
+	public static final String PILL_RECIPE = k("tooltip.pill_recipe");
+	public static final String PILL_EFFECT_AWAKEN = k("tooltip.pill_effect.awaken");
+	public static final String PILL_EFFECT_BREAKTHROUGH = k("tooltip.pill_effect.breakthrough");
+	public static final String PILL_EFFECT_START = k("tooltip.pill_effect.start");
+	public static final String PILL_EFFECT_QI = k("tooltip.pill_effect.qi");
+	public static final String PILL_EFFECT_CULTIVATION = k("tooltip.pill_effect.cultivation");
+	public static final String PILL_EFFECT_RESISTANCE = k("tooltip.pill_effect.resistance");
+	public static final String PILL_WHEN = k("tooltip.pill_when");
+	public static final String CAULDRON_TOOLTIP = k("tooltip.alchemy_cauldron");
+	public static final String CAULDRON_NEEDS_WATER = k("cauldron.needs_water");
+	public static final String CAULDRON_EMPTY = k("cauldron.empty");
+	public static final String CAULDRON_CONTENTS = k("cauldron.contents");
+	public static final String CAULDRON_ADDED = k("cauldron.added");
+	public static final String CAULDRON_REJECTED = k("cauldron.rejected");
+	public static final String CAULDRON_FULL = k("cauldron.full");
+	public static final String CAULDRON_EMPTIED = k("cauldron.emptied");
+	public static final String CAULDRON_BREWING = k("cauldron.brewing");
+	public static final String CAULDRON_NEEDS_HEAT = k("cauldron.needs_heat");
+	public static final String CAULDRON_DONE = k("cauldron.done");
+
 	// Ginseng
 	public static final String GINSENG_INGREDIENT = k("tooltip.ginseng_ingredient");
 	public static final String GINSENG_HARVESTED = k("tooltip.ginseng_harvested");
 	public static final String GINSENG_FULL = k("message.ginseng_full");
 	public static final String GINSENG_SEEDS_TOOLTIP = k("tooltip.ginseng_seeds");
+	public static final String LOTUS_SEEDS_TOOLTIP = k("tooltip.lotus_seeds");
+	public static final String DEW_TOOLTIP = k("tooltip.spirit_dew");
+	public static final String MSG_DEW_MORTAL = k("message.dew_mortal");
+	public static final String MSG_DEW_FULL = k("message.dew_full");
+	public static final String MSG_DEW_DRUNK = k("message.dew_drunk");
+	public static final String PILL_SUBSTITUTE = k("tooltip.pill_substitute");
 	public static final String GINSENG_NEED_CORE = k("message.ginseng.need_core");
 	public static final String GINSENG_NOT_ENOUGH = k("message.ginseng.not_enough");
 	public static final String GINSENG_MAX = k("message.ginseng.max");
