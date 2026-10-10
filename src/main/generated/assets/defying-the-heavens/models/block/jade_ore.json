@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "defying-the-heavens:block/jade_ore"
+  }
+}

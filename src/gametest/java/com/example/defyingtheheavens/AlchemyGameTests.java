@@ -12,6 +12,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -345,6 +346,56 @@ public class AlchemyGameTests implements FabricGameTest {
         }
         helper.assertTrue(lotus > 0 && onWater > 0, "Wild Spirit Lotus takes root on still water");
         helper.assertTrue(dewGrass > 0 && onSoil > 0, "Wild Spirit Dew Grass takes root on grass");
+        helper.succeed();
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE)
+    public void jadeOreDropsJade(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos pos = helper.absolutePos(new BlockPos(1, 2, 1));
+        ItemStack pickaxe = new ItemStack(Items.IRON_PICKAXE);
+        ItemStack silk = new ItemStack(Items.IRON_PICKAXE);
+        silk.enchant(net.minecraft.world.item.enchantment.Enchantments.SILK_TOUCH, 1);
+        ItemStack fortune = new ItemStack(Items.IRON_PICKAXE);
+        fortune.enchant(net.minecraft.world.item.enchantment.Enchantments.BLOCK_FORTUNE, 3);
+        for (net.minecraft.world.level.block.Block ore : List.of(ModBlocks.JADE_ORE, ModBlocks.DEEPSLATE_JADE_ORE)) {
+            BlockState state = ore.defaultBlockState();
+            level.setBlock(pos, state, Block.UPDATE_CLIENTS);
+            List<ItemStack> mined = Block.getDrops(state, level, pos, null, null, pickaxe);
+            helper.assertTrue(mined.size() == 1 && mined.get(0).is(ModItems.JADE) && mined.get(0).getCount() == 1, "A pickaxe mines one Jade");
+            List<ItemStack> kept = Block.getDrops(state, level, pos, null, null, silk);
+            helper.assertTrue(kept.size() == 1 && kept.get(0).is(ore.asItem()), "Silk Touch keeps the ore");
+            int most = 0;
+            for (int i = 0; i < 50; i++) most = Math.max(most, Block.getDrops(state, level, pos, null, null, fortune).get(0).getCount());
+            helper.assertTrue(most > 1, "Fortune gives more Jade");
+            helper.assertTrue(state.requiresCorrectToolForDrops() && pickaxe.isCorrectToolForDrops(state)
+                    && !new ItemStack(Items.STONE_PICKAXE).isCorrectToolForDrops(state), "Jade Ore needs an iron pickaxe");
+        }
+        var placed = level.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.PLACED_FEATURE);
+        helper.assertTrue(placed.containsKey(ModPlacedFeatures.ORE_JADE.location()) && placed.containsKey(ModPlacedFeatures.ORE_JADE_UPPER_REALM.location()),
+                "Jade Ore's placements load");
+        helper.succeed();
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE)
+    public void wildHerbsGrowInSmallPatches(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        for (int x = 0; x < 8; x++) for (int z = 0; z < 8; z++) {
+            helper.setBlock(new BlockPos(x, 1, z), Blocks.GRASS_BLOCK);
+            helper.setBlock(new BlockPos(x, 2, z), Blocks.AIR);
+        }
+        BlockPos first = helper.absolutePos(new BlockPos(4, 2, 4));
+        level.setBlock(first, ModBlocks.GINSENG.defaultBlockState(), Block.UPDATE_CLIENTS);
+        int grown = ((GinsengFeature) ModFeatures.GINSENG).growPatch(level, first, net.minecraft.util.RandomSource.create(5), 4);
+        int found = 0;
+        for (int x = 0; x < 8; x++) for (int z = 0; z < 8; z++) {
+            BlockPos pos = helper.absolutePos(new BlockPos(x, 2, z));
+            if (!level.getBlockState(pos).is(ModBlocks.GINSENG)) continue;
+            found++;
+            helper.assertTrue(Math.abs(pos.getX() - first.getX()) <= GinsengFeature.PATCH_RADIUS
+                    && Math.abs(pos.getZ() - first.getZ()) <= GinsengFeature.PATCH_RADIUS, "Patch plants stay close together");
+        }
+        helper.assertTrue(grown == 4 && found == 4, "A patch of four plants: grew " + grown + ", found " + found);
         helper.succeed();
     }
 

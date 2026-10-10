@@ -67,6 +67,9 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		// Blocks
 		t.add(ModBlocks.SPATIAL_RIFT, "Spatial Rift");
 		t.add(ModBlocks.JADE_STONE, "Jade Stone");
+		t.add(ModBlocks.JADE_ORE, "Jade Ore");
+		t.add(ModBlocks.DEEPSLATE_JADE_ORE, "Deepslate Jade Ore");
+		t.add(ModItems.JADE, "Jade");
 		t.add(ModBlocks.WHITE_BLOSSOM_LEAVES, "White Blossom Leaves");
 		t.add(ModBlocks.BLUE_SPIRIT_LOG, "Blue Spirit Log");
 		t.add(ModBlocks.BLUE_SPIRIT_WOOD, "Blue Spirit Wood");

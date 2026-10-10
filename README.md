@@ -126,7 +126,8 @@ also be set on a Spirit Pedestal, where it counts like a fruit of the same age.
 - A cultivator with a Golden Core (Core Formation or higher) can sneak and right-click a plant with an empty hand to
   pour qi into it, ageing it at the same rising cost as a Spirit Peach Tree (see `QiFeeding.java`).
 - Ginseng grows only on soil (grass, dirt, podzol, moss...). Wild plants appear on grass or podzol, never in caves.
-- Spawning, on average one plant per this many chunks: Ginseng 80 in Overworld forests, taiga and jungles and 32 in the
+- Spawning, in small patches (Ginseng 2-4 plants, Spirit Ginseng 1-3, each with its own age), on average one patch per
+  this many chunks: Ginseng 80 in Overworld forests, taiga and jungles and 32 in the
   Upper Realm; Spirit Ginseng 640 and 160. These are `GINSENG_CHUNKS_*` and `SPIRIT_GINSENG_CHUNKS_*` in
   `ModPlacedFeatures.java` (and the matching `placed_feature/*ginseng*.json`; re-run `runDatagen` after changing them).
 - The plants are drawn like vanilla's sweet berry bush, whose leaves they reuse: Ginseng in a warm green with one cluster
@@ -266,13 +267,22 @@ Pedestal). Code: `GinsengBlock` (shared), `SpiritLotusBlock`, `SpiritDewGrassBlo
 | **Spirit Lotus** (golden, five-coloured petal tips) | Still water, in swamps and rivers | none | Spirit Lotus Seeds (place on water) |
 | **Spirit Dew Grass** | Soil, in meadows, flower forests, cherry groves | none | shears take the grass |
 
-- All of them grow more often everywhere in the Upper Realm. Spawn rates (one per this many chunks) are the
+- Wild herbs grow in small patches, each plant with its own age: Lingzhi, Huangjing and Spirit Lotus 2-4 plants, their
+  rare variants 1-3, Spirit Dew Grass 3-6 (the sizes are in `ModFeatures.java`).
+- All of them grow more often everywhere in the Upper Realm. Spawn rates (one patch per this many chunks) are the
   `*_CHUNKS_*` constants in `ModPlacedFeatures.java`: Lingzhi and Huangjing 100 / 40 (Upper Realm), their rare variants
   1000 / 250, Spirit Lotus 160 / 64, Spirit Dew Grass 40 / 16. If you change them, also change the matching
   `placed_feature/*.json` (or re-run `runDatagen`).
 - The Spirit Lotus is a lily pad as a seedling, a bud from year 4 and in flower from year 10.
 - Spirit Dew Grass gathers a bead of **Spirit Dew** every few minutes (at once in the Upper Realm). Right-click to collect
   it; the grass stays. Drinking Spirit Dew refills a quarter of your qi; it is also an ingredient.
+
+## Jade Ore
+
+Jade Ore and Deepslate Jade Ore drop **Jade** (more with Fortune, the ore itself with Silk Touch) and a little experience,
+like emerald ore, and need an iron pickaxe. Jade Ore spawns in Overworld mountain biomes from Y -48 to 160 (deepslate
+jade below Y 0) and through all the Upper Realm's islands, including the Dense Qi Peaks' jade stone, at about the same
+rarity as diamonds (`JADE_VEINS_*` in `ModPlacedFeatures.java`). Jade has no use yet.
 
 ## Blue Spirit Wood
 

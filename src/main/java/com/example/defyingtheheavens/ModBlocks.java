@@ -8,7 +8,9 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.DropExperienceBlock;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.SoundType;
@@ -34,6 +36,15 @@ public final class ModBlocks {
 	/** Jade-tinged stone of the Dense Qi Peaks. Counts as ore-replaceable stone, so Upper Realm ores spawn in it. */
 	public static final Block JADE_STONE = registerWithItem("jade_stone",
 			new Block(BlockBehaviour.Properties.copy(Blocks.STONE).mapColor(MapColor.COLOR_LIGHT_GREEN)));
+
+	/**
+	 * Jade Ore: drops Jade (more with Fortune) and a little experience, like emerald ore, and needs an iron pickaxe. Found
+	 * in Overworld mountains and all through the Upper Realm's islands (see ModPlacedFeatures), the deepslate kind deep down.
+	 */
+	public static final Block JADE_ORE = registerWithItem("jade_ore",
+			new DropExperienceBlock(BlockBehaviour.Properties.copy(Blocks.EMERALD_ORE), UniformInt.of(3, 7)));
+	public static final Block DEEPSLATE_JADE_ORE = registerWithItem("deepslate_jade_ore",
+			new DropExperienceBlock(BlockBehaviour.Properties.copy(Blocks.DEEPSLATE_EMERALD_ORE), UniformInt.of(3, 7)));
 
 	/** The white canopy of the Peach Blossom Sanctuary's pale trees. */
 	public static final Block WHITE_BLOSSOM_LEAVES = registerWithItem("white_blossom_leaves",
@@ -134,6 +145,8 @@ public final class ModBlocks {
 		});
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.NATURAL_BLOCKS).register(entries -> {
 			entries.accept(JADE_STONE);
+			entries.accept(JADE_ORE);
+			entries.accept(DEEPSLATE_JADE_ORE);
 			entries.accept(WHITE_BLOSSOM_LEAVES);
 			entries.accept(SPIRIT_PEACH_LEAVES);
 			entries.accept(BLUE_SPIRIT_LOG);

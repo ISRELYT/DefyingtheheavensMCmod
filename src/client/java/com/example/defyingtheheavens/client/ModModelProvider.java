@@ -18,6 +18,8 @@ public class ModModelProvider extends FabricModelProvider {
 	@Override
 	public void generateBlockStateModels(BlockModelGenerators blocks) {
 		blocks.createTrivialCube(ModBlocks.JADE_STONE);
+		blocks.createTrivialCube(ModBlocks.JADE_ORE);
+		blocks.createTrivialCube(ModBlocks.DEEPSLATE_JADE_ORE);
 		blocks.createTrivialBlock(ModBlocks.WHITE_BLOSSOM_LEAVES, TexturedModel.LEAVES);
 		blocks.woodProvider(ModBlocks.BLUE_SPIRIT_LOG).logWithHorizontal(ModBlocks.BLUE_SPIRIT_LOG).wood(ModBlocks.BLUE_SPIRIT_WOOD);
 		blocks.createTrivialCube(ModBlocks.BLUE_SPIRIT_PLANKS);
@@ -29,5 +31,6 @@ public class ModModelProvider extends FabricModelProvider {
 	public void generateItemModels(ItemModelGenerators items) {
 		items.generateFlatItem(ModItems.RING_OF_POWER, ModelTemplates.FLAT_ITEM);
 		items.generateFlatItem(ModItems.RING_OF_TRANSCENDENCE, ModelTemplates.FLAT_ITEM);
+		items.generateFlatItem(ModItems.JADE, ModelTemplates.FLAT_ITEM);
 	}
 }

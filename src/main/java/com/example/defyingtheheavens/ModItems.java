@@ -53,6 +53,9 @@ public final class ModItems {
 	public static final Item QI_GATHERING_PILL = register("qi_gathering_pill", new PillItem(PillItem.Kind.QI_GATHERING, new Item.Properties()));
 	public static final Item CULTIVATION_PILL = register("cultivation_pill", new PillItem(PillItem.Kind.CULTIVATION, new Item.Properties()));
 
+	/** Mined from Jade Ore. */
+	public static final Item JADE = register("jade", new Item(new Item.Properties()));
+
 	private static Item register(String id, Item item) {
 		return Registry.register(BuiltInRegistries.ITEM, new ResourceLocation(DefyingTheHeavens.MOD_ID, id), item);
 	}
@@ -80,6 +83,7 @@ public final class ModItems {
 				entries.accept(GinsengItem.create(herb, 1));
 			}
 			entries.accept(SPIRIT_DEW);
+			entries.accept(JADE);
 		});
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(entries -> {
 			entries.accept(RING_OF_POWER);

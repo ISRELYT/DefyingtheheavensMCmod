@@ -138,6 +138,14 @@ public final class ModPlacedFeatures {
 	 * Blue Spirit Trees: a spruce of Blue Spirit Log, common in Overworld taiga and anywhere in the Upper Realm, also appended
 	 * by ModFeatures#register (before the herbs, so herbs can grow beneath them). One per this many chunks.
 	 */
+	/**
+	 * Jade Ore, also appended by ModFeatures#register: veins per chunk in Overworld mountains (from deep in the deepslate
+	 * up into the peaks) and all through the Upper Realm's islands. Set to give about as much jade as there are diamonds.
+	 */
+	public static final ResourceKey<PlacedFeature> ORE_JADE = key("ore_jade");
+	public static final ResourceKey<PlacedFeature> ORE_JADE_UPPER_REALM = key("ore_jade_upper_realm");
+	public static final int JADE_VEINS_MOUNTAINS = 13;
+	public static final int JADE_VEINS_UPPER_REALM = 30;
 	public static final ResourceKey<PlacedFeature> BLUE_SPIRIT_TREE = key("blue_spirit_tree");
 	public static final ResourceKey<PlacedFeature> BLUE_SPIRIT_TREE_UPPER_REALM = key("blue_spirit_tree_upper_realm");
 	public static final int BLUE_SPIRIT_TREE_CHUNKS_TAIGA = 2;
@@ -273,6 +281,11 @@ public final class ModPlacedFeatures {
 		register(context, SPIRIT_LOTUS_UPPER_REALM, configured.getOrThrow(ModConfiguredFeatures.SPIRIT_LOTUS), fruit(SPIRIT_LOTUS_CHUNKS_UPPER_REALM));
 		register(context, SPIRIT_DEW_GRASS, configured.getOrThrow(ModConfiguredFeatures.SPIRIT_DEW_GRASS), fruit(SPIRIT_DEW_GRASS_CHUNKS_OVERWORLD));
 		register(context, SPIRIT_DEW_GRASS_UPPER_REALM, configured.getOrThrow(ModConfiguredFeatures.SPIRIT_DEW_GRASS), fruit(SPIRIT_DEW_GRASS_CHUNKS_UPPER_REALM));
+
+		// Jade Ore: Overworld mountains from Y -48 to 160; every island tier in the Upper Realm, like its other ores.
+		register(context, ORE_JADE, configured.getOrThrow(ModConfiguredFeatures.ORE_JADE), List.of(CountPlacement.of(JADE_VEINS_MOUNTAINS),
+				InSquarePlacement.spread(), HeightRangePlacement.uniform(VerticalAnchor.absolute(-48), VerticalAnchor.absolute(160)), BiomeFilter.biome()));
+		register(context, ORE_JADE_UPPER_REALM, configured.getOrThrow(ModConfiguredFeatures.ORE_JADE), ore(JADE_VEINS_UPPER_REALM, ISLAND_MIN_Y, ORE_MAX_Y));
 
 		// Blue Spirit Trees: placed like vanilla trees in the Overworld, on any island tier in the Upper Realm. They come after
 		// the biome's own trees, so the Overworld spot is the ground under any canopy (a tree may grow up through leaves),

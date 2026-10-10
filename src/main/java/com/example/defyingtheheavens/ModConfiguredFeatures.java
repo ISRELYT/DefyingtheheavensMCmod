@@ -49,6 +49,7 @@ public final class ModConfiguredFeatures {
 	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_DIAMOND = key("ore_diamond");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_DIAMOND_BURIED = key("ore_diamond_buried");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_EMERALD = key("ore_emerald");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_JADE = key("ore_jade");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_QUARTZ = key("ore_quartz");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_CLAY = key("ore_clay");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_SAND = key("ore_sand");
@@ -90,6 +91,8 @@ public final class ModConfiguredFeatures {
 		ore(context, ORE_DIAMOND, Blocks.DIAMOND_ORE, Blocks.DEEPSLATE_DIAMOND_ORE, 4, 0.5f);
 		ore(context, ORE_DIAMOND_BURIED, Blocks.DIAMOND_ORE, Blocks.DEEPSLATE_DIAMOND_ORE, 8, 1.0f);
 		ore(context, ORE_EMERALD, Blocks.EMERALD_ORE, Blocks.DEEPSLATE_EMERALD_ORE, 3, 0.5f);
+		// Jade: small veins, in stone (and the Upper Realm's jade stone) or deepslate.
+		ore(context, ORE_JADE, ModBlocks.JADE_ORE, ModBlocks.DEEPSLATE_JADE_ORE, 4, 0.0f);
 		FeatureUtils.register(context, ORE_QUARTZ, Feature.ORE, new OreConfiguration(List.of(
 				OreConfiguration.target(new BlockMatchTest(Blocks.BASALT), Blocks.NETHER_QUARTZ_ORE.defaultBlockState()),
 				OreConfiguration.target(new BlockMatchTest(Blocks.BLACKSTONE), Blocks.NETHER_QUARTZ_ORE.defaultBlockState()),

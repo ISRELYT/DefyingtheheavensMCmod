@@ -25,24 +25,24 @@ public final class ModFeatures {
 	public static final Feature<NoneFeatureConfiguration> CULTIVATION_FRUIT = Registry.register(BuiltInRegistries.FEATURE,
 			DefyingTheHeavens.id("cultivation_fruit"), new CultivationFruitFeature(NoneFeatureConfiguration.CODEC));
 
-	/** Plants wild ginseng on open soil (see GinsengFeature). */
+	/** Plants wild ginseng on open soil, in small patches (see GinsengFeature): 2-4 plants, rare kinds 1-3. */
 	public static final Feature<NoneFeatureConfiguration> GINSENG = Registry.register(BuiltInRegistries.FEATURE,
-			DefyingTheHeavens.id("ginseng"), new GinsengFeature(() -> ModBlocks.GINSENG));
+			DefyingTheHeavens.id("ginseng"), new GinsengFeature(() -> ModBlocks.GINSENG, 2, 4));
 	public static final Feature<NoneFeatureConfiguration> SPIRIT_GINSENG = Registry.register(BuiltInRegistries.FEATURE,
-			DefyingTheHeavens.id("spirit_ginseng"), new GinsengFeature(() -> ModBlocks.SPIRIT_GINSENG));
+			DefyingTheHeavens.id("spirit_ginseng"), new GinsengFeature(() -> ModBlocks.SPIRIT_GINSENG, 1, 3));
 	/** The other wild herbs (see GinsengFeature): Spirit Lotus on still water, the rest on open soil. */
 	public static final Feature<NoneFeatureConfiguration> LINGZHI = Registry.register(BuiltInRegistries.FEATURE,
-			DefyingTheHeavens.id("lingzhi"), new GinsengFeature(() -> ModBlocks.LINGZHI));
+			DefyingTheHeavens.id("lingzhi"), new GinsengFeature(() -> ModBlocks.LINGZHI, 2, 4));
 	public static final Feature<NoneFeatureConfiguration> PURPLE_LINGZHI = Registry.register(BuiltInRegistries.FEATURE,
-			DefyingTheHeavens.id("purple_lingzhi"), new GinsengFeature(() -> ModBlocks.PURPLE_LINGZHI));
+			DefyingTheHeavens.id("purple_lingzhi"), new GinsengFeature(() -> ModBlocks.PURPLE_LINGZHI, 1, 3));
 	public static final Feature<NoneFeatureConfiguration> HUANGJING = Registry.register(BuiltInRegistries.FEATURE,
-			DefyingTheHeavens.id("huangjing"), new GinsengFeature(() -> ModBlocks.HUANGJING));
+			DefyingTheHeavens.id("huangjing"), new GinsengFeature(() -> ModBlocks.HUANGJING, 2, 4));
 	public static final Feature<NoneFeatureConfiguration> OCHRE_HUANGJING = Registry.register(BuiltInRegistries.FEATURE,
-			DefyingTheHeavens.id("ochre_huangjing"), new GinsengFeature(() -> ModBlocks.OCHRE_HUANGJING));
+			DefyingTheHeavens.id("ochre_huangjing"), new GinsengFeature(() -> ModBlocks.OCHRE_HUANGJING, 1, 3));
 	public static final Feature<NoneFeatureConfiguration> SPIRIT_LOTUS = Registry.register(BuiltInRegistries.FEATURE,
-			DefyingTheHeavens.id("spirit_lotus"), new GinsengFeature(() -> ModBlocks.SPIRIT_LOTUS, GinsengFeature.Ground.WATER));
+			DefyingTheHeavens.id("spirit_lotus"), new GinsengFeature(() -> ModBlocks.SPIRIT_LOTUS, GinsengFeature.Ground.WATER, 2, 4));
 	public static final Feature<NoneFeatureConfiguration> SPIRIT_DEW_GRASS = Registry.register(BuiltInRegistries.FEATURE,
-			DefyingTheHeavens.id("spirit_dew_grass"), new GinsengFeature(() -> ModBlocks.SPIRIT_DEW_GRASS));
+			DefyingTheHeavens.id("spirit_dew_grass"), new GinsengFeature(() -> ModBlocks.SPIRIT_DEW_GRASS, 3, 6));
 
 	/**
 	 * Touching this class registers the feature types. Also appends wild Cultivation Fruit to the end of vegetal
@@ -83,6 +83,14 @@ public final class ModFeatures {
 		herb(woods, upperRealm, ModPlacedFeatures.OCHRE_HUANGJING, ModPlacedFeatures.OCHRE_HUANGJING_UPPER_REALM);
 		herb(wetlands, upperRealm, ModPlacedFeatures.SPIRIT_LOTUS, ModPlacedFeatures.SPIRIT_LOTUS_UPPER_REALM);
 		herb(meadows, upperRealm, ModPlacedFeatures.SPIRIT_DEW_GRASS, ModPlacedFeatures.SPIRIT_DEW_GRASS_UPPER_REALM);
+		jade(upperRealm);
+	}
+
+	/** Jade Ore in Overworld mountains and all through the Upper Realm. */
+	private static void jade(Predicate<BiomeSelectionContext> upperRealm) {
+		BiomeModifications.addFeature(BiomeSelectors.foundInOverworld().and(BiomeSelectors.tag(BiomeTags.IS_MOUNTAIN)),
+				GenerationStep.Decoration.UNDERGROUND_ORES, ModPlacedFeatures.ORE_JADE);
+		BiomeModifications.addFeature(upperRealm, GenerationStep.Decoration.UNDERGROUND_ORES, ModPlacedFeatures.ORE_JADE_UPPER_REALM);
 	}
 
 	private static void herb(Predicate<BiomeSelectionContext> overworld, Predicate<BiomeSelectionContext> upperRealm,
