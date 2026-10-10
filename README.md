@@ -418,6 +418,13 @@ sect) walk through, and can be broken only by a cultivator at least as strong as
 takes 5 seconds, half that for every rank stronger (`Formations.breakTicks`). Breaking the core, or the core running out
 of qi, takes the whole barrier down at once.
 
+No monster spawns inside a raised barrier, a sect's or a secluded cultivator's Concealment Barrier: zombies, skeletons,
+spiders, creepers, pillager patrols and the rest pass over it (`mixin/NaturalSpawnerMixin`, `mixin/PatrolSpawnerMixin`).
+Any that get in another way (a phantom, an enderman teleporting, one swimming in where water breaks the shell, one from a
+monster spawner) are swept out every half second: a wild one vanishes in a puff of smoke, and one that has to stay in
+the world (named, or carrying something it picked up) is set down on the ground just outside. Bosses are left alone, and
+animals and other peaceful mobs are never touched (`Formations.purge`).
+
 - **Power.** The core holds a battery of 2,000 qi. The barrier costs `0.5 + radius² / 80` qi per second (1.3 at radius 8,
   13 at 32, 52 at 64); each **Qi Vein** joined to the core gathers 8 qi per second. A raised barrier stays up while the
   veins and battery can carry it. Each barrier block broken drains 40 qi and each one mended costs 5, so a sustained
@@ -471,8 +478,12 @@ the master is between Core Formation and Nascent Soul Grand Perfection; in the U
   in combat), Realm Suppression and Qi Flight, but only while their qi can sustain them. They flee below a quarter of their
   health, and rogues and disciples also flee from a hostile domain four or more stages stronger once their own domain
   senses it. The Sect Master and the elders never flee a stronger domain: they stand and fight for their sect. A
-  fleeing cultivator runs (or flies) away from what it fears, out of its sect's grounds if need be, and comes home once
-  the fear passes (about 30 seconds after it last sensed it); struck by its pursuer at close quarters, it strikes back.
+  cultivator fleeing a stronger domain runs (or flies) to a refuge about 200 blocks away (160-240), on the far side from
+  what it fears, and only then comes home; it gives up after 3 minutes. The refuge is kept within the area the world is
+  simulating around players (so it doesn't freeze out there): fleeing from you, it ends up near the edge of your
+  simulation distance if that is closer than 200 blocks (10-12 chunks by default, about 160-190 blocks). Badly hurt, a
+  cultivator only backs away. Struck by its pursuer at close quarters, a fleeing cultivator strikes back
+  (`FLEE_DISTANCE`, `FLEE_SPREAD`, `FLEE_TIMEOUT` in `CultivatorNpc.java`).
 - Every cultivator has a nameplate: title, a red health bar with numbers, and alignment, for example "Righteous (+120)".
   Under Qi Sense, meditating cultivators draw qi motes into themselves.
 

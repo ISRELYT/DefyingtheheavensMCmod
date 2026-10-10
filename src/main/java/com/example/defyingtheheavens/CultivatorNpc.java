@@ -87,6 +87,10 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 	public static final float FLEE_HEALTH = 0.25f;
 	/** A hostile domain this many stages (a realm) above one's own sends a cultivator running. */
 	public static final int SUPERIOR_DOMAIN_GAP = 4;
+	/** How far it runs from such a domain (blocks, give or take {@link #FLEE_SPREAD}), and for how long at most (ticks). */
+	public static final int FLEE_DISTANCE = 200;
+	public static final int FLEE_SPREAD = 40;
+	public static final int FLEE_TIMEOUT = 3600;
 	/** Radius of a secluded cultivator's Concealment Barrier, and how far out its repulsion reaches. */
 	public static final int CONCEALMENT_RADIUS = 4;
 	private static final double REPULSE_REACH = CONCEALMENT_RADIUS + 3.5;
@@ -130,6 +134,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 	private int combatTicks;
 	private Entity fleeFrom;
 	private int fleeTicks;
+	private BlockPos refuge;
 	private int repulseCooldown;
 	private double suppressUpkeep;
 	private boolean landing;
@@ -385,7 +390,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		if (getTarget() != null || getLastHurtByMob() != null && tickCount - getLastHurtByMobTimestamp() < 100) combatTicks = 200;
 		else if (combatTicks > 0) combatTicks--;
 		tickQi();
-		if (fleeTicks > 0 && --fleeTicks == 0) fleeFrom = null;
+		if (fleeTicks > 0 && --fleeTicks == 0) reachRefuge(); // given up on getting there: it stops running all the same
 		if (lifecycle == Lifecycle.SECLUDED && isConcealed()) repulse(level);
 		tickFlight(level);
 		NpcTravel.maybeDispatch(this, level);
@@ -616,11 +621,59 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		}
 	}
 
-	/** Runs from {@code other} for the next 30 seconds (renewed while it is still sensed). */
+	/**
+	 * Runs from {@code other}: to a refuge {@link #FLEE_DISTANCE} blocks or so the far side of it, staying until it gets there
+	 * (or {@link #FLEE_TIMEOUT} runs out). Sensed again on the way, it keeps going; sensed again after, it runs again.
+	 */
 	void startFleeing(Entity other) {
-		fleeFrom = other;
-		fleeTicks = 600;
+		if (fleeFrom != other || refuge == null) {
+			fleeFrom = other;
+			refuge = level() instanceof ServerLevel server ? pickRefuge(server, other) : null;
+			fleeTicks = FLEE_TIMEOUT;
+		}
+		fleeTicks = Math.max(fleeTicks, 600);
 		if (getTarget() == other) setTarget(null);
+	}
+
+	/**
+	 * A spot about {@link #FLEE_DISTANCE} (give or take {@link #FLEE_SPREAD}) blocks away, roughly straight away from
+	 * {@code threat}. Kept on ground the world still simulates, drawing it in as far as needed: a fugitive that walked into
+	 * chunks nobody is near would stand frozen there, and never come home while its pursuer stays.
+	 */
+	private BlockPos pickRefuge(ServerLevel level, Entity threat) {
+		Vec3 away = position().subtract(threat.position()).multiply(1, 0, 1);
+		double angle = (away.lengthSqr() < 1.0e-4 ? random.nextDouble() * Math.PI * 2 : Math.atan2(away.z, away.x)) + (random.nextDouble() - 0.5);
+		double distance = FLEE_DISTANCE - FLEE_SPREAD + random.nextInt(2 * FLEE_SPREAD + 1);
+		for (; distance >= 24; distance -= 16) {
+			BlockPos at = BlockPos.containing(getX() + Math.cos(angle) * distance, getY(), getZ() + Math.sin(angle) * distance);
+			if (level.isPositionEntityTicking(at)) return at;
+		}
+		return null; // nowhere far to go: it just backs away (FleeGoal)
+	}
+
+	/** Where it is running to, or null (no refuge, or not running from anyone). */
+	public BlockPos getRefuge() { return refuge; }
+
+	/** Safe at its refuge: it stops running, and heads home (ReturnToTerritoryGoal) or back to its own wandering. */
+	public void reachRefuge() {
+		refuge = null;
+		fleeFrom = null;
+		fleeTicks = 0;
+	}
+
+	/** The refuge it ran for has fallen out of the simulated world (its pursuer moved off): one nearer, the same way. */
+	public void redrawRefuge(ServerLevel level) {
+		if (refuge == null) return;
+		Vec3 to = Vec3.atCenterOf(refuge).subtract(position()).multiply(1, 0, 1);
+		double distance = to.length();
+		for (distance -= 16; distance >= 8; distance -= 16) {
+			BlockPos at = BlockPos.containing(position().add(to.normalize().scale(distance)));
+			if (level.isPositionEntityTicking(at)) {
+				refuge = at;
+				return;
+			}
+		}
+		reachRefuge();
 	}
 
 	/**
@@ -689,7 +742,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 
 	/** Running: from a domain a realm above its own (unless it {@link #holdsGround}), or from a fight it is losing badly. */
 	public boolean shouldFlee() {
-		return fleeFrom != null && fleeFrom.isAlive() && !holdsGround() || getHealth() < getMaxHealth() * FLEE_HEALTH && isInCombat();
+		return fleeFrom != null && fleeFrom.isAlive() && !fleeFrom.isRemoved() && !holdsGround()
+				|| getHealth() < getMaxHealth() * FLEE_HEALTH && isInCombat();
 	}
 
 	public Entity getFleeFrom() { return fleeFrom; }

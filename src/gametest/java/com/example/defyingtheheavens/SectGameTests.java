@@ -100,6 +100,17 @@ public class SectGameTests implements FabricGameTest {
 		for (CultivatorNpc npc : new CultivatorNpc[] {master, elder, disciple}) npc.startFleeing(intruder);
 		helper.assertTrue(!master.shouldFlee() && !elder.shouldFlee(), "The master and its elders stand against a far stronger intruder");
 		helper.assertTrue(disciple.shouldFlee(), "A disciple runs from it");
+		BlockPos refuge = disciple.getRefuge();
+		if (refuge != null) {
+			// Only ground the world is still simulating counts, so in a test world the refuge may be drawn in (or be none).
+			double distance = Math.sqrt(refuge.distSqr(disciple.blockPosition()));
+			double dot = (refuge.getX() - disciple.getX()) * (disciple.getX() - intruder.getX()) + (refuge.getZ() - disciple.getZ()) * (disciple.getZ() - intruder.getZ());
+			helper.assertTrue(distance >= 20 && distance <= CultivatorNpc.FLEE_DISTANCE + CultivatorNpc.FLEE_SPREAD + 2,
+					"Its refuge is a good way off (" + Math.round(distance) + " blocks)");
+			helper.assertTrue(dot > 0, "... away from the intruder, not past it");
+		}
+		disciple.reachRefuge();
+		helper.assertTrue(!disciple.shouldFlee(), "Safe at its refuge, it stops running");
 		elder.setHealth(elder.getMaxHealth() * 0.1f);
 		elder.setLastHurtByMob(intruder);
 		// Being in a fight is worked out on the elder's own tick.
@@ -215,6 +226,36 @@ public class SectGameTests implements FabricGameTest {
 			helper.setBlock(coreRel, Blocks.AIR);
 			helper.assertTrue(countBarriers(level, core, Formations.MIN_RADIUS) == 0, "Breaking the core takes every barrier block with it at once");
 			helper.succeed();
+		});
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 200)
+	public void formationsKeepMonstersOut(GameTestHelper helper) {
+		BlockPos coreRel = new BlockPos(4, 2, 4);
+		helper.setBlock(coreRel.below(), Blocks.STONE);
+		helper.setBlock(coreRel, ModBlocks.FORMATION_CORE);
+		ServerLevel level = helper.getLevel();
+		BlockPos core = helper.absolutePos(coreRel);
+		((FormationCoreBlockEntity) level.getBlockEntity(core)).bindToSect(UUID.randomUUID(), "Test", Formations.MIN_RADIUS, 0);
+		helper.runAfterDelay(45, () -> {
+			helper.assertTrue(Formations.shelters(level, core.above()), "Inside a raised barrier is sheltered ground");
+			helper.assertTrue(!Formations.shelters(level, core.offset(20, 0, 0)), "Outside it is not");
+			// A wild zombie (the world's own, so not kept), a named one (kept in the world), and a cow (no monster).
+			Zombie wild = EntityType.ZOMBIE.create(level);
+			wild.moveTo(core.getX() + 1.5, core.getY() + 1, core.getZ() + 0.5, 0, 0);
+			level.addFreshEntity(wild);
+			Zombie named = helper.spawn(EntityType.ZOMBIE, coreRel.offset(0, 1, 1));
+			named.setCustomName(net.minecraft.network.chat.Component.literal("Gerald"));
+			var cow = helper.spawn(EntityType.COW, coreRel.offset(-1, 1, 0));
+			helper.assertTrue(Formations.isMonster(wild) && !Formations.isMonster(cow), "Zombies are monsters, cows aren't");
+			helper.runAfterDelay(25, () -> {
+				helper.assertTrue(wild.isRemoved(), "A wild monster inside the barrier is dispersed");
+				helper.assertTrue(named.isAlive() && !named.isRemoved(), "A named one is kept in the world");
+				helper.assertTrue(named.blockPosition().distSqr(core) > Formations.MIN_RADIUS * Formations.MIN_RADIUS,
+						"... but set down outside the barrier (" + named.blockPosition().toShortString() + ")");
+				helper.assertTrue(cow.isAlive() && !cow.isRemoved(), "Animals are left in peace");
+				helper.succeed();
+			});
 		});
 	}
 

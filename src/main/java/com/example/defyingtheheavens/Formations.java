@@ -2,11 +2,18 @@ package com.example.defyingtheheavens;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
+import net.minecraft.world.entity.boss.wither.WitherBoss;
+import net.minecraft.world.entity.monster.ElderGuardian;
+import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ChunkPos;
@@ -17,6 +24,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 
@@ -54,6 +63,8 @@ public final class Formations {
 	/** Ticks a barrier takes to break for a cultivator exactly as strong as its formation; halved for each stage beyond. */
 	public static final int BREAK_TICKS_AT_EQUAL = 100;
 	private static final int SYNC_INTERVAL = 40;
+	/** Ticks between two sweeps of each raised formation for monsters inside it. */
+	private static final int PURGE_INTERVAL = 10;
 	private static final double SYNC_RANGE = 256;
 	/** A concealment barrier whose cultivator hasn't been seen for this long (its chunk loaded) is dissolved. */
 	private static final long CONCEALMENT_GRACE = 600;
@@ -108,6 +119,57 @@ public final class Formations {
 			if (formation.isRaised() && formation.encloses(pos)) found.add(formation);
 		}
 		return found;
+	}
+
+	// --- Keeping monsters out ---
+
+	/** Whether a raised formation in {@code level} encloses {@code pos}: no monster may be born there. */
+	public static boolean shelters(ServerLevel level, BlockPos pos) {
+		for (Formation formation : FormationData.get(level).all()) {
+			if (formation.isRaised() && formation.encloses(pos)) return true;
+		}
+		return false;
+	}
+
+	/**
+	 * The monsters a formation keeps out: every hostile mob but the bosses, and the Inner Realm's heart demons (part of its
+	 * trial, not strays).
+	 */
+	public static boolean isMonster(Entity entity) {
+		return entity instanceof Mob && entity instanceof Enemy && !(entity instanceof WitherBoss || entity instanceof EnderDragon
+				|| entity instanceof ElderGuardian || entity instanceof HeartDemonEntity);
+	}
+
+	/**
+	 * Monsters that got inside anyway (a phantom, an enderman's jump, a pursuer swimming in where water breaks the shell, one
+	 * spawned by a spawner) are driven out: a wild one is dispersed, one that must stay in the world (named, or carrying
+	 * loot) is set down outside the barrier.
+	 */
+	private static void purge(ServerLevel level, Formation formation) {
+		double reach = formation.getRadius() + 1;
+		for (Mob mob : level.getEntitiesOfClass(Mob.class, new AABB(formation.center).inflate(reach),
+				m -> m.isAlive() && isMonster(m) && formation.encloses(m.blockPosition()))) {
+			level.sendParticles(ParticleTypes.POOF, mob.getX(), mob.getY() + mob.getBbHeight() / 2, mob.getZ(), 12, 0.3, 0.4, 0.3, 0.02);
+			if (!mob.isPersistenceRequired() && !mob.requiresCustomPersistence()) {
+				mob.discard();
+			} else {
+				expel(level, formation, mob);
+			}
+		}
+	}
+
+	/** Puts {@code mob} down on the ground just outside {@code formation}, on its own side of it. */
+	private static void expel(ServerLevel level, Formation formation, Mob mob) {
+		Vec3 centre = Vec3.atCenterOf(formation.center);
+		Vec3 out = mob.position().subtract(centre).multiply(1, 0, 1);
+		out = out.lengthSqr() < 1.0e-4 ? new Vec3(1, 0, 0) : out.normalize();
+		double distance = formation.getRadius() + 3;
+		int x = Mth.floor(centre.x + out.x * distance), z = Mth.floor(centre.z + out.z * distance);
+		if (!level.isLoaded(new BlockPos(x, mob.getBlockY(), z))) return; // tried again on the next sweep
+		int y = surface(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+		mob.getNavigation().stop();
+		mob.setTarget(null);
+		mob.teleportTo(x + 0.5, y, z + 0.5);
 	}
 
 	/**
@@ -312,6 +374,7 @@ public final class Formations {
 			sweep(sweep.level(), sweep.chunk());
 		}
 		boolean heartbeat = server.getTickCount() % 100 == 0;
+		boolean purging = server.getTickCount() % PURGE_INTERVAL == 0;
 		for (ServerLevel level : server.getAllLevels()) {
 			FormationData data = FormationData.get(level);
 			if (data.all().isEmpty()) continue;
@@ -320,6 +383,7 @@ public final class Formations {
 			for (Formation formation : data.all()) {
 				if (!formation.isRaised() || !level.isLoaded(formation.center)) continue;
 				if (budget > 0) budget -= build(level, formation, budget);
+				if (purging) purge(level, formation);
 				if (heartbeat && formation.kind == Formation.Kind.CONCEALMENT) {
 					Entity owner = formation.getOwner() == null ? null : level.getEntity(formation.getOwner());
 					if (owner instanceof CultivatorNpc npc && npc.isAlive()) {

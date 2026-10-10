@@ -77,12 +77,15 @@ public final class CultivatorGoals {
 
 	/**
 	 * Badly hurt, or a hostile domain far above its own nearby: it gets away from whatever it fears, on foot or through the
-	 * air, sect members out of their grounds too (the core is no shelter from someone already inside), and comes back once
-	 * the fear has passed (ReturnToTerritoryGoal). Caught (struck by its pursuer with no room to run), it strikes back.
+	 * air. From a stronger domain it runs all the way to a refuge some {@link CultivatorNpc#FLEE_DISTANCE} blocks off (sect
+	 * members out of their grounds too: the core is no shelter from someone already inside), then comes back
+	 * (ReturnToTerritoryGoal); badly hurt, it only backs away. Caught (struck by its pursuer at close quarters), it strikes back.
 	 */
 	public static class FleeGoal extends Goal {
 		/** Struck this recently by the one it runs from, with that one in reach: it's cornered. */
 		private static final int CORNERED_TICKS = 40;
+		/** Within this many blocks (sideways) of its refuge, it is there. */
+		private static final double REFUGE_REACHED = 8;
 		private final CultivatorNpc npc;
 		private int recheck;
 		private int cooldown;
@@ -117,6 +120,11 @@ public final class CultivatorGoals {
 					cooldown = attackCooldown(npc);
 				}
 			}
+			BlockPos refuge = npc.getRefuge();
+			if (refuge != null) {
+				run(refuge);
+				return;
+			}
 			Vec3 away = npc.position().subtract(threat.position());
 			away = away.lengthSqr() < 1.0e-4 ? new Vec3(1, 0, 0) : away.normalize();
 			if (npc.canFlySustainably() || npc.isQiFlying()) {
@@ -128,6 +136,26 @@ public final class CultivatorGoals {
 				recheck = 20;
 				Vec3 spot = DefaultRandomPos.getPosAway(npc, 16, 7, threat.position());
 				if (spot != null) npc.getNavigation().moveTo(spot.x, spot.y, spot.z, 1.4);
+			}
+		}
+
+		/** All the way to its refuge (see CultivatorNpc#startFleeing), through the air if it can sustain flight. */
+		private void run(BlockPos refuge) {
+			double dx = refuge.getX() + 0.5 - npc.getX(), dz = refuge.getZ() + 0.5 - npc.getZ();
+			if (dx * dx + dz * dz < REFUGE_REACHED * REFUGE_REACHED) {
+				if (npc.isQiFlying()) npc.land();
+				npc.getNavigation().stop();
+				npc.reachRefuge();
+				return;
+			}
+			if (npc.tickCount % 40 == 0 && npc.level() instanceof ServerLevel level && !level.isPositionEntityTicking(refuge)) npc.redrawRefuge(level);
+			if (!npc.isQiFlying() && npc.canFlySustainably()) npc.setQiFlying(true);
+			if (npc.isQiFlying()) {
+				int ground = Formations.surface(npc.level(), Heightmap.Types.MOTION_BLOCKING, npc.getBlockX(), npc.getBlockZ());
+				npc.flyToward(new Vec3(refuge.getX() + 0.5, Math.max(ground + 10, npc.getY()), refuge.getZ() + 0.5), 0.5);
+			} else if (--recheck <= 0 || npc.getNavigation().isDone()) {
+				recheck = 20;
+				walkToward(npc, Vec3.atBottomCenterOf(refuge), 1.4);
 			}
 		}
 
