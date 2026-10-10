@@ -1,6 +1,7 @@
 package com.example.defyingtheheavens.client.mixin;
 
 import com.example.defyingtheheavens.InnerBodyEntity;
+import com.example.defyingtheheavens.ModDimensions;
 import com.example.defyingtheheavens.client.ClientMeditationTracker;
 import com.example.defyingtheheavens.client.LotusPose;
 import net.minecraft.client.model.HumanoidModel;
@@ -20,7 +21,9 @@ public abstract class HumanoidModelMixin {
 	@Inject(method = "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V", at = @At("TAIL"))
 	private void dth$lotusPose(LivingEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks,
 							   float netHeadYaw, float headPitch, CallbackInfo ci) {
-		boolean meditating = entity instanceof Player && ClientMeditationTracker.isMeditating(entity.getUUID());
+		// A soul walking its Inner Realm is meditating too, but stands and walks.
+		boolean meditating = entity instanceof Player && ClientMeditationTracker.isMeditating(entity.getUUID())
+				&& !ModDimensions.isInnerRealm(entity.level().dimension());
 		// A body left behind while its soul is in the Inner Realm sits the same way.
 		if (!meditating && !(entity instanceof InnerBodyEntity)) return;
 		LotusPose.apply((HumanoidModel<?>) (Object) this);

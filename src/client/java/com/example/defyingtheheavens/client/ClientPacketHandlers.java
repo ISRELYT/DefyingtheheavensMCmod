@@ -36,6 +36,17 @@ public final class ClientPacketHandlers {
 					pillResistance, medicinalQi));
 		});
 
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SURGE, (client, handler, buf, sender) -> {
+			int game = buf.readVarInt();
+			int window = buf.readVarInt();
+			client.execute(() -> QiSurgeHud.start(game, window));
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.INNER_FADE, (client, handler, buf, sender) -> {
+			int ticks = buf.readVarInt();
+			client.execute(() -> InnerRealmFade.begin(ticks));
+		});
+
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.QI_ABSORPTION, (client, handler, buf, sender) -> {
 			UUID id = buf.readUUID();
 			float rate = buf.readFloat();

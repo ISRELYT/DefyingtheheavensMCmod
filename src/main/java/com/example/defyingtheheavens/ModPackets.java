@@ -18,6 +18,10 @@ public final class ModPackets {
 	public static final ResourceLocation CIRCULATION = new ResourceLocation(DefyingTheHeavens.MOD_ID, "circulation");
 	/** C2S: switch an ability on or off (its ordinal). */
 	public static final ResourceLocation TOGGLE_ABILITY = new ResourceLocation(DefyingTheHeavens.MOD_ID, "toggle_ability");
+	/** S2C: a qi surge's screen game starts (game ordinal, window in ticks; -1 ends any running), see QiSurges. */
+	public static final ResourceLocation SURGE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "surge");
+	/** S2C: the soul is about to turn inward: fade the screen to black (see InnerRealm#FADE_TICKS). */
+	public static final ResourceLocation INNER_FADE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "inner_fade");
 	/** S2C: full cultivation state for the owning player. */
 	public static final ResourceLocation SYNC = new ResourceLocation(DefyingTheHeavens.MOD_ID, "sync");
 	/** S2C: "player X is/isn't meditating", for rendering the lotus pose. */
@@ -73,6 +77,19 @@ public final class ModPackets {
 		buf.writeDouble(c.getPillResistance());
 		buf.writeDouble(c.getMedicinalQi());
 		ServerPlayNetworking.send(player, SYNC, buf);
+	}
+
+	public static void sendSurge(ServerPlayer player, int game, int windowTicks) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(game);
+		buf.writeVarInt(windowTicks);
+		ServerPlayNetworking.send(player, SURGE, buf);
+	}
+
+	public static void sendInnerFade(ServerPlayer player) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(InnerRealm.FADE_TICKS);
+		ServerPlayNetworking.send(player, INNER_FADE, buf);
 	}
 
 	public static void sendQiAbsorption(ServerPlayer to, ServerPlayer meditator, double cultivationPerSecond) {

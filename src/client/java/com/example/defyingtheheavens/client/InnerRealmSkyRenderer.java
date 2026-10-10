@@ -1,6 +1,7 @@
 package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.DefyingTheHeavens;
+import com.example.defyingtheheavens.InnerRealm;
 import com.example.defyingtheheavens.PlayerCultivation;
 import com.example.defyingtheheavens.Realm;
 import com.mojang.blaze3d.platform.GlStateManager;
@@ -38,7 +39,7 @@ import java.util.UUID;
 /**
  * The Inner Realm's sky, which is the cultivator's own progress made visible (see InnerRealm):
  * <ul>
- *   <li>far below the island, a web of qi leylines that grows with every stage, qi pulsing along them toward the centre;</li>
+ *   <li>below the island, a web of qi leylines that grows with every stage, qi pulsing along them toward the centre;</li>
  *   <li>at the centre, from Core Formation, a solid golden core that forms over the realm (shards of gold orbiting and
  *   fusing in, motes drawn to it); from Nascent Soul, the cultivator themselves, see-through and sitting in meditation,
  *   wrapped in black mist that clears stage by stage;</li>
@@ -48,8 +49,12 @@ import java.util.UUID;
  * Kept soft: everything is additive and dim enough that it never blinds.
  */
 public class InnerRealmSkyRenderer implements DimensionRenderingRegistry.SkyRenderer {
-	/** The leyline plane, this far below the eye. */
-	private static final float PLANE = -70.0f;
+	/**
+	 * The leyline plane, this far below the island's surface. Everything but the sky dome itself is drawn in place around
+	 * the island (offset by {@link #ox}, {@link #oy}, {@link #oz} from the camera), so a soul walking the island sees the
+	 * lines and the core stay put beneath it, close enough to make out through the see-through floor.
+	 */
+	private static final float PLANE = -26.0f;
 	private static final int MAX_ROOTS = 14;
 	private static final int MAX_DEPTH = 4;
 
@@ -59,7 +64,7 @@ public class InnerRealmSkyRenderer implements DimensionRenderingRegistry.SkyRend
 	private static final float[][] NADIR = {{0.000f, 0.000f, 0.010f}, {0.010f, 0.010f, 0.030f}, {0.010f, 0.010f, 0.040f}, {0.02f, 0.02f, 0.06f}, {0.03f, 0.03f, 0.10f}, {0.08f, 0.08f, 0.20f}};
 	private static final float[] STARS = {0.15f, 0.40f, 0.60f, 0.80f, 0.90f, 1.00f};
 	private static final float[][] LINE = {{0.35f, 0.45f, 0.60f}, {0.40f, 0.65f, 0.95f}, {0.50f, 0.75f, 1.00f}, {0.60f, 0.82f, 1.00f}, {0.75f, 0.90f, 1.00f}, {0.90f, 0.95f, 1.00f}};
-	private static final float[] LINE_ALPHA = {0.35f, 0.45f, 0.55f, 0.60f, 0.65f, 0.70f};
+	private static final float[] LINE_ALPHA = {0.50f, 0.60f, 0.68f, 0.72f, 0.76f, 0.80f};
 	private static final float[] AURORA = {0, 0, 0, 0.18f, 0.40f, 0.45f};
 	/** Black mist around the Nascent Soul, Early to Grand Perfection. */
 	private static final float[] MIST = {0.75f, 0.50f, 0.28f, 0.08f};
@@ -69,6 +74,8 @@ public class InnerRealmSkyRenderer implements DimensionRenderingRegistry.SkyRend
 
 	private static List<Segment> web;
 	private static UUID webOwner;
+	/** The island's centre (its surface) relative to the camera, this frame. */
+	private static float ox, oy, oz;
 	private PlayerModel<?> soulModel;
 	private PlayerModel<?> slimSoulModel;
 
@@ -85,6 +92,11 @@ public class InnerRealmSkyRenderer implements DimensionRenderingRegistry.SkyRend
 			float time = level.getGameTime() + context.tickDelta();
 			PoseStack poseStack = context.matrixStack();
 			Matrix4f pose = poseStack.last().pose();
+			UUID id = mc.player.getUUID();
+			net.minecraft.world.phys.Vec3 camera = context.camera().getPosition();
+			ox = (float) (Math.floorMod(id.hashCode(), 2048) * (double) InnerRealm.SLOT_SPACING + 0.5 - camera.x);
+			oy = (float) (InnerRealm.ISLAND_Y + 1 - camera.y);
+			oz = (float) (0.5 - camera.z);
 
 			RenderSystem.depthMask(false);
 			RenderSystem.enableBlend();
@@ -104,7 +116,7 @@ public class InnerRealmSkyRenderer implements DimensionRenderingRegistry.SkyRend
 
 			if (tier < Realm.CORE_FORMATION.ordinal()) {
 				// Before the core: only a faint node where the lines meet, brighter each stage.
-				glow(pose, new Vector3f(0, PLANE + 0.5f, 0), 2.0f + progress * 0.4f, LINE[tier], 0.15f + progress * 0.03f);
+				glow(pose, new Vector3f(ox, oy + PLANE + 0.5f, oz), 2.0f + progress * 0.4f, LINE[tier], 0.2f + progress * 0.03f);
 			} else if (tier == Realm.CORE_FORMATION.ordinal()) {
 				drawGoldenCore(poseStack, stage, time);
 			} else {
@@ -177,8 +189,8 @@ public class InnerRealmSkyRenderer implements DimensionRenderingRegistry.SkyRend
 			float pulse = 0.55f + 0.45f * Mth.sin(time * 0.06f + s.dist * 0.07f);
 			float fade = Mth.clamp(1.0f - s.dist / 420.0f, 0.15f, 1.0f);
 			float alpha = baseAlpha * pulse * fade * (0.6f + 0.4f * s.width);
-			ribbonFlat(buffer, pose, s, s.width * 2.6f, colour, alpha * 0.18f); // soft glow
-			ribbonFlat(buffer, pose, s, s.width * 0.45f, colour, alpha);        // the line itself
+			ribbonFlat(buffer, pose, s, s.width * 3.0f, colour, alpha * 0.2f); // soft glow
+			ribbonFlat(buffer, pose, s, s.width * 0.6f, colour, alpha);       // the line itself
 		}
 		BufferUploader.drawWithShader(buffer.end());
 		RenderSystem.enableCull();
@@ -189,10 +201,11 @@ public class InnerRealmSkyRenderer implements DimensionRenderingRegistry.SkyRend
 		float len = Mth.sqrt(dx * dx + dz * dz);
 		if (len < 1e-3f) return;
 		float px = -dz / len * halfWidth, pz = dx / len * halfWidth;
-		buffer.vertex(pose, s.x1 - px, PLANE, s.z1 - pz).color(c[0], c[1], c[2], alpha).endVertex();
-		buffer.vertex(pose, s.x1 + px, PLANE, s.z1 + pz).color(c[0], c[1], c[2], alpha).endVertex();
-		buffer.vertex(pose, s.x2 + px, PLANE, s.z2 + pz).color(c[0], c[1], c[2], alpha).endVertex();
-		buffer.vertex(pose, s.x2 - px, PLANE, s.z2 - pz).color(c[0], c[1], c[2], alpha).endVertex();
+		float y = oy + PLANE, x1 = ox + s.x1, z1 = oz + s.z1, x2 = ox + s.x2, z2 = oz + s.z2;
+		buffer.vertex(pose, x1 - px, y, z1 - pz).color(c[0], c[1], c[2], alpha).endVertex();
+		buffer.vertex(pose, x1 + px, y, z1 + pz).color(c[0], c[1], c[2], alpha).endVertex();
+		buffer.vertex(pose, x2 + px, y, z2 + pz).color(c[0], c[1], c[2], alpha).endVertex();
+		buffer.vertex(pose, x2 - px, y, z2 - pz).color(c[0], c[1], c[2], alpha).endVertex();
 	}
 
 	// --- The centre ---
@@ -203,7 +216,7 @@ public class InnerRealmSkyRenderer implements DimensionRenderingRegistry.SkyRend
 	 */
 	private static void drawGoldenCore(PoseStack poseStack, int stage, float time) {
 		float radius = 3.0f + stage * 1.2f;
-		Vector3f centre = new Vector3f(0, PLANE + radius + 1.0f, 0);
+		Vector3f centre = new Vector3f(ox, oy + PLANE + radius + 1.0f, oz);
 		Matrix4f pose = poseStack.last().pose();
 		glow(pose, centre, radius * 3.2f, new float[] {1.0f, 0.75f, 0.35f}, 0.22f + stage * 0.05f);
 
@@ -300,7 +313,7 @@ public class InnerRealmSkyRenderer implements DimensionRenderingRegistry.SkyRend
 	 */
 	private void drawSoul(PoseStack poseStack, Minecraft mc, int tier, int stage, float time) {
 		float scale = 7.0f;
-		Vector3f centre = new Vector3f(0, PLANE + 0.6f * scale, 0);
+		Vector3f centre = new Vector3f(ox, oy + PLANE + 0.6f * scale, oz);
 		Matrix4f pose = poseStack.last().pose();
 		float radiance = tier == Realm.NASCENT_SOUL.ordinal() ? 0.25f + 0.05f * stage : 0.35f + 0.08f * (tier - Realm.NASCENT_SOUL.ordinal());
 		glow(pose, centre, scale * 2.2f, new float[] {0.65f, 0.80f, 1.0f}, radiance);
@@ -315,7 +328,7 @@ public class InnerRealmSkyRenderer implements DimensionRenderingRegistry.SkyRend
 		RenderSystem.depthMask(true);
 		RenderSystem.defaultBlendFunc();
 		poseStack.pushPose();
-		poseStack.translate(0, PLANE, 0);
+		poseStack.translate(ox, oy + PLANE, oz);
 		poseStack.mulPose(Axis.YP.rotationDegrees(Mth.sin(time * 0.002f) * 20.0f + 180.0f));
 		poseStack.scale(scale, scale, scale);
 		poseStack.scale(-1.0f, -1.0f, 1.0f); // entity models are built upside down, like LivingEntityRenderer draws them
@@ -337,7 +350,7 @@ public class InnerRealmSkyRenderer implements DimensionRenderingRegistry.SkyRend
 				float a = i * 2.39996f + time * 0.004f * (1 + i % 3);
 				float r = scale * (0.35f + 0.5f * ((i * 37) % 10) / 10.0f);
 				float y = centre.y + scale * (((i * 53) % 10) / 10.0f - 0.45f) * 0.9f;
-				Vector3f at = new Vector3f(Mth.cos(a) * r, y, Mth.sin(a) * r);
+				Vector3f at = new Vector3f(ox + Mth.cos(a) * r, y, oz + Mth.sin(a) * r);
 				glow(pose, at, scale * (0.45f + 0.25f * ((i * 17) % 5) / 5.0f), new float[] {0.02f, 0.015f, 0.03f}, MIST[stage]);
 			}
 		}
@@ -390,8 +403,8 @@ public class InnerRealmSkyRenderer implements DimensionRenderingRegistry.SkyRend
 		for (int i = 0; i < count; i++) {
 			float a = Mth.TWO_PI * i / count + 0.3f;
 			float r = 90.0f + (i % 2) * 40.0f;
-			Vector3f bottom = new Vector3f(Mth.cos(a) * r, PLANE, Mth.sin(a) * r);
-			Vector3f top = new Vector3f(bottom.x, PLANE + 220.0f, bottom.z);
+			Vector3f bottom = new Vector3f(ox + Mth.cos(a) * r, oy + PLANE, oz + Mth.sin(a) * r);
+			Vector3f top = new Vector3f(bottom.x, bottom.y + 220.0f, bottom.z);
 			float alpha = 0.16f * (0.7f + 0.3f * Mth.sin(time * 0.02f + i));
 			ribbon(buffer, pose, bottom, top, 2.5f, new float[] {0.85f, 0.92f, 1.0f}, alpha, 0.0f);
 		}
@@ -405,11 +418,11 @@ public class InnerRealmSkyRenderer implements DimensionRenderingRegistry.SkyRend
 		RenderSystem.disableCull();
 		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
 		buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-		Vector3f apex = new Vector3f(0, 160.0f, 0);
+		Vector3f apex = new Vector3f(ox, oy + 160.0f, oz);
 		for (int i = 0; i < 16; i++) {
 			float a = Mth.TWO_PI * i / 16 + time * 0.0005f;
-			Vector3f start = new Vector3f(Mth.cos(a) * 170.0f, PLANE, Mth.sin(a) * 170.0f);
-			Vector3f control = new Vector3f(start.x * 0.75f, 110.0f, start.z * 0.75f);
+			Vector3f start = new Vector3f(ox + Mth.cos(a) * 170.0f, oy + PLANE, oz + Mth.sin(a) * 170.0f);
+			Vector3f control = new Vector3f(ox + Mth.cos(a) * 127.5f, oy + 110.0f, oz + Mth.sin(a) * 127.5f);
 			Vector3f previous = start;
 			for (int k = 1; k <= 12; k++) {
 				float t = k / 12.0f;

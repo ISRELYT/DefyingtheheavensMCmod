@@ -54,7 +54,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		BaublePanel.register();
 		ClientPacketHandlers.register();
 		QiHud.register();
-		QiCirculationHud.register();
+		QiSurgeHud.register();
 		TribulationHud.register();
 		TribulationAtmosphere.register();
 		HudRenderCallback.EVENT.register((graphics, tickDelta) -> {
@@ -64,8 +64,15 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		EntityRendererRegistry.register(ModEntities.TRIBULATION_LIGHTNING, TribulationLightningRenderer::new);
 		EntityRendererRegistry.register(ModEntities.TRIBULATION_CLOUD, TribulationCloudRenderer::new);
 		EntityRendererRegistry.register(ModEntities.INNER_BODY, InnerBodyRenderer::new);
+		EntityRendererRegistry.register(ModEntities.HEART_DEMON, HeartDemonRenderer::new);
+		// The Inner Realm's floor: see-through, and coloured by the viewer's realm (gold where a sequence lights it).
+		net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE.putBlock(
+				com.example.defyingtheheavens.ModBlocks.SOUL_CRYSTAL, net.minecraft.client.renderer.RenderType.translucent());
+		net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry.BLOCK.register((state, world, pos, tintIndex) ->
+				SoulCrystalColours.of(state), com.example.defyingtheheavens.ModBlocks.SOUL_CRYSTAL);
 		ParticleFactoryRegistry.getInstance().register(ModParticles.SUPPRESSION, SuppressionParticle.Provider::new);
 		UpperRealmClient.register();
+		InnerRealmFade.register(); // last, so the fade covers the rest of the HUD
 
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(ClientSpatialStorms::render);
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(SuppressionClient::renderMarkers);
@@ -96,6 +103,8 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			QiSenseTreasures.clear();
 			ConsciousnessRenderer.clear();
 			SuppressionClient.clear();
+			QiSurgeHud.clear();
+			InnerRealmFade.clear();
 		}));
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -106,6 +115,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			QiSenseTreasures.tick(client); // after the motes' own tick, which clears them when Qi Sense is off
 			ConsciousnessRenderer.tick(client);
 			SuppressionClient.tick(client);
+			InnerRealmFade.tick(client);
 			while (ModKeybinds.OPEN_MENU.consumeClick()) {
 				if (client.player != null && client.screen == null) {
 					client.setScreen(new CultivationScreen());

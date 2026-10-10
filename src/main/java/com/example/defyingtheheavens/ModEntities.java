@@ -38,9 +38,19 @@ public final class ModEntities {
 					.clientTrackingRange(10)
 					.build("inner_body"));
 
+	/** A cultivator's heart demon, risen in their Inner Realm (see {@link HeartDemonEntity}). */
+	public static final EntityType<HeartDemonEntity> HEART_DEMON = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("heart_demon"),
+			EntityType.Builder.<HeartDemonEntity>of(HeartDemonEntity::new, MobCategory.MONSTER)
+					.noSave().noSummon().fireImmune()
+					.sized(0.6f, 1.8f)
+					.clientTrackingRange(8)
+					.build("heart_demon"));
+
 	/** Touching this class registers the entity types. */
 	public static void register() {
 		net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry.register(INNER_BODY, InnerBodyEntity.createAttributes());
+		net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry.register(HEART_DEMON, HeartDemonEntity.createAttributes());
 	}
 
 	private ModEntities() {}

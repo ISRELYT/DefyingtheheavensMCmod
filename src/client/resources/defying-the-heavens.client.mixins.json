@@ -13,7 +13,8 @@
     "InventoryScreenMixin",
     "LevelRendererMixin",
     "MinecraftMixin",
-    "PostChainAccessor"
+    "PostChainAccessor",
+    "ReceivingLevelScreenMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -22,6 +22,7 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(RealmSuppressSystem::tick);
 		ServerTickEvents.END_SERVER_TICK.register(Tempering::tick);
 		ServerTickEvents.END_SERVER_TICK.register(InnerRealm::tick);
+		InnerRealm.registerEvents();
 		Tempering.register();
 		RealmSuppressionHandler.register();
 
@@ -70,6 +71,8 @@ public final class CultivationEvents {
 			if (source.is(DamageTypeTags.IS_FALL) && SpatialTrialHandler.consumeFallProtection(sp)) {
 				return false;
 			}
+			// A soul in the Inner Realm fights on (its heart demon): only a defeat there sends it back.
+			if (InnerRealm.isInside(sp)) return QiSurges.allowInnerDamage(sp, source, amount);
 			// Any damage breaks concentration.
 			if (amount > 0 && MeditationManager.isMeditating(sp.getUUID())) {
 				MeditationManager.stop(sp, true);

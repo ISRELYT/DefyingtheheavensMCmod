@@ -65,6 +65,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		// Entities
 		t.add(ModEntities.TRIBULATION_LIGHTNING, "Tribulation Lightning");
 		t.add(ModEntities.INNER_BODY, "Meditating Body");
+		t.add(ModEntities.HEART_DEMON, "Heart Demon");
+		t.add(ModBlocks.SOUL_CRYSTAL, "Soul Crystal");
 
 		// Blocks
 		t.add(ModBlocks.SPATIAL_RIFT, "Spatial Rift");
@@ -106,7 +108,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.KEY_CATEGORY, "Defying The Heavens");
 		t.add(ModLang.KEY_MENU, "Open Cultivation Menu");
 		t.add(ModLang.KEY_MEDITATE, "Meditate (Lotus Position)");
-		t.add(ModLang.KEY_CIRCULATE, "Circulate Qi (while meditating)");
+		t.add(ModLang.KEY_CIRCULATE, "Circulate Qi (qi surges)");
 
 		// Realms and stages
 		for (Realm realm : Realm.values()) {
@@ -183,7 +185,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case QI_SENSE -> "See the plane of Qi: the five elements drifting through a grey world. No qi cost.";
 				case CONSCIOUSNESS_DOMAIN -> "Sense all life within %s blocks, even through walls. Cultivators show their realm. No qi cost.";
 				case REALM_SUPPRESS -> "Your realm crushes weaker beings within %s blocks, harder the weaker they are. Costs qi per target.";
-				case INNER_REALM -> "After 10 s of meditation your soul turns inward (+50% cultivation). Get up to return. Harm to your body pulls you back.";
+				case INNER_REALM -> "After 10 s of meditation your soul turns inward (+50% cultivation). Walk freely; stop meditating to return. Harm to your body pulls you back.";
 			});
 		}
 		t.add(ModLang.METHODS_TITLE, "Cultivation Methods");
@@ -286,6 +288,21 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_DEVIATION, "Qi deviation! Your circulation went astray.");
 		t.add(ModLang.CIRCULATION_HINT, "[%s] Circulate qi");
 		t.add(ModLang.CIRCULATION_STREAK, "Circulation x%s");
+		t.add(ModLang.SURGE_CIRCUIT, "Qi surge: tap [%s] as the bead meets each lit point");
+		t.add(ModLang.SURGE_ELEMENTS, "Qi surge: tap [%s] on the element that comes next");
+		t.add(ModLang.SURGE_BREATH, "Qi surge: hold [%s] as it swells, let go as it shrinks");
+		t.add(ModLang.SURGE_SYNC, "In rhythm: %s%%");
+		t.add(ModLang.MSG_HARMONY, "Qi harmony: meditation x%s");
+		t.add(ModLang.MSG_SURGE_FAILED, "The surge passes.");
+		t.add(ModLang.MSG_WISPS, "Stray qi drifts onto your island. Gather it!");
+		t.add(ModLang.MSG_WISPS_DONE, "Gathered %s of %s wisps.");
+		t.add(ModLang.MSG_SEQUENCE, "The leylines stir. Watch the tiles.");
+		t.add(ModLang.MSG_SEQUENCE_GO, "Now walk them in order.");
+		t.add(ModLang.MSG_SEQUENCE_FAIL, "The pattern fades.");
+		t.add(ModLang.MSG_DEMON, "Your heart demon takes shape!");
+		t.add(ModLang.MSG_DEMON_WIN, "Heart demon slain. Your dao heart steadies.");
+		t.add(ModLang.MSG_DEMON_LOSE, "Your heart demon overwhelms you!");
+		t.add(ModLang.MSG_DEMON_FADE, "Your heart demon fades... for now.");
 		t.add(ModLang.MSG_MORTAL_MEDITATE, "Your meridians are sealed. You can't gather qi yet.");
 		t.add(ModLang.MSG_NEED_PILL, "Need a %s to enter %s. Eat it here, then break through.");
 		t.add(ModLang.MSG_AWAKENED, "Your meridians open. You begin cultivating: %s!");

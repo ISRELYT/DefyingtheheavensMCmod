@@ -168,6 +168,21 @@ public final class ModLang {
 	public static final String MSG_DEVIATION = k("message.qi_deviation");
 	public static final String CIRCULATION_HINT = k("circulation.hint");
 	public static final String CIRCULATION_STREAK = k("circulation.streak");
+	public static final String SURGE_CIRCUIT = k("surge.circuit");
+	public static final String SURGE_ELEMENTS = k("surge.elements");
+	public static final String SURGE_BREATH = k("surge.breath");
+	public static final String SURGE_SYNC = k("surge.sync");
+	public static final String MSG_HARMONY = k("message.harmony");
+	public static final String MSG_SURGE_FAILED = k("message.surge_failed");
+	public static final String MSG_WISPS = k("message.wisps");
+	public static final String MSG_WISPS_DONE = k("message.wisps_done");
+	public static final String MSG_SEQUENCE = k("message.sequence");
+	public static final String MSG_SEQUENCE_GO = k("message.sequence_go");
+	public static final String MSG_SEQUENCE_FAIL = k("message.sequence_fail");
+	public static final String MSG_DEMON = k("message.heart_demon");
+	public static final String MSG_DEMON_WIN = k("message.heart_demon_win");
+	public static final String MSG_DEMON_LOSE = k("message.heart_demon_lose");
+	public static final String MSG_DEMON_FADE = k("message.heart_demon_fade");
 	public static final String MSG_PILL_QI = k("message.pill_qi");
 	public static String pillGradeKey(String id) { return "pill_grade." + DefyingTheHeavens.MOD_ID + "." + id; }
 	public static final String PILL_AGE = k("tooltip.pill_age");

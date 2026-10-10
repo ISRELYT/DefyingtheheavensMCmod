@@ -387,7 +387,7 @@ public class AlchemyGameTests implements FabricGameTest {
     }
 
     @GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 200)
-    public void cleanQiCircuitsSpeedMeditation(GameTestHelper helper) {
+    public void qiSurgesPlayedWellSpeedMeditation(GameTestHelper helper) {
         helper.setBlock(new BlockPos(1, 1, 1), Blocks.STONE);
         ServerPlayer player = survivalPlayer(helper);
         net.minecraft.world.phys.Vec3 at = net.minecraft.world.phys.Vec3.atBottomCenterOf(helper.absolutePos(new BlockPos(1, 2, 1)));
@@ -398,20 +398,52 @@ public class AlchemyGameTests implements FabricGameTest {
         c.setQi(c.maxQi());
         MeditationManager.start(player);
         helper.assertTrue(MeditationManager.isMeditating(player.getUUID()), "A cultivator sits down to meditate");
-        helper.assertTrue(MeditationManager.circulationMultiplier(player.getUUID()) == 1, "No circulation bonus at first");
+        helper.assertTrue(QiSurges.active(player.getUUID()) == null, "No surge on screen when sitting down");
+        helper.assertTrue(MeditationManager.circulationMultiplier(player.getUUID()) == 1, "No harmony at first");
         MeditationManager.onCirculation(player, MeditationManager.CIRCUIT_CLEAN);
-        helper.assertTrue(MeditationManager.circulationMultiplier(player.getUUID()) == 1.5, "A clean circuit: x1.5");
+        helper.assertTrue(MeditationManager.circulationMultiplier(player.getUUID()) == 1, "A result without a surge counts for nothing");
+        QiSurges.begin(player, QiSurges.Game.CIRCUIT);
+        helper.assertTrue(QiSurges.active(player.getUUID()) == QiSurges.Game.CIRCUIT, "A surge offers its game");
         MeditationManager.onCirculation(player, MeditationManager.CIRCUIT_CLEAN);
-        MeditationManager.onCirculation(player, MeditationManager.CIRCUIT_CLEAN);
+        helper.assertTrue(QiSurges.active(player.getUUID()) == null, "...which ends with its result");
+        helper.assertTrue(MeditationManager.circulationMultiplier(player.getUUID()) == 1.5, "Played well: x1.5");
+        for (QiSurges.Game game : new QiSurges.Game[] {QiSurges.Game.ELEMENTS, QiSurges.Game.BREATH}) {
+            QiSurges.begin(player, game);
+            MeditationManager.onCirculation(player, MeditationManager.CIRCUIT_CLEAN);
+        }
         helper.assertTrue(MeditationManager.circulationMultiplier(player.getUUID()) == 2, "...building to x2, no further");
+        QiSurges.begin(player, QiSurges.Game.BREATH);
         MeditationManager.onCirculation(player, MeditationManager.CIRCUIT_BROKEN);
-        helper.assertTrue(MeditationManager.circulationMultiplier(player.getUUID()) == 1, "A broken circuit resets it");
+        QiSurges.begin(player, QiSurges.Game.CIRCUIT);
+        MeditationManager.onCirculation(player, MeditationManager.CIRCUIT_IGNORED);
+        helper.assertTrue(MeditationManager.circulationMultiplier(player.getUUID()) == 2, "A failed or ignored surge just passes");
         double qi = c.getQi();
+        QiSurges.begin(player, QiSurges.Game.ELEMENTS);
         MeditationManager.onCirculation(player, MeditationManager.CIRCUIT_DEVIATION);
         helper.assertTrue(c.getQi() < qi && !MeditationManager.isMeditating(player.getUUID()),
                 "Qi deviation costs qi and breaks the meditation");
+        helper.assertTrue(QiSurges.active(player.getUUID()) == null, "Getting up ends any surge");
         MeditationManager.stop(player, false);
         helper.succeed();
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 100)
+    public void soulCrystalLightsUnderfoot(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(1, 1, 1);
+        helper.setBlock(pos, ModBlocks.SOUL_CRYSTAL);
+        ServerPlayer player = survivalPlayer(helper);
+        BlockPos abs = helper.absolutePos(pos);
+        player.moveTo(abs.getX() + 4.5, abs.getY() + 1, abs.getZ() + 4.5); // not standing on it, so it fades again
+        ModBlocks.SOUL_CRYSTAL.stepOn(helper.getLevel(), abs, helper.getLevel().getBlockState(abs), player);
+        helper.assertTrue(helper.getLevel().getBlockState(abs).getValue(SoulCrystalBlock.GLOW) == SoulCrystalBlock.GLOW_STEP,
+                "A step lights the tile");
+        helper.assertTrue(SoulCrystalBlock.light(helper.getLevel().getBlockState(abs)) > SoulCrystalBlock.light(ModBlocks.SOUL_CRYSTAL.defaultBlockState()),
+                "...brighter than at rest");
+        helper.runAfterDelay(30, () -> {
+            helper.assertTrue(helper.getLevel().getBlockState(abs).getValue(SoulCrystalBlock.GLOW) == SoulCrystalBlock.GLOW_NONE,
+                    "...and it fades once the soul moves on");
+            helper.succeed();
+        });
     }
 
     @GameTest(template = EMPTY_STRUCTURE)

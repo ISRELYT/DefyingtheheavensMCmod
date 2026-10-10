@@ -33,6 +33,20 @@ public final class ModBlocks {
 			.pushReaction(PushReaction.BLOCK)
 			.sound(SoundType.AMETHYST)));
 
+	/** The Inner Realm's see-through floor, lit by a soul's steps (see SoulCrystalBlock). Unbreakable, no item. */
+	public static final Block SOUL_CRYSTAL = register("soul_crystal", new SoulCrystalBlock(BlockBehaviour.Properties.of()
+			.mapColor(MapColor.COLOR_LIGHT_BLUE)
+			.strength(-1.0f, 3600000.0f)
+			.noLootTable()
+			.noOcclusion()
+			.sound(SoundType.AMETHYST)
+			.lightLevel(SoulCrystalBlock::light)
+			.isValidSpawn((state, level, pos, type) -> false)
+			.isRedstoneConductor((state, level, pos) -> false)
+			.isSuffocating((state, level, pos) -> false)
+			.isViewBlocking((state, level, pos) -> false)
+			.pushReaction(PushReaction.BLOCK)));
+
 	/** Jade-tinged stone of the Dense Qi Peaks. Counts as ore-replaceable stone, so Upper Realm ores spawn in it. */
 	public static final Block JADE_STONE = registerWithItem("jade_stone",
 			new Block(BlockBehaviour.Properties.copy(Blocks.STONE).mapColor(MapColor.COLOR_LIGHT_GREEN)));

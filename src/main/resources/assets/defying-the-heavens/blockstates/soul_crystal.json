@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "glow=0": {
+      "model": "defying-the-heavens:block/soul_crystal"
+    },
+    "glow=1": {
+      "model": "defying-the-heavens:block/soul_crystal_lit"
+    },
+    "glow=2": {
+      "model": "defying-the-heavens:block/soul_crystal_lit"
+    }
+  }
+}

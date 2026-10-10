@@ -29,8 +29,9 @@ import java.util.List;
 /**
  * The Inner Realm: after meditating a while, a cultivator's soul turns inward to a private island in a void, under a sky
  * that grows from near-black into something celestial as they advance (drawn by the client's InnerRealmSkyRenderer). The
- * body stays sitting where they meditated ({@link InnerBodyEntity}); getting up, or anything touching the body, brings the
- * soul back. Meditation inside is {@link #CULTIVATION_BONUS} times as fruitful.
+ * body stays sitting where they meditated ({@link InnerBodyEntity}). The soul can walk the island freely (qi surges there are
+ * played on foot, see QiSurges); stopping meditation, or anything touching the body, brings it back. Meditation inside is
+ * {@link #CULTIVATION_BONUS} times as fruitful. The island is Soul Crystal, see-through so the leylines show beneath it.
  * <p>
  * Where the soul came from is kept in {@link PlayerCultivation} (saved), so logging out, the server stopping, or a crash
  * always end with the player back at their body.
@@ -38,6 +39,10 @@ import java.util.List;
 public final class InnerRealm {
 	/** Meditating this long (ticks) turns the soul inward, if the Inner Realm ability is on. */
 	public static final int ENTER_AFTER_TICKS = 200;
+	/** The screen fades to black over this long before the soul turns inward (see the client's InnerRealmFade). */
+	public static final int FADE_TICKS = 30;
+	/** A soul that walks off the island's edge is caught this far below it and set back on the seat. */
+	private static final int FALL_CATCH_DEPTH = 24;
 	public static final double CULTIVATION_BONUS = 1.5;
 	public static final int ISLAND_Y = 128;
 	/** Each player's island has its own spot along X, this far apart. */
@@ -64,6 +69,23 @@ public final class InnerRealm {
 	/** The player's island centre (the top block they sit on). */
 	public static BlockPos islandCentre(ServerPlayer player) {
 		return new BlockPos(Math.floorMod(player.getUUID().hashCode(), SLOTS) * SLOT_SPACING, ISLAND_Y, 0);
+	}
+
+	/** The island's radius in blocks, which grows with the realm. */
+	public static int islandRadius(Realm realm) {
+		return 3 + realm.ordinal();
+	}
+
+	/** No digging or building in the Inner Realm (creative players aside). */
+	public static void registerEvents() {
+		net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents.BEFORE.register((level, player, pos, state, entity) ->
+				!ModDimensions.isInnerRealm(level.dimension()) || player.isCreative());
+		net.fabricmc.fabric.api.event.player.AttackBlockCallback.EVENT.register((player, level, hand, pos, direction) ->
+				ModDimensions.isInnerRealm(level.dimension()) && !player.isCreative()
+						? net.minecraft.world.InteractionResult.FAIL : net.minecraft.world.InteractionResult.PASS);
+		net.fabricmc.fabric.api.event.player.UseBlockCallback.EVENT.register((player, level, hand, hit) ->
+				ModDimensions.isInnerRealm(level.dimension()) && !player.isCreative()
+						? net.minecraft.world.InteractionResult.FAIL : net.minecraft.world.InteractionResult.PASS);
 	}
 
 	public static boolean canEnter(ServerPlayer player) {
@@ -172,6 +194,12 @@ public final class InnerRealm {
 		for (ServerPlayer player : server.getPlayerList().getPlayers()) {
 			if (ModDimensions.isInnerRealm(player.level().dimension()) && !MeditationManager.isMeditating(player.getUUID())) {
 				strays.add(player);
+			} else if (isInside(player) && player.getY() < ISLAND_Y - FALL_CATCH_DEPTH) {
+				// Walked off the edge: the soul drifts back to its seat.
+				BlockPos centre = islandCentre(player);
+				player.teleportTo(centre.getX() + 0.5, centre.getY() + 1, centre.getZ() + 0.5);
+				player.setDeltaMovement(Vec3.ZERO);
+				player.fallDistance = 0;
 			} else if (notice && isInside(player)) {
 				CompoundTag back = CultivationManager.get(player).getInnerReturn();
 				ServerLevel level = server.getLevel(dimension(back));
@@ -186,16 +214,14 @@ public final class InnerRealm {
 		strays.forEach(InnerRealm::leave);
 	}
 
-	/** The island grows and brightens with the realm: dark stone at first, pale and celestial at the top. */
+	/**
+	 * The island grows with the realm: a disc of Soul Crystal with a shallow keel beneath, see-through so the leylines and
+	 * the core show below. Its colour follows the realm too, dark and smoky at first, pale and celestial at the top (the
+	 * client tints it, see SoulCrystalBlock).
+	 */
 	static void buildIsland(ServerLevel level, BlockPos centre, Realm realm) {
-		int tier = realm.ordinal();
-		BlockState[] top = {Blocks.POLISHED_BLACKSTONE.defaultBlockState(), Blocks.POLISHED_DEEPSLATE.defaultBlockState(),
-				Blocks.POLISHED_ANDESITE.defaultBlockState(), Blocks.CALCITE.defaultBlockState(), Blocks.QUARTZ_BLOCK.defaultBlockState(),
-				Blocks.WHITE_CONCRETE.defaultBlockState()};
-		BlockState[] under = {Blocks.BLACKSTONE.defaultBlockState(), Blocks.DEEPSLATE.defaultBlockState(), Blocks.ANDESITE.defaultBlockState(),
-				Blocks.DIORITE.defaultBlockState(), Blocks.SMOOTH_QUARTZ.defaultBlockState(), Blocks.CALCITE.defaultBlockState()};
-		int t = Math.min(tier, top.length - 1);
-		int radius = 3 + tier;
+		BlockState crystal = ModBlocks.SOUL_CRYSTAL.defaultBlockState();
+		int radius = islandRadius(realm);
 		int clear = 3 + Realm.values().length;
 		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 		for (int dx = -clear; dx <= clear; dx++) {
@@ -204,14 +230,12 @@ public final class InnerRealm {
 					pos.set(centre.getX() + dx, centre.getY() + dy, centre.getZ() + dz);
 					double d = Math.sqrt(dx * dx + dz * dz);
 					BlockState state = Blocks.AIR.defaultBlockState();
-					if (dy == 0 && d <= radius + 0.3) state = top[t];
-					else if (dy < 0 && d <= radius + 0.3 + dy * (radius / 3.0)) state = under[t];
+					if (dy == 0 && d <= radius + 0.3) state = crystal;
+					else if (dy < 0 && dy >= -2 && d <= radius + 0.3 + dy * (radius / 3.0)) state = crystal;
 					level.setBlock(pos, state, 2);
 				}
 			}
 		}
-		// A soft light at the seat from Core Formation on: the core's glow reaches the surface.
-		if (tier >= Realm.CORE_FORMATION.ordinal()) level.setBlock(centre, Blocks.SEA_LANTERN.defaultBlockState(), 2);
 	}
 
 	private static ResourceKey<Level> dimension(CompoundTag back) {

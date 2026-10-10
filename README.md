@@ -266,46 +266,70 @@ ingredients back out); an empty bucket takes the water back.
 /give @s defying-the-heavens:core_pill{PillGrade:4,PillAge:10000}   an Immortal-grade pill (grades 0-4)
 ```
 
-## Refining medicine and qi circulation
+## Refining medicine and qi surges
 
 - **Unrefined qi.** Cultivation Fruit and Cultivation Pills no longer give cultivation at once: their qi goes into an
   unrefined pool (a pale stretch past the menu's cultivation bar). Meditating refines it at 2x the meditation rate, on top
   of the meditation itself (`REFINE_RATE`). Nothing is refined at a bottleneck, so nothing is lost there either.
 - **Medicinal toxicity.** Every fruit or Cultivation Pill makes the next one 25% weaker (down to 10%), fading by one dose
   every 10 minutes. Shown in the menu and on pill and fruit tooltips.
-- **Qi circulation (Small Heavenly Circuit).** While meditating, a ring of acupoints circles the crosshair and a bead of qi
-  travels round it. Press **R** (Circulate Qi) as the bead reaches the lit point; light all of them for a clean circuit.
-  One clean circuit speeds meditation (and refining) x1.5, two or more in a row x2, for 30 seconds after the last one.
-  Letting the bead pass a point breaks the streak; three wrong presses in a row is a **qi deviation** (a quarter of your
-  qi, Nausea, a little damage, and the meditation ends). Ignoring the ring costs nothing. More points and a faster bead
-  at higher realms (6 points / 4 s at Qi Refining, up to 10 / 2 s). Code: `QiCirculationHud.java` (client),
-  `MeditationManager#onCirculation` (server; `CIRCULATION_BONUS`, `CIRCULATION_LASTS`, `DEVIATION_*`).
+- **Qi surges.** Nothing sits on screen while you meditate. About a minute in, and every 50-80 seconds after, qi surges:
+  a chime, and a short minigame appears round the crosshair (or, in the Inner Realm, on the island). Play it well for
+  **Qi Harmony**: meditation (and refining) x1.5, x2 after two in a row, for 2 minutes. Fail or ignore it and it just passes.
+  All screen games use **R** (Circulate Qi); three wrong taps in the Circuit or the Elements is a **qi deviation** (a
+  quarter of your qi, Nausea, a little damage, and the meditation ends).
+  - **Small Heavenly Circuit:** a bead of qi circles a ring of acupoints; tap as it meets each lit point, all the way round.
+    More points and a faster bead at higher realms (6 points / 4 s at Qi Refining, up to 10 / 2 s).
+  - **Five Elements:** the cycle (wood, fire, earth, metal, water) rings the crosshair; elements flash in the centre. Tap
+    when the element the current one generates appears, five times round. Faster flashes at higher realms.
+  - **Breath rhythm:** a ring swells and shrinks; hold R as it swells, let go as it shrinks, three breaths, 70% in rhythm.
+  - Code: `QiSurges.java` (timing, the Inner Realm games, `FIRST_SURGE`, `INTERVAL_*`), `client/QiSurgeHud.java` (the
+    screen games), `MeditationManager#harmony` / `#onCirculation` (`CIRCULATION_BONUS`, `CIRCULATION_LASTS`, `DEVIATION_*`).
 
 ## The Inner Realm
 
-After **10 seconds of meditation** your soul turns inward: you arrive on your own island in a void, while your body stays
-sitting where you were (other players see it, in your skin). Meditation inside is **x1.5** as fruitful, and still gets
-the mats, pedestals, height and biome bonuses from around your body; suppression and the Upper Realm's x10 also follow the
-body. **Getting up** (moving, sneaking, the meditate key) brings you straight back. Anything that hits your body pulls you
-back to take the blow; being pushed or moved does too. Hostile mobs near the body notice it, and the chunks around it stay
-loaded while you're away. Logging out inside puts you back at your body when you return. It's an ability (on by
-default) that can be switched off on the Abilities tab. No tribulations from inside.
+After **10 seconds of meditation** the screen fades to black and your soul turns inward: you open your eyes on your own
+island in a void, while your body stays sitting where you were (other players see it, in your skin). Meditation inside is
+**x1.5** as fruitful, and still gets the mats, pedestals, height and biome bonuses from around your body; suppression and
+the Upper Realm's x10 also follow the body.
 
-The sky is your cultivation made visible (`InnerRealmSkyRenderer.java`):
+- **Walk freely.** The island is yours to walk; walking off the edge sets you back on the seat. No digging or building.
+- **Leaving:** press the meditate key (**H**) to stop meditating; the eyes open back in your body.
+- **Your body:** anything that hits it pulls you back to take the blow; being pushed or moved does too. Hostile mobs near
+  it notice it, and the chunks around it stay loaded while you're away. Logging out inside puts you back at your body.
+- It's an ability (on by default) that can be switched off on the Abilities tab. No tribulations from inside.
 
-- **Leylines** of qi far below the island, with qi pulsing inward along them. Every stage grows more lines and branches,
-  and each player's web is their own (seeded by their UUID), so it grows rather than changes.
+**Soul Crystal.** The island is frosted crystal tiles, see-through so the leylines and the core show beneath. A tile lights
+up under your feet and fades as you move on. Its colour follows your cultivation: smoky slate at Qi Refining, through
+blue, to pale white-gold at Four Axis. Unbreakable, no item. Code: `SoulCrystalBlock.java`, `client/SoulCrystalColours.java`;
+textures `block/soul_crystal(_lit).png`.
+
+**Surges on the island** (with the screen games too, see above):
+
+- **Qi wisps:** six wisps of stray qi drift onto the island one after another; walk into them before they fade. Each is
+  worth 6 seconds of meditation; gather half for Qi Harmony.
+- **Leyline sequence:** tiles light gold one by one (3 at Qi Refining, up to 6); then walk onto them in the same order
+  within 20 seconds. Other tiles don't count. Worth 30 seconds of meditation and Qi Harmony.
+- **Heart demon** (Nascent Soul and up, at most once every 5 minutes): your own shadow rises at the island's edge and
+  attacks, with 80% of your max health and blows of 10% of it. Slay it for 2 minutes of meditation and Qi Harmony. If it
+  would kill you, it wins instead: you're thrown back to your body with 30% of your qi gone and Nausea. It fades after a
+  minute. Fights there never break the meditation. Code: `HeartDemonEntity.java`, `client/HeartDemonRenderer.java`.
+
+The sky is your cultivation made visible (`InnerRealmSkyRenderer.java`), drawn in place around your island:
+
+- **Leylines** of qi 26 blocks below the island, with qi pulsing inward along them. Every stage grows more lines and
+  branches, and each player's web is their own (seeded by their UUID), so it grows rather than changes.
 - **Qi Refining**: almost black, a few faint threads. **Foundation Building**: a web, the first stars.
-- **Core Formation**: a solid, faceted golden core at the centre, larger each stage; gold shards orbit and fuse into it
-  (8, 5, 3, then none) and qi motes spiral in.
+- **Core Formation**: a solid, faceted golden core beneath the island, larger each stage; gold shards orbit and fuse into
+  it (8, 5, 3, then none) and qi motes spiral in.
 - **Nascent Soul**: the core becomes you, in your own skin, see-through and meditating, wrapped in black mist that
   thins each stage and is gone at Grand Perfection. Nebula colours and a faint aurora appear.
 - **Heavenly Being**: brighter aurora, pillars of light rising from the lines. **Four Axis**: a celestial sky, and the
   lines rise up and meet far overhead.
-- The island grows (radius 3 to 8) and pales with the realm: polished blackstone, deepslate, andesite, calcite, quartz,
-  white concrete, with a sea lantern at the seat from Core Formation.
+- The island grows with the realm (radius 3 to 8).
 
-Code: `InnerRealm.java` (entering, leaving, the island, `ENTER_AFTER_TICKS`, `CULTIVATION_BONUS`), `InnerBodyEntity.java`,
+Code: `InnerRealm.java` (entering, leaving, the island, `ENTER_AFTER_TICKS`, `FADE_TICKS`, `CULTIVATION_BONUS`),
+`InnerBodyEntity.java`, `client/InnerRealmFade.java` (and `client/mixin/ReceivingLevelScreenMixin.java`),
 `client/InnerRealmSkyRenderer.java`, `client/InnerBodyRenderer.java`, `client/LotusPose.java`. The dimension is
 `inner_realm` (each player's island is 4096 blocks apart along X at Y 128).
 
