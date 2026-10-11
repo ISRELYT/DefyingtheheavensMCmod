@@ -4,6 +4,7 @@ import com.example.defyingtheheavens.Alignment;
 import com.example.defyingtheheavens.Formation;
 import com.example.defyingtheheavens.ModPackets;
 import com.example.defyingtheheavens.NpcTitle;
+import com.example.defyingtheheavens.PlayerCultivation;
 import com.example.defyingtheheavens.Realm;
 import com.example.defyingtheheavens.Stage;
 import com.example.defyingtheheavens.TalkIntent;
@@ -39,9 +40,11 @@ public final class ClientPacketHandlers {
 			double medicinalQi = buf.readDouble();
 			int alignment = buf.readInt();
 			double gearQiBonus = buf.readDouble();
+			int[] wheel = new int[PlayerCultivation.WHEEL_SLOTS];
+			for (int i = 0; i < wheel.length; i++) wheel[i] = buf.readVarInt() - 1;
 			client.execute(() -> ClientCultivationData.update(realm, stage, cultivation, qi, meditating, lowerRealmBound, inUpperRealm,
 					disabledAbilities, pressureStages, pressurePenalty, mortal, mortalStage, tempering, preparedRealm, preparedBonus, qiBoost,
-					pillResistance, medicinalQi, alignment, gearQiBonus));
+					pillResistance, medicinalQi, alignment, gearQiBonus, wheel));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SURGE, (client, handler, buf, sender) -> {
@@ -156,6 +159,12 @@ public final class ClientPacketHandlers {
 				pressed.add(new SuppressionClient.Pressed(buf.readVarInt(), buf.readFloat(), buf.readBoolean()));
 			}
 			client.execute(() -> SuppressionClient.update(pressed));
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SWORD_FLIGHT, (client, handler, buf, sender) -> {
+			int entityId = buf.readVarInt();
+			boolean riding = buf.readBoolean();
+			client.execute(() -> SwordFlightClient.set(entityId, riding));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.MEDITATION_STATE, (client, handler, buf, sender) -> {

@@ -17,7 +17,7 @@ public final class ClientCultivationData {
 	public static void update(int realm, int stage, double cultivation, double qi, boolean meditating, boolean lowerRealmBound,
 							  boolean inUpperRealm, int disabledAbilities, int pressureStages, double pressurePenalty,
 							  boolean mortal, int mortalStage, double tempering, int preparedRealm, double preparedBonus, double qiBoost,
-							  double pillResistance, double medicinalQi, int alignment, double gearQiBonus) {
+							  double pillResistance, double medicinalQi, int alignment, double gearQiBonus, int[] wheel) {
 		DATA.setState(Realm.byIndex(realm), Stage.byIndex(stage), cultivation);
 		DATA.setAlignment(alignment);
 		DATA.setGearQiBonus(gearQiBonus);
@@ -29,6 +29,7 @@ public final class ClientCultivationData {
 		DATA.setPillResistance(pillResistance);
 		DATA.setMedicinalQi(medicinalQi);
 		DATA.setDisabledAbilityMask(disabledAbilities);
+		for (int i = 0; i < wheel.length; i++) DATA.setWheelSlot(i, Ability.byIndex(wheel[i]));
 		DATA.setLowerRealmBound(lowerRealmBound);
 		DATA.setInUpperRealm(inUpperRealm);
 		DATA.setPressure(pressureStages, pressurePenalty);
@@ -51,6 +52,7 @@ public final class ClientCultivationData {
 		int offByDefault = 0;
 		for (Ability ability : Ability.offByDefault()) offByDefault |= 1 << ability.ordinal();
 		DATA.setDisabledAbilityMask(offByDefault);
+		for (int i = 0; i < PlayerCultivation.WHEEL_SLOTS; i++) DATA.setWheelSlot(i, Ability.byIndex(i));
 		DATA.setLowerRealmBound(false);
 		DATA.setInUpperRealm(false);
 		DATA.setPressure(0, 0);

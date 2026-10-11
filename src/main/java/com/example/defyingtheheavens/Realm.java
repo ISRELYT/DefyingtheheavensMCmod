@@ -18,17 +18,23 @@ import net.minecraft.network.chat.Component;
  *   Perfection's, which a suppressed cultivator keeps).</li>
  * </ul>
  * Keep those three in mind when retuning qi/sec or fly/sec.
+ * <p>
+ * Riding a sword (sword/sec, from Foundation Building; see {@link SwordFlight}) costs less than flying on qi and is a
+ * little slower. In the lower realms it stays finite through Core Formation even with the full Immortal clothing set
+ * (+60% gathering: CF Grand Perfection then gathers ~16.6/s against 18), and through Nascent Soul up to its Mid stage
+ * with it (Late and Grand Perfection in the full set ride forever). Like Qi Flight it never ends in the Upper Realm or from
+ * Heavenly Being on. An Early pool lasts ~60 s at Foundation Building and Core Formation.
  */
 public enum Realm {
-	//            id                  cultBase  cult/sec  maxQi  qi/sec  fly/sec  health  damage  speed  armor  tough  knockback
-	QI_REFINING(        "qi_refining",        100,      1,     100,     1,      0,      2,    0.5,  0.03,    0,     0,   0.00),
-	FOUNDATION_BUILDING("foundation_building", 800,      5,     250,     3,      0,      8,    2.0,  0.08,    2,     0,   0.00),
-	CORE_FORMATION(     "core_formation",     6400,     25,     600,     8,     28,     20,    5.0,  0.15,    5,     2,   0.10),
-	NASCENT_SOUL(       "nascent_soul",      51200,    125,    1500,    25,     55,     45,   11.0,  0.25,    9,     4,   0.30),
-	HEAVENLY_BEING(     "heavenly_being",   409600,    625,    3500,    70,     60,     90,   24.0,  0.40,   15,     8,   0.60),
+	//            id                  cultBase  cult/sec  maxQi  qi/sec  fly/sec  sword/sec  health  damage  speed  armor  tough  knockback
+	QI_REFINING(        "qi_refining",        100,      1,     100,     1,      0,        0,      2,    0.5,  0.03,    0,     0,   0.00),
+	FOUNDATION_BUILDING("foundation_building", 800,      5,     250,     3,      0,        7,      8,    2.0,  0.08,    2,     0,   0.00),
+	CORE_FORMATION(     "core_formation",     6400,     25,     600,     8,     28,       18,     20,    5.0,  0.15,    5,     2,   0.10),
+	NASCENT_SOUL(       "nascent_soul",      51200,    125,    1500,    25,     55,       45,     45,   11.0,  0.25,    9,     4,   0.30),
+	HEAVENLY_BEING(     "heavenly_being",   409600,    625,    3500,    70,     60,       48,     90,   24.0,  0.40,   15,     8,   0.60),
 	// First realm beyond what the lower realms can sustain: only reachable through breakthroughs in the Upper Realm.
 	// Its cultivation requirement is 10x this base (PlayerCultivation.cultivationRequired) to offset the Upper Realm's dense qi.
-	FOUR_AXIS(          "four_axis",       3276800,   3125,    8000,   200,    150,    180,   50.0,  0.55,   22,    14,   0.80);
+	FOUR_AXIS(          "four_axis",       3276800,   3125,    8000,   200,    150,      110,    180,   50.0,  0.55,   22,    14,   0.80);
 
 	private final String id;
 	private final double cultivationBase;
@@ -36,6 +42,7 @@ public enum Realm {
 	private final double maxQi;
 	private final double qiGather;
 	private final double qiFlightCost;
+	private final double swordFlightCost;
 	private final double maxHealth;
 	private final double attackDamage;
 	private final double moveSpeed;
@@ -44,13 +51,15 @@ public enum Realm {
 	private final double knockbackResistance;
 
 	Realm(String id, double cultivationBase, double cultivationPerSecond, double maxQi, double qiGather, double qiFlightCost,
-		  double maxHealth, double attackDamage, double moveSpeed, double armor, double toughness, double knockbackResistance) {
+		  double swordFlightCost, double maxHealth, double attackDamage, double moveSpeed, double armor, double toughness,
+		  double knockbackResistance) {
 		this.id = id;
 		this.cultivationBase = cultivationBase;
 		this.cultivationPerSecond = cultivationPerSecond;
 		this.maxQi = maxQi;
 		this.qiGather = qiGather;
 		this.qiFlightCost = qiFlightCost;
+		this.swordFlightCost = swordFlightCost;
 		this.maxHealth = maxHealth;
 		this.attackDamage = attackDamage;
 		this.moveSpeed = moveSpeed;
@@ -67,6 +76,8 @@ public enum Realm {
 	public double getQiGather() { return qiGather; }
 	/** Qi spent per second of flight (only realms that {@link #canFlyOnQi()}). */
 	public double getQiFlightCost() { return qiFlightCost; }
+	/** Qi spent per second riding a sword (only realms that {@link #canRideSword()}). */
+	public double getSwordFlightCost() { return swordFlightCost; }
 	public double getMaxHealth() { return maxHealth; }
 	public double getAttackDamage() { return attackDamage; }
 	public double getMoveSpeed() { return moveSpeed; }
@@ -86,6 +97,9 @@ public enum Realm {
 
 	/** From Core Formation (the golden core) on, the cultivator can fly on their qi (see {@link QiFlight}). */
 	public boolean canFlyOnQi() { return ordinal() >= CORE_FORMATION.ordinal(); }
+
+	/** From Foundation Building on, the cultivator can ride a sword through the air (see {@link SwordFlight}). */
+	public boolean canRideSword() { return ordinal() >= FOUNDATION_BUILDING.ordinal(); }
 
 	/** From Core Formation on, the cultivator can see the plane of Qi (see {@link QiSense}). */
 	public boolean canSenseQi() { return ordinal() >= CORE_FORMATION.ordinal(); }

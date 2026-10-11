@@ -23,12 +23,16 @@ public final class ModPackets {
 	public static final ResourceLocation CIRCULATION = new ResourceLocation(DefyingTheHeavens.MOD_ID, "circulation");
 	/** C2S: switch an ability on or off (its ordinal). */
 	public static final ResourceLocation TOGGLE_ABILITY = new ResourceLocation(DefyingTheHeavens.MOD_ID, "toggle_ability");
+	/** C2S: put an ability in an ability wheel slot (slot, then the ability's ordinal, or -1 to empty the slot). */
+	public static final ResourceLocation SET_WHEEL_SLOT = new ResourceLocation(DefyingTheHeavens.MOD_ID, "set_wheel_slot");
 	/** S2C: a qi surge's screen game starts (game ordinal, window in ticks; -1 ends any running), see QiSurges. */
 	public static final ResourceLocation SURGE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "surge");
 	/** S2C: the soul is about to turn inward: fade the screen to black (see InnerRealm#FADE_TICKS). */
 	public static final ResourceLocation INNER_FADE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "inner_fade");
 	/** S2C: full cultivation state for the owning player. */
 	public static final ResourceLocation SYNC = new ResourceLocation(DefyingTheHeavens.MOD_ID, "sync");
+	/** S2C: "player X (entity id) is/isn't riding their sword" (see {@link SwordFlight}), repeated once a second while they ride. */
+	public static final ResourceLocation SWORD_FLIGHT = new ResourceLocation(DefyingTheHeavens.MOD_ID, "sword_flight");
 	/** S2C: "player X is/isn't meditating", for rendering the lotus pose. */
 	public static final ResourceLocation MEDITATION_STATE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "meditation_state");
 	/** S2C: tribulation started/ended + strikes still to come, for the HUD overlay. */
@@ -130,6 +134,11 @@ public final class ModPackets {
 			int ability = buf.readVarInt();
 			server.execute(() -> CultivationManager.toggleAbility(player, ability));
 		});
+		ServerPlayNetworking.registerGlobalReceiver(SET_WHEEL_SLOT, (server, player, handler, buf, responseSender) -> {
+			int slot = buf.readVarInt();
+			int ability = buf.readVarInt();
+			server.execute(() -> CultivationManager.setWheelSlot(player, slot, ability));
+		});
 	}
 
 	public static void sendSync(ServerPlayer player, PlayerCultivation c, boolean meditating) {
@@ -154,6 +163,11 @@ public final class ModPackets {
 		buf.writeDouble(c.getMedicinalQi());
 		buf.writeInt(c.getAlignment());
 		buf.writeDouble(c.getGearQiBonus());
+		// The ability wheel, slot by slot: the ability's ordinal plus one, 0 for an empty slot.
+		for (int i = 0; i < PlayerCultivation.WHEEL_SLOTS; i++) {
+			Ability ability = c.getWheelSlot(i);
+			buf.writeVarInt(ability == null ? 0 : ability.ordinal() + 1);
+		}
 		ServerPlayNetworking.send(player, SYNC, buf);
 	}
 
@@ -308,6 +322,21 @@ public final class ModPackets {
 		for (ServerPlayer other : PlayerLookup.tracking(player)) {
 			ServerPlayNetworking.send(other, MEDITATION_STATE, meditationBuf(player, meditating));
 		}
+	}
+
+	/** Tells the rider and everyone tracking them whether they're riding their sword. */
+	public static void broadcastSwordFlight(ServerPlayer player, boolean riding) {
+		ServerPlayNetworking.send(player, SWORD_FLIGHT, swordFlightBuf(player, riding));
+		for (ServerPlayer other : PlayerLookup.tracking(player)) {
+			ServerPlayNetworking.send(other, SWORD_FLIGHT, swordFlightBuf(player, riding));
+		}
+	}
+
+	private static FriendlyByteBuf swordFlightBuf(ServerPlayer player, boolean riding) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(player.getId());
+		buf.writeBoolean(riding);
+		return buf;
 	}
 
 	public static void sendTribulation(ServerPlayer player, boolean active, int strikesLeft, Realm targetRealm, Stage targetStage) {

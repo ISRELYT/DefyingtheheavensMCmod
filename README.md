@@ -297,7 +297,7 @@ the Upper Realm's x10 also follow the body.
 - **Leaving:** press the meditate key (**H**) to stop meditating; the eyes open back in your body.
 - **Your body:** anything that hits it pulls you back to take the blow; being pushed or moved does too. Hostile mobs near
   it notice it, and the chunks around it stay loaded while you're away. Logging out inside puts you back at your body.
-- It's an ability (on by default) that can be switched off on the Abilities tab. No tribulations from inside.
+- It's an ability (on by default) that can be switched off on the Abilities tab or the ability wheel. No tribulations from inside.
 
 **Soul Crystal.** The island is frosted crystal tiles, see-through so the leylines and the core show beneath. A tile lights
 up under your feet and fades as you move on. Its colour follows your cultivation: smoky slate at Qi Refining, through
@@ -333,6 +333,76 @@ Code: `InnerRealm.java` (entering, leaving, the island, `ENTER_AFTER_TICKS`, `FA
 `client/InnerRealmSkyRenderer.java`, `client/InnerBodyRenderer.java`, `client/LotusPose.java`. The dimension is
 `inner_realm` (at Y 128, each player's island in a slot of its own, 4096 blocks apart in a grid from the origin, handed
 out the first time they need one and kept for good, so no two players share an island: `InnerRealm.Islands`).
+
+## The ability wheel
+
+Abilities can be switched on and off without opening the menu: **hold Z** (rebindable: "Ability Wheel (hold)") and an
+eight-slot wheel opens in the middle of the screen. Point toward a slot (the direction is enough, the pointer needn't be
+on it) and **click** to switch that ability on or off; click as many as you like, then let go of the key to close it.
+The middle names the ability under the pointer and whether it's On or Off. A slot's rim is gold with a green lamp when
+its ability is on, grey and dimmed when it's off.
+
+You keep moving while it's open: walk, jump (double-tap for Qi Flight), sneak and sprint all work, toggled Sneak/Sprint
+included. Only the view can't turn, since the mouse is pointing at the wheel. The wheel only opens once you've awakened
+an ability; a mortal pressing the key just sees "No abilities awakened yet." above the hotbar.
+
+**Arranging it:** cultivation menu, Abilities tab, **Arrange Wheel** (the button switches back to the **Ability List**).
+The wheel is on the left, your awakened abilities on the right (gold-framed if already on the wheel):
+
+- drag an ability onto a slot to put it there; if it was already elsewhere on the wheel, it trades places with what was
+  in that slot
+- drag a slot onto another slot to swap them, or off the wheel to empty it (right-click a slot also empties it)
+
+A new cultivator's wheel starts with the abilities in menu order, and saves from before the wheel get that default too.
+It's saved with the rest of your cultivation and kept through death. An ability placed on the wheel that you haven't
+awakened (or can't use under a lower realm's suppression) shows as an empty slot.
+
+**Icons:** every ability has its own 16x16 icon (`textures/gui/ability/<id>.png`), shown on the wheel, in the editor and
+beside its name in the ability list: Qi Sustenance a red rice bowl with qi rising like steam, Qi Flight the golden core
+borne up on azure qi wings (it was a sword on a cloud until Sword Flight came), Qi Sense an eye ringed by the five
+elements' motes, Consciousness Domain a lattice sphere around a bright soul, Realm Suppress a mountain pressing down on
+red chevrons, the Inner Realm a floating island with a blossom tree, Sword Flight a sword with streaks of light behind it.
+A new ability needs a PNG of its own there.
+
+Code: `client/AbilityWheelScreen.java` (the held wheel), `client/AbilityWheel.java` (icons, slot layout and drawing),
+`client/CultivationScreen.java` (the editor), `PlayerCultivation` (`WHEEL_SLOTS`, `setWheelSlot`; NBT "AbilityWheel"),
+`CultivationManager#setWheelSlot` (packet `set_wheel_slot`); tests in `AbilityWheelGameTests`.
+
+## Sword Flight
+
+From **Foundation Building Early**, a cultivator can ride a sword. Hold any sword in your main hand (vanilla or modded:
+anything that is a sword or in the `swords` item tag) and **double-tap jump**, as for Qi Flight. The sword leaves your
+hand and lies flat under your feet, point first the way you look; you stand on it sideways, the leading arm raised
+toward the point and the other held out behind, and a glowing azure trail streams out behind you with a few glints of
+sword light left hanging in the air. Look down in first person to see the blade under you.
+
+- **Cheaper, slower.** It costs less qi than Qi Flight and flies at **75%** of its speed (sprinting doubles both as
+  usual). That speed is fixed from the day it awakens: no realm, stage or gear makes the sword faster (NPCs' swords
+  neither), so Qi Flight stays the way to fly fast. Qi per second by realm: Foundation Building 7, Core Formation 18 (Qi Flight 28), Nascent Soul 45 (55),
+  Heavenly Being 48 (60), Four Axis 110 (150). A full Early pool rides for about a minute at Foundation Building and Core
+  Formation. Like Qi Flight it never runs out in the Upper Realm or from Heavenly Being on, and it stays finite in the
+  lower realms through Core Formation even in the full Immortal set; in that set Nascent Soul Late and Grand Perfection
+  ride forever there.
+- **The sword takes no wear** from being ridden.
+- **One flight at a time.** Only one of Sword Flight and Qi Flight can be switched on; switching one on (Abilities tab or
+  the ability wheel) switches the other off, and both can be off. With Sword Flight on you need a sword in hand to fly,
+  and putting it away mid-air drops you; with Qi Flight on a sword in hand is just held. When your golden core forms,
+  Qi Flight comes on and Sword Flight goes off (a chat line says so); a save from before this rule with both on keeps
+  Qi Flight the same way. NPCs aren't bound by this: they pick whichever suits them as they go (below).
+- Running dry, falls, the Spatial Gap and Realm Suppress work as for Qi Flight: out of qi you drop (flight returns at 5%),
+  falls hurt, no flight in the Gap, and pressure that holds you below Foundation Building grounds you.
+- A chat line marks the day it awakens; the ability is on by default. It's appended to new wheels (slot 7); a wheel saved
+  before it existed has to have it dragged on.
+
+**NPC cultivators** ride their swords too: every one from Foundation Building up carries one. They ride wherever they fly
+(journeys, seclusion, returning to their grounds, chasing a flier, fleeing), except that one able to fly on qi switches
+to Qi Flight while in a fight or running from danger, where speed matters more than qi.
+
+Code: `SwordFlight.java` (rules, speed, syncing riders to nearby players: packet `sword_flight`), `QiFlight.java` (runs
+both flights for players), `Realm` (the sword/sec column), `CultivatorNpc` (`isSwordFlying`, mode choice in `tickQi` /
+`setQiFlying`), `client/SwordFlightClient.java` (the sword underfoot and the trail), `client/SwordStance.java` and
+`client/mixin/LivingEntityRendererMixin` (the sideways stance), `client/mixin/ItemInHandLayerMixin` /
+`ItemInHandRendererMixin` (the hand left empty); tests in `SwordFlightGameTests`.
 
 ## More herbs
 
@@ -385,39 +455,52 @@ Overworld it takes root on the ground beneath the taiga's canopy and grows up th
 
 ### Sect grounds
 
-**Sects** are open villages, no wall round them, gathered about the **Formation plaza** with the Formation Core at its
-heart. The Sect Master's **main hall** stands at the plaza's back edge on a stone terrace under a double-eaved roof; stone
-roads run from the plaza to three paifang **gates** (the main gate in front, one at each side); the **Treasury** and the
-**Meditation Hall** face each other across the gate road; the **elders' houses** stand on the cross road by the plaza.
-Earthen lanes run front to back either side, joined across the front and round the back of the hall (whose back steps
-come down to it); out past them are the **disciples' houses** and the outer disciples' **dormitories**, the **pagoda**
-(the library, with a meditation chamber at the top, lit on every floor) and a lotus **pond** with its **pavilion**; two
-**herb gardens** (ginseng, Spirit Ginseng, a Spirit Peach Tree) flank the hall. Blossom trees, garden pines, bamboo and
-mossy rocks stand on the open ground, stone lanterns line the roads.
-
-The look follows a few rules, less is more: every building stands on a stone base or on stone feet (the homes are raised
-with a veranda all round); red pillars carry a beam all round, spaced the same either side of the door so every front is
-symmetrical (`SectPiece.framePosts`); walls are plaster on a stone sill with a window in every bay;
-roofs overhang by two on brackets and are concave, a thin eave whose corners flick up rising to a capped ridge with
-upturned ends. Each path builds in its own materials (`SectPalette`).
+**Sects** are open villages spread over wide lawns, with no wall: the barrier closes round the buildings and is their
+wall, while the grounds, the ways and the gates reach on beyond it. A paifang gate stands across the paved way in, well
+outside the barrier, its **gate guards** (the strongest Outer Disciples, "[Gate Guard]" on their nameplates) standing on
+the road before it; the way, lined with stone lanterns, runs up the middle to the round **Formation plaza** with the
+Formation Core at its centre, and on to the steps of the **main hall**; a second way crosses the plaza and leaves on
+either side through a torii, guarded too. The **main hall** stands on a terrace with flag poles at its corners, stone
+guardians at the foot of its steps and two great braziers sending up smoke; inside, banners hang on the pillars over a
+bordered carpet to the Sect Master's mat on its dais, between lanterns. The **Meditation Hall** of mats,
+where the disciples live and meditate, and the **Treasury** face the way in across lawns from either side, a **pagoda**
+stands beside the main hall (every storey but the top is the sect's library, shelves and candles and lecterns, with the
+library chest on the ground floor; a ladder climbs to a meditation chamber at the top) with herb gardens (ginseng,
+Spirit Ginseng, fruit trees) by it, and the **elders' houses** (pavilions with two eaves, one per elder) stand apart
+round the grounds, each with an earthen footpath to its door. Cherry trees and clumps of bamboo grow on the open grass
+between. Buildings stand on stone bases, with plain plastered walls between their pillars, under tiled roofs whose
+ridges, eaves and upturned corners are picked out in the trim colour; the colours go by the sect's path: grey stone, red
+pillars and slate roofs trimmed in bronze for the righteous, Blue Spirit Wood and teal roofs for the neutral, black stone,
+crimson pillars and dark nether-brick roofs trimmed in red with soul lanterns for the demonic.
 
 - Three sizes, for 10-12, 13-16 and 17-20 members. They only generate on fairly level, mostly dry land (at most 20
-  blocks between the highest and lowest ground in the middle of the village, 24 in the Upper Realm; the grounds are
-  levelled within the village's round and a pond or a stream is filled in), never in the Nether or the End:
+  blocks between the highest and lowest ground under the grounds, 24 in the Upper Realm; the grounds are levelled, a
+  pond or a stream filled in), never in the Nether or the End:
   - **Overworld** (`defying-the-heavens:sect`): plains, meadows, forests, taiga, snowy plains, savanna, cherry groves,
-    bamboo and sparse jungle. One attempt per 32x32 chunks, at least 16 chunks apart, never within 6 chunks of a village
+    bamboo and sparse jungle. One attempt per 32x32 chunks, at least 16 chunks apart, never within 10 chunks of a village
     (`worldgen/structure_set/sects.json`).
   - **Upper Realm** (`defying-the-heavens:sect_upper_realm`): islands of Spirit Forest, Peach Blossom Sanctuary, Dense Qi
-    Peaks and Thunder Peaks wide enough to hold one. One attempt per 14x14 chunks, since few islands are
-    (`worldgen/structure_set/sects_upper_realm.json`). Their masters are Heavenly Beings or Four Axis cultivators.
+    Peaks and Thunder Peaks wide enough to hold one. One attempt per 14x14 chunks (at least 10 apart, as the grounds are
+    up to 141 blocks across), since few islands are (`worldgen/structure_set/sects_upper_realm.json`). Their masters are
+    Heavenly Beings or Four Axis cultivators.
+  - The grounds are 121, 133 and 141 blocks across; the buildings stand within 46, 52 and 56 blocks of the plaza (the
+    barrier reaches 2 past them, never more than 64), the gates 8 further out (`Size` in `SectStructure.java`).
   - Tuning: `MAX_RELIEF`, `MAX_RELIEF_UPPER` and `MAX_WET` in `SectStructure.java`, `spacing` in the structure sets.
 - Worldgen that runs after structures can't spoil the grounds: no lake (vanilla lava lakes, the Upper Realm's spring
-  basins) forms where it would reach into a sect (`mixin/LakeFeatureMixin`), no tree or huge mushroom grows within 64
-  blocks of a sect's core (`mixin/TreeFeatureMixin`, `mixin/HugeMushroomFeatureMixin`; the sect plants its own, and
-  saplings and mushrooms players grow are unaffected), and the sects build
-  with nothing a water or lava spring can open in (the plaster is smooth quartz, not calcite; checked by a game test).
-- The layout is planned in code (`SectStructure`, `SectPiece`), not from jigsaw templates, so it keeps its order, fits
-  its population, and each building adapts its base to the ground.
+  basins) forms where it would reach into a sect (`mixin/LakeFeatureMixin`), no wild tree, bamboo, huge mushroom, mossy
+  boulder or jungle vine grows on the grounds or within 4 blocks of them (`mixin/SectClearingMixin`; saplings planted
+  later grow as usual), and the sects build with nothing a water or lava spring can open in (the plaster is smooth quartz, not
+  calcite; checked by a game test).
+- The layout is planned in code (`SectStructure`, `SectLayout`, `SectPiece`), not from jigsaw templates, so it fits its
+  population, every door gets a footpath, and each building adapts its height to the ground. A game test lays out
+  sects of every size and facing and checks there is a house for every elder, a home (an elder's house or a meditation
+  mat) for every member but the master, no two buildings overlap, all of them are inside the barrier, and the gates and
+  the six gate-guard posts are outside it.
+- **Gate guards** (`Sect#guardPost`): the strongest Outer Disciples, in seniority order, take the posts two at the gate,
+  then one at each torii, then a second at each; the rest patrol as before. They stand on the road outside their gate
+  watching it, outside the barrier, where visitors meet them (a future pass into the sect would be bought from them).
+- The earlier layouts are in the git history: the first walled, fully paved compounds (up to 56206f9) and another open
+  village design (ab0301b).
 - The Treasury holds Spirit Pedestals bearing old Cultivation Fruit and ginseng and Spirit Ginseng, and loot chests;
   elders' houses and the library have their own (`loot_tables/chests/sect_*.json`). Taking from a sect is theft: it
   brings the sect down on you.
@@ -435,8 +518,9 @@ No monster spawns inside a raised barrier, a sect's or a secluded cultivator's C
 spiders, creepers, pillager patrols and the rest pass over it (`mixin/NaturalSpawnerMixin`, `mixin/PatrolSpawnerMixin`).
 Any that get in another way (a phantom, an enderman teleporting, one from a monster spawner) are swept out every half
 second: a wild one vanishes in a puff of smoke, and one that has to stay in
-the world (named, or carrying something it picked up) is set down on the ground just outside. Bosses are left alone, and
-animals and other peaceful mobs are never touched (`Formations.purge`).
+the world (carrying something it picked up, say) is set down on the ground just outside. A monster that has been given a
+name with a name tag stays where it is, so a zombie villager can be cured inside your own barrier. Bosses are left alone,
+and animals and other peaceful mobs are never touched (`Formations.purge`).
 
 The barrier's shell has no openings (`Formations.fillFor`):
 - **Water and lava.** Still water or lava on the shell is closed by barrier blocks that hold it: the water still looks and
@@ -487,12 +571,20 @@ the master is between Core Formation and Nascent Soul Grand Perfection; in the U
 
 | Title | Duty |
 | --- | --- |
-| Outer Disciple | Patrols the grounds and up to 30 blocks outside the barrier |
+| Outer Disciple | The strongest (up to six) keep the gates as gate guards; the rest patrol the grounds and up to 30 blocks outside the barrier |
 | Inner Disciple | Meditates in the hall, trains in the courtyards |
-| Elder, Grand Elder | Guards the Treasury and the Formation Core; fights only when disciples nearby are in a fight or someone breaks into the Treasury or at the core |
-| Sect Master | Meditates on the dais; fights only when the barrier is shattered or an elder is killed |
+| Elder, Grand Elder | Guards the Treasury and the Formation Core; otherwise fights only when disciples nearby are in a fight or someone breaks into the Treasury or at the core |
+| Sect Master | Meditates on the dais; otherwise fights only when the barrier is shattered or an elder is killed |
 
-- Members below Heavenly Being stay within the barrier plus 30 blocks, leaving only to chase someone.
+- **The whole sect turns out** (every member in its territory, the elders and the Sect Master too) when a player or a
+  cultivator attacks any member anywhere in the territory (the barrier plus 30 blocks, so the gate guards too), or when
+  someone breaks a block of the barrier to force a way in. Striking the barrier without breaking it, trespassing, and
+  monsters only rouse the members near by, as above (`SectManager.alert`).
+- Members below Heavenly Being stay within the barrier plus 30 blocks, leaving only to chase someone (anywhere in the
+  territory and up to 48 blocks past it). One you strike keeps after you just as far (not only while you are within 32
+  blocks or in its sight). Chasing a flier, a member takes off only under the open sky (from inside a hall, or under
+  thick leaves, it walks out first), climbs over whatever it flies into, and drops out of the air when its qi runs dry;
+  it can't take off again until its qi is back over 40%.
 - A member killed by a player is never replaced, and the sect is smaller for good. One who dies otherwise, or leaves, is
   replaced after 2-4 days by a new Outer Disciple at Qi Refining Early. When the last member dies, the sect is extinct
   and never comes back.
@@ -508,7 +600,7 @@ the master is between Core Formation and Nascent Soul Grand Perfection; in the U
   Perfection; in the Upper Realm the curve runs from Qi Refining Early to Four Axis Grand Perfection
   (`NpcSpawner`). At most 3 near any one player and 40 in a level.
 - **In a fight** cultivators use what their realm gives them: a Consciousness Domain (rogues always, sect members only
-  in combat), Realm Suppression and Qi Flight, but only while their qi can sustain them. They flee below a quarter of their
+  in combat), Realm Suppression and Qi Flight or Sword Flight, but only while their qi can sustain them. They flee below a quarter of their
   health (all but the Sect Master, who makes a last stand), and rogues and disciples also flee from a hostile domain four or more stages stronger once their own domain
   senses it. The Sect Master and the elders never flee a stronger domain: they stand and fight for their sect. A
   cultivator fleeing a stronger domain runs (or flies) to a refuge about 200 blocks away (160-240), on the far side from

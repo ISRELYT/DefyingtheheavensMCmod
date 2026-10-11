@@ -10,6 +10,8 @@ public final class ModKeybinds {
 	public static KeyMapping OPEN_MENU;
 	public static KeyMapping MEDITATE;
 	public static KeyMapping CIRCULATE;
+	/** Held down to show the ability wheel ({@link AbilityWheelScreen}); letting go closes it. */
+	public static KeyMapping ABILITY_WHEEL;
 
 	public static void register() {
 		OPEN_MENU = KeyBindingHelper.registerKeyBinding(new KeyMapping(
@@ -18,6 +20,8 @@ public final class ModKeybinds {
 				ModLang.KEY_MEDITATE, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_H, ModLang.KEY_CATEGORY));
 		CIRCULATE = KeyBindingHelper.registerKeyBinding(new KeyMapping(
 				ModLang.KEY_CIRCULATE, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_R, ModLang.KEY_CATEGORY));
+		ABILITY_WHEEL = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+				ModLang.KEY_ABILITY_WHEEL, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_Z, ModLang.KEY_CATEGORY));
 	}
 
 	private ModKeybinds() {}

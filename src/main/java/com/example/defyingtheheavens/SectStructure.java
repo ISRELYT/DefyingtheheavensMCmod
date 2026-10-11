@@ -1,14 +1,12 @@
 package com.example.defyingtheheavens;
 
+import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.IntArrayTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.LongArrayTag;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.NoiseColumn;
@@ -19,10 +17,13 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.levelgen.LegacyRandomSource;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.WorldgenRandom;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.level.levelgen.structure.StructurePiece;
+import net.minecraft.world.level.levelgen.structure.StructureStart;
 import net.minecraft.world.level.levelgen.structure.StructureType;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePiecesBuilder;
 
@@ -34,82 +35,89 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * A cultivation sect: an open village, no wall round it, gathered about the Formation Core at its heart. Built from
- * {@link SectPiece}s (not jigsaw templates: the layout is planned here, in code, so it can keep its order and fit its
- * population, and every building adapts its base to the ground).
+ * A cultivation sect: an open village of halls and houses on the grass round a paved Formation plaza, with no wall (its barrier
+ * is its wall), built from {@link SectPiece}s (not jigsaw templates: the layout is planned here and in {@link SectLayout}, in
+ * code, so it fits its population and every building adapts its height to the ground).
  * <pre>
- *            [pagoda] :  (garden) [ MAIN HALL ] (garden)  : [pavilion ~pond~]
- *                     :.......... lane round the back .........:
- *   [side gate]==homes=:=elders==( plaza: the core )==elders==:=homes==[side gate]
- *              homes   :  [treasury]       ||       [meditation hall] :   homes
- *              homes   :.......... lane across the front .............:   homes
- *                                       [ main gate ]
+ *   back                         [garden]
+ *        [garden] [main hall: the master's dais] [pagoda]
+ *        ==torii===( Formation plaza: core, array )===torii==
+ *      elders' houses round the plaza, trees and bamboo
+ *              [treasury]  lanterns  [meditation hall]
+ *   front                       [ gate ]
  * </pre>
- * The plaza (the core on its dais, the array round it) is the middle of everything: the Sect Master's hall stands at its
- * back edge, the roads run from it to three paifang gates (the main gate in front, one either side), the treasury and the
- * meditation hall face each other across the gate road, and the elders' houses stand on the cross road by the plaza. Two
- * lanes run front to back either side, joined across the front and round the back of the hall (whose back steps come down
- * to it); out past them are the disciples' houses and the outer disciples' dormitories, on the cross road and facing the
- * lanes, and the pagoda, and a lotus pond with its pavilion; herb gardens flank the hall. Trees, bamboo and mossy rocks fill the open ground.
+ * A paved way runs from the gate up the middle to the plaza and on to the main hall's steps, and out to either side through
+ * a torii; footpaths lead from it to every door. The buildings stand within the size's reach of the plaza, so the barrier
+ * (sized to them) encloses them, while the gates stand {@link #GATE_BEYOND} further out, outside it, with posts for the
+ * gate guards on the road beyond each. The elders' houses scatter over the lawns, with cherry trees and bamboo on the open
+ * grass between (SectLayout). The pagoda and the second garden swap sides from sect to sect, as do the
+ * treasury and the meditation hall.
  * <p>
- * Three sizes, for 10-12, 13-16 and 17-20 members, with a mat to sleep on for each (the Sect Master's is in the main hall).
- * The Formation Core's barrier is sized to enclose every building. Sects appear only on fairly flat, dry land (and, in the
- * Upper Realm, only on an island wide enough to hold them); within the village's round the ground is levelled and no
- * vanilla tree grows (see TreeFeatureMixin). Members are not spawned here: the core carries the sect's blueprint (its
- * posts, alignment and capacity) and founds the sect when it first ticks (SectManager#found).
+ * Three sizes, for 10-12, 13-16 and 17-20 members. The Sect Master sits in the main hall, each elder has a house, and the
+ * disciples live in the meditation hall, a mat each. The Formation Core stands at the middle of the grounds; its barrier is
+ * sized to enclose all of them. Sects appear only on fairly flat, dry land (and, in the Upper Realm, only on an island wide
+ * enough to hold them). Members are not spawned here: the core carries the sect's blueprint (its posts, alignment and
+ * capacity) and founds the sect when it first ticks (SectManager#found).
  */
 public class SectStructure extends Structure {
 	/**
-	 * How uneven the ground in the middle of the village may be (highest sample less lowest). The grounds are cleared 24 blocks
-	 * above the plaza and filled up to 12 below it, so this is about what they can level without leaving a hill through the halls.
-	 * The Upper Realm's islands are rugged and only a few are wide enough, so it takes more there.
+	 * How uneven the ground under the grounds may be (highest sample less lowest). The grounds are cleared 22 blocks above the
+	 * level of the plaza and filled up to 12 below, so this is about what they can level without leaving a hill through the
+	 * halls.
+	 * Surveyed 2026-10-10 over 441 candidate sites: in the Overworld about 1 in 8 attempts finds a site at 20, against 1 in
+	 * 17 at the old 12; the Upper Realm's islands are rugged and only a few are wide enough, so it takes up to 24 there.
 	 */
 	private static final int MAX_RELIEF = 20;
 	private static final int MAX_RELIEF_UPPER = 24;
 	/** How many of the 13 ground samples may be water (a pond or a stream across the grounds is filled in). */
 	private static final int MAX_WET = 3;
-	/** Within this of a sect's core no vanilla tree grows: it would come up through a roof or across a road. */
-	public static final int TREELESS_RADIUS = Formations.MAX_RADIUS;
 
 	private enum Size {
-		//      members  elders houses dorms tiers pagoda main  medW medD treW treD pondW pondD gateRoad sideRoad trees
-		SMALL( 10, 12,   2,     1,     2,    3,    9,     23,   15,  11,  13,  11,  11,   13,   26,      55,      12),
-		MEDIUM(13, 16,   3,     2,     2,    5,    11,    27,   17,  13,  15,  13,  13,   15,   32,      55,      18),
-		LARGE( 17, 20,   4,     2,     3,    5,    13,    31,   19,  15,  17,  15,  15,   17,   32,      55,      24);
+		//    reach min max  treasury(w,d) meditation(w,d) main(w) pagoda tiers garden(w,d) trees bamboo
+		SMALL( 46, 10, 12, 13, 11, 19, 13, 23, 9, 3, 11, 15, 34, 16),
+		MEDIUM(52, 13, 16, 15, 13, 19, 15, 27, 11, 5, 12, 17, 44, 20),
+		LARGE( 56, 17, 20, 17, 15, 19, 15, 31, 13, 7, 13, 19, 54, 24);
 
-		final int minMembers, maxMembers, elders, houses, dorms, tiers, pagoda, mainW, medW, medD, treW, treD, pondW, pondD, gateRoad, sideRoad, trees;
+		/**
+		 * How far from the plaza the buildings may reach (the barrier closes just outside them, and is never wider than
+		 * Formations.MAX_RADIUS); the gates stand {@link #GATE_BEYOND} further out, outside the barrier, and the grounds reach a
+		 * few blocks past the gates.
+		 */
+		final int reach;
+		/** Half the grounds' width and depth: the plaza is at (a, b) of a (2a + 1) by (2b + 1) frame. */
+		final int a, b, w, d;
+		final int minMembers, maxMembers, treasuryW, treasuryD, meditationW, meditationD, mainW, pagoda, tiers, gardenW, gardenD, trees, bamboo;
 
-		Size(int minMembers, int maxMembers, int elders, int houses, int dorms, int tiers, int pagoda, int mainW, int medW, int medD, int treW,
-				int treD, int pondW, int pondD, int gateRoad, int sideRoad, int trees) {
+		Size(int reach, int minMembers, int maxMembers, int treasuryW, int treasuryD, int meditationW, int meditationD, int mainW, int pagoda,
+				int tiers, int gardenW, int gardenD, int trees, int bamboo) {
+			this.reach = reach;
+			this.a = reach + GATE_BEYOND + 6;
+			this.b = reach + GATE_BEYOND + 6;
+			this.w = 2 * a + 1;
+			this.d = 2 * b + 1;
 			this.minMembers = minMembers;
 			this.maxMembers = maxMembers;
-			this.elders = elders;
-			this.houses = houses;
-			this.dorms = dorms;
-			this.tiers = tiers;
-			this.pagoda = pagoda;
+			this.treasuryW = treasuryW;
+			this.treasuryD = treasuryD;
+			this.meditationW = meditationW;
+			this.meditationD = meditationD;
 			this.mainW = mainW;
-			this.medW = medW;
-			this.medD = medD;
-			this.treW = treW;
-			this.treD = treD;
-			this.pondW = pondW;
-			this.pondD = pondD;
-			this.gateRoad = gateRoad;
-			this.sideRoad = sideRoad;
+			this.pagoda = pagoda;
+			this.tiers = tiers;
+			this.gardenW = gardenW;
+			this.gardenD = gardenD;
 			this.trees = trees;
-		}
-
-		/** About how far the village reaches from its core (for surveying the ground). */
-		int reach() {
-			return sideRoad + 2;
+			this.bamboo = bamboo;
 		}
 	}
 
-	private static final int MAIN_DEPTH = 25;
-	private static final int P = SectPiece.PLAZA_RADIUS;
-	/** The lanes run front to back this far either side of the axis, joined across in front and round the back of the main hall. */
-	private static final int LANE_U = 33;
+	private static final int MAIN_DEPTH = 21;
+	/** How far out a garden may reach (SectLayout#outline): it is low and fenced, so it may come nearer the edge than a house. */
+	private static final double GARDEN_LIMIT = 0.97;
+	/** How far beyond the buildings' reach the gates stand: well outside the barrier, which closes 2 past the buildings. */
+	private static final int GATE_BEYOND = 8;
+	/** The lawn between the way up the middle and the halls of the front court, and between the main hall and its neighbours. */
+	private static final int SET_BACK = 5;
 
 	public SectStructure(StructureSettings settings) {
 		super(settings);
@@ -127,7 +135,7 @@ public class SectStructure extends Structure {
 		Size size = roll < 0.35f ? Size.SMALL : roll < 0.75f ? Size.MEDIUM : Size.LARGE;
 		Direction facing = Direction.Plane.HORIZONTAL.getRandomDirection(random);
 		ChunkPos chunk = context.chunkPos();
-		Frame frame = new Frame(facing, chunk.getMiddleBlockX(), chunk.getMiddleBlockZ());
+		Frame frame = new Frame(facing, chunk.getMiddleBlockX(), chunk.getMiddleBlockZ(), size.w, size.d);
 
 		ChunkGenerator generator = context.chunkGenerator();
 		LevelHeightAccessor heights = context.heightAccessor();
@@ -135,15 +143,15 @@ public class SectStructure extends Structure {
 		BlockPos centre = new BlockPos(chunk.getMiddleBlockX(), 64, chunk.getMiddleBlockZ());
 		boolean upper = isUpperRealm(context, centre);
 
-		// The ground, sampled over the heart of the village: too uneven, too wet or (in the Upper Realm) over the edge of an
+		// The ground, sampled where the buildings will stand (a grid reaching three quarters of their reach from the plaza; the
+		// lawns and the gates beyond are simply levelled): too uneven, too wet or (in the Upper Realm) over the edge of an
 		// island, and there's no sect here.
-		int reach = size.reach() * 4 / 5;
 		int[] samples = new int[25];
 		int water = 0;
 		int n = 0;
 		for (int i = 0; i <= 4; i++) {
 			for (int j = 0; j <= 4; j++) {
-				BlockPos at = frame.world(-reach + reach * i / 2, -reach + reach * j / 2);
+				BlockPos at = frame.world(size.a + Math.round(size.reach * 0.375f * (i - 2)), size.b + Math.round(size.reach * 0.375f * (j - 2)));
 				int y = generator.getFirstOccupiedHeight(at.getX(), at.getZ(), Heightmap.Types.WORLD_SURFACE_WG, heights, state);
 				if (y <= heights.getMinBuildHeight() + 2) return Optional.empty();
 				samples[n++] = y;
@@ -160,7 +168,7 @@ public class SectStructure extends Structure {
 		int platformY = sorted[12];
 		if (platformY + 70 > heights.getMaxBuildHeight()) return Optional.empty();
 		return Optional.of(new GenerationStub(new BlockPos(chunk.getMiddleBlockX(), platformY, chunk.getMiddleBlockZ()),
-				builder -> new Plan(builder, random, size, frame, platformY, upper).build()));
+				builder -> plan(builder, random, size, frame, platformY, upper)));
 	}
 
 	/**
@@ -182,19 +190,29 @@ public class SectStructure extends Structure {
 	}
 
 	/**
-	 * Whether (x, z) lies within {@link #TREELESS_RADIUS} of a sect's core, for trees that mustn't grow there (see
-	 * TreeFeatureMixin). A sect's core is the middle of the chunk it started in, which every chunk it reaches names.
+	 * Whether {@code pos} lies on a sect's open grounds or within {@code margin} of them, where worldgen grows no trees, bamboo,
+	 * huge mushrooms or boulders (see SectClearingMixin): a sect keeps its grounds clear and plants its own. Only sects whose
+	 * start this generating region can reach are seen; a sect whose start lies beyond it counts as near, to be safe.
 	 */
-	public static boolean inSectGrounds(WorldGenLevel level, int x, int z) {
-		if (!level.hasChunk(x >> 4, z >> 4)) return false;
-		ChunkAccess chunk = level.getChunk(x >> 4, z >> 4, ChunkStatus.STRUCTURE_REFERENCES, false);
-		if (chunk == null) return false;
-		for (Map.Entry<Structure, it.unimi.dsi.fastutil.longs.LongSet> entry : chunk.getAllReferences().entrySet()) {
-			if (!(entry.getKey() instanceof SectStructure)) continue;
-			for (long start : entry.getValue()) {
-				ChunkPos at = new ChunkPos(start);
-				double dx = x - at.getMiddleBlockX(), dz = z - at.getMiddleBlockZ();
-				if (dx * dx + dz * dz <= (double) TREELESS_RADIUS * TREELESS_RADIUS) return true;
+	public static boolean onGrounds(WorldGenLevel level, BlockPos pos, int margin) {
+		for (int cx = pos.getX() - margin >> 4; cx <= pos.getX() + margin >> 4; cx++) {
+			for (int cz = pos.getZ() - margin >> 4; cz <= pos.getZ() + margin >> 4; cz++) {
+				if (!level.hasChunk(cx, cz)) continue;
+				ChunkAccess chunk = level.getChunk(cx, cz, ChunkStatus.STRUCTURE_REFERENCES, false);
+				if (chunk == null) continue;
+				for (Map.Entry<Structure, LongSet> entry : chunk.getAllReferences().entrySet()) {
+					if (!(entry.getKey() instanceof SectStructure)) continue;
+					for (long start : entry.getValue()) {
+						int sx = ChunkPos.getX(start), sz = ChunkPos.getZ(start);
+						if (!level.hasChunk(sx, sz)) return true;
+						ChunkAccess origin = level.getChunk(sx, sz, ChunkStatus.STRUCTURE_STARTS, false);
+						StructureStart sect = origin == null ? null : origin.getStartForStructure(entry.getKey());
+						if (sect == null || !sect.isValid()) continue;
+						for (StructurePiece piece : sect.getPieces()) {
+							if (piece instanceof SectPiece grounds && grounds.onGrounds(pos, margin)) return true;
+						}
+					}
+				}
 			}
 		}
 		return false;
@@ -208,25 +226,36 @@ public class SectStructure extends Structure {
 	}
 
 	/**
-	 * The village's frame: u across it (to the right, looking in from the main gate), v from the core toward its back (the
-	 * main gate is at negative v), centred on the core; laid in the world by {@code facing} (the way in from the main gate).
+	 * The compound's frame: u from left to right across its front, v from the gate inward, as in SectPiece, laid in the world
+	 * by {@code facing} (the way it extends from its gate).
 	 */
-	private record Frame(Direction facing, int cx, int cz) {
+	private record Frame(Direction facing, int cx, int cz, int w, int d) {
+		/** The world column of compound point (u, v). */
 		BlockPos world(int u, int v) {
 			return switch (facing) {
-				case SOUTH -> new BlockPos(cx + u, 0, cz + v);
-				case NORTH -> new BlockPos(cx + u, 0, cz - v);
-				case EAST -> new BlockPos(cx + v, 0, cz + u);
-				default -> new BlockPos(cx - v, 0, cz + u);
+				case NORTH -> new BlockPos(cx - w / 2 + u, 0, cz + d / 2 - v);
+				case SOUTH -> new BlockPos(cx - w / 2 + u, 0, cz - d / 2 + v);
+				case WEST -> new BlockPos(cx + d / 2 - v, 0, cz - w / 2 + u);
+				default -> new BlockPos(cx - d / 2 + v, 0, cz - w / 2 + u);
 			};
 		}
 
-		/** Village +u in the world. */
+		/** Compound +u in the world. */
 		Direction right() {
 			return facing.getAxis() == Direction.Axis.Z ? Direction.EAST : Direction.SOUTH;
 		}
 
-		/** The world box of village rectangle u0..u1, v0..v1, from y0 up {@code height}. */
+		/** The world direction of a building that extends {@code side} from its door. */
+		Direction toWorld(SectLayout.Side side) {
+			return switch (side) {
+				case BACK -> facing;
+				case FRONT -> facing.getOpposite();
+				case RIGHT -> right();
+				case LEFT -> right().getOpposite();
+			};
+		}
+
+		/** The world box of compound rectangle u0..u1, v0..v1, from y0 up {@code height}. */
 		BoundingBox box(int u0, int v0, int u1, int v1, int y0, int height) {
 			BlockPos a = world(u0, v0), b = world(u1, v1);
 			return new BoundingBox(Math.min(a.getX(), b.getX()), y0, Math.min(a.getZ(), b.getZ()), Math.max(a.getX(), b.getX()), y0 + height - 1,
@@ -234,311 +263,234 @@ public class SectStructure extends Structure {
 		}
 	}
 
-	/** Which way a building's door faces, in the village's frame. */
-	private enum Door { FRONT, BACK, LEFT, RIGHT }
+	private static SectPiece piece(SectPiece.Kind kind, SectLayout.Lot lot, Frame frame, int y, int height, long seed, Alignment.Faction faction,
+			boolean upper, CompoundTag extra) {
+		return new SectPiece(kind, frame.box(lot.u0(), lot.v0(), lot.u1(), lot.v1(), y, height), frame.toWorld(lot.side()), seed, faction, upper, extra);
+	}
 
-	/** One village being laid out. */
-	private static final class Plan {
-		private final StructurePiecesBuilder builder;
-		private final Size size;
-		private final Frame frame;
-		private final int y;
-		private final boolean upper;
-		private final long seed;
-		private final int alignment;
-		private final Alignment.Faction faction;
-		private final List<SectPiece> pieces = new ArrayList<>();
-		/** Village rectangles {u0, v0, u1, v1}: what the buildings stand on. */
-		private final List<int[]> footprints = new ArrayList<>();
-		/** Village rectangles {u0, v0, u1, v1, kind}. */
-		private final List<int[]> paths = new ArrayList<>();
-		private final List<int[]> lanterns = new ArrayList<>();
-		private final List<int[]> trees = new ArrayList<>();
-		private int next;
+	/** A plot {@code width} across and {@code depth} deep beside the main hall, {@code beside} out from the middle on {@code side} (+1 right). */
+	private static SectLayout.Lot besideHall(int cu, int side, int beside, int width, int v0, int depth, SectLayout.Side facing) {
+		int u0 = side > 0 ? cu + beside : cu - beside - width + 1;
+		return new SectLayout.Lot(u0, v0, u0 + width - 1, v0 + depth - 1, facing);
+	}
 
-		Plan(StructurePiecesBuilder builder, WorldgenRandom random, Size size, Frame frame, int y, boolean upper) {
-			this.builder = builder;
-			this.size = size;
-			this.frame = frame;
-			this.y = y;
-			this.upper = upper;
-			this.seed = random.nextLong();
-			this.alignment = Alignment.randomSect(random);
-			this.faction = Alignment.factionOf(alignment);
+	/**
+	 * A hall {@code width} across its front and {@code depth} deep, facing the way up the middle from {@code side} of it across
+	 * a lawn of {@link #SET_BACK}, before the plaza.
+	 */
+	private static SectLayout.Lot beforePlaza(int cu, int cv, int side, int width, int depth) {
+		int v1 = cv - SectPiece.PLAZA_RADIUS - 3 - SET_BACK, v0 = v1 - width + 1;
+		int near = 4 + SET_BACK;
+		return side > 0 ? new SectLayout.Lot(cu + near, v0, cu + near - 1 + depth, v1, SectLayout.Side.RIGHT)
+				: new SectLayout.Lot(cu - near + 1 - depth, v0, cu - near, v1, SectLayout.Side.LEFT);
+	}
+
+	/** Lays out a sect of size {@code size} (0 small, 1 medium, 2 large) at the origin as worldgen would, for the game tests. */
+	public static List<StructurePiece> layOut(long seed, int size, Direction facing, boolean upper) {
+		Size s = Size.values()[size];
+		StructurePiecesBuilder builder = new StructurePiecesBuilder();
+		plan(builder, new WorldgenRandom(new LegacyRandomSource(seed)), s, new Frame(facing, 0, 0, s.w, s.d), 64, upper);
+		return builder.build().pieces();
+	}
+
+	/** The most members a sect of size {@code size} may have (see {@link #layOut}). */
+	public static int maxMembers(int size) {
+		return Size.values()[size].maxMembers;
+	}
+
+	private static void plan(StructurePiecesBuilder builder, WorldgenRandom random, Size size, Frame frame, int y, boolean upper) {
+		long seed = random.nextLong();
+		int alignment = Alignment.randomSect(random);
+		Alignment.Faction faction = Alignment.factionOf(alignment);
+		int w = size.w, d = size.d, cu = size.a, cv = size.b, r = SectPiece.PLAZA_RADIUS;
+		Direction back = frame.facing();
+		int capacity = size.minMembers + random.nextInt(size.maxMembers - size.minMembers + 1);
+		SectLayout layout = new SectLayout(size.a, size.b, size.reach, seed);
+		int gateDistance = size.reach + GATE_BEYOND;
+		List<SectPiece> pieces = new ArrayList<>();
+
+		// The ways: up the middle from the gate to the plaza and on, wider, to the main hall's steps; and out to either side.
+		int mainV0 = cv + r + 2;
+		layout.road(cu, 0, cu, cv, 1);
+		layout.road(cu, cv, cu, mainV0 + 2, 3);
+		layout.road(0, cv, w - 1, cv, 1);
+		layout.plaza(r);
+
+		// The main hall behind the plaza; the pagoda beside it, a garden behind the pagoda and another on the hall's far side.
+		int side = random.nextBoolean() ? 1 : -1;
+		SectLayout.Lot mainLot = new SectLayout.Lot(cu - size.mainW / 2, mainV0, cu - size.mainW / 2 + size.mainW - 1, mainV0 + MAIN_DEPTH - 1,
+				SectLayout.Side.BACK);
+		layout.claim(mainLot, 2);
+		SectPiece main = piece(SectPiece.Kind.MAIN_HALL, mainLot, frame, y, 34, seed + 30, faction, upper, null);
+		pieces.add(main);
+		int beside = size.mainW / 2 + 3 + SET_BACK;
+		SectLayout.Lot pagodaLot = besideHall(cu, side, beside, size.pagoda, mainV0 + 1, size.pagoda, SectLayout.Side.BACK);
+		layout.claim(pagodaLot, 2);
+		layout.apron(pagodaLot, 2, 1);
+		layout.footpath(pagodaLot.doorstep()[0], pagodaLot.doorstep()[1]);
+		CompoundTag pagodaData = new CompoundTag();
+		pagodaData.putInt("Tiers", size.tiers);
+		SectPiece pagoda = piece(SectPiece.Kind.PAGODA, pagodaLot, frame, y, 6 * size.tiers + 14, seed + 31, faction, upper, pagodaData);
+		pieces.add(pagoda);
+		List<SectPiece> gardens = new ArrayList<>();
+		for (int depth = size.gardenD; depth >= 9; depth--) {
+			SectLayout.Lot lot = besideHall(cu, -side, beside, size.gardenW, mainV0 + 1, depth, SectLayout.Side.BACK);
+			if (!layout.within(lot, GARDEN_LIMIT)) continue;
+			layout.claim(lot, 2);
+			layout.footpath(lot.doorstep()[0], lot.doorstep()[1]);
+			gardens.add(piece(SectPiece.Kind.GARDEN, lot, frame, y, 10, seed + 40, faction, upper, null));
+			break;
+		}
+		// Behind the pagoda the second garden opens toward the main hall, its plots running outward.
+		for (int across = 10; across >= 8; across--) {
+			int v0 = pagodaLot.v1() + 5;
+			SectLayout.Lot lot = new SectLayout.Lot(pagodaLot.u0(), v0, pagodaLot.u1(), v0 + across - 1, side > 0 ? SectLayout.Side.RIGHT : SectLayout.Side.LEFT);
+			if (!layout.within(lot, GARDEN_LIMIT)) continue;
+			layout.claim(lot, 2);
+			layout.footpath(lot.doorstep()[0], lot.doorstep()[1]);
+			gardens.add(piece(SectPiece.Kind.GARDEN, lot, frame, y, 10, seed + 41, faction, upper, null));
+			break;
+		}
+		pieces.addAll(gardens);
+
+		// The two halls of the front court face the way up the middle, the treasury on one side and the meditation hall on the
+		// other.
+		int halls = random.nextBoolean() ? 1 : -1;
+		SectLayout.Lot treasuryLot = beforePlaza(cu, cv, halls, size.treasuryW, size.treasuryD);
+		SectLayout.Lot meditationLot = beforePlaza(cu, cv, -halls, size.meditationW, size.meditationD);
+		for (SectLayout.Lot lot : new SectLayout.Lot[] {treasuryLot, meditationLot}) {
+			layout.claim(lot, 2);
+			layout.apron(lot, 1, 1);
+			layout.footpath(lot.doorstep()[0], lot.doorstep()[1]);
+		}
+		SectPiece treasury = piece(SectPiece.Kind.TREASURY, treasuryLot, frame, y, 18, seed + 20, faction, upper, null);
+		SectPiece meditation = piece(SectPiece.Kind.MEDITATION_HALL, meditationLot, frame, y, 18, seed + 21, faction, upper, null);
+		pieces.add(treasury);
+		pieces.add(meditation);
+
+		// The gate across the way up the middle, and a torii across each side way, all outside the barrier (it closes round the
+		// buildings, inside gateDistance), where the gate guards stand and visitors are met.
+		SectLayout.Lot gateLot = new SectLayout.Lot(cu - 9, cv - gateDistance - 1, cu + 9, cv - gateDistance + 1, SectLayout.Side.BACK);
+		layout.keepClear(gateLot.u0(), gateLot.v0() - 1, gateLot.u1(), gateLot.v1() + 1);
+		SectPiece gate = piece(SectPiece.Kind.GATE, gateLot, frame, y, 14, seed + 1, faction, upper, null);
+		pieces.add(gate);
+		List<SectPiece> gates = new ArrayList<>(List.of(gate));
+		for (int k = -1; k <= 1; k += 2) {
+			int u = cu + k * gateDistance;
+			SectLayout.Lot lot = new SectLayout.Lot(u - 1, cv - 5, u + 1, cv + 5, k < 0 ? SectLayout.Side.LEFT : SectLayout.Side.RIGHT);
+			layout.keepClear(lot.u0() - 1, lot.v0(), lot.u1() + 1, lot.v1());
+			SectPiece torii = piece(SectPiece.Kind.TORII, lot, frame, y, 10, seed + 2 + k, faction, upper, null);
+			pieces.add(torii);
+			gates.add(torii);
 		}
 
-		private Direction orientation(Door door) {
-			Direction back = frame.facing(), right = frame.right();
-			return switch (door) {
-				case FRONT -> back;                 // the door looks to the front: the building extends toward the back
-				case BACK -> back.getOpposite();
-				case RIGHT -> right.getOpposite();
-				case LEFT -> right;
-			};
+		// The elders' houses, nearest the plaza (the disciples live in the meditation hall); then lanterns along the ways and
+		// trees and bamboo on the grass between.
+		EnumMap<NpcTitle, Integer> titles = Sect.titleCounts(size.maxMembers);
+		int elders = titles.get(NpcTitle.GRAND_ELDER) + titles.get(NpcTitle.ELDER);
+		List<SectLayout.Lot> lots = layout.houses(random, elders, elders);
+		List<SectPiece> dwellings = new ArrayList<>();
+		for (int i = 0; i < lots.size(); i++) {
+			dwellings.add(piece(SectPiece.Kind.ELDER_HOUSE, lots.get(i), frame, y, 18, seed + 100 + i, faction, upper, null));
 		}
-
-		private SectPiece add(SectPiece.Kind kind, int u0, int v0, int u1, int v1, Door door, int height, CompoundTag extra) {
-			int a = Math.min(u0, u1), b = Math.min(v0, v1), c = Math.max(u0, u1), d = Math.max(v0, v1);
-			SectPiece piece = new SectPiece(kind, frame.box(a, b, c, d, y, height), orientation(door), seed + 1 + next++, faction, upper, extra);
-			pieces.add(piece);
-			if (kind != SectPiece.Kind.GROUNDS) footprints.add(new int[] {a, b, c, d});
-			return piece;
+		pieces.addAll(dwellings);
+		for (int v = cv - gateDistance + 4; v < cv - r; v += 5) {
+			layout.lantern(cu - 3, v);
+			layout.lantern(cu + 3, v);
 		}
-
-		private void path(int u0, int v0, int u1, int v1, int kind) {
-			paths.add(new int[] {Math.min(u0, u1), Math.min(v0, v1), Math.max(u0, u1), Math.max(v0, v1), kind});
+		for (int u = cu - gateDistance + 4; u < cu - r; u += 5) {
+			layout.lantern(u, cv - 3);
+			layout.lantern(u, cv + 3);
+			layout.lantern(w - 1 - u, cv - 3);
+			layout.lantern(w - 1 - u, cv + 3);
 		}
+		layout.plant(random, size.trees, size.bamboo);
 
-		/** A lane from the middle of a building's door side straight out to the line {@code to} (a v, or a u for a side door). */
-		private void spur(int[] r, Door door, int to, int width) {
-			int cu = (r[0] + r[2]) / 2, cv = (r[1] + r[3]) / 2, h = width / 2;
-			switch (door) {
-				case FRONT -> path(cu - h, r[1], cu + h, to, SectPiece.PATH_LANE);
-				case BACK -> path(cu - h, r[3], cu + h, to, SectPiece.PATH_LANE);
-				case LEFT -> path(r[0], cv - h, to, cv + h, SectPiece.PATH_LANE);
-				case RIGHT -> path(r[2], cv - h, to, cv + h, SectPiece.PATH_LANE);
+		// The grounds go first, under everything.
+		CompoundTag groundsData = new CompoundTag();
+		groundsData.putInt("A", size.a);
+		groundsData.putInt("B", size.b);
+		groundsData.putByteArray("Map", layout.map);
+		SectPiece terrace = new SectPiece(SectPiece.Kind.TERRACE, frame.box(0, 0, w - 1, d - 1, y, 24), back, seed, faction, upper, groundsData);
+		pieces.add(0, terrace);
+
+		// The plaza last, so its blueprint can name every post of the grounds.
+		BoundingBox plazaBox = frame.box(cu - r, cv - r, cu + r, cv + r, y, 8);
+		CompoundTag plazaData = new CompoundTag();
+		SectPiece plaza = new SectPiece(SectPiece.Kind.PLAZA, plazaBox, back, seed + 50, faction, upper, plazaData);
+		BlockPos core = plaza.toWorld(r, 2, r);
+
+		Map<Sect.Post, List<BlockPos>> posts = new EnumMap<>(Sect.Post.class);
+		for (Sect.Post post : Sect.Post.values()) posts.put(post, new ArrayList<>());
+		int[] seat = main.masterSeat();
+		posts.get(Sect.Post.MASTER_SEAT).add(main.toWorld(seat[0], seat[1], seat[2]));
+		for (int[] mat : meditation.meditationMats()) posts.get(Sect.Post.MEDITATION).add(meditation.toWorld(mat[0], 2, mat[1]));
+		for (int[] guard : treasury.treasuryGuards()) posts.get(Sect.Post.TREASURY).add(treasury.toWorld(guard[0], guard[1], guard[2]));
+		for (int[] guard : SectPiece.corePosts()) posts.get(Sect.Post.CORE).add(plaza.toWorld(guard[0], 1, guard[1]));
+		// Homes: the elders' houses, nearest the plaza first, then the mats of the meditation hall, where the disciples live.
+		// The strongest members are founded first (SectManager#found), so the elders get the houses.
+		dwellings.sort((x, z) -> Double.compare(x.getBoundingBox().getCenter().distSqr(core), z.getBoundingBox().getCenter().distSqr(core)));
+		for (SectPiece house : dwellings) {
+			int[] mat = house.homeMat();
+			posts.get(Sect.Post.DWELLING).add(house.toWorld(mat[0], mat[1], mat[2]));
+		}
+		for (int[] mat : meditation.meditationMats()) posts.get(Sect.Post.DWELLING).add(meditation.toWorld(mat[0], 2, mat[1]));
+		// Where the inner disciples stroll: along the ways inside the barrier, round the plaza, by the gardens, the pagoda's top.
+		List<BlockPos> courtyard = posts.get(Sect.Post.COURTYARD);
+		int along = (r + size.reach) / 2;
+		courtyard.add(terrace.toWorld(cu, 1, cv - along));
+		courtyard.add(terrace.toWorld(cu, 1, cv - size.reach + 4));
+		courtyard.add(terrace.toWorld(cu - along, 1, cv));
+		courtyard.add(terrace.toWorld(cu + along, 1, cv));
+		for (int k = 0; k < 4; k++) {
+			double angle = Math.PI / 2 * k;
+			courtyard.add(plaza.toWorld(r + (int) Math.round(Math.cos(angle) * 10.5), 1, r + (int) Math.round(Math.sin(angle) * 10.5)));
+		}
+		for (SectPiece garden : gardens) courtyard.add(garden.toWorld(garden.width() / 2, 1, 1));
+		int[] top = pagoda.pagodaSeat();
+		courtyard.add(pagoda.toWorld(top[0], top[1], top[2]));
+		int[] in = gate.gateInside();
+		posts.get(Sect.Post.GATE).add(gate.toWorld(in[0], in[1], in[2]));
+		// The gate guards, on the way just outside each gate: two at the gate, then one at each torii, then a second at each
+		// (Sect#guardPost hands them to the outer disciples in this order).
+		List<BlockPos> guards = posts.get(Sect.Post.GATE_GUARD);
+		int out = gateDistance + 2;
+		guards.add(terrace.toWorld(cu - 2, 1, cv - out));
+		guards.add(terrace.toWorld(cu + 2, 1, cv - out));
+		guards.add(terrace.toWorld(cu - out, 1, cv - 2));
+		guards.add(terrace.toWorld(cu + out, 1, cv - 2));
+		guards.add(terrace.toWorld(cu - out, 1, cv + 2));
+		guards.add(terrace.toWorld(cu + out, 1, cv + 2));
+
+		// The barrier: from the core out round every building, and a little more; the gates stay outside it.
+		int radius = 0;
+		for (SectPiece piece : pieces) {
+			BoundingBox box = piece.getBoundingBox();
+			if (piece == terrace || gates.contains(piece)) continue;
+			for (int[] corner : new int[][] {{box.minX(), box.minZ()}, {box.maxX(), box.minZ()}, {box.minX(), box.maxZ()}, {box.maxX(), box.maxZ()}}) {
+				double dx = corner[0] - core.getX(), dz = corner[1] - core.getZ();
+				radius = Math.max(radius, (int) Math.ceil(Math.sqrt(dx * dx + dz * dz)) + 2);
 			}
 		}
+		radius = Math.min(Formations.MAX_RADIUS, radius);
 
-		/**
-		 * A home and its lane to the road, in slot {@code slot} on side {@code side} (+1 right, -1 left): 'A' in front of the
-		 * cross road and 'B' behind it, both by the plaza; 'C' behind it out past the lanes; 'D' and 'E' out past the lanes in
-		 * front of it, facing the lane (D nearer the cross road).
-		 */
-		private SectPiece home(SectPiece.Kind kind, int slot, int side) {
-			int w = kind == SectPiece.Kind.ELDER_HOUSE ? 15 : kind == SectPiece.Kind.DWELLING ? 13 : 17;
-			int d = kind == SectPiece.Kind.ELDER_HOUSE ? 12 : 11;
-			CompoundTag extra = kind == SectPiece.Kind.ELDER_HOUSE ? null : tag("Mats", kind == SectPiece.Kind.DORMITORY ? 4 : 2);
-			if (slot == 'A' || slot == 'B' || slot == 'C') {
-				int u0 = slot == 'C' ? 36 : 16;
-				int a = side > 0 ? u0 : -u0 - w + 1, b = side > 0 ? u0 + w - 1 : -u0;
-				int[] r = slot == 'A' ? new int[] {a, -3 - d + 1, b, -3} : new int[] {a, 3, b, 3 + d - 1};
-				Door door = slot == 'A' ? Door.BACK : Door.FRONT;
-				spur(r, door, slot == 'A' ? -1 : 1, 1);
-				return add(kind, r[0], r[1], r[2], r[3], door, 16, extra);
-			}
-			// Turned to face the lane: the house's width runs along v, its depth along u.
-			int a = side > 0 ? 36 : -36 - d + 1, b = side > 0 ? 36 + d - 1 : -36;
-			int v1 = slot == 'D' ? -6 : -26;
-			int[] r = {a, v1 - w + 1, b, v1};
-			Door door = side > 0 ? Door.LEFT : Door.RIGHT;
-			spur(r, door, side * (LANE_U + 1), 1);
-			return add(kind, r[0], r[1], r[2], r[3], door, 16, extra);
+		CompoundTag blueprint = new CompoundTag();
+		blueprint.putLong("Seed", seed);
+		blueprint.putInt("Alignment", alignment);
+		blueprint.putInt("Capacity", Math.min(capacity, posts.get(Sect.Post.DWELLING).size() + 1));
+		blueprint.putInt("Radius", radius);
+		BoundingBox bounds = terrace.getBoundingBox();
+		blueprint.putIntArray("Bounds", new int[] {bounds.minX(), bounds.minY() - 16, bounds.minZ(), bounds.maxX(), bounds.maxY() + 48, bounds.maxZ()});
+		BoundingBox vault = treasury.getBoundingBox().inflatedBy(1);
+		blueprint.putIntArray("Treasury", new int[] {vault.minX(), vault.minY(), vault.minZ(), vault.maxX(), vault.maxY(), vault.maxZ()});
+		CompoundTag postTag = new CompoundTag();
+		for (Map.Entry<Sect.Post, List<BlockPos>> entry : posts.entrySet()) {
+			postTag.put(entry.getKey().name(), new LongArrayTag(entry.getValue().stream().mapToLong(BlockPos::asLong).toArray()));
 		}
+		blueprint.put("Posts", postTag);
+		plazaData.put("Blueprint", blueprint);
+		pieces.add(plaza);
 
-		private static CompoundTag tag(String key, int value) {
-			CompoundTag tag = new CompoundTag();
-			tag.putInt(key, value);
-			return tag;
-		}
-
-		void build() {
-			Size s = size;
-			// The heart: the plaza, its blueprint filled in last.
-			CompoundTag plazaData = new CompoundTag();
-			SectPiece plaza = add(SectPiece.Kind.PLAZA, -P, -P, P, P, Door.FRONT, 8, plazaData);
-			// The Sect Master's hall, its steps on the plaza.
-			int mw = s.mainW;
-			SectPiece main = add(SectPiece.Kind.MAIN_HALL, -(mw / 2), P + 2, mw / 2, P + 1 + MAIN_DEPTH, Door.FRONT, 34, null);
-			path(-3, P, 3, P + 2, SectPiece.PATH_ROAD);
-			// The gate road and the main gate.
-			int gateV = -(P + s.gateRoad);
-			path(-2, gateV + 2, 2, -P, SectPiece.PATH_ROAD);
-			CompoundTag bigGate = new CompoundTag();
-			bigGate.putBoolean("Big", true);
-			SectPiece gate = add(SectPiece.Kind.GATE, -9, gateV - 1, 9, gateV + 1, Door.FRONT, 14, bigGate);
-			// The treasury (left) and the meditation hall (right), facing each other across the gate road.
-			int mid = -(P + 6) - Math.max(s.treW, s.medW) / 2;
-			int[] tr = {-(s.treD + 9), mid - s.treW / 2, -10, mid - s.treW / 2 + s.treW - 1};
-			SectPiece treasury = add(SectPiece.Kind.TREASURY, tr[0], tr[1], tr[2], tr[3], Door.RIGHT, 18, null);
-			spur(tr, Door.RIGHT, -2, 3);
-			int[] md = {10, mid - s.medW / 2, 10 + s.medD - 1, mid - s.medW / 2 + s.medW - 1};
-			SectPiece meditation = add(SectPiece.Kind.MEDITATION_HALL, md[0], md[1], md[2], md[3], Door.LEFT, 18, null);
-			spur(md, Door.LEFT, 2, 3);
-			// The cross road and its side gates.
-			int side = s.sideRoad;
-			path(-side + 1, -1, -P, 1, SectPiece.PATH_ROAD);
-			path(P, -1, side - 1, 1, SectPiece.PATH_ROAD);
-			add(SectPiece.Kind.GATE, side, -4, side + 2, 4, Door.LEFT, 12, null);
-			add(SectPiece.Kind.GATE, -side - 2, -4, -side, 4, Door.RIGHT, 12, null);
-			// The lanes: either side, from the front of the village to behind the main hall, joined across front and back, and up
-			// to the hall's back steps.
-			int frontV = gateV + 3, backV = P + 1 + MAIN_DEPTH + 6;
-			for (int sgn : new int[] {-1, 1}) path(sgn * LANE_U - 1, frontV, sgn * LANE_U + 1, backV, SectPiece.PATH_LANE);
-			path(-LANE_U, backV, LANE_U, backV + 1, SectPiece.PATH_LANE);
-			path(-LANE_U, frontV, LANE_U, frontV + 1, SectPiece.PATH_LANE);
-			path(-1, P + 1 + MAIN_DEPTH, 1, backV, SectPiece.PATH_LANE);
-			// Homes, nearest the core first: the elders' houses either side of the plaza on the cross road; the disciples' houses
-			// and dormitories out past the lanes, on the cross road behind it and facing the lanes in front of it.
-			List<SectPiece> homes = new ArrayList<>();
-			int[][] elderSlots = {{'A', 1}, {'B', -1}, {'B', 1}, {'A', -1}};
-			int[][] outerSlots = {{'C', 1}, {'C', -1}, {'D', 1}, {'D', -1}, {'E', 1}, {'E', -1}};
-			List<SectPiece.Kind> kinds = new ArrayList<>();
-			for (int i = 0; i < s.houses; i++) kinds.add(SectPiece.Kind.DWELLING);
-			for (int i = 0; i < s.dorms; i++) kinds.add(SectPiece.Kind.DORMITORY);
-			for (int i = 0; i < s.elders; i++) homes.add(home(SectPiece.Kind.ELDER_HOUSE, elderSlots[i][0], elderSlots[i][1]));
-			for (int i = 0; i < kinds.size(); i++) homes.add(home(kinds.get(i), outerSlots[i][0], outerSlots[i][1]));
-			// The pagoda (left), herb gardens either side of the hall, the pond and its pavilion (right).
-			int pw = s.pagoda;
-			int[] pg = {-LANE_U - 3 - pw, P + 6, -LANE_U - 3, P + 6 + pw - 1};
-			SectPiece pagoda = add(SectPiece.Kind.PAGODA, pg[0], pg[1], pg[2], pg[3], Door.RIGHT, 6 * s.tiers + 16, tag("Tiers", s.tiers));
-			spur(pg, Door.RIGHT, -LANE_U + 1, 3);
-			List<SectPiece> gardens = new ArrayList<>();
-			for (int sgn : new int[] {-1, 1}) {
-				int a = sgn * (mw / 2 + 3), b = sgn * (LANE_U - 2);
-				gardens.add(add(SectPiece.Kind.GARDEN, Math.min(a, b), P + 5, Math.max(a, b), P + 5 + 17, sgn > 0 ? Door.LEFT : Door.RIGHT, 10, null));
-			}
-			int pondU0 = LANE_U + 6;
-			add(SectPiece.Kind.POND, pondU0, P + 3, pondU0 + s.pondW - 1, P + 3 + s.pondD - 1, Door.LEFT, 8, null);
-			int[] pv = {LANE_U + 2, P + 7, LANE_U + 10, P + 15};
-			SectPiece pavilion = add(SectPiece.Kind.PAVILION, pv[0], pv[1], pv[2], pv[3], Door.LEFT, 12, null);
-			spur(pv, Door.LEFT, LANE_U + 1, 1);
-			// Stone lanterns down the roads, clear of the lanes to the doors.
-			for (int v = gateV + 5; v <= -P - 2; v += 6) {
-				lanterns.add(new int[] {-4, v});
-				lanterns.add(new int[] {4, v});
-			}
-			for (int u = P + 4; u < side - 2; u += 8) {
-				for (int[] at : new int[][] {{u, -2}, {-u, 2}}) {
-					int lu = at[0];
-					while (onPath(lu, at[1])) lu += lu > 0 ? 1 : -1;
-					lanterns.add(new int[] {lu, at[1]});
-				}
-			}
-			int radius = 0;
-			for (int[] f : footprints) {
-				for (int u : new int[] {f[0], f[2]}) {
-					for (int v : new int[] {f[1], f[3]}) radius = Math.max(radius, (int) Math.ceil(Math.sqrt(u * u + v * v)));
-				}
-			}
-			radius += 2;
-			// Trees, bamboo and rocks on the open ground.
-			RandomSource random = RandomSource.create(seed);
-			int[] kindsOfTree = faction == Alignment.Faction.NEUTRAL
-					? new int[] {SectPiece.TREE_PINE, SectPiece.TREE_PINE, SectPiece.TREE_BLOSSOM, SectPiece.TREE_BAMBOO, SectPiece.TREE_ROCK}
-					: new int[] {SectPiece.TREE_BLOSSOM, SectPiece.TREE_BLOSSOM, SectPiece.TREE_PINE, SectPiece.TREE_BAMBOO, SectPiece.TREE_ROCK};
-			for (int attempt = 0; attempt < 4000 && trees.size() < s.trees; attempt++) {
-				double a = random.nextDouble() * Math.PI * 2, r = 16 + random.nextDouble() * (radius - 20);
-				int u = (int) Math.round(Math.cos(a) * r), v = (int) Math.round(Math.sin(a) * r);
-				if (blocked(u, v, 3)) continue;
-				boolean crowded = false;
-				for (int[] t : trees) crowded |= Math.abs(u - t[0]) < 5 && Math.abs(v - t[1]) < 5;
-				if (crowded) continue;
-				trees.add(new int[] {u, v, kindsOfTree[random.nextInt(kindsOfTree.length)]});
-			}
-
-			// The grounds, drawn first, so every building stands on them.
-			BoundingBox groundBox = frame.box(-radius, -radius, radius, radius, y, 24);
-			CompoundTag groundData = new CompoundTag();
-			groundData.putInt("CentreX", frame.cx());
-			groundData.putInt("CentreZ", frame.cz());
-			groundData.putInt("Radius", radius);
-			ListTag pathTags = new ListTag();
-			for (int[] path : paths) pathTags.add(new IntArrayTag(worldRect(path[0], path[1], path[2], path[3], path[4])));
-			pathTags.add(new IntArrayTag(worldRect(-P - 2, -P - 2, P + 2, P + 2, SectPiece.PATH_RING)));
-			groundData.put("Paths", pathTags);
-			ListTag lanternTags = new ListTag();
-			for (int[] at : lanterns) {
-				BlockPos pos = frame.world(at[0], at[1]);
-				lanternTags.add(new IntArrayTag(new int[] {pos.getX(), pos.getZ()}));
-			}
-			groundData.put("Lanterns", lanternTags);
-			ListTag treeTags = new ListTag();
-			for (int[] t : trees) {
-				BlockPos pos = frame.world(t[0], t[1]);
-				treeTags.add(new IntArrayTag(new int[] {pos.getX(), pos.getZ(), t[2]}));
-			}
-			groundData.put("Trees", treeTags);
-			SectPiece grounds = new SectPiece(SectPiece.Kind.GROUNDS, groundBox, frame.facing(), seed, faction, upper, groundData);
-
-			// The posts of the grounds, for the blueprint.
-			BlockPos core = plaza.toWorld(P, 2, P);
-			Map<Sect.Post, List<BlockPos>> posts = new EnumMap<>(Sect.Post.class);
-			for (Sect.Post post : Sect.Post.values()) posts.put(post, new ArrayList<>());
-			int[] seat = main.masterSeat();
-			posts.get(Sect.Post.MASTER_SEAT).add(main.toWorld(seat[0], seat[1], seat[2]));
-			for (int[] mat : meditation.meditationMats()) posts.get(Sect.Post.MEDITATION).add(meditation.toWorld(mat[0], 2, mat[1]));
-			for (int[] guard : treasury.treasuryGuards()) posts.get(Sect.Post.TREASURY).add(treasury.toWorld(guard[0], guard[1], guard[2]));
-			for (int[] guard : SectPiece.corePosts()) posts.get(Sect.Post.CORE).add(plaza.toWorld(guard[0], 1, guard[1]));
-			// Every mat in every home, nearest the core first, so the strongest members (founded first) live closest to the heart.
-			List<BlockPos> mats = new ArrayList<>();
-			for (SectPiece home : homes) {
-				for (int[] mat : home.homeMats()) mats.add(home.toWorld(mat[0], mat[1], mat[2]));
-			}
-			mats.sort((a, b) -> Double.compare(a.distSqr(core), b.distSqr(core)));
-			posts.get(Sect.Post.DWELLING).addAll(mats);
-			List<BlockPos> courtyard = posts.get(Sect.Post.COURTYARD);
-			for (int i = 0; i < 4; i++) {
-				double angle = Math.PI / 2 * i + Math.PI / 4;
-				courtyard.add(plaza.toWorld(P + (int) Math.round(Math.cos(angle) * 10.5), 1, P + (int) Math.round(Math.sin(angle) * 10.5)));
-			}
-			for (int[] at : new int[][] {{0, gateV / 2}, {P + 6, 0}, {-P - 6, 0}, {0, P + 1 + MAIN_DEPTH + 6}}) {
-				BlockPos pos = frame.world(at[0], at[1]);
-				courtyard.add(new BlockPos(pos.getX(), y + 1, pos.getZ()));
-			}
-			for (SectPiece garden : gardens) courtyard.add(garden.toWorld(garden.width() / 2, 1, 1));
-			int[] sit = pavilion.pavilionSeat();
-			courtyard.add(pavilion.toWorld(sit[0], sit[1], sit[2]));
-			int[] top = pagoda.pagodaSeat();
-			courtyard.add(pagoda.toWorld(top[0], top[1], top[2]));
-			int[] in = gate.gateInside();
-			posts.get(Sect.Post.GATE).add(gate.toWorld(in[0], in[1], in[2]));
-
-			// The barrier: from the core out past the furthest corner of every building.
-			int barrier = 0;
-			for (SectPiece piece : pieces) {
-				BoundingBox box = piece.getBoundingBox();
-				for (int x : new int[] {box.minX(), box.maxX()}) {
-					for (int z : new int[] {box.minZ(), box.maxZ()}) {
-						double dx = x - core.getX(), dz = z - core.getZ();
-						barrier = Math.max(barrier, (int) Math.ceil(Math.sqrt(dx * dx + dz * dz)) + 2);
-					}
-				}
-			}
-			barrier = Math.min(Formations.MAX_RADIUS, barrier);
-
-			int capacity = s.minMembers + new java.util.Random(seed).nextInt(s.maxMembers - s.minMembers + 1);
-			CompoundTag blueprint = new CompoundTag();
-			blueprint.putLong("Seed", seed);
-			blueprint.putInt("Alignment", alignment);
-			blueprint.putInt("Capacity", Math.min(capacity, posts.get(Sect.Post.DWELLING).size() + 1));
-			blueprint.putInt("Radius", barrier);
-			blueprint.putIntArray("Bounds", new int[] {groundBox.minX(), groundBox.minY() - 16, groundBox.minZ(), groundBox.maxX(), groundBox.maxY() + 48,
-					groundBox.maxZ()});
-			BoundingBox vault = treasury.getBoundingBox().inflatedBy(1);
-			blueprint.putIntArray("Treasury", new int[] {vault.minX(), vault.minY(), vault.minZ(), vault.maxX(), vault.maxY(), vault.maxZ()});
-			CompoundTag postTag = new CompoundTag();
-			for (Map.Entry<Sect.Post, List<BlockPos>> entry : posts.entrySet()) {
-				postTag.put(entry.getKey().name(), new LongArrayTag(entry.getValue().stream().mapToLong(BlockPos::asLong).toArray()));
-			}
-			blueprint.put("Posts", postTag);
-			plazaData.put("Blueprint", blueprint);
-
-			builder.addPiece(grounds);
-			for (SectPiece piece : pieces) builder.addPiece(piece);
-		}
-
-		private int[] worldRect(int u0, int v0, int u1, int v1, int kind) {
-			BlockPos a = frame.world(u0, v0), b = frame.world(u1, v1);
-			return new int[] {Math.min(a.getX(), b.getX()), Math.min(a.getZ(), b.getZ()), Math.max(a.getX(), b.getX()), Math.max(a.getZ(), b.getZ()), kind};
-		}
-
-		private boolean onPath(int u, int v) {
-			for (int[] r : paths) {
-				if (u >= r[0] && u <= r[2] && v >= r[1] && v <= r[3]) return true;
-			}
-			return false;
-		}
-
-		/** Within {@code margin} of a building or a path, or close by the plaza. */
-		private boolean blocked(int u, int v, int margin) {
-			for (int[] r : footprints) {
-				if (u >= r[0] - margin && u <= r[2] + margin && v >= r[1] - margin && v <= r[3] + margin) return true;
-			}
-			for (int[] r : paths) {
-				if (u >= r[0] - margin && u <= r[2] + margin && v >= r[1] - margin && v <= r[3] + margin) return true;
-			}
-			return u * u + v * v < (P + 4) * (P + 4);
-		}
+		for (SectPiece piece : pieces) builder.addPiece(piece);
 	}
 }

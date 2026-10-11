@@ -23,7 +23,9 @@ public enum Ability {
 	/** From the start, off until switched on: weigh down everything weaker in the domain, for qi ({@link RealmSuppressSystem}). */
 	REALM_SUPPRESS("realm_suppress", false, c -> true),
 	/** From the start: after meditating a while, the soul turns inward to the Inner Realm ({@link InnerRealm}). */
-	INNER_REALM("inner_realm", true, c -> true);
+	INNER_REALM("inner_realm", true, c -> true),
+	/** From Foundation Building: ride a sword held in the main hand through the air, for less qi than Qi Flight ({@link SwordFlight}). */
+	SWORD_FLIGHT("sword_flight", true, c -> c.getEffectiveRealm().canRideSword());
 
 	private final String id;
 	private final boolean onByDefault;
@@ -47,8 +49,21 @@ public enum Ability {
 		String key = ModLang.abilityKey(id) + ".description";
 		return switch (this) {
 			case QI_FLIGHT -> Component.translatable(key, Math.round(c.qiFlightCostPerSecond()));
+			case SWORD_FLIGHT -> Component.translatable(key, Math.round(c.swordFlightCostPerSecond()));
 			case CONSCIOUSNESS_DOMAIN, REALM_SUPPRESS -> Component.translatable(key, Math.round(ConsciousnessDomainHandler.radius(c)));
 			default -> Component.translatable(key);
+		};
+	}
+
+	/**
+	 * The ability this one can't be switched on alongside, or null: only one of Qi Flight and Sword Flight is on at a time,
+	 * so switching one on switches the other off ({@link PlayerCultivation#setAbilityEnabled}).
+	 */
+	public Ability exclusiveWith() {
+		return switch (this) {
+			case QI_FLIGHT -> SWORD_FLIGHT;
+			case SWORD_FLIGHT -> QI_FLIGHT;
+			default -> null;
 		};
 	}
 

@@ -52,6 +52,8 @@ public class PlayerCultivation {
 	public static final double PILL_RESISTANCE_DECAY_PER_SECOND = PILL_RESISTANCE_PER_PILL / 600.0;
 	/** Meditation refines unrefined qi at this many times its own cultivation rate, on top of that rate. */
 	public static final double REFINE_RATE = 2.0;
+	/** Slots on the ability wheel (held open by a key to switch abilities without the menu). */
+	public static final int WHEEL_SLOTS = 8;
 
 	/** No cultivation at all until a Marrow Cleansing Elixir opens the meridians (see {@link #awaken}). */
 	private boolean mortal = true;
@@ -70,6 +72,11 @@ public class PlayerCultivation {
 	private boolean lowerRealmBound;
 	/** Abilities switched off on the Abilities tab (or never switched on, for those that start off); everything else is on. */
 	private final EnumSet<Ability> disabledAbilities = Ability.offByDefault();
+	/**
+	 * The ability wheel's slots, clockwise from the top (null: empty); each ability sits in one slot at most. Saved and synced.
+	 * It starts with the abilities in their menu order, so the wheel works before the player has arranged it.
+	 */
+	private final Ability[] wheel = defaultWheel();
 	/** Synced but not saved: re-evaluated from the player's dimension on every join. */
 	private boolean inUpperRealm;
 	/** Realm Suppress from a stronger cultivator (see {@link RealmSuppressSystem}): synced but never saved. */
@@ -364,9 +371,11 @@ public class PlayerCultivation {
 
 	public boolean isAbilityEnabled(Ability ability) { return !disabledAbilities.contains(ability); }
 
+	/** Switches an ability on or off; switching on one of a pair that excludes each other switches the other off. */
 	public void setAbilityEnabled(Ability ability, boolean enabled) {
 		if (enabled) {
 			disabledAbilities.remove(ability);
+			if (ability.exclusiveWith() != null) disabledAbilities.add(ability.exclusiveWith());
 		} else {
 			disabledAbilities.add(ability);
 		}
@@ -387,6 +396,29 @@ public class PlayerCultivation {
 		for (Ability ability : Ability.values()) {
 			if ((mask & (1 << ability.ordinal())) != 0) disabledAbilities.add(ability);
 		}
+	}
+
+	private static Ability[] defaultWheel() {
+		Ability[] wheel = new Ability[WHEEL_SLOTS];
+		for (int i = 0; i < WHEEL_SLOTS && i < Ability.values().length; i++) wheel[i] = Ability.values()[i];
+		return wheel;
+	}
+
+	/** The ability in a wheel slot, or null if the slot is empty. */
+	public Ability getWheelSlot(int slot) { return wheel[slot]; }
+
+	/**
+	 * Puts an ability in a wheel slot (null empties it). An ability already elsewhere on the wheel trades places with the
+	 * slot's old occupant, so dragging one ability onto another swaps them and no ability is ever on the wheel twice.
+	 */
+	public void setWheelSlot(int slot, Ability ability) {
+		if (slot < 0 || slot >= WHEEL_SLOTS) return;
+		if (ability != null) {
+			for (int i = 0; i < WHEEL_SLOTS; i++) {
+				if (i != slot && wheel[i] == ability) wheel[i] = wheel[slot];
+			}
+		}
+		wheel[slot] = ability;
 	}
 
 	// --- Qi (the spendable pool) ---
@@ -441,6 +473,9 @@ public class PlayerCultivation {
 
 	/** Gathering here keeps up with Qi Flight, so it can go on forever (always in the Upper Realm, everywhere from Heavenly Being). */
 	public boolean isQiFlightSustained() { return qiGatherPerSecond() >= qiFlightCostPerSecond(); }
+
+	/** Qi a second of riding a sword costs ({@link SwordFlight}): less than Qi Flight, by the effective realm, not the stage. */
+	public double swordFlightCostPerSecond() { return getEffectiveRealm().getSwordFlightCost(); }
 
 	/** Spends qi for a spell or technique. @return false, spending nothing, if the pool holds less than {@code amount} */
 	public boolean consumeQi(double amount) {
@@ -589,6 +624,9 @@ public class PlayerCultivation {
 		}
 		tag.put("DisabledAbilities", disabled);
 		tag.put("EnabledAbilities", enabled);
+		ListTag wheelTag = new ListTag();
+		for (Ability ability : wheel) wheelTag.add(StringTag.valueOf(ability == null ? "" : ability.getId()));
+		tag.put("AbilityWheel", wheelTag);
 		return tag;
 	}
 
@@ -623,6 +661,12 @@ public class PlayerCultivation {
 		for (int i = 0; i < enabled.size(); i++) {
 			Ability ability = Ability.byId(enabled.getString(i));
 			if (ability != null) c.disabledAbilities.remove(ability);
+		}
+		// Saves from before the wheel keep the default one.
+		if (tag.contains("AbilityWheel", Tag.TAG_LIST)) {
+			ListTag wheelTag = tag.getList("AbilityWheel", Tag.TAG_STRING);
+			for (int i = 0; i < WHEEL_SLOTS; i++) c.wheel[i] = null;
+			for (int i = 0; i < WHEEL_SLOTS && i < wheelTag.size(); i++) c.setWheelSlot(i, Ability.byId(wheelTag.getString(i)));
 		}
 		return c;
 	}

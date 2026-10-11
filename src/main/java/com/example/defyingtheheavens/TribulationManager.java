@@ -322,7 +322,10 @@ public final class TribulationManager {
 		return true;
 	}
 
-	/** Falling out of the Upper Realm mid-trial: cancelled without reward or penalty. */
+	/**
+	 * Entering the Spatial Gap mid-trial, through the rift or by falling out of the Upper Realm: cancelled without reward or
+	 * penalty (see SpatialTrialHandler#enterGap).
+	 */
 	public static void abandon(ServerPlayer p) {
 		Trial t = ACTIVE.remove(p.getUUID());
 		if (t == null) return;

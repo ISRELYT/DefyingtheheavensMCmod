@@ -66,7 +66,7 @@ import java.util.UUID;
  * Breaking a barrier block takes a cultivator at least as strong as the formation (see {@link #canBreak}); the ground the
  * shell runs through can't be dug by anyone weaker either ({@link #protectsGround}), so it can't be tunnelled under, and
  * anyone weaker found inside it anyway is put out ({@link #guard}). Monsters can't spawn inside, and any that get in are
- * swept out ({@link #purge}).
+ * swept out, unless they have been named ({@link #purge}).
  */
 public final class Formations {
 	public static final int MIN_RADIUS = 4;
@@ -159,13 +159,14 @@ public final class Formations {
 
 	/**
 	 * Monsters that got inside anyway (a phantom, an enderman's jump, a pursuer swimming in where water breaks the shell, one
-	 * spawned by a spawner) are driven out: a wild one is dispersed, one that must stay in the world (named, or carrying
-	 * loot) is set down outside the barrier.
+	 * spawned by a spawner) are driven out: a wild one is dispersed, one that must stay in the world (carrying loot, say) is
+	 * set down outside the barrier. One given a name (a name tag: a zombie villager being cured, a kept pet) is left alone:
+	 * someone wants it where it is.
 	 */
 	private static void purge(ServerLevel level, Formation formation) {
 		double reach = formation.getRadius() + 1;
 		for (Mob mob : level.getEntitiesOfClass(Mob.class, new AABB(formation.center).inflate(reach),
-				m -> m.isAlive() && isMonster(m) && formation.encloses(m.blockPosition()))) {
+				m -> m.isAlive() && isMonster(m) && !m.hasCustomName() && formation.encloses(m.blockPosition()))) {
 			level.sendParticles(ParticleTypes.POOF, mob.getX(), mob.getY() + mob.getBbHeight() / 2, mob.getZ(), 12, 0.3, 0.4, 0.3, 0.02);
 			if (!mob.isPersistenceRequired() && !mob.requiresCustomPersistence()) {
 				mob.discard();
@@ -281,7 +282,7 @@ public final class Formations {
 		if (formation.allows(player) || player.isCreative() || player.isSpectator()) return;
 		if (formation.kind == Formation.Kind.CORE) {
 			if (broken && level.getBlockEntity(formation.center) instanceof FormationCoreBlockEntity core) core.onBreach();
-			if (formation.getSect() != null) SectManager.onBarrierAssailed(level, formation.getSect(), player, pos);
+			if (formation.getSect() != null) SectManager.onBarrierAssailed(level, formation.getSect(), player, pos, broken);
 		} else if (formation.getOwner() != null && level.getEntity(formation.getOwner()) instanceof CultivatorNpc npc) {
 			npc.onConcealmentAssailed(player);
 		}

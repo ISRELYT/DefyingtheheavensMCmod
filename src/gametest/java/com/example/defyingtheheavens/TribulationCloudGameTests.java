@@ -101,6 +101,33 @@ public class TribulationCloudGameTests implements FabricGameTest {
     }
 
     @GameTest(template = EMPTY_STRUCTURE)
+    public void theRiftIsAWayOutOfATribulationToo(GameTestHelper helper) {
+        ServerPlayer player = isolated(helper);
+        PlayerCultivation cultivation = CultivationManager.get(player);
+        try {
+            readyForFoundation(cultivation);
+            TribulationManager.start(player);
+            TribulationCloud cloud = cloudFor(helper, player);
+            SpatialTrialHandler.beginAscension(player); // walking into the rift at 0, 0
+            helper.assertTrue(!TribulationManager.isActive(player.getUUID()) && !cultivation.isInTribulation() && cloud.isRemoved(),
+                    "Ascending abandons the tribulation, cloud and all");
+            helper.assertTrue(cultivation.getRealm() == Realm.QI_REFINING && cultivation.getStage() == Stage.GRAND_PERFECTION
+                    && !TribulationManager.onJoin(player), "... without the fall a failed one costs");
+            if (helper.getLevel().getServer().getLevel(ModDimensions.SPATIAL_GAP) != null) { // the test server has only vanilla's
+                helper.assertTrue(SpatialTrialHandler.isInTrial(player.getUUID()) && player.level().dimension() == ModDimensions.SPATIAL_GAP,
+                        "... and the ascension begins");
+            }
+            helper.succeed();
+        } finally {
+            SpatialTrialHandler.forget(player.getUUID());
+            cultivation.setPendingTrial(SpatialTrialHandler.Route.NONE);
+            TribulationManager.forget(player.getUUID());
+            helper.getLevel().getServer().getPlayerList().remove(player);
+            player.discard();
+        }
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE)
     public void aHitJustBeforeAStrikeDoesNotBluntIt(GameTestHelper helper) {
         ServerPlayer player = isolated(helper);
         try {

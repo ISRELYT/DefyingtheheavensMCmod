@@ -77,8 +77,9 @@ public class CultivatorNpcRenderer extends HumanoidMobRenderer<CultivatorNpc, Pl
 		Matrix4f matrix = poseStack.last().pose();
 		int background = (int) (Minecraft.getInstance().options.getBackgroundOpacity(0.25f) * 255.0f) << 24;
 
-		// The title, in its colour.
-		Component title = Component.translatable(ModLang.NPC_TITLE_BRACKETS, npc.getTitle().getDisplayName());
+		// The title, in its colour (a gate guard's post rather than its rank).
+		Component title = Component.translatable(ModLang.NPC_TITLE_BRACKETS,
+				npc.isGateGuard() ? Component.translatable(ModLang.NPC_GATE_GUARD) : npc.getTitle().getDisplayName());
 		int titleColor = 0xFF000000 | npc.getTitle().getColor();
 		float tx = -font.width(title) / 2f;
 		font.drawInBatch(title, tx, -24, 0x20FFFFFF, false, matrix, buffers, Font.DisplayMode.SEE_THROUGH, background, light);
