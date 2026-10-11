@@ -114,9 +114,12 @@ public class SectGameTests implements FabricGameTest {
 		helper.assertTrue(!disciple.shouldFlee(), "Safe at its refuge, it stops running");
 		elder.setHealth(elder.getMaxHealth() * 0.1f);
 		elder.setLastHurtByMob(intruder);
+		master.setHealth(master.getMaxHealth() * 0.1f);
+		master.setLastHurtByMob(intruder);
 		// Being in a fight is worked out on the elder's own tick.
 		helper.runAfterDelay(5, () -> {
 			helper.assertTrue(elder.shouldFlee(), "Even an elder falls back once it is losing badly");
+			helper.assertTrue(!master.shouldFlee(), "The master never runs: it makes its last stand");
 			helper.succeed();
 		});
 	}

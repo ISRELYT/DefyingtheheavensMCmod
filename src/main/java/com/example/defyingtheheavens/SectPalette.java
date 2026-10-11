@@ -13,7 +13,7 @@ import net.minecraft.world.level.block.state.properties.SlabType;
 /**
  * The materials a sect builds with, by its path (see {@link Alignment}):
  * <ul>
- *   <li>Righteous: white plaster walls on grey stone, red-lacquered pillars, dark slate tiles with bronze ridges.</li>
+ *   <li>Righteous: white plaster walls on grey stone, red-lacquered pillars, dark slate tiles with polished slate ridges.</li>
  *   <li>Neutral: white plaster, pillars of Blue Spirit Wood, teal prismarine tiles.</li>
  *   <li>Demonic: black stone, crimson pillars, dark nether-brick tiles with red trim, soul-fire lanterns.</li>
  * </ul>
@@ -26,9 +26,11 @@ import net.minecraft.world.level.block.state.properties.SlabType;
 public final class SectPalette {
 	public final Alignment.Faction faction;
 	public final boolean upper;
-	public final Block foundation, paving, path, wallBase, wall, pillar, beam, floor, roof, roofTrim, accent, window, carpet, carpetAlt;
-	public final StairBlock roofStairs, baseStairs;
-	public final SlabBlock roofSlab, baseSlab;
+	public final Block foundation, paving, path, pathAlt, wallBase, wall, pillar, beam, floor, roof, roofTrim, accent, window, carpet, carpetAlt;
+	/** Lattice (trapdoors) for railings and transoms; the planks of a house's veranda. */
+	public final Block lattice, deck;
+	public final StairBlock roofStairs, baseStairs, trimStairs;
+	public final SlabBlock roofSlab, baseSlab, trimSlab, deckSlab;
 	public final Block baseWall;
 	public final Block lantern, candle, banner, wallBanner, leaves, trunk;
 	public final boolean soulFire;
@@ -40,7 +42,8 @@ public final class SectPalette {
 			case DEMONIC -> {
 				foundation = Blocks.POLISHED_BLACKSTONE_BRICKS;
 				paving = Blocks.POLISHED_BLACKSTONE;
-				path = Blocks.CHISELED_POLISHED_BLACKSTONE;
+				path = Blocks.POLISHED_BLACKSTONE_BRICKS;
+				pathAlt = Blocks.CHISELED_POLISHED_BLACKSTONE;
 				wallBase = Blocks.POLISHED_BLACKSTONE_BRICKS;
 				wall = Blocks.BLACKSTONE;
 				pillar = Blocks.STRIPPED_CRIMSON_STEM;
@@ -50,8 +53,13 @@ public final class SectPalette {
 				roofStairs = (StairBlock) Blocks.NETHER_BRICK_STAIRS;
 				roofSlab = (SlabBlock) Blocks.NETHER_BRICK_SLAB;
 				roofTrim = Blocks.RED_NETHER_BRICKS;
+				trimStairs = (StairBlock) Blocks.RED_NETHER_BRICK_STAIRS;
+				trimSlab = (SlabBlock) Blocks.RED_NETHER_BRICK_SLAB;
 				accent = upper ? ModBlocks.JADE_STONE : Blocks.GILDED_BLACKSTONE;
 				window = Blocks.CRIMSON_FENCE;
+				lattice = Blocks.CRIMSON_TRAPDOOR;
+				deck = Blocks.CRIMSON_PLANKS;
+				deckSlab = (SlabBlock) Blocks.CRIMSON_SLAB;
 				carpet = Blocks.RED_CARPET;
 				carpetAlt = Blocks.BLACK_CARPET;
 				baseStairs = (StairBlock) Blocks.POLISHED_BLACKSTONE_BRICK_STAIRS;
@@ -69,6 +77,7 @@ public final class SectPalette {
 				foundation = Blocks.STONE_BRICKS;
 				paving = Blocks.POLISHED_DIORITE;
 				path = Blocks.SMOOTH_STONE;
+				pathAlt = Blocks.STONE_BRICKS;
 				wallBase = Blocks.STONE_BRICKS;
 				wall = Blocks.SMOOTH_QUARTZ;
 				pillar = ModBlocks.BLUE_SPIRIT_LOG;
@@ -78,8 +87,13 @@ public final class SectPalette {
 				roofStairs = (StairBlock) Blocks.DARK_PRISMARINE_STAIRS;
 				roofSlab = (SlabBlock) Blocks.DARK_PRISMARINE_SLAB;
 				roofTrim = Blocks.PRISMARINE_BRICKS;
+				trimStairs = (StairBlock) Blocks.PRISMARINE_BRICK_STAIRS;
+				trimSlab = (SlabBlock) Blocks.PRISMARINE_BRICK_SLAB;
 				accent = upper ? ModBlocks.JADE_STONE : Blocks.PRISMARINE_BRICKS;
 				window = Blocks.SPRUCE_FENCE;
+				lattice = Blocks.SPRUCE_TRAPDOOR;
+				deck = Blocks.SPRUCE_PLANKS;
+				deckSlab = (SlabBlock) Blocks.SPRUCE_SLAB;
 				carpet = Blocks.BLUE_CARPET;
 				carpetAlt = Blocks.LIGHT_BLUE_CARPET;
 				baseStairs = (StairBlock) Blocks.STONE_BRICK_STAIRS;
@@ -96,7 +110,8 @@ public final class SectPalette {
 			default -> {
 				foundation = Blocks.STONE_BRICKS;
 				paving = Blocks.POLISHED_ANDESITE;
-				path = Blocks.SMOOTH_STONE;
+				path = Blocks.POLISHED_ANDESITE;
+				pathAlt = Blocks.STONE_BRICKS;
 				wallBase = Blocks.STONE_BRICKS;
 				wall = Blocks.SMOOTH_QUARTZ;
 				pillar = Blocks.STRIPPED_MANGROVE_LOG;
@@ -105,9 +120,14 @@ public final class SectPalette {
 				roof = Blocks.DEEPSLATE_TILES;
 				roofStairs = (StairBlock) Blocks.DEEPSLATE_TILE_STAIRS;
 				roofSlab = (SlabBlock) Blocks.DEEPSLATE_TILE_SLAB;
-				roofTrim = Blocks.WAXED_CUT_COPPER;
+				roofTrim = Blocks.POLISHED_DEEPSLATE;
+				trimStairs = (StairBlock) Blocks.POLISHED_DEEPSLATE_STAIRS;
+				trimSlab = (SlabBlock) Blocks.POLISHED_DEEPSLATE_SLAB;
 				accent = upper ? ModBlocks.JADE_STONE : Blocks.WAXED_CUT_COPPER;
 				window = Blocks.DARK_OAK_FENCE;
+				lattice = Blocks.DARK_OAK_TRAPDOOR;
+				deck = Blocks.DARK_OAK_PLANKS;
+				deckSlab = (SlabBlock) Blocks.DARK_OAK_SLAB;
 				carpet = Blocks.RED_CARPET;
 				carpetAlt = Blocks.WHITE_CARPET;
 				baseStairs = (StairBlock) Blocks.STONE_BRICK_STAIRS;
@@ -156,6 +176,19 @@ public final class SectPalette {
 
 	public BlockState baseStair(Direction toward) {
 		return baseStairs.defaultBlockState().setValue(StairBlock.FACING, toward);
+	}
+
+	/** A ridge or verge stair in the trim, its tall side toward {@code toward}. */
+	public BlockState trimStair(Direction toward, boolean upsideDown) {
+		return trimStairs.defaultBlockState().setValue(StairBlock.FACING, toward).setValue(StairBlock.HALF, upsideDown ? Half.TOP : Half.BOTTOM);
+	}
+
+	public BlockState trimSlab(boolean top) {
+		return trimSlab.defaultBlockState().setValue(SlabBlock.TYPE, top ? SlabType.TOP : SlabType.BOTTOM);
+	}
+
+	public BlockState deckSlab(boolean top) {
+		return deckSlab.defaultBlockState().setValue(SlabBlock.TYPE, top ? SlabType.TOP : SlabType.BOTTOM);
 	}
 
 	public BlockState baseSlab(boolean top) {

@@ -22,7 +22,7 @@ import net.minecraft.world.item.ItemStack;
 
 /**
  * Cultivator clothing as worn (on players and NPCs alike, through Fabric's armor renderer), in the shapes of
- * {@link ClothingModels}: the robe with its skirt and hanging sleeves, the hair crown and pin, trousers, boots. Three greyscale
+ * {@link ClothingModels}: the robe with its skirt round the legs, sash and ribbon, the hair crown and pin, trousers, boots. Three greyscale
  * passes, tinted in turn with the path's cloth colour, its accent (lapels, sash, cuffs) and the grade's embroidery. The item
  * icons are tinted the same way (layer 0 cloth, 1 accent, 2 embroidery).
  */
@@ -71,7 +71,11 @@ public final class ClothingArmorRenderer implements ArmorRenderer {
 		boolean legs = slot == EquipmentSlot.LEGS;
 		HumanoidModel<LivingEntity> model = legs ? inner : outer;
 		contextModel.copyPropertiesTo(model);
+		if (!legs) ClothingModels.animate(model);
 		model.setAllVisible(false);
+		model.rightLeg.skipDraw = false;
+		model.leftLeg.skipDraw = false;
+		if (!legs) ClothingModels.showSkirt(model, slot == EquipmentSlot.CHEST);
 		switch (slot) {
 			case HEAD -> {
 				model.head.visible = true;
@@ -81,6 +85,11 @@ public final class ClothingArmorRenderer implements ArmorRenderer {
 				model.body.visible = true;
 				model.rightArm.visible = true;
 				model.leftArm.visible = true;
+				// The robe's skirt hangs round the legs: draw the legs' children, not the legs (those are the boots).
+				model.rightLeg.visible = true;
+				model.leftLeg.visible = true;
+				model.rightLeg.skipDraw = true;
+				model.leftLeg.skipDraw = true;
 			}
 			case LEGS -> {
 				model.body.visible = true;

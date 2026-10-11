@@ -86,6 +86,8 @@ public final class CultivatorGoals {
 		private static final int CORNERED_TICKS = 40;
 		/** Within this many blocks (sideways) of its refuge, it is there. */
 		private static final double REFUGE_REACHED = 8;
+		private static final double RUN_SPEED = 1.15, RUN_SPEED_HURT = 1.0;
+		private static final double FLY_SPEED = 0.45, FLY_SPEED_HURT = 0.32;
 		private final CultivatorNpc npc;
 		private int recheck;
 		private int cooldown;
@@ -131,11 +133,11 @@ public final class CultivatorGoals {
 				npc.setQiFlying(true);
 				// Up off the ground and away, no higher than a dozen blocks over whatever is below.
 				int ground = Formations.surface(npc.level(), Heightmap.Types.MOTION_BLOCKING, npc.getBlockX(), npc.getBlockZ());
-				npc.flyToward(npc.position().add(away.scale(12)).add(0, npc.getY() < ground + 12 ? 4 : 0, 0), 0.5);
+				npc.flyToward(npc.position().add(away.scale(12)).add(0, npc.getY() < ground + 12 ? 4 : 0, 0), flySpeed());
 			} else if (--recheck <= 0 || npc.getNavigation().isDone()) {
 				recheck = 20;
 				Vec3 spot = DefaultRandomPos.getPosAway(npc, 16, 7, threat.position());
-				if (spot != null) npc.getNavigation().moveTo(spot.x, spot.y, spot.z, 1.4);
+				if (spot != null) npc.getNavigation().moveTo(spot.x, spot.y, spot.z, runSpeed());
 			}
 		}
 
@@ -152,11 +154,25 @@ public final class CultivatorGoals {
 			if (!npc.isQiFlying() && npc.canFlySustainably()) npc.setQiFlying(true);
 			if (npc.isQiFlying()) {
 				int ground = Formations.surface(npc.level(), Heightmap.Types.MOTION_BLOCKING, npc.getBlockX(), npc.getBlockZ());
-				npc.flyToward(new Vec3(refuge.getX() + 0.5, Math.max(ground + 10, npc.getY()), refuge.getZ() + 0.5), 0.5);
+				npc.flyToward(new Vec3(refuge.getX() + 0.5, Math.max(ground + 10, npc.getY()), refuge.getZ() + 0.5), flySpeed());
 			} else if (--recheck <= 0 || npc.getNavigation().isDone()) {
 				recheck = 20;
-				walkToward(npc, Vec3.atBottomCenterOf(refuge), 1.4);
+				walkToward(npc, Vec3.atBottomCenterOf(refuge), runSpeed());
 			}
+		}
+
+		/**
+		 * On foot. A mob's speed counts twice (see CultivationStats#applyNpc), so these keep a fleeing cultivator a little
+		 * slower than a sprinting player of its own realm (about 90%), and a badly hurt one well slower (about 70%): one
+		 * running from someone a realm above can't outpace them, and a beaten one can be run down.
+		 */
+		private double runSpeed() {
+			return npc.isBadlyHurt() ? RUN_SPEED_HURT : RUN_SPEED;
+		}
+
+		/** Through the air: well under a player's own qi flight, and slower again when badly hurt. */
+		private double flySpeed() {
+			return npc.isBadlyHurt() ? FLY_SPEED_HURT : FLY_SPEED;
 		}
 
 		/** Its pursuer has just struck it and is close enough to strike back at. */

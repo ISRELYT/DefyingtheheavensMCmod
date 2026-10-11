@@ -385,15 +385,25 @@ Overworld it takes root on the ground beneath the taiga's canopy and grows up th
 
 ### Sect grounds
 
-**Sects** are walled compounds laid out along one axis like a Chinese temple: a gate between two watchtowers, a front
-court with lanterns and trees, the **Formation plaza** with the Formation Core at the centre, a **Meditation Hall** of
-mats on one side and the **Treasury** on the other, the **main hall** at the back with the Sect Master's dais, herb
-gardens (ginseng, Spirit Ginseng, fruit trees) beside it, a **pagoda**, and a row of **dwellings** down each side, one for
-every member. Every building is grey brick and dark oak under tiled roofs with upturned eaves, red pillars and gold trim.
+**Sects** are open villages, no wall round them, gathered about the **Formation plaza** with the Formation Core at its
+heart. The Sect Master's **main hall** stands at the plaza's back edge on a stone terrace under a double-eaved roof; stone
+roads run from the plaza to three paifang **gates** (the main gate in front, one at each side); the **Treasury** and the
+**Meditation Hall** face each other across the gate road; the **elders' houses** stand on the cross road by the plaza.
+Earthen lanes run front to back either side, joined across the front and round the back of the hall (whose back steps
+come down to it); out past them are the **disciples' houses** and the outer disciples' **dormitories**, the **pagoda**
+(the library, with a meditation chamber at the top, lit on every floor) and a lotus **pond** with its **pavilion**; two
+**herb gardens** (ginseng, Spirit Ginseng, a Spirit Peach Tree) flank the hall. Blossom trees, garden pines, bamboo and
+mossy rocks stand on the open ground, stone lanterns line the roads.
+
+The look follows a few rules, less is more: every building stands on a stone base or on stone feet (the homes are raised
+with a veranda all round); red pillars carry a beam all round, spaced the same either side of the door so every front is
+symmetrical (`SectPiece.framePosts`); walls are plaster on a stone sill with a window in every bay;
+roofs overhang by two on brackets and are concave, a thin eave whose corners flick up rising to a capped ridge with
+upturned ends. Each path builds in its own materials (`SectPalette`).
 
 - Three sizes, for 10-12, 13-16 and 17-20 members. They only generate on fairly level, mostly dry land (at most 20
-  blocks between the highest and lowest ground under the compound, 24 in the Upper Realm; the terrace levels the rest and
-  fills in a pond or a stream), never in the Nether or the End:
+  blocks between the highest and lowest ground in the middle of the village, 24 in the Upper Realm; the grounds are
+  levelled within the village's round and a pond or a stream is filled in), never in the Nether or the End:
   - **Overworld** (`defying-the-heavens:sect`): plains, meadows, forests, taiga, snowy plains, savanna, cherry groves,
     bamboo and sparse jungle. One attempt per 32x32 chunks, at least 16 chunks apart, never within 6 chunks of a village
     (`worldgen/structure_set/sects.json`).
@@ -402,12 +412,14 @@ every member. Every building is grey brick and dark oak under tiled roofs with u
     (`worldgen/structure_set/sects_upper_realm.json`). Their masters are Heavenly Beings or Four Axis cultivators.
   - Tuning: `MAX_RELIEF`, `MAX_RELIEF_UPPER` and `MAX_WET` in `SectStructure.java`, `spacing` in the structure sets.
 - Worldgen that runs after structures can't spoil the grounds: no lake (vanilla lava lakes, the Upper Realm's spring
-  basins) forms where it would reach into a sect (`mixin/LakeFeatureMixin`), and the sects build with nothing a water
-  or lava spring can open in (the plaster is smooth quartz, not calcite; checked by a game test).
-- The layout is planned in code (`SectStructure`, `SectPiece`), not from jigsaw templates, so it keeps its symmetry, fits
-  its population, and each building adapts its height to the ground.
+  basins) forms where it would reach into a sect (`mixin/LakeFeatureMixin`), no tree or huge mushroom grows within 64
+  blocks of a sect's core (`mixin/TreeFeatureMixin`, `mixin/HugeMushroomFeatureMixin`; the sect plants its own, and
+  saplings and mushrooms players grow are unaffected), and the sects build
+  with nothing a water or lava spring can open in (the plaster is smooth quartz, not calcite; checked by a game test).
+- The layout is planned in code (`SectStructure`, `SectPiece`), not from jigsaw templates, so it keeps its order, fits
+  its population, and each building adapts its base to the ground.
 - The Treasury holds Spirit Pedestals bearing old Cultivation Fruit and ginseng and Spirit Ginseng, and loot chests;
-  elders' dwellings and the library have their own (`loot_tables/chests/sect_*.json`). Taking from a sect is theft: it
+  elders' houses and the library have their own (`loot_tables/chests/sect_*.json`). Taking from a sect is theft: it
   brings the sect down on you.
 - Players can use the mats in the Meditation Hall.
 
@@ -497,14 +509,16 @@ the master is between Core Formation and Nascent Soul Grand Perfection; in the U
   (`NpcSpawner`). At most 3 near any one player and 40 in a level.
 - **In a fight** cultivators use what their realm gives them: a Consciousness Domain (rogues always, sect members only
   in combat), Realm Suppression and Qi Flight, but only while their qi can sustain them. They flee below a quarter of their
-  health, and rogues and disciples also flee from a hostile domain four or more stages stronger once their own domain
+  health (all but the Sect Master, who makes a last stand), and rogues and disciples also flee from a hostile domain four or more stages stronger once their own domain
   senses it. The Sect Master and the elders never flee a stronger domain: they stand and fight for their sect. A
   cultivator fleeing a stronger domain runs (or flies) to a refuge about 200 blocks away (160-240), on the far side from
   what it fears, and only then comes home; it gives up after 3 minutes. The refuge is kept within the area the world is
   simulating around players (so it doesn't freeze out there): fleeing from you, it ends up near the edge of your
   simulation distance if that is closer than 200 blocks (10-12 chunks by default, about 160-190 blocks). Badly hurt, a
   cultivator only backs away. Struck by its pursuer at close quarters, a fleeing cultivator strikes back
-  (`FLEE_DISTANCE`, `FLEE_SPREAD`, `FLEE_TIMEOUT` in `CultivatorNpc.java`).
+  (`FLEE_DISTANCE`, `FLEE_SPREAD`, `FLEE_TIMEOUT` in `CultivatorNpc.java`). A fleeing cultivator is a little slower than a
+  sprinting player of its own realm, and a badly hurt one well slower, on foot or in the air, so it can be run down
+  (`RUN_SPEED`, `FLY_SPEED` in `CultivatorGoals.FleeGoal`).
 - Every cultivator has a nameplate: title, a red health bar with numbers, and alignment, for example "Righteous (+120)".
   Under Qi Sense, meditating cultivators draw qi motes into themselves.
 

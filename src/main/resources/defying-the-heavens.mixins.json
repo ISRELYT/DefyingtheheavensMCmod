@@ -6,6 +6,7 @@
   "mixins": [
     "EndPortalBlockMixin",
     "EnderEyeItemMixin",
+    "HugeMushroomFeatureMixin",
     "InventoryMenuMixin",
     "LakeFeatureMixin",
     "NaturalSpawnerMixin",
@@ -15,6 +16,7 @@
     "PortalShapeMixin",
     "ServerGamePacketListenerImplMixin",
     "ServerPlayerAccessor",
+    "TreeFeatureMixin",
     "WorldDimensionsMixin"
   ],
   "injectors": {

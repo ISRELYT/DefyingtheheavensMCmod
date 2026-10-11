@@ -679,7 +679,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 
 	/**
 	 * The Sect Master and its elders defend their sect against anyone, however far above them: no stronger domain sends them
-	 * running, only a beating (see {@link #shouldFlee}). Disciples and rogues have no such duty.
+	 * running, only a beating, and not even that for the master (see {@link #shouldFlee}). Disciples and rogues have no such duty.
 	 */
 	public boolean holdsGround() {
 		return lifecycle == Lifecycle.SECT && getTitle().isElderOrAbove();
@@ -741,10 +741,23 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		if (target instanceof Player player) aggressed.add(player.getUUID());
 	}
 
-	/** Running: from a domain a realm above its own (unless it {@link #holdsGround}), or from a fight it is losing badly. */
+	/**
+	 * Running: from a domain a realm above its own (unless it {@link #holdsGround}), or from a fight it is losing badly (unless
+	 * it {@link #makesLastStand}).
+	 */
 	public boolean shouldFlee() {
 		return fleeFrom != null && fleeFrom.isAlive() && !fleeFrom.isRemoved() && !holdsGround()
-				|| getHealth() < getMaxHealth() * FLEE_HEALTH && isInCombat();
+				|| isBadlyHurt() && isInCombat() && !makesLastStand();
+	}
+
+	/** A Sect Master never runs, even from a beating: it makes its last stand in its own sect. Its elders may fall back. */
+	public boolean makesLastStand() {
+		return lifecycle == Lifecycle.SECT && getTitle() == NpcTitle.SECT_MASTER;
+	}
+
+	/** Below {@link #FLEE_HEALTH} of its health. */
+	public boolean isBadlyHurt() {
+		return getHealth() < getMaxHealth() * FLEE_HEALTH;
 	}
 
 	public Entity getFleeFrom() { return fleeFrom; }

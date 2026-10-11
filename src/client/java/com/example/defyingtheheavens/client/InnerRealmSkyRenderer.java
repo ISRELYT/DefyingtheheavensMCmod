@@ -92,11 +92,15 @@ public class InnerRealmSkyRenderer implements DimensionRenderingRegistry.SkyRend
 			float time = level.getGameTime() + context.tickDelta();
 			PoseStack poseStack = context.matrixStack();
 			Matrix4f pose = poseStack.last().pose();
-			UUID id = mc.player.getUUID();
 			net.minecraft.world.phys.Vec3 camera = context.camera().getPosition();
-			ox = (float) (Math.floorMod(id.hashCode(), 2048) * (double) InnerRealm.SLOT_SPACING + 0.5 - camera.x);
+			// Islands sit on a grid SLOT_SPACING apart (slots are handed out by the server, see InnerRealm.Islands), and a
+			// soul never leaves its own island, so the nearest grid point to the camera is always this player's island.
+			double spacing = InnerRealm.SLOT_SPACING;
+			double islandX = Math.round(camera.x / spacing) * spacing;
+			double islandZ = Math.round(camera.z / spacing) * spacing;
+			ox = (float) (islandX + 0.5 - camera.x);
 			oy = (float) (InnerRealm.ISLAND_Y + 1 - camera.y);
-			oz = (float) (0.5 - camera.z);
+			oz = (float) (islandZ + 0.5 - camera.z);
 
 			RenderSystem.depthMask(false);
 			RenderSystem.enableBlend();
@@ -322,6 +326,10 @@ public class InnerRealmSkyRenderer implements DimensionRenderingRegistry.SkyRend
 		ResourceLocation skin = InnerBodyRenderer.skinOf(mc.player.getUUID());
 		boolean slim = info != null && "slim".equals(info.getModelName());
 		PlayerModel<?> model = slim ? slimModel(mc) : wideModel(mc);
+		// A model made here, not by an entity renderer, starts out as a baby's (big head, small body): grown, not riding.
+		model.young = false;
+		model.riding = false;
+		model.attackTime = 0;
 		LotusPose.applyWithLayers(model);
 
 		RenderSystem.enableDepthTest();
@@ -336,7 +344,8 @@ public class InnerRealmSkyRenderer implements DimensionRenderingRegistry.SkyRend
 		Lighting.setupLevel(poseStack.last().pose());
 		MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
 		float alpha = 0.55f + 0.1f * Math.min(stage, 3);
-		model.renderToBuffer(poseStack, buffers.getBuffer(RenderType.entityTranslucent(skin)), LightTexture.FULL_BRIGHT,
+		// Culled, so the see-through soul doesn't show the insides of its own head and limbs.
+		model.renderToBuffer(poseStack, buffers.getBuffer(RenderType.entityTranslucentCull(skin)), LightTexture.FULL_BRIGHT,
 				OverlayTexture.NO_OVERLAY, 0.85f, 0.92f, 1.0f, alpha);
 		buffers.endBatch();
 		poseStack.popPose();
