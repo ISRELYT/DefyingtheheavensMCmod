@@ -125,6 +125,11 @@ public final class TribulationManager {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_INNER_TRIBULATION), true);
 			return;
 		}
+		// The heavens strike the cultivator, body and soul together: not a soul out of its body, nor one possessing another's.
+		if (SoulProjection.isActive(player.getUUID())) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_SOUL_BUSY), true);
+			return;
+		}
 		PlayerCultivation c = CultivationManager.get(player);
 		if (c.isAtBottleneck() && c.isBreakthroughLocked()) {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_REALM_LOCKED,

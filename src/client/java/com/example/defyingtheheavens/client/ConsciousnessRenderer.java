@@ -155,6 +155,8 @@ public final class ConsciousnessRenderer {
 
 	/** For MinecraftMixin: inside the domain, so it shows through walls. */
 	public static boolean isHighlighted(Entity entity) {
+		// A projected nascent soul shows no outline (it is only sensed as near; see SoulProjection).
+		if (entity instanceof net.minecraft.world.entity.player.Player player && ClientSoul.isSoul(player)) return false;
 		return !OUTLINES.isEmpty() && OUTLINES.containsKey(entity.getId());
 	}
 

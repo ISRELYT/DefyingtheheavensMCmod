@@ -146,7 +146,7 @@ public final class InnerRealm {
 
 	public static boolean canEnter(ServerPlayer player) {
 		PlayerCultivation c = CultivationManager.get(player);
-		return c.isAbilityActive(Ability.INNER_REALM) && !ModDimensions.isInnerRealm(player.level().dimension())
+		return c.isAbilityActive(Ability.INNER_REALM) && !ModDimensions.isInnerRealm(player.level().dimension()) && !SoulProjection.isActive(player.getUUID())
 				&& !ModDimensions.isSpatialGap(player.level().dimension()) && !TribulationManager.isActive(player.getUUID())
 				&& player.isAlive() && player.server.getLevel(ModDimensions.INNER_REALM) != null;
 	}

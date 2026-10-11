@@ -17,7 +17,10 @@
     "LivingEntityRendererMixin",
     "MinecraftMixin",
     "PostChainAccessor",
-    "ReceivingLevelScreenMixin"
+    "ReceivingLevelScreenMixin",
+    "SoulFlightMixin",
+    "SoulInputMixin",
+    "SoulRenderDispatcherMixin"
   ],
   "injectors": {
     "defaultRequire": 1

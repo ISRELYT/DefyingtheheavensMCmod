@@ -149,7 +149,10 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 	private final Map<UUID, Regard.Entry> regard = new HashMap<>();
 	/** When each player last struck it (not saved): a fight costs regard once, not per blow. */
 	private final Map<UUID, Long> struckAt = new HashMap<>();
-	/** The player it is talking with, and for how much longer it stands still for them (see {@link TalkSystem}). */
+	/**
+	 * The player it is talking with (kept after the talk lapses, see {@link #tickTalk}), and for how much longer it stands still
+	 * for them (see {@link TalkSystem}).
+	 */
 	private UUID talkingTo;
 	private int talkTicks;
 	/** How long a talk holds it still without a word from the player. */
@@ -200,6 +203,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		targetSelector.addGoal(1, new CultivatorGoals.RetaliateGoal(this));
 		targetSelector.addGoal(2, new CultivatorGoals.HostilityGoal(this));
 		targetSelector.addGoal(3, new CultivatorGoals.GuardGoal(this));
+		targetSelector.addGoal(3, new CultivatorGoals.SoulWardGoal(this));
 	}
 
 	// --- Identity ---
@@ -305,9 +309,35 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 
 	/** Starts (or keeps up) a talk with {@code player}: it stops where it is and turns to them. */
 	public void beginTalk(Player player) {
+		// Someone else whose talk had lapsed (still reading, perhaps) is told it has turned to another.
+		if (talkingTo != null && !talkingTo.equals(player.getUUID())) breakOffTalk(ModLang.TALK_OCCUPIED);
 		talkingTo = player.getUUID();
 		talkTicks = TALK_TICKS;
 		getNavigation().stop();
+	}
+
+	/** Breaks off its talk, if it has one: the player's talk window closes, with the line of {@code key} saying why. */
+	public void breakOffTalk(String key) {
+		UUID partner = talkingTo;
+		talkingTo = null;
+		talkTicks = 0;
+		if (partner != null && level().getPlayerByUUID(partner) instanceof ServerPlayer player) TalkSystem.breakOff(player, this, key);
+	}
+
+	/**
+	 * A talk going on: it breaks off as soon as it won't talk with them any longer (a fight, a reason to run, turning on them;
+	 * see TalkSystem#refusal). Left without a word, it lapses quietly, keeping who it was with: a player still reading picks it
+	 * up again, and is told if someone else takes it up first.
+	 */
+	private void tickTalk() {
+		if (level().getPlayerByUUID(talkingTo) instanceof ServerPlayer player) {
+			String refusal = TalkSystem.refusal(player, this);
+			if (refusal != null) {
+				breakOffTalk(refusal);
+				return;
+			}
+		}
+		talkTicks--;
 	}
 
 	public void endTalk(Player player) {
@@ -475,10 +505,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		else if (combatTicks > 0) combatTicks--;
 		tickQi();
 		if (fleeTicks > 0 && --fleeTicks == 0) reachRefuge(); // given up on getting there: it stops running all the same
-		if (talkTicks > 0 && (--talkTicks == 0 || isInCombat())) {
-			talkTicks = 0;
-			talkingTo = null;
-		}
+		if (talkTicks > 0 && talkingTo != null) tickTalk();
 		if (lifecycle == Lifecycle.SECLUDED && isConcealed()) repulse(level);
 		tickFlight(level);
 		NpcTravel.maybeDispatch(this, level);
@@ -737,8 +764,9 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		if (holdsGround()) return;
 		int mine = sustainedRank();
 		double radius = domainRadius();
+		// A soul out of its body bears down on no domain (see SoulProjection): nothing to run from.
 		for (LivingEntity other : ConsciousnessDomainHandler.entitiesIn(this, Math.min(radius, 96), LivingEntity.class,
-				e -> e.isAlive() && CultivatorEntity.isCultivator(e))) {
+				e -> e.isAlive() && CultivatorEntity.isCultivator(e) && !(e instanceof Player player && SoulProjection.isSoul(player)))) {
 			int theirs = rankOf(other);
 			if (theirs >= mine + SUPERIOR_DOMAIN_GAP && isThreat(other)) {
 				startFleeing(other);
@@ -832,9 +860,18 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		return isAlly(other) || super.isAlliedTo(other);
 	}
 
+	/**
+	 * Whether it can sense {@code other} at all: a projected nascent soul (see SoulProjection) is there only for cultivators of
+	 * Nascent Soul and above, who see it as players of those realms do; to the rest it doesn't exist.
+	 */
+	public boolean senses(LivingEntity other) {
+		if (!(other instanceof Player player) || !SoulProjection.isSoul(player)) return true;
+		return !isMortal() && sustainedRank() >= PlayerCultivation.rank(Realm.NASCENT_SOUL, Stage.EARLY);
+	}
+
 	/** The righteous and the demonic are enemies wherever they meet; the neutral are nobody's. */
 	public boolean isEnemy(LivingEntity other) {
-		if (other == this || !other.isAlive() || isAlly(other)) return false;
+		if (other == this || !other.isAlive() || isAlly(other) || !senses(other)) return false;
 		if (other instanceof Player player) {
 			if (player.isCreative() || player.isSpectator()) return false;
 			if (getFaction().isEnemyOf(Alignment.factionOf(alignmentOf(player)))) return true;
@@ -847,7 +884,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 
 	/** Someone it is (or should be) fighting, or who is fighting it. */
 	public boolean isThreat(LivingEntity other) {
-		if (isAlly(other)) return false;
+		if (isAlly(other) || !senses(other)) return false;
 		if (getTarget() == other || getLastHurtByMob() == other) return true;
 		if (other instanceof Mob mob && mob.getTarget() == this) return true;
 		return isEnemy(other);
@@ -855,7 +892,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 
 	/** What its Realm Suppress weighs on: foes in its domain, never its own sect or bystanders. */
 	public boolean isHostileTo(LivingEntity other) {
-		if (other == this || isAlly(other)) return false;
+		if (other == this || isAlly(other) || !senses(other)) return false;
 		if (getTarget() == other || getLastHurtByMob() == other) return true;
 		return other instanceof Mob mob && mob.getTarget() == this;
 	}

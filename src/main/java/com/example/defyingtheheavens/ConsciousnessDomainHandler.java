@@ -94,10 +94,14 @@ public final class ConsciousnessDomainHandler {
 				if (isActive(player)) users.add(player);
 			}
 			if (users.isEmpty()) continue;
+			// A nascent soul out of its body still sees through its domain, but touches no one's: it is only sensed as near (see
+			// SoulProjection#senseDomains), never met.
+			List<ServerPlayer> embodied = new ArrayList<>(users);
+			embodied.removeIf(SoulProjection::isSoul);
 			List<CultivatorNpc> npcs = CultivatorNpc.openDomains(level);
-			updateContacts(users, next);
-			updateNpcContacts(users, npcs, next);
-			for (ServerPlayer viewer : users) sendDomain(viewer, users, npcs, next);
+			updateContacts(embodied, next);
+			updateNpcContacts(embodied, npcs, next);
+			for (ServerPlayer viewer : users) sendDomain(viewer, embodied, npcs, next);
 		}
 		touching = next; // pairs that split up across dimensions or went inactive are simply not carried over
 	}
@@ -148,6 +152,7 @@ public final class ConsciousnessDomainHandler {
 		List<SensedCultivator> cultivators = new ArrayList<>();
 		for (Entity entity : entitiesIn(viewer, radius, Entity.class, e -> CultivatorEntity.isCultivator(e) && e.isAlive() && !e.isSpectator())) {
 			if (entity instanceof ServerPlayer player) {
+				if (SoulProjection.isSoul(player)) continue; // no outline, no realm: a soul is only sensed as near
 				PlayerCultivation c = CultivationManager.get(player);
 				if (c.isMortal()) continue; // shows as a mortal: an outline, no realm
 				cultivators.add(new SensedCultivator(player.getId(), c.getEffectiveRealm(), c.getEffectiveStage(), c.isUnderPressure()));

@@ -61,8 +61,14 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		TribulationAtmosphere.register();
 		HudRenderCallback.EVENT.register((graphics, tickDelta) -> {
 			SuppressionClient.renderHud(graphics); // under the Qi bar
+			SoulHud.render(graphics); // under that: a projected soul's tether and body
 			ConsciousnessRenderer.renderHud(graphics);
 		});
+		// Soul Projection: the soul's flight and state, its look (a core shader of its own), its body and seized bodies.
+		ClientSoul.register();
+		SoulRenderer.register();
+		EntityRendererRegistry.register(ModEntities.SOUL_BODY, SoulBodyRenderer::new);
+		EntityRendererRegistry.register(ModEntities.SOUL_VESSEL, SoulVesselRenderer::new);
 		EntityRendererRegistry.register(ModEntities.TRIBULATION_LIGHTNING, TribulationLightningRenderer::new);
 		EntityRendererRegistry.register(ModEntities.TRIBULATION_CLOUD, TribulationCloudRenderer::new);
 		// Sects and NPC cultivators: the NPCs and their nameplates, clothing, formations and their seals.
@@ -124,6 +130,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			QiSurgeHud.clear();
 			InnerRealmFade.clear();
 			SwordFlightClient.clear();
+			ClientSoul.clear();
 		}));
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -136,6 +143,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			SuppressionClient.tick(client);
 			InnerRealmFade.tick(client);
 			SwordFlightClient.tick(client);
+			ClientSoul.tick(client);
 			while (ModKeybinds.OPEN_MENU.consumeClick()) {
 				if (client.player != null && client.screen == null) {
 					client.setScreen(new CultivationScreen());

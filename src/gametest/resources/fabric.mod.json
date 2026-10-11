@@ -15,6 +15,7 @@
       "com.example.defyingtheheavens.SectGameTests",
       "com.example.defyingtheheavens.AbilityWheelGameTests",
       "com.example.defyingtheheavens.SwordFlightGameTests",
+      "com.example.defyingtheheavens.SoulProjectionGameTests",
       "com.example.defyingtheheavens.TalkGameTests"
     ]
   }

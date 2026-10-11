@@ -59,7 +59,7 @@ public class InscriptionBrushItem extends Item {
 			level.playSound(null, target, SoundEvents.BOOK_PAGE_TURN, SoundSource.BLOCKS, 0.9f, 1.3f);
 			if (player != null) {
 				context.getItemInHand().hurtAndBreak(1, player, p -> p.broadcastBreakEvent(context.getHand()));
-				if (!CultivationManager.forPlayer(player).isAbilityActive(Ability.QI_SENSE)) {
+				if (!CultivationManager.forPlayer(player).isQiSenseOn()) {
 					player.displayClientMessage(Component.translatable(ModLang.MSG_SEAL_UNSEEN), true);
 				}
 			}

@@ -59,6 +59,18 @@ public final class ModPackets {
 	public static final ResourceLocation FORMATION_CORE_CONFIGURE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "formation_core_configure");
 	/** C2S: the owner trusts a player by name (position, true, name) or stops trusting one (position, false, UUID). */
 	public static final ResourceLocation FORMATION_CORE_TRUST = new ResourceLocation(DefyingTheHeavens.MOD_ID, "formation_core_trust");
+	/**
+	 * S2C: the player's own soul (see {@link SoulProjection}): state, channel ticks left, where the body sits, the tether's reach,
+	 * the body's health and maximum, the possessed being's entity id (-1 for none) and the tether's remaining strength (0-1).
+	 */
+	public static final ResourceLocation SOUL_SELF = new ResourceLocation(DefyingTheHeavens.MOD_ID, "soul_self");
+	/**
+	 * S2C: a soul someone perceives: its entity id, whether it is still out, where its body sits, the being it possesses (-1) and
+	 * its tether's strength. Repeated twice a second while it stays out; clients forget it without.
+	 */
+	public static final ResourceLocation SOUL_SEEN = new ResourceLocation(DefyingTheHeavens.MOD_ID, "soul_seen");
+	/** C2S: a Heavenly Being with Qi Sense on strikes at the tether of the soul with this entity id (checked on the server). */
+	public static final ResourceLocation SOUL_TETHER_STRIKE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "soul_tether_strike");
 	/** S2C: a talk with a cultivator opens (see {@link TalkSystem}): who they are, what they think of you, the intents on offer. */
 	public static final ResourceLocation TALK_OPEN = new ResourceLocation(DefyingTheHeavens.MOD_ID, "talk_open");
 	/** S2C: the dialogue box: what they say, and the replies on offer. */
@@ -69,6 +81,8 @@ public final class ModPackets {
 	public static final ResourceLocation TALK_TOPIC = new ResourceLocation(DefyingTheHeavens.MOD_ID, "talk_topic");
 	/** C2S: the player closed the talk (entity id). */
 	public static final ResourceLocation TALK_END = new ResourceLocation(DefyingTheHeavens.MOD_ID, "talk_end");
+	/** S2C: the cultivator broke off the talk (entity id, why): the talk window closes and the reason shows over the hotbar. */
+	public static final ResourceLocation TALK_CLOSE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "talk_close");
 	/** Players further than this from a core can't work its screen. */
 	private static final double CORE_REACH = 8;
 
@@ -139,6 +153,49 @@ public final class ModPackets {
 			int ability = buf.readVarInt();
 			server.execute(() -> CultivationManager.setWheelSlot(player, slot, ability));
 		});
+		ServerPlayNetworking.registerGlobalReceiver(SOUL_TETHER_STRIKE, (server, player, handler, buf, responseSender) -> {
+			int soul = buf.readVarInt();
+			server.execute(() -> SoulProjection.strikeTether(player, soul));
+		});
+	}
+
+	public static void sendSoulSelf(ServerPlayer player, SoulProjection.State state, int ticks, Vec3 body, int radius, float bodyHealth,
+									float bodyMax, int hostId, float tether) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(state.ordinal());
+		buf.writeVarInt(Math.max(0, ticks));
+		buf.writeDouble(body.x);
+		buf.writeDouble(body.y);
+		buf.writeDouble(body.z);
+		buf.writeVarInt(radius);
+		buf.writeFloat(bodyHealth);
+		buf.writeFloat(bodyMax);
+		buf.writeVarInt(hostId + 1);
+		buf.writeFloat(tether);
+		ServerPlayNetworking.send(player, SOUL_SELF, buf);
+	}
+
+	public static void sendSoulSeen(ServerPlayer to, ServerPlayer soul, Vec3 body, int hostId, float tether) {
+		ServerPlayNetworking.send(to, SOUL_SEEN, soulSeenBuf(soul, true, body, hostId, tether));
+	}
+
+	/** The soul is home (or gone): everyone who might have been drawing it forgets it. */
+	public static void broadcastSoulGone(ServerPlayer soul) {
+		for (ServerPlayer other : soul.serverLevel().players()) {
+			if (other != soul) ServerPlayNetworking.send(other, SOUL_SEEN, soulSeenBuf(soul, false, Vec3.ZERO, -1, 0));
+		}
+	}
+
+	private static FriendlyByteBuf soulSeenBuf(ServerPlayer soul, boolean out, Vec3 body, int hostId, float tether) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(soul.getId());
+		buf.writeBoolean(out);
+		buf.writeDouble(body.x);
+		buf.writeDouble(body.y);
+		buf.writeDouble(body.z);
+		buf.writeVarInt(hostId + 1);
+		buf.writeFloat(tether);
+		return buf;
 	}
 
 	public static void sendSync(ServerPlayer player, PlayerCultivation c, boolean meditating) {
@@ -168,6 +225,7 @@ public final class ModPackets {
 			Ability ability = c.getWheelSlot(i);
 			buf.writeVarInt(ability == null ? 0 : ability.ordinal() + 1);
 		}
+		buf.writeVarInt(c.getSoulState().ordinal());
 		ServerPlayNetworking.send(player, SYNC, buf);
 	}
 
@@ -204,6 +262,14 @@ public final class ModPackets {
 			if (reply.note() != null) buf.writeComponent(reply.note());
 		}
 		ServerPlayNetworking.send(player, TALK_DIALOGUE, buf);
+	}
+
+	/** Closes {@code player}'s talk with the cultivator {@code entityId}, saying why over the hotbar. */
+	public static void sendTalkClose(ServerPlayer player, int entityId, Component reason) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(entityId);
+		buf.writeComponent(reason);
+		ServerPlayNetworking.send(player, TALK_CLOSE, buf);
 	}
 
 	public static void sendSurge(ServerPlayer player, int game, int windowTicks) {

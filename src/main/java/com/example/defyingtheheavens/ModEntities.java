@@ -47,6 +47,24 @@ public final class ModEntities {
 					.clientTrackingRange(10)
 					.build("inner_body"));
 
+	/** A cultivator's body, left sitting while their nascent soul is out (see {@link SoulProjection}). */
+	public static final EntityType<SoulBodyEntity> SOUL_BODY = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("soul_body"),
+			EntityType.Builder.<SoulBodyEntity>of(SoulBodyEntity::new, MobCategory.MISC)
+					.noSave().noSummon()
+					.sized(0.6f, 1.2f)
+					.clientTrackingRange(10)
+					.build("soul_body"));
+
+	/** A player's body seized by another cultivator's nascent soul (see {@link SoulVesselEntity}). Player-sized. */
+	public static final EntityType<SoulVesselEntity> SOUL_VESSEL = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("soul_vessel"),
+			EntityType.Builder.<SoulVesselEntity>of(SoulVesselEntity::new, MobCategory.MISC)
+					.noSummon()
+					.sized(0.6f, 1.8f)
+					.clientTrackingRange(10)
+					.build("soul_vessel"));
+
 	/** A cultivator's heart demon, risen in their Inner Realm (see {@link HeartDemonEntity}). */
 	public static final EntityType<HeartDemonEntity> HEART_DEMON = Registry.register(BuiltInRegistries.ENTITY_TYPE,
 			DefyingTheHeavens.id("heart_demon"),
@@ -61,6 +79,8 @@ public final class ModEntities {
 		FabricDefaultAttributeRegistry.register(CULTIVATOR, CultivatorNpc.createAttributes());
 		FabricDefaultAttributeRegistry.register(INNER_BODY, InnerBodyEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(HEART_DEMON, HeartDemonEntity.createAttributes());
+		FabricDefaultAttributeRegistry.register(SOUL_BODY, SoulBodyEntity.createAttributes());
+		FabricDefaultAttributeRegistry.register(SOUL_VESSEL, SoulVesselEntity.createAttributes());
 	}
 
 	private ModEntities() {}

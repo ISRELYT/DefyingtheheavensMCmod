@@ -290,6 +290,8 @@ public final class ModLang {
 	public static final String TALK_LIST = k("talk.list");
 	public static final String TALK_BACK = k("talk.back");
 	public static final String TALK_PICK = k("talk.pick");
+	/** A cultivator with another's soul inside it (SoulProjection) doesn't answer. */
+	public static final String TALK_POSSESSED = k("talk.possessed");
 	public static final String MSG_SECLUSION_REPULSE = k("message.seclusion.repulse");
 
 	// Cultivator clothing (see ClothingItem)
@@ -340,6 +342,43 @@ public final class ModLang {
 	public static final String MSG_TRUST_UNKNOWN = k("message.trust.unknown");
 	public static final String MSG_TRUST_FULL = k("message.trust.full");
 	public static final String MSG_TRUST_SELF = k("message.trust.self");
+	// Soul Projection (see SoulProjection)
+	public static final String MSG_SOUL_GAINED = k("message.soul.gained");
+	public static final String MSG_SOUL_GATHERING = k("message.soul.gathering");
+	public static final String MSG_SOUL_CANCELLED = k("message.soul.cancelled");
+	public static final String MSG_SOUL_MOVED = k("message.soul.moved");
+	public static final String MSG_SOUL_NOT_HERE = k("message.soul.not_here");
+	public static final String MSG_SOUL_GROUND = k("message.soul.ground");
+	public static final String MSG_SOUL_LOW_QI = k("message.soul.low_qi");
+	public static final String MSG_SOUL_OUT = k("message.soul.out");
+	public static final String MSG_SOUL_RECALLING = k("message.soul.recalling");
+	public static final String MSG_SOUL_BACK = k("message.soul.back");
+	public static final String MSG_SOUL_NO_QI = k("message.soul.no_qi");
+	public static final String MSG_SOUL_BUSY = k("message.soul.busy");
+	public static final String MSG_SOUL_LOST = k("message.soul.lost");
+	public static final String MSG_SOUL_DESTROYED = k("message.soul.destroyed");
+	public static final String MSG_SOUL_SEVERED = k("message.soul.severed");
+	public static final String MSG_SOUL_BODY_SLAIN = k("message.soul.body_slain");
+	public static final String MSG_SOUL_BODY_GONE = k("message.soul.body_gone");
+	public static final String MSG_SOUL_FLED = k("message.soul.fled");
+	public static final String MSG_SOUL_BODY_HURT = k("message.soul.body_hurt");
+	public static final String MSG_SOUL_TETHER_STRUCK = k("message.soul.tether_struck");
+	public static final String MSG_SOUL_SENSED = k("message.soul.sensed");
+	public static final String MSG_SOUL_BARRIER = k("message.soul.barrier");
+	public static final String MSG_POSSESS_START = k("message.possess.start");
+	public static final String MSG_POSSESS_CANNOT = k("message.possess.cannot");
+	public static final String MSG_POSSESS_PVP = k("message.possess.pvp");
+	public static final String MSG_POSSESS_TOO_STRONG = k("message.possess.too_strong");
+	public static final String MSG_POSSESS_QI = k("message.possess.qi");
+	public static final String MSG_POSSESS_EJECTED = k("message.possess.ejected");
+	public static final String MSG_POSSESS_TETHER = k("message.possess.tether");
+	public static final String HUD_SOUL_GATHERING = k("hud.soul.gathering");
+	public static final String HUD_SOUL_RECALLING = k("hud.soul.recalling");
+	public static final String HUD_SOUL_TETHER = k("hud.soul.tether");
+	public static final String HUD_SOUL_BODY = k("hud.soul.body");
+	public static final String HUD_SOUL_POSSESSING = k("hud.soul.possessing");
+	public static final String DEATH_SOUL_SEVERED = "death.attack." + DefyingTheHeavens.MOD_ID + ".soul_severed";
+	public static final String DEATH_SOUL_SEIZED = "death.attack." + DefyingTheHeavens.MOD_ID + ".soul_seized";
 
 	private ModLang() {}
 }

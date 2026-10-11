@@ -25,7 +25,12 @@ public enum Ability {
 	/** From the start: after meditating a while, the soul turns inward to the Inner Realm ({@link InnerRealm}). */
 	INNER_REALM("inner_realm", true, c -> true),
 	/** From Foundation Building: ride a sword held in the main hand through the air, for less qi than Qi Flight ({@link SwordFlight}). */
-	SWORD_FLIGHT("sword_flight", true, c -> c.getEffectiveRealm().canRideSword());
+	SWORD_FLIGHT("sword_flight", true, c -> c.getEffectiveRealm().canRideSword()),
+	/**
+	 * From Nascent Soul: send the nascent soul out of the body ({@link SoulProjection}). Unlike the others it is an act, not a
+	 * standing switch: "on" while the soul is out (or going out), "off" once it is back.
+	 */
+	SOUL_PROJECTION("soul_projection", false, c -> c.getEffectiveRealm().canProjectSoul());
 
 	private final String id;
 	private final boolean onByDefault;
@@ -51,6 +56,8 @@ public enum Ability {
 			case QI_FLIGHT -> Component.translatable(key, Math.round(c.qiFlightCostPerSecond()));
 			case SWORD_FLIGHT -> Component.translatable(key, Math.round(c.swordFlightCostPerSecond()));
 			case CONSCIOUSNESS_DOMAIN, REALM_SUPPRESS -> Component.translatable(key, Math.round(ConsciousnessDomainHandler.radius(c)));
+			case SOUL_PROJECTION -> Component.translatable(key, c.soulHearts(), c.soulTetherRadius(), Math.round(c.soulCostPerSecond(0, false)),
+					Math.round(c.soulCostPerSecond(1, false)));
 			default -> Component.translatable(key);
 		};
 	}

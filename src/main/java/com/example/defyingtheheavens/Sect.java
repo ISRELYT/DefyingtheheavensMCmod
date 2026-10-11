@@ -72,7 +72,7 @@ public final class Sect {
 	public final Map<Post, List<BlockPos>> posts = new EnumMap<>(Post.class);
 	/** What the sect as a whole thinks of each player, added to every member's own regard (see {@link Regard}); never fades. */
 	public final Map<UUID, Integer> standing = new HashMap<>();
-	/** The game day each player last robbed the treasury (not saved): it counts against them once a day, not per block. */
+	/** The game day each player last robbed the treasury (today's only): it counts against them once a day, not per block. */
 	public final Map<UUID, Long> robbedDay = new HashMap<>();
 
 	public Sect(UUID id) {
@@ -250,6 +250,14 @@ public final class Sect {
 			standingList.add(s);
 		}
 		tag.put("Standing", standingList);
+		ListTag robbedList = new ListTag();
+		for (Map.Entry<UUID, Long> entry : robbedDay.entrySet()) {
+			CompoundTag r = new CompoundTag();
+			r.putUUID("Player", entry.getKey());
+			r.putLong("Day", entry.getValue());
+			robbedList.add(r);
+		}
+		tag.put("Robbed", robbedList);
 		return tag;
 	}
 
@@ -284,6 +292,11 @@ public final class Sect {
 		for (int i = 0; i < standingList.size(); i++) {
 			CompoundTag s = standingList.getCompound(i);
 			if (s.hasUUID("Player")) sect.standing.put(s.getUUID("Player"), s.getInt("Value"));
+		}
+		ListTag robbedList = tag.getList("Robbed", Tag.TAG_COMPOUND);
+		for (int i = 0; i < robbedList.size(); i++) {
+			CompoundTag r = robbedList.getCompound(i);
+			if (r.hasUUID("Player")) sect.robbedDay.put(r.getUUID("Player"), r.getLong("Day"));
 		}
 		return sect;
 	}

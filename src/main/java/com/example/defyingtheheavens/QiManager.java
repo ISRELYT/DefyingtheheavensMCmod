@@ -5,7 +5,8 @@ import net.minecraft.server.level.ServerPlayer;
 
 /**
  * Refills every player's qi pool each tick at their qi gather rate (cultivator clothing adds to it, see ClothingItem), less
- * what flying on it ({@link QiFlight}) and pressing down on others ({@link RealmSuppressSystem}) cost, and keeps the client's
+ * what flying on it ({@link QiFlight}), a nascent soul out of its body ({@link SoulProjection}) and pressing down on others
+ * ({@link RealmSuppressSystem}) cost, and keeps the client's
  * Qi bar in step. Spells and techniques spend qi through {@link #trySpend}.
  */
 public final class QiManager {
@@ -32,9 +33,12 @@ public final class QiManager {
 			if (c.setGearQiBonus(ClothingItem.qiGatherBonus(player))) CultivationManager.sync(player);
 			double flightCost = QiFlight.tick(player, c);
 			QiSense.tick(player, c);
+			SoulProjection.announce(player, c);
+			// A soul out of its body pays to stay out (and snaps home if it can't); it neither flies on qi nor presses down.
+			double soulCost = SoulProjection.upkeep(player, c);
 			// Flight is paid first: running dry should end the pressure, not drop the cultivator out of the sky.
-			double suppressCost = RealmSuppressSystem.upkeep(player, c, flightCost);
-			if (!c.gatherQi(1 / 20.0, flightCost + suppressCost)) continue;
+			double suppressCost = RealmSuppressSystem.upkeep(player, c, flightCost + soulCost);
+			if (!c.gatherQi(1 / 20.0, flightCost + soulCost + suppressCost)) continue;
 			changed = true;
 			if (syncTick || c.getQi() >= c.maxQi() || c.getQi() <= 0) {
 				CultivationManager.sync(player);

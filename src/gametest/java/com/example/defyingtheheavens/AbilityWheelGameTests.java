@@ -19,6 +19,7 @@ public class AbilityWheelGameTests implements FabricGameTest {
 		c.setWheelSlot(5, Ability.QI_FLIGHT);
 		helper.assertTrue(c.getWheelSlot(5) == Ability.QI_FLIGHT && c.getWheelSlot(1) == Ability.INNER_REALM,
 				"Moving an ability onto a full slot swaps the two");
+		c.setWheelSlot(7, null); // Soul Projection's by default
 		c.setWheelSlot(7, Ability.QI_SENSE);
 		helper.assertTrue(c.getWheelSlot(7) == Ability.QI_SENSE && c.getWheelSlot(2) == null, "Moving onto an empty slot leaves its old slot empty");
 		c.setWheelSlot(0, null);

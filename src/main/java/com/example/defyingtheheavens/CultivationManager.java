@@ -44,11 +44,20 @@ public final class CultivationManager {
 		Ability ability = Ability.byIndex(index);
 		PlayerCultivation c = get(player);
 		if (ability == null || !ability.isUnlocked(c)) return;
+		// Soul Projection is an act: its switch sends the soul out, or calls it home (the switch shows where it is).
+		if (ability == Ability.SOUL_PROJECTION) {
+			SoulProjection.toggle(player);
+			return;
+		}
+		// While the soul is out, Qi Sense is how it sees: it stays open.
+		if (ability == Ability.QI_SENSE && SoulProjection.isActive(player.getUUID())) return;
 		c.setAbilityEnabled(ability, !c.isAbilityEnabled(ability));
 		markDirty(player.server);
 		sync(player);
 		// Pressure starts or lifts at once, not at the next scan.
 		if (ability == Ability.REALM_SUPPRESS) RealmSuppressSystem.refreshNow();
+		// Opening or closing Qi Sense changes which projected souls this player perceives: the tracker re-asks at once.
+		if (ability == Ability.QI_SENSE) SoulProjection.refreshTracking(player);
 	}
 
 	/**

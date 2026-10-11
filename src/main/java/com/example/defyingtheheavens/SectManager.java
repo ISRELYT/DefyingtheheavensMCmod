@@ -298,6 +298,7 @@ public final class SectManager {
 		if (theft) {
 			// Robbing the treasury turns the whole sect against the thief, once a day however many blocks it takes.
 			long today = Regard.day(level.getGameTime());
+			sect.robbedDay.values().removeIf(day -> day != today); // only today's are needed (and saved)
 			Long last = sect.robbedDay.put(player.getUUID(), today);
 			if (last == null || last != today) changeStanding(level.getServer(), sect.id, player.getUUID(), Regard.TREASURY_ROBBED);
 		}

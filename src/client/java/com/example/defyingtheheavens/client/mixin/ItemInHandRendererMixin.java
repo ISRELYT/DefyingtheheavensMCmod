@@ -1,8 +1,10 @@
 package com.example.defyingtheheavens.client.mixin;
 
+import com.example.defyingtheheavens.client.ClientSoul;
 import com.example.defyingtheheavens.client.SwordFlightClient;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.InteractionHand;
@@ -12,7 +14,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** First person: while riding, the sword is under your feet (look down to see it), not in your hand. */
+/**
+ * First person: while riding, the sword is under your feet (look down to see it), not in your hand. A projected soul has no
+ * hands to show at all.
+ */
 @Mixin(ItemInHandRenderer.class)
 public abstract class ItemInHandRendererMixin {
 	@Inject(method = "renderArmWithItem", at = @At("HEAD"), cancellable = true)
@@ -20,5 +25,11 @@ public abstract class ItemInHandRendererMixin {
 									ItemStack stack, float equipProgress, PoseStack poseStack, MultiBufferSource buffers, int light,
 									CallbackInfo ci) {
 		if (hand == InteractionHand.MAIN_HAND && SwordFlightClient.isRiding(player)) ci.cancel();
+	}
+
+	@Inject(method = "renderHandsWithItems", at = @At("HEAD"), cancellable = true)
+	private void dth$soulHasNoHands(float partialTick, PoseStack poseStack, MultiBufferSource.BufferSource buffers, LocalPlayer player, int light,
+									CallbackInfo ci) {
+		if (ClientSoul.isOut()) ci.cancel();
 	}
 }

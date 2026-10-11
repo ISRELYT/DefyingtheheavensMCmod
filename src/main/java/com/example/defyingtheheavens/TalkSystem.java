@@ -25,8 +25,10 @@ import java.util.List;
  *   concealment change it), sets how they speak to you and what they will entertain. Their path sets the tone.</li>
  *   <li><b>Regard</b> ({@link Regard}): what they think of you, changed by what you do here and elsewhere.</li>
  * </ul>
- * They won't talk in a fight, in seclusion, on their way to the sky, or to an enemy of their path. Talking to one who sits
- * in meditation wakes them; elders and the Sect Master on duty don't mind, anyone else thinks a little less of you.
+ * They won't talk in a fight, in seclusion, on their way to the sky, to an enemy of their path, or with another's soul inside
+ * them; if one of those comes about mid-talk they break it off, and the player's talk window closes with a line saying why
+ * (S2C talk_close). Talking to one who sits in meditation wakes them; elders and the Sect Master on duty don't mind, anyone
+ * else thinks a little less of you.
  */
 public final class TalkSystem {
 	/** How close a player must be to start talking, and to keep talking. */
@@ -90,8 +92,13 @@ public final class TalkSystem {
 
 	// --- Opening a talk ---
 
-	/** Why they won't talk to {@code player} (the line to say so), or null if they will. */
-	private static String refusal(ServerPlayer player, CultivatorNpc npc) {
+	/**
+	 * Why they won't talk to {@code player} (the line to say so), or null if they will. Asked again every tick of a talk, which
+	 * breaks off when it isn't null (see CultivatorNpc#customServerAiStep).
+	 */
+	static String refusal(ServerPlayer player, CultivatorNpc npc) {
+		// Someone else's soul sits in it (SoulProjection): nobody answers, and nothing gives away why.
+		if (SoulProjection.isPossessed(npc)) return ModLang.TALK_POSSESSED;
 		if (npc.getLifecycle() == CultivatorNpc.Lifecycle.SECLUDED && npc.isConcealed()) return ModLang.NPC_GREET_SECLUDED;
 		if (npc.getTarget() == player || npc.isEnemy(player)) return ModLang.NPC_GREET_HOSTILE;
 		if (npc.isInCombat() || npc.shouldFlee() || npc.getLifecycle() == CultivatorNpc.Lifecycle.DEPARTING
@@ -124,18 +131,36 @@ public final class TalkSystem {
 
 	/**
 	 * The cultivator {@code player} is talking with, if it is the entity they name, still in reach and still willing. A talk
-	 * that lapsed while the player read (nobody else having taken it up) picks up again.
+	 * that lapsed while the player read (nobody else having taken it up) picks up again. When they won't go on, the player is
+	 * told why and their talk window closes ({@link #breakOff}); one that is gone or out of reach the client closes itself.
 	 */
 	private static CultivatorNpc partner(ServerPlayer player, int entityId) {
 		Entity entity = player.level().getEntity(entityId);
 		if (!(entity instanceof CultivatorNpc npc) || !npc.isAlive() || player.isSpectator()) return null;
-		if (npc.distanceToSqr(player) > KEEP * KEEP || refusal(player, npc) != null) {
+		if (npc.distanceToSqr(player) > KEEP * KEEP) {
 			npc.endTalk(player);
 			return null;
 		}
+		String refusal = refusal(player, npc);
+		if (refusal != null) {
+			npc.endTalk(player);
+			breakOff(player, npc, refusal);
+			return null;
+		}
 		Player other = npc.talkPartner();
-		if (other != null && other != player) return null;
+		if (other != null && other != player) {
+			breakOff(player, npc, ModLang.TALK_OCCUPIED);
+			return null;
+		}
 		return npc;
+	}
+
+	/**
+	 * {@code npc} won't talk with {@code player} any longer: their talk window closes, and the line of {@code key} says why over
+	 * the hotbar (shown by the client if this talk was still its own).
+	 */
+	public static void breakOff(ServerPlayer player, CultivatorNpc npc, String key) {
+		ModPackets.sendTalkClose(player, npc.getId(), Component.translatable(key, nameOf(npc)));
 	}
 
 	/** The player closed the talk. */
@@ -151,7 +176,12 @@ public final class TalkSystem {
 		TalkIntent intent = TalkIntent.byIndex(index);
 		if (npc == null || intent == null) return;
 		Standing standing = standing(player, npc);
-		if ((intents(standing) & intent.bit()) == 0) return;
+		if ((intents(standing) & intent.bit()) == 0) {
+			// Their standing changed since the wheel opened (suppression, a breakthrough): the wheel again, with what is on offer now.
+			npc.beginTalk(player);
+			ModPackets.sendTalkOpen(player, npc, npc.regard(player), intents(standing));
+			return;
+		}
 		npc.beginTalk(player);
 		switch (intent) {
 			case GREET -> greet(player, npc, standing);
@@ -213,15 +243,11 @@ public final class TalkSystem {
 		Regard.Entry entry = npc.regardEntry(player);
 		long today = Regard.day(npc.level().getGameTime());
 		String item = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
-		if (entry.giftDay == today && entry.giftItem.equals(item)) {
-			entry.giftCount++;
-		} else {
-			entry.giftDay = today;
-			entry.giftItem = item;
-			entry.giftCount = 0;
-		}
+		// Counted per item, so turning between two gifts doesn't make each fresh again.
+		int repeats = entry.giftsToday(item, today);
+		entry.recordGift(item, today);
 		int realm = npc.isMortal() ? 0 : CultivatorNpc.realmOf(npc.getRank()).ordinal();
-		int delta = giftRegard(worth, realm, entry.giftCount);
+		int delta = giftRegard(worth, realm, repeats);
 		if (!player.getAbilities().instabuild) stack.shrink(1);
 		npc.changeRegard(player, delta);
 		say(player, npc, line(delta <= 3 ? "gift.small" : delta <= 10 ? "gift.good" : "gift.great", npc), delta);
@@ -229,7 +255,7 @@ public final class TalkSystem {
 
 	/** The chance an insult starts a fight: likelier on the demonic path, and from someone stronger than you; never from the weaker. */
 	public static float provokeChance(Alignment.Faction faction, int theirRank, int yourRank) {
-		if (theirRank < yourRank - Stage.values().length) return 0; // a realm or more below you: they swallow it
+		if (theirRank <= yourRank - Stage.values().length) return 0; // a realm or more below you: they swallow it
 		float chance = switch (faction) {
 			case RIGHTEOUS -> 0.15f;
 			case NEUTRAL -> 0.35f;
@@ -275,8 +301,12 @@ public final class TalkSystem {
 		if (npc == null || topic == null) return;
 		Standing standing = standing(player, npc);
 		List<Reply> replies = replies(npc, standing);
-		if (replies.stream().noneMatch(r -> r.id() == topic.ordinal())) return;
 		npc.beginTalk(player);
+		if (replies.stream().noneMatch(r -> r.id() == topic.ordinal())) {
+			// No longer on offer (their standing changed): the box again, with the topics there are now.
+			ModPackets.sendTalkDialogue(player, npc, npc.regard(player), TalkIntent.ASK, speech(line("ask", npc, standing)), replies);
+			return;
+		}
 		Component answer = switch (topic) {
 			case SELF -> aboutSelf(npc);
 			case SECT -> aboutSect(npc);

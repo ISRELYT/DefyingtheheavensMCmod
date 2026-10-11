@@ -65,7 +65,7 @@ public class SealBlock extends BaseEntityBlock {
 	@Override
 	public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
 		if (context instanceof EntityCollisionContext entityContext && entityContext.getEntity() instanceof Player player
-				&& CultivationManager.forPlayer(player).isAbilityActive(Ability.QI_SENSE)) {
+				&& CultivationManager.forPlayer(player).isQiSenseOn()) {
 			return plate(state.getValue(FACE));
 		}
 		return Shapes.empty();

@@ -15,6 +15,12 @@
     "PortalShapeMixin",
     "SectClearingMixin",
     "ServerGamePacketListenerImplMixin",
+    "SoulEntityMixin",
+    "SoulLivingEntityMixin",
+    "SoulMobMixin",
+    "SoulPlayerMixin",
+    "SoulProjectileMixin",
+    "SoulServerPlayerMixin",
     "ServerPlayerAccessor",
     "WorldDimensionsMixin"
   ],

@@ -404,6 +404,80 @@ both flights for players), `Realm` (the sword/sec column), `CultivatorNpc` (`isS
 `client/mixin/LivingEntityRendererMixin` (the sideways stance), `client/mixin/ItemInHandLayerMixin` /
 `ItemInHandRendererMixin` (the hand left empty); tests in `SwordFlightGameTests`.
 
+## Soul Projection
+
+From **Nascent Soul Early**, a cultivator can send their nascent soul out of the body. Switch **Soul Projection** on (ability
+wheel or Abilities tab) while standing on steady, dry ground with at least 10% of your qi: you sit in meditation for
+**5 seconds** while the soul gathers itself (moving or being hurt breaks it off), then it rises out. Switch it again to
+call it home: it is drawn back along its tether for **5 seconds** and you stand up where your body sat. A chat line marks
+the day the soul forms, and the ability goes into the first empty slot of your wheel.
+
+- **The body** stays sitting cross-legged where you left it, in your skin and armor, with your health and your armor's
+  protection. You're told whenever it is hurt (a warning, and its health on screen), monsters nearby go for it, and if it
+  is slain your soul dies with it. Players can only hurt it where they could hurt you (PvP).
+- **The soul** is you, flying free of gravity through stone, wood and earth: it moves the way you look (look up and press
+  forward to rise), jump and sneak lift and lower it, sprint doubles its pace, and it carries its momentum. It has its own
+  hearts, **1 at Nascent Soul Early and 3 more every stage** (10 at Grand Perfection, 13 at Heavenly Being Early, 34 at
+  Four Axis Grand Perfection), and they never heal; coming home you have the body's health, not the soul's.
+- **The tether**, a thread of bright blue light from your body's chest to the soul, lets it go **32 / 48 / 64 / 96** blocks
+  through Nascent Soul's stages, 128-176 through Heavenly Being, 192-256 through Four Axis; it stretches against you as you
+  near its end.
+- **Qi**: half your realm's gathering a second at the body, rising to twice your gathering at the tether's end, and that
+  much again while possessing (so clothing, pills and the Upper Realm's dense qi all help; there it costs nothing net).
+  A Nascent Soul Early pool lasts about a minute at the tether's end. **Run dry and the soul snaps home at once** (no 5 s,
+  no penalty). Taking hold of a body costs 10% of your pool on top.
+- **What a soul can't do**: touch anything. No blocks, chests, items (it picks nothing up and drops nothing), plates or
+  tripwires; no meditating, no Inner Realm, no breakthroughs or tribulations (and you can't send the soul out during one),
+  no portals, rift or Spatial Gap; no Qi Flight, Sword Flight or Realm Suppress. Qi Sense is forced open: it is how a nascent
+  soul sees. Blasts, fire, lava, falls, drowning, suffocation, arrows and monsters can't harm it.
+- **Barriers**: a formation's barrier is qi, as the soul is. One that doesn't let you through and is stronger than you stops
+  the soul at its shell (and a soul forced across anyway is set back and loses 5% of its pool); one you could break, you may
+  pass, but it drains 2% of your pool a second while you're inside.
+
+**Who sees a soul.** Only Nascent Soul cultivators and above, and only with **Qi Sense** open: to them it is your skin as
+violet light, the colour shifting through deeper and paler violets, brightest at its edges (Fresnel glow), floating upright
+with its legs together trailing behind like a ghost's. To a Nascent Soul Early it is a faint violet haze; it clears with
+each stage, whole at Grand Perfection and above. Heavenly Beings and above also see the tether. Everyone else's client is
+never even sent the soul, so nothing on it can reveal one. A **Core Formation Grand Perfection** (or stronger) cultivator
+whose Consciousness Domain is open senses a soul that comes inside the domain without seeing it: a warning that a nascent
+soul is near, no outline, no name.
+
+**Harming a soul.** Only those who see it, by their own hand: a Nascent Soul cultivator (Qi Sense open) lands a quarter of
+a blow at Early, 40% at Mid, 55% at Late, 70% at Grand Perfection (it's a haze to them); a Heavenly Being or above lands it
+all, and can strike blind without Qi Sense. A Heavenly Being or above with Qi Sense open can also **strike the tether**:
+swing at the thread itself. It holds 20 plus the soul's own health, mends if left alone for 10 seconds, and when it is cut
+the soul is lost.
+
+**Losing the soul.** A cut tether, a slain body, a soul struck down, or **logging out within 10 seconds of harm to the soul
+or the body** (fleeing a fight) kills you where your body sat (your things fall there) and costs you the nascent soul: you
+fall to **Core Formation Grand Perfection** with no cultivation, and must form it again through the Nascent Soul
+tribulation. Logging out at peace, the server stopping, or a crash simply bring the soul home.
+
+**Possession.** Right-click a being at least **three realms below** your own (a Nascent Soul takes Qi Refining
+cultivators, mortals and beasts; a Heavenly Being, Foundation Building and below; Four Axis, Core Formation and below;
+monsters and animals count as mortals) to take it over: you look out through its eyes and move it with its own speed and
+strength (its melee is your attack), until you **sneak** to let go, your qi runs out, you call the soul home, or it pulls
+too far along the tether. Inside a body your soul can't be struck; if the body dies, the soul is thrown out unharmed (and
+exposed again). Not bosses, Wardens, mounts, named creatures, or another player's pets. Whatever dies in your hands dies by
+your hand (a possessed sect member walked into lava counts as murdered, not replaced). A possessed cultivator talks to no
+one, and breaks off any talk it was in.
+**A player's body is seized** instead (only where PvP is on): they die, and a body in their likeness takes their place with
+their realm's strength and all they carried (unless items are kept on death). You control that body until you let it go,
+when it collapses and everything it carried falls where it stands.
+
+**NPCs.** Cultivators of Nascent Soul and above sense souls as players do; below that a soul isn't there for them at all.
+Sect members who sense one go for a soul that comes onto their grounds, Nascent Souls striking for less, as players do.
+NPCs don't send out souls of their own yet.
+
+Code: `SoulProjection.java` (the rules: going out and back, the tether, qi, harm, severing, possession, who is sent a soul),
+`SoulBodyEntity.java` (the body left behind), `SoulVesselEntity.java` (a seized player's body), `SoulBarriers.java`
+(formation barriers), mixins `SoulPlayerMixin`, `SoulEntityMixin`, `SoulLivingEntityMixin`, `SoulMobMixin`,
+`SoulServerPlayerMixin` (only perceivers are sent it), `SoulProjectileMixin`; client `ClientSoul.java` (its flight, the
+tether's pull, striking tethers), `SoulRenderer.java` with core shader `shaders/core/soul.*` (drawn on the sense layer so it
+keeps its colour under Qi Sense), `SoulHud.java`, `SoulBodyRenderer` / `SoulVesselRenderer`, client mixins `SoulFlightMixin`,
+`SoulInputMixin`, `SoulRenderDispatcherMixin`; tests in `SoulProjectionGameTests`. Shader packs that replace core shaders
+(Iris) fall back to a plain violet translucent soul.
+
 ## More herbs
 
 Four more spirit herbs, for alchemy. The first three age exactly like ginseng (10 years per day up to 10,000, the same age
@@ -631,21 +705,23 @@ Right-click a cultivator to talk. The **talk wheel** opens round the crosshair w
 the hotbar; Ask opens the **dialogue box**, with their portrait and name plate (personal name, title, sect, realm), what
 they say, your regard, and numbered replies. The wheel folds into tabs on the box, so you can turn to a gift without
 leaving; Esc goes back to the wheel, and again ends the talk. They stop and face you while you talk; walking away (8
-blocks) or a fight ends it (`TalkSystem`, `TalkWheelScreen`, `DialogueScreen`).
+blocks) or a fight ends it, and if they break it off the window closes with a line over the hotbar saying why
+(`TalkSystem`, `TalkWheelScreen`, `DialogueScreen`).
 
 - **Names.** Every cultivator has a personal name ("Mo Lian", "Gu Hanyu"), worked out from its UUID (`NpcNames`).
 - **Standing.** Their realm against yours, as each side shows it, sets how they speak to you: 2+ realms above you,
   dismissive (no insults offered; they won't name their elders); a realm above, a senior; the same realm, "Fellow
   Daoist"; below you, deferential. A mortal player is spoken to as a mortal. Their path sets the tone: the righteous are
   formal, the neutral terse, the demonic mocking.
-- **Regard** (-100 to 100, five pips: Polite, Courteous, Warm, Trusted, Sworn friend) is what they think of you: their
-  paths' baseline (+10 between two of the same strong path, -10 when you lean the other way), plus their own regard,
-  plus their sect's standing with you. At -50 or lower they attack you if they think they can win (`Regard`).
+- **Regard** (-100 to 100, five pips: Polite from 20, Courteous 40, Warm 60, Trusted 80, Sworn friend 90) is what they
+  think of you: their paths' baseline (+10 between two of the same strong path, -10 when you lean the other way), plus
+  their own regard, plus their sect's standing with you. At -50 or lower they attack you if they think they can win
+  (`Regard`).
 
 | What you do | Regard |
 | --- | --- |
 | Greet them | +2, once a day |
-| Give them something (old herbs, pills, Cultivation Fruit; worth less to the stronger, and less for the same gift twice in a day) | +1 to +25 |
+| Give them something (old herbs, pills, Cultivation Fruit; worth less to the stronger, and less each time the same kind of gift comes again that day) | +1 to +25 |
 | Kill someone who was attacking them | +20 (+5 to their sect) |
 | Wake them from meditation (elders and the master on duty don't mind) | -2 |
 | Provoke them | -15, and they may attack: likelier on the demonic path or if they are stronger, never if a realm below you |
@@ -658,8 +734,9 @@ blocks) or a fight ends it (`TalkSystem`, `TalkWheelScreen`, `DialogueScreen`).
 - **Ask** about who they are, their sect (its size, path and master), who leads it (its elders by name), and the nearest
   other sect they know of (within 2,000 blocks: its name, path, direction and rough distance). The answers come from the
   world as it is.
-- They won't talk in a fight, in seclusion, while leaving for the sky, to an enemy of their path, or while talking to
-  someone else.
+- They won't talk in a fight, in seclusion, while leaving for the sky, to an enemy of their path, while talking to
+  someone else, or with another's soul inside them (Soul Projection: they just don't seem to hear you). If one of these
+  comes about mid-talk, they break it off.
 
 ### Cultivator clothing
 

@@ -16,7 +16,8 @@ public final class VoidFallHandler {
 		ServerLevel upper = server.getLevel(ModDimensions.UPPER_REALM);
 		if (upper == null) return;
 		for (ServerPlayer player : new ArrayList<>(upper.players())) {
-			if (player.isAlive() && !player.isSpectator() && player.getY() < VOID_FALL_Y) {
+			// A projected soul is kept above the floor by its own rules (see SoulProjection) and never falls out of the realm.
+			if (player.isAlive() && !player.isSpectator() && player.getY() < VOID_FALL_Y && !SoulProjection.isActive(player.getUUID())) {
 				try {
 					SpatialTrialHandler.beginDescension(player); // a running tribulation is abandoned on the way in
 				} catch (Exception e) {

@@ -17,8 +17,9 @@ public final class ClientCultivationData {
 	public static void update(int realm, int stage, double cultivation, double qi, boolean meditating, boolean lowerRealmBound,
 							  boolean inUpperRealm, int disabledAbilities, int pressureStages, double pressurePenalty,
 							  boolean mortal, int mortalStage, double tempering, int preparedRealm, double preparedBonus, double qiBoost,
-							  double pillResistance, double medicinalQi, int alignment, double gearQiBonus, int[] wheel) {
+							  double pillResistance, double medicinalQi, int alignment, double gearQiBonus, int[] wheel, int soulState) {
 		DATA.setState(Realm.byIndex(realm), Stage.byIndex(stage), cultivation);
+		DATA.setSoulState(com.example.defyingtheheavens.SoulProjection.State.byIndex(soulState));
 		DATA.setAlignment(alignment);
 		DATA.setGearQiBonus(gearQiBonus);
 		DATA.setMortal(mortal); // after setState, which marks a cultivator
@@ -56,6 +57,7 @@ public final class ClientCultivationData {
 		DATA.setLowerRealmBound(false);
 		DATA.setInUpperRealm(false);
 		DATA.setPressure(0, 0);
+		DATA.setSoulState(com.example.defyingtheheavens.SoulProjection.State.NONE);
 		meditating = false;
 	}
 

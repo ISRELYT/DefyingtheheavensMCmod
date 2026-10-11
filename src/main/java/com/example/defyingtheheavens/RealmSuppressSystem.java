@@ -152,7 +152,8 @@ public final class RealmSuppressSystem {
 
 	/** Pressing down on others: switched on, alive, in the world, with qi to spare. */
 	private static boolean isSuppressing(ServerPlayer player, PlayerCultivation c) {
-		return player.isAlive() && !player.isSpectator() && c.isAbilityActive(Ability.REALM_SUPPRESS) && !EXHAUSTED.contains(player.getUUID());
+		return player.isAlive() && !player.isSpectator() && c.isAbilityActive(Ability.REALM_SUPPRESS) && !EXHAUSTED.contains(player.getUUID())
+				&& !SoulProjection.isSoul(player); // a soul out of its body has no realm to bear down with
 	}
 
 	/**
@@ -231,7 +232,7 @@ public final class RealmSuppressSystem {
 
 	private static boolean canBePressed(LivingEntity target, Entity suppressor, UUID leaving) {
 		if (!target.isAlive() || target.isRemoved() || target instanceof ArmorStand || target.getUUID().equals(leaving)) return false;
-		if (target instanceof ServerPlayer player) return !player.isSpectator() && !player.isCreative();
+		if (target instanceof ServerPlayer player) return !player.isSpectator() && !player.isCreative() && !SoulProjection.isSoul(player);
 		// Map makers' invulnerable NPCs stay as they are, and a cultivator's own companions are spared.
 		if (target.isInvulnerable()) return false;
 		return !(target instanceof OwnableEntity pet) || !suppressor.getUUID().equals(pet.getOwnerUUID());

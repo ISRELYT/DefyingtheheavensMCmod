@@ -1,6 +1,8 @@
 {
   "replace": false,
   "values": [
-    "defying-the-heavens:spatial_pressure"
+    "defying-the-heavens:spatial_pressure",
+    "defying-the-heavens:soul_severed",
+    "defying-the-heavens:soul_seized"
   ]
 }

@@ -95,9 +95,29 @@ public final class TalkSession {
 	/** TALK_OPEN: the wheel opens. */
 	public static void open(TalkSession session) {
 		Minecraft mc = Minecraft.getInstance();
-		if (mc.screen != null && !(mc.screen instanceof TalkWheelScreen) && !(mc.screen instanceof DialogueScreen)) return;
+		if (mc.screen != null && !(mc.screen instanceof TalkWheelScreen) && !(mc.screen instanceof DialogueScreen)) {
+			// Another screen is up (it opened as the talk did): let them go rather than leave them standing for nothing.
+			session.sendEnd();
+			return;
+		}
 		current = session;
 		mc.setScreen(new TalkWheelScreen(session));
+	}
+
+	/**
+	 * TALK_CLOSE: they broke the talk off. Its window closes (without the usual goodbye: the server has ended it already) and
+	 * why is said over the hotbar, if it was still our talk with them, window open or just answered.
+	 */
+	public static void close(int entityId, Component reason) {
+		if (current == null || current.entityId != entityId) return;
+		TalkSession session = current;
+		current = null;
+		Minecraft mc = Minecraft.getInstance();
+		if (mc.screen instanceof TalkWheelScreen wheel && wheel.session == session
+				|| mc.screen instanceof DialogueScreen box && box.session == session) {
+			mc.setScreen(null);
+		}
+		mc.gui.setOverlayMessage(reason, false);
 	}
 
 	/** TALK_DIALOGUE: the dialogue box opens, or shows what they said next. */

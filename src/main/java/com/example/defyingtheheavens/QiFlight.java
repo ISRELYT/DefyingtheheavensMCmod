@@ -71,6 +71,15 @@ public final class QiFlight {
 			flightsChanged(p, true);
 		}
 
+		// A projected soul flies its own way (see SoulProjection); the permission only keeps the server from calling it "floating".
+		if (SoulProjection.isSoul(p)) {
+			SwordFlight.update(p, false);
+			if (!p.getAbilities().mayfly) {
+				p.getAbilities().mayfly = true;
+				p.onUpdateAbilities();
+			}
+			return 0;
+		}
 		if (p.isCreative() || p.isSpectator()) {
 			// Vanilla's flight again, at vanilla's speed (a ride doesn't carry over into creative).
 			SwordFlight.update(p, false);

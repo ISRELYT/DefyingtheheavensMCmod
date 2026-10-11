@@ -107,6 +107,9 @@ public enum Realm {
 	/** From Nascent Soul on, every minor stage is a bottleneck that needs its own Heavenly Tribulation. */
 	public boolean hasStageTribulations() { return ordinal() >= NASCENT_SOUL.ordinal(); }
 
+	/** From Nascent Soul on, the cultivator can send their nascent soul out of the body (see {@link SoulProjection}). */
+	public boolean canProjectSoul() { return ordinal() >= NASCENT_SOUL.ordinal(); }
+
 	public static Realm byIndex(int index) {
 		return values()[Math.max(0, Math.min(values().length - 1, index))];
 	}

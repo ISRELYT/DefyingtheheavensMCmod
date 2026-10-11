@@ -45,6 +45,11 @@ public final class ClientFormations {
 		formations = list;
 	}
 
+	/** The raised formations near the player, as last sent (a projected soul's flight keeps out of those it can't pass). */
+	public static List<Formation> nearby() {
+		return formations;
+	}
+
 	/** The formation whose shell holds {@code pos}, or null. */
 	public static Formation find(BlockPos pos) {
 		for (Formation formation : formations) {

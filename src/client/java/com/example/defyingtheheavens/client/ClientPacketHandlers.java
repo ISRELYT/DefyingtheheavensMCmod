@@ -6,11 +6,13 @@ import com.example.defyingtheheavens.ModPackets;
 import com.example.defyingtheheavens.NpcTitle;
 import com.example.defyingtheheavens.PlayerCultivation;
 import com.example.defyingtheheavens.Realm;
+import com.example.defyingtheheavens.SoulProjection;
 import com.example.defyingtheheavens.Stage;
 import com.example.defyingtheheavens.TalkIntent;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,9 +44,31 @@ public final class ClientPacketHandlers {
 			double gearQiBonus = buf.readDouble();
 			int[] wheel = new int[PlayerCultivation.WHEEL_SLOTS];
 			for (int i = 0; i < wheel.length; i++) wheel[i] = buf.readVarInt() - 1;
+			int soulState = buf.readVarInt();
 			client.execute(() -> ClientCultivationData.update(realm, stage, cultivation, qi, meditating, lowerRealmBound, inUpperRealm,
 					disabledAbilities, pressureStages, pressurePenalty, mortal, mortalStage, tempering, preparedRealm, preparedBonus, qiBoost,
-					pillResistance, medicinalQi, alignment, gearQiBonus, wheel));
+					pillResistance, medicinalQi, alignment, gearQiBonus, wheel, soulState));
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SOUL_SELF, (client, handler, buf, sender) -> {
+			SoulProjection.State state = SoulProjection.State.byIndex(buf.readVarInt());
+			int ticks = buf.readVarInt();
+			Vec3 body = new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble());
+			int radius = buf.readVarInt();
+			float health = buf.readFloat();
+			float max = buf.readFloat();
+			int host = buf.readVarInt() - 1;
+			float tether = buf.readFloat();
+			client.execute(() -> ClientSoul.self(state, ticks, body, radius, health, max, host, tether));
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SOUL_SEEN, (client, handler, buf, sender) -> {
+			int id = buf.readVarInt();
+			boolean out = buf.readBoolean();
+			Vec3 body = new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble());
+			int host = buf.readVarInt() - 1;
+			float tether = buf.readFloat();
+			client.execute(() -> ClientSoul.seen(id, out, body, host, tether));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SURGE, (client, handler, buf, sender) -> {
@@ -121,6 +145,12 @@ public final class ClientPacketHandlers {
 			}
 			TalkSession.Dialogue dialogue = new TalkSession.Dialogue(intent, line, replies);
 			client.execute(() -> TalkSession.dialogue(entity, regard, dialogue));
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.TALK_CLOSE, (client, handler, buf, sender) -> {
+			int entity = buf.readVarInt();
+			Component reason = buf.readComponent();
+			client.execute(() -> TalkSession.close(entity, reason));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.QI_ABSORPTION, (client, handler, buf, sender) -> {

@@ -35,9 +35,9 @@ public final class QiSense {
 	 * forget it when that stops.
 	 */
 	static void broadcastAbsorption(ServerPlayer meditator, PlayerCultivation c, double cultivationPerSecond) {
-		if (c.isAbilityActive(Ability.QI_SENSE)) ModPackets.sendQiAbsorption(meditator, meditator, cultivationPerSecond);
+		if (c.isQiSenseOn()) ModPackets.sendQiAbsorption(meditator, meditator, cultivationPerSecond);
 		for (ServerPlayer other : PlayerLookup.tracking(meditator)) {
-			if (CultivationManager.get(other).isAbilityActive(Ability.QI_SENSE)) {
+			if (CultivationManager.get(other).isQiSenseOn()) {
 				ModPackets.sendQiAbsorption(other, meditator, cultivationPerSecond);
 			}
 		}

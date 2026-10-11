@@ -3,6 +3,7 @@ package com.example.defyingtheheavens.client.mixin;
 import com.example.defyingtheheavens.CultivatorNpc;
 import com.example.defyingtheheavens.InnerBodyEntity;
 import com.example.defyingtheheavens.ModDimensions;
+import com.example.defyingtheheavens.SoulBodyEntity;
 import com.example.defyingtheheavens.client.ClientMeditationTracker;
 import com.example.defyingtheheavens.client.LotusPose;
 import com.example.defyingtheheavens.client.SwordFlightClient;
@@ -35,8 +36,8 @@ public abstract class HumanoidModelMixin {
 		boolean meditating = entity instanceof Player ? ClientMeditationTracker.isMeditating(entity.getUUID())
 				&& !ModDimensions.isInnerRealm(entity.level().dimension())
 				: entity instanceof CultivatorNpc npc && npc.isMeditating();
-		// A body left behind while its soul is in the Inner Realm sits the same way.
-		if (!meditating && !(entity instanceof InnerBodyEntity)) return;
+		// A body left behind while its soul is in the Inner Realm, or out of it (Soul Projection), sits the same way.
+		if (!meditating && !(entity instanceof InnerBodyEntity) && !(entity instanceof SoulBodyEntity)) return;
 		LotusPose.apply((HumanoidModel<?>) (Object) this);
 	}
 }

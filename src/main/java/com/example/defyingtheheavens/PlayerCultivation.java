@@ -101,6 +101,13 @@ public class PlayerCultivation {
 	private double medicinalQi;
 	/** While the soul is in the Inner Realm: where the body is (see {@link InnerRealm}); null otherwise. Saved. */
 	private net.minecraft.nbt.CompoundTag innerReturn;
+	/**
+	 * While the nascent soul is out of the body (see {@link SoulProjection}): where the body sits and how it was. Saved, so a crash
+	 * or a stop with the soul out still ends with the player back in their body; null otherwise.
+	 */
+	private net.minecraft.nbt.CompoundTag soulReturn;
+	/** The nascent soul's state ({@link SoulProjection.State} ordinal): synced, never saved. */
+	private int soulState;
 
 	/** The cultivator's path, {@link Alignment#MIN} (devil) to {@link Alignment#MAX} (saint); saved and synced. */
 	private int alignment;
@@ -219,6 +226,52 @@ public class PlayerCultivation {
 
 	public void setInnerReturn(net.minecraft.nbt.CompoundTag back) { innerReturn = back; }
 
+	public net.minecraft.nbt.CompoundTag getSoulReturn() { return soulReturn; }
+
+	public void setSoulReturn(net.minecraft.nbt.CompoundTag back) { soulReturn = back; }
+
+	public SoulProjection.State getSoulState() { return SoulProjection.State.byIndex(soulState); }
+
+	public void setSoulState(SoulProjection.State state) { soulState = state.ordinal(); }
+
+	/** The nascent soul is out of the body (flying free, possessing, or on its way back), not merely gathering to leave. */
+	public boolean isSoulOut() {
+		SoulProjection.State state = getSoulState();
+		return state == SoulProjection.State.PROJECTED || state == SoulProjection.State.RECALLING;
+	}
+
+	/** Qi Sense is open: switched on, or forced open while the soul is out (it is how a nascent soul sees). */
+	public boolean isQiSenseOn() {
+		return Ability.QI_SENSE.isUnlocked(this) && (isAbilityEnabled(Ability.QI_SENSE) || isSoulOut());
+	}
+
+	// --- Soul Projection's numbers (see SoulProjection) ---
+
+	/** The rank Soul Projection reckons from: the effective one, and never below Nascent Soul Early. */
+	private int soulRank() {
+		return Math.max(rank(Realm.NASCENT_SOUL, Stage.EARLY), effectiveRank());
+	}
+
+	/** Hearts the projected soul holds: 1 at Nascent Soul Early, 3 more each stage (10 at Grand Perfection, 34 at Four Axis's). */
+	public int soulHearts() {
+		return 1 + 3 * (soulRank() - rank(Realm.NASCENT_SOUL, Stage.EARLY));
+	}
+
+	/** How far (blocks) the tether lets the soul stray from its body. */
+	public int soulTetherRadius() {
+		return SoulProjection.TETHER_RADII[Math.min(SoulProjection.TETHER_RADII.length - 1, soulRank() - rank(Realm.NASCENT_SOUL, Stage.EARLY))];
+	}
+
+	/**
+	 * Qi a second the soul costs at {@code reach} (0 at the body, 1 at the tether's end): half the realm's own gathering at the
+	 * body, twice it at the end of the tether, and that much again on top while possessing. Reckoned from the realm's plain
+	 * gathering, so whatever adds to gathering (clothing, pills, the Upper Realm's dense qi) helps keep the soul out.
+	 */
+	public double soulCostPerSecond(double reach, boolean possessing) {
+		double base = CultivationStats.qiGather(getEffectiveRealm(), getEffectiveStage());
+		return base * (0.5 + 1.5 * Math.max(0, Math.min(1, reach))) + (possessing ? base : 0);
+	}
+
 	public void setMedicinalQi(double amount) { medicinalQi = Math.max(0, amount); }
 
 	/**
@@ -318,7 +371,7 @@ public class PlayerCultivation {
 	}
 
 	/** {@link #sustainedRank()} less the stages another cultivator's pressure takes off; drives stats, qi and the domain. */
-	private int effectiveRank() { return Math.max(0, sustainedRank() - pressureStages); }
+	public int effectiveRank() { return Math.max(0, sustainedRank() - pressureStages); }
 
 	public Realm getEffectiveRealm() { return Realm.byIndex(effectiveRank() / Stage.values().length); }
 	public Stage getEffectiveStage() { return Stage.byIndex(effectiveRank() % Stage.values().length); }
@@ -585,6 +638,20 @@ public class PlayerCultivation {
 		cultivation = 0;
 	}
 
+	/**
+	 * The nascent soul is lost (its tether cut, its body slain, the soul itself destroyed): whatever was built on it goes with it,
+	 * down to Core Formation Grand Perfection with no cultivation, so the soul has to be formed again (the Nascent Soul
+	 * tribulation). A breakthrough pill's power is spent too.
+	 */
+	public void loseNascentSoul() {
+		if (mortal || realm.ordinal() < Realm.NASCENT_SOUL.ordinal()) return;
+		realm = Realm.CORE_FORMATION;
+		stage = Stage.GRAND_PERFECTION;
+		cultivation = 0;
+		preparedRealm = null;
+		preparedBonus = 0;
+	}
+
 	/** "Nascent Soul - Mid" style name. */
 	public static Component rankName(Realm realm, Stage stage) {
 		return Component.empty().append(realm.getDisplayName()).append(" - ").append(stage.getDisplayName());
@@ -605,6 +672,7 @@ public class PlayerCultivation {
 		tag.putDouble("PillResistance", pillResistance);
 		tag.putDouble("MedicinalQi", medicinalQi);
 		if (innerReturn != null) tag.put("InnerReturn", innerReturn.copy());
+		if (soulReturn != null) tag.put("SoulReturn", soulReturn.copy());
 		tag.putInt("Realm", realm.ordinal());
 		tag.putInt("Stage", stage.ordinal());
 		tag.putDouble("Cultivation", cultivation);
@@ -646,6 +714,7 @@ public class PlayerCultivation {
 		c.setPillResistance(tag.getDouble("PillResistance"));
 		c.medicinalQi = Math.max(0, tag.getDouble("MedicinalQi"));
 		c.innerReturn = tag.contains("InnerReturn") ? tag.getCompound("InnerReturn").copy() : null;
+		c.soulReturn = tag.contains("SoulReturn") ? tag.getCompound("SoulReturn").copy() : null;
 		c.lowerRealmBound = tag.getBoolean("LowerRealmBound");
 		c.pendingTrial = SpatialTrialHandler.Route.byName(tag.getString("SpatialTrial"));
 		c.fallProtected = tag.getBoolean("FallProtected");

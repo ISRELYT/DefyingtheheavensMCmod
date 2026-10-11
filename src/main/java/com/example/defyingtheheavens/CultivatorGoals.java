@@ -200,6 +200,8 @@ public final class CultivatorGoals {
 		private boolean valid(LivingEntity target) {
 			if (target == null || !target.isAlive() || target.isRemoved() || target.level() != npc.level()) return false;
 			if (target instanceof Player player && (player.isCreative() || player.isSpectator())) return false;
+			// A soul it can't sense isn't there for it; one hidden inside the body it possesses can't be struck (strike the body).
+			if (!npc.senses(target) || target instanceof Player player && SoulProjection.isSoul(player) && player.isPassenger()) return false;
 			if (npc.isAlly(target) || npc.shouldFlee()) return false;
 			// A leashed member chases only so far past its territory, but anywhere within it: when the whole sect turns out
 			// (SectManager#alert), members come from the far side of the grounds.
@@ -855,6 +857,55 @@ public final class CultivatorGoals {
 		@Override
 		public boolean canContinueToUse() {
 			return false; // the target stays with the combat goal until it's dealt with
+		}
+	}
+
+	/**
+	 * A sect member who can sense a projected nascent soul (Nascent Soul and above, see CultivatorNpc#senses) goes for one that
+	 * comes onto the grounds: a soul there is a spy, or worse. Those weaker than it still strike at it, for less (it is a haze to
+	 * them, see SoulProjection#harmFactor).
+	 */
+	public static class SoulWardGoal extends Goal {
+		private final CultivatorNpc npc;
+		private int scanIn;
+
+		public SoulWardGoal(CultivatorNpc npc) {
+			this.npc = npc;
+			setFlags(EnumSet.of(Flag.TARGET));
+		}
+
+		@Override
+		public boolean canUse() {
+			if (npc.getTarget() != null || npc.getLifecycle() != CultivatorNpc.Lifecycle.SECT || npc.shouldFlee() || --scanIn > 0) return false;
+			scanIn = 20;
+			return find() != null;
+		}
+
+		private Player find() {
+			Sect sect = npc.sect();
+			if (sect == null || npc.isMortal() || npc.sustainedRank() < PlayerCultivation.rank(Realm.NASCENT_SOUL, Stage.EARLY)) return null;
+			Player best = null;
+			double bestDistance = Double.MAX_VALUE;
+			for (Player soul : ConsciousnessDomainHandler.entitiesIn(npc, Math.min(npc.domainRadius(), 48), Player.class,
+					p -> p.isAlive() && SoulProjection.isSoul(p) && !p.isPassenger() && sect.inTerritory(p.blockPosition()))) {
+				double d = npc.distanceToSqr(soul);
+				if (d < bestDistance) {
+					best = soul;
+					bestDistance = d;
+				}
+			}
+			return best;
+		}
+
+		@Override
+		public void start() {
+			npc.setMeditating(false);
+			npc.setTarget(find());
+		}
+
+		@Override
+		public boolean canContinueToUse() {
+			return false;
 		}
 	}
 

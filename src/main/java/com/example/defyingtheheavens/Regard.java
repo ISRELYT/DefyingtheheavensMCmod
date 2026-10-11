@@ -1,7 +1,11 @@
 package com.example.defyingtheheavens;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.util.Mth;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * What a cultivator thinks of a player, from {@link #MIN} to {@link #MAX} (see {@link TalkSystem}). Three parts add up:
@@ -12,13 +16,15 @@ import net.minecraft.util.Mth;
  *   <li>its sect's <b>standing</b> with the player ({@link Sect#standing}), from what the player has done to the sect as a
  *   whole: killing a member, robbing the treasury, fighting beside one. Sect grudges don't fade.</li>
  * </ul>
- * Shown as five pips, one per {@link #PER_PIP}: Polite, Courteous, Warm, Trusted, Sworn; below zero, Resentful, and at
- * {@link #HOSTILE} or lower they attack the player if they think they can win.
+ * Shown as five pips, one per {@link #PER_PIP}: Polite, Courteous, Warm, Trusted, and Sworn from {@link #SWORN} (so a sworn
+ * friend stays one for days without a visit, not just at the very top); below zero, Resentful, and at {@link #HOSTILE} or
+ * lower they attack the player if they think they can win.
  */
 public final class Regard {
 	public static final int MIN = -100;
 	public static final int MAX = 100;
 	public static final int PER_PIP = 20;
+	public static final int SWORN = 90;
 	public static final int HOSTILE = -50;
 
 	public static final int GREET = 2;
@@ -37,9 +43,24 @@ public final class Regard {
 		/** The game day {@link #value} was last brought up to date (its drift toward zero). */
 		public long day;
 		public long greetDay = -1;
-		public String giftItem = "";
+		/** The game day of {@link #gifts}. */
 		public long giftDay = -1;
-		public int giftCount;
+		/** How many of each item (by id) it has been given on {@link #giftDay}: the same gift again counts for less. */
+		public final Map<String, Integer> gifts = new HashMap<>();
+
+		/** How many of {@code item} it has already been given today. */
+		public int giftsToday(String item, long today) {
+			return giftDay == today ? gifts.getOrDefault(item, 0) : 0;
+		}
+
+		/** One more {@code item} given today. */
+		public void recordGift(String item, long today) {
+			if (giftDay != today) {
+				gifts.clear();
+				giftDay = today;
+			}
+			gifts.merge(item, 1, Integer::sum);
+		}
 
 		/** Brings {@link #value} up to {@code today}: a point a day toward zero. */
 		public int current(long today) {
@@ -56,9 +77,10 @@ public final class Regard {
 			tag.putInt("Value", value);
 			tag.putLong("Day", day);
 			tag.putLong("GreetDay", greetDay);
-			tag.putString("GiftItem", giftItem);
 			tag.putLong("GiftDay", giftDay);
-			tag.putInt("GiftCount", giftCount);
+			CompoundTag giftTag = new CompoundTag();
+			for (Map.Entry<String, Integer> gift : gifts.entrySet()) giftTag.putInt(gift.getKey(), gift.getValue());
+			tag.put("Gifts", giftTag);
 			return tag;
 		}
 
@@ -67,9 +89,14 @@ public final class Regard {
 			entry.value = tag.getInt("Value");
 			entry.day = tag.getLong("Day");
 			entry.greetDay = tag.getLong("GreetDay");
-			entry.giftItem = tag.getString("GiftItem");
 			entry.giftDay = tag.getLong("GiftDay");
-			entry.giftCount = tag.getInt("GiftCount");
+			if (tag.contains("Gifts", Tag.TAG_COMPOUND)) {
+				CompoundTag giftTag = tag.getCompound("Gifts");
+				for (String item : giftTag.getAllKeys()) entry.gifts.put(item, giftTag.getInt(item));
+			} else if (!tag.getString("GiftItem").isEmpty()) {
+				// Saved before gifts were counted per item: the one remembered was given its repeats plus once.
+				entry.gifts.put(tag.getString("GiftItem"), tag.getInt("GiftCount") + 1);
+			}
 			return entry;
 		}
 	}
@@ -93,9 +120,9 @@ public final class Regard {
 		return Mth.clamp(regard, MIN, MAX);
 	}
 
-	/** Pips shown, 0 to 5 (none below zero). */
+	/** Pips shown, 0 to 5 (none below zero; the fifth from {@link #SWORN}). */
 	public static int pips(int regard) {
-		return Mth.clamp(regard / PER_PIP, 0, 5);
+		return regard >= SWORN ? 5 : Mth.clamp(regard / PER_PIP, 0, 4);
 	}
 
 	/** The word for a regard: hostile, resentful, indifferent, polite, courteous, warm, trusted, sworn. */

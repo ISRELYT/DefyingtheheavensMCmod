@@ -1,11 +1,13 @@
 package com.example.defyingtheheavens.client.mixin;
 
+import com.example.defyingtheheavens.client.ClientSoul;
 import com.example.defyingtheheavens.client.SenseOverlay;
 import net.minecraft.client.renderer.GameRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Qi Sense's monochrome and the senses' overlay, once the world and hand are drawn: just before vanilla lays the entity
@@ -16,5 +18,11 @@ public abstract class GameRendererMixin {
 	@Inject(method = "render(FJZ)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;doEntityOutline()V"))
 	private void dth$senses(float partialTicks, long nanoTime, boolean renderLevel, CallbackInfo ci) {
 		SenseOverlay.beforeEntityOutline(partialTicks);
+	}
+
+	/** A projected soul touches no block, so none is outlined under its gaze. */
+	@Inject(method = "shouldRenderBlockOutline", at = @At("HEAD"), cancellable = true)
+	private void dth$soulTouchesNoBlock(CallbackInfoReturnable<Boolean> cir) {
+		if (ClientSoul.isOut()) cir.setReturnValue(false);
 	}
 }

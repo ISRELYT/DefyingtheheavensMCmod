@@ -1,6 +1,5 @@
 package com.example.defyingtheheavens.client;
 
-import com.example.defyingtheheavens.Ability;
 import com.example.defyingtheheavens.CultivatorNpc;
 import com.example.defyingtheheavens.DefyingTheHeavens;
 import com.example.defyingtheheavens.Realm;
@@ -130,7 +129,8 @@ public final class QiSenseClientHandler {
 
 	public static boolean isActive() {
 		Minecraft mc = Minecraft.getInstance();
-		return mc.player != null && !mc.player.isSpectator() && ClientCultivationData.get().isAbilityActive(Ability.QI_SENSE);
+		// Switched on, or forced open while the soul is out of the body (it is how a nascent soul sees; see SoulProjection).
+		return mc.player != null && !mc.player.isSpectator() && ClientCultivationData.get().isQiSenseOn();
 	}
 
 	/** From the QI_ABSORPTION packet: {@code id} is meditating and drawing qi in at {@code rate} cultivation per second. */

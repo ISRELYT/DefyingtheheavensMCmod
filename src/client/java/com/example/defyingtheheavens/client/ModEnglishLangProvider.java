@@ -71,6 +71,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModEntities.TRIBULATION_LIGHTNING, "Tribulation Lightning");
 		t.add(ModEntities.INNER_BODY, "Meditating Body");
 		t.add(ModEntities.HEART_DEMON, "Heart Demon");
+		t.add(ModEntities.SOUL_BODY, "Body");
+		t.add(ModEntities.SOUL_VESSEL, "Seized Body");
 		t.add(ModBlocks.SOUL_CRYSTAL, "Soul Crystal");
 
 		// Blocks
@@ -93,6 +95,11 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.biomeKey("spatial_gap"), "Spatial Gap");
 		t.add(ModLang.DEATH_SPATIAL_PRESSURE, "%1$s was crushed by spatial pressure");
 		t.add(ModLang.DEATH_SPATIAL_PRESSURE + ".player", "%1$s was crushed by spatial pressure while fighting %2$s");
+		t.add(ModLang.DEATH_SOUL_SEVERED, "%1$s's nascent soul was severed from their body");
+		t.add(ModLang.DEATH_SOUL_SEVERED + ".player", "%1$s's nascent soul was severed from their body by %2$s");
+		t.add(ModLang.DEATH_SOUL_SEIZED, "%1$s's body was seized by %2$s's nascent soul");
+		t.add(ModLang.DEATH_SOUL_SEIZED + ".item", "%1$s's body was seized by %2$s's nascent soul");
+		t.add(ModLang.DEATH_SOUL_SEIZED + ".player", "%1$s's body was seized by %2$s's nascent soul");
 
 		// Spatial Gap, Realm Suppression and portals
 		t.add(ModLang.MSG_GAP_ASCEND, "Torn into the Spatial Gap! Endure %s seconds to ascend.");
@@ -194,6 +201,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case REALM_SUPPRESS -> "Realm Suppress";
 				case INNER_REALM -> "Inner Realm";
 				case SWORD_FLIGHT -> "Sword Flight";
+				case SOUL_PROJECTION -> "Soul Projection";
 			});
 			t.add(key + ".description", switch (ability) {
 				case QI_SUSTENANCE -> "Qi keeps you fed. Hunger stays full.";
@@ -203,6 +211,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case REALM_SUPPRESS -> "Your realm crushes weaker beings within %s blocks, harder the weaker they are. Costs qi per target.";
 				case INNER_REALM -> "After 10 s of meditation your soul turns inward (+50% cultivation). Walk freely; stop meditating to return. Harm to your body pulls you back.";
 				case SWORD_FLIGHT -> "Hold a sword and double-tap jump to ride it, at a cost of %s qi/s. Cheaper than Qi Flight but slower (75%% of its speed, at every realm); the sword takes no wear. Switching it on switches Qi Flight off.";
+				case SOUL_PROJECTION -> "Send your nascent soul out of your body (5 s to leave, 5 s to return) while your body sits on. It flies through walls on %s hearts, within %s blocks of your body, for %s-%s qi/s (more the farther it goes). Right-click a being three realms below you to possess it. If its tether is cut or your body slain, you die and fall to Core Formation.";
 			});
 		}
 		t.add(ModLang.METHODS_TITLE, "Cultivation Methods");
@@ -529,6 +538,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add("cultivation.defying-the-heavens.talk.path.neutral", "neutral");
 		t.add("cultivation.defying-the-heavens.talk.path.righteous", "righteous");
 		t.add("cultivation.defying-the-heavens.talk.pick", "Click, or press 1-%s");
+		t.add("cultivation.defying-the-heavens.talk.possessed", "%s doesn't seem to hear you.");
 		t.add("cultivation.defying-the-heavens.talk.regard", "Regard");
 		t.add("cultivation.defying-the-heavens.talk.regard.courteous", "Courteous");
 		t.add("cultivation.defying-the-heavens.talk.regard.hostile", "Hostile");
@@ -623,5 +633,41 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_TRUST_UNKNOWN, "No cultivator called %s has been seen in this world.");
 		t.add(ModLang.MSG_TRUST_FULL, "A formation can know at most %s cultivators.");
 		t.add(ModLang.MSG_TRUST_SELF, "The formation already answers to you.");
+
+		// Soul Projection
+		t.add(ModLang.MSG_SOUL_GAINED, "Your nascent soul has formed, and can leave your body: Soul Projection, on the ability wheel or the Abilities tab.");
+		t.add(ModLang.MSG_SOUL_GATHERING, "Your nascent soul gathers itself. Hold still (%s s)...");
+		t.add(ModLang.MSG_SOUL_CANCELLED, "Your soul settles back into your body.");
+		t.add(ModLang.MSG_SOUL_MOVED, "You moved: your soul settles back into your body.");
+		t.add(ModLang.MSG_SOUL_NOT_HERE, "Your soul can't leave your body here.");
+		t.add(ModLang.MSG_SOUL_GROUND, "You need steady, dry ground to send out your soul.");
+		t.add(ModLang.MSG_SOUL_LOW_QI, "Not enough qi: your soul needs %s%% of your pool to leave.");
+		t.add(ModLang.MSG_SOUL_OUT, "Your nascent soul leaves your body.");
+		t.add(ModLang.MSG_SOUL_RECALLING, "Your soul returns along its tether (%s s)...");
+		t.add(ModLang.MSG_SOUL_BACK, "Your soul is back in your body.");
+		t.add(ModLang.MSG_SOUL_NO_QI, "Your qi is spent: your soul snaps back into your body.");
+		t.add(ModLang.MSG_SOUL_BUSY, "Not while your soul is out of your body.");
+		t.add(ModLang.MSG_SOUL_LOST, "Your nascent soul is lost. You fall to %s.");
+		t.add(ModLang.MSG_SOUL_DESTROYED, "Your nascent soul was destroyed.");
+		t.add(ModLang.MSG_SOUL_SEVERED, "Your soul's tether was cut.");
+		t.add(ModLang.MSG_SOUL_BODY_SLAIN, "Your body was slain while your soul was away.");
+		t.add(ModLang.MSG_SOUL_BODY_GONE, "Your body is gone: your soul has nothing to return to.");
+		t.add(ModLang.MSG_SOUL_FLED, "You fled a fight with your soul out of your body: its tether snapped.");
+		t.add(ModLang.MSG_SOUL_BODY_HURT, "Your body is under attack! (%s / %s)");
+		t.add(ModLang.MSG_SOUL_TETHER_STRUCK, "%s strikes at your tether!");
+		t.add(ModLang.MSG_SOUL_SENSED, "You sense a nascent soul nearby.");
+		t.add(ModLang.MSG_SOUL_BARRIER, "A barrier of qi turns your soul back.");
+		t.add(ModLang.MSG_POSSESS_START, "You take hold of %s. Sneak to let go.");
+		t.add(ModLang.MSG_POSSESS_CANNOT, "Your soul can't take hold of that.");
+		t.add(ModLang.MSG_POSSESS_PVP, "You can't seize another player's body here.");
+		t.add(ModLang.MSG_POSSESS_TOO_STRONG, "Too strong: you can only possess beings three realms below your own.");
+		t.add(ModLang.MSG_POSSESS_QI, "Not enough qi: taking hold of a body costs %s%% of your pool.");
+		t.add(ModLang.MSG_POSSESS_EJECTED, "The body you held is dead: your soul is thrown out, exposed.");
+		t.add(ModLang.MSG_POSSESS_TETHER, "Your tether pulls your soul out of the body.");
+		t.add(ModLang.HUD_SOUL_GATHERING, "Leaving your body... %s s");
+		t.add(ModLang.HUD_SOUL_RECALLING, "Returning to your body... %s s");
+		t.add(ModLang.HUD_SOUL_TETHER, "Tether %s / %s");
+		t.add(ModLang.HUD_SOUL_BODY, "Body %s / %s");
+		t.add(ModLang.HUD_SOUL_POSSESSING, "In %s (sneak to let go)");
 	}
 }
