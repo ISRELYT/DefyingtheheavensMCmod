@@ -50,7 +50,7 @@ public final class Sect {
 		}
 	}
 
-	public enum Post { MASTER_SEAT, MEDITATION, TREASURY, CORE, DWELLING, COURTYARD, GATE }
+	public enum Post { MASTER_SEAT, MEDITATION, TREASURY, CORE, DWELLING, COURTYARD, GATE, GATE_GUARD }
 
 	public final UUID id;
 	public String name = "";
@@ -82,7 +82,10 @@ public final class Sect {
 		return list.isEmpty() ? core : list.get(Math.floorMod(index, list.size()));
 	}
 
-	/** Member {@code index}'s home: a dwelling of its own (the master's is the seat in the main hall). */
+	/**
+	 * Member {@code index}'s home: an elder's house, or for a disciple a mat in the meditation hall (the master's is the seat
+	 * in the main hall; see SectStructure).
+	 */
 	public BlockPos dwelling(int index) {
 		if (index < 0) return post(Post.MASTER_SEAT, 0);
 		return post(Post.DWELLING, index);
@@ -162,7 +165,10 @@ public final class Sect {
 		return members.values().stream().filter(m -> m.title == NpcTitle.SECT_MASTER).findFirst().orElse(null);
 	}
 
-	/** Where this member stands guard or sits, by title: elders spread over the treasury and the core, in seniority order. */
+	/**
+	 * Where this member stands guard or sits, by title: elders spread over the treasury and the core, in seniority order; the
+	 * gate guards at the gates (see {@link #guardPost}); anyone else at home.
+	 */
 	public BlockPos dutyPost(Member member) {
 		if (member.title == NpcTitle.SECT_MASTER) return post(Post.MASTER_SEAT, 0);
 		if (member.title == NpcTitle.GRAND_ELDER || member.title == NpcTitle.ELDER) {
@@ -171,7 +177,23 @@ public final class Sect {
 			int index = elders.indexOf(member);
 			return index % 2 == 0 ? post(Post.TREASURY, index / 2) : post(Post.CORE, index / 2);
 		}
-		return dwelling(member.home);
+		BlockPos guard = guardPost(member);
+		return guard != null ? guard : dwelling(member.home);
+	}
+
+	/**
+	 * Where this member stands as a gate guard, or null if it is not one: the strongest Outer Disciples, in seniority order,
+	 * take the gate-guard posts (two at the gate, then one at each torii, then the second at each; see SectStructure) for as
+	 * many posts as there are. Sects laid out before gate guards existed have none.
+	 */
+	public BlockPos guardPost(Member member) {
+		if (member.title != NpcTitle.OUTER_DISCIPLE) return null;
+		List<BlockPos> guards = posts(Post.GATE_GUARD);
+		if (guards.isEmpty()) return null;
+		List<Member> outer = new ArrayList<>(members.values().stream().filter(m -> m.title == NpcTitle.OUTER_DISCIPLE).toList());
+		outer.sort(SENIORITY);
+		int index = outer.indexOf(member);
+		return index >= 0 && index < guards.size() ? guards.get(index) : null;
 	}
 
 	// --- Saving ---

@@ -57,6 +57,15 @@ public class CultivationScreen extends Screen {
 	private static final int SWITCH_H = 14;
 	/** Pixels the Abilities tab moves per mouse-wheel notch. */
 	private static final int SCROLL_STEP = 14;
+	/** The Abilities tab's content stops above its button (Arrange Wheel / Ability List). */
+	private static final int ABILITIES_BOTTOM = HEIGHT - 38;
+	/** The wheel editor: slot ring, slot radius, and the ability palette's cells. */
+	private static final int EDIT_RING = 52;
+	private static final int EDIT_SLOT = 12;
+	private static final int EDIT_BACKDROP = EDIT_RING + EDIT_SLOT + 5;
+	private static final int CELL = 22;
+	private static final int CELL_GAP = 4;
+	private static final int PALETTE_X = 162;
 	/** Right edges of the Base and Realm columns in the Stats tab (Current ends at the panel's inner margin). */
 	private static final int BASE_RIGHT = 138;
 	private static final int BONUS_RIGHT = 190;
@@ -82,13 +91,20 @@ public class CultivationScreen extends Screen {
 		}
 	}
 
-	/** Reopening the menu returns to the tab it was closed on. */
+	/** Reopening the menu returns to the tab it was closed on, and the Abilities tab to its list or its wheel editor. */
 	private static Tab tab = Tab.CULTIVATION;
+	private static boolean arranging;
 
 	private int left;
 	private int top;
 	private Button meditateButton;
 	private Button breakthroughButton;
+	private Button wheelButton;
+	/** The wheel editor's palette as drawn this frame, for {@link #mouseClicked}. Empty unless arranging. */
+	private final List<PaletteCell> palette = new ArrayList<>();
+	/** The ability being dragged in the wheel editor (null: none), and the slot it was lifted from (-1: the palette). */
+	private Ability dragged;
+	private int dragFrom = -1;
 	/** Where each ability's switch was drawn this frame, for {@link #mouseClicked}. Empty on other tabs. */
 	private final List<AbilitySwitch> switches = new ArrayList<>();
 	/** How far the Abilities tab is scrolled, in pixels, and how far it can go (0 when everything fits). */
@@ -98,6 +114,12 @@ public class CultivationScreen extends Screen {
 	private record AbilitySwitch(Ability ability, int x, int y) {
 		boolean contains(double mouseX, double mouseY) {
 			return mouseX >= x && mouseX < x + SWITCH_W && mouseY >= y && mouseY < y + SWITCH_H;
+		}
+	}
+
+	private record PaletteCell(Ability ability, int x, int y) {
+		boolean contains(double mouseX, double mouseY) {
+			return mouseX >= x && mouseX < x + CELL && mouseY >= y && mouseY < y + CELL;
 		}
 	}
 
@@ -135,6 +157,13 @@ public class CultivationScreen extends Screen {
 						b -> ClientPlayNetworking.send(ModPackets.BREAKTHROUGH, PacketByteBufs.create()))
 				.bounds(left + WIDTH - 124, top + HEIGHT - 32, 112, 20).build());
 
+		wheelButton = addRenderableWidget(Button.builder(Component.empty(), b -> {
+					arranging = !arranging;
+					dragged = null;
+					updateButtons();
+				})
+				.bounds(left + (WIDTH - 112) / 2, top + HEIGHT - 32, 112, 20).build());
+
 		updateButtons();
 	}
 
@@ -143,12 +172,14 @@ public class CultivationScreen extends Screen {
 		updateButtons();
 	}
 
-	/** Meditate and Breakthrough belong to the Cultivation tab. */
+	/** Meditate and Breakthrough belong to the Cultivation tab; Arrange Wheel to the Abilities tab, once one is awakened. */
 	private void updateButtons() {
 		if (meditateButton == null) return;
 		boolean progressTab = tab == Tab.CULTIVATION;
 		meditateButton.visible = progressTab;
 		breakthroughButton.visible = progressTab;
+		wheelButton.visible = tab == Tab.ABILITIES && !awakened().isEmpty();
+		wheelButton.setMessage(Component.translatable(arranging ? ModLang.BTN_ABILITY_LIST : ModLang.BTN_ARRANGE_WHEEL));
 		meditateButton.setMessage(Component.translatable(
 				ClientCultivationData.isMeditating() ? ModLang.BTN_STOP : ModLang.BTN_MEDITATE));
 		breakthroughButton.active = ClientCultivationData.get().canBreakthrough() && !ClientTribulationData.isActive();
@@ -180,6 +211,7 @@ public class CultivationScreen extends Screen {
 
 		Player player = minecraft == null ? null : minecraft.player;
 		switches.clear();
+		palette.clear();
 		switch (tab) {
 			case CULTIVATION -> renderCultivation(g, player);
 			case STATS -> {
@@ -192,6 +224,8 @@ public class CultivationScreen extends Screen {
 		}
 
 		super.render(g, mouseX, mouseY, partialTick);
+		// The ability being dragged in the wheel editor rides on the pointer, over everything.
+		if (dragged != null) AbilityWheel.drawIcon(g, dragged, mouseX - 8, mouseY - 8, 16, true);
 	}
 
 	// --- Cultivation: realm, stage, cultivation progress and what comes next ---
@@ -409,17 +443,21 @@ public class CultivationScreen extends Screen {
 	 */
 	private void renderAbilities(GuiGraphics g, int mouseX, int mouseY) {
 		PlayerCultivation c = ClientCultivationData.get();
-		List<Ability> awakened = Arrays.stream(Ability.values()).filter(ability -> ability.isUnlocked(c)).toList();
+		List<Ability> awakened = awakened();
 		if (awakened.isEmpty()) {
 			abilityMaxScroll = 0;
 			renderPlaceholder(g, ModLang.ABILITIES_TITLE, ModLang.ABILITIES_EMPTY, ModLang.ABILITIES_HINT);
+			return;
+		}
+		if (arranging) {
+			renderWheelEditor(g, c, awakened, mouseX, mouseY);
 			return;
 		}
 
 		int x = left + 14;
 		int rightEdge = left + WIDTH - 14;
 		int viewTop = top + CONTENT_Y;
-		int viewBottom = top + HEIGHT - 6;
+		int viewBottom = top + ABILITIES_BOTTOM;
 		List<List<FormattedCharSequence>> descriptions = new ArrayList<>();
 		int contentHeight = 6;
 		for (int i = 0; i < awakened.size(); i++) {
@@ -439,7 +477,8 @@ public class CultivationScreen extends Screen {
 			// Only a switch wholly in view can be clicked.
 			boolean visible = toggle.y() >= viewTop && toggle.y() + SWITCH_H <= viewBottom;
 			if (visible) switches.add(toggle);
-			g.drawString(font, ability.getDisplayName(), x, y, on ? 0xFFD700 : 0x9E9E9E);
+			AbilityWheel.drawIcon(g, ability, x, y - 4, 16, on);
+			g.drawString(font, ability.getDisplayName(), x + 20, y, on ? 0xFFD700 : 0x9E9E9E);
 			drawSwitch(g, toggle, on, visible && toggle.contains(mouseX, mouseY));
 			y += 15;
 			for (FormattedCharSequence line : descriptions.get(i)) {
@@ -465,9 +504,103 @@ public class CultivationScreen extends Screen {
 		}
 	}
 
+	/** The abilities the cultivator has awakened, in menu order. */
+	private static List<Ability> awakened() {
+		PlayerCultivation c = ClientCultivationData.get();
+		return Arrays.stream(Ability.values()).filter(ability -> ability.isUnlocked(c)).toList();
+	}
+
+	/**
+	 * The wheel editor: the wheel on the left (the slots of {@link AbilityWheelScreen}, smaller), the awakened abilities on
+	 * the right. Dragging an ability onto a slot puts it there; one already on the wheel trades places with the slot's
+	 * occupant. A slot dragged off the wheel, or right-clicked, empties. The wheel's centre names what the pointer is on.
+	 */
+	private void renderWheelEditor(GuiGraphics g, PlayerCultivation c, List<Ability> awakened, int mouseX, int mouseY) {
+		int cx = wheelX();
+		int cy = wheelY();
+		int hoveredSlot = AbilityWheel.slotUnder(mouseX, mouseY, cx, cy, EDIT_RING, EDIT_SLOT);
+		Ability pointed = hoveredSlot < 0 ? null : AbilityWheel.shown(c, hoveredSlot);
+
+		AbilityWheel.drawBackdrop(g, cx, cy, EDIT_BACKDROP);
+		for (int i = 0; i < PlayerCultivation.WHEEL_SLOTS; i++) {
+			Ability ability = AbilityWheel.shown(c, i);
+			// The slot an ability was lifted from looks empty while it's carried.
+			if (dragged != null && i == dragFrom) ability = null;
+			AbilityWheel.drawSlot(g, AbilityWheel.slotX(cx, i, EDIT_RING), AbilityWheel.slotY(cy, i, EDIT_RING), EDIT_SLOT, ability,
+					ability != null && c.isAbilityEnabled(ability), i == hoveredSlot, 16);
+		}
+
+		// The palette: every awakened ability, gold-framed if it's already on the wheel.
+		int px = left + PALETTE_X;
+		int y = top + CONTENT_Y;
+		g.drawString(font, Component.translatable(ModLang.ABILITIES_TITLE), px, y, 0xFFD700);
+		y += 12;
+		int perRow = (WIDTH - 12 - PALETTE_X + CELL_GAP) / (CELL + CELL_GAP);
+		for (int i = 0; i < awakened.size(); i++) {
+			Ability ability = awakened.get(i);
+			PaletteCell cell = new PaletteCell(ability, px + (i % perRow) * (CELL + CELL_GAP), y + (i / perRow) * (CELL + CELL_GAP));
+			palette.add(cell);
+			boolean hovered = dragged == null && cell.contains(mouseX, mouseY);
+			if (hovered) pointed = ability;
+			boolean placed = false;
+			for (int s = 0; s < PlayerCultivation.WHEEL_SLOTS; s++) placed |= c.getWheelSlot(s) == ability;
+			g.fill(cell.x(), cell.y(), cell.x() + CELL, cell.y() + CELL, placed ? AbilityWheel.GOLD : AbilityWheel.SLOT_OFF_RIM);
+			g.fill(cell.x() + 1, cell.y() + 1, cell.x() + CELL - 1, cell.y() + CELL - 1, hovered ? AbilityWheel.SLOT_HOVER : AbilityWheel.SLOT);
+			AbilityWheel.drawIcon(g, ability, cell.x() + (CELL - 16) / 2, cell.y() + (CELL - 16) / 2, 16, c.isAbilityEnabled(ability));
+		}
+		y += ((awakened.size() + perRow - 1) / perRow) * (CELL + CELL_GAP) + 4;
+		int textWidth = WIDTH - 12 - PALETTE_X;
+		for (FormattedCharSequence line : font.split(Component.translatable(ModLang.WHEEL_EDITOR_HINT), textWidth)) {
+			g.drawString(font, line, px, y, 0x8A8A8A);
+			y += 10;
+		}
+		y += 4;
+		for (FormattedCharSequence line : font.split(Component.translatable(ModLang.WHEEL_EDITOR_KEY,
+				ModKeybinds.ABILITY_WHEEL.getTranslatedKeyMessage().copy().withStyle(style -> style.withColor(0xFFD700))), textWidth)) {
+			g.drawString(font, line, px, y, 0x8A8A8A);
+			y += 10;
+		}
+
+		// The centre: what's carried, or what the pointer is on, or the wheel's name.
+		int centreWidth = 2 * (EDIT_RING - EDIT_SLOT) - 8;
+		Ability named = dragged != null ? dragged : pointed;
+		List<FormattedCharSequence> lines = named == null
+				? font.split(Component.translatable(ModLang.WHEEL_TITLE), centreWidth)
+				: font.split(named.getDisplayName(), centreWidth);
+		List<FormattedCharSequence> hint = dragged != null && dragFrom < 0
+				? font.split(Component.translatable(ModLang.WHEEL_EDITOR_PICK), centreWidth) : List.of();
+		int ty = cy - (lines.size() + hint.size()) * 10 / 2;
+		for (FormattedCharSequence line : lines) {
+			g.drawCenteredString(font, line, cx, ty, named == null || c.isAbilityEnabled(named) ? 0xFFD700 : 0x9E9E9E);
+			ty += 10;
+		}
+		for (FormattedCharSequence line : hint) {
+			g.drawCenteredString(font, line, cx, ty, 0x8A8A8A);
+			ty += 10;
+		}
+	}
+
+	private int wheelX() {
+		return left + 14 + EDIT_BACKDROP;
+	}
+
+	private int wheelY() {
+		return top + CONTENT_Y + (ABILITIES_BOTTOM - CONTENT_Y) / 2;
+	}
+
+	/** Puts an ability in a wheel slot (null empties it): at once on the client's copy, and on the server, which syncs back. */
+	private void placeOnWheel(int slot, Ability ability) {
+		ClientCultivationData.get().setWheelSlot(slot, ability);
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(slot);
+		buf.writeVarInt(ability == null ? -1 : ability.ordinal());
+		ClientPlayNetworking.send(ModPackets.SET_WHEEL_SLOT, buf);
+		if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+	}
+
 	@Override
 	public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-		if (tab == Tab.ABILITIES && abilityMaxScroll > 0) {
+		if (tab == Tab.ABILITIES && !arranging && abilityMaxScroll > 0) {
 			abilityScroll = Mth.clamp(abilityScroll - (int) Math.round(delta * SCROLL_STEP), 0, abilityMaxScroll);
 			return true;
 		}
@@ -486,6 +619,27 @@ public class CultivationScreen extends Screen {
 
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+		if (tab == Tab.ABILITIES && arranging && (button == 0 || button == 1)) {
+			PlayerCultivation c = ClientCultivationData.get();
+			int slot = AbilityWheel.slotUnder(mouseX, mouseY, wheelX(), wheelY(), EDIT_RING, EDIT_SLOT);
+			Ability inSlot = slot < 0 ? null : AbilityWheel.shown(c, slot);
+			if (inSlot != null) {
+				if (button == 1) {
+					placeOnWheel(slot, null);
+				} else {
+					dragged = inSlot;
+					dragFrom = slot;
+				}
+				return true;
+			}
+			for (PaletteCell cell : palette) {
+				if (button == 0 && cell.contains(mouseX, mouseY)) {
+					dragged = cell.ability();
+					dragFrom = -1;
+					return true;
+				}
+			}
+		}
 		if (button == 0) {
 			for (AbilitySwitch toggle : switches) {
 				if (!toggle.contains(mouseX, mouseY)) continue;
@@ -498,6 +652,30 @@ public class CultivationScreen extends Screen {
 			}
 		}
 		return super.mouseClicked(mouseX, mouseY, button);
+	}
+
+	/**
+	 * Dropping a dragged ability: onto a slot puts it there (swapping with whatever was in it, if it came from another
+	 * slot); a slot's ability dropped off the wheel empties that slot; anywhere else it goes back where it was.
+	 */
+	@Override
+	public boolean mouseReleased(double mouseX, double mouseY, int button) {
+		if (button == 0 && dragged != null) {
+			int cx = wheelX();
+			int cy = wheelY();
+			int target = AbilityWheel.slotUnder(mouseX, mouseY, cx, cy, EDIT_RING, EDIT_SLOT + 2);
+			double dx = mouseX - cx, dy = mouseY - cy;
+			if (target >= 0 && target != dragFrom) {
+				placeOnWheel(target, dragged);
+			} else if (target < 0 && dragFrom >= 0 && dx * dx + dy * dy > EDIT_BACKDROP * EDIT_BACKDROP) {
+				placeOnWheel(dragFrom, null);
+			}
+			dragged = null;
+			dragFrom = -1;
+			super.mouseReleased(mouseX, mouseY, button);
+			return true;
+		}
+		return super.mouseReleased(mouseX, mouseY, button);
 	}
 
 	/**
@@ -623,6 +801,7 @@ public class CultivationScreen extends Screen {
 		@Override
 		public void onPress() {
 			tab = target;
+			dragged = null;
 			updateButtons();
 		}
 

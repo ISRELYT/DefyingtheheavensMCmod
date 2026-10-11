@@ -111,6 +111,10 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 	private static final int FLAG_CONCEALED = 4;
 	private static final int FLAG_DOMAIN = 8;
 	private static final int FLAG_SUPPRESSING = 16;
+	/** Keeping one of its sect's gates (Sect#guardPost): its nameplate says so. */
+	private static final int FLAG_GATE_GUARD = 32;
+	/** While flying: riding its sword ({@link SwordFlight}) rather than flying on qi alone. */
+	private static final int FLAG_SWORD = 64;
 	public static final int SKINS = 6;
 
 	/** Rank -1: a mortal who never opened their meridians. */
@@ -215,10 +219,16 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 
 	public boolean isMeditating() { return flag(FLAG_MEDITATING); }
 	public void setMeditating(boolean meditating) { setFlag(FLAG_MEDITATING, meditating); }
+	/** In the air by its own power: on qi alone, or riding its sword ({@link #isSwordFlying}). */
 	public boolean isQiFlying() { return flag(FLAG_FLYING); }
+	/** In the air on its sword (synced: the client draws the sword under its feet and the trail). */
+	public boolean isSwordFlying() { return flag(FLAG_FLYING) && flag(FLAG_SWORD); }
 	@Override public boolean isConcealed() { return flag(FLAG_CONCEALED); }
 	public boolean isDomainOpen() { return flag(FLAG_DOMAIN) && !isConcealed() && isAlive(); }
 	public boolean isSuppressing() { return flag(FLAG_SUPPRESSING); }
+	/** One of its sect's gate guards (set by its duty, SectDutyGoal; for whoever deals with visitors at the gate). */
+	public boolean isGateGuard() { return flag(FLAG_GATE_GUARD); }
+	public void setGateGuard(boolean guard) { setFlag(FLAG_GATE_GUARD, guard); }
 
 	/** The realm it can wield where it stands (the lower realms cap it); what suppression and domains weigh. */
 	@Override public Realm getCultivationRealm() { return realmOf(sustainedRank()); }
@@ -511,11 +521,21 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		if (isMortal()) return;
 		double spend = 0;
 		if (isQiFlying()) {
-			double cost = cultivation.qiFlightCostPerSecond();
-			if (cultivation.getQi() + (cultivation.qiGatherPerSecond() - cost) / 20.0 < 0) {
-				setQiFlying(false); // out of qi in the air: it falls, as a player would
+			// The sword or qi alone, decided again each tick: in a hurry it flies on qi if it can, otherwise it rides.
+			boolean sword = flag(FLAG_SWORD);
+			boolean canRide = SwordFlight.canRide(this, cultivation);
+			if (sword && (!canRide || hurried() && canQiFlySustainably())) sword = false;
+			else if (!sword && canRide && !hurried()) sword = true;
+			if (!sword && !cultivation.getEffectiveRealm().canFlyOnQi()) {
+				setQiFlying(false); // its sword gone and too weak to fly without one: it falls
 			} else {
-				spend += cost;
+				setFlag(FLAG_SWORD, sword);
+				double cost = sword ? cultivation.swordFlightCostPerSecond() : cultivation.qiFlightCostPerSecond();
+				if (cultivation.getQi() + (cultivation.qiGatherPerSecond() - cost) / 20.0 < 0) {
+					setQiFlying(false); // out of qi in the air: it falls, as a player would
+				} else {
+					spend += cost;
+				}
 			}
 		}
 		if (isSuppressing()) {
@@ -529,18 +549,39 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		cultivation.gatherQi(1 / 20.0, spend);
 	}
 
-	/** Flight it can keep up: endless where gathering covers the cost, otherwise only with ten seconds' reserve in hand. */
+	/** Flight it can keep up, on qi or on its sword (from Foundation Building, with a sword in hand). */
 	public boolean canFlySustainably() {
-		if (isMortal() || !cultivation.getEffectiveRealm().canFlyOnQi()) return false;
+		return canQiFlySustainably() || canSwordFlySustainably();
+	}
+
+	private boolean canQiFlySustainably() {
+		return !isMortal() && cultivation.getEffectiveRealm().canFlyOnQi() && affords(cultivation.qiFlightCostPerSecond());
+	}
+
+	private boolean canSwordFlySustainably() {
+		return !isMortal() && SwordFlight.canRide(this, cultivation) && affords(cultivation.swordFlightCostPerSecond());
+	}
+
+	/** Endless where gathering covers the cost, otherwise only with ten seconds' reserve in hand. Never in the Spatial Gap. */
+	private boolean affords(double cost) {
 		if (ModDimensions.isSpatialGap(level().dimension())) return false;
-		double cost = cultivation.qiFlightCostPerSecond();
 		if (cultivation.qiGatherPerSecond() >= cost) return true;
 		return cultivation.getQi() >= cost * 10 && cultivation.getQi() >= cultivation.maxQi() * 0.4;
 	}
 
+	/** In a fight or running from danger: speed matters more than qi, so it flies on qi alone if it can. */
+	private boolean hurried() {
+		return getTarget() != null && isInCombat() || shouldFlee();
+	}
+
+	/**
+	 * Takes to the air (or comes down). It rides its sword, cheaper and a little slower, unless it is in a hurry and can fly
+	 * on qi alone; {@link #tickQi} switches between the two as that changes.
+	 */
 	public void setQiFlying(boolean flying) {
 		if (flying == isQiFlying()) return;
 		if (flying && !canFlySustainably()) return;
+		setFlag(FLAG_SWORD, flying && canSwordFlySustainably() && (!canQiFlySustainably() || !hurried()));
 		setFlag(FLAG_FLYING, flying);
 		setNoGravity(flying);
 		getNavigation().stop();
@@ -558,7 +599,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 	public void flyToward(Vec3 target, double speed) {
 		lastSteered = tickCount;
 		landing = false;
-		steer(target, speed);
+		steer(target, isSwordFlying() ? speed * SwordFlight.SPEED_FACTOR : speed);
 	}
 
 	private void steer(Vec3 target, double speed) {
@@ -571,6 +612,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		// With the air's drag this settles at about the wanted speed.
 		double wanted = Math.min(speed, distance * 0.2);
 		setDeltaMovement(getDeltaMovement().scale(0.8).add(to.scale(wanted * 0.3 / distance)));
+		// Flying straight at something (a tree, a roof, a hillside) it would hang against it: it climbs over instead.
+		if (horizontalCollision && !landing) setDeltaMovement(getDeltaMovement().add(0, 0.12, 0));
 		getLookControl().setLookAt(target.x, target.y, target.z);
 		setYRot((float) (Mth.atan2(to.z, to.x) * Mth.RAD_TO_DEG) - 90.0f);
 		yBodyRot = getYRot();
@@ -581,8 +624,13 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		return lifecycle == Lifecycle.DEPARTING || lifecycle == Lifecycle.ASCENDING || getTarget() != null && isInCombat();
 	}
 
+	/**
+	 * In the air on qi it goes as fast as its realm lets it walk; on its sword, at the sword's share of its base walking
+	 * speed, the same at every realm (a sword is no faster for a stronger rider, see {@link SwordFlight}).
+	 */
 	@Override
 	protected float getFlyingSpeed() {
+		if (isSwordFlying()) return (float) getAttributeBaseValue(Attributes.MOVEMENT_SPEED) * 0.1f * SwordFlight.SPEED_FACTOR;
 		return isQiFlying() ? getSpeed() * 0.1f : super.getFlyingSpeed();
 	}
 
@@ -785,6 +833,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		sectId = null;
 		home = null;
 		homeIndex = -1;
+		setGateGuard(false);
 		setTitle(isMortal() ? NpcTitle.WANDERER : NpcTitle.ROGUE);
 		lifecycle = Lifecycle.ROGUE;
 		if (departed) SectManager.onMemberDeparted(level, old, getUUID());

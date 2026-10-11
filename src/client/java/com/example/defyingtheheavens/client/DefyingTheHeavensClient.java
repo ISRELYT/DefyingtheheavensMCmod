@@ -3,6 +3,7 @@ package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.DefyingTheHeavens;
 import com.example.defyingtheheavens.ModEntities;
+import com.example.defyingtheheavens.ModLang;
 import com.example.defyingtheheavens.ModPackets;
 import com.example.defyingtheheavens.ModParticles;
 import net.fabricmc.api.ClientModInitializer;
@@ -16,6 +17,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -88,6 +90,9 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(ClientSpatialStorms::render);
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(SuppressionClient::renderMarkers);
+		// Sword Flight: the sword under each rider's feet, and the trail of light behind it.
+		WorldRenderEvents.AFTER_ENTITIES.register(SwordFlightClient::renderSwords);
+		WorldRenderEvents.AFTER_TRANSLUCENT.register(SwordFlightClient::renderTrails);
 		// Qi motes and consciousness domains, on the layer Qi Sense's monochrome leaves in colour.
 		WorldRenderEvents.END.register(SenseOverlay::onWorldEnd);
 		QiSenseTreasures.register();
@@ -118,6 +123,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			ClientFormations.clear();
 			QiSurgeHud.clear();
 			InnerRealmFade.clear();
+			SwordFlightClient.clear();
 		}));
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -129,9 +135,20 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			ConsciousnessRenderer.tick(client);
 			SuppressionClient.tick(client);
 			InnerRealmFade.tick(client);
+			SwordFlightClient.tick(client);
 			while (ModKeybinds.OPEN_MENU.consumeClick()) {
 				if (client.player != null && client.screen == null) {
 					client.setScreen(new CultivationScreen());
+				}
+			}
+			while (ModKeybinds.ABILITY_WHEEL.consumeClick()) {
+				if (client.player != null && client.screen == null) {
+					// Nothing to switch before the first ability awakens: a word above the hotbar instead of an empty wheel.
+					if (AbilityWheelScreen.canOpen(ClientCultivationData.get())) {
+						client.setScreen(new AbilityWheelScreen());
+					} else {
+						client.gui.setOverlayMessage(Component.translatable(ModLang.ABILITIES_EMPTY), false);
+					}
 				}
 			}
 			while (ModKeybinds.MEDITATE.consumeClick()) {

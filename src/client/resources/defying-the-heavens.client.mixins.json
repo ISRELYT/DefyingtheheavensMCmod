@@ -11,7 +11,10 @@
     "GameRendererMixin",
     "HumanoidModelMixin",
     "InventoryScreenMixin",
+    "ItemInHandLayerMixin",
+    "ItemInHandRendererMixin",
     "LevelRendererMixin",
+    "LivingEntityRendererMixin",
     "MinecraftMixin",
     "PostChainAccessor",
     "ReceivingLevelScreenMixin"

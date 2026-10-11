@@ -21,7 +21,8 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
  * A floating tear in reality. Walking into it pulls any player, of any cultivation, into the Spatial Gap to begin
- * ascension. Drawn entirely by the client's block entity renderer (a jagged black shard with a cyan glow).
+ * ascension, out from under a running tribulation too. Drawn entirely by the client's block entity renderer (a jagged
+ * black shard with a cyan glow).
  */
 public class SpatialRiftBlock extends BaseEntityBlock {
 	public static final int RIFT_X = 0;

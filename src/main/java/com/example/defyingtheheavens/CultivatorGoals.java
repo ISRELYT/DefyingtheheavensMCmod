@@ -24,8 +24,9 @@ import java.util.List;
  *   <li><b>Sect Master</b>: meditates on the raised dais of the main hall.</li>
  *   <li><b>Grand Elders and Elders</b>: sit in meditation at their posts by the treasury and the Formation Core.</li>
  *   <li><b>Inner Disciples</b>: meditate on the mats of the meditation hall, now and then walking the inner courtyards.</li>
- *   <li><b>Outer Disciples</b>: patrol a ring outside the barrier (up to its edge plus 26), the sect's front line, resting at
- *   home between rounds.</li>
+ *   <li><b>Outer Disciples</b>: the strongest keep the gates as gate guards, standing on the road outside each gate and
+ *   watching it (see Sect#guardPost); the rest patrol a ring outside the barrier (up to its edge plus 26), the sect's front
+ *   line, resting at home between rounds.</li>
  *   <li><b>Rogues</b>: wander, and sit to meditate when idle.</li>
  * </ul>
  * Below Heavenly Being, sect members never leave their territory except in a fight or running from one, and go straight
@@ -188,6 +189,8 @@ public final class CultivatorGoals {
 		private final CultivatorNpc npc;
 		private int cooldown;
 		private int repath;
+		/** Ticks it keeps to its feet after being stopped flying indoors, to walk out under the open sky. */
+		private int grounded;
 
 		public CombatGoal(CultivatorNpc npc) {
 			this.npc = npc;
@@ -198,13 +201,14 @@ public final class CultivatorGoals {
 			if (target == null || !target.isAlive() || target.isRemoved() || target.level() != npc.level()) return false;
 			if (target instanceof Player player && (player.isCreative() || player.isSpectator())) return false;
 			if (npc.isAlly(target) || npc.shouldFlee()) return false;
-			// A leashed member chases only so far past its territory.
+			// A leashed member chases only so far past its territory, but anywhere within it: when the whole sect turns out
+			// (SectManager#alert), members come from the far side of the grounds.
 			if (npc.isLeashed()) {
 				Sect sect = npc.sect();
 				if (sect != null) {
 					double dx = target.getX() - sect.core.getX(), dz = target.getZ() - sect.core.getZ();
 					double limit = sect.territoryRadius() + 48;
-					if (dx * dx + dz * dz > limit * limit) return false;
+					return dx * dx + dz * dz <= limit * limit;
 				}
 			}
 			return npc.position().distanceToSqr(target.position()) < 96 * 96;
@@ -247,11 +251,16 @@ public final class CultivatorGoals {
 			npc.getLookControl().setLookAt(target, 30.0f, 30.0f);
 			double distanceSqr = npc.distanceToSqr(target);
 
-			// Into the air after a flier, while the qi lasts; back down once the fight is on the ground again.
+			// Into the air after a flier, while the qi lasts; back down once the fight is on the ground again. Only from under
+			// the open sky: flying straight at its target from inside a hall (or under thick leaves) it would only hang against
+			// the wall, so it comes down there and walks out first.
 			boolean airborne = unreachableOnFoot(npc, target);
-			if (airborne && !npc.isQiFlying() && npc.canFlySustainably()) npc.setQiFlying(true);
+			boolean roofed = !npc.level().canSeeSky(npc.blockPosition().above());
+			if (grounded > 0) grounded--;
+			if (npc.isQiFlying() && roofed && npc.horizontalCollision) grounded = 60;
+			if (airborne && !npc.isQiFlying() && grounded == 0 && !roofed && npc.canFlySustainably()) npc.setQiFlying(true);
 			if (npc.isQiFlying()) {
-				if (!airborne && target.onGround() && distanceSqr < 25) {
+				if (grounded > 0 || !airborne && target.onGround() && distanceSqr < 25) {
 					npc.land();
 				} else {
 					npc.flyToward(target.position().add(0, target.getBbHeight() * 0.3, 0), 0.45);
@@ -499,6 +508,8 @@ public final class CultivatorGoals {
 		private final CultivatorNpc npc;
 		private BlockPos goal;
 		private boolean seat;
+		/** Keeping a gate (Sect#guardPost). */
+		private boolean guarding;
 		private int busy;
 		private int patrolLeft;
 		private int repath;
@@ -552,6 +563,13 @@ public final class CultivatorGoals {
 				}
 				sit(npc, goal);
 			}
+			if (guarding) {
+				// At the gate: stand still and watch the road out.
+				npc.getNavigation().stop();
+				Vec3 at = Vec3.atBottomCenterOf(goal);
+				Vec3 out = at.subtract(Vec3.atBottomCenterOf(sect.core)).multiply(1, 0, 1).normalize().scale(8);
+				npc.getLookControl().setLookAt(at.x + out.x, at.y + 1.6, at.z + out.z);
+			}
 			if (--busy <= 0) goal = null;
 		}
 
@@ -561,6 +579,9 @@ public final class CultivatorGoals {
 			if (member == null) return;
 			busy = 0;
 			repath = 0;
+			BlockPos guardPost = sect.guardPost(member);
+			guarding = guardPost != null;
+			npc.setGateGuard(guarding);
 			switch (member.title) {
 				case SECT_MASTER, GRAND_ELDER, ELDER -> {
 					goal = sect.dutyPost(member);
@@ -584,7 +605,12 @@ public final class CultivatorGoals {
 					}
 				}
 				default -> {
-					if (patrolLeft <= 0) {
+					if (guarding) {
+						// A gate guard keeps its gate, outside the barrier, where visitors come.
+						goal = guardPost;
+						seat = false;
+						busy = 1200;
+					} else if (patrolLeft <= 0) {
 						// A rest at home between rounds of the perimeter.
 						patrolLeft = 4 + npc.getRandom().nextInt(4);
 						goal = sect.dwelling(member.home);
@@ -703,6 +729,28 @@ public final class CultivatorGoals {
 		public boolean canUse() {
 			LivingEntity attacker = npc.getLastHurtByMob();
 			return attacker != null && !npc.isAlly(attacker) && !npc.shouldFlee() && super.canUse();
+		}
+
+		/**
+		 * How far it keeps after whoever struck it: not the follow range's 32 blocks (it dropped its attacker the moment they
+		 * were 33 blocks off, while the rest of the sect, called by the alarm, chased on), but as far as CombatGoal lets it
+		 * chase: anywhere its leash allows for a sect member, 96 blocks otherwise.
+		 */
+		@Override
+		protected double getFollowDistance() {
+			Sect sect = npc.sect();
+			return sect != null && npc.isLeashed() ? 2.0 * (sect.territoryRadius() + 48) : 96;
+		}
+
+		/**
+		 * It keeps after its attacker while the attacker is still its target; the combat goal decides when to give up (out of
+		 * its leash or reach, an ally, gone). Not, as vanilla's goal would, the moment the attacker is out of sight for a few
+		 * seconds: one behind a tree or a roof is still being hunted, as the members the alarm called are.
+		 */
+		@Override
+		public boolean canContinueToUse() {
+			LivingEntity target = npc.getTarget();
+			return target != null && target == targetMob && target.isAlive();
 		}
 	}
 

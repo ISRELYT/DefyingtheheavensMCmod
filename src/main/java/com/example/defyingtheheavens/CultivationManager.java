@@ -51,5 +51,18 @@ public final class CultivationManager {
 		if (ability == Ability.REALM_SUPPRESS) RealmSuppressSystem.refreshNow();
 	}
 
+	/**
+	 * The ability wheel editor (Abilities tab): put an ability in a slot, or empty it ({@code index} -1). Only awakened
+	 * abilities can be placed; an unknown slot or ability (a client with a different list) is ignored.
+	 */
+	public static void setWheelSlot(ServerPlayer player, int slot, int index) {
+		PlayerCultivation c = get(player);
+		Ability ability = index < 0 ? null : Ability.byIndex(index);
+		if (slot < 0 || slot >= PlayerCultivation.WHEEL_SLOTS || index >= 0 && (ability == null || !ability.isUnlocked(c))) return;
+		c.setWheelSlot(slot, ability);
+		markDirty(player.server);
+		sync(player);
+	}
+
 	private CultivationManager() {}
 }

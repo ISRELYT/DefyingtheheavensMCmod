@@ -18,9 +18,7 @@ public final class VoidFallHandler {
 		for (ServerPlayer player : new ArrayList<>(upper.players())) {
 			if (player.isAlive() && !player.isSpectator() && player.getY() < VOID_FALL_Y) {
 				try {
-					// A running tribulation would otherwise block the descent and leave the player to die in the void.
-					TribulationManager.abandon(player);
-					SpatialTrialHandler.beginDescension(player);
+					SpatialTrialHandler.beginDescension(player); // a running tribulation is abandoned on the way in
 				} catch (Exception e) {
 					DefyingTheHeavens.LOGGER.error("Void fall routing failed for {}", player.getScoreboardName(), e);
 				}

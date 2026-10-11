@@ -12,7 +12,9 @@
       "com.example.defyingtheheavens.GinsengGameTests",
       "com.example.defyingtheheavens.SpiritPeachGameTests",
       "com.example.defyingtheheavens.AlchemyGameTests",
-      "com.example.defyingtheheavens.SectGameTests"
+      "com.example.defyingtheheavens.SectGameTests",
+      "com.example.defyingtheheavens.AbilityWheelGameTests",
+      "com.example.defyingtheheavens.SwordFlightGameTests"
     ]
   }
 }

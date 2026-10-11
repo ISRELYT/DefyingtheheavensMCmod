@@ -17,8 +17,14 @@ import java.util.UUID;
  * Elsewhere a pool that runs dry drops them out of the sky, and flight returns once it has gathered back to
  * {@link #RESUME_FRACTION} of its maximum. Never in the Spatial Gap, where the trial decides the direction.
  * <p>
- * This ability owns {@code mayfly} for survival and adventure players, granting and revoking it every tick; creative and
- * spectator players are left to vanilla.
+ * Sword Flight ({@link SwordFlight}, from Foundation Building) takes off the same way and is run here too: with a sword in
+ * the main hand and that ability on, the cultivator rides the sword instead, at its lower cost and speed. Only one of the
+ * two is ever switched on ({@link Ability#exclusiveWith}): a rider who puts the sword away mid-air falls. Qi Flight comes
+ * on when the golden core first forms (switching Sword Flight off), and a save from before the rule with both on keeps
+ * Qi Flight; either way the player is told, and switches back on the ability wheel or the Abilities tab.
+ * <p>
+ * These abilities own {@code mayfly} (and the flying speed) for survival and adventure players, granting and revoking it
+ * every tick; creative and spectator players are left to vanilla.
  */
 public final class QiFlight {
 	/** After running dry, flight returns (silently) at this fraction of the pool. */
@@ -28,6 +34,8 @@ public final class QiFlight {
 	private static final Set<UUID> EXHAUSTED = new HashSet<>();
 	/** Whether each online player's true realm had awakened flight last tick, to announce the ability when it is first gained. */
 	private static final Map<UUID, Boolean> REALM_ALLOWED = new HashMap<>();
+	/** The same for Sword Flight. */
+	private static final Map<UUID, Boolean> REALM_ALLOWED_SWORD = new HashMap<>();
 
 	/**
 	 * Called every tick by {@link QiManager} for each living player, before the pool gathers.
@@ -43,52 +51,105 @@ public final class QiFlight {
 		Boolean before = REALM_ALLOWED.put(id, awakened);
 		if (awakened && Boolean.FALSE.equals(before)) {
 			p.sendSystemMessage(Component.translatable(ModLang.MSG_QI_FLIGHT_GAINED));
+			// The new flight comes on, and the sword's goes off: one flight at a time.
+			boolean swordWasOn = c.isAbilityEnabled(Ability.SWORD_FLIGHT);
+			if (swordWasOn || !c.isAbilityEnabled(Ability.QI_FLIGHT)) {
+				c.setAbilityEnabled(Ability.QI_FLIGHT, true);
+				flightsChanged(p, swordWasOn);
+			}
 		}
-		boolean realmAllows = c.getEffectiveRealm().canFlyOnQi();
+		boolean swordAwakened = !c.isMortal() && c.getRealm().canRideSword();
+		Boolean swordBefore = REALM_ALLOWED_SWORD.put(id, swordAwakened);
+		if (swordAwakened && Boolean.FALSE.equals(swordBefore)) {
+			p.sendSystemMessage(Component.translatable(ModLang.MSG_SWORD_FLIGHT_GAINED));
+		}
+		// A save from before the two were exclusive (or a cultivator set straight to Core Formation) can have both on: Qi
+		// Flight keeps it, as it was all a Core Formation cultivator had before Sword Flight.
+		if (c.isAbilityEnabled(Ability.QI_FLIGHT) && c.isAbilityEnabled(Ability.SWORD_FLIGHT) && Ability.QI_FLIGHT.isUnlocked(c)
+				&& Ability.SWORD_FLIGHT.isUnlocked(c)) {
+			c.setAbilityEnabled(Ability.QI_FLIGHT, true);
+			flightsChanged(p, true);
+		}
 
-		if (p.isCreative() || p.isSpectator()) return 0;
+		if (p.isCreative() || p.isSpectator()) {
+			// Vanilla's flight again, at vanilla's speed (a ride doesn't carry over into creative).
+			SwordFlight.update(p, false);
+			setFlight(p, p.getAbilities().mayfly, SwordFlight.QI_FLIGHT_SPEED);
+			return 0;
+		}
 		boolean inGap = SpatialTrialHandler.isInTrial(id) || p.level().dimension() == ModDimensions.SPATIAL_GAP;
-		// Switched off on the Abilities tab: no flight, and one in progress ends.
-		if (!realmAllows || !c.isAbilityEnabled(Ability.QI_FLIGHT) || inGap) {
-			setMayFly(p, false);
+		// At most one of these is switched on (Ability#exclusiveWith); a rider without a sword in hand has no flight.
+		boolean onSword = SwordFlight.canRide(p, c);
+		boolean onQi = !onSword && c.getEffectiveRealm().canFlyOnQi() && c.isAbilityEnabled(Ability.QI_FLIGHT);
+		// Neither (switched off on the Abilities tab, no sword in hand): no flight, and one in progress ends.
+		if (!onQi && !onSword || inGap) {
+			land(p);
 			return 0;
 		}
 
 		if (EXHAUSTED.contains(id)) {
 			if (c.getQi() < c.maxQi() * RESUME_FRACTION) {
-				setMayFly(p, false);
+				land(p);
 				return 0;
 			}
 			EXHAUSTED.remove(id);
 		}
 		// Granted before any flight is paid for: a player flying without mayfly (a flight carried over from a relog, say)
 		// would otherwise be kicked by dedicated servers for "floating too long".
-		setMayFly(p, true);
-		if (!p.getAbilities().flying) return 0;
+		setFlight(p, true, onSword ? SwordFlight.SWORD_SPEED : SwordFlight.QI_FLIGHT_SPEED);
+		if (!p.getAbilities().flying) {
+			SwordFlight.update(p, false);
+			return 0;
+		}
 
-		double cost = c.qiFlightCostPerSecond();
+		double cost = onSword ? c.swordFlightCostPerSecond() : c.qiFlightCostPerSecond();
 		// Affordable as long as this tick's gathering and what's left cover it (always, where flight is sustained).
-		if (c.getQi() + (c.qiGatherPerSecond() - cost) / 20.0 >= 0) return cost;
+		if (c.getQi() + (c.qiGatherPerSecond() - cost) / 20.0 >= 0) {
+			SwordFlight.update(p, onSword);
+			return cost;
+		}
 		// Ran dry mid-flight: whatever is left goes too, and the cultivator falls.
 		c.setQi(0);
 		EXHAUSTED.add(id);
-		setMayFly(p, false);
+		land(p);
 		p.displayClientMessage(Component.translatable(ModLang.MSG_QI_FLIGHT_EXHAUSTED, (int) (RESUME_FRACTION * 100)), true);
 		return 0;
 	}
 
-	/** Grants or revokes flight; revoking also ends a flight in progress. Only sends an update when something changes. */
-	private static void setMayFly(ServerPlayer p, boolean mayFly) {
+	/** The flight switches changed here rather than by the player: the menu and wheel follow, and (if Sword Flight went off) they're told. */
+	private static void flightsChanged(ServerPlayer p, boolean swordWentOff) {
+		CultivationManager.markDirty(p.server);
+		CultivationManager.sync(p);
+		if (swordWentOff) p.sendSystemMessage(Component.translatable(ModLang.MSG_FLIGHT_EXCLUSIVE));
+	}
+
+	/** No flight: revoked, any flight in progress ends, and the speed is vanilla's again. */
+	private static void land(ServerPlayer p) {
+		SwordFlight.update(p, false);
+		setFlight(p, false, SwordFlight.QI_FLIGHT_SPEED);
+	}
+
+	/**
+	 * Grants or revokes flight and sets its speed; revoking also ends a flight in progress. Only sends an update when
+	 * something changes. A speed other than Qi Flight's or a sword's (another mod's, or a command's) is left alone.
+	 */
+	private static void setFlight(ServerPlayer p, boolean mayFly, float speed) {
 		Abilities abilities = p.getAbilities();
-		if (abilities.mayfly == mayFly && (mayFly || !abilities.flying)) return;
+		float current = abilities.getFlyingSpeed();
+		boolean ours = current == SwordFlight.QI_FLIGHT_SPEED || current == SwordFlight.SWORD_SPEED;
+		boolean speedChanges = ours && current != speed;
+		if (abilities.mayfly == mayFly && (mayFly || !abilities.flying) && !speedChanges) return;
 		abilities.mayfly = mayFly;
 		if (!mayFly) abilities.flying = false;
+		if (speedChanges) abilities.setFlyingSpeed(speed);
 		p.onUpdateAbilities();
 	}
 
 	public static void forget(UUID id) {
 		EXHAUSTED.remove(id);
 		REALM_ALLOWED.remove(id);
+		REALM_ALLOWED_SWORD.remove(id);
+		SwordFlight.forget(id);
 	}
 
 	private QiFlight() {}

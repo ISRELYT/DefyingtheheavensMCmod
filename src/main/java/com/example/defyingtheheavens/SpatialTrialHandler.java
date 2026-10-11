@@ -125,16 +125,16 @@ public final class SpatialTrialHandler {
 
 	private static boolean canEnter(ServerPlayer player) {
 		if (player == null || !player.isAlive() || player.isSpectator() || player.getServer() == null) return false;
-		if (ACTIVE.containsKey(player.getUUID())) return false;
-		if (TribulationManager.isActive(player.getUUID())) {
-			player.displayClientMessage(Component.translatable(ModLang.MSG_TRIB_BUSY), true);
-			return false;
-		}
-		return true;
+		return !ACTIVE.containsKey(player.getUUID());
 	}
 
+	/**
+	 * Into the gap, whichever way. A running tribulation can't follow: the gap is a way out of it in both directions (into the
+	 * rift going up, off the edge of an island going down), without reward or penalty (see TribulationManager#abandon).
+	 */
 	private static void enterGap(ServerPlayer player, Route route, double x, double y, double z) {
 		ServerLevel gap = player.getServer().getLevel(ModDimensions.SPATIAL_GAP);
+		TribulationManager.abandon(player); // no-op without one; falling out of the Upper Realm, even with no gap to fall into
 		if (gap == null) {
 			DefyingTheHeavens.LOGGER.error("Spatial Gap dimension is missing; cannot start the {} trial for {}", route, player.getScoreboardName());
 			return;

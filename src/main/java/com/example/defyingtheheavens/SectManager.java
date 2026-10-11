@@ -7,6 +7,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
 import java.util.ArrayList;
@@ -18,10 +19,13 @@ import java.util.UUID;
  * Runs the sects (see {@link Sect}): founds them when their Formation Core first ticks, keeps titles in step with
  * cultivation, replaces those lost to anything but a player, and calls members to arms.
  * <p>
- * <b>Who answers a call.</b> Inner and Outer Disciples answer anything near them (or anywhere on the grounds when the
- * treasury or the core is breached). Elders and Grand Elders keep to their posts unless a lower-ranked member is attacked near
- * them, the treasury or core is breached, or the barrier is down. The Sect Master stays on the dais until the barrier is
- * shattered, its core destroyed, or an Elder (or higher) has just fallen. Anyone attacked fights back.
+ * <b>Who answers a call.</b> When a member is attacked anywhere in the sect's territory by a player or a cultivator, or
+ * someone breaks through the barrier, the whole sect answers: every member in the territory, the elders and the Sect Master too, goes for the
+ * aggressor. Otherwise (a strike on the barrier that doesn't break it, trespass, an attack on a member far outside the
+ * territory) Inner and Outer Disciples answer anything near them (or anywhere on the grounds when the treasury or the core is
+ * breached); Elders and Grand Elders keep to their posts unless a lower-ranked member is attacked near them, the treasury or
+ * core is breached, or the barrier is down; the Sect Master stays on the dais until the barrier is shattered, its core
+ * destroyed, or an Elder (or higher) has just fallen. Anyone attacked fights back.
  */
 public final class SectManager {
 	/** For this long after an Elder falls, the Sect Master takes the field. */
@@ -29,7 +33,7 @@ public final class SectManager {
 	private static final double DISCIPLE_REACH = 40;
 	private static final double ELDER_REACH = 24;
 
-	public enum Alarm { MEMBER_ATTACKED, BARRIER_ASSAILED, TRESPASS, CRITICAL_BREACH, CORE_DESTROYED }
+	public enum Alarm { MEMBER_ATTACKED, BARRIER_ASSAILED, BARRIER_BROKEN, TRESPASS, CRITICAL_BREACH, CORE_DESTROYED }
 
 	public static Sect get(MinecraftServer server, UUID id) {
 		return id == null ? null : SectData.get(server).get(id);
@@ -64,6 +68,13 @@ public final class SectManager {
 
 		boolean upper = ModDimensions.isUpperRealm(level.dimension());
 		int[] ranks = foundingRanks(random, sect.capacity, upper);
+		// Strongest first after the master, so the first homes (the elders' houses, see SectStructure) go to the elders.
+		java.util.Arrays.sort(ranks, 1, ranks.length);
+		for (int i = 1, j = ranks.length - 1; i < j; i++, j--) {
+			int t = ranks[i];
+			ranks[i] = ranks[j];
+			ranks[j] = t;
+		}
 		List<CultivatorNpc> born = new ArrayList<>();
 		for (int i = 0; i < ranks.length; i++) {
 			CultivatorNpc npc = spawnMember(level, sect, ranks[i], i == 0 ? -1 : i - 1, random);
@@ -228,11 +239,15 @@ public final class SectManager {
 		if (aggressor instanceof CultivatorNpc npc && sect.id.equals(npc.getSectId())) return;
 		long now = level.getGameTime();
 		boolean masterRoused = sect.isBarrierDown() || sect.elderFellAt >= 0 && now - sect.elderFellAt < MASTER_WRATH || alarm == Alarm.CORE_DESTROYED;
+		// A member attacked in the territory by a player or a cultivator, or the barrier broken through: the whole sect turns
+		// out. (A monster at a gate guard is only the nearby disciples' business.)
+		boolean person = aggressor instanceof Player || aggressor instanceof CultivatorNpc;
+		boolean everyone = alarm == Alarm.BARRIER_BROKEN || alarm == Alarm.MEMBER_ATTACKED && person && sect.inTerritory(where);
 		for (CultivatorNpc npc : CultivatorNpc.loadedMembers(level, sect.id)) {
 			if (npc == victim || npc.getTarget() == aggressor) continue;
 			double distance = Math.sqrt(npc.blockPosition().distSqr(where));
 			boolean critical = alarm == Alarm.CRITICAL_BREACH || alarm == Alarm.CORE_DESTROYED;
-			boolean respond = switch (npc.getTitle()) {
+			boolean respond = everyone ? sect.inTerritory(npc.blockPosition()) : switch (npc.getTitle()) {
 				case OUTER_DISCIPLE, INNER_DISCIPLE -> distance <= DISCIPLE_REACH || critical && sect.inTerritory(npc.blockPosition());
 				case ELDER, GRAND_ELDER -> critical || sect.isBarrierDown()
 						|| alarm == Alarm.MEMBER_ATTACKED && victimTitle != null && victimTitle.ordinal() > npc.getTitle().ordinal() && distance <= ELDER_REACH;
@@ -247,8 +262,9 @@ public final class SectManager {
 		alert(level, get(level.getServer(), victim.getSectId()), attacker, victim.blockPosition(), Alarm.MEMBER_ATTACKED, victim.getTitle(), victim);
 	}
 
-	public static void onBarrierAssailed(ServerLevel level, UUID sectId, ServerPlayer player, BlockPos where) {
-		alert(level, get(level.getServer(), sectId), player, where, Alarm.BARRIER_ASSAILED, null, null);
+	/** A player struck the sect's barrier, or ({@code broken}) broke a block of it, forcing a way in. */
+	public static void onBarrierAssailed(ServerLevel level, UUID sectId, ServerPlayer player, BlockPos where, boolean broken) {
+		alert(level, get(level.getServer(), sectId), player, where, broken ? Alarm.BARRIER_BROKEN : Alarm.BARRIER_ASSAILED, null, null);
 	}
 
 	/** Someone laid hands on the treasury or the core. */

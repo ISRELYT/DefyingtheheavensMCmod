@@ -16,6 +16,7 @@ public final class ModLang {
 	public static final String KEY_MENU = "key." + DefyingTheHeavens.MOD_ID + ".cultivation_menu";
 	public static final String KEY_MEDITATE = "key." + DefyingTheHeavens.MOD_ID + ".meditate";
 	public static final String KEY_CIRCULATE = "key." + DefyingTheHeavens.MOD_ID + ".circulate";
+	public static final String KEY_ABILITY_WHEEL = "key." + DefyingTheHeavens.MOD_ID + ".ability_wheel";
 
 	public static final String TITLE = k("title");
 	public static final String REALM = k("realm");
@@ -56,6 +57,16 @@ public final class ModLang {
 	public static final String ABILITIES_HINT = k("abilities.hint");
 	public static final String ABILITY_ON = k("abilities.on");
 	public static final String ABILITY_OFF = k("abilities.off");
+	// The ability wheel (held open by its key) and its editor on the Abilities tab.
+	public static final String BTN_ARRANGE_WHEEL = k("abilities.arrange_wheel");
+	public static final String BTN_ABILITY_LIST = k("abilities.list");
+	public static final String WHEEL_TITLE = k("wheel.title");
+	public static final String WHEEL_HINT = k("wheel.hint");
+	public static final String WHEEL_EMPTY = k("wheel.empty");
+	public static final String WHEEL_EMPTY_SLOT = k("wheel.empty_slot");
+	public static final String WHEEL_EDITOR_HINT = k("wheel.editor_hint");
+	public static final String WHEEL_EDITOR_KEY = k("wheel.editor_key");
+	public static final String WHEEL_EDITOR_PICK = k("wheel.editor_pick");
 	public static final String METHODS_TITLE = k("methods.title");
 	public static final String METHODS_EMPTY = k("methods.empty");
 	public static final String METHODS_HINT = k("methods.hint");
@@ -86,6 +97,8 @@ public final class ModLang {
 	public static final String MSG_BOTTLENECK = k("message.bottleneck");
 	public static final String MSG_QI_FLIGHT_GAINED = k("message.qi_flight.gained");
 	public static final String MSG_QI_FLIGHT_EXHAUSTED = k("message.qi_flight.exhausted");
+	public static final String MSG_SWORD_FLIGHT_GAINED = k("message.sword_flight.gained");
+	public static final String MSG_FLIGHT_EXCLUSIVE = k("message.flight_exclusive");
 	public static final String MSG_QI_SENSE_GAINED = k("message.qi_sense.gained");
 	public static final String MSG_SUPPRESS_EXHAUSTED = k("message.realm_suppress.exhausted");
 	// Consciousness Domain and Realm Suppress (another cultivator's pressure on you)
@@ -244,6 +257,7 @@ public final class ModLang {
 	// NPC cultivators and sects (see CultivatorNpc, Sect)
 	public static String titleKey(String id) { return "npc_title." + DefyingTheHeavens.MOD_ID + "." + id; }
 	public static final String NPC_TITLE_BRACKETS = k("npc.title_brackets");
+	public static final String NPC_GATE_GUARD = k("npc.gate_guard");
 	public static final String NPC_OF_SECT = k("npc.of_sect");
 	public static final String NPC_GREET_RIGHTEOUS = k("npc.greet.righteous");
 	public static final String NPC_GREET_NEUTRAL = k("npc.greet.neutral");

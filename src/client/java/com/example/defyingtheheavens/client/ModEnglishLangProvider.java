@@ -114,6 +114,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.KEY_MENU, "Open Cultivation Menu");
 		t.add(ModLang.KEY_MEDITATE, "Meditate (Lotus Position)");
 		t.add(ModLang.KEY_CIRCULATE, "Circulate Qi (qi surges)");
+		t.add(ModLang.KEY_ABILITY_WHEEL, "Ability Wheel (hold)");
 
 		// Realms and stages
 		for (Realm realm : Realm.values()) {
@@ -174,6 +175,15 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.ABILITIES_HINT, "Abilities you awaken will appear here.");
 		t.add(ModLang.ABILITY_ON, "On");
 		t.add(ModLang.ABILITY_OFF, "Off");
+		t.add(ModLang.BTN_ARRANGE_WHEEL, "Arrange Wheel");
+		t.add(ModLang.BTN_ABILITY_LIST, "Ability List");
+		t.add(ModLang.WHEEL_TITLE, "Ability Wheel");
+		t.add(ModLang.WHEEL_HINT, "Click an ability to switch it on or off");
+		t.add(ModLang.WHEEL_EMPTY, "Nothing on the wheel yet. Arrange it on the Abilities tab.");
+		t.add(ModLang.WHEEL_EMPTY_SLOT, "Empty slot");
+		t.add(ModLang.WHEEL_EDITOR_HINT, "Drag an ability onto a slot. Drag a slot onto another to swap them, or off the wheel to empty it.");
+		t.add(ModLang.WHEEL_EDITOR_KEY, "Hold %s to open the wheel.");
+		t.add(ModLang.WHEEL_EDITOR_PICK, "Drag onto a slot");
 		for (Ability ability : Ability.values()) {
 			String key = ModLang.abilityKey(ability.getId());
 			t.add(key, switch (ability) {
@@ -183,14 +193,16 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case CONSCIOUSNESS_DOMAIN -> "Consciousness Domain";
 				case REALM_SUPPRESS -> "Realm Suppress";
 				case INNER_REALM -> "Inner Realm";
+				case SWORD_FLIGHT -> "Sword Flight";
 			});
 			t.add(key + ".description", switch (ability) {
 				case QI_SUSTENANCE -> "Qi keeps you fed. Hunger stays full.";
-				case QI_FLIGHT -> "Double-tap jump to fly, at a cost of %s qi/s.";
+				case QI_FLIGHT -> "Double-tap jump to fly, at a cost of %s qi/s. Switching it on switches Sword Flight off.";
 				case QI_SENSE -> "See the plane of Qi: the five elements drifting through a grey world. No qi cost.";
 				case CONSCIOUSNESS_DOMAIN -> "Sense all life within %s blocks, even through walls. Cultivators show their realm. No qi cost.";
 				case REALM_SUPPRESS -> "Your realm crushes weaker beings within %s blocks, harder the weaker they are. Costs qi per target.";
 				case INNER_REALM -> "After 10 s of meditation your soul turns inward (+50% cultivation). Walk freely; stop meditating to return. Harm to your body pulls you back.";
+				case SWORD_FLIGHT -> "Hold a sword and double-tap jump to ride it, at a cost of %s qi/s. Cheaper than Qi Flight but slower (75%% of its speed, at every realm); the sword takes no wear. Switching it on switches Qi Flight off.";
 			});
 		}
 		t.add(ModLang.METHODS_TITLE, "Cultivation Methods");
@@ -229,6 +241,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_BOTTLENECK, "Bottleneck! Break through in the cultivation menu.");
 		t.add(ModLang.MSG_QI_FLIGHT_GAINED, "Your golden core can carry you. Double-tap jump to fly.");
 		t.add(ModLang.MSG_QI_FLIGHT_EXHAUSTED, "Out of qi! Flight returns at %s%%.");
+		t.add(ModLang.MSG_SWORD_FLIGHT_GAINED, "Your foundation can send qi through a blade. Hold a sword and double-tap jump to ride it.");
+		t.add(ModLang.MSG_FLIGHT_EXCLUSIVE, "Only one flight at a time: Qi Flight is on and Sword Flight is off. Switch between them on the ability wheel or the Abilities tab.");
 		t.add(ModLang.MSG_QI_SENSE_GAINED, "You can now peer into the plane of Qi.");
 		t.add(ModLang.MSG_SUPPRESS_EXHAUSTED, "Out of qi: your pressure lifts. It returns at %s%%.");
 		t.add(ModLang.CONSCIOUSNESS_ALERT_TITLE, "A foreign consciousness touches yours");
@@ -398,6 +412,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 			});
 		}
 		t.add(ModLang.NPC_TITLE_BRACKETS, "[%s]");
+		t.add(ModLang.NPC_GATE_GUARD, "Gate Guard");
 		t.add(ModLang.NPC_OF_SECT, "%s of the %s");
 		t.add(ModLang.NPC_GREET_RIGHTEOUS, "%s nods to you: \"May your path be clear and your heart steady.\"");
 		t.add(ModLang.NPC_GREET_NEUTRAL, "%s regards you calmly and goes back to their own affairs.");

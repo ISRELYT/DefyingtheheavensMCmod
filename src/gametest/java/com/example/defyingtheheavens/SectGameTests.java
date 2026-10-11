@@ -125,6 +125,43 @@ public class SectGameTests implements FabricGameTest {
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
+	public void theWholeSectTurnsOutForAnAttackOrABreach(GameTestHelper helper) {
+		ServerLevel level = helper.getLevel();
+		Sect sect = newSect(helper, 0);
+		CultivatorNpc master = member(helper, sect, 10, 0);
+		CultivatorNpc elder = member(helper, sect, 8, 1);
+		CultivatorNpc disciple = member(helper, sect, 1, 2);
+		CultivatorNpc victim = member(helper, sect, 2, 3);
+		master.setTitle(NpcTitle.SECT_MASTER);
+		elder.setTitle(NpcTitle.ELDER);
+		disciple.setTitle(NpcTitle.OUTER_DISCIPLE);
+		victim.setTitle(NpcTitle.INNER_DISCIPLE);
+		CultivatorNpc[] others = {master, elder, disciple};
+		for (CultivatorNpc npc : others) npc.setNoAi(true);
+		// The test's mock intruder counts as creative, whom sects ignore, so a rogue cultivator plays the intruder.
+		CultivatorNpc intruder = helper.spawn(ModEntities.CULTIVATOR, new BlockPos(5, 2, 5));
+		intruder.becomeRogue(0, 0, level.getRandom());
+		intruder.setNoAi(true);
+		Zombie zombie = helper.spawn(EntityType.ZOMBIE, new BlockPos(3, 2, 3));
+		zombie.setNoAi(true);
+		// Far across the territory: well past where a disciple would once have heard it.
+		BlockPos far = sect.core.offset(60, 0, 0);
+		helper.assertTrue(sect.inTerritory(far), "The spot is in the sect's territory");
+
+		SectManager.alert(level, sect, zombie, far, SectManager.Alarm.MEMBER_ATTACKED, victim.getTitle(), victim);
+		for (CultivatorNpc npc : others) helper.assertTrue(npc.getTarget() == null, "A monster far off is only the nearby disciples' business");
+		SectManager.alert(level, sect, intruder, far, SectManager.Alarm.MEMBER_ATTACKED, victim.getTitle(), victim);
+		for (CultivatorNpc npc : others) helper.assertTrue(npc.getTarget() == intruder, npc.getTitle() + " turns out against an intruder who attacked a member");
+
+		for (CultivatorNpc npc : others) npc.setTarget(null);
+		SectManager.alert(level, sect, intruder, far, SectManager.Alarm.BARRIER_ASSAILED, null, null);
+		for (CultivatorNpc npc : others) helper.assertTrue(npc.getTarget() == null, "Striking the barrier far off without breaking it rouses no one there");
+		SectManager.alert(level, sect, intruder, far, SectManager.Alarm.BARRIER_BROKEN, null, null);
+		for (CultivatorNpc npc : others) helper.assertTrue(npc.getTarget() == intruder, npc.getTitle() + " turns out against an intruder who broke the barrier");
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void playerKillsAreNeverReplacedAndExtinctionIsFinal(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
 		Sect sect = newSect(helper, 0);
@@ -245,19 +282,24 @@ public class SectGameTests implements FabricGameTest {
 			helper.assertTrue(Formations.shelters(level, core.above()), "Inside a raised barrier is sheltered ground");
 			// (High above: other tests' barriers stand around it at its own height.)
 			helper.assertTrue(!Formations.shelters(level, core.offset(0, 150, 0)), "Outside it is not");
-			// A wild zombie (the world's own, so not kept), a named one (kept in the world), and a cow (no monster).
+			// A wild zombie (the world's own, so not kept), one that must stay in the world (the test's spawns are kept), a named
+			// one, and a cow (no monster).
 			Zombie wild = EntityType.ZOMBIE.create(level);
 			wild.moveTo(core.getX() + 1.5, core.getY() + 1, core.getZ() + 0.5, 0, 0);
 			level.addFreshEntity(wild);
-			Zombie named = helper.spawn(EntityType.ZOMBIE, coreRel.offset(0, 1, 1));
+			Zombie kept = helper.spawn(EntityType.ZOMBIE, coreRel.offset(0, 1, -1));
+			Zombie named = helper.spawn(EntityType.ZOMBIE_VILLAGER, coreRel.offset(0, 1, 1));
 			named.setCustomName(net.minecraft.network.chat.Component.literal("Gerald"));
 			var cow = helper.spawn(EntityType.COW, coreRel.offset(-1, 1, 0));
-			helper.assertTrue(Formations.isMonster(wild) && !Formations.isMonster(cow), "Zombies are monsters, cows aren't");
+			helper.assertTrue(Formations.isMonster(wild) && Formations.isMonster(named) && !Formations.isMonster(cow),
+					"Zombies are monsters, cows aren't");
 			helper.runAfterDelay(25, () -> {
 				helper.assertTrue(wild.isRemoved(), "A wild monster inside the barrier is dispersed");
-				helper.assertTrue(named.isAlive() && !named.isRemoved(), "A named one is kept in the world");
-				helper.assertTrue(named.blockPosition().distSqr(core) > Formations.MIN_RADIUS * Formations.MIN_RADIUS,
-						"... but set down outside the barrier (" + named.blockPosition().toShortString() + ")");
+				helper.assertTrue(kept.isAlive() && !kept.isRemoved(), "One that must stay is kept in the world");
+				helper.assertTrue(kept.blockPosition().distSqr(core) > Formations.MIN_RADIUS * Formations.MIN_RADIUS,
+						"... but set down outside the barrier (" + kept.blockPosition().toShortString() + ")");
+				helper.assertTrue(named.isAlive() && !named.isRemoved() && Formations.shelters(level, named.blockPosition()),
+						"A named one is left where it is, inside (" + named.blockPosition().toShortString() + ")");
 				helper.assertTrue(cow.isAlive() && !cow.isRemoved(), "Animals are left in peace");
 				helper.succeed();
 			});
@@ -500,7 +542,7 @@ public class SectGameTests implements FabricGameTest {
 			for (boolean upper : new boolean[] {false, true}) {
 				SectPalette p = SectPalette.of(faction, upper);
 				net.minecraft.world.level.block.Block[] blocks = {p.foundation, p.paving, p.path, p.wallBase, p.wall, p.pillar, p.beam, p.floor, p.roof,
-						p.roofTrim, p.accent, p.window, p.roofStairs, p.baseStairs, p.roofSlab, p.baseSlab, p.baseWall};
+						p.roofTrim, p.accent, p.window, p.roofStairs, p.baseStairs, p.roofSlab, p.baseSlab, p.baseWall, p.trimStairs, p.trimSlab};
 				for (net.minecraft.world.level.block.Block block : blocks) {
 					for (var valid : springs) {
 						helper.assertTrue(!block.defaultBlockState().is(valid), faction + (upper ? " (Upper Realm)" : "") + " builds with "
@@ -515,14 +557,115 @@ public class SectGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void everyMeditationHallHasMats(GameTestHelper helper) {
 		// The meditation halls of SectStructure's three sizes, across the front by front to back, as plan() lays them.
-		int[][] halls = {{15, 11}, {17, 13}, {19, 15}};
-		int[] expected = {4, 8, 18};
+		int[][] halls = {{19, 13}, {19, 15}, {19, 15}};
+		int[] expected = {12, 18, 18};
 		for (int i = 0; i < halls.length; i++) {
 			int w = halls[i][0], d = halls[i][1];
 			SectPiece hall = new SectPiece(SectPiece.Kind.MEDITATION_HALL, new net.minecraft.world.level.levelgen.structure.BoundingBox(0, 0, 0, d - 1, 18, w - 1),
 					Direction.EAST, 0, Alignment.Faction.NEUTRAL, false, null);
 			int mats = hall.meditationMats().length;
 			helper.assertTrue(mats == expected[i], "A " + w + "x" + d + " hall seats " + expected[i] + " (" + mats + ")");
+		}
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void theStrongestOuterDisciplesKeepTheGates(GameTestHelper helper) {
+		Sect sect = new Sect(UUID.randomUUID());
+		List<Sect.Member> outer = new ArrayList<>();
+		for (int i = 0; i < 6; i++) {
+			Sect.Member m = new Sect.Member(UUID.randomUUID(), i, i);
+			m.title = NpcTitle.OUTER_DISCIPLE;
+			sect.members.put(m.id, m);
+			outer.add(m);
+		}
+		Sect.Member inner = new Sect.Member(UUID.randomUUID(), 9, 9);
+		inner.title = NpcTitle.INNER_DISCIPLE;
+		sect.members.put(inner.id, inner);
+		helper.assertTrue(sect.guardPost(outer.get(5)) == null, "A sect laid out without gate-guard posts has no gate guards");
+		for (int i = 0; i < 4; i++) sect.posts(Sect.Post.GATE_GUARD).add(new BlockPos(i, 0, 0));
+		for (int rank = 5; rank >= 2; rank--) {
+			helper.assertTrue(new BlockPos(5 - rank, 0, 0).equals(sect.guardPost(outer.get(rank))), "The strongest outer disciples take the posts in order");
+			helper.assertTrue(sect.guardPost(outer.get(rank)).equals(sect.dutyPost(outer.get(rank))), "A gate guard's duty is its gate");
+		}
+		helper.assertTrue(sect.guardPost(outer.get(1)) == null && sect.guardPost(outer.get(0)) == null, "Once the posts are filled the rest patrol");
+		helper.assertTrue(sect.guardPost(inner) == null, "Only outer disciples keep the gates");
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void everySectHousesItsMembersInsideItsBarrier(GameTestHelper helper) {
+		// Every size, a run of seeds and every facing, as worldgen lays them out: a house for every elder and no disciples' huts
+		// (the disciples live on the meditation hall's mats), a home for every member but the master, no two buildings on the
+		// same ground, every one of them inside the barrier, and a way in through the gate.
+		for (int size = 0; size < 3; size++) {
+			for (long seed = 0; seed < 8; seed++) {
+				for (Direction facing : Direction.Plane.HORIZONTAL) {
+					List<net.minecraft.world.level.levelgen.structure.StructurePiece> pieces = SectStructure.layOut(seed * 7919 + size, size, facing, seed % 2 == 0);
+					String sect = "size " + size + ", seed " + seed + ", facing " + facing;
+					List<SectPiece> buildings = new ArrayList<>();
+					net.minecraft.nbt.CompoundTag blueprint = null;
+					BlockPos core = null;
+					int houses = 0, huts = 0;
+					for (var piece : pieces) {
+						SectPiece sp = (SectPiece) piece;
+						if (sp.kind() == SectPiece.Kind.TERRACE) continue;
+						if (sp.kind() == SectPiece.Kind.ELDER_HOUSE) houses++;
+						if (sp.kind() == SectPiece.Kind.DWELLING) huts++;
+						if (sp.kind() == SectPiece.Kind.PAGODA) {
+							// Every storey it was planned with fits, so its top chamber (and the mat in it) is on the top floor.
+							int tiers = sp.extra().getInt("Tiers");
+							helper.assertTrue(sp.pagodaSeat()[1] == 1 + 5 * (tiers - 1), "The pagoda raises all " + tiers + " storeys (" + sect + ")");
+						}
+						if (sp.kind() == SectPiece.Kind.PLAZA) {
+							blueprint = sp.extra().getCompound("Blueprint");
+							core = sp.toWorld(SectPiece.PLAZA_RADIUS, 2, SectPiece.PLAZA_RADIUS);
+						}
+						buildings.add(sp);
+					}
+					helper.assertTrue(blueprint != null, "A plaza with the sect's blueprint (" + sect + ")");
+					EnumMap<NpcTitle, Integer> titles = Sect.titleCounts(SectStructure.maxMembers(size));
+					int elders = titles.get(NpcTitle.GRAND_ELDER) + titles.get(NpcTitle.ELDER);
+					helper.assertTrue(houses == elders && huts == 0, "A house for each elder and no huts (" + houses + " houses, " + huts + " huts, " + sect + ")");
+					int homes = blueprint.getCompound("Posts").getLongArray("DWELLING").length;
+					helper.assertTrue(homes >= SectStructure.maxMembers(size) - 1, "A home for every member but the master (" + homes + ", " + sect + ")");
+					for (int i = 0; i < buildings.size(); i++) {
+						for (int j = i + 1; j < buildings.size(); j++) {
+							// The plaza is round: houses may stand in the corners of its square.
+							if (buildings.get(i).kind() == SectPiece.Kind.PLAZA || buildings.get(j).kind() == SectPiece.Kind.PLAZA) continue;
+							helper.assertTrue(!buildings.get(i).getBoundingBox().intersects(buildings.get(j).getBoundingBox()),
+									buildings.get(i).kind() + " and " + buildings.get(j).kind() + " overlap (" + sect + ")");
+						}
+					}
+					int radius = blueprint.getInt("Radius");
+					helper.assertTrue(radius <= Formations.MAX_RADIUS, "The barrier is no larger than any (" + radius + ", " + sect + ")");
+					int gates = 0;
+					for (SectPiece building : buildings) {
+						var box = building.getBoundingBox();
+						if (building.kind() == SectPiece.Kind.GATE || building.kind() == SectPiece.Kind.TORII) {
+							// The gates stand wholly outside the barrier: even the nearest point of each is beyond it.
+							gates++;
+							double nx = Math.max(box.minX(), Math.min(core.getX(), box.maxX())), nz = Math.max(box.minZ(), Math.min(core.getZ(), box.maxZ()));
+							helper.assertTrue(Math.sqrt(Math.pow(nx - core.getX(), 2) + Math.pow(nz - core.getZ(), 2)) > radius + 1,
+									building.kind() + " stands inside the barrier (" + sect + ")");
+							continue;
+						}
+						for (int[] c : new int[][] {{box.minX(), box.minZ()}, {box.maxX(), box.minZ()}, {box.minX(), box.maxZ()}, {box.maxX(), box.maxZ()}}) {
+							double reach = Math.sqrt(Math.pow(c[0] - core.getX(), 2) + Math.pow(c[1] - core.getZ(), 2));
+							helper.assertTrue(reach <= radius, building.kind() + " reaches outside the barrier (" + sect + ")");
+						}
+					}
+					helper.assertTrue(gates == 3, "A gate and two torii (" + gates + ", " + sect + ")");
+					helper.assertTrue(blueprint.getCompound("Posts").getLongArray("GATE").length == 1, "A gate post (" + sect + ")");
+					long[] guards = blueprint.getCompound("Posts").getLongArray("GATE_GUARD");
+					helper.assertTrue(guards.length == 6, "Six gate-guard posts (" + guards.length + ", " + sect + ")");
+					for (long g : guards) {
+						BlockPos guard = BlockPos.of(g);
+						helper.assertTrue(Math.sqrt(Math.pow(guard.getX() - core.getX(), 2) + Math.pow(guard.getZ() - core.getZ(), 2)) > radius + 1,
+								"A gate guard stands outside the barrier (" + sect + ")");
+					}
+				}
+			}
 		}
 		helper.succeed();
 	}
