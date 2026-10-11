@@ -14,6 +14,7 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,6 +70,10 @@ public final class Sect {
 	public final Map<UUID, Member> members = new LinkedHashMap<>();
 	public final List<Long> replacements = new ArrayList<>();
 	public final Map<Post, List<BlockPos>> posts = new EnumMap<>(Post.class);
+	/** What the sect as a whole thinks of each player, added to every member's own regard (see {@link Regard}); never fades. */
+	public final Map<UUID, Integer> standing = new HashMap<>();
+	/** The game day each player last robbed the treasury (not saved): it counts against them once a day, not per block. */
+	public final Map<UUID, Long> robbedDay = new HashMap<>();
 
 	public Sect(UUID id) {
 		this.id = id;
@@ -76,6 +81,14 @@ public final class Sect {
 	}
 
 	public List<BlockPos> posts(Post post) { return posts.get(post); }
+
+	public int standing(UUID player) { return standing.getOrDefault(player, 0); }
+
+	public void changeStanding(UUID player, int delta) {
+		int value = Regard.clamp(standing(player) + delta);
+		if (value == 0) standing.remove(player);
+		else standing.put(player, value);
+	}
 
 	public BlockPos post(Post post, int index) {
 		List<BlockPos> list = posts.get(post);
@@ -207,6 +220,14 @@ public final class Sect {
 			postTag.put(entry.getKey().name(), new LongArrayTag(entry.getValue().stream().mapToLong(BlockPos::asLong).toArray()));
 		}
 		tag.put("Posts", postTag);
+		ListTag standingList = new ListTag();
+		for (Map.Entry<UUID, Integer> entry : standing.entrySet()) {
+			CompoundTag s = new CompoundTag();
+			s.putUUID("Player", entry.getKey());
+			s.putInt("Value", entry.getValue());
+			standingList.add(s);
+		}
+		tag.put("Standing", standingList);
 		return tag;
 	}
 
@@ -236,6 +257,11 @@ public final class Sect {
 		CompoundTag postTag = tag.getCompound("Posts");
 		for (Post post : Post.values()) {
 			for (long pos : postTag.getLongArray(post.name())) sect.posts.get(post).add(BlockPos.of(pos));
+		}
+		ListTag standingList = tag.getList("Standing", Tag.TAG_COMPOUND);
+		for (int i = 0; i < standingList.size(); i++) {
+			CompoundTag s = standingList.getCompound(i);
+			if (s.hasUUID("Player")) sect.standing.put(s.getUUID("Player"), s.getInt("Value"));
 		}
 		return sect;
 	}

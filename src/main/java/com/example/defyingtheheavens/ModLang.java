@@ -250,6 +250,32 @@ public final class ModLang {
 	public static final String NPC_GREET_DEMONIC = k("npc.greet.demonic");
 	public static final String NPC_GREET_HOSTILE = k("npc.greet.hostile");
 	public static final String NPC_GREET_SECLUDED = k("npc.greet.secluded");
+
+	// Talking to cultivators (TalkSystem): the wheel, the dialogue box, and what cultivators say.
+	/** A line a cultivator speaks in a {@code kind} ("greet", "ask", "gift.small"...), by their path and standing. */
+	public static String talkLine(String kind, String faction, String standing) { return k("talk.line." + kind + "." + faction + "." + standing); }
+	/** A line by path alone. */
+	public static String talkLine(String kind, String faction) { return k("talk.line." + kind + "." + faction); }
+	/** A line with no path to it (a mortal's, a sect fact). */
+	public static String talkLine(String kind) { return k("talk.line." + kind); }
+	public static String talkIntent(String id) { return k("talk.intent." + id); }
+	public static String talkIntentHint(String id) { return k("talk.intent." + id + ".hint"); }
+	public static String talkTopic(String id) { return k("talk.topic." + id); }
+	public static String talkRegardLevel(String id) { return k("talk.regard." + id); }
+	public static String talkDirection(String id) { return k("talk.direction." + id); }
+	public static String talkPath(String faction) { return k("talk.path." + faction); }
+	public static final String TALK_SAYS = k("talk.says");
+	public static final String TALK_REGARD_DELTA = k("talk.regard_delta");
+	public static final String TALK_REGARD = k("talk.regard");
+	public static final String TALK_BUSY = k("talk.busy");
+	public static final String TALK_OCCUPIED = k("talk.occupied");
+	public static final String TALK_GIFT_EMPTY = k("talk.gift_empty");
+	public static final String TALK_MORTAL = k("talk.mortal");
+	public static final String TALK_TITLED = k("talk.titled");
+	public static final String TALK_AND = k("talk.and");
+	public static final String TALK_LIST = k("talk.list");
+	public static final String TALK_BACK = k("talk.back");
+	public static final String TALK_PICK = k("talk.pick");
 	public static final String MSG_SECLUSION_REPULSE = k("message.seclusion.repulse");
 
 	// Cultivator clothing (see ClothingItem)

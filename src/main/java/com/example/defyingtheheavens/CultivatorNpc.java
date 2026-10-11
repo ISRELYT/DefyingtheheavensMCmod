@@ -48,8 +48,10 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -139,6 +141,17 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 	private double suppressUpkeep;
 	private boolean landing;
 	private int lastSteered;
+	/** Its own regard for each player it has dealt with (see {@link Regard}); its sect's standing is added on top. */
+	private final Map<UUID, Regard.Entry> regard = new HashMap<>();
+	/** When each player last struck it (not saved): a fight costs regard once, not per blow. */
+	private final Map<UUID, Long> struckAt = new HashMap<>();
+	/** The player it is talking with, and for how much longer it stands still for them (see {@link TalkSystem}). */
+	private UUID talkingTo;
+	private int talkTicks;
+	/** How long a talk holds it still without a word from the player. */
+	public static final int TALK_TICKS = 20 * 20;
+	/** Ticks a fight is remembered: a player who strikes again within this loses no more regard for it. */
+	private static final long STRUCK_MEMORY = 30 * 20;
 
 	public CultivatorNpc(EntityType<? extends PathfinderMob> type, Level level) {
 		super(type, level);
@@ -172,6 +185,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		goalSelector.addGoal(0, new FloatGoal(this));
 		goalSelector.addGoal(1, new CultivatorGoals.FleeGoal(this));
 		goalSelector.addGoal(2, new CultivatorGoals.CombatGoal(this));
+		goalSelector.addGoal(2, new CultivatorGoals.TalkGoal(this));
 		goalSelector.addGoal(3, new CultivatorGoals.JourneyGoal(this));
 		goalSelector.addGoal(3, new CultivatorGoals.SeclusionGoal(this));
 		goalSelector.addGoal(4, new CultivatorGoals.ReturnToTerritoryGoal(this));
@@ -241,6 +255,66 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 
 	public Component describe() {
 		return Component.translatable(ModLang.NPC_TITLE_BRACKETS, getTitle().getDisplayName());
+	}
+
+	/** Its personal name ("Mo Lian"), the same everywhere it is named (see {@link NpcNames}). */
+	public String getPersonalName() {
+		return NpcNames.of(getUUID());
+	}
+
+	// --- Regard and talk ---
+
+	/** What it thinks of {@code player} now: their paths' baseline, its own regard and its sect's standing (see {@link Regard}). */
+	public int regard(Player player) {
+		int value = Regard.baseline(getFaction(), alignmentOf(player));
+		Regard.Entry entry = regard.get(player.getUUID());
+		if (entry != null) value += entry.current(Regard.day(level().getGameTime()));
+		Sect sect = sect();
+		if (sect != null) value += sect.standing(player.getUUID());
+		return Regard.clamp(value);
+	}
+
+	/** Its own record of {@code player}, made if there is none yet. */
+	public Regard.Entry regardEntry(Player player) {
+		long today = Regard.day(level().getGameTime());
+		Regard.Entry entry = regard.computeIfAbsent(player.getUUID(), id -> {
+			Regard.Entry fresh = new Regard.Entry();
+			fresh.day = today;
+			return fresh;
+		});
+		entry.current(today);
+		return entry;
+	}
+
+	/** Changes its own regard for {@code player}. */
+	public void changeRegard(Player player, int delta) {
+		if (delta == 0) return;
+		Regard.Entry entry = regardEntry(player);
+		entry.value = Regard.clamp(entry.value + delta);
+	}
+
+	/** Starts (or keeps up) a talk with {@code player}: it stops where it is and turns to them. */
+	public void beginTalk(Player player) {
+		talkingTo = player.getUUID();
+		talkTicks = TALK_TICKS;
+		getNavigation().stop();
+	}
+
+	public void endTalk(Player player) {
+		if (player.getUUID().equals(talkingTo)) {
+			talkingTo = null;
+			talkTicks = 0;
+		}
+	}
+
+	public boolean isTalkingTo(Player player) {
+		return talkTicks > 0 && player.getUUID().equals(talkingTo);
+	}
+
+	/** Who it is talking with, if they are still here; null when not talking. */
+	public Player talkPartner() {
+		if (talkTicks <= 0 || talkingTo == null) return null;
+		return level().getPlayerByUUID(talkingTo);
 	}
 
 	// --- Setting up ---
@@ -391,6 +465,10 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		else if (combatTicks > 0) combatTicks--;
 		tickQi();
 		if (fleeTicks > 0 && --fleeTicks == 0) reachRefuge(); // given up on getting there: it stops running all the same
+		if (talkTicks > 0 && (--talkTicks == 0 || isInCombat())) {
+			talkTicks = 0;
+			talkingTo = null;
+		}
 		if (lifecycle == Lifecycle.SECLUDED && isConcealed()) repulse(level);
 		tickFlight(level);
 		NpcTravel.maybeDispatch(this, level);
@@ -711,7 +789,9 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		if (other == this || !other.isAlive() || isAlly(other)) return false;
 		if (other instanceof Player player) {
 			if (player.isCreative() || player.isSpectator()) return false;
-			return getFaction().isEnemyOf(Alignment.factionOf(alignmentOf(player)));
+			if (getFaction().isEnemyOf(Alignment.factionOf(alignmentOf(player)))) return true;
+			// Loathing turns it on a player too, if it thinks it can win.
+			return !level().isClientSide && regard(player) <= Regard.HOSTILE && rankOf(this) >= rankOf(player);
 		}
 		if (other instanceof CultivatorNpc npc) return !npc.isConcealed() && getFaction().isEnemyOf(npc.getFaction());
 		return false;
@@ -739,6 +819,11 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 	/** It turned on {@code player} unprovoked (their path offends its own): killing it is then self-defence, not murder. */
 	public void markAggressed(LivingEntity target) {
 		if (target instanceof Player player) aggressed.add(player.getUUID());
+	}
+
+	/** {@code player} provoked it into a fight: whatever it did before, killing it now is murder again. */
+	public void provokedBy(Player player) {
+		aggressed.remove(player.getUUID());
 	}
 
 	/**
@@ -1017,6 +1102,13 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 				onConcealmentAssailed(player);
 			}
 			if (attacker != null && sectId != null && !isAlly(attacker)) SectManager.onMemberAttacked(server, this, attacker);
+			if (attacker instanceof ServerPlayer player && !player.isCreative()) {
+				// Striking it costs its regard, once a fight (blows in quick succession count as one).
+				long now = server.getGameTime();
+				Long last = struckAt.put(player.getUUID(), now);
+				if (last == null || now - last > STRUCK_MEMORY) changeRegard(player, Regard.STRUCK);
+				endTalk(player);
+			}
 		}
 		return hurt;
 	}
@@ -1028,6 +1120,15 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		ServerPlayer killer = killerOf(source);
 		if (sectId != null) SectManager.onMemberDeath(server, this, killer != null);
 		if (killer != null) {
+			// Killing a sect member turns the whole sect against the killer; killing one who was attacking a cultivator earns that
+			// cultivator's thanks (and a little of its sect's).
+			if (sectId != null) SectManager.changeStanding(server.getServer(), sectId, killer.getUUID(), Regard.MEMBER_KILLED);
+			if (getTarget() instanceof CultivatorNpc victim && victim != this && victim.isAlive()) {
+				victim.changeRegard(killer, Regard.DEFENDED);
+				if (victim.getSectId() != null && !victim.getSectId().equals(sectId)) {
+					SectManager.changeStanding(server.getServer(), victim.getSectId(), killer.getUUID(), Regard.DEFENDED_SECT);
+				}
+			}
 			int shift = Alignment.killShift(getAlignment(), aggressed.contains(killer.getUUID()), realmOf(getRank()), isMortal());
 			if (shift != 0) {
 				PlayerCultivation c = CultivationManager.get(killer);
@@ -1081,18 +1182,11 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		return super.causeFallDamage(distance, multiplier, source);
 	}
 
+	/** Right-click: talk to it (see {@link TalkSystem}). */
 	@Override
 	protected InteractionResult mobInteract(Player player, InteractionHand hand) {
-		if (!level().isClientSide && hand == InteractionHand.MAIN_HAND) {
-			Sect sect = sect();
-			String key;
-			if (isConcealed()) key = ModLang.NPC_GREET_SECLUDED;
-			else if (isEnemy(player)) key = ModLang.NPC_GREET_HOSTILE;
-			else if (getFaction() == Alignment.Faction.RIGHTEOUS) key = ModLang.NPC_GREET_RIGHTEOUS;
-			else if (getFaction() == Alignment.Faction.DEMONIC) key = ModLang.NPC_GREET_DEMONIC;
-			else key = ModLang.NPC_GREET_NEUTRAL;
-			Component who = sect == null ? describe() : Component.translatable(ModLang.NPC_OF_SECT, describe(), sect.name);
-			player.displayClientMessage(Component.translatable(key, who), true);
+		if (!level().isClientSide && hand == InteractionHand.MAIN_HAND && player instanceof ServerPlayer serverPlayer) {
+			TalkSystem.open(serverPlayer, this);
 		}
 		return InteractionResult.sidedSuccess(level().isClientSide);
 	}
@@ -1121,6 +1215,13 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		ListTag list = new ListTag();
 		for (UUID id : aggressed) list.add(NbtUtils.createUUID(id));
 		npc.put("Aggressed", list);
+		ListTag regardList = new ListTag();
+		for (Map.Entry<UUID, Regard.Entry> entry : regard.entrySet()) {
+			CompoundTag r = entry.getValue().save();
+			r.putUUID("Player", entry.getKey());
+			regardList.add(r);
+		}
+		npc.put("Regard", regardList);
 		tag.put("Npc", npc);
 	}
 
@@ -1158,6 +1259,12 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		aggressed.clear();
 		ListTag list = npc.getList("Aggressed", Tag.TAG_INT_ARRAY);
 		for (Tag entry : list) aggressed.add(NbtUtils.loadUUID(entry));
+		regard.clear();
+		ListTag regardList = npc.getList("Regard", Tag.TAG_COMPOUND);
+		for (int i = 0; i < regardList.size(); i++) {
+			CompoundTag r = regardList.getCompound(i);
+			if (r.hasUUID("Player")) regard.put(r.getUUID("Player"), Regard.Entry.load(r));
+		}
 		setNoGravity(false); // flight isn't saved: it comes back to earth
 		refreshStats();
 	}

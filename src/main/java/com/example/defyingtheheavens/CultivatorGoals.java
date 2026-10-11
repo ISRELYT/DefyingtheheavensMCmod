@@ -688,6 +688,45 @@ public final class CultivatorGoals {
 		}
 	}
 
+	/**
+	 * Talking with a player (see {@link TalkSystem}): it stands where it is and faces them. A fight, a reason to run, or the
+	 * talk running out ends it, and it goes back to whatever it was doing.
+	 */
+	public static class TalkGoal extends Goal {
+		private final CultivatorNpc npc;
+
+		public TalkGoal(CultivatorNpc npc) {
+			this.npc = npc;
+			setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+		}
+
+		@Override
+		public boolean canUse() {
+			return npc.getTarget() == null && !npc.shouldFlee() && npc.talkPartner() != null;
+		}
+
+		@Override
+		public boolean canContinueToUse() {
+			return canUse();
+		}
+
+		@Override
+		public void start() {
+			npc.getNavigation().stop();
+		}
+
+		@Override
+		public boolean requiresUpdateEveryTick() {
+			return true;
+		}
+
+		@Override
+		public void tick() {
+			Player partner = npc.talkPartner();
+			if (partner != null) npc.getLookControl().setLookAt(partner, 30.0f, 30.0f);
+		}
+	}
+
 	// --- Target goals ---
 
 	/** Fights back against whoever hurt it (never its own sect). */

@@ -1,11 +1,15 @@
 package com.example.defyingtheheavens.client;
 
+import com.example.defyingtheheavens.Alignment;
 import com.example.defyingtheheavens.Formation;
 import com.example.defyingtheheavens.ModPackets;
+import com.example.defyingtheheavens.NpcTitle;
 import com.example.defyingtheheavens.Realm;
 import com.example.defyingtheheavens.Stage;
+import com.example.defyingtheheavens.TalkIntent;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,6 +86,38 @@ public final class ClientPacketHandlers {
 			FormationCoreScreen.State state = new FormationCoreScreen.State(pos, radius, wanted, raised, battery, max, supply, veins, rank,
 					cooldown, owner, trusted);
 			client.execute(() -> FormationCoreScreen.receive(state));
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.TALK_OPEN, (client, handler, buf, sender) -> {
+			int entity = buf.readVarInt();
+			String name = buf.readUtf();
+			NpcTitle title = NpcTitle.byIndex(buf.readVarInt());
+			String sect = buf.readUtf();
+			int rank = buf.readInt();
+			int faction = buf.readVarInt();
+			int regard = buf.readInt();
+			int intents = buf.readVarInt();
+			Alignment.Faction path = Alignment.Faction.values()[Math.max(0, Math.min(Alignment.Faction.values().length - 1, faction))];
+			TalkSession session = new TalkSession(entity, name, title, sect, rank, path, regard, intents);
+			client.execute(() -> TalkSession.open(session));
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.TALK_DIALOGUE, (client, handler, buf, sender) -> {
+			int entity = buf.readVarInt();
+			int regard = buf.readInt();
+			TalkIntent intent = TalkIntent.byIndex(buf.readVarInt());
+			Component line = buf.readComponent();
+			int count = buf.readVarInt();
+			List<TalkSession.Reply> replies = new ArrayList<>(count);
+			for (int i = 0; i < count; i++) {
+				int id = buf.readVarInt();
+				Component label = buf.readComponent();
+				boolean enabled = buf.readBoolean();
+				Component note = buf.readBoolean() ? buf.readComponent() : null;
+				replies.add(new TalkSession.Reply(id, label, enabled, note));
+			}
+			TalkSession.Dialogue dialogue = new TalkSession.Dialogue(intent, line, replies);
+			client.execute(() -> TalkSession.dialogue(entity, regard, dialogue));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.QI_ABSORPTION, (client, handler, buf, sender) -> {

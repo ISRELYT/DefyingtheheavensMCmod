@@ -532,6 +532,43 @@ above 50 (white). A sect shares one alignment (40% righteous, 30% neutral, 30% d
 - Killing a cultivator who hadn't provoked you costs 10 alignment, plus 2 for each realm of theirs; killing a demonic one
   gains 6, plus 2 per realm (`Alignment.killShift`).
 
+### Talking to cultivators
+
+Right-click a cultivator to talk. The **talk wheel** opens round the crosshair with what you can mean by it: **Greet**,
+**Ask**, **Gift** and **Provoke** (click one, or press its number). Greet, Gift and Provoke are answered in a line over
+the hotbar; Ask opens the **dialogue box**, with their portrait and name plate (personal name, title, sect, realm), what
+they say, your regard, and numbered replies. The wheel folds into tabs on the box, so you can turn to a gift without
+leaving; Esc goes back to the wheel, and again ends the talk. They stop and face you while you talk; walking away (8
+blocks) or a fight ends it (`TalkSystem`, `TalkWheelScreen`, `DialogueScreen`).
+
+- **Names.** Every cultivator has a personal name ("Mo Lian", "Gu Hanyu"), worked out from its UUID (`NpcNames`).
+- **Standing.** Their realm against yours, as each side shows it, sets how they speak to you: 2+ realms above you,
+  dismissive (no insults offered; they won't name their elders); a realm above, a senior; the same realm, "Fellow
+  Daoist"; below you, deferential. A mortal player is spoken to as a mortal. Their path sets the tone: the righteous are
+  formal, the neutral terse, the demonic mocking.
+- **Regard** (-100 to 100, five pips: Polite, Courteous, Warm, Trusted, Sworn friend) is what they think of you: their
+  paths' baseline (+10 between two of the same strong path, -10 when you lean the other way), plus their own regard,
+  plus their sect's standing with you. At -50 or lower they attack you if they think they can win (`Regard`).
+
+| What you do | Regard |
+| --- | --- |
+| Greet them | +2, once a day |
+| Give them something (old herbs, pills, Cultivation Fruit; worth less to the stronger, and less for the same gift twice in a day) | +1 to +25 |
+| Kill someone who was attacking them | +20 (+5 to their sect) |
+| Wake them from meditation (elders and the master on duty don't mind) | -2 |
+| Provoke them | -15, and they may attack: likelier on the demonic path or if they are stronger, never if a realm below you |
+| Strike them | -30, once a fight |
+| Kill one of their sect | -40 to the whole sect |
+| Rob their treasury | -60 to the whole sect, once a day |
+
+- A cultivator's own regard drifts a point a day back toward zero; a sect's grudges don't fade.
+- Provoking counts as starting the fight: killing them afterwards still costs alignment as murder.
+- **Ask** about who they are, their sect (its size, path and master), who leads it (its elders by name), and the nearest
+  other sect they know of (within 2,000 blocks: its name, path, direction and rough distance). The answers come from the
+  world as it is.
+- They won't talk in a fight, in seclusion, while leaving for the sky, to an enemy of their path, or while talking to
+  someone else.
+
 ### Cultivator clothing
 
 Robes, guan (hair crowns), trousers and boots, worn in place of armour, in five grades: **Mortal, Spirit, Earth, Heaven,

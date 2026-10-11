@@ -5,6 +5,7 @@ import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
@@ -54,6 +55,16 @@ public final class ModPackets {
 	public static final ResourceLocation FORMATION_CORE_CONFIGURE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "formation_core_configure");
 	/** C2S: the owner trusts a player by name (position, true, name) or stops trusting one (position, false, UUID). */
 	public static final ResourceLocation FORMATION_CORE_TRUST = new ResourceLocation(DefyingTheHeavens.MOD_ID, "formation_core_trust");
+	/** S2C: a talk with a cultivator opens (see {@link TalkSystem}): who they are, what they think of you, the intents on offer. */
+	public static final ResourceLocation TALK_OPEN = new ResourceLocation(DefyingTheHeavens.MOD_ID, "talk_open");
+	/** S2C: the dialogue box: what they say, and the replies on offer. */
+	public static final ResourceLocation TALK_DIALOGUE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "talk_dialogue");
+	/** C2S: the player chose an intent (entity id, intent ordinal). */
+	public static final ResourceLocation TALK_INTENT = new ResourceLocation(DefyingTheHeavens.MOD_ID, "talk_intent");
+	/** C2S: the player picked a reply in the dialogue box (entity id, topic). */
+	public static final ResourceLocation TALK_TOPIC = new ResourceLocation(DefyingTheHeavens.MOD_ID, "talk_topic");
+	/** C2S: the player closed the talk (entity id). */
+	public static final ResourceLocation TALK_END = new ResourceLocation(DefyingTheHeavens.MOD_ID, "talk_end");
 	/** Players further than this from a core can't work its screen. */
 	private static final double CORE_REACH = 8;
 
@@ -93,6 +104,20 @@ public final class ModPackets {
 				}
 			});
 		});
+		ServerPlayNetworking.registerGlobalReceiver(TALK_INTENT, (server, player, handler, buf, responseSender) -> {
+			int entity = buf.readVarInt();
+			int intent = buf.readVarInt();
+			server.execute(() -> TalkSystem.intent(player, entity, intent));
+		});
+		ServerPlayNetworking.registerGlobalReceiver(TALK_TOPIC, (server, player, handler, buf, responseSender) -> {
+			int entity = buf.readVarInt();
+			int topic = buf.readVarInt();
+			server.execute(() -> TalkSystem.topic(player, entity, topic));
+		});
+		ServerPlayNetworking.registerGlobalReceiver(TALK_END, (server, player, handler, buf, responseSender) -> {
+			int entity = buf.readVarInt();
+			server.execute(() -> TalkSystem.end(player, entity));
+		});
 		ServerPlayNetworking.registerGlobalReceiver(TOGGLE_MEDITATION,
 				(server, player, handler, buf, responseSender) -> server.execute(() -> MeditationManager.toggle(player)));
 		ServerPlayNetworking.registerGlobalReceiver(BREAKTHROUGH,
@@ -130,6 +155,41 @@ public final class ModPackets {
 		buf.writeInt(c.getAlignment());
 		buf.writeDouble(c.getGearQiBonus());
 		ServerPlayNetworking.send(player, SYNC, buf);
+	}
+
+	/** Opens the talk wheel on {@code npc}: its name, title, sect, the rank it shows (-1 a mortal), regard and the intents on offer. */
+	public static void sendTalkOpen(ServerPlayer player, CultivatorNpc npc, int regard, int intents) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(npc.getId());
+		buf.writeUtf(npc.getPersonalName());
+		buf.writeVarInt(npc.getTitle().ordinal());
+		Sect sect = npc.sect();
+		buf.writeUtf(sect == null ? "" : sect.name);
+		buf.writeInt(npc.isMortal() ? CultivatorNpc.MORTAL
+				: npc.getDisplayedRealm().ordinal() * Stage.values().length + npc.getDisplayedStage().ordinal());
+		buf.writeVarInt(npc.getFaction().ordinal());
+		buf.writeInt(regard);
+		buf.writeVarInt(intents);
+		ServerPlayNetworking.send(player, TALK_OPEN, buf);
+	}
+
+	/** Shows the dialogue box: what {@code npc} says, under {@code intent}, and the replies the player can make. */
+	public static void sendTalkDialogue(ServerPlayer player, CultivatorNpc npc, int regard, TalkIntent intent, Component line,
+			List<TalkSystem.Reply> replies) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(npc.getId());
+		buf.writeInt(regard);
+		buf.writeVarInt(intent.ordinal());
+		buf.writeComponent(line);
+		buf.writeVarInt(replies.size());
+		for (TalkSystem.Reply reply : replies) {
+			buf.writeVarInt(reply.id());
+			buf.writeComponent(reply.label());
+			buf.writeBoolean(reply.enabled());
+			buf.writeBoolean(reply.note() != null);
+			if (reply.note() != null) buf.writeComponent(reply.note());
+		}
+		ServerPlayNetworking.send(player, TALK_DIALOGUE, buf);
 	}
 
 	public static void sendSurge(ServerPlayer player, int game, int windowTicks) {

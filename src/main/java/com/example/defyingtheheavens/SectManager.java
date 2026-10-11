@@ -39,6 +39,14 @@ public final class SectManager {
 		SectData.get(server).setDirty();
 	}
 
+	/** Changes what a whole sect thinks of a player (see {@link Regard}). */
+	public static void changeStanding(MinecraftServer server, UUID sectId, UUID player, int delta) {
+		Sect sect = get(server, sectId);
+		if (sect == null || delta == 0) return;
+		sect.changeStanding(player, delta);
+		dirty(server);
+	}
+
 	// --- Founding ---
 
 	/**
@@ -270,7 +278,14 @@ public final class SectManager {
 		if (player.isCreative() || player.isSpectator()) return;
 		Sect sect = sectAt(level, pos);
 		if (sect == null || sect.members.isEmpty()) return;
-		alert(level, sect, player, pos, sect.treasury.isInside(pos) ? Alarm.CRITICAL_BREACH : Alarm.TRESPASS, null, null);
+		boolean theft = sect.treasury.isInside(pos);
+		if (theft) {
+			// Robbing the treasury turns the whole sect against the thief, once a day however many blocks it takes.
+			long today = Regard.day(level.getGameTime());
+			Long last = sect.robbedDay.put(player.getUUID(), today);
+			if (last == null || last != today) changeStanding(level.getServer(), sect.id, player.getUUID(), Regard.TREASURY_ROBBED);
+		}
+		alert(level, sect, player, pos, theft ? Alarm.CRITICAL_BREACH : Alarm.TRESPASS, null, null);
 	}
 
 	public static void onCoreDestroyed(ServerLevel level, UUID sectId) {
