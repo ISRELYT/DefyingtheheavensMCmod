@@ -5,6 +5,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.util.DefaultRandomPos;
@@ -19,7 +20,8 @@ import java.util.List;
 
 /**
  * What NPC cultivators do ({@link CultivatorNpc}), highest priority first: flee, fight, travel, keep seclusion, go back to
- * the grounds, do their sect duty, wander.
+ * the grounds, live their everyday life (LifeGoal: sleep, the lecture, talk, practice; see {@link NpcLife}), do their sect
+ * duty, wander.
  * <ul>
  *   <li><b>Sect Master</b>: meditates on the raised dais of the main hall.</li>
  *   <li><b>Grand Elders and Elders</b>: sit in meditation at their posts by the treasury and the Formation Core.</li>
@@ -517,6 +519,10 @@ public final class CultivatorGoals {
 		private boolean seat;
 		/** Keeping a gate (Sect#guardPost). */
 		private boolean guarding;
+		/** Whether it was night at the last choice (null before the first): a change of watch is said aloud. */
+		private Boolean watchNight;
+		/** It came on watch at the change: it says so once at the gate. */
+		private boolean announce;
 		private int busy;
 		private int patrolLeft;
 		private int repath;
@@ -573,6 +579,10 @@ public final class CultivatorGoals {
 			if (guarding) {
 				// At the gate: stand still and watch the road out.
 				npc.getNavigation().stop();
+				if (announce) {
+					announce = false;
+					if (NpcSpeech.heard(npc)) NpcSpeech.say(npc, NpcLines.line("watch.begin", npc));
+				}
 				Vec3 at = Vec3.atBottomCenterOf(goal);
 				Vec3 out = at.subtract(Vec3.atBottomCenterOf(sect.core)).multiply(1, 0, 1).normalize().scale(8);
 				npc.getLookControl().setLookAt(at.x + out.x, at.y + 1.6, at.z + out.z);
@@ -586,8 +596,16 @@ public final class CultivatorGoals {
 			if (member == null) return;
 			busy = 0;
 			repath = 0;
-			BlockPos guardPost = sect.guardPost(member);
+			// The gates have a day watch and, where there are outer disciples enough, a night watch (Sect#guardPost).
+			boolean night = NpcLife.isNight(npc.level());
+			BlockPos guardPost = sect.guardPost(member, night);
+			boolean wasGuarding = guarding;
 			guarding = guardPost != null;
+			if (watchNight != null && watchNight != night && wasGuarding != guarding) {
+				if (guarding) announce = true;
+				else if (NpcSpeech.heard(npc)) NpcSpeech.say(npc, NpcLines.line("watch.end", npc));
+			}
+			watchNight = night;
 			npc.setGateGuard(guarding);
 			switch (member.title) {
 				case SECT_MASTER, GRAND_ELDER, ELDER -> {
@@ -596,7 +614,9 @@ public final class CultivatorGoals {
 					busy = 1200;
 				}
 				case INNER_DISCIPLE -> {
-					BlockPos stroll = npc.getRandom().nextFloat() < 0.25f || sect.posts(Sect.Post.MEDITATION).isEmpty() ? courtyardPost(sect) : null;
+					// Out for a walk now and then, but not in the rain.
+					boolean wet = npc.level().isRaining();
+					BlockPos stroll = !wet && (npc.getRandom().nextFloat() < 0.25f || sect.posts(Sect.Post.MEDITATION).isEmpty()) ? courtyardPost(sect) : null;
 					if (stroll != null) {
 						goal = stroll;
 						seat = false;
@@ -788,6 +808,118 @@ public final class CultivatorGoals {
 		public void tick() {
 			Player partner = npc.talkPartner();
 			if (partner != null) npc.getLookControl().setLookAt(partner, 30.0f, 30.0f);
+		}
+	}
+
+	/**
+	 * Everyday life (see {@link NpcLife}): whatever NpcLife has it doing, sleep, the morning lecture, a talk, practice, mourning.
+	 * It goes to where that is, then does it there, while its duty waits. Anything more pressing (a fight, a reason to run, a
+	 * player's talk or trade) comes first, and it takes the activity up again after: back to bed, back to its seat.
+	 */
+	public static class LifeGoal extends Goal {
+		private final CultivatorNpc npc;
+		private NpcLife.Activity doing;
+		private int repath;
+
+		public LifeGoal(CultivatorNpc npc) {
+			this.npc = npc;
+			setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+		}
+
+		@Override public boolean canUse() { return NpcLife.canLive(npc); }
+		@Override public boolean canContinueToUse() { return NpcLife.canLive(npc); }
+		@Override public boolean requiresUpdateEveryTick() { return true; }
+
+		@Override
+		public void start() {
+			doing = null;
+			repath = 0;
+		}
+
+		@Override
+		public void tick() {
+			NpcLife.Activity a = npc.activity();
+			if (a == null) return;
+			if (a != doing) {
+				doing = a;
+				repath = 0;
+				npc.setMeditating(false);
+				if (npc.hasPose(Pose.SLEEPING)) npc.setPose(Pose.STANDING);
+			}
+			Entity partner = a.partner != null && npc.level() instanceof ServerLevel level ? level.getEntity(a.partner) : null;
+			Vec3 target = a.spot != null ? Vec3.atBottomCenterOf(a.spot) : partner != null ? partner.position() : null;
+			if (target == null) {
+				NpcLife.end(npc);
+				return;
+			}
+			double dx = target.x - npc.getX(), dz = target.z - npc.getZ();
+			double sideways = dx * dx + dz * dz;
+			// A path ends within a block of where it was asked to go; sitting and lying down then settle it in the middle.
+			double reach = a.spot == null ? 2.6 : 1.25;
+			boolean there = sideways <= reach * reach && Math.abs(target.y - npc.getY()) < 1.6;
+			// Its path ended close by but no closer (the corner of a mat, a neighbour in the way): near enough to settle in.
+			if (!there && a.spot != null && a.walked > 20 && npc.getNavigation().isDone() && sideways <= 4.0 && Math.abs(target.y - npc.getY()) < 1.6) there = true;
+			// Pushed out of its place (or the one it talks with moved off): it goes back. Practice moves about on its own.
+			boolean moves = a.kind == NpcLife.Kind.SPAR || a.kind == NpcLife.Kind.DRILL;
+			if (a.arrived && !moves && sideways > (reach + 1.5) * (reach + 1.5)) a.arrived = false;
+			if (!a.arrived) {
+				if (!there) {
+					npc.setMeditating(false);
+					if (npc.hasPose(Pose.SLEEPING)) npc.setPose(Pose.STANDING);
+					a.walked++;
+					if (--repath <= 0 || npc.getNavigation().isDone()) {
+						repath = 40;
+						if (sideways > 24 * 24) walkToward(npc, target, 1.0);
+						else npc.getNavigation().moveTo(target.x, target.y, target.z, 0.9);
+					}
+					return;
+				}
+				a.arrived = true;
+				npc.getNavigation().stop();
+				if (a.face != null) face(a.face);
+				NpcLife.arrived(npc, a);
+			}
+			switch (a.kind) {
+				case SLEEP -> lieDown(a.spot);
+				case REST, LISTEN -> sit(npc, a.spot);
+				case SPAR -> NpcLife.spar(npc, a);
+				case DRILL -> NpcLife.drill(npc, a);
+				default -> {
+					if (a.seated && a.spot != null) sit(npc, a.spot);
+					else npc.getNavigation().stop();
+				}
+			}
+			// Looking at the one it talks with, or at what its activity is about.
+			if (a.kind == NpcLife.Kind.CHAT && partner != null) npc.getLookControl().setLookAt(partner, 30.0f, 30.0f);
+			else if (a.face != null && !moves && a.kind != NpcLife.Kind.SLEEP) npc.getLookControl().setLookAt(a.face.x, a.face.y, a.face.z);
+		}
+
+		@Override
+		public void stop() {
+			npc.setMeditating(false);
+			if (npc.hasPose(Pose.SLEEPING)) npc.setPose(Pose.STANDING);
+			npc.getNavigation().stop();
+			doing = null;
+			NpcLife.interrupted(npc);
+		}
+
+		/** Turns its whole body to {@code point}, so it sits facing it (the head alone would turn back). */
+		private void face(Vec3 point) {
+			float yaw = (float) (Math.toDegrees(Math.atan2(point.z - npc.getZ(), point.x - npc.getX())) - 90.0);
+			npc.setYRot(yaw);
+			npc.setYBodyRot(yaw);
+			npc.setYHeadRot(yaw);
+		}
+
+		/** Lies down to sleep on the mat (or patch of ground) at {@code pos}. */
+		private void lieDown(BlockPos pos) {
+			npc.getNavigation().stop();
+			npc.setMeditating(false);
+			double y = pos.getY() + (npc.level().getBlockState(pos).getBlock() instanceof MeditationMatBlock ? 2.0 / 16 : 0);
+			if (npc.position().distanceToSqr(pos.getX() + 0.5, y, pos.getZ() + 0.5) > 0.0025) {
+				npc.moveTo(pos.getX() + 0.5, y, pos.getZ() + 0.5, npc.getYRot(), 0);
+			}
+			if (!npc.hasPose(Pose.SLEEPING)) npc.setPose(Pose.SLEEPING);
 		}
 	}
 

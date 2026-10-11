@@ -645,8 +645,8 @@ the master is between Core Formation and Nascent Soul Grand Perfection; in the U
 
 | Title | Duty |
 | --- | --- |
-| Outer Disciple | The strongest (up to six) keep the gates as gate guards; the rest patrol the grounds and up to 30 blocks outside the barrier |
-| Inner Disciple | Meditates in the hall, trains in the courtyards |
+| Outer Disciple | The strongest (up to six) keep the gates as gate guards (by day; the next strongest by night, where there are enough); the rest patrol the grounds and up to 30 blocks outside the barrier |
+| Inner Disciple | Meditates in the hall, walks the courtyards (not in the rain) |
 | Elder, Grand Elder | Guards the Treasury and the Formation Core; otherwise fights only when disciples nearby are in a fight or someone breaks into the Treasury or at the core |
 | Sect Master | Meditates on the dais; otherwise fights only when the barrier is shattered or an elder is killed |
 
@@ -687,6 +687,36 @@ the master is between Core Formation and Nascent Soul Grand Perfection; in the U
   (`RUN_SPEED`, `FLY_SPEED` in `CultivatorGoals.FleeGoal`).
 - Every cultivator has a nameplate: their name ("Mo Lian", or what a name tag called them), title, a red health bar with
   numbers, and alignment, for example "Righteous (+120)". Under Qi Sense, meditating cultivators draw qi motes into themselves.
+
+### Everyday life
+
+Around their duties, cultivators live a day (`NpcLife`), and say things aloud of their own accord: a line over their head,
+above the name, in quotes, for as long as it takes to read, seen by anyone within 20 blocks (`NpcSpeech`; every line,
+in each path's voice, is in `NpcLines`).
+
+| Time of day | In a sect |
+| --- | --- |
+| Dawn (0) | A bell rings three times from the main hall; the disciples get up |
+| Morning (1,000-4,000) | An Elder (they take turns by the day; with none, the Sect Master) teaches in the main hall, standing before the dais, the disciples seated in rows before it; a listener now and then answers or asks a question. They bow when it ends. With no room in the hall, the lecture is on the plaza |
+| Day (4,000-11,000) and evening | Duties, and between them: two disciples stop to talk, two on neighbouring mats whisper, elders talk quietly at their posts; disciples practise sword forms alone, or spar in pairs on the plaza (lunge, parry, a clash of blades, then a bow, and the stronger usually wins), and others stop to watch |
+| Dusk (12,000) | A drum sounds three times |
+| Night (13,000-24,000) | Disciples sleep on their mats (from Core Formation they meditate through the night instead). With outer disciples enough for two watches the gates have a night watch, who sleep in through the next morning; the watch hands over with a word |
+
+- **Talk** is about real things: their cultivation, their duties, the Sect Master and elders by name, the last visitor to
+  the grounds (by name), and the rumours going round (`Rumours`: herbs, caves, killings). Rogues who meet on the road pass
+  a few words too.
+- **Juniors bow** to a passing Elder or the Sect Master, who may nod back.
+- **Passing a cultivator** (within 6 blocks, 2.5 sneaking; once every few minutes each): one who likes you greets you
+  by name, one who doesn't says so, one two realms beneath you bows in awe, one two realms above is dismissive, a mortal is
+  warned; a gate guard welcomes a friend and halts a stranger; and anyone eyes a Supreme or Immortal spirit stone, or a
+  Cultivation Fruit, in your hand.
+- They remark on the rain and the thunder, dusk and dawn; grumble patrolling in the rain (nobody practises or strolls in
+  it); mumble in their sleep; shout when the sect is attacked, its barrier struck or its treasury robbed; cheer a
+  breakthrough (theirs, or a fellow's).
+- **When a member falls**, those near cry out its name, and for half a day after its fellows go and stand where it fell.
+- Talk and practice start only where a player is near enough to see them; the routine (sleep, the lecture) goes on
+  regardless. Anything more pressing (a fight, your talk with them) interrupts what they're doing, and they take it up
+  again after. Nothing of it is saved: it is worked out again from the time of day.
 
 ### Alignment
 

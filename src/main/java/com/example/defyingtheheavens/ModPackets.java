@@ -87,6 +87,8 @@ public final class ModPackets {
 	public static final ResourceLocation TALK_REQUEST = new ResourceLocation(DefyingTheHeavens.MOD_ID, "talk_request");
 	/** S2C: someone in sight makes a gesture (entity id, Gesture ordinal), drawn for Gesture#TICKS. */
 	public static final ResourceLocation GESTURE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "gesture");
+	/** S2C: a cultivator nearby says something of its own accord (entity id, the line, ticks it stays up), over its head (NpcSpeech). */
+	public static final ResourceLocation NPC_SAY = new ResourceLocation(DefyingTheHeavens.MOD_ID, "npc_say");
 	/** S2C: the player's journal (see Journal), whole. C2S JOURNAL_REQUEST asks for it (the menu's Journal tab opening). */
 	public static final ResourceLocation JOURNAL = new ResourceLocation(DefyingTheHeavens.MOD_ID, "journal");
 	public static final ResourceLocation JOURNAL_REQUEST = new ResourceLocation(DefyingTheHeavens.MOD_ID, "journal_request");
@@ -284,6 +286,15 @@ public final class ModPackets {
 		buf.writeVarInt(gesture.ordinal());
 		for (ServerPlayer watcher : PlayerLookup.tracking(entity)) ServerPlayNetworking.send(watcher, GESTURE, PacketByteBufs.copy(buf));
 		if (entity instanceof ServerPlayer self) ServerPlayNetworking.send(self, GESTURE, buf);
+	}
+
+	/** The cultivator {@code entityId} says {@code line}, shown over its head for {@code ticks}. */
+	public static void sendNpcSay(ServerPlayer player, int entityId, Component line, int ticks) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(entityId);
+		buf.writeComponent(line);
+		buf.writeVarInt(ticks);
+		ServerPlayNetworking.send(player, NPC_SAY, buf);
 	}
 
 	/** The player's whole journal (Journal), for the menu's Journal tab. */

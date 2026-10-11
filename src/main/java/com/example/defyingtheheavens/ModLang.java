@@ -264,6 +264,8 @@ public final class ModLang {
 	public static final String NPC_GREET_DEMONIC = k("npc.greet.demonic");
 	public static final String NPC_GREET_HOSTILE = k("npc.greet.hostile");
 	public static final String NPC_GREET_SECLUDED = k("npc.greet.secluded");
+	/** Something a cultivator says of its own accord (NpcLines: {@code key} is the line's key and variant number). */
+	public static String npcSay(String key) { return k("npc.say." + key); }
 
 	// Talking to cultivators (TalkSystem): the wheel, the dialogue box, and what cultivators say.
 	/** A line a cultivator speaks in a {@code kind} ("greet", "ask", "gift.small"...), by their path and standing. */

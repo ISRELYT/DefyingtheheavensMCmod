@@ -16,17 +16,22 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.HumanoidMobRenderer;
 import net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Pose;
 import org.joml.Matrix4f;
+
+import java.util.List;
 
 /**
  * NPC cultivators: the player model in one of {@link CultivatorNpc#SKINS} skins, wearing whatever clothing or armor they
  * have, and always carrying a nameplate over their heads: their name ("Mo Lian", see NpcNames; or what a name tag called
  * them), their title ("[Sect Master]", "[Rogue Cultivator]") in its colour, a red health bar with the numbers on it, and
  * their path with its alignment ("Righteous (+120)"). A secluded cultivator's Concealment Barrier hides the plate unless
- * you're close.
+ * you're close. Over it all, whatever it is saying of its own accord (NpcSpeech, ClientNpcSpeech).
  */
 public class CultivatorNpcRenderer extends HumanoidMobRenderer<CultivatorNpc, PlayerModel<CultivatorNpc>> {
 	private static final ResourceLocation[] SKINS = new ResourceLocation[CultivatorNpc.SKINS];
@@ -36,6 +41,9 @@ public class CultivatorNpcRenderer extends HumanoidMobRenderer<CultivatorNpc, Pl
 	private static final int BAR_HEIGHT = 9;
 	/** Depth between the health bar's layers, in plate units (the plate is drawn 1/40 of a block per unit). */
 	private static final float LAYER = 0.6f;
+	/** What it says (NpcSpeech) wraps at this width, in plate units, and is drawn in this warm white. */
+	private static final int SPEECH_WIDTH = 160;
+	private static final int SPEECH_COLOR = 0xF2E8CF;
 
 	static {
 		for (int i = 0; i < SKINS.length; i++) SKINS[i] = DefyingTheHeavens.id("textures/entity/cultivator/cultivator_" + i + ".png");
@@ -66,13 +74,16 @@ public class CultivatorNpcRenderer extends HumanoidMobRenderer<CultivatorNpc, Pl
 		double distanceSqr = entityRenderDispatcher.distanceToSqr(npc);
 		double range = npc.isConcealed() ? CONCEALED_RANGE : PLATE_RANGE;
 		if (distanceSqr > range * range) return;
-		plate(npc, poseStack, buffers, light);
+		plate(npc, poseStack, buffers, light, partialTick);
 	}
 
-	private void plate(CultivatorNpc npc, PoseStack poseStack, MultiBufferSource buffers, int light) {
+	private void plate(CultivatorNpc npc, PoseStack poseStack, MultiBufferSource buffers, int light, float partialTick) {
 		Font font = getFont();
 		poseStack.pushPose();
-		poseStack.translate(0, npc.getBbHeight() + 0.5, 0);
+		// The plate floats over its head: lower over one sitting cross-legged (so a seated crowd's plates sit beneath the one
+		// standing before them, the lecturer's), lower still over a sleeper, whose box is a flat sliver.
+		double over = npc.hasPose(Pose.SLEEPING) ? 0.9 : npc.isMeditating() ? npc.getBbHeight() - 0.2 : npc.getBbHeight() + 0.5;
+		poseStack.translate(0, over, 0);
 		poseStack.mulPose(entityRenderDispatcher.cameraOrientation());
 		poseStack.scale(-0.025f, -0.025f, 0.025f);
 		Matrix4f matrix = poseStack.last().pose();
@@ -83,6 +94,25 @@ public class CultivatorNpcRenderer extends HumanoidMobRenderer<CultivatorNpc, Pl
 		float nameX = -font.width(name) / 2f;
 		font.drawInBatch(name, nameX, -35, 0x20FFFFFF, false, matrix, buffers, Font.DisplayMode.SEE_THROUGH, background, light);
 		font.drawInBatch(name, nameX, -35, 0xFFFFFFFF, false, matrix, buffers, Font.DisplayMode.NORMAL, 0, light);
+
+		// What it is saying, over its name (NpcSpeech): in quotes, a line or a few, fading in and out.
+		ClientNpcSpeech.Said said = ClientNpcSpeech.of(npc);
+		if (said != null) {
+			float fade = said.alpha(npc.level().getGameTime(), partialTick);
+			Component quoted = Component.literal("“").append(said.line()).append("”").withStyle(ChatFormatting.ITALIC);
+			List<FormattedCharSequence> rows = font.split(quoted, SPEECH_WIDTH);
+			// The font draws an alpha below 4 fully opaque, so the fade stops just short of nothing.
+			int alpha = Math.max(4, (int) (fade * 255));
+			int faint = Math.max(4, alpha / 8);
+			int back = (int) (Minecraft.getInstance().options.getBackgroundOpacity(0.25f) * 255.0f * fade) << 24;
+			float y = -46 - (rows.size() - 1) * 10;
+			for (FormattedCharSequence row : rows) {
+				float x = -font.width(row) / 2f;
+				font.drawInBatch(row, x, y, faint << 24 | 0xFFFFFF, false, matrix, buffers, Font.DisplayMode.SEE_THROUGH, back, light);
+				font.drawInBatch(row, x, y, alpha << 24 | SPEECH_COLOR, false, matrix, buffers, Font.DisplayMode.NORMAL, 0, light);
+				y += 10;
+			}
+		}
 
 		// The title, in its colour (a gate guard's post rather than its rank).
 		Component title = Component.translatable(ModLang.NPC_TITLE_BRACKETS,

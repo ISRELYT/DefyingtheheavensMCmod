@@ -12,6 +12,7 @@ import com.example.defyingtheheavens.ModEffects;
 import com.example.defyingtheheavens.ModItems;
 import com.example.defyingtheheavens.ModLang;
 import com.example.defyingtheheavens.MortalStage;
+import com.example.defyingtheheavens.NpcLines;
 import com.example.defyingtheheavens.PillGrade;
 import com.example.defyingtheheavens.Realm;
 import com.example.defyingtheheavens.Stage;
@@ -782,5 +783,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.HUD_SOUL_TETHER, "Tether %s / %s");
 		t.add(ModLang.HUD_SOUL_BODY, "Body %s / %s");
 		t.add(ModLang.HUD_SOUL_POSSESSING, "In %s (sneak to let go)");
+
+		// What cultivators say of their own accord (NpcLife, NpcSpeech): every line and its variants, kept in NpcLines.
+		NpcLines.english().forEach((key, text) -> t.add(key, text));
 	}
 }

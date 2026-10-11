@@ -44,6 +44,7 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(SoulProjection::tick);
 		ServerTickEvents.END_SERVER_TICK.register(SparSystem::tick);
 		ServerTickEvents.END_SERVER_TICK.register(Rumours::tick);
+		ServerTickEvents.END_SERVER_TICK.register(NpcLife::tick);
 		InnerRealm.registerEvents();
 		registerSoulInteractions();
 		Tempering.register();
@@ -68,6 +69,7 @@ public final class CultivationEvents {
 			CultivatorNpc.clearLoaded();
 			SoulProjection.clear();
 			Rumours.clearPending();
+			NpcLife.clear();
 		});
 
 		// A formation's shell runs through the ground too: those who couldn't break the barrier can't dig under it either.

@@ -265,6 +265,7 @@ public final class SectManager {
 			};
 			if (respond) npc.answerAlert(aggressor);
 		}
+		if (person) NpcLife.onAlarm(level, sect, alarm, where); // the nearest raise the cry
 	}
 
 	public static void onMemberAttacked(ServerLevel level, CultivatorNpc victim, LivingEntity attacker) {

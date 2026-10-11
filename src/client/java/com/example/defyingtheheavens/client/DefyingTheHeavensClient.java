@@ -133,6 +133,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			ClientSoul.clear();
 			ClientGestures.clear();
 			ClientJournal.clear();
+			ClientNpcSpeech.clear();
 		}));
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {

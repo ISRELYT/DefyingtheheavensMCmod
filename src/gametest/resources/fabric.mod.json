@@ -17,7 +17,8 @@
       "com.example.defyingtheheavens.SwordFlightGameTests",
       "com.example.defyingtheheavens.SoulProjectionGameTests",
       "com.example.defyingtheheavens.TalkGameTests",
-      "com.example.defyingtheheavens.TalkPhasesGameTests"
+      "com.example.defyingtheheavens.TalkPhasesGameTests",
+      "com.example.defyingtheheavens.NpcLifeGameTests"
     ]
   }
 }

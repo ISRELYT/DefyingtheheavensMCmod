@@ -161,6 +161,13 @@ public final class ClientPacketHandlers {
 			client.execute(() -> ClientGestures.start(entity, gesture));
 		});
 
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.NPC_SAY, (client, handler, buf, sender) -> {
+			int entity = buf.readVarInt();
+			Component line = buf.readComponent();
+			int ticks = buf.readVarInt();
+			client.execute(() -> ClientNpcSpeech.say(entity, line, ticks));
+		});
+
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.JOURNAL, (client, handler, buf, sender) -> {
 			List<Journal.Entry> journal = Journal.read(buf);
 			client.execute(() -> ClientJournal.set(journal));

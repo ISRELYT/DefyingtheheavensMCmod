@@ -30,6 +30,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -80,6 +81,10 @@ import java.util.UUID;
  * on weaker foes with Realm Suppress and flies after flying ones, but only while its qi can carry the cost; it flees when badly
  * hurt or when it senses a hostile domain a realm or more above its own. The righteous and the demonic attack each other (and
  * players of the other path) on sight; see {@link CultivatorGoals} for who fights when.
+ * <p>
+ * <b>Everyday life.</b> Around its duties it lives a day (see {@link NpcLife}): sleeps at night, sits the morning lecture,
+ * talks with its fellows, practises, bows to its seniors, mourns the fallen, and says things aloud of its own accord
+ * ({@link NpcSpeech}).
  */
 public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Merchant {
 	/** NPCs cultivate at this share of a player's rate. */
@@ -185,6 +190,15 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	private final Map<MerchantOffer, String> offerKeys = new java.util.IdentityHashMap<>();
 	private final Map<String, Integer> tradeUses = new HashMap<>();
 	private long tradeDay = -1;
+	/** What it is doing of its everyday life (NpcLife: sleep, the lecture, a talk, practice...), or null. Not saved. */
+	private NpcLife.Activity activity;
+	/** When it last said something aloud of its own accord, and until when that stays up (NpcSpeech). */
+	private long lastSpoke = Long.MIN_VALUE / 2;
+	private long speakingUntil;
+	/** When it last remarked on each player passing, or bowed to each senior (NpcLife). Not saved. */
+	private final Map<UUID, Long> remarked = new HashMap<>();
+	/** Set while it makes up for time its chunk spent unloaded: breakthroughs then pass without a word. */
+	private boolean catchingUp;
 
 	public CultivatorNpc(EntityType<? extends PathfinderMob> type, Level level) {
 		super(type, level);
@@ -223,7 +237,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		goalSelector.addGoal(3, new CultivatorGoals.JourneyGoal(this));
 		goalSelector.addGoal(3, new CultivatorGoals.SeclusionGoal(this));
 		goalSelector.addGoal(4, new CultivatorGoals.ReturnToTerritoryGoal(this));
-		goalSelector.addGoal(5, new CultivatorGoals.SectDutyGoal(this));
+		goalSelector.addGoal(5, new CultivatorGoals.LifeGoal(this));
+		goalSelector.addGoal(6, new CultivatorGoals.SectDutyGoal(this));
 		goalSelector.addGoal(6, new CultivatorGoals.WanderGoal(this));
 		goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0f));
 		goalSelector.addGoal(9, new RandomLookAroundGoal(this));
@@ -541,6 +556,28 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		return until != null && until > level().getGameTime();
 	}
 
+	// --- Everyday life (NpcLife, NpcSpeech) ---
+
+	public NpcLife.Activity activity() { return activity; }
+	public void setActivity(NpcLife.Activity activity) { this.activity = activity; }
+	public long lastSpoke() { return lastSpoke; }
+	public long speakingUntil() { return speakingUntil; }
+
+	/** It just said something that stays up for {@code ticks}. */
+	public void spoke(long now, int ticks) {
+		lastSpoke = now;
+		speakingUntil = now + ticks;
+	}
+
+	/** When it last remarked on (or bowed to) {@code who}; a long time ago if never. */
+	public long remarkedAt(UUID who) {
+		return remarked.getOrDefault(who, Long.MIN_VALUE / 2);
+	}
+
+	public void remark(UUID who, long now) {
+		remarked.put(who, now);
+	}
+
 	// --- Setting up ---
 
 	/** Makes this a cultivator of {@code rank} ({@link #MORTAL} for a mortal), re-applying its realm's strength. */
@@ -709,6 +746,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	public boolean isInCombat() { return combatTicks > 0; }
 
 	private void secondTick(ServerLevel level) {
+		// Asleep only while it means to be (NpcLife): anything that took it away from its bed has woken it.
+		if (hasPose(Pose.SLEEPING) && (activity == null || activity.kind != NpcLife.Kind.SLEEP || !NpcLife.canLive(this))) setPose(Pose.STANDING);
 		if (isMeditating() && !isMortal()) cultivate(1.0, meditationMultiplier(level));
 		// Natural recovery out of combat: quicker once qi sustains the body.
 		if (!isInCombat() && getHealth() < getMaxHealth()) heal(isMortal() || getRank() < 4 ? 0.5f : 2.0f);
@@ -803,6 +842,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			setHealth(getMaxHealth());
 			level().playSound(null, blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.NEUTRAL, 0.6f, 1.2f);
 			if (sectId != null && level() instanceof ServerLevel server) SectManager.onMemberRankChanged(server, this);
+			if (after > before && !catchingUp) NpcLife.onBreakthrough(this);
 		}
 	}
 
@@ -811,7 +851,12 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		if (lastSeen < 0 || isMortal()) return;
 		long elapsed = Math.min(MAX_CATCH_UP, level.getGameTime() - lastSeen);
 		if (elapsed < 1200) return;
-		cultivate(elapsed / 20.0 * CATCH_UP_SHARE, 1.0);
+		catchingUp = true;
+		try {
+			cultivate(elapsed / 20.0 * CATCH_UP_SHARE, 1.0);
+		} finally {
+			catchingUp = false;
+		}
 	}
 
 	// --- Qi, flight, suppression ---
@@ -1406,6 +1451,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		super.die(source);
 		if (!(level() instanceof ServerLevel server)) return;
 		ServerPlayer killer = killerOf(source);
+		NpcLife.end(this);
+		NpcLife.onDeath(server, this); // its fellows cry out, and mourn it where it fell
 		if (sectId != null) SectManager.onMemberDeath(server, this, killer != null);
 		if (lifecycle == Lifecycle.SECLUDED) Rumours.forgetCave(this);
 		if (killer != null) {
@@ -1491,6 +1538,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			lowerConcealment(server);
 			setSuppressing(false);
 		}
+		if (!level().isClientSide) NpcLife.end(this); // a talk or a bout it was in is off
 		super.remove(reason);
 	}
 
@@ -1653,6 +1701,15 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		List<CultivatorNpc> found = new ArrayList<>();
 		for (CultivatorNpc npc : LOADED) {
 			if (npc.level() == level && npc.isAlive() && !npc.isRemoved() && npc.isSuppressing()) found.add(npc);
+		}
+		return found;
+	}
+
+	/** Loaded NPCs in {@code level}, alive. */
+	public static List<CultivatorNpc> loaded(ServerLevel level) {
+		List<CultivatorNpc> found = new ArrayList<>();
+		for (CultivatorNpc npc : LOADED) {
+			if (npc.level() == level && npc.isAlive() && !npc.isRemoved()) found.add(npc);
 		}
 		return found;
 	}

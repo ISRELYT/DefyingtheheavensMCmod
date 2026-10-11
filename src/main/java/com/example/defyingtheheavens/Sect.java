@@ -200,12 +200,22 @@ public final class Sect {
 	 * many posts as there are. Sects laid out before gate guards existed have none.
 	 */
 	public BlockPos guardPost(Member member) {
+		return guardPost(member, false);
+	}
+
+	/**
+	 * Where this member stands on the day watch, or ({@code night}) the night watch. With outer disciples enough for two watches
+	 * the next ones in seniority keep the night (see NpcLife: they sleep through the morning after); otherwise the day's guards
+	 * keep the gates all night too.
+	 */
+	public BlockPos guardPost(Member member, boolean night) {
 		if (member.title != NpcTitle.OUTER_DISCIPLE) return null;
 		List<BlockPos> guards = posts(Post.GATE_GUARD);
 		if (guards.isEmpty()) return null;
 		List<Member> outer = new ArrayList<>(members.values().stream().filter(m -> m.title == NpcTitle.OUTER_DISCIPLE).toList());
 		outer.sort(SENIORITY);
 		int index = outer.indexOf(member);
+		if (night && outer.size() >= 2 * guards.size()) index -= guards.size();
 		return index >= 0 && index < guards.size() ? guards.get(index) : null;
 	}
 
