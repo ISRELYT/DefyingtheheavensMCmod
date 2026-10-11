@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "immortal_spirit_stone",
+  "pattern": [
+    "###",
+    "###",
+    "###"
+  ],
+  "key": {
+    "#": {
+      "item": "defying-the-heavens:supreme_spirit_stone"
+    }
+  },
+  "result": {
+    "item": "defying-the-heavens:immortal_spirit_stone"
+  }
+}

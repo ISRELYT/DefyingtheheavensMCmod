@@ -27,6 +27,8 @@ public class GinsengBlockEntity extends BlockEntity {
         super.setLevel(level);
         // Only set the field here, never setChanged(): see CultivationFruitBlockEntity (new worlds hung while loading).
         if (!level.isClientSide && plantedAt < 0) plantedAt = level.getGameTime();
+        // Noted for rumours (queued: nothing in the world may be touched while the chunk loads).
+        Rumours.noteAging(level, worldPosition, Rumours.Kind.HERB, getBlockState().getBlock(), initialYears, plantedAt);
     }
 
     /** Worldgen: the plant has no level yet, so the clock is started from the world's time when it is generated. */
@@ -43,6 +45,7 @@ public class GinsengBlockEntity extends BlockEntity {
         if (level != null && !level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
             GinsengBlock.updateStage(level, worldPosition);
+            Rumours.noteAging(level, worldPosition, Rumours.Kind.HERB, getBlockState().getBlock(), initialYears, plantedAt);
         }
     }
 

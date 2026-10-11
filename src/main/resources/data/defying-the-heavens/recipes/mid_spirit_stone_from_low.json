@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "mid_spirit_stone",
+  "pattern": [
+    "###",
+    "###",
+    "###"
+  ],
+  "key": {
+    "#": {
+      "item": "defying-the-heavens:low_spirit_stone"
+    }
+  },
+  "result": {
+    "item": "defying-the-heavens:mid_spirit_stone"
+  }
+}

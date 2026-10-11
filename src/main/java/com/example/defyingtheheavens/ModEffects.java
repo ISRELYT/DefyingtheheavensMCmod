@@ -13,6 +13,15 @@ public final class ModEffects {
 	public static final MobEffect QI_GATHERING = Registry.register(BuiltInRegistries.MOB_EFFECT, DefyingTheHeavens.id("qi_gathering"),
 			new MarkerEffect(MobEffectCategory.BENEFICIAL, 0x4AAEEA));
 
+	/**
+	 * Insight: a senior's guidance (TalkSystem, or losing a spar to one who likes you) opens the way for a while, and meditation
+	 * gathers {@link #INSIGHT_BONUS} more cultivation (MeditationManager). Once a day from each teacher.
+	 */
+	public static final MobEffect INSIGHT = Registry.register(BuiltInRegistries.MOB_EFFECT, DefyingTheHeavens.id("insight"),
+			new MarkerEffect(MobEffectCategory.BENEFICIAL, 0xF2C94C));
+	public static final double INSIGHT_BONUS = 0.25;
+	public static final int INSIGHT_TICKS = 10 * 60 * 20;
+
 	private static final class MarkerEffect extends MobEffect {
 		MarkerEffect(MobEffectCategory category, int color) {
 			super(category, color);

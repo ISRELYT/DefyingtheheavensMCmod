@@ -32,9 +32,17 @@ public class TalkWheelScreen extends Screen {
 		this.session = session;
 	}
 
+	/**
+	 * The wheel spreads sideways with more choices (up to eight, two realms above someone under your pressure), so the tiles
+	 * don't touch; its height stays, clear of the name plate above and the hint below.
+	 */
+	private int radiusX() {
+		return Math.max(RADIUS, session.intents.size() * 15);
+	}
+
 	private int tileX(int i) {
 		double angle = Math.toRadians(-90 + 360.0 * i / session.intents.size());
-		return width / 2 + (int) Math.round(Math.cos(angle) * RADIUS) - TILE_W / 2;
+		return width / 2 + (int) Math.round(Math.cos(angle) * radiusX()) - TILE_W / 2;
 	}
 
 	private int tileY(int i) {

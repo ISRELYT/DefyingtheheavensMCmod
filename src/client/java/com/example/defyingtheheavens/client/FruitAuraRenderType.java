@@ -5,10 +5,11 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.renderer.RenderType;
 
 /**
- * Additive glow for the fruit aura. The same blending as {@link RenderType#lightning()}, but it does not write depth
- * and does not cull back faces. Lightning writes depth, so each faint, mostly transparent glow quad hid everything
- * drawn behind it afterwards (other glow layers, beams, particles); up close, where the quads fill the screen, that
- * showed as see-through holes. Additive light does not need sorting or depth, so turning both off is safe.
+ * Additive glow for the fruit aura (and the spirit stones' halo, see SpiritStoneGlow). The same blending as
+ * {@link RenderType#lightning()}, but it does not write depth and does not cull back faces. Lightning writes depth, so
+ * each faint, mostly transparent glow quad hid everything drawn behind it afterwards (other glow layers, beams,
+ * particles); up close, where the quads fill the screen, that showed as see-through holes. Additive light does not need
+ * sorting or depth, so turning both off is safe.
  * <p>
  * Extends RenderType only to reach its protected render-state constants; it is never instantiated.
  */
@@ -21,6 +22,20 @@ public final class FruitAuraRenderType extends RenderType {
 					.setWriteMaskState(COLOR_WRITE)
 					.setCullState(NO_CULL)
 					.setOutputState(WEATHER_TARGET)
+					.createCompositeState(false));
+
+	/**
+	 * {@link #GLOW} drawn straight onto the main target, for glow drawn outside the level: items in slots and in your
+	 * first-person hand. GLOW goes to the weather target, which Fabulous graphics only blends into the picture at the end
+	 * of the level, so anything drawn there afterwards would never show.
+	 */
+	public static final RenderType GLOW_ON_MAIN = create("defying_the_heavens_glow_on_main", DefaultVertexFormat.POSITION_COLOR,
+			VertexFormat.Mode.QUADS, 1536, false, false,
+			CompositeState.builder()
+					.setShaderState(RENDERTYPE_LIGHTNING_SHADER)
+					.setTransparencyState(LIGHTNING_TRANSPARENCY)
+					.setWriteMaskState(COLOR_WRITE)
+					.setCullState(NO_CULL)
 					.createCompositeState(false));
 
 	private FruitAuraRenderType(String name, VertexFormat format, VertexFormat.Mode mode, int bufferSize, boolean affectsCrumbling,

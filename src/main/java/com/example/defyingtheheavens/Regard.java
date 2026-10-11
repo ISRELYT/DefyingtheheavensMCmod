@@ -1,11 +1,15 @@
 package com.example.defyingtheheavens;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.util.Mth;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * What a cultivator thinks of a player, from {@link #MIN} to {@link #MAX} (see {@link TalkSystem}). Three parts add up:
@@ -35,7 +39,23 @@ public final class Regard {
 	public static final int DEFENDED = 20;
 	public static final int DEFENDED_SECT = 5;
 	public static final int DISTURBED = -2;
+	/** Coming up to a secluded cultivator's barrier and trying to talk: once a day. */
+	public static final int SECLUSION_DISTURBED = -5;
 	public static final int GIFT_MAX = 25;
+	/** Sparring (see SparSystem): a win, a win over a higher realm, a win when they didn't hold back. */
+	public static final int SPAR_WIN = 8;
+	public static final int SPAR_WIN_SENIOR = 15;
+	public static final int SPAR_WIN_FULL = 25;
+	/** A loss with honour; a loss to someone a realm or more below you, or walking off, costs a little. */
+	public static final int SPAR_LOSS = 3;
+	public static final int SPAR_LOSS_BADLY = -3;
+	/** Sparing one who begged for their life (with +2 alignment), and demanding tribute (with -5 alignment). */
+	public static final int SPARED = 10;
+	public static final int TRIBUTE = -20;
+	/** Regard that opens each thing (Regard pips): rumours at Courteous, guidance at Warm, Spar with a senior at Courteous. */
+	public static final int COURTEOUS = 40;
+	public static final int WARM = 60;
+	public static final int TRUSTED = 80;
 
 	/** One cultivator's own regard for one player, and what it remembers of their dealings. */
 	public static final class Entry {
@@ -47,6 +67,16 @@ public final class Regard {
 		public long giftDay = -1;
 		/** How many of each item (by id) it has been given on {@link #giftDay}: the same gift again counts for less. */
 		public final Map<String, Integer> gifts = new HashMap<>();
+		/** Once-a-day dealings: disturbing its seclusion, its guidance, tribute taken from it, and a gift it gave back. */
+		public long disturbDay = -1;
+		public long guidanceDay = -1;
+		public long tributeDay = -1;
+		public long giftBackDay = -1;
+		/** Spars (SparSystem): the day one last moved its regard, and the day it last took a wager (each once a day). */
+		public long sparDay = -1;
+		public long wagerDay = -1;
+		/** The rumours it has told this player (Rumours ids): each only once. */
+		public final Set<String> toldRumours = new HashSet<>();
 
 		/** How many of {@code item} it has already been given today. */
 		public int giftsToday(String item, long today) {
@@ -81,6 +111,15 @@ public final class Regard {
 			CompoundTag giftTag = new CompoundTag();
 			for (Map.Entry<String, Integer> gift : gifts.entrySet()) giftTag.putInt(gift.getKey(), gift.getValue());
 			tag.put("Gifts", giftTag);
+			tag.putLong("DisturbDay", disturbDay);
+			tag.putLong("GuidanceDay", guidanceDay);
+			tag.putLong("TributeDay", tributeDay);
+			tag.putLong("GiftBackDay", giftBackDay);
+			tag.putLong("SparDay", sparDay);
+			tag.putLong("WagerDay", wagerDay);
+			ListTag told = new ListTag();
+			for (String id : toldRumours) told.add(StringTag.valueOf(id));
+			tag.put("Told", told);
 			return tag;
 		}
 
@@ -97,6 +136,15 @@ public final class Regard {
 				// Saved before gifts were counted per item: the one remembered was given its repeats plus once.
 				entry.gifts.put(tag.getString("GiftItem"), tag.getInt("GiftCount") + 1);
 			}
+			// Saved before these existed: never yet (a missing long reads 0, which would be day 0).
+			entry.disturbDay = tag.contains("DisturbDay") ? tag.getLong("DisturbDay") : -1;
+			entry.guidanceDay = tag.contains("GuidanceDay") ? tag.getLong("GuidanceDay") : -1;
+			entry.tributeDay = tag.contains("TributeDay") ? tag.getLong("TributeDay") : -1;
+			entry.giftBackDay = tag.contains("GiftBackDay") ? tag.getLong("GiftBackDay") : -1;
+			entry.sparDay = tag.contains("SparDay") ? tag.getLong("SparDay") : -1;
+			entry.wagerDay = tag.contains("WagerDay") ? tag.getLong("WagerDay") : -1;
+			ListTag told = tag.getList("Told", Tag.TAG_STRING);
+			for (int i = 0; i < told.size(); i++) entry.toldRumours.add(told.getString(i));
 			return entry;
 		}
 	}

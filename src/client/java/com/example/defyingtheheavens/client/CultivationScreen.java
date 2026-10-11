@@ -7,6 +7,7 @@ import com.example.defyingtheheavens.ModItems;
 import com.example.defyingtheheavens.PillItem;
 import com.example.defyingtheheavens.CultivationBoost;
 import com.example.defyingtheheavens.CultivationStats;
+import com.example.defyingtheheavens.Journal;
 import com.example.defyingtheheavens.ModLang;
 import com.example.defyingtheheavens.MortalStage;
 import com.example.defyingtheheavens.PlayerCultivation;
@@ -41,11 +42,12 @@ import java.util.Locale;
 import java.util.function.ToDoubleBiFunction;
 
 /**
- * The cultivation menu: one panel with five tabs, left to right Cultivation (progress), Stats, Abilities, Methods and
- * Spells. The previous single-page layout is kept in backups/cultivation-menu-2026-10-09.
+ * The cultivation menu: one panel with six tabs, left to right Cultivation (progress), Stats, Abilities, Methods, Spells and
+ * Journal (the rumours cultivators have told you, see Journal). The previous single-page layout is kept in
+ * backups/cultivation-menu-2026-10-09.
  */
 public class CultivationScreen extends Screen {
-	private static final int WIDTH = 260;
+	private static final int WIDTH = 290;
 	private static final int HEIGHT = 230; // fits the smallest usual GUI height (240)
 	private static final int TAB_Y = 6;
 	private static final int TAB_HEIGHT = 19;
@@ -82,7 +84,8 @@ public class CultivationScreen extends Screen {
 		STATS(ModLang.TAB_STATS),
 		ABILITIES(ModLang.TAB_ABILITIES),
 		METHODS(ModLang.TAB_METHODS),
-		SPELLS(ModLang.TAB_SPELLS);
+		SPELLS(ModLang.TAB_SPELLS),
+		JOURNAL(ModLang.TAB_JOURNAL);
 
 		final String key;
 
@@ -110,6 +113,9 @@ public class CultivationScreen extends Screen {
 	/** How far the Abilities tab is scrolled, in pixels, and how far it can go (0 when everything fits). */
 	private int abilityScroll;
 	private int abilityMaxScroll;
+	/** The same for the Journal tab. */
+	private int journalScroll;
+	private int journalMaxScroll;
 
 	private record AbilitySwitch(Ability ability, int x, int y) {
 		boolean contains(double mouseX, double mouseY) {
@@ -165,6 +171,7 @@ public class CultivationScreen extends Screen {
 				.bounds(left + (WIDTH - 112) / 2, top + HEIGHT - 32, 112, 20).build());
 
 		updateButtons();
+		if (tab == Tab.JOURNAL) ClientJournal.request();
 	}
 
 	@Override
@@ -221,6 +228,7 @@ public class CultivationScreen extends Screen {
 			case ABILITIES -> renderAbilities(g, mouseX, mouseY);
 			case METHODS -> renderPlaceholder(g, ModLang.METHODS_TITLE, ModLang.METHODS_EMPTY, ModLang.METHODS_HINT);
 			case SPELLS -> renderPlaceholder(g, ModLang.SPELLS_TITLE, ModLang.SPELLS_EMPTY, ModLang.SPELLS_HINT);
+			case JOURNAL -> renderJournal(g);
 		}
 
 		super.render(g, mouseX, mouseY, partialTick);
@@ -493,15 +501,69 @@ public class CultivationScreen extends Screen {
 		}
 		g.disableScissor();
 
-		if (abilityMaxScroll > 0) {
-			int trackX = left + WIDTH - 7;
-			int trackHeight = viewBottom - viewTop - 4;
-			int thumbHeight = Math.max(12, trackHeight * (viewBottom - viewTop) / contentHeight);
-			int thumbY = viewTop + 2 + (trackHeight - thumbHeight) * abilityScroll / abilityMaxScroll;
-			g.fill(trackX, viewTop + 2, trackX + 2, viewTop + 2 + trackHeight, 0xFF2A2A3A);
-			g.fill(trackX, thumbY, trackX + 2, thumbY + thumbHeight, BORDER);
-			g.fill(trackX + 1, thumbY, trackX + 2, thumbY + thumbHeight, 0xFF6E5214); // shaded side, like the Qi bar's trim
+		scrollbar(g, viewTop, viewBottom, contentHeight, abilityScroll, abilityMaxScroll);
+	}
+
+	/** The gold scrollbar at the panel's right edge, when the content runs past its view. */
+	private void scrollbar(GuiGraphics g, int viewTop, int viewBottom, int contentHeight, int scroll, int maxScroll) {
+		if (maxScroll <= 0) return;
+		int trackX = left + WIDTH - 7;
+		int trackHeight = viewBottom - viewTop - 4;
+		int thumbHeight = Math.max(12, trackHeight * (viewBottom - viewTop) / contentHeight);
+		int thumbY = viewTop + 2 + (trackHeight - thumbHeight) * scroll / maxScroll;
+		g.fill(trackX, viewTop + 2, trackX + 2, viewTop + 2 + trackHeight, 0xFF2A2A3A);
+		g.fill(trackX, thumbY, trackX + 2, thumbY + thumbHeight, BORDER);
+		g.fill(trackX + 1, thumbY, trackX + 2, thumbY + thumbHeight, 0xFF6E5214); // shaded side, like the Qi bar's trim
+	}
+
+	// --- Journal: the rumours cultivators have told you ---
+
+	/** Each rumour heard (newest first): the day and who told it, in gold, then their words; scrolls like the Abilities tab. */
+	private void renderJournal(GuiGraphics g) {
+		List<Journal.Entry> entries = ClientJournal.entries();
+		int cx = left + WIDTH / 2;
+		if (entries.isEmpty()) {
+			journalMaxScroll = 0;
+			int y = top + CONTENT_Y + 30;
+			g.drawCenteredString(font, Component.translatable(ModLang.TAB_JOURNAL), cx, y, 0xFFD700);
+			y += 20;
+			for (FormattedCharSequence line : font.split(Component.translatable(ModLang.JOURNAL_EMPTY), WIDTH - 28)) {
+				g.drawCenteredString(font, line, cx, y, 0xB0B0B0);
+				y += 11;
+			}
+			return;
 		}
+		int x = left + 14;
+		int rightEdge = left + WIDTH - 14;
+		int viewTop = top + CONTENT_Y;
+		int viewBottom = top + HEIGHT - 8;
+		List<List<FormattedCharSequence>> texts = new ArrayList<>();
+		int contentHeight = 6;
+		for (int i = 0; i < entries.size(); i++) {
+			List<FormattedCharSequence> lines = font.split(entries.get(i).text(), rightEdge - x);
+			texts.add(lines);
+			contentHeight += 12 + lines.size() * 10 + (i < entries.size() - 1 ? 10 : 0);
+		}
+		journalMaxScroll = Math.max(0, contentHeight - (viewBottom - viewTop));
+		journalScroll = Mth.clamp(journalScroll, 0, journalMaxScroll);
+		g.enableScissor(left + 1, viewTop, left + WIDTH - 1, viewBottom);
+		int y = viewTop + 3 - journalScroll;
+		for (int i = 0; i < entries.size(); i++) {
+			Journal.Entry entry = entries.get(i);
+			g.drawString(font, Component.translatable(ModLang.JOURNAL_ENTRY, entry.day(), entry.teller()), x, y, 0xFFD700);
+			y += 12;
+			for (FormattedCharSequence line : texts.get(i)) {
+				g.drawString(font, line, x, y, 0xC8C8C8);
+				y += 10;
+			}
+			if (i < entries.size() - 1) {
+				y += 3;
+				g.fill(x, y, rightEdge, y + 1, 0xFF3A3A4A);
+				y += 7;
+			}
+		}
+		g.disableScissor();
+		scrollbar(g, viewTop, viewBottom, contentHeight, journalScroll, journalMaxScroll);
 	}
 
 	/** The abilities the cultivator has awakened, in menu order. */
@@ -602,6 +664,10 @@ public class CultivationScreen extends Screen {
 	public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
 		if (tab == Tab.ABILITIES && !arranging && abilityMaxScroll > 0) {
 			abilityScroll = Mth.clamp(abilityScroll - (int) Math.round(delta * SCROLL_STEP), 0, abilityMaxScroll);
+			return true;
+		}
+		if (tab == Tab.JOURNAL && journalMaxScroll > 0) {
+			journalScroll = Mth.clamp(journalScroll - (int) Math.round(delta * SCROLL_STEP), 0, journalMaxScroll);
 			return true;
 		}
 		return super.mouseScrolled(mouseX, mouseY, delta);
@@ -803,6 +869,7 @@ public class CultivationScreen extends Screen {
 			tab = target;
 			dragged = null;
 			updateButtons();
+			if (target == Tab.JOURNAL) ClientJournal.request(); // fresh from the server
 		}
 
 		@Override

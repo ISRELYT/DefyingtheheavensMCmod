@@ -45,6 +45,8 @@ public class SpiritPeachHeartBlockEntity extends BlockEntity {
         super.setLevel(level);
         // Only set the field here, never setChanged(): see CultivationFruitBlockEntity (new worlds hung while loading).
         if (!level.isClientSide && plantedAt < 0) plantedAt = level.getGameTime();
+        // Noted for rumours (queued: nothing in the world may be touched while the chunk loads).
+        Rumours.noteAging(level, worldPosition, Rumours.Kind.PEACH_TREE, getBlockState().getBlock(), initialYears, plantedAt);
     }
 
     public int age() {
@@ -56,7 +58,10 @@ public class SpiritPeachHeartBlockEntity extends BlockEntity {
         initialYears = FruitAge.clamp(age() + years);
         plantedAt = level == null ? -1 : level.getGameTime();
         setChanged();
-        if (level != null && !level.isClientSide) level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            Rumours.noteAging(level, worldPosition, Rumours.Kind.PEACH_TREE, getBlockState().getBlock(), initialYears, plantedAt);
+        }
     }
 
     // ---- Qi feeding ----

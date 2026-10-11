@@ -131,6 +131,8 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			InnerRealmFade.clear();
 			SwordFlightClient.clear();
 			ClientSoul.clear();
+			ClientGestures.clear();
+			ClientJournal.clear();
 		}));
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {

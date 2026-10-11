@@ -33,6 +33,13 @@ public class SpiritPeachHeartBlock extends BaseEntityBlock {
     public SpiritPeachHeartBlock(Properties properties) { super(properties); }
 
     @Override public BlockEntity newBlockEntity(BlockPos pos, BlockState state) { return new SpiritPeachHeartBlockEntity(pos, state); }
+
+    /** Cut down or destroyed: no more rumours of the tree (see Rumours). Not called when the chunk merely unloads. */
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean moved) {
+        if (!state.is(newState.getBlock())) Rumours.forgetAt(level, pos, Rumours.Kind.PEACH_TREE);
+        super.onRemove(state, level, pos, newState, moved);
+    }
     @Override public RenderShape getRenderShape(BlockState state) { return RenderShape.MODEL; }
 
     @Override

@@ -102,6 +102,15 @@ public final class ModItems {
 	/** Mined from Jade Ore. */
 	public static final Item JADE = register("jade", new Item(new Item.Properties()));
 
+	/** Spirit stones, the cultivators' money and a store of qi, in five grades nine apart (see SpiritStoneItem). */
+	public static final Item LOW_SPIRIT_STONE = register("low_spirit_stone", new SpiritStoneItem(SpiritStoneItem.Grade.LOW, new Item.Properties()));
+	public static final Item MID_SPIRIT_STONE = register("mid_spirit_stone", new SpiritStoneItem(SpiritStoneItem.Grade.MID, new Item.Properties()));
+	public static final Item HIGH_SPIRIT_STONE = register("high_spirit_stone", new SpiritStoneItem(SpiritStoneItem.Grade.HIGH, new Item.Properties()));
+	public static final Item SUPREME_SPIRIT_STONE = register("supreme_spirit_stone",
+			new SpiritStoneItem(SpiritStoneItem.Grade.SUPREME, new Item.Properties()));
+	public static final Item IMMORTAL_SPIRIT_STONE = register("immortal_spirit_stone",
+			new SpiritStoneItem(SpiritStoneItem.Grade.IMMORTAL, new Item.Properties().fireResistant()));
+
 	private static Item register(String id, Item item) {
 		return Registry.register(BuiltInRegistries.ITEM, new ResourceLocation(DefyingTheHeavens.MOD_ID, id), item);
 	}
@@ -130,6 +139,7 @@ public final class ModItems {
 			}
 			entries.accept(SPIRIT_DEW);
 			entries.accept(JADE);
+			for (SpiritStoneItem.Grade grade : SpiritStoneItem.Grade.values()) entries.accept(SpiritStoneItem.of(grade));
 		});
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(entries -> {
 			entries.accept(RING_OF_POWER);

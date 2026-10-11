@@ -92,6 +92,14 @@ public final class ModFeatures {
 		BiomeModifications.addFeature(upperRealm.and(context -> !context.getBiomeKey().equals(ModBiomes.SPATIAL_GAP)),
 				GenerationStep.Decoration.UNDERGROUND_ORES, ModPlacedFeatures.QI_VEIN_UPPER_REALM);
 		jade(upperRealm);
+		// Spirit stone veins (see ModPlacedFeatures#ORE_SPIRIT_STONE): the common kind everywhere underground, the rich kind deep
+		// in the Overworld and all through the Upper Realm (never the Spatial Gap).
+		Predicate<BiomeSelectionContext> islands = upperRealm.and(context -> !context.getBiomeKey().equals(ModBiomes.SPATIAL_GAP));
+		BiomeModifications.addFeature(BiomeSelectors.foundInOverworld(), GenerationStep.Decoration.UNDERGROUND_ORES, ModPlacedFeatures.ORE_SPIRIT_STONE);
+		BiomeModifications.addFeature(BiomeSelectors.foundInOverworld(), GenerationStep.Decoration.UNDERGROUND_ORES,
+				ModPlacedFeatures.ORE_RICH_SPIRIT_STONE_DEEP);
+		BiomeModifications.addFeature(islands, GenerationStep.Decoration.UNDERGROUND_ORES, ModPlacedFeatures.ORE_SPIRIT_STONE_UPPER_REALM);
+		BiomeModifications.addFeature(islands, GenerationStep.Decoration.UNDERGROUND_ORES, ModPlacedFeatures.ORE_RICH_SPIRIT_STONE_UPPER_REALM);
 	}
 
 	/** Jade Ore in Overworld mountains and all through the Upper Realm. */

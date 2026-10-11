@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "high_spirit_stone",
+  "ingredients": [
+    {
+      "item": "defying-the-heavens:supreme_spirit_stone"
+    }
+  ],
+  "result": {
+    "item": "defying-the-heavens:high_spirit_stone",
+    "count": 9
+  }
+}

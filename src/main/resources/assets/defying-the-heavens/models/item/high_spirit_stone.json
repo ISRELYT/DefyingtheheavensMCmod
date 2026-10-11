@@ -1,0 +1,6 @@
+{
+  "parent": "defying-the-heavens:item/spirit_stone",
+  "textures": {
+    "stone": "defying-the-heavens:item/high_spirit_stone"
+  }
+}

@@ -61,14 +61,19 @@ public class DialogueScreen extends Screen {
 		return mouseY >= boxY0 + 9 && row >= 0 && row < replyRows() ? row : -1;
 	}
 
+	/** Tabs narrow when there are many (the portrait keeps its corner). */
+	private int tabW() {
+		return Math.max(36, Math.min(TAB_W, (boxX1 - boxX0 - 60) / Math.max(1, session.intents.size()) - 3));
+	}
+
 	private int tabX(int i) {
-		return boxX1 - (session.intents.size() - i) * (TAB_W + 3);
+		return boxX1 - (session.intents.size() - i) * (tabW() + 3);
 	}
 
 	private int tabAt(double mouseX, double mouseY) {
 		if (mouseY < boxY0 - TAB_H || mouseY >= boxY0) return -1;
 		for (int i = 0; i < session.intents.size(); i++) {
-			if (mouseX >= tabX(i) && mouseX < tabX(i) + TAB_W) return i;
+			if (mouseX >= tabX(i) && mouseX < tabX(i) + tabW()) return i;
 		}
 		return -1;
 	}
@@ -94,18 +99,18 @@ public class DialogueScreen extends Screen {
 		for (int i = 0; i < session.intents.size(); i++) {
 			TalkIntent intent = session.intents.get(i);
 			boolean current = intent == dialogue.intent();
-			int x = tabX(i), y = boxY0 - TAB_H + (current ? 0 : 2);
+			int x = tabX(i), y = boxY0 - TAB_H + (current ? 0 : 2), w = tabW();
 			int border = current || i == hoveredTab ? TalkUi.GOLD : intent == TalkIntent.PROVOKE ? TalkUi.RED_DIM : TalkUi.GOLD_DIM;
-			g.fill(x, y, x + TAB_W, boxY0 + (current ? 3 : 0), border);
-			g.fill(x + 2, y + 2, x + TAB_W - 2, boxY0 + (current ? 3 : 0), current ? TalkUi.PANEL_LIT : TalkUi.PANEL);
+			g.fill(x, y, x + w, boxY0 + (current ? 3 : 0), border);
+			g.fill(x + 2, y + 2, x + w - 2, boxY0 + (current ? 3 : 0), current ? TalkUi.PANEL_LIT : TalkUi.PANEL);
 			int color = current ? TalkUi.CREAM_BRIGHT : i == hoveredTab ? TalkUi.CREAM : TalkUi.MUTED;
-			g.drawCenteredString(font, Component.translatable(ModLang.talkIntent(intent.getId())), x + TAB_W / 2, y + 4, color);
+			g.drawCenteredString(font, Component.translatable(ModLang.talkIntent(intent.getId())), x + w / 2, y + 4, color);
 		}
 
 		// The box.
 		TalkUi.panel(g, boxX0, boxY0, boxX1, boxY1, TalkUi.GOLD);
 		int current = dialogue.intent() == null ? -1 : session.intents.indexOf(dialogue.intent());
-		if (current >= 0) g.fill(tabX(current) + 2, boxY0, tabX(current) + TAB_W - 2, boxY0 + 3, TalkUi.PANEL_LIT);
+		if (current >= 0) g.fill(tabX(current) + 2, boxY0, tabX(current) + tabW() - 2, boxY0 + 3, TalkUi.PANEL_LIT);
 		int textX = boxX0 + 10, textW = repliesX - textX - 14;
 		int y = boxY0 + 9;
 		for (FormattedCharSequence line : font.split(dialogue.line(), textW)) {

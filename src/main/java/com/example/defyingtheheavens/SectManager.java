@@ -186,6 +186,7 @@ public final class SectManager {
 			sect.extinct = true;
 			sect.replacements.clear();
 			DefyingTheHeavens.LOGGER.info("The {} has fallen: its last member is dead", sect.name);
+			Rumours.noteFallenSect(sect, now); // its core stands unclaimed, and people will talk of it
 		} else if (byPlayer) {
 			sect.capacity = Math.max(0, sect.capacity - 1);
 		} else {
@@ -310,6 +311,7 @@ public final class SectManager {
 		if (sect == null) return;
 		sect.barrierDownSince = level.getGameTime();
 		dirty(level.getServer());
+		Rumours.forgetCore(sect); // no unclaimed core there now
 		ServerPlayer culprit = null;
 		double best = 64;
 		for (ServerPlayer player : level.players()) {

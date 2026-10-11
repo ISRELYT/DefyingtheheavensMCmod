@@ -42,6 +42,8 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(Tempering::tick);
 		ServerTickEvents.END_SERVER_TICK.register(InnerRealm::tick);
 		ServerTickEvents.END_SERVER_TICK.register(SoulProjection::tick);
+		ServerTickEvents.END_SERVER_TICK.register(SparSystem::tick);
+		ServerTickEvents.END_SERVER_TICK.register(Rumours::tick);
 		InnerRealm.registerEvents();
 		registerSoulInteractions();
 		Tempering.register();
@@ -56,6 +58,8 @@ public final class CultivationEvents {
 		// First: every soul goes home, no penalty, while its player is still in the world to be saved there.
 		ServerLifecycleEvents.SERVER_STOPPING.register(SoulProjection::returnAll);
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> TribulationManager.clear());
+		// Spars end without a result, stakes back to the players still here, before anyone is saved.
+		ServerLifecycleEvents.SERVER_STOPPING.register(SparSystem::clear);
 		// Before players and chunks are saved, so nobody is saved with the pressure's lowered health.
 		ServerLifecycleEvents.SERVER_STOPPING.register(RealmSuppressSystem::releaseAll);
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> SpatialStorms.clear());
@@ -63,6 +67,7 @@ public final class CultivationEvents {
 			Formations.clear();
 			CultivatorNpc.clearLoaded();
 			SoulProjection.clear();
+			Rumours.clearPending();
 		});
 
 		// A formation's shell runs through the ground too: those who couldn't break the barrier can't dig under it either.
@@ -101,6 +106,8 @@ public final class CultivationEvents {
 		});
 
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+			// Walking out of a spar forfeits it (the cultivator keeps the stakes).
+			SparSystem.abandon(handler.getPlayer());
 			// A soul out of its body goes home (or, fleeing a fight, is severed) while the player can still be moved and saved.
 			SoulProjection.onDisconnect(handler.getPlayer());
 			SoulProjection.forget(handler.getPlayer().getUUID());
@@ -144,12 +151,16 @@ public final class CultivationEvents {
 			if (amount > 0 && MeditationManager.isMeditating(sp.getUUID())) {
 				MeditationManager.stop(sp, true);
 			}
+			// And any talk (being struck is no time for words); Sworn friends nearby come to help (TalkSystem).
+			if (amount > 0 && !sp.isInvulnerableTo(source)) TalkSystem.onPlayerHurt(sp, source);
 			return true;
 		});
 
 		// Before a death goes ahead: a soul dies where its body sat and loses the nascent soul; a possessed body's death is its
 		// possessor's doing.
 		ServerLivingEntityEvents.ALLOW_DEATH.register((entity, source, amount) -> {
+			// Nobody dies in a spar by the other's hand: the blow stops at the line, and the spar ends (SparSystem).
+			if (!SparSystem.allowDeath(entity, source)) return false;
 			if (entity instanceof ServerPlayer sp) SoulProjection.onSoulDying(sp);
 			else SoulProjection.onHostDying(entity, source);
 			return true;
@@ -160,6 +171,7 @@ public final class CultivationEvents {
 				TribulationManager.onDeath(sp); // dying mid-tribulation fails the breakthrough
 				SpatialTrialHandler.onDeath(sp); // dying in the Spatial Gap ends the trial
 				SoulProjection.onDeath(sp); // nothing of a soul's journey outlives a death
+				SparSystem.abandon(sp); // killed mid-spar by something else: the spar is forfeit
 				RealmSuppressSystem.refreshNow(); // a fallen suppressor's pressure lifts at once
 			}
 		});

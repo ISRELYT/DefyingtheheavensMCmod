@@ -6,7 +6,9 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 
 /**
  * One player's cultivation state. Used on the server (authoritative) and as a mirror on the client.
@@ -77,6 +79,8 @@ public class PlayerCultivation {
 	 * It starts with the abilities in their menu order, so the wheel works before the player has arranged it.
 	 */
 	private final Ability[] wheel = defaultWheel();
+	/** Rumours told to this player (see Journal). Saved, sent on its own packet. */
+	private final List<Journal.Entry> journal = new ArrayList<>();
 	/** Synced but not saved: re-evaluated from the player's dimension on every join. */
 	private boolean inUpperRealm;
 	/** Realm Suppress from a stronger cultivator (see {@link RealmSuppressSystem}): synced but never saved. */
@@ -695,6 +699,7 @@ public class PlayerCultivation {
 		ListTag wheelTag = new ListTag();
 		for (Ability ability : wheel) wheelTag.add(StringTag.valueOf(ability == null ? "" : ability.getId()));
 		tag.put("AbilityWheel", wheelTag);
+		if (!journal.isEmpty()) tag.put("Journal", Journal.save(journal));
 		return tag;
 	}
 
@@ -737,6 +742,12 @@ public class PlayerCultivation {
 			for (int i = 0; i < WHEEL_SLOTS; i++) c.wheel[i] = null;
 			for (int i = 0; i < WHEEL_SLOTS && i < wheelTag.size(); i++) c.setWheelSlot(i, Ability.byId(wheelTag.getString(i)));
 		}
+		Journal.load(tag.getList("Journal", Tag.TAG_COMPOUND), c.journal);
 		return c;
+	}
+
+	/** The rumours this player has been told (see Journal), newest first. Not part of the sync packet: sent on its own. */
+	public List<Journal.Entry> journal() {
+		return journal;
 	}
 }

@@ -20,6 +20,9 @@ public class ModModelProvider extends FabricModelProvider {
 		blocks.createTrivialCube(ModBlocks.JADE_STONE);
 		blocks.createTrivialCube(ModBlocks.JADE_ORE);
 		blocks.createTrivialCube(ModBlocks.DEEPSLATE_JADE_ORE);
+		blocks.createTrivialCube(ModBlocks.SPIRIT_STONE_ORE);
+		blocks.createTrivialCube(ModBlocks.DEEPSLATE_SPIRIT_STONE_ORE);
+		blocks.createTrivialCube(ModBlocks.RICH_SPIRIT_STONE_ORE);
 		blocks.createTrivialBlock(ModBlocks.WHITE_BLOSSOM_LEAVES, TexturedModel.LEAVES);
 		blocks.woodProvider(ModBlocks.BLUE_SPIRIT_LOG).logWithHorizontal(ModBlocks.BLUE_SPIRIT_LOG).wood(ModBlocks.BLUE_SPIRIT_WOOD);
 		blocks.createTrivialCube(ModBlocks.BLUE_SPIRIT_PLANKS);
@@ -35,5 +38,6 @@ public class ModModelProvider extends FabricModelProvider {
 		items.generateFlatItem(ModItems.RING_OF_TRANSCENDENCE, ModelTemplates.FLAT_ITEM);
 		items.generateFlatItem(ModItems.INSCRIPTION_BRUSH, ModelTemplates.FLAT_HANDHELD_ITEM);
 		items.generateFlatItem(ModItems.JADE, ModelTemplates.FLAT_ITEM);
+		// Spirit stones have a hand-made oval model (resources: models/item/spirit_stone.json), not a flat sprite.
 	}
 }

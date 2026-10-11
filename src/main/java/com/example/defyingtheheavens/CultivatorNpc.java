@@ -11,6 +11,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
@@ -37,10 +38,14 @@ import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.MerchantMenu;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.trading.Merchant;
+import net.minecraft.world.item.trading.MerchantOffer;
+import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Block;
@@ -76,7 +81,7 @@ import java.util.UUID;
  * hurt or when it senses a hostile domain a realm or more above its own. The righteous and the demonic attack each other (and
  * players of the other path) on sight; see {@link CultivatorGoals} for who fights when.
  */
-public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
+public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Merchant {
 	/** NPCs cultivate at this share of a player's rate. */
 	public static final double NPC_RATE = 0.1;
 	/** Time spent unloaded counts as meditating for this share of it. */
@@ -117,6 +122,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 	private static final int FLAG_GATE_GUARD = 32;
 	/** While flying: riding its sword ({@link SwordFlight}) rather than flying on qi alone. */
 	private static final int FLAG_SWORD = 64;
+	/** Down on one knee: begging for its life, or under the pressure of someone two realms above it (synced for the pose). */
+	private static final int FLAG_KNEELING = 128;
 	public static final int SKINS = 6;
 
 	/** Rank -1: a mortal who never opened their meridians. */
@@ -159,6 +166,25 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 	public static final int TALK_TICKS = 20 * 20;
 	/** Ticks a fight is remembered: a player who strikes again within this loses no more regard for it. */
 	private static final long STRUCK_MEMORY = 30 * 20;
+	/** In a spar (SparSystem), the rank whose strength it holds itself to, or {@link #NO_HOLD_BACK}. */
+	private int sparHoldBack = NO_HOLD_BACK;
+	public static final int NO_HOLD_BACK = Integer.MIN_VALUE;
+	/** What it has won in spars: it carries it, and drops it when it dies. */
+	private final List<ItemStack> winnings = new ArrayList<>();
+	/** Players who spared its life, and until when (game time) it won't raise a hand against them. */
+	private final Map<UUID, Long> sparedBy = new HashMap<>();
+	/** The player it is begging for its life (see TalkSystem), and for how much longer it keeps it up. */
+	private UUID beggingTo;
+	private int begTicks;
+	/** How long one who spared it is left alone (a day), and how long it begs before it gives up and runs again. */
+	public static final long SPARED_TICKS = 24_000;
+	public static final int BEG_TICKS = 15 * 20;
+	/** Trading (CultivatorTrades, on the vanilla trading screen): who with, the offers, and how much of each sold today. */
+	private Player tradingPlayer;
+	private MerchantOffers offers;
+	private final Map<MerchantOffer, String> offerKeys = new java.util.IdentityHashMap<>();
+	private final Map<String, Integer> tradeUses = new HashMap<>();
+	private long tradeDay = -1;
 
 	public CultivatorNpc(EntityType<? extends PathfinderMob> type, Level level) {
 		super(type, level);
@@ -190,6 +216,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 	@Override
 	protected void registerGoals() {
 		goalSelector.addGoal(0, new FloatGoal(this));
+		goalSelector.addGoal(0, new CultivatorGoals.BegGoal(this));
 		goalSelector.addGoal(1, new CultivatorGoals.FleeGoal(this));
 		goalSelector.addGoal(2, new CultivatorGoals.CombatGoal(this));
 		goalSelector.addGoal(2, new CultivatorGoals.TalkGoal(this));
@@ -247,6 +274,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 	/** One of its sect's gate guards (set by its duty, SectDutyGoal; for whoever deals with visitors at the gate). */
 	public boolean isGateGuard() { return flag(FLAG_GATE_GUARD); }
 	public void setGateGuard(boolean guard) { setFlag(FLAG_GATE_GUARD, guard); }
+	public boolean isKneeling() { return flag(FLAG_KNEELING); }
+	public void setKneeling(boolean kneeling) { setFlag(FLAG_KNEELING, kneeling); }
 
 	/** The realm it can wield where it stands (the lower realms cap it); what suppression and domains weigh. */
 	@Override public Realm getCultivationRealm() { return realmOf(sustainedRank()); }
@@ -271,9 +300,24 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		return Component.translatable(ModLang.NPC_TITLE_BRACKETS, getTitle().getDisplayName());
 	}
 
-	/** Its personal name ("Mo Lian"), the same everywhere it is named (see {@link NpcNames}). */
+	/** Its personal name ("Mo Lian"), the same everywhere it is named (see {@link NpcNames}); a name tag's name if it has one. */
 	public String getPersonalName() {
-		return NpcNames.of(getUUID());
+		return hasCustomName() ? getCustomName().getString() : NpcNames.of(getUUID());
+	}
+
+	/** Years it has cultivated (what it says when asked): from its realm and stage, the same every time, and 0 for a mortal. */
+	public int yearsCultivated() {
+		if (isMortal()) return 0;
+		int[][] spans = {{3, 20}, {20, 60}, {60, 150}, {150, 400}, {400, 1000}, {1000, 3000}};
+		int[] span = spans[Math.min(spans.length - 1, realmOf(getRank()).ordinal())];
+		double within = (stageOf(getRank()).ordinal() + new java.util.Random(getUUID().getLeastSignificantBits()).nextDouble()) / Stage.values().length;
+		return (int) Math.round(span[0] + (span[1] - span[0]) * within);
+	}
+
+	/** How far through its stage it is, in percent. */
+	public int stageProgressPercent() {
+		double required = cultivation.cultivationRequired();
+		return required <= 0 ? 100 : (int) Math.min(100, Math.round(100 * cultivation.getCultivation() / required));
 	}
 
 	// --- Regard and talk ---
@@ -336,6 +380,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 				breakOffTalk(refusal);
 				return;
 			}
+			// Two realms beneath them, with their realm bearing down on it: it talks on one knee.
+			if (tickCount % 10 == 0 && TalkSystem.kneelsTo(player, this)) setKneeling(true);
 		}
 		talkTicks--;
 	}
@@ -355,6 +401,144 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 	public Player talkPartner() {
 		if (talkTicks <= 0 || talkingTo == null) return null;
 		return level().getPlayerByUUID(talkingTo);
+	}
+
+	/** Keeps a talk from lapsing while the player is busy with it elsewhere (its trading screen is open). */
+	public void holdTalk(Player player) {
+		if (player.getUUID().equals(talkingTo)) talkTicks = Math.max(talkTicks, 40);
+	}
+
+	/** Every loaded cultivator in a talk with {@code player} now. */
+	public static List<CultivatorNpc> talkingWith(Player player) {
+		List<CultivatorNpc> found = new ArrayList<>();
+		for (CultivatorNpc npc : LOADED) {
+			if (npc.isTalkingTo(player)) found.add(npc);
+		}
+		return found;
+	}
+
+	// --- Trading (Merchant) ---
+
+	/** Opens its trading screen for {@code player} with today's offers (CultivatorTrades); the talk holds while it is open. */
+	public void openTrade(ServerPlayer player) {
+		long today = Regard.day(level().getGameTime());
+		if (today != tradeDay) {
+			tradeDay = today;
+			tradeUses.clear(); // a new day, a fresh stock
+		}
+		offers = CultivatorTrades.offersFor(this, player, tradeUses, offerKeys);
+		setTradingPlayer(player);
+		openTradingScreen(player, TalkSystem.nameOf(this), 0);
+	}
+
+	@Override
+	public void setTradingPlayer(Player player) {
+		if (player == null && tradingPlayer != null) endTalk(tradingPlayer);
+		tradingPlayer = player;
+	}
+
+	@Override public Player getTradingPlayer() { return tradingPlayer; }
+	@Override public MerchantOffers getOffers() { return offers == null ? new MerchantOffers() : offers; }
+	@Override public void overrideOffers(MerchantOffers offers) { this.offers = offers; }
+
+	@Override
+	public void notifyTrade(MerchantOffer offer) {
+		offer.increaseUses();
+		String key = offerKeys.get(offer);
+		if (key != null) tradeUses.merge(key, 1, Integer::sum);
+		playSound(getNotifyTradeSound(), 0.6f, 1.2f);
+	}
+
+	@Override public void notifyTradeUpdated(ItemStack stack) {}
+	@Override public int getVillagerXp() { return 0; }
+	@Override public void overrideXp(int xp) {}
+	@Override public boolean showProgressBar() { return false; }
+	@Override public SoundEvent getNotifyTradeSound() { return SoundEvents.AMETHYST_BLOCK_CHIME; }
+	@Override public boolean isClientSide() { return level().isClientSide; }
+
+	/** While its trading screen is open it stands and faces the trader; walking off (or anything else) closes it. */
+	private void tickTrading() {
+		if (!(tradingPlayer instanceof ServerPlayer trader)) return;
+		if (!trader.isAlive() || trader.distanceToSqr(this) > TalkSystem.KEEP * TalkSystem.KEEP || !(trader.containerMenu instanceof MerchantMenu)) {
+			if (trader.containerMenu instanceof MerchantMenu) trader.closeContainer();
+			setTradingPlayer(null);
+			return;
+		}
+		holdTalk(trader);
+		getNavigation().stop();
+		getLookControl().setLookAt(trader, 30.0f, 30.0f);
+	}
+
+	// --- Sparring, mercy ---
+
+	/** For a spar (SparSystem): it fights with no more than the strength of {@code rank} (or its own, {@link #NO_HOLD_BACK}). */
+	public void beginSpar(int holdBackTo) {
+		sparHoldBack = holdBackTo;
+		setMeditating(false);
+		getNavigation().stop();
+		refreshStats();
+	}
+
+	/** The spar is over: its own strength again, and no quarrel with whoever it fought. */
+	public void endSpar(LivingEntity opponent) {
+		sparHoldBack = NO_HOLD_BACK;
+		refreshStats();
+		if (getTarget() == opponent) setTarget(null);
+		if (getLastHurtByMob() == opponent) setLastHurtByMob(null);
+		combatTicks = 0;
+		setSuppressing(false);
+		if (isQiFlying()) land();
+	}
+
+	public boolean isHoldingBack() { return sparHoldBack != NO_HOLD_BACK; }
+
+	/** Takes {@code stakes} it won in a spar into its keeping (dropped when it dies). */
+	public void keepWinnings(List<ItemStack> stakes) {
+		for (ItemStack stake : stakes) if (!stake.isEmpty()) winnings.add(stake.copy());
+	}
+
+	/** Down on its knees before {@code player}, begging for its life, for {@code ticks}: it neither runs nor fights meanwhile. */
+	public void beg(Player player, int ticks) {
+		beggingTo = player.getUUID();
+		begTicks = ticks;
+		setKneeling(true);
+		setMeditating(false);
+		setTarget(null);
+		getNavigation().stop();
+		if (isQiFlying()) land();
+	}
+
+	public boolean isBeggingTo(Player player) {
+		return begTicks > 0 && player.getUUID().equals(beggingTo);
+	}
+
+	public boolean isBegging() { return begTicks > 0; }
+
+	/** The player it is begging, if they are here. */
+	public Player beggedPlayer() {
+		return begTicks > 0 && beggingTo != null ? level().getPlayerByUUID(beggingTo) : null;
+	}
+
+	public void stopBegging() {
+		begTicks = 0;
+		beggingTo = null;
+		setKneeling(false);
+	}
+
+	/** {@code player} spared its life: it stops running from them and leaves them be for {@link #SPARED_TICKS}. */
+	public void sparedBy(Player player) {
+		stopBegging();
+		sparedBy.put(player.getUUID(), level().getGameTime() + SPARED_TICKS);
+		if (fleeFrom == player) reachRefuge();
+		if (getTarget() == player) setTarget(null);
+		if (getLastHurtByMob() == player) setLastHurtByMob(null);
+		combatTicks = 0;
+	}
+
+	/** Spared by {@code player} lately: it won't go for them. */
+	public boolean owesLife(Player player) {
+		Long until = sparedBy.get(player.getUUID());
+		return until != null && until > level().getGameTime();
 	}
 
 	// --- Setting up ---
@@ -394,8 +578,10 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 	private void refreshStats() {
 		float oldMax = getMaxHealth();
 		float oldHealth = getHealth();
-		Realm realm = isMortal() ? Realm.QI_REFINING : realmOf(sustainedRank());
-		Stage stage = isMortal() ? Stage.EARLY : stageOf(sustainedRank());
+		// Holding back in a spar (SparSystem), it fights with the strength of its opponent's realm.
+		int rank = sparHoldBack == NO_HOLD_BACK ? sustainedRank() : Math.min(sustainedRank(), Math.max(0, sparHoldBack));
+		Realm realm = isMortal() ? Realm.QI_REFINING : realmOf(rank);
+		Stage stage = isMortal() ? Stage.EARLY : stageOf(rank);
 		CultivationStats.applyNpc(this, realm, stage, isMortal());
 		if (oldMax > 0 && getMaxHealth() != oldMax) setHealth(Math.min(getMaxHealth(), oldHealth * getMaxHealth() / oldMax));
 		updateShownRank();
@@ -506,6 +692,14 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		tickQi();
 		if (fleeTicks > 0 && --fleeTicks == 0) reachRefuge(); // given up on getting there: it stops running all the same
 		if (talkTicks > 0 && talkingTo != null) tickTalk();
+		if (tradingPlayer != null) tickTrading();
+		if (begTicks > 0) {
+			getNavigation().stop();
+			if (--begTicks == 0) stopBegging(); // no answer: it gets up and runs (or fights) again
+		} else if (isKneeling() && tickCount % 10 == 0) {
+			// Kneeling under someone's pressure (TalkSystem): only while they still press it and are still talking with it.
+			if (!(talkPartner() instanceof ServerPlayer partner) || !TalkSystem.kneelsTo(partner, this)) setKneeling(false);
+		}
 		if (lifecycle == Lifecycle.SECLUDED && isConcealed()) repulse(level);
 		tickFlight(level);
 		NpcTravel.maybeDispatch(this, level);
@@ -874,6 +1068,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		if (other == this || !other.isAlive() || isAlly(other) || !senses(other)) return false;
 		if (other instanceof Player player) {
 			if (player.isCreative() || player.isSpectator()) return false;
+			if (owesLife(player)) return false; // they spared its life: not today
+			if (SparSystem.areSparring(this, player)) return false; // a spar is a contest, not a feud
 			if (getFaction().isEnemyOf(Alignment.factionOf(alignmentOf(player)))) return true;
 			// Loathing turns it on a player too, if it thinks it can win.
 			return !level().isClientSide && regard(player) <= Regard.HOSTILE && rankOf(this) >= rankOf(player);
@@ -1113,6 +1309,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		lifecycle = Lifecycle.SECLUDED;
 		setPersistenceRequired();
 		raiseConcealment(level);
+		Rumours.noteCave(this); // word gets about: a Heavenly Being has shut itself away here
 	}
 
 	public void raiseConcealment(ServerLevel level) {
@@ -1138,6 +1335,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		lowerConcealment(level);
 		setMeditating(false);
 		seclusionMat = null;
+		Rumours.forgetCave(this);
 	}
 
 	/** Struck or broken barrier: seclusion is broken, and the one who broke it answers for it. */
@@ -1184,6 +1382,10 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		if (hurt && !level().isClientSide && level() instanceof ServerLevel server) {
 			setMeditating(false);
 			LivingEntity attacker = source.getEntity() instanceof LivingEntity living ? living : null;
+			// Struck while begging by the one it begged: no mercy, then; it runs or fights again.
+			if (attacker instanceof Player player && isBeggingTo(player)) stopBegging();
+			// Blows in a spar (SparSystem) are a contest: no alarm, no grudge, no broken seclusion.
+			if (attacker != null && SparSystem.areSparring(this, attacker)) return hurt;
 			if (attacker != null && lifecycle == Lifecycle.SECLUDED && isConcealed() && attacker instanceof ServerPlayer player) {
 				onConcealmentAssailed(player);
 			}
@@ -1205,7 +1407,9 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		if (!(level() instanceof ServerLevel server)) return;
 		ServerPlayer killer = killerOf(source);
 		if (sectId != null) SectManager.onMemberDeath(server, this, killer != null);
+		if (lifecycle == Lifecycle.SECLUDED) Rumours.forgetCave(this);
 		if (killer != null) {
+			Rumours.noteKilling(this, killer); // people will talk
 			// Killing a sect member turns the whole sect against the killer; killing one who was attacking a cultivator earns that
 			// cultivator's thanks (and a little of its sect's).
 			if (sectId != null) SectManager.changeStanding(server.getServer(), sectId, killer.getUUID(), Regard.MEMBER_KILLED);
@@ -1228,6 +1432,46 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		lowerConcealment(server);
 		setSuppressing(false);
 		RealmSuppressSystem.refreshNow();
+	}
+
+	/**
+	 * What it carries falls when it dies: spirit stones by its realm (SpiritStoneItem; a mortal now and then has a Low one or
+	 * two), and whatever it won in spars.
+	 */
+	@Override
+	protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
+		super.dropCustomDeathLoot(source, looting, recentlyHit);
+		for (ItemStack stack : carriedStones(getRank(), random)) spawnAtLocation(stack);
+		for (ItemStack stack : winnings) spawnAtLocation(stack);
+		winnings.clear();
+	}
+
+	/** The spirit stones a cultivator of {@code rank} carries ({@link #MORTAL}: a commoner). */
+	public static List<ItemStack> carriedStones(int rank, RandomSource random) {
+		List<ItemStack> stones = new ArrayList<>();
+		if (rank < 0) {
+			if (random.nextBoolean()) stones.add(new ItemStack(ModItems.LOW_SPIRIT_STONE, 1 + random.nextInt(2)));
+			return stones;
+		}
+		switch (realmOf(rank)) {
+			case QI_REFINING -> stones.add(new ItemStack(ModItems.LOW_SPIRIT_STONE, 1 + random.nextInt(4)));
+			case FOUNDATION_BUILDING -> {
+				stones.add(new ItemStack(ModItems.LOW_SPIRIT_STONE, 3 + random.nextInt(7)));
+				if (random.nextFloat() < 0.2f) stones.add(new ItemStack(ModItems.MID_SPIRIT_STONE));
+			}
+			case CORE_FORMATION -> stones.add(new ItemStack(ModItems.MID_SPIRIT_STONE, 1 + random.nextInt(3)));
+			case NASCENT_SOUL -> {
+				stones.add(new ItemStack(ModItems.MID_SPIRIT_STONE, 2 + random.nextInt(5)));
+				if (random.nextFloat() < 0.2f) stones.add(new ItemStack(ModItems.HIGH_SPIRIT_STONE));
+			}
+			case HEAVENLY_BEING -> stones.add(new ItemStack(ModItems.HIGH_SPIRIT_STONE, 1 + random.nextInt(3)));
+			case FOUR_AXIS -> {
+				stones.add(new ItemStack(ModItems.HIGH_SPIRIT_STONE, 2 + random.nextInt(5)));
+				if (random.nextFloat() < 0.15f) stones.add(new ItemStack(ModItems.SUPREME_SPIRIT_STONE));
+				if (random.nextFloat() < 0.01f) stones.add(new ItemStack(ModItems.IMMORTAL_SPIRIT_STONE));
+			}
+		}
+		return stones;
 	}
 
 	/** Who answers for its death: the player who struck it, whose arrow or pet did, or who last hurt it before it fell. */
@@ -1308,6 +1552,17 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 			regardList.add(r);
 		}
 		npc.put("Regard", regardList);
+		ListTag winningList = new ListTag();
+		for (ItemStack stack : winnings) winningList.add(stack.save(new CompoundTag()));
+		npc.put("Winnings", winningList);
+		ListTag sparedList = new ListTag();
+		for (Map.Entry<UUID, Long> entry : sparedBy.entrySet()) {
+			CompoundTag s = new CompoundTag();
+			s.putUUID("Player", entry.getKey());
+			s.putLong("Until", entry.getValue());
+			sparedList.add(s);
+		}
+		npc.put("SparedBy", sparedList);
 		tag.put("Npc", npc);
 	}
 
@@ -1350,6 +1605,18 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity {
 		for (int i = 0; i < regardList.size(); i++) {
 			CompoundTag r = regardList.getCompound(i);
 			if (r.hasUUID("Player")) regard.put(r.getUUID("Player"), Regard.Entry.load(r));
+		}
+		winnings.clear();
+		ListTag winningList = npc.getList("Winnings", Tag.TAG_COMPOUND);
+		for (int i = 0; i < winningList.size(); i++) {
+			ItemStack stack = ItemStack.of(winningList.getCompound(i));
+			if (!stack.isEmpty()) winnings.add(stack);
+		}
+		sparedBy.clear();
+		ListTag sparedList = npc.getList("SparedBy", Tag.TAG_COMPOUND);
+		for (int i = 0; i < sparedList.size(); i++) {
+			CompoundTag s = sparedList.getCompound(i);
+			if (s.hasUUID("Player")) sparedBy.put(s.getUUID("Player"), s.getLong("Until"));
 		}
 		setNoGravity(false); // flight isn't saved: it comes back to earth
 		refreshStats();

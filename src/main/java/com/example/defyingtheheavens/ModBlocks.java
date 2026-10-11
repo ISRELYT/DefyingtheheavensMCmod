@@ -60,6 +60,19 @@ public final class ModBlocks {
 	public static final Block DEEPSLATE_JADE_ORE = registerWithItem("deepslate_jade_ore",
 			new DropExperienceBlock(BlockBehaviour.Properties.copy(Blocks.DEEPSLATE_EMERALD_ORE), UniformInt.of(3, 7)));
 
+	/**
+	 * Spirit stone veins: Low spirit stones set in stone like pearls in an oyster, a few Mid ones deep in the deepslate, and in
+	 * the Upper Realm the rich veins that give Mid, High and, rarely, Supreme and Immortal stones (see SpiritStoneItem; the
+	 * drops are in their loot tables). An iron pickaxe mines them.
+	 */
+	public static final Block SPIRIT_STONE_ORE = registerWithItem("spirit_stone_ore",
+			new DropExperienceBlock(BlockBehaviour.Properties.copy(Blocks.IRON_ORE).mapColor(MapColor.QUARTZ), UniformInt.of(1, 3)));
+	public static final Block DEEPSLATE_SPIRIT_STONE_ORE = registerWithItem("deepslate_spirit_stone_ore",
+			new DropExperienceBlock(BlockBehaviour.Properties.copy(Blocks.DEEPSLATE_IRON_ORE).mapColor(MapColor.QUARTZ), UniformInt.of(2, 4)));
+	public static final Block RICH_SPIRIT_STONE_ORE = registerWithItem("rich_spirit_stone_ore",
+			new DropExperienceBlock(BlockBehaviour.Properties.copy(Blocks.DIAMOND_ORE).mapColor(MapColor.QUARTZ)
+					.lightLevel(state -> 3), UniformInt.of(4, 8)));
+
 	/** The white canopy of the Peach Blossom Sanctuary's pale trees. */
 	public static final Block WHITE_BLOSSOM_LEAVES = registerWithItem("white_blossom_leaves",
 			new LeavesBlock(BlockBehaviour.Properties.copy(Blocks.CHERRY_LEAVES).mapColor(MapColor.SNOW)));
@@ -183,6 +196,9 @@ public final class ModBlocks {
 			entries.accept(JADE_STONE);
 			entries.accept(JADE_ORE);
 			entries.accept(DEEPSLATE_JADE_ORE);
+			entries.accept(SPIRIT_STONE_ORE);
+			entries.accept(DEEPSLATE_SPIRIT_STONE_ORE);
+			entries.accept(RICH_SPIRIT_STONE_ORE);
 			entries.accept(WHITE_BLOSSOM_LEAVES);
 			entries.accept(SPIRIT_PEACH_LEAVES);
 			entries.accept(BLUE_SPIRIT_LOG);

@@ -292,6 +292,43 @@ public final class ModLang {
 	public static final String TALK_PICK = k("talk.pick");
 	/** A cultivator with another's soul inside it (SoulProjection) doesn't answer. */
 	public static final String TALK_POSSESSED = k("talk.possessed");
+	/** Struck mid-talk; a Sworn friend's aid and gift; one begging for its life; a topic's regard; a junior's realm. */
+	public static final String TALK_INTERRUPTED = k("talk.interrupted");
+	public static final String TALK_AID = k("talk.aid");
+	public static final String TALK_GIFT_BACK = k("talk.gift_back");
+	public static final String TALK_BEGS = k("talk.begs");
+	public static final String TALK_NEEDS = k("talk.needs");
+	public static final String TALK_AT_REALM = k("talk.at_realm");
+	/** Rumours (see Rumours) and guidance: noted in the journal; a senior's Insight. */
+	public static final String TALK_JOURNAL_NOTED = k("talk.journal_noted");
+	public static final String TALK_INSIGHT = k("talk.insight");
+	/** A rumour's words: "old" (a herb, fruit or tree), "cave", "core", "killing", and the pieces they're made of. */
+	public static String rumour(String id) { return k("talk.rumour." + id); }
+	public static String rumourSubject(Rumours.Kind kind) { return k("talk.rumour.subject." + kind.name().toLowerCase(java.util.Locale.ROOT)); }
+	// Sparring (SparSystem)
+	public static String sparTerms(String id) { return k("talk.spar_terms." + id); }
+	public static final String SPAR_BUSY = k("spar.busy");
+	public static final String SPAR_HURT = k("spar.hurt");
+	public static final String SPAR_NO_STAKE = k("spar.no_stake");
+	public static final String SPAR_WAGERED = k("spar.wagered");
+	public static final String SPAR_HOLD_STAKE = k("spar.hold_stake");
+	public static final String SPAR_STAKES = k("spar.stakes");
+	public static final String SPAR_COUNT = k("spar.count");
+	public static final String SPAR_BEGIN = k("spar.begin");
+	public static final String SPAR_COUNTDOWN = k("spar.countdown");
+	public static final String SPAR_FIGHT = k("spar.fight");
+	// Spirit stones (SpiritStoneItem)
+	public static final String MSG_STONE_MORTAL = k("message.stone.mortal");
+	public static final String MSG_STONE_QI_FULL = k("message.stone.qi_full");
+	public static final String MSG_STONE_ABSORBED = k("message.stone.absorbed");
+	public static final String STONE_WORTH = k("stone.worth");
+	public static final String STONE_ABSORB = k("stone.absorb");
+	public static final String STONE_MEDITATE = k("stone.meditate");
+	public static final String STONE_QI_LEFT = k("stone.qi_left");
+	// The menu's Journal tab (see Journal)
+	public static final String TAB_JOURNAL = k("tab.journal");
+	public static final String JOURNAL_EMPTY = k("journal.empty");
+	public static final String JOURNAL_ENTRY = k("journal.entry");
 	public static final String MSG_SECLUSION_REPULSE = k("message.seclusion.repulse");
 
 	// Cultivator clothing (see ClothingItem)

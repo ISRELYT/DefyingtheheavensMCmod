@@ -83,6 +83,13 @@ public final class ModPackets {
 	public static final ResourceLocation TALK_END = new ResourceLocation(DefyingTheHeavens.MOD_ID, "talk_end");
 	/** S2C: the cultivator broke off the talk (entity id, why): the talk window closes and the reason shows over the hotbar. */
 	public static final ResourceLocation TALK_CLOSE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "talk_close");
+	/** C2S: a right-click on a cultivator past arm's length, within TalkSystem#REACH (entity id). */
+	public static final ResourceLocation TALK_REQUEST = new ResourceLocation(DefyingTheHeavens.MOD_ID, "talk_request");
+	/** S2C: someone in sight makes a gesture (entity id, Gesture ordinal), drawn for Gesture#TICKS. */
+	public static final ResourceLocation GESTURE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "gesture");
+	/** S2C: the player's journal (see Journal), whole. C2S JOURNAL_REQUEST asks for it (the menu's Journal tab opening). */
+	public static final ResourceLocation JOURNAL = new ResourceLocation(DefyingTheHeavens.MOD_ID, "journal");
+	public static final ResourceLocation JOURNAL_REQUEST = new ResourceLocation(DefyingTheHeavens.MOD_ID, "journal_request");
 	/** Players further than this from a core can't work its screen. */
 	private static final double CORE_REACH = 8;
 
@@ -136,6 +143,12 @@ public final class ModPackets {
 			int entity = buf.readVarInt();
 			server.execute(() -> TalkSystem.end(player, entity));
 		});
+		ServerPlayNetworking.registerGlobalReceiver(TALK_REQUEST, (server, player, handler, buf, responseSender) -> {
+			int entity = buf.readVarInt();
+			server.execute(() -> TalkSystem.request(player, entity));
+		});
+		ServerPlayNetworking.registerGlobalReceiver(JOURNAL_REQUEST,
+				(server, player, handler, buf, responseSender) -> server.execute(() -> sendJournal(player)));
 		ServerPlayNetworking.registerGlobalReceiver(TOGGLE_MEDITATION,
 				(server, player, handler, buf, responseSender) -> server.execute(() -> MeditationManager.toggle(player)));
 		ServerPlayNetworking.registerGlobalReceiver(BREAKTHROUGH,
@@ -262,6 +275,22 @@ public final class ModPackets {
 			if (reply.note() != null) buf.writeComponent(reply.note());
 		}
 		ServerPlayNetworking.send(player, TALK_DIALOGUE, buf);
+	}
+
+	/** {@code entity} makes {@code gesture}: everyone who can see it is told (the player making it too, for third person). */
+	public static void sendGesture(net.minecraft.world.entity.Entity entity, Gesture gesture) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(entity.getId());
+		buf.writeVarInt(gesture.ordinal());
+		for (ServerPlayer watcher : PlayerLookup.tracking(entity)) ServerPlayNetworking.send(watcher, GESTURE, PacketByteBufs.copy(buf));
+		if (entity instanceof ServerPlayer self) ServerPlayNetworking.send(self, GESTURE, buf);
+	}
+
+	/** The player's whole journal (Journal), for the menu's Journal tab. */
+	public static void sendJournal(ServerPlayer player) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		Journal.write(buf, CultivationManager.get(player).journal());
+		ServerPlayNetworking.send(player, JOURNAL, buf);
 	}
 
 	/** Closes {@code player}'s talk with the cultivator {@code entityId}, saying why over the hotbar. */

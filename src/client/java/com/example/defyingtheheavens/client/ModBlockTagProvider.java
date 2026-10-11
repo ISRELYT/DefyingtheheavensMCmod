@@ -19,6 +19,12 @@ public class ModBlockTagProvider extends FabricTagProvider.BlockTagProvider {
 		getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.JADE_STONE).add(ModBlocks.SPIRIT_PEDESTAL)
 				.add(ModBlocks.ALCHEMY_CAULDRON).add(ModBlocks.JADE_ORE).add(ModBlocks.DEEPSLATE_JADE_ORE);
 		getOrCreateTagBuilder(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.JADE_ORE).add(ModBlocks.DEEPSLATE_JADE_ORE);
+		// Spirit stone veins: an iron pickaxe; the Upper Realm's rich veins a diamond one. (Their drops are hand-written loot
+		// tables in resources, not generated: they roll several grades.)
+		getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.SPIRIT_STONE_ORE).add(ModBlocks.DEEPSLATE_SPIRIT_STONE_ORE)
+				.add(ModBlocks.RICH_SPIRIT_STONE_ORE);
+		getOrCreateTagBuilder(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.SPIRIT_STONE_ORE).add(ModBlocks.DEEPSLATE_SPIRIT_STONE_ORE);
+		getOrCreateTagBuilder(BlockTags.NEEDS_DIAMOND_TOOL).add(ModBlocks.RICH_SPIRIT_STONE_ORE);
 		// Lets vanilla-style ore configurations (and Upper Realm ores) replace jade like stone.
 		getOrCreateTagBuilder(BlockTags.STONE_ORE_REPLACEABLES).add(ModBlocks.JADE_STONE);
 		getOrCreateTagBuilder(BlockTags.BASE_STONE_OVERWORLD).add(ModBlocks.JADE_STONE);

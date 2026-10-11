@@ -51,6 +51,8 @@ public final class ModConfiguredFeatures {
 	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_EMERALD = key("ore_emerald");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_JADE = key("ore_jade");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_JADE_STONE = key("ore_jade_stone");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_SPIRIT_STONE = key("ore_spirit_stone");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_RICH_SPIRIT_STONE = key("ore_rich_spirit_stone");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_QUARTZ = key("ore_quartz");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_CLAY = key("ore_clay");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_SAND = key("ore_sand");
@@ -95,6 +97,9 @@ public final class ModConfiguredFeatures {
 		ore(context, ORE_EMERALD, Blocks.EMERALD_ORE, Blocks.DEEPSLATE_EMERALD_ORE, 3, 0.5f);
 		// Jade: small veins, in stone (and the Upper Realm's jade stone) or deepslate.
 		ore(context, ORE_JADE, ModBlocks.JADE_ORE, ModBlocks.DEEPSLATE_JADE_ORE, 4, 0.0f);
+		// Spirit stone veins: the common kind in stone and deepslate; the rich kind (deep down, and through the Upper Realm).
+		ore(context, ORE_SPIRIT_STONE, ModBlocks.SPIRIT_STONE_ORE, ModBlocks.DEEPSLATE_SPIRIT_STONE_ORE, 6, 0.0f);
+		ore(context, ORE_RICH_SPIRIT_STONE, ModBlocks.RICH_SPIRIT_STONE_ORE, ModBlocks.RICH_SPIRIT_STONE_ORE, 4, 0.0f);
 		FeatureUtils.register(context, ORE_QUARTZ, Feature.ORE, new OreConfiguration(List.of(
 				OreConfiguration.target(new BlockMatchTest(Blocks.BASALT), Blocks.NETHER_QUARTZ_ORE.defaultBlockState()),
 				OreConfiguration.target(new BlockMatchTest(Blocks.BLACKSTONE), Blocks.NETHER_QUARTZ_ORE.defaultBlockState()),

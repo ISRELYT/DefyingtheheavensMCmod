@@ -183,7 +183,13 @@ public final class MeditationManager {
 	private static double ratePerSecond(ServerPlayer p, Session session) {
 		PlayerCultivation c = CultivationManager.get(p);
 		return c.meditationCultivationPerSecond(RingOfPowerItem.cultivationBonus(p)) * session.boost.multiplier()
-				* circulationMultiplier(session, session.ticks) * (InnerRealm.isInside(p) ? InnerRealm.CULTIVATION_BONUS : 1.0);
+				* circulationMultiplier(session, session.ticks) * (InnerRealm.isInside(p) ? InnerRealm.CULTIVATION_BONUS : 1.0)
+				* heldAndTaught(p);
+	}
+
+	/** A spirit stone in hand (SpiritStoneItem) and a teacher's Insight (TalkSystem guidance), each speeding the gain. */
+	private static double heldAndTaught(ServerPlayer p) {
+		return SpiritStoneItem.meditationMultiplier(p) * (p.hasEffect(ModEffects.INSIGHT) ? 1.0 + ModEffects.INSIGHT_BONUS : 1.0);
 	}
 
 	private static boolean stillValid(ServerPlayer p, Session s) {
@@ -278,6 +284,7 @@ public final class MeditationManager {
 		if (tick % 20 == 0) {
 			ModPackets.broadcastMeditation(p, true); // heartbeat for late joiners / newly tracking players
 			broadcastAbsorption(p, session);
+			SpiritStoneItem.drainWhileMeditating(p); // a second of a held stone's qi, if one is held
 		}
 	}
 
@@ -321,7 +328,7 @@ public final class MeditationManager {
 	 */
 	private static void broadcastAbsorption(ServerPlayer p, Session session) {
 		PlayerCultivation c = CultivationManager.get(p);
-		double perSecond = c.meditationCultivationPerSecond(RingOfPowerItem.cultivationBonus(p)) * session.boost.multiplier();
+		double perSecond = c.meditationCultivationPerSecond(RingOfPowerItem.cultivationBonus(p)) * session.boost.multiplier() * heldAndTaught(p);
 		QiSense.broadcastAbsorption(p, c, perSecond);
 	}
 

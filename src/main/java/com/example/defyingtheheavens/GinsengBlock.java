@@ -130,6 +130,13 @@ public class GinsengBlock extends BaseEntityBlock {
 
     @Override public BlockEntity newBlockEntity(BlockPos pos, BlockState state) { return new GinsengBlockEntity(pos, state); }
 
+    /** Dug up or destroyed: no more rumours of it (see Rumours). Not called when the chunk merely unloads. */
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean moved) {
+        if (!state.is(newState.getBlock())) Rumours.forgetAt(level, pos, Rumours.Kind.HERB);
+        super.onRemove(state, level, pos, newState, moved);
+    }
+
     /** Client only: the age aura's particles and sounds (see FruitAura). The server needs no ticking; age is a clock. */
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {

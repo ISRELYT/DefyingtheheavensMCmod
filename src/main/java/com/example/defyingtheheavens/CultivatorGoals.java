@@ -116,6 +116,11 @@ public final class CultivatorGoals {
 			if (threat == null) return;
 			if (cooldown > 0) cooldown--;
 			if (threat instanceof LivingEntity pursuer && cornered(pursuer)) {
+				// Run down by someone two realms above it, there's no fighting back: it throws itself down and begs (TalkSystem).
+				if (pursuer instanceof net.minecraft.server.level.ServerPlayer player && TalkSystem.wouldBeg(npc, player)) {
+					TalkSystem.beginBegging(player, npc);
+					return;
+				}
 				npc.getLookControl().setLookAt(pursuer, 30.0f, 30.0f);
 				if (cooldown <= 0 && npc.getSensing().hasLineOfSight(pursuer)) {
 					npc.swing(InteractionHand.MAIN_HAND);
@@ -272,9 +277,9 @@ public final class CultivatorGoals {
 				npc.getNavigation().moveTo(target, 1.25);
 			}
 
-			// Realm Suppress on a weaker foe, only with qi enough to carry it.
+			// Realm Suppress on a weaker foe, only with qi enough to carry it (and never while holding back in a spar).
 			if (npc.tickCount % 10 == 0) {
-				boolean weaker = CultivatorNpc.rankOf(target) < npc.sustainedRank();
+				boolean weaker = CultivatorNpc.rankOf(target) < npc.sustainedRank() && !npc.isHoldingBack();
 				if (weaker && !npc.isSuppressing() && npc.canSuppressSustainably()) npc.setSuppressing(true);
 				else if (!weaker && npc.isSuppressing()) npc.setSuppressing(false);
 			}
@@ -713,6 +718,37 @@ public final class CultivatorGoals {
 		public void stop() {
 			npc.setMeditating(false);
 			meditate = 0;
+		}
+	}
+
+	/**
+	 * Begging for its life (see TalkSystem#beginBegging): down on its knees, it neither runs nor fights, only watches the one
+	 * it begs, until they answer (spare it, or strike) or it gives up.
+	 */
+	public static class BegGoal extends Goal {
+		private final CultivatorNpc npc;
+
+		public BegGoal(CultivatorNpc npc) {
+			this.npc = npc;
+			setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+		}
+
+		@Override public boolean canUse() { return npc.isBegging(); }
+		@Override public boolean canContinueToUse() { return npc.isBegging(); }
+
+		@Override
+		public void start() {
+			npc.getNavigation().stop();
+			npc.setSuppressing(false);
+		}
+
+		@Override public boolean requiresUpdateEveryTick() { return true; }
+
+		@Override
+		public void tick() {
+			npc.getNavigation().stop();
+			Player pursuer = npc.beggedPlayer();
+			if (pursuer != null) npc.getLookControl().setLookAt(pursuer, 30.0f, 30.0f);
 		}
 	}
 

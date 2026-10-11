@@ -23,9 +23,10 @@ import org.joml.Matrix4f;
 
 /**
  * NPC cultivators: the player model in one of {@link CultivatorNpc#SKINS} skins, wearing whatever clothing or armor they
- * have, and always carrying a nameplate over their heads: their title ("[Sect Master]", "[Rogue Cultivator]") in its
- * colour, a red health bar with the numbers on it, and their path with its alignment ("Righteous (+120)"). A secluded
- * cultivator's Concealment Barrier hides the plate unless you're close.
+ * have, and always carrying a nameplate over their heads: their name ("Mo Lian", see NpcNames; or what a name tag called
+ * them), their title ("[Sect Master]", "[Rogue Cultivator]") in its colour, a red health bar with the numbers on it, and
+ * their path with its alignment ("Righteous (+120)"). A secluded cultivator's Concealment Barrier hides the plate unless
+ * you're close.
  */
 public class CultivatorNpcRenderer extends HumanoidMobRenderer<CultivatorNpc, PlayerModel<CultivatorNpc>> {
 	private static final ResourceLocation[] SKINS = new ResourceLocation[CultivatorNpc.SKINS];
@@ -76,6 +77,12 @@ public class CultivatorNpcRenderer extends HumanoidMobRenderer<CultivatorNpc, Pl
 		poseStack.scale(-0.025f, -0.025f, 0.025f);
 		Matrix4f matrix = poseStack.last().pose();
 		int background = (int) (Minecraft.getInstance().options.getBackgroundOpacity(0.25f) * 255.0f) << 24;
+
+		// The name, on top: the one it was born with, or what a name tag called it.
+		Component name = npc.hasCustomName() ? npc.getCustomName() : Component.literal(npc.getPersonalName());
+		float nameX = -font.width(name) / 2f;
+		font.drawInBatch(name, nameX, -35, 0x20FFFFFF, false, matrix, buffers, Font.DisplayMode.SEE_THROUGH, background, light);
+		font.drawInBatch(name, nameX, -35, 0xFFFFFFFF, false, matrix, buffers, Font.DisplayMode.NORMAL, 0, light);
 
 		// The title, in its colour (a gate guard's post rather than its rank).
 		Component title = Component.translatable(ModLang.NPC_TITLE_BRACKETS,

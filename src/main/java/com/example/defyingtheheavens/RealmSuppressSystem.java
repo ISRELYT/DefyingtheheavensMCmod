@@ -94,6 +94,34 @@ public final class RealmSuppressSystem {
 	private static final Set<UUID> SAW_PRESSURE = new HashSet<>();
 	/** Something changed that shouldn't wait for the next scan; at most one extra scan a tick, however many changes. */
 	private static boolean rescan;
+	/** Which players press each entity now (target UUID to suppressor UUIDs), rebuilt every scan: who it kneels to (TalkSystem). */
+	private static final Map<UUID, Set<UUID>> PRESSERS = new HashMap<>();
+	/** Entities a player has let up off (TalkSystem's Release pressure), each until a game time. */
+	private static final Map<UUID, Map<UUID, Long>> RELEASED = new HashMap<>();
+	/** How long a released one is left alone by that player's Realm Suppress (five minutes). */
+	public static final long RELEASE_TICKS = 6000;
+
+	/** {@code player}'s Realm Suppress is pressing down on {@code target} right now. */
+	public static boolean presses(ServerPlayer player, Entity target) {
+		Set<UUID> pressers = PRESSERS.get(target.getUUID());
+		return pressers != null && pressers.contains(player.getUUID());
+	}
+
+	/** {@code player} lets up off {@code target} for {@link #RELEASE_TICKS}: their Realm Suppress passes it over. */
+	public static void spare(ServerPlayer player, Entity target) {
+		RELEASED.computeIfAbsent(player.getUUID(), id -> new HashMap<>()).put(target.getUUID(), player.level().getGameTime() + RELEASE_TICKS);
+		refreshNow();
+	}
+
+	private static boolean released(ServerPlayer suppressor, Entity target) {
+		Map<UUID, Long> spared = RELEASED.get(suppressor.getUUID());
+		if (spared == null) return false;
+		Long until = spared.get(target.getUUID());
+		if (until == null) return false;
+		if (until > suppressor.level().getGameTime()) return true;
+		spared.remove(target.getUUID());
+		return false;
+	}
 
 	/** True for the attribute modifiers this ability adds (lets the client tell pressure apart from gear and effects). */
 	public static boolean isPressureModifier(UUID id) {
@@ -162,6 +190,7 @@ public final class RealmSuppressSystem {
 	 */
 	private static void scan(MinecraftServer server, UUID leaving) {
 		Map<UUID, Pressed> next = new HashMap<>();
+		Map<UUID, Set<UUID>> pressers = new HashMap<>();
 		for (ServerLevel level : server.getAllLevels()) {
 			for (ServerPlayer suppressor : level.players()) {
 				PlayerCultivation c = CultivationManager.get(suppressor);
@@ -178,6 +207,7 @@ public final class RealmSuppressSystem {
 					Pressure pressure = pressureOn(rank, targetRank);
 					if (pressure == null) continue;
 					cost += costOf(rank, targetRank, target);
+					pressers.computeIfAbsent(target.getUUID(), id -> new HashSet<>()).add(suppressor.getUUID());
 					Pressed current = next.get(target.getUUID());
 					if (current == null || pressure.strongerThan(current.pressure())) next.put(target.getUUID(), new Pressed(target, pressure));
 				}
@@ -211,6 +241,8 @@ public final class RealmSuppressSystem {
 		}
 		// NPCs that stopped (or left) are no longer charged.
 		UPKEEP.keySet().removeIf(id -> server.getPlayerList().getPlayer(id) == null && !npcSuppressing(server, id));
+		PRESSERS.clear();
+		PRESSERS.putAll(pressers);
 
 		for (Iterator<Map.Entry<UUID, Pressed>> it = PRESSED.entrySet().iterator(); it.hasNext(); ) {
 			Map.Entry<UUID, Pressed> entry = it.next();
@@ -232,6 +264,7 @@ public final class RealmSuppressSystem {
 
 	private static boolean canBePressed(LivingEntity target, Entity suppressor, UUID leaving) {
 		if (!target.isAlive() || target.isRemoved() || target instanceof ArmorStand || target.getUUID().equals(leaving)) return false;
+		if (suppressor instanceof ServerPlayer player && released(player, target)) return false; // let up off (Release pressure)
 		if (target instanceof ServerPlayer player) return !player.isSpectator() && !player.isCreative() && !SoulProjection.isSoul(player);
 		// Map makers' invulnerable NPCs stay as they are, and a cultivator's own companions are spared.
 		if (target.isInvulnerable()) return false;

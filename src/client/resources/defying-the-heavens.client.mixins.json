@@ -13,6 +13,7 @@
     "InventoryScreenMixin",
     "ItemInHandLayerMixin",
     "ItemInHandRendererMixin",
+    "ItemRendererMixin",
     "LevelRendererMixin",
     "LivingEntityRendererMixin",
     "MinecraftMixin",

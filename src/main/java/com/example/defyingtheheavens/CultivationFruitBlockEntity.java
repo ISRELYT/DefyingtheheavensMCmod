@@ -23,6 +23,8 @@ public class CultivationFruitBlockEntity extends BlockEntity {
         // Only set the field here: setChanged() would look up this chunk while it is still loading, and the server
         // waits on itself forever (new worlds hung at 100%). Placing the block already marks the chunk changed.
         if (!level.isClientSide && plantedAt < 0) plantedAt = level.getGameTime();
+        // Noted for rumours (queued: nothing in the world may be touched while the chunk loads).
+        Rumours.noteAging(level, worldPosition, Rumours.Kind.FRUIT, getBlockState().getBlock(), initialYears, plantedAt);
     }
 
     /** Worldgen: the fruit has no level yet, so the clock is started from the world's time when it is generated. */
@@ -37,7 +39,10 @@ public class CultivationFruitBlockEntity extends BlockEntity {
         plantedAt = level == null ? -1 : level.getGameTime();
         setChanged();
         // Nearby clients draw the aura from the age, so tell them straight away.
-        if (level != null && !level.isClientSide) level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            Rumours.noteAging(level, worldPosition, Rumours.Kind.FRUIT, getBlockState().getBlock(), initialYears, plantedAt);
+        }
     }
 
     public int age() {

@@ -685,8 +685,8 @@ the master is between Core Formation and Nascent Soul Grand Perfection; in the U
   (`FLEE_DISTANCE`, `FLEE_SPREAD`, `FLEE_TIMEOUT` in `CultivatorNpc.java`). A fleeing cultivator is a little slower than a
   sprinting player of its own realm, and a badly hurt one well slower, on foot or in the air, so it can be run down
   (`RUN_SPEED`, `FLY_SPEED` in `CultivatorGoals.FleeGoal`).
-- Every cultivator has a nameplate: title, a red health bar with numbers, and alignment, for example "Righteous (+120)".
-  Under Qi Sense, meditating cultivators draw qi motes into themselves.
+- Every cultivator has a nameplate: their name ("Mo Lian", or what a name tag called them), title, a red health bar with
+  numbers, and alignment, for example "Righteous (+120)". Under Qi Sense, meditating cultivators draw qi motes into themselves.
 
 ### Alignment
 
@@ -700,43 +700,114 @@ above 50 (white). A sect shares one alignment (40% righteous, 30% neutral, 30% d
 
 ### Talking to cultivators
 
-Right-click a cultivator to talk. The **talk wheel** opens round the crosshair with what you can mean by it: **Greet**,
-**Ask**, **Gift** and **Provoke** (click one, or press its number). Greet, Gift and Provoke are answered in a line over
-the hotbar; Ask opens the **dialogue box**, with their portrait and name plate (personal name, title, sect, realm), what
-they say, your regard, and numbered replies. The wheel folds into tabs on the box, so you can turn to a gift without
-leaving; Esc goes back to the wheel, and again ends the talk. They stop and face you while you talk; walking away (8
-blocks) or a fight ends it, and if they break it off the window closes with a line over the hotbar saying why
-(`TalkSystem`, `TalkWheelScreen`, `DialogueScreen`).
+Right-click a cultivator to talk, from up to 6 blocks away. The **talk wheel** opens round the crosshair with what you
+can mean by it (click one, or press its number): **Greet**, **Ask**, **Spar**, **Trade**, **Gift** and **Provoke**, and
+in some talks **Demand**, **Release**, **Spare** or **Leave**. Greet, Gift, Provoke and the rest are answered in a line
+over the hotbar; Trade opens the trading screen; Ask and Spar open the **dialogue box**, with their portrait and name
+plate (personal name, title, sect, realm), what they say, your regard, and numbered replies. The wheel folds into tabs
+on the box, so you can turn to a gift without leaving; Esc goes back to the wheel, and again ends the talk. They stop and
+face you while you talk; walking away (8 blocks), a fight, or being struck yourself ends it, and if they break it off the
+window closes with a line over the hotbar saying why (`TalkSystem`, `TalkWheelScreen`, `DialogueScreen`).
 
 - **Names.** Every cultivator has a personal name ("Mo Lian", "Gu Hanyu"), worked out from its UUID (`NpcNames`).
-- **Standing.** Their realm against yours, as each side shows it, sets how they speak to you: 2+ realms above you,
-  dismissive (no insults offered; they won't name their elders); a realm above, a senior; the same realm, "Fellow
-  Daoist"; below you, deferential. A mortal player is spoken to as a mortal. Their path sets the tone: the righteous are
-  formal, the neutral terse, the demonic mocking.
+- **Standing.** Their realm against yours, as each side shows it (so Realm Suppression and concealment change it), sets
+  how they speak to you and what they entertain. Their path sets the tone: the righteous are formal, the neutral terse,
+  the demonic mocking. A mortal player is spoken to as a mortal (Greet, Ask, Trade, Gift).
+
+| Their realm against yours | How they treat you | What the wheel offers |
+| --- | --- | --- |
+| 2+ realms above | Dismissive | Greet, Ask (the basics: no rumours, nor their elders), Gift |
+| 1 realm above | A senior, courteous but distant | All but Spar, until they are Courteous to you |
+| The same realm | "Fellow Daoist", and they offer tea | All six |
+| 1 realm below | They answer freely: how far along their stage they are, their elders' realms | All six |
+| 2+ realms below | As below; pressed down by your Realm Suppress, they kneel | All six, and Demand and Release while you press them |
+
+- **Greeting.** You bow to a senior and cup your fist to an equal or a junior; they answer in kind (`GesturePose`).
 - **Regard** (-100 to 100, five pips: Polite from 20, Courteous 40, Warm 60, Trusted 80, Sworn friend 90) is what they
   think of you: their paths' baseline (+10 between two of the same strong path, -10 when you lean the other way), plus
   their own regard, plus their sect's standing with you. At -50 or lower they attack you if they think they can win
-  (`Regard`).
+  (`Regard`). Courteous opens rumours (and Spar with a senior), Warm a senior's guidance, Trusted the best trades; a
+  Sworn friend gives you something now and then when you greet them, and comes to your aid when something attacks you
+  within 24 blocks of them.
 
 | What you do | Regard |
 | --- | --- |
 | Greet them | +2, once a day |
-| Give them something (old herbs, pills, Cultivation Fruit; worth less to the stronger, and less each time the same kind of gift comes again that day) | +1 to +25 |
+| Give them something (old herbs, pills, Cultivation Fruit, spirit stones; worth less to the stronger, and less each time the same kind of gift comes again that day) | +1 to +25 |
+| Win a spar | +8; +15 over a higher realm; +25 when they didn't hold back (once a day) |
+| Lose a spar | +3; -3 to someone a realm or more below you, or for walking off (once a day) |
+| Spare one who begs for their life | +10 (and +2 alignment) |
 | Kill someone who was attacking them | +20 (+5 to their sect) |
 | Wake them from meditation (elders and the master on duty don't mind) | -2 |
+| Press up against a secluded cultivator's barrier to talk | -5, once a day |
 | Provoke them | -15, and they may attack: likelier on the demonic path or if they are stronger, never if a realm below you |
+| Demand tribute | -20 (and -5 alignment), once a day |
 | Strike them | -30, once a fight |
 | Kill one of their sect | -40 to the whole sect |
 | Rob their treasury | -60 to the whole sect, once a day |
 
 - A cultivator's own regard drifts a point a day back toward zero; a sect's grudges don't fade.
 - Provoking counts as starting the fight: killing them afterwards still costs alignment as murder.
-- **Ask** about who they are, their sect (its size, path and master), who leads it (its elders by name), and the nearest
-  other sect they know of (within 2,000 blocks: its name, path, direction and rough distance). The answers come from the
-  world as it is.
-- They won't talk in a fight, in seclusion, while leaving for the sky, to an enemy of their path, while talking to
-  someone else, or with another's soul inside them (Soul Projection: they just don't seem to hear you). If one of these
-  comes about mid-talk, they break it off.
+- They won't talk in a fight, in seclusion, while leaving for the sky, while turned on you, while talking to someone else,
+  or with another's soul inside them (Soul Projection: they just don't seem to hear you). If one of these comes about
+  mid-talk, they break it off. **An enemy of their path** doesn't talk at all: its wheel offers only Provoke (it fights)
+  and Leave, unless you are two realms above it, when it throws itself down and begs: Spare or Leave.
+
+**Ask** answers from the world as it is:
+
+| Topic | Needs | What they tell you |
+| --- | --- | --- |
+| Themselves | Anyone | Their name, title, sect and realm, how long they have cultivated, a line about their path |
+| Their sect | A sect member | Its size, path, master (by name and realm), and the nearest sect of the enemy path |
+| Its people | A sect member, not far above you | Its elders and master by name, and who keeps the gates |
+| Nearby | Anyone | The nearest other sect within 2,000 blocks: its name, path, direction and rough distance |
+| Rumours | Courteous, not far above you | One or two real things they have heard of (see below) |
+| Guidance | Warm, a realm or more above you | Their Insight: +25% cultivation from meditation for 10 minutes, once a day from each teacher |
+
+Topics not open yet still show, greyed, with the regard they need.
+
+- **Rumours** (`Rumours`): old herbs (a hundred years and more), Cultivation Fruit and Spirit Peach Trees, a secluded
+  Heavenly Being's cave, a fallen sect's unclaimed Formation Core, a cultivator killed in the last three days (and by
+  whom). Never coordinates: a direction, a rough distance, the country it's in, and for herbs a guess at the age ("five
+  hundred and fifty to six hundred and fifty years"); the stronger the teller, the closer their guesses. Each cultivator
+  tells you a thing once; rogues have heard of things up to 2,500 blocks away, sect members only within 400. The index is
+  fed as those things come and go (their block entities loading, a sect falling, a killing), never by scanning chunks.
+  Everything you are told goes into the **Journal** tab of the cultivation menu, newest first.
+- **Spar** (`SparSystem`): a duel to first blood. Pick terms in the box: **friendly**, **a wager** (hold a herb, pill,
+  fruit or spirit stones: you stake one, they stake something of like worth of their own, the winner takes both; one
+  wager a day with each), and, with someone stronger, **don't hold back**. Three breaths, then it begins. It ends when
+  either of you has lost a quarter of your health since it began, when you walk 16 blocks off (a forfeit), or after three
+  minutes (a draw). Nobody dies: a blow from the other that would go past the line stops at it. A stronger cultivator
+  holds back to your realm unless told not to. Blows in a spar are no attack on their sect. Losing to a senior who is
+  Warm to you can teach you their Insight.
+- **Trade** (`CultivatorTrades`): barter on the trading screen, in spirit stones. They sell by station: Outer Disciples
+  and commoners seeds and young herbs, Inner Disciples rarer seeds and Qi Gathering Pills, Elders pills and old herbs, the
+  Sect Master the best of both; rogues odd things from far away. The stock changes each day. Regard opens better offers
+  (one more at each of Polite, Courteous, Warm and Trusted) and lowers prices (x1.3 when Resentful down to x0.75 when
+  Sworn). They also buy what you carry that a cultivator has use for (herbs, pills, fruit), for half to four-fifths of
+  its worth by regard.
+- **Pressure**: two realms below you with your Realm Suppress on them, they talk on one knee. **Demand** takes tribute
+  (something of what they keep, and spirit stones); **Release** lifts your pressure off them for five minutes.
+- **Mercy**: a fleeing cultivator you outclass by two realms, run down and struck, throws itself down and begs for 15
+  seconds; right-click it to answer. **Spare** it, and it owes you its life: it won't raise a hand against you for a day.
+
+### Spirit stones
+
+Heaven and earth's qi condensed into small, smooth oval stones with a pearl's sheen: the cultivators' money (prices,
+wagers, gifts) and a store of qi. Five grades, each worth nine of the one below: **Low, Mid, High, Supreme, Immortal**.
+Nine of a grade craft into one of the next, and one breaks back into nine (`SpiritStoneItem`). They glow, more with
+each grade: a soft halo in the grade's colour around the stone (in slots, in hand, on the ground, in item frames), and
+the stone lit from within so it still shows in the dark. A Low stone barely gleams; Supreme and Immortal stones shine
+and slowly breathe (`SpiritStoneGlow`).
+
+- **Absorb**: hold right-click for a second and a half to draw a stone's qi into your pool, 25 qi for every Low stone's
+  worth (225 for a Mid, and so on); the stone is used up.
+- **Meditate** with one in either hand to cultivate 50% faster while its qi lasts: 30 seconds for every Low stone's
+  worth, then it is spent (how much is left shows on it).
+- **Where they come from**: Spirit Stone Veins (Low stones) through Overworld stone, the deepslate kind with the odd Mid;
+  Rich Spirit Stone Veins (Mid, a chance of High, rarely Supreme, very rarely Immortal) at the bottom of the Overworld
+  and all through the Upper Realm (iron pickaxe for the common veins, diamond for the rich); sect chests (most in the
+  treasury); slain cultivators, who carry them by realm; and selling herbs, pills and fruit to cultivators.
 
 ### Cultivator clothing
 

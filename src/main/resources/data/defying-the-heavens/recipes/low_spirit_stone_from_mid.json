@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "low_spirit_stone",
+  "ingredients": [
+    {
+      "item": "defying-the-heavens:mid_spirit_stone"
+    }
+  ],
+  "result": {
+    "item": "defying-the-heavens:low_spirit_stone",
+    "count": 9
+  }
+}

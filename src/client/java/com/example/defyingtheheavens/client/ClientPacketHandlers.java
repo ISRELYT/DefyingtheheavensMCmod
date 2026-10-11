@@ -2,6 +2,8 @@ package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.Alignment;
 import com.example.defyingtheheavens.Formation;
+import com.example.defyingtheheavens.Gesture;
+import com.example.defyingtheheavens.Journal;
 import com.example.defyingtheheavens.ModPackets;
 import com.example.defyingtheheavens.NpcTitle;
 import com.example.defyingtheheavens.PlayerCultivation;
@@ -151,6 +153,17 @@ public final class ClientPacketHandlers {
 			int entity = buf.readVarInt();
 			Component reason = buf.readComponent();
 			client.execute(() -> TalkSession.close(entity, reason));
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.GESTURE, (client, handler, buf, sender) -> {
+			int entity = buf.readVarInt();
+			Gesture gesture = Gesture.byIndex(buf.readVarInt());
+			client.execute(() -> ClientGestures.start(entity, gesture));
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.JOURNAL, (client, handler, buf, sender) -> {
+			List<Journal.Entry> journal = Journal.read(buf);
+			client.execute(() -> ClientJournal.set(journal));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.QI_ABSORPTION, (client, handler, buf, sender) -> {

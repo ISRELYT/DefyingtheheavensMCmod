@@ -1,0 +1,417 @@
+package com.example.defyingtheheavens;
+
+import com.example.defyingtheheavens.mixin.ServerPlayerAccessor;
+import com.mojang.authlib.GameProfile;
+import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
+import net.minecraft.core.BlockPos;
+import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.monster.Zombie;
+import net.minecraft.world.inventory.MerchantMenu;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.trading.MerchantOffer;
+import net.minecraft.world.item.trading.MerchantOffers;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Blocks;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+/**
+ * The talk system's later phases (see TalkSystem): what the wheel offers, being struck mid-talk, seclusion, sparring, rumours
+ * and the journal, guidance, trading, tribute and release, mercy, a Sworn friend's aid, and spirit stones. Driven by hand on
+ * survival test players (as in SoulProjectionGameTests); each test takes its players out of the world again.
+ */
+public class TalkPhasesGameTests implements FabricGameTest {
+	private static int bits(TalkIntent... intents) {
+		int mask = 0;
+		for (TalkIntent intent : intents) mask |= intent.bit();
+		return mask;
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void theWheelOffersWhatStandingAllows(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		try {
+			ServerPlayer player = cultivator(helper, made, "standing", Realm.CORE_FORMATION, Stage.EARLY);
+			CultivatorNpc peer = npc(helper, new BlockPos(3, 2, 2), Realm.CORE_FORMATION, 0);
+			int all = bits(TalkIntent.GREET, TalkIntent.ASK, TalkIntent.SPAR, TalkIntent.TRADE, TalkIntent.GIFT, TalkIntent.PROVOKE);
+			helper.assertTrue(TalkSystem.intents(player, peer, TalkSystem.standing(player, peer)) == all, "An equal entertains all six");
+			CultivatorNpc senior = npc(helper, new BlockPos(1, 2, 2), Realm.NASCENT_SOUL, 0);
+			int above = TalkSystem.intents(player, senior, TalkSystem.Standing.ABOVE);
+			helper.assertTrue((above & TalkIntent.SPAR.bit()) == 0 && (above & TalkIntent.TRADE.bit()) != 0, "A senior won't spar before Courteous");
+			senior.changeRegard(player, Regard.COURTEOUS);
+			helper.assertTrue((TalkSystem.intents(player, senior, TalkSystem.Standing.ABOVE) & TalkIntent.SPAR.bit()) != 0, "...and will after");
+			CultivatorNpc far = npc(helper, new BlockPos(2, 2, 4), Realm.HEAVENLY_BEING, 0);
+			helper.assertTrue(TalkSystem.intents(player, far, TalkSystem.standing(player, far)) == bits(TalkIntent.GREET, TalkIntent.ASK, TalkIntent.GIFT),
+					"Two realms above: only Greet, Ask, Gift");
+			CultivatorNpc commoner = npc(helper, new BlockPos(4, 2, 4), null, 0);
+			helper.assertTrue((TalkSystem.intents(player, commoner, TalkSystem.standing(player, commoner)) & TalkIntent.SPAR.bit()) == 0,
+					"No sparring with a commoner");
+			// An enemy of its path: Provoke or Leave; two realms beneath you, it begs: Spare or Leave.
+			CultivationManager.get(player).setAlignment(150);
+			CultivatorNpc enemy = npc(helper, new BlockPos(2, 2, 0), Realm.CORE_FORMATION, -150);
+			helper.assertTrue(TalkSystem.intents(player, enemy, TalkSystem.standing(player, enemy)) == bits(TalkIntent.PROVOKE, TalkIntent.LEAVE),
+					"An enemy of its path only takes Provoke or Leave");
+			CultivatorNpc weakEnemy = npc(helper, new BlockPos(0, 2, 2), null, -150);
+			weakEnemy.setRank(PlayerCultivation.rank(Realm.QI_REFINING, Stage.EARLY));
+			helper.assertTrue(TalkSystem.intents(player, weakEnemy, TalkSystem.standing(player, weakEnemy)) == bits(TalkIntent.SPARE, TalkIntent.LEAVE),
+					"Two realms beneath you, it begs to be spared");
+			helper.succeed();
+		} finally {
+			leave(made);
+		}
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void beingStruckBreaksOffATalk(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		try {
+			ServerPlayer player = cultivator(helper, made, "struck", Realm.QI_REFINING, Stage.EARLY);
+			CultivatorNpc npc = npc(helper, new BlockPos(3, 2, 2), Realm.QI_REFINING, 0);
+			TalkSystem.open(player, npc);
+			helper.assertTrue(npc.talkPartner() == player, "They talk");
+			((ServerPlayerAccessor) player).dth$setSpawnInvulnerableTime(0); // a new player's grace would turn the blow aside
+			player.hurt(helper.getLevel().damageSources().generic(), 1);
+			helper.assertTrue(npc.talkPartner() == null, "A blow to the player breaks the talk off");
+			helper.succeed();
+		} finally {
+			leave(made);
+		}
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void disturbingSeclusionCostsRegardOnceADay(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		try {
+			ServerPlayer player = cultivator(helper, made, "intruder", Realm.QI_REFINING, Stage.EARLY);
+			CultivatorNpc hermit = npc(helper, new BlockPos(3, 2, 3), Realm.HEAVENLY_BEING, 0);
+			hermit.enterSeclusion(helper.getLevel(), hermit.blockPosition());
+			TalkSystem.open(player, hermit);
+			int once = hermit.regard(player);
+			TalkSystem.open(player, hermit);
+			helper.assertTrue(once == Regard.SECLUSION_DISTURBED && hermit.regard(player) == once, "-5 the first time, nothing more that day");
+			helper.assertTrue(hermit.talkPartner() == null, "And no talk");
+			helper.succeed();
+		} finally {
+			leave(made);
+		}
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void aSparHoldsBackEndsAtTheLineAndRewards(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		try {
+			MinecraftServer server = helper.getLevel().getServer();
+			ServerPlayer player = cultivator(helper, made, "duellist", Realm.CORE_FORMATION, Stage.EARLY);
+			CultivatorNpc senior = npc(helper, new BlockPos(3, 2, 2), Realm.NASCENT_SOUL, 0);
+			float fullHealth = senior.getMaxHealth();
+			player.setItemInHand(InteractionHand.MAIN_HAND, GinsengItem.create(ModItems.GINSENG, 600));
+			TalkSystem.open(player, senior);
+			SparSystem.start(player, senior, SparSystem.Terms.WAGER);
+			helper.assertTrue(SparSystem.areSparring(player, senior) && player.getMainHandItem().isEmpty(), "The spar is on, the ginseng staked");
+			helper.assertTrue(senior.getMaxHealth() < fullHealth && senior.isHoldingBack(), "The senior holds back to a Core Formation's strength");
+			for (int i = 0; i < SparSystem.COUNTDOWN_TICKS; i++) SparSystem.tick(server);
+			helper.assertTrue(senior.getTarget() == player, "Three breaths, and it comes at the player");
+			// Nobody dies: a killing blow from the other stops at the line.
+			helper.assertTrue(!SparSystem.allowDeath(player, helper.getLevel().damageSources().mobAttack(senior)) && player.getHealth() > 0,
+					"A killing blow stops at the line");
+			SparSystem.abandon(player); // that blow lost the spar; start again for the win
+			senior.setHealth(senior.getMaxHealth());
+			player.setHealth(player.getMaxHealth());
+			player.setItemInHand(InteractionHand.MAIN_HAND, GinsengItem.create(ModItems.GINSENG, 600));
+			helper.assertTrue(ModLang.SPAR_WAGERED.equals(SparSystem.refusal(player, senior, SparSystem.Terms.WAGER)), "One wager a day");
+			SparSystem.start(player, senior, SparSystem.Terms.FRIENDLY);
+			for (int i = 0; i < SparSystem.COUNTDOWN_TICKS; i++) SparSystem.tick(server);
+			int regard = senior.regard(player);
+			senior.setHealth(senior.getMaxHealth() * 0.5f);
+			SparSystem.tick(server);
+			helper.assertTrue(!SparSystem.isSparring(player) && !senior.isHoldingBack() && senior.getMaxHealth() == fullHealth,
+					"Past its line, the spar ends and the senior is itself again");
+			helper.assertTrue(senior.regard(player) == regard, "A second spar that day moves no regard (the forfeit already did)");
+			helper.assertTrue(senior.getTarget() != player, "...and it bears no grudge");
+			helper.succeed();
+		} finally {
+			leave(made);
+		}
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void winningAWagerTakesBothStakes(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		try {
+			MinecraftServer server = helper.getLevel().getServer();
+			ServerPlayer player = cultivator(helper, made, "gambler", Realm.CORE_FORMATION, Stage.EARLY);
+			CultivatorNpc senior = npc(helper, new BlockPos(3, 2, 2), Realm.NASCENT_SOUL, 0);
+			player.setItemInHand(InteractionHand.MAIN_HAND, GinsengItem.create(ModItems.GINSENG, 600));
+			SparSystem.start(player, senior, SparSystem.Terms.WAGER);
+			for (int i = 0; i < SparSystem.COUNTDOWN_TICKS; i++) SparSystem.tick(server);
+			int regard = senior.regard(player);
+			senior.setHealth(1);
+			SparSystem.tick(server);
+			helper.assertTrue(senior.regard(player) == regard + Regard.SPAR_WIN_SENIOR, "Beating a higher realm: +15");
+			boolean ginseng = false;
+			int things = 0;
+			for (ItemStack stack : player.getInventory().items) {
+				if (stack.isEmpty()) continue;
+				things++;
+				ginseng |= stack.is(ModItems.GINSENG);
+			}
+			helper.assertTrue(ginseng && things >= 2, "The stake comes back, with theirs");
+			helper.succeed();
+		} finally {
+			leave(made);
+		}
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void rumoursAreRealToldOnceAndNoted(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		try {
+			MinecraftServer server = helper.getLevel().getServer();
+			ServerPlayer player = cultivator(helper, made, "listener", Realm.QI_REFINING, Stage.EARLY);
+			// A realm above (two would be too far above to share rumours).
+			CultivatorNpc teller = npc(helper, new BlockPos(3, 2, 2), Realm.FOUNDATION_BUILDING, 0);
+			BlockPos herbAt = new BlockPos(5, 2, 5);
+			helper.setBlock(herbAt.below(), Blocks.GRASS_BLOCK);
+			helper.setBlock(herbAt, ModBlocks.GINSENG);
+			BlockPos absolute = helper.absolutePos(herbAt);
+			((GinsengBlockEntity) helper.getLevel().getBlockEntity(absolute)).setAge(500);
+			Rumours.tick(server);
+			String id = "herb:" + helper.getLevel().dimension().location() + ":" + absolute.asLong();
+			helper.assertTrue(Rumours.get(server).all().stream().anyMatch(r -> r.id.equals(id)), "The old ginseng is known of");
+			teller.changeRegard(player, Regard.COURTEOUS);
+			// Other tests' herbs and trees are in the index too (it is the world's): as if the teller had told of those already.
+			java.util.Set<String> told = teller.regardEntry(player).toldRumours;
+			Rumours.get(server).all().stream().map(r -> r.id).filter(other -> !other.equals(id)).forEach(told::add);
+			helper.assertTrue(Rumours.untold(teller, told, 2).stream().anyMatch(r -> r.id.equals(id)), "The teller has heard of it");
+			TalkSystem.open(player, teller);
+			helper.assertTrue(teller.talkPartner() == player, "They talk");
+			TalkSystem.topic(player, teller.getId(), TalkSystem.Topic.RUMOURS.ordinal());
+			List<Journal.Entry> journal = CultivationManager.get(player).journal();
+			helper.assertTrue(journal.stream().anyMatch(e -> e.id().equals(id)), "Told, and noted in the journal");
+			helper.assertTrue(teller.regardEntry(player).toldRumours.contains(id), "...and not to be told again");
+			PlayerCultivation loaded = PlayerCultivation.load(CultivationManager.get(player).save());
+			helper.assertTrue(loaded.journal().size() == journal.size(), "The journal is saved");
+			helper.destroyBlock(herbAt);
+			Rumours.tick(server);
+			helper.assertTrue(Rumours.get(server).all().stream().noneMatch(r -> r.id.equals(id)), "Dug up, it is forgotten");
+			helper.assertTrue(Rumours.ageGuess(600, 0).getContents() instanceof TranslatableContents weak && weak.getKey().equals(ModLang.rumour("between"))
+					&& weak.getArgs()[0].equals(350) && weak.getArgs()[1].equals(850), "A weak teller guesses wide: 350 to 850");
+			helper.assertTrue(Rumours.ageGuess(600, 5).getContents() instanceof TranslatableContents strong && strong.getArgs()[0].equals(550)
+					&& strong.getArgs()[1].equals(650), "A strong one close: 550 to 650");
+			helper.succeed();
+		} finally {
+			leave(made);
+		}
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void aWarmSeniorGivesInsightOnceADay(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		try {
+			ServerPlayer player = cultivator(helper, made, "student", Realm.QI_REFINING, Stage.EARLY);
+			CultivatorNpc teacher = npc(helper, new BlockPos(3, 2, 2), Realm.FOUNDATION_BUILDING, 0);
+			teacher.changeRegard(player, Regard.WARM);
+			TalkSystem.open(player, teacher);
+			TalkSystem.topic(player, teacher.getId(), TalkSystem.Topic.GUIDANCE.ordinal());
+			helper.assertTrue(player.hasEffect(ModEffects.INSIGHT), "Guidance: Insight");
+			player.removeEffect(ModEffects.INSIGHT);
+			TalkSystem.topic(player, teacher.getId(), TalkSystem.Topic.GUIDANCE.ordinal());
+			helper.assertTrue(!player.hasEffect(ModEffects.INSIGHT), "Once a day from each teacher");
+			helper.succeed();
+		} finally {
+			leave(made);
+		}
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void cultivatorsTradeInSpiritStones(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		try {
+			ServerPlayer player = cultivator(helper, made, "trader", Realm.QI_REFINING, Stage.EARLY);
+			CultivatorNpc elder = npc(helper, new BlockPos(3, 2, 2), Realm.CORE_FORMATION, 0);
+			elder.setTitle(NpcTitle.ELDER);
+			player.getInventory().add(GinsengItem.create(ModItems.GINSENG, 400));
+			Map<MerchantOffer, String> keys = new IdentityHashMap<>();
+			MerchantOffers cold = CultivatorTrades.offersFor(elder, player, new HashMap<>(), keys);
+			boolean stonesOnly = cold.stream().filter(o -> keys.get(o).startsWith("sell")).allMatch(o -> o.getBaseCostA().getItem() instanceof SpiritStoneItem);
+			boolean buys = cold.stream().anyMatch(o -> o.getBaseCostA().is(ModItems.GINSENG) && o.getResult().getItem() instanceof SpiritStoneItem);
+			helper.assertTrue(stonesOnly && buys, "It sells for spirit stones and buys your ginseng");
+			elder.changeRegard(player, Regard.TRUSTED);
+			MerchantOffers warm = CultivatorTrades.offersFor(elder, player, new HashMap<>(), keys);
+			helper.assertTrue(warm.size() > cold.size(), "Regard opens better offers");
+			ItemStack[] costs = CultivatorTrades.costsFor(15);
+			helper.assertTrue(costs[0].is(ModItems.MID_SPIRIT_STONE) && costs[0].getCount() == 1 && costs[1].is(ModItems.LOW_SPIRIT_STONE)
+					&& costs[1].getCount() == 6, "15 Low stones: one Mid and six Low");
+			elder.openTrade(player);
+			helper.assertTrue(player.containerMenu instanceof MerchantMenu && elder.getTradingPlayer() == player, "Trade opens the trading screen");
+			player.closeContainer();
+			helper.assertTrue(elder.getTradingPlayer() == null, "...and closing it ends the trade");
+			helper.succeed();
+		} finally {
+			leave(made);
+		}
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void pressingOneDownLetsYouDemandOrRelease(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		try {
+			MinecraftServer server = helper.getLevel().getServer();
+			ServerPlayer player = cultivator(helper, made, "oppressor", Realm.HEAVENLY_BEING, Stage.EARLY);
+			PlayerCultivation c = CultivationManager.get(player);
+			c.setAbilityEnabled(Ability.REALM_SUPPRESS, true);
+			CultivatorNpc victim = npc(helper, new BlockPos(3, 2, 2), Realm.FOUNDATION_BUILDING, 0);
+			RealmSuppressSystem.refreshNow();
+			RealmSuppressSystem.tick(server);
+			helper.assertTrue(TalkSystem.kneelsTo(player, victim), "Pressed two realms down, it kneels");
+			TalkSystem.open(player, victim);
+			helper.assertTrue(victim.isKneeling(), "...on one knee");
+			int alignment = c.getAlignment();
+			int regard = victim.regard(player);
+			TalkSystem.intent(player, victim.getId(), TalkIntent.DEMAND.ordinal());
+			helper.assertTrue(victim.regard(player) == regard + Regard.TRIBUTE && c.getAlignment() == alignment - 5, "Tribute: -20 regard, -5 alignment");
+			helper.assertTrue(player.getInventory().items.stream().anyMatch(s -> !s.isEmpty()), "...and something of theirs");
+			TalkSystem.open(player, victim);
+			TalkSystem.intent(player, victim.getId(), TalkIntent.DEMAND.ordinal());
+			helper.assertTrue(victim.regard(player) == regard + Regard.TRIBUTE, "Once a day");
+			TalkSystem.open(player, victim);
+			TalkSystem.intent(player, victim.getId(), TalkIntent.RELEASE.ordinal());
+			RealmSuppressSystem.tick(server);
+			helper.assertTrue(!RealmSuppressSystem.presses(player, victim) && !victim.isKneeling(), "Released, it stands");
+			c.setAbilityEnabled(Ability.REALM_SUPPRESS, false);
+			RealmSuppressSystem.refreshNow();
+			RealmSuppressSystem.tick(server);
+			helper.succeed();
+		} finally {
+			leave(made);
+		}
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void theBeatenBegAndTheSparedRemember(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		try {
+			ServerPlayer player = cultivator(helper, made, "victor", Realm.NASCENT_SOUL, Stage.EARLY);
+			CultivationManager.get(player).setAlignment(150);
+			CultivatorNpc foe = npc(helper, new BlockPos(3, 2, 2), Realm.FOUNDATION_BUILDING, -150);
+			helper.assertTrue(TalkSystem.wouldBeg(foe, player), "Two realms beneath, run down, it would beg");
+			TalkSystem.open(player, foe);
+			helper.assertTrue(foe.isBeggingTo(player) && foe.isKneeling(), "An enemy two realms beneath begs on its knees");
+			int regard = foe.regard(player);
+			TalkSystem.intent(player, foe.getId(), TalkIntent.SPARE.ordinal());
+			helper.assertTrue(foe.owesLife(player) && !foe.isEnemy(player) && foe.regard(player) == regard + Regard.SPARED, "Spared, it owes you its life");
+			helper.assertTrue(CultivationManager.get(player).getAlignment() == 152, "...and your path brightens");
+			helper.succeed();
+		} finally {
+			leave(made);
+		}
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void aSwornFriendComesToYourAid(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		try {
+			ServerPlayer player = cultivator(helper, made, "befriended", Realm.QI_REFINING, Stage.EARLY);
+			CultivatorNpc friend = npc(helper, new BlockPos(4, 2, 4), Realm.CORE_FORMATION, 0);
+			friend.changeRegard(player, Regard.MAX);
+			Zombie zombie = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, new BlockPos(1, 2, 1));
+			TalkSystem.onPlayerHurt(player, helper.getLevel().damageSources().mobAttack(zombie));
+			helper.assertTrue(friend.getTarget() == zombie, "The friend turns on what struck you");
+			helper.succeed();
+		} finally {
+			leave(made);
+		}
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void spiritStonesHoldQiAndValue(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		try {
+			ServerPlayer player = cultivator(helper, made, "absorber", Realm.QI_REFINING, Stage.EARLY);
+			PlayerCultivation c = CultivationManager.get(player);
+			c.setQi(0);
+			ItemStack stones = new ItemStack(ModItems.LOW_SPIRIT_STONE, 3);
+			player.setItemInHand(InteractionHand.MAIN_HAND, stones);
+			ModItems.LOW_SPIRIT_STONE.finishUsingItem(stones, helper.getLevel(), player);
+			helper.assertTrue(Math.abs(c.getQi() - SpiritStoneItem.QI_PER_VALUE) < 0.01 && stones.getCount() == 2, "A Low stone gives 25 qi, and is used up");
+			helper.assertTrue(SpiritStoneItem.meditationMultiplier(player) == 1.0 + SpiritStoneItem.MEDITATION_BOOST, "Held, it speeds meditation");
+			for (int i = 0; i < SpiritStoneItem.secondsPerStone(SpiritStoneItem.Grade.LOW); i++) SpiritStoneItem.drainWhileMeditating(player);
+			helper.assertTrue(stones.getCount() == 1, "...until its qi is spent");
+			List<ItemStack> hundred = SpiritStoneItem.stonesFor(100);
+			helper.assertTrue(hundred.size() == 3 && hundred.get(0).is(ModItems.HIGH_SPIRIT_STONE) && hundred.get(1).getCount() == 2,
+					"100 Low stones' worth: a High, two Mid and a Low");
+			helper.assertTrue(helper.getLevel().getServer().getRecipeManager()
+					.byKey(new ResourceLocation(DefyingTheHeavens.MOD_ID, "mid_spirit_stone_from_low")).isPresent(), "Nine Low craft into a Mid");
+			helper.assertTrue(!CultivatorNpc.carriedStones(PlayerCultivation.rank(Realm.QI_REFINING, Stage.EARLY), helper.getLevel().getRandom()).isEmpty(),
+					"Cultivators carry spirit stones");
+			helper.succeed();
+		} finally {
+			leave(made);
+		}
+	}
+
+	// --- Helpers (as in SoulProjectionGameTests) ---
+
+	/** A cultivator NPC of {@code realm} (Early; null for a commoner) and {@code alignment}, with no will of its own. */
+	private static CultivatorNpc npc(GameTestHelper helper, BlockPos pos, Realm realm, int alignment) {
+		CultivatorNpc npc = helper.spawnWithNoFreeWill(ModEntities.CULTIVATOR, pos);
+		npc.setRank(realm == null ? CultivatorNpc.MORTAL : PlayerCultivation.rank(realm, Stage.EARLY));
+		npc.setAlignment(alignment);
+		npc.setHealth(npc.getMaxHealth());
+		return npc;
+	}
+
+	private static ServerPlayer cultivator(GameTestHelper helper, List<ServerPlayer> made, String name, Realm realm, Stage stage) {
+		ServerPlayer p = survivor(helper, made, name);
+		BlockPos at = helper.absolutePos(new BlockPos(2, 2, 2));
+		p.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0, 0);
+		p.setOnGround(true);
+		PlayerCultivation c = CultivationManager.get(p);
+		c.setState(realm, stage, 0);
+		CultivationStats.apply(p, c);
+		p.setHealth(p.getMaxHealth());
+		c.setQi(c.maxQi());
+		return p;
+	}
+
+	private static ServerPlayer survivor(GameTestHelper helper, List<ServerPlayer> made, String name) {
+		ServerPlayer p = new ServerPlayer(helper.getLevel().getServer(), helper.getLevel(), new GameProfile(UUID.randomUUID(), name)) {
+			@Override
+			public boolean isSpectator() {
+				return false;
+			}
+
+			@Override
+			public boolean isCreative() {
+				return false;
+			}
+		};
+		helper.getLevel().getServer().getPlayerList().placeNewPlayer(new Connection(PacketFlow.SERVERBOUND), p);
+		p.setGameMode(GameType.SURVIVAL);
+		made.add(p);
+		return p;
+	}
+
+	private static void leave(List<ServerPlayer> made) {
+		for (ServerPlayer p : made) {
+			SparSystem.abandon(p);
+			p.server.getPlayerList().remove(p);
+		}
+	}
+}

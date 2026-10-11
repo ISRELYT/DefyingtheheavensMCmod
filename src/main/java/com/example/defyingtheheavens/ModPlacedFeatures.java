@@ -149,6 +149,19 @@ public final class ModPlacedFeatures {
 	public static final ResourceKey<PlacedFeature> ORE_JADE_UPPER_REALM = key("ore_jade_upper_realm");
 	public static final int JADE_VEINS_MOUNTAINS = 13;
 	public static final int JADE_VEINS_UPPER_REALM = 30;
+	/**
+	 * Spirit stone veins (appended by ModFeatures#register): the common kind through Overworld stone and deepslate, and on every
+	 * Upper Realm island tier; the rich kind about once every four chunks at the bottom of the Overworld, and all through the
+	 * Upper Realm, where the better grades come from.
+	 */
+	public static final ResourceKey<PlacedFeature> ORE_SPIRIT_STONE = key("ore_spirit_stone");
+	public static final ResourceKey<PlacedFeature> ORE_SPIRIT_STONE_UPPER_REALM = key("ore_spirit_stone_upper_realm");
+	public static final ResourceKey<PlacedFeature> ORE_RICH_SPIRIT_STONE_DEEP = key("ore_rich_spirit_stone_deep");
+	public static final ResourceKey<PlacedFeature> ORE_RICH_SPIRIT_STONE_UPPER_REALM = key("ore_rich_spirit_stone_upper_realm");
+	public static final int SPIRIT_STONE_VEINS_OVERWORLD = 9;
+	public static final int SPIRIT_STONE_VEINS_UPPER_REALM = 16;
+	public static final int RICH_SPIRIT_STONE_DEEP_CHUNKS = 4;
+	public static final int RICH_SPIRIT_STONE_VEINS_UPPER_REALM = 12;
 	public static final ResourceKey<PlacedFeature> BLUE_SPIRIT_TREE = key("blue_spirit_tree");
 	public static final ResourceKey<PlacedFeature> BLUE_SPIRIT_TREE_UPPER_REALM = key("blue_spirit_tree_upper_realm");
 	public static final int BLUE_SPIRIT_TREE_CHUNKS_TAIGA = 2;
@@ -299,6 +312,16 @@ public final class ModPlacedFeatures {
 				InSquarePlacement.spread(), HeightRangePlacement.uniform(VerticalAnchor.absolute(-48), VerticalAnchor.absolute(160)), BiomeFilter.biome()));
 		register(context, ORE_JADE_UPPER_REALM, configured.getOrThrow(ModConfiguredFeatures.ORE_JADE), ore(JADE_VEINS_UPPER_REALM, ISLAND_MIN_Y, ORE_MAX_Y));
 		register(context, ORE_JADE_STONE, configured.getOrThrow(ModConfiguredFeatures.ORE_JADE_STONE), ore(JADE_STONE_BLOBS, ISLAND_MIN_Y, ISLAND_MAX_Y));
+
+		// Spirit stone veins: see ORE_SPIRIT_STONE.
+		register(context, ORE_SPIRIT_STONE, configured.getOrThrow(ModConfiguredFeatures.ORE_SPIRIT_STONE), ore(SPIRIT_STONE_VEINS_OVERWORLD, -56, 72));
+		register(context, ORE_SPIRIT_STONE_UPPER_REALM, configured.getOrThrow(ModConfiguredFeatures.ORE_SPIRIT_STONE),
+				ore(SPIRIT_STONE_VEINS_UPPER_REALM, ISLAND_MIN_Y, ORE_MAX_Y));
+		register(context, ORE_RICH_SPIRIT_STONE_DEEP, configured.getOrThrow(ModConfiguredFeatures.ORE_RICH_SPIRIT_STONE), List.of(
+				RarityFilter.onAverageOnceEvery(RICH_SPIRIT_STONE_DEEP_CHUNKS), InSquarePlacement.spread(),
+				HeightRangePlacement.uniform(VerticalAnchor.absolute(-64), VerticalAnchor.absolute(-24)), BiomeFilter.biome()));
+		register(context, ORE_RICH_SPIRIT_STONE_UPPER_REALM, configured.getOrThrow(ModConfiguredFeatures.ORE_RICH_SPIRIT_STONE),
+				ore(RICH_SPIRIT_STONE_VEINS_UPPER_REALM, ISLAND_MIN_Y, ORE_MAX_Y));
 
 		// Blue Spirit Trees: placed like vanilla trees in the Overworld, on any island tier in the Upper Realm. They come after
 		// the biome's own trees, so the Overworld spot is the ground under any canopy (a tree may grow up through leaves),
