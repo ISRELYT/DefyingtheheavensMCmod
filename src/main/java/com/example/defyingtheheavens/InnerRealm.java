@@ -41,8 +41,16 @@ public final class InnerRealm {
 	public static final int ENTER_AFTER_TICKS = 200;
 	/** The screen fades to black over this long before the soul turns inward (see the client's InnerRealmFade). */
 	public static final int FADE_TICKS = 30;
-	/** A soul that walks off the island's edge is caught this far below it and set back on the seat. */
+	/** A soul that gets off the island and its floor (flying over the wall, say) is caught this far below and set back on the seat. */
 	private static final int FALL_CATCH_DEPTH = 24;
+	/**
+	 * Round each island, a step below its top, an unseen floor (barrier blocks) out to this far from its middle, walled round at
+	 * its edge {@link #WALL_HEIGHT} high: room to walk off the island and fight a heart demon on, without falling off.
+	 */
+	public static final int FLOOR_RADIUS = 48;
+	private static final int WALL_HEIGHT = 3;
+	/** Ticks before a broken piece of the island or its floor is whole again. */
+	private static final int MEND_TICKS = 40;
 	public static final double CULTIVATION_BONUS = 1.5;
 	public static final int ISLAND_Y = 128;
 	/** Each player's island has its own spot, this far apart. */
@@ -132,10 +140,20 @@ public final class InnerRealm {
 		return 3 + realm.ordinal();
 	}
 
-	/** No digging or building in the Inner Realm (creative players aside). */
+	/**
+	 * No digging or building in the Inner Realm (creative players aside); and what a creative player breaks of an island or
+	 * its floor is whole again a moment later ({@link #MEND_TICKS}).
+	 */
 	public static void registerEvents() {
 		net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents.BEFORE.register((level, player, pos, state, entity) ->
 				!ModDimensions.isInnerRealm(level.dimension()) || player.isCreative());
+		net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents.AFTER.register((level, player, pos, state, entity) -> {
+			if (!(level instanceof ServerLevel server) || !ModDimensions.isInnerRealm(level.dimension())) return;
+			if (state.is(ModBlocks.SOUL_CRYSTAL) || state.is(Blocks.BARRIER)) {
+				BlockState whole = state.is(ModBlocks.SOUL_CRYSTAL) ? ModBlocks.SOUL_CRYSTAL.defaultBlockState() : state;
+				MENDING.add(new Mend(server.dimension(), pos.immutable(), whole, server.getGameTime() + MEND_TICKS));
+			}
+		});
 		net.fabricmc.fabric.api.event.player.AttackBlockCallback.EVENT.register((player, level, hand, pos, direction) ->
 				ModDimensions.isInnerRealm(level.dimension()) && !player.isCreative()
 						? net.minecraft.world.InteractionResult.FAIL : net.minecraft.world.InteractionResult.PASS);
@@ -243,8 +261,40 @@ public final class InnerRealm {
 		leave(owner);
 	}
 
+	/** A broken piece of an island (or its floor) to put back, and when. */
+	private record Mend(ResourceKey<Level> dimension, BlockPos pos, BlockState state, long at) {}
+
+	private static final List<Mend> MENDING = new ArrayList<>();
+
+	public static void clear() {
+		MENDING.clear();
+	}
+
+	/** Broken pieces of islands whose time has come are whole again (unless something else has been put there). */
+	private static void mend(MinecraftServer server) {
+		if (MENDING.isEmpty()) return;
+		for (java.util.Iterator<Mend> it = MENDING.iterator(); it.hasNext(); ) {
+			Mend mend = it.next();
+			ServerLevel level = server.getLevel(mend.dimension());
+			if (level == null) {
+				it.remove();
+				continue;
+			}
+			if (level.getGameTime() < mend.at()) continue;
+			it.remove();
+			if (!level.isLoaded(mend.pos()) || !level.getBlockState(mend.pos()).canBeReplaced()) continue;
+			level.setBlock(mend.pos(), mend.state(), 3);
+			if (mend.state().is(ModBlocks.SOUL_CRYSTAL)) {
+				level.sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD, mend.pos().getX() + 0.5, mend.pos().getY() + 0.8,
+						mend.pos().getZ() + 0.5, 4, 0.3, 0.2, 0.3, 0.01);
+				level.playSound(null, mend.pos(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 0.6f, 1.2f);
+			}
+		}
+	}
+
 	/** Every tick: nobody stays inside without meditating, and hostile mobs notice an unguarded body. */
 	public static void tick(MinecraftServer server) {
+		mend(server);
 		boolean notice = server.getTickCount() % 20 == 0;
 		List<ServerPlayer> strays = new ArrayList<>();
 		for (ServerPlayer player : server.getPlayerList().getPlayers()) {
@@ -273,9 +323,38 @@ public final class InnerRealm {
 	/**
 	 * The island grows with the realm: a disc of Soul Crystal with a shallow keel beneath, see-through so the leylines and
 	 * the core show below. Its colour follows the realm too, dark and smoky at first, pale and celestial at the top (the
-	 * client tints it, see SoulCrystalBlock).
+	 * client tints it, see SoulCrystalBlock). Round it, a step down, its unseen floor and wall ({@link #FLOOR_RADIUS}).
 	 */
 	static void buildIsland(ServerLevel level, BlockPos centre, Realm realm) {
+		buildDisc(level, centre, realm);
+		buildFloor(level, centre);
+	}
+
+	/**
+	 * The unseen floor round the island, a step below its top (barrier blocks: nothing to see, so the leylines and the core
+	 * still show below), out to {@link #FLOOR_RADIUS}, and a wall {@link #WALL_HEIGHT} high round its edge (two blocks thick,
+	 * so there's no gap between its blocks to slip through). Only what's missing is set.
+	 */
+	static void buildFloor(ServerLevel level, BlockPos centre) {
+		BlockState barrier = Blocks.BARRIER.defaultBlockState();
+		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+		int reach = FLOOR_RADIUS + 1;
+		for (int dx = -reach; dx <= reach; dx++) {
+			for (int dz = -reach; dz <= reach; dz++) {
+				double d = Math.sqrt(dx * dx + dz * dz);
+				if (d > FLOOR_RADIUS + 0.5) continue;
+				for (int dy = -1; dy < WALL_HEIGHT; dy++) {
+					if (dy >= 0 && d <= FLOOR_RADIUS - 1.5) break; // the wall only at the edge
+					pos.set(centre.getX() + dx, centre.getY() + dy, centre.getZ() + dz);
+					BlockState here = level.getBlockState(pos);
+					if (here.is(ModBlocks.SOUL_CRYSTAL) || here.is(Blocks.BARRIER)) continue;
+					level.setBlock(pos, barrier, 2);
+				}
+			}
+		}
+	}
+
+	private static void buildDisc(ServerLevel level, BlockPos centre, Realm realm) {
 		BlockState crystal = ModBlocks.SOUL_CRYSTAL.defaultBlockState();
 		int radius = islandRadius(realm);
 		int clear = 3 + Realm.values().length;

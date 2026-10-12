@@ -734,6 +734,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_BARRIER_GROUND, "A formation's shell runs through this ground. You are not strong enough to dig through it.");
 		t.add(ModLang.MSG_BARRIER_EXPELLED, "The formation will not suffer one so weak within it. You are cast out.");
 		t.add(ModLang.MSG_SEAL_UNSEEN, "The qi ink sinks into the surface, unseen by mortal eyes. Only Qi Sense reveals it.");
+		t.add(ModLang.MSG_TREASURY_SEALED, "A seal of %s holds it shut. Only one a realm above its elders could break it.");
+		t.add(ModLang.MSG_TREASURY_SEAL_BROKEN, "The elders' seal shatters under your hand. The treasury lies open.");
 		t.add(ModLang.BRUSH_TOOLTIP, "Paints seals of qi ink on floors and walls, to join Qi Veins to a Formation Core");
 		t.add(ModLang.BRUSH_TOOLTIP_ERASE, "Sneak to wipe a seal away. Only Qi Sense shows the ink.");
 		t.add(ModLang.MSG_CORE_CLAIMED, "The formation of the fallen %s answers to you now.");

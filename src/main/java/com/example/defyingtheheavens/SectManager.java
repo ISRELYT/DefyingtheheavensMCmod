@@ -1,10 +1,13 @@
 package com.example.defyingtheheavens;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -429,6 +432,66 @@ public final class SectManager {
 			if (!sect.extinct && sect.dimension == level.dimension() && sect.bounds.isInside(pos)) return sect;
 		}
 		return null;
+	}
+
+	/** How long a broken treasury seal stays broken before the elders keeping it cast it anew (5 minutes). */
+	public static final long SEAL_RECAST = 6000;
+
+	/**
+	 * The treasury's seal, if it holds: while one of its keepers, an Elder or a Grand Elder, stands in the territory (alive,
+	 * its land loaded), the treasury's chests and pedestals won't open and nothing in it can be broken. They must be beaten,
+	 * or drawn off, first; a treasury nobody is left to keep is open to whoever comes. A cultivator a realm above the
+	 * strongest of them can break it ({@link #breakTreasurySeal}). @return the seal's realm (its strongest keeper's), or null
+	 * if it doesn't hold (no keeper there, or broken and not yet cast anew)
+	 */
+	public static Realm treasurySeal(ServerLevel level, Sect sect) {
+		if (level.getGameTime() < sect.sealBrokenUntil) return null;
+		Realm seal = null;
+		for (CultivatorNpc npc : CultivatorNpc.loadedMembers(level, sect.id)) {
+			NpcTitle title = npc.getTitle();
+			if ((title != NpcTitle.ELDER && title != NpcTitle.GRAND_ELDER) || !sect.inTerritory(npc.blockPosition())) continue;
+			Realm realm = CultivatorNpc.realmOf(npc.getRank());
+			if (seal == null || realm.ordinal() > seal.ordinal()) seal = realm;
+		}
+		return seal;
+	}
+
+	public static boolean treasurySealed(ServerLevel level, Sect sect) {
+		return treasurySeal(level, sect) != null;
+	}
+
+	/**
+	 * {@code player} lays hands on the sealed treasury of {@code sect}: one a full realm above the seal (its strongest keeper's
+	 * realm; a mortal never is) breaks it, and the treasury lies open until its keepers cast it anew ({@link #SEAL_RECAST}).
+	 * The sect knows its treasury is being robbed either way (onTrespass). @return whether the seal broke
+	 */
+	public static boolean breakTreasurySeal(ServerLevel level, Sect sect, ServerPlayer player, BlockPos at) {
+		Realm seal = treasurySeal(level, sect);
+		if (seal == null) return false;
+		PlayerCultivation c = CultivationManager.get(player);
+		if (c.isMortal() || c.getEffectiveRealm().ordinal() <= seal.ordinal()) return false;
+		sect.sealBrokenUntil = level.getGameTime() + SEAL_RECAST;
+		dirty(level.getServer());
+		level.sendParticles(ParticleTypes.ENCHANT, at.getX() + 0.5, at.getY() + 0.8, at.getZ() + 0.5, 30, 0.5, 0.4, 0.5, 0.6);
+		level.sendParticles(ParticleTypes.END_ROD, at.getX() + 0.5, at.getY() + 0.8, at.getZ() + 0.5, 12, 0.3, 0.3, 0.3, 0.06);
+		level.playSound(null, at, SoundEvents.AMETHYST_BLOCK_BREAK, SoundSource.BLOCKS, 1.0f, 0.6f);
+		level.playSound(null, at, SoundEvents.GLASS_BREAK, SoundSource.BLOCKS, 0.7f, 0.8f);
+		return true;
+	}
+
+	/** The sect whose sealed treasury {@code pos} lies in (see {@link #treasurySealed}), or null. */
+	public static Sect sealedTreasuryAt(ServerLevel level, BlockPos pos) {
+		Sect sect = sectAt(level, pos);
+		return sect != null && sect.treasury.isInside(pos) && treasurySealed(level, sect) ? sect : null;
+	}
+
+	/** An explosion: the blocks it would break in sealed treasuries are spared (see ExplosionMixin). */
+	public static void spareSealedTreasuries(ServerLevel level, List<BlockPos> toBlow) {
+		if (toBlow.isEmpty()) return;
+		for (Sect sect : SectData.get(level.getServer()).all()) {
+			if (sect.extinct || sect.dimension != level.dimension() || toBlow.stream().noneMatch(sect.treasury::isInside)) continue;
+			if (treasurySealed(level, sect)) toBlow.removeIf(sect.treasury::isInside);
+		}
 	}
 
 	/** A player broke a block or opened something on a sect's grounds: theft from the treasury, or plain trespass. */

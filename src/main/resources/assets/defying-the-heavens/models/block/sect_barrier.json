@@ -1,5 +1,5 @@
 {
   "textures": {
-    "particle": "minecraft:item/barrier"
+    "particle": "minecraft:block/light_blue_stained_glass"
   }
 }

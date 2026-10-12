@@ -104,6 +104,8 @@ public final class Sect {
 	public final Map<Post, List<BlockPos>> posts = new EnumMap<>(Post.class);
 	/** What the sect as a whole thinks of each player, added to every member's own regard (see {@link Regard}); never fades. */
 	public final Map<UUID, Integer> standing = new HashMap<>();
+	/** The treasury's seal (SectManager#treasurySeal) is broken until this game time, when its elders cast it anew; -1 if whole. */
+	public long sealBrokenUntil = -1;
 	/** The game day each player last robbed the treasury (today's only): it counts against them once a day, not per block. */
 	public final Map<UUID, Long> robbedDay = new HashMap<>();
 	/**
@@ -346,6 +348,7 @@ public final class Sect {
 			robbedList.add(r);
 		}
 		tag.put("Robbed", robbedList);
+		tag.putLong("SealBrokenUntil", sealBrokenUntil);
 		tag.putInt("Offerings", offerings);
 		tag.putLong("OfferingsDay", offeringsDay);
 		return tag;
@@ -402,6 +405,7 @@ public final class Sect {
 			CompoundTag r = robbedList.getCompound(i);
 			if (r.hasUUID("Player")) sect.robbedDay.put(r.getUUID("Player"), r.getLong("Day"));
 		}
+		sect.sealBrokenUntil = tag.contains("SealBrokenUntil") ? tag.getLong("SealBrokenUntil") : -1;
 		// Sects from before the ritual are stocked when first asked (see takeOffering).
 		sect.offerings = tag.contains("Offerings") ? tag.getInt("Offerings") : -1;
 		sect.offeringsDay = tag.contains("OfferingsDay") ? tag.getLong("OfferingsDay") : -1;

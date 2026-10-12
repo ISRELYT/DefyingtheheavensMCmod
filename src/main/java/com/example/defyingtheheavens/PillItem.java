@@ -1,6 +1,7 @@
 package com.example.defyingtheheavens;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -50,6 +51,8 @@ public class PillItem extends Item {
 	/** Breakthrough pills: head start into the new realm per point of potency above 1, up to {@link #MAX_HEAD_START}. */
 	public static final double HEAD_START_PER_POTENCY = 0.05;
 	public static final double MAX_HEAD_START = 0.5;
+	/** The colour of the impurities the Marrow Cleansing Elixir drives out: a dull, earthy grey. */
+	private static final org.joml.Vector3f IMPURITY = new org.joml.Vector3f(0.45f, 0.41f, 0.34f);
 
 	private final Kind kind;
 
@@ -191,8 +194,10 @@ public class PillItem extends Item {
 				c.awaken(headStart(stack));
 				CultivationManager.refresh(player);
 				RealmSuppressSystem.refreshNow(); // no longer weighed as a mortal
-				// The impurities the elixir drives out of the body, then the first breath of qi.
-				level.sendParticles(ParticleTypes.SQUID_INK, player.getX(), player.getY() + 1.0, player.getZ(), 30, 0.4, 0.6, 0.4, 0.02);
+				// The impurities the elixir drives out of the body, a dusky steam off the skin that's gone at once, then the first
+				// breath of qi.
+				level.sendParticles(new DustParticleOptions(IMPURITY, 0.9f), player.getX(), player.getY() + 1.0, player.getZ(), 24, 0.35, 0.55, 0.35, 0.0);
+				level.sendParticles(ParticleTypes.CLOUD, player.getX(), player.getY() + 1.0, player.getZ(), 6, 0.3, 0.5, 0.3, 0.02);
 				level.sendParticles(ParticleTypes.END_ROD, player.getX(), player.getY() + 1.0, player.getZ(), 40, 0.5, 0.8, 0.5, 0.08);
 				level.playSound(null, player.blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 0.8f, 1.4f);
 				player.sendSystemMessage(Component.translatable(ModLang.MSG_AWAKENED, Realm.QI_REFINING.getDisplayName()));

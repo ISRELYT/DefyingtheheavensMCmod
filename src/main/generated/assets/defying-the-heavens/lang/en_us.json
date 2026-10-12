@@ -256,6 +256,8 @@
   "cultivation.defying-the-heavens.message.temper_full": "Your body is fully tempered.",
   "cultivation.defying-the-heavens.message.tempered": "Body tempered: %s!",
   "cultivation.defying-the-heavens.message.tempered_peak": "Mortal Peak! You're ready for the Marrow Cleansing Elixir.",
+  "cultivation.defying-the-heavens.message.treasury_seal_broken": "The elders' seal shatters under your hand. The treasury lies open.",
+  "cultivation.defying-the-heavens.message.treasury_sealed": "A seal of %s holds it shut. Only one a realm above its elders could break it.",
   "cultivation.defying-the-heavens.message.tribulation.abandoned": "You fled the tribulation. Breakthrough abandoned.",
   "cultivation.defying-the-heavens.message.tribulation.busy": "Not during a tribulation.",
   "cultivation.defying-the-heavens.message.tribulation.failed": "%s failed their breakthrough!",

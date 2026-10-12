@@ -366,6 +366,9 @@ public final class ModLang {
 	public static final String MSG_BARRIER_GROUND = k("message.barrier.ground");
 	public static final String MSG_BARRIER_EXPELLED = k("message.barrier.expelled");
 	public static final String MSG_SEAL_UNSEEN = k("message.seal.unseen");
+	/** A sect's treasury held shut while its elders keep it (SectManager#treasurySeal): the seal's realm; and broken. */
+	public static final String MSG_TREASURY_SEALED = k("message.treasury_sealed");
+	public static final String MSG_TREASURY_SEAL_BROKEN = k("message.treasury_seal_broken");
 	public static final String BRUSH_TOOLTIP = k("tooltip.inscription_brush");
 	public static final String BRUSH_TOOLTIP_ERASE = k("tooltip.inscription_brush.erase");
 	public static final String MSG_CORE_CLAIMED = k("message.core.claimed");

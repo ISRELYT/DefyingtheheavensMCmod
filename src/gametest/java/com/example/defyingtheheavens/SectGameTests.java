@@ -501,6 +501,56 @@ public class SectGameTests implements FabricGameTest {
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
+	public void theTreasuryHoldsWhileItsEldersKeepIt(GameTestHelper helper) {
+		ServerLevel level = helper.getLevel();
+		Sect sect = newSect(helper, 0);
+		sect.barrierRadius = 16;
+		BlockPos vault = helper.absolutePos(new BlockPos(2, 2, 2));
+		sect.treasury = new net.minecraft.world.level.levelgen.structure.BoundingBox(vault.getX() - 1, vault.getY() - 1, vault.getZ() - 1, vault.getX() + 1, vault.getY() + 1, vault.getZ() + 1);
+		sect.bounds = sect.treasury.inflatedBy(8);
+		CultivatorNpc disciple = member(helper, sect, PlayerCultivation.rank(Realm.QI_REFINING, Stage.EARLY), 1);
+		disciple.setTitle(NpcTitle.OUTER_DISCIPLE);
+		helper.assertTrue(SectManager.sealedTreasuryAt(level, vault) == null, "A disciple alone doesn't hold the seal");
+		CultivatorNpc elder = member(helper, sect, PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY), 0);
+		elder.setTitle(NpcTitle.ELDER);
+		helper.assertTrue(SectManager.sealedTreasuryAt(level, vault) == sect, "An Elder in the territory holds it shut");
+		helper.assertTrue(SectManager.sealedTreasuryAt(level, vault.offset(3, 0, 0)) == null, "Only the treasury itself");
+
+		// The seal is as strong as its strongest keeper; only one a realm above can break it.
+		CultivatorNpc grandElder = member(helper, sect, PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.LATE), 2);
+		grandElder.setTitle(NpcTitle.GRAND_ELDER);
+		helper.assertTrue(SectManager.treasurySeal(level, sect) == Realm.CORE_FORMATION, "The seal is of its strongest keeper's realm (Core Formation)");
+		ServerPlayer thief = helper.makeMockServerPlayerInLevel();
+		PlayerCultivation c = CultivationManager.get(thief);
+		c.setMortal(true);
+		helper.assertTrue(!SectManager.breakTreasurySeal(level, sect, thief, vault), "A mortal can't break it");
+		c.setMortal(false);
+		c.setState(Realm.CORE_FORMATION, Stage.GRAND_PERFECTION, 0);
+		helper.assertTrue(!SectManager.breakTreasurySeal(level, sect, thief, vault), "Nor one of the seal's own realm, however far along");
+		c.setState(Realm.NASCENT_SOUL, Stage.EARLY, 0);
+		helper.assertTrue(SectManager.breakTreasurySeal(level, sect, thief, vault), "One a realm above breaks it");
+		helper.assertTrue(SectManager.sealedTreasuryAt(level, vault) == null, "and the treasury lies open");
+		sect.sealBrokenUntil = level.getGameTime();
+		helper.assertTrue(SectManager.sealedTreasuryAt(level, vault) == sect, "until its keepers cast it anew (" + SectManager.SEAL_RECAST / 1200 + " minutes later)");
+		sect.sealBrokenUntil = -1;
+
+		// A blast: glass in the sealed treasury stands; once nobody keeps it, it goes.
+		helper.setBlock(new BlockPos(2, 2, 2), Blocks.GLASS);
+		java.util.List<BlockPos> blast = new java.util.ArrayList<>(List.of(vault, vault.offset(4, 0, 0)));
+		SectManager.spareSealedTreasuries(level, blast);
+		helper.assertTrue(blast.size() == 1 && blast.get(0).equals(vault.offset(4, 0, 0)), "A blast spares the sealed treasury, not what's outside it");
+		// (Both go at once: one leaving, the sect retitles the rest, and its strongest left would be Sect Master, no keeper.)
+		grandElder.discard();
+		elder.discard();
+		helper.assertTrue(SectManager.sealedTreasuryAt(level, vault) == null, "Its Elders gone, the treasury is anyone's");
+		blast = new java.util.ArrayList<>(List.of(vault));
+		SectManager.spareSealedTreasuries(level, blast);
+		helper.assertTrue(blast.size() == 1, "and a blast breaks into it");
+		disciple.discard();
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void aFullSectLetsItsWeakestGoForANewcomer(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
 		Sect sect = newSect(helper, 0);

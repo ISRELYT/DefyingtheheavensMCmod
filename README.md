@@ -236,7 +236,8 @@ body is tempered through four stages, **Mortal Low, Mid, High and Peak**, by fig
 
 Low to Mid takes 120, Mid to High 200, High to Peak 300. Each stage grows the body toward Qi Refining Early's bonuses
 (a third at Mid, two thirds at High, all of it at Peak), so awakening never weakens you. Only at **Mortal Peak** can a
-**Marrow Cleansing Elixir** open the meridians and start the player at Qi Refining Early. Players who were already
+**Marrow Cleansing Elixir** open the meridians and start the player at Qi Refining Early (a dusky steam of impurities
+leaves the body, then the first light of qi). Players who were already
 cultivating in an existing world stay cultivators. Code: `MortalStage.java`, `Tempering.java` (all the amounts).
 
 Pills are brewed in an **Alchemy Cauldron** (shapeless: a cauldron, two copper ingots and a gold ingot). Fill it with a
@@ -352,7 +353,11 @@ island in a void, while your body stays sitting where you were (other players se
 **x1.5** as fruitful, and still gets the mats, pedestals, height and biome bonuses from around your body; suppression and
 the Upper Realm's x10 also follow the body.
 
-- **Walk freely.** The island is yours to walk; walking off the edge sets you back on the seat. No digging or building.
+- **Walk freely.** The island is yours to walk, and you can step off it: a step below its top an unseen floor (barrier
+  blocks) runs 48 blocks out from its middle, walled 3 blocks high round its edge, so there's room to walk off into the
+  distance and to fight a heart demon, and no falling off (should you get past the wall anyway, you're set back on the
+  seat). No digging or building; what a creative player breaks of the island or its floor is whole again 2 seconds
+  later.
 - **Leaving:** press the meditate key (**H**) to stop meditating; the eyes open back in your body.
 - **Your body:** anything that hits it pulls you back to take the blow; being pushed or moved does too. Hostile mobs near
   it notice it, and the chunks around it stay loaded while you're away. Logging out inside puts you back at your body.
@@ -731,6 +736,16 @@ the top.
 | Inner Disciple | Meditates in the hall, walks the courtyards (not in the rain) |
 | Elder, Grand Elder | Guards the Treasury and the Formation Core; otherwise fights only when disciples nearby are in a fight or someone breaks into the Treasury or at the core |
 | Sect Master | Meditates on the dais; otherwise fights only when the barrier is shattered or an elder is killed |
+
+- **The treasury is sealed while its elders keep it.** As long as an Elder or a Grand Elder stands anywhere in the
+  territory, the treasury's chests and pedestals won't open, nothing in it can be broken (a chest broken would spill all
+  it holds), and no blast breaks into it ("A seal of Core Formation holds it shut..."). Trying still raises the cry of
+  thief, and the whole sect comes. Its keepers must be beaten, or drawn out of the territory, first; then it's anyone's
+  (`SectManager.treasurySeal`). Or it can be broken: the seal is of its strongest keeper's realm, and a cultivator a full
+  realm above that (a Nascent Soul against Core Formation keepers, say; never a mortal) right-clicks a chest or pedestal
+  to shatter it, and right-clicks again to open it. A broken seal stays broken for 5 minutes, then its keepers, if any
+  are still about, cast it anew.
+- A barrier block broken (or landed on) shows pale shards of light-blue glass, not the red barrier sign.
 
 - **The whole sect turns out** (every member in its territory, the elders and the Sect Master too) when a player or a
   cultivator attacks any member anywhere in the territory (the barrier plus 30 blocks, so the gate guards too), or when

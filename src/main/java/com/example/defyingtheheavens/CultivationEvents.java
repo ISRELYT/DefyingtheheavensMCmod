@@ -14,6 +14,7 @@ import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.DamageTypeTags;
@@ -82,6 +83,7 @@ public final class CultivationEvents {
 			Rumours.clearPending();
 			HermitSites.clearPending();
 			SectSites.clear();
+			InnerRealm.clear();
 			NpcLedger.clear();
 			NpcLife.clear();
 			HeavenRitual.clear();
@@ -93,18 +95,32 @@ public final class CultivationEvents {
 			if (!(world instanceof ServerLevel level) || !(player instanceof ServerPlayer sp)) return true;
 			if (!(state.getBlock() instanceof SectBarrierBlock) && Formations.protectsGround(sp, pos)) return false;
 			SectManager.onTrespass(level, sp, pos);
+			// The treasury's seal holds while its elders keep it: nothing in it breaks (a chest broken would spill all it holds).
+			Sect sealed = sp.isCreative() ? null : SectManager.sealedTreasuryAt(level, pos);
+			if (sealed != null) {
+				sealedMessage(sp, level, sealed);
+				return false;
+			}
 			return true;
 		});
 		// Opening the treasury's chests, lifting what its pedestals hold, or harvesting the sect's herbs is theft.
 		UseBlockCallback.EVENT.register((player, world, hand, hit) -> {
-			if (world.isClientSide || !(world instanceof ServerLevel level) || !(player instanceof ServerPlayer sp) || hand != InteractionHand.MAIN_HAND) {
-				return InteractionResult.PASS;
-			}
+			if (world.isClientSide || !(world instanceof ServerLevel level) || !(player instanceof ServerPlayer sp)) return InteractionResult.PASS;
 			BlockPos pos = hit.getBlockPos();
 			BlockState state = level.getBlockState(pos);
 			boolean valuable = level.getBlockEntity(pos) instanceof Container || state.getBlock() instanceof SpiritPedestalBlock
 					|| state.getBlock() instanceof GinsengBlock || state.getBlock() instanceof CultivationFruitBlock;
-			if (valuable) SectManager.onTrespass(level, sp, pos);
+			if (!valuable) return InteractionResult.PASS;
+			// The attempt still raises the alarm (once a click), but while the treasury's elders keep it, its chests and pedestals
+			// stay shut, from either hand; one a realm above them breaks the seal with this touch, and opens it with the next.
+			Sect sealed = sp.isCreative() ? null : SectManager.sealedTreasuryAt(level, pos);
+			if (hand != InteractionHand.MAIN_HAND) return sealed != null ? InteractionResult.FAIL : InteractionResult.PASS;
+			SectManager.onTrespass(level, sp, pos);
+			if (sealed != null) {
+				if (SectManager.breakTreasurySeal(level, sealed, sp, pos)) sp.displayClientMessage(Component.translatable(ModLang.MSG_TREASURY_SEAL_BROKEN), true);
+				else sealedMessage(sp, level, sealed);
+				return InteractionResult.FAIL;
+			}
 			return InteractionResult.PASS;
 		});
 
@@ -220,6 +236,12 @@ public final class CultivationEvents {
 			if (player instanceof ServerPlayer sp) SoulProjection.hostAttack(sp, entity);
 			return InteractionResult.FAIL;
 		});
+	}
+
+	/** "A seal of <realm> holds it shut": what a sealed treasury tells one who can't break its seal (SectManager#treasurySeal). */
+	private static void sealedMessage(ServerPlayer player, ServerLevel level, Sect sect) {
+		Realm seal = SectManager.treasurySeal(level, sect);
+		if (seal != null) player.displayClientMessage(Component.translatable(ModLang.MSG_TREASURY_SEALED, seal.getDisplayName()), true);
 	}
 
 	private CultivationEvents() {}
