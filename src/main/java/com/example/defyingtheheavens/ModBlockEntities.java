@@ -17,6 +17,11 @@ public final class ModBlockEntities {
 			DefyingTheHeavens.id("spirit_pedestal"),
 			BlockEntityType.Builder.of(SpiritPedestalBlockEntity::new, ModBlocks.SPIRIT_PEDESTAL).build(null));
 
+	/** A Heaven Altar's offering tray (see HeavenAltarBlockEntity). */
+	public static final BlockEntityType<HeavenAltarBlockEntity> HEAVEN_ALTAR = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
+			DefyingTheHeavens.id("heaven_altar"),
+			BlockEntityType.Builder.of(HeavenAltarBlockEntity::new, ModBlocks.HEAVEN_ALTAR).build(null));
+
 	/** A growing herb's age clock; shared by every aging herb (ginseng, lingzhi, huangjing, Spirit Lotus). */
 	public static final BlockEntityType<GinsengBlockEntity> GINSENG = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
 			DefyingTheHeavens.id("ginseng"),

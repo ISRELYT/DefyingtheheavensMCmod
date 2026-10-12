@@ -45,6 +45,7 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(SparSystem::tick);
 		ServerTickEvents.END_SERVER_TICK.register(Rumours::tick);
 		ServerTickEvents.END_SERVER_TICK.register(NpcLife::tick);
+		ServerTickEvents.END_SERVER_TICK.register(HeavenRitual::tick);
 		InnerRealm.registerEvents();
 		registerSoulInteractions();
 		Tempering.register();
@@ -70,6 +71,7 @@ public final class CultivationEvents {
 			SoulProjection.clear();
 			Rumours.clearPending();
 			NpcLife.clear();
+			HeavenRitual.clear();
 		});
 
 		// A formation's shell runs through the ground too: those who couldn't break the barrier can't dig under it either.
@@ -125,6 +127,7 @@ public final class CultivationEvents {
 			PortalRestrictionHandler.forget(handler.getPlayer().getUUID());
 			QiFlight.forget(handler.getPlayer().getUUID());
 			Tempering.forget(handler.getPlayer().getUUID());
+			HeavenRitual.forget(handler.getPlayer().getUUID());
 		});
 
 		// Rings stay on through the End portal and with keepInventory; on a normal death dropEquipment already emptied them.

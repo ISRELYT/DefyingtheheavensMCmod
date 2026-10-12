@@ -418,6 +418,45 @@ public final class ModLang {
 	public static final String HUD_SOUL_POSSESSING = k("hud.soul.possessing");
 	public static final String DEATH_SOUL_SEVERED = "death.attack." + DefyingTheHeavens.MOD_ID + ".soul_severed";
 	public static final String DEATH_SOUL_SEIZED = "death.attack." + DefyingTheHeavens.MOD_ID + ".soul_seized";
+	// The Ritual to the Heavens (see HeavenRitual, HeavenAltar)
+	public static String ritualOffering(String id) { return k("ritual.offering." + id); }
+	public static String ritualGrandeur(String id) { return k("ritual.grandeur." + id); }
+	public static final String ALTAR_TOOLTIP = k("tooltip.heaven_altar");
+	public static final String ALTAR_TOOLTIP_BEGIN = k("tooltip.heaven_altar.begin");
+	public static final String ALTAR_TRAY = k("ritual.tray");
+	// The altar's screen (HeavenAltarScreen)
+	public static final String ALTAR_CHANCE = k("ritual.menu.chance");
+	public static final String ALTAR_OFFERING = k("ritual.menu.offering");
+	public static final String ALTAR_WORTH = k("ritual.menu.worth");
+	public static final String ALTAR_WORTH_NEXT = k("ritual.menu.worth_next");
+	public static final String ALTAR_ALTAR = k("ritual.menu.altar");
+	public static final String ALTAR_HEIGHT = k("ritual.menu.height");
+	public static final String ALTAR_HEIGHT_Y = k("ritual.menu.height_y");
+	public static final String ALTAR_REWARD = k("ritual.menu.reward");
+	public static final String ALTAR_REWARD_LEAVE = k("ritual.menu.reward_leave");
+	public static final String ALTAR_REWARD_FAVOUR = k("ritual.menu.reward_favour");
+	public static final String ALTAR_REWARD_HAVE = k("ritual.menu.reward_have");
+	public static String altarPart(String id) { return k("ritual.menu.part." + id); }
+	public static String altarState(String id) { return k("ritual.menu.state." + id); }
+	public static final String ALTAR_NO_SKY = k("ritual.no_sky");
+	public static final String FAVOUR_LINE = k("ritual.favour_line");
+	public static final String RITUAL_AHEAD = k("ritual.ahead");
+	public static final String RITUAL_GATE = k("ritual.gate");
+	public static final String RITUAL_HOW = k("ritual.how");
+	public static final String MSG_RITUAL_GATE = k("message.ritual.gate");
+	public static final String MSG_RITUAL_BEGIN = k("message.ritual.begin");
+	public static final String MSG_RITUAL_NOT_NOW = k("message.ritual.not_now");
+	public static final String MSG_RITUAL_DAWN = k("message.ritual.dawn");
+	public static final String MSG_RITUAL_ALTAR_BUSY = k("message.ritual.altar_busy");
+	public static final String MSG_RITUAL_BUSY = k("message.ritual.busy");
+	public static final String MSG_RITUAL_MOVED = k("message.ritual.moved");
+	public static final String MSG_RITUAL_BROKEN = k("message.ritual.broken");
+	public static final String MSG_RITUAL_SUCCESS = k("message.ritual.success");
+	public static final String MSG_RITUAL_FAVOUR = k("message.ritual.favour");
+	public static final String MSG_RITUAL_FAIL = k("message.ritual.fail");
+	public static final String RITUAL_TITLE_SUCCESS = k("ritual.title.success");
+	public static final String RITUAL_TITLE_FAIL = k("ritual.title.fail");
+	public static final String HUD_RITUAL = k("hud.ritual");
 
 	private ModLang() {}
 }

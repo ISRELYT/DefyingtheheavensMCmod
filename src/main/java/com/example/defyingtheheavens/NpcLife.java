@@ -89,7 +89,9 @@ public final class NpcLife {
 
 	/** What a cultivator can be doing of its everyday life. */
 	public enum Kind {
-		SLEEP, REST, LISTEN, LECTURE, CHAT, SPAR, DRILL, MOURN;
+		SLEEP, REST, LISTEN, LECTURE, CHAT, SPAR, DRILL, MOURN,
+		/** Kneeling at the sect's Altar of Heaven for the Ritual to the Heavens (see HeavenRitual). */
+		RITUAL;
 
 		/** Something done with free time, which the routine (sleep, the lecture) or anything else replaces. */
 		public boolean leisure() { return this == CHAT || this == SPAR || this == DRILL || this == MOURN; }
@@ -117,6 +119,10 @@ public final class NpcLife {
 		public boolean lead;
 		/** Mourning: who for. */
 		public String mourned;
+		/** The ritual: the altar it kneels before, when the three minutes began (0: not yet there), and its chance. */
+		public BlockPos altar;
+		public long ritualStart;
+		public double chance;
 
 		public Activity(Kind kind, BlockPos spot, long until) {
 			this.kind = kind;
@@ -253,6 +259,7 @@ public final class NpcLife {
 		if (a.walked > WALK_LIMIT && !a.arrived) {
 			end(npc);
 		} else if (now >= a.until) {
+			if (a.kind == Kind.RITUAL && a.ritualStart > 0) answerRitual(npc, a);
 			// A bout is the leader's to call (it ends for both); the other only gives up on it if the leader never does.
 			if (a.kind == Kind.SPAR && !a.lead && now < a.until + 100) return;
 			if (a.kind == Kind.SPAR && a.lead) finishBout(npc, a);
@@ -357,8 +364,8 @@ public final class NpcLife {
 	public static void interrupted(CultivatorNpc npc) {
 		Activity a = npc.activity();
 		if (a == null) return;
-		if (a.kind == Kind.CHAT || a.kind == Kind.SPAR) {
-			end(npc);
+		if (a.kind == Kind.CHAT || a.kind == Kind.SPAR || a.kind == Kind.RITUAL && a.ritualStart > 0) {
+			end(npc); // a ritual broken off is lost, its offering with it
 		} else {
 			a.arrived = false; // back to its place when it resumes
 		}
@@ -367,6 +374,7 @@ public final class NpcLife {
 	/** It has got to where its activity is. */
 	static void arrived(CultivatorNpc npc, Activity a) {
 		if (a.kind == Kind.MOURN && a.mourned != null && NpcSpeech.heard(npc)) NpcSpeech.say(npc, NpcLines.line("mourn", npc, a.mourned));
+		if (a.kind == Kind.RITUAL && a.ritualStart == 0 && npc.level() instanceof ServerLevel level) beginRitual(level, npc, a);
 	}
 
 	// =====================================================================================================================
@@ -382,6 +390,7 @@ public final class NpcLife {
 		}
 		strike(level, sect, day, now);
 		routine(level, sect, members, phase, now);
+		rituals(level, sect, members, phase, now);
 		if (phase == Phase.LECTURE) lecture(level, sect, day, members, now);
 		else if (day.lecture != null) closeLecture(level, sect, day, members, now);
 		boolean watched = watched(level, Vec3.atCenterOf(sect.core), sect.barrierRadius + WATCHED);
@@ -460,6 +469,151 @@ public final class NpcLife {
 			}
 			begin(npc, rest);
 		}
+	}
+
+	// --- The Ritual to the Heavens ---
+
+	/**
+	 * Members at Qi Refining Mid's gate (CultivatorNpc#awaitsHeavensLeave) go to the sect's Altar of Heaven, one at a time,
+	 * outside the lecture and the night, and not again the day the heavens turned them away; there they kneel three minutes
+	 * on an offering from the sect's store (Sect#takeOffering), as a player would (HeavenRitual). A sect laid out before the
+	 * altar existed kneels by its Formation Core instead. Those already kneeling send up smoke and gathering light.
+	 */
+	private static void rituals(ServerLevel level, Sect sect, List<CultivatorNpc> members, Phase phase, long now) {
+		for (CultivatorNpc npc : members) {
+			Activity a = npc.activity();
+			if (a != null && a.kind == Kind.RITUAL && a.ritualStart > 0 && a.altar != null) {
+				double progress = Math.min(1.0, (now - a.ritualStart) / (double) HeavenRitual.DURATION);
+				level.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE, a.altar.getX() + 0.5, a.altar.getY() + 1.0, a.altar.getZ() + 0.5, 1, 0.05, 0, 0.05, 0.01);
+				for (int i = 0; i < 1 + (int) (progress * 6); i++) {
+					double h = 3 + level.random.nextDouble() * (4 + 10 * progress);
+					level.sendParticles(ParticleTypes.END_ROD, a.altar.getX() + 0.5 + (level.random.nextDouble() - 0.5) * 0.6, a.altar.getY() + h,
+							a.altar.getZ() + 0.5 + (level.random.nextDouble() - 0.5) * 0.6, 1, 0, -0.05, 0, 0.02);
+				}
+			}
+		}
+		if (phase == Phase.NIGHT || phase == Phase.LECTURE) return;
+		BlockPos altar = sect.altar() != null ? sect.altar() : sect.core;
+		if (!level.isLoaded(altar) || HeavenRitual.isAltarInUse(level, altar)) return;
+		long today = HeavenRitual.today(level.getServer());
+		for (CultivatorNpc npc : members) {
+			if (!npc.awaitsHeavensLeave() || npc.ritualFailedDay() >= today || !free(npc)) continue;
+			Activity a = npc.activity();
+			if (a != null && !a.kind.leisure()) continue;
+			BlockPos kneel = sect.altarKneel() != null ? sect.altarKneel() : besideCore(level, sect);
+			if (kneel == null) return;
+			Activity ritual = new Activity(Kind.RITUAL, kneel, now + WALK_LIMIT + HeavenRitual.DURATION);
+			ritual.altar = altar;
+			ritual.face = Vec3.atCenterOf(altar);
+			ritual.seated = true;
+			if (npc.isGateGuard()) npc.setGateGuard(false);
+			begin(npc, ritual);
+			return; // one at a time
+		}
+	}
+
+	/** Somewhere to kneel by the Formation Core, for a sect with no altar. */
+	private static BlockPos besideCore(ServerLevel level, Sect sect) {
+		for (int[] d : new int[][] {{0, 3}, {3, 0}, {0, -3}, {-3, 0}, {2, 2}, {-2, -2}}) {
+			for (int dy = -1; dy <= 1; dy++) {
+				BlockPos at = sect.core.offset(d[0], dy, d[1]);
+				if (standable(level, at)) return at;
+			}
+		}
+		return null;
+	}
+
+	/** It kneels before the altar: the sect's offering is taken and the three minutes begin. */
+	private static void beginRitual(ServerLevel level, CultivatorNpc npc, Activity a) {
+		Sect sect = npc.sect();
+		long now = level.getGameTime();
+		double offered = sect == null ? 0 : sect.takeOffering(HeavenRitual.today(level.getServer()));
+		HeavenAltar.Offering offering = HeavenAltar.Offering.of(offered);
+		HeavenAltar.Grandeur grandeur = HeavenAltar.Grandeur.HUMBLE;
+		if (a.altar != null && level.getBlockState(a.altar).is(ModBlocks.HEAVEN_ALTAR)) {
+			HeavenAltar.Judgement judgement = HeavenAltar.judge(level, a.altar);
+			if (judgement.sky()) grandeur = judgement.grandeur();
+		}
+		a.chance = HeavenAltar.chance(offering, grandeur, HeavenAltar.heightBonus(level, a.altar != null ? a.altar : npc.blockPosition()));
+		a.ritualStart = now;
+		a.until = now + HeavenRitual.DURATION;
+		level.playSound(null, npc.blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.NEUTRAL, 0.5f, 0.7f);
+		if (NpcSpeech.heard(npc)) NpcSpeech.say(npc, NpcLines.line("ritual.begin", npc));
+	}
+
+	/** Three minutes knelt: the heavens answer (and a member granted their leave steps into Qi Refining Late). */
+	private static void answerRitual(CultivatorNpc npc, Activity a) {
+		if (!(npc.level() instanceof ServerLevel level)) return;
+		boolean granted = level.random.nextDouble() < a.chance;
+		BlockPos at = a.altar != null ? a.altar : npc.blockPosition();
+		if (granted) {
+			for (int i = 0; i < 30; i++) {
+				level.sendParticles(ParticleTypes.END_ROD, at.getX() + 0.5, at.getY() + 1 + i * 0.6, at.getZ() + 0.5, 2, 0.15, 0.2, 0.15, 0.01);
+			}
+			level.playSound(null, at, SoundEvents.BEACON_POWER_SELECT, SoundSource.NEUTRAL, 0.8f, 1.2f);
+			if (NpcSpeech.heard(npc)) NpcSpeech.say(npc, NpcLines.line("ritual.granted", npc));
+			npc.grantHeavensLeave();
+		} else {
+			npc.setRitualFailedDay(HeavenRitual.today(level.getServer()));
+			level.sendParticles(ParticleTypes.LARGE_SMOKE, at.getX() + 0.5, at.getY() + 1.2, at.getZ() + 0.5, 10, 0.3, 0.3, 0.3, 0.01);
+			level.playSound(null, at, SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 0.4f, 0.7f);
+			if (NpcSpeech.heard(npc)) NpcSpeech.say(npc, NpcLines.line("ritual.denied", npc));
+		}
+	}
+
+	/** For the tests: {@code a} and {@code b} go to spar, and {@code driller} to drill, now. */
+	static void practiseForTest(ServerLevel level, Sect sect, CultivatorNpc a, CultivatorNpc b, CultivatorNpc driller, long now) {
+		startBout(level, sect, a, b, now);
+		startDrill(level, sect, driller, now);
+	}
+
+	/** For the game tests: the heavens answer {@code npc}'s ritual now, with {@code chance}, and it gets up. */
+	static void answerRitualForTest(CultivatorNpc npc, double chance) {
+		Activity a = npc.activity();
+		if (a == null || a.kind != Kind.RITUAL) return;
+		a.chance = chance;
+		answerRitual(npc, a);
+		end(npc);
+	}
+
+	/** A cultivator is kneeling (or on its way to kneel) at the altar at {@code pos}. */
+	public static boolean isAltarInUse(Level level, BlockPos pos) {
+		if (!(level instanceof ServerLevel server)) return false;
+		for (CultivatorNpc npc : CultivatorNpc.loaded(server)) {
+			Activity a = npc.activity();
+			if (a != null && a.kind == Kind.RITUAL && pos.equals(a.altar)) return true;
+		}
+		return false;
+	}
+
+	/**
+	 * A ritual worked out without being seen (a cultivator catching up on time spent unloaded, or a rogue at some roadside
+	 * altar): a sect member offers from the sect's store at its altar (as grand as the sect was built), a rogue from what it
+	 * carries at a humble one. Not on a day the heavens already turned it away. @return whether the heavens granted their leave
+	 */
+	public static boolean ritualOffscreen(ServerLevel level, CultivatorNpc npc) {
+		long today = HeavenRitual.today(level.getServer());
+		if (!npc.awaitsHeavensLeave() || npc.ritualFailedDay() >= today) return false;
+		Sect sect = npc.sect();
+		HeavenAltar.Offering offering;
+		HeavenAltar.Grandeur grandeur;
+		BlockPos at;
+		if (sect != null) {
+			offering = HeavenAltar.Offering.of(sect.takeOffering(today));
+			grandeur = sect.altarGrandeur();
+			at = sect.altar() != null ? sect.altar() : sect.core;
+		} else {
+			offering = HeavenAltar.Offering.PROPER;
+			grandeur = HeavenAltar.Grandeur.HUMBLE;
+			at = npc.blockPosition();
+		}
+		double chance = HeavenAltar.chance(offering, grandeur, HeavenAltar.heightBonus(level, at));
+		if (level.random.nextDouble() < chance) {
+			npc.grantHeavensLeave();
+			return true;
+		}
+		npc.setRitualFailedDay(today);
+		return false;
 	}
 
 	// --- The lecture ---
@@ -726,14 +880,14 @@ public final class NpcLife {
 			if (b != null) startTalk(level, sect, day, a, b, true, now);
 		}
 		if (wet) return; // nobody practises in the rain
-		// A bout on the plaza.
+		// A bout in the training ground's sparring ring (on the plaza, for a sect without one).
 		if (bouts == 0 && random.nextInt(25) == 0 && standing.size() >= 2) {
 			CultivatorNpc a = standing.get(random.nextInt(standing.size()));
 			CultivatorNpc b = nearest(a, standing, 40);
 			if (b != null) startBout(level, sect, a, b, now);
 		}
-		// Sword forms alone.
-		if (drills < 2 && random.nextInt(20) == 0) {
+		// Sword forms alone, before the training ground's dummies (up to three at once there).
+		if (drills < Math.max(2, Math.min(3, sect.drillSpots().size())) && random.nextInt(20) == 0) {
 			List<CultivatorNpc> pool = !standing.isEmpty() ? standing : sitting;
 			if (!pool.isEmpty()) {
 				CultivatorNpc npc = pool.get(random.nextInt(pool.size()));
@@ -857,15 +1011,26 @@ public final class NpcLife {
 		}
 	}
 
-	/** Two disciples meet on the plaza for a practice bout. */
+	/** Two disciples meet in the training ground's sparring ring for a practice bout (a sect without one: on the plaza). */
 	private static void startBout(ServerLevel level, Sect sect, CultivatorNpc a, CultivatorNpc b, long now) {
 		RandomSource random = level.random;
+		BlockPos ring = sect.sparringRing();
 		for (int attempt = 0; attempt < 8; attempt++) {
 			double angle = random.nextDouble() * Math.PI * 2, facing = random.nextDouble() * Math.PI;
-			double cx = sect.core.getX() + 0.5 + Math.cos(angle) * 7.5, cz = sect.core.getZ() + 0.5 + Math.sin(angle) * 7.5;
+			double cx, cz;
+			int y;
+			if (ring != null) {
+				cx = ring.getX() + 0.5;
+				cz = ring.getZ() + 0.5;
+				y = ring.getY();
+			} else {
+				cx = sect.core.getX() + 0.5 + Math.cos(angle) * 7.5;
+				cz = sect.core.getZ() + 0.5 + Math.sin(angle) * 7.5;
+				y = sect.core.getY() - 1;
+			}
 			double ox = Math.cos(facing) * 2.0, oz = Math.sin(facing) * 2.0;
-			BlockPos one = BlockPos.containing(cx + ox, sect.core.getY() - 1, cz + oz);
-			BlockPos two = BlockPos.containing(cx - ox, sect.core.getY() - 1, cz - oz);
+			BlockPos one = BlockPos.containing(cx + ox, y, cz + oz);
+			BlockPos two = BlockPos.containing(cx - ox, y, cz - oz);
 			if (one.equals(two) || !standable(level, one) || !standable(level, two) || roofed(level, one) || roofed(level, two)) continue;
 			long until = now + WALK_LIMIT + 600 + random.nextInt(300);
 			Activity first = new Activity(Kind.SPAR, one, until);
@@ -881,9 +1046,25 @@ public final class NpcLife {
 		}
 	}
 
-	/** A disciple goes to practise its sword forms: on a courtyard or the plaza, in the open. */
+	/**
+	 * A disciple goes to practise its sword forms: at a free spot before a training dummy on the training ground, or (a sect
+	 * laid out before it had one) on a courtyard or the plaza, in the open.
+	 */
 	private static void startDrill(ServerLevel level, Sect sect, CultivatorNpc npc, long now) {
 		RandomSource random = level.random;
+		List<BlockPos> spots = sect.drillSpots();
+		if (!spots.isEmpty()) {
+			List<BlockPos> free = new ArrayList<>(spots);
+			for (CultivatorNpc other : CultivatorNpc.loaded(level)) {
+				Activity a = other.activity();
+				if (a != null && a.kind == Kind.DRILL) free.remove(a.spot);
+			}
+			if (free.isEmpty()) return;
+			BlockPos spot = free.get(random.nextInt(free.size()));
+			if (!standable(level, spot)) return;
+			begin(npc, new Activity(Kind.DRILL, spot, now + WALK_LIMIT + 400 + random.nextInt(400)));
+			return;
+		}
 		List<BlockPos> courtyards = sect.posts(Sect.Post.COURTYARD);
 		for (int attempt = 0; attempt < 6; attempt++) {
 			BlockPos spot;
@@ -1058,7 +1239,7 @@ public final class NpcLife {
 		}
 		if (npc.isMeditating() || !free(npc) || !NpcSpeech.mayRemark(npc)) return;
 		Activity a = npc.activity();
-		if (a != null && (a.kind == Kind.CHAT || a.kind == Kind.SPAR || a.kind == Kind.LECTURE || a.kind == Kind.LISTEN || a.kind == Kind.MOURN)) return;
+		if (a != null && (a.kind == Kind.CHAT || a.kind == Kind.SPAR || a.kind == Kind.LECTURE || a.kind == Kind.LISTEN || a.kind == Kind.MOURN || a.kind == Kind.RITUAL)) return;
 		// Patrolling in the rain gets grumbled about.
 		if (level.isRaining() && npc.getTitle() == NpcTitle.OUTER_DISCIPLE && !npc.isGateGuard() && a == null && level.random.nextInt(120) == 0
 				&& !roofed(level, npc.blockPosition()) && NpcSpeech.heard(npc)) {

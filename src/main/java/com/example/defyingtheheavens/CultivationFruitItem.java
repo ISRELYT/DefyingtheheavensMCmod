@@ -38,7 +38,7 @@ public class CultivationFruitItem extends Item {
      */
     private static Component refusal(PlayerCultivation c) {
         if (c.isMortal()) return Component.translatable(ModLang.MSG_FRUIT_MORTAL);
-        if (c.isAtBottleneck() || c.isSuppressed() || c.isMaxed()) return Component.translatable(ModLang.MSG_FRUIT_BOTTLENECK);
+        if (c.isStalled() || c.isSuppressed() || c.isMaxed()) return Component.translatable(ModLang.MSG_FRUIT_BOTTLENECK);
         return null;
     }
 

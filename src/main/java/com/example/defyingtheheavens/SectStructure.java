@@ -69,14 +69,20 @@ public class SectStructure extends Structure {
 	 */
 	private static final int MAX_RELIEF = 20;
 	private static final int MAX_RELIEF_UPPER = 24;
+	/**
+	 * How far the land just beyond the gates and at the far corners may rise above the grounds: the grounds are cut level out
+	 * to there, so higher land would stand as a cliff across the way out of a gate.
+	 */
+	private static final int MAX_EDGE_RISE = 8;
 	/** How many of the 13 ground samples may be water (a pond or a stream across the grounds is filled in). */
 	private static final int MAX_WET = 3;
 
 	private enum Size {
 		//    reach min max  treasury(w,d) meditation(w,d) main(w) pagoda tiers garden(w,d) trees bamboo
-		SMALL( 46, 10, 12, 13, 11, 19, 13, 23, 9, 3, 11, 15, 34, 16),
-		MEDIUM(52, 13, 16, 15, 13, 19, 15, 27, 11, 5, 12, 17, 44, 20),
-		LARGE( 56, 17, 20, 17, 15, 19, 15, 31, 13, 7, 13, 19, 54, 24);
+		// Reach spread out to the barrier's limit (Formations.MAX_RADIUS 64 = the largest reach + 2) on 2026-10-12.
+		SMALL( 52, 10, 12, 13, 11, 19, 13, 23, 9, 3, 11, 15, 40, 18),
+		MEDIUM(58, 13, 16, 15, 13, 19, 15, 27, 11, 5, 12, 17, 52, 22),
+		LARGE( 62, 17, 20, 17, 15, 19, 15, 31, 13, 7, 13, 19, 62, 26);
 
 		/**
 		 * How far from the plaza the buildings may reach (the barrier closes just outside them, and is never wider than
@@ -117,7 +123,7 @@ public class SectStructure extends Structure {
 	/** How far beyond the buildings' reach the gates stand: well outside the barrier, which closes 2 past the buildings. */
 	private static final int GATE_BEYOND = 8;
 	/** The lawn between the way up the middle and the halls of the front court, and between the main hall and its neighbours. */
-	private static final int SET_BACK = 5;
+	private static final int SET_BACK = 8;
 
 	public SectStructure(StructureSettings settings) {
 		super(settings);
@@ -143,10 +149,11 @@ public class SectStructure extends Structure {
 		BlockPos centre = new BlockPos(chunk.getMiddleBlockX(), 64, chunk.getMiddleBlockZ());
 		boolean upper = isUpperRealm(context, centre);
 
-		// The ground, sampled where the buildings will stand (a grid reaching three quarters of their reach from the plaza; the
-		// lawns and the gates beyond are simply levelled): too uneven, too wet or (in the Upper Realm) over the edge of an
-		// island, and there's no sect here.
-		int[] samples = new int[25];
+		// The ground, sampled where the buildings will stand (a grid reaching three quarters of their reach from the plaza), and
+		// at the gates and the far edges of the grounds: those are levelled too, so a hill there would be cut into a cliff
+		// across the way out of a gate. Too uneven, too wet or (in the Upper Realm) over the edge of an island, and there's no
+		// sect here. The platform's level is the buildings' ground's.
+		int[] samples = new int[33];
 		int water = 0;
 		int n = 0;
 		for (int i = 0; i <= 4; i++) {
@@ -162,10 +169,21 @@ public class SectStructure extends Structure {
 				}
 			}
 		}
+		int[] inner = Arrays.copyOf(samples, 25);
+		Arrays.sort(inner);
+		int platformY = inner[12];
+		// The gates (front and sides), the back, and the four far corners, just beyond the gates' reach.
+		int outer = size.reach + GATE_BEYOND + 4;
+		for (int k = 0; k < 8; k++) {
+			double angle = Math.PI / 4 * k, out = k % 2 == 0 ? outer : outer * 0.75;
+			BlockPos at = frame.world(size.a + (int) Math.round(Math.cos(angle) * out), size.b + (int) Math.round(Math.sin(angle) * out));
+			int y = generator.getFirstOccupiedHeight(at.getX(), at.getZ(), Heightmap.Types.WORLD_SURFACE_WG, heights, state);
+			if (y <= heights.getMinBuildHeight() + 2 || y > platformY + MAX_EDGE_RISE) return Optional.empty();
+			samples[n++] = y;
+		}
 		int[] sorted = samples.clone();
 		Arrays.sort(sorted);
-		if (sorted[24] - sorted[0] > (upper ? MAX_RELIEF_UPPER : MAX_RELIEF) || water > MAX_WET) return Optional.empty();
-		int platformY = sorted[12];
+		if (sorted[sorted.length - 1] - sorted[0] > (upper ? MAX_RELIEF_UPPER : MAX_RELIEF) || water > MAX_WET) return Optional.empty();
 		if (platformY + 70 > heights.getMaxBuildHeight()) return Optional.empty();
 		return Optional.of(new GenerationStub(new BlockPos(chunk.getMiddleBlockX(), platformY, chunk.getMiddleBlockZ()),
 				builder -> plan(builder, random, size, frame, platformY, upper)));
@@ -384,6 +402,28 @@ public class SectStructure extends Structure {
 			gates.add(torii);
 		}
 
+		// The Altar of Heaven, out on the lawns (placed once the gates have their ground kept clear): round terraces (one, two or three, by the sect's size), where members at Qi
+		// Refining Mid's gate perform the Ritual to the Heavens (see NpcLife).
+		// (With no room for its full size, a terrace fewer.)
+		int tiers = size.ordinal() + 1;
+		SectLayout.Lot altarLot = null;
+		for (; tiers >= 1 && altarLot == null; tiers--) altarLot = layout.place(random, SectPiece.altarSize(tiers), SectPiece.altarSize(tiers), size.reach / 2 + 6, 3);
+		tiers++;
+		SectPiece altar = null;
+		if (altarLot != null) {
+			CompoundTag altarData = new CompoundTag();
+			altarData.putInt("Tiers", tiers);
+			altar = piece(SectPiece.Kind.ALTAR, altarLot, frame, y, 2 * tiers + 7, seed + 60, faction, upper, altarData);
+			pieces.add(altar);
+		}
+
+		// The training ground, out on the lawns too: a sparring ring and dummies, where the disciples practise (NpcLife).
+		SectLayout.Lot trainingLot = layout.place(random, SectPiece.TRAINING_W, SectPiece.TRAINING_D, size.reach / 2 + 2, 3);
+		SectPiece training = null;
+		if (trainingLot != null) {
+			training = piece(SectPiece.Kind.TRAINING, trainingLot, frame, y, 9, seed + 70, faction, upper, null);
+			pieces.add(training);
+		}
 		// The elders' houses, nearest the plaza (the disciples live in the meditation hall); then lanterns along the ways and
 		// trees and bamboo on the grass between.
 		EnumMap<NpcTitle, Integer> titles = Sect.titleCounts(size.maxMembers);
@@ -451,6 +491,16 @@ public class SectStructure extends Structure {
 		courtyard.add(pagoda.toWorld(top[0], top[1], top[2]));
 		int[] in = gate.gateInside();
 		posts.get(Sect.Post.GATE).add(gate.toWorld(in[0], in[1], in[2]));
+		if (altar != null) {
+			for (int[] post : altar.altarPosts()) posts.get(Sect.Post.ALTAR).add(altar.toWorld(post[0], post[1], post[2]));
+		}
+		if (training != null) {
+			for (int[] post : training.trainingPosts()) posts.get(Sect.Post.TRAINING).add(training.toWorld(post[0], post[1], post[2]));
+		}
+		// Points along the paved ways every ten blocks, out to the gates, for walkers that can't go straight (Sect#waypoints).
+		List<BlockPos> ways = posts.get(Sect.Post.WAY);
+		for (int v = cv - gateDistance + 2; v <= mainV0; v += 10) if (Math.abs(v - cv) > r) ways.add(terrace.toWorld(cu, 1, v));
+		for (int u = cu - gateDistance + 2; u <= cu + gateDistance - 2; u += 10) if (Math.abs(u - cu) > r) ways.add(terrace.toWorld(u, 1, cv));
 		// The gate guards, on the way just outside each gate: two at the gate, then one at each torii, then a second at each
 		// (Sect#guardPost hands them to the outer disciples in this order).
 		List<BlockPos> guards = posts.get(Sect.Post.GATE_GUARD);

@@ -135,7 +135,7 @@ public class PillItem extends Item {
 				return c.isMortal() ? Component.translatable(ModLang.MSG_PILL_MORTAL) : null;
 			case CULTIVATION:
 				if (c.isMortal()) return Component.translatable(ModLang.MSG_PILL_MORTAL);
-				if (c.isAtBottleneck() || c.isSuppressed() || c.isMaxed()) return Component.translatable(ModLang.MSG_PILL_BOTTLENECK);
+				if (c.isStalled() || c.isSuppressed() || c.isMaxed()) return Component.translatable(ModLang.MSG_PILL_BOTTLENECK);
 				return null;
 			default:
 				return null;

@@ -771,6 +771,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			beginDeparture(level);
 		}
 		if (lifecycle == Lifecycle.ROGUE) decideRogueCourse();
+		// A rogue at Qi Refining Mid's gate asks the heavens on its own, at some roadside altar, now and then (NpcLife).
+		if (lifecycle == Lifecycle.ROGUE && awaitsHeavensLeave() && random.nextInt(600) == 0) NpcLife.ritualOffscreen(level, this);
 		if (lifecycle == Lifecycle.SECLUDED && getRank() >= PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.GRAND_PERFECTION)
 				&& ModDimensions.isLowerRealm(level.dimension())) {
 			endSeclusion(level);
@@ -802,9 +804,25 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		return cultivation.cultivationPerSecond() * NPC_RATE;
 	}
 
+	// --- The Ritual to the Heavens (see NpcLife) ---
+
+	/** At Qi Refining Mid with its cultivation full and no leave from the heavens yet: it needs the Ritual to the Heavens. */
+	public boolean awaitsHeavensLeave() { return !isMortal() && cultivation.isAtRitualGate(); }
+
+	/** The heavens grant their leave: it steps on into Qi Refining Late at once if its cultivation is full. */
+	public void grantHeavensLeave() {
+		cultivation.setHeavensLeave(true);
+		advanceUnchecked(0);
+	}
+
+	public long ritualFailedDay() { return cultivation.getRitualFailedDay(); }
+
+	public void setRitualFailedDay(long day) { cultivation.setRitualFailedDay(day); }
+
 	/**
-	 * Adds cultivation, passing every bottleneck (no tribulation for NPCs) but never past what the realm it stands in can
-	 * sustain. Package-private for the game tests.
+	 * Adds cultivation, passing every bottleneck but one (no tribulation for NPCs) and never past what the realm it stands in
+	 * can sustain. The one is Qi Refining Mid: there it waits on the heavens' leave, as a player does. Package-private for the
+	 * game tests.
 	 */
 	void advance(double amount) {
 		boolean lower = ModDimensions.isLowerRealm(level().dimension());
@@ -826,7 +844,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			double required = cultivation.cultivationRequired();
 			if (value < required) break;
 			int rank = PlayerCultivation.rank(realm, stage);
-			if (rank >= cap) {
+			if (rank >= cap || rank == PlayerCultivation.RITUAL_RANK && !cultivation.hasHeavensLeave()) {
 				value = required;
 				break;
 			}
@@ -854,6 +872,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		catchingUp = true;
 		try {
 			cultivate(elapsed / 20.0 * CATCH_UP_SHARE, 1.0);
+			// Away all that time at Qi Refining Mid's gate: it will have asked the heavens (once), and if they agreed, cultivated on.
+			if (awaitsHeavensLeave() && NpcLife.ritualOffscreen(level, this)) cultivate(elapsed / 20.0 * CATCH_UP_SHARE / 2, 1.0);
 		} finally {
 			catchingUp = false;
 		}
@@ -1627,6 +1647,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		} else {
 			cultivation.setState(realmOf(rank), stageOf(rank), loaded.getCultivation());
 			cultivation.setQi(loaded.getQi());
+			if (loaded.hasHeavensLeave()) cultivation.setHeavensLeave(true);
+			cultivation.setRitualFailedDay(loaded.getRitualFailedDay());
 		}
 		setAlignment(npc.getInt("Alignment"));
 		entityData.set(DATA_TITLE, (byte) NpcTitle.byIndex(npc.getInt("Title")).ordinal());

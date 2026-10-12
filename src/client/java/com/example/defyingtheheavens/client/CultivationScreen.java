@@ -258,7 +258,7 @@ public class CultivationScreen extends Screen {
 		int barW = WIDTH - 28;
 		double required = c.cultivationRequired();
 		double ratio = required <= 0 ? 0 : Math.min(1.0, c.getCultivation() / required);
-		boolean bottleneck = c.isAtBottleneck();
+		boolean bottleneck = c.isStalled();
 		g.fill(x - 1, y - 1, x + barW + 1, y + 11, 0xFF000000);
 		g.fill(x, y, x + barW, y + 10, 0xFF2A2A3A);
 		g.fill(x, y, x + (int) (barW * ratio), y + 10, bottleneck ? 0xFFFFC107 : 0xFF4DD0E1);
@@ -298,6 +298,11 @@ public class CultivationScreen extends Screen {
 		// The cultivator's path (see Alignment), in its colour.
 		g.drawCenteredString(font, Component.translatable(ModLang.ALIGNMENT_LINE, Alignment.describe(c.getAlignment())), cx, y, 0xA0A0A0);
 		y += 11;
+		// Heaven's Favour from a generous offering at the Ritual to the Heavens.
+		if (c.getFavour() > 0) {
+			g.drawCenteredString(font, Component.translatable(ModLang.FAVOUR_LINE, Math.round((c.favourFactor() - 1) * 100)), cx, y, 0xFFE082);
+			y += 11;
+		}
 		y += 7;
 
 		if (c.isUnderPressure()) {
@@ -329,6 +334,19 @@ public class CultivationScreen extends Screen {
 					WIDTH - 28)) {
 				g.drawCenteredString(font, line, cx, y, 0xA0A0A0);
 				y += 11;
+			}
+		} else if (c.needsHeavensLeave()) {
+			// Qi Refining Mid: Late takes the heavens' leave (the Ritual to the Heavens at a Heaven Altar).
+			boolean full = c.isAtRitualGate();
+			for (FormattedCharSequence line : font.split(Component.translatable(full ? ModLang.RITUAL_GATE : ModLang.RITUAL_AHEAD), WIDTH - 28)) {
+				g.drawCenteredString(font, line, cx, y, full ? 0xFFC107 : 0xA0A0A0);
+				y += 11;
+			}
+			if (full) {
+				for (FormattedCharSequence line : font.split(Component.translatable(ModLang.RITUAL_HOW), WIDTH - 28)) {
+					g.drawCenteredString(font, line, cx, y, 0xA0A0A0);
+					y += 11;
+				}
 			}
 		} else if (c.canBreakthrough()) {
 			g.drawCenteredString(font, Component.translatable(ModLang.BOTTLENECK), cx, y, 0xFFC107);
@@ -752,12 +770,12 @@ public class CultivationScreen extends Screen {
 	private void statRow(GuiGraphics g, Player player, StatLine line, PlayerCultivation c, boolean suppressed, int y) {
 		Attribute attribute = line.attribute();
 		double base = player == null ? 0 : player.getAttributeBaseValue(attribute);
-		double bonus = line.bonus().applyAsDouble(c.getEffectiveRealm(), c.getEffectiveStage());
+		double bonus = line.bonus().applyAsDouble(c.getEffectiveRealm(), c.getEffectiveStage()) * c.favourFactor();
 		double now = valueWith(player, attribute, bonus, true);
 		g.drawString(font, Component.translatable(line.nameKey()), left + 14, y, 0xE0E0E0);
 		right(g, Component.literal(one(base * line.scale()) + line.unit()), left + BASE_RIGHT, y, 0xA0A0A0);
 		if (suppressed) {
-			double truth = valueWith(player, attribute, line.bonus().applyAsDouble(c.getRealm(), c.getStage()), false);
+			double truth = valueWith(player, attribute, line.bonus().applyAsDouble(c.getRealm(), c.getStage()) * c.favourFactor(), false);
 			right(g, Component.literal(one(truth * line.scale()) + line.unit()), left + BONUS_RIGHT, y, 0xB39DDB);
 			right(g, Component.literal(one(now * line.scale()) + line.unit()), left + WIDTH - 14, y, now < truth ? 0xFF8A80 : 0xFFFFFF);
 		} else {
@@ -773,11 +791,11 @@ public class CultivationScreen extends Screen {
 	 */
 	private void qiRow(GuiGraphics g, String nameKey, ToDoubleBiFunction<Realm, Stage> value, double now, boolean rate,
 					   PlayerCultivation c, boolean suppressed, int y) {
-		double bonus = value.applyAsDouble(c.getEffectiveRealm(), c.getEffectiveStage());
+		double bonus = value.applyAsDouble(c.getEffectiveRealm(), c.getEffectiveStage()) * c.favourFactor();
 		g.drawString(font, Component.translatable(nameKey), left + 14, y, 0xE0E0E0);
 		right(g, Component.literal(qiText(0, rate)), left + BASE_RIGHT, y, 0xA0A0A0);
 		if (suppressed) {
-			double truth = value.applyAsDouble(c.getRealm(), c.getStage());
+			double truth = value.applyAsDouble(c.getRealm(), c.getStage()) * c.favourFactor();
 			right(g, Component.literal(qiText(truth, rate)), left + BONUS_RIGHT, y, 0xB39DDB);
 			right(g, Component.literal(qiText(now, rate)), left + WIDTH - 14, y, now < truth ? 0xFF8A80 : 0xFFFFFF);
 		} else {

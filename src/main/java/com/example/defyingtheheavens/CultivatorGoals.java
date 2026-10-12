@@ -12,9 +12,12 @@ import net.minecraft.world.entity.ai.util.DefaultRandomPos;
 import net.minecraft.world.entity.ai.util.LandRandomPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -42,12 +45,48 @@ public final class CultivatorGoals {
 		return npc.isMortal() ? 20 : Math.max(10, 20 - 2 * CultivatorNpc.realmOf(npc.getRank()).ordinal());
 	}
 
-	/** Steps a walker toward a far target, a little at a time (paths are only planned so far). */
+	/**
+	 * Steps a walker toward a far target, a little at a time (paths are only planned so far). Each step is set down on the
+	 * ground where it falls: a step at the walker's own height, taken from a hall's raised floor, would hang in the air over
+	 * the lawn, and the path to it end at the hall's wall (gate guards walked into the meditation hall's wall for good). If
+	 * the step still can't be reached (a building in the way), a sect member goes by the sect's ways instead
+	 * ({@link Sect#waypoints}): the nearest point on them that brings it closer.
+	 */
 	static void walkToward(CultivatorNpc npc, Vec3 target, double speed) {
 		Vec3 to = target.subtract(npc.position());
 		double distance = Math.sqrt(to.x * to.x + to.z * to.z);
-		Vec3 step = distance > 24 ? npc.position().add(to.x / distance * 24, 0, to.z / distance * 24) : target;
-		npc.getNavigation().moveTo(step.x, step.y, step.z, speed);
+		if (distance <= 24) {
+			npc.getNavigation().moveTo(target.x, target.y, target.z, speed);
+			return;
+		}
+		double sx = npc.getX() + to.x / distance * 24, sz = npc.getZ() + to.z / distance * 24;
+		int ground = Formations.surface(npc.level(), Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mth.floor(sx), Mth.floor(sz));
+		Path path = npc.getNavigation().createPath(BlockPos.containing(sx, ground, sz), 1);
+		if (path == null || !path.canReach()) {
+			Path around = byTheWays(npc, target);
+			if (around != null) path = around;
+		}
+		if (path != null) npc.getNavigation().moveTo(path, speed);
+		else npc.getNavigation().moveTo(sx, ground, sz, speed);
+	}
+
+	/** A path to the point on its sect's ways that brings it nearer {@code target} at the least cost, or null (no sect, no way). */
+	private static Path byTheWays(CultivatorNpc npc, Vec3 target) {
+		Sect sect = npc.sect();
+		if (sect == null) return null;
+		double here = npc.position().distanceTo(target);
+		List<BlockPos> candidates = new ArrayList<>();
+		for (BlockPos w : sect.waypoints()) {
+			double near = Math.sqrt(npc.blockPosition().distSqr(w));
+			if (near < 3 || near > 30 || Vec3.atBottomCenterOf(w).distanceTo(target) > here - 3) continue;
+			candidates.add(w);
+		}
+		candidates.sort(java.util.Comparator.comparingDouble(w -> Math.sqrt(npc.blockPosition().distSqr(w)) + Vec3.atBottomCenterOf(w).distanceTo(target)));
+		for (int i = 0; i < Math.min(3, candidates.size()); i++) {
+			Path path = npc.getNavigation().createPath(candidates.get(i), 1);
+			if (path != null && path.canReach()) return path;
+		}
+		return null;
 	}
 
 	/** Seats it on the mat (or patch of ground) at {@code pos}: in the middle, facing as it was, meditating. */

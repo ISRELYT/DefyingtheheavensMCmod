@@ -77,6 +77,10 @@ public final class MeditationManager {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_SOUL_BUSY), true);
 			return;
 		}
+		if (HeavenRitual.isActive(player.getUUID())) { // kneeling before the heavens already
+			player.displayClientMessage(Component.translatable(ModLang.MSG_RITUAL_BUSY), true);
+			return;
+		}
 		if (!canMeditate(player)) {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_CANNOT), true);
 			return;
@@ -255,6 +259,7 @@ public final class MeditationManager {
 		// Gain cultivation twice a second so the menu bar moves smoothly.
 		if (tick % 10 == 0) {
 			boolean wasBottleneck = c.isAtBottleneck();
+			boolean wasAtGate = c.isAtRitualGate();
 			// Mats, fruit on pedestals, height and tranquillity speed the gain (see CultivationBoost).
 			double perSecond = ratePerSecond(p, session);
 			// Unrefined qi from pills and fruit is refined on top, at REFINE_RATE times the meditation rate.
@@ -278,6 +283,8 @@ public final class MeditationManager {
 			} else if (!wasBottleneck && c.isAtBottleneck() && c.isBreakthroughLocked()) {
 				p.sendSystemMessage(Component.translatable(ModLang.MSG_REALM_LOCKED,
 						PlayerCultivation.rankName(PlayerCultivation.LOWER_REALM_CAP_REALM, PlayerCultivation.LOWER_REALM_CAP_STAGE)));
+			} else if (!wasAtGate && c.isAtRitualGate()) {
+				p.sendSystemMessage(Component.translatable(ModLang.MSG_RITUAL_GATE));
 			}
 		}
 

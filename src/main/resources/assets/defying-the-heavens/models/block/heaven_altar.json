@@ -1,0 +1,345 @@
+{
+    "parent":  "block/block",
+    "textures":  {
+                     "stone":  "minecraft:block/smooth_stone",
+                     "marble":  "minecraft:block/quartz_block_bottom",
+                     "jade":  "defying-the-heavens:block/jade_stone",
+                     "gold":  "minecraft:block/gold_block",
+                     "bronze":  "defying-the-heavens:block/formation_core_bronze",
+                     "ash":  "minecraft:block/light_gray_concrete_powder",
+                     "incense":  "minecraft:block/red_terracotta",
+                     "particle":  "minecraft:block/quartz_block_bottom"
+                 },
+    "elements":  [
+                     {
+                         "name":  "plinth",
+                         "from":  [
+                                      1,
+                                      0,
+                                      1
+                                  ],
+                         "to":  [
+                                    15,
+                                    2,
+                                    15
+                                ],
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#stone"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#stone"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#stone"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#stone"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#stone"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#stone"
+                                                }
+                                   }
+                     },
+                     {
+                         "name":  "body",
+                         "from":  [
+                                      2.5,
+                                      2,
+                                      2.5
+                                  ],
+                         "to":  [
+                                    13.5,
+                                    9,
+                                    13.5
+                                ],
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#marble"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#marble"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#marble"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#marble"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#marble"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#marble"
+                                                }
+                                   }
+                     },
+                     {
+                         "name":  "jade band",
+                         "from":  [
+                                      2.25,
+                                      5,
+                                      2.25
+                                  ],
+                         "to":  [
+                                    13.75,
+                                    6,
+                                    13.75
+                                ],
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#jade"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#jade"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#jade"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#jade"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#jade"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#jade"
+                                                }
+                                   }
+                     },
+                     {
+                         "name":  "gold trim",
+                         "from":  [
+                                      0.5,
+                                      9,
+                                      0.5
+                                  ],
+                         "to":  [
+                                    15.5,
+                                    10,
+                                    15.5
+                                ],
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#gold"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#gold"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#gold"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#gold"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#gold"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#gold"
+                                                }
+                                   }
+                     },
+                     {
+                         "name":  "table top",
+                         "from":  [
+                                      0.5,
+                                      10,
+                                      0.5
+                                  ],
+                         "to":  [
+                                    15.5,
+                                    11,
+                                    15.5
+                                ],
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#marble"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#marble"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#marble"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#marble"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#marble"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#marble"
+                                                }
+                                   }
+                     },
+                     {
+                         "name":  "burner",
+                         "from":  [
+                                      5,
+                                      11,
+                                      5
+                                  ],
+                         "to":  [
+                                    11,
+                                    13.5,
+                                    11
+                                ],
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#bronze"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#bronze"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#bronze"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#bronze"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#bronze"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#bronze"
+                                                }
+                                   }
+                     },
+                     {
+                         "name":  "burner rim",
+                         "from":  [
+                                      4.5,
+                                      13.5,
+                                      4.5
+                                  ],
+                         "to":  [
+                                    11.5,
+                                    14.5,
+                                    11.5
+                                ],
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#bronze"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#bronze"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#ash"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#bronze"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#bronze"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#bronze"
+                                                }
+                                   }
+                     },
+                     {
+                         "name":  "incense",
+                         "from":  [
+                                      6.5,
+                                      14.5,
+                                      7.5
+                                  ],
+                         "to":  [
+                                    7,
+                                    17.5,
+                                    8
+                                ],
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#incense"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#incense"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#incense"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#incense"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#incense"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#incense"
+                                                }
+                                   }
+                     },
+                     {
+                         "name":  "incense",
+                         "from":  [
+                                      7.75,
+                                      14.5,
+                                      7.75
+                                  ],
+                         "to":  [
+                                    8.25,
+                                    18,
+                                    8.25
+                                ],
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#incense"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#incense"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#incense"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#incense"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#incense"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#incense"
+                                                }
+                                   }
+                     },
+                     {
+                         "name":  "incense",
+                         "from":  [
+                                      9,
+                                      14.5,
+                                      8
+                                  ],
+                         "to":  [
+                                    9.5,
+                                    17,
+                                    8.5
+                                ],
+                         "faces":  {
+                                       "south":  {
+                                                     "texture":  "#incense"
+                                                 },
+                                       "north":  {
+                                                     "texture":  "#incense"
+                                                 },
+                                       "up":  {
+                                                  "texture":  "#incense"
+                                              },
+                                       "west":  {
+                                                    "texture":  "#incense"
+                                                },
+                                       "down":  {
+                                                    "texture":  "#incense"
+                                                },
+                                       "east":  {
+                                                    "texture":  "#incense"
+                                                }
+                                   }
+                     }
+                 ]
+}

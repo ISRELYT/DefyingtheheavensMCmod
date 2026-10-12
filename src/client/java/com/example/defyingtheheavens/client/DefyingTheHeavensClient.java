@@ -25,6 +25,8 @@ import net.minecraft.server.packs.resources.ResourceManager;
 public class DefyingTheHeavensClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
+		// The Heaven Altar's offering screen.
+		net.minecraft.client.gui.screens.MenuScreens.register(com.example.defyingtheheavens.HeavenAltarMenu.TYPE, HeavenAltarScreen::new);
 		net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE.putBlock(
 				com.example.defyingtheheavens.ModBlocks.CULTIVATION_FRUIT, net.minecraft.client.renderer.RenderType.cutout());
 		// Like vanilla leaves: the gaps between blossoms are see-through (in Fast graphics, leaves draw solid anyway).

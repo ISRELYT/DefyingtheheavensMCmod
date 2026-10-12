@@ -241,6 +241,8 @@ public final class ModPackets {
 			buf.writeVarInt(ability == null ? 0 : ability.ordinal() + 1);
 		}
 		buf.writeVarInt(c.getSoulState().ordinal());
+		buf.writeBoolean(c.hasHeavensLeave());
+		buf.writeVarInt(c.getFavour());
 		ServerPlayNetworking.send(player, SYNC, buf);
 	}
 

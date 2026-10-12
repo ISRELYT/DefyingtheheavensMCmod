@@ -47,9 +47,11 @@ public final class ClientPacketHandlers {
 			int[] wheel = new int[PlayerCultivation.WHEEL_SLOTS];
 			for (int i = 0; i < wheel.length; i++) wheel[i] = buf.readVarInt() - 1;
 			int soulState = buf.readVarInt();
+			boolean heavensLeave = buf.readBoolean();
+			int favour = buf.readVarInt();
 			client.execute(() -> ClientCultivationData.update(realm, stage, cultivation, qi, meditating, lowerRealmBound, inUpperRealm,
 					disabledAbilities, pressureStages, pressurePenalty, mortal, mortalStage, tempering, preparedRealm, preparedBonus, qiBoost,
-					pillResistance, medicinalQi, alignment, gearQiBonus, wheel, soulState));
+					pillResistance, medicinalQi, alignment, gearQiBonus, wheel, soulState, heavensLeave, favour));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SOUL_SELF, (client, handler, buf, sender) -> {

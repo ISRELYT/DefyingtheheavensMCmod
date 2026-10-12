@@ -273,7 +273,7 @@ public final class SectLayout {
 
 	/**
 	 * Sets {@code count} houses round the middle, the first {@code large} of them (the elders') larger: each facing the
-	 * plaza, well apart from its neighbours (a lawn of five to seven blocks between), with a footpath from its door to the
+	 * plaza, well apart from its neighbours (a lawn of seven to nine blocks between), with a footpath from its door to the
 	 * ways. Spots are tried roughly in order of distance but with plenty of chance mixed in, so the houses scatter over the
 	 * grounds rather than crowding the plaza or standing in rows. @return the lots, in the order laid (fewer only if the
 	 * grounds run out)
@@ -300,7 +300,7 @@ public final class SectLayout {
 			Side across = du < 0 ? Side.LEFT : Side.RIGHT, along = dv < 0 ? Side.FRONT : Side.BACK;
 			for (Side side : sideways ? new Side[] {across, along} : new Side[] {along, across}) {
 				Lot lot = Lot.centred(u, v, width, depth, side);
-				int ring = 5 + random.nextInt(3);
+				int ring = 7 + random.nextInt(3);
 				if (!fits(lot, ring)) continue;
 				claim(lot, 0);
 				int[] step = lot.doorstep();
@@ -316,6 +316,45 @@ public final class SectLayout {
 			}
 		}
 		return lots;
+	}
+
+	/**
+	 * A lot {@code width} across its front and {@code depth} deep for an open-air building (the Altar of Heaven, the training
+	 * ground), on open ground with a lawn of {@code ring} round it, its front facing the middle and a footpath to the ways: as
+	 * near {@code from} blocks out from the middle as fits, with a little chance mixed in. @return the lot, or null if the
+	 * grounds have no room for it
+	 */
+	public Lot place(RandomSource random, int width, int depth, int from, int ring) {
+		List<long[]> spots = new ArrayList<>();
+		for (int u = 0; u < w; u++) {
+			for (int v = 0; v < d; v++) {
+				if (!inside(u, v) || use[u + v * w] != OPEN) continue;
+				double key = Math.abs(Math.sqrt((u - a) * (u - a) + (v - b) * (v - b)) - from) + random.nextFloat() * 8;
+				spots.add(new long[] {(long) (key * 1000), u, v});
+			}
+		}
+		spots.sort((x, y) -> Long.compare(x[0], y[0]));
+		int tried = 0;
+		for (long[] spot : spots) {
+			int u = (int) spot[1], v = (int) spot[2];
+			if (use[u + v * w] != OPEN) continue;
+			if (++tried > 12000) break; // plenty of tries: the grounds just have no room
+			int du = u - a, dv = v - b;
+			Side side = Math.abs(du) >= Math.abs(dv) ? (du < 0 ? Side.LEFT : Side.RIGHT) : (dv < 0 ? Side.FRONT : Side.BACK);
+			Lot lot = Lot.centred(u, v, width, depth, side);
+			if (!fits(lot, ring)) continue;
+			claim(lot, 0);
+			int[] step = lot.doorstep();
+			if (!footpath(step[0], step[1])) {
+				for (int x = lot.u0(); x <= lot.u1(); x++) {
+					for (int z = lot.v0(); z <= lot.v1(); z++) use[x + z * w] = OPEN;
+				}
+				continue;
+			}
+			claim(lot, ring);
+			return lot;
+		}
+		return null;
 	}
 
 	// --- Trees and bamboo ---

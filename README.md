@@ -266,6 +266,53 @@ ingredients back out); an empty bucket takes the water back.
 /give @s defying-the-heavens:core_pill{PillGrade:4,PillAge:10000}   an Immortal-grade pill (grades 0-4)
 ```
 
+## The Ritual to the Heavens
+
+Leaving **Qi Refining Mid** takes the heavens' **permission to cultivate**, not a tribulation: at Mid the cultivation bar stops full (pills,
+fruit and meditation add nothing more) until the **Ritual to the Heavens** is done. Every path performs the same ritual,
+and sect cultivators perform it too (see Everyday life). Anyone already past Qi Refining Mid already has it.
+
+1. Build a **Heaven Altar** (smooth stone, jade, a Low spirit stone and copper) under open sky, and build round it.
+2. Right-click it to open its screen: nine **offering** slots in a ring (anything at all may be laid there) round a dial
+   showing the **chance**, which moves as you add or take items; beside it the offering's tier and worth (and what the
+   next tier needs), the altar's grandeur and its points by part, the height bonus, the reward (permission to cultivate, and
+   any Heaven's Favour), and whether you may begin now (`HeavenAltarMenu`, `HeavenAltarScreen`).
+3. **Sneak and right-click it with empty hands** to begin. The offerings rise as smoke and are taken, whatever happens.
+4. **Kneel still for three minutes.** Turning your head is fine; moving a third of a block (being knocked back too),
+   leaving the game, dying or losing the altar breaks the ritual, and the offering is gone.
+5. The heavens answer: **permission to cultivate** (and a full Mid steps straight into Late), or **silence**, and no new ritual until
+   the next dawn.
+
+**Offerings** are valued as cultivators value things (`TalkSystem.worth`, in Low spirit stones: a Mid stone is 9, a High
+81, a Supreme 729, an Immortal 6,561; herbs, pills and fruit by their age and grade; ordinary items nothing):
+
+| Offering | Worth | Reward | Base chance |
+|---|---|---|---|
+| Unworthy | under 9 | counts as no offering | 0.5% (2% at most) |
+| Proper | 9 - 80 | permission to cultivate | 40% |
+| Generous | 81 - 728 | permission + Heaven's Favour I | 55% |
+| Lavish | 729 - 6,560 | permission + Heaven's Favour II | 70% |
+| Heavenly | 6,561+ | permission + Heaven's Favour III | 80% |
+
+**Heaven's Favour** raises every cultivation bonus (health, damage, speed, armour, the qi pool and its gathering) and
+cultivation speed by 5% a step, for good; the cultivation menu shows it.
+
+**The altar** adds up to +30% and **height** up to +15% (a point for every 10 blocks above sea level); the chance never
+passes 95%. The altar is judged freely, by what is built round the Heaven Altar block (`HeavenAltar#judge`), and must see
+open sky:
+
+| What | Points |
+|---|---|
+| A raised platform it stands in the middle of: 3x3 / 5x5 / 7x7 / 9x9 | 2 / 5 / 8 / 10 |
+| Levels (terraces) stepping down from it (square or round, up to 3) | 3 each |
+| Noble stone in the platform (polished, carved, tiled or bricked stone, quartz, jade, calcite, precious blocks) | up to 6 |
+| Pillars 3 blocks tall on the platform | 1 each, up to 4 |
+| Lit candles, lit fires, lanterns | 1 each, up to 5 |
+| Treasures on Spirit Pedestals | 2 each, up to 4 |
+
+Humble (0-9 points) +0%, Modest (10-19) +10%, Grand (20-29) +20%, Magnificent (30+) +30%. Code: `HeavenRitual`,
+`HeavenAltar`, `HeavenAltarBlock(Entity)`; the gate is `PlayerCultivation#needsHeavensLeave`.
+
 ## Refining medicine and qi surges
 
 - **Unrefined qi.** Cultivation Fruit and Cultivation Pills no longer give cultivation at once: their qi goes into an
@@ -541,8 +588,13 @@ where the disciples live and meditate, and the **Treasury** face the way in acro
 stands beside the main hall (every storey but the top is the sect's library, shelves and candles and lecterns, with the
 library chest on the ground floor; a ladder climbs to a meditation chamber at the top) with herb gardens (ginseng,
 Spirit Ginseng, fruit trees) by it, and the **elders' houses** (pavilions with two eaves, one per elder) stand apart
-round the grounds, each with an earthen footpath to its door. Cherry trees and clumps of bamboo grow on the open grass
-between. Buildings stand on stone bases, with plain plastered walls between their pillars, under tiled roofs whose
+round the grounds, each with an earthen footpath to its door. Out on the lawns rises the **Altar of Heaven**, round
+terraces of worked stone after Beijing's Circular Mound (one, two or three by the sect's size, built Modest, Grand and
+Magnificent), with a Heaven Altar on top where the members perform the Ritual to the Heavens, and stairs up the front
+a step at a time. Not far off lies the **training ground**: a paved yard with a sparring ring set into the floor, straw
+training dummies across the back with a drill spot before each, sharpening stones and barrels down the sides, stone
+lanterns at the corners and banners at the way in; the disciples spar and practise their sword forms there. Cherry trees and clumps of
+bamboo grow on the open grass between. Buildings stand on stone bases, with plain plastered walls between their pillars, under tiled roofs whose
 ridges, eaves and upturned corners are picked out in the trim colour; the colours go by the sect's path: grey stone, red
 pillars and slate roofs trimmed in bronze for the righteous, Blue Spirit Wood and teal roofs for the neutral, black stone,
 crimson pillars and dark nether-brick roofs trimmed in red with soul lanterns for the demonic.
@@ -555,11 +607,15 @@ crimson pillars and dark nether-brick roofs trimmed in red with soul lanterns fo
     (`worldgen/structure_set/sects.json`).
   - **Upper Realm** (`defying-the-heavens:sect_upper_realm`): islands of Spirit Forest, Peach Blossom Sanctuary, Dense Qi
     Peaks and Thunder Peaks wide enough to hold one. One attempt per 14x14 chunks (at least 10 apart, as the grounds are
-    up to 141 blocks across), since few islands are (`worldgen/structure_set/sects_upper_realm.json`). Their masters are
+    up to 153 blocks across), since few islands are (`worldgen/structure_set/sects_upper_realm.json`). Their masters are
     Heavenly Beings or Four Axis cultivators.
-  - The grounds are 121, 133 and 141 blocks across; the buildings stand within 46, 52 and 56 blocks of the plaza (the
-    barrier reaches 2 past them, never more than 64), the gates 8 further out (`Size` in `SectStructure.java`).
-  - Tuning: `MAX_RELIEF`, `MAX_RELIEF_UPPER` and `MAX_WET` in `SectStructure.java`, `spacing` in the structure sets.
+  - The grounds are 133, 145 and 153 blocks across; the buildings stand within 52, 58 and 62 blocks of the plaza (the
+    barrier reaches 2 past them, never more than 64), the gates 8 further out (`Size` in `SectStructure.java`). Halls
+    stand 8 blocks back from the ways, and the elders' houses have 7-9 blocks of lawn between them.
+  - The land just beyond the gates and at the far corners of the grounds may rise at most 8 blocks above them
+    (`MAX_EDGE_RISE`): the grounds are levelled out to there, so higher land would stand as a cliff across the way out.
+  - Tuning: `MAX_RELIEF`, `MAX_RELIEF_UPPER`, `MAX_EDGE_RISE` and `MAX_WET` in `SectStructure.java`, `spacing` in the
+    structure sets.
 - Worldgen that runs after structures can't spoil the grounds: no lake (vanilla lava lakes, the Upper Realm's spring
   basins) forms where it would reach into a sect (`mixin/LakeFeatureMixin`), no wild tree, bamboo, huge mushroom, mossy
   boulder or jungle vine grows on the grounds or within 4 blocks of them (`mixin/SectClearingMixin`; saplings planted
@@ -698,7 +754,7 @@ in each path's voice, is in `NpcLines`).
 | --- | --- |
 | Dawn (0) | A bell rings three times from the main hall; the disciples get up |
 | Morning (1,000-4,000) | An Elder (they take turns by the day; with none, the Sect Master) teaches in the main hall, standing before the dais, the disciples seated in rows before it; a listener now and then answers or asks a question. They bow when it ends. With no room in the hall, the lecture is on the plaza |
-| Day (4,000-11,000) and evening | Duties, and between them: two disciples stop to talk, two on neighbouring mats whisper, elders talk quietly at their posts; disciples practise sword forms alone, or spar in pairs on the plaza (lunge, parry, a clash of blades, then a bow, and the stronger usually wins), and others stop to watch |
+| Day (4,000-11,000) and evening | Duties, and between them: two disciples stop to talk, two on neighbouring mats whisper, elders talk quietly at their posts; disciples practise sword forms before the training ground's dummies, or spar in pairs in its ring (lunge, parry, a clash of blades, then a bow, and the stronger usually wins), and others stop to watch; a sect laid out before it had a training ground uses the plaza |
 | Dusk (12,000) | A drum sounds three times |
 | Night (13,000-24,000) | Disciples sleep on their mats (from Core Formation they meditate through the night instead). With outer disciples enough for two watches the gates have a night watch, who sleep in through the next morning; the watch hands over with a word |
 
@@ -714,6 +770,11 @@ in each path's voice, is in `NpcLines`).
   it); mumble in their sleep; shout when the sect is attacked, its barrier struck or its treasury robbed; cheer a
   breakthrough (theirs, or a fellow's).
 - **When a member falls**, those near cry out its name, and for half a day after its fellows go and stand where it fell.
+- **The Ritual to the Heavens.** A member whose cultivation fills at Qi Refining Mid goes, by day, to the sect's Altar of
+  Heaven (one at a time; a sect from before the altar existed kneels by its Formation Core), kneels three minutes on an
+  offering from the sect's store (the cheapest that counts, a Proper one: the store holds one for each member it can house
+  and gains one a day), and the heavens answer as for a player, light or thunder; denied, it tries again the next day. One
+  away while it waited, and rogues on the road, ask off-screen.
 - Talk and practice start only where a player is near enough to see them; the routine (sleep, the lecture) goes on
   regardless. Anything more pressing (a fight, your talk with them) interrupts what they're doing, and they take it up
   again after. Nothing of it is saved: it is worked out again from the time of day.

@@ -90,6 +90,11 @@ public final class ModBlocks {
 			BlockBehaviour.Properties.of().mapColor(MapColor.DEEPSLATE).strength(1.5f, 6.0f).sound(SoundType.POLISHED_DEEPSLATE)
 					.noOcclusion()));
 
+	/** Where the Ritual to the Heavens is performed: an offering table with an incense burner (see HeavenAltarBlock). */
+	public static final Block HEAVEN_ALTAR = registerWithItem("heaven_altar", new HeavenAltarBlock(
+			BlockBehaviour.Properties.of().mapColor(MapColor.QUARTZ).requiresCorrectToolForDrops().strength(2.0f, 6.0f)
+					.sound(SoundType.POLISHED_DEEPSLATE).lightLevel(state -> 4).noOcclusion()));
+
 	/** Ginseng, aging in the ground (see GinsengBlock). Planted from its seeds; dug up as the ginseng root, keeping its age. */
 	public static final Block GINSENG = register("ginseng", new GinsengBlock(() -> ModItems.GINSENG, () -> ModItems.GINSENG_SEEDS,
 			ginsengProperties(MapColor.PLANT)));
@@ -187,6 +192,7 @@ public final class ModBlocks {
 			entries.accept(MEDITATION_MAT);
 			entries.accept(RED_MEDITATION_MAT);
 			entries.accept(SPIRIT_PEDESTAL);
+			entries.accept(HEAVEN_ALTAR);
 			entries.accept(ALCHEMY_CAULDRON);
 			entries.accept(FORMATION_CORE);
 		});

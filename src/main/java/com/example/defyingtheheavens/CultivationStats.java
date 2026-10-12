@@ -47,13 +47,13 @@ public final class CultivationStats {
 	public static double qiGather(Realm r, Stage s) { return r.getQiGather() * s.getPowerMultiplier(); }
 
 	/**
-	 * (Re)applies all cultivation modifiers from the EFFECTIVE stage (capped by Realm Suppression in the lower realms).
-	 * Permanent modifiers are saved with the player, so health survives relogs.
+	 * (Re)applies all cultivation modifiers from the EFFECTIVE stage (capped by Realm Suppression in the lower realms), raised
+	 * by Heaven's Favour. Permanent modifiers are saved with the player, so health survives relogs.
 	 */
 	public static void apply(ServerPlayer player, PlayerCultivation c) {
 		Realm r = c.getEffectiveRealm();
 		Stage s = c.getEffectiveStage();
-		double scale = 1;
+		double scale = c.favourFactor();
 		if (c.isMortal()) { // a tempered mortal body grows toward Qi Refining Early's bonuses, reaching them at Mortal Peak
 			r = Realm.QI_REFINING;
 			s = Stage.EARLY;

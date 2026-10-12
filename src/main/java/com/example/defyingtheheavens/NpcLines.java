@@ -311,6 +311,16 @@ public final class NpcLines {
 		lines("congratulate.righteous", "Congratulations, %s! Your diligence is rewarded.", "%s has broken through! Wonderful!");
 		lines("congratulate.neutral", "Nice, %s.", "Well done, %s.");
 		lines("congratulate.demonic", "Hmph. Congratulations, %s. Don't let it go to your head.", "%s broke through? ...I'm happy for you. Really.");
+		// The Ritual to the Heavens (HeavenRitual): kneeling at the altar, and the heavens' answer.
+		lines("ritual.begin.righteous", "Heavens above, hear this humble disciple.", "I offer what I have. Grant me the way forward.");
+		lines("ritual.begin.neutral", "Heavens. I ask your permission to cultivate on.", "Here's my offering. Let me through.");
+		lines("ritual.begin.demonic", "Heavens! I'll ask once. Politely.", "Take the offering and open the way. I'm not asking twice.");
+		lines("ritual.granted.righteous", "The heavens have answered! My thanks, my thanks!", "The way is open. I won't waste it.");
+		lines("ritual.granted.neutral", "They said yes.", "Permission granted. Good.");
+		lines("ritual.granted.demonic", "Ha! Even the heavens know better than to refuse me.", "Granted. As it should be.");
+		lines("ritual.denied.righteous", "Silence... I am not ready yet. Tomorrow, then.", "The heavens turn away. I must be more sincere.");
+		lines("ritual.denied.neutral", "Nothing. Tomorrow.", "Wasted offering.");
+		lines("ritual.denied.demonic", "Ignored?! Tomorrow they'll listen.", "Stingy heavens. Fine. Again at dawn.");
 	}
 
 	private NpcLines() {}

@@ -17,8 +17,11 @@ public final class ClientCultivationData {
 	public static void update(int realm, int stage, double cultivation, double qi, boolean meditating, boolean lowerRealmBound,
 							  boolean inUpperRealm, int disabledAbilities, int pressureStages, double pressurePenalty,
 							  boolean mortal, int mortalStage, double tempering, int preparedRealm, double preparedBonus, double qiBoost,
-							  double pillResistance, double medicinalQi, int alignment, double gearQiBonus, int[] wheel, int soulState) {
+							  double pillResistance, double medicinalQi, int alignment, double gearQiBonus, int[] wheel, int soulState,
+								  boolean heavensLeave, int favour) {
 		DATA.setState(Realm.byIndex(realm), Stage.byIndex(stage), cultivation);
+		DATA.setHeavensLeave(heavensLeave); // after setState, which grants it to anyone past Qi Refining Mid
+		DATA.setFavour(favour);
 		DATA.setSoulState(com.example.defyingtheheavens.SoulProjection.State.byIndex(soulState));
 		DATA.setAlignment(alignment);
 		DATA.setGearQiBonus(gearQiBonus);
@@ -41,6 +44,8 @@ public final class ClientCultivationData {
 	/** Disconnect: don't show the last world's cultivation on the next server. */
 	public static void clear() {
 		DATA.setState(Realm.QI_REFINING, Stage.EARLY, 0);
+		DATA.setHeavensLeave(false);
+		DATA.setFavour(0);
 		DATA.setMortal(true);
 		DATA.setMortalState(MortalStage.LOW, 0);
 		DATA.prepareBreakthrough(null, 0);

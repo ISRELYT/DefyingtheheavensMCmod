@@ -784,6 +784,63 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.HUD_SOUL_BODY, "Body %s / %s");
 		t.add(ModLang.HUD_SOUL_POSSESSING, "In %s (sneak to let go)");
 
+		// The Ritual to the Heavens (HeavenRitual, HeavenAltar)
+		t.add(ModBlocks.HEAVEN_ALTAR, "Heaven Altar");
+		t.add(ModLang.ritualOffering("unworthy"), "Unworthy");
+		t.add(ModLang.ritualOffering("proper"), "Proper");
+		t.add(ModLang.ritualOffering("generous"), "Generous");
+		t.add(ModLang.ritualOffering("lavish"), "Lavish");
+		t.add(ModLang.ritualOffering("heavenly"), "Heavenly");
+		t.add(ModLang.ritualGrandeur("humble"), "Humble");
+		t.add(ModLang.ritualGrandeur("modest"), "Modest");
+		t.add(ModLang.ritualGrandeur("grand"), "Grand");
+		t.add(ModLang.ritualGrandeur("magnificent"), "Magnificent");
+		t.add(ModLang.ALTAR_TOOLTIP, "Where the Ritual to the Heavens is performed: the heavens' permission to cultivate past Qi Refining Mid");
+		t.add(ModLang.ALTAR_TOOLTIP_BEGIN, "Right-click: lay offerings. Sneak + right-click, empty-handed: begin");
+		t.add(ModLang.ALTAR_TRAY, "Offerings to the Heavens");
+		t.add(ModLang.ALTAR_CHANCE, "Chance");
+		t.add(ModLang.ALTAR_OFFERING, "Offering");
+		t.add(ModLang.ALTAR_WORTH, "Worth %s");
+		t.add(ModLang.ALTAR_WORTH_NEXT, "Worth %1$s · %2$s at %3$s");
+		t.add(ModLang.ALTAR_ALTAR, "Altar");
+		t.add(ModLang.ALTAR_HEIGHT, "Height");
+		t.add(ModLang.ALTAR_HEIGHT_Y, "Y %s");
+		t.add(ModLang.ALTAR_REWARD, "Reward");
+		t.add(ModLang.ALTAR_REWARD_LEAVE, "Permission to cultivate");
+		t.add(ModLang.ALTAR_REWARD_FAVOUR, "+ Heaven's Favour %1$s (+%2$s%%)");
+		t.add(ModLang.ALTAR_REWARD_HAVE, "Favour %s already yours");
+		t.add(ModLang.altarPart("platform"), "Platform");
+		t.add(ModLang.altarPart("terraces"), "Levels");
+		t.add(ModLang.altarPart("noble"), "Noble stone");
+		t.add(ModLang.altarPart("pillars"), "Pillars");
+		t.add(ModLang.altarPart("lights"), "Lights");
+		t.add(ModLang.altarPart("treasures"), "Treasures");
+		t.add(ModLang.altarState("ready"), "Sneak + right-click the altar, empty-handed, to begin.");
+		t.add(ModLang.altarState("granted"), "The heavens have already permitted you to cultivate.");
+		t.add(ModLang.altarState("not_yet"), "The ritual waits for Qi Refining Mid.");
+		t.add(ModLang.altarState("dawn"), "The heavens will not hear you again until dawn.");
+		t.add(ModLang.altarState("busy"), "Not now: finish what you are doing first.");
+		t.add(ModLang.altarState("no_sky"), "The heavens can't see this altar: it needs open sky.");
+		t.add(ModLang.ALTAR_NO_SKY, "The heavens cannot see this altar: it needs open sky above it.");
+		t.add(ModLang.FAVOUR_LINE, "Heaven's Favour: +%s%%");
+		t.add(ModLang.RITUAL_AHEAD, "Before Qi Refining Late: the Ritual to the Heavens.");
+		t.add(ModLang.RITUAL_GATE, "Your cultivation is full. The heavens must grant you permission to cultivate further.");
+		t.add(ModLang.RITUAL_HOW, "Build a Heaven Altar under open sky, lay offerings on it, then sneak and right-click it empty-handed and kneel there, still, for three minutes.");
+		t.add(ModLang.MSG_RITUAL_GATE, "Your cultivation at Qi Refining Mid is full. You may go no further until the heavens grant you permission to cultivate: perform the Ritual to the Heavens at a Heaven Altar.");
+		t.add(ModLang.MSG_RITUAL_BEGIN, "The offering rises as smoke (%1$s, chance %2$s). Kneel before the heavens, still, for three minutes...");
+		t.add(ModLang.MSG_RITUAL_NOT_NOW, "The heavens have nothing to grant you now.");
+		t.add(ModLang.MSG_RITUAL_DAWN, "The heavens will not hear you again until dawn.");
+		t.add(ModLang.MSG_RITUAL_ALTAR_BUSY, "Someone is already praying at this altar.");
+		t.add(ModLang.MSG_RITUAL_BUSY, "Not now: finish what you are doing first.");
+		t.add(ModLang.MSG_RITUAL_MOVED, "You moved. The ritual is broken, and the offering is gone.");
+		t.add(ModLang.MSG_RITUAL_BROKEN, "The ritual is broken, and the offering is gone.");
+		t.add(ModLang.MSG_RITUAL_SUCCESS, "The heavens grant you permission to cultivate beyond Qi Refining Mid.");
+		t.add(ModLang.MSG_RITUAL_FAVOUR, "The heavens are pleased with your offering: Heaven's Favour, +%s%% to your cultivation.");
+		t.add(ModLang.MSG_RITUAL_FAIL, "The heavens are silent. Your offering is taken; you may ask again after dawn.");
+		t.add(ModLang.RITUAL_TITLE_SUCCESS, "The Heavens Grant You Permission");
+		t.add(ModLang.RITUAL_TITLE_FAIL, "The Heavens Are Silent");
+		t.add(ModLang.HUD_RITUAL, "Kneeling before the heavens... %s:%s");
+
 		// What cultivators say of their own accord (NpcLife, NpcSpeech): every line and its variants, kept in NpcLines.
 		NpcLines.english().forEach((key, text) -> t.add(key, text));
 	}

@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    " C ",
+    "JLJ",
+    "SSS"
+  ],
+  "key": {
+    "C": {
+      "item": "minecraft:copper_ingot"
+    },
+    "J": {
+      "item": "defying-the-heavens:jade"
+    },
+    "L": {
+      "item": "defying-the-heavens:low_spirit_stone"
+    },
+    "S": {
+      "item": "minecraft:smooth_stone"
+    }
+  },
+  "result": {
+    "item": "defying-the-heavens:heaven_altar"
+  }
+}

@@ -113,6 +113,16 @@ public class PlayerCultivation {
 	/** The nascent soul's state ({@link SoulProjection.State} ordinal): synced, never saved. */
 	private int soulState;
 
+	/**
+	 * The heavens' leave to cultivate past Qi Refining Mid, granted by the Ritual to the Heavens ({@link HeavenRitual}); until
+	 * then cultivation stops full at Qi Refining Mid. Saved and synced; anyone already past Qi Refining Mid has it.
+	 */
+	private boolean heavensLeave;
+	/** Heaven's Favour from a generous offering (0 none, up to 3): every cultivation bonus and cultivation speed, raised. Saved and synced. */
+	private int favour;
+	/** Server-only, saved: the game day a Ritual to the Heavens last failed on; no new one until the next dawn. -1: none. */
+	private long ritualFailedDay = -1;
+
 	/** The cultivator's path, {@link Alignment#MIN} (devil) to {@link Alignment#MAX} (saint); saved and synced. */
 	private int alignment;
 	/** Extra qi gathering from cultivator clothing worn (see ClothingItem#qiGatherBonus): synced, not saved. */
@@ -138,7 +148,39 @@ public class PlayerCultivation {
 		this.realm = realm;
 		this.stage = stage;
 		this.cultivation = Math.max(0, cultivation);
+		if (rank(realm, stage) > RITUAL_RANK) heavensLeave = true; // whoever is already past the ritual had the heavens' leave
 	}
+
+	// --- The Ritual to the Heavens (see HeavenRitual) ---
+
+	/** The stage the heavens' leave is needed to leave: Qi Refining Mid. */
+	public static final int RITUAL_RANK = rank(Realm.QI_REFINING, Stage.MID);
+	/** What each step of Heaven's Favour adds to every cultivation bonus and to cultivation speed. */
+	public static final double FAVOUR_PER_STEP = 0.05;
+
+	public boolean hasHeavensLeave() { return heavensLeave; }
+
+	public void setHeavensLeave(boolean leave) { heavensLeave = leave; }
+
+	public int getFavour() { return favour; }
+
+	public void setFavour(int favour) { this.favour = Math.max(0, Math.min(3, favour)); }
+
+	/** What Heaven's Favour multiplies every cultivation bonus, the qi pool, its gathering and cultivation speed by. */
+	public double favourFactor() { return 1 + FAVOUR_PER_STEP * favour; }
+
+	public long getRitualFailedDay() { return ritualFailedDay; }
+
+	public void setRitualFailedDay(long day) { ritualFailedDay = day; }
+
+	/** At the stage only the heavens' leave lets one leave, without it: Qi Refining Mid. */
+	public boolean needsHeavensLeave() { return !mortal && !heavensLeave && rank(realm, stage) == RITUAL_RANK; }
+
+	/** {@link #needsHeavensLeave()} with the stage's cultivation full: nothing more is gathered until the ritual is done. */
+	public boolean isAtRitualGate() { return needsHeavensLeave() && cultivation >= cultivationRequired(); }
+
+	/** No more cultivation fits: at a tribulation's bottleneck or at the Ritual to the Heavens' gate. */
+	public boolean isStalled() { return isAtBottleneck() || isAtRitualGate(); }
 
 	// --- The mortal path ---
 
@@ -294,18 +336,18 @@ public class PlayerCultivation {
 	 * Returns how much was refined.
 	 */
 	public double refine(double max) {
-		if (mortal || medicinalQi <= 0 || isAtBottleneck() || isSuppressed()) return 0;
+		if (mortal || medicinalQi <= 0 || isStalled() || isSuppressed()) return 0;
 		double refined = Math.min(Math.min(medicinalQi, Math.max(0, max)), roomToBottleneck());
 		medicinalQi -= refined;
 		return refined;
 	}
 
-	/** Cultivation that still fits before the next bottleneck (or the lower realm's cap), across minor stages. */
+	/** Cultivation that still fits before the next bottleneck (the lower realm's cap, or the ritual's gate), across minor stages. */
 	private double roomToBottleneck() {
 		double room = cultivationRequired() - cultivation;
 		Realm r = realm;
 		Stage s = stage;
-		while (!(s.isLast() || r.hasStageTribulations())) {
+		while (!(s.isLast() || r.hasStageTribulations()) && !(rank(r, s) == RITUAL_RANK && !heavensLeave)) {
 			s = s.next();
 			if (lowerRealmBound && rank(r, s) > CAP_RANK) break;
 			double required = r.getCultivationBase() * s.getCultivationMultiplier();
@@ -491,7 +533,7 @@ public class PlayerCultivation {
 	 */
 	public double maxQi() {
 		if (mortal) return 0;
-		return CultivationStats.maxQi(getEffectiveRealm(), getEffectiveStage()) * (1 - pressurePenalty);
+		return CultivationStats.maxQi(getEffectiveRealm(), getEffectiveStage()) * favourFactor() * (1 - pressurePenalty);
 	}
 
 	/**
@@ -501,7 +543,7 @@ public class PlayerCultivation {
 	public double qiGatherPerSecond() {
 		if (mortal) return 0;
 		return CultivationStats.qiGather(getEffectiveRealm(), getEffectiveStage()) * (inUpperRealm ? UPPER_REALM_QI_MULTIPLIER : 1.0)
-				* (1 + qiBoost) * (1 + gearQiBonus) * (1 - pressurePenalty);
+				* (1 + qiBoost) * (1 + gearQiBonus) * favourFactor() * (1 - pressurePenalty);
 	}
 
 	/** Qi above the shrunken pool that pressure holds back; it is back in the pool as soon as the pressure lifts. */
@@ -556,11 +598,12 @@ public class PlayerCultivation {
 
 	/**
 	 * Cultivation meditation actually gathers per second where the player is now: the stage's rate plus a flat bonus
-	 * (Rings of Power), times {@link #UPPER_REALM_QI_MULTIPLIER} in the Upper Realm. Nothing while suppressed.
+	 * (Rings of Power), times {@link #UPPER_REALM_QI_MULTIPLIER} in the Upper Realm, raised by Heaven's Favour. Nothing while
+	 * suppressed.
 	 */
 	public double meditationCultivationPerSecond(double bonus) {
 		if (mortal || isSuppressed()) return 0;
-		return (cultivationPerSecond() + bonus) * (inUpperRealm ? UPPER_REALM_QI_MULTIPLIER : 1.0);
+		return (cultivationPerSecond() + bonus) * (inUpperRealm ? UPPER_REALM_QI_MULTIPLIER : 1.0) * favourFactor();
 	}
 
 	/** Leaving this stage takes a tribulation: Grand Perfection always, and every stage from Nascent Soul on. */
@@ -585,7 +628,8 @@ public class PlayerCultivation {
 
 	/**
 	 * Adds cultivation. Minor stages advance automatically until a bottleneck, where cultivation is capped at the
-	 * stage's requirement until the player breaks through. A suppressed cultivator gains nothing.
+	 * stage's requirement until the player breaks through (or, at Qi Refining Mid, until the heavens grant their leave). A
+	 * suppressed cultivator gains nothing.
 	 *
 	 * @return true if at least one minor stage was gained
 	 */
@@ -596,7 +640,7 @@ public class PlayerCultivation {
 		cultivation += amount;
 		while (cultivation >= cultivationRequired()) {
 			boolean pastCap = lowerRealmBound && rank(realm, stage.next()) > CAP_RANK;
-			if (needsTribulation() || pastCap) {
+			if (needsTribulation() || pastCap || needsHeavensLeave()) {
 				cultivation = cultivationRequired();
 				break;
 			}
@@ -688,6 +732,9 @@ public class PlayerCultivation {
 		tag.putBoolean("FallProtected", fallProtected);
 		tag.putBoolean("InTribulation", inTribulation);
 		tag.putInt("Alignment", alignment);
+		tag.putBoolean("HeavensLeave", heavensLeave);
+		tag.putInt("Favour", favour);
+		tag.putLong("RitualFailedDay", ritualFailedDay);
 		// Both lists, so an ability missing from either (one added since the save) takes its default.
 		ListTag disabled = new ListTag();
 		ListTag enabled = new ListTag();
@@ -725,6 +772,10 @@ public class PlayerCultivation {
 		c.fallProtected = tag.getBoolean("FallProtected");
 		c.inTribulation = tag.getBoolean("InTribulation");
 		c.setAlignment(tag.getInt("Alignment")); // saves from before alignment start neutral (0)
+		// Saves from before the ritual: past Qi Refining Mid already counts as leave (setState); at or below it, they need it.
+		if (tag.getBoolean("HeavensLeave")) c.heavensLeave = true;
+		c.setFavour(tag.getInt("Favour"));
+		c.ritualFailedDay = tag.contains("RitualFailedDay") ? tag.getLong("RitualFailedDay") : -1;
 		// Starts from the defaults (the constructor's), so saves from before an ability existed get its default.
 		ListTag disabled = tag.getList("DisabledAbilities", Tag.TAG_STRING);
 		for (int i = 0; i < disabled.size(); i++) {

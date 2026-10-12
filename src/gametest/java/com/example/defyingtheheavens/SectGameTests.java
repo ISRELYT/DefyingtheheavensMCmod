@@ -606,12 +606,14 @@ public class SectGameTests implements FabricGameTest {
 					List<SectPiece> buildings = new ArrayList<>();
 					net.minecraft.nbt.CompoundTag blueprint = null;
 					BlockPos core = null;
-					int houses = 0, huts = 0;
+					int houses = 0, huts = 0, altars = 0, yards = 0;
 					for (var piece : pieces) {
 						SectPiece sp = (SectPiece) piece;
 						if (sp.kind() == SectPiece.Kind.TERRACE) continue;
 						if (sp.kind() == SectPiece.Kind.ELDER_HOUSE) houses++;
 						if (sp.kind() == SectPiece.Kind.DWELLING) huts++;
+						if (sp.kind() == SectPiece.Kind.ALTAR) altars++;
+						if (sp.kind() == SectPiece.Kind.TRAINING) yards++;
 						if (sp.kind() == SectPiece.Kind.PAGODA) {
 							// Every storey it was planned with fits, so its top chamber (and the mat in it) is on the top floor.
 							int tiers = sp.extra().getInt("Tiers");
@@ -656,6 +658,13 @@ public class SectGameTests implements FabricGameTest {
 						}
 					}
 					helper.assertTrue(gates == 3, "A gate and two torii (" + gates + ", " + sect + ")");
+					// The Altar of Heaven, for the Ritual to the Heavens: its altar block and the spot to kneel before it.
+					helper.assertTrue(altars == 1 && blueprint.getCompound("Posts").getLongArray("ALTAR").length == 2,
+							"An Altar of Heaven (" + altars + ", " + sect + ")");
+					// The training ground: its sparring ring and four drill spots; and points along the ways to walk by.
+					helper.assertTrue(yards == 1 && blueprint.getCompound("Posts").getLongArray("TRAINING").length == 5,
+							"A training ground (" + yards + ", " + sect + ")");
+					helper.assertTrue(blueprint.getCompound("Posts").getLongArray("WAY").length >= 8, "Way-points along the ways (" + sect + ")");
 					helper.assertTrue(blueprint.getCompound("Posts").getLongArray("GATE").length == 1, "A gate post (" + sect + ")");
 					long[] guards = blueprint.getCompound("Posts").getLongArray("GATE_GUARD");
 					helper.assertTrue(guards.length == 6, "Six gate-guard posts (" + guards.length + ", " + sect + ")");

@@ -51,7 +51,12 @@ public final class Sect {
 		}
 	}
 
-	public enum Post { MASTER_SEAT, MEDITATION, TREASURY, CORE, DWELLING, COURTYARD, GATE, GATE_GUARD }
+	/**
+	 * Where things are. ALTAR: the Altar of Heaven's Heaven Altar block, then where one kneels before it (see NpcLife). WAY:
+	 * points along the paved ways, to walk by (see {@link #waypoints}). TRAINING: the training ground's sparring ring, then its
+	 * drill spots.
+	 */
+	public enum Post { MASTER_SEAT, MEDITATION, TREASURY, CORE, DWELLING, COURTYARD, GATE, GATE_GUARD, ALTAR, WAY, TRAINING }
 
 	public final UUID id;
 	public String name = "";
@@ -74,6 +79,12 @@ public final class Sect {
 	public final Map<UUID, Integer> standing = new HashMap<>();
 	/** The game day each player last robbed the treasury (today's only): it counts against them once a day, not per block. */
 	public final Map<UUID, Long> robbedDay = new HashMap<>();
+	/**
+	 * Spirit stones (in Low stones) the sect keeps for its members' Rituals to the Heavens (see NpcLife): stocked for each
+	 * member to make one Proper offering, and topped up by one a day. -1 until first stocked.
+	 */
+	public int offerings = -1;
+	public long offeringsDay = -1;
 
 	public Sect(UUID id) {
 		this.id = id;
@@ -268,6 +279,8 @@ public final class Sect {
 			robbedList.add(r);
 		}
 		tag.put("Robbed", robbedList);
+		tag.putInt("Offerings", offerings);
+		tag.putLong("OfferingsDay", offeringsDay);
 		return tag;
 	}
 
@@ -308,7 +321,75 @@ public final class Sect {
 			CompoundTag r = robbedList.getCompound(i);
 			if (r.hasUUID("Player")) sect.robbedDay.put(r.getUUID("Player"), r.getLong("Day"));
 		}
+		// Sects from before the ritual are stocked when first asked (see takeOffering).
+		sect.offerings = tag.contains("Offerings") ? tag.getInt("Offerings") : -1;
+		sect.offeringsDay = tag.contains("OfferingsDay") ? tag.getLong("OfferingsDay") : -1;
 		return sect;
+	}
+
+	// --- The Ritual to the Heavens ---
+
+	/**
+	 * The offering a member makes at the Ritual to the Heavens, from the sect's store: the cheapest that counts (a Proper
+	 * one, a Mid stone's worth), or nothing if the store has run dry. The store starts with one for each member it can hold and
+	 * gains one a day (on {@code today}, a game day), up to twice that. @return the worth offered (Low stones)
+	 */
+	public double takeOffering(long today) {
+		double proper = HeavenAltar.Offering.PROPER.minWorth;
+		int stock = (int) proper * Math.max(1, capacity);
+		if (offerings < 0) {
+			offerings = stock;
+			offeringsDay = today;
+		}
+		if (today > offeringsDay) {
+			offerings = (int) Math.min(2L * stock, offerings + (today - offeringsDay) * (long) proper);
+			offeringsDay = today;
+		}
+		if (offerings < proper) return 0;
+		offerings -= (int) proper;
+		return proper;
+	}
+
+	/** The sect's Altar of Heaven (its Heaven Altar block), or null for a sect laid out before it had one. */
+	public BlockPos altar() {
+		List<BlockPos> list = posts(Post.ALTAR);
+		return list.isEmpty() ? null : list.get(0);
+	}
+
+	/** Where a member kneels for the ritual: before the altar, or (with none) by the core on the plaza. */
+	public BlockPos altarKneel() {
+		List<BlockPos> list = posts(Post.ALTAR);
+		return list.size() >= 2 ? list.get(1) : null;
+	}
+
+	/**
+	 * Points to walk by: along the paved ways (sects laid out since they were recorded), the courtyards, the gate and the
+	 * plaza. A walker that can't make its way straight goes by these (CultivatorGoals#walkToward).
+	 */
+	public List<BlockPos> waypoints() {
+		List<BlockPos> points = new ArrayList<>(posts(Post.WAY));
+		points.addAll(posts(Post.COURTYARD));
+		points.addAll(posts(Post.GATE));
+		points.add(core);
+		return points;
+	}
+
+	/** The training ground's sparring ring, or null for a sect laid out before it had one. */
+	public BlockPos sparringRing() {
+		List<BlockPos> list = posts(Post.TRAINING);
+		return list.isEmpty() ? null : list.get(0);
+	}
+
+	/** The training ground's drill spots (empty for a sect laid out before it had one). */
+	public List<BlockPos> drillSpots() {
+		List<BlockPos> list = posts(Post.TRAINING);
+		return list.size() <= 1 ? List.of() : list.subList(1, list.size());
+	}
+
+	/** How grand the sect's altar was built (by the size of the sect), for rituals worked out off-screen. */
+	public HeavenAltar.Grandeur altarGrandeur() {
+		if (altar() == null) return HeavenAltar.Grandeur.HUMBLE;
+		return capacity <= 12 ? HeavenAltar.Grandeur.MODEST : capacity <= 16 ? HeavenAltar.Grandeur.GRAND : HeavenAltar.Grandeur.MAGNIFICENT;
 	}
 
 	private static BoundingBox box(int[] values, BlockPos fallback) {

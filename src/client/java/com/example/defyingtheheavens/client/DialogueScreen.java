@@ -7,11 +7,13 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -50,15 +52,39 @@ public class DialogueScreen extends Screen {
 		repliesX = boxX1 - 10 - repliesW;
 	}
 
-	private int replyRows() {
-		return dialogue.replies().size() + 1; // the replies, then "Esc  Back to the wheel"
+	/** One row of the replies, wrapped to the column: where it starts and its lines (the number goes before the first). */
+	private record Row(int y, List<FormattedCharSequence> lines) {
+		int bottom() { return y + Math.max(1, lines.size()) * 10 + (ROW_H - 10); }
+	}
+
+	/** The replies laid out down their column, each wrapped to fit it, then "Esc  Back to the wheel". */
+	private List<Row> rows(int hoveredRow) {
+		List<Row> rows = new ArrayList<>();
+		List<TalkSession.Reply> replies = dialogue.replies();
+		int numberW = font.width("9  ");
+		int width = boxX1 - 10 - repliesX - numberW;
+		int y = boxY0 + 9;
+		for (int i = 0; i < replies.size(); i++) {
+			TalkSession.Reply reply = replies.get(i);
+			int color = !reply.enabled() ? TalkUi.DISABLED : i == hoveredRow ? TalkUi.CREAM_BRIGHT : TalkUi.CREAM;
+			MutableComponent text = reply.label().copy().withStyle(style -> style.withColor(color));
+			if (reply.note() != null) text.append(Component.literal(" ").append(reply.note()).withStyle(style -> style.withColor(TalkUi.WARNING)));
+			Row row = new Row(y, font.split(text, width));
+			rows.add(row);
+			y = row.bottom();
+		}
+		rows.add(new Row(y, font.split(Component.translatable(ModLang.TALK_BACK).withStyle(style -> style.withColor(TalkUi.MUTED)), width + numberW)));
+		return rows;
 	}
 
 	/** The reply row under the pointer: an index into the replies, the back row (size), or -1. */
 	private int rowAt(double mouseX, double mouseY) {
 		if (mouseX < repliesX - 4 || mouseX >= boxX1 - 6) return -1;
-		int row = (int) Math.floor((mouseY - (boxY0 + 9)) / ROW_H);
-		return mouseY >= boxY0 + 9 && row >= 0 && row < replyRows() ? row : -1;
+		List<Row> rows = rows(-1);
+		for (int i = 0; i < rows.size(); i++) {
+			if (mouseY >= rows.get(i).y() - 2 && mouseY < rows.get(i).bottom() - 2) return i;
+		}
+		return -1;
 	}
 
 	/** Tabs narrow when there are many (the portrait keeps its corner). */
@@ -122,24 +148,23 @@ public class DialogueScreen extends Screen {
 		g.fill(repliesX - 8, boxY0 + 8, repliesX - 7, boxY1 - 8, TalkUi.INNER);
 
 		// The replies.
+		// Each reply wrapped to the column: a long one, or one with a note, takes two lines rather than running off the box.
 		int hoveredRow = rowAt(mouseX, mouseY);
 		List<TalkSession.Reply> replies = dialogue.replies();
-		for (int i = 0; i < replyRows(); i++) {
-			int ry = boxY0 + 9 + i * ROW_H;
-			if (ry > boxY1 - 12) break;
+		List<Row> rows = rows(hoveredRow);
+		int numberW = font.width("9  ");
+		for (int i = 0; i < rows.size(); i++) {
+			Row row = rows.get(i);
+			if (row.bottom() > boxY1 - 4) break;
 			boolean back = i == replies.size();
 			boolean enabled = back || replies.get(i).enabled();
-			if (i == hoveredRow && enabled) g.fill(repliesX - 4, ry - 2, boxX1 - 6, ry + ROW_H - 2, TalkUi.INNER);
-			if (back) {
-				g.drawString(font, Component.translatable(ModLang.TALK_BACK), repliesX, ry, TalkUi.MUTED, false);
-				continue;
+			if (i == hoveredRow && enabled) g.fill(repliesX - 4, row.y() - 2, boxX1 - 6, row.bottom() - 2, TalkUi.INNER);
+			if (!back) g.drawString(font, (i + 1) + "  ", repliesX, row.y(), TalkUi.MUTED, false);
+			int ly = row.y();
+			for (FormattedCharSequence line : row.lines()) {
+				g.drawString(font, line, back ? repliesX : repliesX + numberW, ly, TalkUi.CREAM, false);
+				ly += 10;
 			}
-			TalkSession.Reply reply = replies.get(i);
-			int color = !enabled ? TalkUi.DISABLED : i == hoveredRow ? TalkUi.CREAM_BRIGHT : TalkUi.CREAM;
-			int x = repliesX;
-			x += g.drawString(font, (i + 1) + "  ", x, ry, TalkUi.MUTED, false) - x;
-			x += g.drawString(font, reply.label(), x, ry, color, false) - x;
-			if (reply.note() != null) g.drawString(font, Component.literal(" ").append(reply.note()), x, ry, TalkUi.WARNING, false);
 		}
 		super.render(g, mouseX, mouseY, partialTick);
 	}

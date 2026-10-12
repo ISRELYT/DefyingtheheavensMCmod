@@ -46,7 +46,7 @@ import net.minecraft.world.level.material.Fluids;
  */
 public class SectPiece extends StructurePiece {
 	/** TERRACE is the grounds; TOWER (the old walled sects' corner towers) is kept only so their saved pieces still load. */
-	public enum Kind { TERRACE, GATE, TOWER, PLAZA, MEDITATION_HALL, TREASURY, MAIN_HALL, PAGODA, GARDEN, DWELLING, ELDER_HOUSE, TORII }
+	public enum Kind { TERRACE, GATE, TOWER, PLAZA, MEDITATION_HALL, TREASURY, MAIN_HALL, PAGODA, GARDEN, DWELLING, ELDER_HOUSE, TORII, ALTAR, TRAINING }
 
 	public static final ResourceLocation TREASURY_LOOT = DefyingTheHeavens.id("chests/sect_treasury");
 	public static final ResourceLocation DWELLING_LOOT = DefyingTheHeavens.id("chests/sect_dwelling");
@@ -156,6 +156,8 @@ public class SectPiece extends StructurePiece {
 			case GARDEN -> garden(level, chunk, p);
 			case DWELLING -> dwelling(level, chunk, p, false);
 			case ELDER_HOUSE -> dwelling(level, chunk, p, true);
+			case ALTAR -> altarOfHeaven(level, chunk, p);
+			case TRAINING -> trainingGround(level, chunk, p);
 		}
 	}
 
@@ -326,6 +328,27 @@ public class SectPiece extends StructurePiece {
 			// Ran out of courses: close the top flat.
 			int ax0 = x0 + courses, ax1 = x1 - courses, az0 = z0 + courses, az1 = z1 - courses;
 			if (ax0 <= ax1 && az0 <= az1) fill(level, chunk, ax0, y + courses - 1, az0, ax1, y + courses - 1, az1, p.roof);
+		}
+	}
+
+	/**
+	 * Closes the gap between a building's walls and the roof over them. The walls round x0..x1, z0..z1 end at {@code wallTop}
+	 * (their beam), but a hipped roof over rx0..rz1 climbs a course for each block in from its eave, so over the walls it sits a
+	 * course or two higher, and a slit of sky showed between them all the way round (the roof seemed to float). This builds the
+	 * walls up to meet it: plaster, pillars at the corners.
+	 */
+	private void closeEaves(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x0, int z0, int x1, int z1, int wallTop,
+			int rx0, int rz0, int rx1, int rz1, int roofY, int courses) {
+		for (int x = x0; x <= x1; x++) {
+			for (int z = z0; z <= z1; z++) {
+				boolean edgeX = x == x0 || x == x1, edgeZ = z == z0 || z == z1;
+				if (!edgeX && !edgeZ) continue;
+				int k = Math.min(Math.min(x - rx0, rx1 - x), Math.min(z - rz0, rz1 - z));
+				if (k < 0) continue;
+				int roofAt = roofY + Math.min(k, courses - 1);
+				BlockState fill = edgeX && edgeZ ? p.pillar(Direction.Axis.Y) : p.wall.defaultBlockState();
+				for (int y = wallTop + 1; y < roofAt; y++) put(level, chunk, x, y, z, fill);
+			}
 		}
 	}
 
@@ -701,7 +724,9 @@ public class SectPiece extends StructurePiece {
 		interior(level, chunk, p, f.x0 + 1, f.z0 + 1, f.x1 - 1, f.z1 - 1, floor, top + 4);
 		walls(level, chunk, p, f.x0, f.z0, f.x1, f.z1, floor + 1, top - 1, 4, 3, 4, false);
 		fill(level, chunk, f.x0 + 1, top, f.z0 + 1, f.x1 - 1, top, f.z1 - 1, p.floor); // ceiling
-		roof(level, chunk, p, 0, 0, width() - 1, depth() - 1, top + 1, ridgeCourses(0, 0, width() - 1, depth() - 1), true);
+		int courses = ridgeCourses(0, 0, width() - 1, depth() - 1);
+		roof(level, chunk, p, 0, 0, width() - 1, depth() - 1, top + 1, courses, true);
+		closeEaves(level, chunk, p, f.x0, f.z0, f.x1, f.z1, top, 0, 0, width() - 1, depth() - 1, top + 1, courses);
 		// Mats in rows, a carpet aisle down the middle.
 		for (int[] mat : meditationMats()) put(level, chunk, mat[0], floor + 1, mat[1], ModBlocks.MEDITATION_MAT);
 		for (int z = f.z0 + 1; z < f.z1 - 2; z++) put(level, chunk, f.cx(), floor + 1, z, p.carpet);
@@ -750,7 +775,9 @@ public class SectPiece extends StructurePiece {
 		}
 		walls(level, chunk, p, f.x0, f.z0, f.x1, f.z1, floor + 1, top - 1, 4, 1, 3, true);
 		fill(level, chunk, f.x0 + 1, top, f.z0 + 1, f.x1 - 1, top, f.z1 - 1, p.floor);
-		roof(level, chunk, p, 0, 1, width() - 1, depth() - 1, top + 1, ridgeCourses(0, 1, width() - 1, depth() - 1), true);
+		int courses = ridgeCourses(0, 1, width() - 1, depth() - 1);
+		roof(level, chunk, p, 0, 1, width() - 1, depth() - 1, top + 1, courses, true);
+		closeEaves(level, chunk, p, f.x0, f.z0, f.x1, f.z1, top, 0, 1, width() - 1, depth() - 1, top + 1, courses);
 		RandomSource random = rand(3, 3, 11);
 		int[][] spots = treasurePedestals();
 		for (int i = 0; i < spots.length; i++) pedestal(level, chunk, spots[i][0], floor + 1, spots[i][1], treasure(random, i));
@@ -823,6 +850,7 @@ public class SectPiece extends StructurePiece {
 		int ex0 = f.x0 - 2, ez0 = hz0 - 2, ex1 = f.x1 + 2, ez1 = f.z1 + 2;
 		// Four courses: the last meets the clerestory, so no gap opens between the two roofs.
 		roof(level, chunk, p, ex0, ez0, ex1, ez1, top + 1, 4, false, true);
+		closeEaves(level, chunk, p, f.x0, hz0, f.x1, f.z1, top, ex0, ez0, ex1, ez1, top + 1, 4);
 		int cx0 = f.x0 + 2, cz0 = hz0 + 2, cx1 = f.x1 - 2, cz1 = f.z1 - 2;
 		for (int x = cx0; x <= cx1; x++) {
 			for (int z = cz0; z <= cz1; z++) {
@@ -836,7 +864,9 @@ public class SectPiece extends StructurePiece {
 				}
 			}
 		}
-		roof(level, chunk, p, cx0 - 2, cz0 - 2, cx1 + 2, cz1 + 2, top + 5, ridgeCourses(cx0 - 2, cz0 - 2, cx1 + 2, cz1 + 2), true, true);
+		int upper = ridgeCourses(cx0 - 2, cz0 - 2, cx1 + 2, cz1 + 2);
+		roof(level, chunk, p, cx0 - 2, cz0 - 2, cx1 + 2, cz1 + 2, top + 5, upper, true, true);
+		closeEaves(level, chunk, p, cx0, cz0, cx1, cz1, top + 4, cx0 - 2, cz0 - 2, cx1 + 2, cz1 + 2, top + 5, upper);
 		// The carpet, bordered, and the dais.
 		for (int z = hz0; z < f.z1 - 5; z++) {
 			fill(level, chunk, f.cx() - 1, floor + 1, z, f.cx() + 1, floor + 1, z, p.carpet);
@@ -974,6 +1004,7 @@ public class SectPiece extends StructurePiece {
 			// The eave round this storey (tiles out over the walls, then in to the next storey's foot; the next storey's walls
 			// replace whatever of it they stand on).
 			roof(level, chunk, p, x0 - 2, x0 - 2, x1 + 2, x1 + 2, base + 4, 3, false, true);
+			closeEaves(level, chunk, p, x0, x0, x1, x1, base + 4, x0 - 2, x0 - 2, x1 + 2, x1 + 2, base + 4, 3);
 			// Lanterns, clear of the ladder up the middle of the back: one at the front of the middle, and in a wider storey one
 			// over each back corner as well.
 			int mid = (x0 + x1) / 2;
@@ -1000,6 +1031,8 @@ public class SectPiece extends StructurePiece {
 		candles(level, chunk, p, tx1 - 1, topBase, seat[2], 4);
 		// The crowning roof and spire.
 		roof(level, chunk, p, tx0 - 1, tx0 - 1, tx1 + 1, tx1 + 1, base, ridgeCourses(tx0 - 1, tx0 - 1, tx1 + 1, tx1 + 1), true, true);
+		closeEaves(level, chunk, p, tx0, tx0, tx1, tx1, topBase + 4, tx0 - 1, tx0 - 1, tx1 + 1, tx1 + 1, base,
+				ridgeCourses(tx0 - 1, tx0 - 1, tx1 + 1, tx1 + 1));
 		int cx = w / 2;
 		int spire = base + ridgeCourses(tx0 - 1, tx0 - 1, tx1 + 1, tx1 + 1);
 		put(level, chunk, cx, spire, cx, p.accent);
@@ -1143,6 +1176,7 @@ public class SectPiece extends StructurePiece {
 		if (elder) {
 			// The lower eave, a short upper storey inside it, and the upper roof.
 			roof(level, chunk, p, 0, 0, width() - 1, depth() - 1, top + 1, 2, false, true);
+			closeEaves(level, chunk, p, f.x0, f.z0, f.x1, f.z1, top, 0, 0, width() - 1, depth() - 1, top + 1, 2);
 			int ux0 = f.x0 + 1, uz0 = f.z0 + 1, ux1 = f.x1 - 1, uz1 = f.z1 - 1;
 			for (int x = ux0; x <= ux1; x++) {
 				for (int z = uz0; z <= uz1; z++) {
@@ -1152,9 +1186,13 @@ public class SectPiece extends StructurePiece {
 					fill(level, chunk, x, top + 1, z, x, top + 3, z, corner ? p.pillar(Direction.Axis.Y) : p.wall.defaultBlockState());
 				}
 			}
-			roof(level, chunk, p, 1, 1, width() - 2, depth() - 2, top + 4, ridgeCourses(1, 1, width() - 2, depth() - 2), true, true);
+			int upper = ridgeCourses(1, 1, width() - 2, depth() - 2);
+			roof(level, chunk, p, 1, 1, width() - 2, depth() - 2, top + 4, upper, true, true);
+			closeEaves(level, chunk, p, ux0, uz0, ux1, uz1, top + 3, 1, 1, width() - 2, depth() - 2, top + 4, upper);
 		} else {
-			roof(level, chunk, p, 0, 0, width() - 1, depth() - 1, top + 1, ridgeCourses(0, 0, width() - 1, depth() - 1), true);
+			int courses = ridgeCourses(0, 0, width() - 1, depth() - 1);
+			roof(level, chunk, p, 0, 0, width() - 1, depth() - 1, top + 1, courses, true);
+			closeEaves(level, chunk, p, f.x0, f.z0, f.x1, f.z1, top, 0, 0, width() - 1, depth() - 1, top + 1, courses);
 		}
 		int[] mat = homeMat();
 		put(level, chunk, mat[0], mat[1], mat[2], elder ? ModBlocks.RED_MEDITATION_MAT : ModBlocks.MEDITATION_MAT);
@@ -1165,6 +1203,139 @@ public class SectPiece extends StructurePiece {
 			put(level, chunk, f.x0 + 1, floor + 2, f.z1 - 1, Blocks.POTTED_BAMBOO);
 			candles(level, chunk, p, f.x1 - 1, floor + 2, f.z1 - 1, 2);
 			wallBanner(level, chunk, p, f.cx(), floor + 3, f.z1 - 1, Direction.SOUTH);
+		}
+	}
+
+	// --- The Altar of Heaven ---
+
+	/** How many round terraces the Altar of Heaven has (1 to 3, by the sect's size). */
+	private int altarTiers() { return Math.max(1, Math.min(3, extra.getInt("Tiers"))); }
+
+	/** The radius of terrace {@code tier}, counting down from the top (0); each ring below is three blocks wider. */
+	private double altarRadius(int tier) { return (altarTiers() == 3 ? 5.7 : 4.5) + 3 * tier; }
+
+	/** The square lot an Altar of Heaven of {@code tiers} needs: its widest ring and the two steps up to it. */
+	public static int altarSize(int tiers) {
+		double widest = (tiers >= 3 ? 5.7 : 4.5) + 3 * (Math.max(1, Math.min(3, tiers)) - 1);
+		return 2 * (int) Math.ceil(widest) + 5;
+	}
+
+	/** How high the terraces stand {@code dist} from the middle: two blocks for each terrace whose ring reaches that far. */
+	private int altarHeight(double dist) {
+		int tiers = altarTiers();
+		for (int t = 0; t < tiers; t++) if (dist <= altarRadius(t)) return 2 * (tiers - t);
+		return 0;
+	}
+
+	/** {x, y, z}: the Heaven Altar block at the top's middle, and the spot before it, toward the stairs, where one kneels. */
+	public int[][] altarPosts() {
+		int cx = width() / 2, cz = depth() / 2, top = 2 * altarTiers();
+		return new int[][] {{cx, top + 1, cz}, {cx, top + 1, cz - 2}};
+	}
+
+	/**
+	 * The Altar of Heaven, after the Circular Mound in Beijing: round terraces of worked stone, each two blocks above the one
+	 * below and three blocks narrower, a balustrade round each, stairs up the front; on the top the Heaven Altar where the sect's
+	 * cultivators perform the Ritual to the Heavens (see NpcLife), under open sky. Lantern posts at the top's corners, and for
+	 * the greatest sects four pillars crowned with lanterns and incense candles by the altar. Built to be judged (HeavenAltar)
+	 * Modest, Grand and Magnificent with one, two and three terraces.
+	 */
+	private void altarOfHeaven(WorldGenLevel level, BoundingBox chunk, SectPalette p) {
+		int tiers = altarTiers();
+		int cx = width() / 2, cz = depth() / 2, top = 2 * tiers;
+		for (int x = 0; x < width(); x++) {
+			for (int z = 0; z < depth(); z++) {
+				double dist = Math.sqrt((x - cx) * (x - cx) + (z - cz) * (z - cz));
+				int h = altarHeight(dist);
+				if (h == 0) continue;
+				fill(level, chunk, x, 0, z, x, h - 1, z, p.foundation);
+				foundation(level, chunk, x, 0, z, p.foundation.defaultBlockState());
+				put(level, chunk, x, h, z, p.paving);
+				air(level, chunk, x, h + 1, z, x, top + 6, z);
+				// The balustrade round the rim of this terrace, open where the stairs come up.
+				double rim = altarRadius(tiers - h / 2);
+				boolean stairs = Math.abs(x - cx) <= 1 && z < cz;
+				if (dist > rim - 1 && !stairs) put(level, chunk, x, h + 1, z, p.baseWall);
+			}
+		}
+		// The stairs up the front: wherever the next column inward stands higher, a step for every block of the rise, the top
+		// one against the terrace on a block of stone and each lower one a column further out, so the way up is a walk, not a jump.
+		for (int x = cx - 1; x <= cx + 1; x++) {
+			for (int z = 0; z < cz; z++) {
+				int here = altarHeight(Math.sqrt((x - cx) * (x - cx) + (z - cz) * (z - cz)));
+				int next = altarHeight(Math.sqrt((x - cx) * (x - cx) + (z + 1 - cz) * (z + 1 - cz)));
+				int rise = next - here;
+				for (int k = 0; k < rise && z - k >= 0; k++) {
+					int step = next - k;
+					if (step - 1 >= here + 1) fill(level, chunk, x, here + 1, z - k, x, step - 1, z - k, p.foundation);
+					put(level, chunk, x, step, z - k, p.baseStair(Direction.NORTH));
+				}
+			}
+		}
+		if (tiers >= 3) {
+			// Four pillars on the top, crowned with lanterns.
+			for (int[] c : new int[][] {{5, 2}, {5, -2}, {-5, 2}, {-5, -2}}) {
+				pillar(level, chunk, p, cx + c[0], top + 1, top + 3, cz + c[1]);
+				lanternStanding(level, chunk, p, cx + c[0], top + 4, cz + c[1]);
+			}
+		} else {
+			for (int[] c : new int[][] {{3, 3}, {3, -3}, {-3, 3}, {-3, -3}}) {
+				put(level, chunk, cx + c[0], top + 1, cz + c[1], p.baseWall);
+				lanternStanding(level, chunk, p, cx + c[0], top + 2, cz + c[1]);
+			}
+		}
+		put(level, chunk, cx, top + 1, cz, ModBlocks.HEAVEN_ALTAR);
+		if (tiers >= 2) {
+			candles(level, chunk, p, cx - 1, top + 1, cz + 1, 3);
+			candles(level, chunk, p, cx + 1, top + 1, cz + 1, 3);
+		}
+	}
+
+	// --- The training ground ---
+
+	/** The training ground's lot: across its front, and deep. */
+	public static final int TRAINING_W = 19, TRAINING_D = 17;
+	/** Where the dummies stand across the back, and how far in the sparring ring's middle lies. */
+	private static final int[] DUMMIES = {3, 7, 11, 15};
+	private static final int RING_Z = 7;
+
+	/** {x, y, z}: the sparring ring's middle, then a drill spot before each training dummy. */
+	public int[][] trainingPosts() {
+		int[][] posts = new int[1 + DUMMIES.length][];
+		posts[0] = new int[] {width() / 2, 1, RING_Z};
+		for (int i = 0; i < DUMMIES.length; i++) posts[i + 1] = new int[] {DUMMIES[i], 1, depth() - 5};
+		return posts;
+	}
+
+	/**
+	 * The training ground, where the disciples practise (NpcLife): a yard of worked stone with an edging, a sparring ring set
+	 * into the floor, straw training dummies on posts across the back with a drill spot before each, sharpening stones and
+	 * barrels of practice gear down the sides, a stone lantern at each corner and the sect's banners either side of the way in.
+	 */
+	private void trainingGround(WorldGenLevel level, BoundingBox chunk, SectPalette p) {
+		int w = width(), d = depth(), cx = w / 2;
+		for (int x = 0; x < w; x++) {
+			for (int z = 0; z < d; z++) {
+				boolean edge = x == 0 || z == 0 || x == w - 1 || z == d - 1;
+				foundation(level, chunk, x, 0, z, p.foundation.defaultBlockState());
+				double ring = Math.sqrt((x - cx) * (x - cx) + (z - RING_Z) * (z - RING_Z));
+				put(level, chunk, x, 0, z, edge ? p.foundation : ring >= 3.6 && ring < 4.6 ? p.path : p.paving);
+				air(level, chunk, x, 1, z, x, 8, z);
+			}
+		}
+		for (int x : DUMMIES) {
+			put(level, chunk, x, 1, d - 3, p.pillar(Direction.Axis.Y));
+			put(level, chunk, x, 2, d - 3, Blocks.HAY_BLOCK);
+		}
+		for (int side : new int[] {1, w - 2}) {
+			put(level, chunk, side, 1, 5, Blocks.GRINDSTONE);
+			put(level, chunk, side, 1, 9, Blocks.BARREL);
+			put(level, chunk, side, 1, 10, Blocks.BARREL);
+		}
+		for (int[] c : new int[][] {{1, 1}, {w - 2, 1}, {1, d - 2}, {w - 2, d - 2}}) stoneLantern(level, chunk, p, c[0], 1, c[1]);
+		for (int x : new int[] {cx - 3, cx + 3}) {
+			fill(level, chunk, x, 1, 0, x, 3, 0, p.baseWall);
+			put(level, chunk, x, 4, 0, p.banner);
 		}
 	}
 
