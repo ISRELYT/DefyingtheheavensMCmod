@@ -134,9 +134,9 @@ public class SectBarrierBlock extends Block {
 	public void attack(BlockState state, Level level, BlockPos pos, Player player) {
 		if (level instanceof ServerLevel server && player instanceof ServerPlayer sp) {
 			Formations.onAttacked(server, pos, sp);
-			// The struck cell ripples, so the unseen wall shows for a moment.
-			server.sendParticles(ParticleTypes.ENCHANT, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 12, 0.4, 0.4, 0.4, 0.4);
-			server.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_HIT, SoundSource.BLOCKS, 0.8f, 0.6f);
+			// The struck barrier ripples out from the blow and rings, so the unseen sphere shows for a moment.
+			Formations.struck(server, pos, 1.0f);
+			server.sendParticles(ParticleTypes.ENCHANT, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 6, 0.4, 0.4, 0.4, 0.4);
 		}
 	}
 
@@ -144,6 +144,7 @@ public class SectBarrierBlock extends Block {
 	public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
 		if (level instanceof ServerLevel server && player instanceof ServerPlayer sp) {
 			Formations.onBroken(server, pos, sp);
+			Formations.struck(server, pos, 1.6f); // a breach rings out the harder
 			server.sendParticles(ParticleTypes.END_ROD, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 8, 0.3, 0.3, 0.3, 0.05);
 			server.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_BREAK, SoundSource.BLOCKS, 1.0f, 0.5f);
 		}

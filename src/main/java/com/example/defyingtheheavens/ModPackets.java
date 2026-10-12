@@ -51,6 +51,8 @@ public final class ModPackets {
 	public static final ResourceLocation PRESSED_ENTITIES = new ResourceLocation(DefyingTheHeavens.MOD_ID, "pressed_entities");
 	/** S2C: the raised formations near the player (see {@link Formations}): drawn under Qi Sense, and walked through by their owner. */
 	public static final ResourceLocation FORMATIONS = new ResourceLocation(DefyingTheHeavens.MOD_ID, "formations");
+	/** S2C: a barrier was struck (centre, radius, kind, the way out from its centre to the blow, strength): it ripples. */
+	public static final ResourceLocation BARRIER_RIPPLE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "barrier_ripple");
 	/** S2C: a Formation Core's state, opening (or refreshing) its screen. */
 	public static final ResourceLocation FORMATION_CORE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "formation_core");
 	/** C2S: the open core screen asks for a fresh state (its position). */
@@ -342,6 +344,19 @@ public final class ModPackets {
 			for (UUID player : formation.getTrusted()) buf.writeUUID(player);
 		}
 		ServerPlayNetworking.send(to, FORMATIONS, buf);
+	}
+
+	/** To {@code to}: the barrier of {@code formation} was struck where {@code way} (a unit vector from its centre) meets it. */
+	public static void sendBarrierRipple(ServerPlayer to, Formation formation, Vec3 way, float strength) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeBlockPos(formation.center);
+		buf.writeVarInt(formation.getRadius());
+		buf.writeEnum(formation.kind);
+		buf.writeFloat((float) way.x);
+		buf.writeFloat((float) way.y);
+		buf.writeFloat((float) way.z);
+		buf.writeFloat(strength);
+		ServerPlayNetworking.send(to, BARRIER_RIPPLE, buf);
 	}
 
 	public static void sendFormationCore(ServerPlayer to, FormationCoreBlockEntity core) {

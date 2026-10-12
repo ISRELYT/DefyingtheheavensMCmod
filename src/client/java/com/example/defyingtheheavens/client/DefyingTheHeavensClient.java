@@ -98,6 +98,8 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(ClientSpatialStorms::render);
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(SuppressionClient::renderMarkers);
+		// A struck barrier ripples, for everyone near (Qi Sense or not).
+		WorldRenderEvents.AFTER_TRANSLUCENT.register(BarrierRipples::render);
 		// Sword Flight: the sword under each rider's feet, and the trail of light behind it.
 		WorldRenderEvents.AFTER_ENTITIES.register(SwordFlightClient::renderSwords);
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(SwordFlightClient::renderTrails);
@@ -129,6 +131,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			ConsciousnessRenderer.clear();
 			SuppressionClient.clear();
 			ClientFormations.clear();
+			BarrierRipples.clear();
 			QiSurgeHud.clear();
 			InnerRealmFade.clear();
 			SwordFlightClient.clear();

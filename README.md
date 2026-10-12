@@ -746,6 +746,12 @@ the top.
   to shatter it, and right-clicks again to open it. A broken seal stays broken for 5 minutes, then its keepers, if any
   are still about, cast it anew.
 - A barrier block broken (or landed on) shows pale shards of light-blue glass, not the red barrier sign.
+- **A struck barrier ripples and rings.** What stops you is a shell of invisible barrier blocks round the core, but
+  what's struck is the true sphere they stand for, as Qi Sense shows it: a blow, an arrow or anything else thrown at
+  it (a snowball, a trident, a fireball), or a cell broken, and for a moment the whole sphere shows faintly while bright
+  rings run out over its surface from where it was hit and fade (a core's barrier purple, a concealment green), seen
+  by everyone within 160 blocks, Qi Sense or not, with a deep crystal resonance and a chime (a breach the louder and
+  wider) (`Formations.struck`, `BarrierRipples` on the client).
 
 - **The whole sect turns out** (every member in its territory, the elders and the Sect Master too) when a player or a
   cultivator attacks any member anywhere in the territory (the barrier plus 30 blocks, so the gate guards too), or when

@@ -104,6 +104,15 @@ public final class ClientPacketHandlers {
 			client.execute(() -> ClientFormations.update(formations));
 		});
 
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.BARRIER_RIPPLE, (client, handler, buf, sender) -> {
+			BlockPos centre = buf.readBlockPos();
+			int radius = buf.readVarInt();
+			Formation.Kind kind = buf.readEnum(Formation.Kind.class);
+			net.minecraft.world.phys.Vec3 way = new net.minecraft.world.phys.Vec3(buf.readFloat(), buf.readFloat(), buf.readFloat());
+			float strength = buf.readFloat();
+			client.execute(() -> BarrierRipples.add(centre, radius, kind, way, strength));
+		});
+
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.FORMATION_CORE, (client, handler, buf, sender) -> {
 			BlockPos pos = buf.readBlockPos();
 			int radius = buf.readVarInt();

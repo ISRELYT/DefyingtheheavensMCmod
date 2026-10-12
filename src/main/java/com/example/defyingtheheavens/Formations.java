@@ -39,6 +39,8 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
@@ -273,6 +275,30 @@ public final class Formations {
 	}
 
 	/** A player broke through a barrier block. */
+	/** Players this far from where a barrier is struck see it ripple (about as far as they can see a cultivator). */
+	private static final double RIPPLE_SEEN = 160;
+
+	/**
+	 * A barrier was struck at its cell {@code pos} (a blow, a projectile, a cell broken), with {@code strength} (1 for a
+	 * blow): the true sphere the cells stand for rings out from there, seen by everyone near (BarrierRipples, on the client),
+	 * and resonates like struck crystal.
+	 */
+	public static void struck(ServerLevel level, BlockPos pos, float strength) {
+		Formation formation = onShell(level, pos, null);
+		if (formation == null) return;
+		Vec3 centre = Vec3.atCenterOf(formation.center);
+		Vec3 way = Vec3.atCenterOf(pos).subtract(centre);
+		if (way.lengthSqr() < 1.0e-6) return;
+		way = way.normalize();
+		Vec3 at = centre.add(way.scale(formation.getRadius() + 0.5));
+		for (ServerPlayer player : level.players()) {
+			if (player.distanceToSqr(at) <= RIPPLE_SEEN * RIPPLE_SEEN) ModPackets.sendBarrierRipple(player, formation, way, strength);
+		}
+		float pitch = 0.5f + level.getRandom().nextFloat() * 0.12f;
+		level.playSound(null, at.x, at.y, at.z, SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.BLOCKS, 1.4f * strength, pitch);
+		level.playSound(null, at.x, at.y, at.z, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 0.9f * strength, pitch * 1.6f);
+	}
+
 	public static void onBroken(ServerLevel level, BlockPos pos, ServerPlayer player) {
 		Formation formation = onShell(level, pos, null);
 		if (formation != null) assailed(level, formation, player, pos, true);

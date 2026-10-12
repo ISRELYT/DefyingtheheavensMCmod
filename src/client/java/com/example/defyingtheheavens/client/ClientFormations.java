@@ -28,9 +28,9 @@ import java.util.List;
  * is green.
  */
 public final class ClientFormations {
-	/** Deep and light shades of each kind: the deep one where the membrane faces you, the light one at its edges. */
-	private static final float[][] CORE = {{0.48f, 0.16f, 0.92f}, {0.86f, 0.62f, 1.0f}};
-	private static final float[][] CONCEALMENT = {{0.10f, 0.62f, 0.28f}, {0.58f, 0.98f, 0.64f}};
+	/** Deep and light shades of each kind: the deep one where the membrane faces you, the light one at its edges (and ripples). */
+	static final float[][] CORE = {{0.48f, 0.16f, 0.92f}, {0.86f, 0.62f, 1.0f}};
+	static final float[][] CONCEALMENT = {{0.10f, 0.62f, 0.28f}, {0.58f, 0.98f, 0.64f}};
 	private static final int RINGS = 32;
 	private static final int SECTORS = 64;
 	private static final double DRAW_RANGE = 192;

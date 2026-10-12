@@ -547,6 +547,9 @@ public class SectGameTests implements FabricGameTest {
 		SectManager.spareSealedTreasuries(level, blast);
 		helper.assertTrue(blast.size() == 1, "and a blast breaks into it");
 		disciple.discard();
+		// Its grounds cover this spot: put it out of the way, or a later run's test laid out here would find it first
+		// (SectManager#sectAt), as the game-test world is kept between runs.
+		sect.extinct = true;
 		helper.succeed();
 	}
 
