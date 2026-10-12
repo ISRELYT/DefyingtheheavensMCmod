@@ -350,6 +350,156 @@ public class SectGameTests implements FabricGameTest {
 		helper.succeed();
 	}
 
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 100)
+	public void aMemberLetGoWhileUnloadedIsWokenAndLeavesAtOnce(GameTestHelper helper) {
+		ServerLevel level = helper.getLevel();
+		Sect sect = newSect(helper, 0);
+		sect.capacity = 2;
+		CultivatorNpc master = member(helper, sect, PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.EARLY), 0);
+		// A member whose land is unloaded: on the roll, not in the world, last seen at the far corner of the test.
+		UUID unloaded = UUID.randomUUID();
+		Sect.Member away = new Sect.Member(unloaded, PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY), 1);
+		away.lastAt = helper.absolutePos(new BlockPos(6, 2, 6));
+		sect.members.put(unloaded, away);
+		sect.recalculateTitles();
+		CultivatorNpc newcomer = helper.spawn(ModEntities.CULTIVATOR, new BlockPos(2, 2, 4));
+		newcomer.becomeRogue(PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.GRAND_PERFECTION), 0, level.getRandom());
+
+		helper.assertTrue(SectManager.admit(level, sect, newcomer), "The newcomer joins");
+		helper.assertTrue(!sect.members.containsKey(unloaded) && sect.letGo.containsKey(unloaded)
+				&& away.lastAt.equals(sect.letGo.get(unloaded).lastAt), "The one let go is off the roll, to be woken where it last stood");
+		Sect saved = Sect.load(sect.save());
+		helper.assertTrue(saved.letGo.containsKey(unloaded) && away.lastAt.equals(saved.letGo.get(unloaded).lastAt), "That survives a save");
+		SectManager.rouse(level.getServer(), sect);
+		helper.assertTrue(sect.letGo.get(unloaded).looks == 1, "Its land is woken, and looked at again till it turns up");
+
+		// Its land loads (woken, or anyone's): the body, still thinking itself a member, sets off at once, ticking or not.
+		CultivatorNpc body = ModEntities.CULTIVATOR.create(level);
+		body.setUUID(unloaded);
+		body.setRank(away.rank);
+		body.joinSect(sect, 1);
+		body.moveTo(away.lastAt.getX() + 0.5, away.lastAt.getY(), away.lastAt.getZ() + 0.5, 0, 0);
+		level.addFreshEntity(body);
+		helper.assertTrue(body.getSectId() == null && body.getLifecycle() == CultivatorNpc.Lifecycle.DEPARTING, "It sets off the moment it loads");
+		helper.assertTrue(!sect.letGo.containsKey(unloaded), "and needn't be looked for any more");
+		// Heavenly Beings and up leave a lower-realm sect on their own: gone before they can, so they don't wander off into other tests.
+		body.discard();
+		master.discard();
+		newcomer.discard();
+
+		Sect other = newSect(helper, 0);
+		CultivatorNpc disciple = member(helper, other, PlayerCultivation.rank(Realm.QI_REFINING, Stage.EARLY), 0);
+		helper.runAfterDelay(30, () -> {
+			Sect.Member kept = other.members.get(disciple.getUUID());
+			// Kept every second it ticks: within a second's stroll of where it is now.
+			helper.assertTrue(kept != null && kept.lastAt != null && kept.lastAt.distSqr(disciple.blockPosition()) <= 16,
+					"A loaded member's place is kept up as it goes (" + (kept == null ? null : kept.lastAt) + " vs " + disciple.blockPosition() + ")");
+			disciple.discard();
+			helper.succeed();
+		});
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void anUnseenJourneyKeepsToARealWay(GameTestHelper helper) {
+		BlockPos from = new BlockPos(0, 100, 0), to = new BlockPos(400, 100, 300); // 500 blocks
+		long length = (long) (500 / NpcTravel.SPEED);
+		var journey = new NpcTravel.Journey(net.minecraft.world.level.Level.OVERWORLD, from, to, 1000, 1000 + length, false, new net.minecraft.nbt.CompoundTag());
+		helper.assertTrue(journey.at(1000).distanceTo(Vec3.atBottomCenterOf(from)) < 0.01, "Setting off, it is where it left");
+		Vec3 half = journey.at(1000 + length / 2);
+		helper.assertTrue(half.distanceTo(new Vec3(200.5, 100, 150.5)) < 1, "Halfway there, it is halfway along the line (" + half + ")");
+		helper.assertTrue(journey.at(1000 + length * 3).distanceTo(Vec3.atBottomCenterOf(to)) < 0.01, "Done, it is there, and no further");
+		var back = journey.shortOfTheEnd(1000 + length * 2, 160);
+		double left = back.at(1000 + length * 2).distanceTo(Vec3.atBottomCenterOf(to));
+		helper.assertTrue(Math.abs(left - 160) < 1 && back.readyAt() > 1000 + length * 2,
+				"Someone waiting at its end: it is put back " + Math.round(left) + " blocks along its way, to fly in in their sight");
+
+		// Saved, and as saved before journeys had a way (at their end already).
+		net.minecraft.nbt.CompoundTag old = new net.minecraft.nbt.CompoundTag();
+		net.minecraft.nbt.ListTag list = new net.minecraft.nbt.ListTag();
+		net.minecraft.nbt.CompoundTag j = new net.minecraft.nbt.CompoundTag();
+		j.putString("Dimension", "minecraft:overworld");
+		j.putLong("Target", to.asLong());
+		j.putLong("ReadyAt", 5000);
+		j.put("Entity", new net.minecraft.nbt.CompoundTag());
+		list.add(j);
+		old.put("Journeys", list);
+		net.minecraft.nbt.CompoundTag again = NpcTravel.load(old).save(new net.minecraft.nbt.CompoundTag()).getList("Journeys", 10).getCompound(0);
+		helper.assertTrue(again.getLong("Origin") == to.asLong() && again.getLong("DepartedAt") == 5000 && !again.getBoolean("Ascent"),
+				"An old journey is simply at its end, and keeps its way when saved again");
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 200)
+	public void anUnseenTravellerIsMetWhereItHasGotTo(GameTestHelper helper) {
+		ServerLevel level = helper.getLevel();
+		BlockPos here = helper.absolutePos(new BlockPos(2, 10, 2));
+		// A Heavenly Being leaving its sect, unseen, its way running right across the test from 300 blocks off either side.
+		CultivatorNpc traveller = ModEntities.CULTIVATOR.create(level);
+		traveller.becomeRogue(PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.MID), 0, level.getRandom());
+		BlockPos from = here.offset(-300, 0, 0), to = here.offset(300, 0, 0);
+		traveller.moveTo(from.getX() + 0.5, from.getY(), from.getZ() + 0.5, 0, 0);
+		traveller.setJourneyTarget(to);
+		net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+		traveller.saveAsPassenger(tag);
+		tag.getCompound("Npc").putString("Lifecycle", CultivatorNpc.Lifecycle.DEPARTING.name()); // as one leaving its sect
+		long now = level.getGameTime();
+		long length = (long) (600 / NpcTravel.SPEED);
+		// Set off long enough ago to be just short of the test now.
+		long departed = now - (long) (290 / NpcTravel.SPEED);
+		NpcTravel.journeys(level.getServer()).add(new NpcTravel.Journey(level.dimension(), from, to, departed, departed + length, false, tag));
+		helper.makeMockServerPlayerInLevel().moveTo(here.getX() + 0.5, here.getY(), here.getZ() + 0.5);
+		helper.runAfterDelay(40, () -> {
+			helper.assertTrue(NpcTravel.journeys(level.getServer()).stream().noneMatch(journey -> journey.entity() == tag), "It is no longer on its way unseen");
+			net.minecraft.world.entity.Entity met = level.getEntity(traveller.getUUID());
+			helper.assertTrue(met instanceof CultivatorNpc, "It is back in the world");
+			CultivatorNpc npc = (CultivatorNpc) met;
+			double off = Math.abs(npc.getX() - here.getX());
+			helper.assertTrue(off < NpcTravel.reach(level.getServer()) + 8, "Where it had got to on its way, near the player (" + Math.round(npc.getX() - here.getX()) + " blocks off)");
+			helper.assertTrue(npc.getLifecycle() == CultivatorNpc.Lifecycle.DEPARTING && to.equals(npc.getJourneyTarget()), "Still bound where it was");
+			helper.assertTrue(npc.isQiFlying(), "In the air, on its way");
+			npc.discard();
+			helper.succeed();
+		});
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 200)
+	public void aTravellerStopsToFightWhoeverStrikesItThenGoesOn(GameTestHelper helper) {
+		ServerLevel level = helper.getLevel();
+		ServerPlayer player = new ServerPlayer(level.getServer(), level, new com.mojang.authlib.GameProfile(UUID.randomUUID(), "wayfarer")) {
+			@Override
+			public boolean isSpectator() {
+				return false;
+			}
+
+			@Override
+			public boolean isCreative() {
+				return false;
+			}
+		};
+		level.getServer().getPlayerList().placeNewPlayer(new net.minecraft.network.Connection(net.minecraft.network.protocol.PacketFlow.SERVERBOUND), player);
+		player.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+		Vec3 stand = Vec3.atBottomCenterOf(helper.absolutePos(new BlockPos(1, 2, 1)));
+		player.teleportTo(level, stand.x, stand.y, stand.z, 0, 0);
+		CultivatorNpc traveller = helper.spawn(ModEntities.CULTIVATOR, new BlockPos(4, 2, 4));
+		traveller.becomeRogue(PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.MID), 0, level.getRandom());
+		traveller.dismiss(level); // sets off 200-1,000 blocks
+		helper.assertTrue(traveller.getLifecycle() == CultivatorNpc.Lifecycle.DEPARTING, "On its way");
+		// Struck once it has ticked (a blow in its very first tick is stamped 0, which vanilla's retaliation takes for none).
+		helper.runAfterDelay(5, () -> traveller.hurt(level.damageSources().playerAttack(player), 1.0f));
+		helper.runAfterDelay(15, () -> {
+			helper.assertTrue(player.equals(traveller.getTarget()), "Struck on its way, it turns on the one who struck it");
+			helper.assertTrue(traveller.getLifecycle() == CultivatorNpc.Lifecycle.DEPARTING, "its journey only waiting");
+			level.getServer().getPlayerList().remove(player);
+			helper.runAfterDelay(40, () -> {
+				boolean unseen = NpcTravel.journeys(level.getServer()).removeIf(j -> j.entity().hasUUID("UUID") && j.entity().getUUID("UUID").equals(traveller.getUUID()));
+				helper.assertTrue(unseen || traveller.getTarget() == null && traveller.getLifecycle() == CultivatorNpc.Lifecycle.DEPARTING,
+						"Its foe gone, it goes on its way (" + (unseen ? "unseen" : "in the world") + ")");
+				traveller.discard();
+				helper.succeed();
+			});
+		});
+	}
+
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void aFullSectLetsItsWeakestGoForANewcomer(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();

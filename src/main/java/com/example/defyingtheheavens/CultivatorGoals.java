@@ -383,6 +383,14 @@ public final class CultivatorGoals {
 			double dx = target.getX() + 0.5 - npc.getX(), dz = target.getZ() + 0.5 - npc.getZ();
 			double sideways = Math.sqrt(dx * dx + dz * dz);
 			if (sideways <= arrival) {
+				// Over open sky (the Upper Realm, between islands): on over the land there, or if it was bound for open sky, the
+				// nearest island, to set down on that instead (coming down here it would only hover).
+				if (npc.isQiFlying() && openSky(level, npc.blockPosition())) {
+					BlockPos ground = target.equals(npc.getJourneyTarget()) && openSky(level, target) ? NpcTravel.landing(level, target) : target;
+					if (!ground.equals(target)) npc.setJourneyTarget(ground);
+					npc.flyToward(Vec3.atBottomCenterOf(ground).add(0, 1, 0), 0.45);
+					return;
+				}
 				if (npc.isQiFlying()) npc.land();
 				if (npc.onGround() || !npc.isQiFlying()) npc.arrive(level);
 				return;
@@ -396,6 +404,12 @@ public final class CultivatorGoals {
 			} else if (npc.getNavigation().isDone()) {
 				walkToward(npc, new Vec3(target.getX() + 0.5, npc.getY(), target.getZ() + 0.5), 1.0);
 			}
+		}
+
+		/** Nothing below {@code pos} but open sky (its land loaded): the Upper Realm's abyss. */
+		private static boolean openSky(ServerLevel level, BlockPos pos) {
+			return level.hasChunkAt(pos) && Formations.surface(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, pos.getX(), pos.getZ())
+					<= level.getMinBuildHeight() + 1;
 		}
 
 		/** To the rift at Overworld 0, 0 (from another lower realm it rises out of sight; NpcTravel carries it on). */

@@ -469,7 +469,8 @@ public final class Formations {
 	private static int build(ServerLevel level, Formation formation, int budget) {
 		int[] shell = Formation.shell(formation.getRadius());
 		if (shell.length == 0) return 0;
-		int steps = Math.min(budget, formation.complete ? REPAIR_BUDGET : RAISE_BUDGET);
+		// Never more than once round its shell a tick: a small one done in a tick costs its cells, not the whole allowance.
+		int steps = Math.min(Math.min(budget, shell.length), formation.complete ? REPAIR_BUDGET : RAISE_BUDGET);
 		BlockPos c = formation.center;
 		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 		FormationCoreBlockEntity core = null;
@@ -518,6 +519,7 @@ public final class Formations {
 			if (data.all().isEmpty()) continue;
 			int budget = TOTAL_BUDGET;
 			List<UUID> lapsed = new ArrayList<>();
+			List<Formation> rising = new ArrayList<>(), standing = new ArrayList<>();
 			for (Formation formation : data.all()) {
 				if (!formation.isRaised()) continue;
 				// Tended only where its land ticks (a player near enough, or held for a moment: NpcLedger#wake). Land merely
@@ -532,7 +534,7 @@ public final class Formations {
 					formation.awake = true;
 					formation.heartbeat = level.getGameTime();
 				}
-				if (budget > 0) budget -= build(level, formation, budget);
+				(formation.complete ? standing : rising).add(formation);
 				if (purging) {
 					purge(level, formation);
 					guard(level, formation);
@@ -545,6 +547,15 @@ public final class Formations {
 						lapsed.add(formation.id);
 					}
 				}
+			}
+			// Barriers still going up first, so a new one rises at once however many stand about it; then those standing are
+			// kept up, from a different one each tick, so none is passed over for long when there are more than the budget
+			// covers (each costs REPAIR_BUDGET a tick, a done one too).
+			for (Formation formation : rising) {
+				if (budget > 0) budget -= build(level, formation, budget);
+			}
+			for (int i = 0; i < standing.size() && budget > 0; i++) {
+				budget -= build(level, standing.get((i + server.getTickCount()) % standing.size()), budget);
 			}
 			for (UUID id : lapsed) dissolve(level, id);
 		}

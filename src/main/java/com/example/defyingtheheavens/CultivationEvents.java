@@ -72,6 +72,8 @@ public final class CultivationEvents {
 		ServerLifecycleEvents.SERVER_STOPPING.register(RealmSuppressSystem::releaseAll);
 		// Cultivators still loaded go into the ledger now: their land unloads only after the save.
 		ServerLifecycleEvents.SERVER_STOPPING.register(NpcLedger::enterLoaded);
+		// So does where each sect member stands, to wake it if it's let go while unloaded (SectManager#rouse).
+		ServerLifecycleEvents.SERVER_STOPPING.register(CultivatorNpc::noteWhereMembersStand);
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> SpatialStorms.clear());
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
 			Formations.clear();

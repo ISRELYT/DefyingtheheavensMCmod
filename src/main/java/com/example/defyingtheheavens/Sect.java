@@ -46,10 +46,30 @@ public final class Sect {
 		public double cultivation;
 		public NpcTitle title = NpcTitle.OUTER_DISCIPLE;
 		public int home;
+		/**
+		 * Where it stands, kept up every second it ticks and set as its land unloads (it can't move while unloaded, so this
+		 * is where it is): where to wake it if it is let go meanwhile (see {@link LetGo}). Null until first known.
+		 */
+		public BlockPos lastAt;
 
 		Member(UUID id, int rank, int home) {
 			this.id = id;
 			this.rank = rank;
+			this.home = home;
+		}
+	}
+
+	/**
+	 * A member let go for a newcomer while its land was unloaded (SectManager#admit), still standing in the grounds: its
+	 * land is woken until it has set off (SectManager#rouse). Where it last stood, its home, and how many looks so far.
+	 */
+	public static final class LetGo {
+		public final BlockPos lastAt;
+		public final int home;
+		public int looks;
+
+		public LetGo(BlockPos lastAt, int home) {
+			this.lastAt = lastAt;
 			this.home = home;
 		}
 	}
@@ -79,6 +99,8 @@ public final class Sect {
 	public final List<Long> replacements = new ArrayList<>();
 	/** Slots held for cultivators on their way to join (see SectManager#reserve), and until when (game time). */
 	public final Map<UUID, Long> reserved = new HashMap<>();
+	/** Members let go for a newcomer while unloaded, to be woken so they set off now (see {@link LetGo}). */
+	public final Map<UUID, LetGo> letGo = new HashMap<>();
 	public final Map<Post, List<BlockPos>> posts = new EnumMap<>(Post.class);
 	/** What the sect as a whole thinks of each player, added to every member's own regard (see {@link Regard}); never fades. */
 	public final Map<UUID, Integer> standing = new HashMap<>();
@@ -280,9 +302,20 @@ public final class Sect {
 			m.putDouble("Cultivation", member.cultivation);
 			m.putInt("Title", member.title.ordinal());
 			m.putInt("Home", member.home);
+			if (member.lastAt != null) m.putLong("LastAt", member.lastAt.asLong());
 			list.add(m);
 		}
 		tag.put("Members", list);
+		ListTag letGoList = new ListTag();
+		for (Map.Entry<UUID, LetGo> entry : letGo.entrySet()) {
+			CompoundTag g = new CompoundTag();
+			g.putUUID("Cultivator", entry.getKey());
+			if (entry.getValue().lastAt != null) g.putLong("LastAt", entry.getValue().lastAt.asLong());
+			g.putInt("Home", entry.getValue().home);
+			g.putInt("Looks", entry.getValue().looks);
+			letGoList.add(g);
+		}
+		tag.put("LetGo", letGoList);
 		tag.put("Replacements", new LongArrayTag(replacements.stream().mapToLong(Long::longValue).toArray()));
 		ListTag reservedList = new ListTag();
 		for (Map.Entry<UUID, Long> entry : reserved.entrySet()) {
@@ -338,7 +371,16 @@ public final class Sect {
 			Member member = new Member(m.getUUID("Id"), m.getInt("Rank"), m.getInt("Home"));
 			member.cultivation = m.getDouble("Cultivation");
 			member.title = NpcTitle.byIndex(m.getInt("Title"));
+			if (m.contains("LastAt")) member.lastAt = BlockPos.of(m.getLong("LastAt"));
 			sect.members.put(member.id, member);
+		}
+		ListTag letGoList = tag.getList("LetGo", Tag.TAG_COMPOUND);
+		for (int i = 0; i < letGoList.size(); i++) {
+			CompoundTag g = letGoList.getCompound(i);
+			if (!g.hasUUID("Cultivator")) continue;
+			LetGo gone = new LetGo(g.contains("LastAt") ? BlockPos.of(g.getLong("LastAt")) : null, g.getInt("Home"));
+			gone.looks = g.getInt("Looks");
+			sect.letGo.put(g.getUUID("Cultivator"), gone);
 		}
 		for (long time : tag.getLongArray("Replacements")) sect.replacements.add(time);
 		ListTag reservedList = tag.getList("Reserved", Tag.TAG_COMPOUND);

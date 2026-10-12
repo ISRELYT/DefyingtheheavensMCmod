@@ -40,7 +40,7 @@ public final class SectManager {
 		return id == null ? null : SectData.get(server).get(id);
 	}
 
-	private static void dirty(MinecraftServer server) {
+	static void dirty(MinecraftServer server) {
 		SectData.get(server).setDirty();
 	}
 
@@ -279,8 +279,10 @@ public final class SectManager {
 			Sect.Member out = sect.weakestBelow(npc.getRank());
 			if (out != null) {
 				sect.members.remove(out.id);
-				// Loaded, it sets off now; unloaded, it finds itself off the roll when next loaded and sets off then.
-				if (level.getEntity(out.id) instanceof CultivatorNpc dismissed) dismissed.dismiss(level);
+				// Loaded, it sets off now; unloaded, its land is woken so that it does all the same (rouse).
+				ServerLevel home = level.getServer().getLevel(sect.dimension);
+				if (home != null && home.getEntity(out.id) instanceof CultivatorNpc dismissed) dismissed.dismiss(home);
+				else sect.letGo.put(out.id, new Sect.LetGo(out.lastAt, out.home));
 				DefyingTheHeavens.LOGGER.info("The {} lets its weakest member go to make room for a cultivator from below", sect.name);
 			}
 		}
@@ -305,6 +307,7 @@ public final class SectManager {
 		if (server.getTickCount() % 100 != 0) return;
 		SectData data = SectData.get(server);
 		for (Sect sect : data.all()) {
+			if (!sect.letGo.isEmpty()) rouse(server, sect);
 			if (!sect.reserved.isEmpty()) {
 				// Held slots whose newcomer never came: the sect sends for disciples instead.
 				ServerLevel home = server.getLevel(sect.dimension);
@@ -338,6 +341,43 @@ public final class SectManager {
 			}
 			if (changed) retitle(level, sect);
 		}
+	}
+
+	/** How many looks (5 seconds apart) each place a let-go member may be is woken for. */
+	static final int LOOKS_PER_PLACE = 3;
+
+	/**
+	 * Members let go for a newcomer while their land was unloaded (Sect#letGo): each one's land is woken until it has loaded,
+	 * and then it sets off at once (CultivatorNpc#onLoad), out of the world straight away with nobody near (NpcTravel), long
+	 * before anyone comes. Looked for where it last stood (exact: it can't move while unloaded), then, if that isn't known (a
+	 * member unloaded before positions were kept), at its home, then across the whole territory. Should it be in none of
+	 * them, it still sets off the moment its land next loads.
+	 */
+	static void rouse(MinecraftServer server, Sect sect) {
+		ServerLevel level = server.getLevel(sect.dimension);
+		for (Iterator<Map.Entry<UUID, Sect.LetGo>> it = sect.letGo.entrySet().iterator(); it.hasNext(); ) {
+			Map.Entry<UUID, Sect.LetGo> entry = it.next();
+			Sect.LetGo gone = entry.getValue();
+			if (level != null && level.getEntity(entry.getKey()) instanceof CultivatorNpc npc) {
+				if (sect.id.equals(npc.getSectId())) npc.dismiss(level); // (it already has, as it loaded)
+				it.remove();
+				continue;
+			}
+			List<BlockPos> places = new ArrayList<>();
+			if (gone.lastAt != null) places.add(gone.lastAt);
+			places.add(sect.dwelling(gone.home));
+			places.add(sect.core);
+			int place = gone.looks++ / LOOKS_PER_PLACE;
+			if (level == null || place >= places.size()) {
+				it.remove();
+				DefyingTheHeavens.LOGGER.info("A member let go by the {} wasn't found; it sets off when its land next loads", sect.name);
+				continue;
+			}
+			// The last look covers the whole territory: the barrier, the 30 blocks members keep to past it, and a chase beyond.
+			int distance = place < places.size() - 1 ? 2 : (sect.barrierRadius + 30 + 48) / 16 + 1;
+			NpcLedger.wake(level, places.get(place), distance);
+		}
+		dirty(server);
 	}
 
 	// --- Calls to arms ---

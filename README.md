@@ -751,12 +751,26 @@ the top.
   or a mountainside, sets down a mat and goes into seclusion behind a **Concealment Barrier** that hides their presence
   from Qi Sense and pushes back (and slows) anyone who comes close. They fight only if attacked or the barrier is struck.
   At Heavenly Being Grand Perfection they set out for the rift at 0, 0 and try to ascend to the Upper Realm (7 in 10
-  succeed). Once no player is within 96 blocks, a journey goes on off-screen (`NpcTravel`): the traveller reappears at
-  its destination (at about flying speed), and an ascension is decided on the spot. Travellers are checked twice a second
-  whether their land is ticking or not, so one left behind by a fast flight, a teleport or a logout doesn't wait there
-  frozen; a destination nobody has loaded is loaded for a moment so the traveller can arrive. It sets down on dry ground
-  near the spot (within 64 blocks, not out at sea), and in the Upper Realm on the nearest island, as a player arriving
-  does (a small platform if the abyss is empty there), never over the void.
+  succeed).
+- **Journeys follow a real way** (`NpcTravel`). While the land round a traveller runs (within a player's simulation
+  distance), it flies in the world. Out of every player's reach (or its land no longer running: a fast flight, a
+  teleport or a logout left it behind) it goes on unseen, in a straight line from where it was to where it's bound at
+  about flying speed (8 blocks a second), so at any moment it is somewhere on that line. It can be found there: as soon
+  as a player's running land reaches where it has got to, it is back in the world right there, in the air on its way,
+  as far off as it can be and still move: about 164 blocks at simulation distance 10 (tested), beyond the 160 blocks a
+  game shows cultivators from, so it is first seen flying nearer rather than appearing; at a lower simulation distance,
+  at its edge (100 blocks at 6), the nearest anything moves. It can be followed, talked to, traded with or fought (a
+  fight or a talk stops it; it goes on after). Lower realms and
+  the Upper Realm alike: a sect member leaving, a rogue let go, a Heavenly Being on its way to the rift (from the Nether
+  or the End it rises out of sight and goes on from the matching place in the Overworld), a newcomer coming out on the
+  Upper Realm side of the rift and flying on to the sect it chose. Nobody pops out of thin air where they're bound:
+  with a player waiting there, a traveller is put back along its way to fly in in their sight. What a journey comes to
+  is settled at its end: there an ascension is tried (unseen, 7 in 10 come through, out near the rift on the Upper
+  Realm side), a newcomer joins its sect, one leaving becomes a rogue or seeks seclusion. A destination nobody has
+  loaded is loaded for a moment so the traveller can arrive. It sets down on dry ground near the spot (within 64
+  blocks, not out at sea), and in the Upper Realm on the nearest island, as a player arriving does (a small platform if
+  the abyss is empty there), never over the void; one flying in the world bound for open sky between islands goes on
+  to the nearest island, and one held up over open sky (talking, say) hovers rather than sink into the abyss.
 - **Coming up.** A cultivator who makes it through to the Upper Realm looks once for the nearest sect of its path
   (righteous, neutral or demonic) that will take it, as far as 8,192 blocks off (nearest first, so it goes further only
   when there's none nearer; that far takes it about 17 minutes unseen): one with a free slot (a member it lost, dying to
@@ -765,9 +779,15 @@ the top.
   founded early in a world's life without anyone going up (see below), so a newcomer has a dozen or more to choose from,
   and further out those near wherever players have been. It holds its
   place at once (the disciple on the way is called off, and nobody else can take it), goes there (unseen, if nobody is
-  near) and joins, titled by strength: the Sect Master's seat if it is the strongest. A full sect lets its weakest member
+  near, and to be met on the way like any traveller) and joins as it gets there, titled by strength: the Sect Master's
+  seat if it is the strongest. A full sect lets its weakest member
   go (never the master) to make room: that one sets off 200-1,000 blocks to make its own way, and no replacement is sent
-  for. If the newcomer dies on the way or hasn't come in 3 days, its place goes back to a new disciple. With no sect to
+  for. It goes at once even if nobody is near: every member's place is kept (each second it ticks, and as its land
+  unloads, when it can't move), so the sect wakes its land there (failing that, round its home, then the whole
+  territory) until it is loaded, and it sets off the moment it is, ticking or not, on its way unseen straight away with
+  nobody within 160 blocks. Tested with nobody in the Upper Realm: gone 4 seconds after it was let go. Should it somehow
+  be in none of those places, it still sets off the instant its land next loads, before anyone could reach it. If the
+  newcomer dies on the way or hasn't come in 3 days, its place goes back to a new disciple. With no sect to
   take it, it finds a high or sheltered spot and goes into seclusion in the Upper Realm, cultivating toward Four Axis.
 - **Lives go on unseen** (`NpcLedger`). A cultivator whose land is unloaded catches up when it is next loaded, however
   long it was away: half of every second counts as meditation, stage by stage, and one held at Qi Refining Mid's gate

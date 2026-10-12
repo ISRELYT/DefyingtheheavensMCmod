@@ -77,7 +77,7 @@ import java.util.UUID;
  * flies to the rift at Overworld 0, 0 and attempts the ascension ({@link Lifecycle#ASCENDING}). Come up into the Upper Realm,
  * it joins the nearest sect of its path that has room (taking the slot a new disciple would have filled, and the Sect Master's
  * seat if it is the strongest), or else goes into seclusion there to cultivate toward Four Axis. Out of every player's sight,
- * long journeys finish without it (see {@link NpcTravel}).
+ * a long journey goes on unseen along a real way, and anyone coming upon it on the way finds it there (see {@link NpcTravel}).
  * <p>
  * <b>Fighting.</b> Rogues always hold their consciousness domain open, sect members only in combat. In combat it presses down
  * on weaker foes with Realm Suppress and flies after flying ones, but only while its qi can carry the cost; it flees when badly
@@ -274,6 +274,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	public int getHomeIndex() { return homeIndex; }
 	public BlockPos getHome() { return home; }
 	public BlockPos getJourneyTarget() { return journeyTarget; }
+	/** Bound somewhere else on the same journey (JourneyGoal: open sky where it meant to set down, so the nearest island). */
+	void setJourneyTarget(BlockPos target) { journeyTarget = target; }
 	public BlockPos getSeclusionMat() { return seclusionMat; }
 	public PlayerCultivation cultivation() { return cultivation; }
 
@@ -771,8 +773,9 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 					// The sect no longer counts it (let go for a newcomer while its land was unloaded, or a copy of one that
 					// departed): it sets off, as it would have.
 					dismiss(level);
-				} else if (member.title != getTitle()) {
-					setTitle(member.title);
+				} else {
+					member.lastAt = blockPosition(); // where to wake it, should it be let go once its land unloads
+					if (member.title != getTitle()) setTitle(member.title);
 				}
 			}
 		}
@@ -1293,6 +1296,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	private void setOff(ServerLevel level, boolean replaced) {
 		Sect sect = sect();
 		BlockPos from = sect == null ? blockPosition() : sect.core;
+		// Let go while unloaded and woken for it (SectManager#rouse): it has set off, so it needn't be looked for any more.
+		if (sect != null && sect.letGo.remove(getUUID()) != null) SectManager.dirty(level.getServer());
 		leaveSect(level, replaced);
 		double angle = random.nextDouble() * Math.PI * 2;
 		double distance = 200 + random.nextDouble() * 800;
@@ -1409,6 +1414,12 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		if (!landing && tickCount - lastSteered > 10) landing = true;
 		if (landing) {
 			int ground = Formations.surface(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, getBlockX(), getBlockZ());
+			if (ground <= level.getMinBuildHeight() + 1) {
+				// Nothing under it but open sky (the Upper Realm's abyss): it holds where it is rather than sink into it, and
+				// comes down once something steers it over land.
+				setDeltaMovement(getDeltaMovement().scale(0.6));
+				return;
+			}
 			steer(new Vec3(getX(), Math.min(getY(), ground), getZ()), 0.2);
 			if (onGround() || getY() - ground < 0.2) {
 				setQiFlying(false);
@@ -1826,6 +1837,12 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		if (npc.lastSeen < 0) npc.lastSeen = npc.level().getGameTime();
 		RogueIndex.note(npc);
 		NpcLedger.onLoad(npc);
+		// Let go by its sect while its land was unloaded (for a newcomer from below): it sets off the moment it is back, ticking
+		// or not, so it's gone (NpcTravel, with nobody near) before anyone could come upon it still in the grounds.
+		if (npc.sectId != null && npc.level() instanceof ServerLevel level) {
+			Sect sect = SectManager.get(level.getServer(), npc.sectId);
+			if (sect != null && !sect.extinct && !sect.members.containsKey(npc.getUUID())) npc.dismiss(level);
+		}
 	}
 
 	public static void onUnload(Entity entity) {
@@ -1833,6 +1850,23 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		LOADED.remove(npc);
 		RogueIndex.onUnload(npc);
 		NpcLedger.onUnload(npc);
+		// Its land unloading (not its death or discarding), a member's place is kept: it stays there till it is next loaded.
+		if (npc.getRemovalReason() == null || npc.getRemovalReason().shouldSave()) noteWhereItStands(npc);
+	}
+
+	/** A sect member's place, kept on its sect's roll (Sect.Member#lastAt). */
+	private static void noteWhereItStands(CultivatorNpc npc) {
+		if (npc.sectId == null || !(npc.level() instanceof ServerLevel level)) return;
+		Sect sect = SectManager.get(level.getServer(), npc.sectId);
+		Sect.Member member = sect == null ? null : sect.members.get(npc.getUUID());
+		if (member == null) return;
+		member.lastAt = npc.blockPosition();
+		SectManager.dirty(level.getServer());
+	}
+
+	/** On shutting down, before the save (the land unloads only after it): every loaded member's place is kept. */
+	public static void noteWhereMembersStand(net.minecraft.server.MinecraftServer server) {
+		for (CultivatorNpc npc : LOADED) noteWhereItStands(npc);
 	}
 
 	public static void clearLoaded() {

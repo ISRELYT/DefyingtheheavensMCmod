@@ -149,8 +149,13 @@ public class NpcLedger extends SavedData {
 	 * long ({@link #AWAKE}): the Upper Realm with everyone below, the Overworld with everyone above.
 	 */
 	public static void wake(ServerLevel level, BlockPos pos) {
+		wake(level, pos, 2);
+	}
+
+	/** As {@link #wake(ServerLevel, BlockPos)}, the land loaded {@code distance} chunks round (their creatures with it). */
+	public static void wake(ServerLevel level, BlockPos pos, int distance) {
 		ChunkPos chunk = new ChunkPos(pos);
-		level.getChunkSource().addRegionTicket(WAKE, chunk, 2, chunk);
+		level.getChunkSource().addRegionTicket(WAKE, chunk, distance, chunk);
 		AWAKE.put(level.dimension(), level.getGameTime() + WAKE_TICKS);
 		level.resetEmptyTime();
 	}
