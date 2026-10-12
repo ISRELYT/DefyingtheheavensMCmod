@@ -29,8 +29,11 @@ import java.util.UUID;
  * three tenths Inner Disciples, and the rest Outer Disciples.
  * <p>
  * <b>Population.</b> A member killed by a player is never replaced (the sect's {@link #capacity} drops for good, so a sect can't
- * be farmed). One who dies otherwise, or leaves (reaching Heavenly Being), is replaced after a few days by a Qi Refining
- * Outer Disciple. A sect whose last member dies is {@link #extinct} and never repopulates.
+ * be farmed). One who dies otherwise, or leaves (reaching Heavenly Being), is replaced after a few days by an Outer Disciple
+ * at the realm's lowest rank (Qi Refining below, Core Formation in the Upper Realm), unless a cultivator newly ascended to the
+ * Upper Realm has {@link #reserved} the slot: then that disciple is called off and the newcomer comes instead. A full sect
+ * takes such a newcomer too, letting its weakest member go to make room (see {@link #canTakeIn}). A sect whose last member
+ * dies is {@link #extinct} and never repopulates.
  */
 public final class Sect {
 	/** A replacement disciple arrives this many ticks (2-4 Minecraft days) after a member is lost to anything but a player. */
@@ -74,6 +77,8 @@ public final class Sect {
 	public BoundingBox treasury = new BoundingBox(BlockPos.ZERO);
 	public final Map<UUID, Member> members = new LinkedHashMap<>();
 	public final List<Long> replacements = new ArrayList<>();
+	/** Slots held for cultivators on their way to join (see SectManager#reserve), and until when (game time). */
+	public final Map<UUID, Long> reserved = new HashMap<>();
 	public final Map<Post, List<BlockPos>> posts = new EnumMap<>(Post.class);
 	/** What the sect as a whole thinks of each player, added to every member's own regard (see {@link Regard}); never fades. */
 	public final Map<UUID, Integer> standing = new HashMap<>();
@@ -124,6 +129,27 @@ public final class Sect {
 	}
 
 	public boolean isBarrierDown() { return barrierDownSince >= 0; }
+
+	/** Member slots nobody fills or has reserved: room for a newcomer. */
+	public int openSlots() { return capacity - members.size() - reserved.size(); }
+
+	/**
+	 * Whether the sect would take in a newcomer of {@code rank}: into a free slot, or, full but with no one else on the way,
+	 * by letting its weakest member go, if that one is weaker than the newcomer (see {@link #weakestBelow}).
+	 */
+	public boolean canTakeIn(int rank) {
+		return openSlots() > 0 || members.size() >= capacity && reserved.isEmpty() && weakestBelow(rank) != null;
+	}
+
+	/** The least senior member weaker than {@code rank}, never the Sect Master; null if there is none. */
+	public Member weakestBelow(int rank) {
+		Member weakest = null;
+		for (Member member : members.values()) {
+			if (member.rank >= rank || member.title == NpcTitle.SECT_MASTER) continue;
+			if (weakest == null || SENIORITY.compare(member, weakest) > 0) weakest = member;
+		}
+		return weakest;
+	}
 
 	/** The lowest dwelling index no member holds (or a shared one when they are all taken). */
 	public int freeHome() {
@@ -258,6 +284,14 @@ public final class Sect {
 		}
 		tag.put("Members", list);
 		tag.put("Replacements", new LongArrayTag(replacements.stream().mapToLong(Long::longValue).toArray()));
+		ListTag reservedList = new ListTag();
+		for (Map.Entry<UUID, Long> entry : reserved.entrySet()) {
+			CompoundTag r = new CompoundTag();
+			r.putUUID("Cultivator", entry.getKey());
+			r.putLong("Until", entry.getValue());
+			reservedList.add(r);
+		}
+		tag.put("Reserved", reservedList);
 		CompoundTag postTag = new CompoundTag();
 		for (Map.Entry<Post, List<BlockPos>> entry : posts.entrySet()) {
 			postTag.put(entry.getKey().name(), new LongArrayTag(entry.getValue().stream().mapToLong(BlockPos::asLong).toArray()));
@@ -307,6 +341,11 @@ public final class Sect {
 			sect.members.put(member.id, member);
 		}
 		for (long time : tag.getLongArray("Replacements")) sect.replacements.add(time);
+		ListTag reservedList = tag.getList("Reserved", Tag.TAG_COMPOUND);
+		for (int i = 0; i < reservedList.size(); i++) {
+			CompoundTag r = reservedList.getCompound(i);
+			if (r.hasUUID("Cultivator")) sect.reserved.put(r.getUUID("Cultivator"), r.getLong("Until"));
+		}
 		CompoundTag postTag = tag.getCompound("Posts");
 		for (Post post : Post.values()) {
 			for (long pos : postTag.getLongArray(post.name())) sect.posts.get(post).add(BlockPos.of(pos));

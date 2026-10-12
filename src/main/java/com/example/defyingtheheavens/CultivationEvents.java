@@ -38,7 +38,11 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(Formations::tick);
 		ServerTickEvents.END_SERVER_TICK.register(SectManager::tick);
 		ServerTickEvents.END_SERVER_TICK.register(NpcSpawner::tick);
+		ServerTickEvents.END_SERVER_TICK.register(RogueIndex::tick);
 		ServerTickEvents.END_SERVER_TICK.register(NpcTravel::tick);
+		ServerTickEvents.END_SERVER_TICK.register(NpcLedger::tick);
+		ServerTickEvents.END_SERVER_TICK.register(HermitSites::tick);
+		ServerTickEvents.END_SERVER_TICK.register(SectSites::tick);
 		ServerTickEvents.END_SERVER_TICK.register(Tempering::tick);
 		ServerTickEvents.END_SERVER_TICK.register(InnerRealm::tick);
 		ServerTickEvents.END_SERVER_TICK.register(SoulProjection::tick);
@@ -53,6 +57,8 @@ public final class CultivationEvents {
 
 		// Barrier blocks left in a chunk that was unloaded when their formation came down are swept as it loads.
 		ServerChunkEvents.CHUNK_LOAD.register(Formations::onChunkLoad);
+		// A region's hermit is seated the first time its chunk loads.
+		ServerChunkEvents.CHUNK_LOAD.register(HermitSites::onChunkLoad);
 		ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> CultivatorNpc.onLoad(entity));
 		ServerEntityEvents.ENTITY_UNLOAD.register((entity, level) -> CultivatorNpc.onUnload(entity));
 
@@ -64,12 +70,17 @@ public final class CultivationEvents {
 		ServerLifecycleEvents.SERVER_STOPPING.register(SparSystem::clear);
 		// Before players and chunks are saved, so nobody is saved with the pressure's lowered health.
 		ServerLifecycleEvents.SERVER_STOPPING.register(RealmSuppressSystem::releaseAll);
+		// Cultivators still loaded go into the ledger now: their land unloads only after the save.
+		ServerLifecycleEvents.SERVER_STOPPING.register(NpcLedger::enterLoaded);
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> SpatialStorms.clear());
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
 			Formations.clear();
 			CultivatorNpc.clearLoaded();
 			SoulProjection.clear();
 			Rumours.clearPending();
+			HermitSites.clearPending();
+			SectSites.clear();
+			NpcLedger.clear();
 			NpcLife.clear();
 			HeavenRitual.clear();
 		});

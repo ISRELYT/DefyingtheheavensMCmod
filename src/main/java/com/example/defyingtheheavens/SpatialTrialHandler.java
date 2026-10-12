@@ -305,8 +305,8 @@ public final class SpatialTrialHandler {
 		p.sendSystemMessage(Component.translatable(ModLang.MSG_ARRIVE_LOWER));
 	}
 
-	/** Nearest solid, dry island surface around (x, z); builds a small platform if the abyss is empty there. */
-	private static BlockPos findArrival(ServerLevel level, int x, int z) {
+	/** Nearest solid, dry island surface around (x, z); builds a small platform if the abyss is empty there (NpcTravel too). */
+	static BlockPos findArrival(ServerLevel level, int x, int z) {
 		try {
 			for (int radius : ARRIVAL_SEARCH_RADII) {
 				for (int i = 0; i < (radius == 0 ? 1 : 8); i++) {

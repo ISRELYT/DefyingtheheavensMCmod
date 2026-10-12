@@ -12,6 +12,7 @@ import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.NoiseRouter;
 import net.minecraft.world.level.levelgen.NoiseSettings;
 import net.minecraft.world.level.levelgen.Noises;
+import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.SurfaceRules;
 import net.minecraft.world.level.levelgen.synth.NormalNoise;
 
@@ -120,12 +121,31 @@ public final class ModNoiseSettings {
 				false);
 	}
 
+	/** The island masks' strength, each tier's offset (the higher, the more of the sky its islands cover), the edge noise's. */
+	private static final double MASK_STRENGTH = 1.6;
+	private static final double LOW_OFFSET = -0.33, MID_OFFSET = -0.36, HIGH_OFFSET = -0.42;
+	private static final double EDGE_STRENGTH = 0.06;
+
+	/**
+	 * The strongest of the three tiers' island masks at x, z in {@code state}'s world: positive over an island, 0 at its rim,
+	 * negative over open sky. An island (as against a stray boulder islet) only stands where this is above about -0.15 (the
+	 * 3D detail noise reaches about 0.15). Four 2D noise samples: far cheaper than having the generator find a column's
+	 * surface (~10 ms, most of it spent on the empty sky), so SectStructure looks here first for ground for a sect.
+	 */
+	public static double islandMask(RandomState state, int x, int z) {
+		double edge = state.getOrCreateNoise(EDGE).getValue(x, 0, z) * EDGE_STRENGTH;
+		double low = state.getOrCreateNoise(ISLAND_LOW).getValue(x, 0, z) * MASK_STRENGTH + LOW_OFFSET;
+		double mid = state.getOrCreateNoise(ISLAND_MID).getValue(x, 0, z) * MASK_STRENGTH + MID_OFFSET;
+		double high = state.getOrCreateNoise(ISLAND_HIGH).getValue(x, 0, z) * MASK_STRENGTH + HIGH_OFFSET;
+		return Math.max(low, Math.max(mid, high)) + edge;
+	}
+
 	private static DensityFunction terrain(HolderGetter<NormalNoise.NoiseParameters> noises) {
 		// Island masks. The edge noise is too weak to open holes inside an island; it only makes the rims ragged.
-		DensityFunction edge = scale(flat(noises, EDGE, 1.0), 0.06);
-		DensityFunction low = add(mask(noises, ISLAND_LOW, 1.6, -0.33), edge);
-		DensityFunction mid = add(mask(noises, ISLAND_MID, 1.6, -0.36), edge);
-		DensityFunction high = add(mask(noises, ISLAND_HIGH, 1.6, -0.42), edge);
+		DensityFunction edge = scale(flat(noises, EDGE, 1.0), EDGE_STRENGTH);
+		DensityFunction low = add(mask(noises, ISLAND_LOW, MASK_STRENGTH, LOW_OFFSET), edge);
+		DensityFunction mid = add(mask(noises, ISLAND_MID, MASK_STRENGTH, MID_OFFSET), edge);
+		DensityFunction high = add(mask(noises, ISLAND_HIGH, MASK_STRENGTH, HIGH_OFFSET), edge);
 
 		DensityFunction lowTier = tier(noises, low, STYLE_LOW, 128);
 		DensityFunction midTier = tier(noises, mid, STYLE_MID, 256);

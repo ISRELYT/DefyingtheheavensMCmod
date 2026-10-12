@@ -74,7 +74,9 @@ import java.util.UUID;
  * ({@link Lifecycle#DEPARTING}). A Heavenly Being then seeks a cave or a mountain, sets down a mat and raises a small
  * Concealment Barrier to cultivate in seclusion ({@link Lifecycle#SECLUDED}): passive, unseen by consciousness domains,
  * pushing away anyone who comes close, and fighting only when attacked or when its barrier is struck. At Grand Perfection it
- * flies to the rift at Overworld 0, 0 and attempts the ascension ({@link Lifecycle#ASCENDING}). Out of every player's sight,
+ * flies to the rift at Overworld 0, 0 and attempts the ascension ({@link Lifecycle#ASCENDING}). Come up into the Upper Realm,
+ * it joins the nearest sect of its path that has room (taking the slot a new disciple would have filled, and the Sect Master's
+ * seat if it is the strongest), or else goes into seclusion there to cultivate toward Four Axis. Out of every player's sight,
  * long journeys finish without it (see {@link NpcTravel}).
  * <p>
  * <b>Fighting.</b> Rogues always hold their consciousness domain open, sect members only in combat. In combat it presses down
@@ -89,10 +91,12 @@ import java.util.UUID;
 public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Merchant {
 	/** NPCs cultivate at this share of a player's rate. */
 	public static final double NPC_RATE = 0.1;
-	/** Time spent unloaded counts as meditating for this share of it. */
+	/** Time spent unloaded counts as meditating for this share of it, however long it was (see NpcLedger for what it does). */
 	public static final double CATCH_UP_SHARE = 0.5;
-	/** Never catch up for more than this (3 Minecraft days) at once. */
-	private static final long MAX_CATCH_UP = 72_000;
+	/** At most this many tries at the Ritual to the Heavens in one catch-up: one for each day away. */
+	private static final int MAX_CATCH_UP_RITUALS = 64;
+	/** Away less than this (ticks, a minute), it hasn't missed enough to catch up on. */
+	public static final long MIN_CATCH_UP = 1200;
 	/** A sect member territory reaches this far past the barrier. */
 	public static final int TERRITORY_MARGIN = 30;
 	/** Flee below this share of health. */
@@ -140,6 +144,10 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	private BlockPos home;
 	private Lifecycle lifecycle = Lifecycle.ROGUE;
 	private BlockPos journeyTarget;
+	/** Newly through the rift, with its course in the Upper Realm still to choose (see {@link #decideRogueCourse}). */
+	private boolean ascended;
+	/** The sect it is on its way to join, a slot held for it (SectManager#reserve); null if none. */
+	private UUID joiningSect;
 	private BlockPos seclusionMat;
 	private UUID concealment;
 	private long lastSeen = -1;
@@ -760,7 +768,9 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			} else {
 				Sect.Member member = sect.members.get(getUUID());
 				if (member == null) {
-					leaveSect(level, false); // the sect no longer counts it (e.g. a copy of a member that departed)
+					// The sect no longer counts it (let go for a newcomer while its land was unloaded, or a copy of one that
+					// departed): it sets off, as it would have.
+					dismiss(level);
 				} else if (member.title != getTitle()) {
 					setTitle(member.title);
 				}
@@ -777,6 +787,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 				&& ModDimensions.isLowerRealm(level.dimension())) {
 			endSeclusion(level);
 			beginAscension();
+			HermitSites.onLeft(level, this, false); // a region's hermit: another comes in time
 		}
 		cultivation.setGearQiBonus(ClothingItem.qiGatherBonus(this));
 		updateShownRank();
@@ -791,12 +802,25 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		return 1 + boost;
 	}
 
-	/** {@code seconds} of meditation at a tenth of a player's rate (times {@code multiplier}). */
+	/**
+	 * Meditates for {@code seconds} at a tenth of a player's rate (times {@code multiplier}): stage by stage, each at its own rate (a long catch-up passes several), until the time
+	 * runs out or it is held (at Qi Refining Mid's gate, or the realm's cap). NpcLedger reckons ahead the same way.
+	 */
 	private void cultivate(double seconds, double multiplier) {
-		if (isMortal() || cultivation.isMaxed()) return;
-		double perSecond = cultivation.cultivationPerSecond() * NPC_RATE * multiplier
-				* (cultivation.isInUpperRealm() ? PlayerCultivation.UPPER_REALM_QI_MULTIPLIER : 1.0);
-		advanceUnchecked(perSecond * seconds);
+		for (int guard = 0; guard < 32 && seconds > 1.0e-9 && !isMortal() && !cultivation.isMaxed(); guard++) {
+			double perSecond = cultivation.cultivationPerSecond() * NPC_RATE * multiplier
+					* (cultivation.isInUpperRealm() ? PlayerCultivation.UPPER_REALM_QI_MULTIPLIER : 1.0);
+			if (perSecond <= 0) return;
+			double need = Math.max(0, cultivation.cultivationRequired() - cultivation.getCultivation());
+			if (need > perSecond * seconds) {
+				advanceUnchecked(perSecond * seconds);
+				return;
+			}
+			int before = getRank();
+			advanceUnchecked(need + 1.0e-6); // a hair over, so rounding can't leave it a hair short
+			if (getRank() == before) return;
+			seconds -= need / perSecond;
+		}
 	}
 
 	/** Cultivation a second this NPC gathers meditating with nothing to help it: a tenth of a player's (used by the tests). */
@@ -864,19 +888,39 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		}
 	}
 
-	/** The time its chunk spent unloaded, part of it spent meditating. */
+	/**
+	 * The time its chunk spent unloaded, part of it spent meditating, however long it was. Held at Qi Refining Mid's gate,
+	 * it will have asked the heavens once a day while away (each try on its own day); granted, it cultivated on for the
+	 * days that were left.
+	 */
 	private void catchUp(ServerLevel level) {
-		if (lastSeen < 0 || isMortal()) return;
-		long elapsed = Math.min(MAX_CATCH_UP, level.getGameTime() - lastSeen);
-		if (elapsed < 1200) return;
+		if (lastSeen < 0) return;
+		catchUp(level, level.getGameTime() - lastSeen, HeavenRitual.today(level.getServer()));
+	}
+
+	private void catchUp(ServerLevel level, long elapsed, long today) {
+		if (isMortal() || elapsed < MIN_CATCH_UP) return;
 		catchingUp = true;
 		try {
 			cultivate(elapsed / 20.0 * CATCH_UP_SHARE, 1.0);
-			// Away all that time at Qi Refining Mid's gate: it will have asked the heavens (once), and if they agreed, cultivated on.
-			if (awaitsHeavensLeave() && NpcLife.ritualOffscreen(level, this)) cultivate(elapsed / 20.0 * CATCH_UP_SHARE / 2, 1.0);
+			if (!awaitsHeavensLeave()) return;
+			int days = (int) Math.max(1, Math.min(MAX_CATCH_UP_RITUALS, elapsed / HeavenRitual.DAY));
+			for (int i = 0; i < days; i++) {
+				if (!NpcLife.ritualOffscreen(level, this, today - days + 1 + i)) continue;
+				cultivate(elapsed / 20.0 * CATCH_UP_SHARE * (days - 1 - i) / days, 1.0);
+				break;
+			}
 		} finally {
 			catchingUp = false;
 		}
+	}
+
+	/** The game time it was last seen ticking (-1: never), for working out what it did while unloaded (NpcLedger). */
+	public long lastSeen() { return lastSeen; }
+
+	/** As if it had been away {@code ticks} and come back on game day {@code today} (game tests). */
+	void catchUpForTest(ServerLevel level, long ticks, long today) {
+		catchUp(level, ticks, today);
 	}
 
 	// --- Qi, flight, suppression ---
@@ -1235,9 +1279,21 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 
 	/** Leaves its sect to make its own way: flies off 200-1000 blocks before settling into a rogue's life. */
 	private void beginDeparture(ServerLevel level) {
+		setOff(level, true);
+	}
+
+	/**
+	 * Let go by its sect, to make room for a newcomer from below (SectManager#admit), or found no longer on its roll: it
+	 * leaves as one who departs does, but no replacement is sent for, since its place is taken.
+	 */
+	public void dismiss(ServerLevel level) {
+		setOff(level, false);
+	}
+
+	private void setOff(ServerLevel level, boolean replaced) {
 		Sect sect = sect();
 		BlockPos from = sect == null ? blockPosition() : sect.core;
-		leaveSect(level, true);
+		leaveSect(level, replaced);
 		double angle = random.nextDouble() * Math.PI * 2;
 		double distance = 200 + random.nextDouble() * 800;
 		journeyTarget = BlockPos.containing(from.getX() + Math.cos(angle) * distance, from.getY(), from.getZ() + Math.sin(angle) * distance);
@@ -1248,9 +1304,18 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		level.playSound(null, blockPosition(), SoundEvents.BEACON_POWER_SELECT, SoundSource.NEUTRAL, 1.0f, 1.4f);
 	}
 
-	/** A rogue's next step: Heavenly Beings in the lower realms seek seclusion, and at Grand Perfection go to ascend. */
+	/**
+	 * A rogue's next step: Heavenly Beings in the lower realms seek seclusion, and at Grand Perfection go to ascend. One just
+	 * come up into the Upper Realm looks once for a sect of its path with room (SectManager#findOpening): it holds the slot
+	 * and goes to join; with none to be had, it seeks seclusion there, to cultivate toward Four Axis.
+	 */
 	public void decideRogueCourse() {
-		if (lifecycle != Lifecycle.ROGUE || isMortal() || !ModDimensions.isLowerRealm(level().dimension())) return;
+		if (lifecycle != Lifecycle.ROGUE || isMortal()) return;
+		if (ModDimensions.isUpperRealm(level().dimension())) {
+			if (ascended && level() instanceof ServerLevel level) seekSectOrSeclusion(level);
+			return;
+		}
+		if (!ModDimensions.isLowerRealm(level().dimension())) return;
 		if (getRank() >= PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.GRAND_PERFECTION)) {
 			beginAscension();
 		} else if (getRank() >= PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.EARLY)) {
@@ -1260,9 +1325,37 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		}
 	}
 
-	/** A journey (departure or ascension) has reached its end. */
+	/** Just come up into the Upper Realm, its course there not chosen yet. */
+	public boolean isNewlyAscended() { return ascended; }
+
+	private void seekSectOrSeclusion(ServerLevel level) {
+		ascended = false; // decided once
+		Sect sect = SectManager.findOpening(level, this);
+		if (sect != null) {
+			SectManager.reserve(level, sect, getUUID());
+			joiningSect = sect.id;
+			journeyTarget = sect.post(Sect.Post.GATE, 0);
+			lifecycle = Lifecycle.DEPARTING;
+		} else {
+			lifecycle = Lifecycle.SEEKING_SECLUSION;
+			journeyTarget = null;
+		}
+		setPersistenceRequired();
+	}
+
+	/** A journey (departure, going to join a sect, or ascension) has reached its end. */
 	public void arrive(ServerLevel level) {
-		if (lifecycle == Lifecycle.DEPARTING) {
+		if (lifecycle == Lifecycle.DEPARTING && joiningSect != null) {
+			Sect sect = SectManager.get(level.getServer(), joiningSect);
+			joiningSect = null;
+			journeyTarget = null;
+			lifecycle = Lifecycle.ROGUE;
+			// No room after all (the sect fell, or lost slots to a player's kills): into seclusion instead.
+			if (sect == null || !SectManager.admit(level, sect, this)) {
+				lifecycle = Lifecycle.SEEKING_SECLUSION;
+				setPersistenceRequired();
+			}
+		} else if (lifecycle == Lifecycle.DEPARTING) {
 			lifecycle = Lifecycle.ROGUE;
 			journeyTarget = null;
 			decideRogueCourse();
@@ -1289,9 +1382,13 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		NpcTravel.sendToUpperRealm(this, level, upper);
 	}
 
-	/** Through the rift and out into the Upper Realm: a rogue again, no longer held by the lower realms' cap. */
+	/**
+	 * Through the rift and out into the Upper Realm: a rogue again, no longer held by the lower realms' cap, with its course
+	 * there to choose once it has arrived (a sect to join, or seclusion: see {@link #decideRogueCourse}).
+	 */
 	public void completeAscension() {
 		lifecycle = Lifecycle.ROGUE;
+		ascended = true;
 		journeyTarget = null;
 		landing = false;
 		setQiFlying(false);
@@ -1357,7 +1454,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		return best;
 	}
 
-	private static boolean isSeatable(ServerLevel level, BlockPos feet) {
+	static boolean isSeatable(ServerLevel level, BlockPos feet) {
 		return level.getBlockState(feet).isAir() && level.getBlockState(feet.above()).isAir() && level.getBlockState(feet.above(2)).isAir()
 				&& level.getBlockState(feet.below()).isFaceSturdy(level, feet.below(), net.minecraft.core.Direction.UP)
 				&& level.getFluidState(feet).isEmpty();
@@ -1475,6 +1572,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		NpcLife.onDeath(server, this); // its fellows cry out, and mourn it where it fell
 		if (sectId != null) SectManager.onMemberDeath(server, this, killer != null);
 		if (lifecycle == Lifecycle.SECLUDED) Rumours.forgetCave(this);
+		HermitSites.onLeft(server, this, killer != null); // a region's hermit: replaced in time, unless a player killed it
+		if (joiningSect != null) SectManager.release(server, joiningSect, getUUID()); // the slot it held goes to a new disciple
 		if (killer != null) {
 			Rumours.noteKilling(this, killer); // people will talk
 			// Killing a sect member turns the whole sect against the killer; killing one who was attacking a cultivator earns that
@@ -1555,6 +1654,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		if (!level().isClientSide && level() instanceof ServerLevel server && reason == RemovalReason.DISCARDED && !travelling && isAlive()) {
 			// Taken out of the world without dying (despawned, discarded by a command): for its sect, it simply left.
 			if (sectId != null) leaveSect(server, true);
+			if (joiningSect != null) SectManager.release(server, joiningSect, getUUID());
 			lowerConcealment(server);
 			setSuppressing(false);
 		}
@@ -1562,11 +1662,28 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		super.remove(reason);
 	}
 
+	/**
+	 * Cultivators never despawn: sect members, rogues and wanderers alike stay in the world until they die or move on of their
+	 * own accord (a journey, an ascension). The spawner keeps rogues rare instead (NpcSpawner).
+	 */
 	@Override
-	public boolean removeWhenFarAway(double distanceSqr) {
-		// Only the weaker rogues come and go; sect members, Heavenly Beings and those on a journey stay.
-		return lifecycle == Lifecycle.ROGUE && sectId == null && getRank() < PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.EARLY)
-				&& !hasCustomName();
+	public boolean requiresCustomPersistence() {
+		return true;
+	}
+
+	/**
+	 * A rogue cultivator out about the land: the kind NpcSpawner keeps to one near each player. Those in seclusion or on a
+	 * journey (departing, seeking seclusion, going to ascend) don't count; nor do mortal wanderers, who are kept to one near
+	 * each player of their own ({@link #isWanderingMortal}). One a player has named (a name tag) still counts: naming a rogue
+	 * mustn't make room for another.
+	 */
+	public boolean isWanderingRogue() {
+		return lifecycle == Lifecycle.ROGUE && sectId == null && !isMortal();
+	}
+
+	/** A mortal wanderer out about the land (of no sect; named by a player or not). */
+	public boolean isWanderingMortal() {
+		return lifecycle == Lifecycle.ROGUE && sectId == null && isMortal();
 	}
 
 	@Override
@@ -1605,6 +1722,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		npc.putInt("Home", homeIndex);
 		if (home != null) npc.put("HomePos", NbtUtils.writeBlockPos(home));
 		if (journeyTarget != null) npc.put("Journey", NbtUtils.writeBlockPos(journeyTarget));
+		if (ascended) npc.putBoolean("Ascended", true);
+		if (joiningSect != null) npc.putUUID("JoiningSect", joiningSect);
 		if (seclusionMat != null) npc.put("SeclusionMat", NbtUtils.writeBlockPos(seclusionMat));
 		if (concealment != null) npc.putUUID("Concealment", concealment);
 		npc.putBoolean("Concealed", isConcealed());
@@ -1662,6 +1781,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		homeIndex = npc.getInt("Home");
 		home = npc.contains("HomePos") ? NbtUtils.readBlockPos(npc.getCompound("HomePos")) : null;
 		journeyTarget = npc.contains("Journey") ? NbtUtils.readBlockPos(npc.getCompound("Journey")) : null;
+		ascended = npc.getBoolean("Ascended");
+		joiningSect = npc.hasUUID("JoiningSect") ? npc.getUUID("JoiningSect") : null;
 		seclusionMat = npc.contains("SeclusionMat") ? NbtUtils.readBlockPos(npc.getCompound("SeclusionMat")) : null;
 		concealment = npc.hasUUID("Concealment") ? npc.getUUID("Concealment") : null;
 		setFlag(FLAG_CONCEALED, npc.getBoolean("Concealed"));
@@ -1698,11 +1819,20 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	private static final Set<CultivatorNpc> LOADED = new HashSet<>();
 
 	public static void onLoad(Entity entity) {
-		if (entity instanceof CultivatorNpc npc) LOADED.add(npc);
+		if (!(entity instanceof CultivatorNpc npc)) return;
+		LOADED.add(npc);
+		// Seen from the moment it is first in the world, ticking yet or not: one put down in land that unloads before it ever
+		// ticks (a hermit at the edge of what's loaded) still catches up on the time away, as NpcLedger reckons it will.
+		if (npc.lastSeen < 0) npc.lastSeen = npc.level().getGameTime();
+		RogueIndex.note(npc);
+		NpcLedger.onLoad(npc);
 	}
 
 	public static void onUnload(Entity entity) {
-		if (entity instanceof CultivatorNpc npc) LOADED.remove(npc);
+		if (!(entity instanceof CultivatorNpc npc)) return;
+		LOADED.remove(npc);
+		RogueIndex.onUnload(npc);
+		NpcLedger.onUnload(npc);
 	}
 
 	public static void clearLoaded() {
@@ -1745,19 +1875,31 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		return found;
 	}
 
-	/** Loaded NPCs in {@code level} within {@code radius} of {@code pos}. */
-	public static int countNear(ServerLevel level, Vec3 pos, double radius) {
+	/** Loaded wandering rogues ({@link #isWanderingRogue}) within {@code radius} of {@code pos}, sideways. */
+	public static int wanderingRoguesNear(ServerLevel level, Vec3 pos, double radius) {
 		int count = 0;
 		for (CultivatorNpc npc : LOADED) {
-			if (npc.level() == level && npc.isAlive() && npc.position().distanceToSqr(pos) <= radius * radius) count++;
+			if (npc.level() != level || !npc.isAlive() || !npc.isWanderingRogue()) continue;
+			double dx = npc.getX() - pos.x, dz = npc.getZ() - pos.z;
+			if (dx * dx + dz * dz <= radius * radius) count++;
 		}
 		return count;
 	}
 
-	public static int countIn(ServerLevel level) {
+	/** Loaded NPCs on a journey (departing their sect, or going to ascend), ticking or not, for NpcTravel. */
+	public static List<CultivatorNpc> travellers() {
+		List<CultivatorNpc> found = new ArrayList<>();
+		for (CultivatorNpc npc : LOADED) {
+			if (npc.isAlive() && !npc.isRemoved() && (npc.lifecycle == Lifecycle.DEPARTING || npc.lifecycle == Lifecycle.ASCENDING)) found.add(npc);
+		}
+		return found;
+	}
+
+	/** Loaded wandering rogues and mortal wanderers in {@code level} (sect members, hermits and travellers not counted). */
+	public static int countWanderers(ServerLevel level) {
 		int count = 0;
 		for (CultivatorNpc npc : LOADED) {
-			if (npc.level() == level && npc.isAlive()) count++;
+			if (npc.level() == level && npc.isAlive() && (npc.isWanderingRogue() || npc.isWanderingMortal())) count++;
 		}
 		return count;
 	}

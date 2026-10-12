@@ -592,7 +592,11 @@ public final class NpcLife {
 	 * carries at a humble one. Not on a day the heavens already turned it away. @return whether the heavens granted their leave
 	 */
 	public static boolean ritualOffscreen(ServerLevel level, CultivatorNpc npc) {
-		long today = HeavenRitual.today(level.getServer());
+		return ritualOffscreen(level, npc, HeavenRitual.today(level.getServer()));
+	}
+
+	/** The same, worked out for {@code today} (a cultivator catching up asks once for each day it was away). */
+	public static boolean ritualOffscreen(ServerLevel level, CultivatorNpc npc, long today) {
 		if (!npc.awaitsHeavensLeave() || npc.ritualFailedDay() >= today) return false;
 		Sect sect = npc.sect();
 		HeavenAltar.Offering offering;

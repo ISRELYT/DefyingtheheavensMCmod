@@ -117,6 +117,9 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.SUPPRESSED_TO, "%s");
 		t.add(ModLang.BREAKTHROUGH_SEALED, "Only the Upper Realm can hold this breakthrough.");
 
+		// The creative tab
+		t.add(ModLang.CREATIVE_TAB, "Defying The Heavens");
+
 		// Keybinds
 		t.add(ModLang.KEY_CATEGORY, "Defying The Heavens");
 		t.add(ModLang.KEY_MENU, "Open Cultivation Menu");

@@ -425,8 +425,29 @@ public final class CultivatorGoals {
 			}
 		}
 
-		/** Looks around for a cave or a mountainside; after a few tries, wanders on and looks again; at last, sits where it is. */
+		/**
+		 * Looks around for a cave or a mountainside; after a few tries, wanders on and looks again; at last, sits where it is.
+		 * With nobody near to see it search (woken in unloaded land, or arrived there unseen: NpcLedger), it settles at once on
+		 * the best spot to hand, or where it stands.
+		 */
 		private void seek(ServerLevel level) {
+			if (level.getNearestPlayer(npc.getX(), npc.getY(), npc.getZ(), 96, false) == null) {
+				if (npc.isQiFlying()) {
+					npc.land();
+					return;
+				}
+				if (npc.onGround() || npc.isInWater()) {
+					BlockPos found = npc.findSeclusionSite(level);
+					// In water with nowhere to hand, it looks about as anyone would (below) rather than sit down in the water.
+					if (found != null || npc.onGround()) {
+						BlockPos at = found != null ? found : npc.blockPosition();
+						npc.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, npc.getYRot(), 0);
+						npc.enterSeclusion(level, at);
+						site = null;
+						return;
+					}
+				}
+			}
 			if (site != null) {
 				if (npc.position().distanceToSqr(Vec3.atBottomCenterOf(site)) < 2.5) {
 					if (npc.isQiFlying()) npc.land();

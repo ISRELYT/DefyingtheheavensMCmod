@@ -25,8 +25,11 @@ import java.util.List;
  * Long journeys off-screen. Flying a few hundred blocks would leave an NPC frozen at the edge of the loaded world, so once
  * nobody is within {@link #SIGHT} of a travelling NPC (departing its sect, going to ascend, rising out of the Nether or End)
  * it is taken out of the world and its journey finishes on its own: it reappears at its destination, at about its flying
- * speed, as soon as that place is loaded. An ascension out of sight is decided there and then: into the Upper Realm, or lost
- * in the Spatial Gap. Saved with the Overworld, so journeys survive restarts.
+ * speed, its land loaded for the moment if nobody is there (NpcLedger#wake). An ascension out of sight is decided there and
+ * then: into the Upper Realm, or lost in the Spatial Gap. Saved with the Overworld, so journeys survive restarts.
+ * <p>
+ * Travellers are checked twice a second whether they are ticking or not ({@link #sweep}): one in loaded land that has stopped
+ * ticking (its player flew off fast, teleported or left) would otherwise wait there, frozen, until someone came back.
  */
 public class NpcTravel extends SavedData {
 	private static final String NAME = DefyingTheHeavens.MOD_ID + "_npc_travel";
@@ -34,6 +37,12 @@ public class NpcTravel extends SavedData {
 	private static final double SIGHT = 96;
 	/** Blocks a tick an unseen traveller covers (about its flying speed). */
 	private static final double SPEED = 0.4;
+	/** At most this many destinations woken every few seconds for travellers to arrive in. */
+	private static final int ARRIVALS_WOKEN = 4;
+	/** How far from its destination a traveller looks for dry ground to set down on (outside the Upper Realm). */
+	private static final int LANDING_REACH = 64;
+	/** How far from its destination in the Upper Realm a traveller looks for an island to set down on. */
+	private static final int ISLAND_REACH = 320;
 
 	private record Journey(ResourceKey<Level> dimension, BlockPos target, long readyAt, CompoundTag entity) {}
 
@@ -45,7 +54,19 @@ public class NpcTravel extends SavedData {
 
 	/** Called every tick by a travelling NPC: once it is out of everyone's sight, the rest of its journey happens unseen. */
 	public static void maybeDispatch(CultivatorNpc npc, ServerLevel level) {
-		if (npc.tickCount % 40 != 0 || npc.isRemoved()) return;
+		if (npc.tickCount % 40 != 0) return;
+		dispatch(npc, level);
+	}
+
+	/** Every loaded traveller, ticking or not, that nobody is near goes on its way unseen. */
+	private static void sweep() {
+		for (CultivatorNpc npc : CultivatorNpc.travellers()) {
+			if (npc.level() instanceof ServerLevel level) dispatch(npc, level);
+		}
+	}
+
+	private static void dispatch(CultivatorNpc npc, ServerLevel level) {
+		if (npc.isRemoved()) return;
 		CultivatorNpc.Lifecycle life = npc.getLifecycle();
 		boolean ascending = life == CultivatorNpc.Lifecycle.ASCENDING;
 		if (life != CultivatorNpc.Lifecycle.DEPARTING && !ascending) return;
@@ -105,13 +126,18 @@ public class NpcTravel extends SavedData {
 		return null;
 	}
 
-	/** Every few seconds: travellers whose journey is done reappear, if the place they're bound for is loaded. */
+	/**
+	 * Twice a second, loaded travellers out of everyone's sight are sent on their way ({@link #sweep}); every few seconds,
+	 * travellers whose journey is done reappear, if the place they're bound for is loaded.
+	 */
 	public static void tick(MinecraftServer server) {
+		if (server.getTickCount() % 10 == 0) sweep();
 		if (server.getTickCount() % 100 != 50) return;
 		NpcTravel data = get(server);
 		if (data.journeys.isEmpty()) return;
 		long now = server.overworld().getGameTime();
 		boolean changed = false;
+		int woken = 0;
 		for (Iterator<Journey> it = data.journeys.iterator(); it.hasNext(); ) {
 			Journey journey = it.next();
 			if (journey.readyAt() > now) continue;
@@ -122,7 +148,11 @@ public class NpcTravel extends SavedData {
 				continue;
 			}
 			BlockPos column = journey.target();
-			if (!level.isLoaded(column) || !level.isPositionEntityTicking(column)) continue;
+			if (!level.isLoaded(column) || !level.isPositionEntityTicking(column)) {
+				// Nobody there: the land is woken for a moment so it can arrive and go on with its life (NpcLedger).
+				if (woken++ < ARRIVALS_WOKEN) NpcLedger.wake(level, column);
+				continue;
+			}
 			if (arrive(level, journey)) {
 				it.remove();
 				changed = true;
@@ -134,15 +164,78 @@ public class NpcTravel extends SavedData {
 	private static boolean arrive(ServerLevel level, Journey journey) {
 		Entity entity = EntityType.loadEntityRecursive(journey.entity(), level, e -> e);
 		if (!(entity instanceof CultivatorNpc npc)) return true; // nothing to bring back: drop the journey
-		int x = journey.target().getX(), z = journey.target().getZ();
-		int y = Formations.surface(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
-		if (y <= level.getMinBuildHeight() + 1) y = journey.target().getY() > level.getMinBuildHeight() ? journey.target().getY() : level.getSeaLevel();
-		npc.moveTo(x + 0.5, y, z + 0.5, npc.getYRot(), 0);
+		BlockPos at = landing(level, journey.target());
+		npc.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, npc.getYRot(), 0);
 		npc.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
 		npc.setQiFlying(false);
 		npc.travelling = false;
 		level.addFreshEntity(npc);
 		return true;
+	}
+
+	/**
+	 * Where a traveller sets down at {@code target}: in the Upper Realm, on the nearest island within {@link #ISLAND_REACH}
+	 * (failing that, a small platform as for a player arriving: SpatialTrialHandler#findArrival), never over the void;
+	 * elsewhere, on dry ground near the spot if there is some within {@link #LANDING_REACH} (not out at sea), else on the
+	 * surface there.
+	 */
+	static BlockPos landing(ServerLevel level, BlockPos target) {
+		int x = target.getX(), z = target.getZ();
+		if (ModDimensions.isUpperRealm(level.dimension())) {
+			BlockPos island = nearestIsland(level, x, z);
+			return island != null ? island : SpatialTrialHandler.findArrival(level, x, z);
+		}
+		for (int radius = 0; radius <= LANDING_REACH; radius += 16) {
+			int points = radius == 0 ? 1 : 8;
+			for (int i = 0; i < points; i++) {
+				double angle = Math.PI * 2 * i / points;
+				int cx = x + (int) Math.round(Math.cos(angle) * radius), cz = z + (int) Math.round(Math.sin(angle) * radius);
+				level.getChunk(cx >> 4, cz >> 4);
+				int top = Formations.surface(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, cx, cz);
+				if (top <= level.getMinBuildHeight() + 1) continue;
+				BlockPos ground = new BlockPos(cx, top - 1, cz);
+				if (standsOn(level, ground)) {
+					return ground.above();
+				}
+			}
+		}
+		int y = Formations.surface(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+		if (y <= level.getMinBuildHeight() + 1) y = target.getY() > level.getMinBuildHeight() ? target.getY() : level.getSeaLevel();
+		return new BlockPos(x, y, z);
+	}
+
+	/**
+	 * Solid, dry island ground nearest (x, z), out to {@link #ISLAND_REACH}, or null. The world generator's own heights are
+	 * asked first (no land is generated for that), and only a column with an island under it is loaded and looked at: a
+	 * cultivator set down on a lone platform in the sky would sooner or later stroll off it into the void.
+	 */
+	private static BlockPos nearestIsland(ServerLevel level, int x, int z) {
+		net.minecraft.world.level.chunk.ChunkGenerator generator = level.getChunkSource().getGenerator();
+		net.minecraft.world.level.levelgen.RandomState noise = level.getChunkSource().randomState();
+		int floor = level.getMinBuildHeight() + 2;
+		for (int radius = 0; radius <= ISLAND_REACH; radius += 16) {
+			int points = radius == 0 ? 1 : Math.max(8, radius / 8);
+			for (int i = 0; i < points; i++) {
+				double angle = Math.PI * 2 * i / points;
+				int cx = x + (int) Math.round(Math.cos(angle) * radius), cz = z + (int) Math.round(Math.sin(angle) * radius);
+				if (generator.getBaseHeight(cx, cz, Heightmap.Types.WORLD_SURFACE_WG, level, noise) <= floor) continue;
+				level.getChunk(cx >> 4, cz >> 4);
+				int top = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, cx, cz);
+				if (top <= floor || top >= level.getMaxBuildHeight() - 2) continue;
+				BlockPos ground = new BlockPos(cx, top - 1, cz);
+				if (standsOn(level, ground)) {
+					return ground.above();
+				}
+			}
+		}
+		return null;
+	}
+
+	/** Dry, solid ground to stand on, and not the top of a tree trunk (it would stand wedged in the leaves). */
+	private static boolean standsOn(ServerLevel level, BlockPos ground) {
+		net.minecraft.world.level.block.state.BlockState state = level.getBlockState(ground);
+		return level.getFluidState(ground).isEmpty() && !state.is(net.minecraft.tags.BlockTags.LOGS)
+				&& state.isFaceSturdy(level, ground, net.minecraft.core.Direction.UP);
 	}
 
 	/** How many NPCs are on their way somewhere unseen (for /sect info and tests). */

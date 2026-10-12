@@ -18,6 +18,18 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\launcher\Build-Launcher.ps
 
 See [launcher/README.md](launcher/README.md) for setup and troubleshooting.
 
+## Creative tab
+
+Everything the mod adds has its own creative tab, **Defying The Heavens** (`ModCreativeTab`, shown with a Cultivation
+Fruit; with vanilla's tabs full it sits on the second page, behind the arrows at the top). In order: what cultivation is
+done with (meditation mats, Spirit Pedestal, Heaven Altar, Alchemy Cauldron, Formation Core, Inscription Brush, the
+rings), what is taken (a one-year Cultivation Fruit, every pill at every grade from Low to Immortal, Spirit Dew), the
+herbs (a year old) and their seeds, spores and pit, spirit stones of every grade and jade, the world's blocks (jade
+stone, ores, qi veins, Blue Spirit Wood, leaves), the clothing (every path's colours, grade and piece), and the
+Cultivator Spawn Egg. An item added later that the list doesn't name still shows, at the end. The items stay in
+vanilla's tabs too. The mod's other creatures (tribulation clouds, heart demons, the bodies left behind by the Inner
+Realm and Soul Projection) only arise from what makes them, so they have no eggs.
+
 ## Cultivation fruit
 
 The Blockbench fruit is available as an edible item and a block hanging directly below leaves.
@@ -606,16 +618,23 @@ crimson pillars and dark nether-brick roofs trimmed in red with soul lanterns fo
     bamboo and sparse jungle. One attempt per 32x32 chunks, at least 16 chunks apart, never within 10 chunks of a village
     (`worldgen/structure_set/sects.json`).
   - **Upper Realm** (`defying-the-heavens:sect_upper_realm`): islands of Spirit Forest, Peach Blossom Sanctuary, Dense Qi
-    Peaks and Thunder Peaks wide enough to hold one. One attempt per 14x14 chunks (at least 10 apart, as the grounds are
-    up to 153 blocks across), since few islands are (`worldgen/structure_set/sects_upper_realm.json`). Their masters are
-    Heavenly Beings or Four Axis cultivators.
+    Peaks and Thunder Peaks wide enough to hold one. The realm is mostly open sky, so a sect doesn't need its island right
+    at its site: there is one site in every 256 x 256-block cell (`worldgen/structure_set/sects_upper_realm.json`: spacing
+    16, separation 15, a start chunk every 16 chunks exactly), and the sect stands wherever within 48 blocks of the
+    cell's middle an island will hold it, taking a smaller size if the island is too small for the one rolled. Its
+    grounds never leave its cell, so two never overlap. To keep that cheap, the island masks of the terrain
+    (`ModNoiseSettings.islandMask`, four 2D noise samples) pick the two most promising spots per size before the
+    generator is asked the heights (~10 ms a column, most of it empty sky): about 85 ms a site on the worldgen threads.
+    Surveyed on two seeds, within 2,048 blocks of the rift: 21 and 15 sects, against 1 and 6 when a sect could only
+    stand at its site. Their masters are Heavenly Beings or Four Axis cultivators.
   - The grounds are 133, 145 and 153 blocks across; the buildings stand within 52, 58 and 62 blocks of the plaza (the
     barrier reaches 2 past them, never more than 64), the gates 8 further out (`Size` in `SectStructure.java`). Halls
     stand 8 blocks back from the ways, and the elders' houses have 7-9 blocks of lawn between them.
   - The land just beyond the gates and at the far corners of the grounds may rise at most 8 blocks above them
     (`MAX_EDGE_RISE`): the grounds are levelled out to there, so higher land would stand as a cliff across the way out.
-  - Tuning: `MAX_RELIEF`, `MAX_RELIEF_UPPER`, `MAX_EDGE_RISE` and `MAX_WET` in `SectStructure.java`, `spacing` in the
-    structure sets.
+  - Tuning: `MAX_RELIEF`, `MAX_RELIEF_UPPER`, `MAX_EDGE_RISE`, `MAX_WET`, and for the Upper Realm `ISLAND_SEARCH`,
+    `ISLAND_MIN` and `ISLAND_TRIES` in `SectStructure.java`; `spacing` in the structure sets (the Upper Realm's must keep a
+    start chunk every 16 chunks exactly, or `ISLAND_SEARCH` could make two sects overlap: a game test checks it).
 - Worldgen that runs after structures can't spoil the grounds: no lake (vanilla lava lakes, the Upper Realm's spring
   basins) forms where it would reach into a sect (`mixin/LakeFeatureMixin`), no wild tree, bamboo, huge mushroom, mossy
   boulder or jungle vine grows on the grounds or within 4 blocks of them (`mixin/SectClearingMixin`; saplings planted
@@ -667,6 +686,10 @@ player too weak to break the barrier who ends up inside that way is set down jus
 (`Formations.guard`). The owner, the players they trust, anyone strong enough to break it, and players in creative or
 spectator stay where they are. Rogue cultivators never spawn inside a barrier either.
 
+A barrier is raised, mended and watched over only while its land ticks (a player near enough, or the land held for a
+moment: `NpcLedger`). Land that is merely loaded is left alone, so it can unload: reading its blocks every tick used to
+hold it loaded for good, freezing the cultivators in it.
+
 - **Power.** The core holds a battery of 2,000 qi. The barrier costs `0.5 + radius² / 80` qi per second (1.3 at radius 8,
   13 at 32, 52 at 64); each **Qi Vein** joined to the core gathers 8 qi per second. A raised barrier stays up while the
   veins and battery can carry it. Each barrier block broken drains 40 qi and each one mended costs 5, so a sustained
@@ -694,10 +717,13 @@ spectator stay where they are. Rogue cultivators never spawn inside a barrier ei
 
 ### Sect members
 
-A sect is founded with 10-20 members the first time its core ticks (`SectManager.found`). Titles go by strength and are
+A sect is founded with 10-20 members the first time its core ticks (`SectManager.found`), and it needn't wait for a
+player to come by (see **Sects come into being unseen** below). Titles go by strength and are
 recalculated whenever someone dies, leaves or breaks through: the strongest is **Sect Master**, then about 10% **Grand
 Elders** (from 6 members), 20% **Elders**, 30% **Inner Disciples**, and the rest **Outer Disciples**. In the lower realms
-the master is between Core Formation and Nascent Soul Grand Perfection; in the Upper Realm, a Heavenly Being or Four Axis.
+the master is between Core Formation and Nascent Soul Grand Perfection and most members sit near Qi Refining; in the Upper
+Realm, rich in qi, the master is a Heavenly Being or Four Axis and the members run from Core Formation up, leaning toward
+the top.
 
 | Title | Duty |
 | --- | --- |
@@ -716,19 +742,81 @@ the master is between Core Formation and Nascent Soul Grand Perfection; in the U
   thick leaves, it walks out first), climbs over whatever it flies into, and drops out of the air when its qi runs dry;
   it can't take off again until its qi is back over 40%.
 - A member killed by a player is never replaced, and the sect is smaller for good. One who dies otherwise, or leaves, is
-  replaced after 2-4 days by a new Outer Disciple at Qi Refining Early. When the last member dies, the sect is extinct
-  and never comes back.
+  replaced after 2-4 days by a new Outer Disciple at the realm's lowest rank (Qi Refining Early below, Core Formation
+  Early in the Upper Realm), unless a newcomer from below has taken the slot (see **Coming up**). When the last member
+  dies, the sect is extinct and never comes back.
 - Cultivators cultivate ten times slower than players, and break through without tribulations (they never pass Heavenly
   Being Grand Perfection in the lower realms).
 - **Leaving the sect.** A lower-realm member who reaches Heavenly Being leaves: flies 200-1,000 blocks away, finds a cave
   or a mountainside, sets down a mat and goes into seclusion behind a **Concealment Barrier** that hides their presence
   from Qi Sense and pushes back (and slows) anyone who comes close. They fight only if attacked or the barrier is struck.
   At Heavenly Being Grand Perfection they set out for the rift at 0, 0 and try to ascend to the Upper Realm (7 in 10
-  succeed). Journeys through unloaded land go on off-screen (`NpcTravel`).
-- **Rogue cultivators** turn up now and then 40-80 blocks from a player, out of sight. Each attempt (every 30 seconds,
-  35% of the time) rolls a rank: a mortal 10% of the time, falling evenly with every stage to 0.1% for Heavenly Being Grand
-  Perfection; in the Upper Realm the curve runs from Qi Refining Early to Four Axis Grand Perfection
-  (`NpcSpawner`). At most 3 near any one player and 40 in a level.
+  succeed). Once no player is within 96 blocks, a journey goes on off-screen (`NpcTravel`): the traveller reappears at
+  its destination (at about flying speed), and an ascension is decided on the spot. Travellers are checked twice a second
+  whether their land is ticking or not, so one left behind by a fast flight, a teleport or a logout doesn't wait there
+  frozen; a destination nobody has loaded is loaded for a moment so the traveller can arrive. It sets down on dry ground
+  near the spot (within 64 blocks, not out at sea), and in the Upper Realm on the nearest island, as a player arriving
+  does (a small platform if the abyss is empty there), never over the void.
+- **Coming up.** A cultivator who makes it through to the Upper Realm looks once for the nearest sect of its path
+  (righteous, neutral or demonic) that will take it, as far as 8,192 blocks off (nearest first, so it goes further only
+  when there's none nearer; that far takes it about 17 minutes unseen): one with a free slot (a member it lost, dying to
+  anything but a player, whose replacement hasn't come yet), or a full one with a member weaker than the newcomer, and no
+  other newcomer already on the way. Only sects already founded are known: those within 2,048 blocks of the rift are
+  founded early in a world's life without anyone going up (see below), so a newcomer has a dozen or more to choose from,
+  and further out those near wherever players have been. It holds its
+  place at once (the disciple on the way is called off, and nobody else can take it), goes there (unseen, if nobody is
+  near) and joins, titled by strength: the Sect Master's seat if it is the strongest. A full sect lets its weakest member
+  go (never the master) to make room: that one sets off 200-1,000 blocks to make its own way, and no replacement is sent
+  for. If the newcomer dies on the way or hasn't come in 3 days, its place goes back to a new disciple. With no sect to
+  take it, it finds a high or sheltered spot and goes into seclusion in the Upper Realm, cultivating toward Four Axis.
+- **Lives go on unseen** (`NpcLedger`). A cultivator whose land is unloaded catches up when it is next loaded, however
+  long it was away: half of every second counts as meditation, stage by stage, and one held at Qi Refining Mid's gate
+  asks the heavens once for each day it was away (sect members from the sect's store, rogues from what they carry). The
+  steps of a life don't wait for a player either: when a cultivator's land unloads, the ledger reckons the same way when
+  its next step falls due (a sect member or rogue reaching Heavenly Being, a secluded one reaching Grand Perfection; one
+  held at the gate every 3 days), and then loads its land for 15 seconds (keeping that dimension ticking meanwhile, even
+  with no player in it: a level nobody is in stops ticking its creatures after 15 seconds). It catches up, takes the step (leaves its sect,
+  goes into seclusion on the best spot to hand, or sets off to ascend), and its journey goes on off-screen. Roughly, at
+  that pace: Qi Refining takes 10 days, Foundation Building 17, Core Formation 27, Nascent Soul 43, and a Heavenly Being
+  needs 44 more to reach Grand Perfection. Mortals and the Upper Realm's cultivators have no such steps.
+- **Sects come into being unseen** (`SectSites`). A sect used to be founded only when a player came near enough for its
+  core to tick. Now the server asks the world generator where sects stand (as `/locate` does, generating nothing to find
+  out) within 2,048 blocks of the world spawn, 2,048 blocks of the rift in the Upper Realm, and 1,024 blocks of every
+  player in either, and loads each one's heart for a moment so it founds itself: its middle generated, its members born,
+  and their lives going on from then on like any other sect's, unseen. One site at a time, nearest first, taking spawn,
+  rift and players in turn, about two a second; the ground is sampled off the server thread (10-100 ms a site), so it
+  doesn't stall the game. Each site is decided once (founded, or no sect there) and remembered across restarts. A new
+  world works through what's round spawn and the rift in its first two or three minutes, at the cost of generating each
+  sect's middle in the background; a player travelling has the sects ahead founded before they get there. Overworld
+  sects are rare (they need wide, flat, dry ground away from villages), so how many stand near spawn depends on the seed
+  (none within 2,048 on one test seed, 4 on another); the Upper Realm has a dozen or more round the rift (see above). A
+  world made without structures has none. Rogues and hermits wait for a site near them to be settled (`unsettled`)
+  instead of asking the generator themselves.
+- **Hermits.** Each 1,024 x 1,024-block region of the Overworld has, 4 times in 5, a Heavenly Being (Early, Mid or
+  Late) who was in seclusion before anyone came, in a cave (above the deep dark, clear of lava) or high on a mountain in
+  the chunk the world's seed picks. They are seated the first time that chunk loads (`HermitSites`; worldgen itself can't
+  raise a Concealment Barrier) and live like any secluded cultivator from then on, rumours included. A region with no
+  cave or mountain there has none, nor one near a sect's grounds (it waits while a sect site near by is still to be
+  looked at). Never where someone has been at work: no spot lit by a
+  torch or lantern, or within 4 blocks of a chest, bed, furnace, sign, rails or any other block with a block entity (a
+  dark corner of a mine or a cellar looks like a cave otherwise), and never with a player within 80 blocks to see one
+  appear (it waits until they've gone). When a region's hermit leaves (sets off to ascend, or dies), a new one takes its
+  place two weeks of game days later, seated as the land next loads; one killed by a player is never replaced, as with a
+  sect.
+- **Rogue cultivators** turn up now and then near a player, out of close sight: 40-80 blocks off around a player who stays
+  about (an attempt every 30 seconds, 35% of the time), or 64-128 blocks ahead along the way of one travelling faster than
+  7 blocks a second (flying, riding: an attempt every 5 seconds). Each attempt rolls a rank: a mortal 10% of the time,
+  falling evenly with every stage to 0.1% for Heavenly Being Grand Perfection; in the Upper Realm the curve runs from Qi
+  Refining Early to Four Axis Grand Perfection (`NpcSpawner`). **Cultivators never despawn**, so rogues are kept rare by
+  placement instead: there is never more than one wandering rogue within 160 blocks (sideways) of a player, because a new
+  one keeps 352 blocks (twice that, plus room for strolling) from every other, loaded or not. Mortal wanderers are kept
+  the same way among themselves, apart from the rogues, so you may meet one of each. `RogueIndex` remembers where each
+  one is, saved with the Overworld. Sect members, and those seeking seclusion, in seclusion or on a journey don't count;
+  a rogue a player has named (a name tag) still does, so naming one doesn't make room for another. Neither kind turns up
+  within 160 blocks of a sect's grounds, nor near a sect site not settled yet (`SectSites.unsettled`: the sites round a
+  player are looked at within seconds of their coming, so this only holds a spawn back a little).
+  None turns up while 40 rogues and wanderers are loaded in the level (sect members don't count). Flying over land you
+  meet one every 350-650 blocks or so; over water, none.
 - **In a fight** cultivators use what their realm gives them: a Consciousness Domain (rogues always, sect members only
   in combat), Realm Suppression and Qi Flight or Sword Flight, but only while their qi can sustain them. They flee below a quarter of their
   health (all but the Sect Master, who makes a last stand), and rogues and disciples also flee from a hostile domain four or more stages stronger once their own domain

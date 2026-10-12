@@ -50,6 +50,8 @@ public final class Formation {
 	// Runtime only: how far the raising (or the next repair pass) has got through the shell.
 	int cursor;
 	boolean complete;
+	/** Runtime only: tended at the last tick (its land ticking); see Formations#tick. */
+	boolean awake;
 
 	public Formation(UUID id, Kind kind, BlockPos center, int radius) {
 		this.id = id;

@@ -12,6 +12,8 @@ public final class ModLang {
 	public static String stageKey(String id) { return "stage." + DefyingTheHeavens.MOD_ID + "." + id; }
 	public static String mortalStageKey(String id) { return k("mortal_stage." + id); }
 
+	/** The mod's creative tab (ModCreativeTab). */
+	public static final String CREATIVE_TAB = "itemGroup." + DefyingTheHeavens.MOD_ID;
 	public static final String KEY_CATEGORY = "key.categories." + DefyingTheHeavens.MOD_ID;
 	public static final String KEY_MENU = "key." + DefyingTheHeavens.MOD_ID + ".cultivation_menu";
 	public static final String KEY_MEDITATE = "key." + DefyingTheHeavens.MOD_ID + ".meditate";

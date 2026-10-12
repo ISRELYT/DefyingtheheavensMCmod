@@ -13,6 +13,7 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -105,11 +106,13 @@ public final class SectManager {
 	/**
 	 * The ranks a new sect is born with, strongest (the first Sect Master) first: in the lower realms a master between Core
 	 * Formation and Nascent Soul Grand Perfection (never a Heavenly Being: they leave), most members far below; in the Upper
-	 * Realm a Heavenly Being or Four Axis master, its disciples from Foundation Building up.
+	 * Realm, rich in qi, a Heavenly Being or Four Axis master and its members from Core Formation up, leaning toward the top.
 	 */
 	public static int[] foundingRanks(RandomSource random, int count, boolean upperRealm) {
 		int[] ranks = new int[count];
-		int floor = upperRealm ? PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.EARLY) : 0;
+		int floor = floorRank(upperRealm);
+		// Below most members sit near the floor; in the Upper Realm they spread toward the master.
+		double lean = upperRealm ? 0.8 : 1.7;
 		int master = upperRealm
 				? PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.EARLY) + (int) (8 * Math.pow(random.nextFloat(), 1.3))
 				: PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY) + (int) (8 * Math.pow(random.nextFloat(), 1.5));
@@ -117,9 +120,14 @@ public final class SectManager {
 				: PlayerCultivation.rank(Realm.NASCENT_SOUL, Stage.GRAND_PERFECTION));
 		ranks[0] = master;
 		for (int i = 1; i < count; i++) {
-			ranks[i] = Math.min(master - 1, floor + (int) ((master - floor) * Math.pow(random.nextFloat(), 1.7)));
+			ranks[i] = Math.min(master - 1, floor + (int) ((master - floor) * Math.pow(random.nextFloat(), lean)));
 		}
 		return ranks;
+	}
+
+	/** A sect's lowest rank, at which its new disciples come: Qi Refining Early below, Core Formation Early in the Upper Realm. */
+	public static int floorRank(boolean upperRealm) {
+		return upperRealm ? PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY) : 0;
 	}
 
 	/** A new member of {@code rank} living at dwelling {@code home} (-1: the master's seat); not yet added to the world. */
@@ -209,12 +217,103 @@ public final class SectManager {
 		sect.replacements.add(now + Sect.REPLACEMENT_MIN + random.nextInt((int) Sect.REPLACEMENT_SPREAD));
 	}
 
+	// --- Newcomers from below (cultivators who ascended to the Upper Realm) ---
+
+	/**
+	 * How far (blocks) a newly ascended cultivator looks for a sect to join, nearest first, so it goes further only when
+	 * there's none nearer (8,192 blocks takes it about 17 minutes unseen, NpcTravel); and how long a slot is held for it (3
+	 * days).
+	 */
+	public static final double JOIN_RANGE = 8192;
+	public static final long RESERVE_TIME = 3 * HeavenRitual.DAY;
+
+	/**
+	 * The nearest sect {@code npc} could join: in its realm, of its path (righteous, neutral or demonic), within
+	 * {@link #JOIN_RANGE}, still standing, and either with a slot nobody fills or has reserved, or full with a member weaker
+	 * than {@code npc} to let go (Sect#canTakeIn). Only sects already founded are known: those within SectSites#RIFT_REACH of
+	 * the rift, where newcomers arrive, and those near where players have been. Null if none.
+	 */
+	public static Sect findOpening(ServerLevel level, CultivatorNpc npc) {
+		Alignment.Faction faction = Alignment.factionOf(npc.getAlignment());
+		Sect best = null;
+		double bestDistance = JOIN_RANGE * JOIN_RANGE;
+		for (Sect sect : SectData.get(level.getServer()).all()) {
+			if (sect.extinct || sect.dimension != level.dimension() || !sect.canTakeIn(npc.getRank()) || Alignment.factionOf(sect.alignment) != faction) continue;
+			double dx = sect.core.getX() - npc.getX(), dz = sect.core.getZ() - npc.getZ();
+			double distance = dx * dx + dz * dz;
+			if (distance <= bestDistance) {
+				bestDistance = distance;
+				best = sect;
+			}
+		}
+		return best;
+	}
+
+	/**
+	 * Holds a slot in {@code sect} for {@code npc} on its way to join, for {@link #RESERVE_TIME}: the next new disciple due to
+	 * fill a slot (if any is on the way) is called off, and nobody else can take the slot meanwhile.
+	 */
+	public static void reserve(ServerLevel level, Sect sect, UUID npc) {
+		sect.reserved.put(npc, level.getGameTime() + RESERVE_TIME);
+		if (!sect.replacements.isEmpty()) sect.replacements.remove(java.util.Collections.min(sect.replacements));
+		dirty(level.getServer());
+	}
+
+	/** A held slot given up (the newcomer died on the way, or never came): the sect sends for a new disciple as usual. */
+	public static void release(ServerLevel level, UUID sectId, UUID npc) {
+		Sect sect = get(level.getServer(), sectId);
+		if (sect == null || sect.reserved.remove(npc) == null) return;
+		if (!sect.extinct) scheduleReplacement(sect, level.getGameTime(), level.getRandom());
+		dirty(level.getServer());
+	}
+
+	/**
+	 * {@code npc} arrives and joins {@code sect} in the place it holds: a member like any other, titled by its strength, so
+	 * the Sect Master if it is the strongest. A full sect lets its weakest member go to make room (it sets off to make its own
+	 * way, and no replacement is sent for). @return false if there is no room after all (the sect fell, or everyone left to
+	 * let go has grown stronger than the newcomer)
+	 */
+	public static boolean admit(ServerLevel level, Sect sect, CultivatorNpc npc) {
+		sect.reserved.remove(npc.getUUID());
+		if (!sect.extinct && sect.members.size() >= sect.capacity) {
+			Sect.Member out = sect.weakestBelow(npc.getRank());
+			if (out != null) {
+				sect.members.remove(out.id);
+				// Loaded, it sets off now; unloaded, it finds itself off the roll when next loaded and sets off then.
+				if (level.getEntity(out.id) instanceof CultivatorNpc dismissed) dismissed.dismiss(level);
+				DefyingTheHeavens.LOGGER.info("The {} lets its weakest member go to make room for a cultivator from below", sect.name);
+			}
+		}
+		if (sect.extinct || sect.members.size() >= sect.capacity) {
+			dirty(level.getServer());
+			return false;
+		}
+		int home = sect.freeHome();
+		npc.joinSect(sect, home);
+		Sect.Member member = new Sect.Member(npc.getUUID(), npc.getRank(), home);
+		member.cultivation = npc.cultivation().getCultivation();
+		sect.members.put(member.id, member);
+		retitle(level, sect);
+		npc.setTitle(sect.members.get(npc.getUUID()).title);
+		DefyingTheHeavens.LOGGER.info("A cultivator from below joins the {} as {}", sect.name, member.title.getId());
+		return true;
+	}
+
 	// --- Ticking ---
 
 	public static void tick(MinecraftServer server) {
 		if (server.getTickCount() % 100 != 0) return;
 		SectData data = SectData.get(server);
 		for (Sect sect : data.all()) {
+			if (!sect.reserved.isEmpty()) {
+				// Held slots whose newcomer never came: the sect sends for disciples instead.
+				ServerLevel home = server.getLevel(sect.dimension);
+				long now = server.overworld().getGameTime();
+				for (UUID late : sect.reserved.entrySet().stream().filter(e -> e.getValue() <= now).map(Map.Entry::getKey).toList()) {
+					if (home != null) release(home, sect.id, late);
+					else sect.reserved.remove(late);
+				}
+			}
 			if (sect.extinct || sect.replacements.isEmpty()) continue;
 			ServerLevel level = server.getLevel(sect.dimension);
 			if (level == null || !level.isLoaded(sect.core)) continue;
@@ -225,8 +324,9 @@ public final class SectManager {
 				if (due > now) continue;
 				it.remove();
 				changed = true;
-				if (sect.members.size() >= sect.capacity) continue; // no room left: the slot was a player's kill
-				CultivatorNpc npc = spawnMember(level, sect, 0, sect.freeHome(), level.getRandom());
+				// No room left: the slot was a player's kill, or is held for a newcomer from below.
+				if (sect.members.size() + sect.reserved.size() >= sect.capacity) continue;
+				CultivatorNpc npc = spawnMember(level, sect, floorRank(ModDimensions.isUpperRealm(sect.dimension)), sect.freeHome(), level.getRandom());
 				if (npc == null) continue;
 				BlockPos gate = sect.post(Sect.Post.GATE, 0);
 				if (level.isLoaded(gate)) npc.moveTo(gate.getX() + 0.5, gate.getY() + 0.1, gate.getZ() + 0.5, npc.getYRot(), 0);

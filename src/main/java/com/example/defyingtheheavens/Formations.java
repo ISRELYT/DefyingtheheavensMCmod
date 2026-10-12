@@ -519,7 +519,19 @@ public final class Formations {
 			int budget = TOTAL_BUDGET;
 			List<UUID> lapsed = new ArrayList<>();
 			for (Formation formation : data.all()) {
-				if (!formation.isRaised() || !level.isLoaded(formation.center)) continue;
+				if (!formation.isRaised()) continue;
+				// Tended only where its land ticks (a player near enough, or held for a moment: NpcLedger#wake). Land merely
+				// loaded (a border chunk, one kept for an instant) is left alone: reading its blocks each tick would renew the
+				// hold on it, and it would never unload, nor its cultivators (frozen, never catching up). Nor can a
+				// concealment's owner be judged gone while its land doesn't tick: it gets a fresh grace once the land does.
+				if (!level.shouldTickBlocksAt(ChunkPos.asLong(formation.center))) {
+					formation.awake = false;
+					continue;
+				}
+				if (!formation.awake) {
+					formation.awake = true;
+					formation.heartbeat = level.getGameTime();
+				}
 				if (budget > 0) budget -= build(level, formation, budget);
 				if (purging) {
 					purge(level, formation);

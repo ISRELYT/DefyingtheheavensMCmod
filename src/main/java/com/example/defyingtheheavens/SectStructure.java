@@ -56,8 +56,9 @@ import java.util.Optional;
  * Three sizes, for 10-12, 13-16 and 17-20 members. The Sect Master sits in the main hall, each elder has a house, and the
  * disciples live in the meditation hall, a mat each. The Formation Core stands at the middle of the grounds; its barrier is
  * sized to enclose all of them. Sects appear only on fairly flat, dry land (and, in the Upper Realm, only on an island wide
- * enough to hold them). Members are not spawned here: the core carries the sect's blueprint (its posts, alignment and
- * capacity) and founds the sect when it first ticks (SectManager#found).
+ * enough to hold them: there a sect looks up to 48 blocks round its site for one, and takes a smaller size if the island
+ * is too small for the one rolled). Members are not spawned here: the core carries the sect's blueprint (its posts,
+ * alignment and capacity) and founds the sect when it first ticks (SectManager#found).
  */
 public class SectStructure extends Structure {
 	/**
@@ -115,6 +116,11 @@ public class SectStructure extends Structure {
 			this.trees = trees;
 			this.bamboo = bamboo;
 		}
+
+		/** The next size down, or null below the smallest. */
+		Size smaller() {
+			return ordinal() == 0 ? null : values()[ordinal() - 1];
+		}
 	}
 
 	private static final int MAIN_DEPTH = 21;
@@ -138,55 +144,145 @@ public class SectStructure extends Structure {
 	protected Optional<GenerationStub> findGenerationPoint(GenerationContext context) {
 		WorldgenRandom random = context.random();
 		float roll = random.nextFloat();
-		Size size = roll < 0.35f ? Size.SMALL : roll < 0.75f ? Size.MEDIUM : Size.LARGE;
+		Size rolled = roll < 0.35f ? Size.SMALL : roll < 0.75f ? Size.MEDIUM : Size.LARGE;
 		Direction facing = Direction.Plane.HORIZONTAL.getRandomDirection(random);
 		ChunkPos chunk = context.chunkPos();
-		Frame frame = new Frame(facing, chunk.getMiddleBlockX(), chunk.getMiddleBlockZ(), size.w, size.d);
+		int x = chunk.getMiddleBlockX(), z = chunk.getMiddleBlockZ();
+		if (!isUpperRealm(context, new BlockPos(x, 64, z))) {
+			Frame frame = new Frame(facing, x, z, rolled.w, rolled.d);
+			int platformY = groundLevel(context, rolled, frame, false);
+			return platformY == NO_SITE ? Optional.empty() : Optional.of(stub(random, rolled, frame, platformY, false));
+		}
+		// The Upper Realm is mostly open sky, and few islands are wide enough: the sect stands wherever near the middle of its
+		// cell an island will hold it (see ISLAND_SEARCH), and ground too small for the size rolled takes a smaller sect.
+		for (Size size = rolled; size != null; size = size.smaller()) {
+			for (Frame frame : islandSpots(context, size, facing, x, z)) {
+				int platformY = groundLevel(context, size, frame, true);
+				if (platformY != NO_SITE) return Optional.of(stub(random, size, frame, platformY, true));
+			}
+		}
+		return Optional.empty();
+	}
 
-		ChunkGenerator generator = context.chunkGenerator();
-		LevelHeightAccessor heights = context.heightAccessor();
-		RandomState state = context.randomState();
-		BlockPos centre = new BlockPos(chunk.getMiddleBlockX(), 64, chunk.getMiddleBlockZ());
-		boolean upper = isUpperRealm(context, centre);
+	/** The sect's start: at its plaza (where its core will stand), which SectSites wakes to found it. */
+	private static GenerationStub stub(WorldgenRandom random, Size size, Frame frame, int platformY, boolean upper) {
+		return new GenerationStub(new BlockPos(frame.cx(), platformY, frame.cz()), builder -> plan(builder, random, size, frame, platformY, upper));
+	}
 
-		// The ground, sampled where the buildings will stand (a grid reaching three quarters of their reach from the plaza), and
-		// at the gates and the far edges of the grounds: those are levelled too, so a hill there would be cut into a cliff
-		// across the way out of a gate. Too uneven, too wet or (in the Upper Realm) over the edge of an island, and there's no
-		// sect here. The platform's level is the buildings' ground's.
-		int[] samples = new int[33];
-		int water = 0;
+	private static final int NO_SITE = Integer.MIN_VALUE;
+	/**
+	 * How far from its start chunk's middle an Upper Realm sect may stand, in steps of {@link #ISLAND_STEP}. The Upper Realm's
+	 * sects are spread one to a 256-block cell round each start chunk (structure set sects_upper_realm: spacing 16, separation
+	 * 15, so a start chunk every 16 chunks exactly): 48 plus the largest grounds' half-width (76) is 124, so a sect's grounds
+	 * never leave its cell and two never overlap, and all of it stays within the 8 chunks of its start that worldgen places
+	 * structure pieces in. Surveyed 2026-10-12 over 195 cells within 2,048 blocks of the rift on two seeds: 21 and 15 sects,
+	 * against 1 and 6 when a sect could only stand at its start chunk's middle; about 85 ms a site on average (on the
+	 * worldgen threads), against ~12.
+	 */
+	static final int ISLAND_SEARCH = 48;
+	private static final int ISLAND_STEP = 16;
+	/** Below this island mask (ModNoiseSettings#islandMask) a sample point is surely over the open sky. */
+	private static final double ISLAND_MIN = -0.15;
+	/** How many of the most promising spots, per size, the generator is asked about (3 or 4 found barely any more). */
+	private static final int ISLAND_TRIES = 2;
+
+	/**
+	 * Where a sect of {@code size} might stand round x, z: the spots within {@link #ISLAND_SEARCH} where every point the
+	 * ground is sampled at (see groundLevel) is over an island by the island masks, deepest inside first; at most
+	 * {@link #ISLAND_TRIES}. The masks cost next to nothing, while the generator takes ~10 ms to find each point's surface
+	 * (mostly sky), so most sites, which are open sky, are passed over at once.
+	 */
+	private static List<Frame> islandSpots(GenerationContext context, Size size, Direction facing, int x, int z) {
+		List<Frame> spots = new ArrayList<>();
+		List<Double> depths = new ArrayList<>();
+		for (int dx = -ISLAND_SEARCH; dx <= ISLAND_SEARCH; dx += ISLAND_STEP) {
+			for (int dz = -ISLAND_SEARCH; dz <= ISLAND_SEARCH; dz += ISLAND_STEP) {
+				Frame frame = new Frame(facing, x + dx, z + dz, size.w, size.d);
+				double depth = Double.MAX_VALUE;
+				for (BlockPos at : samplePoints(size, frame)) {
+					depth = Math.min(depth, ModNoiseSettings.islandMask(context.randomState(), at.getX(), at.getZ()));
+					if (depth < ISLAND_MIN) break;
+				}
+				if (depth < ISLAND_MIN) continue;
+				int i = 0;
+				while (i < depths.size() && depths.get(i) >= depth) i++;
+				if (i >= ISLAND_TRIES) continue;
+				spots.add(i, frame);
+				depths.add(i, depth);
+				if (spots.size() > ISLAND_TRIES) {
+					spots.remove(ISLAND_TRIES);
+					depths.remove(ISLAND_TRIES);
+				}
+			}
+		}
+		return spots;
+	}
+
+	/**
+	 * The columns the ground is sampled at for a sect of {@code size} laid out as {@code frame}: 25 where the buildings will
+	 * stand (a grid reaching three quarters of their reach from the plaza), then 8 at the gates (front and sides), the back
+	 * and the four far corners, just beyond the gates' reach.
+	 */
+	private static BlockPos[] samplePoints(Size size, Frame frame) {
+		BlockPos[] points = new BlockPos[33];
 		int n = 0;
 		for (int i = 0; i <= 4; i++) {
 			for (int j = 0; j <= 4; j++) {
-				BlockPos at = frame.world(size.a + Math.round(size.reach * 0.375f * (i - 2)), size.b + Math.round(size.reach * 0.375f * (j - 2)));
-				int y = generator.getFirstOccupiedHeight(at.getX(), at.getZ(), Heightmap.Types.WORLD_SURFACE_WG, heights, state);
-				if (y <= heights.getMinBuildHeight() + 2) return Optional.empty();
-				samples[n++] = y;
-				if ((i + j) % 2 == 0) {
-					NoiseColumn column = generator.getBaseColumn(at.getX(), at.getZ(), heights, state);
-					BlockState top = column.getBlock(y);
-					if (!top.getFluidState().isEmpty()) water++;
-				}
+				points[n++] = frame.world(size.a + Math.round(size.reach * 0.375f * (i - 2)), size.b + Math.round(size.reach * 0.375f * (j - 2)));
+			}
+		}
+		int outer = size.reach + GATE_BEYOND + 4;
+		for (int k = 0; k < 8; k++) {
+			double angle = Math.PI / 4 * k, out = k % 2 == 0 ? outer : outer * 0.75;
+			points[n++] = frame.world(size.a + (int) Math.round(Math.cos(angle) * out), size.b + (int) Math.round(Math.sin(angle) * out));
+		}
+		return points;
+	}
+
+	/**
+	 * The level of the grounds of a sect of {@code size} laid out as {@code frame}: where its buildings stand, if the land
+	 * will take it, else {@link #NO_SITE}. The ground is sampled where the buildings will stand, and at the gates and the far
+	 * edges of the grounds (samplePoints): those are levelled too, so a hill there would be cut into a cliff across the way
+	 * out of a gate. Too uneven, too wet or (in the Upper Realm) over the edge of an island, and there's no sect here. The
+	 * platform's level is the buildings' ground's.
+	 */
+	private static int groundLevel(GenerationContext context, Size size, Frame frame, boolean upper) {
+		ChunkGenerator generator = context.chunkGenerator();
+		LevelHeightAccessor heights = context.heightAccessor();
+		RandomState state = context.randomState();
+		BlockPos[] points = samplePoints(size, frame);
+		int[] samples = new int[points.length];
+		int water = 0;
+		for (int n = 0; n < 25; n++) {
+			BlockPos at = points[n];
+			int y = generator.getFirstOccupiedHeight(at.getX(), at.getZ(), Heightmap.Types.WORLD_SURFACE_WG, heights, state);
+			if (y <= heights.getMinBuildHeight() + 2) return NO_SITE;
+			samples[n] = y;
+			if (n % 2 == 0) { // (i + j) even on the 5 x 5 grid
+				NoiseColumn column = generator.getBaseColumn(at.getX(), at.getZ(), heights, state);
+				BlockState top = column.getBlock(y);
+				if (!top.getFluidState().isEmpty()) water++;
 			}
 		}
 		int[] inner = Arrays.copyOf(samples, 25);
 		Arrays.sort(inner);
 		int platformY = inner[12];
-		// The gates (front and sides), the back, and the four far corners, just beyond the gates' reach.
-		int outer = size.reach + GATE_BEYOND + 4;
-		for (int k = 0; k < 8; k++) {
-			double angle = Math.PI / 4 * k, out = k % 2 == 0 ? outer : outer * 0.75;
-			BlockPos at = frame.world(size.a + (int) Math.round(Math.cos(angle) * out), size.b + (int) Math.round(Math.sin(angle) * out));
+		for (int n = 25; n < points.length; n++) {
+			BlockPos at = points[n];
 			int y = generator.getFirstOccupiedHeight(at.getX(), at.getZ(), Heightmap.Types.WORLD_SURFACE_WG, heights, state);
-			if (y <= heights.getMinBuildHeight() + 2 || y > platformY + MAX_EDGE_RISE) return Optional.empty();
-			samples[n++] = y;
+			if (y <= heights.getMinBuildHeight() + 2 || y > platformY + MAX_EDGE_RISE) return NO_SITE;
+			samples[n] = y;
 		}
 		int[] sorted = samples.clone();
 		Arrays.sort(sorted);
-		if (sorted[sorted.length - 1] - sorted[0] > (upper ? MAX_RELIEF_UPPER : MAX_RELIEF) || water > MAX_WET) return Optional.empty();
-		if (platformY + 70 > heights.getMaxBuildHeight()) return Optional.empty();
-		return Optional.of(new GenerationStub(new BlockPos(chunk.getMiddleBlockX(), platformY, chunk.getMiddleBlockZ()),
-				builder -> plan(builder, random, size, frame, platformY, upper)));
+		if (sorted[sorted.length - 1] - sorted[0] > (upper ? MAX_RELIEF_UPPER : MAX_RELIEF) || water > MAX_WET) return NO_SITE;
+		if (platformY + 70 > heights.getMaxBuildHeight()) return NO_SITE;
+		return platformY;
+	}
+
+	/** The largest grounds' half-width, from the plaza to the edge (for SectGameTests). */
+	static int largestHalfWidth() {
+		return Size.LARGE.a;
 	}
 
 	/**

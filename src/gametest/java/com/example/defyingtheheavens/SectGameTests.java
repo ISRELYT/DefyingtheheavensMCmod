@@ -250,6 +250,314 @@ public class SectGameTests implements FabricGameTest {
 		helper.succeed();
 	}
 
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void onlyWanderingRoguesCountAndNoneDespawn(GameTestHelper helper) {
+		ServerLevel level = helper.getLevel();
+		Sect sect = newSect(helper, 0);
+		CultivatorNpc member = member(helper, sect, 3, 0);
+		CultivatorNpc rogue = helper.spawn(ModEntities.CULTIVATOR, new BlockPos(2, 2, 2));
+		rogue.becomeRogue(PlayerCultivation.rank(Realm.QI_REFINING, Stage.EARLY), 0, level.getRandom());
+		CultivatorNpc named = helper.spawn(ModEntities.CULTIVATOR, new BlockPos(3, 2, 2));
+		named.becomeRogue(PlayerCultivation.rank(Realm.QI_REFINING, Stage.EARLY), 0, level.getRandom());
+		named.setCustomName(net.minecraft.network.chat.Component.literal("Kept"));
+		CultivatorNpc heavenly = helper.spawn(ModEntities.CULTIVATOR, new BlockPos(2, 2, 3));
+		heavenly.becomeRogue(PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.EARLY), 0, level.getRandom());
+		CultivatorNpc wanderer = helper.spawn(ModEntities.CULTIVATOR, new BlockPos(3, 2, 3));
+		wanderer.becomeRogue(CultivatorNpc.MORTAL, 0, level.getRandom());
+
+		helper.assertTrue(rogue.isWanderingRogue(), "A rogue about the land counts toward the one near each player");
+		helper.assertTrue(named.isWanderingRogue(), "So does one a player has named: naming it makes no room for another");
+		helper.assertTrue(heavenly.getLifecycle() == CultivatorNpc.Lifecycle.SEEKING_SECLUSION && !heavenly.isWanderingRogue(),
+				"Nor a Heavenly Being off to seclusion");
+		helper.assertTrue(!member.isWanderingRogue(), "Nor a sect member");
+		helper.assertTrue(wanderer.isWanderingMortal() && !wanderer.isWanderingRogue(), "A mortal wanderer is a kind of its own");
+		Vec3 here = helper.absoluteVec(new Vec3(2.5, 2, 2.5));
+		helper.assertTrue(CultivatorNpc.wanderingRoguesNear(level, here, 4) == 2, "Counted: the rogue and the named one, no others");
+		for (CultivatorNpc npc : List.of(member, rogue, named, heavenly, wanderer)) {
+			helper.assertTrue(npc.requiresCustomPersistence(), "No cultivator despawns");
+			RogueIndex.note(npc); // as the index's next refresh would: each was a plain rogue when it spawned
+		}
+		helper.assertTrue(RogueIndex.anyWithin(level, here.x, here.z, 0.6, false), "The rogue is in the index");
+		helper.assertTrue(RogueIndex.anyWithin(level, here.x + 1, here.z, 0.6, false), "and the named one");
+		helper.assertTrue(!RogueIndex.anyWithin(level, here.x, here.z + 1, 0.6, false), "but not the Heavenly Being off to seclusion");
+		helper.assertTrue(RogueIndex.anyWithin(level, here.x, here.z, 4, true), "The wanderer is in it as a wanderer");
+		helper.assertTrue(NpcSpawner.wouldCrowd(level, here.add(NpcSpawner.SPACING - 10, 0, 0), false), "No new rogue within " + (int) NpcSpawner.SPACING + " of another");
+		helper.assertTrue(NpcSpawner.wouldCrowd(level, here.add(NpcSpawner.SPACING - 10, 0, 0), true), "Nor a new wanderer of another wanderer");
+		rogue.discard();
+		helper.assertTrue(!RogueIndex.anyWithin(level, here.x, here.z, 0.6, false), "One gone for good leaves the index");
+		helper.assertTrue(RogueIndex.anyWithin(level, here.x, here.z, 4, true), "The wanderer stays: the kinds are kept apart");
+		helper.succeed();
+	}
+
+	// --- The Upper Realm's sects ---
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void upperRealmSectsLeanTowardTheHighRealms(GameTestHelper helper) {
+		net.minecraft.util.RandomSource random = net.minecraft.util.RandomSource.create(5);
+		int floor = PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY);
+		helper.assertTrue(SectManager.floorRank(true) == floor && SectManager.floorRank(false) == 0,
+				"New disciples come at Core Formation in the Upper Realm, Qi Refining below");
+		double upperSum = 0, lowerSum = 0;
+		int upperCount = 0, lowerCount = 0;
+		for (int s = 0; s < 50; s++) {
+			int[] upper = SectManager.foundingRanks(random, 20, true);
+			helper.assertTrue(upper[0] >= PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.EARLY), "An Upper Realm master is a Heavenly Being or Four Axis");
+			for (int i = 1; i < upper.length; i++) {
+				helper.assertTrue(upper[i] >= floor && upper[i] < upper[0], "Its members are Core Formation and up, below the master");
+				upperSum += upper[i] - floor;
+				upperCount++;
+			}
+			int[] lower = SectManager.foundingRanks(random, 20, false);
+			for (int i = 1; i < lower.length; i++) {
+				lowerSum += lower[i];
+				lowerCount++;
+			}
+		}
+		// Measured from each realm's floor, as a share of the way up to the master.
+		helper.assertTrue(upperSum / upperCount > lowerSum / lowerCount, "Upper Realm members sit higher above their floor than lower-realm ones");
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void anAscendedCultivatorTakesTheSlotANewDiscipleWouldHave(GameTestHelper helper) {
+		ServerLevel level = helper.getLevel();
+		Sect sect = newSect(helper, 0);
+		sect.capacity = 3;
+		member(helper, sect, PlayerCultivation.rank(Realm.NASCENT_SOUL, Stage.GRAND_PERFECTION), 0);
+		member(helper, sect, PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY), 1);
+		sect.recalculateTitles();
+		sect.replacements.add(level.getGameTime() + Sect.REPLACEMENT_MIN); // the slot a lost member left, a disciple on the way
+		CultivatorNpc newcomer = helper.spawn(ModEntities.CULTIVATOR, new BlockPos(2, 2, 4));
+		newcomer.becomeRogue(PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.GRAND_PERFECTION), 0, level.getRandom());
+
+		helper.assertTrue(SectManager.findOpening(level, newcomer) == sect, "It finds the sect of its path with room");
+		SectManager.reserve(level, sect, newcomer.getUUID());
+		helper.assertTrue(sect.replacements.isEmpty() && sect.openSlots() == 0, "The slot is held for it: the disciple on the way is called off");
+		CultivatorNpc another = helper.spawn(ModEntities.CULTIVATOR, new BlockPos(3, 2, 4));
+		another.becomeRogue(PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.GRAND_PERFECTION), 0, level.getRandom());
+		helper.assertTrue(SectManager.findOpening(level, another) != sect, "Nobody else can take a held slot");
+
+		helper.assertTrue(SectManager.admit(level, sect, newcomer), "On arriving it joins");
+		helper.assertTrue(sect.id.equals(newcomer.getSectId()) && sect.members.size() == 3 && sect.reserved.isEmpty(), "in the slot it held");
+		helper.assertTrue(newcomer.getTitle() == NpcTitle.SECT_MASTER, "Stronger than the Sect Master, it takes the seat");
+
+		Sect other = newSect(helper, 0);
+		other.capacity = 2;
+		member(helper, other, PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY), 0);
+		SectManager.reserve(level, other, another.getUUID());
+		SectManager.release(level, other.id, another.getUUID());
+		helper.assertTrue(other.reserved.isEmpty() && other.replacements.size() == 1, "A slot given up (it died on the way) goes to a new disciple");
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void aFullSectLetsItsWeakestGoForANewcomer(GameTestHelper helper) {
+		ServerLevel level = helper.getLevel();
+		Sect sect = newSect(helper, 0);
+		sect.capacity = 2;
+		CultivatorNpc master = member(helper, sect, PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.EARLY), 0);
+		CultivatorNpc weakest = member(helper, sect, PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY), 1);
+		sect.recalculateTitles();
+		CultivatorNpc newcomer = helper.spawn(ModEntities.CULTIVATOR, new BlockPos(2, 2, 4));
+		newcomer.becomeRogue(PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.GRAND_PERFECTION), 0, level.getRandom());
+
+		helper.assertTrue(sect.openSlots() == 0 && sect.canTakeIn(newcomer.getRank()), "Full, but with a member weaker than the newcomer to let go");
+		helper.assertTrue(SectManager.findOpening(level, newcomer) == sect, "So the newcomer can choose it");
+		SectManager.reserve(level, sect, newcomer.getUUID());
+		CultivatorNpc another = helper.spawn(ModEntities.CULTIVATOR, new BlockPos(3, 2, 4));
+		another.becomeRogue(PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.GRAND_PERFECTION), 0, level.getRandom());
+		helper.assertTrue(!sect.canTakeIn(another.getRank()), "Only one newcomer at a time pushes a member out");
+
+		helper.assertTrue(SectManager.admit(level, sect, newcomer), "It joins");
+		helper.assertTrue(!sect.members.containsKey(weakest.getUUID()) && weakest.getSectId() == null
+				&& weakest.getLifecycle() == CultivatorNpc.Lifecycle.DEPARTING, "The weakest member is let go, and sets off to make its own way");
+		helper.assertTrue(sect.members.size() == 2 && sect.replacements.isEmpty() && sect.reserved.isEmpty(), "No replacement is sent for it: its place is taken");
+		helper.assertTrue(sect.master() != null && sect.master().id.equals(master.getUUID()), "The Four Axis master, stronger than the newcomer, keeps the seat");
+
+		Sect strong = newSect(helper, 0);
+		strong.capacity = 1;
+		member(helper, strong, PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION), 0);
+		strong.recalculateTitles();
+		helper.assertTrue(!strong.canTakeIn(another.getRank()), "A sect with no one weaker than the newcomer (the master never counts) has no place for it");
+		helper.succeed();
+	}
+
+	// --- Lives off-screen (NpcLedger) ---
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void catchUpHasNoLimitAndKeepsTheLedgersTime(GameTestHelper helper) {
+		ServerLevel level = helper.getLevel();
+		CultivatorNpc far = helper.spawn(ModEntities.CULTIVATOR, new BlockPos(1, 2, 1));
+		far.becomeRogue(PlayerCultivation.rank(Realm.QI_REFINING, Stage.LATE), 0, level.getRandom());
+		far.cultivation().setState(Realm.QI_REFINING, Stage.LATE, 0);
+		far.cultivation().setHeavensLeave(true);
+		far.catchUpForTest(level, 100 * HeavenRitual.DAY, 1000);
+		helper.assertTrue(far.getRank() >= PlayerCultivation.rank(Realm.NASCENT_SOUL, Stage.EARLY),
+				"A hundred days away: through Qi Refining, Foundation and Core, no three-day limit (rank " + far.getRank() + ")");
+
+		// The ledger reckons as the catch-up does: a Foundation Building rogue reaches Heavenly Being just when it says.
+		int from = PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.EARLY);
+		int target = PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.EARLY);
+		long ticks = (long) Math.ceil(NpcLedger.secondsAway(from, 0, true, target, new boolean[1]) * 20);
+		CultivatorNpc early = helper.spawn(ModEntities.CULTIVATOR, new BlockPos(2, 2, 1));
+		CultivatorNpc onTime = helper.spawn(ModEntities.CULTIVATOR, new BlockPos(3, 2, 1));
+		for (CultivatorNpc npc : List.of(early, onTime)) {
+			npc.becomeRogue(from, 0, level.getRandom());
+			npc.cultivation().setState(Realm.FOUNDATION_BUILDING, Stage.EARLY, 0);
+			npc.cultivation().setHeavensLeave(true);
+		}
+		early.catchUpForTest(level, ticks - 200, 1000);
+		onTime.catchUpForTest(level, ticks + 200, 1000);
+		helper.assertTrue(early.getRank() == target - 1, "Ten seconds short of the ledger's time: still Nascent Soul (rank " + early.getRank() + ")");
+		helper.assertTrue(onTime.getRank() == target, "Ten seconds past it: a Heavenly Being (rank " + onTime.getRank() + ")");
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void heldAtTheGateItAsksOnceForEachDayAway(GameTestHelper helper) {
+		ServerLevel level = helper.getLevel();
+		CultivatorNpc npc = helper.spawn(ModEntities.CULTIVATOR, new BlockPos(2, 2, 2));
+		npc.becomeRogue(PlayerCultivation.RITUAL_RANK, 0, level.getRandom());
+		npc.cultivation().setHeavensLeave(false);
+		npc.cultivation().setState(Realm.QI_REFINING, Stage.MID, 0);
+		npc.cultivation().setState(Realm.QI_REFINING, Stage.MID, npc.cultivation().cultivationRequired());
+		helper.assertTrue(npc.awaitsHeavensLeave(), "At Qi Refining Mid's gate, cultivation full, no leave");
+		Long due = NpcLedger.dueAt(npc, level);
+		helper.assertTrue(due != null && due - level.getGameTime() == NpcLedger.GATE_RETRY, "Unloaded, the ledger wakes it in three days to ask again");
+		npc.catchUpForTest(level, 40 * HeavenRitual.DAY, 1000);
+		helper.assertTrue(npc.cultivation().hasHeavensLeave() && npc.getRank() > PlayerCultivation.RITUAL_RANK,
+				"Forty days away, asking once a day: granted, and it cultivated on (rank " + npc.getRank() + ")");
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void anEmptiedHermitRegionFillsAgainInTwoWeeks(GameTestHelper helper) {
+		ServerLevel level = helper.getLevel();
+		long ascendedRegion = net.minecraft.world.level.ChunkPos.asLong(900_001, 900_001);
+		long slainRegion = net.minecraft.world.level.ChunkPos.asLong(900_002, 900_002);
+		CultivatorNpc ascended = helper.spawn(ModEntities.CULTIVATOR, new BlockPos(1, 2, 1));
+		CultivatorNpc slain = helper.spawn(ModEntities.CULTIVATOR, new BlockPos(3, 2, 1));
+		CultivatorNpc stranger = helper.spawn(ModEntities.CULTIVATOR, new BlockPos(5, 2, 1));
+		HermitSites.seatForTest(level.getServer(), ascended, ascendedRegion);
+		HermitSites.seatForTest(level.getServer(), slain, slainRegion);
+
+		HermitSites.onLeft(level, ascended, false);
+		helper.assertTrue(!HermitSites.isHermit(level.getServer(), ascended)
+						&& HermitSites.vacantUntil(level.getServer(), ascendedRegion) == level.getGameTime() + HermitSites.REFILL,
+				"A hermit gone to ascend: its region gets a new one in two weeks");
+		HermitSites.onLeft(level, slain, true);
+		helper.assertTrue(!HermitSites.isHermit(level.getServer(), slain) && HermitSites.vacantUntil(level.getServer(), slainRegion) == -1,
+				"One killed by a player is never replaced");
+		HermitSites.onLeft(level, stranger, false);
+		helper.assertTrue(!HermitSites.isHermit(level.getServer(), stranger), "A cultivator that was no region's hermit changes nothing");
+
+		HermitSites.reopenDue(level, level.getGameTime() + HermitSites.REFILL - 1);
+		helper.assertTrue(HermitSites.isDecided(level.getServer(), ascendedRegion), "A tick before the two weeks are up, it still waits");
+		HermitSites.reopenDue(level, level.getGameTime() + HermitSites.REFILL);
+		helper.assertTrue(!HermitSites.isDecided(level.getServer(), ascendedRegion) && HermitSites.vacantUntil(level.getServer(), ascendedRegion) == -1,
+				"Two weeks on, the region is open again: a new hermit is seated as its land next loads");
+		helper.assertTrue(HermitSites.isDecided(level.getServer(), slainRegion), "The slain one's region stays as it is");
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void hermitRegionsAreDecidedByTheSeed(GameTestHelper helper) {
+		int with = 0;
+		for (int rx = -20; rx < 20; rx++) {
+			for (int rz = -20; rz < 20; rz++) {
+				net.minecraft.world.level.ChunkPos chunk = HermitSites.siteChunk(12345L, rx, rz);
+				if (chunk == null) continue;
+				with++;
+				helper.assertTrue(Math.floorDiv(chunk.x, HermitSites.REGION) == rx && Math.floorDiv(chunk.z, HermitSites.REGION) == rz,
+						"A region's hermit chunk lies in that region");
+				helper.assertTrue(chunk.equals(HermitSites.siteChunk(12345L, rx, rz)), "and is the same every time");
+			}
+		}
+		helper.assertTrue(with > 1600 * (HermitSites.CHANCE - 0.06) && with < 1600 * (HermitSites.CHANCE + 0.06),
+				"About " + Math.round(HermitSites.CHANCE * 100) + "% of regions have a hermit (" + with + " of 1600)");
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void sectSitesAreTakenNearestFirstAndRemembered(GameTestHelper helper) {
+		// As the Overworld's sects are spread (structure set "sects").
+		var placement = new net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement(32, 16,
+				net.minecraft.world.level.levelgen.structure.placement.RandomSpreadType.LINEAR, 1874662921);
+		BlockPos anchor = new BlockPos(-1234, 64, 5678);
+		java.util.Set<Long> done = new java.util.HashSet<>();
+		double last = -1;
+		long[] next;
+		while ((next = SectSites.nearestUndecided(done, placement, 12345L, anchor, SectSites.SPAWN_REACH)) != null) {
+			net.minecraft.world.level.ChunkPos region = new net.minecraft.world.level.ChunkPos(next[0]);
+			net.minecraft.world.level.ChunkPos site = new net.minecraft.world.level.ChunkPos(next[1]);
+			helper.assertTrue(Math.floorDiv(site.x, 32) == region.x && Math.floorDiv(site.z, 32) == region.z, "A site lies in its region");
+			double distance = Math.hypot(site.getMiddleBlockX() - anchor.getX(), site.getMiddleBlockZ() - anchor.getZ());
+			helper.assertTrue(distance <= SectSites.SPAWN_REACH, "Only sites within reach are taken (" + Math.round(distance) + ")");
+			helper.assertTrue(distance >= last, "Nearest first (" + Math.round(distance) + " after " + Math.round(last) + ")");
+			last = distance;
+			helper.assertTrue(done.add(next[0]), "Each region once");
+		}
+		// About pi * 2048^2 / 512^2 (50) regions' sites lie within reach.
+		helper.assertTrue(done.size() > 35 && done.size() < 65, "Every site within reach is taken in the end (" + done.size() + ")");
+
+		SectSites sites = new SectSites();
+		long region = net.minecraft.world.level.ChunkPos.asLong(-3, 11);
+		sites.decide(ModDimensions.UPPER_REALM, region);
+		SectSites loaded = SectSites.load(sites.save(new net.minecraft.nbt.CompoundTag()));
+		helper.assertTrue(loaded.isDecided(ModDimensions.UPPER_REALM, region), "A decided site is remembered through a save");
+		helper.assertTrue(!loaded.isDecided(net.minecraft.world.level.Level.OVERWORLD, region), "in its own dimension only");
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void upperRealmSectsKeepToTheirOwnCells(GameTestHelper helper) {
+		var set = helper.getLevel().registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.STRUCTURE_SET)
+				.get(DefyingTheHeavens.id("sects_upper_realm"));
+		helper.assertTrue(set != null && set.placement() instanceof net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement,
+				"The Upper Realm's sects are spread at random");
+		var spread = (net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement) set.placement();
+		helper.assertTrue(spread.spacing() - spread.separation() == 1, "A start chunk exactly every " + spread.spacing() + " chunks, at its region's corner");
+		int cell = spread.spacing() * 16;
+		int reach = SectStructure.ISLAND_SEARCH + SectStructure.largestHalfWidth();
+		helper.assertTrue(reach <= cell / 2, "A sect moved as far as it may for an island (" + reach + ") stays in its " + cell + "-block cell: two never overlap");
+		helper.assertTrue(reach <= 8 * 16, "and within the 8 chunks of its start where worldgen places its pieces");
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void aNewcomerLooksFurtherWhenNoSectIsNear(GameTestHelper helper) {
+		ServerLevel level = helper.getLevel();
+		// Far off where no other test's sects stand. The newcomer isn't added to the world: only where it is matters.
+		int x0 = 3_000_000;
+		CultivatorNpc newcomer = ModEntities.CULTIVATOR.create(level);
+		newcomer.setPos(x0, 100, 0);
+		newcomer.becomeRogue(PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.MID), 0, level.getRandom());
+		helper.assertTrue(Alignment.factionOf(-300) == Alignment.Faction.DEMONIC, "-300 is demonic");
+		Sect otherPath = farSect(helper, x0 + 100, -300, 3);
+		Sect nearest = farSect(helper, x0 + 3000, 0, 3);
+		Sect further = farSect(helper, x0 - 6000, 0, 3);
+		Sect beyond = farSect(helper, x0 + (int) SectManager.JOIN_RANGE + 500, 0, 3);
+
+		helper.assertTrue(SectManager.findOpening(level, newcomer) == nearest, "None of its path within 2,048: it looks further, nearest first (3,000 off)");
+		nearest.extinct = true;
+		helper.assertTrue(SectManager.findOpening(level, newcomer) == further, "then the next (6,000 off)");
+		further.extinct = true;
+		helper.assertTrue(SectManager.findOpening(level, newcomer) == null, "but not beyond " + (int) SectManager.JOIN_RANGE
+				+ " (" + (beyond.core.getX() - x0) + "), nor one of another path (" + otherPath.name + ")");
+		otherPath.extinct = true;
+		beyond.extinct = true;
+		helper.succeed();
+	}
+
+	/** A founded sect of {@code alignment} with a free slot, its core at x, 100, 0. */
+	private Sect farSect(GameTestHelper helper, int x, int alignment, int capacity) {
+		Sect sect = newSect(helper, alignment);
+		sect.name = "Far Sect " + x;
+		sect.core = new BlockPos(x, 100, 0);
+		sect.capacity = capacity;
+		return sect;
+	}
+
 	// --- Formations ---
 
 	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 200)
