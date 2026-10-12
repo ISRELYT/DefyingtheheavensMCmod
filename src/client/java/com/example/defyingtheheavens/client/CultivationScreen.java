@@ -57,8 +57,12 @@ public class CultivationScreen extends Screen {
 	private static final int CONTENT_Y = 34;
 	private static final int SWITCH_W = 30;
 	private static final int SWITCH_H = 14;
-	/** Pixels the Abilities tab moves per mouse-wheel notch. */
+	/** Pixels the Abilities and Journal tabs move per mouse-wheel notch. */
 	private static final int SCROLL_STEP = 14;
+	/** The scrollbar of those two tabs: its width and where it starts from the panel's left; their lists end short of it. */
+	private static final int SCROLLBAR_W = 6;
+	private static final int SCROLLBAR_X = WIDTH - 11;
+	private static final int LIST_RIGHT = SCROLLBAR_X - 6;
 	/** The Abilities tab's content stops above its button (Arrange Wheel / Ability List). */
 	private static final int ABILITIES_BOTTOM = HEIGHT - 38;
 	/** The wheel editor: slot ring, slot radius, and the ability palette's cells. */
@@ -116,10 +120,30 @@ public class CultivationScreen extends Screen {
 	/** The same for the Journal tab. */
 	private int journalScroll;
 	private int journalMaxScroll;
+	/** Where the scrollbar was drawn this frame (null: none on this tab), and where its thumb is held (-1: not held). */
+	private ScrollBar bar;
+	private int barGrab = -1;
 
 	private record AbilitySwitch(Ability ability, int x, int y) {
 		boolean contains(double mouseX, double mouseY) {
 			return mouseX >= x && mouseX < x + SWITCH_W && mouseY >= y && mouseY < y + SWITCH_H;
+		}
+	}
+
+	/** The scrollbar's thumb runs from laneTop to laneBottom; a pixel either side of the trough still counts as on it. */
+	private record ScrollBar(int x, int laneTop, int laneBottom, int thumbY, int thumbHeight, int maxScroll) {
+		boolean contains(double mouseX, double mouseY) {
+			return mouseX >= x - 1 && mouseX < x + SCROLLBAR_W + 1 && mouseY >= laneTop && mouseY < laneBottom;
+		}
+
+		boolean onThumb(double mouseY) {
+			return mouseY >= thumbY && mouseY < thumbY + thumbHeight;
+		}
+
+		/** The scroll that puts the thumb's top at {@code thumbTop}. */
+		int scrollFor(double thumbTop) {
+			int travel = laneBottom - laneTop - thumbHeight;
+			return travel <= 0 ? 0 : Mth.clamp((int) Math.round((thumbTop - laneTop) * maxScroll / travel), 0, maxScroll);
 		}
 	}
 
@@ -219,6 +243,7 @@ public class CultivationScreen extends Screen {
 		Player player = minecraft == null ? null : minecraft.player;
 		switches.clear();
 		palette.clear();
+		bar = null;
 		switch (tab) {
 			case CULTIVATION -> renderCultivation(g, player);
 			case STATS -> {
@@ -228,7 +253,7 @@ public class CultivationScreen extends Screen {
 			case ABILITIES -> renderAbilities(g, mouseX, mouseY);
 			case METHODS -> renderPlaceholder(g, ModLang.METHODS_TITLE, ModLang.METHODS_EMPTY, ModLang.METHODS_HINT);
 			case SPELLS -> renderPlaceholder(g, ModLang.SPELLS_TITLE, ModLang.SPELLS_EMPTY, ModLang.SPELLS_HINT);
-			case JOURNAL -> renderJournal(g);
+			case JOURNAL -> renderJournal(g, mouseX, mouseY);
 		}
 
 		super.render(g, mouseX, mouseY, partialTick);
@@ -465,7 +490,7 @@ public class CultivationScreen extends Screen {
 	/**
 	 * One entry per awakened ability, top to bottom: its name with an On/Off switch, then what it does (Qi Flight always
 	 * shows its cost, even where gathering covers it: players find out flight is endless there by flying). Scrolls with the
-	 * mouse wheel once the entries outgrow the panel, with a thin gold bar at the right edge showing where the view is.
+	 * mouse wheel or the {@link #scrollbar} at the right edge once the entries outgrow the panel.
 	 */
 	private void renderAbilities(GuiGraphics g, int mouseX, int mouseY) {
 		PlayerCultivation c = ClientCultivationData.get();
@@ -481,7 +506,7 @@ public class CultivationScreen extends Screen {
 		}
 
 		int x = left + 14;
-		int rightEdge = left + WIDTH - 14;
+		int rightEdge = left + LIST_RIGHT;
 		int viewTop = top + CONTENT_Y;
 		int viewBottom = top + ABILITIES_BOTTOM;
 		List<List<FormattedCharSequence>> descriptions = new ArrayList<>();
@@ -519,25 +544,61 @@ public class CultivationScreen extends Screen {
 		}
 		g.disableScissor();
 
-		scrollbar(g, viewTop, viewBottom, contentHeight, abilityScroll, abilityMaxScroll);
+		scrollbar(g, viewTop, viewBottom, contentHeight, abilityScroll, abilityMaxScroll, mouseX, mouseY);
 	}
 
-	/** The gold scrollbar at the panel's right edge, when the content runs past its view. */
-	private void scrollbar(GuiGraphics g, int viewTop, int viewBottom, int contentHeight, int scroll, int maxScroll) {
-		if (maxScroll <= 0) return;
-		int trackX = left + WIDTH - 7;
-		int trackHeight = viewBottom - viewTop - 4;
-		int thumbHeight = Math.max(12, trackHeight * (viewBottom - viewTop) / contentHeight);
-		int thumbY = viewTop + 2 + (trackHeight - thumbHeight) * scroll / maxScroll;
-		g.fill(trackX, viewTop + 2, trackX + 2, viewTop + 2 + trackHeight, 0xFF2A2A3A);
-		g.fill(trackX, thumbY, trackX + 2, thumbY + thumbHeight, BORDER);
-		g.fill(trackX + 1, thumbY, trackX + 2, thumbY + thumbHeight, 0xFF6E5214); // shaded side, like the Qi bar's trim
+	/**
+	 * The scrollbar at the panel's right edge, there whenever the tab lists anything: a lacquer trough between two gold
+	 * roller caps, and a gold thumb, gripped in the middle, for where the view is. The thumb can be dragged, and a click on
+	 * the trough brings it there. When everything fits, the thumb fills the trough, dimmed.
+	 */
+	private void scrollbar(GuiGraphics g, int viewTop, int viewBottom, int contentHeight, int scroll, int maxScroll,
+						   int mouseX, int mouseY) {
+		int x = left + SCROLLBAR_X;
+		int laneTop = viewTop + 2;
+		int laneBottom = viewBottom - 2;
+		int lane = laneBottom - laneTop;
+		boolean scrolls = maxScroll > 0;
+		int thumbHeight = scrolls ? Mth.clamp(lane * (viewBottom - viewTop) / contentHeight, 14, lane) : lane;
+		int thumbY = scrolls ? laneTop + (lane - thumbHeight) * scroll / maxScroll : laneTop;
+		bar = new ScrollBar(x, laneTop, laneBottom, thumbY, thumbHeight, maxScroll);
+
+		// The trough, rimmed in dark gold, and a roller cap at each end a pixel wider than it.
+		g.fill(x, laneTop, x + SCROLLBAR_W, laneBottom, 0xFF6E5214);
+		g.fill(x + 1, laneTop, x + SCROLLBAR_W - 1, laneBottom, 0xFF0C0C14);
+		for (int capY : new int[] {viewTop, laneBottom}) {
+			g.fill(x - 1, capY, x + SCROLLBAR_W + 1, capY + 1, BORDER);
+			g.fill(x - 1, capY + 1, x + SCROLLBAR_W + 1, capY + 2, 0xFF6E5214);
+		}
+
+		// The thumb: lit on its left and top, shaded on its right and bottom, brighter while pointed at or held.
+		boolean hot = scrolls && (barGrab >= 0 || bar.contains(mouseX, mouseY) && bar.onThumb(mouseY));
+		int tx = x + 1;
+		int tw = SCROLLBAR_W - 2;
+		int face = !scrolls ? 0xFF4A3A12 : hot ? 0xFFDAA520 : BORDER;
+		int lit = !scrolls ? 0xFF5A4818 : 0xFFF0C850;
+		int shade = !scrolls ? 0xFF3A2E0E : 0xFF6E5214;
+		g.fill(tx, thumbY, tx + tw, thumbY + thumbHeight, face);
+		g.fill(tx, thumbY, tx + tw, thumbY + 1, lit);
+		g.fill(tx, thumbY + 1, tx + 1, thumbY + thumbHeight, lit);
+		g.fill(tx + tw - 1, thumbY + 1, tx + tw, thumbY + thumbHeight, shade);
+		g.fill(tx + 1, thumbY + thumbHeight - 1, tx + tw, thumbY + thumbHeight, shade);
+		if (scrolls) {
+			int mid = thumbY + thumbHeight / 2;
+			for (int gy = mid - 2; gy <= mid + 2; gy += 2) g.fill(tx + 1, gy, tx + tw - 1, gy + 1, shade);
+		}
+	}
+
+	/** Scrolls whichever tab has the scrollbar. */
+	private void setScroll(int scroll) {
+		if (tab == Tab.JOURNAL) journalScroll = scroll;
+		else abilityScroll = scroll;
 	}
 
 	// --- Journal: the rumours cultivators have told you ---
 
 	/** Each rumour heard (newest first): the day and who told it, in gold, then their words; scrolls like the Abilities tab. */
-	private void renderJournal(GuiGraphics g) {
+	private void renderJournal(GuiGraphics g, int mouseX, int mouseY) {
 		List<Journal.Entry> entries = ClientJournal.entries();
 		int cx = left + WIDTH / 2;
 		if (entries.isEmpty()) {
@@ -552,7 +613,7 @@ public class CultivationScreen extends Screen {
 			return;
 		}
 		int x = left + 14;
-		int rightEdge = left + WIDTH - 14;
+		int rightEdge = left + LIST_RIGHT;
 		int viewTop = top + CONTENT_Y;
 		int viewBottom = top + HEIGHT - 8;
 		List<List<FormattedCharSequence>> texts = new ArrayList<>();
@@ -581,7 +642,7 @@ public class CultivationScreen extends Screen {
 			}
 		}
 		g.disableScissor();
-		scrollbar(g, viewTop, viewBottom, contentHeight, journalScroll, journalMaxScroll);
+		scrollbar(g, viewTop, viewBottom, contentHeight, journalScroll, journalMaxScroll, mouseX, mouseY);
 	}
 
 	/** The abilities the cultivator has awakened, in menu order. */
@@ -691,6 +752,16 @@ public class CultivationScreen extends Screen {
 		return super.mouseScrolled(mouseX, mouseY, delta);
 	}
 
+	/** A held scrollbar thumb follows the pointer. */
+	@Override
+	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+		if (button == 0 && barGrab >= 0 && bar != null) {
+			setScroll(bar.scrollFor(mouseY - barGrab));
+			return true;
+		}
+		return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+	}
+
 	/** An On/Off switch in the panel's colours: green "On", grey "Off". */
 	private void drawSwitch(GuiGraphics g, AbilitySwitch toggle, boolean on, boolean hovered) {
 		int x = toggle.x();
@@ -724,6 +795,12 @@ public class CultivationScreen extends Screen {
 				}
 			}
 		}
+		if (button == 0 && bar != null && bar.maxScroll() > 0 && bar.contains(mouseX, mouseY)) {
+			// The thumb keeps the point it was taken by; a click on the trough takes it by the middle and brings it there.
+			barGrab = bar.onThumb(mouseY) ? (int) (mouseY - bar.thumbY()) : bar.thumbHeight() / 2;
+			setScroll(bar.scrollFor(mouseY - barGrab));
+			return true;
+		}
 		if (button == 0) {
 			for (AbilitySwitch toggle : switches) {
 				if (!toggle.contains(mouseX, mouseY)) continue;
@@ -744,6 +821,10 @@ public class CultivationScreen extends Screen {
 	 */
 	@Override
 	public boolean mouseReleased(double mouseX, double mouseY, int button) {
+		if (button == 0 && barGrab >= 0) {
+			barGrab = -1;
+			return true;
+		}
 		if (button == 0 && dragged != null) {
 			int cx = wheelX();
 			int cy = wheelY();
