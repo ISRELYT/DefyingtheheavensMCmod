@@ -94,6 +94,35 @@ public final class ModPackets {
 	/** S2C: the player's journal (see Journal), whole. C2S JOURNAL_REQUEST asks for it (the menu's Journal tab opening). */
 	public static final ResourceLocation JOURNAL = new ResourceLocation(DefyingTheHeavens.MOD_ID, "journal");
 	public static final ResourceLocation JOURNAL_REQUEST = new ResourceLocation(DefyingTheHeavens.MOD_ID, "journal_request");
+	/**
+	 * S2C: the player's own Netherworld state (see NetherworldManager#sync): the ghostly qi pool and its maximum, the density of
+	 * ghostly qi here, yin corruption (-1 where it doesn't apply), which way it is going (1 rising, -1 ebbing, 0 held), and how
+	 * many seconds a Yang Preservation Pill still holds it. Kept apart from SYNC, so that one doesn't grow.
+	 */
+	public static final ResourceLocation NETHERWORLD_SYNC = new ResourceLocation(DefyingTheHeavens.MOD_ID, "netherworld_sync");
+	/** S2C: the player is on the Soul River (route ordinal; NONE: off it) and this many ticks into the journey (see SoulRiver). */
+	public static final ResourceLocation SOUL_RIVER = new ResourceLocation(DefyingTheHeavens.MOD_ID, "soul_river");
+	/** S2C: how far the Chief Judge's gaze has taken the player, 0 to 1 (see JudgeEye): the client warps and whispers by it. */
+	public static final ResourceLocation JUDGE_GAZE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "judge_gaze");
+	/** S2C: player X (entity id) is or isn't a ghost (see GhostSystem): to the ghost and everyone tracking it, as soon as they do. */
+	public static final ResourceLocation GHOST = new ResourceLocation(DefyingTheHeavens.MOD_ID, "ghost");
+	/** S2C: the screen fades to a colour (0xRRGGBB) over so many ticks, holds, and fades back (a ghost dispersing, the Wheel turning). */
+	public static final ResourceLocation GHOST_FADE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "ghost_fade");
+	/** S2C: entity X (id) is bound by a Ghost-Quelling Talisman for so many ticks (QuelledEffect): the talisman shows on its brow. */
+	public static final ResourceLocation QUELLED = new ResourceLocation(DefyingTheHeavens.MOD_ID, "quelled");
+	/**
+	 * S2C: the player's ghost methods and spells (see GhostMethods, Spells): each method's layer and progress, the active one,
+	 * the readied spell, the spell wheel's slots, each spell's cooldown left (ticks), and whether they are a ghost.
+	 */
+	public static final ResourceLocation METHODS = new ResourceLocation(DefyingTheHeavens.MOD_ID, "methods");
+	/** C2S: practise this method (its id): meditation cultivates it. */
+	public static final ResourceLocation PRACTISE_METHOD = new ResourceLocation(DefyingTheHeavens.MOD_ID, "practise_method");
+	/** C2S: ready this spell for the cast key (its ordinal plus one; 0 clears it). */
+	public static final ResourceLocation READY_SPELL = new ResourceLocation(DefyingTheHeavens.MOD_ID, "ready_spell");
+	/** C2S: cast this spell now (its ordinal plus one; 0 the readied one). */
+	public static final ResourceLocation CAST_SPELL = new ResourceLocation(DefyingTheHeavens.MOD_ID, "cast_spell");
+	/** C2S: put a spell in a slot of the spell wheel (the slot, then the spell's ordinal plus one; 0 empties it). */
+	public static final ResourceLocation SET_SPELL_SLOT = new ResourceLocation(DefyingTheHeavens.MOD_ID, "set_spell_slot");
 	/** Players further than this from a core can't work its screen. */
 	private static final double CORE_REACH = 8;
 
@@ -169,6 +198,23 @@ public final class ModPackets {
 			int slot = buf.readVarInt();
 			int ability = buf.readVarInt();
 			server.execute(() -> CultivationManager.setWheelSlot(player, slot, ability));
+		});
+		ServerPlayNetworking.registerGlobalReceiver(PRACTISE_METHOD, (server, player, handler, buf, responseSender) -> {
+			GhostMethod method = GhostMethod.byId(buf.readUtf(64));
+			server.execute(() -> Spells.practise(player, method));
+		});
+		ServerPlayNetworking.registerGlobalReceiver(READY_SPELL, (server, player, handler, buf, responseSender) -> {
+			Spell spell = Spell.byIndex(buf.readVarInt() - 1);
+			server.execute(() -> Spells.ready(player, spell));
+		});
+		ServerPlayNetworking.registerGlobalReceiver(CAST_SPELL, (server, player, handler, buf, responseSender) -> {
+			Spell spell = Spell.byIndex(buf.readVarInt() - 1);
+			server.execute(() -> Spells.cast(player, spell));
+		});
+		ServerPlayNetworking.registerGlobalReceiver(SET_SPELL_SLOT, (server, player, handler, buf, responseSender) -> {
+			int slot = buf.readVarInt();
+			Spell spell = Spell.byIndex(buf.readVarInt() - 1);
+			server.execute(() -> Spells.setSlot(player, slot, spell));
 		});
 		ServerPlayNetworking.registerGlobalReceiver(SOUL_TETHER_STRIKE, (server, player, handler, buf, responseSender) -> {
 			int soul = buf.readVarInt();
@@ -314,6 +360,82 @@ public final class ModPackets {
 		buf.writeVarInt(entityId);
 		buf.writeComponent(reason);
 		ServerPlayNetworking.send(player, TALK_CLOSE, buf);
+	}
+
+	public static void sendNetherworld(ServerPlayer player, double ghostQi, double ghostQiMax, double density, float corruption,
+									   int trend, int heldSeconds) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeDouble(ghostQi);
+		buf.writeDouble(ghostQiMax);
+		buf.writeDouble(density);
+		buf.writeFloat(corruption);
+		buf.writeByte(trend);
+		buf.writeVarInt(Math.max(0, heldSeconds));
+		ServerPlayNetworking.send(player, NETHERWORLD_SYNC, buf);
+	}
+
+	public static void sendMethods(ServerPlayer player, NetherworldState s, java.util.function.ToIntFunction<Spell> cooldownLeft) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(s.knownMethods().size());
+		for (GhostMethod method : s.knownMethods()) {
+			buf.writeUtf(method.getId());
+			buf.writeVarInt(s.layer(method));
+			buf.writeDouble(s.progress(method));
+		}
+		buf.writeUtf(s.activeMethod() == null ? "" : s.activeMethod().getId());
+		buf.writeVarInt(s.readiedSpell() == null ? 0 : s.readiedSpell().ordinal() + 1);
+		for (int i = 0; i < Spells.WHEEL_SLOTS; i++) {
+			Spell spell = s.spellSlot(i);
+			buf.writeVarInt(spell == null ? 0 : spell.ordinal() + 1);
+		}
+		for (Spell spell : Spell.values()) buf.writeVarInt(cooldownLeft.applyAsInt(spell));
+		buf.writeBoolean(s.ghost()); // what a ghost can cast and switch on (Spell#isKnown, Ability#isUnlocked)
+		ServerPlayNetworking.send(player, METHODS, buf);
+	}
+
+	/** Tells {@code viewer} whether {@code subject} is a ghost. */
+	public static void sendGhost(ServerPlayer viewer, ServerPlayer subject, boolean ghost) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(subject.getId());
+		buf.writeBoolean(ghost);
+		ServerPlayNetworking.send(viewer, GHOST, buf);
+	}
+
+	/** Tells the player and everyone tracking them whether they are a ghost. */
+	public static void broadcastGhost(ServerPlayer player, boolean ghost) {
+		sendGhost(player, player, ghost);
+		for (ServerPlayer other : PlayerLookup.tracking(player)) sendGhost(other, player, ghost);
+	}
+
+	/** Tells everyone tracking {@code bound} (and a bound player themselves) that a talisman binds it for {@code ticks}. */
+	public static void broadcastQuelled(net.minecraft.world.entity.Entity bound, int ticks) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(bound.getId());
+		buf.writeVarInt(ticks);
+		for (ServerPlayer viewer : PlayerLookup.tracking(bound)) ServerPlayNetworking.send(viewer, QUELLED, PacketByteBufs.copy(buf));
+		if (bound instanceof ServerPlayer player) ServerPlayNetworking.send(player, QUELLED, buf);
+	}
+
+	public static void sendGhostFade(ServerPlayer player, int rgb, int closeTicks, int holdTicks, int openTicks) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeInt(rgb);
+		buf.writeVarInt(closeTicks);
+		buf.writeVarInt(holdTicks);
+		buf.writeVarInt(openTicks);
+		ServerPlayNetworking.send(player, GHOST_FADE, buf);
+	}
+
+	public static void sendJudgeGaze(ServerPlayer player, float gaze) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeFloat(gaze);
+		ServerPlayNetworking.send(player, JUDGE_GAZE, buf);
+	}
+
+	public static void sendSoulRiver(ServerPlayer player, SoulRiver.Route route, int tick) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(route.ordinal());
+		buf.writeVarInt(tick);
+		ServerPlayNetworking.send(player, SOUL_RIVER, buf);
 	}
 
 	public static void sendSurge(ServerPlayer player, int game, int windowTicks) {

@@ -155,7 +155,7 @@ public class HermitSites extends SavedData {
 		if (NpcSpawner.nearSect(level, new BlockPos(chunk.getMiddleBlockX(), 64, chunk.getMiddleBlockZ()))) return null;
 		BlockPos site = findSite(level, chunk, random);
 		if (site == null) return null;
-		CultivatorNpc npc = ModEntities.CULTIVATOR.create(level);
+		CultivatorNpc npc = CultivatorNpc.createFor(level);
 		if (npc == null) return null;
 		npc.moveTo(site.getX() + 0.5, site.getY(), site.getZ() + 0.5, random.nextFloat() * 360, 0);
 		float roll = random.nextFloat();

@@ -14,16 +14,21 @@ import java.util.UUID;
 
 /**
  * No shortcuts from the high realms: Nether portals won't light or teleport and End portal frames won't take eyes inside
- * the Upper Realm and the Spatial Gap. Enforced by the mixins in the mixin package (PortalShape, NetherPortalBlock,
- * EndPortalBlock, EnderEyeItem); vanilla already refuses to light Nether portals outside the Overworld and Nether, the
- * PortalShape mixin makes that explicit for any other ignition path.
+ * the high realms (the Upper Realm, the Netherworld) and the passages to them (the Spatial Gap, the Soul River). Enforced by
+ * the mixins in the mixin package (PortalShape, NetherPortalBlock, EndPortalBlock, EnderEyeItem); vanilla already refuses to
+ * light Nether portals outside the Overworld and Nether, the PortalShape mixin makes that explicit for any other ignition path.
  */
 public final class PortalRestrictionHandler {
 	private static final int MESSAGE_COOLDOWN_TICKS = 60;
 	private static final Map<UUID, Long> LAST_MESSAGE = new HashMap<>();
 
 	public static boolean isRestricted(Level level) {
-		return level != null && (ModDimensions.isUpperRealm(level.dimension()) || ModDimensions.isSpatialGap(level.dimension()));
+		return level != null && isRestricted(level.dimension());
+	}
+
+	/** In a high realm or a passage to one (see {@link HighRealm}). */
+	public static boolean isRestricted(net.minecraft.resources.ResourceKey<Level> dimension) {
+		return ModDimensions.isHighRealm(dimension) || ModDimensions.isPassage(dimension);
 	}
 
 	/** Also handles the world-generation views of a level (WorldGenRegion). */

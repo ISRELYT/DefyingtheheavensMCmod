@@ -1,7 +1,11 @@
 package com.example.defyingtheheavens.mixin;
 
+import com.example.defyingtheheavens.GhostSystem;
+import com.example.defyingtheheavens.Incorporeal;
 import com.example.defyingtheheavens.SoulProjection;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
@@ -36,18 +40,18 @@ public abstract class SoulPlayerMixin {
 
 	@Inject(method = "isPushedByFluid", at = @At("HEAD"), cancellable = true)
 	private void dth$soulIgnoresCurrents(CallbackInfoReturnable<Boolean> cir) {
-		if (SoulProjection.isSoul((Player) (Object) this)) cir.setReturnValue(false);
+		if (Incorporeal.is((Player) (Object) this)) cir.setReturnValue(false);
 	}
 
 	@Inject(method = "canBeSeenAsEnemy", at = @At("HEAD"), cancellable = true)
 	private void dth$noPreyForMobs(CallbackInfoReturnable<Boolean> cir) {
-		if (SoulProjection.isSoul((Player) (Object) this)) cir.setReturnValue(false);
+		if (Incorporeal.is((Player) (Object) this)) cir.setReturnValue(false);
 	}
 
 	/** Items, experience and arrows lying about: a soul touches none of them. */
 	@Inject(method = "touch", at = @At("HEAD"), cancellable = true)
 	private void dth$soulTouchesNothing(Entity entity, CallbackInfo ci) {
-		if (SoulProjection.isSoul((Player) (Object) this)) ci.cancel();
+		if (Incorporeal.is((Player) (Object) this)) ci.cancel();
 	}
 
 	/** The server never moves a soul itself (no gravity to apply): its client flies it. */
@@ -55,5 +59,21 @@ public abstract class SoulPlayerMixin {
 	private void dth$soulFliesOnItsClient(Vec3 input, CallbackInfo ci) {
 		Player self = (Player) (Object) this;
 		if (!self.level().isClientSide && SoulProjection.isSoul(self)) ci.cancel();
+	}
+
+	/**
+	 * A ghost's tread makes no sound: no footsteps (on any block, through carpet and snow, wading), no splashing. Both sides, so
+	 * the ghost's own client is as quiet as everyone else's. EVENTS rather than NONE: only a walker that emits something counts
+	 * the distance it walks, which the view's bobbing goes by.
+	 */
+	@ModifyReturnValue(method = "getMovementEmission", at = @At("RETURN"))
+	private Entity.MovementEmission dth$ghostsTreadSilently(Entity.MovementEmission emission) {
+		return emission == Entity.MovementEmission.ALL && GhostSystem.isGhost((Player) (Object) this) ? Entity.MovementEmission.EVENTS : emission;
+	}
+
+	/** Nor does a ghost land with a thud: a fall is nothing to it (and no fall harms it, see GhostSystem#allowDamage). */
+	@Inject(method = "causeFallDamage", at = @At("HEAD"), cancellable = true)
+	private void dth$ghostsLandSilently(float distance, float multiplier, DamageSource source, CallbackInfoReturnable<Boolean> cir) {
+		if (GhostSystem.isGhost((Player) (Object) this)) cir.setReturnValue(false);
 	}
 }

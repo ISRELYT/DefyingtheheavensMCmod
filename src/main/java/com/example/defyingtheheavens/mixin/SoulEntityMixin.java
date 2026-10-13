@@ -1,5 +1,6 @@
 package com.example.defyingtheheavens.mixin;
 
+import com.example.defyingtheheavens.Incorporeal;
 import com.example.defyingtheheavens.SoulProjection;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -10,25 +11,26 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * What every entity is asked that a projected soul (see SoulProjection) answers its own way: it sets off no pressure plate or
- * tripwire, no blast throws it about, no portal takes it to another dimension, and riding a body it possesses it looks out
- * through that body's eyes.
+ * What every entity is asked that a projected soul (see SoulProjection) or a ghost (Incorporeal) answers its own way: it sets
+ * off no pressure plate or tripwire, no blast throws it about, no portal takes it to another dimension; riding a body it
+ * possesses, a soul looks out through that body's eyes. (A ghost's silent tread is SoulPlayerMixin's: the player's own
+ * movement emission.)
  */
 @Mixin(Entity.class)
 public abstract class SoulEntityMixin {
 	@Inject(method = "isIgnoringBlockTriggers", at = @At("HEAD"), cancellable = true)
 	private void dth$soulTriggersNothing(CallbackInfoReturnable<Boolean> cir) {
-		if ((Object) this instanceof Player player && SoulProjection.isSoul(player)) cir.setReturnValue(true);
+		if ((Object) this instanceof Player player && Incorporeal.is(player)) cir.setReturnValue(true);
 	}
 
 	@Inject(method = "ignoreExplosion", at = @At("HEAD"), cancellable = true)
 	private void dth$soulIgnoresBlasts(CallbackInfoReturnable<Boolean> cir) {
-		if ((Object) this instanceof Player player && SoulProjection.isSoul(player)) cir.setReturnValue(true);
+		if ((Object) this instanceof Player player && Incorporeal.is(player)) cir.setReturnValue(true);
 	}
 
 	@Inject(method = "canChangeDimensions", at = @At("HEAD"), cancellable = true)
 	private void dth$soulKeepsToItsRealm(CallbackInfoReturnable<Boolean> cir) {
-		if ((Object) this instanceof Player player && SoulProjection.isSoul(player)) cir.setReturnValue(false);
+		if ((Object) this instanceof Player player && Incorporeal.is(player)) cir.setReturnValue(false);
 	}
 
 	/** A soul riding the body it possesses sits at that body's eyes, so its view is the body's (whatever the body's size). */

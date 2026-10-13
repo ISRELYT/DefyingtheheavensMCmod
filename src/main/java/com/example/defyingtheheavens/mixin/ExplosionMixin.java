@@ -1,5 +1,6 @@
 package com.example.defyingtheheavens.mixin;
 
+import com.example.defyingtheheavens.GhostGate;
 import com.example.defyingtheheavens.SectManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -27,5 +28,7 @@ public abstract class ExplosionMixin {
 	@Inject(method = "explode", at = @At("TAIL"))
 	private void dth$spareSealedTreasuries(CallbackInfo ci) {
 		if (level instanceof ServerLevel server) SectManager.spareSealedTreasuries(server, getToBlow());
+		// Nor anything on the Ghost Gate's ground (GhostGate#protects).
+		GhostGate.spareFromBlast(level, getToBlow());
 	}
 }

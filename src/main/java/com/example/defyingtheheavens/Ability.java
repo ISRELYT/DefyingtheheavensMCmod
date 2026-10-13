@@ -9,7 +9,8 @@ import java.util.function.Predicate;
  * Abilities a cultivator awakens as they advance, listed on the cultivation menu's Abilities tab where each can be switched
  * on or off. Most start switched on; those that aren't {@code onByDefault} start off until the player turns them on.
  * {@link PlayerCultivation} remembers every switch.
- * Add new abilities at the end: the switched-off set is synced as a bit mask over the ordinals.
+ * Add new abilities at the end: the switched-off set is synced as a bit mask over the ordinals. Spells (Spell) are not
+ * abilities: they are cast, not switched, and have their own wheel.
  */
 public enum Ability {
 	/** From Foundation Building: hunger and saturation always stay full ({@link CultivationStats#tickHunger}). */
@@ -30,22 +31,49 @@ public enum Ability {
 	 * From Nascent Soul: send the nascent soul out of the body ({@link SoulProjection}). Unlike the others it is an act, not a
 	 * standing switch: "on" while the soul is out (or going out), "off" once it is back.
 	 */
-	SOUL_PROJECTION("soul_projection", false, c -> c.getEffectiveRealm().canProjectSoul());
+	SOUL_PROJECTION("soul_projection", false, c -> c.getEffectiveRealm().canProjectSoul()),
+	/**
+	 * Netherworld Breathing Art, third layer: ghosts, ghost cultivators and Method Steles glow through walls within 32 blocks;
+	 * outside the Netherworld, projected souls are seen as a Nascent Soul with Qi Sense open would see them. Ghostly qi upkeep.
+	 */
+	GHOST_EYE("ghost_eye", false, true, c -> c.netherworld().layer(GhostMethod.NETHERWORLD_BREATHING) >= 3),
+	/** Netherworld Breathing Art, sixth layer: the living take the Netherworld's yin at half the rate. Ghostly qi upkeep. */
+	NETHERWORLD_VEIL("netherworld_veil", false, true, c -> c.netherworld().layer(GhostMethod.NETHERWORLD_BREATHING) >= 6),
+	/** Wandering Soul Steps, first layer: swifter, and falls do no harm. Ghostly qi upkeep. */
+	YIN_WIND_STEPS("yin_wind_steps", false, true, c -> c.netherworld().layer(GhostMethod.WANDERING_SOUL_STEPS) >= 1),
+	/** Wandering Soul Steps, fourth layer: a ghost flies freely, on ghostly qi (never running out in the Netherworld). */
+	GHOST_FLIGHT("ghost_flight", false, true, c -> c.netherworld().ghost() && c.netherworld().layer(GhostMethod.WANDERING_SOUL_STEPS) >= 4);
 
 	private final String id;
 	private final boolean onByDefault;
+	/** A ghost method's ability: a mortal's ghost may use it too (a living mortal still can't). */
+	private final boolean ghostly;
 	private final Predicate<PlayerCultivation> unlocked;
 
 	Ability(String id, boolean onByDefault, Predicate<PlayerCultivation> unlocked) {
+		this(id, onByDefault, false, unlocked);
+	}
+
+	Ability(String id, boolean onByDefault, boolean ghostly, Predicate<PlayerCultivation> unlocked) {
 		this.id = id;
 		this.onByDefault = onByDefault;
+		this.ghostly = ghostly;
 		this.unlocked = unlocked;
 	}
 
 	public String getId() { return id; }
 
-	/** The cultivator's realm has awakened this ability (whether or not it is switched on). A mortal has none. */
-	public boolean isUnlocked(PlayerCultivation c) { return !c.isMortal() && unlocked.test(c); }
+	/** Whether it comes from a ghost method (paid for from the ghostly qi pool) rather than the realm. */
+	public boolean isGhostly() { return ghostly; }
+
+	/**
+	 * The cultivator has awakened this ability (whether or not it is switched on). A living mortal has none; a mortal's ghost has
+	 * its ghost methods' ones.
+	 */
+	public boolean isUnlocked(PlayerCultivation c) {
+		boolean canHold = !c.isMortal() || ghostly && c.netherworld().ghost();
+		return canHold && unlocked.test(c);
+	}
 
 	public Component getDisplayName() { return Component.translatable(ModLang.abilityKey(id)); }
 
@@ -58,6 +86,10 @@ public enum Ability {
 			case CONSCIOUSNESS_DOMAIN, REALM_SUPPRESS -> Component.translatable(key, Math.round(ConsciousnessDomainHandler.radius(c)));
 			case SOUL_PROJECTION -> Component.translatable(key, c.soulHearts(), c.soulTetherRadius(), Math.round(c.soulCostPerSecond(0, false)),
 					Math.round(c.soulCostPerSecond(1, false)));
+			case GHOST_EYE -> Component.translatable(key, GhostMethods.GHOST_EYE_COST);
+			case NETHERWORLD_VEIL -> Component.translatable(key, Math.round(GhostMethods.VEIL_COST));
+			case YIN_WIND_STEPS -> Component.translatable(key, Math.round(GhostMethods.YIN_WIND_SPEED * 100), Math.round(GhostMethods.YIN_WIND_COST));
+			case GHOST_FLIGHT -> Component.translatable(key, Math.round(GhostMethods.GHOST_FLIGHT_COST));
 			default -> Component.translatable(key);
 		};
 	}

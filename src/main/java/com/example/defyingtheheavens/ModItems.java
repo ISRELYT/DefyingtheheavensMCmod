@@ -46,6 +46,15 @@ public final class ModItems {
 			new GinsengSeedsItem(ModBlocks.OCHRE_HUANGJING, new Item.Properties().rarity(Rarity.UNCOMMON)));
 	public static final Item SPIRIT_LOTUS_SEEDS = register("spirit_lotus_seeds",
 			new SpiritLotusSeedsItem(ModBlocks.SPIRIT_LOTUS, new Item.Properties().rarity(Rarity.UNCOMMON)));
+	/** The Netherworld's aging herbs (see OtherShoreFlowerBlock, ModBlocks#NETHERWORLD_LOTUS), and what they're grown from. */
+	public static final Item OTHER_SHORE_FLOWER = register("other_shore_flower", new GinsengItem(new Item.Properties().rarity(Rarity.UNCOMMON)));
+	public static final Item OTHER_SHORE_FLOWER_SEEDS = register("other_shore_flower_seeds",
+			new GinsengSeedsItem(ModBlocks.OTHER_SHORE_FLOWER, new Item.Properties().rarity(Rarity.UNCOMMON)));
+	public static final Item NETHERWORLD_LOTUS = register("netherworld_lotus", new GinsengItem(new Item.Properties().rarity(Rarity.RARE)));
+	public static final Item NETHERWORLD_LOTUS_SEEDS = register("netherworld_lotus_seeds",
+			new SpiritLotusSeedsItem(ModBlocks.NETHERWORLD_LOTUS, new Item.Properties().rarity(Rarity.UNCOMMON)));
+	/** Mined from Yin Jade Ore in the Netherworld: painted into Ghost-Quelling Talismans, and a trade good the dead value. */
+	public static final Item YIN_JADE = register("yin_jade", new Item(new Item.Properties()));
 	/** Collected from Spirit Dew Grass: drunk for qi, or brewed. */
 	public static final Item SPIRIT_DEW = register("spirit_dew", new SpiritDewItem(new Item.Properties().stacksTo(16)));
 
@@ -59,11 +68,29 @@ public final class ModItems {
 	public static final Item CORE_PILL = register("core_pill", new PillItem(PillItem.Kind.CORE, new Item.Properties()));
 	public static final Item QI_GATHERING_PILL = register("qi_gathering_pill", new PillItem(PillItem.Kind.QI_GATHERING, new Item.Properties()));
 	public static final Item CULTIVATION_PILL = register("cultivation_pill", new PillItem(PillItem.Kind.CULTIVATION, new Item.Properties()));
+	/** The Netherworld's pills: one holds its yin still in a living body, one quickens the ghost methods. */
+	public static final Item YANG_PRESERVATION_PILL = register("yang_preservation_pill",
+			new PillItem(PillItem.Kind.YANG_PRESERVATION, new Item.Properties()));
+	public static final Item YIN_GATHERING_PILL = register("yin_gathering_pill", new PillItem(PillItem.Kind.YIN_GATHERING, new Item.Properties()));
 
 	/** Paints seals of qi ink, the lines that carry a Qi Vein's qi to a Formation Core (see InscriptionBrushItem). */
 	public static final Item INSCRIPTION_BRUSH = register("inscription_brush", new InscriptionBrushItem(new Item.Properties().durability(256)));
+	/** Painted with the brush: burnt, its yang fire drives a third of the yin out of a living body (see YangFireTalismanItem). */
+	public static final Item YANG_FIRE_TALISMAN = register("yang_fire_talisman", new YangFireTalismanItem(new Item.Properties().stacksTo(16)));
+	/** Painted with the brush: thrown, it strikes one of the dead and binds it where it stands (see GhostQuellingTalismanItem). */
+	public static final Item GHOST_QUELLING_TALISMAN = register("ghost_quelling_talisman",
+			new GhostQuellingTalismanItem(new Item.Properties().stacksTo(16)));
+	/** Holds a ghost method; read, it teaches the first layer, and isn't used up (see GhostJadeSlipItem). */
+	public static final Item GHOST_JADE_SLIP = register("ghost_jade_slip", new GhostJadeSlipItem(new Item.Properties().stacksTo(1)));
+	/** The exorcist's weapon: a stone sword to the living, every blow landing twice over on the dead (see PeachWoodSwordItem). */
+	public static final Item PEACH_WOOD_SWORD = register("peach_wood_sword", new PeachWoodSwordItem(new Item.Properties()));
 	public static final Item CULTIVATOR_SPAWN_EGG = register("cultivator_spawn_egg",
 			new SpawnEggItem(ModEntities.CULTIVATOR, 0xE8E0D0, 0x3D6FC0, new Item.Properties()));
+	/** The Netherworld's dead: a ghost cultivator, and a Hungry Ghost. */
+	public static final Item GHOST_CULTIVATOR_SPAWN_EGG = register("ghost_cultivator_spawn_egg",
+			new SpawnEggItem(ModEntities.GHOST_CULTIVATOR, 0x1A4A52, 0x8AF4F0, new Item.Properties()));
+	public static final Item HUNGRY_GHOST_SPAWN_EGG = register("hungry_ghost_spawn_egg",
+			new SpawnEggItem(ModEntities.HUNGRY_GHOST, 0x0E2A30, 0x5FE6DC, new Item.Properties()));
 
 	/** Cultivator clothing, every grade and piece ({@link ClothingItem}): "spirit_cultivator_robe" and so on. */
 	private static final Map<ClothingTier, Map<ArmorItem.Type, Item>> CLOTHING = new EnumMap<>(ClothingTier.class);
@@ -145,8 +172,10 @@ public final class ModItems {
 			entries.accept(RING_OF_POWER);
 			entries.accept(RING_OF_TRANSCENDENCE);
 			entries.accept(INSCRIPTION_BRUSH);
+			entries.accept(YANG_FIRE_TALISMAN);
 		});
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.COMBAT).register(entries -> {
+			entries.accept(GHOST_QUELLING_TALISMAN);
 			for (ClothingStyle style : ClothingStyle.values()) {
 				for (ClothingTier tier : ClothingTier.values()) {
 					for (ArmorItem.Type type : ArmorItem.Type.values()) entries.accept(ClothingItem.create(clothing(tier, type), style));

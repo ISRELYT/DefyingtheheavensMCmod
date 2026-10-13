@@ -33,6 +33,13 @@ public final class MeditationManager {
 		/** Ticks left in which a soul just arrived in the Inner Realm settles onto the island (moving doesn't count yet). */
 		int settling;
 
+		// The ghost methods (see GhostMethods): the Method Steles near, re-read every few seconds; seconds spent by the stele of
+		// each method not yet known; and whether the outside cap has been told.
+		java.util.Set<GhostMethod> stelesNear = java.util.EnumSet.noneOf(GhostMethod.class);
+		java.util.Set<GhostMethod> stelesInReach = java.util.EnumSet.noneOf(GhostMethod.class);
+		final Map<GhostMethod, Double> steleSeconds = new java.util.EnumMap<>(GhostMethod.class);
+		boolean capTold;
+
 		Session(double x, double y, double z) {
 			this.x = x;
 			this.y = y;
@@ -77,6 +84,11 @@ public final class MeditationManager {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_SOUL_BUSY), true);
 			return;
 		}
+		// The dead cultivate only a ghost method: one chosen, or one to learn from a stele close by.
+		if (GhostSystem.isGhost(player) && CultivationManager.get(player).netherworld().activeMethod() == null && unknownStelesNear(player).isEmpty()) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_GHOST_NO_METHOD), true);
+			return;
+		}
 		if (HeavenRitual.isActive(player.getUUID())) { // kneeling before the heavens already
 			player.displayClientMessage(Component.translatable(ModLang.MSG_RITUAL_BUSY), true);
 			return;
@@ -85,7 +97,7 @@ public final class MeditationManager {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_CANNOT), true);
 			return;
 		}
-		if (CultivationManager.get(player).isMortal()) {
+		if (CultivationManager.get(player).isMortal() && !GhostSystem.isGhost(player)) { // a mortal's ghost may cultivate a ghost method
 			player.displayClientMessage(Component.translatable(ModLang.MSG_MORTAL_MEDITATE), true);
 			return;
 		}
@@ -256,8 +268,10 @@ public final class MeditationManager {
 			}
 		}
 
-		// Gain cultivation twice a second so the menu bar moves smoothly.
-		if (tick % 10 == 0) {
+		// The ghost methods, as often: learning from a stele, cultivating the one practised.
+		if (tick % 10 == 0) ghostMethods(p, c, session);
+		// Gain cultivation twice a second so the menu bar moves smoothly. The dead's meditation feeds only their ghost method.
+		if (tick % 10 == 0 && !GhostSystem.isGhost(p)) {
 			boolean wasBottleneck = c.isAtBottleneck();
 			boolean wasAtGate = c.isAtRitualGate();
 			// Mats, fruit on pedestals, height and tranquillity speed the gain (see CultivationBoost).
@@ -293,6 +307,66 @@ public final class MeditationManager {
 			broadcastAbsorption(p, session);
 			SpiritStoneItem.drainWhileMeditating(p); // a second of a held stone's qi, if one is held
 		}
+	}
+
+	/**
+	 * Half a second of the ghost methods (see GhostMethods): by a stele of a method not yet known, a step toward learning it;
+	 * the method practised gains progress where ghostly qi flows (by its stele, faster), layer by layer, held at the third where
+	 * the qi is too thin.
+	 */
+	private static void ghostMethods(ServerPlayer p, PlayerCultivation c, Session session) {
+		NetherworldState s = c.netherworld();
+		if (session.ticks % 40 == 10) {
+			session.stelesInReach = stelesWithin(p, GhostMethods.STELE_LEARN_RADIUS);
+			session.stelesNear = stelesWithin(p, GhostMethods.STELE_BONUS_RADIUS);
+		}
+		// A mortal can't learn alive (they can't meditate at all); a mortal's ghost can.
+		for (GhostMethod method : session.stelesInReach) {
+			if (s.knows(method)) continue;
+			double seconds = session.steleSeconds.merge(method, 0.5, Double::sum);
+			if (seconds == 0.5) p.displayClientMessage(Component.translatable(ModLang.MSG_STELE_READING, method.getDisplayName()), true);
+			if (seconds >= GhostMethods.STELE_LEARN_SECONDS) {
+				session.steleSeconds.remove(method);
+				GhostMethods.learn(p, method);
+			}
+		}
+		GhostMethod active = s.activeMethod();
+		if (active == null || s.density() <= 0) return;
+		double rate = GhostMethods.ratePerSecond(c, s.density()) * circulationMultiplier(session, session.ticks)
+				* (session.stelesNear.contains(active) ? GhostMethods.STELE_BONUS : 1.0)
+				* (1 + (p.hasEffect(ModEffects.YIN_GATHERING) ? s.methodBoost() : 0)); // a Yin Gathering Pill
+		int result = GhostMethods.cultivate(s, active, rate * 0.5, s.density());
+		if (result > 0) {
+			p.serverLevel().playSound(null, p.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.8f, 0.6f);
+			p.displayClientMessage(Component.translatable(ModLang.MSG_METHOD_LAYER, active.getDisplayName(), s.layer(active)), true);
+			GhostMethods.afterLayer(p, s);
+			NetherworldManager.refresh(p);
+		} else if (result < 0 && !session.capTold) {
+			session.capTold = true;
+			p.sendSystemMessage(Component.translatable(ModLang.MSG_METHOD_CAPPED));
+		}
+		CultivationManager.markDirty(p.server);
+		if (session.ticks % 20 == 0 || result != 0) Spells.sync(p); // the Methods tab's bar
+	}
+
+	/** The methods whose steles stand within {@code radius} of {@code p} (by their middle stone). */
+	private static java.util.Set<GhostMethod> stelesWithin(ServerPlayer p, double radius) {
+		java.util.Set<GhostMethod> found = java.util.EnumSet.noneOf(GhostMethod.class);
+		int r = (int) Math.ceil(radius);
+		net.minecraft.core.BlockPos at = p.blockPosition();
+		for (net.minecraft.core.BlockPos pos : net.minecraft.core.BlockPos.betweenClosed(at.offset(-r, -2, -r), at.offset(r, 3, r))) {
+			var state = p.level().getBlockState(pos);
+			if (!state.is(ModBlocks.METHOD_STELE) || state.getValue(MethodSteleBlock.PART) != MethodSteleBlock.Part.MIDDLE) continue;
+			if (pos.distToCenterSqr(p.getX(), p.getY() + 1, p.getZ()) <= radius * radius) found.add(state.getValue(MethodSteleBlock.METHOD));
+		}
+		return found;
+	}
+
+	/** The methods by whose steles {@code p} sits that they don't know yet. */
+	private static java.util.Set<GhostMethod> unknownStelesNear(ServerPlayer p) {
+		java.util.Set<GhostMethod> near = stelesWithin(p, GhostMethods.STELE_LEARN_RADIUS);
+		near.removeIf(CultivationManager.get(p).netherworld()::knows);
+		return near;
 	}
 
 	/**

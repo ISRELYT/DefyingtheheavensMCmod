@@ -162,9 +162,39 @@ public final class CultivatorTrades {
 				goods.add(pill(ModItems.QI_GATHERING_PILL, PillGrade.MID, 2, Regard.COURTEOUS));
 				goods.add(herb(random, 400, 900, Regard.WARM, ModItems.SPIRIT_GINSENG, ModItems.PURPLE_LINGZHI, ModItems.OCHRE_HUANGJING));
 			}
+			case WANDERING_GHOST, GHOST_ELDER, GATE_WARDEN, BRIDGE_KEEPER -> ghostGoods(npc, random, goods);
 		}
 		return goods;
 	}
+
+	/**
+	 * What the Netherworld's dead sell the living (never another ghost: TalkSystem): the Netherworld's herbs and Yin Jade, and
+	 * talismans against its yin; a Ghost Elder its own method's Ghost Jade Slip; the Gate's wardens the remedies for the yin
+	 * they warn the living of, and the means to keep the restless dead in order (the Peach Wood Sword, Ghost-Quelling Talismans).
+	 */
+	private static void ghostGoods(CultivatorNpc npc, RandomSource random, List<Goods> goods) {
+		goods.add(new Goods(new ItemStack(ModItems.YIN_JADE, 2), 8, 4, 0));
+		goods.add(herb(random, 40, 120, 0, ModItems.OTHER_SHORE_FLOWER));
+		goods.add(new Goods(new ItemStack(ModItems.YANG_FIRE_TALISMAN, 2), 6, 3, 0));
+		switch (npc.getTitle()) {
+			case GHOST_ELDER -> {
+				GhostMethod method = npc instanceof GhostCultivatorNpc ghost ? ghost.method() : null;
+				if (method != null) goods.add(new Goods(GhostJadeSlipItem.of(method), GHOST_SLIP_PRICE, 1, Regard.COURTEOUS));
+				goods.add(herb(random, 100, 300, Regard.PER_PIP, ModItems.NETHERWORLD_LOTUS));
+				goods.add(pill(ModItems.YIN_GATHERING_PILL, PillGrade.MID, 2, Regard.WARM));
+			}
+			case GATE_WARDEN -> {
+				goods.add(pill(ModItems.YANG_PRESERVATION_PILL, PillGrade.MID, 2, 0));
+				goods.add(new Goods(new ItemStack(ModItems.PEACH_WOOD_SWORD), 20, 1, Regard.COURTEOUS));
+				goods.add(new Goods(new ItemStack(ModItems.GHOST_QUELLING_TALISMAN, 2), 12, 2, Regard.COURTEOUS));
+			}
+			case BRIDGE_KEEPER -> goods.add(herb(random, 200, 500, 0, ModItems.NETHERWORLD_LOTUS));
+			default -> goods.add(new Goods(new ItemStack(ModItems.OTHER_SHORE_FLOWER_SEEDS), 12, 2, Regard.PER_PIP));
+		}
+	}
+
+	/** A Ghost Jade Slip's price (Low stones): a whole method's first layer, and the way to the rest. */
+	public static final int GHOST_SLIP_PRICE = 60;
 
 	private static Goods herb(RandomSource random, int minYears, int maxYears, int regard, Item... kinds) {
 		ItemStack herb = GinsengItem.create(pick(random, kinds), Mth.nextInt(random, minYears, maxYears));

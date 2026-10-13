@@ -13,14 +13,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Vanilla 1.20.1 flags any world with a non-vanilla dimension as "experimental", which puts a "Worlds using Experimental
- * Settings are not supported" warning in front of every world creation and load. This marks the Upper Realm and Spatial
- * Gap as stable. Other mods' custom dimensions still go through vanilla's per-dimension check, so they keep the warning.
+ * Settings are not supported" warning in front of every world creation and load. This marks the mod's own dimensions (the
+ * Upper Realm, Spatial Gap, Inner Realm, Netherworld and Soul River) as stable. Other mods' custom dimensions still go through vanilla's per-dimension check, so they keep the warning.
  */
 @Mixin(WorldDimensions.class)
 public abstract class WorldDimensionsMixin {
 	@Inject(method = "checkStability", at = @At("HEAD"), cancellable = true)
 	private static void dth$ourDimensionsAreStable(ResourceKey<LevelStem> key, LevelStem stem, CallbackInfoReturnable<Lifecycle> cir) {
-		if (ModDimensions.UPPER_REALM_STEM.equals(key) || ModDimensions.SPATIAL_GAP_STEM.equals(key) || ModDimensions.INNER_REALM_STEM.equals(key)) {
+		if (ModDimensions.UPPER_REALM_STEM.equals(key) || ModDimensions.SPATIAL_GAP_STEM.equals(key) || ModDimensions.INNER_REALM_STEM.equals(key)
+				|| ModDimensions.NETHERWORLD_STEM.equals(key) || ModDimensions.SOUL_RIVER_STEM.equals(key)) {
 			cir.setReturnValue(Lifecycle.stable());
 		}
 	}

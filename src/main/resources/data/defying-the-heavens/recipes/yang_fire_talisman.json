@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {"item": "minecraft:paper"},
+    {"item": "minecraft:blaze_powder"},
+    {"item": "minecraft:gold_nugget"},
+    {"item": "defying-the-heavens:inscription_brush"}
+  ],
+  "result": {"item": "defying-the-heavens:yang_fire_talisman"}
+}

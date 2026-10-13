@@ -1,0 +1,148 @@
+{
+  "variants": {
+    "facing=east,method=ghost_fire_scripture,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_ghost_fire_scripture_lower",
+      "y": 90
+    },
+    "facing=east,method=ghost_fire_scripture,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_ghost_fire_scripture_middle",
+      "y": 90
+    },
+    "facing=east,method=ghost_fire_scripture,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_ghost_fire_scripture_upper",
+      "y": 90
+    },
+    "facing=east,method=netherworld_breathing,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_netherworld_breathing_lower",
+      "y": 90
+    },
+    "facing=east,method=netherworld_breathing,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_netherworld_breathing_middle",
+      "y": 90
+    },
+    "facing=east,method=netherworld_breathing,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_netherworld_breathing_upper",
+      "y": 90
+    },
+    "facing=east,method=wandering_soul_steps,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_wandering_soul_steps_lower",
+      "y": 90
+    },
+    "facing=east,method=wandering_soul_steps,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_wandering_soul_steps_middle",
+      "y": 90
+    },
+    "facing=east,method=wandering_soul_steps,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_wandering_soul_steps_upper",
+      "y": 90
+    },
+    "facing=north,method=ghost_fire_scripture,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_ghost_fire_scripture_lower",
+      "y": 0
+    },
+    "facing=north,method=ghost_fire_scripture,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_ghost_fire_scripture_middle",
+      "y": 0
+    },
+    "facing=north,method=ghost_fire_scripture,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_ghost_fire_scripture_upper",
+      "y": 0
+    },
+    "facing=north,method=netherworld_breathing,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_netherworld_breathing_lower",
+      "y": 0
+    },
+    "facing=north,method=netherworld_breathing,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_netherworld_breathing_middle",
+      "y": 0
+    },
+    "facing=north,method=netherworld_breathing,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_netherworld_breathing_upper",
+      "y": 0
+    },
+    "facing=north,method=wandering_soul_steps,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_wandering_soul_steps_lower",
+      "y": 0
+    },
+    "facing=north,method=wandering_soul_steps,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_wandering_soul_steps_middle",
+      "y": 0
+    },
+    "facing=north,method=wandering_soul_steps,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_wandering_soul_steps_upper",
+      "y": 0
+    },
+    "facing=south,method=ghost_fire_scripture,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_ghost_fire_scripture_lower",
+      "y": 180
+    },
+    "facing=south,method=ghost_fire_scripture,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_ghost_fire_scripture_middle",
+      "y": 180
+    },
+    "facing=south,method=ghost_fire_scripture,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_ghost_fire_scripture_upper",
+      "y": 180
+    },
+    "facing=south,method=netherworld_breathing,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_netherworld_breathing_lower",
+      "y": 180
+    },
+    "facing=south,method=netherworld_breathing,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_netherworld_breathing_middle",
+      "y": 180
+    },
+    "facing=south,method=netherworld_breathing,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_netherworld_breathing_upper",
+      "y": 180
+    },
+    "facing=south,method=wandering_soul_steps,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_wandering_soul_steps_lower",
+      "y": 180
+    },
+    "facing=south,method=wandering_soul_steps,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_wandering_soul_steps_middle",
+      "y": 180
+    },
+    "facing=south,method=wandering_soul_steps,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_wandering_soul_steps_upper",
+      "y": 180
+    },
+    "facing=west,method=ghost_fire_scripture,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_ghost_fire_scripture_lower",
+      "y": 270
+    },
+    "facing=west,method=ghost_fire_scripture,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_ghost_fire_scripture_middle",
+      "y": 270
+    },
+    "facing=west,method=ghost_fire_scripture,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_ghost_fire_scripture_upper",
+      "y": 270
+    },
+    "facing=west,method=netherworld_breathing,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_netherworld_breathing_lower",
+      "y": 270
+    },
+    "facing=west,method=netherworld_breathing,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_netherworld_breathing_middle",
+      "y": 270
+    },
+    "facing=west,method=netherworld_breathing,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_netherworld_breathing_upper",
+      "y": 270
+    },
+    "facing=west,method=wandering_soul_steps,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_wandering_soul_steps_lower",
+      "y": 270
+    },
+    "facing=west,method=wandering_soul_steps,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_wandering_soul_steps_middle",
+      "y": 270
+    },
+    "facing=west,method=wandering_soul_steps,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_wandering_soul_steps_upper",
+      "y": 270
+    }
+  }
+}

@@ -38,6 +38,33 @@ public final class ModEntities {
 					.clientTrackingRange(10)
 					.build("cultivator"));
 
+	/** The Netherworld's ghost cultivators, its officials among them (see GhostCultivatorNpc). Player-sized; fire passes through them. */
+	public static final EntityType<GhostCultivatorNpc> GHOST_CULTIVATOR = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("ghost_cultivator"),
+			EntityType.Builder.<GhostCultivatorNpc>of(GhostCultivatorNpc::new, MobCategory.MISC)
+					.fireImmune()
+					.sized(0.6f, 1.8f)
+					.clientTrackingRange(10)
+					.build("ghost_cultivator"));
+
+	/** The Netherworld's Hungry Ghosts (see HungryGhost): packs of the starving dead. */
+	public static final EntityType<HungryGhost> HUNGRY_GHOST = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("hungry_ghost"),
+			EntityType.Builder.<HungryGhost>of(HungryGhost::new, MobCategory.MONSTER)
+					.fireImmune()
+					.sized(0.6f, 1.8f)
+					.clientTrackingRange(8)
+					.build("hungry_ghost"));
+
+	/** A thrown Ghost-Quelling Talisman (see GhostQuellingTalismanEntity): small and quick, like a snowball. */
+	public static final EntityType<GhostQuellingTalismanEntity> GHOST_QUELLING_TALISMAN = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("ghost_quelling_talisman"),
+			EntityType.Builder.<GhostQuellingTalismanEntity>of(GhostQuellingTalismanEntity::new, MobCategory.MISC)
+					.sized(0.25f, 0.25f)
+					.clientTrackingRange(4)
+					.updateInterval(10)
+					.build("ghost_quelling_talisman"));
+
 	/** A meditator's body, left sitting while their soul is in the Inner Realm (see {@link InnerRealm}). */
 	public static final EntityType<InnerBodyEntity> INNER_BODY = Registry.register(BuiltInRegistries.ENTITY_TYPE,
 			DefyingTheHeavens.id("inner_body"),
@@ -77,6 +104,10 @@ public final class ModEntities {
 	/** Touching this class registers the entity types and their attributes. */
 	public static void register() {
 		FabricDefaultAttributeRegistry.register(CULTIVATOR, CultivatorNpc.createAttributes());
+		FabricDefaultAttributeRegistry.register(GHOST_CULTIVATOR, CultivatorNpc.createAttributes());
+		FabricDefaultAttributeRegistry.register(HUNGRY_GHOST, HungryGhost.createAttributes());
+		net.minecraft.world.entity.SpawnPlacements.register(HUNGRY_GHOST, net.minecraft.world.entity.SpawnPlacements.Type.ON_GROUND,
+				net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, HungryGhost::checkSpawn);
 		FabricDefaultAttributeRegistry.register(INNER_BODY, InnerBodyEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(HEART_DEMON, HeartDemonEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(SOUL_BODY, SoulBodyEntity.createAttributes());

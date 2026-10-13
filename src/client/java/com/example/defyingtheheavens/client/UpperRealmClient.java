@@ -23,6 +23,10 @@ public final class UpperRealmClient {
 	private static final float[] SPATIAL_GAP_FOG = {0.1f, 1.0f};
 	/** Hardly any: the island is all there is, and the sky is the point. */
 	private static final float[] INNER_REALM_FOG = {0.95f, 1.0f};
+	/** Close, dark teal fog over the Netherworld: the land fades out within half the render distance. */
+	private static final float[] NETHERWORLD_FOG = {0.02f, 0.5f};
+	/** The Soul River: the dark closes in, so the river's own light is what's seen. */
+	private static final float[] SOUL_RIVER_FOG = {0.05f, 0.85f};
 
 	public static void register() {
 		DimensionRenderingRegistry.registerDimensionEffects(ModDimensions.UPPER_REALM_EFFECTS, new UpperRealmEffects());
@@ -43,6 +47,8 @@ public final class UpperRealmClient {
 		if (ModDimensions.isUpperRealm(dimension)) return UPPER_REALM_FOG;
 		if (ModDimensions.isSpatialGap(dimension)) return SPATIAL_GAP_FOG;
 		if (ModDimensions.isInnerRealm(dimension)) return INNER_REALM_FOG;
+		if (ModDimensions.isNetherworld(dimension)) return NETHERWORLD_FOG;
+		if (ModDimensions.isSoulRiver(dimension)) return SOUL_RIVER_FOG;
 		return null;
 	}
 

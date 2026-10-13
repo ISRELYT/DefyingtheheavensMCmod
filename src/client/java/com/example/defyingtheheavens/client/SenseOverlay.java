@@ -14,7 +14,8 @@ import net.minecraft.client.renderer.ShaderInstance;
  * from the whole frame (world and hand) with a post effect, so what must stay vivid is drawn here instead of into the world:
  * the qi motes ({@link QiSenseClientHandler}), the consciousness domains ({@link ConsciousnessRenderer}), the glow of
  * spirit treasures ({@link QiSenseTreasures}; seals of qi ink draw into the same glow, see SealRenderer), formation
- * barriers ({@link ClientFormations}) and projected nascent souls with their tethers ({@link SoulRenderer}).
+ * barriers ({@link ClientFormations}), projected nascent souls with their tethers ({@link SoulRenderer}), and what the Ghost Eye
+ * sees behind walls ({@link GhostEye}).
  * <p>
  * At the end of world rendering this target is cleared and given a copy of the world's depth, so the layer still hides
  * behind terrain and entities. It holds premultiplied colour: domains and the motes' cores are blended in, the motes' halos
@@ -36,7 +37,8 @@ public final class SenseOverlay {
 		boolean treasures = QiSenseTreasures.hasGlow();
 		boolean barriers = ClientFormations.hasDomes();
 		boolean souls = SoulRenderer.hasWork();
-		if (!motes && !domains && !treasures && !barriers && !souls) return;
+		boolean eye = GhostEye.hasWork();
+		if (!motes && !domains && !treasures && !barriers && !souls && !eye) return;
 
 		Minecraft mc = Minecraft.getInstance();
 		RenderTarget main = mc.getMainRenderTarget();
@@ -66,6 +68,7 @@ public final class SenseOverlay {
 		if (domains) ConsciousnessRenderer.renderDomains(context);
 		if (barriers) ClientFormations.render(context); // formation barriers, seen only with Qi Sense
 		if (souls) SoulRenderer.render(context); // projected nascent souls and their tethers (it leaves the blending as it found it)
+		if (eye) GhostEye.render(context); // the dead and the Method Steles behind walls (likewise, and the depth test)
 		if (motes) {
 			QiSenseClientHandler.renderMotes(context, false);
 			// Added on: colour without coverage, so the glow brightens whatever is under it.

@@ -11,8 +11,8 @@ import net.minecraft.world.level.Level;
  * Realm Suppression: the Overworld, Nether and End cannot sustain cultivation beyond
  * {@link PlayerCultivation#LOWER_REALM_CAP_REALM} - {@link PlayerCultivation#LOWER_REALM_CAP_STAGE}.
  * In those dimensions a stronger cultivator's effective stage and stats are capped and nobody can progress past the cap;
- * entering the Spatial Gap or the Upper Realm restores the true stage at once. The true stage itself is never changed.
- * Breakthroughs past the cap (into and within Four Axis) are only possible in the Upper Realm itself.
+ * entering a passage or a high realm (the Upper Realm, the Netherworld) restores the true stage at once. The true stage itself
+ * is never changed. Breakthroughs past the cap (into and within Four Axis) are only possible in the Upper Realm itself.
  */
 public final class RealmSuppressionHandler {
 	private static final int RECHECK_INTERVAL = 20;
@@ -31,9 +31,7 @@ public final class RealmSuppressionHandler {
 			float oldMax = player.getMaxHealth();
 			float oldHealth = player.getHealth();
 			// A soul in the Inner Realm is held to whatever holds its body.
-			ResourceKey<Level> where = InnerRealm.bodyDimension(player);
-			c.setLowerRealmBound(ModDimensions.isLowerRealm(where));
-			c.setInUpperRealm(ModDimensions.isUpperRealm(where));
+			applyRealm(c, InnerRealm.bodyDimension(player));
 			CultivationManager.refresh(player); // stats from the effective stage + save + sync, also on every dimension change
 
 			// Keep the same fraction of vitality when the cap toggles, so a restored cultivator enters the
@@ -56,6 +54,16 @@ public final class RealmSuppressionHandler {
 		} catch (Exception e) {
 			DefyingTheHeavens.LOGGER.error("Realm suppression update failed for {}", player.getScoreboardName(), e);
 		}
+	}
+
+	/**
+	 * What the realm a cultivator stands in does to their cultivation: the lower realms (the Nether among them) hold them to
+	 * the cap; the high realms lift it ({@link HighRealm}); only the Upper Realm is dense in ordinary qi and lets them break
+	 * through past the cap. The Netherworld lifts the cap with ordinary qi as thin as anywhere.
+	 */
+	static void applyRealm(PlayerCultivation c, ResourceKey<Level> where) {
+		c.setLowerRealmBound(ModDimensions.isLowerRealm(where));
+		c.setInUpperRealm(ModDimensions.isUpperRealm(where));
 	}
 
 	/** Safety net for dimension changes that don't fire the world-change event (e.g. some command teleports). */

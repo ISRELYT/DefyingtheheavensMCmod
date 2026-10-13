@@ -44,7 +44,7 @@ public final class SectCommand {
 														int realm = IntegerArgumentType.getInteger(ctx, "realm");
 														int stage = IntegerArgumentType.getInteger(ctx, "stage");
 														int rank = realm == 0 ? CultivatorNpc.MORTAL : PlayerCultivation.rank(Realm.byIndex(realm - 1), Stage.byIndex(stage - 1));
-														CultivatorNpc npc = ModEntities.CULTIVATOR.create(level);
+														CultivatorNpc npc = CultivatorNpc.createFor(level);
 														if (npc == null) return 0;
 														Vec3 at = source.getPosition();
 														npc.moveTo(at.x, at.y, at.z, source.getRotation().y, 0);

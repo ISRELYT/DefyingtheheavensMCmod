@@ -57,7 +57,17 @@ public class CultivatorNpcRenderer extends HumanoidMobRenderer<CultivatorNpc, Pl
 
 	@Override
 	public ResourceLocation getTextureLocation(CultivatorNpc npc) {
-		return SKINS[Mth.clamp(npc.getSkin(), 0, SKINS.length - 1)];
+		return skinOf(npc.getSkin());
+	}
+
+	/** One of the cultivator skins (CultivatorNpc#getSkin). */
+	static ResourceLocation skinOf(int skin) {
+		return SKINS[Mth.clamp(skin, 0, SKINS.length - 1)];
+	}
+
+	/** Whether its body is drawn here: the Netherworld's dead are drawn as light on the sense layer instead (SoulRenderer). */
+	protected boolean drawsBody(CultivatorNpc npc) {
+		return true;
 	}
 
 	/** The plate replaces the vanilla name tag. */
@@ -68,7 +78,7 @@ public class CultivatorNpcRenderer extends HumanoidMobRenderer<CultivatorNpc, Pl
 
 	@Override
 	public void render(CultivatorNpc npc, float yaw, float partialTick, PoseStack poseStack, MultiBufferSource buffers, int light) {
-		super.render(npc, yaw, partialTick, poseStack, buffers, light);
+		if (drawsBody(npc)) super.render(npc, yaw, partialTick, poseStack, buffers, light);
 		Minecraft mc = Minecraft.getInstance();
 		if (mc.options.hideGui || npc.isInvisible()) return;
 		double distanceSqr = entityRenderDispatcher.distanceToSqr(npc);

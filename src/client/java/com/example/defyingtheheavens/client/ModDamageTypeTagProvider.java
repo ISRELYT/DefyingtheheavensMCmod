@@ -21,11 +21,18 @@ public class ModDamageTypeTagProvider extends FabricTagProvider<DamageType> {
 
 	@Override
 	protected void addTags(HolderLookup.Provider registries) {
-		tag(DamageTypeTags.BYPASSES_ARMOR).add(ModDamageTypes.SPATIAL_PRESSURE, ModDamageTypes.SOUL_SEVERED, ModDamageTypes.SOUL_SEIZED);
-		tag(DamageTypeTags.BYPASSES_ENCHANTMENTS).add(ModDamageTypes.SPATIAL_PRESSURE, ModDamageTypes.SOUL_SEVERED, ModDamageTypes.SOUL_SEIZED);
-		tag(DamageTypeTags.BYPASSES_EFFECTS).add(ModDamageTypes.SPATIAL_PRESSURE, ModDamageTypes.SOUL_SEVERED, ModDamageTypes.SOUL_SEIZED);
-		tag(DamageTypeTags.NO_IMPACT).add(ModDamageTypes.SPATIAL_PRESSURE, ModDamageTypes.SOUL_SEVERED, ModDamageTypes.SOUL_SEIZED);
-		tag(DamageTypeTags.BYPASSES_RESISTANCE).add(ModDamageTypes.SOUL_SEVERED, ModDamageTypes.SOUL_SEIZED);
-		tag(DamageTypeTags.BYPASSES_INVULNERABILITY).add(ModDamageTypes.SOUL_SEVERED, ModDamageTypes.SOUL_SEIZED);
+		// A soul scattering on the Soul River is raw the same way (and never takes the last of a body's health).
+		// The dead's harm, too (a ghost's blow, ghost fire).
+		tag(DamageTypeTags.BYPASSES_ARMOR).add(ModDamageTypes.SPATIAL_PRESSURE, ModDamageTypes.SOUL_SEVERED, ModDamageTypes.SOUL_SEIZED, ModDamageTypes.SOUL_SCATTER,
+				ModDamageTypes.JUDGE_GAZE, ModDamageTypes.GHOSTLY);
+		tag(DamageTypeTags.BYPASSES_ENCHANTMENTS).add(ModDamageTypes.SPATIAL_PRESSURE, ModDamageTypes.SOUL_SEVERED, ModDamageTypes.SOUL_SEIZED, ModDamageTypes.SOUL_SCATTER,
+				ModDamageTypes.JUDGE_GAZE, ModDamageTypes.GHOSTLY);
+		tag(DamageTypeTags.BYPASSES_EFFECTS).add(ModDamageTypes.SPATIAL_PRESSURE, ModDamageTypes.SOUL_SEVERED, ModDamageTypes.SOUL_SEIZED, ModDamageTypes.SOUL_SCATTER,
+				ModDamageTypes.JUDGE_GAZE, ModDamageTypes.GHOSTLY);
+		tag(DamageTypeTags.NO_IMPACT).add(ModDamageTypes.SPATIAL_PRESSURE, ModDamageTypes.SOUL_SEVERED, ModDamageTypes.SOUL_SEIZED, ModDamageTypes.SOUL_SCATTER,
+				ModDamageTypes.JUDGE_GAZE, ModDamageTypes.GHOSTLY);
+		// A True Immortal's gaze, like a severed soul's death: nothing stands between it and death, a totem included.
+		tag(DamageTypeTags.BYPASSES_RESISTANCE).add(ModDamageTypes.SOUL_SEVERED, ModDamageTypes.SOUL_SEIZED, ModDamageTypes.JUDGE_GAZE);
+		tag(DamageTypeTags.BYPASSES_INVULNERABILITY).add(ModDamageTypes.SOUL_SEVERED, ModDamageTypes.SOUL_SEIZED, ModDamageTypes.JUDGE_GAZE);
 	}
 }

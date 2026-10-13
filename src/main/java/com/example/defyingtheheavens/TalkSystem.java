@@ -73,7 +73,9 @@ public final class TalkSystem {
 
 	/** What one can ask about. */
 	public enum Topic {
-		SELF("self"), SECT("sect"), PEOPLE("people"), NEARBY("nearby"), RUMOURS("rumours"), GUIDANCE("guidance");
+		SELF("self"), SECT("sect"), PEOPLE("people"), NEARBY("nearby"), RUMOURS("rumours"), GUIDANCE("guidance"),
+		/** Meng Po's soup (GhostGate#drinkSoup), asked of her alone. */
+		SOUP("soup");
 
 		private final String id;
 
@@ -130,8 +132,14 @@ public final class TalkSystem {
 		boolean spar = !npc.isMortal() && (standing != Standing.ABOVE || npc.regard(player) >= Regard.COURTEOUS);
 		if (!spar) mask &= ~TalkIntent.SPAR.bit();
 		if (kneelsTo(player, npc)) mask |= TalkIntent.DEMAND.bit() | TalkIntent.RELEASE.bit();
+		// The dead have nothing to trade or give, and press nobody: greet, ask, spar, provoke or leave.
+		if (GhostSystem.isGhost(player)) mask &= GHOST_INTENTS;
 		return mask;
 	}
+
+	/** What a ghost may do in a talk (with the Netherworld's dead, the only ones it can talk to). */
+	public static final int GHOST_INTENTS = TalkIntent.GREET.bit() | TalkIntent.ASK.bit() | TalkIntent.SPAR.bit() | TalkIntent.PROVOKE.bit()
+			| TalkIntent.LEAVE.bit();
 
 	/** It kneels to {@code player}: two realms beneath them, with their realm pressed down on it. */
 	public static boolean kneelsTo(ServerPlayer player, CultivatorNpc npc) {
@@ -344,15 +352,22 @@ public final class TalkSystem {
 			double w = Math.max(1, GinsengItem.age(stack) / 40.0);
 			if (stack.is(ModItems.SPIRIT_GINSENG)) w *= 2;
 			else if (stack.is(ModItems.PURPLE_LINGZHI) || stack.is(ModItems.OCHRE_HUANGJING)) w *= 1.5;
+			else if (stack.is(ModItems.OTHER_SHORE_FLOWER)) w *= 1.5; // grown where only the dead walk
+			else if (stack.is(ModItems.NETHERWORLD_LOTUS)) w *= 2.5;
 			return w;
 		}
 		if (stack.getItem() instanceof PillItem) {
 			double w = PillItem.grade(stack).getMultiplier() * 4;
 			if (stack.is(ModItems.FOUNDATION_PILL)) w += 6;
 			else if (stack.is(ModItems.CORE_PILL)) w += 10;
+			else if (stack.is(ModItems.YANG_PRESERVATION_PILL) || stack.is(ModItems.YIN_GATHERING_PILL)) w += 4;
 			return w;
 		}
 		if (stack.getItem() instanceof CultivationFruitItem) return Math.max(2, CultivationFruitItem.age(stack) / 30.0);
+		// The Netherworld's: Yin Jade, a Ghost-Quelling Talisman, and a Ghost Jade Slip (a whole method's first layer).
+		if (stack.is(ModItems.YIN_JADE)) return 4;
+		if (stack.is(ModItems.GHOST_QUELLING_TALISMAN)) return 5;
+		if (stack.is(ModItems.GHOST_JADE_SLIP)) return CultivatorTrades.GHOST_SLIP_PRICE / 1.5;
 		return 0;
 	}
 
@@ -491,8 +506,15 @@ public final class TalkSystem {
 		replies.add(topic(Topic.NEARBY));
 		int regard = npc.regard(player);
 		if (standing != Standing.FAR_ABOVE) replies.add(gated(Topic.RUMOURS, regard >= Regard.COURTEOUS, "courteous"));
-		if (isSenior(player, npc)) replies.add(gated(Topic.GUIDANCE, regard >= Regard.WARM, "warm"));
+		// A ghost who knows a method teaches it to those it is Warm to, senior or not.
+		if (isSenior(player, npc) || teaches(npc)) replies.add(gated(Topic.GUIDANCE, regard >= Regard.WARM, "warm"));
+		if (npc instanceof GhostCultivatorNpc ghost && ghost.getRole() == GhostCultivatorNpc.Role.MENG_PO) replies.add(topic(Topic.SOUP));
 		return replies;
+	}
+
+	/** One of the dead who knows a ghost method it can teach (Foundation Building and above, GhostCultivatorNpc#method). */
+	private static boolean teaches(CultivatorNpc npc) {
+		return npc instanceof GhostCultivatorNpc ghost && ghost.method() != null;
 	}
 
 	/** A realm or more above the player (as it shows itself). */
@@ -535,7 +557,11 @@ public final class TalkSystem {
 			case PEOPLE -> aboutPeople(npc, freely);
 			case NEARBY -> aboutNearby(npc);
 			case RUMOURS -> rumours(player, npc);
-			case GUIDANCE -> guidance(player, npc);
+			case GUIDANCE -> npc instanceof GhostCultivatorNpc ghost && ghost.method() != null ? teach(player, ghost) : guidance(player, npc);
+			case SOUP -> {
+				GhostGate.drinkSoup(player);
+				yield Component.translatable(GhostSystem.isGhost(player) ? ModLang.TALK_SOUP : ModLang.TALK_SOUP_LIVING);
+			}
 		};
 		ModPackets.sendTalkDialogue(player, npc, npc.regard(player), TalkIntent.ASK, speech(answer), replies(player, npc, standing));
 	}
@@ -553,7 +579,36 @@ public final class TalkSystem {
 				.append(Component.translatable(ModLang.talkLine("self.years"), npc.yearsCultivated()));
 		// To a senior, a junior says how far along its stage it is.
 		if (freely) answer.append(" ").append(Component.translatable(ModLang.talkLine("self.progress"), npc.stageProgressPercent()));
+		// One of the dead says how it died (always the same: picked from who it is).
+		if (npc instanceof GhostCultivatorNpc ghost) answer.append(" ").append(Component.translatable(ModLang.npcSay("death." + ghost.deathKey() + ".1")));
 		return answer;
+	}
+
+	/** Ghostly qi progress a teacher's guidance gives a method already known: ten minutes' worth (GhostMethods' seconds). */
+	public static final double TEACHING_PROGRESS = 10 * 60;
+
+	/**
+	 * A ghost teaches its method (once a day, to one it is Warm to): its first layer to one who doesn't know it, or ten minutes'
+	 * worth of progress ({@link #TEACHING_PROGRESS}) to one who does.
+	 */
+	static Component teach(ServerPlayer player, GhostCultivatorNpc ghost) {
+		GhostMethod method = ghost.method();
+		Regard.Entry entry = ghost.regardEntry(player);
+		long today = Regard.day(ghost.level().getGameTime());
+		if (entry.guidanceDay == today) return line("guidance.again", ghost);
+		entry.guidanceDay = today;
+		NetherworldState s = CultivationManager.get(player).netherworld();
+		if (!s.knows(method)) {
+			GhostMethods.learn(player, method);
+			return Component.translatable(ModLang.TALK_TEACH_LEARN, method.getDisplayName());
+		}
+		GhostMethods.cultivate(s, method, TEACHING_PROGRESS, GhostQi.FULL_DENSITY);
+		GhostMethods.afterLayer(player, s);
+		CultivationManager.markDirty(player.server);
+		Spells.sync(player);
+		NetherworldManager.refresh(player);
+		player.level().playSound(null, player.blockPosition(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.0f, 0.7f);
+		return Component.translatable(ModLang.TALK_TEACH_PROGRESS, method.getDisplayName(), (int) (TEACHING_PROGRESS / 60));
 	}
 
 	private static Component aboutSect(CultivatorNpc npc) {

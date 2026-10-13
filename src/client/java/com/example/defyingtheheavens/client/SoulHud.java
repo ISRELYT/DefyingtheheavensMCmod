@@ -26,7 +26,7 @@ public final class SoulHud {
 		if (mc.player == null || mc.options.hideGui || mc.options.renderDebug) return;
 		SoulProjection.State state = ClientSoul.state();
 		if (state == SoulProjection.State.NONE) return;
-		int y = Y;
+		int y = Y + NetherworldHud.rowsUnderQi() * QiHud.ROW; // under the ghostly qi bar too, when there is one
 		if (state == SoulProjection.State.PROJECTING || state == SoulProjection.State.RECALLING) {
 			float seconds = ClientSoul.ticksLeft() / 20f;
 			String key = state == SoulProjection.State.PROJECTING ? ModLang.HUD_SOUL_GATHERING : ModLang.HUD_SOUL_RECALLING;

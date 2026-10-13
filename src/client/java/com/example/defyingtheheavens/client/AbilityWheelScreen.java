@@ -95,7 +95,7 @@ public class AbilityWheelScreen extends Screen {
 	 * state. Null for a key bound by scan code, which can't be asked: the wheel's own key then closes on
 	 * {@link #keyReleased} instead.
 	 */
-	private static Boolean physicallyDown(KeyMapping mapping) {
+	static Boolean physicallyDown(KeyMapping mapping) {
 		InputConstants.Key key = KeyBindingHelper.getBoundKeyOf(mapping);
 		long window = Minecraft.getInstance().getWindow().getWindow();
 		return switch (key.getType()) {

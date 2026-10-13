@@ -21,7 +21,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class SoulRenderDispatcherMixin {
 	@Inject(method = "shouldRender", at = @At("HEAD"), cancellable = true)
 	private <E extends Entity> void dth$soulsAreLight(E entity, Frustum frustum, double x, double y, double z, CallbackInfoReturnable<Boolean> cir) {
-		if (entity instanceof Player player && SoulProjection.isSoul(player)) {
+		// A soul, or one of the dead: drawn as light instead (SoulRenderer).
+		if (entity instanceof Player player && (SoulProjection.isSoul(player) || com.example.defyingtheheavens.GhostSystem.isGhost(player))) {
 			cir.setReturnValue(false);
 			return;
 		}

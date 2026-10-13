@@ -24,10 +24,13 @@ public class ModBlockLootProvider extends FabricBlockLootTableProvider {
 		dropSelf(ModBlocks.QI_VEIN);
 		dropSelf(ModBlocks.DEEPSLATE_QI_VEIN);
 		dropSelf(ModBlocks.FORMATION_CORE);
+		dropSelf(ModBlocks.RED_SPIDER_LILY);
 		// The sapling has no item of its own: breaking it gives back the peach pit it grew from.
 		dropOther(ModBlocks.SPIRIT_PEACH_SAPLING, ModItems.PEACH_PIT);
 		add(ModBlocks.JADE_ORE, createOreDrop(ModBlocks.JADE_ORE, ModItems.JADE));
 		add(ModBlocks.DEEPSLATE_JADE_ORE, createOreDrop(ModBlocks.DEEPSLATE_JADE_ORE, ModItems.JADE));
+		add(ModBlocks.YIN_JADE_ORE, createOreDrop(ModBlocks.YIN_JADE_ORE, ModItems.YIN_JADE));
+		dropSelf(ModBlocks.YIN_JADE_BLOCK);
 		add(ModBlocks.WHITE_BLOSSOM_LEAVES, createShearsOnlyDrop(ModBlocks.WHITE_BLOSSOM_LEAVES));
 		add(ModBlocks.SPIRIT_PEACH_LEAVES, createShearsOnlyDrop(ModBlocks.SPIRIT_PEACH_LEAVES));
 	}

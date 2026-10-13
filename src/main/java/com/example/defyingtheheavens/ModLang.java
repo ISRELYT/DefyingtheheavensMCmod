@@ -463,5 +463,133 @@ public final class ModLang {
 	public static final String RITUAL_TITLE_FAIL = k("ritual.title.fail");
 	public static final String HUD_RITUAL = k("hud.ritual");
 
+	// The Netherworld (see HighRealm, GhostGate, SoulRiver)
+	public static final String MSG_HEAVENS_BLIND = k("message.netherworld.heavens_blind");
+	public static final String MSG_GATE_PROTECTED = k("message.netherworld.gate_protected");
+	public static final String MSG_WHEEL_LIVING = k("message.netherworld.wheel_living");
+	public static final String MSG_ARRIVE_NETHERWORLD = k("message.netherworld.arrive");
+	public static final String MSG_ARRIVE_NETHER = k("message.netherworld.arrive_nether");
+	public static final String MSG_RIVER_ASCEND = k("message.soul_river.ascend");
+	public static final String MSG_RIVER_DESCEND = k("message.soul_river.descend");
+	public static final String MSG_RIVER_ABYSS = k("message.soul_river.abyss");
+	public static final String MSG_RIVER_RESTART = k("message.soul_river.restart");
+	public static final String MSG_RIVER_SCATTERED_UP = k("message.soul_river.scattered_up");
+	public static final String MSG_RIVER_SCATTERED_DOWN = k("message.soul_river.scattered_down");
+	public static final String MSG_RIVER_COOLDOWN = k("message.soul_river.cooldown");
+	public static final String HUD_RIVER = k("hud.soul_river");
+	public static final String HUD_RIVER_STRAY = k("hud.soul_river.stray");
+	public static final String DEATH_SOUL_SCATTER = "death.attack." + DefyingTheHeavens.MOD_ID + ".soul_scatter";
+	public static final String DEATH_JUDGE_GAZE = "death.attack." + DefyingTheHeavens.MOD_ID + ".judge_gaze";
+	public static final String DEATH_GHOSTLY = "death.attack." + DefyingTheHeavens.MOD_ID + ".ghostly";
+	public static final String GAMERULE_AFTER_DEATH = "gamerule.netherworldAfterDeath";
+	public static final String MSG_GHOST_WAKE = k("message.ghost.wake");
+	public static final String MSG_YIN_OVERTAKEN = k("message.ghost.yin_overtaken");
+	public static final String MSG_GHOST_DISPERSED = k("message.ghost.dispersed");
+	public static final String MSG_GHOST_REFORMED = k("message.ghost.reformed");
+	public static final String MSG_GHOST_CANNOT = k("message.ghost.cannot");
+	public static final String MSG_WHEEL_TURNS = k("message.ghost.wheel_turns");
+	public static final String MSG_WHEEL_HARDCORE = k("message.ghost.wheel_hardcore");
+	public static final String MSG_REVIVED = k("message.ghost.revived");
+	public static final String MSG_JUDGE_WARNING = k("message.judge.warning");
+	public static final String MSG_JUDGE_STRIPPED = k("message.judge.stripped");
+	public static final String MSG_JUDGE_MORTAL = k("message.judge.mortal");
+	public static final String MSG_YIN_HALF = k("message.yin.half");
+	public static final String MSG_YIN_THREE_QUARTERS = k("message.yin.three_quarters");
+	public static final String MSG_YIN_NEAR = k("message.yin.near");
+	public static final String MSG_YIN_CLEANSED = k("message.yin.cleansed");
+	public static final String MSG_YIN_NONE = k("message.yin.none");
+	public static final String YIN_LINE = k("netherworld.yin_line");
+	public static final String YIN_EBBING = k("netherworld.yin_ebbing");
+	public static final String YIN_HELD = k("netherworld.yin_held");
+	public static final String GHOST_QI_HERE = k("netherworld.ghost_qi_here");
+	public static final String GHOST_QI_DENSE = k("netherworld.ghost_qi.dense");
+	public static final String GHOST_QI_PEAKS = k("netherworld.ghost_qi.peaks");
+	public static final String GHOST_QI_THIN = k("netherworld.ghost_qi.thin");
+	public static final String GHOST_QI_FAINT = k("netherworld.ghost_qi.faint");
+	public static final String HUD_GHOST_QI_LABEL = k("hud.ghost_qi_label");
+	public static final String HUD_YIN_CORRUPTION_LABEL = k("hud.yin_corruption_label");
+	public static final String HUD_PERCENT = k("hud.percent");
+	public static final String TOOLTIP_YANG_FIRE_TALISMAN = k("tooltip.yang_fire_talisman");
+	// The ghost methods and their spells (see GhostMethods, Spells)
+	public static String methodKey(String id) { return "ghost_method." + DefyingTheHeavens.MOD_ID + "." + id; }
+	public static String spellKey(String id) { return "spell." + DefyingTheHeavens.MOD_ID + "." + id; }
+	public static final String KEY_SPELL_WHEEL = "key." + DefyingTheHeavens.MOD_ID + ".spell_wheel";
+	public static final String KEY_CAST_SPELL = "key." + DefyingTheHeavens.MOD_ID + ".cast_spell";
+	public static final String MSG_METHOD_LEARNED = k("message.method.learned");
+	public static final String MSG_METHOD_LAYER = k("message.method.layer");
+	public static final String MSG_METHOD_CAPPED = k("message.method.capped");
+	public static final String MSG_METHOD_PRACTISED = k("message.method.practised");
+	public static final String MSG_GHOST_NO_METHOD = k("message.method.ghost_none");
+	public static final String MSG_GHOST_QI_SPENT = k("message.method.ghost_qi_spent");
+	public static final String MSG_STELE_TEACHES = k("message.stele.teaches");
+	public static final String MSG_STELE_KNOWN = k("message.stele.known");
+	public static final String MSG_STELE_READING = k("message.stele.reading");
+	public static final String MSG_SLIP_KNOWN = k("message.slip.known");
+	public static final String ITEM_GHOST_JADE_SLIP_OF = "item." + DefyingTheHeavens.MOD_ID + ".ghost_jade_slip.of";
+	public static final String TOOLTIP_GHOST_JADE_SLIP = k("tooltip.ghost_jade_slip");
+	public static final String MSG_SPELL_NONE_READY = k("message.spell.none_ready");
+	public static final String MSG_SPELL_NOT_HERE = k("message.spell.not_here");
+	public static final String MSG_SPELL_COOLING = k("message.spell.cooling");
+	public static final String MSG_SPELL_NO_QI = k("message.spell.no_qi");
+	public static final String MSG_SPELL_READIED = k("message.spell.readied");
+	public static final String MSG_GHOST_FIRE_ARMED = k("message.spell.ghost_fire_armed");
+	// The Methods tab
+	public static final String METHODS_KNOWN = k("methods.known");
+	public static final String METHODS_LAYER = k("methods.layer");
+	public static final String METHODS_PERFECTED = k("methods.perfected");
+	public static final String METHODS_PROGRESS = k("methods.progress");
+	public static final String METHODS_RATE = k("methods.rate");
+	public static final String METHODS_CAPPED = k("methods.capped");
+	public static final String METHODS_ACTIVE = k("methods.active");
+	public static final String METHODS_UNKNOWN = k("methods.unknown");
+	public static final String METHODS_GAINS = k("methods.gains");
+	public static final String BTN_PRACTISE = k("methods.practise");
+	public static final String METHODS_NO_QI = k("methods.no_qi");
+	public static final String BTN_SPELL_LIST = k("spells.list");
+	// The Spells tab and the spell wheel (held open by its key)
+	public static final String SPELLS_COST = k("spells.cost");
+	public static final String SPELLS_COOLDOWN = k("spells.cooldown");
+	public static final String SPELLS_LOCKED = k("spells.locked");
+	public static final String SPELLS_READY = k("spells.ready");
+	public static final String SPELLS_READIED = k("spells.readied");
+	public static final String SPELLS_COOLING = k("spells.cooling");
+	public static final String SPELLS_ON_WHEEL = k("spells.on_wheel");
+	public static final String SPELLS_ARRANGE_HINT = k("spells.arrange_hint");
+	public static final String SPELL_WHEEL_TITLE = k("spell_wheel.title");
+	public static final String SPELL_WHEEL_HINT = k("spell_wheel.hint");
+	public static final String SPELL_WHEEL_EMPTY = k("spell_wheel.empty");
+	public static final String HUD_READIED_SPELL = k("hud.readied_spell");
+	// The Netherworld's inhabitants and its herbs, items and pills (phase 5)
+	public static String officialName(String id) { return k("official." + id); }
+	public static final String TOOLTIP_PEACH_WOOD_SWORD = k("tooltip.peach_wood_sword");
+	public static final String MSG_PILL_NO_METHOD = k("message.pill.no_method");
+	public static final String MSG_PILL_YANG = k("message.pill.yang");
+	public static final String MSG_PILL_YIN = k("message.pill.yin");
+	public static final String PILL_EFFECT_YANG = k("pill.effect.yang");
+	public static final String PILL_EFFECT_YIN = k("pill.effect.yin");
+	public static final String MSG_TERRACE = k("message.terrace");
+	public static final String TERRACE_PLACE = k("terrace.place");
+	public static final String JOURNAL_TERRACE = k("journal.terrace");
+	public static final String JOURNAL_TERRACE_TEXT = k("journal.terrace.text");
+	public static final String JOURNAL_METHOD = k("journal.method");
+	public static final String JOURNAL_METHOD_TEXT = k("journal.method.text");
+	public static final String DIMENSION_OVERWORLD = k("dimension.overworld");
+	public static final String DIMENSION_NETHER = k("dimension.nether");
+	public static final String DIMENSION_END = k("dimension.end");
+	public static final String DIMENSION_UPPER_REALM = k("dimension.upper_realm");
+	public static final String DIMENSION_NETHERWORLD = k("dimension.netherworld");
+	public static final String MSG_SOUP = k("message.soup");
+	public static final String MSG_SOUP_AGAIN = k("message.soup.again");
+	public static final String MSG_SOUP_LIVING = k("message.soup.living");
+	public static final String TALK_SOUP = k("talk.soup");
+	public static final String TALK_SOUP_LIVING = k("talk.soup.living");
+	public static final String TALK_TEACH_LEARN = k("talk.teach.learn");
+	public static final String TALK_TEACH_PROGRESS = k("talk.teach.progress");
+	// The Ghost-Quelling Talisman
+	public static final String TOOLTIP_GHOST_QUELLING_TALISMAN = k("tooltip.ghost_quelling_talisman");
+	public static final String MSG_QUELLED = k("message.quelled");
+	public static final String MSG_QUELLED_OTHER = k("message.quelled.other");
+	public static final String MSG_QUELLED_HELD = k("message.quelled.held");
+
 	private ModLang() {}
 }

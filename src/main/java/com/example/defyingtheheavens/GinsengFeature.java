@@ -37,8 +37,8 @@ public class GinsengFeature extends Feature<NoneFeatureConfiguration> {
     public static final int PATCH_RADIUS = 3;
     /** A patch's other plants grow at most this many blocks above or below its first (so a patch stays on one slope). */
     private static final int PATCH_HEIGHT = 3;
-    /** Where a herb takes root: open soil, or the surface of still water. */
-    public enum Ground { SOIL, WATER }
+    /** Where a herb takes root: open soil, the surface of still water, or soul soil and soul sand (the Netherworld's herbs). */
+    public enum Ground { SOIL, WATER, SOUL }
 
     private final Supplier<Block> plant;
     private final Ground ground;
@@ -129,6 +129,8 @@ public class GinsengFeature extends Feature<NoneFeatureConfiguration> {
                 if (ground == Ground.WATER) {
                     FluidState water = soil.getFluidState();
                     if (!water.is(FluidTags.WATER) || !water.isSource() || !soil.is(Blocks.WATER)) continue;
+                } else if (ground == Ground.SOUL) {
+                    if (!soil.is(Blocks.SOUL_SOIL) && !soil.is(Blocks.SOUL_SAND)) continue;
                 } else if (!soil.is(Blocks.GRASS_BLOCK) && !soil.is(Blocks.PODZOL)) {
                     continue;
                 }

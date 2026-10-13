@@ -298,9 +298,9 @@ public final class NpcLife {
 		return npc.getTitle() == NpcTitle.INNER_DISCIPLE || npc.getTitle() == NpcTitle.OUTER_DISCIPLE;
 	}
 
-	/** Free, with nothing else on, and not keeping a gate. */
+	/** Free, with nothing else on, and not keeping a gate (a sect's, or the Ghost Gate). */
 	private static boolean idle(CultivatorNpc npc) {
-		return npc.activity() == null && !npc.isGateGuard() && !npc.hasPose(Pose.SLEEPING) && free(npc);
+		return npc.activity() == null && !npc.isGateGuard() && !npc.keepsPost() && !npc.hasPose(Pose.SLEEPING) && free(npc);
 	}
 
 	/** Somewhere to stand: room for feet and head (a carpet or a mat underfoot will do), and something under the feet. */
@@ -1219,8 +1219,8 @@ public final class NpcLife {
 				}
 			}
 		}
-		// Two rogues who meet pass a few words.
-		if (phase == Phase.NIGHT || level.random.nextInt(15) != 0) return;
+		// Two rogues who meet pass a few words (by day; the Netherworld's dead in its endless night).
+		if (phase == Phase.NIGHT && !ModDimensions.isNetherworld(level.dimension()) || level.random.nextInt(15) != 0) return;
 		List<CultivatorNpc> idle = new ArrayList<>();
 		for (CultivatorNpc npc : rogues) {
 			if (idle(npc) && !npc.isMeditating() && npc.onGround() && watched(level, npc.position(), WATCHED / 2)) idle.add(npc);
@@ -1282,6 +1282,8 @@ public final class NpcLife {
 		String name = player.getGameProfile().getName();
 		int regard = npc.regard(player);
 		if (npc.isGateGuard()) return NpcLines.line(regard >= Regard.COURTEOUS ? "gate.welcome" : "gate.halt", npc, name);
+		// The dead marvel at the living's warmth (and warn them off), now and then.
+		if (npc.isGhost() && !GhostSystem.isGhost(player) && random.nextInt(3) == 0) return NpcLines.line("pass.living", npc);
 		ItemStack held = player.getMainHandItem();
 		if (held.getItem() instanceof SpiritStoneItem stone && stone.grade().ordinal() >= SpiritStoneItem.Grade.SUPREME.ordinal()) {
 			return NpcLines.line("pass.stone", npc, held.getHoverName());

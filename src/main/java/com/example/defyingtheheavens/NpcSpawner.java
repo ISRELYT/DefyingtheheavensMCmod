@@ -31,7 +31,8 @@ import java.util.UUID;
  * Each attempt rolls a rank from {@link #chance}: the weaker, the likelier, from {@link #MORTAL_CHANCE} for a mortal
  * wanderer down to {@link #PEAK_CHANCE} for a Heavenly Being at Grand Perfection, falling evenly (by the same factor) with
  * every stage; the rest of the time the attempt finds no one. The lower realms never see anyone above Heavenly Being Grand
- * Perfection. The Upper Realm's curve runs over its own range instead, from Qi Refining Early to Four Axis Grand Perfection.
+ * Perfection. The Upper Realm's curve runs over its own range instead, from Qi Refining Early to Four Axis Grand Perfection;
+ * the Netherworld's too, where those who turn up are its dead, ghost cultivators (GhostCultivatorNpc), never the living.
  */
 public final class NpcSpawner {
 	public static final double MORTAL_CHANCE = 0.10;
@@ -124,22 +125,33 @@ public final class NpcSpawner {
 		return speed < TRAVEL_SPEED || speed > TELEPORT_SPEED ? null : new Vec3(dx, 0, dz).normalize();
 	}
 
-	/** One attempt around {@code player}: 40-80 blocks off, or ahead along {@code heading} if they're travelling. */
+	/** Whether living rogues and mortal wanderers turn up in this dimension: never in a passage, the Inner Realm or the Netherworld. */
+	public static boolean spawnsLiving(ResourceKey<Level> dimension) {
+		return !ModDimensions.isPassage(dimension) && !ModDimensions.isInnerRealm(dimension) && !ModDimensions.isNetherworld(dimension);
+	}
+
+	/**
+	 * One attempt around {@code player}: 40-80 blocks off, or ahead along {@code heading} if they're travelling. In the
+	 * Netherworld it is one of the dead who turns up (GhostCultivatorNpc), on the high realms' curve and never a mortal, and
+	 * never on the Ghost Gate's ground.
+	 */
 	static void trySpawnNear(ServerLevel level, ServerPlayer player, Vec3 heading) {
-		if (ModDimensions.isSpatialGap(level.dimension()) || ModDimensions.isInnerRealm(level.dimension())) return;
+		boolean dead = ModDimensions.isNetherworld(level.dimension());
+		if (!spawnsLiving(level.dimension()) && !dead) return;
 		RandomSource random = level.getRandom();
 		if (CultivatorNpc.countWanderers(level) >= LEVEL_CAP) return;
-		boolean upper = ModDimensions.isUpperRealm(level.dimension());
+		boolean upper = dead || ModDimensions.isUpperRealm(level.dimension());
 		int rank = rollRank(random, upper, false);
 		if (rank == Integer.MIN_VALUE) return;
 		boolean mortal = rank < 0;
 		if (RogueIndex.anyWithin(level, player.getX(), player.getZ(), CROWD_RADIUS, mortal)) return;
 		BlockPos spot = heading == null ? findSpot(level, player, random, mortal) : findSpotAhead(level, player, heading, random, mortal);
-		if (spot == null) return;
-		CultivatorNpc npc = ModEntities.CULTIVATOR.create(level);
+		if (spot == null || dead && GhostGate.protects(level, spot)) return;
+		CultivatorNpc npc = CultivatorNpc.createFor(level);
 		if (npc == null) return;
 		npc.moveTo(spot.getX() + 0.5, spot.getY(), spot.getZ() + 0.5, random.nextFloat() * 360, 0);
-		npc.becomeRogue(rank, Alignment.randomRogue(random), random);
+		if (npc instanceof GhostCultivatorNpc ghost) ghost.becomeGhost(rank, Alignment.randomRogue(random), random);
+		else npc.becomeRogue(rank, Alignment.randomRogue(random), random);
 		level.addFreshEntity(npc);
 	}
 

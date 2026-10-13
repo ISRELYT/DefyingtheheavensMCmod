@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    {"item": "minecraft:paper"},
+    {"item": "minecraft:paper"},
+    {"item": "minecraft:redstone"},
+    {"item": "defying-the-heavens:yin_jade"},
+    {"item": "defying-the-heavens:inscription_brush"}
+  ],
+  "result": {"item": "defying-the-heavens:ghost_quelling_talisman", "count": 2}
+}

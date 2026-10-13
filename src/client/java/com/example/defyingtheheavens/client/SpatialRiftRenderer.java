@@ -1,5 +1,6 @@
 package com.example.defyingtheheavens.client;
 
+import com.example.defyingtheheavens.ModBlocks;
 import com.example.defyingtheheavens.SpatialRiftBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -16,7 +17,7 @@ import org.joml.Matrix4f;
 /**
  * Draws the Spatial Rift: a ~2.5-block jagged tear, pitch black (#000000) inside, with a bright electric-cyan (#00E5FF)
  * outline and a soft outer glow. It turns to face the camera so it reads as a tear from every side, and its edges
- * crackle slightly over time.
+ * crackle slightly over time. The Gate of the Yellow Springs is the same tear with a gold rim and a pale soul-cyan halo.
  */
 public class SpatialRiftRenderer implements BlockEntityRenderer<SpatialRiftBlockEntity> {
 	/** Outline points (x, y) in blocks, going around the tear; y spans -0.25 .. 2.25 from the block's base. */
@@ -26,13 +27,19 @@ public class SpatialRiftRenderer implements BlockEntityRenderer<SpatialRiftBlock
 			{0.00f, -0.25f}, {-0.16f, 0.05f}, {-0.08f, 0.30f}, {-0.32f, 0.60f}, {-0.18f, 0.80f},
 			{-0.42f, 1.10f}, {-0.20f, 1.30f}, {-0.26f, 1.60f}, {-0.08f, 1.80f}, {-0.12f, 2.00f}};
 	private static final float CENTER_Y = 1.0f;
-	private static final float CYAN_R = 0.0f, CYAN_G = 0xE5 / 255.0f, CYAN_B = 1.0f;
+	private static final float[] CYAN = {0.0f, 0xE5 / 255.0f, 1.0f};
+	/** The Gate of the Yellow Springs (and the way down at the Ghost Gate): a gold rim with a cold cyan halo beyond it. */
+	private static final float[] GOLD = {1.0f, 0.78f, 0.28f};
+	private static final float[] SOUL_CYAN = {0.35f, 0.95f, 1.0f};
 	private static final float CORE_WIDTH = 0.05f;
 	private static final float GLOW_WIDTH = 0.24f;
 
 	@Override
 	public void render(SpatialRiftBlockEntity rift, float partialTick, PoseStack poseStack, MultiBufferSource buffers, int light, int overlay) {
 		if (rift.getLevel() == null) return;
+		boolean yellowSprings = rift.getBlockState().is(ModBlocks.YELLOW_SPRINGS_RIFT);
+		float[] core = yellowSprings ? GOLD : CYAN;
+		float[] halo = yellowSprings ? SOUL_CYAN : CYAN;
 		float time = rift.getLevel().getGameTime() + partialTick;
 		Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
 
@@ -67,26 +74,27 @@ public class SpatialRiftRenderer implements BlockEntityRenderer<SpatialRiftBlock
 		// Glowing outline: a bright core band and a wider fading halo, pushed out from the centre, additive.
 		float pulse = 0.85f + 0.15f * Mth.sin(time * 0.2f);
 		VertexConsumer glow = buffers.getBuffer(RenderType.lightning());
-		band(glow, pose, xs, ys, 0.0f, CORE_WIDTH, pulse, pulse);
-		band(glow, pose, xs, ys, CORE_WIDTH, GLOW_WIDTH, 0.45f * pulse, 0.0f);
+		band(glow, pose, xs, ys, 0.0f, CORE_WIDTH, pulse, pulse, core);
+		band(glow, pose, xs, ys, CORE_WIDTH, GLOW_WIDTH, 0.45f * pulse, 0.0f, halo);
 
 		poseStack.popPose();
 	}
 
-	private static void band(VertexConsumer consumer, Matrix4f pose, float[] xs, float[] ys, float from, float to, float innerAlpha, float outerAlpha) {
+	private static void band(VertexConsumer consumer, Matrix4f pose, float[] xs, float[] ys, float from, float to, float innerAlpha, float outerAlpha,
+			float[] colour) {
 		int n = xs.length;
 		for (int i = 0; i < n; i++) {
 			int j = (i + 1) % n;
 			float[] a0 = push(xs[i], ys[i], from), a1 = push(xs[j], ys[j], from);
 			float[] b0 = push(xs[i], ys[i], to), b1 = push(xs[j], ys[j], to);
-			glowVertex(consumer, pose, a0, innerAlpha);
-			glowVertex(consumer, pose, a1, innerAlpha);
-			glowVertex(consumer, pose, b1, outerAlpha);
-			glowVertex(consumer, pose, b0, outerAlpha);
-			glowVertex(consumer, pose, a0, innerAlpha);
-			glowVertex(consumer, pose, b0, outerAlpha);
-			glowVertex(consumer, pose, b1, outerAlpha);
-			glowVertex(consumer, pose, a1, innerAlpha);
+			glowVertex(consumer, pose, a0, innerAlpha, colour);
+			glowVertex(consumer, pose, a1, innerAlpha, colour);
+			glowVertex(consumer, pose, b1, outerAlpha, colour);
+			glowVertex(consumer, pose, b0, outerAlpha, colour);
+			glowVertex(consumer, pose, a0, innerAlpha, colour);
+			glowVertex(consumer, pose, b0, outerAlpha, colour);
+			glowVertex(consumer, pose, b1, outerAlpha, colour);
+			glowVertex(consumer, pose, a1, innerAlpha, colour);
 		}
 	}
 
@@ -102,8 +110,8 @@ public class SpatialRiftRenderer implements BlockEntityRenderer<SpatialRiftBlock
 		consumer.vertex(pose, x, y, 0.0f).color(0, 0, 0, 255).uv2(LightTexture.FULL_BRIGHT).endVertex();
 	}
 
-	private static void glowVertex(VertexConsumer consumer, Matrix4f pose, float[] point, float alpha) {
-		consumer.vertex(pose, point[0], point[1], 0.0f).color(CYAN_R, CYAN_G, CYAN_B, alpha).endVertex();
+	private static void glowVertex(VertexConsumer consumer, Matrix4f pose, float[] point, float alpha, float[] colour) {
+		consumer.vertex(pose, point[0], point[1], 0.0f).color(colour[0], colour[1], colour[2], alpha).endVertex();
 	}
 
 	@Override

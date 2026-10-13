@@ -20,7 +20,12 @@
       "com.example.defyingtheheavens.TalkPhasesGameTests",
       "com.example.defyingtheheavens.NpcLifeGameTests",
       "com.example.defyingtheheavens.HeavenRitualGameTests",
-      "com.example.defyingtheheavens.CreativeTabGameTests"
+      "com.example.defyingtheheavens.CreativeTabGameTests",
+      "com.example.defyingtheheavens.NetherworldGameTests",
+      "com.example.defyingtheheavens.NetherworldQiGameTests",
+      "com.example.defyingtheheavens.NetherworldDeadGameTests",
+      "com.example.defyingtheheavens.NetherworldMethodsGameTests",
+      "com.example.defyingtheheavens.NetherworldInhabitantsGameTests"
     ]
   }
 }

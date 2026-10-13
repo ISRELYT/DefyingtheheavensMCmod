@@ -135,7 +135,7 @@ public final class SectManager {
 
 	/** A new member of {@code rank} living at dwelling {@code home} (-1: the master's seat); not yet added to the world. */
 	private static CultivatorNpc spawnMember(ServerLevel level, Sect sect, int rank, int home, RandomSource random) {
-		CultivatorNpc npc = ModEntities.CULTIVATOR.create(level);
+		CultivatorNpc npc = CultivatorNpc.createFor(level);
 		if (npc == null) return null;
 		npc.randomizeSkin(random);
 		npc.setRank(rank);

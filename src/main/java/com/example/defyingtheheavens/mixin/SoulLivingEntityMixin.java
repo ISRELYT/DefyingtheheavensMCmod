@@ -1,6 +1,9 @@
 package com.example.defyingtheheavens.mixin;
 
+import com.example.defyingtheheavens.GhostSystem;
+import com.example.defyingtheheavens.Incorporeal;
 import com.example.defyingtheheavens.SoulProjection;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -45,7 +48,10 @@ public abstract class SoulLivingEntityMixin {
 
 	@ModifyVariable(method = "hurt", at = @At("HEAD"), argsOnly = true)
 	private float dth$soulTakesWhatIsSeen(float amount, DamageSource source, float original) {
-		return SoulProjection.scaleSoulDamage((LivingEntity) (Object) this, source, amount);
+		LivingEntity self = (LivingEntity) (Object) this;
+		// A ghost takes only what reaches the dead, the living's blows by how clearly they see it (see GhostSystem).
+		if (self instanceof ServerPlayer ghost && GhostSystem.isGhost(ghost)) return GhostSystem.scaleDamage(ghost, source, amount);
+		return SoulProjection.scaleSoulDamage(self, source, amount);
 	}
 
 	@Inject(method = "checkTotemDeathProtection", at = @At("HEAD"), cancellable = true)
@@ -55,12 +61,18 @@ public abstract class SoulLivingEntityMixin {
 
 	@Inject(method = "isPushable", at = @At("HEAD"), cancellable = true)
 	private void dth$soulIsNotPushed(CallbackInfoReturnable<Boolean> cir) {
-		if ((Object) this instanceof Player player && SoulProjection.isSoul(player)) cir.setReturnValue(false);
+		if ((Object) this instanceof Player player && Incorporeal.is(player)) cir.setReturnValue(false);
 	}
 
 	@Inject(method = "pushEntities", at = @At("HEAD"), cancellable = true)
 	private void dth$soulPushesNothing(CallbackInfo ci) {
-		if ((Object) this instanceof Player player && SoulProjection.isSoul(player)) ci.cancel();
+		if ((Object) this instanceof Player player && Incorporeal.is(player)) ci.cancel();
+	}
+
+	/** One of the dead bound by a Ghost-Quelling Talisman can't jump (see QuelledEffect). Both sides: a player's client jumps it. */
+	@Inject(method = "jumpFromGround", at = @At("HEAD"), cancellable = true)
+	private void dth$quelledCantJump(CallbackInfo ci) {
+		if (((LivingEntity) (Object) this).hasEffect(com.example.defyingtheheavens.ModEffects.QUELLED)) ci.cancel();
 	}
 
 	/**

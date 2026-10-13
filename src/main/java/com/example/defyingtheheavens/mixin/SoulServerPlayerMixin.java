@@ -1,5 +1,6 @@
 package com.example.defyingtheheavens.mixin;
 
+import com.example.defyingtheheavens.Incorporeal;
 import com.example.defyingtheheavens.SoulProjection;
 import net.minecraft.server.level.ServerPlayer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -21,6 +22,6 @@ public abstract class SoulServerPlayerMixin {
 
 	@Inject(method = "drop(Z)Z", at = @At("HEAD"), cancellable = true)
 	private void dth$soulDropsNothing(boolean wholeStack, CallbackInfoReturnable<Boolean> cir) {
-		if (SoulProjection.isSoul((ServerPlayer) (Object) this)) cir.setReturnValue(false);
+		if (Incorporeal.is((ServerPlayer) (Object) this)) cir.setReturnValue(false);
 	}
 }

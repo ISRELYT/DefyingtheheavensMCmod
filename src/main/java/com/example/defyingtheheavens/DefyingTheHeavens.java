@@ -19,6 +19,8 @@ public class DefyingTheHeavens implements ModInitializer {
 		ModParticles.register();
 		ModItems.register();
 		ModCreativeTab.register();
+		ModNoiseSettings.registerTypes();
+		ModGameRules.register();
 		ModFeatures.register();
 		ModStructures.register();
 		ClothingRecipes.register();
@@ -28,6 +30,7 @@ public class DefyingTheHeavens implements ModInitializer {
 		CultivationFruitCommand.register();
 		GinsengCommand.register();
 		SectCommand.register();
+		NetherworldCommand.register();
 		LOGGER.info("Defying The Heavens initialised.");
 	}
 

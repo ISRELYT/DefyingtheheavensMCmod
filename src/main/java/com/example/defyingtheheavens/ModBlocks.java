@@ -33,6 +33,37 @@ public final class ModBlocks {
 			.pushReaction(PushReaction.BLOCK)
 			.sound(SoundType.AMETHYST)));
 
+	/**
+	 * The Gate of the Yellow Springs: the rift at Nether 0, 0 that leads up the Soul River to the Netherworld, and the way down
+	 * on the Ghost Gate's plaza (see SpatialRiftBlock#leads; drawn gold and cyan). Unbreakable, walk-through, no item.
+	 */
+	public static final Block YELLOW_SPRINGS_RIFT = register("yellow_springs_rift", new SpatialRiftBlock(BlockBehaviour.Properties.of()
+			.mapColor(MapColor.GOLD)
+			.noCollission()
+			.strength(-1.0f, 3600000.0f)
+			.noLootTable()
+			.lightLevel(state -> 12)
+			.pushReaction(PushReaction.BLOCK)
+			.sound(SoundType.AMETHYST)));
+	/** The hub of the Wheel of Reincarnation by the Ghost Gate (see WheelOfReincarnationBlock). Unbreakable, no item. */
+	public static final Block WHEEL_OF_REINCARNATION = register("wheel_of_reincarnation", new WheelOfReincarnationBlock(BlockBehaviour.Properties.of()
+			.mapColor(MapColor.COLOR_BLACK)
+			.strength(-1.0f, 3600000.0f)
+			.noLootTable()
+			.noOcclusion()
+			.lightLevel(state -> 10)
+			.pushReaction(PushReaction.BLOCK)
+			.sound(SoundType.POLISHED_DEEPSLATE)));
+	/** A Method Stele, three blocks tall, teaching a ghost method (see MethodSteleBlock). Unbreakable, no item; its emblem glows. */
+	public static final Block METHOD_STELE = register("method_stele", new MethodSteleBlock(BlockBehaviour.Properties.of()
+			.mapColor(MapColor.COLOR_BLACK)
+			.strength(-1.0f, 3600000.0f)
+			.noLootTable()
+			.noOcclusion()
+			.lightLevel(state -> state.getValue(MethodSteleBlock.PART) == MethodSteleBlock.Part.MIDDLE ? 6 : 0)
+			.pushReaction(PushReaction.BLOCK)
+			.sound(SoundType.POLISHED_DEEPSLATE)));
+
 	/** The Inner Realm's see-through floor, lit by a soul's steps (see SoulCrystalBlock). Unbreakable, no item. */
 	public static final Block SOUL_CRYSTAL = register("soul_crystal", new SoulCrystalBlock(BlockBehaviour.Properties.of()
 			.mapColor(MapColor.COLOR_LIGHT_BLUE)
@@ -117,6 +148,26 @@ public final class ModBlocks {
 	/** The Spirit Lotus: an aging herb that floats on still water (see SpiritLotusBlock). */
 	public static final Block SPIRIT_LOTUS = register("spirit_lotus", new SpiritLotusBlock(() -> ModItems.SPIRIT_LOTUS,
 			() -> ModItems.SPIRIT_LOTUS_SEEDS, ginsengProperties(MapColor.COLOR_YELLOW)));
+	/**
+	 * The Netherworld's aging herbs: the Other-Shore Flower (彼岸花, the red spider lily as a herb, on soul soil and soul sand;
+	 * see OtherShoreFlowerBlock), and the Netherworld Lotus (冥莲), pale cyan-white on the Yellow Springs' still water.
+	 */
+	public static final Block OTHER_SHORE_FLOWER = register("other_shore_flower", new OtherShoreFlowerBlock(() -> ModItems.OTHER_SHORE_FLOWER,
+			() -> ModItems.OTHER_SHORE_FLOWER_SEEDS, ginsengProperties(MapColor.COLOR_RED).lightLevel(state -> 3)));
+	public static final Block NETHERWORLD_LOTUS = register("netherworld_lotus", new SpiritLotusBlock(() -> ModItems.NETHERWORLD_LOTUS,
+			() -> ModItems.NETHERWORLD_LOTUS_SEEDS, ginsengProperties(MapColor.COLOR_LIGHT_BLUE).lightLevel(state -> 5)));
+	/**
+	 * Yin Jade Ore: dark teal jade in the Netherworld's deepslate and blackstone (common in the Nine Nether Peaks) and, very
+	 * rarely, a Soul Sand Valley's netherrack; drops Yin Jade like Jade Ore, and needs an iron pickaxe. Yin Jade Block: nine of it.
+	 */
+	public static final Block YIN_JADE_ORE = registerWithItem("yin_jade_ore",
+			new DropExperienceBlock(BlockBehaviour.Properties.copy(Blocks.DEEPSLATE_EMERALD_ORE).mapColor(MapColor.WARPED_STEM).lightLevel(state -> 2),
+					UniformInt.of(3, 7)));
+	public static final Block YIN_JADE_BLOCK = registerWithItem("yin_jade_block",
+			new Block(BlockBehaviour.Properties.copy(Blocks.EMERALD_BLOCK).mapColor(MapColor.WARPED_STEM)));
+	/** The red spider lily of the Fields of the Other Shore (see SpiderLilyBlock): a plain flower, on soul soil and earth. */
+	public static final Block RED_SPIDER_LILY = registerWithItem("red_spider_lily", new SpiderLilyBlock(
+			BlockBehaviour.Properties.copy(Blocks.POPPY).mapColor(MapColor.COLOR_RED)));
 	/** Grass that gathers Spirit Dew (see SpiritDewGrassBlock). */
 	public static final Block SPIRIT_DEW_GRASS = registerWithItem("spirit_dew_grass", new SpiritDewGrassBlock(
 			BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_CYAN).noCollission().instabreak().sound(SoundType.GRASS)

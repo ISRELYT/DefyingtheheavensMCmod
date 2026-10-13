@@ -8,10 +8,14 @@ public final class ModBlockEntities {
 	public static final BlockEntityType<CultivationFruitBlockEntity> CULTIVATION_FRUIT = Registry.register(
 			BuiltInRegistries.BLOCK_ENTITY_TYPE, DefyingTheHeavens.id("cultivation_fruit"),
 			BlockEntityType.Builder.of(CultivationFruitBlockEntity::new, ModBlocks.CULTIVATION_FRUIT).build(null));
-	/** Carries no data; it exists so the client can draw the rift with a block entity renderer. */
+	/** Carries no data; it exists so the client can draw the rift (either kind) with a block entity renderer. */
 	public static final BlockEntityType<SpatialRiftBlockEntity> SPATIAL_RIFT = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
 			DefyingTheHeavens.id("spatial_rift"),
-			BlockEntityType.Builder.of(SpatialRiftBlockEntity::new, ModBlocks.SPATIAL_RIFT).build(null));
+			BlockEntityType.Builder.of(SpatialRiftBlockEntity::new, ModBlocks.SPATIAL_RIFT, ModBlocks.YELLOW_SPRINGS_RIFT).build(null));
+	/** The Wheel of Reincarnation's hub; no data, only drawn turning. */
+	public static final BlockEntityType<WheelOfReincarnationBlockEntity> WHEEL_OF_REINCARNATION = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
+			DefyingTheHeavens.id("wheel_of_reincarnation"),
+			BlockEntityType.Builder.of(WheelOfReincarnationBlockEntity::new, ModBlocks.WHEEL_OF_REINCARNATION).build(null));
 
 	public static final BlockEntityType<SpiritPedestalBlockEntity> SPIRIT_PEDESTAL = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
 			DefyingTheHeavens.id("spirit_pedestal"),
@@ -22,11 +26,15 @@ public final class ModBlockEntities {
 			DefyingTheHeavens.id("heaven_altar"),
 			BlockEntityType.Builder.of(HeavenAltarBlockEntity::new, ModBlocks.HEAVEN_ALTAR).build(null));
 
-	/** A growing herb's age clock; shared by every aging herb (ginseng, lingzhi, huangjing, Spirit Lotus). */
+	/**
+	 * A growing herb's age clock; shared by every aging herb (ginseng, lingzhi, huangjing, Spirit Lotus, and the Netherworld's
+	 * Other-Shore Flower and Netherworld Lotus).
+	 */
 	public static final BlockEntityType<GinsengBlockEntity> GINSENG = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
 			DefyingTheHeavens.id("ginseng"),
 			BlockEntityType.Builder.of(GinsengBlockEntity::new, ModBlocks.GINSENG, ModBlocks.SPIRIT_GINSENG,
-					ModBlocks.LINGZHI, ModBlocks.PURPLE_LINGZHI, ModBlocks.HUANGJING, ModBlocks.OCHRE_HUANGJING, ModBlocks.SPIRIT_LOTUS)
+					ModBlocks.LINGZHI, ModBlocks.PURPLE_LINGZHI, ModBlocks.HUANGJING, ModBlocks.OCHRE_HUANGJING, ModBlocks.SPIRIT_LOTUS,
+					ModBlocks.OTHER_SHORE_FLOWER, ModBlocks.NETHERWORLD_LOTUS)
 					.build(null));
 
 	/** A Spirit Peach Tree's heart: its age, its fruit, the qi poured into it. */

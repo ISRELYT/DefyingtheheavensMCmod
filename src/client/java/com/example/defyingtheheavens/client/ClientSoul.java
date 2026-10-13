@@ -125,18 +125,20 @@ public final class ClientSoul {
 
 	/**
 	 * How clearly the local player sees {@code soul}: whole for their own and for Heavenly Beings and above, a haze for Nascent
-	 * Soul cultivators that clears with each stage (a quarter at Early, whole at Grand Perfection); 0 without Qi Sense open.
+	 * Soul cultivators that clears with each stage (a quarter at Early, whole at Grand Perfection); 0 without Qi Sense open. The
+	 * Ghost Eye sees them too, outside the Netherworld (GhostEye#soulClarity), whichever is clearer.
 	 */
 	public static float clarity(Player soul) {
 		Minecraft mc = Minecraft.getInstance();
 		if (soul == mc.player) return 1;
 		if (mc.player == null || mc.player.isSpectator()) return 1;
-		if (!QiSenseClientHandler.isActive()) return 0;
+		float eye = GhostEye.soulClarity();
+		if (!QiSenseClientHandler.isActive()) return eye;
 		PlayerCultivation c = ClientCultivationData.get();
 		int nascent = PlayerCultivation.rank(Realm.NASCENT_SOUL, Stage.EARLY);
 		int rank = c.effectiveRank();
-		if (c.isMortal() || rank < nascent) return 0;
-		return Math.min(1, (rank - nascent + 1) / 4.0f);
+		if (c.isMortal() || rank < nascent) return eye;
+		return Math.max(eye, Math.min(1, (rank - nascent + 1) / 4.0f));
 	}
 
 	/** Whether the local player sees souls' tethers: their own always; others' as a Heavenly Being or above with Qi Sense open. */

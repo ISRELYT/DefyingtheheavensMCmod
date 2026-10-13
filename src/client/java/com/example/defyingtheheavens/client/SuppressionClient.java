@@ -156,7 +156,7 @@ public final class SuppressionClient {
 		PlayerCultivation c = ClientCultivationData.get();
 		if (mc.player == null || mc.options.hideGui || mc.options.renderDebug || mc.player.isSpectator() || !c.isUnderPressure()) return;
 		int x = HUD_X;
-		int y = HUD_Y;
+		int y = HUD_Y + NetherworldHud.rowsUnderQi() * QiHud.ROW; // under the ghostly qi bar too, when there is one
 		// Two stacked chevrons, 7 pixels wide, in crimson over a dark edge.
 		for (int stack = 0; stack < 2; stack++) {
 			int top = y + stack * 3;

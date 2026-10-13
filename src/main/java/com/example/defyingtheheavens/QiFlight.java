@@ -86,7 +86,16 @@ public final class QiFlight {
 			setFlight(p, p.getAbilities().mayfly, SwordFlight.QI_FLIGHT_SPEED);
 			return 0;
 		}
-		boolean inGap = SpatialTrialHandler.isInTrial(id) || p.level().dimension() == ModDimensions.SPATIAL_GAP;
+		// A ghost flies on no qi and no sword: only on its own method's flight (Wandering Soul Steps), paid for in ghostly qi
+		// (NetherworldManager), never on the Soul River, nor while a Ghost-Quelling Talisman binds it (QuelledEffect).
+		if (Incorporeal.isRuledGhost(p)) {
+			SwordFlight.update(p, false);
+			if (c.isAbilityActive(Ability.GHOST_FLIGHT) && !ModDimensions.isPassage(p.level().dimension()) && !p.hasEffect(ModEffects.QUELLED))
+				setFlight(p, true, SwordFlight.QI_FLIGHT_SPEED);
+			else land(p);
+			return 0;
+		}
+		boolean inGap = SpatialTrialHandler.isInTrial(id) || ModDimensions.isPassage(p.level().dimension());
 		// At most one of these is switched on (Ability#exclusiveWith); a rider without a sword in hand has no flight.
 		boolean onSword = SwordFlight.canRide(p, c);
 		boolean onQi = !onSword && c.getEffectiveRealm().canFlyOnQi() && c.isAbilityEnabled(Ability.QI_FLIGHT);

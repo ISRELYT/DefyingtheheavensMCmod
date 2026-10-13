@@ -75,6 +75,13 @@ public final class InnerRealm {
 		return back == null ? Level.OVERWORLD : dimension(back);
 	}
 
+	/** Where the player's body is: where they stand, or where it sits while the soul is in the Inner Realm. */
+	public static BlockPos bodyPos(ServerPlayer player) {
+		if (!ModDimensions.isInnerRealm(player.level().dimension())) return player.blockPosition();
+		CompoundTag back = CultivationManager.get(player).getInnerReturn();
+		return back == null ? player.blockPosition() : BlockPos.containing(back.getDouble("X"), back.getDouble("Y"), back.getDouble("Z"));
+	}
+
 	/** The player's island centre (the top block they sit on). */
 	public static BlockPos islandCentre(ServerPlayer player) {
 		return islandCentre(player.server, player.getUUID());
@@ -164,8 +171,10 @@ public final class InnerRealm {
 
 	public static boolean canEnter(ServerPlayer player) {
 		PlayerCultivation c = CultivationManager.get(player);
+		// Not from a passage, nor from the Netherworld, where the heavens don't see (the soul's own realm is heaven-made).
 		return c.isAbilityActive(Ability.INNER_REALM) && !ModDimensions.isInnerRealm(player.level().dimension()) && !SoulProjection.isActive(player.getUUID())
-				&& !ModDimensions.isSpatialGap(player.level().dimension()) && !TribulationManager.isActive(player.getUUID())
+				&& !ModDimensions.isPassage(player.level().dimension()) && !ModDimensions.isUnseenByHeaven(player.level().dimension())
+				&& !TribulationManager.isActive(player.getUUID()) && !Incorporeal.isRuledGhost(player) // the dead have no body to leave
 				&& player.isAlive() && player.server.getLevel(ModDimensions.INNER_REALM) != null;
 	}
 

@@ -167,7 +167,9 @@ public final class QiSenseClientHandler {
 		}
 
 		boolean upperRealm = ModDimensions.isUpperRealm(mc.level.dimension());
-		float rate = AMBIENT_PER_TICK * (upperRealm ? UPPER_REALM_DENSITY : 1);
+		// The Netherworld is as thick with its ghostly qi (nearly all yin, see QiElement) as the Upper Realm is with qi.
+		boolean dense = upperRealm || ModDimensions.isNetherworld(mc.level.dimension());
+		float rate = AMBIENT_PER_TICK * (dense ? UPPER_REALM_DENSITY : 1);
 		ambientCarry += rate;
 		while (ambientCarry >= 1 && MOTES.size() < MAX_MOTES) {
 			ambientCarry--;
@@ -252,7 +254,8 @@ public final class QiSenseClientHandler {
 			mote.vy = mote.vy * 0.86 + dy / distance * pull;
 			mote.vz = mote.vz * 0.86 + dz / distance * pull + dx / distance * swirl;
 		} else {
-			// Each element drifts its own way: fire rises, water and earth settle, wood floats up, metal hangs still.
+			// Each element drifts its own way: fire rises, water and earth settle, wood floats up, metal hangs still, and yin
+			// sinks slowly, wavering like breath on cold air.
 			float t = mote.age * 0.08f + mote.phase;
 			double lift = switch (mote.element) {
 				case FIRE -> 0.012;
@@ -260,8 +263,10 @@ public final class QiSenseClientHandler {
 				case WATER -> -0.003;
 				case EARTH -> -0.004;
 				case METAL -> 0;
+				case YIN -> -0.002;
 			};
-			double sway = mote.element == QiElement.WATER ? 0.006 : mote.element == QiElement.METAL ? 0.001 : 0.003;
+			double sway = mote.element == QiElement.WATER || mote.element == QiElement.YIN ? 0.006
+					: mote.element == QiElement.METAL ? 0.001 : 0.003;
 			mote.vx = mote.vx * 0.96 + Mth.sin(t) * sway * 0.2;
 			mote.vy = mote.vy * 0.96 + lift * 0.1;
 			mote.vz = mote.vz * 0.96 + Mth.cos(t * 0.9f) * sway * 0.2;

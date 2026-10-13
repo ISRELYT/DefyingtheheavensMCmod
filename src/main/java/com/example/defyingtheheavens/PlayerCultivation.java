@@ -81,6 +81,8 @@ public class PlayerCultivation {
 	private final Ability[] wheel = defaultWheel();
 	/** Rumours told to this player (see Journal). Saved, sent on its own packet. */
 	private final List<Journal.Entry> journal = new ArrayList<>();
+	/** The Netherworld's hold on them: ghostly qi, yin corruption, the Soul River. Saved only when not at its defaults. */
+	private final NetherworldState netherworld = new NetherworldState();
 	/** Synced but not saved: re-evaluated from the player's dimension on every join. */
 	private boolean inUpperRealm;
 	/** Realm Suppress from a stronger cultivator (see {@link RealmSuppressSystem}): synced but never saved. */
@@ -747,6 +749,8 @@ public class PlayerCultivation {
 		for (Ability ability : wheel) wheelTag.add(StringTag.valueOf(ability == null ? "" : ability.getId()));
 		tag.put("AbilityWheel", wheelTag);
 		if (!journal.isEmpty()) tag.put("Journal", Journal.save(journal));
+		CompoundTag nether = netherworld.save();
+		if (!nether.isEmpty()) tag.put("Netherworld", nether);
 		return tag;
 	}
 
@@ -794,7 +798,13 @@ public class PlayerCultivation {
 			for (int i = 0; i < WHEEL_SLOTS && i < wheelTag.size(); i++) c.setWheelSlot(i, Ability.byId(wheelTag.getString(i)));
 		}
 		Journal.load(tag.getList("Journal", Tag.TAG_COMPOUND), c.journal);
+		c.netherworld.load(tag.getCompound("Netherworld")); // an empty compound when missing: every default
 		return c;
+	}
+
+	/** The Netherworld's hold on this cultivator (see NetherworldState). */
+	public NetherworldState netherworld() {
+		return netherworld;
 	}
 
 	/** The rumours this player has been told (see Journal), newest first. Not part of the sync packet: sent on its own. */

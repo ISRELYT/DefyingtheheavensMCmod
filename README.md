@@ -25,10 +25,32 @@ Fruit; with vanilla's tabs full it sits on the second page, behind the arrows at
 done with (meditation mats, Spirit Pedestal, Heaven Altar, Alchemy Cauldron, Formation Core, Inscription Brush, the
 rings), what is taken (a one-year Cultivation Fruit, every pill at every grade from Low to Immortal, Spirit Dew), the
 herbs (a year old) and their seeds, spores and pit, spirit stones of every grade and jade, the world's blocks (jade
-stone, ores, qi veins, Blue Spirit Wood, leaves), the clothing (every path's colours, grade and piece), and the
-Cultivator Spawn Egg. An item added later that the list doesn't name still shows, at the end. The items stay in
-vanilla's tabs too. The mod's other creatures (tribulation clouds, heart demons, the bodies left behind by the Inner
-Realm and Soul Projection) only arise from what makes them, so they have no eggs.
+stone, ores, qi veins, Blue Spirit Wood, leaves), the clothing (every path's colours, grade and piece), the
+Netherworld's things (Yang Fire Talisman, Ghost-Quelling Talisman, Peach Wood Sword, Red Spider Lily, the Other-Shore Flower and Netherworld Lotus
+a year old with their bulbs and seeds, Yin Jade with its ore and block, the Yang Preservation and Yin Gathering Pills at
+every grade, a Ghost Jade Slip of each method), and the spawn eggs: Cultivator, Ghost Cultivator and Hungry Ghost. An
+item added later that the list doesn't name still shows, at the end. The items stay in vanilla's tabs too. The mod's
+other creatures (tribulation clouds, heart demons, the bodies left behind by the Inner Realm and Soul Projection) only
+arise from what makes them, so they have no eggs.
+
+## Recipe book
+
+Every crafting recipe the mod adds has its own tab in the recipe book, last among the crafting table's tabs (and the
+inventory's), shown with a Cultivation Fruit: meditation mats, the Spirit Pedestal, Heaven Altar, Alchemy Cauldron and
+Formation Core, the Inscription Brush and the talismans painted with it, spirit stones up and down the grades, Blue
+Spirit Wood, Yin Jade, the Peach Wood Sword, the Mortal-grade clothing. The search tab finds them too. You don't have to
+come by an ingredient first: every player knows all of the mod's recipes from the moment they join (a recipe added in a
+later version is learned at the next join), so the first join shows the "New Recipes Unlocked!" toast once.
+
+Not in the book: dyeing and upgrading clothing (they work on any piece, keeping its colours, enchantments and wear, so
+like vanilla's own fireworks and banner recipes the book can't show them; see Cultivator clothing), and the Alchemy
+Cauldron's brews, which aren't crafting-table recipes (see The mortal path and alchemy).
+
+Code: `ModRecipeBook` (teaching the recipes on join), client `CultivationRecipeTab`, client mixins
+`RecipeBookCategoriesMixin` (vanilla's tabs are a fixed enum: the tab is added to it as it loads, and to the crafting
+book's tabs and search) and `ClientRecipeBookMixin` (the mod's crafting recipes are sorted into it); tests in
+`NetherworldInhabitantsGameTests` (`everyRecipeOfTheModIsInTheRecipeBook`). A new crafting recipe under
+`data/defying-the-heavens/recipes/` goes in the tab by itself.
 
 ## Cultivation fruit
 
@@ -425,8 +447,10 @@ awakened (or can't use under a lower realm's suppression) shows as an empty slot
 beside its name in the ability list: Qi Sustenance a red rice bowl with qi rising like steam, Qi Flight the golden core
 borne up on azure qi wings (it was a sword on a cloud until Sword Flight came), Qi Sense an eye ringed by the five
 elements' motes, Consciousness Domain a lattice sphere around a bright soul, Realm Suppress a mountain pressing down on
-red chevrons, the Inner Realm a floating island with a blossom tree, Sword Flight a sword with streaks of light behind it.
-A new ability needs a PNG of its own there.
+red chevrons, the Inner Realm a floating island with a blossom tree, Sword Flight a sword with streaks of light behind it;
+the ghost abilities' are under The Netherworld. A new ability needs a PNG of its own there.
+
+Spells don't go on this wheel: they have their own (hold V, see The Netherworld).
 
 Code: `client/AbilityWheelScreen.java` (the held wheel), `client/AbilityWheel.java` (icons, slot layout and drawing),
 `client/CultivationScreen.java` (the editor), `PlayerCultivation` (`WHEEL_SLOTS`, `setWheelSlot`; NBT "AbilityWheel"),
@@ -504,7 +528,12 @@ with its legs together trailing behind like a ghost's. To a Nascent Soul Early i
 each stage, whole at Grand Perfection and above. Heavenly Beings and above also see the tether. Everyone else's client is
 never even sent the soul, so nothing on it can reveal one. A **Core Formation Grand Perfection** (or stronger) cultivator
 whose Consciousness Domain is open senses a soul that comes inside the domain without seeing it: a warning that a nascent
-soul is near, no outline, no name.
+soul is near, no outline, no name. A cultivator with the **Ghost Eye** open (a ghost method's ability, see The Netherworld)
+sees souls as a Nascent Soul with Qi Sense open would, whatever their realm.
+
+**Where it can't go.** The heavens can't see the Netherworld, and a nascent soul can't be sent out there or on the Soul
+River ("The heavens cannot see you here."); a soul already out can't take a rift up to it. The dead can't send out souls
+at all.
 
 **Harming a soul.** Only those who see it, by their own hand: a Nascent Soul cultivator (Qi Sense open) lands a quarter of
 a blow at Early, 40% at Mid, 55% at Late, 70% at Grand Perfection (it's a haze to them); a Heavenly Being or above lands it
@@ -549,6 +578,396 @@ tether's pull, striking tethers), `SoulRenderer.java` with core shader `shaders/
 keeps its colour under Qi Sense), `SoulHud.java`, `SoulBodyRenderer` / `SoulVesselRenderer`, client mixins `SoulFlightMixin`,
 `SoulInputMixin`, `SoulRenderDispatcherMixin`; tests in `SoulProjectionGameTests`. Shader packs that replace core shaders
 (Iris) fall back to a plain violet translucent soul.
+
+## The Netherworld
+
+Above the Nether lies the **Netherworld**, the realm of the dead: misty plateaus of soul soil and blackstone between about
+Y 40 and 200 over a bottomless abyss, dim (the ground is seen without a torch, barely), under a sky of its own. It is a
+high realm, as the Upper Realm is above the Overworld: Realm Suppression doesn't reach it, portals don't work there, and
+NPC cultivators come up into it from below. But its riches are another kind of qi. Ordinary qi is as thin there as
+anywhere, and breakthroughs into Four Axis stay the Upper Realm's; what the Netherworld has is **ghostly qi**, which the
+dead and those who learn the ghost methods cultivate on. And the heavens can't see it: no tribulation, Ritual to the
+Heavens, Inner Realm or Soul Projection there or on the river to it ("The heavens cannot see you here.").
+
+There are two ways in: **die** (you wake there as a ghost), or **go up alive** from the Nether.
+
+Code: `HighRealm` (what the two high realms share), `ModDimensions` (`netherworld`, `soul_river`, `NETHERWORLD_MIN_Y`,
+`NETHERWORLD_AMBIENT_LIGHT`), `ModBiomes`, `ModNoiseSettings#netherworld`, `NetherworldManager` (the per-second tick);
+client `NetherworldClient`, `NetherworldSkyRenderer`, `UpperRealmClient` (its fog). Tests in `NetherworldGameTests`,
+`NetherworldQiGameTests`, `NetherworldDeadGameTests`, `NetherworldMethodsGameTests`, `NetherworldInhabitantsGameTests`.
+
+### Getting there: the Soul River
+
+The Nether's rift, the **Gate of the Yellow Springs**, stands at Nether 0, 0: placed on server start in an open pocket of
+that column between Y 32 and 110 clear of lava (or, failing that, a chamber carved at Y 70), never on the bedrock roof,
+with a small shrine of blackstone, soul soil and soul lanterns round it. Walk into it, at any cultivation, and you're
+taken onto the **Soul River**: a glowing cyan river of streams, sparkles and wisps in a black void, with the souls of
+villagers and beasts drifting down it beside you, which carries you for **60 seconds** up to the Ghost Gate. Going down
+is the same river the other way: walk into the **way down** on the Ghost Gate's plaza, or fall into the abyss (below
+Y 0; this takes anyone, cooldown or not), and it sets you down on safe ground in the Nether near 0, 0.
+
+- The river does no harm, but it bends and sways, and its current pushes straight on: **steer** (look and move) to keep
+  to its flow. Flying and gliding stop on it.
+- Out of the flow for more than **¾ of a second**, or more than 3 blocks past its edge, and **your soul scatters**. Going
+  up, the ascent fails: you're thrown back by the Nether's rift, hurt (60% of your max health, never your last heart,
+  through armour) and dazed for 12 seconds, and the rift turns you away for a minute. Going down, it spits you out early.
+- After any journey down the rifts let you be for 10 seconds, so nobody is swept straight back up.
+- A relog mid-river starts the journey over; dying ends it.
+
+**The Eye.** Off to one side of the river, square to its flow so that you must turn to see it, hangs a huge white eye in
+the void: the eye of the **Chief Judge of the Netherworld**, a True Immortal. It watches the dead drift by, now and then
+looks straight at the living, and blinks. **Don't meet its gaze.** Hold it within 22 degrees of where you look and the
+whispers start, a heartbeat quickens, the view rolls and breathes and tears, and a crimson dark closes in; after
+**10 seconds** the gaze unmakes you: you die, and your cultivation is stripped back to **Qi Refining Early**, whatever
+your realm. Look away and it ebbs (from the brink to nothing in 4 seconds). Nothing below a True Immortal is spared;
+creative and spectator players are untouched.
+
+| Soul River | Value | Constant |
+|---|---|---|
+| Journey, either way | 60 s (480 blocks) | `SoulRiverCourse.TICKS`, `FLOW` |
+| The flow's reach from its middle | 4 blocks at the start, narrowing to 3 | `SoulRiverCourse.RADIUS_START` / `RADIUS_END` |
+| Grace out of the flow | 15 ticks, or 3 blocks past the edge at once | `SoulRiver.GRACE_TICKS`, `HARD_MARGIN` |
+| Scattering | 60% of max health, 12 s dazed, 60 s cooldown | `SCATTER_HARM`, `DAZE_TICKS`, `SCATTER_COOLDOWN_TICKS` |
+| After a journey down | 10 s before a rift takes you | `SoulRiver.COOLDOWN_TICKS` |
+| The Eye's gaze | 22° cone; death at 10 s; ebbs in 4 s | `JudgeEye.LOOK_CONE`, `GAZE_SECONDS`, `RECOVER_SECONDS` |
+
+Code: `NetherRift` (the Nether's rift and landings), `SpatialRiftBlock#leads` (a rift leads by the realm it stands in),
+`SoulRiver` (the server's side: time, straying, scattering, where you come out), `SoulRiverCourse` (the river's path, a
+pure function both sides share), `JudgeEye` (where it looks, when it blinks, the gaze's toll; `isImmune` is where True
+Immortals will come in); client `ClientSoulRiver` (steering), `SoulRiverRenderer`, `SoulRiverSky`, `RiverSouls`,
+`ClientJudgeGaze` with `mixin/GameRendererMixin` (the warping), `mixin/SoulRiverMixin`. Damage types `soul_scatter` and
+`judge_gaze` (re-run `runDatagen` after changing them).
+
+### The land and the Ghost Gate
+
+| Biome | What it is |
+|---|---|
+| **Yellow Springs** | low golden riverlands of pools and springs; the Netherworld Lotus floats on its water |
+| **Fields of the Other Shore** | soul-soil meadows red with spider lilies, a dead tree here and there; the Other-Shore Flower's home |
+| **Bone Wastes** | ash and bone, dead trees, soul fire burning on the ground; Hungry Ghosts gather here most |
+| **Nine Nether Peaks** | dark crags of blackstone and basalt, where ghostly qi is densest and Yin Jade runs thickest |
+
+The **Ghost Gate** is the Netherworld's hub, at 0, 0, built the first time the server starts with the Netherworld.
+North to south:
+
+- the **arrival plaza**, 21 x 21 of blackstone bricks with braziers of soul fire and soul lanterns, where the river sets
+  the living down and the dead wake. The **way down** (a rift) is on its north side, and a **Method Stele** of the
+  Netherworld Breathing Art faces the arrival;
+- the **Gate** itself, two towering pillars of blackstone striped with bone, chains and lanterns hanging from the lintel,
+  **Ox-Head** and **Horse-Face** standing guard before it;
+- the **Naihe Bridge** over a channel of the Wangchuan, the river of forgetting, with **Meng Po's** pavilion and pot at
+  its near end;
+- the **Wheel of Reincarnation**, turning slowly on its dais on the far bank;
+- and west of the plaza, the tall **Terrace for Gazing Homeward**, its ramp rising from the plaza's edge.
+
+Within 32 blocks of the Gate's middle, survival players can't break or place blocks and blasts break nothing; Hungry
+Ghosts and wandering ghost cultivators never spawn on its ground. The way down, the Wheel's hub and the plaza's stele
+are put back on every start if something took them.
+
+Code: `GhostGate` (the build, `GATE_RADIUS`, the fixtures' positions, its keepers), `WheelOfReincarnationBlock`(+`Entity`)
+and client `WheelOfReincarnationRenderer`, `SpiderLilyBlock`, `DeadTreeFeature`, `YellowSpringsPoolFeature`. The biomes'
+features are in `ModBiomes#netherworldFeatures` and `ModPlacedFeatures` (the `NW_*` features); if you change them, re-run
+`runDatagen`.
+
+### Yin corruption
+
+A living body in the Netherworld fills with its yin. The **Yin Corruption** bar (under the qi bar, top left) climbs from
+0 to 100%, its percentage beside it with an arrow (up while rising, down while ebbing, a dash while a pill holds it).
+Past a quarter a cold cyan-black frost creeps in from the edges of the screen, thicker as it climbs; there are warnings
+at 50, 75 and 90%. **At 100% your body gives way: you become a ghost where you stand, keeping everything you carry**
+(see The dead, below). Outside the Netherworld it ebbs, from full to nothing in **5 minutes**; on the Soul River it holds
+still. Ghosts, and players in creative or spectator, take none.
+
+How long a stay fills it, by true realm:
+
+| Realm | Full in | Constant (`YinCorruption`) |
+|---|---|---|
+| Below Nascent Soul (mortals too) | 1 minute: they have no business there | `STAY_BELOW_NASCENT_SOUL` |
+| Nascent Soul | 5 minutes | `STAY_NASCENT_SOUL` |
+| Heavenly Being | 10 minutes | `STAY_HEAVENLY_BEING` |
+| Four Axis | 20 minutes | `STAY_FOUR_AXIS` |
+
+times the stage's power (Early 1.0 up to Grand Perfection 1.3), times 1 + 10% for each layer of the Netherworld Breathing
+Art (`BREATHING_STAY_PER_LAYER`): a Four Axis Grand Perfection stays 26 minutes, about 49 with all nine layers.
+
+| What changes it | How | Constant |
+|---|---|---|
+| **Netherworld Veil** (ability, below) | yin comes in at half the rate | `YinCorruption.VEIL_FACTOR` |
+| **Yang Preservation Pill** | holds it still: 3 minutes per point of potency, 15 at most | `PillItem.PRESERVATION_TICKS_PER_POTENCY`, `MAX_PRESERVATION_TICKS` |
+| **Yang Fire Talisman** | burnt (right-click), drives a third of it out at once; not spent on a body with no yin | `YinCorruption.TALISMAN_CLEANSE` |
+| A blow from the dead | each drives 5% more in | `YinCorruption.GHOSTLY_BLOW`, `HungryGhost.YIN_PER_BLOW` |
+
+The **Yang Fire Talisman** is crafted from paper, blaze powder and a gold nugget with the Inscription Brush (shapeless;
+the brush comes back a use more worn). It stacks to 16, and ghost cultivators sell them.
+
+Code: `YinCorruption` (the stay, the rate, the fade, the warnings), `YangFireTalismanItem`, `NetherworldState` (saved in
+the "Netherworld" compound of a player's cultivation, only when it differs from the defaults); client `NetherworldHud`
+(the bars and the frost), `ClientNetherworldData`.
+
+### Ghostly qi
+
+The second kind of qi. Ordinary qi is the cultivator's own; ghostly qi belongs to places, and is what the ghost methods
+are cultivated on and the **Ghost Qi** pool fills from. Under Qi Sense it is a sixth element, yin, its motes thick in the
+Netherworld.
+
+| Where | Density (a Soul Sand Valley = 1) | The pool fills, a second |
+|---|---|---|
+| The Netherworld | 10 (`GhostQi.NETHERWORLD`) | 2 |
+| The Nine Nether Peaks | 12 (x `PEAKS_FACTOR`) | 2.4 |
+| A Soul Sand Valley | 1 (`SOUL_SAND_VALLEY`) | 0.2 |
+| The rest of the Nether | 0.25 (`NETHER`) | 0.05 |
+| Everywhere else | 0 | nothing |
+
+The pool fills at density x 0.2 a second (`FILL_PER_DENSITY`); spirit stones and Spirit Dew don't fill it. Everyone who
+has one sees it as a cyan **Ghost Qi** bar: every ghost, and every living cultivator who knows a ghost method. It holds
+30 (`BASE_POOL`), plus 10 for every layer known across all methods (`POOL_PER_LAYER`), plus 20 more for every layer of the
+Netherworld Breathing Art (`BREATHING_POOL_PER_LAYER`). Ghost abilities and spells are paid from it, never from your qi.
+
+Code: `GhostQi` (density, fill, pool size), `QiElement.YIN`, client `QiSenseClientHandler`, `NetherworldHud`.
+
+### The dead
+
+While the gamerule **`netherworldAfterDeath`** is on (the default), a player who dies wakes at the Ghost Gate as a
+**ghost** instead of at their bed. The death itself is vanilla's (its message, its drops, keepInventory if set); only
+the respawn is the Gate's. A living visitor overtaken by yin becomes a ghost where they stand instead, and keeps all
+they carry. With the gamerule off, death is vanilla's and there are no ghosts.
+
+A ghost:
+
+- is drawn as cyan light in its own skin, brightest at its edges, with its name above it, and is seen by everyone in the
+  Netherworld. It walks with gravity and walls, and takes no fall, drowning, fire, lava, suffocation, freezing or hunger.
+  Its tread makes no sound: no footsteps on any block, no splashing, no thud when it lands (on its own client as on
+  everyone else's). Ghost cultivators and Hungry Ghosts walk as silently.
+- has **half its living hearts**, plus a heart for every layer of the Netherworld Breathing Art, and heals a heart every
+  two seconds.
+- **touches nothing of the living world.** It can't break or place, use items or blocks (but it can use the dead's own:
+  steles, Meng Po's pot, the Wheel), drop or pick up, ride, take a rift or portal, meditate on the main track, break
+  through, fly on qi or a sword, Realm Suppress, turn inward or project its soul. Arrows, blasts and ordinary mobs pass
+  through it. It cultivates only its ghost method, half again as fast as the living do (below).
+- **is struck** only by what touches the dead: another ghost's or a ghostly creature's blows, ghost fire, a Peach Wood
+  Sword (in full, and twice over), a Ghost-Quelling Talisman (below), and the living who can see it, as they would a projected soul (a Nascent Soul with
+  Qi Sense open lands a quarter to 70% of a blow by stage, a Heavenly Being or above all of it). A ghost's own blow on
+  the living is a ghostly one, light (half a heart) but driving 5% of the Netherworld's yin into them.
+- at no health **disperses** in cyan sparks and reforms at the Gate **5 seconds** later with half its health and half
+  its ghostly qi. Falling into the abyss does the same.
+
+**Coming back.** Use the **Wheel of Reincarnation**'s hub, on the far bank: it turns, and you return to life at your own
+respawn point (your bed or anchor, as vanilla would choose it). In hardcore the Wheel refuses. Before that:
+
+- **The Terrace for Gazing Homeward**: climb it, and standing at its top a ghost sees where it died (the dimension, and
+  the place to within 10 blocks); a journal note keeps it.
+- **Meng Po's soup**: drink from her pot or ask her for it, and when the Wheel returns you to life your medicinal
+  toxicity is gone (the pills' diminishing returns start over). The living are turned away.
+
+A creative ghost keeps the look and none of the rules.
+
+| The dead | Value | Constant (`GhostSystem` unless named) |
+|---|---|---|
+| Hearts | half the living's, +1 per Breathing Art layer | `HEALTH_SHARE`, `HEALTH_PER_BREATHING_LAYER` |
+| Healing | a heart every 2 s | `REGEN_PER_SECOND` |
+| Dispersal | reforms after 5 s with half health and qi | `DISPERSE_TICKS` |
+| A ghost's blow on the living | half a heart, +5% yin | `GHOSTLY_BLOW`, `YinCorruption.GHOSTLY_BLOW` |
+| The Wheel's turning | 2 s | `WHEEL_TICKS` |
+| The Terrace | within 3.5 blocks of its top stone; the place to 10 blocks | `GhostGate.TERRACE_REACH`, `TERRACE_ROUNDING` |
+
+Code: `GhostSystem` (becoming a ghost, the rules, dispersal, the Wheel), `Incorporeal` (what a ghost shares with a
+projected soul), `ModGameRules`, `GhostGate` (the Terrace, Meng Po's pot), mixins `SoulEntityMixin`, `SoulPlayerMixin`,
+`SoulLivingEntityMixin`, `SoulServerPlayerMixin`, `SoulProjectileMixin`, `ServerGamePacketListenerImplMixin` (a hardcore
+ghost isn't made a spectator); client `SoulRenderer` (ghosts drawn with the soul shader, `shaders/core/soul.*`, turned to
+the dead's cyan), `ClientGhosts`, `mixin/GhostDriftMixin`, `mixin/SoulRenderDispatcherMixin`.
+
+### Ghost methods
+
+The ghost methods are cultivated on ghostly qi, by the dead and the living alike, through **nine layers** each. Each
+layer brings something, and some bring abilities and spells.
+
+| Method | What its layers bring | Abilities | Spells | Stele weight |
+|---|---|---|---|---|
+| **Netherworld Breathing Art** (the foundation) | +20 ghostly qi pool, +1 heart as a ghost, +10% of the living's stay | Ghost Eye (3), Netherworld Veil (6) | Ghostly Wail (5) | 6 |
+| **Ghost Fire Scripture** (offence) | a ghost's blows +10% | | Ghost Fire (1), Ghost Fire Bolt (4); the fire leaps to a second foe (7) | 3 |
+| **Wandering Soul Steps** (movement) | a ghost +3% swifter | Yin Wind Steps (1), Ghost Flight (4, ghosts only) | Soul Dash (2) | 2 |
+
+**Learning one.** Meditate within 4 blocks of a **Method Stele** for a minute and you learn its first layer. Steles
+stand on worn plinths across the Netherworld, one in about every 14 chunks, the foundation's most often and the
+movement method's least (the weights above), and one of the Breathing Art on the Gate's plaza. They're unbreakable;
+touch one to read what it teaches (the dead can too), and the Ghost Eye shows them through walls. A **Ghost Jade Slip**,
+read (right-click), teaches its method at once and isn't used up: ghost cultivators drop them now and then, and Ghost
+Elders sell their own. And a ghost cultivator who is Warm to you will **teach** you its method once a day: its first
+layer, or ten minutes' progress if you know it.
+
+**Cultivating.** Meditate as usual: while ghostly qi flows where you sit, the method you practise gains progress on top
+of your ordinary cultivation (a ghost cultivates only the method). Choose which one in the cultivation menu's
+**Methods** tab: every method you know, its layer and progress, how fast it's going here and why, and a **Practise**
+button. Progress is counted in seconds of baseline meditation, so a layer costs its minutes x 60:
+
+| Layer | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+|---|---|---|---|---|---|---|---|---|---|
+| Minutes | 5 | 8 | 12 | 20 | 30 | 45 | 60 | 90 | 120 |
+
+That is about six and a half hours for all nine (`GhostMethods.MINUTES`), at the baseline: a living Nascent Soul Early in
+the Netherworld. The rate is `BASE_RATE` x density / 10 x the realm's factor (`realmFactor`: x0.5 for a mortal's ghost, -10%
+a realm below Nascent Soul, +10% a realm above) x Qi Harmony x a Yin Gathering Pill's boost x 1.5 for the dead
+(`GHOST_FACTOR`) x 1.25 beside a stele of the method you're practising (`STELE_BONUS`, within 8 blocks). Outside the
+Netherworld (a Soul Sand Valley is ten times slower) progress stops at the end of **layer 3** (`OUTSIDE_LAYER_CAP`): only
+the Netherworld's qi carries a method past it.
+
+Code: `GhostMethod` (the methods; ids saved, add new ones at the end), `GhostMethods` (rate, layers, learning, what each
+layer grants), `MethodSteleBlock`, `MethodSteleFeature` (`NW_STELE_CHUNKS` in `ModPlacedFeatures`), `GhostJadeSlipItem`,
+`MeditationManager#ghostMethods`, `TalkSystem#teach`; client `ClientMethods`, `CultivationScreen` (the Methods tab).
+
+### Ghost abilities and spells
+
+**Abilities** are switched on and left on, from the Abilities tab or the ability wheel (hold Z), like any other; these
+four are paid from the ghostly qi pool, a little each second.
+
+| Ability | From | What it does | Ghostly qi a second |
+|---|---|---|---|
+| **Ghost Eye** | Breathing Art 3 | ghosts, ghost cultivators, Hungry Ghosts and Method Steles glow through walls within 32 blocks; outside the Netherworld, projected souls are seen as a Nascent Soul with Qi Sense open sees them | 0.5 (`GHOST_EYE_COST`) |
+| **Netherworld Veil** | Breathing Art 6 | the living take the Netherworld's yin at half the rate | 1 (`VEIL_COST`) |
+| **Yin Wind Steps** | Soul Steps 1 | 20% swifter, and falls do no harm | 1 (`YIN_WIND_COST`, `YIN_WIND_SPEED`) |
+| **Ghost Flight** | Soul Steps 4, ghosts only | a ghost flies freely (double-tap jump), never running dry in the Netherworld | 2 (`GHOST_FLIGHT_COST`) |
+
+**Spells** are cast at will, and live on a **spell wheel** of their own, never the ability wheel. **Hold V** (rebindable:
+"Spell Wheel (hold)") and an eight-slot wheel opens: **click** a slot to ready its spell, **right-click** to cast it at
+once. **C** ("Cast Readied Spell") casts the readied one; its name, and the seconds left while it cools, sit under the
+bars top left. Each costs ghostly qi and has a cooldown; none can be cast on the Soul River or while dispersed. A
+spell you learn goes into the first empty slot. The cultivation menu's **Spells** tab lists every spell (cost, cooldown,
+the layer it needs, whether it's ready), and its **Arrange Wheel** button lays the wheel out as the ability wheel's
+editor does. The living need a cultivation to shape a spell; a mortal's ghost doesn't.
+
+| Spell | From | Ghostly qi | Cooldown | What it does |
+|---|---|---|---|---|
+| **Ghost Fire** | Fire Scripture 1 | 3, then 3 a burning blow | 2 s | the hands take cold fire: the next 3 blows within 20 s set what they strike burning for 4 s (half a heart a second, three times that on the dead); from layer 7 the fire leaps to a second foe within 4 blocks |
+| **Ghost Fire Bolt** | Fire Scripture 4 | 8 | 1.5 s | a bolt of it, thrown up to 24 blocks: 3 hearts of ghostly harm, and it sets the struck burning |
+| **Soul Dash** | Soul Steps 2 | 6 | 3 s | a rush forward on the yin wind, about 8 blocks; no fall harm for 2 s after |
+| **Ghostly Wail** | Breathing Art 5 | 15 | 12 s | a cry of the dead: everything within 8 blocks is driven back, slowed and weakened for 5 s, and the dead among them (ghosts, ghost cultivators, Hungry Ghosts) take 2 hearts |
+
+The numbers are the `Spell` enum (layer, cost, cooldown) and `Spells` (`GHOST_FIRE_*`, `BOLT_*`, `DASH_*`, `WAIL_*`).
+
+**Icons** (16x16, `textures/gui/ability/<id>.png` and `textures/gui/spell/<id>.png`): Ghost Eye a slit-pupilled cyan
+eye, Netherworld Veil a dark hood with two cold eyes, Yin Wind Steps a pale footprint on curling wind, Ghost Flight a
+ghost rising on trails of light; Ghost Fire a cold flame, Ghost Fire Bolt a ball of it streaking up and right, Soul Dash
+a ghost darting with speed lines behind, Ghostly Wail a ghost's open-mouthed cry ringing out both sides.
+
+Code: `Ability` (the four, appended), `Spell`, `Spells` (casting, the effects, packets), `GhostFireEffect`,
+`NetherworldState` (`setSpellSlot`, `addToWheel`; NBT "Netherworld"); client `SpellWheelScreen`, `GhostEye`,
+`CultivationScreen` (the Spells tab and its editor), `ModKeybinds` (`SPELL_WHEEL`, `CAST_SPELL`), `NetherworldHud`.
+
+### Who lives there
+
+**Ghost cultivators** are the Netherworld's rogues: cultivators in every way that matters (rank, path, regard, talk,
+spars, daily life) but dead, drawn as cyan light in their cultivator skins. They turn up there instead of living rogues,
+Qi Refining Early to Four Axis Grand Perfection, never mortals; they join no sect and make no journeys. They speak as the
+dead do, tell you how they died if you ask about them, and from Foundation Building on know a ghost method they can teach;
+**Ghost Elders** (Nascent Soul and up) sell its Ghost Jade Slip (60 low-grade stones). The dead don't trade with, gift or
+make demands of other ghosts; to the living they sell Yin Jade, Other-Shore Flowers and Yang Fire Talismans. Blows reach
+them as they reach any of the dead. Struck down they scatter in sparks, now and then leaving a jade slip (8%), Yin Jade
+(40%) or an Other-Shore Flower (15%). An NPC cultivator who ascends from the Nether goes to its rift and comes out at
+the Ghost Gate as one of them.
+
+**The Gate's keepers**, three ghost cultivators who never leave their posts, each **three times a man's height** (5.4
+blocks tall and 1.8 across, their eyes, reach and stride to match: `GhostCultivatorNpc.KEEPER_SCALE`):
+
+- **Ox-Head** and **Horse-Face**, Four Axis Grand Perfection, guard the Gate: they greet the dead, warn the living about
+  the yin, and fight whoever attacks them. One slain comes back to its post three days later
+  (`GhostGate.OFFICIAL_RETURNS_AFTER`). They wear their beasts' heads in place of a man's (below): Ox-Head a bull's,
+  broad and dark, glaring under a heavy brow, a gold ring through the muzzle and great horns sweeping out, up and
+  forward; Horse-Face a horse's, its long face sloping to a broad nose, a white blaze down it, ears pricked and a black
+  mane down the neck. Besides the Yin Jade and herbs every ghost sells, they sell the living Yang Preservation Pills, a
+  Peach Wood Sword and Ghost-Quelling Talismans (two for 12), the means to keep the restless dead in order.
+- **Meng Po**, Keeper of the Naihe Bridge, stands by her pot and never fights; ask her about the soup. Her pavilion's
+  roof stands six blocks up, clear of her head; a Gate built before the keepers grew has its low pavilion raised once, the
+  next time the server starts.
+
+**Hungry Ghosts** are the dead who starved in life: gaunt, translucent cyan, about Qi Refining strength (8 hearts),
+in packs of two to four, in any light, most of all in the Bone Wastes; never on the Gate's ground, nor on Peaceful. They go for the
+living first (half a heart a blow, but each blow drives 5% yin in), then for ghosts (1½ hearts, ghostly). A ghost who
+disperses one takes 5 ghostly qi from it. They drop bones, and Yin Jade one time in ten.
+
+| Hungry Ghosts | Value | Constant (`HungryGhost`) |
+|---|---|---|
+| Health | 16 | `HEALTH` |
+| Blows | 1 on the living (+5% yin), 3 on the dead | `ON_THE_LIVING`, `YIN_PER_BLOW`, `ON_THE_DEAD` |
+| A ghost's reward | 5 ghostly qi | `QI_REWARD` |
+| Spawning | weight 10 in every Netherworld biome; 30% of tries go ahead in the Bone Wastes, 6% elsewhere; at most 8 within 48 blocks | `ModBiomes#hungryGhosts`, `SPAWN_CHANCE_BONE_WASTES`, `SPAWN_CHANCE`, `CROWD_CAP`, `CROWD` |
+
+Code: `GhostCultivatorNpc` (the dead as NPCs, the keepers' roles), `Ghostly` (what the dead's kind share), `HungryGhost`,
+`NpcSpawner` (the dead in the Netherworld), `NpcTravel` (ascending from the Nether), `NpcLines` (the ghost voice and how
+they died), `TalkSystem` (the soup, teaching), `CultivatorTrades#ghostGoods`, `CultivatorLoot`; client `GhostlyRenderers`,
+`SoulRenderer#drawDead`. Loot tables `entities/ghost_cultivator.json`, `entities/hungry_ghost.json`,
+`chests/ghost_cultivator.json` are hand-written in `src/main/resources`.
+
+### Beasts' heads
+
+A beast's head worn on a man's body is its own little model, built from cubes as vanilla's models are, and drawn in
+place of the human head and its hat layer: it turns and nods with the head it replaces (its pivot is the neck), so any
+humanoid body can wear one. Ox-Head and Horse-Face are the first; the same pieces are there for whatever comes to wear
+one later (a demon race's tiger or snake head, say).
+
+- **The list** is `BeastHead` (shared by both sides, so the server can name one and sync it): `OX`, `HORSE`. Saved and
+  synced by id; add new heads at the end.
+- **The models** are in client `BeastHeadModels`: each a model layer, `defying-the-heavens:beast_head/<id>`, with its mesh
+  (in the model's pixels: the human head is the box from (-4, -8, -4) to (4, 0, 4) about the neck, the face toward -z, -x
+  its right), and a 64 x 64 texture, `textures/entity/beast_head/<id>.png`. Each mesh's comment lists its boxes' texture
+  corners. A head also names its **brow**, where a talisman sealed to it hangs (on the long face of a horse it lies along
+  the top of the face).
+- **Wearing one**: hide the body model's `head` and `hat`, call the head's `follow(model.head)` after the body's
+  `setupAnim`, and draw it with the same transforms (and the same render type) as the body, in its own texture.
+  `SoulRenderer#drawBody` does so for the dead (`drawDead` picks the head from `GhostCultivatorNpc.Role#beastHead`); a living
+  wearer would do the same from a render layer with an ordinary entity render type.
+- **A new head**: an entry in `BeastHead`, its mesh in `BeastHeadModels#definition` and its brow in `#brow`, and its texture.
+  The textures here were drawn by a small generator, box by box (fur fill, then eyes, nose, blaze and the like).
+
+### Herbs, Yin Jade and the exorcist's tools
+
+| Thing | Where / how | What for |
+|---|---|---|
+| **Other-Shore Flower** (bulbs) | an aging herb, like ginseng, glowing faintly; roots in soul soil and soul sand (planted, any soil). A patch in about every 6 chunks of the Fields of the Other Shore, every 40 of the Yellow Springs and Bone Wastes, every 160 of a Soul Sand Valley | the Yin Gathering Pill |
+| **Netherworld Lotus** (seeds) | an aging herb on still water, like the Spirit Lotus; a patch in about every 8 chunks of the Yellow Springs | the Yin Gathering Pill |
+| **Yin Jade Ore** | veins in the Netherworld's stone, 16 a chunk on the Nine Nether Peaks and 4 in its other biomes, and one vein in about every 4 chunks of a Soul Sand Valley; an iron pickaxe, more with Fortune, the ore with Silk Touch | **Yin Jade**: the Ghost-Quelling Talisman; a trade good the dead value; 9 make a Block of Yin Jade |
+| **Red Spider Lily** | an ordinary flower carpeting the Fields of the Other Shore | decoration |
+| **Peach Wood Sword** | 2 cherry planks, a stick and a Peach Pit (shapeless) | a stone sword to the living; on the dead every blow lands in full, whoever swings it, and twice as hard (`PeachWoodSwordItem.ON_THE_DEAD`) |
+| **Ghost-Quelling Talisman** | 2 paper, redstone (the cinnabar) and Yin Jade with the Inscription Brush (shapeless; makes 2, the brush comes back a use more worn); the Gate's wardens sell them | thrown (right-click, like a snowball): see below |
+| **Yang Preservation Pill** | Alchemy Cauldron, 30 s: Ginseng, blaze powder, glowstone dust, a honey bottle | holds yin corruption still (above) |
+| **Yin Gathering Pill** | Alchemy Cauldron, 30 s: an Other-Shore Flower, a Netherworld Lotus, a ghast tear | the ghost methods go +25% faster per point of potency for 5 minutes (`PillItem.YIN_BOOST_PER_POTENCY`); only for one who knows a method |
+
+**The Ghost-Quelling Talisman.** Thrown, it flies past the living (and through a projected soul) and strikes only the
+dead: a player's ghost, a ghost cultivator, a Hungry Ghost. It deals **6** of the dead's own harm, which lands in full, and
+binds the one it strikes where it stands for **5 seconds** (the Quelled effect): no walking, jumping, Ghost Flight or Soul
+Dash, and a bound creature is held still, only falling; it can still strike what is in reach. The talisman shows sealed
+to its brow, yellow paper in its own colours over the dead's cyan light (on a beast's head too), and gold sparks circle
+it. A ghost can't throw one (the dead use no items), and it hurts another player's ghost only where PvP is on. Its
+numbers are `GhostQuellingTalismanItem.DAMAGE` and `BIND_TICKS`.
+
+Code: `GhostQuellingTalismanItem` (the throw, the strike, `quell`), `GhostQuellingTalismanEntity` (only the dead stop it),
+`QuelledEffect` / `ModEffects.QUELLED`, `SoulProjectileMixin` (lets it reach a ghost, as no other projectile does),
+`SoulLivingEntityMixin` (no jumping), `QiFlight` and `Spells` (no flight or dash); packet `quelled`; client `ClientQuelled`,
+`SoulRenderer#drawTalisman` (the paper on the brow is the item's own picture); recipe `recipes/ghost_quelling_talisman.json`.
+
+Rates are the `*_CHUNKS_*` and `YIN_JADE_*` constants in `ModPlacedFeatures` (re-run `runDatagen` after changing them).
+Code: `OtherShoreFlowerBlock`, `ModBlocks#NETHERWORLD_LOTUS`, `GinsengFeature` (`Ground.SOUL`), `PeachWoodSwordItem`,
+`PillItem` (`YANG_PRESERVATION`, `YIN_GATHERING`), `AlchemyRecipes`, `ModEffects` (`YIN_GATHERING`, `YANG_PRESERVATION`);
+the herbs' blockstates and models are hand-written in `src/main/resources`.
+
+### Commands (op)
+
+All act on yourself.
+
+```
+/netherworld enter          arrive alive at the Ghost Gate (skipping the river)
+/netherworld gate           the same, from anywhere
+/netherworld leave          down the Soul River to the Nether
+/netherworld up             onto the Soul River from its start, going up (clears the rift's cooldown)
+/netherworld ghost          become a ghost where you stand
+/netherworld revive         return to life, as at the Wheel
+/netherworld corruption <percent>   set your yin corruption
+/method learn <id> [layer]  a ghost method at that layer (the first by default), its progress reset
+/method progress <seconds>  that many seconds of baseline meditation on the practised method (the outside cap ignored)
+/method forget <id>         as if it had never been learned
+/gamerule netherworldAfterDeath false   death as vanilla's, no ghosts
+```
+
+Method ids: `netherworld_breathing`, `ghost_fire_scripture`, `wandering_soul_steps`. Code: `NetherworldCommand`.
 
 ## More herbs
 
@@ -1082,6 +1501,9 @@ structures do the same); sects that generate with the world don't.
 
 Sects and cultivators' off-screen journeys are saved in the Overworld's `data/defying-the-heavens_sects.dat` and
 `defying-the-heavens_npc_travel.dat`; formations in each dimension's `defying-the-heavens_formations.dat`.
+
+The Netherworld's own commands (`/netherworld`, `/method`) are listed under The Netherworld. Its Ghost Gate is remembered
+as built in the Netherworld's `data/defying-the-heavens_ghost_gate.dat`.
 
 ## License
 

@@ -6,8 +6,11 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BiomeDefaultFeatures;
 import net.minecraft.data.worldgen.BootstapContext;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.sounds.Musics;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.level.biome.AmbientAdditionsSettings;
 import net.minecraft.world.level.biome.AmbientMoodSettings;
 import net.minecraft.world.level.biome.AmbientParticleSettings;
 import net.minecraft.world.level.biome.Biome;
@@ -34,6 +37,17 @@ public final class ModBiomes {
 	public static final ResourceKey<Biome> ANCIENT_SWORD_GRAVEYARD = key("ancient_sword_graveyard");
 	public static final ResourceKey<Biome> SPATIAL_GAP = key("spatial_gap");
 	public static final ResourceKey<Biome> INNER_REALM = key("inner_realm");
+	/**
+	 * The Netherworld (dimension/netherworld.json picks them from the terrain's own noises, see ModNoiseSettings#netherworld):
+	 * the low golden riverlands of the Yellow Springs, the soul-soil meadows of the Fields of the Other Shore red with spider
+	 * lilies, the Bone Wastes, and the crags of the Nine Nether Peaks, where ghostly qi is densest.
+	 */
+	public static final ResourceKey<Biome> YELLOW_SPRINGS = key("yellow_springs");
+	public static final ResourceKey<Biome> FIELDS_OF_THE_OTHER_SHORE = key("fields_of_the_other_shore");
+	public static final ResourceKey<Biome> BONE_WASTES = key("bone_wastes");
+	public static final ResourceKey<Biome> NINE_NETHER_PEAKS = key("nine_nether_peaks");
+	/** The Soul River's empty dark (the river itself is drawn by the client, see SoulRiver). */
+	public static final ResourceKey<Biome> SOUL_RIVER = key("soul_river");
 
 	private static final int WATER = 0x3FC6E4;
 	private static final int WATER_FOG = 0x0A3D52;
@@ -90,6 +104,77 @@ public final class ModBiomes {
 				new BiomeSpecialEffects.Builder().skyColor(0x000000).fogColor(0x020108).waterColor(WATER).waterFogColor(WATER_FOG),
 				new MobSpawnSettings.Builder().build(),
 				new BiomeGenerationSettings.Builder(placed, carvers).build()));
+
+		// The Netherworld: no rain or snow (custom dimensions share the Overworld's weather), the Soul Sand Valley's sounds and
+		// music everywhere, and each biome its own fog, sky, water and foliage.
+		// Hungry Ghosts in packs of 2-4 everywhere but the Soul River, most often in the Bone Wastes (HungryGhost#checkSpawn sets
+		// how often a try comes to anything, by the biome's HungryGhost#spawnChance).
+		context.register(YELLOW_SPRINGS, biome(false, 0.8f, 0.0f,
+				// GLOW, not SOUL: it shines in the dark (a soul particle takes the dim light and comes out a dull brown face).
+				netherworld(0x061A16, 0x1C2A16, 0xA6872C, 0x3A2C0C, 0x6B6A3A).ambientParticle(new AmbientParticleSettings(ParticleTypes.GLOW, 0.0012f)),
+				hungryGhosts(),
+				netherworldFeatures(placed, carvers, ModPlacedFeatures.NW_SPRINGS_POOL, ModPlacedFeatures.NW_LAKE_SPRINGS, ModPlacedFeatures.NW_SPRING_WATER,
+						ModPlacedFeatures.NW_SPIDER_LILIES_SPARSE, ModPlacedFeatures.NW_NETHERWORLD_LOTUS, ModPlacedFeatures.NW_OTHER_SHORE_FLOWER,
+						ModPlacedFeatures.NW_ORE_YIN_JADE)));
+		context.register(FIELDS_OF_THE_OTHER_SHORE, biome(false, 0.8f, 0.0f,
+				netherworld(0x081820, 0x0D2B2E, 0x2F6E6A, 0x0B2224, 0x4E5E4A).ambientParticle(new AmbientParticleSettings(ParticleTypes.GLOW, 0.0025f)),
+				hungryGhosts(),
+				netherworldFeatures(placed, carvers, ModPlacedFeatures.NW_LAKE_RARE, ModPlacedFeatures.NW_SPRING_WATER, ModPlacedFeatures.NW_DEAD_TREE_RARE,
+						ModPlacedFeatures.NW_SPIDER_LILIES, ModPlacedFeatures.NW_CRIMSON_ROOTS, ModPlacedFeatures.NW_OTHER_SHORE_FLOWER_FIELDS,
+						ModPlacedFeatures.NW_ORE_YIN_JADE)));
+		context.register(BONE_WASTES, biome(false, 0.8f, 0.0f,
+				netherworld(0x10140F, 0x2A2A24, 0x3E5E58, 0x101C1A, 0x6E6A5A).ambientParticle(new AmbientParticleSettings(ParticleTypes.WHITE_ASH, 0.04f)),
+				hungryGhosts(),
+				netherworldFeatures(placed, carvers, ModPlacedFeatures.NW_SPRING_WATER, ModPlacedFeatures.NW_BONE_PILE, ModPlacedFeatures.NW_SOUL_FIRE,
+						ModPlacedFeatures.NW_DEAD_TREE, ModPlacedFeatures.NW_OTHER_SHORE_FLOWER, ModPlacedFeatures.NW_ORE_YIN_JADE)));
+		context.register(NINE_NETHER_PEAKS, biome(false, 0.8f, 0.0f,
+				netherworld(0x050F18, 0x0A1A24, 0x2A5C66, 0x081A20, 0x3E4A4A).ambientParticle(new AmbientParticleSettings(ParticleTypes.ASH, 0.01f)),
+				hungryGhosts(),
+				netherworldFeatures(placed, carvers, ModPlacedFeatures.NW_BLACKSTONE_BLOBS, ModPlacedFeatures.NW_BASALT_BLOBS,
+						ModPlacedFeatures.NW_SPRING_WATER, ModPlacedFeatures.NW_ORE_YIN_JADE_PEAKS)));
+
+		// The Soul River: a void with nothing in it but the river, drawn by the client; the Soul Sand Valley's whispering
+		// ambience and its music.
+		context.register(SOUL_RIVER, biome(false, 0.5f, 0.0f,
+				netherworld(0x000000, 0x0C0A1F, WATER, WATER_FOG, 0x4E5E4A),
+				new MobSpawnSettings.Builder().build(),
+				new BiomeGenerationSettings.Builder(placed, carvers).build()));
+	}
+
+	/** The Netherworld's monsters: Hungry Ghosts, in packs of two to four. */
+	private static MobSpawnSettings hungryGhosts() {
+		return new MobSpawnSettings.Builder()
+				.addSpawn(net.minecraft.world.entity.MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(ModEntities.HUNGRY_GHOST, 10, 2, 4))
+				.build();
+	}
+
+	/** A Netherworld biome's colours, with the Soul Sand Valley's ambience and music. */
+	private static BiomeSpecialEffects.Builder netherworld(int sky, int fog, int water, int waterFog, int foliage) {
+		return new BiomeSpecialEffects.Builder()
+				.skyColor(sky)
+				.fogColor(fog)
+				.waterColor(water)
+				.waterFogColor(waterFog)
+				.foliageColorOverride(foliage)
+				.grassColorOverride(foliage)
+				.ambientLoopSound(SoundEvents.AMBIENT_SOUL_SAND_VALLEY_LOOP)
+				.ambientMoodSound(new AmbientMoodSettings(SoundEvents.AMBIENT_SOUL_SAND_VALLEY_MOOD, 6000, 8, 2.0))
+				.ambientAdditionsSound(new AmbientAdditionsSettings(SoundEvents.AMBIENT_SOUL_SAND_VALLEY_ADDITIONS, 0.0111))
+				.backgroundMusic(Musics.createGameMusic(SoundEvents.MUSIC_BIOME_SOUL_SAND_VALLEY));
+	}
+
+	/**
+	 * A Netherworld biome's features (none of the Upper Realm's common ores: the dead's realm keeps its own riches), and in every
+	 * one the Method Steles.
+	 */
+	@SafeVarargs
+	private static BiomeGenerationSettings netherworldFeatures(HolderGetter<PlacedFeature> placed, HolderGetter<ConfiguredWorldCarver<?>> carvers,
+			ResourceKey<PlacedFeature>... specific) {
+		BiomeGenerationSettings.Builder builder = new BiomeGenerationSettings.Builder(placed, carvers);
+		Set<ResourceKey<PlacedFeature>> features = new java.util.HashSet<>(Set.of(specific));
+		features.add(ModPlacedFeatures.NW_METHOD_STELE);
+		ModPlacedFeatures.addFeatures(builder, features);
+		return builder.build();
 	}
 
 	private static Biome biome(boolean precipitation, float temperature, float downfall, BiomeSpecialEffects.Builder effects,

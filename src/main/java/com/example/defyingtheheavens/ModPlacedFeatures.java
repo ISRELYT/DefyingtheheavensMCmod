@@ -176,10 +176,69 @@ public final class ModPlacedFeatures {
 	public static final int QI_VEIN_TRIES_OVERWORLD = 7;
 	public static final int QI_VEIN_TRIES_UPPER_REALM = 22;
 
+	/**
+	 * The Netherworld (biomes in ModBiomes): the Yellow Springs' riverlands flooded with golden water, and lakes there (one try a
+	 * chunk; the Fields' one in six chunks),
+	 * springs breaking out of the plateaus' walls ({@link #NW_SPRINGS} tries a chunk: waterfalls into the abyss), heaps of
+	 * bone, undying soul fire and dead trees in the Bone Wastes, spider lilies thick in the Fields of the Other Shore, and
+	 * blackstone and basalt through the Nine Nether Peaks' deepslate.
+	 */
+	public static final ResourceKey<PlacedFeature> NW_LAKE_SPRINGS = key("netherworld/lake_springs");
+	public static final ResourceKey<PlacedFeature> NW_LAKE_RARE = key("netherworld/lake_rare");
+	public static final ResourceKey<PlacedFeature> NW_SPRING_WATER = key("netherworld/spring_water");
+	public static final ResourceKey<PlacedFeature> NW_SOUL_FIRE = key("netherworld/soul_fire");
+	public static final ResourceKey<PlacedFeature> NW_BONE_PILE = key("netherworld/bone_pile");
+	public static final ResourceKey<PlacedFeature> NW_DEAD_TREE = key("netherworld/dead_tree");
+	public static final ResourceKey<PlacedFeature> NW_DEAD_TREE_RARE = key("netherworld/dead_tree_rare");
+	public static final ResourceKey<PlacedFeature> NW_SPIDER_LILIES = key("netherworld/spider_lilies");
+	public static final ResourceKey<PlacedFeature> NW_SPIDER_LILIES_SPARSE = key("netherworld/spider_lilies_sparse");
+	public static final ResourceKey<PlacedFeature> NW_CRIMSON_ROOTS = key("netherworld/crimson_roots");
+	public static final ResourceKey<PlacedFeature> NW_BLACKSTONE_BLOBS = key("netherworld/blackstone_blobs");
+	public static final ResourceKey<PlacedFeature> NW_BASALT_BLOBS = key("netherworld/basalt_blobs");
+	/** Once a chunk in the Yellow Springs: its riverlands flooded up to YellowSpringsPoolFeature#POOL_LEVEL. */
+	public static final ResourceKey<PlacedFeature> NW_SPRINGS_POOL = key("netherworld/springs_pool");
+	/** A Method Stele in one chunk in {@link #NW_STELE_CHUNKS}, anywhere in the Netherworld. */
+	public static final ResourceKey<PlacedFeature> NW_METHOD_STELE = key("netherworld/method_stele");
+	public static final int NW_STELE_CHUNKS = 14;
+	public static final int NW_SPRINGS = 24;
+	public static final int NW_LAKES_SPRINGS = 1;
+	/** A small patch of soul fire (10 tries) in one Bone Wastes chunk in this many. */
+	public static final int NW_SOUL_FIRE_CHUNKS = 2;
+	public static final int NW_LAKE_RARE_CHUNKS = 6;
+	/**
+	 * The Netherworld's herbs (patches, see GinsengFeature): the Other-Shore Flower in one chunk in
+	 * {@link #OTHER_SHORE_FLOWER_CHUNKS_FIELDS} of the Fields of the Other Shore, {@link #OTHER_SHORE_FLOWER_CHUNKS_NETHERWORLD} of
+	 * the rest of the Netherworld, {@link #OTHER_SHORE_FLOWER_CHUNKS_NETHER} of a Soul Sand Valley; the Netherworld Lotus in one
+	 * chunk in {@link #NETHERWORLD_LOTUS_CHUNKS_NETHERWORLD} of the Yellow Springs.
+	 */
+	public static final ResourceKey<PlacedFeature> NW_OTHER_SHORE_FLOWER_FIELDS = key("netherworld/other_shore_flower_fields");
+	public static final ResourceKey<PlacedFeature> NW_OTHER_SHORE_FLOWER = key("netherworld/other_shore_flower");
+	public static final ResourceKey<PlacedFeature> OTHER_SHORE_FLOWER_NETHER = key("other_shore_flower_nether");
+	public static final ResourceKey<PlacedFeature> NW_NETHERWORLD_LOTUS = key("netherworld/netherworld_lotus");
+	public static final int OTHER_SHORE_FLOWER_CHUNKS_FIELDS = 6;
+	public static final int OTHER_SHORE_FLOWER_CHUNKS_NETHERWORLD = 40;
+	public static final int OTHER_SHORE_FLOWER_CHUNKS_NETHER = 160;
+	public static final int NETHERWORLD_LOTUS_CHUNKS_NETHERWORLD = 8;
+	/**
+	 * Yin Jade Ore: {@link #YIN_JADE_VEINS_PEAKS} veins a chunk in the Nine Nether Peaks, {@link #YIN_JADE_VEINS_NETHERWORLD}
+	 * through the rest of the Netherworld, and one in {@link #YIN_JADE_CHUNKS_NETHER} chunks of a Soul Sand Valley.
+	 */
+	public static final ResourceKey<PlacedFeature> NW_ORE_YIN_JADE_PEAKS = key("netherworld/ore_yin_jade_peaks");
+	public static final ResourceKey<PlacedFeature> NW_ORE_YIN_JADE = key("netherworld/ore_yin_jade");
+	public static final ResourceKey<PlacedFeature> ORE_YIN_JADE_NETHER = key("ore_yin_jade_nether");
+	public static final int YIN_JADE_VEINS_PEAKS = 16;
+	public static final int YIN_JADE_VEINS_NETHERWORLD = 4;
+	public static final int YIN_JADE_CHUNKS_NETHER = 4;
+
 	public static final List<Entry> ORDER = List.of(
 			new Entry(GenerationStep.Decoration.LAKES, SPRING_BASIN),
 			new Entry(GenerationStep.Decoration.LAKES, LAVA_LAKE),
+			new Entry(GenerationStep.Decoration.LAKES, NW_SPRINGS_POOL),
+			new Entry(GenerationStep.Decoration.LAKES, NW_LAKE_SPRINGS),
+			new Entry(GenerationStep.Decoration.LAKES, NW_LAKE_RARE),
 			new Entry(GenerationStep.Decoration.LOCAL_MODIFICATIONS, FOREST_ROCK),
+			new Entry(GenerationStep.Decoration.LOCAL_MODIFICATIONS, NW_BONE_PILE),
+			new Entry(GenerationStep.Decoration.SURFACE_STRUCTURES, NW_METHOD_STELE),
 			new Entry(GenerationStep.Decoration.UNDERGROUND_ORES, ORE_DIRT),
 			new Entry(GenerationStep.Decoration.UNDERGROUND_ORES, ORE_GRAVEL),
 			new Entry(GenerationStep.Decoration.UNDERGROUND_ORES, ORE_GRANITE),
@@ -197,8 +256,13 @@ public final class ModPlacedFeatures {
 			new Entry(GenerationStep.Decoration.UNDERGROUND_ORES, ORE_DIAMOND_BURIED),
 			new Entry(GenerationStep.Decoration.UNDERGROUND_ORES, ORE_EMERALD),
 			new Entry(GenerationStep.Decoration.UNDERGROUND_ORES, ORE_QUARTZ),
+			new Entry(GenerationStep.Decoration.UNDERGROUND_ORES, NW_BLACKSTONE_BLOBS),
+			new Entry(GenerationStep.Decoration.UNDERGROUND_ORES, NW_BASALT_BLOBS),
+			new Entry(GenerationStep.Decoration.UNDERGROUND_ORES, NW_ORE_YIN_JADE_PEAKS),
+			new Entry(GenerationStep.Decoration.UNDERGROUND_ORES, NW_ORE_YIN_JADE),
 			new Entry(GenerationStep.Decoration.FLUID_SPRINGS, SPRING_WATER),
 			new Entry(GenerationStep.Decoration.FLUID_SPRINGS, SPRING_LAVA),
+			new Entry(GenerationStep.Decoration.FLUID_SPRINGS, NW_SPRING_WATER),
 			new Entry(GenerationStep.Decoration.VEGETAL_DECORATION, SPIRIT_FOREST_TREES),
 			new Entry(GenerationStep.Decoration.VEGETAL_DECORATION, BAMBOO_GROVE),
 			new Entry(GenerationStep.Decoration.VEGETAL_DECORATION, PEACH_BLOSSOM_TREES),
@@ -209,7 +273,16 @@ public final class ModPlacedFeatures {
 			new Entry(GenerationStep.Decoration.VEGETAL_DECORATION, PATCH_GRASS),
 			new Entry(GenerationStep.Decoration.VEGETAL_DECORATION, PATCH_SUGAR_CANE),
 			new Entry(GenerationStep.Decoration.VEGETAL_DECORATION, PATCH_PUMPKIN),
-			new Entry(GenerationStep.Decoration.VEGETAL_DECORATION, PATCH_BERRY_BUSH));
+			new Entry(GenerationStep.Decoration.VEGETAL_DECORATION, PATCH_BERRY_BUSH),
+			new Entry(GenerationStep.Decoration.VEGETAL_DECORATION, NW_DEAD_TREE),
+			new Entry(GenerationStep.Decoration.VEGETAL_DECORATION, NW_DEAD_TREE_RARE),
+			new Entry(GenerationStep.Decoration.VEGETAL_DECORATION, NW_SOUL_FIRE),
+			new Entry(GenerationStep.Decoration.VEGETAL_DECORATION, NW_SPIDER_LILIES),
+			new Entry(GenerationStep.Decoration.VEGETAL_DECORATION, NW_SPIDER_LILIES_SPARSE),
+			new Entry(GenerationStep.Decoration.VEGETAL_DECORATION, NW_CRIMSON_ROOTS),
+			new Entry(GenerationStep.Decoration.VEGETAL_DECORATION, NW_OTHER_SHORE_FLOWER_FIELDS),
+			new Entry(GenerationStep.Decoration.VEGETAL_DECORATION, NW_OTHER_SHORE_FLOWER),
+			new Entry(GenerationStep.Decoration.VEGETAL_DECORATION, NW_NETHERWORLD_LOTUS));
 
 	/** Resources every Upper Realm biome provides, so an ascended cultivator never has to go back down for basics. */
 	public static final Set<ResourceKey<PlacedFeature>> COMMON = Set.of(
@@ -337,6 +410,38 @@ public final class ModPlacedFeatures {
 				InSquarePlacement.spread(), HeightRangePlacement.triangle(VerticalAnchor.aboveBottom(-80), VerticalAnchor.aboveBottom(80)),
 				BiomeFilter.biome()));
 		register(context, QI_VEIN_UPPER_REALM, configured.getOrThrow(ModConfiguredFeatures.QI_VEIN), ore(QI_VEIN_TRIES_UPPER_REALM, ISLAND_MIN_Y, ORE_MAX_Y));
+
+		// The Netherworld: one land under an open dark sky, so its surface features stand on the plain heightmap.
+		register(context, NW_LAKE_SPRINGS, configured.getOrThrow(ModConfiguredFeatures.NW_LAKE), onSurface(CountPlacement.of(NW_LAKES_SPRINGS)));
+		register(context, NW_LAKE_RARE, configured.getOrThrow(ModConfiguredFeatures.NW_LAKE), onSurface(RarityFilter.onAverageOnceEvery(NW_LAKE_RARE_CHUNKS)));
+		register(context, NW_SPRING_WATER, configured.getOrThrow(ModConfiguredFeatures.NW_SPRING_WATER), ore(NW_SPRINGS, 30, 210));
+		register(context, NW_SOUL_FIRE, configured.getOrThrow(ModConfiguredFeatures.NW_SOUL_FIRE), onSurface(RarityFilter.onAverageOnceEvery(NW_SOUL_FIRE_CHUNKS)));
+		// Once a chunk, wherever a column picked in it is the Yellow Springs (the pool itself fills only the Springs' columns).
+		register(context, NW_SPRINGS_POOL, configured.getOrThrow(ModConfiguredFeatures.NW_SPRINGS_POOL),
+				List.of(CountPlacement.of(1), InSquarePlacement.spread(), BiomeFilter.biome()));
+		register(context, NW_BONE_PILE, configured.getOrThrow(ModConfiguredFeatures.NW_BONE_PILE), onSurface(CountPlacement.of(2)));
+		register(context, NW_DEAD_TREE, configured.getOrThrow(ModConfiguredFeatures.NW_DEAD_TREE), onSurface(RarityFilter.onAverageOnceEvery(2)));
+		register(context, NW_METHOD_STELE, configured.getOrThrow(ModConfiguredFeatures.NW_METHOD_STELE),
+				onSurface(RarityFilter.onAverageOnceEvery(NW_STELE_CHUNKS)));
+		register(context, NW_DEAD_TREE_RARE, configured.getOrThrow(ModConfiguredFeatures.NW_DEAD_TREE), onSurface(RarityFilter.onAverageOnceEvery(10)));
+		register(context, NW_SPIDER_LILIES, configured.getOrThrow(ModConfiguredFeatures.NW_SPIDER_LILIES), onSurface(CountPlacement.of(4)));
+		register(context, NW_SPIDER_LILIES_SPARSE, configured.getOrThrow(ModConfiguredFeatures.NW_SPIDER_LILIES), onSurface(RarityFilter.onAverageOnceEvery(3)));
+		register(context, NW_CRIMSON_ROOTS, configured.getOrThrow(ModConfiguredFeatures.NW_CRIMSON_ROOTS), onSurface(CountPlacement.of(2)));
+		register(context, NW_BLACKSTONE_BLOBS, configured.getOrThrow(ModConfiguredFeatures.NW_BLACKSTONE_BLOBS), ore(10, 40, 230));
+		register(context, NW_BASALT_BLOBS, configured.getOrThrow(ModConfiguredFeatures.NW_BASALT_BLOBS), ore(8, 40, 230));
+		register(context, NW_OTHER_SHORE_FLOWER_FIELDS, configured.getOrThrow(ModConfiguredFeatures.OTHER_SHORE_FLOWER), fruit(OTHER_SHORE_FLOWER_CHUNKS_FIELDS));
+		register(context, NW_OTHER_SHORE_FLOWER, configured.getOrThrow(ModConfiguredFeatures.OTHER_SHORE_FLOWER), fruit(OTHER_SHORE_FLOWER_CHUNKS_NETHERWORLD));
+		register(context, OTHER_SHORE_FLOWER_NETHER, configured.getOrThrow(ModConfiguredFeatures.OTHER_SHORE_FLOWER), fruit(OTHER_SHORE_FLOWER_CHUNKS_NETHER));
+		register(context, NW_NETHERWORLD_LOTUS, configured.getOrThrow(ModConfiguredFeatures.NETHERWORLD_LOTUS), fruit(NETHERWORLD_LOTUS_CHUNKS_NETHERWORLD));
+		register(context, NW_ORE_YIN_JADE_PEAKS, configured.getOrThrow(ModConfiguredFeatures.ORE_YIN_JADE), ore(YIN_JADE_VEINS_PEAKS, 40, 300));
+		register(context, NW_ORE_YIN_JADE, configured.getOrThrow(ModConfiguredFeatures.ORE_YIN_JADE), ore(YIN_JADE_VEINS_NETHERWORLD, 40, 230));
+		register(context, ORE_YIN_JADE_NETHER, configured.getOrThrow(ModConfiguredFeatures.ORE_YIN_JADE_NETHER),
+				prepend(RarityFilter.onAverageOnceEvery(YIN_JADE_CHUNKS_NETHER), ore(1, 10, 110)));
+	}
+
+	/** On the top of the land, by the heightmap (the Netherworld has one layer of land, not the Upper Realm's tiers). */
+	private static List<PlacementModifier> onSurface(PlacementModifier count) {
+		return List.of(count, InSquarePlacement.spread(), PlacementUtils.HEIGHTMAP, BiomeFilter.biome());
 	}
 
 	private static List<PlacementModifier> fruit(int chunks) {

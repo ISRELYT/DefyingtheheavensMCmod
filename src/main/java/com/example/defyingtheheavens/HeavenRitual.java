@@ -79,6 +79,7 @@ public final class HeavenRitual {
 
 	/** Why {@code player} can't begin a ritual now (a message key), or null if they can. */
 	static String refusal(ServerPlayer player, PlayerCultivation c) {
+		if (ModDimensions.isUnseenByHeaven(player.level().dimension())) return ModLang.MSG_HEAVENS_BLIND;
 		if (c.isMortal() || !c.needsHeavensLeave()) return ModLang.MSG_RITUAL_NOT_NOW;
 		if (c.getRitualFailedDay() >= today(player.server)) return ModLang.MSG_RITUAL_DAWN;
 		if (isActive(player.getUUID()) || TribulationManager.isActive(player.getUUID()) || SoulProjection.isActive(player.getUUID())) {

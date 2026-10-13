@@ -1,5 +1,6 @@
 package com.example.defyingtheheavens;
 
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -36,6 +37,10 @@ public final class CultivationManager {
 
 	/** Breakthrough button: no longer an instant rank-up, it starts the Heavenly Tribulation. */
 	public static void tryBreakthrough(ServerPlayer player) {
+		if (Incorporeal.isRuledGhost(player)) { // the dead break through nothing
+			player.displayClientMessage(Component.translatable(ModLang.MSG_GHOST_CANNOT), true);
+			return;
+		}
 		TribulationManager.start(player);
 	}
 

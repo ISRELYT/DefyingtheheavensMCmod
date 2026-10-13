@@ -332,11 +332,19 @@ public class SectStructure extends Structure {
 		return false;
 	}
 
-	/** Upper Realm biomes are the mod's own (the Spatial Gap has no surface for a sect). */
+	/**
+	 * An Upper Realm biome (tagged {@link ModTags#IS_UPPER_REALM}): the sect is laid out the Upper Realm's way, on an island. The
+	 * Netherworld's biomes are the mod's too, but no sect stands there (its biomes have no has_structure/sect tag).
+	 */
 	private static boolean isUpperRealm(GenerationContext context, BlockPos pos) {
 		Holder<Biome> biome = context.biomeSource().getNoiseBiome(QuartPos.fromBlock(pos.getX()), QuartPos.fromBlock(pos.getY()),
 				QuartPos.fromBlock(pos.getZ()), context.randomState().sampler());
-		return biome.unwrapKey().map(key -> key.location().getNamespace().equals(DefyingTheHeavens.MOD_ID)).orElse(false);
+		return isUpperRealmBiome(biome);
+	}
+
+	/** Whether a sect in this biome is laid out the Upper Realm's way. */
+	public static boolean isUpperRealmBiome(Holder<Biome> biome) {
+		return biome.is(ModTags.IS_UPPER_REALM);
 	}
 
 	/**

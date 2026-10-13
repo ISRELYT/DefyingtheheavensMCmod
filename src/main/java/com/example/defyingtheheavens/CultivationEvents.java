@@ -12,6 +12,7 @@ import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
+import net.fabricmc.fabric.api.networking.v1.EntityTrackingEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -22,6 +23,7 @@ import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 
 public final class CultivationEvents {
@@ -31,6 +33,14 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(CultivationStats::tickHunger);
 		ServerTickEvents.END_SERVER_TICK.register(QiManager::tick);
 		ServerTickEvents.END_SERVER_TICK.register(SpatialTrialHandler::tick);
+		ServerTickEvents.END_SERVER_TICK.register(SoulRiver::tick);
+		ServerTickEvents.END_SERVER_TICK.register(NetherworldManager::tick);
+		ServerTickEvents.END_SERVER_TICK.register(GhostSystem::tick);
+		ServerTickEvents.END_SERVER_TICK.register(GhostGate::keepOfficials);
+		// Whoever starts seeing a ghost is told it is one, before they could draw it as a living player.
+		EntityTrackingEvents.START_TRACKING.register((tracked, viewer) -> {
+			if (tracked instanceof ServerPlayer ghost && GhostSystem.isGhost(ghost)) ModPackets.sendGhost(viewer, ghost, true);
+		});
 		ServerTickEvents.END_SERVER_TICK.register(SpatialStorms::tick);
 		ServerTickEvents.END_SERVER_TICK.register(VoidFallHandler::tick);
 		ServerTickEvents.END_SERVER_TICK.register(RealmSuppressionHandler::tick);
@@ -52,9 +62,11 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(NpcLife::tick);
 		ServerTickEvents.END_SERVER_TICK.register(HeavenRitual::tick);
 		InnerRealm.registerEvents();
+		GhostGate.registerProtection();
 		registerSoulInteractions();
 		Tempering.register();
 		RealmSuppressionHandler.register();
+		NetherworldManager.register();
 
 		// Barrier blocks left in a chunk that was unloaded when their formation came down are swept as it loads.
 		ServerChunkEvents.CHUNK_LOAD.register(Formations::onChunkLoad);
@@ -64,6 +76,10 @@ public final class CultivationEvents {
 		ServerEntityEvents.ENTITY_UNLOAD.register((entity, level) -> CultivatorNpc.onUnload(entity));
 
 		ServerLifecycleEvents.SERVER_STARTED.register(SpatialRiftBlock::ensureOverworldRift);
+		// The Ghost Gate at the Netherworld's 0, 0 (built the first time; its fixtures put back every time).
+		ServerLifecycleEvents.SERVER_STARTED.register(GhostGate::ensure);
+		// The Gate of the Yellow Springs at the Nether's 0, 0, up the Soul River (placed the first time, back if removed).
+		ServerLifecycleEvents.SERVER_STARTED.register(NetherRift::ensure);
 		// First: every soul goes home, no penalty, while its player is still in the world to be saved there.
 		ServerLifecycleEvents.SERVER_STOPPING.register(SoulProjection::returnAll);
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> TribulationManager.clear());
@@ -87,12 +103,16 @@ public final class CultivationEvents {
 			NpcLedger.clear();
 			NpcLife.clear();
 			HeavenRitual.clear();
+			NetherworldManager.clear();
+			GhostSystem.clear();
+			Spells.clear();
 		});
 
 		// A formation's shell runs through the ground too: those who couldn't break the barrier can't dig under it either.
 		// Breaking anything on a sect's grounds is trespass (theft, in the treasury), and its disciples answer it.
 		PlayerBlockBreakEvents.BEFORE.register((world, player, pos, state, blockEntity) -> {
 			if (!(world instanceof ServerLevel level) || !(player instanceof ServerPlayer sp)) return true;
+			if (Incorporeal.is(sp)) return false; // the dead and wandering souls break nothing
 			if (!(state.getBlock() instanceof SectBarrierBlock) && Formations.protectsGround(sp, pos)) return false;
 			SectManager.onTrespass(level, sp, pos);
 			// The treasury's seal holds while its elders keep it: nothing in it breaks (a chest broken would spill all it holds).
@@ -136,6 +156,10 @@ public final class CultivationEvents {
 			RealmSuppressionHandler.update(player);
 			if (fled) player.setHealth(Math.min(player.getHealth(), player.getMaxHealth())); // the lower stage's smaller body
 			Formations.syncSoon(); // the barriers near them, at once
+			GhostSystem.onJoin(player); // a ghost logs back in a ghost
+			Spells.sync(player); // ghost methods, spells, the spell wheel
+			NetherworldManager.refresh(player); // ghostly qi, yin corruption
+			ModRecipeBook.unlock(player); // every recipe of the mod in the recipe book (its own tab)
 		});
 
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
@@ -153,6 +177,10 @@ public final class CultivationEvents {
 			MeditationManager.forget(handler.getPlayer().getUUID());
 			TribulationManager.forget(handler.getPlayer().getUUID());
 			SpatialTrialHandler.forget(handler.getPlayer().getUUID());
+			SoulRiver.forget(handler.getPlayer().getUUID());
+			NetherworldManager.forget(handler.getPlayer().getUUID());
+			GhostSystem.forget(handler.getPlayer().getUUID());
+			Spells.forget(handler.getPlayer().getUUID());
 			PortalRestrictionHandler.forget(handler.getPlayer().getUUID());
 			QiFlight.forget(handler.getPlayer().getUUID());
 			Tempering.forget(handler.getPlayer().getUUID());
@@ -169,12 +197,27 @@ public final class CultivationEvents {
 			RealmSuppressionHandler.update(newPlayer);
 			// Leaving the End (alive) copies health onto the new entity before our max-health bonus exists, capping it at 20.
 			newPlayer.setHealth(alive ? oldPlayer.getHealth() : newPlayer.getMaxHealth());
+			// A death's respawn wakes a ghost at the Ghost Gate; the Wheel's wakes the living (GhostSystem).
+			GhostSystem.onRespawn(newPlayer, alive);
+			NetherworldManager.refresh(newPlayer);
 		});
 
+		// Ghost Fire on a cultivator's hands (Spells): a blow of theirs sets what it strikes burning.
+		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
+			if (source.getEntity() instanceof ServerPlayer attacker && source.getDirectEntity() == attacker
+					&& source.is(net.minecraft.world.damagesource.DamageTypes.PLAYER_ATTACK) && entity != attacker) {
+				Spells.onMeleeHit(attacker, entity);
+			}
+			return true;
+		});
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
 			if (!(entity instanceof ServerPlayer sp)) return true;
+			// Just after a Soul Dash, or on Yin Wind Steps, a fall does no harm (Spells#fallIsSafe).
+			if (source.is(DamageTypeTags.IS_FALL) && Spells.fallIsSafe(sp)) return false;
 			// A projected soul is harmed only by cultivators who see it, by their own hand (see SoulProjection#allowSoulDamage).
 			if (SoulProjection.isSoul(sp)) return SoulProjection.allowSoulDamage(sp, source);
+			// A ghost, only by what reaches the dead (see GhostSystem#allowDamage).
+			if (GhostSystem.isGhost(sp)) return GhostSystem.allowDamage(sp, source);
 			// The drop back into the Overworld sky after descension doesn't kill on landing.
 			if (source.is(DamageTypeTags.IS_FALL) && SpatialTrialHandler.consumeFallProtection(sp)) {
 				return false;
@@ -193,6 +236,8 @@ public final class CultivationEvents {
 		// Before a death goes ahead: a soul dies where its body sat and loses the nascent soul; a possessed body's death is its
 		// possessor's doing.
 		ServerLivingEntityEvents.ALLOW_DEATH.register((entity, source, amount) -> {
+			// A ghost doesn't die: it disperses and reforms at the Gate (GhostSystem). No death screen, none of death's bookkeeping.
+			if (entity instanceof ServerPlayer ghost && !GhostSystem.allowDeath(ghost)) return false;
 			// Nobody dies in a spar by the other's hand: the blow stops at the line, and the spar ends (SparSystem).
 			if (!SparSystem.allowDeath(entity, source)) return false;
 			if (entity instanceof ServerPlayer sp) SoulProjection.onSoulDying(sp);
@@ -204,6 +249,8 @@ public final class CultivationEvents {
 			if (entity instanceof ServerPlayer sp) {
 				TribulationManager.onDeath(sp); // dying mid-tribulation fails the breakthrough
 				SpatialTrialHandler.onDeath(sp); // dying in the Spatial Gap ends the trial
+				SoulRiver.onDeath(sp); // and on the Soul River, the journey
+				GhostSystem.onDeath(sp); // bound for the Netherworld (the gamerule on): the respawn will be the Ghost Gate's
 				SoulProjection.onDeath(sp); // nothing of a soul's journey outlives a death
 				SparSystem.abandon(sp); // killed mid-spar by something else: the spar is forfeit
 				RealmSuppressSystem.refreshNow(); // a fallen suppressor's pressure lifts at once
@@ -213,23 +260,37 @@ public final class CultivationEvents {
 
 	/**
 	 * A projected soul touches nothing: no blocks, no items, nothing it can use or hit. Its one act is to enter a being (right
-	 * click, see SoulProjection#tryPossess), and while it is in one, its blows are that body's. Registered for both sides: the
-	 * client's answer decides whether a packet is sent at all.
+	 * click, see SoulProjection#tryPossess), and while it is in one, its blows are that body's. A ghost (see GhostSystem) touches
+	 * nothing of the living world either, but uses the dead's own blocks (tagged ghost_usable: the Wheel and the like) and fights
+	 * with its own hands. Registered for both sides: the client's answer decides whether a packet is sent at all.
 	 */
 	private static void registerSoulInteractions() {
 		AttackBlockCallback.EVENT.register((player, world, hand, pos, direction) ->
-				SoulProjection.isSoul(player) ? InteractionResult.FAIL : InteractionResult.PASS);
-		UseBlockCallback.EVENT.register((player, world, hand, hit) ->
-				SoulProjection.isSoul(player) ? InteractionResult.FAIL : InteractionResult.PASS);
-		UseItemCallback.EVENT.register((player, world, hand) -> SoulProjection.isSoul(player)
+				Incorporeal.is(player) ? InteractionResult.FAIL : InteractionResult.PASS);
+		UseBlockCallback.EVENT.register((player, world, hand, hit) -> {
+			if (SoulProjection.isSoul(player)) return InteractionResult.FAIL;
+			if (!Incorporeal.isRuledGhost(player)) return InteractionResult.PASS;
+			return world.getBlockState(hit.getBlockPos()).is(ModTags.GHOST_USABLE) && hand == InteractionHand.MAIN_HAND
+					? InteractionResult.PASS : InteractionResult.FAIL;
+		});
+		UseItemCallback.EVENT.register((player, world, hand) -> Incorporeal.is(player)
 				? InteractionResultHolder.fail(player.getItemInHand(hand)) : InteractionResultHolder.pass(player.getItemInHand(hand)));
 		UseEntityCallback.EVENT.register((player, world, hand, entity, hit) -> {
+			// Nothing to ride or use; only the dead's own kind to talk with (TalkSystem keeps the talk to what the dead may do).
+			if (Incorporeal.isRuledGhost(player)) return entity instanceof GhostCultivatorNpc ? InteractionResult.PASS : InteractionResult.FAIL;
 			if (!SoulProjection.isSoul(player)) return InteractionResult.PASS;
 			if (hand != InteractionHand.MAIN_HAND || player.isPassenger()) return InteractionResult.FAIL;
 			if (world.isClientSide) return InteractionResult.SUCCESS; // the server decides
 			return player instanceof ServerPlayer sp ? SoulProjection.tryPossess(sp, entity) : InteractionResult.FAIL;
 		});
 		AttackEntityCallback.EVENT.register((player, world, hand, entity, hit) -> {
+			if (Incorporeal.isRuledGhost(player)) {
+				// Another ghost, or the dead's own kind, is struck as anyone would be; anything else is the ghost's own business
+				// (GhostSystem#attack).
+				if (entity instanceof Player target && GhostSystem.isGhost(target) || entity instanceof Ghostly) return InteractionResult.PASS;
+				if (world.isClientSide) return InteractionResult.SUCCESS; // sent on to the server
+				return player instanceof ServerPlayer sp && GhostSystem.attack(sp, entity) ? InteractionResult.PASS : InteractionResult.FAIL;
+			}
 			if (!SoulProjection.isSoul(player)) return InteractionResult.PASS;
 			if (!player.isPassenger()) return InteractionResult.FAIL;
 			if (world.isClientSide) return InteractionResult.SUCCESS; // sent on to the server, which strikes with the host

@@ -67,6 +67,17 @@ public class InscriptionBrushItem extends Item {
 		return InteractionResult.sidedSuccess(level.isClientSide);
 	}
 
+	/**
+	 * Painting a talisman at a crafting table (the Yang Fire Talisman) gives the brush back one use more worn, or nothing if that
+	 * was its last; a plain crafting remainder would hand back a fresh one.
+	 */
+	@Override
+	public ItemStack getRecipeRemainder(ItemStack stack) {
+		ItemStack worn = stack.copyWithCount(1);
+		worn.setDamageValue(worn.getDamageValue() + 1);
+		return worn.getDamageValue() >= worn.getMaxDamage() ? ItemStack.EMPTY : worn;
+	}
+
 	@Override
 	public void appendHoverText(ItemStack stack, Level level, List<Component> lines, TooltipFlag flag) {
 		lines.add(Component.translatable(ModLang.BRUSH_TOOLTIP).withStyle(ChatFormatting.GRAY));

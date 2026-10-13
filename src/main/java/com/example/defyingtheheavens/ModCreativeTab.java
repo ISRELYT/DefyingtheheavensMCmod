@@ -72,6 +72,15 @@ public final class ModCreativeTab {
 					ModBlocks.DEEPSLATE_SPIRIT_STONE_ORE, ModBlocks.RICH_SPIRIT_STONE_ORE, ModBlocks.QI_VEIN, ModBlocks.DEEPSLATE_QI_VEIN,
 					ModBlocks.BLUE_SPIRIT_LOG, ModBlocks.BLUE_SPIRIT_WOOD, ModBlocks.BLUE_SPIRIT_PLANKS, ModBlocks.WHITE_BLOSSOM_LEAVES,
 					ModBlocks.SPIRIT_PEACH_LEAVES);
+			// The Netherworld: talismans and the exorcist's sword, its herbs (a year old) and what they're grown from, Yin Jade, its
+			// pills at every grade, the slips
+			add(ModItems.YANG_FIRE_TALISMAN, ModItems.GHOST_QUELLING_TALISMAN, ModItems.PEACH_WOOD_SWORD, ModBlocks.RED_SPIDER_LILY);
+			for (Item herb : new Item[] {ModItems.OTHER_SHORE_FLOWER, ModItems.NETHERWORLD_LOTUS}) add(GinsengItem.create(herb, 1));
+			add(ModItems.OTHER_SHORE_FLOWER_SEEDS, ModItems.NETHERWORLD_LOTUS_SEEDS, ModItems.YIN_JADE, ModBlocks.YIN_JADE_ORE, ModBlocks.YIN_JADE_BLOCK);
+			for (Item pill : new Item[] {ModItems.YANG_PRESERVATION_PILL, ModItems.YIN_GATHERING_PILL}) {
+				for (PillGrade grade : PillGrade.values()) add(PillItem.create(pill, grade, 1));
+			}
+			for (GhostMethod method : GhostMethod.values()) add(GhostJadeSlipItem.of(method));
 			// Clothing: each path's colours, every grade, crown to boots
 			for (ClothingStyle style : ClothingStyle.values()) {
 				for (ClothingTier tier : ClothingTier.values()) {
@@ -79,7 +88,7 @@ public final class ModCreativeTab {
 				}
 			}
 			// Spawn eggs
-			add(ModItems.CULTIVATOR_SPAWN_EGG);
+			add(ModItems.CULTIVATOR_SPAWN_EGG, ModItems.GHOST_CULTIVATOR_SPAWN_EGG, ModItems.HUNGRY_GHOST_SPAWN_EGG);
 			// Anything of the mod's not named above.
 			for (Item item : BuiltInRegistries.ITEM) {
 				if (!listed.contains(item) && BuiltInRegistries.ITEM.getKey(item).getNamespace().equals(DefyingTheHeavens.MOD_ID)) add(item);

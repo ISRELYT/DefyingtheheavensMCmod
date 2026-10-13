@@ -412,14 +412,17 @@ public final class CultivatorGoals {
 					<= level.getMinBuildHeight() + 1;
 		}
 
-		/** To the rift at Overworld 0, 0 (from another lower realm it rises out of sight; NpcTravel carries it on). */
+		/**
+		 * To the rift at Overworld 0, 0, or from the Nether to its own rift at Nether 0, 0 (up the Soul River to the Netherworld);
+		 * from the End it rises out of sight, and NpcTravel carries it on to the Overworld's.
+		 */
 		private void ascend(ServerLevel level) {
-			if (level.dimension() != Level.OVERWORLD) {
+			if (level.dimension() != Level.OVERWORLD && level.dimension() != Level.NETHER) {
 				if (!npc.isQiFlying() && npc.canFlySustainably()) npc.setQiFlying(true);
 				if (npc.isQiFlying()) npc.flyToward(npc.position().add(0, 6, 0), 0.3);
 				return;
 			}
-			BlockPos rift = NpcTravel.riftPosition(level);
+			BlockPos rift = level.dimension() == Level.NETHER ? NetherRift.riftPosition(level) : NpcTravel.riftPosition(level);
 			if (rift == null) {
 				travel(level, new BlockPos(SpatialRiftBlock.RIFT_X, (int) npc.getY(), SpatialRiftBlock.RIFT_Z), 6);
 				return;
@@ -780,7 +783,7 @@ public final class CultivatorGoals {
 
 		@Override
 		public boolean canUse() {
-			return npc.getLifecycle() == CultivatorNpc.Lifecycle.ROGUE && npc.getTarget() == null && !npc.shouldFlee();
+			return npc.getLifecycle() == CultivatorNpc.Lifecycle.ROGUE && npc.getTarget() == null && !npc.shouldFlee() && !npc.keepsPost();
 		}
 
 		@Override

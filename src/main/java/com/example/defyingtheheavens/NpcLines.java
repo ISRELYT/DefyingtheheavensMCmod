@@ -29,8 +29,9 @@ public final class NpcLines {
 	private static final Map<String, List<List<String>>> SCRIPTS = new LinkedHashMap<>();
 	private static final Map<String, String> ENGLISH = new LinkedHashMap<>();
 
-	/** The voice {@code npc} speaks in: its path's, or a commoner's. */
+	/** The voice {@code npc} speaks in: its path's, or a commoner's; the Netherworld's dead speak as the dead. */
 	public static String voice(CultivatorNpc npc) {
+		if (npc.isGhost()) return "ghost";
 		return npc.isMortal() ? "commoner" : npc.getFaction().getId();
 	}
 
@@ -321,6 +322,62 @@ public final class NpcLines {
 		lines("ritual.denied.righteous", "Silence... I am not ready yet. Tomorrow, then.", "The heavens turn away. I must be more sincere.");
 		lines("ritual.denied.neutral", "Nothing. Tomorrow.", "Wasted offering.");
 		lines("ritual.denied.demonic", "Ignored?! Tomorrow they'll listen.", "Stingy heavens. Fine. Again at dawn.");
+
+		// --- The Netherworld's dead (GhostCultivatorNpc): melancholy, and a little strange ---
+		lines("pass.liked.ghost", "%s... you came back. Few ever do.", "Ah, %s. You still remember me?", "%s. Sit a while. Time is all we have here.");
+		lines("pass.disliked.ghost", "You again. The dead have long memories.", "Go on, %s. Walk past, as the living always do.",
+				"I counted your steps last time, %s. I'm counting again.");
+		lines("pass.awe.ghost", "Such a soul... even death bows to it.", "Senior. Even here, your light is heavy.", "Do not look at it. Do not look.");
+		lines("pass.junior.ghost", "So small. So newly dead.", "Little one, the cold gets easier. Then it gets worse.", "Do you know your name yet? Hold on to it.");
+		lines("pass.mortal.ghost", "A mortal soul... how did you come so far?", "You smell of rice and rain. I miss rain.", "Stay close to the lanterns, little mortal.");
+		lines("pass.peer.ghost", "Another wanderer of the Yellow Springs.", "The lanterns burn blue tonight. They always do.",
+				"Have you seen my body? I left it somewhere.", "Do you hear it? The Wheel, turning, far away.");
+		lines("pass.stone.ghost", "A %s... it still holds the warmth of the sun.", "What use is a %s to the dead? ...May I hold it?");
+		lines("pass.fruit.ghost", "That fruit is alive. I can hear it breathing.", "Put it away. Hunger never dies down here.");
+		lines("pass.living.ghost", "You're warm. You're so warm.", "Your heart is still beating. Go home before it stops.",
+				"The yin is in you already. I can see it on your breath.", "The living should not linger by the Springs.");
+		lines("spar.begin.ghost", "%s. Shall we see what death left us?", "Fight me, %s. I want to remember how.");
+		lines("spar.win.ghost", "You flicker, %s. Hold yourself together.", "Again tomorrow, %s. We have nothing but tomorrows.");
+		lines("spar.lose.ghost", "I yield, %s. I came apart a little.", "Well struck, %s. It almost hurt.");
+		lines("spar.watch.ghost", "%1$s and %2$s are fighting. How lively.", "Look at them, %1$s and %2$s. Like the old days.");
+		lines("grief.ghost", "%s has scattered!", "%s... gone to cyan sparks.", "Who scattered %s? Who?");
+		lines("mourn.ghost", "%s will gather again. Most do.", "Come back together, %s.", "The Wheel will find you, %s.");
+		lines("alarm.attack.ghost", "Something hunts us! Gather your yin!", "They come for the dead!");
+		lines("breakthrough.ghost", "I... grew stronger. Even dead, I grew stronger!", "The ghostly qi answers me!");
+		lines("congratulate.ghost", "%s has grown. Death is not the end of the road.", "Well done, %s. Climb on.");
+		talk("chat.road.ghost", "Do you remember the sun, %1$s?", "Warm. Yellow. That's all I have left of it.");
+		talk("chat.road.ghost", "How long have you been dead, %1$s?", "I stopped counting at the hundredth Wheel.", "Lucky. I never started.");
+		talk("chat.road.ghost", "I dreamed I was alive again.", "Ghosts don't dream, %1$s.", "Then what was it?");
+		talk("chat.road.ghost", "Have you drunk Meng Po's soup?", "Not yet. I'm not ready to forget.", "Neither am I.");
+		talk("chat.road.ghost", "The Hungry Ghosts are out in the Bone Wastes again.", "Then we stay on the road.");
+		talk("chat.gossip.ghost", "Listen, %1$s. %2$s", "Even the dead hear things, it seems.");
+		talk("chat.gossip.ghost", "They say %2$s", "I'll go and look. What else is there to do?");
+		// The Gate's keepers (GhostCultivatorNpc): to the dead as they come, to the living, and Meng Po's call.
+		lines("warden.greet", "Another one. Welcome to the Netherworld, %s.", "%s. Your thread was cut. Walk on to the Wheel when you're ready.",
+				"Name: %s. Dead. Pass.");
+		lines("warden.warn", "You, %s! You still breathe. The yin is filling you. Go back.", "Living one. Your warmth is going out. Leave.",
+				"%s. The living do not belong at this gate.");
+		lines("meng_po.call", "Come, %s. A bowl of soup for the road.", "Drink, child. Forgetting is a kindness.",
+				"%s... the soup is warm. The past is heavy.");
+		// How each of the dead died (GhostCultivatorNpc#deathKey), told when asked about themselves.
+		lines("death.tribulation", "The ninth bolt of my tribulation. I saw it coming, and I still didn't move.");
+		lines("death.deviation", "My qi turned on me halfway through a breakthrough. My meridians burned from the inside.");
+		lines("death.sect_war", "A sect war. Ours lost. I held the gate until there was nothing left of me to hold it.");
+		lines("death.demonic_palm", "A demonic cultivator's palm. One touch. My heart simply stopped.");
+		lines("death.old_age", "Old age, with my cultivation unfinished. Two hundred years, and the bottleneck never gave way.");
+		lines("death.poison", "A pill I brewed myself. I got the fire wrong.");
+		lines("death.betrayal", "My own sworn brother, for a herb a thousand years old. I hope it was worth it to him.");
+		lines("death.beast", "A spirit beast in the deep mountains. I thought I could take its core.");
+		lines("death.duel", "A duel over a slight I can't even remember now.");
+		lines("death.breakthrough", "I forced a breakthrough I wasn't ready for. The heavens weren't patient with me.");
+		lines("death.starvation", "Starved, in seclusion. I sealed the cave too well, and forgot to come out.");
+		lines("death.plague", "A plague in a mortal village I was protecting. Even cultivators can sicken.");
+		lines("death.drowning", "I fell from my sword over the sea. Qi Refining. I should have learned to swim.");
+		lines("death.assassin", "A knife in the dark, during meditation. I never saw a face.");
+		lines("death.ascension", "The Spatial Gap, on my way to ascend. Its pressure crushed me two breaths from the other side.");
+		lines("death.ox_head", "Died? I keep this gate. I have kept it longer than your world has had a name.");
+		lines("death.horse_face", "My death is older than your ancestors' ancestors. Ask me something else.");
+		lines("death.meng_po", "I forgot, child. I drank my own soup long ago.");
 	}
 
 	private NpcLines() {}

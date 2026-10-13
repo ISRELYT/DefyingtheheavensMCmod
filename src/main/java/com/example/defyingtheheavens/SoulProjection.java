@@ -216,11 +216,13 @@ public final class SoulProjection {
 
 	/**
 	 * Whether {@code viewer}'s client is sent the soul at all: Heavenly Beings and above always (they may strike at it, and see it
-	 * under Qi Sense), Nascent Soul cultivators only with Qi Sense open, spectators always, nobody else.
+	 * under Qi Sense), Nascent Soul cultivators only with Qi Sense open, spectators always, and outside the Netherworld anyone with
+	 * the Ghost Eye open (Netherworld Breathing Art); nobody else.
 	 */
 	public static boolean perceives(ServerPlayer viewer) {
 		if (viewer.isSpectator()) return true;
 		PlayerCultivation c = CultivationManager.get(viewer);
+		if (c.isAbilityActive(Ability.GHOST_EYE) && !ModDimensions.isNetherworld(viewer.level().dimension())) return true;
 		if (c.isMortal()) return false;
 		Realm realm = c.getEffectiveRealm();
 		if (realm.ordinal() > Realm.NASCENT_SOUL.ordinal()) return true;
@@ -274,12 +276,20 @@ public final class SoulProjection {
 	public static void begin(ServerPlayer player) {
 		PlayerCultivation c = CultivationManager.get(player);
 		if (!Ability.SOUL_PROJECTION.isUnlocked(c) || !player.isAlive() || player.isSpectator()) return;
+		if (Incorporeal.isRuledGhost(player)) { // a ghost is already all soul
+			player.displayClientMessage(Component.translatable(ModLang.MSG_GHOST_CANNOT), true);
+			return;
+		}
 		if (TribulationManager.isActive(player.getUUID())) {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_TRIB_BUSY), true);
 			return;
 		}
 		ResourceKey<Level> dimension = player.level().dimension();
-		if (ModDimensions.isSpatialGap(dimension) || ModDimensions.isInnerRealm(dimension) || SpatialTrialHandler.isInTrial(player.getUUID())) {
+		if (ModDimensions.isUnseenByHeaven(dimension)) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_HEAVENS_BLIND), true);
+			return;
+		}
+		if (ModDimensions.isPassage(dimension) || ModDimensions.isInnerRealm(dimension) || SpatialTrialHandler.isInTrial(player.getUUID())) {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_SOUL_NOT_HERE), true);
 			return;
 		}

@@ -2,6 +2,7 @@ package com.example.defyingtheheavens;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -20,13 +21,26 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
- * A floating tear in reality. Walking into it pulls any player, of any cultivation, into the Spatial Gap to begin
- * ascension, out from under a running tribulation too. Drawn entirely by the client's block entity renderer (a jagged
- * black shard with a cyan glow).
+ * A floating tear in reality. Where it leads depends on the realm it stands in ({@link #leads}): in the Overworld it pulls any
+ * player, of any cultivation, into the Spatial Gap to begin ascension to the Upper Realm, out from under a running tribulation
+ * too; in the Nether (the Gate of the Yellow Springs) it leads up the Soul River to the Netherworld; on the Ghost Gate's plaza
+ * in the Netherworld it is the way down. Drawn entirely by the client's block entity renderer (a jagged black shard with a cyan
+ * glow; the Yellow Springs' kind gold and cyan).
  */
 public class SpatialRiftBlock extends BaseEntityBlock {
 	public static final int RIFT_X = 0;
 	public static final int RIFT_Z = 0;
+
+	/** Where a rift leads one who walks into it, by the realm it stands in. */
+	public enum Leads { UPPER_REALM, NETHERWORLD, DOWN_TO_NETHER, NOWHERE }
+
+	/** The Overworld's rift leads to the Upper Realm; the Nether's to the Netherworld; the Netherworld's is the way down. */
+	public static Leads leads(ResourceKey<Level> dimension) {
+		if (dimension == Level.OVERWORLD) return Leads.UPPER_REALM;
+		if (dimension == Level.NETHER) return Leads.NETHERWORLD;
+		if (ModDimensions.isNetherworld(dimension)) return Leads.DOWN_TO_NETHER;
+		return Leads.NOWHERE;
+	}
 
 	public SpatialRiftBlock(Properties properties) {
 		super(properties);
@@ -52,14 +66,28 @@ public class SpatialRiftBlock extends BaseEntityBlock {
 	public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
 		if (level.isClientSide() || !(entity instanceof ServerPlayer player)) return;
 		try {
-			SpatialTrialHandler.beginAscension(player);
+			switch (leads(level.dimension())) {
+				case UPPER_REALM -> SpatialTrialHandler.beginAscension(player);
+				case NETHERWORLD -> SoulRiver.beginAscent(player);
+				case DOWN_TO_NETHER -> SoulRiver.beginDescent(player, true);
+				case NOWHERE -> { }
+			}
 		} catch (Exception e) {
-			DefyingTheHeavens.LOGGER.error("Spatial rift failed to pull {} into the Spatial Gap", player.getScoreboardName(), e);
+			DefyingTheHeavens.LOGGER.error("Rift failed to carry {} on from {}", player.getScoreboardName(), level.dimension().location(), e);
 		}
 	}
 
 	@Override
 	public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+		if (state.is(ModBlocks.YELLOW_SPRINGS_RIFT)) {
+			// Souls drifting up out of the gold-rimmed tear, and the odd cold flame.
+			double x = pos.getX() + 0.5 + (random.nextDouble() - 0.5) * 0.8;
+			double y = pos.getY() - 0.2 + random.nextDouble() * 2.4;
+			double z = pos.getZ() + 0.5 + (random.nextDouble() - 0.5) * 0.8;
+			level.addParticle(ParticleTypes.SOUL, x, y, z, 0, 0.03, 0);
+			if (random.nextInt(3) == 0) level.addParticle(ParticleTypes.SOUL_FIRE_FLAME, x, y, z, 0, 0.02, 0);
+			return;
+		}
 		for (int i = 0; i < 2; i++) {
 			double x = pos.getX() + 0.5 + (random.nextDouble() - 0.5) * 0.7;
 			double y = pos.getY() - 0.2 + random.nextDouble() * 2.4;

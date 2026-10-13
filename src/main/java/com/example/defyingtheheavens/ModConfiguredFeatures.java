@@ -2,6 +2,14 @@ package com.example.defyingtheheavens;
 
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderGetter;
+import net.minecraft.core.HolderSet;
+import net.minecraft.core.Vec3i;
+import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
+import net.minecraft.world.level.levelgen.feature.configurations.BlockPileConfiguration;
+import net.minecraft.world.level.levelgen.feature.configurations.RandomPatchConfiguration;
+import net.minecraft.world.level.levelgen.feature.configurations.SimpleBlockConfiguration;
+import net.minecraft.world.level.levelgen.feature.configurations.SpringConfiguration;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstapContext;
 import net.minecraft.data.worldgen.features.FeatureUtils;
@@ -77,6 +85,23 @@ public final class ModConfiguredFeatures {
 	public static final ResourceKey<ConfiguredFeature<?, ?>> SPIRIT_DEW_GRASS = key("spirit_dew_grass");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> BLUE_SPIRIT_TREE = key("blue_spirit_tree");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> QI_VEIN = key("qi_vein");
+
+	// The Netherworld (see ModPlacedFeatures#NW_*).
+	public static final ResourceKey<ConfiguredFeature<?, ?>> NW_LAKE = key("netherworld/lake");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> NW_SPRING_WATER = key("netherworld/spring_water");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> NW_SOUL_FIRE = key("netherworld/soul_fire");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> NW_BONE_PILE = key("netherworld/bone_pile");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> NW_DEAD_TREE = key("netherworld/dead_tree");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> NW_SPIDER_LILIES = key("netherworld/spider_lilies");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> NW_CRIMSON_ROOTS = key("netherworld/crimson_roots");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> NW_BLACKSTONE_BLOBS = key("netherworld/blackstone_blobs");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> NW_BASALT_BLOBS = key("netherworld/basalt_blobs");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> NW_SPRINGS_POOL = key("netherworld/springs_pool");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> NW_METHOD_STELE = key("netherworld/method_stele");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> OTHER_SHORE_FLOWER = key("other_shore_flower");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> NETHERWORLD_LOTUS = key("netherworld_lotus");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_YIN_JADE = key("netherworld/ore_yin_jade");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_YIN_JADE_NETHER = key("ore_yin_jade_nether");
 
 	private static ResourceKey<ConfiguredFeature<?, ?>> key(String name) {
 		return ResourceKey.create(Registries.CONFIGURED_FEATURE, DefyingTheHeavens.id(name));
@@ -167,6 +192,52 @@ public final class ModConfiguredFeatures {
 				new TwoLayersFeatureSize(2, 0, 2))
 				.ignoreVines()
 				.build());
+
+		netherworld(context);
+	}
+
+	/**
+	 * The Netherworld's features. Its stone is deepslate under soul soil, soul sand, mud, blackstone and basalt (see
+	 * ModNoiseSettings#netherworldSurface): springs break out of all of them, so the Yellow Springs spill over the plateaus'
+	 * edges as waterfalls into the dark.
+	 */
+	private static void netherworld(BootstapContext<ConfiguredFeature<?, ?>> context) {
+		@SuppressWarnings("deprecation")
+		Feature<LakeFeature.Configuration> lake = Feature.LAKE;
+		FeatureUtils.register(context, NW_LAKE, lake, new LakeFeature.Configuration(
+				BlockStateProvider.simple(Blocks.WATER), BlockStateProvider.simple(Blocks.MUD)));
+		FeatureUtils.register(context, NW_SPRING_WATER, Feature.SPRING, new SpringConfiguration(Fluids.WATER.defaultFluidState(), true, 4, 1,
+				HolderSet.direct(Block::builtInRegistryHolder, Blocks.DEEPSLATE, Blocks.BLACKSTONE, Blocks.BASALT, Blocks.SOUL_SOIL,
+						Blocks.SOUL_SAND, Blocks.MUD)));
+		// Small patches of soul fire on soul sand and soul soil, burning for ever (it never spreads or goes out).
+		FeatureUtils.register(context, NW_SOUL_FIRE, Feature.RANDOM_PATCH, new RandomPatchConfiguration(10, 3, 1,
+				PlacementUtils.filtered(Feature.SIMPLE_BLOCK, new SimpleBlockConfiguration(BlockStateProvider.simple(Blocks.SOUL_FIRE)),
+						BlockPredicate.allOf(BlockPredicate.ONLY_IN_AIR_PREDICATE,
+								BlockPredicate.matchesBlocks(new Vec3i(0, -1, 0), List.of(Blocks.SOUL_SAND, Blocks.SOUL_SOIL))))));
+		FeatureUtils.register(context, NW_SPRINGS_POOL, ModFeatures.YELLOW_SPRINGS_POOL);
+		FeatureUtils.register(context, NW_BONE_PILE, Feature.BLOCK_PILE, new BlockPileConfiguration(BlockStateProvider.simple(Blocks.BONE_BLOCK)));
+		FeatureUtils.register(context, NW_DEAD_TREE, ModFeatures.DEAD_TREE);
+		FeatureUtils.register(context, NW_METHOD_STELE, ModFeatures.METHOD_STELE);
+		FeatureUtils.register(context, NW_SPIDER_LILIES, Feature.FLOWER, new RandomPatchConfiguration(64, 7, 2,
+				PlacementUtils.onlyWhenEmpty(Feature.SIMPLE_BLOCK, new SimpleBlockConfiguration(BlockStateProvider.simple(ModBlocks.RED_SPIDER_LILY)))));
+		FeatureUtils.register(context, NW_CRIMSON_ROOTS, Feature.RANDOM_PATCH, FeatureUtils.simplePatchConfiguration(Feature.SIMPLE_BLOCK,
+				new SimpleBlockConfiguration(BlockStateProvider.simple(Blocks.CRIMSON_ROOTS)), List.of(Blocks.SOUL_SOIL)));
+		FeatureUtils.register(context, NW_BLACKSTONE_BLOBS, Feature.ORE,
+				new OreConfiguration(new BlockMatchTest(Blocks.DEEPSLATE), Blocks.BLACKSTONE.defaultBlockState(), 48));
+		FeatureUtils.register(context, NW_BASALT_BLOBS, Feature.ORE,
+				new OreConfiguration(new BlockMatchTest(Blocks.DEEPSLATE), Blocks.BASALT.defaultBlockState(), 40));
+		// Its herbs (the Other-Shore Flower on soul soil and sand, the lotus on the Springs' water), and Yin Jade in its stone.
+		FeatureUtils.register(context, OTHER_SHORE_FLOWER, ModFeatures.OTHER_SHORE_FLOWER);
+		FeatureUtils.register(context, NETHERWORLD_LOTUS, ModFeatures.NETHERWORLD_LOTUS);
+		net.minecraft.world.level.block.state.BlockState yinJade = ModBlocks.YIN_JADE_ORE.defaultBlockState();
+		FeatureUtils.register(context, ORE_YIN_JADE, Feature.ORE, new OreConfiguration(List.of(
+				OreConfiguration.target(new BlockMatchTest(Blocks.DEEPSLATE), yinJade),
+				OreConfiguration.target(new BlockMatchTest(Blocks.BLACKSTONE), yinJade),
+				OreConfiguration.target(new BlockMatchTest(Blocks.BASALT), yinJade)), 5, 0.0f));
+		// In a Soul Sand Valley, small veins in the netherrack and basalt under its sand.
+		FeatureUtils.register(context, ORE_YIN_JADE_NETHER, Feature.ORE, new OreConfiguration(List.of(
+				OreConfiguration.target(new BlockMatchTest(Blocks.NETHERRACK), yinJade),
+				OreConfiguration.target(new BlockMatchTest(Blocks.BASALT), yinJade)), 3, 0.0f));
 	}
 
 	private static void ore(BootstapContext<ConfiguredFeature<?, ?>> context, ResourceKey<ConfiguredFeature<?, ?>> key,

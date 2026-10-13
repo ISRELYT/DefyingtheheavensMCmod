@@ -83,6 +83,8 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 				com.example.defyingtheheavens.ModBlocks.FORMATION_CORE, net.minecraft.client.renderer.RenderType.cutout());
 		ClothingModels.register();
 		ClothingArmorRenderer.register();
+		// Beasts' heads worn in place of a man's (the Ghost Gate's Ox-Head and Horse-Face; see BeastHead).
+		BeastHeadModels.register();
 		ClientFormations.register();
 		com.example.defyingtheheavens.QiVeinBlock.clientEffects = QiSenseClientHandler::veinGathers;
 		EntityRendererRegistry.register(ModEntities.INNER_BODY, InnerBodyRenderer::new);
@@ -94,6 +96,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 				SoulCrystalColours.of(state), com.example.defyingtheheavens.ModBlocks.SOUL_CRYSTAL);
 		ParticleFactoryRegistry.getInstance().register(ModParticles.SUPPRESSION, SuppressionParticle.Provider::new);
 		UpperRealmClient.register();
+		NetherworldClient.register();
 		InnerRealmFade.register(); // last, so the fade covers the rest of the HUD
 
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(ClientSpatialStorms::render);
@@ -139,6 +142,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			ClientGestures.clear();
 			ClientJournal.clear();
 			ClientNpcSpeech.clear();
+			NetherworldClient.clear();
 		}));
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -166,6 +170,16 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 						client.gui.setOverlayMessage(Component.translatable(ModLang.ABILITIES_EMPTY), false);
 					}
 				}
+			}
+			while (ModKeybinds.SPELL_WHEEL.consumeClick()) {
+				if (client.player != null && client.screen == null) {
+					// Likewise before the first spell is learned.
+					if (ClientMethods.anyKnown()) client.setScreen(new SpellWheelScreen());
+					else client.gui.setOverlayMessage(Component.translatable(ModLang.SPELLS_EMPTY), false);
+				}
+			}
+			while (ModKeybinds.CAST_SPELL.consumeClick()) {
+				if (client.player != null && client.screen == null && ClientMethods.anyKnown()) ClientMethods.cast(null);
 			}
 			while (ModKeybinds.MEDITATE.consumeClick()) {
 				if (client.player != null && client.screen == null) {

@@ -264,6 +264,20 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	/** True rank (realm and stage as one number), or {@link #MORTAL}. */
 	public int getRank() { return entityData.get(DATA_RANK); }
 	@Override public boolean isMortal() { return getRank() < 0; }
+	/** One of the Netherworld's dead (GhostCultivatorNpc). */
+	public boolean isGhost() { return false; }
+
+	/** Keeps a post of its own (the Ghost Gate's keepers): it doesn't stroll off, nor fall into talk with passers-by. */
+	public boolean keepsPost() { return false; }
+
+	/**
+	 * A new cultivator for {@code level}: in the Netherworld one of its dead (a ghost cultivator, GhostCultivatorNpc), anywhere
+	 * else a living one. Everything that brings cultivators into the world (NpcSpawner, HermitSites, SectManager, SectCommand)
+	 * makes them here; null if the entity can't be made.
+	 */
+	public static CultivatorNpc createFor(ServerLevel level) {
+		return ModDimensions.isNetherworld(level.dimension()) ? ModEntities.GHOST_CULTIVATOR.create(level) : ModEntities.CULTIVATOR.create(level);
+	}
 	public NpcTitle getTitle() { return NpcTitle.byIndex(entityData.get(DATA_TITLE)); }
 	public int getAlignment() { return entityData.get(DATA_ALIGNMENT); }
 	public Alignment.Faction getFaction() { return Alignment.factionOf(getAlignment()); }
@@ -675,7 +689,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			case ELDER -> 1 + random.nextInt(2);
 			case INNER_DISCIPLE -> random.nextInt(2);
 			case OUTER_DISCIPLE -> 0;
-			case ROGUE, WANDERER -> rank < 0 ? 0 : Math.min(4, rank / Stage.values().length - 1 + random.nextInt(2));
+			case ROGUE, WANDERER, WANDERING_GHOST, GHOST_ELDER, GATE_WARDEN, BRIDGE_KEEPER ->
+					rank < 0 ? 0 : Math.min(4, rank / Stage.values().length - 1 + random.nextInt(2));
 		};
 		if (ModDimensions.isUpperRealm(level().dimension())) grade++;
 		return ClothingTier.byIndex(Math.max(0, grade));
@@ -717,6 +732,11 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 
 	public void randomizeSkin(RandomSource random) {
 		entityData.set(DATA_SKIN, (byte) random.nextInt(SKINS));
+	}
+
+	/** Its face (one of the {@link #SKINS}): kept by one that sheds its body (GhostCultivatorNpc#shedBody). */
+	public void setSkin(int skin) {
+		entityData.set(DATA_SKIN, (byte) Mth.clamp(skin, 0, SKINS - 1));
 	}
 
 	// --- Ticking ---
@@ -976,9 +996,9 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		return !isMortal() && SwordFlight.canRide(this, cultivation) && affords(cultivation.swordFlightCostPerSecond());
 	}
 
-	/** Endless where gathering covers the cost, otherwise only with ten seconds' reserve in hand. Never in the Spatial Gap. */
+	/** Endless where gathering covers the cost, otherwise only with ten seconds' reserve in hand. Never in a passage (the Gap, the Soul River). */
 	private boolean affords(double cost) {
-		if (ModDimensions.isSpatialGap(level().dimension())) return false;
+		if (ModDimensions.isPassage(level().dimension())) return false;
 		if (cultivation.qiGatherPerSecond() >= cost) return true;
 		return cultivation.getQi() >= cost * 10 && cultivation.getQi() >= cultivation.maxQi() * 0.4;
 	}
@@ -1378,8 +1398,25 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		setPersistenceRequired();
 	}
 
-	/** At the rift: into the Spatial Gap, and out into the Upper Realm, or crushed on the way. */
+	/**
+	 * At the rift: into the Spatial Gap, and out into the Upper Realm, or crushed on the way. From the Nether its rift leads up
+	 * the Soul River instead: it comes out at the Ghost Gate as one of the dead (GhostCultivatorNpc#shedBody), or its soul
+	 * scatters on the way.
+	 */
 	public void attemptAscension(ServerLevel level) {
+		if (level.dimension() == net.minecraft.world.level.Level.NETHER) {
+			ServerLevel netherworld = level.getServer().getLevel(ModDimensions.NETHERWORLD);
+			level.playSound(null, blockPosition(), SoundEvents.SOUL_ESCAPE, SoundSource.NEUTRAL, 1.0f, 0.7f);
+			if (netherworld == null || random.nextFloat() >= ASCENSION_SUCCESS) {
+				hurt(ModDamageTypes.soulScatter(level), Float.MAX_VALUE);
+				return;
+			}
+			GhostCultivatorNpc ghost = GhostCultivatorNpc.shedBody(this, netherworld);
+			travelling = true; // not a departure: it goes on, as one of the dead
+			discard();
+			if (ghost != null) GhostCultivatorNpc.arriveAtGate(ghost, netherworld);
+			return;
+		}
 		ServerLevel upper = level.getServer().getLevel(ModDimensions.UPPER_REALM);
 		level.playSound(null, blockPosition(), SoundEvents.PORTAL_TRAVEL, SoundSource.NEUTRAL, 0.6f, 1.6f);
 		if (upper == null || random.nextFloat() >= ASCENSION_SUCCESS) {

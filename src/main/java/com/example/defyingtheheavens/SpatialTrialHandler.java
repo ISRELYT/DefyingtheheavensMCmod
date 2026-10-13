@@ -126,6 +126,7 @@ public final class SpatialTrialHandler {
 	private static boolean canEnter(ServerPlayer player) {
 		if (player == null || !player.isAlive() || player.isSpectator() || player.getServer() == null) return false;
 		if (SoulProjection.isActive(player.getUUID())) return false; // a soul is bound to its body's realm
+		if (Incorporeal.isRuledGhost(player)) return false; // nor do the dead take a rift
 		return !ACTIVE.containsKey(player.getUUID());
 	}
 

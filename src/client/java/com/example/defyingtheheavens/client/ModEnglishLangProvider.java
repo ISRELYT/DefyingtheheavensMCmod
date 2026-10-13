@@ -4,6 +4,8 @@ import com.example.defyingtheheavens.Ability;
 import com.example.defyingtheheavens.Alignment;
 import com.example.defyingtheheavens.ClothingStyle;
 import com.example.defyingtheheavens.ClothingTier;
+import com.example.defyingtheheavens.GhostMethod;
+import com.example.defyingtheheavens.Spell;
 import com.example.defyingtheheavens.ModBlocks;
 import com.example.defyingtheheavens.NpcTitle;
 import net.minecraft.world.item.ArmorItem;
@@ -94,6 +96,68 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.biomeKey("thunder_peaks"), "Thunder Peaks");
 		t.add(ModLang.biomeKey("ancient_sword_graveyard"), "Ancient Sword Graveyard");
 		t.add(ModLang.biomeKey("spatial_gap"), "Spatial Gap");
+		// The Netherworld's biomes, and the Soul River
+		t.add(ModLang.biomeKey("yellow_springs"), "Yellow Springs");
+		t.add(ModLang.biomeKey("fields_of_the_other_shore"), "Fields of the Other Shore");
+		t.add(ModLang.biomeKey("bone_wastes"), "Bone Wastes");
+		t.add(ModLang.biomeKey("nine_nether_peaks"), "Nine Nether Peaks");
+		t.add(ModLang.biomeKey("soul_river"), "Soul River");
+		t.add(ModBlocks.RED_SPIDER_LILY, "Red Spider Lily");
+		t.add(ModLang.MSG_HEAVENS_BLIND, "The heavens cannot see you here.");
+		t.add(ModLang.MSG_GATE_PROTECTED, "The Ghost Gate's ground is not yours to change.");
+		t.add(ModLang.MSG_WHEEL_LIVING, "The Wheel turns only for the dead.");
+		t.add(ModLang.MSG_ARRIVE_NETHERWORLD, "You stand before the Ghost Gate, in the Netherworld. Ghostly qi hangs here %s times as thick as "
+				+ "in a Soul Sand Valley, and its yin seeps into the living: leave before it fills you, or you walk on among the dead.");
+		t.add(ModLang.MSG_ARRIVE_NETHER, "The river sets you down in the Nether.");
+		t.add(ModLang.MSG_RIVER_ASCEND, "The Soul River takes you up toward the Netherworld. Keep to its flow for %s seconds, or your soul scatters.");
+		t.add(ModLang.MSG_RIVER_DESCEND, "The Soul River carries you back down toward the Nether. Keep to its flow for %s seconds.");
+		t.add(ModLang.MSG_RIVER_ABYSS, "The abyss gives you to the Soul River, flowing down to the Nether. Keep to its flow for %s seconds.");
+		t.add(ModLang.MSG_RIVER_RESTART, "You wake on the Soul River, back where the journey began. Keep to its flow for %s seconds.");
+		t.add(ModLang.MSG_RIVER_SCATTERED_UP, "You strayed from the flow and your soul scattered. It drags itself back together at the Nether's gate, battered.");
+		t.add(ModLang.MSG_RIVER_SCATTERED_DOWN, "You strayed from the flow and your soul scattered. The river spits you out into the Nether, battered.");
+		t.add(ModLang.MSG_RIVER_COOLDOWN, "Your soul is still unsettled from the river. Wait %s seconds.");
+		t.add(ModLang.HUD_RIVER, "The Soul River  %s s");
+		t.add(ModLang.HUD_RIVER_STRAY, "Back into the flow!");
+		t.add(ModLang.DEATH_SOUL_SCATTER, "%1$s's soul scattered on the Soul River");
+		t.add(ModLang.DEATH_SOUL_SCATTER + ".player", "%1$s's soul scattered on the Soul River while fighting %2$s");
+		t.add(ModLang.DEATH_JUDGE_GAZE, "%1$s met the gaze of the Chief Judge of the Netherworld");
+		t.add(ModLang.DEATH_JUDGE_GAZE + ".player", "%1$s met the gaze of the Chief Judge of the Netherworld while fighting %2$s");
+		t.add(ModLang.MSG_JUDGE_WARNING, "The eye of the Chief Judge of the Netherworld has turned toward you. A True Immortal's gaze is not for "
+				+ "eyes like yours. Look away.");
+		t.add(ModLang.MSG_JUDGE_STRIPPED, "The Chief Judge's gaze unmade you. Everything you cultivated is gone: you are back at Qi Refining Early.");
+		t.add(ModLang.MSG_JUDGE_MORTAL, "The Chief Judge's gaze unmade you.");
+		t.add(ModLang.DEATH_GHOSTLY, "%1$s was torn at by the dead");
+		t.add(ModLang.DEATH_GHOSTLY + ".player", "%1$s was torn at by the dead %2$s");
+		t.add(ModLang.GAMERULE_AFTER_DEATH, "The dead go to the Netherworld");
+		t.add(ModLang.GAMERULE_AFTER_DEATH + ".description", "Players who die wake at the Ghost Gate as ghosts, and return to life at the Wheel of Reincarnation.");
+		t.add(ModLang.MSG_GHOST_WAKE, "You wake at the Ghost Gate, in the Netherworld, one of the dead. The Wheel of Reincarnation, across the bridge, "
+				+ "will return you to life when you are ready.");
+		t.add(ModLang.MSG_YIN_OVERTAKEN, "The yin fills you. Your body gives way, and you walk on as one of the dead, everything you carried still with "
+				+ "you. The Wheel of Reincarnation, by the Ghost Gate, will return you to life.");
+		t.add(ModLang.MSG_GHOST_DISPERSED, "You scatter...");
+		t.add(ModLang.MSG_GHOST_REFORMED, "You gather yourself again at the Ghost Gate.");
+		t.add(ModLang.MSG_GHOST_CANNOT, "The dead can't do that.");
+		t.add(ModLang.MSG_WHEEL_TURNS, "The Wheel of Reincarnation turns for you...");
+		t.add(ModLang.MSG_WHEEL_HARDCORE, "Your thread of life has been cut.");
+		t.add(ModLang.MSG_REVIVED, "You wake, alive.");
+		t.add(ModLang.MSG_YIN_HALF, "The Netherworld's yin has half filled you. Your hands have gone cold.");
+		t.add(ModLang.MSG_YIN_THREE_QUARTERS, "The yin creeps toward your heart. Your breath leaves no warmth.");
+		t.add(ModLang.MSG_YIN_NEAR, "You can barely feel your body. Leave the Netherworld or burn a Yang Fire Talisman, or walk on as one of the dead.");
+		t.add(ModLang.MSG_YIN_CLEANSED, "The yang fire burns away %s%% of the yin (%s%% left).");
+		t.add(ModLang.MSG_YIN_NONE, "There is no yin in you to burn away.");
+		t.add(ModLang.YIN_LINE, "Yin corruption: %s%%");
+		t.add(ModLang.YIN_EBBING, "Yin corruption: %s%% (ebbing)");
+		t.add(ModLang.YIN_HELD, "Yin corruption: %s%% (held still, %s s)");
+		t.add(ModLang.GHOST_QI_HERE, "Ghostly qi here: %s");
+		t.add(ModLang.GHOST_QI_DENSE, "dense x%s");
+		t.add(ModLang.GHOST_QI_PEAKS, "dense x%s (on the Nine Nether Peaks)");
+		t.add(ModLang.GHOST_QI_THIN, "thin x%s");
+		t.add(ModLang.GHOST_QI_FAINT, "faint x%s");
+		t.add(ModLang.HUD_GHOST_QI_LABEL, "Ghost Qi");
+		t.add(ModLang.HUD_YIN_CORRUPTION_LABEL, "Yin Corruption");
+		t.add(ModLang.HUD_PERCENT, "%s%%");
+		t.add(ModItems.YANG_FIRE_TALISMAN, "Yang Fire Talisman");
+		t.add(ModLang.TOOLTIP_YANG_FIRE_TALISMAN, "Burn it to drive a third of the Netherworld's yin out of your body");
 		t.add(ModLang.DEATH_SPATIAL_PRESSURE, "%1$s was crushed by spatial pressure");
 		t.add(ModLang.DEATH_SPATIAL_PRESSURE + ".player", "%1$s was crushed by spatial pressure while fighting %2$s");
 		t.add(ModLang.DEATH_SOUL_SEVERED, "%1$s's nascent soul was severed from their body");
@@ -206,6 +270,10 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case INNER_REALM -> "Inner Realm";
 				case SWORD_FLIGHT -> "Sword Flight";
 				case SOUL_PROJECTION -> "Soul Projection";
+				case GHOST_EYE -> "Ghost Eye";
+				case NETHERWORLD_VEIL -> "Netherworld Veil";
+				case YIN_WIND_STEPS -> "Yin Wind Steps";
+				case GHOST_FLIGHT -> "Ghost Flight";
 			});
 			t.add(key + ".description", switch (ability) {
 				case QI_SUSTENANCE -> "Qi keeps you fed. Hunger stays full.";
@@ -216,6 +284,10 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case INNER_REALM -> "After 10 s of meditation your soul turns inward (+50% cultivation). Walk freely; stop meditating to return. Harm to your body pulls you back.";
 				case SWORD_FLIGHT -> "Hold a sword and double-tap jump to ride it, at a cost of %s qi/s. Cheaper than Qi Flight but slower (75%% of its speed, at every realm); the sword takes no wear. Switching it on switches Qi Flight off.";
 				case SOUL_PROJECTION -> "Send your nascent soul out of your body (5 s to leave, 5 s to return) while your body sits on. It flies through walls on %s hearts, within %s blocks of your body, for %s-%s qi/s (more the farther it goes). Right-click a being three realms below you to possess it. If its tether is cut or your body slain, you die and fall to Core Formation.";
+				case GHOST_EYE -> "See the dead and the Method Steles through walls within 32 blocks. Costs %s ghost qi/s.";
+				case NETHERWORLD_VEIL -> "Wrap your body in the Netherworld's own yin: it seeps into you at half the rate. Costs %s ghost qi/s.";
+				case YIN_WIND_STEPS -> "Walk on the yin wind: %s%% swifter, and falls do you no harm. Costs %s ghost qi/s.";
+				case GHOST_FLIGHT -> "The dead need no ground. Double-tap jump to fly, at a cost of %s ghost qi/s.";
 			});
 		}
 		t.add(ModLang.METHODS_TITLE, "Cultivation Methods");
@@ -224,6 +296,87 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.SPELLS_TITLE, "Spells");
 		t.add(ModLang.SPELLS_EMPTY, "No spells learned yet.");
 		t.add(ModLang.SPELLS_HINT, "Spells you learn will appear here.");
+		// The ghost methods and their spells
+		for (GhostMethod method : GhostMethod.values()) {
+			t.add(ModLang.methodKey(method.getId()), switch (method) {
+				case NETHERWORLD_BREATHING -> "Netherworld Breathing Art";
+				case GHOST_FIRE_SCRIPTURE -> "Ghost Fire Scripture";
+				case WANDERING_SOUL_STEPS -> "Wandering Soul Steps";
+			});
+			t.add(ModLang.methodKey(method.getId()) + ".description", switch (method) {
+				case NETHERWORLD_BREATHING -> "The foundation of the ghost cultivators: breathe the Netherworld's yin and keep it. A deeper ghost qi pool, "
+						+ "a ghost's hearts, and longer among the dead for the living.";
+				case GHOST_FIRE_SCRIPTURE -> "Cold fire drawn out of yin, that burns the dead worst of all. A ghost's blows strike harder.";
+				case WANDERING_SOUL_STEPS -> "How the dead drift where the wind goes. A ghost moves swifter.";
+			});
+			t.add(ModLang.methodKey(method.getId()) + ".gains", switch (method) {
+				case NETHERWORLD_BREATHING -> "Layer 3: Ghost Eye. Layer 5: Ghostly Wail. Layer 6: Netherworld Veil. Every layer: +20 ghost qi.";
+				case GHOST_FIRE_SCRIPTURE -> "Layer 1: Ghost Fire. Layer 4: Ghost Fire Bolt. Layer 7: the fire leaps to a second foe. Every layer: a ghost's blows +10%.";
+				case WANDERING_SOUL_STEPS -> "Layer 1: Yin Wind Steps. Layer 2: Soul Dash. Layer 4: Ghost Flight (the dead). Every layer: a ghost +3% speed.";
+			});
+		}
+		for (Spell spell : Spell.values()) {
+			t.add(ModLang.spellKey(spell.getId()), switch (spell) {
+				case GHOST_FIRE -> "Ghost Fire";
+				case GHOST_FIRE_BOLT -> "Ghost Fire Bolt";
+				case SOUL_DASH -> "Soul Dash";
+				case GHOSTLY_WAIL -> "Ghostly Wail";
+			});
+			t.add(ModLang.spellKey(spell.getId()) + ".description", switch (spell) {
+				case GHOST_FIRE -> "Wreathe your hands in cold fire: your next 3 blows within 20 seconds set what they strike burning (3 ghost qi each). "
+						+ "It burns the dead three times as hard.";
+				case GHOST_FIRE_BOLT -> "Throw a bolt of ghost fire up to 24 blocks: it strikes the first being in its path and sets it burning.";
+				case SOUL_DASH -> "Rush forward on the yin wind, about eight blocks. Falls do you no harm for a moment after.";
+				case GHOSTLY_WAIL -> "A cry of the dead: everything within 8 blocks is driven back, slowed and weakened, and the dead are torn at.";
+			});
+		}
+		t.add(ModLang.KEY_SPELL_WHEEL, "Spell Wheel (hold)");
+		t.add(ModLang.KEY_CAST_SPELL, "Cast Readied Spell");
+		t.add(ModLang.MSG_METHOD_LEARNED, "You have learned the first layer of the %s.");
+		t.add(ModLang.MSG_METHOD_LAYER, "%s: layer %s reached.");
+		t.add(ModLang.MSG_METHOD_CAPPED, "The ghostly qi here is too thin to carry your method past its third layer. Only the Netherworld's can.");
+		t.add(ModLang.MSG_METHOD_PRACTISED, "Your meditation now cultivates the %s.");
+		t.add(ModLang.MSG_GHOST_NO_METHOD, "The dead cultivate only the ghost methods. Learn one at a Method Stele first.");
+		t.add(ModLang.MSG_GHOST_QI_SPENT, "Your ghost qi is spent. Your ghostly arts fade.");
+		t.add(ModLang.MSG_STELE_TEACHES, "This stele holds the %s. Meditate beside it to learn it.");
+		t.add(ModLang.MSG_STELE_KNOWN, "This stele holds the %s, which you know. Meditating beside it while you practise it is faster.");
+		t.add(ModLang.MSG_STELE_READING, "You read the %s carved in the stele...");
+		t.add(ModLang.MSG_SLIP_KNOWN, "You already know the %s.");
+		t.add(ModLang.ITEM_GHOST_JADE_SLIP_OF, "Ghost Jade Slip: %s");
+		t.add(ModLang.TOOLTIP_GHOST_JADE_SLIP, "Read it to learn the method's first layer");
+		t.add(ModItems.GHOST_JADE_SLIP, "Ghost Jade Slip");
+		t.add(ModBlocks.METHOD_STELE, "Method Stele");
+		t.add(ModEffects.GHOST_FIRE, "Ghost Fire");
+		t.add(ModLang.MSG_SPELL_NONE_READY, "No spell readied. Hold the spell wheel key and click one.");
+		t.add(ModLang.MSG_SPELL_NOT_HERE, "The river's flow won't let you shape a spell.");
+		t.add(ModLang.MSG_SPELL_COOLING, "%s: ready again in %s s.");
+		t.add(ModLang.MSG_SPELL_NO_QI, "Not enough ghost qi for %s.");
+		t.add(ModLang.MSG_SPELL_READIED, "%s readied.");
+		t.add(ModLang.MSG_GHOST_FIRE_ARMED, "Ghost fire wreathes your hands: your next %s blows set what they strike burning.");
+		t.add(ModLang.METHODS_KNOWN, "%s of %s methods known");
+		t.add(ModLang.METHODS_LAYER, "Layer %s of %s");
+		t.add(ModLang.METHODS_PERFECTED, "Perfected");
+		t.add(ModLang.METHODS_PROGRESS, "%s%% to the next layer");
+		t.add(ModLang.METHODS_RATE, "Meditating here, the %s's next layer comes in about %s min.");
+		t.add(ModLang.METHODS_NO_QI, "There is no ghostly qi here to cultivate with. Meditate in the Netherworld, or in the Nether.");
+		t.add(ModLang.BTN_SPELL_LIST, "Spell List");
+		t.add(ModLang.METHODS_CAPPED, "Held at the third layer: only the Netherworld's ghostly qi carries a method further.");
+		t.add(ModLang.METHODS_ACTIVE, "Practising");
+		t.add(ModLang.METHODS_UNKNOWN, "Unknown method. Its stele stands somewhere in the Netherworld.");
+		t.add(ModLang.METHODS_GAINS, "What its layers bring");
+		t.add(ModLang.BTN_PRACTISE, "Practise");
+		t.add(ModLang.SPELLS_COST, "%s ghost qi");
+		t.add(ModLang.SPELLS_COOLDOWN, "%s s cooldown");
+		t.add(ModLang.SPELLS_LOCKED, "%s, layer %s");
+		t.add(ModLang.SPELLS_READY, "Ready");
+		t.add(ModLang.SPELLS_READIED, "Readied");
+		t.add(ModLang.SPELLS_COOLING, "Ready in %s s");
+		t.add(ModLang.SPELLS_ON_WHEEL, "Spell wheel");
+		t.add(ModLang.SPELLS_ARRANGE_HINT, "Drag a spell onto a slot of the wheel. Drag a slot off the wheel, or right-click it, to empty it. Hold %s for the wheel, press %s to cast.");
+		t.add(ModLang.SPELL_WHEEL_TITLE, "Spell Wheel");
+		t.add(ModLang.SPELL_WHEEL_HINT, "Click: ready (cast with %s). Right-click: cast now.");
+		t.add(ModLang.SPELL_WHEEL_EMPTY, "No spells on the wheel yet. Learn them from the ghost methods.");
+		t.add(ModLang.HUD_READIED_SPELL, "Spell: %s");
 		t.add(ModLang.STATS_HEADER, "Stats (cultivation bonus in brackets)");
 		t.add(ModLang.STAT_HEALTH, "Max Health: %s (%s)");
 		t.add(ModLang.STAT_DAMAGE, "Attack Damage: %s (%s)");
@@ -413,6 +566,61 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		// NPC cultivators and sects
 		t.add(ModEntities.CULTIVATOR, "Cultivator");
 		t.add(ModItems.CULTIVATOR_SPAWN_EGG, "Cultivator Spawn Egg");
+		// The Netherworld's dead: ghost cultivators, the Gate's keepers, Hungry Ghosts
+		t.add(ModEntities.GHOST_CULTIVATOR, "Ghost Cultivator");
+		t.add(ModItems.GHOST_CULTIVATOR_SPAWN_EGG, "Ghost Cultivator Spawn Egg");
+		t.add(ModEntities.HUNGRY_GHOST, "Hungry Ghost");
+		t.add(ModItems.HUNGRY_GHOST_SPAWN_EGG, "Hungry Ghost Spawn Egg");
+		t.add(ModLang.officialName("ox_head"), "Ox-Head");
+		t.add(ModLang.officialName("horse_face"), "Horse-Face");
+		t.add(ModLang.officialName("meng_po"), "Meng Po");
+		t.add(ModLang.TALK_SOUP, "She ladles a bowl of thin, bitter soup and presses it into your hands. As it goes down, the past grows "
+				+ "faint: when the Wheel returns you to life, your body will be washed clean of every pill's poison.");
+		t.add(ModLang.TALK_SOUP_LIVING, "\"Not for you, child. You still have a life to remember. Go home.\"");
+		t.add(ModLang.MSG_SOUP, "You drink Meng Po's soup. The past grows faint; your next life will begin clean of medicinal toxicity.");
+		t.add(ModLang.MSG_SOUP_AGAIN, "You have drunk the soup already. One bowl is enough to forget.");
+		t.add(ModLang.MSG_SOUP_LIVING, "Meng Po's soup is for the dead.");
+		t.add(ModLang.TALK_TEACH_LEARN, "Listen, then. This is the first layer of the %s... Sit with it, and it will come to you.");
+		t.add(ModLang.TALK_TEACH_PROGRESS, "You know the %s already. Here: this is how I breathe it. (%s minutes' progress.)");
+		t.add(ModLang.MSG_TERRACE, "From the top of the Terrace for Gazing Homeward you see, far off, %s.");
+		t.add(ModLang.TERRACE_PLACE, "the place you died: %s, near %s, %s, %s");
+		t.add(ModLang.JOURNAL_TERRACE, "The Terrace for Gazing Homeward");
+		t.add(ModLang.JOURNAL_TERRACE_TEXT, "I looked homeward, and saw %s.");
+		t.add(ModLang.JOURNAL_METHOD, "A ghost method");
+		t.add(ModLang.JOURNAL_METHOD_TEXT, "I learned the first layer of the %s. %s");
+		t.add(ModLang.DIMENSION_OVERWORLD, "the Overworld");
+		t.add(ModLang.DIMENSION_NETHER, "the Nether");
+		t.add(ModLang.DIMENSION_END, "the End");
+		t.add(ModLang.DIMENSION_UPPER_REALM, "the Upper Realm");
+		t.add(ModLang.DIMENSION_NETHERWORLD, "the Netherworld");
+		// The Netherworld's herbs, materials and items
+		t.add(ModItems.OTHER_SHORE_FLOWER, "Other-Shore Flower");
+		t.add(ModBlocks.OTHER_SHORE_FLOWER, "Other-Shore Flower");
+		t.add(ModItems.OTHER_SHORE_FLOWER_SEEDS, "Other-Shore Flower Bulbs");
+		t.add(ModItems.NETHERWORLD_LOTUS, "Netherworld Lotus");
+		t.add(ModBlocks.NETHERWORLD_LOTUS, "Netherworld Lotus");
+		t.add(ModItems.NETHERWORLD_LOTUS_SEEDS, "Netherworld Lotus Seeds");
+		t.add(ModItems.YIN_JADE, "Yin Jade");
+		t.add(ModBlocks.YIN_JADE_ORE, "Yin Jade Ore");
+		t.add(ModBlocks.YIN_JADE_BLOCK, "Block of Yin Jade");
+		t.add(ModItems.PEACH_WOOD_SWORD, "Peach Wood Sword");
+		t.add(ModLang.TOOLTIP_PEACH_WOOD_SWORD, "Against the dead every blow lands in full, and twice as hard");
+		t.add(ModItems.YANG_PRESERVATION_PILL, "Yang Preservation Pill");
+		t.add(ModItems.YIN_GATHERING_PILL, "Yin Gathering Pill");
+		t.add(ModEffects.YANG_PRESERVATION, "Yang Preservation");
+		t.add(ModEffects.YIN_GATHERING, "Yin Gathering");
+		t.add(ModLang.MSG_PILL_NO_METHOD, "You know no ghost method for its yin to feed.");
+		t.add(ModLang.MSG_PILL_YANG, "Yang warmth spreads through you: the Netherworld's yin is held still for %s minutes");
+		t.add(ModLang.MSG_PILL_YIN, "+%s%% ghost method cultivation for %s minutes");
+		t.add(ModLang.PILL_EFFECT_YANG, "Holds the Netherworld's yin still for %s minutes");
+		t.add(ModLang.PILL_EFFECT_YIN, "+%s%% ghost method cultivation for %s minutes");
+		t.add(ModItems.GHOST_QUELLING_TALISMAN, "Ghost-Quelling Talisman");
+		t.add(ModLang.TOOLTIP_GHOST_QUELLING_TALISMAN, "Throw it at the dead: it strikes them and binds them where they stand for %s seconds");
+		t.add(ModEntities.GHOST_QUELLING_TALISMAN, "Ghost-Quelling Talisman");
+		t.add(ModEffects.QUELLED, "Quelled");
+		t.add(ModLang.MSG_QUELLED, "A talisman seals your brow: you are bound where you stand!");
+		t.add(ModLang.MSG_QUELLED_OTHER, "The talisman binds %s where they stand");
+		t.add(ModLang.MSG_QUELLED_HELD, "The talisman holds you where you stand.");
 		for (NpcTitle title : NpcTitle.values()) {
 			t.add(ModLang.titleKey(title.getId()), switch (title) {
 				case SECT_MASTER -> "Sect Master";
@@ -422,6 +630,10 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case OUTER_DISCIPLE -> "Outer Disciple";
 				case ROGUE -> "Rogue Cultivator";
 				case WANDERER -> "Wandering Mortal";
+				case WANDERING_GHOST -> "Wandering Ghost";
+				case GHOST_ELDER -> "Ghost Elder";
+				case GATE_WARDEN -> "Gate Warden";
+				case BRIDGE_KEEPER -> "Keeper of the Naihe Bridge";
 			});
 		}
 		t.add(ModLang.NPC_TITLE_BRACKETS, "[%s]");
@@ -559,6 +771,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add("cultivation.defying-the-heavens.talk.intent.leave.hint", "Walk away.");
 		t.add("cultivation.defying-the-heavens.talk.topic.rumours", "Rumours");
 		t.add("cultivation.defying-the-heavens.talk.topic.guidance", "Guidance");
+		t.add("cultivation.defying-the-heavens.talk.topic.soup", "Drink the soup");
+		t.add("cultivation.defying-the-heavens.talk.rumour.stele", "A stele of the %1$s stands %2$s of here, in the %3$s, some %4$s blocks off. Sit by it a while and it will teach you.");
 		t.add("cultivation.defying-the-heavens.talk.needs", "(needs %s)");
 		t.add("cultivation.defying-the-heavens.talk.at_realm", "%s (%s)");
 		t.add("cultivation.defying-the-heavens.talk.line.self.years", "I have cultivated some %s years.");

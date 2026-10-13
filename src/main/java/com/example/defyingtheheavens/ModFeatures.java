@@ -43,25 +43,42 @@ public final class ModFeatures {
 			DefyingTheHeavens.id("spirit_lotus"), new GinsengFeature(() -> ModBlocks.SPIRIT_LOTUS, GinsengFeature.Ground.WATER, 2, 4));
 	public static final Feature<NoneFeatureConfiguration> SPIRIT_DEW_GRASS = Registry.register(BuiltInRegistries.FEATURE,
 			DefyingTheHeavens.id("spirit_dew_grass"), new GinsengFeature(() -> ModBlocks.SPIRIT_DEW_GRASS, 3, 6));
+	/** The Netherworld's herbs: the Other-Shore Flower on soul soil and soul sand, the Netherworld Lotus on still water. */
+	public static final Feature<NoneFeatureConfiguration> OTHER_SHORE_FLOWER = Registry.register(BuiltInRegistries.FEATURE,
+			DefyingTheHeavens.id("other_shore_flower"), new GinsengFeature(() -> ModBlocks.OTHER_SHORE_FLOWER, GinsengFeature.Ground.SOUL, 2, 5));
+	public static final Feature<NoneFeatureConfiguration> NETHERWORLD_LOTUS = Registry.register(BuiltInRegistries.FEATURE,
+			DefyingTheHeavens.id("netherworld_lotus"), new GinsengFeature(() -> ModBlocks.NETHERWORLD_LOTUS, GinsengFeature.Ground.WATER, 1, 3));
 	/** A Qi Vein of 1-4 blocks (see QiVeinFeature). */
 	public static final Feature<NoneFeatureConfiguration> QI_VEIN = Registry.register(BuiltInRegistries.FEATURE,
 			DefyingTheHeavens.id("qi_vein"), new QiVeinFeature());
+	/** A bare dead tree hung with soul lanterns, in the Netherworld (see DeadTreeFeature). */
+	public static final Feature<NoneFeatureConfiguration> DEAD_TREE = Registry.register(BuiltInRegistries.FEATURE,
+			DefyingTheHeavens.id("dead_tree"), new DeadTreeFeature());
+	/** The Yellow Springs' riverlands flooded with golden water (see YellowSpringsPoolFeature). */
+	public static final Feature<NoneFeatureConfiguration> YELLOW_SPRINGS_POOL = Registry.register(BuiltInRegistries.FEATURE,
+			DefyingTheHeavens.id("yellow_springs_pool"), new YellowSpringsPoolFeature());
+	/** A Method Stele on its plinth, teaching a ghost method (see MethodSteleFeature). */
+	public static final Feature<NoneFeatureConfiguration> METHOD_STELE = Registry.register(BuiltInRegistries.FEATURE,
+			DefyingTheHeavens.id("method_stele"), new MethodSteleFeature());
 
 	/**
 	 * Touching this class registers the feature types. Also appends wild Cultivation Fruit to the end of vegetal
 	 * decoration (after trees) in every Overworld biome and, more often, in every Upper Realm biome.
+	 * <p>
+	 * The Upper Realm is told by its biome tag ({@link ModTags#IS_UPPER_REALM}), not by the mod's namespace: the Netherworld's
+	 * biomes are the mod's too, and grow none of the Upper Realm's herbs, ores or fruit.
 	 */
 	public static void register() {
 		BiomeModifications.addFeature(BiomeSelectors.foundInOverworld(),
 				GenerationStep.Decoration.VEGETAL_DECORATION, ModPlacedFeatures.CULTIVATION_FRUIT);
-		BiomeModifications.addFeature(context -> context.getBiomeKey().location().getNamespace().equals(DefyingTheHeavens.MOD_ID),
+		BiomeModifications.addFeature(BiomeSelectors.tag(ModTags.IS_UPPER_REALM),
 				GenerationStep.Decoration.VEGETAL_DECORATION, ModPlacedFeatures.CULTIVATION_FRUIT_UPPER_REALM);
 
 		// Ginseng grows in the shade of Overworld woods (forests, taiga, jungle) and, more often, all over the Upper Realm.
 		// Spirit Ginseng is far rarer in both.
 		Predicate<BiomeSelectionContext> woods = BiomeSelectors.foundInOverworld().and(BiomeSelectors.tag(BiomeTags.IS_FOREST)
 				.or(BiomeSelectors.tag(BiomeTags.IS_TAIGA)).or(BiomeSelectors.tag(BiomeTags.IS_JUNGLE)));
-		Predicate<BiomeSelectionContext> upperRealm = context -> context.getBiomeKey().location().getNamespace().equals(DefyingTheHeavens.MOD_ID);
+		Predicate<BiomeSelectionContext> upperRealm = BiomeSelectors.tag(ModTags.IS_UPPER_REALM);
 		// Blue Spirit Trees (a spruce of Blue Spirit Log) in every taiga and anywhere in the Upper Realm. Added before the
 		// herbs, so they can still take root in its shade.
 		Predicate<BiomeSelectionContext> taiga = BiomeSelectors.foundInOverworld().and(BiomeSelectors.tag(BiomeTags.IS_TAIGA));
@@ -100,6 +117,12 @@ public final class ModFeatures {
 				ModPlacedFeatures.ORE_RICH_SPIRIT_STONE_DEEP);
 		BiomeModifications.addFeature(islands, GenerationStep.Decoration.UNDERGROUND_ORES, ModPlacedFeatures.ORE_SPIRIT_STONE_UPPER_REALM);
 		BiomeModifications.addFeature(islands, GenerationStep.Decoration.UNDERGROUND_ORES, ModPlacedFeatures.ORE_RICH_SPIRIT_STONE_UPPER_REALM);
+
+		// What of the Netherworld reaches down into the Nether's Soul Sand Valleys: the Other-Shore Flower, rarely, and Yin Jade,
+		// very rarely. (In the Netherworld itself they are in its biomes' own features, ModBiomes.)
+		Predicate<BiomeSelectionContext> soulSandValley = BiomeSelectors.includeByKey(Biomes.SOUL_SAND_VALLEY);
+		BiomeModifications.addFeature(soulSandValley, GenerationStep.Decoration.VEGETAL_DECORATION, ModPlacedFeatures.OTHER_SHORE_FLOWER_NETHER);
+		BiomeModifications.addFeature(soulSandValley, GenerationStep.Decoration.UNDERGROUND_ORES, ModPlacedFeatures.ORE_YIN_JADE_NETHER);
 	}
 
 	/** Jade Ore in Overworld mountains and all through the Upper Realm. */

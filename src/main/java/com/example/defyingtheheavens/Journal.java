@@ -31,6 +31,20 @@ public final class Journal {
 		ModPackets.sendJournal(player);
 	}
 
+	/**
+	 * Notes something {@code player} came to know for themselves (a method learned, the Terrace's view): {@code sourceKey}, a
+	 * translation key, stands where a teller's name would ("#" marks it so on the client, see ClientJournal#teller).
+	 */
+	public static void note(ServerPlayer player, String id, String sourceKey, Component text) {
+		PlayerCultivation c = CultivationManager.get(player);
+		List<Entry> journal = c.journal();
+		journal.removeIf(entry -> entry.id().equals(id));
+		journal.add(0, new Entry(id, Regard.day(player.level().getGameTime()), "#" + sourceKey, text));
+		while (journal.size() > MAX_ENTRIES) journal.remove(journal.size() - 1);
+		CultivationManager.markDirty(player.server);
+		ModPackets.sendJournal(player);
+	}
+
 	public static ListTag save(List<Entry> journal) {
 		ListTag list = new ListTag();
 		for (Entry entry : journal) {

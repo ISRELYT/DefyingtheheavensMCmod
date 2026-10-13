@@ -1,0 +1,79 @@
+{
+  "carvers": {},
+  "downfall": 0.0,
+  "effects": {
+    "additions_sound": {
+      "sound": "minecraft:ambient.soul_sand_valley.additions",
+      "tick_chance": 0.0111
+    },
+    "ambient_sound": "minecraft:ambient.soul_sand_valley.loop",
+    "fog_color": 2763300,
+    "foliage_color": 7236186,
+    "grass_color": 7236186,
+    "mood_sound": {
+      "block_search_extent": 8,
+      "offset": 2.0,
+      "sound": "minecraft:ambient.soul_sand_valley.mood",
+      "tick_delay": 6000
+    },
+    "music": {
+      "max_delay": 24000,
+      "min_delay": 12000,
+      "replace_current_music": false,
+      "sound": "minecraft:music.nether.soul_sand_valley"
+    },
+    "particle": {
+      "options": {
+        "type": "minecraft:white_ash"
+      },
+      "probability": 0.04
+    },
+    "sky_color": 1053711,
+    "water_color": 4087384,
+    "water_fog_color": 1055770
+  },
+  "features": [
+    [],
+    [],
+    [
+      "defying-the-heavens:netherworld/bone_pile"
+    ],
+    [],
+    [
+      "defying-the-heavens:netherworld/method_stele"
+    ],
+    [],
+    [
+      "defying-the-heavens:netherworld/ore_yin_jade"
+    ],
+    [],
+    [
+      "defying-the-heavens:netherworld/spring_water"
+    ],
+    [
+      "defying-the-heavens:netherworld/dead_tree",
+      "defying-the-heavens:netherworld/soul_fire",
+      "defying-the-heavens:netherworld/other_shore_flower"
+    ]
+  ],
+  "has_precipitation": false,
+  "spawn_costs": {},
+  "spawners": {
+    "ambient": [],
+    "axolotls": [],
+    "creature": [],
+    "misc": [],
+    "monster": [
+      {
+        "type": "defying-the-heavens:hungry_ghost",
+        "maxCount": 4,
+        "minCount": 2,
+        "weight": 10
+      }
+    ],
+    "underground_water_creature": [],
+    "water_ambient": [],
+    "water_creature": []
+  },
+  "temperature": 0.8
+}

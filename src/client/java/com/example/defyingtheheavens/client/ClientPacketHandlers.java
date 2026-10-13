@@ -9,6 +9,7 @@ import com.example.defyingtheheavens.NpcTitle;
 import com.example.defyingtheheavens.PlayerCultivation;
 import com.example.defyingtheheavens.Realm;
 import com.example.defyingtheheavens.SoulProjection;
+import com.example.defyingtheheavens.SoulRiver;
 import com.example.defyingtheheavens.Stage;
 import com.example.defyingtheheavens.TalkIntent;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -22,6 +23,46 @@ import java.util.UUID;
 
 public final class ClientPacketHandlers {
 	public static void register() {
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.NETHERWORLD_SYNC, (client, handler, buf, sender) -> {
+			double ghostQi = buf.readDouble();
+			double ghostQiMax = buf.readDouble();
+			double density = buf.readDouble();
+			float corruption = buf.readFloat();
+			int trend = buf.readByte();
+			int held = buf.readVarInt();
+			client.execute(() -> ClientNetherworldData.set(ghostQi, ghostQiMax, density, corruption, trend, held));
+		});
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.METHODS, (client, handler, buf, sender) -> client.execute(ClientMethods.read(buf)));
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.GHOST, (client, handler, buf, sender) -> {
+			int entity = buf.readVarInt();
+			boolean ghost = buf.readBoolean();
+			client.execute(() -> ClientGhosts.set(entity, ghost));
+		});
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.GHOST_FADE, (client, handler, buf, sender) -> {
+			int rgb = buf.readInt();
+			int close = buf.readVarInt();
+			int hold = buf.readVarInt();
+			int open = buf.readVarInt();
+			client.execute(() -> ClientGhosts.fade(rgb, close, hold, open));
+		});
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.QUELLED, (client, handler, buf, sender) -> {
+			int entity = buf.readVarInt();
+			int ticks = buf.readVarInt();
+			client.execute(() -> {
+				net.minecraft.world.entity.Entity bound = client.level == null ? null : client.level.getEntity(entity);
+				if (bound != null) ClientQuelled.set(bound, ticks);
+			});
+		});
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.JUDGE_GAZE, (client, handler, buf, sender) -> {
+			float gaze = buf.readFloat();
+			client.execute(() -> ClientJudgeGaze.set(gaze));
+		});
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SOUL_RIVER, (client, handler, buf, sender) -> {
+			int route = buf.readVarInt();
+			int tick = buf.readVarInt();
+			SoulRiver.Route[] routes = SoulRiver.Route.values();
+			client.execute(() -> ClientSoulRiver.set(route >= 0 && route < routes.length ? routes[route] : SoulRiver.Route.NONE, tick));
+		});
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SYNC, (client, handler, buf, sender) -> {
 			// Read on the network thread, apply on the client thread.
 			int realm = buf.readVarInt();

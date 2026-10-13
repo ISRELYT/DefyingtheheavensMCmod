@@ -1,0 +1,80 @@
+{
+  "carvers": {},
+  "downfall": 0.0,
+  "effects": {
+    "additions_sound": {
+      "sound": "minecraft:ambient.soul_sand_valley.additions",
+      "tick_chance": 0.0111
+    },
+    "ambient_sound": "minecraft:ambient.soul_sand_valley.loop",
+    "fog_color": 863022,
+    "foliage_color": 5135946,
+    "grass_color": 5135946,
+    "mood_sound": {
+      "block_search_extent": 8,
+      "offset": 2.0,
+      "sound": "minecraft:ambient.soul_sand_valley.mood",
+      "tick_delay": 6000
+    },
+    "music": {
+      "max_delay": 24000,
+      "min_delay": 12000,
+      "replace_current_music": false,
+      "sound": "minecraft:music.nether.soul_sand_valley"
+    },
+    "particle": {
+      "options": {
+        "type": "minecraft:glow"
+      },
+      "probability": 0.0025
+    },
+    "sky_color": 530464,
+    "water_color": 3108458,
+    "water_fog_color": 729636
+  },
+  "features": [
+    [],
+    [
+      "defying-the-heavens:netherworld/lake_rare"
+    ],
+    [],
+    [],
+    [
+      "defying-the-heavens:netherworld/method_stele"
+    ],
+    [],
+    [
+      "defying-the-heavens:netherworld/ore_yin_jade"
+    ],
+    [],
+    [
+      "defying-the-heavens:netherworld/spring_water"
+    ],
+    [
+      "defying-the-heavens:netherworld/dead_tree_rare",
+      "defying-the-heavens:netherworld/spider_lilies",
+      "defying-the-heavens:netherworld/crimson_roots",
+      "defying-the-heavens:netherworld/other_shore_flower_fields"
+    ]
+  ],
+  "has_precipitation": false,
+  "spawn_costs": {},
+  "spawners": {
+    "ambient": [],
+    "axolotls": [],
+    "creature": [],
+    "misc": [],
+    "monster": [
+      {
+        "type": "defying-the-heavens:hungry_ghost",
+        "maxCount": 4,
+        "minCount": 2,
+        "weight": 10
+      }
+    ],
+    "underground_water_creature": [],
+    "water_ambient": [],
+    "water_creature": []
+  },
+  "temperature": 0.8
+}

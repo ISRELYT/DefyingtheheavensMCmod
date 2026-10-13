@@ -53,7 +53,11 @@ public final class AlchemyRecipes {
 					recipe(ModItems.FOUNDATION_PILL, 45, ModItems.GINSENG, 1, ModItems.LINGZHI, 1, ModItems.SPIRIT_GINSENG, 1,
 							ModItems.JADE, 1),
 					recipe(ModItems.CORE_PILL, 60, ModItems.SPIRIT_GINSENG, 1, ModItems.SPIRIT_LOTUS, 1, ModItems.CULTIVATION_FRUIT, 1,
-							Items.BLAZE_POWDER, 1));
+							Items.BLAZE_POWDER, 1),
+					// The Netherworld's: yang warmth to hold its yin still in the living, and yin to feed the ghost methods.
+					recipe(ModItems.YANG_PRESERVATION_PILL, 30, ModItems.GINSENG, 1, Items.BLAZE_POWDER, 1, Items.GLOWSTONE_DUST, 1,
+							Items.HONEY_BOTTLE, 1),
+					recipe(ModItems.YIN_GATHERING_PILL, 30, ModItems.OTHER_SHORE_FLOWER, 1, ModItems.NETHERWORLD_LOTUS, 1, Items.GHAST_TEAR, 1));
 		}
 		return recipes;
 	}

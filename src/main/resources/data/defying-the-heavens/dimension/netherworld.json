@@ -1,0 +1,60 @@
+{
+  "type": "defying-the-heavens:netherworld",
+  "generator": {
+    "type": "minecraft:noise",
+    "settings": "defying-the-heavens:netherworld_plateaus",
+    "biome_source": {
+      "type": "minecraft:multi_noise",
+      "biomes": [
+        {
+          "biome": "defying-the-heavens:nine_nether_peaks",
+          "parameters": {
+            "temperature": [0.25, 1.0],
+            "humidity": [-1.0, 1.0],
+            "continentalness": 0.0,
+            "erosion": 0.0,
+            "weirdness": [-1.0, 1.0],
+            "depth": 0.0,
+            "offset": 0.0
+          }
+        },
+        {
+          "biome": "defying-the-heavens:yellow_springs",
+          "parameters": {
+            "temperature": [-1.0, 0.25],
+            "humidity": [-1.0, -0.25],
+            "continentalness": 0.0,
+            "erosion": 0.0,
+            "weirdness": [-1.0, 1.0],
+            "depth": 0.0,
+            "offset": 0.0
+          }
+        },
+        {
+          "biome": "defying-the-heavens:bone_wastes",
+          "parameters": {
+            "temperature": [-1.0, 0.25],
+            "humidity": [-0.25, 1.0],
+            "continentalness": 0.0,
+            "erosion": 0.0,
+            "weirdness": [0.3, 1.0],
+            "depth": 0.0,
+            "offset": 0.0
+          }
+        },
+        {
+          "biome": "defying-the-heavens:fields_of_the_other_shore",
+          "parameters": {
+            "temperature": [-1.0, 0.25],
+            "humidity": [-0.25, 1.0],
+            "continentalness": 0.0,
+            "erosion": 0.0,
+            "weirdness": [-1.0, 0.3],
+            "depth": 0.0,
+            "offset": 0.0
+          }
+        }
+      ]
+    }
+  }
+}

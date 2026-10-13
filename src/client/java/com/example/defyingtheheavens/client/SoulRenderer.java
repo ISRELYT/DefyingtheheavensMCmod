@@ -20,8 +20,12 @@ import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import com.example.defyingtheheavens.GhostCultivatorNpc;
+import com.example.defyingtheheavens.HungryGhost;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -46,16 +50,35 @@ public final class SoulRenderer {
 	private static final int TETHER_SEGMENTS = 28;
 	private static final float[] TETHER_CORE = {0.55f, 0.88f, 1.0f};
 	private static final float[] TETHER_GLOW = {0.2f, 0.55f, 1.0f};
+	/** The mist a hazily seen soul trails (violet), and the faint trail a ghost leaves (cyan). */
+	private static final float[] SOUL_MIST = {0.55f, 0.3f, 1.0f};
+	private static final float[] DEAD_MIST = {0.3f, 0.9f, 0.95f};
 
 	public static void register() {
 		CoreShaderRegistrationCallback.EVENT.register(context ->
 				context.register(DefyingTheHeavens.id("soul"), DefaultVertexFormat.NEW_ENTITY, shader -> soulShader = shader));
 	}
 
+	/** The soul shader, or null if a shader pack has replaced the core shaders (see RiverSouls, which draws the dead with it). */
+	static ShaderInstance shader() {
+		return soulShader;
+	}
+
 	/** Anything to draw this frame. */
 	public static boolean hasWork() {
 		Minecraft mc = Minecraft.getInstance();
-		return mc.level != null && (ClientSoul.isOut() || !ClientSoul.seenSouls().isEmpty());
+		return mc.level != null && (ClientSoul.isOut() || !ClientSoul.seenSouls().isEmpty() || ClientGhosts.any() || anyGhostly(mc));
+	}
+
+	/** How far off the Netherworld's dead (ghost cultivators, Hungry Ghosts) are drawn. */
+	private static final double GHOSTLY_RANGE = 96;
+
+	/** Any of the Netherworld's dead in this world (they are drawn here, not by their entity renderers). */
+	private static boolean anyGhostly(Minecraft mc) {
+		for (net.minecraft.world.entity.Entity entity : mc.level.entitiesForRendering()) {
+			if (entity instanceof com.example.defyingtheheavens.Ghostly) return true;
+		}
+		return false;
 	}
 
 	/** The souls and tethers, into the sense layer (its blending and depth already set, see SenseOverlay#onWorldEnd). */
@@ -73,7 +96,20 @@ public final class SoulRenderer {
 			// One's own soul is seen from inside in first person; another's inside the body it possesses is hidden by it.
 			if (soul == mc.player && !camera.isDetached() || soul.isPassenger()) continue;
 			float clarity = ClientSoul.clarity(soul);
-			if (clarity > 0) drawSoul(context, soul, clarity, partial);
+			if (clarity > 0) drawSoul(context, soul, clarity, partial, false);
+		}
+		// The dead: seen by everyone, whole, in cyan, with their names; not while dispersed (hidden), nor one's own in first person.
+		for (Player ghost : mc.level.players()) {
+			if (!com.example.defyingtheheavens.GhostSystem.isGhost(ghost) || ghost.isInvisible() || ghost == mc.player && !camera.isDetached()) continue;
+			drawSoul(context, ghost, 1.0f, partial, true);
+			if (ghost != mc.player) drawName(context, ghost, partial);
+		}
+		// The Netherworld's own dead, ghost cultivators and Hungry Ghosts, likewise (their plates are their renderers').
+		Vec3 eye = camera.getPosition();
+		for (net.minecraft.world.entity.Entity entity : mc.level.entitiesForRendering()) {
+			if (!(entity instanceof com.example.defyingtheheavens.Ghostly) || !(entity instanceof LivingEntity body)) continue;
+			if (body.isInvisible() || body.isRemoved() || body.distanceToSqr(eye) > GHOSTLY_RANGE * GHOSTLY_RANGE) continue;
+			drawDead(context, body, partial);
 		}
 		// Additive from here: light, not cover.
 		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
@@ -92,43 +128,79 @@ public final class SoulRenderer {
 
 	// --- The soul ---
 
-	private static void drawSoul(WorldRenderContext context, Player soul, float clarity, float partial) {
-		Minecraft mc = Minecraft.getInstance();
+	/** {@code dead}: a ghost (see GhostSystem), in the dead's cyan rather than a soul's violet, a faint trail drifting from it. */
+	private static void drawSoul(WorldRenderContext context, Player soul, float clarity, float partial, boolean dead) {
 		boolean slimModel = soul instanceof AbstractClientPlayer client && "slim".equals(client.getModelName());
-		PlayerModel<Player> model = model(slimModel);
+		// A player wears a man's head (a beast's, should a demon race give one: its BeastHead here).
+		drawBody(context, soul, ((AbstractClientPlayer) soul).getSkinTextureLocation(), slimModel, clarity, partial, dead, Look.SOUL, null);
+	}
+
+	/**
+	 * One of the Netherworld's dead (a ghost cultivator, a Hungry Ghost), in its own skin, as the dead are drawn; Ox-Head and
+	 * Horse-Face with their beasts' heads (BeastHeadModels).
+	 */
+	static void drawDead(WorldRenderContext context, LivingEntity body, float partial) {
+		boolean hungry = body instanceof HungryGhost;
+		ResourceLocation skin = hungry ? GhostlyRenderers.HUNGRY_GHOST_SKIN
+				: body instanceof GhostCultivatorNpc ghost ? GhostlyRenderers.skin(ghost) : GhostlyRenderers.HUNGRY_GHOST_SKIN;
+		BeastHeadModels.Head beast = body instanceof GhostCultivatorNpc ghost ? BeastHeadModels.get(ghost.getRole().beastHead()) : null;
+		drawBody(context, body, skin, false, 1.0f, partial, true, hungry ? Look.HUNGRY : Look.DEAD, beast);
+	}
+
+	/**
+	 * How a body is posed and turned: a projected soul or a player's ghost turns whole to where it looks and leans into its
+	 * flight; one of the Netherworld's dead turns by its body, its head free; a Hungry Ghost reaches out before it, grasping.
+	 */
+	private enum Look { SOUL, DEAD, HUNGRY }
+
+	/** {@code beast}: a beast's head worn in place of the man's (see BeastHeadModels), or null. */
+	@SuppressWarnings({"rawtypes", "unchecked"})
+	private static void drawBody(WorldRenderContext context, LivingEntity soul, ResourceLocation skin, boolean slimModel, float clarity, float partial,
+								 boolean dead, Look look, BeastHeadModels.Head beast) {
+		Minecraft mc = Minecraft.getInstance();
+		PlayerModel model = model(slimModel);
 		if (model == null) return;
 		float age = soul.tickCount + partial;
-		float yaw = Mth.rotLerp(partial, soul.yHeadRotO, soul.yHeadRot);
+		float headYaw = Mth.rotLerp(partial, soul.yHeadRotO, soul.yHeadRot);
+		float yaw = look == Look.SOUL ? headYaw : Mth.rotLerp(partial, soul.yBodyRotO, soul.yBodyRot);
 		float pitch = Mth.lerp(partial, soul.xRotO, soul.getXRot());
 		Vec3 cam = context.camera().getPosition();
 		Vec3 at = soul.getPosition(partial);
-		// It leans into its flight: up to 35 degrees at full pace.
+		// A soul leans into its flight: up to 35 degrees at full pace.
 		Vec3 motion = soul.position().subtract(soul.xo, soul.yo, soul.zo);
 		double horizontal = Math.sqrt(motion.x * motion.x + motion.z * motion.z);
-		float lean = (float) Math.min(35, horizontal * 60);
+		float lean = look == Look.SOUL ? (float) Math.min(35, horizontal * 60) : 0;
 
 		PoseStack pose = context.matrixStack();
 		pose.pushPose();
 		pose.translate(at.x - cam.x, at.y - cam.y + Mth.sin(age * 0.08f) * 0.06f, at.z - cam.z);
 		pose.mulPose(Axis.YP.rotationDegrees(180.0f - yaw));
 		pose.mulPose(Axis.XP.rotationDegrees(-lean));
+		// Its size (the Gate's keepers stand three times a man's height: GhostCultivatorNpc#getScale), from its feet.
+		float scale = soul.getScale();
+		if (scale != 1.0f) pose.scale(scale, scale, scale);
 
-		model.attackTime = 0;
+		model.attackTime = look == Look.SOUL ? 0 : soul.getAttackAnim(partial);
 		model.riding = false;
 		model.young = false;
 		model.crouching = false;
-		model.setupAnim(soul, 0, 0, age, 0, pitch);
+		model.setupAnim(soul, 0, 0, age, look == Look.SOUL ? 0 : Mth.wrapDegrees(headYaw - yaw), pitch);
 		ghostPose(model, age);
+		if (look == Look.HUNGRY) reachingPose(model, age);
+		// A beast's head in place of the man's: posed as his would be, his head and hat hidden while the body is drawn.
+		if (beast != null) beast.follow(model.head);
+		model.head.visible = model.hat.visible = beast == null;
 
 		boolean shader = soulShader != null;
-		RenderSystem.setShaderTexture(0, ((AbstractClientPlayer) soul).getSkinTextureLocation());
+		RenderSystem.setShaderTexture(0, skin);
 		if (shader) {
 			RenderSystem.setShader(() -> soulShader);
 			// The body, then its glow: the same, a little larger, added on (the shader draws only its edge light).
-			drawModel(pose, model, 1, clarity, 1.0f);
+			float green = dead ? 0 : 1; // the shader's switch to the dead's cyan
+			drawModel(pose, model, skin, beast, 1, green, clarity, 1.0f);
 			RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
 					GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
-			drawModel(pose, model, 0, clarity, 1.07f);
+			drawModel(pose, model, skin, beast, 0, green, clarity, 1.07f);
 			RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
 					GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
 		} else {
@@ -139,23 +211,59 @@ public final class SoulRenderer {
 			pose.scale(-1.0f, -1.0f, 1.0f);
 			pose.scale(0.9375f, 0.9375f, 0.9375f);
 			pose.translate(0.0f, -1.501f, 0.0f);
+			float red = dead ? 0.35f : 0.6f, green = dead ? 0.95f : 0.4f, alpha = dead ? 0.55f : 0.15f + 0.4f * clarity;
 			BufferBuilder buffer = Tesselator.getInstance().getBuilder();
 			buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.NEW_ENTITY);
-			model.renderToBuffer(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, 0.6f, 0.4f, 1.0f, 0.15f + 0.4f * clarity);
+			model.renderToBuffer(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, red, green, 1.0f, alpha);
 			BufferUploader.drawWithShader(buffer.end());
+			if (beast != null) {
+				RenderSystem.setShaderTexture(0, beast.texture());
+				buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.NEW_ENTITY);
+				beast.render(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, red, green, 1.0f, alpha);
+				BufferUploader.drawWithShader(buffer.end());
+			}
 			pose.popPose();
 			mc.gameRenderer.lightTexture().turnOffLightLayer();
 			mc.gameRenderer.overlayTexture().teardownOverlayColor();
 		}
+		model.head.visible = model.hat.visible = true;
+		// Bound by a Ghost-Quelling Talisman: the talisman on its brow.
+		if (ClientQuelled.is(soul)) drawTalisman(pose, model, beast, age);
 		pose.popPose();
-		if (clarity < 1) drawMist(context, soul, clarity, partial);
+		if (dead) drawMist(context, soul, 0.6f, partial, DEAD_MIST, scale);
+		else if (clarity < 1) drawMist(context, soul, clarity, partial, SOUL_MIST, scale);
+	}
+
+	/** A ghost as the Ghost Eye sees it behind walls (GhostEye, which sets the depth test to draw only what is hidden). */
+	static void drawGhostSeen(WorldRenderContext context, Player ghost, float partial) {
+		drawSoul(context, ghost, 1.0f, partial, true);
+	}
+
+	/** A ghost's name over its head, in cyan, as a living player's would be. */
+	private static void drawName(WorldRenderContext context, Player ghost, float partial) {
+		Minecraft mc = Minecraft.getInstance();
+		Vec3 cam = context.camera().getPosition();
+		Vec3 at = ghost.getPosition(partial);
+		PoseStack pose = context.matrixStack();
+		pose.pushPose();
+		pose.translate(at.x - cam.x, at.y - cam.y + ghost.getBbHeight() + 0.5, at.z - cam.z);
+		pose.mulPose(context.camera().rotation());
+		pose.scale(-0.025f, -0.025f, 0.025f);
+		net.minecraft.network.chat.Component name = ghost.getDisplayName();
+		net.minecraft.client.renderer.MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
+		mc.font.drawInBatch(name, -mc.font.width(name) / 2.0f, 0, 0xFF8AF4F0, false, pose.last().pose(), buffers,
+				net.minecraft.client.gui.Font.DisplayMode.NORMAL, 0x40000000, 0xF000F0);
+		buffers.endBatch();
+		pose.popPose();
 	}
 
 	/**
 	 * The model at the pose's origin (the soul's feet, facing set), scaled by {@code size} about its middle. {@code red} 1 is the
-	 * body pass, 0 the halo pass; the clarity rides in the alpha. Full bright: the soul is its own light.
+	 * body pass, 0 the halo pass; {@code green} 0 is the dead's cyan, 1 a soul's violet; the clarity rides in the alpha. Full
+	 * bright: the soul is its own light. A beast's head, if one is worn, after the body, in its own texture.
 	 */
-	private static void drawModel(PoseStack pose, PlayerModel<Player> model, float red, float clarity, float size) {
+	private static void drawModel(PoseStack pose, PlayerModel<?> model, ResourceLocation skin, BeastHeadModels.Head beast, float red, float green,
+								  float clarity, float size) {
 		pose.pushPose();
 		pose.translate(0, 0.95f, 0);
 		pose.scale(size, size, size);
@@ -165,16 +273,63 @@ public final class SoulRenderer {
 		pose.translate(0.0f, -1.501f, 0.0f);
 		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
 		buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.NEW_ENTITY);
-		model.renderToBuffer(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, red, 1, 1, clarity);
+		model.renderToBuffer(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, red, green, 1, clarity);
 		BufferUploader.drawWithShader(buffer.end());
+		if (beast != null) {
+			RenderSystem.setShaderTexture(0, beast.texture());
+			buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.NEW_ENTITY);
+			beast.render(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, red, green, 1, clarity);
+			BufferUploader.drawWithShader(buffer.end());
+			RenderSystem.setShaderTexture(0, skin);
+		}
+		pose.popPose();
+	}
+
+	/** The paper a Ghost-Quelling Talisman is painted on (its item picture). */
+	private static final ResourceLocation TALISMAN = DefyingTheHeavens.id("textures/item/ghost_quelling_talisman.png");
+
+	/**
+	 * A Ghost-Quelling Talisman sealed to the brow of one it binds (ClientQuelled): the paper in its own colours, not the dead's
+	 * light, hanging from the brow down the face (a man's, or a beast's: BeastHeadModels#Brow), lifted a little off it and
+	 * stirring.
+	 */
+	private static void drawTalisman(PoseStack pose, PlayerModel<?> model, BeastHeadModels.Head beast, float age) {
+		pose.pushPose();
+		pose.scale(-1.0f, -1.0f, 1.0f);
+		pose.scale(0.9375f, 0.9375f, 0.9375f);
+		pose.translate(0.0f, -1.501f, 0.0f);
+		float length;
+		if (beast != null) {
+			beast.toBrow(pose);
+			length = beast.browLength();
+		} else {
+			BeastHeadModels.toHumanBrow(pose, model.head);
+			length = BeastHeadModels.HUMAN_BROW.length();
+		}
+		pose.mulPose(Axis.XP.rotationDegrees(-6.0f + Mth.sin(age * 0.2f) * 3.0f));
+		Matrix4f matrix = pose.last().pose();
+		float halfWidth = 2.0f / 16.0f, hang = length / 16.0f;
+		RenderSystem.setShader(GameRenderer::getPositionTexShader);
+		RenderSystem.setShaderTexture(0, TALISMAN);
+		RenderSystem.disableCull();
+		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
+		buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+		// The paper of the picture, framed: its columns 4 to 11 and rows 1 to 14 (of 16).
+		buffer.vertex(matrix, -halfWidth, 0, 0).uv(4 / 16.0f, 1 / 16.0f).endVertex();
+		buffer.vertex(matrix, -halfWidth, hang, 0).uv(4 / 16.0f, 15 / 16.0f).endVertex();
+		buffer.vertex(matrix, halfWidth, hang, 0).uv(12 / 16.0f, 15 / 16.0f).endVertex();
+		buffer.vertex(matrix, halfWidth, 0, 0).uv(12 / 16.0f, 1 / 16.0f).endVertex();
+		BufferUploader.drawWithShader(buffer.end());
+		RenderSystem.enableCull();
 		pose.popPose();
 	}
 
 	/**
 	 * To those who see it only hazily, the soul trails a drifting violet mist: soft puffs around it, more and brighter the
-	 * hazier it is. Drawn here rather than as particles, which Qi Sense would grey.
+	 * hazier it is. Drawn here rather than as particles, which Qi Sense would grey. {@code scale}: the body's size (a keeper's
+	 * mist reaches as high and as wide as it stands).
 	 */
-	private static void drawMist(WorldRenderContext context, Player soul, float clarity, float partial) {
+	private static void drawMist(WorldRenderContext context, LivingEntity soul, float clarity, float partial, float[] rgb, float scale) {
 		Camera camera = context.camera();
 		Vec3 cam = camera.getPosition();
 		Vector3f left = camera.getLeftVector();
@@ -194,19 +349,19 @@ public final class SoulRenderer {
 			// Each puff keeps its own slow orbit and bob around the soul, from a seed of the soul and the puff.
 			float seed = Mth.frac(Mth.sin(soul.getId() * 12.9898f + i * 78.233f) * 43758.547f);
 			float angle = seed * Mth.TWO_PI + age * (0.015f + 0.02f * (i % 3));
-			float reach = 0.25f + 0.45f * Mth.frac(seed * 7.13f);
-			float height = 0.15f + 1.7f * Mth.frac(seed * 3.71f + age * 0.004f);
-			float size = 0.28f + 0.3f * Mth.frac(seed * 5.3f);
+			float reach = (0.25f + 0.45f * Mth.frac(seed * 7.13f)) * scale;
+			float height = (0.15f + 1.7f * Mth.frac(seed * 3.71f + age * 0.004f)) * scale;
+			float size = (0.28f + 0.3f * Mth.frac(seed * 5.3f)) * scale;
 			float px = (float) (at.x - cam.x) + Mth.cos(angle) * reach;
 			float py = (float) (at.y - cam.y) + height;
 			float pz = (float) (at.z - cam.z) + Mth.sin(angle) * reach;
 			for (int s = 0; s < segments; s++) {
 				float a0 = s * Mth.TWO_PI / segments, a1 = (s + 1) * Mth.TWO_PI / segments;
-				buffer.vertex(matrix, px, py, pz).color(0.55f, 0.3f, 1.0f, alpha).endVertex();
+				buffer.vertex(matrix, px, py, pz).color(rgb[0], rgb[1], rgb[2], alpha).endVertex();
 				buffer.vertex(matrix, px + (left.x() * Mth.cos(a0) + up.x() * Mth.sin(a0)) * size, py + (left.y() * Mth.cos(a0) + up.y() * Mth.sin(a0)) * size,
-						pz + (left.z() * Mth.cos(a0) + up.z() * Mth.sin(a0)) * size).color(0.55f, 0.3f, 1.0f, 0f).endVertex();
+						pz + (left.z() * Mth.cos(a0) + up.z() * Mth.sin(a0)) * size).color(rgb[0], rgb[1], rgb[2], 0f).endVertex();
 				buffer.vertex(matrix, px + (left.x() * Mth.cos(a1) + up.x() * Mth.sin(a1)) * size, py + (left.y() * Mth.cos(a1) + up.y() * Mth.sin(a1)) * size,
-						pz + (left.z() * Mth.cos(a1) + up.z() * Mth.sin(a1)) * size).color(0.55f, 0.3f, 1.0f, 0f).endVertex();
+						pz + (left.z() * Mth.cos(a1) + up.z() * Mth.sin(a1)) * size).color(rgb[0], rgb[1], rgb[2], 0f).endVertex();
 			}
 		}
 		BufferUploader.drawWithShader(buffer.end());
@@ -214,8 +369,21 @@ public final class SoulRenderer {
 				GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
 	}
 
+	/** A Hungry Ghost's grasping: both arms reaching out before it, clawing a little as it drifts. */
+	private static void reachingPose(PlayerModel<?> model, float age) {
+		float claw = Mth.sin(age * 0.15f) * 0.12f;
+		model.rightArm.xRot = -1.45f + claw;
+		model.leftArm.xRot = -1.45f - claw;
+		model.rightArm.zRot = 0.08f;
+		model.leftArm.zRot = -0.08f;
+		model.head.xRot += 0.3f; // hunched, staring down at what it hungers for
+		model.leftSleeve.copyFrom(model.leftArm);
+		model.rightSleeve.copyFrom(model.rightArm);
+		model.hat.copyFrom(model.head);
+	}
+
 	/** Upright and drifting: legs together and trailing behind like a ghost's, arms loose at its sides, gently swaying. */
-	private static void ghostPose(PlayerModel<Player> model, float age) {
+	static void ghostPose(PlayerModel<?> model, float age) {
 		float sway = Mth.sin(age * 0.09f);
 		model.rightLeg.xRot = 0.6f + sway * 0.07f;
 		model.leftLeg.xRot = 0.6f + sway * 0.07f;
@@ -239,7 +407,7 @@ public final class SoulRenderer {
 		model.hat.copyFrom(model.head);
 	}
 
-	private static PlayerModel<Player> model(boolean slimModel) {
+	static PlayerModel<Player> model(boolean slimModel) {
 		Minecraft mc = Minecraft.getInstance();
 		if (slimModel) {
 			if (slim == null) slim = new PlayerModel<>(mc.getEntityModels().bakeLayer(ModelLayers.PLAYER_SLIM), true);

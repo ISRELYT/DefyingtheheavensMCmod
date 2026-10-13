@@ -5,10 +5,12 @@
   "compatibilityLevel": "JAVA_17",
   "client": [
     "ClientLevelSkyMixin",
+    "ClientRecipeBookMixin",
     "CreativeModeInventoryScreenMixin",
     "EntityRendererMixin",
     "FogRendererMixin",
     "GameRendererMixin",
+    "GhostDriftMixin",
     "HumanoidModelMixin",
     "InventoryScreenMixin",
     "ItemInHandLayerMixin",
@@ -19,8 +21,11 @@
     "MinecraftMixin",
     "PostChainAccessor",
     "ReceivingLevelScreenMixin",
+    "RecipeBookCategoriesInvoker",
+    "RecipeBookCategoriesMixin",
     "SoulFlightMixin",
     "SoulInputMixin",
+    "SoulRiverMixin",
     "SoulRenderDispatcherMixin"
   ],
   "injectors": {

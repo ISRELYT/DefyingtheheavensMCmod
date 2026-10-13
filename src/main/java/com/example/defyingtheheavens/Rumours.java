@@ -45,7 +45,8 @@ public final class Rumours extends SavedData {
 	public static final double LOCAL_REACH = 400;
 	public static final double FAR_REACH = 2500;
 
-	public enum Kind { HERB, FRUIT, PEACH_TREE, CAVE, CORE, KILLING }
+	/** STELE: a Method Stele in the Netherworld, told of only by its dead. Saved by name: new kinds go at the end. */
+	public enum Kind { HERB, FRUIT, PEACH_TREE, CAVE, CORE, KILLING, STELE }
 
 	/** One thing worth telling of. */
 	public static final class Rumour {
@@ -80,7 +81,7 @@ public final class Rumours extends SavedData {
 			return switch (kind) {
 				case HERB, FRUIT, PEACH_TREE -> age(now) >= OLD_FROM;
 				case KILLING -> now - since < KILLING_REMEMBERED;
-				case CAVE, CORE -> true;
+				case CAVE, CORE, STELE -> true;
 			};
 		}
 
@@ -181,6 +182,11 @@ public final class Rumours extends SavedData {
 		PENDING.add(new Forget("core:" + sect.id));
 	}
 
+	/** A Method Stele stands at {@code middle} (placed by the world, or the Gate's): any thread, taken in next tick. */
+	public static void noteStele(ResourceKey<Level> dimension, BlockPos middle, GhostMethod method) {
+		PENDING.add(new Rumour("stele:" + dimension.location() + ":" + middle.asLong(), Kind.STELE, dimension, middle.immutable(), method.getId(), 0, 0, ""));
+	}
+
 	/** A player has killed a cultivator. */
 	public static void noteKilling(CultivatorNpc victim, ServerPlayer killer) {
 		PENDING.add(new Rumour("kill:" + victim.getUUID(), Kind.KILLING, victim.level().dimension(), victim.blockPosition(),
@@ -225,6 +231,7 @@ public final class Rumours extends SavedData {
 		List<Rumour> other = new ArrayList<>();
 		for (Rumour rumour : data.rumours.values()) {
 			if (rumour.dimension != level.dimension() || told.contains(rumour.id) || !rumour.current(now)) continue;
+			if (rumour.kind == Kind.STELE && !npc.isGhost()) continue; // only the dead tell of the steles
 			if (rumour.pos.distSqr(npc.blockPosition()) > reach * reach) continue;
 			if (gone(level, rumour)) {
 				PENDING.add(new Forget(rumour.id));
@@ -244,6 +251,7 @@ public final class Rumours extends SavedData {
 
 	/** A herb, fruit or tree whose chunk is loaded and which isn't there any more (picked by someone with no rumour to go on). */
 	private static boolean gone(ServerLevel level, Rumour rumour) {
+		if (rumour.kind == Kind.STELE) return level.isLoaded(rumour.pos) && !level.getBlockState(rumour.pos).is(ModBlocks.METHOD_STELE);
 		if (rumour.kind != Kind.HERB && rumour.kind != Kind.FRUIT && rumour.kind != Kind.PEACH_TREE) return false;
 		if (!level.isLoaded(rumour.pos)) return false;
 		ResourceLocation block = BuiltInRegistries.BLOCK.getKey(level.getBlockState(rumour.pos).getBlock());
@@ -277,6 +285,11 @@ public final class Rumours extends SavedData {
 				Component when = days == 0 ? Component.translatable(ModLang.rumour("today"))
 						: days == 1 ? Component.translatable(ModLang.rumour("yesterday")) : Component.translatable(ModLang.rumour("days_ago"), days);
 				yield Component.translatable(ModLang.rumour("killing"), rumour.subject, direction, country, rough, when, rumour.detail);
+			}
+			case STELE -> {
+				GhostMethod method = GhostMethod.byId(rumour.subject);
+				Component name = method == null ? Component.literal(rumour.subject) : method.getDisplayName();
+				yield Component.translatable(ModLang.rumour("stele"), name, direction, country, rough);
 			}
 		};
 	}

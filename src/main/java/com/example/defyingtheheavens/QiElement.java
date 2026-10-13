@@ -7,9 +7,10 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
 
 /**
- * The five elements qi takes in the world, each with the colours it shows in under Qi Sense: a core and the glow around it.
- * All five drift everywhere, but the land decides which is thickest ({@link #pick}): forests are thick with wood qi, seas
- * with water, the Nether and deserts with fire, mountains and caves with earth and metal.
+ * The elements qi takes in the world, each with the colours it shows in under Qi Sense: a core and the glow around it.
+ * The five drift everywhere, but the land decides which is thickest ({@link #pick}): forests are thick with wood qi, seas
+ * with water, the Nether and deserts with fire, mountains and caves with earth and metal. The sixth, yin, is ghostly qi
+ * ({@link GhostQi}): it shows only where ghostly qi flows, and the Netherworld is almost nothing else.
  */
 public enum QiElement {
 	/** Green. */
@@ -21,10 +22,21 @@ public enum QiElement {
 	/** Yellow core in a brown glow. */
 	EARTH(0xD99A2B, 0x8C5A1E),
 	/** White core in a gold glow. */
-	METAL(0xFFFFFF, 0xFFC83C);
+	METAL(0xFFFFFF, 0xFFC83C),
+	/** Pale cyan-white core in a cyan glow: ghostly qi. Appended, so the five keep their ordinals. */
+	YIN(0xE6FFFF, 0x4FE3E8);
 
-	/** This share of every place's qi is of any element at random, so all five always show; the land decides the rest. */
+	/**
+	 * This share of every place's qi is of an element at random, so all the land's elements always show; the land decides the
+	 * rest. Only where ghostly qi flows can the random one be yin, so the living world never shows a mote of it.
+	 */
 	private static final float MIXED_SHARE = 0.35f;
+	/**
+	 * In the Netherworld, this share of the random part is yin outright (the rest drawn from all six): with its weights below,
+	 * 0.65 x 12/12.7 + 0.35 x (0.9 + 0.1/6) = about 93% of its qi is yin, "almost pure".
+	 */
+	private static final float NETHERWORLD_MIXED_YIN = 0.9f;
+	private static final QiElement[] FIVE = {WOOD, WATER, FIRE, EARTH, METAL};
 
 	private final int coreColor;
 	private final int glowColor;
@@ -40,35 +52,44 @@ public enum QiElement {
 	/** The glow around it, 0xRRGGBB. */
 	public int getGlowColor() { return glowColor; }
 
-	// Weights, in enum order: wood, water, fire, earth, metal.
-	private static final float[] NETHER = {0, 0, 8, 2, 1};
-	private static final float[] END = {0, 0, 0, 2, 6};
-	private static final float[] WATERS = {1, 8, 0, 1, 0};
-	private static final float[] SWAMP = {4, 5, 0, 1, 0};
-	private static final float[] FOREST = {8, 1, 0.3f, 1, 0.3f};
-	private static final float[] ARID = {0.3f, 0, 5, 4, 0.5f};
-	private static final float[] SAVANNA = {2, 0, 2, 2, 0.3f};
-	private static final float[] PEAKS = {0.3f, 0.5f, 0, 4, 5};
-	private static final float[] SNOW = {0.5f, 4, 0, 1, 3};
-	private static final float[] UNDERGROUND = {0.2f, 0.5f, 0.5f, 5, 4};
-	private static final float[] LUSH_CAVES = {5, 3, 0, 2, 0.5f};
-	private static final float[] THUNDER = {0, 0, 4, 1, 4};
-	private static final float[] SWORDS = {0.3f, 0, 0, 2, 8};
-	private static final float[] CHAOS = {1, 1, 1, 1, 1};
-	private static final float[] PLAINS = {3, 1, 1, 3, 1};
+	// Weights, in enum order: wood, water, fire, earth, metal, yin. Every array has all six.
+	/** Almost pure yin (see {@link #NETHERWORLD_MIXED_YIN}), whatever lies under it: deep underground too. */
+	private static final float[] NETHERWORLD = {0, 0.2f, 0, 0.3f, 0.2f, 12};
+	/** Mostly yin, the Nether's fire beneath: 0.65 x 10/13.5 + 0.35 / 6 = about 54% yin. */
+	private static final float[] SOUL_SAND_VALLEY = {0, 0, 2, 1, 0.5f, 10};
+	private static final float[] NETHER = {0, 0, 8, 2, 1, 0};
+	private static final float[] END = {0, 0, 0, 2, 6, 0};
+	private static final float[] WATERS = {1, 8, 0, 1, 0, 0};
+	private static final float[] SWAMP = {4, 5, 0, 1, 0, 0};
+	private static final float[] FOREST = {8, 1, 0.3f, 1, 0.3f, 0};
+	private static final float[] ARID = {0.3f, 0, 5, 4, 0.5f, 0};
+	private static final float[] SAVANNA = {2, 0, 2, 2, 0.3f, 0};
+	private static final float[] PEAKS = {0.3f, 0.5f, 0, 4, 5, 0};
+	private static final float[] SNOW = {0.5f, 4, 0, 1, 3, 0};
+	private static final float[] UNDERGROUND = {0.2f, 0.5f, 0.5f, 5, 4, 0};
+	private static final float[] LUSH_CAVES = {5, 3, 0, 2, 0.5f, 0};
+	private static final float[] THUNDER = {0, 0, 4, 1, 4, 0};
+	private static final float[] SWORDS = {0.3f, 0, 0, 2, 8, 0};
+	private static final float[] CHAOS = {1, 1, 1, 1, 1, 0};
+	private static final float[] PLAINS = {3, 1, 1, 3, 1, 0};
 
 	/**
 	 * A random element for qi gathering in {@code biome}; {@code underground} (no sky above, in a realm that has one) leans to
-	 * earth and metal whatever the biome. Every element is at least {@link #MIXED_SHARE} / 5 (7%) of the qi anywhere.
+	 * earth and metal whatever the biome. Every one of the five is at least {@link #MIXED_SHARE} / 5 (7%) of the qi anywhere
+	 * outside the realm of the dead; yin shows only where ghostly qi flows.
 	 */
 	public static QiElement pick(Holder<Biome> biome, boolean underground, RandomSource random) {
-		QiElement[] all = values();
-		if (random.nextFloat() < MIXED_SHARE) return all[random.nextInt(all.length)];
+		boolean netherworld = biome.is(ModTags.IS_NETHERWORLD);
+		if (random.nextFloat() < MIXED_SHARE) {
+			if (netherworld && random.nextFloat() < NETHERWORLD_MIXED_YIN) return YIN;
+			QiElement[] pool = netherworld || biome.is(Biomes.SOUL_SAND_VALLEY) ? values() : FIVE;
+			return pool[random.nextInt(pool.length)];
+		}
 		float[] weights = weights(biome, underground);
 		float total = 0;
 		for (float w : weights) total += w;
 		float roll = random.nextFloat() * total;
-		for (QiElement element : all) {
+		for (QiElement element : values()) {
 			roll -= weights[element.ordinal()];
 			if (roll < 0) return element;
 		}
@@ -76,6 +97,8 @@ public enum QiElement {
 	}
 
 	private static float[] weights(Holder<Biome> biome, boolean underground) {
+		if (biome.is(ModTags.IS_NETHERWORLD) || biome.is(ModBiomes.SOUL_RIVER)) return NETHERWORLD;
+		if (biome.is(Biomes.SOUL_SAND_VALLEY)) return SOUL_SAND_VALLEY;
 		if (biome.is(BiomeTags.IS_NETHER)) return NETHER;
 		if (biome.is(BiomeTags.IS_END)) return END;
 		if (biome.is(ModBiomes.SPATIAL_GAP)) return CHAOS;

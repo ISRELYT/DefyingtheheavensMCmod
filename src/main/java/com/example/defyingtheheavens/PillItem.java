@@ -34,11 +34,13 @@ import java.util.List;
  *   <li>Qi Gathering Pill: more qi gathered per second for a while.</li>
  *   <li>Cultivation Pill: a share of the current stage's cultivation at once, less the pill resistance built up by earlier
  *   ones.</li>
+ *   <li>Yang Preservation Pill: holds the Netherworld's yin still in the body for a while (YinCorruption).</li>
+ *   <li>Yin Gathering Pill: the ghost method practised is cultivated faster for a while (GhostMethods).</li>
  * </ul>
  * A pill that can't do anything right now isn't eaten: the player is told why instead.
  */
 public class PillItem extends Item {
-	public enum Kind { MARROW_CLEANSING, FOUNDATION, CORE, QI_GATHERING, CULTIVATION }
+	public enum Kind { MARROW_CLEANSING, FOUNDATION, CORE, QI_GATHERING, CULTIVATION, YANG_PRESERVATION, YIN_GATHERING }
 
 	public static final String GRADE_TAG = "PillGrade";
 	public static final String AGE_TAG = "PillAge";
@@ -51,6 +53,12 @@ public class PillItem extends Item {
 	/** Breakthrough pills: head start into the new realm per point of potency above 1, up to {@link #MAX_HEAD_START}. */
 	public static final double HEAD_START_PER_POTENCY = 0.05;
 	public static final double MAX_HEAD_START = 0.5;
+	/** Yang Preservation Pill: the yin held still this long per point of potency (3 minutes), at most {@link #MAX_PRESERVATION_TICKS}. */
+	public static final int PRESERVATION_TICKS_PER_POTENCY = 3 * 60 * 20;
+	public static final int MAX_PRESERVATION_TICKS = 15 * 60 * 20;
+	/** Yin Gathering Pill: the ghost method cultivated faster by this much per point of potency, for {@link #YIN_BOOST_TICKS}. */
+	public static final double YIN_BOOST_PER_POTENCY = 0.25;
+	public static final int YIN_BOOST_TICKS = 5 * 60 * 20;
 	/** The colour of the impurities the Marrow Cleansing Elixir drives out: a dull, earthy grey. */
 	private static final org.joml.Vector3f IMPURITY = new org.joml.Vector3f(0.45f, 0.41f, 0.34f);
 
@@ -99,6 +107,15 @@ public class PillItem extends Item {
 		return CULTIVATION_PER_POTENCY * potency(stack);
 	}
 
+	/** How long a Yang Preservation Pill holds the yin still (ticks). */
+	public static int preservationTicks(ItemStack stack) {
+		return (int) Math.min(MAX_PRESERVATION_TICKS, Math.round(PRESERVATION_TICKS_PER_POTENCY * potency(stack)));
+	}
+
+	public static double yinBoost(ItemStack stack) {
+		return YIN_BOOST_PER_POTENCY * potency(stack);
+	}
+
 	/** The pill a breakthrough into {@code target} needs, or null if it needs none. */
 	public static Item breakthroughPillFor(Realm target) {
 		if (target == Realm.FOUNDATION_BUILDING) return ModItems.FOUNDATION_PILL;
@@ -140,6 +157,8 @@ public class PillItem extends Item {
 				if (c.isMortal()) return Component.translatable(ModLang.MSG_PILL_MORTAL);
 				if (c.isStalled() || c.isSuppressed() || c.isMaxed()) return Component.translatable(ModLang.MSG_PILL_BOTTLENECK);
 				return null;
+			case YIN_GATHERING:
+				return c.netherworld().knowsAnyMethod() ? null : Component.translatable(ModLang.MSG_PILL_NO_METHOD);
 			default:
 				return null;
 		}
@@ -228,6 +247,27 @@ public class PillItem extends Item {
 				player.displayClientMessage(Component.translatable(ModLang.MSG_PILL_CULTIVATION, Math.round(amount),
 						Math.round(effectiveness * 100)), true);
 			}
+			case YANG_PRESERVATION -> {
+				// Its yang warmth holds the Netherworld's yin where it is (YinCorruption), however much of the hold was left.
+				int ticks = preservationTicks(stack);
+				NetherworldState s = c.netherworld();
+				s.setYinPausedUntil(Math.max(s.yinPausedUntil(), level.getGameTime() + ticks));
+				player.addEffect(new MobEffectInstance(ModEffects.YANG_PRESERVATION, ticks, 0, false, false, true));
+				CultivationManager.markDirty(player.server);
+				NetherworldManager.refresh(player);
+				level.sendParticles(ParticleTypes.FLAME, player.getX(), player.getY() + 1.0, player.getZ(), 16, 0.35, 0.5, 0.35, 0.01);
+				level.playSound(null, player.blockPosition(), SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 0.6f, 1.3f);
+				player.displayClientMessage(Component.translatable(ModLang.MSG_PILL_YANG, Math.round(ticks / 1200.0)), true);
+			}
+			case YIN_GATHERING -> {
+				c.netherworld().setMethodBoost(yinBoost(stack));
+				player.addEffect(new MobEffectInstance(ModEffects.YIN_GATHERING, YIN_BOOST_TICKS, 0, false, false, true));
+				CultivationManager.markDirty(player.server);
+				level.sendParticles(ParticleTypes.SOUL, player.getX(), player.getY() + 1.0, player.getZ(), 16, 0.35, 0.5, 0.35, 0.02);
+				level.playSound(null, player.blockPosition(), SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.0f, 0.9f);
+				player.displayClientMessage(Component.translatable(ModLang.MSG_PILL_YIN, Math.round(yinBoost(stack) * 100),
+						YIN_BOOST_TICKS / 1200), true);
+			}
 		}
 	}
 
@@ -268,6 +308,10 @@ public class PillItem extends Item {
 							.withStyle(ChatFormatting.RED));
 				}
 			}
+			case YANG_PRESERVATION -> Tooltips.add(lines, Component.translatable(ModLang.PILL_EFFECT_YANG,
+					Math.round(preservationTicks(stack) / 1200.0)).withStyle(ChatFormatting.GOLD));
+			case YIN_GATHERING -> Tooltips.add(lines, Component.translatable(ModLang.PILL_EFFECT_YIN, Math.round(yinBoost(stack) * 100),
+					YIN_BOOST_TICKS / 1200).withStyle(ChatFormatting.AQUA));
 		}
 		Tooltips.add(lines, Component.translatable(ModLang.PILL_RECIPE, AlchemyRecipes.describe(this)).withStyle(ChatFormatting.DARK_GRAY));
 	}

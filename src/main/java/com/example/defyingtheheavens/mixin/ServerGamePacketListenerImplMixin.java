@@ -1,5 +1,6 @@
 package com.example.defyingtheheavens.mixin;
 
+import com.example.defyingtheheavens.GhostSystem;
 import com.example.defyingtheheavens.RingSlot;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import net.minecraft.server.level.ServerPlayer;
@@ -28,5 +29,14 @@ public abstract class ServerGamePacketListenerImplMixin {
 			if (slot instanceof RingSlot) last = Math.max(last, slot.index);
 		}
 		return last;
+	}
+
+	/**
+	 * In hardcore, vanilla makes a respawned player a spectator. The dead go to the Netherworld for good instead (GhostSystem: the
+	 * Wheel won't take them back): a player who respawned a ghost stays one, in their own game mode.
+	 */
+	@ModifyExpressionValue(method = "handleClientCommand", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;isHardcore()Z"))
+	private boolean dth$theDeadAreNoSpectators(boolean hardcore) {
+		return hardcore && !GhostSystem.isGhost(player);
 	}
 }

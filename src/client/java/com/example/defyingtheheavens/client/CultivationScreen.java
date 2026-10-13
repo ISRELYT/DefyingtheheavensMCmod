@@ -7,6 +7,12 @@ import com.example.defyingtheheavens.ModItems;
 import com.example.defyingtheheavens.PillItem;
 import com.example.defyingtheheavens.CultivationBoost;
 import com.example.defyingtheheavens.CultivationStats;
+import com.example.defyingtheheavens.GhostMethod;
+import com.example.defyingtheheavens.GhostMethods;
+import com.example.defyingtheheavens.GhostQi;
+import com.example.defyingtheheavens.NetherworldState;
+import com.example.defyingtheheavens.Spell;
+import com.example.defyingtheheavens.Spells;
 import com.example.defyingtheheavens.Journal;
 import com.example.defyingtheheavens.ModLang;
 import com.example.defyingtheheavens.MortalStage;
@@ -123,6 +129,34 @@ public class CultivationScreen extends Screen {
 	/** Where the scrollbar was drawn this frame (null: none on this tab), and where its thumb is held (-1: not held). */
 	private ScrollBar bar;
 	private int barGrab = -1;
+	/** The Methods and Spells tabs' scrolling, as the Abilities tab's. */
+	private int methodScroll;
+	private int methodMaxScroll;
+	private int spellScroll;
+	private int spellMaxScroll;
+	/** The Spells tab shows its wheel editor rather than its list (kept on reopening, as the Abilities tab's). */
+	private static boolean arrangingSpells;
+	private Button spellWheelButton;
+	/** The Methods tab's Practise buttons and the Spells tab's Ready buttons, as drawn this frame, for {@link #mouseClicked}. */
+	private final List<RowButton<GhostMethod>> practiseButtons = new ArrayList<>();
+	private final List<RowButton<Spell>> readyButtons = new ArrayList<>();
+	/** The spell wheel editor's palette as drawn this frame, the spell being dragged in it, and the slot it came from (-1: the palette). */
+	private final List<SpellCell> spellPalette = new ArrayList<>();
+	private Spell draggedSpell;
+	private int spellDragFrom = -1;
+
+	/** A small button on a row of a list (Practise, Ready): what it acts on, and where it was drawn. */
+	private record RowButton<T>(T value, int x, int y, int w) {
+		boolean contains(double mouseX, double mouseY) {
+			return mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + SWITCH_H;
+		}
+	}
+
+	private record SpellCell(Spell spell, int x, int y) {
+		boolean contains(double mouseX, double mouseY) {
+			return mouseX >= x && mouseX < x + CELL && mouseY >= y && mouseY < y + CELL;
+		}
+	}
 
 	private record AbilitySwitch(Ability ability, int x, int y) {
 		boolean contains(double mouseX, double mouseY) {
@@ -194,6 +228,13 @@ public class CultivationScreen extends Screen {
 				})
 				.bounds(left + (WIDTH - 112) / 2, top + HEIGHT - 32, 112, 20).build());
 
+		spellWheelButton = addRenderableWidget(Button.builder(Component.empty(), b -> {
+					arrangingSpells = !arrangingSpells;
+					draggedSpell = null;
+					updateButtons();
+				})
+				.bounds(left + (WIDTH - 112) / 2, top + HEIGHT - 32, 112, 20).build());
+
 		updateButtons();
 		if (tab == Tab.JOURNAL) ClientJournal.request();
 	}
@@ -211,6 +252,8 @@ public class CultivationScreen extends Screen {
 		breakthroughButton.visible = progressTab;
 		wheelButton.visible = tab == Tab.ABILITIES && !awakened().isEmpty();
 		wheelButton.setMessage(Component.translatable(arranging ? ModLang.BTN_ABILITY_LIST : ModLang.BTN_ARRANGE_WHEEL));
+		spellWheelButton.visible = tab == Tab.SPELLS && ClientMethods.anyKnown();
+		spellWheelButton.setMessage(Component.translatable(arrangingSpells ? ModLang.BTN_SPELL_LIST : ModLang.BTN_ARRANGE_WHEEL));
 		meditateButton.setMessage(Component.translatable(
 				ClientCultivationData.isMeditating() ? ModLang.BTN_STOP : ModLang.BTN_MEDITATE));
 		breakthroughButton.active = ClientCultivationData.get().canBreakthrough() && !ClientTribulationData.isActive();
@@ -243,6 +286,9 @@ public class CultivationScreen extends Screen {
 		Player player = minecraft == null ? null : minecraft.player;
 		switches.clear();
 		palette.clear();
+		practiseButtons.clear();
+		readyButtons.clear();
+		spellPalette.clear();
 		bar = null;
 		switch (tab) {
 			case CULTIVATION -> renderCultivation(g, player);
@@ -251,14 +297,15 @@ public class CultivationScreen extends Screen {
 				else renderStats(g, player);
 			}
 			case ABILITIES -> renderAbilities(g, mouseX, mouseY);
-			case METHODS -> renderPlaceholder(g, ModLang.METHODS_TITLE, ModLang.METHODS_EMPTY, ModLang.METHODS_HINT);
-			case SPELLS -> renderPlaceholder(g, ModLang.SPELLS_TITLE, ModLang.SPELLS_EMPTY, ModLang.SPELLS_HINT);
+			case METHODS -> renderMethods(g, mouseX, mouseY);
+			case SPELLS -> renderSpells(g, mouseX, mouseY);
 			case JOURNAL -> renderJournal(g, mouseX, mouseY);
 		}
 
 		super.render(g, mouseX, mouseY, partialTick);
-		// The ability being dragged in the wheel editor rides on the pointer, over everything.
+		// The ability (or spell) being dragged in a wheel editor rides on the pointer, over everything.
 		if (dragged != null) AbilityWheel.drawIcon(g, dragged, mouseX - 8, mouseY - 8, 16, true);
+		if (draggedSpell != null) SpellWheelScreen.drawIcon(g, draggedSpell, mouseX - 8, mouseY - 8, 16, true);
 	}
 
 	// --- Cultivation: realm, stage, cultivation progress and what comes next ---
@@ -306,6 +353,7 @@ public class CultivationScreen extends Screen {
 				? Component.translatable(ModLang.CULTIVATION_RATE_UPPER, one(rate), (int) PlayerCultivation.UPPER_REALM_QI_MULTIPLIER)
 				: Component.translatable(ModLang.CULTIVATION_RATE, one(rate)), cx, y, boost > 1.0 && rate > 0 ? 0x7FE0A0 : 0xA0A0A0);
 		y += 11;
+		y = renderNetherworldLines(g, cx, y);
 		// Pills at work: a Qi Gathering Pill's boost, and how much less the next Cultivation Pill will do.
 		if (c.getQiBoost() > 0) {
 			g.drawCenteredString(font, Component.translatable(ModLang.QI_BOOST_LINE, Math.round(c.getQiBoost() * 100)), cx, y, 0x64B5F6);
@@ -421,6 +469,36 @@ public class CultivationScreen extends Screen {
 			g.drawCenteredString(font, line, cx, y, 0xFFC107);
 			y += 11;
 		}
+		renderNetherworldLines(g, cx, y + 4);
+	}
+
+	/**
+	 * The ghostly qi where the player stands (only where there is any: the Nether and the Netherworld), and their yin corruption
+	 * while they carry any, with whether it is ebbing or held still. Returns the y below what it drew.
+	 */
+	private int renderNetherworldLines(GuiGraphics g, int cx, int y) {
+		double density = ClientNetherworldData.density();
+		if (density > 0) {
+			String word = GhostQi.word(density);
+			Component amount = Component.translatable(switch (word) {
+				case "dense" -> density > GhostQi.NETHERWORLD ? ModLang.GHOST_QI_PEAKS : ModLang.GHOST_QI_DENSE;
+				case "thin" -> ModLang.GHOST_QI_THIN;
+				default -> ModLang.GHOST_QI_FAINT;
+			}, density == Math.rint(density) ? String.valueOf((long) density) : String.valueOf(density));
+			g.drawCenteredString(font, Component.translatable(ModLang.GHOST_QI_HERE, amount), cx, y, 0x8FEAE4);
+			y += 11;
+		}
+		float corruption = ClientNetherworldData.corruption();
+		if (corruption > 0) {
+			long percent = Math.round(corruption * 100);
+			Component line = ClientNetherworldData.heldSeconds() > 0
+					? Component.translatable(ModLang.YIN_HELD, percent, ClientNetherworldData.heldSeconds())
+					: ClientNetherworldData.trend() < 0 ? Component.translatable(ModLang.YIN_EBBING, percent)
+					: Component.translatable(ModLang.YIN_LINE, percent);
+			g.drawCenteredString(font, line, cx, y, corruption >= 0.75f ? 0x4FC3D9 : 0x7FB8C8);
+			y += 11;
+		}
+		return y;
 	}
 
 	// --- Stats: base values, what the realm adds, and the current totals (true vs. suppressed when suppressed) ---
@@ -591,8 +669,12 @@ public class CultivationScreen extends Screen {
 
 	/** Scrolls whichever tab has the scrollbar. */
 	private void setScroll(int scroll) {
-		if (tab == Tab.JOURNAL) journalScroll = scroll;
-		else abilityScroll = scroll;
+		switch (tab) {
+			case JOURNAL -> journalScroll = scroll;
+			case METHODS -> methodScroll = scroll;
+			case SPELLS -> spellScroll = scroll;
+			default -> abilityScroll = scroll;
+		}
 	}
 
 	// --- Journal: the rumours cultivators have told you ---
@@ -629,7 +711,9 @@ public class CultivationScreen extends Screen {
 		int y = viewTop + 3 - journalScroll;
 		for (int i = 0; i < entries.size(); i++) {
 			Journal.Entry entry = entries.get(i);
-			g.drawString(font, Component.translatable(ModLang.JOURNAL_ENTRY, entry.day(), entry.teller()), x, y, 0xFFD700);
+			// Who told it; "#" marks a source of the player's own (a method learned, the Terrace's view), a translation key.
+			Object teller = entry.teller().startsWith("#") ? Component.translatable(entry.teller().substring(1)) : entry.teller();
+			g.drawString(font, Component.translatable(ModLang.JOURNAL_ENTRY, entry.day(), teller), x, y, 0xFFD700);
 			y += 12;
 			for (FormattedCharSequence line : texts.get(i)) {
 				g.drawString(font, line, x, y, 0xC8C8C8);
@@ -749,6 +833,14 @@ public class CultivationScreen extends Screen {
 			journalScroll = Mth.clamp(journalScroll - (int) Math.round(delta * SCROLL_STEP), 0, journalMaxScroll);
 			return true;
 		}
+		if (tab == Tab.METHODS && methodMaxScroll > 0) {
+			methodScroll = Mth.clamp(methodScroll - (int) Math.round(delta * SCROLL_STEP), 0, methodMaxScroll);
+			return true;
+		}
+		if (tab == Tab.SPELLS && !arrangingSpells && spellMaxScroll > 0) {
+			spellScroll = Mth.clamp(spellScroll - (int) Math.round(delta * SCROLL_STEP), 0, spellMaxScroll);
+			return true;
+		}
 		return super.mouseScrolled(mouseX, mouseY, delta);
 	}
 
@@ -795,6 +887,41 @@ public class CultivationScreen extends Screen {
 				}
 			}
 		}
+		if (tab == Tab.SPELLS && arrangingSpells && (button == 0 || button == 1)) {
+			int slot = AbilityWheel.slotUnder(mouseX, mouseY, wheelX(), wheelY(), EDIT_RING, EDIT_SLOT);
+			Spell inSlot = slot < 0 ? null : ClientMethods.shown(slot);
+			if (inSlot != null) {
+				if (button == 1) {
+					placeSpell(slot, null);
+				} else {
+					draggedSpell = inSlot;
+					spellDragFrom = slot;
+				}
+				return true;
+			}
+			for (SpellCell cell : spellPalette) {
+				if (button == 0 && cell.contains(mouseX, mouseY)) {
+					draggedSpell = cell.spell();
+					spellDragFrom = -1;
+					return true;
+				}
+			}
+		}
+		if (button == 0) {
+			for (RowButton<GhostMethod> practise : practiseButtons) {
+				if (!practise.contains(mouseX, mouseY)) continue;
+				ClientMethods.practise(practise.value());
+				if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+				return true;
+			}
+			for (RowButton<Spell> ready : readyButtons) {
+				if (!ready.contains(mouseX, mouseY)) continue;
+				// Ready it; the readied one's button clears it.
+				ClientMethods.ready(ready.value() == ClientCultivationData.get().netherworld().readiedSpell() ? null : ready.value());
+				if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+				return true;
+			}
+		}
 		if (button == 0 && bar != null && bar.maxScroll() > 0 && bar.contains(mouseX, mouseY)) {
 			// The thumb keeps the point it was taken by; a click on the trough takes it by the middle and brings it there.
 			barGrab = bar.onThumb(mouseY) ? (int) (mouseY - bar.thumbY()) : bar.thumbHeight() / 2;
@@ -837,6 +964,21 @@ public class CultivationScreen extends Screen {
 			}
 			dragged = null;
 			dragFrom = -1;
+			super.mouseReleased(mouseX, mouseY, button);
+			return true;
+		}
+		if (button == 0 && draggedSpell != null) {
+			int cx = wheelX();
+			int cy = wheelY();
+			int target = AbilityWheel.slotUnder(mouseX, mouseY, cx, cy, EDIT_RING, EDIT_SLOT + 2);
+			double dx = mouseX - cx, dy = mouseY - cy;
+			if (target >= 0 && target != spellDragFrom) {
+				placeSpell(target, draggedSpell);
+			} else if (target < 0 && spellDragFrom >= 0 && dx * dx + dy * dy > EDIT_BACKDROP * EDIT_BACKDROP) {
+				placeSpell(spellDragFrom, null);
+			}
+			draggedSpell = null;
+			spellDragFrom = -1;
 			super.mouseReleased(mouseX, mouseY, button);
 			return true;
 		}
@@ -890,7 +1032,294 @@ public class CultivationScreen extends Screen {
 		return rate ? String.format(Locale.ROOT, "%,.1f/s", v) : num(v);
 	}
 
-	// --- Methods and Spells: nothing to learn yet ---
+	// --- Methods: the ghost methods learned, their layers, and which one meditation cultivates ---
+
+	/**
+	 * How many of the methods are known, how soon meditating here brings the practised one's next layer (or why it can't), then
+	 * each method: its stele's emblem and name, Practise (or "Practising"), nine pips for its layers, the bar through the current
+	 * one, and what its layers bring. Methods not yet learned show only that they exist. Scrolls like the Abilities tab.
+	 */
+	private void renderMethods(GuiGraphics g, int mouseX, int mouseY) {
+		PlayerCultivation c = ClientCultivationData.get();
+		NetherworldState s = c.netherworld();
+		if (!s.knowsAnyMethod()) {
+			methodMaxScroll = 0;
+			renderPlaceholder(g, ModLang.METHODS_TITLE, ModLang.METHODS_EMPTY, ModLang.METHODS_HINT);
+			return;
+		}
+		int x = left + 14;
+		int rightEdge = left + LIST_RIGHT;
+		int width = rightEdge - x;
+		int viewTop = top + CONTENT_Y;
+		int viewBottom = top + HEIGHT - 8;
+
+		// What the top says, wrapped, measured before drawing so the scroll knows the height.
+		GhostMethod active = s.activeMethod();
+		double density = ClientNetherworldData.density();
+		List<FormattedCharSequence> rateLines = new ArrayList<>();
+		int rateColor = 0x8FEAE4;
+		if (active != null) {
+			Component rate;
+			if (density <= 0) {
+				rate = Component.translatable(ModLang.METHODS_NO_QI);
+				rateColor = 0x9E9E9E;
+			} else if (GhostMethods.heldAtCap(s, active, density)) {
+				rate = Component.translatable(ModLang.METHODS_CAPPED);
+				rateColor = 0xE0A040;
+			} else if (s.layer(active) >= GhostMethods.LAYERS) {
+				rate = Component.translatable(ModLang.METHODS_PERFECTED);
+			} else {
+				double perSecond = GhostMethods.ratePerSecond(c, density);
+				double minutes = (GhostMethods.layerCost(s.layer(active)) - s.progress(active)) / Math.max(1.0e-6, perSecond) / 60.0;
+				rate = Component.translatable(ModLang.METHODS_RATE, active.getDisplayName(), minutes < 1 ? "<1" : String.valueOf(Math.round(minutes)));
+			}
+			rateLines = font.split(rate, width);
+		}
+		List<List<FormattedCharSequence>> gains = new ArrayList<>();
+		int contentHeight = 6 + 12 + rateLines.size() * 10 + 6;
+		for (GhostMethod method : GhostMethod.values()) {
+			List<FormattedCharSequence> lines = s.knows(method) ? font.split(method.getGains(), width) : font.split(Component.translatable(ModLang.METHODS_UNKNOWN), width - 20);
+			gains.add(lines);
+			contentHeight += s.knows(method) ? 15 + 11 + 9 + 11 + lines.size() * 10 : lines.size() * 10 + 4;
+			contentHeight += 12;
+		}
+		methodMaxScroll = Math.max(0, contentHeight - (viewBottom - viewTop));
+		methodScroll = Mth.clamp(methodScroll, 0, methodMaxScroll);
+
+		g.enableScissor(left + 1, viewTop, left + WIDTH - 1, viewBottom);
+		int y = viewTop + 3 - methodScroll;
+		int known = 0;
+		for (GhostMethod method : GhostMethod.values()) if (s.knows(method)) known++;
+		g.drawString(font, Component.translatable(ModLang.METHODS_KNOWN, known, GhostMethod.values().length), x, y, 0xFFD700);
+		y += 12;
+		for (FormattedCharSequence line : rateLines) {
+			g.drawString(font, line, x, y, rateColor);
+			y += 10;
+		}
+		y += 6;
+		GhostMethod[] methods = GhostMethod.values();
+		for (int i = 0; i < methods.length; i++) {
+			GhostMethod method = methods[i];
+			if (!s.knows(method)) {
+				drawEmblem(g, method, x, y - 3, false);
+				for (FormattedCharSequence line : gains.get(i)) {
+					g.drawString(font, line, x + 20, y, 0x707070);
+					y += 10;
+				}
+				y += 4;
+			} else {
+				boolean isActive = method == active;
+				drawEmblem(g, method, x, y - 4, true);
+				g.drawString(font, method.getDisplayName(), x + 20, y, isActive ? 0xFFD700 : 0xE0E0E0);
+				if (isActive) {
+					right(g, Component.translatable(ModLang.METHODS_ACTIVE), rightEdge, y, 0x69F0AE);
+				} else {
+					int w = font.width(Component.translatable(ModLang.BTN_PRACTISE)) + 10;
+					RowButton<GhostMethod> button = new RowButton<>(method, rightEdge - w, y - 3, w);
+					boolean visible = button.y() >= viewTop && button.y() + SWITCH_H <= viewBottom;
+					if (visible) practiseButtons.add(button);
+					drawRowButton(g, button, Component.translatable(ModLang.BTN_PRACTISE), visible && button.contains(mouseX, mouseY), 0xE0E0E0);
+				}
+				y += 15;
+				int layer = s.layer(method);
+				drawPips(g, x, y, layer);
+				g.drawString(font, Component.translatable(ModLang.METHODS_LAYER, layer, GhostMethods.LAYERS), x + 9 * 9 + 6, y, 0xB0B0B0);
+				y += 11;
+				boolean perfected = layer >= GhostMethods.LAYERS;
+				double fraction = perfected ? 1 : Mth.clamp(s.progress(method) / GhostMethods.layerCost(layer), 0, 1);
+				g.fill(x, y, rightEdge, y + 5, 0xFF6E5214);
+				g.fill(x + 1, y + 1, rightEdge - 1, y + 4, 0xFF0C0C14);
+				g.fill(x + 1, y + 1, x + 1 + (int) Math.round((rightEdge - x - 2) * fraction), y + 4, perfected ? 0xFFFFD700 : 0xFF4FC3D9);
+				y += 9;
+				Component progress = perfected ? Component.translatable(ModLang.METHODS_PERFECTED)
+						: Component.translatable(ModLang.METHODS_PROGRESS, (int) Math.floor(fraction * 100));
+				g.drawString(font, progress, x, y, perfected ? 0xFFD700 : 0x8FEAE4);
+				y += 11;
+				for (FormattedCharSequence line : gains.get(i)) {
+					g.drawString(font, line, x, y, 0x8A8A8A);
+					y += 10;
+				}
+			}
+			if (i < methods.length - 1) {
+				y += 4;
+				g.fill(x, y, rightEdge, y + 1, 0xFF3A3A4A);
+				y += 8;
+			}
+		}
+		g.disableScissor();
+		scrollbar(g, viewTop, viewBottom, contentHeight, methodScroll, methodMaxScroll, mouseX, mouseY);
+	}
+
+	/** A method's emblem (the one carved on its stele), 16 pixels square; one not yet learned, dark. */
+	private static void drawEmblem(GuiGraphics g, GhostMethod method, int x, int y, boolean lit) {
+		if (!lit) g.setColor(0.3F, 0.3F, 0.36F, 1.0F);
+		g.blit(new net.minecraft.resources.ResourceLocation(com.example.defyingtheheavens.DefyingTheHeavens.MOD_ID,
+				"textures/block/method_stele_" + method.getId() + ".png"), x, y, 16, 16, 0, 0, 16, 16, 16, 16);
+		g.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+	}
+
+	/** Nine pips, one a layer: gold to the layer reached, dark beyond it. */
+	private static void drawPips(GuiGraphics g, int x, int y, int layer) {
+		for (int i = 0; i < GhostMethods.LAYERS; i++) {
+			int px = x + i * 9;
+			boolean reached = i < layer;
+			g.fill(px, y, px + 7, y + 7, reached ? BORDER : 0xFF3A3A4A);
+			g.fill(px + 1, y + 1, px + 6, y + 6, reached ? 0xFFFFD700 : 0xFF14141E);
+			if (reached) g.fill(px + 1, y + 1, px + 3, y + 3, 0xFFFFF4C0); // a glint
+		}
+	}
+
+	/** A small framed button on a list row, in the switches' colours. */
+	private void drawRowButton(GuiGraphics g, RowButton<?> button, Component label, boolean hovered, int color) {
+		g.fill(button.x(), button.y(), button.x() + button.w(), button.y() + SWITCH_H, BORDER);
+		g.fill(button.x() + 1, button.y() + 1, button.x() + button.w() - 1, button.y() + SWITCH_H - 1, hovered ? TAB_HOVER : TAB_IDLE);
+		g.drawCenteredString(font, label, button.x() + button.w() / 2, button.y() + (SWITCH_H - 8) / 2, color);
+	}
+
+	// --- Spells: what the methods have taught, which is readied, and the spell wheel ---
+
+	/**
+	 * Each spell a method known teaches (cast or not yet): its icon and name, Ready (or "Readied"), its cost and cooldown, and
+	 * what it does; one not yet reached says which layer brings it. Or, arranging, the spell wheel's editor. Scrolls like the
+	 * Abilities tab.
+	 */
+	private void renderSpells(GuiGraphics g, int mouseX, int mouseY) {
+		if (!ClientMethods.anyKnown()) {
+			spellMaxScroll = 0;
+			renderPlaceholder(g, ModLang.SPELLS_TITLE, ModLang.SPELLS_EMPTY, ModLang.SPELLS_HINT);
+			return;
+		}
+		if (arrangingSpells) {
+			renderSpellWheelEditor(g, mouseX, mouseY);
+			return;
+		}
+		NetherworldState s = ClientCultivationData.get().netherworld();
+		int x = left + 14;
+		int rightEdge = left + LIST_RIGHT;
+		int viewTop = top + CONTENT_Y;
+		int viewBottom = top + ABILITIES_BOTTOM;
+		List<Spell> shown = Arrays.stream(Spell.values()).filter(spell -> s.knows(spell.method())).toList();
+		List<List<FormattedCharSequence>> descriptions = new ArrayList<>();
+		int contentHeight = 6;
+		for (int i = 0; i < shown.size(); i++) {
+			Spell spell = shown.get(i);
+			List<FormattedCharSequence> lines = ClientMethods.known(spell) ? font.split(spell.getDescription(), rightEdge - x) : List.of();
+			descriptions.add(lines);
+			contentHeight += 15 + 10 + lines.size() * 10 + (i < shown.size() - 1 ? 12 : 0);
+		}
+		spellMaxScroll = Math.max(0, contentHeight - (viewBottom - viewTop));
+		spellScroll = Mth.clamp(spellScroll, 0, spellMaxScroll);
+
+		g.enableScissor(left + 1, viewTop, left + WIDTH - 1, viewBottom);
+		int y = viewTop + 3 - spellScroll;
+		for (int i = 0; i < shown.size(); i++) {
+			Spell spell = shown.get(i);
+			boolean known = ClientMethods.known(spell);
+			boolean readied = known && spell == s.readiedSpell();
+			SpellWheelScreen.drawIcon(g, spell, x, y - 4, 16, known);
+			g.drawString(font, spell.getDisplayName(), x + 20, y, readied ? 0xFFD700 : known ? 0xE0E0E0 : 0x707070);
+			if (known) {
+				Component label = Component.translatable(readied ? ModLang.SPELLS_READIED : ModLang.SPELLS_READY);
+				int w = Math.max(SWITCH_W + 16, font.width(label) + 10);
+				RowButton<Spell> button = new RowButton<>(spell, rightEdge - w, y - 3, w);
+				boolean visible = button.y() >= viewTop && button.y() + SWITCH_H <= viewBottom;
+				if (visible) readyButtons.add(button);
+				drawRowButton(g, button, label, visible && button.contains(mouseX, mouseY), readied ? 0x69F0AE : 0xB0B0B0);
+			}
+			y += 15;
+			Component detail = known
+					? Component.translatable(ModLang.SPELLS_COST, Math.round(spell.cost())).append(", ")
+							.append(Component.translatable(ModLang.SPELLS_COOLDOWN, seconds(spell.cooldownTicks())))
+					: Component.translatable(ModLang.SPELLS_LOCKED, spell.method().getDisplayName(), spell.layer());
+			g.drawString(font, detail, x + 20, y, known ? 0x7FDBE8 : 0x707070);
+			y += 10;
+			for (FormattedCharSequence line : descriptions.get(i)) {
+				g.drawString(font, line, x, y, 0xB0B0B0);
+				y += 10;
+			}
+			if (i < shown.size() - 1) {
+				y += 4;
+				g.fill(x, y, rightEdge, y + 1, 0xFF3A3A4A);
+				y += 8;
+			}
+		}
+		g.disableScissor();
+		scrollbar(g, viewTop, viewBottom, contentHeight, spellScroll, spellMaxScroll, mouseX, mouseY);
+	}
+
+	/** Ticks as seconds, a decimal only where it isn't whole: "2", "1.5". */
+	private static String seconds(int ticks) {
+		return ticks % 20 == 0 ? String.valueOf(ticks / 20) : String.format(Locale.ROOT, "%.1f", ticks / 20.0);
+	}
+
+	/**
+	 * The spell wheel's editor, as the ability wheel's: the wheel on the left, the spells that can be cast on the right; dragging
+	 * one onto a slot puts it there (trading places with the slot's), a slot dragged off the wheel or right-clicked empties.
+	 */
+	private void renderSpellWheelEditor(GuiGraphics g, int mouseX, int mouseY) {
+		NetherworldState s = ClientCultivationData.get().netherworld();
+		int cx = wheelX();
+		int cy = wheelY();
+		int hoveredSlot = AbilityWheel.slotUnder(mouseX, mouseY, cx, cy, EDIT_RING, EDIT_SLOT);
+		Spell pointed = hoveredSlot < 0 ? null : ClientMethods.shown(hoveredSlot);
+
+		AbilityWheel.drawBackdrop(g, cx, cy, EDIT_BACKDROP);
+		for (int i = 0; i < Spells.WHEEL_SLOTS; i++) {
+			Spell spell = ClientMethods.shown(i);
+			if (draggedSpell != null && i == spellDragFrom) spell = null;
+			int sx = AbilityWheel.slotX(cx, i, EDIT_RING), sy = AbilityWheel.slotY(cy, i, EDIT_RING);
+			if (i == hoveredSlot) AbilityWheel.ring(g, sx, sy, EDIT_SLOT + 3, EDIT_SLOT + 1, 0x80FFD700);
+			AbilityWheel.disc(g, sx, sy, EDIT_SLOT + 1, spell == null ? AbilityWheel.SLOT_EMPTY_RIM : AbilityWheel.GOLD);
+			AbilityWheel.disc(g, sx, sy, EDIT_SLOT, i == hoveredSlot ? AbilityWheel.SLOT_HOVER : AbilityWheel.SLOT);
+			if (spell != null) SpellWheelScreen.drawIcon(g, spell, sx - 8, sy - 8, 16, true);
+		}
+
+		int px = left + PALETTE_X;
+		int y = top + CONTENT_Y;
+		g.drawString(font, Component.translatable(ModLang.SPELLS_TITLE), px, y, 0xFFD700);
+		y += 12;
+		int perRow = (WIDTH - 12 - PALETTE_X + CELL_GAP) / (CELL + CELL_GAP);
+		List<Spell> castable = Arrays.stream(Spell.values()).filter(ClientMethods::known).toList();
+		for (int i = 0; i < castable.size(); i++) {
+			Spell spell = castable.get(i);
+			SpellCell cell = new SpellCell(spell, px + (i % perRow) * (CELL + CELL_GAP), y + (i / perRow) * (CELL + CELL_GAP));
+			spellPalette.add(cell);
+			boolean hovered = draggedSpell == null && cell.contains(mouseX, mouseY);
+			if (hovered) pointed = spell;
+			boolean placed = false;
+			for (int slot = 0; slot < Spells.WHEEL_SLOTS; slot++) placed |= s.spellSlot(slot) == spell;
+			g.fill(cell.x(), cell.y(), cell.x() + CELL, cell.y() + CELL, placed ? AbilityWheel.GOLD : AbilityWheel.SLOT_OFF_RIM);
+			g.fill(cell.x() + 1, cell.y() + 1, cell.x() + CELL - 1, cell.y() + CELL - 1, hovered ? AbilityWheel.SLOT_HOVER : AbilityWheel.SLOT);
+			SpellWheelScreen.drawIcon(g, spell, cell.x() + (CELL - 16) / 2, cell.y() + (CELL - 16) / 2, 16, true);
+		}
+		y += ((castable.size() + perRow - 1) / perRow) * (CELL + CELL_GAP) + 4;
+		int textWidth = WIDTH - 12 - PALETTE_X;
+		Component hint = Component.translatable(ModLang.SPELLS_ARRANGE_HINT,
+				ModKeybinds.SPELL_WHEEL.getTranslatedKeyMessage().copy().withStyle(style -> style.withColor(0xFFD700)),
+				ModKeybinds.CAST_SPELL.getTranslatedKeyMessage().copy().withStyle(style -> style.withColor(0xFFD700)));
+		for (FormattedCharSequence line : font.split(hint, textWidth)) {
+			g.drawString(font, line, px, y, 0x8A8A8A);
+			y += 10;
+		}
+
+		int centreWidth = 2 * (EDIT_RING - EDIT_SLOT) - 8;
+		Spell named = draggedSpell != null ? draggedSpell : pointed;
+		List<FormattedCharSequence> lines = font.split(named == null ? Component.translatable(ModLang.SPELL_WHEEL_TITLE) : named.getDisplayName(), centreWidth);
+		int ty = cy - lines.size() * 10 / 2;
+		for (FormattedCharSequence line : lines) {
+			g.drawCenteredString(font, line, cx, ty, 0xFFD700);
+			ty += 10;
+		}
+	}
+
+	/** Puts a spell in a slot of the spell wheel (null empties it): at once here, and on the server, which syncs back. */
+	private void placeSpell(int slot, Spell spell) {
+		ClientCultivationData.get().netherworld().setSpellSlot(slot, spell);
+		ClientMethods.setSlot(slot, spell);
+		if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+	}
+
+	// --- Placeholders: a title, what's missing, and a hint ---
 
 	private void renderPlaceholder(GuiGraphics g, String titleKey, String emptyKey, String hintKey) {
 		int cx = left + WIDTH / 2;

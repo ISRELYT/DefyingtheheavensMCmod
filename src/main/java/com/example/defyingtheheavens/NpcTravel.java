@@ -37,9 +37,10 @@ import java.util.ListIterator;
  * appears out of thin air where it's bound: someone waiting there sees it fly in from back along its way.
  * <p>
  * What a journey comes to is settled at its end: one leaving its sect becomes a rogue (or goes into seclusion), one coming
- * to join a sect joins (SectManager#admit), and one going to ascend tries the rift at Overworld 0, 0 (from the Nether or the
- * End it rises out of sight first, and goes on from the matching place in the Overworld): lost in the Spatial Gap, or out on
- * the Upper Realm side, close to the rift. Unseen, the land at a journey's end is loaded for a moment if nobody is there
+ * to join a sect joins (SectManager#admit), and one going to ascend tries the rift at Overworld 0, 0 (from the End it rises
+ * out of sight first, and goes on from the matching place in the Overworld): lost in the Spatial Gap, or out on the Upper Realm
+ * side, close to the rift. One ascending from the Nether goes to the Nether's own rift instead, up the Soul River: its soul
+ * scattered on the way, or out at the Ghost Gate as one of the dead. Unseen, the land at a journey's end is loaded for a moment if nobody is there
  * (NpcLedger#wake). Saved with the Overworld, so journeys survive restarts.
  * <p>
  * Travellers are checked twice a second whether they are ticking or not ({@link #sweep}): one in loaded land that has stopped
@@ -131,7 +132,12 @@ public class NpcTravel extends SavedData {
 				&& level.getNearestPlayer(npc.getX(), npc.getY(), npc.getZ(), reach(server) + SLACK, false) != null) return;
 		BlockPos from = npc.blockPosition();
 		if (ascending) {
-			// To the rift; from the Nether or the End, it rises out of sight and goes on from the matching place in the Overworld.
+			// From the Nether, to its own rift at Nether 0, 0 (the Journey knows its dimension: the Soul River, see tryTheRift).
+			if (ascentRift(level.dimension()) == Level.NETHER) {
+				schedule(server, npc, Level.NETHER, from, new BlockPos(SpatialRiftBlock.RIFT_X, from.getY(), SpatialRiftBlock.RIFT_Z), true);
+				return;
+			}
+			// To the Overworld's rift; from the End, it rises out of sight and goes on from the matching place in the Overworld.
 			if (level.dimension() != Level.OVERWORLD) from = overworldSide(level, from);
 			schedule(server, npc, Level.OVERWORLD, from, new BlockPos(SpatialRiftBlock.RIFT_X, from.getY(), SpatialRiftBlock.RIFT_Z), true);
 			return;
@@ -142,6 +148,19 @@ public class NpcTravel extends SavedData {
 			return;
 		}
 		schedule(server, npc, level.dimension(), from, target, false);
+	}
+
+	/**
+	 * Which rift an NPC ascending from {@code from} goes to (the dimension it stands in): the Nether's own, up the Soul River to
+	 * the Netherworld, from the Nether; the Overworld's, to the Upper Realm, from anywhere else.
+	 */
+	public static ResourceKey<Level> ascentRift(ResourceKey<Level> from) {
+		return from == Level.NETHER ? Level.NETHER : Level.OVERWORLD;
+	}
+
+	/** Where an NPC through {@code rift}'s rift comes out: the Netherworld from the Nether's, the Upper Realm from the Overworld's. */
+	public static ResourceKey<Level> ascentDestination(ResourceKey<Level> rift) {
+		return rift == Level.NETHER ? ModDimensions.NETHERWORLD : ModDimensions.UPPER_REALM;
 	}
 
 	/** The Overworld place matching {@code pos} in the Nether (eight times as far out) or the End (out from the rift). */
@@ -256,6 +275,7 @@ public class NpcTravel extends SavedData {
 	 * Upper Realm side. @return its way on from the rift, or null if it was lost
 	 */
 	private static Journey tryTheRift(MinecraftServer server, ServerLevel level, Journey journey) {
+		if (journey.dimension() == Level.NETHER) return tryTheSoulRiver(server, level, journey);
 		ServerLevel upper = server.getLevel(ModDimensions.UPPER_REALM);
 		Entity entity = EntityType.loadEntityRecursive(journey.entity(), level, e -> e);
 		if (!(entity instanceof CultivatorNpc npc)) return null;
@@ -267,6 +287,38 @@ public class NpcTravel extends SavedData {
 		CompoundTag tag = new CompoundTag();
 		if (!npc.saveAsPassenger(tag)) return null;
 		return journey(server, upper.dimension(), upperEntry(), upperLanding(level.getRandom()), false, tag);
+	}
+
+	/**
+	 * At the Nether's rift, unseen: up the Soul River, its soul scattered on the way ({@link CultivatorNpc#ASCENSION_SUCCESS}), or
+	 * come out at the Ghost Gate as one of the dead, its body shed (GhostCultivatorNpc#shedBody). @return its way on to the
+	 * Gate's plaza, or null if it was lost
+	 */
+	private static Journey tryTheSoulRiver(MinecraftServer server, ServerLevel nether, Journey journey) {
+		ServerLevel netherworld = server.getLevel(ModDimensions.NETHERWORLD);
+		Entity entity = EntityType.loadEntityRecursive(journey.entity(), nether, e -> e);
+		if (!(entity instanceof CultivatorNpc npc)) return null;
+		if (netherworld == null || nether.getRandom().nextFloat() >= CultivatorNpc.ASCENSION_SUCCESS) {
+			DefyingTheHeavens.LOGGER.info("A {}'s soul scattered on the Soul River on the way up to the Netherworld", npc.getTitle().getId());
+			return null;
+		}
+		GhostCultivatorNpc ghost = GhostCultivatorNpc.shedBody(npc, netherworld);
+		CompoundTag tag = new CompoundTag();
+		if (ghost == null || !ghost.saveAsPassenger(tag)) return null;
+		BlockPos arrival = GhostGate.at(netherworld, GhostGate.ARRIVAL);
+		return journey(server, netherworld.dimension(), arrival, arrival, false, tag);
+	}
+
+	/**
+	 * Sends {@code npc} (not yet in any world) to {@code target} in {@code level}, there when that land is next loaded: one just
+	 * come up into the Netherworld while nobody is at the Gate.
+	 */
+	public static void sendTo(CultivatorNpc npc, ServerLevel level, BlockPos target) {
+		CompoundTag tag = new CompoundTag();
+		if (!npc.saveAsPassenger(tag)) return;
+		NpcTravel data = get(level.getServer());
+		data.journeys.add(journey(level.getServer(), level.dimension(), target, target, false, tag));
+		data.setDirty();
 	}
 
 	/** Its journey done, unseen: it sets down where it was bound, and what the journey was for comes about. */

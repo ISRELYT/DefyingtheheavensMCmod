@@ -12,6 +12,10 @@ public final class ModKeybinds {
 	public static KeyMapping CIRCULATE;
 	/** Held down to show the ability wheel ({@link AbilityWheelScreen}); letting go closes it. */
 	public static KeyMapping ABILITY_WHEEL;
+	/** Held down to show the spell wheel ({@link SpellWheelScreen}); letting go closes it. */
+	public static KeyMapping SPELL_WHEEL;
+	/** Casts the spell readied on the spell wheel. */
+	public static KeyMapping CAST_SPELL;
 
 	public static void register() {
 		OPEN_MENU = KeyBindingHelper.registerKeyBinding(new KeyMapping(
@@ -22,6 +26,10 @@ public final class ModKeybinds {
 				ModLang.KEY_CIRCULATE, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_R, ModLang.KEY_CATEGORY));
 		ABILITY_WHEEL = KeyBindingHelper.registerKeyBinding(new KeyMapping(
 				ModLang.KEY_ABILITY_WHEEL, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_Z, ModLang.KEY_CATEGORY));
+		SPELL_WHEEL = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+				ModLang.KEY_SPELL_WHEEL, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_V, ModLang.KEY_CATEGORY));
+		CAST_SPELL = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+				ModLang.KEY_CAST_SPELL, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_C, ModLang.KEY_CATEGORY));
 	}
 
 	private ModKeybinds() {}
