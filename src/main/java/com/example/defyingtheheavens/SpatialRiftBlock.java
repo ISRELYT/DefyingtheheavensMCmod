@@ -62,19 +62,41 @@ public class SpatialRiftBlock extends BaseEntityBlock {
 		return Shapes.empty();
 	}
 
+	/**
+	 * Players a rift has taken hold of, to be carried on as soon as the step that brought them in is done, and the server tick
+	 * it took hold (a hold older than a second is stale: a world closed before its task ran, say).
+	 */
+	private static final java.util.Map<java.util.UUID, Integer> PENDING = new java.util.HashMap<>();
+
+	/**
+	 * A player walked in: carried on to where the rift leads, but not at once. A walker touches the rift inside the server's
+	 * handling of their own step (it moves them along it to check it), and carrying them to another dimension right there makes
+	 * the server, finishing that check, take the step for a wrong move and snap them back to where it ended: off the Soul River
+	 * or the Spatial Gap's course in the new dimension, facing however they walked in. So it waits for the server's next task.
+	 */
 	@Override
 	public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
 		if (level.isClientSide() || !(entity instanceof ServerPlayer player)) return;
-		try {
-			switch (leads(level.dimension())) {
-				case UPPER_REALM -> SpatialTrialHandler.beginAscension(player);
-				case NETHERWORLD -> SoulRiver.beginAscent(player);
-				case DOWN_TO_NETHER -> SoulRiver.beginDescent(player, true);
-				case NOWHERE -> { }
+		Leads leads = leads(level.dimension());
+		MinecraftServer server = player.getServer();
+		if (leads == Leads.NOWHERE || server == null) return;
+		Integer held = PENDING.get(player.getUUID());
+		if (held != null && Math.abs(server.getTickCount() - held) < 20) return;
+		PENDING.put(player.getUUID(), server.getTickCount());
+		server.tell(new net.minecraft.server.TickTask(server.getTickCount(), () -> {
+			PENDING.remove(player.getUUID());
+			if (player.isRemoved() || player.level() != level) return; // gone, or carried off some other way meanwhile
+			try {
+				switch (leads) {
+					case UPPER_REALM -> SpatialTrialHandler.beginAscension(player);
+					case NETHERWORLD -> SoulRiver.beginAscent(player);
+					case DOWN_TO_NETHER -> SoulRiver.beginDescent(player, true);
+					case NOWHERE -> { }
+				}
+			} catch (Exception e) {
+				DefyingTheHeavens.LOGGER.error("Rift failed to carry {} on from {}", player.getScoreboardName(), level.dimension().location(), e);
 			}
-		} catch (Exception e) {
-			DefyingTheHeavens.LOGGER.error("Rift failed to carry {} on from {}", player.getScoreboardName(), level.dimension().location(), e);
-		}
+		}));
 	}
 
 	@Override
