@@ -1,6 +1,7 @@
 package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.DefyingTheHeavens;
+import com.example.defyingtheheavens.client.mixin.HumanoidModelInvoker;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -8,6 +9,7 @@ import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.math.Axis;
 import net.fabricmc.fabric.api.client.rendering.v1.CoreShaderRegistrationCallback;
@@ -16,8 +18,11 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.model.geom.ModelLayers;
+import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
@@ -53,6 +58,8 @@ public final class SoulRenderer {
 	/** The mist a hazily seen soul trails (violet), and the faint trail a ghost leaves (cyan). */
 	private static final float[] SOUL_MIST = {0.55f, 0.3f, 1.0f};
 	private static final float[] DEAD_MIST = {0.3f, 0.9f, 0.95f};
+	/** How far over the ground one of the dead floats as it sits in meditation (blocks). */
+	private static final float SEATED_HOVER = 0.25f;
 
 	public static void register() {
 		CoreShaderRegistrationCallback.EVENT.register(context ->
@@ -170,23 +177,29 @@ public final class SoulRenderer {
 		Vec3 motion = soul.position().subtract(soul.xo, soul.yo, soul.zo);
 		double horizontal = Math.sqrt(motion.x * motion.x + motion.z * motion.z);
 		float lean = look == Look.SOUL ? (float) Math.min(35, horizontal * 60) : 0;
+		// One of the dead in meditation sits cross-legged (HumanoidModelMixin), floating a little over the ground.
+		boolean seated = dead && LotusPose.meditating(soul);
 
 		PoseStack pose = context.matrixStack();
 		pose.pushPose();
-		pose.translate(at.x - cam.x, at.y - cam.y + Mth.sin(age * 0.08f) * 0.06f, at.z - cam.z);
+		pose.translate(at.x - cam.x, at.y - cam.y + Mth.sin(age * 0.08f) * 0.06f + (seated ? SEATED_HOVER : 0), at.z - cam.z);
 		pose.mulPose(Axis.YP.rotationDegrees(180.0f - yaw));
 		pose.mulPose(Axis.XP.rotationDegrees(-lean));
 		// Its size (the Gate's keepers stand three times a man's height: GhostCultivatorNpc#getScale), from its feet.
 		float scale = soul.getScale();
 		if (scale != 1.0f) pose.scale(scale, scale, scale);
 
-		model.attackTime = look == Look.SOUL ? 0 : soul.getAttackAnim(partial);
+		// The dead strike as the living do, the arm swung (a projected soul's never is).
+		model.attackTime = look == Look.SOUL && !dead ? 0 : soul.getAttackAnim(partial);
 		model.riding = false;
 		model.young = false;
 		model.crouching = false;
 		model.setupAnim(soul, 0, 0, age, look == Look.SOUL ? 0 : Mth.wrapDegrees(headYaw - yaw), pitch);
-		ghostPose(model, age);
-		if (look == Look.HUNGRY) reachingPose(model, age);
+		if (!seated) {
+			ghostPose(model, age);
+			if (look == Look.HUNGRY) reachingPose(model, age);
+			if (model.attackTime > 0) swingPose(model, soul, age);
+		}
 		// A beast's head in place of the man's: posed as his would be, his head and hat hidden while the body is drawn.
 		if (beast != null) beast.follow(model.head);
 		model.head.visible = model.hat.visible = beast == null;
@@ -232,6 +245,51 @@ public final class SoulRenderer {
 		pose.popPose();
 		if (dead) drawMist(context, soul, 0.6f, partial, DEAD_MIST, scale);
 		else if (clarity < 1) drawMist(context, soul, clarity, partial, SOUL_MIST, scale);
+	}
+
+	/**
+	 * A ghost's own arm in first person (PlayerRendererMixin, the model already posed for it): the dead's cyan light with its
+	 * glow, as everyone else sees the ghost. Without the shader, the skin tinted cyan and faded.
+	 */
+	public static void drawGhostArm(PoseStack pose, MultiBufferSource buffers, ResourceLocation skin, ModelPart arm, ModelPart sleeve, int light) {
+		arm.xRot = 0;
+		sleeve.xRot = 0;
+		if (soulShader == null) {
+			VertexConsumer faded = buffers.getBuffer(RenderType.entityTranslucent(skin));
+			arm.render(pose, faded, light, OverlayTexture.NO_OVERLAY, 0.35f, 0.95f, 1.0f, 0.55f);
+			sleeve.render(pose, faded, light, OverlayTexture.NO_OVERLAY, 0.35f, 0.95f, 1.0f, 0.55f);
+			return;
+		}
+		// As the sense layer draws the dead (SenseOverlay): blended, tested but not written, both faces.
+		RenderSystem.enableBlend();
+		RenderSystem.enableDepthTest();
+		RenderSystem.depthMask(false);
+		RenderSystem.disableCull();
+		RenderSystem.setShader(() -> soulShader);
+		RenderSystem.setShaderTexture(0, skin);
+		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+				GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+		drawArm(pose, arm, sleeve, 1, 1.0f);
+		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
+				GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
+		drawArm(pose, arm, sleeve, 0, 1.07f);
+		RenderSystem.depthMask(true);
+		RenderSystem.enableCull();
+		RenderSystem.defaultBlendFunc();
+		RenderSystem.disableBlend();
+	}
+
+	/** The arm and its sleeve, {@code red} 1 the body pass and 0 the halo (see drawModel), {@code size} times as large. */
+	private static void drawArm(PoseStack pose, ModelPart arm, ModelPart sleeve, float red, float size) {
+		arm.xScale = arm.yScale = arm.zScale = size;
+		sleeve.xScale = sleeve.yScale = sleeve.zScale = size;
+		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
+		buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.NEW_ENTITY);
+		arm.render(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, red, 0, 1, 1);
+		sleeve.render(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, red, 0, 1, 1);
+		BufferUploader.drawWithShader(buffer.end());
+		arm.xScale = arm.yScale = arm.zScale = 1;
+		sleeve.xScale = sleeve.yScale = sleeve.zScale = 1;
 	}
 
 	/** A ghost as the Ghost Eye sees it behind walls (GhostEye, which sets the depth test to draw only what is hidden). */
@@ -380,6 +438,17 @@ public final class SoulRenderer {
 		model.leftSleeve.copyFrom(model.leftArm);
 		model.rightSleeve.copyFrom(model.rightArm);
 		model.hat.copyFrom(model.head);
+	}
+
+	/**
+	 * A blow (a fist, or what it holds) over the drifting pose: the arm swung as the living swing theirs (HumanoidModel's own
+	 * swing, which the drifting pose took away), the outer layers following it.
+	 */
+	private static void swingPose(PlayerModel<?> model, LivingEntity soul, float age) {
+		((HumanoidModelInvoker) (Object) model).dth$setupAttackAnimation(soul, age);
+		model.leftSleeve.copyFrom(model.leftArm);
+		model.rightSleeve.copyFrom(model.rightArm);
+		model.jacket.copyFrom(model.body);
 	}
 
 	/** Upright and drifting: legs together and trailing behind like a ghost's, arms loose at its sides, gently swaying. */

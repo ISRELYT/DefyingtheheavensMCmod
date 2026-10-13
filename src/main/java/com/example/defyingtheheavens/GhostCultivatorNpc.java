@@ -198,6 +198,12 @@ public class GhostCultivatorNpc extends CultivatorNpc implements Ghostly {
 		setPersistenceRequired();
 	}
 
+	/** Where it keeps its post (one of the Gate's keepers), or null. */
+	public BlockPos keeperPost() { return post; }
+
+	/** Its post moved (GhostGate#keepOfficials, as Meng Po's pavilion became her hall): it keeps the new one. */
+	public void moveKeeperPost(BlockPos post) { this.post = post; }
+
 	/** Its ghost method: from Foundation Building on, one of the three, by its UUID and the methods' rarity; null below. */
 	public GhostMethod method() {
 		if (getRank() < PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.EARLY)) return null;

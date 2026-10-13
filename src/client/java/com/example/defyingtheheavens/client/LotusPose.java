@@ -1,10 +1,20 @@
 package com.example.defyingtheheavens.client;
 
+import com.example.defyingtheheavens.CultivatorNpc;
+import com.example.defyingtheheavens.ModDimensions;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.PlayerModel;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 
 /** The cross-legged meditation pose, shared by meditating players, their bodies, and the Nascent Soul in the Inner Realm. */
 public final class LotusPose {
+	/** Whether {@code entity} sits in meditation: a player (but a soul walking its Inner Realm stands and walks), an NPC cultivator. */
+	public static boolean meditating(LivingEntity entity) {
+		return entity instanceof Player ? ClientMeditationTracker.isMeditating(entity.getUUID()) && !ModDimensions.isInnerRealm(entity.level().dimension())
+				: entity instanceof CultivatorNpc npc && npc.isMeditating();
+	}
+
 	/** Poses {@code model} (already set up for its entity) cross-legged on the ground. */
 	public static void apply(HumanoidModel<?> model) {
 		// Model space: y = 24 is the ground. Drop everything 10px so the hips sit on the floor.

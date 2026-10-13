@@ -655,8 +655,8 @@ North to south:
   Netherworld Breathing Art faces the arrival;
 - the **Gate** itself, two towering pillars of blackstone striped with bone, chains and lanterns hanging from the lintel,
   **Ox-Head** and **Horse-Face** standing guard before it;
-- the **Naihe Bridge** over a channel of the Wangchuan, the river of forgetting, with **Meng Po's** pavilion and pot at
-  its near end;
+- the **Naihe Bridge** over a channel of the Wangchuan, the river of forgetting, with **Meng Po's hall** and her pot by
+  its near end, on the bank west of the Gate;
 - the **Wheel of Reincarnation**, turning slowly on its dais on the far bank;
 - and west of the plaza, the tall **Terrace for Gazing Homeward**, its ramp rising from the plaza's edge.
 
@@ -737,11 +737,14 @@ A ghost:
 - is drawn as cyan light in its own skin, brightest at its edges, with its name above it, and is seen by everyone in the
   Netherworld. It walks with gravity and walls, and takes no fall, drowning, fire, lava, suffocation, freezing or hunger.
   Its tread makes no sound: no footsteps on any block, no splashing, no thud when it lands (on its own client as on
-  everyone else's). Ghost cultivators and Hungry Ghosts walk as silently.
+  everyone else's). Ghost cultivators and Hungry Ghosts walk as silently. In first person its own hand is the same cyan
+  light; it swings its arm when it strikes, as the living do, and when it meditates it sits cross-legged, floating a
+  quarter of a block off the ground.
 - has **half its living hearts**, plus a heart for every layer of the Netherworld Breathing Art, and heals a heart every
   two seconds.
 - **touches nothing of the living world.** It can't break or place, use items or blocks (but it can use the dead's own:
-  steles, Meng Po's pot, the Wheel), drop or pick up, ride, take a rift or portal, meditate on the main track, break
+  steles, Meng Po's pot, the Wheel), drop or pick up anything (but the experience that comes to it, which it takes as
+  the living do), ride, take a rift or portal, meditate on the main track, break
   through, fly on qi or a sword, Realm Suppress, turn inward or project its soul. Arrows, blasts and ordinary mobs pass
   through it. It cultivates only its ghost method, half again as fast as the living do (below).
 - **is struck** only by what touches the dead: another ghost's or a ghostly creature's blows, ghost fire, a Peach Wood
@@ -879,9 +882,16 @@ blocks tall and 1.8 across, their eyes, reach and stride to match: `GhostCultiva
   forward; Horse-Face a horse's, its long face sloping to a broad nose, a white blaze down it, ears pricked and a black
   mane down the neck. Besides the Yin Jade and herbs every ghost sells, they sell the living Yang Preservation Pills, a
   Peach Wood Sword and Ghost-Quelling Talismans (two for 12), the means to keep the restless dead in order.
-- **Meng Po**, Keeper of the Naihe Bridge, stands by her pot and never fights; ask her about the soup. Her pavilion's
-  roof stands six blocks up, clear of her head; a Gate built before the keepers grew has its low pavilion raised once, the
-  next time the server starts.
+- **Meng Po**, Keeper of the Naihe Bridge, stands in her hall with her pot at her side and never fights; ask her about
+  the soup. Her hall, built to her height on the bank west of the Gate, is raised a step off the ground (stairs up along
+  its east side from the plaza and the Gate's way, and from the north), railed over the water, with six red columns
+  under gold capitals and red beams, a screen at its back, and a double roof of deepslate tiles 17 blocks high, its
+  eaves turned up at the corners and a lantern on the ridge. A Gate built with one of the old pavilions (small, against
+  the Gate's west pillar) has it replaced by the hall the next time the server starts: the pavilion taken away, the
+  pillar made whole, and Meng Po set down at her new post.
+
+Their plates (name, title, health and path) are 1.7 times the size of a man's, to be read from as far off as they stand,
+and float clear over the beasts' horns and ears (`CultivatorNpcRenderer#plateSize`, `GhostlyRenderers#plateHeight`).
 
 **Hungry Ghosts** are the dead who starved in life: gaunt, translucent cyan, about Qi Refining strength (8 hearts),
 in packs of two to four, in any light, most of all in the Bone Wastes; never on the Gate's ground, nor on Peaceful. They go for the

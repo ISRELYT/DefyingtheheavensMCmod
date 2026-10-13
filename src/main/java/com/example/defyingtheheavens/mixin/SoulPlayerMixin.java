@@ -7,6 +7,7 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
@@ -48,10 +49,15 @@ public abstract class SoulPlayerMixin {
 		if (Incorporeal.is((Player) (Object) this)) cir.setReturnValue(false);
 	}
 
-	/** Items, experience and arrows lying about: a soul touches none of them. */
+	/**
+	 * Items, experience and arrows lying about: a soul touches none of them. A ghost takes the experience that comes to it (drawn
+	 * to the nearest player, it would only circle the ghost for ever), but nothing else.
+	 */
 	@Inject(method = "touch", at = @At("HEAD"), cancellable = true)
 	private void dth$soulTouchesNothing(Entity entity, CallbackInfo ci) {
-		if (Incorporeal.is((Player) (Object) this)) ci.cancel();
+		Player self = (Player) (Object) this;
+		if (entity instanceof ExperienceOrb && GhostSystem.isGhost(self) && !SoulProjection.isSoul(self)) return;
+		if (Incorporeal.is(self)) ci.cancel();
 	}
 
 	/** The server never moves a soul itself (no gravity to apply): its client flies it. */

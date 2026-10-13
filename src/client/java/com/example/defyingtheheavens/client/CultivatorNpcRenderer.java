@@ -87,15 +87,26 @@ public class CultivatorNpcRenderer extends HumanoidMobRenderer<CultivatorNpc, Pl
 		plate(npc, poseStack, buffers, light, partialTick);
 	}
 
+	/**
+	 * How high over its feet the plate floats: over its head; lower over one sitting cross-legged (so a seated crowd's plates
+	 * sit beneath the one standing before them, the lecturer's), lower still over a sleeper, whose box is a flat sliver.
+	 */
+	protected double plateHeight(CultivatorNpc npc) {
+		return npc.hasPose(Pose.SLEEPING) ? 0.9 : npc.isMeditating() ? npc.getBbHeight() - 0.2 : npc.getBbHeight() + 0.5;
+	}
+
+	/** How large its plate is: one taller than a man (the Gate's keepers) carries a larger one, read from as far as it stands. */
+	protected float plateSize(CultivatorNpc npc) {
+		return Mth.clamp(Mth.sqrt(npc.getScale()), 1.0f, 2.0f);
+	}
+
 	private void plate(CultivatorNpc npc, PoseStack poseStack, MultiBufferSource buffers, int light, float partialTick) {
 		Font font = getFont();
 		poseStack.pushPose();
-		// The plate floats over its head: lower over one sitting cross-legged (so a seated crowd's plates sit beneath the one
-		// standing before them, the lecturer's), lower still over a sleeper, whose box is a flat sliver.
-		double over = npc.hasPose(Pose.SLEEPING) ? 0.9 : npc.isMeditating() ? npc.getBbHeight() - 0.2 : npc.getBbHeight() + 0.5;
-		poseStack.translate(0, over, 0);
+		poseStack.translate(0, plateHeight(npc), 0);
 		poseStack.mulPose(entityRenderDispatcher.cameraOrientation());
-		poseStack.scale(-0.025f, -0.025f, 0.025f);
+		float size = 0.025f * plateSize(npc);
+		poseStack.scale(-size, -size, size);
 		Matrix4f matrix = poseStack.last().pose();
 		int background = (int) (Minecraft.getInstance().options.getBackgroundOpacity(0.25f) * 255.0f) << 24;
 

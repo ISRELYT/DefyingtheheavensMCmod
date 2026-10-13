@@ -43,6 +43,16 @@ final class GhostlyRenderers {
 		protected boolean drawsBody(CultivatorNpc npc) {
 			return false;
 		}
+
+		/**
+		 * Over a beast's head, clear of its horns and ears (rising a fifth of its height over where a man's head ends), even
+		 * seen from close under it, where they reach up across the plate.
+		 */
+		@Override
+		protected double plateHeight(CultivatorNpc npc) {
+			double over = super.plateHeight(npc);
+			return npc instanceof GhostCultivatorNpc ghost && ghost.getRole().beastHead() != null ? over + 0.7 * npc.getScale() : over;
+		}
 	}
 
 	/** A Hungry Ghost: nothing but a name tag, if one was put on it. */

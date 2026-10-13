@@ -37,7 +37,7 @@ import java.util.List;
  *   <li>the <b>Ghost Gate</b> on its south side: two towering pillars of blackstone striped with bone, a lintel 12 blocks up,
  *   chains and soul lanterns hanging from it;</li>
  *   <li>a short way south to the <b>Naihe Bridge</b>, arched over a channel of the <b>Wangchuan</b>, the river of forgetting,
- *   with <b>Meng Po's pavilion</b> at its near end;</li>
+ *   with <b>Meng Po's hall</b> by its near end, on the bank west of the gate (built for her three times a man's height);</li>
  *   <li>on the far bank, the <b>Wheel of Reincarnation</b> on its dais, flanked by braziers;</li>
  *   <li>west of the plaza, the tall <b>Terrace for Gazing Homeward</b>, its ramp rising from the plaza's edge.</li>
  * </ul>
@@ -68,8 +68,13 @@ public final class GhostGate {
 	public static final BlockPos WHEEL = new BlockPos(0, 6, 32);
 	/** The top of the Terrace for Gazing Homeward, where its stone stands. */
 	public static final BlockPos TERRACE_TOP = new BlockPos(-23, 10, 0);
-	/** Meng Po's pot, in her pavilion at the near end of the bridge. */
-	public static final BlockPos MENG_PO_POT = new BlockPos(-9, 1, 15);
+	/** Meng Po's pot, in her hall by the near end of the bridge (on its raised floor, over a soul campfire), at her side. */
+	public static final BlockPos MENG_PO_POT = new BlockPos(-16, 2, 10);
+	/**
+	 * Where Meng Po stands: in the middle of her hall, facing the way in, her pot at her side (not before her, where its
+	 * smoke would rise across her face and plate).
+	 */
+	public static final BlockPos MENG_PO_POST = new BlockPos(-18, 1, 12);
 	/** Where Ox-Head and Horse-Face keep the gate, either side of it. */
 	public static final BlockPos OX_HEAD_POST = new BlockPos(-4, 0, 9), HORSE_FACE_POST = new BlockPos(4, 0, 9);
 	/** A stele of the Netherworld Breathing Art on the plaza, facing the arrival: the foundation, where every ghost can find it. */
@@ -102,7 +107,7 @@ public final class GhostGate {
 				DefyingTheHeavens.LOGGER.info("Ghost Gate built at {}, {}, {} in {} ms", X, y, Z, System.currentTimeMillis() - start);
 			}
 			if (data.pavilion < PAVILION_VERSION) {
-				raisePavilion(level, data.y); // Meng Po stands three times a man's height now
+				replacePavilion(level, data.y); // Meng Po stands three times a man's height now: her hall, for her
 				data.pavilion = PAVILION_VERSION;
 				data.setDirty();
 			}
@@ -195,7 +200,7 @@ public final class GhostGate {
 		wayDownShrine(level, y);
 		gate(level, y);
 		channelAndBridge(level, y);
-		mengPoPavilion(level, y);
+		mengPoHall(level, y);
 		wheelDais(level, y);
 		terrace(level, y);
 		// Plants knocked loose while the ground was laid (the land's own spider lilies and roots) leave no litter behind.
@@ -268,16 +273,7 @@ public final class GhostGate {
 
 	/** The Ghost Gate: pillars of blackstone striped with bone, a lintel 12 up, chains and soul lanterns hung from it. */
 	private static void gate(ServerLevel level, int y) {
-		for (int side : new int[] {-6, 6}) {
-			for (int x = side - 1; x <= side + 1; x++) {
-				for (int z = 11; z <= 13; z++) {
-					for (int dy = 0; dy < 12; dy++) {
-						boolean stripe = (x == side || z == 12) && !(x == side && z == 12) && dy > 0 && dy < 11;
-						put(level, x, y + dy, z, stripe ? BONE.setValue(RotatedPillarBlock.AXIS, Direction.Axis.Y) : dy == 0 || dy == 11 ? CHISELED : BRICKS);
-					}
-				}
-			}
-		}
+		for (int side : new int[] {-6, 6}) pillar(level, y, side);
 		for (int x = -8; x <= 8; x++) {
 			for (int z = 11; z <= 13; z++) {
 				put(level, x, y + 12, z, Math.abs(x) == 8 ? CHISELED : BRICKS);
@@ -301,6 +297,18 @@ public final class GhostGate {
 		// Paved through the gate and on to the bridge.
 		for (int x = -4; x <= 4; x++) {
 			for (int z = 11; z <= 16; z++) put(level, x, y - 1, z, Math.abs(x) == 4 ? POLISHED : BRICKS);
+		}
+	}
+
+	/** One of the gate's pillars, three blocks square about x {@code side}, z 12: blackstone striped with bone, 12 high. */
+	private static void pillar(ServerLevel level, int y, int side) {
+		for (int x = side - 1; x <= side + 1; x++) {
+			for (int z = 11; z <= 13; z++) {
+				for (int dy = 0; dy < 12; dy++) {
+					boolean stripe = (x == side || z == 12) && !(x == side && z == 12) && dy > 0 && dy < 11;
+					put(level, x, y + dy, z, stripe ? BONE.setValue(RotatedPillarBlock.AXIS, Direction.Axis.Y) : dy == 0 || dy == 11 ? CHISELED : BRICKS);
+				}
+			}
 		}
 	}
 
@@ -350,48 +358,168 @@ public final class GhostGate {
 		}
 	}
 
-	/** Meng Po's pavilion: its roof this high over the floor, room for her (three times a man's height, 5.4 blocks). */
-	private static final int PAVILION_ROOF = 6;
-	/** The pavilion as it is built now; a gate built with an older one has it raised once (Data#pavilion). */
-	private static final int PAVILION_VERSION = 2;
+	/**
+	 * What Meng Po has as it is built now (3: her hall); a gate built with one of the old pavilions has it replaced once
+	 * (Data#pavilion).
+	 */
+	private static final int PAVILION_VERSION = 3;
+
+	// Meng Po's hall: its raised floor (relative x, z) and its columns, and how tall they stand on the floor (up to the beams):
+	// room under the roof for her, three times a man's height (5.4 blocks), and for her plate and what she says over it.
+	private static final int HALL_WEST = -23, HALL_EAST = -11, HALL_NORTH = 8, HALL_SOUTH = 16;
+	private static final int[] HALL_COLUMNS_X = {-22, -17, -12};
+	private static final int[] HALL_COLUMNS_Z = {9, 15};
+	private static final int HALL_COLUMN = 8;
+
+	private static final BlockState TILES = Blocks.DEEPSLATE_TILES.defaultBlockState();
+	private static final BlockState TILE_STAIRS = Blocks.DEEPSLATE_TILE_STAIRS.defaultBlockState();
+	private static final BlockState TILE_WALL = Blocks.DEEPSLATE_TILE_WALL.defaultBlockState();
+	private static final BlockState RED_COLUMN = Blocks.STRIPPED_CRIMSON_STEM.defaultBlockState();
+	private static final BlockState RED_WOOD = Blocks.STRIPPED_CRIMSON_HYPHAE.defaultBlockState();
+	private static final BlockState GILDED = Blocks.GILDED_BLACKSTONE.defaultBlockState();
 
 	/**
-	 * Meng Po's pavilion at the bridge's near end: four tall posts, a tiled roof {@link #PAVILION_ROOF} up, and her pot over a
-	 * soul campfire.
+	 * Meng Po's hall, on the bank west of the gate by the bridge's near end, built for her three times a man's height: a raised
+	 * floor of blackstone (stairs up along its east side from the plaza and the gate's way, and from the north), railed over the
+	 * water; six red columns capped in gold under red beams; a double roof of deepslate tiles, its eaves turned up at the
+	 * corners, a red band between its tiers, a lantern on its ridge. Open to the east, a screen at its back, her pot over a soul
+	 * campfire at her side, soul lanterns hung from the beams; a path to the bridge south of the gate's west pillar.
 	 */
-	private static void mengPoPavilion(ServerLevel level, int y) {
-		for (int x = -11; x <= -7; x++) {
-			for (int z = 13; z <= 16; z++) put(level, x, y - 1, z, BRICKS);
-		}
-		for (int x : new int[] {-11, -7}) {
-			for (int z : new int[] {13, 15}) {
-				for (int dy = 0; dy < PAVILION_ROOF; dy++) put(level, x, y + dy, z, WALL);
+	private static void mengPoHall(ServerLevel level, int y) {
+		int floor = y + 1; // where one stands in the hall
+		// The raised floor: a polished rim, bricks, a chiseled aisle from the stairs up to her.
+		for (int x = HALL_WEST; x <= HALL_EAST; x++) {
+			for (int z = HALL_NORTH; z <= HALL_SOUTH; z++) {
+				boolean rim = x == HALL_WEST || x == HALL_EAST || z == HALL_NORTH || z == HALL_SOUTH;
+				boolean aisle = z == MENG_PO_POST.getZ() && x > MENG_PO_POST.getX() + 1;
+				put(level, x, y, z, rim ? POLISHED : aisle ? CHISELED : BRICKS);
 			}
 		}
-		for (int x = -12; x <= -6; x++) {
-			for (int z = 12; z <= 16; z++) {
-				put(level, x, y + PAVILION_ROOF, z, z == 14 ? Blocks.DEEPSLATE_TILES.defaultBlockState()
-						: Blocks.DEEPSLATE_TILE_SLAB.defaultBlockState().setValue(SlabBlock.TYPE, SlabType.TOP));
-			}
-			put(level, x, y + PAVILION_ROOF + 1, 14, Blocks.DEEPSLATE_TILE_SLAB.defaultBlockState());
+		for (int z = HALL_COLUMNS_Z[0]; z <= HALL_COLUMNS_Z[1]; z++) {
+			put(level, HALL_EAST + 1, y, z, Blocks.POLISHED_BLACKSTONE_BRICK_STAIRS.defaultBlockState().setValue(StairBlock.FACING, Direction.WEST));
 		}
-		put(level, MENG_PO_POT.getX(), y, MENG_PO_POT.getZ(), Blocks.SOUL_CAMPFIRE.defaultBlockState().setValue(CampfireBlock.SIGNAL_FIRE, false));
+		for (int x = -18; x <= -16; x++) {
+			put(level, x, y, HALL_NORTH - 1, Blocks.POLISHED_BLACKSTONE_BRICK_STAIRS.defaultBlockState().setValue(StairBlock.FACING, Direction.SOUTH));
+		}
+		// Railed along its north side (but for the stairs), its west, and its south over the water.
+		for (int x = HALL_WEST; x <= HALL_EAST; x++) {
+			if (x < -18 || x > -16) put(level, x, floor, HALL_NORTH, WALL);
+			put(level, x, floor, HALL_SOUTH, WALL);
+		}
+		for (int z = HALL_NORTH; z <= HALL_SOUTH; z++) put(level, HALL_WEST, floor, z, WALL);
+		// The path from its stairs to the bridge, south of the west pillar.
+		for (int x = HALL_EAST + 2; x <= -5; x++) {
+			for (int z = 11; z <= 15; z++) put(level, x, y - 1, z, BRICKS);
+		}
+
+		// The columns, red, on stone bases and under gold capitals, and the red beams over them round the hall.
+		int beam = floor + HALL_COLUMN;
+		for (int cx : HALL_COLUMNS_X) {
+			for (int cz : HALL_COLUMNS_Z) {
+				put(level, cx, floor, cz, POLISHED);
+				for (int dy = 1; dy < HALL_COLUMN - 1; dy++) put(level, cx, floor + dy, cz, RED_COLUMN);
+				put(level, cx, floor + HALL_COLUMN - 1, cz, GILDED);
+			}
+		}
+		for (int x = HALL_COLUMNS_X[0]; x <= HALL_COLUMNS_X[2]; x++) {
+			for (int cz : HALL_COLUMNS_Z) put(level, x, beam, cz, RED_WOOD);
+		}
+		for (int cx : new int[] {HALL_COLUMNS_X[0], HALL_COLUMNS_X[2]}) {
+			for (int z = HALL_COLUMNS_Z[0]; z <= HALL_COLUMNS_Z[1]; z++) put(level, cx, beam, z, RED_WOOD);
+		}
+		// Soul lanterns hung from the beams: two over the way in, two down each side.
+		for (int z : new int[] {11, 13}) put(level, HALL_COLUMNS_X[2], beam - 1, z, Blocks.SOUL_LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true));
+		for (int x : new int[] {-20, -14}) {
+			for (int cz : HALL_COLUMNS_Z) put(level, x, beam - 1, cz, Blocks.SOUL_LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true));
+		}
+
+		// The screen at its back, a gold heart in it, her jars before it.
+		for (int z = HALL_COLUMNS_Z[0] + 1; z < HALL_COLUMNS_Z[1]; z++) {
+			for (int dy = 0; dy < HALL_COLUMN; dy++) {
+				boolean heart = z == MENG_PO_POST.getZ() && (dy == 3 || dy == 4);
+				put(level, HALL_COLUMNS_X[0], floor + dy, z, dy == 0 ? POLISHED : dy == HALL_COLUMN - 1 ? RED_WOOD : heart ? GILDED : BRICKS);
+			}
+		}
+		put(level, HALL_COLUMNS_X[0] + 1, floor, HALL_COLUMNS_Z[0] + 1, Blocks.DECORATED_POT.defaultBlockState());
+		put(level, HALL_COLUMNS_X[0] + 1, floor, HALL_COLUMNS_Z[1] - 1, Blocks.DECORATED_POT.defaultBlockState());
+		// Her pot at her side, over a soul campfire.
+		put(level, MENG_PO_POT.getX(), y + MENG_PO_POT.getY() - 1, MENG_PO_POT.getZ(), Blocks.SOUL_CAMPFIRE.defaultBlockState().setValue(CampfireBlock.SIGNAL_FIRE, false));
 		put(level, MENG_PO_POT.getX(), y + MENG_PO_POT.getY(), MENG_PO_POT.getZ(), Blocks.CAULDRON.defaultBlockState());
-		put(level, -11, y + PAVILION_ROOF - 1, 14, Blocks.SOUL_LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true));
+
+		// The roof: the lower eaves two out from the columns, a ledge, the red band, the upper eaves over it, up to the ridge.
+		int eave = beam + 1;
+		roofRing(level, eave, HALL_WEST - 1, HALL_EAST + 1, HALL_NORTH - 1, HALL_SOUTH + 1);
+		roofRing(level, eave + 1, HALL_WEST, HALL_EAST, HALL_NORTH, HALL_SOUTH);
+		for (int x = HALL_WEST + 2; x <= HALL_EAST - 2; x++) {
+			for (int z = HALL_NORTH + 2; z <= HALL_SOUTH - 2; z++) {
+				boolean side = x == HALL_WEST + 2 || x == HALL_EAST - 2, end = z == HALL_NORTH + 2 || z == HALL_SOUTH - 2;
+				if (side || end) put(level, x, eave + 2, z, side && end ? GILDED : RED_WOOD);
+			}
+		}
+		roofRing(level, eave + 3, HALL_WEST + 1, HALL_EAST - 1, HALL_NORTH + 1, HALL_SOUTH - 1);
+		roofRing(level, eave + 4, HALL_WEST + 2, HALL_EAST - 2, HALL_NORTH + 2, HALL_SOUTH - 2);
+		roofRing(level, eave + 5, HALL_WEST + 3, HALL_EAST - 3, HALL_NORTH + 3, HALL_SOUTH - 3);
+		// The eaves' corners turned up, both tiers.
+		for (int[] corner : new int[][] {{HALL_WEST - 1, HALL_NORTH - 1, 1}, {HALL_EAST + 1, HALL_NORTH - 1, 1}, {HALL_WEST - 1, HALL_SOUTH + 1, 1},
+				{HALL_EAST + 1, HALL_SOUTH + 1, 1}, {HALL_WEST + 1, HALL_NORTH + 1, 4}, {HALL_EAST - 1, HALL_NORTH + 1, 4},
+				{HALL_WEST + 1, HALL_SOUTH - 1, 4}, {HALL_EAST - 1, HALL_SOUTH - 1, 4}}) {
+			put(level, corner[0], eave + corner[2], corner[1], TILE_WALL);
+		}
+		// The ridge, its ends raised, a soul lantern at its middle.
+		int ridgeZ = (HALL_NORTH + HALL_SOUTH) / 2;
+		for (int x = HALL_WEST + 4; x <= HALL_EAST - 4; x++) put(level, x, eave + 6, ridgeZ, TILE_WALL);
+		put(level, HALL_WEST + 4, eave + 7, ridgeZ, TILE_WALL);
+		put(level, HALL_EAST - 4, eave + 7, ridgeZ, TILE_WALL);
+		put(level, (HALL_WEST + HALL_EAST) / 2, eave + 7, ridgeZ, Blocks.SOUL_LANTERN.defaultBlockState());
+
+		// Every stair and wall shaped by what was laid around it (a corner turned, a rail joined).
+		for (int x = HALL_WEST - 1; x <= HALL_EAST + 1; x++) {
+			for (int z = HALL_NORTH - 1; z <= HALL_SOUTH + 1; z++) {
+				for (int at = y; at <= eave + 7; at++) settle(level, x, at, z);
+			}
+		}
 	}
 
 	/**
-	 * A gate built with the first, low pavilion (its roof 3 up, a lantern hung under it) gets the tall one: the old roof and
-	 * lantern taken away, then the pavilion built again (its posts reach up through where the roof was).
+	 * One course of a hipped roof: a ring of tile stairs round x0..x1, z0..z1 at height {@code y}, each rising toward the
+	 * middle, the tiles laid flat within.
 	 */
-	private static void raisePavilion(ServerLevel level, int y) {
-		for (int x = -12; x <= -6; x++) {
-			for (int z = 12; z <= 16; z++) {
-				for (int dy = 3; dy <= 4; dy++) put(level, x, y + dy, z, AIR);
+	private static void roofRing(ServerLevel level, int y, int x0, int x1, int z0, int z1) {
+		for (int x = x0; x <= x1; x++) {
+			for (int z = z0; z <= z1; z++) {
+				if (x > x0 && x < x1 && z > z0 && z < z1) {
+					put(level, x, y, z, TILES);
+					continue;
+				}
+				Direction facing = z == z0 ? Direction.SOUTH : z == z1 ? Direction.NORTH : x == x0 ? Direction.EAST : Direction.WEST;
+				put(level, x, y, z, TILE_STAIRS.setValue(StairBlock.FACING, facing));
 			}
 		}
-		put(level, -11, y + 2, 14, AIR);
-		mengPoPavilion(level, y);
+	}
+
+	/** A stair or wall at (x, y, z) shaped by its neighbours (a stair's corner turned, a wall joined to what is beside it). */
+	private static void settle(ServerLevel level, int x, int y, int z) {
+		BlockPos pos = new BlockPos(X + x, y, Z + z);
+		BlockState state = level.getBlockState(pos);
+		if (!(state.getBlock() instanceof StairBlock) && !(state.getBlock() instanceof net.minecraft.world.level.block.WallBlock)) return;
+		BlockState settled = Block.updateFromNeighbourShapes(state, level, pos);
+		if (settled != state) level.setBlock(pos, settled, Block.UPDATE_CLIENTS);
+	}
+
+	/**
+	 * A gate built with one of the old pavilions (the first with its roof 3 up, the second 6 up; both small, against the gate's
+	 * west pillar and cutting into it) gets Meng Po's hall: the pavilion taken away and the ground under it put back, the pillar
+	 * made whole, the hall built (Meng Po goes to her new post: keepOfficials).
+	 */
+	private static void replacePavilion(ServerLevel level, int y) {
+		for (int x = -12; x <= -6; x++) {
+			for (int z = 12; z <= 16; z++) {
+				for (int dy = 0; dy <= 7; dy++) put(level, x, y + dy, z, AIR);
+				if (x >= -11 && x <= -7 && z >= 13) put(level, x, y - 1, z, z == 16 ? POLISHED : SOUL_SOIL); // its floor; the bank
+			}
+		}
+		pillar(level, y, -6);
+		mengPoHall(level, y);
 	}
 
 	/** The Wheel's dais on the far bank: a raised floor with a step, the axle post behind the hub, braziers either side. */
@@ -516,6 +644,7 @@ public final class GhostGate {
 			Official official = data.officials.computeIfAbsent(role.getId(), id -> new Official());
 			if (official.id != null && level.getEntity(official.id) instanceof GhostCultivatorNpc npc && npc.isAlive()) {
 				official.missing = 0;
+				keepAt(npc, role, post);
 				continue;
 			}
 			// Found by its role (its id lost with an older save), or still loading with its land: give it a moment.
@@ -527,14 +656,14 @@ public final class GhostGate {
 				official.id = found.getUUID();
 				official.missing = 0;
 				data.setDirty();
+				keepAt(found, role, post);
 				continue;
 			}
 			if (official.slainAt > 0 && now - official.slainAt < OFFICIAL_RETURNS_AFTER) continue;
 			if (official.id != null && official.slainAt == 0 && (official.missing += 40) < OFFICIAL_MISSING_TICKS) continue;
 			GhostCultivatorNpc npc = ModEntities.GHOST_CULTIVATOR.create(level);
 			if (npc == null) continue;
-			// The wardens face the plaza the dead come from; Meng Po faces her pot.
-			npc.moveTo(post.getX() + 0.5, post.getY(), post.getZ() + 0.5, role == GhostCultivatorNpc.Role.MENG_PO ? 0 : 180, 0);
+			npc.moveTo(post.getX() + 0.5, post.getY(), post.getZ() + 0.5, facingOf(role), 0);
 			npc.becomeOfficial(role, post, level.getRandom());
 			level.addFreshEntity(npc);
 			official.id = npc.getUUID();
@@ -545,12 +674,27 @@ public final class GhostGate {
 	}
 
 	/** Where each keeper stands (relative to the gate). */
-	private static BlockPos postOf(GhostCultivatorNpc.Role role) {
+	static BlockPos postOf(GhostCultivatorNpc.Role role) {
 		return switch (role) {
 			case OX_HEAD -> OX_HEAD_POST;
 			case HORSE_FACE -> HORSE_FACE_POST;
-			default -> MENG_PO_POT.offset(0, -1, -2); // under her pavilion's roof, before the pot
+			default -> MENG_PO_POST;
 		};
+	}
+
+	/** Which way each keeper faces at its post: the wardens the plaza the dead come from, Meng Po the way into her hall. */
+	private static float facingOf(GhostCultivatorNpc.Role role) {
+		return role == GhostCultivatorNpc.Role.MENG_PO ? -90 : 180;
+	}
+
+	/**
+	 * A keeper whose post has moved since it took it (Meng Po's, as her pavilion became her hall: replacePavilion) is set down at
+	 * the new one.
+	 */
+	private static void keepAt(GhostCultivatorNpc npc, GhostCultivatorNpc.Role role, BlockPos post) {
+		if (post.equals(npc.keeperPost())) return;
+		npc.moveKeeperPost(post);
+		npc.moveTo(post.getX() + 0.5, post.getY(), post.getZ() + 0.5, facingOf(role), 0);
 	}
 
 	/** A warden has fallen: it comes back in three days. */
@@ -650,7 +794,7 @@ public final class GhostGate {
 		private static final String NAME = DefyingTheHeavens.MOD_ID + "_ghost_gate";
 		boolean built;
 		int y = FALLBACK_Y;
-		/** Which pavilion Meng Po has (1: the first, low one, in a gate saved before the keepers grew; see PAVILION_VERSION). */
+		/** What Meng Po has (1 and 2: the old pavilions, low and tall; 3: her hall; see PAVILION_VERSION). */
 		int pavilion = 1;
 		final java.util.Map<String, Official> officials = new java.util.HashMap<>();
 
