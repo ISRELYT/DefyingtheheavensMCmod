@@ -133,7 +133,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_GHOST_WAKE, "You wake at the Ghost Gate, in the Netherworld, one of the dead. The Wheel of Reincarnation, across the bridge, "
 				+ "will return you to life when you are ready.");
 		t.add(ModLang.MSG_YIN_OVERTAKEN, "The yin fills you. Your body gives way, and you walk on as one of the dead, everything you carried still with "
-				+ "you. The Wheel of Reincarnation, by the Ghost Gate, will return you to life.");
+				+ "you, for now. The Wheel of Reincarnation, by the Ghost Gate, will return you to life, but nothing you carry goes back with you.");
+		t.add(ModLang.MSG_BELONGINGS_LEFT, "What you carried stays behind at the Wheel, in the Netherworld.");
 		t.add(ModLang.MSG_GHOST_DISPERSED, "You scatter...");
 		t.add(ModLang.MSG_GHOST_REFORMED, "You gather yourself again at the Ghost Gate.");
 		t.add(ModLang.MSG_GHOST_CANNOT, "The dead can't do that.");

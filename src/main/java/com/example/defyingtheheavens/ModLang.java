@@ -490,6 +490,7 @@ public final class ModLang {
 	public static final String MSG_WHEEL_TURNS = k("message.ghost.wheel_turns");
 	public static final String MSG_WHEEL_HARDCORE = k("message.ghost.wheel_hardcore");
 	public static final String MSG_REVIVED = k("message.ghost.revived");
+	public static final String MSG_BELONGINGS_LEFT = k("message.ghost.belongings_left");
 	public static final String MSG_JUDGE_WARNING = k("message.judge.warning");
 	public static final String MSG_JUDGE_STRIPPED = k("message.judge.stripped");
 	public static final String MSG_JUDGE_MORTAL = k("message.judge.mortal");

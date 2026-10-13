@@ -13,9 +13,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 /**
- * The dead (phase 3, see GhostSystem): what a ghost is saved as, what can touch one, dispersing instead of dying, and the yin
- * taking the living where they stand. The test server has no Netherworld, so the Gate's respawn and the Wheel are checked in
- * game instead.
+ * The dead (phase 3, see GhostSystem): what a ghost is saved as, what can touch one, dispersing instead of dying, the yin
+ * taking the living where they stand, and what a ghost leaves behind when it is born again. The test server has no
+ * Netherworld, so the Gate's respawn and the Wheel's turning are checked in game instead.
  */
 public class NetherworldDeadGameTests implements FabricGameTest {
 	private static ServerPlayer cultivator(GameTestHelper helper, Realm realm) {
@@ -119,6 +119,45 @@ public class NetherworldDeadGameTests implements FabricGameTest {
 			helper.assertTrue(visitor.getInventory().countItem(Items.DIAMOND) == 5, "...with everything they carried");
 			helper.assertTrue(s.yinCorruption() == 0 && s.hasDeathPlace() && s.deathPos().equals(where), "The yin spent; where it took them remembered");
 		} finally {
+			GhostSystem.forget(visitor.getUUID());
+		}
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void bornAgainAGhostLeavesWhatItCarriedAtTheWheel(GameTestHelper helper) {
+		ServerPlayer visitor = cultivator(helper, Realm.NASCENT_SOUL);
+		visitor.getInventory().add(new ItemStack(Items.DIAMOND, 5));
+		visitor.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(Items.IRON_HELMET));
+		ItemStack cursed = new ItemStack(Items.GOLDEN_SWORD);
+		cursed.enchant(net.minecraft.world.item.enchantment.Enchantments.VANISHING_CURSE, 1);
+		visitor.getInventory().add(cursed);
+		RingContainer.of(visitor).setItem(0, new ItemStack(ModItems.RING_OF_POWER));
+		CultivationManager.get(visitor).netherworld().setYinCorruption(1.0);
+		net.minecraft.world.level.GameRules.BooleanValue keep = helper.getLevel().getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_KEEPINVENTORY);
+		boolean kept = keep.get();
+		try {
+			keep.set(false, helper.getLevel().getServer());
+			GhostSystem.overtakenByYin(visitor);
+			GhostSystem.leaveBelongings(visitor);
+			helper.assertTrue(visitor.getInventory().isEmpty() && RingContainer.of(visitor).isEmpty(), "Nothing it carried goes back with it");
+			java.util.List<net.minecraft.world.entity.item.ItemEntity> left = helper.getLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
+					visitor.getBoundingBox().inflate(4));
+			java.util.function.Predicate<net.minecraft.world.item.Item> lying = item -> left.stream().anyMatch(e -> e.getItem().is(item));
+			helper.assertTrue(left.stream().filter(e -> e.getItem().is(Items.DIAMOND)).mapToInt(e -> e.getItem().getCount()).sum() == 5
+					&& lying.test(Items.IRON_HELMET) && lying.test(ModItems.RING_OF_POWER), "It all lies where the ghost stood: the diamonds, the helmet, the ring");
+			helper.assertTrue(!lying.test(Items.GOLDEN_SWORD), "What bore the Curse of Vanishing is gone");
+			left.forEach(net.minecraft.world.entity.Entity::discard);
+			// With keepInventory, as at a death, everything is kept.
+			ServerPlayer keeper = cultivator(helper, Realm.NASCENT_SOUL);
+			keeper.getInventory().add(new ItemStack(Items.EMERALD, 3));
+			keep.set(true, helper.getLevel().getServer());
+			GhostSystem.makeGhost(keeper);
+			GhostSystem.leaveBelongings(keeper);
+			helper.assertTrue(keeper.getInventory().countItem(Items.EMERALD) == 3, "With keepInventory it is all kept");
+			GhostSystem.forget(keeper.getUUID());
+		} finally {
+			keep.set(kept, helper.getLevel().getServer());
 			GhostSystem.forget(visitor.getUUID());
 		}
 		helper.succeed();

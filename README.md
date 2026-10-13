@@ -674,8 +674,8 @@ features are in `ModBiomes#netherworldFeatures` and `ModPlacedFeatures` (the `NW
 A living body in the Netherworld fills with its yin. The **Yin Corruption** bar (under the qi bar, top left) climbs from
 0 to 100%, its percentage beside it with an arrow (up while rising, down while ebbing, a dash while a pill holds it).
 Past a quarter a cold cyan-black frost creeps in from the edges of the screen, thicker as it climbs; there are warnings
-at 50, 75 and 90%. **At 100% your body gives way: you become a ghost where you stand, keeping everything you carry**
-(see The dead, below). Outside the Netherworld it ebbs, from full to nothing in **5 minutes**; on the Soul River it holds
+at 50, 75 and 90%. **At 100% your body gives way: you become a ghost where you stand, keeping everything you carry** for
+now; none of it goes back with you when the Wheel returns you to life (see The dead, below). Outside the Netherworld it ebbs, from full to nothing in **5 minutes**; on the Soul River it holds
 still. Ghosts, and players in creative or spectator, take none.
 
 How long a stay fills it, by true realm:
@@ -730,7 +730,7 @@ Code: `GhostQi` (density, fill, pool size), `QiElement.YIN`, client `QiSenseClie
 While the gamerule **`netherworldAfterDeath`** is on (the default), a player who dies wakes at the Ghost Gate as a
 **ghost** instead of at their bed. The death itself is vanilla's (its message, its drops, keepInventory if set); only
 the respawn is the Gate's. A living visitor overtaken by yin becomes a ghost where they stand instead, and keeps all
-they carry. With the gamerule off, death is vanilla's and there are no ghosts.
+they carry, as a ghost. With the gamerule off, death is vanilla's and there are no ghosts.
 
 A ghost:
 
@@ -752,7 +752,11 @@ A ghost:
   its ghostly qi. Falling into the abyss does the same.
 
 **Coming back.** Use the **Wheel of Reincarnation**'s hub, on the far bank: it turns, and you return to life at your own
-respawn point (your bed or anchor, as vanilla would choose it). In hardcore the Wheel refuses. Before that:
+respawn point (your bed or anchor, as vanilla would choose it). In hardcore the Wheel refuses. **Nothing you carry goes back
+with you**: whatever a ghost still holds (only one overtaken by yin holds anything, since a death drops its things and the
+dead pick nothing up) falls where it stands at the Wheel, inventory, armour and rings alike, and what bears the Curse of
+Vanishing is gone, just as at a death; you'll have to come back up the Soul River for it. With keepInventory on, as at a
+death, you keep it all (`GhostSystem#leaveBelongings`; the same goes for `/netherworld revive`). Before that:
 
 - **The Terrace for Gazing Homeward**: climb it, and standing at its top a ghost sees where it died (the dimension, and
   the place to within 10 blocks); a journal note keeps it.

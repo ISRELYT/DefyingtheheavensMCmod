@@ -42,7 +42,8 @@ import java.util.function.Predicate;
  * seconds later with half its health and half its ghostly qi ({@link #disperse}). It can't break or place, use or drop or pick
  * up, ride, take a rift or portal, meditate on the main track, break through, fly on qi or a sword, press with its realm, turn
  * inward or project its soul (Incorporeal; the systems' own checks). The Wheel of Reincarnation returns it to life at its own
- * respawn point, as vanilla would choose it ({@link #useWheel}); in hardcore the Wheel refuses.
+ * respawn point, as vanilla would choose it ({@link #useWheel}), leaving behind at the Wheel anything it still carried (a
+ * visitor overtaken by yin: {@link #leaveBelongings}); in hardcore the Wheel refuses.
  * <p>
  * A creative ghost keeps the look and none of the rules.
  */
@@ -169,7 +170,8 @@ public final class GhostSystem {
 
 	/**
 	 * Yin corruption is full (see YinCorruption): the living body gives way and the visitor walks on as a ghost where they
-	 * stand, keeping everything they carry. Off the gamerule, there are no ghosts: the realm casts them down the river instead.
+	 * stand, keeping everything they carry, until the Wheel returns them to life without it ({@link #leaveBelongings}). Off the
+	 * gamerule, there are no ghosts: the realm casts them down the river instead.
 	 */
 	public static void overtakenByYin(ServerPlayer p) {
 		if (state(p).ghost()) return;
@@ -245,8 +247,7 @@ public final class GhostSystem {
 			entry.setValue(entry.getValue() - 1);
 			if (entry.getValue() <= 0) {
 				it.remove();
-				REVIVING.add(p.getUUID());
-				server.getPlayerList().respawn(p, true); // as vanilla would place them, everything they carry kept
+				reincarnate(p);
 			}
 		}
 		boolean second = server.getTickCount() % 20 == 0;
@@ -432,8 +433,41 @@ public final class GhostSystem {
 	/** Back to life at once, as at the Wheel (commands, tests). */
 	public static void revive(ServerPlayer p) {
 		if (!isGhost(p)) return;
+		reincarnate(p);
+	}
+
+	/**
+	 * The Wheel has turned: the ghost leaves behind what it carried ({@link #leaveBelongings}) and is born again where vanilla
+	 * would respawn it (the respawn copies the rest across: cultivation, experience, its state; finishRevival does the waking).
+	 */
+	private static void reincarnate(ServerPlayer p) {
+		leaveBelongings(p);
 		REVIVING.add(p.getUUID());
 		p.server.getPlayerList().respawn(p, true);
+	}
+
+	/**
+	 * Born again, a ghost brings nothing back from the Netherworld: everything it carries (its inventory, armour and rings) falls
+	 * where it stands, as a death's things fall where it died, and what bears the Curse of Vanishing is gone. Only a visitor
+	 * overtaken by yin still carries anything as a ghost (a death dropped its things already, and the dead pick nothing up), so
+	 * the yin is no free way home with a full pack. With keepInventory on, as at a death, everything is kept; a creative ghost
+	 * keeps the look and none of the rules.
+	 */
+	static void leaveBelongings(ServerPlayer p) {
+		if (p.level().getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_KEEPINVENTORY) || p.getAbilities().instabuild
+				|| p.isSpectator()) return;
+		net.minecraft.world.entity.player.Inventory inventory = p.getInventory();
+		RingContainer rings = RingContainer.of(p);
+		boolean carried = !inventory.isEmpty() || !rings.isEmpty();
+		for (int i = 0; i < inventory.getContainerSize(); i++) {
+			if (net.minecraft.world.item.enchantment.EnchantmentHelper.hasVanishingCurse(inventory.getItem(i))) inventory.removeItemNoUpdate(i);
+		}
+		inventory.dropAll();
+		for (int i = 0; i < rings.getContainerSize(); i++) {
+			net.minecraft.world.item.ItemStack ring = rings.removeItemNoUpdate(i);
+			if (!ring.isEmpty() && !net.minecraft.world.item.enchantment.EnchantmentHelper.hasVanishingCurse(ring)) p.drop(ring, true, false);
+		}
+		if (carried) p.sendSystemMessage(Component.translatable(ModLang.MSG_BELONGINGS_LEFT).withStyle(ChatFormatting.GRAY));
 	}
 
 	/** A ghost at once, where they stand, things kept (commands, tests). */
