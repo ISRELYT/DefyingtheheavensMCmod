@@ -208,6 +208,20 @@ public class NpcLifeGameTests implements FabricGameTest {
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
+	public void aGateGuardRaisedAboveTheGatesLeavesThem(GameTestHelper helper) {
+		// Only outer disciples keep the gates: one raised to a higher title (its seniors fallen while it fought, say) is a gate
+		// guard no longer, so its name shows the new title, and not only in its colour.
+		CultivatorNpc guard = npc(helper, new BlockPos(2, 2, 2), Realm.QI_REFINING, 0);
+		guard.setTitle(NpcTitle.OUTER_DISCIPLE);
+		guard.setGateGuard(true);
+		guard.setTitle(NpcTitle.OUTER_DISCIPLE);
+		helper.assertTrue(guard.isGateGuard(), "Still an outer disciple, it keeps the gate");
+		guard.setTitle(NpcTitle.SECT_MASTER);
+		helper.assertTrue(!guard.isGateGuard() && guard.getTitle() == NpcTitle.SECT_MASTER, "Made Sect Master, it is no gate guard");
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void speechTakesItsTime(GameTestHelper helper) {
 		CultivatorNpc npc = npc(helper, new BlockPos(2, 2, 2), Realm.QI_REFINING, 0);
 		helper.assertTrue(NpcSpeech.mayRemark(npc), "Quiet at first");

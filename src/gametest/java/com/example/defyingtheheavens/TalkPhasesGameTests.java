@@ -294,6 +294,13 @@ public class TalkPhasesGameTests implements FabricGameTest {
 			TalkSystem.intent(player, victim.getId(), TalkIntent.RELEASE.ordinal());
 			RealmSuppressSystem.tick(server);
 			helper.assertTrue(!RealmSuppressSystem.presses(player, victim) && !victim.isKneeling(), "Released, it stands");
+			// The release is a mercy for that pressing, not a lasting pass: switched off and on again, it bears down on it anew.
+			CultivationManager.toggleAbility(player, Ability.REALM_SUPPRESS.ordinal());
+			RealmSuppressSystem.tick(server);
+			CultivationManager.toggleAbility(player, Ability.REALM_SUPPRESS.ordinal());
+			RealmSuppressSystem.tick(server);
+			helper.assertTrue(c.isAbilityEnabled(Ability.REALM_SUPPRESS) && RealmSuppressSystem.presses(player, victim),
+					"Switched off and on again, Realm Suppress presses the one it let up off");
 			c.setAbilityEnabled(Ability.REALM_SUPPRESS, false);
 			RealmSuppressSystem.refreshNow();
 			RealmSuppressSystem.tick(server);

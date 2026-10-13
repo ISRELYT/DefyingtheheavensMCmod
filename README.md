@@ -520,9 +520,17 @@ tribulation. Logging out at peace, the server stopping, or a crash simply bring 
 **Possession.** Right-click a being at least **three realms below** your own (a Nascent Soul takes Qi Refining
 cultivators, mortals and beasts; a Heavenly Being, Foundation Building and below; Four Axis, Core Formation and below;
 monsters and animals count as mortals) to take it over: you look out through its eyes and move it with its own speed and
-strength (its melee is your attack), until you **sneak** to let go, your qi runs out, you call the soul home, or it pulls
-too far along the tether. Inside a body your soul can't be struck; if the body dies, the soul is thrown out unharmed (and
-exposed again). Not bosses, Wardens, mounts, named creatures, or another player's pets. Whatever dies in your hands dies by
+strength (it runs as fast as it would run at you, no faster, and its melee is your attack), until you **sneak** to let
+go, your qi runs out, you call the soul home, or it pulls too far along the tether. Inside a body your soul can't be
+struck; if the body dies, the soul is thrown out unharmed (and
+exposed again). **A flier flies** (a bee, parrot, allay, bat, ghast, phantom, vex or blaze): forward goes where you
+look, so look up to climb and down to dive, and **jump** rises straight up; let go of the keys and it hangs in the air.
+Each flies at its own pace (a bee or parrot gently, a vex fast; a phantom gathers speed while it holds its line, up to
+far faster than anything else, and loses it when it turns), slower in water and slower still in lava. It takes no fall
+damage while you fly it, and a roosting bat is roused. (A flier you hold is weightless, or a server without flight
+allowed would kick you for floating a mount; it gets its weight back when you let go. A vex can't pass through walls
+while you hold it: the server checks a ridden body against the blocks it moves through.)
+Not bosses, Wardens, mounts, named creatures, or another player's pets. Whatever dies in your hands dies by
 your hand (a possessed sect member walked into lava counts as murdered, not replaced). A possessed cultivator talks to no
 one, and breaks off any talk it was in.
 **A player's body is seized** instead (only where PvP is on): they die, and a body in their likeness takes their place with
@@ -618,7 +626,10 @@ crimson pillars and dark nether-brick roofs trimmed in red with soul lanterns fo
 
 - Three sizes, for 10-12, 13-16 and 17-20 members. They only generate on fairly level, mostly dry land (at most 20
   blocks between the highest and lowest ground under the grounds, 24 in the Upper Realm; the grounds are levelled, a
-  pond or a stream filled in), never in the Nether or the End:
+  pond or a stream filled in), never in the Nether or the End. The levelled ground keeps the land's own floor, column by
+  column (podzol and coarse dirt in an old taiga, snow on the snowy slopes, sand, stone, grass on the plains), so a sect
+  sits in its land rather than on a lawn; only a filled-in pond is grassed over. (Chunks generated before this keep the
+  old grass.)
   - **Overworld** (`defying-the-heavens:sect`): plains, meadows, forests, taiga, snowy plains, savanna, cherry groves,
     bamboo and sparse jungle. One attempt per 32x32 chunks, at least 16 chunks apart, never within 10 chunks of a village
     (`worldgen/structure_set/sects.json`).
@@ -652,7 +663,9 @@ crimson pillars and dark nether-brick roofs trimmed in red with soul lanterns fo
   the six gate-guard posts are outside it.
 - **Gate guards** (`Sect#guardPost`): the strongest Outer Disciples, in seniority order, take the posts two at the gate,
   then one at each torii, then a second at each; the rest patrol as before. They stand on the road outside their gate
-  watching it, outside the barrier, where visitors meet them (a future pass into the sect would be bought from them).
+  watching it, outside the barrier, where visitors meet them (a future pass into the sect would be bought from them). One
+  raised above the Outer Disciples (its seniors fallen, say, while it was fighting) is a gate guard no longer: its nameplate
+  shows its new title at once, and it leaves the gate for its new station.
 - The earlier layouts are in the git history: the first walled, fully paved compounds (up to 56206f9) and another open
   village design (ab0301b).
 - The Treasury holds Spirit Pedestals bearing old Cultivation Fruit and ginseng and Spirit Ginseng, and loot chests;
@@ -1007,7 +1020,8 @@ Topics not open yet still show, greyed, with the regard they need.
   Sworn). They also buy what you carry that a cultivator has use for (herbs, pills, fruit), for half to four-fifths of
   its worth by regard.
 - **Pressure**: two realms below you with your Realm Suppress on them, they talk on one knee. **Demand** takes tribute
-  (something of what they keep, and spirit stones); **Release** lifts your pressure off them for five minutes.
+  (something of what they keep, and spirit stones); **Release** lifts your pressure off them for five minutes, or until you
+  switch Realm Suppress off (switched on again, it bears down on them like anyone else).
 - **Mercy**: a fleeing cultivator you outclass by two realms, run down and struck, throws itself down and begs for 15
   seconds; right-click it to answer. **Spare** it, and it owes you its life: it won't raise a hand against you for a day.
 

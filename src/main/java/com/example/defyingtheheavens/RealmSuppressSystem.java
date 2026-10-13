@@ -113,6 +113,14 @@ public final class RealmSuppressSystem {
 		refreshNow();
 	}
 
+	/**
+	 * {@code player} switched Realm Suppress (off or on): whoever they let up off is under it again the next time it's on. A
+	 * release is a mercy for this pressing, not a lasting pass.
+	 */
+	public static void forgetReleases(ServerPlayer player) {
+		RELEASED.remove(player.getUUID());
+	}
+
 	private static boolean released(ServerPlayer suppressor, Entity target) {
 		Map<UUID, Long> spared = RELEASED.get(suppressor.getUUID());
 		if (spared == null) return false;

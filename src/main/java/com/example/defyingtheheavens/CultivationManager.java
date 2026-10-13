@@ -54,8 +54,11 @@ public final class CultivationManager {
 		c.setAbilityEnabled(ability, !c.isAbilityEnabled(ability));
 		markDirty(player.server);
 		sync(player);
-		// Pressure starts or lifts at once, not at the next scan.
-		if (ability == Ability.REALM_SUPPRESS) RealmSuppressSystem.refreshNow();
+		// Pressure starts or lifts at once, not at the next scan; and those let up off (TalkSystem's release) are pressed anew.
+		if (ability == Ability.REALM_SUPPRESS) {
+			RealmSuppressSystem.forgetReleases(player);
+			RealmSuppressSystem.refreshNow();
+		}
 		// Opening or closing Qi Sense changes which projected souls this player perceives: the tracker re-asks at once.
 		if (ability == Ability.QI_SENSE) SoulProjection.refreshTracking(player);
 	}

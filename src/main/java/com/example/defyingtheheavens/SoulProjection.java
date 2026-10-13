@@ -13,10 +13,12 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.FlyingMob;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.OwnableEntity;
@@ -24,10 +26,18 @@ import net.minecraft.world.entity.PlayerRideable;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.control.FlyingMoveControl;
+import net.minecraft.world.entity.ambient.Bat;
+import net.minecraft.world.entity.animal.FlyingAnimal;
+import net.minecraft.world.entity.animal.allay.Allay;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
+import net.minecraft.world.entity.monster.Blaze;
 import net.minecraft.world.entity.monster.ElderGuardian;
+import net.minecraft.world.entity.monster.Ghast;
 import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.monster.Phantom;
+import net.minecraft.world.entity.monster.Vex;
 import net.minecraft.world.entity.monster.warden.Warden;
 import net.minecraft.world.entity.player.Abilities;
 import net.minecraft.world.entity.player.Player;
@@ -68,7 +78,8 @@ import java.util.function.Predicate;
  *   <li><b>Losing the soul</b>: a cut tether, a slain body, a destroyed soul, or logging out within {@link #COMBAT_MEMORY_TICKS}
  *   of harm to either kills the cultivator and costs the nascent soul itself ({@link PlayerCultivation#loseNascentSoul}).</li>
  *   <li><b>Possession</b> ({@link #tryPossess}): a being at least {@link #POSSESS_REALM_GAP} realms below the soul (beasts and
- *   monsters count as mortals) is taken over: the soul controls it with its own body's strength until it lets go (sneak), its qi
+ *   monsters count as mortals) is taken over: the soul controls it with its own body's strength and pace (a flier flies where the
+ *   soul looks, {@link #flightWish}) until it lets go (sneak), its qi
  *   runs out, it is recalled, or the body dies (the soul is thrown out unharmed, and can then be harmed). A player is not
  *   controlled: their body is seized ({@link SoulVesselEntity}), and they die.</li>
  * </ul>
@@ -147,6 +158,8 @@ public final class SoulProjection {
 		int bodyMissing;
 		/** The being the soul is in, or null. */
 		UUID possessed;
+		/** Possession made its flier weightless (it wasn't): it gets its weight back when the soul leaves it. */
+		boolean weightless;
 		/** Game time of the last harm to the soul or the body. */
 		long lastHurt = Long.MIN_VALUE / 2;
 		double tether;
@@ -787,6 +800,13 @@ public final class SoulProjection {
 		}
 		if (!player.startRiding(host, true)) return;
 		s.possessed = host.getUUID();
+		if (flies(host)) {
+			// It hangs in the air on its soul's keys: weightless while held, or the server would take the soul for one floating its
+			// mount and turn it out. A roosting bat is roused, since its own mind, which would wake it, is silent now.
+			s.weightless = !host.isNoGravity();
+			host.setNoGravity(true);
+			if (host instanceof Bat bat) bat.setResting(false);
+		}
 		// Whoever it was talking with gets no more answers (its own AI, which would break the talk off, no longer runs).
 		if (host instanceof CultivatorNpc npc) npc.breakOffTalk(ModLang.TALK_POSSESSED);
 		ServerLevel level = player.serverLevel();
@@ -803,6 +823,7 @@ public final class SoulProjection {
 		if (host == null || !host.isAlive()) {
 			// The host died (or was taken from the world): the soul is thrown out unharmed.
 			s.possessed = null;
+			s.weightless = false;
 			if (player.isPassenger()) player.stopRiding();
 			player.displayClientMessage(Component.translatable(ModLang.MSG_POSSESS_EJECTED), true);
 			sendSelf(player, s, CultivationManager.get(player), 0, radius);
@@ -812,6 +833,8 @@ public final class SoulProjection {
 			release(player, s, false);
 			return;
 		}
+		// A flier's way down is flight, not a fall (the server moves it as its soul's client says, and would count the drop).
+		if (flies(host)) host.resetFallDistance();
 		if (host.position().distanceTo(s.bodyPos) > radius) {
 			release(player, s, true);
 			player.displayClientMessage(Component.translatable(ModLang.MSG_POSSESS_TETHER), true);
@@ -822,6 +845,8 @@ public final class SoulProjection {
 	private static void release(ServerPlayer player, Session s, boolean pulled) {
 		Entity host = s.possessed == null ? null : player.serverLevel().getEntity(s.possessed);
 		s.possessed = null;
+		if (host != null && s.weightless) host.setNoGravity(false);
+		s.weightless = false;
 		if (player.isPassenger()) player.stopRiding();
 		if (host instanceof SoulVesselEntity vessel && vessel.isAlive()) vessel.collapse();
 		else if (host instanceof Mob mob) mob.setTarget(null);
@@ -829,6 +854,96 @@ public final class SoulProjection {
 			player.connection.teleport(host.getX(), host.getY() + 0.5, host.getZ(), player.getYRot(), player.getXRot());
 		}
 		sendSelf(player, s, CultivationManager.get(player), 0, CultivationManager.get(player).soulTetherRadius());
+	}
+
+	/**
+	 * How a possessed body steps for its soul's keys ({@code strafe}, {@code forward}, a player's walking input): at the body's
+	 * own pace, as fast as its own legs carry it when it runs at something, and no faster on the diagonal. A mob walking of its
+	 * own accord steps by its speed itself (Mob#setSpeed sets its forward input to it), so its speed tells twice in how fast it
+	 * goes; the soul's keys are scaled by it the same way. Unscaled, as a horse's rider gets the whole speed from a full key, a
+	 * spider ran three times as fast as any spider can.
+	 */
+	public static Vec3 hostStep(LivingEntity host, float strafe, float forward) {
+		Vec3 keys = new Vec3(strafe, 0, forward);
+		if (keys.lengthSqr() > 1) keys = keys.normalize();
+		return keys.scale(host.getAttributeValue(Attributes.MOVEMENT_SPEED));
+	}
+
+	// --- A possessed flier ---
+
+	/** The air's drag on a flier each tick (vanilla's own): how much of its speed it keeps, and so how quickly it gathers more. */
+	public static final double AIR_DRAG = 0.91;
+	/** Of its pace in the air, a flier keeps this much in water, and in lava (as vanilla's fliers swim: about half, and a fifth). */
+	private static final double WATER_PACE = 0.45, LAVA_PACE = 0.2;
+	/**
+	 * Blocks a tick at full flight, as each flies by itself against the air's drag: a vex's charge (0.05 a tick, its own mover),
+	 * a ghast's drift (0.1 every four ticks or so), a bat's flutter (steering for half a block a tick, Bat#customServerAiStep).
+	 */
+	private static final double VEX_PACE = 0.556, GHAST_PACE = 0.278, BAT_PACE = 0.33;
+	/** A phantom's glide, blocks a tick (its own mover): from the least, gathering speed while it holds its line, up to the most. */
+	public static final float GLIDE_MIN = 0.2f, GLIDE_MAX = 1.8f;
+
+	/**
+	 * A body that flies, so that possessed it flies where its soul looks rather than walking: bees, parrots, allays, bats, ghasts,
+	 * phantoms, vexes and blazes, and anything else that moves on wings (a flying mover, a flier's travel).
+	 */
+	public static boolean flies(Entity host) {
+		return host instanceof FlyingMob || host instanceof FlyingAnimal || host instanceof Bat || host instanceof Vex || host instanceof Blaze
+				|| host instanceof Mob mob && mob.getMoveControl() instanceof FlyingMoveControl;
+	}
+
+	/**
+	 * Where a soul's keys send the flier it possesses, as it flies itself (ClientSoul#fly) but with sneaking kept for letting go:
+	 * forward along its line of sight, so looking down and going forward goes down; strafing level; jump straight up. At most a
+	 * full step.
+	 */
+	public static Vec3 flightWish(float strafe, float forward, boolean up, Vec3 look, float yRot) {
+		float yaw = yRot * ((float) Math.PI / 180f);
+		Vec3 wish = look.scale(forward).add(new Vec3(Math.cos(yaw), 0, Math.sin(yaw)).scale(strafe)).add(0, up ? 1 : 0, 0);
+		return wish.lengthSqr() > 1 ? wish.normalize() : wish;
+	}
+
+	/**
+	 * A flier's own pace in the air, blocks a tick at full flight: what its own wings give it (a vex's charge, a ghast's drift, a
+	 * bat's flutter, a phantom's {@code glide}); for one with a flying speed, that worked against the air as its flying mover
+	 * works it (a bee 0.13, a parrot 0.09, an allay 0.11); for any other (a blaze), its walking pace. Less in water or lava.
+	 */
+	public static double flightPace(LivingEntity host, float glide) {
+		double pace;
+		if (host instanceof Phantom) pace = glide;
+		else if (host instanceof Vex) pace = VEX_PACE;
+		else if (host instanceof Bat) pace = BAT_PACE;
+		else if (host instanceof Ghast) pace = GHAST_PACE;
+		else if (host.getAttribute(Attributes.FLYING_SPEED) != null) {
+			// Its flying mover sets its speed to this and its step to the same: an allay goes by its speed (Allay#travel), the rest by 0.02 of it.
+			double wings = host.getAttributeValue(Attributes.FLYING_SPEED);
+			pace = (host instanceof Allay ? wings : 0.02) * wings * 0.98 / (1 - AIR_DRAG);
+		} else if (host instanceof FlyingMob) {
+			pace = GHAST_PACE;
+		} else {
+			// Its speed tells twice on the ground (see hostStep), against the drag of ordinary ground.
+			double legs = host.getAttributeValue(Attributes.MOVEMENT_SPEED);
+			pace = 0.98 * legs * legs / (1 - 0.6 * AIR_DRAG);
+		}
+		if (host.isInLava()) return pace * LAVA_PACE;
+		return host.isInWater() ? pace * WATER_PACE : pace;
+	}
+
+	/**
+	 * A phantom's glide a tick on, as its own mover keeps it: gathering speed toward {@link #GLIDE_MAX} while it holds its line
+	 * (turning less than 3 degrees a tick), losing it toward {@link #GLIDE_MIN} while it turns or hangs still.
+	 */
+	public static float glide(float glide, float turned) {
+		return Math.abs(turned) < 3 ? Mth.approach(glide, GLIDE_MAX, 0.005f * (GLIDE_MAX / glide)) : Mth.approach(glide, GLIDE_MIN, 0.025f);
+	}
+
+	/**
+	 * A tick of a possessed flier's flight: from {@code velocity} toward {@code wish} at {@code pace}, gathering speed and losing
+	 * it as through the air, so that it holds exactly its pace, and drifts to a stop in the air when the keys are let go. Its
+	 * wings hold it up: no gravity.
+	 */
+	public static Vec3 flightVelocity(Vec3 velocity, Vec3 wish, double pace) {
+		return velocity.scale(AIR_DRAG).add(wish.scale(pace * (1 - AIR_DRAG)));
 	}
 
 	/**

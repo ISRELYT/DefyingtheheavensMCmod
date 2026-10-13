@@ -629,6 +629,8 @@ public final class CultivatorGoals {
 		public void tick() {
 			Sect sect = npc.sect();
 			if (sect == null) return;
+			// Raised above the gates while keeping one (CultivatorNpc#setTitle): off to its new station now, not when the watch ends.
+			if (guarding && !npc.isGateGuard()) goal = null;
 			if (goal == null) choose(sect);
 			if (goal == null) return;
 			double distanceSqr = npc.position().distanceToSqr(Vec3.atBottomCenterOf(goal));

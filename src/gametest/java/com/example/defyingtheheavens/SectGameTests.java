@@ -1190,6 +1190,56 @@ public class SectGameTests implements FabricGameTest {
 		helper.succeed();
 	}
 
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void theGroundsKeepTheLandsOwnFloor(GameTestHelper helper) {
+		// The grounds level the land but keep its floor, column by column: podzol under a fern, two below the grounds, is raised
+		// as podzol; coarse dirt on a knoll under a fallen log is cut down to the grounds as coarse dirt; and only where there was
+		// water is it grass.
+		ServerLevel level = helper.getLevel();
+		SectPiece grounds = null;
+		for (var piece : SectStructure.layOut(17, 0, Direction.NORTH, false)) {
+			if (((SectPiece) piece).kind() == SectPiece.Kind.TERRACE) grounds = (SectPiece) piece;
+		}
+		helper.assertTrue(grounds != null, "A sect has grounds");
+		int w = grounds.width();
+		byte[] map = grounds.extra().getByteArray("Map");
+		int open = -1;
+		for (int i = 0; i + 2 < map.length && open < 0; i++) {
+			if (i % w + 2 < w && map[i] == SectLayout.GRASS && map[i + 1] == SectLayout.GRASS && map[i + 2] == SectLayout.GRASS) open = i;
+		}
+		helper.assertTrue(open >= 0, "Open ground on the grounds");
+		// The grounds moved so three open columns of theirs come down in the test's space.
+		BlockPos ground = helper.absolutePos(new BlockPos(2, 6, 2)), first = grounds.toWorld(open % w, 0, open / w);
+		grounds.move(ground.getX() - first.getX(), ground.getY() - first.getY(), ground.getZ() - first.getZ());
+		BlockPos[] columns = new BlockPos[3];
+		for (int i = 0; i < 3; i++) columns[i] = grounds.toWorld(open % w + i, 0, open / w);
+		try {
+			for (int dy = -5; dy <= -3; dy++) level.setBlock(columns[0].above(dy), Blocks.STONE.defaultBlockState(), 2);
+			level.setBlock(columns[0].below(2), Blocks.PODZOL.defaultBlockState(), 2);
+			level.setBlock(columns[0].below(), Blocks.FERN.defaultBlockState(), 2);
+			for (int dy = -5; dy <= 2; dy++) level.setBlock(columns[1].above(dy), Blocks.DIRT.defaultBlockState(), 2);
+			level.setBlock(columns[1].above(3), Blocks.COARSE_DIRT.defaultBlockState(), 2);
+			level.setBlock(columns[1].above(4), Blocks.SPRUCE_LOG.defaultBlockState(), 2);
+			for (int dy = -5; dy <= -4; dy++) level.setBlock(columns[2].above(dy), Blocks.STONE.defaultBlockState(), 2);
+			for (int dy = -3; dy <= -1; dy++) level.setBlock(columns[2].above(dy), Blocks.WATER.defaultBlockState(), 2);
+			var box = net.minecraft.world.level.levelgen.structure.BoundingBox.encapsulatingPositions(
+					List.of(columns[0].below(20), columns[2].above(45))).orElseThrow();
+			grounds.postProcess(level, level.structureManager(), level.getChunkSource().getGenerator(), level.random, box,
+					new net.minecraft.world.level.ChunkPos(ground), ground);
+			helper.assertTrue(level.getBlockState(columns[0]).is(Blocks.PODZOL) && level.getBlockState(columns[0].below()).is(Blocks.DIRT),
+					"Podzol raised to the grounds stays podzol (" + level.getBlockState(columns[0]) + ")");
+			helper.assertTrue(level.getBlockState(columns[1]).is(Blocks.COARSE_DIRT) && level.getBlockState(columns[1].above()).isAir(),
+					"A knoll of coarse dirt cut down to the grounds stays coarse dirt (" + level.getBlockState(columns[1]) + ")");
+			helper.assertTrue(level.getBlockState(columns[2]).is(Blocks.GRASS_BLOCK) && level.getFluidState(columns[2].below()).isEmpty(),
+					"Over water it is grass, on earth filled in (" + level.getBlockState(columns[2]) + ")");
+			helper.succeed();
+		} finally {
+			for (BlockPos column : columns) {
+				for (int dy = -5; dy <= 26; dy++) level.setBlock(column.above(dy), Blocks.AIR.defaultBlockState(), 2);
+			}
+		}
+	}
+
 	// --- Clothing ---
 
 	@GameTest(template = EMPTY_STRUCTURE)

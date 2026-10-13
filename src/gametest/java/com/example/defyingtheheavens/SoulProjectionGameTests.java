@@ -10,10 +10,13 @@ import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.ambient.Bat;
+import net.minecraft.world.entity.animal.Bee;
 import net.minecraft.world.entity.animal.Pig;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Zombie;
@@ -255,6 +258,12 @@ public class SoulProjectionGameTests implements FabricGameTest {
 			helper.assertTrue(SoulProjection.tryPossess(soul, zombie) == InteractionResult.SUCCESS, "A beast counts as a mortal");
 			helper.assertTrue(zombie.getFirstPassenger() == soul && SoulProjection.possessorOf(zombie) == soul && zombie.getControllingPassenger() == soul,
 					"The soul rides inside it, and steers it");
+			// ...at its own pace: a mob walking by itself steps by its speed (Mob#setSpeed), and a soul's full step is that, no
+			// more (it was the whole speed, three or four times as fast), nor more on the diagonal.
+			double pace = zombie.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
+			zombie.setSpeed((float) pace);
+			helper.assertTrue(Math.abs(SoulProjection.hostStep(zombie, 0, 1).length() - zombie.zza) < 1.0E-6
+					&& SoulProjection.hostStep(zombie, 1, 1).length() <= pace + 1.0E-6, "The soul walks its host at the host's own pace");
 			helper.assertTrue(c.getQi() < qi, "Taking hold costs qi");
 			ServerPlayer heavenly = cultivator(helper, made, "hb-striker", Realm.HEAVENLY_BEING, Stage.EARLY);
 			helper.assertTrue(!SoulProjection.allowSoulDamage(soul, helper.getLevel().damageSources().playerAttack(heavenly)),
@@ -269,6 +278,67 @@ public class SoulProjectionGameTests implements FabricGameTest {
 			SoulProjection.tick(soul, helper.getLevel().getGameTime());
 			helper.assertTrue(!soul.isPassenger() && SoulProjection.isSoul(soul) && soul.getHealth() == health,
 					"The host dead, the soul is thrown out unharmed");
+			helper.succeed();
+		} finally {
+			leave(made);
+		}
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void aPossessedFlierFliesWhereItsSoulLooks(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		try {
+			ServerLevel level = helper.getLevel();
+			for (EntityType<?> type : List.of(EntityType.BEE, EntityType.PARROT, EntityType.ALLAY, EntityType.BAT, EntityType.GHAST, EntityType.PHANTOM,
+					EntityType.VEX, EntityType.BLAZE)) {
+				helper.assertTrue(SoulProjection.flies(type.create(level)), type.toShortString() + " flies");
+			}
+			for (EntityType<?> type : List.of(EntityType.ZOMBIE, EntityType.SPIDER, EntityType.PIG, EntityType.CHICKEN)) {
+				helper.assertTrue(!SoulProjection.flies(type.create(level)), type.toShortString() + " walks");
+			}
+			// Forward goes along the line of sight (looking down, down), strafing level, jump straight up; never more than a full step.
+			helper.assertTrue(SoulProjection.flightWish(0, 1, false, new Vec3(0, -1, 0), 0).y < -0.99, "Looking down, forward goes down");
+			Vec3 climb = SoulProjection.flightWish(0, 0, true, new Vec3(0, 0, 1), 0);
+			helper.assertTrue(climb.y > 0.99 && Math.abs(climb.x) + Math.abs(climb.z) < 1.0E-6, "Jump climbs straight up");
+			helper.assertTrue(SoulProjection.flightWish(1, 0, false, new Vec3(0, 0, 1), 0).x > 0.99, "Strafing left, facing south, goes east");
+			helper.assertTrue(SoulProjection.flightWish(1, 1, true, new Vec3(0, 0, 1), 0).length() <= 1 + 1.0E-6, "At most a full step");
+
+			// At its own pace, as its wings carry it by itself: a bee's flight against the air; a vex's charge outpaces a ghast's drift.
+			Bee bee = helper.spawn(EntityType.BEE, new BlockPos(2, 3, 2));
+			double pace = SoulProjection.flightPace(bee, SoulProjection.GLIDE_MIN);
+			helper.assertTrue(Math.abs(pace - 0.02 * 0.6 * 0.98 / 0.09) < 1.0E-3, "A bee flies at a bee's pace (" + pace + ")");
+			double allay = SoulProjection.flightPace(EntityType.ALLAY.create(level), SoulProjection.GLIDE_MIN);
+			double parrot = SoulProjection.flightPace(EntityType.PARROT.create(level), SoulProjection.GLIDE_MIN);
+			double vex = SoulProjection.flightPace(EntityType.VEX.create(level), SoulProjection.GLIDE_MIN);
+			double ghast = SoulProjection.flightPace(EntityType.GHAST.create(level), SoulProjection.GLIDE_MIN);
+			helper.assertTrue(Math.abs(allay - 0.109) < 1.0E-3 && Math.abs(parrot - 0.087) < 1.0E-3 && vex > ghast && ghast > pace,
+					"Each at its own (allay " + allay + ", parrot " + parrot + ", vex " + vex + ", ghast " + ghast + ")");
+			Vec3 v = Vec3.ZERO;
+			for (int i = 0; i < 200; i++) v = SoulProjection.flightVelocity(v, new Vec3(0, 0, 1), pace);
+			helper.assertTrue(Math.abs(v.length() - pace) < 1.0E-3, "It gathers speed up to its pace, and holds it");
+			for (int i = 0; i < 200; i++) v = SoulProjection.flightVelocity(v, Vec3.ZERO, pace);
+			helper.assertTrue(v.length() < 1.0E-3, "Let go of, it drifts to a hover");
+			float glide = SoulProjection.GLIDE_MIN;
+			for (int i = 0; i < 400; i++) glide = SoulProjection.glide(glide, 0);
+			helper.assertTrue(glide > 1.7f, "A phantom holding its line gathers speed (" + glide + ")");
+			for (int i = 0; i < 100; i++) glide = SoulProjection.glide(glide, 20);
+			helper.assertTrue(glide == SoulProjection.GLIDE_MIN, "...and turning, loses it");
+
+			// Held, it is weightless (the server lets a ridden body hang in the air only so) and falls no distance; let go, its weight
+			// comes back. A roosting bat is roused.
+			ServerPlayer soul = projected(helper, made, "soul-flier", Realm.NASCENT_SOUL, Stage.EARLY);
+			bee.setNoGravity(false);
+			helper.assertTrue(SoulProjection.tryPossess(soul, bee) == InteractionResult.SUCCESS && bee.isNoGravity(), "A possessed bee is weightless");
+			bee.fallDistance = 10;
+			SoulProjection.tick(soul, level.getGameTime());
+			helper.assertTrue(bee.fallDistance == 0, "Its way down is flight, not a fall");
+			soul.stopRiding();
+			SoulProjection.tick(soul, level.getGameTime());
+			helper.assertTrue(!bee.isNoGravity() && !bee.isVehicle(), "Let go of, it has its weight back");
+			Bat bat = helper.spawn(EntityType.BAT, new BlockPos(1, 3, 1));
+			bat.setResting(true);
+			helper.assertTrue(SoulProjection.tryPossess(soul, bat) == InteractionResult.SUCCESS && !bat.isResting() && bat.isNoGravity(),
+					"A roosting bat is roused to fly");
 			helper.succeed();
 		} finally {
 			leave(made);

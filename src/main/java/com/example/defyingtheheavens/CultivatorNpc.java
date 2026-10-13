@@ -608,6 +608,9 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	public void setTitle(NpcTitle title) {
 		NpcTitle before = getTitle();
 		entityData.set(DATA_TITLE, (byte) title.ordinal());
+		// Only Outer Disciples keep the gates (Sect#guardPost): one raised above them (its seniors fallen, say, while it was in
+		// the thick of a fight and choosing no duty) is a gate guard no longer, and its name shows its new title.
+		if (title != NpcTitle.OUTER_DISCIPLE) setGateGuard(false);
 		// Promoted past the clothing it wears: it dresses for its new station.
 		if (before != title && !level().isClientSide && title.isSectTitle()) upgradeClothing(ClothingStyle.of(getFaction()), clothingTier(title, getRank(), random));
 	}

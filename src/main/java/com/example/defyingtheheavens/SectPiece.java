@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
@@ -420,10 +421,12 @@ public class SectPiece extends StructurePiece {
 	private static final int CROWN = 3;
 
 	/**
-	 * The grounds, from SectLayout's map: no wall and no paving, but the open grass levelled (cleared above, filled with earth
+	 * The grounds, from SectLayout's map: no wall and no paving, but the open ground levelled (cleared above, filled with earth
 	 * below), the paved ways with their edging, earthen footpaths to the doors, stone lanterns along the ways, and trees and
-	 * bamboo on the grass between the buildings. The ground keeps its own top (podzol in a taiga, snowy grass in the snow)
-	 * where there is one at the right height; anywhere else it is grass.
+	 * bamboo on the grass between the buildings. The open ground keeps the land's own floor, column by column: what was on top
+	 * of each before it was levelled (podzol and coarse dirt in an old taiga, grass on the plains, the stone of a rocky peak),
+	 * wherever that was, raised or lowered to the grounds' level; so a sect sits in its land rather than on a lawn laid over
+	 * it. Only where there was no such ground (water) is it grass.
 	 */
 	private void terrace(WorldGenLevel level, BoundingBox chunk, SectPalette p) {
 		int w = width(), d = depth();
@@ -435,6 +438,8 @@ public class SectPiece extends StructurePiece {
 			for (int z = 0; z < d; z++) {
 				byte code = map[x + z * w];
 				if (code == SectLayout.OUT || !chunk.isInside(getWorldPos(x, 0, z))) continue;
+				// The land's floor here, read before the levelling takes it away.
+				BlockState floor = landFloor(level, chunk, x, z);
 				boolean paved = code == SectLayout.PATH || code == SectLayout.PATH_EDGE || code == SectLayout.PLAZA;
 				foundation(level, chunk, x, 0, z, paved ? stone : earth);
 				air(level, chunk, x, 1, z, x, 22, z);
@@ -445,9 +450,7 @@ public class SectPiece extends StructurePiece {
 						int roll = rand(x, z, 3).nextInt(10);
 						put(level, chunk, x, 0, z, roll < 7 ? Blocks.DIRT_PATH : roll < 9 ? Blocks.COARSE_DIRT : p.paving);
 					}
-					default -> {
-						if (!naturalTop(at(level, chunk, x, 0, z))) put(level, chunk, x, 0, z, Blocks.GRASS_BLOCK);
-					}
+					default -> put(level, chunk, x, 0, z, floor != null ? floor : Blocks.GRASS_BLOCK.defaultBlockState());
 				}
 			}
 		}
@@ -468,10 +471,39 @@ public class SectPiece extends StructurePiece {
 		}
 	}
 
-	/** A natural top for the grounds: what the land had there already, if it is good ground. */
-	private static boolean naturalTop(BlockState state) {
-		return state.is(Blocks.GRASS_BLOCK) || state.is(Blocks.PODZOL) || state.is(Blocks.COARSE_DIRT) || state.is(Blocks.MYCELIUM)
-				|| state.is(Blocks.MOSS_BLOCK);
+	/**
+	 * How far above and below the grounds' level a column is searched for the land's top: below as deep as the grounds are ever
+	 * set into a dip, above past the tallest knoll the levelling cuts away (and a tree's crown over it).
+	 */
+	private static final int FLOOR_ABOVE = 40, FLOOR_BELOW = 14;
+
+	/**
+	 * The land's floor in column x, z: the first block down that the land is made of ({@link #asFloor}), under whatever stands
+	 * or grows on it (plants, trees, mushrooms, snow cover, moss carpet); null if water comes first, or no such block is found.
+	 */
+	private BlockState landFloor(WorldGenLevel level, BoundingBox chunk, int x, int z) {
+		for (int y = FLOOR_ABOVE; y >= -FLOOR_BELOW; y--) {
+			BlockState state = at(level, chunk, x, y, z);
+			if (!state.getFluidState().isEmpty()) return null;
+			BlockState floor = asFloor(state);
+			if (floor != null) return floor;
+		}
+		return null;
+	}
+
+	/**
+	 * The floor the grounds lay for a block the land's top is made of: earth of any kind, sand, gravel, snow, or the land's
+	 * own stone, as it is (but plain, without what a buried or snowed-on block carries); the snow's ice and powder as packed
+	 * snow, firm to walk on. Null for anything else.
+	 */
+	private static BlockState asFloor(BlockState state) {
+		if (state.is(Blocks.SUSPICIOUS_SAND)) return Blocks.SAND.defaultBlockState();
+		if (state.is(Blocks.SUSPICIOUS_GRAVEL)) return Blocks.GRAVEL.defaultBlockState();
+		if (state.is(Blocks.POWDER_SNOW) || state.is(BlockTags.ICE)) return Blocks.SNOW_BLOCK.defaultBlockState();
+		boolean ground = state.is(BlockTags.DIRT) || state.is(BlockTags.SAND) || state.is(BlockTags.BASE_STONE_OVERWORLD)
+				|| state.is(Blocks.GRAVEL) || state.is(Blocks.SNOW_BLOCK) || state.is(Blocks.CALCITE) || state.is(Blocks.BASALT)
+				|| state.is(Blocks.BLACKSTONE) || state.is(Blocks.OBSIDIAN) || state.is(ModBlocks.JADE_STONE);
+		return ground ? state.getBlock().defaultBlockState() : null;
 	}
 
 	/**
