@@ -21,8 +21,8 @@ import java.util.List;
 
 /**
  * The Inscription Brush paints seals of qi ink ({@link SealBlock}) on the top of a block or the side of a wall, one per use,
- * each costing a point of durability; used while sneaking, it wipes away the seal on that face instead. The ink can only be
- * seen with Qi Sense on.
+ * each costing a point of durability; used while sneaking, it wipes away the seal on that face instead. Either is a soft
+ * brush stroke to the ear (vanilla's brushing sound, quiet; lower when wiping). The ink can only be seen with Qi Sense on.
  */
 public class InscriptionBrushItem extends Item {
 	public InscriptionBrushItem(Properties properties) {
@@ -43,7 +43,7 @@ public class InscriptionBrushItem extends Item {
 			if (seal == null) return InteractionResult.PASS;
 			if (!level.isClientSide) {
 				level.removeBlock(seal, false);
-				level.playSound(null, seal, SoundEvents.BOOK_PAGE_TURN, SoundSource.BLOCKS, 0.8f, 0.7f);
+				level.playSound(null, seal, SoundEvents.BRUSH_GENERIC, SoundSource.BLOCKS, 0.6f, 0.8f); // a stroke wiping it away
 			}
 			return InteractionResult.sidedSuccess(level.isClientSide);
 		}
@@ -56,7 +56,7 @@ public class InscriptionBrushItem extends Item {
 		if (!level.isClientSide) {
 			level.setBlock(target, seal, Block.UPDATE_ALL);
 			level.gameEvent(player, GameEvent.BLOCK_PLACE, target);
-			level.playSound(null, target, SoundEvents.BOOK_PAGE_TURN, SoundSource.BLOCKS, 0.9f, 1.3f);
+			level.playSound(null, target, SoundEvents.BRUSH_GENERIC, SoundSource.BLOCKS, 0.6f, 1.1f); // a soft brush stroke
 			if (player != null) {
 				context.getItemInHand().hurtAndBreak(1, player, p -> p.broadcastBreakEvent(context.getHand()));
 				if (!CultivationManager.forPlayer(player).isQiSenseOn()) {
