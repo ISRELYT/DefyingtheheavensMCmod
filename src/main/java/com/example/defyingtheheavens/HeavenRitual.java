@@ -26,7 +26,7 @@ import java.util.UUID;
  *   <li>Lay offerings on a Heaven Altar's tray (anything at all; see {@link HeavenAltar} for how they are weighed).</li>
  *   <li>Sneak and right-click it, empty-handed, to begin: the offerings rise as smoke and are taken, whatever happens next,
  *   and the chance is set by the offering, the altar and its height.</li>
- *   <li>Kneel there, unmoving, for {@link #DURATION} ticks (three minutes): moving a third of a block (being knocked back
+ *   <li>Kneel there, unmoving, for {@link #DURATION} ticks (fifteen seconds): moving a third of a block (being knocked back
  *   too), leaving, dying, or losing the altar breaks the ritual, and the offering is gone.</li>
  *   <li>Then the heavens answer: their leave (and, for a Generous offering or better, Heaven's Favour), or silence, and no
  *   new ritual until the next dawn.</li>
@@ -34,8 +34,8 @@ import java.util.UUID;
  * Every path performs the same ritual. Sect cultivators perform it too, at their sect's Altar of Heaven (see NpcLife).
  */
 public final class HeavenRitual {
-	/** Three minutes. */
-	public static final int DURATION = 3 * 60 * 20;
+	/** Fifteen seconds. */
+	public static final int DURATION = 15 * 20;
 	/** How far (blocks, horizontally) the kneeling cultivator may drift before the ritual counts as broken. */
 	public static final double STILL = 1.0 / 3.0;
 	public static final long DAY = 24_000L;
@@ -159,7 +159,7 @@ public final class HeavenRitual {
 				level.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE, r.altar.getX() + 0.5, r.altar.getY() + 1.0, r.altar.getZ() + 0.5,
 						1, 0.05, 0, 0.05, 0.01);
 			}
-			// Light gathers over the altar, a little more as the minutes pass.
+			// Light gathers over the altar, a little more as the seconds pass.
 			if (level.random.nextDouble() < 0.15 + 0.6 * progress) {
 				double h = 3 + level.random.nextDouble() * (4 + 10 * progress);
 				level.sendParticles(ParticleTypes.END_ROD, r.altar.getX() + 0.5 + (level.random.nextDouble() - 0.5) * 0.6, r.altar.getY() + h,
@@ -172,7 +172,7 @@ public final class HeavenRitual {
 		}
 	}
 
-	/** The heavens' answer, at the end of three still minutes. */
+	/** The heavens' answer, at the end of fifteen still seconds. */
 	private static void answer(ServerPlayer player, Ritual r, boolean granted) {
 		ServerLevel level = player.serverLevel();
 		PlayerCultivation c = CultivationManager.get(player);

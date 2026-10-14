@@ -109,16 +109,26 @@ public class SpellWheelScreen extends Screen {
 		Spell pointed = hovered < 0 ? null : ClientMethods.shown(hovered);
 		if (pointed != null) {
 			int cooldown = ClientMethods.cooldownLeft(pointed);
-			boolean affordable = ClientNetherworldData.ghostQi() >= pointed.cost() || isCreative();
+			// Each cost on its own line: a heaven method's spell costs qi, a ghost method's ghostly qi, one of both paths (TwoPaths) both.
+			boolean usesQi = pointed.qiCost() > 0, usesGhostQi = pointed.cost() > 0;
+			boolean ghostAffordable = ClientNetherworldData.ghostQi() >= pointed.cost() || isCreative();
+			boolean qiAffordable = ClientCultivationData.get().getQi() >= pointed.qiCost() || isCreative();
 			List<FormattedCharSequence> name = font.split(pointed.getDisplayName(), textWidth);
-			int y = cy - (name.size() * 10 + 20) / 2;
+			int y = cy - (name.size() * 10 + (usesQi ? 10 : 0) + (usesGhostQi ? 10 : 0) + 10) / 2;
 			for (FormattedCharSequence line : name) {
 				g.drawCenteredString(font, line, cx, y, cooldown > 0 ? 0x9E9E9E : 0xFFD700);
 				y += 10;
 			}
-			g.drawCenteredString(font, Component.translatable(ModLang.SPELLS_COST, Math.round(pointed.cost())), cx, y + 1,
-					affordable ? 0x7FDBE8 : 0xE05050);
-			y += 10;
+			if (usesQi) {
+				g.drawCenteredString(font, Component.translatable(ModLang.SPELLS_QI_COST, Math.round(pointed.qiCost())), cx, y + 1,
+						qiAffordable ? 0x64B5F6 : 0xE05050);
+				y += 10;
+			}
+			if (usesGhostQi) {
+				g.drawCenteredString(font, Component.translatable(ModLang.SPELLS_COST, Math.round(pointed.cost())), cx, y + 1,
+						ghostAffordable ? 0x7FDBE8 : 0xE05050);
+				y += 10;
+			}
 			Component state = cooldown > 0 ? Component.translatable(ModLang.SPELLS_COOLING, (cooldown + 19) / 20)
 					: Component.translatable(pointed == readied ? ModLang.SPELLS_READIED : ModLang.SPELLS_READY);
 			g.drawCenteredString(font, state, cx, y + 2, cooldown > 0 ? 0x9E9E9E : pointed == readied ? 0x69F0AE : 0xB0B0B0);

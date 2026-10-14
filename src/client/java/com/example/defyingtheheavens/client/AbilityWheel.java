@@ -27,7 +27,7 @@ final class AbilityWheel {
 
 	private static final Map<Ability, ResourceLocation> ICONS = new EnumMap<>(Ability.class);
 
-	/** Each ability's 16x16 icon, textures/gui/ability/<id>.png. */
+	/** Each ability's icon, textures/gui/ability/<id>.png: 32x32 art, drawn whole at whatever size is asked ({@link #drawIcon}). */
 	static ResourceLocation icon(Ability ability) {
 		return ICONS.computeIfAbsent(ability, a -> new ResourceLocation(DefyingTheHeavens.MOD_ID, "textures/gui/ability/" + a.getId() + ".png"));
 	}

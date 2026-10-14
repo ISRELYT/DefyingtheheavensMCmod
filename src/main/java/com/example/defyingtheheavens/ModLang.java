@@ -170,6 +170,7 @@ public final class ModLang {
 	public static final String MSG_MORTAL_MEDITATE = k("message.mortal_meditate");
 	public static final String MSG_NEED_PILL = k("message.need_pill");
 	public static final String MSG_AWAKENED = k("message.awakened");
+	public static final String MSG_AWAKENED_DEAD = k("message.awakened_dead");
 	public static final String MSG_ALREADY_AWAKENED = k("message.already_awakened");
 	public static final String MSG_PILL_PREPARED = k("message.pill_prepared");
 	public static final String MSG_PILL_WRONG_TIME = k("message.pill_wrong_time");
@@ -186,6 +187,8 @@ public final class ModLang {
 	public static final String CIRCULATION_STREAK = k("circulation.streak");
 	public static final String SURGE_CIRCUIT = k("surge.circuit");
 	public static final String SURGE_ELEMENTS = k("surge.elements");
+	/** An element's name: this and its name in lower case (QiElement#getDisplayName). */
+	public static final String ELEMENT_PREFIX = k("element.");
 	public static final String SURGE_BREATH = k("surge.breath");
 	public static final String SURGE_SYNC = k("surge.sync");
 	public static final String MSG_HARMONY = k("message.harmony");
@@ -296,6 +299,8 @@ public final class ModLang {
 	public static final String TALK_PICK = k("talk.pick");
 	/** A cultivator with another's soul inside it (SoulProjection) doesn't answer. */
 	public static final String TALK_POSSESSED = k("talk.possessed");
+	/** One of the living who can't see you (you in a Ghost King's form, or dead, to one below Nascent Soul: CultivatorNpc#senses). */
+	public static final String TALK_UNSEEN = k("talk.unseen");
 	/** Struck mid-talk; a Sworn friend's aid and gift; one begging for its life; a topic's regard; a junior's realm. */
 	public static final String TALK_INTERRUPTED = k("talk.interrupted");
 	public static final String TALK_AID = k("talk.aid");
@@ -491,6 +496,10 @@ public final class ModLang {
 	public static final String MSG_WHEEL_HARDCORE = k("message.ghost.wheel_hardcore");
 	public static final String MSG_REVIVED = k("message.ghost.revived");
 	public static final String MSG_BELONGINGS_LEFT = k("message.ghost.belongings_left");
+	public static final String MSG_GHOST_KING = k("message.ghost.king");
+	public static final String MSG_GHOST_KING_LOST = k("message.ghost.king_lost");
+	public static final String JOURNAL_GHOST_KING = k("journal.ghost_king");
+	public static final String JOURNAL_GHOST_KING_TEXT = k("journal.ghost_king.text");
 	public static final String MSG_JUDGE_WARNING = k("message.judge.warning");
 	public static final String MSG_JUDGE_STRIPPED = k("message.judge.stripped");
 	public static final String MSG_JUDGE_MORTAL = k("message.judge.mortal");
@@ -514,11 +523,54 @@ public final class ModLang {
 	// The ghost methods and their spells (see GhostMethods, Spells)
 	public static String methodKey(String id) { return "ghost_method." + DefyingTheHeavens.MOD_ID + "." + id; }
 	public static String spellKey(String id) { return "spell." + DefyingTheHeavens.MOD_ID + "." + id; }
+	/** A heaven method's name; and with ".description" and ".gains" its lore and what its layers bring (HeavenMethod). */
+	public static String heavenMethodKey(String id) { return "heaven_method." + DefyingTheHeavens.MOD_ID + "." + id; }
+	// The heaven methods (HeavenMethods): learning, cultivating, the Dao Steles, the jade slips, the Methods tab's heaven page
+	public static final String MSG_HEAVEN_METHOD_MERIDIANS = k("message.heaven_method.meridians");
+	public static final String MSG_HEAVEN_METHOD_DEAD = k("message.heaven_method.dead");
+	public static final String MSG_HEAVEN_LEARNED = k("message.heaven_method.learned");
+	public static final String MSG_HEAVEN_LEARNED_AT = k("message.heaven_method.learned_at");
+	public static final String MSG_HEAVEN_PRACTISED = k("message.heaven_method.practised");
+	public static final String MSG_HEAVEN_LAYER = k("message.heaven_method.layer");
+	/** Cultivation waiting on the heaven methods (HeavenMethods#gateLine): a layer to finish, or no method that goes on. */
+	public static final String HEAVEN_GATE_LAYER = k("heaven_method.gate.layer");
+	public static final String HEAVEN_GATE_NONE = k("heaven_method.gate.none");
+	public static final String JOURNAL_HEAVEN_METHOD = k("journal.heaven_method");
+	public static final String JOURNAL_HEAVEN_METHOD_TEXT = k("journal.heaven_method.text");
+	public static final String MSG_SPELL_NO_HEAVEN_QI = k("message.spell.no_heaven_qi");
+	public static final String MSG_SPELL_NO_HOLD = k("message.spell.no_hold");
+	public static final String MSG_SPRING_DRY = k("message.spell.spring_dry");
+	public static final String MSG_NO_REFLECTION = k("message.spell.no_reflection");
+	public static final String MSG_NO_SKY = k("message.spell.no_sky");
+	public static final String MSG_DAO_STELE_TEACHES = k("message.dao_stele.teaches");
+	public static final String MSG_DAO_STELE_KNOWN = k("message.dao_stele.known");
+	public static final String MSG_DAO_STELE_READING = k("message.dao_stele.reading");
+	public static final String ITEM_JADE_SLIP_OF = "item." + DefyingTheHeavens.MOD_ID + ".jade_slip.of";
+	public static final String TOOLTIP_JADE_SLIP = k("tooltip.jade_slip");
+	public static final String TOOLTIP_JADE_SLIP_ELEMENT = k("tooltip.jade_slip.element");
+	public static final String METHODS_PAGE_GHOST = k("methods.page.ghost");
+	public static final String METHODS_PAGE_HEAVEN = k("methods.page.heaven");
+	public static final String METHODS_HEAVEN_KNOWN = k("methods.heaven.known");
+	public static final String METHODS_HEAVEN_EMPTY = k("methods.heaven.empty");
+	public static final String METHODS_HEAVEN_HINT = k("methods.heaven.hint");
+	public static final String METHODS_HEAVEN_DEAD = k("methods.heaven.dead");
+	public static final String METHODS_HEAVEN_SEALED = k("methods.heaven.sealed");
+	public static final String METHODS_HEAVEN_RATE = k("methods.heaven.rate");
+	public static final String METHODS_HEAVEN_SHARE = k("methods.heaven.share");
+	public static final String METHODS_HEAVEN_REACH = k("methods.heaven.reach");
+	public static final String METHODS_HEAVEN_UNKNOWN = k("methods.heaven.unknown");
+	public static final String METHODS_HEAVEN_PASSIVE = k("methods.heaven.passive");
+	public static final String TALK_TEACH_HEAVEN = k("talk.teach.heaven");
+	public static final String TALK_TEACH_HEAVEN_PROGRESS = k("talk.teach.heaven_progress");
+	/** An element's passive's name and its line on the Methods tab (HeavenPassives): {@code passive.<mod>.<element>}. */
+	public static String passiveKey(QiElement element) { return "passive." + DefyingTheHeavens.MOD_ID + "." + element.name().toLowerCase(java.util.Locale.ROOT); }
 	public static final String KEY_SPELL_WHEEL = "key." + DefyingTheHeavens.MOD_ID + ".spell_wheel";
 	public static final String KEY_CAST_SPELL = "key." + DefyingTheHeavens.MOD_ID + ".cast_spell";
 	public static final String MSG_METHOD_LEARNED = k("message.method.learned");
 	public static final String MSG_METHOD_LAYER = k("message.method.layer");
-	public static final String MSG_METHOD_CAPPED = k("message.method.capped");
+	public static final String MSG_METHOD_REALM_CAPPED = k("message.method.realm_capped");
+	public static final String MSG_METHOD_FLOOR = k("message.method.floor");
+	public static final String MSG_METHOD_LEARNED_AT = k("message.method.learned_at");
 	public static final String MSG_METHOD_PRACTISED = k("message.method.practised");
 	public static final String MSG_GHOST_NO_METHOD = k("message.method.ghost_none");
 	public static final String MSG_GHOST_QI_SPENT = k("message.method.ghost_qi_spent");
@@ -537,10 +589,16 @@ public final class ModLang {
 	// The Methods tab
 	public static final String METHODS_KNOWN = k("methods.known");
 	public static final String METHODS_LAYER = k("methods.layer");
+	public static final String METHODS_LAYER_REALM = k("methods.layer_realm");
 	public static final String METHODS_PERFECTED = k("methods.perfected");
 	public static final String METHODS_PROGRESS = k("methods.progress");
 	public static final String METHODS_RATE = k("methods.rate");
-	public static final String METHODS_CAPPED = k("methods.capped");
+	public static final String METHODS_REALM_CAPPED = k("methods.realm_capped");
+	public static final String METHODS_FLOOR_NEXT = k("methods.floor_next");
+	public static final String METHODS_SEEK_NEXT = k("methods.seek_next");
+	public static final String METHODS_GHOST_PATH = k("methods.ghost_path");
+	public static final String METHODS_GHOST_PATH_NONE = k("methods.ghost_path_none");
+	public static final String METHODS_UNKNOWN_DEEP = k("methods.unknown_deep");
 	public static final String METHODS_ACTIVE = k("methods.active");
 	public static final String METHODS_UNKNOWN = k("methods.unknown");
 	public static final String METHODS_GAINS = k("methods.gains");
@@ -551,12 +609,36 @@ public final class ModLang {
 	public static final String SPELLS_COST = k("spells.cost");
 	public static final String SPELLS_COOLDOWN = k("spells.cooldown");
 	public static final String SPELLS_LOCKED = k("spells.locked");
+	public static final String SPELLS_LOCKED_REALM = k("spells.locked_realm");
+	/** A heaven spell not yet known: the realm and stage one's cultivation must reach for it, as well as its layer (Spell#realmNeeded). */
+	public static final String SPELLS_LOCKED_STAGE = k("spells.locked_stage");
 	public static final String SPELLS_READY = k("spells.ready");
 	public static final String SPELLS_READIED = k("spells.readied");
 	public static final String SPELLS_COOLING = k("spells.cooling");
 	public static final String SPELLS_ON_WHEEL = k("spells.on_wheel");
 	public static final String SPELLS_ARRANGE_HINT = k("spells.arrange_hint");
+	public static final String SPELLS_COST_BOTH = k("spells.cost_both");
+	public static final String SPELLS_QI_COST = k("spells.qi_cost");
+	public static final String SPELLS_LOCKED_BOTH = k("spells.locked_both");
 	public static final String SPELL_WHEEL_TITLE = k("spell_wheel.title");
+	// The two paths (see TwoPaths): the body, the harmony, the spells of both paths, the forms
+	public static final String STATS_GHOST_BODY = k("stats.ghost_body");
+	public static final String STATS_HARMONY = k("stats.harmony");
+	public static final String TWO_PATHS_LINE = k("two_paths.line");
+	public static final String MSG_SPELL_NO_BOTH = k("message.spell.no_both");
+	public static final String MSG_SPELL_BOTH_PATHS = k("message.spell.both_paths");
+	/** A form's name: this and its id (TwoPaths.Form). */
+	public static final String FORM_PREFIX = k("form.");
+	public static final String MSG_FORMS_OPEN = k("message.form.open");
+	public static final String MSG_FORMS_OPEN_DEAD = k("message.form.open_dead");
+	/** A mortal's closed meridians, alive (MSG_METHOD_MERIDIANS) or dead: no ghost method taken up or cultivated (GhostMethods#refusal). */
+	public static final String MSG_METHOD_MERIDIANS = k("message.method.meridians");
+	public static final String MSG_METHOD_MERIDIANS_DEAD = k("message.method.meridians_dead");
+	public static final String METHODS_GHOST_PATH_SEALED = k("methods.ghost_path_sealed");
+	public static final String MSG_TRUE_FORM = k("message.form.true");
+	public static final String MSG_FORM_TAKEN = k("message.form.taken");
+	public static final String JOURNAL_FORMS = k("journal.two_forms");
+	public static final String JOURNAL_FORMS_TEXT = k("journal.two_forms.text");
 	public static final String SPELL_WHEEL_HINT = k("spell_wheel.hint");
 	public static final String SPELL_WHEEL_EMPTY = k("spell_wheel.empty");
 	public static final String HUD_READIED_SPELL = k("hud.readied_spell");

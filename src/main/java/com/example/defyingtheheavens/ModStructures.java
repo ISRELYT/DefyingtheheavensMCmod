@@ -19,6 +19,10 @@ import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
  *   (every Upper Realm island biome), placed by {@code worldgen/structure_set/sects_upper_realm.json}: one try per 14 x 14
  *   chunks, since so few of the islands are wide and level enough.</li>
  * </ul>
+ * And the Netherworld's Ghost Kings' palaces: {@code worldgen/structure/ghost_palace.json}, biomes
+ * {@code #defying-the-heavens:has_structure/ghost_palace} (the Fields of the Other Shore, the Bone Wastes), placed by
+ * {@code worldgen/structure_set/ghost_palaces.json}: one try per 24 x 24 chunks (about one in five comes to a palace: the
+ * biomes, level ground, the Gate's clearance).
  */
 public final class ModStructures {
 	public static final ResourceKey<Structure> SECT = ResourceKey.create(Registries.STRUCTURE, DefyingTheHeavens.id("sect"));
@@ -29,6 +33,13 @@ public final class ModStructures {
 			DefyingTheHeavens.id("sect"), () -> SECT_CODEC);
 	public static final StructurePieceType SECT_PIECE = Registry.register(BuiltInRegistries.STRUCTURE_PIECE,
 			DefyingTheHeavens.id("sect_piece"), (StructurePieceType.ContextlessType) SectPiece::new);
+
+	public static final ResourceKey<Structure> GHOST_PALACE = ResourceKey.create(Registries.STRUCTURE, DefyingTheHeavens.id("ghost_palace"));
+	public static final Codec<GhostPalaceStructure> GHOST_PALACE_CODEC = Structure.simpleCodec(GhostPalaceStructure::new);
+	public static final StructureType<GhostPalaceStructure> GHOST_PALACE_TYPE = Registry.register(BuiltInRegistries.STRUCTURE_TYPE,
+			DefyingTheHeavens.id("ghost_palace"), () -> GHOST_PALACE_CODEC);
+	public static final StructurePieceType GHOST_PALACE_PIECE = Registry.register(BuiltInRegistries.STRUCTURE_PIECE,
+			DefyingTheHeavens.id("ghost_palace_piece"), (StructurePieceType.ContextlessType) GhostPalacePiece::new);
 
 	/** Touching this class registers the types. */
 	public static void register() {

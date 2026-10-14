@@ -33,6 +33,7 @@ public class HeavenRitualGameTests implements FabricGameTest {
 	public void qiRefiningMidWaitsOnTheHeavens(GameTestHelper helper) {
 		PlayerCultivation c = new PlayerCultivation();
 		c.setState(Realm.QI_REFINING, Stage.EARLY, 0);
+		TestMethods.carryAll(c); // a heaven method carrying the realm on (HeavenMethods#reach): only the heavens stand in the way
 		c.addCultivation(1_000_000);
 		helper.assertTrue(c.getStage() == Stage.MID && c.isAtRitualGate() && !c.isAtBottleneck() && !c.canBreakthrough(),
 				"Early runs on into Mid, and Mid stops full: no tribulation, the heavens' leave");
@@ -290,6 +291,7 @@ public class HeavenRitualGameTests implements FabricGameTest {
 		p.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0, 0);
 		PlayerCultivation c = CultivationManager.get(p);
 		c.setState(Realm.QI_REFINING, stage, 0);
+		TestMethods.carryAll(c); // granted, a full Mid steps on into Late (HeavenMethods#reach)
 		CultivationStats.apply(p, c);
 		return p;
 	}

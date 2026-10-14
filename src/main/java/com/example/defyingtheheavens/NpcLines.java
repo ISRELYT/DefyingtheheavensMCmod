@@ -359,6 +359,11 @@ public final class NpcLines {
 				"%s. The living do not belong at this gate.");
 		lines("meng_po.call", "Come, %s. A bowl of soup for the road.", "Drink, child. Forgetting is a kindness.",
 				"%s... the soup is warm. The past is heavy.");
+		// A Ghost King on its throne (GhostCultivatorNpc#speakToComers): to the dead, and to the living.
+		lines("king.greet", "Kneel, %s. You stand in the court of a king of the dead.", "Another soul at my gates. Come, %s, and be counted.",
+				"The dead bow to a king, %s. So will you.");
+		lines("king.warn", "A living thing in my palace? Leave, %s, before my court makes you one of us.",
+				"The halls of the dead are not for the warm, %s. Go.", "Breath, in my court? Bold, %s. Foolish.");
 		// How each of the dead died (GhostCultivatorNpc#deathKey), told when asked about themselves.
 		lines("death.tribulation", "The ninth bolt of my tribulation. I saw it coming, and I still didn't move.");
 		lines("death.deviation", "My qi turned on me halfway through a breakthrough. My meridians burned from the inside.");

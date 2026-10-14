@@ -2,6 +2,8 @@ package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.DefyingTheHeavens;
 import com.example.defyingtheheavens.GhostMethod;
+import com.example.defyingtheheavens.HeavenMethod;
+import com.example.defyingtheheavens.HeavenState;
 import com.example.defyingtheheavens.ModPackets;
 import com.example.defyingtheheavens.NetherworldState;
 import com.example.defyingtheheavens.Spell;
@@ -48,7 +50,22 @@ public final class ClientMethods {
 		int[] cooldowns = new int[Spell.values().length];
 		for (int i = 0; i < cooldowns.length; i++) cooldowns[i] = buf.readVarInt();
 		boolean ghost = buf.readBoolean();
+		int heavenCount = buf.readVarInt();
+		Map<HeavenMethod, double[]> heaven = new EnumMap<>(HeavenMethod.class);
+		for (int i = 0; i < heavenCount; i++) {
+			HeavenMethod method = HeavenMethod.byId(buf.readUtf(64));
+			int layer = buf.readVarInt();
+			double progress = buf.readDouble();
+			if (method != null) heaven.put(method, new double[]{layer, progress});
+		}
+		HeavenMethod heavenActive = HeavenMethod.byId(buf.readUtf(64));
 		return () -> {
+			HeavenState h = ClientCultivationData.get().heaven();
+			for (HeavenMethod method : HeavenMethod.values()) {
+				double[] entry = heaven.get(method);
+				h.setMethod(method, entry == null ? 0 : (int) entry[0], entry == null ? 0 : entry[1]);
+			}
+			h.setActiveMethod(heavenActive);
 			NetherworldState s = state();
 			for (GhostMethod method : GhostMethod.values()) {
 				double[] entry = methods.get(method);
@@ -92,7 +109,7 @@ public final class ClientMethods {
 		return spell != null && known(spell) ? spell : null;
 	}
 
-	/** Each spell's 16x16 icon, textures/gui/spell/<id>.png. */
+	/** Each spell's icon, textures/gui/spell/<id>.png: 32x32 art, drawn whole at whatever size is asked ({@link SpellWheelScreen#drawIcon}). */
 	static ResourceLocation icon(Spell spell) {
 		return ICONS.computeIfAbsent(spell, s -> new ResourceLocation(DefyingTheHeavens.MOD_ID, "textures/gui/spell/" + s.getId() + ".png"));
 	}
@@ -125,10 +142,17 @@ public final class ClientMethods {
 		ClientPlayNetworking.send(ModPackets.PRACTISE_METHOD, buf);
 	}
 
+	static void practise(HeavenMethod method) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeUtf(method.getId());
+		ClientPlayNetworking.send(ModPackets.PRACTISE_HEAVEN_METHOD, buf);
+	}
+
 	/** Leaving a world: forget its methods and spells. */
 	static void clear() {
 		NetherworldState s = state();
 		for (GhostMethod method : GhostMethod.values()) s.setMethod(method, 0, 0);
+		ClientCultivationData.get().heaven().clear();
 		s.setReadiedSpell(null);
 		for (int i = 0; i < Spells.WHEEL_SLOTS; i++) s.setSpellSlot(i, null);
 		s.setGhost(false);

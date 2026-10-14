@@ -12,7 +12,7 @@ import net.minecraft.world.food.FoodData;
 import java.util.Set;
 import java.util.UUID;
 
-/** Converts a realm + stage into attribute bonuses, and runs the Qi Sustenance ability. */
+/** Converts a realm + stage into attribute bonuses (a player's from the higher of their two paths, TwoPaths), and runs the Qi Sustenance ability. */
 public final class CultivationStats {
 	private static final UUID HEALTH_ID = UUID.fromString("5f1e2a10-8b3c-4d77-a1e0-0c1d2e3f4a01");
 	private static final UUID DAMAGE_ID = UUID.fromString("5f1e2a10-8b3c-4d77-a1e0-0c1d2e3f4a02");
@@ -47,18 +47,16 @@ public final class CultivationStats {
 	public static double qiGather(Realm r, Stage s) { return r.getQiGather() * s.getPowerMultiplier(); }
 
 	/**
-	 * (Re)applies all cultivation modifiers from the EFFECTIVE stage (capped by Realm Suppression in the lower realms), raised
-	 * by Heaven's Favour. Permanent modifiers are saved with the player, so health survives relogs.
+	 * (Re)applies all cultivation modifiers from the body (TwoPaths#body: the higher of the heaven path and the ghost path, at
+	 * the EFFECTIVE stage, capped by Realm Suppression in the lower realms), raised by Heaven's Favour and the two paths'
+	 * harmony; a mortal on neither path, its tempered body growing toward Qi Refining Early's bonuses. Permanent modifiers are
+	 * saved with the player, so health survives relogs.
 	 */
 	public static void apply(ServerPlayer player, PlayerCultivation c) {
-		Realm r = c.getEffectiveRealm();
-		Stage s = c.getEffectiveStage();
-		double scale = c.favourFactor();
-		if (c.isMortal()) { // a tempered mortal body grows toward Qi Refining Early's bonuses, reaching them at Mortal Peak
-			r = Realm.QI_REFINING;
-			s = Stage.EARLY;
-			scale = c.getMortalStage().bodyShare();
-		}
+		TwoPaths.Body body = TwoPaths.body(c, true);
+		Realm r = body.realm();
+		Stage s = body.stage();
+		double scale = body.scale();
 		set(player, Attributes.MAX_HEALTH, HEALTH_ID, "Cultivation max health", maxHealth(r, s) * scale);
 		set(player, Attributes.ATTACK_DAMAGE, DAMAGE_ID, "Cultivation attack damage", attackDamage(r, s) * scale);
 		set(player, Attributes.MOVEMENT_SPEED, SPEED_ID, "Cultivation speed", moveSpeed(r, s) * scale);

@@ -41,12 +41,17 @@ public abstract class SoulPlayerMixin {
 
 	@Inject(method = "isPushedByFluid", at = @At("HEAD"), cancellable = true)
 	private void dth$soulIgnoresCurrents(CallbackInfoReturnable<Boolean> cir) {
-		if (Incorporeal.is((Player) (Object) this)) cir.setReturnValue(false);
+		if (Incorporeal.untouchable((Player) (Object) this)) cir.setReturnValue(false);
 	}
 
+	/**
+	 * No mob takes a soul or one of the dead for prey, nor one of the living in a Ghost King's form (GhostSystem#seenAsDead): the
+	 * living world doesn't see them. The dead's own kind see the dead (GhostSystem#deadMayAttack, their canAttack).
+	 */
 	@Inject(method = "canBeSeenAsEnemy", at = @At("HEAD"), cancellable = true)
 	private void dth$noPreyForMobs(CallbackInfoReturnable<Boolean> cir) {
-		if (Incorporeal.is((Player) (Object) this)) cir.setReturnValue(false);
+		Player self = (Player) (Object) this;
+		if (Incorporeal.untouchable(self) || GhostSystem.seenAsDead(self)) cir.setReturnValue(false);
 	}
 
 	/**
@@ -57,6 +62,8 @@ public abstract class SoulPlayerMixin {
 	private void dth$soulTouchesNothing(Entity entity, CallbackInfo ci) {
 		Player self = (Player) (Object) this;
 		if (entity instanceof ExperienceOrb && GhostSystem.isGhost(self) && !SoulProjection.isSoul(self)) return;
+		// A Marrow Cleansing Elixir handed to a ghost (Incorporeal#mayDrink), the one thing it takes up.
+		if (entity instanceof net.minecraft.world.entity.item.ItemEntity item && Incorporeal.mayDrink(self, item.getItem())) return;
 		if (Incorporeal.is(self)) ci.cancel();
 	}
 

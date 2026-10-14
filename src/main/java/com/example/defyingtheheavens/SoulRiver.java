@@ -92,7 +92,8 @@ public final class SoulRiver {
 	 */
 	public static void beginDescent(ServerPlayer player, boolean fromRift) {
 		if (!canEnter(player, fromRift)) return;
-		enter(player, Route.DESCEND, player.getBlockX(), player.getBlockZ());
+		// The way down comes out by the Nether's rift, where the way up went in; a fall, under where they fell.
+		enter(player, Route.DESCEND, fromRift ? SpatialRiftBlock.RIFT_X : player.getBlockX(), fromRift ? SpatialRiftBlock.RIFT_Z : player.getBlockZ());
 		player.sendSystemMessage(Component.translatable(fromRift ? ModLang.MSG_RIVER_DESCEND : ModLang.MSG_RIVER_ABYSS,
 				SoulRiverCourse.TICKS / 20).withStyle(ChatFormatting.AQUA));
 	}

@@ -56,6 +56,8 @@ public final class NetherworldManager {
 			else s.setGhostQi(s.ghostQi() - upkeep);
 		}
 		GhostMethods.applyModifiers(player);
+		HeavenPassives.apply(player); // the heaven methods' elements, here for the same second's tick
+		HeavenMethods.watchSpells(player); // and their spells, which come as the realm reaches them
 		double corruption = s.yinCorruption();
 		int trend = YinCorruption.second(player, c, now);
 		TREND.put(player.getUUID(), trend);

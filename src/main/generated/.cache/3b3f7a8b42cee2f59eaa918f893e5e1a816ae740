@@ -1,11 +1,11 @@
-// 1.20.1	2026-10-13T18:22:18.1496619	Defying The Heavens/Tags for minecraft:block
+// 1.20.1	2026-10-14T14:13:32.195651	Defying The Heavens/Tags for minecraft:block
 893fa32b67b301e16fe6ed62df0e0c615918e083 data\minecraft\tags\blocks\planks.json
 6eb4b2f86be0c164d7164463761a0b91f496bccb data\minecraft\tags\blocks\leaves.json
 e4a7f08802b5215b19d8c0a804fc5eab4b5385fe data\minecraft\tags\blocks\snow_layer_cannot_survive_on.json
 fcb9c3610b1d9fc4a9d88dc624bf6762173000ef data\minecraft\tags\blocks\needs_diamond_tool.json
 6eb4b2f86be0c164d7164463761a0b91f496bccb data\minecraft\tags\blocks\mineable\hoe.json
 8c63a4ef478a2d1c559b96a5beae4408cb88a4b7 data\minecraft\tags\blocks\mineable\axe.json
-ab31865d2b0689bec92c11509f0f89f9952ec884 data\minecraft\tags\blocks\features_cannot_replace.json
+9a76a97daa85f2047448d5dd17650fca3b896de1 data\minecraft\tags\blocks\features_cannot_replace.json
 254038c27212d829d4fe53016cca02405cac1835 data\minecraft\tags\blocks\stone_ore_replaceables.json
 08257d2c01e57a2f511f6587261ed83ba8548dca data\defying-the-heavens\tags\blocks\qi_veins.json
 50f14eadc23332da068cd76fceab7a09359a08ec data\minecraft\tags\blocks\mineable\pickaxe.json
@@ -13,7 +13,7 @@ ab31865d2b0689bec92c11509f0f89f9952ec884 data\minecraft\tags\blocks\features_can
 34d01ebfc44bbf63f53bb9905a6e96db54eeebf8 data\minecraft\tags\blocks\small_flowers.json
 2158d077130ffd8b69997db2ee3a8f5677a849b2 data\minecraft\tags\blocks\needs_iron_tool.json
 0a324e20b80ef43b8a2bf9d7f01f48cbb5103ffd data\minecraft\tags\blocks\logs.json
-ab020c5be892bd365b8a0994ca641e3974a59cdd data\minecraft\tags\blocks\wither_immune.json
-ab020c5be892bd365b8a0994ca641e3974a59cdd data\minecraft\tags\blocks\dragon_immune.json
+c201a8c9c09f68dad0d7e289dc64c4638bc3a5c6 data\minecraft\tags\blocks\wither_immune.json
+c201a8c9c09f68dad0d7e289dc64c4638bc3a5c6 data\minecraft\tags\blocks\dragon_immune.json
 254038c27212d829d4fe53016cca02405cac1835 data\minecraft\tags\blocks\base_stone_overworld.json
 6b8419fade93ef24e3cbe8b9a80357420252171e data\defying-the-heavens\tags\blocks\ghost_usable.json

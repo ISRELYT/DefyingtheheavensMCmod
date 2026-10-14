@@ -75,7 +75,9 @@ public final class TalkSystem {
 	public enum Topic {
 		SELF("self"), SECT("sect"), PEOPLE("people"), NEARBY("nearby"), RUMOURS("rumours"), GUIDANCE("guidance"),
 		/** Meng Po's soup (GhostGate#drinkSoup), asked of her alone. */
-		SOUP("soup");
+		SOUP("soup"),
+		/** A living cultivator's heaven method (CultivatorNpc#heavenMethod), taught by a sect's elders and by rogues. */
+		METHOD("method");
 
 		private final String id;
 
@@ -155,6 +157,8 @@ public final class TalkSystem {
 	static String refusal(ServerPlayer player, CultivatorNpc npc) {
 		// Someone else's soul sits in it (SoulProjection): nobody answers, and nothing gives away why.
 		if (SoulProjection.isPossessed(npc)) return ModLang.TALK_POSSESSED;
+		// It doesn't see you at all (in a Ghost King's form, to the living: CultivatorNpc#senses): there is nobody there to answer.
+		if (!npc.senses(player)) return ModLang.TALK_UNSEEN;
 		// Begging for its life, it hears nothing but the one it begs.
 		if (npc.isBeggingTo(player)) return null;
 		if (npc.isBegging()) return ModLang.TALK_BUSY;
@@ -364,10 +368,11 @@ public final class TalkSystem {
 			return w;
 		}
 		if (stack.getItem() instanceof CultivationFruitItem) return Math.max(2, CultivationFruitItem.age(stack) / 30.0);
-		// The Netherworld's: Yin Jade, a Ghost-Quelling Talisman, and a Ghost Jade Slip (a whole method's first layer).
+		// The Netherworld's: Yin Jade, a Ghost-Quelling Talisman, and a Ghost Jade Slip (a whole method); a heaven method's Jade Slip.
 		if (stack.is(ModItems.YIN_JADE)) return 4;
 		if (stack.is(ModItems.GHOST_QUELLING_TALISMAN)) return 5;
-		if (stack.is(ModItems.GHOST_JADE_SLIP)) return CultivatorTrades.GHOST_SLIP_PRICE / 1.5;
+		if (stack.is(ModItems.GHOST_JADE_SLIP)) return CultivatorTrades.slipPrice(GhostJadeSlipItem.method(stack)) / 1.5;
+		if (stack.is(ModItems.JADE_SLIP)) return CultivatorTrades.heavenSlipPrice(JadeSlipItem.method(stack)) / 1.5;
 		return 0;
 	}
 
@@ -509,7 +514,14 @@ public final class TalkSystem {
 		// A ghost who knows a method teaches it to those it is Warm to, senior or not.
 		if (isSenior(player, npc) || teaches(npc)) replies.add(gated(Topic.GUIDANCE, regard >= Regard.WARM, "warm"));
 		if (npc instanceof GhostCultivatorNpc ghost && ghost.getRole() == GhostCultivatorNpc.Role.MENG_PO) replies.add(topic(Topic.SOUP));
+		// A sect's elders teach its element's heaven method, and a rogue its own, to the living they are Warm to.
+		if (teachesHeaven(npc) && !GhostSystem.isGhost(player)) replies.add(gated(Topic.METHOD, regard >= Regard.WARM, "warm"));
 		return replies;
+	}
+
+	/** A living cultivator who teaches its heaven method: a sect's elders and master, and rogues (CultivatorNpc#heavenMethod). */
+	private static boolean teachesHeaven(CultivatorNpc npc) {
+		return !npc.isGhost() && npc.heavenMethod() != null && (npc.getTitle().isElderOrAbove() || npc.getTitle() == NpcTitle.ROGUE);
 	}
 
 	/** One of the dead who knows a ghost method it can teach (Foundation Building and above, GhostCultivatorNpc#method). */
@@ -562,6 +574,7 @@ public final class TalkSystem {
 				GhostGate.drinkSoup(player);
 				yield Component.translatable(GhostSystem.isGhost(player) ? ModLang.TALK_SOUP : ModLang.TALK_SOUP_LIVING);
 			}
+			case METHOD -> teachHeaven(player, npc);
 		};
 		ModPackets.sendTalkDialogue(player, npc, npc.regard(player), TalkIntent.ASK, speech(answer), replies(player, npc, standing));
 	}
@@ -596,19 +609,49 @@ public final class TalkSystem {
 		Regard.Entry entry = ghost.regardEntry(player);
 		long today = Regard.day(ghost.level().getGameTime());
 		if (entry.guidanceDay == today) return line("guidance.again", ghost);
-		entry.guidanceDay = today;
 		NetherworldState s = CultivationManager.get(player).netherworld();
+		// A mortal's closed meridians: it says so, and the day's guidance isn't spent.
+		Component refusal = GhostMethods.refusal(CultivationManager.get(player), method);
+		if (refusal != null) return refusal;
+		entry.guidanceDay = today;
 		if (!s.knows(method)) {
 			GhostMethods.learn(player, method);
 			return Component.translatable(ModLang.TALK_TEACH_LEARN, method.getDisplayName());
 		}
-		GhostMethods.cultivate(s, method, TEACHING_PROGRESS, GhostQi.FULL_DENSITY);
-		GhostMethods.afterLayer(player, s);
+		int ghostPathBefore = GhostMethods.ghostRank(s);
+		GhostMethods.cultivate(s, method, TEACHING_PROGRESS, GhostMethods.layerCap(CultivationManager.get(player), method));
+		GhostMethods.afterLayer(player, s, ghostPathBefore);
 		CultivationManager.markDirty(player.server);
 		Spells.sync(player);
 		NetherworldManager.refresh(player);
 		player.level().playSound(null, player.blockPosition(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.0f, 0.7f);
 		return Component.translatable(ModLang.TALK_TEACH_PROGRESS, method.getDisplayName(), (int) (TEACHING_PROGRESS / 60));
+	}
+
+	/**
+	 * A living cultivator teaches its heaven method (once a day, sharing the day's guidance): the method to one who doesn't know
+	 * it, or ten minutes of their own meditation's worth of progress ({@link HeavenMethods#teachingProgress}) to one who does. A
+	 * mortal or one of the dead is told why not, and the day isn't spent.
+	 */
+	static Component teachHeaven(ServerPlayer player, CultivatorNpc npc) {
+		HeavenMethod method = npc.heavenMethod();
+		if (method == null) return guidance(player, npc);
+		Regard.Entry entry = npc.regardEntry(player);
+		long today = Regard.day(npc.level().getGameTime());
+		if (entry.guidanceDay == today) return line("guidance.again", npc);
+		PlayerCultivation c = CultivationManager.get(player);
+		Component refusal = HeavenMethods.refusal(c);
+		if (refusal != null) return refusal;
+		entry.guidanceDay = today;
+		HeavenState s = c.heaven();
+		if (!s.knows(method)) {
+			HeavenMethods.learn(player, method);
+			return Component.translatable(ModLang.TALK_TEACH_HEAVEN, method.getDisplayName(), method.element().getDisplayName());
+		}
+		HeavenMethods.cultivate(s, method, HeavenMethods.teachingProgress(c));
+		HeavenMethods.afterLayer(player);
+		player.level().playSound(null, player.blockPosition(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.0f, 1.0f);
+		return Component.translatable(ModLang.TALK_TEACH_HEAVEN_PROGRESS, method.getDisplayName(), (int) (HeavenMethods.TEACHING_SECONDS / 60));
 	}
 
 	private static Component aboutSect(CultivatorNpc npc) {

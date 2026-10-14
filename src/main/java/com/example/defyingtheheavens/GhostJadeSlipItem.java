@@ -16,8 +16,8 @@ import net.minecraft.world.level.Level;
 import java.util.List;
 
 /**
- * A Ghost Jade Slip (鬼玉简): a slip of dark jade holding a ghost method (its "Method" tag). Read (used), it teaches the method's
- * first layer, and isn't used up. An item, so only the living can read one. Dropped now and then by ghost cultivators, sold by
+ * A Ghost Jade Slip (鬼玉简): a slip of dark jade holding a ghost method (its "Method" tag). Read (used), it teaches the method
+ * (at the layer GhostMethods#startLayer gives), and isn't used up. An item, so only the living can read one. Dropped now and then by ghost cultivators, sold by
  * ghost elders.
  */
 public class GhostJadeSlipItem extends Item {
@@ -48,7 +48,8 @@ public class GhostJadeSlipItem extends Item {
 			sp.displayClientMessage(Component.translatable(ModLang.MSG_SLIP_KNOWN, method.getDisplayName()), true);
 			return InteractionResultHolder.fail(stack);
 		}
-		GhostMethods.learn(sp, method);
+		// Not taken up (a mortal's meridians are closed): told why, and nothing read.
+		if (!GhostMethods.learn(sp, method)) return InteractionResultHolder.fail(stack);
 		level.playSound(null, sp.getX(), sp.getY(), sp.getZ(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.0f, 0.6f);
 		return InteractionResultHolder.consume(stack);
 	}

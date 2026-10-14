@@ -37,7 +37,7 @@ public final class CultivationManager {
 
 	/** Breakthrough button: no longer an instant rank-up, it starts the Heavenly Tribulation. */
 	public static void tryBreakthrough(ServerPlayer player) {
-		if (Incorporeal.isRuledGhost(player)) { // the dead break through nothing
+		if (Incorporeal.isGhost(player)) { // the dead break through nothing (a Ghost King neither: its method is its way)
 			player.displayClientMessage(Component.translatable(ModLang.MSG_GHOST_CANNOT), true);
 			return;
 		}
@@ -66,6 +66,8 @@ public final class CultivationManager {
 		}
 		// Opening or closing Qi Sense changes which projected souls this player perceives: the tracker re-asks at once.
 		if (ability == Ability.QI_SENSE) SoulProjection.refreshTracking(player);
+		// The other form taken, or the true one again, for all to see at once.
+		if (ability == Ability.FORM_SHIFT) TwoPaths.shifted(player);
 	}
 
 	/**

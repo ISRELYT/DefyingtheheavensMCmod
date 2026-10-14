@@ -63,6 +63,15 @@ public final class ModBlocks {
 			.lightLevel(state -> state.getValue(MethodSteleBlock.PART) == MethodSteleBlock.Part.MIDDLE ? 6 : 0)
 			.pushReaction(PushReaction.BLOCK)
 			.sound(SoundType.POLISHED_DEEPSLATE)));
+	/** A Dao Stele, three blocks tall, teaching a heaven method (see DaoSteleBlock). Unbreakable, no item; its element's emblem glows. */
+	public static final Block DAO_STELE = register("dao_stele", new DaoSteleBlock(BlockBehaviour.Properties.of()
+			.mapColor(MapColor.QUARTZ)
+			.strength(-1.0f, 3600000.0f)
+			.noLootTable()
+			.noOcclusion()
+			.lightLevel(state -> state.getValue(MethodSteleBlock.PART) == MethodSteleBlock.Part.MIDDLE ? 7 : 0)
+			.pushReaction(PushReaction.BLOCK)
+			.sound(SoundType.STONE)));
 
 	/** The Inner Realm's see-through floor, lit by a soul's steps (see SoulCrystalBlock). Unbreakable, no item. */
 	public static final Block SOUL_CRYSTAL = register("soul_crystal", new SoulCrystalBlock(BlockBehaviour.Properties.of()

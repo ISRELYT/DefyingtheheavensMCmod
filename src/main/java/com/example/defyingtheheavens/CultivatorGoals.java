@@ -70,23 +70,62 @@ public final class CultivatorGoals {
 		else npc.getNavigation().moveTo(sx, ground, sz, speed);
 	}
 
-	/** A path to the point on its sect's ways that brings it nearer {@code target} at the least cost, or null (no sect, no way). */
+	/** Way points this close are taken as joined by a stretch of way (they stand ten apart along each way). */
+	private static final double WAY_LINK = 15;
+
+	/**
+	 * A path to the way point from which the sect's ways lead to {@code target} soonest, or null (no sect, no way). The ways are
+	 * walked as a network: each point's distance to the target is its walk along them (points within {@link #WAY_LINK} of each
+	 * other joined) to the point nearest the target, and the walker heads for the reachable point within 30 blocks with the
+	 * least of that plus the walk to it, even one further from the target as the crow flies. So a gate guard in the meditation
+	 * hall, its gate behind the hall, goes out of the door first rather than pressing against the back wall for good.
+	 */
 	private static Path byTheWays(CultivatorNpc npc, Vec3 target) {
 		Sect sect = npc.sect();
 		if (sect == null) return null;
-		double here = npc.position().distanceTo(target);
-		List<BlockPos> candidates = new ArrayList<>();
-		for (BlockPos w : sect.waypoints()) {
-			double near = Math.sqrt(npc.blockPosition().distSqr(w));
-			if (near < 3 || near > 30 || Vec3.atBottomCenterOf(w).distanceTo(target) > here - 3) continue;
-			candidates.add(w);
+		List<BlockPos> ways = sect.waypoints();
+		if (ways.isEmpty()) return null;
+		double[] toTarget = alongTheWays(ways, target);
+		List<Integer> candidates = new ArrayList<>();
+		for (int i = 0; i < ways.size(); i++) {
+			double near = Math.sqrt(npc.blockPosition().distSqr(ways.get(i)));
+			if (near >= 3 && near <= 30) candidates.add(i); // not the one it stands at; one it can plan a path to
 		}
-		candidates.sort(java.util.Comparator.comparingDouble(w -> Math.sqrt(npc.blockPosition().distSqr(w)) + Vec3.atBottomCenterOf(w).distanceTo(target)));
-		for (int i = 0; i < Math.min(3, candidates.size()); i++) {
-			Path path = npc.getNavigation().createPath(candidates.get(i), 1);
+		candidates.sort(java.util.Comparator.comparingDouble(i -> Math.sqrt(npc.blockPosition().distSqr(ways.get(i))) + toTarget[i]));
+		for (int k = 0; k < Math.min(4, candidates.size()); k++) {
+			Path path = npc.getNavigation().createPath(ways.get(candidates.get(k)), 1);
 			if (path != null && path.canReach()) return path;
 		}
 		return null;
+	}
+
+	/**
+	 * For each way point, the walk along the ways from it to {@code target}: to the point nearest the target (by the stretches
+	 * joining them), then straight on from there. A point joined to none (a lone courtyard) is reckoned straight to the target.
+	 */
+	static double[] alongTheWays(List<BlockPos> ways, Vec3 target) {
+		int n = ways.size();
+		double[] cost = new double[n];
+		boolean[] done = new boolean[n];
+		int end = 0;
+		for (int i = 1; i < n; i++) {
+			if (Vec3.atBottomCenterOf(ways.get(i)).distanceTo(target) < Vec3.atBottomCenterOf(ways.get(end)).distanceTo(target)) end = i;
+		}
+		java.util.Arrays.fill(cost, Double.MAX_VALUE);
+		cost[end] = Vec3.atBottomCenterOf(ways.get(end)).distanceTo(target);
+		for (int round = 0; round < n; round++) {
+			int next = -1;
+			for (int i = 0; i < n; i++) if (!done[i] && cost[i] < Double.MAX_VALUE && (next < 0 || cost[i] < cost[next])) next = i;
+			if (next < 0) break;
+			done[next] = true;
+			for (int i = 0; i < n; i++) {
+				if (done[i]) continue;
+				double link = Math.sqrt(ways.get(i).distSqr(ways.get(next)));
+				if (link <= WAY_LINK && cost[next] + link < cost[i]) cost[i] = cost[next] + link;
+			}
+		}
+		for (int i = 0; i < n; i++) if (cost[i] == Double.MAX_VALUE) cost[i] = Vec3.atBottomCenterOf(ways.get(i)).distanceTo(target);
+		return cost;
 	}
 
 	/** Seats it on the mat (or patch of ground) at {@code pos}: in the middle, facing as it was, meditating. */

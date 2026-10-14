@@ -1,0 +1,7 @@
+{
+  "type": "defying-the-heavens:ghost_palace",
+  "biomes": "#defying-the-heavens:has_structure/ghost_palace",
+  "spawn_overrides": {},
+  "step": "surface_structures",
+  "terrain_adaptation": "none"
+}

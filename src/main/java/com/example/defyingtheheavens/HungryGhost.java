@@ -33,7 +33,8 @@ import net.minecraft.world.level.ServerLevelAccessor;
  * ghost shader in a skin of its own, SoulRenderer). About Qi Refining strength, {@link #HEALTH} health; packs of two to four,
  * most often in the Bone Wastes, spawning in any light but never on the Ghost Gate's ground.
  * <p>
- * It goes for the living first, then for ghosts. A ghost it strikes takes {@link #ON_THE_DEAD} (ghostly harm); the living take
+ * It goes for the living first, then for ghosts, then, with no player about, for the cultivators of the Netherworld (not the
+ * Gate's keepers), who fight back. A ghost it strikes takes {@link #ON_THE_DEAD} (ghostly harm); the living take
  * only {@link #ON_THE_LIVING}, but each blow drives {@link #YIN_PER_BLOW} of the Netherworld's yin into them. Blows reach it as
  * they reach any of the dead (GhostSystem#reaches); a ghost who disperses one takes {@link #QI_REWARD} ghostly qi from it.
  */
@@ -65,17 +66,39 @@ public class HungryGhost extends Monster implements Ghostly {
 		goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0f));
 		goalSelector.addGoal(7, new RandomLookAroundGoal(this));
 		targetSelector.addGoal(1, new HurtByTargetGoal(this));
-		// The living first; only with none about, the dead.
+		// The living first; only with none about, the dead; and with no player about, any cultivator (the ghost cultivators, those
+		// newly come up the Soul River, a king's court, which fights back as one), but not the Gate's keepers.
 		targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, target -> !GhostSystem.isDead(target)));
 		targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, GhostSystem::isDead));
+		targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, CultivatorNpc.class, 10, true, false,
+				target -> !(target instanceof GhostCultivatorNpc ghost && ghost.getRole().isGateKeeper())));
 	}
 
-	/** Its own harm: heavy on the dead, light on the living but carrying the Netherworld's yin. */
+	/**
+	 * How a cultivator's realm weighs against a Hungry Ghost, about Qi Refining's strength: 0 for a mortal or Qi Refining, 1 for
+	 * Foundation Building, and so on. Its blows on a cultivator are divided by 1 + this; a cultivator's on it multiplied by 1 +
+	 * half of it. So a ghost cultivator of Foundation Building fends off a pack of three, and a king and its court make short
+	 * work of one.
+	 */
+	static int realmOver(CultivatorNpc npc) {
+		return npc.isMortal() ? 0 : CultivatorNpc.realmOf(npc.getRank()).ordinal();
+	}
+
+	/** It sees the dead (and the living in a Ghost King's form) as its prey, whom the living world's mobs don't (GhostSystem#deadMayAttack). */
+	@Override
+	public boolean canAttack(LivingEntity target) {
+		Boolean dead = GhostSystem.deadMayAttack(this, target);
+		return dead != null ? dead : super.canAttack(target);
+	}
+
+	/** Its own harm: heavy on the dead, light on the living but carrying the Netherworld's yin; less on a cultivator the stronger it is. */
 	@Override
 	public boolean doHurtTarget(Entity target) {
 		if (!(target instanceof LivingEntity living) || !(level() instanceof ServerLevel level)) return false;
 		boolean dead = GhostSystem.isDead(living);
-		boolean hit = living.hurt(ModDamageTypes.ghostly(level, this), dead ? ON_THE_DEAD : ON_THE_LIVING);
+		float harm = dead ? ON_THE_DEAD : ON_THE_LIVING;
+		if (living instanceof CultivatorNpc npc) harm /= 1 + realmOver(npc);
+		boolean hit = living.hurt(ModDamageTypes.ghostly(level, this), harm);
 		if (hit && !dead && living instanceof ServerPlayer player && YinCorruption.affects(player)) {
 			NetherworldState s = CultivationManager.get(player).netherworld();
 			s.setYinCorruption(s.yinCorruption() + YIN_PER_BLOW);
@@ -89,7 +112,9 @@ public class HungryGhost extends Monster implements Ghostly {
 	public boolean hurt(DamageSource source, float amount) {
 		if (level().isClientSide) return super.hurt(source, amount);
 		if (!GhostSystem.reaches(source)) return false;
-		return super.hurt(source, GhostSystem.scaled(source, amount));
+		float landed = GhostSystem.scaled(source, amount);
+		if (source.getEntity() instanceof CultivatorNpc npc) landed *= 1 + 0.5f * realmOver(npc); // a cultivator's realm tells
+		return super.hurt(source, landed);
 	}
 
 	@Override

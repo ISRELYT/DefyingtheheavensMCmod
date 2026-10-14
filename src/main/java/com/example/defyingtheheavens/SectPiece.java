@@ -359,19 +359,23 @@ public class SectPiece extends StructurePiece {
 	}
 
 	/**
-	 * The walls of a building between x0..x1, z0..z1, from {@code y0} to {@code y1}: pillars at the corners and every
-	 * {@code bay} blocks, plain plaster between on a stone foot (no fence-post lattice; a {@code solid} building, the
-	 * treasury, has small barred windows), the doorway ({@code door} wide, {@code doorHeight} high) in the middle of the
-	 * front, and a timber beam with bronze brackets above the pillars all round.
+	 * The walls of a building between x0..x1, z0..z1, from {@code y0} to {@code y1}: pillars at the corners and about every
+	 * {@code bay} blocks between, set evenly and mirrored about the middle (the front and back with a bay in the middle, so the
+	 * doorway stands centred between two pillars, never beside one on one side only), plain plaster between on a stone foot (no
+	 * fence-post lattice; a {@code solid} building, the treasury, has small barred windows), the doorway ({@code door} wide,
+	 * {@code doorHeight} high) in the middle of the front, and a timber beam with bronze brackets above the pillars all round.
 	 */
 	private void walls(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x0, int z0, int x1, int z1, int y0, int y1, int bay, int door,
 			int doorHeight, boolean solid) {
 		int cx = (x0 + x1) / 2;
+		int[] across = pillarSpots(x1 - x0, bay, true), along = pillarSpots(z1 - z0, bay, false);
 		for (int x = x0; x <= x1; x++) {
 			for (int z = z0; z <= z1; z++) {
 				boolean edgeX = x == x0 || x == x1, edgeZ = z == z0 || z == z1;
 				if (!edgeX && !edgeZ) continue;
-				boolean post = edgeX && edgeZ || edgeZ && (x - x0) % bay == 0 || edgeX && (z - z0) % bay == 0;
+				int[] spots = edgeZ ? across : along;
+				int at = edgeZ ? x - x0 : z - z0;
+				boolean post = edgeX && edgeZ || java.util.Arrays.binarySearch(spots, at) >= 0;
 				if (post) {
 					pillar(level, chunk, p, x, y0, y1, z);
 					put(level, chunk, x, y1 + 1, z, p.accent);
@@ -380,14 +384,46 @@ public class SectPiece extends StructurePiece {
 				put(level, chunk, x, y0, z, p.wallBase);
 				fill(level, chunk, x, y0 + 1, z, x, y1, z, p.wall);
 				// The treasury's barred windows, in the middle of each bay.
-				int along = edgeZ ? (x - x0) % bay : (z - z0) % bay;
-				boolean middle = along >= 1 && along <= bay - 1 && Math.abs(along - bay / 2.0) <= (bay > 3 ? 1 : 0.5);
-				if (solid && middle && y1 - y0 >= 3) put(level, chunk, x, y0 + 2, z, Blocks.IRON_BARS);
+				if (solid && y1 - y0 >= 3 && inBayMiddle(spots, at)) put(level, chunk, x, y0 + 2, z, Blocks.IRON_BARS);
 				put(level, chunk, x, y1 + 1, z, p.beam(edgeZ ? Direction.Axis.X : Direction.Axis.Z));
 			}
 		}
 		// The doorway, in the front wall.
 		if (door > 0) air(level, chunk, cx - door / 2, y0, z0, cx + door / 2, y0 + doorHeight - 1, z0);
+	}
+
+	/**
+	 * Where a wall {@code length} blocks long (corner to corner) has its pillars: at both ends and evenly between, about
+	 * {@code bay} apart, mirrored about the middle; with {@code middleBay} (the front and back) an odd number of bays, so the
+	 * middle of the wall, where the door is, falls in a bay's middle rather than on a pillar.
+	 */
+	static int[] pillarSpots(int length, int bay, boolean middleBay) {
+		int bays = Math.max(1, Math.round((float) length / bay));
+		if (middleBay && bays % 2 == 0) bays += (float) length / (bays + 1) >= 3 ? 1 : -1;
+		bays = Math.max(1, bays);
+		int[] spots = spread(length, bays);
+		// A middle bay too narrow to hold the door (a short wall in many bays): fewer, wider bays.
+		while (middleBay && bays > 1 && java.util.Arrays.binarySearch(spots, length / 2) >= 0) spots = spread(length, bays -= 2);
+		return spots;
+	}
+
+	/** Pillars at both ends of a wall {@code length} long and {@code bays - 1} between, rounded alike from either end. */
+	private static int[] spread(int length, int bays) {
+		int[] spots = new int[bays + 1];
+		for (int i = 0; i <= bays; i++) {
+			spots[i] = 2 * i <= bays ? (2 * i * length + bays) / (2 * bays) : length - (2 * (bays - i) * length + bays) / (2 * bays);
+		}
+		return spots;
+	}
+
+	/** Whether {@code at} is in the middle of its bay between the pillars at {@code spots} (a window's place). */
+	private static boolean inBayMiddle(int[] spots, int at) {
+		for (int i = 0; i + 1 < spots.length; i++) {
+			if (at <= spots[i] || at >= spots[i + 1]) continue;
+			double middle = (spots[i] + spots[i + 1]) / 2.0;
+			return Math.abs(at - middle) <= (spots[i + 1] - spots[i] > 3 ? 1 : 0.5);
+		}
+		return false;
 	}
 
 	/** A raised stone base with steps down at the front middle, {@code height} above the paving. */
@@ -796,7 +832,7 @@ public class SectPiece extends StructurePiece {
 	 */
 	private void treasury(WorldGenLevel level, BoundingBox chunk, SectPalette p) {
 		Frame f = frame(2, 3);
-		int floor = 2, top = floor + 5;
+		int floor = 2, top = floor + 6; // walls five high, so it stands up under its roof rather than squatting
 		plinth(level, chunk, p, f.x0 - 1, f.z0, f.x1 + 1, f.z1 + 1, floor, 3);
 		interior(level, chunk, p, f.x0 + 1, f.z0 + 1, f.x1 - 1, f.z1 - 1, floor, top + 4);
 		for (int x = f.x0; x <= f.x1; x++) {

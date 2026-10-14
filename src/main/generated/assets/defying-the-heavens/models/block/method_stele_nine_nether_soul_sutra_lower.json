@@ -1,0 +1,7 @@
+{
+  "parent": "defying-the-heavens:block/method_stele_part",
+  "textures": {
+    "front": "defying-the-heavens:block/method_stele_front",
+    "side": "defying-the-heavens:block/method_stele_side"
+  }
+}

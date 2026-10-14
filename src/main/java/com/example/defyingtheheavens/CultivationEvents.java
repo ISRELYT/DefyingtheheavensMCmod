@@ -36,10 +36,13 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(SoulRiver::tick);
 		ServerTickEvents.END_SERVER_TICK.register(NetherworldManager::tick);
 		ServerTickEvents.END_SERVER_TICK.register(GhostSystem::tick);
+		ServerTickEvents.END_SERVER_TICK.register(Spells::tick);
 		ServerTickEvents.END_SERVER_TICK.register(GhostGate::keepOfficials);
-		// Whoever starts seeing a ghost is told it is one, before they could draw it as a living player.
+		// Whoever starts seeing a player is told whether it is a ghost and how it is drawn (TwoPaths#look: one of the living may wear
+		// a Ghost King's form), before they could draw it otherwise; every player, so a client that last saw it in another form
+		// (and lost sight of it while it changed) isn't left drawing that one.
 		EntityTrackingEvents.START_TRACKING.register((tracked, viewer) -> {
-			if (tracked instanceof ServerPlayer ghost && GhostSystem.isGhost(ghost)) ModPackets.sendGhost(viewer, ghost, true);
+			if (tracked instanceof ServerPlayer subject) ModPackets.sendGhost(viewer, subject);
 		});
 		ServerTickEvents.END_SERVER_TICK.register(SpatialStorms::tick);
 		ServerTickEvents.END_SERVER_TICK.register(VoidFallHandler::tick);
@@ -91,6 +94,8 @@ public final class CultivationEvents {
 		ServerLifecycleEvents.SERVER_STOPPING.register(NpcLedger::enterLoaded);
 		// So does where each sect member stands, to wake it if it's let go while unloaded (SectManager#rouse).
 		ServerLifecycleEvents.SERVER_STOPPING.register(CultivatorNpc::noteWhereMembersStand);
+		// Before the save: every block a heaven spell set down is taken up again, so none is saved into the world.
+		ServerLifecycleEvents.SERVER_STOPPING.register(server -> HeavenSpells.clear());
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> SpatialStorms.clear());
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
 			Formations.clear();
@@ -202,6 +207,8 @@ public final class CultivationEvents {
 			NetherworldManager.refresh(newPlayer);
 		});
 
+		// A blow a heaven spell's ward has brought to nothing is refused outright: no knockback, no flinch (HeavenSpells#wardedOff).
+		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> !HeavenSpells.wardedOff(entity));
 		// Ghost Fire on a cultivator's hands (Spells): a blow of theirs sets what it strikes burning.
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
 			if (source.getEntity() instanceof ServerPlayer attacker && source.getDirectEntity() == attacker
@@ -238,6 +245,8 @@ public final class CultivationEvents {
 		ServerLivingEntityEvents.ALLOW_DEATH.register((entity, source, amount) -> {
 			// A ghost doesn't die: it disperses and reforms at the Gate (GhostSystem). No death screen, none of death's bookkeeping.
 			if (entity instanceof ServerPlayer ghost && !GhostSystem.allowDeath(ghost)) return false;
+			// A heaven spell that holds off a death (HeavenSpells#allowDeath: a phoenix's rebirth, say).
+			if (!HeavenSpells.allowDeath(entity, source)) return false;
 			// Nobody dies in a spar by the other's hand: the blow stops at the line, and the spar ends (SparSystem).
 			if (!SparSystem.allowDeath(entity, source)) return false;
 			if (entity instanceof ServerPlayer sp) SoulProjection.onSoulDying(sp);
@@ -273,7 +282,9 @@ public final class CultivationEvents {
 			return world.getBlockState(hit.getBlockPos()).is(ModTags.GHOST_USABLE) && hand == InteractionHand.MAIN_HAND
 					? InteractionResult.PASS : InteractionResult.FAIL;
 		});
-		UseItemCallback.EVENT.register((player, world, hand) -> Incorporeal.is(player)
+		// Nothing of the living world in the hand of a soul or a ghost; but a ghost may drink a Marrow Cleansing Elixir, its meridians
+		// opened in death as in life (a mortal's ghost has no ghost path without it: GhostMethods#refusal).
+		UseItemCallback.EVENT.register((player, world, hand) -> Incorporeal.is(player) && !Incorporeal.mayDrink(player, player.getItemInHand(hand))
 				? InteractionResultHolder.fail(player.getItemInHand(hand)) : InteractionResultHolder.pass(player.getItemInHand(hand)));
 		UseEntityCallback.EVENT.register((player, world, hand, entity, hit) -> {
 			// Nothing to ride or use; only the dead's own kind to talk with (TalkSystem keeps the talk to what the dead may do).

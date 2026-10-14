@@ -23,7 +23,8 @@ public final class VoidFallHandler {
 			for (ServerPlayer player : new ArrayList<>(netherworld.players())) {
 				if (player.isAlive() && !player.isSpectator() && player.getY() < NETHERWORLD_FALL_Y) {
 					try {
-						// The dead have no river to fall to: a ghost that falls into the abyss disperses and reforms at the Gate.
+						// The dead have no river to fall to: a ghost that falls into the abyss disperses and reforms at the Gate (a
+						// Ghost King, whose way is its own, rides the river down as the living do).
 						if (Incorporeal.isRuledGhost(player)) GhostSystem.disperse(player);
 						else SoulRiver.beginDescent(player, false);
 					} catch (Exception e) {

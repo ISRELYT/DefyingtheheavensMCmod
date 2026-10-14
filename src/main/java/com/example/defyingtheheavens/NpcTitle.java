@@ -6,8 +6,9 @@ import net.minecraft.network.chat.Component;
  * What an NPC cultivator is called on their nameplate. Sect titles follow cultivation within the sect (see
  * {@link Sect#recalculateTitles}): the strongest member is always the Sect Master, then come the Grand Elders, Elders, Inner
  * and Outer Disciples. Cultivators belonging to no sect are Rogue Cultivators, or Wanderers if they never opened their
- * meridians. The Netherworld's ghost cultivators are Wandering Ghosts, or Ghost Elders from Nascent Soul; Ox-Head and
- * Horse-Face are its Gate Wardens, Meng Po the Keeper of the Naihe Bridge.
+ * meridians. The Netherworld's ghost cultivators are Wandering Ghosts, Ghost Elders from Foundation Building, and Ghost Kings
+ * from Core Formation, ruling their palaces with their Ghost Retainers; Ox-Head and Horse-Face are its Gate Wardens, Meng Po
+ * the Keeper of the Naihe Bridge.
  */
 public enum NpcTitle {
 	SECT_MASTER("sect_master", 0xFFD54F, true),
@@ -21,7 +22,10 @@ public enum NpcTitle {
 	WANDERING_GHOST("wandering_ghost", 0x8AF4F0, false),
 	GHOST_ELDER("ghost_elder", 0x4FC3D9, false),
 	GATE_WARDEN("gate_warden", 0xE57373, false),
-	BRIDGE_KEEPER("bridge_keeper", 0xB39DDB, false);
+	BRIDGE_KEEPER("bridge_keeper", 0xB39DDB, false),
+	// The Netherworld's Ghost Kings (Core Formation and above) and the retainers of their courts: appended.
+	GHOST_KING("ghost_king", 0xB388FF, false),
+	GHOST_RETAINER("ghost_retainer", 0x80CBC4, false);
 
 	private final String id;
 	private final int color;

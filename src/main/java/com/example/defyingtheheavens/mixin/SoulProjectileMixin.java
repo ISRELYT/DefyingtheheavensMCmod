@@ -20,6 +20,6 @@ public abstract class SoulProjectileMixin {
 	@Inject(method = "canHitEntity", at = @At("HEAD"), cancellable = true)
 	private void dth$passThroughSouls(Entity target, CallbackInfoReturnable<Boolean> cir) {
 		if ((Object) this instanceof GhostQuellingTalismanEntity) return;
-		if (target instanceof Player player && Incorporeal.is(player)) cir.setReturnValue(false);
+		if (target instanceof Player player && Incorporeal.untouchable(player)) cir.setReturnValue(false);
 	}
 }

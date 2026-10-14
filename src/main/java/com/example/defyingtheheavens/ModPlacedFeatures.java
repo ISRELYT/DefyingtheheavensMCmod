@@ -195,11 +195,18 @@ public final class ModPlacedFeatures {
 	public static final ResourceKey<PlacedFeature> NW_CRIMSON_ROOTS = key("netherworld/crimson_roots");
 	public static final ResourceKey<PlacedFeature> NW_BLACKSTONE_BLOBS = key("netherworld/blackstone_blobs");
 	public static final ResourceKey<PlacedFeature> NW_BASALT_BLOBS = key("netherworld/basalt_blobs");
-	/** Once a chunk in the Yellow Springs: its riverlands flooded up to YellowSpringsPoolFeature#POOL_LEVEL. */
+	/** Once in every chunk the Yellow Springs reach: its riverlands flooded up to YellowSpringsPoolFeature#POOL_LEVEL, banked in. */
 	public static final ResourceKey<PlacedFeature> NW_SPRINGS_POOL = key("netherworld/springs_pool");
 	/** A Method Stele in one chunk in {@link #NW_STELE_CHUNKS}, anywhere in the Netherworld. */
 	public static final ResourceKey<PlacedFeature> NW_METHOD_STELE = key("netherworld/method_stele");
-	public static final int NW_STELE_CHUNKS = 14;
+	public static final int NW_STELE_CHUNKS = 24;
+	/**
+	 * A Dao Stele (a heaven method, see DaoSteleFeature) in one chunk in {@link #DAO_STELE_CHUNKS} across the Overworld, and in
+	 * {@link #DAO_STELE_CHUNKS_UPPER_REALM} in the Upper Realm. Not in {@link #ORDER}: ModFeatures#register appends them.
+	 */
+	public static final ResourceKey<PlacedFeature> DAO_STELE = key("dao_stele");
+	public static final ResourceKey<PlacedFeature> DAO_STELE_UPPER_REALM = key("dao_stele_upper_realm");
+	public static final int DAO_STELE_CHUNKS = 60, DAO_STELE_CHUNKS_UPPER_REALM = 32;
 	public static final int NW_SPRINGS = 24;
 	public static final int NW_LAKES_SPRINGS = 1;
 	/** A small patch of soul fire (10 tries) in one Bone Wastes chunk in this many. */
@@ -411,19 +418,26 @@ public final class ModPlacedFeatures {
 				BiomeFilter.biome()));
 		register(context, QI_VEIN_UPPER_REALM, configured.getOrThrow(ModConfiguredFeatures.QI_VEIN), ore(QI_VEIN_TRIES_UPPER_REALM, ISLAND_MIN_Y, ORE_MAX_Y));
 
-		// The Netherworld: one land under an open dark sky, so its surface features stand on the plain heightmap.
-		register(context, NW_LAKE_SPRINGS, configured.getOrThrow(ModConfiguredFeatures.NW_LAKE), onSurface(CountPlacement.of(NW_LAKES_SPRINGS)));
-		register(context, NW_LAKE_RARE, configured.getOrThrow(ModConfiguredFeatures.NW_LAKE), onSurface(RarityFilter.onAverageOnceEvery(NW_LAKE_RARE_CHUNKS)));
-		register(context, NW_SPRING_WATER, configured.getOrThrow(ModConfiguredFeatures.NW_SPRING_WATER), ore(NW_SPRINGS, 30, 210));
-		register(context, NW_SOUL_FIRE, configured.getOrThrow(ModConfiguredFeatures.NW_SOUL_FIRE), onSurface(RarityFilter.onAverageOnceEvery(NW_SOUL_FIRE_CHUNKS)));
-		// Once a chunk, wherever a column picked in it is the Yellow Springs (the pool itself fills only the Springs' columns).
-		register(context, NW_SPRINGS_POOL, configured.getOrThrow(ModConfiguredFeatures.NW_SPRINGS_POOL),
-				List.of(CountPlacement.of(1), InSquarePlacement.spread(), BiomeFilter.biome()));
-		register(context, NW_BONE_PILE, configured.getOrThrow(ModConfiguredFeatures.NW_BONE_PILE), onSurface(CountPlacement.of(2)));
-		register(context, NW_DEAD_TREE, configured.getOrThrow(ModConfiguredFeatures.NW_DEAD_TREE), onSurface(RarityFilter.onAverageOnceEvery(2)));
+		// The Netherworld: one land under an open dark sky, so its surface features stand on the plain heightmap. What digs, builds
+		// or pours is kept off the ghost palaces' ground (NoGhostPalaceFilter).
+		register(context, NW_LAKE_SPRINGS, configured.getOrThrow(ModConfiguredFeatures.NW_LAKE), palaceSafe(onSurface(CountPlacement.of(NW_LAKES_SPRINGS))));
+		register(context, NW_LAKE_RARE, configured.getOrThrow(ModConfiguredFeatures.NW_LAKE), palaceSafe(onSurface(RarityFilter.onAverageOnceEvery(NW_LAKE_RARE_CHUNKS))));
+		register(context, NW_SPRING_WATER, configured.getOrThrow(ModConfiguredFeatures.NW_SPRING_WATER), palaceSafe(ore(NW_SPRINGS, 30, 210)));
+		register(context, NW_SOUL_FIRE, configured.getOrThrow(ModConfiguredFeatures.NW_SOUL_FIRE), palaceSafe(onSurface(RarityFilter.onAverageOnceEvery(NW_SOUL_FIRE_CHUNKS))));
+		// Once in every chunk the Yellow Springs reach: no biome filter, the pool checks its columns itself, so none is left dry
+		// at a chunk's edge (where a random column would have missed the Springs) for the water beside it to spill into.
+		register(context, NW_SPRINGS_POOL, configured.getOrThrow(ModConfiguredFeatures.NW_SPRINGS_POOL), palaceSafe(List.of(CountPlacement.of(1))));
+		register(context, NW_BONE_PILE, configured.getOrThrow(ModConfiguredFeatures.NW_BONE_PILE), palaceSafe(onSurface(CountPlacement.of(2))));
+		register(context, NW_DEAD_TREE, configured.getOrThrow(ModConfiguredFeatures.NW_DEAD_TREE), palaceSafe(onSurface(RarityFilter.onAverageOnceEvery(2))));
 		register(context, NW_METHOD_STELE, configured.getOrThrow(ModConfiguredFeatures.NW_METHOD_STELE),
-				onSurface(RarityFilter.onAverageOnceEvery(NW_STELE_CHUNKS)));
-		register(context, NW_DEAD_TREE_RARE, configured.getOrThrow(ModConfiguredFeatures.NW_DEAD_TREE), onSurface(RarityFilter.onAverageOnceEvery(10)));
+				palaceSafe(onSurface(RarityFilter.onAverageOnceEvery(NW_STELE_CHUNKS))));
+		// On the ground under the trees, not on their crowns (a forest's wood steles stand among the trunks).
+		register(context, DAO_STELE, configured.getOrThrow(ModConfiguredFeatures.DAO_STELE), List.of(RarityFilter.onAverageOnceEvery(DAO_STELE_CHUNKS),
+				InSquarePlacement.spread(), HeightmapPlacement.onHeightmap(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES), BiomeFilter.biome()));
+		register(context, DAO_STELE_UPPER_REALM, configured.getOrThrow(ModConfiguredFeatures.DAO_STELE), List.of(
+				RarityFilter.onAverageOnceEvery(DAO_STELE_CHUNKS_UPPER_REALM), InSquarePlacement.spread(),
+				HeightmapPlacement.onHeightmap(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES), BiomeFilter.biome()));
+		register(context, NW_DEAD_TREE_RARE, configured.getOrThrow(ModConfiguredFeatures.NW_DEAD_TREE), palaceSafe(onSurface(RarityFilter.onAverageOnceEvery(10))));
 		register(context, NW_SPIDER_LILIES, configured.getOrThrow(ModConfiguredFeatures.NW_SPIDER_LILIES), onSurface(CountPlacement.of(4)));
 		register(context, NW_SPIDER_LILIES_SPARSE, configured.getOrThrow(ModConfiguredFeatures.NW_SPIDER_LILIES), onSurface(RarityFilter.onAverageOnceEvery(3)));
 		register(context, NW_CRIMSON_ROOTS, configured.getOrThrow(ModConfiguredFeatures.NW_CRIMSON_ROOTS), onSurface(CountPlacement.of(2)));
@@ -442,6 +456,13 @@ public final class ModPlacedFeatures {
 	/** On the top of the land, by the heightmap (the Netherworld has one layer of land, not the Upper Realm's tiers). */
 	private static List<PlacementModifier> onSurface(PlacementModifier count) {
 		return List.of(count, InSquarePlacement.spread(), PlacementUtils.HEIGHTMAP, BiomeFilter.biome());
+	}
+
+	/** {@code modifiers}, then kept off a ghost palace's ground (see NoGhostPalaceFilter). */
+	private static List<PlacementModifier> palaceSafe(List<PlacementModifier> modifiers) {
+		List<PlacementModifier> safe = new ArrayList<>(modifiers);
+		safe.add(NoGhostPalaceFilter.INSTANCE);
+		return safe;
 	}
 
 	private static List<PlacementModifier> fruit(int chunks) {

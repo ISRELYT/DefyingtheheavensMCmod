@@ -150,7 +150,8 @@ public final class NpcSpawner {
 		CultivatorNpc npc = CultivatorNpc.createFor(level);
 		if (npc == null) return;
 		npc.moveTo(spot.getX() + 0.5, spot.getY(), spot.getZ() + 0.5, random.nextFloat() * 360, 0);
-		if (npc instanceof GhostCultivatorNpc ghost) ghost.becomeGhost(rank, Alignment.randomRogue(random), random);
+		// The land's wandering ghosts stop short of Ghost King: the kings keep their palaces (GhostPalacePiece).
+		if (npc instanceof GhostCultivatorNpc ghost) ghost.becomeGhost(Math.min(GhostCultivatorNpc.WANDERER_CAP, rank), Alignment.randomRogue(random), random);
 		else npc.becomeRogue(rank, Alignment.randomRogue(random), random);
 		level.addFreshEntity(npc);
 	}

@@ -22,13 +22,13 @@ final class GhostlyRenderers {
 	private static final ResourceLocation HORSE_FACE = DefyingTheHeavens.id("textures/entity/ghost/horse_face.png");
 	private static final ResourceLocation MENG_PO = DefyingTheHeavens.id("textures/entity/ghost/meng_po.png");
 
-	/** A ghost cultivator's skin: its own face from life, or the Gate's keepers' own. */
+	/** A ghost cultivator's skin: its own face from life (a Ghost King's and its retainers' too), or the Gate's keepers' own. */
 	static ResourceLocation skin(GhostCultivatorNpc ghost) {
 		return switch (ghost.getRole()) {
 			case OX_HEAD -> OX_HEAD;
 			case HORSE_FACE -> HORSE_FACE;
 			case MENG_PO -> MENG_PO;
-			case NONE -> CultivatorNpcRenderer.skinOf(ghost.getSkin());
+			case NONE, GHOST_KING, COURTIER -> CultivatorNpcRenderer.skinOf(ghost.getSkin());
 		};
 	}
 
@@ -51,7 +51,10 @@ final class GhostlyRenderers {
 		@Override
 		protected double plateHeight(CultivatorNpc npc) {
 			double over = super.plateHeight(npc);
-			return npc instanceof GhostCultivatorNpc ghost && ghost.getRole().beastHead() != null ? over + 0.7 * npc.getScale() : over;
+			if (!(npc instanceof GhostCultivatorNpc ghost)) return over;
+			if (ghost.getRole().beastHead() != null) return over + 0.7 * npc.getScale();
+			// Over a Ghost King's crown and the soul fire on its points (GhostKingCrown#HEIGHT, in its scale).
+			return ghost.getRole() == GhostCultivatorNpc.Role.GHOST_KING ? over + GhostKingCrown.HEIGHT * npc.getScale() : over;
 		}
 	}
 

@@ -115,6 +115,14 @@ public final class Sect {
 	public int offerings = -1;
 	public long offeringsDay = -1;
 
+	/**
+	 * The element the sect cultivates (QiElement, one of the five): its heaven methods are that element's, its elders teach them
+	 * (CultivatorNpc#heavenMethod). Picked from who the sect is, so it never changes and needs no saving.
+	 */
+	public QiElement element() {
+		return QiElement.five()[(int) Math.floorMod(id.getMostSignificantBits() ^ id.getLeastSignificantBits(), 5L)];
+	}
+
 	public Sect(UUID id) {
 		this.id = id;
 		for (Post post : Post.values()) posts.put(post, new ArrayList<>());

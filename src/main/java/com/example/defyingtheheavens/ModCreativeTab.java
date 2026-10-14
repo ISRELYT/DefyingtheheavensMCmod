@@ -81,6 +81,7 @@ public final class ModCreativeTab {
 				for (PillGrade grade : PillGrade.values()) add(PillItem.create(pill, grade, 1));
 			}
 			for (GhostMethod method : GhostMethod.values()) add(GhostJadeSlipItem.of(method));
+			for (HeavenMethod method : HeavenMethod.values()) add(JadeSlipItem.of(method));
 			// Clothing: each path's colours, every grade, crown to boots
 			for (ClothingStyle style : ClothingStyle.values()) {
 				for (ClothingTier tier : ClothingTier.values()) {

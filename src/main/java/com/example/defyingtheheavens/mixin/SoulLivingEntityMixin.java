@@ -1,6 +1,7 @@
 package com.example.defyingtheheavens.mixin;
 
 import com.example.defyingtheheavens.GhostSystem;
+import com.example.defyingtheheavens.HeavenSpells;
 import com.example.defyingtheheavens.Incorporeal;
 import com.example.defyingtheheavens.SoulProjection;
 import net.minecraft.server.level.ServerPlayer;
@@ -43,15 +44,27 @@ public abstract class SoulLivingEntityMixin {
 
 	@Inject(method = "heal", at = @At("HEAD"), cancellable = true)
 	private void dth$soulNeverHeals(float amount, CallbackInfo ci) {
-		if ((Object) this instanceof Player player && SoulProjection.isSoul(player)) ci.cancel();
+		LivingEntity self = (LivingEntity) (Object) this;
+		if (self instanceof Player player && SoulProjection.isSoul(player)) ci.cancel();
+		// A heaven spell's hold on healing: a seared wound, a strangler fig's host (HeavenSpells#allowHeal).
+		else if (!self.level().isClientSide && amount > 0 && !HeavenSpells.allowHeal(self, amount)) ci.cancel();
+	}
+
+	/** A heaven spell's ward against effects: the dawn's light, a severed fate (HeavenSpells#allowEffect). */
+	@Inject(method = "canBeAffected", at = @At("HEAD"), cancellable = true)
+	private void dth$heavenWardsEffects(net.minecraft.world.effect.MobEffectInstance effect, CallbackInfoReturnable<Boolean> cir) {
+		LivingEntity self = (LivingEntity) (Object) this;
+		if (!self.level().isClientSide && !HeavenSpells.allowEffect(self, effect)) cir.setReturnValue(false);
 	}
 
 	@ModifyVariable(method = "hurt", at = @At("HEAD"), argsOnly = true)
 	private float dth$soulTakesWhatIsSeen(float amount, DamageSource source, float original) {
 		LivingEntity self = (LivingEntity) (Object) this;
 		// A ghost takes only what reaches the dead, the living's blows by how clearly they see it (see GhostSystem).
-		if (self instanceof ServerPlayer ghost && GhostSystem.isGhost(ghost)) return GhostSystem.scaleDamage(ghost, source, amount);
-		return SoulProjection.scaleSoulDamage(self, source, amount);
+		float scaled = self instanceof ServerPlayer ghost && GhostSystem.isGhost(ghost) ? GhostSystem.scaleDamage(ghost, source, amount)
+				: SoulProjection.scaleSoulDamage(self, source, amount);
+		// Then what the heaven methods' wards and the earth's passive make of it (HeavenSpells#incoming), on the server.
+		return scaled > 0 && !self.level().isClientSide ? HeavenSpells.incoming(self, source, scaled) : scaled;
 	}
 
 	@Inject(method = "checkTotemDeathProtection", at = @At("HEAD"), cancellable = true)
@@ -61,12 +74,12 @@ public abstract class SoulLivingEntityMixin {
 
 	@Inject(method = "isPushable", at = @At("HEAD"), cancellable = true)
 	private void dth$soulIsNotPushed(CallbackInfoReturnable<Boolean> cir) {
-		if ((Object) this instanceof Player player && Incorporeal.is(player)) cir.setReturnValue(false);
+		if ((Object) this instanceof Player player && Incorporeal.untouchable(player)) cir.setReturnValue(false);
 	}
 
 	@Inject(method = "pushEntities", at = @At("HEAD"), cancellable = true)
 	private void dth$soulPushesNothing(CallbackInfo ci) {
-		if ((Object) this instanceof Player player && Incorporeal.is(player)) ci.cancel();
+		if ((Object) this instanceof Player player && Incorporeal.untouchable(player)) ci.cancel();
 	}
 
 	/** One of the dead bound by a Ghost-Quelling Talisman can't jump (see QuelledEffect). Both sides: a player's client jumps it. */

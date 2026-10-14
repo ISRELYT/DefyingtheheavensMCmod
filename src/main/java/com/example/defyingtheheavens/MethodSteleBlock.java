@@ -24,7 +24,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
  * A Method Stele (功法碑): a tall tablet of carved stone, three blocks high, standing across the Netherworld, each teaching one
- * ghost method (see GhostMethods): meditating beside it for a minute teaches its first layer, and beside the stele of a method
+ * ghost method (see GhostMethods): meditating beside it for 15 seconds teaches the method, and beside the stele of a method
  * one knows, meditation on that method goes faster. Unbreakable; the dead may use it (tagged ghost_usable): a touch tells what
  * it teaches.
  */

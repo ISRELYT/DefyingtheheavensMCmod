@@ -162,4 +162,25 @@ public class NetherworldDeadGameTests implements FabricGameTest {
 		}
 		helper.succeed();
 	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void theWheelHandsTheConnectionToTheBodyBornAgain(GameTestHelper helper) {
+		ServerPlayer ghost = cultivator(helper, Realm.CORE_FORMATION);
+		GhostSystem.makeGhost(ghost);
+		net.minecraft.server.players.PlayerList players = helper.getLevel().getServer().getPlayerList();
+		ServerPlayer reborn = null;
+		try {
+			GhostSystem.revive(ghost);
+			reborn = players.getPlayer(ghost.getUUID());
+			helper.assertTrue(reborn != null && reborn != ghost && ghost.isRemoved(), "Born again in a new body; the ghost's is gone");
+			helper.assertTrue(reborn.connection.player == reborn,
+					"The connection moves the new body (left on the ghost's, the server would act for it at the Gate)");
+			helper.assertTrue(!GhostSystem.isGhost(reborn) && reborn.getMaxHealth() > 20, "Alive, with its cultivated hearts ("
+					+ reborn.getMaxHealth() + ")");
+		} finally {
+			GhostSystem.forget(ghost.getUUID());
+			if (reborn != null) players.remove(reborn);
+		}
+		helper.succeed();
+	}
 }

@@ -272,7 +272,8 @@ public class SectGameTests implements FabricGameTest {
 		helper.assertTrue(!member.isWanderingRogue(), "Nor a sect member");
 		helper.assertTrue(wanderer.isWanderingMortal() && !wanderer.isWanderingRogue(), "A mortal wanderer is a kind of its own");
 		Vec3 here = helper.absoluteVec(new Vec3(2.5, 2, 2.5));
-		helper.assertTrue(CultivatorNpc.wanderingRoguesNear(level, here, 4) == 2, "Counted: the rogue and the named one, no others");
+		// Close in: a cultivator of the next test over may wander within a few blocks.
+		helper.assertTrue(CultivatorNpc.wanderingRoguesNear(level, here, 1.5) == 2, "Counted: the rogue and the named one, no others");
 		for (CultivatorNpc npc : List.of(member, rogue, named, heavenly, wanderer)) {
 			helper.assertTrue(npc.requiresCustomPersistence(), "No cultivator despawns");
 			RogueIndex.note(npc); // as the index's next refresh would: each was a plain rogue when it spawned
@@ -979,6 +980,12 @@ public class SectGameTests implements FabricGameTest {
 		helper.succeed();
 	}
 
+	/** Runs {@code then} once a barrier fills {@code cell}, or after {@code ticks} ticks without it (for it to say so). */
+	private static void whenFilled(GameTestHelper helper, BlockPos cell, int ticks, Runnable then) {
+		if (ticks <= 0 || helper.getLevel().getBlockState(cell).is(ModBlocks.SECT_BARRIER)) then.run();
+		else helper.runAfterDelay(1, () -> whenFilled(helper, cell, ticks - 1, then));
+	}
+
 	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 100)
 	public void barrierLetsMembersThroughAndHoldsTheWeak(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
@@ -988,8 +995,10 @@ public class SectGameTests implements FabricGameTest {
 		Formation formation = Formations.create(level, id, Formation.Kind.CORE, center, Formations.MIN_RADIUS);
 		Formations.update(level, formation, PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY), null, sectId);
 		Formations.raise(level, formation);
-		helper.runAfterDelay(3, () -> {
-			BlockPos cell = center.offset(Formations.MIN_RADIUS, 0, 0);
+		BlockPos cell = center.offset(Formations.MIN_RADIUS, 0, 0);
+		// Up within a tick or two, or a while longer: the level's other formations share the budget, and the test world keeps those
+		// left by earlier runs, every one rising again (first in line) once the server starts.
+		whenFilled(helper, cell, 80, () -> {
 			BlockState state = level.getBlockState(cell);
 			helper.assertTrue(state.is(ModBlocks.SECT_BARRIER), "The shell is filled");
 			Zombie zombie = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, new BlockPos(1, 2, 1));
@@ -1293,6 +1302,43 @@ public class SectGameTests implements FabricGameTest {
 				"... to Spirit grade, keeping its colours");
 		up.setItem(3, new ItemStack(Items.IRON_INGOT));
 		helper.assertTrue(!upgrade.matches(up, helper.getLevel()), "The wrong materials don't");
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void wallPillarsStandEvenlyAndMirroredRoundTheDoor(GameTestHelper helper) {
+		for (int length = 4; length <= 30; length++) {
+			for (int bay : new int[] {2, 3, 4}) {
+				for (boolean front : new boolean[] {true, false}) {
+					int[] spots = SectPiece.pillarSpots(length, bay, front);
+					String what = "length " + length + ", bay " + bay + (front ? ", front" : ", side") + ": " + java.util.Arrays.toString(spots);
+					helper.assertTrue(spots[0] == 0 && spots[spots.length - 1] == length, "A pillar at each corner (" + what + ")");
+					int bays = spots.length - 1;
+					for (int i = 1; i <= bays; i++) helper.assertTrue(spots[i] > spots[i - 1], "In order, apart (" + what + ")");
+					for (int i = 0; i <= bays; i++) {
+						if (2 * i != bays) helper.assertTrue(spots[i] == length - spots[bays - i], "Mirrored about the middle (" + what + ")");
+					}
+					if (front) {
+						helper.assertTrue(bays % 2 == 1 && java.util.Arrays.binarySearch(spots, length / 2) < 0,
+								"The door, in the middle of the front, is in a bay's middle, not on or beside one pillar only (" + what + ")");
+					}
+				}
+			}
+		}
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void walkersGoByTheWaysEvenWhereTheyFirstLeadAway(GameTestHelper helper) {
+		// An L of way points round a hall: from its door (the L's start) to a gate past the far end.
+		java.util.List<BlockPos> ways = java.util.List.of(new BlockPos(0, 0, 0), new BlockPos(10, 0, 0), new BlockPos(20, 0, 0),
+				new BlockPos(20, 0, 10), new BlockPos(20, 0, 20));
+		net.minecraft.world.phys.Vec3 gate = new net.minecraft.world.phys.Vec3(20.5, 0, 25.5);
+		double[] cost = CultivatorGoals.alongTheWays(ways, gate);
+		for (int i = 1; i < ways.size(); i++) helper.assertTrue(cost[i] < cost[i - 1], "Each point is nearer the gate along the ways: "
+				+ java.util.Arrays.toString(cost));
+		helper.assertTrue(cost[0] > net.minecraft.world.phys.Vec3.atBottomCenterOf(ways.get(0)).distanceTo(gate) + 1,
+				"Reckoned along the ways, not as the crow flies (through the hall): " + cost[0]);
 		helper.succeed();
 	}
 }

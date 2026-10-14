@@ -6,7 +6,8 @@
 // whole, the skin's own shapes show through the violet. A vertex red of 0 marks the halo pass (the same body drawn a little
 // larger, added on): only its glow, brightest at the silhouette, so the whole soul seems to shine at its edges.
 // A vertex green of 0 turns the violet to cyan, deep cyan to pale aqua with an aqua-white halo: the dead (the souls that flow
-// down the Soul River, and the Netherworld's ghosts) rather than a living cultivator's projected soul.
+// down the Soul River, and the Netherworld's ghosts) rather than a living cultivator's projected soul. With it, a vertex blue
+// of 0 marks a Ghost King: its cyan deeper, its edges and halo violet.
 
 uniform sampler2D Sampler0;
 uniform vec4 ColorModulator;
@@ -31,6 +32,7 @@ void main() {
     float clarity = clamp(vertexColor.a, 0.0, 1.0);
     bool halo = vertexColor.r < 0.5;
     bool dead = vertexColor.g < 0.5;
+    bool king = dead && vertexColor.b < 0.5;
     float t = GameTime * 1200.0; // seconds through the day
 
     vec3 n = normalize(viewNormal);
@@ -38,9 +40,12 @@ void main() {
     float fresnel = pow(1.0 - clamp(abs(dot(n, v)), 0.0, 1.0), 1.6);
 
     float shift = 0.5 + 0.5 * sin(t * 1.6 + viewPos.y * 2.5 + viewPos.x * 1.1);
-    vec3 violet = dead ? mix(vec3(0.08, 0.58, 0.78), vec3(0.50, 0.95, 1.0), shift)
+    vec3 violet = king ? mix(vec3(0.03, 0.34, 0.58), vec3(0.26, 0.70, 0.95), shift)
+                : dead ? mix(vec3(0.08, 0.58, 0.78), vec3(0.50, 0.95, 1.0), shift)
                        : mix(vec3(0.40, 0.16, 1.0), vec3(0.62, 0.40, 1.0), shift);
-    vec3 haloLight = dead ? vec3(0.80, 1.0, 1.0) : vec3(0.85, 0.75, 1.0);
+    vec3 haloLight = king ? vec3(0.74, 0.52, 1.0) : dead ? vec3(0.80, 1.0, 1.0) : vec3(0.85, 0.75, 1.0);
+    // Where it is seen side-on: its own colour, or a Ghost King's violet.
+    vec3 edge = king ? vec3(0.58, 0.34, 1.0) : violet;
 
     // Grain: the haze shimmers, coarser and thinner the less clearly it is seen.
     float cell = mix(5.0, 2.0, clarity);
@@ -48,14 +53,14 @@ void main() {
 
     if (halo) {
         float glow = (0.08 + 0.6 * fresnel) * mix(0.45, 1.0, clarity) * mix(0.5 + 0.5 * grain, 1.0, clarity);
-        fragColor = vec4(mix(violet, haloLight, fresnel * 0.5), clamp(glow, 0.0, 1.0)) * ColorModulator;
+        fragColor = vec4(mix(edge, haloLight, fresnel * 0.5), clamp(glow, 0.0, 1.0)) * ColorModulator;
         return;
     }
 
     float luma = dot(tex.rgb, vec3(0.299, 0.587, 0.114));
     vec3 light = violet * (0.5 + 0.7 * luma);
     vec3 seen = mix(light, tex.rgb * 0.3 + violet * 0.7, clarity * 0.5);
-    vec3 color = seen + violet * fresnel * 1.2;
+    vec3 color = seen + edge * fresnel * 1.2;
 
     float alpha = mix(0.05, 0.42, clarity) + fresnel * mix(0.18, 0.45, clarity);
     alpha *= mix(0.2 + 0.8 * grain, 1.0, clarity * clarity);

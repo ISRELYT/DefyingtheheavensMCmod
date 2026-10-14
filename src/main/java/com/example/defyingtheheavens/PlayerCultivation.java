@@ -34,6 +34,11 @@ import java.util.List;
  * opens their meridians ({@link #awaken}) and they begin at Qi Refining Early. Saves from before mortals existed load as
  * cultivators. Breaking into Foundation Building and Core Formation also takes a pill ({@link #requiresPill}), eaten at Grand
  * Perfection to prepare the breakthrough ({@link #prepareBreakthrough}).
+ * <p>
+ * A player's cultivation waits on their heaven methods (HeavenMethods#reach): no stage is entered, minor or by tribulation, until a
+ * method has cultivated every layer that stands for the stages before it ({@link #isHeldByMethod}). The methods wait on nothing:
+ * they grow while one meditates, whatever the realm. Cultivator NPCs advance by their own reckoning (CultivatorNpc#advance) and
+ * aren't held so.
  */
 public class PlayerCultivation {
 	/** The most the lower realms can sustain. */
@@ -83,6 +88,8 @@ public class PlayerCultivation {
 	private final List<Journal.Entry> journal = new ArrayList<>();
 	/** The Netherworld's hold on them: ghostly qi, yin corruption, the Soul River. Saved only when not at its defaults. */
 	private final NetherworldState netherworld = new NetherworldState();
+	/** The heaven methods known (see HeavenMethods). Saved only when one is. */
+	private final HeavenState heaven = new HeavenState();
 	/** Synced but not saved: re-evaluated from the player's dimension on every join. */
 	private boolean inUpperRealm;
 	/** Realm Suppress from a stronger cultivator (see {@link RealmSuppressSystem}): synced but never saved. */
@@ -175,6 +182,13 @@ public class PlayerCultivation {
 
 	public void setRitualFailedDay(long day) { ritualFailedDay = day; }
 
+	/** As if the ritual had never been asked (an op setting a cultivator back to or below Qi Refining Mid): no leave, no Favour. */
+	public void resetRitual() {
+		heavensLeave = false;
+		favour = 0;
+		ritualFailedDay = -1;
+	}
+
 	/** At the stage only the heavens' leave lets one leave, without it: Qi Refining Mid. */
 	public boolean needsHeavensLeave() { return !mortal && !heavensLeave && rank(realm, stage) == RITUAL_RANK; }
 
@@ -183,6 +197,16 @@ public class PlayerCultivation {
 
 	/** No more cultivation fits: at a tribulation's bottleneck or at the Ritual to the Heavens' gate. */
 	public boolean isStalled() { return isAtBottleneck() || isAtRitualGate(); }
+
+	// --- The heaven method's gate (see HeavenMethods#reach) ---
+
+	/**
+	 * The stage's bar full, and no heaven method yet carries cultivation into the next stage: it waits on the method's layers (or,
+	 * with none that goes on, on finding one). Not part of {@link #isStalled()}: medicine taken now is refined into the method.
+	 */
+	public boolean isHeldByMethod() {
+		return !mortal && !isMaxed() && cultivation >= cultivationRequired() && !HeavenMethods.carries(this, rank(realm, stage) + 1);
+	}
 
 	// --- The mortal path ---
 
@@ -344,16 +368,30 @@ public class PlayerCultivation {
 		return refined;
 	}
 
-	/** Cultivation that still fits before the next bottleneck (the lower realm's cap, or the ritual's gate), across minor stages. */
+	/**
+	 * Held at the heaven method's gate ({@link #isHeldByMethod}), meditation refines up to {@code max} unrefined qi into the method
+	 * practised instead (MeditationManager, which only asks while that method can take it). Returns how much was refined.
+	 */
+	public double refineIntoMethod(double max) {
+		if (mortal || medicinalQi <= 0 || isSuppressed() || !isHeldByMethod()) return 0;
+		double refined = Math.min(medicinalQi, Math.max(0, max));
+		medicinalQi -= refined;
+		return refined;
+	}
+
+	/**
+	 * Cultivation that still fits before the next bottleneck (the lower realm's cap, the ritual's gate, or the heaven method's),
+	 * across minor stages.
+	 */
 	private double roomToBottleneck() {
 		double room = cultivationRequired() - cultivation;
+		int reach = HeavenMethods.reach(this);
 		Realm r = realm;
 		Stage s = stage;
-		while (!(s.isLast() || r.hasStageTribulations()) && !(rank(r, s) == RITUAL_RANK && !heavensLeave)) {
+		while (!(s.isLast() || r.hasStageTribulations()) && !(rank(r, s) == RITUAL_RANK && !heavensLeave) && rank(r, s) + 1 <= reach) {
 			s = s.next();
 			if (lowerRealmBound && rank(r, s) > CAP_RANK) break;
-			double required = r.getCultivationBase() * s.getCultivationMultiplier();
-			room += isUpperRealmOnly(r) ? required * UPPER_REALM_QI_MULTIPLIER : required;
+			room += required(r, s);
 		}
 		return Math.max(0, room);
 	}
@@ -420,6 +458,15 @@ public class PlayerCultivation {
 
 	/** {@link #sustainedRank()} less the stages another cultivator's pressure takes off; drives stats, qi and the domain. */
 	public int effectiveRank() { return Math.max(0, sustainedRank() - pressureStages); }
+
+	/**
+	 * Any rank as the realm the player stands in and another's pressure let them wield it, as {@link #effectiveRank} is the true
+	 * rank's: the ghost path's, say (TwoPaths). -1 (none) stays -1.
+	 */
+	public int wielded(int rank) {
+		if (rank < 0) return rank;
+		return Math.max(0, (lowerRealmBound ? Math.min(rank, CAP_RANK) : rank) - pressureStages);
+	}
 
 	public Realm getEffectiveRealm() { return Realm.byIndex(effectiveRank() / Stage.values().length); }
 	public Stage getEffectiveStage() { return Stage.byIndex(effectiveRank() % Stage.values().length); }
@@ -545,7 +592,8 @@ public class PlayerCultivation {
 	public double qiGatherPerSecond() {
 		if (mortal) return 0;
 		return CultivationStats.qiGather(getEffectiveRealm(), getEffectiveStage()) * (inUpperRealm ? UPPER_REALM_QI_MULTIPLIER : 1.0)
-				* (1 + qiBoost) * (1 + gearQiBonus) * favourFactor() * (1 - pressurePenalty);
+				* (1 + qiBoost) * (1 + gearQiBonus) * favourFactor() * (1 - pressurePenalty)
+				+ HeavenPassives.amount(this, QiElement.WATER); // Ceaseless Flow, the water methods' passive
 	}
 
 	/** Qi above the shrunken pool that pressure holds back; it is back in the pool as soon as the pressure lifts. */
@@ -592,6 +640,11 @@ public class PlayerCultivation {
 	 * the realm's base, offsetting the dense qi they can only be cultivated in.
 	 */
 	public double cultivationRequired() {
+		return required(realm, stage);
+	}
+
+	/** {@link #cultivationRequired()} for any realm and stage (the heaven methods' layers share it out: HeavenMethods#layerCost). */
+	public static double required(Realm realm, Stage stage) {
 		double required = realm.getCultivationBase() * stage.getCultivationMultiplier();
 		return isUpperRealmOnly(realm) ? required * UPPER_REALM_QI_MULTIPLIER : required;
 	}
@@ -614,9 +667,13 @@ public class PlayerCultivation {
 	/** Full cultivation bar at a stage that can only be left through a tribulation. */
 	public boolean isAtBottleneck() { return !mortal && needsTribulation() && cultivation >= cultivationRequired(); }
 
-	/** Ready for the tribulation: at the bottleneck, not sealed by the lower realm, and any pill the next realm needs taken. */
+	/**
+	 * Ready for the tribulation: at the bottleneck, not sealed by the lower realm, any pill the next realm needs taken, and a heaven
+	 * method carrying cultivation on into what lies past it (HeavenMethods#reach).
+	 */
 	public boolean canBreakthrough() {
-		return isAtBottleneck() && !isMaxed() && !isBreakthroughLocked() && !isMissingBreakthroughPill();
+		return isAtBottleneck() && !isMaxed() && !isBreakthroughLocked() && !isMissingBreakthroughPill()
+				&& HeavenMethods.carries(this, rank(breakthroughRealm(), breakthroughStage()));
 	}
 
 	/** Grand Perfection of the highest realm (currently Four Axis). */
@@ -630,8 +687,8 @@ public class PlayerCultivation {
 
 	/**
 	 * Adds cultivation. Minor stages advance automatically until a bottleneck, where cultivation is capped at the
-	 * stage's requirement until the player breaks through (or, at Qi Refining Mid, until the heavens grant their leave). A
-	 * suppressed cultivator gains nothing.
+	 * stage's requirement until the player breaks through (or, at Qi Refining Mid, until the heavens grant their leave, or until
+	 * a heaven method carries it into the next stage: HeavenMethods#reach). A suppressed cultivator gains nothing.
 	 *
 	 * @return true if at least one minor stage was gained
 	 */
@@ -642,7 +699,7 @@ public class PlayerCultivation {
 		cultivation += amount;
 		while (cultivation >= cultivationRequired()) {
 			boolean pastCap = lowerRealmBound && rank(realm, stage.next()) > CAP_RANK;
-			if (needsTribulation() || pastCap || needsHeavensLeave()) {
+			if (needsTribulation() || pastCap || needsHeavensLeave() || !HeavenMethods.carries(this, rank(realm, stage) + 1)) {
 				cultivation = cultivationRequired();
 				break;
 			}
@@ -751,6 +808,8 @@ public class PlayerCultivation {
 		if (!journal.isEmpty()) tag.put("Journal", Journal.save(journal));
 		CompoundTag nether = netherworld.save();
 		if (!nether.isEmpty()) tag.put("Netherworld", nether);
+		CompoundTag methods = heaven.save();
+		if (!methods.isEmpty()) tag.put("HeavenMethods", methods);
 		return tag;
 	}
 
@@ -799,12 +858,18 @@ public class PlayerCultivation {
 		}
 		Journal.load(tag.getList("Journal", Tag.TAG_COMPOUND), c.journal);
 		c.netherworld.load(tag.getCompound("Netherworld")); // an empty compound when missing: every default
+		c.heaven.load(tag.getCompound("HeavenMethods"));
 		return c;
 	}
 
 	/** The Netherworld's hold on this cultivator (see NetherworldState). */
 	public NetherworldState netherworld() {
 		return netherworld;
+	}
+
+	/** The heaven methods this cultivator knows (see HeavenMethods). */
+	public HeavenState heaven() {
+		return heaven;
 	}
 
 	/** The rumours this player has been told (see Journal), newest first. Not part of the sync packet: sent on its own. */

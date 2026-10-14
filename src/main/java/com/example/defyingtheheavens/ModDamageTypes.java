@@ -30,6 +30,28 @@ public final class ModDamageTypes {
 	public static final ResourceKey<DamageType> GHOSTLY = ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("ghostly"));
 	/** The Chief Judge of the Netherworld's gaze (see JudgeEye): tagged as {@link #SOUL_SEVERED}, so nothing holds it off. */
 	public static final ResourceKey<DamageType> JUDGE_GAZE = ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("judge_gaze"));
+	/**
+	 * The heaven methods' spells (HeavenSpells): the five elements' qi, one harm each, "qi_wood" to "qi_metal". Tagged to pass
+	 * armour (qi goes through steel), but Protection and Resistance still turn some of it. It reaches the dead as a living blow
+	 * does: only from one who sees souls (GhostSystem#reaches).
+	 */
+	public static final ResourceKey<DamageType> QI_WOOD = qiKey(QiElement.WOOD), QI_WATER = qiKey(QiElement.WATER), QI_FIRE = qiKey(QiElement.FIRE),
+			QI_EARTH = qiKey(QiElement.EARTH), QI_METAL = qiKey(QiElement.METAL);
+
+	private static ResourceKey<DamageType> qiKey(QiElement element) {
+		return ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("qi_" + element.name().toLowerCase(java.util.Locale.ROOT)));
+	}
+
+	/** The harm of {@code element}'s qi (one of the five). */
+	public static ResourceKey<DamageType> qiType(QiElement element) {
+		return switch (element) {
+			case WOOD -> QI_WOOD;
+			case WATER -> QI_WATER;
+			case FIRE -> QI_FIRE;
+			case EARTH -> QI_EARTH;
+			default -> QI_METAL;
+		};
+	}
 
 	public static void bootstrap(BootstapContext<DamageType> context) {
 		context.register(SPATIAL_PRESSURE, new DamageType(DefyingTheHeavens.MOD_ID + ".spatial_pressure", DamageScaling.NEVER, 0.0f));
@@ -38,6 +60,15 @@ public final class ModDamageTypes {
 		context.register(GHOSTLY, new DamageType(DefyingTheHeavens.MOD_ID + ".ghostly", DamageScaling.NEVER, 0.0f));
 		context.register(SOUL_SEVERED, new DamageType(DefyingTheHeavens.MOD_ID + ".soul_severed", DamageScaling.NEVER, 0.0f));
 		context.register(SOUL_SEIZED, new DamageType(DefyingTheHeavens.MOD_ID + ".soul_seized", DamageScaling.NEVER, 0.0f));
+		for (QiElement element : QiElement.five()) {
+			ResourceKey<DamageType> key = qiType(element);
+			context.register(key, new DamageType(DefyingTheHeavens.MOD_ID + "." + key.location().getPath(), DamageScaling.NEVER, 0.1f));
+		}
+	}
+
+	/** {@code element}'s qi, cast by {@code attacker} (null for none: a zone left burning, say). */
+	public static DamageSource qi(Level level, QiElement element, net.minecraft.world.entity.Entity attacker) {
+		return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(qiType(element)), attacker);
 	}
 
 	public static DamageSource spatialPressure(Level level) {

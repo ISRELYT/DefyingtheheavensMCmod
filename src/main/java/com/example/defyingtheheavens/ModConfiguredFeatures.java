@@ -98,6 +98,7 @@ public final class ModConfiguredFeatures {
 	public static final ResourceKey<ConfiguredFeature<?, ?>> NW_BASALT_BLOBS = key("netherworld/basalt_blobs");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> NW_SPRINGS_POOL = key("netherworld/springs_pool");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> NW_METHOD_STELE = key("netherworld/method_stele");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> DAO_STELE = key("dao_stele");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> OTHER_SHORE_FLOWER = key("other_shore_flower");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> NETHERWORLD_LOTUS = key("netherworld_lotus");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_YIN_JADE = key("netherworld/ore_yin_jade");
@@ -218,6 +219,7 @@ public final class ModConfiguredFeatures {
 		FeatureUtils.register(context, NW_BONE_PILE, Feature.BLOCK_PILE, new BlockPileConfiguration(BlockStateProvider.simple(Blocks.BONE_BLOCK)));
 		FeatureUtils.register(context, NW_DEAD_TREE, ModFeatures.DEAD_TREE);
 		FeatureUtils.register(context, NW_METHOD_STELE, ModFeatures.METHOD_STELE);
+		FeatureUtils.register(context, DAO_STELE, ModFeatures.DAO_STELE);
 		FeatureUtils.register(context, NW_SPIDER_LILIES, Feature.FLOWER, new RandomPatchConfiguration(64, 7, 2,
 				PlacementUtils.onlyWhenEmpty(Feature.SIMPLE_BLOCK, new SimpleBlockConfiguration(BlockStateProvider.simple(ModBlocks.RED_SPIDER_LILY)))));
 		FeatureUtils.register(context, NW_CRIMSON_ROOTS, Feature.RANDOM_PATCH, FeatureUtils.simplePatchConfiguration(Feature.SIMPLE_BLOCK,

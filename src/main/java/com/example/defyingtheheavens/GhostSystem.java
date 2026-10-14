@@ -15,6 +15,7 @@ import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -45,11 +46,27 @@ import java.util.function.Predicate;
  * respawn point, as vanilla would choose it ({@link #useWheel}), leaving behind at the Wheel anything it still carried (a
  * visitor overtaken by yin: {@link #leaveBelongings}); in hardcore the Wheel refuses.
  * <p>
+ * A <b>Ghost King</b> ({@link #isKing}) is one of the dead at Core Formation or above: one who died there, or whose ghost path
+ * rose to it (GhostMethods#ghostRank, the Ghost Core Canon; never a mortal's ghost, whose meridians are closed). Its hands are its own again: it breaks and places, uses and
+ * picks up, sets off plates, takes the rifts, the Soul River and portals down to the living world, and strikes as the living do
+ * (Incorporeal#is leaves it out). It stays one of the dead in all else: drawn as their light (crowned), harmed only as they
+ * are, hunted by no mob, passed through by arrows, cultivating only its method; outside the Netherworld only those who see
+ * souls see it (SoulProjection#broadcastsTo).
+ * <p>
+ * How a player is drawn is told apart from what it is (TwoPaths#look): the dead are always drawn as the dead (a king crowned),
+ * whatever their paths; one of the living whose ghost path has reached Core Formation has a human form and a Ghost King's, and
+ * shows its true form or the other. In a Ghost King's form the living are seen as the dead are (outside the Netherworld, only by
+ * those who perceive souls), and keep every other rule of the living.
+ * <p>
  * A creative ghost keeps the look and none of the rules.
  */
 public final class GhostSystem {
 	/** Set by the client: whether it has been told a player is a ghost. */
 	public static Predicate<Player> clientGhost = player -> false;
+	/** Set by the client: whether it has been told a ghost is a Ghost King. */
+	public static Predicate<Player> clientKing = player -> false;
+	/** One of the dead this strong is a Ghost King: Core Formation Early. */
+	public static final int KING_RANK = PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY);
 
 	private static final UUID GHOST_HEALTH_ID = UUID.fromString("5b1e0c3a-7d4f-4c8e-9a61-2f0d8e3b6c71");
 	/** A dispersed ghost reforms at the Gate this long after. */
@@ -75,6 +92,22 @@ public final class GhostSystem {
 		if (player == null) return false;
 		if (player.level().isClientSide) return clientGhost.test(player);
 		return player instanceof ServerPlayer sp && CultivationManager.get(sp).netherworld().ghost();
+	}
+
+	/** A Ghost King (see the class notes): both sides, as {@link #isGhost}. */
+	public static boolean isKing(Player player) {
+		if (player == null) return false;
+		if (player.level().isClientSide) return clientKing.test(player);
+		return player instanceof ServerPlayer sp && isKing(CultivationManager.get(sp));
+	}
+
+	/**
+	 * One of the dead whose true cultivation, or whose ghost path (TwoPaths#ghostRank: a mortal's lies dormant), is Core Formation
+	 * or above.
+	 */
+	public static boolean isKing(PlayerCultivation c) {
+		if (!c.netherworld().ghost()) return false;
+		return TwoPaths.heavenRank(c, false) >= KING_RANK || TwoPaths.ghostRank(c, false) >= KING_RANK;
 	}
 
 	private static NetherworldState state(ServerPlayer p) {
@@ -217,9 +250,9 @@ public final class GhostSystem {
 		if (health != null) health.removeModifier(GHOST_HEALTH_ID);
 	}
 
-	/** Netherworld Breathing Art's layers: a heart more for each. */
+	/** The foundations' layers (the Netherworld Breathing Art's and those after it): a heart more for each. */
 	private static int breathingLayers(ServerPlayer p) {
-		return GhostMethods.breathingLayers(CultivationManager.get(p));
+		return GhostMethods.foundationLayers(CultivationManager.get(p));
 	}
 
 	public static void tick(net.minecraft.server.MinecraftServer server) {
@@ -252,6 +285,10 @@ public final class GhostSystem {
 		}
 		boolean second = server.getTickCount() % 20 == 0;
 		for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+			if (second) {
+				watchKing(p);
+				TwoPaths.watch(p); // the forms, and the spells of both paths
+			}
 			if (!isGhost(p)) continue;
 			p.setAirSupply(p.getMaxAirSupply());
 			p.clearFire();
@@ -265,6 +302,30 @@ public final class GhostSystem {
 				GhostGate.terrace(p); // atop the Terrace for Gazing Homeward: the place it died
 			}
 		}
+	}
+
+	/** The Ghost Kings among the online players, as they were last told (a king's crown and hands come and go with its realm). */
+	private static final Set<UUID> KINGS = new HashSet<>();
+
+	/**
+	 * Once a second: a ghost risen to Core Formation (or one that died there) is told it is a Ghost King, and its clients told too;
+	 * one stripped of its might (the Chief Judge's gaze) is told it is one of the common dead again. Born again, it simply isn't.
+	 */
+	private static void watchKing(ServerPlayer p) {
+		boolean king = isKing(p);
+		if (king == KINGS.contains(p.getUUID())) return;
+		if (king) {
+			KINGS.add(p.getUUID());
+			p.sendSystemMessage(Component.translatable(ModLang.MSG_GHOST_KING).withStyle(ChatFormatting.LIGHT_PURPLE));
+			p.playNotifySound(SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.0f, 0.5f);
+			p.playNotifySound(SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.8f, 0.6f);
+			sparks(p, 60);
+			Journal.note(p, "ghost_king", ModLang.JOURNAL_GHOST_KING, Component.translatable(ModLang.JOURNAL_GHOST_KING_TEXT));
+		} else {
+			KINGS.remove(p.getUUID());
+			if (isGhost(p)) p.sendSystemMessage(Component.translatable(ModLang.MSG_GHOST_KING_LOST).withStyle(ChatFormatting.GRAY));
+		}
+		broadcast(p);
 	}
 
 	// --- Harm ---
@@ -291,6 +352,26 @@ public final class GhostSystem {
 	/** One of the dead: a player's ghost, or a ghostly mob or NPC ({@link Ghostly}). */
 	public static boolean isDead(Entity entity) {
 		return entity instanceof Ghostly || entity instanceof Player player && isGhost(player);
+	}
+
+	/**
+	 * A player the living world's mobs and NPCs don't see, and the dead's own kind do (Hungry Ghosts, ghost cultivators,
+	 * {@link #deadMayAttack}): one of the dead in earnest, or one of the living in a Ghost King's form (TwoPaths#inGhostForm).
+	 * Server side (a client's mobs choose no targets).
+	 */
+	public static boolean seenAsDead(Player player) {
+		if (!(player instanceof ServerPlayer sp)) return false;
+		return Incorporeal.isGhost(sp) || TwoPaths.inGhostForm(sp);
+	}
+
+	/**
+	 * Whether one of the dead's kind ({@code attacker}, a Ghostly mob or NPC) may take {@code target} for prey: the dead, and the
+	 * living in a Ghost King's form, as anyone else may be taken (vanilla asks Player#canBeSeenAsEnemy, which the living world's
+	 * mobs are answered no for these: SoulPlayerMixin); null to leave it to vanilla.
+	 */
+	public static Boolean deadMayAttack(LivingEntity attacker, LivingEntity target) {
+		if (!(target instanceof Player player) || !seenAsDead(player)) return null;
+		return attacker.level().getDifficulty() != net.minecraft.world.Difficulty.PEACEFUL && !player.getAbilities().invulnerable && player.canBeSeenByAnyone();
 	}
 
 	/** A Peach Wood Sword in hand, struck with: on the dead it always lands, and hard ({@link PeachWoodSwordItem#ON_THE_DEAD}). */
@@ -320,7 +401,7 @@ public final class GhostSystem {
 	 * cancel the ordinary attack.
 	 */
 	public static boolean attack(ServerPlayer ghost, Entity target) {
-		if (isDead(target)) return true;
+		if (isDead(target) || isKing(ghost)) return true; // a Ghost King strikes as the living do
 		if (target instanceof ServerPlayer living && YinCorruption.affects(living)) {
 			living.hurt(ModDamageTypes.ghostly(ghost.level(), ghost), GHOSTLY_BLOW);
 			Spells.onMeleeHit(ghost, living); // Ghost Fire on its hands sets them burning
@@ -439,11 +520,13 @@ public final class GhostSystem {
 	/**
 	 * The Wheel has turned: the ghost leaves behind what it carried ({@link #leaveBelongings}) and is born again where vanilla
 	 * would respawn it (the respawn copies the rest across: cultivation, experience, its state; finishRevival does the waking).
+	 * The respawn makes a new player; the connection is handed to it, as vanilla's own callers do (left on the old one, the
+	 * server would go on moving and breaking for the ghost's removed body at the Gate while the client stood in the world).
 	 */
 	private static void reincarnate(ServerPlayer p) {
 		leaveBelongings(p);
 		REVIVING.add(p.getUUID());
-		p.server.getPlayerList().respawn(p, true);
+		p.connection.player = p.server.getPlayerList().respawn(p, true);
 	}
 
 	/**
@@ -482,27 +565,40 @@ public final class GhostSystem {
 	/** A ghost logging in wakes a ghost (reforming at the Gate if it left while dispersed). */
 	public static void onJoin(ServerPlayer p) {
 		NetherworldState s = state(p);
-		if (!s.ghost()) return;
+		TwoPaths.onJoin(p);
+		if (!s.ghost()) {
+			// One of the living in a Ghost King's form (TwoPaths) is drawn so, to itself too (its hand in first person).
+			if (TwoPaths.look(CultivationManager.get(p)) != TwoPaths.Look.HUMAN) broadcast(p);
+			return;
+		}
 		if (s.reforming()) reform(p);
+		if (isKing(p)) KINGS.add(p.getUUID()); // a king already: no need to tell it again
 		applyBody(p);
 		broadcast(p);
 	}
 
-	/** Tells the player and everyone tracking them whether they are a ghost (and the player what they can cast as one, or not). */
+	/**
+	 * Tells the player and everyone tracking them whether they are a ghost, and a Ghost King (and the player what they can cast
+	 * as one, or not).
+	 */
 	public static void broadcast(ServerPlayer p) {
-		ModPackets.broadcastGhost(p, state(p).ghost());
+		ModPackets.broadcastGhost(p);
 		Spells.sync(p);
 	}
 
 	public static void forget(UUID id) {
 		DISPERSED.remove(id);
 		TURNING.remove(id);
+		KINGS.remove(id);
+		TwoPaths.forget(id);
 	}
 
 	public static void clear() {
 		DISPERSED.clear();
 		TURNING.clear();
 		REVIVING.clear();
+		KINGS.clear();
+		TwoPaths.clear();
 	}
 
 	private GhostSystem() {}

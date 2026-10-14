@@ -103,12 +103,22 @@ public final class SoulRenderer {
 			// One's own soul is seen from inside in first person; another's inside the body it possesses is hidden by it.
 			if (soul == mc.player && !camera.isDetached() || soul.isPassenger()) continue;
 			float clarity = ClientSoul.clarity(soul);
-			if (clarity > 0) drawSoul(context, soul, clarity, partial, false);
+			if (clarity > 0) drawSoul(context, soul, clarity, partial);
 		}
-		// The dead: seen by everyone, whole, in cyan, with their names; not while dispersed (hidden), nor one's own in first person.
+		// The dead: in the Netherworld seen by everyone, whole, in cyan, with their names; outside it (a Ghost King come up to the
+		// living world) only as clearly as souls are seen (the server sends them only to those who perceive souls), but whole to
+		// another of the dead; not while dispersed (hidden), nor one's own in first person. Drawn so by their look (TwoPaths), and
+		// seen alike: the living in a Ghost King's form too, as clearly as the dead are; a living soul out of its body is drawn as a
+		// soul above.
+		boolean whole = com.example.defyingtheheavens.ModDimensions.isNetherworld(mc.level.dimension())
+				|| com.example.defyingtheheavens.GhostSystem.isGhost(mc.player);
 		for (Player ghost : mc.level.players()) {
-			if (!com.example.defyingtheheavens.GhostSystem.isGhost(ghost) || ghost.isInvisible() || ghost == mc.player && !camera.isDetached()) continue;
-			drawSoul(context, ghost, 1.0f, partial, true);
+			if (!ClientGhosts.drawnAsLight(ghost) || ghost.isInvisible() || ghost == mc.player && !camera.isDetached()) continue;
+			boolean dead = com.example.defyingtheheavens.GhostSystem.isGhost(ghost);
+			if (!dead && com.example.defyingtheheavens.SoulProjection.isSoul(ghost)) continue;
+			float clarity = whole ? 1.0f : ClientSoul.clarity(ghost);
+			if (clarity <= 0) continue;
+			drawSoul(context, ghost, clarity, partial, true, ClientGhosts.crowned(ghost));
 			if (ghost != mc.player) drawName(context, ghost, partial);
 		}
 		// The Netherworld's own dead, ghost cultivators and Hungry Ghosts, likewise (their plates are their renderers').
@@ -135,11 +145,17 @@ public final class SoulRenderer {
 
 	// --- The soul ---
 
-	/** {@code dead}: a ghost (see GhostSystem), in the dead's cyan rather than a soul's violet, a faint trail drifting from it. */
-	private static void drawSoul(WorldRenderContext context, Player soul, float clarity, float partial, boolean dead) {
+	/** A projected soul, in a soul's violet. */
+	private static void drawSoul(WorldRenderContext context, Player soul, float clarity, float partial) {
+		drawSoul(context, soul, clarity, partial, false, false);
+	}
+
+	/** One drawn as the dead (see GhostSystem, TwoPaths#look), in their cyan rather than a soul's violet, a faint trail drifting from it. */
+	private static void drawSoul(WorldRenderContext context, Player soul, float clarity, float partial, boolean dead, boolean crowned) {
 		boolean slimModel = soul instanceof AbstractClientPlayer client && "slim".equals(client.getModelName());
-		// A player wears a man's head (a beast's, should a demon race give one: its BeastHead here).
-		drawBody(context, soul, ((AbstractClientPlayer) soul).getSkinTextureLocation(), slimModel, clarity, partial, dead, Look.SOUL, null);
+		// A player wears a man's head (a beast's, should a demon race give one: its BeastHead here); a Ghost King, a crown on it.
+		drawBody(context, soul, ((AbstractClientPlayer) soul).getSkinTextureLocation(), slimModel, clarity, partial, dead, Look.SOUL, null,
+				dead && crowned);
 	}
 
 	/**
@@ -151,7 +167,8 @@ public final class SoulRenderer {
 		ResourceLocation skin = hungry ? GhostlyRenderers.HUNGRY_GHOST_SKIN
 				: body instanceof GhostCultivatorNpc ghost ? GhostlyRenderers.skin(ghost) : GhostlyRenderers.HUNGRY_GHOST_SKIN;
 		BeastHeadModels.Head beast = body instanceof GhostCultivatorNpc ghost ? BeastHeadModels.get(ghost.getRole().beastHead()) : null;
-		drawBody(context, body, skin, false, 1.0f, partial, true, hungry ? Look.HUNGRY : Look.DEAD, beast);
+		boolean king = body instanceof GhostCultivatorNpc ghost && ghost.getRole() == GhostCultivatorNpc.Role.GHOST_KING;
+		drawBody(context, body, skin, false, 1.0f, partial, true, hungry ? Look.HUNGRY : Look.DEAD, beast, king);
 	}
 
 	/**
@@ -160,10 +177,13 @@ public final class SoulRenderer {
 	 */
 	private enum Look { SOUL, DEAD, HUNGRY }
 
-	/** {@code beast}: a beast's head worn in place of the man's (see BeastHeadModels), or null. */
+	/**
+	 * {@code beast}: a beast's head worn in place of the man's (see BeastHeadModels), or null. {@code king}: a Ghost King, its
+	 * light deeper, edged with violet (the shader's king switch), a crown of bone and soul fire on its head ({@link #drawCrown}).
+	 */
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	private static void drawBody(WorldRenderContext context, LivingEntity soul, ResourceLocation skin, boolean slimModel, float clarity, float partial,
-								 boolean dead, Look look, BeastHeadModels.Head beast) {
+								 boolean dead, Look look, BeastHeadModels.Head beast, boolean king) {
 		Minecraft mc = Minecraft.getInstance();
 		PlayerModel model = model(slimModel);
 		if (model == null) return;
@@ -210,10 +230,11 @@ public final class SoulRenderer {
 			RenderSystem.setShader(() -> soulShader);
 			// The body, then its glow: the same, a little larger, added on (the shader draws only its edge light).
 			float green = dead ? 0 : 1; // the shader's switch to the dead's cyan
-			drawModel(pose, model, skin, beast, 1, green, clarity, 1.0f);
+			float blue = king ? 0 : 1; // and to a Ghost King's deeper light, edged with violet
+			drawModel(pose, model, skin, beast, 1, green, blue, clarity, 1.0f);
 			RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
 					GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
-			drawModel(pose, model, skin, beast, 0, green, clarity, 1.07f);
+			drawModel(pose, model, skin, beast, 0, green, blue, clarity, 1.07f);
 			RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
 					GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
 		} else {
@@ -224,7 +245,7 @@ public final class SoulRenderer {
 			pose.scale(-1.0f, -1.0f, 1.0f);
 			pose.scale(0.9375f, 0.9375f, 0.9375f);
 			pose.translate(0.0f, -1.501f, 0.0f);
-			float red = dead ? 0.35f : 0.6f, green = dead ? 0.95f : 0.4f, alpha = dead ? 0.55f : 0.15f + 0.4f * clarity;
+			float red = king ? 0.55f : dead ? 0.35f : 0.6f, green = king ? 0.6f : dead ? 0.95f : 0.4f, alpha = dead ? 0.55f : 0.15f + 0.4f * clarity;
 			BufferBuilder buffer = Tesselator.getInstance().getBuilder();
 			buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.NEW_ENTITY);
 			model.renderToBuffer(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, red, green, 1.0f, alpha);
@@ -240,6 +261,8 @@ public final class SoulRenderer {
 			mc.gameRenderer.overlayTexture().teardownOverlayColor();
 		}
 		model.head.visible = model.hat.visible = true;
+		// A Ghost King: its crown on its head.
+		if (king) drawCrown(pose, model, age, clarity);
 		// Bound by a Ghost-Quelling Talisman: the talisman on its brow.
 		if (ClientQuelled.is(soul)) drawTalisman(pose, model, beast, age);
 		pose.popPose();
@@ -292,36 +315,47 @@ public final class SoulRenderer {
 		sleeve.xScale = sleeve.yScale = sleeve.zScale = 1;
 	}
 
-	/** A ghost as the Ghost Eye sees it behind walls (GhostEye, which sets the depth test to draw only what is hidden). */
+	/**
+	 * A ghost (or one in a Ghost King's form) as the Ghost Eye sees it behind walls (GhostEye, which sets the depth test to draw only
+	 * what is hidden), crowned as it is drawn.
+	 */
 	static void drawGhostSeen(WorldRenderContext context, Player ghost, float partial) {
-		drawSoul(context, ghost, 1.0f, partial, true);
+		drawSoul(context, ghost, 1.0f, partial, true, ClientGhosts.crowned(ghost));
 	}
 
-	/** A ghost's name over its head, in cyan, as a living player's would be. */
+	/** A ghost's name over its head, in cyan, as a living player's would be; a Ghost King's (as drawn) over its crown, its title above. */
 	private static void drawName(WorldRenderContext context, Player ghost, float partial) {
 		Minecraft mc = Minecraft.getInstance();
 		Vec3 cam = context.camera().getPosition();
 		Vec3 at = ghost.getPosition(partial);
+		boolean king = ClientGhosts.crowned(ghost);
 		PoseStack pose = context.matrixStack();
 		pose.pushPose();
-		pose.translate(at.x - cam.x, at.y - cam.y + ghost.getBbHeight() + 0.5, at.z - cam.z);
+		pose.translate(at.x - cam.x, at.y - cam.y + ghost.getBbHeight() + 0.5 + (king ? GhostKingCrown.HEIGHT : 0), at.z - cam.z);
 		pose.mulPose(context.camera().rotation());
 		pose.scale(-0.025f, -0.025f, 0.025f);
 		net.minecraft.network.chat.Component name = ghost.getDisplayName();
 		net.minecraft.client.renderer.MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
 		mc.font.drawInBatch(name, -mc.font.width(name) / 2.0f, 0, 0xFF8AF4F0, false, pose.last().pose(), buffers,
 				net.minecraft.client.gui.Font.DisplayMode.NORMAL, 0x40000000, 0xF000F0);
+		if (king) {
+			net.minecraft.network.chat.Component title = net.minecraft.network.chat.Component.translatable(com.example.defyingtheheavens.ModLang.NPC_TITLE_BRACKETS,
+					com.example.defyingtheheavens.NpcTitle.GHOST_KING.getDisplayName());
+			mc.font.drawInBatch(title, -mc.font.width(title) / 2.0f, -10, 0xFF000000 | com.example.defyingtheheavens.NpcTitle.GHOST_KING.getColor(), false,
+					pose.last().pose(), buffers, net.minecraft.client.gui.Font.DisplayMode.NORMAL, 0x40000000, 0xF000F0);
+		}
 		buffers.endBatch();
 		pose.popPose();
 	}
 
 	/**
 	 * The model at the pose's origin (the soul's feet, facing set), scaled by {@code size} about its middle. {@code red} 1 is the
-	 * body pass, 0 the halo pass; {@code green} 0 is the dead's cyan, 1 a soul's violet; the clarity rides in the alpha. Full
-	 * bright: the soul is its own light. A beast's head, if one is worn, after the body, in its own texture.
+	 * body pass, 0 the halo pass; {@code green} 0 is the dead's cyan, 1 a soul's violet; {@code blue} 0 a Ghost King's deeper
+	 * light (of the dead's); the clarity rides in the alpha. Full bright: the soul is its own light. A beast's head, if one is
+	 * worn, after the body, in its own texture.
 	 */
 	private static void drawModel(PoseStack pose, PlayerModel<?> model, ResourceLocation skin, BeastHeadModels.Head beast, float red, float green,
-								  float clarity, float size) {
+								  float blue, float clarity, float size) {
 		pose.pushPose();
 		pose.translate(0, 0.95f, 0);
 		pose.scale(size, size, size);
@@ -331,15 +365,77 @@ public final class SoulRenderer {
 		pose.translate(0.0f, -1.501f, 0.0f);
 		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
 		buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.NEW_ENTITY);
-		model.renderToBuffer(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, red, green, 1, clarity);
+		model.renderToBuffer(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, red, green, blue, clarity);
 		BufferUploader.drawWithShader(buffer.end());
 		if (beast != null) {
 			RenderSystem.setShaderTexture(0, beast.texture());
 			buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.NEW_ENTITY);
-			beast.render(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, red, green, 1, clarity);
+			beast.render(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, red, green, blue, clarity);
 			BufferUploader.drawWithShader(buffer.end());
 			RenderSystem.setShaderTexture(0, skin);
 		}
+		pose.popPose();
+	}
+
+	/** Soul fire's own flame (its particle's picture), burning on a Ghost King's crown. */
+	private static final ResourceLocation SOUL_FLAME = new ResourceLocation("minecraft", "textures/particle/soul_fire_flame.png");
+
+	/**
+	 * A Ghost King's crown (GhostKingCrown) on its head, turning and nodding with it: bone in its own colours, not the dead's
+	 * light (faint as the king is to one who sees it only hazily), and on its tallest points soul fire, flickering, two crossed
+	 * flames each as a fire burns. Drawn with depth, so its points hide one another; the sense layer's state put back after.
+	 */
+	private static void drawCrown(PoseStack pose, PlayerModel<?> model, float age, float clarity) {
+		Minecraft mc = Minecraft.getInstance();
+		net.minecraft.client.model.geom.ModelPart crown = GhostKingCrown.part();
+		crown.copyFrom(model.head);
+		pose.pushPose();
+		pose.scale(-1.0f, -1.0f, 1.0f);
+		pose.scale(0.9375f, 0.9375f, 0.9375f);
+		pose.translate(0.0f, -1.501f, 0.0f);
+		boolean solid = clarity >= 1;
+		RenderSystem.depthMask(solid);
+		RenderSystem.enableCull();
+		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+				GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+		RenderSystem.setShader(GameRenderer::getRendertypeEntityTranslucentShader);
+		RenderSystem.setShaderTexture(0, GhostKingCrown.TEXTURE);
+		mc.gameRenderer.lightTexture().turnOnLightLayer();
+		mc.gameRenderer.overlayTexture().setupOverlayColor();
+		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
+		buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.NEW_ENTITY);
+		crown.render(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, 1.0f, 1.0f, 1.0f, Math.max(0.15f, clarity));
+		BufferUploader.drawWithShader(buffer.end());
+		mc.gameRenderer.lightTexture().turnOffLightLayer();
+		mc.gameRenderer.overlayTexture().teardownOverlayColor();
+
+		// The soul fire on its points: light, added on, no depth written.
+		crown.translateAndRotate(pose);
+		Matrix4f matrix = pose.last().pose();
+		RenderSystem.depthMask(false);
+		RenderSystem.disableCull();
+		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
+				GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
+		RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
+		RenderSystem.setShaderTexture(0, SOUL_FLAME);
+		buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+		for (int i = 0; i < GhostKingCrown.FLAMES.length; i++) {
+			float[] tip = GhostKingCrown.FLAMES[i];
+			float flicker = 0.8f + 0.2f * Mth.sin(age * 0.6f + i * 1.7f) * Mth.sin(age * 0.23f + i);
+			float half = (i == 0 ? 1.4f : 1.0f) * flicker / 16.0f, tall = (i == 0 ? 3.6f : 2.6f) * flicker / 16.0f;
+			float x = tip[0] / 16.0f, y = tip[1] / 16.0f, z = tip[2] / 16.0f, a = 0.9f * Math.max(0.2f, clarity);
+			// Two flames crossed at the tip, rising (up is -y in the model's own space).
+			for (int k = 0; k < 2; k++) {
+				float dx = k == 0 ? half : 0, dz = k == 0 ? 0 : half;
+				buffer.vertex(matrix, x - dx, y, z - dz).uv(0, 1).color(0.6f, 0.95f, 1.0f, a).endVertex();
+				buffer.vertex(matrix, x + dx, y, z + dz).uv(1, 1).color(0.6f, 0.95f, 1.0f, a).endVertex();
+				buffer.vertex(matrix, x + dx, y - tall, z + dz).uv(1, 0).color(0.6f, 0.95f, 1.0f, a).endVertex();
+				buffer.vertex(matrix, x - dx, y - tall, z - dz).uv(0, 0).color(0.6f, 0.95f, 1.0f, a).endVertex();
+			}
+		}
+		BufferUploader.drawWithShader(buffer.end());
+		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+				GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
 		pose.popPose();
 	}
 

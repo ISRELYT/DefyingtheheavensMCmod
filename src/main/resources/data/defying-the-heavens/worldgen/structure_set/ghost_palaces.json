@@ -1,0 +1,11 @@
+{
+  "structures": [
+    {"structure": "defying-the-heavens:ghost_palace", "weight": 1}
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 1593052417,
+    "spacing": 24,
+    "separation": 12
+  }
+}

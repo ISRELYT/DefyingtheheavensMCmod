@@ -25,7 +25,17 @@
       "com.example.defyingtheheavens.NetherworldQiGameTests",
       "com.example.defyingtheheavens.NetherworldDeadGameTests",
       "com.example.defyingtheheavens.NetherworldMethodsGameTests",
-      "com.example.defyingtheheavens.NetherworldInhabitantsGameTests"
+      "com.example.defyingtheheavens.NetherworldInhabitantsGameTests",
+      "com.example.defyingtheheavens.GhostKingGameTests",
+      "com.example.defyingtheheavens.MethodTiersGameTests",
+      "com.example.defyingtheheavens.TwoPathsGameTests",
+      "com.example.defyingtheheavens.GhostSightGameTests",
+      "com.example.defyingtheheavens.HeavenMethodsGameTests",
+      "com.example.defyingtheheavens.HeavenWoodSpellsGameTests",
+      "com.example.defyingtheheavens.HeavenWaterSpellsGameTests",
+      "com.example.defyingtheheavens.HeavenFireSpellsGameTests",
+      "com.example.defyingtheheavens.HeavenEarthSpellsGameTests",
+      "com.example.defyingtheheavens.HeavenMetalSpellsGameTests"
     ]
   }
 }

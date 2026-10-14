@@ -19,9 +19,10 @@ import net.minecraft.sounds.SoundSource;
  *   <tr><td>Heavenly Being</td><td>{@link #STAY_HEAVENLY_BEING} s (10 min)</td></tr>
  *   <tr><td>Four Axis</td><td>{@link #STAY_FOUR_AXIS} s (20 min)</td></tr>
  * </table>
- * times the stage's power (Early 1.0 to Grand Perfection 1.3), times 1 + {@link #BREATHING_STAY_PER_LAYER} for each layer of
- * Netherworld Breathing Art: a Nascent Soul Early stays 5 min, a Four Axis Grand Perfection 1200 x 1.3 = 26 min, or with all
- * nine layers 26 x 1.9 = about 49 min.
+ * times the stage's power (Early 1.0 to Grand Perfection 1.3), times 1 + {@link #BREATHING_STAY_PER_LAYER} for each foundation
+ * layer (the Netherworld Breathing Art's and those after it, up to {@link #STAY_LAYERS_MAX}): a Nascent Soul Early stays 5 min,
+ * a Four Axis Grand Perfection 1200 x 1.3 = 26 min, with the Breathing Art perfected 26 x 1.9 = about 49 min, and with two
+ * foundations perfected or more 26 x 2.8 = about 73 min.
  * <p>
  * What changes it: Netherworld Veil halves the rate ({@link #VEIL_FACTOR}); a Yang Preservation Pill stops it for a while; a
  * Yang Fire Talisman burns {@link #TALISMAN_CLEANSE} of it away at once; a ghostly blow drives {@link #GHOSTLY_BLOW} in.
@@ -32,6 +33,8 @@ public final class YinCorruption {
 	public static final int STAY_HEAVENLY_BEING = 10 * 60;
 	public static final int STAY_FOUR_AXIS = 20 * 60;
 	public static final double BREATHING_STAY_PER_LAYER = 0.10;
+	/** Foundation layers past this many lengthen the stay no further: two foundations' worth, +180%. */
+	public static final int STAY_LAYERS_MAX = 18;
 	/** Netherworld Veil: the yin seeps in at half the rate. */
 	public static final double VEIL_FACTOR = 0.5;
 	/** A blow from a Hungry Ghost or a ghost drives in this much at once: 5% of a full stay. */
@@ -58,7 +61,7 @@ public final class YinCorruption {
 			};
 		}
 		if (!c.isMortal()) power = c.getStage().getPowerMultiplier();
-		return base * power * (1 + BREATHING_STAY_PER_LAYER * Math.max(0, breathingLayers));
+		return base * power * (1 + BREATHING_STAY_PER_LAYER * Math.max(0, Math.min(STAY_LAYERS_MAX, breathingLayers)));
 	}
 
 	/** Corruption gained a second in the Netherworld (1 is full), with the Veil on or off. */
@@ -80,7 +83,7 @@ public final class YinCorruption {
 		NetherworldState s = c.netherworld();
 		double before = s.yinCorruption();
 		int trend = step(c, ModDimensions.isNetherworld(player.level().dimension()) && affects(player),
-				ModDimensions.isSoulRiver(player.level().dimension()), GhostMethods.breathingLayers(c), c.isAbilityActive(Ability.NETHERWORLD_VEIL),
+				ModDimensions.isSoulRiver(player.level().dimension()), GhostMethods.foundationLayers(c), c.isAbilityActive(Ability.NETHERWORLD_VEIL),
 				gameTime);
 		double after = s.yinCorruption();
 		for (int i = 0; i < WARNINGS.length; i++) {

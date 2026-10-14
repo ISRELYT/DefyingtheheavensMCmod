@@ -12,6 +12,7 @@ import com.example.defyingtheheavens.SoulProjection;
 import com.example.defyingtheheavens.SoulRiver;
 import com.example.defyingtheheavens.Stage;
 import com.example.defyingtheheavens.TalkIntent;
+import com.example.defyingtheheavens.TwoPaths;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -36,7 +37,10 @@ public final class ClientPacketHandlers {
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.GHOST, (client, handler, buf, sender) -> {
 			int entity = buf.readVarInt();
 			boolean ghost = buf.readBoolean();
-			client.execute(() -> ClientGhosts.set(entity, ghost));
+			boolean king = buf.readBoolean();
+			int look = buf.readByte();
+			TwoPaths.Look drawn = look >= 0 && look < TwoPaths.Look.values().length ? TwoPaths.Look.values()[look] : TwoPaths.Look.HUMAN;
+			client.execute(() -> ClientGhosts.set(entity, ghost, king, drawn));
 		});
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.GHOST_FADE, (client, handler, buf, sender) -> {
 			int rgb = buf.readInt();

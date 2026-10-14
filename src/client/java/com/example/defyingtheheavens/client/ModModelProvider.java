@@ -1,7 +1,9 @@
 package com.example.defyingtheheavens.client;
 
+import com.example.defyingtheheavens.DaoSteleBlock;
 import com.example.defyingtheheavens.DefyingTheHeavens;
 import com.example.defyingtheheavens.GhostMethod;
+import com.example.defyingtheheavens.QiElement;
 import com.example.defyingtheheavens.MethodSteleBlock;
 import com.example.defyingtheheavens.ModBlocks;
 import com.example.defyingtheheavens.ModItems;
@@ -50,6 +52,7 @@ public class ModModelProvider extends FabricModelProvider {
 		blocks.createNonTemplateModelBlock(ModBlocks.WHEEL_OF_REINCARNATION, Blocks.POLISHED_BLACKSTONE_BRICKS);
 		blocks.createCrossBlockWithDefaultItem(ModBlocks.RED_SPIDER_LILY, BlockModelGenerators.TintState.NOT_TINTED);
 		methodStele(blocks);
+		daoStele(blocks);
 		blocks.createTrivialCube(ModBlocks.YIN_JADE_ORE);
 		blocks.createTrivialCube(ModBlocks.YIN_JADE_BLOCK);
 		// The Netherworld's herbs have hand-made blockstates and models, as the other herbs do (resources).
@@ -94,8 +97,45 @@ public class ModModelProvider extends FabricModelProvider {
 								}))));
 	}
 
+	/**
+	 * The Dao Stele: the Method Stele's shape (its part and top models) in pale carved stone, its element's emblem on the middle
+	 * stone's faces (one model each element: its six methods' steles look alike), the frame on the others.
+	 */
+	private static void daoStele(BlockModelGenerators blocks) {
+		ModelTemplate part = new ModelTemplate(
+				Optional.of(DefyingTheHeavens.id("block/method_stele_part")), Optional.empty(),
+				TextureSlot.FRONT, TextureSlot.SIDE);
+		ModelTemplate top = new ModelTemplate(
+				Optional.of(DefyingTheHeavens.id("block/method_stele_top")), Optional.empty(),
+				TextureSlot.FRONT, TextureSlot.SIDE);
+		ResourceLocation side = DefyingTheHeavens.id("block/dao_stele_side");
+		ResourceLocation frame = DefyingTheHeavens.id("block/dao_stele_front");
+		Map<String, ResourceLocation> models = new HashMap<>();
+		for (QiElement element : QiElement.five()) {
+			String name = element.name().toLowerCase(java.util.Locale.ROOT);
+			for (MethodSteleBlock.Part p : MethodSteleBlock.Part.values()) {
+				ResourceLocation front = p == MethodSteleBlock.Part.MIDDLE ? DefyingTheHeavens.id("block/dao_stele_" + name) : frame;
+				ResourceLocation id = DefyingTheHeavens.id("block/dao_stele_" + name + "_" + p.getSerializedName());
+				TextureMapping textures = new TextureMapping().put(TextureSlot.FRONT, front).put(TextureSlot.SIDE, side);
+				(p == MethodSteleBlock.Part.UPPER ? top : part).create(id, textures, blocks.modelOutput);
+				models.put(name + "_" + p.getSerializedName(), id);
+			}
+		}
+		blocks.blockStateOutput.accept(MultiVariantGenerator.multiVariant(ModBlocks.DAO_STELE)
+				.with(PropertyDispatch.properties(DaoSteleBlock.METHOD, DaoSteleBlock.PART, DaoSteleBlock.FACING)
+						.generate((method, p, facing) -> Variant.variant()
+								.with(VariantProperties.MODEL, models.get(method.element().name().toLowerCase(java.util.Locale.ROOT) + "_" + p.getSerializedName()))
+								.with(VariantProperties.Y_ROT, switch (facing) {
+									case EAST -> VariantProperties.Rotation.R90;
+									case SOUTH -> VariantProperties.Rotation.R180;
+									case WEST -> VariantProperties.Rotation.R270;
+									default -> VariantProperties.Rotation.R0;
+								}))));
+	}
+
 	@Override
 	public void generateItemModels(ItemModelGenerators items) {
+		items.generateFlatItem(ModItems.JADE_SLIP, ModelTemplates.FLAT_ITEM);
 		items.generateFlatItem(ModItems.RING_OF_POWER, ModelTemplates.FLAT_ITEM);
 		items.generateFlatItem(ModItems.RING_OF_TRANSCENDENCE, ModelTemplates.FLAT_ITEM);
 		items.generateFlatItem(ModItems.INSCRIPTION_BRUSH, ModelTemplates.FLAT_HANDHELD_ITEM);

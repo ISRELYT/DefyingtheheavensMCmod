@@ -81,9 +81,11 @@ public class SectStructure extends Structure {
 	private enum Size {
 		//    reach min max  treasury(w,d) meditation(w,d) main(w) pagoda tiers garden(w,d) trees bamboo
 		// Reach spread out to the barrier's limit (Formations.MAX_RADIUS 64 = the largest reach + 2) on 2026-10-12.
-		SMALL( 52, 10, 12, 13, 11, 19, 13, 23, 9, 3, 11, 15, 40, 18),
-		MEDIUM(58, 13, 16, 15, 13, 19, 15, 27, 11, 5, 12, 17, 52, 22),
-		LARGE( 62, 17, 20, 17, 15, 19, 15, 31, 13, 7, 13, 19, 62, 26);
+		// The treasury grew on 2026-10-13 (it was 13x11 / 15x13 / 17x15, squat under its roof): never larger than the meditation
+		// hall facing it across the way, so it fits the same ground.
+		SMALL( 52, 10, 12, 17, 13, 19, 13, 23, 9, 3, 11, 15, 40, 18),
+		MEDIUM(58, 13, 16, 17, 15, 19, 15, 27, 11, 5, 12, 17, 52, 22),
+		LARGE( 62, 17, 20, 19, 15, 19, 15, 31, 13, 7, 13, 19, 62, 26);
 
 		/**
 		 * How far from the plaza the buildings may reach (the barrier closes just outside them, and is never wider than

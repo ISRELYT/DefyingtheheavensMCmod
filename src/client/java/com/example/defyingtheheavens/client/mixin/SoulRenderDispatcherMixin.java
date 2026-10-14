@@ -14,15 +14,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * A projected soul is never drawn as a player (no body, no name, no shadow): it is drawn as light on the sense layer instead
- * (SoulRenderer), for those who see it. And the body a soul possesses isn't drawn for that soul in first person: it looks out
- * through those eyes.
+ * (SoulRenderer), for those who see it; so too one drawn as the dead (ClientGhosts#drawnAsLight). And the body a soul possesses
+ * isn't drawn for that soul in first person: it looks out through those eyes.
  */
 @Mixin(EntityRenderDispatcher.class)
 public abstract class SoulRenderDispatcherMixin {
 	@Inject(method = "shouldRender", at = @At("HEAD"), cancellable = true)
 	private <E extends Entity> void dth$soulsAreLight(E entity, Frustum frustum, double x, double y, double z, CallbackInfoReturnable<Boolean> cir) {
-		// A soul, or one of the dead: drawn as light instead (SoulRenderer).
-		if (entity instanceof Player player && (SoulProjection.isSoul(player) || com.example.defyingtheheavens.GhostSystem.isGhost(player))) {
+		// A soul, or one drawn as the dead's light (one of the dead, or one in a Ghost King's form): drawn as light instead (SoulRenderer).
+		if (entity instanceof Player player && (SoulProjection.isSoul(player) || com.example.defyingtheheavens.client.ClientGhosts.drawnAsLight(player))) {
 			cir.setReturnValue(false);
 			return;
 		}

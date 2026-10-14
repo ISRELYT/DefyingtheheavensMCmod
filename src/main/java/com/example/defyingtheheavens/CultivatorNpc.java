@@ -689,7 +689,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			case ELDER -> 1 + random.nextInt(2);
 			case INNER_DISCIPLE -> random.nextInt(2);
 			case OUTER_DISCIPLE -> 0;
-			case ROGUE, WANDERER, WANDERING_GHOST, GHOST_ELDER, GATE_WARDEN, BRIDGE_KEEPER ->
+			case ROGUE, WANDERER, WANDERING_GHOST, GHOST_ELDER, GATE_WARDEN, BRIDGE_KEEPER, GHOST_KING, GHOST_RETAINER ->
 					rank < 0 ? 0 : Math.min(4, rank / Stage.values().length - 1 + random.nextInt(2));
 		};
 		if (ModDimensions.isUpperRealm(level().dimension())) grade++;
@@ -1191,10 +1191,20 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 
 	/**
 	 * Whether it can sense {@code other} at all: a projected nascent soul (see SoulProjection) is there only for cultivators of
-	 * Nascent Soul and above, who see it as players of those realms do; to the rest it doesn't exist.
+	 * Nascent Soul and above, who see it as players of those realms do; to the rest it doesn't exist. A player's ghost, likewise,
+	 * to the living (below Nascent Soul they couldn't touch it either: SoulProjection#harmFactor); and one of the living in a
+	 * Ghost King's form to none of the living at all (TwoPaths#inGhostForm). The dead's own kind see the dead, and that form.
 	 */
 	public boolean senses(LivingEntity other) {
-		if (!(other instanceof Player player) || !SoulProjection.isSoul(player)) return true;
+		if (!(other instanceof Player player)) return true;
+		if (SoulProjection.isSoul(player)) return seesSouls();
+		if (!GhostSystem.seenAsDead(player)) return true;
+		if (this instanceof Ghostly) return true;
+		return Incorporeal.isGhost(player) && seesSouls();
+	}
+
+	/** Nascent Soul or above: it sees souls, and the dead, as players of those realms do. */
+	private boolean seesSouls() {
 		return !isMortal() && sustainedRank() >= PlayerCultivation.rank(Realm.NASCENT_SOUL, Stage.EARLY);
 	}
 
@@ -1653,7 +1663,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 
 	/**
 	 * What it carries falls when it dies: spirit stones by its realm (SpiritStoneItem; a mortal now and then has a Low one or
-	 * two), and whatever it won in spars.
+	 * two), whatever it won in spars, and now and then the slip of its heaven method.
 	 */
 	@Override
 	protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
@@ -1661,6 +1671,28 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		for (ItemStack stack : carriedStones(getRank(), random)) spawnAtLocation(stack);
 		for (ItemStack stack : winnings) spawnAtLocation(stack);
 		winnings.clear();
+		HeavenMethod method = heavenMethod();
+		if (method != null && random.nextFloat() < (isSectMember() ? HEAVEN_SLIP_CHANCE_SECT : HEAVEN_SLIP_CHANCE)) spawnAtLocation(JadeSlipItem.of(method));
+	}
+
+	/** A cultivator struck down leaves its heaven method's slip this often; a sect member (who keeps its sect's own closer), this often. */
+	public static final float HEAVEN_SLIP_CHANCE = 0.25f, HEAVEN_SLIP_CHANCE_SECT = 0.1f;
+	/** In ten cultivators (not a sect's elders and master, who always do), how many cultivate their own realm's method of their element. */
+	public static final int OWN_HEAVEN_METHOD_IN_TEN = 4;
+
+	/**
+	 * The heaven method it cultivates, the one it teaches and sells (picked from who it is, so it never changes): none for a
+	 * commoner or one of the dead. Its element is its sect's (Sect#element), or for one of no sect its own; its realm its own (a
+	 * sect's elders and master always, others four times in ten), else one below it at random.
+	 */
+	public HeavenMethod heavenMethod() {
+		if (isMortal() || isGhost()) return null;
+		Sect sect = isSectMember() ? sect() : null;
+		QiElement element = sect != null ? sect.element() : QiElement.five()[(int) Math.floorMod(getUUID().getLeastSignificantBits() >>> 3, 5L)];
+		int own = Math.min(Realm.FOUR_AXIS.ordinal(), getRank() / Stage.values().length);
+		int hash = getUUID().hashCode() * 17 + 3;
+		int realm = getTitle().isElderOrAbove() || Math.floorMod(hash, 10) < OWN_HEAVEN_METHOD_IN_TEN ? own : Math.floorMod(hash / 10, own + 1);
+		return HeavenMethod.of(element, Realm.byIndex(realm));
 	}
 
 	/** The spirit stones a cultivator of {@code rank} carries ({@link #MORTAL}: a commoner). */

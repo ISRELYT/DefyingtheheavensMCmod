@@ -146,6 +146,11 @@ public final class TribulationManager {
 					PillItem.breakthroughPillFor(c.breakthroughRealm()).getDescription(), c.breakthroughRealm().getDisplayName()), true);
 			return;
 		}
+		// What lies past the tribulation waits on a heaven method too (HeavenMethods#reach).
+		if (c.isHeldByMethod()) {
+			player.displayClientMessage(HeavenMethods.gateLine(c), true);
+			return;
+		}
 		if (!c.canBreakthrough()) {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_NOT_READY), true);
 			return;

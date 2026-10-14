@@ -9,6 +9,12 @@ import com.example.defyingtheheavens.CultivationBoost;
 import com.example.defyingtheheavens.CultivationStats;
 import com.example.defyingtheheavens.GhostMethod;
 import com.example.defyingtheheavens.GhostMethods;
+import com.example.defyingtheheavens.HeavenMethod;
+import com.example.defyingtheheavens.HeavenMethods;
+import com.example.defyingtheheavens.HeavenPassives;
+import com.example.defyingtheheavens.HeavenState;
+import com.example.defyingtheheavens.MethodLayers;
+import com.example.defyingtheheavens.QiElement;
 import com.example.defyingtheheavens.GhostQi;
 import com.example.defyingtheheavens.NetherworldState;
 import com.example.defyingtheheavens.Spell;
@@ -21,6 +27,7 @@ import com.example.defyingtheheavens.Realm;
 import com.example.defyingtheheavens.RealmSuppressSystem;
 import com.example.defyingtheheavens.RingOfPowerItem;
 import com.example.defyingtheheavens.Stage;
+import com.example.defyingtheheavens.TwoPaths;
 import com.example.defyingtheheavens.ModPackets;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
@@ -45,6 +52,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.function.ToDoubleBiFunction;
 
 /**
@@ -140,6 +148,11 @@ public class CultivationScreen extends Screen {
 	/** The Methods tab's Practise buttons and the Spells tab's Ready buttons, as drawn this frame, for {@link #mouseClicked}. */
 	private final List<RowButton<GhostMethod>> practiseButtons = new ArrayList<>();
 	private final List<RowButton<Spell>> readyButtons = new ArrayList<>();
+	/** The Methods tab's heaven page's Practise buttons, and the two pages' own buttons (true: the heaven page). */
+	private final List<RowButton<HeavenMethod>> heavenPractiseButtons = new ArrayList<>();
+	private final List<RowButton<Boolean>> methodPageButtons = new ArrayList<>();
+	/** The Methods tab shows the heaven path's methods rather than the ghost path's (kept on reopening). */
+	private static boolean heavenPage;
 	/** The spell wheel editor's palette as drawn this frame, the spell being dragged in it, and the slot it came from (-1: the palette). */
 	private final List<SpellCell> spellPalette = new ArrayList<>();
 	private Spell draggedSpell;
@@ -288,13 +301,19 @@ public class CultivationScreen extends Screen {
 		palette.clear();
 		practiseButtons.clear();
 		readyButtons.clear();
+		heavenPractiseButtons.clear();
+		methodPageButtons.clear();
 		spellPalette.clear();
 		bar = null;
 		switch (tab) {
 			case CULTIVATION -> renderCultivation(g, player);
 			case STATS -> {
-				if (ClientCultivationData.get().isMortal()) renderPlaceholder(g, ModLang.MORTAL, ModLang.MORTAL_STATS, ModLang.MORTAL_DETAIL);
-				else renderStats(g, player);
+				// A mortal on neither path has only a tempered body; a mortal's ghost on the ghost path, that path's strength.
+				if (ClientCultivationData.get().isMortal() && !TwoPaths.body(ClientCultivationData.get(), false).ghostPath()) {
+					renderPlaceholder(g, ModLang.MORTAL, ModLang.MORTAL_STATS, ModLang.MORTAL_DETAIL);
+				} else {
+					renderStats(g, player);
+				}
 			}
 			case ABILITIES -> renderAbilities(g, mouseX, mouseY);
 			case METHODS -> renderMethods(g, mouseX, mouseY);
@@ -330,7 +349,7 @@ public class CultivationScreen extends Screen {
 		int barW = WIDTH - 28;
 		double required = c.cultivationRequired();
 		double ratio = required <= 0 ? 0 : Math.min(1.0, c.getCultivation() / required);
-		boolean bottleneck = c.isStalled();
+		boolean bottleneck = c.isStalled() || c.isHeldByMethod();
 		g.fill(x - 1, y - 1, x + barW + 1, y + 11, 0xFF000000);
 		g.fill(x, y, x + barW, y + 10, 0xFF2A2A3A);
 		g.fill(x, y, x + (int) (barW * ratio), y + 10, bottleneck ? 0xFFFFC107 : 0xFF4DD0E1);
@@ -371,6 +390,12 @@ public class CultivationScreen extends Screen {
 		// The cultivator's path (see Alignment), in its colour.
 		g.drawCenteredString(font, Component.translatable(ModLang.ALIGNMENT_LINE, Alignment.describe(c.getAlignment())), cx, y, 0xA0A0A0);
 		y += 11;
+		// The ghost path beside this one (TwoPaths), and how much the two in harmony add to the body.
+		if (TwoPaths.walksBoth(c)) {
+			g.drawCenteredString(font, Component.translatable(ModLang.TWO_PATHS_LINE, GhostMethods.rankName(TwoPaths.ghostRank(c, false)),
+					Math.round(TwoPaths.harmony(c) * 100)), cx, y, 0x8FEAE4);
+			y += 11;
+		}
 		// Heaven's Favour from a generous offering at the Ritual to the Heavens.
 		if (c.getFavour() > 0) {
 			g.drawCenteredString(font, Component.translatable(ModLang.FAVOUR_LINE, Math.round((c.favourFactor() - 1) * 100)), cx, y, 0xFFE082);
@@ -420,6 +445,13 @@ public class CultivationScreen extends Screen {
 					g.drawCenteredString(font, line, cx, y, 0xA0A0A0);
 					y += 11;
 				}
+			}
+		} else if (!c.netherworld().ghost() && !HeavenMethods.carries(c, PlayerCultivation.rank(c.getRealm(), c.getStage()) + 1)) {
+			// The next stage waits on a heaven method (HeavenMethods#reach): said ahead in grey, in amber once the bar is full.
+			boolean full = c.isHeldByMethod();
+			for (FormattedCharSequence line : font.split(HeavenMethods.gateLine(c), WIDTH - 28)) {
+				g.drawCenteredString(font, line, cx, y, full ? 0xFFC107 : 0xA0A0A0);
+				y += 11;
 			}
 		} else if (c.canBreakthrough()) {
 			g.drawCenteredString(font, Component.translatable(ModLang.BOTTLENECK), cx, y, 0xFFC107);
@@ -517,17 +549,27 @@ public class CultivationScreen extends Screen {
 
 	private void renderStats(GuiGraphics g, Player player) {
 		PlayerCultivation c = ClientCultivationData.get();
+		// The body follows the higher of the two paths (TwoPaths), as wielded now and as it truly stands.
+		TwoPaths.Body body = TwoPaths.body(c, true);
+		TwoPaths.Body truth = TwoPaths.body(c, false);
 		// The lower realm's cap, or another cultivator's Realm Suppress: either way the stats now fall short of the true ones.
-		boolean suppressed = c.isSuppressed() || c.isUnderPressure();
-		Realm r = c.getEffectiveRealm(); // bonuses follow the (possibly suppressed) effective stage
-		Stage s = c.getEffectiveStage();
+		boolean suppressed = body.rank() != truth.rank() || c.isUnderPressure();
+		boolean qiSuppressed = c.isSuppressed() || c.isUnderPressure();
+		Realm r = body.realm(); // bonuses follow the (possibly suppressed) effective stage
+		Stage s = body.stage();
 		int cx = left + WIDTH / 2;
 		int x = left + 14;
 		int y = top + CONTENT_Y;
+		// The ghost path's strength is named so; and the two paths' harmony, if they are both walked near enough.
+		double harmony = TwoPaths.harmony(c);
+		java.util.function.Function<Component, Component> named = rank -> {
+			Component line = body.ghostPath() ? Component.translatable(ModLang.STATS_GHOST_BODY, rank) : rank;
+			return harmony > 0 ? line.copy().append(Component.translatable(ModLang.STATS_HARMONY, Math.round(harmony * 100))) : line;
+		};
 
 		if (suppressed) {
 			// True cultivation, then what the lower realm or the pressure holds it to.
-			g.drawCenteredString(font, PlayerCultivation.rankName(c.getRealm(), c.getStage()), cx, y, 0xB39DDB);
+			g.drawCenteredString(font, named.apply(PlayerCultivation.rankName(truth.realm(), truth.stage())), cx, y, 0xB39DDB);
 			y += 11;
 			g.drawCenteredString(font, Component.translatable(c.isUnderPressure() ? ModLang.STATS_PRESSED : ModLang.STATS_SUPPRESSED),
 					cx, y, 0xFF6E6E);
@@ -536,7 +578,7 @@ public class CultivationScreen extends Screen {
 			if (c.isUnderPressure()) held = held.copy().append(" (-" + Math.round(c.getPressurePenalty() * 100) + "%)");
 			g.drawCenteredString(font, held, cx, y, 0xFF6E6E);
 		} else {
-			g.drawCenteredString(font, PlayerCultivation.rankName(r, s), cx, y, 0xB39DDB);
+			g.drawCenteredString(font, named.apply(PlayerCultivation.rankName(r, s)), cx, y, 0xB39DDB);
 		}
 		y += 16;
 
@@ -550,12 +592,13 @@ public class CultivationScreen extends Screen {
 		y += 4;
 
 		for (StatLine line : STAT_LINES) {
-			statRow(g, player, line, c, suppressed, y);
+			statRow(g, player, line, body, truth, suppressed, y);
 			y += 11;
 		}
-		qiRow(g, ModLang.STAT_NAME_MAX_QI, CultivationStats::maxQi, c.maxQi(), false, c, suppressed, y);
+		if (c.isMortal()) return; // a mortal's ghost: no qi of the heaven path's
+		qiRow(g, ModLang.STAT_NAME_MAX_QI, CultivationStats::maxQi, c.maxQi(), false, c, qiSuppressed, y);
 		y += 11;
-		qiRow(g, ModLang.STAT_NAME_QI_GATHER, CultivationStats::qiGather, c.qiGatherPerSecond(), true, c, suppressed, y);
+		qiRow(g, ModLang.STAT_NAME_QI_GATHER, CultivationStats::qiGather, c.qiGatherPerSecond(), true, c, qiSuppressed, y);
 		y += 11;
 		if (c.isInUpperRealm()) {
 			g.drawString(font, Component.translatable(ModLang.STATS_QI_GATHER_UPPER, (int) PlayerCultivation.UPPER_REALM_QI_MULTIPLIER),
@@ -908,7 +951,22 @@ public class CultivationScreen extends Screen {
 			}
 		}
 		if (button == 0) {
+			for (RowButton<Boolean> page : methodPageButtons) {
+				if (!page.contains(mouseX, mouseY)) continue;
+				if (heavenPage != page.value()) {
+					heavenPage = page.value();
+					methodScroll = 0;
+				}
+				if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+				return true;
+			}
 			for (RowButton<GhostMethod> practise : practiseButtons) {
+				if (!practise.contains(mouseX, mouseY)) continue;
+				ClientMethods.practise(practise.value());
+				if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+				return true;
+			}
+			for (RowButton<HeavenMethod> practise : heavenPractiseButtons) {
 				if (!practise.contains(mouseX, mouseY)) continue;
 				ClientMethods.practise(practise.value());
 				if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
@@ -986,19 +1044,19 @@ public class CultivationScreen extends Screen {
 	}
 
 	/**
-	 * One stat: the attribute's base value, then either the realm's bonus and the current value, or (while suppressed or
-	 * pressed) the value at the true cultivation without the pressure and the value now. The bonus of a percentage stat is
-	 * a fraction, shown x100.
+	 * One stat: the attribute's base value, then either the body's bonus (TwoPaths#body: the higher path's, Heaven's Favour and
+	 * the harmony on it) and the current value, or (while suppressed or pressed) the value at the true cultivation without the
+	 * pressure and the value now. The bonus of a percentage stat is a fraction, shown x100.
 	 */
-	private void statRow(GuiGraphics g, Player player, StatLine line, PlayerCultivation c, boolean suppressed, int y) {
+	private void statRow(GuiGraphics g, Player player, StatLine line, TwoPaths.Body body, TwoPaths.Body trueBody, boolean suppressed, int y) {
 		Attribute attribute = line.attribute();
 		double base = player == null ? 0 : player.getAttributeBaseValue(attribute);
-		double bonus = line.bonus().applyAsDouble(c.getEffectiveRealm(), c.getEffectiveStage()) * c.favourFactor();
+		double bonus = line.bonus().applyAsDouble(body.realm(), body.stage()) * body.scale();
 		double now = valueWith(player, attribute, bonus, true);
 		g.drawString(font, Component.translatable(line.nameKey()), left + 14, y, 0xE0E0E0);
 		right(g, Component.literal(one(base * line.scale()) + line.unit()), left + BASE_RIGHT, y, 0xA0A0A0);
 		if (suppressed) {
-			double truth = valueWith(player, attribute, line.bonus().applyAsDouble(c.getRealm(), c.getStage()) * c.favourFactor(), false);
+			double truth = valueWith(player, attribute, line.bonus().applyAsDouble(trueBody.realm(), trueBody.stage()) * trueBody.scale(), false);
 			right(g, Component.literal(one(truth * line.scale()) + line.unit()), left + BONUS_RIGHT, y, 0xB39DDB);
 			right(g, Component.literal(one(now * line.scale()) + line.unit()), left + WIDTH - 14, y, now < truth ? 0xFF8A80 : 0xFFFFFF);
 		} else {
@@ -1035,22 +1093,46 @@ public class CultivationScreen extends Screen {
 	// --- Methods: the ghost methods learned, their layers, and which one meditation cultivates ---
 
 	/**
-	 * How many of the methods are known, how soon meditating here brings the practised one's next layer (or why it can't), then
+	 * How many of the methods are known, where the ghost path stands, how soon meditating here brings the practised one's next
+	 * layer (or why it can't: the density, or the ghost path's gate), which layer of the deepest foundation carries the ghost path
+	 * on (or, perfected, which foundation to seek), then
 	 * each method: its stele's emblem and name, Practise (or "Practising"), nine pips for its layers, the bar through the current
 	 * one, and what its layers bring. Methods not yet learned show only that they exist. Scrolls like the Abilities tab.
 	 */
 	private void renderMethods(GuiGraphics g, int mouseX, int mouseY) {
+		// The two pages, side by side at the top: the ghost path's methods and the heaven path's.
+		int y = top + CONTENT_Y;
+		int x = left + 14;
+		for (boolean heaven : new boolean[]{false, true}) {
+			Component label = Component.translatable(heaven ? ModLang.METHODS_PAGE_HEAVEN : ModLang.METHODS_PAGE_GHOST);
+			int w = font.width(label) + 12;
+			RowButton<Boolean> button = new RowButton<>(heaven, x, y, w);
+			methodPageButtons.add(button);
+			boolean chosen = heavenPage == heaven;
+			drawRowButton(g, button, label, button.contains(mouseX, mouseY), chosen ? (heaven ? 0xFFD700 : 0x8FEAE4) : 0x9E9E9E);
+			if (chosen) g.fill(button.x() + 2, button.y() + SWITCH_H, button.x() + w - 2, button.y() + SWITCH_H + 1, heaven ? 0xFFFFD700 : 0xFF8FEAE4);
+			x += w + 4;
+		}
+		int viewTop = top + CONTENT_Y + METHOD_PAGE_ROW;
+		if (heavenPage) renderHeavenMethods(g, mouseX, mouseY, viewTop);
+		else renderGhostMethods(g, mouseX, mouseY, viewTop);
+	}
+
+	/** The pages' buttons' row above either page's list. */
+	private static final int METHOD_PAGE_ROW = SWITCH_H + 5;
+
+	private void renderGhostMethods(GuiGraphics g, int mouseX, int mouseY, int viewTop) {
 		PlayerCultivation c = ClientCultivationData.get();
 		NetherworldState s = c.netherworld();
 		if (!s.knowsAnyMethod()) {
 			methodMaxScroll = 0;
-			renderPlaceholder(g, ModLang.METHODS_TITLE, ModLang.METHODS_EMPTY, ModLang.METHODS_HINT);
+			// A mortal can't take one up at all yet (its meridians closed): said so rather than sent to a stele.
+			renderPlaceholder(g, ModLang.METHODS_TITLE, ModLang.METHODS_EMPTY, c.isMortal() ? ModLang.METHODS_GHOST_PATH_SEALED : ModLang.METHODS_HINT);
 			return;
 		}
 		int x = left + 14;
 		int rightEdge = left + LIST_RIGHT;
 		int width = rightEdge - x;
-		int viewTop = top + CONTENT_Y;
 		int viewBottom = top + HEIGHT - 8;
 
 		// What the top says, wrapped, measured before drawing so the scroll knows the height.
@@ -1058,29 +1140,54 @@ public class CultivationScreen extends Screen {
 		double density = ClientNetherworldData.density();
 		List<FormattedCharSequence> rateLines = new ArrayList<>();
 		int rateColor = 0x8FEAE4;
-		if (active != null) {
+		// A mortal's methods lie dormant (GhostMethods#refusal): no pace, no next floor, only the sealed path below.
+		boolean sealed = c.isMortal();
+		if (active != null && !sealed) {
 			Component rate;
 			if (density <= 0) {
 				rate = Component.translatable(ModLang.METHODS_NO_QI);
 				rateColor = 0x9E9E9E;
-			} else if (GhostMethods.heldAtCap(s, active, density)) {
-				rate = Component.translatable(ModLang.METHODS_CAPPED);
+			} else if (GhostMethods.heldByRealm(c, active)) {
+				int cap = GhostMethods.layerCap(c, active);
+				rate = Component.translatable(ModLang.METHODS_REALM_CAPPED, cap, GhostMethods.realmToPass(active, cap).getDisplayName());
 				rateColor = 0xE0A040;
-			} else if (s.layer(active) >= GhostMethods.LAYERS) {
+			} else if (s.layer(active) >= active.layers()) {
 				rate = Component.translatable(ModLang.METHODS_PERFECTED);
 			} else {
 				double perSecond = GhostMethods.ratePerSecond(c, density);
-				double minutes = (GhostMethods.layerCost(s.layer(active)) - s.progress(active)) / Math.max(1.0e-6, perSecond) / 60.0;
+				double minutes = (GhostMethods.layerCost(active, s.layer(active)) - s.progress(active)) / Math.max(1.0e-6, perSecond) / 60.0;
 				rate = Component.translatable(ModLang.METHODS_RATE, active.getDisplayName(), minutes < 1 ? "<1" : String.valueOf(Math.round(minutes)));
 			}
 			rateLines = font.split(rate, width);
 		}
+		// The deepest foundation's next layer that carries the ghost path on (GhostMethods#floor); or, perfected, the foundation that
+		// carries it further, to be sought out.
+		List<FormattedCharSequence> floorLines = new ArrayList<>();
+		GhostMethod foundation = GhostMethods.deepestFoundation(s);
+		if (foundation != null && !sealed) {
+			int layer = s.layer(foundation);
+			int reached = GhostMethods.floor(foundation, layer);
+			Component floorLine = null;
+			for (int next = layer + 1; next <= foundation.layers() && floorLine == null; next++) {
+				int floor = GhostMethods.floor(foundation, next);
+				if (floor > reached) floorLine = Component.translatable(ModLang.METHODS_FLOOR_NEXT, next, foundation.getDisplayName(), GhostMethods.rankName(floor));
+			}
+			if (floorLine == null && layer >= foundation.layers() && foundation.next() != null) {
+				floorLine = Component.translatable(ModLang.METHODS_SEEK_NEXT, foundation.getDisplayName(), foundation.next().getDisplayName());
+			}
+			if (floorLine != null) floorLines = font.split(floorLine, width);
+		}
 		List<List<FormattedCharSequence>> gains = new ArrayList<>();
-		int contentHeight = 6 + 12 + rateLines.size() * 10 + 6;
+		int ghostPath = GhostMethods.ghostRank(s);
+		// A mortal's methods lie dormant, its meridians closed (TwoPaths#ghostRank): it has no ghost path yet, whatever it knows.
+		Component pathLine = sealed ? Component.translatable(ModLang.METHODS_GHOST_PATH_SEALED)
+				: ghostPath < 0 ? Component.translatable(ModLang.METHODS_GHOST_PATH_NONE)
+				: Component.translatable(ModLang.METHODS_GHOST_PATH, GhostMethods.rankName(ghostPath));
+		int contentHeight = 6 + 12 + 11 + rateLines.size() * 10 + floorLines.size() * 10 + 6;
 		for (GhostMethod method : GhostMethod.values()) {
-			List<FormattedCharSequence> lines = s.knows(method) ? font.split(method.getGains(), width) : font.split(Component.translatable(ModLang.METHODS_UNKNOWN), width - 20);
+			List<FormattedCharSequence> lines = s.knows(method) ? font.split(method.getGains(), width) : font.split(Component.translatable(method.tier() >= 3 ? ModLang.METHODS_UNKNOWN_DEEP : ModLang.METHODS_UNKNOWN), width - 20);
 			gains.add(lines);
-			contentHeight += s.knows(method) ? 15 + 11 + 9 + 11 + lines.size() * 10 : lines.size() * 10 + 4;
+			contentHeight += s.knows(method) ? 15 + 11 + (spansRealms(method) ? 10 : 0) + 9 + 11 + lines.size() * 10 : lines.size() * 10 + 4;
 			contentHeight += 12;
 		}
 		methodMaxScroll = Math.max(0, contentHeight - (viewBottom - viewTop));
@@ -1092,8 +1199,14 @@ public class CultivationScreen extends Screen {
 		for (GhostMethod method : GhostMethod.values()) if (s.knows(method)) known++;
 		g.drawString(font, Component.translatable(ModLang.METHODS_KNOWN, known, GhostMethod.values().length), x, y, 0xFFD700);
 		y += 12;
+		g.drawString(font, pathLine, x, y, 0x8FEAE4);
+		y += 11;
 		for (FormattedCharSequence line : rateLines) {
 			g.drawString(font, line, x, y, rateColor);
+			y += 10;
+		}
+		for (FormattedCharSequence line : floorLines) {
+			g.drawString(font, line, x, y, 0xB388FF);
 			y += 10;
 		}
 		y += 6;
@@ -1122,11 +1235,20 @@ public class CultivationScreen extends Screen {
 				}
 				y += 15;
 				int layer = s.layer(method);
-				drawPips(g, x, y, layer);
-				g.drawString(font, Component.translatable(ModLang.METHODS_LAYER, layer, GhostMethods.LAYERS), x + 9 * 9 + 6, y, 0xB0B0B0);
-				y += 11;
-				boolean perfected = layer >= GhostMethods.LAYERS;
-				double fraction = perfected ? 1 : Mth.clamp(s.progress(method) / GhostMethods.layerCost(layer), 0, 1);
+				if (spansRealms(method)) {
+					// Nine small pips for each realm it spans, the realms apart; under them, the layer and where it stands in its realm.
+					drawRealmPips(g, x, y, layer, method.layers());
+					y += 11;
+					g.drawString(font, Component.translatable(ModLang.METHODS_LAYER_REALM, layer, method.layers(), MethodLayers.realmOf(layer).getDisplayName(),
+							MethodLayers.within(layer)), x, y, 0xB0B0B0);
+					y += 10;
+				} else {
+					drawPips(g, x, y, layer);
+					g.drawString(font, Component.translatable(ModLang.METHODS_LAYER, layer, method.layers()), x + 9 * 9 + 6, y, 0xB0B0B0);
+					y += 11;
+				}
+				boolean perfected = layer >= method.layers();
+				double fraction = perfected ? 1 : Mth.clamp(s.progress(method) / GhostMethods.layerCost(method, layer), 0, 1);
 				g.fill(x, y, rightEdge, y + 5, 0xFF6E5214);
 				g.fill(x + 1, y + 1, rightEdge - 1, y + 4, 0xFF0C0C14);
 				g.fill(x + 1, y + 1, x + 1 + (int) Math.round((rightEdge - x - 2) * fraction), y + 4, perfected ? 0xFFFFD700 : 0xFF4FC3D9);
@@ -1150,12 +1272,225 @@ public class CultivationScreen extends Screen {
 		scrollbar(g, viewTop, viewBottom, contentHeight, methodScroll, methodMaxScroll, mouseX, mouseY);
 	}
 
+	/**
+	 * The heaven path's page: how many of the thirty are known, each element's passive the layers have strengthened, how soon
+	 * meditating here brings the practised method's next layer and what share of the qi here is its element's (or why it can't
+	 * go on), then the five elements in turn: each method of it known (its element's emblem and name, Practise, its layers realm
+	 * by realm, the bar, what its layers bring), and how many of the element's six are not.
+	 */
+	private void renderHeavenMethods(GuiGraphics g, int mouseX, int mouseY, int viewTop) {
+		PlayerCultivation c = ClientCultivationData.get();
+		HeavenState h = c.heaven();
+		boolean dead = c.netherworld().ghost();
+		if (!h.knowsAny()) {
+			methodMaxScroll = 0;
+			renderPlaceholder(g, ModLang.METHODS_TITLE, ModLang.METHODS_HEAVEN_EMPTY,
+					dead ? ModLang.METHODS_HEAVEN_DEAD : c.isMortal() ? ModLang.METHODS_HEAVEN_SEALED : ModLang.METHODS_HEAVEN_HINT);
+			return;
+		}
+		int x = left + 14;
+		int rightEdge = left + LIST_RIGHT;
+		int width = rightEdge - x;
+		int viewBottom = top + HEIGHT - 8;
+
+		// The top lines, measured before drawing so the scroll knows the height.
+		List<FormattedCharSequence> topLines = new ArrayList<>();
+		List<Integer> topColors = new ArrayList<>();
+		java.util.function.BiConsumer<Component, Integer> addTop = (line, color) -> {
+			for (FormattedCharSequence part : font.split(line, width)) {
+				topLines.add(part);
+				topColors.add(color);
+			}
+		};
+		addTop.accept(Component.translatable(ModLang.METHODS_HEAVEN_KNOWN, h.known().size(), HeavenMethod.values().length), 0xFFD700);
+		for (QiElement element : QiElement.five()) {
+			double amount = HeavenPassives.amount(c, element);
+			if (amount <= 0) continue;
+			addTop.accept(Component.translatable(ModLang.METHODS_HEAVEN_PASSIVE, Component.translatable(ModLang.passiveKey(element)),
+					Component.translatable(ModLang.passiveKey(element) + ".amount", passiveAmount(amount))), element.getGlowColor() | 0x404040);
+		}
+		HeavenMethod active = h.activeMethod();
+		if (dead) {
+			addTop.accept(Component.translatable(ModLang.METHODS_HEAVEN_DEAD), 0x9E9E9E);
+		} else if (c.isMortal()) {
+			addTop.accept(Component.translatable(ModLang.METHODS_HEAVEN_SEALED), 0x9E9E9E);
+		} else {
+			// How far the methods carry the realm (HeavenMethods#reach): cultivation waits there for them.
+			addTop.accept(Component.translatable(ModLang.METHODS_HEAVEN_REACH, GhostMethods.rankName(HeavenMethods.reach(c))), 0xC8B88A);
+		}
+		if (!dead && !c.isMortal() && active != null) {
+			int layer = h.layer(active);
+			if (layer >= active.layers()) {
+				addTop.accept(Component.translatable(ModLang.METHODS_PERFECTED), 0xFFD700);
+			} else {
+				// What meditating here gathers (as the Cultivation tab reckons it) times what the method takes in of it.
+				double share = shareHere(active.element());
+				Player player = minecraft == null ? null : minecraft.player;
+				double boost = player == null ? 1.0 : CultivationBoost.of(player).multiplier();
+				double perSecond = c.meditationCultivationPerSecond(RingOfPowerItem.cultivationBonus(player)) * boost
+						* HeavenMethods.methodFactor(c, share, false);
+				if (perSecond > 0) {
+					double minutes = (HeavenMethods.layerCost(layer) - h.progress(active)) / perSecond / 60.0;
+					addTop.accept(Component.translatable(ModLang.METHODS_HEAVEN_RATE, active.getDisplayName(), minutes < 1 ? "<1" : String.valueOf(Math.round(minutes))), 0xF0D78C);
+				}
+				addTop.accept(Component.translatable(ModLang.METHODS_HEAVEN_SHARE, active.element().getDisplayName(), Math.round(share * 100),
+						String.format(Locale.ROOT, "%.2f", HeavenMethods.elementFactor(share))), 0xB0A070);
+			}
+		}
+		// Each element: its header, the methods of it known, then how many are not.
+		List<HeavenMethod> known = new ArrayList<>();
+		Map<HeavenMethod, List<FormattedCharSequence>> gains = new java.util.EnumMap<>(HeavenMethod.class);
+		int contentHeight = 6 + topLines.size() * 10 + 4;
+		for (QiElement element : QiElement.five()) {
+			contentHeight += 14;
+			int unknown = 0;
+			for (Realm realm : Realm.values()) {
+				HeavenMethod method = HeavenMethod.of(element, realm);
+				if (!h.knows(method)) {
+					unknown++;
+					continue;
+				}
+				known.add(method);
+				List<FormattedCharSequence> lines = font.split(method.getGains(), width);
+				gains.put(method, lines);
+				contentHeight += 15 + 11 + (method.layers() > MethodLayers.PER_REALM ? 10 : 0) + 9 + 11 + lines.size() * 10 + 6;
+			}
+			if (unknown > 0) contentHeight += font.split(unknownLine(element, unknown), width - 20).size() * 10 + 4;
+			contentHeight += 8;
+		}
+		methodMaxScroll = Math.max(0, contentHeight - (viewBottom - viewTop));
+		methodScroll = Mth.clamp(methodScroll, 0, methodMaxScroll);
+
+		g.enableScissor(left + 1, viewTop, left + WIDTH - 1, viewBottom);
+		int y = viewTop + 3 - methodScroll;
+		for (int i = 0; i < topLines.size(); i++) {
+			g.drawString(font, topLines.get(i), x, y, topColors.get(i));
+			y += 10;
+		}
+		y += 4;
+		for (QiElement element : QiElement.five()) {
+			// The element's header: its name in its colour, a rule after it.
+			Component name = element.getDisplayName();
+			int color = element == QiElement.METAL ? 0xFFE8C060 : 0xFF000000 | element.getCoreColor();
+			g.drawString(font, name, x, y, color);
+			g.fill(x + font.width(name) + 4, y + 4, rightEdge, y + 5, (color & 0x00FFFFFF) | 0x60000000);
+			y += 14;
+			int unknown = 0;
+			for (Realm realm : Realm.values()) {
+				HeavenMethod method = HeavenMethod.of(element, realm);
+				if (!h.knows(method)) {
+					unknown++;
+					continue;
+				}
+				boolean isActive = method == active;
+				drawElementEmblem(g, element, x, y - 4, true);
+				g.drawString(font, method.getDisplayName(), x + 20, y, isActive ? 0xFFD700 : 0xE0E0E0);
+				if (isActive) {
+					right(g, Component.translatable(ModLang.METHODS_ACTIVE), rightEdge, y, 0x69F0AE);
+				} else if (!dead) {
+					int w = font.width(Component.translatable(ModLang.BTN_PRACTISE)) + 10;
+					RowButton<HeavenMethod> button = new RowButton<>(method, rightEdge - w, y - 3, w);
+					boolean visible = button.y() >= viewTop && button.y() + SWITCH_H <= viewBottom;
+					if (visible) heavenPractiseButtons.add(button);
+					drawRowButton(g, button, Component.translatable(ModLang.BTN_PRACTISE), visible && button.contains(mouseX, mouseY), 0xE0E0E0);
+				}
+				y += 15;
+				int layer = h.layer(method);
+				if (method.layers() > MethodLayers.PER_REALM) {
+					drawRealmPips(g, x, y, layer, method.layers());
+					y += 11;
+					g.drawString(font, Component.translatable(ModLang.METHODS_LAYER_REALM, layer, method.layers(), MethodLayers.realmOf(layer).getDisplayName(),
+							MethodLayers.within(layer)), x, y, 0xB0B0B0);
+					y += 10;
+				} else {
+					drawPips(g, x, y, layer);
+					g.drawString(font, Component.translatable(ModLang.METHODS_LAYER, layer, method.layers()), x + 9 * 9 + 6, y, 0xB0B0B0);
+					y += 11;
+				}
+				boolean perfected = layer >= method.layers();
+				double fraction = perfected ? 1 : Mth.clamp(h.progress(method) / HeavenMethods.layerCost(layer), 0, 1);
+				g.fill(x, y, rightEdge, y + 5, 0xFF6E5214);
+				g.fill(x + 1, y + 1, rightEdge - 1, y + 4, 0xFF0C0C14);
+				g.fill(x + 1, y + 1, x + 1 + (int) Math.round((rightEdge - x - 2) * fraction), y + 4, perfected ? 0xFFFFD700 : 0xFF000000 | element.getGlowColor());
+				y += 9;
+				Component progress = perfected ? Component.translatable(ModLang.METHODS_PERFECTED)
+						: Component.translatable(ModLang.METHODS_PROGRESS, (int) Math.floor(fraction * 100));
+				g.drawString(font, progress, x, y, perfected ? 0xFFD700 : 0xF0D78C);
+				y += 11;
+				for (FormattedCharSequence line : gains.get(method)) {
+					g.drawString(font, line, x, y, 0x8A8A8A);
+					y += 10;
+				}
+				y += 6;
+			}
+			if (unknown > 0) {
+				drawElementEmblem(g, element, x, y - 3, false);
+				for (FormattedCharSequence line : font.split(unknownLine(element, unknown), width - 20)) {
+					g.drawString(font, line, x + 20, y, 0x707070);
+					y += 10;
+				}
+				y += 4;
+			}
+			y += 8;
+		}
+		g.disableScissor();
+		scrollbar(g, viewTop, viewBottom, contentHeight, methodScroll, methodMaxScroll, mouseX, mouseY);
+	}
+
+	/** "4 of the 6 Wood methods are unknown...": how many of {@code element}'s are still to be found. */
+	private static Component unknownLine(QiElement element, int unknown) {
+		return Component.translatable(ModLang.METHODS_HEAVEN_UNKNOWN, unknown, Realm.values().length, element.getDisplayName());
+	}
+
+	/** A passive's amount as the Methods tab shows it: whole where it is whole, else to two places. */
+	private static String passiveAmount(double amount) {
+		return Math.abs(amount - Math.rint(amount)) < 1.0e-6 ? String.valueOf((long) Math.rint(amount)) : String.format(Locale.ROOT, "%.2f", amount);
+	}
+
+	/** What share of the qi where the player stands is {@code element} (QiElement#share), as the server reckons it. */
+	private static double shareHere(QiElement element) {
+		net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+		if (mc.level == null || mc.player == null) return 0;
+		net.minecraft.core.BlockPos pos = mc.player.blockPosition();
+		boolean underground = mc.level.dimensionType().hasSkyLight() && !mc.level.dimensionType().hasCeiling() && pos.getY() < mc.level.getSeaLevel()
+				&& mc.level.getBrightness(net.minecraft.world.level.LightLayer.SKY, pos) < mc.level.getMaxLightLevel();
+		return QiElement.share(mc.level.getBiome(pos), underground, element);
+	}
+
+	/** An element's emblem (the one carved on its Dao Steles), 16 pixels square; dark for one of its methods not yet learned. */
+	private static void drawElementEmblem(GuiGraphics g, QiElement element, int x, int y, boolean lit) {
+		if (!lit) g.setColor(0.3F, 0.3F, 0.36F, 1.0F);
+		g.blit(new net.minecraft.resources.ResourceLocation(com.example.defyingtheheavens.DefyingTheHeavens.MOD_ID,
+				"textures/block/dao_stele_" + element.name().toLowerCase(Locale.ROOT) + ".png"), x, y, 16, 16, 0, 0, 16, 16, 16, 16);
+		g.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+	}
+
 	/** A method's emblem (the one carved on its stele), 16 pixels square; one not yet learned, dark. */
 	private static void drawEmblem(GuiGraphics g, GhostMethod method, int x, int y, boolean lit) {
 		if (!lit) g.setColor(0.3F, 0.3F, 0.36F, 1.0F);
 		g.blit(new net.minecraft.resources.ResourceLocation(com.example.defyingtheheavens.DefyingTheHeavens.MOD_ID,
 				"textures/block/method_stele_" + method.getId() + ".png"), x, y, 16, 16, 0, 0, 16, 16, 16, 16);
 		g.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+	}
+
+	/** Whether {@code method} spans more than one realm (a foundation past the Breathing Art: MethodLayers), drawn realm by realm. */
+	private static boolean spansRealms(GhostMethod method) {
+		return method.layers() > MethodLayers.PER_REALM;
+	}
+
+	/**
+	 * A narrow pip for each of {@code total} layers, nine to a realm, a gap between realms: gold to the layer reached, the realm
+	 * it is in lit a little, dark beyond.
+	 */
+	private static void drawRealmPips(GuiGraphics g, int x, int y, int layer, int total) {
+		int realmNow = (Math.max(1, layer) - 1) / MethodLayers.PER_REALM;
+		for (int i = 0; i < total; i++) {
+			int realm = i / MethodLayers.PER_REALM;
+			int px = x + i * 4 + realm * 4;
+			boolean reached = i < layer;
+			g.fill(px, y, px + 3, y + 7, reached ? BORDER : realm == realmNow ? 0xFF4A4A5E : 0xFF2E2E3A);
+			g.fill(px + 1, y + 1, px + 2, y + 6, reached ? 0xFFFFD700 : 0xFF14141E);
+		}
 	}
 
 	/** Nine pips, one a layer: gold to the layer reached, dark beyond it. */
@@ -1198,12 +1533,20 @@ public class CultivationScreen extends Screen {
 		int rightEdge = left + LIST_RIGHT;
 		int viewTop = top + CONTENT_Y;
 		int viewBottom = top + ABILITIES_BOTTOM;
-		List<Spell> shown = Arrays.stream(Spell.values()).filter(spell -> s.knows(spell.method())).toList();
+		// A method's spells once the method is known; the spells of both paths (TwoPaths) once both are walked.
+		boolean both = TwoPaths.walksBoth(ClientCultivationData.get());
+		// A heaven method's spells once it is known, to the living (the dead cast none of them).
+		PlayerCultivation self = ClientCultivationData.get();
+		List<Spell> shown = Arrays.stream(Spell.values()).filter(spell -> spell.isDual() ? both
+				: spell.isHeaven() ? !s.ghost() && self.heaven().knows(spell.heavenMethod()) : s.knows(spell.method())).toList();
 		List<List<FormattedCharSequence>> descriptions = new ArrayList<>();
 		int contentHeight = 6;
 		for (int i = 0; i < shown.size(); i++) {
 			Spell spell = shown.get(i);
-			List<FormattedCharSequence> lines = ClientMethods.known(spell) ? font.split(spell.getDescription(), rightEdge - x) : List.of();
+			// Known, what it does; a heaven spell not yet, the stage one's cultivation must reach for it too (Spell#realmNeeded).
+			List<FormattedCharSequence> lines = ClientMethods.known(spell) ? font.split(spell.getDescription(), rightEdge - x)
+					: spell.isHeaven() ? font.split(Component.translatable(ModLang.SPELLS_LOCKED_STAGE, GhostMethods.rankName(spell.realmNeeded())), rightEdge - x)
+					: List.of();
 			descriptions.add(lines);
 			contentHeight += 15 + 10 + lines.size() * 10 + (i < shown.size() - 1 ? 12 : 0);
 		}
@@ -1227,10 +1570,17 @@ public class CultivationScreen extends Screen {
 				drawRowButton(g, button, label, visible && button.contains(mouseX, mouseY), readied ? 0x69F0AE : 0xB0B0B0);
 			}
 			y += 15;
+			Component cost = spell.isDual() ? Component.translatable(ModLang.SPELLS_COST_BOTH, Math.round(spell.qiCost()), Math.round(spell.cost()))
+					: spell.isHeaven() ? Component.translatable(ModLang.SPELLS_QI_COST, Math.round(spell.qiCost()))
+					: Component.translatable(ModLang.SPELLS_COST, Math.round(spell.cost()));
+			Component teacher = spell.isHeaven() ? spell.heavenMethod().getDisplayName() : spell.isDual() ? Component.empty() : spell.method().getDisplayName();
 			Component detail = known
-					? Component.translatable(ModLang.SPELLS_COST, Math.round(spell.cost())).append(", ")
-							.append(Component.translatable(ModLang.SPELLS_COOLDOWN, seconds(spell.cooldownTicks())))
-					: Component.translatable(ModLang.SPELLS_LOCKED, spell.method().getDisplayName(), spell.layer());
+					? cost.copy().append(", ").append(Component.translatable(ModLang.SPELLS_COOLDOWN, seconds(spell.cooldownTicks())))
+					: spell.isDual() ? Component.translatable(ModLang.SPELLS_LOCKED_BOTH, spell.dualRealm().getDisplayName())
+					: spell.layer() > MethodLayers.PER_REALM // a method's spell in its own realm past the first: where in it, too
+					? Component.translatable(ModLang.SPELLS_LOCKED_REALM, teacher, spell.layer(),
+							MethodLayers.realmOf(spell.layer()).getDisplayName(), MethodLayers.within(spell.layer()))
+					: Component.translatable(ModLang.SPELLS_LOCKED, teacher, spell.layer());
 			g.drawString(font, detail, x + 20, y, known ? 0x7FDBE8 : 0x707070);
 			y += 10;
 			for (FormattedCharSequence line : descriptions.get(i)) {

@@ -1,5 +1,17 @@
 {
   "variants": {
+    "facing=east,method=ghost_core_canon,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_ghost_core_canon_lower",
+      "y": 90
+    },
+    "facing=east,method=ghost_core_canon,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_ghost_core_canon_middle",
+      "y": 90
+    },
+    "facing=east,method=ghost_core_canon,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_ghost_core_canon_upper",
+      "y": 90
+    },
     "facing=east,method=ghost_fire_scripture,part=lower": {
       "model": "defying-the-heavens:block/method_stele_ghost_fire_scripture_lower",
       "y": 90
@@ -24,6 +36,30 @@
       "model": "defying-the-heavens:block/method_stele_netherworld_breathing_upper",
       "y": 90
     },
+    "facing=east,method=nine_nether_soul_sutra,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_nine_nether_soul_sutra_lower",
+      "y": 90
+    },
+    "facing=east,method=nine_nether_soul_sutra,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_nine_nether_soul_sutra_middle",
+      "y": 90
+    },
+    "facing=east,method=nine_nether_soul_sutra,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_nine_nether_soul_sutra_upper",
+      "y": 90
+    },
+    "facing=east,method=six_paths_canon,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_six_paths_canon_lower",
+      "y": 90
+    },
+    "facing=east,method=six_paths_canon,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_six_paths_canon_middle",
+      "y": 90
+    },
+    "facing=east,method=six_paths_canon,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_six_paths_canon_upper",
+      "y": 90
+    },
     "facing=east,method=wandering_soul_steps,part=lower": {
       "model": "defying-the-heavens:block/method_stele_wandering_soul_steps_lower",
       "y": 90
@@ -35,6 +71,42 @@
     "facing=east,method=wandering_soul_steps,part=upper": {
       "model": "defying-the-heavens:block/method_stele_wandering_soul_steps_upper",
       "y": 90
+    },
+    "facing=east,method=yama_judgement,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_yama_judgement_lower",
+      "y": 90
+    },
+    "facing=east,method=yama_judgement,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_yama_judgement_middle",
+      "y": 90
+    },
+    "facing=east,method=yama_judgement,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_yama_judgement_upper",
+      "y": 90
+    },
+    "facing=east,method=yellow_springs_marrow,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_yellow_springs_marrow_lower",
+      "y": 90
+    },
+    "facing=east,method=yellow_springs_marrow,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_yellow_springs_marrow_middle",
+      "y": 90
+    },
+    "facing=east,method=yellow_springs_marrow,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_yellow_springs_marrow_upper",
+      "y": 90
+    },
+    "facing=north,method=ghost_core_canon,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_ghost_core_canon_lower",
+      "y": 0
+    },
+    "facing=north,method=ghost_core_canon,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_ghost_core_canon_middle",
+      "y": 0
+    },
+    "facing=north,method=ghost_core_canon,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_ghost_core_canon_upper",
+      "y": 0
     },
     "facing=north,method=ghost_fire_scripture,part=lower": {
       "model": "defying-the-heavens:block/method_stele_ghost_fire_scripture_lower",
@@ -60,6 +132,30 @@
       "model": "defying-the-heavens:block/method_stele_netherworld_breathing_upper",
       "y": 0
     },
+    "facing=north,method=nine_nether_soul_sutra,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_nine_nether_soul_sutra_lower",
+      "y": 0
+    },
+    "facing=north,method=nine_nether_soul_sutra,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_nine_nether_soul_sutra_middle",
+      "y": 0
+    },
+    "facing=north,method=nine_nether_soul_sutra,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_nine_nether_soul_sutra_upper",
+      "y": 0
+    },
+    "facing=north,method=six_paths_canon,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_six_paths_canon_lower",
+      "y": 0
+    },
+    "facing=north,method=six_paths_canon,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_six_paths_canon_middle",
+      "y": 0
+    },
+    "facing=north,method=six_paths_canon,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_six_paths_canon_upper",
+      "y": 0
+    },
     "facing=north,method=wandering_soul_steps,part=lower": {
       "model": "defying-the-heavens:block/method_stele_wandering_soul_steps_lower",
       "y": 0
@@ -71,6 +167,42 @@
     "facing=north,method=wandering_soul_steps,part=upper": {
       "model": "defying-the-heavens:block/method_stele_wandering_soul_steps_upper",
       "y": 0
+    },
+    "facing=north,method=yama_judgement,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_yama_judgement_lower",
+      "y": 0
+    },
+    "facing=north,method=yama_judgement,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_yama_judgement_middle",
+      "y": 0
+    },
+    "facing=north,method=yama_judgement,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_yama_judgement_upper",
+      "y": 0
+    },
+    "facing=north,method=yellow_springs_marrow,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_yellow_springs_marrow_lower",
+      "y": 0
+    },
+    "facing=north,method=yellow_springs_marrow,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_yellow_springs_marrow_middle",
+      "y": 0
+    },
+    "facing=north,method=yellow_springs_marrow,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_yellow_springs_marrow_upper",
+      "y": 0
+    },
+    "facing=south,method=ghost_core_canon,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_ghost_core_canon_lower",
+      "y": 180
+    },
+    "facing=south,method=ghost_core_canon,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_ghost_core_canon_middle",
+      "y": 180
+    },
+    "facing=south,method=ghost_core_canon,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_ghost_core_canon_upper",
+      "y": 180
     },
     "facing=south,method=ghost_fire_scripture,part=lower": {
       "model": "defying-the-heavens:block/method_stele_ghost_fire_scripture_lower",
@@ -96,6 +228,30 @@
       "model": "defying-the-heavens:block/method_stele_netherworld_breathing_upper",
       "y": 180
     },
+    "facing=south,method=nine_nether_soul_sutra,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_nine_nether_soul_sutra_lower",
+      "y": 180
+    },
+    "facing=south,method=nine_nether_soul_sutra,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_nine_nether_soul_sutra_middle",
+      "y": 180
+    },
+    "facing=south,method=nine_nether_soul_sutra,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_nine_nether_soul_sutra_upper",
+      "y": 180
+    },
+    "facing=south,method=six_paths_canon,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_six_paths_canon_lower",
+      "y": 180
+    },
+    "facing=south,method=six_paths_canon,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_six_paths_canon_middle",
+      "y": 180
+    },
+    "facing=south,method=six_paths_canon,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_six_paths_canon_upper",
+      "y": 180
+    },
     "facing=south,method=wandering_soul_steps,part=lower": {
       "model": "defying-the-heavens:block/method_stele_wandering_soul_steps_lower",
       "y": 180
@@ -107,6 +263,42 @@
     "facing=south,method=wandering_soul_steps,part=upper": {
       "model": "defying-the-heavens:block/method_stele_wandering_soul_steps_upper",
       "y": 180
+    },
+    "facing=south,method=yama_judgement,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_yama_judgement_lower",
+      "y": 180
+    },
+    "facing=south,method=yama_judgement,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_yama_judgement_middle",
+      "y": 180
+    },
+    "facing=south,method=yama_judgement,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_yama_judgement_upper",
+      "y": 180
+    },
+    "facing=south,method=yellow_springs_marrow,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_yellow_springs_marrow_lower",
+      "y": 180
+    },
+    "facing=south,method=yellow_springs_marrow,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_yellow_springs_marrow_middle",
+      "y": 180
+    },
+    "facing=south,method=yellow_springs_marrow,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_yellow_springs_marrow_upper",
+      "y": 180
+    },
+    "facing=west,method=ghost_core_canon,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_ghost_core_canon_lower",
+      "y": 270
+    },
+    "facing=west,method=ghost_core_canon,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_ghost_core_canon_middle",
+      "y": 270
+    },
+    "facing=west,method=ghost_core_canon,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_ghost_core_canon_upper",
+      "y": 270
     },
     "facing=west,method=ghost_fire_scripture,part=lower": {
       "model": "defying-the-heavens:block/method_stele_ghost_fire_scripture_lower",
@@ -132,6 +324,30 @@
       "model": "defying-the-heavens:block/method_stele_netherworld_breathing_upper",
       "y": 270
     },
+    "facing=west,method=nine_nether_soul_sutra,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_nine_nether_soul_sutra_lower",
+      "y": 270
+    },
+    "facing=west,method=nine_nether_soul_sutra,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_nine_nether_soul_sutra_middle",
+      "y": 270
+    },
+    "facing=west,method=nine_nether_soul_sutra,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_nine_nether_soul_sutra_upper",
+      "y": 270
+    },
+    "facing=west,method=six_paths_canon,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_six_paths_canon_lower",
+      "y": 270
+    },
+    "facing=west,method=six_paths_canon,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_six_paths_canon_middle",
+      "y": 270
+    },
+    "facing=west,method=six_paths_canon,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_six_paths_canon_upper",
+      "y": 270
+    },
     "facing=west,method=wandering_soul_steps,part=lower": {
       "model": "defying-the-heavens:block/method_stele_wandering_soul_steps_lower",
       "y": 270
@@ -142,6 +358,30 @@
     },
     "facing=west,method=wandering_soul_steps,part=upper": {
       "model": "defying-the-heavens:block/method_stele_wandering_soul_steps_upper",
+      "y": 270
+    },
+    "facing=west,method=yama_judgement,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_yama_judgement_lower",
+      "y": 270
+    },
+    "facing=west,method=yama_judgement,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_yama_judgement_middle",
+      "y": 270
+    },
+    "facing=west,method=yama_judgement,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_yama_judgement_upper",
+      "y": 270
+    },
+    "facing=west,method=yellow_springs_marrow,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_yellow_springs_marrow_lower",
+      "y": 270
+    },
+    "facing=west,method=yellow_springs_marrow,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_yellow_springs_marrow_middle",
+      "y": 270
+    },
+    "facing=west,method=yellow_springs_marrow,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_yellow_springs_marrow_upper",
       "y": 270
     }
   }

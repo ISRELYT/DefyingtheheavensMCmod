@@ -162,14 +162,21 @@ public final class CultivatorTrades {
 				goods.add(pill(ModItems.QI_GATHERING_PILL, PillGrade.MID, 2, Regard.COURTEOUS));
 				goods.add(herb(random, 400, 900, Regard.WARM, ModItems.SPIRIT_GINSENG, ModItems.PURPLE_LINGZHI, ModItems.OCHRE_HUANGJING));
 			}
-			case WANDERING_GHOST, GHOST_ELDER, GATE_WARDEN, BRIDGE_KEEPER -> ghostGoods(npc, random, goods);
+			case WANDERING_GHOST, GHOST_ELDER, GATE_WARDEN, BRIDGE_KEEPER, GHOST_KING, GHOST_RETAINER -> ghostGoods(npc, random, goods);
+		}
+		// Last, the slip of its heaven method (CultivatorNpc#heavenMethod): an elder's (its sect's own) only to one it is Warm to, a
+		// rogue's to the courteous; a disciple keeps its own.
+		HeavenMethod heaven = npc.heavenMethod();
+		if (heaven != null && (npc.getTitle().isElderOrAbove() || npc.getTitle() == NpcTitle.ROGUE)) {
+			goods.add(new Goods(JadeSlipItem.of(heaven), heavenSlipPrice(heaven), 1, npc.getTitle().isElderOrAbove() ? Regard.WARM : Regard.COURTEOUS));
 		}
 		return goods;
 	}
 
 	/**
 	 * What the Netherworld's dead sell the living (never another ghost: TalkSystem): the Netherworld's herbs and Yin Jade, and
-	 * talismans against its yin; a Ghost Elder its own method's Ghost Jade Slip; the Gate's wardens the remedies for the yin
+	 * talismans against its yin; a Ghost Elder (a Ghost King, a king's retainer) its own method's Ghost Jade Slip (a king its
+	 * realm's foundation only to one it is Warm to, at its price); the Gate's wardens the remedies for the yin
 	 * they warn the living of, and the means to keep the restless dead in order (the Peach Wood Sword, Ghost-Quelling Talismans).
 	 */
 	private static void ghostGoods(CultivatorNpc npc, RandomSource random, List<Goods> goods) {
@@ -177,9 +184,10 @@ public final class CultivatorTrades {
 		goods.add(herb(random, 40, 120, 0, ModItems.OTHER_SHORE_FLOWER));
 		goods.add(new Goods(new ItemStack(ModItems.YANG_FIRE_TALISMAN, 2), 6, 3, 0));
 		switch (npc.getTitle()) {
-			case GHOST_ELDER -> {
+			case GHOST_ELDER, GHOST_KING, GHOST_RETAINER -> {
 				GhostMethod method = npc instanceof GhostCultivatorNpc ghost ? ghost.method() : null;
-				if (method != null) goods.add(new Goods(GhostJadeSlipItem.of(method), GHOST_SLIP_PRICE, 1, Regard.COURTEOUS));
+				// The Breathing Art, the fire, the steps and the Marrow Art to the courteous; a king's own canon only to one it is Warm to.
+				if (method != null) goods.add(new Goods(GhostJadeSlipItem.of(method), slipPrice(method), 1, method.tier() <= 2 ? Regard.COURTEOUS : Regard.WARM));
 				goods.add(herb(random, 100, 300, Regard.PER_PIP, ModItems.NETHERWORLD_LOTUS));
 				goods.add(pill(ModItems.YIN_GATHERING_PILL, PillGrade.MID, 2, Regard.WARM));
 			}
@@ -195,6 +203,24 @@ public final class CultivatorTrades {
 
 	/** A Ghost Jade Slip's price (Low stones): a whole method's first layer, and the way to the rest. */
 	public static final int GHOST_SLIP_PRICE = 60;
+
+	/**
+	 * What a slip of {@code method} is worth (Low stones): {@link #GHOST_SLIP_PRICE} for the Breathing Art, the fire and the steps,
+	 * three times as much again for each foundation deeper (the Yellow Springs Marrow Art 180, the Ghost Core Canon 540, on to the
+	 * Six Paths Reincarnation Canon's 14,580).
+	 */
+	public static int slipPrice(GhostMethod method) {
+		int price = GHOST_SLIP_PRICE;
+		if (method != null) for (int t = 1; t < method.tier(); t++) price *= 3;
+		return price;
+	}
+
+	/** A Jade Slip's price (Low stones): {@link #GHOST_SLIP_PRICE} for a Qi Refining method, three times again each realm deeper. */
+	public static int heavenSlipPrice(HeavenMethod method) {
+		int price = GHOST_SLIP_PRICE;
+		if (method != null) for (int t = 1; t < method.tier(); t++) price *= 3;
+		return price;
+	}
 
 	private static Goods herb(RandomSource random, int minYears, int maxYears, int regard, Item... kinds) {
 		ItemStack herb = GinsengItem.create(pick(random, kinds), Mth.nextInt(random, minYears, maxYears));

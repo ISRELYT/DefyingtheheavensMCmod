@@ -85,6 +85,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		ClothingArmorRenderer.register();
 		// Beasts' heads worn in place of a man's (the Ghost Gate's Ox-Head and Horse-Face; see BeastHead).
 		BeastHeadModels.register();
+		GhostKingCrown.register(); // a Ghost King's crown (GhostSystem#isKing)
 		ClientFormations.register();
 		com.example.defyingtheheavens.QiVeinBlock.clientEffects = QiSenseClientHandler::veinGathers;
 		EntityRendererRegistry.register(ModEntities.INNER_BODY, InnerBodyRenderer::new);

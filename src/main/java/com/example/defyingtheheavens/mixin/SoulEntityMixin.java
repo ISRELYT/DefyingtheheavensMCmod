@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * What every entity is asked that a projected soul (see SoulProjection) or a ghost (Incorporeal) answers its own way: it sets
  * off no pressure plate or tripwire, no blast throws it about, no portal takes it to another dimension; riding a body it
  * possesses, a soul looks out through that body's eyes. (A ghost's silent tread is SoulPlayerMixin's: the player's own
- * movement emission.)
+ * movement emission.) A Ghost King sets off plates and takes portals as the living do; blasts still pass through it.
  */
 @Mixin(Entity.class)
 public abstract class SoulEntityMixin {
@@ -25,7 +25,7 @@ public abstract class SoulEntityMixin {
 
 	@Inject(method = "ignoreExplosion", at = @At("HEAD"), cancellable = true)
 	private void dth$soulIgnoresBlasts(CallbackInfoReturnable<Boolean> cir) {
-		if ((Object) this instanceof Player player && Incorporeal.is(player)) cir.setReturnValue(true);
+		if ((Object) this instanceof Player player && Incorporeal.untouchable(player)) cir.setReturnValue(true);
 	}
 
 	@Inject(method = "canChangeDimensions", at = @At("HEAD"), cancellable = true)

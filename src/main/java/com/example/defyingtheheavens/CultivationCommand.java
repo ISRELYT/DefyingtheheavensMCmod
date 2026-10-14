@@ -9,9 +9,17 @@ import net.minecraft.server.level.ServerPlayer;
 
 /**
  * Op-only testing helpers: /cultivation set <realm 1-6> <stage 1-4>, /cultivation addcultivation <amount>,
- * /cultivation setqi <amount> (the qi pool, capped at its maximum).
+ * /cultivation setqi <amount> (the qi pool, capped at its maximum). Setting a cultivator back to or below Qi Refining Mid (or
+ * mortal) takes back the heavens' leave and Favour, so the Ritual to the Heavens is asked again; setting one past their heaven
+ * methods' reach says so (their cultivation waits there for the methods: HeavenMethods#reach).
  */
 public final class CultivationCommand {
+	/** /cultivation set: the realm and stage, the ritual undone at or below its gate. */
+	public static void set(PlayerCultivation c, Realm realm, Stage stage) {
+		c.setState(realm, stage, 0);
+		if (PlayerCultivation.rank(realm, stage) <= PlayerCultivation.RITUAL_RANK) c.resetRitual();
+	}
+
 	public static void register() {
 		CommandRegistrationCallback.EVENT.register((dispatcher, buildContext, selection) ->
 				dispatcher.register(Commands.literal("cultivation")
@@ -23,10 +31,17 @@ public final class CultivationCommand {
 													ServerPlayer p = ctx.getSource().getPlayerOrException();
 													Realm r = Realm.byIndex(IntegerArgumentType.getInteger(ctx, "realm") - 1);
 													Stage s = Stage.byIndex(IntegerArgumentType.getInteger(ctx, "stage") - 1);
-													CultivationManager.get(p).setState(r, s, 0);
+													PlayerCultivation c = CultivationManager.get(p);
+													set(c, r, s);
 													CultivationManager.refresh(p);
 													ctx.getSource().sendSuccess(() -> Component.literal("Cultivation set.").append(" ")
 															.append(r.getDisplayName()).append(" - ").append(s.getDisplayName()), false);
+													int reach = HeavenMethods.reach(c);
+													if (PlayerCultivation.rank(r, s) > reach) {
+														ctx.getSource().sendSuccess(() -> Component.literal("Your heaven methods only carry you to ")
+																.append(GhostMethods.rankName(reach)).append(": your cultivation waits there until they catch up"
+																+ " (/heavenmethod learn <id> <layer>)."), false);
+													}
 													return 1;
 												}))))
 						.then(Commands.literal("mortal")
@@ -34,7 +49,7 @@ public final class CultivationCommand {
 									// Back to the start of the path (for testing the Marrow Cleansing Elixir).
 									ServerPlayer p = ctx.getSource().getPlayerOrException();
 									PlayerCultivation c = CultivationManager.get(p);
-									c.setState(Realm.QI_REFINING, Stage.EARLY, 0);
+									set(c, Realm.QI_REFINING, Stage.EARLY);
 									c.setMortal(true);
 									c.setMortalState(MortalStage.LOW, 0);
 									c.setQi(0);

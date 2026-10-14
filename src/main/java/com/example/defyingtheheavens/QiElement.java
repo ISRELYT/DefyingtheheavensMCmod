@@ -96,6 +96,48 @@ public enum QiElement {
 		return EARTH;
 	}
 
+	/** The five (not yin), in their order: the heaven methods' elements (HeavenMethod). */
+	public static QiElement[] five() {
+		return FIVE.clone();
+	}
+
+	/** The element's name ("Wood", ...), for the heaven methods' screens and messages. */
+	public net.minecraft.network.chat.Component getDisplayName() {
+		return net.minecraft.network.chat.Component.translatable(ModLang.ELEMENT_PREFIX + name().toLowerCase(java.util.Locale.ROOT));
+	}
+
+	/**
+	 * What share of the qi in {@code biome} is {@code element} (0 to 1), as {@link #pick} draws it: the random part shared out
+	 * evenly, the rest by the land's weights. A heaven method of an element cultivates the faster the greater its share where one
+	 * meditates (HeavenMethods#methodFactor).
+	 */
+	public static double share(Holder<Biome> biome, boolean underground, QiElement element) {
+		boolean netherworld = biome.is(ModTags.IS_NETHERWORLD);
+		boolean allSix = netherworld || biome.is(Biomes.SOUL_SAND_VALLEY);
+		double random;
+		if (element == YIN && !allSix) random = 0;
+		else if (netherworld) random = element == YIN ? NETHERWORLD_MIXED_YIN + (1 - NETHERWORLD_MIXED_YIN) / 6.0 : (1 - NETHERWORLD_MIXED_YIN) / 6.0;
+		else random = 1.0 / (allSix ? 6 : 5);
+		float[] weights = weights(biome, underground);
+		float total = 0;
+		for (float w : weights) total += w;
+		return MIXED_SHARE * random + (1 - MIXED_SHARE) * (total <= 0 ? 0 : weights[element.ordinal()] / total);
+	}
+
+	/** One of the five (never yin) drawn by the land's own weights in {@code biome}: the element a stele there is carved for. */
+	public static QiElement pickOfFive(Holder<Biome> biome, boolean underground, RandomSource random) {
+		float[] weights = weights(biome, underground);
+		float total = 0;
+		for (QiElement element : FIVE) total += weights[element.ordinal()];
+		if (total <= 0) return FIVE[random.nextInt(FIVE.length)];
+		float roll = random.nextFloat() * total;
+		for (QiElement element : FIVE) {
+			roll -= weights[element.ordinal()];
+			if (roll < 0) return element;
+		}
+		return EARTH;
+	}
+
 	private static float[] weights(Holder<Biome> biome, boolean underground) {
 		if (biome.is(ModTags.IS_NETHERWORLD) || biome.is(ModBiomes.SOUL_RIVER)) return NETHERWORLD;
 		if (biome.is(Biomes.SOUL_SAND_VALLEY)) return SOUL_SAND_VALLEY;

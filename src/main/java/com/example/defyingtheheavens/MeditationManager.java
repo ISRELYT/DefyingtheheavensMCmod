@@ -39,6 +39,10 @@ public final class MeditationManager {
 		java.util.Set<GhostMethod> stelesInReach = java.util.EnumSet.noneOf(GhostMethod.class);
 		final Map<GhostMethod, Double> steleSeconds = new java.util.EnumMap<>(GhostMethod.class);
 		boolean capTold;
+		// The heaven methods (see HeavenMethods), the same way: the Dao Steles near, and seconds by each.
+		java.util.Set<HeavenMethod> daoStelesNear = java.util.EnumSet.noneOf(HeavenMethod.class);
+		java.util.Set<HeavenMethod> daoStelesInReach = java.util.EnumSet.noneOf(HeavenMethod.class);
+		final Map<HeavenMethod, Double> daoSteleSeconds = new java.util.EnumMap<>(HeavenMethod.class);
 
 		Session(double x, double y, double z) {
 			this.x = x;
@@ -84,6 +88,11 @@ public final class MeditationManager {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_SOUL_BUSY), true);
 			return;
 		}
+		// A mortal's meridians are closed, the ghost path's as the heaven path's: alive or dead, it has nothing to cultivate with.
+		if (CultivationManager.get(player).isMortal()) {
+			player.displayClientMessage(Component.translatable(GhostSystem.isGhost(player) ? ModLang.MSG_METHOD_MERIDIANS_DEAD : ModLang.MSG_MORTAL_MEDITATE), true);
+			return;
+		}
 		// The dead cultivate only a ghost method: one chosen, or one to learn from a stele close by.
 		if (GhostSystem.isGhost(player) && CultivationManager.get(player).netherworld().activeMethod() == null && unknownStelesNear(player).isEmpty()) {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_GHOST_NO_METHOD), true);
@@ -97,10 +106,6 @@ public final class MeditationManager {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_CANNOT), true);
 			return;
 		}
-		if (CultivationManager.get(player).isMortal() && !GhostSystem.isGhost(player)) { // a mortal's ghost may cultivate a ghost method
-			player.displayClientMessage(Component.translatable(ModLang.MSG_MORTAL_MEDITATE), true);
-			return;
-		}
 		Session session = new Session(player.getX(), player.getY(), player.getZ());
 		session.boost = CultivationBoost.of(player);
 		SESSIONS.put(player.getUUID(), session);
@@ -108,6 +113,9 @@ public final class MeditationManager {
 		broadcastAbsorption(player, session);
 		CultivationManager.sync(player);
 		player.displayClientMessage(Component.translatable(ModLang.MSG_START), true);
+		// Sitting down with the bar already waiting on a heaven method: said now, as it would be when the bar filled.
+		PlayerCultivation c = CultivationManager.get(player);
+		if (!GhostSystem.isGhost(player) && c.isHeldByMethod()) player.sendSystemMessage(HeavenMethods.gateLine(c).copy().withStyle(net.minecraft.ChatFormatting.GOLD));
 	}
 
 	public static void stop(ServerPlayer player, boolean interrupted) {
@@ -269,17 +277,22 @@ public final class MeditationManager {
 		}
 
 		// The ghost methods, as often: learning from a stele, cultivating the one practised.
-		if (tick % 10 == 0) ghostMethods(p, c, session);
+		if (tick % 10 == 0) ghostMethods(p, c, session, tick);
 		// Gain cultivation twice a second so the menu bar moves smoothly. The dead's meditation feeds only their ghost method.
 		if (tick % 10 == 0 && !GhostSystem.isGhost(p)) {
 			boolean wasBottleneck = c.isAtBottleneck();
 			boolean wasAtGate = c.isAtRitualGate();
+			boolean wasHeld = c.isHeldByMethod();
 			// Mats, fruit on pedestals, height and tranquillity speed the gain (see CultivationBoost).
 			double perSecond = ratePerSecond(p, session);
 			// Unrefined qi from pills and fruit is refined on top, at REFINE_RATE times the meditation rate.
 			double refined = c.refine(perSecond * PlayerCultivation.REFINE_RATE * 0.5);
-			boolean advanced = c.addCultivation(perSecond * 0.5 + refined + session.bonusCultivation);
+			double gained = perSecond * 0.5 + refined + session.bonusCultivation;
 			session.bonusCultivation = 0;
+			// The heaven methods, the living's: the one practised takes in what was gathered, on the elements' qi. First, so a layer
+			// finished now lets the bar on into the next stage at once.
+			heavenMethods(p, c, session, tick, gained, perSecond);
+			boolean advanced = c.addCultivation(gained);
 			CultivationManager.refresh(p); // re-applies stats (cheap), marks dirty, syncs
 
 			if (advanced) {
@@ -300,6 +313,8 @@ public final class MeditationManager {
 			} else if (!wasAtGate && c.isAtRitualGate()) {
 				p.sendSystemMessage(Component.translatable(ModLang.MSG_RITUAL_GATE));
 			}
+			// Not else-if: at Qi Refining Mid the ritual and the method may both be wanted.
+			if (!wasHeld && c.isHeldByMethod()) p.sendSystemMessage(HeavenMethods.gateLine(c).copy().withStyle(net.minecraft.ChatFormatting.GOLD));
 		}
 
 		if (tick % 20 == 0) {
@@ -311,18 +326,19 @@ public final class MeditationManager {
 
 	/**
 	 * Half a second of the ghost methods (see GhostMethods): by a stele of a method not yet known, a step toward learning it;
-	 * the method practised gains progress where ghostly qi flows (by its stele, faster), layer by layer, held at the third where
-	 * the qi is too thin.
+	 * the method practised gains progress wherever ghostly qi flows, as fast as it is dense (by its stele, faster), layer by layer,
+	 * held where the ghost path can carry it no further. Timed by the server's {@code tick} (it runs on every tenth): the session's own count is offset from it,
+	 * so tested against that, the steles were never re-read and the Methods tab's bar never sent but at a new layer.
 	 */
-	private static void ghostMethods(ServerPlayer p, PlayerCultivation c, Session session) {
+	private static void ghostMethods(ServerPlayer p, PlayerCultivation c, Session session, int tick) {
+		if (c.isMortal()) return; // a mortal's meridians are closed: nothing learned, nothing cultivated (it can't sit down to it either)
 		NetherworldState s = c.netherworld();
-		if (session.ticks % 40 == 10) {
+		if (tick % 40 == 0 || session.ticks <= 10) {
 			session.stelesInReach = stelesWithin(p, GhostMethods.STELE_LEARN_RADIUS);
 			session.stelesNear = stelesWithin(p, GhostMethods.STELE_BONUS_RADIUS);
 		}
-		// A mortal can't learn alive (they can't meditate at all); a mortal's ghost can.
 		for (GhostMethod method : session.stelesInReach) {
-			if (s.knows(method)) continue;
+			if (s.knows(method) || !GhostMethods.canLearn(c, method)) continue;
 			double seconds = session.steleSeconds.merge(method, 0.5, Double::sum);
 			if (seconds == 0.5) p.displayClientMessage(Component.translatable(ModLang.MSG_STELE_READING, method.getDisplayName()), true);
 			if (seconds >= GhostMethods.STELE_LEARN_SECONDS) {
@@ -335,18 +351,73 @@ public final class MeditationManager {
 		double rate = GhostMethods.ratePerSecond(c, s.density()) * circulationMultiplier(session, session.ticks)
 				* (session.stelesNear.contains(active) ? GhostMethods.STELE_BONUS : 1.0)
 				* (1 + (p.hasEffect(ModEffects.YIN_GATHERING) ? s.methodBoost() : 0)); // a Yin Gathering Pill
-		int result = GhostMethods.cultivate(s, active, rate * 0.5, s.density());
+		int cap = GhostMethods.layerCap(c, active);
+		int ghostPathBefore = GhostMethods.ghostRank(s);
+		int result = GhostMethods.cultivate(s, active, rate * 0.5, cap);
 		if (result > 0) {
 			p.serverLevel().playSound(null, p.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.8f, 0.6f);
 			p.displayClientMessage(Component.translatable(ModLang.MSG_METHOD_LAYER, active.getDisplayName(), s.layer(active)), true);
-			GhostMethods.afterLayer(p, s);
+			GhostMethods.afterLayer(p, s, ghostPathBefore);
 			NetherworldManager.refresh(p);
 		} else if (result < 0 && !session.capTold) {
 			session.capTold = true;
-			p.sendSystemMessage(Component.translatable(ModLang.MSG_METHOD_CAPPED));
+			p.sendSystemMessage(Component.translatable(ModLang.MSG_METHOD_REALM_CAPPED, active.getDisplayName(), cap,
+					GhostMethods.realmToPass(active, cap).getDisplayName()));
 		}
 		CultivationManager.markDirty(p.server);
-		if (session.ticks % 20 == 0 || result != 0) Spells.sync(p); // the Methods tab's bar
+		if (tick % 20 == 0 || result != 0) Spells.sync(p); // the Methods tab's bar
+	}
+
+	/**
+	 * Half a second of the heaven methods (see HeavenMethods), the living's: by a Dao Stele of a method not yet known, a step toward
+	 * learning it; the method practised takes in the cultivation {@code gained} this half second (every boost to meditation in it) by
+	 * its element's share of the qi here (by its stele, faster: HeavenMethods#methodFactor), whatever the realm, to its last layer.
+	 * While the realm waits on it, pills' unrefined qi is refined into it instead, at the realm's refining pace.
+	 */
+	private static void heavenMethods(ServerPlayer p, PlayerCultivation c, Session session, int tick, double gained, double perSecond) {
+		if (!HeavenMethods.canLearn(c)) return;
+		HeavenState s = c.heaven();
+		if (tick % 40 == 0 || session.ticks <= 10) {
+			session.daoStelesInReach = daoStelesWithin(p, HeavenMethods.STELE_LEARN_RADIUS);
+			session.daoStelesNear = daoStelesWithin(p, HeavenMethods.STELE_BONUS_RADIUS);
+		}
+		for (HeavenMethod method : session.daoStelesInReach) {
+			if (s.knows(method)) continue;
+			double seconds = session.daoSteleSeconds.merge(method, 0.5, Double::sum);
+			if (seconds == 0.5) p.displayClientMessage(Component.translatable(ModLang.MSG_DAO_STELE_READING, method.getDisplayName()), true);
+			if (seconds >= HeavenMethods.STELE_LEARN_SECONDS) {
+				session.daoSteleSeconds.remove(method);
+				HeavenMethods.learn(p, method);
+			}
+		}
+		HeavenMethod active = s.activeMethod();
+		if (active == null) return;
+		boolean byStele = false;
+		for (HeavenMethod near : session.daoStelesNear) byStele |= near.element() == active.element();
+		// Nothing unless the realm waits on it (PlayerCultivation#refineIntoMethod), and nothing into a method perfected.
+		if (!HeavenMethods.perfected(s, active)) gained += c.refineIntoMethod(perSecond * PlayerCultivation.REFINE_RATE * 0.5);
+		double factor = HeavenMethods.methodFactor(c, HeavenMethods.shareAt(p, active.element()), byStele);
+		int result = HeavenMethods.cultivate(s, active, gained * factor);
+		if (result > 0) {
+			p.serverLevel().playSound(null, p.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.8f, 1.4f);
+			p.displayClientMessage(Component.translatable(ModLang.MSG_HEAVEN_LAYER, active.getDisplayName(), s.layer(active)), true);
+			HeavenMethods.afterLayer(p);
+		}
+		CultivationManager.markDirty(p.server);
+		if (tick % 20 == 0 || result != 0) Spells.sync(p); // the Methods tab's bar
+	}
+
+	/** The heaven methods whose Dao Steles stand within {@code radius} of {@code p} (by their middle stone). */
+	private static java.util.Set<HeavenMethod> daoStelesWithin(ServerPlayer p, double radius) {
+		java.util.Set<HeavenMethod> found = java.util.EnumSet.noneOf(HeavenMethod.class);
+		int r = (int) Math.ceil(radius);
+		net.minecraft.core.BlockPos at = p.blockPosition();
+		for (net.minecraft.core.BlockPos pos : net.minecraft.core.BlockPos.betweenClosed(at.offset(-r, -2, -r), at.offset(r, 3, r))) {
+			var state = p.level().getBlockState(pos);
+			if (!state.is(ModBlocks.DAO_STELE) || state.getValue(DaoSteleBlock.PART) != MethodSteleBlock.Part.MIDDLE) continue;
+			if (pos.distToCenterSqr(p.getX(), p.getY() + 1, p.getZ()) <= radius * radius) found.add(state.getValue(DaoSteleBlock.METHOD));
+		}
+		return found;
 	}
 
 	/** The methods whose steles stand within {@code radius} of {@code p} (by their middle stone). */

@@ -276,7 +276,7 @@ public final class SoulProjection {
 	public static void begin(ServerPlayer player) {
 		PlayerCultivation c = CultivationManager.get(player);
 		if (!Ability.SOUL_PROJECTION.isUnlocked(c) || !player.isAlive() || player.isSpectator()) return;
-		if (Incorporeal.isRuledGhost(player)) { // a ghost is already all soul
+		if (Incorporeal.isGhost(player)) { // a ghost is already all soul
 			player.displayClientMessage(Component.translatable(ModLang.MSG_GHOST_CANNOT), true);
 			return;
 		}
@@ -1147,9 +1147,22 @@ public final class SoulProjection {
 		return new ArrayList<>(SESSIONS.keySet());
 	}
 
-	/** Whether the tracker sends {@code soul} to {@code viewer} (see the ServerPlayer mixin): always, unless it is a soul unperceived. */
+	/**
+	 * Whether the tracker sends {@code soul} to {@code viewer} (see the ServerPlayer mixin): always, unless it is a soul, or one
+	 * of the dead out of the Netherworld (a Ghost King come up to the living world), or one of the living in a Ghost King's form
+	 * there (TwoPaths#inGhostForm), and the viewer doesn't perceive souls (the dead always see the dead, and those in their form).
+	 */
 	public static boolean broadcastsTo(ServerPlayer soul, ServerPlayer viewer) {
-		return !isSoul(soul) || viewer == soul || perceives(viewer);
+		return !seenOnlyBySeers(soul) || viewer == soul || perceives(viewer)
+				|| (GhostSystem.isGhost(soul) || TwoPaths.inGhostForm(soul)) && GhostSystem.isGhost(viewer);
+	}
+
+	/**
+	 * A projected soul; or, outside the Netherworld, where only those who perceive souls see the dead, one of the dead or one of
+	 * the living in a Ghost King's form (TwoPaths#inGhostForm).
+	 */
+	public static boolean seenOnlyBySeers(ServerPlayer player) {
+		return isSoul(player) || !ModDimensions.isNetherworld(player.level().dimension()) && (GhostSystem.isGhost(player) || TwoPaths.inGhostForm(player));
 	}
 
 	/** Whether each online player's realm had awakened Soul Projection last tick, to announce it when first gained. */

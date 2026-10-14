@@ -42,13 +42,13 @@ public class ModBlockTagProvider extends FabricTagProvider.BlockTagProvider {
 		getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_AXE)
 				.add(ModBlocks.BLUE_SPIRIT_LOG).add(ModBlocks.BLUE_SPIRIT_WOOD).add(ModBlocks.BLUE_SPIRIT_PLANKS);
 
-		// The rifts, the Wheel of Reincarnation and the Method Steles must survive dragons, withers and feature placement.
+		// The rifts, the Wheel of Reincarnation and the Method and Dao Steles must survive dragons, withers and feature placement.
 		getOrCreateTagBuilder(BlockTags.DRAGON_IMMUNE).add(ModBlocks.SPATIAL_RIFT).add(ModBlocks.YELLOW_SPRINGS_RIFT).add(ModBlocks.WHEEL_OF_REINCARNATION)
-				.add(ModBlocks.METHOD_STELE);
+				.add(ModBlocks.METHOD_STELE).add(ModBlocks.DAO_STELE);
 		getOrCreateTagBuilder(BlockTags.WITHER_IMMUNE).add(ModBlocks.SPATIAL_RIFT).add(ModBlocks.YELLOW_SPRINGS_RIFT).add(ModBlocks.WHEEL_OF_REINCARNATION)
-				.add(ModBlocks.METHOD_STELE);
+				.add(ModBlocks.METHOD_STELE).add(ModBlocks.DAO_STELE);
 		getOrCreateTagBuilder(BlockTags.FEATURES_CANNOT_REPLACE).add(ModBlocks.SPATIAL_RIFT).add(ModBlocks.YELLOW_SPRINGS_RIFT)
-				.add(ModBlocks.WHEEL_OF_REINCARNATION).add(ModBlocks.METHOD_STELE);
+				.add(ModBlocks.WHEEL_OF_REINCARNATION).add(ModBlocks.METHOD_STELE).add(ModBlocks.DAO_STELE);
 		// What the dead may still use (see Incorporeal).
 		getOrCreateTagBuilder(ModTags.GHOST_USABLE).add(ModBlocks.WHEEL_OF_REINCARNATION).add(ModBlocks.METHOD_STELE);
 		// Yin Jade: mined with an iron pickaxe, ore and block alike.

@@ -25,6 +25,8 @@ public final class NetherRift {
 	/** Where to look for ground around a landing, and how far clear of the rift's column it must be. */
 	private static final int[] LAND_RADII = {0, 3, 6, 10, 14, 20, 28, 36, 48};
 	private static final int RIFT_CLEARANCE = 3;
+	/** How far above or below the rift's height a landing may be, searched in turn: by the shrine first, then further. */
+	private static final int[] LAND_BANDS = {8, 24, 256};
 	/** The Nether's ceiling of bedrock starts here: nobody is set down at or above it. */
 	private static final int ROOF_Y = 122;
 
@@ -153,26 +155,31 @@ public final class NetherRift {
 	/**
 	 * Where in the Nether a traveller can stand near {@code x}, {@code z} (see {@link #land}): of the ground in each column, the
 	 * stretch nearest the rift's own height (or Y {@link #CHAMBER_Y} where there is no rift), so they come out by its shrine
-	 * rather than in some sealed pocket above or below.
+	 * rather than in some sealed pocket above or below. Searched in widening bands of height ({@link #LAND_BANDS}), each over
+	 * every radius before the next: ground near that height a little further off is better than the first column's only
+	 * standing room, a pocket under the bedrock roof.
 	 */
 	public static BlockPos findGround(ServerLevel nether, int x, int z) {
 		int preferredY = riftY(nether);
-		for (int radius : LAND_RADII) {
-			int points = radius == 0 ? 1 : 8 + radius / 2;
-			for (int i = 0; i < points; i++) {
-				double angle = Math.PI * 2 * i / points;
-				int cx = x + (int) Math.round(Math.cos(angle) * radius);
-				int cz = z + (int) Math.round(Math.sin(angle) * radius);
-				int fromRiftX = cx - SpatialRiftBlock.RIFT_X, fromRiftZ = cz - SpatialRiftBlock.RIFT_Z;
-				if (fromRiftX * fromRiftX + fromRiftZ * fromRiftZ < RIFT_CLEARANCE * RIFT_CLEARANCE) continue;
-				nether.getChunk(cx >> 4, cz >> 4);
-				BlockPos best = null;
-				for (int y = nether.getMinBuildHeight() + 5; y < ROOF_Y - 1; y++) {
-					BlockPos feet = new BlockPos(cx, y, cz);
-					if (best != null && Math.abs(y - preferredY) >= Math.abs(best.getY() - preferredY)) continue;
-					if (isStandable(nether, feet, 2) && !lavaNear(nether, feet, 1)) best = feet;
+		for (int band : LAND_BANDS) {
+			for (int radius : LAND_RADII) {
+				int points = radius == 0 ? 1 : 8 + radius / 2;
+				for (int i = 0; i < points; i++) {
+					double angle = Math.PI * 2 * i / points;
+					int cx = x + (int) Math.round(Math.cos(angle) * radius);
+					int cz = z + (int) Math.round(Math.sin(angle) * radius);
+					int fromRiftX = cx - SpatialRiftBlock.RIFT_X, fromRiftZ = cz - SpatialRiftBlock.RIFT_Z;
+					if (fromRiftX * fromRiftX + fromRiftZ * fromRiftZ < RIFT_CLEARANCE * RIFT_CLEARANCE) continue;
+					nether.getChunk(cx >> 4, cz >> 4);
+					BlockPos best = null;
+					int from = Math.max(nether.getMinBuildHeight() + 5, preferredY - band), to = Math.min(ROOF_Y - 2, preferredY + band);
+					for (int y = from; y <= to; y++) {
+						BlockPos feet = new BlockPos(cx, y, cz);
+						if (best != null && Math.abs(y - preferredY) >= Math.abs(best.getY() - preferredY)) continue;
+						if (isStandable(nether, feet, 2) && !lavaNear(nether, feet, 1)) best = feet;
+					}
+					if (best != null) return best;
 				}
-				if (best != null) return best;
 			}
 		}
 		BlockPos platform = new BlockPos(x + RIFT_CLEARANCE + 1, CHAMBER_Y, z);

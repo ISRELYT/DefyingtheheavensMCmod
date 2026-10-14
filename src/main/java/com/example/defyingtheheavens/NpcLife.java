@@ -119,7 +119,7 @@ public final class NpcLife {
 		public boolean lead;
 		/** Mourning: who for. */
 		public String mourned;
-		/** The ritual: the altar it kneels before, when the three minutes began (0: not yet there), and its chance. */
+		/** The ritual: the altar it kneels before, when the kneeling began (0: not yet there), and its chance. */
 		public BlockPos altar;
 		public long ritualStart;
 		public double chance;
@@ -475,7 +475,7 @@ public final class NpcLife {
 
 	/**
 	 * Members at Qi Refining Mid's gate (CultivatorNpc#awaitsHeavensLeave) go to the sect's Altar of Heaven, one at a time,
-	 * outside the lecture and the night, and not again the day the heavens turned them away; there they kneel three minutes
+	 * outside the lecture and the night, and not again the day the heavens turned them away; there they kneel (HeavenRitual#DURATION)
 	 * on an offering from the sect's store (Sect#takeOffering), as a player would (HeavenRitual). A sect laid out before the
 	 * altar existed kneels by its Formation Core instead. Those already kneeling send up smoke and gathering light.
 	 */
@@ -523,7 +523,7 @@ public final class NpcLife {
 		return null;
 	}
 
-	/** It kneels before the altar: the sect's offering is taken and the three minutes begin. */
+	/** It kneels before the altar: the sect's offering is taken and the kneeling begins. */
 	private static void beginRitual(ServerLevel level, CultivatorNpc npc, Activity a) {
 		Sect sect = npc.sect();
 		long now = level.getGameTime();
@@ -1253,7 +1253,8 @@ public final class NpcLife {
 		ServerPlayer player = null;
 		double best = REMARK_RANGE * REMARK_RANGE;
 		for (ServerPlayer p : level.players()) {
-			if (p.isSpectator() || !p.isAlive() || p.isInvisible() || SoulProjection.isSoul(p)) continue;
+			// Not one it can't sense (a soul, the dead, a Ghost King's form: CultivatorNpc#senses).
+			if (p.isSpectator() || !p.isAlive() || p.isInvisible() || !npc.senses(p)) continue;
 			double d = p.distanceToSqr(npc);
 			double range = p.isShiftKeyDown() ? SNEAK_REMARK_RANGE : REMARK_RANGE;
 			if (d <= range * range && d <= best) {

@@ -60,7 +60,7 @@ public final class NetherworldState {
 	}
 
 	// The ghost methods (see GhostMethods) and spells (see Spells): saved by id, never by ordinal.
-	/** Each method learned: the layer reached (1 to 9) and the progress through it. */
+	/** Each method learned: the layer reached (1 to its last, GhostMethod#layers) and the progress through it. */
 	private final java.util.Map<GhostMethod, double[]> methods = new java.util.EnumMap<>(GhostMethod.class);
 	/** The method meditation cultivates (null: none chosen). */
 	private GhostMethod activeMethod;
@@ -83,22 +83,21 @@ public final class NetherworldState {
 	public boolean knows(GhostMethod method) { return methods.containsKey(method); }
 	public boolean knowsAnyMethod() { return !methods.isEmpty(); }
 
-	/** Every layer reached, across all methods. */
-	public int totalLayers() {
-		int total = 0;
-		for (double[] entry : methods.values()) total += (int) entry[0];
-		return total;
-	}
-
-	/** Sets a method's layer (1 to 9; 0 forgets it) and progress through it. */
+	/** Sets a method's layer (1 to its last, GhostMethod#layers; 0 forgets it) and progress through it. */
 	public void setMethod(GhostMethod method, int layer, double progress) {
 		if (layer <= 0) {
 			methods.remove(method);
 			if (activeMethod == method) activeMethod = null;
 			return;
 		}
-		methods.put(method, new double[]{Math.min(GhostMethods.LAYERS, layer), Math.max(0, progress)});
+		methods.put(method, new double[]{Math.min(method.layers(), layer), Math.max(0, progress)});
 	}
+
+	/**
+	 * How the saved layers are laid out: 2 since each foundation spans Qi Refining up to its own realm (MethodLayers). Before, a
+	 * foundation past the first had nine layers of its own realm alone, so its layer L then is its layer 9 x (tier - 1) + L now.
+	 */
+	private static final int METHOD_LAYOUT = 2;
 
 	public java.util.Set<GhostMethod> knownMethods() { return java.util.Collections.unmodifiableSet(methods.keySet()); }
 
@@ -204,6 +203,7 @@ public final class NetherworldState {
 				learned.put(entry.getKey().getId(), one);
 			}
 			tag.put("Methods", learned);
+			tag.putInt("MethodLayout", METHOD_LAYOUT);
 		}
 		if (activeMethod != null) tag.putString("ActiveMethod", activeMethod.getId());
 		if (readiedSpell != null) tag.putString("ReadiedSpell", readiedSpell.getId());
@@ -239,10 +239,15 @@ public final class NetherworldState {
 		savedRespawn = tag.contains("SavedRespawn") ? tag.getCompound("SavedRespawn").copy() : null;
 		methods.clear();
 		CompoundTag learned = tag.getCompound("Methods");
+		boolean oldLayout = tag.getInt("MethodLayout") < METHOD_LAYOUT;
 		for (String id : learned.getAllKeys()) {
 			GhostMethod method = GhostMethod.byId(id);
 			CompoundTag one = learned.getCompound(id);
-			if (method != null) setMethod(method, one.getInt("Layer"), one.getDouble("Progress")); // an unknown id (a method since removed) is dropped
+			if (method == null) continue; // an unknown id (a method since removed) is dropped
+			int layer = one.getInt("Layer");
+			// Saved before the foundations spanned the realms below their own: the same stage of the same realm, the same progress.
+			if (oldLayout && method.tier() > 1 && layer > 0) layer = Math.min(GhostMethods.LAYERS, layer) + MethodLayers.PER_REALM * (method.tier() - 1);
+			setMethod(method, layer, one.getDouble("Progress"));
 		}
 		activeMethod = null;
 		setActiveMethod(GhostMethod.byId(tag.getString("ActiveMethod")));

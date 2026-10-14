@@ -10,7 +10,7 @@ import net.minecraft.world.level.biome.Biomes;
 
 /**
  * Ghostly qi (阴气): the second kind of qi, which belongs to places rather than to the cultivator who gathers it. It is what ghost
- * methods are cultivated on, and what the ghostly qi pool fills from.
+ * methods are cultivated on, as fast as it is dense (GhostMethods#ratePerSecond), and what the ghostly qi pool fills from.
  * <p>
  * Density, a Soul Sand Valley being 1:
  * <table>
@@ -32,14 +32,12 @@ public final class GhostQi {
 	public static final double FILL_PER_DENSITY = 0.2;
 	/**
 	 * The pool's size: {@link #BASE_POOL} for anyone who has one (every ghost, and everyone who knows a ghost method), and
-	 * {@link #POOL_PER_LAYER} more for every layer known across all methods (Netherworld Breathing Art adds its own on top).
+	 * {@link #POOL_PER_LAYER} more for every layer known across all methods (each foundation's layers add their own on top).
 	 */
 	public static final double BASE_POOL = 30.0;
 	public static final double POOL_PER_LAYER = 10.0;
-	/** Netherworld Breathing Art's own addition to the pool, a layer. */
+	/** A foundation's own addition to the pool, a layer (the Netherworld Breathing Art's and those after it: GhostMethod#isFoundation). */
 	public static final double BREATHING_POOL_PER_LAYER = 20.0;
-	/** Below this density, ghost methods can't pass their third layer (GhostMethods#OUTSIDE_LAYER_CAP). */
-	public static final double FULL_DENSITY = NETHERWORLD;
 
 	/** The ghostly qi density at a place: one pure function, so tests can call it. */
 	public static double density(ResourceKey<Level> dimension, Holder<Biome> biome) {
@@ -60,19 +58,23 @@ public final class GhostQi {
 	}
 
 	/**
-	 * The pool's size: nothing without a pool; otherwise {@link #BASE_POOL}, {@link #POOL_PER_LAYER} for every layer known across
-	 * all methods, and {@link #BREATHING_POOL_PER_LAYER} more for each of Netherworld Breathing Art's. A ghost who knows all nine
-	 * layers of all three methods holds 30 + 27 x 10 + 9 x 20 = 480.
+	 * The pool's size: nothing without a pool; otherwise {@link #BASE_POOL}, {@link #POOL_PER_LAYER} for every layer known (the
+	 * foundations' depth, GhostMethods#layersKnown, with the fire's and the steps'), and {@link #BREATHING_POOL_PER_LAYER} more for
+	 * each of the foundations' depth. A ghost who knows all nine layers of the Breathing Art, the fire and the steps holds 30 + 27 x
+	 * 10 + 9 x 20 = 480; the Six Paths Reincarnation Canon's 54 with them, 30 + 72 x 10 + 54 x 20 = 1,830.
 	 */
 	public static double poolMax(boolean hasPool, int layersKnown, int breathingLayers) {
 		if (!hasPool) return 0;
 		return BASE_POOL + POOL_PER_LAYER * Math.max(0, layersKnown) + BREATHING_POOL_PER_LAYER * Math.max(0, breathingLayers);
 	}
 
-	/** This cultivator's pool size. Every ghost, and everyone who knows a ghost method, has one. */
+	/**
+	 * This cultivator's pool size. Every ghost, and everyone who knows a ghost method, has one; a mortal's layers add nothing to it,
+	 * its methods dormant (GhostMethods#refusal).
+	 */
 	public static double poolMax(PlayerCultivation c) {
 		NetherworldState s = c.netherworld();
-		return poolMax(s.ghost() || s.knowsAnyMethod(), s.totalLayers(), s.layer(GhostMethod.NETHERWORLD_BREATHING));
+		return poolMax(s.ghost() || s.knowsAnyMethod(), GhostMethods.layersKnown(c), GhostMethods.foundationLayers(c));
 	}
 
 	/** Ghostly qi filled a second at {@code density}. */

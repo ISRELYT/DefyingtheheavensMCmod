@@ -120,6 +120,7 @@ public class SoulProjectionGameTests implements FabricGameTest {
 			helper.assertTrue(!SoulProjection.isActive(p.getUUID()), "Too little qi to leave");
 			c.setQi(c.maxQi());
 
+			TestMethods.carryAll(c); // a heaven method carrying the realm on (HeavenMethods#reach)
 			c.addCultivation(c.cultivationRequired());
 			TribulationManager.start(p);
 			helper.assertTrue(TribulationManager.isActive(p.getUUID()), "A tribulation begins");

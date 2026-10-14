@@ -697,6 +697,17 @@ public final class GhostGate {
 		npc.moveTo(post.getX() + 0.5, post.getY(), post.getZ() + 0.5, facingOf(role), 0);
 	}
 
+	/** A keeper that can find no way back to its post (GhostCultivatorNpc#customServerAiStep) is set down there again, facing as it should. */
+	static void returnToPost(GhostCultivatorNpc npc) {
+		BlockPos post = npc.keeperPost();
+		if (post == null) return;
+		npc.getNavigation().stop();
+		npc.moveTo(post.getX() + 0.5, post.getY(), post.getZ() + 0.5, facingOf(npc.getRole()), 0);
+		if (npc.level() instanceof ServerLevel level) {
+			level.sendParticles(net.minecraft.core.particles.ParticleTypes.SOUL, npc.getX(), npc.getY() + 1, npc.getZ(), 20, 0.5, 1.0, 0.5, 0.03);
+		}
+	}
+
 	/** A warden has fallen: it comes back in three days. */
 	static void onOfficialSlain(ServerLevel level, GhostCultivatorNpc.Role role) {
 		if (!ModDimensions.isNetherworld(level.dimension())) return;

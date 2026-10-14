@@ -1,6 +1,7 @@
 package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.GhostSystem;
+import com.example.defyingtheheavens.TwoPaths;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.BufferUploader;
@@ -35,17 +36,43 @@ public final class ClientGhosts {
 
 	public static void register() {
 		GhostSystem.clientGhost = player -> GHOSTS.contains(player.getId());
+		GhostSystem.clientKing = player -> KINGS.contains(player.getId());
 		ClientTickEvents.END_CLIENT_TICK.register(ClientGhosts::tick);
 		HudRenderCallback.EVENT.register(ClientGhosts::overlay);
 	}
 
-	static void set(int entityId, boolean ghost) {
+	/** The Ghost Kings among them (GhostSystem#isKing). */
+	private static final Set<Integer> KINGS = new HashSet<>();
+	/**
+	 * The players drawn as the dead's light (TwoPaths#look), and those of them crowned, in a Ghost King's deeper light: the dead,
+	 * but for one in its human form; and the living in a Ghost King's form. A form is only a look: the rules go by GHOSTS.
+	 */
+	private static final Set<Integer> LIGHT = new HashSet<>();
+	private static final Set<Integer> CROWNED = new HashSet<>();
+
+	static void set(int entityId, boolean ghost, boolean king, TwoPaths.Look look) {
 		if (ghost) GHOSTS.add(entityId);
 		else GHOSTS.remove(entityId);
+		if (ghost && king) KINGS.add(entityId);
+		else KINGS.remove(entityId);
+		if (look != TwoPaths.Look.HUMAN) LIGHT.add(entityId);
+		else LIGHT.remove(entityId);
+		if (look == TwoPaths.Look.KING) CROWNED.add(entityId);
+		else CROWNED.remove(entityId);
+	}
+
+	/** Whether {@code player} is drawn as light (SoulRenderer), not as a man: one of the dead, or one in a Ghost King's form. */
+	public static boolean drawnAsLight(Player player) {
+		return player != null && LIGHT.contains(player.getId());
+	}
+
+	/** Whether {@code player} is drawn crowned, in a Ghost King's light. */
+	public static boolean crowned(Player player) {
+		return player != null && CROWNED.contains(player.getId());
 	}
 
 	static boolean any() {
-		return !GHOSTS.isEmpty();
+		return !GHOSTS.isEmpty() || !LIGHT.isEmpty();
 	}
 
 	static void fade(int rgb, int close, int hold, int open) {
@@ -58,6 +85,9 @@ public final class ClientGhosts {
 
 	static void clear() {
 		GHOSTS.clear();
+		KINGS.clear();
+		LIGHT.clear();
+		CROWNED.clear();
 		fadeTick = -1;
 		fadeAlpha = fadePrevious = 0;
 	}

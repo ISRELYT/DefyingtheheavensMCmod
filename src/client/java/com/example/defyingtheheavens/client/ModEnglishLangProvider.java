@@ -16,6 +16,7 @@ import com.example.defyingtheheavens.ModLang;
 import com.example.defyingtheheavens.MortalStage;
 import com.example.defyingtheheavens.NpcLines;
 import com.example.defyingtheheavens.PillGrade;
+import com.example.defyingtheheavens.QiElement;
 import com.example.defyingtheheavens.Realm;
 import com.example.defyingtheheavens.Stage;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
@@ -28,6 +29,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 
 	@Override
 	public void generateTranslations(TranslationBuilder t) {
+		// The heaven methods' names, lore and spells (generated from their spec sheet)
+		HeavenLangText.add(t);
 		// Items
 		t.add(ModItems.CULTIVATION_FRUIT, "Cultivation Fruit");
 		t.add(ModBlocks.CULTIVATION_FRUIT, "Cultivation Fruit");
@@ -128,6 +131,18 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_JUDGE_MORTAL, "The Chief Judge's gaze unmade you.");
 		t.add(ModLang.DEATH_GHOSTLY, "%1$s was torn at by the dead");
 		t.add(ModLang.DEATH_GHOSTLY + ".player", "%1$s was torn at by the dead %2$s");
+		// The heaven methods' qi (ModDamageTypes#qi)
+		String death = "death.attack." + com.example.defyingtheheavens.DefyingTheHeavens.MOD_ID + ".qi_";
+		t.add(death + "wood", "%1$s was strangled by living wood");
+		t.add(death + "wood.player", "%1$s was strangled by %2$s's wood qi");
+		t.add(death + "water", "%1$s was drowned in qi-born water");
+		t.add(death + "water.player", "%1$s was drowned in %2$s's water qi");
+		t.add(death + "fire", "%1$s was burnt away by fire qi");
+		t.add(death + "fire.player", "%1$s was burnt away by %2$s's fire qi");
+		t.add(death + "earth", "%1$s was crushed beneath earth qi");
+		t.add(death + "earth.player", "%1$s was crushed beneath %2$s's earth qi");
+		t.add(death + "metal", "%1$s was cut down by metal qi");
+		t.add(death + "metal.player", "%1$s was cut down by %2$s's metal qi");
 		t.add(ModLang.GAMERULE_AFTER_DEATH, "The dead go to the Netherworld");
 		t.add(ModLang.GAMERULE_AFTER_DEATH + ".description", "Players who die wake at the Ghost Gate as ghosts, and return to life at the Wheel of Reincarnation.");
 		t.add(ModLang.MSG_GHOST_WAKE, "You wake at the Ghost Gate, in the Netherworld, one of the dead. The Wheel of Reincarnation, across the bridge, "
@@ -135,6 +150,13 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_YIN_OVERTAKEN, "The yin fills you. Your body gives way, and you walk on as one of the dead, everything you carried still with "
 				+ "you, for now. The Wheel of Reincarnation, by the Ghost Gate, will return you to life, but nothing you carry goes back with you.");
 		t.add(ModLang.MSG_BELONGINGS_LEFT, "What you carried stays behind at the Wheel, in the Netherworld.");
+		t.add(ModLang.MSG_GHOST_KING, "Your soul burns with a Core Formation cultivator's might: you are a Ghost King. Your hands are your own "
+				+ "again (you can touch, take and build), and the rifts and the Soul River will carry you to the world of the living, where "
+				+ "only those who see souls will see you.");
+		t.add(ModLang.MSG_GHOST_KING_LOST, "Your might is gone: you are one of the common dead again, and your hands pass through the world.");
+		t.add(ModLang.JOURNAL_GHOST_KING, "A Ghost King");
+		t.add(ModLang.JOURNAL_GHOST_KING_TEXT, "Dead, I rose to Core Formation and became a Ghost King. My hands are my own again, and the "
+				+ "Soul River carries me down to the world of the living, unseen but by those who see souls.");
 		t.add(ModLang.MSG_GHOST_DISPERSED, "You scatter...");
 		t.add(ModLang.MSG_GHOST_REFORMED, "You gather yourself again at the Ghost Gate.");
 		t.add(ModLang.MSG_GHOST_CANNOT, "The dead can't do that.");
@@ -275,6 +297,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case NETHERWORLD_VEIL -> "Netherworld Veil";
 				case YIN_WIND_STEPS -> "Yin Wind Steps";
 				case GHOST_FLIGHT -> "Ghost Flight";
+				case FORM_SHIFT -> "Form Shift";
 			});
 			t.add(key + ".description", switch (ability) {
 				case QI_SUSTENANCE -> "Qi keeps you fed. Hunger stays full.";
@@ -288,7 +311,10 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case GHOST_EYE -> "See the dead and the Method Steles through walls within 32 blocks. Costs %s ghost qi/s.";
 				case NETHERWORLD_VEIL -> "Wrap your body in the Netherworld's own yin: it seeps into you at half the rate. Costs %s ghost qi/s.";
 				case YIN_WIND_STEPS -> "Walk on the yin wind: %s%% swifter, and falls do you no harm. Costs %s ghost qi/s.";
-				case GHOST_FLIGHT -> "The dead need no ground. Double-tap jump to fly, at a cost of %s ghost qi/s.";
+				case GHOST_FLIGHT -> "The dead fly at a drift (double-tap jump); with this, as swiftly as on qi, at a cost of %s ghost qi/s.";
+				case FORM_SHIFT -> "Your true form is the form of your higher path: now your %s. Switched on, you take your %s instead. "
+						+ "In a Ghost King's form you are seen as the dead are: outside the Netherworld, only by those who perceive souls. "
+						+ "Only while you live; no cost.";
 			});
 		}
 		t.add(ModLang.METHODS_TITLE, "Cultivation Methods");
@@ -303,25 +329,68 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case NETHERWORLD_BREATHING -> "Netherworld Breathing Art";
 				case GHOST_FIRE_SCRIPTURE -> "Ghost Fire Scripture";
 				case WANDERING_SOUL_STEPS -> "Wandering Soul Steps";
+				case YELLOW_SPRINGS_MARROW -> "Yellow Springs Marrow Art";
+				case GHOST_CORE_CANON -> "Ghost Core Canon";
+				case NINE_NETHER_SOUL_SUTRA -> "Nine Nether Soul Sutra";
+				case YAMA_JUDGEMENT -> "Yama's Judgement Scripture";
+				case SIX_PATHS_CANON -> "Six Paths Reincarnation Canon";
 			});
 			t.add(ModLang.methodKey(method.getId()) + ".description", switch (method) {
-				case NETHERWORLD_BREATHING -> "The foundation of the ghost cultivators: breathe the Netherworld's yin and keep it. A deeper ghost qi pool, "
-						+ "a ghost's hearts, and longer among the dead for the living.";
+				case NETHERWORLD_BREATHING -> "The first foundation of the ghost cultivators: breathe the Netherworld's yin and keep it. It carries "
+						+ "your ghost path through Qi Refining, with a deeper ghost qi pool, a ghost's hearts, and longer among the dead for the living.";
 				case GHOST_FIRE_SCRIPTURE -> "Cold fire drawn out of yin, that burns the dead worst of all. A ghost's blows strike harder.";
 				case WANDERING_SOUL_STEPS -> "How the dead drift where the wind goes. A ghost moves swifter.";
+				case YELLOW_SPRINGS_MARROW -> "The second foundation: steep the bones in the Yellow Springs' waters until the marrow runs with yin. "
+						+ "It carries your ghost path from Qi Refining through Foundation Building.";
+				case GHOST_CORE_CANON -> "The third foundation, the Ghost Kings' own: gather the yin into a core of cold fire. It carries your "
+						+ "ghost path from Qi Refining through Core Formation, where the dead are kings.";
+				case NINE_NETHER_SOUL_SUTRA -> "The fourth foundation, out of the depths of the Nine Nethers: a soul born again of yin. It carries "
+						+ "your ghost path from Qi Refining through Nascent Soul.";
+				case YAMA_JUDGEMENT -> "The fifth foundation, the Judges' own: weigh souls as the courts of the underworld weigh them. It carries "
+						+ "your ghost path from Qi Refining through Heavenly Being.";
+				case SIX_PATHS_CANON -> "The last foundation, the law of the Wheel itself: the six paths of rebirth turn within you. It carries "
+						+ "your ghost path from Qi Refining all the way through Four Axis.";
 			});
 			t.add(ModLang.methodKey(method.getId()) + ".gains", switch (method) {
-				case NETHERWORLD_BREATHING -> "Layer 3: Ghost Eye. Layer 5: Ghostly Wail. Layer 6: Netherworld Veil. Every layer: +20 ghost qi.";
+				case NETHERWORLD_BREATHING -> "Qi Refining: layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection. Layer 3: Ghost Eye. Layer 5: Ghostly "
+						+ "Wail. Layer 6: Netherworld Veil. Every layer: +20 ghost qi.";
 				case GHOST_FIRE_SCRIPTURE -> "Layer 1: Ghost Fire. Layer 4: Ghost Fire Bolt. Layer 7: the fire leaps to a second foe. Every layer: a ghost's blows +10%.";
 				case WANDERING_SOUL_STEPS -> "Layer 1: Yin Wind Steps. Layer 2: Soul Dash. Layer 4: Ghost Flight (the dead). Every layer: a ghost +3% speed.";
+				case YELLOW_SPRINGS_MARROW -> "Qi Refining to Foundation Building, nine layers each: of each realm's nine, layer 1 Early, 3 Mid, 6 "
+						+ "Late, 9 Grand Perfection. Layer 12: Yellow Springs Tide. Layer 16: Marrow Ward. Every layer: +20 ghost qi.";
+				case GHOST_CORE_CANON -> "Qi Refining to Core Formation, nine layers each: of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 "
+						+ "Grand Perfection. Layer 21: Ghost Core Burst. Layer 25: King's Decree. Every layer: +20 ghost qi.";
+				case NINE_NETHER_SOUL_SUTRA -> "Qi Refining to Nascent Soul, nine layers each: of each realm's nine, layer 1 Early, 3 Mid, 6 Late, "
+						+ "9 Grand Perfection. Layer 30: Soul Rend. Layer 34: Nine Nether Step. Every layer: +20 ghost qi.";
+				case YAMA_JUDGEMENT -> "Qi Refining to Heavenly Being, nine layers each: of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 "
+						+ "Grand Perfection. Layer 39: Yama's Verdict. Layer 43: Chains of Hell. Every layer: +20 ghost qi.";
+				case SIX_PATHS_CANON -> "Qi Refining to Four Axis, nine layers each: of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand "
+						+ "Perfection. Layer 48: Wheel of Samsara. Layer 52: Six Paths Annihilation. Every layer: +20 ghost qi.";
 			});
 		}
 		for (Spell spell : Spell.values()) {
+			if (spell.isHeaven()) continue; // the heaven methods' are with HeavenLangText
 			t.add(ModLang.spellKey(spell.getId()), switch (spell) {
 				case GHOST_FIRE -> "Ghost Fire";
 				case GHOST_FIRE_BOLT -> "Ghost Fire Bolt";
 				case SOUL_DASH -> "Soul Dash";
 				case GHOSTLY_WAIL -> "Ghostly Wail";
+				case YELLOW_SPRINGS_TIDE -> "Yellow Springs Tide";
+				case MARROW_WARD -> "Marrow Ward";
+				case GHOST_CORE_BURST -> "Ghost Core Burst";
+				case KINGS_DECREE -> "King's Decree";
+				case SOUL_REND -> "Soul Rend";
+				case NINE_NETHER_STEP -> "Nine Nether Step";
+				case YAMA_VERDICT -> "Yama's Verdict";
+				case HELL_CHAINS -> "Chains of Hell";
+				case SAMSARA_WHEEL -> "Wheel of Samsara";
+				case SIX_PATHS_ANNIHILATION -> "Six Paths Annihilation";
+				case YIN_YANG_PALM -> "Yin-Yang Palm";
+				case TAIJI_SHIELD -> "Taiji Shield";
+				case LIFE_DEATH_SEAL -> "Life and Death Seal";
+				case HEAVEN_HELL_PILLAR -> "Heaven and Hell Pillar";
+				case PRIMORDIAL_CHAOS -> "Primordial Chaos";
+				default -> throw new IllegalStateException(spell.getId()); // a heaven spell: skipped above
 			});
 			t.add(ModLang.spellKey(spell.getId()) + ".description", switch (spell) {
 				case GHOST_FIRE -> "Wreathe your hands in cold fire: your next 3 blows within 20 seconds set what they strike burning (3 ghost qi each). "
@@ -329,13 +398,69 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case GHOST_FIRE_BOLT -> "Throw a bolt of ghost fire up to 24 blocks: it strikes the first being in its path and sets it burning.";
 				case SOUL_DASH -> "Rush forward on the yin wind, about eight blocks. Falls do you no harm for a moment after.";
 				case GHOSTLY_WAIL -> "A cry of the dead: everything within 8 blocks is driven back, slowed and weakened, and the dead are torn at.";
+				case YELLOW_SPRINGS_TIDE -> "A surge of the Yellow Springs' water rushes 7 blocks ahead: all it reaches is driven back and slowed, "
+						+ "and the dead take 3 hearts.";
+				case MARROW_WARD -> "Your bones hold like iron for 10 seconds: Resistance II and 4 hearts of absorption.";
+				case GHOST_CORE_BURST -> "Your core flares: everything within 5 blocks takes 4 hearts of ghostly harm, is thrown back and set "
+						+ "burning with ghost fire.";
+				case KINGS_DECREE -> "A Ghost King's word: every foe within 16 blocks is weakened, slowed and shown glowing for 8 seconds.";
+				case SOUL_REND -> "A beam of the Nine Nethers' dark, 32 blocks: every being in its line takes 8 hearts of ghostly harm.";
+				case NINE_NETHER_STEP -> "Step through the dark to where you look, up to 24 blocks, short of any wall. Falls do you no harm for a "
+						+ "moment after.";
+				case YAMA_VERDICT -> "Judge the being you look at, up to 32 blocks: 10 hearts of ghostly harm, twice that if it is below half "
+						+ "its health.";
+				case HELL_CHAINS -> "Chains drag every foe within 12 blocks to you and hold them fast for 3 seconds.";
+				case SAMSARA_WHEEL -> "The six paths turn: your health is made whole, your harmful effects are gone, and half your yin "
+						+ "corruption with them.";
+				case SIX_PATHS_ANNIHILATION -> "Six pillars of cold fire rise round you: everything within 12 blocks takes 20 hearts of ghostly "
+						+ "harm and is hurled away.";
+				case YIN_YANG_PALM -> "A spell of both paths. A palm of light and shadow strikes the first being within 16 blocks: 5 hearts of "
+						+ "harm, living or dead, and it is thrown back. A quarter of the harm mends you.";
+				case TAIJI_SHIELD -> "A spell of both paths. Light and dark turn round you for 10 seconds: arrows and fireballs shot at you are "
+						+ "turned back on whoever shot them, and you have Resistance I.";
+				case LIFE_DEATH_SEAL -> "A spell of both paths. Seal the being you look at, up to 32 blocks: for 8 seconds it loses 2 hearts a "
+						+ "second, living or dead, and half of it comes to you. It is slowed while sealed.";
+				case HEAVEN_HELL_PILLAR -> "A spell of both paths. Where you look, up to 32 blocks, heaven's light falls and hell's fire rises: "
+						+ "everything within 5 blocks takes 15 hearts of harm, is thrown up and set burning.";
+				case PRIMORDIAL_CHAOS -> "A spell of both paths, made one again. Everything within 16 blocks is dragged in and takes 25 hearts of "
+						+ "harm; a tenth of all of it mends you, and you have Strength II for 10 seconds.";
+				default -> throw new IllegalStateException(spell.getId()); // a heaven spell: skipped above
 			});
 		}
+		t.add(ModLang.SPELLS_COST_BOTH, "%s qi and %s ghost qi");
+		t.add(ModLang.SPELLS_QI_COST, "%s qi");
+		t.add(ModLang.SPELLS_LOCKED_BOTH, "Both paths at %s");
+		t.add(ModLang.MSG_SPELL_NO_BOTH, "Not enough qi for %s: a spell of both paths draws on your qi and your ghost qi.");
+		t.add(ModLang.MSG_SPELL_BOTH_PATHS, "Your heaven path and your ghost path meet at %s: you can cast %s.");
+		t.add(ModLang.STATS_GHOST_BODY, "Ghost path: %s");
+		t.add(ModLang.STATS_HARMONY, ", harmony +%s%%");
+		t.add(ModLang.TWO_PATHS_LINE, "Ghost path: %s (harmony +%s%%)");
+		t.add(ModLang.FORM_PREFIX + "human", "human form");
+		t.add(ModLang.FORM_PREFIX + "ghost_king", "Ghost King form");
+		t.add(ModLang.MSG_FORMS_OPEN, "Your ghost path has reached Core Formation: beside your human form you have a Ghost King's. Your true "
+				+ "form is the form of your higher path, now your %s; Form Shift (Abilities) takes the other. In a Ghost King's form, only "
+				+ "those who perceive souls see you outside the Netherworld.");
+		t.add(ModLang.MSG_FORMS_OPEN_DEAD, "Your ghost path has reached Core Formation: a Ghost King's form is yours. The dead are what they "
+				+ "are; when you live again, Form Shift (Abilities) will let you take it.");
+		t.add(ModLang.MSG_METHOD_MERIDIANS, "Your meridians are sealed: the ghost path, like the heaven path, opens only once a Marrow "
+				+ "Cleansing Elixir has opened them.");
+		t.add(ModLang.MSG_METHOD_MERIDIANS_DEAD, "Your meridians were never opened in life: the ghost path, like the heaven path, waits on a "
+				+ "Marrow Cleansing Elixir. The dead can drink one too, at Mortal Peak (fighting and running temper a ghost as they do the "
+				+ "living).");
+		t.add(ModLang.MSG_TRUE_FORM, "Your true form is now your %s.");
+		t.add(ModLang.MSG_FORM_TAKEN, "You take your %s.");
+		t.add(ModLang.JOURNAL_FORMS, "Two forms");
+		t.add(ModLang.JOURNAL_FORMS_TEXT, "My ghost path reached Core Formation, and I found a second form in me: a Ghost King's, crowned in "
+				+ "soul fire. While I live, the form of whichever path stands higher is my true one, and the other I can take at will "
+				+ "(Form Shift); in the Ghost King's, outside the Netherworld only those who perceive souls see me. In death I am simply "
+				+ "one of the dead.");
 		t.add(ModLang.KEY_SPELL_WHEEL, "Spell Wheel (hold)");
 		t.add(ModLang.KEY_CAST_SPELL, "Cast Readied Spell");
 		t.add(ModLang.MSG_METHOD_LEARNED, "You have learned the first layer of the %s.");
+		t.add(ModLang.MSG_METHOD_LEARNED_AT, "You have learned the %s. Your ghost path already stands this deep: you take it up at its layer %s.");
 		t.add(ModLang.MSG_METHOD_LAYER, "%s: layer %s reached.");
-		t.add(ModLang.MSG_METHOD_CAPPED, "The ghostly qi here is too thin to carry your method past its third layer. Only the Netherworld's can.");
+		t.add(ModLang.MSG_METHOD_REALM_CAPPED, "Your ghost path can carry the %s no further than its layer %s. Take your ghost path to %s to go on.");
+		t.add(ModLang.MSG_METHOD_FLOOR, "The %s carries your ghost path to %s.");
 		t.add(ModLang.MSG_METHOD_PRACTISED, "Your meditation now cultivates the %s.");
 		t.add(ModLang.MSG_GHOST_NO_METHOD, "The dead cultivate only the ghost methods. Learn one at a Method Stele first.");
 		t.add(ModLang.MSG_GHOST_QI_SPENT, "Your ghost qi is spent. Your ghostly arts fade.");
@@ -344,7 +469,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_STELE_READING, "You read the %s carved in the stele...");
 		t.add(ModLang.MSG_SLIP_KNOWN, "You already know the %s.");
 		t.add(ModLang.ITEM_GHOST_JADE_SLIP_OF, "Ghost Jade Slip: %s");
-		t.add(ModLang.TOOLTIP_GHOST_JADE_SLIP, "Read it to learn the method's first layer");
+		t.add(ModLang.TOOLTIP_GHOST_JADE_SLIP, "Read it to learn the method");
 		t.add(ModItems.GHOST_JADE_SLIP, "Ghost Jade Slip");
 		t.add(ModBlocks.METHOD_STELE, "Method Stele");
 		t.add(ModEffects.GHOST_FIRE, "Ghost Fire");
@@ -356,12 +481,20 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_GHOST_FIRE_ARMED, "Ghost fire wreathes your hands: your next %s blows set what they strike burning.");
 		t.add(ModLang.METHODS_KNOWN, "%s of %s methods known");
 		t.add(ModLang.METHODS_LAYER, "Layer %s of %s");
+		t.add(ModLang.METHODS_LAYER_REALM, "Layer %s of %s: %s, %s of 9");
 		t.add(ModLang.METHODS_PERFECTED, "Perfected");
 		t.add(ModLang.METHODS_PROGRESS, "%s%% to the next layer");
 		t.add(ModLang.METHODS_RATE, "Meditating here, the %s's next layer comes in about %s min.");
-		t.add(ModLang.METHODS_NO_QI, "There is no ghostly qi here to cultivate with. Meditate in the Netherworld, or in the Nether.");
+		t.add(ModLang.METHODS_NO_QI, "There is no ghostly qi here to cultivate with. Meditate in the Nether, or ten times as fast in the Netherworld.");
 		t.add(ModLang.BTN_SPELL_LIST, "Spell List");
-		t.add(ModLang.METHODS_CAPPED, "Held at the third layer: only the Netherworld's ghostly qi carries a method further.");
+		t.add(ModLang.METHODS_REALM_CAPPED, "Held at layer %s: your ghost path must reach %s to cultivate it further.");
+		t.add(ModLang.METHODS_FLOOR_NEXT, "Layer %s of the %s carries your ghost path to %s.");
+		t.add(ModLang.METHODS_SEEK_NEXT, "The %s is perfected. Only a foundation that goes further, the %s or one beyond it, carries your "
+				+ "ghost path on: seek it out.");
+		t.add(ModLang.METHODS_GHOST_PATH, "Ghost path: %s");
+		t.add(ModLang.METHODS_GHOST_PATH_NONE, "Ghost path: not yet begun");
+		t.add(ModLang.METHODS_GHOST_PATH_SEALED, "Ghost path: sealed, your meridians not yet opened (a Marrow Cleansing Elixir)");
+		t.add(ModLang.METHODS_UNKNOWN_DEEP, "Unknown method. It is seldom carved in stone, and seldom taught.");
 		t.add(ModLang.METHODS_ACTIVE, "Practising");
 		t.add(ModLang.METHODS_UNKNOWN, "Unknown method. Its stele stands somewhere in the Netherworld.");
 		t.add(ModLang.METHODS_GAINS, "What its layers bring");
@@ -369,6 +502,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.SPELLS_COST, "%s ghost qi");
 		t.add(ModLang.SPELLS_COOLDOWN, "%s s cooldown");
 		t.add(ModLang.SPELLS_LOCKED, "%s, layer %s");
+		t.add(ModLang.SPELLS_LOCKED_REALM, "%s, layer %s (%s, %s of 9)");
+		t.add(ModLang.SPELLS_LOCKED_STAGE, "...and your cultivation at %s");
 		t.add(ModLang.SPELLS_READY, "Ready");
 		t.add(ModLang.SPELLS_READIED, "Readied");
 		t.add(ModLang.SPELLS_COOLING, "Ready in %s s");
@@ -376,8 +511,73 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.SPELLS_ARRANGE_HINT, "Drag a spell onto a slot of the wheel. Drag a slot off the wheel, or right-click it, to empty it. Hold %s for the wheel, press %s to cast.");
 		t.add(ModLang.SPELL_WHEEL_TITLE, "Spell Wheel");
 		t.add(ModLang.SPELL_WHEEL_HINT, "Click: ready (cast with %s). Right-click: cast now.");
-		t.add(ModLang.SPELL_WHEEL_EMPTY, "No spells on the wheel yet. Learn them from the ghost methods.");
+		t.add(ModLang.SPELL_WHEEL_EMPTY, "No spells on the wheel yet. Learn them from the heaven or ghost methods.");
 		t.add(ModLang.HUD_READIED_SPELL, "Spell: %s");
+		// The heaven methods (the names, lore, gains and spells are with HeavenMethodText)
+		for (QiElement element : QiElement.five()) {
+			t.add(ModLang.ELEMENT_PREFIX + element.name().toLowerCase(java.util.Locale.ROOT), switch (element) {
+				case WOOD -> "Wood";
+				case WATER -> "Water";
+				case FIRE -> "Fire";
+				case EARTH -> "Earth";
+				default -> "Metal";
+			});
+		}
+		// The five passives (HeavenPassives): each one's name, and its amount on the Methods tab
+		for (QiElement element : QiElement.five()) {
+			t.add(ModLang.passiveKey(element), switch (element) {
+				case WOOD -> "Evergreen Vitality";
+				case WATER -> "Ceaseless Flow";
+				case FIRE -> "Fury of the Fanned Flame";
+				case EARTH -> "Unshaken Mountain Body";
+				default -> "Whetted Edge";
+			});
+			t.add(ModLang.passiveKey(element) + ".amount", switch (element) {
+				case WOOD -> "%s health regained each second";
+				case WATER -> "+%s qi regained each second";
+				case FIRE -> "+%s%% attack speed";
+				case EARTH -> "%s%% less harm taken";
+				default -> "+%s melee harm";
+			});
+		}
+		t.add(ModLang.MSG_HEAVEN_METHOD_MERIDIANS, "Your meridians are sealed: no heaven method takes hold until a Marrow Cleansing Elixir has opened them.");
+		t.add(ModLang.MSG_HEAVEN_METHOD_DEAD, "The heaven methods are the living's. The dead cultivate the ghost methods alone.");
+		t.add(ModLang.MSG_HEAVEN_LEARNED, "You have learned the first layer of the %s.");
+		t.add(ModLang.MSG_HEAVEN_LEARNED_AT, "You have learned the %s. Your methods of its element already run this deep: you take it up at its layer %s.");
+		t.add(ModLang.MSG_HEAVEN_PRACTISED, "Your meditation now cultivates the %s.");
+		t.add(ModLang.MSG_HEAVEN_LAYER, "%s: layer %s reached.");
+		t.add(ModLang.HEAVEN_GATE_LAYER, "Your cultivation waits on your heaven method: complete its layer %s to step into %s.");
+		t.add(ModLang.HEAVEN_GATE_NONE, "Your cultivation waits on a heaven method: none you know carries it into %s. Find one that does at a Dao Stele or in a Jade Slip.");
+		t.add(ModLang.JOURNAL_HEAVEN_METHOD, "A heaven method");
+		t.add(ModLang.JOURNAL_HEAVEN_METHOD_TEXT, "I learned the %s, a method of %s qi. %s");
+		t.add(ModLang.MSG_SPELL_NO_HEAVEN_QI, "Not enough qi for %s.");
+		t.add(ModLang.MSG_SPELL_NO_HOLD, "Nothing there for the spell to take hold of.");
+		t.add(ModLang.MSG_SPRING_DRY, "The spring has run dry.");
+		t.add(ModLang.MSG_NO_REFLECTION, "No reflection answers.");
+		t.add(ModLang.MSG_NO_SKY, "There is no open sky above you.");
+		t.add(ModLang.MSG_DAO_STELE_TEACHES, "This stele holds the %s (%s, to %s). Meditate beside it to learn it.");
+		t.add(ModLang.MSG_DAO_STELE_KNOWN, "This stele holds the %s (%s, to %s), which you know. Meditating beside a stele of its element while you practise it is faster.");
+		t.add(ModLang.MSG_DAO_STELE_READING, "You read the %s carved in the stele...");
+		t.add(ModLang.ITEM_JADE_SLIP_OF, "Jade Slip: %s");
+		t.add(ModLang.TOOLTIP_JADE_SLIP, "Read it to learn the method");
+		t.add(ModLang.TOOLTIP_JADE_SLIP_ELEMENT, "A %s method, to %s");
+		t.add(ModItems.JADE_SLIP, "Jade Slip");
+		t.add(ModBlocks.DAO_STELE, "Dao Stele");
+		t.add(ModLang.METHODS_PAGE_GHOST, "Ghost Path");
+		t.add(ModLang.METHODS_PAGE_HEAVEN, "Heaven Path");
+		t.add(ModLang.METHODS_HEAVEN_KNOWN, "%s of %s heaven methods known");
+		t.add(ModLang.METHODS_HEAVEN_EMPTY, "No heaven methods learned yet.");
+		t.add(ModLang.METHODS_HEAVEN_HINT, "Without one your cultivation goes no further than Qi Refining Early. Dao Steles stand where an element's qi runs thick; cultivators carry jade slips; a sect's elders teach its element.");
+		t.add(ModLang.METHODS_HEAVEN_DEAD, "The heaven methods are the living's: the dead cultivate the ghost methods alone.");
+		t.add(ModLang.METHODS_HEAVEN_SEALED, "Heaven methods: sealed, your meridians not yet opened (a Marrow Cleansing Elixir)");
+		t.add(ModLang.METHODS_HEAVEN_RATE, "Meditating here, the %s's next layer comes in about %s min.");
+		t.add(ModLang.METHODS_HEAVEN_SHARE, "%s qi here: %s%% of all (x%s)");
+		t.add(ModLang.METHODS_HEAVEN_REACH, "Your heaven methods carry your cultivation to %s.");
+		t.add(ModLang.METHODS_HEAVEN_UNKNOWN, "%s of the %s %s methods unknown. Their Dao Steles stand where their qi runs thick; the deepest are "
+				+ "seldom carved outside the Upper Realm.");
+		t.add(ModLang.METHODS_HEAVEN_PASSIVE, "%s: %s");
+		t.add(ModLang.TALK_TEACH_HEAVEN, "Then listen. This is the %s, as my teachers gave it to me... Sit with it where %s qi runs thick.");
+		t.add(ModLang.TALK_TEACH_HEAVEN_PROGRESS, "Your %s, then. Here, where you falter... (%s minutes' progress)");
 		t.add(ModLang.STATS_HEADER, "Stats (cultivation bonus in brackets)");
 		t.add(ModLang.STAT_HEALTH, "Max Health: %s (%s)");
 		t.add(ModLang.STAT_DAMAGE, "Attack Damage: %s (%s)");
@@ -493,6 +693,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_MORTAL_MEDITATE, "Your meridians are sealed. You can't gather qi yet.");
 		t.add(ModLang.MSG_NEED_PILL, "Need a %s to enter %s. Eat it here, then break through.");
 		t.add(ModLang.MSG_AWAKENED, "Your meridians open. You begin cultivating: %s!");
+		t.add(ModLang.MSG_AWAKENED_DEAD, "Your meridians open, even in death. The ghost path is yours to walk now; the heaven path waits until "
+				+ "you live again.");
 		t.add(ModLang.MSG_ALREADY_AWAKENED, "Your meridians are already open.");
 		t.add(ModLang.MSG_PILL_PREPARED, "%s absorbed. The way into %s is open (+%s%% head start).");
 		t.add(ModLang.MSG_PILL_WRONG_TIME, "This pill is only of use at %s.");
@@ -581,14 +783,14 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_SOUP, "You drink Meng Po's soup. The past grows faint; your next life will begin clean of medicinal toxicity.");
 		t.add(ModLang.MSG_SOUP_AGAIN, "You have drunk the soup already. One bowl is enough to forget.");
 		t.add(ModLang.MSG_SOUP_LIVING, "Meng Po's soup is for the dead.");
-		t.add(ModLang.TALK_TEACH_LEARN, "Listen, then. This is the first layer of the %s... Sit with it, and it will come to you.");
+		t.add(ModLang.TALK_TEACH_LEARN, "Listen, then. This is the %s... Sit with it, and it will come to you.");
 		t.add(ModLang.TALK_TEACH_PROGRESS, "You know the %s already. Here: this is how I breathe it. (%s minutes' progress.)");
 		t.add(ModLang.MSG_TERRACE, "From the top of the Terrace for Gazing Homeward you see, far off, %s.");
 		t.add(ModLang.TERRACE_PLACE, "the place you died: %s, near %s, %s, %s");
 		t.add(ModLang.JOURNAL_TERRACE, "The Terrace for Gazing Homeward");
 		t.add(ModLang.JOURNAL_TERRACE_TEXT, "I looked homeward, and saw %s.");
 		t.add(ModLang.JOURNAL_METHOD, "A ghost method");
-		t.add(ModLang.JOURNAL_METHOD_TEXT, "I learned the first layer of the %s. %s");
+		t.add(ModLang.JOURNAL_METHOD_TEXT, "I learned the %s. %s");
 		t.add(ModLang.DIMENSION_OVERWORLD, "the Overworld");
 		t.add(ModLang.DIMENSION_NETHER, "the Nether");
 		t.add(ModLang.DIMENSION_END, "the End");
@@ -635,6 +837,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case GHOST_ELDER -> "Ghost Elder";
 				case GATE_WARDEN -> "Gate Warden";
 				case BRIDGE_KEEPER -> "Keeper of the Naihe Bridge";
+				case GHOST_KING -> "Ghost King";
+				case GHOST_RETAINER -> "Ghost Retainer";
 			});
 		}
 		t.add(ModLang.NPC_TITLE_BRACKETS, "[%s]");
@@ -756,6 +960,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add("cultivation.defying-the-heavens.talk.path.righteous", "righteous");
 		t.add("cultivation.defying-the-heavens.talk.pick", "Click, or press 1-%s");
 		t.add("cultivation.defying-the-heavens.talk.possessed", "%s doesn't seem to hear you.");
+		t.add(ModLang.TALK_UNSEEN, "%s looks straight through you, as if nobody were there.");
 		// Talk phases 2-4 (TalkSystem, SparSystem, Rumours, CultivatorTrades) and spirit stones (SpiritStoneItem)
 		t.add("cultivation.defying-the-heavens.talk.interrupted", "The blow breaks off your talk with %s.");
 		t.add("cultivation.defying-the-heavens.talk.intent.spar", "Spar");
@@ -887,6 +1092,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add("cultivation.defying-the-heavens.talk.topic.people", "Who leads it?");
 		t.add("cultivation.defying-the-heavens.talk.topic.sect", "Tell me about your sect.");
 		t.add("cultivation.defying-the-heavens.talk.topic.self", "Who are you?");
+		t.add("cultivation.defying-the-heavens.talk.topic.method", "Will you teach me your method?");
 		t.add(ModLang.MSG_SECLUSION_REPULSE, "A concealment barrier pushes you back. Disturbing a secluded cultivator would be unwise.");
 
 		// Cultivator clothing
@@ -1045,9 +1251,9 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.FAVOUR_LINE, "Heaven's Favour: +%s%%");
 		t.add(ModLang.RITUAL_AHEAD, "Before Qi Refining Late: the Ritual to the Heavens.");
 		t.add(ModLang.RITUAL_GATE, "Your cultivation is full. The heavens must grant you permission to cultivate further.");
-		t.add(ModLang.RITUAL_HOW, "Build a Heaven Altar under open sky, lay offerings on it, then sneak and right-click it empty-handed and kneel there, still, for three minutes.");
+		t.add(ModLang.RITUAL_HOW, "Build a Heaven Altar under open sky, lay offerings on it, then sneak and right-click it empty-handed and kneel there, still, for fifteen seconds.");
 		t.add(ModLang.MSG_RITUAL_GATE, "Your cultivation at Qi Refining Mid is full. You may go no further until the heavens grant you permission to cultivate: perform the Ritual to the Heavens at a Heaven Altar.");
-		t.add(ModLang.MSG_RITUAL_BEGIN, "The offering rises as smoke (%1$s, chance %2$s). Kneel before the heavens, still, for three minutes...");
+		t.add(ModLang.MSG_RITUAL_BEGIN, "The offering rises as smoke (%1$s, chance %2$s). Kneel before the heavens, still, for fifteen seconds...");
 		t.add(ModLang.MSG_RITUAL_NOT_NOW, "The heavens have nothing to grant you now.");
 		t.add(ModLang.MSG_RITUAL_DAWN, "The heavens will not hear you again until dawn.");
 		t.add(ModLang.MSG_RITUAL_ALTAR_BUSY, "Someone is already praying at this altar.");

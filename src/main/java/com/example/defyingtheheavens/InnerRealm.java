@@ -174,7 +174,7 @@ public final class InnerRealm {
 		// Not from a passage, nor from the Netherworld, where the heavens don't see (the soul's own realm is heaven-made).
 		return c.isAbilityActive(Ability.INNER_REALM) && !ModDimensions.isInnerRealm(player.level().dimension()) && !SoulProjection.isActive(player.getUUID())
 				&& !ModDimensions.isPassage(player.level().dimension()) && !ModDimensions.isUnseenByHeaven(player.level().dimension())
-				&& !TribulationManager.isActive(player.getUUID()) && !Incorporeal.isRuledGhost(player) // the dead have no body to leave
+				&& !TribulationManager.isActive(player.getUUID()) && !Incorporeal.isGhost(player) // the dead have no body to leave
 				&& player.isAlive() && player.server.getLevel(ModDimensions.INNER_REALM) != null;
 	}
 

@@ -33,7 +33,7 @@ import java.util.List;
  * has awakened an ability ({@link #canOpen}).
  */
 public class AbilityWheelScreen extends Screen {
-	/** How far the slots sit from the centre, their radius, and their icons' size (the 16x16 art at 2x). */
+	/** How far the slots sit from the centre, their radius, and their icons' size (the 32x32 art pixel for pixel). */
 	private static final int RING = 70;
 	private static final int SLOT_RADIUS = 18;
 	private static final int ICON = 32;

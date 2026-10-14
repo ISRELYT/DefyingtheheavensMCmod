@@ -41,12 +41,21 @@ public enum Ability {
 	NETHERWORLD_VEIL("netherworld_veil", false, true, c -> c.netherworld().layer(GhostMethod.NETHERWORLD_BREATHING) >= 6),
 	/** Wandering Soul Steps, first layer: swifter, and falls do no harm. Ghostly qi upkeep. */
 	YIN_WIND_STEPS("yin_wind_steps", false, true, c -> c.netherworld().layer(GhostMethod.WANDERING_SOUL_STEPS) >= 1),
-	/** Wandering Soul Steps, fourth layer: a ghost flies freely, on ghostly qi (never running out in the Netherworld). */
-	GHOST_FLIGHT("ghost_flight", false, true, c -> c.netherworld().ghost() && c.netherworld().layer(GhostMethod.WANDERING_SOUL_STEPS) >= 4);
+	/**
+	 * Wandering Soul Steps, fourth layer: a ghost flies as swiftly as on qi, on ghostly qi (never running out in the Netherworld);
+	 * without it the dead fly only at a drift (QiFlight#GHOST_SPEED).
+	 */
+	GHOST_FLIGHT("ghost_flight", false, true, c -> c.netherworld().ghost() && c.netherworld().layer(GhostMethod.WANDERING_SOUL_STEPS) >= 4),
+	/**
+	 * From a ghost path of Core Formation, for the living (TwoPaths): the other form. One's true form is the higher path's, human
+	 * or a Ghost King's; switched on, the other is shown instead. In a Ghost King's form one is seen as the dead are, outside the
+	 * Netherworld only by those who perceive souls. At no cost.
+	 */
+	FORM_SHIFT("form_shift", false, true, TwoPaths::formsOpen);
 
 	private final String id;
 	private final boolean onByDefault;
-	/** A ghost method's ability: a mortal's ghost may use it too (a living mortal still can't). */
+	/** A ghost method's ability (the ghostly qi pool pays any upkeep it has), not the realm's. */
 	private final boolean ghostly;
 	private final Predicate<PlayerCultivation> unlocked;
 
@@ -67,12 +76,11 @@ public enum Ability {
 	public boolean isGhostly() { return ghostly; }
 
 	/**
-	 * The cultivator has awakened this ability (whether or not it is switched on). A living mortal has none; a mortal's ghost has
-	 * its ghost methods' ones.
+	 * The cultivator has awakened this ability (whether or not it is switched on). A mortal has none, alive or dead: its
+	 * meridians are closed, the realm's abilities and the ghost methods' alike.
 	 */
 	public boolean isUnlocked(PlayerCultivation c) {
-		boolean canHold = !c.isMortal() || ghostly && c.netherworld().ghost();
-		return canHold && unlocked.test(c);
+		return !c.isMortal() && unlocked.test(c);
 	}
 
 	public Component getDisplayName() { return Component.translatable(ModLang.abilityKey(id)); }
@@ -90,6 +98,7 @@ public enum Ability {
 			case NETHERWORLD_VEIL -> Component.translatable(key, Math.round(GhostMethods.VEIL_COST));
 			case YIN_WIND_STEPS -> Component.translatable(key, Math.round(GhostMethods.YIN_WIND_SPEED * 100), Math.round(GhostMethods.YIN_WIND_COST));
 			case GHOST_FLIGHT -> Component.translatable(key, Math.round(GhostMethods.GHOST_FLIGHT_COST));
+			case FORM_SHIFT -> Component.translatable(key, TwoPaths.trueForm(c).getDisplayName(), TwoPaths.trueForm(c).other().getDisplayName());
 			default -> Component.translatable(key);
 		};
 	}

@@ -128,6 +128,7 @@ public class CultivationFruitGameTests implements FabricGameTest {
         try {
             player.getAbilities().instabuild = false;
             PlayerCultivation cultivation = CultivationManager.get(player);
+            TestMethods.carryAll(cultivation); // not waiting on a heaven method, which would take the fruit's qi (HeavenMethods#reach)
             cultivation.setState(Realm.QI_REFINING, Stage.GRAND_PERFECTION, 0);
             cultivation.addCultivation(cultivation.cultivationRequired()); // at the bottleneck
             ItemStack fruit = CultivationFruitItem.create(500);

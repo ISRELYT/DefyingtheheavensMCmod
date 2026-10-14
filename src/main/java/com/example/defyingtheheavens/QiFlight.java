@@ -29,6 +29,8 @@ import java.util.UUID;
 public final class QiFlight {
 	/** After running dry, flight returns (silently) at this fraction of the pool. */
 	public static final double RESUME_FRACTION = 0.05;
+	/** A ghost's own flight, without Ghost Flight: a drift through the air, at this share of Qi Flight's speed. */
+	public static final float GHOST_SPEED = SwordFlight.QI_FLIGHT_SPEED * 0.6f;
 
 	/** Players whose qi ran dry in flight and who haven't gathered back to {@link #RESUME_FRACTION} yet. */
 	private static final Set<UUID> EXHAUSTED = new HashSet<>();
@@ -86,12 +88,13 @@ public final class QiFlight {
 			setFlight(p, p.getAbilities().mayfly, SwordFlight.QI_FLIGHT_SPEED);
 			return 0;
 		}
-		// A ghost flies on no qi and no sword: only on its own method's flight (Wandering Soul Steps), paid for in ghostly qi
-		// (NetherworldManager), never on the Soul River, nor while a Ghost-Quelling Talisman binds it (QuelledEffect).
-		if (Incorporeal.isRuledGhost(p)) {
+		// A ghost flies on no qi and no sword: the dead need no ground, and drift through the air at {@link #GHOST_SPEED}; on its
+		// method's flight (Wandering Soul Steps' Ghost Flight, paid for in ghostly qi: NetherworldManager) as fast as Qi Flight.
+		// Never on the Soul River, nor while a Ghost-Quelling Talisman binds it (QuelledEffect).
+		if (Incorporeal.isGhost(p)) {
 			SwordFlight.update(p, false);
-			if (c.isAbilityActive(Ability.GHOST_FLIGHT) && !ModDimensions.isPassage(p.level().dimension()) && !p.hasEffect(ModEffects.QUELLED))
-				setFlight(p, true, SwordFlight.QI_FLIGHT_SPEED);
+			if (!ModDimensions.isPassage(p.level().dimension()) && !p.hasEffect(ModEffects.QUELLED))
+				setFlight(p, true, c.isAbilityActive(Ability.GHOST_FLIGHT) ? SwordFlight.QI_FLIGHT_SPEED : GHOST_SPEED);
 			else land(p);
 			return 0;
 		}
@@ -154,7 +157,7 @@ public final class QiFlight {
 	private static void setFlight(ServerPlayer p, boolean mayFly, float speed) {
 		Abilities abilities = p.getAbilities();
 		float current = abilities.getFlyingSpeed();
-		boolean ours = current == SwordFlight.QI_FLIGHT_SPEED || current == SwordFlight.SWORD_SPEED;
+		boolean ours = current == SwordFlight.QI_FLIGHT_SPEED || current == SwordFlight.SWORD_SPEED || current == GHOST_SPEED;
 		boolean speedChanges = ours && current != speed;
 		if (abilities.mayfly == mayFly && (mayFly || !abilities.flying) && !speedChanges) return;
 		abilities.mayfly = mayFly;

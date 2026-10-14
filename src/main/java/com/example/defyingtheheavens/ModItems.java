@@ -80,8 +80,10 @@ public final class ModItems {
 	/** Painted with the brush: thrown, it strikes one of the dead and binds it where it stands (see GhostQuellingTalismanItem). */
 	public static final Item GHOST_QUELLING_TALISMAN = register("ghost_quelling_talisman",
 			new GhostQuellingTalismanItem(new Item.Properties().stacksTo(16)));
-	/** Holds a ghost method; read, it teaches the first layer, and isn't used up (see GhostJadeSlipItem). */
+	/** Holds a ghost method; read, it teaches it, and isn't used up (see GhostJadeSlipItem). */
 	public static final Item GHOST_JADE_SLIP = register("ghost_jade_slip", new GhostJadeSlipItem(new Item.Properties().stacksTo(1)));
+	/** Holds a heaven method; read, it teaches it, and isn't used up (see JadeSlipItem). */
+	public static final Item JADE_SLIP = register("jade_slip", new JadeSlipItem(new Item.Properties().stacksTo(1)));
 	/** The exorcist's weapon: a stone sword to the living, every blow landing twice over on the dead (see PeachWoodSwordItem). */
 	public static final Item PEACH_WOOD_SWORD = register("peach_wood_sword", new PeachWoodSwordItem(new Item.Properties()));
 	public static final Item CULTIVATOR_SPAWN_EGG = register("cultivator_spawn_egg",

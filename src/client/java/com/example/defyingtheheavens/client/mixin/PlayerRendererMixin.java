@@ -1,6 +1,6 @@
 package com.example.defyingtheheavens.client.mixin;
 
-import com.example.defyingtheheavens.GhostSystem;
+import com.example.defyingtheheavens.client.ClientGhosts;
 import com.example.defyingtheheavens.client.SoulRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.geom.ModelPart;
@@ -14,7 +14,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * A ghost's own hand in first person (empty-handed, or holding a map) is the dead's cyan light, as the rest of it is to everyone
- * else (SoulRenderer#drawGhostArm): drawn once the model is posed for the hand, in place of the skin.
+ * else (SoulRenderer#drawGhostArm): drawn once the model is posed for the hand, in place of the skin. It goes by the look
+ * (ClientGhosts#drawnAsLight): the living in a Ghost King's form too, the dead in a human form not.
  */
 @Mixin(PlayerRenderer.class)
 public abstract class PlayerRendererMixin {
@@ -23,7 +24,7 @@ public abstract class PlayerRendererMixin {
 			shift = At.Shift.AFTER), cancellable = true)
 	private void dth$ghostlyHand(PoseStack pose, MultiBufferSource buffers, int light, AbstractClientPlayer player, ModelPart arm,
 								 ModelPart sleeve, CallbackInfo ci) {
-		if (!GhostSystem.isGhost(player)) return;
+		if (!ClientGhosts.drawnAsLight(player)) return; // a form is a look: a Ghost King's form's hand too, a human form's not
 		SoulRenderer.drawGhostArm(pose, buffers, player.getSkinTextureLocation(), arm, sleeve, light);
 		ci.cancel();
 	}

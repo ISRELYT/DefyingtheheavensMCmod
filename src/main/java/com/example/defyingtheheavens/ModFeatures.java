@@ -60,6 +60,9 @@ public final class ModFeatures {
 	/** A Method Stele on its plinth, teaching a ghost method (see MethodSteleFeature). */
 	public static final Feature<NoneFeatureConfiguration> METHOD_STELE = Registry.register(BuiltInRegistries.FEATURE,
 			DefyingTheHeavens.id("method_stele"), new MethodSteleFeature());
+	/** A Dao Stele on its plinth, teaching a heaven method (see DaoSteleFeature). */
+	public static final Feature<NoneFeatureConfiguration> DAO_STELE = Registry.register(BuiltInRegistries.FEATURE,
+			DefyingTheHeavens.id("dao_stele"), new DaoSteleFeature());
 
 	/**
 	 * Touching this class registers the feature types. Also appends wild Cultivation Fruit to the end of vegetal
@@ -73,6 +76,10 @@ public final class ModFeatures {
 				GenerationStep.Decoration.VEGETAL_DECORATION, ModPlacedFeatures.CULTIVATION_FRUIT);
 		BiomeModifications.addFeature(BiomeSelectors.tag(ModTags.IS_UPPER_REALM),
 				GenerationStep.Decoration.VEGETAL_DECORATION, ModPlacedFeatures.CULTIVATION_FRUIT_UPPER_REALM);
+		// Dao Steles, teaching the heaven methods: across the Overworld and, more often, the Upper Realm (not its Spatial Gap).
+		BiomeModifications.addFeature(BiomeSelectors.foundInOverworld(), GenerationStep.Decoration.SURFACE_STRUCTURES, ModPlacedFeatures.DAO_STELE);
+		BiomeModifications.addFeature(BiomeSelectors.tag(ModTags.IS_UPPER_REALM).and(context -> !context.getBiomeKey().equals(ModBiomes.SPATIAL_GAP)),
+				GenerationStep.Decoration.SURFACE_STRUCTURES, ModPlacedFeatures.DAO_STELE_UPPER_REALM);
 
 		// Ginseng grows in the shade of Overworld woods (forests, taiga, jungle) and, more often, all over the Upper Realm.
 		// Spirit Ginseng is far rarer in both.

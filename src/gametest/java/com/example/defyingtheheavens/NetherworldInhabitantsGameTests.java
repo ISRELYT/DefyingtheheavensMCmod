@@ -59,7 +59,8 @@ public class NetherworldInhabitantsGameTests implements FabricGameTest {
 		GhostCultivatorNpc teacher = ghost(helper, Realm.FOUNDATION_BUILDING);
 		GhostCultivatorNpc elder = ghost(helper, Realm.NASCENT_SOUL);
 		helper.assertTrue(young.isGhost() && young instanceof Ghostly && NpcLines.voice(young).equals("ghost"), "One of the dead, speaking as the dead");
-		helper.assertTrue(young.getTitle() == NpcTitle.WANDERING_GHOST && elder.getTitle() == NpcTitle.GHOST_ELDER, "A Wandering Ghost; from Nascent Soul a Ghost Elder");
+		helper.assertTrue(young.getTitle() == NpcTitle.WANDERING_GHOST && teacher.getTitle() == NpcTitle.GHOST_ELDER && elder.getTitle() == NpcTitle.GHOST_KING,
+				"A Wandering Ghost; from Foundation Building a Ghost Elder; from Core Formation a Ghost King");
 		helper.assertTrue(young.method() == null && teacher.method() != null && teacher.method() == teacher.method(),
 				"Below Foundation Building no method; from it one, always the same");
 		helper.assertTrue(young.deathKey().equals(young.deathKey())
@@ -138,15 +139,20 @@ public class NetherworldInhabitantsGameTests implements FabricGameTest {
 			// Its teaching: the first layer of its method, then (another day) ten minutes' progress.
 			GhostMethod method = teacher.method();
 			NetherworldState s = CultivationManager.get(living).netherworld();
+			// Any foundation is taught to one with no ghost path at all: each carries it from Qi Refining.
 			TalkSystem.teach(living, teacher);
-			helper.assertTrue(s.layer(method) == 1, "It teaches its method's first layer");
+			helper.assertTrue(s.layer(method) == 1, "It teaches its method, from the first layer");
 			TalkSystem.teach(living, teacher);
 			helper.assertTrue(s.progress(method) == 0, "...once a day");
 			teacher.regardEntry(living).guidanceDay = -1;
+			int cap = GhostMethods.layerCap(CultivationManager.get(living), method);
 			TalkSystem.teach(living, teacher);
-			// Ten minutes: the first layer's five, and five into the second.
-			helper.assertTrue(s.layer(method) == 2 && Math.abs(s.progress(method) - (TalkSystem.TEACHING_PROGRESS - GhostMethods.layerCost(1))) < 1.0e-9,
-					"Known already: ten minutes' progress (" + s.layer(method) + ", " + s.progress(method) + ")");
+			// Ten minutes: through as many layers as they pay for, as far as the ghost path lets it go.
+			double left = TalkSystem.TEACHING_PROGRESS;
+			int layer = 1;
+			while (left >= GhostMethods.layerCost(method, layer) && layer < cap) left -= GhostMethods.layerCost(method, layer++);
+			helper.assertTrue(s.layer(method) == layer && Math.abs(s.progress(method) - Math.min(left, GhostMethods.layerCost(method, layer))) < 1.0e-9,
+					"Known already: ten minutes' progress (" + method.getId() + ": " + s.layer(method) + ", " + s.progress(method) + ")");
 			// Meng Po's soup: for the dead.
 			GhostGate.drinkSoup(living);
 			helper.assertTrue(!s.memoryCleansed(), "The living are turned away");
@@ -169,6 +175,19 @@ public class NetherworldInhabitantsGameTests implements FabricGameTest {
 				&& ox.hasCustomName(), "Ox-Head: Four Axis Grand Perfection, a Gate Warden, by name");
 		helper.assertTrue(mengPo.getTitle() == NpcTitle.BRIDGE_KEEPER && mengPo.isInvulnerable() && !mengPo.isHostileTo(cultivator(helper, Realm.QI_REFINING)),
 				"Meng Po keeps the bridge, fights nobody, and nobody harms her");
+		// No one's path makes a foe of them: a demonic Heavenly Being once drew Meng Po off her post to cut it down (HostilityGoal).
+		ServerPlayer demon = cultivator(helper, Realm.HEAVENLY_BEING);
+		try {
+			CultivationManager.get(demon).setAlignment(Alignment.MIN);
+			helper.assertTrue(!mengPo.isEnemy(demon) && !ox.isEnemy(demon), "A demonic cultivator passing is no foe of the keepers");
+			ox.setLastHurtByMob(demon);
+			mengPo.setLastHurtByMob(demon);
+			helper.assertTrue(ox.isEnemy(demon) && !mengPo.isEnemy(demon), "Ox-Head fights whoever strikes it; Meng Po not even then");
+			helper.assertTrue(ox.holdsGround() && mengPo.holdsGround() && ox.makesLastStand() && !ghost(helper, Realm.QI_REFINING).holdsGround(),
+					"The keepers never run from their posts; a wandering ghost may");
+		} finally {
+			helper.getLevel().getServer().getPlayerList().remove(demon);
+		}
 		helper.assertTrue(NpcLines.english().containsKey(ModLang.npcSay("warden.greet.1")) && NpcLines.english().containsKey(ModLang.npcSay("warden.warn.1"))
 				&& NpcLines.english().containsKey(ModLang.npcSay("meng_po.call.1")), "Their words, in English");
 		// Saved and loaded: still who they were.
@@ -182,7 +201,7 @@ public class NetherworldInhabitantsGameTests implements FabricGameTest {
 
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void theDeadSellTheirOwnAndTellOfSteles(GameTestHelper helper) {
-		GhostCultivatorNpc elder = ghost(helper, Realm.NASCENT_SOUL);
+		GhostCultivatorNpc elder = ghost(helper, Realm.FOUNDATION_BUILDING); // a Ghost Elder (from Core Formation, a king: its canon isn't sold)
 		GhostCultivatorNpc young = ghost(helper, Realm.QI_REFINING);
 		RandomSource random = RandomSource.create(1);
 		boolean slip = CultivatorTrades.goodsFor(elder, random).stream().anyMatch(g -> g.item().is(ModItems.GHOST_JADE_SLIP));
@@ -263,7 +282,8 @@ public class NetherworldInhabitantsGameTests implements FabricGameTest {
 				"The same soul: its name carries over");
 		helper.assertTrue(ghost.getRank() == living.getRank() && ghost.getAlignment() == living.getAlignment() && ghost.getSkin() == 3,
 				"...its strength, its path, its face");
-		helper.assertTrue(ghost.isGhost() && ghost.getTitle() == NpcTitle.GHOST_ELDER, "...one of the dead now");
+		helper.assertTrue(ghost.isGhost() && ghost.getTitle() == NpcTitle.GHOST_KING && ghost.getRole() == GhostCultivatorNpc.Role.GHOST_KING,
+				"...one of the dead now, and so strong a one a Ghost King");
 		helper.succeed();
 	}
 
@@ -380,8 +400,10 @@ public class NetherworldInhabitantsGameTests implements FabricGameTest {
 					&& Math.abs(keeper.getBbWidth() - 1.8f) < 0.01f && keeper.getEyeHeight() > 4.5f,
 					role.getId() + " is three times a man (" + keeper.getBbWidth() + " x " + keeper.getBbHeight() + ")");
 		}
-		GhostCultivatorNpc plain = ghost(helper, Realm.NASCENT_SOUL);
+		GhostCultivatorNpc plain = ghost(helper, Realm.FOUNDATION_BUILDING);
 		helper.assertTrue(plain.getScale() == 1.0f && Math.abs(plain.getBbHeight() - 1.8f) < 0.01f, "Any other ghost a man's size");
+		GhostCultivatorNpc king = ghost(helper, Realm.NASCENT_SOUL);
+		helper.assertTrue(king.getScale() == GhostCultivatorNpc.KING_SCALE && Math.abs(king.getBbHeight() - 2.7f) < 0.01f, "A Ghost King half again as tall");
 		helper.succeed();
 	}
 

@@ -2,7 +2,6 @@ package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.Ability;
 import com.example.defyingtheheavens.GhostMethod;
-import com.example.defyingtheheavens.GhostSystem;
 import com.example.defyingtheheavens.MethodSteleBlock;
 import com.example.defyingtheheavens.ModBlocks;
 import com.example.defyingtheheavens.ModDimensions;
@@ -96,7 +95,8 @@ public final class GhostEye {
 		float partial = context.tickDelta();
 		RenderSystem.depthFunc(GL11.GL_GREATER); // only where the world is nearer than what's drawn: behind walls
 		for (Player ghost : mc.level.players()) {
-			if (ghost == mc.player || !GhostSystem.isGhost(ghost) || ghost.isInvisible() || ghost.distanceToSqr(mc.player) > RANGE * RANGE) continue;
+			// The dead, and the living in a Ghost King's form: whatever is drawn as the dead's light.
+			if (ghost == mc.player || !ClientGhosts.drawnAsLight(ghost) || ghost.isInvisible() || ghost.distanceToSqr(mc.player) > RANGE * RANGE) continue;
 			SoulRenderer.drawGhostSeen(context, ghost, partial);
 		}
 		if (ghostlyNear) {

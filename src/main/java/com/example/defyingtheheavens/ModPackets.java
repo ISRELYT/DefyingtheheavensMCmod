@@ -117,6 +117,8 @@ public final class ModPackets {
 	public static final ResourceLocation METHODS = new ResourceLocation(DefyingTheHeavens.MOD_ID, "methods");
 	/** C2S: practise this method (its id): meditation cultivates it. */
 	public static final ResourceLocation PRACTISE_METHOD = new ResourceLocation(DefyingTheHeavens.MOD_ID, "practise_method");
+	/** C2S: practise this heaven method (its id): the one meditation cultivates (HeavenMethods#practise). */
+	public static final ResourceLocation PRACTISE_HEAVEN_METHOD = new ResourceLocation(DefyingTheHeavens.MOD_ID, "practise_heaven_method");
 	/** C2S: ready this spell for the cast key (its ordinal plus one; 0 clears it). */
 	public static final ResourceLocation READY_SPELL = new ResourceLocation(DefyingTheHeavens.MOD_ID, "ready_spell");
 	/** C2S: cast this spell now (its ordinal plus one; 0 the readied one). */
@@ -202,6 +204,10 @@ public final class ModPackets {
 		ServerPlayNetworking.registerGlobalReceiver(PRACTISE_METHOD, (server, player, handler, buf, responseSender) -> {
 			GhostMethod method = GhostMethod.byId(buf.readUtf(64));
 			server.execute(() -> Spells.practise(player, method));
+		});
+		ServerPlayNetworking.registerGlobalReceiver(PRACTISE_HEAVEN_METHOD, (server, player, handler, buf, responseSender) -> {
+			HeavenMethod method = HeavenMethod.byId(buf.readUtf(64));
+			server.execute(() -> HeavenMethods.practise(player, method));
 		});
 		ServerPlayNetworking.registerGlobalReceiver(READY_SPELL, (server, player, handler, buf, responseSender) -> {
 			Spell spell = Spell.byIndex(buf.readVarInt() - 1);
@@ -390,21 +396,36 @@ public final class ModPackets {
 		}
 		for (Spell spell : Spell.values()) buf.writeVarInt(cooldownLeft.applyAsInt(spell));
 		buf.writeBoolean(s.ghost()); // what a ghost can cast and switch on (Spell#isKnown, Ability#isUnlocked)
+		// The heaven methods (HeavenMethods): each known, its layer and progress, and the one practised.
+		HeavenState heaven = CultivationManager.get(player).heaven();
+		buf.writeVarInt(heaven.known().size());
+		for (HeavenMethod method : heaven.known()) {
+			buf.writeUtf(method.getId());
+			buf.writeVarInt(heaven.layer(method));
+			buf.writeDouble(heaven.progress(method));
+		}
+		buf.writeUtf(heaven.activeMethod() == null ? "" : heaven.activeMethod().getId());
 		ServerPlayNetworking.send(player, METHODS, buf);
 	}
 
-	/** Tells {@code viewer} whether {@code subject} is a ghost. */
-	public static void sendGhost(ServerPlayer viewer, ServerPlayer subject, boolean ghost) {
+	/**
+	 * Tells {@code viewer} whether {@code subject} is a ghost, whether a Ghost King (GhostSystem#isKing), and how it is drawn
+	 * (TwoPaths#look: a form is only a look, so the living may be drawn as a Ghost King, and the dead as a man).
+	 */
+	public static void sendGhost(ServerPlayer viewer, ServerPlayer subject) {
+		boolean ghost = GhostSystem.isGhost(subject);
 		FriendlyByteBuf buf = PacketByteBufs.create();
 		buf.writeVarInt(subject.getId());
 		buf.writeBoolean(ghost);
+		buf.writeBoolean(ghost && GhostSystem.isKing(subject));
+		buf.writeByte(TwoPaths.look(CultivationManager.get(subject)).ordinal());
 		ServerPlayNetworking.send(viewer, GHOST, buf);
 	}
 
-	/** Tells the player and everyone tracking them whether they are a ghost. */
-	public static void broadcastGhost(ServerPlayer player, boolean ghost) {
-		sendGhost(player, player, ghost);
-		for (ServerPlayer other : PlayerLookup.tracking(player)) sendGhost(other, player, ghost);
+	/** Tells the player and everyone tracking them whether they are a ghost, and how they are drawn. */
+	public static void broadcastGhost(ServerPlayer player) {
+		sendGhost(player, player);
+		for (ServerPlayer other : PlayerLookup.tracking(player)) sendGhost(other, player);
 	}
 
 	/** Tells everyone tracking {@code bound} (and a bound player themselves) that a talisman binds it for {@code ticks}. */

@@ -34,5 +34,8 @@ public class ModDamageTypeTagProvider extends FabricTagProvider<DamageType> {
 		// A True Immortal's gaze, like a severed soul's death: nothing stands between it and death, a totem included.
 		tag(DamageTypeTags.BYPASSES_RESISTANCE).add(ModDamageTypes.SOUL_SEVERED, ModDamageTypes.SOUL_SEIZED, ModDamageTypes.JUDGE_GAZE);
 		tag(DamageTypeTags.BYPASSES_INVULNERABILITY).add(ModDamageTypes.SOUL_SEVERED, ModDamageTypes.SOUL_SEIZED, ModDamageTypes.JUDGE_GAZE);
+		// The heaven methods' qi goes through armour; Protection and Resistance still turn some of it.
+		tag(DamageTypeTags.BYPASSES_ARMOR).add(ModDamageTypes.QI_WOOD, ModDamageTypes.QI_WATER, ModDamageTypes.QI_FIRE, ModDamageTypes.QI_EARTH,
+				ModDamageTypes.QI_METAL);
 	}
 }
