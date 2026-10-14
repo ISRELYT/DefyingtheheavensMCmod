@@ -17,7 +17,8 @@ import java.util.List;
 
 /**
  * A Jade Slip (玉简): a slip of green jade holding a heaven method (its "HeavenMethod" tag). Read (used), it teaches the method
- * (at the layer HeavenMethods#startLayer gives), and isn't used up. The living alone can read one (the dead use no items).
+ * (at the layer HeavenMethods#startLayer gives), and isn't used up. The dead may read one (Incorporeal#mayUse), but take up no
+ * heaven method (HeavenMethods#refusal says why).
  * Cultivators carry them: one struck down may drop its own, and some sell theirs (CultivatorNpc#heavenMethod).
  */
 public class JadeSlipItem extends Item {

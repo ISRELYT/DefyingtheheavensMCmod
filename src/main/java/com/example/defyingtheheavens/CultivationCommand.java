@@ -8,15 +8,20 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
- * Op-only testing helpers: /cultivation set <realm 1-6> <stage 1-4>, /cultivation addcultivation <amount>,
- * /cultivation setqi <amount> (the qi pool, capped at its maximum). Setting a cultivator back to or below Qi Refining Mid (or
- * mortal) takes back the heavens' leave and Favour, so the Ritual to the Heavens is asked again; setting one past their heaven
- * methods' reach says so (their cultivation waits there for the methods: HeavenMethods#reach).
+ * Op-only testing helpers: /cultivation set <realm 1-6> <stage 1-4>, /cultivation addcultivation <amount>, /cultivation setqi
+ * <amount> (the qi pool, capped at its maximum). Setting a cultivator back to or below Qi Refining Mid (or mortal) takes back the
+ * heavens' leave and Favour, so the Ritual to the Heavens is asked again. Set leaves every heaven method known understood exactly as
+ * far as the stage set (HeavenMethods#alignTo), nothing left to settle.
  */
 public final class CultivationCommand {
-	/** /cultivation set: the realm and stage, the ritual undone at or below its gate. */
+	/**
+	 * /cultivation set: the realm and stage, the methods understood as far as it, the ritual undone at or below its gate, and a
+	 * breakthrough pill taken for a realm already reached spent.
+	 */
 	public static void set(PlayerCultivation c, Realm realm, Stage stage) {
 		c.setState(realm, stage, 0);
+		if (c.getPreparedRealm() != null && c.getPreparedRealm().ordinal() <= realm.ordinal()) c.prepareBreakthrough(null, 0);
+		HeavenMethods.alignTo(c.heaven(), PlayerCultivation.rank(realm, stage));
 		if (PlayerCultivation.rank(realm, stage) <= PlayerCultivation.RITUAL_RANK) c.resetRitual();
 	}
 
@@ -34,14 +39,9 @@ public final class CultivationCommand {
 													PlayerCultivation c = CultivationManager.get(p);
 													set(c, r, s);
 													CultivationManager.refresh(p);
+													HeavenMethods.afterLayer(p); // the methods' layers as the stage's
 													ctx.getSource().sendSuccess(() -> Component.literal("Cultivation set.").append(" ")
 															.append(r.getDisplayName()).append(" - ").append(s.getDisplayName()), false);
-													int reach = HeavenMethods.reach(c);
-													if (PlayerCultivation.rank(r, s) > reach) {
-														ctx.getSource().sendSuccess(() -> Component.literal("Your heaven methods only carry you to ")
-																.append(GhostMethods.rankName(reach)).append(": your cultivation waits there until they catch up"
-																+ " (/heavenmethod learn <id> <layer>)."), false);
-													}
 													return 1;
 												}))))
 						.then(Commands.literal("mortal")

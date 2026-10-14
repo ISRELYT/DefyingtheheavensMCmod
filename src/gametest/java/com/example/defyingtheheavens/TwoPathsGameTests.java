@@ -57,6 +57,92 @@ public class TwoPathsGameTests implements FabricGameTest {
 		return Math.abs(a - b) < 1.0e-3;
 	}
 
+	/** {@link #ghostPath} for a bare cultivation, no player. */
+	private static void ghostPath(PlayerCultivation c, Realm realm, Stage stage) {
+		int layer = switch (stage) {
+			case EARLY -> 1;
+			case MID -> 3;
+			case LATE -> 6;
+			case GRAND_PERFECTION -> 9;
+		};
+		for (GhostMethod method : GhostMethod.values()) {
+			if (method.isFoundation()) c.netherworld().setMethod(method, method.realm().ordinal() < realm.ordinal() ? method.layers()
+					: method.realm() == realm ? MethodLayers.PER_REALM * realm.ordinal() + layer : 0, 0);
+		}
+	}
+
+	/** A name's translation key ("" for one that isn't translated as a whole, like a plain rank's), and its first argument's. */
+	private static String key(net.minecraft.network.chat.Component name, int arg) {
+		if (!(name.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t)) return "";
+		if (arg < 0) return t.getKey();
+		return t.getArgs()[arg] instanceof net.minecraft.network.chat.Component a ? key(a, -1) : "";
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void effectiveCultivationNamesWhatTheBodyComesTo(GameTestHelper helper) {
+		int stages = Stage.values().length;
+		PlayerCultivation c = new PlayerCultivation();
+		c.setState(Realm.FOUNDATION_BUILDING, Stage.MID, 0);
+		TwoPaths.Effective e = TwoPaths.effective(c, false);
+		helper.assertTrue(e.rank() == PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.MID) && !e.quasi() && !TwoPaths.strongerThanRank(c),
+				"One path, no Favour: its own rank");
+		// Mid on both paths in one realm: x1.3 on Mid's 1.1 is 1.43 of Early's might, past Grand Perfection's 1.3, a tenth of the
+		// way to Core Formation Early (might 5.72 between 5.2 and 10).
+		ghostPath(c, Realm.FOUNDATION_BUILDING, Stage.MID);
+		e = TwoPaths.effective(c, false);
+		helper.assertTrue(e.rank() == PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.GRAND_PERFECTION) && e.quasi() && near(e.toward(), 0.52 / 4.8)
+				&& TwoPaths.strongerThanRank(c), "Mid on both paths: past Grand Perfection (" + e + ")");
+		helper.assertTrue(key(TwoPaths.effectiveName(e), -1).equals(ModLang.EFFECTIVE_QUASI_REALM)
+				&& key(TwoPaths.effectiveName(e), 0).equals(Realm.CORE_FORMATION.getTranslationKey()), "...named Quasi-Core Formation");
+		net.minecraft.network.chat.Component label = TwoPaths.effectiveLabel(e);
+		helper.assertTrue(key(label, -1).equals(ModLang.EFFECTIVE_TOWARD) && label.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t
+				&& Long.valueOf(11).equals(t.getArgs()[1]), "...11% of the way there");
+		// Early on both: x1.3 is Grand Perfection's might exactly.
+		c.setState(Realm.FOUNDATION_BUILDING, Stage.EARLY, 0);
+		ghostPath(c, Realm.FOUNDATION_BUILDING, Stage.EARLY);
+		e = TwoPaths.effective(c, false);
+		helper.assertTrue(e.rank() == PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.GRAND_PERFECTION) && !e.quasi() && TwoPaths.strongerThanRank(c)
+				&& key(TwoPaths.effectiveName(e), -1).isEmpty() && key(TwoPaths.effectiveLabel(e), -1).isEmpty(),
+				"Early on both: Grand Perfection itself, no Quasi-, no per cent (" + e + ")");
+		// A realm apart (x1.2): Core Formation Early is Core Formation Late.
+		ghostPath(c, Realm.CORE_FORMATION, Stage.EARLY);
+		e = TwoPaths.effective(c, false);
+		helper.assertTrue(e.rank() == PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.LATE) && !e.quasi(), "A realm apart, Early: Late (" + e + ")");
+		// Two realms apart (x1.1): Nascent Soul Mid's 1.21 is just past Late's 1.2.
+		ghostPath(c, Realm.NASCENT_SOUL, Stage.MID);
+		e = TwoPaths.effective(c, false);
+		helper.assertTrue(e.rank() == PlayerCultivation.rank(Realm.NASCENT_SOUL, Stage.LATE) && e.quasi()
+				&& key(TwoPaths.effectiveName(e), -1).equals(ModLang.EFFECTIVE_QUASI_STAGE)
+				&& key(TwoPaths.effectiveName(e), 0).equals(Realm.NASCENT_SOUL.getTranslationKey()), "Two realms apart, Mid: Nascent Soul - Quasi-Grand Perfection (" + e + ")");
+		// Three apart: no harmony, its own rank.
+		ghostPath(c, Realm.HEAVENLY_BEING, Stage.MID);
+		helper.assertTrue(!TwoPaths.strongerThanRank(c), "Three realms apart: no harmony, its own rank");
+		// Heaven's Favour on one path counts too: Early x1.05, past Early, short of Mid.
+		PlayerCultivation favoured = new PlayerCultivation();
+		favoured.setState(Realm.QI_REFINING, Stage.EARLY, 0);
+		favoured.setFavour(1);
+		e = TwoPaths.effective(favoured, false);
+		helper.assertTrue(e.rank() == PlayerCultivation.rank(Realm.QI_REFINING, Stage.EARLY) && e.quasi() && near(e.toward(), 0.5), "Favour: Quasi-Mid, half way (" + e + ")");
+		// The very last, with harmony: beyond Four Axis Grand Perfection.
+		PlayerCultivation top = new PlayerCultivation();
+		top.setState(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION, 0);
+		ghostPath(top, Realm.FOUR_AXIS, Stage.GRAND_PERFECTION);
+		e = TwoPaths.effective(top, false);
+		helper.assertTrue(e.quasi() && key(TwoPaths.effectiveName(e), -1).equals(ModLang.EFFECTIVE_BEYOND), "Beyond the very last (" + e + ")");
+		// Harmony and Favour at their most never make a body a realm's: each realm's Grand Perfection x1.3 x1.15 stops short of the next.
+		for (Realm realm : Realm.values()) {
+			PlayerCultivation most = new PlayerCultivation();
+			most.setState(realm, Stage.GRAND_PERFECTION, 0);
+			ghostPath(most, realm, Stage.GRAND_PERFECTION);
+			most.setFavour(3);
+			e = TwoPaths.effective(most, false);
+			helper.assertTrue(e.rank() / stages == realm.ordinal() && e.quasi(), realm.getId() + " at its most: still its own realm, Quasi- the next (" + e + ")");
+		}
+		// A mortal: no effective cultivation.
+		helper.assertTrue(TwoPaths.effective(new PlayerCultivation(), false) == null, "A mortal: none");
+		helper.succeed();
+	}
+
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void theBodyFollowsTheHigherPath(GameTestHelper helper) {
 		ServerPlayer player = cultivator(helper, Realm.CORE_FORMATION, Stage.EARLY);

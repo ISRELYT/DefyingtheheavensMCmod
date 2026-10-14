@@ -34,12 +34,11 @@ public class CultivationFruitItem extends Item {
 
     /**
      * Why eating it now would waste it, or null: a mortal can't hold its qi, and a stage at its bottleneck (or a cultivator
-     * suppressed, or at the very peak) can't take in any more, unless it waits on a heaven method, which takes the qi instead. The
-     * same rules as a Cultivation Pill.
+     * suppressed, or at the very peak) can't take in any more. The same rules as a Cultivation Pill.
      */
     private static Component refusal(PlayerCultivation c) {
         if (c.isMortal()) return Component.translatable(ModLang.MSG_FRUIT_MORTAL);
-        if (c.isStalled() && !c.isHeldByMethod() || c.isSuppressed() || c.isMaxed()) return Component.translatable(ModLang.MSG_FRUIT_BOTTLENECK);
+        if (c.isStalled() || c.isSuppressed() || c.isMaxed()) return Component.translatable(ModLang.MSG_FRUIT_BOTTLENECK);
         return null;
     }
 

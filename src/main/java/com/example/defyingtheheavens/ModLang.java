@@ -25,8 +25,18 @@ public final class ModLang {
 	public static final String STAGE = k("stage");
 	public static final String CULTIVATION = k("cultivation");
 	public static final String CULTIVATION_MAX = k("cultivation_max");
-	public static final String CULTIVATION_RATE = k("cultivation_rate");
-	public static final String CULTIVATION_RATE_UPPER = k("cultivation_rate_upper");
+	/**
+	 * Under the cultivation bar: the heaven method practised, its layer, and what meditating here gathers a second with it; where
+	 * that won't fit, the method and the rate, else the layer and the rate.
+	 */
+	public static final String METHOD_LINE = k("method_line");
+	public static final String METHOD_LINE_NAME = k("method_line.name");
+	public static final String METHOD_LINE_SHORT = k("method_line.short");
+	public static final String METHOD_LINE_NONE = k("method_line.none");
+	/** A heaven method's layer settling in (HeavenMethods#settle), and how far. */
+	public static final String SETTLING_LINE = k("settling_line");
+	/** The Upper Realm's dense qi, among the Cultivation tab's details. */
+	public static final String UPPER_REALM_LINE = k("upper_realm_line");
 	public static final String HUD_QI = k("hud.qi");
 	public static final String HUD_QI_LABEL = k("hud.qi_label");
 	public static final String BOTTLENECK = k("bottleneck");
@@ -374,6 +384,9 @@ public final class ModLang {
 	/** A sect's treasury held shut while its elders keep it (SectManager#treasurySeal): the seal's realm; and broken. */
 	public static final String MSG_TREASURY_SEALED = k("message.treasury_sealed");
 	public static final String MSG_TREASURY_SEAL_BROKEN = k("message.treasury_seal_broken");
+	/** A ghost palace's treasury (PalaceTreasury): its king's seal holding, or broken. */
+	public static final String MSG_PALACE_SEALED = k("message.palace_sealed");
+	public static final String MSG_PALACE_SEAL_BROKEN = k("message.palace_seal_broken");
 	public static final String BRUSH_TOOLTIP = k("tooltip.inscription_brush");
 	public static final String BRUSH_TOOLTIP_ERASE = k("tooltip.inscription_brush.erase");
 	public static final String MSG_CORE_CLAIMED = k("message.core.claimed");
@@ -529,11 +542,13 @@ public final class ModLang {
 	public static final String MSG_HEAVEN_METHOD_MERIDIANS = k("message.heaven_method.meridians");
 	public static final String MSG_HEAVEN_METHOD_DEAD = k("message.heaven_method.dead");
 	public static final String MSG_HEAVEN_LEARNED = k("message.heaven_method.learned");
-	public static final String MSG_HEAVEN_LEARNED_AT = k("message.heaven_method.learned_at");
 	public static final String MSG_HEAVEN_PRACTISED = k("message.heaven_method.practised");
+	/** A layer settled in (HeavenMethods#settle); with the spell it brings. */
 	public static final String MSG_HEAVEN_LAYER = k("message.heaven_method.layer");
-	/** Cultivation waiting on the heaven methods (HeavenMethods#gateLine): a layer to finish, or no method that goes on. */
-	public static final String HEAVEN_GATE_LAYER = k("heaven_method.gate.layer");
+	public static final String MSG_HEAVEN_LAYER_SPELL = k("message.heaven_method.layer_spell");
+	/** Meditating with no heaven method known (MeditationManager), once a login. */
+	public static final String MSG_HEAVEN_NONE_KNOWN = k("message.heaven_method.none_known");
+	/** A breakthrough into a realm waiting on a heaven method of it (HeavenMethods#gateLine). */
 	public static final String HEAVEN_GATE_NONE = k("heaven_method.gate.none");
 	public static final String JOURNAL_HEAVEN_METHOD = k("journal.heaven_method");
 	public static final String JOURNAL_HEAVEN_METHOD_TEXT = k("journal.heaven_method.text");
@@ -556,7 +571,13 @@ public final class ModLang {
 	public static final String METHODS_HEAVEN_DEAD = k("methods.heaven.dead");
 	public static final String METHODS_HEAVEN_SEALED = k("methods.heaven.sealed");
 	public static final String METHODS_HEAVEN_RATE = k("methods.heaven.rate");
+	/** The practised method understood as far as the realm: where its next layer opens. */
+	public static final String METHODS_HEAVEN_NEXT = k("methods.heaven.next");
+	/** A method's next layer, waiting on the realm (in short where that won't fit). */
+	public static final String METHODS_HEAVEN_OPENS = k("methods.heaven.opens");
+	public static final String METHODS_HEAVEN_OPENS_SHORT = k("methods.heaven.opens.short");
 	public static final String METHODS_HEAVEN_SHARE = k("methods.heaven.share");
+	/** The deepest realm a breakthrough may lead into, by the methods known (HeavenMethods#opensWay). */
 	public static final String METHODS_HEAVEN_REACH = k("methods.heaven.reach");
 	public static final String METHODS_HEAVEN_UNKNOWN = k("methods.heaven.unknown");
 	public static final String METHODS_HEAVEN_PASSIVE = k("methods.heaven.passive");
@@ -625,6 +646,26 @@ public final class ModLang {
 	public static final String STATS_GHOST_BODY = k("stats.ghost_body");
 	public static final String STATS_HARMONY = k("stats.harmony");
 	public static final String TWO_PATHS_LINE = k("two_paths.line");
+	/** The Cultivation tab on both paths: the heaven path's line. */
+	public static final String HEAVEN_PATH_LINE = k("two_paths.heaven_line");
+	/**
+	 * Effective cultivation (TwoPaths#effective): the line, and its names: past a stage ("%s - Quasi-%s"), past a realm's Grand
+	 * Perfection ("Quasi-%s"), past the very last.
+	 */
+	public static final String EFFECTIVE_LINE = k("two_paths.effective");
+	public static final String EFFECTIVE_QUASI_STAGE = k("two_paths.effective.quasi_stage");
+	public static final String EFFECTIVE_QUASI_REALM = k("two_paths.effective.quasi_realm");
+	public static final String EFFECTIVE_BEYOND = k("two_paths.effective.beyond");
+	/** A Quasi- name and how far toward it ("%s (%s%%)"). */
+	public static final String EFFECTIVE_TOWARD = k("two_paths.effective.toward");
+	/**
+	 * What the ghost path's bar on the Cultivation tab says: its foundation and layer (in short where that won't fit), the
+	 * foundation perfected, or the one to seek next. The first also names the heaven method practised, at the very peak.
+	 */
+	public static final String METHOD_BAR = k("method_bar");
+	public static final String METHOD_BAR_SHORT = k("method_bar.short");
+	public static final String METHOD_BAR_PERFECTED = k("method_bar.perfected");
+	public static final String METHOD_BAR_SEEK = k("method_bar.seek");
 	public static final String MSG_SPELL_NO_BOTH = k("message.spell.no_both");
 	public static final String MSG_SPELL_BOTH_PATHS = k("message.spell.both_paths");
 	/** A form's name: this and its id (TwoPaths.Form). */

@@ -80,8 +80,8 @@ public class AlchemyGameTests implements FabricGameTest {
     public void foundationBuildingNeedsAFoundationPill(GameTestHelper helper) {
         ServerPlayer player = survivalPlayer(helper);
         PlayerCultivation c = CultivationManager.get(player);
-        TestMethods.carryAll(c); // a heaven method carrying the realm on (HeavenMethods#reach): only the pills stand in the way
         c.setState(Realm.QI_REFINING, Stage.LATE, 0);
+        TestMethods.carryAll(c); // a heaven method opening every realm's way: only the pills stand in it
 
         ItemStack early = PillItem.create(ModItems.FOUNDATION_PILL, PillGrade.LOW, 1);
         eat(player, early);

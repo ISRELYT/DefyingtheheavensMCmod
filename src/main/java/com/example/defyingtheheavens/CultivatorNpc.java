@@ -522,6 +522,11 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	public void endSpar(LivingEntity opponent) {
 		sparHoldBack = NO_HOLD_BACK;
 		refreshStats();
+		letGoOf(opponent);
+	}
+
+	/** No quarrel with {@code opponent} any more (a spar ended; a ghost it fought scattered: GhostSystem#disperse). */
+	public void letGoOf(LivingEntity opponent) {
 		if (getTarget() == opponent) setTarget(null);
 		if (getLastHurtByMob() == opponent) setLastHurtByMob(null);
 		combatTicks = 0;
@@ -1192,15 +1197,16 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	/**
 	 * Whether it can sense {@code other} at all: a projected nascent soul (see SoulProjection) is there only for cultivators of
 	 * Nascent Soul and above, who see it as players of those realms do; to the rest it doesn't exist. A player's ghost, likewise,
-	 * to the living (below Nascent Soul they couldn't touch it either: SoulProjection#harmFactor); and one of the living in a
-	 * Ghost King's form to none of the living at all (TwoPaths#inGhostForm). The dead's own kind see the dead, and that form.
+	 * to the living (below Nascent Soul they couldn't touch it either: SoulProjection#harmFactor), but in the Netherworld, where
+	 * everyone sees the dead, to all; and one of the living in a Ghost King's form to none of the living at all
+	 * (TwoPaths#inGhostForm). The dead's own kind see the dead, and that form.
 	 */
 	public boolean senses(LivingEntity other) {
 		if (!(other instanceof Player player)) return true;
 		if (SoulProjection.isSoul(player)) return seesSouls();
 		if (!GhostSystem.seenAsDead(player)) return true;
 		if (this instanceof Ghostly) return true;
-		return Incorporeal.isGhost(player) && seesSouls();
+		return Incorporeal.isGhost(player) && (seesSouls() || ModDimensions.isNetherworld(level().dimension()));
 	}
 
 	/** Nascent Soul or above: it sees souls, and the dead, as players of those realms do. */

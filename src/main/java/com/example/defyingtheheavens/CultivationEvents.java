@@ -110,6 +110,7 @@ public final class CultivationEvents {
 			HeavenRitual.clear();
 			NetherworldManager.clear();
 			GhostSystem.clear();
+			PalaceTreasury.clear();
 			Spells.clear();
 		});
 
@@ -126,7 +127,8 @@ public final class CultivationEvents {
 				sealedMessage(sp, level, sealed);
 				return false;
 			}
-			return true;
+			// A ghost palace's treasury the same, under its king's seal (PalaceTreasury).
+			return !PalaceTreasury.isTreasury(level, pos) || PalaceTreasury.touch(level, sp, pos);
 		});
 		// Opening the treasury's chests, lifting what its pedestals hold, or harvesting the sect's herbs is theft.
 		UseBlockCallback.EVENT.register((player, world, hand, hit) -> {
@@ -136,6 +138,11 @@ public final class CultivationEvents {
 			boolean valuable = level.getBlockEntity(pos) instanceof Container || state.getBlock() instanceof SpiritPedestalBlock
 					|| state.getBlock() instanceof GinsengBlock || state.getBlock() instanceof CultivationFruitBlock;
 			if (!valuable) return InteractionResult.PASS;
+			// A ghost palace's treasury: theft, and shut while its king's seal holds (PalaceTreasury).
+			if (PalaceTreasury.isTreasury(level, pos)) {
+				if (hand != InteractionHand.MAIN_HAND) return PalaceTreasury.sealed(level, pos) ? InteractionResult.FAIL : InteractionResult.PASS;
+				return PalaceTreasury.touch(level, sp, pos) ? InteractionResult.PASS : InteractionResult.FAIL;
+			}
 			// The attempt still raises the alarm (once a click), but while the treasury's elders keep it, its chests and pedestals
 			// stay shut, from either hand; one a realm above them breaks the seal with this touch, and opens it with the next.
 			Sect sealed = sp.isCreative() ? null : SectManager.sealedTreasuryAt(level, pos);
@@ -279,16 +286,23 @@ public final class CultivationEvents {
 		UseBlockCallback.EVENT.register((player, world, hand, hit) -> {
 			if (SoulProjection.isSoul(player)) return InteractionResult.FAIL;
 			if (!Incorporeal.isRuledGhost(player)) return InteractionResult.PASS;
-			return world.getBlockState(hit.getBlockPos()).is(ModTags.GHOST_USABLE) && hand == InteractionHand.MAIN_HAND
-					? InteractionResult.PASS : InteractionResult.FAIL;
+			if (hand != InteractionHand.MAIN_HAND) return InteractionResult.FAIL;
+			BlockState state = world.getBlockState(hit.getBlockPos());
+			if (state.is(ModTags.GHOST_USABLE)) return InteractionResult.PASS;
+			// A ghost palace's treasury is the dead's own (PalaceTreasury): the client asks for any chest in the Netherworld, the
+			// server decides.
+			boolean treasury = state.getBlock() instanceof net.minecraft.world.level.block.ChestBlock && (world instanceof ServerLevel level
+					? PalaceTreasury.isTreasury(level, hit.getBlockPos()) : ModDimensions.isNetherworld(world.dimension()));
+			return treasury ? InteractionResult.PASS : InteractionResult.FAIL;
 		});
 		// Nothing of the living world in the hand of a soul or a ghost; but a ghost may drink a Marrow Cleansing Elixir, its meridians
-		// opened in death as in life (a mortal's ghost has no ghost path without it: GhostMethods#refusal).
-		UseItemCallback.EVENT.register((player, world, hand) -> Incorporeal.is(player) && !Incorporeal.mayDrink(player, player.getItemInHand(hand))
+		// opened in death as in life (a mortal's ghost has no ghost path without it: GhostMethods#refusal), and read a slip.
+		UseItemCallback.EVENT.register((player, world, hand) -> Incorporeal.is(player) && !Incorporeal.mayUse(player, player.getItemInHand(hand))
 				? InteractionResultHolder.fail(player.getItemInHand(hand)) : InteractionResultHolder.pass(player.getItemInHand(hand)));
 		UseEntityCallback.EVENT.register((player, world, hand, entity, hit) -> {
-			// Nothing to ride or use; only the dead's own kind to talk with (TalkSystem keeps the talk to what the dead may do).
-			if (Incorporeal.isRuledGhost(player)) return entity instanceof GhostCultivatorNpc ? InteractionResult.PASS : InteractionResult.FAIL;
+			// Nothing to ride or use; only cultivators to talk with, the living and the dead (TalkSystem keeps the talk to what the
+			// dead may do).
+			if (Incorporeal.isRuledGhost(player)) return entity instanceof CultivatorNpc ? InteractionResult.PASS : InteractionResult.FAIL;
 			if (!SoulProjection.isSoul(player)) return InteractionResult.PASS;
 			if (hand != InteractionHand.MAIN_HAND || player.isPassenger()) return InteractionResult.FAIL;
 			if (world.isClientSide) return InteractionResult.SUCCESS; // the server decides

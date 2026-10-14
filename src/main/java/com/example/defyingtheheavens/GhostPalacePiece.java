@@ -30,7 +30,8 @@ import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSeriali
  * it with bone towers at its corners and a gate of bone pillars hung with soul lanterns at its front; a courtyard with braziers
  * of soul fire and beds of red spider lilies either side of the way in; and at its back the hall: on a raised floor, red
  * columns under gold capitals, walls of black stone barred with iron, a double roof of deepslate tiles with upturned eaves and a
- * red band between its tiers, a red carpet up the middle to a dais and the king's throne set in the back wall.
+ * red band between its tiers, a red carpet up the middle to a dais and the king's throne set in the back wall. Beside the hall,
+ * its treasury ({@link #treasury}, PalaceTreasury): a vault of the dead's wealth under the king's seal.
  * <p>
  * Its king (Core Formation, or Nascent Soul, now and then Heavenly Being, seldom Four Axis: {@link #kingRealm}) stands before
  * the throne, and six Ghost
@@ -101,6 +102,7 @@ public class GhostPalacePiece extends StructurePiece {
 		outerWall(level, chunk);
 		gate(level, chunk);
 		hall(level, chunk);
+		treasury(level, chunk, random);
 		settle(level, chunk);
 		court(level, chunk, random);
 	}
@@ -339,6 +341,65 @@ public class GhostPalacePiece extends StructurePiece {
 				put(level, chunk, su * HALL_U, top + 1, sv == 0 ? HALL_FRONT : HALL_BACK, TILE_WALL);
 			}
 		}
+	}
+
+	// --- The treasury ---
+
+	/** The treasury: across u {@link #VAULT_U0} to {@link #VAULT_U1}, v {@link #VAULT_V0} to {@link #VAULT_V1}, beside the hall. */
+	static final int VAULT_U0 = -17, VAULT_U1 = -12, VAULT_V0 = 7, VAULT_V1 = 15, VAULT_WALL = 5;
+
+	/**
+	 * The treasury (PalaceTreasury), in the courtyard's back corner beside the hall: a vault of black stone, red columns at its
+	 * corners under gold, iron-barred windows, a door with a carved lintel facing the gate, a low hipped roof of deepslate tiles, a
+	 * soul lantern hung within, and four chests of the dead's wealth (chests/ghost_palace_treasury) under the king's seal.
+	 */
+	private void treasury(WorldGenLevel level, BoundingBox chunk, RandomSource random) {
+		for (int u = VAULT_U0; u <= VAULT_U1; u++) {
+			for (int v = VAULT_V0; v <= VAULT_V1; v++) {
+				boolean sideU = u == VAULT_U0 || u == VAULT_U1, endV = v == VAULT_V0 || v == VAULT_V1;
+				put(level, chunk, u, y - 1, v, sideU || endV ? POLISHED : BRICKS);
+				if (!sideU && !endV) continue;
+				boolean corner = sideU && endV;
+				for (int dy = 0; dy < VAULT_WALL; dy++) {
+					BlockState state;
+					if (corner) state = dy == VAULT_WALL - 1 ? GILDED : RED_COLUMN;
+					else if (sideU && v == (VAULT_V0 + VAULT_V1) / 2 && (dy == 1 || dy == 2)) state = Blocks.IRON_BARS.defaultBlockState();
+					else state = BRICKS;
+					put(level, chunk, u, y + dy, v, state);
+				}
+			}
+		}
+		// The door, two wide, under a carved lintel and a gilded stone.
+		for (int u = -15; u <= -14; u++) {
+			for (int dy = 0; dy < 3; dy++) put(level, chunk, u, y + dy, VAULT_V0, AIR);
+			put(level, chunk, u, y + 3, VAULT_V0, CHISELED);
+		}
+		put(level, chunk, -15, y + 4, VAULT_V0, GILDED);
+		put(level, chunk, -14, y + 4, VAULT_V0, GILDED);
+		// The roof: tile courses rising inward from an eave one out from the walls, flat tiles atop.
+		for (int k = 0; ; k++) {
+			int u0 = VAULT_U0 - 1 + k, u1 = VAULT_U1 + 1 - k, v0 = VAULT_V0 - 1 + k, v1 = VAULT_V1 + 1 - k;
+			if (u1 - u0 < 2) {
+				for (int u = u0; u <= u1; u++) {
+					for (int v = v0; v <= v1; v++) put(level, chunk, u, y + VAULT_WALL + k, v, TILES);
+				}
+				break;
+			}
+			roofRing(level, chunk, y + VAULT_WALL + k, u0, u1, v0, v1);
+		}
+		put(level, chunk, -15, y + VAULT_WALL - 1, (VAULT_V0 + VAULT_V1) / 2, HANGING_LANTERN);
+		put(level, chunk, -14, y + VAULT_WALL - 1, (VAULT_V0 + VAULT_V1) / 2 + 2, HANGING_LANTERN);
+		// The chests: two at the back, facing the door, and one on either side, facing in.
+		chest(level, chunk, random, -16, VAULT_V1 - 1, Direction.NORTH);
+		chest(level, chunk, random, -13, VAULT_V1 - 1, Direction.NORTH);
+		chest(level, chunk, random, -16, VAULT_V0 + 3, Direction.EAST);
+		chest(level, chunk, random, -13, VAULT_V0 + 3, Direction.WEST);
+	}
+
+	/** One of the treasury's chests at (u, v) on its floor, opening toward {@code local}, filled with the dead's wealth. */
+	private void chest(WorldGenLevel level, BoundingBox chunk, RandomSource random, int u, int v, Direction local) {
+		BlockState state = Blocks.CHEST.defaultBlockState().setValue(net.minecraft.world.level.block.ChestBlock.FACING, dir(local));
+		createChest(level, chunk, random, at(u, y, v), PalaceTreasury.LOOT, state);
 	}
 
 	/** One course of a hipped roof: tile stairs round u0..u1, v0..v1 at {@code height}, each rising inward, tiles laid within. */

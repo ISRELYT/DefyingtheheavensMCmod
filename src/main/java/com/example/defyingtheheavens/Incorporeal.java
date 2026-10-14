@@ -4,9 +4,9 @@ import net.minecraft.world.entity.player.Player;
 
 /**
  * What a projected nascent soul (SoulProjection) and a ghost (GhostSystem) have in common: neither touches the living world.
- * They break and place nothing, use no item or block (but a ghost may use the dead's own blocks, tagged ghost_usable, and drink a
- * Marrow Cleansing Elixir: {@link #mayDrink}), drop and pick up nothing (but a ghost takes experience, and that elixir:
- * SoulPlayerMixin), set off no plate or tripwire, take no portal, push nothing
+ * They break and place nothing, use no item or block (but a ghost may use the dead's own blocks, tagged ghost_usable, drink a
+ * Marrow Cleansing Elixir and read a slip: {@link #mayUse}), drop and pick up nothing (but a ghost takes experience, and the
+ * dead's money and writings: {@link #mayCarry}, SoulPlayerMixin), set off no plate or tripwire, take no portal, push nothing
  * and are pushed by nothing (no current carries them), are passed through by arrows and blasts, and no ordinary mob takes them
  * for prey. Both sides.
  * <p>
@@ -42,11 +42,21 @@ public final class Incorporeal {
 	}
 
 	/**
-	 * The one thing of the living world a ghost (not a soul) may take up and drink: a Marrow Cleansing Elixir, which opens a
-	 * mortal's meridians in death as in life. Handed to it (dropped where it is), or kept by it.
+	 * What a ghost (not a soul) may use: a Marrow Cleansing Elixir, which opens a mortal's meridians in death as in life, and a
+	 * slip to read, a Ghost Jade Slip or a heaven method's Jade Slip (the dead take up no heaven method: HeavenMethods#refusal says so).
 	 */
-	public static boolean mayDrink(Player player, net.minecraft.world.item.ItemStack stack) {
-		return GhostSystem.isGhost(player) && !SoulProjection.isSoul(player) && stack.is(ModItems.MARROW_CLEANSING_ELIXIR);
+	public static boolean mayUse(Player player, net.minecraft.world.item.ItemStack stack) {
+		return GhostSystem.isGhost(player) && !SoulProjection.isSoul(player)
+				&& (stack.is(ModItems.MARROW_CLEANSING_ELIXIR) || stack.is(ModItems.GHOST_JADE_SLIP) || stack.is(ModItems.JADE_SLIP));
+	}
+
+	/**
+	 * What a ghost (not a soul) may take up and carry, besides what it buys: the dead's money and writings (spirit stones, Yin Jade,
+	 * the slips) to trade and give with (TalkSystem), and the Marrow Cleansing Elixir. Handed to it (dropped where it is), or kept.
+	 */
+	public static boolean mayCarry(Player player, net.minecraft.world.item.ItemStack stack) {
+		return mayUse(player, stack) || GhostSystem.isGhost(player) && !SoulProjection.isSoul(player)
+				&& (stack.getItem() instanceof SpiritStoneItem || stack.is(ModItems.YIN_JADE));
 	}
 
 	private Incorporeal() {}

@@ -52,6 +52,8 @@ public final class MeditationManager {
 	}
 
 	private static final Map<UUID, Session> SESSIONS = new HashMap<>();
+	/** Players told this login that they meditate without a heaven method (not saved). */
+	private static final java.util.Set<UUID> NO_METHOD_TOLD = new java.util.HashSet<>();
 	/** Each qi surge played well in a row speeds meditation by this much more, up to {@link #MAX_STREAK} of them. */
 	public static final double CIRCULATION_BONUS = 0.5;
 	public static final int MAX_STREAK = 2;
@@ -113,7 +115,7 @@ public final class MeditationManager {
 		broadcastAbsorption(player, session);
 		CultivationManager.sync(player);
 		player.displayClientMessage(Component.translatable(ModLang.MSG_START), true);
-		// Sitting down with the bar already waiting on a heaven method: said now, as it would be when the bar filled.
+		// Sitting down with the breakthrough already waiting on a heaven method: said now, as it would be when the bar filled.
 		PlayerCultivation c = CultivationManager.get(player);
 		if (!GhostSystem.isGhost(player) && c.isHeldByMethod()) player.sendSystemMessage(HeavenMethods.gateLine(c).copy().withStyle(net.minecraft.ChatFormatting.GOLD));
 	}
@@ -131,6 +133,7 @@ public final class MeditationManager {
 	/** Silent removal (disconnect). */
 	public static void forget(UUID id) {
 		SESSIONS.remove(id);
+		NO_METHOD_TOLD.remove(id);
 		QiSurges.forget(id);
 		SoulCrystalBlock.forget(id);
 	}
@@ -287,12 +290,12 @@ public final class MeditationManager {
 			double perSecond = ratePerSecond(p, session);
 			// Unrefined qi from pills and fruit is refined on top, at REFINE_RATE times the meditation rate.
 			double refined = c.refine(perSecond * PlayerCultivation.REFINE_RATE * 0.5);
-			double gained = perSecond * 0.5 + refined + session.bonusCultivation;
+			double gathered = perSecond * 0.5 + session.bonusCultivation;
 			session.bonusCultivation = 0;
-			// The heaven methods, the living's: the one practised takes in what was gathered, on the elements' qi. First, so a layer
-			// finished now lets the bar on into the next stage at once.
-			heavenMethods(p, c, session, tick, gained, perSecond);
-			boolean advanced = c.addCultivation(gained);
+			// What is gathered goes by the heaven method practised (its element's qi here: HeavenMethods#cultivationFactor), and the
+			// methods' layers behind the realm settle in on it.
+			double factor = heavenMethods(p, c, session, tick, gathered, refined);
+			boolean advanced = c.addCultivation(gathered * factor + refined);
 			CultivationManager.refresh(p); // re-applies stats (cheap), marks dirty, syncs
 
 			if (advanced) {
@@ -313,7 +316,7 @@ public final class MeditationManager {
 			} else if (!wasAtGate && c.isAtRitualGate()) {
 				p.sendSystemMessage(Component.translatable(ModLang.MSG_RITUAL_GATE));
 			}
-			// Not else-if: at Qi Refining Mid the ritual and the method may both be wanted.
+			// Not else-if: a pill and a method may both be wanted.
 			if (!wasHeld && c.isHeldByMethod()) p.sendSystemMessage(HeavenMethods.gateLine(c).copy().withStyle(net.minecraft.ChatFormatting.GOLD));
 		}
 
@@ -370,12 +373,13 @@ public final class MeditationManager {
 
 	/**
 	 * Half a second of the heaven methods (see HeavenMethods), the living's: by a Dao Stele of a method not yet known, a step toward
-	 * learning it; the method practised takes in the cultivation {@code gained} this half second (every boost to meditation in it) by
-	 * its element's share of the qi here (by its stele, faster: HeavenMethods#methodFactor), whatever the realm, to its last layer.
-	 * While the realm waits on it, pills' unrefined qi is refined into it instead, at the realm's refining pace.
+	 * learning it; the layers of every method known that lag behind the realm settle in on the cultivation {@code gathered} this half
+	 * second (every boost to meditation in it) by their own elements' share of the qi here, the {@code refined} pill and fruit qi on
+	 * top (HeavenMethods#meditate). Returns what {@code gathered} is multiplied by for the cultivation bar: the method practised's
+	 * factor here (by its stele, more: HeavenMethods#cultivationFactor), or a cultivator's with none, who is told so once a login.
 	 */
-	private static void heavenMethods(ServerPlayer p, PlayerCultivation c, Session session, int tick, double gained, double perSecond) {
-		if (!HeavenMethods.canLearn(c)) return;
+	private static double heavenMethods(ServerPlayer p, PlayerCultivation c, Session session, int tick, double gathered, double refined) {
+		if (!HeavenMethods.canLearn(c)) return HeavenMethods.cultivationFactor(c, null, 0, false);
 		HeavenState s = c.heaven();
 		if (tick % 40 == 0 || session.ticks <= 10) {
 			session.daoStelesInReach = daoStelesWithin(p, HeavenMethods.STELE_LEARN_RADIUS);
@@ -390,21 +394,21 @@ public final class MeditationManager {
 				HeavenMethods.learn(p, method);
 			}
 		}
-		HeavenMethod active = s.activeMethod();
-		if (active == null) return;
-		boolean byStele = false;
-		for (HeavenMethod near : session.daoStelesNear) byStele |= near.element() == active.element();
-		// Nothing unless the realm waits on it (PlayerCultivation#refineIntoMethod), and nothing into a method perfected.
-		if (!HeavenMethods.perfected(s, active)) gained += c.refineIntoMethod(perSecond * PlayerCultivation.REFINE_RATE * 0.5);
-		double factor = HeavenMethods.methodFactor(c, HeavenMethods.shareAt(p, active.element()), byStele);
-		int result = HeavenMethods.cultivate(s, active, gained * factor);
-		if (result > 0) {
-			p.serverLevel().playSound(null, p.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.8f, 1.4f);
-			p.displayClientMessage(Component.translatable(ModLang.MSG_HEAVEN_LAYER, active.getDisplayName(), s.layer(active)), true);
-			HeavenMethods.afterLayer(p);
+		java.util.Set<QiElement> byStele = java.util.EnumSet.noneOf(QiElement.class);
+		for (HeavenMethod near : session.daoStelesNear) byStele.add(near.element());
+		HeavenMethod practised = HeavenMethods.practised(s);
+		if (practised == null && !c.isSuppressed() && NO_METHOD_TOLD.add(p.getUUID())) {
+			p.sendSystemMessage(Component.translatable(ModLang.MSG_HEAVEN_NONE_KNOWN).withStyle(net.minecraft.ChatFormatting.GOLD));
 		}
-		CultivationManager.markDirty(p.server);
-		if (tick % 20 == 0 || result != 0) Spells.sync(p); // the Methods tab's bar
+		boolean settling = false;
+		for (HeavenMethod method : s.known()) settling |= HeavenMethods.settling(c, method);
+		if (settling) {
+			boolean settled = HeavenMethods.meditate(p, gathered, refined, byStele);
+			CultivationManager.markDirty(p.server);
+			if (tick % 20 == 0 && !settled) Spells.sync(p); // the Methods tab's bars (a layer settled has synced already)
+		}
+		return HeavenMethods.cultivationFactor(c, practised, practised == null ? 0 : HeavenMethods.shareAt(p, practised.element()),
+				practised != null && byStele.contains(practised.element()));
 	}
 
 	/** The heaven methods whose Dao Steles stand within {@code radius} of {@code p} (by their middle stone). */

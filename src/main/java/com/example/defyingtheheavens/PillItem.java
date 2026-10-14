@@ -155,8 +155,8 @@ public class PillItem extends Item {
 				return c.isMortal() ? Component.translatable(ModLang.MSG_PILL_MORTAL) : null;
 			case CULTIVATION:
 				if (c.isMortal()) return Component.translatable(ModLang.MSG_PILL_MORTAL);
-				if (c.isStalled() && !c.isHeldByMethod() || c.isSuppressed() || c.isMaxed()) return Component.translatable(ModLang.MSG_PILL_BOTTLENECK);
-				return null; // waiting on a heaven method, the pill's qi is refined into it (MeditationManager)
+				if (c.isStalled() || c.isSuppressed() || c.isMaxed()) return Component.translatable(ModLang.MSG_PILL_BOTTLENECK);
+				return null;
 			case YIN_GATHERING:
 				if (c.isMortal()) return Component.translatable(ModLang.MSG_PILL_MORTAL); // its ghost methods lie dormant (GhostMethods#refusal)
 				return c.netherworld().knowsAnyMethod() ? null : Component.translatable(ModLang.MSG_PILL_NO_METHOD);
@@ -220,7 +220,7 @@ public class PillItem extends Item {
 				level.sendParticles(ParticleTypes.CLOUD, player.getX(), player.getY() + 1.0, player.getZ(), 6, 0.3, 0.5, 0.3, 0.02);
 				level.sendParticles(ParticleTypes.END_ROD, player.getX(), player.getY() + 1.0, player.getZ(), 40, 0.5, 0.8, 0.5, 0.08);
 				level.playSound(null, player.blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 0.8f, 1.4f);
-				// The dead may drink it too (Incorporeal#mayDrink): the ghost path is theirs now, the heaven path once they live again.
+				// The dead may drink it too (Incorporeal#mayUse): the ghost path is theirs now, the heaven path once they live again.
 				player.sendSystemMessage(GhostSystem.isGhost(player) ? Component.translatable(ModLang.MSG_AWAKENED_DEAD)
 						: Component.translatable(ModLang.MSG_AWAKENED, Realm.QI_REFINING.getDisplayName()));
 			}

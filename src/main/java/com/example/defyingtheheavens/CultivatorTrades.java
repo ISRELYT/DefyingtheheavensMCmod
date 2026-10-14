@@ -174,7 +174,7 @@ public final class CultivatorTrades {
 	}
 
 	/**
-	 * What the Netherworld's dead sell the living (never another ghost: TalkSystem): the Netherworld's herbs and Yin Jade, and
+	 * What the Netherworld's dead sell (to the living and the dead alike: TalkSystem): the Netherworld's herbs and Yin Jade, and
 	 * talismans against its yin; a Ghost Elder (a Ghost King, a king's retainer) its own method's Ghost Jade Slip (a king its
 	 * realm's foundation only to one it is Warm to, at its price); the Gate's wardens the remedies for the yin
 	 * they warn the living of, and the means to keep the restless dead in order (the Peach Wood Sword, Ghost-Quelling Talismans).

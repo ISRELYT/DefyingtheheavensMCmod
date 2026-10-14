@@ -115,10 +115,12 @@ public final class GhostEye {
 			BufferBuilder b = Tesselator.getInstance().getBuilder();
 			b.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 			for (BlockPos pos : STELES) {
-				// The whole stone, the middle block and the one above and below: a pillar of cold light.
-				float x0 = (float) (pos.getX() + 0.12 - cam.x), x1 = (float) (pos.getX() + 0.88 - cam.x);
-				float y0 = (float) (pos.getY() - 1 - cam.y), y1 = (float) (pos.getY() + 1.9 - cam.y);
-				float z0 = (float) (pos.getZ() + 0.12 - cam.z), z1 = (float) (pos.getZ() + 0.88 - cam.z);
+				// The whole stone, the middle block and the one above and below: a pillar of cold light. Its faces clear of the stone's
+				// own (2/16 in, 14/16 tall at the top) and no floor to it: a face the depth test meets at the stone's or the ground's
+				// own depth flickers (the light is drawn only where the world stands nearer, GL_GREATER).
+				float x0 = (float) (pos.getX() + 0.08 - cam.x), x1 = (float) (pos.getX() + 0.92 - cam.x);
+				float y0 = (float) (pos.getY() - 1 - cam.y), y1 = (float) (pos.getY() + 1.95 - cam.y);
+				float z0 = (float) (pos.getZ() + 0.08 - cam.z), z1 = (float) (pos.getZ() + 0.92 - cam.z);
 				box(b, m, x0, y0, z0, x1, y1, z1, 0.42f * pulse);
 				// A fainter haze around it, so a far stele still catches the eye.
 				float h = 0.3f;
@@ -131,15 +133,16 @@ public final class GhostEye {
 		RenderSystem.depthFunc(GL11.GL_LEQUAL);
 	}
 
-	/** A box's six faces, brighter at the bottom and fading toward the top. */
+	/**
+	 * A box's four sides and top, brighter at the bottom and fading toward the top. No bottom: it lies on the ground, where it
+	 * would flicker against the ground's own surface.
+	 */
 	private static void box(BufferBuilder b, Matrix4f m, float x0, float y0, float z0, float x1, float y1, float z1, float alpha) {
 		float top = alpha * 0.35f;
-		// The four sides, then the bottom and top.
 		quad(b, m, x0, y0, z0, x1, y0, z0, x1, y1, z0, x0, y1, z0, alpha, top);
 		quad(b, m, x1, y0, z1, x0, y0, z1, x0, y1, z1, x1, y1, z1, alpha, top);
 		quad(b, m, x0, y0, z1, x0, y0, z0, x0, y1, z0, x0, y1, z1, alpha, top);
 		quad(b, m, x1, y0, z0, x1, y0, z1, x1, y1, z1, x1, y1, z0, alpha, top);
-		quad(b, m, x0, y0, z0, x0, y0, z1, x1, y0, z1, x1, y0, z0, alpha, alpha);
 		quad(b, m, x0, y1, z0, x1, y1, z0, x1, y1, z1, x0, y1, z1, top, top);
 	}
 

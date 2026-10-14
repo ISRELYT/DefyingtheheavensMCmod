@@ -15,7 +15,7 @@ public class TribulationCloudGameTests implements FabricGameTest {
         ServerPlayer player = isolated(helper);
         try {
             PlayerCultivation cultivation = CultivationManager.get(player);
-            TestMethods.carryAll(cultivation); // a heaven method carrying the realm on (HeavenMethods#reach)
+            TestMethods.carryAll(cultivation); // a heaven method opening the way into new realms (HeavenMethods#opensWay)
             cultivation.setState(Realm.QI_REFINING, Stage.GRAND_PERFECTION, 0);
             cultivation.addCultivation(cultivation.cultivationRequired());
             cultivation.prepareBreakthrough(Realm.FOUNDATION_BUILDING, 0); // Foundation Building takes a Foundation Pill
@@ -155,7 +155,7 @@ public class TribulationCloudGameTests implements FabricGameTest {
         }
     }
 
-    /** Qi Refining Grand Perfection, bar full, Foundation Pill taken, a heaven method carrying it on: ready to break into Foundation Building. */
+    /** Qi Refining Grand Perfection, bar full, Foundation Pill taken, a heaven method opening the way: ready to break into Foundation Building. */
     private static void readyForFoundation(PlayerCultivation cultivation) {
         TestMethods.carryAll(cultivation);
         cultivation.setState(Realm.QI_REFINING, Stage.GRAND_PERFECTION, 0);

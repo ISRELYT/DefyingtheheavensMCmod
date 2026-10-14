@@ -8,17 +8,18 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * The heaven methods a cultivator knows (see HeavenMethods): each one's layer (1 to its last) and the progress through it, and the one
- * meditation cultivates. Saved by id under one "HeavenMethods" compound in PlayerCultivation, and only when something is known.
- * Progress is in cultivation (HeavenMethods#layerCost); saves from when it was seconds of meditation keep their share of the layer.
+ * The heaven methods a cultivator knows (see HeavenMethods): each one's layer understood (1 to its last), the settling toward the next
+ * (HeavenMethods#settle, in cultivation: HeavenMethods#settleCost), and the one meditation cultivates by. Saved by id under one
+ * "HeavenMethods" compound in PlayerCultivation, and only when something is known. Saves from before layers settled kept other
+ * progress: it is dropped (PlayerCultivation aligns their layers to the realm on load).
  */
 public final class HeavenState {
-	/** The units progress is saved in: 2, cultivation. Saves without it counted seconds of baseline meditation (MethodLayers#cost). */
-	private static final int UNITS = 2;
+	/** What progress is saved as: 3, settling toward the next layer. Before it, progress through the layer one was on. */
+	private static final int UNITS = 3;
 	private final Map<HeavenMethod, double[]> methods = new EnumMap<>(HeavenMethod.class);
 	private HeavenMethod activeMethod;
 
-	/** The layer reached in {@code method}: 0 if it isn't known. */
+	/** The layer understood in {@code method}: 0 if it isn't known. */
 	public int layer(HeavenMethod method) {
 		double[] entry = methods.get(method);
 		return entry == null ? 0 : (int) entry[0];
@@ -74,15 +75,12 @@ public final class HeavenState {
 	public void load(CompoundTag tag) {
 		methods.clear();
 		CompoundTag learned = tag.getCompound("Methods");
-		boolean seconds = !learned.isEmpty() && tag.getInt("Units") < UNITS;
+		boolean older = tag.getInt("Units") < UNITS;
 		for (String id : learned.getAllKeys()) {
 			HeavenMethod method = HeavenMethod.byId(id);
 			if (method == null) continue; // a method since removed is dropped
 			CompoundTag one = learned.getCompound(id);
-			int layer = Math.max(1, Math.min(method.layers(), one.getInt("Layer")));
-			double progress = one.getDouble("Progress");
-			if (seconds) progress = Math.min(1, progress / MethodLayers.cost(layer)) * HeavenMethods.layerCost(layer); // its share of the layer kept
-			setMethod(method, one.getInt("Layer"), progress);
+			setMethod(method, Math.max(1, one.getInt("Layer")), older ? 0 : one.getDouble("Progress"));
 		}
 		activeMethod = null;
 		setActiveMethod(HeavenMethod.byId(tag.getString("Active")));

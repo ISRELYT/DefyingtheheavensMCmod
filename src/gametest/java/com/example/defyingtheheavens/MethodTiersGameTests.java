@@ -61,6 +61,29 @@ public class MethodTiersGameTests implements FabricGameTest {
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
+	public void theGhostPathsBarRunsThroughTheStageItStandsAt(GameTestHelper helper) {
+		PlayerCultivation c = new PlayerCultivation();
+		c.setState(Realm.QI_REFINING, Stage.EARLY, 0);
+		NetherworldState s = c.netherworld();
+		helper.assertTrue(GhostMethods.stageProgress(s) == 0, "No foundation: no ghost path, nothing on its bar");
+		GhostMethod art = GhostMethod.NETHERWORLD_BREATHING;
+		s.setMethod(art, 1, 0);
+		helper.assertTrue(GhostMethods.stageProgress(s) == 0, "Just learned: Early, none of it behind");
+		// Early is the first two layers (3 and 4 minutes): through the first, three sevenths of the way to Mid.
+		s.setMethod(art, 2, 0);
+		helper.assertTrue(Math.abs(GhostMethods.stageProgress(s) - 3.0 / 7) < 1e-9, "Through the first layer: 3/7 (" + GhostMethods.stageProgress(s) + ")");
+		s.setMethod(art, 2, GhostMethods.layerCost(art, 2) / 2);
+		helper.assertTrue(Math.abs(GhostMethods.stageProgress(s) - 5.0 / 7) < 1e-9, "...and half the second: 5/7 (" + GhostMethods.stageProgress(s) + ")");
+		s.setMethod(art, 3, 0);
+		helper.assertTrue(GhostMethods.stageProgress(s) == 0, "Mid, at the third: begun again from nothing");
+		GhostMethod marrow = GhostMethod.YELLOW_SPRINGS_MARROW;
+		s.setMethod(marrow, 9, GhostMethods.layerCost(marrow, 9) / 4);
+		helper.assertTrue(Math.abs(GhostMethods.stageProgress(s) - 0.25) < 1e-9,
+				"Grand Perfection is the ninth layer alone, the deepest foundation's: a quarter through it, a quarter (" + GhostMethods.stageProgress(s) + ")");
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void anyFoundationIsTakenUpALaterOneWhereTheGhostPathStands(GameTestHelper helper) {
 		PlayerCultivation c = new PlayerCultivation();
 		c.setState(Realm.QI_REFINING, Stage.EARLY, 0); // its meridians open: a mortal takes up nothing (TwoPathsGameTests)

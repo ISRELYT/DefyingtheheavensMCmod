@@ -290,8 +290,7 @@ ingredients back out); an empty bucket takes the water back.
   in it spends the pill. Later realms need no pill.
 - **Pill resistance.** Each Cultivation Pill makes the next one 25% weaker (down to 10%); it wears off at one pill's worth
   every ten minutes. A pill that would do nothing right now (a cultivation pill at a bottleneck, a breakthrough pill at the
-  wrong stage, anything but the elixir for a mortal) isn't eaten. A cultivation pill (or fruit) eaten while the bar waits
-  on a heaven method is refined into the method you practise instead (see **Heaven methods**).
+  wrong stage, anything but the elixir for a mortal) isn't eaten.
 - **Rare herbs.** Purple Lingzhi and Ochre Huangjing stand in for Lingzhi and Huangjing in any recipe and count as twice
   their age, so they push the grade up.
 - Recipes are in `AlchemyRecipes.java`; the cauldron is `AlchemyCauldronBlock(Entity).java`; the Qi Gathering effect is
@@ -309,7 +308,7 @@ Leaving **Qi Refining Mid** takes the heavens' **permission to cultivate**, not 
 fruit and meditation add nothing more) until the **Ritual to the Heavens** is done. Every path performs the same ritual,
 and sect cultivators perform it too (see Everyday life). Anyone already past Qi Refining Mid already has it, and an op's
 `/cultivation set` (or `mortal`) back to Qi Refining Mid or below takes it away again, Heaven's Favour with it, so the ritual
-is asked once more. Late also waits on a heaven method's first five layers (see **Heaven methods**).
+is asked once more.
 
 1. Build a **Heaven Altar** (smooth stone, jade, a Low spirit stone and copper) under open sky, and build round it.
 2. Right-click it to open its screen: nine **offering** slots in a ring (anything at all may be laid there) round a dial
@@ -375,49 +374,57 @@ Humble (0-9 points) +0%, Modest (10-19) +10%, Grand (20-29) +20%, Magnificent (3
 ## Heaven methods
 
 The heaven methods are the living's techniques, cultivated on the qi of the five elements (wood, water, fire, earth and
-metal, the motes Qi Sense shows), and ordinary cultivation **waits on them**. There are **thirty**: one of each
-element for each realm, Qi Refining to Four Axis. Each has its own layers, a passive that grows with them, and **two
-spells**. The dead can't take one up (their meridians belong to the ghost path now), nor a mortal.
+metal, the motes Qi Sense shows). Your cultivation is **its own bar**, as it always was: the methods speed it, bring spells
+and passives as it climbs, and open the way into new realms. There are **thirty**: one of each element for each realm, Qi
+Refining to Four Axis. Each has its own layers, a passive that grows with them, and **two spells**. The dead can't take one
+up (their meridians belong to the ghost path now), nor a mortal.
 
-**Layers, and the realm's gate.** A method of a realm spans **Qi Refining up to that realm**, nine layers a realm
-(`MethodLayers`, the same layout as the ghost foundations): a Qi Refining method has 9 layers, a Four Axis method 54. Within
-each realm's nine, layers 1-2 stand for Early, 3-5 Mid, 6-8 Late and 9 Grand Perfection.
-- Your cultivation enters **no stage, minor or by tribulation, until a method has cultivated every layer standing for the
-  stages before it** (`HeavenMethods#reach`, `PlayerCultivation#isHeldByMethod`): Qi Refining Mid waits for a method's first
-  two layers, Late for its fifth, Foundation Building for its ninth. There the cultivation bar stays full (amber), and the
-  Cultivation tab (and a message) says which layer to finish.
-- The **method waits on nothing**: it grows for as long as you meditate, whatever your realm, past it if it will, to its last
-  layer. Its spells and its passive, though, come only with the realm (below).
-- A method goes **no further than its own realm**: a Qi Refining method, perfected, carries you to Grand Perfection but not
-  into Foundation Building; for that you need a Foundation Building method (or deeper). The deepest method of any element
-  counts. **Without a heaven method, cultivation stops at the end of Qi Refining Early**: a new cultivator's first task is
-  to find one.
+**Layers.** A method of a realm spans **Qi Refining up to that realm**, nine layers a realm (`MethodLayers`, the same layout as
+the ghost foundations): a Qi Refining method has 9 layers, a Four Axis method 54. Within each realm's nine, layers 1-2 stand
+for Early, 3-5 Mid, 6-8 Late and 9 Grand Perfection.
+- **Cultivation needs no method.** Meditation fills the bar, the stages step on by themselves, and the gates are the realm's:
+  the Ritual to the Heavens at Qi Refining Mid, a tribulation at every Grand Perfection (and every stage from Nascent Soul),
+  Foundation and Core Pills, the lower realm's cap. Without a method you cultivate at **three quarters' pace**.
+- **A method is understood as far as your cultivation has come** (`HeavenMethods#understoodTo`): learned, its layers up to
+  your stage are yours at once. Each time you reach a new stage, **its layers settle in** while you meditate
+  (`HeavenMethods#settle`), on half the stage's own cultivation, gathered by the method's element (so half as long as the
+  stage takes at a plain pace: under a minute at Qi Refining, several minutes in the highest realms), each told as it does
+  ("layer 3 settles in", with the spell it brings). Every method you know settles at once, each by its own element. A
+  method's layers never run ahead of your realm.
+- **Methods open the way into realms**, and nothing else waits on them: breaking into a realm wants a heaven method **of that
+  realm or deeper**, of any element (`HeavenMethods#opensWay`). A Qi Refining method takes you no further than Qi Refining
+  Grand Perfection; for Foundation Building you need a Foundation Building method (or deeper). Minor stages, and the stage
+  tribulations from Nascent Soul, never wait on one.
+- **A fall takes the layers past it**: a failed tribulation (a stage down, its cultivation lost), the nascent soul lost (back to
+  Core Formation Grand Perfection), the Chief Judge's gaze (back to Qi Refining Early) leave every method understood no deeper
+  than the stage you fall to (`HeavenMethods#clampTo`); they settle in again as you climb back.
+- **The Cultivation tab's bar** is the cultivation bar, in the colour of the **element** of the method you practise (wood
+  green, water blue, fire red, earth ochre, metal silver; the old cyan with none), the stage's cultivation written on it,
+  unrefined pill qi a pale stretch beyond the fill. It is framed in amber while the realm is held (a tribulation's
+  bottleneck, the ritual's gate, a breakthrough waiting on a method) and in gold at Four Axis Grand Perfection. Under it, the
+  method you practise, its layer, and what meditating where you are adds a second; a layer still settling is among the
+  details below ("Layer 4 settling: 40%").
 
-So the realm is held back by the method and never the other way round: a method cultivated ahead (while the realm waits on a
-tribulation, a pill or the ritual, say) lets the realm run on as soon as it may. At the Ritual to the Heavens both are wanted:
-the heavens' permission and Mid's three layers. Pills and fruit eaten while the bar waits on the method are
-refined into the method instead. Cultivator NPCs advance by their own reckoning and aren't held so. (Saves from before keep
-their realm; past their methods' reach, their cultivation simply waits there until the methods catch up. `/cultivation set`
-says so when it sets you past them; `/heavenmethod learn <id> <layer>` sets a method's layer.)
+Pills and fruit are refused at a bottleneck, at the very peak, or while the realm is suppressed, as they always were. Cultivator
+NPCs advance by their own reckoning. (A save from before keeps its cultivation, and every method it knows is understood as far
+as its realm on loading. `/cultivation set` leaves every method you know understood exactly as far as the stage set;
+`/heavenmethod learn <id> <layer>` sets a method's layer, past the realm too, though its spells and passive still wait on it.)
 
-**The cost and the rate.** A layer costs **cultivation**: the stage's own requirement shared out among the layers standing for
-it, by their place (`HeavenMethods#layerCost`; Qi Refining Early's two cost 43 and 57 of its 100, Grand Perfection's one all
-300). Meditating, the method you practise takes in **what meditation gathers**, every boost to it included (Rings of Power,
-mats and the other surroundings, Qi Harmony, a held spirit stone, a teacher's Insight, Heaven's Favour, the Upper Realm's
-dense qi, the Inner Realm, and pills' and fruit's qi as it is refined), x `HeavenMethods#methodFactor`:
-- the **element's share** of the qi where you sit (`HeavenMethods#elementFactor`: x0.5 where there is none of it, x1 at an
-  even fifth, up to x3 where it is all of it: forests for wood, seas for water, deserts and the Nether for fire, mountains
-  and caves for earth and metal);
+**The rate.** What meditation gathers, every boost to it included (Rings of Power, mats and the other surroundings, Qi
+Harmony, a held spirit stone, a teacher's Insight, Heaven's Favour, the Upper Realm's dense qi, the Inner Realm), goes onto the
+bar x `HeavenMethods#cultivationFactor`, the method you practise's:
+- the **element's share** of the qi where you sit (`HeavenMethods#elementFactor`: x0.75 where there is none of it, x1 at an
+  even fifth, up to x1.5 where it runs thick (three fifths or more): forests for wood, seas for water, deserts and the Nether
+  for fire, mountains and caves for earth and metal);
 - x1.25 within 8 blocks of a **Dao Stele** of the same element (`STELE_BONUS`);
 - and a **Qi Gathering Pill**'s and cultivator **clothing**'s boost to qi gathering.
 
-At an even fifth, then, the layers keep pace with the bar; in the element's own lands, by its stele or in good clothing they
-run ahead, in lands without it they lag (and the realm waits on them). Layers above your realm cost what their stages do,
-so they come slowly at a lower realm's pace. Layers of a realm long passed
-go by as fast as its stages would now. While the realm is suppressed (Four Axis in the lower realms), neither gains. Choose
-which method to practise on the Methods tab's **Heaven Path** page (the Ghost Path and Heaven Path buttons at its top switch
-pages): how far your methods carry your cultivation, each method's layer, its realms as pips, how fast it goes here and why,
-and a **Practise** button.
+With no method, x0.75 (and the pill's and clothing's boosts). Refined pill and fruit qi goes onto the bar as it is, whatever
+the method. The layers settle in by the same factor, each method by its own element. While the realm is suppressed (Four Axis
+in the lower realms), nothing gains. Choose which method to practise on the Methods tab's **Heaven Path** page (the Ghost Path
+and Heaven Path buttons at its top switch pages): the deepest realm your methods open the way into, each method's layer, its
+realms as pips, its next layer settling (how far, and how long here) or the stage it opens at, the element's share here, and a
+**Practise** button.
 
 **Learning one.**
 - **Dao Steles** stand on small worn plinths, their heart-stone of their element (moss, prismarine, red nether brick,
@@ -439,15 +446,15 @@ and a **Practise** button.
   Elders and the master sell their sect's slip to one they are Warm to, rogues to one they are Courteous to: 60 stones for a
   Qi Refining method, three times as much for each realm deeper (180, 540, 1,620, 4,860, 14,580).
 - **Taught**: a sect's elders and master, and rogues, answer "Will you teach me your method?" for one they are Warm to,
-  once a day: the method, or ten minutes' progress if you know it (ten minutes of your stage's plain meditation).
+  once a day: the method, or, if you know it, its layers still settling settled at once and ten minutes of your stage's
+  plain meditation on the bar.
 
-A method is **learned where its element already stands** (`HeavenMethods#startLayer`): with a Foundation Building wood
-method at layer 14, a Core Formation wood method starts at 14, progress and all; one you've outgrown is learned whole.
-Methods of one element don't stack (only the deepest counts); methods of different elements do.
+The first method learned is practised, and a deeper one of the same element takes over the practice. Methods of one element
+don't stack (only the deepest counts); methods of different elements do.
 
 **Passives.** Every layer of an element's deepest method strengthens its passive, by the realm the layer stands in
-(`HeavenPassives#PER_LAYER`), once **your cultivation has reached the stage that layer stands for**: a method cultivated
-ahead of your realm adds nothing for its layers above it until the realm catches up:
+(`HeavenPassives#PER_LAYER`), once **your cultivation has reached the stage that layer stands for** and the layer has settled in
+(a layer an op set ahead of your realm adds nothing until the realm catches up):
 
 | Element | Passive | Per layer: QR / FB / CF / NS / HB / FA | At a full Four Axis method |
 |---|---|---|---|
@@ -506,10 +513,11 @@ element's class. Two notes on the calls made where the designs left room: Hundre
 are at odds with you (the same rule as a spell's foes), and a creature's weapon falls to the ground if it picked it up (it
 keeps those for good) but shatters if it spawned holding it, so none can be farmed.
 
-**Commands (op):** `/heavenmethod learn <id> [layer]`, `/heavenmethod progress <seconds>`, `/heavenmethod forget <id>`.
+**Commands (op):** `/heavenmethod learn <id> [layer]`, `/heavenmethod progress <amount>` (that much settling on the practised
+method, no further than the realm), `/heavenmethod forget <id>`.
 
-Code: `HeavenMethod` (the thirty, their ids and realms), `HeavenState` (what you know, saved), `HeavenMethods` (who, how far,
-the rate, learning, `startLayer`), `HeavenPassives`, `MethodLayers`, `HeavenSpells` (the kit: who is spared, targets, what
+Code: `HeavenMethod` (the thirty, their ids and realms), `HeavenState` (what you know, saved), `HeavenMethods` (who, how far
+understood, settling, the gate, the rate, learning), `HeavenPassives`, `MethodLayers`, `HeavenSpells` (the kit: who is spared, targets, what
 lingers, wards, temporary blocks, the elements' qi harm) and `WoodSpells`, `WaterSpells`, `FireSpells`, `EarthSpells`,
 `MetalSpells`; `Spell` (the sixty); `DaoSteleBlock`, `DaoSteleFeature` (`DAO_STELE_CHUNKS`), `JadeSlipItem`,
 `CultivatorNpc#heavenMethod`, `TalkSystem#teachHeaven`, `CultivatorTrades#heavenSlipPrice`, `MeditationManager#heavenMethods`,
@@ -891,7 +899,8 @@ A ghost:
 - is drawn as cyan light in its own skin, brightest at its edges, with its name above it, and is seen by everyone in the
   Netherworld. It walks with gravity and walls, and takes no fall, drowning, fire, lava, suffocation, freezing or hunger.
   Its tread makes no sound: no footsteps on any block, no splashing, no thud when it lands (on its own client as on
-  everyone else's). Ghost cultivators and Hungry Ghosts walk as silently. In first person its own hand is the same cyan
+  everyone else's). Ghost cultivators and Hungry Ghosts walk as silently, and none of the dead is slowed by soul sand or
+  soul soil (`SoulEntityMixin`). In first person its own hand is the same cyan
   light; it swings its arm when it strikes, as the living do, and when it meditates it sits cross-legged, floating a
   quarter of a block off the ground.
 - has **half its living hearts**, plus a heart for every layer of its deepest foundation, and heals a heart every two seconds.
@@ -899,8 +908,10 @@ A ghost:
   or as fast as Qi Flight with Ghost Flight on (below); not on the Soul River, nor while a Ghost-Quelling Talisman binds it.
   Holding jump while falling, it drifts down gently.
 - **touches nothing of the living world.** It can't break or place, use items or blocks (but it can use the dead's own:
-  steles, Meng Po's pot, the Wheel), drop or pick up anything (but the experience that comes to it, which it takes as
-  the living do), ride, take a rift or portal, meditate on the main track, break
+  steles, Meng Po's pot, the Wheel, a ghost palace's treasury chests; and read a Ghost Jade Slip or a Jade Slip, though it
+  takes up no heaven method), drop or pick up anything (but the experience that comes to it, which it takes as the living do,
+  and the dead's money and writings: spirit stones, Yin Jade, the slips, a Marrow Cleansing Elixir: `Incorporeal#mayCarry`),
+  ride, take a rift or portal, meditate on the main track, break
   through, fly on qi or a sword (it has its own flight), Realm Suppress, turn inward or project its soul. Arrows, blasts and ordinary mobs pass
   through it. It cultivates only its ghost method, half again as fast as the living do (below).
 - **is struck** only by what touches the dead: another ghost's or a ghostly creature's blows, ghost fire, a Peach Wood
@@ -908,7 +919,12 @@ A ghost:
   Qi Sense open lands a quarter to 70% of a blow by stage, a Heavenly Being or above all of it). A ghost's own blow on
   the living is a ghostly one, light (half a heart) but driving 5% of the Netherworld's yin into them.
 - at no health **disperses** in cyan sparks and reforms at the Gate **5 seconds** later with half its health and half
-  its ghostly qi. Falling into the abyss does the same (a Ghost King, below, rides the Soul River down instead).
+  its ghostly qi. Falling into the abyss does the same (a Ghost King, below, rides the Soul River down instead). The
+  scattering ends the fight: whatever fought it lets it go (`CultivatorNpc#letGoOf`), so the Gate's wardens, say, don't
+  cut it down again the moment it reforms before them. A ghost that logs out scattered reforms at the Gate when it
+  returns; the scattered body is marked in its own saved data (a tag), so even with the ghost's record gone (a
+  development client's new random name each launch is a new player) it comes back seen and touchable, never
+  untouchable for good.
 
 **Coming back.** Use the **Wheel of Reincarnation**'s hub, on the far bank: it turns, and you return to life at your own
 respawn point (your bed or anchor, as vanilla would choose it). In hardcore the Wheel refuses. **Nothing you carry goes back
@@ -1089,8 +1105,32 @@ cultivator who walks both is stronger than one who walks either (`TwoPaths`):
   Suppress hold the ghost path down as they do the heaven path. Qi and its pool are still the heaven path's.
 - **Harmony.** The two paths together add to that body, the more the closer they stand: **+30%** with both in the same
   realm, **+20%** a realm apart, **+10%** two apart, nothing further (`TwoPaths#HARMONY`, by realm, not stage), on top of
-  Heaven's Favour. The Stats tab names the path the body follows and the harmony; the Cultivation tab shows the ghost path
-  beside your realm.
+  Heaven's Favour. The Stats tab names the path the body follows and the harmony; on the Cultivation tab the two paths
+  stand one under the other, each with its rank and its bar: the heaven path's cultivation bar (above) and the ghost path's,
+  which fills through the stage it stands at, its deepest foundation's layer written on it (`GhostMethods#stageProgress`),
+  amber once that foundation is perfected (the foundation to seek named on it) and gold at the last. A method's name too long
+  for its line is written short ("…, 4 of 54"). The tab's details (pills, path, harmony, favour, the Upper Realm's qi, ghostly qi, yin)
+  share rows as they fit, and the lines draw closer when there is much to say, so everything fits.
+- **Effective cultivation.** When the harmony (or Heaven's Favour) carries the body past its own rank, the Cultivation and
+  Stats tabs say what it comes to on a single path, in gold (`TwoPaths#effective`): the rank a one-path cultivator with no
+  Favour would need for a body as mighty. A body that equals a stage is named as it ("Foundation Building - Late"); one past a
+  stage and short of the next is **Quasi-** the next ("Foundation Building - Quasi-Late"); one past a realm's Grand Perfection
+  is Quasi- the next realm ("Quasi-Core Formation"); past Four Axis Grand Perfection, beyond it. A Quasi- name carries how far
+  toward it the body has come ("Quasi-Core Formation (11%)"), since past Grand Perfection the next realm is a long way off
+  (`TwoPaths#effectiveLabel`). Bodies are weighed by their
+  **might** (`TwoPaths#might`, the geometric mean of the health and harm bonuses). Within a realm every bonus grows alike, x1.0
+  / 1.1 / 1.2 / 1.3 from Early to Grand Perfection, so the harmony is worth whole stages there; a realm's Early is 2 to 4 times
+  the realm before's, which no harmony reaches:
+
+  | Paths | Harmony | Early body | Mid | Late | Grand Perfection |
+  |---|---|---|---|---|---|
+  | in one realm | x1.3 | Grand Perfection | Quasi- next realm | Quasi- next realm | Quasi- next realm |
+  | a realm apart | x1.2 | Late | Quasi- next realm | Quasi- next realm | Quasi- next realm |
+  | two apart | x1.1 | Mid | Quasi-Grand Perfection | Quasi- next realm | Quasi- next realm |
+
+  (The body is the higher path's, so "Mid" means the higher path at Mid.) Mid on both paths in one realm comes 5% (Qi Refining)
+  to 18% (Heavenly Being) of the way to the next realm. Even Grand Perfection on both paths with full Favour (x1.3 x1.15) stops
+  short of the next realm's Early: Foundation Building's comes about half way, Heavenly Being's most of it.
 - **Spells of both paths**, one for each realm from Foundation Building, need **both paths at that realm** and cost **qi
   as well as ghostly qi** (below). When both paths reach a realm you're told, and its spell goes on the spell wheel.
 - **Two forms, while you live.** Once your ghost path reaches Core Formation (a Ghost King's might) you have a **Ghost King
@@ -1190,8 +1230,10 @@ dead do, tell you how they died if you ask about them, and from Foundation Build
 (their realm's foundation four times in ten, else one of the first three methods); **Ghost Elders** (Foundation Building
 and up) sell its Ghost Jade Slip (60 low-grade stones, 180 for the Yellow Springs Marrow Art), and one struck down leaves a
 foundation's slip 15% of the time. The dead fight back against whatever strikes them, Hungry Ghosts included (a king's
-court as one). The dead don't trade with, gift or
-make demands of other ghosts; to the living they sell Yin Jade, Other-Shore Flowers and Yang Fire Talismans. Blows reach
+court as one). A ghost talks with cultivators living and dead (in the Netherworld everyone sees the dead, living NPCs too:
+`CultivatorNpc#senses`) and, with the spirit stones and slips it carries, **trades and gives gifts** as the living do, by the
+same standing (one far above it greets, hears and takes a gift, but doesn't trade); it makes no demands. The dead sell Yin
+Jade, Other-Shore Flowers and Yang Fire Talismans, to the living and the dead alike. Blows reach
 them as they reach any of the dead. Struck down they scatter in sparks, now and then leaving a jade slip (8%), Yin Jade
 (40%) or an Other-Shore Flower (15%). An NPC cultivator who ascends from the Nether goes to its rift and comes out at
 the Ghost Gate as one of them (a Ghost King, if it was Core Formation or above).
@@ -1216,6 +1258,17 @@ palace. A court leaves passers-by alone, but strike the king or any retainer and
 blocks) turns on you. Slay the king and its throne stands empty, until a ghost cultivator who rises to Core
 Formation (`GhostCultivatorNpc#rise`) goes to claim the nearest empty one within 768 blocks (`GhostPalaces`). With none in
 reach, it roams, a king without a court.
+
+**A palace's treasury** (`PalaceTreasury`, `GhostPalacePiece#treasury`) stands in the courtyard's back corner beside the hall:
+a vault of black stone with red columns at its corners, iron-barred windows, a carved lintel over its door and a low tiled
+roof, four chests inside of the dead's wealth (`chests/ghost_palace_treasury`: middling and high spirit stones, Yin Jade,
+old Other-Shore Flowers and Netherworld Lotus, Yin Gathering Pills, gold, and Ghost Jade Slips, the first three methods
+most, now and then the Yellow Springs Marrow Art or the Ghost Core Canon). **The king's seal** holds the chests shut and
+unbreakable while the king lives and stands in its palace, as a sect's elders keep theirs: one a full realm above the king
+(by the stronger of their two paths) breaks it with a touch and opens it with the next, and it stays broken five minutes
+(`SEAL_RECAST`; a Four Axis king's can't be broken); a king slain, or its throne empty, leaves it open. The dead may open it
+too. Laying hands on it is **theft**, open or not: the king and its retainers turn on you, and think 60 worse of you once a
+day.
 
 **The Gate's keepers**, three ghost cultivators who never leave their posts, each **three times a man's height** (5.4
 blocks tall and 1.8 across, their eyes, reach and stride to match: `GhostCultivatorNpc.KEEPER_SCALE`):

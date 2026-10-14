@@ -121,6 +121,26 @@ public final class GhostMethods {
 		return rank < 0 ? null : Realm.byIndex(rank / Stage.values().length);
 	}
 
+	/**
+	 * How far the ghost path has come through the stage it stands at, toward the next, 0 to 1: the deepest foundation's layers
+	 * of that stage behind it and its progress through the one it is on, against all of the stage's layers (the Cultivation
+	 * tab's ghost path bar). 0 if it isn't begun.
+	 */
+	public static double stageProgress(NetherworldState s) {
+		GhostMethod deepest = deepestFoundation(s);
+		if (deepest == null) return 0;
+		int layer = s.layer(deepest);
+		int rank = floor(deepest, layer);
+		double done = 0, whole = 0;
+		for (int at = MethodLayers.deepestAt(rank - 1) + 1; at <= MethodLayers.deepestAt(rank); at++) {
+			double cost = MethodLayers.cost(at);
+			whole += cost;
+			if (at < layer) done += cost;
+			else if (at == layer) done += Math.min(cost, s.progress(deepest));
+		}
+		return whole <= 0 ? 0 : Math.min(1, done / whole);
+	}
+
 	/** The name of a rank (PlayerCultivation#rankName), for the ghost path's. */
 	public static Component rankName(int rank) {
 		return PlayerCultivation.rankName(Realm.byIndex(rank / Stage.values().length), Stage.byIndex(rank % Stage.values().length));

@@ -132,8 +132,16 @@ public class NetherworldInhabitantsGameTests implements FabricGameTest {
 		try {
 			GhostSystem.makeGhost(dead);
 			int ghostMask = TalkSystem.intents(dead, teacher, TalkSystem.standing(dead, teacher));
-			helper.assertTrue((ghostMask & ~TalkSystem.GHOST_INTENTS) == 0 && (ghostMask & TalkIntent.TRADE.bit()) == 0,
-					"A ghost may greet, ask, spar, provoke or leave: never trade, give or demand");
+			helper.assertTrue((ghostMask & ~TalkSystem.GHOST_INTENTS) == 0 && (ghostMask & TalkIntent.TRADE.bit()) != 0 && (ghostMask & TalkIntent.GIFT.bit()) != 0
+					&& (TalkSystem.GHOST_INTENTS & TalkIntent.DEMAND.bit()) == 0,
+					"A ghost may greet, ask, trade, give, spar, provoke or leave, with the spirit stones and slips it carries: never demand");
+			// The mock players are creative, and a creative ghost keeps no rule (Incorporeal): the rules are asked of a survival one.
+			dead.setGameMode(GameType.SURVIVAL);
+			helper.assertTrue(Incorporeal.mayCarry(dead, new ItemStack(ModItems.LOW_SPIRIT_STONE)) && Incorporeal.mayCarry(dead, new ItemStack(ModItems.YIN_JADE))
+					&& Incorporeal.mayUse(dead, GhostJadeSlipItem.of(GhostMethod.GHOST_FIRE_SCRIPTURE)) && Incorporeal.mayUse(dead, new ItemStack(ModItems.JADE_SLIP))
+					&& !Incorporeal.mayCarry(dead, new ItemStack(net.minecraft.world.item.Items.DIAMOND)) && !Incorporeal.mayUse(dead, new ItemStack(ModItems.YIN_JADE))
+					&& !Incorporeal.mayUse(living, GhostJadeSlipItem.of(GhostMethod.GHOST_FIRE_SCRIPTURE)),
+					"The dead take up their money and writings, and read the slips; nothing else of the living world");
 			helper.assertTrue((TalkSystem.intents(living, teacher, TalkSystem.standing(living, teacher)) & TalkIntent.TRADE.bit()) != 0,
 					"The living trade with the dead");
 			// Its teaching: the first layer of its method, then (another day) ten minutes' progress.

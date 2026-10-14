@@ -141,16 +141,15 @@ public final class TribulationManager {
 					PlayerCultivation.rankName(PlayerCultivation.LOWER_REALM_CAP_REALM, PlayerCultivation.LOWER_REALM_CAP_STAGE)), true);
 			return;
 		}
+		// A new realm waits on a heaven method of it too (HeavenMethods#opensWay): said in chat, so a pill also wanting is said as well.
+		boolean held = c.isHeldByMethod();
+		if (held) player.sendSystemMessage(HeavenMethods.gateLine(c).copy().withStyle(net.minecraft.ChatFormatting.GOLD));
 		if (c.isAtBottleneck() && c.isMissingBreakthroughPill()) {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_NEED_PILL,
 					PillItem.breakthroughPillFor(c.breakthroughRealm()).getDescription(), c.breakthroughRealm().getDisplayName()), true);
 			return;
 		}
-		// What lies past the tribulation waits on a heaven method too (HeavenMethods#reach).
-		if (c.isHeldByMethod()) {
-			player.displayClientMessage(HeavenMethods.gateLine(c), true);
-			return;
-		}
+		if (held) return;
 		if (!c.canBreakthrough()) {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_NOT_READY), true);
 			return;

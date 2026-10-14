@@ -334,137 +334,306 @@ public class CultivationScreen extends Screen {
 		int cx = left + WIDTH / 2;
 		int x = left + 14;
 		int y = top + CONTENT_Y;
+		int barW = WIDTH - 28;
 
 		if (c.isMortal()) {
 			renderMortal(g, cx, y);
 			return;
 		}
 
-		g.drawCenteredString(font, Component.translatable(ModLang.REALM, c.getRealm().getDisplayName()), cx, y, 0x7FDBFF);
-		y += 12;
-		g.drawCenteredString(font, Component.translatable(ModLang.STAGE, c.getStage().getDisplayName()), cx, y, 0xB39DDB);
-		y += 18;
+		// On the heaven path alone, its realm and stage; on both paths (TwoPaths), each path a line and a bar, one under the other.
+		boolean both = TwoPaths.walksBoth(c);
+		if (both) {
+			g.drawCenteredString(font, Component.translatable(ModLang.HEAVEN_PATH_LINE, PlayerCultivation.rankName(c.getRealm(), c.getStage())),
+					cx, y, 0x7FDBFF);
+			y += 12;
+		} else {
+			g.drawCenteredString(font, Component.translatable(ModLang.REALM, c.getRealm().getDisplayName()), cx, y, 0x7FDBFF);
+			y += 12;
+			g.drawCenteredString(font, Component.translatable(ModLang.STAGE, c.getStage().getDisplayName()), cx, y, 0xB39DDB);
+			y += 16;
+		}
 
-		// Cultivation bar
-		int barW = WIDTH - 28;
+		// The cultivation bar, in the colour of the heaven method practised's element (HeavenMethods#practised; the old cyan with
+		// none), the stage's cultivation written on it, unrefined pill and fruit qi a pale stretch beyond the fill. Framed in amber
+		// while the realm is held (at a tribulation's bottleneck, at the ritual's gate, a breakthrough waiting on a method); in gold at
+		// the very last.
+		HeavenMethod method = HeavenMethods.practised(c.heaven());
 		double required = c.cultivationRequired();
 		double ratio = required <= 0 ? 0 : Math.min(1.0, c.getCultivation() / required);
-		boolean bottleneck = c.isStalled() || c.isHeldByMethod();
-		g.fill(x - 1, y - 1, x + barW + 1, y + 11, 0xFF000000);
-		g.fill(x, y, x + barW, y + 10, 0xFF2A2A3A);
-		g.fill(x, y, x + (int) (barW * ratio), y + 10, bottleneck ? 0xFFFFC107 : 0xFF4DD0E1);
-		// Unrefined qi from pills and fruit, waiting to be refined: a pale stretch beyond the bar's fill.
-		if (c.getMedicinalQi() > 0 && required > 0 && !bottleneck) {
+		drawBar(g, x, y, barW, ratio, method == null ? 0xFF4DD0E1 : elementFill(method.element()),
+				c.isMaxed() ? 0xFFFFD700 : c.isStalled() ? 0xFFFFC107 : 0);
+		if (c.getMedicinalQi() > 0 && required > 0 && !c.isStalled()) {
 			double pending = Math.min(1.0, (c.getCultivation() + c.getMedicinalQi()) / required);
 			g.fill(x + (int) (barW * ratio), y + 3, x + (int) (barW * pending), y + 7, 0x90B2EBF2);
 		}
+		barText(g, cx, y + 1, barW, c.isMaxed() ? Component.translatable(ModLang.CULTIVATION_MAX, num(c.getCultivation()))
+				: Component.translatable(ModLang.CULTIVATION, num(c.getCultivation()), num(required)));
 		y += 14;
-
-		Component progressLine = c.isMaxed()
-				? Component.translatable(ModLang.CULTIVATION_MAX, num(c.getCultivation()))
-				: Component.translatable(ModLang.CULTIVATION, num(c.getCultivation()), num(required));
-		g.drawCenteredString(font, progressLine, cx, y, 0xFFFFFF);
-		y += 11;
-		// What meditating here gathers, surroundings included (mats, fruit on pedestals, height, tranquillity); jade when boosted.
+		// Under it, the method practised and its layer understood, and what meditating here adds a second: what it gathers,
+		// surroundings included (mats, fruit on pedestals, height, tranquillity, the Upper Realm's dense qi), by the method's element's
+		// share of the qi here (HeavenMethods#cultivationFactor), or at a cultivator's pace with none; jade when boosted.
 		double boost = player == null ? 1.0 : CultivationBoost.of(player).multiplier();
-		double rate = c.meditationCultivationPerSecond(RingOfPowerItem.cultivationBonus(player)) * boost; // 0 while suppressed
-		g.drawCenteredString(font, c.isInUpperRealm()
-				? Component.translatable(ModLang.CULTIVATION_RATE_UPPER, one(rate), (int) PlayerCultivation.UPPER_REALM_QI_MULTIPLIER)
-				: Component.translatable(ModLang.CULTIVATION_RATE, one(rate)), cx, y, boost > 1.0 && rate > 0 ? 0x7FE0A0 : 0xA0A0A0);
+		double rate = c.meditationCultivationPerSecond(RingOfPowerItem.cultivationBonus(player)) * boost // 0 while suppressed
+				* HeavenMethods.cultivationFactor(c, method, method == null ? 0 : shareHere(method.element()), false);
+		Component methodLine;
+		if (method == null) {
+			methodLine = Component.translatable(ModLang.METHOD_LINE_NONE, one(rate));
+		} else {
+			int layer = c.heaven().layer(method);
+			methodLine = c.isMaxed() ? fit(barW, Component.translatable(ModLang.METHOD_BAR, method.getDisplayName(), layer, method.layers()),
+					Component.translatable(ModLang.METHOD_BAR_SHORT, method.getDisplayName(), layer, method.layers()))
+					: fit(barW, Component.translatable(ModLang.METHOD_LINE, method.getDisplayName(), layer, method.layers(), one(rate)),
+					Component.translatable(ModLang.METHOD_LINE_NAME, method.getDisplayName(), one(rate)),
+					Component.translatable(ModLang.METHOD_LINE_SHORT, layer, method.layers(), one(rate)));
+		}
+		g.drawCenteredString(font, methodLine, cx, y, boost > 1.0 && rate > 0 ? 0x7FE0A0 : 0xB8B8B8);
 		y += 11;
-		y = renderNetherworldLines(g, cx, y);
-		// Pills at work: a Qi Gathering Pill's boost, and how much less the next Cultivation Pill will do.
-		if (c.getQiBoost() > 0) {
-			g.drawCenteredString(font, Component.translatable(ModLang.QI_BOOST_LINE, Math.round(c.getQiBoost() * 100)), cx, y, 0x64B5F6);
-			y += 11;
+		// The ghost path (GhostMethods#ghostRank) and its bar: how far through the stage it stands at, its deepest foundation's
+		// layer written on it; amber once that foundation is perfected (only a deeper one carries it on), gold at the very last.
+		if (both) {
+			g.drawCenteredString(font, Component.translatable(ModLang.METHODS_GHOST_PATH, GhostMethods.rankName(TwoPaths.ghostRank(c, false))),
+					cx, y, 0x8FEAE4);
+			y += 12;
+			NetherworldState s = c.netherworld();
+			GhostMethod foundation = GhostMethods.deepestFoundation(s);
+			int layer = s.layer(foundation);
+			boolean perfected = layer >= foundation.layers();
+			GhostMethod next = foundation.next();
+			drawBar(g, x, y, barW, perfected ? 1 : GhostMethods.stageProgress(s), 0xFF4DB6AC, !perfected ? 0 : next != null ? 0xFFFFC107 : 0xFFFFD700);
+			if (!perfected) {
+				barText(g, cx, y + 1, barW, Component.translatable(ModLang.METHOD_BAR, foundation.getDisplayName(), layer, foundation.layers()),
+						Component.translatable(ModLang.METHOD_BAR_SHORT, foundation.getDisplayName(), layer, foundation.layers()));
+			} else if (next != null) {
+				barText(g, cx, y + 1, barW, Component.translatable(ModLang.METHOD_BAR_SEEK, next.getDisplayName()));
+			} else {
+				barText(g, cx, y + 1, barW, Component.translatable(ModLang.METHOD_BAR_PERFECTED, foundation.getDisplayName()),
+						Component.translatable(ModLang.METHODS_PERFECTED));
+			}
+			y += 14;
 		}
-		if (c.getMedicinalQi() >= 0.5) {
-			g.drawCenteredString(font, Component.translatable(ModLang.UNREFINED_LINE, num(c.getMedicinalQi())), cx, y, 0xB2EBF2);
-			y += 11;
+		// Effective cultivation (TwoPaths#effective): what the body comes to on one path, when the harmony or Heaven's Favour carry it
+		// past its own rank; in gold, the name on a line of its own if a long one needs it.
+		if (TwoPaths.strongerThanRank(c)) {
+			for (FormattedCharSequence part : effectiveLines(c, barW)) {
+				g.drawCenteredString(font, part, cx, y, 0xFFD54F);
+				y += 10;
+			}
+			y += 1;
 		}
-		if (c.getPillResistance() > 0.005) {
-			g.drawCenteredString(font, Component.translatable(ModLang.PILL_RESISTANCE_LINE, Math.round(c.getPillResistance() * 100)),
-					cx, y, 0x9E9E9E);
-			y += 11;
-		}
-		// The cultivator's path (see Alignment), in its colour.
-		g.drawCenteredString(font, Component.translatable(ModLang.ALIGNMENT_LINE, Alignment.describe(c.getAlignment())), cx, y, 0xA0A0A0);
-		y += 11;
-		// The ghost path beside this one (TwoPaths), and how much the two in harmony add to the body.
-		if (TwoPaths.walksBoth(c)) {
-			g.drawCenteredString(font, Component.translatable(ModLang.TWO_PATHS_LINE, GhostMethods.rankName(TwoPaths.ghostRank(c, false)),
-					Math.round(TwoPaths.harmony(c) * 100)), cx, y, 0x8FEAE4);
-			y += 11;
-		}
-		// Heaven's Favour from a generous offering at the Ritual to the Heavens.
-		if (c.getFavour() > 0) {
-			g.drawCenteredString(font, Component.translatable(ModLang.FAVOUR_LINE, Math.round((c.favourFactor() - 1) * 100)), cx, y, 0xFFE082);
-			y += 11;
-		}
-		y += 7;
 
+		// The details, as many to a row as fit: the ghostly qi here and one's yin, pills at work (a Qi Gathering Pill's boost, qi
+		// not yet refined, how much less the next Cultivation Pill will do), one's path (Alignment) in its colour, the two paths'
+		// harmony, Heaven's Favour from a generous offering at the Ritual to the Heavens.
+		List<Detail> details = netherworldDetails();
+		// The practised method's next layer settling in behind the realm (HeavenMethods#settle), and how far.
+		if (method != null && HeavenMethods.settling(c, method)) {
+			int next = c.heaven().layer(method) + 1;
+			int percent = (int) Math.floor(Mth.clamp(c.heaven().progress(method) / HeavenMethods.settleCost(next), 0, 1) * 100);
+			details.add(new Detail(Component.translatable(ModLang.SETTLING_LINE, next, percent), 0xF0D78C));
+		}
+		if (c.isInUpperRealm()) {
+			details.add(new Detail(Component.translatable(ModLang.UPPER_REALM_LINE, (int) PlayerCultivation.UPPER_REALM_QI_MULTIPLIER), 0x7FDBFF));
+		}
+		if (c.getQiBoost() > 0) details.add(new Detail(Component.translatable(ModLang.QI_BOOST_LINE, Math.round(c.getQiBoost() * 100)), 0x64B5F6));
+		if (c.getMedicinalQi() >= 0.5) details.add(new Detail(Component.translatable(ModLang.UNREFINED_LINE, num(c.getMedicinalQi())), 0xB2EBF2));
+		if (c.getPillResistance() > 0.005) {
+			details.add(new Detail(Component.translatable(ModLang.PILL_RESISTANCE_LINE, Math.round(c.getPillResistance() * 100)), 0x9E9E9E));
+		}
+		details.add(new Detail(Component.translatable(ModLang.ALIGNMENT_LINE, Alignment.describe(c.getAlignment())), 0xA0A0A0));
+		if (both && TwoPaths.harmony(c) > 0) {
+			details.add(new Detail(Component.translatable(ModLang.TWO_PATHS_LINE, Math.round(TwoPaths.harmony(c) * 100)), 0x8FEAE4));
+		}
+		if (c.getFavour() > 0) {
+			details.add(new Detail(Component.translatable(ModLang.FAVOUR_LINE, Math.round((c.favourFactor() - 1) * 100)), 0xFFE082));
+		}
+		List<List<Line>> rows = detailRows(details, barW);
+
+		// What stands next on the heaven path, under the details.
+		List<Line> status = new ArrayList<>();
 		if (c.isUnderPressure()) {
 			// Another cultivator's Realm Suppress: what it holds the player to (if a realm), and what it takes.
-			g.drawCenteredString(font, Component.translatable(ModLang.PRESSURE), cx, y, 0xFF6E6E);
-			if (c.getPressureStages() > 0) {
-				y += 11;
-				g.drawCenteredString(font, PlayerCultivation.rankName(c.getEffectiveRealm(), c.getEffectiveStage()), cx, y, 0xFF6E6E);
-			}
-			g.drawCenteredString(font, Component.translatable(ModLang.PRESSURE_DETAIL, Math.round(c.getPressurePenalty() * 100)),
-					cx, y + 11, 0xFF6E6E);
+			addStatus(status, Component.translatable(ModLang.PRESSURE), 0xFF6E6E, barW);
+			if (c.getPressureStages() > 0) addStatus(status, PlayerCultivation.rankName(c.getEffectiveRealm(), c.getEffectiveStage()), 0xFF6E6E, barW);
+			addStatus(status, Component.translatable(ModLang.PRESSURE_DETAIL, Math.round(c.getPressurePenalty() * 100)), 0xFF6E6E, barW);
 		} else if (c.isSuppressed()) {
-			g.drawCenteredString(font, Component.translatable(ModLang.SUPPRESSED), cx, y, 0xFF6E6E);
-			g.drawCenteredString(font, Component.translatable(ModLang.SUPPRESSED_TO,
-					PlayerCultivation.rankName(c.getEffectiveRealm(), c.getEffectiveStage())), cx, y + 11, 0xFF6E6E);
+			addStatus(status, Component.translatable(ModLang.SUPPRESSED), 0xFF6E6E, barW);
+			addStatus(status, Component.translatable(ModLang.SUPPRESSED_TO, PlayerCultivation.rankName(c.getEffectiveRealm(), c.getEffectiveStage())),
+					0xFF6E6E, barW);
 		} else if (c.isMaxed()) {
-			g.drawCenteredString(font, Component.translatable(ModLang.PINNACLE), cx, y, 0xFFD700);
+			addStatus(status, Component.translatable(ModLang.PINNACLE), 0xFFD700, barW);
 		} else if (c.isAtBottleneck() && c.isBreakthroughLocked()) {
-			g.drawCenteredString(font, Component.translatable(ModLang.BREAKTHROUGH_SEALED), cx, y, 0xFF6E6E);
+			addStatus(status, Component.translatable(ModLang.BREAKTHROUGH_SEALED), 0xFF6E6E, barW);
 		} else if (c.isAtBottleneck() && c.isMissingBreakthroughPill()) {
 			// The realm ahead needs a pill: name it and how to brew it.
 			var pill = PillItem.breakthroughPillFor(c.breakthroughRealm());
-			for (FormattedCharSequence line : font.split(Component.translatable(ModLang.NEED_PILL, pill.getDescription(),
-					c.breakthroughRealm().getDisplayName()), WIDTH - 28)) {
-				g.drawCenteredString(font, line, cx, y, 0xFFC107);
-				y += 11;
-			}
-			for (FormattedCharSequence line : font.split(Component.translatable(ModLang.PILL_RECIPE, AlchemyRecipes.describe(pill)),
-					WIDTH - 28)) {
-				g.drawCenteredString(font, line, cx, y, 0xA0A0A0);
-				y += 11;
-			}
+			addStatus(status, Component.translatable(ModLang.NEED_PILL, pill.getDescription(), c.breakthroughRealm().getDisplayName()), 0xFFC107, barW);
+			addStatus(status, Component.translatable(ModLang.PILL_RECIPE, AlchemyRecipes.describe(pill)), 0xA0A0A0, barW);
+			// ...and a heaven method of the realm, if none is known.
+			if (c.isHeldByMethod()) addStatus(status, HeavenMethods.gateLine(c), 0xFFC107, barW);
 		} else if (c.needsHeavensLeave()) {
 			// Qi Refining Mid: Late takes the heavens' leave (the Ritual to the Heavens at a Heaven Altar).
 			boolean full = c.isAtRitualGate();
-			for (FormattedCharSequence line : font.split(Component.translatable(full ? ModLang.RITUAL_GATE : ModLang.RITUAL_AHEAD), WIDTH - 28)) {
-				g.drawCenteredString(font, line, cx, y, full ? 0xFFC107 : 0xA0A0A0);
-				y += 11;
-			}
-			if (full) {
-				for (FormattedCharSequence line : font.split(Component.translatable(ModLang.RITUAL_HOW), WIDTH - 28)) {
-					g.drawCenteredString(font, line, cx, y, 0xA0A0A0);
-					y += 11;
-				}
-			}
-		} else if (!c.netherworld().ghost() && !HeavenMethods.carries(c, PlayerCultivation.rank(c.getRealm(), c.getStage()) + 1)) {
-			// The next stage waits on a heaven method (HeavenMethods#reach): said ahead in grey, in amber once the bar is full.
-			boolean full = c.isHeldByMethod();
-			for (FormattedCharSequence line : font.split(HeavenMethods.gateLine(c), WIDTH - 28)) {
-				g.drawCenteredString(font, line, cx, y, full ? 0xFFC107 : 0xA0A0A0);
-				y += 11;
-			}
+			addStatus(status, Component.translatable(full ? ModLang.RITUAL_GATE : ModLang.RITUAL_AHEAD), full ? 0xFFC107 : 0xA0A0A0, barW);
+			if (full) addStatus(status, Component.translatable(ModLang.RITUAL_HOW), 0xA0A0A0, barW);
+		} else if (!c.netherworld().ghost() && c.getStage().isLast() && !c.isMaxed() && !HeavenMethods.opensWay(c, c.getRealm().next())) {
+			// Grand Perfection with no heaven method known of the realm ahead: one wanted, said ahead in grey, in amber once the
+			// stage is full (the breakthrough waits on it).
+			addStatus(status, HeavenMethods.gateLine(c), c.isHeldByMethod() ? 0xFFC107 : 0xA0A0A0, barW);
 		} else if (c.canBreakthrough()) {
-			g.drawCenteredString(font, Component.translatable(ModLang.BOTTLENECK), cx, y, 0xFFC107);
-			g.drawCenteredString(font, Component.translatable(ModLang.BOTTLENECK_NEXT,
-					PlayerCultivation.rankName(c.breakthroughRealm(), c.breakthroughStage())), cx, y + 11, 0xFFC107);
+			addStatus(status, Component.translatable(ModLang.BOTTLENECK), 0xFFC107, barW);
+			addStatus(status, Component.translatable(ModLang.BOTTLENECK_NEXT, PlayerCultivation.rankName(c.breakthroughRealm(), c.breakthroughStage())),
+					0xFFC107, barW);
 		} else if (c.getPreparedRealm() != null) {
 			// A breakthrough pill already taken, waiting for the bar to fill.
-			g.drawCenteredString(font, Component.translatable(ModLang.PILL_PREPARED, c.getPreparedRealm().getDisplayName()), cx, y, 0x7FE0A0);
+			addStatus(status, Component.translatable(ModLang.PILL_PREPARED, c.getPreparedRealm().getDisplayName()), 0x7FE0A0, barW);
 		}
 
-		boolean meditating = ClientCultivationData.isMeditating();
-		g.drawCenteredString(font, Component.translatable(meditating ? ModLang.STATUS_MEDITATING : ModLang.STATUS_IDLE),
-				cx, top + HEIGHT - 46, meditating ? 0x69F0AE : 0x9E9E9E);
+		// All of it fits above the meditation line: the lines drawn closer when there is much to say (never closer than the font's
+		// own height), and in the rare case even that won't do, over the meditation line (the Meditate button says it too).
+		int statusY = top + HEIGHT - 46;
+		int lines = rows.size() + status.size();
+		int lineH = 11, gap = 6;
+		for (int[] spacing : SPACINGS) {
+			lineH = spacing[0];
+			gap = spacing[1];
+			if (fits(y, lines, lineH, gap, statusY)) break;
+		}
+		boolean roomForStatus = fits(y, lines, lineH, gap, statusY);
+		for (List<Line> row : rows) {
+			drawDetailRow(g, row, cx, y);
+			y += lineH;
+		}
+		y += gap;
+		for (Line line : status) {
+			g.drawCenteredString(font, line.text(), cx, y, line.color());
+			y += lineH;
+		}
+
+		if (roomForStatus) {
+			boolean meditating = ClientCultivationData.isMeditating();
+			g.drawCenteredString(font, Component.translatable(meditating ? ModLang.STATUS_MEDITATING : ModLang.STATUS_IDLE),
+					cx, statusY, meditating ? 0x69F0AE : 0x9E9E9E);
+		}
+	}
+
+	/** The Cultivation tab's line spacings, each with the room above its status lines, roomiest first. */
+	private static final int[][] SPACINGS = {{11, 6}, {10, 4}, {9, 3}};
+	/** Room between two details sharing a row, a bronze dot in the middle of it. */
+	private static final int DETAIL_GAP = 13;
+
+	/** One of the Cultivation tab's details: a short line in its colour. */
+	private record Detail(Component text, int color) {}
+
+	/** A line as it is drawn (a detail, or a wrapped piece of one or of a status line) and its colour. */
+	private record Line(FormattedCharSequence text, int color) {}
+
+	/** Whether {@code lines} lines from {@code y}, {@code lineH} apart with {@code gap} before the status, end clear of the meditation line. */
+	private boolean fits(int y, int lines, int lineH, int gap, int statusY) {
+		return y + gap + (lines - 1) * lineH + font.lineHeight <= statusY - 1;
+	}
+
+	/** {@code text} wrapped to {@code width}, each piece a status line in {@code color}. */
+	private void addStatus(List<Line> status, Component text, int color, int width) {
+		for (FormattedCharSequence line : font.split(text, width)) status.add(new Line(line, color));
+	}
+
+	/** The details laid into rows of {@code width}, in order, as many to a row as fit; one too wide for any row is wrapped. */
+	private List<List<Line>> detailRows(List<Detail> details, int width) {
+		List<List<Line>> rows = new ArrayList<>();
+		List<Line> row = new ArrayList<>();
+		int rowW = 0;
+		for (Detail detail : details) {
+			int w = font.width(detail.text());
+			if (w > width) {
+				if (!row.isEmpty()) rows.add(row);
+				row = new ArrayList<>();
+				rowW = 0;
+				for (FormattedCharSequence piece : font.split(detail.text(), width)) rows.add(List.of(new Line(piece, detail.color())));
+				continue;
+			}
+			if (!row.isEmpty() && rowW + DETAIL_GAP + w > width) {
+				rows.add(row);
+				row = new ArrayList<>();
+				rowW = 0;
+			}
+			rowW += (row.isEmpty() ? 0 : DETAIL_GAP) + w;
+			row.add(new Line(detail.text().getVisualOrderText(), detail.color()));
+		}
+		if (!row.isEmpty()) rows.add(row);
+		return rows;
+	}
+
+	/** A row of details, centred, a small bronze dot between each two. */
+	private void drawDetailRow(GuiGraphics g, List<Line> row, int cx, int y) {
+		int total = -DETAIL_GAP;
+		for (Line line : row) total += font.width(line.text()) + DETAIL_GAP;
+		int dx = cx - total / 2;
+		for (int i = 0; i < row.size(); i++) {
+			Line line = row.get(i);
+			if (i > 0) {
+				int dot = dx - (DETAIL_GAP + 2) / 2;
+				g.fill(dot, y + 3, dot + 2, y + 5, BORDER);
+			}
+			g.drawString(font, line.text(), dx, y, line.color());
+			dx += font.width(line.text()) + DETAIL_GAP;
+		}
+	}
+
+	/**
+	 * A progress bar {@code w} wide, filled {@code ratio} of the way in {@code color}, framed in black, or, held or at the last, in
+	 * {@code frame} as well (0: none), a ring around the black.
+	 */
+	private static void drawBar(GuiGraphics g, int x, int y, int w, double ratio, int color, int frame) {
+		if (frame != 0) g.fill(x - 2, y - 2, x + w + 2, y + 12, frame);
+		g.fill(x - 1, y - 1, x + w + 1, y + 11, 0xFF000000);
+		g.fill(x, y, x + w, y + 10, 0xFF2A2A3A);
+		g.fill(x, y, x + (int) (w * Math.max(0, Math.min(1, ratio))), y + 10, color);
+	}
+
+	/** The heaven bar's fill, by its method's element: wood green, water blue, fire red, earth ochre, metal silver. */
+	private static int elementFill(QiElement element) {
+		return switch (element) {
+			case WOOD -> 0xFF3CBF55;
+			case WATER -> 0xFF3C8CFF;
+			case FIRE -> 0xFFE8452C;
+			case EARTH -> 0xFFC08A35;
+			case METAL -> 0xFFB8BDC8;
+			default -> 0xFF4DD0E1;
+		};
+	}
+
+	/**
+	 * Text written on a bar {@code width} wide, centred on {@code cx}: the first of {@code texts} that fits (the last if none does),
+	 * white, outlined in black, so it reads on the bar's fill and its dark alike.
+	 */
+	private void barText(GuiGraphics g, int cx, int y, int width, Component... texts) {
+		Component text = fit(width - 2, texts);
+		int tx = cx - font.width(text) / 2;
+		for (int[] d : OUTLINE) g.drawString(font, text, tx + d[0], y + d[1], 0x000000, false);
+		g.drawString(font, text, tx, y, 0xFFFFFF, false);
+	}
+
+	private static final int[][] OUTLINE = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+	/**
+	 * The effective cultivation line (TwoPaths#effectiveLabel) as it fits {@code width}: one line; else "Effective cultivation:" and
+	 * the name under it (wrapped only if the name alone won't fit).
+	 */
+	private List<FormattedCharSequence> effectiveLines(PlayerCultivation c, int width) {
+		Component label = TwoPaths.effectiveLabel(TwoPaths.effective(c, true));
+		Component line = Component.translatable(ModLang.EFFECTIVE_LINE, label);
+		if (font.width(line) <= width) return List.of(line.getVisualOrderText());
+		List<FormattedCharSequence> lines = new ArrayList<>();
+		lines.add(Component.literal(Component.translatable(ModLang.EFFECTIVE_LINE, "").getString().trim()).getVisualOrderText());
+		lines.addAll(font.split(label, width));
+		return lines;
+	}
+
+	/** The first of {@code texts} no wider than {@code width}; the last if none is. */
+	private Component fit(int width, Component... texts) {
+		for (Component text : texts) if (font.width(text) <= width) return text;
+		return texts[texts.length - 1];
 	}
 
 	/** A mortal's Cultivation tab: the body's tempering stage and progress, then how to open the meridians. */
@@ -501,14 +670,19 @@ public class CultivationScreen extends Screen {
 			g.drawCenteredString(font, line, cx, y, 0xFFC107);
 			y += 11;
 		}
-		renderNetherworldLines(g, cx, y + 4);
+		y += 4;
+		for (Detail detail : netherworldDetails()) {
+			g.drawCenteredString(font, detail.text(), cx, y, detail.color());
+			y += 11;
+		}
 	}
 
 	/**
 	 * The ghostly qi where the player stands (only where there is any: the Nether and the Netherworld), and their yin corruption
-	 * while they carry any, with whether it is ebbing or held still. Returns the y below what it drew.
+	 * while they carry any, with whether it is ebbing or held still.
 	 */
-	private int renderNetherworldLines(GuiGraphics g, int cx, int y) {
+	private List<Detail> netherworldDetails() {
+		List<Detail> details = new ArrayList<>();
 		double density = ClientNetherworldData.density();
 		if (density > 0) {
 			String word = GhostQi.word(density);
@@ -517,8 +691,7 @@ public class CultivationScreen extends Screen {
 				case "thin" -> ModLang.GHOST_QI_THIN;
 				default -> ModLang.GHOST_QI_FAINT;
 			}, density == Math.rint(density) ? String.valueOf((long) density) : String.valueOf(density));
-			g.drawCenteredString(font, Component.translatable(ModLang.GHOST_QI_HERE, amount), cx, y, 0x8FEAE4);
-			y += 11;
+			details.add(new Detail(Component.translatable(ModLang.GHOST_QI_HERE, amount), 0x8FEAE4));
 		}
 		float corruption = ClientNetherworldData.corruption();
 		if (corruption > 0) {
@@ -527,10 +700,9 @@ public class CultivationScreen extends Screen {
 					? Component.translatable(ModLang.YIN_HELD, percent, ClientNetherworldData.heldSeconds())
 					: ClientNetherworldData.trend() < 0 ? Component.translatable(ModLang.YIN_EBBING, percent)
 					: Component.translatable(ModLang.YIN_LINE, percent);
-			g.drawCenteredString(font, line, cx, y, corruption >= 0.75f ? 0x4FC3D9 : 0x7FB8C8);
-			y += 11;
+			details.add(new Detail(line, corruption >= 0.75f ? 0x4FC3D9 : 0x7FB8C8));
 		}
-		return y;
+		return details;
 	}
 
 	// --- Stats: base values, what the realm adds, and the current totals (true vs. suppressed when suppressed) ---
@@ -579,6 +751,14 @@ public class CultivationScreen extends Screen {
 			g.drawCenteredString(font, held, cx, y, 0xFF6E6E);
 		} else {
 			g.drawCenteredString(font, named.apply(PlayerCultivation.rankName(r, s)), cx, y, 0xB39DDB);
+		}
+		// What the body comes to on one path (TwoPaths#effective), when the harmony or Heaven's Favour carry it past its own rank.
+		if (TwoPaths.strongerThanRank(c)) {
+			y += 1;
+			for (FormattedCharSequence part : effectiveLines(c, WIDTH - 28)) {
+				y += 10;
+				g.drawCenteredString(font, part, cx, y, 0xFFD54F);
+			}
 		}
 		y += 16;
 
@@ -1309,33 +1489,39 @@ public class CultivationScreen extends Screen {
 			addTop.accept(Component.translatable(ModLang.METHODS_HEAVEN_PASSIVE, Component.translatable(ModLang.passiveKey(element)),
 					Component.translatable(ModLang.passiveKey(element) + ".amount", passiveAmount(amount))), element.getGlowColor() | 0x404040);
 		}
-		HeavenMethod active = h.activeMethod();
+		HeavenMethod active = HeavenMethods.practised(h);
 		if (dead) {
 			addTop.accept(Component.translatable(ModLang.METHODS_HEAVEN_DEAD), 0x9E9E9E);
 		} else if (c.isMortal()) {
 			addTop.accept(Component.translatable(ModLang.METHODS_HEAVEN_SEALED), 0x9E9E9E);
 		} else {
-			// How far the methods carry the realm (HeavenMethods#reach): cultivation waits there for them.
-			addTop.accept(Component.translatable(ModLang.METHODS_HEAVEN_REACH, GhostMethods.rankName(HeavenMethods.reach(c))), 0xC8B88A);
+			// The deepest realm a breakthrough may lead into (HeavenMethods#opensWay).
+			addTop.accept(Component.translatable(ModLang.METHODS_HEAVEN_REACH, HeavenMethods.deepestRealm(h).getDisplayName()), 0xC8B88A);
 		}
 		if (!dead && !c.isMortal() && active != null) {
 			int layer = h.layer(active);
+			double share = shareHere(active.element());
 			if (layer >= active.layers()) {
 				addTop.accept(Component.translatable(ModLang.METHODS_PERFECTED), 0xFFD700);
-			} else {
-				// What meditating here gathers (as the Cultivation tab reckons it) times what the method takes in of it.
-				double share = shareHere(active.element());
+			} else if (HeavenMethods.settling(c, active)) {
+				// What meditating here gathers (as the Cultivation tab reckons it) by the method's element, against what is left of the
+				// next layer's settling.
 				Player player = minecraft == null ? null : minecraft.player;
 				double boost = player == null ? 1.0 : CultivationBoost.of(player).multiplier();
 				double perSecond = c.meditationCultivationPerSecond(RingOfPowerItem.cultivationBonus(player)) * boost
 						* HeavenMethods.methodFactor(c, share, false);
 				if (perSecond > 0) {
-					double minutes = (HeavenMethods.layerCost(layer) - h.progress(active)) / perSecond / 60.0;
-					addTop.accept(Component.translatable(ModLang.METHODS_HEAVEN_RATE, active.getDisplayName(), minutes < 1 ? "<1" : String.valueOf(Math.round(minutes))), 0xF0D78C);
+					double minutes = (HeavenMethods.settleCost(layer + 1) - h.progress(active)) / perSecond / 60.0;
+					addTop.accept(Component.translatable(ModLang.METHODS_HEAVEN_RATE, layer + 1, active.getDisplayName(),
+							minutes < 1 ? "<1" : String.valueOf(Math.round(minutes))), 0xF0D78C);
 				}
-				addTop.accept(Component.translatable(ModLang.METHODS_HEAVEN_SHARE, active.element().getDisplayName(), Math.round(share * 100),
-						String.format(Locale.ROOT, "%.2f", HeavenMethods.elementFactor(share))), 0xB0A070);
+			} else {
+				addTop.accept(Component.translatable(ModLang.METHODS_HEAVEN_NEXT, active.getDisplayName(),
+						GhostMethods.rankName(MethodLayers.floor(layer + 1))), 0xF0D78C);
 			}
+			// The element's share here, and what it makes of meditation's cultivation (perfected or not).
+			addTop.accept(Component.translatable(ModLang.METHODS_HEAVEN_SHARE, active.element().getDisplayName(), Math.round(share * 100),
+					String.format(Locale.ROOT, "%.2f", HeavenMethods.elementFactor(share))), 0xB0A070);
 		}
 		// Each element: its header, the methods of it known, then how many are not.
 		List<HeavenMethod> known = new ArrayList<>();
@@ -1407,15 +1593,20 @@ public class CultivationScreen extends Screen {
 					g.drawString(font, Component.translatable(ModLang.METHODS_LAYER, layer, method.layers()), x + 9 * 9 + 6, y, 0xB0B0B0);
 					y += 11;
 				}
+				// Its next layer: settling in behind the realm (how far), or waiting on the realm to reach it; or all of it understood.
 				boolean perfected = layer >= method.layers();
-				double fraction = perfected ? 1 : Mth.clamp(h.progress(method) / HeavenMethods.layerCost(layer), 0, 1);
+				boolean settling = !dead && !c.isMortal() && HeavenMethods.settling(c, method);
+				double fraction = perfected ? 1 : settling ? Mth.clamp(h.progress(method) / HeavenMethods.settleCost(layer + 1), 0, 1) : 0;
 				g.fill(x, y, rightEdge, y + 5, 0xFF6E5214);
 				g.fill(x + 1, y + 1, rightEdge - 1, y + 4, 0xFF0C0C14);
 				g.fill(x + 1, y + 1, x + 1 + (int) Math.round((rightEdge - x - 2) * fraction), y + 4, perfected ? 0xFFFFD700 : 0xFF000000 | element.getGlowColor());
 				y += 9;
+				Component opensAt = GhostMethods.rankName(MethodLayers.floor(layer + 1));
 				Component progress = perfected ? Component.translatable(ModLang.METHODS_PERFECTED)
-						: Component.translatable(ModLang.METHODS_PROGRESS, (int) Math.floor(fraction * 100));
-				g.drawString(font, progress, x, y, perfected ? 0xFFD700 : 0xF0D78C);
+						: settling ? Component.translatable(ModLang.SETTLING_LINE, layer + 1, (int) Math.floor(fraction * 100))
+						: fit(rightEdge - x, Component.translatable(ModLang.METHODS_HEAVEN_OPENS, layer + 1, opensAt),
+						Component.translatable(ModLang.METHODS_HEAVEN_OPENS_SHORT, layer + 1, opensAt));
+				g.drawString(font, progress, x, y, perfected ? 0xFFD700 : settling ? 0xF0D78C : 0x9A9A9A);
 				y += 11;
 				for (FormattedCharSequence line : gains.get(method)) {
 					g.drawString(font, line, x, y, 0x8A8A8A);

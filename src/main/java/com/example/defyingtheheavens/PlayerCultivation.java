@@ -35,10 +35,10 @@ import java.util.List;
  * cultivators. Breaking into Foundation Building and Core Formation also takes a pill ({@link #requiresPill}), eaten at Grand
  * Perfection to prepare the breakthrough ({@link #prepareBreakthrough}).
  * <p>
- * A player's cultivation waits on their heaven methods (HeavenMethods#reach): no stage is entered, minor or by tribulation, until a
- * method has cultivated every layer that stands for the stages before it ({@link #isHeldByMethod}). The methods wait on nothing:
- * they grow while one meditates, whatever the realm. Cultivator NPCs advance by their own reckoning (CultivatorNpc#advance) and
- * aren't held so.
+ * The heaven methods (HeavenMethods) ride on the cultivation bar rather than make it: one cultivates with none (more slowly), a
+ * method known is understood as far as the realm has come, and only a major breakthrough waits on one, of the realm ahead or deeper
+ * ({@link #isHeldByMethod}). A fall (a failed tribulation, the nascent soul lost, the Chief Judge's gaze) takes the methods' layers
+ * past the stage fallen to with it ({@link #setBackTo}). Cultivator NPCs advance by their own reckoning (CultivatorNpc#advance).
  */
 public class PlayerCultivation {
 	/** The most the lower realms can sustain. */
@@ -192,20 +192,20 @@ public class PlayerCultivation {
 	/** At the stage only the heavens' leave lets one leave, without it: Qi Refining Mid. */
 	public boolean needsHeavensLeave() { return !mortal && !heavensLeave && rank(realm, stage) == RITUAL_RANK; }
 
-	/** {@link #needsHeavensLeave()} with the stage's cultivation full: nothing more is gathered until the ritual is done. */
+	/** {@link #needsHeavensLeave()} with the stage's cultivation full: the stage goes no further until the ritual is done. */
 	public boolean isAtRitualGate() { return needsHeavensLeave() && cultivation >= cultivationRequired(); }
 
 	/** No more cultivation fits: at a tribulation's bottleneck or at the Ritual to the Heavens' gate. */
 	public boolean isStalled() { return isAtBottleneck() || isAtRitualGate(); }
 
-	// --- The heaven method's gate (see HeavenMethods#reach) ---
+	// --- The heaven method's gate (see HeavenMethods#opensWay) ---
 
 	/**
-	 * The stage's bar full, and no heaven method yet carries cultivation into the next stage: it waits on the method's layers (or,
-	 * with none that goes on, on finding one). Not part of {@link #isStalled()}: medicine taken now is refined into the method.
+	 * At Grand Perfection's bottleneck with no heaven method known of the realm ahead or deeper: the breakthrough waits on finding one
+	 * (minor stages never do).
 	 */
 	public boolean isHeldByMethod() {
-		return !mortal && !isMaxed() && cultivation >= cultivationRequired() && !HeavenMethods.carries(this, rank(realm, stage) + 1);
+		return isAtBottleneck() && stage.isLast() && !isMaxed() && !HeavenMethods.opensWay(this, realm.next());
 	}
 
 	// --- The mortal path ---
@@ -368,27 +368,12 @@ public class PlayerCultivation {
 		return refined;
 	}
 
-	/**
-	 * Held at the heaven method's gate ({@link #isHeldByMethod}), meditation refines up to {@code max} unrefined qi into the method
-	 * practised instead (MeditationManager, which only asks while that method can take it). Returns how much was refined.
-	 */
-	public double refineIntoMethod(double max) {
-		if (mortal || medicinalQi <= 0 || isSuppressed() || !isHeldByMethod()) return 0;
-		double refined = Math.min(medicinalQi, Math.max(0, max));
-		medicinalQi -= refined;
-		return refined;
-	}
-
-	/**
-	 * Cultivation that still fits before the next bottleneck (the lower realm's cap, the ritual's gate, or the heaven method's),
-	 * across minor stages.
-	 */
+	/** Cultivation that still fits before the next bottleneck (the lower realm's cap, or the ritual's gate), across minor stages. */
 	private double roomToBottleneck() {
 		double room = cultivationRequired() - cultivation;
-		int reach = HeavenMethods.reach(this);
 		Realm r = realm;
 		Stage s = stage;
-		while (!(s.isLast() || r.hasStageTribulations()) && !(rank(r, s) == RITUAL_RANK && !heavensLeave) && rank(r, s) + 1 <= reach) {
+		while (!(s.isLast() || r.hasStageTribulations()) && !(rank(r, s) == RITUAL_RANK && !heavensLeave)) {
 			s = s.next();
 			if (lowerRealmBound && rank(r, s) > CAP_RANK) break;
 			room += required(r, s);
@@ -668,12 +653,11 @@ public class PlayerCultivation {
 	public boolean isAtBottleneck() { return !mortal && needsTribulation() && cultivation >= cultivationRequired(); }
 
 	/**
-	 * Ready for the tribulation: at the bottleneck, not sealed by the lower realm, any pill the next realm needs taken, and a heaven
-	 * method carrying cultivation on into what lies past it (HeavenMethods#reach).
+	 * Ready for the tribulation: at the bottleneck, not sealed by the lower realm, any pill the next realm needs taken, and into a new
+	 * realm, a heaven method of it or deeper known ({@link #isHeldByMethod}).
 	 */
 	public boolean canBreakthrough() {
-		return isAtBottleneck() && !isMaxed() && !isBreakthroughLocked() && !isMissingBreakthroughPill()
-				&& HeavenMethods.carries(this, rank(breakthroughRealm(), breakthroughStage()));
+		return isAtBottleneck() && !isMaxed() && !isBreakthroughLocked() && !isMissingBreakthroughPill() && !isHeldByMethod();
 	}
 
 	/** Grand Perfection of the highest realm (currently Four Axis). */
@@ -687,8 +671,9 @@ public class PlayerCultivation {
 
 	/**
 	 * Adds cultivation. Minor stages advance automatically until a bottleneck, where cultivation is capped at the
-	 * stage's requirement until the player breaks through (or, at Qi Refining Mid, until the heavens grant their leave, or until
-	 * a heaven method carries it into the next stage: HeavenMethods#reach). A suppressed cultivator gains nothing.
+	 * stage's requirement until the player breaks through (or, at Qi Refining Mid, until the heavens grant their leave). A
+	 * suppressed cultivator gains nothing. The heaven methods hold no minor stage back (their layers settle in after it:
+	 * HeavenMethods#settle).
 	 *
 	 * @return true if at least one minor stage was gained
 	 */
@@ -696,10 +681,10 @@ public class PlayerCultivation {
 		if (mortal) return false; // sealed meridians hold nothing
 		if (isSuppressed()) return false; // the lower realm can't sustain any further growth
 		boolean advanced = false;
-		cultivation += amount;
+		cultivation += Math.max(0, amount);
 		while (cultivation >= cultivationRequired()) {
 			boolean pastCap = lowerRealmBound && rank(realm, stage.next()) > CAP_RANK;
-			if (needsTribulation() || pastCap || needsHeavensLeave() || !HeavenMethods.carries(this, rank(realm, stage) + 1)) {
+			if (needsTribulation() || pastCap || needsHeavensLeave()) {
 				cultivation = cultivationRequired();
 				break;
 			}
@@ -712,7 +697,7 @@ public class PlayerCultivation {
 
 	/**
 	 * Moves to the breakthrough target (next stage, or next realm's Early stage) and empties cultivation; a pill taken for
-	 * this realm is used up, starting the new stage part of the way in.
+	 * this realm is used up, starting the new stage part of the way in. The new stage's heaven layers settle in with meditation.
 	 */
 	public boolean breakthrough() {
 		if (!canBreakthrough()) return false;
@@ -730,8 +715,8 @@ public class PlayerCultivation {
 	}
 
 	/**
-	 * Tribulation failure: drop one minor stage (Early falls to the previous realm's Grand Perfection) and lose all
-	 * cultivation. A breakthrough pill's power is spent with it.
+	 * Tribulation failure: drop one minor stage (Early falls to the previous realm's Grand Perfection) and lose all cultivation,
+	 * the heaven methods' layers past it with it ({@link #setBackTo}). A breakthrough pill's power is spent with it.
 	 */
 	public void fallOneStage() {
 		preparedRealm = null;
@@ -742,19 +727,27 @@ public class PlayerCultivation {
 			realm = realm.previous();
 			stage = Stage.GRAND_PERFECTION;
 		}
-		cultivation = 0;
+		setBackTo(realm, stage);
+	}
+
+	/**
+	 * Set back to {@code realm} {@code stage} with none of it cultivated (a tribulation failed, the nascent soul lost, the Chief
+	 * Judge's gaze): the heaven methods' layers past the stage are lost with it (HeavenMethods#clampTo), to settle in again when the
+	 * realm climbs back.
+	 */
+	public void setBackTo(Realm realm, Stage stage) {
+		setState(realm, stage, 0);
+		HeavenMethods.clampTo(heaven, rank(realm, stage));
 	}
 
 	/**
 	 * The nascent soul is lost (its tether cut, its body slain, the soul itself destroyed): whatever was built on it goes with it,
-	 * down to Core Formation Grand Perfection with no cultivation, so the soul has to be formed again (the Nascent Soul
-	 * tribulation). A breakthrough pill's power is spent too.
+	 * down to Core Formation Grand Perfection with no cultivation (the methods' layers past it too), so the soul has to be formed
+	 * again (the Nascent Soul tribulation). A breakthrough pill's power is spent too.
 	 */
 	public void loseNascentSoul() {
 		if (mortal || realm.ordinal() < Realm.NASCENT_SOUL.ordinal()) return;
-		realm = Realm.CORE_FORMATION;
-		stage = Stage.GRAND_PERFECTION;
-		cultivation = 0;
+		setBackTo(Realm.CORE_FORMATION, Stage.GRAND_PERFECTION);
 		preparedRealm = null;
 		preparedBonus = 0;
 	}
@@ -810,8 +803,15 @@ public class PlayerCultivation {
 		if (!nether.isEmpty()) tag.put("Netherworld", nether);
 		CompoundTag methods = heaven.save();
 		if (!methods.isEmpty()) tag.put("HeavenMethods", methods);
+		tag.putInt("PathModel", PATH_MODEL);
 		return tag;
 	}
+
+	/**
+	 * How the heaven path is saved: 3 since the methods are understood as far as the realm (HeavenMethods#understoodTo). Before it
+	 * (2: the realm followed the methods' layers; below: the methods grew apart from it) the cultivation saved stands as it was.
+	 */
+	private static final int PATH_MODEL = 3;
 
 	public static PlayerCultivation load(CompoundTag tag) {
 		PlayerCultivation c = new PlayerCultivation();
@@ -859,6 +859,8 @@ public class PlayerCultivation {
 		Journal.load(tag.getList("Journal", Tag.TAG_COMPOUND), c.journal);
 		c.netherworld.load(tag.getCompound("Netherworld")); // an empty compound when missing: every default
 		c.heaven.load(tag.getCompound("HeavenMethods"));
+		// Saves from before: every method known understood as far as the realm, none behind it or past it.
+		if (tag.getInt("PathModel") < PATH_MODEL && !c.mortal) HeavenMethods.alignTo(c.heaven, rank(c.realm, c.stage));
 		return c;
 	}
 

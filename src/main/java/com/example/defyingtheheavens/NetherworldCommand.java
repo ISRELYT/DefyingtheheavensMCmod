@@ -109,7 +109,10 @@ public final class NetherworldCommand {
 		return method;
 	}
 
-	/** /heavenmethod learn <id> [layer]: that layer (no further than its last), progress reset; without one, as a stele teaches it. */
+	/**
+	 * /heavenmethod learn <id> [layer]: that layer understood (no further than its last, deeper than the realm too: its spells and
+	 * passive still wait on the realm), nothing settling; without one, as a stele teaches it.
+	 */
 	private static int learnHeaven(ServerPlayer p, HeavenMethod method, int layer) {
 		HeavenState s = CultivationManager.get(p).heaven();
 		if (!s.knows(method)) HeavenMethods.give(p, method); // an op's word: whatever stands in the way
@@ -119,18 +122,23 @@ public final class NetherworldCommand {
 		return 1;
 	}
 
-	/** /heavenmethod progress <amount>: that much cultivation (HeavenMethods#layerCost) on the practised heaven method. */
+	/**
+	 * /heavenmethod progress <amount>: that much settling (HeavenMethods#settleCost) on the practised heaven method, no further than
+	 * the realm has come (HeavenMethods#understoodTo).
+	 */
 	private static int progressHeaven(ServerPlayer p, double amount) {
-		HeavenState s = CultivationManager.get(p).heaven();
+		PlayerCultivation c = CultivationManager.get(p);
+		HeavenState s = c.heaven();
 		HeavenMethod active = s.activeMethod();
 		if (active == null) {
 			p.sendSystemMessage(Component.literal("No heaven method is being practised."));
 			return 0;
 		}
-		HeavenMethods.cultivate(s, active, amount);
+		int upTo = HeavenMethods.understoodTo(c, active);
+		HeavenMethods.settle(s, active, amount, upTo);
 		HeavenMethods.afterLayer(p);
-		p.sendSystemMessage(Component.literal(active.getId() + ": layer " + s.layer(active) + ", " + Math.round(s.progress(active)) + " / "
-				+ Math.round(HeavenMethods.layerCost(s.layer(active))) + " cultivation."));
+		p.sendSystemMessage(Component.literal(active.getId() + ": layer " + s.layer(active) + (s.layer(active) >= upTo ? ", understood as far as the realm."
+				: ", " + Math.round(s.progress(active)) + " / " + Math.round(HeavenMethods.settleCost(s.layer(active) + 1)) + " settling.")));
 		return 1;
 	}
 

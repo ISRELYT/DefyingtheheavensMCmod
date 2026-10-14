@@ -56,14 +56,15 @@ public abstract class SoulPlayerMixin {
 
 	/**
 	 * Items, experience and arrows lying about: a soul touches none of them. A ghost takes the experience that comes to it (drawn
-	 * to the nearest player, it would only circle the ghost for ever), but nothing else.
+	 * to the nearest player, it would only circle the ghost for ever), and the dead's money and writings (Incorporeal#mayCarry), but
+	 * nothing else.
 	 */
 	@Inject(method = "touch", at = @At("HEAD"), cancellable = true)
 	private void dth$soulTouchesNothing(Entity entity, CallbackInfo ci) {
 		Player self = (Player) (Object) this;
 		if (entity instanceof ExperienceOrb && GhostSystem.isGhost(self) && !SoulProjection.isSoul(self)) return;
-		// A Marrow Cleansing Elixir handed to a ghost (Incorporeal#mayDrink), the one thing it takes up.
-		if (entity instanceof net.minecraft.world.entity.item.ItemEntity item && Incorporeal.mayDrink(self, item.getItem())) return;
+		// What a ghost takes up (Incorporeal#mayCarry): the dead's money and writings, and a Marrow Cleansing Elixir.
+		if (entity instanceof net.minecraft.world.entity.item.ItemEntity item && Incorporeal.mayCarry(self, item.getItem())) return;
 		if (Incorporeal.is(self)) ci.cancel();
 	}
 

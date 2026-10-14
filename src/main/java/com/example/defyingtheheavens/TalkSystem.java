@@ -134,14 +134,15 @@ public final class TalkSystem {
 		boolean spar = !npc.isMortal() && (standing != Standing.ABOVE || npc.regard(player) >= Regard.COURTEOUS);
 		if (!spar) mask &= ~TalkIntent.SPAR.bit();
 		if (kneelsTo(player, npc)) mask |= TalkIntent.DEMAND.bit() | TalkIntent.RELEASE.bit();
-		// The dead have nothing to trade or give, and press nobody: greet, ask, spar, provoke or leave.
+		// The dead press nobody: they greet, ask, trade and give (with the spirit stones, Yin Jade and slips they carry:
+		// Incorporeal#mayCarry), spar, provoke or leave, as their standing allows, as the living do.
 		if (GhostSystem.isGhost(player)) mask &= GHOST_INTENTS;
 		return mask;
 	}
 
-	/** What a ghost may do in a talk (with the Netherworld's dead, the only ones it can talk to). */
-	public static final int GHOST_INTENTS = TalkIntent.GREET.bit() | TalkIntent.ASK.bit() | TalkIntent.SPAR.bit() | TalkIntent.PROVOKE.bit()
-			| TalkIntent.LEAVE.bit();
+	/** What a ghost may do in a talk, with the dead or the living (those who sense it: CultivatorNpc#senses). */
+	public static final int GHOST_INTENTS = TalkIntent.GREET.bit() | TalkIntent.ASK.bit() | TalkIntent.TRADE.bit() | TalkIntent.GIFT.bit()
+			| TalkIntent.SPAR.bit() | TalkIntent.PROVOKE.bit() | TalkIntent.LEAVE.bit();
 
 	/** It kneels to {@code player}: two realms beneath them, with their realm pressed down on it. */
 	public static boolean kneelsTo(ServerPlayer player, CultivatorNpc npc) {
@@ -630,8 +631,8 @@ public final class TalkSystem {
 
 	/**
 	 * A living cultivator teaches its heaven method (once a day, sharing the day's guidance): the method to one who doesn't know
-	 * it, or ten minutes of their own meditation's worth of progress ({@link HeavenMethods#teachingProgress}) to one who does. A
-	 * mortal or one of the dead is told why not, and the day isn't spent.
+	 * it; to one who does, its layers still settling in, settled at once, and ten minutes of their own meditation's worth of
+	 * cultivation ({@link HeavenMethods#teachingProgress}). A mortal or one of the dead is told why not, and the day isn't spent.
 	 */
 	static Component teachHeaven(ServerPlayer player, CultivatorNpc npc) {
 		HeavenMethod method = npc.heavenMethod();
@@ -648,7 +649,14 @@ public final class TalkSystem {
 			HeavenMethods.learn(player, method);
 			return Component.translatable(ModLang.TALK_TEACH_HEAVEN, method.getDisplayName(), method.element().getDisplayName());
 		}
-		HeavenMethods.cultivate(s, method, HeavenMethods.teachingProgress(c));
+		int upTo = HeavenMethods.understoodTo(c, method);
+		if (s.layer(method) < upTo) s.setMethod(method, upTo, 0);
+		boolean advanced = c.addCultivation(HeavenMethods.teachingProgress(c));
+		CultivationManager.refresh(player);
+		if (advanced) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_STAGE_UP, c.getRealm().getDisplayName(), c.getStage().getDisplayName()), true);
+			player.setHealth(player.getMaxHealth());
+		}
 		HeavenMethods.afterLayer(player);
 		player.level().playSound(null, player.blockPosition(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.0f, 1.0f);
 		return Component.translatable(ModLang.TALK_TEACH_HEAVEN_PROGRESS, method.getDisplayName(), (int) (HeavenMethods.TEACHING_SECONDS / 60));

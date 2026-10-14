@@ -419,7 +419,10 @@ public final class GhostSystem {
 		return false;
 	}
 
-	/** Out of health, or into the abyss: scattered in cyan sparks, the screen gone dark; it reforms at the Gate. */
+	/**
+	 * Out of health, or into the abyss: scattered in cyan sparks, the screen gone dark; it reforms at the Gate. Those that fought
+	 * it let it go (CultivatorNpc#letGoOf): the scattering is the end of that fight.
+	 */
 	public static void disperse(ServerPlayer p) {
 		p.setHealth(1.0f);
 		if (DISPERSED.containsKey(p.getUUID())) return;
@@ -427,9 +430,19 @@ public final class GhostSystem {
 		p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.ALLAY_DEATH, SoundSource.PLAYERS, 1.0f, 0.5f);
 		p.setInvisible(true);
 		p.setInvulnerable(true);
+		p.addTag(SCATTERED_TAG);
 		state(p).setReforming(true);
 		CultivationManager.markDirty(p.server);
 		DISPERSED.put(p.getUUID(), DISPERSE_TICKS);
+		// Whatever scattered it has done with it: the dead reform at the Gate, before its wardens, and a warden still set on a
+		// ghost it had scattered cut it down again the moment it reformed, over and over.
+		for (CultivatorNpc npc : CultivatorNpc.loaded(p.serverLevel())) {
+			if (npc.getTarget() == p || npc.getLastHurtByMob() == p) npc.letGoOf(p);
+		}
+		for (net.minecraft.world.entity.Mob mob : p.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.Mob.class, p.getBoundingBox().inflate(64),
+				m -> m.getTarget() == p && !(m instanceof CultivatorNpc))) {
+			mob.setTarget(null);
+		}
 		ModPackets.sendGhostFade(p, 0x062428, 10, DISPERSE_TICKS - 5, 25);
 		p.displayClientMessage(Component.translatable(ModLang.MSG_GHOST_DISPERSED), true);
 	}
@@ -438,8 +451,7 @@ public final class GhostSystem {
 	static void reform(ServerPlayer p) {
 		NetherworldState s = state(p);
 		s.setReforming(false);
-		p.setInvisible(false);
-		p.setInvulnerable(false);
+		gatherBody(p);
 		toGate(p);
 		applyBody(p);
 		p.setHealth(p.getMaxHealth() / 2);
@@ -447,6 +459,20 @@ public final class GhostSystem {
 		CultivationManager.markDirty(p.server);
 		NetherworldManager.refresh(p);
 		p.sendSystemMessage(Component.translatable(ModLang.MSG_GHOST_REFORMED).withStyle(ChatFormatting.AQUA));
+	}
+
+	/**
+	 * Marks a scattered body (in its own saved data, the Tags), so that what the scattering did to it (unseen, untouchable) is
+	 * undone whatever becomes of the ghost's record: vanilla saves the untouchable, and carries a singleplayer body over to a
+	 * player of another name, whose records (by its UUID) are new (a development client's name is new each launch).
+	 */
+	static final String SCATTERED_TAG = "defying-the-heavens.scattered";
+
+	/** Seen and touchable again, its scattering's mark gone. */
+	private static void gatherBody(ServerPlayer p) {
+		p.setInvisible(false);
+		p.setInvulnerable(false);
+		p.removeTag(SCATTERED_TAG);
 	}
 
 	private static void sparks(ServerPlayer p, int count) {
@@ -495,8 +521,7 @@ public final class GhostSystem {
 		s.setGhost(false);
 		s.setReforming(false);
 		removeBody(p);
-		p.setInvisible(false);
-		p.setInvulnerable(false);
+		gatherBody(p);
 		RealmSuppressionHandler.update(p);
 		p.setHealth(p.getMaxHealth());
 		p.getFoodData().setFoodLevel(20);
@@ -562,9 +587,13 @@ public final class GhostSystem {
 
 	// --- Joining, and telling clients ---
 
-	/** A ghost logging in wakes a ghost (reforming at the Gate if it left while dispersed). */
+	/**
+	 * A ghost logging in wakes a ghost (reforming at the Gate if it left while dispersed). A body that left scattered with no
+	 * reforming ghost's record to go with it (SCATTERED_TAG) is simply seen and touchable again.
+	 */
 	public static void onJoin(ServerPlayer p) {
 		NetherworldState s = state(p);
+		if (p.getTags().contains(SCATTERED_TAG) && !(s.ghost() && s.reforming())) gatherBody(p);
 		TwoPaths.onJoin(p);
 		if (!s.ghost()) {
 			// One of the living in a Ghost King's form (TwoPaths) is drawn so, to itself too (its hand in first person).

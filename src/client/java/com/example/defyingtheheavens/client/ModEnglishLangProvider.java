@@ -173,7 +173,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.YIN_HELD, "Yin corruption: %s%% (held still, %s s)");
 		t.add(ModLang.GHOST_QI_HERE, "Ghostly qi here: %s");
 		t.add(ModLang.GHOST_QI_DENSE, "dense x%s");
-		t.add(ModLang.GHOST_QI_PEAKS, "dense x%s (on the Nine Nether Peaks)");
+		t.add(ModLang.GHOST_QI_PEAKS, "dense x%s (Nine Nether Peaks)");
 		t.add(ModLang.GHOST_QI_THIN, "thin x%s");
 		t.add(ModLang.GHOST_QI_FAINT, "faint x%s");
 		t.add(ModLang.HUD_GHOST_QI_LABEL, "Ghost Qi");
@@ -240,8 +240,12 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.STAGE, "Stage: %s");
 		t.add(ModLang.CULTIVATION, "Cultivation: %s / %s");
 		t.add(ModLang.CULTIVATION_MAX, "Cultivation: %s (Maximum)");
-		t.add(ModLang.CULTIVATION_RATE, "Cultivation gain: %s/s");
-		t.add(ModLang.CULTIVATION_RATE_UPPER, "Cultivation gain: %s/s (x%s Upper Realm)");
+		t.add(ModLang.METHOD_LINE, "%s, layer %s of %s: +%s/s");
+		t.add(ModLang.METHOD_LINE_NAME, "%s: +%s/s");
+		t.add(ModLang.METHOD_LINE_SHORT, "Layer %s of %s: +%s/s");
+		t.add(ModLang.METHOD_LINE_NONE, "No heaven method: +%s/s");
+		t.add(ModLang.SETTLING_LINE, "Layer %s settling: %s%%");
+		t.add(ModLang.UPPER_REALM_LINE, "Upper Realm: qi x%s");
 		t.add(ModLang.HUD_QI, "%s / %s");
 		t.add(ModLang.HUD_QI_LABEL, "Qi");
 		t.add(ModLang.BOTTLENECK, "Bottleneck reached! Break through to advance.");
@@ -354,8 +358,10 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 			t.add(ModLang.methodKey(method.getId()) + ".gains", switch (method) {
 				case NETHERWORLD_BREATHING -> "Qi Refining: layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection. Layer 3: Ghost Eye. Layer 5: Ghostly "
 						+ "Wail. Layer 6: Netherworld Veil. Every layer: +20 ghost qi.";
-				case GHOST_FIRE_SCRIPTURE -> "Layer 1: Ghost Fire. Layer 4: Ghost Fire Bolt. Layer 7: the fire leaps to a second foe. Every layer: a ghost's blows +10%.";
-				case WANDERING_SOUL_STEPS -> "Layer 1: Yin Wind Steps. Layer 2: Soul Dash. Layer 4: Ghost Flight (the dead). Every layer: a ghost +3% speed.";
+				case GHOST_FIRE_SCRIPTURE -> "Your ghost path opens its layers: 1-3 at Qi Refining, 4-6 at Foundation Building, 7-9 at Core Formation. "
+						+ "Layer 1: Ghost Fire. Layer 4: Ghost Fire Bolt. Layer 7: the fire leaps to a second foe. Every layer: a ghost's blows +10%.";
+				case WANDERING_SOUL_STEPS -> "Your ghost path opens its layers: 1-3 at Qi Refining, 4-6 at Foundation Building, 7-9 at Core Formation. "
+						+ "Layer 1: Yin Wind Steps. Layer 2: Soul Dash. Layer 4: Ghost Flight (the dead). Every layer: a ghost +3% speed.";
 				case YELLOW_SPRINGS_MARROW -> "Qi Refining to Foundation Building, nine layers each: of each realm's nine, layer 1 Early, 3 Mid, 6 "
 						+ "Late, 9 Grand Perfection. Layer 12: Yellow Springs Tide. Layer 16: Marrow Ward. Every layer: +20 ghost qi.";
 				case GHOST_CORE_CANON -> "Qi Refining to Core Formation, nine layers each: of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 "
@@ -434,7 +440,17 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_SPELL_BOTH_PATHS, "Your heaven path and your ghost path meet at %s: you can cast %s.");
 		t.add(ModLang.STATS_GHOST_BODY, "Ghost path: %s");
 		t.add(ModLang.STATS_HARMONY, ", harmony +%s%%");
-		t.add(ModLang.TWO_PATHS_LINE, "Ghost path: %s (harmony +%s%%)");
+		t.add(ModLang.TWO_PATHS_LINE, "Paths in harmony: +%s%%");
+		t.add(ModLang.HEAVEN_PATH_LINE, "Heaven path: %s");
+		t.add(ModLang.EFFECTIVE_LINE, "Effective cultivation: %s");
+		t.add(ModLang.EFFECTIVE_QUASI_STAGE, "%s - Quasi-%s");
+		t.add(ModLang.EFFECTIVE_QUASI_REALM, "Quasi-%s");
+		t.add(ModLang.EFFECTIVE_BEYOND, "%s - beyond %s");
+		t.add(ModLang.EFFECTIVE_TOWARD, "%s (%s%%)");
+		t.add(ModLang.METHOD_BAR, "%s, layer %s of %s");
+		t.add(ModLang.METHOD_BAR_SHORT, "%s, %s of %s");
+		t.add(ModLang.METHOD_BAR_PERFECTED, "%s: perfected");
+		t.add(ModLang.METHOD_BAR_SEEK, "Perfected: seek the %s");
 		t.add(ModLang.FORM_PREFIX + "human", "human form");
 		t.add(ModLang.FORM_PREFIX + "ghost_king", "Ghost King form");
 		t.add(ModLang.MSG_FORMS_OPEN, "Your ghost path has reached Core Formation: beside your human form you have a Ghost King's. Your true "
@@ -459,7 +475,9 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_METHOD_LEARNED, "You have learned the first layer of the %s.");
 		t.add(ModLang.MSG_METHOD_LEARNED_AT, "You have learned the %s. Your ghost path already stands this deep: you take it up at its layer %s.");
 		t.add(ModLang.MSG_METHOD_LAYER, "%s: layer %s reached.");
-		t.add(ModLang.MSG_METHOD_REALM_CAPPED, "Your ghost path can carry the %s no further than its layer %s. Take your ghost path to %s to go on.");
+		t.add(ModLang.MSG_METHOD_REALM_CAPPED, "The %s waits at layer %s until your ghost path reaches %s. The ghost path has no breakthrough: it rises "
+				+ "with the layers of your foundation method (the Netherworld Breathing Art to Qi Refining's end, the Yellow Springs Marrow Art or a "
+				+ "deeper one beyond it).");
 		t.add(ModLang.MSG_METHOD_FLOOR, "The %s carries your ghost path to %s.");
 		t.add(ModLang.MSG_METHOD_PRACTISED, "Your meditation now cultivates the %s.");
 		t.add(ModLang.MSG_GHOST_NO_METHOD, "The dead cultivate only the ghost methods. Learn one at a Method Stele first.");
@@ -487,7 +505,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.METHODS_RATE, "Meditating here, the %s's next layer comes in about %s min.");
 		t.add(ModLang.METHODS_NO_QI, "There is no ghostly qi here to cultivate with. Meditate in the Nether, or ten times as fast in the Netherworld.");
 		t.add(ModLang.BTN_SPELL_LIST, "Spell List");
-		t.add(ModLang.METHODS_REALM_CAPPED, "Held at layer %s: your ghost path must reach %s to cultivate it further.");
+		t.add(ModLang.METHODS_REALM_CAPPED, "Held at layer %s until your ghost path reaches %s: practise your foundation method to raise it.");
 		t.add(ModLang.METHODS_FLOOR_NEXT, "Layer %s of the %s carries your ghost path to %s.");
 		t.add(ModLang.METHODS_SEEK_NEXT, "The %s is perfected. Only a foundation that goes further, the %s or one beyond it, carries your "
 				+ "ghost path on: seek it out.");
@@ -542,12 +560,14 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		}
 		t.add(ModLang.MSG_HEAVEN_METHOD_MERIDIANS, "Your meridians are sealed: no heaven method takes hold until a Marrow Cleansing Elixir has opened them.");
 		t.add(ModLang.MSG_HEAVEN_METHOD_DEAD, "The heaven methods are the living's. The dead cultivate the ghost methods alone.");
-		t.add(ModLang.MSG_HEAVEN_LEARNED, "You have learned the first layer of the %s.");
-		t.add(ModLang.MSG_HEAVEN_LEARNED_AT, "You have learned the %s. Your methods of its element already run this deep: you take it up at its layer %s.");
+		t.add(ModLang.MSG_HEAVEN_LEARNED, "You have learned the %s, understood as far as your cultivation has come: layer %s of %s.");
 		t.add(ModLang.MSG_HEAVEN_PRACTISED, "Your meditation now cultivates the %s.");
-		t.add(ModLang.MSG_HEAVEN_LAYER, "%s: layer %s reached.");
-		t.add(ModLang.HEAVEN_GATE_LAYER, "Your cultivation waits on your heaven method: complete its layer %s to step into %s.");
-		t.add(ModLang.HEAVEN_GATE_NONE, "Your cultivation waits on a heaven method: none you know carries it into %s. Find one that does at a Dao Stele or in a Jade Slip.");
+		t.add(ModLang.MSG_HEAVEN_LAYER, "%s: layer %s settles in.");
+		t.add(ModLang.MSG_HEAVEN_LAYER_SPELL, "%s: layer %s settles in. New spell: %s.");
+		t.add(ModLang.MSG_HEAVEN_NONE_KNOWN, "You meditate without a heaven method, at three quarters' pace, and no breakthrough leads past Qi Refining "
+				+ "until you find one: at a Dao Stele, in a Jade Slip, or from a sect's elders.");
+		t.add(ModLang.HEAVEN_GATE_NONE, "No heaven method you know reaches %s: find one of that realm or deeper at a Dao Stele, in a Jade Slip or "
+				+ "from a sect's elders.");
 		t.add(ModLang.JOURNAL_HEAVEN_METHOD, "A heaven method");
 		t.add(ModLang.JOURNAL_HEAVEN_METHOD_TEXT, "I learned the %s, a method of %s qi. %s");
 		t.add(ModLang.MSG_SPELL_NO_HEAVEN_QI, "Not enough qi for %s.");
@@ -567,12 +587,15 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.METHODS_PAGE_HEAVEN, "Heaven Path");
 		t.add(ModLang.METHODS_HEAVEN_KNOWN, "%s of %s heaven methods known");
 		t.add(ModLang.METHODS_HEAVEN_EMPTY, "No heaven methods learned yet.");
-		t.add(ModLang.METHODS_HEAVEN_HINT, "Without one your cultivation goes no further than Qi Refining Early. Dao Steles stand where an element's qi runs thick; cultivators carry jade slips; a sect's elders teach its element.");
+		t.add(ModLang.METHODS_HEAVEN_HINT, "Without one you cultivate at three quarters' pace and break through no further than Qi Refining. Dao Steles stand where an element's qi runs thick; cultivators carry jade slips; a sect's elders teach its element.");
 		t.add(ModLang.METHODS_HEAVEN_DEAD, "The heaven methods are the living's: the dead cultivate the ghost methods alone.");
 		t.add(ModLang.METHODS_HEAVEN_SEALED, "Heaven methods: sealed, your meridians not yet opened (a Marrow Cleansing Elixir)");
-		t.add(ModLang.METHODS_HEAVEN_RATE, "Meditating here, the %s's next layer comes in about %s min.");
+		t.add(ModLang.METHODS_HEAVEN_RATE, "Meditating here, layer %s of the %s settles in about %s min.");
+		t.add(ModLang.METHODS_HEAVEN_NEXT, "The %s is understood as far as your cultivation: its next layer opens at %s.");
+		t.add(ModLang.METHODS_HEAVEN_OPENS, "Layer %s opens at %s");
+		t.add(ModLang.METHODS_HEAVEN_OPENS_SHORT, "Layer %s: %s");
 		t.add(ModLang.METHODS_HEAVEN_SHARE, "%s qi here: %s%% of all (x%s)");
-		t.add(ModLang.METHODS_HEAVEN_REACH, "Your heaven methods carry your cultivation to %s.");
+		t.add(ModLang.METHODS_HEAVEN_REACH, "Your heaven methods open the way as far as %s.");
 		t.add(ModLang.METHODS_HEAVEN_UNKNOWN, "%s of the %s %s methods unknown. Their Dao Steles stand where their qi runs thick; the deepest are "
 				+ "seldom carved outside the Upper Realm.");
 		t.add(ModLang.METHODS_HEAVEN_PASSIVE, "%s: %s");
@@ -664,11 +687,11 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_TEMPER_FULL, "Your body is fully tempered.");
 		t.add(ModLang.MSG_ELIXIR_TOO_WEAK, "Your body is too weak. Reach Mortal Peak first.");
 		t.add(ModLang.MSG_HERB_EATEN, "+%s tempering");
-		t.add(ModLang.NEED_PILL, "Bottleneck! You need a %s to enter %s.");
+		t.add(ModLang.NEED_PILL, "%2$s needs a %1$s.");
 		t.add(ModLang.PILL_PREPARED, "A pill's power waits to carry you into %s.");
-		t.add(ModLang.QI_BOOST_LINE, "Qi Gathering Pill: +%s%% qi gathering");
+		t.add(ModLang.QI_BOOST_LINE, "Qi Gathering Pill: +%s%%");
 		t.add(ModLang.PILL_RESISTANCE_LINE, "Medicinal toxicity: %s%%");
-		t.add(ModLang.UNREFINED_LINE, "Unrefined qi: %s (meditate to refine)");
+		t.add(ModLang.UNREFINED_LINE, "Unrefined qi: %s");
 		t.add(ModLang.MSG_INNER_ENTER, "You close your eyes and turn inward.");
 		t.add(ModLang.MSG_INNER_PULLED, "Your body is disturbed! Your soul snaps back.");
 		t.add(ModLang.MSG_INNER_TRIBULATION, "Return to your body first.");
@@ -1157,6 +1180,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_SEAL_UNSEEN, "The qi ink sinks into the surface, unseen by mortal eyes. Only Qi Sense reveals it.");
 		t.add(ModLang.MSG_TREASURY_SEALED, "A seal of %s holds it shut. Only one a realm above its elders could break it.");
 		t.add(ModLang.MSG_TREASURY_SEAL_BROKEN, "The elders' seal shatters under your hand. The treasury lies open.");
+		t.add(ModLang.MSG_PALACE_SEALED, "The Ghost King's seal of %s holds it shut. Only one a realm above the king could break it.");
+		t.add(ModLang.MSG_PALACE_SEAL_BROKEN, "The Ghost King's seal shatters under your hand. The treasury lies open.");
 		t.add(ModLang.BRUSH_TOOLTIP, "Paints seals of qi ink on floors and walls, to join Qi Veins to a Formation Core");
 		t.add(ModLang.BRUSH_TOOLTIP_ERASE, "Sneak to wipe a seal away. Only Qi Sense shows the ink.");
 		t.add(ModLang.MSG_CORE_CLAIMED, "The formation of the fallen %s answers to you now.");
@@ -1250,8 +1275,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.ALTAR_NO_SKY, "The heavens cannot see this altar: it needs open sky above it.");
 		t.add(ModLang.FAVOUR_LINE, "Heaven's Favour: +%s%%");
 		t.add(ModLang.RITUAL_AHEAD, "Before Qi Refining Late: the Ritual to the Heavens.");
-		t.add(ModLang.RITUAL_GATE, "Your cultivation is full. The heavens must grant you permission to cultivate further.");
-		t.add(ModLang.RITUAL_HOW, "Build a Heaven Altar under open sky, lay offerings on it, then sneak and right-click it empty-handed and kneel there, still, for fifteen seconds.");
+		t.add(ModLang.RITUAL_GATE, "The heavens must grant you leave to go on.");
+		t.add(ModLang.RITUAL_HOW, "At a Heaven Altar under open sky, lay offerings, then sneak, right-click it empty-handed and kneel there, still, for 15 seconds.");
 		t.add(ModLang.MSG_RITUAL_GATE, "Your cultivation at Qi Refining Mid is full. You may go no further until the heavens grant you permission to cultivate: perform the Ritual to the Heavens at a Heaven Altar.");
 		t.add(ModLang.MSG_RITUAL_BEGIN, "The offering rises as smoke (%1$s, chance %2$s). Kneel before the heavens, still, for fifteen seconds...");
 		t.add(ModLang.MSG_RITUAL_NOT_NOW, "The heavens have nothing to grant you now.");

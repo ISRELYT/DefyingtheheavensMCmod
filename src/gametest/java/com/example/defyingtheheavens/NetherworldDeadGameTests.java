@@ -96,9 +96,68 @@ public class NetherworldDeadGameTests implements FabricGameTest {
 					"It scatters: gone from sight, untouchable, reforming");
 			helper.assertTrue(!GhostSystem.allowDamage(ghost, ModDamageTypes.ghostly(helper.getLevel(), null)), "Nothing is left to strike meanwhile");
 			GhostSystem.reform(ghost);
-			helper.assertTrue(!ghost.isInvisible() && !ghost.isInvulnerable() && !s.reforming(), "Back together");
+			helper.assertTrue(!ghost.isInvisible() && !ghost.isInvulnerable() && !s.reforming() && !ghost.getTags().contains(GhostSystem.SCATTERED_TAG),
+					"Back together");
 			helper.assertTrue(Math.abs(ghost.getHealth() - ghost.getMaxHealth() / 2) < 0.01 && Math.abs(s.ghostQi() - 10) < 1.0e-9,
 					"With half its health and half its ghostly qi");
+		} finally {
+			GhostSystem.forget(ghost.getUUID());
+		}
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void theScatteringEndsTheFight(GameTestHelper helper) {
+		ServerPlayer ghost = cultivator(helper, Realm.QI_REFINING);
+		GhostSystem.makeGhost(ghost);
+		GhostCultivatorNpc warden = helper.spawn(ModEntities.GHOST_CULTIVATOR, new BlockPos(1, 2, 1));
+		Zombie zombie = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, new BlockPos(3, 2, 1));
+		// beside them (a mock player starts at the world's spawn, and what fought a ghost is looked for within 64 blocks of it)
+		net.minecraft.world.phys.Vec3 at = helper.absoluteVec(new net.minecraft.world.phys.Vec3(2.5, 2, 2.5));
+		ghost.moveTo(at.x, at.y, at.z);
+		try {
+			warden.setTarget(ghost);
+			warden.setLastHurtByMob(ghost);
+			zombie.setTarget(ghost);
+			GhostSystem.allowDeath(ghost);
+			helper.assertTrue(warden.getTarget() == null && warden.getLastHurtByMob() == null,
+					"The warden that scattered it lets it go (or it cuts it down again as it reforms, over and over)");
+			helper.assertTrue(zombie.getTarget() == null, "...and so does anything else set on it");
+		} finally {
+			GhostSystem.forget(ghost.getUUID());
+		}
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void theDeadWalkSoulSandUnslowed(GameTestHelper helper) throws ReflectiveOperationException {
+		helper.setBlock(new BlockPos(1, 1, 1), net.minecraft.world.level.block.Blocks.SOUL_SAND);
+		helper.setBlock(new BlockPos(3, 1, 1), net.minecraft.world.level.block.Blocks.SOUL_SAND);
+		HungryGhost hungry = helper.spawnWithNoFreeWill(ModEntities.HUNGRY_GHOST, new BlockPos(1, 2, 1));
+		Zombie zombie = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, new BlockPos(3, 2, 1));
+		java.lang.reflect.Method speed = net.minecraft.world.entity.Entity.class.getDeclaredMethod("getBlockSpeedFactor");
+		speed.setAccessible(true);
+		float living = (Float) speed.invoke(zombie), dead = (Float) speed.invoke(hungry);
+		helper.assertTrue(living < 1 && dead == 1, "Soul sand drags at the living (" + living + "), not the dead (" + dead + ")");
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void aBodyLeftScatteredWithoutItsGhostsRecordIsWholeAgain(GameTestHelper helper) {
+		ServerPlayer ghost = cultivator(helper, Realm.CORE_FORMATION);
+		GhostSystem.makeGhost(ghost);
+		NetherworldState s = CultivationManager.get(ghost).netherworld();
+		try {
+			GhostSystem.allowDeath(ghost);
+			helper.assertTrue(ghost.isInvulnerable() && ghost.getTags().contains(GhostSystem.SCATTERED_TAG), "Scattered, and its body marked so");
+			// Logged out mid-scattering, and back with no reforming ghost's record (another name's in a singleplayer world, whose
+			// records are new; or the records lost): only the body's own saved data still says it scattered.
+			GhostSystem.forget(ghost.getUUID());
+			s.setGhost(false);
+			s.setReforming(false);
+			GhostSystem.onJoin(ghost);
+			helper.assertTrue(!ghost.isInvulnerable() && !ghost.isInvisible() && !ghost.getTags().contains(GhostSystem.SCATTERED_TAG),
+					"Seen and touchable again, not untouchable for good");
 		} finally {
 			GhostSystem.forget(ghost.getUUID());
 		}

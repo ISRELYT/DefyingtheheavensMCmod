@@ -17,8 +17,8 @@ import java.util.List;
 
 /**
  * A Ghost Jade Slip (鬼玉简): a slip of dark jade holding a ghost method (its "Method" tag). Read (used), it teaches the method
- * (at the layer GhostMethods#startLayer gives), and isn't used up. An item, so only the living can read one. Dropped now and then by ghost cultivators, sold by
- * ghost elders.
+ * (at the layer GhostMethods#startLayer gives), and isn't used up. The dead read them too (Incorporeal#mayUse), and take them up.
+ * Dropped now and then by ghost cultivators, sold by ghost elders.
  */
 public class GhostJadeSlipItem extends Item {
 	private static final String TAG = "Method";

@@ -19,7 +19,9 @@ import java.util.UUID;
  * <ul>
  *   <li><b>The body</b> takes its strength from the higher of the two ({@link #body}: health, harm, speed, armour, toughness and
  *       knockback resistance by that path's realm and stage, as CultivationStats has them), and the two paths' <b>harmony</b>
- *       adds to it, the more the closer they stand: {@link #HARMONY} for realms the same, one apart, two apart.</li>
+ *       adds to it, the more the closer they stand: {@link #HARMONY} for realms the same, one apart, two apart. What that body
+ *       comes to is named as one path's rank would be ({@link #effective}, "effective cultivation"): a stage it equals, or
+ *       "Quasi-" the stage or realm it is on its way to.</li>
  *   <li><b>Spells of both paths</b> (Spell#isDual), one for each realm from Foundation Building, need both paths at that realm,
  *       and draw on both pools, qi and ghostly qi.</li>
  *   <li><b>The true form</b>, the living's only. Once the ghost path reaches Core Formation (a Ghost King's might) a living
@@ -100,6 +102,81 @@ public final class TwoPaths {
 		if (ghost > heaven) return new Body(Realm.byIndex(ghost / stages), Stage.byIndex(ghost % stages), scale, true, ghost);
 		if (heaven < 0) return new Body(Realm.QI_REFINING, Stage.EARLY, c.getMortalStage().bodyShare(), false, -1);
 		return new Body(Realm.byIndex(heaven / stages), Stage.byIndex(heaven % stages), scale, false, heaven);
+	}
+
+	// --- Effective cultivation: what the body's strength comes to on one path ---
+
+	/** Within this share of a rank's might, a body counts as that rank, not past it (rounding). */
+	public static final double EFFECTIVE_TOLERANCE = 0.005;
+
+	/**
+	 * A rank's might, by which bodies are weighed against each other: the geometric mean of its health and harm bonuses
+	 * (CultivationStats), the two every realm has. Within a realm every bonus grows alike with the stage (Stage#getPowerMultiplier),
+	 * so between two stages of one realm any bonus gives the same answer; between realms these two set it.
+	 */
+	public static double might(int rank) {
+		int stages = Stage.values().length;
+		Realm realm = Realm.byIndex(rank / stages);
+		Stage stage = Stage.byIndex(rank % stages);
+		return Math.sqrt(CultivationStats.maxHealth(realm, stage) * CultivationStats.attackDamage(realm, stage));
+	}
+
+	/**
+	 * Effective cultivation: the highest rank (PlayerCultivation#rank) a cultivator on one path, with no Heaven's Favour, would need
+	 * for a body as mighty as this one; whether this one is past it ({@code quasi}: "Quasi-" the rank after it); and how far toward
+	 * that next rank, 0 to 1.
+	 */
+	public record Effective(int rank, boolean quasi, double toward) {}
+
+	/**
+	 * {@code c}'s effective cultivation ({@link Effective}): the body's might (the higher path's rank, x Heaven's Favour and the
+	 * harmony, {@link #body}) set against the single path's ranks. Null for a mortal on no path. {@code wielded}: the body as
+	 * Realm Suppression and pressure leave it (the stats it has now).
+	 */
+	public static Effective effective(PlayerCultivation c, boolean wielded) {
+		Body body = body(c, wielded);
+		if (body.rank() < 0) return null;
+		double value = might(body.rank()) * body.scale();
+		int last = PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION);
+		int rank = body.rank();
+		while (rank < last && might(rank + 1) <= value * (1 + EFFECTIVE_TOLERANCE)) rank++;
+		boolean quasi = value > might(rank) * (1 + EFFECTIVE_TOLERANCE);
+		double toward = rank >= last ? 0 : Math.max(0, Math.min(1, (value - might(rank)) / (might(rank + 1) - might(rank))));
+		return new Effective(rank, quasi, toward);
+	}
+
+	/** Whether {@code c}'s body is mightier than its own rank alone (the harmony, Heaven's Favour): its effective cultivation is worth saying. */
+	public static boolean strongerThanRank(PlayerCultivation c) {
+		Effective effective = effective(c, true);
+		return effective != null && (effective.quasi() || effective.rank() > body(c, true).rank());
+	}
+
+	/**
+	 * An effective cultivation's name: the rank it equals ("Foundation Building - Late"); past a stage, "Quasi-" the next
+	 * ("Foundation Building - Quasi-Late"); past Grand Perfection, "Quasi-" the next realm ("Quasi-Core Formation"); past the
+	 * very last, beyond it.
+	 */
+	public static Component effectiveName(Effective effective) {
+		int stages = Stage.values().length;
+		Realm realm = Realm.byIndex(effective.rank() / stages);
+		Stage stage = Stage.byIndex(effective.rank() % stages);
+		if (!effective.quasi()) return PlayerCultivation.rankName(realm, stage);
+		if (effective.rank() >= PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION)) {
+			return Component.translatable(ModLang.EFFECTIVE_BEYOND, realm.getDisplayName(), stage.getDisplayName());
+		}
+		if (stage.isLast()) return Component.translatable(ModLang.EFFECTIVE_QUASI_REALM, realm.next().getDisplayName());
+		return Component.translatable(ModLang.EFFECTIVE_QUASI_STAGE, realm.getDisplayName(), stage.next().getDisplayName());
+	}
+
+	/**
+	 * {@link #effectiveName}, and for a Quasi- one how far toward the rank it names, in whole per cent (1 to 99): past a realm's Grand
+	 * Perfection the next realm is two to four times as mighty, so one barely past it is "Quasi-Core Formation (1%)".
+	 */
+	public static Component effectiveLabel(Effective effective) {
+		Component name = effectiveName(effective);
+		if (!effective.quasi() || effective.rank() >= PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION)) return name;
+		long percent = Math.max(1, Math.min(99, Math.round(effective.toward() * 100)));
+		return Component.translatable(ModLang.EFFECTIVE_TOWARD, name, percent);
 	}
 
 	// --- The forms ---

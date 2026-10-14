@@ -17,9 +17,9 @@ import net.minecraft.world.level.block.Blocks;
 
 /**
  * The heaven methods' framework (see HeavenMethod, HeavenMethods): thirty of them, five elements by six realms, each spanning Qi
- * Refining up to its own realm; gating the heaven realm, never gated by it; learned by the living alone, a later one of an element at the element's
- * depth; faster where its element's qi runs thick and in realms long passed; saved; known by cultivators, carved on Dao Steles
- * whose realms the lands decide; and the blocks the spells set down always taken up again.
+ * Refining up to its own realm; understood as far as the realm, a new stage's layers settling in with meditation; opening the way
+ * into new realms, never holding back a minor stage; learned by the living alone; their element's lands speeding cultivation; saved;
+ * known by cultivators, carved on Dao Steles whose realms the lands decide; and the blocks the spells set down always taken up again.
  */
 public class HeavenMethodsGameTests implements FabricGameTest {
 	private static ServerPlayer cultivator(GameTestHelper helper, Realm realm, Stage stage) {
@@ -62,20 +62,31 @@ public class HeavenMethodsGameTests implements FabricGameTest {
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
-	public void theMethodGrowsWhateverTheRealm(GameTestHelper helper) {
+	public void aMethodSettlesNoFurtherThanTheRealm(GameTestHelper helper) {
 		PlayerCultivation c = new PlayerCultivation();
 		HeavenMethod fourAxis = HeavenMethod.of(QiElement.FIRE, Realm.FOUR_AXIS);
 		helper.assertTrue(HeavenMethods.refusal(c) != null && !HeavenMethods.canLearn(c), "A mortal: its meridians sealed");
 		c.setState(Realm.QI_REFINING, Stage.EARLY, 0);
 		helper.assertTrue(HeavenMethods.canLearn(c), "Opened, a cultivator takes them up");
 		HeavenState s = c.heaven();
-		s.setMethod(fourAxis, 1, 0);
-		helper.assertTrue(HeavenMethods.cultivate(s, fourAxis, 1_000_000) > 20 && s.layer(fourAxis) > 20 && c.getRealm() == Realm.QI_REFINING,
-				"At Qi Refining Early it goes on far past its realm's layers (to " + s.layer(fourAxis) + "): no realm holds it back");
-		helper.assertTrue(HeavenMethods.cultivate(s, fourAxis, 1.0e12) > 0 && s.layer(fourAxis) == 54 && s.progress(fourAxis) == HeavenMethods.layerCost(54)
-				&& HeavenMethods.perfected(s, fourAxis) && HeavenMethods.cultivate(s, fourAxis, 1.0e12) == 0, "...on to the 54th, perfected, and no further");
-		helper.assertTrue(HeavenMethods.reach(c) == PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION),
-				"Perfected, it carries cultivation all the way: the realm still has to be climbed, the method waits on nothing");
+		s.setMethod(fourAxis, 2, 0);
+		helper.assertTrue(HeavenMethods.understoodTo(c, fourAxis) == 2 && !HeavenMethods.settling(c, fourAxis)
+				&& HeavenMethods.settle(s, fourAxis, 1.0e12, HeavenMethods.understoodTo(c, fourAxis)) == 0 && s.layer(fourAxis) == 2 && s.progress(fourAxis) == 0,
+				"At Qi Refining Early it is understood to Early's two layers, and no amount of meditation takes it further");
+		c.setState(Realm.QI_REFINING, Stage.MID, 0);
+		int upTo = HeavenMethods.understoodTo(c, fourAxis);
+		helper.assertTrue(upTo == 5 && HeavenMethods.settling(c, fourAxis), "The realm at Mid: Mid's three layers to settle in");
+		helper.assertTrue(HeavenMethods.settle(s, fourAxis, HeavenMethods.settleCost(3) + HeavenMethods.settleCost(4) / 2, upTo) == 1 && s.layer(fourAxis) == 3
+				&& near(s.progress(fourAxis), HeavenMethods.settleCost(4) / 2), "One settles, the next half way (" + s.progress(fourAxis) + ")");
+		helper.assertTrue(HeavenMethods.settle(s, fourAxis, 1.0e12, upTo) == 2 && s.layer(fourAxis) == 5 && s.progress(fourAxis) == 0 && !HeavenMethods.settling(c, fourAxis),
+				"...the rest settle, and nothing more is kept past the realm's last");
+		helper.assertTrue(near(HeavenMethods.settleCost(9), HeavenMethods.layerCost(9) * HeavenMethods.SETTLE_SHARE)
+				&& near(HeavenMethods.settleCost(3) + HeavenMethods.settleCost(4) + HeavenMethods.settleCost(5), 75),
+				"A stage's layers settle in on half the stage's cultivation (Mid's 150: 75)");
+		HeavenMethods.clampTo(s, PlayerCultivation.rank(Realm.QI_REFINING, Stage.EARLY));
+		helper.assertTrue(s.layer(fourAxis) == 2, "A fall to Early takes Mid's layers with it");
+		HeavenMethods.alignTo(s, PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION));
+		helper.assertTrue(s.layer(fourAxis) == 54 && HeavenMethods.perfected(s, fourAxis), "Aligned to the very last: all 54, perfected");
 		PlayerCultivation ghost = new PlayerCultivation();
 		ghost.setState(Realm.NASCENT_SOUL, Stage.EARLY, 0);
 		ghost.netherworld().setGhost(true);
@@ -84,37 +95,35 @@ public class HeavenMethodsGameTests implements FabricGameTest {
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
-	public void aMethodIsLearnedAtItsElementsDepth(GameTestHelper helper) {
+	public void aMethodIsLearnedAsFarAsTheRealm(GameTestHelper helper) {
 		ServerPlayer player = cultivator(helper, Realm.CORE_FORMATION, Stage.EARLY);
 		PlayerCultivation c = CultivationManager.get(player);
 		HeavenState s = c.heaven();
 		try {
 			HeavenMethod woodFb = HeavenMethod.of(QiElement.WOOD, Realm.FOUNDATION_BUILDING);
-			helper.assertTrue(HeavenMethods.learn(player, woodFb) && s.layer(woodFb) == 1 && s.activeMethod() == woodFb, "The first learned: its first layer, practised");
-			s.setMethod(woodFb, 14, 77);
+			helper.assertTrue(HeavenMethods.learn(player, woodFb) && s.layer(woodFb) == 18 && s.activeMethod() == woodFb,
+					"The first learned: understood whole, as it ends before Core Formation, and practised");
 			HeavenMethod woodNs = HeavenMethod.of(QiElement.WOOD, Realm.NASCENT_SOUL);
-			helper.assertTrue(HeavenMethods.learn(player, woodNs) && s.layer(woodNs) == 14 && s.progress(woodNs) == 77 && s.activeMethod() == woodNs,
-					"A deeper wood method starts where wood stands (14, progress and all), and takes over the practice");
-			HeavenMethod woodQr = HeavenMethod.of(QiElement.WOOD, Realm.QI_REFINING);
-			helper.assertTrue(HeavenMethods.learn(player, woodQr) && s.layer(woodQr) == 9 && s.progress(woodQr) == HeavenMethods.layerCost(9),
-					"A lesser wood method, outgrown, is known whole");
+			helper.assertTrue(HeavenMethods.learn(player, woodNs) && s.layer(woodNs) == 20 && s.progress(woodNs) == 0 && s.activeMethod() == woodNs,
+					"A deeper one: understood as far as Core Formation Early (layer 20), and it takes over the practice of its element");
 			HeavenMethod fire = HeavenMethod.of(QiElement.FIRE, Realm.CORE_FORMATION);
-			helper.assertTrue(HeavenMethods.learn(player, fire) && s.layer(fire) == 1 && s.activeMethod() == woodNs,
-					"Another element's starts at its first layer; the practice stays with wood");
+			helper.assertTrue(HeavenMethods.learn(player, fire) && s.layer(fire) == 20 && s.activeMethod() == woodNs,
+					"Another element's, as far too; the practice stays with wood");
 			helper.assertTrue(!HeavenMethods.learn(player, fire), "Known: not learned again");
-			helper.assertTrue(HeavenMethods.depth(s, QiElement.WOOD) == 14 && HeavenMethods.deepestOf(s, QiElement.WOOD) == woodNs,
-					"Wood's depth is its deepest method's (of two as deep, the one going further)");
-			// Saved and loaded by id.
+			helper.assertTrue(HeavenMethods.depth(s, QiElement.WOOD) == 20 && HeavenMethods.deepestOf(s, QiElement.WOOD) == woodNs,
+					"Wood's depth is its deepest method's");
+			// Saved and loaded by id, a layer still settling and all.
+			s.setMethod(woodNs, 19, 7);
 			HeavenState loaded = PlayerCultivation.load(c.save()).heaven();
-			helper.assertTrue(loaded.layer(woodNs) == 14 && loaded.progress(woodNs) == 77 && loaded.layer(fire) == 1 && loaded.activeMethod() == woodNs
-					&& loaded.known().size() == 4, "Saved and loaded");
+			helper.assertTrue(loaded.layer(woodNs) == 19 && loaded.progress(woodNs) == 7 && loaded.layer(fire) == 20 && loaded.activeMethod() == woodNs
+					&& loaded.known().size() == 3, "Saved and loaded");
 			// A slip, read, teaches its method, and isn't used up.
 			HeavenMethod metal = HeavenMethod.of(QiElement.METAL, Realm.QI_REFINING);
 			ItemStack slip = JadeSlipItem.of(metal);
 			helper.assertTrue(JadeSlipItem.method(slip) == metal, "A slip holds its method");
 			player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, slip);
 			slip.use(helper.getLevel(), player, net.minecraft.world.InteractionHand.MAIN_HAND);
-			helper.assertTrue(s.knows(metal) && s.layer(metal) == 1 && !player.getMainHandItem().isEmpty(), "Read: its method learned, the slip kept");
+			helper.assertTrue(s.knows(metal) && s.layer(metal) == 9 && !player.getMainHandItem().isEmpty(), "Read: its method learned (all nine), the slip kept");
 		} finally {
 			Spells.forget(player.getUUID());
 		}
@@ -131,17 +140,21 @@ public class HeavenMethodsGameTests implements FabricGameTest {
 		double sum = 0;
 		for (QiElement element : QiElement.five()) sum += QiElement.share(forest, false, element);
 		helper.assertTrue(Math.abs(sum - 1) < 1.0e-6, "The five shares make the whole");
-		helper.assertTrue(HeavenMethods.elementFactor(0.2) == 1.0 && HeavenMethods.elementFactor(0) == 0.5 && HeavenMethods.elementFactor(1) == 3.0,
-				"An even fifth: the base pace; none: half; all of it: three times");
+		helper.assertTrue(near(HeavenMethods.elementFactor(0.2), 1.0) && near(HeavenMethods.elementFactor(0), 0.75) && near(HeavenMethods.elementFactor(0.4), 1.25)
+				&& near(HeavenMethods.elementFactor(0.6), 1.5) && near(HeavenMethods.elementFactor(1), 1.5),
+				"An even fifth: the base pace; none of it: three quarters; thick: up to half again, no more");
 		PlayerCultivation c = new PlayerCultivation();
 		c.setState(Realm.NASCENT_SOUL, Stage.EARLY, 0);
-		helper.assertTrue(HeavenMethods.methodFactor(c, woodInForest, false) > HeavenMethods.methodFactor(c, woodInDesert, false) * 2,
-				"Wood cultivates more than twice as fast in a forest as in a desert");
+		helper.assertTrue(HeavenMethods.methodFactor(c, woodInForest, false) > HeavenMethods.methodFactor(c, woodInDesert, false) * 1.3,
+				"Wood cultivates a third faster or more in a forest than in a desert");
+		helper.assertTrue(near(HeavenMethods.cultivationFactor(c, null, 0.6, true), HeavenMethods.NO_METHOD_FACTOR),
+				"With no method, a cultivator's pace: three quarters, wherever one sits");
 		c.setQiBoost(0.5);
 		c.setGearQiBonus(0.6);
 		helper.assertTrue(near(HeavenMethods.methodFactor(c, 0.2, true), 1.25 * 1.5 * 1.6),
 				"By its stele x1.25, a Qi Gathering Pill's +50% and clothing's +60% on top (" + HeavenMethods.methodFactor(c, 0.2, true) + ")");
-		// A stage's layers cost what the stage does: a realm long passed goes by as fast as its stages would now.
+		helper.assertTrue(near(HeavenMethods.cultivationFactor(c, null, 0, false), 0.75 * 1.5 * 1.6), "...the boosts with no method too");
+		// A stage's layers cost what the stage does (their settling half that).
 		helper.assertTrue(near(HeavenMethods.layerCost(1) + HeavenMethods.layerCost(2), 100) && near(HeavenMethods.layerCost(3) + HeavenMethods.layerCost(4)
 				+ HeavenMethods.layerCost(5), 150) && near(HeavenMethods.layerCost(6) + HeavenMethods.layerCost(7) + HeavenMethods.layerCost(8), 200)
 				&& near(HeavenMethods.layerCost(9), 300), "Qi Refining's layers: Early's two 100 between them, Mid's three 150, Late's 200, Grand Perfection's 300");
@@ -151,51 +164,100 @@ public class HeavenMethodsGameTests implements FabricGameTest {
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
-	public void theRealmKeepsStepWithTheMethod(GameTestHelper helper) {
+	public void cultivationIsItsOwnAndMethodsOpenOnlyRealms(GameTestHelper helper) {
 		PlayerCultivation c = new PlayerCultivation();
 		c.setState(Realm.QI_REFINING, Stage.EARLY, 0);
-		helper.assertTrue(!c.addCultivation(1000) && c.getStage() == Stage.EARLY && c.getCultivation() == c.cultivationRequired() && c.isHeldByMethod()
-				&& !c.isStalled() && HeavenMethods.reach(c) == 0, "No method: Qi Refining Early's bar fills, and there it waits");
+		helper.assertTrue(c.addCultivation(100) && c.getStage() == Stage.MID && c.getCultivation() == 0, "No method needed: a full Early steps into Mid");
+		helper.assertTrue(!c.addCultivation(10_000) && c.getStage() == Stage.MID && c.isAtRitualGate(), "...and Mid waits full for the heavens' leave");
+		c.setHeavensLeave(true);
+		helper.assertTrue(c.addCultivation(0) && c.getStage() == Stage.LATE, "The leave granted, a full Mid steps into Late");
+		c.addCultivation(10_000);
+		helper.assertTrue(c.getStage() == Stage.GRAND_PERFECTION && c.isAtBottleneck() && c.isHeldByMethod() && !c.canBreakthrough()
+				&& HeavenMethods.gateLine(c) != null, "At Grand Perfection's bottleneck the breakthrough waits on a Foundation Building method");
 		HeavenState s = c.heaven();
 		HeavenMethod fire = HeavenMethod.of(QiElement.FIRE, Realm.QI_REFINING);
-		s.setMethod(fire, 2, 0);
-		helper.assertTrue(!c.addCultivation(0) && c.isHeldByMethod(), "Its second layer begun, not finished: still waiting");
-		s.setMethod(fire, 2, HeavenMethods.layerCost(2));
-		helper.assertTrue(c.addCultivation(0) && c.getStage() == Stage.MID, "Early's two layers cultivated: on into Mid");
-		c.setHeavensLeave(true);
-		helper.assertTrue(!c.addCultivation(10_000) && c.getStage() == Stage.MID && c.isHeldByMethod(), "Mid's three layers not yet: Late waits, the ritual done");
-		s.setMethod(fire, 5, HeavenMethods.layerCost(5));
-		helper.assertTrue(c.addCultivation(0) && c.getStage() == Stage.LATE, "...cultivated: into Late");
-		// A method goes no further than its own realm.
-		s.setMethod(fire, 9, HeavenMethods.layerCost(9));
-		c.setState(Realm.QI_REFINING, Stage.GRAND_PERFECTION, 0);
-		c.prepareBreakthrough(Realm.FOUNDATION_BUILDING, 0);
-		c.addCultivation(10_000);
-		helper.assertTrue(c.isAtBottleneck() && c.isHeldByMethod() && !c.canBreakthrough(),
-				"A Qi Refining method, perfected, carries no one into Foundation Building");
-		s.setMethod(HeavenMethod.of(QiElement.WOOD, Realm.FOUNDATION_BUILDING), 9, HeavenMethods.layerCost(9));
-		helper.assertTrue(c.canBreakthrough() && !c.isHeldByMethod() && HeavenMethods.reach(c) == PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.EARLY),
-				"A Foundation Building method as deep (any element's): the tribulation may come");
-		// Unrefined qi waiting at the method's gate goes into the method, not the full bar.
-		PlayerCultivation held = new PlayerCultivation();
-		held.setState(Realm.QI_REFINING, Stage.EARLY, 0);
-		held.addCultivation(1000);
-		held.setMedicinalQi(50);
-		helper.assertTrue(held.refine(10) == 0 && held.refineIntoMethod(10) == 10 && near(held.getMedicinalQi(), 40), "Refined into the method at its gate");
-		// An op setting one back to or below Qi Refining Mid: the ritual is asked again.
+		s.setMethod(fire, 9, 0);
+		helper.assertTrue(c.isHeldByMethod() && !HeavenMethods.opensWay(c, Realm.FOUNDATION_BUILDING) && HeavenMethods.opensWay(c, Realm.QI_REFINING),
+				"A Qi Refining method opens no way past Qi Refining");
+		HeavenMethod woodFb = HeavenMethod.of(QiElement.WOOD, Realm.FOUNDATION_BUILDING);
+		s.setMethod(woodFb, 9, 0);
+		helper.assertTrue(!c.isHeldByMethod() && HeavenMethods.opensWay(c, Realm.FOUNDATION_BUILDING) && !HeavenMethods.opensWay(c, Realm.CORE_FORMATION)
+				&& HeavenMethods.deepestRealm(s) == Realm.FOUNDATION_BUILDING && !c.canBreakthrough(),
+				"A Foundation Building method (any element's) opens the way: only the pill is wanting");
+		c.prepareBreakthrough(Realm.FOUNDATION_BUILDING, 0.5);
+		helper.assertTrue(c.canBreakthrough() && c.breakthrough() && c.getRealm() == Realm.FOUNDATION_BUILDING && c.getStage() == Stage.EARLY
+				&& near(c.getCultivation(), PlayerCultivation.required(Realm.FOUNDATION_BUILDING, Stage.EARLY) * 0.5),
+				"Through the tribulation, the pill's head start on the bar (" + c.getCultivation() + ")");
+		helper.assertTrue(HeavenMethods.settling(c, woodFb) && HeavenMethods.understoodTo(c, woodFb) == 11 && !HeavenMethods.settling(c, fire),
+				"The new stage's layers wait to settle in; the Qi Refining method has none there");
+		helper.assertTrue(c.addCultivation(PlayerCultivation.required(Realm.FOUNDATION_BUILDING, Stage.EARLY)) && c.getStage() == Stage.MID,
+				"A minor stage never waits on a method, its layers settled or not");
+		// A minor stage's tribulation (from Nascent Soul) waits on no method either.
+		PlayerCultivation soul = new PlayerCultivation();
+		soul.setState(Realm.NASCENT_SOUL, Stage.EARLY, 0);
+		soul.heaven().setMethod(fire, 9, 0);
+		soul.addCultivation(soul.cultivationRequired());
+		helper.assertTrue(soul.isAtBottleneck() && !soul.isHeldByMethod() && soul.canBreakthrough(), "Nascent Soul Early's tribulation: no method wanted");
+		// A failed tribulation's fall takes the stage's cultivation, and the methods' layers past it.
+		s.setMethod(woodFb, 14, 0);
+		c.fallOneStage();
+		helper.assertTrue(c.getRealm() == Realm.FOUNDATION_BUILDING && c.getStage() == Stage.EARLY && c.getCultivation() == 0
+				&& s.layer(woodFb) == 11 && s.layer(fire) == 9, "Fallen to Early: Mid's layers lost, to settle in again (" + s.layer(woodFb) + ")");
+		// A pill's qi is refined with or without a method, never past the bottleneck.
+		PlayerCultivation sick = new PlayerCultivation();
+		sick.setState(Realm.QI_REFINING, Stage.EARLY, 0);
+		sick.setMedicinalQi(50);
+		helper.assertTrue(sick.refine(10) == 10 && near(sick.getMedicinalQi(), 40), "No method: the pill's qi is refined all the same");
+		// A save from before: its cultivation as it was, its methods understood as far as the realm (deeper set back, behind brought up).
+		PlayerCultivation old = new PlayerCultivation();
+		old.setState(Realm.QI_REFINING, Stage.MID, 60);
+		old.heaven().setMethod(fire, 7, 50);
+		old.heaven().setMethod(woodFb, 1, 0);
+		net.minecraft.nbt.CompoundTag tag = old.save();
+		tag.putInt("PathModel", 2);
+		tag.getCompound("HeavenMethods").putInt("Units", 2);
+		PlayerCultivation loaded = PlayerCultivation.load(tag);
+		helper.assertTrue(near(loaded.getCultivation(), 60) && loaded.getStage() == Stage.MID && loaded.heaven().layer(fire) == 5
+				&& loaded.heaven().progress(fire) == 0 && loaded.heaven().layer(woodFb) == 5,
+				"An old save: 60 cultivation kept, both methods at Mid's last layer (" + loaded.heaven().layer(fire) + ", " + loaded.heaven().layer(woodFb) + ")");
+		// An op setting the realm leaves the methods understood as far as it; back to or below Qi Refining Mid, the ritual is asked again.
 		PlayerCultivation op = new PlayerCultivation();
-		CultivationCommand.set(op, Realm.CORE_FORMATION, Stage.EARLY);
+		op.setState(Realm.QI_REFINING, Stage.EARLY, 0);
+		op.heaven().setMethod(woodFb, 2, 0);
+		op.prepareBreakthrough(Realm.FOUNDATION_BUILDING, 0.3);
+		CultivationCommand.set(op, Realm.FOUNDATION_BUILDING, Stage.MID);
+		helper.assertTrue(op.heaven().layer(woodFb) == 14 && op.getStage() == Stage.MID && op.getCultivation() == 0 && op.hasHeavensLeave(),
+				"Set: the methods understood through the stage, past the ritual as if it had been asked");
+		helper.assertTrue(op.getPreparedRealm() == null, "...and a Foundation Pill taken for a realm already reached spent");
 		op.setFavour(2);
-		helper.assertTrue(op.hasHeavensLeave(), "Set past the ritual: as if it had been asked");
 		CultivationCommand.set(op, Realm.QI_REFINING, Stage.EARLY);
-		helper.assertTrue(!op.hasHeavensLeave() && op.getFavour() == 0 && op.needsHeavensLeave() == false, "Set back to Early: no leave, no Favour");
+		helper.assertTrue(op.heaven().layer(woodFb) == 2 && op.getStage() == Stage.EARLY && !op.hasHeavensLeave() && op.getFavour() == 0,
+				"Set back to Early: the methods with it, no leave, no Favour");
 		CultivationCommand.set(op, Realm.QI_REFINING, Stage.MID);
 		helper.assertTrue(op.needsHeavensLeave(), "...and at Mid the ritual is wanted again");
 		helper.succeed();
 	}
 
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void theMethodPractisedSetsThePace(GameTestHelper helper) {
+		PlayerCultivation c = new PlayerCultivation();
+		c.setState(Realm.QI_REFINING, Stage.EARLY, 0);
+		HeavenState s = c.heaven();
+		helper.assertTrue(HeavenMethods.practised(s) == null && HeavenMethods.deepestRealm(s) == null, "No method known: none practised");
+		HeavenMethod fire = HeavenMethod.of(QiElement.FIRE, Realm.QI_REFINING);
+		HeavenMethod woodFb = HeavenMethod.of(QiElement.WOOD, Realm.FOUNDATION_BUILDING);
+		s.setMethod(fire, 2, 0);
+		s.setMethod(woodFb, 2, 0);
+		helper.assertTrue(HeavenMethods.practised(s) == woodFb, "None chosen: the one going furthest");
+		s.setActiveMethod(fire);
+		helper.assertTrue(HeavenMethods.practised(s) == fire, "Chosen: that one");
+		helper.assertTrue(near(HeavenMethods.cultivationFactor(c, fire, 0.6, true), 1.5 * HeavenMethods.STELE_BONUS)
+				&& near(HeavenMethods.cultivationFactor(c, fire, 0, false), 0.75), "Its element thick and its stele near: x1.875; none of it: x0.75");
+		helper.succeed();
+	}
+
 	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 260)
-	public void meditationFillsTheBarAndTheMethodAlike(GameTestHelper helper) {
+	public void meditationFillsTheBarAndSettlesTheLayers(GameTestHelper helper) {
 		helper.setBlock(new BlockPos(1, 1, 1), Blocks.STONE);
 		ServerPlayer player = helper.makeMockServerPlayerInLevel();
 		player.setGameMode(GameType.SURVIVAL);
@@ -206,32 +268,32 @@ public class HeavenMethodsGameTests implements FabricGameTest {
 		c.awaken(0);
 		HeavenMethod fire = HeavenMethod.of(QiElement.FIRE, Realm.QI_REFINING);
 		HeavenState s = c.heaven();
-		s.setMethod(fire, 1, 0);
+		s.setMethod(fire, 2, 0);
 		s.setActiveMethod(fire);
+		Spell third = null;
+		for (Spell spell : Spell.values()) if (spell.heavenMethod() == fire && spell.layer() == 3) third = spell;
+		Spell sleeping = third;
 		MeditationManager.start(player);
 		helper.assertTrue(MeditationManager.isMeditating(player.getUUID()), "Sat down to meditate");
-		double factor = HeavenMethods.methodFactor(c, HeavenMethods.shareAt(player, QiElement.FIRE), false);
 		double[] before = new double[1];
 		helper.runAfterDelay(100, () -> {
-			helper.assertTrue(c.getCultivation() > 0 && Math.abs(s.progress(fire) / c.getCultivation() - factor) < 1.0e-6,
-					"The method takes in what the bar gathers, by fire's share here (" + s.progress(fire) + " / " + c.getCultivation() + ", x" + factor + ")");
-			// The bar full and its method's second layer not yet: it waits, and a pill's qi goes into the method.
-			c.addCultivation(c.cultivationRequired());
+			helper.assertTrue(c.getCultivation() > 0 && s.layer(fire) == 2 && s.progress(fire) == 0,
+					"Meditation fills the bar (" + c.getCultivation() + "); at Early the method has nothing to settle");
+			c.setState(Realm.QI_REFINING, Stage.MID, 0);
+			s.setMethod(fire, 2, HeavenMethods.settleCost(3) - 0.001);
 			c.setMedicinalQi(50);
-			before[0] = s.progress(fire);
+			before[0] = c.getCultivation();
 		});
 		helper.runAfterDelay(160, () -> {
-			helper.assertTrue(c.getStage() == Stage.EARLY && c.isHeldByMethod() && c.getMedicinalQi() < 50 && s.progress(fire) > before[0],
-					"Held at the method's gate, the unrefined qi refined into the method (" + c.getMedicinalQi() + ")");
-			s.setMethod(fire, 2, HeavenMethods.layerCost(2));
-		});
-		helper.runAfterDelay(200, () -> {
 			try {
-				helper.assertTrue(c.getStage() == Stage.MID, "Its layers cultivated, the bar steps on into Mid (" + c.getStage() + ")");
+				helper.assertTrue(s.layer(fire) >= 3 && s.layer(fire) <= 5 && sleeping != null && sleeping.isKnown(c),
+						"At Mid, its third layer settles in with meditation, and its spell with it (" + s.layer(fire) + ")");
+				helper.assertTrue(c.getMedicinalQi() < 50 && c.getCultivation() > before[0], "A pill's qi refined onto the bar (" + c.getMedicinalQi() + " left)");
 				helper.succeed();
 			} finally {
 				MeditationManager.forget(player.getUUID());
 				Spells.forget(player.getUUID());
+				HeavenMethods.forget(player.getUUID());
 				player.server.getPlayerList().remove(player);
 			}
 		});
@@ -251,7 +313,7 @@ public class HeavenMethodsGameTests implements FabricGameTest {
 		}
 		helper.assertTrue(third != null && seventh != null, "The wood method's two spells");
 		try {
-			c.heaven().setMethod(wood, 9, HeavenMethods.layerCost(9)); // perfected, far ahead of the realm
+			c.heaven().setMethod(wood, 9, 0); // understood whole (an op's word), far ahead of the realm
 			HeavenMethods.watchSpells(player); // the first look: noted, nothing new
 			helper.assertTrue(!third.isKnown(c) && !seventh.isKnown(c) && third.realmNeeded() == PlayerCultivation.rank(Realm.QI_REFINING, Stage.MID)
 					&& seventh.realmNeeded() == PlayerCultivation.rank(Realm.QI_REFINING, Stage.LATE), "At Qi Refining Early neither spell, its layers cultivated or not");
@@ -279,21 +341,23 @@ public class HeavenMethodsGameTests implements FabricGameTest {
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
-	public void oldSavesKeepTheirShareOfALayer(GameTestHelper helper) {
+	public void oldSavesDropTheirOldProgress(GameTestHelper helper) {
 		HeavenMethod wood = HeavenMethod.of(QiElement.WOOD, Realm.QI_REFINING);
 		net.minecraft.nbt.CompoundTag old = new net.minecraft.nbt.CompoundTag();
 		net.minecraft.nbt.CompoundTag methods = new net.minecraft.nbt.CompoundTag();
 		net.minecraft.nbt.CompoundTag one = new net.minecraft.nbt.CompoundTag();
-		one.putInt("Layer", 1);
-		one.putDouble("Progress", MethodLayers.cost(1) / 2); // half its first layer, in the seconds it was once counted in
+		one.putInt("Layer", 4);
+		one.putDouble("Progress", 33); // progress through the layer it was on, as it was once counted
 		methods.put(wood.getId(), one);
 		old.put("Methods", methods);
+		old.putInt("Units", 2);
 		HeavenState migrated = new HeavenState();
 		migrated.load(old);
-		helper.assertTrue(near(migrated.progress(wood), HeavenMethods.layerCost(1) / 2), "Half its first layer still (" + migrated.progress(wood) + ")");
+		helper.assertTrue(migrated.layer(wood) == 4 && migrated.progress(wood) == 0, "Its layer kept, the old progress dropped");
+		migrated.setMethod(wood, 4, 12);
 		HeavenState again = new HeavenState();
 		again.load(migrated.save());
-		helper.assertTrue(again.progress(wood) == migrated.progress(wood), "Saved again, read as it is");
+		helper.assertTrue(again.layer(wood) == 4 && again.progress(wood) == 12, "Saved again, its settling read as it is");
 		helper.succeed();
 	}
 
@@ -342,16 +406,20 @@ public class HeavenMethodsGameTests implements FabricGameTest {
 		rogue.becomeRogue(PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.MID), 0, random);
 		HeavenMethod method = rogue.heavenMethod();
 		ServerPlayer player = cultivator(helper, Realm.CORE_FORMATION, Stage.MID);
-		HeavenState s = CultivationManager.get(player).heaven();
+		PlayerCultivation c = CultivationManager.get(player);
+		HeavenState s = c.heaven();
 		try {
 			rogue.regardEntry(player).value = Regard.WARM;
 			TalkSystem.teachHeaven(player, rogue);
-			helper.assertTrue(s.knows(method) && s.layer(method) == 1, "Warm: it teaches its method (" + method.getId() + ")");
+			int upTo = HeavenMethods.understoodTo(c, method);
+			helper.assertTrue(s.knows(method) && s.layer(method) == upTo, "Warm: it teaches its method (" + method.getId() + "), understood as far as the realm");
+			s.setMethod(method, upTo - 2, 0); // two layers still settling
 			TalkSystem.teachHeaven(player, rogue);
-			helper.assertTrue(s.layer(method) == 1 && s.progress(method) == 0, "...once a day");
+			helper.assertTrue(s.layer(method) == upTo - 2 && c.getCultivation() == 0, "...once a day");
 			rogue.regardEntry(player).guidanceDay = -1;
 			TalkSystem.teachHeaven(player, rogue);
-			helper.assertTrue(s.layer(method) > 1, "Another day: ten minutes' progress (" + s.layer(method) + ")");
+			helper.assertTrue(s.layer(method) >= upTo && (c.getStage() != Stage.MID || c.getCultivation() > 0),
+					"Another day: its layers settled at once, and ten minutes' cultivation (" + s.layer(method) + ", " + c.getStage() + ")");
 			ServerPlayer mortal = helper.makeMockServerPlayerInLevel();
 			rogue.regardEntry(mortal).value = Regard.WARM;
 			TalkSystem.teachHeaven(mortal, rogue);

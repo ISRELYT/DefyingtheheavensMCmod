@@ -106,13 +106,16 @@ public final class JudgeEye {
 		if (gaze >= 1.0) judge(p);
 	}
 
-	/** The gaze has unmade them: their cultivation stripped back to Qi Refining Early (a mortal has none to lose), and death. */
+	/**
+	 * The gaze has unmade them: their cultivation stripped back to Qi Refining Early, their heaven methods' layers with it (a mortal
+	 * has none to lose), and death.
+	 */
 	private static void judge(ServerPlayer p) {
 		forget(p);
 		PlayerCultivation c = CultivationManager.get(p);
 		boolean mortal = c.isMortal();
 		if (!mortal) {
-			c.setState(Realm.QI_REFINING, Stage.EARLY, 0);
+			c.setBackTo(Realm.QI_REFINING, Stage.EARLY);
 			c.prepareBreakthrough(null, 0);
 			c.setQi(0);
 			CultivationManager.refresh(p);
