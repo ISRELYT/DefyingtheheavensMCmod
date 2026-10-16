@@ -32,9 +32,10 @@ import net.minecraft.world.level.LightLayer;
  * <b>Learning.</b> A Dao Stele (DaoSteleBlock) teaches its method to one who meditates beside it for {@link #STELE_LEARN_SECONDS};
  * a Jade Slip, read, at once; a cultivator who is Warm to you may teach theirs (TalkSystem).
  * <p>
- * <b>What the layers bring.</b> Two spells each, at the third and seventh layers of its own realm (HeavenMethod#ownLayer, Spell);
- * and every layer of the element's deepest method strengthens the element's passive (HeavenPassives), by the realm the layer
- * stands in. Methods of one element don't stack; of different elements they do.
+ * <b>What the layers bring.</b> The element's spells of every realm it spans (Spell#taughtBy): three in Qi Refining and in
+ * Foundation Building (at the second, fifth and eighth layers of the realm), two in each realm deeper (the third and seventh); and
+ * every layer of the element's deepest method strengthens the element's passive (HeavenPassives), by the realm the layer stands
+ * in. Methods of one element don't stack; of different elements they do.
  */
 public final class HeavenMethods {
 	/** The element's share of the qi: x{@code SHARE_FLOOR + SHARE_GAIN x share}, no more than {@code FACTOR_CAP}; an even fifth is x1. */
@@ -58,9 +59,17 @@ public final class HeavenMethods {
 
 	/** Why {@code c} can't take up or cultivate a heaven method now, or null if they can: a mortal's closed meridians, or death. */
 	public static Component refusal(PlayerCultivation c) {
+		if (c.hasShatteredMeridians()) return Component.translatable(ModLang.MSG_PHYSIQUE_SHATTERED);
 		if (c.isMortal()) return Component.translatable(ModLang.MSG_HEAVEN_METHOD_MERIDIANS);
 		if (c.netherworld().ghost()) return Component.translatable(ModLang.MSG_HEAVEN_METHOD_DEAD);
 		return null;
+	}
+
+	/** Why {@code c} can't take up {@code method}, or null if they can: {@link #refusal(PlayerCultivation)}, or roots of other elements (Physique#allows). */
+	public static Component refusal(PlayerCultivation c, HeavenMethod method) {
+		Component refusal = refusal(c);
+		if (refusal != null || c.rootsAllow(method.element())) return refusal;
+		return Component.translatable(ModLang.MSG_PHYSIQUE_WRONG_ELEMENT, method.element().getDisplayName(), Physiques.rootsLine(c.getRootElements()));
 	}
 
 	/** Whether {@code method} is understood to its last layer. */
@@ -246,7 +255,8 @@ public final class HeavenMethods {
 				continue;
 			}
 			int before = s.layer(method);
-			double amount = gained * methodFactor(c, shareAt(player, method.element()), byStele.contains(method.element())) + refined;
+			double amount = c.physique() == Physique.FALLEN_TRUE_IMMORTAL ? Double.POSITIVE_INFINITY // understood at once, no settling
+					: gained * methodFactor(c, shareAt(player, method.element()), byStele.contains(method.element())) + refined;
 			if (settle(s, method, amount, upTo) <= 0) continue;
 			any = true;
 			for (int layer = before + 1; layer <= s.layer(method); layer++) settled(player, method, layer);
@@ -262,7 +272,7 @@ public final class HeavenMethods {
 	private static void settled(ServerPlayer player, HeavenMethod method, int layer) {
 		Component spells = null;
 		for (Spell spell : Spell.values()) {
-			if (spell.heavenMethod() != method || spell.layer() != layer) continue;
+			if (!spell.taughtBy(method) || spell.layer() != layer) continue;
 			spells = spells == null ? spell.getDisplayName().copy() : spells.copy().append(", ").append(spell.getDisplayName());
 		}
 		player.sendSystemMessage((spells == null ? Component.translatable(ModLang.MSG_HEAVEN_LAYER, method.getDisplayName(), layer)
@@ -295,7 +305,7 @@ public final class HeavenMethods {
 	public static boolean learn(ServerPlayer player, HeavenMethod method) {
 		PlayerCultivation c = CultivationManager.get(player);
 		if (c.heaven().knows(method)) return false;
-		Component refusal = refusal(c);
+		Component refusal = refusal(c, method);
 		if (refusal != null) {
 			player.displayClientMessage(refusal, true);
 			return false;

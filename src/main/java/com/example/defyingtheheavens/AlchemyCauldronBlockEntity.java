@@ -47,6 +47,8 @@ public class AlchemyCauldronBlockEntity extends BlockEntity {
 	private Item brewing;
 	private int brewTicks;
 	private int brewTotal;
+	/** Whoever put in the last ingredient, starting the brew, was born with an Innate Alchemy Body (Physique): the pill works twice as strongly. */
+	private boolean alchemyBody;
 
 	public AlchemyCauldronBlockEntity(BlockPos pos, BlockState state) {
 		super(ModBlockEntities.ALCHEMY_CAULDRON, pos, state);
@@ -116,6 +118,7 @@ public class AlchemyCauldronBlockEntity extends BlockEntity {
 			brewing = recipe.output();
 			brewTicks = 0;
 			brewTotal = recipe.brewTicks();
+			alchemyBody = CultivationManager.forPlayer(player).physique() == Physique.INNATE_ALCHEMY_BODY;
 			setState(state.setValue(AlchemyCauldronBlock.BREWING, true));
 			level.playSound(null, worldPosition, SoundEvents.BREWING_STAND_BREW, SoundSource.BLOCKS, 0.8f, 0.8f);
 			tell(player, AlchemyCauldronBlock.isHeated(level, worldPosition)
@@ -171,6 +174,8 @@ public class AlchemyCauldronBlockEntity extends BlockEntity {
 		int age = AlchemyRecipes.averageAge(contents);
 		PillGrade grade = PillGrade.roll(age, level.random);
 		ItemStack pill = PillItem.create(brewing, grade, age);
+		if (alchemyBody) pill.getOrCreateTag().putBoolean(PillItem.ALCHEMY_BODY_TAG, true);
+		alchemyBody = false;
 		brewing = null;
 		brewTicks = brewTotal = 0;
 		contents.clear();
@@ -216,6 +221,7 @@ public class AlchemyCauldronBlockEntity extends BlockEntity {
 			tag.putString("Brewing", BuiltInRegistries.ITEM.getKey(brewing).toString());
 			tag.putInt("BrewTicks", brewTicks);
 			tag.putInt("BrewTotal", brewTotal);
+			if (alchemyBody) tag.putBoolean("AlchemyBody", true);
 		}
 	}
 
@@ -236,5 +242,6 @@ public class AlchemyCauldronBlockEntity extends BlockEntity {
 			brewTicks = tag.getInt("BrewTicks");
 			brewTotal = tag.getInt("BrewTotal");
 		}
+		alchemyBody = brewing != null && tag.getBoolean("AlchemyBody");
 	}
 }

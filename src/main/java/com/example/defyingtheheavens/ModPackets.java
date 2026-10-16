@@ -8,6 +8,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
@@ -125,6 +126,19 @@ public final class ModPackets {
 	public static final ResourceLocation CAST_SPELL = new ResourceLocation(DefyingTheHeavens.MOD_ID, "cast_spell");
 	/** C2S: put a spell in a slot of the spell wheel (the slot, then the spell's ordinal plus one; 0 empties it). */
 	public static final ResourceLocation SET_SPELL_SLOT = new ResourceLocation(DefyingTheHeavens.MOD_ID, "set_spell_slot");
+	/** S2C: a being's spell auras (SpellAuras): its entity id, then each aura's ordinal and the ticks it has left (none: all gone). */
+	public static final ResourceLocation SPELL_AURAS = new ResourceLocation(DefyingTheHeavens.MOD_ID, "spell_auras");
+	/** S2C: a spell's passing moment to draw (SpellFx): its kind, where, a way, and two numbers of its own. */
+	public static final ResourceLocation SPELL_FX = new ResourceLocation(DefyingTheHeavens.MOD_ID, "spell_fx");
+	/**
+	 * S2C: an open Storage Ring's space (StorageRings#send): the screen's id, the ring's grade, whether this begins the space afresh,
+	 * then its entries (each the item and how many, a flag before each), in as many packets as it takes.
+	 */
+	public static final ResourceLocation STORAGE_RING = new ResourceLocation(DefyingTheHeavens.MOD_ID, "storage_ring");
+	/** C2S: a click on the open ring's space (StorageRings#act): what to do, and the kind of thing clicked (empty: none). */
+	public static final ResourceLocation STORAGE_RING_ACTION = new ResourceLocation(DefyingTheHeavens.MOD_ID, "storage_ring_action");
+	/** C2S: the Storage Ring key: open the ring worn (or else the first one on the player). */
+	public static final ResourceLocation STORAGE_RING_OPEN = new ResourceLocation(DefyingTheHeavens.MOD_ID, "storage_ring_open");
 	/** Players further than this from a core can't work its screen. */
 	private static final double CORE_REACH = 8;
 
@@ -226,6 +240,41 @@ public final class ModPackets {
 			int soul = buf.readVarInt();
 			server.execute(() -> SoulProjection.strikeTether(player, soul));
 		});
+		ServerPlayNetworking.registerGlobalReceiver(STORAGE_RING_ACTION, (server, player, handler, buf, responseSender) -> {
+			int action = buf.readVarInt();
+			ItemStack like = buf.readItem();
+			server.execute(() -> StorageRings.act(player, action, like));
+		});
+		ServerPlayNetworking.registerGlobalReceiver(STORAGE_RING_OPEN,
+				(server, player, handler, buf, responseSender) -> server.execute(() -> StorageRings.openFirst(player)));
+	}
+
+	/**
+	 * An open ring's space to {@code player} ({@link #STORAGE_RING}): the grade, then the entries, a new packet whenever one passes
+	 * {@code maxBytes}.
+	 */
+	public static void sendStorageRing(ServerPlayer player, int containerId, StorageRings.Grade grade, java.util.List<StorageRings.Entry> entries, int maxBytes) {
+		FriendlyByteBuf buf = storageRingHeader(containerId, grade, true);
+		for (StorageRings.Entry entry : entries) {
+			buf.writeBoolean(true);
+			buf.writeItem(entry.kind());
+			buf.writeVarLong(entry.count());
+			if (buf.writerIndex() > maxBytes) {
+				buf.writeBoolean(false);
+				ServerPlayNetworking.send(player, STORAGE_RING, buf);
+				buf = storageRingHeader(containerId, grade, false);
+			}
+		}
+		buf.writeBoolean(false);
+		ServerPlayNetworking.send(player, STORAGE_RING, buf);
+	}
+
+	private static FriendlyByteBuf storageRingHeader(int containerId, StorageRings.Grade grade, boolean fresh) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(containerId);
+		buf.writeVarInt(grade.ordinal());
+		buf.writeBoolean(fresh);
+		return buf;
 	}
 
 	public static void sendSoulSelf(ServerPlayer player, SoulProjection.State state, int ticks, Vec3 body, int radius, float bodyHealth,
@@ -297,6 +346,12 @@ public final class ModPackets {
 		buf.writeVarInt(c.getSoulState().ordinal());
 		buf.writeBoolean(c.hasHeavensLeave());
 		buf.writeVarInt(c.getFavour());
+		// The body they were born with (Physique): its ordinal (-1 not yet rolled), the roots' elements as a bit mask, body refining.
+		buf.writeVarInt(c.getPhysique() == null ? -1 : c.getPhysique().ordinal());
+		int roots = 0;
+		for (QiElement element : c.getRootElements()) roots |= 1 << element.ordinal();
+		buf.writeVarInt(roots);
+		buf.writeVarInt(c.getBodyRefining());
 		ServerPlayNetworking.send(player, SYNC, buf);
 	}
 
@@ -618,7 +673,38 @@ public final class ModPackets {
 		FriendlyByteBuf buf = PacketByteBufs.create();
 		buf.writeUUID(player.getUUID());
 		buf.writeBoolean(meditating);
+		buf.writeBoolean(meditating && MeditationManager.floats(player)); // sits on the air, not the ground
 		return buf;
+	}
+
+	/** {@code e}'s spell auras ({@code auras}: each with the game time it ends; null or empty: none), to {@code to}. */
+	public static void sendSpellAuras(ServerPlayer to, net.minecraft.world.entity.LivingEntity e, java.util.EnumMap<SpellAura, Long> auras) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(e.getId());
+		long now = e.level().getGameTime();
+		buf.writeVarInt(auras == null ? 0 : auras.size());
+		if (auras != null) {
+			for (Map.Entry<SpellAura, Long> aura : auras.entrySet()) {
+				buf.writeVarInt(aura.getKey().ordinal());
+				buf.writeVarInt((int) Math.max(1, aura.getValue() - now));
+			}
+		}
+		ServerPlayNetworking.send(to, SPELL_AURAS, buf);
+	}
+
+	/** A spell's passing moment (SpellFx) for {@code to} to draw. */
+	public static void sendSpellFx(ServerPlayer to, SpellFx.Kind kind, Vec3 at, Vec3 way, float a, float b) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(kind.ordinal());
+		buf.writeDouble(at.x);
+		buf.writeDouble(at.y);
+		buf.writeDouble(at.z);
+		buf.writeFloat((float) way.x);
+		buf.writeFloat((float) way.y);
+		buf.writeFloat((float) way.z);
+		buf.writeFloat(a);
+		buf.writeFloat(b);
+		ServerPlayNetworking.send(to, SPELL_FX, buf);
 	}
 
 	private ModPackets() {}

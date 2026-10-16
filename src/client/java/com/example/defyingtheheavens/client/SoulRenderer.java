@@ -323,7 +323,10 @@ public final class SoulRenderer {
 		drawSoul(context, ghost, 1.0f, partial, true, ClientGhosts.crowned(ghost));
 	}
 
-	/** A ghost's name over its head, in cyan, as a living player's would be; a Ghost King's (as drawn) over its crown, its title above. */
+	/**
+	 * A ghost's name over its head, in cyan, as a living player's would be; a Ghost King's (as drawn) over its crown, its title above.
+	 * Leaves the sense layer's state as it found it (SenseOverlay#layerState).
+	 */
 	private static void drawName(WorldRenderContext context, Player ghost, float partial) {
 		Minecraft mc = Minecraft.getInstance();
 		Vec3 cam = context.camera().getPosition();
@@ -345,6 +348,8 @@ public final class SoulRenderer {
 					pose.last().pose(), buffers, net.minecraft.client.gui.Font.DisplayMode.NORMAL, 0x40000000, 0xF000F0);
 		}
 		buffers.endBatch();
+		// The text's batch turns blending and the depth test off as it finishes: the layer's own state back for what follows.
+		SenseOverlay.layerState();
 		pose.popPose();
 	}
 
@@ -474,7 +479,8 @@ public final class SoulRenderer {
 		buffer.vertex(matrix, halfWidth, hang, 0).uv(12 / 16.0f, 15 / 16.0f).endVertex();
 		buffer.vertex(matrix, halfWidth, 0, 0).uv(12 / 16.0f, 1 / 16.0f).endVertex();
 		BufferUploader.drawWithShader(buffer.end());
-		RenderSystem.enableCull();
+		// Both faces still, as the sense layer draws (SenseOverlay#layerState): turning culling back on here left every soul and
+		// ghost drawn after a bound one in the frame with only its front faces.
 		pose.popPose();
 	}
 

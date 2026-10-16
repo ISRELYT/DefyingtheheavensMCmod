@@ -47,17 +47,29 @@ public class HeavenMethodsGameTests implements FabricGameTest {
 				helper.assertTrue(HeavenMethod.byId(method.getId()) == method && ids.add(method.getId()), "Its id is its own");
 			}
 		}
-		// Its spells: two each, the third and seventh layers of its own realm, costing qi alone.
+		// The elements' spells: three of each element in Qi Refining and in Foundation Building (layers 2, 5, 8 of the realm), two in each
+		// realm deeper (3 and 7), costing qi alone, each taught by every method of its element reaching its realm.
 		int spells = 0;
+		java.util.Map<String, Integer> perSlot = new java.util.HashMap<>();
 		for (Spell spell : Spell.values()) {
 			if (!spell.isHeaven()) continue;
 			spells++;
-			HeavenMethod method = spell.heavenMethod();
 			int within = MethodLayers.within(spell.layer());
-			helper.assertTrue(MethodLayers.realmOf(spell.layer()) == method.realm() && (within == 3 || within == 7) && spell.cost() == 0 && spell.qiCost() > 0,
-					spell.getId() + " comes in its method's own realm, on qi");
+			boolean early = spell.heavenRealm().ordinal() <= Realm.FOUNDATION_BUILDING.ordinal();
+			helper.assertTrue(MethodLayers.realmOf(spell.layer()) == spell.heavenRealm() && (early ? within == 2 || within == 5 || within == 8 : within == 3 || within == 7)
+					&& spell.cost() == 0 && spell.qiCost() > 0, spell.getId() + " comes at its place in its own realm, on qi");
+			helper.assertTrue(spell.taughtBy(HeavenMethod.of(spell.element(), spell.heavenRealm())) && spell.taughtBy(HeavenMethod.of(spell.element(), Realm.FOUR_AXIS))
+					&& (spell.heavenRealm() == Realm.QI_REFINING || !spell.taughtBy(HeavenMethod.of(spell.element(), spell.heavenRealm().previous()))),
+					spell.getId() + ": taught by its realm's method and deeper, never shallower");
+			perSlot.merge(spell.element() + " " + spell.heavenRealm(), 1, Integer::sum);
 		}
-		helper.assertTrue(spells == 0 || spells == 60, "Sixty spells, or none yet (" + spells + ")");
+		helper.assertTrue(spells == 70, "Seventy element spells (" + spells + ")");
+		for (QiElement element : QiElement.five()) {
+			for (Realm realm : Realm.values()) {
+				int want = realm.ordinal() <= Realm.FOUNDATION_BUILDING.ordinal() ? 3 : 2;
+				helper.assertTrue(perSlot.getOrDefault(element + " " + realm, 0) == want, element + " " + realm + ": " + want + " spells");
+			}
+		}
 		helper.succeed();
 	}
 
@@ -270,9 +282,8 @@ public class HeavenMethodsGameTests implements FabricGameTest {
 		HeavenState s = c.heaven();
 		s.setMethod(fire, 2, 0);
 		s.setActiveMethod(fire);
-		Spell third = null;
-		for (Spell spell : Spell.values()) if (spell.heavenMethod() == fire && spell.layer() == 3) third = spell;
-		Spell sleeping = third;
+		Spell sleeping = Spell.FLAME_BOLT; // the second layer's spell: in reach from Early
+		helper.assertTrue(sleeping.isKnown(c) && !Spell.FLAME_FIST.isKnown(c), "At Early, Flame Bolt (layer 2), not yet Flame Fist (layer 5, Mid)");
 		MeditationManager.start(player);
 		helper.assertTrue(MeditationManager.isMeditating(player.getUUID()), "Sat down to meditate");
 		double[] before = new double[1];
@@ -286,8 +297,8 @@ public class HeavenMethodsGameTests implements FabricGameTest {
 		});
 		helper.runAfterDelay(160, () -> {
 			try {
-				helper.assertTrue(s.layer(fire) >= 3 && s.layer(fire) <= 5 && sleeping != null && sleeping.isKnown(c),
-						"At Mid, its third layer settles in with meditation, and its spell with it (" + s.layer(fire) + ")");
+				helper.assertTrue(s.layer(fire) >= 3 && s.layer(fire) <= 5 && sleeping.isKnown(c),
+						"At Mid, its third layer settles in with meditation, the spells it had still known (" + s.layer(fire) + ")");
 				helper.assertTrue(c.getMedicinalQi() < 50 && c.getCultivation() > before[0], "A pill's qi refined onto the bar (" + c.getMedicinalQi() + " left)");
 				helper.succeed();
 			} finally {
@@ -304,22 +315,16 @@ public class HeavenMethodsGameTests implements FabricGameTest {
 		ServerPlayer player = cultivator(helper, Realm.QI_REFINING, Stage.EARLY);
 		PlayerCultivation c = CultivationManager.get(player);
 		HeavenMethod wood = HeavenMethod.of(QiElement.WOOD, Realm.QI_REFINING);
-		Spell third = null, seventh = null;
-		for (Spell spell : Spell.values()) {
-			if (spell.isHeaven() && spell.heavenMethod() == wood) {
-				if (spell.layer() == 3) third = spell;
-				if (spell.layer() == 7) seventh = spell;
-			}
-		}
-		helper.assertTrue(third != null && seventh != null, "The wood method's two spells");
+		Spell first = Spell.WOOD_BULLET, third = Spell.EMERALD_HEALING_ART, seventh = Spell.VERDANT_GROWTH;
+		helper.assertTrue(first.taughtBy(wood) && third.taughtBy(wood) && seventh.taughtBy(wood), "The wood method's three spells");
 		try {
 			c.heaven().setMethod(wood, 9, 0); // understood whole (an op's word), far ahead of the realm
 			HeavenMethods.watchSpells(player); // the first look: noted, nothing new
-			helper.assertTrue(!third.isKnown(c) && !seventh.isKnown(c) && third.realmNeeded() == PlayerCultivation.rank(Realm.QI_REFINING, Stage.MID)
-					&& seventh.realmNeeded() == PlayerCultivation.rank(Realm.QI_REFINING, Stage.LATE), "At Qi Refining Early neither spell, its layers cultivated or not");
+			helper.assertTrue(first.isKnown(c) && !third.isKnown(c) && !seventh.isKnown(c) && third.realmNeeded() == PlayerCultivation.rank(Realm.QI_REFINING, Stage.MID)
+					&& seventh.realmNeeded() == PlayerCultivation.rank(Realm.QI_REFINING, Stage.LATE), "At Qi Refining Early only the first, its layers cultivated or not");
 			helper.assertTrue(near(HeavenPassives.amount(c, QiElement.WOOD), 0.04), "Its passive only for Early's two layers (" + HeavenPassives.amount(c, QiElement.WOOD) + ")");
 			c.setState(Realm.QI_REFINING, Stage.MID, 0);
-			helper.assertTrue(third.isKnown(c) && !seventh.isKnown(c) && near(HeavenPassives.amount(c, QiElement.WOOD), 0.10), "Mid: the third layer's spell, five layers' passive");
+			helper.assertTrue(third.isKnown(c) && !seventh.isKnown(c) && near(HeavenPassives.amount(c, QiElement.WOOD), 0.10), "Mid: the fifth layer's spell, five layers' passive");
 			HeavenMethods.watchSpells(player);
 			NetherworldState s = c.netherworld();
 			int slot = -1;

@@ -216,7 +216,8 @@ public final class GhostMethods {
 	 * harmony, pill and stele (which the caller multiplies in).
 	 */
 	public static double ratePerSecond(PlayerCultivation c, double density) {
-		return BASE_RATE * density / GhostQi.SOUL_SAND_VALLEY * realmFactor(c) * (c.netherworld().ghost() ? GHOST_FACTOR : 1.0);
+		return BASE_RATE * density / GhostQi.SOUL_SAND_VALLEY * realmFactor(c) * (c.netherworld().ghost() ? GHOST_FACTOR : 1.0)
+				* c.physique().ghostFactor(); // a Ghost Devil Body's, a Fallen True Immortal's (Physique)
 	}
 
 	/** {@link #cultivate(NetherworldState, GhostMethod, double, int)} with no gate (commands). */
@@ -280,6 +281,12 @@ public final class GhostMethods {
 		int before = ghostRank(s);
 		double[] start = startLayer(s, method);
 		int layer = (int) start[0];
+		// A Ghost Devil Body (Physique) finding a foundation of Core Formation or deeper leaps to its realm's first layer.
+		if (method.isFoundation() && CultivationManager.get(player).physique() == Physique.GHOST_DEVIL_BODY
+				&& method.realm().ordinal() >= Realm.CORE_FORMATION.ordinal()) {
+			int first = method.realm().ordinal() * MethodLayers.PER_REALM + 1;
+			if (layer < first) start = new double[]{layer = first, 0};
+		}
 		s.setMethod(method, layer, start[1]);
 		// The first learned is practised; and a foundation going further than the foundation practised takes over (the way on).
 		GhostMethod active = s.activeMethod();

@@ -85,13 +85,19 @@ public final class Tempering {
 		return HERB * PillGrade.ageFactor(GinsengItem.age(stack)) * rare;
 	}
 
-	/** Adds tempering to a mortal below Peak (anyone else: nothing). Returns true if it did anything. */
+	/**
+	 * Adds tempering to a mortal below Peak, or one with shattered meridians below the last body refining (BodyRefining); anyone
+	 * else: nothing. Returns true if it did anything.
+	 */
 	public static boolean gain(ServerPlayer player, double amount) {
 		PlayerCultivation c = CultivationManager.get(player);
-		if (!c.isMortal() || c.getMortalStage().isLast() || amount <= 0) return false;
+		if (!c.canTemper() || amount <= 0) return false;
+		boolean refining = c.getMortalStage().isLast();
 		if (c.addTempering(amount)) {
 			MortalStage stage = c.getMortalStage();
-			player.displayClientMessage(stage.isLast() ? Component.translatable(ModLang.MSG_TEMPERED_PEAK)
+			player.displayClientMessage(refining || c.getBodyRefining() > 0
+					? Component.translatable(ModLang.MSG_BODY_REFINED, BodyRefining.name(c.getBodyRefining())).withStyle(net.minecraft.ChatFormatting.GOLD)
+					: stage.isLast() ? Component.translatable(ModLang.MSG_TEMPERED_PEAK)
 					: Component.translatable(ModLang.MSG_TEMPERED, stage.getDisplayName()), true);
 			player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.6f, 0.8f);
 			CultivationManager.refresh(player); // the tempered body's stats

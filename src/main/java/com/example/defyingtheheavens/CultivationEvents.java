@@ -43,7 +43,10 @@ public final class CultivationEvents {
 		// (and lost sight of it while it changed) isn't left drawing that one.
 		EntityTrackingEvents.START_TRACKING.register((tracked, viewer) -> {
 			if (tracked instanceof ServerPlayer subject) ModPackets.sendGhost(viewer, subject);
+			SpellAuras.startSeeing(viewer, tracked); // the spells' auras on it, to draw (SpellAuras)
 		});
+		net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents.AFTER_PLAYER_CHANGE_WORLD.register((player, origin, destination) ->
+				SpellAuras.resend(player));
 		ServerTickEvents.END_SERVER_TICK.register(SpatialStorms::tick);
 		ServerTickEvents.END_SERVER_TICK.register(VoidFallHandler::tick);
 		ServerTickEvents.END_SERVER_TICK.register(RealmSuppressionHandler::tick);
@@ -64,6 +67,10 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(Rumours::tick);
 		ServerTickEvents.END_SERVER_TICK.register(NpcLife::tick);
 		ServerTickEvents.END_SERVER_TICK.register(HeavenRitual::tick);
+		ServerTickEvents.END_SERVER_TICK.register(Physiques::tick);
+		ServerTickEvents.END_SERVER_TICK.register(CoreDetonation::tick);
+		ServerTickEvents.END_SERVER_TICK.register(StorageRings::flush);
+		Physiques.register();
 		InnerRealm.registerEvents();
 		GhostGate.registerProtection();
 		registerSoulInteractions();
@@ -76,6 +83,7 @@ public final class CultivationEvents {
 		// A region's hermit is seated the first time its chunk loads.
 		ServerChunkEvents.CHUNK_LOAD.register(HermitSites::onChunkLoad);
 		ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> CultivatorNpc.onLoad(entity));
+		ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> StorageRingItem.onItemLoad(entity));
 		ServerEntityEvents.ENTITY_UNLOAD.register((entity, level) -> CultivatorNpc.onUnload(entity));
 
 		ServerLifecycleEvents.SERVER_STARTED.register(SpatialRiftBlock::ensureOverworldRift);
@@ -112,6 +120,7 @@ public final class CultivationEvents {
 			GhostSystem.clear();
 			PalaceTreasury.clear();
 			Spells.clear();
+			CoreDetonation.clear();
 		});
 
 		// A formation's shell runs through the ground too: those who couldn't break the barrier can't dig under it either.
@@ -120,6 +129,8 @@ public final class CultivationEvents {
 			if (!(world instanceof ServerLevel level) || !(player instanceof ServerPlayer sp)) return true;
 			if (Incorporeal.is(sp)) return false; // the dead and wandering souls break nothing
 			if (!(state.getBlock() instanceof SectBarrierBlock) && Formations.protectsGround(sp, pos)) return false;
+			// A spell's block (a wall, a tree, a field's ice) is taken up, dropping nothing: spells are no quarry.
+			if (HeavenSpells.breakTemporary(level, pos)) return false;
 			SectManager.onTrespass(level, sp, pos);
 			// The treasury's seal holds while its elders keep it: nothing in it breaks (a chest broken would spill all it holds).
 			Sect sealed = sp.isCreative() ? null : SectManager.sealedTreasuryAt(level, pos);
@@ -165,6 +176,8 @@ public final class CultivationEvents {
 			if (ModDimensions.isInnerRealm(player.level().dimension())) InnerRealm.leave(player);
 			// Likewise a nascent soul still out of its body (a crash, or a server killed mid-way): home, no penalty.
 			SoulProjection.onJoin(player);
+			Physiques.onJoin(player); // the body they were born with, the first time
+			CoreDetonation.onJoin(player); // no act's switch left on from a server that stopped mid-way
 			RealmSuppressionHandler.update(player);
 			if (fled) player.setHealth(Math.min(player.getHealth(), player.getMaxHealth())); // the lower stage's smaller body
 			Formations.syncSoon(); // the barriers near them, at once
@@ -177,6 +190,8 @@ public final class CultivationEvents {
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
 			// Walking out of a spar forfeits it (the cultivator keeps the stakes).
 			SparSystem.abandon(handler.getPlayer());
+			// A golden core breaking bursts as its cultivator goes.
+			CoreDetonation.onDisconnect(handler.getPlayer());
 			// A soul out of its body goes home (or, fleeing a fight, is severed) while the player can still be moved and saved.
 			SoulProjection.onDisconnect(handler.getPlayer());
 			SoulProjection.forget(handler.getPlayer().getUUID());

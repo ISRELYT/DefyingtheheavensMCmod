@@ -54,6 +54,15 @@ public final class CultivationManager {
 			SoulProjection.toggle(player);
 			return;
 		}
+		// So are detonating the golden core (asked twice) and tearing space open (into the Spatial Gap, or out of it).
+		if (ability == Ability.CORE_DETONATION) {
+			CoreDetonation.toggle(player);
+			return;
+		}
+		if (ability == Ability.SPATIAL_TEAR) {
+			SpatialTrialHandler.tear(player);
+			return;
+		}
 		// While the soul is out, Qi Sense is how it sees: it stays open.
 		if (ability == Ability.QI_SENSE && SoulProjection.isActive(player.getUUID())) return;
 		c.setAbilityEnabled(ability, !c.isAbilityEnabled(ability));

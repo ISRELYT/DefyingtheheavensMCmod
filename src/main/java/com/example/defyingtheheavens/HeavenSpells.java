@@ -31,16 +31,18 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 /**
- * The heaven methods' spells (Spell#isHeaven), cast by the living on qi alone (Spells#cast pays and checks): each element's twelve
+ * The five elements' spells (Spell#isHeaven), cast by the living on qi alone (Spells#cast pays and checks): each element's fourteen
  * in a kit of its own ({@link WoodSpells}, {@link WaterSpells}, {@link FireSpells}, {@link EarthSpells}, {@link MetalSpells}),
- * and here what they share: whom a spell spares and whom it takes for a foe, the ways of finding a target, the element's qi harm,
- * effects that linger tick by tick ({@link Lingering}), and blocks a spell sets down for a while ({@link #placeTemporary}),
- * always taken up again.
+ * and here what they share: whom a spell spares and whom it takes for a foe, the ways of finding a target, the element's qi harm
+ * (of the spell's realm, for the wards: SpellAuras), effects that linger tick by tick ({@link Lingering}), blocks a spell sets down
+ * for a while ({@link #placeTemporary}), always taken up again, and the ground a spell may carve for good ({@link #carvable}).
+ * What a spell looks like is its own: its missiles (SpellProjectile), what it leaves standing (SpellField), blocks it moves before
+ * your eyes (SpellBlock), its passing moments (SpellFx) and the auras it leaves on beings (SpellAuras).
  */
 public final class HeavenSpells {
 	/** Whether {@code spell} can take hold for {@code p} now (its element's say); refused, nothing is paid. */
 	public static boolean canCast(ServerPlayer p, Spell spell) {
-		return switch (spell.heavenMethod().element()) {
+		return switch (spell.element()) {
 			case WOOD -> WoodSpells.canCast(p, spell);
 			case WATER -> WaterSpells.canCast(p, spell);
 			case FIRE -> FireSpells.canCast(p, spell);
@@ -58,7 +60,7 @@ public final class HeavenSpells {
 	/** Casts {@code spell} (Spells#cast has paid for it). */
 	public static void cast(ServerPlayer p, Spell spell) {
 		if (!spell.isHeaven()) return;
-		switch (spell.heavenMethod().element()) {
+		switch (spell.element()) {
 			case WOOD -> WoodSpells.cast(p, spell);
 			case WATER -> WaterSpells.cast(p, spell);
 			case FIRE -> FireSpells.cast(p, spell);
@@ -88,15 +90,18 @@ public final class HeavenSpells {
 				}
 			}
 		}
-		if (!TEMPORARY.isEmpty()) {
-			for (Iterator<Map.Entry<Placed, Long>> it = TEMPORARY.entrySet().iterator(); it.hasNext(); ) {
-				Map.Entry<Placed, Long> entry = it.next();
-				if (entry.getKey().level().getGameTime() >= entry.getValue()) {
-					restore(entry.getKey());
-					it.remove();
-				}
+		if (!DUE.isEmpty()) {
+			long now = server.overworld().getGameTime();
+			while (!DUE.isEmpty() && DUE.peek().until() <= now) {
+				Placed placed = DUE.poll();
+				Map<BlockPos, Placed> here = TEMPORARY.get(placed.level());
+				if (here == null || here.get(placed.pos()) != placed) continue; // taken up early, or set again since
+				here.remove(placed.pos());
+				if (here.isEmpty()) TEMPORARY.remove(placed.level());
+				restore(placed);
 			}
 		}
+		SpellAuras.tick(server);
 		WoodSpells.tick(server);
 		WaterSpells.tick(server);
 		FireSpells.tick(server);
@@ -126,8 +131,10 @@ public final class HeavenSpells {
 		LINGERING.clear();
 		for (Lingering l : all) endQuietly(l);
 		LINGERING.clear(); // whatever an ending set lingering ends with the server too
-		for (Placed placed : TEMPORARY.keySet()) restore(placed);
+		for (Map<BlockPos, Placed> here : TEMPORARY.values()) for (Placed placed : here.values()) restore(placed);
 		TEMPORARY.clear();
+		DUE.clear();
+		SpellAuras.clear();
 		WoodSpells.clear();
 		WaterSpells.clear();
 		FireSpells.clear();
@@ -214,6 +221,11 @@ public final class HeavenSpells {
 		return found;
 	}
 
+	/** Ends {@code effect} now, if it is still running. */
+	public static void stop(Lingering effect) {
+		if (LINGERING.remove(effect)) endQuietly(effect);
+	}
+
 	/** Ends every lingering effect of {@code type} of {@code caster}'s now. */
 	public static void endLingering(UUID caster, Class<? extends Lingering> type) {
 		// Taken out first, then ended: an ending may set something else lingering (an uprooting lends its blow).
@@ -294,6 +306,12 @@ public final class HeavenSpells {
 	 * ward brings to nothing is refused outright ({@link #wardedOff}, ALLOW_DAMAGE).
 	 */
 	public static float incoming(LivingEntity target, net.minecraft.world.damagesource.DamageSource source, float amount) {
+		// First the auras: a ward of the element that overcomes the blow's, a Golden Bell, a polished blade (SpellAuras).
+		amount = SpellAuras.incoming(target, source, amount);
+		if (amount <= 0) {
+			WARDED_OFF.add(target);
+			return 0;
+		}
 		if (!LINGERING.isEmpty()) {
 			for (Lingering l : new ArrayList<>(LINGERING)) {
 				if (l instanceof HarmListener listener) {
@@ -349,6 +367,7 @@ public final class HeavenSpells {
 
 	/** A melee blow of {@code attacker}'s landed on {@code target}. */
 	public static void onMelee(ServerPlayer attacker, LivingEntity target) {
+		SpellAuras.onMelee(attacker, target); // Flame Fist
 		if (LINGERING.isEmpty()) return;
 		for (Lingering l : new ArrayList<>(LINGERING)) {
 			if (l instanceof MeleeListener listener) {
@@ -383,45 +402,81 @@ public final class HeavenSpells {
 
 	// --- Temporary blocks ---
 
-	private record Placed(ServerLevel level, BlockPos pos, BlockState was, BlockState placed) {}
+	private record Placed(ServerLevel level, BlockPos pos, BlockState was, BlockState placed, long until) {}
 
-	/** Each block a spell has set down, and the game time it is taken up again. */
-	private static final Map<Placed, Long> TEMPORARY = new HashMap<>();
+	/** Each block a spell has set down, by level and place (a Frozen Field sets down thousands: looked up, never searched). */
+	private static final Map<ServerLevel, Map<BlockPos, Placed>> TEMPORARY = new HashMap<>();
+	/** The same, soonest to be taken up first. */
+	private static final java.util.PriorityQueue<Placed> DUE = new java.util.PriorityQueue<>(java.util.Comparator.comparingLong(Placed::until));
 
 	/**
 	 * Sets {@code state} at {@code pos} for {@code ticks}, then takes it up again: only into air or a replaceable block (grass,
 	 * snow, water...), never inside a raised formation's barrier, and never where a spell's block already stands. Returns
-	 * whether it was set. What it replaced comes back (a replaceable plant comes back as air).
+	 * whether it was set. What it replaced comes back (a replaceable plant comes back as air, water as water).
 	 */
 	public static boolean placeTemporary(ServerLevel level, BlockPos pos, BlockState state, int ticks) {
 		BlockState here = level.getBlockState(pos);
 		if (!here.canBeReplaced() || !level.isInWorldBounds(pos) || Formations.shelters(level, pos) || isTemporary(level, pos)) return false;
 		BlockState was = here.getFluidState().isEmpty() ? net.minecraft.world.level.block.Blocks.AIR.defaultBlockState() : here.getFluidState().createLegacyBlock();
 		if (!level.setBlock(pos, state, 3)) return false;
-		TEMPORARY.put(new Placed(level, pos.immutable(), was, state), level.getGameTime() + Math.max(1, ticks));
+		Placed placed = new Placed(level, pos.immutable(), was, state, level.getGameTime() + Math.max(1, ticks));
+		TEMPORARY.computeIfAbsent(level, k -> new HashMap<>()).put(placed.pos(), placed);
+		DUE.add(placed);
 		return true;
 	}
 
 	/** Whether a spell's block stands at {@code pos} now. */
 	public static boolean isTemporary(ServerLevel level, BlockPos pos) {
-		for (Placed placed : TEMPORARY.keySet()) if (placed.level() == level && placed.pos().equals(pos)) return true;
-		return false;
+		Map<BlockPos, Placed> here = TEMPORARY.get(level);
+		return here != null && here.containsKey(pos);
 	}
 
 	/** Takes up a spell's block at {@code pos} at once (a wall shattered early). */
 	public static void removeTemporary(ServerLevel level, BlockPos pos) {
-		for (Iterator<Placed> it = TEMPORARY.keySet().iterator(); it.hasNext(); ) {
-			Placed placed = it.next();
-			if (placed.level() == level && placed.pos().equals(pos)) {
-				restore(placed);
-				it.remove();
-			}
-		}
+		Map<BlockPos, Placed> here = TEMPORARY.get(level);
+		Placed placed = here == null ? null : here.remove(pos);
+		if (placed == null) return;
+		if (here.isEmpty()) TEMPORARY.remove(level);
+		restore(placed);
+	}
+
+	/**
+	 * A player breaks a spell's block (PlayerBlockBreakEvents): it is taken up at once, what it replaced back, and nothing drops (a
+	 * wall, a tree, a field's ice are never a quarry). Returns whether {@code pos} held one.
+	 */
+	public static boolean breakTemporary(ServerLevel level, BlockPos pos) {
+		if (!isTemporary(level, pos)) return false;
+		BlockState state = level.getBlockState(pos);
+		level.levelEvent(2001, pos, net.minecraft.world.level.block.Block.getId(state)); // the break's crumbs and sound
+		removeTemporary(level, pos);
+		return true;
+	}
+
+	/** A blast takes no spell's block as loot: those among {@code toBlow} are taken up at once instead, dropping nothing. */
+	public static void spareTemporaryFromBlast(ServerLevel level, List<BlockPos> toBlow) {
+		if (TEMPORARY.get(level) == null) return;
+		toBlow.removeIf(pos -> {
+			if (!isTemporary(level, pos)) return false;
+			removeTemporary(level, pos);
+			return true;
+		});
+	}
+
+	/** Moves when a spell's block at {@code pos} is taken up to {@code ticks} from now (ice thawing a little sooner here, later there). */
+	public static void retime(ServerLevel level, BlockPos pos, int ticks) {
+		Map<BlockPos, Placed> here = TEMPORARY.get(level);
+		Placed placed = here == null ? null : here.get(pos);
+		if (placed == null) return;
+		Placed moved = new Placed(level, placed.pos(), placed.was(), placed.placed(), level.getGameTime() + Math.max(1, ticks));
+		here.put(moved.pos(), moved);
+		DUE.add(moved);
 	}
 
 	/** How many of the spells' blocks stand now (tests). */
 	public static int temporaryCount() {
-		return TEMPORARY.size();
+		int count = 0;
+		for (Map<BlockPos, Placed> here : TEMPORARY.values()) count += here.size();
+		return count;
 	}
 
 	private static void restore(Placed placed) {
@@ -433,12 +488,55 @@ public final class HeavenSpells {
 		if (level.getBlockState(placed.pos()).is(placed.placed().getBlock())) level.setBlock(placed.pos(), placed.was(), 3);
 	}
 
+	// --- Carving the ground for good ---
+
+	/**
+	 * Whether a spell may take the block at {@code pos} away for good (a boulder torn from the ground, a cave carved, a slash cut
+	 * through a hillside): something there, not a spell's own block, nothing kept in it (a chest, a furnace), no harder than
+	 * obsidian's toughness and not unbreakable, not a barrier, and not under a formation's shelter or ground {@code p} may not dig
+	 * (Adventure mode, spawn protection, a sect's ground).
+	 */
+	public static boolean carvable(ServerLevel level, BlockPos pos, ServerPlayer p) {
+		if (!level.isInWorldBounds(pos)) return false;
+		BlockState state = level.getBlockState(pos);
+		if (state.isAir() || !state.getFluidState().isEmpty() && state.canBeReplaced()) return false;
+		float hardness = state.getDestroySpeed(level, pos);
+		if (hardness < 0 || hardness >= 50 || state.hasBlockEntity() || state.getBlock() instanceof SectBarrierBlock) return false;
+		if (isTemporary(level, pos) || Formations.shelters(level, pos)) return false;
+		// Nor what the caster couldn't dig by hand: in Adventure mode, or under the server's spawn protection.
+		return p == null || p.mayBuild() && level.mayInteract(p, pos) && !Formations.protectsGround(p, pos);
+	}
+
+	/** What a block of {@code state} looks like as moved earth: grassy and snowy tops come as their soil. */
+	public static BlockState asEarth(BlockState state) {
+		if (state.is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK) || state.is(net.minecraft.world.level.block.Blocks.MYCELIUM)
+				|| state.is(net.minecraft.world.level.block.Blocks.PODZOL) || state.is(net.minecraft.world.level.block.Blocks.DIRT_PATH)) {
+			return net.minecraft.world.level.block.Blocks.DIRT.defaultBlockState();
+		}
+		return state;
+	}
+
 	// --- Whom, and where ---
 
-	/** Spared by a caster's spells: the caster, the dead and fallen, spectators, and its own tamed creatures. */
+	/**
+	 * Spared by a caster's spells: the caster, the dead and fallen, spectators, its own tamed creatures, and any player it may not
+	 * harm (PvP off, or a team that won't hurt its own): no hold, push, drowning or burning reaches them either, not only the harm.
+	 */
 	public static boolean spared(ServerPlayer p, LivingEntity e) {
-		return e == p || !e.isAlive() || e instanceof Player player && player.isSpectator()
+		return e == p || !e.isAlive() || e instanceof Player player && (player.isSpectator() || !p.canHarmPlayer(player))
 				|| e instanceof OwnableEntity pet && p.getUUID().equals(pet.getOwnerUUID());
+	}
+
+	/**
+	 * The first being along the look within {@code range} that a blessing may reach (Life Force Gain): any but the caster, the dead and
+	 * spectators, a player too where the server keeps players from harming each other (which {@link #aimed} spares).
+	 */
+	public static LivingEntity aimedAny(ServerPlayer p, double range) {
+		Vec3 from = p.getEyePosition();
+		Vec3 to = beamEnd(p, range);
+		EntityHitResult hit = ProjectileUtil.getEntityHitResult(p.level(), p, from, to, new AABB(from, to).inflate(1.0),
+				e -> e instanceof LivingEntity living && living != p && living.isAlive() && !(living instanceof Player other && other.isSpectator()));
+		return hit != null && hit.getEntity() instanceof LivingEntity target ? target : null;
 	}
 
 	/** A foe of the caster's: a monster, or anything set on it (a mob or a cultivator with it as its target). */
@@ -628,10 +726,32 @@ public final class HeavenSpells {
 		return Math.max(0, before - target.getHealth() - target.getAbsorptionAmount());
 	}
 
+	/**
+	 * Strikes {@code target} for {@code amount} of {@code spell}'s element's qi harm (of its realm, for the wards: SpellAuras) by
+	 * {@code p} ({@code via}: the thing that struck, or null for the caster's own hand), and returns how much it took.
+	 */
+	public static float strike(ServerPlayer p, LivingEntity target, float amount, Spell spell, net.minecraft.world.entity.Entity via) {
+		float before = target.getHealth() + target.getAbsorptionAmount();
+		ServerLevel level = (ServerLevel) target.level();
+		target.hurt(ModDamageTypes.qi(level, spell.element(), spell.heavenRealm(), via, p), amount);
+		return Math.max(0, before - target.getHealth() - target.getAbsorptionAmount());
+	}
+
+	/** {@link #strike(ServerPlayer, LivingEntity, float, Spell, net.minecraft.world.entity.Entity)} by the caster's own hand. */
+	public static float strike(ServerPlayer p, LivingEntity target, float amount, Spell spell) {
+		return strike(p, target, amount, spell, null);
+	}
+
 	/** Strikes without the struck flinching away from the next blow's harm (a zone's ticks, a chain's leaps). */
 	public static float strikeAgain(ServerPlayer p, LivingEntity target, float amount, QiElement element) {
 		target.invulnerableTime = 0;
 		return strike(p, target, amount, element);
+	}
+
+	/** {@link #strike(ServerPlayer, LivingEntity, float, Spell)} without the struck flinching away from the next (a zone's ticks). */
+	public static float strikeAgain(ServerPlayer p, LivingEntity target, float amount, Spell spell) {
+		target.invulnerableTime = 0;
+		return strike(p, target, amount, spell);
 	}
 
 	/** Throws {@code target} away from {@code from} along the ground, {@code strength} as a knockback's. */

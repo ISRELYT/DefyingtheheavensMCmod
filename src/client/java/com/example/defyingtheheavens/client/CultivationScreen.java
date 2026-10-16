@@ -22,6 +22,9 @@ import com.example.defyingtheheavens.Spells;
 import com.example.defyingtheheavens.Journal;
 import com.example.defyingtheheavens.ModLang;
 import com.example.defyingtheheavens.MortalStage;
+import com.example.defyingtheheavens.BodyRefining;
+import com.example.defyingtheheavens.Physique;
+import com.example.defyingtheheavens.Physiques;
 import com.example.defyingtheheavens.PlayerCultivation;
 import com.example.defyingtheheavens.Realm;
 import com.example.defyingtheheavens.RealmSuppressSystem;
@@ -639,6 +642,10 @@ public class CultivationScreen extends Screen {
 	/** A mortal's Cultivation tab: the body's tempering stage and progress, then how to open the meridians. */
 	private void renderMortal(GuiGraphics g, int cx, int y) {
 		PlayerCultivation c = ClientCultivationData.get();
+		if (c.hasShatteredMeridians()) {
+			renderBodyRefining(g, c, cx, y);
+			return;
+		}
 		MortalStage stage = c.getMortalStage();
 		g.drawCenteredString(font, Component.translatable(ModLang.REALM, stage.getDisplayName()), cx, y, 0x7FDBFF);
 		y += 18;
@@ -668,6 +675,39 @@ public class CultivationScreen extends Screen {
 		for (FormattedCharSequence line : font.split(Component.translatable(ModLang.MORTAL_RECIPE,
 				ModItems.MARROW_CLEANSING_ELIXIR.getDescription(), AlchemyRecipes.describe(ModItems.MARROW_CLEANSING_ELIXIR)), WIDTH - 28)) {
 			g.drawCenteredString(font, line, cx, y, 0xFFC107);
+			y += 11;
+		}
+		y += 4;
+		for (Detail detail : netherworldDetails()) {
+			g.drawCenteredString(font, detail.text(), cx, y, detail.color());
+			y += 11;
+		}
+	}
+
+	/**
+	 * Shattered Meridians' Cultivation tab (BodyRefining): the mortal stage below Peak, then the body refining stage past it, its
+	 * tempering bar, and what it is about.
+	 */
+	private void renderBodyRefining(GuiGraphics g, PlayerCultivation c, int cx, int y) {
+		boolean refining = c.getMortalStage().isLast();
+		Component name = refining ? BodyRefining.name(c.getBodyRefining()) : c.getMortalStage().getDisplayName();
+		g.drawCenteredString(font, Component.translatable(ModLang.REALM, name), cx, y, 0xFFB74D);
+		y += 18;
+		int x = left + 14;
+		int barW = WIDTH - 28;
+		boolean done = !c.canTemper();
+		double ratio = done ? 1 : Math.min(1, c.getTempering() / Math.max(1, c.temperingRequired()));
+		g.fill(x - 1, y - 1, x + barW + 1, y + 11, 0xFF000000);
+		g.fill(x, y, x + barW, y + 10, 0xFF2A2A3A);
+		g.fill(x, y, x + (int) (barW * ratio), y + 10, done ? 0xFFFFC107 : 0xFFFF8A65);
+		y += 14;
+		if (!done) {
+			g.drawCenteredString(font, Component.translatable(ModLang.TEMPERING, Math.round(c.getTempering()),
+					Math.round(c.temperingRequired())), cx, y, 0xE0E0E0);
+			y += 16;
+		}
+		for (FormattedCharSequence line : font.split(c.physique().getDescription(), WIDTH - 28)) {
+			g.drawCenteredString(font, line, cx, y, 0xB0B0B0);
 			y += 11;
 		}
 		y += 4;
@@ -759,6 +799,16 @@ public class CultivationScreen extends Screen {
 				y += 10;
 				g.drawCenteredString(font, part, cx, y, 0xFFD54F);
 			}
+		}
+		// The body they were born with (Physique), its roots' elements; shattered meridians' body refining.
+		if (c.getPhysique() != null) {
+			y += 11;
+			Physique physique = c.getPhysique();
+			Component line = Component.translatable(ModLang.STATS_PHYSIQUE, physique.getDisplayName(), physique.grade().getDisplayName());
+			if (!c.getRootElements().isEmpty()) line = line.copy().append("  ").append(Component.translatable(ModLang.STATS_ROOTS, Physiques.rootsLine(c.getRootElements())));
+			if (c.getBodyRefining() > 0) line = line.copy().append("  ").append(Component.translatable(ModLang.STATS_BODY_REFINING, BodyRefining.name(c.getBodyRefining())));
+			g.drawCenteredString(font, fit(WIDTH - 20, line, Component.translatable(ModLang.STATS_PHYSIQUE, physique.getDisplayName(),
+					physique.grade().getDisplayName())), cx, y, 0xE0E0E0);
 		}
 		y += 16;
 
@@ -1729,7 +1779,7 @@ public class CultivationScreen extends Screen {
 		// A heaven method's spells once it is known, to the living (the dead cast none of them).
 		PlayerCultivation self = ClientCultivationData.get();
 		List<Spell> shown = Arrays.stream(Spell.values()).filter(spell -> spell.isDual() ? both
-				: spell.isHeaven() ? !s.ghost() && self.heaven().knows(spell.heavenMethod()) : s.knows(spell.method())).toList();
+				: spell.isHeaven() ? !s.ghost() && spell.taughtBy(self.heaven()) : s.knows(spell.method())).toList();
 		List<List<FormattedCharSequence>> descriptions = new ArrayList<>();
 		int contentHeight = 6;
 		for (int i = 0; i < shown.size(); i++) {
@@ -1764,7 +1814,7 @@ public class CultivationScreen extends Screen {
 			Component cost = spell.isDual() ? Component.translatable(ModLang.SPELLS_COST_BOTH, Math.round(spell.qiCost()), Math.round(spell.cost()))
 					: spell.isHeaven() ? Component.translatable(ModLang.SPELLS_QI_COST, Math.round(spell.qiCost()))
 					: Component.translatable(ModLang.SPELLS_COST, Math.round(spell.cost()));
-			Component teacher = spell.isHeaven() ? spell.heavenMethod().getDisplayName() : spell.isDual() ? Component.empty() : spell.method().getDisplayName();
+			Component teacher = spell.isHeaven() ? spell.teacher(self.heaven()).getDisplayName() : spell.isDual() ? Component.empty() : spell.method().getDisplayName();
 			Component detail = known
 					? cost.copy().append(", ").append(Component.translatable(ModLang.SPELLS_COOLDOWN, seconds(spell.cooldownTicks())))
 					: spell.isDual() ? Component.translatable(ModLang.SPELLS_LOCKED_BOTH, spell.dualRealm().getDisplayName())

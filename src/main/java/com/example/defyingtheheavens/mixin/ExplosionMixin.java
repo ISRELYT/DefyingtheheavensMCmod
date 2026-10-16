@@ -30,5 +30,7 @@ public abstract class ExplosionMixin {
 		if (level instanceof ServerLevel server) SectManager.spareSealedTreasuries(server, getToBlow());
 		// Nor anything on the Ghost Gate's ground (GhostGate#protects).
 		GhostGate.spareFromBlast(level, getToBlow());
+		// A spell's own blocks are taken up, not blown into loot (HeavenSpells#spareTemporaryFromBlast).
+		if (level instanceof ServerLevel server) com.example.defyingtheheavens.HeavenSpells.spareTemporaryFromBlast(server, getToBlow());
 	}
 }

@@ -134,12 +134,24 @@ public class PlayerCultivation {
 
 	/** The cultivator's path, {@link Alignment#MIN} (devil) to {@link Alignment#MAX} (saint); saved and synced. */
 	private int alignment;
+
+	/** The body they were born with (see Physique): null until rolled, on their first join. Saved and synced. */
+	private Physique physique;
+	/** Three or True Element Roots: the elements whose heaven methods they may take up. Saved and synced. */
+	private final EnumSet<QiElement> rootElements = EnumSet.noneOf(QiElement.class);
+	/**
+	 * Shattered Meridians: how far past a mortal's Peak the body has been refined (BodyRefining's stage, 0 none yet); the progress
+	 * toward the next is {@link #tempering}. Saved and synced.
+	 */
+	private int bodyRefining;
 	/** Extra qi gathering from cultivator clothing worn (see ClothingItem#qiGatherBonus): synced, not saved. */
 	private double gearQiBonus;
 
 	// Server-only bookkeeping for the Spatial Gap (not synced).
 	private SpatialTrialHandler.Route pendingTrial = SpatialTrialHandler.Route.NONE;
 	private boolean fallProtected;
+	/** Torn into the Spatial Gap from the Upper Realm (SpatialTrialHandler#tear): tearing out leads back there, not to the Overworld. */
+	private boolean gapFromUpper;
 	/**
 	 * Server-only, saved: a Heavenly Tribulation is under way. Set when one starts and cleared when it ends, so a player who
 	 * leaves mid-trial (logging out, quitting, the game closing) still carries it on their return, where it counts as failed
@@ -189,8 +201,37 @@ public class PlayerCultivation {
 		ritualFailedDay = -1;
 	}
 
-	/** At the stage only the heavens' leave lets one leave, without it: Qi Refining Mid. */
-	public boolean needsHeavensLeave() { return !mortal && !heavensLeave && rank(realm, stage) == RITUAL_RANK; }
+	/** At the stage only the heavens' leave lets one leave, without it: Qi Refining Mid. A Heaven Sacred Body has it from birth. */
+	public boolean needsHeavensLeave() { return !mortal && !heavensLeave && physique != Physique.HEAVEN_SACRED_BODY && rank(realm, stage) == RITUAL_RANK; }
+
+	// --- The body they were born with (see Physique) ---
+
+	/** Their physique, or null until it is rolled (their first join). */
+	public Physique getPhysique() { return physique; }
+
+	/** Their physique, or a plain mortal body until one is rolled. */
+	public Physique physique() { return physique == null ? Physique.MORTAL_BODY : physique; }
+
+	public void setPhysique(Physique physique) { this.physique = physique; }
+
+	/** Three or True Element Roots: their roots' elements (empty for any other physique). */
+	public java.util.Set<QiElement> getRootElements() { return rootElements; }
+
+	public void setRootElements(java.util.Collection<QiElement> elements) {
+		rootElements.clear();
+		rootElements.addAll(elements);
+	}
+
+	/** Whether their roots let them take up a heaven method of {@code element}. */
+	public boolean rootsAllow(QiElement element) { return physique().allows(element, rootElements); }
+
+	/** Shattered Meridians: the stage of body refining past a mortal's Peak (0 none yet). */
+	public int getBodyRefining() { return bodyRefining; }
+
+	public void setBodyRefining(int stage) { bodyRefining = Math.max(0, Math.min(BodyRefining.LAST, stage)); }
+
+	/** Born with shattered meridians: they can't cultivate, and temper the body instead. */
+	public boolean hasShatteredMeridians() { return physique == Physique.SHATTERED_MERIDIANS; }
 
 	/** {@link #needsHeavensLeave()} with the stage's cultivation full: the stage goes no further until the ritual is done. */
 	public boolean isAtRitualGate() { return needsHeavensLeave() && cultivation >= cultivationRequired(); }
@@ -218,12 +259,21 @@ public class PlayerCultivation {
 
 	public double getTempering() { return tempering; }
 
-	/** Tempering the current mortal stage needs to reach the next (0 at Peak). */
-	public double temperingRequired() { return mortalStage.getTemperingToNext(); }
+	/** Tempering the current mortal stage needs to reach the next (0 at Peak; past it, Shattered Meridians' body refining). */
+	public double temperingRequired() {
+		if (mortalStage.isLast() && hasShatteredMeridians()) return BodyRefining.toNext(bodyRefining);
+		return mortalStage.getTemperingToNext();
+	}
+
+	/** Whether tempering can still take this body further: a mortal below Peak, or Shattered Meridians below the last refining. */
+	public boolean canTemper() {
+		return mortal && (!mortalStage.isLast() || hasShatteredMeridians() && bodyRefining < BodyRefining.LAST);
+	}
 
 	public void setMortalState(MortalStage stage, double tempering) {
 		this.mortalStage = stage;
-		this.tempering = stage.isLast() ? 0 : Math.max(0, tempering);
+		this.tempering = Math.max(0, tempering);
+		if (!canTemper()) this.tempering = 0;
 	}
 
 	/** Mortal Peak: the body can take a Marrow Cleansing Elixir. */
@@ -235,15 +285,16 @@ public class PlayerCultivation {
 	 * @return true if at least one stage was gained
 	 */
 	public boolean addTempering(double amount) {
-		if (!mortal || mortalStage.isLast() || amount <= 0) return false;
+		if (!canTemper() || amount <= 0) return false;
 		boolean advanced = false;
 		tempering += amount;
-		while (!mortalStage.isLast() && tempering >= temperingRequired()) {
+		while (canTemper() && tempering >= temperingRequired()) {
 			tempering -= temperingRequired();
-			mortalStage = mortalStage.next();
+			if (!mortalStage.isLast()) mortalStage = mortalStage.next();
+			else bodyRefining++;
 			advanced = true;
 		}
-		if (mortalStage.isLast()) tempering = 0;
+		if (!canTemper()) tempering = 0;
 		return advanced;
 	}
 
@@ -354,7 +405,18 @@ public class PlayerCultivation {
 		double taken = amount * (1 - pillResistance);
 		medicinalQi += taken;
 		addPillResistance();
+		// A Jade Poison Body refines it the moment it is taken (what doesn't fit before the next bottleneck waits, refined as soon as it does).
+		if (physique == Physique.JADE_POISON_BODY) refineAtOnce();
 		return taken;
+	}
+
+	/** A Jade Poison Body's unrefined qi, refined into cultivation at once as far as it fits. @return whether any was */
+	public boolean refineAtOnce() {
+		if (physique != Physique.JADE_POISON_BODY || medicinalQi <= 0) return false;
+		double refined = refine(medicinalQi);
+		if (refined <= 0) return false;
+		addCultivation(refined);
+		return true;
 	}
 
 	/**
@@ -383,8 +445,10 @@ public class PlayerCultivation {
 
 	public void setPillResistance(double resistance) { pillResistance = Math.max(0, Math.min(MAX_PILL_RESISTANCE, resistance)); }
 
-	/** A Cultivation Pill was taken: the next one works {@link #PILL_RESISTANCE_PER_PILL} less. */
-	public void addPillResistance() { setPillResistance(pillResistance + PILL_RESISTANCE_PER_PILL); }
+	/** A Cultivation Pill was taken: the next one works {@link #PILL_RESISTANCE_PER_PILL} less (a Jade Poison Body builds up no toxicity). */
+	public void addPillResistance() {
+		if (physique != Physique.JADE_POISON_BODY) setPillResistance(pillResistance + PILL_RESISTANCE_PER_PILL);
+	}
 
 	// --- Alignment and clothing ---
 
@@ -494,6 +558,8 @@ public class PlayerCultivation {
 	public void setPendingTrial(SpatialTrialHandler.Route route) { pendingTrial = route == null ? SpatialTrialHandler.Route.NONE : route; }
 	public boolean isFallProtected() { return fallProtected; }
 	public void setFallProtected(boolean value) { fallProtected = value; }
+	public boolean isGapFromUpper() { return gapFromUpper; }
+	public void setGapFromUpper(boolean value) { gapFromUpper = value; }
 
 	// --- Heavenly Tribulation bookkeeping ---
 
@@ -567,7 +633,7 @@ public class PlayerCultivation {
 	 */
 	public double maxQi() {
 		if (mortal) return 0;
-		return CultivationStats.maxQi(getEffectiveRealm(), getEffectiveStage()) * favourFactor() * (1 - pressurePenalty);
+		return CultivationStats.maxQi(getEffectiveRealm(), getEffectiveStage()) * favourFactor() * (1 - pressurePenalty) * physique().qiFactor();
 	}
 
 	/**
@@ -577,7 +643,7 @@ public class PlayerCultivation {
 	public double qiGatherPerSecond() {
 		if (mortal) return 0;
 		return CultivationStats.qiGather(getEffectiveRealm(), getEffectiveStage()) * (inUpperRealm ? UPPER_REALM_QI_MULTIPLIER : 1.0)
-				* (1 + qiBoost) * (1 + gearQiBonus) * favourFactor() * (1 - pressurePenalty)
+				* (1 + qiBoost) * (1 + gearQiBonus) * favourFactor() * (1 - pressurePenalty) * physique().qiFactor()
 				+ HeavenPassives.amount(this, QiElement.WATER); // Ceaseless Flow, the water methods' passive
 	}
 
@@ -643,7 +709,7 @@ public class PlayerCultivation {
 	 */
 	public double meditationCultivationPerSecond(double bonus) {
 		if (mortal || isSuppressed()) return 0;
-		return (cultivationPerSecond() + bonus) * (inUpperRealm ? UPPER_REALM_QI_MULTIPLIER : 1.0) * favourFactor();
+		return (cultivationPerSecond() + bonus) * (inUpperRealm ? UPPER_REALM_QI_MULTIPLIER : 1.0) * favourFactor() * physique().cultivationFactor();
 	}
 
 	/** Leaving this stage takes a tribulation: Grand Perfection always, and every stage from Nascent Soul on. */
@@ -782,8 +848,16 @@ public class PlayerCultivation {
 		tag.putBoolean("LowerRealmBound", lowerRealmBound);
 		tag.putString("SpatialTrial", pendingTrial.name());
 		tag.putBoolean("FallProtected", fallProtected);
+		if (gapFromUpper) tag.putBoolean("GapFromUpper", true);
 		tag.putBoolean("InTribulation", inTribulation);
 		tag.putInt("Alignment", alignment);
+		if (physique != null) tag.putString("Physique", physique.getId());
+		if (!rootElements.isEmpty()) {
+			ListTag roots = new ListTag();
+			for (QiElement element : rootElements) roots.add(StringTag.valueOf(element.name()));
+			tag.put("RootElements", roots);
+		}
+		if (bodyRefining > 0) tag.putInt("BodyRefining", bodyRefining);
 		tag.putBoolean("HeavensLeave", heavensLeave);
 		tag.putInt("Favour", favour);
 		tag.putLong("RitualFailedDay", ritualFailedDay);
@@ -821,6 +895,17 @@ public class PlayerCultivation {
 		c.setQi(legacy ? 0 : tag.getDouble("Qi"));
 		// Saves from before the mortal path were already cultivating, so a missing flag means "not mortal".
 		c.mortal = tag.contains("Mortal") && tag.getBoolean("Mortal");
+		// The body first: shattered meridians temper on past a mortal's Peak (saves from before physiques roll one on joining).
+		c.physique = tag.contains("Physique") ? Physique.byId(tag.getString("Physique")) : null;
+		ListTag roots = tag.getList("RootElements", Tag.TAG_STRING);
+		for (int i = 0; i < roots.size(); i++) {
+			try {
+				c.rootElements.add(QiElement.valueOf(roots.getString(i)));
+			} catch (IllegalArgumentException ignored) {
+				// an element no longer known: dropped
+			}
+		}
+		c.setBodyRefining(tag.getInt("BodyRefining"));
 		c.setMortalState(MortalStage.byIndex(tag.getInt("MortalStage")), tag.getDouble("Tempering"));
 		int prepared = tag.contains("PreparedRealm") ? tag.getInt("PreparedRealm") : -1;
 		c.preparedRealm = prepared >= 0 && prepared < Realm.values().length ? Realm.byIndex(prepared) : null;
@@ -833,6 +918,7 @@ public class PlayerCultivation {
 		c.lowerRealmBound = tag.getBoolean("LowerRealmBound");
 		c.pendingTrial = SpatialTrialHandler.Route.byName(tag.getString("SpatialTrial"));
 		c.fallProtected = tag.getBoolean("FallProtected");
+		c.gapFromUpper = tag.getBoolean("GapFromUpper");
 		c.inTribulation = tag.getBoolean("InTribulation");
 		c.setAlignment(tag.getInt("Alignment")); // saves from before alignment start neutral (0)
 		// Saves from before the ritual: past Qi Refining Mid already counts as leave (setState); at or below it, they need it.

@@ -24,6 +24,7 @@
     "SoulProjectileMixin",
     "SoulServerPlayerMixin",
     "ServerPlayerAccessor",
+    "SpellLivingEntityMixin",
     "WorldDimensionsMixin"
   ],
   "injectors": {

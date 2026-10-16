@@ -33,6 +33,16 @@ public abstract class HumanoidModelMixin {
 			SwordStance.apply((HumanoidModel<?>) (Object) this, netHeadYaw, SwordFlightClient.bodyOffset(entity, partialTick));
 			return;
 		}
+		// Steel Hurricane: both arms thrust ahead with the weapon as the body spins along its dash; a Dirt Tide's rider stands on its
+		// crest, legs braced apart and arms out (SpellPoses).
+		if (com.example.defyingtheheavens.client.ClientSpellAuras.has(entity, com.example.defyingtheheavens.SpellAura.STEEL_HURRICANE)) {
+			com.example.defyingtheheavens.client.SpellPoses.hurricane((HumanoidModel<?>) (Object) this);
+			return;
+		}
+		if (entity.getVehicle() instanceof com.example.defyingtheheavens.DirtTide) {
+			com.example.defyingtheheavens.client.SpellPoses.surf((HumanoidModel<?>) (Object) this, ageInTicks);
+			return;
+		}
 		// A body left behind while its soul is in the Inner Realm, or out of it (Soul Projection), sits the same way.
 		if (LotusPose.meditating(entity) || entity instanceof InnerBodyEntity || entity instanceof SoulBodyEntity) {
 			LotusPose.apply((HumanoidModel<?>) (Object) this);

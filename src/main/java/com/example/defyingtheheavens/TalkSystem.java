@@ -641,7 +641,7 @@ public final class TalkSystem {
 		long today = Regard.day(npc.level().getGameTime());
 		if (entry.guidanceDay == today) return line("guidance.again", npc);
 		PlayerCultivation c = CultivationManager.get(player);
-		Component refusal = HeavenMethods.refusal(c);
+		Component refusal = HeavenMethods.refusal(c, method);
 		if (refusal != null) return refusal;
 		entry.guidanceDay = today;
 		HeavenState s = c.heaven();

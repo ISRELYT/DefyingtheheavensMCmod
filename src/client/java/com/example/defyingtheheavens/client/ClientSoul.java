@@ -156,8 +156,9 @@ public final class ClientSoul {
 		if (mc.player == null || mc.level == null) return;
 		if (ticksLeft > 0 && (state == SoulProjection.State.PROJECTING || state == SoulProjection.State.RECALLING)) ticksLeft--;
 		SEEN.keySet().removeIf(id -> seenSoul(id) == null);
-		// A soul carries nothing in hand and opens nothing: no inventory, no chest.
-		if (isOut() && mc.screen instanceof AbstractContainerScreen<?>) mc.player.closeContainer();
+		// A soul carries nothing in hand and opens nothing: no inventory, no chest. Only a seized body's own things, from inside it
+		// (VesselScreen).
+		if (isOut() && mc.screen instanceof AbstractContainerScreen<?> && !(mc.screen instanceof VesselScreen)) mc.player.closeContainer();
 	}
 
 	/**

@@ -389,11 +389,80 @@ public class SoulProjectionGameTests implements FabricGameTest {
 				helper.assertTrue(soul.getVehicle() instanceof SoulVesselEntity vessel && vessel.getItemBySlot(EquipmentSlot.HEAD).is(Items.IRON_HELMET)
 						&& vessel.carried().stream().anyMatch(s -> s.is(Items.DIAMOND)), "Their body, with all they carried, is the soul's");
 				SoulVesselEntity vessel = (SoulVesselEntity) soul.getVehicle();
+				// It walks as the player walked: a full key (0.98, as a player's own) at their speed, told once (getRiddenSpeed), not
+				// squared as a mob's (a tenth of a walk).
+				double speed = vessel.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED);
+				helper.assertTrue(Math.abs(SoulProjection.hostStep(vessel, 0, 0.98f).length() - 0.98) < 1.0E-6 && speed > 0.09,
+						"The seized body steps as a player does (" + SoulProjection.hostStep(vessel, 0, 0.98f).length() * speed + " a tick)");
 				SoulProjection.toggle(soul); // called home: the vessel collapses
 				helper.assertTrue(!vessel.isAlive(), "Left without a soul, the body falls");
 				List<ItemEntity> dropped = helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(vessel.blockPosition()).inflate(3));
 				helper.assertTrue(dropped.stream().anyMatch(e -> e.getItem().is(Items.DIAMOND)) && dropped.stream().anyMatch(e -> e.getItem().is(Items.IRON_HELMET)),
 						"And everything it carried falls where it does");
+			} finally {
+				server.setPvpAllowed(pvp);
+				keep.set(kept, server);
+			}
+			helper.succeed();
+		} finally {
+			leave(made);
+		}
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void theSoulOpensTheSeizedBodysInventory(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		try {
+			MinecraftServer server = helper.getLevel().getServer();
+			boolean pvp = server.isPvpAllowed();
+			GameRules.BooleanValue keep = helper.getLevel().getGameRules().getRule(GameRules.RULE_KEEPINVENTORY);
+			boolean kept = keep.get();
+			server.setPvpAllowed(true);
+			keep.set(false, server);
+			try {
+				ServerPlayer soul = projected(helper, made, "soul-pack", Realm.NASCENT_SOUL, Stage.EARLY);
+				ServerPlayer victim = survivor(helper, made, "victim-pack");
+				victim.moveTo(soul.getX() + 1, soul.getY(), soul.getZ(), 0, 0);
+				victim.getInventory().selected = 0;
+				victim.getInventory().setItem(0, new ItemStack(Items.IRON_SWORD));
+				victim.getInventory().setItem(9, new ItemStack(Items.DIAMOND, 5));
+				victim.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.IRON_HELMET));
+				helper.assertTrue(SoulProjection.tryPossess(soul, victim) == InteractionResult.SUCCESS && soul.getVehicle() instanceof SoulVesselEntity,
+						"The body is seized");
+				SoulVesselEntity vessel = (SoulVesselEntity) soul.getVehicle();
+				ServerPlayer stranger = survivor(helper, made, "stranger-pack");
+				vessel.openCustomInventoryScreen(stranger);
+				helper.assertTrue(!(stranger.containerMenu instanceof VesselMenu), "No one but the soul in it opens it");
+				// The inventory key, from inside it (as a horse's rider opens the horse's).
+				vessel.openCustomInventoryScreen(soul);
+				helper.assertTrue(soul.containerMenu instanceof VesselMenu, "The soul in it opens the body's things");
+				VesselMenu menu = (VesselMenu) soul.containerMenu;
+				int head = SoulVesselEntity.PACK, hand = SoulVesselEntity.PACK + 5;
+				helper.assertTrue(menu.getSlot(head).getItem().is(Items.IRON_HELMET) && menu.getSlot(hand).getItem().is(Items.IRON_SWORD)
+						&& menu.getSlot(0).getItem().is(Items.DIAMOND), "What it wears, holds and carries");
+				// Shift-click: the helmet off into the pack, and back on.
+				menu.quickMoveStack(soul, head);
+				helper.assertTrue(vessel.getItemBySlot(EquipmentSlot.HEAD).isEmpty() && vessel.carried().stream().anyMatch(s -> s.is(Items.IRON_HELMET)),
+						"The helmet taken off into the pack");
+				int helmetAt = -1;
+				for (int i = 0; i < SoulVesselEntity.PACK; i++) if (menu.getSlot(i).getItem().is(Items.IRON_HELMET)) helmetAt = i;
+				menu.quickMoveStack(soul, helmetAt);
+				helper.assertTrue(vessel.getItemBySlot(EquipmentSlot.HEAD).is(Items.IRON_HELMET), "...and put back on its head");
+				// Nothing to or from the soul's own things: no hotbar swap.
+				menu.clicked(0, 0, net.minecraft.world.inventory.ClickType.SWAP, soul);
+				helper.assertTrue(menu.getSlot(0).getItem().is(Items.DIAMOND) && soul.getInventory().isEmpty(), "No swap with the soul's hotbar");
+				// Thrown out: it falls from the body.
+				int before = helper.getLevel().getEntitiesOfClass(ItemEntity.class, vessel.getBoundingBox().inflate(4), e -> e.getItem().is(Items.DIAMOND)).size();
+				menu.clicked(0, 0, net.minecraft.world.inventory.ClickType.THROW, soul);
+				int after = helper.getLevel().getEntitiesOfClass(ItemEntity.class, vessel.getBoundingBox().inflate(4), e -> e.getItem().is(Items.DIAMOND)).size();
+				helper.assertTrue(menu.getSlot(0).getItem().getCount() == 4 && after == before + 1, "One diamond thrown from the body");
+				// Closed with the diamonds on the cursor: back into the pack, not to the soul.
+				menu.clicked(0, 0, net.minecraft.world.inventory.ClickType.PICKUP, soul);
+				helper.assertTrue(menu.getCarried().is(Items.DIAMOND), "The diamonds on the cursor");
+				soul.closeContainer();
+				helper.assertTrue(vessel.carried().stream().anyMatch(s -> s.is(Items.DIAMOND) && s.getCount() == 4) && soul.getInventory().isEmpty(),
+						"Closed: back in the body's pack, none to the soul");
+				SoulProjection.toggle(soul); // called home: the body collapses with all it holds
 			} finally {
 				server.setPvpAllowed(pvp);
 				keep.set(kept, server);

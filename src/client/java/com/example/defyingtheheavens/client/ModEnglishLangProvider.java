@@ -302,6 +302,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case YIN_WIND_STEPS -> "Yin Wind Steps";
 				case GHOST_FLIGHT -> "Ghost Flight";
 				case FORM_SHIFT -> "Form Shift";
+				case CORE_DETONATION -> "Golden Core Detonation";
+				case SPATIAL_TEAR -> "Spatial Tear";
 			});
 			t.add(key + ".description", switch (ability) {
 				case QI_SUSTENANCE -> "Qi keeps you fed. Hunger stays full.";
@@ -319,6 +321,13 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case FORM_SHIFT -> "Your true form is the form of your higher path: now your %s. Switched on, you take your %s instead. "
 						+ "In a Ghost King's form you are seen as the dead are: outside the Netherworld, only by those who perceive souls. "
 						+ "Only while you live; no cost.";
+				case CORE_DETONATION -> "The last resort. Use it twice within 5 s and your golden core breaks: 3 s later it bursts, everything within %s blocks "
+						+ "harmed by its distance and how far its realm stands below yours (a cultivator of your own realm in good armour may live). "
+						+ "You die, and the core is lost: you return at Foundation Building Grand Perfection.";
+				case SPATIAL_TEAR -> "Tear space open and step into the Spatial Gap, or out of it again into the realm you came from. There you fly freely, "
+						+ "each block crossing %s in the world, under spatial pressure (worse in its stormy layers: rise through the upper ones to cross "
+						+ "into the Upper Realm, or sink slowly through the lower ones to fall into the mortal world). "
+						+ "Costs %s%% of your qi to tear in, %s%% to tear out.";
 			});
 		}
 		t.add(ModLang.METHODS_TITLE, "Cultivation Methods");
@@ -442,6 +451,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.STATS_HARMONY, ", harmony +%s%%");
 		t.add(ModLang.TWO_PATHS_LINE, "Paths in harmony: +%s%%");
 		t.add(ModLang.HEAVEN_PATH_LINE, "Heaven path: %s");
+		t.add(ModLang.VESSEL_INVENTORY, "%s's body");
 		t.add(ModLang.EFFECTIVE_LINE, "Effective cultivation: %s");
 		t.add(ModLang.EFFECTIVE_QUASI_STAGE, "%s - Quasi-%s");
 		t.add(ModLang.EFFECTIVE_QUASI_REALM, "Quasi-%s");
@@ -572,9 +582,120 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.JOURNAL_HEAVEN_METHOD_TEXT, "I learned the %s, a method of %s qi. %s");
 		t.add(ModLang.MSG_SPELL_NO_HEAVEN_QI, "Not enough qi for %s.");
 		t.add(ModLang.MSG_SPELL_NO_HOLD, "Nothing there for the spell to take hold of.");
-		t.add(ModLang.MSG_SPRING_DRY, "The spring has run dry.");
-		t.add(ModLang.MSG_NO_REFLECTION, "No reflection answers.");
-		t.add(ModLang.MSG_NO_SKY, "There is no open sky above you.");
+		t.add(ModLang.MSG_YANG_BOMB_SET, "A ball of yang fire waits where you left it. Cast the spell again to set it off.");
+		t.add(ModLang.MSG_YANG_BOMB_FAR, "Your yang fire is too far away to answer you.");
+		t.add(ModLang.MSG_YANG_BOMB_GONE, "Your yang fire gutters out.");
+		t.add(ModLang.MSG_NO_EARTH, "There is no earth here for the spell to draw on.");
+		t.add(ModLang.MSG_ORES_FOUND, "Your consciousness draws %s ores out of the rock.");
+		t.add(ModLang.MSG_NO_ORES, "Your consciousness finds no ore within its reach.");
+		t.add(ModLang.MSG_PHOENIX_REBORN, "You rise again from your own flames!");
+		t.add(ModLang.MSG_LIFE_SEALED, "The treasury's seal holds what grows in it: break the seal first.");
+		t.add(ModLang.MSG_LIFE_HOLD_ONE, "Hold a single fruit or herb: a whole stack can't be drawn on at once.");
+		// The body one is born with (Physique), body refining (BodyRefining)
+		t.add(ModLang.physiqueGradeKey("low"), "Low");
+		t.add(ModLang.physiqueGradeKey("mid"), "Mid");
+		t.add(ModLang.physiqueGradeKey("high"), "High");
+		t.add(ModLang.physiqueGradeKey("supreme"), "Supreme");
+		t.add(ModLang.physiqueGradeKey("immortal"), "Immortal");
+		physique(t, "mortal_body", "Mortal Body", "An ordinary body. Nothing helps it and nothing holds it back.");
+		physique(t, "five_element_spiritual_roots", "Five Elements Spiritual Roots",
+				"Roots of all five elements: any element's methods may be learned, at the ordinary pace.");
+		physique(t, "cursed_meridian_body", "Cursed Meridian Body", "Meridians that leak: qi gathers 0.8 times as fast into a pool 0.8 times as deep.");
+		physique(t, "shattered_meridians", "Shattered Meridians",
+				"Meridians that will never hold qi: no cultivation, no heaven methods, no spells. The body can be tempered on past a mortal's Peak instead, "
+						+ "eight stages of body refining, the last as strong as a Core Formation cultivator's. Meditation tempers it too.");
+		physique(t, "three_element_spiritual_roots", "Three Elements Spiritual Roots",
+				"Roots of three elements only: methods of those three alone, cultivated 1.5 times as fast.");
+		physique(t, "yin_soul_body", "Yin Soul Body", "A soul at home in yin: yin corruption never takes hold of it.");
+		physique(t, "heaven_sacred_body", "Heaven Sacred Body",
+				"The heavens favour it: no Ritual to the Heavens is wanted at Qi Refining Mid, and heaven methods are cultivated 1.2 times as fast.");
+		physique(t, "innate_alchemy_body", "Innate Alchemy Body", "Pills and elixirs brewed by its hands work twice as strongly.");
+		physique(t, "true_element_spiritual_root", "True Element Spiritual Root",
+				"A single pure root: one element's methods alone, cultivated twice as fast.");
+		physique(t, "innate_consciousness_body", "Innate Consciousness Body",
+				"A Consciousness Domain as wide as a Four Axis cultivator's the day it opens. It never grows past that.");
+		physique(t, "blessed_meridian_body", "Blessed Meridian Body",
+				"Wide, clean meridians: qi gathers 1.5 times as fast into a pool 1.5 times as deep, and Qi Sense opens from a mortal's first day.");
+		physique(t, "jade_poison_body", "Jade Poison Body",
+				"No medicinal toxicity ever builds up, and the qi of pills and spirit fruit is refined the moment it is taken.");
+		physique(t, "fallen_true_immortal", "Fallen True Immortal",
+				"An immortal reborn in a mortal body: any element, five times the pace on both paths, and a method's new layers need no settling.");
+		physique(t, "ghost_devil_body", "Ghost Devil Body",
+				"Half the dead's already: the ghost path at twice the pace, and a Ghost King's form of its own anywhere, even among the living, "
+						+ "as strong as its ghost methods allow. Find a ghost method of a deeper realm and the ghost path leaps to it.");
+		physique(t, "heavenly_thunder_body", "Heavenly Thunder Body",
+				"The rarest of all. A tribulation's lightning feeds it instead of harming it: every bolt taken becomes cultivation and qi.");
+		t.add(ModLang.bodyRefiningKey("peak"), "Mortal Peak");
+		t.add(ModLang.bodyRefiningKey("copper_skin"), "Copper Skin");
+		t.add(ModLang.bodyRefiningKey("iron_flesh"), "Iron Flesh");
+		t.add(ModLang.bodyRefiningKey("steel_sinew"), "Steel Sinew");
+		t.add(ModLang.bodyRefiningKey("jade_bone"), "Jade Bone");
+		t.add(ModLang.bodyRefiningKey("silver_marrow"), "Silver Marrow");
+		t.add(ModLang.bodyRefiningKey("golden_blood"), "Golden Blood");
+		t.add(ModLang.bodyRefiningKey("diamond_heart"), "Diamond Heart");
+		t.add(ModLang.bodyRefiningKey("indestructible_body"), "Indestructible Body");
+		t.add(ModLang.MSG_PHYSIQUE_BORN, "You were born with a %s (%s grade). %s");
+		t.add(ModLang.MSG_PHYSIQUE_ROOTS, "Your roots are of %s.");
+		t.add(ModLang.MSG_PHYSIQUE_WRONG_ELEMENT, "Your roots won't take %s qi: only %s methods can be learned with your body.");
+		t.add(ModLang.MSG_PHYSIQUE_SHATTERED, "Your meridians are shattered: they will never hold qi. Temper your body instead.");
+		t.add(ModLang.MSG_BODY_REFINED, "Your body is refined: %s!");
+		t.add(ModLang.MSG_THUNDER_ABSORBED, "Your body drinks in the lightning (+%s cultivation)");
+		t.add(ModLang.JOURNAL_PHYSIQUE, "My body");
+		t.add(ModLang.JOURNAL_PHYSIQUE_TEXT, "I was born with a %s, a %s grade physique. %s");
+		t.add(ModLang.STATS_PHYSIQUE, "Physique: %s (%s)");
+		t.add(ModLang.STATS_ROOTS, "Roots: %s");
+		t.add(ModLang.STATS_BODY_REFINING, "Body refining: %s");
+		t.add(ModLang.CMD_PHYSIQUE_GET, "%s was born with a %s");
+		t.add(ModLang.CMD_PHYSIQUE_SET, "%s now has a %s");
+		t.add(ModLang.CMD_PHYSIQUE_UNKNOWN, "No physique called %s");
+		t.add(ModLang.PILL_ALCHEMY_BODY, "Brewed by an Innate Alchemy Body: twice as strong");
+		// The Storage Ring (StorageRingItem, StorageRings) and its screen
+		t.add(ModItems.STORAGE_RING, "Storage Ring");
+		t.add(ModLang.STORAGE_RING_NAME, "Storage Ring (%s grade)");
+		t.add(ModLang.STORAGE_RING_BOUNDLESS, "Boundless Qiankun Ring");
+		t.add(ModLang.storageGradeKey("mortal"), "Mortal");
+		t.add(ModLang.storageGradeKey("spirit"), "Spirit");
+		t.add(ModLang.storageGradeKey("earth"), "Earth");
+		t.add(ModLang.storageGradeKey("heaven"), "Heaven");
+		t.add(ModLang.storageGradeKey("boundless"), "Boundless");
+		t.add(ModLang.STORAGE_TOOLTIP_STACKS, "A space folded inside: holds %s stacks");
+		t.add(ModLang.STORAGE_TOOLTIP_BOUNDLESS, "A space without end: holds anything, any number of it");
+		t.add(ModLang.STORAGE_TOOLTIP_USE, "Right-click to open; sneak + right-click to wear it (then the Storage Ring key opens it)");
+		t.add(ModLang.STORAGE_USED, "%s / %s stacks");
+		t.add(ModLang.STORAGE_USED_BOUNDLESS, "%s kinds, no end");
+		t.add(ModLang.STORAGE_SEARCH, "Search...");
+		t.add(ModLang.STORAGE_EMPTY, "The space is empty.");
+		t.add(ModLang.STORAGE_REFINE, "Refine");
+		t.add(ModLang.STORAGE_REFINE_TO, "Refine into %s grade: %s");
+		t.add(ModLang.STORAGE_REFINE_REALM, "Needs a cultivator of %s or above");
+		t.add(ModLang.STORAGE_REFINE_LAST, "Boundless: there is no grade beyond");
+		t.add(ModLang.STORAGE_COUNT, "In the ring: %s");
+		t.add(ModLang.MSG_STORAGE_NO_RING, "You carry no Storage Ring.");
+		t.add(ModLang.MSG_STORAGE_LAST_GRADE, "This ring is already boundless.");
+		t.add(ModLang.MSG_STORAGE_REALM, "Only a cultivator of %s can fix a space of %s grade.");
+		t.add(ModLang.MSG_STORAGE_COST, "Refining it takes %s %s.");
+		t.add(ModLang.MSG_STORAGE_REFINED, "The space within unfolds: %s grade!");
+		t.add(ModLang.KEY_STORAGE_RING, "Open Storage Ring");
+		// Detonating the golden core (CoreDetonation)
+		t.add(ModLang.MSG_CORE_CONFIRM, "Your golden core trembles. Detonate it again within %s seconds to break it: you will die, your core lost, and everything near you will burn.");
+		t.add(ModLang.MSG_CORE_TOO_LATE, "Your core is already breaking. Nothing can stop it now.");
+		t.add(ModLang.MSG_CORE_BREAKING, "%s's golden core is breaking apart! Get away!");
+		t.add(ModLang.DEATH_CORE_DETONATION, "%1$s detonated their golden core");
+		t.add(ModLang.DEATH_CORE_DETONATION + ".player", "%1$s detonated their golden core against %2$s");
+		// The Spatial Tear and travel through the gap
+		t.add(ModLang.MSG_GAP_TRAVEL, "You step through your tear into the Spatial Gap. Each block here is %s in the world. "
+				+ "Fly to where you would go and tear space again to step out, back into the realm you came from. "
+				+ "To pass between the realms, go up or down: rise through the storms of the upper layers to cross into the Upper Realm, "
+				+ "or sink through the storms of the lower layers, slowly, for the gap is thick there, to fall out into the mortal world's sky.");
+		t.add(ModLang.MSG_GAP_TRAVEL_SHALLOWS, "The shallows - the world beneath: %s, %s - %s blocks to the crossing");
+		t.add(ModLang.MSG_GAP_TRAVEL_UPPER, "The upper layers - the world beneath: %s, %s - %s blocks to the crossing");
+		t.add(ModLang.MSG_GAP_TRAVEL_LOWER, "The lower layers - the world beneath: %s, %s - %s blocks to the floor");
+		t.add(ModLang.MSG_GAP_SETTLING, "Space settles about your way out...");
+		t.add(ModLang.MSG_TEAR_COOLING, "Space hasn't settled from your last tear (%s s).");
+		t.add(ModLang.MSG_TEAR_NOT_HERE, "Space here won't tear: only the mortal world and the Upper Realm open onto the gap.");
+		t.add(ModLang.MSG_TEAR_NO_QI, "Tearing space open takes %s qi.");
+		t.add(ModLang.MSG_TEAR_OUT, "You tear your way out of the gap at %s, %s.");
+		t.add(ModLang.MSG_TEAR_OUT_UPPER, "You tear your way out into the Upper Realm at %s, %s.");
 		t.add(ModLang.MSG_DAO_STELE_TEACHES, "This stele holds the %s (%s, to %s). Meditate beside it to learn it.");
 		t.add(ModLang.MSG_DAO_STELE_KNOWN, "This stele holds the %s (%s, to %s), which you know. Meditating beside a stele of its element while you practise it is faster.");
 		t.add(ModLang.MSG_DAO_STELE_READING, "You read the %s carved in the stele...");
@@ -1294,5 +1415,11 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 
 		// What cultivators say of their own accord (NpcLife, NpcSpeech): every line and its variants, kept in NpcLines.
 		NpcLines.english().forEach((key, text) -> t.add(key, text));
+	}
+
+	/** A physique's name and description (Physique). */
+	private static void physique(TranslationBuilder t, String id, String name, String description) {
+		t.add(ModLang.physiqueKey(id), name);
+		t.add(ModLang.physiqueKey(id) + ".description", description);
 	}
 }

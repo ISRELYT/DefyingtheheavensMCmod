@@ -32,6 +32,10 @@ import net.minecraft.network.chat.Component;
  *   <li>Heaven and Hell Pillar (Heavenly Being): heaven's light falls and hell's fire rises where you look.</li>
  *   <li>Primordial Chaos (Four Axis): the two made one again: all around dragged in and unmade, and you made strong.</li>
  * </ul>
+ * And the five elements' spells ({@link #isHeaven}; HeavenSpells and the kits of the elements, FireSpells to MetalSpells), cast
+ * by the living on qi: each of an element and a realm, at a place among that realm's nine layers, and taught by every heaven
+ * method of its element that reaches the realm (a Four Axis fire method teaches every fire spell), once the method is cultivated
+ * to the layer and the cultivation stands at the stage it stands for.
  */
 public enum Spell {
 	/** Cost: lighting the hands; each burning blow then costs {@link Spells#GHOST_FIRE_PER_HIT} more. */
@@ -55,73 +59,89 @@ public enum Spell {
 	LIFE_DEATH_SEAL("life_death_seal", Realm.NASCENT_SOUL, 40, 150, 20 * 20),
 	HEAVEN_HELL_PILLAR("heaven_hell_pillar", Realm.HEAVENLY_BEING, 60, 350, 25 * 20),
 	PRIMORDIAL_CHAOS("primordial_chaos", Realm.FOUR_AXIS, 120, 800, 120 * 20),
-	// The heaven methods' spells (HeavenSpells): method, layer of its own realm, qi, cooldown.
-	GRASPING_ROOTS("grasping_roots", HeavenMethod.WOOD_QI_REFINING, 3, 10, 8 * 20),
-	BRAMBLE_MANTLE("bramble_mantle", HeavenMethod.WOOD_QI_REFINING, 7, 18, 30 * 20),
-	WISTERIA_ASCENT("wisteria_ascent", HeavenMethod.WOOD_FOUNDATION_BUILDING, 3, 24, 6 * 20),
-	TWIN_SERPENT_VINES("twin_serpent_vines", HeavenMethod.WOOD_FOUNDATION_BUILDING, 7, 50, 25 * 20),
-	BURSTING_THORN_PODS("bursting_thorn_pods", HeavenMethod.WOOD_CORE_FORMATION, 3, 60, 10 * 20),
-	HEARTWOOD_OF_NINE_RINGS("heartwood_of_nine_rings", HeavenMethod.WOOD_CORE_FORMATION, 7, 120, 40 * 20),
-	POLLEN_OF_LONG_DREAMS("pollen_of_long_dreams", HeavenMethod.WOOD_NASCENT_SOUL, 3, 150, 12 * 20),
-	MYRIAD_THORN_THICKET("myriad_thorn_thicket", HeavenMethod.WOOD_NASCENT_SOUL, 7, 320, 40 * 20),
-	STRANGLER_FIG_SEED("strangler_fig_seed", HeavenMethod.WOOD_HEAVENLY_BEING, 3, 340, 10 * 20),
-	RITE_OF_RETURNING_SPRING("rite_of_returning_spring", HeavenMethod.WOOD_HEAVENLY_BEING, 7, 700, 60 * 20),
-	HEAVEN_SHADING_CANOPY("heaven_shading_canopy", HeavenMethod.WOOD_FOUR_AXIS, 3, 800, 12 * 20),
-	WORLD_TREE_RISES("world_tree_rises", HeavenMethod.WOOD_FOUR_AXIS, 7, 1800, 180 * 20),
-	HOARFROST_NEEDLE("hoarfrost_needle", HeavenMethod.WATER_QI_REFINING, 3, 10, 4 * 20),
-	MORNING_MIST_SHROUD("morning_mist_shroud", HeavenMethod.WATER_QI_REFINING, 7, 18, 30 * 20),
-	RETURNING_CURRENT("returning_current", HeavenMethod.WATER_FOUNDATION_BUILDING, 3, 24, 12 * 20),
-	RENEWING_MOUNTAIN_RAIN("renewing_mountain_rain", HeavenMethod.WATER_FOUNDATION_BUILDING, 7, 50, 30 * 20),
-	COILING_STREAM_LASH("coiling_stream_lash", HeavenMethod.WATER_CORE_FORMATION, 3, 60, 8 * 20),
-	NINE_BEND_WHIRLPOOL("nine_bend_whirlpool", HeavenMethod.WATER_CORE_FORMATION, 7, 120, 30 * 20),
-	MOON_IN_THE_WATER("moon_in_the_water", HeavenMethod.WATER_NASCENT_SOUL, 3, 150, 10 * 20),
-	STILL_LAKE_MIRROR("still_lake_mirror", HeavenMethod.WATER_NASCENT_SOUL, 7, 300, 40 * 20),
-	ABYSSAL_WATER_PRISON("abyssal_water_prison", HeavenMethod.WATER_HEAVENLY_BEING, 3, 340, 10 * 20),
-	OVERTURNED_HEAVENLY_RIVER("overturned_heavenly_river", HeavenMethod.WATER_HEAVENLY_BEING, 7, 720, 60 * 20),
-	TEN_THOUSAND_REFLECTIONS("ten_thousand_reflections", HeavenMethod.WATER_FOUR_AXIS, 3, 800, 12 * 20),
-	ETERNAL_WINTER_DESCENDS("eternal_winter_descends", HeavenMethod.WATER_FOUR_AXIS, 7, 1600, 150 * 20),
-	SLEEPING_EMBER("sleeping_ember", HeavenMethod.FIRE_QI_REFINING, 3, 10, 6 * 20),
-	STRUCK_FLINT_FLASH("struck_flint_flash", HeavenMethod.FIRE_QI_REFINING, 7, 20, 25 * 20),
-	FIRE_HORSE_GALLOP("fire_horse_gallop", HeavenMethod.FIRE_FOUNDATION_BUILDING, 3, 25, 12 * 20),
-	SEALED_FURNACE_REFINEMENT("sealed_furnace_refinement", HeavenMethod.FIRE_FOUNDATION_BUILDING, 7, 50, 40 * 20),
-	PRAIRIE_BURNING_SPARK("prairie_burning_spark", HeavenMethod.FIRE_CORE_FORMATION, 3, 60, 10 * 20),
-	CRIMSON_LOTUS_BLOOMS("crimson_lotus_blooms", HeavenMethod.FIRE_CORE_FORMATION, 7, 120, 35 * 20),
-	ASH_SEARING_TALON("ash_searing_talon", HeavenMethod.FIRE_NASCENT_SOUL, 3, 150, 12 * 20),
-	VERMILION_BIRD_PLUNGE("vermilion_bird_plunge", HeavenMethod.FIRE_NASCENT_SOUL, 7, 300, 30 * 20),
-	LIGHT_OF_FIRST_DAWN("light_of_first_dawn", HeavenMethod.FIRE_HEAVENLY_BEING, 3, 320, 12 * 20),
-	NOONDAY_GOLDEN_CROW("noonday_golden_crow", HeavenMethod.FIRE_HEAVENLY_BEING, 7, 700, 60 * 20),
-	HEAVEN_SCORCHING_FIRESTORMS("heaven_scorching_firestorms", HeavenMethod.FIRE_FOUR_AXIS, 3, 800, 12 * 20),
-	UNDYING_PHOENIX("undying_phoenix", HeavenMethod.FIRE_FOUR_AXIS, 7, 1600, 180 * 20),
-	ROLLING_MILLSTONE("rolling_millstone", HeavenMethod.EARTH_QI_REFINING, 3, 10, 7 * 20),
-	RAMMED_EARTH_RAMPART("rammed_earth_rampart", HeavenMethod.EARTH_QI_REFINING, 7, 20, 30 * 20),
-	STONE_SCALE_ARMOUR("stone_scale_armour", HeavenMethod.EARTH_FOUNDATION_BUILDING, 3, 25, 12 * 20),
-	SWALLOWING_SANDS("swallowing_sands", HeavenMethod.EARTH_FOUNDATION_BUILDING, 7, 50, 35 * 20),
-	EARTH_SPLITTING_FISSURE("earth_splitting_fissure", HeavenMethod.EARTH_CORE_FORMATION, 3, 60, 10 * 20),
-	MOUNT_TAI_PRESSES_DOWN("mount_tai_presses_down", HeavenMethod.EARTH_CORE_FORMATION, 7, 120, 30 * 20),
-	EARTH_DRAGON_TURNS_OVER("earth_dragon_turns_over", HeavenMethod.EARTH_NASCENT_SOUL, 3, 150, 12 * 20),
-	EARTH_VEIN_GUARDIAN("earth_vein_guardian", HeavenMethod.EARTH_NASCENT_SOUL, 7, 300, 45 * 20),
-	BEDROCK_BEARS_THE_BLOWS("bedrock_bears_the_blows", HeavenMethod.EARTH_HEAVENLY_BEING, 3, 320, 12 * 20),
-	SHOULDER_THE_MYRIAD_BURDENS("shoulder_the_myriad_burdens", HeavenMethod.EARTH_HEAVENLY_BEING, 7, 700, 60 * 20),
-	RIDING_TEN_THOUSAND_DUNES("riding_ten_thousand_dunes", HeavenMethod.EARTH_FOUR_AXIS, 3, 800, 12 * 20),
-	FALL_OF_BUZHOU("fall_of_buzhou", HeavenMethod.EARTH_FOUR_AXIS, 7, 1800, 150 * 20),
-	SWALLOW_RETURN_THREAD("swallow_return_thread", HeavenMethod.METAL_QI_REFINING, 3, 10, 6 * 20),
-	IRON_BELL_COVER("iron_bell_cover", HeavenMethod.METAL_QI_REFINING, 7, 20, 30 * 20),
-	LODESTONE_BRAND("lodestone_brand", HeavenMethod.METAL_FOUNDATION_BUILDING, 3, 25, 10 * 20),
-	HUNDRED_WEAPONS_KNEEL("hundred_weapons_kneel", HeavenMethod.METAL_FOUNDATION_BUILDING, 7, 50, 35 * 20),
-	ARMOUR_SPLITTING_FINGER("armour_splitting_finger", HeavenMethod.METAL_CORE_FORMATION, 3, 60, 10 * 20),
-	LEAPING_GOLDEN_LIGHTNING("leaping_golden_lightning", HeavenMethod.METAL_CORE_FORMATION, 7, 120, 25 * 20),
-	NINE_CIRCLING_BLADES("nine_circling_blades", HeavenMethod.METAL_NASCENT_SOUL, 3, 150, 12 * 20),
-	THOUSAND_ECHO_TOLL("thousand_echo_toll", HeavenMethod.METAL_NASCENT_SOUL, 7, 300, 40 * 20),
-	FATE_SEVERING_EDGE("fate_severing_edge", HeavenMethod.METAL_HEAVENLY_BEING, 3, 350, 12 * 20),
-	TEN_THOUSAND_SWORDS_DESCEND("ten_thousand_swords_descend", HeavenMethod.METAL_HEAVENLY_BEING, 7, 750, 90 * 20),
-	INDESTRUCTIBLE_GOLDEN_BODY("indestructible_golden_body", HeavenMethod.METAL_FOUR_AXIS, 3, 800, 12 * 20),
-	FOUR_GATES_IMMORTAL_SLAYING_ARRAY("four_gates_immortal_slaying_array", HeavenMethod.METAL_FOUR_AXIS, 7, 1800, 180 * 20);
+	// The five elements' spells (HeavenSpells), taught by any heaven method of the element that reaches their realm: element, realm,
+	// place among the realm's nine layers (Qi Refining and Foundation Building three spells at 2, 5 and 8, the deeper realms two at 3
+	// and 7), qi, cooldown.
+	FLAME_BOLT("flame_bolt", QiElement.FIRE, Realm.QI_REFINING, 2, 8, 30),
+	FLAME_FIST("flame_fist", QiElement.FIRE, Realm.QI_REFINING, 5, 14, 20 * 20),
+	CRIMSON_TEMPERING("crimson_tempering", QiElement.FIRE, Realm.QI_REFINING, 8, 20, 45 * 20),
+	WOOD_BULLET("wood_bullet", QiElement.WOOD, Realm.QI_REFINING, 2, 8, 30),
+	EMERALD_HEALING_ART("emerald_healing_art", QiElement.WOOD, Realm.QI_REFINING, 5, 15, 30 * 20),
+	VERDANT_GROWTH("verdant_growth", QiElement.WOOD, Realm.QI_REFINING, 8, 20, 40 * 20),
+	EARTH_SPEAR("earth_spear", QiElement.EARTH, Realm.QI_REFINING, 2, 10, 40),
+	HARDENED_BODY("hardened_body", QiElement.EARTH, Realm.QI_REFINING, 5, 12, 30 * 20),
+	DIRT_TIDE("dirt_tide", QiElement.EARTH, Realm.QI_REFINING, 8, 18, 25 * 20),
+	WATER_ARROW("water_arrow", QiElement.WATER, Realm.QI_REFINING, 2, 8, 30),
+	AZURE_COATING_TECHNIQUE("azure_coating_technique", QiElement.WATER, Realm.QI_REFINING, 5, 12, 30 * 20),
+	AZURE_BREATHING_TECHNIQUE("azure_breathing_technique", QiElement.WATER, Realm.QI_REFINING, 8, 18, 60 * 20),
+	FLYING_SWORD("flying_sword", QiElement.METAL, Realm.QI_REFINING, 2, 10, 40),
+	BLADE_POLISH("blade_polish", QiElement.METAL, Realm.QI_REFINING, 5, 12, 30 * 20),
+	STEEL_HURRICANE("steel_hurricane", QiElement.METAL, Realm.QI_REFINING, 8, 15, 8 * 20),
+	REMOTE_YANG_BOMB("remote_yang_bomb", QiElement.FIRE, Realm.FOUNDATION_BUILDING, 2, 30, 20),
+	FLAME_ARMOUR("flame_armour", QiElement.FIRE, Realm.FOUNDATION_BUILDING, 5, 35, 40 * 20),
+	FIRE_SERPENT("fire_serpent", QiElement.FIRE, Realm.FOUNDATION_BUILDING, 8, 40, 6 * 20),
+	LIFE_FORCE_DRAIN("life_force_drain", QiElement.WOOD, Realm.FOUNDATION_BUILDING, 2, 25, 12 * 20),
+	LIFE_FORCE_GAIN("life_force_gain", QiElement.WOOD, Realm.FOUNDATION_BUILDING, 5, 20, 12 * 20),
+	MYSTERIOUS_BRISTLE_PRISON("mysterious_bristle_prison", QiElement.WOOD, Realm.FOUNDATION_BUILDING, 8, 40, 15 * 20),
+	EARTH_WALL_TECHNIQUE("earth_wall_technique", QiElement.EARTH, Realm.FOUNDATION_BUILDING, 2, 25, 15 * 20),
+	BOULDER_THROW("boulder_throw", QiElement.EARTH, Realm.FOUNDATION_BUILDING, 5, 35, 10 * 20),
+	CAVE_FORMATION("cave_formation", QiElement.EARTH, Realm.FOUNDATION_BUILDING, 8, 30, 20 * 20),
+	RAIN_CALL("rain_call", QiElement.WATER, Realm.FOUNDATION_BUILDING, 2, 25, 30 * 20),
+	WATER_PRISON("water_prison", QiElement.WATER, Realm.FOUNDATION_BUILDING, 5, 40, 18 * 20),
+	TORRENTIAL_SPRING("torrential_spring", QiElement.WATER, Realm.FOUNDATION_BUILDING, 8, 50, 30 * 20),
+	BOULDER_CLEAVE("boulder_cleave", QiElement.METAL, Realm.FOUNDATION_BUILDING, 2, 30, 8 * 20),
+	MINERAL_PURIFICATION("mineral_purification", QiElement.METAL, Realm.FOUNDATION_BUILDING, 5, 50, 60 * 20),
+	ADVANCED_FLYING_SWORD_TECHNIQUE("advanced_flying_sword_technique", QiElement.METAL, Realm.FOUNDATION_BUILDING, 8, 50, 15 * 20),
+	CRIMSON_SWIRL("crimson_swirl", QiElement.FIRE, Realm.CORE_FORMATION, 3, 120, 30 * 20),
+	SOLAR_FIELD("solar_field", QiElement.FIRE, Realm.CORE_FORMATION, 7, 150, 60 * 20),
+	THOUSAND_LEAF_STORM("thousand_leaf_storm", QiElement.WOOD, Realm.CORE_FORMATION, 3, 80, 10 * 20),
+	ANCIENT_BARK_SKIN("ancient_bark_skin", QiElement.WOOD, Realm.CORE_FORMATION, 7, 100, 40 * 20),
+	EARTH_DRAGON_SURGE("earth_dragon_surge", QiElement.EARTH, Realm.CORE_FORMATION, 3, 90, 12 * 20),
+	MOUNTAIN_STANCE("mountain_stance", QiElement.EARTH, Realm.CORE_FORMATION, 7, 100, 40 * 20),
+	TIDAL_LANCE("tidal_lance", QiElement.WATER, Realm.CORE_FORMATION, 3, 90, 12 * 20),
+	MIST_VEIL("mist_veil", QiElement.WATER, Realm.CORE_FORMATION, 7, 100, 45 * 20),
+	SWORD_RAIN("sword_rain", QiElement.METAL, Realm.CORE_FORMATION, 3, 100, 14 * 20),
+	GOLDEN_BELL_SHIELD("golden_bell_shield", QiElement.METAL, Realm.CORE_FORMATION, 7, 110, 40 * 20),
+	KARMIC_FIRE("karmic_fire", QiElement.FIRE, Realm.NASCENT_SOUL, 3, 200, 15 * 20),
+	BLAZING_METEOR("blazing_meteor", QiElement.FIRE, Realm.NASCENT_SOUL, 7, 300, 30 * 20),
+	THORN_SPEAR_FOREST("thorn_spear_forest", QiElement.WOOD, Realm.NASCENT_SOUL, 3, 200, 15 * 20),
+	LOTUS_OF_REBIRTH("lotus_of_rebirth", QiElement.WOOD, Realm.NASCENT_SOUL, 7, 300, 60 * 20),
+	SUMMON_GOLEM("summon_golem", QiElement.EARTH, Realm.NASCENT_SOUL, 3, 300, 20 * 20),
+	EARTHQUAKE("earthquake", QiElement.EARTH, Realm.NASCENT_SOUL, 7, 350, 40 * 20),
+	GLACIAL_SPEARS("glacial_spears", QiElement.WATER, Realm.NASCENT_SOUL, 3, 220, 12 * 20),
+	GREAT_TIDE("great_tide", QiElement.WATER, Realm.NASCENT_SOUL, 7, 320, 35 * 20),
+	PIERCING_SWORD_LIGHT("piercing_sword_light", QiElement.METAL, Realm.NASCENT_SOUL, 3, 220, 12 * 20),
+	VAJRA_BODY("vajra_body", QiElement.METAL, Realm.NASCENT_SOUL, 7, 300, 45 * 20),
+	PHOENIX_DESCENT("phoenix_descent", QiElement.FIRE, Realm.HEAVENLY_BEING, 3, 450, 20 * 20),
+	SEA_OF_FLAMES("sea_of_flames", QiElement.FIRE, Realm.HEAVENLY_BEING, 7, 700, 60 * 20),
+	HEAVEN_PIERCING_BAMBOO("heaven_piercing_bamboo", QiElement.WOOD, Realm.HEAVENLY_BEING, 3, 500, 20 * 20),
+	SPRING_OF_MYRIAD_LIFE("spring_of_myriad_life", QiElement.WOOD, Realm.HEAVENLY_BEING, 7, 800, 90 * 20),
+	FALLING_MOUNTAIN("falling_mountain", QiElement.EARTH, Realm.HEAVENLY_BEING, 3, 600, 40 * 20),
+	HEAVY_EARTH_SEAL("heavy_earth_seal", QiElement.EARTH, Realm.HEAVENLY_BEING, 7, 700, 60 * 20),
+	HEAVENLY_RIVER_TORRENT("heavenly_river_torrent", QiElement.WATER, Realm.HEAVENLY_BEING, 3, 500, 20 * 20),
+	FROZEN_FIELD("frozen_field", QiElement.WATER, Realm.HEAVENLY_BEING, 7, 900, 120 * 20),
+	MOUNTAIN_CLEAVE("mountain_cleave", QiElement.METAL, Realm.HEAVENLY_BEING, 3, 700, 45 * 20),
+	SWORD_DOMAIN("sword_domain", QiElement.METAL, Realm.HEAVENLY_BEING, 7, 800, 60 * 20),
+	NINE_SUNS_DESCEND("nine_suns_descend", QiElement.FIRE, Realm.FOUR_AXIS, 3, 1500, 60 * 20),
+	PHOENIX_NIRVANA("phoenix_nirvana", QiElement.FIRE, Realm.FOUR_AXIS, 7, 1200, 300 * 20),
+	MYRIAD_VINE_BINDING("myriad_vine_binding", QiElement.WOOD, Realm.FOUR_AXIS, 3, 1200, 40 * 20),
+	WORLD_TREE("world_tree", QiElement.WOOD, Realm.FOUR_AXIS, 7, 2000, 180 * 20),
+	EARTHEN_TITAN("earthen_titan", QiElement.EARTH, Realm.FOUR_AXIS, 3, 1500, 120 * 20),
+	MOUNTAIN_SEAL("mountain_seal", QiElement.EARTH, Realm.FOUR_AXIS, 7, 1800, 90 * 20),
+	ABSOLUTE_ZERO("absolute_zero", QiElement.WATER, Realm.FOUR_AXIS, 3, 1200, 30 * 20),
+	BOUNDLESS_SEA("boundless_sea", QiElement.WATER, Realm.FOUR_AXIS, 7, 2000, 120 * 20),
+	HEAVEN_SEVERING_SWORD("heaven_severing_sword", QiElement.METAL, Realm.FOUR_AXIS, 3, 1500, 60 * 20),
+	FOUR_SWORDS_ARRAY("four_swords_array", QiElement.METAL, Realm.FOUR_AXIS, 7, 2000, 180 * 20);
 
 	private final String id;
 	private final GhostMethod method;
-	/** The heaven method that teaches it (HeavenMethods), or null for a ghost method's or both paths'. */
-	private final HeavenMethod heavenMethod;
-	/** The method's layer it comes with, counted from its first (a foundation's spells come in its own realm: GhostMethod#ownLayer). */
+	/** An element's spell (HeavenSpells): its element and realm, or null for a ghost method's or both paths'. */
+	private final QiElement element;
+	private final Realm heavenRealm;
+	/**
+	 * The method's layer it comes with, counted from its first (a foundation's spells come in its own realm: GhostMethod#ownLayer;
+	 * an element's spell, the layer of its realm's nine at its place: MethodLayers).
+	 */
 	private final int layer;
 	/** A spell of both paths: the realm both must stand at (null for a method's spell). */
 	private final Realm dualRealm;
@@ -137,12 +157,13 @@ public enum Spell {
 		this(id, null, 0, dualRealm, cost, qiCost, cooldownTicks);
 	}
 
-	/** A heaven method's spell: {@code layer} of the method's own realm (3 or 7), costing qi alone. */
-	Spell(String id, HeavenMethod heavenMethod, int layer, double qiCost, int cooldownTicks) {
+	/** An element's spell: of {@code realm}, at {@code place} among its nine layers (1 to 9), costing qi alone. */
+	Spell(String id, QiElement element, Realm realm, int place, double qiCost, int cooldownTicks) {
 		this.id = id;
 		this.method = null;
-		this.heavenMethod = heavenMethod;
-		this.layer = heavenMethod.ownLayer(layer);
+		this.element = element;
+		this.heavenRealm = realm;
+		this.layer = realm.ordinal() * MethodLayers.PER_REALM + place;
 		this.dualRealm = null;
 		this.cost = 0;
 		this.qiCost = qiCost;
@@ -153,7 +174,8 @@ public enum Spell {
 	Spell(String id, GhostMethod method, int layer, Realm dualRealm, double cost, double qiCost, int cooldownTicks) {
 		this.id = id;
 		this.method = method;
-		this.heavenMethod = null;
+		this.element = null;
+		this.heavenRealm = null;
 		this.layer = method == null ? 0 : method.ownLayer(layer);
 		this.dualRealm = dualRealm;
 		this.cost = cost;
@@ -164,11 +186,40 @@ public enum Spell {
 	public String getId() { return id; }
 	/** The ghost method that teaches it; null for a heaven method's spell or one of both paths. */
 	public GhostMethod method() { return method; }
-	/** The heaven method that teaches it; null for the others. */
-	public HeavenMethod heavenMethod() { return heavenMethod; }
-	/** A heaven method's spell: cast by the living alone, on qi alone. */
-	public boolean isHeaven() { return heavenMethod != null; }
+	/** An element's spell: the heaven method of its element and realm (any of the element reaching as deep teaches it too); null for the others. */
+	public HeavenMethod heavenMethod() { return element == null ? null : HeavenMethod.of(element, heavenRealm); }
+	/** An element's spell: its element; null for the others. */
+	public QiElement element() { return element; }
+	/** An element's spell: its realm; null for the others. */
+	public Realm heavenRealm() { return heavenRealm; }
+	/** A heaven method's spell (an element's): cast by the living alone, on qi alone. */
+	public boolean isHeaven() { return element != null; }
 	public int layer() { return layer; }
+
+	/** An element's spell: whether {@code method} teaches it (of its element, and reaching its realm). */
+	public boolean taughtBy(HeavenMethod method) {
+		return element != null && method.element() == element && method.realm().ordinal() >= heavenRealm.ordinal();
+	}
+
+	/** An element's spell: whether {@code s} knows a method that teaches it (cultivated that far or not). */
+	public boolean taughtBy(HeavenState s) {
+		if (element == null) return false;
+		for (HeavenMethod known : s.known()) if (taughtBy(known)) return true;
+		return false;
+	}
+
+	/**
+	 * An element's spell: the method of {@code s}'s that teaches it, cultivated deepest (null with none), else (none known) its own
+	 * realm's method; null for the others.
+	 */
+	public HeavenMethod teacher(HeavenState s) {
+		if (element == null) return null;
+		HeavenMethod best = null;
+		for (HeavenMethod known : s.known()) {
+			if (taughtBy(known) && (best == null || s.layer(known) > s.layer(best))) best = known;
+		}
+		return best != null ? best : heavenMethod();
+	}
 	/** A spell of both paths (TwoPaths): of no method, in reach once both paths stand at {@link #dualRealm}. */
 	public boolean isDual() { return dualRealm != null; }
 	public Realm dualRealm() { return dualRealm; }
@@ -186,8 +237,11 @@ public enum Spell {
 	 */
 	public boolean isKnown(PlayerCultivation c) {
 		if (isDual()) return TwoPaths.bothReach(c, dualRealm);
-		if (isHeaven()) return !c.isMortal() && !c.netherworld().ghost() && c.heaven().layer(heavenMethod) >= layer
-				&& PlayerCultivation.rank(c.getRealm(), c.getStage()) >= realmNeeded();
+		if (isHeaven()) {
+			if (c.isMortal() || c.netherworld().ghost() || PlayerCultivation.rank(c.getRealm(), c.getStage()) < realmNeeded()) return false;
+			for (HeavenMethod known : c.heaven().known()) if (taughtBy(known) && c.heaven().layer(known) >= layer) return true;
+			return false;
+		}
 		return !c.isMortal() && c.netherworld().layer(method) >= layer;
 	}
 

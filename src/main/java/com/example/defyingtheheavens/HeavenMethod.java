@@ -6,7 +6,7 @@ import net.minecraft.util.StringRepresentable;
 /**
  * The heaven path's methods (see HeavenMethods): one for each of the five elements of qi in each realm, thirty in all, cultivated
  * by the living from Qi Refining up to the method's own realm, nine layers to each realm (MethodLayers), each layer opening as
- * their heaven realm reaches the stage it stands for. Each brings two spells, at the third and seventh layers of its own realm,
+ * their heaven realm reaches the stage it stands for. Each teaches its element's spells of every realm it spans (Spell#taughtBy),
  * and every layer strengthens its element's passive. Saved by id: add new ones at the end.
  */
 public enum HeavenMethod implements StringRepresentable {

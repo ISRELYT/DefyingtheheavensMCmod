@@ -130,6 +130,30 @@ close it. Shift-clicking a ring puts it on even while the panel is closed. The p
 open. In the creative inventory tab the ring slots show right of the armor, as before. Code: `client/BaublePanel.java`,
 `client/mixin/InventoryScreenMixin.java`, `RingSlot.java`.
 
+## Storage Rings
+
+A **Storage Ring** folds a space into a ring: crafted from four gold ingots, four jade and an ender pearl (gold at the corners,
+jade at the sides, the pearl in the middle). Right-click to open it; sneak-right-click to wear it in a ring slot, and the
+**Storage Ring key (B)** opens the one worn (or else the first one carried). Its screen, in lacquer and gold: what it holds
+as a grid (one well a kind, how many beneath it, shortened to k/M/B), a search line, how full it is, and the pack below.
+Click a kind to take a stack (right-click: half; shift-click: straight into the pack); click with something carried to put
+it in (right-click: one); shift-click the pack to put a stack in. Rings can't go inside rings, and the open ring can't be moved.
+A ring lying on the ground never despawns and is proof against fire, cactus and blasts (the void still takes it).
+
+What it holds lives with the world, keyed by the ring: the ring goes where it goes (a fallen cultivator's ring is the
+victor's), and a ring lost is a space lost. **Refine** (top right of its screen) raises its grade:
+
+| Grade | Holds | Refining into it takes | Realm |
+|---|---|---|---|
+| Mortal | 27 stacks | crafted | - |
+| Spirit | 54 stacks | 16 Low Spirit Stones, 4 ender pearls | Foundation Building |
+| Earth | 108 stacks | 16 Mid Spirit Stones, 8 jade | Core Formation |
+| Heaven | 216 stacks | 16 High Spirit Stones, 2 shulker shells | Nascent Soul |
+| Boundless (Qiankun Ring) | **without end**: any number of any number of kinds | 8 Supreme Spirit Stones, 1 Immortal Spirit Stone, a nether star | Heavenly Being |
+
+Code: `StorageRingItem`, `StorageRings` (the spaces, saved data, clicks, refining), `StorageRingMenu`; client
+`StorageRingScreen`, `ClientStorageRing`; tests `StorageRingGameTests`.
+
 ## Meditation mats
 
 A **Meditation Mat** (a flat, round mat of coiled straw) and a **Red Silk Meditation Mat** (the same mat with a square of
@@ -302,6 +326,34 @@ ingredients back out); an empty bucket takes the water back.
 /give @s defying-the-heavens:core_pill{PillGrade:4,PillAge:10000}   an Immortal-grade pill (grades 0-4)
 ```
 
+## Physiques
+
+Every player is born with a **physique**, rolled the first time they join, told in chat and written in the journal; the
+Stats tab names it (and its roots), with its grade's colour. An op can change it: `/physique get|set <id>|reroll [player]`.
+The rarer the grade, the rarer the roll (out of about 100 births):
+
+| Physique | Grade | Births | What it does |
+|---|---|---|---|
+| Five Elements Spiritual Roots | Low | 24 | Any element's methods, at the ordinary pace |
+| Mortal Body | Low | 20 | Nothing |
+| Cursed Meridian Body | Low | 10 | Qi gathered 0.8 times as fast into a pool 0.8 times as deep |
+| Shattered Meridians | Low | 6 | Can't cultivate: no heaven methods, no Marrow Cleansing Elixir. **Body refining** instead: past Mortal Peak, eight stages (Copper Skin, Iron Flesh, Steel Sinew, Jade Bone, Silver Marrow, Golden Blood, Diamond Heart, Indestructible Body), each a body as strong as a cultivator's a stage higher, the last Core Formation Early's; tempered as a mortal is, and by meditation |
+| Three Elements Spiritual Roots | Mid | 9 | Methods of three elements only, cultivated 1.5 times as fast |
+| Heaven Sacred Body | Mid | 6 | No Ritual to the Heavens wanted at Qi Refining Mid; heaven methods 1.2 times as fast |
+| Yin Soul Body | Mid | 5 | Yin corruption never takes hold |
+| Innate Alchemy Body | Mid | 5 | Pills and elixirs brewed by its hands (it put in the last ingredient) work twice as strongly |
+| True Element Spiritual Root | High | 4 | One element's methods only, twice as fast |
+| Innate Consciousness Body | High | 3 | A Consciousness Domain as wide as a Four Axis cultivator's (160) from the day it opens; it never grows |
+| Blessed Meridian Body | High | 3 | Qi gathered 1.5 times as fast into a pool 1.5 times as deep; Qi Sense from a mortal's first day |
+| Jade Poison Body | Supreme | 3 | No medicinal toxicity; a pill's or fruit's qi refined the moment it is taken (what doesn't fit before a bottleneck waits) |
+| Fallen True Immortal | Immortal | 0.8 | Any element; both paths five times as fast; a method's new layers need no settling |
+| Ghost Devil Body | Immortal | 0.8 | The ghost path twice as fast; a Ghost King's form of its own anywhere from the start (held to its ghost path's might while shown); a Ghost King when dead; learning a ghost foundation of Core Formation or deeper takes the ghost path straight to that realm's Early |
+| Heavenly Thunder Body | Immortal | 0.4 | A tribulation's lightning feeds it: no harm, the qi pool filled, and the strikes bank up to 60% of the new stage's cultivation for the breakthrough |
+
+Roots' elements are drawn at birth, the elements of any methods already known first (so a save from before keeps its methods);
+an element limit never touches the ghost path. A player already cultivating is never given Shattered Meridians. Code:
+`Physique`, `Physiques` (the roll, the command), `BodyRefining`; tests `PhysiqueGameTests`.
+
 ## The Ritual to the Heavens
 
 Leaving **Qi Refining Mid** takes the heavens' **permission to cultivate**, not a tribulation: at Mid the cultivation bar stops full (pills,
@@ -376,8 +428,9 @@ Humble (0-9 points) +0%, Modest (10-19) +10%, Grand (20-29) +20%, Magnificent (3
 The heaven methods are the living's techniques, cultivated on the qi of the five elements (wood, water, fire, earth and
 metal, the motes Qi Sense shows). Your cultivation is **its own bar**, as it always was: the methods speed it, bring spells
 and passives as it climbs, and open the way into new realms. There are **thirty**: one of each element for each realm, Qi
-Refining to Four Axis. Each has its own layers, a passive that grows with them, and **two spells**. The dead can't take one
-up (their meridians belong to the ghost path now), nor a mortal.
+Refining to Four Axis. Each has its own layers and a passive that grows with them, and teaches its element's **spells** of
+its realm and every realm before it. The dead can't take one up (their meridians belong to the ghost path now), nor a mortal,
+nor one whose roots won't take its element (see Physiques).
 
 **Layers.** A method of a realm spans **Qi Refining up to that realm**, nine layers a realm (`MethodLayers`, the same layout as
 the ghost foundations): a Qi Refining method has 9 layers, a Four Axis method 54. Within each realm's nine, layers 1-2 stand
@@ -464,66 +517,143 @@ don't stack (only the deepest counts); methods of different elements do.
 | Earth | Unshaken Mountain Body: less harm taken | 0.2% / 0.25% / 0.3% / 0.35% / 0.4% / 0.5% | 18% less (never the void's, the soul harms', or a tribulation's) |
 | Metal | Whetted Edge: melee harm | 0.05 / 0.1 / 0.25 / 0.5 / 1 / 2 | +35.1 |
 
-**Spells.** Each method brings two spells, at the **3rd and 7th layers of its own realm** (a Four Axis method's 48th and
-52nd), and only once **your cultivation has reached the stage that layer stands for** too (`Spell#realmNeeded`: the 3rd
-layer's Mid, the 7th's Late, of the method's realm). The Spells tab shows a spell still locked with both. They go on the
-spell wheel (V) as they come, whether the layer or the realm comes last, like the ghost spells (never the ability wheel),
-cost heaven qi and have cooldowns. A
-spell that needs something to take hold of (a being looked at, the ground) isn't cast without it, and nothing is paid. Their
-qi harm is the element's own and passes armour. None touches its caster, spectators or its tamed creatures; harm to another
-player needs PvP on, and the spells that hold, carry, swap or lull only slow or harm the great beasts (the Ender Dragon, the
-Wither, the Warden, an Elder Guardian, anything of 300 health or more). Blocks a spell sets down (the rampart) are always
-taken up again, and nothing is broken.
+**Spells.** Every element has its own spells in every realm: **three** in Qi Refining and Foundation Building (at the 2nd, 5th
+and 8th layers of the realm, its Early, Mid and Late), **two** from Core Formation on (the 3rd and 7th, Mid and Late), seventy in
+all. A spell belongs to its element and realm, not to one method: any heaven method of that element **of that realm or
+deeper** teaches it once it is understood to the spell's layer (and your cultivation has reached the stage the layer stands
+for), so a Four Axis fire method carries every fire spell. The Spells tab shows each one locked with both. They go on the spell
+wheel (V) as they come, never the ability wheel, cost heaven qi and have cooldowns. A spell that needs something to take hold
+of (a being looked at, the ground, earth to draw on) isn't cast without it, and nothing is paid. Their qi harm is the
+element's own and passes armour; none touches its caster, spectators or its tamed creatures, and nothing of one (harm, hold,
+push, drowning, burning) touches another player unless the server lets players harm each other (PvP on, teams allowing);
+blessings like Life Force Gain still reach them. Terrain a spell carves or tears up is gone for good, the ground and whatever
+is built on it alike (never a chest or anything else holding something, nor obsidian or anything harder), but nothing inside a
+raised barrier (protective or concealment) is touched, nor the ground its shell runs through by anyone weaker than it; and
+spawn protection and Adventure mode are respected.
+Every one has its own models, animation and effects (nothing is only Minecraft's own particles), and blocks a spell sets down
+(walls, trees, ice) are taken up again in time; broken or blown up before then they simply vanish, dropping nothing.
 
-| Element | Method (realm) | Spells |
+**The five elements' cycle.** Fire overcomes metal, metal wood, wood earth, earth water, water fire. Some spells are **wards**
+(Azure Coating water; Hardened Body and Mountain Stance earth; Crimson Tempering and Flame Armour fire; Ancient Bark Skin wood;
+the Golden Bell and Vajra Body metal): a ward stops a spell of the element it overcomes outright (or half of one from a deeper
+realm), and a spell of the element that overcomes it comes through a quarter harder. Wooden missiles burn to ash on a fire ward;
+water puts out what burns.
+
+**Qi Refining**
+
+| Element | Spell (layer) | What it does |
 |---|---|---|
-| Wood | Green Sprout Breathing Manual (QR) | **Grasping Roots** (roots bind the being looked at, hauling it down from the air); **Bramble Mantle** (melee blows on you softened, their strikers torn) |
-| Wood | Coiling Vine Scripture (FB) | **Wisteria Ascent** (a vine hauls you to the block looked at, where you cling); **Twin Serpent Vines** (two beings bound together, hauled back when they stray) |
-| Wood | Ancient Cypress Art (CF) | **Bursting Thorn Pods** (hidden pods burst under foes); **Heartwood of Nine Rings** (rooted, ring on ring warding and mending you; the uprooting lends a blow) |
-| Wood | Primeval Forest Canon (NS) | **Pollen of Long Dreams** (a cloud that puts foes to sleep); **Myriad Thorn Thicket** (whatever moves in it is torn) |
-| Wood | Eternal Spring Sutra (HB) | **Strangler Fig Seed** (its host's healing comes to you); **Rite of Returning Spring** (friends mended, their hurts growing back) |
-| Wood | Heaven-Bearing World Tree Classic (FA) | **Heaven-Shading Canopy** (missiles caught in its leaves give you qi); **The World Tree Rises** (allies mended beneath it, foes struck by its roots) |
-| Water | Morning Dew Gathering Art (QR) | **Hoarfrost Needle** (frost stacks; three freeze); **Morning Mist Shroud** (creatures lose track of those inside; you unseen) |
-| Water | Clear Fount Cleansing Manual (FB) | **Returning Current** (the current carries you back to a spring, half your lost health with you); **Renewing Mountain Rain** (friends mended, their cooldowns running twice as fast) |
-| Water | Nine-Bend River Record (CF) | **Coiling Stream Lash** (a being swung over your head and dashed down behind you); **Nine-Bend Whirlpool** (swept round and held, then flung out) |
-| Water | Moon-Mirror Lake Sutra (NS) | **Moon in the Water** (you and the being looked at change places); **Still Lake Mirror** (blows halved, then mirrored back) |
-| Water | Heavenly River Scripture (HB) | **Abyssal Water Prison** (a globe of water drowns its prisoner); **Overturned Heavenly River** (a wall of water carries all before it and crashes) |
-| Water | Boundless Four Seas Canon (FA) | **Ten Thousand Reflections** (foe creatures turn on one another); **Eternal Winter Descends** (all frozen still, the harm held in the ice until it shatters) |
-| Fire | Ember Kindling Art (QR) | **Sleeping Ember** (an ember lodged in a being bursts later, or when you strike it); **Flash of Struck Flint** (foes looking at you blinded) |
-| Fire | Furnace Heart Manual (FB) | **Fire Horse Gallop** (swift, leaving burning hoofprints); **Sealed Furnace Refinement** (harm cut, fire's whole, the held-back harm refined into qi) |
-| Fire | Crimson Crucible Classic (CF) | **Prairie-Burning Spark** (crimson fire leaping from being to being); **Crimson Lotus Blooms** (a lotus of fire bursts and scatters twelve petals) |
-| Fire | Vermilion Bird Sutra (NS) | **Ash-Searing Talon** (the wound can't heal); **Vermilion Bird Plunge** (soar, glide, and strike where you land) |
-| Fire | Golden Crow Great Sun Scripture (HB) | **Light of First Dawn** (friends' ills burned away and barred a while); **Noonday Golden Crow** (a sun overhead sears all it can see) |
-| Fire | Heaven-Burning Phoenix Nirvana Canon (FA) | **Three Heaven-Scorching Firestorms** (three storms hunt a foe each); **Undying Phoenix** (death turned to ash and a rebirth) |
-| Earth | Rammed Earth Manual (QR) | **Rolling Millstone** (runs over and shoves what it meets); **Rammed Earth Rampart** (a wall raised row by row, crumbling after) |
-| Earth | Thousand-Layer Stone Record (FB) | **Stone Scale Armour** (three scales, each stopping or blunting a blow); **Swallowing Sands** (quicksand that holds and sinks) |
-| Earth | Five Sacred Peaks Classic (CF) | **Earth-Splitting Fissure** (a line of earth erupts; a wall two high stops it); **Mount Tai Presses Down** (a being held down and crushed on the ground) |
-| Earth | Yellow Dragon Earth-Vein Canon (NS) | **Earth Dragon Turns Over** (a dragon hunts its quarry from below); **Earth-Vein Guardian** (a stone head bites the nearest foe again and again) |
-| Earth | Sovereign Earth Myriad-Bearing Sutra (HB) | **Bedrock Bears the Blows** (part of every hurt sinks away, the rest comes slowly); **Shoulder the Myriad Burdens** (you bear half your allies' hurts) |
-| Earth | Four Pillars Upholding Heaven Scripture (FA) | **Riding Ten Thousand Dunes** (a river of sand carries you and your allies, trampling foes); **Fall of Buzhou** (a mountain falls on all in its shadow) |
-| Metal | Whetstone Edge Manual (QR) | **Swallow-Return Thread** (pierces going out and coming home); **Iron Bell Cover** (each blow two the less) |
-| Metal | Hundred-Forged Lodestone Art (FB) | **Lodestone Brand** (every missile near bends into the branded); **Hundred Weapons Kneel** (enemies numbed, creatures disarmed, players' items seized) |
-| Metal | Golden Thunder Core Sutra (CF) | **Armour-Splitting Finger** (a crack in the armour that every blow widens); **Leaping Golden Lightning** (leaps from being to being) |
-| Metal | Nine Bells Sword-Soul Classic (NS) | **Nine Circling Blades** (each darts at a foe that comes near); **Thousand-Echo Toll** (those who hear it share one another's wounds) |
-| Metal | Heaven-Severing Sword Scripture (HB) | **Fate-Severing Edge** (every blessing severed, none taking hold after); **Ten Thousand Swords Descend** (a sword a second on all beneath, roofs sheltering) |
-| Metal | Four Swords Immortal-Slaying Canon (FA) | **Indestructible Golden Body** (no blow takes more than a tenth of your health; nothing moves you); **Four Gates Immortal-Slaying Array** (enemies sealed in a great square and struck) |
+| Fire | **Flame Bolt** (2) | Shoots a bolt of red flame from your hand at where you aim, up to 40 blocks. It strikes for 5 fire harm and sets its mark burning for 3 s. Water puts it out: a being under a water ward (Azure Coating) takes none of it. |
+| Fire | **Flame Fist** (5) | For 15 s your fists burn with red and orange flame. Every blow you land sets its mark burning for 5 s and sears it for 1 more fire harm. Against a being under a water ward the flames only hiss out. |
+| Fire | **Crimson Tempering** (8) | For 30 s fire and lava cannot burn you, and lava bears your weight: you can walk and run across it. A fire ward. |
+| Wood | **Wood Bullet** (2) | Grows a sharp wooden stake in the air before you, then shoots it at where you aim, up to 40 blocks: 5 wood harm and a small knock back. Against a fire ward (Crimson Tempering, Flame Armour) the stake burns to ash. |
+| Wood | **Emerald Healing Art** (5) | For 10 s you heal 1 health every second, fed or hungry, and glow a faint green. |
+| Wood | **Verdant Growth** (8) | A tree grows up out of the ground under your feet in two seconds, lifting you 14 blocks into the air on its trunk, and spreads a blossoming crown round you at the top. It stands for 60 s, then withers away; its wood and leaves give nothing when broken. Cast it standing on the ground. |
+| Earth | **Earth Spear** (2) | Raises clods of earth into the air before you, where they fuse into a podao of dried earth, then flings it at where you aim, up to 40 blocks: 6 earth harm and a heavy knock back. |
+| Earth | **Hardened Body** (5) | For 30 s a thin skin of stone covers you, taking 7% off all harm you take (14% off water's). An earth ward. |
+| Earth | **Dirt Tide** (8) | Raises a wave of the earth you stand on and carries you on its crest for 10 s, the way you face, faster than a sprint: forward drives it on, back reins it in, and it climbs a block at a time and rides over water. Sneak to step off. |
+| Water | **Water Arrow** (2) | Forms an arrow of swirling water in the air and shoots it at where you aim, up to 40 blocks: 5 water harm, and whatever burns on its mark is put out. Strong against fire wards. |
+| Water | **Azure Coating Technique** (5) | For 30 s a thin coat of water clings to you: fire cannot burn you and fire spells stop at it (a fire spell of a deeper realm than this still breaks half through). Lava boils it away. A water ward. |
+| Water | **Azure Breathing Technique** (8) | For 60 s you can walk and run on water (sneak to sink into it) and breathe under it. |
+| Metal | **Flying Sword** (2) | Forms a sword of metal in the air before you, shard by shard, and shoots it at where you aim, up to 48 blocks: 6 metal harm, and it flies on through its first mark to strike another. |
+| Metal | **Blade Polish** (5) | For 30 s every melee blow you strike deals 1.2 times its harm, and the weapon in your hand gives off a faint white glow and wisps of white smoke. |
+| Metal | **Steel Hurricane** (8) | You dash the way you look with your weapon thrust before you, spinning like a trident's riptide, for 1.6 s: every being you meet takes your weapon's blow and 3 metal harm more. No fall harm from it. |
 
-Each spell's own numbers (harm, reach, how long) are its description in the Spells tab and the constants at the top of its
-element's class. Two notes on the calls made where the designs left room: Hundred Weapons Kneel takes players only when they
-are at odds with you (the same rule as a spell's foes), and a creature's weapon falls to the ground if it picked it up (it
-keeps those for good) but shatters if it spawned holding it, so none can be farmed.
+**Foundation Building**
+
+| Element | Spell (layer) | What it does |
+|---|---|---|
+| Fire | **Remote Yang Bomb** (11) | Leaves a ball of yang fire on the surface you look at, within 16 blocks. Only you, and those with Qi Sense open, can see it. While it waits it draws 1 qi a second from you. Cast the spell again within 48 blocks to set it off: 14 fire harm to everything within 4 blocks, burning for 4 s, and a blast that throws them back. Setting it off costs nothing; the spell then rests for 15 s. It gutters out if your qi runs dry or you go far from it. |
+| Fire | **Flame Armour** (14) | For 30 s you are clad in armour made of red flame, from its burning crest to its greaves. It takes 10% off all harm you take, and 20% off metal's (metal spells, and blows of iron, gold, diamond or netherite weapons). A fire ward. |
+| Fire | **Fire Serpent** (17) | A serpent of fire coils out of your hand and swims through the air at where you aim, bending toward its mark as it goes, up to 48 blocks: 12 fire harm and burning for 4 s. |
+| Wood | **Life Force Drain** (11) | For 6 s you draw the life out of the being you look at, or the years out of an aging herb growing there (a ginseng and its kind), within 12 blocks; or, looking at neither, out of a single aging fruit or herb in your hand (a Cultivation Fruit only so: never on its tree, it must be picked and held; and one, not a stack). A being loses 1.5 health a second, and it heals you; a herb or fruit loses 60 years a second, and you heal 1 a second. A stream of emerald light runs from it to you. It breaks if you stray 16 blocks apart, or the one held leaves your hand. Herbs in a sect's or a Ghost King's treasury can't be touched while its seal holds. |
+| Wood | **Life Force Gain** (14) | For 6 s you pour your own life into the being you look at, into an aging herb or fruit growing (a fruit on its tree too), or into a single one in your hand, within 12 blocks: you lose 1 health a second (never below 4), and a being heals 2 a second, or a herb or fruit gains 120 years a second. Not into herbs in a treasury whose seal holds. |
+| Wood | **Mysterious Bristle Prison** (17) | Thorny bristles burst up out of the ground round the being you look at, within 20 blocks, and close over it: it is held where it stands for 4 s, torn for 1.5 wood harm a second. Three blows on the cage break it, from outside or in; but each one the prisoner strikes from inside tears it for 2 more. |
+| Earth | **Earth Wall Technique** (11) | A wall of the ground you stand on, 6 blocks long and 4 tall, rises out of the earth 3 blocks ahead of you, across your way. If you are not on the ground, it forms in mid air, from its middle block outward. It stands for 30 s, then sinks back into the ground. |
+| Earth | **Boulder Throw** (14) | Tears a boulder out of the ground ahead of you, leaving a round hole two blocks deep, gathers it in the air and throws it at where you aim, up to 48 blocks: 16 earth harm and a heavy knock back. It tears it from whatever lies ahead, the ground or what is built there (not inside a barrier). |
+| Earth | **Cave Formation** (17) | Carves a cave fit for one into the slope or ground you look at, within 6 blocks, crumbling it away before your eyes over 3 s: into a slope, an entrance one block wide and two tall with a room three blocks wide, deep and tall behind it; into the ground, three steps down to such a room. |
+| Water | **Rain Call** (11) | Calls a rain cloud of your own over where you stand, 8 blocks round, for 20 s. Everyone under it but you is slowed by a tenth, and the rain puts out fires and whatever burns. |
+| Water | **Water Prison** (14) | Encases the being you look at, within 16 blocks, in a sphere of water for 5 s. The air is drawn out of it at once: it drowns from the first second (no held breath), takes 2 water harm a second besides, and is held where it is. 30 harm struck on the sphere bursts it, the prisoner's own blows from inside too. |
+| Water | **Torrential Spring** (17) | Gathers a great ball of water out of the air above and ahead of you over 1.5 s, then drops it on where you look, up to 32 blocks: 8 water harm to everything within 4 blocks, a heavy wash that throws them back, and a small lake pressed into the ground where it falls. |
+| Metal | **Boulder Cleave** (11) | Flings a crescent of sword qi from you the way you look. It flies 15 blocks through the ground as through air, cutting a slot 3 blocks wide and 2 tall through everything it passes (what it cuts is gone), and cleaves every being in its way for 14 metal harm. |
+| Metal | **Mineral Purification** (14) | Every ore within the reach of your consciousness (your Consciousness Domain's radius) gives up its ore: it streams to you as light and is yours, as mined and unsmelted, the rock it lay in left behind. At most 256 ores, the nearest first. Ores inside a raised barrier (protective or concealment) are beyond its reach. |
+| Metal | **Advanced Flying Sword Technique** (17) | Six swords form in the air round you one after another, then fly one after another at where you look: 9 metal harm each, each passing through one being to strike another. |
+
+**Core Formation**
+
+| Element | Spell (layer) | What it does |
+|---|---|---|
+| Fire | **Crimson Swirl** (21) | A great tornado of fire rises 3 blocks ahead of you and creeps toward where you aim (up to 40 blocks away) for 10 s. It drags in and lifts whatever comes near, burns all within it for 6 fire harm a second, tears up the ground beneath it (and what is built there) and leaves fire behind. |
+| Fire | **Solar Field** (25) | A small sun burns 8 blocks above you for 10 s. Everyone else within 40 blocks of you is set burning, every second, as if standing in fire (a water ward or a fire-proof body excepted). |
+| Wood | **Thousand Leaf Storm** (21) | Sixteen razor leaves stream from your palm over a second, each bending a little toward a foe: 2.5 wood harm each, every one its own cut. Against a fire ward they burn to ash. |
+| Wood | **Ancient Bark Skin** (25) | For 20 s ancient bark grows over you: 20% less harm taken, 40% less of earth's. A wood ward. |
+| Earth | **Earth Dragon Surge** (21) | A ridge of jagged spikes of the ground's own rock bursts up along the ground from you toward where you face, 24 blocks out, running out as fast as a horse: whatever it passes over takes 20 earth harm and is thrown into the air. The spikes sink back a few seconds later. |
+| Earth | **Mountain Stance** (25) | For 15 s you stand like a mountain, clad in slabs of stone: 25% less harm taken (50% less of water's), and nothing can knock you back, but you walk a fifth slower. An earth ward. |
+| Water | **Tidal Lance** (21) | A jet of water bursts from your hands for 2 s, as far as 24 blocks: the first being in it takes 6 water harm every half second and is driven back along it. |
+| Water | **Mist Veil** (25) | A thick mist rises 10 blocks round you for 15 s, moving with you: foes in it lose sight of you and your allies (unless within 3 blocks of them), and missiles flying into it slow to half their speed. |
+| Metal | **Sword Rain** (21) | Twelve swords form in a ring high over where you look, up to 32 blocks, and plunge down round it: 6 metal harm each. |
+| Metal | **Golden Bell Shield** (25) | A great golden bell comes down over you for 10 s and takes up to 40 harm for you, tolling with each blow; wood's harm costs it half as much, fire's twice. A metal ward. |
+
+**Nascent Soul**
+
+| Element | Spell (layer) | What it does |
+|---|---|---|
+| Fire | **Karmic Fire** (30) | Sets karmic fire on the being you look at, within 32 blocks, for 8 s, burning away its sins: each second it takes 1 harm if it is guiltless, up to 11 for a devil (by its alignment), 6 for a monster, a little for a beast or a villager. A sinner's alignment burns 2 a second toward neutral. |
+| Fire | **Blazing Meteor** (34) | Calls a burning meteor down out of the sky onto where you look, up to 48 blocks, its mark glowing on the ground as it falls: 45 fire harm to everything within 6 blocks, burning for 6 s, a scorched crater and fires round it. |
+| Wood | **Thorn Spear Forest** (30) | Spears of thorny wood burst out of the ground 6 blocks round where you look, up to 32 blocks: every foe there takes 35 wood harm and is held where it stands for 2 s. |
+| Wood | **Lotus of Rebirth** (34) | A great lotus opens at your feet for 10 s: you and every friendly being within 10 blocks are cleansed of harmful effects and fire at once, and heal 4 health a second while it blooms. |
+| Earth | **Summon Golem** (30) | Raises an earth golem out of the ground beside you for 90 s. It flies (at three fifths of a cultivator's flight), keeps by you and fights for you: whatever strikes you or you strike, or a monster that comes for you. 80 health, 18 earth harm a blow. Two at most: a third sends the oldest back to the earth. |
+| Earth | **Earthquake** (34) | The ground shakes 16 blocks round you for 4 s: every foe on the ground takes 10 earth harm a second, is slowed hard and thrown about. |
+| Water | **Glacial Spears** (30) | Five spears of ice form over your head and fly in a fan at where you look: 14 water harm each, slowness for 3 s and the cold's frost. |
+| Water | **Great Tide** (34) | A wave 10 blocks tall and 14 wide rolls out 30 blocks the way you face: whatever it overtakes takes 30 water harm, is swept along hard and put out. |
+| Metal | **Piercing Sword Light** (30) | A beam of sword light pierces everything along your look for 48 blocks (until a wall): 45 metal harm to each being in it. |
+| Metal | **Vajra Body** (34) | For 12 s your skin turns to gold: 35% less harm taken (70% less of wood's), nothing can knock you back, and whoever strikes you in melee takes 4 metal harm. A metal ward. |
+
+**Heavenly Being**
+
+| Element | Spell (layer) | What it does |
+|---|---|---|
+| Fire | **Phoenix Descent** (39) | A phoenix of fire takes wing from you and flies at where you aim, bending toward its mark, up to 64 blocks, and bursts there: 90 fire harm to everything within 5 blocks, burning for 6 s. |
+| Fire | **Sea of Flames** (43) | The ground 20 blocks round where you look, up to 48 blocks, becomes a sea of flame for 10 s: every foe standing in it takes 20 fire harm a second. |
+| Wood | **Heaven-Piercing Bamboo** (39) | Giant bamboo bursts up out of the ground under as many as 8 foes within 24 blocks of where you look: 80 wood harm each, and they are thrown high into the air. |
+| Wood | **Spring of Myriad Life** (43) | A green rain of life falls 32 blocks round you for 10 s: you and every friendly being in it heal 50 health at once, then 6 a second. |
+| Earth | **Falling Mountain** (39) | A mountain of rock forms in the sky over where you look, up to 64 blocks, and falls on it: 120 earth harm to everything within 8 blocks, a shockwave, and a crater 4 blocks round. |
+| Earth | **Heavy Earth Seal** (43) | Every foe within 24 blocks of you is pressed to the ground for 6 s: it cannot jump or fly (a flier is brought down), is slowed hard, and takes 15 earth harm a second. |
+| Water | **Heavenly River Torrent** (39) | A river pours out of the sky along a line from you to where you look, 32 blocks, for 2 s: everyone in its fall takes 70 water harm and is swept along it. |
+| Water | **Frozen Field** (43) | The cold runs out from you to 100 blocks round over three seconds: open water freezes, frost lies on the ground near you, and every being it reaches (but your allies and pets) is frozen solid for 4 s. The ice thaws over the next 20 to 40 s, and until it has, every being in the field takes 4 water harm a second. |
+| Metal | **Mountain Cleave** (39) | Flings a crescent of sword qi as tall as a tower the way you look. It flies 100 blocks, cutting a slot 3 blocks wide and 12 tall through hills and mountains alike (what it cuts is gone), and cleaves every being in its way for 150 metal harm. |
+| Metal | **Sword Domain** (43) | Thirty-six swords circle you 10 blocks round for 12 s: every foe within takes 20 metal harm every half second. |
+
+**Four Axis**
+
+| Element | Spell (layer) | What it does |
+|---|---|---|
+| Fire | **Nine Suns Descend** (48) | Nine suns fall out of the sky, one after another, onto where you look and round it, up to 64 blocks: each bursts for 150 fire harm 6 blocks round, burning for 6 s. |
+| Fire | **Phoenix Nirvana** (52) | For 60 s the phoenix's fire waits in you: if you would die, you rise again instead at full health, harmful effects burnt away, in a burst of flame that strikes everyone but your allies within 10 blocks for 200 fire harm. Once. |
+| Wood | **Myriad Vine Binding** (48) | Vines burst up and seize as many as 12 foes within 40 blocks of where you look, up to 64 blocks: each is held fast for 6 s and takes 30 wood harm a second. |
+| Wood | **World Tree** (52) | The World Tree grows out of the ground where you look (or before you) and towers over all for 15 s. Its vines reach from its boughs for every being but you within 32 blocks of its trunk (your pets spared), lift them into its branches and hold them there, drinking 15 of their health a second into you. |
+| Earth | **Earthen Titan** (48) | Raises an earth titan three times a golem's size beside you for 60 s: it flies, keeps by you and fights for you, 400 health and 80 earth harm a blow, its fist striking the ground round its mark too. One at a time. |
+| Earth | **Mountain Seal** (52) | A mountain of stone bursts up over where you look, up to 48 blocks, 6 blocks round and 8 tall: everything inside is entombed, held fast for 5 s and crushed for 60 earth harm a second. The mountain crumbles away after 20 s; its stone gives nothing. |
+| Water | **Absolute Zero** (48) | A beam of utter cold freezes the being you look at solid, within 48 blocks: 200 water harm, and it is held frozen for 8 s. When anything strikes it, or the cold lets go, it shatters for 100 more. |
+| Water | **Boundless Sea** (52) | A sphere of the sea 16 blocks round fills the place you look at, up to 48 blocks, for 10 s: every foe inside is held in it, drowning, and takes 30 water harm a second. |
+| Metal | **Heaven-Severing Sword** (48) | A sword as tall as a tower falls out of the sky onto where you look, up to 64 blocks: 300 metal harm to everything within 4 blocks, and a trench 20 blocks long, 3 wide and 10 deep cut into the earth along your facing. |
+| Metal | **Four Swords Array** (52) | Four giant swords plant themselves at the corners of a square 32 blocks across round where you look, up to 48 blocks: for 8 s every foe inside is held in by the walls of light between them and takes 80 metal harm a second. |
+
+Each spell's description in the Spells tab gives its numbers; the constants at the top of its element's class set them. Harm
+grows by realm: about 5 at Qi Refining, 8-16 at Foundation Building, 16-30 at Core Formation, 30-60 at Nascent Soul, 60-150 at
+Heavenly Being and 150-300 at Four Axis; qi costs likewise (8-20 at Qi Refining up to 1,000-2,000 at Four Axis).
 
 **Commands (op):** `/heavenmethod learn <id> [layer]`, `/heavenmethod progress <amount>` (that much settling on the practised
 method, no further than the realm), `/heavenmethod forget <id>`.
 
 Code: `HeavenMethod` (the thirty, their ids and realms), `HeavenState` (what you know, saved), `HeavenMethods` (who, how far
-understood, settling, the gate, the rate, learning), `HeavenPassives`, `MethodLayers`, `HeavenSpells` (the kit: who is spared, targets, what
-lingers, wards, temporary blocks, the elements' qi harm) and `WoodSpells`, `WaterSpells`, `FireSpells`, `EarthSpells`,
-`MetalSpells`; `Spell` (the sixty); `DaoSteleBlock`, `DaoSteleFeature` (`DAO_STELE_CHUNKS`), `JadeSlipItem`,
-`CultivatorNpc#heavenMethod`, `TalkSystem#teachHeaven`, `CultivatorTrades#heavenSlipPrice`, `MeditationManager#heavenMethods`,
-`NetherworldCommand#registerHeaven`; client `CultivationScreen` (the Methods tab's heaven page), `ClientMethods`,
-`HeavenLangText` (the methods' and spells' English). Tests: `HeavenMethodsGameTests` and one `Heaven<Element>SpellsGameTests`
-per element (each spell in a batch of its own).
+understood, settling, the gate, the rate, learning), `HeavenPassives`, `MethodLayers`, `Spell` (the seventy, by element, realm
+and layer), `HeavenSpells` (the kit: who is spared, targets, what lingers, temporary blocks, the elements' qi harm), `SpellAura`
+and `SpellAuras` (wards and auras, synced), `FireSpells`, `WoodSpells`, `EarthSpells`, `WaterSpells`, `MetalSpells`, the spell
+entities `SpellProjectile`, `SpellField`, `SpellBlock`, `EarthGolem`, `DirtTide`, and `SpellFx` (passing moments); client
+`SpellRender`, `SpellModels`, `SpellProjectileRenderer`, `SpellFieldRenderer`, `SpellBlockRenderer`, `SpellAuraLayer`,
+`SpellAuraWorld`, `ClientSpellFx`, `HeavenLangText` (the methods' and spells' English). Tests: `HeavenMethodsGameTests`,
+`ElementSpellsGameTests`.
 
 ## The Inner Realm
 
@@ -672,7 +802,7 @@ the day the soul forms, and the ability goes into the first empty slot of your w
   much again while possessing (so clothing, pills and the Upper Realm's dense qi all help; there it costs nothing net).
   A Nascent Soul Early pool lasts about a minute at the tether's end. **Run dry and the soul snaps home at once** (no 5 s,
   no penalty). Taking hold of a body costs 10% of your pool on top.
-- **What a soul can't do**: touch anything. No blocks, chests, items (it picks nothing up and drops nothing), plates or
+- **What a soul can't do**: touch anything (save a seized body's own things, below). No blocks, chests, items (it picks nothing up and drops nothing), plates or
   tripwires; no meditating, no Inner Realm, no breakthroughs or tribulations (and you can't send the soul out during one),
   no portals, rift or Spatial Gap; no Qi Flight, Sword Flight or Realm Suppress. Qi Sense is forced open: it is how a nascent
   soul sees. Blasts, fire, lava, falls, drowning, suffocation, arrows and monsters can't harm it.
@@ -721,8 +851,13 @@ Not bosses, Wardens, mounts, named creatures, or another player's pets. Whatever
 your hand (a possessed sect member walked into lava counts as murdered, not replaced). A possessed cultivator talks to no
 one, and breaks off any talk it was in.
 **A player's body is seized** instead (only where PvP is on): they die, and a body in their likeness takes their place with
-their realm's strength and all they carried (unless items are kept on death). You control that body until you let it go,
-when it collapses and everything it carried falls where it stands.
+their realm's strength and all they carried (unless items are kept on death). It walks as they walked (their speed, as a
+player's own keys give it). Inside it, **your inventory key opens the body's inventory** (as a horse's rider opens the horse's;
+`VesselMenu`): its armour, its off hand and the hand it fights with along the top, everything else it carried in five rows of
+nine below. Move things about, put armour on and take a weapon in hand (its blows are the weapon's); throw something out (or
+drop it outside the screen) and it falls from the body. Nothing passes between it and your own things (no hotbar or off-hand
+swap keys; what's on the cursor when you close it goes back into its pack). You control that body until you let it go, when
+it collapses and everything it carried falls where it stands.
 
 **NPCs.** Cultivators of Nascent Soul and above sense souls as players do; below that a soul isn't there for them at all.
 Sect members who sense one go for a soul that comes onto their grounds, Nascent Souls striking for less, as players do.
@@ -736,6 +871,64 @@ tether's pull, striking tethers), `SoulRenderer.java` with core shader `shaders/
 keeps its colour under Qi Sense), `SoulHud.java`, `SoulBodyRenderer` / `SoulVesselRenderer`, client mixins `SoulFlightMixin`,
 `SoulInputMixin`, `SoulRenderDispatcherMixin`; tests in `SoulProjectionGameTests`. Shader packs that replace core shaders
 (Iris) fall back to a plain violet translucent soul.
+
+## Golden Core Detonation
+
+From **Core Formation**, the living have a last resort on the ability wheel: detonating the golden core. Used once, the core
+only trembles and you are warned; used again within 5 seconds (but not in the same half second: a double click is ignored),
+it breaks (everyone on the server is told), swells for 3 seconds
+while you can barely move, and bursts. Everything living within its reach (10 blocks at Core Formation, 16 at Nascent Soul,
+22 at Heavenly Being, 28 at Four Axis, a tenth more for each stage) takes its harm: at the heart 1.1 times the whole health of a
+body of your own stage, falling off with distance to nothing at the edge; for every realm a victim stands below you the harm
+grows by the whole of it again, and for every realm above it is 0.3 times as much. It is an explosion, so armour and Blast
+Protection turn some of it: a cultivator of your own realm in good armour may live through it, anything weaker near the heart
+won't. The ground at its heart is blown away (what a spell may carve, nothing dropped). **You die** (nothing saves you, a totem
+neither), and the core is lost: you return at **Foundation Building Grand Perfection**, your heaven methods understood no deeper
+than that. Leaving the game while it breaks doesn't escape it. A creative player's core bursts without the death. Code:
+`CoreDetonation`.
+
+## The Spatial Gap, the Spatial Tear and floating meditation
+
+**The Spatial Tear.** From **Heavenly Being**, the living can tear space open (on the ability wheel) and step into the Spatial
+Gap from the Overworld or the Upper Realm, for a quarter of their qi pool, and tear their way out again for a tenth (5 seconds
+between tears). In the gap by your own tear there is no timer and no current: you **fly** on qi (Qi Flight, Sword Flight; elytra
+don't open there),
+and **a block crossed there is 20 in the world**, both ways: you step in at a twentieth of where you stood and out at twenty
+times where you are. The action bar shows where the world lies beneath you and how far the crossing (or the floor) is. Spatial
+pressure still presses: **2.5 a second in the shallows** (where you come in at Y 128, between Y 60 and Y 200), the trial's full
+**4.15** in the stormy layers above and below them. **Tearing out only ever leads back to the realm you tore in from**; to pass
+from one realm to the other you go **up or down**. Rise through the **upper layers** past **Y 360** and you are through, into
+the Upper Realm, where the gap's place there lies (the arrival finds an island). Sink through the **lower layers** (under Y 60)
+below **Y 12** and you fall out of the gap into the Overworld's sky (the first landing harmless); the gap is thick there, and
+nothing sinks through it faster than 4 blocks a second (falling or flying down; about as fast as Qi Flight climbs), so the 48
+blocks take 12 seconds: some 50 harm, before the storms. The trials still run as before: the rift at the Overworld's 0, 0
+carries anyone up for 60 seconds to the Upper Realm, and falling off the Upper Realm drops one through the gap to the
+Overworld; a Heavenly Being can tear out of either, back to the realm it set out from (the Overworld from the climb, the Upper
+Realm from the fall), at the world's own scale there, since a trial's gap lies over the place it began.
+
+**Arriving without a lag spike.** Coming out where nobody has been means generating the land there, and the server used to
+do it on its own thread while everyone waited (an arrival in the Upper Realm could generate some 49 chunks of open sky looking
+for an island). Now nothing waits on new land:
+- **The island is found by numbers.** The Upper Realm's island masks (four noise samples a point) say where islands lie
+  within 160 blocks of where you come out, and the generator's own heights confirm the nearest; no land is generated to look.
+- **The land is loaded ahead.** Within 40 blocks of the crossing, or 20 of the floor, the land you're heading for is asked
+  for, and generated on the world-generation threads while you climb or sink the rest of the way. The ascent trial's landing
+  is asked for 10 seconds before the climb ends.
+- **A short hold if it isn't ready.** Tearing out (or crossing) to land that hasn't loaded yet, you're held hovering where
+  the tear opened while "space settles", for at most 5 seconds: no pressure and no storms meanwhile. Then you step out.
+  Arriving reads only loaded land: if the Overworld's ground isn't loaded by then, you come down from its sky instead,
+  the landing protected.
+
+**Storms spread through the gap.** The physical storms (their lightning a tribulation strike) now gather all round everyone in
+the gap, not only one ahead of a climb: one carried by a trial meets about two ahead along the way (spread wider to the sides),
+and one flying by their own tear has two round them in the shallows and five in the upper layers they must rise through (or the
+lower ones they must sink through), most of them gathering in the stormy layer nearer them.
+
+**Floating meditation.** From **Core Formation**, the living float as they meditate, as the dead always have: rising gently
+once seated, a little off the ground, bobbing; NPC cultivators of those realms too.
+
+Code: `SpatialTrialHandler` (the routes, `tear`, `homeRealm`, travel, the hold), `SpatialArrivals` (island by numbers, land asked for ahead), `SpatialStorms`, `QiFlight`, client `GapSinkMixin`; `MeditationManager#floats`, client
+`ClientMeditationTracker#hover`; tests `CoreAndGapGameTests` (the game-test server has no gap, so travel itself was checked in game).
 
 ## The Netherworld
 

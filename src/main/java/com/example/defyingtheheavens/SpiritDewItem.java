@@ -28,7 +28,7 @@ public class SpiritDewItem extends Item {
 
     /** Why it would be wasted right now, or null. */
     private static Component refusal(PlayerCultivation c) {
-        if (c.isMortal()) return c.isMortalPeak() ? Component.translatable(ModLang.MSG_TEMPER_FULL) : null;
+        if (c.isMortal()) return !c.canTemper() ? Component.translatable(ModLang.MSG_TEMPER_FULL) : null;
         if (c.getQi() >= c.maxQi()) return Component.translatable(ModLang.MSG_DEW_FULL);
         return null;
     }
@@ -59,9 +59,10 @@ public class SpiritDewItem extends Item {
         }
         if (c.isMortal()) {
             MortalStage was = c.getMortalStage();
+            int wasRefined = c.getBodyRefining();
             if (!Tempering.gain(player, Tempering.SPIRIT_DEW)) return stack;
             level.playSound(null, player.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 0.8f, 1.5f);
-            if (c.getMortalStage() == was) { // a new stage has its own message
+            if (c.getMortalStage() == was && c.getBodyRefining() == wasRefined) { // a new stage has its own message
                 player.displayClientMessage(Component.translatable(ModLang.MSG_HERB_EATEN, Math.round(Tempering.SPIRIT_DEW)), true);
             }
             if (!player.getAbilities().instabuild) stack.shrink(1);

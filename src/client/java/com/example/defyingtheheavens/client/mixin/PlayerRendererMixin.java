@@ -28,4 +28,12 @@ public abstract class PlayerRendererMixin {
 		SoulRenderer.drawGhostArm(pose, buffers, player.getSkinTextureLocation(), arm, sleeve, light);
 		ci.cancel();
 	}
+
+	/** The spells' auras on your own arm in first person (SpellAuraLayer#firstPersonArm): Flame Fist's fire, a ward's skin. */
+	@Inject(method = "renderHand", at = @At("TAIL"))
+	private void dth$spellAurasOnHand(PoseStack pose, MultiBufferSource buffers, int light, AbstractClientPlayer player, ModelPart arm,
+									  ModelPart sleeve, CallbackInfo ci) {
+		boolean right = arm == ((PlayerRenderer) (Object) this).getModel().rightArm;
+		com.example.defyingtheheavens.client.SpellAuraLayer.firstPersonArm(pose, buffers, player, arm, sleeve, light, right);
+	}
 }

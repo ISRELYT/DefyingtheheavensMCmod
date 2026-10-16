@@ -23,6 +23,8 @@ public final class ModItems {
 			new RingOfPowerItem(new Item.Properties().rarity(Rarity.EPIC)));
 	public static final Item RING_OF_TRANSCENDENCE = register("ring_of_transcendence",
 			new RingOfTranscendenceItem(new Item.Properties().rarity(Rarity.EPIC)));
+	/** A space folded into a ring, refined grade by grade until it holds without end (see StorageRingItem, StorageRings). */
+	public static final Item STORAGE_RING = register("storage_ring", new StorageRingItem(new Item.Properties().rarity(Rarity.UNCOMMON).fireResistant()));
 
 	/** Harvested ginseng roots: ingredients for alchemy, keeping their age (see GinsengItem). */
 	public static final Item GINSENG = register("ginseng", new GinsengItem(new Item.Properties()));

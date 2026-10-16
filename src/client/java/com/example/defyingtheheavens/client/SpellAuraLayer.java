@@ -1,0 +1,198 @@
+package com.example.defyingtheheavens.client;
+
+import com.example.defyingtheheavens.SpellAura;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.model.geom.ModelLayers;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.RenderLayerParent;
+import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
+
+/**
+ * The spell auras that clothe a body (on everything drawn with a humanoid model: players, cultivators): a skin over it of the ward's
+ * stuff (Hardened Body's thin stone, Azure Coating's water, Ancient Bark Skin, Mountain Stance's slabs, Vajra Body's gold, Emerald
+ * Healing's green shimmer, Crimson Tempering's ember veins), Flame Armour's armour of living flame with its crest and shoulder fires,
+ * and Flame Fist's fire round both fists. Each grows in as it is cast and fades as it ends.
+ */
+public class SpellAuraLayer<T extends LivingEntity, M extends HumanoidModel<T>> extends RenderLayer<T, M> {
+	private static final float[] WHITE = {1, 1, 1};
+	private static final float[] FIRE_MID = {1.0f, 0.55f, 0.15f}, FIRE_CORE = {1.0f, 0.92f, 0.65f};
+	private final HumanoidModel<T> thin, thick;
+
+	public SpellAuraLayer(RenderLayerParent<T, M> parent, EntityRendererProvider.Context context) {
+		super(parent);
+		this.thin = new HumanoidModel<>(context.bakeLayer(ModelLayers.PLAYER_INNER_ARMOR));
+		this.thick = new HumanoidModel<>(context.bakeLayer(ModelLayers.PLAYER_OUTER_ARMOR));
+	}
+
+	@Override
+	public void render(PoseStack pose, MultiBufferSource buffers, int light, T entity, float walk, float walkSpeed, float partial, float age, float headYaw,
+					   float headPitch) {
+		if (!ClientSpellAuras.any(entity) || entity.isInvisible()) return;
+		M parent = getParentModel();
+		float hardened = ClientSpellAuras.shown(entity, SpellAura.HARDENED_BODY, partial, 10, 20);
+		if (hardened > 0) skin(pose, buffers, thin, SpellRender.clearLit(SpellRender.STONE_SHELL), new float[]{0.95f, 0.85f, 0.72f}, 0.55f * hardened, light);
+		float coating = ClientSpellAuras.shown(entity, SpellAura.AZURE_COATING, partial, 8, 20);
+		if (coating > 0) {
+			float[] fv = SpellRender.frame(age, 0.5f, SpellRender.WATER_FRAMES);
+			skin(pose, buffers, thin, RenderType.energySwirl(SpellRender.WATER, 0, fv[0] + age * 0.002f), new float[]{0.55f, 0.75f, 1.0f}, 0.65f * coating,
+					SpellRender.FULL_BRIGHT);
+		}
+		float emerald = ClientSpellAuras.shown(entity, SpellAura.EMERALD_HEALING, partial, 8, 20);
+		if (emerald > 0) {
+			float pulse = 0.25f + 0.1f * Mth.sin(age * 0.2f);
+			skin(pose, buffers, thin, RenderType.energySwirl(SpellRender.WATER, age * 0.004f, age * 0.006f), new float[]{0.3f, 1.0f, 0.4f}, pulse * emerald,
+					SpellRender.FULL_BRIGHT);
+		}
+		float tempering = ClientSpellAuras.shown(entity, SpellAura.CRIMSON_TEMPERING, partial, 10, 30);
+		if (tempering > 0) {
+			float pulse = 0.7f + 0.3f * Mth.sin(age * 0.25f);
+			skin(pose, buffers, parent, SpellRender.glow(SpellRender.VEINS), new float[]{1.0f, 0.5f, 0.25f}, pulse * tempering, SpellRender.FULL_BRIGHT);
+		}
+		float bark = ClientSpellAuras.shown(entity, SpellAura.ANCIENT_BARK_SKIN, partial, 12, 20);
+		if (bark > 0) skin(pose, buffers, thin, SpellRender.clearLit(SpellRender.BARK), WHITE, 0.92f * bark, light);
+		float stance = ClientSpellAuras.shown(entity, SpellAura.MOUNTAIN_STANCE, partial, 10, 20);
+		if (stance > 0) skin(pose, buffers, thick, SpellRender.clearLit(SpellRender.STONE_SHELL), new float[]{0.8f, 0.75f, 0.7f}, 0.95f * stance, light);
+		float vajra = ClientSpellAuras.shown(entity, SpellAura.VAJRA_BODY, partial, 10, 20);
+		if (vajra > 0) {
+			skin(pose, buffers, thin, SpellRender.clearLit(SpellRender.GOLD), WHITE, 0.7f * vajra, SpellRender.FULL_BRIGHT);
+			skin(pose, buffers, thin, RenderType.energySwirl(SpellRender.GOLD, age * 0.02f, 0), new float[]{1.0f, 0.9f, 0.5f}, 0.4f * vajra, SpellRender.FULL_BRIGHT);
+		}
+		float armour = ClientSpellAuras.shown(entity, SpellAura.FLAME_ARMOUR, partial, 10, 20);
+		if (armour > 0) flameArmour(pose, buffers, parent, age, armour);
+		float fist = ClientSpellAuras.shown(entity, SpellAura.FLAME_FIST, partial, 6, 20);
+		if (fist > 0) {
+			fists(pose, buffers, parent.rightArm, -1, age, fist);
+			fists(pose, buffers, parent.leftArm, 1, age + 7, fist);
+		}
+	}
+
+	/** A skin over the whole body in {@code type}, posed as the body. */
+	private void skin(PoseStack pose, MultiBufferSource buffers, HumanoidModel<T> shell, RenderType type, float[] rgb, float alpha, int light) {
+		if (shell != getParentModel()) getParentModel().copyPropertiesTo(shell);
+		shell.setAllVisible(true);
+		shell.hat.visible = false;
+		VertexConsumer vc = buffers.getBuffer(type);
+		shell.renderToBuffer(pose, vc, light, OverlayTexture.NO_OVERLAY, rgb[0], rgb[1], rgb[2], alpha);
+	}
+
+	/**
+	 * Flame Armour: an armour of living flame over the body (the thick shell, in moving flame), a crest of three tongues over the helm,
+	 * fire leaping from the shoulders and burning down the forearms and shins.
+	 */
+	private void flameArmour(PoseStack pose, MultiBufferSource buffers, M parent, float age, float shown) {
+		float[] fv = SpellRender.frame(age, 0.5f, SpellRender.FLAME_FRAMES);
+		parent.copyPropertiesTo(thick);
+		thick.setAllVisible(true);
+		thick.hat.visible = false;
+		thick.renderToBuffer(pose, buffers.getBuffer(RenderType.energySwirl(SpellRender.FLAME, age * 0.01f, fv[0])), SpellRender.FULL_BRIGHT, OverlayTexture.NO_OVERLAY,
+				1.0f, 0.6f, 0.25f, 0.9f * shown);
+		VertexConsumer flames = buffers.getBuffer(SpellRender.glow(SpellRender.FLAME));
+		// The helm's crest and horns.
+		tongues(pose, flames, parent.head, new Vector3f(0, -9.5f, -1), 0.32f, 0.7f, age, shown, 3);
+		tongues(pose, flames, parent.head, new Vector3f(-3.5f, -8.5f, -2), 0.22f, 0.45f, age + 5, shown, 2);
+		tongues(pose, flames, parent.head, new Vector3f(3.5f, -8.5f, -2), 0.22f, 0.45f, age + 9, shown, 2);
+		// Shoulders, forearms, the back, the shins.
+		tongues(pose, flames, parent.rightArm, new Vector3f(-1, -2, 0), 0.4f, 0.55f, age + 3, shown, 3);
+		tongues(pose, flames, parent.leftArm, new Vector3f(1, -2, 0), 0.4f, 0.55f, age + 11, shown, 3);
+		tongues(pose, flames, parent.rightArm, new Vector3f(-1, 7, 0), 0.3f, 0.4f, age + 6, shown, 2);
+		tongues(pose, flames, parent.leftArm, new Vector3f(1, 7, 0), 0.3f, 0.4f, age + 14, shown, 2);
+		tongues(pose, flames, parent.body, new Vector3f(0, 4, 3), 0.5f, 0.6f, age + 2, shown, 3);
+		tongues(pose, flames, parent.rightLeg, new Vector3f(0, 8, -1), 0.3f, 0.4f, age + 8, shown, 2);
+		tongues(pose, flames, parent.leftLeg, new Vector3f(0, 8, -1), 0.3f, 0.4f, age + 13, shown, 2);
+	}
+
+	/** Flame Fist: fire wreathing the fist at the end of {@code arm}, a bright glow in it, tongues licking up from it. */
+	private void fists(PoseStack pose, MultiBufferSource buffers, ModelPart arm, int side, float age, float shown) {
+		VertexConsumer flames = buffers.getBuffer(SpellRender.glow(SpellRender.FLAME));
+		tongues(pose, flames, arm, new Vector3f(side * 0.5f, 9.5f, 0), 0.42f, 0.6f, age, shown, 4);
+		VertexConsumer glow = buffers.getBuffer(SpellRender.glow(SpellRender.GLOW));
+		Vector3f hand = at(arm, new Vector3f(side * 0.5f, 10, 0));
+		crossed(pose, glow, hand, 0.6f, 0.6f, 0.3f, FIRE_MID, 0.6f * shown, 0, 0, 1, 1);
+	}
+
+	/**
+	 * {@code count} tongues of flame rising (always upward) from the point {@code local} of {@code part} (its pixels), {@code width}
+	 * wide and {@code height} tall (blocks), each flickering on its own.
+	 */
+	private static void tongues(PoseStack pose, VertexConsumer vc, ModelPart part, Vector3f local, float width, float height, float age, float shown, int count) {
+		Vector3f at = at(part, local);
+		for (int i = 0; i < count; i++) {
+			float jitterX = (SpellRender.hash(i * 7L + (long) local.y) - 0.5f) * width * 0.6f;
+			float jitterZ = (SpellRender.hash(i * 13L + (long) local.x) - 0.5f) * width * 0.6f;
+			float tall = height * (0.75f + 0.35f * Mth.sin(age * 0.4f + i * 2.1f)) * shown;
+			float[] fv = SpellRender.frame(age + i * 3, 0.5f, SpellRender.FLAME_FRAMES);
+			Vector3f base = new Vector3f(at.x + jitterX, at.y + 0.08f, at.z + jitterZ);
+			crossed(pose, vc, base, width * shown, tall, 0, i % 2 == 0 ? FIRE_MID : FIRE_CORE, 0.95f * shown, 0, fv[0], 1, fv[1]);
+		}
+	}
+
+	/** Where {@code local} (a part's own pixels) is in the model's space (blocks, y down): through the part's pivot and turn. */
+	private static Vector3f at(ModelPart part, Vector3f local) {
+		Vector3f p = new Vector3f(local).div(16);
+		new Quaternionf().rotationZYX(part.zRot, part.yRot, part.xRot).transform(p);
+		return p.add(part.x / 16, part.y / 16, part.z / 16);
+	}
+
+	/**
+	 * Two upright quads crossed at right angles (three, turned 60 degrees apart, for {@code spread} > 0) standing on {@code base} in
+	 * model space (up is -y there), {@code width} wide and {@code height} tall: a flame seen from any side.
+	 */
+	private static void crossed(PoseStack pose, VertexConsumer vc, Vector3f base, float width, float height, float spread, float[] rgb, float alpha,
+								float u0, float v0, float u1, float v1) {
+		PoseStack.Pose p = pose.last();
+		int planes = 3;
+		for (int k = 0; k < planes; k++) {
+			double a = Math.PI * k / planes;
+			float dx = (float) Math.cos(a) * width / 2, dz = (float) Math.sin(a) * width / 2;
+			float yb = base.y + (spread > 0 ? height / 2 : 0), yt = base.y - height + (spread > 0 ? height / 2 : 0);
+			SpellRender.vertex(vc, p, base.x - dx, yb, base.z - dz, rgb[0], rgb[1], rgb[2], alpha, u0, v1, SpellRender.FULL_BRIGHT, 0, 0, 1);
+			SpellRender.vertex(vc, p, base.x + dx, yb, base.z + dz, rgb[0], rgb[1], rgb[2], alpha, u1, v1, SpellRender.FULL_BRIGHT, 0, 0, 1);
+			SpellRender.vertex(vc, p, base.x + dx, yt, base.z + dz, rgb[0], rgb[1], rgb[2], alpha, u1, v0, SpellRender.FULL_BRIGHT, 0, 0, 1);
+			SpellRender.vertex(vc, p, base.x - dx, yt, base.z - dz, rgb[0], rgb[1], rgb[2], alpha, u0, v0, SpellRender.FULL_BRIGHT, 0, 0, 1);
+		}
+	}
+
+	/**
+	 * First person: the auras on the player's own arm (PlayerRendererMixin): Flame Fist's fire round the fist, and the skins of the
+	 * wards (the arm drawn again in them).
+	 */
+	public static void firstPersonArm(PoseStack pose, MultiBufferSource buffers, LivingEntity player, ModelPart arm, ModelPart sleeve, int light, boolean right) {
+		if (!ClientSpellAuras.any(player)) return;
+		float partial = net.minecraft.client.Minecraft.getInstance().getFrameTime();
+		float age = player.tickCount + partial;
+		float coating = ClientSpellAuras.shown(player, SpellAura.AZURE_COATING, partial, 8, 20);
+		if (coating > 0) armSkin(pose, buffers, arm, RenderType.energySwirl(SpellRender.WATER, 0, age * 0.01f), new float[]{0.55f, 0.75f, 1.0f}, 0.6f * coating);
+		float tempering = ClientSpellAuras.shown(player, SpellAura.CRIMSON_TEMPERING, partial, 10, 30);
+		if (tempering > 0) armSkin(pose, buffers, arm, SpellRender.glow(SpellRender.VEINS), new float[]{1.0f, 0.5f, 0.25f}, tempering);
+		float hardened = ClientSpellAuras.shown(player, SpellAura.HARDENED_BODY, partial, 10, 20);
+		if (hardened > 0) armSkin(pose, buffers, arm, SpellRender.clearLit(SpellRender.STONE_SHELL), new float[]{0.95f, 0.85f, 0.72f}, 0.55f * hardened);
+		float vajra = ClientSpellAuras.shown(player, SpellAura.VAJRA_BODY, partial, 10, 20);
+		if (vajra > 0) armSkin(pose, buffers, arm, SpellRender.clearLit(SpellRender.GOLD), WHITE, 0.7f * vajra);
+		float bark = ClientSpellAuras.shown(player, SpellAura.ANCIENT_BARK_SKIN, partial, 12, 20);
+		if (bark > 0) armSkin(pose, buffers, arm, SpellRender.clearLit(SpellRender.BARK), WHITE, 0.92f * bark);
+		float fist = Math.max(ClientSpellAuras.shown(player, SpellAura.FLAME_FIST, partial, 6, 20), ClientSpellAuras.shown(player, SpellAura.FLAME_ARMOUR, partial, 10, 20));
+		if (fist > 0) {
+			VertexConsumer flames = buffers.getBuffer(SpellRender.glow(SpellRender.FLAME));
+			tongues(pose, flames, arm, new Vector3f(right ? -0.5f : 0.5f, 9.5f, 0), 0.4f, 0.55f, age, fist, 4);
+			VertexConsumer glow = buffers.getBuffer(SpellRender.glow(SpellRender.GLOW));
+			crossed(pose, glow, at(arm, new Vector3f(right ? -0.5f : 0.5f, 10, 0)), 0.6f, 0.6f, 0.3f, FIRE_MID, 0.6f * fist, 0, 0, 1, 1);
+		}
+	}
+
+	private static void armSkin(PoseStack pose, MultiBufferSource buffers, ModelPart arm, RenderType type, float[] rgb, float alpha) {
+		pose.pushPose();
+		pose.scale(1.06f, 1.02f, 1.06f);
+		arm.render(pose, buffers.getBuffer(type), SpellRender.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, rgb[0], rgb[1], rgb[2], alpha);
+		pose.popPose();
+	}
+}

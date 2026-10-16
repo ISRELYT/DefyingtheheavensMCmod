@@ -35,7 +35,7 @@ public class GinsengItem extends Item {
         ItemStack stack = player.getItemInHand(hand);
         PlayerCultivation c = CultivationManager.forPlayer(player);
         if (!c.isMortal()) return InteractionResultHolder.pass(stack);
-        if (c.isMortalPeak()) {
+        if (!c.canTemper()) { // Peak, or the last body refining of shattered meridians
             if (!level.isClientSide) player.displayClientMessage(Component.translatable(ModLang.MSG_TEMPER_FULL), true);
             return InteractionResultHolder.fail(stack);
         }
@@ -51,10 +51,11 @@ public class GinsengItem extends Item {
         if (!(entity instanceof ServerPlayer player)) return stack;
         PlayerCultivation c = CultivationManager.get(player);
         MortalStage was = c.getMortalStage();
+        int wasRefined = c.getBodyRefining();
         double amount = Tempering.herb(stack);
         if (!Tempering.gain(player, amount)) return stack;
         level.playSound(null, player.blockPosition(), SoundEvents.GENERIC_EAT, SoundSource.PLAYERS, 0.8f, 1.0f);
-        if (c.getMortalStage() == was) player.displayClientMessage(Component.translatable(ModLang.MSG_HERB_EATEN, Math.round(amount)), true);
+        if (c.getMortalStage() == was && c.getBodyRefining() == wasRefined) player.displayClientMessage(Component.translatable(ModLang.MSG_HERB_EATEN, Math.round(amount)), true);
         if (!player.getAbilities().instabuild) stack.shrink(1);
         return stack;
     }

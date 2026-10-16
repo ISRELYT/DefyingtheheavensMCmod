@@ -871,11 +871,13 @@ public final class SoulProjection {
 	 * own pace, as fast as its own legs carry it when it runs at something, and no faster on the diagonal. A mob walking of its
 	 * own accord steps by its speed itself (Mob#setSpeed sets its forward input to it), so its speed tells twice in how fast it
 	 * goes; the soul's keys are scaled by it the same way. Unscaled, as a horse's rider gets the whole speed from a full key, a
-	 * spider ran three times as fast as any spider can.
+	 * spider ran three times as fast as any spider can. A seized player's body (SoulVesselEntity) walks as a player does: its keys
+	 * as they are, its speed (a player's) told once; scaled like a mob's, it crawled at a tenth of a walk.
 	 */
 	public static Vec3 hostStep(LivingEntity host, float strafe, float forward) {
 		Vec3 keys = new Vec3(strafe, 0, forward);
 		if (keys.lengthSqr() > 1) keys = keys.normalize();
+		if (host instanceof SoulVesselEntity) return keys;
 		return keys.scale(host.getAttributeValue(Attributes.MOVEMENT_SPEED));
 	}
 

@@ -90,9 +90,20 @@ public class PillItem extends Item {
 		return stack;
 	}
 
-	/** 1 (Low grade, fresh ingredients) to 10 (Immortal grade, 10,000-year ingredients). */
+	/**
+	 * 1 (Low grade, fresh ingredients) to 10 (Immortal grade, 10,000-year ingredients); twice that brewed by an Innate Alchemy Body
+	 * ({@link #ALCHEMY_BODY_TAG}).
+	 */
 	public static double potency(ItemStack stack) {
-		return grade(stack).potency(age(stack));
+		return grade(stack).potency(age(stack)) * (byAlchemyBody(stack) ? ALCHEMY_BODY_FACTOR : 1.0);
+	}
+
+	/** Set on a pill brewed by one born with an Innate Alchemy Body (Physique): it works {@link #ALCHEMY_BODY_FACTOR} times as strongly. */
+	public static final String ALCHEMY_BODY_TAG = "AlchemyBody";
+	public static final double ALCHEMY_BODY_FACTOR = 2.0;
+
+	public static boolean byAlchemyBody(ItemStack stack) {
+		return stack.hasTag() && stack.getTag().getBoolean(ALCHEMY_BODY_TAG);
 	}
 
 	public static double headStart(ItemStack stack) {
@@ -139,6 +150,7 @@ public class PillItem extends Item {
 		switch (kind) {
 			case MARROW_CLEANSING:
 				if (!c.isMortal()) return Component.translatable(ModLang.MSG_ALREADY_AWAKENED);
+				if (c.hasShatteredMeridians()) return Component.translatable(ModLang.MSG_PHYSIQUE_SHATTERED); // nothing to open
 				return c.isMortalPeak() ? null : Component.translatable(ModLang.MSG_ELIXIR_TOO_WEAK);
 			case FOUNDATION:
 			case CORE: {
@@ -289,6 +301,7 @@ public class PillItem extends Item {
 	@Override
 	public void appendHoverText(ItemStack stack, Level level, List<Component> lines, TooltipFlag flag) {
 		Tooltips.add(lines, Component.translatable(ModLang.PILL_AGE, age(stack)).withStyle(ChatFormatting.GOLD));
+		if (byAlchemyBody(stack)) Tooltips.add(lines, Component.translatable(ModLang.PILL_ALCHEMY_BODY).withStyle(ChatFormatting.LIGHT_PURPLE));
 		switch (kind) {
 			case MARROW_CLEANSING -> {
 				Tooltips.add(lines, Component.translatable(ModLang.PILL_EFFECT_AWAKEN).withStyle(ChatFormatting.GREEN));

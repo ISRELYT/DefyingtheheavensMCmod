@@ -1,5 +1,6 @@
 package com.example.defyingtheheavens.client.mixin;
 
+import com.example.defyingtheheavens.client.ClientMeditationTracker;
 import com.example.defyingtheheavens.client.SwordFlightClient;
 import com.example.defyingtheheavens.client.SwordStance;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -21,6 +22,9 @@ public abstract class LivingEntityRendererMixin {
 	@Inject(method = "setupRotations", at = @At("TAIL"))
 	private void dth$sidewaysOnTheSword(LivingEntity entity, PoseStack poseStack, float bob, float bodyYaw, float partialTick,
 										CallbackInfo ci) {
+		// From Core Formation the living float as they meditate, as the dead do (ClientMeditationTracker#hover).
+		float hover = ClientMeditationTracker.hover(entity, partialTick);
+		if (hover != 0) poseStack.translate(0, hover, 0);
 		if (!SwordFlightClient.isRiding(entity)) return;
 		float turn = SwordStance.TURN_DEGREES + SwordFlightClient.bodyOffset(entity, partialTick);
 		poseStack.mulPose(Axis.YP.rotationDegrees(turn));

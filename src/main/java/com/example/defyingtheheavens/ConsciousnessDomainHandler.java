@@ -56,6 +56,7 @@ public final class ConsciousnessDomainHandler {
 
 	/** A player's domain, from their effective stage: a stronger cultivator's pressure narrows it. */
 	public static double radius(PlayerCultivation c) {
+		if (c.physique() == Physique.INNATE_CONSCIOUSNESS_BODY) return MAX_RADIUS; // a Four Axis cultivator's from the first day (Physique)
 		return radius(c.getEffectiveRealm(), c.getEffectiveStage());
 	}
 

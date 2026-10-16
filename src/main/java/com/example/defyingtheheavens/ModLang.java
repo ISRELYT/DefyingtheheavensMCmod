@@ -554,9 +554,80 @@ public final class ModLang {
 	public static final String JOURNAL_HEAVEN_METHOD_TEXT = k("journal.heaven_method.text");
 	public static final String MSG_SPELL_NO_HEAVEN_QI = k("message.spell.no_heaven_qi");
 	public static final String MSG_SPELL_NO_HOLD = k("message.spell.no_hold");
-	public static final String MSG_SPRING_DRY = k("message.spell.spring_dry");
-	public static final String MSG_NO_REFLECTION = k("message.spell.no_reflection");
-	public static final String MSG_NO_SKY = k("message.spell.no_sky");
+	// The element spells' own words (FireSpells to MetalSpells)
+	public static final String MSG_YANG_BOMB_SET = k("message.spell.yang_bomb_set");
+	public static final String MSG_YANG_BOMB_FAR = k("message.spell.yang_bomb_far");
+	public static final String MSG_YANG_BOMB_GONE = k("message.spell.yang_bomb_gone");
+	public static final String MSG_NO_EARTH = k("message.spell.no_earth");
+	public static final String MSG_ORES_FOUND = k("message.spell.ores_found");
+	public static final String MSG_NO_ORES = k("message.spell.no_ores");
+	public static final String MSG_PHOENIX_REBORN = k("message.spell.phoenix_reborn");
+	/** Life Force Drain or Gain refused: a sealed treasury's herb; a whole stack held rather than one. */
+	public static final String MSG_LIFE_SEALED = k("message.spell.life_sealed");
+	public static final String MSG_LIFE_HOLD_ONE = k("message.spell.life_hold_one");
+	// The body one is born with (Physique) and the body refining of shattered meridians (BodyRefining)
+	/** A physique's name; with ".description" what it does. */
+	public static String physiqueKey(String id) { return "physique." + DefyingTheHeavens.MOD_ID + "." + id; }
+	public static String physiqueGradeKey(String id) { return "physique_grade." + DefyingTheHeavens.MOD_ID + "." + id; }
+	public static String bodyRefiningKey(String id) { return "body_refining." + DefyingTheHeavens.MOD_ID + "." + id; }
+	/** The roll on a first join: the physique, its grade; and the roots' elements where it has any. */
+	public static final String MSG_PHYSIQUE_BORN = k("message.physique.born");
+	public static final String MSG_PHYSIQUE_ROOTS = k("message.physique.roots");
+	/** A heaven method of an element one's roots won't take. */
+	public static final String MSG_PHYSIQUE_WRONG_ELEMENT = k("message.physique.wrong_element");
+	/** Shattered meridians: a breakthrough or a cultivation elixir refused; a body refining stage reached. */
+	public static final String MSG_PHYSIQUE_SHATTERED = k("message.physique.shattered");
+	public static final String MSG_BODY_REFINED = k("message.physique.body_refined");
+	public static final String MSG_THUNDER_ABSORBED = k("message.physique.thunder_absorbed");
+	public static final String JOURNAL_PHYSIQUE = k("journal.physique");
+	public static final String JOURNAL_PHYSIQUE_TEXT = k("journal.physique.text");
+	public static final String STATS_PHYSIQUE = k("stats.physique");
+	public static final String STATS_ROOTS = k("stats.roots");
+	public static final String STATS_BODY_REFINING = k("stats.body_refining");
+	public static final String CMD_PHYSIQUE_GET = k("command.physique.get");
+	public static final String CMD_PHYSIQUE_SET = k("command.physique.set");
+	public static final String CMD_PHYSIQUE_UNKNOWN = k("command.physique.unknown");
+	/** A pill brewed by an Innate Alchemy Body (PillItem#ALCHEMY_BODY_TAG). */
+	public static final String PILL_ALCHEMY_BODY = k("tooltip.pill.alchemy_body");
+	// The Storage Ring (StorageRingItem, StorageRings) and its screen
+	public static String storageGradeKey(String id) { return "storage_grade." + DefyingTheHeavens.MOD_ID + "." + id; }
+	/** "Storage Ring (Spirit grade)"; the last grade's own name. */
+	public static final String STORAGE_RING_NAME = "item." + DefyingTheHeavens.MOD_ID + ".storage_ring.graded";
+	public static final String STORAGE_RING_BOUNDLESS = "item." + DefyingTheHeavens.MOD_ID + ".storage_ring.boundless";
+	public static final String STORAGE_TOOLTIP_STACKS = k("tooltip.storage_ring.stacks");
+	public static final String STORAGE_TOOLTIP_BOUNDLESS = k("tooltip.storage_ring.boundless");
+	public static final String STORAGE_TOOLTIP_USE = k("tooltip.storage_ring.use");
+	public static final String STORAGE_USED = k("storage_ring.used");
+	public static final String STORAGE_USED_BOUNDLESS = k("storage_ring.used_boundless");
+	public static final String STORAGE_SEARCH = k("storage_ring.search");
+	public static final String STORAGE_EMPTY = k("storage_ring.empty");
+	public static final String STORAGE_REFINE = k("storage_ring.refine");
+	public static final String STORAGE_REFINE_TO = k("storage_ring.refine_to");
+	public static final String STORAGE_REFINE_REALM = k("storage_ring.refine_realm");
+	public static final String STORAGE_REFINE_LAST = k("storage_ring.refine_last");
+	public static final String STORAGE_COUNT = k("storage_ring.count");
+	public static final String MSG_STORAGE_NO_RING = k("message.storage_ring.none");
+	public static final String MSG_STORAGE_LAST_GRADE = k("message.storage_ring.last_grade");
+	public static final String MSG_STORAGE_REALM = k("message.storage_ring.realm");
+	public static final String MSG_STORAGE_COST = k("message.storage_ring.cost");
+	public static final String MSG_STORAGE_REFINED = k("message.storage_ring.refined");
+	public static final String KEY_STORAGE_RING = "key." + DefyingTheHeavens.MOD_ID + ".storage_ring";
+	// Detonating the golden core (CoreDetonation)
+	public static final String MSG_CORE_CONFIRM = k("message.core_detonation.confirm");
+	public static final String MSG_CORE_TOO_LATE = k("message.core_detonation.too_late");
+	public static final String MSG_CORE_BREAKING = k("message.core_detonation.breaking");
+	public static final String DEATH_CORE_DETONATION = "death.attack." + DefyingTheHeavens.MOD_ID + ".core_detonation";
+	// The Spatial Tear and travel through the gap (SpatialTrialHandler#tear)
+	public static final String MSG_GAP_TRAVEL = k("message.spatial_gap.travel");
+	public static final String MSG_GAP_TRAVEL_SHALLOWS = k("message.spatial_gap.travel_shallows");
+	public static final String MSG_GAP_TRAVEL_UPPER = k("message.spatial_gap.travel_upper");
+	public static final String MSG_GAP_TRAVEL_LOWER = k("message.spatial_gap.travel_lower");
+	public static final String MSG_GAP_SETTLING = k("message.spatial_gap.settling");
+	public static final String MSG_TEAR_COOLING = k("message.spatial_tear.cooling");
+	public static final String MSG_TEAR_NOT_HERE = k("message.spatial_tear.not_here");
+	public static final String MSG_TEAR_NO_QI = k("message.spatial_tear.no_qi");
+	public static final String MSG_TEAR_OUT = k("message.spatial_tear.out");
+	public static final String MSG_TEAR_OUT_UPPER = k("message.spatial_tear.out_upper");
 	public static final String MSG_DAO_STELE_TEACHES = k("message.dao_stele.teaches");
 	public static final String MSG_DAO_STELE_KNOWN = k("message.dao_stele.known");
 	public static final String MSG_DAO_STELE_READING = k("message.dao_stele.reading");
@@ -646,6 +717,8 @@ public final class ModLang {
 	public static final String STATS_GHOST_BODY = k("stats.ghost_body");
 	public static final String STATS_HARMONY = k("stats.harmony");
 	public static final String TWO_PATHS_LINE = k("two_paths.line");
+	/** A seized player's body opened by the soul in it (VesselMenu): its title. */
+	public static final String VESSEL_INVENTORY = k("soul.vessel_inventory");
 	/** The Cultivation tab on both paths: the heaven path's line. */
 	public static final String HEAVEN_PATH_LINE = k("two_paths.heaven_line");
 	/**

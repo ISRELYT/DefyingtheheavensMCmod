@@ -99,7 +99,16 @@ public final class TwoPaths {
 		int heaven = heavenRank(c, wielded), ghost = ghostRank(c, wielded);
 		double scale = c.favourFactor() * (1 + harmony(c));
 		int stages = Stage.values().length;
+		// A Ghost Devil Body in its Ghost King's form is held to its ghost path's might, as Realm Suppression holds a realm (Physique).
+		if (c.physique() == Physique.GHOST_DEVIL_BODY && inGhostForm(c)) {
+			int rank = Math.max(0, ghost);
+			return new Body(Realm.byIndex(rank / stages), Stage.byIndex(rank % stages), ghost < 0 ? 0.5 : scale, true, rank);
+		}
 		if (ghost > heaven) return new Body(Realm.byIndex(ghost / stages), Stage.byIndex(ghost % stages), scale, true, ghost);
+		if (heaven < 0 && c.getBodyRefining() > 0) { // shattered meridians' body refining: a cultivator's body, a stage higher for each
+			int rank = BodyRefining.rank(c.getBodyRefining());
+			return new Body(Realm.byIndex(rank / stages), Stage.byIndex(rank % stages), 1.0, false, -1);
+		}
 		if (heaven < 0) return new Body(Realm.QI_REFINING, Stage.EARLY, c.getMortalStage().bodyShare(), false, -1);
 		return new Body(Realm.byIndex(heaven / stages), Stage.byIndex(heaven % stages), scale, false, heaven);
 	}
@@ -199,6 +208,7 @@ public final class TwoPaths {
 
 	/** Whether {@code c}'s ghost path has the Ghost King's form in it: Core Formation, a Ghost King's might (dormant while it is dead). */
 	public static boolean hasKingForm(PlayerCultivation c) {
+		if (c.physique() == Physique.GHOST_DEVIL_BODY && !c.isMortal()) return true; // from birth, as strong as its ghost path (Physique)
 		return ghostRank(c, false) >= GhostSystem.KING_RANK;
 	}
 
@@ -317,6 +327,9 @@ public final class TwoPaths {
 		SEEN.put(p.getUUID(), see(c));
 		GhostSystem.broadcast(p);
 		SoulProjection.refreshTracking(p);
+		// The body follows the form at once (a Ghost Devil Body's Ghost King form is held to its ghost path: TwoPaths#body).
+		CultivationManager.refresh(p);
+		if (p.getHealth() > p.getMaxHealth()) p.setHealth(p.getMaxHealth());
 	}
 
 	public static void forget(UUID id) {

@@ -30,6 +30,8 @@ public final class ModDamageTypes {
 	public static final ResourceKey<DamageType> GHOSTLY = ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("ghostly"));
 	/** The Chief Judge of the Netherworld's gaze (see JudgeEye): tagged as {@link #SOUL_SEVERED}, so nothing holds it off. */
 	public static final ResourceKey<DamageType> JUDGE_GAZE = ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("judge_gaze"));
+	/** A golden core detonated (CoreDetonation): its own cultivator's death, tagged as {@link #SOUL_SEVERED}, so nothing holds it off. */
+	public static final ResourceKey<DamageType> CORE_DETONATION = ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("core_detonation"));
 	/**
 	 * The heaven methods' spells (HeavenSpells): the five elements' qi, one harm each, "qi_wood" to "qi_metal". Tagged to pass
 	 * armour (qi goes through steel), but Protection and Resistance still turn some of it. It reaches the dead as a living blow
@@ -60,6 +62,7 @@ public final class ModDamageTypes {
 		context.register(GHOSTLY, new DamageType(DefyingTheHeavens.MOD_ID + ".ghostly", DamageScaling.NEVER, 0.0f));
 		context.register(SOUL_SEVERED, new DamageType(DefyingTheHeavens.MOD_ID + ".soul_severed", DamageScaling.NEVER, 0.0f));
 		context.register(SOUL_SEIZED, new DamageType(DefyingTheHeavens.MOD_ID + ".soul_seized", DamageScaling.NEVER, 0.0f));
+		context.register(CORE_DETONATION, new DamageType(DefyingTheHeavens.MOD_ID + ".core_detonation", DamageScaling.NEVER, 0.0f));
 		for (QiElement element : QiElement.five()) {
 			ResourceKey<DamageType> key = qiType(element);
 			context.register(key, new DamageType(DefyingTheHeavens.MOD_ID + "." + key.location().getPath(), DamageScaling.NEVER, 0.1f));
@@ -69,6 +72,16 @@ public final class ModDamageTypes {
 	/** {@code element}'s qi, cast by {@code attacker} (null for none: a zone left burning, say). */
 	public static DamageSource qi(Level level, QiElement element, net.minecraft.world.entity.Entity attacker) {
 		return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(qiType(element)), attacker);
+	}
+
+	/**
+	 * {@code element}'s qi from a spell of {@code realm} (QiDamageSource: a ward that overcomes the element reads it), cast by
+	 * {@code attacker} (null for none), through {@code direct} (a thrown spell; null: the attacker's own hand).
+	 */
+	public static QiDamageSource qi(Level level, QiElement element, Realm realm, net.minecraft.world.entity.Entity direct,
+			net.minecraft.world.entity.Entity attacker) {
+		return new QiDamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(qiType(element)),
+				direct == null ? attacker : direct, attacker, element, realm);
 	}
 
 	public static DamageSource spatialPressure(Level level) {
@@ -91,6 +104,11 @@ public final class ModDamageTypes {
 
 	public static DamageSource soulScatter(Level level) {
 		return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(SOUL_SCATTER));
+	}
+
+	/** One's own golden core, detonated. */
+	public static DamageSource coreDetonation(Level level) {
+		return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(CORE_DETONATION));
 	}
 
 	public static DamageSource soulSevered(Level level) {

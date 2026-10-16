@@ -101,6 +101,54 @@ public final class ModEntities {
 					.clientTrackingRange(8)
 					.build("heart_demon"));
 
+	/** What an element spell throws (see {@link SpellProjectile}): small by default, its hitbox set by its spell. */
+	public static final EntityType<SpellProjectile> SPELL_PROJECTILE = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("spell_projectile"),
+			EntityType.Builder.<SpellProjectile>of(SpellProjectile::new, MobCategory.MISC)
+					.noSave().noSummon().fireImmune()
+					.sized(0.5f, 0.5f)
+					.clientTrackingRange(10)
+					.updateInterval(1)
+					.build("spell_projectile"));
+
+	/** What an element spell leaves standing a while (see {@link SpellField}): seen from far, since some are vast. */
+	public static final EntityType<SpellField> SPELL_FIELD = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("spell_field"),
+			EntityType.Builder.<SpellField>of(SpellField::new, MobCategory.MISC)
+					.noSave().noSummon().fireImmune()
+					.sized(0.1f, 0.1f)
+					.clientTrackingRange(16)
+					.updateInterval(1)
+					.build("spell_field"));
+
+	/** A block a spell moves before your eyes (see {@link SpellBlock}): it never moves itself, so it is never updated. */
+	public static final EntityType<SpellBlock> SPELL_BLOCK = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("spell_block"),
+			EntityType.Builder.<SpellBlock>of(SpellBlock::new, MobCategory.MISC)
+					.noSave().noSummon().fireImmune()
+					.sized(0.98f, 0.98f)
+					.clientTrackingRange(8)
+					.updateInterval(Integer.MAX_VALUE)
+					.build("spell_block"));
+
+	/** An earth golem summoned by its caster (see {@link EarthGolem}); the Earthen Titan is one three times as large. */
+	public static final EntityType<EarthGolem> EARTH_GOLEM = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("earth_golem"),
+			EntityType.Builder.<EarthGolem>of(EarthGolem::new, MobCategory.MISC)
+					.noSave().noSummon()
+					.sized(1.2f, 2.6f)
+					.clientTrackingRange(10)
+					.build("earth_golem"));
+
+	/** The wave of dirt a Dirt Tide rides on (see {@link DirtTide}): steered by its rider. */
+	public static final EntityType<DirtTide> DIRT_TIDE = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("dirt_tide"),
+			EntityType.Builder.<DirtTide>of(DirtTide::new, MobCategory.MISC)
+					.noSave().noSummon()
+					.sized(1.6f, 0.9f)
+					.clientTrackingRange(10)
+					.build("dirt_tide"));
+
 	/** Touching this class registers the entity types and their attributes. */
 	public static void register() {
 		FabricDefaultAttributeRegistry.register(CULTIVATOR, CultivatorNpc.createAttributes());
@@ -112,6 +160,7 @@ public final class ModEntities {
 		FabricDefaultAttributeRegistry.register(HEART_DEMON, HeartDemonEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(SOUL_BODY, SoulBodyEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(SOUL_VESSEL, SoulVesselEntity.createAttributes());
+		FabricDefaultAttributeRegistry.register(EARTH_GOLEM, EarthGolem.createAttributes());
 	}
 
 	private ModEntities() {}

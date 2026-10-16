@@ -41,8 +41,20 @@ public final class ClientCultivationData {
 		ClientCultivationData.meditating = meditating;
 	}
 
+	/** The body the local player was born with (Physique): its ordinal (-1 none yet), its roots' elements as a bit mask, body refining. */
+	public static void physique(int physique, int roots, int bodyRefining) {
+		DATA.setPhysique(com.example.defyingtheheavens.Physique.byIndex(physique));
+		java.util.List<com.example.defyingtheheavens.QiElement> elements = new java.util.ArrayList<>();
+		for (com.example.defyingtheheavens.QiElement element : com.example.defyingtheheavens.QiElement.five()) {
+			if ((roots & 1 << element.ordinal()) != 0) elements.add(element);
+		}
+		DATA.setRootElements(elements);
+		DATA.setBodyRefining(bodyRefining);
+	}
+
 	/** Disconnect: don't show the last world's cultivation on the next server. */
 	public static void clear() {
+		physique(-1, 0, 0);
 		DATA.setState(Realm.QI_REFINING, Stage.EARLY, 0);
 		DATA.setHeavensLeave(false);
 		DATA.setFavour(0);

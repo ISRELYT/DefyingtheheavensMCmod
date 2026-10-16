@@ -6,6 +6,9 @@
   "environment": "*",
   "entrypoints": {
     "fabric-gametest": [
+      "com.example.defyingtheheavens.PhysiqueGameTests",
+      "com.example.defyingtheheavens.StorageRingGameTests",
+      "com.example.defyingtheheavens.CoreAndGapGameTests",
       "com.example.defyingtheheavens.CultivationFruitGameTests",
       "com.example.defyingtheheavens.TribulationCloudGameTests",
       "com.example.defyingtheheavens.SpiritPedestalGameTests",
@@ -31,11 +34,7 @@
       "com.example.defyingtheheavens.TwoPathsGameTests",
       "com.example.defyingtheheavens.GhostSightGameTests",
       "com.example.defyingtheheavens.HeavenMethodsGameTests",
-      "com.example.defyingtheheavens.HeavenWoodSpellsGameTests",
-      "com.example.defyingtheheavens.HeavenWaterSpellsGameTests",
-      "com.example.defyingtheheavens.HeavenFireSpellsGameTests",
-      "com.example.defyingtheheavens.HeavenEarthSpellsGameTests",
-      "com.example.defyingtheheavens.HeavenMetalSpellsGameTests"
+      "com.example.defyingtheheavens.ElementSpellsGameTests"
     ]
   }
 }

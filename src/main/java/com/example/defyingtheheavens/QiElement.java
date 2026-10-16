@@ -101,6 +101,21 @@ public enum QiElement {
 		return FIVE.clone();
 	}
 
+	/**
+	 * Whether this element overcomes {@code other} in the cycle of the five (fire melts metal, metal fells wood, wood breaks earth,
+	 * earth dams water, water quenches fire). Yin neither overcomes nor is overcome.
+	 */
+	public boolean overcomes(QiElement other) {
+		return switch (this) {
+			case FIRE -> other == METAL;
+			case METAL -> other == WOOD;
+			case WOOD -> other == EARTH;
+			case EARTH -> other == WATER;
+			case WATER -> other == FIRE;
+			default -> false;
+		};
+	}
+
 	/** The element's name ("Wood", ...), for the heaven methods' screens and messages. */
 	public net.minecraft.network.chat.Component getDisplayName() {
 		return net.minecraft.network.chat.Component.translatable(ModLang.ELEMENT_PREFIX + name().toLowerCase(java.util.Locale.ROOT));

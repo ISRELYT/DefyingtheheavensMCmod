@@ -27,6 +27,11 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		// The Heaven Altar's offering screen.
 		net.minecraft.client.gui.screens.MenuScreens.register(com.example.defyingtheheavens.HeavenAltarMenu.TYPE, HeavenAltarScreen::new);
+		net.minecraft.client.gui.screens.MenuScreens.register(com.example.defyingtheheavens.VesselMenu.TYPE, VesselScreen::new);
+		net.minecraft.client.gui.screens.MenuScreens.register(com.example.defyingtheheavens.StorageRingMenu.TYPE, StorageRingScreen::new);
+		// A Storage Ring looks its grade: "defying-the-heavens:grade" 0 to 4 picks the model (models/item/storage_ring_*).
+		net.minecraft.client.renderer.item.ItemProperties.register(com.example.defyingtheheavens.ModItems.STORAGE_RING, DefyingTheHeavens.id("grade"),
+				(stack, level, entity, seed) -> com.example.defyingtheheavens.StorageRingItem.grade(stack).ordinal() / 4.0f);
 		net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE.putBlock(
 				com.example.defyingtheheavens.ModBlocks.CULTIVATION_FRUIT, net.minecraft.client.renderer.RenderType.cutout());
 		// Like vanilla leaves: the gaps between blossoms are see-through (in Fast graphics, leaves draw solid anyway).
@@ -96,6 +101,20 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry.BLOCK.register((state, world, pos, tintIndex) ->
 				SoulCrystalColours.of(state), com.example.defyingtheheavens.ModBlocks.SOUL_CRYSTAL);
 		ParticleFactoryRegistry.getInstance().register(ModParticles.SUPPRESSION, SuppressionParticle.Provider::new);
+		// The element spells: their missiles, what they leave standing, blocks they move, golems, the Dirt Tide; the auras they
+		// leave on beings (on the body's model, and round it in the world); their passing moments.
+		EntityRendererRegistry.register(ModEntities.SPELL_PROJECTILE, SpellProjectileRenderer::new);
+		EntityRendererRegistry.register(ModEntities.SPELL_FIELD, SpellFieldRenderer::new);
+		EntityRendererRegistry.register(ModEntities.SPELL_BLOCK, SpellBlockRenderer::new);
+		EntityRendererRegistry.register(ModEntities.EARTH_GOLEM, EarthGolemRenderer::new);
+		EntityRendererRegistry.register(ModEntities.DIRT_TIDE, DirtTideRenderer::new);
+		net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry.registerModelLayer(EarthGolemModel.LAYER, EarthGolemModel::definition);
+		net.fabricmc.fabric.api.client.rendering.v1.LivingEntityFeatureRendererRegistrationCallback.EVENT.register((type, renderer, helper, context) -> {
+			if (renderer.getModel() instanceof net.minecraft.client.model.HumanoidModel<?>) registerAuraLayer(renderer, helper, context);
+		});
+		com.example.defyingtheheavens.SpellAuras.clientView = ClientSpellAuras::has;
+		WorldRenderEvents.AFTER_ENTITIES.register(SpellAuraWorld::render);
+		WorldRenderEvents.AFTER_TRANSLUCENT.register(ClientSpellFx::render);
 		UpperRealmClient.register();
 		NetherworldClient.register();
 		InnerRealmFade.register(); // last, so the fade covers the rest of the HUD
@@ -130,6 +149,8 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			SpatialGapAmbience.clear();
 			ClientSpatialStorms.clear();
 			MeditationFormation.clear();
+			ClientMeditationTracker.clear();
+			ClientStorageRing.clear();
 			QiSenseClientHandler.clear();
 			QiSenseTreasures.clear();
 			ConsciousnessRenderer.clear();
@@ -144,6 +165,9 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			ClientJournal.clear();
 			ClientNpcSpeech.clear();
 			NetherworldClient.clear();
+			ClientSpellAuras.clear();
+			ClientSpellFx.clear();
+			ClientSpellTrails.clear();
 		}));
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -157,6 +181,9 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			InnerRealmFade.tick(client);
 			SwordFlightClient.tick(client);
 			ClientSoul.tick(client);
+			ClientSpellTrails.tick(client);
+			ClientSpellAuras.tick();
+			ClientSpellFx.tick();
 			while (ModKeybinds.OPEN_MENU.consumeClick()) {
 				if (client.player != null && client.screen == null) {
 					client.setScreen(new CultivationScreen());
@@ -179,6 +206,9 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 					else client.gui.setOverlayMessage(Component.translatable(ModLang.SPELLS_EMPTY), false);
 				}
 			}
+			while (ModKeybinds.STORAGE_RING.consumeClick()) {
+				if (client.player != null && client.screen == null) ClientPlayNetworking.send(ModPackets.STORAGE_RING_OPEN, PacketByteBufs.create());
+			}
 			while (ModKeybinds.CAST_SPELL.consumeClick()) {
 				if (client.player != null && client.screen == null && ClientMethods.anyKnown()) ClientMethods.cast(null);
 			}
@@ -188,5 +218,13 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 				}
 			}
 		});
+	}
+
+	/** The spells' auras on a renderer drawing a man's shape (players, cultivators...): SpellAuraLayer. */
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	private static void registerAuraLayer(net.minecraft.client.renderer.entity.LivingEntityRenderer<?, ?> renderer,
+										  net.fabricmc.fabric.api.client.rendering.v1.LivingEntityFeatureRendererRegistrationCallback.RegistrationHelper helper,
+										  net.minecraft.client.renderer.entity.EntityRendererProvider.Context context) {
+		helper.register(new SpellAuraLayer(renderer, context));
 	}
 }

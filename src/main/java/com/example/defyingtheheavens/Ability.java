@@ -51,7 +51,18 @@ public enum Ability {
 	 * or a Ghost King's; switched on, the other is shown instead. In a Ghost King's form one is seen as the dead are, outside the
 	 * Netherworld only by those who perceive souls. At no cost.
 	 */
-	FORM_SHIFT("form_shift", false, true, TwoPaths::formsOpen);
+	FORM_SHIFT("form_shift", false, true, TwoPaths::formsOpen),
+	/**
+	 * From Core Formation, the living: detonate the golden core (CoreDetonation). An act, asked twice: "on" while it gathers. The
+	 * cultivator dies, the core lost (back to Foundation Building Grand Perfection); everything near takes the blast, by distance
+	 * and by how far its realm stands from theirs.
+	 */
+	CORE_DETONATION("core_detonation", false, c -> !c.netherworld().ghost() && c.getRealm().ordinal() >= Realm.CORE_FORMATION.ordinal()),
+	/**
+	 * From Heavenly Being, the living: tear space open and step into the Spatial Gap, or out of it (SpatialTrialHandler, Route
+	 * TRAVEL). A block crossed in the gap is twenty in the world. An act: "on" while in the gap by one's own tear.
+	 */
+	SPATIAL_TEAR("spatial_tear", false, c -> !c.netherworld().ghost() && c.getRealm().ordinal() >= Realm.HEAVENLY_BEING.ordinal());
 
 	private final String id;
 	private final boolean onByDefault;
@@ -80,6 +91,7 @@ public enum Ability {
 	 * meridians are closed, the realm's abilities and the ghost methods' alike.
 	 */
 	public boolean isUnlocked(PlayerCultivation c) {
+		if (this == QI_SENSE && c.physique() == Physique.BLESSED_MERIDIANS) return true; // open from a mortal's first day (Physique)
 		return !c.isMortal() && unlocked.test(c);
 	}
 
@@ -99,6 +111,9 @@ public enum Ability {
 			case YIN_WIND_STEPS -> Component.translatable(key, Math.round(GhostMethods.YIN_WIND_SPEED * 100), Math.round(GhostMethods.YIN_WIND_COST));
 			case GHOST_FLIGHT -> Component.translatable(key, Math.round(GhostMethods.GHOST_FLIGHT_COST));
 			case FORM_SHIFT -> Component.translatable(key, TwoPaths.trueForm(c).getDisplayName(), TwoPaths.trueForm(c).other().getDisplayName());
+			case CORE_DETONATION -> Component.translatable(key, Math.round(CoreDetonation.radius(c.getRealm(), c.getStage())));
+			case SPATIAL_TEAR -> Component.translatable(key, SpatialTrialHandler.GAP_SCALE, Math.round(SpatialTrialHandler.TEAR_IN_QI * 100),
+					Math.round(SpatialTrialHandler.TEAR_OUT_QI * 100));
 			default -> Component.translatable(key);
 		};
 	}

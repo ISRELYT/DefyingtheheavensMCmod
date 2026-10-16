@@ -27,6 +27,16 @@ public abstract class ItemInHandRendererMixin {
 		if (hand == InteractionHand.MAIN_HAND && SwordFlightClient.isRiding(player)) ci.cancel();
 	}
 
+	/** A polished blade in your own hand wisps with white smoke (BladeWisps), as others see it. */
+	@Inject(method = "renderArmWithItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/ItemInHandRenderer;renderItem(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;ZLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V"))
+	private void dth$polishedBlade(AbstractClientPlayer player, float partialTick, float pitch, InteractionHand hand, float swingProgress,
+								   ItemStack stack, float equipProgress, PoseStack poseStack, MultiBufferSource buffers, int light,
+								   CallbackInfo ci) {
+		boolean right = (hand == InteractionHand.MAIN_HAND) == (player.getMainArm() == net.minecraft.world.entity.HumanoidArm.RIGHT);
+		com.example.defyingtheheavens.client.BladeWisps.draw(player, stack, right ? net.minecraft.world.item.ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
+				: net.minecraft.world.item.ItemDisplayContext.FIRST_PERSON_LEFT_HAND, !right, poseStack, buffers);
+	}
+
 	@Inject(method = "renderHandsWithItems", at = @At("HEAD"), cancellable = true)
 	private void dth$soulHasNoHands(float partialTick, PoseStack poseStack, MultiBufferSource.BufferSource buffers, LocalPlayer player, int light,
 									CallbackInfo ci) {

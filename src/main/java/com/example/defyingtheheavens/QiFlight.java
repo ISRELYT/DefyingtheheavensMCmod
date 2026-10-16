@@ -15,7 +15,8 @@ import java.util.UUID;
  * jump), paying their realm's flight cost in qi for every second in the air while still gathering. Where gathering keeps
  * up with the cost (the Upper Realm, and everywhere from Heavenly Being on; see {@link Realm}) flight never ends.
  * Elsewhere a pool that runs dry drops them out of the sky, and flight returns once it has gathered back to
- * {@link #RESUME_FRACTION} of its maximum. Never in the Spatial Gap, where the trial decides the direction.
+ * {@link #RESUME_FRACTION} of its maximum. Never on a trial through the Spatial Gap, where the gap decides the direction; one
+ * who tore their own way in (SpatialTrialHandler#tear) flies there as anywhere.
  * <p>
  * Sword Flight ({@link SwordFlight}, from Foundation Building) takes off the same way and is run here too: with a sword in
  * the main hand and that ability on, the cultivator rides the sword instead, at its lower cost and speed. Only one of the
@@ -98,7 +99,8 @@ public final class QiFlight {
 			else land(p);
 			return 0;
 		}
-		boolean inGap = SpatialTrialHandler.isInTrial(id) || ModDimensions.isPassage(p.level().dimension());
+		// The gap's current carries every trial, but one who tore their own way in flies there as anywhere (SpatialTrialHandler#tear).
+		boolean inGap = !SpatialTrialHandler.isTravelling(id) && (SpatialTrialHandler.isInTrial(id) || ModDimensions.isPassage(p.level().dimension()));
 		// At most one of these is switched on (Ability#exclusiveWith); a rider without a sword in hand has no flight.
 		boolean onSword = SwordFlight.canRide(p, c);
 		boolean onQi = !onSword && c.getEffectiveRealm().canFlyOnQi() && c.isAbilityEnabled(Ability.QI_FLIGHT);

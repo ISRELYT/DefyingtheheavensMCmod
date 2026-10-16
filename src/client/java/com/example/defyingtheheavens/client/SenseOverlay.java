@@ -8,6 +8,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ShaderInstance;
+import org.lwjgl.opengl.GL11;
 
 /**
  * The layer the cultivator's senses draw on, laid over the finished frame so it keeps its colour. Qi Sense drains the colour
@@ -57,19 +58,25 @@ public final class SenseOverlay {
 		target.bindWrite(false);
 
 		primeBlendMode();
-		RenderSystem.enableBlend();
-		RenderSystem.enableDepthTest();
-		RenderSystem.depthMask(false); // tested against the world, never written: layers in the layer don't hide each other
-		RenderSystem.disableCull();
-		RenderSystem.setShaderColor(1, 1, 1, 1);
-		// Blended in: coloured and covering, so the frame beneath shows through by what's left.
-		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
-				GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-		if (domains) ConsciousnessRenderer.renderDomains(context);
-		if (barriers) ClientFormations.render(context); // formation barriers, seen only with Qi Sense
-		if (souls) SoulRenderer.render(context); // projected nascent souls and their tethers (it leaves the blending as it found it)
-		if (eye) GhostEye.render(context); // the dead and the Method Steles behind walls (likewise, and the depth test)
+		// Each part of the layer starts from the layer's own state, whatever the part before it left (see layerState).
+		if (domains) {
+			layerState();
+			ConsciousnessRenderer.renderDomains(context);
+		}
+		if (barriers) {
+			layerState();
+			ClientFormations.render(context); // formation barriers, seen only with Qi Sense
+		}
+		if (souls) {
+			layerState();
+			SoulRenderer.render(context); // projected nascent souls and their tethers, the dead
+		}
+		if (eye) {
+			layerState();
+			GhostEye.render(context); // the dead and the Method Steles behind walls
+		}
 		if (motes) {
+			layerState();
 			QiSenseClientHandler.renderMotes(context, false);
 			// Added on: colour without coverage, so the glow brightens whatever is under it.
 			RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
@@ -78,6 +85,7 @@ public final class SenseOverlay {
 		}
 		if (treasures) {
 			// The glow of spirit treasures (QiSenseTreasures), added on like the motes' halos.
+			layerState();
 			RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
 					GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
 			QiSenseTreasures.render();
@@ -108,6 +116,24 @@ public final class SenseOverlay {
 		target.blitToScreen(main.width, main.height, false);
 		RenderSystem.defaultBlendFunc();
 		RenderSystem.disableBlend();
+	}
+
+	/**
+	 * The layer's drawing state: blended in (coloured and covering, so the frame beneath shows through by what's left), tested
+	 * against the world's depth but never writing it (layers in the layer don't hide each other), both faces, no tint. Set before
+	 * each part of the layer, and again by any part after drawing through a vanilla RenderType: its batch, flushed, turns blending
+	 * and the depth test off as it finishes (a name over another player's ghost did, and everything drawn after it in the frame,
+	 * the Netherworld's dead and what the Ghost Eye sees, came out as solid, unblended light, through walls).
+	 */
+	static void layerState() {
+		RenderSystem.enableBlend();
+		RenderSystem.enableDepthTest();
+		RenderSystem.depthFunc(GL11.GL_LEQUAL);
+		RenderSystem.depthMask(false);
+		RenderSystem.disableCull();
+		RenderSystem.setShaderColor(1, 1, 1, 1);
+		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+				GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
 	}
 
 	/**

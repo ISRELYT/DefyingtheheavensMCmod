@@ -28,6 +28,8 @@ public final class TribulationManager {
 	private static final int FIRST_STRIKE_DELAY = 60;  // 3 s for the local cloud to gather before the first bolt
 	private static final int STRIKE_INTERVAL = 60;     // 3 s between strikes
 	private static final int FINISH_DELAY = 20;        // 1 s after the last strike before the breakthrough completes
+	/** All a tribulation's strikes drunk in by a Heavenly Thunder Body (Physique): this share of the new stage's cultivation. */
+	public static final double THUNDER_SHARE = 0.6;
 
 	/** One tribulation: a set number of identical strikes, each heavenly lightning (armor applies) plus magic (it doesn't). */
 	public record Strikes(int count, float bolt, float magic) {}
@@ -41,6 +43,8 @@ public final class TribulationManager {
 		int finishIn = FINISH_DELAY;
 		int age;
 		int ambientStrikeIn;
+		/** A Heavenly Thunder Body's share of the strikes drunk in (Physique): {@link #THUNDER_SHARE} of the new stage's cultivation at most. */
+		double absorbed;
 		TribulationCloud cloud;
 
 		void removeCloud() {
@@ -250,6 +254,19 @@ public final class TribulationManager {
 		level.addFreshEntity(bolt);
 		if (t.cloud != null) t.cloud.flash();
 
+		// A Heavenly Thunder Body drinks the bolt in: no harm, the qi pool filled, and a share of the new stage's cultivation banked
+		// for the breakthrough.
+		PlayerCultivation c = CultivationManager.get(p);
+		if (c.physique() == Physique.HEAVENLY_THUNDER_BODY) {
+			t.absorbed += 1.0 / Math.max(1, t.strikes.count());
+			c.setQi(c.maxQi());
+			p.heal(t.strikes.bolt() * 0.25f);
+			level.sendParticles(ParticleTypes.ELECTRIC_SPARK, p.getX(), p.getY() + 1.0, p.getZ(), 60, 0.5, 0.9, 0.5, 0.3);
+			level.playSound(null, p.blockPosition(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 1.0f, 1.6f);
+			CultivationManager.sync(p);
+			return;
+		}
+
 		// Both parts land in the same tick as the bolt. Clearing the hurt cooldown in between stops vanilla from
 		// discarding the second hit; magic goes first so a killing strike usually reads "struck by lightning".
 		// It is cleared before the first part too: within half a second of another hit, vanilla only deals what exceeds
@@ -280,6 +297,11 @@ public final class TribulationManager {
 		if (!sameTarget || !c.breakthrough()) { // state changed mid-trial (e.g. admin command)
 			p.displayClientMessage(Component.translatable(ModLang.MSG_NOT_READY), true);
 			return;
+		}
+		if (t.absorbed > 0) { // a Heavenly Thunder Body's banked lightning becomes cultivation in the new stage
+			double gained = Math.min(1, t.absorbed) * THUNDER_SHARE * c.cultivationRequired();
+			c.addCultivation(gained);
+			p.sendSystemMessage(Component.translatable(ModLang.MSG_THUNDER_ABSORBED, Math.round(gained)).withStyle(net.minecraft.ChatFormatting.AQUA));
 		}
 		CultivationManager.refresh(p);
 		p.setHealth(p.getMaxHealth());

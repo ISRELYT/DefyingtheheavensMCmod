@@ -49,6 +49,7 @@ public final class ModCreativeTab {
 			add(ModBlocks.MEDITATION_MAT, ModBlocks.RED_MEDITATION_MAT, ModBlocks.SPIRIT_PEDESTAL, ModBlocks.HEAVEN_ALTAR,
 					ModBlocks.ALCHEMY_CAULDRON, ModBlocks.FORMATION_CORE, ModItems.INSCRIPTION_BRUSH, ModItems.RING_OF_POWER,
 					ModItems.RING_OF_TRANSCENDENCE);
+			for (StorageRings.Grade grade : StorageRings.Grade.values()) add(StorageRingItem.of(grade));
 			// Taken for qi and cultivation
 			add(CultivationFruitItem.create(1));
 			for (Item pill : new Item[] {ModItems.MARROW_CLEANSING_ELIXIR, ModItems.QI_GATHERING_PILL, ModItems.CULTIVATION_PILL,

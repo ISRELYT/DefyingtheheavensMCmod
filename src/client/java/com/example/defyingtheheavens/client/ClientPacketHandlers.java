@@ -94,9 +94,15 @@ public final class ClientPacketHandlers {
 			int soulState = buf.readVarInt();
 			boolean heavensLeave = buf.readBoolean();
 			int favour = buf.readVarInt();
-			client.execute(() -> ClientCultivationData.update(realm, stage, cultivation, qi, meditating, lowerRealmBound, inUpperRealm,
-					disabledAbilities, pressureStages, pressurePenalty, mortal, mortalStage, tempering, preparedRealm, preparedBonus, qiBoost,
-					pillResistance, medicinalQi, alignment, gearQiBonus, wheel, soulState, heavensLeave, favour));
+			int physique = buf.readVarInt();
+			int roots = buf.readVarInt();
+			int bodyRefining = buf.readVarInt();
+			client.execute(() -> {
+				ClientCultivationData.physique(physique, roots, bodyRefining); // first: a shattered body tempers past Peak
+				ClientCultivationData.update(realm, stage, cultivation, qi, meditating, lowerRealmBound, inUpperRealm,
+						disabledAbilities, pressureStages, pressurePenalty, mortal, mortalStage, tempering, preparedRealm, preparedBonus, qiBoost,
+						pillResistance, medicinalQi, alignment, gearQiBonus, wheel, soulState, heavensLeave, favour);
+			});
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SOUL_SELF, (client, handler, buf, sender) -> {
@@ -273,10 +279,40 @@ public final class ClientPacketHandlers {
 			client.execute(() -> SwordFlightClient.set(entityId, riding));
 		});
 
+		// An open Storage Ring's space, in one packet or several (ClientStorageRing).
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.STORAGE_RING, (client, handler, buf, sender) -> {
+			int containerId = buf.readVarInt();
+			int grade = buf.readVarInt();
+			boolean fresh = buf.readBoolean();
+			java.util.List<ClientStorageRing.Entry> entries = new java.util.ArrayList<>();
+			while (buf.readBoolean()) entries.add(new ClientStorageRing.Entry(buf.readItem(), buf.readVarLong()));
+			client.execute(() -> ClientStorageRing.receive(containerId, grade, fresh, entries));
+		});
+
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.MEDITATION_STATE, (client, handler, buf, sender) -> {
 			UUID id = buf.readUUID();
 			boolean meditating = buf.readBoolean();
-			client.execute(() -> ClientMeditationTracker.set(id, meditating));
+			boolean floats = buf.readBoolean();
+			client.execute(() -> ClientMeditationTracker.set(id, meditating, floats));
+		});
+
+		// The element spells: the auras on a being (ClientSpellAuras), and a spell's passing moment to draw (ClientSpellFx).
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SPELL_AURAS, (client, handler, buf, sender) -> {
+			int entityId = buf.readVarInt();
+			int count = buf.readVarInt();
+			int[] auras = new int[count], left = new int[count];
+			for (int i = 0; i < count; i++) {
+				auras[i] = buf.readVarInt();
+				left[i] = buf.readVarInt();
+			}
+			client.execute(() -> ClientSpellAuras.set(entityId, auras, left));
+		});
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SPELL_FX, (client, handler, buf, sender) -> {
+			com.example.defyingtheheavens.SpellFx.Kind kind = com.example.defyingtheheavens.SpellFx.Kind.byIndex(buf.readVarInt());
+			net.minecraft.world.phys.Vec3 at = new net.minecraft.world.phys.Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble());
+			net.minecraft.world.phys.Vec3 way = new net.minecraft.world.phys.Vec3(buf.readFloat(), buf.readFloat(), buf.readFloat());
+			float a = buf.readFloat(), b = buf.readFloat();
+			client.execute(() -> ClientSpellFx.add(kind, at, way, a, b));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.TRIBULATION_STATE, (client, handler, buf, sender) -> {

@@ -34,6 +34,7 @@ public abstract class GameRendererMixin {
 	@Inject(method = "bobHurt", at = @At("TAIL"))
 	private void dth$judgeGazeRolls(PoseStack pose, float partialTicks, CallbackInfo ci) {
 		ClientJudgeGaze.distort(pose, partialTicks);
+		com.example.defyingtheheavens.client.ClientSpellFx.shake(pose, partialTicks); // a blow or a quake near shakes the view
 	}
 
 	/** ...and breathes in and out. */

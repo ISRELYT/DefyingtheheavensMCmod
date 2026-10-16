@@ -73,6 +73,15 @@ public final class MeditationManager {
 		return SESSIONS.containsKey(id);
 	}
 
+	/** From this realm on the living float as they meditate, as the dead always do (the body's realm: TwoPaths#body). */
+	public static final Realm FLOATS_FROM = Realm.CORE_FORMATION;
+
+	/** Whether {@code player} floats in meditation: alive (the dead's own hover is the SoulRenderer's), the body at {@link #FLOATS_FROM} or above. */
+	public static boolean floats(ServerPlayer player) {
+		PlayerCultivation c = CultivationManager.get(player);
+		return !c.netherworld().ghost() && TwoPaths.body(c, false).rank() >= PlayerCultivation.rank(FLOATS_FROM, Stage.EARLY);
+	}
+
 	public static void toggle(ServerPlayer player) {
 		if (isMeditating(player.getUUID())) {
 			stop(player, false);
@@ -90,8 +99,10 @@ public final class MeditationManager {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_SOUL_BUSY), true);
 			return;
 		}
-		// A mortal's meridians are closed, the ghost path's as the heaven path's: alive or dead, it has nothing to cultivate with.
-		if (CultivationManager.get(player).isMortal()) {
+		// A mortal's meridians are closed, the ghost path's as the heaven path's: alive or dead, it has nothing to cultivate with. Shattered
+		// meridians, alive, sit to temper the body instead (BodyRefining).
+		PlayerCultivation sitting = CultivationManager.get(player);
+		if (sitting.isMortal() && (!sitting.hasShatteredMeridians() || GhostSystem.isGhost(player) || !sitting.canTemper())) {
 			player.displayClientMessage(Component.translatable(GhostSystem.isGhost(player) ? ModLang.MSG_METHOD_MERIDIANS_DEAD : ModLang.MSG_MORTAL_MEDITATE), true);
 			return;
 		}
@@ -270,6 +281,11 @@ public final class MeditationManager {
 		}
 		if (session.ticks % BOOST_REFRESH_TICKS == 0) session.boost = CultivationBoost.of(p);
 		if (session.ticks >= BOOST_ANNOUNCE_DELAY) announceBoost(p, session);
+		if (c.isMortal()) { // shattered meridians: no qi to circulate, blood instead, tempering the body (BodyRefining)
+			if (tick % 10 == 0) Tempering.gain(p, BodyRefining.meditationPerSecond(c) * 0.5 * heldAndTaught(p));
+			if (tick % 20 == 0) ModPackets.broadcastMeditation(p, true);
+			return;
+		}
 		QiSurges.tick(p, session.ticks, session.settling <= 0);
 
 		if (tick % 5 == 0 && !InnerRealm.isInside(p)) {
@@ -386,7 +402,7 @@ public final class MeditationManager {
 			session.daoStelesNear = daoStelesWithin(p, HeavenMethods.STELE_BONUS_RADIUS);
 		}
 		for (HeavenMethod method : session.daoStelesInReach) {
-			if (s.knows(method)) continue;
+			if (s.knows(method) || !c.rootsAllow(method.element())) continue; // roots of other elements can't read it (Physique)
 			double seconds = session.daoSteleSeconds.merge(method, 0.5, Double::sum);
 			if (seconds == 0.5) p.displayClientMessage(Component.translatable(ModLang.MSG_DAO_STELE_READING, method.getDisplayName()), true);
 			if (seconds >= HeavenMethods.STELE_LEARN_SECONDS) {

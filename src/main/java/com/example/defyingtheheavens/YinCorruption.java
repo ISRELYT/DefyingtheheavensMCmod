@@ -66,12 +66,17 @@ public final class YinCorruption {
 
 	/** Corruption gained a second in the Netherworld (1 is full), with the Veil on or off. */
 	public static double perSecond(PlayerCultivation c, int breathingLayers, boolean veil) {
+		if (c.physique() == Physique.YIN_SOUL_BODY) return 0; // never takes hold
 		return 1.0 / fullStaySeconds(c, breathingLayers) * (veil ? VEIL_FACTOR : 1.0);
 	}
 
-	/** Whether the Netherworld's yin works on this player at all: alive in body (not a ghost), and not in creative or spectator. */
+	/**
+	 * Whether the Netherworld's yin works on this player at all: alive in body (not a ghost), not in creative or spectator, and not
+	 * born with a Yin Soul Body (Physique).
+	 */
 	public static boolean affects(ServerPlayer player) {
-		return player.isAlive() && !player.isCreative() && !player.isSpectator() && !GhostSystem.isGhost(player);
+		return player.isAlive() && !player.isCreative() && !player.isSpectator() && !GhostSystem.isGhost(player)
+				&& CultivationManager.get(player).physique() != Physique.YIN_SOUL_BODY;
 	}
 
 	/**

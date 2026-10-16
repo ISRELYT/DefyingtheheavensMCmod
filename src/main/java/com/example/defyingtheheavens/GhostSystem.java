@@ -107,6 +107,7 @@ public final class GhostSystem {
 	 */
 	public static boolean isKing(PlayerCultivation c) {
 		if (!c.netherworld().ghost()) return false;
+		if (c.physique() == Physique.GHOST_DEVIL_BODY && !c.isMortal()) return true; // a Ghost King from birth (Physique)
 		return TwoPaths.heavenRank(c, false) >= KING_RANK || TwoPaths.ghostRank(c, false) >= KING_RANK;
 	}
 
