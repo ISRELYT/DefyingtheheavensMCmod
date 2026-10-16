@@ -34,9 +34,13 @@ import com.example.defyingtheheavens.HungryGhost;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.lwjgl.opengl.GL11;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Draws projected nascent souls (see ClientSoul) and their tethers on the sense layer ({@link SenseOverlay}), so they keep their
@@ -46,10 +50,15 @@ import java.util.List;
  * upright, legs together and trailing like a ghost's, leaning into its flight. The tether is an elastic thread of bright blue
  * light from the body's chest to the soul, sagging and swaying, thinner and flickering as it is worn through.
  * <p>
+ * Each figure is drawn as one shell of light, its nearest faces only (see {@link #drawNearest}), as everyone sees it alike.
  * Without the shader (a shader pack replacing core shaders), souls fall back to vanilla's translucent entity shader, tinted.
  */
 public final class SoulRenderer {
 	private static ShaderInstance soulShader;
+	/** Writes the world's depth back where a figure laid its own (shader {@code soul_depth}, see {@link #restoreDepth}). */
+	private static ShaderInstance depthShader;
+	/** How much larger the glow drawn around a figure is than the figure. */
+	private static final float HALO = 1.07f;
 	private static PlayerModel<Player> wide;
 	private static PlayerModel<Player> slim;
 	private static final int TETHER_SEGMENTS = 28;
@@ -62,8 +71,10 @@ public final class SoulRenderer {
 	private static final float SEATED_HOVER = 0.25f;
 
 	public static void register() {
-		CoreShaderRegistrationCallback.EVENT.register(context ->
-				context.register(DefyingTheHeavens.id("soul"), DefaultVertexFormat.NEW_ENTITY, shader -> soulShader = shader));
+		CoreShaderRegistrationCallback.EVENT.register(context -> {
+			context.register(DefyingTheHeavens.id("soul"), DefaultVertexFormat.NEW_ENTITY, shader -> soulShader = shader);
+			context.register(DefyingTheHeavens.id("soul_depth"), DefaultVertexFormat.NEW_ENTITY, shader -> depthShader = shader);
+		});
 	}
 
 	/** The soul shader, or null if a shader pack has replaced the core shaders (see RiverSouls, which draws the dead with it). */
@@ -118,7 +129,7 @@ public final class SoulRenderer {
 			if (!dead && com.example.defyingtheheavens.SoulProjection.isSoul(ghost)) continue;
 			float clarity = whole ? 1.0f : ClientSoul.clarity(ghost);
 			if (clarity <= 0) continue;
-			drawSoul(context, ghost, clarity, partial, true, ClientGhosts.crowned(ghost));
+			drawSoul(context, ghost, clarity, partial, true, ClientGhosts.crowned(ghost), false);
 			if (ghost != mc.player) drawName(context, ghost, partial);
 		}
 		// The Netherworld's own dead, ghost cultivators and Hungry Ghosts, likewise (their plates are their renderers').
@@ -126,7 +137,7 @@ public final class SoulRenderer {
 		for (net.minecraft.world.entity.Entity entity : mc.level.entitiesForRendering()) {
 			if (!(entity instanceof com.example.defyingtheheavens.Ghostly) || !(entity instanceof LivingEntity body)) continue;
 			if (body.isInvisible() || body.isRemoved() || body.distanceToSqr(eye) > GHOSTLY_RANGE * GHOSTLY_RANGE) continue;
-			drawDead(context, body, partial);
+			drawDead(context, body, partial, false);
 		}
 		// Additive from here: light, not cover.
 		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
@@ -147,28 +158,32 @@ public final class SoulRenderer {
 
 	/** A projected soul, in a soul's violet. */
 	private static void drawSoul(WorldRenderContext context, Player soul, float clarity, float partial) {
-		drawSoul(context, soul, clarity, partial, false, false);
+		drawSoul(context, soul, clarity, partial, false, false, false);
 	}
 
-	/** One drawn as the dead (see GhostSystem, TwoPaths#look), in their cyan rather than a soul's violet, a faint trail drifting from it. */
-	private static void drawSoul(WorldRenderContext context, Player soul, float clarity, float partial, boolean dead, boolean crowned) {
+	/**
+	 * One drawn as the dead (see GhostSystem, TwoPaths#look), in their cyan rather than a soul's violet, a faint trail drifting from it.
+	 * {@code throughWalls}: drawn by the Ghost Eye where walls hide it (see {@link #drawNearest}).
+	 */
+	private static void drawSoul(WorldRenderContext context, Player soul, float clarity, float partial, boolean dead, boolean crowned,
+								 boolean throughWalls) {
 		boolean slimModel = soul instanceof AbstractClientPlayer client && "slim".equals(client.getModelName());
 		// A player wears a man's head (a beast's, should a demon race give one: its BeastHead here); a Ghost King, a crown on it.
 		drawBody(context, soul, ((AbstractClientPlayer) soul).getSkinTextureLocation(), slimModel, clarity, partial, dead, Look.SOUL, null,
-				dead && crowned);
+				dead && crowned, throughWalls);
 	}
 
 	/**
 	 * One of the Netherworld's dead (a ghost cultivator, a Hungry Ghost), in its own skin, as the dead are drawn; Ox-Head and
-	 * Horse-Face with their beasts' heads (BeastHeadModels).
+	 * Horse-Face with their beasts' heads (BeastHeadModels). {@code throughWalls}: drawn by the Ghost Eye where walls hide it.
 	 */
-	static void drawDead(WorldRenderContext context, LivingEntity body, float partial) {
+	static void drawDead(WorldRenderContext context, LivingEntity body, float partial, boolean throughWalls) {
 		boolean hungry = body instanceof HungryGhost;
 		ResourceLocation skin = hungry ? GhostlyRenderers.HUNGRY_GHOST_SKIN
 				: body instanceof GhostCultivatorNpc ghost ? GhostlyRenderers.skin(ghost) : GhostlyRenderers.HUNGRY_GHOST_SKIN;
 		BeastHeadModels.Head beast = body instanceof GhostCultivatorNpc ghost ? BeastHeadModels.get(ghost.getRole().beastHead()) : null;
 		boolean king = body instanceof GhostCultivatorNpc ghost && ghost.getRole() == GhostCultivatorNpc.Role.GHOST_KING;
-		drawBody(context, body, skin, false, 1.0f, partial, true, hungry ? Look.HUNGRY : Look.DEAD, beast, king);
+		drawBody(context, body, skin, false, 1.0f, partial, true, hungry ? Look.HUNGRY : Look.DEAD, beast, king, throughWalls);
 	}
 
 	/**
@@ -180,10 +195,11 @@ public final class SoulRenderer {
 	/**
 	 * {@code beast}: a beast's head worn in place of the man's (see BeastHeadModels), or null. {@code king}: a Ghost King, its
 	 * light deeper, edged with violet (the shader's king switch), a crown of bone and soul fire on its head ({@link #drawCrown}).
+	 * {@code throughWalls}: drawn by the Ghost Eye where walls hide it (see {@link #drawNearest}).
 	 */
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	private static void drawBody(WorldRenderContext context, LivingEntity soul, ResourceLocation skin, boolean slimModel, float clarity, float partial,
-								 boolean dead, Look look, BeastHeadModels.Head beast, boolean king) {
+								 boolean dead, Look look, BeastHeadModels.Head beast, boolean king, boolean throughWalls) {
 		Minecraft mc = Minecraft.getInstance();
 		PlayerModel model = model(slimModel);
 		if (model == null) return;
@@ -194,9 +210,7 @@ public final class SoulRenderer {
 		Vec3 cam = context.camera().getPosition();
 		Vec3 at = soul.getPosition(partial);
 		// A soul leans into its flight: up to 35 degrees at full pace.
-		Vec3 motion = soul.position().subtract(soul.xo, soul.yo, soul.zo);
-		double horizontal = Math.sqrt(motion.x * motion.x + motion.z * motion.z);
-		float lean = look == Look.SOUL ? (float) Math.min(35, horizontal * 60) : 0;
+		float lean = look == Look.SOUL ? lean(soul, partial) : 0;
 		// One of the dead in meditation sits cross-legged (HumanoidModelMixin), floating a little over the ground.
 		boolean seated = dead && LotusPose.meditating(soul);
 
@@ -214,6 +228,10 @@ public final class SoulRenderer {
 		model.riding = false;
 		model.young = false;
 		model.crouching = false;
+		// The model is shared by every figure drawn: the legs' spread (which setupAnim leaves alone and the drifting pose narrows)
+		// back to the model's own, so one sitting in meditation doesn't take it from whoever was drawn before.
+		model.rightLeg.resetPose();
+		model.leftLeg.resetPose();
 		model.setupAnim(soul, 0, 0, age, look == Look.SOUL ? 0 : Mth.wrapDegrees(headYaw - yaw), pitch);
 		if (!seated) {
 			ghostPose(model, age);
@@ -228,15 +246,17 @@ public final class SoulRenderer {
 		RenderSystem.setShaderTexture(0, skin);
 		if (shader) {
 			RenderSystem.setShader(() -> soulShader);
-			// The body, then its glow: the same, a little larger, added on (the shader draws only its edge light).
+			// The body, then its glow: the same, a little larger, added on (the shader draws only its edge light). Each its nearest
+			// faces only, then the world's depth given back for the rest of the layer.
 			float green = dead ? 0 : 1; // the shader's switch to the dead's cyan
 			float blue = king ? 0 : 1; // and to a Ghost King's deeper light, edged with violet
-			drawModel(pose, model, skin, beast, 1, green, blue, clarity, 1.0f);
+			drawNearest(() -> drawModel(pose, model, skin, beast, 1, green, blue, clarity, 1.0f), throughWalls);
 			RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
 					GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
-			drawModel(pose, model, skin, beast, 0, green, blue, clarity, 1.07f);
+			drawNearest(() -> drawModel(pose, model, skin, beast, 0, green, blue, clarity, HALO), throughWalls);
 			RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
 					GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+			restoreDepth(pose, model, beast, throughWalls);
 		} else {
 			RenderSystem.setShader(GameRenderer::getRendertypeEntityTranslucentShader);
 			mc.gameRenderer.lightTexture().turnOnLightLayer();
@@ -283,19 +303,19 @@ public final class SoulRenderer {
 			sleeve.render(pose, faded, light, OverlayTexture.NO_OVERLAY, 0.35f, 0.95f, 1.0f, 0.55f);
 			return;
 		}
-		// As the sense layer draws the dead (SenseOverlay): blended, tested but not written, both faces.
+		// As the sense layer draws the dead (SenseOverlay): blended, both faces, its nearest faces only (drawNearest). The depth it
+		// leaves is the hand's own, as vanilla's arm leaves its (the hand is drawn on a cleared depth).
 		RenderSystem.enableBlend();
 		RenderSystem.enableDepthTest();
-		RenderSystem.depthMask(false);
 		RenderSystem.disableCull();
 		RenderSystem.setShader(() -> soulShader);
 		RenderSystem.setShaderTexture(0, skin);
 		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
 				GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-		drawArm(pose, arm, sleeve, 1, 1.0f);
+		drawNearest(() -> drawArm(pose, arm, sleeve, 1, 1.0f), false);
 		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
 				GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
-		drawArm(pose, arm, sleeve, 0, 1.07f);
+		drawNearest(() -> drawArm(pose, arm, sleeve, 0, HALO), false);
 		RenderSystem.depthMask(true);
 		RenderSystem.enableCull();
 		RenderSystem.defaultBlendFunc();
@@ -320,7 +340,7 @@ public final class SoulRenderer {
 	 * what is hidden), crowned as it is drawn.
 	 */
 	static void drawGhostSeen(WorldRenderContext context, Player ghost, float partial) {
-		drawSoul(context, ghost, 1.0f, partial, true, ClientGhosts.crowned(ghost));
+		drawSoul(context, ghost, 1.0f, partial, true, ClientGhosts.crowned(ghost), true);
 	}
 
 	/**
@@ -362,12 +382,7 @@ public final class SoulRenderer {
 	private static void drawModel(PoseStack pose, PlayerModel<?> model, ResourceLocation skin, BeastHeadModels.Head beast, float red, float green,
 								  float blue, float clarity, float size) {
 		pose.pushPose();
-		pose.translate(0, 0.95f, 0);
-		pose.scale(size, size, size);
-		pose.translate(0, -0.95f, 0);
-		pose.scale(-1.0f, -1.0f, 1.0f);
-		pose.scale(0.9375f, 0.9375f, 0.9375f);
-		pose.translate(0.0f, -1.501f, 0.0f);
+		modelSpace(pose, size);
 		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
 		buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.NEW_ENTITY);
 		model.renderToBuffer(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, red, green, blue, clarity);
@@ -380,6 +395,109 @@ public final class SoulRenderer {
 			RenderSystem.setShaderTexture(0, skin);
 		}
 		pose.popPose();
+	}
+
+	/** From the soul's feet (its facing set) into the model's own space, scaled by {@code size} about its middle. */
+	private static void modelSpace(PoseStack pose, float size) {
+		pose.translate(0, 0.95f, 0);
+		pose.scale(size, size, size);
+		pose.translate(0, -0.95f, 0);
+		pose.scale(-1.0f, -1.0f, 1.0f);
+		pose.scale(0.9375f, 0.9375f, 0.9375f);
+		pose.translate(0.0f, -1.501f, 0.0f);
+	}
+
+	/**
+	 * Draws a figure (or its glow) as one shell of light: {@code draw} twice, first laying down only its depth, then its light only
+	 * where that depth is, so only its nearest faces are lit, as an opaque skin would show them. Every face of every box and both
+	 * layers of the skin, each blended over the last with nothing hiding anything, came out as a stack of offset copies, doubled
+	 * at every edge and burnt white where they crossed: other players saw a ghost so (a ghost sees only its own arm). Through walls
+	 * (the Ghost Eye's depth test, GL_GREATER, drawing only what the world hides) the faces kept are the farthest of what is hidden,
+	 * the one depth test can't keep the nearest of those. The depth it leaves is put back by {@link #restoreDepth}.
+	 */
+	private static void drawNearest(Runnable draw, boolean throughWalls) {
+		if (depthShader == null) { // its depth couldn't be given back: blended over itself, as before
+			RenderSystem.depthMask(false);
+			draw.run();
+			return;
+		}
+		RenderSystem.colorMask(false, false, false, false);
+		RenderSystem.depthMask(true);
+		draw.run();
+		RenderSystem.colorMask(true, true, true, true);
+		RenderSystem.depthMask(false);
+		RenderSystem.depthFunc(throughWalls ? GL11.GL_GEQUAL : GL11.GL_LEQUAL);
+		draw.run();
+		RenderSystem.depthFunc(throughWalls ? GL11.GL_GREATER : GL11.GL_LEQUAL);
+	}
+
+	/**
+	 * Writes the world's depth back over the figure and its glow (all their faces, shader {@code soul_depth} reading the frame's
+	 * own depth), so the depth {@link #drawNearest} laid down hides nothing else on the sense layer: another soul behind it, its
+	 * mist, the motes, what the Ghost Eye shows.
+	 */
+	private static void restoreDepth(PoseStack pose, PlayerModel<?> model, BeastHeadModels.Head beast, boolean throughWalls) {
+		if (depthShader == null) return;
+		RenderSystem.setShader(() -> depthShader);
+		RenderSystem.setShaderTexture(0, Minecraft.getInstance().getMainRenderTarget().getDepthTextureId());
+		RenderSystem.colorMask(false, false, false, false);
+		RenderSystem.depthMask(true);
+		RenderSystem.depthFunc(GL11.GL_ALWAYS);
+		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
+		buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.NEW_ENTITY);
+		for (float size : new float[] {1.0f, HALO}) {
+			pose.pushPose();
+			modelSpace(pose, size);
+			model.renderToBuffer(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, 1, 1, 1, 1);
+			if (beast != null) beast.render(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, 1, 1, 1, 1);
+			pose.popPose();
+		}
+		BufferUploader.drawWithShader(buffer.end());
+		RenderSystem.colorMask(true, true, true, true);
+		RenderSystem.depthMask(false);
+		RenderSystem.depthFunc(throughWalls ? GL11.GL_GREATER : GL11.GL_LEQUAL);
+	}
+
+	/** How many ticks' steps a soul's lean is taken over. */
+	private static final int LEAN_TICKS = 4;
+	/** Each soul's last steps and lean, by entity id (see #lean). */
+	private static final Map<Integer, Lean> LEANS = new HashMap<>();
+
+	private static final class Lean {
+		final float[] steps = new float[LEAN_TICKS];
+		float before, now;
+		int tick;
+		long seen;
+	}
+
+	/**
+	 * How far {@code soul} leans into its flight (degrees, up to 35 at full pace): from its pace over its last few ticks, eased
+	 * between ticks. Another player's steps reach this client in uneven batches (the server sends them every other tick, and the
+	 * network bunches them: a step, none, a double one), so a lean taken from each tick's step alone jerked back and forth every
+	 * tick, the whole figure rocking about its feet; one's own steps are even.
+	 */
+	private static float lean(LivingEntity soul, float partial) {
+		long time = soul.level().getGameTime();
+		double dx = soul.getX() - soul.xo, dz = soul.getZ() - soul.zo;
+		float step = (float) Math.sqrt(dx * dx + dz * dz);
+		Lean lean = LEANS.get(soul.getId());
+		if (lean == null || soul.tickCount < lean.tick || soul.tickCount - lean.tick > 20) {
+			// New (or another entity under its id, or long unseen): as it moves now.
+			if (lean == null) LEANS.put(soul.getId(), lean = new Lean());
+			Arrays.fill(lean.steps, step);
+			lean.before = lean.now = Math.min(35, step * 60);
+			lean.tick = soul.tickCount;
+		} else if (soul.tickCount != lean.tick) {
+			lean.steps[Math.floorMod(soul.tickCount, LEAN_TICKS)] = step;
+			float pace = 0;
+			for (float s : lean.steps) pace += s / LEAN_TICKS;
+			lean.before = lean.now;
+			lean.now = Math.min(35, pace * 60);
+			lean.tick = soul.tickCount;
+		}
+		lean.seen = time;
+		if (LEANS.size() > 64) LEANS.values().removeIf(l -> time - l.seen > 200);
+		return Mth.lerp(partial, lean.before, lean.now);
 	}
 
 	/** Soul fire's own flame (its particle's picture), burning on a Ghost King's crown. */

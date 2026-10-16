@@ -160,6 +160,9 @@ public class CultivationScreen extends Screen {
 	private final List<SpellCell> spellPalette = new ArrayList<>();
 	private Spell draggedSpell;
 	private int spellDragFrom = -1;
+	/** How far the spell wheel editor's palette is scrolled, and how far it can go (0 when every spell fits). */
+	private int spellPaletteScroll;
+	private int spellPaletteMaxScroll;
 
 	/** A small button on a row of a list (Practise, Ready): what it acts on, and where it was drawn. */
 	private record RowButton<T>(T value, int x, int y, int w) {
@@ -945,7 +948,10 @@ public class CultivationScreen extends Screen {
 		switch (tab) {
 			case JOURNAL -> journalScroll = scroll;
 			case METHODS -> methodScroll = scroll;
-			case SPELLS -> spellScroll = scroll;
+			case SPELLS -> {
+				if (arrangingSpells) spellPaletteScroll = scroll;
+				else spellScroll = scroll;
+			}
 			default -> abilityScroll = scroll;
 		}
 	}
@@ -1112,6 +1118,10 @@ public class CultivationScreen extends Screen {
 		}
 		if (tab == Tab.SPELLS && !arrangingSpells && spellMaxScroll > 0) {
 			spellScroll = Mth.clamp(spellScroll - (int) Math.round(delta * SCROLL_STEP), 0, spellMaxScroll);
+			return true;
+		}
+		if (tab == Tab.SPELLS && arrangingSpells && spellPaletteMaxScroll > 0) {
+			spellPaletteScroll = Mth.clamp(spellPaletteScroll - (int) Math.round(delta * SCROLL_STEP), 0, spellPaletteMaxScroll);
 			return true;
 		}
 		return super.mouseScrolled(mouseX, mouseY, delta);
@@ -1845,7 +1855,9 @@ public class CultivationScreen extends Screen {
 
 	/**
 	 * The spell wheel's editor, as the ability wheel's: the wheel on the left, the spells that can be cast on the right; dragging
-	 * one onto a slot puts it there (trading places with the slot's), a slot dragged off the wheel or right-clicked empties.
+	 * one onto a slot puts it there (trading places with the slot's), a slot dragged off the wheel or right-clicked empties. The
+	 * spells, with the hint under them, scroll in the room above the button: one who knows many methods can cast more spells
+	 * than the panel holds, and drawn whole they ran under the button and off the panel's foot.
 	 */
 	private void renderSpellWheelEditor(GuiGraphics g, int mouseX, int mouseY) {
 		NetherworldState s = ClientCultivationData.get().netherworld();
@@ -1869,13 +1881,30 @@ public class CultivationScreen extends Screen {
 		int y = top + CONTENT_Y;
 		g.drawString(font, Component.translatable(ModLang.SPELLS_TITLE), px, y, 0xFFD700);
 		y += 12;
+		int viewTop = y;
+		int viewBottom = top + ABILITIES_BOTTOM;
 		int perRow = (WIDTH - 12 - PALETTE_X + CELL_GAP) / (CELL + CELL_GAP);
 		List<Spell> castable = Arrays.stream(Spell.values()).filter(ClientMethods::known).toList();
+		int rows = (castable.size() + perRow - 1) / perRow;
+		// Wrapped short of the scrollbar, which stands at the panel's edge when the spells overflow.
+		int textWidth = SCROLLBAR_X - 4 - PALETTE_X;
+		Component hint = Component.translatable(ModLang.SPELLS_ARRANGE_HINT,
+				ModKeybinds.SPELL_WHEEL.getTranslatedKeyMessage().copy().withStyle(style -> style.withColor(0xFFD700)),
+				ModKeybinds.CAST_SPELL.getTranslatedKeyMessage().copy().withStyle(style -> style.withColor(0xFFD700)));
+		List<FormattedCharSequence> hintLines = font.split(hint, textWidth);
+		int contentHeight = rows * (CELL + CELL_GAP) + 4 + hintLines.size() * 10;
+		spellPaletteMaxScroll = Math.max(0, contentHeight - (viewBottom - viewTop));
+		spellPaletteScroll = Mth.clamp(spellPaletteScroll, 0, spellPaletteMaxScroll);
+
+		g.enableScissor(px, viewTop, left + SCROLLBAR_X - 1, viewBottom);
+		y = viewTop - spellPaletteScroll;
 		for (int i = 0; i < castable.size(); i++) {
 			Spell spell = castable.get(i);
 			SpellCell cell = new SpellCell(spell, px + (i % perRow) * (CELL + CELL_GAP), y + (i / perRow) * (CELL + CELL_GAP));
-			spellPalette.add(cell);
-			boolean hovered = draggedSpell == null && cell.contains(mouseX, mouseY);
+			// Only a cell wholly in view can be taken (as the list's Ready buttons).
+			boolean visible = cell.y() >= viewTop && cell.y() + CELL <= viewBottom;
+			if (visible) spellPalette.add(cell);
+			boolean hovered = visible && draggedSpell == null && cell.contains(mouseX, mouseY);
 			if (hovered) pointed = spell;
 			boolean placed = false;
 			for (int slot = 0; slot < Spells.WHEEL_SLOTS; slot++) placed |= s.spellSlot(slot) == spell;
@@ -1883,15 +1912,13 @@ public class CultivationScreen extends Screen {
 			g.fill(cell.x() + 1, cell.y() + 1, cell.x() + CELL - 1, cell.y() + CELL - 1, hovered ? AbilityWheel.SLOT_HOVER : AbilityWheel.SLOT);
 			SpellWheelScreen.drawIcon(g, spell, cell.x() + (CELL - 16) / 2, cell.y() + (CELL - 16) / 2, 16, true);
 		}
-		y += ((castable.size() + perRow - 1) / perRow) * (CELL + CELL_GAP) + 4;
-		int textWidth = WIDTH - 12 - PALETTE_X;
-		Component hint = Component.translatable(ModLang.SPELLS_ARRANGE_HINT,
-				ModKeybinds.SPELL_WHEEL.getTranslatedKeyMessage().copy().withStyle(style -> style.withColor(0xFFD700)),
-				ModKeybinds.CAST_SPELL.getTranslatedKeyMessage().copy().withStyle(style -> style.withColor(0xFFD700)));
-		for (FormattedCharSequence line : font.split(hint, textWidth)) {
+		y += rows * (CELL + CELL_GAP) + 4;
+		for (FormattedCharSequence line : hintLines) {
 			g.drawString(font, line, px, y, 0x8A8A8A);
 			y += 10;
 		}
+		g.disableScissor();
+		if (spellPaletteMaxScroll > 0) scrollbar(g, viewTop, viewBottom, contentHeight, spellPaletteScroll, spellPaletteMaxScroll, mouseX, mouseY);
 
 		int centreWidth = 2 * (EDIT_RING - EDIT_SLOT) - 8;
 		Spell named = draggedSpell != null ? draggedSpell : pointed;
