@@ -17,6 +17,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.phys.Vec3;
 
@@ -60,7 +61,12 @@ public class NpcTravel extends SavedData {
 	/** How far from its destination a traveller looks for dry ground to set down on (outside the Upper Realm). */
 	private static final int LANDING_REACH = 64;
 	/** How far from its destination in the Upper Realm a traveller looks for an island to set down on. */
-	private static final int ISLAND_REACH = 320;
+	static final int ISLAND_REACH = 320;
+	/**
+	 * At most this many columns of land not yet loaded are put to the world generator (about 10 ms each) in looking for an
+	 * island to set down on, and loaded to look at if there is one under them ({@link #nearestIsland}).
+	 */
+	static final int ISLAND_ASKS = 4;
 	/** The height cultivators come out at on the Upper Realm side of the rift, over its lowest islands. */
 	private static final int UPPER_ENTRY_Y = 160;
 	/** How far round the rift's Upper Realm side they come out. */
@@ -426,30 +432,75 @@ public class NpcTravel extends SavedData {
 	}
 
 	/**
-	 * Solid, dry island ground nearest (x, z), out to {@link #ISLAND_REACH}, or null. The world generator's own heights are
-	 * asked first (no land is generated for that), and only a column with an island under it is loaded and looked at: a
-	 * cultivator set down on a lone platform in the sky would sooner or later stroll off it into the void.
+	 * Solid, dry island ground nearest (x, z), out to {@link #ISLAND_REACH}, or null: a cultivator set down on a lone platform in
+	 * the sky would sooner or later stroll off it into the void.
 	 */
 	private static BlockPos nearestIsland(ServerLevel level, int x, int z) {
-		net.minecraft.world.level.chunk.ChunkGenerator generator = level.getChunkSource().getGenerator();
-		net.minecraft.world.level.levelgen.RandomState noise = level.getChunkSource().randomState();
-		int floor = level.getMinBuildHeight() + 2;
+		return nearestIsland(level.getChunkSource().randomState(), new LevelLand(level), x, z);
+	}
+
+	/**
+	 * The search for {@link #nearestIsland(ServerLevel, int, int)} in {@code land}. Only a column well inside an island by its
+	 * mask (ModNoiseSettings#islandMask: four noise samples, nothing generated) is looked at, so the open sky costs next to
+	 * nothing. Its land, if loaded, is read as it stands; if not, the world generator's own heights are asked first (no land is
+	 * generated for that), and only with an island under it is the land loaded and looked at: at most {@link #ISLAND_ASKS}
+	 * of those a landing, however many trunks and ponds stand where it looks, so a landing never holds the server up.
+	 */
+	static BlockPos nearestIsland(RandomState noise, IslandLand land, int x, int z) {
+		int asked = 0;
 		for (int radius = 0; radius <= ISLAND_REACH; radius += 16) {
 			int points = radius == 0 ? 1 : Math.max(8, radius / 8);
 			for (int i = 0; i < points; i++) {
 				double angle = Math.PI * 2 * i / points;
 				int cx = x + (int) Math.round(Math.cos(angle) * radius), cz = z + (int) Math.round(Math.sin(angle) * radius);
-				if (generator.getBaseHeight(cx, cz, Heightmap.Types.WORLD_SURFACE_WG, level, noise) <= floor) continue;
-				level.getChunk(cx >> 4, cz >> 4);
-				int top = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, cx, cz);
-				if (top <= floor || top >= level.getMaxBuildHeight() - 2) continue;
-				BlockPos ground = new BlockPos(cx, top - 1, cz);
-				if (standsOn(level, ground)) {
-					return ground.above();
+				if (ModNoiseSettings.islandMask(noise, cx, cz) <= SpatialArrivals.INSIDE) continue;
+				if (!land.loaded(cx, cz)) {
+					if (asked >= ISLAND_ASKS) continue;
+					asked++;
+					if (!land.groundUnder(cx, cz)) continue;
+				}
+				BlockPos ground = land.ground(cx, cz);
+				if (ground != null) {
+					return ground;
 				}
 			}
 		}
 		return null;
+	}
+
+	/** The land an island is sought in ({@link #nearestIsland}): the Upper Realm's own, or (for tests) its generator's alone. */
+	interface IslandLand {
+		/** Whether the land at column (x, z) is loaded, to be read as it stands. */
+		boolean loaded(int x, int z);
+
+		/** Whether the world generator's own heights put ground under column (x, z) (about 10 ms; no land is generated). */
+		boolean groundUnder(int x, int z);
+
+		/** Dry, solid ground to stand on at column (x, z), its land loaded to look if it isn't yet; or null. */
+		BlockPos ground(int x, int z);
+	}
+
+	/** The Upper Realm's land in {@code level}. */
+	private record LevelLand(ServerLevel level) implements IslandLand {
+		@Override
+		public boolean loaded(int x, int z) {
+			return level.getChunkSource().getChunkNow(x >> 4, z >> 4) != null;
+		}
+
+		@Override
+		public boolean groundUnder(int x, int z) {
+			return level.getChunkSource().getGenerator().getBaseHeight(x, z, Heightmap.Types.WORLD_SURFACE_WG, level,
+					level.getChunkSource().randomState()) > level.getMinBuildHeight() + 2;
+		}
+
+		@Override
+		public BlockPos ground(int x, int z) {
+			level.getChunk(x >> 4, z >> 4);
+			int top = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+			if (top <= level.getMinBuildHeight() + 2 || top >= level.getMaxBuildHeight() - 2) return null;
+			BlockPos ground = new BlockPos(x, top - 1, z);
+			return standsOn(level, ground) ? ground.above() : null;
+		}
 	}
 
 	/** Dry, solid ground to stand on, and not the top of a tree trunk (it would stand wedged in the leaves). */
