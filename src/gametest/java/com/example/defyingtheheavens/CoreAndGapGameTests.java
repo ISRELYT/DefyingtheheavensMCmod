@@ -199,6 +199,82 @@ public class CoreAndGapGameTests implements FabricGameTest {
 		helper.succeed();
 	}
 
+	/**
+	 * Where an NPC's journey sets down in the Upper Realm (NpcTravel#nearestIsland), against the realm's own generator as above:
+	 * only columns well inside an island by its mask are looked at, and the generator is asked about a few at most (about 10 ms
+	 * each), not about every point out to the search's reach (some 430: seconds, with no island near); land that is loaded is
+	 * read as it stands, the generator not asked at all.
+	 */
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 200)
+	public void anNpcLandingAsksTheGeneratorOnlyAFewTimes(GameTestHelper helper) {
+		var access = helper.getLevel().registryAccess();
+		Holder<NoiseGeneratorSettings> settings = access.registryOrThrow(Registries.NOISE_SETTINGS).getHolderOrThrow(ModNoiseSettings.UPPER_REALM);
+		RandomState noise = RandomState.create(settings.value(), access.lookupOrThrow(Registries.NOISE), 20261016L);
+		NoiseBasedChunkGenerator generator = new NoiseBasedChunkGenerator(
+				new FixedBiomeSource(access.registryOrThrow(Registries.BIOME).getHolderOrThrow(Biomes.PLAINS)), settings);
+		LevelHeightAccessor heights = LevelHeightAccessor.create(ModDimensions.UPPER_REALM_MIN_Y, ModDimensions.UPPER_REALM_HEIGHT);
+		int floor = heights.getMinBuildHeight() + 2;
+		int[] asked = {0};
+		boolean[] loaded = {false}, stands = {true};
+		// The land as the generator makes it: none of it loaded (or all of it), and ground wherever it has some (or none to
+		// stand on anywhere: all trunks and ponds).
+		NpcTravel.IslandLand land = new NpcTravel.IslandLand() {
+			@Override
+			public boolean loaded(int x, int z) {
+				return loaded[0];
+			}
+
+			@Override
+			public boolean groundUnder(int x, int z) {
+				asked[0]++;
+				return generator.getBaseHeight(x, z, Heightmap.Types.WORLD_SURFACE_WG, heights, noise) > floor;
+			}
+
+			@Override
+			public BlockPos ground(int x, int z) {
+				if (!stands[0]) return null;
+				int top = generator.getBaseHeight(x, z, Heightmap.Types.WORLD_SURFACE_WG, heights, noise);
+				return top > floor ? new BlockPos(x, top, z) : null;
+			}
+		};
+		int spots = 12, found = 0, foundLoaded = 0, most = 0;
+		long nanos = 0;
+		for (int i = 0; i < spots; i++) {
+			int x = 1000 * i - 6000, z = 7919 * i % 9000 - 4500;
+			loaded[0] = false;
+			stands[0] = true;
+			asked[0] = 0;
+			BlockPos island = NpcTravel.nearestIsland(noise, land, x, z);
+			most = Math.max(most, asked[0]);
+			if (island != null) {
+				found++;
+				helper.assertTrue(Math.abs(island.getX() - x) <= NpcTravel.ISLAND_REACH && Math.abs(island.getZ() - z) <= NpcTravel.ISLAND_REACH,
+						"Within reach of where it was bound");
+				helper.assertTrue(ModNoiseSettings.islandMask(noise, island.getX(), island.getZ()) > SpatialArrivals.INSIDE,
+						"Well inside an island (" + island.toShortString() + ")");
+			}
+			// Nothing to stand on anywhere round: it gives up after a few questions, not hundreds.
+			stands[0] = false;
+			asked[0] = 0;
+			long start = System.nanoTime();
+			helper.assertTrue(NpcTravel.nearestIsland(noise, land, x, z) == null, "No ground to stand on, no island found");
+			nanos += System.nanoTime() - start;
+			most = Math.max(most, asked[0]);
+			// All of it loaded: read as it stands.
+			loaded[0] = true;
+			stands[0] = true;
+			asked[0] = 0;
+			if (NpcTravel.nearestIsland(noise, land, x, z) != null) foundLoaded++;
+			helper.assertTrue(asked[0] == 0, "Loaded land is read as it stands, the generator not asked (" + asked[0] + " times)");
+		}
+		double ms = nanos / 1.0e6 / spots;
+		helper.assertTrue(most <= NpcTravel.ISLAND_ASKS, "The generator asked a few times at most a landing (" + most + ")");
+		helper.assertTrue(found >= spots / 3 && foundLoaded >= found, "Islands found near most points (" + found + " of " + spots + "; "
+				+ foundLoaded + " in loaded land)");
+		helper.assertTrue(ms < 250, "With nothing to stand on, given up in milliseconds, not seconds (" + Math.round(ms) + " ms a search)");
+		helper.succeed();
+	}
+
 	/** The land asked for ahead loads without the server waiting on it (SpatialArrivals#prepare), and the arrival reads only loaded land. */
 	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 300)
 	public void theLandAheadLoadsWhileTheServerGoesOn(GameTestHelper helper) {
