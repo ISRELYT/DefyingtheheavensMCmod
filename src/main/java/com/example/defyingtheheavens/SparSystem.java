@@ -36,7 +36,7 @@ import java.util.UUID;
  *   Losing to a senior who is Warm to you can grant their Insight (once a day from each teacher).</li>
  * </ul>
  * Blows between the two are no attack on a sect (no alarm, no grudge; see CultivatorNpc#hurt), and neither of them dies of
- * the other's hand while it lasts.
+ * the other's hand while it lasts; those that land in the moment after it ends are pulled ({@link #AFTERMATH_TICKS}).
  */
 public final class SparSystem {
 	public static final int COUNTDOWN_TICKS = 60;
@@ -105,6 +105,19 @@ public final class SparSystem {
 	private static final Map<UUID, Spar> BY_PLAYER = new HashMap<>();
 	private static final Map<UUID, Spar> BY_NPC = new HashMap<>();
 
+	/**
+	 * Blows between the two in this long after their spar ends are pulled ({@link #allowDamage}). The winning blow often ends it
+	 * at once (one far stronger takes a quarter of its partner's health in a stroke), and the next swing a moment later landed
+	 * as an attack in earnest: the whole sect turned out, and its barrier set its guest down outside.
+	 */
+	public static final int AFTERMATH_TICKS = 60;
+
+	/** A spar just over: the player's side, and until when (game time) blows between them are pulled. */
+	private record Aftermath(UUID player, long until) {}
+
+	/** By the cultivator's id. */
+	private static final Map<UUID, Aftermath> AFTER = new HashMap<>();
+
 	private static Spar of(Entity entity) {
 		Spar spar = BY_PLAYER.get(entity.getUUID());
 		return spar != null ? spar : BY_NPC.get(entity.getUUID());
@@ -121,6 +134,20 @@ public final class SparSystem {
 		if (spar == null || a == b) return false;
 		UUID other = a.getUUID().equals(spar.player) ? spar.npc : spar.player;
 		return b.getUUID().equals(other);
+	}
+
+	/** {@code a} and {@code b} (either way round, or a projectile one of them loosed) ended a spar between them a moment ago. */
+	public static boolean justSparred(Entity a, Entity b) {
+		if (b instanceof Projectile projectile && projectile.getOwner() != null) b = projectile.getOwner();
+		Aftermath after = AFTER.get(a.getUUID());
+		if (after != null && after.player().equals(b.getUUID())) return a.level().getGameTime() < after.until();
+		after = AFTER.get(b.getUUID());
+		return after != null && after.player().equals(a.getUUID()) && b.level().getGameTime() < after.until();
+	}
+
+	/** Whether a blow may land on {@code entity} (ALLOW_DAMAGE): not one from its partner in a spar just over. */
+	public static boolean allowDamage(LivingEntity entity, DamageSource source) {
+		return AFTER.isEmpty() || source.getEntity() == null || !justSparred(entity, source.getEntity());
 	}
 
 	/** Still in the three breaths before it begins. */
@@ -159,6 +186,7 @@ public final class SparSystem {
 			npc.regardEntry(player).wagerDay = Regard.day(npc.level().getGameTime());
 		}
 		Spar spar = new Spar(player, npc, terms, playerStake, npcStake);
+		AFTER.remove(spar.npc);
 		// A stronger cultivator holds back to the player's realm, unless told not to.
 		int yours = CultivatorNpc.rankOf(player);
 		boolean holdBack = !terms.full && npc.sustainedRank() > yours;
@@ -185,6 +213,10 @@ public final class SparSystem {
 	}
 
 	public static void tick(MinecraftServer server) {
+		if (!AFTER.isEmpty()) {
+			long now = server.overworld().getGameTime();
+			AFTER.values().removeIf(after -> now >= after.until());
+		}
 		if (BY_PLAYER.isEmpty()) return;
 		for (Spar spar : new ArrayList<>(BY_PLAYER.values())) {
 			ServerPlayer player = server.getPlayerList().getPlayer(spar.player);
@@ -246,6 +278,7 @@ public final class SparSystem {
 		BY_PLAYER.remove(spar.player);
 		BY_NPC.remove(spar.npc);
 		if (npc != null) npc.endSpar(player);
+		if (npc != null && player != null) AFTER.put(spar.npc, new Aftermath(spar.player, npc.level().getGameTime() + AFTERMATH_TICKS));
 		if (player == null) {
 			// Gone mid-spar (logged out): the cultivator keeps the stakes, the player's included.
 			if (npc != null) {
@@ -332,6 +365,7 @@ public final class SparSystem {
 		}
 		BY_PLAYER.clear();
 		BY_NPC.clear();
+		AFTER.clear();
 	}
 
 	private SparSystem() {}

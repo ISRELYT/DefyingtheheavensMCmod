@@ -184,6 +184,45 @@ public class TalkPhasesGameTests implements FabricGameTest {
 		}
 	}
 
+	/**
+	 * One far stronger ends a spar with its first blow (a quarter of the partner's health in a stroke), and the next swing a
+	 * moment later landed as an attack in earnest: the whole sect turned out and the barrier set its guest outside. Blows
+	 * between the two just after the end are pulled (SparSystem#AFTERMATH_TICKS); afterwards, blows are blows again.
+	 */
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = SparSystem.AFTERMATH_TICKS + 40)
+	public void theSwingJustAfterASparIsPulled(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		MinecraftServer server = helper.getLevel().getServer();
+		ServerPlayer player = cultivator(helper, made, "eager", Realm.HEAVENLY_BEING, Stage.GRAND_PERFECTION);
+		CultivatorNpc junior = npc(helper, new BlockPos(3, 2, 2), Realm.CORE_FORMATION, 0);
+		try {
+			SparSystem.start(player, junior, SparSystem.Terms.FRIENDLY);
+			for (int i = 0; i < SparSystem.COUNTDOWN_TICKS; i++) SparSystem.tick(server);
+			junior.setHealth(1); // the winning blow
+			SparSystem.tick(server);
+			helper.assertTrue(!SparSystem.isSparring(player) && SparSystem.justSparred(player, junior), "The spar is won, a moment ago");
+			int regard = junior.regard(player);
+			float health = junior.getHealth();
+			helper.assertTrue(!SparSystem.allowDamage(junior, player.damageSources().playerAttack(player))
+					&& !junior.hurt(player.damageSources().playerAttack(player), 4) && junior.getHealth() == health, "The next swing is pulled");
+			helper.assertTrue(junior.regard(player) == regard && junior.getTarget() != player, "...with no grudge and no fight for it");
+			helper.assertTrue(!SparSystem.allowDamage(player, junior.damageSources().mobAttack(junior)), "...nor does its own last blow land");
+			helper.assertTrue(SparSystem.allowDamage(junior, junior.damageSources().generic()), "Anything else still hurts");
+		} catch (RuntimeException e) {
+			leave(made);
+			throw e;
+		}
+		helper.runAfterDelay(SparSystem.AFTERMATH_TICKS + 5, () -> {
+			try {
+				helper.assertTrue(!SparSystem.justSparred(player, junior) && SparSystem.allowDamage(junior, player.damageSources().playerAttack(player)),
+						"Once the moment has passed, a blow is a blow");
+				helper.succeed();
+			} finally {
+				leave(made);
+			}
+		});
+	}
+
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void winningAWagerTakesBothStakes(GameTestHelper helper) {
 		List<ServerPlayer> made = new ArrayList<>();

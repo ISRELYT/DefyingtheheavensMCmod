@@ -45,29 +45,51 @@ public final class CultivatorGoals {
 		return npc.isMortal() ? 20 : Math.max(10, 20 - 2 * CultivatorNpc.realmOf(npc.getRank()).ordinal());
 	}
 
+	/** A target this near (sideways) is walked to straight; a farther one a step of this at a time. */
+	private static final double STEP = 24;
+	/** A target this near is searched for whole by the far search (CultivatorNavigation#farPath); a farther one, the step. */
+	private static final double FAR_TARGET = 64;
+
 	/**
-	 * Steps a walker toward a far target, a little at a time (paths are only planned so far). Each step is set down on the
-	 * ground where it falls: a step at the walker's own height, taken from a hall's raised floor, would hang in the air over
-	 * the lawn, and the path to it end at the hall's wall (gate guards walked into the meditation hall's wall for good). If
-	 * the step still can't be reached (a building in the way), a sect member goes by the sect's ways instead
-	 * ({@link Sect#waypoints}): the nearest point on them that brings it closer.
+	 * Walks toward {@code target}: straight there when it is near, else a step at a time (paths are only planned so far). Each
+	 * step is set down on the ground where it falls: a step at the walker's own height, taken from a hall's raised floor,
+	 * would hang in the air over the lawn, and the path to it end at the hall's wall. When the usual search can't find the
+	 * way (it gives up past 32 blocks of walking: from the back of the meditation hall to a gate behind it, out of the door
+	 * and round, is longer, and gate guards pressed into the hall's corner for good), the far search looks again
+	 * (CultivatorNavigation#farPath); failing that, a sect member goes by the sect's ways ({@link Sect#waypoints}).
 	 */
 	static void walkToward(CultivatorNpc npc, Vec3 target, double speed) {
-		Vec3 to = target.subtract(npc.position());
-		double distance = Math.sqrt(to.x * to.x + to.z * to.z);
-		if (distance <= 24) {
-			npc.getNavigation().moveTo(target.x, target.y, target.z, speed);
+		// Already on a path the whole way there: it keeps to it. (Planned afresh every couple of seconds, a guard deep in a hall
+		// swung between a way out and a dead end, half a block each way; and vanilla's stuck check, reset by every new plan, never
+		// came round to set a stuck walker going again.)
+		Path current = npc.getNavigation().getPath();
+		if (current != null && !current.isDone() && current.canReach() && current.getTarget() != null
+				&& Vec3.atBottomCenterOf(current.getTarget()).distanceToSqr(target) < 4.0) {
+			npc.getNavigation().setSpeedModifier(speed);
 			return;
 		}
-		double sx = npc.getX() + to.x / distance * 24, sz = npc.getZ() + to.z / distance * 24;
-		int ground = Formations.surface(npc.level(), Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mth.floor(sx), Mth.floor(sz));
-		Path path = npc.getNavigation().createPath(BlockPos.containing(sx, ground, sz), 1);
+		Vec3 to = target.subtract(npc.position());
+		double distance = Math.sqrt(to.x * to.x + to.z * to.z);
+		BlockPos step;
+		if (distance <= STEP) {
+			step = BlockPos.containing(target);
+		} else {
+			double sx = npc.getX() + to.x / distance * STEP, sz = npc.getZ() + to.z / distance * STEP;
+			step = BlockPos.containing(sx, Formations.surface(npc.level(), Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mth.floor(sx), Mth.floor(sz)), sz);
+		}
+		Path path = npc.getNavigation().createPath(step, 1);
 		if (path == null || !path.canReach()) {
-			Path around = byTheWays(npc, target);
-			if (around != null) path = around;
+			Path far = npc.getNavigation() instanceof CultivatorNavigation navigation
+					? navigation.farPath(distance <= FAR_TARGET ? BlockPos.containing(target) : step, 1) : null;
+			if (far != null && far.canReach()) {
+				path = far;
+			} else {
+				Path around = byTheWays(npc, target);
+				if (around != null) path = around;
+			}
 		}
 		if (path != null) npc.getNavigation().moveTo(path, speed);
-		else npc.getNavigation().moveTo(sx, ground, sz, speed);
+		else npc.getNavigation().moveTo(step.getX() + 0.5, step.getY(), step.getZ() + 0.5, speed);
 	}
 
 	/** Way points this close are taken as joined by a stretch of way (they stand ten apart along each way). */
@@ -95,6 +117,22 @@ public final class CultivatorGoals {
 		for (int k = 0; k < Math.min(4, candidates.size()); k++) {
 			Path path = npc.getNavigation().createPath(ways.get(candidates.get(k)), 1);
 			if (path != null && path.canReach()) return path;
+		}
+		// None in a short walk (it is deep in a building): by the far search, whichever point it can walk to soonest, out of
+		// the door; from there the way on is open.
+		if (npc.getNavigation() instanceof CultivatorNavigation navigation) {
+			java.util.Set<BlockPos> near = new java.util.HashSet<>();
+			BlockPos nearest = null;
+			for (BlockPos way : ways) {
+				double d = Math.sqrt(npc.blockPosition().distSqr(way));
+				if (d < 3 || d > 40) continue;
+				near.add(way);
+				if (nearest == null || npc.blockPosition().distSqr(way) < npc.blockPosition().distSqr(nearest)) nearest = way;
+			}
+			if (nearest != null) {
+				Path path = navigation.farPath(near, nearest, 1);
+				if (path != null && path.canReach()) return path;
+			}
 		}
 		return null;
 	}
@@ -680,8 +718,7 @@ public final class CultivatorGoals {
 				npc.setMeditating(false);
 				if (--repath <= 0 || npc.getNavigation().isDone()) {
 					repath = 40;
-					if (distanceSqr > 24 * 24) walkToward(npc, Vec3.atBottomCenterOf(goal), 1.0);
-					else npc.getNavigation().moveTo(goal.getX() + 0.5, goal.getY(), goal.getZ() + 0.5, 0.9);
+					walkToward(npc, Vec3.atBottomCenterOf(goal), distanceSqr > STEP * STEP ? 1.0 : 0.9);
 				}
 				if (++busy > 900) goal = null; // stuck: pick another
 				return;
@@ -987,8 +1024,7 @@ public final class CultivatorGoals {
 					a.walked++;
 					if (--repath <= 0 || npc.getNavigation().isDone()) {
 						repath = 40;
-						if (sideways > 24 * 24) walkToward(npc, target, 1.0);
-						else npc.getNavigation().moveTo(target.x, target.y, target.z, 0.9);
+						walkToward(npc, target, sideways > STEP * STEP ? 1.0 : 0.9);
 					}
 					return;
 				}

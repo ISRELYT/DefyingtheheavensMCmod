@@ -1846,6 +1846,17 @@ crimson pillars and dark nether-brick roofs trimmed in red with soul lanterns fo
   watching it, outside the barrier, where visitors meet them (a future pass into the sect would be bought from them). One
   raised above the Outer Disciples (its seniors fallen, say, while it was fighting) is a gate guard no longer: its nameplate
   shows its new title at once, and it leaves the gate for its new station.
+- **Finding the way** (`CultivatorNavigation`, `CultivatorGoals#walkToward`): vanilla's path search gives up on any walk
+  longer than 32 blocks, and from the back of the meditation hall to a gate behind it, out of the door and round, is longer:
+  every path it found ended in the hall's corner nearest the gate, where gate guards stood for good. When the usual search
+  falls short, a cultivator searches again for a walk of up to 96 blocks (a spot that search can't reach isn't tried again
+  for 10 seconds), then for whichever of the sect's way points it can walk to soonest (out of the door). A path that goes
+  the whole way is kept rather than planned afresh every couple of seconds (a guard swung between a way out and a dead end),
+  and a walker that gets nowhere for a second beside the next point of its path goes on to the one after, stepping down
+  onto it if it hangs on an edge above it (a guard rocked on the corner of the hall's plinth for good, where its path
+  stepped down across the corner). A game test walls a walker into the back of a closed hall with its goal just behind the
+  back wall and checks the way it finds leads out of the door and round; in game, every gate guard of a sect set on the
+  meditation mat nearest its post reached its gate within 23 seconds.
 - The earlier layouts are in the git history: the first walled, fully paved compounds (up to 56206f9) and another open
   village design (ab0301b).
 - The Treasury holds Spirit Pedestals bearing old Cultivation Fruit and ginseng and Spirit Ginseng, and loot chests;
@@ -2148,7 +2159,8 @@ Right-click a cultivator to talk, from up to 6 blocks away. The **talk wheel** o
 can mean by it (click one, or press its number): **Greet**, **Ask**, **Spar**, **Trade**, **Gift** and **Provoke**, and
 in some talks **Demand**, **Release**, **Spare** or **Leave**. Greet, Gift, Provoke and the rest are answered in a line
 over the hotbar; Trade opens the trading screen; Ask and Spar open the **dialogue box**, with their portrait and name
-plate (personal name, title, sect, realm), what they say, your regard, and numbered replies. The wheel folds into tabs
+plate (personal name, title, sect, realm), what they say, your regard, and numbered replies (the box grows taller to hold
+them all: an elder's Join, after its teachings, used to fall off the bottom). The wheel folds into tabs
 on the box, so you can turn to a gift without leaving; Esc goes back to the wheel, and again ends the talk. They stop and
 face you while you talk; walking away (8 blocks), a fight, or being struck yourself ends it, and if they break it off the
 window closes with a line over the hotbar saying why (`TalkSystem`, `TalkWheelScreen`, `DialogueScreen`).
@@ -2222,7 +2234,9 @@ Topics not open yet still show, greyed, with the regard they need.
   wager a day with each), and, with someone stronger, **don't hold back**. Three breaths, then it begins. It ends when
   either of you has lost a quarter of your health since it began, when you walk 16 blocks off (a forfeit), or after three
   minutes (a draw). Nobody dies: a blow from the other that would go past the line stops at it. A stronger cultivator
-  holds back to your realm unless told not to. Blows in a spar are no attack on their sect. Losing to a senior who is
+  holds back to your realm unless told not to. Blows in a spar are no attack on their sect, and blows between you in the
+  three seconds after it ends are pulled (one far stronger often ends it with the first blow, and the next swing came a
+  moment later; it was taken for an attack, the whole sect turned out and the barrier put you outside). Losing to a senior who is
   Warm to you can teach you their Insight. A weaker cultivator never runs from the one it is sparring with, however far
   above it they are (it would run from such a domain in a real fight); if it runs from someone else mid-bout, the spar ends
   with no result rather than as your forfeit.

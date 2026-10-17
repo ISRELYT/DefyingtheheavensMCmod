@@ -35,6 +35,7 @@ import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.monster.Enemy;
@@ -222,6 +223,12 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 				.add(Attributes.FOLLOW_RANGE, 32.0)
 				.add(Attributes.FLYING_SPEED, 0.6)
 				.add(Attributes.ARMOR, 0.0);
+	}
+
+	/** Its way on foot, with a far search for walks out of a building and round it (CultivatorGoals#walkToward). */
+	@Override
+	protected PathNavigation createNavigation(Level level) {
+		return new CultivatorNavigation(this, level);
 	}
 
 	@Override

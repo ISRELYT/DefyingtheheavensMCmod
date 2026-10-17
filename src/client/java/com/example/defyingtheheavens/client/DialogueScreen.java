@@ -40,6 +40,7 @@ public class DialogueScreen extends Screen {
 	/** They said something more. */
 	void show(TalkSession.Dialogue next) {
 		dialogue = next;
+		if (minecraft != null) fit();
 	}
 
 	@Override
@@ -47,9 +48,23 @@ public class DialogueScreen extends Screen {
 		boxX0 = 12;
 		boxX1 = width - 12;
 		boxY1 = height - 8;
-		boxY0 = boxY1 - BOX_H;
 		int repliesW = Math.min(190, (boxX1 - boxX0) / 2);
 		repliesX = boxX1 - 10 - repliesW;
+		fit();
+	}
+
+	/**
+	 * The box's height: {@link #BOX_H}, or taller to hold every reply and all they say, as far as the screen allows (the
+	 * portrait and tabs keep their room above). Rows that didn't fit were left off: an elder's "Ask to join", after its
+	 * teachings, was never seen.
+	 */
+	private void fit() {
+		boxY0 = boxY1 - BOX_H;
+		List<Row> rows = rows(-1);
+		int forReplies = rows.get(rows.size() - 1).bottom() + 4 - boxY0;
+		int forLine = font.split(dialogue.line(), repliesX - (boxX0 + 10) - 14).size() * 10 + 23;
+		int room = boxY1 - 60;
+		boxY0 = boxY1 - Math.max(BOX_H, Math.min(room, Math.max(forReplies, forLine)));
 	}
 
 	/** One row of the replies, wrapped to the column: where it starts and its lines (the number goes before the first). */

@@ -1341,4 +1341,53 @@ public class SectGameTests implements FabricGameTest {
 				"Reckoned along the ways, not as the crow flies (through the hall): " + cost[0]);
 		helper.succeed();
 	}
+
+	/**
+	 * A walker in the back corner of a closed hall, its goal a few blocks behind the back wall, the way there out of the door
+	 * at the front and round: more than vanilla's 32 blocks of walking, so its own search only ever reached the corner nearest
+	 * the goal (where gate guards stood for good). The far search finds the way (CultivatorNavigation, CultivatorGoals#walkToward).
+	 * On a floor high over its spot, in a batch of its own.
+	 */
+	@GameTest(template = EMPTY_STRUCTURE, batch = "sect_hall_way_out", timeoutTicks = 60)
+	public void aWalkerFindsTheWayOutOfAHallAndRoundIt(GameTestHelper helper) {
+		HeavenSpellTesting.Floor floor = HeavenSpellTesting.floor(helper, 24, 8);
+		ServerLevel level = helper.getLevel();
+		BlockPos c = floor.centre();
+		CultivatorNpc npc = null;
+		try {
+			// The hall: stone walls 4 high under a roof, 17 across and 11 deep inside, a door 3 wide in the middle of its front (north).
+			int x0 = c.getX() - 9, x1 = c.getX() + 9, z0 = c.getZ() - 8, z1 = c.getZ() + 4;
+			for (int x = x0; x <= x1; x++) {
+				for (int z = z0; z <= z1; z++) {
+					boolean wall = x == x0 || x == x1 || z == z0 || z == z1;
+					for (int y = 0; y < 4; y++) if (wall) level.setBlock(new BlockPos(x, c.getY() + y, z), Blocks.STONE_BRICKS.defaultBlockState(), 2);
+					level.setBlock(new BlockPos(x, c.getY() + 4, z), Blocks.STONE_BRICKS.defaultBlockState(), 2);
+				}
+			}
+			for (int x = c.getX() - 1; x <= c.getX() + 1; x++) {
+				for (int y = 0; y < 3; y++) level.setBlock(new BlockPos(x, c.getY() + y, z0), Blocks.AIR.defaultBlockState(), 2);
+			}
+			npc = ModEntities.CULTIVATOR.create(level);
+			npc.moveTo(x1 - 0.5, c.getY(), z1 - 0.5, 0, 0);
+			npc.setNoAi(true);
+			level.addFreshEntity(npc);
+			npc.setOnGround(true);
+			BlockPos goal = new BlockPos(c.getX() + 5, c.getY(), c.getZ() + 14);
+			net.minecraft.world.level.pathfinder.Path straight = npc.getNavigation().createPath(goal, 1);
+			helper.assertTrue(straight == null || !straight.canReach(), "Vanilla's own search ends short of the goal (the corner nearest it)");
+			CultivatorGoals.walkToward(npc, Vec3.atBottomCenterOf(goal), 1.0);
+			net.minecraft.world.level.pathfinder.Path path = npc.getNavigation().getPath();
+			helper.assertTrue(path != null && path.canReach(), "The walker's way reaches the goal");
+			boolean byTheDoor = false;
+			for (int i = 0; i < path.getNodeCount(); i++) {
+				BlockPos node = path.getNodePos(i);
+				if (node.getZ() == z0 && Math.abs(node.getX() - c.getX()) <= 1) byTheDoor = true;
+			}
+			helper.assertTrue(byTheDoor, "...out by the door");
+			helper.succeed();
+		} finally {
+			if (npc != null) npc.discard();
+			floor.remove();
+		}
+	}
 }
