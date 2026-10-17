@@ -109,15 +109,14 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_HEAVENS_BLIND, "The heavens cannot see you here.");
 		t.add(ModLang.MSG_GATE_PROTECTED, "The Ghost Gate's ground is not yours to change.");
 		t.add(ModLang.MSG_WHEEL_LIVING, "The Wheel turns only for the dead.");
-		t.add(ModLang.MSG_ARRIVE_NETHERWORLD, "You stand before the Ghost Gate, in the Netherworld. Ghostly qi hangs here %s times as thick as "
-				+ "in a Soul Sand Valley, and its yin seeps into the living: leave before it fills you, or you walk on among the dead.");
+		t.add(ModLang.MSG_ARRIVE_NETHERWORLD, "The Netherworld. Its yin seeps into the living: leave before it fills you.");
 		t.add(ModLang.MSG_ARRIVE_NETHER, "The river sets you down in the Nether.");
-		t.add(ModLang.MSG_RIVER_ASCEND, "The Soul River takes you up toward the Netherworld. Keep to its flow for %s seconds, or your soul scatters.");
-		t.add(ModLang.MSG_RIVER_DESCEND, "The Soul River carries you back down toward the Nether. Keep to its flow for %s seconds.");
-		t.add(ModLang.MSG_RIVER_ABYSS, "The abyss gives you to the Soul River, flowing down to the Nether. Keep to its flow for %s seconds.");
-		t.add(ModLang.MSG_RIVER_RESTART, "You wake on the Soul River, back where the journey began. Keep to its flow for %s seconds.");
-		t.add(ModLang.MSG_RIVER_SCATTERED_UP, "You strayed from the flow and your soul scattered. It drags itself back together at the Nether's gate, battered.");
-		t.add(ModLang.MSG_RIVER_SCATTERED_DOWN, "You strayed from the flow and your soul scattered. The river spits you out into the Nether, battered.");
+		t.add(ModLang.MSG_RIVER_ASCEND, "Up the Soul River: keep to its flow for %s seconds.");
+		t.add(ModLang.MSG_RIVER_DESCEND, "Down the Soul River: keep to its flow for %s seconds.");
+		t.add(ModLang.MSG_RIVER_ABYSS, "The abyss gives you to the Soul River: keep to its flow for %s seconds.");
+		t.add(ModLang.MSG_RIVER_RESTART, "Back on the Soul River: keep to its flow for %s seconds.");
+		t.add(ModLang.MSG_RIVER_SCATTERED_UP, "Your soul scattered, and gathered again at the Nether's gate.");
+		t.add(ModLang.MSG_RIVER_SCATTERED_DOWN, "Your soul scattered: the river spat you out into the Nether.");
 		t.add(ModLang.MSG_RIVER_COOLDOWN, "Your soul is still unsettled from the river. Wait %s seconds.");
 		t.add(ModLang.HUD_RIVER, "The Soul River  %s s");
 		t.add(ModLang.HUD_RIVER_STRAY, "Back into the flow!");
@@ -125,9 +124,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.DEATH_SOUL_SCATTER + ".player", "%1$s's soul scattered on the Soul River while fighting %2$s");
 		t.add(ModLang.DEATH_JUDGE_GAZE, "%1$s met the gaze of the Chief Judge of the Netherworld");
 		t.add(ModLang.DEATH_JUDGE_GAZE + ".player", "%1$s met the gaze of the Chief Judge of the Netherworld while fighting %2$s");
-		t.add(ModLang.MSG_JUDGE_WARNING, "The eye of the Chief Judge of the Netherworld has turned toward you. A True Immortal's gaze is not for "
-				+ "eyes like yours. Look away.");
-		t.add(ModLang.MSG_JUDGE_STRIPPED, "The Chief Judge's gaze unmade you. Everything you cultivated is gone: you are back at Qi Refining Early.");
+		t.add(ModLang.MSG_JUDGE_WARNING, "The Chief Judge's eye has turned on you. Look away!");
+		t.add(ModLang.MSG_JUDGE_STRIPPED, "The Chief Judge's gaze unmade you: you are back at Qi Refining Early.");
 		t.add(ModLang.MSG_JUDGE_MORTAL, "The Chief Judge's gaze unmade you.");
 		t.add(ModLang.DEATH_GHOSTLY, "%1$s was torn at by the dead");
 		t.add(ModLang.DEATH_GHOSTLY + ".player", "%1$s was torn at by the dead %2$s");
@@ -145,15 +143,11 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(death + "metal.player", "%1$s was cut down by %2$s's metal qi");
 		t.add(ModLang.GAMERULE_AFTER_DEATH, "The dead go to the Netherworld");
 		t.add(ModLang.GAMERULE_AFTER_DEATH + ".description", "Players who die wake at the Ghost Gate as ghosts, and return to life at the Wheel of Reincarnation.");
-		t.add(ModLang.MSG_GHOST_WAKE, "You wake at the Ghost Gate, in the Netherworld, one of the dead. The Wheel of Reincarnation, across the bridge, "
-				+ "will return you to life when you are ready.");
-		t.add(ModLang.MSG_YIN_OVERTAKEN, "The yin fills you. Your body gives way, and you walk on as one of the dead, everything you carried still with "
-				+ "you, for now. The Wheel of Reincarnation, by the Ghost Gate, will return you to life, but nothing you carry goes back with you.");
-		t.add(ModLang.MSG_BELONGINGS_LEFT, "What you carried stays behind at the Wheel, in the Netherworld.");
-		t.add(ModLang.MSG_GHOST_KING, "Your soul burns with a Core Formation cultivator's might: you are a Ghost King. Your hands are your own "
-				+ "again (you can touch, take and build), and the rifts and the Soul River will carry you to the world of the living, where "
-				+ "only those who see souls will see you.");
-		t.add(ModLang.MSG_GHOST_KING_LOST, "Your might is gone: you are one of the common dead again, and your hands pass through the world.");
+		t.add(ModLang.MSG_GHOST_WAKE, "You are dead. The Wheel of Reincarnation, across the bridge, will return you to life.");
+		t.add(ModLang.MSG_YIN_OVERTAKEN, "The yin overtakes you: you walk on among the dead.");
+		t.add(ModLang.MSG_BELONGINGS_LEFT, "What you carried stays behind at the Wheel.");
+		t.add(ModLang.MSG_GHOST_KING, "You are a Ghost King: you can touch the world again, and cross to the living.");
+		t.add(ModLang.MSG_GHOST_KING_LOST, "You are no longer a Ghost King.");
 		t.add(ModLang.JOURNAL_GHOST_KING, "A Ghost King");
 		t.add(ModLang.JOURNAL_GHOST_KING_TEXT, "Dead, I rose to Core Formation and became a Ghost King. My hands are my own again, and the "
 				+ "Soul River carries me down to the world of the living, unseen but by those who see souls.");
@@ -163,9 +157,9 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_WHEEL_TURNS, "The Wheel of Reincarnation turns for you...");
 		t.add(ModLang.MSG_WHEEL_HARDCORE, "Your thread of life has been cut.");
 		t.add(ModLang.MSG_REVIVED, "You wake, alive.");
-		t.add(ModLang.MSG_YIN_HALF, "The Netherworld's yin has half filled you. Your hands have gone cold.");
-		t.add(ModLang.MSG_YIN_THREE_QUARTERS, "The yin creeps toward your heart. Your breath leaves no warmth.");
-		t.add(ModLang.MSG_YIN_NEAR, "You can barely feel your body. Leave the Netherworld or burn a Yang Fire Talisman, or walk on as one of the dead.");
+		t.add(ModLang.MSG_YIN_HALF, "The yin has half filled you.");
+		t.add(ModLang.MSG_YIN_THREE_QUARTERS, "The yin creeps toward your heart.");
+		t.add(ModLang.MSG_YIN_NEAR, "The yin has nearly filled you: leave, or burn a Yang Fire Talisman!");
 		t.add(ModLang.MSG_YIN_CLEANSED, "The yang fire burns away %s%% of the yin (%s%% left).");
 		t.add(ModLang.MSG_YIN_NONE, "There is no yin in you to burn away.");
 		t.add(ModLang.YIN_LINE, "Yin corruption: %s%%");
@@ -446,7 +440,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.SPELLS_QI_COST, "%s qi");
 		t.add(ModLang.SPELLS_LOCKED_BOTH, "Both paths at %s");
 		t.add(ModLang.MSG_SPELL_NO_BOTH, "Not enough qi for %s: a spell of both paths draws on your qi and your ghost qi.");
-		t.add(ModLang.MSG_SPELL_BOTH_PATHS, "Your heaven path and your ghost path meet at %s: you can cast %s.");
+		t.add(ModLang.MSG_SPELL_BOTH_PATHS, "New spell: %2$s (both paths at %1$s).");
 		t.add(ModLang.STATS_GHOST_BODY, "Ghost path: %s");
 		t.add(ModLang.STATS_HARMONY, ", harmony +%s%%");
 		t.add(ModLang.TWO_PATHS_LINE, "Paths in harmony: +%s%%");
@@ -463,11 +457,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.METHOD_BAR_SEEK, "Perfected: seek the %s");
 		t.add(ModLang.FORM_PREFIX + "human", "human form");
 		t.add(ModLang.FORM_PREFIX + "ghost_king", "Ghost King form");
-		t.add(ModLang.MSG_FORMS_OPEN, "Your ghost path has reached Core Formation: beside your human form you have a Ghost King's. Your true "
-				+ "form is the form of your higher path, now your %s; Form Shift (Abilities) takes the other. In a Ghost King's form, only "
-				+ "those who perceive souls see you outside the Netherworld.");
-		t.add(ModLang.MSG_FORMS_OPEN_DEAD, "Your ghost path has reached Core Formation: a Ghost King's form is yours. The dead are what they "
-				+ "are; when you live again, Form Shift (Abilities) will let you take it.");
+		t.add(ModLang.MSG_FORMS_OPEN, "Your ghost path reached Core Formation: Form Shift (Abilities) takes a Ghost King's form.");
+		t.add(ModLang.MSG_FORMS_OPEN_DEAD, "Your ghost path reached Core Formation: a Ghost King's form is yours.");
 		t.add(ModLang.MSG_METHOD_MERIDIANS, "Your meridians are sealed: the ghost path, like the heaven path, opens only once a Marrow "
 				+ "Cleansing Elixir has opened them.");
 		t.add(ModLang.MSG_METHOD_MERIDIANS_DEAD, "Your meridians were never opened in life: the ghost path, like the heaven path, waits on a "
@@ -482,12 +473,10 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				+ "one of the dead.");
 		t.add(ModLang.KEY_SPELL_WHEEL, "Spell Wheel (hold)");
 		t.add(ModLang.KEY_CAST_SPELL, "Cast Readied Spell");
-		t.add(ModLang.MSG_METHOD_LEARNED, "You have learned the first layer of the %s.");
-		t.add(ModLang.MSG_METHOD_LEARNED_AT, "You have learned the %s. Your ghost path already stands this deep: you take it up at its layer %s.");
+		t.add(ModLang.MSG_METHOD_LEARNED, "Learned the %s.");
+		t.add(ModLang.MSG_METHOD_LEARNED_AT, "Learned the %s, at layer %s.");
 		t.add(ModLang.MSG_METHOD_LAYER, "%s: layer %s reached.");
-		t.add(ModLang.MSG_METHOD_REALM_CAPPED, "The %s waits at layer %s until your ghost path reaches %s. The ghost path has no breakthrough: it rises "
-				+ "with the layers of your foundation method (the Netherworld Breathing Art to Qi Refining's end, the Yellow Springs Marrow Art or a "
-				+ "deeper one beyond it).");
+		t.add(ModLang.MSG_METHOD_REALM_CAPPED, "The %s waits at layer %s until your ghost path reaches %s.");
 		t.add(ModLang.MSG_METHOD_FLOOR, "The %s carries your ghost path to %s.");
 		t.add(ModLang.MSG_METHOD_PRACTISED, "Your meditation now cultivates the %s.");
 		t.add(ModLang.MSG_GHOST_NO_METHOD, "The dead cultivate only the ghost methods. Learn one at a Method Stele first.");
@@ -570,14 +559,12 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		}
 		t.add(ModLang.MSG_HEAVEN_METHOD_MERIDIANS, "Your meridians are sealed: no heaven method takes hold until a Marrow Cleansing Elixir has opened them.");
 		t.add(ModLang.MSG_HEAVEN_METHOD_DEAD, "The heaven methods are the living's. The dead cultivate the ghost methods alone.");
-		t.add(ModLang.MSG_HEAVEN_LEARNED, "You have learned the %s, understood as far as your cultivation has come: layer %s of %s.");
+		t.add(ModLang.MSG_HEAVEN_LEARNED, "Learned the %s: layer %s of %s.");
 		t.add(ModLang.MSG_HEAVEN_PRACTISED, "Your meditation now cultivates the %s.");
 		t.add(ModLang.MSG_HEAVEN_LAYER, "%s: layer %s settles in.");
-		t.add(ModLang.MSG_HEAVEN_LAYER_SPELL, "%s: layer %s settles in. New spell: %s.");
-		t.add(ModLang.MSG_HEAVEN_NONE_KNOWN, "You meditate without a heaven method, at three quarters' pace, and no breakthrough leads past Qi Refining "
-				+ "until you find one: at a Dao Stele, in a Jade Slip, or from a sect's elders.");
-		t.add(ModLang.HEAVEN_GATE_NONE, "No heaven method you know reaches %s: find one of that realm or deeper at a Dao Stele, in a Jade Slip or "
-				+ "from a sect's elders.");
+		t.add(ModLang.MSG_HEAVEN_LAYER_SPELL, "New spell: %3$s (%1$s, layer %2$s).");
+		t.add(ModLang.MSG_HEAVEN_NONE_KNOWN, "No heaven method: you cultivate at 3/4 pace. Seek a Dao Stele, a Jade Slip or a sect elder.");
+		t.add(ModLang.HEAVEN_GATE_NONE, "You need a heaven method of %s or deeper: seek a Dao Stele, a Jade Slip or a sect elder.");
 		t.add(ModLang.JOURNAL_HEAVEN_METHOD, "A heaven method");
 		t.add(ModLang.JOURNAL_HEAVEN_METHOD_TEXT, "I learned the %s, a method of %s qi. %s");
 		t.add(ModLang.MSG_SPELL_NO_HEAVEN_QI, "Not enough qi for %s.");
@@ -634,7 +621,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.bodyRefiningKey("golden_blood"), "Golden Blood");
 		t.add(ModLang.bodyRefiningKey("diamond_heart"), "Diamond Heart");
 		t.add(ModLang.bodyRefiningKey("indestructible_body"), "Indestructible Body");
-		t.add(ModLang.MSG_PHYSIQUE_BORN, "You were born with a %s (%s grade). %s");
+		t.add(ModLang.MSG_PHYSIQUE_BORN, "You were born with a %s (%s grade).");
 		t.add(ModLang.MSG_PHYSIQUE_ROOTS, "Your roots are of %s.");
 		t.add(ModLang.MSG_PHYSIQUE_WRONG_ELEMENT, "Your roots won't take %s qi: only %s methods can be learned with your body.");
 		t.add(ModLang.MSG_PHYSIQUE_SHATTERED, "Your meridians are shattered: they will never hold qi. Temper your body instead.");
@@ -677,16 +664,13 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_STORAGE_REFINED, "The space within unfolds: %s grade!");
 		t.add(ModLang.KEY_STORAGE_RING, "Open Storage Ring");
 		// Detonating the golden core (CoreDetonation)
-		t.add(ModLang.MSG_CORE_CONFIRM, "Your golden core trembles. Detonate it again within %s seconds to break it: you will die, your core lost, and everything near you will burn.");
+		t.add(ModLang.MSG_CORE_CONFIRM, "Detonate again within %s seconds to break your golden core. You will die.");
 		t.add(ModLang.MSG_CORE_TOO_LATE, "Your core is already breaking. Nothing can stop it now.");
 		t.add(ModLang.MSG_CORE_BREAKING, "%s's golden core is breaking apart! Get away!");
 		t.add(ModLang.DEATH_CORE_DETONATION, "%1$s detonated their golden core");
 		t.add(ModLang.DEATH_CORE_DETONATION + ".player", "%1$s detonated their golden core against %2$s");
 		// The Spatial Tear and travel through the gap
-		t.add(ModLang.MSG_GAP_TRAVEL, "You step through your tear into the Spatial Gap. Each block here is %s in the world. "
-				+ "Fly to where you would go and tear space again to step out, back into the realm you came from. "
-				+ "To pass between the realms, go up or down: rise through the storms of the upper layers to cross into the Upper Realm, "
-				+ "or sink through the storms of the lower layers, slowly, for the gap is thick there, to fall out into the mortal world's sky.");
+		t.add(ModLang.MSG_GAP_TRAVEL, "The Spatial Gap: each block here is %s in the world. Tear space again to step out.");
 		t.add(ModLang.MSG_GAP_TRAVEL_SHALLOWS, "The shallows - the world beneath: %s, %s - %s blocks to the crossing");
 		t.add(ModLang.MSG_GAP_TRAVEL_UPPER, "The upper layers - the world beneath: %s, %s - %s blocks to the crossing");
 		t.add(ModLang.MSG_GAP_TRAVEL_LOWER, "The lower layers - the world beneath: %s, %s - %s blocks to the floor");
@@ -752,8 +736,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_BOTTLENECK, "Bottleneck! Break through in the cultivation menu.");
 		t.add(ModLang.MSG_QI_FLIGHT_GAINED, "Your golden core can carry you. Double-tap jump to fly.");
 		t.add(ModLang.MSG_QI_FLIGHT_EXHAUSTED, "Out of qi! Flight returns at %s%%.");
-		t.add(ModLang.MSG_SWORD_FLIGHT_GAINED, "Your foundation can send qi through a blade. Hold a sword and double-tap jump to ride it.");
-		t.add(ModLang.MSG_FLIGHT_EXCLUSIVE, "Only one flight at a time: Qi Flight is on and Sword Flight is off. Switch between them on the ability wheel or the Abilities tab.");
+		t.add(ModLang.MSG_SWORD_FLIGHT_GAINED, "Sword Flight: hold a sword and double-tap jump to ride it.");
+		t.add(ModLang.MSG_FLIGHT_EXCLUSIVE, "One flight at a time: Qi Flight on, Sword Flight off.");
 		t.add(ModLang.MSG_QI_SENSE_GAINED, "You can now peer into the plane of Qi.");
 		t.add(ModLang.MSG_SUPPRESS_EXHAUSTED, "Out of qi: your pressure lifts. It returns at %s%%.");
 		t.add(ModLang.CONSCIOUSNESS_ALERT_TITLE, "A foreign consciousness touches yours");
@@ -769,7 +753,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_TRIB_FAILED, "%s failed their breakthrough!");
 		t.add(ModLang.MSG_TRIB_FALL, "Backlash! You fall to %s.");
 		t.add(ModLang.MSG_TRIB_ABANDONED, "You fled the tribulation. Breakthrough abandoned.");
-		t.add(ModLang.MSG_TRIB_FLED, "You fled the tribulation, but the heavens remember. Backlash! You fall to %s.");
+		t.add(ModLang.MSG_TRIB_FLED, "You fled the tribulation. Backlash! You fall to %s.");
 		t.add(ModLang.TRIB_HUD, "Heavenly Tribulation (%s) - strikes left: %s");
 
 		// The mortal path and alchemy
@@ -837,8 +821,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_MORTAL_MEDITATE, "Your meridians are sealed. You can't gather qi yet.");
 		t.add(ModLang.MSG_NEED_PILL, "Need a %s to enter %s. Eat it here, then break through.");
 		t.add(ModLang.MSG_AWAKENED, "Your meridians open. You begin cultivating: %s!");
-		t.add(ModLang.MSG_AWAKENED_DEAD, "Your meridians open, even in death. The ghost path is yours to walk now; the heaven path waits until "
-				+ "you live again.");
+		t.add(ModLang.MSG_AWAKENED_DEAD, "Your meridians open, even in death: the ghost path is yours.");
 		t.add(ModLang.MSG_ALREADY_AWAKENED, "Your meridians are already open.");
 		t.add(ModLang.MSG_PILL_PREPARED, "%s absorbed. The way into %s is open (+%s%% head start).");
 		t.add(ModLang.MSG_PILL_WRONG_TIME, "This pill is only of use at %s.");
@@ -924,12 +907,12 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.TALK_SOUP, "She ladles a bowl of thin, bitter soup and presses it into your hands. As it goes down, the past grows "
 				+ "faint: when the Wheel returns you to life, your body will be washed clean of every pill's poison.");
 		t.add(ModLang.TALK_SOUP_LIVING, "\"Not for you, child. You still have a life to remember. Go home.\"");
-		t.add(ModLang.MSG_SOUP, "You drink Meng Po's soup. The past grows faint; your next life will begin clean of medicinal toxicity.");
+		t.add(ModLang.MSG_SOUP, "Meng Po's soup: your next life begins free of medicinal toxicity.");
 		t.add(ModLang.MSG_SOUP_AGAIN, "You have drunk the soup already. One bowl is enough to forget.");
 		t.add(ModLang.MSG_SOUP_LIVING, "Meng Po's soup is for the dead.");
 		t.add(ModLang.TALK_TEACH_LEARN, "Listen, then. This is the %s... Sit with it, and it will come to you.");
 		t.add(ModLang.TALK_TEACH_PROGRESS, "You know the %s already. Here: this is how I breathe it. (%s minutes' progress.)");
-		t.add(ModLang.MSG_TERRACE, "From the top of the Terrace for Gazing Homeward you see, far off, %s.");
+		t.add(ModLang.MSG_TERRACE, "From the Terrace you see, far off, %s.");
 		t.add(ModLang.TERRACE_PLACE, "the place you died: %s, near %s, %s, %s");
 		t.add(ModLang.JOURNAL_TERRACE, "The Terrace for Gazing Homeward");
 		t.add(ModLang.JOURNAL_TERRACE_TEXT, "I looked homeward, and saw %s.");
@@ -1152,7 +1135,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add("cultivation.defying-the-heavens.talk.line.guidance.again.righteous", "That is enough for one day. Let it settle.");
 		t.add("cultivation.defying-the-heavens.talk.line.guidance.again.neutral", "Enough for today.");
 		t.add("cultivation.defying-the-heavens.talk.line.guidance.again.demonic", "Greedy. Come back tomorrow.");
-		t.add("cultivation.defying-the-heavens.talk.insight", "%s's guidance opens your understanding. Insight: +%s%% cultivation from meditation, for %s minutes.");
+		t.add("cultivation.defying-the-heavens.talk.insight", "%s's guidance: +%s%% cultivation from meditation, for %s minutes.");
 		t.add("cultivation.defying-the-heavens.talk.line.spar.terms.righteous", "A friendly bout? Gladly. Name your terms, and we keep to them.");
 		t.add("cultivation.defying-the-heavens.talk.line.spar.terms.neutral", "A spar. Terms?");
 		t.add("cultivation.defying-the-heavens.talk.line.spar.terms.demonic", "You want to trade blows with me? Name your terms, and try not to weep.");
@@ -1200,7 +1183,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add("cultivation.defying-the-heavens.talk.line.spared.commoner", "Bless you, immortal! Bless you!");
 		t.add("cultivation.defying-the-heavens.talk.begs", "%s throws themself to the ground and begs for their life. (Right-click them to answer.)");
 		t.add("cultivation.defying-the-heavens.talk.aid", "%s comes to your aid!");
-		t.add("cultivation.defying-the-heavens.talk.gift_back", "%s presses %s into your hands. \"For a friend.\"");
+		t.add("cultivation.defying-the-heavens.talk.gift_back", "%s gives you %s.");
 		t.add("cultivation.defying-the-heavens.message.stone.mortal", "Your meridians are closed; the stone's qi has nowhere to go.");
 		t.add("cultivation.defying-the-heavens.message.stone.qi_full", "Your qi is already full.");
 		t.add("cultivation.defying-the-heavens.message.stone.absorbed", "You draw in the stone's qi: +%s qi.");
@@ -1321,7 +1304,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_TRUST_SELF, "The formation already answers to you.");
 
 		// Soul Projection
-		t.add(ModLang.MSG_SOUL_GAINED, "Your nascent soul has formed, and can leave your body: Soul Projection, on the ability wheel or the Abilities tab.");
+		t.add(ModLang.MSG_SOUL_GAINED, "Your nascent soul has formed: Soul Projection is yours.");
 		t.add(ModLang.MSG_SOUL_GATHERING, "Your nascent soul gathers itself. Hold still (%s s)...");
 		t.add(ModLang.MSG_SOUL_CANCELLED, "Your soul settles back into your body.");
 		t.add(ModLang.MSG_SOUL_MOVED, "You moved: your soul settles back into your body.");
@@ -1398,17 +1381,17 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.RITUAL_AHEAD, "Before Qi Refining Late: the Ritual to the Heavens.");
 		t.add(ModLang.RITUAL_GATE, "The heavens must grant you leave to go on.");
 		t.add(ModLang.RITUAL_HOW, "At a Heaven Altar under open sky, lay offerings, then sneak, right-click it empty-handed and kneel there, still, for 15 seconds.");
-		t.add(ModLang.MSG_RITUAL_GATE, "Your cultivation at Qi Refining Mid is full. You may go no further until the heavens grant you permission to cultivate: perform the Ritual to the Heavens at a Heaven Altar.");
-		t.add(ModLang.MSG_RITUAL_BEGIN, "The offering rises as smoke (%1$s, chance %2$s). Kneel before the heavens, still, for fifteen seconds...");
+		t.add(ModLang.MSG_RITUAL_GATE, "Qi Refining Mid is full. Perform the Ritual to the Heavens at a Heaven Altar to go further.");
+		t.add(ModLang.MSG_RITUAL_BEGIN, "The ritual begins (%1$s, %2$s chance). Kneel still.");
 		t.add(ModLang.MSG_RITUAL_NOT_NOW, "The heavens have nothing to grant you now.");
 		t.add(ModLang.MSG_RITUAL_DAWN, "The heavens will not hear you again until dawn.");
 		t.add(ModLang.MSG_RITUAL_ALTAR_BUSY, "Someone is already praying at this altar.");
 		t.add(ModLang.MSG_RITUAL_BUSY, "Not now: finish what you are doing first.");
-		t.add(ModLang.MSG_RITUAL_MOVED, "You moved. The ritual is broken, and the offering is gone.");
-		t.add(ModLang.MSG_RITUAL_BROKEN, "The ritual is broken, and the offering is gone.");
-		t.add(ModLang.MSG_RITUAL_SUCCESS, "The heavens grant you permission to cultivate beyond Qi Refining Mid.");
-		t.add(ModLang.MSG_RITUAL_FAVOUR, "The heavens are pleased with your offering: Heaven's Favour, +%s%% to your cultivation.");
-		t.add(ModLang.MSG_RITUAL_FAIL, "The heavens are silent. Your offering is taken; you may ask again after dawn.");
+		t.add(ModLang.MSG_RITUAL_MOVED, "You moved: the ritual is broken, the offering lost.");
+		t.add(ModLang.MSG_RITUAL_BROKEN, "The ritual is broken, the offering lost.");
+		t.add(ModLang.MSG_RITUAL_SUCCESS, "The heavens permit you to cultivate past Qi Refining Mid.");
+		t.add(ModLang.MSG_RITUAL_FAVOUR, "Heaven's Favour: +%s%% cultivation");
+		t.add(ModLang.MSG_RITUAL_FAIL, "The heavens are silent. Ask again after dawn.");
 		t.add(ModLang.RITUAL_TITLE_SUCCESS, "The Heavens Grant You Permission");
 		t.add(ModLang.RITUAL_TITLE_FAIL, "The Heavens Are Silent");
 		t.add(ModLang.HUD_RITUAL, "Kneeling before the heavens... %s:%s");

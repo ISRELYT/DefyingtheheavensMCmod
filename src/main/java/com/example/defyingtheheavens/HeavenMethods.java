@@ -275,8 +275,12 @@ public final class HeavenMethods {
 			if (!spell.taughtBy(method) || spell.layer() != layer) continue;
 			spells = spells == null ? spell.getDisplayName().copy() : spells.copy().append(", ").append(spell.getDisplayName());
 		}
-		player.sendSystemMessage((spells == null ? Component.translatable(ModLang.MSG_HEAVEN_LAYER, method.getDisplayName(), layer)
-				: Component.translatable(ModLang.MSG_HEAVEN_LAYER_SPELL, method.getDisplayName(), layer, spells)).withStyle(ChatFormatting.GOLD));
+		// A layer alone is a passing word over the hotbar; a new spell is kept in the chat.
+		if (spells == null) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_HEAVEN_LAYER, method.getDisplayName(), layer).withStyle(ChatFormatting.GOLD), true);
+		} else {
+			player.sendSystemMessage(Component.translatable(ModLang.MSG_HEAVEN_LAYER_SPELL, method.getDisplayName(), layer, spells).withStyle(ChatFormatting.GOLD));
+		}
 	}
 
 	// --- An element's methods ---

@@ -1,5 +1,13 @@
 {
   "parent": "minecraft:item/generated",
+  "overrides": [
+    {
+      "model": "defying-the-heavens:item/yang_preservation_pill_glow",
+      "predicate": {
+        "defying-the-heavens:grade": 0.25
+      }
+    }
+  ],
   "textures": {
     "layer0": "defying-the-heavens:item/yang_preservation_pill"
   }

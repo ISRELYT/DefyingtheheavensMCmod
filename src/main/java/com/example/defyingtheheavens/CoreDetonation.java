@@ -68,7 +68,7 @@ public final class CoreDetonation {
 		ASKED.remove(id);
 		if (asked == null || now - asked > CONFIRM_TICKS) {
 			ASKED.put(id, now);
-			player.sendSystemMessage(Component.translatable(ModLang.MSG_CORE_CONFIRM, CONFIRM_TICKS / 20).withStyle(ChatFormatting.RED));
+			player.displayClientMessage(Component.translatable(ModLang.MSG_CORE_CONFIRM, CONFIRM_TICKS / 20).withStyle(ChatFormatting.RED), true);
 			player.level().playSound(null, player.blockPosition(), SoundEvents.BEACON_DEACTIVATE, SoundSource.PLAYERS, 1.0f, 0.6f);
 			return;
 		}

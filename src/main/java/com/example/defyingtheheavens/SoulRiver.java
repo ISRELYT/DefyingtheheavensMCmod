@@ -83,7 +83,7 @@ public final class SoulRiver {
 	public static void beginAscent(ServerPlayer player) {
 		if (!canEnter(player, true)) return;
 		enter(player, Route.ASCEND, player.getBlockX(), player.getBlockZ());
-		player.sendSystemMessage(Component.translatable(ModLang.MSG_RIVER_ASCEND, SoulRiverCourse.TICKS / 20).withStyle(ChatFormatting.AQUA));
+		player.displayClientMessage(Component.translatable(ModLang.MSG_RIVER_ASCEND, SoulRiverCourse.TICKS / 20).withStyle(ChatFormatting.AQUA), true);
 	}
 
 	/**
@@ -94,8 +94,8 @@ public final class SoulRiver {
 		if (!canEnter(player, fromRift)) return;
 		// The way down comes out by the Nether's rift, where the way up went in; a fall, under where they fell.
 		enter(player, Route.DESCEND, fromRift ? SpatialRiftBlock.RIFT_X : player.getBlockX(), fromRift ? SpatialRiftBlock.RIFT_Z : player.getBlockZ());
-		player.sendSystemMessage(Component.translatable(fromRift ? ModLang.MSG_RIVER_DESCEND : ModLang.MSG_RIVER_ABYSS,
-				SoulRiverCourse.TICKS / 20).withStyle(ChatFormatting.AQUA));
+		player.displayClientMessage(Component.translatable(fromRift ? ModLang.MSG_RIVER_DESCEND : ModLang.MSG_RIVER_ABYSS,
+				SoulRiverCourse.TICKS / 20).withStyle(ChatFormatting.AQUA), true);
 	}
 
 	private static boolean canEnter(ServerPlayer player, boolean checkCooldown) {
@@ -181,7 +181,7 @@ public final class SoulRiver {
 			CultivationManager.markDirty(server);
 			start(p, river, route);
 			RealmSuppressionHandler.update(p);
-			p.sendSystemMessage(Component.translatable(ModLang.MSG_RIVER_RESTART, SoulRiverCourse.TICKS / 20).withStyle(ChatFormatting.AQUA));
+			p.displayClientMessage(Component.translatable(ModLang.MSG_RIVER_RESTART, SoulRiverCourse.TICKS / 20).withStyle(ChatFormatting.AQUA), true);
 			return;
 		}
 		// Vanilla shields a joining player for 3 s; nothing on the river hurts, but nothing should hide behind that either.
@@ -245,7 +245,7 @@ public final class SoulRiver {
 		} else {
 			s.setRiverCooldownUntil(p.level().getGameTime() + COOLDOWN_TICKS);
 			NetherRift.land(server, p, s.riverFromX(), s.riverFromZ());
-			p.sendSystemMessage(Component.translatable(ModLang.MSG_ARRIVE_NETHER));
+			p.displayClientMessage(Component.translatable(ModLang.MSG_ARRIVE_NETHER), true);
 		}
 		CultivationManager.markDirty(server);
 	}
@@ -268,8 +268,8 @@ public final class SoulRiver {
 		if (route == Route.ASCEND) NetherRift.land(server, p, SpatialRiftBlock.RIFT_X, SpatialRiftBlock.RIFT_Z);
 		else NetherRift.land(server, p, s.riverFromX(), s.riverFromZ());
 		p.playNotifySound(SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.0f, 0.5f);
-		p.sendSystemMessage(Component.translatable(route == Route.ASCEND ? ModLang.MSG_RIVER_SCATTERED_UP : ModLang.MSG_RIVER_SCATTERED_DOWN)
-				.withStyle(ChatFormatting.RED));
+		p.displayClientMessage(Component.translatable(route == Route.ASCEND ? ModLang.MSG_RIVER_SCATTERED_UP : ModLang.MSG_RIVER_SCATTERED_DOWN)
+				.withStyle(ChatFormatting.RED), true);
 		CultivationManager.markDirty(server);
 	}
 

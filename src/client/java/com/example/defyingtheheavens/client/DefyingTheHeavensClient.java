@@ -32,6 +32,25 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		// A Storage Ring looks its grade: "defying-the-heavens:grade" 0 to 4 picks the model (models/item/storage_ring_*).
 		net.minecraft.client.renderer.item.ItemProperties.register(com.example.defyingtheheavens.ModItems.STORAGE_RING, DefyingTheHeavens.id("grade"),
 				(stack, level, entity, seed) -> com.example.defyingtheheavens.StorageRingItem.grade(stack).ordinal() / 4.0f);
+		// A pill shows its grade: from Mid up "defying-the-heavens:grade" picks its "_glow" model, whose halo (layer 1) takes the
+		// grade's colour (PillGrade); a Low-Grade pill has none.
+		net.minecraft.world.item.Item[] pills = {com.example.defyingtheheavens.ModItems.MARROW_CLEANSING_ELIXIR,
+				com.example.defyingtheheavens.ModItems.FOUNDATION_PILL, com.example.defyingtheheavens.ModItems.CORE_PILL,
+				com.example.defyingtheheavens.ModItems.QI_GATHERING_PILL, com.example.defyingtheheavens.ModItems.CULTIVATION_PILL,
+				com.example.defyingtheheavens.ModItems.YANG_PRESERVATION_PILL, com.example.defyingtheheavens.ModItems.YIN_GATHERING_PILL};
+		for (net.minecraft.world.item.Item pill : pills) {
+			net.minecraft.client.renderer.item.ItemProperties.register(pill, DefyingTheHeavens.id("grade"),
+					(stack, level, entity, seed) -> com.example.defyingtheheavens.PillItem.grade(stack).ordinal() / 4.0f);
+		}
+		net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry.ITEM.register((stack, tintIndex) -> {
+			if (tintIndex != 1) return -1;
+			Integer colour = com.example.defyingtheheavens.PillItem.grade(stack).getColor().getColor();
+			return colour == null ? -1 : colour;
+		}, pills);
+		// A Jade Slip's writing (layer 1) is inked in its method's element.
+		net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry.ITEM.register(
+				(stack, tintIndex) -> tintIndex == 1 ? slipInk(com.example.defyingtheheavens.JadeSlipItem.method(stack)) : -1,
+				com.example.defyingtheheavens.ModItems.JADE_SLIP);
 		net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE.putBlock(
 				com.example.defyingtheheavens.ModBlocks.CULTIVATION_FRUIT, net.minecraft.client.renderer.RenderType.cutout());
 		// Like vanilla leaves: the gaps between blossoms are see-through (in Fast graphics, leaves draw solid anyway).
@@ -218,6 +237,19 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 				}
 			}
 		});
+	}
+
+	/** The ink of a Jade Slip's writing: its method's element, gold for metal (or a slip holding none). */
+	private static int slipInk(com.example.defyingtheheavens.HeavenMethod method) {
+		if (method == null) return 0xD9A538;
+		return switch (method.element()) {
+			case WOOD -> 0x1FA34A;
+			case WATER -> 0x2F7CF0;
+			case FIRE -> 0xFF4020;
+			case EARTH -> 0x9A6424;
+			case YIN -> 0x3FC9CF;
+			default -> 0xD9A538;
+		};
 	}
 
 	/** The spells' auras on a renderer drawing a man's shape (players, cultivators...): SpellAuraLayer. */

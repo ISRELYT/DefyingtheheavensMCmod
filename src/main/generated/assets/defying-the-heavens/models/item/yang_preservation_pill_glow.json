@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "defying-the-heavens:item/yang_preservation_pill",
+    "layer1": "defying-the-heavens:item/yang_preservation_pill_glow"
+  }
+}

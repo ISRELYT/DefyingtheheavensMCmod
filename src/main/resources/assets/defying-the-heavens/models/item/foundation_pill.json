@@ -2,5 +2,8 @@
   "parent": "minecraft:item/generated",
   "textures": {
     "layer0": "defying-the-heavens:item/foundation_pill"
-  }
+  },
+  "overrides": [
+    {"predicate": {"defying-the-heavens:grade": 0.25}, "model": "defying-the-heavens:item/foundation_pill_glow"}
+  ]
 }

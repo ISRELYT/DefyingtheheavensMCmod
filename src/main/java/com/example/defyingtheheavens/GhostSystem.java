@@ -459,7 +459,7 @@ public final class GhostSystem {
 		s.setGhostQi(s.ghostQi() / 2);
 		CultivationManager.markDirty(p.server);
 		NetherworldManager.refresh(p);
-		p.sendSystemMessage(Component.translatable(ModLang.MSG_GHOST_REFORMED).withStyle(ChatFormatting.AQUA));
+		p.displayClientMessage(Component.translatable(ModLang.MSG_GHOST_REFORMED).withStyle(ChatFormatting.AQUA), true);
 	}
 
 	/**

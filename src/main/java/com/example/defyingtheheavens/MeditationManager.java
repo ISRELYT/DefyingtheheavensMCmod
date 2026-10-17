@@ -126,9 +126,9 @@ public final class MeditationManager {
 		broadcastAbsorption(player, session);
 		CultivationManager.sync(player);
 		player.displayClientMessage(Component.translatable(ModLang.MSG_START), true);
-		// Sitting down with the breakthrough already waiting on a heaven method: said now, as it would be when the bar filled.
+		// Sitting down with the breakthrough already waiting on a heaven method: a reminder over the hotbar (the chat had it when the bar filled).
 		PlayerCultivation c = CultivationManager.get(player);
-		if (!GhostSystem.isGhost(player) && c.isHeldByMethod()) player.sendSystemMessage(HeavenMethods.gateLine(c).copy().withStyle(net.minecraft.ChatFormatting.GOLD));
+		if (!GhostSystem.isGhost(player) && c.isHeldByMethod()) player.displayClientMessage(HeavenMethods.gateLine(c).copy().withStyle(net.minecraft.ChatFormatting.GOLD), true);
 	}
 
 	public static void stop(ServerPlayer player, boolean interrupted) {
@@ -380,8 +380,8 @@ public final class MeditationManager {
 			NetherworldManager.refresh(p);
 		} else if (result < 0 && !session.capTold) {
 			session.capTold = true;
-			p.sendSystemMessage(Component.translatable(ModLang.MSG_METHOD_REALM_CAPPED, active.getDisplayName(), cap,
-					GhostMethods.realmToPass(active, cap).getDisplayName()));
+			p.displayClientMessage(Component.translatable(ModLang.MSG_METHOD_REALM_CAPPED, active.getDisplayName(), cap,
+					GhostMethods.realmToPass(active, cap).getDisplayName()), true);
 		}
 		CultivationManager.markDirty(p.server);
 		if (tick % 20 == 0 || result != 0) Spells.sync(p); // the Methods tab's bar
@@ -414,7 +414,7 @@ public final class MeditationManager {
 		for (HeavenMethod near : session.daoStelesNear) byStele.add(near.element());
 		HeavenMethod practised = HeavenMethods.practised(s);
 		if (practised == null && !c.isSuppressed() && NO_METHOD_TOLD.add(p.getUUID())) {
-			p.sendSystemMessage(Component.translatable(ModLang.MSG_HEAVEN_NONE_KNOWN).withStyle(net.minecraft.ChatFormatting.GOLD));
+			p.displayClientMessage(Component.translatable(ModLang.MSG_HEAVEN_NONE_KNOWN).withStyle(net.minecraft.ChatFormatting.GOLD), true);
 		}
 		boolean settling = false;
 		for (HeavenMethod method : s.known()) settling |= HeavenMethods.settling(c, method);

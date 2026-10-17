@@ -76,8 +76,9 @@ public final class Physiques {
 
 	private static void tell(ServerPlayer player, PlayerCultivation c) {
 		Physique physique = c.physique();
-		player.sendSystemMessage(Component.translatable(ModLang.MSG_PHYSIQUE_BORN, physique.getDisplayName(), physique.grade().getDisplayName(),
-				physique.getDescription()).withStyle(ChatFormatting.GOLD));
+		// The physique's lore is in the journal (below), not the chat.
+		player.sendSystemMessage(Component.translatable(ModLang.MSG_PHYSIQUE_BORN, physique.getDisplayName(), physique.grade().getDisplayName())
+				.withStyle(ChatFormatting.GOLD));
 		if (!c.getRootElements().isEmpty()) {
 			player.sendSystemMessage(Component.translatable(ModLang.MSG_PHYSIQUE_ROOTS, rootsLine(c.getRootElements())).withStyle(ChatFormatting.GOLD));
 		}

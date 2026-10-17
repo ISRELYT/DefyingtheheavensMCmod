@@ -241,8 +241,8 @@ public class PillItem extends Item {
 				CultivationManager.refresh(player);
 				level.sendParticles(ParticleTypes.ENCHANT, player.getX(), player.getY() + 1.2, player.getZ(), 40, 0.5, 0.6, 0.5, 0.6);
 				level.playSound(null, player.blockPosition(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.0f, 0.8f);
-				player.sendSystemMessage(Component.translatable(ModLang.MSG_PILL_PREPARED, getDescription(), target().getDisplayName(),
-						Math.round(headStart(stack) * 100)));
+				player.displayClientMessage(Component.translatable(ModLang.MSG_PILL_PREPARED, getDescription(), target().getDisplayName(),
+						Math.round(headStart(stack) * 100)), true);
 			}
 			case QI_GATHERING -> {
 				// A new pill replaces whatever Qi Gathering Pill was still working.

@@ -1,6 +1,7 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "defying-the-heavens:item/jade_slip"
+    "layer0": "defying-the-heavens:item/jade_slip",
+    "layer1": "defying-the-heavens:item/jade_slip_ink"
   }
 }
