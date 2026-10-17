@@ -264,6 +264,74 @@ public final class SectMembership {
 		ServerPlayNetworking.send(player, ModPackets.SECT_STATUS, buf);
 	}
 
+	/** How far off (blocks) a sect may lie and still be told of on a non-member's Sect tab. */
+	public static final int TOLD_OF = 4000;
+
+	/**
+	 * S2C sect_info, the Sect tab's page (asked for as it opens): for a disciple, their sect (its name, path, their title and its
+	 * standing with them, whether they stand on its grounds or how far off they lie, its barrier, the treasury's rule as it stands
+	 * for them, how long they have belonged) and its members (cultivators by seniority, then its players); for one of no sect, the
+	 * nearest sect in this world, and whether it would hear them now.
+	 */
+	public static void sendInfo(ServerPlayer player) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		Sect sect = sectOf(player.server, player.getUUID());
+		buf.writeBoolean(sect != null);
+		if (sect != null) {
+			buf.writeUtf(sect.name);
+			buf.writeInt(sect.alignment);
+			buf.writeVarInt(titleOf(sect, player).ordinal());
+			buf.writeInt(sect.standing(player.getUUID()));
+			boolean here = sect.dimension == player.level().dimension();
+			buf.writeBoolean(here && sect.inTerritory(player.blockPosition()));
+			buf.writeVarInt(here ? (int) Math.sqrt(sect.core.distSqr(player.blockPosition())) : -1);
+			buf.writeUtf(here ? TalkSystem.direction(player.blockPosition(), sect.core) : "");
+			buf.writeBoolean(!sect.isBarrierDown());
+			Sect.Disciple disciple = sect.disciples.get(player.getUUID());
+			buf.writeVarInt(disciple == null ? 0 : disciple.treasuryTries);
+			buf.writeBoolean(isElder(sect, player));
+			buf.writeVarLong(disciple == null ? 0 : Math.max(0, player.level().getGameTime() - disciple.joined));
+			java.util.List<Sect.Member> members = new java.util.ArrayList<>(sect.members.values());
+			members.sort(Sect.SENIORITY);
+			buf.writeVarInt(members.size() + sect.disciples.size());
+			for (Sect.Member member : members) {
+				buf.writeUtf(NpcNames.of(member.id));
+				buf.writeVarInt(member.title.ordinal() + 1);
+				buf.writeVarInt(member.rank + 1);
+				buf.writeBoolean(false);
+			}
+			for (Sect.Disciple d : sect.disciples.values()) {
+				ServerPlayer online = player.server.getPlayerList().getPlayer(d.id);
+				buf.writeUtf(d.name);
+				buf.writeVarInt(online != null ? titleOf(sect, online).ordinal() + 1 : 0);
+				buf.writeVarInt(online != null ? CultivatorNpc.rankOf(online) + 1 : 0);
+				buf.writeBoolean(true);
+			}
+		} else {
+			Sect near = null;
+			double best = (double) TOLD_OF * TOLD_OF;
+			for (Sect s : SectData.get(player.server).all()) {
+				if (s.extinct || s.dimension != player.level().dimension()) continue;
+				double d = s.core.distSqr(player.blockPosition());
+				if (d < best) {
+					best = d;
+					near = s;
+				}
+			}
+			buf.writeBoolean(near != null);
+			if (near != null) {
+				buf.writeUtf(near.name);
+				buf.writeInt(near.alignment);
+				buf.writeVarInt((int) Math.sqrt(best));
+				buf.writeUtf(TalkSystem.direction(player.blockPosition(), near.core));
+				Long barred = near.barredUntil.get(player.getUUID());
+				long left = barred == null ? 0 : barred - player.level().getGameTime();
+				buf.writeVarInt(left <= 0 ? 0 : (int) Math.max(1, (left + HeavenRitual.DAY - 1) / HeavenRitual.DAY));
+			}
+		}
+		ServerPlayNetworking.send(player, ModPackets.SECT_INFO, buf);
+	}
+
 	/** A player logged out: what is kept of them here goes. */
 	public static void forget(UUID player) {
 		TOLD.remove(player);

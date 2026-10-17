@@ -51,17 +51,17 @@ public final class EarthSpells {
 	public static final float SURGE_DAMAGE = 20;
 	public static final int STANCE_TICKS = 15 * 20;
 	public static final int GOLEM_TICKS = 90 * 20, GOLEMS = 2;
-	public static final double QUAKE_RADIUS = 16;
-	public static final int QUAKE_TICKS = 4 * 20;
-	public static final float QUAKE_DAMAGE = 10;
-	public static final double MOUNTAIN_RANGE = 64, MOUNTAIN_RADIUS = 8;
-	public static final float MOUNTAIN_DAMAGE = 120;
+	public static final double QUAKE_RADIUS = 20;
+	public static final int QUAKE_TICKS = 4 * 20, QUAKE_FISSURES = 9, QUAKE_FISSURE_DEPTH = 5;
+	public static final float QUAKE_DAMAGE = 14;
+	public static final double MOUNTAIN_RANGE = 64, MOUNTAIN_RADIUS = 10, MOUNTAIN_CRATER = 12, MOUNTAIN_CRATER_DEPTH = 7;
+	public static final float MOUNTAIN_DAMAGE = 140;
 	public static final double SEAL_RADIUS = 24;
-	public static final int SEAL_TICKS = 6 * 20;
-	public static final float SEAL_DAMAGE = 15;
+	public static final int SEAL_TICKS = 6 * 20, SEAL_SINK = 2;
+	public static final float SEAL_DAMAGE = 20;
 	public static final int TITAN_TICKS = 60 * 20;
 	public static final double TOMB_RANGE = 48;
-	public static final int TOMB_RADIUS = 6, TOMB_HEIGHT = 8, TOMB_TICKS = 5 * 20, TOMB_LASTS = 20 * 20;
+	public static final int TOMB_RADIUS = 7, TOMB_HEIGHT = 9, TOMB_TICKS = 5 * 20, TOMB_LASTS = 20 * 20;
 	public static final float TOMB_DAMAGE = 60;
 
 	/** Each caster's golems, oldest first. */
@@ -461,6 +461,8 @@ public final class EarthSpells {
 			this.spell = spell;
 			this.field = SpellField.create(level, SpellField.Kind.EARTHQUAKE, caster.position(), (float) QUAKE_RADIUS, 2, QUAKE_TICKS, caster)
 					.data(Block.getId(groundUnder(caster))).spawn();
+			// The ground splits: fissures running out from a little way off the caster to the quake's edge.
+			Devastation.fissures(caster, level, caster.position(), QUAKE_RADIUS, QUAKE_FISSURES, QUAKE_FISSURE_DEPTH, 3);
 			HeavenSpells.sound(level, caster.position(), SoundEvents.WARDEN_EMERGE, 2.0f, 0.5f);
 		}
 
@@ -502,7 +504,8 @@ public final class EarthSpells {
 					private void land(Vec3 where) {
 						mark.discard();
 						slam(p, spell, level, where, MOUNTAIN_RADIUS, MOUNTAIN_DAMAGE, stateId);
-						dig(p, level, where, 4);
+						Devastation.crater(p, level, where, MOUNTAIN_CRATER, MOUNTAIN_CRATER_DEPTH, Devastation.Floor.RUBBLE);
+						Devastation.fissures(p, level, where, MOUNTAIN_CRATER * 2.2, 7, 4, MOUNTAIN_CRATER);
 					}
 
 					@Override
@@ -537,22 +540,6 @@ public final class EarthSpells {
 		HeavenSpells.sound(level, at, SoundEvents.ANVIL_LAND, 3.0f, 0.3f);
 	}
 
-	/** A crater {@code radius} round at {@code at}: the ground there blown away, and anything built on it (HeavenSpells#carvable). */
-	static void dig(ServerPlayer p, ServerLevel level, Vec3 at, int radius) {
-		BlockPos centre = BlockPos.containing(at);
-		for (int dx = -radius; dx <= radius; dx++) {
-			for (int dz = -radius; dz <= radius; dz++) {
-				for (int dy = -radius; dy <= 1; dy++) {
-					if (dx * dx + dz * dz + dy * dy * 2.5 > radius * radius + 1) continue;
-					BlockPos pos = centre.offset(dx, dy, dz);
-					BlockState state = level.getBlockState(pos);
-					if (state.isAir() || !HeavenSpells.carvable(level, pos, p)) continue;
-					level.removeBlock(pos, false);
-				}
-			}
-		}
-	}
-
 	/**
 	 * Heavy Earth Seal: every foe within {@link #SEAL_RADIUS} of its caster is pressed to the ground for {@link #SEAL_TICKS}: no
 	 * jump, no flight (a flier is brought down), slowed hard, {@link #SEAL_DAMAGE} of earth a second.
@@ -566,6 +553,9 @@ public final class EarthSpells {
 			super(caster, SEAL_TICKS);
 			this.spell = spell;
 			this.field = SpellField.create(level, SpellField.Kind.HEAVY_SEAL, caster.position(), (float) SEAL_RADIUS, 2, SEAL_TICKS, caster).spawn();
+			// Under its weight the land sinks (all but where the caster stands), cracked, split here and there.
+			Devastation.subside(caster, level, caster.position(), SEAL_RADIUS, SEAL_SINK, 3);
+			Devastation.fissures(caster, level, caster.position(), SEAL_RADIUS, 10, 3, 4);
 			HeavenSpells.sound(level, caster.position(), SoundEvents.ANVIL_LAND, 2.0f, 0.3f);
 			HeavenSpells.sound(level, caster.position(), SoundEvents.BEACON_DEACTIVATE, 2.0f, 0.4f);
 		}
@@ -677,6 +667,9 @@ public final class EarthSpells {
 				}
 			}
 			SpellFx.send(level, SpellFx.Kind.EARTH_BURST, at.add(0, TOMB_HEIGHT / 2.0, 0), Vec3.ZERO, TOMB_RADIUS, Block.getId(stone), 192);
+			// The land torn open round the mountain's foot where it burst up.
+			Devastation.fissures(caster, level, at, TOMB_RADIUS * 2.6, 9, 5, TOMB_RADIUS + 1);
+			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, at, Vec3.ZERO, TOMB_RADIUS * 3, 0, 192);
 			HeavenSpells.sound(level, at, SoundEvents.GENERIC_EXPLODE, 3.0f, 0.4f);
 		}
 

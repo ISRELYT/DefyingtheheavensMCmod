@@ -32,6 +32,11 @@ public final class ModPackets {
 	public static final ResourceLocation INNER_FADE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "inner_fade");
 	/** S2C: the player's sect and their title in it, for the Stats tab (SectMembership#sendStatus). */
 	public static final ResourceLocation SECT_STATUS = new ResourceLocation(DefyingTheHeavens.MOD_ID, "sect_status");
+	/** C2S: the Sect tab opening asks for its page; S2C SECT_INFO is it (SectMembership#sendInfo). */
+	public static final ResourceLocation SECT_INFO_REQUEST = new ResourceLocation(DefyingTheHeavens.MOD_ID, "sect_info_request");
+	public static final ResourceLocation SECT_INFO = new ResourceLocation(DefyingTheHeavens.MOD_ID, "sect_info");
+	/** C2S: put points into a stat (StatPoints): the stat's place, then how many. */
+	public static final ResourceLocation SPEND_STAT_POINTS = new ResourceLocation(DefyingTheHeavens.MOD_ID, "spend_stat_points");
 	/** S2C: full cultivation state for the owning player. */
 	public static final ResourceLocation SYNC = new ResourceLocation(DefyingTheHeavens.MOD_ID, "sync");
 	/** S2C: "player X (entity id) is/isn't riding their sword" (see {@link SwordFlight}), repeated once a second while they ride. */
@@ -200,6 +205,13 @@ public final class ModPackets {
 		});
 		ServerPlayNetworking.registerGlobalReceiver(JOURNAL_REQUEST,
 				(server, player, handler, buf, responseSender) -> server.execute(() -> sendJournal(player)));
+		ServerPlayNetworking.registerGlobalReceiver(SECT_INFO_REQUEST,
+				(server, player, handler, buf, responseSender) -> server.execute(() -> SectMembership.sendInfo(player)));
+		ServerPlayNetworking.registerGlobalReceiver(SPEND_STAT_POINTS, (server, player, handler, buf, responseSender) -> {
+			int stat = buf.readVarInt();
+			int count = buf.readVarInt();
+			server.execute(() -> StatPoints.spend(player, StatPoints.Stat.byIndex(stat), Math.min(count, 1000)));
+		});
 		ServerPlayNetworking.registerGlobalReceiver(TOGGLE_MEDITATION,
 				(server, player, handler, buf, responseSender) -> server.execute(() -> MeditationManager.toggle(player)));
 		ServerPlayNetworking.registerGlobalReceiver(BREAKTHROUGH,
@@ -354,6 +366,8 @@ public final class ModPackets {
 		for (QiElement element : c.getRootElements()) roots |= 1 << element.ordinal();
 		buf.writeVarInt(roots);
 		buf.writeVarInt(c.getBodyRefining());
+		// The points put into each stat (StatPoints), by the stat's place.
+		for (StatPoints.Stat stat : StatPoints.Stat.values()) buf.writeVarInt(c.getStatPoints(stat));
 		ServerPlayNetworking.send(player, SYNC, buf);
 	}
 

@@ -6,10 +6,16 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -20,6 +26,7 @@ import java.util.List;
  * <ul>
  *   <li>/sect info: the nearest sect (within 512 blocks): its path, its barrier, its members with their titles and realms.</li>
  *   <li>/cultivator spawn &lt;realm 0-6&gt; &lt;stage 1-4&gt; &lt;alignment&gt;: a rogue where you stand (realm 0: a mortal).</li>
+ *   <li>/cultivator secluded [count]: the secluded cultivators nearest you, and land where a hermit will be seated.</li>
  *   <li>/alignment get [player], /alignment set &lt;player&gt; &lt;value&gt;.</li>
  * </ul>
  * Sects themselves can be placed with vanilla's {@code /place structure defying-the-heavens:sect} and found with
@@ -57,6 +64,11 @@ public final class SectCommand {
 
 			dispatcher.register(Commands.literal("cultivator")
 					.requires(src -> src.hasPermission(2))
+					// Where the secluded are: everyone known to sit in seclusion (or to be seeking a place for it), nearest first.
+					.then(Commands.literal("secluded")
+							.executes(ctx -> secluded(ctx.getSource(), 10))
+							.then(Commands.argument("count", IntegerArgumentType.integer(1, 100))
+									.executes(ctx -> secluded(ctx.getSource(), IntegerArgumentType.getInteger(ctx, "count")))))
 					.then(Commands.literal("spawn")
 							.then(Commands.argument("realm", IntegerArgumentType.integer(0, Realm.values().length))
 									.then(Commands.argument("stage", IntegerArgumentType.integer(1, Stage.values().length))
@@ -96,6 +108,73 @@ public final class SectCommand {
 												return get(ctx.getSource(), player);
 											})))));
 		});
+	}
+
+	/** One secluded cultivator found: who, where, and what is known of it (its realm if its land is loaded). */
+	private record Secluded(String name, ResourceKey<Level> dimension, BlockPos pos, Component state) {}
+
+	/**
+	 * /cultivator secluded [count]: the secluded cultivators nearest the source (those in this dimension first), from the loaded
+	 * ones (their realm, seated or still seeking a place) and the rumours of caves (those whose land is unloaded); each line
+	 * teleports there when clicked. Then the nearest spots where a hermit will be seated once their land first loads (HermitSites).
+	 */
+	private static int secluded(CommandSourceStack source, int count) {
+		MinecraftServer server = source.getServer();
+		Vec3 at = source.getPosition();
+		ResourceKey<Level> here = source.getLevel().dimension();
+		List<Secluded> found = new ArrayList<>();
+		java.util.Set<String> seen = new java.util.HashSet<>();
+		for (ServerLevel level : server.getAllLevels()) {
+			for (CultivatorNpc npc : CultivatorNpc.loaded(level)) {
+				CultivatorNpc.Lifecycle life = npc.getLifecycle();
+				if (life != CultivatorNpc.Lifecycle.SECLUDED && life != CultivatorNpc.Lifecycle.SEEKING_SECLUSION) continue;
+				seen.add("cave:" + npc.getUUID());
+				BlockPos pos = life == CultivatorNpc.Lifecycle.SECLUDED && npc.getSeclusionMat() != null ? npc.getSeclusionMat() : npc.blockPosition();
+				Component state = PlayerCultivation.rankName(CultivatorNpc.realmOf(npc.getRank()), CultivatorNpc.stageOf(npc.getRank())).copy()
+						.append(Component.literal(life == CultivatorNpc.Lifecycle.SECLUDED ? ", in seclusion" : ", seeking a place for seclusion"));
+				found.add(new Secluded(npc.getPersonalName(), level.dimension(), pos, state));
+			}
+		}
+		for (Rumours.Rumour cave : Rumours.all(server, Rumours.Kind.CAVE)) {
+			if (seen.contains(cave.id)) continue;
+			found.add(new Secluded(cave.subject, cave.dimension, cave.pos, Component.literal("in seclusion, its land unloaded")));
+		}
+		found.sort(java.util.Comparator.comparing((Secluded s) -> s.dimension() != here).thenComparingDouble(s -> s.pos().distToCenterSqr(at)));
+		source.sendSuccess(() -> Component.literal(found.isEmpty() ? "No secluded cultivators are known yet."
+				: found.size() + " secluded cultivator" + (found.size() == 1 ? "" : "s") + " known" + (found.size() > count ? "; the nearest " + count : "") + ":")
+				.withStyle(ChatFormatting.GOLD), false);
+		for (Secluded s : found.subList(0, Math.min(count, found.size()))) {
+			BlockPos p = s.pos();
+			String where = p.getX() + " " + p.getY() + " " + p.getZ();
+			MutableComponent line = Component.literal("  " + s.name()).withStyle(ChatFormatting.AQUA)
+					.append(Component.literal(" (").withStyle(ChatFormatting.GRAY)).append(s.state().copy().withStyle(ChatFormatting.GRAY))
+					.append(Component.literal(") at ").withStyle(ChatFormatting.GRAY))
+					.append(Component.literal(where).withStyle(style -> style.withColor(ChatFormatting.GREEN).withUnderlined(true)
+							.withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+									"/execute in " + s.dimension().location() + " run tp @s " + p.getX() + " " + (p.getY() + 1) + " " + p.getZ()))
+							.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Teleport there")))))
+					.append(Component.literal(s.dimension() == here ? ", " + Math.round(Math.sqrt(p.distToCenterSqr(at))) + " blocks away"
+							: " in " + s.dimension().location().getPath()).withStyle(ChatFormatting.GRAY));
+			source.sendSuccess(() -> line, false);
+		}
+		// Hermits still to be seated: the land there hasn't been loaded yet.
+		List<net.minecraft.world.level.ChunkPos> unseated = HermitSites.unseatedNear(source.getLevel(), BlockPos.containing(at), 3);
+		unseated.sort(java.util.Comparator.comparingDouble(c -> c.getMiddleBlockPosition((int) at.y).distToCenterSqr(at)));
+		if (!unseated.isEmpty()) {
+			source.sendSuccess(() -> Component.literal("Land nobody has loaded yet where a hermit will be seated (if it holds a cave or a high peak):")
+					.withStyle(ChatFormatting.GOLD), false);
+			for (net.minecraft.world.level.ChunkPos chunk : unseated.subList(0, Math.min(5, unseated.size()))) {
+				int x = chunk.getMiddleBlockX(), z = chunk.getMiddleBlockZ();
+				MutableComponent line = Component.literal("  around ").withStyle(ChatFormatting.GRAY)
+						.append(Component.literal(x + ", " + z).withStyle(style -> style.withColor(ChatFormatting.GREEN).withUnderlined(true)
+								.withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/tp @s " + x + " 200 " + z))
+								.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Put a teleport there in the chat")))))
+						.append(Component.literal(", " + Math.round(Math.sqrt(chunk.getMiddleBlockPosition((int) at.y).distToCenterSqr(at))) + " blocks away")
+								.withStyle(ChatFormatting.GRAY));
+				source.sendSuccess(() -> line, false);
+			}
+		}
+		return found.size();
 	}
 
 	private static int get(CommandSourceStack source, ServerPlayer player) {

@@ -63,6 +63,7 @@ public final class CultivationStats {
 		set(player, Attributes.ARMOR, ARMOR_ID, "Cultivation armor", armor(r, s) * scale);
 		set(player, Attributes.ARMOR_TOUGHNESS, TOUGHNESS_ID, "Cultivation toughness", toughness(r, s) * scale);
 		set(player, Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID, "Cultivation knockback resistance", knockbackResistance(r, s) * scale);
+		StatPoints.apply(player, c); // and what the player has put into their stats on top
 	}
 
 	/**

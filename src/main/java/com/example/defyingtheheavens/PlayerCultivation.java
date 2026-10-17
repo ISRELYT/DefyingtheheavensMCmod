@@ -228,6 +228,22 @@ public class PlayerCultivation {
 	/** Shattered Meridians: the stage of body refining past a mortal's Peak (0 none yet). */
 	public int getBodyRefining() { return bodyRefining; }
 
+	/** Points put into each stat (StatPoints), by the stat's place. */
+	private final int[] statPoints = new int[StatPoints.Stat.values().length];
+
+	public int getStatPoints(StatPoints.Stat stat) { return statPoints[stat.ordinal()]; }
+
+	public void setStatPoints(StatPoints.Stat stat, int points) { statPoints[stat.ordinal()] = Math.max(0, points); }
+
+	/** Every point spent, all stats together. */
+	public int statPointsSpent() {
+		int spent = 0;
+		for (int points : statPoints) spent += points;
+		return spent;
+	}
+
+	public void clearStatPoints() { java.util.Arrays.fill(statPoints, 0); }
+
 	public void setBodyRefining(int stage) { bodyRefining = Math.max(0, Math.min(BodyRefining.LAST, stage)); }
 
 	/** Born with shattered meridians: they can't cultivate, and temper the body instead. */
@@ -633,7 +649,8 @@ public class PlayerCultivation {
 	 */
 	public double maxQi() {
 		if (mortal) return 0;
-		return CultivationStats.maxQi(getEffectiveRealm(), getEffectiveStage()) * favourFactor() * (1 - pressurePenalty) * physique().qiFactor();
+		return CultivationStats.maxQi(getEffectiveRealm(), getEffectiveStage()) * favourFactor() * (1 - pressurePenalty) * physique().qiFactor()
+				* (1 + StatPoints.bonus(this, StatPoints.Stat.SPIRIT));
 	}
 
 	/**
@@ -644,6 +661,7 @@ public class PlayerCultivation {
 		if (mortal) return 0;
 		return CultivationStats.qiGather(getEffectiveRealm(), getEffectiveStage()) * (inUpperRealm ? UPPER_REALM_QI_MULTIPLIER : 1.0)
 				* (1 + qiBoost) * (1 + gearQiBonus) * favourFactor() * (1 - pressurePenalty) * physique().qiFactor()
+				* (1 + StatPoints.bonus(this, StatPoints.Stat.INSIGHT) / 2)
 				+ HeavenPassives.amount(this, QiElement.WATER); // Ceaseless Flow, the water methods' passive
 	}
 
@@ -709,7 +727,8 @@ public class PlayerCultivation {
 	 */
 	public double meditationCultivationPerSecond(double bonus) {
 		if (mortal || isSuppressed()) return 0;
-		return (cultivationPerSecond() + bonus) * (inUpperRealm ? UPPER_REALM_QI_MULTIPLIER : 1.0) * favourFactor() * physique().cultivationFactor();
+		return (cultivationPerSecond() + bonus) * (inUpperRealm ? UPPER_REALM_QI_MULTIPLIER : 1.0) * favourFactor() * physique().cultivationFactor()
+				* (1 + StatPoints.bonus(this, StatPoints.Stat.INSIGHT));
 	}
 
 	/** Leaving this stage takes a tribulation: Grand Perfection always, and every stage from Nascent Soul on. */
@@ -858,6 +877,7 @@ public class PlayerCultivation {
 			tag.put("RootElements", roots);
 		}
 		if (bodyRefining > 0) tag.putInt("BodyRefining", bodyRefining);
+		if (statPointsSpent() > 0) tag.putIntArray("StatPoints", statPoints.clone());
 		tag.putBoolean("HeavensLeave", heavensLeave);
 		tag.putInt("Favour", favour);
 		tag.putLong("RitualFailedDay", ritualFailedDay);
@@ -906,6 +926,8 @@ public class PlayerCultivation {
 			}
 		}
 		c.setBodyRefining(tag.getInt("BodyRefining"));
+		int[] points = tag.getIntArray("StatPoints"); // none spent (or a save from before them): all zero
+		for (int i = 0; i < points.length && i < c.statPoints.length; i++) c.statPoints[i] = Math.max(0, points[i]);
 		c.setMortalState(MortalStage.byIndex(tag.getInt("MortalStage")), tag.getDouble("Tempering"));
 		int prepared = tag.contains("PreparedRealm") ? tag.getInt("PreparedRealm") : -1;
 		c.preparedRealm = prepared >= 0 && prepared < Realm.values().length ? Realm.byIndex(prepared) : null;

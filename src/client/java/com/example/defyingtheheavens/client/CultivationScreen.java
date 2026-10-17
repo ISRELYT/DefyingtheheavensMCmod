@@ -30,7 +30,13 @@ import com.example.defyingtheheavens.Realm;
 import com.example.defyingtheheavens.RealmSuppressSystem;
 import com.example.defyingtheheavens.RingOfPowerItem;
 import com.example.defyingtheheavens.Stage;
+import com.example.defyingtheheavens.StatPoints;
 import com.example.defyingtheheavens.TwoPaths;
+import com.example.defyingtheheavens.CultivatorNpc;
+import com.example.defyingtheheavens.HeavenRitual;
+import com.example.defyingtheheavens.NpcTitle;
+import com.example.defyingtheheavens.Regard;
+import com.example.defyingtheheavens.SectMembership;
 import com.example.defyingtheheavens.ModPackets;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
@@ -42,6 +48,7 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
@@ -64,13 +71,13 @@ import java.util.function.ToDoubleBiFunction;
  * backups/cultivation-menu-2026-10-09.
  */
 public class CultivationScreen extends Screen {
-	private static final int WIDTH = 290;
+	private static final int WIDTH = 310; // room for seven tabs (the smallest usual GUI is 427 wide)
 	private static final int HEIGHT = 230; // fits the smallest usual GUI height (240)
 	private static final int TAB_Y = 6;
 	private static final int TAB_HEIGHT = 19;
 	private static final int TAB_GAP = 2;
 	/** Least space between a tab's label and its edges; tabs are as wide as their labels plus a share of what's left. */
-	private static final int TAB_PADDING = 8;
+	private static final int TAB_PADDING = 5;
 	private static final int CONTENT_Y = 34;
 	private static final int SWITCH_W = 30;
 	private static final int SWITCH_H = 14;
@@ -106,6 +113,7 @@ public class CultivationScreen extends Screen {
 		ABILITIES(ModLang.TAB_ABILITIES),
 		METHODS(ModLang.TAB_METHODS),
 		SPELLS(ModLang.TAB_SPELLS),
+		SECT(ModLang.TAB_SECT),
 		JOURNAL(ModLang.TAB_JOURNAL);
 
 		final String key;
@@ -163,6 +171,13 @@ public class CultivationScreen extends Screen {
 	/** How far the spell wheel editor's palette is scrolled, and how far it can go (0 when every spell fits). */
 	private int spellPaletteScroll;
 	private int spellPaletteMaxScroll;
+	/** The Stats tab shows its Stat Points page rather than its stats (kept on reopening); its page buttons and + buttons this frame. */
+	private static boolean pointsPage;
+	private final List<RowButton<Boolean>> statPageButtons = new ArrayList<>();
+	private final List<RowButton<StatPoints.Stat>> statPlusButtons = new ArrayList<>();
+	/** The Sect tab's member list's scrolling. */
+	private int sectScroll;
+	private int sectMaxScroll;
 
 	/** A small button on a row of a list (Practise, Ready): what it acts on, and where it was drawn. */
 	private record RowButton<T>(T value, int x, int y, int w) {
@@ -256,6 +271,7 @@ public class CultivationScreen extends Screen {
 
 		updateButtons();
 		if (tab == Tab.JOURNAL) ClientJournal.request();
+		if (tab == Tab.SECT) ClientSect.request();
 	}
 
 	@Override
@@ -310,6 +326,8 @@ public class CultivationScreen extends Screen {
 		heavenPractiseButtons.clear();
 		methodPageButtons.clear();
 		spellPalette.clear();
+		statPageButtons.clear();
+		statPlusButtons.clear();
 		bar = null;
 		switch (tab) {
 			case CULTIVATION -> renderCultivation(g, player);
@@ -318,12 +336,15 @@ public class CultivationScreen extends Screen {
 				if (ClientCultivationData.get().isMortal() && !TwoPaths.body(ClientCultivationData.get(), false).ghostPath()) {
 					renderPlaceholder(g, ModLang.MORTAL, ModLang.MORTAL_STATS, ModLang.MORTAL_DETAIL);
 				} else {
-					renderStats(g, player);
+					renderStatPages(g, mouseX, mouseY);
+					if (pointsPage) renderStatPoints(g, mouseX, mouseY);
+					else renderStats(g, player);
 				}
 			}
 			case ABILITIES -> renderAbilities(g, mouseX, mouseY);
 			case METHODS -> renderMethods(g, mouseX, mouseY);
 			case SPELLS -> renderSpells(g, mouseX, mouseY);
+			case SECT -> renderSect(g, mouseX, mouseY);
 			case JOURNAL -> renderJournal(g, mouseX, mouseY);
 		}
 
@@ -774,7 +795,7 @@ public class CultivationScreen extends Screen {
 		Stage s = body.stage();
 		int cx = left + WIDTH / 2;
 		int x = left + 14;
-		int y = top + CONTENT_Y;
+		int y = top + CONTENT_Y + METHOD_PAGE_ROW; // under the page buttons (Stats, Stat Points)
 		// The ghost path's strength is named so; and the two paths' harmony, if they are both walked near enough.
 		double harmony = TwoPaths.harmony(c);
 		java.util.function.Function<Component, Component> named = rank -> {
@@ -813,13 +834,8 @@ public class CultivationScreen extends Screen {
 			g.drawCenteredString(font, fit(WIDTH - 20, line, Component.translatable(ModLang.STATS_PHYSIQUE, physique.getDisplayName(),
 					physique.grade().getDisplayName())), cx, y, 0xE0E0E0);
 		}
-		// The sect they belong to, and their title in it (SectMembership, S2C sect_status).
-		if (ClientSect.member()) {
-			y += 11;
-			g.drawCenteredString(font, fit(WIDTH - 20, Component.translatable(ModLang.STATS_SECT, ClientSect.name(), ClientSect.title().getDisplayName()),
-					Component.literal(ClientSect.name())), cx, y, ClientSect.title().getColor());
-		}
-		y += 16;
+		// (The sect they belong to, and their title in it, are on the Sect tab.)
+		y += 13;
 
 		int currentX = left + WIDTH - 14;
 		g.drawString(font, Component.translatable(ModLang.STATS_COL_STAT), x, y, 0xFFD700);
@@ -843,6 +859,250 @@ public class CultivationScreen extends Screen {
 			g.drawString(font, Component.translatable(ModLang.STATS_QI_GATHER_UPPER, (int) PlayerCultivation.UPPER_REALM_QI_MULTIPLIER),
 					x, y, QI_UPPER_COLOR);
 		}
+	}
+
+	// --- Stats: the Stat Points page ---
+
+	/** Each stat's colour on the Points page and its chart. */
+	private static int statColour(StatPoints.Stat stat) {
+		return switch (stat) {
+			case STRENGTH -> 0xFF8A65;
+			case CONSTITUTION -> 0x81C784;
+			case AGILITY -> 0x4FC3F7;
+			case ENDURANCE -> 0xFFB74D;
+			case SPIRIT -> 0xB39DDB;
+			case INSIGHT -> 0xFFE082;
+		};
+	}
+
+	/** The Stats tab's two pages, as buttons over it: Stats, and Stat Points (gold, with the count, while there are points to spend). */
+	private void renderStatPages(GuiGraphics g, int mouseX, int mouseY) {
+		int unspent = StatPoints.unspent(ClientCultivationData.get());
+		int x = left + 14;
+		int y = top + CONTENT_Y;
+		for (boolean points : new boolean[]{false, true}) {
+			Component label = Component.translatable(points ? ModLang.BTN_STAT_POINTS : ModLang.BTN_STAT_LIST);
+			if (points && unspent > 0) label = label.copy().append(" (" + unspent + ")");
+			int w = font.width(label) + 12;
+			RowButton<Boolean> button = new RowButton<>(points, x, y, w);
+			statPageButtons.add(button);
+			boolean chosen = pointsPage == points;
+			int colour = points && unspent > 0 ? 0xFFD700 : chosen ? 0xFFFFFF : 0x9E9E9E;
+			drawRowButton(g, button, label, button.contains(mouseX, mouseY), colour);
+			if (chosen) g.fill(button.x() + 2, button.y() + SWITCH_H, button.x() + w - 2, button.y() + SWITCH_H + 1, 0xFFFFD700);
+			x += w + 4;
+		}
+	}
+
+	/**
+	 * The Stat Points page: the six stats' spread drawn as a hexagon on the left (each corner a stat, the gold shape out toward it as
+	 * far as its points go against the most in any one), and on the right the points to spend and each stat with its points, what
+	 * they give, and a + to put one more in (shift-click: five).
+	 */
+	private void renderStatPoints(GuiGraphics g, int mouseX, int mouseY) {
+		PlayerCultivation c = ClientCultivationData.get();
+		StatPoints.Stat[] stats = StatPoints.Stat.values();
+		int[] values = new int[stats.length];
+		int most = 0;
+		for (StatPoints.Stat stat : stats) {
+			values[stat.ordinal()] = c.getStatPoints(stat);
+			most = Math.max(most, values[stat.ordinal()]);
+		}
+		int cx = left + 58, cy = top + 136, radius = 42;
+		radarChart(g, cx, cy, radius, values, Math.max(5, most), stats);
+
+		int x = left + 116, right = left + WIDTH - 12;
+		int y = top + CONTENT_Y + METHOD_PAGE_ROW + 4;
+		int unspent = StatPoints.unspent(c), earned = StatPoints.earned(c);
+		g.drawString(font, Component.translatable(ModLang.STAT_POINTS_UNSPENT, unspent), x, y, unspent > 0 ? 0xFFD700 : 0xE0E0E0);
+		y += 11;
+		Component earnedLine = earned <= 0 ? Component.translatable(ModLang.STAT_POINTS_MORTAL)
+				: Component.translatable(ModLang.STAT_POINTS_EARNED, earned, StatPoints.STAGE_POINTS, StatPoints.REALM_POINTS);
+		for (FormattedCharSequence line : font.split(earnedLine, right - x)) {
+			g.drawString(font, line, x, y, 0x9E9E9E);
+			y += 10;
+		}
+		y += 3;
+		for (StatPoints.Stat stat : stats) {
+			int points = c.getStatPoints(stat);
+			g.drawString(font, stat.getDisplayName(), x, y, statColour(stat));
+			RowButton<StatPoints.Stat> plus = new RowButton<>(stat, right - 16, y - 3, 16);
+			right(g, Component.literal(String.valueOf(points)), plus.x() - 4, y, 0xFFFFFF);
+			if (unspent > 0) {
+				statPlusButtons.add(plus);
+				drawRowButton(g, plus, Component.literal("+"), plus.contains(mouseX, mouseY), 0x69F0AE);
+			}
+			y += 10;
+			g.drawString(font, stat.describe(points), x, y, 0xA8A8A8);
+			y += 11;
+		}
+		g.drawCenteredString(font, Component.translatable(ModLang.STAT_POINTS_HINT), left + WIDTH / 2, top + HEIGHT - 12, 0x7A7A7A);
+	}
+
+	/**
+	 * A radar chart: a hexagon (or as many corners as there are stats) {@code radius} round ({@code cx}, {@code cy}), rings at a
+	 * third and two thirds, a spoke to each corner and the stat's short name past it; over it the shape of {@code values}, each as
+	 * far toward its corner as it goes against {@code scale}, filled in gold, its edge bright and a dot at each point.
+	 */
+	private void radarChart(GuiGraphics g, int cx, int cy, int radius, int[] values, int scale, StatPoints.Stat[] stats) {
+		int n = values.length;
+		float[][] corner = new float[n][2], point = new float[n][2];
+		for (int i = 0; i < n; i++) {
+			double a = Math.PI * 2 * i / n;
+			corner[i][0] = (float) Math.sin(a);
+			corner[i][1] = (float) -Math.cos(a);
+			float t = Math.max(0.05f, Math.min(1, values[i] / (float) scale));
+			point[i][0] = cx + corner[i][0] * radius * t;
+			point[i][1] = cy + corner[i][1] * radius * t;
+		}
+		org.joml.Matrix4f m = g.pose().last().pose();
+		com.mojang.blaze3d.systems.RenderSystem.enableBlend();
+		com.mojang.blaze3d.systems.RenderSystem.defaultBlendFunc();
+		com.mojang.blaze3d.systems.RenderSystem.setShader(net.minecraft.client.renderer.GameRenderer::getPositionColorShader);
+		com.mojang.blaze3d.vertex.BufferBuilder b = com.mojang.blaze3d.vertex.Tesselator.getInstance().getBuilder();
+		b.begin(com.mojang.blaze3d.vertex.VertexFormat.Mode.TRIANGLES, com.mojang.blaze3d.vertex.DefaultVertexFormat.POSITION_COLOR);
+		for (int i = 0; i < n; i++) {
+			int j = (i + 1) % n;
+			// The field, dark; its rings and spokes, faint gold.
+			tri(b, m, cx, cy, cx + corner[i][0] * radius, cy + corner[i][1] * radius, cx + corner[j][0] * radius, cy + corner[j][1] * radius, 0xC0141420);
+			for (int ring = 1; ring <= 3; ring++) {
+				float r = radius * ring / 3f;
+				line(b, m, cx + corner[i][0] * r, cy + corner[i][1] * r, cx + corner[j][0] * r, cy + corner[j][1] * r, ring == 3 ? 1.2f : 0.7f,
+						ring == 3 ? 0xFFB8860B : 0x806E5214);
+			}
+			line(b, m, cx, cy, cx + corner[i][0] * radius, cy + corner[i][1] * radius, 0.7f, 0x806E5214);
+		}
+		for (int i = 0; i < n; i++) {
+			int j = (i + 1) % n;
+			tri(b, m, cx, cy, point[i][0], point[i][1], point[j][0], point[j][1], 0x88E0B040);
+		}
+		for (int i = 0; i < n; i++) {
+			int j = (i + 1) % n;
+			line(b, m, point[i][0], point[i][1], point[j][0], point[j][1], 1.4f, 0xFFFFD54F);
+			float d = 2.2f;
+			int colour = 0xFF000000 | statColour(stats[i]);
+			tri(b, m, point[i][0] - d, point[i][1], point[i][0], point[i][1] - d, point[i][0] + d, point[i][1], colour);
+			tri(b, m, point[i][0] - d, point[i][1], point[i][0] + d, point[i][1], point[i][0], point[i][1] + d, colour);
+		}
+		com.mojang.blaze3d.vertex.BufferUploader.drawWithShader(b.end());
+		com.mojang.blaze3d.systems.RenderSystem.disableBlend();
+		for (int i = 0; i < n; i++) {
+			String name = stats[i].getDisplayName().getString();
+			String shortName = name.length() > 3 ? name.substring(0, 3).toUpperCase(Locale.ROOT) : name;
+			int lx = Math.round(cx + corner[i][0] * (radius + 10)), ly = Math.round(cy + corner[i][1] * (radius + 9)) - 4;
+			g.drawCenteredString(font, shortName, lx, ly, statColour(stats[i]));
+		}
+	}
+
+	private static void tri(com.mojang.blaze3d.vertex.BufferBuilder b, org.joml.Matrix4f m, float x1, float y1, float x2, float y2, float x3, float y3, int argb) {
+		int a = argb >>> 24, r = argb >> 16 & 0xFF, gr = argb >> 8 & 0xFF, bl = argb & 0xFF;
+		b.vertex(m, x1, y1, 0).color(r, gr, bl, a).endVertex();
+		b.vertex(m, x2, y2, 0).color(r, gr, bl, a).endVertex();
+		b.vertex(m, x3, y3, 0).color(r, gr, bl, a).endVertex();
+	}
+
+	/** A line {@code width} across, as two triangles. */
+	private static void line(com.mojang.blaze3d.vertex.BufferBuilder b, org.joml.Matrix4f m, float x1, float y1, float x2, float y2, float width, int argb) {
+		float dx = x2 - x1, dy = y2 - y1, len = (float) Math.sqrt(dx * dx + dy * dy);
+		if (len < 1.0e-3f) return;
+		float nx = -dy / len * width / 2, ny = dx / len * width / 2;
+		tri(b, m, x1 + nx, y1 + ny, x2 + nx, y2 + ny, x2 - nx, y2 - ny, argb);
+		tri(b, m, x1 + nx, y1 + ny, x2 - nx, y2 - ny, x1 - nx, y1 - ny, argb);
+	}
+
+	// --- Sect: the player's sect, or how to join one ---
+
+	/**
+	 * A disciple's sect: its name and path, their title and its regard, where its grounds lie, its barrier, the treasury's rule for
+	 * them, its members (counted, then listed by seniority, players after, scrolling); for one of no sect, how to join one and the
+	 * nearest sect.
+	 */
+	private void renderSect(GuiGraphics g, int mouseX, int mouseY) {
+		ClientSect.Info info = ClientSect.info();
+		int cx = left + WIDTH / 2;
+		int x = left + 14;
+		int y = top + CONTENT_Y + 4;
+		if (info == null) {
+			sectMaxScroll = 0;
+			g.drawCenteredString(font, Component.translatable(ModLang.SECT_TAB_LOADING), cx, y + 40, 0x9E9E9E);
+			return;
+		}
+		if (!info.member()) {
+			sectMaxScroll = 0;
+			g.drawCenteredString(font, Component.translatable(ModLang.SECT_TAB_NONE), cx, y + 6, 0xFFD700);
+			y += 24;
+			for (FormattedCharSequence line : font.split(Component.translatable(ModLang.SECT_TAB_HOW), WIDTH - 28)) {
+				g.drawCenteredString(font, line, cx, y, 0xB0B0B0);
+				y += 11;
+			}
+			y += 8;
+			Component nearest = info.sectName().isEmpty() ? Component.translatable(ModLang.SECT_TAB_NEAREST_NONE)
+					: Component.translatable(ModLang.SECT_TAB_NEAREST, info.sectName(), Alignment.describe(info.alignment()), info.nearestDistance(),
+					Component.translatable(ModLang.talkDirection(info.direction())));
+			for (FormattedCharSequence line : font.split(nearest, WIDTH - 28)) {
+				g.drawCenteredString(font, line, cx, y, 0xE0E0E0);
+				y += 11;
+			}
+			if (info.barredDays() > 0) g.drawCenteredString(font, Component.translatable(ModLang.SECT_TAB_BARRED, info.barredDays()), cx, y + 2, 0xFF6E6E);
+			return;
+		}
+		g.drawCenteredString(font, fit(WIDTH - 20, Component.literal(info.sectName()), Component.literal(info.sectName())), cx, y, 0xFFD700);
+		y += 11;
+		g.drawCenteredString(font, Alignment.describe(info.alignment()), cx, y, 0xB0B0B0);
+		y += 15;
+		NpcTitle title = info.title();
+		g.drawString(font, Component.translatable(ModLang.SECT_TAB_TITLE, title.getDisplayName()), x, y, title.getColor());
+		y += 11;
+		g.drawString(font, Component.translatable(ModLang.SECT_TAB_STANDING, Component.translatable(ModLang.talkRegardLevel(Regard.levelId(info.standing()))),
+				(info.standing() >= 0 ? "+" : "") + info.standing()), x, y, 0xE0E0E0);
+		y += 11;
+		Component grounds = info.onGrounds() ? Component.translatable(ModLang.SECT_TAB_GROUNDS_HERE, Math.round((SectMembership.GROUNDS_BONUS - 1) * 100))
+				: info.distance() < 0 ? Component.translatable(ModLang.SECT_TAB_GROUNDS_ELSEWHERE)
+				: Component.translatable(ModLang.SECT_TAB_GROUNDS_AWAY, info.distance(), Component.translatable(ModLang.talkDirection(info.direction())));
+		g.drawString(font, fit(WIDTH - 28, grounds, grounds), x, y, info.onGrounds() ? 0x69F0AE : 0xE0E0E0);
+		y += 11;
+		g.drawString(font, Component.translatable(info.barrierUp() ? ModLang.SECT_TAB_BARRIER_UP : ModLang.SECT_TAB_BARRIER_DOWN), x, y,
+				info.barrierUp() ? 0x8FEAE4 : 0xFF6E6E);
+		y += 11;
+		String treasury = info.elder() ? ModLang.SECT_TAB_TREASURY_OPEN
+				: info.treasuryTries() >= SectMembership.TREASURY_WARNINGS ? ModLang.SECT_TAB_TREASURY_LAST : ModLang.SECT_TAB_TREASURY_CLOSED;
+		Component treasuryLine = Component.translatable(treasury);
+		g.drawString(font, fit(WIDTH - 28, treasuryLine, treasuryLine), x, y, info.elder() ? 0xFFD700 : info.treasuryTries() > 0 ? 0xFF6E6E : 0xE0E0E0);
+		y += 11;
+		long cultivators = info.members().stream().filter(member -> !member.player()).count();
+		g.drawString(font, Component.translatable(ModLang.SECT_TAB_MEMBERS, cultivators, info.members().size() - cultivators), x, y, 0xE0E0E0);
+		y += 11;
+		g.drawString(font, Component.translatable(ModLang.SECT_TAB_DAYS, Math.max(1, info.ticksMember() / HeavenRitual.DAY + 1)), x, y, 0x9E9E9E);
+		y += 13;
+		g.fill(x, y, left + LIST_RIGHT, y + 1, 0xFF3A3A4A);
+		y += 3;
+
+		// The members, by seniority (the strongest first), players after them.
+		int viewTop = y, viewBottom = top + HEIGHT - 8;
+		int rowHeight = 10;
+		int contentHeight = info.members().size() * rowHeight + 4;
+		sectMaxScroll = Math.max(0, contentHeight - (viewBottom - viewTop));
+		sectScroll = Mth.clamp(sectScroll, 0, sectMaxScroll);
+		g.enableScissor(left + 1, viewTop, left + WIDTH - 1, viewBottom);
+		int ry = viewTop + 2 - sectScroll;
+		for (ClientSect.Member member : info.members()) {
+			if (ry > viewTop - rowHeight && ry < viewBottom) {
+				MutableComponent row = member.title() == null ? Component.literal("") : Component.translatable(ModLang.NPC_TITLE_BRACKETS, member.title().getDisplayName()).append(" ");
+				row.append(member.player() ? Component.translatable(ModLang.SECT_TAB_PLAYER, member.name()) : Component.literal(member.name()));
+				int colour = member.title() == null ? 0x8A8A8A : member.title().getColor();
+				Component realm = member.rank() < 0 ? Component.translatable(ModLang.SECT_TAB_OFFLINE)
+						: PlayerCultivation.rankName(CultivatorNpc.realmOf(member.rank()), CultivatorNpc.stageOf(member.rank()));
+				right(g, realm, left + LIST_RIGHT, ry, 0x9E9E9E);
+				// The name gets what the realm leaves, cut short with an ellipsis if it must be.
+				int room = left + LIST_RIGHT - font.width(realm) - 6 - x;
+				String name = row.getString();
+				if (font.width(name) > room) name = font.plainSubstrByWidth(name, Math.max(0, room - font.width("..."))) + "...";
+				g.drawString(font, name, x, ry, member.player() ? 0x8FEAE4 : colour);
+			}
+			ry += rowHeight;
+		}
+		g.disableScissor();
+		scrollbar(g, viewTop, viewBottom, contentHeight, sectScroll, sectMaxScroll, mouseX, mouseY);
 	}
 
 	// --- Abilities: what the realm has awakened, each switchable on and off ---
@@ -954,6 +1214,7 @@ public class CultivationScreen extends Screen {
 		switch (tab) {
 			case JOURNAL -> journalScroll = scroll;
 			case METHODS -> methodScroll = scroll;
+			case SECT -> sectScroll = scroll;
 			case SPELLS -> {
 				if (arrangingSpells) spellPaletteScroll = scroll;
 				else spellScroll = scroll;
@@ -1122,6 +1383,10 @@ public class CultivationScreen extends Screen {
 			methodScroll = Mth.clamp(methodScroll - (int) Math.round(delta * SCROLL_STEP), 0, methodMaxScroll);
 			return true;
 		}
+		if (tab == Tab.SECT && sectMaxScroll > 0) {
+			sectScroll = Mth.clamp(sectScroll - (int) Math.round(delta * SCROLL_STEP), 0, sectMaxScroll);
+			return true;
+		}
 		if (tab == Tab.SPELLS && !arrangingSpells && spellMaxScroll > 0) {
 			spellScroll = Mth.clamp(spellScroll - (int) Math.round(delta * SCROLL_STEP), 0, spellMaxScroll);
 			return true;
@@ -1197,6 +1462,22 @@ public class CultivationScreen extends Screen {
 			}
 		}
 		if (button == 0) {
+			for (RowButton<Boolean> page : statPageButtons) {
+				if (!page.contains(mouseX, mouseY)) continue;
+				pointsPage = page.value();
+				if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+				return true;
+			}
+			for (RowButton<StatPoints.Stat> plus : statPlusButtons) {
+				if (!plus.contains(mouseX, mouseY)) continue;
+				// One point; shift: five (as many as are left, the server keeps to it).
+				FriendlyByteBuf buf = PacketByteBufs.create();
+				buf.writeVarInt(plus.value().ordinal());
+				buf.writeVarInt(Screen.hasShiftDown() ? 5 : 1);
+				ClientPlayNetworking.send(ModPackets.SPEND_STAT_POINTS, buf);
+				if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+				return true;
+			}
 			for (RowButton<Boolean> page : methodPageButtons) {
 				if (!page.contains(mouseX, mouseY)) continue;
 				if (heavenPage != page.value()) {
@@ -2022,6 +2303,7 @@ public class CultivationScreen extends Screen {
 			dragged = null;
 			updateButtons();
 			if (target == Tab.JOURNAL) ClientJournal.request(); // fresh from the server
+			if (target == Tab.SECT) ClientSect.request();
 		}
 
 		@Override

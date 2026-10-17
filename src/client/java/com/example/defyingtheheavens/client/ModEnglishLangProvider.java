@@ -19,6 +19,7 @@ import com.example.defyingtheheavens.PillGrade;
 import com.example.defyingtheheavens.QiElement;
 import com.example.defyingtheheavens.Realm;
 import com.example.defyingtheheavens.Stage;
+import com.example.defyingtheheavens.StatPoints;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricLanguageProvider;
 
@@ -1295,6 +1296,55 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_SECT_TREASURY_WARNING, "The treasury is the elders' alone. Lay hands on it again and you will be cast out.");
 		t.add(ModLang.MSG_SECT_TITLE, "By your strength you are now %s of the %s.");
 		t.add(ModLang.STATS_SECT, "%s - %s");
+		t.add(ModLang.TAB_SECT, "Sect");
+		t.add(ModLang.SECT_TAB_LOADING, "...");
+		t.add(ModLang.SECT_TAB_NONE, "You belong to no sect.");
+		t.add(ModLang.SECT_TAB_HOW, "To join one, talk to any of its members and ask to join: its disciples send you to an elder, who sets you an entrance trial (a spar, holding back to your realm; win it or stand your ground to the end). A body of High grade or better, or an elder Warm to you, needs no trial. Its disciples cultivate a quarter faster on its grounds, pass its barrier, and are helped by its members.");
+		t.add(ModLang.SECT_TAB_NEAREST, "Nearest: %s (%s), %s blocks to the %s.");
+		t.add(ModLang.SECT_TAB_NEAREST_NONE, "No sect is known of within 4,000 blocks.");
+		t.add(ModLang.SECT_TAB_BARRED, "It won't hear you for %s more day(s).");
+		t.add(ModLang.SECT_TAB_TITLE, "Your title: %s");
+		t.add(ModLang.SECT_TAB_STANDING, "Its regard for you: %s (%s)");
+		t.add(ModLang.SECT_TAB_GROUNDS_HERE, "Grounds: you stand on them (cultivating %s%% faster)");
+		t.add(ModLang.SECT_TAB_GROUNDS_AWAY, "Grounds: %s blocks to the %s");
+		t.add(ModLang.SECT_TAB_GROUNDS_ELSEWHERE, "Grounds: in another world");
+		t.add(ModLang.SECT_TAB_BARRIER_UP, "Barrier: raised (it lets you through)");
+		t.add(ModLang.SECT_TAB_BARRIER_DOWN, "Barrier: down");
+		t.add(ModLang.SECT_TAB_TREASURY_OPEN, "Treasury: yours to open (Elder and above)");
+		t.add(ModLang.SECT_TAB_TREASURY_CLOSED, "Treasury: elders only (a first try: a warning)");
+		t.add(ModLang.SECT_TAB_TREASURY_LAST, "Treasury: warned once; another try casts you out");
+		t.add(ModLang.SECT_TAB_MEMBERS, "Members: %s cultivator(s), %s player(s)");
+		t.add(ModLang.SECT_TAB_DAYS, "A disciple for %s day(s). To leave, ask an elder.");
+		t.add(ModLang.SECT_TAB_LEAVE, "To leave, ask an elder.");
+		t.add(ModLang.SECT_TAB_PLAYER, "%s (player)");
+		t.add(ModLang.SECT_TAB_OFFLINE, "away");
+		for (StatPoints.Stat stat : StatPoints.Stat.values()) {
+			String name = switch (stat) {
+				case STRENGTH -> "Strength";
+				case CONSTITUTION -> "Constitution";
+				case AGILITY -> "Agility";
+				case ENDURANCE -> "Endurance";
+				case SPIRIT -> "Spirit";
+				case INSIGHT -> "Insight";
+			};
+			String effect = switch (stat) {
+				case STRENGTH -> "+%s%% melee harm";
+				case CONSTITUTION -> "+%s%% max health";
+				case AGILITY -> "+%s%% speed, attack speed";
+				case ENDURANCE -> "+%s%% armour, toughness";
+				case SPIRIT -> "+%s%% qi pool";
+				case INSIGHT -> "+%s%% cultivation, half in qi";
+			};
+			t.add(ModLang.STAT_POINT_PREFIX + stat.getId(), name);
+			t.add(ModLang.STAT_POINT_PREFIX + stat.getId() + ".effect", effect);
+		}
+		t.add(ModLang.MSG_STAT_POINTS_RETURNED, "Your cultivation has fallen below what your stat points were spent from: every point is given back to spend again (Stats tab, Stat Points).");
+		t.add(ModLang.BTN_STAT_POINTS, "Stat Points");
+		t.add(ModLang.BTN_STAT_LIST, "Stats");
+		t.add(ModLang.STAT_POINTS_UNSPENT, "Points to spend: %s");
+		t.add(ModLang.STAT_POINTS_EARNED, "%s earned: %s a stage, %s a realm");
+		t.add(ModLang.STAT_POINTS_HINT, "+ spends a point, shift-click five");
+		t.add(ModLang.STAT_POINTS_MORTAL, "Points come with your first breakthrough.");
 		t.add("cultivation.defying-the-heavens.talk.topic.join", "May I join your sect?");
 		t.add("cultivation.defying-the-heavens.talk.topic.trial", "I am ready for the entrance trial.");
 		t.add("cultivation.defying-the-heavens.talk.topic.leave_sect", "I wish to leave the sect.");

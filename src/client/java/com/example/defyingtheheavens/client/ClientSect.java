@@ -1,15 +1,79 @@
 package com.example.defyingtheheavens.client;
 
+import com.example.defyingtheheavens.ModPackets;
 import com.example.defyingtheheavens.NpcTitle;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.minecraft.network.FriendlyByteBuf;
 
-/** The local player's sect and their title in it (S2C sect_status, SectMembership#sendStatus), for the Stats tab. */
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * The local player's sect and their title in it (S2C sect_status, SectMembership#sendStatus), for the Stats tab; and the Sect
+ * tab's page (S2C sect_info, SectMembership#sendInfo), asked for as the tab opens.
+ */
 public final class ClientSect {
 	private static String name = "";
 	private static NpcTitle title;
+	/** The Sect tab's page, or null until it has come. */
+	private static Info info;
+
+	/** One of a sect's members as the Sect tab lists it: a title (null: an absent player's), a rank (-1: not known), a player or not. */
+	public record Member(String name, NpcTitle title, int rank, boolean player) {}
+
+	/** A disciple's own sect (the first fields) or, for one of no sect, the nearest one ({@code nearest...}; empty name: none). */
+	public record Info(boolean member, String sectName, int alignment, NpcTitle title, int standing, boolean onGrounds, int distance,
+					   String direction, boolean barrierUp, int treasuryTries, boolean elder, long ticksMember, List<Member> members,
+					   int nearestDistance, int barredDays) {}
 
 	static void set(String sectName, int titleIndex) {
 		name = sectName == null ? "" : sectName;
 		title = titleIndex < 0 ? null : NpcTitle.byIndex(titleIndex);
+	}
+
+	/** Reads S2C sect_info (on the network thread; the result is set on the client's). */
+	static Info read(FriendlyByteBuf buf) {
+		if (buf.readBoolean()) {
+			String sectName = buf.readUtf();
+			int alignment = buf.readInt();
+			NpcTitle mine = NpcTitle.byIndex(buf.readVarInt());
+			int standing = buf.readInt();
+			boolean onGrounds = buf.readBoolean();
+			int distance = buf.readVarInt();
+			String direction = buf.readUtf();
+			boolean barrierUp = buf.readBoolean();
+			int tries = buf.readVarInt();
+			boolean elder = buf.readBoolean();
+			long ticks = buf.readVarLong();
+			int count = buf.readVarInt();
+			List<Member> members = new ArrayList<>(count);
+			for (int i = 0; i < count; i++) {
+				String memberName = buf.readUtf();
+				int t = buf.readVarInt() - 1;
+				int rank = buf.readVarInt() - 1;
+				boolean player = buf.readBoolean();
+				members.add(new Member(memberName, t < 0 ? null : NpcTitle.byIndex(t), rank, player));
+			}
+			return new Info(true, sectName, alignment, mine, standing, onGrounds, distance, direction, barrierUp, tries, elder, ticks, members, 0, 0);
+		}
+		if (!buf.readBoolean()) return new Info(false, "", 0, null, 0, false, -1, "", false, 0, false, 0, List.of(), -1, 0);
+		String near = buf.readUtf();
+		int alignment = buf.readInt();
+		int distance = buf.readVarInt();
+		String direction = buf.readUtf();
+		int barred = buf.readVarInt();
+		return new Info(false, near, alignment, null, 0, false, distance, direction, false, 0, false, 0, List.of(), distance, barred);
+	}
+
+	static void setInfo(Info page) { info = page; }
+
+	/** The Sect tab's page as last sent, or null while it is on its way. */
+	public static Info info() { return info; }
+
+	/** The Sect tab is opening: its page is asked for afresh. */
+	public static void request() {
+		ClientPlayNetworking.send(ModPackets.SECT_INFO_REQUEST, PacketByteBufs.create());
 	}
 
 	/** The sect's name, or "" for none. */
@@ -23,6 +87,7 @@ public final class ClientSect {
 	static void clear() {
 		name = "";
 		title = null;
+		info = null;
 	}
 
 	private ClientSect() {}

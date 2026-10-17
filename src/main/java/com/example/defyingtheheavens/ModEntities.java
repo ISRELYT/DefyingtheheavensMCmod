@@ -101,13 +101,13 @@ public final class ModEntities {
 					.clientTrackingRange(8)
 					.build("heart_demon"));
 
-	/** What an element spell throws (see {@link SpellProjectile}): small by default, its hitbox set by its spell. */
+	/** What an element spell throws (see {@link SpellProjectile}): small by default, its hitbox set by its spell; seen from far (a slash runs 240 blocks). */
 	public static final EntityType<SpellProjectile> SPELL_PROJECTILE = Registry.register(BuiltInRegistries.ENTITY_TYPE,
 			DefyingTheHeavens.id("spell_projectile"),
 			EntityType.Builder.<SpellProjectile>of(SpellProjectile::new, MobCategory.MISC)
 					.noSave().noSummon().fireImmune()
 					.sized(0.5f, 0.5f)
-					.clientTrackingRange(10)
+					.clientTrackingRange(16)
 					.updateInterval(1)
 					.build("spell_projectile"));
 

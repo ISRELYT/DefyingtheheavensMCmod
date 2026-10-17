@@ -37,6 +37,8 @@ public final class SpellRender {
 			DUST = tex("dust"), STONE_SHELL = tex("stone_shell"), GOLEM = tex("golem"), GOLEM_GLOW = tex("golem_glow"), STEEL = tex("steel"),
 			GOLD = tex("gold"), SLASH = tex("slash"), WIND = tex("wind"), ICE = tex("ice"), CLOUD = tex("cloud"), RAIN = tex("rain"), MIST = tex("mist"),
 			SUN = tex("sun"), RUNE = tex("rune"), VEINS = tex("veins"), FEATHER = tex("feather"), STAR = tex("star"), LIGHTNING = tex("lightning");
+	/** Vanilla's beacon beam: streaks along a tube, for a beam's see-through core (added light alone is lost against a day sky). */
+	public static final ResourceLocation BEAM = new ResourceLocation("minecraft", "textures/entity/beacon_beam.png");
 	/** The five elements' seals: its character (火 水 木 土 金) within rings of trigrams and the star of the five (TexGen). */
 	public static final ResourceLocation SEAL_FIRE = tex("seal_fire"), SEAL_WATER = tex("seal_water"), SEAL_WOOD = tex("seal_wood"),
 			SEAL_EARTH = tex("seal_earth"), SEAL_METAL = tex("seal_metal");

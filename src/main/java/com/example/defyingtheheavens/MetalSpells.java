@@ -54,21 +54,24 @@ public final class MetalSpells {
 	public static final float RAIN_DAMAGE = 6;
 	public static final float BELL_HOLD = 40;
 	public static final int BELL_TICKS = 10 * 20;
-	public static final double LIGHT_RANGE = 48;
-	public static final float LIGHT_DAMAGE = 45;
+	public static final double LIGHT_RANGE = 64, LIGHT_BORE = 1.6;
+	public static final float LIGHT_DAMAGE = 55;
 	public static final int VAJRA_TICKS = 12 * 20;
-	public static final double MOUNTAIN_SPEED = 4.0, MOUNTAIN_RANGE = 100;
+	public static final double MOUNTAIN_SPEED = 4.0, MOUNTAIN_RANGE = 140;
 	public static final float MOUNTAIN_DAMAGE = 150;
-	public static final int MOUNTAIN_WIDTH = 3, MOUNTAIN_HEIGHT = 12;
+	public static final int MOUNTAIN_WIDTH = 4, MOUNTAIN_HEIGHT = 16;
 	public static final double DOMAIN_RADIUS = 10;
 	public static final int DOMAIN_TICKS = 12 * 20;
 	public static final float DOMAIN_DAMAGE = 20;
-	public static final double SEVER_RANGE = 64, SEVER_RADIUS = 4;
+	/** Heaven-Severing Sword: a slash {@link #SEVER_RANGE} long at {@link #SEVER_SPEED} a tick, cutting a canyon {@link #SEVER_WIDTH} wide from {@link #SEVER_DOWN} below where it began to {@link #SEVER_UP} above. */
+	public static final double SEVER_RANGE = 240, SEVER_SPEED = 6, SEVER_REACH = 3.5;
 	public static final float SEVER_DAMAGE = 300;
-	public static final int TRENCH_LENGTH = 20, TRENCH_DEPTH = 10, TRENCH_WIDTH = 3;
+	public static final int SEVER_WIDTH = 5, SEVER_DOWN = 24, SEVER_UP = 40;
 	public static final double ARRAY_RANGE = 48, ARRAY_HALF = 16;
 	public static final int ARRAY_TICKS = 8 * 20;
 	public static final float ARRAY_DAMAGE = 80;
+	/** Where each of the Four Swords is driven in: a crater this round and deep. */
+	public static final double ARRAY_CRATER = 4, ARRAY_CRATER_DEPTH = 7;
 
 	static boolean canCast(ServerPlayer p, Spell spell) {
 		return true;
@@ -397,16 +400,26 @@ public final class MetalSpells {
 
 	// --- Nascent Soul ---
 
+	/**
+	 * Piercing Sword Light: a line of sword light along the look for {@link #LIGHT_RANGE}, through whatever stands in its way: it
+	 * bores a tunnel {@link #LIGHT_BORE} round through hill and wall (Devastation#bore) and cuts every being along it.
+	 */
 	private static void light(ServerPlayer p, Spell spell) {
 		ServerLevel level = p.serverLevel();
 		Vec3 from = HeavenSpells.fromHands(p);
-		Vec3 to = HeavenSpells.beamEnd(p, LIGHT_RANGE);
+		Vec3 look = p.getViewVector(1.0f);
+		Vec3 to = p.getEyePosition().add(look.scale(LIGHT_RANGE));
 		SpellField.create(level, SpellField.Kind.SWORD_LIGHT, from, 0.6f, (float) from.distanceTo(to), 14, p).facing(p.getYRot(), p.getXRot()).spawn();
-		for (LivingEntity e : HeavenSpells.alongLook(p, LIGHT_RANGE, 0.8)) {
+		Vec3 eye = p.getEyePosition();
+		for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, new net.minecraft.world.phys.AABB(eye, to).inflate(2), e -> !HeavenSpells.spared(p, e))) {
+			Vec3 mid = HeavenSpells.middle(e).subtract(eye);
+			double along = mid.dot(look);
+			if (along < 0 || along > LIGHT_RANGE || mid.subtract(look.scale(along)).length() > 1.2 + e.getBbWidth() / 2) continue;
 			HeavenSpells.strike(p, e, LIGHT_DAMAGE, spell);
 			e.invulnerableTime = 0;
-			SpellFx.send(level, SpellFx.Kind.METAL_SPARKS, HeavenSpells.middle(e), to.subtract(from), 1.2f, 0);
+			SpellFx.send(level, SpellFx.Kind.METAL_SPARKS, HeavenSpells.middle(e), look, 1.2f, 0);
 		}
+		Devastation.bore(p, level, eye.add(look.scale(1.5)), to, LIGHT_BORE);
 		SpellFx.send(level, SpellFx.Kind.FLASH, to, Vec3.ZERO, 2.0f, 0xFFF2C0);
 		HeavenSpells.sound(level, p.position(), SoundEvents.TRIDENT_THUNDER, 1.0f, 1.8f);
 		HeavenSpells.sound(level, p.position(), SoundEvents.BEACON_ACTIVATE, 1.0f, 2.0f);
@@ -450,63 +463,71 @@ public final class MetalSpells {
 
 	// --- Four Axis ---
 
+	/**
+	 * Heaven-Severing Sword: one stroke, and a slash of sword light as tall as a hill stands up out of it and runs off the way the
+	 * caster faces, {@link #SEVER_SPEED} a tick for {@link #SEVER_RANGE} blocks. Nothing stops it: it cuts a canyon
+	 * {@link #SEVER_WIDTH} wide through everything in its way, from {@link #SEVER_DOWN} below where it set out to {@link #SEVER_UP}
+	 * above (hills split, the ground laid open, what is built in its way cut through), and every being it passes takes
+	 * {@link #SEVER_DAMAGE} and is flung aside.
+	 */
 	private static void sever(ServerPlayer p, Spell spell) {
 		ServerLevel level = p.serverLevel();
-		LivingEntity aimed = HeavenSpells.aimed(p, SEVER_RANGE);
-		Vec3 point = aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, SEVER_RANGE);
-		Vec3 ground = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 32);
-		Vec3 target = ground != null ? ground : point;
-		Vec3 along = Vec3.directionFromRotation(0, p.getYRot());
-		SpellField mark = SpellField.create(level, SpellField.Kind.METEOR_MARK, target, (float) SEVER_RADIUS, 1, 40, p).data(2).facing(p.getYRot(), 0).spawn();
-		Vec3 from = target.add(0, 48, 0);
-		HeavenSpells.sound(level, target, SoundEvents.BEACON_ACTIVATE, 3.0f, 0.4f);
-		SpellProjectile.thrown(level, p, spell, SpellProjectile.Shape.COLOSSAL_SWORD, 1.0f, from, new Vec3(0, -1.6, 0), 52, new SpellProjectile.Behaviour() {
-			private void land(Vec3 where) {
-				mark.discard();
-				for (LivingEntity e : HeavenSpells.aroundPoint(level, where, SEVER_RADIUS + 1, e -> !HeavenSpells.spared(p, e))) {
-					HeavenSpells.strike(p, e, SEVER_DAMAGE, spell);
-					HeavenSpells.push(where, e, 2.5);
+		Vec3 look = p.getViewVector(1.0f);
+		Vec3 flat = look.multiply(1, 0, 1).lengthSqr() < 1.0e-4 ? Vec3.directionFromRotation(0, p.getYRot()) : look.multiply(1, 0, 1).normalize();
+		Vec3 side = new Vec3(-flat.z, 0, flat.x);
+		// It runs level, along the ground the caster stands over (in the air, from the ground below them, if near).
+		Vec3 ground = HeavenSpells.groundBelow(level, p.position().add(0, 1, 0), 2, 24);
+		int base = (int) Math.floor((ground != null ? ground : p.position()).y);
+		int yMin = Math.max(level.getMinBuildHeight() + 1, base - SEVER_DOWN), yMax = Math.min(level.getMaxBuildHeight() - 1, base + SEVER_UP);
+		java.util.Set<Long> columns = new java.util.HashSet<>();
+		java.util.Set<LivingEntity> struck = new java.util.HashSet<>();
+		Vec3 from = new Vec3(p.getX(), base + 1, p.getZ()).add(flat.scale(2.5));
+		SpellProjectile.thrown(level, p, spell, SpellProjectile.Shape.HEAVEN_SLASH, 1.0f, from, flat.scale(SEVER_SPEED), SEVER_RANGE, new SpellProjectile.Behaviour() {
+			@Override
+			public boolean hitEntity(SpellProjectile missile, LivingEntity target) {
+				return true; // its blade cuts what it passes (flying), and goes on
+			}
+
+			@Override
+			public void hitBlock(SpellProjectile missile, BlockHitResult hit) {}
+
+			@Override
+			public void flying(SpellProjectile missile) {
+				Vec3 at = missile.position();
+				Vec3 step = missile.getDeltaMovement();
+				// The canyon: every column of its width along the way it went this tick, cut from its floor to its top.
+				int steps = (int) Math.ceil(step.length()) + 1;
+				for (int s = 0; s <= steps; s++) {
+					Vec3 point = at.add(step.scale(s / (double) steps - 1));
+					if (point.subtract(from).dot(flat) < 0) continue; // nothing behind where it set out: its caster stands at the canyon's lip
+					for (int w = -(SEVER_WIDTH / 2); w <= SEVER_WIDTH / 2; w++) {
+						BlockPos column = BlockPos.containing(point.add(side.scale(w)));
+						if (columns.add(BlockPos.asLong(column.getX(), 0, column.getZ()))) {
+							Devastation.cutColumn(p, level, column.getX(), column.getZ(), yMin, yMax, true);
+						}
+					}
 				}
-				trench(p, level, where, along);
-				SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, where, Vec3.ZERO, 20, 0, 256);
-				SpellFx.send(level, SpellFx.Kind.FLASH, where, Vec3.ZERO, 6, 0xFFF4D0, 256);
-				SpellFx.send(level, SpellFx.Kind.EARTH_BURST, where, Vec3.ZERO, 5, Block.getId(Blocks.STONE.defaultBlockState()), 256);
-				HeavenSpells.sound(level, where, SoundEvents.GENERIC_EXPLODE, 5.0f, 0.3f);
-				HeavenSpells.sound(level, where, SoundEvents.ANVIL_LAND, 4.0f, 0.3f);
-			}
-
-			@Override
-			public boolean hitEntity(SpellProjectile missile, LivingEntity hit) {
-				return true; // it falls through to the ground
-			}
-
-			@Override
-			public void hitBlock(SpellProjectile missile, BlockHitResult hit) {
-				land(hit.getLocation());
-			}
-
-			@Override
-			public void expire(SpellProjectile missile) {
-				land(missile.position());
-			}
-		}).pierce(1000).hitSize(3.0f).data(Math.round(p.getYRot()));
-	}
-
-	/** The colossal sword's wound in the earth: a trench {@link #TRENCH_WIDTH} wide, {@link #TRENCH_LENGTH} long, {@link #TRENCH_DEPTH} deep. */
-	private static void trench(ServerPlayer p, ServerLevel level, Vec3 at, Vec3 along) {
-		Vec3 side = new Vec3(-along.z, 0, along.x);
-		for (int l = -TRENCH_LENGTH / 2; l <= TRENCH_LENGTH / 2; l++) {
-			double taper = 1 - Math.abs(l) / (TRENCH_LENGTH / 2.0 + 1);
-			int depth = (int) Math.ceil(TRENCH_DEPTH * Math.sqrt(taper));
-			for (int w = -(TRENCH_WIDTH / 2); w <= TRENCH_WIDTH / 2; w++) {
-				for (int d = -1; d < depth; d++) {
-					BlockPos pos = BlockPos.containing(at.add(along.scale(l)).add(side.scale(w)).subtract(0, d, 0));
-					BlockState state = level.getBlockState(pos);
-					if (state.isAir() || !HeavenSpells.carvable(level, pos, p)) continue;
-					level.removeBlock(pos, false);
+				// Every being its blade passes, from the canyon's floor to above its top.
+				net.minecraft.world.phys.AABB swept = new net.minecraft.world.phys.AABB(at.subtract(step), at).inflate(SEVER_REACH, 0, SEVER_REACH)
+						.setMinY(yMin - 2).setMaxY(yMax + 8);
+				for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, swept, e -> !HeavenSpells.spared(p, e))) {
+					if (e.position().subtract(from).dot(flat) < -1 || !struck.add(e)) continue;
+					HeavenSpells.strike(p, e, SEVER_DAMAGE, spell, missile);
+					HeavenSpells.move(e, side.scale(e.position().subtract(at).dot(side) < 0 ? -1.6 : 1.6).add(0, 0.6, 0));
+					SpellFx.send(level, SpellFx.Kind.METAL_SPARKS, HeavenSpells.middle(e), flat, 2.0f, 0);
 				}
+				if (missile.tickCount % 2 == 0) {
+					HeavenSpells.sound(level, at, SoundEvents.PLAYER_ATTACK_SWEEP, 3.0f, 0.4f);
+					SpellFx.send(level, SpellFx.Kind.EARTH_BURST, new Vec3(at.x, base + 0.5, at.z), Vec3.ZERO, 3, Block.getId(Blocks.STONE.defaultBlockState()), 160);
+				}
+				if (missile.tickCount % 6 == 0) HeavenSpells.sound(level, at, SoundEvents.GENERIC_EXPLODE, 3.0f, 0.4f);
 			}
-		}
+		}).phasing().pierce(100000).hitSize(4.0f).data(Math.round(p.getYRot()));
+		SpellFx.send(level, SpellFx.Kind.FLASH, p.position().add(flat.scale(3)).add(0, 2, 0), Vec3.ZERO, 8, 0xFFF4D0, 256);
+		SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, p.position(), Vec3.ZERO, 14, 0, 256);
+		HeavenSpells.sound(level, p.position(), SoundEvents.TRIDENT_THUNDER, 4.0f, 0.5f);
+		HeavenSpells.sound(level, p.position(), SoundEvents.PLAYER_ATTACK_SWEEP, 4.0f, 0.3f);
+		HeavenSpells.sound(level, p.position(), SoundEvents.BEACON_ACTIVATE, 3.0f, 0.4f);
 	}
 
 	/**
@@ -537,6 +558,16 @@ public final class MetalSpells {
 		@Override
 		protected boolean run(long age, long now) {
 			if (age < 10) return true; // the swords are still falling into place
+			if (age == 10) {
+				// Each sword driven deep into the ground where it lands, the earth thrown up round it.
+				for (int c = 0; c < 4; c++) {
+					Vec3 corner = at.add((c == 0 || c == 3 ? -1 : 1) * ARRAY_HALF, 0, (c < 2 ? -1 : 1) * ARRAY_HALF);
+					Devastation.crater(caster, level, corner, ARRAY_CRATER, ARRAY_CRATER_DEPTH, Devastation.Floor.RUBBLE);
+					SpellFx.send(level, SpellFx.Kind.EARTH_BURST, corner, Vec3.ZERO, 4, Block.getId(Blocks.STONE.defaultBlockState()), 192);
+				}
+				SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, at, Vec3.ZERO, (float) ARRAY_HALF * 2.5f, 0, 256);
+				HeavenSpells.sound(level, at, SoundEvents.GENERIC_EXPLODE, 5.0f, 0.4f);
+			}
 			for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, new net.minecraft.world.phys.AABB(at, at).inflate(ARRAY_HALF + 3, 32, ARRAY_HALF + 3),
 					e -> !HeavenSpells.friendly(caster, e) && !HeavenSpells.spared(caster, e))) {
 				if (!inside(e.position(), 2.5)) continue;

@@ -48,7 +48,7 @@ public final class WaterSpells {
 	public static final double RAIN_RADIUS = 8, RAIN_HEIGHT = 9, RAIN_SLOW = 0.1;
 	public static final int RAIN_TICKS = 20 * 20;
 	public static final double PRISON_RANGE = 16;
-	public static final int PRISON_TICKS = 5 * 20;
+	public static final int PRISON_TICKS = 4 * 20;
 	public static final float PRISON_FORCE = 30, PRISON_DAMAGE = 2;
 	public static final double SPRING_RANGE = 32;
 	public static final int SPRING_GATHER = 30, LAKE_RADIUS = 3;
@@ -60,21 +60,21 @@ public final class WaterSpells {
 	public static final double MIST_RADIUS = 10;
 	public static final int MIST_TICKS = 15 * 20;
 	public static final double SPEAR_SPEED = 2.2, SPEAR_RANGE = 40;
-	public static final float SPEAR_DAMAGE = 14;
+	public static final float SPEAR_DAMAGE = 11;
 	public static final double TIDE_LENGTH = 30, TIDE_PACE = 0.75, TIDE_WIDTH = 14, TIDE_HEIGHT = 10;
 	public static final float TIDE_DAMAGE = 30;
-	public static final double RIVER_LENGTH = 32, RIVER_WIDTH = 2.5;
+	public static final double RIVER_LENGTH = 32, RIVER_WIDTH = 2.5, RIVER_SCOUR = 1.8;
 	public static final int RIVER_TICKS = 2 * 20;
-	public static final float RIVER_DAMAGE = 70;
-	public static final double FROZEN_RADIUS = 100, FROST_RADIUS = 40;
-	public static final int FREEZE_SPREAD = 60, FROZEN_TICKS = 4 * 20, THAW_MIN = 20 * 20, THAW_MAX = 40 * 20;
-	public static final float THAW_DAMAGE = 4;
+	public static final float RIVER_DAMAGE = 60;
+	public static final double FROZEN_RADIUS = 64, FROST_RADIUS = 32;
+	public static final int FREEZE_SPREAD = 50, FROZEN_TICKS = 3 * 20, THAW_MIN = 20 * 20, THAW_MAX = 40 * 20;
+	public static final float THAW_DAMAGE = 3;
 	public static final double ZERO_RANGE = 48;
-	public static final int ZERO_TICKS = 8 * 20;
-	public static final float ZERO_DAMAGE = 200, ZERO_SHATTER = 100;
-	public static final double SEA_RANGE = 48, SEA_RADIUS = 16;
-	public static final int SEA_TICKS = 10 * 20;
-	public static final float SEA_DAMAGE = 30;
+	public static final int ZERO_TICKS = 5 * 20;
+	public static final float ZERO_DAMAGE = 200, ZERO_SHATTER = 60;
+	public static final double SEA_RANGE = 48, SEA_RADIUS = 16, SEA_BASIN = 10;
+	public static final int SEA_TICKS = 8 * 20;
+	public static final float SEA_DAMAGE = 22;
 
 	private static final UUID RAIN_ID = UUID.fromString("4c1e9a72-0b5f-4e3d-8f26-d91a7b3e5c08");
 
@@ -576,6 +576,7 @@ public final class WaterSpells {
 		@Override
 		protected boolean run(long age, long now) {
 			if (age < 6) return true; // the river is still falling
+			if (age == 6) Devastation.bore(caster, level, from.add(0, -1.2, 0), to.add(0, -1.2, 0), RIVER_SCOUR); // where it lands, it scours a channel
 			Vec3 way = to.subtract(from).multiply(1, 0, 1);
 			double length = way.length();
 			Vec3 dir = way.scale(1 / Math.max(1.0e-3, length));
@@ -785,6 +786,9 @@ public final class WaterSpells {
 		public void end() {
 			SpellFx.send(level, SpellFx.Kind.SPLASH, at, Vec3.ZERO, (float) SEA_RADIUS, 0, 192);
 			field.discard();
+			// The sea's weight leaves the ground under it crushed into a basin, and a lake in it.
+			Vec3 ground = HeavenSpells.groundBelow(level, at, 2, (int) SEA_RADIUS + 4);
+			if (ground != null) Devastation.crater(caster, level, ground, SEA_BASIN, SEA_BASIN * 0.45, Devastation.Floor.LAKE);
 		}
 	}
 

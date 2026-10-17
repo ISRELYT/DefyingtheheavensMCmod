@@ -79,6 +79,7 @@ public class SpellProjectileRenderer extends EntityRenderer<SpellProjectile> {
 			case FIRE_SERPENT -> serpent(missile, pose, buffers, facing, cam, trail, age, formed, yaw, pitch);
 			case BOULDER, MOUNTAIN -> boulder(missile, pose, buffers, facing, cam, trail, age, light);
 			case CLEAVE_SLASH, MOUNTAIN_SLASH -> slash(missile, pose, buffers, trail, age, yaw, pitch);
+			case HEAVEN_SLASH -> heavenSlash(pose, buffers, facing, cam, trail, age, yaw);
 			case RAZOR_LEAF -> leaf(missile, pose, buffers, cam, trail, age, yaw, pitch, light);
 			case ICE_SPEAR -> iceSpear(missile, pose, buffers, facing, cam, trail, age, formed, yaw, pitch);
 			case METEOR -> meteor(missile, pose, buffers, facing, cam, trail, age, light);
@@ -776,6 +777,40 @@ public class SpellProjectileRenderer extends EntityRenderer<SpellProjectile> {
 			star(buffers, pose, facing, (float) tip.x, (float) tip.y, (float) tip.z, (mountain ? 3.5f : 1.1f) * s, age * 0.25f, WHITE, 0.9f * flicker);
 		}
 		glowBall(buffers, pose, facing, 0, lift, 0, radius * 2.2f, new float[]{0.8f, 0.92f, 1.0f}, 0.2f);
+	}
+
+	/** Heaven-Severing Sword's slash: how tall its crescent stands (its radius) and how far above the ground its heart is. */
+	private static final float SEVER_RADIUS = 32, SEVER_LIFT = 9;
+
+	/**
+	 * Heaven-Severing Sword: a crescent of sword light standing on its edge, as tall as a hill (from deep in the ground it cuts to
+	 * forty blocks over it), running bow-first: a hot white edge in a pale blade, echoes of it streaming behind, stars flaring at
+	 * its two tips, light pouring off it, and the canyon's line burning white along the ground where it has passed.
+	 */
+	private void heavenSlash(PoseStack pose, MultiBufferSource buffers, Quaternionf facing, Vec3 cam, List<Vec3> trail, float age, float yaw) {
+		float flicker = 0.85f + 0.15f * Mth.sin(age * 2.7f);
+		VertexConsumer vc = buffers.getBuffer(SpellRender.glow(SpellRender.SLASH));
+		for (int echo = 0; echo < 7; echo++) {
+			pose.pushPose();
+			face(pose, yaw, 0);
+			pose.translate(0, SEVER_LIFT, -echo * 5.0f);
+			pose.mulPose(Axis.ZP.rotationDegrees(90));
+			float alpha = (echo == 0 ? 1 : 0.5f / echo) * flicker;
+			float radius = SEVER_RADIUS * (1 - echo * 0.04f);
+			SpellRender.crescent(vc, pose.last(), radius, radius * 0.42f, 2.3f, 28, new float[]{0.82f, 0.94f, 1.0f}, alpha, SpellRender.FULL_BRIGHT);
+			SpellRender.crescent(vc, pose.last(), radius * 0.99f, radius * 0.12f, 2.2f, 28, WHITE, alpha, SpellRender.FULL_BRIGHT);
+			pose.popPose();
+		}
+		Vec3 ahead = Vec3.directionFromRotation(0, -yaw);
+		for (int side = -1; side <= 1; side += 2) {
+			Vec3 tip = new Vec3(0, side * SEVER_RADIUS * 0.91 + SEVER_LIFT, 0).add(ahead.scale(-SEVER_RADIUS * 0.59));
+			star(buffers, pose, facing, (float) tip.x, (float) tip.y, (float) tip.z, 14, age * 0.2f, WHITE, flicker);
+		}
+		star(buffers, pose, facing, 0, SEVER_LIFT, 0, 24, -age * 0.1f, new float[]{0.85f, 0.95f, 1.0f}, 0.6f * flicker);
+		glowBall(buffers, pose, facing, 0, SEVER_LIFT, 0, SEVER_RADIUS * 2.6f, new float[]{0.8f, 0.92f, 1.0f}, 0.22f);
+		// The line it has cut, burning white along the ground behind it.
+		streak(buffers, pose, trail, cam, SpellRender.GLOW, new float[]{0.9f, 0.97f, 1.0f}, 6.0f, 0.9f, 90, age * 0.05f);
+		streak(buffers, pose, trail, cam, SpellRender.SLASH, WHITE, 2.0f, 1.0f, 60, age * 0.08f);
 	}
 
 	@Override

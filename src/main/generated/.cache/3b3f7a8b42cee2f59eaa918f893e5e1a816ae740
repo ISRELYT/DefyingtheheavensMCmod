@@ -1,10 +1,10 @@
-// 1.20.1	2026-10-16T22:46:46.8716932	Defying The Heavens/Tags for minecraft:block
+// 1.20.1	2026-10-17T16:58:50.1451973	Defying The Heavens/Tags for minecraft:block
 893fa32b67b301e16fe6ed62df0e0c615918e083 data\minecraft\tags\blocks\planks.json
 6eb4b2f86be0c164d7164463761a0b91f496bccb data\minecraft\tags\blocks\leaves.json
 e4a7f08802b5215b19d8c0a804fc5eab4b5385fe data\minecraft\tags\blocks\snow_layer_cannot_survive_on.json
 fcb9c3610b1d9fc4a9d88dc624bf6762173000ef data\minecraft\tags\blocks\needs_diamond_tool.json
-8c63a4ef478a2d1c559b96a5beae4408cb88a4b7 data\minecraft\tags\blocks\mineable\axe.json
 6eb4b2f86be0c164d7164463761a0b91f496bccb data\minecraft\tags\blocks\mineable\hoe.json
+8c63a4ef478a2d1c559b96a5beae4408cb88a4b7 data\minecraft\tags\blocks\mineable\axe.json
 9a76a97daa85f2047448d5dd17650fca3b896de1 data\minecraft\tags\blocks\features_cannot_replace.json
 254038c27212d829d4fe53016cca02405cac1835 data\minecraft\tags\blocks\stone_ore_replaceables.json
 08257d2c01e57a2f511f6587261ed83ba8548dca data\defying-the-heavens\tags\blocks\qi_veins.json

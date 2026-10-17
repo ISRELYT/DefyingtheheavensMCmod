@@ -571,6 +571,11 @@ public class SpellFieldRenderer extends EntityRenderer<SpellField> {
 		float[] wide = new float[10];
 		for (int i = 0; i < 10; i++) wide[i] = radii[i] * 3.2f;
 		SpellRender.tube(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), pose.last(), line, wide, 8, ICE, 0.45f * show, 0.2f, 0, SpellRender.FULL_BRIGHT, null);
+		// Its core, see-through rather than added light, so it shows against a bright day too.
+		float[] core = new float[10];
+		for (int i = 0; i < 10; i++) core[i] = radii[i] * 0.6f;
+		SpellRender.tube(buffers.getBuffer(SpellRender.clear(SpellRender.BEAM)), pose.last(), line, core, 8, new float[]{0.8f, 0.95f, 1.0f}, 0.8f * show, 0.3f,
+				-age * 0.4f, SpellRender.FULL_BRIGHT, null);
 		// Crystals of frost hanging along the beam, glinting.
 		VertexConsumer glints = buffers.getBuffer(SpellRender.glow(SpellRender.STAR));
 		for (int i = 0; i < 8; i++) {
@@ -1256,6 +1261,11 @@ public class SpellFieldRenderer extends EntityRenderer<SpellField> {
 		float[] wide = new float[6];
 		for (int i = 0; i < 6; i++) wide[i] = radii[i] * 3.5f;
 		SpellRender.tube(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), pose.last(), line, wide, 8, SWORD_LIGHT, 0.45f * show, 0.2f, 0, SpellRender.FULL_BRIGHT, null);
+		// Its core, see-through rather than added light, so it shows against a bright day too.
+		float[] core = new float[6];
+		for (int i = 0; i < 6; i++) core[i] = radii[i] * 0.8f;
+		SpellRender.tube(buffers.getBuffer(SpellRender.clear(SpellRender.BEAM)), pose.last(), line, core, 8, SWORD_LIGHT, 0.85f * show, 0.25f, -age * 0.6f,
+				SpellRender.FULL_BRIGHT, null);
 		pose.pushPose();
 		pose.translate(0, 0, length - 1.5f);
 		SpellModels.jian(pose, buffers, 2.2f, SpellRender.FULL_BRIGHT, 1, null);

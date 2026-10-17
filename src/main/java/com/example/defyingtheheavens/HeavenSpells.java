@@ -102,6 +102,7 @@ public final class HeavenSpells {
 			}
 		}
 		SpellAuras.tick(server);
+		Devastation.tick(server);
 		WoodSpells.tick(server);
 		WaterSpells.tick(server);
 		FireSpells.tick(server);
@@ -134,6 +135,7 @@ public final class HeavenSpells {
 		for (Map<BlockPos, Placed> here : TEMPORARY.values()) for (Placed placed : here.values()) restore(placed);
 		TEMPORARY.clear();
 		DUE.clear();
+		Devastation.clear();
 		SpellAuras.clear();
 		WoodSpells.clear();
 		WaterSpells.clear();

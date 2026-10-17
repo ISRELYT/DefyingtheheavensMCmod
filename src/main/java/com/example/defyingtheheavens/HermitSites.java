@@ -135,6 +135,25 @@ public class HermitSites extends SavedData {
 		}
 	}
 
+	/**
+	 * The chunks within {@code regions} regions of {@code at} where a hermit will be seated (if its land offers a spot) the first
+	 * time that land loads: regions still undecided whose seed picks a hermit (/cultivator secluded).
+	 */
+	public static java.util.List<ChunkPos> unseatedNear(ServerLevel level, BlockPos at, int regions) {
+		java.util.List<ChunkPos> found = new java.util.ArrayList<>();
+		if (level.dimension() != Level.OVERWORLD) return found;
+		HermitSites data = get(level.getServer());
+		int cx = Math.floorDiv(at.getX() >> 4, REGION), cz = Math.floorDiv(at.getZ() >> 4, REGION);
+		for (int rx = cx - regions; rx <= cx + regions; rx++) {
+			for (int rz = cz - regions; rz <= cz + regions; rz++) {
+				if (data.decided.contains(ChunkPos.asLong(rx, rz))) continue;
+				ChunkPos chunk = siteChunk(level.getSeed(), rx, rz);
+				if (chunk != null) found.add(chunk);
+			}
+		}
+		return found;
+	}
+
 	/** Whether region {@code key} has been decided (has its hermit, or is known to have none) (for tests). */
 	static boolean isDecided(MinecraftServer server, long key) {
 		return get(server).decided.contains(key);

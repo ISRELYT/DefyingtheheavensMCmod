@@ -36,7 +36,8 @@
       "com.example.defyingtheheavens.HeavenMethodsGameTests",
       "com.example.defyingtheheavens.ElementSpellsGameTests",
       "com.example.defyingtheheavens.SpellCircumstancesGameTests",
-      "com.example.defyingtheheavens.SectMembershipGameTests"
+      "com.example.defyingtheheavens.SectMembershipGameTests",
+      "com.example.defyingtheheavens.StatPointsGameTests"
     ]
   }
 }

@@ -33,7 +33,9 @@ public class SpellProjectile extends Projectile {
 	/** What a spell's missile looks like (and a few things about it). Synced by ordinal: add new ones at the end. */
 	public enum Shape {
 		FLAME_BOLT, WOOD_STAKE(true), EARTH_PODAO, WATER_ARROW, FLYING_SWORD, FIRE_SERPENT, BOULDER, CLEAVE_SLASH, RAZOR_LEAF(true),
-		ICE_SPEAR, METEOR, PHOENIX, PLUNGING_SWORD, FALLING_SUN, COLOSSAL_SWORD, MOUNTAIN, MOUNTAIN_SLASH, WATER_BALL, YANG_BOLT;
+		ICE_SPEAR, METEOR, PHOENIX, PLUNGING_SWORD, FALLING_SUN, COLOSSAL_SWORD, MOUNTAIN, MOUNTAIN_SLASH, WATER_BALL, YANG_BOLT,
+		/** Heaven-Severing Sword's slash (synced by place: new shapes go at the end). */
+		HEAVEN_SLASH;
 
 		private final boolean wooden;
 

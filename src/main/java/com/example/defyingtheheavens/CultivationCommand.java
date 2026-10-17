@@ -85,7 +85,17 @@ public final class CultivationCommand {
 											CultivationManager.markDirty(p.server);
 											CultivationManager.sync(p);
 											return 1;
-										})))));
+										})))
+						// Every stat point given back to spend again (StatPoints).
+						.then(Commands.literal("resetstats")
+								.executes(ctx -> {
+									ServerPlayer p = ctx.getSource().getPlayerOrException();
+									CultivationManager.get(p).clearStatPoints();
+									CultivationManager.refresh(p);
+									ctx.getSource().sendSuccess(() -> Component.literal("Stat points given back: "
+											+ StatPoints.unspent(CultivationManager.get(p)) + " to spend."), false);
+									return 1;
+								}))));
 	}
 
 	private CultivationCommand() {}

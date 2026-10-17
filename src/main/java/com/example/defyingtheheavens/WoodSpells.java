@@ -59,19 +59,19 @@ public final class WoodSpells {
 	public static final int SPEARS_ROOT = 2 * 20;
 	public static final double LOTUS_RADIUS = 10;
 	public static final int LOTUS_TICKS = 10 * 20;
-	public static final float LOTUS_HEAL = 4;
-	public static final double BAMBOO_RANGE = 48, BAMBOO_RADIUS = 24;
-	public static final int BAMBOO_TARGETS = 8;
-	public static final float BAMBOO_DAMAGE = 80;
+	public static final float LOTUS_HEAL = 3;
+	public static final double BAMBOO_RANGE = 48, BAMBOO_RADIUS = 24, BAMBOO_BREAK = 2.5;
+	public static final int BAMBOO_TARGETS = 6;
+	public static final float BAMBOO_DAMAGE = 70;
 	public static final double SPRING_RADIUS = 32;
-	public static final float SPRING_BURST = 50, SPRING_HEAL = 6;
+	public static final float SPRING_BURST = 40, SPRING_HEAL = 4;
 	public static final int SPRING_TICKS = 10 * 20;
 	public static final double VINES_RANGE = 64, VINES_RADIUS = 40;
-	public static final int VINES_TARGETS = 12, VINES_TICKS = 6 * 20;
-	public static final float VINES_DAMAGE = 30;
+	public static final int VINES_TARGETS = 12, VINES_TICKS = 5 * 20;
+	public static final float VINES_DAMAGE = 22;
 	public static final double TREE_RANGE = 24, TREE_REACH = 32;
-	public static final int TREE_TICKS = 15 * 20;
-	public static final float TREE_DRAIN = 15;
+	public static final int TREE_TICKS = 12 * 20;
+	public static final float TREE_DRAIN = 10;
 
 	private static final UUID BOUND_ID = UUID.fromString("2b8f4e17-91c3-4d6a-b5e0-7a3c1f9d2e64");
 
@@ -640,6 +640,7 @@ public final class WoodSpells {
 			Vec3 ground = HeavenSpells.groundBelow(level, foe.position().add(0, 0.5, 0), 2, 24);
 			Vec3 at = ground != null ? ground : foe.position();
 			SpellField.create(level, SpellField.Kind.BAMBOO, at, 0.9f, 18, 50, p).target(foe).data(level.random.nextInt()).spawn();
+			Devastation.crater(p, level, at, BAMBOO_BREAK, BAMBOO_BREAK, Devastation.Floor.RUBBLE); // the ground it burst out of, broken
 			HeavenSpells.strike(p, foe, BAMBOO_DAMAGE, spell);
 			HeavenSpells.move(foe, new Vec3(foe.getDeltaMovement().x, 1.6, foe.getDeltaMovement().z));
 		}
@@ -745,6 +746,8 @@ public final class WoodSpells {
 			this.trunk = ground != null ? ground : point;
 			this.field = SpellField.create(level, SpellField.Kind.WORLD_TREE, trunk, (float) TREE_REACH, 40, TREE_TICKS, caster)
 					.data(caster.getRandom().nextInt()).spawn();
+			// Its roots heave the land open as it grows.
+			Devastation.fissures(caster, level, trunk, TREE_REACH * 0.55, 8, 3, 4);
 			HeavenSpells.sound(level, trunk, SoundEvents.ROOTED_DIRT_BREAK, 4.0f, 0.3f);
 			HeavenSpells.sound(level, trunk, SoundEvents.WARDEN_EMERGE, 2.0f, 0.6f);
 		}

@@ -97,8 +97,13 @@ public final class ClientPacketHandlers {
 			int physique = buf.readVarInt();
 			int roots = buf.readVarInt();
 			int bodyRefining = buf.readVarInt();
+			int[] statPoints = new int[com.example.defyingtheheavens.StatPoints.Stat.values().length];
+			for (int i = 0; i < statPoints.length; i++) statPoints[i] = buf.readVarInt();
 			client.execute(() -> {
 				ClientCultivationData.physique(physique, roots, bodyRefining); // first: a shattered body tempers past Peak
+				for (com.example.defyingtheheavens.StatPoints.Stat stat : com.example.defyingtheheavens.StatPoints.Stat.values()) {
+					ClientCultivationData.get().setStatPoints(stat, statPoints[stat.ordinal()]);
+				}
 				ClientCultivationData.update(realm, stage, cultivation, qi, meditating, lowerRealmBound, inUpperRealm,
 						disabledAbilities, pressureStages, pressurePenalty, mortal, mortalStage, tempering, preparedRealm, preparedBonus, qiBoost,
 						pillResistance, medicinalQi, alignment, gearQiBonus, wheel, soulState, heavensLeave, favour);
@@ -142,6 +147,11 @@ public final class ClientPacketHandlers {
 			String name = buf.readUtf();
 			int title = buf.readVarInt();
 			client.execute(() -> ClientSect.set(name, title));
+		});
+		// The Sect tab's page (SectMembership#sendInfo).
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SECT_INFO, (client, handler, buf, sender) -> {
+			ClientSect.Info info = ClientSect.read(buf);
+			client.execute(() -> ClientSect.setInfo(info));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.FORMATIONS, (client, handler, buf, sender) -> {

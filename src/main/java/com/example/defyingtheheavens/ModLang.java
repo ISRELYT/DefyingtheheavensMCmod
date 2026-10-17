@@ -393,6 +393,38 @@ public final class ModLang {
 	public static final String MSG_SECT_TREASURY_WARNING = k("message.sect.treasury_warning");
 	public static final String MSG_SECT_TITLE = k("message.sect.title");
 	public static final String STATS_SECT = k("stats.sect");
+	/** The menu's Sect tab (SectMembership#sendInfo). */
+	public static final String TAB_SECT = k("tab.sect");
+	public static final String SECT_TAB_LOADING = k("sect_tab.loading");
+	public static final String SECT_TAB_NONE = k("sect_tab.none");
+	public static final String SECT_TAB_HOW = k("sect_tab.how");
+	public static final String SECT_TAB_NEAREST = k("sect_tab.nearest");
+	public static final String SECT_TAB_NEAREST_NONE = k("sect_tab.nearest_none");
+	public static final String SECT_TAB_BARRED = k("sect_tab.barred");
+	public static final String SECT_TAB_TITLE = k("sect_tab.title");
+	public static final String SECT_TAB_STANDING = k("sect_tab.standing");
+	public static final String SECT_TAB_GROUNDS_HERE = k("sect_tab.grounds_here");
+	public static final String SECT_TAB_GROUNDS_AWAY = k("sect_tab.grounds_away");
+	public static final String SECT_TAB_GROUNDS_ELSEWHERE = k("sect_tab.grounds_elsewhere");
+	public static final String SECT_TAB_BARRIER_UP = k("sect_tab.barrier_up");
+	public static final String SECT_TAB_BARRIER_DOWN = k("sect_tab.barrier_down");
+	public static final String SECT_TAB_TREASURY_OPEN = k("sect_tab.treasury_open");
+	public static final String SECT_TAB_TREASURY_CLOSED = k("sect_tab.treasury_closed");
+	public static final String SECT_TAB_TREASURY_LAST = k("sect_tab.treasury_last");
+	public static final String SECT_TAB_MEMBERS = k("sect_tab.members");
+	public static final String SECT_TAB_DAYS = k("sect_tab.days");
+	public static final String SECT_TAB_LEAVE = k("sect_tab.leave");
+	public static final String SECT_TAB_PLAYER = k("sect_tab.player");
+	public static final String SECT_TAB_OFFLINE = k("sect_tab.offline");
+	/** Stat points (StatPoints): each stat's name ("stat_point.<id>") and effect (".effect"), and the Stats tab's Points page. */
+	public static final String STAT_POINT_PREFIX = k("stat_point.");
+	public static final String MSG_STAT_POINTS_RETURNED = k("message.stat_points.returned");
+	public static final String BTN_STAT_POINTS = k("button.stat_points");
+	public static final String BTN_STAT_LIST = k("button.stat_list");
+	public static final String STAT_POINTS_UNSPENT = k("stat_points.unspent");
+	public static final String STAT_POINTS_EARNED = k("stat_points.earned");
+	public static final String STAT_POINTS_HINT = k("stat_points.hint");
+	public static final String STAT_POINTS_MORTAL = k("stat_points.mortal");
 	/** A ghost palace's treasury (PalaceTreasury): its king's seal holding, or broken. */
 	public static final String MSG_PALACE_SEALED = k("message.palace_sealed");
 	public static final String MSG_PALACE_SEAL_BROKEN = k("message.palace_seal_broken");

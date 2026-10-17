@@ -260,6 +260,10 @@ public class SpellCircumstancesGameTests implements FabricGameTest {
 		Husk husk = mark(level, home.add(0, 0, 6), spawned);
 		try {
 			List<String> tookHold = new ArrayList<>();
+			// What earlier tests left flying about (a crater's flung pieces) isn't counted against these casts.
+			java.util.function.Predicate<Entity> spellMade = e -> e instanceof SpellProjectile || e instanceof SpellField || e instanceof SpellBlock
+					|| e instanceof EarthGolem || e instanceof DirtTide;
+			java.util.Set<Entity> before = new java.util.HashSet<>(level.getEntities((Entity) null, new AABB(home, home).inflate(60), spellMade));
 			for (Spell spell : Spell.values()) {
 				if (!spell.isHeaven() || spell.qiCost() <= 0) continue;
 				CultivationManager.get(p).setQi(spell.qiCost() * 0.5);
@@ -267,8 +271,7 @@ public class SpellCircumstancesGameTests implements FabricGameTest {
 				HeavenSpellTesting.lookAt(p, HeavenSpells.middle(husk));
 				Spells.cast(p, spell);
 				if (Spells.cooldownLeft(p, spell) > 0 || CultivationManager.get(p).getQi() < spell.qiCost() * 0.5 - 1.0e-6) tookHold.add(spell.getId());
-				int left = level.getEntities((Entity) null, new AABB(home, home).inflate(60),
-						e -> e instanceof SpellProjectile || e instanceof SpellField || e instanceof SpellBlock || e instanceof EarthGolem || e instanceof DirtTide).size();
+				int left = level.getEntities((Entity) null, new AABB(home, home).inflate(60), e -> spellMade.test(e) && !before.contains(e)).size();
 				helper.assertTrue(left == 0, spell.getId() + " set something going with only half its qi");
 				helper.assertTrue(!SpellAuras.has(p, SpellAura.GOLDEN_BELL) && !SpellAuras.has(p, SpellAura.HARDENED_BODY), spell.getId() + " warded its caster unpaid");
 				HeavenSpells.forget(p.getUUID());

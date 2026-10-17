@@ -433,16 +433,19 @@ public class ElementSpellsGameTests implements FabricGameTest {
 		level.setBlock(at.above(), Blocks.STONE_BRICKS.defaultBlockState(), 3);
 		level.setBlock(at.east(), Blocks.CHEST.defaultBlockState(), 3);
 		level.setBlock(at.west(), Blocks.OBSIDIAN.defaultBlockState(), 3);
-		try {
-			helper.assertTrue(HeavenSpells.carvable(level, at, p) && HeavenSpells.carvable(level, at.above(), p), "Planks and bricks laid by hand can be torn up");
-			helper.assertTrue(!HeavenSpells.carvable(level, at.east(), p) && !HeavenSpells.carvable(level, at.west(), p), "...not a chest (what it holds), nor obsidian");
-			EarthSpells.dig(p, level, Vec3.atCenterOf(at), 2);
-			helper.assertTrue(level.getBlockState(at).isAir() && level.getBlockState(at.above()).isAir(), "A spell digging there takes the planks and bricks");
-			helper.assertTrue(level.getBlockState(at.east()).is(Blocks.CHEST) && level.getBlockState(at.west()).is(Blocks.OBSIDIAN), "...and leaves the chest and the obsidian");
-			helper.succeed();
-		} finally {
-			HeavenSpellTesting.cleanUp(p, HeavenSpellTesting.spawned(), floor);
-		}
+		helper.assertTrue(HeavenSpells.carvable(level, at, p) && HeavenSpells.carvable(level, at.above(), p), "Planks and bricks laid by hand can be torn up");
+		helper.assertTrue(!HeavenSpells.carvable(level, at.east(), p) && !HeavenSpells.carvable(level, at.west(), p), "...not a chest (what it holds), nor obsidian");
+		Devastation.crater(p, level, Vec3.atCenterOf(at), 2.5, 2.5, Devastation.Floor.NONE);
+		// A crater is cut over the next ticks (Devastation's budget).
+		helper.runAfterDelay(5, () -> {
+			try {
+				helper.assertTrue(level.getBlockState(at).isAir() && level.getBlockState(at.above()).isAir(), "A spell's crater there takes the planks and bricks");
+				helper.assertTrue(level.getBlockState(at.east()).is(Blocks.CHEST) && level.getBlockState(at.west()).is(Blocks.OBSIDIAN), "...and leaves the chest and the obsidian");
+				helper.succeed();
+			} finally {
+				HeavenSpellTesting.cleanUp(p, HeavenSpellTesting.spawned(), floor);
+			}
+		});
 	}
 
 	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)

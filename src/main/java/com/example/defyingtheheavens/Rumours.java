@@ -173,6 +173,13 @@ public final class Rumours extends SavedData {
 		PENDING.add(new Forget("cave:" + npc.getUUID()));
 	}
 
+	/** Every rumour of {@code kind} known now (a copy; /cultivator secluded lists the caves). */
+	public static java.util.List<Rumour> all(MinecraftServer server, Kind kind) {
+		java.util.List<Rumour> found = new java.util.ArrayList<>();
+		for (Rumour rumour : get(server).rumours.values()) if (rumour.kind == kind) found.add(rumour);
+		return found;
+	}
+
 	/** A sect has fallen, its core left standing for whoever finds it. */
 	public static void noteFallenSect(Sect sect, long now) {
 		PENDING.add(new Rumour("core:" + sect.id, Kind.CORE, sect.dimension, sect.core, sect.name, 0, now, ""));

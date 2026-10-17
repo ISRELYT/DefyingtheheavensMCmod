@@ -57,14 +57,16 @@ public final class FireSpells {
 	public static final int KARMIC_TICKS = 8 * 20, KARMIC_CLEANSE = 2;
 	public static final double METEOR_RANGE = 48, METEOR_RADIUS = 6;
 	public static final float METEOR_DAMAGE = 45;
-	public static final int METEOR_FALL = 30;
+	public static final int METEOR_FALL = 30, METEOR_CRATER = 6;
 	public static final double PHOENIX_SPEED = 1.6, PHOENIX_RANGE = 64, PHOENIX_RADIUS = 5;
 	public static final float PHOENIX_DAMAGE = 90;
-	public static final double SEA_RANGE = 48, SEA_RADIUS = 20;
+	public static final int PHOENIX_CRATER = 4;
+	public static final double SEA_RANGE = 48, SEA_RADIUS = 20, SEA_FIRES = 0.12;
 	public static final int SEA_TICKS = 10 * 20;
 	public static final float SEA_DAMAGE = 20;
-	public static final double SUNS_RANGE = 64, SUNS_SPREAD = 8, SUNS_RADIUS = 6;
+	public static final double SUNS_RANGE = 64, SUNS_SPREAD = 10, SUNS_RADIUS = 7;
 	public static final float SUNS_DAMAGE = 150;
+	public static final int SUNS_CRATER = 6;
 	public static final int NIRVANA_TICKS = 60 * 20;
 	public static final double NIRVANA_RADIUS = 10;
 	public static final float NIRVANA_DAMAGE = 200;
@@ -463,7 +465,7 @@ public final class FireSpells {
 	private static void meteor(ServerPlayer p, Spell spell) {
 		LivingEntity aimed = HeavenSpells.aimed(p, METEOR_RANGE);
 		Vec3 at = aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, METEOR_RANGE);
-		fallOn(p, spell, at, SpellProjectile.Shape.METEOR, 1.0f, METEOR_FALL, METEOR_RADIUS, METEOR_DAMAGE, 2, 0);
+		fallOn(p, spell, at, SpellProjectile.Shape.METEOR, 1.0f, METEOR_FALL, METEOR_RADIUS, METEOR_DAMAGE, METEOR_CRATER, 0);
 		HeavenSpells.sound(p.serverLevel(), at, SoundEvents.FIRECHARGE_USE, 2.0f, 0.3f);
 	}
 
@@ -508,21 +510,14 @@ public final class FireSpells {
 		else HeavenSpells.linger(new Delayed(p, delay, drop));
 	}
 
-	/** The ground at a blast: what lies within {@code crater}, natural or built, blown away; fires left on what stands round it. */
+	/**
+	 * The ground at a blast: a crater {@code crater} round and seven tenths as deep blown out of it, natural or built
+	 * (Devastation#crater), its floor burnt to magma and blackstone; fires left on what stands round it.
+	 */
 	private static void scorch(ServerPlayer p, ServerLevel level, Vec3 at, int crater) {
 		if (crater <= 0) return;
 		BlockPos centre = BlockPos.containing(at);
-		for (int dx = -crater; dx <= crater; dx++) {
-			for (int dz = -crater; dz <= crater; dz++) {
-				for (int dy = -crater; dy <= 1; dy++) {
-					if (dx * dx + dz * dz + dy * dy * 2 > crater * crater + 1) continue;
-					BlockPos pos = centre.offset(dx, dy, dz);
-					BlockState state = level.getBlockState(pos);
-					if (state.isAir() || !HeavenSpells.carvable(level, pos, p)) continue;
-					level.removeBlock(pos, false);
-				}
-			}
-		}
+		Devastation.crater(p, level, at, crater, crater * 0.7, Devastation.Floor.SCORCHED);
 		for (int i = 0; i < crater * 6; i++) {
 			BlockPos pos = centre.offset(level.random.nextInt(crater * 4 + 1) - crater * 2, 0, level.random.nextInt(crater * 4 + 1) - crater * 2);
 			Vec3 ground = HeavenSpells.groundBelow(level, Vec3.atBottomCenterOf(pos), 3, 6);
@@ -562,12 +557,14 @@ public final class FireSpells {
 					@Override
 					public boolean hitEntity(SpellProjectile missile, LivingEntity target) {
 						explode(p, spell, p.serverLevel(), missile.position(), PHOENIX_RADIUS, PHOENIX_DAMAGE, 6, 1.8);
+						scorch(p, p.serverLevel(), missile.position(), PHOENIX_CRATER);
 						return false;
 					}
 
 					@Override
 					public void hitBlock(SpellProjectile missile, BlockHitResult hit) {
 						explode(p, spell, p.serverLevel(), hit.getLocation(), PHOENIX_RADIUS, PHOENIX_DAMAGE, 6, 1.8);
+						scorch(p, p.serverLevel(), hit.getLocation(), PHOENIX_CRATER);
 					}
 
 					@Override
@@ -592,6 +589,8 @@ public final class FireSpells {
 			this.at = ground != null ? ground : point;
 			this.field = SpellField.create(level, SpellField.Kind.SEA_OF_FLAMES, at, (float) SEA_RADIUS, 3, SEA_TICKS, caster)
 					.data(caster.getRandom().nextInt()).spawn();
+			// The land itself takes fire: scorched, patches of it molten, flames on what stands there (trees catch, and spread it).
+			Devastation.burn(caster, level, at, SEA_RADIUS, SEA_FIRES);
 			HeavenSpells.sound(level, at, SoundEvents.BLAZE_SHOOT, 3.0f, 0.3f);
 			HeavenSpells.sound(level, at, SoundEvents.FIRECHARGE_USE, 3.0f, 0.4f);
 		}
@@ -621,7 +620,7 @@ public final class FireSpells {
 		Vec3 centre = aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, SUNS_RANGE);
 		for (int i = 0; i < 9; i++) {
 			Vec3 at = i == 0 ? centre : centre.add(Math.cos(Math.PI * 2 * i / 8) * SUNS_SPREAD, 0, Math.sin(Math.PI * 2 * i / 8) * SUNS_SPREAD);
-			fallOn(p, spell, at, SpellProjectile.Shape.FALLING_SUN, 1.0f, 26, SUNS_RADIUS, SUNS_DAMAGE, 1, i * 5);
+			fallOn(p, spell, at, SpellProjectile.Shape.FALLING_SUN, 1.0f, 26, SUNS_RADIUS, SUNS_DAMAGE, SUNS_CRATER, i * 5);
 		}
 		HeavenSpells.sound(p.serverLevel(), p.position(), SoundEvents.BEACON_ACTIVATE, 3.0f, 0.4f);
 		HeavenSpells.sound(p.serverLevel(), centre, SoundEvents.BLAZE_SHOOT, 3.0f, 0.3f);
