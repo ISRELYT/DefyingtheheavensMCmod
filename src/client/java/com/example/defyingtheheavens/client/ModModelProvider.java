@@ -7,6 +7,8 @@ import com.example.defyingtheheavens.QiElement;
 import com.example.defyingtheheavens.MethodSteleBlock;
 import com.example.defyingtheheavens.ModBlocks;
 import com.example.defyingtheheavens.ModItems;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricModelProvider;
 import net.minecraft.data.models.BlockModelGenerators;
@@ -15,12 +17,14 @@ import net.minecraft.data.models.blockstates.MultiVariantGenerator;
 import net.minecraft.data.models.blockstates.PropertyDispatch;
 import net.minecraft.data.models.blockstates.Variant;
 import net.minecraft.data.models.blockstates.VariantProperties;
+import net.minecraft.data.models.model.ModelLocationUtils;
 import net.minecraft.data.models.model.ModelTemplate;
 import net.minecraft.data.models.model.ModelTemplates;
 import net.minecraft.data.models.model.TextureMapping;
 import net.minecraft.data.models.model.TextureSlot;
 import net.minecraft.data.models.model.TexturedModel;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Blocks;
 
 import java.util.HashMap;
@@ -135,7 +139,10 @@ public class ModModelProvider extends FabricModelProvider {
 
 	@Override
 	public void generateItemModels(ItemModelGenerators items) {
-		items.generateFlatItem(ModItems.JADE_SLIP, ModelTemplates.FLAT_ITEM);
+		// A Jade Slip's writing is a layer of its own, inked in its method's element (DefyingTheHeavensClient).
+		ModelTemplates.TWO_LAYERED_ITEM.create(ModelLocationUtils.getModelLocation(ModItems.JADE_SLIP),
+				TextureMapping.layered(TextureMapping.getItemTexture(ModItems.JADE_SLIP), TextureMapping.getItemTexture(ModItems.JADE_SLIP, "_ink")),
+				items.output);
 		items.generateFlatItem(ModItems.RING_OF_POWER, ModelTemplates.FLAT_ITEM);
 		items.generateFlatItem(ModItems.RING_OF_TRANSCENDENCE, ModelTemplates.FLAT_ITEM);
 		items.generateFlatItem(ModItems.INSCRIPTION_BRUSH, ModelTemplates.FLAT_HANDHELD_ITEM);
@@ -148,9 +155,33 @@ public class ModModelProvider extends FabricModelProvider {
 		items.generateFlatItem(ModItems.OTHER_SHORE_FLOWER_SEEDS, ModelTemplates.FLAT_ITEM);
 		items.generateFlatItem(ModItems.NETHERWORLD_LOTUS, ModelTemplates.FLAT_ITEM);
 		items.generateFlatItem(ModItems.NETHERWORLD_LOTUS_SEEDS, ModelTemplates.FLAT_ITEM);
-		items.generateFlatItem(ModItems.YANG_PRESERVATION_PILL, ModelTemplates.FLAT_ITEM);
-		items.generateFlatItem(ModItems.YIN_GATHERING_PILL, ModelTemplates.FLAT_ITEM);
+		pill(items, ModItems.YANG_PRESERVATION_PILL);
+		pill(items, ModItems.YIN_GATHERING_PILL);
 		items.generateFlatItem(ModItems.JADE, ModelTemplates.FLAT_ITEM);
 		// Spirit stones have a hand-made oval model (resources: models/item/spirit_stone.json), not a flat sprite.
+	}
+
+	/**
+	 * A pill's model: its sprite, and from Mid grade up ("defying-the-heavens:grade", DefyingTheHeavensClient) the "_glow" model, the
+	 * sprite with a halo round it that takes the grade's colour. The other pills' models are hand-made alike (resources: models/item).
+	 */
+	private static void pill(ItemModelGenerators items, Item pill) {
+		ResourceLocation glow = ModelLocationUtils.getModelLocation(pill, "_glow");
+		ModelTemplates.TWO_LAYERED_ITEM.create(glow,
+				TextureMapping.layered(TextureMapping.getItemTexture(pill), TextureMapping.getItemTexture(pill, "_glow")), items.output);
+		JsonObject textures = new JsonObject();
+		textures.addProperty("layer0", TextureMapping.getItemTexture(pill).toString());
+		JsonObject predicate = new JsonObject();
+		predicate.addProperty(DefyingTheHeavens.id("grade").toString(), 0.25);
+		JsonObject override = new JsonObject();
+		override.add("predicate", predicate);
+		override.addProperty("model", glow.toString());
+		JsonArray overrides = new JsonArray();
+		overrides.add(override);
+		JsonObject model = new JsonObject();
+		model.addProperty("parent", "minecraft:item/generated");
+		model.add("textures", textures);
+		model.add("overrides", overrides);
+		items.output.accept(ModelLocationUtils.getModelLocation(pill), () -> model);
 	}
 }

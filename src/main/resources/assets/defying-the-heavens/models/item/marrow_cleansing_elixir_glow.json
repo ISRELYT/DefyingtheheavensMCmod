@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "defying-the-heavens:item/marrow_cleansing_elixir",
+    "layer1": "defying-the-heavens:item/marrow_cleansing_elixir_glow"
+  }
+}

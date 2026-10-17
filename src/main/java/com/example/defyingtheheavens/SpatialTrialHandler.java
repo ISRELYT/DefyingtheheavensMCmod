@@ -557,8 +557,8 @@ public final class SpatialTrialHandler {
 		CultivationManager.markDirty(server);
 		CultivationManager.sync(p);
 		riftFx(p);
-		p.sendSystemMessage(Component.translatable(to.dimension() == ModDimensions.UPPER_REALM ? ModLang.MSG_TEAR_OUT_UPPER : ModLang.MSG_TEAR_OUT,
-				bx, bz).withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE));
+		p.displayClientMessage(Component.translatable(to.dimension() == ModDimensions.UPPER_REALM ? ModLang.MSG_TEAR_OUT_UPPER : ModLang.MSG_TEAR_OUT,
+				bx, bz).withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE), true);
 		if (way == Way.CROSSING && to.dimension() == ModDimensions.UPPER_REALM) {
 			p.playNotifySound(SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1.0f, 1.2f);
 			p.sendSystemMessage(Component.translatable(ModLang.MSG_ARRIVE_UPPER, (int) PlayerCultivation.UPPER_REALM_QI_MULTIPLIER));
@@ -786,7 +786,7 @@ public final class SpatialTrialHandler {
 		p.setOnGround(false); // nothing stale from the gap may count as a landing (see tickFallProtection)
 		c.setFallProtected(true); // the first landing from the sky drop is harmless
 		RealmSuppressionHandler.update(p);
-		p.sendSystemMessage(Component.translatable(ModLang.MSG_ARRIVE_LOWER));
+		p.displayClientMessage(Component.translatable(ModLang.MSG_ARRIVE_LOWER), true);
 	}
 
 	/**

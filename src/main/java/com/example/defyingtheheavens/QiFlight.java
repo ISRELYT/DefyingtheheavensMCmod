@@ -150,7 +150,7 @@ public final class QiFlight {
 	private static void flightsChanged(ServerPlayer p, boolean swordWentOff) {
 		CultivationManager.markDirty(p.server);
 		CultivationManager.sync(p);
-		if (swordWentOff) p.sendSystemMessage(Component.translatable(ModLang.MSG_FLIGHT_EXCLUSIVE));
+		if (swordWentOff) p.displayClientMessage(Component.translatable(ModLang.MSG_FLIGHT_EXCLUSIVE), true);
 	}
 
 	/** No flight: revoked, any flight in progress ends, and the speed is vanilla's again. */

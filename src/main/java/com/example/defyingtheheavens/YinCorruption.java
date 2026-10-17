@@ -93,7 +93,7 @@ public final class YinCorruption {
 		double after = s.yinCorruption();
 		for (int i = 0; i < WARNINGS.length; i++) {
 			if (before < WARNINGS[i] && after >= WARNINGS[i]) {
-				player.sendSystemMessage(Component.translatable(WARNING_KEYS[i]).withStyle(ChatFormatting.DARK_AQUA));
+				player.displayClientMessage(Component.translatable(WARNING_KEYS[i]).withStyle(ChatFormatting.DARK_AQUA), true);
 				player.playNotifySound(SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.0f, 0.6f + 0.15f * i);
 			}
 		}

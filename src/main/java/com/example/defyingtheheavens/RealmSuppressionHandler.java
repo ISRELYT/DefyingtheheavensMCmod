@@ -41,11 +41,11 @@ public final class RealmSuppressionHandler {
 			}
 
 			if (c.isSuppressed() && !wasSuppressed) {
-				player.sendSystemMessage(Component.translatable(ModLang.MSG_SUPPRESSED,
-						PlayerCultivation.rankName(c.getEffectiveRealm(), c.getEffectiveStage())));
+				player.displayClientMessage(Component.translatable(ModLang.MSG_SUPPRESSED,
+						PlayerCultivation.rankName(c.getEffectiveRealm(), c.getEffectiveStage())), true);
 			} else if (!c.isSuppressed() && wasSuppressed) {
-				player.sendSystemMessage(Component.translatable(ModLang.MSG_RESTORED,
-						PlayerCultivation.rankName(c.getRealm(), c.getStage())));
+				player.displayClientMessage(Component.translatable(ModLang.MSG_RESTORED,
+						PlayerCultivation.rankName(c.getRealm(), c.getStage())), true);
 			}
 			// A bottleneck that was sealed outside the Upper Realm can be broken now that the player has arrived.
 			if (wasSealed && c.canBreakthrough()) {

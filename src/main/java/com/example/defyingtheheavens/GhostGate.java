@@ -759,7 +759,7 @@ public final class GhostGate {
 		int r = TERRACE_ROUNDING;
 		Component where = Component.translatable(ModLang.TERRACE_PLACE, dimensionName(s.deathDimension()),
 				Math.round(place.getX() / (double) r) * r, Math.round(place.getY() / (double) r) * r, Math.round(place.getZ() / (double) r) * r);
-		p.sendSystemMessage(Component.translatable(ModLang.MSG_TERRACE, where).withStyle(net.minecraft.ChatFormatting.AQUA));
+		p.displayClientMessage(Component.translatable(ModLang.MSG_TERRACE, where).withStyle(net.minecraft.ChatFormatting.AQUA), true);
 		p.playNotifySound(net.minecraft.sounds.SoundEvents.AMETHYST_BLOCK_RESONATE, net.minecraft.sounds.SoundSource.PLAYERS, 0.8f, 0.6f);
 		Journal.note(p, "terrace", ModLang.JOURNAL_TERRACE, Component.translatable(ModLang.JOURNAL_TERRACE_TEXT, where));
 	}
@@ -797,7 +797,7 @@ public final class GhostGate {
 		s.setMemoryCleansed(true);
 		CultivationManager.markDirty(p.server);
 		p.serverLevel().playSound(null, p.blockPosition(), net.minecraft.sounds.SoundEvents.GENERIC_DRINK, net.minecraft.sounds.SoundSource.PLAYERS, 1.0f, 0.8f);
-		p.sendSystemMessage(Component.translatable(ModLang.MSG_SOUP).withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE));
+		p.displayClientMessage(Component.translatable(ModLang.MSG_SOUP).withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE), true);
 	}
 
 	/** That the gate is built, and its floor level, and its keepers; kept with the Netherworld's own data. */

@@ -301,7 +301,7 @@ public final class TribulationManager {
 		if (t.absorbed > 0) { // a Heavenly Thunder Body's banked lightning becomes cultivation in the new stage
 			double gained = Math.min(1, t.absorbed) * THUNDER_SHARE * c.cultivationRequired();
 			c.addCultivation(gained);
-			p.sendSystemMessage(Component.translatable(ModLang.MSG_THUNDER_ABSORBED, Math.round(gained)).withStyle(net.minecraft.ChatFormatting.AQUA));
+			p.displayClientMessage(Component.translatable(ModLang.MSG_THUNDER_ABSORBED, Math.round(gained)).withStyle(net.minecraft.ChatFormatting.AQUA), true);
 		}
 		CultivationManager.refresh(p);
 		p.setHealth(p.getMaxHealth());

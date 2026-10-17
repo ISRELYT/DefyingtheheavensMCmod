@@ -144,8 +144,8 @@ public final class HeavenRitual {
 			if (!player.isAlive() || moved || gone) {
 				it.remove();
 				ModPackets.broadcastMeditation(player, false);
-				player.sendSystemMessage(Component.translatable(moved && !gone ? ModLang.MSG_RITUAL_MOVED : ModLang.MSG_RITUAL_BROKEN)
-						.withStyle(ChatFormatting.RED));
+				player.displayClientMessage(Component.translatable(moved && !gone ? ModLang.MSG_RITUAL_MOVED : ModLang.MSG_RITUAL_BROKEN)
+						.withStyle(ChatFormatting.RED), true);
 				level.playSound(null, r.altar, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 0.6f, 0.8f);
 				continue;
 			}
@@ -189,10 +189,6 @@ public final class HeavenRitual {
 			title(player, Component.translatable(ModLang.RITUAL_TITLE_SUCCESS).withStyle(ChatFormatting.GOLD),
 					r.offering.favour > 0 ? Component.translatable(ModLang.MSG_RITUAL_FAVOUR, Math.round((c.favourFactor() - 1) * 100)) : null);
 			player.sendSystemMessage(Component.translatable(ModLang.MSG_RITUAL_SUCCESS).withStyle(ChatFormatting.GOLD));
-			if (r.offering.favour > 0) {
-				player.sendSystemMessage(Component.translatable(ModLang.MSG_RITUAL_FAVOUR, Math.round((c.favourFactor() - 1) * 100))
-						.withStyle(ChatFormatting.YELLOW));
-			}
 			if (advanced) {
 				player.displayClientMessage(Component.translatable(ModLang.MSG_STAGE_UP, c.getRealm().getDisplayName(), c.getStage().getDisplayName()), true);
 				player.setHealth(player.getMaxHealth());
@@ -203,7 +199,7 @@ public final class HeavenRitual {
 			level.sendParticles(ParticleTypes.LARGE_SMOKE, r.altar.getX() + 0.5, r.altar.getY() + 1.2, r.altar.getZ() + 0.5, 16, 0.3, 0.3, 0.3, 0.01);
 			level.playSound(null, r.altar, SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 0.6f, 0.7f);
 			title(player, Component.translatable(ModLang.RITUAL_TITLE_FAIL).withStyle(ChatFormatting.GRAY), null);
-			player.sendSystemMessage(Component.translatable(ModLang.MSG_RITUAL_FAIL).withStyle(ChatFormatting.GRAY));
+			player.displayClientMessage(Component.translatable(ModLang.MSG_RITUAL_FAIL).withStyle(ChatFormatting.GRAY), true);
 		}
 	}
 
