@@ -64,16 +64,16 @@ public final class SpatialStorms {
 	/** ...flying by their own tear, round them within these, gathering this far off (beyond the fog). */
 	private static final double AROUND_RANGE = 650.0, AROUND_HEIGHT = 450.0, AROUND_MIN = 250.0, AROUND_MAX = 650.0;
 	/**
-	 * How many: ahead on a trial's climb or fall (spread wider than the one at a time there used to be, so the climb meets about as
-	 * many); round one's own travel, in the stormy layers (upper and lower alike) and in the shallows.
+	 * How many: ahead on a trial's climb or fall; round one's own travel, in the stormy layers (upper and lower alike) and in the
+	 * shallows. Doubled on 2026-10-17 (the user: they were rare).
 	 */
-	private static final int TRIAL_AHEAD = 2, UPPER_AROUND = 5, SHALLOW_AROUND = 2;
+	private static final int TRIAL_AHEAD = 4, UPPER_AROUND = 10, SHALLOW_AROUND = 4;
 	/** Storms of the lower layers have their base between the gap's floor and this far above the layers' top (their lightning reaching 100 below). */
 	private static final double LOWER_BAND_ABOVE = 40;
 	/** A storm this far behind every trial's player and this far from every traveller (or to the side of all of them) is gone. */
 	private static final double BEHIND_LIMIT = 300.0;
 	private static final double SIDE_LIMIT = 950.0, HEIGHT_LIMIT = 800.0;
-	private static final int MAX_STORMS = 16;
+	private static final int MAX_STORMS = 32;
 	/** Players within this of a bolt (true height and sideways) see it. */
 	private static final double STRIKE_SEND_DISTANCE = 450.0;
 

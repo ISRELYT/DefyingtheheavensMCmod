@@ -839,6 +839,23 @@ public final class ModLang {
 	public static final String MSG_QUELLED = k("message.quelled");
 	public static final String MSG_QUELLED_OTHER = k("message.quelled.other");
 	public static final String MSG_QUELLED_HELD = k("message.quelled.held");
+	// The Astral Realm
+	public static final String DIMENSION_ASTRAL_VOID = k("dimension.astral_void");
+	public static final String DIMENSION_ASTRAL_SURFACES = k("dimension.astral_surfaces");
+	public static final String MSG_ASTRAL_TOO_WEAK = k("message.astral.too_weak");
+	public static final String MSG_ASTRAL_ENTER = k("message.astral.enter");
+	public static final String MSG_ASTRAL_LAND = k("message.astral.land");
+	public static final String MSG_ASTRAL_HOME = k("message.astral.home");
+	public static final String MSG_ASTRAL_LEAVE = k("message.astral.leave");
+	public static final String MSG_ASTRAL_HOLD = k("message.astral.hold");
+	public static final String MSG_ASTRAL_STAR_HEAT = k("message.astral.star_heat");
+	public static final String VESTIGE_NAME = k("vestige.name");
+	public static final String ASTRAL_QI_LINE = k("astral_qi_line");
+	public static final String STATS_QI_GATHER_PLACE = k("stats.qi_gather_place");
+	public static final String MSG_VESTIGE_NEAR = k("message.vestige.near");
+
+	/** A planet's kind, as told (verdant, volcanic, ...). */
+	public static String astralKind(AstralPlanets.Kind kind) { return k("astral.kind." + kind.getId()); }
 
 	private ModLang() {}
 }

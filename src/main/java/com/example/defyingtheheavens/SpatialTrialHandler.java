@@ -69,7 +69,8 @@ public final class SpatialTrialHandler {
 
 	private static final int ASCENT_ENTRY_Y = 96;
 	private static final int DESCENT_ENTRY_Y = 300;
-	private static final int OVERWORLD_DROP_Y = 350;
+	/** Out of the gap into the Overworld's sky: above its build limit, below where rising leads out into space (AstralRealm#EXIT_Y). */
+	private static final int OVERWORLD_DROP_Y = 330;
 	/** The gap is floorless: below this Y the player is lifted back up mid-fall, keeping their speed, so they never hit the void. */
 	private static final int LOOP_BELOW_Y = 64;
 	/** ...and has no ceiling: above this Y a rising player is dropped back down mid-climb, keeping their speed. */
@@ -89,12 +90,12 @@ public final class SpatialTrialHandler {
 	public static final int GAP_SCALE = 20;
 	/** Tearing in, one stands this high in the gap: its shallows. */
 	public static final int TEAR_IN_Y = 128;
-	/** Above this, the gap's upper layers: the full pressure and the storms thick (SpatialStorms#targetAround). */
+	/** Above this, the gap's upper layers: the heaviest pressure ({@link #LAYER_PRESSURE}) and the storms thick (SpatialStorms#targetAround). */
 	public static final int UPPER_LAYERS_Y = 200;
 	/** Rising past this, one is through: the Upper Realm, where the gap's place there lies. */
 	public static final int CROSSING_Y = 360;
 	/**
-	 * Below this, the gap's lower layers, as the upper ones are above: the full pressure and the storms thick. The gap is thick
+	 * Below this, the gap's lower layers, as the upper ones are above: the heaviest pressure and the storms thick. The gap is thick
 	 * there too: nothing sinks through it faster than {@link #LOWER_SINK} (client GapSinkMixin), about as fast as Qi Flight climbs,
 	 * so falling out costs about as much a block as rising through.
 	 */
@@ -105,9 +106,15 @@ public final class SpatialTrialHandler {
 	public static final int FLOOR_Y = 12;
 	/**
 	 * The pressure in the shallows, a second: against Qi Sustenance's 2 a second a Heavenly Being Early (59 health) holds out a couple
-	 * of minutes, crossing hundreds of thousands of blocks; the upper layers press with the trial's full {@link #PRESSURE_DAMAGE}.
+	 * of minutes, crossing hundreds of thousands of blocks; the stormy layers press with {@link #LAYER_PRESSURE}.
 	 */
 	public static final float SHALLOW_PRESSURE = 2.5f;
+	/**
+	 * The pressure a second in the gap's stormy upper and lower layers, flown by one's own tear: twice the trial's (the user's ask,
+	 * 2026-10-17). Climbing the upper layers on Qi Flight (160 blocks at ~4.5 a second, some 35 s) costs about 220 health against Qi
+	 * Sustenance; sinking through the lower ones (12 s) about 75. The trial itself keeps {@link #PRESSURE_DAMAGE}.
+	 */
+	public static final float LAYER_PRESSURE = PRESSURE_DAMAGE * 2;
 	/** Tearing space open costs this share of the qi pool going in, and this coming out. */
 	public static final double TEAR_IN_QI = 0.25, TEAR_OUT_QI = 0.10;
 	/** Between one tear and the next (ticks). */
@@ -611,9 +618,9 @@ public final class SpatialTrialHandler {
 		return y < LOWER_LAYERS_Y && y >= FLOOR_Y;
 	}
 
-	/** The pressure a second on one flying the gap by their own tear at height {@code y}: the full trial's in the stormy layers, less in the shallows. */
+	/** The pressure a second on one flying the gap by their own tear at height {@code y}: twice the trial's in the stormy layers, less in the shallows. */
 	static float pressureAt(double y) {
-		return y >= UPPER_LAYERS_Y || y < LOWER_LAYERS_Y ? PRESSURE_DAMAGE : SHALLOW_PRESSURE;
+		return y >= UPPER_LAYERS_Y || y < LOWER_LAYERS_Y ? LAYER_PRESSURE : SHALLOW_PRESSURE;
 	}
 
 	public static void tick(MinecraftServer server) {
@@ -837,8 +844,9 @@ public final class SpatialTrialHandler {
 		for (ServerPlayer p : server.getPlayerList().getPlayers()) {
 			PlayerCultivation c = CultivationManager.get(p);
 			if (!c.isFallProtected()) continue;
+			// (Coming down onto a planet out of space is protected the same way: AstralRealm.)
 			boolean landed = (p.onGround() && p.fallDistance <= 0) || p.isInWater() || p.getAbilities().flying || !p.isAlive()
-					|| p.level().dimension() != Level.OVERWORLD;
+					|| p.level().dimension() != Level.OVERWORLD && !ModDimensions.isPlanetSurface(p.level().dimension());
 			if (landed) {
 				c.setFallProtected(false);
 				CultivationManager.markDirty(server);

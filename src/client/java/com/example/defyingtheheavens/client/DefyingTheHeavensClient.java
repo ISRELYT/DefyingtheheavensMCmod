@@ -137,6 +137,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(ClientSpellFx::render);
 		UpperRealmClient.register();
 		NetherworldClient.register();
+		AstralClient.register(); // space's sky, the planets' skies
 		InnerRealmFade.register(); // last, so the fade covers the rest of the HUD
 
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(ClientSpatialStorms::render);

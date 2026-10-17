@@ -111,17 +111,19 @@ public final class ModFeatures {
 		herb(wetlands, upperRealm, ModPlacedFeatures.SPIRIT_LOTUS, ModPlacedFeatures.SPIRIT_LOTUS_UPPER_REALM);
 		herb(meadows, upperRealm, ModPlacedFeatures.SPIRIT_DEW_GRASS, ModPlacedFeatures.SPIRIT_DEW_GRASS_UPPER_REALM);
 
-		// Qi Veins: as common as diamonds, wherever diamonds can be found (all the Overworld, every Upper Realm island).
-		BiomeModifications.addFeature(BiomeSelectors.foundInOverworld(), GenerationStep.Decoration.UNDERGROUND_ORES, ModPlacedFeatures.QI_VEIN);
+		// Qi Veins: as common as diamonds, wherever diamonds can be found (all the Overworld, every Upper Realm island, and the
+		// Astral Realm's planets: those in the Overworld's biomes have them already, and its own lands have them too).
+		Predicate<BiomeSelectionContext> lower = BiomeSelectors.foundInOverworld().or(BiomeSelectors.includeByKey(ModBiomes.ASTRAL_VOLCANIC,
+				ModBiomes.ASTRAL_ASHEN, ModBiomes.ASTRAL_CRYSTAL, ModBiomes.ASTRAL_BARREN));
+		BiomeModifications.addFeature(lower, GenerationStep.Decoration.UNDERGROUND_ORES, ModPlacedFeatures.QI_VEIN);
 		BiomeModifications.addFeature(upperRealm.and(context -> !context.getBiomeKey().equals(ModBiomes.SPATIAL_GAP)),
 				GenerationStep.Decoration.UNDERGROUND_ORES, ModPlacedFeatures.QI_VEIN_UPPER_REALM);
 		jade(upperRealm);
 		// Spirit stone veins (see ModPlacedFeatures#ORE_SPIRIT_STONE): the common kind everywhere underground, the rich kind deep
 		// in the Overworld and all through the Upper Realm (never the Spatial Gap).
 		Predicate<BiomeSelectionContext> islands = upperRealm.and(context -> !context.getBiomeKey().equals(ModBiomes.SPATIAL_GAP));
-		BiomeModifications.addFeature(BiomeSelectors.foundInOverworld(), GenerationStep.Decoration.UNDERGROUND_ORES, ModPlacedFeatures.ORE_SPIRIT_STONE);
-		BiomeModifications.addFeature(BiomeSelectors.foundInOverworld(), GenerationStep.Decoration.UNDERGROUND_ORES,
-				ModPlacedFeatures.ORE_RICH_SPIRIT_STONE_DEEP);
+		BiomeModifications.addFeature(lower, GenerationStep.Decoration.UNDERGROUND_ORES, ModPlacedFeatures.ORE_SPIRIT_STONE);
+		BiomeModifications.addFeature(lower, GenerationStep.Decoration.UNDERGROUND_ORES, ModPlacedFeatures.ORE_RICH_SPIRIT_STONE_DEEP);
 		BiomeModifications.addFeature(islands, GenerationStep.Decoration.UNDERGROUND_ORES, ModPlacedFeatures.ORE_SPIRIT_STONE_UPPER_REALM);
 		BiomeModifications.addFeature(islands, GenerationStep.Decoration.UNDERGROUND_ORES, ModPlacedFeatures.ORE_RICH_SPIRIT_STONE_UPPER_REALM);
 

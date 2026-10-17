@@ -510,8 +510,13 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 
 	// --- Sparring, mercy ---
 
-	/** For a spar (SparSystem): it fights with no more than the strength of {@code rank} (or its own, {@link #NO_HOLD_BACK}). */
-	public void beginSpar(int holdBackTo) {
+	/**
+	 * For a spar with {@code opponent} (SparSystem): it fights with no more than the strength of {@code rank} (or its own,
+	 * {@link #NO_HOLD_BACK}). A bout it agreed to is nothing to run from, however far above it the opponent is (see
+	 * {@link #senseDomains}).
+	 */
+	public void beginSpar(LivingEntity opponent, int holdBackTo) {
+		if (fleeFrom == opponent) reachRefuge();
 		sparHoldBack = holdBackTo;
 		setMeditating(false);
 		getNavigation().stop();
@@ -525,8 +530,9 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		letGoOf(opponent);
 	}
 
-	/** No quarrel with {@code opponent} any more (a spar ended; a ghost it fought scattered: GhostSystem#disperse). */
+	/** No quarrel with {@code opponent} any more (a spar ended; a ghost it fought scattered: GhostSystem#disperse), nor running from them. */
 	public void letGoOf(LivingEntity opponent) {
+		if (opponent != null && fleeFrom == opponent) reachRefuge();
 		if (getTarget() == opponent) setTarget(null);
 		if (getLastHurtByMob() == opponent) setLastHurtByMob(null);
 		combatTicks = 0;
@@ -1092,15 +1098,17 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 
 	/**
 	 * Its open domain feels every other within reach: a hostile one a realm above its own sends it running, unless it
-	 * {@link #holdsGround holds its ground}.
+	 * {@link #holdsGround holds its ground}. Never the one it is sparring with: it agreed to that bout (it used to run, the spar
+	 * counted as the player walking off, and it kept on running after).
 	 */
-	private void senseDomains(ServerLevel level) {
+	void senseDomains(ServerLevel level) {
 		if (holdsGround()) return;
 		int mine = sustainedRank();
 		double radius = domainRadius();
 		// A soul out of its body bears down on no domain (see SoulProjection): nothing to run from.
 		for (LivingEntity other : ConsciousnessDomainHandler.entitiesIn(this, Math.min(radius, 96), LivingEntity.class,
-				e -> e.isAlive() && CultivatorEntity.isCultivator(e) && !(e instanceof Player player && SoulProjection.isSoul(player)))) {
+				e -> e.isAlive() && CultivatorEntity.isCultivator(e) && !(e instanceof Player player && SoulProjection.isSoul(player))
+						&& !SparSystem.areSparring(this, e))) {
 			int theirs = rankOf(other);
 			if (theirs >= mine + SUPERIOR_DOMAIN_GAP && isThreat(other)) {
 				startFleeing(other);

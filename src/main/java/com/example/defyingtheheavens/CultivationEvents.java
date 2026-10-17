@@ -226,6 +226,7 @@ public final class CultivationEvents {
 			TribulationManager.forget(handler.getPlayer().getUUID());
 			SpatialTrialHandler.forget(handler.getPlayer().getUUID());
 			SectMembership.forget(handler.getPlayer().getUUID());
+			AstralRealm.forget(handler.getPlayer().getUUID());
 			SoulRiver.forget(handler.getPlayer().getUUID());
 			NetherworldManager.forget(handler.getPlayer().getUUID());
 			GhostSystem.forget(handler.getPlayer().getUUID());

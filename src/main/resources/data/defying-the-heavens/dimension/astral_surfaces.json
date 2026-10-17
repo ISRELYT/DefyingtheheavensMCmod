@@ -1,0 +1,9 @@
+{
+  "type": "defying-the-heavens:astral_surfaces",
+  "generator": {
+    "type": "defying-the-heavens:planet_surface",
+    "biome_source": {
+      "type": "defying-the-heavens:planets"
+    }
+  }
+}

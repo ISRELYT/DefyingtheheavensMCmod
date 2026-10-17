@@ -90,6 +90,18 @@ public final class QiFlight {
 			}
 			return 0;
 		}
+		// Space (AstralRealm): there is no ground, so everyone there flies, always, on no qi, at a speed of their realm.
+		if (ModDimensions.isSpace(p.level().dimension()) && !Incorporeal.isGhost(p)) {
+			SwordFlight.update(p, false);
+			EXHAUSTED.remove(id);
+			if (p.isSpectator()) return 0;
+			setFlight(p, true, AstralRealm.spaceSpeed(c));
+			if (!p.getAbilities().flying) {
+				p.getAbilities().flying = true;
+				p.onUpdateAbilities();
+			}
+			return 0;
+		}
 		if (p.isCreative() || p.isSpectator()) {
 			// Vanilla's flight again, at vanilla's speed (a ride doesn't carry over into creative).
 			SwordFlight.update(p, false);
@@ -132,7 +144,9 @@ public final class QiFlight {
 			return 0;
 		}
 
-		double cost = onSword ? c.swordFlightCostPerSecond() : c.qiFlightCostPerSecond();
+		// On a planet's land (AstralRealm) flight costs nothing: nobody is stranded on a world of thin qi.
+		double cost = ModDimensions.isPlanetSurface(p.level().dimension()) ? 0
+				: onSword ? c.swordFlightCostPerSecond() : c.qiFlightCostPerSecond();
 		// Affordable as long as this tick's gathering and what's left cover it (always, where flight is sustained).
 		if (c.getQi() + (c.qiGatherPerSecond() - cost) / 20.0 >= 0) {
 			SwordFlight.update(p, onSword);
@@ -166,17 +180,25 @@ public final class QiFlight {
 	private static void setFlight(ServerPlayer p, boolean mayFly, float speed) {
 		Abilities abilities = p.getAbilities();
 		float current = abilities.getFlyingSpeed();
-		boolean ours = current == SwordFlight.QI_FLIGHT_SPEED || current == SwordFlight.SWORD_SPEED || current == GHOST_SPEED;
+		boolean ours = current == SwordFlight.QI_FLIGHT_SPEED || current == SwordFlight.SWORD_SPEED || current == GHOST_SPEED
+				|| Float.valueOf(current).equals(SPEED_SET.get(p.getUUID()));
 		boolean speedChanges = ours && current != speed;
 		if (abilities.mayfly == mayFly && (mayFly || !abilities.flying) && !speedChanges) return;
 		abilities.mayfly = mayFly;
 		if (!mayFly) abilities.flying = false;
-		if (speedChanges) abilities.setFlyingSpeed(speed);
+		if (speedChanges) {
+			abilities.setFlyingSpeed(speed);
+			SPEED_SET.put(p.getUUID(), speed);
+		}
 		p.onUpdateAbilities();
 	}
 
+	/** The last speed set here for each player (space's speeds vary by realm, so "ours" can't be told by value alone). */
+	private static final Map<UUID, Float> SPEED_SET = new HashMap<>();
+
 	public static void forget(UUID id) {
 		EXHAUSTED.remove(id);
+		SPEED_SET.remove(id);
 		REALM_ALLOWED.remove(id);
 		REALM_ALLOWED_SWORD.remove(id);
 		DIMENSION.remove(id);

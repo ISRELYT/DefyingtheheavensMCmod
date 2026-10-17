@@ -48,6 +48,15 @@ public final class ModBiomes {
 	public static final ResourceKey<Biome> NINE_NETHER_PEAKS = key("nine_nether_peaks");
 	/** The Soul River's empty dark (the river itself is drawn by the client, see SoulRiver). */
 	public static final ResourceKey<Biome> SOUL_RIVER = key("soul_river");
+	/**
+	 * The Astral Realm: space itself (the void between the stars), and the planets' lands the Overworld has none like (PlanetTerrain:
+	 * the other planets wear the Overworld's own biomes): volcanic, ashen, crystal, and barren (no air: a black sky by day).
+	 */
+	public static final ResourceKey<Biome> ASTRAL_VOID = key("astral_void");
+	public static final ResourceKey<Biome> ASTRAL_VOLCANIC = key("astral_volcanic");
+	public static final ResourceKey<Biome> ASTRAL_ASHEN = key("astral_ashen");
+	public static final ResourceKey<Biome> ASTRAL_CRYSTAL = key("astral_crystal");
+	public static final ResourceKey<Biome> ASTRAL_BARREN = key("astral_barren");
 
 	private static final int WATER = 0x3FC6E4;
 	private static final int WATER_FOG = 0x0A3D52;
@@ -139,6 +148,56 @@ public final class ModBiomes {
 				netherworld(0x000000, 0x0C0A1F, WATER, WATER_FOG, 0x4E5E4A),
 				new MobSpawnSettings.Builder().build(),
 				new BiomeGenerationSettings.Builder(placed, carvers).build()));
+
+		// The Astral Realm. Space: nothing in it at all.
+		context.register(ASTRAL_VOID, biome(false, 0.5f, 0.0f,
+				new BiomeSpecialEffects.Builder().skyColor(0x000000).fogColor(0x010105).waterColor(WATER).waterFogColor(WATER_FOG),
+				new MobSpawnSettings.Builder().build(),
+				new BiomeGenerationSettings.Builder(placed, carvers).build()));
+		// The planets' own lands: the Overworld's ores and rock beneath them (in its own order, so they sit beside its biomes on one
+		// planet), no beasts (the planets' wildlife is a question for later), each its own sky.
+		context.register(ASTRAL_VOLCANIC, biome(false, 2.0f, 0.0f,
+				new BiomeSpecialEffects.Builder().skyColor(0x6A3420).fogColor(0x5C3424).waterColor(0x3F5F66).waterFogColor(0x1A2628)
+						.foliageColorOverride(0x5A5030).grassColorOverride(0x5A5030)
+						.ambientParticle(new AmbientParticleSettings(ParticleTypes.ASH, 0.04f))
+						.ambientLoopSound(SoundEvents.AMBIENT_BASALT_DELTAS_LOOP)
+						.ambientMoodSound(new AmbientMoodSettings(SoundEvents.AMBIENT_BASALT_DELTAS_MOOD, 6000, 8, 2.0))
+						.ambientAdditionsSound(new AmbientAdditionsSettings(SoundEvents.AMBIENT_BASALT_DELTAS_ADDITIONS, 0.0111)),
+				new MobSpawnSettings.Builder().build(), astralFeatures(placed, carvers)));
+		context.register(ASTRAL_ASHEN, biome(false, 1.2f, 0.0f,
+				new BiomeSpecialEffects.Builder().skyColor(0xA29C92).fogColor(0xB4AEA4).waterColor(0x6E7A7C).waterFogColor(0x2A3032)
+						.foliageColorOverride(0x7A7660).grassColorOverride(0x7A7660)
+						.ambientParticle(new AmbientParticleSettings(ParticleTypes.WHITE_ASH, 0.05f))
+						.ambientMoodSound(AmbientMoodSettings.LEGACY_CAVE_SETTINGS),
+				new MobSpawnSettings.Builder().build(), astralFeatures(placed, carvers)));
+		context.register(ASTRAL_CRYSTAL, biome(false, 0.6f, 0.2f,
+				new BiomeSpecialEffects.Builder().skyColor(0x8A78E2).fogColor(0xCDBEF4).waterColor(0x9C7CE8).waterFogColor(0x2C2050)
+						.foliageColorOverride(0x9A88D0).grassColorOverride(0x9A88D0)
+						.ambientParticle(new AmbientParticleSettings(ParticleTypes.END_ROD, 0.0015f))
+						.ambientMoodSound(AmbientMoodSettings.LEGACY_CAVE_SETTINGS),
+				new MobSpawnSettings.Builder().build(), astralFeatures(placed, carvers)));
+		context.register(ASTRAL_BARREN, biome(false, 0.5f, 0.0f,
+				new BiomeSpecialEffects.Builder().skyColor(0x000000).fogColor(0x0C0C10).waterColor(WATER).waterFogColor(WATER_FOG)
+						.ambientMoodSound(AmbientMoodSettings.LEGACY_CAVE_SETTINGS),
+				new MobSpawnSettings.Builder().build(), astralFeatures(placed, carvers)));
+	}
+
+	/**
+	 * A planet land's features: the Overworld's lakes, geodes, dungeons, rock varieties, springs, freezing, ores and disks, added
+	 * in the order its own biomes add them (one planet mixes these lands with the Overworld's biomes, and a step's features must
+	 * keep one order across them all).
+	 */
+	private static BiomeGenerationSettings astralFeatures(HolderGetter<PlacedFeature> placed, HolderGetter<ConfiguredWorldCarver<?>> carvers) {
+		BiomeGenerationSettings.Builder builder = new BiomeGenerationSettings.Builder(placed, carvers);
+		BiomeDefaultFeatures.addDefaultCarversAndLakes(builder);
+		BiomeDefaultFeatures.addDefaultCrystalFormations(builder);
+		BiomeDefaultFeatures.addDefaultMonsterRoom(builder);
+		BiomeDefaultFeatures.addDefaultUndergroundVariety(builder);
+		BiomeDefaultFeatures.addDefaultSprings(builder);
+		BiomeDefaultFeatures.addSurfaceFreezing(builder);
+		BiomeDefaultFeatures.addDefaultOres(builder);
+		BiomeDefaultFeatures.addDefaultSoftDisks(builder);
+		return builder.build();
 	}
 
 	/** The Netherworld's monsters: Hungry Ghosts, in packs of two to four. */

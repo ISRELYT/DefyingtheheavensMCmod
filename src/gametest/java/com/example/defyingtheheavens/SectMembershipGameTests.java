@@ -217,6 +217,33 @@ public class SectMembershipGameTests implements FabricGameTest {
 		}
 	}
 
+	/**
+	 * Sent on to an elder by a disciple, the asker is the sect's guest: its barrier lets them through (the user couldn't reach the
+	 * elders behind it), until they turn on the sect.
+	 */
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void aDiscipleSendsOneThroughTheBarrierToAnElder(GameTestHelper helper) {
+		ServerLevel level = helper.getLevel();
+		Sect sect = newSect(helper);
+		ServerPlayer p = player(helper, Realm.FOUNDATION_BUILDING, Stage.EARLY);
+		Formation formation = new Formation(UUID.randomUUID(), Formation.Kind.CORE, sect.core, 12);
+		formation.setSect(sect.id);
+		try {
+			helper.assertTrue(!formation.allows(p), "The barrier keeps out one of no sect");
+			SectMembership.welcomeGuest(p, sect);
+			helper.assertTrue(formation.allows(p) && SectMembership.guestsOf(sect, level.getGameTime()).contains(p.getUUID()),
+					"Sent on to an elder: the barrier lets them through, on the client's side too");
+			helper.assertTrue(!SectMembership.isDisciple(p.server, sect.id, p.getUUID()), "...a guest, not a disciple");
+			helper.assertTrue(!SectMembership.isGuest(sect.id, p.getUUID(), level.getGameTime() + SectMembership.GUEST_TICKS),
+					"...for " + SectMembership.GUEST_TICKS / 1200 + " minutes (and while they stay on its grounds)");
+			SectManager.alert(level, sect, p, sect.core, SectManager.Alarm.TRESPASS, null, null);
+			helper.assertTrue(!formation.allows(p), "Turning on the sect, they are its guest no longer");
+			helper.succeed();
+		} finally {
+			done(helper, p, sect);
+		}
+	}
+
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void theBarrierAndTheGroundsAreADisciples(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();

@@ -92,6 +92,11 @@ public class PlayerCultivation {
 	private final HeavenState heaven = new HeavenState();
 	/** Synced but not saved: re-evaluated from the player's dimension on every join. */
 	private boolean inUpperRealm;
+	/**
+	 * How dense ordinary qi is where they stand, against the lower realms' (1): space's thin qi, a planet's own (AstralRealm sets it
+	 * as they move; synced, not saved). The Upper Realm's is {@link #UPPER_REALM_QI_MULTIPLIER} regardless.
+	 */
+	private double placeQi = 1.0;
 	/** Realm Suppress from a stronger cultivator (see {@link RealmSuppressSystem}): synced but never saved. */
 	private int pressureStages;
 	private double pressurePenalty;
@@ -570,6 +575,18 @@ public class PlayerCultivation {
 		return true;
 	}
 
+	public double getPlaceQi() { return placeQi; }
+
+	/** @return true if it changed */
+	public boolean setPlaceQi(double value) {
+		if (Math.abs(placeQi - value) < 1.0e-9) return false;
+		placeQi = value;
+		return true;
+	}
+
+	/** How many times the lower realms' qi this place gives: the Upper Realm's {@link #UPPER_REALM_QI_MULTIPLIER}, else the place's own density. */
+	public double placeFactor() { return inUpperRealm ? UPPER_REALM_QI_MULTIPLIER : placeQi; }
+
 	/** Outside the Upper Realm (lower realms and the Spatial Gap alike), no breakthrough may lead past the cap. */
 	public boolean isBreakthroughLocked() {
 		return !inUpperRealm && !isMaxed() && rank(breakthroughRealm(), breakthroughStage()) > CAP_RANK;
@@ -661,12 +678,13 @@ public class PlayerCultivation {
 	}
 
 	/**
-	 * Qi gathered per second where the player is now: {@link #UPPER_REALM_QI_MULTIPLIER} times faster in the Upper Realm,
-	 * raised by a Qi Gathering Pill and by cultivator clothing, slowed by pressure. A mortal gathers none.
+	 * Qi gathered per second where the player is now: {@link #UPPER_REALM_QI_MULTIPLIER} times faster in the Upper Realm, by the
+	 * place's own density in the Astral Realm ({@link #placeFactor}), raised by a Qi Gathering Pill and by cultivator clothing,
+	 * slowed by pressure. A mortal gathers none.
 	 */
 	public double qiGatherPerSecond() {
 		if (mortal) return 0;
-		return CultivationStats.qiGather(getEffectiveRealm(), getEffectiveStage()) * (inUpperRealm ? UPPER_REALM_QI_MULTIPLIER : 1.0)
+		return CultivationStats.qiGather(getEffectiveRealm(), getEffectiveStage()) * placeFactor()
 				* (1 + qiBoost) * (1 + gearQiBonus) * favourFactor() * (1 - pressurePenalty) * physique().qiFactor()
 				* (1 + StatPoints.bonus(this, StatPoints.Stat.INSIGHT) / 2)
 				+ HeavenPassives.amount(this, QiElement.WATER); // Ceaseless Flow, the water methods' passive
@@ -729,12 +747,12 @@ public class PlayerCultivation {
 
 	/**
 	 * Cultivation meditation actually gathers per second where the player is now: the stage's rate plus a flat bonus
-	 * (Rings of Power), times {@link #UPPER_REALM_QI_MULTIPLIER} in the Upper Realm, raised by Heaven's Favour. Nothing while
-	 * suppressed.
+	 * (Rings of Power), times {@link #UPPER_REALM_QI_MULTIPLIER} in the Upper Realm or the place's own density in the Astral Realm
+	 * ({@link #placeFactor}), raised by Heaven's Favour. Nothing while suppressed.
 	 */
 	public double meditationCultivationPerSecond(double bonus) {
 		if (mortal || isSuppressed()) return 0;
-		return (cultivationPerSecond() + bonus) * (inUpperRealm ? UPPER_REALM_QI_MULTIPLIER : 1.0) * favourFactor() * physique().cultivationFactor()
+		return (cultivationPerSecond() + bonus) * placeFactor() * favourFactor() * physique().cultivationFactor()
 				* (1 + StatPoints.bonus(this, StatPoints.Stat.INSIGHT));
 	}
 

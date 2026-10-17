@@ -49,6 +49,7 @@ public final class UpperRealmClient {
 		if (ModDimensions.isInnerRealm(dimension)) return INNER_REALM_FOG;
 		if (ModDimensions.isNetherworld(dimension)) return NETHERWORLD_FOG;
 		if (ModDimensions.isSoulRiver(dimension)) return SOUL_RIVER_FOG;
+		if (ModDimensions.isAstral(dimension)) return AstralClient.fogFor(dimension);
 		return null;
 	}
 

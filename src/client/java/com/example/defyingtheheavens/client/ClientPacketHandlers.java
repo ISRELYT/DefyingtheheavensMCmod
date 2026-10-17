@@ -100,16 +100,24 @@ public final class ClientPacketHandlers {
 			int[] statPoints = new int[com.example.defyingtheheavens.StatPoints.Stat.values().length];
 			for (int i = 0; i < statPoints.length; i++) statPoints[i] = buf.readVarInt();
 			com.example.defyingtheheavens.Ability selected = com.example.defyingtheheavens.Ability.byIndex(buf.readVarInt() - 1);
+			double placeQi = buf.readDouble();
 			client.execute(() -> {
 				ClientCultivationData.physique(physique, roots, bodyRefining); // first: a shattered body tempers past Peak
 				for (com.example.defyingtheheavens.StatPoints.Stat stat : com.example.defyingtheheavens.StatPoints.Stat.values()) {
 					ClientCultivationData.get().setStatPoints(stat, statPoints[stat.ordinal()]);
 				}
 				ClientCultivationData.get().setSelectedAbility(selected);
+				ClientCultivationData.get().setPlaceQi(placeQi);
 				ClientCultivationData.update(realm, stage, cultivation, qi, meditating, lowerRealmBound, inUpperRealm,
 						disabledAbilities, pressureStages, pressurePenalty, mortal, mortalStage, tempering, preparedRealm, preparedBonus, qiBoost,
 						pillResistance, medicinalQi, alignment, gearQiBonus, wheel, soulState, heavensLeave, favour);
 			});
+		});
+
+		// The Astral Realm's seed: the same stars and planets as the server's (AstralPlanets).
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.ASTRAL_SEED, (client, handler, buf, sender) -> {
+			long seed = buf.readLong();
+			client.execute(() -> com.example.defyingtheheavens.AstralPlanets.forSeed(seed));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SOUL_SELF, (client, handler, buf, sender) -> {

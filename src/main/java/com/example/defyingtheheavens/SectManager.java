@@ -389,6 +389,7 @@ public final class SectManager {
 	public static void alert(ServerLevel level, Sect sect, LivingEntity aggressor, BlockPos where, Alarm alarm, NpcTitle victimTitle, CultivatorNpc victim) {
 		if (sect == null || sect.extinct || aggressor == null || !aggressor.isAlive()) return;
 		if (aggressor instanceof CultivatorNpc npc && sect.id.equals(npc.getSectId())) return;
+		if (aggressor instanceof ServerPlayer player) SectMembership.revokeGuest(player, sect); // its barrier shuts on them again
 		long now = level.getGameTime();
 		boolean masterRoused = sect.isBarrierDown() || sect.elderFellAt >= 0 && now - sect.elderFellAt < MASTER_WRATH || alarm == Alarm.CORE_DESTROYED;
 		// A member attacked in the territory by a player or a cultivator, or the barrier broken through: the whole sect turns

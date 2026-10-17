@@ -21,9 +21,10 @@ import java.util.List;
 
 /**
  * The ability wheel: open for as long as its key ({@link ModKeybinds#ABILITY_WHEEL}) is held. Pointing toward a slot picks
- * it; a click selects its ability (ringed in cyan) for the Use Selected Ability key ({@link QuickAbilities}), and a right-click
- * switches it on or off now, the same as the switch on the menu's Abilities tab; so does pressing the slot's number (1 the top,
- * then clockwise); several can be switched before letting go. The slots are arranged on the Abilities tab ("Arrange Wheel").
+ * it; a click selects its ability (ringed in cyan) for the Use Selected Ability key ({@link QuickAbilities}), and a second click on
+ * it, or a right-click, switches it on or off now, the same as the switch on the menu's Abilities tab; so does pressing the slot's
+ * number (1 the top, then clockwise); several can be switched before letting go. The slots are arranged on the Abilities tab
+ * ("Arrange Wheel").
  * <p>
  * The player keeps moving while it's open: walking, jumping (and so Qi Flight), sneaking and sprinting pass through
  * ({@link #walk}). The mouse points at the wheel, so the view can't turn until it closes. It only opens once the player
@@ -214,14 +215,17 @@ public class AbilityWheelScreen extends Screen {
 		return dx * dx + dy * dy > DEAD_ZONE * DEAD_ZONE ? AbilityWheel.slotInDirection(x, y, width / 2, height / 2) : -1;
 	}
 
-	/** A click selects the slot's ability for the Use Selected Ability key; a right-click switches it now. */
+	/**
+	 * A click selects the slot's ability for the Use Selected Ability key, and a click on the one already selected switches it (or
+	 * carries it out); a right-click switches it now either way.
+	 */
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
 		int slot = slotToward(mouseX, mouseY);
 		if ((button == 0 || button == 1) && slot >= 0) {
 			Ability ability = AbilityWheel.shown(ClientCultivationData.get(), slot);
 			if (ability != null) {
-				if (button == 0) {
+				if (button == 0 && ability != QuickAbilities.selected(ClientCultivationData.get())) {
 					QuickAbilities.select(ability);
 					if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
 				} else {

@@ -2,6 +2,7 @@ package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.Ability;
 import com.example.defyingtheheavens.Alignment;
+import com.example.defyingtheheavens.AstralPlanets;
 import com.example.defyingtheheavens.ClothingStyle;
 import com.example.defyingtheheavens.ClothingTier;
 import com.example.defyingtheheavens.GhostMethod;
@@ -276,7 +277,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.BTN_ARRANGE_WHEEL, "Arrange Wheel");
 		t.add(ModLang.BTN_ABILITY_LIST, "Ability List");
 		t.add(ModLang.WHEEL_TITLE, "Ability Wheel");
-		t.add(ModLang.WHEEL_HINT, "Click: select (use with %s). Right-click or its number: switch now.");
+		t.add(ModLang.WHEEL_HINT, "Click: select (use with %s). Click again, right-click or its number: switch now.");
 		t.add(ModLang.WHEEL_EMPTY, "Nothing on the wheel yet. Arrange it on the Abilities tab.");
 		t.add(ModLang.WHEEL_EMPTY_SLOT, "Empty slot");
 		t.add(ModLang.WHEEL_EDITOR_HINT, "Drag an ability onto a slot. Drag a slot onto another to swap them, or off the wheel to empty it.");
@@ -935,6 +936,46 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.DIMENSION_END, "the End");
 		t.add(ModLang.DIMENSION_UPPER_REALM, "the Upper Realm");
 		t.add(ModLang.DIMENSION_NETHERWORLD, "the Netherworld");
+		// The Astral Realm
+		t.add(ModLang.DIMENSION_ASTRAL_VOID, "the Astral Realm");
+		t.add(ModLang.DIMENSION_ASTRAL_SURFACES, "a world of the Astral Realm");
+		t.add(ModLang.MSG_ASTRAL_TOO_WEAK, "Above you the sky thins to nothing. Only a Nascent Soul could bear the void beyond.");
+		t.add(ModLang.MSG_ASTRAL_ENTER, "You rise past the last of the sky into the Astral Realm. The stars lie open before you.");
+		t.add(ModLang.MSG_ASTRAL_LAND, "You descend through the sky of %s, a %s world. Its qi: x%s.");
+		t.add(ModLang.MSG_ASTRAL_HOME, "You come down through the Overworld's sky.");
+		t.add(ModLang.MSG_ASTRAL_LEAVE, "You rise out of the sky of %s into the void.");
+		t.add(ModLang.MSG_ASTRAL_HOLD, "The land of %s comes into view...");
+		t.add(ModLang.MSG_ASTRAL_STAR_HEAT, "The fire of %s sears you: turn back!");
+		t.add(com.example.defyingtheheavens.ModEntities.VOID_VESTIGE, "Vestige of the Void");
+		t.add(ModLang.VESTIGE_NAME, "Vestige of the Void (%s)");
+		t.add(ModLang.ASTRAL_QI_LINE, "Astral Realm: qi x%s");
+		t.add(ModLang.STATS_QI_GATHER_PLACE, "Qi gather x%s here");
+		t.add(ModLang.MSG_VESTIGE_NEAR, "Something vast stirs in the dark...");
+		for (AstralPlanets.Kind kind : AstralPlanets.Kind.values()) {
+			t.add(ModLang.astralKind(kind), switch (kind) {
+				case VERDANT -> "verdant";
+				case TEMPERATE -> "temperate";
+				case OCEAN -> "ocean";
+				case DESERT -> "desert";
+				case MESA -> "mesa";
+				case FROZEN -> "frozen";
+				case JUNGLE -> "jungle";
+				case MUSHROOM -> "mushroom";
+				case VOLCANIC -> "volcanic";
+				case ASHEN -> "ashen";
+				case CRYSTAL -> "crystal";
+				case SWAMP -> "swamp";
+				case BARREN -> "barren";
+				case BLOSSOM -> "blossom";
+				case SAVANNA -> "savanna";
+				case TAIGA -> "taiga";
+			});
+		}
+		t.add("biome.defying-the-heavens.astral_void", "Astral Void");
+		t.add("biome.defying-the-heavens.astral_volcanic", "Volcanic Wastes");
+		t.add("biome.defying-the-heavens.astral_ashen", "Ash Plains");
+		t.add("biome.defying-the-heavens.astral_crystal", "Crystal Fields");
+		t.add("biome.defying-the-heavens.astral_barren", "Barren Regolith");
 		// The Netherworld's herbs, materials and items
 		t.add(ModItems.OTHER_SHORE_FLOWER, "Other-Shore Flower");
 		t.add(ModBlocks.OTHER_SHORE_FLOWER, "Other-Shore Flower");
@@ -1357,7 +1398,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add("cultivation.defying-the-heavens.talk.topic.join", "May I join your sect?");
 		t.add("cultivation.defying-the-heavens.talk.topic.trial", "I am ready for the entrance trial.");
 		t.add("cultivation.defying-the-heavens.talk.topic.leave_sect", "I wish to leave the sect.");
-		t.add(ModLang.talkLine("join.disciple"), "I am only a disciple. Speak to one of our elders: they decide who joins us.");
+		t.add(ModLang.talkLine("join.disciple"), "I am only a disciple. Speak to one of our elders: they decide who joins us. "
+				+ "Go in, our barrier will let you pass.");
 		t.add(ModLang.talkLine("join.ghost"), "The dead have no place in a sect of the living.");
 		t.add(ModLang.talkLine("join.mortal"), "You have not even begun to cultivate. Open your meridians first, then come to us.");
 		t.add(ModLang.talkLine("join.other_sect"), "You are already a disciple of the %s. A cultivator serves one sect.");

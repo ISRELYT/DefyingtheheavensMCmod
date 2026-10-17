@@ -148,6 +148,8 @@ public final class ModPackets {
 	public static final ResourceLocation STORAGE_RING_ACTION = new ResourceLocation(DefyingTheHeavens.MOD_ID, "storage_ring_action");
 	/** C2S: the Storage Ring key: open the ring worn (or else the first one on the player). */
 	public static final ResourceLocation STORAGE_RING_OPEN = new ResourceLocation(DefyingTheHeavens.MOD_ID, "storage_ring_open");
+	/** S2C: the Astral Realm's seed (AstralRealm#sendSeed), from which the client works out the stars and planets. */
+	public static final ResourceLocation ASTRAL_SEED = new ResourceLocation(DefyingTheHeavens.MOD_ID, "astral_seed");
 	/** Players further than this from a core can't work its screen. */
 	private static final double CORE_REACH = 8;
 
@@ -376,6 +378,8 @@ public final class ModPackets {
 		for (StatPoints.Stat stat : StatPoints.Stat.values()) buf.writeVarInt(c.getStatPoints(stat));
 		// The ability selected on the wheel, by its place (+1; 0 for none).
 		buf.writeVarInt(c.getSelectedAbility() == null ? 0 : c.getSelectedAbility().ordinal() + 1);
+		// How dense qi is where they stand (the Astral Realm's places: AstralRealm).
+		buf.writeDouble(c.getPlaceQi());
 		ServerPlayNetworking.send(player, SYNC, buf);
 	}
 
@@ -562,10 +566,13 @@ public final class ModPackets {
 			buf.writeInt(formation.getRank());
 			buf.writeBoolean(formation.getOwner() != null);
 			if (formation.getOwner() != null) buf.writeUUID(formation.getOwner());
-			// A sect's barrier lets its player disciples through (SectMembership): on the client they are among the trusted.
+			// A sect's barrier lets its player disciples and its guests through (SectMembership): on the client they are among the trusted.
 			java.util.Set<UUID> trusted = new java.util.LinkedHashSet<>(formation.getTrusted());
 			Sect sect = formation.getSect() == null ? null : SectManager.get(to.server, formation.getSect());
-			if (sect != null) trusted.addAll(sect.disciples.keySet());
+			if (sect != null) {
+				trusted.addAll(sect.disciples.keySet());
+				trusted.addAll(SectMembership.guestsOf(sect, to.level().getGameTime()));
+			}
 			buf.writeVarInt(trusted.size());
 			for (UUID player : trusted) buf.writeUUID(player);
 		}

@@ -163,7 +163,7 @@ public final class SparSystem {
 		int yours = CultivatorNpc.rankOf(player);
 		boolean holdBack = !terms.full && npc.sustainedRank() > yours;
 		npc.endTalk(player);
-		npc.beginSpar(holdBack ? Math.max(0, yours) : CultivatorNpc.NO_HOLD_BACK);
+		npc.beginSpar(player, holdBack ? Math.max(0, yours) : CultivatorNpc.NO_HOLD_BACK);
 		spar.playerLine = Math.max(1, player.getHealth() - player.getMaxHealth() * LINE_SHARE);
 		spar.npcLine = Math.max(1, npc.getHealth() - npc.getMaxHealth() * LINE_SHARE);
 		BY_PLAYER.put(spar.player, spar);
@@ -222,7 +222,8 @@ public final class SparSystem {
 				npc.setHealth(Math.max(npc.getHealth(), spar.npcLine));
 				end(spar, Outcome.WON, player, npc);
 			} else if (player.distanceTo(npc) > WALK_AWAY) {
-				end(spar, Outcome.FORFEIT, player, npc);
+				// Apart: the player walked off (a forfeit), unless it was the cultivator that ran (from someone else's domain): no result.
+				end(spar, npc.shouldFlee() ? Outcome.VOID : Outcome.FORFEIT, player, npc);
 			} else if (++spar.ticks >= TIME_LIMIT_TICKS) {
 				end(spar, Outcome.DRAW, player, npc);
 			}

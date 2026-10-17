@@ -27,18 +27,28 @@ public final class ModDimensions {
 	public static final ResourceKey<Level> NETHERWORLD = ResourceKey.create(Registries.DIMENSION, DefyingTheHeavens.id("netherworld"));
 	/** The river of souls between the Nether and the Netherworld, carried along in both directions (see {@link SoulRiver}). */
 	public static final ResourceKey<Level> SOUL_RIVER = ResourceKey.create(Registries.DIMENSION, DefyingTheHeavens.id("soul_river"));
+	/**
+	 * The Astral Realm (see {@link AstralRealm}): space, where the stars and planets hang (drawn by the client; nothing in it is a
+	 * block), and the planets' lands, every planet's in a square of its own ({@link AstralPlanets}, PlanetSurfaceGenerator).
+	 */
+	public static final ResourceKey<Level> ASTRAL_VOID = ResourceKey.create(Registries.DIMENSION, DefyingTheHeavens.id("astral_void"));
+	public static final ResourceKey<Level> ASTRAL_SURFACES = ResourceKey.create(Registries.DIMENSION, DefyingTheHeavens.id("astral_surfaces"));
 
 	public static final ResourceKey<LevelStem> UPPER_REALM_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("upper_realm"));
 	public static final ResourceKey<LevelStem> SPATIAL_GAP_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("spatial_gap"));
 	public static final ResourceKey<LevelStem> INNER_REALM_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("inner_realm"));
 	public static final ResourceKey<LevelStem> NETHERWORLD_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("netherworld"));
 	public static final ResourceKey<LevelStem> SOUL_RIVER_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("soul_river"));
+	public static final ResourceKey<LevelStem> ASTRAL_VOID_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("astral_void"));
+	public static final ResourceKey<LevelStem> ASTRAL_SURFACES_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("astral_surfaces"));
 
 	public static final ResourceKey<DimensionType> UPPER_REALM_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("upper_realm"));
 	public static final ResourceKey<DimensionType> SPATIAL_GAP_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("spatial_gap"));
 	public static final ResourceKey<DimensionType> INNER_REALM_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("inner_realm"));
 	public static final ResourceKey<DimensionType> NETHERWORLD_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("netherworld"));
 	public static final ResourceKey<DimensionType> SOUL_RIVER_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("soul_river"));
+	public static final ResourceKey<DimensionType> ASTRAL_VOID_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("astral_void"));
+	public static final ResourceKey<DimensionType> ASTRAL_SURFACES_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("astral_surfaces"));
 
 	/** Dimension effects ids; the client registers the custom sky, fog and cloud behaviour under these. */
 	public static final ResourceLocation UPPER_REALM_EFFECTS = DefyingTheHeavens.id("upper_realm");
@@ -46,6 +56,14 @@ public final class ModDimensions {
 	public static final ResourceLocation INNER_REALM_EFFECTS = DefyingTheHeavens.id("inner_realm");
 	public static final ResourceLocation NETHERWORLD_EFFECTS = DefyingTheHeavens.id("netherworld");
 	public static final ResourceLocation SOUL_RIVER_EFFECTS = DefyingTheHeavens.id("soul_river");
+	public static final ResourceLocation ASTRAL_VOID_EFFECTS = DefyingTheHeavens.id("astral_void");
+	public static final ResourceLocation ASTRAL_SURFACES_EFFECTS = DefyingTheHeavens.id("astral_surfaces");
+	/**
+	 * Space is a sliver of a world (see AstralPlanets#SPACE_Y: everything in it hangs far above), with light enough to see whoever
+	 * flies there by.
+	 */
+	public static final int ASTRAL_VOID_MIN_Y = 0, ASTRAL_VOID_HEIGHT = 16;
+	public static final float ASTRAL_VOID_AMBIENT_LIGHT = 0.4f;
 
 	public static final int UPPER_REALM_MIN_Y = -64;
 	public static final int UPPER_REALM_HEIGHT = 576; // -64 .. 511
@@ -64,9 +82,25 @@ public final class ModDimensions {
 	 */
 	public static final float NETHERWORLD_AMBIENT_LIGHT = 0.15f;
 
-	/** Overworld, Nether and End: the lower realms, where Realm Suppression applies. */
+	/**
+	 * Overworld, Nether and End, and the Astral Realm the Overworld hangs in: the lower realms, where Realm Suppression applies
+	 * (space and the planets are the mortal world's sky, its qi never near the Upper Realm's).
+	 */
 	public static boolean isLowerRealm(ResourceKey<Level> dimension) {
-		return dimension == Level.OVERWORLD || dimension == Level.NETHER || dimension == Level.END;
+		return dimension == Level.OVERWORLD || dimension == Level.NETHER || dimension == Level.END || isAstral(dimension);
+	}
+
+	/** Space or a planet's land: the Astral Realm (see {@link AstralRealm}). */
+	public static boolean isAstral(ResourceKey<Level> dimension) {
+		return dimension == ASTRAL_VOID || dimension == ASTRAL_SURFACES;
+	}
+
+	public static boolean isSpace(ResourceKey<Level> dimension) {
+		return dimension == ASTRAL_VOID;
+	}
+
+	public static boolean isPlanetSurface(ResourceKey<Level> dimension) {
+		return dimension == ASTRAL_SURFACES;
 	}
 
 	public static boolean isUpperRealm(ResourceKey<Level> dimension) {
@@ -193,6 +227,40 @@ public final class ModDimensions {
 				SOUL_RIVER_EFFECTS,
 				0.4f,                          // the river's own glow lights whoever rides it
 				new DimensionType.MonsterSettings(false, false, ConstantInt.of(0), 0)));
+
+		context.register(ASTRAL_VOID_TYPE, new DimensionType(
+				OptionalLong.of(18000L),       // no day: the stars' light is what there is
+				false,                         // no skylight
+				false,
+				false,
+				false,                         // not natural: compasses spin
+				1.0,
+				false,
+				false,
+				ASTRAL_VOID_MIN_Y,
+				ASTRAL_VOID_HEIGHT,
+				ASTRAL_VOID_HEIGHT,
+				BlockTags.INFINIBURN_OVERWORLD,
+				ASTRAL_VOID_EFFECTS,
+				ASTRAL_VOID_AMBIENT_LIGHT,
+				new DimensionType.MonsterSettings(false, false, ConstantInt.of(0), 0)));
+
+		context.register(ASTRAL_SURFACES_TYPE, new DimensionType(
+				OptionalLong.empty(),          // day and night, as below
+				true,
+				false,
+				false,
+				true,                          // natural: compasses work, beds set spawn
+				1.0,
+				true,
+				false,
+				PlanetTerrain.MIN_Y,
+				PlanetTerrain.HEIGHT,
+				PlanetTerrain.HEIGHT,
+				BlockTags.INFINIBURN_OVERWORLD,
+				ASTRAL_SURFACES_EFFECTS,
+				0.0f,
+				new DimensionType.MonsterSettings(false, true, UniformInt.of(0, 7), 0)));
 	}
 
 	private ModDimensions() {}

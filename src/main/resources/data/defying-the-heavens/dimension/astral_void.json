@@ -1,0 +1,13 @@
+{
+  "type": "defying-the-heavens:astral_void",
+  "generator": {
+    "type": "minecraft:flat",
+    "settings": {
+      "biome": "defying-the-heavens:astral_void",
+      "layers": [],
+      "lakes": false,
+      "features": false,
+      "structure_overrides": []
+    }
+  }
+}

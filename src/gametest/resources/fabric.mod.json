@@ -37,7 +37,8 @@
       "com.example.defyingtheheavens.ElementSpellsGameTests",
       "com.example.defyingtheheavens.SpellCircumstancesGameTests",
       "com.example.defyingtheheavens.SectMembershipGameTests",
-      "com.example.defyingtheheavens.StatPointsGameTests"
+      "com.example.defyingtheheavens.StatPointsGameTests",
+      "com.example.defyingtheheavens.AstralGameTests"
     ]
   }
 }

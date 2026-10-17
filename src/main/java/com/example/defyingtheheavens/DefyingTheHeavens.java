@@ -22,6 +22,7 @@ public class DefyingTheHeavens implements ModInitializer {
 		ModItems.register();
 		ModCreativeTab.register();
 		ModNoiseSettings.registerTypes();
+		AstralRealm.registerWorldgen(); // the planets' generator and biome source
 		ModGameRules.register();
 		ModFeatures.register();
 		ModStructures.register();
@@ -29,6 +30,7 @@ public class DefyingTheHeavens implements ModInitializer {
 		ClothingRecipes.register();
 		ModPackets.registerServerReceivers();
 		CultivationEvents.register();
+		AstralRealm.register();
 		CultivationCommand.register();
 		CultivationFruitCommand.register();
 		GinsengCommand.register();

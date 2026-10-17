@@ -110,15 +110,16 @@ public final class Formation {
 
 	/**
 	 * Walks through the barrier as if it weren't there: the player who owns it and those they trust, the NPC whose concealment
-	 * it is, and every member of the sect it protects: its cultivators, and its player disciples (SectMembership; on the client,
-	 * among the trusted, as ModPackets#sendFormations sends them).
+	 * it is, and every member of the sect it protects: its cultivators, and its player disciples, and its guests on their way to an
+	 * elder (SectMembership; on the client, among the trusted, as ModPackets#sendFormations sends them).
 	 */
 	public boolean allows(Entity entity) {
 		if (entity == null) return false;
 		if (owner != null && owner.equals(entity.getUUID())) return true;
 		if (entity instanceof Player && trusted.contains(entity.getUUID())) return true;
 		if (sect != null && entity instanceof net.minecraft.server.level.ServerPlayer player
-				&& SectMembership.isDisciple(player.server, sect, player.getUUID())) return true;
+				&& (SectMembership.isDisciple(player.server, sect, player.getUUID())
+				|| SectMembership.isGuest(sect, player.getUUID(), player.level().getGameTime()))) return true;
 		return sect != null && entity instanceof CultivatorNpc npc && sect.equals(npc.getSectId());
 	}
 

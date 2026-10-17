@@ -461,6 +461,10 @@ public class CultivationScreen extends Screen {
 		}
 		if (c.isInUpperRealm()) {
 			details.add(new Detail(Component.translatable(ModLang.UPPER_REALM_LINE, (int) PlayerCultivation.UPPER_REALM_QI_MULTIPLIER), 0x7FDBFF));
+		} else if (Math.abs(c.getPlaceQi() - 1) > 1e-6) {
+			// The Astral Realm's places: space's thin qi, a planet's own.
+			details.add(new Detail(Component.translatable(ModLang.ASTRAL_QI_LINE, String.format(Locale.ROOT, "%.2f", c.getPlaceQi())),
+					c.getPlaceQi() > 1 ? 0x7FDBFF : 0xB0B0C8));
 		}
 		if (c.getQiBoost() > 0) details.add(new Detail(Component.translatable(ModLang.QI_BOOST_LINE, Math.round(c.getQiBoost() * 100)), 0x64B5F6));
 		if (c.getMedicinalQi() >= 0.5) details.add(new Detail(Component.translatable(ModLang.UNREFINED_LINE, num(c.getMedicinalQi())), 0xB2EBF2));
@@ -858,6 +862,9 @@ public class CultivationScreen extends Screen {
 		if (c.isInUpperRealm()) {
 			g.drawString(font, Component.translatable(ModLang.STATS_QI_GATHER_UPPER, (int) PlayerCultivation.UPPER_REALM_QI_MULTIPLIER),
 					x, y, QI_UPPER_COLOR);
+		} else if (Math.abs(c.getPlaceQi() - 1) > 1e-6) {
+			g.drawString(font, Component.translatable(ModLang.STATS_QI_GATHER_PLACE, String.format(Locale.ROOT, "%.2f", c.getPlaceQi())), x, y,
+					c.getPlaceQi() > 1 ? QI_UPPER_COLOR : 0xB0B0C8);
 		}
 	}
 

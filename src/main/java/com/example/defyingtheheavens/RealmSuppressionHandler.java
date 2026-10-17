@@ -64,6 +64,8 @@ public final class RealmSuppressionHandler {
 	static void applyRealm(PlayerCultivation c, ResourceKey<Level> where) {
 		c.setLowerRealmBound(ModDimensions.isLowerRealm(where));
 		c.setInUpperRealm(ModDimensions.isUpperRealm(where));
+		// The Astral Realm's density is the place's own, kept by AstralRealm as one moves; everywhere else, the realm's.
+		if (!ModDimensions.isAstral(where)) c.setPlaceQi(1.0);
 	}
 
 	/** Safety net for dimension changes that don't fire the world-change event (e.g. some command teleports). */

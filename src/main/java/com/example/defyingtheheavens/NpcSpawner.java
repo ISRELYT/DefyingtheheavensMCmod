@@ -125,9 +125,13 @@ public final class NpcSpawner {
 		return speed < TRAVEL_SPEED || speed > TELEPORT_SPEED ? null : new Vec3(dx, 0, dz).normalize();
 	}
 
-	/** Whether living rogues and mortal wanderers turn up in this dimension: never in a passage, the Inner Realm or the Netherworld. */
+	/**
+	 * Whether living rogues and mortal wanderers turn up in this dimension: never in a passage, the Inner Realm or the Netherworld,
+	 * nor (for now) in the Astral Realm, whose worlds are wild.
+	 */
 	public static boolean spawnsLiving(ResourceKey<Level> dimension) {
-		return !ModDimensions.isPassage(dimension) && !ModDimensions.isInnerRealm(dimension) && !ModDimensions.isNetherworld(dimension);
+		return !ModDimensions.isPassage(dimension) && !ModDimensions.isInnerRealm(dimension) && !ModDimensions.isNetherworld(dimension)
+				&& !ModDimensions.isAstral(dimension);
 	}
 
 	/**

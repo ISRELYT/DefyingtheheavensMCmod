@@ -26,9 +26,9 @@ public final class PortalRestrictionHandler {
 		return level != null && isRestricted(level.dimension());
 	}
 
-	/** In a high realm or a passage to one (see {@link HighRealm}). */
+	/** In a high realm or a passage to one (see {@link HighRealm}), or in the Astral Realm (its ways are flown). */
 	public static boolean isRestricted(net.minecraft.resources.ResourceKey<Level> dimension) {
-		return ModDimensions.isHighRealm(dimension) || ModDimensions.isPassage(dimension);
+		return ModDimensions.isHighRealm(dimension) || ModDimensions.isPassage(dimension) || ModDimensions.isAstral(dimension);
 	}
 
 	/** Also handles the world-generation views of a level (WorldGenRegion). */

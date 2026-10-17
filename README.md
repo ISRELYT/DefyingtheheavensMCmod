@@ -757,8 +757,9 @@ out the first time they need one and kept for good, so no two players share an i
 
 Abilities can be switched on and off without opening the menu: **hold Z** (rebindable: "Ability Wheel (hold)") and an
 eight-slot wheel opens in the middle of the screen. Point toward a slot (the direction is enough, the pointer needn't be
-on it) and **click** to **select** that ability, or **right-click** (or press the slot's **number**, 1 at the top, then
-clockwise, shown beside each slot) to switch it on or off now; do as many as you like, then let go of the key to close it.
+on it) and **click** to **select** that ability; **click it again**, **right-click**, or press the slot's **number** (1 at the
+top, then clockwise, shown beside each slot) to switch it on or off now (or carry it out, for an act such as the Spatial
+Tear); do as many as you like, then let go of the key to close it.
 The middle names the ability under the pointer, whether it's On or Off, and "Selected" for the selected one. A slot's rim
 is gold with a green lamp when its ability is on, grey and dimmed when it's off; the selected one is ringed in cyan, as the
 spell wheel rings its readied spell.
@@ -959,13 +960,14 @@ throws you out until you rise past the crossing or sink below the floor. A Heave
 Overworld's 0, 0, or falls off the Upper Realm, flies the gap the same way (no trial),
 and **a block crossed there is 20 in the world**, both ways: you step in at a twentieth of where you stood and out at twenty
 times where you are. The action bar shows where the world lies beneath you and how far the crossing (or the floor) is. Spatial
-pressure still presses: **2.5 a second in the shallows** (where you come in at Y 128, between Y 60 and Y 200), the trial's full
-**4.15** in the stormy layers above and below them. **Tearing out only ever leads back to the realm you tore in from**; to pass
+pressure still presses: **2.5 a second in the shallows** (where you come in at Y 128, between Y 60 and Y 200), and **8.3**, twice
+the trial's 4.15, in the stormy layers above and below them (doubled 2026-10-17: climbing the upper layers on Qi Flight takes
+some 35 seconds, about 220 harm against Qi Sustenance, so bring healing). **Tearing out only ever leads back to the realm you tore in from**; to pass
 from one realm to the other you go **up or down**. Rise through the **upper layers** past **Y 360** and you are through, into
 the Upper Realm, where the gap's place there lies (the arrival finds an island). Sink through the **lower layers** (under Y 60)
 below **Y 12** and you fall out of the gap into the Overworld's sky (the first landing harmless); the gap is thick there, and
 nothing sinks through it faster than 4 blocks a second (falling or flying down; about as fast as Qi Flight climbs), so the 48
-blocks take 12 seconds: some 50 harm, before the storms. Below Heavenly Being the trials still run as before: the rift at the
+blocks take 12 seconds: some 100 harm, before the storms. Below Heavenly Being the trials still run as before: the rift at the
 Overworld's 0, 0 carries one up for 60 seconds to the Upper Realm, and falling off the Upper Realm drops one through the gap
 to the Overworld.
 
@@ -990,15 +992,92 @@ for an island). Now nothing waits on new land:
   the landing protected.
 
 **Storms spread through the gap.** The physical storms (their lightning a tribulation strike) now gather all round everyone in
-the gap, not only one ahead of a climb: one carried by a trial meets about two ahead along the way (spread wider to the sides),
-and one flying by their own tear has two round them in the shallows and five in the upper layers they must rise through (or the
-lower ones they must sink through), most of them gathering in the stormy layer nearer them.
+the gap, not only one ahead of a climb: one carried by a trial meets about four ahead along the way (spread wider to the sides),
+and one flying by their own tear has four round them in the shallows and ten in the upper layers they must rise through (or the
+lower ones they must sink through), most of them gathering in the stormy layer nearer them (doubled 2026-10-17; at most 32 in
+the gap at once).
 
 **Floating meditation.** From **Core Formation**, the living float as they meditate, as the dead always have: rising gently
 once seated, a little off the ground, bobbing; NPC cultivators of those realms too.
 
 Code: `SpatialTrialHandler` (the routes, `tear`, `homeRealm`, travel, the hold), `SpatialArrivals` (island by numbers, land asked for ahead), `SpatialStorms`, `QiFlight`, client `GapSinkMixin`; `MeditationManager#floats`, client
 `ClientMeditationTracker#hover`; tests `CoreAndGapGameTests` (the game-test server has no gap, so travel itself was checked in game).
+
+## The Astral Realm
+
+Beyond the Overworld's sky lies the **Astral Realm**: space, where the Overworld is one planet among **3,600**, round some
+560 stars, and every other planet has land of its own to walk.
+
+**Getting there.** A **Nascent Soul** or stronger (as the realm lets them wield it), flying up past **Y 340** in the Overworld,
+rises out of its sky into space, over the Overworld's lit side. Weaker cultivators are told the sky thins to nothing above them.
+(Y 340: just above the build limit, so a Nascent Soul's pool can carry them there from a hill, and Mid and up from the sea.)
+
+**Space** (`astral_void`). Nothing in it is a block: the stars and planets are drawn by the client where they truly are, and
+you fly among them. Everyone in space is always flying, **on no qi**, at a speed of their realm: Nascent Soul 0.12 (vanilla
+flying is 0.05), Heavenly Being 0.20, Four Axis 0.32, a little more each stage; sprint for twice that. Qi gathers at **a
+quarter** of the lower realms'. A star's heat burns whoever comes within 1.6 times its radius, and its fire consumes those who
+reach it.
+- **The stars and planets.** Star systems lie about 16,000 blocks apart, scattered up and down as well as across (space is as
+  deep as it is wide), each a star with two to seven planets, some with moons (32%) or rings (14%). The Overworld's star,
+  Taiyang, has three to five planets besides it. Each planet has a **kind** (verdant, temperate, ocean, desert, mesa, frozen,
+  jungle, mushroom, volcanic, ashen, crystal, swamp, barren, blossom, savanna or taiga) and its own numbers within it (how much
+  sea, how high its land and mountains, how warm and wet), so planets of one kind still differ; a few verdant ones come out
+  much like the Overworld.
+- **How they look.** Each planet is painted from its own land (`PlanetPainter`): the same continents, seas (shallows turquoise,
+  the deep dark), ice caps, deserts, forests, mesas' bands, mountains and their relief, lava's glow on the night side, a crystal
+  world's glints, under clouds and their shadows, lit by its own star from where that star lies, the terminator warm where the
+  planet has air. Then its air's glow round the rim (lit on its sun's side, all round when the sun is behind it) and its rings,
+  lit on either face and dark in its shadow. Textures are painted at the size the planet is seen, up to 2048 by 1024 for the one
+  you're approaching (on threads of their own, sharper ones replacing the first as they're ready). Behind everything, nebulae and
+  the galaxy's band with its dust lanes, and a field of stars. Other systems' suns are points of light, brighter the nearer.
+- **Vestiges of the Void** hunt there (below).
+
+**The planets' lands** (`astral_surfaces`). Fly into a planet's atmosphere and you come down in its sky, **over the very land
+you flew toward** (the land is the planet's map: once round its equator east to west, pole to pole north to south), the first
+landing harmless. Each planet's land is 960,000 by 480,000 blocks, in a square of its own; the land you're heading for is made
+ready while you approach (you may be held a moment at the edge if it isn't). On the land:
+- the Overworld's own biomes where they fit (forests, plains, deserts, badlands, jungles, taiga, snowfields and ice spikes,
+  swamps, cherry groves, oceans of every warmth, rivers, beaches, peaks), with their trees, flowers, animals, ores, spirit stones,
+  qi veins, herbs and Dao steles, and four lands of the realm's own: **volcanic** (basalt, blackstone and magma, lava seas, lava
+  rivers, cones with lava standing in their craters), **ashen** (tuff, gravel and ash dunes, dead bushes), **crystal** (calcite
+  and amethyst under a violet sky, glowing crystal spires) and **barren** (grey regolith and darker maria, craters great and
+  small, no air: a black sky and the stars by day);
+- the planet's **own qi** (`AstralPlanets.Planet#qi`), from a fifth of the lower realms' on barren worlds to 3-4 times on crystal and
+  blossom ones (now and then a richer one), never near the Upper Realm's ten;
+- its own **sky**: its star rising and setting with the day, sized by how near it is, its sister planets and moons where they truly
+  hang, the stars by night (all day where there is no air), clouds only where there is air;
+- **flight costs no qi** anywhere in the Astral Realm, so nobody is stranded on a world of thin qi.
+
+Fly up past **Y 340** on a planet and you rise out into space over it; fall off a land's edge and you fall out into space below
+it. Fly into the Overworld's atmosphere and you come down where you rose from. The Astral Realm is a **lower realm**: the cap
+holds there (Heavenly Being Grand Perfection), as in the Overworld. No Nether portals; no sects or rogue cultivators there yet
+(the worlds are wild).
+
+**Vestiges of the Void** (`VoidVestige`). Black things of the deep void, shaped like the deep sea's dragonfish: a long eel's body
+that follows the path its head swims, a great fanged lower jaw jutting past its snout (snapping shut as it bites), a huge pale
+eye, a lure hanging from its chin, rows of violet lights along its belly, faint starlight in its skin and a violet sheen at its
+edges. They hunt whoever flies **open space**, never the planets: they turn away from a planet's air, and reaching a planet's sky
+is safety.
+- **Strength:** a cultivator's, from **Nascent Soul Early** to **Heavenly Being Grand Perfection** (the most a lower realm
+  sustains), with health half again a cultivator's of that stage and a bite of its attack.
+- **Size:** larger with every stage, from 14 blocks long at Nascent Soul Early to nearly **100** at Grand Perfection.
+- **Speed:** a little faster (8%) than a cultivator of its own stage sprinting through space, so one who has only just reached
+  the void can't outrun one of their own strength; a stronger cultivator can. They lunge now and then.
+- **Where:** after your first 30 seconds in space, every 10 seconds there's a chance one comes for you, 100-150 blocks off (at
+  most two round you, 32 in all, none on Peaceful). Near the Overworld they are of Nascent Soul Early; a stage stronger at most for
+  every 30,000 blocks out, Heavenly Being Grand Perfection beyond about 210,000. Felt before they are seen ("Something vast
+  stirs in the dark..."). Unseen by anyone for 20 seconds, they slip away.
+- **Drops:** spirit stones (low, mid or high grade by its strength) and experience.
+
+**Commands.** `/astral where` (anyone: the planet you're on, its kind and qi, where on it; or in space the nearest star and planet
+and the Overworld's distance). Op: `/astral visit <kind>` (beside the nearest planet of that kind), `/astral planet <index>`,
+`/astral vestige <rank>` (12 Nascent Soul Early to 19 Heavenly Being Grand Perfection, near you in space).
+
+Code: `AstralPlanets` (the catalog from the world's seed), `PlanetTerrain` (a planet's land, shared with the painter),
+`PlanetSurfaceGenerator`, `PlanetBiomeSource`, `AstralRealm` (the ways in and out, qi, heat, `spaceSpeed`), `QiFlight` (space's
+flight), `VoidVestige`, `VestigeSpawner`, `AstralCommand`; client `AstralSky`, `AstralClient` (the planets' skies),
+`PlanetPainter`, `PlanetTextures`, `PlanetDraw`, `PlanetLooks`, `VestigeRenderer`; tests `AstralGameTests` (the game-test server
+has no Astral Realm, so the travel was checked in game).
 
 ## The Netherworld
 
@@ -1990,7 +2069,9 @@ the top.
 ### Joining a sect
 
 Players can join a sect and become one of its disciples (`SectMembership`).
-- **Asking.** Talk to one of its members and Ask "to join the sect". A disciple sends you to an elder; an Elder, a Grand Elder
+- **Asking.** Talk to one of its members and Ask "to join the sect". A disciple sends you to an elder, and you are the sect's
+  **guest**: its barrier lets you through for 10 minutes, and for as long as you stay on its grounds after (so it never shuts
+  you in), until you turn on the sect (an alarm raised over you). An Elder, a Grand Elder
   or the Sect Master judges you. They turn away the dead, mortals, a disciple of another sect (who must leave it first), one
   the sect cast out or who just left it (see below), one it loathes (its standing with you, or the elder's regard, Hostile or
   worse), and anyone stronger than its Sect Master.
@@ -2142,7 +2223,9 @@ Topics not open yet still show, greyed, with the regard they need.
   either of you has lost a quarter of your health since it began, when you walk 16 blocks off (a forfeit), or after three
   minutes (a draw). Nobody dies: a blow from the other that would go past the line stops at it. A stronger cultivator
   holds back to your realm unless told not to. Blows in a spar are no attack on their sect. Losing to a senior who is
-  Warm to you can teach you their Insight.
+  Warm to you can teach you their Insight. A weaker cultivator never runs from the one it is sparring with, however far
+  above it they are (it would run from such a domain in a real fight); if it runs from someone else mid-bout, the spar ends
+  with no result rather than as your forfeit.
 - **Trade** (`CultivatorTrades`): barter on the trading screen, in spirit stones. They sell by station: Outer Disciples
   and commoners seeds and young herbs, Inner Disciples rarer seeds and Qi Gathering Pills, Elders pills and old herbs, the
   Sect Master the best of both; rogues odd things from far away. The stock changes each day. Regard opens better offers

@@ -150,6 +150,40 @@ public class TalkPhasesGameTests implements FabricGameTest {
 		}
 	}
 
+	/**
+	 * A weak cultivator sparring a far stronger player doesn't run from them (the user's Core Formation gate guard against their
+	 * Heavenly Being: it ran the moment the bout began, the spar counted it as the player walking off, and it kept on running).
+	 */
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void aWeakerSparPartnerStandsItsGround(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		try {
+			MinecraftServer server = helper.getLevel().getServer();
+			ServerPlayer player = cultivator(helper, made, "towering", Realm.HEAVENLY_BEING, Stage.GRAND_PERFECTION);
+			CultivatorNpc junior = npc(helper, new BlockPos(3, 2, 2), Realm.CORE_FORMATION, 0);
+			// Out of a spar, a fight with one so far above it sends it running.
+			junior.setTarget(player);
+			junior.senseDomains(helper.getLevel());
+			helper.assertTrue(junior.shouldFlee(), "Fighting a Heavenly Being for real, a Core Formation cultivator runs");
+			// A spar it agreed to: it stops running, and doesn't start again once the bout is on.
+			SparSystem.start(player, junior, SparSystem.Terms.FRIENDLY);
+			helper.assertTrue(!junior.shouldFlee(), "The spar begins: it no longer runs from its partner");
+			for (int i = 0; i < SparSystem.COUNTDOWN_TICKS; i++) SparSystem.tick(server);
+			helper.assertTrue(junior.getTarget() == player, "...and comes at them");
+			junior.senseDomains(helper.getLevel());
+			helper.assertTrue(!junior.shouldFlee() && SparSystem.areSparring(player, junior), "...feeling their domain, it stands its ground");
+			int regard = junior.regard(player);
+			junior.setHealth(1);
+			SparSystem.tick(server);
+			helper.assertTrue(!SparSystem.isSparring(player) && junior.regard(player) > regard, "The spar is won, not forfeited");
+			junior.senseDomains(helper.getLevel());
+			helper.assertTrue(!junior.shouldFlee(), "...and over, it bears no fear of them either");
+			helper.succeed();
+		} finally {
+			leave(made);
+		}
+	}
+
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void winningAWagerTakesBothStakes(GameTestHelper helper) {
 		List<ServerPlayer> made = new ArrayList<>();

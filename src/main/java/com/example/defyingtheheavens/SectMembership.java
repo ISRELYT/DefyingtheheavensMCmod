@@ -43,6 +43,14 @@ public final class SectMembership {
 	/** What a disciple's tries at the treasury below Elder come to: the first, a warning; the second, cast out. */
 	public static final int TREASURY_WARNINGS = 1;
 
+	/**
+	 * Sent on to an elder by one of a sect's disciples, a player is its guest: its barrier lets them through for this long (ticks),
+	 * and on for as long as they stay on its grounds after, so it never shuts them in (the user found the elders out of reach behind
+	 * it, 2026-10-17).
+	 */
+	public static final long GUEST_TICKS = 10 * 60 * 20;
+	/** Each player's guest passes: sect, and until when (game time). Runtime only. */
+	private static final Map<UUID, Map<UUID, Long>> GUESTS = new HashMap<>();
 	/** The day each player last took (and failed) an entrance trial with each sect, so it is once a day (runtime only). */
 	private static final Map<UUID, Map<UUID, Long>> TRIED = new HashMap<>();
 	/** The title last told to each online disciple, to tell them when it changes. */
@@ -107,6 +115,61 @@ public final class SectMembership {
 		Sect.Member master = sect.master();
 		if (master != null && CultivatorNpc.rankOf(player) > master.rank) return "join.too_strong";
 		return null;
+	}
+
+	/** {@code player}, sent on to an elder, is {@code sect}'s guest for {@link #GUEST_TICKS}: its barrier opens to them, on their side too. */
+	public static void welcomeGuest(ServerPlayer player, Sect sect) {
+		GUESTS.computeIfAbsent(player.getUUID(), id -> new HashMap<>()).put(sect.id, player.level().getGameTime() + GUEST_TICKS);
+		Formations.syncSoon();
+	}
+
+	/** A guest who turns on the sect (an alarm raised over them: SectManager#alert) is a guest no longer. */
+	public static void revokeGuest(ServerPlayer player, Sect sect) {
+		Map<UUID, Long> passes = GUESTS.get(player.getUUID());
+		if (passes != null && passes.remove(sect.id) != null) Formations.syncSoon();
+	}
+
+	/** Whether {@code player} is the guest of the sect {@code sectId} now (see {@link #welcomeGuest}). */
+	public static boolean isGuest(UUID sectId, UUID player, long now) {
+		Long until = GUESTS.getOrDefault(player, Map.of()).get(sectId);
+		return until != null && now < until;
+	}
+
+	/** The guests of {@code sect} now, for the barrier's view on the client (ModPackets#sendFormations). */
+	public static java.util.List<UUID> guestsOf(Sect sect, long now) {
+		java.util.List<UUID> guests = new java.util.ArrayList<>();
+		GUESTS.forEach((player, passes) -> {
+			Long until = passes.get(sect.id);
+			if (until != null && now < until) guests.add(player);
+		});
+		return guests;
+	}
+
+	/**
+	 * Every 5 s: a guest still on the grounds as their pass runs out keeps it while they stay (the barrier mustn't shut them in);
+	 * passes run out are dropped, and the barrier's view told.
+	 */
+	private static void tickGuests(MinecraftServer server) {
+		boolean changed = false;
+		for (java.util.Iterator<Map.Entry<UUID, Map<UUID, Long>>> players = GUESTS.entrySet().iterator(); players.hasNext(); ) {
+			Map.Entry<UUID, Map<UUID, Long>> entry = players.next();
+			ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
+			for (java.util.Iterator<Map.Entry<UUID, Long>> passes = entry.getValue().entrySet().iterator(); passes.hasNext(); ) {
+				Map.Entry<UUID, Long> pass = passes.next();
+				Sect sect = SectManager.get(server, pass.getKey());
+				long now = player != null ? player.level().getGameTime() : server.overworld().getGameTime();
+				if (pass.getValue() - now > 200) continue;
+				if (player != null && sect != null && !sect.extinct && sect.dimension == player.level().dimension()
+						&& sect.inTerritory(player.blockPosition())) {
+					pass.setValue(now + 400);
+				} else if (now >= pass.getValue()) {
+					passes.remove();
+					changed = true;
+				}
+			}
+			if (entry.getValue().isEmpty()) players.remove();
+		}
+		if (changed) Formations.syncSoon();
 	}
 
 	/** Taken in without the trial: a body of High grade or better, or an elder Warm to them. */
@@ -236,6 +299,7 @@ public final class SectMembership {
 	/** Every 5 s: a disciple whose title changed (a breakthrough, the sect's members changing) is told so. */
 	public static void tick(MinecraftServer server) {
 		if (server.getTickCount() % 100 != 0) return;
+		tickGuests(server);
 		for (ServerPlayer player : server.getPlayerList().getPlayers()) {
 			Sect sect = sectOf(server, player.getUUID());
 			if (sect == null) continue;
@@ -341,6 +405,7 @@ public final class SectMembership {
 	public static void clear() {
 		TRIED.clear();
 		TOLD.clear();
+		GUESTS.clear();
 	}
 
 	private SectMembership() {}

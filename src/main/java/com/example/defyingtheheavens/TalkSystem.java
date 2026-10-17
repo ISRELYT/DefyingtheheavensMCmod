@@ -552,16 +552,20 @@ public final class TalkSystem {
 	}
 
 	/**
-	 * Asking to join: a disciple sends you to an elder; an elder turns you away (SectMembership#refusal), takes you in at once (a
-	 * gifted body, or one they are Warm to), or sets the entrance trial (TRIAL is offered next).
+	 * Asking to join: a disciple sends you to an elder, its barrier opening to you as the sect's guest (SectMembership#welcomeGuest),
+	 * or tells you why the sect won't have you; an elder turns you away (SectMembership#refusal), takes you in at once (a gifted
+	 * body, or one they are Warm to), or sets the entrance trial (TRIAL is offered next).
 	 */
 	private static Component askToJoin(ServerPlayer player, CultivatorNpc npc) {
 		Sect sect = npc.sect();
 		if (sect == null) return Component.translatable(ModLang.talkLine("join.failed"));
-		if (!npc.getTitle().isElderOrAbove()) return Component.translatable(ModLang.talkLine("join.disciple"));
 		Object[] arg = new Object[1];
 		String refusal = SectMembership.refusal(player, npc, sect, arg);
 		if (refusal != null) return arg[0] == null ? Component.translatable(ModLang.talkLine(refusal)) : Component.translatable(ModLang.talkLine(refusal), arg[0]);
+		if (!npc.getTitle().isElderOrAbove()) {
+			SectMembership.welcomeGuest(player, sect);
+			return Component.translatable(ModLang.talkLine("join.disciple"));
+		}
 		if (SectMembership.excused(player, npc)) {
 			boolean gifted = CultivationManager.get(player).getPhysique() != null
 					&& CultivationManager.get(player).getPhysique().grade().ordinal() >= Physique.Grade.HIGH.ordinal();

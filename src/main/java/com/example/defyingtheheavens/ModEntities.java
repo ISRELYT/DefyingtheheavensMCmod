@@ -159,8 +159,19 @@ public final class ModEntities {
 					.updateInterval(20)
 					.build("spatial_tear"));
 
+	/** A Vestige of the Void, hunting the fliers of open space (see {@link VoidVestige}); seen from afar, its position sent every tick. */
+	public static final EntityType<VoidVestige> VOID_VESTIGE = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("void_vestige"),
+			EntityType.Builder.<VoidVestige>of(VoidVestige::new, MobCategory.MONSTER)
+					.fireImmune()
+					.sized(2.4f, 1.8f)
+					.clientTrackingRange(16)
+					.updateInterval(1)
+					.build("void_vestige"));
+
 	/** Touching this class registers the entity types and their attributes. */
 	public static void register() {
+		FabricDefaultAttributeRegistry.register(VOID_VESTIGE, VoidVestige.createAttributes());
 		FabricDefaultAttributeRegistry.register(CULTIVATOR, CultivatorNpc.createAttributes());
 		FabricDefaultAttributeRegistry.register(GHOST_CULTIVATOR, CultivatorNpc.createAttributes());
 		FabricDefaultAttributeRegistry.register(HUNGRY_GHOST, HungryGhost.createAttributes());
