@@ -123,11 +123,9 @@ public final class SenseOverlay {
 	 * against the world's depth but never writing it (layers in the layer don't hide each other), both faces, no tint. Set before
 	 * each part of the layer, and again by any part after drawing through a vanilla RenderType: its batch, flushed, turns blending
 	 * and the depth test off as it finishes (a name over another player's ghost did, and everything drawn after it in the frame,
-	 * the Netherworld's dead and what the Ghost Eye sees, came out as solid, unblended light, through walls). Colour written: the
-	 * souls lay down their depth unlit first (SoulRenderer#drawNearest).
+	 * the Netherworld's dead and what the Ghost Eye sees, came out as solid, unblended light, through walls).
 	 */
 	static void layerState() {
-		RenderSystem.colorMask(true, true, true, true);
 		RenderSystem.enableBlend();
 		RenderSystem.enableDepthTest();
 		RenderSystem.depthFunc(GL11.GL_LEQUAL);

@@ -108,6 +108,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		EntityRendererRegistry.register(ModEntities.SPELL_BLOCK, SpellBlockRenderer::new);
 		EntityRendererRegistry.register(ModEntities.EARTH_GOLEM, EarthGolemRenderer::new);
 		EntityRendererRegistry.register(ModEntities.DIRT_TIDE, DirtTideRenderer::new);
+		EntityRendererRegistry.register(ModEntities.SPATIAL_TEAR, SpatialTearRenderer::new);
 		net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry.registerModelLayer(EarthGolemModel.LAYER, EarthGolemModel::definition);
 		net.fabricmc.fabric.api.client.rendering.v1.LivingEntityFeatureRendererRegistrationCallback.EVENT.register((type, renderer, helper, context) -> {
 			if (renderer.getModel() instanceof net.minecraft.client.model.HumanoidModel<?>) registerAuraLayer(renderer, helper, context);
@@ -120,6 +121,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		InnerRealmFade.register(); // last, so the fade covers the rest of the HUD
 
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(ClientSpatialStorms::render);
+		GapLayers.register(); // the gap's layers made plain to one flying it freely: veils over the boundaries, the gauge
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(SuppressionClient::renderMarkers);
 		// A struck barrier ripples, for everyone near (Qi Sense or not).
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(BarrierRipples::render);
@@ -146,6 +148,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> client.execute(() -> {
 			ClientTribulationData.clear();
 			ClientCultivationData.clear();
+			ClientSect.clear();
 			SpatialGapAmbience.clear();
 			ClientSpatialStorms.clear();
 			MeditationFormation.clear();

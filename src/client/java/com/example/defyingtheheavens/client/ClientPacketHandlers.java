@@ -137,6 +137,13 @@ public final class ClientPacketHandlers {
 			client.execute(() -> InnerRealmFade.begin(ticks));
 		});
 
+		// The player's sect and title (SectMembership#sendStatus), for the Stats tab.
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SECT_STATUS, (client, handler, buf, sender) -> {
+			String name = buf.readUtf();
+			int title = buf.readVarInt();
+			client.execute(() -> ClientSect.set(name, title));
+		});
+
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.FORMATIONS, (client, handler, buf, sender) -> {
 			int count = buf.readVarInt();
 			List<Formation> formations = new ArrayList<>(count);

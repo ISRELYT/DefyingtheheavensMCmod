@@ -36,7 +36,30 @@ public final class SpellRender {
 			LEAF = tex("leaf"), VINE = tex("vine"), BAMBOO = tex("bamboo"), PETAL = tex("petal"), LOTUS_LEAF = tex("lotus_leaf"), MUD = tex("mud"),
 			DUST = tex("dust"), STONE_SHELL = tex("stone_shell"), GOLEM = tex("golem"), GOLEM_GLOW = tex("golem_glow"), STEEL = tex("steel"),
 			GOLD = tex("gold"), SLASH = tex("slash"), WIND = tex("wind"), ICE = tex("ice"), CLOUD = tex("cloud"), RAIN = tex("rain"), MIST = tex("mist"),
-			SUN = tex("sun"), RUNE = tex("rune"), VEINS = tex("veins"), FEATHER = tex("feather");
+			SUN = tex("sun"), RUNE = tex("rune"), VEINS = tex("veins"), FEATHER = tex("feather"), STAR = tex("star"), LIGHTNING = tex("lightning");
+	/** The five elements' seals: its character (火 水 木 土 金) within rings of trigrams and the star of the five (TexGen). */
+	public static final ResourceLocation SEAL_FIRE = tex("seal_fire"), SEAL_WATER = tex("seal_water"), SEAL_WOOD = tex("seal_wood"),
+			SEAL_EARTH = tex("seal_earth"), SEAL_METAL = tex("seal_metal");
+
+	/** The seal of {@code element} (the plain rune for any other). */
+	public static ResourceLocation seal(com.example.defyingtheheavens.QiElement element) {
+		if (element == null) return RUNE;
+		return switch (element) {
+			case FIRE -> SEAL_FIRE;
+			case WATER -> SEAL_WATER;
+			case WOOD -> SEAL_WOOD;
+			case EARTH -> SEAL_EARTH;
+			case METAL -> SEAL_METAL;
+			default -> RUNE;
+		};
+	}
+
+	/** {@code element}'s light: its core colour drawn toward its glow, as {r, g, b}. */
+	public static float[] light(com.example.defyingtheheavens.QiElement element) {
+		if (element == null) return new float[] {0.9f, 0.85f, 1.0f};
+		float[] core = rgb(element.getCoreColor()), glow = rgb(element.getGlowColor());
+		return new float[] {(core[0] * 2 + glow[0]) / 3, (core[1] * 2 + glow[1]) / 3, (core[2] * 2 + glow[2]) / 3};
+	}
 	/** Frames in the animated strips (each a square, top to bottom). */
 	public static final int FLAME_FRAMES = 8, WATER_FRAMES = 8, SUN_FRAMES = 4;
 	public static final int FULL_BRIGHT = LightTexture.FULL_BRIGHT;

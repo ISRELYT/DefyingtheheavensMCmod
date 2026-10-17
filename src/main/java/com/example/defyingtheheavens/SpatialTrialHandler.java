@@ -12,6 +12,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.RelativeMovement;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -22,6 +23,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -182,19 +184,49 @@ public final class SpatialTrialHandler {
 		return t != null && t.route == Route.DESCEND ? -1 : 1;
 	}
 
-	/** Called by the Spatial Rift. */
+	/**
+	 * Called by the Spatial Rift. One strong enough to tear space (a Heavenly Being) isn't carried: they fly the gap freely as by
+	 * their own tear ({@link #travelIn}); anyone else is carried up on the trial.
+	 */
 	public static void beginAscension(ServerPlayer player) {
 		if (!canEnter(player)) return;
 		// Someone just cast down from the Upper Realm is still falling from the sky drop; descending near X=0, Z=0
 		// would otherwise drop them straight back through the rift into a new ascension.
 		if (CultivationManager.get(player).isFallProtected()) return;
+		if (flysTheGap(player)) {
+			travelIn(player, false);
+			return;
+		}
 		enterGap(player, Route.ASCEND, player.getX(), ASCENT_ENTRY_Y, player.getZ());
 	}
 
-	/** Called by the VoidFallHandler when a player drops out of the bottom of the Upper Realm. */
+	/** Called by the VoidFallHandler when a player drops out of the bottom of the Upper Realm: a Heavenly Being flies the gap freely. */
 	public static void beginDescension(ServerPlayer player) {
 		if (!canEnter(player)) return;
+		if (flysTheGap(player)) {
+			travelIn(player, true);
+			return;
+		}
 		enterGap(player, Route.DESCEND, player.getX(), DESCENT_ENTRY_Y, player.getZ());
+	}
+
+	/** Strong enough to tear space (Ability#SPATIAL_TEAR: the living, from Heavenly Being): the gap carries them nowhere, they fly it. */
+	public static boolean flysTheGap(ServerPlayer player) {
+		return Ability.SPATIAL_TEAR.isUnlocked(CultivationManager.get(player));
+	}
+
+	/**
+	 * Into the gap's shallows as one who flies it (Route TRAVEL), at a {@link #GAP_SCALE}th of where they were, from the Upper
+	 * Realm ({@code fromUpper}) or the Overworld: as a tear in, but free (the rift or the fall opened the way), and out again the
+	 * same ways: up through the crossing, down through the floor, or by a tear back home.
+	 */
+	private static void travelIn(ServerPlayer player, boolean fromUpper) {
+		PlayerCultivation c = CultivationManager.get(player);
+		c.setGapFromUpper(fromUpper);
+		c.setAbilityEnabled(Ability.SPATIAL_TEAR, true);
+		enterGap(player, Route.TRAVEL, player.getX() / GAP_SCALE, TEAR_IN_Y, player.getZ() / GAP_SCALE);
+		player.fallDistance = 0;
+		CultivationManager.sync(player);
 	}
 
 	private static boolean canEnter(ServerPlayer player) {
@@ -238,10 +270,12 @@ public final class SpatialTrialHandler {
 	// --- One's own tear (Ability#SPATIAL_TEAR) ---
 
 	/**
-	 * The Spatial Tear: from the Overworld or the Upper Realm, space torn open and stepped through, into the gap's shallows where
-	 * the gap's place for this one lies (a {@link #GAP_SCALE}th of the way); from inside the gap (by one's own tear or not), out
-	 * again into the realm one came from ({@link #homeRealm}, never the other one), where the gap's place leads there. Heavenly
-	 * Being and above, for qi ({@link #TEAR_IN_QI}, {@link #TEAR_OUT_QI} of the pool), {@link #TEAR_COOLDOWN} between tears.
+	 * The Spatial Tear: space torn open before the cultivator, a tear ({@link SpatialTearEntity}) that stands for a while and that
+	 * they, and anyone else, walk through ({@link #walkInto}). From the Overworld or the Upper Realm it leads into the gap's shallows
+	 * where the gap's place for it lies (a {@link #GAP_SCALE}th of the way); from inside the gap (by one's own tear or not), out
+	 * again into the realm its opener came from ({@link #homeRealm}, never the other one), where the gap's place leads there.
+	 * Heavenly Being and above, for qi ({@link #TEAR_IN_QI}, {@link #TEAR_OUT_QI} of the pool), {@link #TEAR_COOLDOWN} between
+	 * tears; a new one closes the last.
 	 */
 	public static void tear(ServerPlayer p) {
 		PlayerCultivation c = CultivationManager.get(p);
@@ -274,22 +308,118 @@ public final class SpatialTrialHandler {
 		}
 		LAST_TEAR.put(p.getUUID(), now);
 		riftFx(p);
+		openTear(p, out);
+		p.displayClientMessage(Component.translatable(ModLang.MSG_TEAR_OPEN), true);
+		CultivationManager.sync(p);
+	}
+
+	// --- Tears standing open (SpatialTearEntity) ---
+
+	/** How far before its opener a tear opens (the nearest of these with room), and how near one must come to step through it. */
+	private static final double[] TEAR_AHEAD = {2.2, 1.6, 1.0};
+	private static final double TEAR_REACH = 0.8, TEAR_HEIGHT = 2.6;
+
+	/**
+	 * A tear standing open, and where it leads: into the gap (from the Upper Realm or the Overworld, {@code fromUpper}), or out of it
+	 * to {@code to}, where its place leads there at {@code scale} (its opener's way home: GAP_SCALE, or a trial's own 1).
+	 */
+	private record Tear(UUID entity, ServerLevel level, UUID opener, boolean out, boolean fromUpper, ServerLevel to, int scale, Vec3 at, long until) {}
+
+	private static final List<Tear> TEARS = new ArrayList<>();
+
+	/** Opens {@code p}'s tear before them (closing any of theirs still open), its far side's land asked for at once. */
+	private static void openTear(ServerPlayer p, boolean out) {
+		ServerLevel level = p.serverLevel();
+		closeTears(p.getUUID());
+		Vec3 ahead = p.getLookAngle().multiply(1, 0, 1);
+		ahead = ahead.lengthSqr() < 1.0e-4 ? Vec3.directionFromRotation(0, p.getYRot()) : ahead.normalize();
+		Vec3 at = p.position();
+		for (double distance : TEAR_AHEAD) {
+			Vec3 spot = p.position().add(ahead.scale(distance));
+			BlockPos feet = BlockPos.containing(spot);
+			if (level.getBlockState(feet).getCollisionShape(level, feet).isEmpty() && level.getBlockState(feet.above()).getCollisionShape(level, feet.above()).isEmpty()) {
+				at = spot;
+				break;
+			}
+		}
+		PlayerCultivation c = CultivationManager.get(p);
+		ServerLevel to;
+		int scale = GAP_SCALE;
+		SpatialTearEntity.Leads leads;
 		if (out) {
-			// Back where one came from, never on into the other realm. One's own tear's gap is the world at GAP_SCALE; a trial's lies
-			// over the place it began, at the world's own scale (at GAP_SCALE, falling off an island and tearing out at once would
+			// Back where its opener came from, never on into the other realm. One's own tear's gap is the world at GAP_SCALE; a trial's
+			// lies over the place it began, at the world's own scale (at GAP_SCALE, falling off an island and tearing out at once would
 			// be a free leap twenty times as far).
 			Trial t = ACTIVE.get(p.getUUID());
 			Route route = t != null ? t.route : c.getPendingTrial();
-			int scale = route == Route.TRAVEL ? GAP_SCALE : 1;
-			ServerLevel to = p.server.getLevel(homeRealm(route, c.isGapFromUpper()));
-			leaveWhenReady(p.server, p, to == null ? p.server.overworld() : to, p.getX() * scale, p.getZ() * scale, Way.TEAR);
+			scale = route == Route.TRAVEL ? GAP_SCALE : 1;
+			ServerLevel home = p.server.getLevel(homeRealm(route, c.isGapFromUpper()));
+			to = home == null ? p.server.overworld() : home;
+			leads = to.dimension() == ModDimensions.UPPER_REALM ? SpatialTearEntity.Leads.UPPER_REALM : SpatialTearEntity.Leads.OVERWORLD;
+			SpatialArrivals.prepare(to, columnFor(to, at.x * scale, at.z * scale)); // loading while one steps toward it
 		} else {
-			c.setGapFromUpper(dimension == ModDimensions.UPPER_REALM);
-			c.setAbilityEnabled(Ability.SPATIAL_TEAR, true);
-			enterGap(p, Route.TRAVEL, p.getX() / GAP_SCALE, TEAR_IN_Y, p.getZ() / GAP_SCALE);
-			riftFx(p);
+			to = p.server.getLevel(ModDimensions.SPATIAL_GAP);
+			leads = SpatialTearEntity.Leads.GAP;
 		}
-		CultivationManager.sync(p);
+		// Its face turned to its opener.
+		SpatialTearEntity entity = SpatialTearEntity.create(level, at, p.getYRot() + 180, leads);
+		level.addFreshEntity(entity);
+		TEARS.add(new Tear(entity.getUUID(), level, p.getUUID(), out, level.dimension() == ModDimensions.UPPER_REALM, to, scale, at,
+				level.getGameTime() + SpatialTearEntity.LIFE - SpatialTearEntity.CLOSE_TICKS / 2));
+	}
+
+	/** Closes every tear {@code opener} has standing open. */
+	private static void closeTears(UUID opener) {
+		for (Iterator<Tear> it = TEARS.iterator(); it.hasNext(); ) {
+			Tear tear = it.next();
+			if (!tear.opener().equals(opener)) continue;
+			if (tear.level().getEntity(tear.entity()) instanceof SpatialTearEntity entity) entity.discard();
+			it.remove();
+		}
+	}
+
+	/** Each tick: whoever has stepped into a tear goes through it; a tear closing (or gone) is let go. */
+	private static void tickTears(MinecraftServer server) {
+		if (TEARS.isEmpty()) return;
+		for (Tear tear : new ArrayList<>(TEARS)) {
+			Entity entity = tear.level().getEntity(tear.entity());
+			if (!(entity instanceof SpatialTearEntity) || entity.isRemoved() || tear.level().getGameTime() >= tear.until() || tear.to() == null) {
+				TEARS.remove(tear);
+				continue;
+			}
+			net.minecraft.world.phys.AABB mouth = new net.minecraft.world.phys.AABB(tear.at().x - TEAR_REACH, tear.at().y - 0.2, tear.at().z - TEAR_REACH,
+					tear.at().x + TEAR_REACH, tear.at().y + TEAR_HEIGHT, tear.at().z + TEAR_REACH);
+			for (ServerPlayer walker : tear.level().getEntitiesOfClass(ServerPlayer.class, mouth)) walkInto(server, walker, tear);
+		}
+	}
+
+	/**
+	 * {@code walker} stepped into {@code tear}: through it into the gap's shallows, as one who flies the gap freely (a Heavenly
+	 * Being's tear carries anyone through, those who can't tear space themselves too: they come out by the crossing, the floor, or
+	 * a tear out opened for them); or out of the gap to where the tear leads. The dead, souls out of their bodies and those held
+	 * on their way out already don't pass.
+	 */
+	private static void walkInto(MinecraftServer server, ServerPlayer walker, Tear tear) {
+		if (!walker.isAlive() || walker.isSpectator() || SoulProjection.isActive(walker.getUUID()) || Incorporeal.isRuledGhost(walker) || isHeld(walker.getUUID())) return;
+		if (tear.out()) {
+			if (!ModDimensions.isSpatialGap(walker.level().dimension())) return;
+			leaveWhenReady(server, walker, tear.to(), tear.at().x * tear.scale(), tear.at().z * tear.scale(), Way.TEAR);
+			return;
+		}
+		if (ACTIVE.containsKey(walker.getUUID())) return;
+		PlayerCultivation c = CultivationManager.get(walker);
+		c.setGapFromUpper(tear.fromUpper());
+		c.setAbilityEnabled(Ability.SPATIAL_TEAR, true); // flying the gap freely (and the client shows its layers)
+		enterGap(walker, Route.TRAVEL, tear.at().x / GAP_SCALE, TEAR_IN_Y, tear.at().z / GAP_SCALE);
+		walker.fallDistance = 0;
+		CultivationManager.sync(walker);
+	}
+
+	/** Server stopped: no tear outlasts it. */
+	public static void clear() {
+		TEARS.clear();
+		HOLDS.clear();
+		AHEAD.clear();
 	}
 
 	/** The tear opening before the cultivator, for all to see, and its sound. */
@@ -488,6 +618,7 @@ public final class SpatialTrialHandler {
 
 	public static void tick(MinecraftServer server) {
 		if (server == null) return;
+		tickTears(server); // whoever stepped into a tear goes through (out of the levels' own ticking: safe to carry them off)
 		ServerLevel gap = server.getLevel(ModDimensions.SPATIAL_GAP);
 
 		// Drop trials for players who logged out (the route stays saved) or left the gap by other means.

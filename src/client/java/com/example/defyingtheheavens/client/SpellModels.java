@@ -19,6 +19,8 @@ import static com.example.defyingtheheavens.client.SpellRender.v;
  */
 public final class SpellModels {
 	private static final float[] WHITE = {1, 1, 1};
+	/** The qi about a spell's weapon: a sword's white-gold, a stake's green, a podao's amber. */
+	private static final float[] QI_LIGHT = {1.0f, 0.93f, 0.75f}, WOOD_QI = {0.45f, 1.0f, 0.5f}, EARTH_QI = {1.0f, 0.7f, 0.3f};
 
 	/**
 	 * A jian {@code length} long from its guard (at the origin) to its point (+z): a diamond-section blade of steel, a gold guard and
@@ -42,6 +44,15 @@ public final class SpellModels {
 			}
 		}
 		if (grow < 0.35f) return;
+		// The sword's qi about its blade: a soft glow along it, brightest at the edge, and a glint running up it.
+		VertexConsumer aura = buffers.getBuffer(SpellRender.glow(SpellRender.GLOW));
+		List<Vec3> spine = List.of(new Vec3(0, 0, 0), new Vec3(0, 0, l * 0.5), new Vec3(0, 0, l * 0.92), new Vec3(0, 0, l));
+		SpellRender.tube(aura, p, spine, new float[]{w * 1.3f, w * 1.2f, w * 0.8f, w * 0.15f}, 6, QI_LIGHT, 0.32f, 0.5f / Math.max(0.3f, l), 0,
+				SpellRender.FULL_BRIGHT, null);
+		VertexConsumer edge = buffers.getBuffer(SpellRender.glow(SpellRender.SPARK));
+		float glint = (float) ((System.currentTimeMillis() % 1400) / 1400.0);
+		SpellRender.quad(edge, p, v(-w * 0.6f, 0, l * glint - w), v(w * 0.6f, 0, l * glint - w), v(w * 0.6f, 0, l * glint + w), v(-w * 0.6f, 0, l * glint + w),
+				WHITE, 0.6f * Mth.sin((float) Math.PI * glint), 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
 		VertexConsumer gold = buffers.getBuffer(SpellRender.solid(SpellRender.GOLD));
 		float g = Math.min(1, (grow - 0.35f) / 0.4f);
 		SpellRender.box(gold, p, -w * 1.5f * g, -t * 1.3f, -0.03f, w * 1.5f * g, t * 1.3f, 0.03f, WHITE, 1, 0, 0, 1, 0.3f, light);
@@ -96,6 +107,15 @@ public final class SpellModels {
 		}
 		// The blade's root against the guard.
 		SpellRender.quad(mud, p, v(-half, tops[0], zs[0]), v(-half, bottoms[0], zs[0]), v(half, bottoms[0], zs[0]), v(half, tops[0], zs[0]), c, 1, 0, 0, 0.1f, 1, light);
+		// The earth's qi in it: an amber glow about the blade, and its edge lit like a seam of the earth's fire.
+		VertexConsumer aura = buffers.getBuffer(SpellRender.glow(SpellRender.GLOW));
+		List<Vec3> spine = List.of(new Vec3(0, -0.05 * s, 0.1 * s), new Vec3(0, -0.08 * s, 0.7 * s), new Vec3(0, -0.02 * s, 1.25 * s));
+		SpellRender.tube(aura, p, spine, new float[]{0.3f * s, 0.34f * s, 0.12f * s}, 6, EARTH_QI, 0.28f, 0.5f, 0, SpellRender.FULL_BRIGHT, null);
+		VertexConsumer seam = buffers.getBuffer(SpellRender.glow(SpellRender.GLOW));
+		for (int i = 0; i < steps; i++) {
+			SpellRender.quad(seam, p, v(half * 1.2f, bottoms[i] + 0.02f * s, zs[i]), v(half * 1.2f, bottoms[i] - 0.02f * s, zs[i]),
+					v(half * 1.2f, bottoms[i + 1] - 0.02f * s, zs[i + 1]), v(half * 1.2f, bottoms[i + 1] + 0.02f * s, zs[i + 1]), EARTH_QI, 0.8f, 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+		}
 	}
 
 	/** A stake of bark (its point toward +z), {@code length} long and {@code radius} thick at its foot. */
@@ -120,6 +140,10 @@ public final class SpellModels {
 			SpellRender.quad(bark, p, v(0, 0, -l / 2), v((float) Math.cos(a1) * r, (float) Math.sin(a1) * r, -l / 2), v((float) Math.cos(a0) * r, (float) Math.sin(a0) * r, -l / 2),
 					v(0, 0, -l / 2), wood, 1, 0.4f, 0.4f, 0.6f, 0.6f, light);
 		}
+		// The wood's qi in it: a green glow about the stake, brightest toward its point.
+		float[] glow = new float[radii.length];
+		for (int i = 0; i < radii.length; i++) glow[i] = radius * 2.2f * grow * (0.6f + 0.4f * i / (radii.length - 1f));
+		SpellRender.tube(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), pose.last(), points, glow, 6, WOOD_QI, 0.3f * grow, 0.5f, 0, SpellRender.FULL_BRIGHT, null);
 	}
 
 	/** A lumpy boulder of {@code radius} faced with {@code sprite} (a block's own texture), tumbling by {@code spin}. */

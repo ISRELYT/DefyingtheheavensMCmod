@@ -2,6 +2,7 @@ package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.SpellBlock;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
@@ -95,5 +96,23 @@ public class SpellBlockRenderer extends EntityRenderer<SpellBlock> {
 		pose.translate(-0.5, -0.5, -0.5);
 		blocks.renderSingleBlock(state, pose, buffers, light, OverlayTexture.NO_OVERLAY);
 		pose.popPose();
+		// Dust breaking off it where the ground gives it up (a wall rising, a pillar heaving up), and off a block crumbling away.
+		float age = block.tickCount + partial - block.delay();
+		boolean heaving = (block.motion() == SpellBlock.Motion.SLIDE || block.motion() == SpellBlock.Motion.RISE_AND_SINK) && t < 0.9f && age >= 0;
+		boolean crumbling = block.motion() == SpellBlock.Motion.CRUMBLE && t > 0.2f && t < 1;
+		if ((heaving || crumbling) && (block.getId() & 1) == 0) {
+			VertexConsumer dust = buffers.getBuffer(SpellRender.clear(SpellRender.DUST));
+			var facing = entityRenderDispatcher.cameraOrientation();
+			// A rising block breaks out of the ground where its way ends (the top of the block it rose from); a crumbling one, where it is.
+			Vec3 from = crumbling ? new Vec3(0, 0.4, 0) : travel.add(0, 0.1, 0);
+			for (int i = 0; i < 2; i++) {
+				long s = block.getId() * 7L + i + (long) (age / 4);
+				float f = (age % 4) / 4f;
+				SpellRender.billboard(dust, pose, facing, (float) from.x + (SpellRender.hash(s) - 0.5f) * 1.2f, (float) from.y + f * 0.6f,
+						(float) from.z + (SpellRender.hash(s + 1) - 0.5f) * 1.2f, 0.9f + f * 0.6f, i, DUST_TINT, 0.55f * (1 - f), 0, 0, 1, 1, light);
+			}
+		}
 	}
+
+	private static final float[] DUST_TINT = {0.85f, 0.78f, 0.68f};
 }

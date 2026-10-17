@@ -55,7 +55,13 @@ public final class SpellFx {
 		/** Leaves bursting out round a point (size). */
 		LEAVES,
 		/** A rock spike's dust and chips (size). */
-		ROCK_CHIPS;
+		ROCK_CHIPS,
+		/**
+		 * An element spell's casting seal (HeavenSpells#castSeal): its element's seal turning under the caster (a: its radius; b: the
+		 * element's ordinal + 16 x the spell's realm's), and, for one cast at something, a smaller one upright before them facing the
+		 * way (way: the look; zero for a spell on oneself).
+		 */
+		CAST_SEAL;
 
 		public static Kind byIndex(int index) {
 			return index >= 0 && index < values().length ? values()[index] : FLAME_BURST;

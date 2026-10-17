@@ -813,6 +813,12 @@ public class CultivationScreen extends Screen {
 			g.drawCenteredString(font, fit(WIDTH - 20, line, Component.translatable(ModLang.STATS_PHYSIQUE, physique.getDisplayName(),
 					physique.grade().getDisplayName())), cx, y, 0xE0E0E0);
 		}
+		// The sect they belong to, and their title in it (SectMembership, S2C sect_status).
+		if (ClientSect.member()) {
+			y += 11;
+			g.drawCenteredString(font, fit(WIDTH - 20, Component.translatable(ModLang.STATS_SECT, ClientSect.name(), ClientSect.title().getDisplayName()),
+					Component.literal(ClientSect.name())), cx, y, ClientSect.title().getColor());
+		}
 		y += 16;
 
 		int currentX = left + WIDTH - 14;

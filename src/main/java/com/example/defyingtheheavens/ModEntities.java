@@ -149,6 +149,16 @@ public final class ModEntities {
 					.clientTrackingRange(10)
 					.build("dirt_tide"));
 
+	/** A tear in space a Heavenly Being opens (see {@link SpatialTearEntity}): walked through, into the gap or out of it. */
+	public static final EntityType<SpatialTearEntity> SPATIAL_TEAR = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("spatial_tear"),
+			EntityType.Builder.<SpatialTearEntity>of(SpatialTearEntity::new, MobCategory.MISC)
+					.noSave().noSummon().fireImmune()
+					.sized(1.4f, 2.8f)
+					.clientTrackingRange(10)
+					.updateInterval(20)
+					.build("spatial_tear"));
+
 	/** Touching this class registers the entity types and their attributes. */
 	public static void register() {
 		FabricDefaultAttributeRegistry.register(CULTIVATOR, CultivatorNpc.createAttributes());

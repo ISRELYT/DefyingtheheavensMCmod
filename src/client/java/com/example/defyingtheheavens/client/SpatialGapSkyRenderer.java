@@ -32,8 +32,9 @@ public class SpatialGapSkyRenderer implements DimensionRenderingRegistry.SkyRend
 			RenderSystem.enableBlend();
 			RenderSystem.defaultBlendFunc();
 			float flash = SpatialGapAmbience.skyFlash(partialTick) * 0.5f;
-			SkyDome.drawGradient(poseStack.last().pose(), SkyDome.lerp(ZENITH, ZENITH_FLASH, flash),
-					SkyDome.lerp(HORIZON, HORIZON_FLASH, flash), SkyDome.lerp(NADIR, NADIR_FLASH, flash), 70.0f);
+			// Turned toward the stormy layer's colour where one flying the gap freely is (GapLayers).
+			SkyDome.drawGradient(poseStack.last().pose(), GapLayers.sky(SkyDome.lerp(ZENITH, ZENITH_FLASH, flash)),
+					GapLayers.sky(SkyDome.lerp(HORIZON, HORIZON_FLASH, flash)), GapLayers.sky(SkyDome.lerp(NADIR, NADIR_FLASH, flash)), 70.0f);
 
 			poseStack.pushPose();
 			poseStack.mulPose(Axis.YP.rotationDegrees(time * 0.02f));

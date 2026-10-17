@@ -68,7 +68,8 @@ public final class CoreDetonation {
 		ASKED.remove(id);
 		if (asked == null || now - asked > CONFIRM_TICKS) {
 			ASKED.put(id, now);
-			player.sendSystemMessage(Component.translatable(ModLang.MSG_CORE_CONFIRM, CONFIRM_TICKS / 20).withStyle(ChatFormatting.RED));
+			// Over the hotbar, never in chat (user's ask).
+			player.displayClientMessage(Component.translatable(ModLang.MSG_CORE_CONFIRM, CONFIRM_TICKS / 20).withStyle(ChatFormatting.RED), true);
 			player.level().playSound(null, player.blockPosition(), SoundEvents.BEACON_DEACTIVATE, SoundSource.PLAYERS, 1.0f, 0.6f);
 			return;
 		}
@@ -82,8 +83,13 @@ public final class CoreDetonation {
 		c.setAbilityEnabled(Ability.CORE_DETONATION, true);
 		CultivationManager.sync(player);
 		MeditationManager.stop(player, true);
-		player.serverLevel().getServer().getPlayerList().broadcastSystemMessage(
-				Component.translatable(ModLang.MSG_CORE_BREAKING, player.getDisplayName()).withStyle(ChatFormatting.GOLD), false);
+		// No word in chat (the user's ask): only those the blast could reach are warned, over their hotbar.
+		double warn = 2 * radius(c.getRealm(), c.getStage());
+		for (ServerPlayer near : player.serverLevel().players()) {
+			if (near != player && near.distanceToSqr(player) <= warn * warn) {
+				near.displayClientMessage(Component.translatable(ModLang.MSG_CORE_BREAKING, player.getDisplayName()).withStyle(ChatFormatting.GOLD), true);
+			}
+		}
 		player.level().playSound(null, player.blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 2.0f, 0.5f);
 	}
 

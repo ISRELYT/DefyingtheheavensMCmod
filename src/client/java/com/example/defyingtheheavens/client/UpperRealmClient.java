@@ -45,7 +45,7 @@ public final class UpperRealmClient {
 	/** Fog start/end fractions for a dimension, or null to keep vanilla fog. */
 	public static float[] fogFor(ResourceKey<Level> dimension) {
 		if (ModDimensions.isUpperRealm(dimension)) return UPPER_REALM_FOG;
-		if (ModDimensions.isSpatialGap(dimension)) return SPATIAL_GAP_FOG;
+		if (ModDimensions.isSpatialGap(dimension)) return GapLayers.fog(SPATIAL_GAP_FOG); // closer in its stormy layers
 		if (ModDimensions.isInnerRealm(dimension)) return INNER_REALM_FOG;
 		if (ModDimensions.isNetherworld(dimension)) return NETHERWORLD_FOG;
 		if (ModDimensions.isSoulRiver(dimension)) return SOUL_RIVER_FOG;
@@ -71,15 +71,17 @@ public final class UpperRealmClient {
 		}
 	}
 
-	/** No clouds, no ground, near-black fog. */
+	/** No clouds, no ground, near-black fog (tinted by the layer for one flying the gap freely: GapLayers). */
 	private static final class SpatialGapEffects extends DimensionSpecialEffects {
+		private static final Vec3 TRIAL_FOG = new Vec3(0.01, 0.005, 0.03);
+
 		SpatialGapEffects() {
 			super(Float.NaN, false, SkyType.NONE, false, false);
 		}
 
 		@Override
 		public Vec3 getBrightnessDependentFogColor(Vec3 fogColor, float brightness) {
-			return new Vec3(0.01, 0.005, 0.03);
+			return GapLayers.fogColour(TRIAL_FOG);
 		}
 
 		@Override

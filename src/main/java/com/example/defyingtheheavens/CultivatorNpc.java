@@ -1185,8 +1185,11 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 
 	// --- Allies and enemies ---
 
+	/** One of its own sect: a cultivator of it, or a player who is its disciple (SectMembership). */
 	public boolean isAlly(Entity other) {
-		return other instanceof CultivatorNpc npc && sectId != null && sectId.equals(npc.sectId);
+		if (sectId == null) return false;
+		if (other instanceof CultivatorNpc npc) return sectId.equals(npc.sectId);
+		return other instanceof ServerPlayer player && SectMembership.isDisciple(player.server, sectId, player.getUUID());
 	}
 
 	@Override
@@ -1618,6 +1621,9 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			if (attacker != null && lifecycle == Lifecycle.SECLUDED && isConcealed() && attacker instanceof ServerPlayer player) {
 				onConcealmentAssailed(player);
 			}
+			// One of its sect's players striking it (outside a spar: that returned above) is cast out first (SectMembership), and so
+			// is answered by the sect as anyone would be.
+			if (attacker instanceof ServerPlayer player && sectId != null) SectMembership.onFellowStruck(this, player);
 			if (attacker != null && sectId != null && !isAlly(attacker)) SectManager.onMemberAttacked(server, this, attacker);
 			if (attacker instanceof ServerPlayer player && !player.isCreative()) {
 				// Striking it costs its regard, once a fight (blows in quick succession count as one).

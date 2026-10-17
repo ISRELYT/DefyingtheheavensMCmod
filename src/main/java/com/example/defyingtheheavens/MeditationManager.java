@@ -225,9 +225,13 @@ public final class MeditationManager {
 				* heldAndTaught(p);
 	}
 
-	/** A spirit stone in hand (SpiritStoneItem) and a teacher's Insight (TalkSystem guidance), each speeding the gain. */
+	/**
+	 * A spirit stone in hand (SpiritStoneItem), a teacher's Insight (TalkSystem guidance) and one's own sect's grounds
+	 * (SectMembership#groundsMultiplier), each speeding the gain.
+	 */
 	private static double heldAndTaught(ServerPlayer p) {
-		return SpiritStoneItem.meditationMultiplier(p) * (p.hasEffect(ModEffects.INSIGHT) ? 1.0 + ModEffects.INSIGHT_BONUS : 1.0);
+		return SpiritStoneItem.meditationMultiplier(p) * (p.hasEffect(ModEffects.INSIGHT) ? 1.0 + ModEffects.INSIGHT_BONUS : 1.0)
+				* SectMembership.groundsMultiplier(p);
 	}
 
 	private static boolean stillValid(ServerPlayer p, Session s) {

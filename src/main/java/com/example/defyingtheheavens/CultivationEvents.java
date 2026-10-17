@@ -54,6 +54,7 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(RealmSuppressSystem::tick);
 		ServerTickEvents.END_SERVER_TICK.register(Formations::tick);
 		ServerTickEvents.END_SERVER_TICK.register(SectManager::tick);
+		ServerTickEvents.END_SERVER_TICK.register(SectMembership::tick); // disciples told of their title as it changes
 		ServerTickEvents.END_SERVER_TICK.register(NpcSpawner::tick);
 		ServerTickEvents.END_SERVER_TICK.register(RogueIndex::tick);
 		ServerTickEvents.END_SERVER_TICK.register(NpcTravel::tick);
@@ -121,6 +122,8 @@ public final class CultivationEvents {
 			PalaceTreasury.clear();
 			Spells.clear();
 			CoreDetonation.clear();
+			SectMembership.clear();
+			SpatialTrialHandler.clear();
 		});
 
 		// A formation's shell runs through the ground too: those who couldn't break the barrier can't dig under it either.
@@ -131,6 +134,14 @@ public final class CultivationEvents {
 			if (!(state.getBlock() instanceof SectBarrierBlock) && Formations.protectsGround(sp, pos)) return false;
 			// A spell's block (a wall, a tree, a field's ice) is taken up, dropping nothing: spells are no quarry.
 			if (HeavenSpells.breakTemporary(level, pos)) return false;
+			// One's own sect's grounds (SectMembership): no trespass; its treasury the elders' alone.
+			Sect own = ownSect(level, sp, pos);
+			if (own != null) {
+				if (!own.treasury.isInside(pos)) return true;
+				SectMembership.TreasuryTouch touch = SectMembership.treasury(sp, own);
+				if (touch == SectMembership.TreasuryTouch.ALLOWED) return true;
+				if (touch == SectMembership.TreasuryTouch.REFUSED) return false;
+			}
 			SectManager.onTrespass(level, sp, pos);
 			// The treasury's seal holds while its elders keep it: nothing in it breaks (a chest broken would spill all it holds).
 			Sect sealed = sp.isCreative() ? null : SectManager.sealedTreasuryAt(level, pos);
@@ -153,6 +164,16 @@ public final class CultivationEvents {
 			if (PalaceTreasury.isTreasury(level, pos)) {
 				if (hand != InteractionHand.MAIN_HAND) return PalaceTreasury.sealed(level, pos) ? InteractionResult.FAIL : InteractionResult.PASS;
 				return PalaceTreasury.touch(level, sp, pos) ? InteractionResult.PASS : InteractionResult.FAIL;
+			}
+			// One's own sect's (SectMembership): its things are one's own to use, but its treasury is the elders' alone (a warning,
+			// then cast out, then theft as anyone's).
+			Sect own = ownSect(level, sp, pos);
+			if (own != null) {
+				if (!own.treasury.isInside(pos)) return InteractionResult.PASS;
+				if (hand != InteractionHand.MAIN_HAND) return SectMembership.isElder(own, sp) ? InteractionResult.PASS : InteractionResult.FAIL;
+				SectMembership.TreasuryTouch touch = SectMembership.treasury(sp, own);
+				if (touch == SectMembership.TreasuryTouch.ALLOWED) return InteractionResult.PASS;
+				if (touch == SectMembership.TreasuryTouch.REFUSED) return InteractionResult.FAIL;
 			}
 			// The attempt still raises the alarm (once a click), but while the treasury's elders keep it, its chests and pedestals
 			// stay shut, from either hand; one a realm above them breaks the seal with this touch, and opens it with the next.
@@ -204,6 +225,7 @@ public final class CultivationEvents {
 			MeditationManager.forget(handler.getPlayer().getUUID());
 			TribulationManager.forget(handler.getPlayer().getUUID());
 			SpatialTrialHandler.forget(handler.getPlayer().getUUID());
+			SectMembership.forget(handler.getPlayer().getUUID());
 			SoulRiver.forget(handler.getPlayer().getUUID());
 			NetherworldManager.forget(handler.getPlayer().getUUID());
 			GhostSystem.forget(handler.getPlayer().getUUID());
@@ -337,6 +359,12 @@ public final class CultivationEvents {
 			if (player instanceof ServerPlayer sp) SoulProjection.hostAttack(sp, entity);
 			return InteractionResult.FAIL;
 		});
+	}
+
+	/** The sect whose grounds {@code pos} lies in, if {@code player} is one of its disciples (SectMembership); else null. */
+	private static Sect ownSect(ServerLevel level, ServerPlayer player, BlockPos pos) {
+		Sect sect = SectManager.sectAt(level, pos);
+		return sect != null && sect.disciples.containsKey(player.getUUID()) ? sect : null;
 	}
 
 	/** "A seal of <realm> holds it shut": what a sealed treasury tells one who can't break its seal (SectManager#treasurySeal). */

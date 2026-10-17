@@ -384,6 +384,15 @@ public final class ModLang {
 	/** A sect's treasury held shut while its elders keep it (SectManager#treasurySeal): the seal's realm; and broken. */
 	public static final String MSG_TREASURY_SEALED = k("message.treasury_sealed");
 	public static final String MSG_TREASURY_SEAL_BROKEN = k("message.treasury_seal_broken");
+	/** Players in sects (SectMembership): joined, left, cast out (and why), a warning at the treasury, a new title; the Stats line. */
+	public static final String MSG_SECT_JOINED = k("message.sect.joined");
+	public static final String MSG_SECT_LEFT = k("message.sect.left");
+	public static final String MSG_SECT_EXPELLED = k("message.sect.expelled");
+	public static final String MSG_SECT_EXPELLED_TREASURY = k("message.sect.expelled.treasury");
+	public static final String MSG_SECT_EXPELLED_VIOLENCE = k("message.sect.expelled.violence");
+	public static final String MSG_SECT_TREASURY_WARNING = k("message.sect.treasury_warning");
+	public static final String MSG_SECT_TITLE = k("message.sect.title");
+	public static final String STATS_SECT = k("stats.sect");
 	/** A ghost palace's treasury (PalaceTreasury): its king's seal holding, or broken. */
 	public static final String MSG_PALACE_SEALED = k("message.palace_sealed");
 	public static final String MSG_PALACE_SEAL_BROKEN = k("message.palace_seal_broken");
@@ -624,6 +633,7 @@ public final class ModLang {
 	public static final String MSG_GAP_TRAVEL_LOWER = k("message.spatial_gap.travel_lower");
 	public static final String MSG_GAP_SETTLING = k("message.spatial_gap.settling");
 	public static final String MSG_TEAR_COOLING = k("message.spatial_tear.cooling");
+	public static final String MSG_TEAR_OPEN = k("message.spatial_tear.open");
 	public static final String MSG_TEAR_NOT_HERE = k("message.spatial_tear.not_here");
 	public static final String MSG_TEAR_NO_QI = k("message.spatial_tear.no_qi");
 	public static final String MSG_TEAR_OUT = k("message.spatial_tear.out");

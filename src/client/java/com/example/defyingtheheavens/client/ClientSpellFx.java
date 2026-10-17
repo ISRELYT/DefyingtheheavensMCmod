@@ -32,7 +32,8 @@ public final class ClientSpellFx {
 	private static final float[] FIRE_CORE = {1.0f, 0.93f, 0.7f}, FIRE_MID = {1.0f, 0.55f, 0.15f}, FIRE_OUTER = {0.95f, 0.22f, 0.06f};
 	private static final float[] WATER = {0.7f, 0.88f, 1.0f}, ICE = {0.75f, 0.92f, 1.0f}, LIFE = {0.35f, 1.0f, 0.45f}, GOLD = {1.0f, 0.82f, 0.4f};
 
-	private record Moment(SpellFx.Kind kind, Vec3 at, Vec3 way, float a, float b, long start, int life, long seed) {}
+	/** One moment; {@code own}: at the viewer's own feet when it came (their own cast's seal). */
+	private record Moment(SpellFx.Kind kind, Vec3 at, Vec3 way, float a, float b, long start, int life, long seed, boolean own) {}
 
 	private static final List<Moment> MOMENTS = new ArrayList<>();
 	/** The view's shaking now (0 none), set by blows near and quakes underfoot. */
@@ -43,7 +44,8 @@ public final class ClientSpellFx {
 		Minecraft mc = Minecraft.getInstance();
 		if (mc.level == null) return;
 		long now = mc.level.getGameTime();
-		MOMENTS.add(new Moment(kind, at, way, a, b, now, lifeOf(kind, a), mc.level.random.nextLong()));
+		boolean own = kind == SpellFx.Kind.CAST_SEAL && mc.player != null && mc.player.position().distanceToSqr(at) < 1.0;
+		MOMENTS.add(new Moment(kind, at, way, a, b, now, lifeOf(kind, a), mc.level.random.nextLong(), own));
 		// Big blows shake the view of those near.
 		if (mc.player != null) {
 			double d = mc.player.position().distanceTo(at);
@@ -69,6 +71,7 @@ public final class ClientSpellFx {
 			case STREAK, LIFE_MOTES -> 14;
 			case CORE_DETONATION -> 60;
 			case RIFT_TEAR -> 30;
+			case CAST_SEAL -> 36;
 		};
 	}
 
@@ -113,20 +116,22 @@ public final class ClientSpellFx {
 		long now = mc.level.getGameTime();
 		Quaternionf facing = context.camera().rotation();
 		PoseStack pose = context.matrixStack();
-		MultiBufferSource.BufferSource own = context.consumers() == null ? mc.renderBuffers().bufferSource() : null;
-		MultiBufferSource buffers = own != null ? own : context.consumers();
-		for (Iterator<Moment> it = List.copyOf(MOMENTS).iterator(); it.hasNext(); ) {
-			Moment m = it.next();
-			float age = now - m.start() + partial;
-			if (age < 0 || age > m.life()) continue;
-			float t = age / m.life();
-			pose.pushPose();
-			pose.translate(m.at().x - cam.x, m.at().y - cam.y, m.at().z - cam.z);
-			Vec3 eye = cam.subtract(m.at());
-			draw(m, pose, buffers, facing, eye, age, t);
-			pose.popPose();
+		MultiBufferSource buffers = SpellBuffers.begin(context.consumers() == null ? mc.renderBuffers().bufferSource() : context.consumers());
+		try {
+			for (Iterator<Moment> it = List.copyOf(MOMENTS).iterator(); it.hasNext(); ) {
+				Moment m = it.next();
+				float age = now - m.start() + partial;
+				if (age < 0 || age > m.life()) continue;
+				float t = age / m.life();
+				pose.pushPose();
+				pose.translate(m.at().x - cam.x, m.at().y - cam.y, m.at().z - cam.z);
+				Vec3 eye = cam.subtract(m.at());
+				draw(m, pose, buffers, facing, eye, age, t);
+				pose.popPose();
+			}
+		} finally {
+			SpellBuffers.end();
 		}
-		if (own != null) own.endBatch();
 	}
 
 	private static float h(long seed) {
@@ -191,6 +196,10 @@ public final class ClientSpellFx {
 					SpellRender.disc(ring, pose.last(), 1.0f + t * 2.5f, 0, 0, GOLD, (1 - t) * 0.8f, SpellRender.FULL_BRIGHT);
 					pose.popPose();
 				}
+				// The toll rung out through the bell: its gold flaring and the metal's seal ringing out under it.
+				glow(buffers, pose, facing, new Vec3(0, 1, 0), 3.2f * (1 - t * 0.5f), GOLD, 0.5f * (1 - t));
+				SpellRender.disc(buffers.getBuffer(SpellRender.glow(SpellRender.SEAL_METAL)), pose.last(), 1.3f + t * 1.8f, 0.05f, t * 2, GOLD, 0.6f * (1 - t),
+						SpellRender.FULL_BRIGHT);
 			}
 			case BELL_SHATTER -> {
 				VertexConsumer gold = buffers.getBuffer(SpellRender.solid(SpellRender.GOLD));
@@ -243,6 +252,18 @@ public final class ClientSpellFx {
 					Vec3 p = dir(seed + 60 + i, true).scale(size * 0.5 * (0.5 + t));
 					SpellRender.billboard(dust, pose, facing, (float) p.x, (float) p.y, (float) p.z, size * (1 + t), i, WHITE, 0.7f * (1 - t), 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
 				}
+				if (m.kind() == SpellFx.Kind.EARTH_BURST) {
+					// A ring of dust and the earth's glow running out over the ground.
+					SpellRender.disc(buffers.getBuffer(SpellRender.glow(SpellRender.RING)), pose.last(), size * 1.6f * SpellRender.easeOut(t), 0.1f, 0,
+							new float[]{0.85f, 0.6f, 0.3f}, 0.6f * (1 - t), SpellRender.FULL_BRIGHT);
+					VertexConsumer ringDust = buffers.getBuffer(SpellRender.clear(SpellRender.DUST));
+					for (int i = 0; i < 12; i++) {
+						double a = Math.PI * 2 * i / 12 + h(seed + i);
+						float d = size * 1.5f * SpellRender.easeOut(t);
+						SpellRender.billboard(ringDust, pose, facing, (float) Math.cos(a) * d, 0.35f, (float) Math.sin(a) * d, size * 0.6f + 0.6f, i, WHITE, 0.5f * (1 - t),
+								0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+					}
+				}
 			}
 			case SPLINTERS, THORNS_BREAK -> {
 				VertexConsumer bark = buffers.getBuffer(SpellRender.solid(SpellRender.BARK));
@@ -268,11 +289,20 @@ public final class ClientSpellFx {
 							SpellRender.FULL_BRIGHT);
 				}
 				glow(buffers, pose, facing, Vec3.ZERO, 1.6f * size, new float[]{1.0f, 0.95f, 0.8f}, (1 - t) * (1 - t));
+				if (t < 0.4f) SpellRender.billboard(buffers.getBuffer(SpellRender.glow(SpellRender.STAR)), pose, facing, 0, 0, 0, 1.4f * size, seed % 7, WHITE,
+						1 - t / 0.4f, 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
 			}
 			case SHOCKWAVE -> {
 				VertexConsumer ring = buffers.getBuffer(SpellRender.glow(SpellRender.RING));
 				float r = size * SpellRender.easeOut(t);
-				SpellRender.disc(ring, pose.last(), r, 0.15f, 0, new float[]{1.0f, 0.95f, 0.85f}, 0.7f * (1 - t), SpellRender.FULL_BRIGHT);
+				float[] pale = {1.0f, 0.95f, 0.85f};
+				SpellRender.disc(ring, pose.last(), r, 0.15f, 0, pale, 0.7f * (1 - t), SpellRender.FULL_BRIGHT);
+				// A second, slower ring behind the first, a wall of force standing up off the front, a flash where it began.
+				float t2 = Math.max(0, t - 0.2f) / 0.8f;
+				if (t2 > 0) SpellRender.disc(ring, pose.last(), size * 0.7f * SpellRender.easeOut(t2), 0.12f, 0, pale, 0.45f * (1 - t2), SpellRender.FULL_BRIGHT);
+				SpellRender.cylinder(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), pose.last(), 1.6f * (1 - t) + 0.2f, h0 -> r, 2, 32, pale, 0.3f * (1 - t), 1, 1,
+						0, 0, 0, SpellRender.FULL_BRIGHT, h0 -> 1 - h0);
+				if (t < 0.25f) glow(buffers, pose, facing, new Vec3(0, 0.5, 0), size * 0.8f, WHITE, 1 - t / 0.25f);
 				VertexConsumer dust = buffers.getBuffer(SpellRender.clear(SpellRender.DUST));
 				for (int i = 0; i < 20; i++) {
 					double a = Math.PI * 2 * i / 20;
@@ -285,6 +315,8 @@ public final class ClientSpellFx {
 				float[] rgb = c == 0 ? WHITE : SpellRender.rgb(c);
 				glow(buffers, pose, facing, Vec3.ZERO, size * 4 * (0.6f + t), rgb, (1 - t) * (1 - t));
 				SpellRender.billboard(buffers.getBuffer(SpellRender.glow(SpellRender.SPARK)), pose, facing, 0, 0, 0, size * 8, size * 8, 0, rgb, (1 - t) * 0.7f,
+						0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+				SpellRender.billboard(buffers.getBuffer(SpellRender.glow(SpellRender.STAR)), pose, facing, 0, 0, 0, size * 5 * (0.5f + t), age * 0.04f, WHITE, (1 - t),
 						0, 0, 1, 1, SpellRender.FULL_BRIGHT);
 			}
 			case FIRE_EXPLOSION -> explosion(m, pose, buffers, facing, eye, age, t, size, seed, false);
@@ -342,11 +374,19 @@ public final class ClientSpellFx {
 				}
 				VertexConsumer mist = buffers.getBuffer(SpellRender.clear(SpellRender.MIST));
 				SpellRender.billboard(mist, pose, facing, 0, 0, 0, size * 2 * (1 + t), age * 0.02f, ICE, 0.6f * (1 - t), 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+				VertexConsumer glints = buffers.getBuffer(SpellRender.glow(SpellRender.STAR));
+				for (int i = 0; i < 6; i++) {
+					Vec3 p = flung(dir(seed + 30 + i, false).scale(0.18 * size), age, 0.02f);
+					float tw = Mth.sin(age * 0.6f + i * 2);
+					if (tw > 0.3f) SpellRender.billboard(glints, pose, facing, (float) p.x, (float) p.y, (float) p.z, 0.45f, i, WHITE, (tw - 0.3f) * (1 - t), 0, 0, 1, 1,
+							SpellRender.FULL_BRIGHT);
+				}
 			}
 			case RIPPLE -> {
 				VertexConsumer ring = buffers.getBuffer(SpellRender.clear(SpellRender.RIPPLE));
 				SpellRender.disc(ring, pose.last(), size * (0.3f + t * 1.6f), 0.03f, 0, WHITE, 0.8f * (1 - t), SpellRender.FULL_BRIGHT);
 			}
+			case CAST_SEAL -> castSeal(m, pose, buffers, facing, age, t);
 			case RIFT_TEAR -> {
 				float open = SpellRender.easeOut(Math.min(1, t * 2));
 				pose.pushPose();
@@ -360,6 +400,69 @@ public final class ClientSpellFx {
 				pose.popPose();
 				glow(buffers, pose, facing, new Vec3(0, 1.5, 0), 4 * size * open, new float[]{0.6f, 0.4f, 1.0f}, (1 - t) * 0.6f);
 			}
+		}
+	}
+
+	/**
+	 * An element spell's casting seal (HeavenSpells#castSeal): the element's seal (its character within the trigrams and the star of
+	 * the five) blooming out under the caster and turning, the plain rune turning the other way inside it, a ring of light at its rim
+	 * and motes rising off it; from Core Formation a faint pillar of light over it as well, larger and brighter by the realm. A spell
+	 * cast at something has a smaller seal upright before the caster's chest, facing the way, flaring as the spell goes.
+	 */
+	private static void castSeal(Moment m, PoseStack pose, MultiBufferSource buffers, Quaternionf facing, float age, float t) {
+		int code = (int) m.b();
+		com.example.defyingtheheavens.QiElement element = com.example.defyingtheheavens.QiElement.values()[Math.floorMod(code % 16, 6)];
+		int realm = code / 16;
+		float radius = m.a() <= 0 ? 1.5f : m.a();
+		float[] light = SpellRender.light(element);
+		float bloom = SpellRender.easeOut(Math.min(1, age / 7f));
+		float fade = Mth.clamp((m.life() - age) / 14f, 0, 1);
+		float alpha = fade * (0.75f + 0.25f * Mth.sin(age * 0.6f));
+		float spin = age * (0.045f + 0.01f * realm);
+		pose.pushPose();
+		pose.translate(0, 0.06f, 0);
+		SpellRender.disc(buffers.getBuffer(SpellRender.glow(SpellRender.seal(element))), pose.last(), radius * bloom, 0, spin, light, alpha, SpellRender.FULL_BRIGHT);
+		SpellRender.disc(buffers.getBuffer(SpellRender.glow(SpellRender.RUNE)), pose.last(), radius * 0.55f * bloom, 0.01f, -spin * 1.6f, light, alpha * 0.7f,
+				SpellRender.FULL_BRIGHT);
+		SpellRender.disc(buffers.getBuffer(SpellRender.glow(SpellRender.RING)), pose.last(), radius * 1.12f * bloom, 0.02f, spin, light, alpha * 0.6f, SpellRender.FULL_BRIGHT);
+		pose.popPose();
+		// Motes rising off its rim, more of them for a deeper realm.
+		VertexConsumer motes = buffers.getBuffer(SpellRender.glow(SpellRender.STAR));
+		int count = 10 + realm * 4;
+		for (int i = 0; i < count; i++) {
+			float a = i * Mth.TWO_PI / count + spin * 0.6f;
+			float rise = ((age * 0.045f + h(m.seed() + i)) % 1f);
+			float r = radius * bloom * (0.92f + 0.12f * h(m.seed() + i + 99));
+			float size = (0.16f + 0.05f * realm) * (1 - rise * 0.6f);
+			SpellRender.billboard(motes, pose, facing, Mth.cos(a) * r, 0.1f + rise * radius * 0.9f, Mth.sin(a) * r, size, a, light, alpha * (1 - rise), 0, 0, 1, 1,
+					SpellRender.FULL_BRIGHT);
+		}
+		// From Core Formation, a pillar of the element's light over the seal.
+		if (realm >= 2) {
+			float tall = radius * (0.6f + 0.25f * realm) * bloom;
+			SpellRender.cylinder(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), pose.last(), tall, h0 -> radius * bloom * (1 - 0.15f * h0), 1, 32, light,
+					alpha * (0.10f + 0.03f * realm), 1, 1, 0, 0, 0, SpellRender.FULL_BRIGHT, h0 -> 1 - h0);
+		}
+		// Cast at something: the hand's seal, upright before the chest, facing the way, flaring as the spell leaves it. One's own, seen
+		// through one's own eyes, is smaller, fainter and lower and soon gone, so it frames the view rather than hiding what was cast at.
+		Vec3 way = m.way();
+		if (way.lengthSqr() > 1.0e-4) {
+			boolean eyes = m.own() && Minecraft.getInstance().options.getCameraType().isFirstPerson();
+			Vec3 dir = way.normalize();
+			float yaw = (float) Math.atan2(dir.x, dir.z), pitch = (float) Math.asin(Mth.clamp(dir.y, -1, 1));
+			float flare = 1 + 0.35f * Math.max(0, 1 - age / 6f);
+			double reach = eyes ? 1.5 : 1.1, height = eyes ? 0.95 : 1.35;
+			float shown = eyes ? alpha * 0.45f * Mth.clamp(1 - (age - 4) / 10f, 0, 1) : alpha;
+			Vec3 centre = new Vec3(dir.x * reach, height + dir.y * reach, dir.z * reach);
+			pose.pushPose();
+			pose.translate(centre.x, centre.y, centre.z);
+			pose.mulPose(Axis.YP.rotation(yaw));
+			pose.mulPose(Axis.XP.rotation(-pitch + (float) Math.PI / 2));
+			float handRadius = (0.45f + 0.18f * realm) * bloom * flare * (eyes ? 0.45f : 1);
+			SpellRender.disc(buffers.getBuffer(SpellRender.glow(SpellRender.seal(element))), pose.last(), handRadius, 0, -spin * 2, light, shown, SpellRender.FULL_BRIGHT);
+			SpellRender.disc(buffers.getBuffer(SpellRender.glow(SpellRender.RING)), pose.last(), handRadius * 1.15f, 0.01f, spin, light, shown * 0.5f, SpellRender.FULL_BRIGHT);
+			pose.popPose();
+			glow(buffers, pose, facing, centre, handRadius * 1.6f, light, shown * 0.35f * flare);
 		}
 	}
 
@@ -405,6 +508,18 @@ public final class ClientSpellFx {
 		embers(buffers, pose, facing, seed, age, t, size * 0.8f, core ? 40 : 20, mid);
 		VertexConsumer ring = buffers.getBuffer(SpellRender.glow(SpellRender.RING));
 		SpellRender.disc(ring, pose.last(), size * 2.2f * SpellRender.easeOut(t), -size * 0.3f + 0.2f, 0, mid, 0.7f * (1 - t), SpellRender.FULL_BRIGHT);
+		float t2 = Math.max(0, t - 0.15f) / 0.85f;
+		if (t2 > 0) SpellRender.disc(ring, pose.last(), size * 3.4f * SpellRender.easeOut(t2), -size * 0.3f + 0.25f, 0, outer, 0.45f * (1 - t2), SpellRender.FULL_BRIGHT);
+		if (core) {
+			// A core's: a column of gold light standing up out of it into the sky, and the fire's and metal's seals blazing under it.
+			float column = SpellRender.easeOut(Math.min(1, t * 4)) * fade;
+			SpellRender.cylinder(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), pose.last(), size * 9 * column, h0 -> Math.min(5, size * 0.18f) * (1 - 0.4f * h0), 4,
+					16, hot, 0.45f * column, 1, 1, 0, 0, 0, SpellRender.FULL_BRIGHT, h0 -> 1 - h0);
+			SpellRender.disc(buffers.getBuffer(SpellRender.glow(SpellRender.SEAL_METAL)), pose.last(), size * 1.8f * grow, -size * 0.3f + 0.3f, age * 0.05f, GOLD,
+					0.8f * fade, SpellRender.FULL_BRIGHT);
+			SpellRender.disc(buffers.getBuffer(SpellRender.glow(SpellRender.SEAL_FIRE)), pose.last(), size * 1.1f * grow, -size * 0.3f + 0.32f, -age * 0.07f, hot,
+					0.7f * fade, SpellRender.FULL_BRIGHT);
+		}
 		VertexConsumer smoke = buffers.getBuffer(SpellRender.clear(SpellRender.SMOKE));
 		for (int i = 0; i < (core ? 18 : 10); i++) {
 			Vec3 p = dir(seed + 500 + i, true).scale(size * (0.4 + t)).add(0, age * (core ? 0.12 : 0.05), 0);

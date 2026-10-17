@@ -36,8 +36,15 @@ public final class SpellAuraWorld {
 		float partial = context.tickDelta();
 		Quaternionf facing = context.camera().rotation();
 		PoseStack pose = context.matrixStack();
-		MultiBufferSource.BufferSource own = context.consumers() == null ? mc.renderBuffers().bufferSource() : null;
-		MultiBufferSource buffers = own != null ? own : context.consumers();
+		MultiBufferSource buffers = SpellBuffers.begin(context.consumers() == null ? mc.renderBuffers().bufferSource() : context.consumers());
+		try {
+			draw(mc, buffers, pose, cam, partial, facing);
+		} finally {
+			SpellBuffers.end();
+		}
+	}
+
+	private static void draw(Minecraft mc, MultiBufferSource buffers, PoseStack pose, Vec3 cam, float partial, Quaternionf facing) {
 		for (Map.Entry<Integer, EnumMap<SpellAura, long[]>> entry : List.copyOf(ClientSpellAuras.all().entrySet())) {
 			Entity entity = mc.level.getEntity(entry.getKey());
 			if (!(entity instanceof LivingEntity e) || e.isInvisible()) continue;
@@ -65,9 +72,9 @@ public final class SpellAuraWorld {
 			if (breathing > 0) breathing(pose, buffers, facing, e, age, breathing);
 			float emerald = ClientSpellAuras.shown(e, SpellAura.EMERALD_HEALING, partial, 8, 20);
 			if (emerald > 0) leavesRising(pose, buffers, facing, e, age, emerald);
+			wards(pose, buffers, facing, eye, e, partial, age);
 			pose.popPose();
 		}
-		if (own != null) own.endBatch();
 	}
 
 	/**
@@ -164,7 +171,10 @@ public final class SpellAuraWorld {
 		}
 	}
 
-	/** Phoenix Nirvana: faint wings of fire folded at the caster's back, stirring, waiting to rise. */
+	/**
+	 * Phoenix Nirvana: wings of fire folded at the caster's back, two ranks of feathers burning gold to crimson, stirring, a glow of
+	 * fire between them and embers drifting off their tips, waiting to rise.
+	 */
 	private static void wings(PoseStack pose, MultiBufferSource buffers, LivingEntity e, float partial, float age, float shown) {
 		float yaw = Mth.rotLerp(partial, e.yBodyRotO, e.yBodyRot);
 		VertexConsumer feathers = buffers.getBuffer(SpellRender.glow(SpellRender.FEATHER));
@@ -173,17 +183,31 @@ public final class SpellAuraWorld {
 		pose.mulPose(Axis.YP.rotationDegrees(180 - yaw));
 		pose.translate(0, 0, 0.2f);
 		float stir = Mth.sin(age * 0.08f) * 6;
+		float[] inner = {1.0f, 0.85f, 0.45f}, outer = {1.0f, 0.4f, 0.15f};
 		for (int side = -1; side <= 1; side += 2) {
-			for (int f = 0; f < 6; f++) {
-				pose.pushPose();
-				pose.translate(side * 0.15f, 0, 0);
-				pose.mulPose(Axis.ZP.rotationDegrees(side * (20 + f * 14 + stir)));
-				PoseStack.Pose p = pose.last();
-				float len = 0.7f + f * 0.1f, w = 0.22f;
-				SpellRender.quad(feathers, p, SpellRender.v(-w / 2, 0, 0), SpellRender.v(w / 2, 0, 0), SpellRender.v(w / 2, len, 0), SpellRender.v(-w / 2, len, 0),
-						WHITE, 0.55f * shown, 0, 1, 1, 0, SpellRender.FULL_BRIGHT);
-				pose.popPose();
+			for (int rank = 0; rank < 2; rank++) {
+				for (int f = 0; f < 7; f++) {
+					pose.pushPose();
+					pose.translate(side * 0.15f, 0, rank * 0.03f);
+					pose.mulPose(Axis.ZP.rotationDegrees(side * (16 + f * 13 + stir * (1 + f * 0.1f)) + side * rank * 6));
+					PoseStack.Pose p = pose.last();
+					float len = (rank == 0 ? 0.8f : 0.55f) + f * 0.12f, w = rank == 0 ? 0.26f : 0.2f;
+					SpellRender.quad(feathers, p, SpellRender.v(-w / 2, 0, 0), SpellRender.v(w / 2, 0, 0), SpellRender.v(w / 2, len, 0), SpellRender.v(-w / 2, len, 0),
+							rank == 0 ? outer : inner, 0.85f * shown, 0, 1, 1, 0, SpellRender.FULL_BRIGHT);
+					pose.popPose();
+				}
 			}
+		}
+		SpellRender.quad(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), pose.last(), SpellRender.v(-1.4f, -0.6f, 0.05f), SpellRender.v(1.4f, -0.6f, 0.05f),
+				SpellRender.v(1.4f, 1.6f, 0.05f), SpellRender.v(-1.4f, 1.6f, 0.05f), outer, 0.3f * shown * (0.85f + 0.15f * Mth.sin(age * 0.2f)), 0, 0, 1, 1,
+				SpellRender.FULL_BRIGHT);
+		VertexConsumer embers = buffers.getBuffer(SpellRender.glow(SpellRender.SPARK));
+		for (int i = 0; i < 10; i++) {
+			long s = e.getId() * 37L + i;
+			float t = (age * 0.03f + SpellRender.hash(s)) % 1;
+			float x = (SpellRender.hash(s + 1) - 0.5f) * 2.4f, y = 0.4f + SpellRender.hash(s + 2) * 0.9f + t * 0.8f;
+			SpellRender.quad(embers, pose.last(), SpellRender.v(x - 0.06f, y - 0.06f, 0.1f), SpellRender.v(x + 0.06f, y - 0.06f, 0.1f), SpellRender.v(x + 0.06f, y + 0.06f, 0.1f),
+					SpellRender.v(x - 0.06f, y + 0.06f, 0.1f), inner, shown * (1 - t), 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
 		}
 		pose.popPose();
 	}
@@ -250,6 +274,138 @@ public final class SpellAuraWorld {
 			double a = SpellRender.hash(s + 1) * Math.PI * 2 + t * 3;
 			SpellRender.billboard(leaves, pose, facing, (float) Math.cos(a) * w, t * h * 1.2f, (float) Math.sin(a) * w, 0.22f, age * 0.1f + i, LIFE,
 					shown * Mth.sin((float) Math.PI * t), 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+		}
+	}
+
+	/** Each ward or body art a being is under, and the element whose seal turns at its feet. */
+	private static final SpellAura[] WARDS = {SpellAura.HARDENED_BODY, SpellAura.MOUNTAIN_STANCE, SpellAura.AZURE_COATING, SpellAura.AZURE_BREATHING,
+			SpellAura.EMERALD_HEALING, SpellAura.ANCIENT_BARK_SKIN, SpellAura.CRIMSON_TEMPERING, SpellAura.FLAME_ARMOUR, SpellAura.FLAME_FIST,
+			SpellAura.VAJRA_BODY, SpellAura.BLADE_POLISH};
+	private static final com.example.defyingtheheavens.QiElement[] WARD_ELEMENTS = {com.example.defyingtheheavens.QiElement.EARTH,
+			com.example.defyingtheheavens.QiElement.EARTH, com.example.defyingtheheavens.QiElement.WATER, com.example.defyingtheheavens.QiElement.WATER,
+			com.example.defyingtheheavens.QiElement.WOOD, com.example.defyingtheheavens.QiElement.WOOD, com.example.defyingtheheavens.QiElement.FIRE,
+			com.example.defyingtheheavens.QiElement.FIRE, com.example.defyingtheheavens.QiElement.FIRE, com.example.defyingtheheavens.QiElement.METAL,
+			com.example.defyingtheheavens.QiElement.METAL};
+
+	/**
+	 * What every ward and body art shows round its bearer, over the skin SpellAuraLayer draws: its element's seal turning at the
+	 * feet (so one under a ward is plain from afar), and each its own: Hardened Body's flecks of stone wheeling at the waist, Mountain
+	 * Stance's great stones circling slowly and the earth's glow underfoot, Azure Coating's two streams of water winding up the body,
+	 * Azure Breathing's bubbles about the head, Ancient Bark Skin's leaves spiralling round, Crimson Tempering's embers rising off a
+	 * smouldering heat, Vajra Body's golden halo behind the head and its glints, Emerald Healing's stars of healing.
+	 */
+	private static void wards(PoseStack pose, MultiBufferSource buffers, Quaternionf facing, Vec3 eye, LivingEntity e, float partial, float age) {
+		float h = e.getBbHeight(), w = e.getBbWidth() / 2;
+		int index = 0;
+		for (int k = 0; k < WARDS.length; k++) {
+			float shown = ClientSpellAuras.shown(e, WARDS[k], partial, 8, 20);
+			if (shown <= 0) continue;
+			float[] light = SpellRender.light(WARD_ELEMENTS[k]);
+			pose.pushPose();
+			pose.translate(0, 0.04f + index * 0.012f, 0);
+			float r = (w + 0.75f) * (1 + index * 0.18f) * SpellRender.easeOut(shown);
+			SpellRender.disc(buffers.getBuffer(SpellRender.glow(SpellRender.seal(WARD_ELEMENTS[k]))), pose.last(), r, 0, age * (index % 2 == 0 ? 0.03f : -0.03f), light,
+					0.5f * shown, SpellRender.FULL_BRIGHT);
+			pose.popPose();
+			index++;
+		}
+		VertexConsumer stars = buffers.getBuffer(SpellRender.glow(SpellRender.STAR));
+		float hardened = ClientSpellAuras.shown(e, SpellAura.HARDENED_BODY, partial, 10, 20);
+		float stance = ClientSpellAuras.shown(e, SpellAura.MOUNTAIN_STANCE, partial, 10, 20);
+		if (hardened > 0 || stance > 0) {
+			var sprite = SpellRender.sprite(net.minecraft.world.level.block.Blocks.STONE.defaultBlockState());
+			VertexConsumer rock = buffers.getBuffer(SpellRender.blocks());
+			int count = stance > 0 ? 5 : 7;
+			float shown = Math.max(hardened, stance);
+			for (int i = 0; i < count; i++) {
+				double a = age * (stance > 0 ? 0.03 : 0.08) + i * Math.PI * 2 / count;
+				float rr = (stance > 0 ? w + 1.1f : w + 0.55f) * shown;
+				float y = (stance > 0 ? 0.4f + 0.25f * Mth.sin(age * 0.05f + i) : h * 0.45f + 0.2f * Mth.sin(age * 0.1f + i * 1.7f));
+				float c = (stance > 0 ? 0.22f : 0.07f) * (0.8f + 0.4f * SpellRender.hash(e.getId() * 7L + i));
+				pose.pushPose();
+				pose.translate(Math.cos(a) * rr, y, Math.sin(a) * rr);
+				pose.mulPose(Axis.XP.rotation(age * 0.05f + i));
+				pose.mulPose(Axis.YP.rotation(age * 0.04f + i));
+				SpellRender.box(rock, pose.last(), -c, -c, -c, c, c, c, WHITE, 1, sprite.getU0(), sprite.getV0(), sprite.getU(6), sprite.getV(6), SpellRender.FULL_BRIGHT);
+				pose.popPose();
+			}
+			if (stance > 0) SpellRender.billboard(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), pose, facing, 0, 0.3f, 0, (w + 2) * 2, 0, EARTH, 0.25f * stance, 0, 0,
+					1, 1, SpellRender.FULL_BRIGHT);
+		}
+		float coating = ClientSpellAuras.shown(e, SpellAura.AZURE_COATING, partial, 8, 20);
+		if (coating > 0) {
+			float[] fv = SpellRender.frame(age, 0.5f, SpellRender.WATER_FRAMES);
+			for (int k = 0; k < 2; k++) {
+				List<Vec3> stream = new java.util.ArrayList<>();
+				float[] radii = new float[20];
+				for (int i = 0; i < 20; i++) {
+					double t = i / 19.0, a = age * 0.12 + k * Math.PI + t * Math.PI * 3;
+					stream.add(new Vec3(Math.cos(a) * (w + 0.3), t * h * 1.05, Math.sin(a) * (w + 0.3)));
+					radii[i] = 0.05f * Mth.sin((float) (Math.PI * t)) + 0.01f;
+				}
+				SpellRender.tube(buffers.getBuffer(SpellRender.clear(SpellRender.WATER)), pose.last(), stream, radii, 5, new float[]{0.7f, 0.9f, 1.0f}, 0.8f * coating, 0.5f,
+						fv[0] - age * 0.05f, SpellRender.FULL_BRIGHT, null);
+			}
+		}
+		float breathing = ClientSpellAuras.shown(e, SpellAura.AZURE_BREATHING, partial, 5, 20);
+		if (breathing > 0 && !e.isEyeInFluid(net.minecraft.tags.FluidTags.WATER)) {
+			VertexConsumer bubbles = buffers.getBuffer(SpellRender.clear(SpellRender.BUBBLE));
+			for (int i = 0; i < 6; i++) {
+				double a = age * 0.09 + i * Math.PI * 2 / 6;
+				float y = e.getEyeHeight() + 0.1f * Mth.sin(age * 0.15f + i);
+				SpellRender.billboard(bubbles, pose, facing, (float) Math.cos(a) * 0.45f, y, (float) Math.sin(a) * 0.45f, 0.13f, 0, WHITE, 0.85f * breathing, 0, 0, 1, 1,
+						SpellRender.FULL_BRIGHT);
+			}
+		}
+		float bark = ClientSpellAuras.shown(e, SpellAura.ANCIENT_BARK_SKIN, partial, 12, 20);
+		if (bark > 0) {
+			VertexConsumer leaves = buffers.getBuffer(SpellRender.solid(SpellRender.LEAF));
+			for (int i = 0; i < 8; i++) {
+				float t = (age * 0.012f + i / 8f) % 1;
+				double a = t * Math.PI * 4 + i;
+				SpellRender.billboard(leaves, pose, facing, (float) Math.cos(a) * (w + 0.45f), t * h * 1.1f, (float) Math.sin(a) * (w + 0.45f), 0.22f * bark, age * 0.1f + i,
+						WHITE, 1, 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+			}
+		}
+		float tempering = ClientSpellAuras.shown(e, SpellAura.CRIMSON_TEMPERING, partial, 10, 30);
+		if (tempering > 0) {
+			SpellRender.billboard(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), pose, facing, 0, h / 2, 0, h * 1.9f, 0, new float[]{1.0f, 0.35f, 0.12f},
+					0.28f * tempering * (0.8f + 0.2f * Mth.sin(age * 0.3f)), 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+			VertexConsumer embers = buffers.getBuffer(SpellRender.glow(SpellRender.SPARK));
+			for (int i = 0; i < 14; i++) {
+				long s = e.getId() * 23L + i;
+				float t = (age * 0.025f + SpellRender.hash(s)) % 1;
+				double a = SpellRender.hash(s + 1) * Math.PI * 2 + t * 2;
+				SpellRender.billboard(embers, pose, facing, (float) Math.cos(a) * (w + 0.2f), t * h * 1.4f, (float) Math.sin(a) * (w + 0.2f), 0.14f, 0,
+						new float[]{1.0f, 0.55f, 0.2f}, tempering * (1 - t), 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+			}
+		}
+		float vajra = ClientSpellAuras.shown(e, SpellAura.VAJRA_BODY, partial, 10, 20);
+		if (vajra > 0) {
+			// A halo of gold behind the head, turned to face the viewer, its rim of the metal's seal.
+			pose.pushPose();
+			pose.translate(0, h + 0.05f, 0);
+			pose.mulPose(facing);
+			pose.mulPose(Axis.XP.rotationDegrees(90));
+			SpellRender.disc(buffers.getBuffer(SpellRender.glow(SpellRender.SEAL_METAL)), pose.last(), 0.55f * vajra, 0, age * 0.02f, GOLD, 0.8f * vajra, SpellRender.FULL_BRIGHT);
+			SpellRender.disc(buffers.getBuffer(SpellRender.glow(SpellRender.RING)), pose.last(), 0.65f * vajra, 0.01f, 0, GOLD, 0.7f * vajra, SpellRender.FULL_BRIGHT);
+			pose.popPose();
+			SpellRender.billboard(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), pose, facing, 0, h / 2, 0, h * 1.8f, 0, GOLD, 0.25f * vajra, 0, 0, 1, 1,
+					SpellRender.FULL_BRIGHT);
+			for (int i = 0; i < 5; i++) {
+				long s = e.getId() * 29L + i + (long) (age / 6);
+				SpellRender.billboard(stars, pose, facing, (SpellRender.hash(s) - 0.5f) * (w * 2 + 0.6f), SpellRender.hash(s + 1) * h, (SpellRender.hash(s + 2) - 0.5f) * (w * 2 + 0.6f),
+						0.35f, age * 0.1f, WHITE, vajra * Mth.sin((float) Math.PI * ((age % 6) / 6f)), 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+			}
+		}
+		float emerald = ClientSpellAuras.shown(e, SpellAura.EMERALD_HEALING, partial, 8, 20);
+		if (emerald > 0) {
+			for (int i = 0; i < 4; i++) {
+				long s = e.getId() * 31L + i + (long) (age / 8);
+				float tw = Mth.sin((float) Math.PI * ((age % 8) / 8f));
+				SpellRender.billboard(stars, pose, facing, (SpellRender.hash(s) - 0.5f) * (w * 2 + 0.8f), 0.3f + SpellRender.hash(s + 1) * h, (SpellRender.hash(s + 2) - 0.5f) * (w * 2 + 0.8f),
+						0.4f, 0, LIFE, emerald * tw, 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+			}
 		}
 	}
 

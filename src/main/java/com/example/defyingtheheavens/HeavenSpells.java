@@ -284,6 +284,25 @@ public final class HeavenSpells {
 		void onCast(ServerPlayer caster, Spell spell);
 	}
 
+	/** The element spells cast on oneself (wards, a body's arts, a field round one): their seal is under the caster only. */
+	private static final java.util.Set<Spell> ON_ONESELF = java.util.EnumSet.of(Spell.FLAME_FIST, Spell.CRIMSON_TEMPERING, Spell.EMERALD_HEALING_ART,
+			Spell.VERDANT_GROWTH, Spell.HARDENED_BODY, Spell.DIRT_TIDE, Spell.AZURE_COATING_TECHNIQUE, Spell.AZURE_BREATHING_TECHNIQUE, Spell.BLADE_POLISH,
+			Spell.FLAME_ARMOUR, Spell.MINERAL_PURIFICATION, Spell.SOLAR_FIELD, Spell.ANCIENT_BARK_SKIN, Spell.MOUNTAIN_STANCE, Spell.MIST_VEIL,
+			Spell.GOLDEN_BELL_SHIELD, Spell.LOTUS_OF_REBIRTH, Spell.EARTHQUAKE, Spell.VAJRA_BODY, Spell.SEA_OF_FLAMES, Spell.SPRING_OF_MYRIAD_LIFE,
+			Spell.FROZEN_FIELD, Spell.SWORD_DOMAIN, Spell.PHOENIX_NIRVANA, Spell.WORLD_TREE, Spell.ABSOLUTE_ZERO, Spell.BOUNDLESS_SEA, Spell.FOUR_SWORDS_ARRAY);
+
+	/**
+	 * An element spell's casting seal (SpellFx CAST_SEAL), seen by all near: its element's seal turning under the caster, the larger
+	 * and grander the deeper its realm, and for one cast at something a smaller one upright before them, facing the way.
+	 */
+	public static void castSeal(ServerPlayer caster, Spell spell) {
+		if (!spell.isHeaven()) return;
+		int realm = spell.heavenRealm().ordinal();
+		float radius = 1.4f + 0.75f * realm;
+		Vec3 way = ON_ONESELF.contains(spell) ? Vec3.ZERO : caster.getLookAngle();
+		SpellFx.send(caster.serverLevel(), SpellFx.Kind.CAST_SEAL, caster.position(), way, radius, spell.element().ordinal() + 16 * realm);
+	}
+
 	/** {@code caster} is casting {@code spell} (paid for, about to take hold). */
 	public static void onCast(ServerPlayer caster, Spell spell) {
 		if (LINGERING.isEmpty()) return;
@@ -520,11 +539,13 @@ public final class HeavenSpells {
 
 	/**
 	 * Spared by a caster's spells: the caster, the dead and fallen, spectators, its own tamed creatures, and any player it may not
-	 * harm (PvP off, or a team that won't hurt its own): no hold, push, drowning or burning reaches them either, not only the harm.
+	 * harm (PvP off, or a team that won't hurt its own), and the members of its own sect (SectMembership): no hold, push, drowning
+	 * or burning reaches them either, not only the harm.
 	 */
 	public static boolean spared(ServerPlayer p, LivingEntity e) {
 		return e == p || !e.isAlive() || e instanceof Player player && (player.isSpectator() || !p.canHarmPlayer(player))
-				|| e instanceof OwnableEntity pet && p.getUUID().equals(pet.getOwnerUUID());
+				|| e instanceof OwnableEntity pet && p.getUUID().equals(pet.getOwnerUUID())
+				|| e instanceof CultivatorNpc npc && SectMembership.areFellows(npc, p);
 	}
 
 	/**

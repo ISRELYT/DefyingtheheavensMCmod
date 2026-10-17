@@ -20,6 +20,7 @@ import net.minecraft.world.phys.AABB;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Talking to cultivators. Right-click one (from up to {@link #REACH} blocks) and, if they will talk, the talk wheel opens
@@ -77,7 +78,13 @@ public final class TalkSystem {
 		/** Meng Po's soup (GhostGate#drinkSoup), asked of her alone. */
 		SOUP("soup"),
 		/** A living cultivator's heaven method (CultivatorNpc#heavenMethod), taught by a sect's elders and by rogues. */
-		METHOD("method");
+		METHOD("method"),
+		/** Asking to join the sect (SectMembership): an elder judges, and sets the entrance trial. */
+		JOIN("join"),
+		/** The entrance trial, once an elder has set it: a spar with them (SparSystem.Terms#TRIAL). */
+		TRIAL("trial"),
+		/** Leaving the sect one belongs to (an elder releases you). */
+		LEAVE_SECT("leave_sect");
 
 		private final String id;
 
@@ -270,7 +277,9 @@ public final class TalkSystem {
 		AABB around = player.getBoundingBox().inflate(AID_REACH);
 		for (CultivatorNpc friend : player.level().getEntitiesOfClass(CultivatorNpc.class, around, npc -> npc.isAlive() && npc != attacker)) {
 			if (friend.getTarget() != null || friend.isInCombat() || friend.isAlly(attacker) || friend.isBegging() || friend.isConcealed()) continue;
-			if (SoulProjection.isPossessed(friend) || SparSystem.isSparring(friend) || friend.regard(player) < Regard.SWORN) continue;
+			// Sworn friends, and one's own sect's members (SectMembership): they stand by their own.
+			if (SoulProjection.isPossessed(friend) || SparSystem.isSparring(friend)) continue;
+			if (friend.regard(player) < Regard.SWORN && !SectMembership.areFellows(friend, player)) continue;
 			friend.setMeditating(false);
 			friend.setTarget(attacker);
 			player.displayClientMessage(Component.translatable(ModLang.TALK_AID, nameOf(friend)), true);
@@ -515,9 +524,71 @@ public final class TalkSystem {
 		// A ghost who knows a method teaches it to those it is Warm to, senior or not.
 		if (isSenior(player, npc) || teaches(npc)) replies.add(gated(Topic.GUIDANCE, regard >= Regard.WARM, "warm"));
 		if (npc instanceof GhostCultivatorNpc ghost && ghost.getRole() == GhostCultivatorNpc.Role.MENG_PO) replies.add(topic(Topic.SOUP));
-		// A sect's elders teach its element's heaven method, and a rogue its own, to the living they are Warm to.
-		if (teachesHeaven(npc) && !GhostSystem.isGhost(player)) replies.add(gated(Topic.METHOD, regard >= Regard.WARM, "warm"));
+		// A sect's elders teach its element's heaven method, and a rogue its own, to the living they are Warm to (to their own
+		// sect's disciples once Courteous).
+		if (teachesHeaven(npc) && !GhostSystem.isGhost(player)) {
+			boolean fellow = SectMembership.areFellows(npc, player);
+			replies.add(gated(Topic.METHOD, regard >= (fellow ? Regard.COURTEOUS : Regard.WARM), fellow ? "courteous" : "warm"));
+		}
+		// Joining the sect (or leaving it), and the trial an elder has set (SectMembership).
+		if (npc.isSectMember() && npc.sect() != null && !GhostSystem.isGhost(player) && !npc.isGhost()) {
+			if (SectMembership.areFellows(npc, player)) replies.add(topic(Topic.LEAVE_SECT));
+			else if (SectMembership.sectOf(player.server, player.getUUID()) == null) {
+				replies.add(topic(Topic.JOIN));
+				if (trialSet(player, npc)) replies.add(topic(Topic.TRIAL));
+			}
+		}
 		return replies;
+	}
+
+	/** Elders who set {@code player} the entrance trial, and until when (game time) the offer stands. */
+	private static final java.util.Map<UUID, java.util.Map<UUID, Long>> TRIAL_SET = new java.util.HashMap<>();
+	/** How long an elder's offer of the trial stands. */
+	private static final long TRIAL_OFFER_TICKS = 5 * 60 * 20;
+
+	private static boolean trialSet(ServerPlayer player, CultivatorNpc npc) {
+		Long until = TRIAL_SET.getOrDefault(player.getUUID(), java.util.Map.of()).get(npc.getUUID());
+		return until != null && npc.level().getGameTime() < until;
+	}
+
+	/**
+	 * Asking to join: a disciple sends you to an elder; an elder turns you away (SectMembership#refusal), takes you in at once (a
+	 * gifted body, or one they are Warm to), or sets the entrance trial (TRIAL is offered next).
+	 */
+	private static Component askToJoin(ServerPlayer player, CultivatorNpc npc) {
+		Sect sect = npc.sect();
+		if (sect == null) return Component.translatable(ModLang.talkLine("join.failed"));
+		if (!npc.getTitle().isElderOrAbove()) return Component.translatable(ModLang.talkLine("join.disciple"));
+		Object[] arg = new Object[1];
+		String refusal = SectMembership.refusal(player, npc, sect, arg);
+		if (refusal != null) return arg[0] == null ? Component.translatable(ModLang.talkLine(refusal)) : Component.translatable(ModLang.talkLine(refusal), arg[0]);
+		if (SectMembership.excused(player, npc)) {
+			boolean gifted = CultivationManager.get(player).getPhysique() != null
+					&& CultivationManager.get(player).getPhysique().grade().ordinal() >= Physique.Grade.HIGH.ordinal();
+			SectMembership.join(player, sect);
+			return Component.translatable(ModLang.talkLine(gifted ? "join.gifted" : "join.friend"), sect.name,
+					SectMembership.titleOf(sect, player).getDisplayName());
+		}
+		if (SectMembership.triedToday(player, sect, npc.level().getGameTime())) return Component.translatable(ModLang.talkLine("join.tried"));
+		TRIAL_SET.computeIfAbsent(player.getUUID(), id -> new java.util.HashMap<>()).put(npc.getUUID(), npc.level().getGameTime() + TRIAL_OFFER_TICKS);
+		return Component.translatable(ModLang.talkLine("join.trial"));
+	}
+
+	/** The entrance trial begins (a spar with the elder: SparSystem.Terms#TRIAL), or the line why it can't. */
+	private static Component beginTrial(ServerPlayer player, CultivatorNpc npc) {
+		String refusal = SparSystem.refusal(player, npc, SparSystem.Terms.TRIAL);
+		if (refusal != null) return Component.translatable(refusal, nameOf(npc));
+		TRIAL_SET.getOrDefault(player.getUUID(), new java.util.HashMap<>()).remove(npc.getUUID());
+		SparSystem.start(player, npc, SparSystem.Terms.TRIAL);
+		return null;
+	}
+
+	/** Leaving the sect: an elder releases you; a disciple can't. */
+	private static Component leaveSect(ServerPlayer player, CultivatorNpc npc) {
+		Sect sect = npc.sect();
+		if (sect == null || !npc.getTitle().isElderOrAbove()) return Component.translatable(ModLang.talkLine("leave.disciple"));
+		SectMembership.leave(player, sect);
+		return Component.translatable(ModLang.talkLine("leave.done"));
 	}
 
 	/** A living cultivator who teaches its heaven method: a sect's elders and master, and rogues (CultivatorNpc#heavenMethod). */
@@ -576,7 +647,11 @@ public final class TalkSystem {
 				yield Component.translatable(GhostSystem.isGhost(player) ? ModLang.TALK_SOUP : ModLang.TALK_SOUP_LIVING);
 			}
 			case METHOD -> teachHeaven(player, npc);
+			case JOIN -> askToJoin(player, npc);
+			case TRIAL -> beginTrial(player, npc);
+			case LEAVE_SECT -> leaveSect(player, npc);
 		};
+		if (answer == null) return; // the trial began: the talk is over (SparSystem#start closed it)
 		ModPackets.sendTalkDialogue(player, npc, npc.regard(player), TalkIntent.ASK, speech(answer), replies(player, npc, standing));
 	}
 
@@ -802,7 +877,8 @@ public final class TalkSystem {
 	}
 
 	private static void sparOn(ServerPlayer player, CultivatorNpc npc, SparSystem.Terms terms) {
-		if (terms == null || (intents(player, npc, standing(player, npc)) & TalkIntent.SPAR.bit()) == 0) return;
+		// The entrance trial is set by an elder (askToJoin), never picked from the spar's terms.
+		if (terms == null || terms == SparSystem.Terms.TRIAL || (intents(player, npc, standing(player, npc)) & TalkIntent.SPAR.bit()) == 0) return;
 		String refusal = SparSystem.refusal(player, npc, terms);
 		if (refusal != null) {
 			npc.beginTalk(player);

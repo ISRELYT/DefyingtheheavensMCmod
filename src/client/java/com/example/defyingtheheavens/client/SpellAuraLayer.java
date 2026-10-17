@@ -35,9 +35,18 @@ public class SpellAuraLayer<T extends LivingEntity, M extends HumanoidModel<T>> 
 	}
 
 	@Override
-	public void render(PoseStack pose, MultiBufferSource buffers, int light, T entity, float walk, float walkSpeed, float partial, float age, float headYaw,
+	public void render(PoseStack pose, MultiBufferSource source, int light, T entity, float walk, float walkSpeed, float partial, float age, float headYaw,
 					   float headPitch) {
 		if (!ClientSpellAuras.any(entity) || entity.isInvisible()) return;
+		MultiBufferSource buffers = SpellBuffers.begin(source);
+		try {
+			draw(pose, buffers, light, entity, partial, age);
+		} finally {
+			SpellBuffers.end();
+		}
+	}
+
+	private void draw(PoseStack pose, MultiBufferSource buffers, int light, T entity, float partial, float age) {
 		M parent = getParentModel();
 		float hardened = ClientSpellAuras.shown(entity, SpellAura.HARDENED_BODY, partial, 10, 20);
 		if (hardened > 0) skin(pose, buffers, thin, SpellRender.clearLit(SpellRender.STONE_SHELL), new float[]{0.95f, 0.85f, 0.72f}, 0.55f * hardened, light);
@@ -111,13 +120,25 @@ public class SpellAuraLayer<T extends LivingEntity, M extends HumanoidModel<T>> 
 		tongues(pose, flames, parent.leftLeg, new Vector3f(0, 8, -1), 0.3f, 0.4f, age + 13, shown, 2);
 	}
 
-	/** Flame Fist: fire wreathing the fist at the end of {@code arm}, a bright glow in it, tongues licking up from it. */
+	/**
+	 * Flame Fist: fire wreathing the fist at the end of {@code arm} and running up the forearm, a white-hot glow in it within a wider
+	 * one of orange, tongues licking up from it, sparks thrown off it.
+	 */
 	private void fists(PoseStack pose, MultiBufferSource buffers, ModelPart arm, int side, float age, float shown) {
 		VertexConsumer flames = buffers.getBuffer(SpellRender.glow(SpellRender.FLAME));
-		tongues(pose, flames, arm, new Vector3f(side * 0.5f, 9.5f, 0), 0.42f, 0.6f, age, shown, 4);
+		tongues(pose, flames, arm, new Vector3f(side * 0.5f, 9.5f, 0), 0.6f, 0.9f, age, shown, 5);
+		tongues(pose, flames, arm, new Vector3f(side * 0.5f, 6, 0), 0.4f, 0.5f, age + 4, shown, 3);
 		VertexConsumer glow = buffers.getBuffer(SpellRender.glow(SpellRender.GLOW));
 		Vector3f hand = at(arm, new Vector3f(side * 0.5f, 10, 0));
-		crossed(pose, glow, hand, 0.6f, 0.6f, 0.3f, FIRE_MID, 0.6f * shown, 0, 0, 1, 1);
+		crossed(pose, glow, hand, 1.1f, 1.1f, 0.3f, FIRE_MID, 0.55f * shown, 0, 0, 1, 1);
+		crossed(pose, glow, hand, 0.45f, 0.45f, 0.3f, FIRE_CORE, 0.9f * shown, 0, 0, 1, 1);
+		VertexConsumer sparks = buffers.getBuffer(SpellRender.glow(SpellRender.SPARK));
+		for (int i = 0; i < 4; i++) {
+			float t = (age * 0.06f + i / 4f) % 1;
+			long s = i * 31L + (long) (age * 0.06f + i / 4f);
+			Vector3f spark = new Vector3f(hand.x + (SpellRender.hash(s) - 0.5f) * 0.6f * t, hand.y - t * 0.9f, hand.z + (SpellRender.hash(s + 1) - 0.5f) * 0.6f * t);
+			crossed(pose, sparks, spark, 0.12f, 0.12f, 0.3f, FIRE_CORE, shown * (1 - t), 0, 0, 1, 1);
+		}
 	}
 
 	/**
@@ -166,8 +187,17 @@ public class SpellAuraLayer<T extends LivingEntity, M extends HumanoidModel<T>> 
 	 * First person: the auras on the player's own arm (PlayerRendererMixin): Flame Fist's fire round the fist, and the skins of the
 	 * wards (the arm drawn again in them).
 	 */
-	public static void firstPersonArm(PoseStack pose, MultiBufferSource buffers, LivingEntity player, ModelPart arm, ModelPart sleeve, int light, boolean right) {
+	public static void firstPersonArm(PoseStack pose, MultiBufferSource source, LivingEntity player, ModelPart arm, ModelPart sleeve, int light, boolean right) {
 		if (!ClientSpellAuras.any(player)) return;
+		MultiBufferSource buffers = SpellBuffers.begin(source);
+		try {
+			firstPersonAuras(pose, buffers, player, arm, right);
+		} finally {
+			SpellBuffers.end();
+		}
+	}
+
+	private static void firstPersonAuras(PoseStack pose, MultiBufferSource buffers, LivingEntity player, ModelPart arm, boolean right) {
 		float partial = net.minecraft.client.Minecraft.getInstance().getFrameTime();
 		float age = player.tickCount + partial;
 		float coating = ClientSpellAuras.shown(player, SpellAura.AZURE_COATING, partial, 8, 20);

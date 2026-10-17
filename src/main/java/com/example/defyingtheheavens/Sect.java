@@ -81,6 +81,23 @@ public final class Sect {
 	 */
 	public enum Post { MASTER_SEAT, MEDITATION, TREASURY, CORE, DWELLING, COURTYARD, GATE, GATE_GUARD, ALTAR, WAY, TRAINING }
 
+	/**
+	 * A player of the sect (SectMembership): their last known name, when they joined (game time), and how often they have laid
+	 * hands on the treasury below Elder (a warning, then cast out).
+	 */
+	public static final class Disciple {
+		public final UUID id;
+		public String name;
+		public long joined;
+		public int treasuryTries;
+
+		public Disciple(UUID id, String name, long joined) {
+			this.id = id;
+			this.name = name;
+			this.joined = joined;
+		}
+	}
+
 	public final UUID id;
 	public String name = "";
 	public ResourceKey<Level> dimension = Level.OVERWORLD;
@@ -96,6 +113,10 @@ public final class Sect {
 	public BoundingBox bounds = new BoundingBox(BlockPos.ZERO);
 	public BoundingBox treasury = new BoundingBox(BlockPos.ZERO);
 	public final Map<UUID, Member> members = new LinkedHashMap<>();
+	/** Its players (SectMembership), kept apart from the cultivators: they hold no post and take no member's slot. */
+	public final Map<UUID, Disciple> disciples = new LinkedHashMap<>();
+	/** Players who left it, or were cast out, and until when (game time) it won't take them back. */
+	public final Map<UUID, Long> barredUntil = new HashMap<>();
 	public final List<Long> replacements = new ArrayList<>();
 	/** Slots held for cultivators on their way to join (see SectManager#reserve), and until when (game time). */
 	public final Map<UUID, Long> reserved = new HashMap<>();
@@ -242,6 +263,27 @@ public final class Sect {
 		return changed;
 	}
 
+	/**
+	 * The title one of {@code rank} and {@code cultivation} would hold among the members (by seniority, the members as they are
+	 * and one more): a player's (SectMembership). Never the Sect Master's, whose seat is a cultivator's: the strongest player is
+	 * a Grand Elder (an Elder, in a sect too small for Grand Elders).
+	 */
+	public NpcTitle titleAmong(int rank, double cultivation) {
+		int above = 0;
+		for (Member member : members.values()) {
+			if (member.rank > rank || member.rank == rank && member.cultivation > cultivation) above++;
+		}
+		EnumMap<NpcTitle, Integer> counts = titleCounts(members.size() + 1);
+		int reached = 0;
+		for (NpcTitle title : new NpcTitle[] {NpcTitle.SECT_MASTER, NpcTitle.GRAND_ELDER, NpcTitle.ELDER, NpcTitle.INNER_DISCIPLE, NpcTitle.OUTER_DISCIPLE}) {
+			reached += counts.getOrDefault(title, 0);
+			if (above >= reached) continue;
+			if (title != NpcTitle.SECT_MASTER) return title;
+			return counts.getOrDefault(NpcTitle.GRAND_ELDER, 0) > 0 ? NpcTitle.GRAND_ELDER : NpcTitle.ELDER;
+		}
+		return NpcTitle.OUTER_DISCIPLE;
+	}
+
 	/** The current Sect Master, or null for an empty sect. */
 	public Member master() {
 		return members.values().stream().filter(m -> m.title == NpcTitle.SECT_MASTER).findFirst().orElse(null);
@@ -359,6 +401,24 @@ public final class Sect {
 		tag.putLong("SealBrokenUntil", sealBrokenUntil);
 		tag.putInt("Offerings", offerings);
 		tag.putLong("OfferingsDay", offeringsDay);
+		ListTag discipleList = new ListTag();
+		for (Disciple disciple : disciples.values()) {
+			CompoundTag d = new CompoundTag();
+			d.putUUID("Player", disciple.id);
+			d.putString("Name", disciple.name);
+			d.putLong("Joined", disciple.joined);
+			d.putInt("TreasuryTries", disciple.treasuryTries);
+			discipleList.add(d);
+		}
+		tag.put("Disciples", discipleList);
+		ListTag barredList = new ListTag();
+		for (Map.Entry<UUID, Long> entry : barredUntil.entrySet()) {
+			CompoundTag b = new CompoundTag();
+			b.putUUID("Player", entry.getKey());
+			b.putLong("Until", entry.getValue());
+			barredList.add(b);
+		}
+		tag.put("Barred", barredList);
 		return tag;
 	}
 
@@ -417,6 +477,19 @@ public final class Sect {
 		// Sects from before the ritual are stocked when first asked (see takeOffering).
 		sect.offerings = tag.contains("Offerings") ? tag.getInt("Offerings") : -1;
 		sect.offeringsDay = tag.contains("OfferingsDay") ? tag.getLong("OfferingsDay") : -1;
+		ListTag discipleList = tag.getList("Disciples", Tag.TAG_COMPOUND);
+		for (int i = 0; i < discipleList.size(); i++) {
+			CompoundTag d = discipleList.getCompound(i);
+			if (!d.hasUUID("Player")) continue;
+			Disciple disciple = new Disciple(d.getUUID("Player"), d.getString("Name"), d.getLong("Joined"));
+			disciple.treasuryTries = d.getInt("TreasuryTries");
+			sect.disciples.put(disciple.id, disciple);
+		}
+		ListTag barredList = tag.getList("Barred", Tag.TAG_COMPOUND);
+		for (int i = 0; i < barredList.size(); i++) {
+			CompoundTag b = barredList.getCompound(i);
+			if (b.hasUUID("Player")) sect.barredUntil.put(b.getUUID("Player"), b.getLong("Until"));
+		}
 		return sect;
 	}
 

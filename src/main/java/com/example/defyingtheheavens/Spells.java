@@ -143,6 +143,7 @@ public final class Spells {
 		}
 		cooldowns(p).put(spell, now + spell.cooldownTicks());
 		HeavenSpells.onCast(p, spell); // what lingers that hears of a cast (a mist's hiding broken)
+		HeavenSpells.castSeal(p, spell); // an element spell's seal, turning under its caster
 		switch (spell) {
 			case GHOST_FIRE -> ghostFire(p);
 			case GHOST_FIRE_BOLT -> bolt(p);

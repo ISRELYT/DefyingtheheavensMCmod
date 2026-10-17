@@ -39,6 +39,8 @@ public final class QiFlight {
 	private static final Map<UUID, Boolean> REALM_ALLOWED = new HashMap<>();
 	/** The same for Sword Flight. */
 	private static final Map<UUID, Boolean> REALM_ALLOWED_SWORD = new HashMap<>();
+	/** The dimension each online player was in last tick: a change means their client's flight must be told again (see {@link #tick}). */
+	private static final Map<UUID, net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>> DIMENSION = new HashMap<>();
 
 	/**
 	 * Called every tick by {@link QiManager} for each living player, before the pool gathers.
@@ -48,6 +50,11 @@ public final class QiFlight {
 	 */
 	static double tick(ServerPlayer p, PlayerCultivation c) {
 		UUID id = p.getUUID();
+		// Carried into another dimension by a teleport (ServerPlayer#teleportTo: the rifts, the Soul River, the Netherworld's ways, a
+		// ghost's return to the living world), the client rebuilds its player with no right to fly, and nothing tells it otherwise
+		// (vanilla's portals do, its teleports don't): the flight owned here (mayfly) would stay refused until something about it
+		// changed. So a new dimension tells the client again.
+		if (DIMENSION.put(id, p.level().dimension()) != p.level().dimension()) p.onUpdateAbilities();
 		// Announced by the true realm: Realm Suppress can hold a cultivator below Core Formation for a while (grounding them),
 		// and the greeting shouldn't repeat each time that lifts.
 		boolean awakened = c.getRealm().canFlyOnQi();
@@ -172,6 +179,7 @@ public final class QiFlight {
 		EXHAUSTED.remove(id);
 		REALM_ALLOWED.remove(id);
 		REALM_ALLOWED_SWORD.remove(id);
+		DIMENSION.remove(id);
 		SwordFlight.forget(id);
 	}
 

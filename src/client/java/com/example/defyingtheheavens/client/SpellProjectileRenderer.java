@@ -29,7 +29,7 @@ public class SpellProjectileRenderer extends EntityRenderer<SpellProjectile> {
 	private static final float[] WHITE = {1, 1, 1};
 	private static final float[] FIRE_CORE = {1.0f, 0.95f, 0.75f}, FIRE_MID = {1.0f, 0.55f, 0.15f}, FIRE_OUTER = {0.95f, 0.22f, 0.06f};
 	private static final float[] WATER_GLOW = {0.35f, 0.75f, 1.0f}, ICE_GLOW = {0.6f, 0.9f, 1.0f};
-	private static final float[] SWORD_LIGHT = {1.0f, 0.95f, 0.8f}, LEAF_GLOW = {0.45f, 1.0f, 0.4f};
+	private static final float[] SWORD_LIGHT = {1.0f, 0.95f, 0.8f}, LEAF_GLOW = {0.45f, 1.0f, 0.4f}, EARTH_GLOW = {1.0f, 0.68f, 0.28f};
 
 	public SpellProjectileRenderer(EntityRendererProvider.Context context) {
 		super(context);
@@ -47,7 +47,16 @@ public class SpellProjectileRenderer extends EntityRenderer<SpellProjectile> {
 	}
 
 	@Override
-	public void render(SpellProjectile missile, float entityYaw, float partial, PoseStack pose, MultiBufferSource buffers, int light) {
+	public void render(SpellProjectile missile, float entityYaw, float partial, PoseStack pose, MultiBufferSource parent, int light) {
+		MultiBufferSource buffers = SpellBuffers.begin(parent);
+		try {
+			draw(missile, partial, pose, buffers, light);
+		} finally {
+			SpellBuffers.end();
+		}
+	}
+
+	private void draw(SpellProjectile missile, float partial, PoseStack pose, MultiBufferSource buffers, int light) {
 		float age = missile.tickCount + partial;
 		float lift = missile.getBbHeight() / 2;
 		Vec3 at = missile.getPosition(partial).add(0, lift, 0);
@@ -62,7 +71,7 @@ public class SpellProjectileRenderer extends EntityRenderer<SpellProjectile> {
 		pose.translate(0, lift, 0);
 		switch (missile.shape()) {
 			case FLAME_BOLT, YANG_BOLT -> flameBolt(missile, pose, buffers, facing, cam, trail, age, formed, yaw, pitch);
-			case WOOD_STAKE -> stake(missile, pose, buffers, facing, trail, age, formed, yaw, pitch, light);
+			case WOOD_STAKE -> stake(missile, pose, buffers, facing, cam, trail, age, formed, yaw, pitch, light);
 			case EARTH_PODAO -> podao(missile, pose, buffers, facing, cam, trail, age, formed, yaw, pitch, light);
 			case WATER_ARROW -> waterArrow(missile, pose, buffers, facing, cam, trail, age, formed, yaw, pitch);
 			case FLYING_SWORD, PLUNGING_SWORD -> sword(missile, pose, buffers, facing, cam, trail, age, formed, yaw, pitch, light, 1.3f);
@@ -141,6 +150,40 @@ public class SpellProjectileRenderer extends EntityRenderer<SpellProjectile> {
 		SpellRender.ribbon(buffers.getBuffer(SpellRender.glow(texture)), pose.last(), points, widths, cam, rgb, alphas, 0.5f, scroll, SpellRender.FULL_BRIGHT);
 	}
 
+	/**
+	 * {@code count} ribbons winding round the trail (out to {@code length} blocks behind), {@code radius} out from it at the head and
+	 * closing in toward the tail, turning as they go: the spiralling streams round a missile's wake.
+	 */
+	private static void spirals(MultiBufferSource buffers, PoseStack pose, List<Vec3> trail, Vec3 cam, ResourceLocation texture, float[] rgb, float radius,
+								float width, float alpha, double length, float age, int count) {
+		List<Vec3> path = back(trail, length, 14);
+		if (path.size() < 3) return;
+		for (int k = 0; k < count; k++) {
+			List<Vec3> ribbon = new ArrayList<>();
+			float[] widths = new float[path.size()], alphas = new float[path.size()];
+			for (int i = 0; i < path.size(); i++) {
+				Vec3 p = path.get(i);
+				Vec3 dir = path.get(Math.min(path.size() - 1, i + 1)).subtract(path.get(Math.max(0, i - 1)));
+				dir = dir.lengthSqr() < 1.0e-8 ? new Vec3(0, 0, 1) : dir.normalize();
+				Vec3 side = dir.cross(new Vec3(0, 1, 0));
+				side = side.lengthSqr() < 1.0e-6 ? new Vec3(1, 0, 0) : side.normalize();
+				Vec3 up = side.cross(dir).normalize();
+				float t = i / (float) (path.size() - 1);
+				double a = age * 0.45 + i * 0.75 + k * Math.PI * 2 / count;
+				float r = radius * (1 - t * 0.6f);
+				ribbon.add(p.add(side.scale(Math.cos(a) * r)).add(up.scale(Math.sin(a) * r)));
+				widths[i] = width * (1 - t * 0.7f);
+				alphas[i] = alpha * (1 - t) * Math.min(1, i * 0.5f);
+			}
+			SpellRender.ribbon(buffers.getBuffer(SpellRender.glow(texture)), pose.last(), ribbon, widths, cam, rgb, alphas, 0.5f, -age * 0.1f, SpellRender.FULL_BRIGHT);
+		}
+	}
+
+	/** A four-point star of light, turning, at (x, y, z). */
+	private static void star(MultiBufferSource buffers, PoseStack pose, Quaternionf facing, float x, float y, float z, float size, float spin, float[] rgb, float alpha) {
+		SpellRender.billboard(buffers.getBuffer(SpellRender.glow(SpellRender.STAR)), pose, facing, x, y, z, size, spin, rgb, alpha, 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+	}
+
 	private static void glowBall(MultiBufferSource buffers, PoseStack pose, Quaternionf facing, float x, float y, float z, float size, float[] rgb, float alpha) {
 		SpellRender.billboard(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), pose, facing, x, y, z, size, 0, rgb, alpha, 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
 	}
@@ -154,11 +197,14 @@ public class SpellProjectileRenderer extends EntityRenderer<SpellProjectile> {
 	private void flameBolt(SpellProjectile missile, PoseStack pose, MultiBufferSource buffers, Quaternionf facing, Vec3 cam, List<Vec3> trail, float age,
 						   float formed, float yaw, float pitch) {
 		boolean yang = missile.shape() == SpellProjectile.Shape.YANG_BOLT;
-		float s = missile.scale() * (0.3f + 0.7f * SpellRender.easeOut(formed));
+		float s = missile.scale() * 1.25f * (0.3f + 0.7f * SpellRender.easeOut(formed));
 		float pulse = 1 + 0.08f * Mth.sin(age * 1.7f);
 		glowBall(buffers, pose, facing, 0, 0, 0, 2.6f * s * pulse, FIRE_OUTER, 0.35f);
 		glowBall(buffers, pose, facing, 0, 0, 0, 1.4f * s * pulse, FIRE_MID, 0.7f);
 		glowBall(buffers, pose, facing, 0, 0, 0, 0.7f * s, FIRE_CORE, 1.0f);
+		// A star of heat at its heart, turning, and two ribbons of flame winding round its wake.
+		star(buffers, pose, facing, 0, 0, 0, 2.2f * s, age * 0.12f, FIRE_CORE, 0.8f);
+		spirals(buffers, pose, trail, cam, SpellRender.FLAME, FIRE_MID, 0.35f * s, 0.32f * s, 0.85f, 2.8, age, 2);
 		// The flare: a thin line of light across it.
 		VertexConsumer spark = buffers.getBuffer(SpellRender.glow(SpellRender.SPARK));
 		SpellRender.billboard(spark, pose, facing, 0, 0, 0, 3.2f * s, 0.35f * s, 0, FIRE_MID, 0.5f, 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
@@ -388,9 +434,25 @@ public class SpellProjectileRenderer extends EntityRenderer<SpellProjectile> {
 
 	// --- Wood ---
 
-	/** Wood Bullet: a tapered stake of bark, point first; while it grows in the air, leaves spiral in round it. */
-	private void stake(SpellProjectile missile, PoseStack pose, MultiBufferSource buffers, Quaternionf facing, List<Vec3> trail, float age, float formed,
+	/**
+	 * Wood Bullet: a tapered stake of bark, point first, in a glow of the wood's qi; while it grows in the air, leaves spiral in round it;
+	 * in flight it leaves a green wake and sheds leaves that flutter down behind it.
+	 */
+	private void stake(SpellProjectile missile, PoseStack pose, MultiBufferSource buffers, Quaternionf facing, Vec3 cam, List<Vec3> trail, float age, float formed,
 					   float yaw, float pitch, int light) {
+		if (!missile.forming()) {
+			float s = missile.scale();
+			streak(buffers, pose, trail, cam, SpellRender.GLOW, LEAF_GLOW, 0.45f * s, 0.55f, 3.0, 0);
+			spirals(buffers, pose, trail, cam, SpellRender.GLOW, LEAF_GLOW, 0.22f * s, 0.12f * s, 0.6f, 2.4, age, 2);
+			VertexConsumer shed = buffers.getBuffer(SpellRender.solid(SpellRender.LEAF));
+			List<Vec3> path = back(trail, 3.5, 8);
+			for (int i = 1; i < path.size(); i++) {
+				long seed = missile.getId() * 41L + i;
+				Vec3 p = path.get(i).add(Mth.sin(age * 0.4f + i) * 0.25f, -i * 0.06f, Mth.cos(age * 0.35f + i) * 0.25f);
+				SpellRender.billboard(shed, pose, facing, (float) p.x, (float) p.y, (float) p.z, 0.2f * s, age * 0.3f + SpellRender.hash(seed) * 6, WHITE, 1, 0, 0, 1, 1,
+						SpellRender.FULL_BRIGHT);
+			}
+		}
 		float s = missile.scale();
 		float g = SpellRender.easeOut(formed);
 		pose.pushPose();
@@ -421,7 +483,12 @@ public class SpellProjectileRenderer extends EntityRenderer<SpellProjectile> {
 		VertexConsumer vc = buffers.getBuffer(SpellRender.solid(SpellRender.LEAF));
 		PoseStack.Pose p = pose.last();
 		float w = 0.22f * s, l = 0.42f * s;
-		SpellRender.quad(vc, p, SpellRender.v(-w, 0, -l), SpellRender.v(-w, 0, l), SpellRender.v(w, 0, l), SpellRender.v(w, 0, -l), WHITE, 1, 0, 1, 1, 0, light);
+		SpellRender.quad(vc, p, SpellRender.v(-w, 0, -l), SpellRender.v(-w, 0, l), SpellRender.v(w, 0, l), SpellRender.v(w, 0, -l), WHITE, 1, 0, 1, 1, 0,
+				SpellRender.FULL_BRIGHT);
+		// Its razor edge lit with the wood's qi: the leaf again, larger, in light.
+		VertexConsumer edge = buffers.getBuffer(SpellRender.glow(SpellRender.LEAF));
+		SpellRender.quad(edge, p, SpellRender.v(-w * 1.5f, 0.01f, -l * 1.4f), SpellRender.v(-w * 1.5f, 0.01f, l * 1.4f), SpellRender.v(w * 1.5f, 0.01f, l * 1.4f),
+				SpellRender.v(w * 1.5f, 0.01f, -l * 1.4f), LEAF_GLOW, 0.55f, 0, 1, 1, 0, SpellRender.FULL_BRIGHT);
 		pose.popPose();
 	}
 
@@ -454,6 +521,20 @@ public class SpellProjectileRenderer extends EntityRenderer<SpellProjectile> {
 			}
 		} else {
 			dustTrail(buffers, pose, facing, trail, missile.getId(), age, 0.9f, 3.0, 0.5f);
+			// An amber wake of the earth's qi, and chips of stone wheeling round the blade as it flies.
+			streak(buffers, pose, trail, cam, SpellRender.GLOW, EARTH_GLOW, 0.5f, 0.5f, 3.0, 0);
+			var sprite = SpellRender.sprite(missile.data() == 0 ? Block.getId(Blocks.DIRT.defaultBlockState()) : missile.data());
+			VertexConsumer vc = buffers.getBuffer(SpellRender.blocks());
+			for (int i = 0; i < 6; i++) {
+				double a = age * 0.5 + i * Math.PI * 2 / 6;
+				float r = 0.55f, c = 0.07f + 0.03f * (i % 2);
+				pose.pushPose();
+				face(pose, yaw, pitch);
+				pose.translate(Math.cos(a) * r, Math.sin(a) * r, -0.3f - (i % 3) * 0.25f);
+				pose.mulPose(Axis.XP.rotation(age * 0.4f + i));
+				SpellRender.box(vc, pose.last(), -c, -c, -c, c, c, c, WHITE, 1, sprite.getU0(), sprite.getV0(), sprite.getU(6), sprite.getV(6), SpellRender.FULL_BRIGHT);
+				pose.popPose();
+			}
 		}
 	}
 
@@ -474,7 +555,16 @@ public class SpellProjectileRenderer extends EntityRenderer<SpellProjectile> {
 		boolean mountain = missile.shape() == SpellProjectile.Shape.MOUNTAIN;
 		var sprite = SpellRender.sprite(missile.data() == 0 ? Block.getId(Blocks.STONE.defaultBlockState()) : missile.data());
 		float radius = mountain ? 4.2f : 0.95f;
-		SpellModels.boulder(pose, buffers, sprite, radius * missile.scale(), age * (mountain ? 0.03f : 0.25f), light, missile.getId(), null);
+		float spin = age * (mountain ? 0.03f : 0.25f);
+		SpellModels.boulder(pose, buffers, sprite, radius * missile.scale(), spin, light, missile.getId(), null);
+		// The earth's qi that tore it loose: seams of its fire glowing through the rock, turning with it, and a halo about it.
+		pose.pushPose();
+		pose.mulPose(Axis.XP.rotation(spin));
+		pose.mulPose(Axis.ZP.rotation(spin * 0.6f));
+		SpellRender.sphere(buffers.getBuffer(SpellRender.glow(SpellRender.VEINS)), pose.last(), radius * missile.scale() * 1.05f, 8, 12, EARTH_GLOW, 0.75f, 2, 1, 0, 0,
+				SpellRender.FULL_BRIGHT, null);
+		pose.popPose();
+		glowBall(buffers, pose, facing, 0, 0, 0, radius * missile.scale() * 3.2f, EARTH_GLOW, mountain ? 0.22f : 0.3f);
 		if (mountain) {
 			for (int i = 0; i < 8; i++) {
 				double a = age * 0.05 + i * Math.PI * 2 / 8;
@@ -520,6 +610,9 @@ public class SpellProjectileRenderer extends EntityRenderer<SpellProjectile> {
 		}
 		glowBall(buffers, pose, facing, 0, 0, 0.2f * s, 0.9f * s, WATER_GLOW, 0.35f);
 		pose.popPose();
+		// A twinkle at its point, and the water's light about it.
+		star(buffers, pose, facing, 0, 0, 0, 1.3f * s, age * 0.15f, new float[]{0.8f, 0.95f, 1.0f}, 0.75f);
+		glowBall(buffers, pose, facing, 0, 0, 0, 1.8f * s, WATER_GLOW, 0.25f);
 		// Drops left hanging behind.
 		VertexConsumer drops = buffers.getBuffer(SpellRender.clear(SpellRender.BUBBLE));
 		List<Vec3> path = back(trail, 3.5, 10);
@@ -553,6 +646,12 @@ public class SpellProjectileRenderer extends EntityRenderer<SpellProjectile> {
 		SpellRender.tube(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), pose.last(), spine, core, 6, ICE_GLOW, 0.8f, 0.3f, 0, SpellRender.FULL_BRIGHT, null);
 		pose.popPose();
 		glowBall(buffers, pose, facing, 0, 0, 0, 1.2f * s * g, ICE_GLOW, 0.3f);
+		// Frost glinting about it as it turns.
+		for (int i = 0; i < 4; i++) {
+			double a = age * 0.3 + i * Math.PI / 2;
+			float tw = 0.5f + 0.5f * Mth.sin(age * 0.7f + i * 2);
+			star(buffers, pose, facing, (float) Math.cos(a) * 0.35f * s, (float) Math.sin(a) * 0.35f * s, 0, 0.45f * s * g, (float) a, WHITE, 0.8f * tw);
+		}
 		if (!missile.forming()) {
 			VertexConsumer mist = buffers.getBuffer(SpellRender.clear(SpellRender.MIST));
 			List<Vec3> path = back(trail, 4, 8);
@@ -615,7 +714,12 @@ public class SpellProjectileRenderer extends EntityRenderer<SpellProjectile> {
 				glowBall(buffers, pose, facing, (float) at.x, (float) at.y, (float) at.z, 0.3f, SWORD_LIGHT, 0.5f);
 			}
 		} else {
-			streak(buffers, pose, trail, cam, SpellRender.GLOW, SWORD_LIGHT, 0.35f * s, 0.7f, 3.5, 0);
+			// Sword light streaming behind it, white at its heart, and a star at its point.
+			streak(buffers, pose, trail, cam, SpellRender.GLOW, SWORD_LIGHT, 0.5f * s, 0.75f, 4.0, 0);
+			streak(buffers, pose, trail, cam, SpellRender.GLOW, WHITE, 0.18f * s, 0.9f, 2.5, 0);
+			Vec3 way = trail.size() > 1 ? trail.get(0).subtract(trail.get(1)) : Vec3.ZERO;
+			Vec3 tip = way.lengthSqr() < 1.0e-6 ? Vec3.ZERO : way.normalize().scale(length * s * 0.65);
+			star(buffers, pose, facing, (float) tip.x, (float) tip.y, (float) tip.z, 1.1f * s, age * 0.2f, WHITE, 0.85f);
 		}
 	}
 
@@ -630,6 +734,15 @@ public class SpellProjectileRenderer extends EntityRenderer<SpellProjectile> {
 		glowBall(buffers, pose, facing, 0, 0, 0, 14, new float[]{1.0f, 0.85f, 0.45f}, 0.35f);
 		glowBall(buffers, pose, facing, 0, -6, 0, 6, SWORD_LIGHT, 0.6f);
 		streak(buffers, pose, trail, cam, SpellRender.GLOW, SWORD_LIGHT, 4, 0.5f, 30, 0);
+		// Seals of metal turning round the blade as it comes down, and a blazing star where its point leads.
+		VertexConsumer seal = buffers.getBuffer(SpellRender.glow(SpellRender.SEAL_METAL));
+		for (int k = 0; k < 3; k++) {
+			pose.pushPose();
+			pose.translate(0, -2 + k * 6, 0);
+			SpellRender.disc(seal, pose.last(), 3.2f - k * 0.6f, 0, age * (k % 2 == 0 ? 0.05f : -0.07f), new float[]{1.0f, 0.88f, 0.5f}, 0.75f, SpellRender.FULL_BRIGHT);
+			pose.popPose();
+		}
+		star(buffers, pose, facing, 0, -12, 0, 9, age * 0.1f, WHITE, 0.9f);
 	}
 
 	/**
@@ -652,6 +765,17 @@ public class SpellProjectileRenderer extends EntityRenderer<SpellProjectile> {
 			SpellRender.crescent(vc, pose.last(), radius * 0.98f, radius * 0.16f, 2.1f, 16, WHITE, alpha, SpellRender.FULL_BRIGHT);
 			pose.popPose();
 		}
+		// Stars flaring at its two tips, and the light of its edge about it.
+		Quaternionf facing = entityRenderDispatcher.cameraOrientation();
+		float radius = (mountain ? 7.0f : 1.7f) * (mountain ? s / 4 : s);
+		// The crescent's tips: 0.91 of its radius out to either side, 0.59 back from its bow (SpellRender#crescent, span 2.3).
+		Vec3 ahead = Vec3.directionFromRotation(0, -yaw), across = new Vec3(ahead.z, 0, -ahead.x);
+		float lift = mountain ? 3.0f * s / 4 : 0;
+		for (int side = -1; side <= 1; side += 2) {
+			Vec3 tip = (mountain ? new Vec3(0, side * radius * 0.91 + lift, 0) : across.scale(side * radius * 0.91)).add(ahead.scale(-radius * 0.59));
+			star(buffers, pose, facing, (float) tip.x, (float) tip.y, (float) tip.z, (mountain ? 3.5f : 1.1f) * s, age * 0.25f, WHITE, 0.9f * flicker);
+		}
+		glowBall(buffers, pose, facing, 0, lift, 0, radius * 2.2f, new float[]{0.8f, 0.92f, 1.0f}, 0.2f);
 	}
 
 	@Override

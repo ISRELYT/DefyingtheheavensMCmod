@@ -532,6 +532,11 @@ raised barrier (protective or concealment) is touched, nor the ground its shell 
 spawn protection and Adventure mode are respected.
 Every one has its own models, animation and effects (nothing is only Minecraft's own particles), and blocks a spell sets down
 (walls, trees, ice) are taken up again in time; broken or blown up before then they simply vanish, dropping nothing.
+Every cast blooms its element's **seal** under the caster (its character, 火 水 木 土 金, within rings of trigrams and the star
+of the five), turning, motes rising off it, from Core Formation with a pillar of its light; a spell cast at something also
+raises a smaller seal upright before the chest. The great spells work in their seals too (a domain's, a field's, the mark of
+what will fall, the seal a beam or jet comes out of), wards turn their seal at their bearer's feet, and the light of each
+element (flame, water, wood's green, earth's amber, metal's gold) glows through its missiles, fields and blows.
 
 **The five elements' cycle.** Fire overcomes metal, metal wood, wood earth, earth water, water fire. Some spells are **wards**
 (Azure Coating water; Hardened Body and Mountain Stance earth; Crimson Tempering and Flame Armour fire; Ancient Bark Skin wood;
@@ -767,6 +772,9 @@ sword light left hanging in the air. Look down in first person to see the blade 
   Qi Flight the same way. NPCs aren't bound by this: they pick whichever suits them as they go (below).
 - Running dry, falls, the Spatial Gap and Realm Suppress work as for Qi Flight: out of qi you drop (flight returns at 5%),
   falls hurt, no flight in the Gap, and pressure that holds you below Foundation Building grounds you.
+- **Changing worlds.** Flight is kept when you pass into another dimension however you go (a ghost crossing into the
+  Overworld, a command's teleport): vanilla's teleport between dimensions doesn't resend what a player may do, so the client
+  fell back to walking until something else resent it; `QiFlight` now resends it on every change of dimension.
 - A chat line marks the day it awakens; the ability is on by default. It's appended to new wheels (slot 7); a wheel saved
   before it existed has to have it dragged on.
 
@@ -876,7 +884,7 @@ keeps its colour under Qi Sense), `SoulHud.java`, `SoulBodyRenderer` / `SoulVess
 
 From **Core Formation**, the living have a last resort on the ability wheel: detonating the golden core. Used once, the core
 only trembles and you are warned; used again within 5 seconds (but not in the same half second: a double click is ignored),
-it breaks (everyone on the server is told), swells for 3 seconds
+it breaks (those near enough to be caught in it are warned on their action bar; nothing goes to chat), swells for 3 seconds
 while you can barely move, and bursts. Everything living within its reach (10 blocks at Core Formation, 16 at Nascent Soul,
 22 at Heavenly Being, 28 at Four Axis, a tenth more for each stage) takes its harm: at the heart 1.1 times the whole health of a
 body of your own stage, falling off with distance to nothing at the edge; for every realm a victim stands below you the harm
@@ -889,10 +897,15 @@ than that. Leaving the game while it breaks doesn't escape it. A creative player
 
 ## The Spatial Gap, the Spatial Tear and floating meditation
 
-**The Spatial Tear.** From **Heavenly Being**, the living can tear space open (on the ability wheel) and step into the Spatial
-Gap from the Overworld or the Upper Realm, for a quarter of their qi pool, and tear their way out again for a tenth (5 seconds
-between tears). In the gap by your own tear there is no timer and no current: you **fly** on qi (Qi Flight, Sword Flight; elytra
-don't open there),
+**The Spatial Tear.** From **Heavenly Being**, the living can tear space open (on the ability wheel), for a quarter of their qi
+pool going in and a tenth coming out (5 seconds between tears). The tear is a **rift that opens in front of you** (a couple of
+blocks ahead, where there's room) and stands for **20 seconds**: nothing happens until you **walk into it**, and **anyone else
+can walk through it too**, those who can't tear space themselves included (they come out of the gap by the crossing, the
+floor, or a rift out that someone opens for them). Its rim shows where it leads: violet into the gap, green out to the
+Overworld, gold out to the Upper Realm. Opening a new one closes your last. In the gap by a tear there is no timer and no
+current: you **fly freely** on qi (Qi Flight, Sword Flight; elytra don't open there), up and down as you like, and nothing
+throws you out until you rise past the crossing or sink below the floor. A Heavenly Being who steps into the rift at the
+Overworld's 0, 0, or falls off the Upper Realm, flies the gap the same way (no trial),
 and **a block crossed there is 20 in the world**, both ways: you step in at a twentieth of where you stood and out at twenty
 times where you are. The action bar shows where the world lies beneath you and how far the crossing (or the floor) is. Spatial
 pressure still presses: **2.5 a second in the shallows** (where you come in at Y 128, between Y 60 and Y 200), the trial's full
@@ -901,10 +914,16 @@ from one realm to the other you go **up or down**. Rise through the **upper laye
 the Upper Realm, where the gap's place there lies (the arrival finds an island). Sink through the **lower layers** (under Y 60)
 below **Y 12** and you fall out of the gap into the Overworld's sky (the first landing harmless); the gap is thick there, and
 nothing sinks through it faster than 4 blocks a second (falling or flying down; about as fast as Qi Flight climbs), so the 48
-blocks take 12 seconds: some 50 harm, before the storms. The trials still run as before: the rift at the Overworld's 0, 0
-carries anyone up for 60 seconds to the Upper Realm, and falling off the Upper Realm drops one through the gap to the
-Overworld; a Heavenly Being can tear out of either, back to the realm it set out from (the Overworld from the climb, the Upper
-Realm from the fall), at the world's own scale there, since a trial's gap lies over the place it began.
+blocks take 12 seconds: some 50 harm, before the storms. Below Heavenly Being the trials still run as before: the rift at the
+Overworld's 0, 0 carries one up for 60 seconds to the Upper Realm, and falling off the Upper Realm drops one through the gap
+to the Overworld.
+
+**Telling the layers apart.** Flying the gap freely, its layers are plain to see: a veil of storm-light lies across each
+boundary (magenta at Y 200, ember red at Y 60), the fog and sky darken and take the stormy layer's colour as you pass into it
+(the shallows stay a calm deep blue), the motes there turn the layer's colour and the wind grows wilder, a storm's roar rises,
+the screen's edge glows in the layer's colour, and a gauge at the left of the screen shows where you are: the shallows in the
+middle, the stormy layers above and below, the crossing (gold, the Upper Realm) at its top and the floor (green, the
+Overworld) at its foot.
 
 **Arriving without a lag spike.** Coming out where nobody has been means generating the land there, and the server used to
 do it on its own thread while everyone waited (an arrival in the Upper Realm could generate some 49 chunks of open sky looking
@@ -1916,6 +1935,29 @@ the top.
   (`RUN_SPEED`, `FLY_SPEED` in `CultivatorGoals.FleeGoal`).
 - Every cultivator has a nameplate: their name ("Mo Lian", or what a name tag called them), title, a red health bar with
   numbers, and alignment, for example "Righteous (+120)". Under Qi Sense, meditating cultivators draw qi motes into themselves.
+
+### Joining a sect
+
+Players can join a sect and become one of its disciples (`SectMembership`).
+- **Asking.** Talk to one of its members and Ask "to join the sect". A disciple sends you to an elder; an Elder, a Grand Elder
+  or the Sect Master judges you. They turn away the dead, mortals, a disciple of another sect (who must leave it first), one
+  the sect cast out or who just left it (see below), one it loathes (its standing with you, or the elder's regard, Hostile or
+  worse), and anyone stronger than its Sect Master.
+- **The entrance trial.** Otherwise the elder sets you a trial: Ask again, "take the entrance trial", within 5 minutes, and you
+  spar with them, holding back to your own realm. Win it, or stand your ground to the end, and you are taken in. Lose it and
+  that sect won't try you again until tomorrow. A body of **High grade or better** (Physiques), or an elder **Warm** to you,
+  takes you in without the trial.
+- **Your title** is your strength among its members as they are: Outer Disciple, Inner Disciple, Elder or Grand Elder (the
+  Sect Master's seat is always a cultivator's), changing as you break through or its members change; you're told when it
+  does. The Stats tab shows your sect and title under your physique.
+- **Belonging.** Its barrier lets you through. Its members are your fellows: never hostile to you, they come to your aid when
+  you are struck near them, and your spells spare them. On its grounds you cultivate **a quarter faster**. Its elders teach
+  you its method once Courteous (others need Warm).
+- **Its rules.** The treasury belongs to its elders. Below Elder, the first hand you lay on it (opening or breaking) is stopped
+  with a warning; the second casts you out, and after that you are an outsider there like anyone (the seal, theft). Striking a
+  fellow member outside a spar also casts you out. Cast out, the sect won't hear you for **30 days**.
+- **Leaving.** Ask an elder to "leave the sect". It takes you back after **3 days**.
+- Commands (op): `/sect join <player>` joins the nearest sect, `/sect leave <player>`; `/sect info` lists its disciples too.
 
 ### Everyday life
 

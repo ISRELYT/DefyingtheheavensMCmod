@@ -30,7 +30,30 @@ public final class SectCommand {
 		CommandRegistrationCallback.EVENT.register((dispatcher, buildContext, selection) -> {
 			dispatcher.register(Commands.literal("sect")
 					.requires(src -> src.hasPermission(2))
-					.then(Commands.literal("info").executes(ctx -> info(ctx.getSource()))));
+					.then(Commands.literal("info").executes(ctx -> info(ctx.getSource())))
+					// A player made a disciple of the nearest sect (no trial), or taken off their sect's rolls (SectMembership).
+					.then(Commands.literal("join").then(Commands.argument("player", EntityArgument.player()).executes(ctx -> {
+						ServerPlayer player = EntityArgument.getPlayer(ctx, "player");
+						Sect sect = nearest(ctx.getSource());
+						if (sect == null) {
+							ctx.getSource().sendFailure(Component.literal("No sect within 512 blocks."));
+							return 0;
+						}
+						SectMembership.join(player, sect);
+						ctx.getSource().sendSuccess(() -> Component.literal(player.getGameProfile().getName() + " joined " + sect.name + "."), true);
+						return 1;
+					})))
+					.then(Commands.literal("leave").then(Commands.argument("player", EntityArgument.player()).executes(ctx -> {
+						ServerPlayer player = EntityArgument.getPlayer(ctx, "player");
+						Sect sect = SectMembership.sectOf(player.server, player.getUUID());
+						if (sect == null) {
+							ctx.getSource().sendFailure(Component.literal(player.getGameProfile().getName() + " belongs to no sect."));
+							return 0;
+						}
+						SectMembership.leave(player, sect);
+						ctx.getSource().sendSuccess(() -> Component.literal(player.getGameProfile().getName() + " left " + sect.name + "."), true);
+						return 1;
+					}))));
 
 			dispatcher.register(Commands.literal("cultivator")
 					.requires(src -> src.hasPermission(2))
@@ -81,24 +104,29 @@ public final class SectCommand {
 		return 1;
 	}
 
-	private static int info(CommandSourceStack source) {
+	/** The sect whose core is nearest the command's source, within 512 blocks; or null. */
+	private static Sect nearest(CommandSourceStack source) {
 		ServerLevel level = source.getLevel();
 		Vec3 at = source.getPosition();
 		Sect nearest = null;
 		double best = 512 * 512;
 		for (Sect sect : SectData.get(level.getServer()).all()) {
-			if (sect.dimension != level.dimension()) continue;
+			if (sect.dimension != level.dimension() || sect.extinct) continue;
 			double d = sect.core.distToCenterSqr(at);
 			if (d < best) {
 				best = d;
 				nearest = sect;
 			}
 		}
-		if (nearest == null) {
+		return nearest;
+	}
+
+	private static int info(CommandSourceStack source) {
+		Sect sect = nearest(source);
+		if (sect == null) {
 			source.sendFailure(Component.literal("No sect within 512 blocks."));
 			return 0;
 		}
-		Sect sect = nearest;
 		List<Component> lines = new ArrayList<>();
 		lines.add(Component.literal(sect.name).withStyle(ChatFormatting.GOLD).append(Component.literal(" (").withStyle(ChatFormatting.GRAY))
 				.append(Alignment.describe(sect.alignment)).append(Component.literal(")").withStyle(ChatFormatting.GRAY)));
@@ -112,6 +140,13 @@ public final class SectCommand {
 					.withStyle(style -> style.withColor(member.title.getColor())));
 			line.append(" ").append(PlayerCultivation.rankName(CultivatorNpc.realmOf(member.rank), CultivatorNpc.stageOf(member.rank)));
 			lines.add(line);
+		}
+		for (Sect.Disciple disciple : sect.disciples.values()) {
+			ServerPlayer online = source.getServer().getPlayerList().getPlayer(disciple.id);
+			NpcTitle title = online != null ? SectMembership.titleOf(sect, online) : null;
+			lines.add(Component.literal("  player " + disciple.name + (title != null ? " " : " (offline)")).withStyle(ChatFormatting.AQUA)
+					.append(title != null ? Component.translatable(ModLang.NPC_TITLE_BRACKETS, title.getDisplayName()) : Component.empty())
+					.append(Component.literal(disciple.treasuryTries > 0 ? ", treasury tries " + disciple.treasuryTries : "").withStyle(ChatFormatting.GRAY)));
 		}
 		for (Component line : lines) source.sendSuccess(() -> line, false);
 		return 1;

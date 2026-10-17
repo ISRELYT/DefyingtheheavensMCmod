@@ -48,7 +48,9 @@ public final class SparSystem {
 
 	/** What the player asked for: a wager, and whether the cultivator holds back. */
 	public enum Terms {
-		FRIENDLY(false, false), WAGER(true, false), FULL(false, true), WAGER_FULL(true, true);
+		FRIENDLY(false, false), WAGER(true, false), FULL(false, true), WAGER_FULL(true, true),
+		/** A sect's entrance trial (SectMembership): a friendly bout with the elder, held back to the player's realm; set by the elder only. */
+		TRIAL(false, false);
 
 		public final boolean wager;
 		public final boolean full;
@@ -282,6 +284,12 @@ public final class SparSystem {
 				give(player, spar.playerStake);
 				npc.keepWinnings(spar.npcStake);
 			}
+		}
+		if (spar.terms == Terms.TRIAL && outcome != Outcome.VOID) {
+			// The entrance trial: won or held to the time, the elder takes them in; else not today (SectMembership#onTrial).
+			TalkSystem.say(player, npc, Component.translatable(ModLang.talkLine(SectMembership.onTrial(player, npc, outcome))), delta);
+			npc.level().playSound(null, npc.blockPosition(), SoundEvents.ANVIL_LAND, SoundSource.NEUTRAL, 0.3f, 1.8f);
+			return;
 		}
 		String line = switch (outcome) {
 			case WON -> "spar.won";

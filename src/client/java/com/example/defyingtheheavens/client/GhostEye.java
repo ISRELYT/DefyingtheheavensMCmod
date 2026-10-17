@@ -102,7 +102,7 @@ public final class GhostEye {
 		if (ghostlyNear) {
 			for (net.minecraft.world.entity.LivingEntity dead : mc.level.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class,
 					mc.player.getBoundingBox().inflate(RANGE), e -> e instanceof com.example.defyingtheheavens.Ghostly && !e.isInvisible())) {
-				SoulRenderer.drawDead(context, dead, partial, true);
+				SoulRenderer.drawDead(context, dead, partial);
 			}
 		}
 		if (!STELES.isEmpty()) {

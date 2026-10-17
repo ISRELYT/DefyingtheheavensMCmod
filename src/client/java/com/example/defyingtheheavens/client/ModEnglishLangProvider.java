@@ -324,7 +324,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case CORE_DETONATION -> "The last resort. Use it twice within 5 s and your golden core breaks: 3 s later it bursts, everything within %s blocks "
 						+ "harmed by its distance and how far its realm stands below yours (a cultivator of your own realm in good armour may live). "
 						+ "You die, and the core is lost: you return at Foundation Building Grand Perfection.";
-				case SPATIAL_TEAR -> "Tear space open and step into the Spatial Gap, or out of it again into the realm you came from. There you fly freely, "
+				case SPATIAL_TEAR -> "Tear space open before you: a rift that stands 20 s, that you and anyone with you can walk through, into the Spatial Gap "
+						+ "or out of it again into the realm you came from. There you fly freely, "
 						+ "each block crossing %s in the world, under spatial pressure (worse in its stormy layers: rise through the upper ones to cross "
 						+ "into the Upper Realm, or sink slowly through the lower ones to fall into the mortal world). "
 						+ "Costs %s%% of your qi to tear in, %s%% to tear out.";
@@ -692,6 +693,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_GAP_TRAVEL_LOWER, "The lower layers - the world beneath: %s, %s - %s blocks to the floor");
 		t.add(ModLang.MSG_GAP_SETTLING, "Space settles about your way out...");
 		t.add(ModLang.MSG_TEAR_COOLING, "Space hasn't settled from your last tear (%s s).");
+		t.add(ModLang.MSG_TEAR_OPEN, "Space tears open before you. Step through it, and any with you, before it closes.");
 		t.add(ModLang.MSG_TEAR_NOT_HERE, "Space here won't tear: only the mortal world and the Upper Realm open onto the gap.");
 		t.add(ModLang.MSG_TEAR_NO_QI, "Tearing space open takes %s qi.");
 		t.add(ModLang.MSG_TEAR_OUT, "You tear your way out of the gap at %s, %s.");
@@ -1301,6 +1303,34 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_SEAL_UNSEEN, "The qi ink sinks into the surface, unseen by mortal eyes. Only Qi Sense reveals it.");
 		t.add(ModLang.MSG_TREASURY_SEALED, "A seal of %s holds it shut. Only one a realm above its elders could break it.");
 		t.add(ModLang.MSG_TREASURY_SEAL_BROKEN, "The elders' seal shatters under your hand. The treasury lies open.");
+		// Players in sects (SectMembership)
+		t.add(ModLang.MSG_SECT_JOINED, "You are now a disciple of the %s: %s.");
+		t.add(ModLang.MSG_SECT_LEFT, "You have left the %s.");
+		t.add(ModLang.MSG_SECT_EXPELLED, "You have been cast out of the %s: %s");
+		t.add(ModLang.MSG_SECT_EXPELLED_TREASURY, "you laid hands on the elders' treasury again.");
+		t.add(ModLang.MSG_SECT_EXPELLED_VIOLENCE, "you struck one of your own sect.");
+		t.add(ModLang.MSG_SECT_TREASURY_WARNING, "The treasury is the elders' alone. Lay hands on it again and you will be cast out.");
+		t.add(ModLang.MSG_SECT_TITLE, "By your strength you are now %s of the %s.");
+		t.add(ModLang.STATS_SECT, "%s - %s");
+		t.add("cultivation.defying-the-heavens.talk.topic.join", "May I join your sect?");
+		t.add("cultivation.defying-the-heavens.talk.topic.trial", "I am ready for the entrance trial.");
+		t.add("cultivation.defying-the-heavens.talk.topic.leave_sect", "I wish to leave the sect.");
+		t.add(ModLang.talkLine("join.disciple"), "I am only a disciple. Speak to one of our elders: they decide who joins us.");
+		t.add(ModLang.talkLine("join.ghost"), "The dead have no place in a sect of the living.");
+		t.add(ModLang.talkLine("join.mortal"), "You have not even begun to cultivate. Open your meridians first, then come to us.");
+		t.add(ModLang.talkLine("join.other_sect"), "You are already a disciple of the %s. A cultivator serves one sect.");
+		t.add(ModLang.talkLine("join.barred"), "We will not take you back yet. Come again in %s days, if you still wish it.");
+		t.add(ModLang.talkLine("join.hated"), "Our sect has not forgotten what you have done to us. Leave.");
+		t.add(ModLang.talkLine("join.too_strong"), "One of your strength would be no disciple of ours. We cannot take you in.");
+		t.add(ModLang.talkLine("join.tried"), "You have been tested today already. Train, and come back tomorrow.");
+		t.add(ModLang.talkLine("join.trial"), "Then show me what you have learned: an entrance trial, against me. I will hold back to your realm. "
+				+ "Win, or stand your ground until the time runs out, and you are one of us. Say when you are ready.");
+		t.add(ModLang.talkLine("join.gifted"), "A body like yours needs no testing. Welcome to the %s: from today you are %s.");
+		t.add(ModLang.talkLine("join.friend"), "You have long been a friend to us. Welcome to the %s: from today you are %s.");
+		t.add(ModLang.talkLine("join.passed"), "Well fought. From today you are one of us. Our gates are open to you.");
+		t.add(ModLang.talkLine("join.failed"), "Not yet. Train, and come back tomorrow.");
+		t.add(ModLang.talkLine("leave.disciple"), "Only an elder can release you from the sect.");
+		t.add(ModLang.talkLine("leave.done"), "So be it. You are no longer one of us. Go well.");
 		t.add(ModLang.MSG_PALACE_SEALED, "The Ghost King's seal of %s holds it shut. Only one a realm above the king could break it.");
 		t.add(ModLang.MSG_PALACE_SEAL_BROKEN, "The Ghost King's seal shatters under your hand. The treasury lies open.");
 		t.add(ModLang.BRUSH_TOOLTIP, "Paints seals of qi ink on floors and walls, to join Qi Veins to a Formation Core");

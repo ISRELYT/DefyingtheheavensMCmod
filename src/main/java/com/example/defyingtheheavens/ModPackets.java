@@ -30,6 +30,8 @@ public final class ModPackets {
 	public static final ResourceLocation SURGE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "surge");
 	/** S2C: the soul is about to turn inward: fade the screen to black (see InnerRealm#FADE_TICKS). */
 	public static final ResourceLocation INNER_FADE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "inner_fade");
+	/** S2C: the player's sect and their title in it, for the Stats tab (SectMembership#sendStatus). */
+	public static final ResourceLocation SECT_STATUS = new ResourceLocation(DefyingTheHeavens.MOD_ID, "sect_status");
 	/** S2C: full cultivation state for the owning player. */
 	public static final ResourceLocation SYNC = new ResourceLocation(DefyingTheHeavens.MOD_ID, "sync");
 	/** S2C: "player X (entity id) is/isn't riding their sword" (see {@link SwordFlight}), repeated once a second while they ride. */
@@ -538,8 +540,12 @@ public final class ModPackets {
 			buf.writeInt(formation.getRank());
 			buf.writeBoolean(formation.getOwner() != null);
 			if (formation.getOwner() != null) buf.writeUUID(formation.getOwner());
-			buf.writeVarInt(formation.getTrusted().size());
-			for (UUID player : formation.getTrusted()) buf.writeUUID(player);
+			// A sect's barrier lets its player disciples through (SectMembership): on the client they are among the trusted.
+			java.util.Set<UUID> trusted = new java.util.LinkedHashSet<>(formation.getTrusted());
+			Sect sect = formation.getSect() == null ? null : SectManager.get(to.server, formation.getSect());
+			if (sect != null) trusted.addAll(sect.disciples.keySet());
+			buf.writeVarInt(trusted.size());
+			for (UUID player : trusted) buf.writeUUID(player);
 		}
 		ServerPlayNetworking.send(to, FORMATIONS, buf);
 	}

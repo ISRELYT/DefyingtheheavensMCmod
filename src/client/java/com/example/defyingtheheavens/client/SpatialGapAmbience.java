@@ -54,7 +54,7 @@ public final class SpatialGapAmbience {
 	private static final int FAR_BURST = 325;
 	private static final int NEAR_BURST = 75;
 	private static final double JUMP_DISTANCE = 40.0;
-	private static final int[] MOTE_COLORS = {0xC9A8FF, 0x8FE3FF, 0xF1EAFF, 0xA06BFF};
+	/** The motes' colours are the layer's (GapLayers#moteColours); they all fade to this. */
 	private static final int MOTE_FADE = 0x2A1259;
 
 	/** Storms sit just inside the star dome (radius 100), so they cover the stars behind them. */
@@ -78,6 +78,8 @@ public final class SpatialGapAmbience {
 	private static PressureLoop warp;
 	private static PressureLoop wind;
 	private static PressureLoop crush;
+	/** The roar of a stormy layer (one flying the gap freely: GapLayers), rising as one goes deeper into it. */
+	private static StormRoar roar;
 
 	/** Called every client tick. */
 	public static void tick(Minecraft mc) {
@@ -132,14 +134,18 @@ public final class SpatialGapAmbience {
 		// Uniform through the shell's volume, so the motes aren't crowded close in.
 		float min3 = minRadius * minRadius * minRadius;
 		float r = (float) Math.cbrt(min3 + RANDOM.nextFloat() * (maxRadius * maxRadius * maxRadius - min3));
+		// In a stormy layer (one flying the gap freely: GapLayers) the motes take its colour and are driven on its wind.
+		float storm = Math.abs(GapLayers.layer(mc));
+		float wind = 0.02f + 0.5f * storm;
 		Particle p = mc.particleEngine.createParticle(ParticleTypes.END_ROD,
 				center.x + dir.x * r, center.y + dir.y * r, center.z + dir.z * r,
-				(RANDOM.nextFloat() - 0.5f) * 0.02f, (RANDOM.nextFloat() - 0.5f) * 0.02f, (RANDOM.nextFloat() - 0.5f) * 0.02f);
+				(RANDOM.nextFloat() - 0.5f) * wind + storm * 0.25f, (RANDOM.nextFloat() - 0.5f) * 0.02f, (RANDOM.nextFloat() - 0.5f) * wind);
 		if (p == null) return;
 		p.scale(minScale + RANDOM.nextFloat() * (maxScale - minScale));
 		p.setLifetime(60 + RANDOM.nextInt(60));
 		if (p instanceof SimpleAnimatedParticle mote) {
-			mote.setColor(MOTE_COLORS[RANDOM.nextInt(MOTE_COLORS.length)]);
+			int[] colours = GapLayers.moteColours(mc);
+			mote.setColor(colours[RANDOM.nextInt(colours.length)]);
 			mote.setFadeColor(MOTE_FADE);
 		}
 	}
@@ -426,6 +432,10 @@ public final class SpatialGapAmbience {
 		warp = keepPlaying(mc, warp, SoundEvents.PORTAL_AMBIENT, 0.7f, 0.8f);
 		wind = keepPlaying(mc, wind, SoundEvents.AMBIENT_SOUL_SAND_VALLEY_LOOP.value(), 0.75f, 1.0f);
 		crush = keepPlaying(mc, crush, SoundEvents.AMBIENT_UNDERWATER_LOOP, 0.85f, 1.0f);
+		if (Math.abs(GapLayers.layer(mc)) > 0.01f && (roar == null || !mc.getSoundManager().isActive(roar))) {
+			roar = new StormRoar();
+			mc.getSoundManager().play(roar);
+		}
 		// hurtTime jumps up when the player is hit; in the gap that is the pressure, once a second.
 		int hurtTime = mc.player.hurtTime;
 		if (hurtTime > lastHurtTime) {
@@ -467,6 +477,34 @@ public final class SpatialGapAmbience {
 		public void tick() {
 			volume = inGap ? Math.min(maxVolume, volume + maxVolume / 40.0f) : volume - maxVolume / 30.0f;
 			if (volume <= 0.0f) {
+				volume = 0.0f;
+				stop();
+			}
+		}
+	}
+
+	/** A howling gale at the listener, as loud as one is deep in a stormy layer (GapLayers#layer); it stops in the calm. */
+	private static final class StormRoar extends AbstractTickableSoundInstance {
+		StormRoar() {
+			super(SoundEvents.ELYTRA_FLYING, SoundSource.AMBIENT, SoundInstance.createUnseededRandom());
+			this.looping = true;
+			this.delay = 0;
+			this.volume = 0.0f;
+			this.pitch = 0.55f;
+			this.relative = true;
+			this.attenuation = SoundInstance.Attenuation.NONE;
+		}
+
+		@Override
+		public boolean canStartSilent() {
+			return true;
+		}
+
+		@Override
+		public void tick() {
+			float target = inGap ? 0.9f * Math.abs(GapLayers.layer(Minecraft.getInstance())) : 0;
+			volume += Mth.clamp(target - volume, -0.03f, 0.03f);
+			if (volume <= 0.0f && target <= 0) {
 				volume = 0.0f;
 				stop();
 			}

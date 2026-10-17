@@ -19,15 +19,26 @@ import net.minecraft.world.item.TridentItem;
  * diagonal a sword's blade runs in its texture, from the hilt to the point.
  */
 public final class BladeWisps {
-	private static final float[] WHITE = {1, 1, 1};
+	private static final float[] WHITE = {1, 1, 1}, POLISH = {0.85f, 0.92f, 1.0f};
 
-	public static void draw(LivingEntity holder, ItemStack stack, ItemDisplayContext context, boolean leftHand, PoseStack pose, MultiBufferSource buffers) {
+	public static void draw(LivingEntity holder, ItemStack stack, ItemDisplayContext context, boolean leftHand, PoseStack pose, MultiBufferSource source) {
 		if (stack.isEmpty() || !(stack.getItem() instanceof TieredItem || stack.getItem() instanceof TridentItem)) return;
 		if (!ClientSpellAuras.has(holder, SpellAura.BLADE_POLISH)) return;
 		Minecraft mc = Minecraft.getInstance();
 		float partial = mc.getFrameTime();
 		float shown = ClientSpellAuras.shown(holder, SpellAura.BLADE_POLISH, partial, 8, 20);
 		if (shown <= 0) return;
+		MultiBufferSource buffers = SpellBuffers.begin(source);
+		try {
+			draw(holder, stack, context, leftHand, pose, buffers, partial, shown);
+		} finally {
+			SpellBuffers.end();
+		}
+	}
+
+	private static void draw(LivingEntity holder, ItemStack stack, ItemDisplayContext context, boolean leftHand, PoseStack pose, MultiBufferSource buffers,
+							 float partial, float shown) {
+		Minecraft mc = Minecraft.getInstance();
 		float age = holder.tickCount + partial;
 		BakedModel model = mc.getItemRenderer().getModel(stack, holder.level(), holder, holder.getId());
 		pose.pushPose();
@@ -38,9 +49,23 @@ public final class BladeWisps {
 		PoseStack.Pose p = pose.last();
 		for (int i = 0; i < 6; i++) {
 			float t = 0.35f + i * 0.11f;
-			float size = 0.28f;
+			float size = 0.34f;
 			SpellRender.quad(glow, p, SpellRender.v(t - size / 2, t - size / 2, 0.5f), SpellRender.v(t - size / 2, t + size / 2, 0.5f),
-					SpellRender.v(t + size / 2, t + size / 2, 0.5f), SpellRender.v(t + size / 2, t - size / 2, 0.5f), WHITE, 0.35f * shown, 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+					SpellRender.v(t + size / 2, t + size / 2, 0.5f), SpellRender.v(t + size / 2, t - size / 2, 0.5f), POLISH, 0.5f * shown, 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+		}
+		// The keen edge: a thread of light along it, both faces.
+		float e = 0.025f;
+		for (float z : new float[]{0.47f, 0.53f}) {
+			SpellRender.quad(glow, p, SpellRender.v(0.32f - e, 0.32f + e, z), SpellRender.v(0.32f + e, 0.32f - e, z), SpellRender.v(0.97f + e, 0.97f - e, z),
+					SpellRender.v(0.97f - e, 0.97f + e, z), WHITE, 0.9f * shown, 0.45f, 0, 0.55f, 1, SpellRender.FULL_BRIGHT);
+		}
+		// A glint running from the hilt to the point now and again, flaring at the point.
+		float run = (age % 30) / 12f;
+		if (run < 1) {
+			float t = 0.35f + run * 0.62f, size = 0.22f + (run > 0.85f ? (run - 0.85f) * 2.5f : 0);
+			VertexConsumer star = buffers.getBuffer(SpellRender.glow(SpellRender.STAR));
+			SpellRender.quad(star, p, SpellRender.v(t - size, t - size, 0.55f), SpellRender.v(t - size, t + size, 0.55f), SpellRender.v(t + size, t + size, 0.55f),
+					SpellRender.v(t + size, t - size, 0.55f), WHITE, shown * Mth.sin((float) Math.PI * Math.min(1, run * 1.1f)), 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
 		}
 		// Wisps of white smoke curling up off the edge.
 		VertexConsumer smoke = buffers.getBuffer(SpellRender.clear(SpellRender.SMOKE));
