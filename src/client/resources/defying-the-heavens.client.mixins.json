@@ -19,6 +19,8 @@
     "ItemInHandLayerMixin",
     "ItemInHandRendererMixin",
     "ItemRendererMixin",
+    "KeyMappingAccessor",
+    "KeyMappingMixin",
     "LevelRendererMixin",
     "LivingEntityRendererMixin",
     "MinecraftMixin",

@@ -653,6 +653,16 @@ public final class ModLang {
 	public static final String MSG_STORAGE_COST = k("message.storage_ring.cost");
 	public static final String MSG_STORAGE_REFINED = k("message.storage_ring.refined");
 	public static final String KEY_STORAGE_RING = "key." + DefyingTheHeavens.MOD_ID + ".storage_ring";
+	// Switching abilities by key, without the wheel (client QuickAbilities)
+	public static final String KEY_QUICK_ABILITY = "key." + DefyingTheHeavens.MOD_ID + ".quick_ability";
+	/** Followed by the slot's number, 1 to 8: "key.defying-the-heavens.ability_slot_3". */
+	public static final String KEY_ABILITY_SLOT_PREFIX = "key." + DefyingTheHeavens.MOD_ID + ".ability_slot_";
+	public static final String MSG_QUICK_ABILITY_STATE = k("message.quick_ability.state");
+	public static final String MSG_QUICK_ABILITY_EMPTY = k("message.quick_ability.empty");
+	public static final String MSG_SELECTED_ABILITY_NONE = k("message.selected_ability.none");
+	public static final String MSG_SELECTED_ABILITY_ASLEEP = k("message.selected_ability.asleep");
+	public static final String WHEEL_SELECTED = k("wheel.selected");
+	public static final String HUD_SELECTED_ABILITY = k("hud.selected_ability");
 	// Detonating the golden core (CoreDetonation)
 	public static final String MSG_CORE_CONFIRM = k("message.core_detonation.confirm");
 	public static final String MSG_CORE_TOO_LATE = k("message.core_detonation.too_late");

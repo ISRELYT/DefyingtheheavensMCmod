@@ -99,11 +99,13 @@ public final class ClientPacketHandlers {
 			int bodyRefining = buf.readVarInt();
 			int[] statPoints = new int[com.example.defyingtheheavens.StatPoints.Stat.values().length];
 			for (int i = 0; i < statPoints.length; i++) statPoints[i] = buf.readVarInt();
+			com.example.defyingtheheavens.Ability selected = com.example.defyingtheheavens.Ability.byIndex(buf.readVarInt() - 1);
 			client.execute(() -> {
 				ClientCultivationData.physique(physique, roots, bodyRefining); // first: a shattered body tempers past Peak
 				for (com.example.defyingtheheavens.StatPoints.Stat stat : com.example.defyingtheheavens.StatPoints.Stat.values()) {
 					ClientCultivationData.get().setStatPoints(stat, statPoints[stat.ordinal()]);
 				}
+				ClientCultivationData.get().setSelectedAbility(selected);
 				ClientCultivationData.update(realm, stage, cultivation, qi, meditating, lowerRealmBound, inUpperRealm,
 						disabledAbilities, pressureStages, pressurePenalty, mortal, mortalStage, tempering, preparedRealm, preparedBonus, qiBoost,
 						pillResistance, medicinalQi, alignment, gearQiBonus, wheel, soulState, heavensLeave, favour);

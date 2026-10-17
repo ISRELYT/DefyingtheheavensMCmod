@@ -1,4 +1,4 @@
-// 1.20.1	2026-10-17T16:58:50.1436448	Defying The Heavens/Model Definitions
+// 1.20.1	2026-10-17T18:38:32.1915584	Defying The Heavens/Model Definitions
 2a37dff13a81a9b17eb809fba4b736f445728126 assets\defying-the-heavens\models\item\jade_ore.json
 6e19ed319a3f65b6678d96013549e5ddab50a243 assets\defying-the-heavens\models\block\dao_stele_water_upper.json
 f4125133876ff3cdf20bb5bc48fc24e6cc6789ee assets\defying-the-heavens\models\block\deepslate_jade_ore.json
@@ -14,8 +14,8 @@ da7a1c3fc0e87b9c781c74138e9608fcedf25064 assets\defying-the-heavens\models\block
 da7a1c3fc0e87b9c781c74138e9608fcedf25064 assets\defying-the-heavens\models\block\method_stele_six_paths_canon_upper.json
 2bacabe79dbf5574954bc191623f366054cdc0c9 assets\defying-the-heavens\models\block\method_stele_ghost_core_canon_lower.json
 98b70cff3ad56583e895df9e6c332915e519d08a assets\defying-the-heavens\models\item\deepslate_spirit_stone_ore.json
-c0e4b0cdcb488823285623bf077547b9ddaa1d9d assets\defying-the-heavens\models\item\ring_of_transcendence.json
 fc3ae8540ad10ef01a87db729302b06ffe0b661b assets\defying-the-heavens\blockstates\white_blossom_leaves.json
+c0e4b0cdcb488823285623bf077547b9ddaa1d9d assets\defying-the-heavens\models\item\ring_of_transcendence.json
 fb34311402d475c485625c6a75a4d6b0b920d312 assets\defying-the-heavens\models\item\yin_gathering_pill.json
 480f3c53f41e1e027db19122204589e46fa173b7 assets\defying-the-heavens\models\block\spirit_stone_ore.json
 fd8953c44891ca695c043d79873eb70faecbd362 assets\defying-the-heavens\models\item\peach_wood_sword.json
@@ -69,8 +69,8 @@ d4d15be2eff29a8fb0020cba0fc501bcdf2df5ae assets\defying-the-heavens\models\block
 2bacabe79dbf5574954bc191623f366054cdc0c9 assets\defying-the-heavens\models\block\method_stele_ghost_fire_scripture_lower.json
 6e19ed319a3f65b6678d96013549e5ddab50a243 assets\defying-the-heavens\models\block\dao_stele_metal_upper.json
 61e7b54c6380042dba354bce72074780bd1a7ed0 assets\defying-the-heavens\models\item\netherworld_lotus.json
-a01acdd980b4457dccc2d6879ada12fd7cc69850 assets\defying-the-heavens\blockstates\spirit_stone_ore.json
 a2d38dd4e6557111c4c71bf032bdff2a0e336b43 assets\defying-the-heavens\models\block\yin_jade_ore.json
+a01acdd980b4457dccc2d6879ada12fd7cc69850 assets\defying-the-heavens\blockstates\spirit_stone_ore.json
 a5b6d377c39209c7f72ab1c30d0510dc81c5f5f0 assets\defying-the-heavens\models\item\qi_vein.json
 a7272af6b2be065470f02af22e19a6f5153be4dc assets\defying-the-heavens\blockstates\yin_jade_block.json
 84a528459ea7fcd54c627af9728b2c265bf87c06 assets\defying-the-heavens\models\item\other_shore_flower_seeds.json

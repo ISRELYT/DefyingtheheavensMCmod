@@ -1,5 +1,6 @@
 package com.example.defyingtheheavens.client;
 
+import com.example.defyingtheheavens.MetalSpells;
 import com.example.defyingtheheavens.SpellProjectile;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -779,38 +780,94 @@ public class SpellProjectileRenderer extends EntityRenderer<SpellProjectile> {
 		glowBall(buffers, pose, facing, 0, lift, 0, radius * 2.2f, new float[]{0.8f, 0.92f, 1.0f}, 0.2f);
 	}
 
-	/** Heaven-Severing Sword's slash: how tall its crescent stands (its radius) and how far above the ground its heart is. */
-	private static final float SEVER_RADIUS = 32, SEVER_LIFT = 9;
+	/**
+	 * How far below the Heaven-Severing slash's drawn middle its blade lies: the missile flies a block over the ground it set out from
+	 * and is drawn from half its 4-block height up, the blade's middle MetalSpells#SEVER_LIFT over that ground.
+	 */
+	private static final float SEVER_DROP = 3 - MetalSpells.SEVER_LIFT;
 
 	/**
-	 * Heaven-Severing Sword: a crescent of sword light standing on its edge, as tall as a hill (from deep in the ground it cuts to
-	 * forty blocks over it), running bow-first: a hot white edge in a pale blade, echoes of it streaming behind, stars flaring at
-	 * its two tips, light pouring off it, and the canyon's line burning white along the ground where it has passed.
+	 * Heaven-Severing Sword: a crescent of sword light lying level, about 110 blocks across (MetalSpells' numbers, the same the server
+	 * cuts by), sweeping bow-first at a caster's chest. Its body is see-through layers of light one over another, as thick as the
+	 * blade (thick at its middle, thinning to its tips, so it is lens-shaped seen from ahead), in a texture bright all through (not
+	 * only at the edge), with added light over it; its bow stands up as a band of white light so it shows from level with it too;
+	 * echoes stream behind it, stars flare at its tips and heart, and wakes of light trail from its tips and heart.
 	 */
 	private void heavenSlash(PoseStack pose, MultiBufferSource buffers, Quaternionf facing, Vec3 cam, List<Vec3> trail, float age, float yaw) {
-		float flicker = 0.85f + 0.15f * Mth.sin(age * 2.7f);
-		VertexConsumer vc = buffers.getBuffer(SpellRender.glow(SpellRender.SLASH));
-		for (int echo = 0; echo < 7; echo++) {
+		float flicker = 0.9f + 0.1f * Mth.sin(age * 2.7f);
+		float r = MetalSpells.SEVER_RADIUS, span = MetalSpells.SEVER_SPAN, half = MetalSpells.SEVER_THICK / 2;
+		float depth = r * 0.24f;
+		// Warm sword light (gold-white, as the other metal spells), which shows against a blue sky where pale blue-white is lost.
+		float[] pale = {1.0f, 0.86f, 0.52f}, edge = {1.0f, 0.97f, 0.86f};
+		pose.pushPose();
+		pose.translate(0, -SEVER_DROP, 0);
+		Vec3 eye = cam.add(0, SEVER_DROP, 0);
+		VertexConsumer light = buffers.getBuffer(SpellRender.glow(SpellRender.SEVER));
+		VertexConsumer body = buffers.getBuffer(SpellRender.clear(SpellRender.SEVER));
+		// Its edge: the bow stood up as tall as the blade is thick (thick at its middle, thin at its tips), white-hot and solid, with a
+		// halo of light about it; seen from behind and level with it, it is a great arc of light bowed up over the land.
+		pose.pushPose();
+		face(pose, yaw, 0);
+		bow(body, pose.last(), r, half, span, 48, edge, flicker, 0.3f);
+		bow(light, pose.last(), r, half, span, 48, edge, flicker, 0.3f);
+		bow(light, pose.last(), r * 1.004f, half * 1.6f, span, 48, pale, 0.5f * flicker, 1);
+		// Its body: the crescent itself, lying level from its edge back, see-through, with light over it.
+		SpellRender.crescent(body, pose.last(), r, depth, span, 48, pale, 0.75f * flicker, SpellRender.FULL_BRIGHT);
+		SpellRender.crescent(light, pose.last(), r, depth, span, 48, pale, 0.7f * flicker, SpellRender.FULL_BRIGHT);
+		// Its inner side stood up too, fainter and lower, so the blade shows its depth from behind.
+		bow(body, pose.last(), r - depth, half * 0.5f, span * 0.9f, 48, pale, 0.45f * flicker, 1);
+		pose.popPose();
+		// Echoes of the blade streaming behind it.
+		for (int echo = 1; echo < 5; echo++) {
 			pose.pushPose();
 			face(pose, yaw, 0);
-			pose.translate(0, SEVER_LIFT, -echo * 5.0f);
-			pose.mulPose(Axis.ZP.rotationDegrees(90));
-			float alpha = (echo == 0 ? 1 : 0.5f / echo) * flicker;
-			float radius = SEVER_RADIUS * (1 - echo * 0.04f);
-			SpellRender.crescent(vc, pose.last(), radius, radius * 0.42f, 2.3f, 28, new float[]{0.82f, 0.94f, 1.0f}, alpha, SpellRender.FULL_BRIGHT);
-			SpellRender.crescent(vc, pose.last(), radius * 0.99f, radius * 0.12f, 2.2f, 28, WHITE, alpha, SpellRender.FULL_BRIGHT);
+			pose.translate(0, 0, -echo * 9.0f);
+			float radius = r * (1 - echo * 0.03f);
+			bow(light, pose.last(), radius, half * (1 - echo * 0.15f), span, 48, pale, 0.5f / echo * flicker, 1);
+			SpellRender.crescent(light, pose.last(), radius, depth * 0.7f, span, 48, pale, 0.4f / echo * flicker, SpellRender.FULL_BRIGHT);
 			pose.popPose();
 		}
-		Vec3 ahead = Vec3.directionFromRotation(0, -yaw);
+		// Stars at its two tips (out to either side, back from its bow by the crescent's curve), a wake of light from each.
+		Vec3 ahead = Vec3.directionFromRotation(0, -yaw), across = new Vec3(ahead.z, 0, -ahead.x);
+		float tipOut = r * Mth.sin(span / 2), tipBack = r * (1 - Mth.cos(span / 2));
 		for (int side = -1; side <= 1; side += 2) {
-			Vec3 tip = new Vec3(0, side * SEVER_RADIUS * 0.91 + SEVER_LIFT, 0).add(ahead.scale(-SEVER_RADIUS * 0.59));
-			star(buffers, pose, facing, (float) tip.x, (float) tip.y, (float) tip.z, 14, age * 0.2f, WHITE, flicker);
+			Vec3 tip = across.scale(side * tipOut).add(ahead.scale(-tipBack));
+			star(buffers, pose, facing, (float) tip.x, 0, (float) tip.z, 16, age * 0.25f, WHITE, flicker);
+			List<Vec3> wake = new ArrayList<>();
+			for (Vec3 point : trail) wake.add(point.add(tip));
+			streak(buffers, pose, wake, eye, SpellRender.GLOW, pale, 3.5f, 0.7f, 60, age * 0.05f);
 		}
-		star(buffers, pose, facing, 0, SEVER_LIFT, 0, 24, -age * 0.1f, new float[]{0.85f, 0.95f, 1.0f}, 0.6f * flicker);
-		glowBall(buffers, pose, facing, 0, SEVER_LIFT, 0, SEVER_RADIUS * 2.6f, new float[]{0.8f, 0.92f, 1.0f}, 0.22f);
-		// The line it has cut, burning white along the ground behind it.
-		streak(buffers, pose, trail, cam, SpellRender.GLOW, new float[]{0.9f, 0.97f, 1.0f}, 6.0f, 0.9f, 90, age * 0.05f);
-		streak(buffers, pose, trail, cam, SpellRender.SLASH, WHITE, 2.0f, 1.0f, 60, age * 0.08f);
+		star(buffers, pose, facing, 0, 0, 0, 18, -age * 0.1f, pale, 0.5f * flicker);
+		Vec3 heart = ahead.scale(-r * 0.1);
+		glowBall(buffers, pose, facing, (float) heart.x, 0, (float) heart.z, r * 0.6f, pale, 0.1f);
+		// Its heart's wake, burning white over the cut it leaves.
+		streak(buffers, pose, trail, eye, SpellRender.GLOW, edge, 8.0f, 0.8f, 90, age * 0.05f);
+		streak(buffers, pose, trail, eye, SpellRender.SLASH, WHITE, 3.0f, 0.9f, 60, age * 0.08f);
+		pose.popPose();
+	}
+
+	/**
+	 * The bow of a crescent ({@link SpellRender#crescent}'s outer edge, round a centre {@code radius} behind it) stood up as a band
+	 * {@code half} above and below it, thinning toward its tips: bright along its middle, fading up and down (the texture's v from 0
+	 * at the middle to {@code vEdge} at the band's top and bottom: less than 1 keeps the whole band nearer full), so a level crescent
+	 * shows from level with it too.
+	 */
+	private static void bow(VertexConsumer vc, PoseStack.Pose pose, float radius, float half, float span, int segments, float[] rgb, float alpha,
+							float vEdge) {
+		for (int i = 0; i < segments; i++) {
+			float a0 = -span / 2 + span * i / segments, a1 = -span / 2 + span * (i + 1) / segments;
+			float h0 = half * (0.25f + 0.75f * Mth.sin((float) Math.PI * i / segments));
+			float h1 = half * (0.25f + 0.75f * Mth.sin((float) Math.PI * (i + 1) / segments));
+			float x0 = Mth.sin(a0) * radius, z0 = Mth.cos(a0) * radius - radius, x1 = Mth.sin(a1) * radius, z1 = Mth.cos(a1) * radius - radius;
+			float u0 = i / (float) segments, u1 = (i + 1) / (float) segments;
+			float nx = Mth.sin((a0 + a1) / 2), nz = Mth.cos((a0 + a1) / 2);
+			for (int up = -1; up <= 1; up += 2) {
+				SpellRender.vertex(vc, pose, x0, 0, z0, rgb[0], rgb[1], rgb[2], alpha, u0, 0, SpellRender.FULL_BRIGHT, nx, 0, nz);
+				SpellRender.vertex(vc, pose, x0, up * h0, z0, rgb[0], rgb[1], rgb[2], alpha, u0, vEdge, SpellRender.FULL_BRIGHT, nx, 0, nz);
+				SpellRender.vertex(vc, pose, x1, up * h1, z1, rgb[0], rgb[1], rgb[2], alpha, u1, vEdge, SpellRender.FULL_BRIGHT, nx, 0, nz);
+				SpellRender.vertex(vc, pose, x1, 0, z1, rgb[0], rgb[1], rgb[2], alpha, u1, 0, SpellRender.FULL_BRIGHT, nx, 0, nz);
+			}
+		}
 	}
 
 	@Override

@@ -2,12 +2,9 @@ package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.Ability;
 import com.example.defyingtheheavens.ModLang;
-import com.example.defyingtheheavens.ModPackets;
 import com.example.defyingtheheavens.PlayerCultivation;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
@@ -15,7 +12,6 @@ import net.minecraft.client.ToggleKeyMapping;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
@@ -25,8 +21,9 @@ import java.util.List;
 
 /**
  * The ability wheel: open for as long as its key ({@link ModKeybinds#ABILITY_WHEEL}) is held. Pointing toward a slot picks
- * it, and a click switches its ability on or off, the same as the switch on the menu's Abilities tab; several can be
- * switched before letting go. The slots are arranged on the Abilities tab ("Arrange Wheel").
+ * it; a click selects its ability (ringed in cyan) for the Use Selected Ability key ({@link QuickAbilities}), and a right-click
+ * switches it on or off now, the same as the switch on the menu's Abilities tab; so does pressing the slot's number (1 the top,
+ * then clockwise); several can be switched before letting go. The slots are arranged on the Abilities tab ("Arrange Wheel").
  * <p>
  * The player keeps moving while it's open: walking, jumping (and so Qi Flight), sneaking and sprinting pass through
  * ({@link #walk}). The mouse points at the wheel, so the view can't turn until it closes. It only opens once the player
@@ -39,6 +36,8 @@ public class AbilityWheelScreen extends Screen {
 	private static final int ICON = 32;
 	/** Inside this, the pointer picks no slot, so the wheel can open without one already chosen. */
 	private static final int DEAD_ZONE = 22;
+	/** The selected ability's halo: the spell wheel's readied cyan. */
+	private static final int SELECTED_HALO = 0xC060E0F0;
 
 	/** The movement keys passed through to the player while the wheel is open, and whether each was down last tick. */
 	private final KeyMapping[] movement;
@@ -111,6 +110,26 @@ public class AbilityWheelScreen extends Screen {
 		walk();
 	}
 
+	/**
+	 * The number keys switch their slot straight off (1 the top, then on clockwise), no pointing needed; so do the Quick Ability
+	 * and Ability Wheel Slot keys, which an open screen would otherwise swallow.
+	 */
+	@Override
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		KeyMapping[] hotbar = Minecraft.getInstance().options.keyHotbarSlots;
+		for (int slot = 0; slot < PlayerCultivation.WHEEL_SLOTS; slot++) {
+			if (slot < hotbar.length && hotbar[slot].matches(keyCode, scanCode) || ModKeybinds.ABILITY_SLOTS[slot].matches(keyCode, scanCode)) {
+				QuickAbilities.toggle(slot);
+				return true;
+			}
+		}
+		if (ModKeybinds.QUICK_ABILITY.matches(keyCode, scanCode)) {
+			QuickAbilities.useSelected();
+			return true;
+		}
+		return super.keyPressed(keyCode, scanCode, modifiers);
+	}
+
 	@Override
 	public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
 		if (ModKeybinds.ABILITY_WHEEL.matches(keyCode, scanCode)) {
@@ -139,10 +158,19 @@ public class AbilityWheelScreen extends Screen {
 
 		AbilityWheel.drawBackdrop(g, cx, cy, RING + SLOT_RADIUS + 8);
 		AbilityWheel.disc(g, cx, cy, RING - SLOT_RADIUS - 4, 0xC0101018); // nearly solid behind the text in the middle
+		Ability selected = QuickAbilities.selected(c);
 		for (int i = 0; i < PlayerCultivation.WHEEL_SLOTS; i++) {
 			Ability ability = AbilityWheel.shown(c, i);
+			// The selected one ringed in cyan within the gold, as the spell wheel rings its readied spell.
+			if (ability != null && ability == selected) {
+				AbilityWheel.ring(g, AbilityWheel.slotX(cx, i, RING), AbilityWheel.slotY(cy, i, RING), SLOT_RADIUS + 4, SLOT_RADIUS + 1, SELECTED_HALO);
+			}
 			AbilityWheel.drawSlot(g, AbilityWheel.slotX(cx, i, RING), AbilityWheel.slotY(cy, i, RING), SLOT_RADIUS, ability,
 					ability != null && c.isAbilityEnabled(ability), i == hovered, ICON);
+			// Its number key, just outside it.
+			int number = RING + SLOT_RADIUS + 3;
+			g.drawCenteredString(font, String.valueOf(i + 1), AbilityWheel.slotX(cx, i, number), AbilityWheel.slotY(cy, i, number) - 4,
+					ability == null ? 0x505050 : 0xB8A060);
 		}
 
 		// The middle names what the pointer is on, or says what the wheel is for.
@@ -157,12 +185,14 @@ public class AbilityWheelScreen extends Screen {
 				y += 10;
 			}
 			g.drawCenteredString(font, Component.translatable(on ? ModLang.ABILITY_ON : ModLang.ABILITY_OFF), cx, y + 1, on ? 0x69F0AE : 0x9E9E9E);
+			if (pointed == selected) g.drawCenteredString(font, Component.translatable(ModLang.WHEEL_SELECTED), cx, y + 12, 0x8FEAE4);
 		} else if (hovered >= 0) {
 			g.drawCenteredString(font, Component.translatable(ModLang.WHEEL_EMPTY_SLOT), cx, cy - 4, 0x707070);
 		} else {
 			boolean any = AbilityWheel.anyShown(c);
-			centred(g, Component.translatable(ModLang.WHEEL_TITLE), Component.translatable(any ? ModLang.WHEEL_HINT : ModLang.WHEEL_EMPTY),
-					cx, cy, textWidth);
+			centred(g, Component.translatable(ModLang.WHEEL_TITLE), any ? Component.translatable(ModLang.WHEEL_HINT,
+					ModKeybinds.QUICK_ABILITY.getTranslatedKeyMessage().copy().withStyle(style -> style.withColor(0xFFD700)))
+					: Component.translatable(ModLang.WHEEL_EMPTY), cx, cy, textWidth);
 		}
 	}
 
@@ -184,17 +214,20 @@ public class AbilityWheelScreen extends Screen {
 		return dx * dx + dy * dy > DEAD_ZONE * DEAD_ZONE ? AbilityWheel.slotInDirection(x, y, width / 2, height / 2) : -1;
 	}
 
+	/** A click selects the slot's ability for the Use Selected Ability key; a right-click switches it now. */
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
 		int slot = slotToward(mouseX, mouseY);
-		if (button == 0 && slot >= 0) {
+		if ((button == 0 || button == 1) && slot >= 0) {
 			Ability ability = AbilityWheel.shown(ClientCultivationData.get(), slot);
 			if (ability != null) {
-				// The server flips it and syncs back; the slot shows the synced state.
-				FriendlyByteBuf buf = PacketByteBufs.create();
-				buf.writeVarInt(ability.ordinal());
-				ClientPlayNetworking.send(ModPackets.TOGGLE_ABILITY, buf);
-				if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+				if (button == 0) {
+					QuickAbilities.select(ability);
+					if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+				} else {
+					// The server flips it and syncs back; the slot shows the synced state.
+					QuickAbilities.switchNow(ability);
+				}
 				return true;
 			}
 		}

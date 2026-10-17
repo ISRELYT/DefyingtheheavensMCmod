@@ -664,7 +664,7 @@ water puts out what burns.
 | Earth | **Mountain Seal** (52) | A mountain of stone bursts up over where you look, up to 48 blocks, 7 blocks round and 9 tall, tearing the land open round its foot in nine fissures out to 18 blocks: everything inside is entombed, held fast for 5 s and crushed for 60 earth harm a second. The mountain crumbles away after 20 s; its stone gives nothing. |
 | Water | **Absolute Zero** (48) | A beam of utter cold freezes the being you look at solid, within 48 blocks: 200 water harm, and it is held frozen for 5 s. When anything strikes it, or the cold lets go, it shatters for 60 more. |
 | Water | **Boundless Sea** (52) | A sphere of the sea 16 blocks round fills the place you look at, up to 48 blocks, for 8 s: every foe inside is held in it, drowning, and takes 22 water harm a second. When it lets go, the ground under it is left crushed into a basin 10 blocks round with a lake in it. |
-| Metal | **Heaven-Severing Sword** (48) | One stroke, and a slash of sword light as tall as a hill stands up and runs off the way you face for 240 blocks, faster than anything can flee it: nothing stops it. It cuts a canyon 5 blocks wide through everything in its way, from just ahead of you (you stand at its lip), 24 blocks below where you stand to 40 above (hills split in two, the ground laid open, whatever is built there cut through), and every being it passes takes 300 metal harm and is flung aside. |
+| Metal | **Heaven-Severing Sword** (48) | One stroke, and a giant crescent of sword light some 110 blocks across flies out level from your chest the way you face, 240 blocks, faster than anything can flee it: nothing stops it. It cuts through whatever its blade passes through, 10 blocks thick at its middle and thinner toward its tips: hills and mountains are sliced through (their tops left standing above the cut), trees felled, whatever is built in its way cut in two, and the land at its far end is cut in the crescent's curve. Every being its blade passes through takes 300 metal harm and is hurled ahead of it. |
 | Metal | **Four Swords Array** (52) | Four giant swords plant themselves at the corners of a square 32 blocks across round where you look, up to 48 blocks, each driven deep into the ground in a crater 4 blocks round: for 8 s every foe inside is held in by the walls of light between them and takes 80 metal harm a second. |
 
 Each spell's description in the Spells tab gives its numbers; the constants at the top of its element's class set them. Harm
@@ -674,8 +674,12 @@ Heavenly Being and 150-300 at Four Axis; qi costs likewise (8-20 at Qi Refining 
 **Wounds in the land.** From Nascent Soul up the great spells leave the land the way a walking disaster would: meteors, suns,
 phoenixes and falling mountains blow out craters (burnt to magma and blackstone, or broken to rubble), quakes and seals split it
 in fissures and sink it, the Heavenly River scours a channel, the Boundless Sea leaves a lake in a crushed basin, Piercing Sword
-Light bores a tunnel, Mountain Cleave cuts a slot through hills, and the Heaven-Severing Sword's slash cuts a canyon 240 blocks
-long from 24 below the caster's feet to 40 above. Every block goes by the same rule as the rest of the spells' terrain harm
+Light bores a tunnel, Mountain Cleave cuts a slot through hills, and the Heaven-Severing Sword's crescent, some 110 blocks across,
+slices through whatever its blade passes through for 240 blocks: a slit 10 blocks tall at its middle and thinner toward its tips,
+at the caster's chest, through hills and mountains (their tops left standing), its far end cut in the crescent's curve
+(`MetalSpells#severThickness`, `#severLag`; the client draws it to the same numbers). Its way is asked to load as it is cast and
+kept loading just ahead of it, since 240 blocks run past the usual simulation distance; land that was never made before is made
+meanwhile, and the slash waits at its edge until it is. Every block goes by the same rule as the rest of the spells' terrain harm
 (`HeavenSpells#carvable`: nothing that holds items, nothing harder than obsidian, nothing a raised barrier shelters, nothing the
 caster couldn't dig) and is gone for good, dropping nothing; a few pieces are flung off as debris. A big wound is cut over
 several ticks, nearest its heart first, 2,500 blocks a tick for all of them together (`Devastation`), so no tick has to take it
@@ -753,9 +757,18 @@ out the first time they need one and kept for good, so no two players share an i
 
 Abilities can be switched on and off without opening the menu: **hold Z** (rebindable: "Ability Wheel (hold)") and an
 eight-slot wheel opens in the middle of the screen. Point toward a slot (the direction is enough, the pointer needn't be
-on it) and **click** to switch that ability on or off; click as many as you like, then let go of the key to close it.
-The middle names the ability under the pointer and whether it's On or Off. A slot's rim is gold with a green lamp when
-its ability is on, grey and dimmed when it's off.
+on it) and **click** to **select** that ability, or **right-click** (or press the slot's **number**, 1 at the top, then
+clockwise, shown beside each slot) to switch it on or off now; do as many as you like, then let go of the key to close it.
+The middle names the ability under the pointer, whether it's On or Off, and "Selected" for the selected one. A slot's rim
+is gold with a green lamp when its ability is on, grey and dimmed when it's off; the selected one is ringed in cyan, as the
+spell wheel rings its readied spell.
+
+**The selected ability** is switched by **X** ("Use Selected Ability", rebindable) without opening the wheel, the way C
+casts the readied spell: Qi Flight on and off, the Spatial Tear opened, and so on. It's shown under the qi bar ("Ability:
+Qi Sense On"), and each switch by key says "Qi Sense: On" above the hotbar once the server has done it. It's saved with
+your cultivation; with none selected, X says how to select one. For a key of its own for any slot, bind the eight **Ability
+Wheel Slot** keys in Controls (unbound at first). X and C are also vanilla's creative hotbar activators: Minecraft gives
+each key to one binding only, so the mod's bindings are given presses on a key they share as well (`KeyMappingMixin`).
 
 You keep moving while it's open: walk, jump (double-tap for Qi Flight), sneak and sprint all work, toggled Sneak/Sprint
 included. Only the view can't turn, since the mouse is pointing at the wheel. The wheel only opens once you've awakened
@@ -782,7 +795,8 @@ the ghost abilities' are under The Netherworld. A new ability needs a PNG of its
 
 Spells don't go on this wheel: they have their own (hold V, see The Netherworld).
 
-Code: `client/AbilityWheelScreen.java` (the held wheel), `client/AbilityWheel.java` (icons, slot layout and drawing),
+Code: `client/AbilityWheelScreen.java` (the held wheel), `client/QuickAbilities.java` (the selected ability, X and the slot
+keys), `client/AbilityWheel.java` (icons, slot layout and drawing),
 `client/CultivationScreen.java` (the editor), `PlayerCultivation` (`WHEEL_SLOTS`, `setWheelSlot`; NBT "AbilityWheel"),
 `CultivationManager#setWheelSlot` (packet `set_wheel_slot`); tests in `AbilityWheelGameTests`.
 

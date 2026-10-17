@@ -124,17 +124,24 @@ public class StatPointsGameTests implements FabricGameTest {
 		ServerPlayer p = HeavenSpellTesting.caster(helper, HeavenMethod.of(QiElement.METAL, Realm.FOUR_AXIS), at);
 		p.setYRot(0); // facing south, +z
 		p.setXRot(0);
+		// Stone in its blade's way (ahead, and far out to one side) and stone above its blade.
+		BlockPos inBlade = at.offset(0, 3, 8), wide = at.offset(20, 0, 10), above = at.offset(0, 9, 8);
+		for (BlockPos pos : new BlockPos[]{inBlade, wide, above}) level.setBlockAndUpdate(pos, Blocks.STONE.defaultBlockState());
 		Spells.setCooldown(p, Spell.HEAVEN_SEVERING_SWORD, 0);
 		Spells.cast(p, Spell.HEAVEN_SEVERING_SWORD);
-		helper.runAfterDelay(3, () -> {
+		helper.runAfterDelay(4, () -> {
 			try {
 				helper.assertTrue(!level.getBlockState(at.below()).isAir() && !level.getBlockState(at.offset(0, -1, -3)).isAir()
 						&& !level.getBlockState(at.offset(2, -1, 0)).isAir(), "The ground under its caster, and behind, still stands");
-				helper.assertTrue(level.getBlockState(at.offset(0, -1, 6)).isAir(), "...and the canyon opens ahead of them");
+				helper.assertTrue(level.getBlockState(at.offset(0, -1, 6)).isAir() && level.getBlockState(inBlade).isAir(),
+						"...its blade cuts what it passes through ahead of them");
+				helper.assertTrue(level.getBlockState(wide).isAir(), "...20 blocks out to the side too (it is about 110 across)");
+				helper.assertTrue(level.getBlockState(above).is(Blocks.STONE), "...and what stands above its blade is left standing");
 				helper.succeed();
 			} finally {
 				// The slash goes no further than this (it would run on through the other tests' ground).
 				level.getEntitiesOfClass(SpellProjectile.class, new net.minecraft.world.phys.AABB(at).inflate(64)).forEach(net.minecraft.world.entity.Entity::discard);
+				for (BlockPos pos : new BlockPos[]{inBlade, wide, above}) level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
 				HeavenSpellTesting.cleanUp(p, HeavenSpellTesting.spawned(), floor);
 			}
 		});

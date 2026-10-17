@@ -244,6 +244,13 @@ public class PlayerCultivation {
 
 	public void clearStatPoints() { java.util.Arrays.fill(statPoints, 0); }
 
+	/** The ability selected on the ability wheel, which the Use Selected Ability key switches (null: none yet). */
+	private Ability selectedAbility;
+
+	public Ability getSelectedAbility() { return selectedAbility; }
+
+	public void setSelectedAbility(Ability ability) { selectedAbility = ability; }
+
 	public void setBodyRefining(int stage) { bodyRefining = Math.max(0, Math.min(BodyRefining.LAST, stage)); }
 
 	/** Born with shattered meridians: they can't cultivate, and temper the body instead. */
@@ -878,6 +885,7 @@ public class PlayerCultivation {
 		}
 		if (bodyRefining > 0) tag.putInt("BodyRefining", bodyRefining);
 		if (statPointsSpent() > 0) tag.putIntArray("StatPoints", statPoints.clone());
+		if (selectedAbility != null) tag.putString("SelectedAbility", selectedAbility.getId());
 		tag.putBoolean("HeavensLeave", heavensLeave);
 		tag.putInt("Favour", favour);
 		tag.putLong("RitualFailedDay", ritualFailedDay);
@@ -928,6 +936,7 @@ public class PlayerCultivation {
 		c.setBodyRefining(tag.getInt("BodyRefining"));
 		int[] points = tag.getIntArray("StatPoints"); // none spent (or a save from before them): all zero
 		for (int i = 0; i < points.length && i < c.statPoints.length; i++) c.statPoints[i] = Math.max(0, points[i]);
+		c.selectedAbility = Ability.byId(tag.getString("SelectedAbility")); // none yet: null
 		c.setMortalState(MortalStage.byIndex(tag.getInt("MortalStage")), tag.getDouble("Tempering"));
 		int prepared = tag.contains("PreparedRealm") ? tag.getInt("PreparedRealm") : -1;
 		c.preparedRealm = prepared >= 0 && prepared < Realm.values().length ? Realm.byIndex(prepared) : null;

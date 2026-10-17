@@ -58,4 +58,23 @@ public class AbilityWheelGameTests implements FabricGameTest {
 		helper.assertTrue(c.getWheelSlot(7) == null, "-1 empties a slot");
 		helper.succeed();
 	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void anAwakenedAbilityCanBeSelectedAndIsSaved(GameTestHelper helper) {
+		ServerPlayer player = helper.makeMockServerPlayerInLevel();
+		PlayerCultivation c = CultivationManager.get(player);
+		c.setSelectedAbility(null);
+		CultivationManager.selectAbility(player, Ability.QI_FLIGHT.ordinal());
+		helper.assertTrue(c.getSelectedAbility() == null, "A mortal can't select an ability it hasn't awakened");
+		c.setMortal(false);
+		c.setState(Realm.CORE_FORMATION, Stage.EARLY, 0);
+		CultivationManager.selectAbility(player, Ability.QI_FLIGHT.ordinal());
+		helper.assertTrue(c.getSelectedAbility() == Ability.QI_FLIGHT, "An awakened ability is selected (for the Use Selected Ability key)");
+		CultivationManager.selectAbility(player, Ability.values().length);
+		helper.assertTrue(c.getSelectedAbility() == Ability.QI_FLIGHT, "An unknown ability is ignored");
+		helper.assertTrue(PlayerCultivation.load(c.save()).getSelectedAbility() == Ability.QI_FLIGHT, "The selection survives saving and loading");
+		CultivationManager.selectAbility(player, -1);
+		helper.assertTrue(c.getSelectedAbility() == null && PlayerCultivation.load(c.save()).getSelectedAbility() == null, "-1 selects none");
+		helper.succeed();
+	}
 }

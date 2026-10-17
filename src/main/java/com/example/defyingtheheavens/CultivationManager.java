@@ -92,5 +92,18 @@ public final class CultivationManager {
 		sync(player);
 	}
 
+	/**
+	 * The ability wheel: select an ability for the Use Selected Ability key, or select none ({@code index} -1). Only an awakened
+	 * ability can be selected; an unknown one is ignored.
+	 */
+	public static void selectAbility(ServerPlayer player, int index) {
+		PlayerCultivation c = get(player);
+		Ability ability = index < 0 ? null : Ability.byIndex(index);
+		if (index >= 0 && (ability == null || !ability.isUnlocked(c))) return;
+		c.setSelectedAbility(ability);
+		markDirty(player.server);
+		sync(player);
+	}
+
 	private CultivationManager() {}
 }

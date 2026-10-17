@@ -19,6 +19,7 @@ import com.example.defyingtheheavens.PillGrade;
 import com.example.defyingtheheavens.QiElement;
 import com.example.defyingtheheavens.Realm;
 import com.example.defyingtheheavens.Stage;
+import com.example.defyingtheheavens.PlayerCultivation;
 import com.example.defyingtheheavens.StatPoints;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricLanguageProvider;
@@ -275,7 +276,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.BTN_ARRANGE_WHEEL, "Arrange Wheel");
 		t.add(ModLang.BTN_ABILITY_LIST, "Ability List");
 		t.add(ModLang.WHEEL_TITLE, "Ability Wheel");
-		t.add(ModLang.WHEEL_HINT, "Click an ability to switch it on or off");
+		t.add(ModLang.WHEEL_HINT, "Click: select (use with %s). Right-click or its number: switch now.");
 		t.add(ModLang.WHEEL_EMPTY, "Nothing on the wheel yet. Arrange it on the Abilities tab.");
 		t.add(ModLang.WHEEL_EMPTY_SLOT, "Empty slot");
 		t.add(ModLang.WHEEL_EDITOR_HINT, "Drag an ability onto a slot. Drag a slot onto another to swap them, or off the wheel to empty it.");
@@ -665,6 +666,14 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_STORAGE_COST, "Refining it takes %s %s.");
 		t.add(ModLang.MSG_STORAGE_REFINED, "The space within unfolds: %s grade!");
 		t.add(ModLang.KEY_STORAGE_RING, "Open Storage Ring");
+		t.add(ModLang.KEY_QUICK_ABILITY, "Use Selected Ability");
+		for (int slot = 1; slot <= PlayerCultivation.WHEEL_SLOTS; slot++) t.add(ModLang.KEY_ABILITY_SLOT_PREFIX + slot, "Ability Wheel Slot " + slot);
+		t.add(ModLang.MSG_QUICK_ABILITY_STATE, "%s: %s");
+		t.add(ModLang.MSG_QUICK_ABILITY_EMPTY, "Slot %s of your ability wheel is empty (arrange it on the Abilities tab).");
+		t.add(ModLang.MSG_SELECTED_ABILITY_NONE, "No ability selected: hold %s and click one to select it.");
+		t.add(ModLang.MSG_SELECTED_ABILITY_ASLEEP, "%s can't be used right now.");
+		t.add(ModLang.WHEEL_SELECTED, "Selected");
+		t.add(ModLang.HUD_SELECTED_ABILITY, "Ability: %s");
 		// Detonating the golden core (CoreDetonation)
 		t.add(ModLang.MSG_CORE_CONFIRM, "Detonate again within %s seconds to break your golden core. You will die.");
 		t.add(ModLang.MSG_CORE_TOO_LATE, "Your core is already breaking. Nothing can stop it now.");

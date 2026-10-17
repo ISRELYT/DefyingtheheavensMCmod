@@ -37,6 +37,8 @@ public final class ModPackets {
 	public static final ResourceLocation SECT_INFO = new ResourceLocation(DefyingTheHeavens.MOD_ID, "sect_info");
 	/** C2S: put points into a stat (StatPoints): the stat's place, then how many. */
 	public static final ResourceLocation SPEND_STAT_POINTS = new ResourceLocation(DefyingTheHeavens.MOD_ID, "spend_stat_points");
+	/** C2S: select an ability on the wheel for the Use Selected Ability key: its place (-1: none). */
+	public static final ResourceLocation SELECT_ABILITY = new ResourceLocation(DefyingTheHeavens.MOD_ID, "select_ability");
 	/** S2C: full cultivation state for the owning player. */
 	public static final ResourceLocation SYNC = new ResourceLocation(DefyingTheHeavens.MOD_ID, "sync");
 	/** S2C: "player X (entity id) is/isn't riding their sword" (see {@link SwordFlight}), repeated once a second while they ride. */
@@ -224,6 +226,10 @@ public final class ModPackets {
 			int ability = buf.readVarInt();
 			server.execute(() -> CultivationManager.toggleAbility(player, ability));
 		});
+		ServerPlayNetworking.registerGlobalReceiver(SELECT_ABILITY, (server, player, handler, buf, responseSender) -> {
+			int ability = buf.readVarInt();
+			server.execute(() -> CultivationManager.selectAbility(player, ability));
+		});
 		ServerPlayNetworking.registerGlobalReceiver(SET_WHEEL_SLOT, (server, player, handler, buf, responseSender) -> {
 			int slot = buf.readVarInt();
 			int ability = buf.readVarInt();
@@ -368,6 +374,8 @@ public final class ModPackets {
 		buf.writeVarInt(c.getBodyRefining());
 		// The points put into each stat (StatPoints), by the stat's place.
 		for (StatPoints.Stat stat : StatPoints.Stat.values()) buf.writeVarInt(c.getStatPoints(stat));
+		// The ability selected on the wheel, by its place (+1; 0 for none).
+		buf.writeVarInt(c.getSelectedAbility() == null ? 0 : c.getSelectedAbility().ordinal() + 1);
 		ServerPlayNetworking.send(player, SYNC, buf);
 	}
 

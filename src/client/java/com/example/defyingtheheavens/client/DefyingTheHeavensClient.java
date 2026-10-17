@@ -168,6 +168,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			ClientTribulationData.clear();
 			ClientCultivationData.clear();
 			ClientSect.clear();
+			QuickAbilities.clear();
 			SpatialGapAmbience.clear();
 			ClientSpatialStorms.clear();
 			MeditationFormation.clear();
@@ -221,6 +222,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 					}
 				}
 			}
+			QuickAbilities.tick(client);
 			while (ModKeybinds.SPELL_WHEEL.consumeClick()) {
 				if (client.player != null && client.screen == null) {
 					// Likewise before the first spell is learned.

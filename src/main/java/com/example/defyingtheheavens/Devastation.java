@@ -29,8 +29,8 @@ import java.util.Map;
 public final class Devastation {
 	/** Blocks taken away at most in one tick, every wound together. */
 	static final int BUDGET = 2500;
-	/** Pieces flung off a wound, at most. */
-	private static final int DEBRIS = 36;
+	/** Pieces flung off a wound, at most (a slash's swath is many small wounds, a few each). */
+	private static final int DEBRIS = 36, SHEAR_DEBRIS = 4;
 
 	/** What the floor of a wound becomes once it is cut: left as it is, burnt (magma, blackstone, fires), broken (rubble), or a lake in it. */
 	public enum Floor { NONE, SCORCHED, RUBBLE, LAKE }
@@ -42,14 +42,16 @@ public final class Devastation {
 		final List<BlockPos> cells;
 		final Vec3 heart;
 		final Runnable after;
+		final int debris;
 		int next, flung;
 
-		Job(ServerLevel level, ServerPlayer caster, List<BlockPos> cells, Vec3 heart, Runnable after) {
+		Job(ServerLevel level, ServerPlayer caster, List<BlockPos> cells, Vec3 heart, Runnable after, int debris) {
 			this.level = level;
 			this.caster = caster;
 			this.cells = cells;
 			this.heart = heart;
 			this.after = after;
+			this.debris = debris;
 		}
 	}
 
@@ -186,6 +188,55 @@ public final class Devastation {
 	}
 
 	/**
+	 * What a slash's blade passed through (the Heaven-Severing Sword's, a tick of it at a time): each of {@code spans} ({x, z,
+	 * lowest y, highest y}) cut from its top (or the top of what stands there, if lower) down to its bottom, like any wound,
+	 * nearest {@code heart} first, a few pieces flung.
+	 */
+	public static void shear(ServerPlayer p, ServerLevel level, List<int[]> spans, Vec3 heart) {
+		List<BlockPos> cells = new ArrayList<>();
+		for (int[] span : spans) {
+			// Land still loading (the slash asks for it as it goes) is cut once it has come, if it comes in time.
+			if (!level.hasChunk(span[0] >> 4, span[1] >> 4)) WAITING.add(new Waiting(level, p, span, heart, level.getGameTime() + WAIT_TICKS));
+			else addSpan(level, span, cells);
+		}
+		if (!cells.isEmpty()) queue(level, p, cells, heart, null, SHEAR_DEBRIS);
+	}
+
+	/** One span's cells ({x, z, lowest y, highest y}), from its top (or the top of what stands there, if lower) down. */
+	private static void addSpan(ServerLevel level, int[] span, List<BlockPos> cells) {
+		int x = span[0], z = span[1];
+		int bottom = Math.max(level.getMinBuildHeight() + 1, span[2]);
+		int top = Math.min(Math.min(level.getMaxBuildHeight() - 1, span[3]), level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1);
+		for (int y = top; y >= bottom; y--) cells.add(new BlockPos(x, y, z));
+	}
+
+	/** A span of a slash's blade over land that wasn't loaded yet, waiting for it until {@code until} (game time). */
+	private record Waiting(ServerLevel level, ServerPlayer caster, int[] span, Vec3 heart, long until) {}
+
+	private static final List<Waiting> WAITING = new ArrayList<>();
+	/** How long a span waits for its land (ticks): long enough for land never made before to be made. */
+	private static final int WAIT_TICKS = 300;
+
+	/** The spans whose land has come since, cut (one wound a tick for them all); those waited for too long, let go. */
+	private static void cutWaiting() {
+		List<BlockPos> cells = new ArrayList<>();
+		Waiting first = null;
+		for (Iterator<Waiting> it = WAITING.iterator(); it.hasNext(); ) {
+			Waiting w = it.next();
+			if (w.level.hasChunk(w.span[0] >> 4, w.span[1] >> 4)) {
+				if (first == null) first = w;
+				if (w.level == first.level) {
+					addSpan(w.level, w.span, cells);
+					it.remove();
+				}
+			} else if (w.level.getGameTime() > w.until) {
+				it.remove();
+			}
+		}
+		if (first != null && !cells.isEmpty()) queue(first.level, first.caster, cells, first.heart, null, SHEAR_DEBRIS);
+	}
+
+	/**
 	 * The land {@code radius} round {@code at} set ablaze: grass and earth scorched to coarse dirt, now and then a patch of magma or
 	 * netherrack, and fires on {@code share} of it (on whatever stands highest there: a tree's crown catches too).
 	 */
@@ -217,13 +268,18 @@ public final class Devastation {
 	// --- Underway ---
 
 	private static void queue(ServerLevel level, ServerPlayer p, List<BlockPos> cells, Vec3 heart, Runnable after) {
+		queue(level, p, cells, heart, after, DEBRIS);
+	}
+
+	private static void queue(ServerLevel level, ServerPlayer p, List<BlockPos> cells, Vec3 heart, Runnable after, int debris) {
 		BlockPos centre = BlockPos.containing(heart);
 		cells.sort(java.util.Comparator.comparingDouble(c -> c.distSqr(centre)));
-		JOBS.add(new Job(level, p, cells, heart, after));
+		JOBS.add(new Job(level, p, cells, heart, after, debris));
 	}
 
 	/** Every tick (HeavenSpells#tick): the wounds underway cut a share further, {@link #BUDGET} blocks in all. */
 	public static void tick(MinecraftServer server) {
+		if (!WAITING.isEmpty()) cutWaiting();
 		if (JOBS.isEmpty()) return;
 		int budget = BUDGET;
 		for (Iterator<Job> it = JOBS.iterator(); it.hasNext() && budget > 0; ) {
@@ -235,7 +291,7 @@ public final class Devastation {
 				BlockState state = job.level.getBlockState(pos);
 				if (state.isAir() || !HeavenSpells.carvable(job.level, pos, job.caster)) continue;
 				job.level.removeBlock(pos, false);
-				if (job.flung < DEBRIS && job.level.random.nextInt(Math.max(8, job.cells.size() / (DEBRIS * 2))) == 0) {
+				if (job.flung < job.debris && job.level.random.nextInt(Math.max(8, job.cells.size() / (job.debris * 2))) == 0) {
 					job.flung++;
 					Vec3 from = Vec3.atBottomCenterOf(pos);
 					Vec3 out = from.subtract(job.heart).multiply(1, 0, 1);
@@ -255,6 +311,7 @@ public final class Devastation {
 	/** Server stopping: whatever is underway stops where it is. */
 	public static void clear() {
 		JOBS.clear();
+		WAITING.clear();
 	}
 
 	/** Blocks still to be cut, all wounds together (tests). */
