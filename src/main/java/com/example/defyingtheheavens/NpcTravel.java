@@ -128,7 +128,8 @@ public class NpcTravel extends SavedData {
 	}
 
 	private static void dispatch(CultivatorNpc npc, ServerLevel level) {
-		if (npc.isRemoved()) return;
+		// Its body taken by a soul (Possession): it goes where the soul takes it, never on unseen (carried into land not yet loaded, say).
+		if (npc.isRemoved() || npc.isVacant()) return;
 		CultivatorNpc.Lifecycle life = npc.getLifecycle();
 		boolean ascending = life == CultivatorNpc.Lifecycle.ASCENDING;
 		if (life != CultivatorNpc.Lifecycle.DEPARTING && !ascending) return;

@@ -269,7 +269,8 @@ public final class SparSystem {
 				end(spar, Outcome.FORFEIT, player, npc);
 				continue;
 			}
-			if (npc == null || player.level() != npc.level()) {
+			// Gone, elsewhere, or its body taken by a soul (Possession: it is set aside, and the one in it is no partner of this bout).
+			if (npc == null || npc.isVacant() || player.level() != npc.level()) {
 				end(spar, Outcome.VOID, player, npc);
 				continue;
 			}
@@ -361,6 +362,7 @@ public final class SparSystem {
 				npc.keepWinnings(spar.npcStake);
 			}
 		}
+		if (npc.isVacant()) return; // its body taken by a soul (Possession): set aside, it says nothing
 		if (spar.terms == Terms.TRIAL && outcome != Outcome.VOID) {
 			// The entrance trial: won or held to the time, the elder takes them in; else not today (SectMembership#onTrial).
 			TalkSystem.say(player, npc, Component.translatable(ModLang.talkLine(SectMembership.onTrial(player, npc, outcome))), delta);

@@ -401,6 +401,109 @@ public class PossessionGameTests implements FabricGameTest {
 		}
 	}
 
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void whatAVictimHeldOnTheirCursorGoesWithTheirBody(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		MinecraftServer server = helper.getLevel().getServer();
+		boolean pvp = server.isPvpAllowed();
+		server.setPvpAllowed(true);
+		try {
+			ServerPlayer soul = projected(helper, made, "cursor-soul");
+			ServerPlayer victim = victim(helper, made, "cursor-victim", soul);
+			victim.containerMenu.setCarried(new ItemStack(Items.EMERALD, 4)); // their inventory open, the emeralds picked up
+			helper.assertTrue(SoulProjection.tryPossess(soul, victim) == InteractionResult.SUCCESS, "Possessed");
+			helper.assertTrue(victim.containerMenu.getCarried().isEmpty() && soul.getInventory().countItem(Items.EMERALD) == 4,
+					"What was on their cursor went with their body");
+			SoulProjection.toggle(soul);
+			helper.assertTrue(victim.getInventory().countItem(Items.EMERALD) == 4, "...and comes back with it");
+			helper.succeed();
+		} finally {
+			server.setPvpAllowed(pvp);
+			leave(made);
+		}
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void aHeldPlayerMadeAnewIsHeldStill(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		MinecraftServer server = helper.getLevel().getServer();
+		boolean pvp = server.isPvpAllowed();
+		server.setPvpAllowed(true);
+		try {
+			ServerPlayer soul = projected(helper, made, "anew-soul");
+			ServerPlayer victim = victim(helper, made, "anew-victim", soul);
+			helper.assertTrue(SoulProjection.tryPossess(soul, victim) == InteractionResult.SUCCESS, "Possessed");
+			// Their player made anew (as a respawn makes it: a /kill reaches even a spectator).
+			ServerPlayer again = server.getPlayerList().respawn(victim, true);
+			made.add(again);
+			SoulProjection.tick(soul, helper.getLevel().getGameTime());
+			helper.assertTrue(Possession.playerBody(soul) == again && again.gameMode.getGameModeForPlayer() == GameType.SPECTATOR
+					&& again.getCamera() == soul, "Back as a new body of theirs, they are held to it all the same");
+			SoulProjection.toggle(soul);
+			helper.assertTrue(again.gameMode.getGameModeForPlayer() == GameType.SURVIVAL && again.getCamera() == again,
+					"...and given it back when the soul lets go");
+			helper.succeed();
+		} finally {
+			server.setPvpAllowed(pvp);
+			leave(made);
+		}
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void aSoulInABodyKeepsFillingItsOwnGhostQi(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		MinecraftServer server = helper.getLevel().getServer();
+		boolean pvp = server.isPvpAllowed();
+		server.setPvpAllowed(true);
+		try {
+			ServerPlayer soul = projected(helper, made, "ghostqi-soul");
+			ServerPlayer victim = victim(helper, made, "ghostqi-victim", soul);
+			PlayerCultivation own = CultivationManager.own(soul), theirs = CultivationManager.own(victim);
+			own.netherworld().setMethod(GhostMethod.NETHERWORLD_BREATHING, 3, 0);
+			own.netherworld().setGhostQi(0);
+			theirs.netherworld().setMethod(GhostMethod.NETHERWORLD_BREATHING, 1, 0);
+			theirs.netherworld().setGhostQi(0);
+			helper.assertTrue(SoulProjection.tryPossess(soul, victim) == InteractionResult.SUCCESS, "Possessed");
+			// Into the Nether, where there is ghostly qi for the pools to fill by.
+			soul.teleportTo(server.getLevel(net.minecraft.world.level.Level.NETHER), 0.5, 100, 0.5, 0, 0);
+			long now = helper.getLevel().getGameTime();
+			NetherworldManager.second(soul, now);
+			double body = theirs.netherworld().ghostQi();
+			helper.assertTrue(own.netherworld().ghostQi() > 0 && body > 0, "The soul's own ghost qi fills by the place, as the body's does ("
+					+ own.netherworld().ghostQi() + ", " + body + ")");
+			NetherworldManager.second(victim, now); // the held owner's own second
+			helper.assertTrue(theirs.netherworld().ghostQi() == body, "...the body's pool filled once, not again through its owner");
+			helper.succeed();
+		} finally {
+			server.setPvpAllowed(pvp);
+			leave(made);
+		}
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void aSparIsCalledOffWhenASoulTakesTheCultivatorsBody(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		CultivatorNpc npc = null;
+		try {
+			MinecraftServer server = helper.getLevel().getServer();
+			ServerPlayer partner = survivor(helper, made, "spar-partner");
+			ServerPlayer soul = projected(helper, made, "spar-soul");
+			npc = helper.spawnWithNoFreeWill(ModEntities.CULTIVATOR, new BlockPos(3, 2, 2));
+			npc.setRank(PlayerCultivation.rank(Realm.QI_REFINING, Stage.GRAND_PERFECTION));
+			SparSystem.start(partner, npc, SparSystem.Terms.FRIENDLY);
+			helper.assertTrue(SparSystem.areSparring(partner, npc), "A friendly bout begins");
+			int regard = npc.regard(partner);
+			helper.assertTrue(SoulProjection.tryPossess(soul, npc) == InteractionResult.SUCCESS, "Another's soul takes the cultivator's body");
+			SparSystem.tick(server);
+			helper.assertTrue(!SparSystem.isSparring(partner) && npc.regard(partner) == regard,
+					"The bout is called off, nobody's loss (" + SparSystem.isSparring(partner) + ", " + regard + " -> " + npc.regard(partner) + ")");
+			helper.succeed();
+		} finally {
+			if (npc != null) npc.discard();
+			leave(made);
+		}
+	}
+
 	// --- Helpers (as SoulProjectionGameTests') ---
 
 	/** A survival player in the player list (the helper's mock player is creative), remembered in {@code made} to take out after. */

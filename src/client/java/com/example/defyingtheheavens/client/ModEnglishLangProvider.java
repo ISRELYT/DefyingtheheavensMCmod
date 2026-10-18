@@ -187,12 +187,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.DEATH_SOUL_SEIZED + ".player", "%1$s's body was seized by %2$s's nascent soul");
 
 		// Spatial Gap, Realm Suppression and portals
-		t.add(ModLang.MSG_GAP_ASCEND, "Torn into the Spatial Gap! Endure %s seconds to ascend.");
-		t.add(ModLang.MSG_GAP_DESCEND, "You fall into the Spatial Gap! Endure %s seconds to descend.");
-		t.add(ModLang.MSG_GAP_RESTART, "Still in the Spatial Gap. The %s-second trial restarts.");
-		t.add(ModLang.MSG_GAP_TIMER, "Spatial Pressure: %ss");
 		t.add(ModLang.MSG_ARRIVE_UPPER, "The Upper Realm. Its dense qi makes cultivation %sx faster.");
-		t.add(ModLang.MSG_ARRIVE_LOWER, "You are cast down into the lower realm.");
 		t.add(ModLang.MSG_SUPPRESSED, "The lower realm suppresses you to %s.");
 		t.add(ModLang.MSG_RESTORED, "Suppression lifted: %s.");
 		t.add(ModLang.MSG_REALM_LOCKED, "Past %s, only the Upper Realm can hold you.");
@@ -536,7 +531,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.METHODS_PERFECTED, "Perfected");
 		t.add(ModLang.METHODS_PROGRESS, "%s%% to the next layer");
 		t.add(ModLang.METHODS_RATE, "Meditating here, the %s's next layer comes in about %s min.");
-		t.add(ModLang.METHODS_NO_QI, "There is no ghostly qi here to cultivate with. Meditate in the Nether, or ten times as fast in the Netherworld.");
+		t.add(ModLang.METHODS_NO_QI, "There is no ghostly qi here to cultivate with. It flows faintly in the Overworld, thicker in the Nether's Soul Sand Valleys, and ten times as dense in the Netherworld.");
 		t.add(ModLang.BTN_SPELL_LIST, "Spell List");
 		t.add(ModLang.METHODS_REALM_CAPPED, "Held at layer %s until your ghost path reaches %s: practise your foundation method to raise it.");
 		t.add(ModLang.METHODS_FLOOR_NEXT, "Layer %s of the %s carries your ghost path to %s.");
@@ -713,6 +708,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.DEATH_CORE_DETONATION + ".player", "%1$s detonated their golden core against %2$s");
 		// The Spatial Tear and travel through the gap
 		t.add(ModLang.MSG_GAP_TRAVEL, "The Spatial Gap: each block here is %s in the world. Tear space again to step out.");
+		t.add(ModLang.MSG_GAP_TRAVEL_NO_TEAR, "The Spatial Gap: each block here is %s in the world. Fly up through it into the Upper Realm, or sink through its floor back to the Overworld.");
 		t.add(ModLang.MSG_GAP_TRAVEL_SHALLOWS, "The shallows - the world beneath: %s, %s - %s blocks to the crossing");
 		t.add(ModLang.MSG_GAP_TRAVEL_UPPER, "The upper layers - the world beneath: %s, %s - %s blocks to the crossing");
 		t.add(ModLang.MSG_GAP_TRAVEL_LOWER, "The lower layers - the world beneath: %s, %s - %s blocks to the floor");

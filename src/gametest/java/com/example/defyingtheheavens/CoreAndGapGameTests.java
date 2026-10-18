@@ -141,6 +141,46 @@ public class CoreAndGapGameTests implements FabricGameTest {
 		helper.succeed();
 	}
 
+	/**
+	 * The old trial is gone (the user, 2026-10-18): one below Heavenly Being stepping into the rift at 0, 0 is in the gap as a
+	 * Heavenly Being would be, free to fly it, in its shallows at a twentieth of where they stood; and an old save's descent trial,
+	 * back in the gap, goes on as travel from the Upper Realm.
+	 */
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+	public void anyoneInTheGapFliesItNoTrial(GameTestHelper helper) {
+		net.minecraft.server.MinecraftServer server = helper.getLevel().getServer();
+		if (server.getLevel(ModDimensions.SPATIAL_GAP) == null) { // only vanilla's dimensions on this server: no gap to enter
+			helper.succeed();
+			return;
+		}
+		ServerPlayer p = helper.makeMockServerPlayerInLevel();
+		p.setGameMode(GameType.SURVIVAL);
+		PlayerCultivation c = CultivationManager.get(p);
+		c.setState(Realm.CORE_FORMATION, Stage.EARLY, 0);
+		CultivationManager.refresh(p);
+		try {
+			p.moveTo(400, p.getY(), -200, 0, 0);
+			SpatialTrialHandler.beginAscension(p);
+			helper.assertTrue(SpatialTrialHandler.isTravelling(p.getUUID()) && p.level().dimension() == ModDimensions.SPATIAL_GAP
+					&& Math.abs(p.getY() - SpatialTrialHandler.TEAR_IN_Y) < 1 && Math.abs(p.getX() - 20) < 1 && Math.abs(p.getZ() + 10) < 1
+					&& c.getPendingTrial() == SpatialTrialHandler.Route.TRAVEL && !c.isGapFromUpper(),
+					"Through the rift, a Core Formation cultivator is in the gap's shallows, free to fly it (" + p.position() + ")");
+			SpatialTrialHandler.forget(p.getUUID());
+			c.setPendingTrial(SpatialTrialHandler.Route.DESCEND); // as a save from the old trials' days left it
+			SpatialTrialHandler.tick(server);
+			helper.assertTrue(SpatialTrialHandler.isTravelling(p.getUUID()) && c.getPendingTrial() == SpatialTrialHandler.Route.TRAVEL
+					&& c.isGapFromUpper(), "An old descent's trial, back in the gap: travelling, come from the Upper Realm");
+			helper.succeed();
+		} finally {
+			SpatialTrialHandler.forget(p.getUUID());
+			c.setPendingTrial(SpatialTrialHandler.Route.NONE);
+			c.setAbilityEnabled(Ability.SPATIAL_TEAR, false);
+			c.setGapFromUpper(false);
+			net.minecraft.core.BlockPos home = helper.absolutePos(new net.minecraft.core.BlockPos(1, 2, 1));
+			p.teleportTo(helper.getLevel(), home.getX() + 0.5, home.getY(), home.getZ() + 0.5, 0, 0);
+		}
+	}
+
 	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
 	public void aTearLeadsHomeAndTheWayOnIsUpOrDown(GameTestHelper helper) {
 		SpatialTrialHandler.Route travel = SpatialTrialHandler.Route.TRAVEL;
@@ -148,16 +188,16 @@ public class CoreAndGapGameTests implements FabricGameTest {
 				&& SpatialTrialHandler.homeRealm(travel, true) == ModDimensions.UPPER_REALM, "Tearing out leads back to the realm torn in from");
 		helper.assertTrue(SpatialTrialHandler.homeRealm(SpatialTrialHandler.Route.DESCEND, false) == ModDimensions.UPPER_REALM
 				&& SpatialTrialHandler.homeRealm(SpatialTrialHandler.Route.ASCEND, true) == net.minecraft.world.level.Level.OVERWORLD,
-				"...out of a trial, to the realm it set out from (a descent's tear can't skip it)");
+				"...an old save's trial, to the realm it set out from (a descent's tear can't skip it)");
 		helper.assertTrue(SpatialTrialHandler.pressureAt(SpatialTrialHandler.TEAR_IN_Y) == SpatialTrialHandler.SHALLOW_PRESSURE
 				&& SpatialTrialHandler.pressureAt(SpatialTrialHandler.UPPER_LAYERS_Y) == SpatialTrialHandler.PRESSURE_DAMAGE * 2
 				&& SpatialTrialHandler.pressureAt(SpatialTrialHandler.LOWER_LAYERS_Y - 1) == SpatialTrialHandler.PRESSURE_DAMAGE * 2
 				&& SpatialTrialHandler.pressureAt(SpatialTrialHandler.LOWER_LAYERS_Y) == SpatialTrialHandler.SHALLOW_PRESSURE,
-				"The shallows press lightly; the layers above and below twice as hard as the trial");
+				"The shallows press lightly; the layers above and below twice as hard as the old trial");
 		helper.assertTrue(SpatialTrialHandler.inLowerLayers(SpatialTrialHandler.FLOOR_Y) && !SpatialTrialHandler.inLowerLayers(SpatialTrialHandler.FLOOR_Y - 1)
 				&& !SpatialTrialHandler.inLowerLayers(SpatialTrialHandler.LOWER_LAYERS_Y), "The lower layers run from their top down to the floor");
-		helper.assertTrue(SpatialStorms.targetAround(true, SpatialTrialHandler.LOWER_LAYERS_Y - 10) == SpatialStorms.targetAround(true, SpatialTrialHandler.UPPER_LAYERS_Y + 10)
-				&& SpatialStorms.targetAround(true, SpatialTrialHandler.LOWER_LAYERS_Y - 10) > SpatialStorms.targetAround(true, SpatialTrialHandler.TEAR_IN_Y),
+		helper.assertTrue(SpatialStorms.targetAround(SpatialTrialHandler.LOWER_LAYERS_Y - 10) == SpatialStorms.targetAround(SpatialTrialHandler.UPPER_LAYERS_Y + 10)
+				&& SpatialStorms.targetAround(SpatialTrialHandler.LOWER_LAYERS_Y - 10) > SpatialStorms.targetAround(SpatialTrialHandler.TEAR_IN_Y),
 				"Storms crowd the lower layers as they do the upper");
 		double seconds = (SpatialTrialHandler.LOWER_LAYERS_Y - SpatialTrialHandler.FLOOR_Y) / (SpatialTrialHandler.LOWER_SINK * 20);
 		helper.assertTrue(seconds >= 10 && SpatialTrialHandler.LOWER_SINK * 20 < 0.225 * 20,

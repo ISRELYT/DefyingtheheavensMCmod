@@ -17,18 +17,14 @@ import java.util.List;
  * Spatial storms: real storm clouds raging in the Spatial Gap, whose lightning strikes cultivators who pass beneath or
  * through them.
  * <p>
- * The trial keeps players inside a {@link #PERIOD}-block band by moving them back whenever they leave it, but
- * {@link SpatialTrialHandler#loops} counts those moves, so each player has a true height ({@link #trueY}) that keeps on
- * climbing (or falling) as if the gap were an endless sky. Storms live at true heights, spread through the gap all round
- * every cultivator in it ({@link #targetAround} of them near each): for one carried by a trial, gathering 350-700 blocks
- * ahead along the way and up to {@link #SPREAD} to the side, so the climb runs through them; for one flying the gap by
- * their own tear, anywhere round them, few in the shallows and crowding the upper layers they must rise through to cross
- * (SpatialTrialHandler#UPPER_LAYERS_Y) and the lower ones they must sink through to fall out (LOWER_LAYERS_Y). They are huge (radius 100-180) and drift at 3-6 blocks/s, while a climber steers
- * sideways at only ~4-5 blocks/s: seeing one coming early is the way past it.
+ * Storms spread through the gap all round every cultivator in it ({@link #targetAround} of them near each): anywhere round
+ * them, few in the shallows and crowding the upper layers they must rise through to cross (SpatialTrialHandler#UPPER_LAYERS_Y)
+ * and the lower ones they must sink through to fall out (LOWER_LAYERS_Y). They are huge (radius 100-180) and drift at 3-6
+ * blocks/s, while a climber steers sideways at only ~4-5 blocks/s: seeing one coming early is the way past it. (The old trial
+ * carried its climbers through an endless sky, looping them back down a {@link #PERIOD} at a time, and storms gathered ahead
+ * along its way; it is gone, and the gap's heights are its own: the loop count sent to clients is always 0.)
  * <p>
- * There is one list for the whole gap: cultivators crossing together climb through the same storms, and one who starts
- * later meets them further back. Each player is sent the storms in true heights along with their own loop count, and
- * draws them at the matching place in the band; bolts are sent already placed in each viewer's band.
+ * There is one list for the whole gap: cultivators crossing together climb through the same storms.
  * <p>
  * The far-off storms on the gap's sky are separate scenery (client SpatialGapAmbience). Runtime only: storms are not
  * saved, and they vanish once nobody is in the gap.
@@ -53,25 +49,13 @@ public final class SpatialStorms {
 	 * unless you steer out from under it.
 	 */
 	private static final float AIMED_CHANCE = 0.85f;
-	/** A new storm gathers this far ahead of the player along their way (true height), beyond sight. */
-	private static final double AHEAD_MIN = 350.0;
-	private static final double AHEAD_MAX = 700.0;
-	/** ...and up to this far to one side of their path (about half the storms end up over it). */
-	private static final double SPREAD = 300.0;
-	/** Storms kept near each cultivator: on a trial's climb or fall, ahead of them within these (true height, and sideways)... */
-	private static final double AHEAD_RANGE = 800.0;
-	private static final double SIDE_RANGE = 500.0;
-	/** ...flying by their own tear, round them within these, gathering this far off (beyond the fog). */
+	/** Storms kept near each cultivator: round them within these, gathering this far off (beyond the fog). */
 	private static final double AROUND_RANGE = 650.0, AROUND_HEIGHT = 450.0, AROUND_MIN = 250.0, AROUND_MAX = 650.0;
-	/**
-	 * How many: ahead on a trial's climb or fall; round one's own travel, in the stormy layers (upper and lower alike) and in the
-	 * shallows. Doubled on 2026-10-17 (the user: they were rare).
-	 */
-	private static final int TRIAL_AHEAD = 4, UPPER_AROUND = 10, SHALLOW_AROUND = 4;
+	/** How many: in the stormy layers (upper and lower alike) and in the shallows. Doubled on 2026-10-17 (the user: they were rare). */
+	private static final int UPPER_AROUND = 10, SHALLOW_AROUND = 4;
 	/** Storms of the lower layers have their base between the gap's floor and this far above the layers' top (their lightning reaching 100 below). */
 	private static final double LOWER_BAND_ABOVE = 40;
-	/** A storm this far behind every trial's player and this far from every traveller (or to the side of all of them) is gone. */
-	private static final double BEHIND_LIMIT = 300.0;
+	/** A storm this far from every cultivator in the gap (in height, or to the side of all of them) is gone. */
 	private static final double SIDE_LIMIT = 950.0, HEIGHT_LIMIT = 800.0;
 	private static final int MAX_STORMS = 32;
 	/** Players within this of a bolt (true height and sideways) see it. */
@@ -109,9 +93,9 @@ public final class SpatialStorms {
 	private static final RandomSource RANDOM = RandomSource.create();
 	private static int nextId;
 
-	/** How far the player has really climbed: their height plus everything the loop has taken off it. */
+	/** How high the player is in the gap (once their height plus what the old trial's loop had taken off it). */
 	public static double trueY(ServerPlayer p) {
-		return p.getY() + (double) SpatialTrialHandler.loops(p) * PERIOD;
+		return p.getY();
 	}
 
 	public static void tick(MinecraftServer server) {
@@ -151,77 +135,57 @@ public final class SpatialStorms {
 		STORMS.clear();
 	}
 
-	/** How far ahead of the player, along the way the gap carries them, the storm's base is (negative: passed). */
-	private static double ahead(Storm s, ServerPlayer p) {
-		return (s.baseY - trueY(p)) * SpatialTrialHandler.direction(p);
-	}
-
 	private static double sideways(Storm s, ServerPlayer p) {
 		return Math.sqrt(Mth.square(p.getX() - s.x) + Mth.square(p.getZ() - s.z));
 	}
 
-	/** Not yet left far behind by every trial's player, nor far from every traveller, nor drifted far off to the side of all of them. */
+	/** Not far from every cultivator in the gap, in height or to the side of all of them. */
 	private static boolean stillAhead(Storm s, List<ServerPlayer> players) {
 		for (ServerPlayer p : players) {
-			if (sideways(s, p) >= SIDE_LIMIT) continue;
-			if (SpatialTrialHandler.isTravelling(p.getUUID()) ? Math.abs(s.baseY - trueY(p)) < HEIGHT_LIMIT : ahead(s, p) > -BEHIND_LIMIT) return true;
+			if (sideways(s, p) < SIDE_LIMIT && Math.abs(s.baseY - trueY(p)) < HEIGHT_LIMIT) return true;
 		}
 		return false;
 	}
 
-	/** How many storms {@code p} has near: ahead along a trial's way, or all round one flying by their own tear. */
+	/** How many storms {@code p} has near, all round them. */
 	private static int near(ServerPlayer p) {
-		boolean travelling = SpatialTrialHandler.isTravelling(p.getUUID());
 		int count = 0;
 		for (Storm s : STORMS) {
-			if (travelling ? sideways(s, p) < AROUND_RANGE && Math.abs(s.baseY - trueY(p)) < AROUND_HEIGHT
-					: ahead(s, p) > 0 && ahead(s, p) < AHEAD_RANGE && sideways(s, p) < SIDE_RANGE) {
-				count++;
-			}
+			if (sideways(s, p) < AROUND_RANGE && Math.abs(s.baseY - trueY(p)) < AROUND_HEIGHT) count++;
 		}
 		return count;
 	}
 
-	/** How many storms are kept near {@code p}: few in the shallows of one's own travel, more on a trial and in the stormy layers. */
+	/** How many storms are kept near {@code p}: few in the shallows, more in the stormy layers. */
 	static int targetAround(ServerPlayer p) {
-		return targetAround(SpatialTrialHandler.isTravelling(p.getUUID()), trueY(p));
+		return targetAround(trueY(p));
 	}
 
-	static int targetAround(boolean travelling, double trueY) {
-		if (!travelling) return TRIAL_AHEAD;
-		return trueY >= SpatialTrialHandler.UPPER_LAYERS_Y || trueY < SpatialTrialHandler.LOWER_LAYERS_Y ? UPPER_AROUND : SHALLOW_AROUND;
+	static int targetAround(double y) {
+		return y >= SpatialTrialHandler.UPPER_LAYERS_Y || y < SpatialTrialHandler.LOWER_LAYERS_Y ? UPPER_AROUND : SHALLOW_AROUND;
 	}
 
 	/**
-	 * A storm (radius 100-180, drifting 3-6 blocks/s) gathering near {@code p}: on a trial, 350-700 blocks ahead along the way and
-	 * up to {@link #SPREAD} to the side; flying by their own tear, 250-650 off in any direction, within 300 of their height, and
-	 * more often than not in the stormy layer nearer them: the upper layers above where one tears in, the lower below it.
+	 * A storm (radius 100-180, drifting 3-6 blocks/s) gathering near {@code p}: 250-650 off in any direction, within 300 of their
+	 * height, and more often than not in the stormy layer nearer them: the upper layers above where one comes in, the lower below it.
 	 */
 	private static Storm spawnNear(ServerPlayer p) {
 		float radius = 100.0f + RANDOM.nextFloat() * 80.0f;
 		double angle = RANDOM.nextDouble() * Mth.TWO_PI;
-		boolean travelling = SpatialTrialHandler.isTravelling(p.getUUID());
-		double side = travelling ? AROUND_MIN + RANDOM.nextDouble() * (AROUND_MAX - AROUND_MIN)
-				: Math.sqrt(RANDOM.nextDouble()) * SPREAD; // even over the disc, not bunched at its middle
+		double side = AROUND_MIN + RANDOM.nextDouble() * (AROUND_MAX - AROUND_MIN);
 		double x = p.getX() + Math.cos(angle) * side;
 		double z = p.getZ() + Math.sin(angle) * side;
-		double baseY;
-		if (travelling) {
-			baseY = trueY(p) + (RANDOM.nextDouble() * 2 - 1) * 300;
-			boolean shallows = baseY >= SpatialTrialHandler.LOWER_LAYERS_Y && baseY < SpatialTrialHandler.UPPER_LAYERS_Y;
-			boolean below = trueY(p) < SpatialTrialHandler.TEAR_IN_Y;
-			if (baseY < SpatialTrialHandler.FLOOR_Y || shallows && below && RANDOM.nextFloat() < 0.6f) {
-				baseY = SpatialTrialHandler.FLOOR_Y + RANDOM.nextDouble() * (SpatialTrialHandler.LOWER_LAYERS_Y - SpatialTrialHandler.FLOOR_Y + LOWER_BAND_ABOVE);
-			} else if (shallows && RANDOM.nextFloat() < 0.6f) {
-				baseY = SpatialTrialHandler.UPPER_LAYERS_Y + RANDOM.nextDouble() * (SpatialTrialHandler.CROSSING_Y - SpatialTrialHandler.UPPER_LAYERS_Y + 60);
-			}
-		} else {
-			baseY = trueY(p) + SpatialTrialHandler.direction(p) * (AHEAD_MIN + RANDOM.nextDouble() * (AHEAD_MAX - AHEAD_MIN));
+		double baseY = trueY(p) + (RANDOM.nextDouble() * 2 - 1) * 300;
+		boolean shallows = baseY >= SpatialTrialHandler.LOWER_LAYERS_Y && baseY < SpatialTrialHandler.UPPER_LAYERS_Y;
+		boolean below = trueY(p) < SpatialTrialHandler.TEAR_IN_Y;
+		if (baseY < SpatialTrialHandler.FLOOR_Y || shallows && below && RANDOM.nextFloat() < 0.6f) {
+			baseY = SpatialTrialHandler.FLOOR_Y + RANDOM.nextDouble() * (SpatialTrialHandler.LOWER_LAYERS_Y - SpatialTrialHandler.FLOOR_Y + LOWER_BAND_ABOVE);
+		} else if (shallows && RANDOM.nextFloat() < 0.6f) {
+			baseY = SpatialTrialHandler.UPPER_LAYERS_Y + RANDOM.nextDouble() * (SpatialTrialHandler.CROSSING_Y - SpatialTrialHandler.UPPER_LAYERS_Y + 60);
 		}
 		double heading = RANDOM.nextDouble() * Mth.TWO_PI;
 		double speed = 0.15 + RANDOM.nextDouble() * 0.15;
-		return new Storm(nextId++, x, baseY, z, Math.cos(heading) * speed, Math.sin(heading) * speed, radius,
-				travelling ? 2400 + RANDOM.nextInt(2400) : 1200 + RANDOM.nextInt(1200));
+		return new Storm(nextId++, x, baseY, z, Math.cos(heading) * speed, Math.sin(heading) * speed, radius, 2400 + RANDOM.nextInt(2400));
 	}
 
 	/** Beneath the cloud (within its lightning's reach) or inside it, at the player's true height. */
@@ -288,11 +252,11 @@ public final class SpatialStorms {
 		target.invulnerableTime = 0;
 	}
 
-	/** To every player within range of the bolt, given in true heights and moved into each viewer's own band. */
+	/** To every player within range of the bolt. */
 	private static void sendStrike(List<ServerPlayer> players, Storm s, double x1, double y1, double z1, double x2, double y2,
 			double z2, long seed, boolean hit) {
 		for (ServerPlayer p : players) {
-			double offset = (double) SpatialTrialHandler.loops(p) * PERIOD;
+			double offset = 0; // no loop any more (the old trial's): the gap's heights are its own
 			if (Math.abs((y1 + y2) * 0.5 - trueY(p)) > STRIKE_SEND_DISTANCE) continue;
 			if (Mth.square(p.getX() - x2) + Mth.square(p.getZ() - z2) > STRIKE_SEND_DISTANCE * STRIKE_SEND_DISTANCE) continue;
 			FriendlyByteBuf buf = PacketByteBufs.create();
@@ -315,7 +279,7 @@ public final class SpatialStorms {
 	 */
 	private static FriendlyByteBuf stormsBuf(ServerPlayer p) {
 		FriendlyByteBuf buf = PacketByteBufs.create();
-		buf.writeInt(SpatialTrialHandler.loops(p));
+		buf.writeInt(0); // the loop count (the old trial's endless sky): none any more
 		buf.writeDouble(p.getY());
 		buf.writeVarInt(STORMS.size());
 		for (Storm s : STORMS) {

@@ -218,7 +218,7 @@ public final class CultivationEvents {
 			SparSystem.abandon(handler.getPlayer());
 			// A golden core breaking bursts as its cultivator goes.
 			CoreDetonation.onDisconnect(handler.getPlayer());
-			// One whose body is held takes it with them (the soul in it is thrown out) before they're saved (Possession).
+			// One whose body is held doesn't take it with them: it plays on under the soul, and they watch again as they come back (Possession).
 			Possession.onDisconnect(handler.getPlayer());
 			// A soul out of its body goes home (or, fleeing a fight, is severed) while the player can still be moved and saved; one in
 			// a person's body gives it back first.

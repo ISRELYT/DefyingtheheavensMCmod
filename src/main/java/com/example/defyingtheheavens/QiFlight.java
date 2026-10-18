@@ -15,8 +15,8 @@ import java.util.UUID;
  * jump), paying their realm's flight cost in qi for every second in the air while still gathering. Where gathering keeps
  * up with the cost (the Upper Realm, and everywhere from Heavenly Being on; see {@link Realm}) flight never ends.
  * Elsewhere a pool that runs dry drops them out of the sky, and flight returns once it has gathered back to
- * {@link #RESUME_FRACTION} of its maximum. Never on a trial through the Spatial Gap, where the gap decides the direction; one
- * who tore their own way in (SpatialTrialHandler#tear) flies there as anywhere.
+ * {@link #RESUME_FRACTION} of its maximum. Never on the Soul River, whose current carries the living; in the Spatial Gap one
+ * flies as anywhere (SpatialTrialHandler).
  * <p>
  * Sword Flight ({@link SwordFlight}, from Foundation Building) takes off the same way and is run here too: with a sword in
  * the main hand and that ability on, the cultivator rides the sword instead, at its lower cost and speed. Only one of the
@@ -120,15 +120,16 @@ public final class QiFlight {
 		if (Incorporeal.isGhost(p)) {
 			SwordFlight.update(p, false);
 			EXHAUSTED.remove(id);
-			if (!ModDimensions.isPassage(p.level().dimension()) && !p.hasEffect(ModEffects.QUELLED)) setFlight(p, true, freeSpeed(c));
+			if (!ModDimensions.isSoulRiver(p.level().dimension()) && !p.hasEffect(ModEffects.QUELLED)) setFlight(p, true, freeSpeed(c));
 			else land(p);
 			return 0;
 		}
-		// The gap's current carries every trial, but one who tore their own way in flies there as anywhere (SpatialTrialHandler#tear).
-		boolean inGap = !SpatialTrialHandler.isTravelling(id) && (SpatialTrialHandler.isInTrial(id) || ModDimensions.isPassage(p.level().dimension()));
-		// One of the living in a Ghost King's form flies as the dead do, whatever its realms, for nothing (the gap and the Soul River
-		// carry it as they carry everyone living, and a talisman binds it as it binds them).
-		if (TwoPaths.inGhostForm(c) && !inGap) {
+		// The Soul River's current carries everyone living on it; the Spatial Gap carries nobody: whoever can fly flies it as anywhere
+		// (SpatialTrialHandler: its old trials, which carried those below Heavenly Being, are gone).
+		boolean carried = ModDimensions.isSoulRiver(p.level().dimension()); // not isPassage: that is the gap too
+		// One of the living in a Ghost King's form flies as the dead do, whatever its realms, for nothing (the Soul River carries it as
+		// it carries everyone living, and a talisman binds it as it binds them).
+		if (TwoPaths.inGhostForm(c) && !carried) {
 			SwordFlight.update(p, false);
 			EXHAUSTED.remove(id);
 			if (!p.hasEffect(ModEffects.QUELLED)) setFlight(p, true, freeSpeed(c));
@@ -139,7 +140,7 @@ public final class QiFlight {
 		boolean onSword = SwordFlight.canRide(p, c);
 		boolean onQi = !onSword && c.getEffectiveRealm().canFlyOnQi() && c.isAbilityEnabled(Ability.QI_FLIGHT);
 		// Neither (switched off on the Abilities tab, no sword in hand): no flight, and one in progress ends.
-		if (!onQi && !onSword || inGap) {
+		if (!onQi && !onSword || carried) {
 			land(p);
 			return 0;
 		}

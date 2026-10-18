@@ -869,7 +869,10 @@ public final class SoulProjection {
 			}
 			if (GhostSystem.isGhost(victim)) return ModLang.MSG_POSSESS_DEAD; // the dead have no body to take
 			if (!victim.canHarmPlayer(player) || !player.server.isPvpAllowed()) return ModLang.MSG_POSSESS_PVP;
-			if (TribulationManager.isActive(victim.getUUID()) || HeavenRitual.isActive(victim.getUUID())) return ModLang.MSG_POSSESS_CANNOT;
+			if (TribulationManager.isActive(victim.getUUID()) || HeavenRitual.isActive(victim.getUUID())
+					|| CoreDetonation.isCharging(victim.getUUID())) { // a core already breaking bursts as it would, theirs
+				return ModLang.MSG_POSSESS_CANNOT;
+			}
 		} else if (!(target instanceof Mob mob) || !canPossess(mob, player)) {
 			return ModLang.MSG_POSSESS_CANNOT;
 		}

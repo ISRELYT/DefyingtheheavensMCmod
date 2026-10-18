@@ -55,7 +55,8 @@ public final class Possession {
 	/** A soul in a body. */
 	private static final class Tenancy {
 		final UUID soul, body;
-		final ServerPlayer soulPlayer;
+		/** The soul's player (as last ticked: leaving the End by its portal makes it anew). */
+		ServerPlayer soulPlayer;
 		/** Whether the body is an NPC's (else a player's). */
 		final boolean npcBody;
 		/** The player whose body it is while they're here (null while they're away: logged out, the body still held), or null for an NPC's. */
@@ -255,7 +256,7 @@ public final class Possession {
 			if (victim.isSleeping()) victim.stopSleepInBed(true, true);
 			if (MeditationManager.isMeditating(victim.getUUID())) MeditationManager.stop(victim, true);
 			victim.stopUsingItem();
-			SparSystem.abandon(victim);
+			endDealings(victim); // what was on their cursor or crafting grid goes back into their things first, to go with the body
 			body = takeFrom(victim);
 			record = CultivationManager.own(victim);
 			Sect disciple = SectMembership.sectOf(server, victim.getUUID());
@@ -337,7 +338,7 @@ public final class Possession {
 		MinecraftServer server = soul.server;
 		if (MeditationManager.isMeditating(soul.getUUID())) MeditationManager.stop(soul, false);
 		soul.stopUsingItem();
-		soul.closeContainer(); // whatever it had open was the body's to have open
+		endDealings(soul); // whatever it had open, the talk or the bout it was in, were the body's
 		takeLeaveOffWheel(t);
 		CompoundTag body = takeFrom(soul);
 		BY_SOUL.remove(t.soul);
@@ -457,9 +458,14 @@ public final class Possession {
 	static boolean tick(ServerPlayer soul) {
 		Tenancy t = BY_SOUL.get(soul.getUUID());
 		if (t == null) return false;
+		t.soulPlayer = soul;
 		if (!t.isNpc()) {
 			ServerPlayer victim = t.heldPlayer;
-			if (victim != null && (victim.isRemoved() || victim.hasDisconnected())) t.heldPlayer = victim = null; // gone without a word
+			if (victim != null && (victim.isRemoved() || victim.hasDisconnected())) {
+				// Gone without a word; or killed (a command reaches even a spectator) and back as a new body of theirs: held all the same.
+				ServerPlayer again = victim.hasDisconnected() ? null : soul.server.getPlayerList().getPlayer(t.body);
+				t.heldPlayer = victim = again != null && again != victim && !again.isRemoved() ? again : null;
+			}
 			if (victim != null) {
 				moving = true;
 				try {
@@ -685,6 +691,8 @@ public final class Possession {
 		inventory.clearContent();
 		inventory.load(body.getList("Inventory", Tag.TAG_COMPOUND));
 		inventory.selected = Mth.clamp(body.getInt("Selected"), 0, Inventory.getSelectionSize() - 1);
+		// The hand's slot is the client's to say (it tells the server when it changes): it is told, or it would show one slot and use another.
+		if (p.connection != null) p.connection.send(new net.minecraft.network.protocol.game.ClientboundSetCarriedItemPacket(inventory.selected));
 		RingContainer rings = RingContainer.of(p);
 		rings.clearContent();
 		rings.load(body.getList("Rings", Tag.TAG_COMPOUND));
@@ -837,6 +845,19 @@ public final class Possession {
 	}
 
 	// --- Helpers ---
+
+	/**
+	 * Whatever {@code p} was in the middle of with others as the body changes hands: a screen open (its cursor and crafting grid back
+	 * into their things), a talk with an NPC cultivator, a bout (forfeited).
+	 */
+	private static void endDealings(ServerPlayer p) {
+		p.closeContainer();
+		for (CultivatorNpc npc : CultivatorNpc.talkingWith(p)) {
+			npc.endTalk(p);
+			TalkSystem.breakOff(p, npc, ModLang.TALK_INTERRUPTED);
+		}
+		SparSystem.abandon(p);
+	}
 
 	/** The NPC of {@code t}, wherever it is now (a crossing into another world makes it anew, under the same id). */
 	private static CultivatorNpc findNpc(MinecraftServer server, Tenancy t) {

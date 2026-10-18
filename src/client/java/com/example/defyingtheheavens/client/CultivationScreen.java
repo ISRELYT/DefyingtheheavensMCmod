@@ -572,7 +572,7 @@ public class CultivationScreen extends Screen {
 			}
 		}
 		y += 14;
-		// The practised ghost method's pace here (its ghostly qi: the Netherworld's, thinner in the Nether, none elsewhere).
+		// The practised ghost method's pace here (its ghostly qi: the Netherworld's, thinner in the Nether and the Overworld, none elsewhere).
 		GhostMethod active = s.activeMethod();
 		Component pace;
 		int paceColor = 0x9E9E9E;
@@ -869,7 +869,7 @@ public class CultivationScreen extends Screen {
 	}
 
 	/**
-	 * The ghostly qi where the player stands (only where there is any: the Nether and the Netherworld), and their yin corruption
+	 * The ghostly qi where the player stands (only where there is any: the Overworld, the Nether and the Netherworld), and their yin corruption
 	 * while they carry any, with whether it is ebbing or held still.
 	 */
 	private List<Detail> netherworldDetails() {

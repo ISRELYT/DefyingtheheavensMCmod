@@ -13,14 +13,12 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.RelativeMovement;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -28,24 +26,22 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * The 60-second Spatial Pressure Trial in the Spatial Gap, for both directions:
- * ascension (Overworld rift -> Upper Realm) and descension (Upper Realm void -> Overworld sky).
+ * The Spatial Gap, between the Overworld and the Upper Realm. However one comes in (the Overworld's rift at 0, 0, a fall off the
+ * Upper Realm, a tear in space: one's own or another's), one is in it the same way ({@link Route#TRAVEL}): no timer and no current,
+ * free to fly it as anywhere (Qi Flight, Sword Flight, a ghostly form's flight; one who can't fly falls). A block crossed here is
+ * {@link #GAP_SCALE} in the world; rising through the stormy upper layers past {@link #CROSSING_Y} leads into the Upper Realm,
+ * sinking through the stormy lower layers below {@link #FLOOR_Y} drops one into the Overworld's sky, and a tear out (a Heavenly
+ * Being's) leads back to the realm one came from. Spatial pressure presses all the while ({@link #pressureAt}).
  * <p>
- * The route alone decides which way the gap carries the player: ascending, they are lifted upward the whole way;
- * descending, they fall. Flying (creative or any other kind) and elytra gliding are cancelled inside the gap, and a
- * descending player loses any Levitation, so nobody can hover or go against the current.
- * <p>
- * The running timer is runtime-only and restarts from 60 s if the player relogs inside the gap; which direction they
- * were travelling is persisted in their cultivation data. Dying in the gap ends the trial.
+ * The gap once carried those below Heavenly Being on a timed trial instead (60 seconds, lifted up or dropped down, no flying):
+ * the user removed it on 2026-10-18 ("anyone who can fly can move around in there"). Which realm one came from is saved with
+ * them; dying in the gap ends the journey.
  */
 public final class SpatialTrialHandler {
 	/**
-	 * How one came into the gap: carried up from the Overworld's rift (ASCEND) or down out of the Upper Realm (DESCEND), each a
-	 * timed trial; or through one's own tear in space (TRAVEL, Heavenly Being and above: {@link #tear}), free to fly, with no
-	 * timer: a block crossed here is {@link #GAP_SCALE} in the world, rising through the stormy upper layers past
-	 * {@link #CROSSING_Y} leads into the Upper Realm, sinking through the stormy lower layers below {@link #FLOOR_Y} drops one
-	 * into the Overworld's sky. Tearing out again only ever leads back to the realm one came from ({@link #homeRealm}): to
-	 * pass from one realm to the other, one goes up or down.
+	 * How one is in the gap: {@link #TRAVEL}, the only way now (see above); NONE outside it. ASCEND and DESCEND were the old timed
+	 * trials, kept so a save from then still reads: one back in the gap on either travels (DESCEND as one come down from the Upper
+	 * Realm).
 	 */
 	public enum Route {
 		NONE, ASCEND, DESCEND, TRAVEL;
@@ -58,33 +54,21 @@ public final class SpatialTrialHandler {
 		}
 	}
 
-	public static final int TRIAL_TICKS = 60 * 20;
 	/**
-	 * Per second; ignores armor, enchantments and effects (see ModDamageTypes). Health, regen, absorption and healing count.
-	 * Against Qi Sustenance's 2 health/s regen (the ability switched on; off, the gap is harder), 60 hits net 131 damage: Heavenly Being - Grand Perfection (137 max
-	 * health), the peak of the lower realms, is the first stage that endures it unaided; Late (128) falls at ~59 s.
-	 * Four Axis (200+) passes with room to spare. A golden apple or two carries a Late cultivator through.
+	 * The gap's pressure a second, the stormy layers' half (it was the old trial's: see {@link #LAYER_PRESSURE}); ignores armor,
+	 * enchantments and effects (see ModDamageTypes). Health, regen, absorption and healing count.
 	 */
 	public static final float PRESSURE_DAMAGE = 4.15f;
 
-	private static final int ASCENT_ENTRY_Y = 96;
-	private static final int DESCENT_ENTRY_Y = 300;
 	/** Out of the gap into the Overworld's sky: above its build limit, below where rising leads out into space (AstralRealm#EXIT_Y). */
 	private static final int OVERWORLD_DROP_Y = 330;
-	/** The gap is floorless: below this Y the player is lifted back up mid-fall, keeping their speed, so they never hit the void. */
-	private static final int LOOP_BELOW_Y = 64;
-	/** ...and has no ceiling: above this Y a rising player is dropped back down mid-climb, keeping their speed. */
-	private static final int LOOP_ABOVE_Y = 320;
-	/** How far the loop moves a player; the gap repeats every this many blocks (see {@link SpatialStorms}). */
+	/** The storms' band height (SpatialStorms#PERIOD; the old trial's endless sky repeated every this many blocks). */
 	public static final int LOOP_LIFT = 192;
-	/**
-	 * Ascending, the gap carries the player up with a hidden Levitation effect of this amplifier (a steady ~1.8 blocks per
-	 * tick). Levitation is how the client is made to rise, and servers don't kick a levitating player for "flying".
-	 */
+	/** The old trial's hidden lift (Levitation of this amplifier), still taken off anyone a save from then left it on. */
 	private static final int ASCENT_LIFT_AMPLIFIER = 39;
 	private static final int PLATFORM_Y = 256;
 
-	// --- Travel through one's own tear (Route TRAVEL) ---
+	// --- Travel through the gap (Route TRAVEL) ---
 
 	/** A block crossed in the gap is this many in the world, both ways (Overworld and Upper Realm alike). */
 	public static final int GAP_SCALE = 20;
@@ -110,9 +94,9 @@ public final class SpatialTrialHandler {
 	 */
 	public static final float SHALLOW_PRESSURE = 2.5f;
 	/**
-	 * The pressure a second in the gap's stormy upper and lower layers, flown by one's own tear: twice the trial's (the user's ask,
-	 * 2026-10-17). Climbing the upper layers on Qi Flight (160 blocks at ~4.5 a second, some 35 s) costs about 220 health against Qi
-	 * Sustenance; sinking through the lower ones (12 s) about 75. The trial itself keeps {@link #PRESSURE_DAMAGE}.
+	 * The pressure a second in the gap's stormy upper and lower layers: twice the old trial's (the user's ask, 2026-10-17). Climbing
+	 * the upper layers on Qi Flight (160 blocks at ~7.5 a second, measured 2026-10-19: some 21 s) costs about 175 health, the whole
+	 * climb from where one comes in about 200; sinking through the lower ones (12 s) about 100 (both before any healing).
 	 */
 	public static final float LAYER_PRESSURE = PRESSURE_DAMAGE * 2;
 	/** Tearing space open costs this share of the qi pool going in, and this coming out. */
@@ -128,12 +112,10 @@ public final class SpatialTrialHandler {
 	/** ...asked for again once one has moved this far in the gap (blocks), or this long after (ticks: the land is held 30 s). */
 	private static final double AHEAD_MOVE = 2;
 	private static final int AHEAD_RENEW = 20 * 20;
-	/** The ascent trial's landing is asked for this many ticks before the trial ends. */
-	private static final int AHEAD_TRIAL_TICKS = 10 * 20;
 	/** Coming out where the land isn't loaded yet, one is held in the gap while space settles: at most this long (ticks), then out regardless. */
 	public static final int HOLD_TICKS = 100;
 
-	/** The way out of the gap: by one's own tear, rising through the crossing, or sinking through the floor. */
+	/** The way out of the gap: by a tear, rising through the crossing, or sinking through the floor. */
 	private enum Way { TEAR, CROSSING, FLOOR }
 
 	/** One held at {@code at} until the land at {@code column} in {@code to} is loaded (or {@link #HOLD_TICKS} have passed). */
@@ -150,13 +132,11 @@ public final class SpatialTrialHandler {
 		return HOLDS.containsKey(id);
 	}
 
+	/** One in the gap (Route TRAVEL). */
 	private static final class Trial {
 		final Route route;
-		int ticksLeft = TRIAL_TICKS;
-		/** Ticks spent in the gap (travel has no timer: the pressure lands once every 20). */
+		/** Ticks spent in the gap (the pressure lands once every 20). */
 		int ticks;
-		/** Times the loop has moved the player down (rising) minus times it moved them up (falling). */
-		int loops;
 
 		Trial(Route route) {
 			this.route = route;
@@ -165,67 +145,36 @@ public final class SpatialTrialHandler {
 
 	private static final Map<UUID, Trial> ACTIVE = new HashMap<>();
 
+	/** In the gap (on its way through it, by any way in). */
 	public static boolean isInTrial(UUID id) {
 		return ACTIVE.containsKey(id);
 	}
 
-	/** In the gap through their own tear (Route TRAVEL): free to fly there (QiFlight), no timer. */
+	/** In the gap, free to fly it (QiFlight): everyone in it now (Route TRAVEL). */
 	public static boolean isTravelling(UUID id) {
 		Trial t = ACTIVE.get(id);
 		return t != null && t.route == Route.TRAVEL;
 	}
 
-	/**
-	 * How many {@link #LOOP_LIFT}s the loop has taken off the player's height this trial, so that
-	 * {@code getY() + loops * LOOP_LIFT} is how far they have really climbed (or fallen): the gap behaves as an endless
-	 * sky. 0 outside a trial, and it starts over with the trial (a relog, say).
-	 */
-	public static int loops(ServerPlayer player) {
-		Trial t = ACTIVE.get(player.getUUID());
-		return t == null ? 0 : t.loops;
-	}
-
-	/** +1 while the gap carries the player up (ascension, and any trial not yet begun), -1 while it drops them. */
-	public static int direction(ServerPlayer player) {
-		Trial t = ACTIVE.get(player.getUUID());
-		return t != null && t.route == Route.DESCEND ? -1 : 1;
-	}
-
-	/**
-	 * Called by the Spatial Rift. One strong enough to tear space (a Heavenly Being) isn't carried: they fly the gap freely as by
-	 * their own tear ({@link #travelIn}); anyone else is carried up on the trial.
-	 */
+	/** Called by the Spatial Rift at the Overworld's 0, 0: into the gap's shallows, to fly up through it (or fall back down). */
 	public static void beginAscension(ServerPlayer player) {
 		if (!canEnter(player)) return;
 		// Someone just cast down from the Upper Realm is still falling from the sky drop; descending near X=0, Z=0
-		// would otherwise drop them straight back through the rift into a new ascension.
+		// would otherwise drop them straight back through the rift into the gap again.
 		if (CultivationManager.get(player).isFallProtected()) return;
-		if (flysTheGap(player)) {
-			travelIn(player, false);
-			return;
-		}
-		enterGap(player, Route.ASCEND, player.getX(), ASCENT_ENTRY_Y, player.getZ());
+		travelIn(player, false);
 	}
 
-	/** Called by the VoidFallHandler when a player drops out of the bottom of the Upper Realm: a Heavenly Being flies the gap freely. */
+	/** Called by the VoidFallHandler when a player drops out of the bottom of the Upper Realm: into the gap's shallows below it. */
 	public static void beginDescension(ServerPlayer player) {
 		if (!canEnter(player)) return;
-		if (flysTheGap(player)) {
-			travelIn(player, true);
-			return;
-		}
-		enterGap(player, Route.DESCEND, player.getX(), DESCENT_ENTRY_Y, player.getZ());
-	}
-
-	/** Strong enough to tear space (Ability#SPATIAL_TEAR: the living, from Heavenly Being): the gap carries them nowhere, they fly it. */
-	public static boolean flysTheGap(ServerPlayer player) {
-		return Ability.SPATIAL_TEAR.isUnlocked(CultivationManager.get(player));
+		travelIn(player, true);
 	}
 
 	/**
-	 * Into the gap's shallows as one who flies it (Route TRAVEL), at a {@link #GAP_SCALE}th of where they were, from the Upper
-	 * Realm ({@code fromUpper}) or the Overworld: as a tear in, but free (the rift or the fall opened the way), and out again the
-	 * same ways: up through the crossing, down through the floor, or by a tear back home.
+	 * Into the gap's shallows (Route TRAVEL), at a {@link #GAP_SCALE}th of where they were, from the Upper Realm ({@code fromUpper})
+	 * or the Overworld: as a tear in (the rift or the fall opened the way), and out again the same ways: up through the crossing,
+	 * down through the floor, or by a tear back home for one who can tear space.
 	 */
 	private static void travelIn(ServerPlayer player, boolean fromUpper) {
 		PlayerCultivation c = CultivationManager.get(player);
@@ -252,7 +201,7 @@ public final class SpatialTrialHandler {
 		ServerLevel gap = player.getServer().getLevel(ModDimensions.SPATIAL_GAP);
 		TribulationManager.abandon(player); // no-op without one; falling out of the Upper Realm, even with no gap to fall into
 		if (gap == null) {
-			DefyingTheHeavens.LOGGER.error("Spatial Gap dimension is missing; cannot start the {} trial for {}", route, player.getScoreboardName());
+			DefyingTheHeavens.LOGGER.error("Spatial Gap dimension is missing; cannot carry {} into it", player.getScoreboardName());
 			return;
 		}
 		PlayerCultivation c = CultivationManager.get(player);
@@ -267,12 +216,10 @@ public final class SpatialTrialHandler {
 		RealmSuppressionHandler.update(player); // the gap lifts suppression immediately
 
 		player.playNotifySound(SoundEvents.PORTAL_TRAVEL, SoundSource.PLAYERS, 0.6f, 0.6f);
-		if (route == Route.TRAVEL) {
-			player.sendSystemMessage(Component.translatable(ModLang.MSG_GAP_TRAVEL, GAP_SCALE).withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE));
-		} else {
-			player.sendSystemMessage(Component.translatable(route == Route.ASCEND ? ModLang.MSG_GAP_ASCEND : ModLang.MSG_GAP_DESCEND,
-					TRIAL_TICKS / 20));
-		}
+		// Its ways out: a tear back for one who can tear space; up through the crossing or down through the floor for everyone.
+		boolean tears = Ability.SPATIAL_TEAR.isUnlocked(c);
+		player.sendSystemMessage(Component.translatable(tears ? ModLang.MSG_GAP_TRAVEL : ModLang.MSG_GAP_TRAVEL_NO_TEAR, GAP_SCALE)
+				.withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE));
 	}
 
 	// --- One's own tear (Ability#SPATIAL_TEAR) ---
@@ -336,7 +283,7 @@ public final class SpatialTrialHandler {
 
 	/**
 	 * A tear standing open, and where it leads: into the gap (from the Upper Realm or the Overworld, {@code fromUpper}), or out of it
-	 * to {@code to}, where its place leads there at {@code scale} (its opener's way home: GAP_SCALE, or a trial's own 1).
+	 * to {@code to}, where its place leads there at {@code scale} (its opener's way home: GAP_SCALE).
 	 */
 	private record Tear(UUID entity, ServerLevel level, UUID opener, boolean out, boolean fromUpper, ServerLevel to, int scale, Vec3 at, long until) {}
 
@@ -362,12 +309,9 @@ public final class SpatialTrialHandler {
 		int scale = GAP_SCALE;
 		SpatialTearEntity.Leads leads;
 		if (out) {
-			// Back where its opener came from, never on into the other realm. One's own tear's gap is the world at GAP_SCALE; a trial's
-			// lies over the place it began, at the world's own scale (at GAP_SCALE, falling off an island and tearing out at once would
-			// be a free leap twenty times as far).
+			// Back where its opener came from, never on into the other realm, where the gap's place leads there (GAP_SCALE).
 			Trial t = ACTIVE.get(p.getUUID());
 			Route route = t != null ? t.route : c.getPendingTrial();
-			scale = route == Route.TRAVEL ? GAP_SCALE : 1;
 			ServerLevel home = p.server.getLevel(homeRealm(route, c.isGapFromUpper()));
 			to = home == null ? p.server.overworld() : home;
 			leads = to.dimension() == ModDimensions.UPPER_REALM ? SpatialTearEntity.Leads.UPPER_REALM : SpatialTearEntity.Leads.OVERWORLD;
@@ -582,7 +526,7 @@ public final class SpatialTrialHandler {
 	}
 
 	/**
-	 * A second in the gap by one's own tear: the pressure by its layer, and where the world lies beneath them on the action bar.
+	 * A second in the gap: the pressure by its layer, and where the world lies beneath them on the action bar.
 	 * Past {@link #CROSSING_Y}, through into the Upper Realm; below {@link #FLOOR_Y}, out into the Overworld's sky.
 	 */
 	private static void tickTravel(MinecraftServer server, ServerLevel gap, ServerPlayer p, Trial t) {
@@ -614,8 +558,8 @@ public final class SpatialTrialHandler {
 	}
 
 	/**
-	 * The realm a tear out of the gap leads back to: the one torn in from (a trial's, the one it set out from: the Upper Realm for a
-	 * descent, the Overworld for an ascent). Never the other: the way between them is up or down through the gap.
+	 * The realm a tear out of the gap leads back to: the one come in from (an old save's trial, the one it set out from: the Upper
+	 * Realm for a descent, the Overworld for an ascent). Never the other: the way between them is up or down through the gap.
 	 */
 	static ResourceKey<Level> homeRealm(Route route, boolean gapFromUpper) {
 		boolean upper = route == Route.TRAVEL ? gapFromUpper : route == Route.DESCEND;
@@ -627,7 +571,7 @@ public final class SpatialTrialHandler {
 		return y < LOWER_LAYERS_Y && y >= FLOOR_Y;
 	}
 
-	/** The pressure a second on one flying the gap by their own tear at height {@code y}: twice the trial's in the stormy layers, less in the shallows. */
+	/** The pressure a second on one in the gap at height {@code y}: {@link #LAYER_PRESSURE} in the stormy layers, less in the shallows. */
 	static float pressureAt(double y) {
 		return y >= UPPER_LAYERS_Y || y < LOWER_LAYERS_Y ? LAYER_PRESSURE : SHALLOW_PRESSURE;
 	}
@@ -673,18 +617,23 @@ public final class SpatialTrialHandler {
 	}
 
 	private static void tickPlayer(MinecraftServer server, ServerLevel gap, ServerPlayer p) {
-		if (!p.isAlive()) return;
+		// A spectator only looks on (as on the Soul River): no journey. One whose body is held (Possession) is carried in so, watching it.
+		if (!p.isAlive() || p.isSpectator()) return;
 		Trial t = ACTIVE.get(p.getUUID());
 		if (t == null) {
-			// Relogged inside the gap, or sent here by a command: the timer starts over.
+			// Relogged inside the gap, or sent here by a command: on the way through it again. A save from the old trials' days too:
+			// one coming down out of the Upper Realm came from there; one going up, or with nothing saved, from the Overworld.
 			PlayerCultivation c = CultivationManager.get(p);
-			Route route = c.getPendingTrial() == Route.NONE ? Route.ASCEND : c.getPendingTrial();
-			c.setPendingTrial(route);
+			Route was = c.getPendingTrial();
+			if (was == Route.DESCEND) c.setGapFromUpper(true);
+			else if (was != Route.TRAVEL) c.setGapFromUpper(false);
+			c.setPendingTrial(Route.TRAVEL);
+			c.setAbilityEnabled(Ability.SPATIAL_TEAR, true); // flying the gap (and the client shows its layers)
 			CultivationManager.markDirty(server);
-			t = new Trial(route);
+			CultivationManager.sync(p);
+			t = new Trial(Route.TRAVEL);
 			ACTIVE.put(p.getUUID(), t);
 			RealmSuppressionHandler.update(p);
-			if (route != Route.TRAVEL) p.sendSystemMessage(Component.translatable(ModLang.MSG_GAP_RESTART, TRIAL_TICKS / 20));
 		}
 
 		// Vanilla shields a player from damage for 3 s after joining while health keeps regenerating, so relogging over
@@ -696,113 +645,18 @@ public final class SpatialTrialHandler {
 			tickHold(server, p, hold);
 			return;
 		}
-		if (t.route == Route.TRAVEL) { // one's own tear: free to fly, no timer
-			tickTravel(server, gap, p, t);
-			return;
-		}
-
-		t.ticksLeft--;
-		forceDirection(p, t.route);
-		// The climb's landing in the Upper Realm asked for ten seconds before it ends (complete: findArrival finds it loaded).
-		if (t.route == Route.ASCEND && t.ticksLeft == AHEAD_TRIAL_TICKS) {
-			ServerLevel upper = server.getLevel(ModDimensions.UPPER_REALM);
-			if (upper != null) SpatialArrivals.prepare(upper, SpatialArrivals.target(upper, p.getBlockX(), p.getBlockZ()));
-		}
-
-		// All axes relative: the client keeps its speed through the loop.
-		if (p.getY() < LOOP_BELOW_Y) {
-			p.connection.teleport(p.getX(), p.getY() + LOOP_LIFT, p.getZ(), p.getYRot(), p.getXRot(), EnumSet.allOf(RelativeMovement.class));
-			resyncMovement(p);
-			t.loops--;
-		} else if (p.getY() > LOOP_ABOVE_Y) {
-			p.connection.teleport(p.getX(), p.getY() - LOOP_LIFT, p.getZ(), p.getYRot(), p.getXRot(), EnumSet.allOf(RelativeMovement.class));
-			resyncMovement(p);
-			t.loops++;
-		}
-
-		if (t.ticksLeft % 20 == 0) {
-			p.hurt(ModDamageTypes.spatialPressure(gap), PRESSURE_DAMAGE);
-			if (!p.isAlive()) return; // AFTER_DEATH -> onDeath() cleans up
-			p.displayClientMessage(Component.translatable(ModLang.MSG_GAP_TIMER, Math.max(0, t.ticksLeft / 20)), true);
-		}
-
-		if (t.ticksLeft <= 0) {
-			complete(server, p, t.route);
-		}
+		tickTravel(server, gap, p, t);
 	}
 
-	/**
-	 * Makes the route decide the direction: no flying (creative or any other kind) and no elytra gliding in the gap;
-	 * ascending, the hidden Levitation lift is kept topped up; descending, any Levitation (a potion, say) is removed.
-	 */
-	private static void forceDirection(ServerPlayer p, Route route) {
-		if (p.isSpectator()) return;
-		if (p.getAbilities().flying) {
-			p.getAbilities().flying = false;
-			p.onUpdateAbilities();
-		}
-		if (p.isFallFlying()) p.stopFallFlying();
-
-		MobEffectInstance levitation = p.getEffect(MobEffects.LEVITATION);
-		if (route == Route.ASCEND) {
-			if (levitation != null && isLift(levitation) && levitation.getDuration() >= 20) return;
-			if (levitation != null && !isLift(levitation)) p.removeEffect(MobEffects.LEVITATION);
-			p.addEffect(new MobEffectInstance(MobEffects.LEVITATION, 40, ASCENT_LIFT_AMPLIFIER, false, false, false));
-			// Being carried up isn't levitating: keep vanilla from counting it toward "Great View From Up Here".
-			((ServerPlayerAccessor) p).dth$setLevitationStartPos(null);
-		} else if (levitation != null) {
-			p.removeEffect(MobEffects.LEVITATION);
-		}
-	}
-
-	/** The ascent lift: our amplifier, no particles, no icon. */
+	/** The old trial's ascent lift: our amplifier, no particles, no icon. */
 	private static boolean isLift(MobEffectInstance effect) {
 		return effect.getAmplifier() == ASCENT_LIFT_AMPLIFIER && !effect.isVisible() && !effect.showIcon();
 	}
 
-	/** Takes the ascent lift off on arrival, or when the player leaves the gap some other way. */
+	/** Takes the old trial's lift off anyone a save from then left it on (in the gap, or as they leave it). */
 	private static void removeLift(ServerPlayer p) {
 		MobEffectInstance levitation = p.getEffect(MobEffects.LEVITATION);
 		if (levitation != null && isLift(levitation)) p.removeEffect(MobEffects.LEVITATION);
-	}
-
-	private static void complete(MinecraftServer server, ServerPlayer p, Route route) {
-		ACTIVE.remove(p.getUUID());
-		removeLift(p);
-		PlayerCultivation c = CultivationManager.get(p);
-		c.setPendingTrial(Route.NONE);
-
-		if (route == Route.ASCEND) {
-			ServerLevel upper = server.getLevel(ModDimensions.UPPER_REALM);
-			if (upper == null) {
-				DefyingTheHeavens.LOGGER.error("Upper Realm dimension is missing; returning {} to the Overworld instead", p.getScoreboardName());
-				dropIntoOverworld(server, p, c);
-				return;
-			}
-			BlockPos arrival = findArrival(upper, p.getBlockX(), p.getBlockZ());
-			p.teleportTo(upper, arrival.getX() + 0.5, arrival.getY(), arrival.getZ() + 0.5, p.getYRot(), p.getXRot());
-			resyncMovement(p);
-			p.setDeltaMovement(Vec3.ZERO);
-			p.fallDistance = 0;
-			RealmSuppressionHandler.update(p);
-			p.playNotifySound(SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1.0f, 1.2f);
-			p.sendSystemMessage(Component.translatable(ModLang.MSG_ARRIVE_UPPER, (int) PlayerCultivation.UPPER_REALM_QI_MULTIPLIER));
-		} else {
-			dropIntoOverworld(server, p, c);
-		}
-		CultivationManager.markDirty(server);
-	}
-
-	private static void dropIntoOverworld(MinecraftServer server, ServerPlayer p, PlayerCultivation c) {
-		ServerLevel overworld = server.overworld();
-		if (overworld == null) return;
-		p.teleportTo(overworld, p.getX(), OVERWORLD_DROP_Y, p.getZ(), p.getYRot(), p.getXRot());
-		resyncMovement(p);
-		p.fallDistance = 0;
-		p.setOnGround(false); // nothing stale from the gap may count as a landing (see tickFallProtection)
-		c.setFallProtected(true); // the first landing from the sky drop is harmless
-		RealmSuppressionHandler.update(p);
-		p.displayClientMessage(Component.translatable(ModLang.MSG_ARRIVE_LOWER), true);
 	}
 
 	/**
@@ -881,7 +735,7 @@ public final class SpatialTrialHandler {
 		return true;
 	}
 
-	/** Dying in the gap ends the trial; the player respawns at their spawn point as usual. */
+	/** Dying in the gap ends the journey through it; the player respawns at their spawn point as usual. */
 	public static void onDeath(ServerPlayer player) {
 		if (player == null) return;
 		HOLDS.remove(player.getUUID());
@@ -895,8 +749,8 @@ public final class SpatialTrialHandler {
 	}
 
 	/**
-	 * Disconnect: forget the running timer; the saved route restarts a full trial on the next login (travel simply goes on). A hold
-	 * goes too: back in, one stands where it held them, and the way out opens again at the crossing or floor, or with a new tear.
+	 * Disconnect: forget what runs; the saved route and realm come back with them (back in, the journey simply goes on). A hold goes
+	 * too: back in, one stands where it held them, and the way out opens again at the crossing or floor, or with a new tear.
 	 */
 	public static void forget(UUID id) {
 		ACTIVE.remove(id);

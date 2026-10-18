@@ -222,14 +222,11 @@ public final class ClientSpatialStorms {
 	}
 
 	/**
-	 * The player's loop count now: the last packet's, plus one for each time the loop has moved the player since. A loop
-	 * moves them a whole PERIOD while they travel well under half that between packets, so the difference in height
-	 * since the packet, rounded to whole PERIODs, is exactly the loops missed. Nothing is counted on the client, so a
-	 * loop arriving before or after a packet can't be counted twice.
+	 * The player's loop count now: the server's (the old trial carried its climbers round an endless sky a PERIOD at a time; it is
+	 * gone, so the count is always 0, and nothing is guessed from the height here, which a fall could only throw off).
 	 */
 	private static int loopsNow(Minecraft mc) {
-		if (mc.player == null) return syncLoops;
-		return syncLoops + (int) Math.round((syncY - mc.player.getY()) / SpatialStorms.PERIOD);
+		return syncLoops;
 	}
 
 	/** 0 while the storm gathers or after it has died away, 1 while it rages. */

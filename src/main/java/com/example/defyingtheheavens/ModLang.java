@@ -129,12 +129,7 @@ public final class ModLang {
 	public static final String MSG_TRIB_ABANDONED = k("message.tribulation.abandoned");
 	public static final String MSG_TRIB_FLED = k("message.tribulation.fled");
 	public static final String TRIB_HUD = k("hud.tribulation");
-	public static final String MSG_GAP_ASCEND = k("message.spatial_gap.ascend");
-	public static final String MSG_GAP_DESCEND = k("message.spatial_gap.descend");
-	public static final String MSG_GAP_RESTART = k("message.spatial_gap.restart");
-	public static final String MSG_GAP_TIMER = k("message.spatial_gap.timer");
 	public static final String MSG_ARRIVE_UPPER = k("message.spatial_gap.arrive_upper");
-	public static final String MSG_ARRIVE_LOWER = k("message.spatial_gap.arrive_lower");
 	public static final String MSG_SUPPRESSED = k("message.suppression.suppressed");
 	public static final String MSG_RESTORED = k("message.suppression.restored");
 	public static final String MSG_REALM_LOCKED = k("message.suppression.locked");
@@ -692,6 +687,7 @@ public final class ModLang {
 	public static final String DEATH_CORE_DETONATION = "death.attack." + DefyingTheHeavens.MOD_ID + ".core_detonation";
 	// The Spatial Tear and travel through the gap (SpatialTrialHandler#tear)
 	public static final String MSG_GAP_TRAVEL = k("message.spatial_gap.travel");
+	public static final String MSG_GAP_TRAVEL_NO_TEAR = k("message.spatial_gap.travel_no_tear");
 	public static final String MSG_GAP_TRAVEL_SHALLOWS = k("message.spatial_gap.travel_shallows");
 	public static final String MSG_GAP_TRAVEL_UPPER = k("message.spatial_gap.travel_upper");
 	public static final String MSG_GAP_TRAVEL_LOWER = k("message.spatial_gap.travel_lower");

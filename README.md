@@ -987,22 +987,25 @@ pool going in and a tenth coming out (5 seconds between tears). The tear is a **
 blocks ahead, where there's room) and stands for **20 seconds**: nothing happens until you **walk into it**, and **anyone else
 can walk through it too**, those who can't tear space themselves included (they come out of the gap by the crossing, the
 floor, or a rift out that someone opens for them). Its rim shows where it leads: violet into the gap, green out to the
-Overworld, gold out to the Upper Realm. Opening a new one closes your last. In the gap by a tear there is no timer and no
-current: you **fly freely** on qi (Qi Flight, Sword Flight; elytra don't open there), up and down as you like, and nothing
-throws you out until you rise past the crossing or sink below the floor. A Heavenly Being who steps into the rift at the
-Overworld's 0, 0, or falls off the Upper Realm, flies the gap the same way (no trial),
-and **a block crossed there is 20 in the world**, both ways: you step in at a twentieth of where you stood and out at twenty
+Overworld, gold out to the Upper Realm. Opening a new one closes your last.
+
+**In the gap, everyone flies it the same way** (there are no trials any more: the 60-second trial that once carried those below
+Heavenly Being up from the rift or down from the Upper Realm was removed 2026-10-18). However you come in (the rift at the
+Overworld's 0, 0, falling off the Upper Realm, or a tear, yours or another's) there is no timer and no current: whoever can
+fly **flies freely** there as anywhere (Qi Flight from Core Formation, Sword Flight from Foundation Building with a sword in
+hand, a Ghost King's form; elytra don't open there), up and down as they like, and nothing throws them out until they rise
+past the crossing or sink below the floor. Whoever can't fly falls: through the shallows, slowly through the lower layers, and
+out of the floor into the Overworld's sky. **A block crossed there is 20 in the world**, both ways: you step in at a twentieth of where you stood and out at twenty
 times where you are. The action bar shows where the world lies beneath you and how far the crossing (or the floor) is. Spatial
-pressure still presses: **2.5 a second in the shallows** (where you come in at Y 128, between Y 60 and Y 200), and **8.3**, twice
-the trial's 4.15, in the stormy layers above and below them (doubled 2026-10-17: climbing the upper layers on Qi Flight takes
-some 35 seconds, about 220 harm against Qi Sustenance, so bring healing). **Tearing out only ever leads back to the realm you tore in from**; to pass
+pressure still presses: **2.5 a second in the shallows** (where you come in at Y 128, between Y 60 and Y 200), and **8.3** in the
+stormy layers above and below them (doubled 2026-10-17). Qi Flight climbs about 7.5 blocks a second (measured 2026-10-19): the
+upper layers take some 21 seconds, about 175 harm, and the whole climb from Y 128 some 31 seconds and 200 harm, before Qi
+Sustenance's healing and the storms, so bring healing. **Tearing out (a Heavenly Being's way) only ever leads back to the realm you came in from**; to pass
 from one realm to the other you go **up or down**. Rise through the **upper layers** past **Y 360** and you are through, into
 the Upper Realm, where the gap's place there lies (the arrival finds an island). Sink through the **lower layers** (under Y 60)
 below **Y 12** and you fall out of the gap into the Overworld's sky (the first landing harmless); the gap is thick there, and
 nothing sinks through it faster than 4 blocks a second (falling or flying down; about as fast as Qi Flight climbs), so the 48
-blocks take 12 seconds: some 100 harm, before the storms. Below Heavenly Being the trials still run as before: the rift at the
-Overworld's 0, 0 carries one up for 60 seconds to the Upper Realm, and falling off the Upper Realm drops one through the gap
-to the Overworld.
+blocks take 12 seconds: some 100 harm, before the storms (enough to kill a mortal or a weak cultivator who falls through).
 
 **Telling the layers apart.** Flying the gap freely, its layers are plain to see: a veil of storm-light lies across each
 boundary (magenta at Y 200, ember red at Y 60), the fog and sky darken and take the stormy layer's colour as you pass into it
@@ -1017,16 +1020,14 @@ for an island). Now nothing waits on new land:
 - **The island is found by numbers.** The Upper Realm's island masks (four noise samples a point) say where islands lie
   within 160 blocks of where you come out, and the generator's own heights confirm the nearest; no land is generated to look.
 - **The land is loaded ahead.** Within 40 blocks of the crossing, or 20 of the floor, the land you're heading for is asked
-  for, and generated on the world-generation threads while you climb or sink the rest of the way. The ascent trial's landing
-  is asked for 10 seconds before the climb ends.
+  for, and generated on the world-generation threads while you climb or sink the rest of the way.
 - **A short hold if it isn't ready.** Tearing out (or crossing) to land that hasn't loaded yet, you're held hovering where
   the tear opened while "space settles", for at most 5 seconds: no pressure and no storms meanwhile. Then you step out.
   Arriving reads only loaded land: if the Overworld's ground isn't loaded by then, you come down from its sky instead,
   the landing protected.
 
 **Storms spread through the gap.** The physical storms (their lightning a tribulation strike) now gather all round everyone in
-the gap, not only one ahead of a climb: one carried by a trial meets about four ahead along the way (spread wider to the sides),
-and one flying by their own tear has four round them in the shallows and ten in the upper layers they must rise through (or the
+the gap: everyone in it has four round them in the shallows and ten in the upper layers they must rise through (or the
 lower ones they must sink through), most of them gathering in the stormy layer nearer them (doubled 2026-10-17; at most 32 in
 the gap at once).
 
@@ -1256,8 +1257,9 @@ Netherworld.
 | The Netherworld | 10 (`GhostQi.NETHERWORLD`) | 2 | x10 |
 | The Nine Nether Peaks | 12 (x `PEAKS_FACTOR`) | 2.4 | x12 |
 | A Soul Sand Valley | 1 (`SOUL_SAND_VALLEY`) | 0.2 | x1 (the baseline) |
+| The Overworld, anywhere in it | 0.5 (`OVERWORLD`) | 0.1 | x0.5 |
 | The rest of the Nether | 0.25 (`NETHER`) | 0.05 | x0.25 |
-| Everywhere else | 0 | nothing | not at all |
+| Everywhere else (the Upper Realm, the Spatial Gap, the End, the Astral Realm) | 0 | nothing | not at all |
 
 The pool fills at density x 0.2 a second (`FILL_PER_DENSITY`); spirit stones and Spirit Dew don't fill it. Everyone who
 has one sees it as a cyan **Ghost Qi** bar: every ghost, and every living cultivator who knows a ghost method. It holds
@@ -1414,10 +1416,11 @@ hours, all at the baseline: a living cultivator whose ghost path is at Nascent S
 Harmony x a Yin Gathering Pill's boost x 1.5 for the dead (`GHOST_FACTOR`) x 1.25 beside a stele of the method you're
 practising (`STELE_BONUS`, within 8 blocks). Your ordinary realm doesn't come into it.
 
-Every layer can be cultivated **wherever ghostly qi flows**, the Nether included; the Netherworld is simply the best place
-for it. Its qi is ten times as dense, so methods go **ten times as fast** there (twelve on the Nine Nether Peaks): the
-Breathing Art in about 8 minutes, the Six Paths Reincarnation Canon in about 5.7 hours (the dead half as fast again).
-In a Soul Sand Valley they go at the baseline, and in the rest of the Nether at a quarter of it.
+Every layer can be cultivated **wherever ghostly qi flows**, the Overworld and the Nether included; the Netherworld is
+simply the best place for it. Its qi is ten times as dense, so methods go **ten times as fast** there (twelve on the Nine
+Nether Peaks): the Breathing Art in about 8 minutes, the Six Paths Reincarnation Canon in about 5.7 hours (the dead half as
+fast again). In a Soul Sand Valley they go at the baseline, in the Overworld at half of it, and in the rest of the Nether at
+a quarter of it.
 
 **The ghost path's realms.** A foundation carries the ghost path through each realm it spans (`GhostMethods#floor`; the
 deepest layer of any foundation you know counts), for the living and the dead alike. Within each realm's nine:
@@ -1508,7 +1511,7 @@ cultivator who walks both is stronger than one who walks either (`TwoPaths`):
   its form's (below).
 - **Ghostly creatures fly freely.** The dead, and the living in a Ghost King's form, fly at every realm, as fast as Qi
   Flight (and +10% a layer from Wandering Soul Steps' fourth, +60% at its ninth), spending nothing (`TwoPaths#fliesFreely`):
-  double-tap jump. The Soul River and the Spatial Gap's trials still carry
+  double-tap jump (the Spatial Gap too). The Soul River still carries
   the living, and a Ghost-Quelling Talisman grounds whoever it binds.
 - **Effective cultivation.** When the harmony (or Heaven's Favour) carries the body past its own rank, the Cultivation and
   Stats tabs say what it comes to on a single path, in gold (`TwoPaths#effective`): the rank a one-path cultivator with no
