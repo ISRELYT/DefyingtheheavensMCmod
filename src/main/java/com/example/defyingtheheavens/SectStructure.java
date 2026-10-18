@@ -306,6 +306,37 @@ public class SectStructure extends Structure {
 	}
 
 	/**
+	 * Whether worldgen working within {@code box} would cut into one of the mod's buildings: a sect's halls, houses, gates and the
+	 * rest (not its open grounds, under which ore lies as anywhere), or a ghost palace (see OreFeatureMixin). Only starts this
+	 * generating region can reach are seen (a feature's region reaches eight chunks round it, past any of these buildings).
+	 */
+	public static boolean cutsIntoBuildings(WorldGenLevel level, BoundingBox box) {
+		for (int cx = box.minX() >> 4; cx <= box.maxX() >> 4; cx++) {
+			for (int cz = box.minZ() >> 4; cz <= box.maxZ() >> 4; cz++) {
+				if (!level.hasChunk(cx, cz)) continue;
+				ChunkAccess chunk = level.getChunk(cx, cz, ChunkStatus.STRUCTURE_REFERENCES, false);
+				if (chunk == null) continue;
+				for (Map.Entry<Structure, LongSet> entry : chunk.getAllReferences().entrySet()) {
+					Structure structure = entry.getKey();
+					if (!(structure instanceof SectStructure) && !(structure instanceof GhostPalaceStructure)) continue;
+					for (long start : entry.getValue()) {
+						int sx = ChunkPos.getX(start), sz = ChunkPos.getZ(start);
+						if (!level.hasChunk(sx, sz)) continue;
+						ChunkAccess origin = level.getChunk(sx, sz, ChunkStatus.STRUCTURE_STARTS, false);
+						StructureStart found = origin == null ? null : origin.getStartForStructure(structure);
+						if (found == null || !found.isValid() || !found.getBoundingBox().intersects(box)) continue;
+						for (StructurePiece piece : found.getPieces()) {
+							if (piece instanceof SectPiece sect && sect.kind() == SectPiece.Kind.TERRACE) continue;
+							if (piece.getBoundingBox().intersects(box)) return true;
+						}
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Whether {@code pos} lies on a sect's open grounds or within {@code margin} of them, where worldgen grows no trees, bamboo,
 	 * huge mushrooms or boulders (see SectClearingMixin): a sect keeps its grounds clear and plants its own. Only sects whose
 	 * start this generating region can reach are seen; a sect whose start lies beyond it counts as near, to be safe.
