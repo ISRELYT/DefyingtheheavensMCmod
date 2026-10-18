@@ -92,6 +92,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		});
 		// Soul Projection: the soul's flight and state, its look (a core shader of its own), its body and seized bodies.
 		ClientSoul.register();
+		ClientBodies.register(); // a soul in another's body wears its look and name (Possession)
 		SoulRenderer.register();
 		EntityRendererRegistry.register(ModEntities.SOUL_BODY, SoulBodyRenderer::new);
 		EntityRendererRegistry.register(ModEntities.SOUL_VESSEL, SoulVesselRenderer::new);
@@ -188,6 +189,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			InnerRealmFade.clear();
 			SwordFlightClient.clear();
 			ClientSoul.clear();
+			ClientBodies.clear();
 			ClientGestures.clear();
 			ClientJournal.clear();
 			ClientNpcSpeech.clear();

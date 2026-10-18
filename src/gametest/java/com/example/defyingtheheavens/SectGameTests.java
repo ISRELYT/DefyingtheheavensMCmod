@@ -96,8 +96,12 @@ public class SectGameTests implements FabricGameTest {
 		elder.setTitle(NpcTitle.ELDER);
 		disciple.setTitle(NpcTitle.OUTER_DISCIPLE);
 		CultivatorNpc intruder = helper.spawn(ModEntities.CULTIVATOR, new BlockPos(4, 2, 4));
-		intruder.becomeRogue(PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.GRAND_PERFECTION), -150, helper.getLevel().getRandom());
+		// Short of Grand Perfection: a Heavenly Being at it goes to ascend, and a traveller with no player near (in the test world,
+		// often none within the simulation distance) is taken out of the world unseen (NpcTravel's sweep, twice a second). Swept
+		// before the sect's first tick, it was gone before anyone had been in a fight with it, and the test timed out.
+		intruder.becomeRogue(PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.LATE), -150, helper.getLevel().getRandom());
 		intruder.setNoAi(true);
+		helper.assertTrue(!CultivatorNpc.travellers().contains(intruder), "The intruder stays: it is no traveller, to go on its way unseen");
 		for (CultivatorNpc npc : new CultivatorNpc[] {master, elder, disciple}) npc.startFleeing(intruder);
 		helper.assertTrue(!master.shouldFlee() && !elder.shouldFlee(), "The master and its elders stand against a far stronger intruder");
 		helper.assertTrue(disciple.shouldFlee(), "A disciple runs from it");

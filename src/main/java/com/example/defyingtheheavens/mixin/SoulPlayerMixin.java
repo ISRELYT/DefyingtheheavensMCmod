@@ -85,6 +85,16 @@ public abstract class SoulPlayerMixin {
 		return emission == Entity.MovementEmission.ALL && GhostSystem.isGhost((Player) (Object) this) ? Entity.MovementEmission.EVENTS : emission;
 	}
 
+	/**
+	 * One whose soul is in another's body (Possession) goes by the body's name: over its head, in chat, in death messages. Both sides
+	 * (the client's from ClientBodies).
+	 */
+	@Inject(method = "getDisplayName", at = @At("HEAD"), cancellable = true)
+	private void dth$theBodysName(CallbackInfoReturnable<net.minecraft.network.chat.Component> cir) {
+		net.minecraft.network.chat.Component name = com.example.defyingtheheavens.Possession.displayName((Player) (Object) this);
+		if (name != null) cir.setReturnValue(name);
+	}
+
 	/** Nor does a ghost land with a thud: a fall is nothing to it (and no fall harms it, see GhostSystem#allowDamage). */
 	@Inject(method = "causeFallDamage", at = @At("HEAD"), cancellable = true)
 	private void dth$ghostsLandSilently(float distance, float multiplier, DamageSource source, CallbackInfoReturnable<Boolean> cir) {

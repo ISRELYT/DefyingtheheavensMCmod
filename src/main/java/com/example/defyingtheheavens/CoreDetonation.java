@@ -57,7 +57,9 @@ public final class CoreDetonation {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_CORE_TOO_LATE).withStyle(ChatFormatting.RED), true);
 			return;
 		}
-		if (SoulProjection.isActive(id) || InnerRealm.isInside(player) || !player.isAlive() || player.isSpectator()) {
+		// A soul in a person's body detonates that body's core, if it has one (Possession; the user's ask, 2026-10-18): the body dies
+		// as its owner, its core lost, and the soul is thrown out.
+		if (SoulProjection.isAwayFromBody(id) || InnerRealm.isInside(player) || !player.isAlive() || player.isSpectator()) {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_SOUL_BUSY), true);
 			return;
 		}
@@ -84,7 +86,7 @@ public final class CoreDetonation {
 		CultivationManager.sync(player);
 		MeditationManager.stop(player, true);
 		// No word in chat (the user's ask): only those the blast could reach are warned, over their hotbar.
-		double warn = 2 * radius(c.getRealm(), c.getStage());
+		double warn = 2 * radius(c);
 		for (ServerPlayer near : player.serverLevel().players()) {
 			if (near != player && near.distanceToSqr(player) <= warn * warn) {
 				near.displayClientMessage(Component.translatable(ModLang.MSG_CORE_BREAKING, player.getDisplayName()).withStyle(ChatFormatting.GOLD), true);
@@ -131,6 +133,26 @@ public final class CoreDetonation {
 		p.addEffect(new MobEffectInstance(MobEffects.GLOWING, 10, 0, false, false, false));
 	}
 
+	/**
+	 * The path whose core it is (TwoPaths#awakens: the heaven path's golden core once it stands at Core Formation, else the ghost
+	 * path's), and so whose rank the blast goes by and whose fall it is.
+	 */
+	static TwoPaths.Path corePath(PlayerCultivation c) {
+		TwoPaths.Path path = TwoPaths.awakens(c, Realm.CORE_FORMATION, false);
+		return path == null ? TwoPaths.Path.HEAVEN : path;
+	}
+
+	/** The rank of the core that breaks ({@link #corePath}): its realm and stage set the blast. */
+	static int coreRank(PlayerCultivation c) {
+		return Math.max(0, TwoPaths.rank(c, corePath(c), false));
+	}
+
+	/** The blast's reach for {@code c}'s core ({@link #coreRank}). */
+	public static double radius(PlayerCultivation c) {
+		int rank = coreRank(c), stages = Stage.values().length;
+		return radius(Realm.byIndex(rank / stages), Stage.byIndex(rank % stages));
+	}
+
 	/** The blast's reach for a cultivator of {@code realm} and {@code stage}. */
 	public static double radius(Realm realm, Stage stage) {
 		int r = Mth.clamp(realm.ordinal() - Realm.CORE_FORMATION.ordinal(), 0, RADIUS.length - 1);
@@ -154,8 +176,10 @@ public final class CoreDetonation {
 	static void detonate(ServerPlayer p) {
 		ServerLevel level = p.serverLevel();
 		PlayerCultivation c = CultivationManager.get(p);
-		Realm realm = c.getRealm();
-		Stage stage = c.getStage();
+		TwoPaths.Path path = corePath(c);
+		int core = coreRank(c), stages = Stage.values().length;
+		Realm realm = Realm.byIndex(core / stages);
+		Stage stage = Stage.byIndex(core % stages);
 		double radius = radius(realm, stage);
 		Vec3 heart = p.position().add(0, 1.0, 0);
 
@@ -180,11 +204,17 @@ public final class CoreDetonation {
 		}
 		crater(level, p, BlockPos.containing(heart), radius * CRATER_SHARE);
 
-		// The core lost: they wake at Foundation Building Grand Perfection, the methods understood no deeper than that.
+		// The core lost: they wake at Foundation Building Grand Perfection, the methods understood no deeper than that: on the heaven
+		// path, or on the ghost path if the core was its (its methods held there: GhostMethods#fallTo).
 		// Not a creative player's, told by the abilities (isCreative is true for the game tests' mock players whatever their mode).
 		if (!p.getAbilities().instabuild && !p.isSpectator()) {
-			c.setState(Realm.FOUNDATION_BUILDING, Stage.GRAND_PERFECTION, 0);
-			HeavenMethods.clampTo(c.heaven(), PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.GRAND_PERFECTION));
+			int fall = PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.GRAND_PERFECTION);
+			if (path == TwoPaths.Path.GHOST) {
+				GhostMethods.fallTo(c.netherworld(), fall);
+			} else {
+				c.setState(Realm.FOUNDATION_BUILDING, Stage.GRAND_PERFECTION, 0);
+				HeavenMethods.clampTo(c.heaven(), fall);
+			}
 			c.setAbilityEnabled(Ability.CORE_DETONATION, false);
 			CultivationManager.markDirty(p.server);
 			p.invulnerableTime = 0;

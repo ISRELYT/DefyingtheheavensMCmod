@@ -135,9 +135,10 @@ public class NetherworldMethodsGameTests implements FabricGameTest {
 			s.setMethod(GhostMethod.NETHERWORLD_BREATHING, 6, 0);
 			helper.assertTrue(Ability.GHOST_EYE.isUnlocked(c) && Ability.NETHERWORLD_VEIL.isUnlocked(c), "...at the third; the Veil at the sixth");
 			s.setMethod(GhostMethod.WANDERING_SOUL_STEPS, 4, 0);
-			helper.assertTrue(Ability.YIN_WIND_STEPS.isUnlocked(c) && !Ability.GHOST_FLIGHT.isUnlocked(c), "Yin Wind Steps alive; flight is the dead's");
+			helper.assertTrue(Ability.YIN_WIND_STEPS.isUnlocked(c) && !Ability.GHOST_FLIGHT.isUnlocked(c), "Yin Wind Steps alive");
 			s.setGhost(true);
-			helper.assertTrue(Ability.GHOST_FLIGHT.isUnlocked(c), "...and the dead have it");
+			// Ghost Flight is retired (2026-10-18): the dead fly freely without it (TwoPaths#fliesFreely; BothPathsGameTests).
+			helper.assertTrue(!Ability.GHOST_FLIGHT.isUnlocked(c) && TwoPaths.fliesFreely(c), "...and the dead fly freely, no Ghost Flight needed");
 			s.setGhost(false);
 			helper.assertTrue(Math.abs(GhostQi.poolMax(c) - (GhostQi.BASE_POOL + 14 * GhostQi.POOL_PER_LAYER + 6 * GhostQi.BREATHING_POOL_PER_LAYER)) < 1.0e-9,
 					"The pool grows with every layer, and the Breathing Art's twice over");

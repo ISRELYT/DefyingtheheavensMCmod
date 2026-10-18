@@ -13,6 +13,7 @@
     "NetherPortalBlockMixin",
     "OreFeatureMixin",
     "PatrolSpawnerMixin",
+    "PlayerAdvancementsMixin",
     "PlayerMixin",
     "PortalShapeMixin",
     "ProjectileBarrierMixin",

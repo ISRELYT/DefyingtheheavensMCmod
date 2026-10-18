@@ -64,6 +64,7 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(Tempering::tick);
 		ServerTickEvents.END_SERVER_TICK.register(InnerRealm::tick);
 		ServerTickEvents.END_SERVER_TICK.register(SoulProjection::tick);
+		ServerTickEvents.END_SERVER_TICK.register(Possession::settle); // a body's health held to while its whole settles
 		ServerTickEvents.END_SERVER_TICK.register(SparSystem::tick);
 		ServerTickEvents.END_SERVER_TICK.register(Rumours::tick);
 		ServerTickEvents.END_SERVER_TICK.register(NpcLife::tick);
@@ -110,6 +111,7 @@ public final class CultivationEvents {
 			Formations.clear();
 			CultivatorNpc.clearLoaded();
 			SoulProjection.clear();
+			Possession.clear();
 			Rumours.clearPending();
 			HermitSites.clearPending();
 			SectSites.clear();
@@ -196,7 +198,9 @@ public final class CultivationEvents {
 			// Applies stats from the effective (possibly suppressed) stage and syncs the client.
 			// Back from a crash with the soul still inward: return it to the body first.
 			if (ModDimensions.isInnerRealm(player.level().dimension())) InnerRealm.leave(player);
-			// Likewise a nascent soul still out of its body (a crash, or a server killed mid-way): home, no penalty.
+			// Likewise a possession left on record (Possession: each one's things back where they belong), then a nascent soul still
+			// out of its body: home, no penalty.
+			Possession.onJoin(player);
 			SoulProjection.onJoin(player);
 			Physiques.onJoin(player); // the body they were born with, the first time
 			CoreDetonation.onJoin(player); // no act's switch left on from a server that stopped mid-way
@@ -214,7 +218,10 @@ public final class CultivationEvents {
 			SparSystem.abandon(handler.getPlayer());
 			// A golden core breaking bursts as its cultivator goes.
 			CoreDetonation.onDisconnect(handler.getPlayer());
-			// A soul out of its body goes home (or, fleeing a fight, is severed) while the player can still be moved and saved.
+			// One whose body is held takes it with them (the soul in it is thrown out) before they're saved (Possession).
+			Possession.onDisconnect(handler.getPlayer());
+			// A soul out of its body goes home (or, fleeing a fight, is severed) while the player can still be moved and saved; one in
+			// a person's body gives it back first.
 			SoulProjection.onDisconnect(handler.getPlayer());
 			SoulProjection.forget(handler.getPlayer().getUUID());
 			SoulBarriers.forget(handler.getPlayer().getUUID());
@@ -298,6 +305,15 @@ public final class CultivationEvents {
 			if (!HeavenSpells.allowDeath(entity, source)) return false;
 			// Nobody dies in a spar by the other's hand: the blow stops at the line, and the spar ends (SparSystem).
 			if (!SparSystem.allowDeath(entity, source)) return false;
+			// A body held by a soul (Possession) dies as its owner's, by this blow, and the soul is thrown out: never the soul's own
+			// death. A totem in its hands holds death off as it would for anyone (vanilla's, next), but not from what nothing stops.
+			if (entity instanceof ServerPlayer sp && Possession.inhabits(sp.getUUID())) {
+				boolean totem = sp.getMainHandItem().is(net.minecraft.world.item.Items.TOTEM_OF_UNDYING)
+						|| sp.getOffhandItem().is(net.minecraft.world.item.Items.TOTEM_OF_UNDYING);
+				if (totem && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) return true;
+				SoulProjection.onBodyDying(sp, source);
+				return false;
+			}
 			if (entity instanceof ServerPlayer sp) SoulProjection.onSoulDying(sp);
 			else SoulProjection.onHostDying(entity, source);
 			return true;
@@ -327,6 +343,8 @@ public final class CultivationEvents {
 				Incorporeal.is(player) ? InteractionResult.FAIL : InteractionResult.PASS);
 		UseBlockCallback.EVENT.register((player, world, hand, hit) -> {
 			if (SoulProjection.isSoul(player)) return InteractionResult.FAIL;
+			// One whose body is held only watches it (a spectator could otherwise look into a chest it looks at).
+			if (player instanceof ServerPlayer held && Possession.isHeld(held.getUUID())) return InteractionResult.FAIL;
 			if (!Incorporeal.isRuledGhost(player)) return InteractionResult.PASS;
 			if (hand != InteractionHand.MAIN_HAND) return InteractionResult.FAIL;
 			BlockState state = world.getBlockState(hit.getBlockPos());
@@ -366,10 +384,15 @@ public final class CultivationEvents {
 		});
 	}
 
-	/** The sect whose grounds {@code pos} lies in, if {@code player} is one of its disciples (SectMembership); else null. */
+	/**
+	 * The sect whose grounds {@code pos} lies in, if {@code player} is one of its disciples (SectMembership), or is in the body of one
+	 * of its own (Possession); else null.
+	 */
 	private static Sect ownSect(ServerLevel level, ServerPlayer player, BlockPos pos) {
 		Sect sect = SectManager.sectAt(level, pos);
-		return sect != null && sect.disciples.containsKey(player.getUUID()) ? sect : null;
+		if (sect == null) return null;
+		if (Possession.inhabits(player.getUUID())) return sect.id.equals(Possession.sectOfBody(player.getUUID())) ? sect : null;
+		return sect.disciples.containsKey(player.getUUID()) ? sect : null;
 	}
 
 	/** "A seal of <realm> holds it shut": what a sealed treasury tells one who can't break its seal (SectManager#treasurySeal). */

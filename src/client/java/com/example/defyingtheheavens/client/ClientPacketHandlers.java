@@ -129,7 +129,33 @@ public final class ClientPacketHandlers {
 			float max = buf.readFloat();
 			int host = buf.readVarInt() - 1;
 			float tether = buf.readFloat();
-			client.execute(() -> ClientSoul.self(state, ticks, body, radius, health, max, host, tether));
+			float ownQi = buf.readFloat();
+			float ownMax = buf.readFloat();
+			boolean ghostPool = buf.readBoolean();
+			boolean bodyHere = buf.readBoolean();
+			boolean soulTears = buf.readBoolean();
+			client.execute(() -> ClientSoul.self(state, ticks, body, radius, health, max, host, tether, ownQi, ownMax, ghostPool, bodyHere, soulTears));
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.BODY_LOOK, (client, handler, buf, sender) -> {
+			int id = buf.readVarInt();
+			int kind = buf.readByte();
+			java.util.UUID player = null;
+			net.minecraft.network.chat.Component name = null;
+			String textures = null, signature = null;
+			if (kind == 1) {
+				player = buf.readUUID();
+				name = buf.readComponent();
+				if (buf.readBoolean()) {
+					textures = buf.readUtf();
+					signature = buf.readNullable(net.minecraft.network.FriendlyByteBuf::readUtf);
+				}
+			}
+			int npc = kind == 2 ? buf.readVarInt() : -1;
+			java.util.UUID who = player;
+			net.minecraft.network.chat.Component called = name;
+			String value = textures, signed = signature;
+			client.execute(() -> ClientBodies.set(id, kind, who, called, value, signed, npc));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SOUL_SEEN, (client, handler, buf, sender) -> {
@@ -138,7 +164,8 @@ public final class ClientPacketHandlers {
 			Vec3 body = new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble());
 			int host = buf.readVarInt() - 1;
 			float tether = buf.readFloat();
-			client.execute(() -> ClientSoul.seen(id, out, body, host, tether));
+			boolean inside = buf.readBoolean();
+			client.execute(() -> ClientSoul.seen(id, out, body, host, tether, inside));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SURGE, (client, handler, buf, sender) -> {

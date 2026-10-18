@@ -97,9 +97,10 @@ public class TalkPhasesGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void disturbingSeclusionCostsRegardOnceADay(GameTestHelper helper) {
 		List<ServerPlayer> made = new ArrayList<>();
+		CultivatorNpc hermit = null;
 		try {
 			ServerPlayer player = cultivator(helper, made, "intruder", Realm.QI_REFINING, Stage.EARLY);
-			CultivatorNpc hermit = npc(helper, new BlockPos(3, 2, 3), Realm.HEAVENLY_BEING, 0);
+			hermit = npc(helper, new BlockPos(3, 2, 3), Realm.HEAVENLY_BEING, 0);
 			hermit.enterSeclusion(helper.getLevel(), hermit.blockPosition());
 			TalkSystem.open(player, hermit);
 			int once = hermit.regard(player);
@@ -109,6 +110,9 @@ public class TalkPhasesGameTests implements FabricGameTest {
 			helper.succeed();
 		} finally {
 			leave(made);
+			// Its Concealment Barrier down: left raised in the kept test world, it dispersed the monsters of whatever test came to
+			// stand there in a later run (Formations#purge), a Hungry Ghost's own room among them.
+			if (hermit != null) hermit.lowerConcealment(helper.getLevel());
 		}
 	}
 

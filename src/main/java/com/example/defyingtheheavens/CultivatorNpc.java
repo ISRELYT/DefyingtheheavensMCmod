@@ -122,6 +122,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	private static final EntityDataAccessor<Integer> DATA_ALIGNMENT = SynchedEntityData.defineId(CultivatorNpc.class, EntityDataSerializers.INT);
 	private static final EntityDataAccessor<Byte> DATA_FLAGS = SynchedEntityData.defineId(CultivatorNpc.class, EntityDataSerializers.BYTE);
 	private static final EntityDataAccessor<Byte> DATA_SKIN = SynchedEntityData.defineId(CultivatorNpc.class, EntityDataSerializers.BYTE);
+	/** Set aside while a nascent soul uses its body ({@link #isVacant}). */
+	private static final EntityDataAccessor<Boolean> DATA_VACANT = SynchedEntityData.defineId(CultivatorNpc.class, EntityDataSerializers.BOOLEAN);
 
 	private static final int FLAG_MEDITATING = 1;
 	private static final int FLAG_FLYING = 2;
@@ -240,6 +242,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		entityData.define(DATA_ALIGNMENT, 0);
 		entityData.define(DATA_FLAGS, (byte) 0);
 		entityData.define(DATA_SKIN, (byte) 0);
+		entityData.define(DATA_VACANT, false);
 	}
 
 	@Override
@@ -308,6 +311,76 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		if (next != flags) entityData.set(DATA_FLAGS, next);
 	}
 
+	/**
+	 * Its body taken by a nascent soul (Possession): it is set aside, unseen, untouched, silent and still (no mind of its own, no
+	 * weight, nothing to strike or bump), and goes where its body goes until it is given back. Synced (no client draws it), and saved
+	 * so a crash with it set aside still ends with it back: with nothing holding it, it wakes ({@link #tick}).
+	 */
+	public boolean isVacant() { return entityData.get(DATA_VACANT); }
+
+	/** What it was before it was set aside, to be again after: bits of {@link #VACANT_NO_AI} and the rest. */
+	private byte vacantWas;
+	private static final int VACANT_NO_AI = 1, VACANT_INVULNERABLE = 2, VACANT_SILENT = 4, VACANT_NO_GRAVITY = 8, VACANT_INVISIBLE = 16;
+
+	public void setVacant(boolean vacant) {
+		if (vacant == isVacant()) return;
+		if (vacant && !level().isClientSide) {
+			// Whatever it was about ends: a talk, a trade, a bout, a flight, a meditation, its pressure.
+			getNavigation().stop();
+			setTarget(null);
+			setMeditating(false);
+			if (isQiFlying()) land();
+			setSuppressing(false);
+			setKneeling(false);
+			if (isBegging()) stopBegging();
+			breakOffTalk(ModLang.TALK_POSSESSED);
+			if (tradingPlayer != null) setTradingPlayer(null);
+			NpcLife.end(this);
+			setPose(Pose.STANDING);
+			vacantWas = (byte) ((isNoAi() ? VACANT_NO_AI : 0) | (isInvulnerable() ? VACANT_INVULNERABLE : 0) | (isSilent() ? VACANT_SILENT : 0)
+					| (isNoGravity() ? VACANT_NO_GRAVITY : 0) | (isInvisible() ? VACANT_INVISIBLE : 0));
+		}
+		entityData.set(DATA_VACANT, vacant);
+		setNoAi(vacant || (vacantWas & VACANT_NO_AI) != 0);
+		setInvulnerable(vacant || (vacantWas & VACANT_INVULNERABLE) != 0);
+		setSilent(vacant || (vacantWas & VACANT_SILENT) != 0);
+		setNoGravity(vacant || (vacantWas & VACANT_NO_GRAVITY) != 0);
+		setInvisible(vacant || (vacantWas & VACANT_INVISIBLE) != 0);
+		noPhysics = vacant;
+		setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+		if (!vacant) vacantWas = 0;
+	}
+
+	/** Takes what it carries of its winnings (Possession: its body's to carry now), leaving it none. */
+	public List<ItemStack> takeWinnings() {
+		List<ItemStack> taken = new ArrayList<>(winnings);
+		winnings.clear();
+		return taken;
+	}
+
+	/** Something more for it to carry with its winnings (dropped when it falls). */
+	public void addWinnings(ItemStack stack) {
+		if (!stack.isEmpty()) winnings.add(stack);
+	}
+
+	/** Set aside, it is nothing to pick out, push or bump into. */
+	@Override
+	public boolean isPickable() {
+		return !isVacant() && super.isPickable();
+	}
+
+	@Override
+	public boolean isPushable() {
+		return !isVacant() && super.isPushable();
+	}
+
+	@Override
+	public void tick() {
+		super.tick();
+		// Set aside with no soul holding its body (a crash, a reload): it wakes where it is.
+		if (!level().isClientSide && isVacant() && tickCount % 20 == 0 && !Possession.holds(getUUID())) setVacant(false);
+	}
+
 	public boolean isMeditating() { return flag(FLAG_MEDITATING); }
 	public void setMeditating(boolean meditating) { setFlag(FLAG_MEDITATING, meditating); }
 	/** In the air by its own power: on qi alone, or riding its sword ({@link #isSwordFlying}). */
@@ -315,7 +388,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	/** In the air on its sword (synced: the client draws the sword under its feet and the trail). */
 	public boolean isSwordFlying() { return flag(FLAG_FLYING) && flag(FLAG_SWORD); }
 	@Override public boolean isConcealed() { return flag(FLAG_CONCEALED); }
-	public boolean isDomainOpen() { return flag(FLAG_DOMAIN) && !isConcealed() && isAlive(); }
+	public boolean isDomainOpen() { return flag(FLAG_DOMAIN) && !isConcealed() && isAlive() && !isVacant(); } // set aside: the soul's own domain shows
 	public boolean isSuppressing() { return flag(FLAG_SUPPRESSING); }
 	/** One of its sect's gate guards (set by its duty, SectDutyGoal; for whoever deals with visitors at the gate). */
 	public boolean isGateGuard() { return flag(FLAG_GATE_GUARD); }
@@ -368,20 +441,24 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 
 	// --- Regard and talk ---
 
-	/** What it thinks of {@code player} now: their paths' baseline, its own regard and its sect's standing (see {@link Regard}). */
+	/**
+	 * What it thinks of {@code player} now: their paths' baseline, its own regard and its sect's standing (see {@link Regard}). One in
+	 * another's body is who that body is to it (Possession#identity).
+	 */
 	public int regard(Player player) {
 		int value = Regard.baseline(getFaction(), alignmentOf(player));
-		Regard.Entry entry = regard.get(player.getUUID());
+		UUID who = Possession.identity(player);
+		Regard.Entry entry = regard.get(who);
 		if (entry != null) value += entry.current(Regard.day(level().getGameTime()));
 		Sect sect = sect();
-		if (sect != null) value += sect.standing(player.getUUID());
+		if (sect != null) value += sect.standing(who);
 		return Regard.clamp(value);
 	}
 
-	/** Its own record of {@code player}, made if there is none yet. */
+	/** Its own record of {@code player} (of the body they are in), made if there is none yet. */
 	public Regard.Entry regardEntry(Player player) {
 		long today = Regard.day(level().getGameTime());
-		Regard.Entry entry = regard.computeIfAbsent(player.getUUID(), id -> {
+		Regard.Entry entry = regard.computeIfAbsent(Possession.identity(player), id -> {
 			Regard.Entry fresh = new Regard.Entry();
 			fresh.day = today;
 			return fresh;
@@ -1203,11 +1280,16 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 
 	// --- Allies and enemies ---
 
-	/** One of its own sect: a cultivator of it, or a player who is its disciple (SectMembership). */
+	/**
+	 * One of its own sect: a cultivator of it, or a player who is its disciple (SectMembership), or one in the body of either
+	 * (Possession: it is the body it knows).
+	 */
 	public boolean isAlly(Entity other) {
 		if (sectId == null) return false;
 		if (other instanceof CultivatorNpc npc) return sectId.equals(npc.sectId);
-		return other instanceof ServerPlayer player && SectMembership.isDisciple(player.server, sectId, player.getUUID());
+		if (!(other instanceof ServerPlayer player)) return false;
+		if (Possession.inhabits(player.getUUID())) return sectId.equals(Possession.sectOfBody(player.getUUID()));
+		return SectMembership.isDisciple(player.server, sectId, player.getUUID());
 	}
 
 	@Override
@@ -1246,7 +1328,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			// Loathing turns it on a player too, if it thinks it can win.
 			return !level().isClientSide && regard(player) <= Regard.HOSTILE && rankOf(this) >= rankOf(player);
 		}
-		if (other instanceof CultivatorNpc npc) return !npc.isConcealed() && getFaction().isEnemyOf(npc.getFaction());
+		if (other instanceof CultivatorNpc npc) return !npc.isConcealed() && !npc.isVacant() && getFaction().isEnemyOf(npc.getFaction());
 		return false;
 	}
 
@@ -1628,6 +1710,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 
 	@Override
 	public boolean hurt(DamageSource source, float amount) {
+		if (isVacant() && !source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) return false; // set aside: its body is elsewhere
 		boolean hurt = super.hurt(source, amount);
 		if (hurt && !level().isClientSide && level() instanceof ServerLevel server) {
 			setMeditating(false);
@@ -1863,6 +1946,10 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			sparedList.add(s);
 		}
 		npc.put("SparedBy", sparedList);
+		if (isVacant()) {
+			npc.putBoolean("Vacant", true);
+			npc.putByte("VacantWas", vacantWas);
+		}
 		tag.put("Npc", npc);
 	}
 
@@ -1924,6 +2011,14 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			if (s.hasUUID("Player")) sparedBy.put(s.getUUID("Player"), s.getLong("Until"));
 		}
 		setNoGravity(false); // flight isn't saved: it comes back to earth
+		if (npc.getBoolean("Vacant")) {
+			// Still set aside (its body taken when it was saved): so it stays while a soul holds it, and wakes once none does.
+			vacantWas = npc.getByte("VacantWas");
+			entityData.set(DATA_VACANT, true);
+			setNoGravity(true);
+			setInvisible(true);
+			noPhysics = true;
+		}
 		refreshStats();
 	}
 

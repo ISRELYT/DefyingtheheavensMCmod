@@ -842,8 +842,9 @@ both flights for players), `Realm` (the sword/sec column), `CultivatorNpc` (`isS
 
 ## Soul Projection
 
-From **Nascent Soul Early**, a cultivator can send their nascent soul out of the body. Switch **Soul Projection** on (ability
-wheel or Abilities tab) while standing on steady, dry ground with at least 10% of your qi: you sit in meditation for
+From **Nascent Soul Early** on either path, a cultivator can send their nascent soul out of the body (born of the ghost path,
+it is that path's: its strength, ghost qi for its costs and the ghost path's fall; see "The two paths"). Switch **Soul
+Projection** on (ability wheel or Abilities tab) while standing on steady, dry ground with at least 10% of your qi: you sit in meditation for
 **5 seconds** while the soul gathers itself (moving or being hurt breaks it off), then it rises out. Switch it again to
 call it home: it is drawn back along its tether for **5 seconds** and you stand up where your body sat. A chat line marks
 the day the soul forms, and the ability goes into the first empty slot of your wheel.
@@ -862,7 +863,7 @@ the day the soul forms, and the ability goes into the first empty slot of your w
   much again while possessing (so clothing, pills and the Upper Realm's dense qi all help; there it costs nothing net).
   A Nascent Soul Early pool lasts about a minute at the tether's end. **Run dry and the soul snaps home at once** (no 5 s,
   no penalty). Taking hold of a body costs 10% of your pool on top.
-- **What a soul can't do**: touch anything (save a seized body's own things, below). No blocks, chests, items (it picks nothing up and drops nothing), plates or
+- **What a soul can't do**: touch anything (in a person's body it can do all a player can: below). No blocks, chests, items (it picks nothing up and drops nothing), plates or
   tripwires; no meditating, no Inner Realm, no breakthroughs or tribulations (and you can't send the soul out during one),
   no portals, rift or Spatial Gap; no Qi Flight, Sword Flight or Realm Suppress. Qi Sense opens as it sets out (it is how a nascent
   soul sees), and you can shut it while out; it goes back as it was when you return. Blasts, fire, lava, falls, drowning, suffocation, arrows and monsters can't harm it.
@@ -894,13 +895,48 @@ or the body** (fleeing a fight) kills you where your body sat (your things fall 
 fall to **Core Formation Grand Perfection** with no cultivation, and must form it again through the Nascent Soul
 tribulation. Logging out at peace, the server stopping, or a crash simply bring the soul home.
 
-**Possession.** Right-click a being at least **three realms below** your own (a Nascent Soul takes Qi Refining
-cultivators, mortals and beasts; a Heavenly Being, Foundation Building and below; Four Axis, Core Formation and below;
-monsters and animals count as mortals) to take it over: you look out through its eyes and move it with its own speed and
-strength (it runs as fast as it would run at you, no faster, and its melee is your attack), until you **sneak** to let
-go, your qi runs out, you call the soul home, or it pulls too far along the tether. Inside a body your soul can't be
-struck; if the body dies, the soul is thrown out unharmed (and
-exposed again). **A flier flies** (a bee, parrot, allay, bat, ghast, phantom, vex or blaze): forward goes where you
+**Possession.** Right-click a being at least **one realm below** your own (a Nascent Soul takes Core Formation and
+below, mortals and beasts; a Heavenly Being, Nascent Soul and below; Four Axis, Heavenly Being and below; monsters and
+animals count as mortals) to take it over, until you let go, your qi runs out, you call the soul home, or it walks too
+far along the tether. If the body dies, the soul is thrown out unharmed (and exposed again). How you hold
+it depends on what it is:
+
+**A person is truly possessed** (a player, only where PvP is on, or an NPC cultivator; `Possession`): your soul takes the
+body's place and **you play it as a player**, with everything a player can do: walk, sprint, swim, mine, build, fight, eat,
+use and throw things, open chests and your inventory, craft, ride. You have **what it carries, wears and holds**, its
+health, hunger, experience and effects, and **its look and name to everyone** (its skin and cape, the name over its head
+and in chat; in an NPC's body, its nameplate with its title and path). You have **its cultivation**: its realm and
+strength, its qi pool and gathering, its abilities and spells; meditating in it cultivates the body, not you (no
+breakthrough that brings a tribulation, though: a soul away from its own body can't face one). Its people take you for it:
+an NPC's sect lets you through its barrier and onto its grounds as its own, and NPCs think of you what they think of the
+body. Your own things wait for you, put by, and your soul's upkeep comes out of **your own pool**, apart from the body's
+(the **Qi** bar is the body's, what its spells and abilities draw on; under it an **Own Qi** bar, in violet, is yours, or
+**Own Ghost Qi** for a soul born of the ghost path; in a mortal's body yours takes the top). **Soul Projection leaves the body** (it is put on the
+body's ability wheel for that, a mortal's body too). Inside, you are the body: it is harmed as anyone is, and your soul
+itself is out of sight, but **your tether still runs** from your own body to the one you're in: you see it, and Heavenly
+Beings and above with Qi Sense open see it and can strike it, as ever. To those who perceive souls with **Qi Sense** open,
+a possessed body wears a **violet veil**: the soul's light washed over it, breathing slowly, with a halo about it.
+- **Its tear and its core**: **Spatial Tear** is the body's own if it has one; if not and your soul has one, you tear space
+  with your own, from your own pool. **Core Detonation** detonates the body's core (Core Formation and up): the body dies
+  as its owner, its core lost (its owner falls to Foundation Building Grand Perfection), and your soul is thrown out.
+- **Other realms**: take the body through a portal, a rift, your tear, the Soul River or a fall from the Upper Realm and
+  your soul goes with it. Away from the realm your own body is in, the tether reaches across the realms: no thread to see
+  or strike, and it costs only what it would beside your own body, so a Heavenly Being's full pool lasts about 100 seconds
+  in the gap while possessing (about 60 after the tear). Let go of the body there and your soul goes home at once.
+- **The player** isn't killed: they **watch through their body's eyes**, a spectator held to it (no other view, no
+  teleporting off, nothing touched), and get it back where it stands, with whatever was done with it, when you leave.
+  **If the body dies, they die**, as their own death by that blow (their things fall as keepInventory says), and you're
+  thrown out. **Logging out doesn't free them**: the body plays on under you, and when they come back they're watching it
+  again. If you let go while they're away, they wake where you left it with what it carried; if it died while they were
+  away, they die as they come back. You logging out, or the server stopping, gives the body back first; a crash is put
+  right as each comes back.
+- **The NPC** is set aside, unseen and still, and goes where its body goes. Given back, it stands there again holding and
+  wearing what the body does (anything else it took up, it carries among its winnings), at the body's health and any stage
+  its cultivation came to. If the body dies, it dies (its sect mourns it, and whatever struck it has the kill).
+- Your ender chest and spawn point stay your own. The dead have no body to take.
+
+**A beast or monster is ridden from inside**: you look out through its eyes and move it with its own speed and strength
+(it runs as fast as it would run at you, no faster, and its melee is your attack); **sneak** to let go. **A flier flies** (a bee, parrot, allay, bat, ghast, phantom, vex or blaze): forward goes where you
 look, so look up to climb and down to dive, and **jump** rises straight up; let go of the keys and it hangs in the air.
 Each flies at its own pace (a bee or parrot gently, a vex fast; a phantom gathers speed while it holds its line, up to
 far faster than anything else, and loses it when it turns), slower in water and slower still in lava. It takes no fall
@@ -909,27 +945,23 @@ allowed would kick you for floating a mount; it gets its weight back when you le
 while you hold it: the server checks a ridden body against the blocks it moves through.)
 Not bosses, Wardens, mounts, named creatures, or another player's pets. Whatever dies in your hands dies by
 your hand (a possessed sect member walked into lava counts as murdered, not replaced). A possessed cultivator talks to no
-one, and breaks off any talk it was in.
-**A player's body is seized** instead (only where PvP is on): they die, and a body in their likeness takes their place with
-their realm's strength and all they carried (unless items are kept on death). It walks as they walked (their speed, as a
-player's own keys give it). Inside it, **your inventory key opens the body's inventory** (as a horse's rider opens the horse's;
-`VesselMenu`): its armour, its off hand and the hand it fights with along the top, everything else it carried in five rows of
-nine below. Move things about, put armour on and take a weapon in hand (its blows are the weapon's); throw something out (or
-drop it outside the screen) and it falls from the body. Nothing passes between it and your own things (no hotbar or off-hand
-swap keys; what's on the cursor when you close it goes back into its pack). You control that body until you let it go, when
-it collapses and everything it carried falls where it stands.
+one, and breaks off any talk it was in. (Before true possession a seized player died and a body in their likeness was left
+to steer, `SoulVesselEntity`; one still in a world falls the moment it loads, with all it carried.)
 
 **NPCs.** Cultivators of Nascent Soul and above sense souls as players do; below that a soul isn't there for them at all.
 Sect members who sense one go for a soul that comes onto their grounds, Nascent Souls striking for less, as players do.
 NPCs don't send out souls of their own yet.
 
 Code: `SoulProjection.java` (the rules: going out and back, the tether, qi, harm, severing, possession, who is sent a soul),
-`SoulBodyEntity.java` (the body left behind), `SoulVesselEntity.java` (a seized player's body), `SoulBarriers.java`
+`Possession.java` (a person's body taken and given back: what moves with it, the record that answers for it
+(`CultivationManager#get`), the held player's view, the NPC set aside (`CultivatorNpc#isVacant`), crashes), client
+`ClientBodies.java` and mixin `AbstractClientPlayerMixin` (its look and name), `SoulBodyEntity.java` (the body left behind),
+`SoulVesselEntity.java` (a seized body from before), `SoulBarriers.java`
 (formation barriers), mixins `SoulPlayerMixin`, `SoulEntityMixin`, `SoulLivingEntityMixin`, `SoulMobMixin`,
 `SoulServerPlayerMixin` (only perceivers are sent it), `SoulProjectileMixin`; client `ClientSoul.java` (its flight, the
 tether's pull, striking tethers), `SoulRenderer.java` with core shader `shaders/core/soul.*` (drawn on the sense layer so it
 keeps its colour under Qi Sense), `SoulHud.java`, `SoulBodyRenderer` / `SoulVesselRenderer`, client mixins `SoulFlightMixin`,
-`SoulInputMixin`, `SoulRenderDispatcherMixin`; tests in `SoulProjectionGameTests`. Resource packs that replace core shaders
+`SoulInputMixin`, `SoulRenderDispatcherMixin`; tests in `SoulProjectionGameTests` and `PossessionGameTests`. Resource packs that replace core shaders
 fall back to a plain violet translucent soul; under an Iris shader pack souls and ghosts are drawn as ever (the sense layer
 comes after the pack's own passes), and a ghost's own first-person hand as flat glowing cyan (`compat/ShaderPacks`).
 
@@ -1252,9 +1284,9 @@ A ghost:
   light (under a shader pack, a flat cyan glow); it swings its arm when it strikes, as the living do, and when it meditates it sits cross-legged, floating a
   quarter of a block off the ground.
 - has **half its living hearts**, plus a heart for every layer of its deepest foundation, and heals a heart every two seconds.
-- **flies**: the dead need no ground. Double-tap jump to fly, at a drift (60% of Qi Flight's speed, `QiFlight.GHOST_SPEED`),
-  or as fast as Qi Flight with Ghost Flight on (below); not on the Soul River, nor while a Ghost-Quelling Talisman binds it.
-  Holding jump while falling, it drifts down gently.
+- **flies freely**: the dead need no ground. Double-tap jump to fly, at every realm and as fast as Qi Flight (swifter from
+  Wandering Soul Steps' fourth layer, +10% a layer), spending nothing (`TwoPaths#fliesFreely`; the living in a Ghost King's form fly so too, see "The two paths"); not on the Soul River,
+  nor while a Ghost-Quelling Talisman binds it. Holding jump while falling, it drifts down gently.
 - **touches nothing of the living world.** It can't break or place, use items or blocks (but it can use the dead's own:
   steles, Meng Po's pot, the Wheel, a ghost palace's treasury chests; and read a Ghost Jade Slip or a Jade Slip, though it
   takes up no heaven method), drop or pick up anything (but the experience that comes to it, which it takes as the living do,
@@ -1345,7 +1377,7 @@ Besides the foundations, two methods of their own:
 | Method | What its layers bring | Abilities | Spells |
 |---|---|---|---|
 | **Ghost Fire Scripture** (offence) | a ghost's blows +10% | | Ghost Fire (1), Ghost Fire Bolt (4); the fire leaps to a second foe (7) |
-| **Wandering Soul Steps** (movement) | a ghost +3% swifter | Yin Wind Steps (1), Ghost Flight (4, ghosts only) | Soul Dash (2) |
+| **Wandering Soul Steps** (movement) | a ghost +3% swifter; from layer 4, the free flight of the dead and of a Ghost King's form +10% swifter a layer (+60% at 9; `QiFlight#freeSpeed`) | Yin Wind Steps (1) | Soul Dash (2) |
 
 **Learning one.** First your meridians must be open (a Marrow Cleansing Elixir): a mortal, alive or dead, can't take up or
 cultivate a ghost method (`GhostMethods#refusal`); anyone else can take up any of them. Meditate within 4 blocks of a
@@ -1455,11 +1487,29 @@ cultivator who walks both is stronger than one who walks either (`TwoPaths`):
 - **Harmony.** The two paths together add to that body, the more the closer they stand: **+30%** with both in the same
   realm, **+20%** a realm apart, **+10%** two apart, nothing further (`TwoPaths#HARMONY`, by realm, not stage), on top of
   Heaven's Favour. The Stats tab names the path the body follows and the harmony; on the Cultivation tab the two paths
-  stand one under the other, each with its rank and its bar: the heaven path's cultivation bar (above) and the ghost path's,
-  which fills through the stage it stands at, its deepest foundation's layer written on it (`GhostMethods#stageProgress`),
-  amber once that foundation is perfected (the foundation to seek named on it) and gold at the last. A method's name too long
-  for its line is written short ("…, 4 of 54"). The tab's details (pills, path, harmony, favour, the Upper Realm's qi, ghostly qi, yin)
-  share rows as they fit, and the lines draw closer when there is much to say, so everything fits.
+  stand **side by side, alike** (neither a side path): each its name, realm and stage, its bar (the heaven path's
+  cultivation; the ghost path's fills through the stage it stands at, its deepest foundation's layer written on it,
+  `GhostMethods#stageProgress`, amber once that foundation is perfected and gold at the last), and the method practised and
+  its pace (the ghost path's next layer in minutes, or why it can't come here). Words too long for a column are written
+  short ("Layer 4 of 54"). Under the two, the details (pills, path, harmony, favour, the Upper Realm's qi, ghostly qi, yin)
+  share rows as they fit, then across the whole width what stands next on each path (the heaven path's breakthrough, pill
+  or ritual; then the ghost path's next floor, or the foundation to seek), or whatever holds you (pressure, Realm
+  Suppress); the lines draw closer when there is much to say, so everything fits.
+- **The realm's abilities come from either path** (`TwoPaths#awakens`): Qi Sustenance at Foundation Building, Qi Sense and
+  Golden Core Detonation at Core Formation, Soul Projection at Nascent Soul, the Spatial Tear at Heavenly Being. The heaven
+  path awakens one if it stands at its realm; otherwise the ghost path does, and then it is the ghost path's: Soul
+  Projection's upkeep, the cost of taking hold of a body and the tear's cost come out of the **ghost qi** (a ghost path
+  soul's upkeep is reckoned from what the ghostly pool gathers in the Netherworld, `SoulProjection#GHOST_SOUL_BASE`: half of
+  that a second at the body, twice it at the tether's end, the same again while possessing; outside the Netherworld and the
+  Nether the pool doesn't refill), the soul's hearts and tether are the ghost path's, losing that soul drops the ghost path to
+  Core Formation Grand Perfection (its methods held there, `GhostMethods#fallTo`), and a detonated ghost core drops it to
+  Foundation Building Grand Perfection. Who perceives a projected soul, how hard one may be struck, and how strong a player is
+  to be possessed go by the higher path. **Qi Flight and Sword Flight stay the heaven path's**; the ghost path's flight is
+  its form's (below).
+- **Ghostly creatures fly freely.** The dead, and the living in a Ghost King's form, fly at every realm, as fast as Qi
+  Flight (and +10% a layer from Wandering Soul Steps' fourth, +60% at its ninth), spending nothing (`TwoPaths#fliesFreely`):
+  double-tap jump. The Soul River and the Spatial Gap's trials still carry
+  the living, and a Ghost-Quelling Talisman grounds whoever it binds.
 - **Effective cultivation.** When the harmony (or Heaven's Favour) carries the body past its own rank, the Cultivation and
   Stats tabs say what it comes to on a single path, in gold (`TwoPaths#effective`): the rank a one-path cultivator with no
   Favour would need for a body as mighty. A body that equals a stage is named as it ("Foundation Building - Late"); one past a
@@ -1531,7 +1581,10 @@ four are paid from the ghostly qi pool, a little each second.
 | **Ghost Eye** | Breathing Art 3 | ghosts, ghost cultivators, Hungry Ghosts and Method Steles glow through walls within 32 blocks; outside the Netherworld, projected souls are seen as a Nascent Soul with Qi Sense open sees them | 0.5 (`GHOST_EYE_COST`) |
 | **Netherworld Veil** | Breathing Art 6 | the living take the Netherworld's yin at half the rate | 1 (`VEIL_COST`) |
 | **Yin Wind Steps** | Soul Steps 1 | 20% swifter, and falls do no harm | 1 (`YIN_WIND_COST`, `YIN_WIND_SPEED`) |
-| **Ghost Flight** | Soul Steps 4, ghosts only | a ghost flies as fast as on qi instead of at a drift, never running dry in the Netherworld | 2 (`GHOST_FLIGHT_COST`) |
+
+(**Ghost Flight**, which once let the dead fly as fast as on qi for ghostly qi, is retired: every ghost flies so now, for
+nothing, and Wandering Soul Steps' fourth layer on speeds that flight instead. The ability stays in the list, never awakened,
+so the saved switches after it keep their places.)
 
 **Spells** are cast at will, and live on a **spell wheel** of their own, never the ability wheel. **Hold V** (rebindable:
 "Spell Wheel (hold)") and an eight-slot wheel opens: **click** a slot to ready its spell, **right-click** to cast it at
@@ -1564,7 +1617,7 @@ PvP on. The numbers are the `Spell` enum (layer, cost, cooldown) and `Spells` (`
 `TIDE_*`, `WARD_TICKS`, `BURST_*`, `DECREE_*`, `REND_*`, `STEP_*`, `VERDICT_*`, `CHAINS_*`, `ANNIHILATION_*`).
 
 **Icons** (32x32, `textures/gui/ability/<id>.png` and `textures/gui/spell/<id>.png`): Ghost Eye a slit-pupilled cyan
-eye, Netherworld Veil a dark hood with two cold eyes, Yin Wind Steps a pale footprint on curling wind, Ghost Flight a
+eye, Netherworld Veil a dark hood with two cold eyes, Yin Wind Steps a pale footprint on curling wind, Ghost Flight (retired) a
 ghost rising on trails of light; Ghost Fire a cold flame, Ghost Fire Bolt a ball of it streaking up and right, Soul Dash
 a ghost darting with speed lines behind, Ghostly Wail a ghost's open-mouthed cry ringing out both sides.
 
@@ -1703,7 +1756,7 @@ one later (a demon race's tiger or snake head, say).
 
 **The Ghost-Quelling Talisman.** Thrown, it flies past the living (and through a projected soul) and strikes only the
 dead: a player's ghost, a ghost cultivator, a Hungry Ghost. It deals **6** of the dead's own harm, which lands in full, and
-binds the one it strikes where it stands for **5 seconds** (the Quelled effect): no walking, jumping, Ghost Flight or Soul
+binds the one it strikes where it stands for **5 seconds** (the Quelled effect): no walking, jumping, flying or Soul
 Dash, and a bound creature is held still, only falling; it can still strike what is in reach. The talisman shows sealed
 to its brow, yellow paper in its own colours over the dead's cyan light (on a beast's head too), and gold sparks circle
 it. A ghost can't throw one (the dead use no items), and it hurts another player's ghost only where PvP is on. Its

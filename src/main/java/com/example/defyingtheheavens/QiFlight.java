@@ -26,11 +26,18 @@ import java.util.UUID;
  * <p>
  * These abilities own {@code mayfly} (and the flying speed) for survival and adventure players, granting and revoking it
  * every tick; creative and spectator players are left to vanilla.
+ * <p>
+ * The dead, and the living in a Ghost King's form, fly freely (TwoPaths#fliesFreely): at every realm, at Qi Flight's speed
+ * and swifter by each layer of Wandering Soul Steps from the fourth ({@link #freeSpeed}), spending nothing. Qi Flight and Sword
+ * Flight themselves are the heaven path's.
  */
 public final class QiFlight {
 	/** After running dry, flight returns (silently) at this fraction of the pool. */
 	public static final double RESUME_FRACTION = 0.05;
-	/** A ghost's own flight, without Ghost Flight: a drift through the air, at this share of Qi Flight's speed. */
+	/**
+	 * The drift the dead once flew at without Ghost Flight (they fly at Qi Flight's speed now: TwoPaths#fliesFreely): kept so a
+	 * speed set to it before is still known as this class's (see {@link #setFlight}).
+	 */
 	public static final float GHOST_SPEED = SwordFlight.QI_FLIGHT_SPEED * 0.6f;
 
 	/** Players whose qi ran dry in flight and who haven't gathered back to {@link #RESUME_FRACTION} yet. */
@@ -108,18 +115,26 @@ public final class QiFlight {
 			setFlight(p, p.getAbilities().mayfly, SwordFlight.QI_FLIGHT_SPEED);
 			return 0;
 		}
-		// A ghost flies on no qi and no sword: the dead need no ground, and drift through the air at {@link #GHOST_SPEED}; on its
-		// method's flight (Wandering Soul Steps' Ghost Flight, paid for in ghostly qi: NetherworldManager) as fast as Qi Flight.
-		// Never on the Soul River, nor while a Ghost-Quelling Talisman binds it (QuelledEffect).
+		// A ghost flies on no qi and no sword, at every realm and as fast as Qi Flight or more (TwoPaths#fliesFreely: ghostly creatures
+		// need no ground; the user's rule, 2026-10-18). Never on the Soul River, nor while a Ghost-Quelling Talisman binds it (QuelledEffect).
 		if (Incorporeal.isGhost(p)) {
 			SwordFlight.update(p, false);
-			if (!ModDimensions.isPassage(p.level().dimension()) && !p.hasEffect(ModEffects.QUELLED))
-				setFlight(p, true, c.isAbilityActive(Ability.GHOST_FLIGHT) ? SwordFlight.QI_FLIGHT_SPEED : GHOST_SPEED);
+			EXHAUSTED.remove(id);
+			if (!ModDimensions.isPassage(p.level().dimension()) && !p.hasEffect(ModEffects.QUELLED)) setFlight(p, true, freeSpeed(c));
 			else land(p);
 			return 0;
 		}
 		// The gap's current carries every trial, but one who tore their own way in flies there as anywhere (SpatialTrialHandler#tear).
 		boolean inGap = !SpatialTrialHandler.isTravelling(id) && (SpatialTrialHandler.isInTrial(id) || ModDimensions.isPassage(p.level().dimension()));
+		// One of the living in a Ghost King's form flies as the dead do, whatever its realms, for nothing (the gap and the Soul River
+		// carry it as they carry everyone living, and a talisman binds it as it binds them).
+		if (TwoPaths.inGhostForm(c) && !inGap) {
+			SwordFlight.update(p, false);
+			EXHAUSTED.remove(id);
+			if (!p.hasEffect(ModEffects.QUELLED)) setFlight(p, true, freeSpeed(c));
+			else land(p);
+			return 0;
+		}
 		// At most one of these is switched on (Ability#exclusiveWith); a rider without a sword in hand has no flight.
 		boolean onSword = SwordFlight.canRide(p, c);
 		boolean onQi = !onSword && c.getEffectiveRealm().canFlyOnQi() && c.isAbilityEnabled(Ability.QI_FLIGHT);
@@ -174,15 +189,38 @@ public final class QiFlight {
 	}
 
 	/**
+	 * How fast one who flies freely flies (TwoPaths#fliesFreely): Qi Flight's speed, and from the fourth layer of Wandering Soul
+	 * Steps (GhostMethods#STEPS_FLIGHT_FROM) a tenth more for each layer, +60% at the ninth.
+	 */
+	public static float freeSpeed(PlayerCultivation c) {
+		return freeSpeed(c.netherworld().layer(GhostMethod.WANDERING_SOUL_STEPS));
+	}
+
+	static float freeSpeed(int stepsLayer) {
+		int past = Math.max(0, stepsLayer - GhostMethods.STEPS_FLIGHT_FROM + 1);
+		return SwordFlight.QI_FLIGHT_SPEED * (1 + GhostMethods.STEPS_FLIGHT_PER_LAYER * past);
+	}
+
+	/**
+	 * Whether {@code speed} is one set here: Qi Flight's, a sword's, the free flight's, space's or the last one set for that
+	 * player. Told by value, so a speed saved with the player (vanilla keeps it) is still known after a relog.
+	 */
+	private static boolean isOurs(UUID id, float speed) {
+		if (speed == SwordFlight.QI_FLIGHT_SPEED || speed == SwordFlight.SWORD_SPEED || speed == GHOST_SPEED
+				|| Float.valueOf(speed).equals(SPEED_SET.get(id))) return true;
+		for (int layer = GhostMethods.STEPS_FLIGHT_FROM; layer <= GhostMethods.LAYERS; layer++) if (speed == freeSpeed(layer)) return true;
+		for (Realm realm : Realm.values()) for (Stage stage : Stage.values()) if (speed == AstralRealm.spaceSpeed(realm, stage)) return true;
+		return false;
+	}
+
+	/**
 	 * Grants or revokes flight and sets its speed; revoking also ends a flight in progress. Only sends an update when
-	 * something changes. A speed other than Qi Flight's or a sword's (another mod's, or a command's) is left alone.
+	 * something changes. A speed not set here ({@link #isOurs}: another mod's, or a command's) is left alone.
 	 */
 	private static void setFlight(ServerPlayer p, boolean mayFly, float speed) {
 		Abilities abilities = p.getAbilities();
 		float current = abilities.getFlyingSpeed();
-		boolean ours = current == SwordFlight.QI_FLIGHT_SPEED || current == SwordFlight.SWORD_SPEED || current == GHOST_SPEED
-				|| Float.valueOf(current).equals(SPEED_SET.get(p.getUUID()));
-		boolean speedChanges = ours && current != speed;
+		boolean speedChanges = current != speed && isOurs(p.getUUID(), current);
 		if (abilities.mayfly == mayFly && (mayFly || !abilities.flying) && !speedChanges) return;
 		abilities.mayfly = mayFly;
 		if (!mayFly) abilities.flying = false;

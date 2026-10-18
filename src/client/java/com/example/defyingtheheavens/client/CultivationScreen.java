@@ -368,76 +368,26 @@ public class CultivationScreen extends Screen {
 			return;
 		}
 
-		// On the heaven path alone, its realm and stage; on both paths (TwoPaths), each path a line and a bar, one under the other.
+		HeavenMethod method = HeavenMethods.practised(c.heaven());
+		double boost = player == null ? 1.0 : CultivationBoost.of(player).multiplier();
+		// On both paths (TwoPaths) the two stand side by side, each in full and alike: name, realm and stage, bar, the method
+		// practised and its pace, what stands next on it (the user's ask, 2026-10-18: both are ways to the heights, neither a side
+		// path). On the heaven path alone, its realm and stage over the whole width.
 		boolean both = TwoPaths.walksBoth(c);
 		if (both) {
-			g.drawCenteredString(font, Component.translatable(ModLang.HEAVEN_PATH_LINE, PlayerCultivation.rankName(c.getRealm(), c.getStage())),
-					cx, y, 0x7FDBFF);
-			y += 12;
+			int colW = (barW - COLUMN_GAP) / 2;
+			int heavenEnd = heavenColumn(g, player, c, method, boost, x, y, colW);
+			int ghostEnd = ghostColumn(g, c, x + colW + COLUMN_GAP, y, colW);
+			int end = Math.max(heavenEnd, ghostEnd);
+			g.fill(cx, y + 2, cx + 1, end - 2, 0x50B8860B); // a faint bronze line between the two
+			y = end + 2;
 		} else {
 			g.drawCenteredString(font, Component.translatable(ModLang.REALM, c.getRealm().getDisplayName()), cx, y, 0x7FDBFF);
 			y += 12;
 			g.drawCenteredString(font, Component.translatable(ModLang.STAGE, c.getStage().getDisplayName()), cx, y, 0xB39DDB);
 			y += 16;
-		}
-
-		// The cultivation bar, in the colour of the heaven method practised's element (HeavenMethods#practised; the old cyan with
-		// none), the stage's cultivation written on it, unrefined pill and fruit qi a pale stretch beyond the fill. Framed in amber
-		// while the realm is held (at a tribulation's bottleneck, at the ritual's gate, a breakthrough waiting on a method); in gold at
-		// the very last.
-		HeavenMethod method = HeavenMethods.practised(c.heaven());
-		double required = c.cultivationRequired();
-		double ratio = required <= 0 ? 0 : Math.min(1.0, c.getCultivation() / required);
-		drawBar(g, x, y, barW, ratio, method == null ? 0xFF4DD0E1 : elementFill(method.element()),
-				c.isMaxed() ? 0xFFFFD700 : c.isStalled() ? 0xFFFFC107 : 0);
-		if (c.getMedicinalQi() > 0 && required > 0 && !c.isStalled()) {
-			double pending = Math.min(1.0, (c.getCultivation() + c.getMedicinalQi()) / required);
-			g.fill(x + (int) (barW * ratio), y + 3, x + (int) (barW * pending), y + 7, 0x90B2EBF2);
-		}
-		barText(g, cx, y + 1, barW, c.isMaxed() ? Component.translatable(ModLang.CULTIVATION_MAX, num(c.getCultivation()))
-				: Component.translatable(ModLang.CULTIVATION, num(c.getCultivation()), num(required)));
-		y += 14;
-		// Under it, the method practised and its layer understood, and what meditating here adds a second: what it gathers,
-		// surroundings included (mats, fruit on pedestals, height, tranquillity, the Upper Realm's dense qi), by the method's element's
-		// share of the qi here (HeavenMethods#cultivationFactor), or at a cultivator's pace with none; jade when boosted.
-		double boost = player == null ? 1.0 : CultivationBoost.of(player).multiplier();
-		double rate = c.meditationCultivationPerSecond(RingOfPowerItem.cultivationBonus(player)) * boost // 0 while suppressed
-				* HeavenMethods.cultivationFactor(c, method, method == null ? 0 : shareHere(method.element()), false);
-		Component methodLine;
-		if (method == null) {
-			methodLine = Component.translatable(ModLang.METHOD_LINE_NONE, one(rate));
-		} else {
-			int layer = c.heaven().layer(method);
-			methodLine = c.isMaxed() ? fit(barW, Component.translatable(ModLang.METHOD_BAR, method.getDisplayName(), layer, method.layers()),
-					Component.translatable(ModLang.METHOD_BAR_SHORT, method.getDisplayName(), layer, method.layers()))
-					: fit(barW, Component.translatable(ModLang.METHOD_LINE, method.getDisplayName(), layer, method.layers(), one(rate)),
-					Component.translatable(ModLang.METHOD_LINE_NAME, method.getDisplayName(), one(rate)),
-					Component.translatable(ModLang.METHOD_LINE_SHORT, layer, method.layers(), one(rate)));
-		}
-		g.drawCenteredString(font, methodLine, cx, y, boost > 1.0 && rate > 0 ? 0x7FE0A0 : 0xB8B8B8);
-		y += 11;
-		// The ghost path (GhostMethods#ghostRank) and its bar: how far through the stage it stands at, its deepest foundation's
-		// layer written on it; amber once that foundation is perfected (only a deeper one carries it on), gold at the very last.
-		if (both) {
-			g.drawCenteredString(font, Component.translatable(ModLang.METHODS_GHOST_PATH, GhostMethods.rankName(TwoPaths.ghostRank(c, false))),
-					cx, y, 0x8FEAE4);
-			y += 12;
-			NetherworldState s = c.netherworld();
-			GhostMethod foundation = GhostMethods.deepestFoundation(s);
-			int layer = s.layer(foundation);
-			boolean perfected = layer >= foundation.layers();
-			GhostMethod next = foundation.next();
-			drawBar(g, x, y, barW, perfected ? 1 : GhostMethods.stageProgress(s), 0xFF4DB6AC, !perfected ? 0 : next != null ? 0xFFFFC107 : 0xFFFFD700);
-			if (!perfected) {
-				barText(g, cx, y + 1, barW, Component.translatable(ModLang.METHOD_BAR, foundation.getDisplayName(), layer, foundation.layers()),
-						Component.translatable(ModLang.METHOD_BAR_SHORT, foundation.getDisplayName(), layer, foundation.layers()));
-			} else if (next != null) {
-				barText(g, cx, y + 1, barW, Component.translatable(ModLang.METHOD_BAR_SEEK, next.getDisplayName()));
-			} else {
-				barText(g, cx, y + 1, barW, Component.translatable(ModLang.METHOD_BAR_PERFECTED, foundation.getDisplayName()),
-						Component.translatable(ModLang.METHODS_PERFECTED));
-			}
-			y += 14;
+			y = heavenBar(g, c, method, x, y, barW);
+			y = heavenMethodLine(g, player, c, method, boost, cx, y, barW);
 		}
 		// Effective cultivation (TwoPaths#effective): what the body comes to on one path, when the harmony or Heaven's Favour carry it
 		// past its own rank; in gold, the name on a line of its own if a long one needs it.
@@ -480,44 +430,13 @@ public class CultivationScreen extends Screen {
 		}
 		List<List<Line>> rows = detailRows(details, barW);
 
-		// What stands next on the heaven path, under the details.
-		List<Line> status = new ArrayList<>();
-		if (c.isUnderPressure()) {
-			// Another cultivator's Realm Suppress: what it holds the player to (if a realm), and what it takes.
-			addStatus(status, Component.translatable(ModLang.PRESSURE), 0xFF6E6E, barW);
-			if (c.getPressureStages() > 0) addStatus(status, PlayerCultivation.rankName(c.getEffectiveRealm(), c.getEffectiveStage()), 0xFF6E6E, barW);
-			addStatus(status, Component.translatable(ModLang.PRESSURE_DETAIL, Math.round(c.getPressurePenalty() * 100)), 0xFF6E6E, barW);
-		} else if (c.isSuppressed()) {
-			addStatus(status, Component.translatable(ModLang.SUPPRESSED), 0xFF6E6E, barW);
-			addStatus(status, Component.translatable(ModLang.SUPPRESSED_TO, PlayerCultivation.rankName(c.getEffectiveRealm(), c.getEffectiveStage())),
-					0xFF6E6E, barW);
-		} else if (c.isMaxed()) {
-			addStatus(status, Component.translatable(ModLang.PINNACLE), 0xFFD700, barW);
-		} else if (c.isAtBottleneck() && c.isBreakthroughLocked()) {
-			addStatus(status, Component.translatable(ModLang.BREAKTHROUGH_SEALED), 0xFF6E6E, barW);
-		} else if (c.isAtBottleneck() && c.isMissingBreakthroughPill()) {
-			// The realm ahead needs a pill: name it and how to brew it.
-			var pill = PillItem.breakthroughPillFor(c.breakthroughRealm());
-			addStatus(status, Component.translatable(ModLang.NEED_PILL, pill.getDescription(), c.breakthroughRealm().getDisplayName()), 0xFFC107, barW);
-			addStatus(status, Component.translatable(ModLang.PILL_RECIPE, AlchemyRecipes.describe(pill)), 0xA0A0A0, barW);
-			// ...and a heaven method of the realm, if none is known.
-			if (c.isHeldByMethod()) addStatus(status, HeavenMethods.gateLine(c), 0xFFC107, barW);
-		} else if (c.needsHeavensLeave()) {
-			// Qi Refining Mid: Late takes the heavens' leave (the Ritual to the Heavens at a Heaven Altar).
-			boolean full = c.isAtRitualGate();
-			addStatus(status, Component.translatable(full ? ModLang.RITUAL_GATE : ModLang.RITUAL_AHEAD), full ? 0xFFC107 : 0xA0A0A0, barW);
-			if (full) addStatus(status, Component.translatable(ModLang.RITUAL_HOW), 0xA0A0A0, barW);
-		} else if (!c.netherworld().ghost() && c.getStage().isLast() && !c.isMaxed() && !HeavenMethods.opensWay(c, c.getRealm().next())) {
-			// Grand Perfection with no heaven method known of the realm ahead: one wanted, said ahead in grey, in amber once the
-			// stage is full (the breakthrough waits on it).
-			addStatus(status, HeavenMethods.gateLine(c), c.isHeldByMethod() ? 0xFFC107 : 0xA0A0A0, barW);
-		} else if (c.canBreakthrough()) {
-			addStatus(status, Component.translatable(ModLang.BOTTLENECK), 0xFFC107, barW);
-			addStatus(status, Component.translatable(ModLang.BOTTLENECK_NEXT, PlayerCultivation.rankName(c.breakthroughRealm(), c.breakthroughStage())),
-					0xFFC107, barW);
-		} else if (c.getPreparedRealm() != null) {
-			// A breakthrough pill already taken, waiting for the bar to fill.
-			addStatus(status, Component.translatable(ModLang.PILL_PREPARED, c.getPreparedRealm().getDisplayName()), 0x7FE0A0, barW);
+		// Under the details, what holds the cultivator (another's pressure, their own Realm Suppress); else what stands next on the
+		// heaven path, and on both paths the ghost path's next after it, across the whole width (a column's half would wrap a pill's
+		// recipe and a method's gate into a dozen lines).
+		List<Line> status = heldStatus(c, barW);
+		if (status.isEmpty()) {
+			status = heavenNext(c, barW);
+			if (both) status.addAll(ghostNext(c.netherworld(), barW));
 		}
 
 		// All of it fits above the meditation line: the lines drawn closer when there is much to say (never closer than the font's
@@ -546,6 +465,210 @@ public class CultivationScreen extends Screen {
 			g.drawCenteredString(font, Component.translatable(meditating ? ModLang.STATUS_MEDITATING : ModLang.STATUS_IDLE),
 					cx, statusY, meditating ? 0x69F0AE : 0x9E9E9E);
 		}
+	}
+
+	/** Room between the two paths' columns on the Cultivation tab (a faint line down the middle of it). */
+	private static final int COLUMN_GAP = 10;
+
+	/**
+	 * The heaven path's cultivation bar, {@code w} wide: in the colour of the heaven method practised's element
+	 * (HeavenMethods#practised; the old cyan with none), the stage's cultivation written on it (shorter where that won't fit),
+	 * unrefined pill and fruit qi a pale stretch beyond the fill. Framed in amber while the realm is held (at a tribulation's
+	 * bottleneck, at the ritual's gate, a breakthrough waiting on a method); in gold at the very last. @return the y under it
+	 */
+	private int heavenBar(GuiGraphics g, PlayerCultivation c, HeavenMethod method, int x, int y, int w) {
+		double required = c.cultivationRequired();
+		double ratio = required <= 0 ? 0 : Math.min(1.0, c.getCultivation() / required);
+		drawBar(g, x, y, w, ratio, method == null ? 0xFF4DD0E1 : elementFill(method.element()), c.isMaxed() ? 0xFFFFD700 : c.isStalled() ? 0xFFFFC107 : 0);
+		if (c.getMedicinalQi() > 0 && required > 0 && !c.isStalled()) {
+			double pending = Math.min(1.0, (c.getCultivation() + c.getMedicinalQi()) / required);
+			g.fill(x + (int) (w * ratio), y + 3, x + (int) (w * pending), y + 7, 0x90B2EBF2);
+		}
+		int cx = x + w / 2;
+		if (c.isMaxed()) {
+			barText(g, cx, y + 1, w, Component.translatable(ModLang.CULTIVATION_MAX, num(c.getCultivation())),
+					Component.translatable(ModLang.CULTIVATION_MAX_SHORT, num(c.getCultivation())));
+		} else {
+			barText(g, cx, y + 1, w, Component.translatable(ModLang.CULTIVATION, num(c.getCultivation()), num(required)),
+					Component.translatable(ModLang.CULTIVATION_SHORT, num(c.getCultivation()), num(required)));
+		}
+		return y + 14;
+	}
+
+	/**
+	 * Under the heaven path's bar, the method practised and its layer understood, and what meditating here adds a second: what it
+	 * gathers, surroundings included (mats, fruit on pedestals, height, tranquillity, the Upper Realm's dense qi), by the method's
+	 * element's share of the qi here (HeavenMethods#cultivationFactor), or at a cultivator's pace with none; jade when boosted.
+	 * @return the y under it
+	 */
+	private int heavenMethodLine(GuiGraphics g, Player player, PlayerCultivation c, HeavenMethod method, double boost, int cx, int y, int w) {
+		double rate = c.meditationCultivationPerSecond(RingOfPowerItem.cultivationBonus(player)) * boost // 0 while suppressed
+				* HeavenMethods.cultivationFactor(c, method, method == null ? 0 : shareHere(method.element()), false);
+		Component line;
+		if (method == null) {
+			line = Component.translatable(ModLang.METHOD_LINE_NONE, one(rate));
+		} else {
+			int layer = c.heaven().layer(method);
+			line = c.isMaxed() ? fit(w, Component.translatable(ModLang.METHOD_BAR, method.getDisplayName(), layer, method.layers()),
+					Component.translatable(ModLang.METHOD_BAR_SHORT, method.getDisplayName(), layer, method.layers()),
+					Component.translatable(ModLang.METHOD_BAR_LAYERS, layer, method.layers()))
+					: fit(w, Component.translatable(ModLang.METHOD_LINE, method.getDisplayName(), layer, method.layers(), one(rate)),
+					Component.translatable(ModLang.METHOD_LINE_NAME, method.getDisplayName(), one(rate)),
+					Component.translatable(ModLang.METHOD_LINE_SHORT, layer, method.layers(), one(rate)));
+		}
+		g.drawCenteredString(font, line, cx, y, boost > 1.0 && rate > 0 ? 0x7FE0A0 : 0xB8B8B8);
+		return y + 11;
+	}
+
+	/**
+	 * The heaven path's column (both paths walked): its name, realm and stage, its bar, and the heaven method practised and its
+	 * pace. (What stands next on it goes under the details, across the tab: {@link #heavenNext}.) @return the y under it
+	 */
+	private int heavenColumn(GuiGraphics g, Player player, PlayerCultivation c, HeavenMethod method, double boost, int x, int y, int w) {
+		int cx = x + w / 2;
+		g.drawCenteredString(font, Component.translatable(ModLang.METHODS_PAGE_HEAVEN), cx, y, 0xFFD700);
+		y += 11;
+		g.drawCenteredString(font, c.getRealm().getDisplayName(), cx, y, 0x7FDBFF);
+		y += 10;
+		g.drawCenteredString(font, c.getStage().getDisplayName(), cx, y, 0xB39DDB);
+		y += 12;
+		y = heavenBar(g, c, method, x, y, w);
+		return heavenMethodLine(g, player, c, method, boost, cx, y, w);
+	}
+
+	/**
+	 * The ghost path's column (both paths walked), the heaven path's mirror: its name, realm and stage (GhostMethods#ghostRank),
+	 * its bar (how far through the stage it stands, its deepest foundation's layer written on it; amber once that foundation is
+	 * perfected and only a deeper one carries it on, gold at the very last), and the ghost method practised and how soon
+	 * meditating here brings its next layer (or why it can't). (What carries it on goes under the details: {@link #ghostNext}.)
+	 * @return the y under it
+	 */
+	private int ghostColumn(GuiGraphics g, PlayerCultivation c, int x, int y, int w) {
+		int cx = x + w / 2;
+		NetherworldState s = c.netherworld();
+		int rank = Math.max(0, TwoPaths.ghostRank(c, false)), stages = Stage.values().length;
+		g.drawCenteredString(font, Component.translatable(ModLang.METHODS_PAGE_GHOST), cx, y, 0x8FEAE4);
+		y += 11;
+		g.drawCenteredString(font, Realm.byIndex(rank / stages).getDisplayName(), cx, y, 0x7FDBFF);
+		y += 10;
+		g.drawCenteredString(font, Stage.byIndex(rank % stages).getDisplayName(), cx, y, 0xB39DDB);
+		y += 12;
+		GhostMethod foundation = GhostMethods.deepestFoundation(s);
+		if (foundation != null) {
+			int layer = s.layer(foundation);
+			boolean perfected = layer >= foundation.layers();
+			GhostMethod next = foundation.next();
+			drawBar(g, x, y, w, perfected ? 1 : GhostMethods.stageProgress(s), 0xFF4DB6AC, !perfected ? 0 : next != null ? 0xFFFFC107 : 0xFFFFD700);
+			if (!perfected) {
+				barText(g, cx, y + 1, w, Component.translatable(ModLang.METHOD_BAR, foundation.getDisplayName(), layer, foundation.layers()),
+						Component.translatable(ModLang.METHOD_BAR_SHORT, foundation.getDisplayName(), layer, foundation.layers()),
+						Component.translatable(ModLang.METHOD_BAR_LAYERS, layer, foundation.layers()));
+			} else if (next != null) {
+				barText(g, cx, y + 1, w, Component.translatable(ModLang.METHOD_BAR_SEEK, next.getDisplayName()),
+						Component.translatable(ModLang.METHOD_BAR_SEEK_SHORT));
+			} else {
+				barText(g, cx, y + 1, w, Component.translatable(ModLang.METHOD_BAR_PERFECTED, foundation.getDisplayName()),
+						Component.translatable(ModLang.METHODS_PERFECTED));
+			}
+		}
+		y += 14;
+		// The practised ghost method's pace here (its ghostly qi: the Netherworld's, thinner in the Nether, none elsewhere).
+		GhostMethod active = s.activeMethod();
+		Component pace;
+		int paceColor = 0x9E9E9E;
+		double density = ClientNetherworldData.density();
+		if (active == null) {
+			pace = Component.translatable(ModLang.GHOST_COLUMN_NONE);
+		} else if (density <= 0) {
+			pace = Component.translatable(ModLang.GHOST_COLUMN_NO_QI);
+		} else if (GhostMethods.heldByRealm(c, active)) {
+			pace = Component.translatable(ModLang.GHOST_COLUMN_HELD, GhostMethods.layerCap(c, active));
+			paceColor = 0xE0A040;
+		} else if (s.layer(active) >= active.layers()) {
+			pace = Component.translatable(ModLang.METHODS_PERFECTED);
+			paceColor = 0xFFD700;
+		} else {
+			double perSecond = GhostMethods.ratePerSecond(c, density);
+			double minutes = (GhostMethods.layerCost(active, s.layer(active)) - s.progress(active)) / Math.max(1.0e-6, perSecond) / 60.0;
+			String when = minutes < 1 ? "<1" : String.valueOf(Math.round(minutes));
+			pace = fit(w, Component.translatable(ModLang.GHOST_COLUMN_RATE, active.getDisplayName(), when),
+					Component.translatable(ModLang.GHOST_COLUMN_RATE_SHORT, when));
+			paceColor = 0x8FEAE4;
+		}
+		g.drawCenteredString(font, fit(w, pace), cx, y, paceColor);
+		return y + 11;
+	}
+
+	/**
+	 * What carries the ghost path on, wrapped to {@code width}: the deepest foundation's next layer that raises it
+	 * (GhostMethods#floor), or, perfected, the foundation to seek.
+	 */
+	private List<Line> ghostNext(NetherworldState s, int width) {
+		List<Line> lines = new ArrayList<>();
+		GhostMethod foundation = GhostMethods.deepestFoundation(s);
+		if (foundation == null) return lines;
+		int layer = s.layer(foundation);
+		int reached = GhostMethods.floor(foundation, layer);
+		for (int next = layer + 1; next <= foundation.layers(); next++) {
+			int floor = GhostMethods.floor(foundation, next);
+			if (floor > reached) {
+				addStatus(lines, Component.translatable(ModLang.METHODS_FLOOR_NEXT, next, foundation.getDisplayName(), GhostMethods.rankName(floor)), 0xB388FF, width);
+				return lines;
+			}
+		}
+		if (layer >= foundation.layers() && foundation.next() != null) {
+			addStatus(lines, Component.translatable(ModLang.METHODS_SEEK_NEXT, foundation.getDisplayName(), foundation.next().getDisplayName()), 0xFFC107, width);
+		}
+		return lines;
+	}
+
+	/** What holds the cultivator now, whichever path: another cultivator's Realm Suppress (what it holds them to, what it takes), or their own. */
+	private List<Line> heldStatus(PlayerCultivation c, int width) {
+		List<Line> status = new ArrayList<>();
+		if (c.isUnderPressure()) {
+			addStatus(status, Component.translatable(ModLang.PRESSURE), 0xFF6E6E, width);
+			if (c.getPressureStages() > 0) addStatus(status, PlayerCultivation.rankName(c.getEffectiveRealm(), c.getEffectiveStage()), 0xFF6E6E, width);
+			addStatus(status, Component.translatable(ModLang.PRESSURE_DETAIL, Math.round(c.getPressurePenalty() * 100)), 0xFF6E6E, width);
+		} else if (c.isSuppressed()) {
+			addStatus(status, Component.translatable(ModLang.SUPPRESSED), 0xFF6E6E, width);
+			addStatus(status, Component.translatable(ModLang.SUPPRESSED_TO, PlayerCultivation.rankName(c.getEffectiveRealm(), c.getEffectiveStage())),
+					0xFF6E6E, width);
+		}
+		return status;
+	}
+
+	/** What stands next on the heaven path, wrapped to {@code width}: the pinnacle, or what the breakthrough ahead waits on. */
+	private List<Line> heavenNext(PlayerCultivation c, int width) {
+		List<Line> status = new ArrayList<>();
+		if (c.isMaxed()) {
+			addStatus(status, Component.translatable(ModLang.PINNACLE), 0xFFD700, width);
+		} else if (c.isAtBottleneck() && c.isBreakthroughLocked()) {
+			addStatus(status, Component.translatable(ModLang.BREAKTHROUGH_SEALED), 0xFF6E6E, width);
+		} else if (c.isAtBottleneck() && c.isMissingBreakthroughPill()) {
+			// The realm ahead needs a pill: name it and how to brew it.
+			var pill = PillItem.breakthroughPillFor(c.breakthroughRealm());
+			addStatus(status, Component.translatable(ModLang.NEED_PILL, pill.getDescription(), c.breakthroughRealm().getDisplayName()), 0xFFC107, width);
+			addStatus(status, Component.translatable(ModLang.PILL_RECIPE, AlchemyRecipes.describe(pill)), 0xA0A0A0, width);
+			// ...and a heaven method of the realm, if none is known.
+			if (c.isHeldByMethod()) addStatus(status, HeavenMethods.gateLine(c), 0xFFC107, width);
+		} else if (c.needsHeavensLeave()) {
+			// Qi Refining Mid: Late takes the heavens' leave (the Ritual to the Heavens at a Heaven Altar).
+			boolean full = c.isAtRitualGate();
+			addStatus(status, Component.translatable(full ? ModLang.RITUAL_GATE : ModLang.RITUAL_AHEAD), full ? 0xFFC107 : 0xA0A0A0, width);
+			if (full) addStatus(status, Component.translatable(ModLang.RITUAL_HOW), 0xA0A0A0, width);
+		} else if (!c.netherworld().ghost() && c.getStage().isLast() && !c.isMaxed() && !HeavenMethods.opensWay(c, c.getRealm().next())) {
+			// Grand Perfection with no heaven method known of the realm ahead: one wanted, said ahead in grey, in amber once the
+			// stage is full (the breakthrough waits on it).
+			addStatus(status, HeavenMethods.gateLine(c), c.isHeldByMethod() ? 0xFFC107 : 0xA0A0A0, width);
+		} else if (c.canBreakthrough()) {
+			addStatus(status, Component.translatable(ModLang.BOTTLENECK), 0xFFC107, width);
+			addStatus(status, Component.translatable(ModLang.BOTTLENECK_NEXT, PlayerCultivation.rankName(c.breakthroughRealm(), c.breakthroughStage())),
+					0xFFC107, width);
+		} else if (c.getPreparedRealm() != null) {
+			// A breakthrough pill already taken, waiting for the bar to fill.
+			addStatus(status, Component.translatable(ModLang.PILL_PREPARED, c.getPreparedRealm().getDisplayName()), 0x7FE0A0, width);
+		}
+		return status;
 	}
 
 	/** The Cultivation tab's line spacings, each with the room above its status lines, roomiest first. */

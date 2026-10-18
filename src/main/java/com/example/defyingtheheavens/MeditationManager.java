@@ -95,7 +95,8 @@ public final class MeditationManager {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_TRIB_BUSY), true);
 			return;
 		}
-		if (SoulProjection.isActive(player.getUUID())) { // a soul out of its body (or leaving it) can't settle into meditation
+		// A soul out of its body (or leaving it) can't settle into meditation; one in another's body can, and cultivates that body (Possession).
+		if (SoulProjection.isAwayFromBody(player.getUUID())) {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_SOUL_BUSY), true);
 			return;
 		}
@@ -151,7 +152,7 @@ public final class MeditationManager {
 
 	/** Whether {@link #start} would begin a session right now: no tribulation running, and steady, dry ground. */
 	public static boolean canStart(ServerPlayer player) {
-		return !TribulationManager.isActive(player.getUUID()) && !SoulProjection.isActive(player.getUUID()) && canMeditate(player);
+		return !TribulationManager.isActive(player.getUUID()) && !SoulProjection.isAwayFromBody(player.getUUID()) && canMeditate(player);
 	}
 
 	private static boolean canMeditate(ServerPlayer p) {

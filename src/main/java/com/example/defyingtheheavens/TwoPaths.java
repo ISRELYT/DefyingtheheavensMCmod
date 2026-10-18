@@ -24,6 +24,9 @@ import java.util.UUID;
  *       "Quasi-" the stage or realm it is on its way to.</li>
  *   <li><b>Spells of both paths</b> (Spell#isDual), one for each realm from Foundation Building, need both paths at that realm,
  *       and draw on both pools, qi and ghostly qi.</li>
+ *   <li><b>The realm's abilities</b> (Qi Sustenance, Qi Sense, Soul Projection, Core Detonation, the Spatial Tear) come from
+ *       either path reaching their realm ({@link #awakens}), paid from that path's pool; Qi Flight and Sword Flight are the heaven
+ *       path's alone. The dead and the living in a Ghost King's form fly freely at every realm ({@link #fliesFreely}).</li>
  *   <li><b>The true form</b>, the living's only. Once the ghost path reaches Core Formation (a Ghost King's might), or once
  *       they have reigned as a Ghost King among the dead (kept when born again: {@link #hasKingForm}), a living
  *       cultivator has a second form beside the human one: the Ghost King's, crowned and drawn in the dead's deeper light. The
@@ -58,6 +61,61 @@ public final class TwoPaths {
 		if (c.isMortal()) return -1;
 		int rank = GhostMethods.ghostRank(c.netherworld());
 		return wielded ? c.wielded(rank) : rank;
+	}
+
+	// --- The realm's abilities, from either path ---
+
+	/** The two paths, for which of them awakens one of the realm's abilities, and so pays for it. */
+	public enum Path { HEAVEN, GHOST }
+
+	/**
+	 * Which path awakens an ability of {@code realm} (Ability): the heaven path if it stands there, else the ghost path if it does;
+	 * null if neither. Both paths are ways to the same heights (the user's ask, 2026-10-18), so either one reaching a realm awakens
+	 * its abilities, paid from that path's own pool ({@link #pool}). {@code wielded}: as Realm Suppression and pressure leave the
+	 * paths (for the abilities that go by the effective realm), else as they truly stand.
+	 */
+	public static Path awakens(PlayerCultivation c, Realm realm, boolean wielded) {
+		int needed = PlayerCultivation.rank(realm, Stage.EARLY);
+		if (heavenRank(c, wielded) >= needed) return Path.HEAVEN;
+		if (ghostRank(c, wielded) >= needed) return Path.GHOST;
+		return null;
+	}
+
+	/** {@code path}'s rank (PlayerCultivation#rank), or -1. */
+	public static int rank(PlayerCultivation c, Path path, boolean wielded) {
+		return path == Path.GHOST ? ghostRank(c, wielded) : heavenRank(c, wielded);
+	}
+
+	/** The higher of the two paths' ranks, or -1 on neither: where the cultivator stands, for what either path brings alike. */
+	public static int higherRank(PlayerCultivation c, boolean wielded) {
+		return Math.max(heavenRank(c, wielded), ghostRank(c, wielded));
+	}
+
+	/** {@code path}'s pool now: qi, or the ghostly qi (GhostQi). */
+	public static double pool(PlayerCultivation c, Path path) {
+		return path == Path.GHOST ? c.netherworld().ghostQi() : c.getQi();
+	}
+
+	/** {@code path}'s pool when full. */
+	public static double poolMax(PlayerCultivation c, Path path) {
+		return path == Path.GHOST ? GhostQi.poolMax(c) : c.maxQi();
+	}
+
+	/** Spends {@code amount} from {@code path}'s pool. @return false, spending nothing, if it holds less */
+	public static boolean spend(PlayerCultivation c, Path path, double amount) {
+		if (path != Path.GHOST) return c.consumeQi(amount);
+		NetherworldState s = c.netherworld();
+		if (amount < 0 || s.ghostQi() < amount) return false;
+		s.setGhostQi(s.ghostQi() - amount);
+		return true;
+	}
+
+	/**
+	 * Flies freely: the dead, and the living in a Ghost King's form. Ghostly creatures need no ground (the user's rule,
+	 * 2026-10-18): at every realm, at Qi Flight's speed, for nothing (QiFlight).
+	 */
+	public static boolean fliesFreely(PlayerCultivation c) {
+		return c.netherworld().ghost() || inGhostForm(c);
 	}
 
 	/** On both paths: a cultivator (not a mortal) whose ghost path has begun. */

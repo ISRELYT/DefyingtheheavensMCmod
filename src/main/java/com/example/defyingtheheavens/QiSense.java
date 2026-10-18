@@ -20,8 +20,9 @@ public final class QiSense {
 
 	/** Called every tick by {@link QiManager} for each living player. */
 	static void tick(ServerPlayer p, PlayerCultivation c) {
-		// The true realm, so a cultivator pressed below Core Formation for a while isn't greeted again when it lifts.
-		boolean awakened = c.getRealm().canSenseQi();
+		// The true realm (on either path: TwoPaths#awakens), so a cultivator pressed below Core Formation for a while isn't greeted
+		// again when it lifts.
+		boolean awakened = !c.isMortal() && TwoPaths.awakens(c, Realm.CORE_FORMATION, false) != null;
 		Boolean before = AWAKENED.put(p.getUUID(), awakened);
 		if (awakened && Boolean.FALSE.equals(before)) {
 			p.sendSystemMessage(Component.translatable(ModLang.MSG_QI_SENSE_GAINED));

@@ -73,9 +73,18 @@ public final class SectMembership {
 		return sect != null && sect.disciples.containsKey(player);
 	}
 
-	/** {@code npc} and {@code player} are of one sect. */
+	/** {@code npc} and {@code player} are of one sect ({@code player} by the body they are in, if their soul is in one: Possession). */
 	public static boolean areFellows(CultivatorNpc npc, ServerPlayer player) {
-		return npc.isSectMember() && isDisciple(player.server, npc.getSectId(), player.getUUID());
+		if (!npc.isSectMember()) return false;
+		if (Possession.inhabits(player.getUUID())) return npc.getSectId().equals(Possession.sectOfBody(player.getUUID()));
+		return isDisciple(player.server, npc.getSectId(), player.getUUID());
+	}
+
+	/** The sect of the body {@code player} is in, if their soul is in one (Possession), else their own as a disciple; or null. */
+	private static Sect bodySect(ServerPlayer player) {
+		if (!Possession.inhabits(player.getUUID())) return sectOf(player.server, player.getUUID());
+		UUID id = Possession.sectOfBody(player.getUUID());
+		return id == null ? null : SectManager.get(player.server, id);
 	}
 
 	/** {@code player}'s title in their sect now, by their strength among its members ({@link Sect#titleAmong}). */
@@ -129,19 +138,24 @@ public final class SectMembership {
 		if (passes != null && passes.remove(sect.id) != null) Formations.syncSoon();
 	}
 
-	/** Whether {@code player} is the guest of the sect {@code sectId} now (see {@link #welcomeGuest}). */
+	/**
+	 * Whether {@code player} is the guest of the sect {@code sectId} now (see {@link #welcomeGuest}), or as good as one of its own: in
+	 * the body of one of them (Possession), its barrier lets them through.
+	 */
 	public static boolean isGuest(UUID sectId, UUID player, long now) {
+		if (sectId != null && sectId.equals(Possession.sectOfBody(player))) return true;
 		Long until = GUESTS.getOrDefault(player, Map.of()).get(sectId);
 		return until != null && now < until;
 	}
 
-	/** The guests of {@code sect} now, for the barrier's view on the client (ModPackets#sendFormations). */
+	/** The guests of {@code sect} now (and those in its people's bodies), for the barrier's view on the client (ModPackets#sendFormations). */
 	public static java.util.List<UUID> guestsOf(Sect sect, long now) {
 		java.util.List<UUID> guests = new java.util.ArrayList<>();
 		GUESTS.forEach((player, passes) -> {
 			Long until = passes.get(sect.id);
 			if (until != null && now < until) guests.add(player);
 		});
+		for (UUID soul : Possession.tenantsOf(sect.id)) if (!guests.contains(soul)) guests.add(soul);
 		return guests;
 	}
 
@@ -266,7 +280,12 @@ public final class SectMembership {
 	 * is a warning and the second casts them out; once out, they are an outsider like any other.
 	 */
 	public static TreasuryTouch treasury(ServerPlayer player, Sect sect) {
-		Sect.Disciple disciple = sect.disciples.get(player.getUUID());
+		// In the body of one of its cultivators (Possession): as that one may (an elder's hands open it; anyone else's are held back).
+		CultivatorNpc body = Possession.npcBody(player);
+		if (body != null && sect.id.equals(body.getSectId())) {
+			return body.getTitle().isElderOrAbove() ? TreasuryTouch.ALLOWED : TreasuryTouch.REFUSED;
+		}
+		Sect.Disciple disciple = sect.disciples.get(Possession.identity(player));
 		if (disciple == null) return TreasuryTouch.OUTSIDER;
 		if (isElder(sect, player)) return TreasuryTouch.ALLOWED;
 		disciple.treasuryTries++;
@@ -287,9 +306,12 @@ public final class SectMembership {
 		if (sect != null && sect.disciples.containsKey(attacker.getUUID())) expel(attacker, sect, ModLang.MSG_SECT_EXPELLED_VIOLENCE);
 	}
 
-	/** How much faster {@code player} cultivates where they are: {@link #GROUNDS_BONUS} on their own sect's grounds, else 1. */
+	/**
+	 * How much faster {@code player} cultivates where they are: {@link #GROUNDS_BONUS} on their own sect's grounds (the body's, when
+	 * they meditate in another's: Possession), else 1.
+	 */
 	public static double groundsMultiplier(ServerPlayer player) {
-		Sect sect = sectOf(player.server, player.getUUID());
+		Sect sect = bodySect(player);
 		if (sect == null || sect.extinct || sect.dimension != player.level().dimension() || !sect.inTerritory(player.blockPosition())) return 1;
 		return GROUNDS_BONUS;
 	}

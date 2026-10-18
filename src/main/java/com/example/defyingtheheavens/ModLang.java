@@ -455,6 +455,10 @@ public final class ModLang {
 	public static final String MSG_SOUL_NOT_HERE = k("message.soul.not_here");
 	public static final String MSG_SOUL_GROUND = k("message.soul.ground");
 	public static final String MSG_SOUL_LOW_QI = k("message.soul.low_qi");
+	/** A soul born of the ghost path (PlayerCultivation#soulPath) pays in ghost qi: its words for the pool short and spent. */
+	public static final String MSG_SOUL_LOW_GHOST_QI = k("message.soul.low_ghost_qi");
+	public static final String MSG_SOUL_NO_GHOST_QI = k("message.soul.no_ghost_qi");
+	public static final String MSG_POSSESS_GHOST_QI = k("message.possess.ghost_qi");
 	public static final String MSG_SOUL_OUT = k("message.soul.out");
 	public static final String MSG_SOUL_RECALLING = k("message.soul.recalling");
 	public static final String MSG_SOUL_BACK = k("message.soul.back");
@@ -477,6 +481,22 @@ public final class ModLang {
 	public static final String MSG_POSSESS_QI = k("message.possess.qi");
 	public static final String MSG_POSSESS_EJECTED = k("message.possess.ejected");
 	public static final String MSG_POSSESS_TETHER = k("message.possess.tether");
+	public static final String MSG_POSSESS_DEAD = k("message.possess.dead");
+	public static final String MSG_POSSESS_INHABIT = k("message.possess.inhabit");
+	public static final String MSG_POSSESS_TAKEN = k("message.possess.taken");
+	public static final String MSG_POSSESS_FREED = k("message.possess.freed");
+	public static final String MSG_POSSESS_LET_GO = k("message.possess.let_go");
+	public static final String MSG_POSSESS_BODY_DIED = k("message.possess.body_died");
+	public static final String MSG_POSSESS_OWNER_LEFT = k("message.possess.owner_left");
+	public static final String MSG_POSSESS_LOST = k("message.possess.lost");
+	public static final String MSG_POSSESS_OWNER_AWAY = k("message.possess.owner_away");
+	public static final String MSG_POSSESS_OWNER_BACK = k("message.possess.owner_back");
+	public static final String MSG_POSSESS_STILL_HELD = k("message.possess.still_held");
+	public static final String MSG_POSSESS_DIED_AWAY = k("message.possess.died_away");
+	public static final String HUD_SOUL_TETHER_AWAY = k("hud.soul.tether_away");
+	public static final String HUD_SOUL_INSIDE = k("hud.soul.inside");
+	public static final String HUD_SOUL_OWN_QI_LABEL = k("hud.soul.own_qi_label");
+	public static final String HUD_SOUL_OWN_GHOST_QI_LABEL = k("hud.soul.own_ghost_qi_label");
 	public static final String HUD_SOUL_GATHERING = k("hud.soul.gathering");
 	public static final String HUD_SOUL_RECALLING = k("hud.soul.recalling");
 	public static final String HUD_SOUL_TETHER = k("hud.soul.tether");
@@ -680,6 +700,8 @@ public final class ModLang {
 	public static final String MSG_TEAR_OPEN = k("message.spatial_tear.open");
 	public static final String MSG_TEAR_NOT_HERE = k("message.spatial_tear.not_here");
 	public static final String MSG_TEAR_NO_QI = k("message.spatial_tear.no_qi");
+	/** The tear awakened by the ghost path (TwoPaths#awakens) is paid in ghost qi. */
+	public static final String MSG_TEAR_NO_GHOST_QI = k("message.spatial_tear.no_ghost_qi");
 	public static final String MSG_TEAR_OUT = k("message.spatial_tear.out");
 	public static final String MSG_TEAR_OUT_UPPER = k("message.spatial_tear.out_upper");
 	public static final String MSG_DAO_STELE_TEACHES = k("message.dao_stele.teaches");
@@ -793,6 +815,20 @@ public final class ModLang {
 	public static final String METHOD_BAR_SHORT = k("method_bar.short");
 	public static final String METHOD_BAR_PERFECTED = k("method_bar.perfected");
 	public static final String METHOD_BAR_SEEK = k("method_bar.seek");
+	/**
+	 * The Cultivation tab on both paths, each path a column of its own (half the width): the bars' shortest words (the cultivation
+	 * without its label, the layer without the method's name, the foundation to seek unnamed), and the ghost path's column's line:
+	 * the practised ghost method's pace (or why there is none).
+	 */
+	public static final String CULTIVATION_SHORT = k("cultivation.short");
+	public static final String CULTIVATION_MAX_SHORT = k("cultivation_max.short");
+	public static final String METHOD_BAR_LAYERS = k("method_bar.layers");
+	public static final String METHOD_BAR_SEEK_SHORT = k("method_bar.seek_short");
+	public static final String GHOST_COLUMN_NONE = k("two_paths.ghost.none");
+	public static final String GHOST_COLUMN_NO_QI = k("two_paths.ghost.no_qi");
+	public static final String GHOST_COLUMN_HELD = k("two_paths.ghost.held");
+	public static final String GHOST_COLUMN_RATE = k("two_paths.ghost.rate");
+	public static final String GHOST_COLUMN_RATE_SHORT = k("two_paths.ghost.rate_short");
 	public static final String MSG_SPELL_NO_BOTH = k("message.spell.no_both");
 	public static final String MSG_SPELL_BOTH_PATHS = k("message.spell.both_paths");
 	/** A form's name: this and its id (TwoPaths.Form). */

@@ -100,7 +100,8 @@ public final class SoulRiver {
 
 	private static boolean canEnter(ServerPlayer player, boolean checkCooldown) {
 		if (player == null || !player.isAlive() || player.isSpectator() || player.getServer() == null) return false;
-		if (SoulProjection.isActive(player.getUUID())) return false; // a soul is bound to its body's realm
+		// A soul is bound to its body's realm, unless a person's body it is in carries it (Possession).
+		if (SoulProjection.isAwayFromBody(player.getUUID())) return false;
 		if (Incorporeal.isRuledGhost(player)) return false; // the dead take no rift: the Wheel is their way back
 		if (ACTIVE.containsKey(player.getUUID()) || SpatialTrialHandler.isInTrial(player.getUUID())) return false;
 		if (checkCooldown) {

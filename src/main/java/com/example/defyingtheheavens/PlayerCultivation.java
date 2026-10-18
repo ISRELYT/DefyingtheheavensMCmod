@@ -124,6 +124,13 @@ public class PlayerCultivation {
 	 * or a stop with the soul out still ends with the player back in their body; null otherwise.
 	 */
 	private net.minecraft.nbt.CompoundTag soulReturn;
+	/**
+	 * A possession under way ({@link Possession}): for a soul in another's body, whose body and its own things put by ("Tenant",
+	 * "Body", "Npc", "Stash"); for a player whose body is held, by whom and their game mode before ("Held", "By", "Mode", and
+	 * "Returned": their body's things waiting for them after a crash). Saved, so a crash mid-way is put right as each comes back;
+	 * null otherwise.
+	 */
+	private net.minecraft.nbt.CompoundTag possession;
 	/** The nascent soul's state ({@link SoulProjection.State} ordinal): synced, never saved. */
 	private int soulState;
 
@@ -381,14 +388,18 @@ public class PlayerCultivation {
 
 	public void setSoulReturn(net.minecraft.nbt.CompoundTag back) { soulReturn = back; }
 
+	public net.minecraft.nbt.CompoundTag getPossession() { return possession; }
+
+	public void setPossession(net.minecraft.nbt.CompoundTag tag) { possession = tag; }
+
 	public SoulProjection.State getSoulState() { return SoulProjection.State.byIndex(soulState); }
 
 	public void setSoulState(SoulProjection.State state) { soulState = state.ordinal(); }
 
-	/** The nascent soul is out of the body (flying free, possessing, or on its way back), not merely gathering to leave. */
+	/** The nascent soul is out of the body (flying free, possessing, in another's body, or on its way back), not merely gathering to leave. */
 	public boolean isSoulOut() {
 		SoulProjection.State state = getSoulState();
-		return state == SoulProjection.State.PROJECTED || state == SoulProjection.State.RECALLING;
+		return state == SoulProjection.State.PROJECTED || state == SoulProjection.State.RECALLING || state == SoulProjection.State.INHABITING;
 	}
 
 	/**
@@ -401,9 +412,18 @@ public class PlayerCultivation {
 
 	// --- Soul Projection's numbers (see SoulProjection) ---
 
-	/** The rank Soul Projection reckons from: the effective one, and never below Nascent Soul Early. */
+	/**
+	 * The path the nascent soul is born of (TwoPaths#awakens): the heaven path once it stands at Nascent Soul, else the ghost path.
+	 * The soul's strength is that path's, it draws on that path's pool, and losing it is that path's fall (SoulProjection).
+	 */
+	public TwoPaths.Path soulPath() {
+		TwoPaths.Path path = TwoPaths.awakens(this, Realm.NASCENT_SOUL, true);
+		return path == null ? TwoPaths.Path.HEAVEN : path;
+	}
+
+	/** The rank Soul Projection reckons from: the soul's path's, as wielded, and never below Nascent Soul Early. */
 	private int soulRank() {
-		return Math.max(rank(Realm.NASCENT_SOUL, Stage.EARLY), effectiveRank());
+		return Math.max(rank(Realm.NASCENT_SOUL, Stage.EARLY), TwoPaths.rank(this, soulPath(), true));
 	}
 
 	/** Hearts the projected soul holds: 1 at Nascent Soul Early, 3 more each stage (10 at Grand Perfection, 34 at Four Axis's). */
@@ -419,10 +439,12 @@ public class PlayerCultivation {
 	/**
 	 * Qi a second the soul costs at {@code reach} (0 at the body, 1 at the tether's end): half the realm's own gathering at the
 	 * body, twice it at the end of the tether, and that much again on top while possessing. Reckoned from the realm's plain
-	 * gathering, so whatever adds to gathering (clothing, pills, the Upper Realm's dense qi) helps keep the soul out.
+	 * gathering, so whatever adds to gathering (clothing, pills, the Upper Realm's dense qi) helps keep the soul out. A soul born of
+	 * the ghost path ({@link #soulPath}) costs ghost qi, reckoned the same way from what that pool gathers in the Netherworld
+	 * (SoulProjection#GHOST_SOUL_BASE): it fills by the place's ghostly density, not by the realm.
 	 */
 	public double soulCostPerSecond(double reach, boolean possessing) {
-		double base = CultivationStats.qiGather(getEffectiveRealm(), getEffectiveStage());
+		double base = soulPath() == TwoPaths.Path.GHOST ? SoulProjection.GHOST_SOUL_BASE : CultivationStats.qiGather(getEffectiveRealm(), getEffectiveStage());
 		return base * (0.5 + 1.5 * Math.max(0, Math.min(1, reach))) + (possessing ? base : 0);
 	}
 
@@ -886,6 +908,7 @@ public class PlayerCultivation {
 		tag.putDouble("MedicinalQi", medicinalQi);
 		if (innerReturn != null) tag.put("InnerReturn", innerReturn.copy());
 		if (soulReturn != null) tag.put("SoulReturn", soulReturn.copy());
+		if (possession != null) tag.put("Possession", possession.copy());
 		tag.putInt("Realm", realm.ordinal());
 		tag.putInt("Stage", stage.ordinal());
 		tag.putDouble("Cultivation", cultivation);
@@ -967,6 +990,7 @@ public class PlayerCultivation {
 		c.medicinalQi = Math.max(0, tag.getDouble("MedicinalQi"));
 		c.innerReturn = tag.contains("InnerReturn") ? tag.getCompound("InnerReturn").copy() : null;
 		c.soulReturn = tag.contains("SoulReturn") ? tag.getCompound("SoulReturn").copy() : null;
+		c.possession = tag.contains("Possession") ? tag.getCompound("Possession").copy() : null;
 		c.lowerRealmBound = tag.getBoolean("LowerRealmBound");
 		c.pendingTrial = SpatialTrialHandler.Route.byName(tag.getString("SpatialTrial"));
 		c.fallProtected = tag.getBoolean("FallProtected");

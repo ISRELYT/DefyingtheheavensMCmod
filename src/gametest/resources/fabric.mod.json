@@ -32,13 +32,15 @@
       "com.example.defyingtheheavens.GhostKingGameTests",
       "com.example.defyingtheheavens.MethodTiersGameTests",
       "com.example.defyingtheheavens.TwoPathsGameTests",
+      "com.example.defyingtheheavens.BothPathsGameTests",
       "com.example.defyingtheheavens.GhostSightGameTests",
       "com.example.defyingtheheavens.HeavenMethodsGameTests",
       "com.example.defyingtheheavens.ElementSpellsGameTests",
       "com.example.defyingtheheavens.SpellCircumstancesGameTests",
       "com.example.defyingtheheavens.SectMembershipGameTests",
       "com.example.defyingtheheavens.StatPointsGameTests",
-      "com.example.defyingtheheavens.AstralGameTests"
+      "com.example.defyingtheheavens.AstralGameTests",
+      "com.example.defyingtheheavens.PossessionGameTests"
     ]
   }
 }

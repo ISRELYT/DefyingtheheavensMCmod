@@ -26,4 +26,13 @@ public abstract class SoulServerPlayerMixin {
 	private void dth$soulDropsNothing(boolean wholeStack, CallbackInfoReturnable<Boolean> cir) {
 		if (Incorporeal.is((ServerPlayer) (Object) this)) cir.setReturnValue(false);
 	}
+
+	/**
+	 * One whose body is held by another's soul (Possession) watches through it and nothing else: sneaking off it, clicking another
+	 * to watch, a command, all leave the view where it is until the body is given back.
+	 */
+	@Inject(method = "setCamera", at = @At("HEAD"), cancellable = true)
+	private void dth$heldWatchTheirBody(net.minecraft.world.entity.Entity camera, org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+		if (!com.example.defyingtheheavens.Possession.mayView((ServerPlayer) (Object) this, camera == null ? (ServerPlayer) (Object) this : camera)) ci.cancel();
+	}
 }

@@ -77,7 +77,7 @@ public final class SoulRenderer {
 	/** Anything to draw this frame. */
 	public static boolean hasWork() {
 		Minecraft mc = Minecraft.getInstance();
-		return mc.level != null && (ClientSoul.isOut() || !ClientSoul.seenSouls().isEmpty() || ClientGhosts.any() || anyGhostly(mc));
+		return mc.level != null && (ClientSoul.isOut() || ClientSoul.isInside() || !ClientSoul.seenSouls().isEmpty() || ClientGhosts.any() || anyGhostly(mc));
 	}
 
 	/** How far off the Netherworld's dead (ghost cultivators, Hungry Ghosts) are drawn. */
@@ -98,15 +98,24 @@ public final class SoulRenderer {
 		float partial = context.tickDelta();
 		Camera camera = context.camera();
 		List<Player> souls = new ArrayList<>();
+		// Souls in a person's body (Possession): that body is veiled in violet for those who perceive souls, its tether running to it.
+		List<Player> veiled = new ArrayList<>();
 		if (ClientSoul.isOut()) souls.add(mc.player);
-		for (Integer id : ClientSoul.seenSouls().keySet()) {
-			if (mc.level.getEntity(id) instanceof Player soul && soul != mc.player) souls.add(soul);
+		for (java.util.Map.Entry<Integer, ClientSoul.Seen> entry : ClientSoul.seenSouls().entrySet()) {
+			if (!(mc.level.getEntity(entry.getKey()) instanceof Player soul) || soul == mc.player) continue;
+			(entry.getValue().inside() ? veiled : souls).add(soul);
 		}
 		for (Player soul : souls) {
 			// One's own soul is seen from inside in first person; another's inside the body it possesses is hidden by it.
 			if (soul == mc.player && !camera.isDetached() || soul.isPassenger()) continue;
 			float clarity = ClientSoul.clarity(soul);
 			if (clarity > 0) drawSoul(context, soul, clarity, partial);
+		}
+		for (Player body : veiled) {
+			// Not round the view of one who watches through it (its held owner, or a spectator in it).
+			if (body.isInvisible() || body == camera.getEntity() && !camera.isDetached()) continue;
+			float clarity = ClientSoul.clarity(body);
+			if (clarity > 0) drawVeil(context, body, clarity, partial);
 		}
 		// The dead: in the Netherworld seen by everyone, whole, in cyan, with their names; outside it (a Ghost King come up to the
 		// living world) only as clearly as souls are seen (the server sends them only to those who perceive souls), but whole to
@@ -142,6 +151,19 @@ public final class SoulRenderer {
 			Vec3[] ends = ClientSoul.tetherEnds(soul, seen, partial);
 			drawTether(context, ends[0], ends[1], own ? ClientSoul.tether() : seen.tether(), soul.getId());
 		}
+		// In a person's body, one's own tether still runs back to one's own body (while that sits in this realm), and others' to theirs.
+		if (ClientSoul.isInside() && ClientSoul.bodyHere()) {
+			Vec3[] ends = ClientSoul.tetherEnds(mc.player, null, partial);
+			drawTether(context, ends[0], ends[1], ClientSoul.tether(), mc.player.getId());
+		}
+		if (ClientSoul.seesTethers()) {
+			for (Player body : veiled) {
+				ClientSoul.Seen seen = ClientSoul.seenSoul(body.getId());
+				if (seen == null || seen.tether() < 0) continue;
+				Vec3[] ends = ClientSoul.tetherEnds(body, seen, partial);
+				drawTether(context, ends[0], ends[1], seen.tether(), body.getId());
+			}
+		}
 		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
 				GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
 	}
@@ -159,6 +181,52 @@ public final class SoulRenderer {
 		// A player wears a man's head (a beast's, should a demon race give one: its BeastHead here); a Ghost King, a crown on it.
 		drawBody(context, soul, ((AbstractClientPlayer) soul).getSkinTextureLocation(), slimModel, clarity, partial, dead, Look.SOUL, null,
 				dead && crowned);
+	}
+
+	/** How strongly a possessed body's veil shows at its clearest (it breathes a little about this), and how far it stands off the body. */
+	private static final float VEIL_ALPHA = 1.0f, VEIL_SIZE = 1.1f;
+
+	/**
+	 * A person's body with another's soul in it (Possession), as those who perceive souls see it: a violet veil of the soul's own
+	 * light laid over the body, breathing slowly, posed and moving as the body does (it is drawn by its renderer as ever, under the
+	 * veil). As clear as a soul would be to them (ClientSoul#clarity: only under Qi Sense, or the Ghost Eye).
+	 */
+	@SuppressWarnings({"rawtypes", "unchecked"})
+	private static void drawVeil(WorldRenderContext context, Player body, float clarity, float partial) {
+		if (soulShader == null || !(body instanceof AbstractClientPlayer client)) return; // a shader pack: only the tether shows
+		PlayerModel model = model("slim".equals(client.getModelName()));
+		if (model == null) return;
+		float age = body.tickCount + partial;
+		float bodyYaw = Mth.rotLerp(partial, body.yBodyRotO, body.yBodyRot);
+		float headYaw = Mth.rotLerp(partial, body.yHeadRotO, body.yHeadRot);
+		float pitch = Mth.lerp(partial, body.xRotO, body.getXRot());
+		Vec3 cam = context.camera().getPosition();
+		Vec3 at = body.getPosition(partial);
+		PoseStack pose = context.matrixStack();
+		pose.pushPose();
+		pose.translate(at.x - cam.x, at.y - cam.y - (body.isCrouching() ? 0.125 : 0), at.z - cam.z);
+		pose.mulPose(Axis.YP.rotationDegrees(180.0f - bodyYaw));
+		model.attackTime = body.getAttackAnim(partial);
+		model.riding = body.isPassenger();
+		model.young = false;
+		model.crouching = body.isCrouching();
+		model.rightLeg.resetPose();
+		model.leftLeg.resetPose();
+		model.setupAnim(body, body.walkAnimation.position(partial), Math.min(1, body.walkAnimation.speed(partial)), age,
+				Mth.wrapDegrees(headYaw - bodyYaw), pitch);
+		ResourceLocation skin = client.getSkinTextureLocation();
+		RenderSystem.setShaderTexture(0, skin);
+		RenderSystem.setShader(() -> soulShader);
+		float veil = clarity * VEIL_ALPHA * (0.85f + 0.15f * Mth.sin(age * 0.12f));
+		// Light over the body, not cover: the soul's violet edge light about it, a fainter haze beyond, and a wash of its violet on it.
+		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
+				GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
+		drawModel(pose, model, skin, null, 0, 1, 1, veil, VEIL_SIZE);
+		drawModel(pose, model, skin, null, 0, 1, 1, veil * 0.45f, VEIL_SIZE * 1.1f);
+		drawModel(pose, model, skin, null, 1, 1, 1, veil * 0.5f, 1.02f);
+		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+				GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+		pose.popPose();
 	}
 
 	/**

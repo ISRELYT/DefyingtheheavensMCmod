@@ -78,6 +78,7 @@ public class CultivatorNpcRenderer extends HumanoidMobRenderer<CultivatorNpc, Pl
 
 	@Override
 	public void render(CultivatorNpc npc, float yaw, float partialTick, PoseStack poseStack, MultiBufferSource buffers, int light) {
+		if (npc.isVacant()) return; // set aside while a soul uses its body: its body (the soul's player) is drawn in its likeness instead
 		if (drawsBody(npc)) super.render(npc, yaw, partialTick, poseStack, buffers, light);
 		Minecraft mc = Minecraft.getInstance();
 		if (mc.options.hideGui || npc.isInvisible()) return;
@@ -101,11 +102,21 @@ public class CultivatorNpcRenderer extends HumanoidMobRenderer<CultivatorNpc, Pl
 	}
 
 	private void plate(CultivatorNpc npc, PoseStack poseStack, MultiBufferSource buffers, int light, float partialTick) {
-		Font font = getFont();
+		drawPlate(npc, npc.getHealth(), npc.getMaxHealth(), plateHeight(npc), plateSize(npc), poseStack, buffers, light, partialTick);
+	}
+
+	/**
+	 * {@code npc}'s plate ({@link #plate}) over whatever is drawn at the pose's origin, {@code height} above it, with {@code health}
+	 * of {@code max} on its bar: an NPC's own, or the player whose soul is in its body, drawn in its likeness (ClientBodies).
+	 */
+	static void drawPlate(CultivatorNpc npc, float health, float max, double height, float plateSize, PoseStack poseStack,
+						  MultiBufferSource buffers, int light, float partialTick) {
+		Minecraft mc = Minecraft.getInstance();
+		Font font = mc.font;
 		poseStack.pushPose();
-		poseStack.translate(0, plateHeight(npc), 0);
-		poseStack.mulPose(entityRenderDispatcher.cameraOrientation());
-		float size = 0.025f * plateSize(npc);
+		poseStack.translate(0, height, 0);
+		poseStack.mulPose(mc.getEntityRenderDispatcher().cameraOrientation());
+		float size = 0.025f * plateSize;
 		poseStack.scale(-size, -size, size);
 		Matrix4f matrix = poseStack.last().pose();
 		int background = (int) (Minecraft.getInstance().options.getBackgroundOpacity(0.25f) * 255.0f) << 24;
@@ -146,8 +157,8 @@ public class CultivatorNpcRenderer extends HumanoidMobRenderer<CultivatorNpc, Pl
 		// The health bar: a gold frame, a dark track, the red of what's left, the numbers over it. Each layer sits a whole
 		// LAYER in front of the one behind (in plate units, 1/40 block): any closer and the depth buffer can't tell them
 		// apart at a distance, so the numbers flicker through the red and the font's own shadow shows as a second copy.
-		float health = Math.max(0, npc.getHealth());
-		float max = Math.max(1, npc.getMaxHealth());
+		health = Math.max(0, health);
+		max = Math.max(1, max);
 		float x0 = -BAR_WIDTH / 2f, y0 = -13.5f;
 		float fill = BAR_WIDTH * Math.min(1, health / max);
 		VertexConsumer quads = buffers.getBuffer(RenderType.textBackground());

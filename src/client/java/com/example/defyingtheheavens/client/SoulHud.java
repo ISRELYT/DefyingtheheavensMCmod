@@ -11,7 +11,7 @@ import net.minecraft.world.phys.Vec3;
 /**
  * The projected soul's own readout, top left under the Qi bar (and the pressure mark): while it gathers to leave or comes home,
  * how long is left; while it is out, how far along its tether it is (blue, then red as it strains), its body's health (red when
- * low), and the body it holds, if any.
+ * low), and the body it holds, if any; in a person's body, whose body it is in (its own pool is a bar of its own: QiHud).
  */
 public final class SoulHud {
 	private static final int X = 4;
@@ -37,11 +37,18 @@ public final class SoulHud {
 		if (state == SoulProjection.State.PROJECTING) return;
 
 		int radius = ClientSoul.radius();
-		Vec3 at = mc.player.isPassenger() && mc.player.getVehicle() != null ? mc.player.getVehicle().position() : mc.player.position();
-		double distance = at.distanceTo(ClientSoul.body());
-		float reach = radius <= 0 ? 0 : (float) Math.min(1, distance / radius);
-		bar(g, y, reach, reach > 0.85f ? 0xFFE0524A : 0xFF59C3FF);
-		g.drawString(mc.font, Component.translatable(ModLang.HUD_SOUL_TETHER, Math.round(distance), radius), X + BAR_W + 6, y - 1, TEXT);
+		if (ClientSoul.bodyHere()) {
+			Vec3 at = mc.player.isPassenger() && mc.player.getVehicle() != null ? mc.player.getVehicle().position() : mc.player.position();
+			double distance = at.distanceTo(ClientSoul.body());
+			float reach = radius <= 0 ? 0 : (float) Math.min(1, distance / radius);
+			bar(g, y, reach, reach > 0.85f ? 0xFFE0524A : 0xFF59C3FF);
+			g.drawString(mc.font, Component.translatable(ModLang.HUD_SOUL_TETHER, Math.round(distance), radius), X + BAR_W + 6, y - 1, TEXT);
+		} else {
+			// Carried into another realm in a person's body: the tether reaching across the realms (no distance to tell; its cost is
+			// what it is beside the body, SoulProjection#CROSS_REALM_REACH), shown whole and dim.
+			bar(g, y, 1, 0xFF7A5AA8);
+			g.drawString(mc.font, Component.translatable(ModLang.HUD_SOUL_TETHER_AWAY), X + BAR_W + 6, y - 1, TEXT);
+		}
 		y += 12;
 
 		float max = ClientSoul.bodyMax();
@@ -52,6 +59,10 @@ public final class SoulHud {
 
 		Entity host = ClientSoul.host() < 0 || mc.level == null ? null : mc.level.getEntity(ClientSoul.host());
 		if (host != null) g.drawString(mc.font, Component.translatable(ModLang.HUD_SOUL_POSSESSING, host.getDisplayName()), X, y, 0xD9B8FF);
+		if (!ClientSoul.isInside()) return;
+		// In a person's body (Possession): the soul's own pool has its own bar in the stack above, under the body's (QiHud).
+		Component name = ClientBodies.name(mc.player);
+		g.drawString(mc.font, Component.translatable(ModLang.HUD_SOUL_INSIDE, name == null ? Component.literal("?") : name), X, y, 0xD9B8FF);
 	}
 
 	/** A thin gold-framed bar, filled to {@code fill}. */

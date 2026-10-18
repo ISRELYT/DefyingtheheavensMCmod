@@ -11,8 +11,26 @@ public final class CultivationManager {
 	/** The client's mirror of its own player's cultivation; the client sets this, the server never reads it. */
 	public static Supplier<PlayerCultivation> clientMirror = PlayerCultivation::new;
 
+	/**
+	 * The cultivation {@code player} has now: their own, or, while their soul is in another's body (Possession), the body's (its
+	 * realm, qi, abilities and spells are theirs to use, and meditating cultivates it). One whose own body is held answers as a mortal
+	 * with nothing (Possession#sealed): the soul in it plays their record, and nothing of it may be reckoned twice.
+	 */
 	public static PlayerCultivation get(ServerPlayer player) {
-		return CultivationSavedData.forServer(player.server).getOrCreate(player.getUUID());
+		PlayerCultivation body = Possession.borrowed(player);
+		if (body != null) return body;
+		if (Possession.isHeld(player.getUUID())) return Possession.sealed();
+		return own(player);
+	}
+
+	/** {@code player}'s own record, whatever body their soul is in: what Soul Projection reckons the soul by (its realm, pool, tether). */
+	public static PlayerCultivation own(ServerPlayer player) {
+		return own(player.server, player.getUUID());
+	}
+
+	/** The own record of the player {@code id}, online or not. */
+	public static PlayerCultivation own(MinecraftServer server, java.util.UUID id) {
+		return CultivationSavedData.forServer(server).getOrCreate(id);
 	}
 
 	/** For code that runs on both sides (items): the server's record, or on the client the synced mirror of the local player. */
@@ -25,6 +43,7 @@ public final class CultivationManager {
 	}
 
 	public static void sync(ServerPlayer player) {
+		if (Possession.isHeld(player.getUUID())) return; // a held body's owner: their screen keeps what it last showed of them
 		ModPackets.sendSync(player, get(player), MeditationManager.isMeditating(player.getUUID()));
 	}
 
@@ -49,7 +68,8 @@ public final class CultivationManager {
 		Ability ability = Ability.byIndex(index);
 		PlayerCultivation c = get(player);
 		// The dead are all soul already: there is no body to send a soul out of (a Ghost King, or a creative ghost, neither).
-		if (ability == Ability.SOUL_PROJECTION && c.netherworld().ghost() && !c.isMortal() && c.getEffectiveRealm().canProjectSoul()) {
+		if (ability == Ability.SOUL_PROJECTION && c.netherworld().ghost() && !c.isMortal()
+				&& TwoPaths.awakens(c, Realm.NASCENT_SOUL, true) != null) {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_GHOST_CANNOT), true);
 			return;
 		}

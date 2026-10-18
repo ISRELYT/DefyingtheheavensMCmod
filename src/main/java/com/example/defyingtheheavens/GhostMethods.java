@@ -62,6 +62,12 @@ public final class GhostMethods {
 	public static final double STELE_LEARN_SECONDS = 15;
 	/** Each layer of Wandering Soul Steps quickens a ghost this much; each of Ghost Fire Scripture strengthens its blows this much. */
 	public static final double STEPS_SPEED_PER_LAYER = 0.03, FIRE_DAMAGE_PER_LAYER = 0.10;
+	/**
+	 * From this layer of Wandering Soul Steps on, each layer speeds the free flight of the dead and of a Ghost King's form this much
+	 * (QiFlight#freeSpeed: the fourth +10%, the ninth +60%; the user's pick, 2026-10-18, in Ghost Flight's place).
+	 */
+	public static final int STEPS_FLIGHT_FROM = 4;
+	public static final float STEPS_FLIGHT_PER_LAYER = 0.10f;
 	/** Yin Wind Steps: this much swifter (and no harm from falls). */
 	public static final double YIN_WIND_SPEED = 0.20;
 	/** The abilities' upkeep from the ghostly qi pool, a second. */
@@ -113,6 +119,18 @@ public final class GhostMethods {
 	public static int ghostRank(NetherworldState s) {
 		GhostMethod deepest = deepestFoundation(s);
 		return deepest == null ? -1 : floor(deepest, s.layer(deepest));
+	}
+
+	/**
+	 * The ghost path falls to {@code rank} (its nascent soul lost, its core detonated: the realm's abilities it awakened cost what
+	 * the heaven path's would, TwoPaths#awakens): every method held no deeper than that rank's last layer (MethodLayers#deepestAt),
+	 * as the heaven path's methods are held to its realm (HeavenMethods#clampTo). A path already at or below it is untouched.
+	 */
+	public static void fallTo(NetherworldState s, int rank) {
+		int cap = Math.max(1, MethodLayers.deepestAt(rank));
+		for (GhostMethod method : new java.util.ArrayList<>(s.knownMethods())) {
+			if (s.layer(method) > cap) s.setMethod(method, cap, 0);
+		}
 	}
 
 	/** The ghost path's realm, or null if it isn't begun. */
@@ -387,14 +405,13 @@ public final class GhostMethods {
 		if (c.isAbilityActive(Ability.GHOST_EYE)) cost += GHOST_EYE_COST;
 		if (c.isAbilityActive(Ability.NETHERWORLD_VEIL)) cost += VEIL_COST;
 		if (c.isAbilityActive(Ability.YIN_WIND_STEPS)) cost += YIN_WIND_COST;
-		if (c.isAbilityActive(Ability.GHOST_FLIGHT)) cost += GHOST_FLIGHT_COST;
 		return cost;
 	}
 
 	/** The pool ran dry: every ghost ability switches off. */
 	static void exhaust(ServerPlayer p, PlayerCultivation c) {
 		boolean any = false;
-		for (Ability ability : new Ability[]{Ability.GHOST_EYE, Ability.NETHERWORLD_VEIL, Ability.YIN_WIND_STEPS, Ability.GHOST_FLIGHT}) {
+		for (Ability ability : new Ability[]{Ability.GHOST_EYE, Ability.NETHERWORLD_VEIL, Ability.YIN_WIND_STEPS}) {
 			if (c.isAbilityEnabled(ability)) {
 				c.setAbilityEnabled(ability, false);
 				any = true;

@@ -54,6 +54,7 @@ public final class Physiques {
 
 	/** On joining: one born before physiques were (or never yet joined) is given one now, and told. */
 	public static void onJoin(ServerPlayer player) {
+		if (Possession.isHeld(player.getUUID())) return; // back while their body is held: their own record already has one
 		PlayerCultivation c = CultivationManager.get(player);
 		if (c.getPhysique() != null || !rollOnJoin) return;
 		Physique physique = Physique.roll(player.getRandom());

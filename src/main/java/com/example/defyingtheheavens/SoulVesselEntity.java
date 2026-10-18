@@ -32,6 +32,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
+ * No longer made: a player's body is truly possessed now (Possession, 2026-10-18), and one still standing in a world falls the
+ * moment it loads (nothing possesses it), with everything it carried. Kept so worlds saved with one load it.
+ * <p>
  * A player's body seized by another cultivator's nascent soul (see {@link SoulProjection#tryPossess}): the player dies, their
  * soul driven out, and this stands in their place, in their likeness, with their body's strength (their realm's health, damage,
  * speed and armor; what they wore and held, it wears and holds) and, unless items are kept on death, everything they carried.

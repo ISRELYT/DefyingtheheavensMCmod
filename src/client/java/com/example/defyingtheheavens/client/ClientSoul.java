@@ -47,13 +47,25 @@ public final class ClientSoul {
 	/** Perceived souls are forgotten this long after the server last spoke of them. */
 	private static final long SEEN_EXPIRY_MS = 1500;
 
-	public record Seen(Vec3 body, int host, float tether, long at) {}
+	/**
+	 * A soul this client perceives: its body's place, the beast it rides, its tether's strength (-1: none to draw, its body in another
+	 * realm), and whether it is in a person's body ({@code inside}: that body is drawn veiled in violet, SoulRenderer#drawVeil, and the
+	 * player is no soul to this client).
+	 */
+	public record Seen(Vec3 body, int host, float tether, boolean inside, long at) {}
 
 	private static SoulProjection.State state = SoulProjection.State.NONE;
 	private static int ticksLeft;
 	private static Vec3 body = Vec3.ZERO;
 	private static int radius;
 	private static float bodyHealth, bodyMax, tether = 1;
+	/** The soul's own pool and its whole (its path's: qi, or ghostly qi when {@code ownGhost}), and whether it rose at the last word. */
+	private static float ownQi, ownMax;
+	private static boolean ownGhost, ownRising;
+	/** Whether its own body sits in this realm (a person's body it is in may have carried it to another: no tether to draw). */
+	private static boolean bodyHere = true;
+	/** Whether the soul itself can tear space (in a body that can't, it tears with its own: Possession#soulTears). */
+	private static boolean soulTears;
 	private static int host = -1;
 	private static Vec3 velocity = Vec3.ZERO;
 	private static final Map<Integer, Seen> SEEN = new HashMap<>();
@@ -61,13 +73,19 @@ public final class ClientSoul {
 	public static void register() {
 		SoulProjection.clientSoul = ClientSoul::isSoul;
 		SoulProjection.clientChanneling = player -> player == Minecraft.getInstance().player && state == SoulProjection.State.PROJECTING;
+		// In another's body (Possession), the synced record is the body's: Soul Projection is open on it, to leave by.
+		com.example.defyingtheheavens.Possession.clientBorrowed = c -> state == SoulProjection.State.INHABITING && c == ClientCultivationData.get();
+		com.example.defyingtheheavens.Possession.clientSoulTears = c -> soulTears && state == SoulProjection.State.INHABITING && c == ClientCultivationData.get();
 		ClientPreAttackCallback.EVENT.register(ClientSoul::onPreAttack);
 	}
 
 	// --- State ---
 
 	/** SOUL_SELF: the local player's soul. */
-	public static void self(SoulProjection.State newState, int ticks, Vec3 newBody, int newRadius, float health, float max, int newHost, float newTether) {
+	public static void self(SoulProjection.State newState, int ticks, Vec3 newBody, int newRadius, float health, float max, int newHost, float newTether,
+							float newOwnQi, float newOwnMax, boolean newOwnGhost, boolean newBodyHere, boolean newSoulTears) {
+		bodyHere = newBodyHere;
+		soulTears = newSoulTears;
 		boolean wasOut = isOut();
 		state = newState;
 		ticksLeft = ticks;
@@ -77,14 +95,18 @@ public final class ClientSoul {
 		bodyMax = max;
 		host = newHost;
 		tether = newTether;
+		ownRising = newOwnQi > ownQi + 1.0e-3f;
+		ownQi = newOwnQi;
+		ownMax = newOwnMax;
+		ownGhost = newOwnGhost;
 		if (isOut() != wasOut) velocity = Vec3.ZERO;
 		Minecraft mc = Minecraft.getInstance();
 		if (!isOut() && mc.player != null) mc.player.noPhysics = false; // back in the body: solid again at once
 	}
 
 	/** SOUL_SEEN: another soul this client perceives (or, {@code out} false, one that went home). */
-	public static void seen(int entityId, boolean out, Vec3 seenBody, int seenHost, float seenTether) {
-		if (out) SEEN.put(entityId, new Seen(seenBody, seenHost, seenTether, System.currentTimeMillis()));
+	public static void seen(int entityId, boolean out, Vec3 seenBody, int seenHost, float seenTether, boolean inside) {
+		if (out) SEEN.put(entityId, new Seen(seenBody, seenHost, seenTether, inside, System.currentTimeMillis()));
 		else SEEN.remove(entityId);
 	}
 
@@ -100,13 +122,25 @@ public final class ClientSoul {
 	public static float bodyHealth() { return bodyHealth; }
 	public static float bodyMax() { return bodyMax; }
 	public static float tether() { return tether; }
+	public static float ownQi() { return ownQi; }
+	public static float ownMax() { return ownMax; }
+	/** The soul's own pool is ghostly qi (a soul born of the ghost path). */
+	public static boolean ownGhost() { return ownGhost; }
+	public static boolean ownRising() { return ownRising; }
+	public static boolean bodyHere() { return bodyHere; }
 	public static int host() { return host; }
+
+	/** The local soul is in a person's body (Possession): it plays it as a player, solid, on the ground. */
+	public static boolean isInside() {
+		return state == SoulProjection.State.INHABITING;
+	}
 
 	/** Whether {@code player} is a projected soul on this client: the local player's own, or one the server says is perceived. */
 	public static boolean isSoul(Player player) {
 		Minecraft mc = Minecraft.getInstance();
 		if (player == mc.player) return isOut();
-		return seenSoul(player.getId()) != null;
+		Seen seen = seenSoul(player.getId());
+		return seen != null && !seen.inside(); // one in a person's body is that body here (only veiled)
 	}
 
 	/** What this client knows of another's soul, or null (not perceived, or gone home). */
@@ -155,7 +189,8 @@ public final class ClientSoul {
 	public static void tick(Minecraft mc) {
 		if (mc.player == null || mc.level == null) return;
 		if (ticksLeft > 0 && (state == SoulProjection.State.PROJECTING || state == SoulProjection.State.RECALLING)) ticksLeft--;
-		SEEN.keySet().removeIf(id -> seenSoul(id) == null);
+		long now = System.currentTimeMillis(); // no word for a while (gone into another world, say): forgotten
+		SEEN.values().removeIf(seen -> now - seen.at() > SEEN_EXPIRY_MS);
 		// A soul carries nothing in hand and opens nothing: no inventory, no chest. Only a seized body's own things, from inside it
 		// (VesselScreen).
 		if (isOut() && mc.screen instanceof AbstractContainerScreen<?> && !(mc.screen instanceof VesselScreen)) mc.player.closeContainer();
@@ -247,7 +282,7 @@ public final class ClientSoul {
 		double nearest = mc.hitResult != null && mc.hitResult.getType() != HitResult.Type.MISS ? mc.hitResult.getLocation().distanceTo(eye) : Double.MAX_VALUE;
 		int target = -1;
 		for (Map.Entry<Integer, Seen> entry : SEEN.entrySet()) {
-			if (!(mc.level.getEntity(entry.getKey()) instanceof Player soul)) continue;
+			if (entry.getValue().tether() < 0 || !(mc.level.getEntity(entry.getKey()) instanceof Player soul)) continue; // no tether here
 			Vec3[] ends = tetherEnds(soul, entry.getValue(), 1.0f);
 			if (SoulProjection.rayToSegment(eye, look, SoulProjection.TETHER_STRIKE_REACH, ends[0], ends[1]) > SoulProjection.TETHER_STRIKE_WIDTH) continue;
 			// Only if the tether is nearer than whatever the crosshair is on (a wall, the soul itself, anyone else).
@@ -295,6 +330,10 @@ public final class ClientSoul {
 		body = Vec3.ZERO;
 		radius = 0;
 		host = -1;
+		ownQi = ownMax = 0;
+		ownGhost = ownRising = false;
+		bodyHere = true;
+		soulTears = false;
 		velocity = Vec3.ZERO;
 		SEEN.clear();
 	}

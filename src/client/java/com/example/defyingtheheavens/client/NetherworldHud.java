@@ -64,7 +64,7 @@ public final class NetherworldHud {
 			lastFrame = now;
 			if (shown > FROST_FROM) frost(graphics, (shown - FROST_FROM) / (1 - FROST_FROM), now);
 			if (mc.options.renderDebug) return;
-			int y = QiHud.showing() ? QiHud.Y + QiHud.ROW : QiHud.Y;
+			int y = QiHud.Y + QiHud.rows() * QiHud.ROW; // under the qi bar, and a soul's own pool under that (Possession)
 			int barX = QiHud.barX(mc.font);
 			if (ClientNetherworldData.ghostQiMax() > 0) {
 				GHOST.draw(graphics, mc.font, y, barX, Component.translatable(ModLang.HUD_GHOST_QI_LABEL),
@@ -129,11 +129,14 @@ public final class NetherworldHud {
 		return widest;
 	}
 
-	/** Bars the Netherworld adds under the qi bar, so what is drawn under the qi bar can make room. */
+	/**
+	 * Bars under the top one (the qi bar): a soul's own pool (QiHud#ownShowing) and what the Netherworld adds, so what is drawn under
+	 * the stack can make room.
+	 */
 	static int rowsUnderQi() {
-		if (!QiHud.showing()) return 0;
-		return (ClientNetherworldData.ghostQiMax() > 0 ? 1 : 0) + (ClientNetherworldData.corruption() >= 0 ? 1 : 0) + (readied() != null ? 1 : 0)
-				+ (selectedAbility() != null ? 1 : 0);
+		if (QiHud.rows() == 0) return 0;
+		return QiHud.rows() - 1 + (ClientNetherworldData.ghostQiMax() > 0 ? 1 : 0) + (ClientNetherworldData.corruption() >= 0 ? 1 : 0)
+				+ (readied() != null ? 1 : 0) + (selectedAbility() != null ? 1 : 0);
 	}
 
 	/** A small arrow after the percentage: up while it rises, down while it ebbs, a bar while a pill holds it still. */

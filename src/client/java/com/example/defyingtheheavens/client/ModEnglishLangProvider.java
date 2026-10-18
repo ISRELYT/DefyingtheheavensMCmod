@@ -310,7 +310,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case REALM_SUPPRESS -> "Your realm crushes weaker beings within %s blocks, harder the weaker they are. Costs qi per target.";
 				case INNER_REALM -> "After 10 s of meditation your soul turns inward (+50% cultivation). Walk freely; stop meditating to return. Harm to your body pulls you back.";
 				case SWORD_FLIGHT -> "Hold a sword and double-tap jump to ride it, at a cost of %s qi/s. Cheaper than Qi Flight but slower (75%% of its speed, at every realm); the sword takes no wear. Switching it on switches Qi Flight off.";
-				case SOUL_PROJECTION -> "Send your nascent soul out of your body (5 s to leave, 5 s to return) while your body sits on. It flies through walls on %s hearts, within %s blocks of your body, for %s-%s qi/s (more the farther it goes). Right-click a being three realms below you to possess it. If its tether is cut or your body slain, you die and fall to Core Formation.";
+				case SOUL_PROJECTION -> "Send your nascent soul out of your body (5 s to leave, 5 s to return) while your body sits on. It flies through walls on %s hearts, within %s blocks of your body, for %s-%s qi/s (more the farther it goes). Right-click a being a realm or more below you to possess it. If its tether is cut or your body slain, you die and fall to Core Formation.";
 				case GHOST_EYE -> "See the dead and the Method Steles through walls within 32 blocks. Costs %s ghost qi/s.";
 				case NETHERWORLD_VEIL -> "Wrap your body in the Netherworld's own yin: it seeps into you at half the rate. Costs %s ghost qi/s.";
 				case YIN_WIND_STEPS -> "Walk on the yin wind: %s%% swifter, and falls do you no harm. Costs %s ghost qi/s.";
@@ -329,6 +329,25 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 						+ "Costs %s%% of your qi to tear in, %s%% to tear out.";
 			});
 		}
+		// Soul Projection while the soul is in another's body (Possession): the way out of it.
+		t.add(ModLang.abilityKey(Ability.SOUL_PROJECTION.getId()) + ".description.leave", "You are in another's body, using it as your own: "
+				+ "its things, its strength, its cultivation. Use this to leave it; your soul goes out where the body stands, and the body is "
+				+ "its owner's again.");
+		// The realm's abilities awakened by the ghost path rather than the heaven path (TwoPaths#awakens): paid in its ghost qi, and
+		// what is lost is the ghost path's.
+		t.add(ModLang.abilityKey(Ability.SOUL_PROJECTION.getId()) + ".description.ghost", "Send your nascent soul, born of your ghost path, out of "
+				+ "your body (5 s to leave, 5 s to return) while your body sits on. It flies through walls on %s hearts, within %s blocks of your body, "
+				+ "for %s-%s ghost qi/s (more the farther it goes). Right-click a being a realm or more below you to possess it. If its tether is cut "
+				+ "or your body slain, you die and your ghost path falls to Core Formation.");
+		t.add(ModLang.abilityKey(Ability.CORE_DETONATION.getId()) + ".description.ghost", "The last resort. Use it twice within 5 s and your ghost "
+				+ "path's core breaks: 3 s later it bursts, everything within %s blocks harmed by its distance and how far its realm stands below "
+				+ "yours (a cultivator of your own realm in good armour may live). You die, and the core is lost: your ghost path returns to "
+				+ "Foundation Building Grand Perfection.");
+		t.add(ModLang.abilityKey(Ability.SPATIAL_TEAR.getId()) + ".description.ghost", "Tear space open before you: a rift that stands 20 s, that "
+				+ "you and anyone with you can walk through, into the Spatial Gap or out of it again into the realm you came from. There you fly "
+				+ "freely, each block crossing %s in the world, under spatial pressure (worse in its stormy layers: rise through the upper ones to "
+				+ "cross into the Upper Realm, or sink slowly through the lower ones to fall into the mortal world). Costs %s%% of your ghost qi "
+				+ "to tear in, %s%% to tear out.");
 		t.add(ModLang.METHODS_TITLE, "Cultivation Methods");
 		t.add(ModLang.METHODS_EMPTY, "No cultivation methods learned yet.");
 		t.add(ModLang.METHODS_HINT, "Methods you learn will appear here.");
@@ -369,7 +388,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case GHOST_FIRE_SCRIPTURE -> "Your ghost path opens its layers: 1-3 at Qi Refining, 4-6 at Foundation Building, 7-9 at Core Formation. "
 						+ "Layer 1: Ghost Fire. Layer 4: Ghost Fire Bolt. Layer 7: the fire leaps to a second foe. Every layer: a ghost's blows +10%.";
 				case WANDERING_SOUL_STEPS -> "Your ghost path opens its layers: 1-3 at Qi Refining, 4-6 at Foundation Building, 7-9 at Core Formation. "
-						+ "Layer 1: Yin Wind Steps. Layer 2: Soul Dash. Layer 4: Ghost Flight (the dead). Every layer: a ghost +3% speed.";
+						+ "Layer 1: Yin Wind Steps. Layer 2: Soul Dash. Layers 4-9: the free flight of the dead and of a Ghost King's form "
+						+ "+10% swifter each (+60% at 9). Every layer: a ghost +3% speed.";
 				case YELLOW_SPRINGS_MARROW -> "Qi Refining to Foundation Building, nine layers each: of each realm's nine, layer 1 Early, 3 Mid, 6 "
 						+ "Late, 9 Grand Perfection. Layer 12: Yellow Springs Tide. Layer 16: Marrow Ward. Every layer: +20 ghost qi.";
 				case GHOST_CORE_CANON -> "Qi Refining to Core Formation, nine layers each: of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 "
@@ -460,6 +480,15 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.METHOD_BAR_SHORT, "%s, %s of %s");
 		t.add(ModLang.METHOD_BAR_PERFECTED, "%s: perfected");
 		t.add(ModLang.METHOD_BAR_SEEK, "Perfected: seek the %s");
+		t.add(ModLang.CULTIVATION_SHORT, "%s / %s");
+		t.add(ModLang.CULTIVATION_MAX_SHORT, "%s (Max)");
+		t.add(ModLang.METHOD_BAR_LAYERS, "Layer %s of %s");
+		t.add(ModLang.METHOD_BAR_SEEK_SHORT, "Seek a deeper foundation");
+		t.add(ModLang.GHOST_COLUMN_NONE, "No ghost method practised");
+		t.add(ModLang.GHOST_COLUMN_NO_QI, "No ghost qi here");
+		t.add(ModLang.GHOST_COLUMN_HELD, "Held at layer %s");
+		t.add(ModLang.GHOST_COLUMN_RATE, "%s: next layer ~%s min");
+		t.add(ModLang.GHOST_COLUMN_RATE_SHORT, "Next layer ~%s min");
 		t.add(ModLang.FORM_PREFIX + "human", "human form");
 		t.add(ModLang.FORM_PREFIX + "ghost_king", "Ghost King form");
 		t.add(ModLang.MSG_FORMS_OPEN, "Your ghost path reached Core Formation: Form Shift (Abilities) takes a Ghost King's form.");
@@ -692,6 +721,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_TEAR_OPEN, "Space tears open before you. Step through it, and any with you, before it closes.");
 		t.add(ModLang.MSG_TEAR_NOT_HERE, "Space here won't tear: only the mortal world and the Upper Realm open onto the gap.");
 		t.add(ModLang.MSG_TEAR_NO_QI, "Tearing space open takes %s qi.");
+		t.add(ModLang.MSG_TEAR_NO_GHOST_QI, "Tearing space open takes %s ghost qi.");
 		t.add(ModLang.MSG_TEAR_OUT, "You tear your way out of the gap at %s, %s.");
 		t.add(ModLang.MSG_TEAR_OUT_UPPER, "You tear your way out into the Upper Realm at %s, %s.");
 		t.add(ModLang.MSG_DAO_STELE_TEACHES, "This stele holds the %s (%s, to %s). Meditate beside it to learn it.");
@@ -1449,6 +1479,9 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_SOUL_NOT_HERE, "Your soul can't leave your body here.");
 		t.add(ModLang.MSG_SOUL_GROUND, "You need steady, dry ground to send out your soul.");
 		t.add(ModLang.MSG_SOUL_LOW_QI, "Not enough qi: your soul needs %s%% of your pool to leave.");
+		t.add(ModLang.MSG_SOUL_LOW_GHOST_QI, "Not enough ghost qi: your soul needs %s%% of your ghost qi to leave.");
+		t.add(ModLang.MSG_SOUL_NO_GHOST_QI, "Your ghost qi is spent: your soul snaps back into your body.");
+		t.add(ModLang.MSG_POSSESS_GHOST_QI, "Not enough ghost qi: taking hold of a body costs %s%% of your ghost qi.");
 		t.add(ModLang.MSG_SOUL_OUT, "Your nascent soul leaves your body.");
 		t.add(ModLang.MSG_SOUL_RECALLING, "Your soul returns along its tether (%s s)...");
 		t.add(ModLang.MSG_SOUL_BACK, "Your soul is back in your body.");
@@ -1467,15 +1500,32 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_POSSESS_START, "You take hold of %s. Sneak to let go.");
 		t.add(ModLang.MSG_POSSESS_CANNOT, "Your soul can't take hold of that.");
 		t.add(ModLang.MSG_POSSESS_PVP, "You can't seize another player's body here.");
-		t.add(ModLang.MSG_POSSESS_TOO_STRONG, "Too strong: you can only possess beings three realms below your own.");
+		t.add(ModLang.MSG_POSSESS_TOO_STRONG, "Too strong: you can only possess beings at least a realm below your own.");
 		t.add(ModLang.MSG_POSSESS_QI, "Not enough qi: taking hold of a body costs %s%% of your pool.");
 		t.add(ModLang.MSG_POSSESS_EJECTED, "The body you held is dead: your soul is thrown out, exposed.");
 		t.add(ModLang.MSG_POSSESS_TETHER, "Your tether pulls your soul out of the body.");
+		t.add(ModLang.MSG_POSSESS_DEAD, "The dead have no body to take.");
+		t.add(ModLang.MSG_POSSESS_INHABIT, "You are in %s's body: everything they carry, their strength and their cultivation are yours to use. "
+				+ "Soul Projection (on your ability wheel) leaves it.");
+		t.add(ModLang.MSG_POSSESS_TAKEN, "%s's nascent soul has taken your body. You can only watch through its eyes until it lets go.");
+		t.add(ModLang.MSG_POSSESS_FREED, "Your body is your own again.");
+		t.add(ModLang.MSG_POSSESS_LET_GO, "You leave the body.");
+		t.add(ModLang.MSG_POSSESS_BODY_DIED, "The body you were in has died: your soul is thrown out.");
+		t.add(ModLang.MSG_POSSESS_OWNER_LEFT, "The body's owner is gone, and their body with them: your soul is thrown out.");
+		t.add(ModLang.MSG_POSSESS_LOST, "The body slips from your hold: your soul is thrown out.");
+		t.add(ModLang.MSG_POSSESS_OWNER_AWAY, "%s has left the world; their body is still yours.");
+		t.add(ModLang.MSG_POSSESS_OWNER_BACK, "%s is back, watching through their body's eyes.");
+		t.add(ModLang.MSG_POSSESS_STILL_HELD, "%s's nascent soul still holds your body. You can only watch through its eyes until it lets go.");
+		t.add(ModLang.MSG_POSSESS_DIED_AWAY, "Your body died while another's soul held it.");
 		t.add(ModLang.HUD_SOUL_GATHERING, "Leaving your body... %s s");
 		t.add(ModLang.HUD_SOUL_RECALLING, "Returning to your body... %s s");
 		t.add(ModLang.HUD_SOUL_TETHER, "Tether %s / %s");
 		t.add(ModLang.HUD_SOUL_BODY, "Body %s / %s");
 		t.add(ModLang.HUD_SOUL_POSSESSING, "In %s (sneak to let go)");
+		t.add(ModLang.HUD_SOUL_INSIDE, "In %s's body (Soul Projection leaves it)");
+		t.add(ModLang.HUD_SOUL_OWN_QI_LABEL, "Own Qi");
+		t.add(ModLang.HUD_SOUL_OWN_GHOST_QI_LABEL, "Own Ghost Qi");
+		t.add(ModLang.HUD_SOUL_TETHER_AWAY, "Tether across the realms");
 
 		// The Ritual to the Heavens (HeavenRitual, HeavenAltar)
 		t.add(ModBlocks.HEAVEN_ALTAR, "Heaven Altar");

@@ -42,7 +42,6 @@ import net.minecraft.world.entity.monster.warden.Warden;
 import net.minecraft.world.entity.player.Abilities;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -78,16 +77,22 @@ import java.util.function.Predicate;
  *   <li><b>Losing the soul</b>: a cut tether, a slain body, a destroyed soul, or logging out within {@link #COMBAT_MEMORY_TICKS}
  *   of harm to either kills the cultivator and costs the nascent soul itself ({@link PlayerCultivation#loseNascentSoul}).</li>
  *   <li><b>Possession</b> ({@link #tryPossess}): a being at least {@link #POSSESS_REALM_GAP} realms below the soul (beasts and
- *   monsters count as mortals) is taken over: the soul controls it with its own body's strength and pace (a flier flies where the
- *   soul looks, {@link #flightWish}) until it lets go (sneak), its qi
- *   runs out, it is recalled, or the body dies (the soul is thrown out unharmed, and can then be harmed). A player is not
- *   controlled: their body is seized ({@link SoulVesselEntity}), and they die.</li>
+ *   monsters count as mortals) is taken over until the soul lets go, its qi runs out, it is recalled or pulled out by its tether,
+ *   or the body dies (the soul is thrown out unharmed, and can then be harmed). A beast or monster is ridden from inside and
+ *   steered at its own body's strength and pace (a flier flies where the soul looks, {@link #flightWish}; sneak lets go). A
+ *   player or an NPC cultivator is truly possessed ({@link Possession}, the user's rules 2026-10-18): the soul takes the body's
+ *   place and plays it as a player, with its things, its look and name, and its own cultivation, while its player watches or its
+ *   NPC is set aside ({@link State#INHABITING}; Soul Projection leaves it). Inside, the soul is the body: it is hurt as the body
+ *   is, and goes where it goes, into other realms too (a portal, a tear; the tether reaching across them at {@link #CROSS_REALM_REACH},
+ *   the soul going home if it leaves the body there). Those who perceive souls see a violet veil over the body, and (Heavenly Beings) its
+ *   tether, which may be struck. The body's player logging out doesn't free it (Possession#onDisconnect).</li>
  * </ul>
  * Nothing about it may be used to dodge a tribulation: a soul can't start one, a cultivator mid-tribulation can't send one out.
  */
 public final class SoulProjection {
+	/** Where the soul is: home, gathering to go out, out (flying free or riding a beast), coming home, or in a person's body (Possession). */
 	public enum State {
-		NONE, PROJECTING, PROJECTED, RECALLING;
+		NONE, PROJECTING, PROJECTED, RECALLING, INHABITING;
 
 		public static State byIndex(int index) {
 			return index >= 0 && index < values().length ? values()[index] : NONE;
@@ -103,8 +108,22 @@ public final class SoulProjection {
 	/** How near a being must be for the soul to enter it, and what entering costs (share of the pool). */
 	public static final double POSSESS_REACH = 4.0;
 	public static final double POSSESS_QI_FRACTION = 0.1;
-	/** A possessed being must stand at least this many realms below the soul (a mortal or a beast counts as below Qi Refining). */
-	public static final int POSSESS_REALM_GAP = 3;
+	/**
+	 * What a soul born of the ghost path (PlayerCultivation#soulPath) reckons its upkeep from, in ghost qi a second: the pool's own
+	 * gathering in the Netherworld (GhostQi). The ghostly pool fills by the place, not by the realm, so a heaven soul's reckoning
+	 * (the realm's gathering) would empty it in moments.
+	 */
+	public static final double GHOST_SOUL_BASE = GhostQi.fillPerSecond(GhostQi.NETHERWORLD);
+	/**
+	 * A possessed being must stand at least this many realms below the soul (a mortal or a beast counts as below Qi Refining): one,
+	 * the user's rule of 2026-10-18 (it was three).
+	 */
+	public static final int POSSESS_REALM_GAP = 1;
+	/**
+	 * Carried into another realm in a person's body, the soul's upkeep is reckoned as at this reach along the tether (0 at its body,
+	 * 1 at the end): as though beside its body, so a soul may stay a while in the gap (the user's ask, 2026-10-18; it was the end).
+	 */
+	public static final double CROSS_REALM_REACH = 0;
 	/** The tether's reach by stage from Nascent Soul Early to Four Axis Grand Perfection. */
 	public static final int[] TETHER_RADII = {32, 48, 64, 96, 128, 144, 160, 176, 192, 208, 224, 256};
 	/**
@@ -196,6 +215,15 @@ public final class SoulProjection {
 		return SESSIONS.containsKey(player);
 	}
 
+	/**
+	 * Out of any body (server): gathering to leave, flying free or riding a beast, or coming home; not in a person's body, where the
+	 * soul may meditate as the body (cultivating it: Possession).
+	 */
+	public static boolean isAwayFromBody(UUID player) {
+		Session s = SESSIONS.get(player);
+		return s != null && s.state != State.INHABITING;
+	}
+
 	public static State state(ServerPlayer player) {
 		Session s = SESSIONS.get(player.getUUID());
 		return s == null ? State.NONE : s.state;
@@ -206,8 +234,9 @@ public final class SoulProjection {
 		return entity != null && entity.getFirstPassenger() instanceof Player player && isSoul(player) ? player : null;
 	}
 
+	/** Taken over by a soul: a beast ridden by one, or an NPC cultivator set aside while one is in its body (both sides). */
 	public static boolean isPossessed(Entity entity) {
-		return possessorOf(entity) != null;
+		return possessorOf(entity) != null || entity instanceof CultivatorNpc npc && npc.isVacant();
 	}
 
 	/** Where the soul's body sits (server); null if the player has no soul out. */
@@ -219,14 +248,14 @@ public final class SoulProjection {
 	/**
 	 * Whether {@code viewer}'s client is sent the soul at all: Heavenly Beings and above always (they may strike at it, and see it
 	 * under Qi Sense), Nascent Soul cultivators only with Qi Sense open, spectators always, and outside the Netherworld anyone with
-	 * the Ghost Eye open (Netherworld Breathing Art); nobody else.
+	 * the Ghost Eye open (Netherworld Breathing Art); nobody else. The realm is the higher path's (TwoPaths#higherRank).
 	 */
 	public static boolean perceives(ServerPlayer viewer) {
 		if (viewer.isSpectator()) return true;
 		PlayerCultivation c = CultivationManager.get(viewer);
 		if (c.isAbilityActive(Ability.GHOST_EYE) && !ModDimensions.isNetherworld(viewer.level().dimension())) return true;
 		if (c.isMortal()) return false;
-		Realm realm = c.getEffectiveRealm();
+		Realm realm = Realm.byIndex(Math.max(0, TwoPaths.higherRank(c, true)) / Stage.values().length);
 		if (realm.ordinal() > Realm.NASCENT_SOUL.ordinal()) return true;
 		return realm == Realm.NASCENT_SOUL && c.isQiSenseOn();
 	}
@@ -241,7 +270,7 @@ public final class SoulProjection {
 			if (isSoul(player)) return 0;
 			PlayerCultivation c = CultivationManager.get(player);
 			if (c.isMortal()) return 0;
-			rank = c.effectiveRank();
+			rank = TwoPaths.higherRank(c, true);
 			if (rank < PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.EARLY) && !c.isQiSenseOn()) return 0;
 		} else if (attacker instanceof CultivatorNpc npc && !npc.isMortal()) {
 			rank = npc.sustainedRank();
@@ -255,7 +284,7 @@ public final class SoulProjection {
 
 	// --- Going out, and back ---
 
-	/** The ability wheel or the Abilities tab: go out, call the soul back, or think better of either. */
+	/** The ability wheel or the Abilities tab: go out, leave a body the soul is in, call the soul back, or think better of either. */
 	public static void toggle(ServerPlayer player) {
 		Session s = SESSIONS.get(player.getUUID());
 		if (s == null) {
@@ -265,6 +294,7 @@ public final class SoulProjection {
 		switch (s.state) {
 			case PROJECTING -> cancelChannel(player, ModLang.MSG_SOUL_CANCELLED);
 			case PROJECTED -> beginRecall(player, s);
+			case INHABITING -> leaveBody(player, s, ModLang.MSG_POSSESS_LET_GO); // out of it, and still out
 			case RECALLING -> {
 				s.state = State.PROJECTED; // stays out after all
 				s.ticks = 0;
@@ -276,7 +306,7 @@ public final class SoulProjection {
 
 	/** Starts gathering the soul to go out: sitting still on steady, dry ground, outside any tribulation, with qi to spare. */
 	public static void begin(ServerPlayer player) {
-		PlayerCultivation c = CultivationManager.get(player);
+		PlayerCultivation c = CultivationManager.own(player);
 		if (!Ability.SOUL_PROJECTION.isUnlocked(c) || !player.isAlive() || player.isSpectator()) return;
 		if (GhostSystem.isGhost(player)) { // a ghost is already all soul (a creative one too: it has no living body to leave sitting)
 			player.displayClientMessage(Component.translatable(ModLang.MSG_GHOST_CANNOT), true);
@@ -300,8 +330,11 @@ public final class SoulProjection {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_SOUL_GROUND), true);
 			return;
 		}
-		if (c.getQi() < c.maxQi() * MIN_QI_FRACTION) {
-			player.displayClientMessage(Component.translatable(ModLang.MSG_SOUL_LOW_QI, (int) (MIN_QI_FRACTION * 100)), true);
+		// The soul's own path's pool (PlayerCultivation#soulPath): the qi, or a ghost path soul's ghost qi.
+		TwoPaths.Path path = c.soulPath();
+		if (TwoPaths.pool(c, path) < TwoPaths.poolMax(c, path) * MIN_QI_FRACTION) {
+			player.displayClientMessage(Component.translatable(path == TwoPaths.Path.GHOST ? ModLang.MSG_SOUL_LOW_GHOST_QI : ModLang.MSG_SOUL_LOW_QI,
+					(int) (MIN_QI_FRACTION * 100)), true);
 			return;
 		}
 		MeditationManager.stop(player, false); // no-op unless meditating
@@ -323,7 +356,7 @@ public final class SoulProjection {
 	/** The soul leaves the body: the body sits on, and the player flies on as the soul. */
 	private static void emerge(ServerPlayer player, Session s) {
 		ServerLevel level = player.serverLevel();
-		PlayerCultivation c = CultivationManager.get(player);
+		PlayerCultivation c = CultivationManager.own(player);
 		SoulBodyEntity body = SoulBodyEntity.of(player);
 		level.addFreshEntity(body);
 		ChunkPos chunk = new ChunkPos(body.blockPosition());
@@ -375,6 +408,7 @@ public final class SoulProjection {
 
 	/** Called home: the soul lets go of anything it holds and is drawn back along the tether (the client flies it there). */
 	private static void beginRecall(ServerPlayer player, Session s) {
+		if (s.state == State.INHABITING) leaveBody(player, s, null);
 		if (s.possessed != null) release(player, s, false);
 		s.state = State.RECALLING;
 		s.ticks = CHANNEL_TICKS;
@@ -387,9 +421,10 @@ public final class SoulProjection {
 	 * the way out of every other ending (qi spent, a logout, the server stopping), and before a death (so its drops fall there).
 	 */
 	private static void merge(ServerPlayer player, Session s) {
+		if (s.state == State.INHABITING) leaveBody(player, s, null); // the body it was in is given back first, where it stands
 		if (s.possessed != null) release(player, s, false);
 		SESSIONS.remove(player.getUUID());
-		PlayerCultivation c = CultivationManager.get(player);
+		PlayerCultivation c = CultivationManager.own(player);
 		MinecraftServer server = player.server;
 		CompoundTag back = c.getSoulReturn();
 		ServerLevel level = s.dimension == null ? null : server.getLevel(s.dimension);
@@ -445,13 +480,24 @@ public final class SoulProjection {
 		player.hurt(ModDamageTypes.soulSevered(player.level()), Float.MAX_VALUE);
 	}
 
-	/** The nascent soul is gone: the fall to Core Formation Grand Perfection, and the word of it. */
+	/**
+	 * The nascent soul is gone: its path's fall to Core Formation Grand Perfection (the heaven path's, or a ghost path soul's ghost
+	 * path, its methods held no deeper: GhostMethods#fallTo), and the word of it.
+	 */
 	private static void loseSoul(ServerPlayer player, String why) {
-		PlayerCultivation c = CultivationManager.get(player);
-		c.loseNascentSoul();
+		PlayerCultivation c = CultivationManager.own(player);
+		Component fallen;
+		if (c.soulPath() == TwoPaths.Path.GHOST) {
+			GhostMethods.fallTo(c.netherworld(), PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.GRAND_PERFECTION));
+			fallen = GhostMethods.rankName(TwoPaths.ghostRank(c, false));
+			CultivationManager.refresh(player);
+		} else {
+			c.loseNascentSoul();
+			fallen = PlayerCultivation.rankName(c.getRealm(), c.getStage());
+		}
 		CultivationManager.markDirty(player.server);
 		player.sendSystemMessage(Component.translatable(why));
-		player.sendSystemMessage(Component.translatable(ModLang.MSG_SOUL_LOST, PlayerCultivation.rankName(c.getRealm(), c.getStage())));
+		player.sendSystemMessage(Component.translatable(ModLang.MSG_SOUL_LOST, fallen));
 		player.serverLevel().playSound(null, player.blockPosition(), SoundEvents.WITHER_HURT, SoundSource.PLAYERS, 0.8f, 0.6f);
 	}
 
@@ -508,13 +554,16 @@ public final class SoulProjection {
 
 	private static void tickSoul(MinecraftServer server, ServerPlayer player, Session s, long now) {
 		ServerLevel level = player.serverLevel();
-		PlayerCultivation c = CultivationManager.get(player);
-		// Commanded elsewhere (another dimension): the soul goes home at once.
-		if (s.dimension != null && level.dimension() != s.dimension) {
+		PlayerCultivation c = CultivationManager.own(player);
+		// Commanded elsewhere (another dimension): the soul goes home at once. Not in a body, which carries it where it goes (a
+		// portal, a tear, the river), its tether reaching across the realms (see #upkeep, CROSS_REALM_REACH).
+		boolean inside = s.state == State.INHABITING;
+		boolean here = s.dimension == null || level.dimension() == s.dimension;
+		if (!here && !inside) {
 			merge(player, s);
 			return;
 		}
-		Entity found = level.getEntity(s.body);
+		Entity found = ownBody(player, s);
 		if (found instanceof SoulBodyEntity body && body.isAlive()) {
 			s.bodyPos = body.position();
 			s.bodyMissing = 0;
@@ -523,45 +572,62 @@ public final class SoulProjection {
 			return;
 		}
 
-		player.clearFire();
-		player.setAirSupply(player.getMaxAirSupply());
-		player.fallDistance = 0;
-		if (player.tickCount % 20 == 0) updateSoulHealth(player, c);
+		// In a body, the soul is the body: it burns, drowns, falls and heals as the body does.
+		if (!inside) {
+			player.clearFire();
+			player.setAirSupply(player.getMaxAirSupply());
+			player.fallDistance = 0;
+			if (player.tickCount % 20 == 0) updateSoulHealth(player, c);
+		}
 
 		// The tether: the client keeps the soul within it; one well past the end is drawn back.
 		int radius = c.soulTetherRadius();
 		Vec3 center = player.position().add(0, 1, 0);
 		Vec3 home = s.bodyPos.add(0, 1, 0);
-		double distance = center.distanceTo(home);
-		if (s.possessed != null) {
+		double distance = here ? center.distanceTo(home) : radius;
+		if (inside) {
+			// Its owner kept watching it, an NPC kept by it (Possession#tick); walked past the tether's end in its own body's realm,
+			// the soul is pulled out (across the realms, the tether holds at its end).
+			if (!Possession.tick(player)) leaveBody(player, s, ModLang.MSG_POSSESS_LOST);
+			else if (here && distance > radius) leaveBody(player, s, ModLang.MSG_POSSESS_TETHER);
+			if (SESSIONS.get(player.getUUID()) != s) return;
+			if (s.state != State.INHABITING && !here) { // out of the body in another realm: a soul can't stay there, it goes home
+				merge(player, s);
+				return;
+			}
+		} else if (s.possessed != null) {
 			tickPossession(player, s, radius);
 			if (SESSIONS.get(player.getUUID()) != s) return;
 		} else if (distance > radius + TETHER_SLACK && s.state == State.PROJECTED) {
 			Vec3 to = home.add(center.subtract(home).normalize().scale(radius - 1)).subtract(0, 1, 0);
 			player.connection.teleport(to.x, to.y, to.z, player.getYRot(), player.getXRot());
 		}
-		// Never into the void below the world, nor far above it.
-		if (player.getY() < level.getMinBuildHeight() - 4) {
-			player.connection.teleport(player.getX(), level.getMinBuildHeight() + 1, player.getZ(), player.getYRot(), player.getXRot());
-		} else if (player.getY() > level.getMaxBuildHeight() + 64) {
-			player.connection.teleport(player.getX(), level.getMaxBuildHeight() + 60, player.getZ(), player.getYRot(), player.getXRot());
+		if (s.state != State.INHABITING) {
+			// Never into the void below the world, nor far above it.
+			if (player.getY() < level.getMinBuildHeight() - 4) {
+				player.connection.teleport(player.getX(), level.getMinBuildHeight() + 1, player.getZ(), player.getYRot(), player.getXRot());
+			} else if (player.getY() > level.getMaxBuildHeight() + 64) {
+				player.connection.teleport(player.getX(), level.getMaxBuildHeight() + 60, player.getZ(), player.getYRot(), player.getXRot());
+			}
+			if (player.tickCount % 2 == 0) SoulBarriers.check(player, s.possessed != null);
+			if (SESSIONS.get(player.getUUID()) != s) return;
 		}
-		if (player.tickCount % 2 == 0) SoulBarriers.check(player, s.possessed != null);
-		if (SESSIONS.get(player.getUUID()) != s) return;
 
 		// The tether mends when left alone.
 		if (now - s.tetherStruck > TETHER_MEND_TICKS) s.tether = tetherStrength(c);
 		// Monsters near the unguarded body go for it.
 		if (player.tickCount % 20 == 0 && found instanceof SoulBodyEntity body) {
 			AABB around = body.getBoundingBox().inflate(BODY_NOTICE_RANGE);
-			for (Monster monster : level.getEntitiesOfClass(Monster.class, around, m -> m.getTarget() == null && m.isAlive())) {
+			for (Monster monster : body.level().getEntitiesOfClass(Monster.class, around, m -> m.getTarget() == null && m.isAlive())) {
 				monster.setTarget(body);
 			}
 		}
 		if (player.tickCount % SELF_SYNC_INTERVAL == 0) sendSelf(player, s, c, distance, radius);
+		// Those who perceive souls see it, or (in a body) the veil over the body it is in, and the tether; only a soul out of any body
+		// is sensed by a domain that can't see it (one in a body is there to all).
 		if (player.tickCount % SEEN_SYNC_INTERVAL == 0) {
 			broadcastSeen(player, s, c);
-			senseDomains(player, s);
+			if (s.state != State.INHABITING) senseDomains(player, s);
 		}
 		if (player.tickCount % 20 == 0) refreshTracking(player); // whoever has come to see it (or stopped) since
 
@@ -575,12 +641,37 @@ public final class SoulProjection {
 	 * Qi a second the soul costs this tick, called by {@link QiManager} for each living player before the pool gathers. Out of
 	 * qi, the soul snaps back at once (no 5 s, no penalty) and nothing more is charged.
 	 */
-	static double upkeep(ServerPlayer player, PlayerCultivation c) {
+	static double upkeep(ServerPlayer player, PlayerCultivation body) {
 		Session s = SESSIONS.get(player.getUUID());
 		if (s == null || s.state == State.PROJECTING) return 0;
+		PlayerCultivation c = CultivationManager.own(player); // the soul's own, whatever body it is in
 		Vec3 at = s.possessed != null && player.getVehicle() != null ? player.getVehicle().position() : player.position();
-		double reach = at.distanceTo(s.bodyPos) / c.soulTetherRadius();
-		double cost = c.soulCostPerSecond(reach, s.possessed != null);
+		// Carried into another realm in a body, the tether reaches across the realms: reckoned as CROSS_REALM_REACH along it.
+		double reach = inOwnRealm(player, s) ? at.distanceTo(s.bodyPos) / c.soulTetherRadius() : CROSS_REALM_REACH;
+		double cost = c.soulCostPerSecond(reach, s.possessed != null || s.state == State.INHABITING);
+		if (c != body && c.soulPath() == TwoPaths.Path.HEAVEN) {
+			// In a person's body, whose qi is the body's own (QiManager gathers it), the soul keeps its own pool apart: it gathers and
+			// pays here, a tick's share at a time.
+			CultivationManager.markDirty(player.server);
+			double next = c.getQi() + (c.qiGatherPerSecond() - cost) / 20.0;
+			if (next >= 0) {
+				c.setQi(Math.min(c.maxQi(), next));
+				return 0;
+			}
+			c.setQi(0);
+			merge(player, s);
+			player.displayClientMessage(Component.translatable(ModLang.MSG_SOUL_NO_QI), true);
+			return 0;
+		}
+		if (c.soulPath() == TwoPaths.Path.GHOST) {
+			// A ghost path soul draws on the ghost qi, a tick's share at a time (the pool fills by the second: NetherworldManager);
+			// it costs the qi nothing.
+			if (TwoPaths.spend(c, TwoPaths.Path.GHOST, cost / 20.0)) return 0;
+			c.netherworld().setGhostQi(0);
+			merge(player, s);
+			player.displayClientMessage(Component.translatable(ModLang.MSG_SOUL_NO_GHOST_QI), true);
+			return 0;
+		}
 		if (c.getQi() + (c.qiGatherPerSecond() - cost) / 20.0 >= 0) return cost;
 		c.setQi(0);
 		merge(player, s);
@@ -669,10 +760,11 @@ public final class SoulProjection {
 		if (!striker.isAlive() || striker.isSpectator() || isSoul(striker) || isActive(striker.getUUID())) return;
 		PlayerCultivation c = CultivationManager.get(striker);
 		if (c.isMortal() || c.effectiveRank() < PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.EARLY) || !c.isQiSenseOn()) return;
-		if (!(striker.serverLevel().getEntity(soulId) instanceof ServerPlayer soul) || soul == striker || !isSoul(soul)) return;
-		if (!soul.canHarmPlayer(striker)) return;
+		// A soul out of its body, or one in a person's body (its tether runs to that body): only in its own body's realm.
+		if (!(striker.serverLevel().getEntity(soulId) instanceof ServerPlayer soul) || soul == striker) return;
+		if (!isSoul(soul) && !Possession.inhabits(soul.getUUID()) || !soul.canHarmPlayer(striker)) return;
 		Session s = SESSIONS.get(soul.getUUID());
-		if (s == null) return;
+		if (s == null || !inOwnRealm(soul, s)) return;
 		Vec3 a = s.bodyPos.add(0, 1.0, 0);
 		Entity holder = s.possessed != null && soul.getVehicle() != null ? soul.getVehicle() : soul;
 		Vec3 b = holder.position().add(0, holder.getBbHeight() * 0.55, 0);
@@ -733,8 +825,8 @@ public final class SoulProjection {
 
 	/**
 	 * The soul (right-clicking) enters {@code target}: within reach, at least {@link #POSSESS_REALM_GAP} realms below it, with
-	 * {@link #POSSESS_QI_FRACTION} of its pool to pay. Not a boss, a Warden, anyone's pet but its own, a named creature, a mount, or
-	 * another soul. A player's body is seized instead (they die; see {@link #seize}).
+	 * {@link #POSSESS_QI_FRACTION} of its pool to pay. Not a boss, a Warden, anyone's pet but its own, a named creature, a mount, the
+	 * dead, or another soul. A player or a living NPC cultivator is truly possessed ({@link #inhabit}); anything else is ridden.
 	 */
 	public static InteractionResult tryPossess(ServerPlayer player, Entity target) {
 		Session s = SESSIONS.get(player.getUUID());
@@ -742,32 +834,42 @@ public final class SoulProjection {
 		if (!(target instanceof LivingEntity living) || !living.isAlive() || player.distanceTo(target) > POSSESS_REACH + target.getBbWidth()) {
 			return InteractionResult.FAIL;
 		}
-		PlayerCultivation c = CultivationManager.get(player);
-		int own = c.getEffectiveRealm().ordinal();
+		PlayerCultivation c = CultivationManager.own(player);
+		// The soul's own path (PlayerCultivation#soulPath): its realm weighs the being, its pool pays.
+		TwoPaths.Path path = c.soulPath();
+		int own = Math.max(0, TwoPaths.rank(c, path, true)) / Stage.values().length;
 		String refusal = refusal(player, living, own);
 		if (refusal != null) {
 			player.displayClientMessage(Component.translatable(refusal), true);
 			return InteractionResult.FAIL;
 		}
-		if (!c.consumeQi(c.maxQi() * POSSESS_QI_FRACTION)) {
-			player.displayClientMessage(Component.translatable(ModLang.MSG_POSSESS_QI, (int) (POSSESS_QI_FRACTION * 100)), true);
+		double cost = TwoPaths.poolMax(c, path) * POSSESS_QI_FRACTION;
+		if (TwoPaths.pool(c, path) < cost) {
+			player.displayClientMessage(Component.translatable(path == TwoPaths.Path.GHOST ? ModLang.MSG_POSSESS_GHOST_QI : ModLang.MSG_POSSESS_QI,
+					(int) (POSSESS_QI_FRACTION * 100)), true);
 			return InteractionResult.FAIL;
 		}
+		if (target instanceof ServerPlayer || target instanceof CultivatorNpc npc && !npc.isGhost()) {
+			if (!inhabit(player, s, living)) return InteractionResult.FAIL;
+		} else {
+			possess(player, s, (Mob) target);
+			if (s.possessed == null) return InteractionResult.FAIL;
+		}
+		TwoPaths.spend(c, path, cost);
 		CultivationManager.markDirty(player.server);
-		Mob host = target instanceof ServerPlayer victim ? seize(player, victim) : (Mob) target;
-		if (host == null) return InteractionResult.FAIL;
-		possess(player, s, host);
 		return InteractionResult.SUCCESS;
 	}
 
 	/** Why {@code player}'s soul can't enter {@code target} (a lang key), or null if it can. */
 	private static String refusal(ServerPlayer player, LivingEntity target, int ownRealm) {
 		if (target instanceof ServerPlayer victim) {
-			if (victim == player || victim.isCreative() || victim.isSpectator() || isActive(victim.getUUID()) || InnerRealm.isInside(victim)) {
+			if (victim == player || victim.isCreative() || victim.isSpectator() || isActive(victim.getUUID()) || InnerRealm.isInside(victim)
+					|| Possession.isHeld(victim.getUUID())) {
 				return ModLang.MSG_POSSESS_CANNOT;
 			}
+			if (GhostSystem.isGhost(victim)) return ModLang.MSG_POSSESS_DEAD; // the dead have no body to take
 			if (!victim.canHarmPlayer(player) || !player.server.isPvpAllowed()) return ModLang.MSG_POSSESS_PVP;
-			if (TribulationManager.isActive(victim.getUUID())) return ModLang.MSG_POSSESS_CANNOT;
+			if (TribulationManager.isActive(victim.getUUID()) || HeavenRitual.isActive(victim.getUUID())) return ModLang.MSG_POSSESS_CANNOT;
 		} else if (!(target instanceof Mob mob) || !canPossess(mob, player)) {
 			return ModLang.MSG_POSSESS_CANNOT;
 		}
@@ -778,36 +880,97 @@ public final class SoulProjection {
 	private static boolean canPossess(Mob mob, ServerPlayer player) {
 		if (mob instanceof EnderDragon || mob instanceof WitherBoss || mob instanceof ElderGuardian || mob instanceof Warden) return false;
 		if (mob instanceof HeartDemonEntity || mob instanceof PlayerRideable || mob.isVehicle() || mob.isPassenger()) return false;
-		if (mob instanceof SoulVesselEntity) return false; // a seized body has its one soul already, or is collapsing
+		if (mob instanceof SoulVesselEntity) return false; // a seized body from before (it is collapsing)
+		if (mob instanceof CultivatorNpc npc && npc.isVacant()) return false; // its body has its one soul already
 		if (mob.hasCustomName()) return false;
 		return !(mob instanceof OwnableEntity pet) || pet.getOwnerUUID() == null || pet.getOwnerUUID().equals(player.getUUID());
 	}
 
-	/** A being's realm as possession weighs it: a cultivator's realm, -1 for mortals and everything that doesn't cultivate. */
+	/**
+	 * A being's realm as possession weighs it: a cultivator's realm (a player's higher path's, TwoPaths#higherRank), -1 for mortals
+	 * and everything that doesn't cultivate.
+	 */
 	public static int realmOf(LivingEntity entity) {
 		if (entity instanceof ServerPlayer player) {
 			PlayerCultivation c = CultivationManager.get(player);
-			return c.isMortal() ? -1 : c.getEffectiveRealm().ordinal();
+			return c.isMortal() ? -1 : Math.max(0, TwoPaths.higherRank(c, true)) / Stage.values().length;
 		}
 		if (entity instanceof CultivatorNpc npc) return npc.isMortal() ? -1 : CultivatorNpc.realmOf(npc.sustainedRank()).ordinal();
 		return -1;
 	}
 
 	/**
-	 * A player's body is seized: a vessel in their likeness stands where they did, carrying everything they had (unless items are
-	 * kept on death), and they die, their soul driven out.
+	 * The soul goes into a person's body (Possession#enter): the player or NPC cultivator {@code body}. The soul is solid again, on
+	 * the ground, its own hearts put by with its things; everything else it is now is the body's.
 	 */
-	private static Mob seize(ServerPlayer soul, ServerPlayer victim) {
-		ServerLevel level = victim.serverLevel();
-		boolean keep = level.getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY);
-		SoulVesselEntity vessel = SoulVesselEntity.of(victim, !keep);
-		level.addFreshEntity(vessel);
-		victim.hurt(ModDamageTypes.soulSeized(level, soul), Float.MAX_VALUE);
-		if (victim.isAlive()) { // something kept them alive (creative's invulnerability is already ruled out)
-			vessel.discard();
-			return null;
+	private static boolean inhabit(ServerPlayer player, Session s, LivingEntity body) {
+		removeSoulHealth(player); // its own body's measure, for its health to be put by against (and come back to)
+		if (!Possession.enter(player, body)) {
+			updateSoulHealth(player, CultivationManager.own(player));
+			return false;
 		}
-		return vessel;
+		s.state = State.INHABITING;
+		s.ticks = 0;
+		s.possessed = null;
+		player.noPhysics = false;
+		Abilities abilities = player.getAbilities();
+		abilities.flying = false; // the body walks (QiFlight gives it the flight its own realm has, from the next tick)
+		player.onUpdateAbilities();
+		setState(player, State.INHABITING);
+		RealmSuppressSystem.refreshNow();
+		refreshTracking(player); // seen by all now: it is the body
+		ServerLevel level = player.serverLevel();
+		level.playSound(null, player.blockPosition(), SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.2f, 0.6f);
+		level.sendParticles(VIOLET, player.getX(), player.getY() + 1.0, player.getZ(), 30, 0.3, 0.6, 0.3, 0.02);
+		return true;
+	}
+
+	/**
+	 * The soul leaves the person's body it is in (Possession#leave): the body's things and the body itself go back to it where it
+	 * stands, the soul's own come back to the soul, and the soul is a soul again there, out of the body. {@code why} (a lang key, or
+	 * null) is told over the hotbar.
+	 */
+	private static void leaveBody(ServerPlayer player, Session s, String why) {
+		Possession.leave(player);
+		// Whatever the body was about in the Spatial Gap (its trial, its tear's wait) was the body's: the soul takes none of it out.
+		SpatialTrialHandler.forget(player.getUUID());
+		s.state = State.PROJECTED;
+		s.ticks = 0;
+		PlayerCultivation c = CultivationManager.own(player);
+		player.clearFire();
+		updateSoulHealth(player, c); // its own hearts again (its health came back with its things)
+		Abilities abilities = player.getAbilities();
+		abilities.mayfly = true;
+		abilities.flying = true;
+		player.onUpdateAbilities();
+		player.setDeltaMovement(new Vec3(0, 0.15, 0));
+		setState(player, State.PROJECTED);
+		RealmSuppressSystem.refreshNow();
+		refreshTracking(player); // only those who perceive souls are sent it again
+		ServerLevel level = player.serverLevel();
+		level.playSound(null, player.blockPosition(), SoundEvents.ALLAY_AMBIENT_WITHOUT_ITEM, SoundSource.PLAYERS, 1.0f, 0.5f);
+		level.sendParticles(VIOLET, player.getX(), player.getY() + 1.0, player.getZ(), 30, 0.3, 0.6, 0.3, 0.02);
+		if (why != null) player.displayClientMessage(Component.translatable(why), true);
+	}
+
+	/** The soul in a person's body is made to leave it (the body's owner logged out, say), telling it {@code why}. */
+	public static void letGo(ServerPlayer player, String why) {
+		Session s = SESSIONS.get(player.getUUID());
+		if (s != null && s.state == State.INHABITING) leaveBody(player, s, why);
+	}
+
+	/**
+	 * The person's body the soul is in is about to die (called instead of the soul's own death: CultivationEvents' ALLOW_DEATH):
+	 * given back, it dies as its owner's own death by the same blow (Possession#kill), and the soul is thrown out unharmed.
+	 */
+	public static void onBodyDying(ServerPlayer player, DamageSource source) {
+		Session s = SESSIONS.get(player.getUUID());
+		if (s == null || s.state != State.INHABITING) return;
+		LivingEntity body = Possession.bodyEntity(player);
+		UUID away = Possession.awayOwner(player); // its player logged out, the body held on: they die as they come back
+		leaveBody(player, s, ModLang.MSG_POSSESS_BODY_DIED);
+		if (body != null) Possession.kill(body, source, player);
+		else if (away != null) Possession.diedAway(player, away);
 	}
 
 	private static void possess(ServerPlayer player, Session s, Mob host) {
@@ -832,7 +995,7 @@ public final class SoulProjection {
 		level.playSound(null, host.blockPosition(), SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.2f, 0.7f);
 		level.sendParticles(VIOLET, host.getX(), host.getY() + host.getBbHeight() * 0.6, host.getZ(), 30, 0.3, 0.5, 0.3, 0.02);
 		player.displayClientMessage(Component.translatable(ModLang.MSG_POSSESS_START, host.getDisplayName()), true);
-		sendSelf(player, s, CultivationManager.get(player), 0, CultivationManager.get(player).soulTetherRadius());
+		sendSelf(player, s, CultivationManager.own(player), 0, CultivationManager.own(player).soulTetherRadius());
 	}
 
 	/** Each tick while possessing: the soul keeps to its host, and its host to the tether. */
@@ -845,7 +1008,7 @@ public final class SoulProjection {
 			s.weightless = false;
 			if (player.isPassenger()) player.stopRiding();
 			player.displayClientMessage(Component.translatable(ModLang.MSG_POSSESS_EJECTED), true);
-			sendSelf(player, s, CultivationManager.get(player), 0, radius);
+			sendSelf(player, s, CultivationManager.own(player), 0, radius);
 			return;
 		}
 		if (vehicle != host) { // let go (sneaking)
@@ -860,7 +1023,7 @@ public final class SoulProjection {
 		}
 	}
 
-	/** The soul leaves its host (a seized body collapses: nothing holds it up without a soul). */
+	/** The soul leaves the beast it rides (a body seized before true possession collapses: nothing holds it up without a soul). */
 	private static void release(ServerPlayer player, Session s, boolean pulled) {
 		Entity host = s.possessed == null ? null : player.serverLevel().getEntity(s.possessed);
 		s.possessed = null;
@@ -872,7 +1035,7 @@ public final class SoulProjection {
 		if (pulled && host != null) { // out where the host stood; the tether draws it back in next tick
 			player.connection.teleport(host.getX(), host.getY() + 0.5, host.getZ(), player.getYRot(), player.getXRot());
 		}
-		sendSelf(player, s, CultivationManager.get(player), 0, CultivationManager.get(player).soulTetherRadius());
+		sendSelf(player, s, CultivationManager.own(player), 0, CultivationManager.own(player).soulTetherRadius());
 	}
 
 	/**
@@ -1038,7 +1201,7 @@ public final class SoulProjection {
 	 * health, no penalty. The body itself removes itself (no soul claims it).
 	 */
 	public static void onJoin(ServerPlayer player) {
-		PlayerCultivation c = CultivationManager.get(player);
+		PlayerCultivation c = CultivationManager.own(player);
 		CompoundTag back = c.getSoulReturn();
 		if (c.isAbilityEnabled(Ability.SOUL_PROJECTION)) c.setAbilityEnabled(Ability.SOUL_PROJECTION, false);
 		c.setSoulState(State.NONE);
@@ -1055,12 +1218,13 @@ public final class SoulProjection {
 		if (back.hasUUID("Body") && level.getEntity(back.getUUID("Body")) instanceof SoulBodyEntity body) body.discard();
 	}
 
-	/** After any death: nothing of a soul session survives it. */
+	/** After any death: nothing of a soul session survives it (a body it was somehow still in is given back, as it is). */
 	public static void onDeath(ServerPlayer player) {
+		if (Possession.inhabits(player.getUUID())) Possession.leave(player);
 		Session s = SESSIONS.remove(player.getUUID());
 		ServerLevel level = s == null || s.dimension == null ? null : player.server.getLevel(s.dimension);
 		if (level != null && s.body != null && level.getEntity(s.body) instanceof SoulBodyEntity body) body.discard();
-		PlayerCultivation c = CultivationManager.get(player);
+		PlayerCultivation c = CultivationManager.own(player);
 		if (s != null && s.openedSense) c.setAbilityEnabled(Ability.QI_SENSE, false);
 		c.setSoulReturn(null);
 		setState(player, State.NONE);
@@ -1074,37 +1238,59 @@ public final class SoulProjection {
 
 	/** Records the soul's state (synced: the menu's switch, forced Qi Sense, the client's flight) and tells the player. */
 	private static void setState(ServerPlayer player, State state) {
-		PlayerCultivation c = CultivationManager.get(player);
+		PlayerCultivation c = CultivationManager.own(player);
 		c.setSoulState(state);
 		c.setAbilityEnabled(Ability.SOUL_PROJECTION, state != State.NONE);
 		CultivationManager.markDirty(player.server);
-		CultivationManager.sync(player);
+		CultivationManager.sync(player); // the body's record, while the soul is in one
 		Session s = SESSIONS.get(player.getUUID());
 		if (s == null) {
-			ModPackets.sendSoulSelf(player, State.NONE, 0, Vec3.ZERO, 0, 0, 0, -1, 0);
+			ModPackets.sendSoulSelf(player, State.NONE, 0, Vec3.ZERO, 0, 0, 0, -1, 0, 0, 0, false, true, false);
 			ModPackets.broadcastSoulGone(player);
 		} else {
 			sendSelf(player, s, c, 0, c.soulTetherRadius());
+			// Those who see souls see it at once as it is now: a soul, or (in a person's body) the veil over the body.
+			if (state != State.PROJECTING) broadcastSeen(player, s, c);
 		}
 		// Gathering to go out shows as sitting in meditation to those around.
 		ModPackets.broadcastMeditation(player, state == State.PROJECTING || MeditationManager.isMeditating(player.getUUID()));
 	}
 
+	/** The soul's own body, sitting where it was left (in its own realm, wherever a body the soul is in has carried it). */
+	private static Entity ownBody(ServerPlayer player, Session s) {
+		if (s.body == null) return null;
+		ServerLevel level = s.dimension == null ? player.serverLevel() : player.server.getLevel(s.dimension);
+		return level == null ? null : level.getEntity(s.body);
+	}
+
+	/** Whether the soul is in its own body's realm (a body it is in may have carried it to another). */
+	private static boolean inOwnRealm(ServerPlayer player, Session s) {
+		return s.dimension == null || player.level().dimension() == s.dimension;
+	}
+
 	private static void sendSelf(ServerPlayer player, Session s, PlayerCultivation c, double distance, int radius) {
-		Entity body = s.body == null ? null : player.serverLevel().getEntity(s.body);
+		Entity body = ownBody(player, s);
 		float health = body instanceof LivingEntity living ? living.getHealth() : 0;
 		float max = body instanceof LivingEntity living ? living.getMaxHealth() : 0;
 		Entity host = s.possessed == null ? null : player.serverLevel().getEntity(s.possessed);
+		// The soul's own pool (its path's), for its own bar under the body's while it is in a body whose qi is the body's.
+		TwoPaths.Path path = c.soulPath();
 		ModPackets.sendSoulSelf(player, s.state, s.ticks, s.bodyPos, radius, health, max, host == null ? -1 : host.getId(),
-				(float) (s.tether / tetherStrength(c)));
+				(float) (s.tether / tetherStrength(c)), (float) TwoPaths.pool(c, path), (float) TwoPaths.poolMax(c, path),
+				path == TwoPaths.Path.GHOST, inOwnRealm(player, s), Ability.SPATIAL_TEAR.isUnlocked(c));
 	}
 
-	/** Tells everyone who perceives the soul where its body is (for its tether), and which body it is in. */
+	/**
+	 * Tells everyone who perceives the soul where its body is (for its tether), which body it rides, and whether it is in a person's
+	 * body (for the violet veil they see over that body); the tether only in the soul's own body's realm (tether -1 elsewhere).
+	 */
 	private static void broadcastSeen(ServerPlayer player, Session s, PlayerCultivation c) {
 		Entity host = s.possessed == null ? null : player.serverLevel().getEntity(s.possessed);
+		boolean inside = s.state == State.INHABITING;
+		float tether = inOwnRealm(player, s) ? (float) (s.tether / tetherStrength(c)) : -1;
 		for (ServerPlayer viewer : player.serverLevel().players()) {
 			if (viewer == player || viewer.distanceToSqr(player) > SEEN_RANGE * SEEN_RANGE || !perceives(viewer)) continue;
-			ModPackets.sendSoulSeen(viewer, player, s.bodyPos, host == null ? -1 : host.getId(), (float) (s.tether / tetherStrength(c)));
+			ModPackets.sendSoulSeen(viewer, player, s.bodyPos, host == null ? -1 : host.getId(), tether, inside);
 		}
 	}
 
@@ -1123,7 +1309,7 @@ public final class SoulProjection {
 			if (ConsciousnessDomainHandler.center(other).distanceToSqr(soul.position().add(0, 1, 0)) > radius * radius) continue;
 			inside.add(other.getUUID());
 			// Those who see it (Qi Sense open, Nascent Soul and above) need no telling.
-			if (s.sensedBy.add(other.getUUID()) && !(c.isQiSenseOn() && c.getEffectiveRealm().canProjectSoul())) {
+			if (s.sensedBy.add(other.getUUID()) && !(c.isQiSenseOn() && TwoPaths.higherRank(c, true) >= PlayerCultivation.rank(Realm.NASCENT_SOUL, Stage.EARLY))) {
 				other.displayClientMessage(Component.translatable(ModLang.MSG_SOUL_SENSED), true);
 				other.playNotifySound(SoundEvents.AMETHYST_CLUSTER_STEP, SoundSource.PLAYERS, 1.0f, 0.5f);
 			}
@@ -1187,8 +1373,9 @@ public final class SoulProjection {
 	 * Called every tick by {@link QiManager}: the first time the nascent soul forms, the cultivator is told, and the ability is put
 	 * in the first empty slot of their wheel.
 	 */
-	static void announce(ServerPlayer player, PlayerCultivation c) {
-		boolean awakened = !c.isMortal() && c.getRealm().canProjectSoul();
+	static void announce(ServerPlayer player, PlayerCultivation body) {
+		PlayerCultivation c = CultivationManager.own(player); // the soul's own (not a body it is in, nor a held one's seal)
+		boolean awakened = !c.isMortal() && TwoPaths.awakens(c, Realm.NASCENT_SOUL, false) != null; // on either path
 		Boolean before = AWAKENED.put(player.getUUID(), awakened);
 		if (!awakened || !Boolean.FALSE.equals(before)) return;
 		player.sendSystemMessage(Component.translatable(ModLang.MSG_SOUL_GAINED));

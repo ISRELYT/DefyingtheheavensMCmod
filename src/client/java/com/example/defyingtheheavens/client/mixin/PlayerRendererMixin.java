@@ -29,6 +29,14 @@ public abstract class PlayerRendererMixin {
 		ci.cancel();
 	}
 
+	/** A player in an NPC cultivator's body (Possession) carries that NPC's plate over their head, not a name tag (ClientBodies). */
+	@Inject(method = "renderNameTag(Lnet/minecraft/client/player/AbstractClientPlayer;Lnet/minecraft/network/chat/Component;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
+			at = @At("HEAD"), cancellable = true)
+	private void dth$theNpcsPlate(AbstractClientPlayer player, net.minecraft.network.chat.Component name, PoseStack pose, MultiBufferSource buffers,
+								  int light, CallbackInfo ci) {
+		if (com.example.defyingtheheavens.client.ClientBodies.drawPlate(player, pose, buffers, light)) ci.cancel();
+	}
+
 	/** The spells' auras on your own arm in first person (SpellAuraLayer#firstPersonArm): Flame Fist's fire, a ward's skin. */
 	@Inject(method = "renderHand", at = @At("TAIL"))
 	private void dth$spellAurasOnHand(PoseStack pose, MultiBufferSource buffers, int light, AbstractClientPlayer player, ModelPart arm,

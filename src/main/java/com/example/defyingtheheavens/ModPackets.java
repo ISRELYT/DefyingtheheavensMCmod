@@ -76,6 +76,7 @@ public final class ModPackets {
 	 * the body's health and maximum, the possessed being's entity id (-1 for none) and the tether's remaining strength (0-1).
 	 */
 	public static final ResourceLocation SOUL_SELF = new ResourceLocation(DefyingTheHeavens.MOD_ID, "soul_self");
+	public static final ResourceLocation BODY_LOOK = new ResourceLocation(DefyingTheHeavens.MOD_ID, "body_look");
 	/**
 	 * S2C: a soul someone perceives: its entity id, whether it is still out, where its body sits, the being it possesses (-1) and
 	 * its tether's strength. Repeated twice a second while it stays out; clients forget it without.
@@ -300,7 +301,8 @@ public final class ModPackets {
 	}
 
 	public static void sendSoulSelf(ServerPlayer player, SoulProjection.State state, int ticks, Vec3 body, int radius, float bodyHealth,
-									float bodyMax, int hostId, float tether) {
+									float bodyMax, int hostId, float tether, float ownQi, float ownMax, boolean ghostPool, boolean bodyHere,
+									boolean soulTears) {
 		FriendlyByteBuf buf = PacketByteBufs.create();
 		buf.writeVarInt(state.ordinal());
 		buf.writeVarInt(Math.max(0, ticks));
@@ -312,21 +314,57 @@ public final class ModPackets {
 		buf.writeFloat(bodyMax);
 		buf.writeVarInt(hostId + 1);
 		buf.writeFloat(tether);
+		buf.writeFloat(ownQi);
+		buf.writeFloat(ownMax);
+		buf.writeBoolean(ghostPool);
+		buf.writeBoolean(bodyHere);
+		buf.writeBoolean(soulTears);
 		ServerPlayNetworking.send(player, SOUL_SELF, buf);
 	}
 
-	public static void sendSoulSeen(ServerPlayer to, ServerPlayer soul, Vec3 body, int hostId, float tether) {
-		ServerPlayNetworking.send(to, SOUL_SEEN, soulSeenBuf(soul, true, body, hostId, tether));
+	/**
+	 * Whose look {@code soul} wears now (Possession), to everyone in its world: another player's ({@code player}: their skin, cape
+	 * and {@code name}; their profile's {@code textures}, for clients that don't have them in the list, while they're away), an NPC
+	 * cultivator's (by its entity, {@code npcId}: its skin and nameplate), or ({@code player} null and {@code npcId} -1) its own
+	 * again. Told again each second while it lasts, and forgotten by clients that stop hearing it.
+	 */
+	public static void broadcastBodyLook(ServerPlayer soul, java.util.UUID player, Component name, com.mojang.authlib.properties.Property textures,
+										 int npcId) {
+		for (ServerPlayer other : soul.serverLevel().players()) {
+			FriendlyByteBuf buf = PacketByteBufs.create();
+			buf.writeVarInt(soul.getId());
+			buf.writeByte(player != null ? 1 : npcId >= 0 ? 2 : 0);
+			if (player != null) {
+				buf.writeUUID(player);
+				buf.writeComponent(name == null ? Component.empty() : name);
+				buf.writeBoolean(textures != null);
+				if (textures != null) {
+					buf.writeUtf(textures.getValue());
+					buf.writeNullable(textures.getSignature(), FriendlyByteBuf::writeUtf);
+				}
+			} else if (npcId >= 0) {
+				buf.writeVarInt(npcId);
+			}
+			ServerPlayNetworking.send(other, BODY_LOOK, buf);
+		}
+	}
+
+	/**
+	 * A soul {@code to} perceives: its body's place (for the tether; {@code tether} -1: none to draw, its body in another realm), the
+	 * beast it rides, and ({@code inside}) whether it is in a person's body (Possession: drawn as a violet veil over that body).
+	 */
+	public static void sendSoulSeen(ServerPlayer to, ServerPlayer soul, Vec3 body, int hostId, float tether, boolean inside) {
+		ServerPlayNetworking.send(to, SOUL_SEEN, soulSeenBuf(soul, true, body, hostId, tether, inside));
 	}
 
 	/** The soul is home (or gone): everyone who might have been drawing it forgets it. */
 	public static void broadcastSoulGone(ServerPlayer soul) {
 		for (ServerPlayer other : soul.serverLevel().players()) {
-			if (other != soul) ServerPlayNetworking.send(other, SOUL_SEEN, soulSeenBuf(soul, false, Vec3.ZERO, -1, 0));
+			if (other != soul) ServerPlayNetworking.send(other, SOUL_SEEN, soulSeenBuf(soul, false, Vec3.ZERO, -1, 0, false));
 		}
 	}
 
-	private static FriendlyByteBuf soulSeenBuf(ServerPlayer soul, boolean out, Vec3 body, int hostId, float tether) {
+	private static FriendlyByteBuf soulSeenBuf(ServerPlayer soul, boolean out, Vec3 body, int hostId, float tether, boolean inside) {
 		FriendlyByteBuf buf = PacketByteBufs.create();
 		buf.writeVarInt(soul.getId());
 		buf.writeBoolean(out);
@@ -335,6 +373,7 @@ public final class ModPackets {
 		buf.writeDouble(body.z);
 		buf.writeVarInt(hostId + 1);
 		buf.writeFloat(tether);
+		buf.writeBoolean(inside);
 		return buf;
 	}
 
@@ -656,7 +695,7 @@ public final class ModPackets {
 	public static void sendConsciousnessAlert(ServerPlayer to, ServerPlayer other, PlayerCultivation otherCultivation) {
 		FriendlyByteBuf buf = PacketByteBufs.create();
 		buf.writeVarInt(other.getId());
-		buf.writeUtf(other.getGameProfile().getName());
+		buf.writeUtf(other.getDisplayName().getString()); // a soul in another's body goes by that body's name (Possession)
 		buf.writeVarInt(otherCultivation.getEffectiveRealm().ordinal());
 		buf.writeVarInt(otherCultivation.getEffectiveStage().ordinal());
 		ServerPlayNetworking.send(to, CONSCIOUSNESS_ALERT, buf);

@@ -238,7 +238,8 @@ public final class SpatialTrialHandler {
 
 	private static boolean canEnter(ServerPlayer player) {
 		if (player == null || !player.isAlive() || player.isSpectator() || player.getServer() == null) return false;
-		if (SoulProjection.isActive(player.getUUID())) return false; // a soul is bound to its body's realm
+		// A soul is bound to its body's realm, unless a person's body it is in carries it (Possession).
+		if (SoulProjection.isAwayFromBody(player.getUUID())) return false;
 		if (Incorporeal.isRuledGhost(player)) return false; // nor do the dead take a rift
 		return !ACTIVE.containsKey(player.getUUID());
 	}
@@ -281,8 +282,8 @@ public final class SpatialTrialHandler {
 	 * they, and anyone else, walk through ({@link #walkInto}). From the Overworld or the Upper Realm it leads into the gap's shallows
 	 * where the gap's place for it lies (a {@link #GAP_SCALE}th of the way); from inside the gap (by one's own tear or not), out
 	 * again into the realm its opener came from ({@link #homeRealm}, never the other one), where the gap's place leads there.
-	 * Heavenly Being and above, for qi ({@link #TEAR_IN_QI}, {@link #TEAR_OUT_QI} of the pool), {@link #TEAR_COOLDOWN} between
-	 * tears; a new one closes the last.
+	 * Heavenly Being and above on either path, for that path's pool ({@link #TEAR_IN_QI}, {@link #TEAR_OUT_QI} of it: qi, or the
+	 * ghost path's ghost qi), {@link #TEAR_COOLDOWN} between tears; a new one closes the last.
 	 */
 	public static void tear(ServerPlayer p) {
 		PlayerCultivation c = CultivationManager.get(p);
@@ -303,14 +304,21 @@ public final class SpatialTrialHandler {
 			p.displayClientMessage(Component.translatable(ModLang.MSG_TEAR_NOT_HERE), true);
 			return;
 		}
-		if (SoulProjection.isActive(p.getUUID()) || InnerRealm.isInside(p) || TribulationManager.isActive(p.getUUID())
+		// A soul in a person's body tears space with that body's own tear, if it has one (Possession; the user's ask, 2026-10-18).
+		if (SoulProjection.isAwayFromBody(p.getUUID()) || InnerRealm.isInside(p) || TribulationManager.isActive(p.getUUID())
 				|| CoreDetonation.isCharging(p.getUUID())) {
 			p.displayClientMessage(Component.translatable(ModLang.MSG_SOUL_BUSY), true);
 			return;
 		}
-		double cost = c.maxQi() * (out ? TEAR_OUT_QI : TEAR_IN_QI);
-		if (!p.getAbilities().instabuild && !c.consumeQi(cost)) {
-			p.displayClientMessage(Component.translatable(ModLang.MSG_TEAR_NO_QI, Math.round(cost)), true);
+		// Paid from the pool of the path that awakened the tear (TwoPaths#awakens): the qi, or the ghost qi. A soul in a body that can't
+		// tear space tears it with its own, from its own pool (Possession#soulTears).
+		PlayerCultivation payer = Ability.SPATIAL_TEAR.awakenedBy(c) == null && Possession.inhabits(p.getUUID()) ? CultivationManager.own(p) : c;
+		TwoPaths.Path path = Ability.SPATIAL_TEAR.awakenedBy(payer);
+		if (path == null) path = TwoPaths.Path.HEAVEN;
+		double cost = TwoPaths.poolMax(payer, path) * (out ? TEAR_OUT_QI : TEAR_IN_QI);
+		if (!p.getAbilities().instabuild && !TwoPaths.spend(payer, path, cost)) {
+			p.displayClientMessage(Component.translatable(path == TwoPaths.Path.GHOST ? ModLang.MSG_TEAR_NO_GHOST_QI : ModLang.MSG_TEAR_NO_QI,
+					Math.round(cost)), true);
 			return;
 		}
 		LAST_TEAR.put(p.getUUID(), now);
@@ -407,7 +415,8 @@ public final class SpatialTrialHandler {
 	 * on their way out already don't pass.
 	 */
 	private static void walkInto(MinecraftServer server, ServerPlayer walker, Tear tear) {
-		if (!walker.isAlive() || walker.isSpectator() || SoulProjection.isActive(walker.getUUID()) || Incorporeal.isRuledGhost(walker) || isHeld(walker.getUUID())) return;
+		if (!walker.isAlive() || walker.isSpectator() || SoulProjection.isAwayFromBody(walker.getUUID()) || Incorporeal.isRuledGhost(walker)
+				|| isHeld(walker.getUUID())) return;
 		if (tear.out()) {
 			if (!ModDimensions.isSpatialGap(walker.level().dimension())) return;
 			leaveWhenReady(server, walker, tear.to(), tear.at().x * tear.scale(), tear.at().z * tear.scale(), Way.TEAR);

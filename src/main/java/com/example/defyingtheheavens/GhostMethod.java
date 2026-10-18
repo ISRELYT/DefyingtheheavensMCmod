@@ -26,7 +26,7 @@ import net.minecraft.util.StringRepresentable;
  *   <li>Ghost Fire Scripture (鬼火经), offence: a ghost's blows harder; Ghost Fire at the first layer, Ghost Fire Bolt at the
  *       fourth, the fire leaping to a second foe at the seventh.</li>
  *   <li>Wandering Soul Steps (游魂步), movement: a ghost swifter; Yin Wind Steps at the first layer, Soul Dash at the second,
- *       a ghost's own flight at the fourth.</li>
+ *       and from the fourth the free flight of the dead and of a Ghost King's form swifter (QiFlight#freeSpeed).</li>
  * </ul>
  * How often a method's stele turns up, against the others': {@link #steleWeight} across the Netherworld, {@link #peakWeight} on
  * the Nine Nether Peaks, where alone the deepest foundations are carved (MethodSteleFeature).

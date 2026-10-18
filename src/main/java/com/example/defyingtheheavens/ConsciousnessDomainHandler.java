@@ -173,6 +173,7 @@ public final class ConsciousnessDomainHandler {
 				cultivators.add(new SensedCultivator(player.getId(), c.getEffectiveRealm(), c.getEffectiveStage(), c.isUnderPressure()));
 			} else if (entity instanceof CultivatorEntity npc) {
 				if (npc.isConcealed()) continue; // a Concealment Barrier masks it
+				if (npc instanceof CultivatorNpc set && set.isVacant()) continue; // set aside, unseen, while a soul uses its body (Possession)
 				cultivators.add(new SensedCultivator(entity.getId(), npc.getDisplayedRealm(), npc.getDisplayedStage(),
 						RealmSuppressSystem.isPressed(entity)));
 			}
