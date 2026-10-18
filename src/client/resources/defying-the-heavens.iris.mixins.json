@@ -1,0 +1,13 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.example.defyingtheheavens.client.compat.mixin",
+  "plugin": "com.example.defyingtheheavens.client.compat.IrisMixinPlugin",
+  "compatibilityLevel": "JAVA_17",
+  "client": [
+    "IrisDimensionMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

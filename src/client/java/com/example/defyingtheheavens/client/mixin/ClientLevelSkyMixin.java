@@ -10,9 +10,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(ClientLevel.class)
 public abstract class ClientLevelSkyMixin {
+	/** A tribulation darkens the sky; and a shader pack, painting its sky from this colour, is given the realm's tint (ShaderPacks). */
 	@Inject(method = "getSkyColor", at = @At("RETURN"), cancellable = true)
 	private void dth$tribulationSky(Vec3 position, float partialTick, CallbackInfoReturnable<Vec3> cir) {
-		cir.setReturnValue(TribulationAtmosphere.tint(cir.getReturnValue(), partialTick));
+		Vec3 sky = TribulationAtmosphere.tint(cir.getReturnValue(), partialTick);
+		cir.setReturnValue(com.example.defyingtheheavens.client.compat.ShaderPacks.skyColour((ClientLevel) (Object) this, sky));
 	}
 
 	@Inject(method = "getCloudColor", at = @At("RETURN"), cancellable = true)

@@ -158,6 +158,8 @@ public class VoidVestige extends Monster {
 		if (biteCooldown > 0) biteCooldown--;
 		if (lungeTicks > 0) lungeTicks--;
 
+		// One gone from space (down to a planet, home, or out of the game) is let go at once, not hunted on till its next look.
+		if (prey != null && !huntable(prey)) prey = null;
 		if (prey == null || tickCount % 10 == 0) choosePrey(server, planets);
 		Vec3 pos = position().add(0, getBbHeight() / 2, 0);
 		double max = maxSpeed();
@@ -223,7 +225,7 @@ public class VoidVestige extends Monster {
 		ServerPlayer best = null;
 		double bestDistance = HUNT_RANGE * HUNT_RANGE;
 		for (ServerPlayer player : server.players()) {
-			if (!player.isAlive() || player.isCreative() || player.isSpectator()) continue;
+			if (!huntable(player)) continue;
 			if (planets.atmosphereAt(player.position(), AIR_MARGIN * 0.5) != null) continue;
 			double d = player.distanceToSqr(this);
 			// It keeps to the prey it has, unless another is much nearer.
@@ -236,6 +238,11 @@ public class VoidVestige extends Monster {
 		if (best != prey) lastPreyPos = null;
 		prey = best;
 		setTarget(best);
+	}
+
+	/** Here in space with it, alive, and neither creative nor a spectator. */
+	private boolean huntable(ServerPlayer player) {
+		return player.isAlive() && !player.isRemoved() && player.level() == level() && !player.isCreative() && !player.isSpectator();
 	}
 
 	/** Its jaws within reach of {@code target}: its head's reach out from its hitbox. */

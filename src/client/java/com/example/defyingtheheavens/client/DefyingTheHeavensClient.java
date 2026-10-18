@@ -148,6 +148,9 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		// Sword Flight: the sword under each rider's feet, and the trail of light behind it.
 		WorldRenderEvents.AFTER_ENTITIES.register(SwordFlightClient::renderSwords);
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(SwordFlightClient::renderTrails);
+		// Under a shader pack, the realm's own sky laid over the pack's where the sky is all the mod's (space, the dead's).
+		SkyLayer.register();
+		WorldRenderEvents.END.register(SkyLayer::onWorldEnd);
 		// Qi motes and consciousness domains, on the layer Qi Sense's monochrome leaves in colour.
 		WorldRenderEvents.END.register(SenseOverlay::onWorldEnd);
 		QiSenseTreasures.register();

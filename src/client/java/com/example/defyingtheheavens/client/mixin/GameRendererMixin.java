@@ -13,14 +13,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * Qi Sense's monochrome and the senses' overlay, once the world and hand are drawn: just before vanilla lays the entity
- * outlines over the frame, so the Consciousness Domain's outlines keep their colour. And the view warped by the Chief Judge's
- * gaze on the Soul River (ClientJudgeGaze).
+ * Under a shader pack, the realm's own sky laid over the pack's (SkyLayer); then Qi Sense's monochrome and the senses' overlay,
+ * once the world and hand are drawn: just before vanilla lays the entity outlines over the frame, so the Consciousness Domain's
+ * outlines keep their colour. And the view warped by the Chief Judge's gaze on the Soul River (ClientJudgeGaze).
  */
 @Mixin(GameRenderer.class)
 public abstract class GameRendererMixin {
 	@Inject(method = "render(FJZ)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;doEntityOutline()V"))
 	private void dth$senses(float partialTicks, long nanoTime, boolean renderLevel, CallbackInfo ci) {
+		com.example.defyingtheheavens.client.SkyLayer.composite();
 		SenseOverlay.beforeEntityOutline(partialTicks);
 	}
 

@@ -6,6 +6,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.block.state.BlockState;
@@ -44,7 +45,10 @@ public class HermitSites extends SavedData {
 	/** Below this a cave is the deep dark's, and above this (open sky) a mountain is high enough to seclude oneself on. */
 	private static final int DEEPEST = 0;
 	private static final int MOUNTAIN = 110;
-	/** A hermit is only seated with no player this close to its chunk (sideways or not), so none appears before anyone's eyes. */
+	/**
+	 * A hermit is only seated with no player this close to its chunk, sideways (one high on its mountain, or down in its cave, is
+	 * as near as one beside it), so none appears before anyone's eyes.
+	 */
 	private static final double UNSEEN = 80;
 
 	/** A region left empty gets a new hermit this long (ticks: two weeks of game days) after its last one left. */
@@ -109,7 +113,7 @@ public class HermitSites extends SavedData {
 			}
 			if (!aroundLoaded(level, chunk)) continue;
 			// Nobody close enough to see one appear: it waits (pending) until they have gone.
-			if (level.getNearestPlayer(chunk.getMiddleBlockX(), 64, chunk.getMiddleBlockZ(), UNSEEN, false) != null) continue;
+			if (watched(level, chunk)) continue;
 			// Nor while a sect may yet be founded near by (its site not looked at yet): it waits until that is settled.
 			if (SectSites.unsettled(level, chunk.getMiddleBlockPosition(64), NpcSpawner.SECT_CLEARANCE + NpcSpawner.UNFOUNDED_GROUNDS)) continue;
 			it.remove();
@@ -157,6 +161,19 @@ public class HermitSites extends SavedData {
 	/** Whether region {@code key} has been decided (has its hermit, or is known to have none) (for tests). */
 	static boolean isDecided(MinecraftServer server, long key) {
 		return get(server).decided.contains(key);
+	}
+
+	/**
+	 * Someone within {@link #UNSEEN} of {@code chunk}'s middle, sideways. (Measured from a point at height 64 as it was, one on a
+	 * mountaintop beside the site stood too far off, and saw its hermit appear.)
+	 */
+	private static boolean watched(ServerLevel level, ChunkPos chunk) {
+		for (ServerPlayer player : level.players()) {
+			if (player.isSpectator()) continue;
+			double dx = player.getX() - chunk.getMiddleBlockX(), dz = player.getZ() - chunk.getMiddleBlockZ();
+			if (dx * dx + dz * dz < UNSEEN * UNSEEN) return true;
+		}
+		return false;
 	}
 
 	private static boolean aroundLoaded(ServerLevel level, ChunkPos chunk) {

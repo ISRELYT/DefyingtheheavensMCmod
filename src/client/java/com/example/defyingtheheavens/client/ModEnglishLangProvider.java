@@ -1070,6 +1070,10 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add("cultivation.defying-the-heavens.talk.line.ask.righteous.far_below", "Whatever Senior wishes to know, this one will answer.");
 		t.add("cultivation.defying-the-heavens.talk.line.ask.righteous.mortal", "Ask, then. Briefly.");
 		t.add("cultivation.defying-the-heavens.talk.line.ask.righteous.peer", "Ask, fellow Daoist. I'll answer what I can.");
+		t.add("cultivation.defying-the-heavens.talk.line.gift.enough.commoner", "You've given me plenty today, Immortal. Keep it.");
+		t.add("cultivation.defying-the-heavens.talk.line.gift.enough.demonic", "Again? Keep your trinkets.");
+		t.add("cultivation.defying-the-heavens.talk.line.gift.enough.neutral", "You've given me enough of those today.");
+		t.add("cultivation.defying-the-heavens.talk.line.gift.enough.righteous", "You are too generous. Keep it, friend.");
 		t.add("cultivation.defying-the-heavens.talk.line.gift.good.commoner", "This is too much, Immortal. Thank you!");
 		t.add("cultivation.defying-the-heavens.talk.line.gift.good.demonic", "Now this is a proper gift.");
 		t.add("cultivation.defying-the-heavens.talk.line.gift.good.neutral", "Useful. My thanks.");

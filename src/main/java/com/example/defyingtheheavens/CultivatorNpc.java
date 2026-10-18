@@ -1188,7 +1188,10 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		return lifecycle == Lifecycle.SECT && getTitle().isElderOrAbove();
 	}
 
-	/** A player's or NPC's rank as cultivators weigh each other ({@link #MORTAL} for mortals and creative players). */
+	/**
+	 * A player's or NPC's rank as cultivators weigh each other ({@link #MORTAL} for mortals, and for a cultivator hidden behind its
+	 * Concealment Barrier). Creative players keep their rank; who may take them for an enemy is decided elsewhere (isEnemy).
+	 */
 	public static int rankOf(LivingEntity entity) {
 		if (entity instanceof ServerPlayer player) {
 			PlayerCultivation c = CultivationManager.get(player);

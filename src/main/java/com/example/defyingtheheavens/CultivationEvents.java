@@ -123,6 +123,7 @@ public final class CultivationEvents {
 			Spells.clear();
 			CoreDetonation.clear();
 			SectMembership.clear();
+			TalkSystem.clearTrials();
 			SpatialTrialHandler.clear();
 		});
 

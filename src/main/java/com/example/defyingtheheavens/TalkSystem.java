@@ -386,10 +386,14 @@ public final class TalkSystem {
 		return 0;
 	}
 
-	/** How much regard {@code worth} buys from a cultivator of {@code realm} (mortals: as the first realm). */
+	/**
+	 * How much regard {@code worth} buys from a cultivator of {@code realm} (mortals: as the first realm), given as the
+	 * {@code repeats}+1th of its kind today. The first of a kind each day always counts for something; the same again can come
+	 * to nothing (the user's call, 2026-10-18: at +1 apiece, sixty Low Spirit Stones handed over one by one made anyone Warm).
+	 */
 	public static int giftRegard(double worth, int realm, int repeats) {
 		double scaled = worth * 6.0 / (6.0 + 3.0 * Math.max(0, realm)) / (1 + repeats);
-		return Mth.clamp((int) Math.round(scaled), 1, Regard.GIFT_MAX);
+		return Mth.clamp((int) Math.round(scaled), repeats == 0 ? 1 : 0, Regard.GIFT_MAX);
 	}
 
 	private static void gift(ServerPlayer player, CultivatorNpc npc) {
@@ -408,9 +412,14 @@ public final class TalkSystem {
 		String item = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
 		// Counted per item, so turning between two gifts doesn't make each fresh again.
 		int repeats = entry.giftsToday(item, today);
-		entry.recordGift(item, today);
 		int realm = npc.isMortal() ? 0 : CultivatorNpc.realmOf(npc.getRank()).ordinal();
 		int delta = giftRegard(worth, realm, repeats);
+		if (delta <= 0) {
+			// Worth nothing more to them today: they hand it back rather than take it for nothing.
+			say(player, npc, line("gift.enough", npc), 0);
+			return;
+		}
+		entry.recordGift(item, today);
 		if (!player.getAbilities().instabuild) stack.shrink(1);
 		npc.changeRegard(player, delta);
 		say(player, npc, line(delta <= 3 ? "gift.small" : delta <= 10 ? "gift.good" : "gift.great", npc), delta);
@@ -545,6 +554,11 @@ public final class TalkSystem {
 	private static final java.util.Map<UUID, java.util.Map<UUID, Long>> TRIAL_SET = new java.util.HashMap<>();
 	/** How long an elder's offer of the trial stands. */
 	private static final long TRIAL_OFFER_TICKS = 5 * 60 * 20;
+
+	/** Server stopped: the offers of the trial still standing go with it. */
+	public static void clearTrials() {
+		TRIAL_SET.clear();
+	}
 
 	private static boolean trialSet(ServerPlayer player, CultivatorNpc npc) {
 		Long until = TRIAL_SET.getOrDefault(player.getUUID(), java.util.Map.of()).get(npc.getUUID());

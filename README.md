@@ -929,8 +929,9 @@ Code: `SoulProjection.java` (the rules: going out and back, the tether, qi, harm
 `SoulServerPlayerMixin` (only perceivers are sent it), `SoulProjectileMixin`; client `ClientSoul.java` (its flight, the
 tether's pull, striking tethers), `SoulRenderer.java` with core shader `shaders/core/soul.*` (drawn on the sense layer so it
 keeps its colour under Qi Sense), `SoulHud.java`, `SoulBodyRenderer` / `SoulVesselRenderer`, client mixins `SoulFlightMixin`,
-`SoulInputMixin`, `SoulRenderDispatcherMixin`; tests in `SoulProjectionGameTests`. Shader packs that replace core shaders
-(Iris) fall back to a plain violet translucent soul.
+`SoulInputMixin`, `SoulRenderDispatcherMixin`; tests in `SoulProjectionGameTests`. Resource packs that replace core shaders
+fall back to a plain violet translucent soul; under an Iris shader pack souls and ghosts are drawn as ever (the sense layer
+comes after the pack's own passes), and a ghost's own first-person hand as flat glowing cyan (`compat/ShaderPacks`).
 
 ## Golden Core Detonation
 
@@ -1098,6 +1099,9 @@ Code: `HighRealm` (what the two high realms share), `ModDimensions` (`netherworl
 client `NetherworldClient`, `NetherworldSkyRenderer`, `UpperRealmClient` (its fog). Tests in `NetherworldGameTests`,
 `NetherworldQiGameTests`, `NetherworldDeadGameTests`, `NetherworldMethodsGameTests`, `NetherworldInhabitantsGameTests`.
 
+**Shader packs.** Under an Iris shader pack the Netherworld is lit as the pack lights the Nether, and its own sky (ghost
+fires and aurora) is laid over the pack's: see Shader packs (Iris) below.
+
 ### Getting there: the Soul River
 
 The Nether's rift, the **Gate of the Yellow Springs**, stands at Nether 0, 0: placed on server start in an open pocket of
@@ -1245,7 +1249,7 @@ A ghost:
   Its tread makes no sound: no footsteps on any block, no splashing, no thud when it lands (on its own client as on
   everyone else's). Ghost cultivators and Hungry Ghosts walk as silently, and none of the dead is slowed by soul sand or
   soul soil (`SoulEntityMixin`). In first person its own hand is the same cyan
-  light; it swings its arm when it strikes, as the living do, and when it meditates it sits cross-legged, floating a
+  light (under a shader pack, a flat cyan glow); it swings its arm when it strikes, as the living do, and when it meditates it sits cross-legged, floating a
   quarter of a block off the ground.
 - has **half its living hearts**, plus a heart for every layer of its deepest foundation, and heals a heart every two seconds.
 - **flies**: the dead need no ground. Double-tap jump to fly, at a drift (60% of Qi Flight's speed, `QiFlight.GHOST_SPEED`),
@@ -2192,7 +2196,7 @@ window closes with a line over the hotbar saying why (`TalkSystem`, `TalkWheelSc
 | What you do | Regard |
 | --- | --- |
 | Greet them | +2, once a day |
-| Give them something (old herbs, pills, Cultivation Fruit, spirit stones; worth less to the stronger, and less each time the same kind of gift comes again that day) | +1 to +25 |
+| Give them something (old herbs, pills, Cultivation Fruit, spirit stones; worth less to the stronger, and less each time the same kind of gift comes again that day, until a trifle is worth nothing more and they hand it back) | +1 to +25 (the day's first of a kind); the same again can be 0 |
 | Win a spar | +8; +15 over a higher realm; +25 when they didn't hold back (once a day) |
 | Lose a spar | +3; -3 to someone a realm or more below you, or for walking off (once a day) |
 | Spare one who begs for their life | +10 (and +2 alignment) |
@@ -2326,6 +2330,28 @@ Sects and cultivators' off-screen journeys are saved in the Overworld's `data/de
 
 The Netherworld's own commands (`/netherworld`, `/method`) are listed under The Netherworld. Its Ghost Gate is remembered
 as built in the Netherworld's `data/defying-the-heavens_ghost_gate.dat`.
+
+## Shader packs (Iris)
+
+The mod runs with Iris shader packs (checked with Iris 1.7.6, Sodium 0.5.13 and Complementary Reimagined r5.9.3 at its
+highest settings). Iris is never required: everything below is looked up by name and does nothing without it.
+
+- **The realms' skies.** A pack draws the sky with its own programs and keeps nothing a realm's sky renderer draws, so in
+  space, the Netherworld, the Soul River and the Inner Realm the realm's own sky is drawn again into a layer of its own at the
+  end of the world's drawing and laid over the pack's finished frame wherever the world's depth shows open sky (`SkyLayer`,
+  core shader `sky_layer`): space keeps its nebulae, stars, suns and planets, the Netherworld its ghost fires and aurora. The
+  land stays the pack's, lit its way; Qi Sense greys the sky as before, and the senses' layer (souls, ghosts, motes) still goes
+  on top. The Spatial Gap keeps the pack's own sky (its haze and stars, with the gap's storms in it): its own near-black void
+  looked bare laid over a pack.
+- **The Netherworld's light.** A pack gives a dimension it doesn't know its Overworld programs (Complementary:
+  `dimension.world0=*`), an Overworld night of moonlight and clouds; the Netherworld is named the Nether to Iris instead
+  (`compat/mixin/IrisDimensionMixin`, its own optional mixin config `defying-the-heavens.iris.mixins.json`, applied only with
+  Iris), so it is lit as the Nether, by the fog's dark teal.
+- **The Upper Realm** keeps the pack's sky (its sun, clouds, shadows and day), which a pack paints from the sky's colour alone;
+  while a pack is on, that colour is turned toward the jade the realm's own sky shows (`compat/ShaderPacks#skyColour`).
+- **A ghost's own hand** in first person is drawn as a flat cyan glow (the pack discards the soul shader's draw in its hand
+  pass); ghosts and souls in the world are drawn as ever.
+- Planet surfaces in the Astral Realm keep the pack's own sky, day and night.
 
 ## License
 

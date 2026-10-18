@@ -16,6 +16,7 @@ import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * The Astral Realm's painted textures: each planet's face at the size it is seen (PlanetPainter, on two threads of their own, the
@@ -56,9 +57,15 @@ final class PlanetTextures {
 	/** Bumped when everything is let go (a new world), so paintings from before land nowhere. */
 	private static volatile int generation;
 	private static ResourceLocation nebula, starFace, glow;
-	private static long nebulaSeed;
-	private static volatile NativeImage nebulaImage;
+	/** The realm seed the nebula texture is of, and the one last asked for (painted, or painting now). */
+	private static long nebulaFor;
+	private static volatile long nebulaAskedFor;
 	private static boolean nebulaAsked;
+
+	/** A nebula painted, with the seed it is of: a painting for a world since left must never become the next one's sky. */
+	private record Painted(long seed, NativeImage image) {}
+
+	private static final AtomicReference<Painted> NEBULA_DONE = new AtomicReference<>();
 
 	/** A painting job, the one most needed first. */
 	private record Job(double priority, Runnable work) implements Runnable, Comparable<Job> {
@@ -105,20 +112,29 @@ final class PlanetTextures {
 
 	/** The nebula behind everything, for this realm's seed (painted on a painter thread; null until it's ready). */
 	static ResourceLocation nebula(long seed) {
-		if (nebula != null && nebulaSeed == seed) return nebula;
-		NativeImage ready = nebulaImage;
-		if (ready != null && nebulaSeed == seed) {
-			nebulaImage = null;
-			if (nebula != null) Minecraft.getInstance().getTextureManager().release(nebula);
-			nebula = register("astral/nebula_" + Long.toHexString(seed), ready);
-			return nebula;
+		if (nebula != null && nebulaFor == seed) return nebula;
+		Painted ready = NEBULA_DONE.getAndSet(null);
+		if (ready != null) {
+			if (ready.seed() == seed) {
+				if (nebula != null) Minecraft.getInstance().getTextureManager().release(nebula);
+				nebula = register("astral/nebula_" + Long.toHexString(seed), ready.image());
+				nebulaFor = seed;
+				return nebula;
+			}
+			ready.image().close(); // painted for another realm (a world left while it was painting)
 		}
-		if (!nebulaAsked || nebulaSeed != seed) {
+		if (!nebulaAsked || nebulaAskedFor != seed) {
 			nebulaAsked = true;
-			nebulaSeed = seed;
+			nebulaAskedFor = seed;
 			PAINTERS.execute(new Job(2e6, () -> {
 				try {
-					nebulaImage = PlanetPainter.nebula(seed, 2048);
+					NativeImage image = PlanetPainter.nebula(seed, 2048);
+					if (seed != nebulaAskedFor) {
+						image.close();
+						return;
+					}
+					Painted old = NEBULA_DONE.getAndSet(new Painted(seed, image));
+					if (old != null) old.image().close();
 				} catch (Throwable t) {
 					DefyingTheHeavens.LOGGER.error("Painting the nebula failed", t);
 				}
@@ -206,9 +222,8 @@ final class PlanetTextures {
 		if (nebula != null) textures.release(nebula);
 		nebula = null;
 		nebulaAsked = false;
-		NativeImage pending = nebulaImage;
-		nebulaImage = null;
-		if (pending != null) pending.close();
+		Painted pending = NEBULA_DONE.getAndSet(null);
+		if (pending != null) pending.image().close();
 	}
 
 	private PlanetTextures() {}

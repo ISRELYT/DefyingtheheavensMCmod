@@ -154,6 +154,7 @@ public final class AstralPlanets {
 				addPlanet(planets, star, orbit, here);
 			}
 		}
+		settle(stars, planets);
 		this.stars = Collections.unmodifiableList(stars);
 		this.planets = Collections.unmodifiableList(planets);
 	}
@@ -206,6 +207,60 @@ public final class AstralPlanets {
 			if (at.distanceTo(other.pos()) < air + other.atmosphere()) return false;
 		}
 		return true;
+	}
+
+	/**
+	 * Systems lie near enough that a planet far out from its own star can stray into a neighbour's heat (even its body), or its
+	 * air into another system's planet's: some nine to eighteen planets in every world (found 2026-10-18), for {@link #clear} only
+	 * minds a planet's own system. Each such planet is moved, its moons with it, straight out from that star (or planet) until it
+	 * is as clear as {@link #clear} keeps the rest. Nothing is drawn from the random here, so no other planet changes, nor any
+	 * planet's land.
+	 */
+	private void settle(List<Star> stars, List<Planet> planets) {
+		for (int pass = 0; pass < 6; pass++) {
+			boolean moved = false;
+			for (int root = 0; root < planets.size(); root++) {
+				if (planets.get(root).parent() >= 0) continue;
+				int end = root + 1;
+				while (end < planets.size() && planets.get(end).parent() == root) end++;
+				Vec3 push = Vec3.ZERO;
+				for (int i = root; i < end; i++) {
+					Planet p = planets.get(i);
+					for (Star star : stars) push = away(push, p.pos(), star.pos(), star.radius() * AstralRealm.STAR_HEAT + p.atmosphere() + 150);
+					push = away(push, p.pos(), overworld.pos(), overworld.atmosphere() + p.atmosphere() + 150);
+					// The planets placed before it stay; it moves off them (one placed after moves off it in turn).
+					for (int j = 0; j < root; j++) {
+						Planet other = planets.get(j);
+						push = away(push, p.pos(), other.pos(), other.atmosphere() + p.atmosphere() + 150);
+					}
+				}
+				if (push.lengthSqr() < 1e-6) continue;
+				// Never past space's floor or ceiling.
+				for (int i = root; i < end; i++) {
+					Planet p = planets.get(i);
+					double y = p.pos().y + push.y, low = SPACE_FLOOR + 100 + p.atmosphere(), high = SPACE_CEILING - 100 - p.atmosphere();
+					if (y < low) push = new Vec3(push.x, low - p.pos().y, push.z);
+					else if (y > high) push = new Vec3(push.x, high - p.pos().y, push.z);
+				}
+				for (int i = root; i < end; i++) {
+					Planet p = planets.get(i);
+					planets.set(i, new Planet(p.index(), p.system(), p.parent(), p.kind(), p.pos().add(push), p.radius(), p.qi(), p.seed(), p.rings(), p.name()));
+				}
+				moved = true;
+			}
+			if (!moved) return;
+		}
+	}
+
+	/** {@code push}, lengthened if need be so that {@code at} moved by it lies {@code clearance} from {@code from}: straight away from it. */
+	private static Vec3 away(Vec3 push, Vec3 at, Vec3 from, double clearance) {
+		double dx = at.x + push.x - from.x, dy = at.y + push.y - from.y, dz = at.z + push.z - from.z;
+		if (Math.abs(dx) >= clearance || Math.abs(dz) >= clearance || Math.abs(dy) >= clearance) return push;
+		double d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+		if (d >= clearance) return push;
+		if (d < 1e-6) return push.add(clearance, 0, 0);
+		double grow = (clearance - d) / d;
+		return push.add(dx * grow, dy * grow, dz * grow);
 	}
 
 	private static double qiFor(Kind kind, RandomSource random) {

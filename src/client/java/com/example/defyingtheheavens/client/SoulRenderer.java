@@ -277,13 +277,24 @@ public final class SoulRenderer {
 		else if (clarity < 1) drawMist(context, soul, clarity, partial, SOUL_MIST, scale);
 	}
 
+	/** Plain white, for a ghost's arm drawn as flat light under a shader pack (see #drawGhostArm). */
+	private static final ResourceLocation WHITE = new ResourceLocation("minecraft", "textures/misc/white.png");
+
 	/**
 	 * A ghost's own arm in first person (PlayerRendererMixin, the model already posed for it): the dead's cyan light with its
-	 * glow, as everyone else sees the ghost. Without the shader, the skin tinted cyan and faded.
+	 * glow, as everyone else sees the ghost. Without the shader, the skin tinted cyan and faded. Under a shader pack, which draws
+	 * the hand in its own pass and keeps nothing the soul shader draws there (ShaderPacks): the dead's cyan, through a glowing
+	 * render type the pack knows, at full light, flat (the skin tinted came out the skin's own greens and browns, not the light
+	 * the dead are drawn as).
 	 */
 	public static void drawGhostArm(PoseStack pose, MultiBufferSource buffers, ResourceLocation skin, ModelPart arm, ModelPart sleeve, int light) {
 		arm.xRot = 0;
 		sleeve.xRot = 0;
+		if (com.example.defyingtheheavens.client.compat.ShaderPacks.inUse()) {
+			VertexConsumer glow = buffers.getBuffer(RenderType.entityTranslucentEmissive(WHITE));
+			arm.render(pose, glow, 0xF000F0, OverlayTexture.NO_OVERLAY, 0.3f, 0.85f, 1.0f, 0.6f);
+			return;
+		}
 		if (soulShader == null) {
 			VertexConsumer faded = buffers.getBuffer(RenderType.entityTranslucent(skin));
 			arm.render(pose, faded, light, OverlayTexture.NO_OVERLAY, 0.35f, 0.95f, 1.0f, 0.55f);

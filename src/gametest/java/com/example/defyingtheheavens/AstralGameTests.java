@@ -36,20 +36,24 @@ public class AstralGameTests implements FabricGameTest {
 			helper.assertTrue(planets.planetAt(planet.landX(), planet.landZ()) == planet, planet.name() + "'s land is its own");
 		}
 		helper.assertTrue(kinds.size() == AstralPlanets.Kind.values().length, "Every kind of planet is among them (" + kinds + ")");
+		// Clear of every star's heat, not its own star's alone: an outer planet of one system used to stray into the next's.
 		for (AstralPlanets.Planet planet : planets.planets()) {
-			AstralPlanets.Star star = planets.star(planet.system());
-			helper.assertTrue(planet.pos().distanceTo(star.pos()) - planet.atmosphere() > star.radius() * AstralRealm.STAR_HEAT,
-					planet.name() + "'s air is clear of its star's heat");
-		}
-		// No planet's air touches another's (a sample, the home reaches in full).
-		for (int i = 0; i < 400; i++) {
-			AstralPlanets.Planet a = planets.planets().get(i);
-			for (int j = i + 1; j < 400; j++) {
-				AstralPlanets.Planet b = planets.planets().get(j);
-				helper.assertTrue(a.pos().distanceTo(b.pos()) > a.atmosphere() + b.atmosphere(), a.name() + " and " + b.name() + " stand apart");
+			for (AstralPlanets.Star star : planets.stars()) {
+				helper.assertTrue(planet.pos().distanceTo(star.pos()) - planet.atmosphere() > star.radius() * AstralRealm.STAR_HEAT,
+						planet.name() + "'s air is clear of " + star.name() + "'s heat" + (star.index() == planet.system() ? " (its own star)" : ""));
 			}
-			helper.assertTrue(a.pos().distanceTo(planets.overworld().pos()) > a.atmosphere() + planets.overworld().atmosphere(),
-					a.name() + " stands apart from the Overworld");
+		}
+		// No planet's air touches another's, in its own system or any other, nor the Overworld's.
+		java.util.List<AstralPlanets.Planet> all = new java.util.ArrayList<>(planets.planets());
+		all.add(planets.overworld());
+		for (int i = 0; i < all.size(); i++) {
+			AstralPlanets.Planet a = all.get(i);
+			for (int j = i + 1; j < all.size(); j++) {
+				AstralPlanets.Planet b = all.get(j);
+				double reach = a.atmosphere() + b.atmosphere();
+				if (Math.abs(a.pos().x - b.pos().x) > reach || Math.abs(a.pos().z - b.pos().z) > reach) continue;
+				helper.assertTrue(a.pos().distanceTo(b.pos()) > reach, a.name() + " and " + b.name() + " stand apart");
+			}
 		}
 		helper.succeed();
 	}

@@ -106,7 +106,12 @@ public class TalkGameTests implements FabricGameTest {
 		helper.assertTrue(toQiRefining == 15 && toNascentSoul == 6, "Worth 15: +15 to Qi Refining, +6 to Nascent Soul (got " + toQiRefining + ", "
 				+ toNascentSoul + ")");
 		helper.assertTrue(again < toQiRefining, "The same gift twice in a day counts for less");
-		helper.assertTrue(TalkSystem.giftRegard(1000, 0, 0) == Regard.GIFT_MAX && TalkSystem.giftRegard(0.1, 5, 3) == 1, "Gifts give 1 to 25");
+		helper.assertTrue(TalkSystem.giftRegard(1000, 0, 0) == Regard.GIFT_MAX && TalkSystem.giftRegard(0.1, 5, 0) == 1, "A day's first gift of a kind gives 1 to 25");
+		// The same again can come to nothing: a Low Spirit Stone (worth 1) after the first is soon worth nothing more that day.
+		helper.assertTrue(TalkSystem.giftRegard(0.1, 5, 3) == 0, "A trifle given again is worth nothing more");
+		int stones = 0;
+		for (int repeats = 0; repeats < 60; repeats++) stones += TalkSystem.giftRegard(1, Realm.QI_REFINING.ordinal(), repeats);
+		helper.assertTrue(stones <= 3, "Sixty Low Spirit Stones one by one no longer buy sixty regard (" + stones + ")");
 		helper.succeed();
 	}
 

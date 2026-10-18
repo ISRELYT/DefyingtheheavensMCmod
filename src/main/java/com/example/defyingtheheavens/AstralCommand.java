@@ -104,6 +104,8 @@ public final class AstralCommand {
 		AstralPlanets.Star star = planets.star(planet.system());
 		Vec3 sun = star.pos().subtract(planet.pos()).normalize();
 		Vec3 at = planet.pos().add(sun.scale(planet.radius() * 3));
+		// A large planet near its star has less room than that on its lit side: just outside its air instead, not in the heat.
+		if (planets.starNear(at, AstralRealm.STAR_HEAT) != null) at = planet.pos().add(sun.scale(planet.atmosphere() + 60));
 		Vec3 look = planet.pos().subtract(at);
 		float yaw = (float) Math.toDegrees(Math.atan2(-look.x, look.z)), pitch = (float) -Math.toDegrees(Math.atan2(look.y, look.horizontalDistance()));
 		p.teleportTo(space, at.x, at.y, at.z, yaw, pitch);
