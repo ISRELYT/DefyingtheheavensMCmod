@@ -41,7 +41,8 @@ import java.util.List;
  * The client half of the Consciousness Domain ({@link ConsciousnessDomainHandler}), while the ability is on:
  * <ul>
  *   <li>the domain itself, a translucent blue sphere around the player, and any other cultivator's domain touching it in
- *   red, drawn on {@link SenseOverlay} so Qi Sense's monochrome doesn't grey them. From inside a sphere its fill is kept
+ *   red (another player's open domain near is shown in red whether the ability is on or not), drawn on {@link SenseOverlay} so
+ *   Qi Sense's monochrome doesn't grey them. From inside a sphere its fill is kept
  *   faint (it would tint everything beyond it) and a lattice of latitude and longitude lines marks the boundary instead;</li>
  *   <li>every living thing inside the domain outlined through walls (vanilla's glowing outline, through MinecraftMixin and
  *   LevelRendererMixin; EntityRendererMixin keeps them drawn past vanilla's entity render distance): mortals white,
@@ -167,9 +168,10 @@ public final class ConsciousnessRenderer {
 
 	// --- Domains ---
 
+	/** Whether there is a domain to draw: one's own (switched on, or still fading), or another's near (seen even with one's own shut). */
 	public static boolean hasDomains() {
 		updateStrength();
-		return strength > 0 && shownRadius > 0;
+		return strength > 0 && shownRadius > 0 || !domains.isEmpty();
 	}
 
 	/** Eases the domain in and out as the ability is switched; once per frame. */
@@ -186,11 +188,13 @@ public final class ConsciousnessRenderer {
 		Minecraft mc = Minecraft.getInstance();
 		ClientLevel level = mc.level;
 		if (level == null || mc.player == null) return;
+		if (Util.getMillis() - lastUpdate > DATA_EXPIRY_MS) domains = previousDomains = List.of(); // gone stale between ticks
 		float partial = context.tickDelta();
 		Vec3 camera = context.camera().getPosition();
 		Matrix4f matrix = context.matrixStack().last().pose();
 		float time = level.getGameTime() + partial;
-		float pulse = (0.85f + 0.15f * Mth.sin(time * 0.05f)) * strength * strength * (3 - 2 * strength);
+		float beat = 0.85f + 0.15f * Mth.sin(time * 0.05f);
+		float pulse = beat * strength * strength * (3 - 2 * strength);
 
 		RenderSystem.setShader(GameRenderer::getPositionColorShader);
 		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
@@ -208,7 +212,7 @@ public final class ConsciousnessRenderer {
 				center = new Vec3(Mth.lerp(progress, before.x(), domain.x()), Mth.lerp(progress, before.y(), domain.y()),
 						Mth.lerp(progress, before.z(), domain.z()));
 			}
-			sphere(buffer, matrix, center.subtract(camera), domain.radius(), OTHER, pulse);
+			sphere(buffer, matrix, center.subtract(camera), domain.radius(), OTHER, beat); // another's, whether one's own is open or not
 		}
 		BufferUploader.drawWithShader(buffer.end());
 	}

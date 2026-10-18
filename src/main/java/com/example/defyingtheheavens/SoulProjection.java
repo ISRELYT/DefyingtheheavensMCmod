@@ -68,7 +68,7 @@ import java.util.function.Predicate;
  *   <li><b>The soul</b> is the player itself: it flies free of gravity through solid blocks (the client's free flight) within its
  *   tether ({@link PlayerCultivation#soulTetherRadius}), on {@link PlayerCultivation#soulHearts} hearts that never heal. It
  *   touches nothing: no blocks, items, chests or meditation; no plates or tripwires; no portals or rifts. Its only act is to
- *   possess. Qi Sense is forced open (it is how the soul sees), and its upkeep ({@link PlayerCultivation#soulCostPerSecond})
+ *   possess. Qi Sense opens as it sets out (it is how the soul sees; it may be shut while out), and its upkeep ({@link PlayerCultivation#soulCostPerSecond})
  *   grows with the distance from the body; out of qi, the soul snaps back at once.</li>
  *   <li><b>Who sees it</b> ({@link #perceives}): Nascent Soul cultivators with Qi Sense on (hazy at Early, clearer each stage,
  *   whole at Grand Perfection) and Heavenly Beings and above, whose clients are always sent it (to strike at) but draw it only
@@ -167,6 +167,8 @@ public final class SoulProjection {
 		long bodyAlerted = Long.MIN_VALUE / 2;
 		/** Domains (players) that have sensed this soul and were told, so each is told once while it stays. */
 		final Set<UUID> sensedBy = new HashSet<>();
+		/** Qi Sense was shut when the soul set out, and opened for it: shut again when it comes home. */
+		boolean openedSense;
 	}
 
 	private static final Map<UUID, Session> SESSIONS = new HashMap<>();
@@ -276,7 +278,7 @@ public final class SoulProjection {
 	public static void begin(ServerPlayer player) {
 		PlayerCultivation c = CultivationManager.get(player);
 		if (!Ability.SOUL_PROJECTION.isUnlocked(c) || !player.isAlive() || player.isSpectator()) return;
-		if (Incorporeal.isGhost(player)) { // a ghost is already all soul
+		if (GhostSystem.isGhost(player)) { // a ghost is already all soul (a creative one too: it has no living body to leave sitting)
 			player.displayClientMessage(Component.translatable(ModLang.MSG_GHOST_CANNOT), true);
 			return;
 		}
@@ -342,6 +344,12 @@ public final class SoulProjection {
 		back.putFloat("Health", player.getHealth());
 		back.putUUID("Body", body.getUUID());
 		c.setSoulReturn(back);
+
+		// Qi Sense opens as the soul sets out (it is how a nascent soul sees); it may be shut while out, and is put back as it was.
+		if (!c.isAbilityEnabled(Ability.QI_SENSE)) {
+			c.setAbilityEnabled(Ability.QI_SENSE, true);
+			s.openedSense = true;
+		}
 
 		// The soul's own body of qi: its hearts by stage, whole as it sets out.
 		player.stopUsingItem();
@@ -416,6 +424,7 @@ public final class SoulProjection {
 		Abilities abilities = player.getAbilities();
 		abilities.flying = false;
 		player.onUpdateAbilities(); // Qi Flight sets mayfly again next tick, as the realm allows
+		if (s.openedSense) c.setAbilityEnabled(Ability.QI_SENSE, false); // as it was before the soul went out
 		c.setSoulReturn(null);
 		setState(player, State.NONE);
 		RealmSuppressSystem.refreshNow();
@@ -1052,6 +1061,7 @@ public final class SoulProjection {
 		ServerLevel level = s == null || s.dimension == null ? null : player.server.getLevel(s.dimension);
 		if (level != null && s.body != null && level.getEntity(s.body) instanceof SoulBodyEntity body) body.discard();
 		PlayerCultivation c = CultivationManager.get(player);
+		if (s != null && s.openedSense) c.setAbilityEnabled(Ability.QI_SENSE, false);
 		c.setSoulReturn(null);
 		setState(player, State.NONE);
 	}
@@ -1160,11 +1170,14 @@ public final class SoulProjection {
 	}
 
 	/**
-	 * A projected soul; or, outside the Netherworld, where only those who perceive souls see the dead, one of the dead or one of
-	 * the living in a Ghost King's form (TwoPaths#inGhostForm).
+	 * A projected soul; or, outside the Netherworld, where only those who perceive souls see the dead, one of the dead (but a Ghost
+	 * King in its human form) or one of the living in a Ghost King's form (TwoPaths#inGhostForm).
 	 */
 	public static boolean seenOnlyBySeers(ServerPlayer player) {
-		return isSoul(player) || !ModDimensions.isNetherworld(player.level().dimension()) && (GhostSystem.isGhost(player) || TwoPaths.inGhostForm(player));
+		if (isSoul(player)) return true;
+		if (ModDimensions.isNetherworld(player.level().dimension())) return false;
+		// A Ghost King in its human form is seen as the living are (TwoPaths#inHumanForm).
+		return GhostSystem.isGhost(player) && !TwoPaths.inHumanForm(player) || TwoPaths.inGhostForm(player);
 	}
 
 	/** Whether each online player's realm had awakened Soul Projection last tick, to announce it when first gained. */

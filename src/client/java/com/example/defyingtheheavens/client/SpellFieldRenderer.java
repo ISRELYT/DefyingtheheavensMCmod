@@ -20,6 +20,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -107,6 +108,7 @@ public class SpellFieldRenderer extends EntityRenderer<SpellField> {
 			case WATER_GATHER -> gather(field, pose, buffers, facing, age, life);
 			case SWORD_RING -> swordRing(field, pose, buffers, facing, age, life);
 			case METEOR_MARK -> mark(field, pose, buffers, age, life);
+			case SEVER_SWING -> severSwing(field, pose, buffers, facing, age, life);
 			case BOULDER_FORMING -> {
 				float g = SpellRender.easeOut(age / life);
 				SpellModels.boulder(pose, buffers, SpellRender.sprite(field.data() == 0 ? Block.getId(Blocks.DIRT.defaultBlockState()) : field.data()),
@@ -181,6 +183,13 @@ public class SpellFieldRenderer extends EntityRenderer<SpellField> {
 		if (level == null || viewer == null) return (float) baseY;
 		Vec3 from = origin.add(dx, baseY + 3, dz), to = origin.add(dx, baseY - 8, dz);
 		var hit = level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, viewer));
+		// A formation's barrier is invisible: the ground is below it (anything set on its shell would hang in the air).
+		for (int tries = 0; tries < 4 && hit.getType() != HitResult.Type.MISS
+				&& level.getBlockState(hit.getBlockPos()).is(com.example.defyingtheheavens.ModBlocks.SECT_BARRIER); tries++) {
+			Vec3 below = new Vec3(hit.getLocation().x, hit.getBlockPos().getY() - 1.0e-3, hit.getLocation().z);
+			if (below.y <= to.y) return (float) baseY;
+			hit = level.clip(new ClipContext(below, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, viewer));
+		}
 		return hit.getType() == HitResult.Type.MISS ? (float) baseY : (float) (hit.getLocation().y - origin.y);
 	}
 
@@ -416,40 +425,178 @@ public class SpellFieldRenderer extends EntityRenderer<SpellField> {
 		}
 	}
 
-	/** Heavenly River Torrent: a river along the sky over its line, pouring down in a sheet onto it, foaming where it lands. */
+	/**
+	 * Heavenly River Torrent: a river churning along the sky over its line under its water seal, falling out of it onto the line in
+	 * heavy streams with the water racing down them; mist boils up and spray flies where it lands, and ripples run out over the
+	 * ground. The line runs along z, the ground following its slope (the field's pitch). The water's strip is only ever drawn a
+	 * frame at a time, each frame repeating itself ({@link #fallingStream}): stretched over all eight it showed as stacked tiles.
+	 */
 	private void river(SpellField field, PoseStack pose, MultiBufferSource buffers, Quaternionf facing, float age, float life) {
-		float length = field.height(), width = field.radius() * 2;
+		float length = Math.max(1, field.height()), half = field.radius();
+		float slope = Mth.clamp((float) Math.tan(field.pitch() * Mth.DEG_TO_RAD), -2, 2);
 		float pour = SpellRender.easeOut(Math.min(1, age / 6));
 		float show = SpellRender.fade(age, life, 2, 10);
-		pose.mulPose(Axis.YP.rotationDegrees(-field.yaw()));
+		float sky = 20;
+		long seed = field.data();
+		Quaternionf turn = Axis.YP.rotationDegrees(-field.yaw());
 		float[] fv = SpellRender.frame(age, 0.5f, SpellRender.WATER_FRAMES);
 		VertexConsumer water = buffers.getBuffer(SpellRender.clear(SpellRender.WATER));
-		float top = 22, bottom = top * (1 - pour);
-		int segments = 12;
-		for (int i = 0; i < segments; i++) {
-			float z0 = length * i / segments, z1 = length * (i + 1) / segments;
-			// The river in the sky, then its falling sheet.
-			SpellRender.quad(water, pose.last(), SpellRender.v(-width, top, z0), SpellRender.v(width, top, z0), SpellRender.v(width, top, z1), SpellRender.v(-width, top, z1),
-					WHITE, 0.8f * show, 0, fv[0] + z0 * 0.1f - age * 0.05f, 1, fv[0] + z1 * 0.1f - age * 0.05f, SpellRender.FULL_BRIGHT);
-			for (int side = -1; side <= 1; side += 2) {
-				float x = side * width * 0.5f;
-				SpellRender.quad(water, pose.last(), SpellRender.v(x, top, z0), SpellRender.v(x, bottom, z0), SpellRender.v(x, bottom, z1), SpellRender.v(x, top, z1),
-						WHITE, 0.75f * show, fv[0] - age * 0.12f, 0, fv[0] - age * 0.12f + 2, 1, SpellRender.FULL_BRIGHT);
-			}
-		}
-		// The water's seal opened in the sky where the river comes out of it.
+		int streams = Math.max(3, Math.round(length / 1.3f));
+
 		pose.pushPose();
-		pose.translate(0, top + 0.6f, length / 2);
-		groundSeal(buffers, pose, QiElement.WATER, Math.max(width * 1.6f, length * 0.55f), 0, age * 0.01f, 0.6f * show);
+		pose.mulPose(turn);
+		// The river along the sky, wider than its fall, ragged and thin at its edges.
+		skyRiver(water, pose.last(), length, half * 1.7f, sky, slope, fv, age, 0.85f * show);
+		// Its water seal, opened over the middle of the line.
+		pose.pushPose();
+		pose.translate(0, sky + slope * length / 2 + 0.9f, length / 2);
+		groundSeal(buffers, pose, QiElement.WATER, Math.max(half * 3.2f, length * 0.5f), 0, age * 0.01f, 0.55f * show);
 		pose.popPose();
-		if (pour >= 1) {
-			VertexConsumer foam = buffers.getBuffer(SpellRender.clear(SpellRender.SMOKE));
-			for (int i = 0; i < 30; i++) {
-				long s = field.getId() * 23L + i + (long) (age / 2);
-				SpellRender.billboard(foam, pose, facing, (h(s) - 0.5f) * width * 1.6f, h(s + 1) * 1.5f, h(s + 2) * length, 1.8f + h(s + 3) * 1.5f, h(s + 4) * 6,
-						WHITE, 0.7f * show, 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+		// The falls: streams side by side along the line, overlapping into one body of water.
+		for (int k = 0; k < streams; k++) {
+			long s = seed * 31L + k * 7L;
+			float z = (k + 0.5f) * length / streams + (h(s) - 0.5f) * 0.5f;
+			float ground = slope * z;
+			float top = sky + ground - 0.3f;
+			float bottom = ground - 0.3f + (sky - 0.3f) * (1 - pour);
+			fallingStream(water, pose.last(), (h(s + 1) - 0.5f) * half * 0.7f, z, top, bottom, half * (0.55f + 0.3f * h(s + 2)), s, fv, age, 0.8f * show);
+		}
+		// Ripples running out over the ground where it lands.
+		if (pour > 0.9f) {
+			VertexConsumer ripple = buffers.getBuffer(SpellRender.clear(SpellRender.RIPPLE));
+			for (int i = 0; i < streams; i++) {
+				long s = seed * 17L + i;
+				float z = (i + 0.5f) * length / streams;
+				float t = Mth.frac(age * 0.06f + h(s));
+				pose.pushPose();
+				pose.translate((h(s + 1) - 0.5f) * half, slope * z + 0.08f, z);
+				SpellRender.disc(ripple, pose.last(), half * (0.8f + 2.2f * t), 0, h(s + 2) * 6, WHITE, 0.8f * (1 - t) * show, SpellRender.FULL_BRIGHT);
+				pose.popPose();
 			}
 		}
+		pose.popPose();
+
+		// What faces the camera is set along the turned line by hand (a billboard turned with the line wouldn't face the camera).
+		// Streaks racing down the falls.
+		VertexConsumer streaks = buffers.getBuffer(SpellRender.glow(SpellRender.RAIN));
+		for (int i = 0; i < 56; i++) {
+			long s = seed * 41L + i;
+			float z = h(s) * length;
+			float ground = slope * z;
+			float y = sky + ground - Mth.frac(age * 0.09f + h(s + 1)) * sky;
+			if (y < ground + sky * (1 - pour)) continue; // the water hasn't come down so far yet
+			Vector3f at = turn.transform(new Vector3f((h(s + 2) - 0.5f) * half * 2.1f, y, z));
+			SpellRender.billboard(streaks, pose, facing, at.x, at.y, at.z, 0.22f, 2.8f, 0, WATER_GLOW, 0.6f * show, 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+		}
+		if (pour < 0.8f) return;
+		// Mist boiling up off the landing...
+		VertexConsumer mist = buffers.getBuffer(SpellRender.clear(SpellRender.SMOKE));
+		for (int i = 0; i < 36; i++) {
+			long s = seed * 23L + i;
+			float z = h(s) * length;
+			float t = Mth.frac(age * 0.035f + h(s + 1));
+			Vector3f at = turn.transform(new Vector3f((h(s + 2) - 0.5f) * half * 2.6f, slope * z + 0.4f + t * 3.2f, z));
+			SpellRender.billboard(mist, pose, facing, at.x, at.y, at.z, 1.8f + 2.4f * t + h(s + 3), h(s + 4) * 6 + age * 0.02f, WHITE, 0.7f * show * (1 - t),
+					0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+		}
+		// ...and spray flung out of it, rising and falling back.
+		VertexConsumer spray = buffers.getBuffer(SpellRender.glow(SpellRender.GLOW));
+		for (int i = 0; i < 40; i++) {
+			long s = seed * 59L + i;
+			float z = h(s) * length;
+			float t = Mth.frac(age * 0.07f + h(s + 1));
+			double a = h(s + 2) * Math.PI * 2;
+			float out = half * 0.8f + t * (2 + 3 * h(s + 3));
+			float rise = t * (1 - t) * 4 * (1.5f + 2 * h(s + 4));
+			Vector3f at = turn.transform(new Vector3f((float) Math.cos(a) * out, slope * z + 0.3f + rise, z + (float) Math.sin(a) * out * 0.5f));
+			SpellRender.billboard(spray, pose, facing, at.x, at.y, at.z, 0.35f + 0.3f * h(s + 5), 0, WATER_GLOW, 0.7f * show * (1 - t), 0, 0, 1, 1,
+					SpellRender.FULL_BRIGHT);
+		}
+	}
+
+	/**
+	 * The river along the sky over the line: a band {@code width} each side of it, sagging a little in its middle and rolling, its
+	 * edges fading out; the water streams along it (u along the line wraps the frame round on itself; v across spans one frame).
+	 */
+	private static void skyRiver(VertexConsumer vc, PoseStack.Pose pose, float length, float width, float sky, float slope, float[] fv, float age, float alpha) {
+		int along = Math.max(4, Math.round(length + 2)), across = 6;
+		float fh = fv[1] - fv[0];
+		float[] tint = {0.82f, 0.93f, 1.0f};
+		for (int i = 0; i < along; i++) {
+			float z0 = -1 + (length + 2) * i / along, z1 = -1 + (length + 2) * (i + 1) / along;
+			for (int j = 0; j < across; j++) {
+				float a0 = j / (float) across, a1 = (j + 1) / (float) across;
+				Vector3f p00 = skyPoint(z0, a0, width, sky, slope, age), p01 = skyPoint(z0, a1, width, sky, slope, age);
+				Vector3f p11 = skyPoint(z1, a1, width, sky, slope, age), p10 = skyPoint(z1, a0, width, sky, slope, age);
+				float e0 = alpha * (0.15f + 0.85f * Mth.sin((float) Math.PI * a0)), e1 = alpha * (0.15f + 0.85f * Mth.sin((float) Math.PI * a1));
+				float u0 = z0 * 0.1f - age * 0.03f, u1 = z1 * 0.1f - age * 0.03f;
+				float v0 = fv[0] + fh * (0.002f + 0.996f * a0), v1 = fv[0] + fh * (0.002f + 0.996f * a1);
+				SpellRender.vertex(vc, pose, p00.x, p00.y, p00.z, tint[0], tint[1], tint[2], e0, u0, v0, SpellRender.FULL_BRIGHT, 0, -1, 0);
+				SpellRender.vertex(vc, pose, p01.x, p01.y, p01.z, tint[0], tint[1], tint[2], e1, u0, v1, SpellRender.FULL_BRIGHT, 0, -1, 0);
+				SpellRender.vertex(vc, pose, p11.x, p11.y, p11.z, tint[0], tint[1], tint[2], e1, u1, v1, SpellRender.FULL_BRIGHT, 0, -1, 0);
+				SpellRender.vertex(vc, pose, p10.x, p10.y, p10.z, tint[0], tint[1], tint[2], e0, u1, v0, SpellRender.FULL_BRIGHT, 0, -1, 0);
+			}
+		}
+	}
+
+	/** A point of the river in the sky: {@code a} across it (0 to 1), at {@code z} along the line. */
+	private static Vector3f skyPoint(float z, float a, float width, float sky, float slope, float age) {
+		float across = a * 2 - 1;
+		float x = across * width * (1 + 0.15f * Mth.sin(z * 0.7f + age * 0.1f + across * 1.3f));
+		float y = sky + slope * z - 0.7f * (1 - across * across) + 0.25f * Mth.sin(z * 0.9f + a * 5 + age * 0.25f);
+		return new Vector3f(x, y, z);
+	}
+
+	/**
+	 * One stream of the falling river, at (x, z) from {@code top} down to {@code bottom}, {@code radius} round: swaying and swelling as
+	 * it falls, thin where it leaves the sky and spreading where it lands. The water races down it: v runs down the stream with time,
+	 * the rings set at every whole frame as well as every 1.25 blocks, so each stretch between them shows one frame and only it.
+	 */
+	private static void fallingStream(VertexConsumer vc, PoseStack.Pose pose, float x, float z, float top, float bottom, float radius, long seed, float[] fv,
+									  float age, float alpha) {
+		float height = top - bottom;
+		if (height < 0.2f || alpha <= 0.01f) return;
+		float fh = fv[1] - fv[0];
+		float tile = 3.2f, flow = age * 0.2f; // blocks of fall to a frame's repeat; repeats run down a tick
+		List<Float> depths = new ArrayList<>();
+		for (float d = 0; d < height; d += 1.25f) depths.add(d);
+		depths.add(height);
+		for (int n = (int) Math.ceil(-flow); (n + flow) * tile < height; n++) {
+			float d = (n + flow) * tile;
+			if (d > 0) depths.add(d);
+		}
+		depths.sort(null);
+		int sides = 10;
+		float spin = h(seed + 9);
+		for (int i = 0; i < depths.size() - 1; i++) {
+			float d0 = depths.get(i), d1 = depths.get(i + 1);
+			if (d1 - d0 < 1.0e-3f) continue;
+			float t0 = d0 / tile - flow, t1 = d1 / tile - flow;
+			float whole = Mth.floor((t0 + t1) / 2);
+			float v0 = fv[0] + fh * (0.002f + 0.996f * Mth.clamp(t0 - whole, 0, 1)), v1 = fv[0] + fh * (0.002f + 0.996f * Mth.clamp(t1 - whole, 0, 1));
+			float r0 = streamRadius(radius, d0, height, seed, age), r1 = streamRadius(radius, d1, height, seed, age);
+			float a0 = alpha * Math.min(1, 0.2f + d0 / 1.5f), a1 = alpha * Math.min(1, 0.2f + d1 / 1.5f);
+			float cx0 = x + Mth.sin(d0 * 0.45f + seed % 13 + age * 0.15f) * 0.18f * radius, cz0 = z + Mth.cos(d0 * 0.37f + seed % 7 + age * 0.12f) * 0.12f * radius;
+			float cx1 = x + Mth.sin(d1 * 0.45f + seed % 13 + age * 0.15f) * 0.18f * radius, cz1 = z + Mth.cos(d1 * 0.37f + seed % 7 + age * 0.12f) * 0.12f * radius;
+			for (int k = 0; k < sides; k++) {
+				float c0 = Mth.cos((float) Math.PI * 2 * k / sides), s0 = Mth.sin((float) Math.PI * 2 * k / sides);
+				float c1 = Mth.cos((float) Math.PI * 2 * (k + 1) / sides), s1 = Mth.sin((float) Math.PI * 2 * (k + 1) / sides);
+				float u0 = spin + 2f * k / sides, u1 = spin + 2f * (k + 1) / sides;
+				float nx = (c0 + c1) / 2, nz = (s0 + s1) / 2;
+				SpellRender.vertex(vc, pose, cx0 + c0 * r0, top - d0, cz0 + s0 * r0, 1, 1, 1, a0, u0, v0, SpellRender.FULL_BRIGHT, nx, 0, nz);
+				SpellRender.vertex(vc, pose, cx1 + c0 * r1, top - d1, cz1 + s0 * r1, 1, 1, 1, a1, u0, v1, SpellRender.FULL_BRIGHT, nx, 0, nz);
+				SpellRender.vertex(vc, pose, cx1 + c1 * r1, top - d1, cz1 + s1 * r1, 1, 1, 1, a1, u1, v1, SpellRender.FULL_BRIGHT, nx, 0, nz);
+				SpellRender.vertex(vc, pose, cx0 + c1 * r0, top - d0, cz0 + s1 * r0, 1, 1, 1, a0, u1, v0, SpellRender.FULL_BRIGHT, nx, 0, nz);
+			}
+		}
+	}
+
+	/** A falling stream's radius {@code d} below the sky: thin as it leaves it, swelling as it falls, spreading where it lands. */
+	private static float streamRadius(float radius, float d, float height, long seed, float age) {
+		float swell = 0.85f + 0.15f * Mth.sin(d * 0.9f - age * 0.6f + seed % 17);
+		float leave = 0.45f + 0.55f * Math.min(1, d / 2.5f);
+		float land = 1 + 0.7f * Math.max(0, 1 - (height - d) / 1.6f);
+		return radius * swell * leave * land;
 	}
 
 	/** Torrential Spring gathering: streams of water spiralling in from all round into a growing ball. */
@@ -1272,6 +1419,69 @@ public class SpellFieldRenderer extends EntityRenderer<SpellField> {
 		pose.popPose();
 		handSeal(buffers, pose, field, QiElement.METAL, 1.1f * show, 0.2f, age * 0.1f, show);
 		glowBall(buffers, pose, facing, 0, 0, length, 4 * show, SWORD_LIGHT, 0.7f * show);
+	}
+
+	/**
+	 * The Heaven-Severing Sword's stroke: a sword of light as long as a tower ({@link MetalSpells#SEVER_SWORD}) forms in its caster's
+	 * right hand, held out behind them ({@link MetalSpells#SEVER_FORM} ticks), and is swung level across their front, fast out of the
+	 * wind-up and settling at the end of the stroke ({@link MetalSpells#SEVER_SWING}): the slash leaves it as its blade crosses the
+	 * front. A fan of sword light sweeps after its edge, streaked along the stroke, brightest at its leading edge and its tip. Then
+	 * the sword goes back into light from its point down to the hilt, and the fan closes after it.
+	 */
+	private void severSwing(SpellField field, PoseStack pose, MultiBufferSource buffers, Quaternionf facing, float age, float life) {
+		float length = field.radius();
+		float form = com.example.defyingtheheavens.MetalSpells.SEVER_FORM, stroke = com.example.defyingtheheavens.MetalSpells.SEVER_SWING;
+		float start = (float) Math.toRadians(-125), finish = (float) Math.toRadians(105); // behind on the right, round to the left
+		float grow = SpellRender.easeOut(Mth.clamp(age / form, 0, 1));
+		float t = Mth.clamp((age - form) / stroke, 0, 1);
+		float sweep = 1 - (1 - t) * (1 - t) * (1 - t);
+		float angle = start + (finish - start) * sweep;
+		float after = Math.max(0, age - form - stroke), rest = Math.max(1, life - form - stroke);
+		float dissolve = 1 - SpellRender.ease(after / rest);
+		// The light gathering in the hand as it forms, and flaring as it is swung (drawn unturned: it faces the camera).
+		glowBall(buffers, pose, facing, 0, 0, 0, 3 + 4 * grow, SWORD_LIGHT, (0.35f + 0.4f * (t > 0 && t < 1 ? 1 : 0)) * dissolve);
+		pose.pushPose();
+		pose.mulPose(Axis.YP.rotationDegrees(-field.yaw()));
+		pose.mulPose(Axis.ZP.rotationDegrees(-8)); // the stroke's plane a little tilted: high on the right, low on the left
+		pose.translate(-0.6f, 0, 0.3f); // the hilt in the right hand, just before the caster (their right is -x)
+		// The fan after its edge: back from the blade to where it was a moment ago, closing once the stroke is done.
+		float trail = Math.min(angle - start, (finish - start) * 0.4f) * (t >= 1 ? dissolve * dissolve : 1);
+		if (trail > 0.01f && t > 0) {
+			strokeFan(buffers.getBuffer(SpellRender.glow(SpellRender.SLASH)), pose.last(), length * 0.15f, length * 1.03f, angle - trail, angle, SWORD_LIGHT,
+					0.95f * (t >= 1 ? dissolve : 1));
+			strokeFan(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), pose.last(), length * 0.5f, length * 1.08f, angle - trail * 0.5f, angle,
+					new float[]{1.0f, 0.97f, 0.88f}, 0.35f * (t >= 1 ? dissolve : 1));
+		}
+		// The sword, its flat level and its edge leading the stroke.
+		pose.mulPose(Axis.YP.rotation(angle));
+		SpellModels.jian(pose, buffers, length, SpellRender.FULL_BRIGHT, grow * dissolve, new float[]{1.0f, 0.96f, 0.86f});
+		// Its light along the blade, brighter while it moves.
+		float moving = t > 0 && t < 1 ? 1 : 0.4f, reach = length * grow * dissolve;
+		if (reach > 1) {
+			List<Vec3> blade = List.of(new Vec3(0, 0, 0), new Vec3(0, 0, reach * 0.6f), new Vec3(0, 0, reach));
+			SpellRender.tube(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), pose.last(), blade, new float[]{2.4f, 2.0f, 0.4f}, 8, SWORD_LIGHT,
+					0.35f * moving * dissolve, 0.05f, 0, SpellRender.FULL_BRIGHT, null);
+		}
+		pose.popPose();
+	}
+
+	/**
+	 * The light a stroke leaves: a fan about the pose's origin from {@code inner} to {@code outer}, from angle {@code from} (where the
+	 * blade was) to {@code to} (where it is; 0 straight ahead, toward +x), fading back from its leading edge and in toward the hilt.
+	 * The texture's v runs back from the leading edge, its u out along the blade (its streaks lie along the stroke).
+	 */
+	private static void strokeFan(VertexConsumer vc, PoseStack.Pose pose, float inner, float outer, float from, float to, float[] rgb, float alpha) {
+		int segments = 28;
+		for (int i = 0; i < segments; i++) {
+			float s0 = i / (float) segments, s1 = (i + 1) / (float) segments; // 0 at the leading edge, 1 at the trailing
+			float a0 = to - (to - from) * s0, a1 = to - (to - from) * s1;
+			float f0 = (1 - s0) * (1 - s0), f1 = (1 - s1) * (1 - s1);
+			float ci0 = Mth.sin(a0), co0 = Mth.cos(a0), ci1 = Mth.sin(a1), co1 = Mth.cos(a1);
+			SpellRender.vertex(vc, pose, ci0 * inner, 0, co0 * inner, rgb[0], rgb[1], rgb[2], alpha * f0 * 0.2f, 0, s0, SpellRender.FULL_BRIGHT, 0, 1, 0);
+			SpellRender.vertex(vc, pose, ci0 * outer, 0, co0 * outer, rgb[0], rgb[1], rgb[2], alpha * f0, 1, s0, SpellRender.FULL_BRIGHT, 0, 1, 0);
+			SpellRender.vertex(vc, pose, ci1 * outer, 0, co1 * outer, rgb[0], rgb[1], rgb[2], alpha * f1, 1, s1, SpellRender.FULL_BRIGHT, 0, 1, 0);
+			SpellRender.vertex(vc, pose, ci1 * inner, 0, co1 * inner, rgb[0], rgb[1], rgb[2], alpha * f1 * 0.2f, 0, s1, SpellRender.FULL_BRIGHT, 0, 1, 0);
+		}
 	}
 
 	/** Sword Domain: swords wheeling round the caster in two rings turning against each other, darting in and out, a circle of light beneath. */

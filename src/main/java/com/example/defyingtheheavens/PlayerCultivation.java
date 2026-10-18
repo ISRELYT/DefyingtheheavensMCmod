@@ -391,9 +391,12 @@ public class PlayerCultivation {
 		return state == SoulProjection.State.PROJECTED || state == SoulProjection.State.RECALLING;
 	}
 
-	/** Qi Sense is open: switched on, or forced open while the soul is out (it is how a nascent soul sees). */
+	/**
+	 * Qi Sense is open: switched on. A soul sets out with it open (it is how a nascent soul sees: SoulProjection#emerge), but may
+	 * shut it while out like anyone else.
+	 */
 	public boolean isQiSenseOn() {
-		return Ability.QI_SENSE.isUnlocked(this) && (isAbilityEnabled(Ability.QI_SENSE) || isSoulOut());
+		return Ability.QI_SENSE.isUnlocked(this) && isAbilityEnabled(Ability.QI_SENSE);
 	}
 
 	// --- Soul Projection's numbers (see SoulProjection) ---

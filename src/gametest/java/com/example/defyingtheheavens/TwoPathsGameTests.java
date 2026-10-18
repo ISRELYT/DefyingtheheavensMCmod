@@ -359,13 +359,24 @@ public class TwoPathsGameTests implements FabricGameTest {
 		ghostPath(player, Realm.NASCENT_SOUL, Stage.EARLY);
 		c.setAbilityEnabled(Ability.FORM_SHIFT, true);
 		helper.assertTrue(TwoPaths.look(c) == TwoPaths.Look.KING, "Alive, Form Shift on: the Ghost King's form");
-		s.setGhost(true);
-		// Dead: no forms, no true form, no Form Shift; Four Axis on the heaven path and Nascent Soul on the ghost: a Ghost King.
-		helper.assertTrue(!TwoPaths.formsOpen(c) && !Ability.FORM_SHIFT.isUnlocked(c) && TwoPaths.hasKingForm(c), "The dead have no forms to choose");
-		helper.assertTrue(TwoPaths.look(c) == TwoPaths.Look.KING && GhostSystem.isKing(c) && !TwoPaths.inGhostForm(c),
-				"Dead, the heaven path higher: a Ghost King, drawn as one, never in a human form");
 		c.setAbilityEnabled(Ability.FORM_SHIFT, false);
-		helper.assertTrue(TwoPaths.look(c) == TwoPaths.Look.KING, "Form Shift's switch is nothing to the dead");
+		s.setGhost(true);
+		// Dead, Four Axis on the heaven path and Nascent Soul on the ghost: a Ghost King, its true form the King's, its human form
+		// there for Form Shift to take.
+		helper.assertTrue(TwoPaths.formsOpen(c) && Ability.FORM_SHIFT.isUnlocked(c) && TwoPaths.trueForm(c) == TwoPaths.Form.GHOST_KING,
+				"A Ghost King has its two forms");
+		helper.assertTrue(TwoPaths.look(c) == TwoPaths.Look.KING && GhostSystem.isKing(c) && !TwoPaths.inGhostForm(c) && !TwoPaths.inHumanForm(c),
+				"Dead, Form Shift off: a Ghost King, drawn as one");
+		c.setAbilityEnabled(Ability.FORM_SHIFT, true);
+		helper.assertTrue(TwoPaths.look(c) == TwoPaths.Look.HUMAN && TwoPaths.inHumanForm(c) && !TwoPaths.inGhostForm(c), "Form Shift on: its human form");
+		c.setAbilityEnabled(Ability.FORM_SHIFT, false);
+		// No ghost path at all, dead at Core Formation: a king by its heaven path, its forms as open.
+		for (GhostMethod method : GhostMethod.values()) if (method.isFoundation()) s.setMethod(method, 0, 0);
+		heaven(player, Realm.CORE_FORMATION, Stage.EARLY);
+		helper.assertTrue(TwoPaths.ghostRank(c, false) < 0 && GhostSystem.isKing(c) && TwoPaths.formsOpen(c) && Ability.FORM_SHIFT.isUnlocked(c),
+				"A Ghost King without a ghost method can still switch forms");
+		heaven(player, Realm.FOUR_AXIS, Stage.EARLY);
+		ghostPath(player, Realm.NASCENT_SOUL, Stage.EARLY);
 		// Either path at Core Formation makes a king of the dead; below it on both, a common ghost.
 		heaven(player, Realm.QI_REFINING, Stage.EARLY);
 		helper.assertTrue(TwoPaths.look(c) == TwoPaths.Look.KING, "Dead at Qi Refining with a Nascent Soul ghost path: a Ghost King");

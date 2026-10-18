@@ -245,11 +245,10 @@ public class SectPiece extends StructurePiece {
 		put(level, chunk, x, y, z, p.lantern.defaultBlockState().setValue(LanternBlock.HANGING, false));
 	}
 
-	/** A stone lantern: a post, the lantern, and a little tiled cap. */
+	/** A stone lantern: a post with the lantern standing on it (no cap: a slab on top read as clutter). */
 	private void stoneLantern(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x, int y, int z) {
 		put(level, chunk, x, y, z, p.baseWall);
 		lanternStanding(level, chunk, p, x, y + 1, z);
-		put(level, chunk, x, y + 2, z, p.roofSlab(false));
 	}
 
 	private void candles(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x, int y, int z, int count) {

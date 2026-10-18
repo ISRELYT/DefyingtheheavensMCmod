@@ -176,6 +176,19 @@ public class GhostKingGameTests implements FabricGameTest {
 			helper.assertTrue(!SoulProjection.broadcastsTo(king, living) && SoulProjection.broadcastsTo(king, seer) && SoulProjection.broadcastsTo(king, king),
 					"Hidden from a Qi Refining cultivator; a Heavenly Being sees it, as it sees itself");
 			helper.assertTrue(SoulProjection.broadcastsTo(king, common), "The dead see the dead");
+			// A Ghost King's human form (Form Shift, whatever its ghost path) is seen as the living are.
+			CultivationManager.get(king).setAbilityEnabled(Ability.FORM_SHIFT, true);
+			helper.assertTrue(TwoPaths.inHumanForm(king) && !SoulProjection.seenOnlyBySeers(king) && SoulProjection.broadcastsTo(king, living),
+					"In its human form a Ghost King is seen by all");
+			CultivationManager.get(king).setAbilityEnabled(Ability.FORM_SHIFT, false);
+			// The dead are all soul already: no soul to send out of a body, no body left sitting (a creative ghost neither).
+			CultivationManager.get(king).setState(Realm.NASCENT_SOUL, Stage.EARLY, 0);
+			king.setGameMode(GameType.CREATIVE);
+			SoulProjection.toggle(king);
+			helper.assertTrue(!SoulProjection.isActive(king.getUUID()) && !Ability.SOUL_PROJECTION.isUnlocked(CultivationManager.get(king)),
+					"A Ghost King projects no soul, even in creative");
+			king.setGameMode(GameType.SURVIVAL);
+			CultivationManager.get(king).setState(Realm.CORE_FORMATION, Stage.EARLY, 0);
 			CultivationManager.get(king).setState(Realm.FOUNDATION_BUILDING, Stage.GRAND_PERFECTION, 0);
 			helper.assertTrue(!GhostSystem.isKing(king), "Brought low (the Chief Judge's gaze), a king no longer");
 		} finally {

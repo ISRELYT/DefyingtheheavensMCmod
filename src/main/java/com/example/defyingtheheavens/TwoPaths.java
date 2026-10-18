@@ -30,8 +30,9 @@ import java.util.UUID;
  *       other. In a Ghost King's form one is seen as the dead are: outside the Netherworld only by those who perceive souls
  *       ({@link #inGhostForm}, SoulProjection#seenOnlyBySeers); in all else one is still among the living. Below that the living
  *       look human.</li>
- *   <li><b>The dead</b> are the dead, whatever their paths ({@link #look}): a ghost, or a Ghost King (GhostSystem#isKing), never
- *       a human form.</li>
+ *   <li><b>The dead</b> are the dead, whatever their paths ({@link #look}): a ghost, or a Ghost King (GhostSystem#isKing). A
+ *       Ghost King has two forms whatever its ghost path: its true one, the King's, and (Form Shift) its human form, in which it is
+ *       seen as the living are ({@link #inHumanForm}); the rules it keeps are still the dead's.</li>
  * </ul>
  * A mortal's meridians are closed (until a Marrow Cleansing Elixir opens them), so a mortal has no ghost path, alive or dead:
  * its methods can't be taken up or cultivated (GhostMethods#refusal), and any it knows lie dormant ({@link #ghostRank}).
@@ -212,13 +213,21 @@ public final class TwoPaths {
 		return ghostRank(c, false) >= GhostSystem.KING_RANK;
 	}
 
-	/** Whether {@code c} has two forms to choose between now: living, its ghost path at Core Formation. The dead have none. */
+	/**
+	 * Whether {@code c} has two forms to choose between now: the living, their ghost path at Core Formation; the dead, as Ghost
+	 * Kings (GhostSystem#isKing), whatever their ghost path, a king by its heaven path having its human form to take as well.
+	 * Common ghosts have none.
+	 */
 	public static boolean formsOpen(PlayerCultivation c) {
-		return !c.netherworld().ghost() && hasKingForm(c);
+		return c.netherworld().ghost() ? GhostSystem.isKing(c) : hasKingForm(c);
 	}
 
-	/** The true form, with forms open: the higher path's (true cultivation); the paths level, the human (it lives). */
+	/**
+	 * The true form, with forms open: for the living the higher path's (true cultivation), the paths level the human (it lives);
+	 * for a Ghost King, the King's (it is dead).
+	 */
 	public static Form trueForm(PlayerCultivation c) {
+		if (c.netherworld().ghost()) return Form.GHOST_KING;
 		return ghostRank(c, false) > heavenRank(c, false) ? Form.GHOST_KING : Form.HUMAN;
 	}
 
@@ -229,11 +238,14 @@ public final class TwoPaths {
 	}
 
 	/**
-	 * How {@code c} is drawn. The dead as the dead, whatever their paths: a Ghost King crowned, the rest as common ghosts. The
-	 * living by their shown form if they have two, otherwise as men.
+	 * How {@code c} is drawn. The dead as the dead, whatever their paths: a Ghost King crowned (or as a man while it shows its human
+	 * form, Form Shift on), the rest as common ghosts. The living by their shown form if they have two, otherwise as men.
 	 */
 	public static Look look(PlayerCultivation c) {
-		if (c.netherworld().ghost()) return GhostSystem.isKing(c) ? Look.KING : Look.DEAD;
+		if (c.netherworld().ghost()) {
+			if (!GhostSystem.isKing(c)) return Look.DEAD;
+			return shownForm(c) == Form.HUMAN ? Look.HUMAN : Look.KING;
+		}
 		if (formsOpen(c)) return shownForm(c) == Form.GHOST_KING ? Look.KING : Look.HUMAN;
 		return Look.HUMAN;
 	}
@@ -246,6 +258,19 @@ public final class TwoPaths {
 	/** {@link #inGhostForm} for an online player (the server's record). */
 	public static boolean inGhostForm(ServerPlayer p) {
 		return inGhostForm(CultivationManager.get(p));
+	}
+
+	/**
+	 * A Ghost King showing its human form: seen as the living are (by everyone, SoulProjection#seenOnlyBySeers), the mirror of
+	 * the living in a Ghost King's form; in all else still one of the dead (a form is only a look and who sees it).
+	 */
+	public static boolean inHumanForm(PlayerCultivation c) {
+		return c.netherworld().ghost() && look(c) == Look.HUMAN;
+	}
+
+	/** {@link #inHumanForm} for an online player (the server's record). */
+	public static boolean inHumanForm(ServerPlayer p) {
+		return inHumanForm(CultivationManager.get(p));
 	}
 
 	// --- Watching the paths (server) ---

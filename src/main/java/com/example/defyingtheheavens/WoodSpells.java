@@ -83,6 +83,9 @@ public final class WoodSpells {
 			}
 			case MYSTERIOUS_BRISTLE_PRISON -> HeavenSpells.aimed(p, PRISON_RANGE) != null || HeavenSpells.refuse(p);
 			case VERDANT_GROWTH -> p.onGround() || HeavenSpells.refuse(p);
+			// Nothing to seize where you look: refused, and nothing paid (it was 500 and 1200 qi spent on nothing).
+			case HEAVEN_PIERCING_BAMBOO -> !marksNear(p, BAMBOO_RANGE, BAMBOO_RADIUS, 1).isEmpty() || HeavenSpells.refuse(p);
+			case MYRIAD_VINE_BINDING -> !marksNear(p, VINES_RANGE, VINES_RADIUS, 1).isEmpty() || HeavenSpells.refuse(p);
 			default -> true;
 		};
 	}
@@ -556,7 +559,8 @@ public final class WoodSpells {
 		SpellField.create(level, SpellField.Kind.THORN_SPEARS, at, (float) SPEARS_RADIUS, 4, 50, p).data(level.random.nextInt()).spawn();
 		HeavenSpells.sound(level, at, SoundEvents.ROOTED_DIRT_BREAK, 2.0f, 0.5f);
 		HeavenSpells.linger(new FireFromBelow(p, 6, () -> {
-			for (LivingEntity e : HeavenSpells.aroundPoint(level, at, SPEARS_RADIUS + 1, e -> !HeavenSpells.friendly(p, e) && !HeavenSpells.spared(p, e))) {
+			// Whoever stands in it that the spells don't spare: foes, and people (players, cultivators), the one aimed at too.
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, at, SPEARS_RADIUS + 1, e -> e == aimed || HeavenSpells.mark(p, e))) {
 				if (Math.abs(e.getY() - at.y) > 3) continue;
 				HeavenSpells.strike(p, e, SPEARS_DAMAGE, spell);
 				bind(p, e, SPEARS_ROOT);
@@ -620,22 +624,30 @@ public final class WoodSpells {
 
 	// --- Heavenly Being ---
 
-	/** Up to {@code count} foes of {@code p}'s within {@code radius} of {@code centre}, nearest it first. */
-	static List<LivingEntity> foesNear(ServerPlayer p, Vec3 centre, double radius, int count) {
-		List<LivingEntity> found = new ArrayList<>(HeavenSpells.aroundPoint(p.serverLevel(), centre, radius,
-				e -> !HeavenSpells.friendly(p, e) && !HeavenSpells.spared(p, e)));
+	/** Where a spell that seeks beings out lands: the being aimed at (within {@code range}), or else the point looked at. */
+	static Vec3 seekCentre(ServerPlayer p, LivingEntity aimed, double range) {
+		return aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, range);
+	}
+
+	/**
+	 * Up to {@code count} beings for a spell that seeks them out where its caster looks (Heaven-Piercing Bamboo, Myriad Vine
+	 * Binding): the one aimed at first, then the marks ({@link HeavenSpells#mark}: foes, and players and cultivators the caster's
+	 * spells don't spare) within {@code radius} of it, nearest first. With a being aimed at, the search is round that being, so
+	 * one standing against the open sky (the look running on past it to the end of the range) is still found.
+	 */
+	static List<LivingEntity> marksNear(ServerPlayer p, double range, double radius, int count) {
+		LivingEntity aimed = HeavenSpells.aimed(p, range);
+		Vec3 centre = seekCentre(p, aimed, range);
+		List<LivingEntity> found = new ArrayList<>(HeavenSpells.aroundPoint(p.serverLevel(), centre, radius, e -> e != aimed && HeavenSpells.mark(p, e)));
 		found.sort(Comparator.comparingDouble(e -> e.position().distanceToSqr(centre)));
-		return found.size() > count ? found.subList(0, count) : found;
+		if (aimed != null) found.add(0, aimed);
+		return found.size() > count ? new ArrayList<>(found.subList(0, count)) : found;
 	}
 
 	private static void bamboo(ServerPlayer p, Spell spell) {
 		ServerLevel level = p.serverLevel();
-		Vec3 centre = HeavenSpells.lookPoint(p, BAMBOO_RANGE);
-		List<LivingEntity> foes = foesNear(p, centre, BAMBOO_RADIUS, BAMBOO_TARGETS);
-		if (foes.isEmpty()) {
-			Vec3 ground = HeavenSpells.groundBelow(level, centre.add(0, 1, 0), 3, 16);
-			SpellField.create(level, SpellField.Kind.BAMBOO, ground != null ? ground : centre, 0.9f, 18, 50, p).data(level.random.nextInt()).spawn();
-		}
+		Vec3 centre = seekCentre(p, HeavenSpells.aimed(p, BAMBOO_RANGE), BAMBOO_RANGE);
+		List<LivingEntity> foes = marksNear(p, BAMBOO_RANGE, BAMBOO_RADIUS, BAMBOO_TARGETS);
 		for (LivingEntity foe : foes) {
 			Vec3 ground = HeavenSpells.groundBelow(level, foe.position().add(0, 0.5, 0), 2, 24);
 			Vec3 at = ground != null ? ground : foe.position();
@@ -683,8 +695,8 @@ public final class WoodSpells {
 
 	private static void vines(ServerPlayer p, Spell spell) {
 		ServerLevel level = p.serverLevel();
-		Vec3 centre = HeavenSpells.lookPoint(p, VINES_RANGE);
-		List<LivingEntity> foes = foesNear(p, centre, VINES_RADIUS, VINES_TARGETS);
+		Vec3 centre = seekCentre(p, HeavenSpells.aimed(p, VINES_RANGE), VINES_RANGE);
+		List<LivingEntity> foes = marksNear(p, VINES_RANGE, VINES_RADIUS, VINES_TARGETS);
 		for (LivingEntity foe : foes) HeavenSpells.linger(new Vines(p, spell, foe));
 		HeavenSpells.sound(level, centre, SoundEvents.ROOTED_DIRT_BREAK, 3.0f, 0.4f);
 		HeavenSpells.sound(level, p.position(), SoundEvents.EVOKER_CAST_SPELL, 2.0f, 0.5f);

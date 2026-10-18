@@ -562,6 +562,16 @@ public final class HeavenSpells {
 		return hit != null && hit.getEntity() instanceof LivingEntity target ? target : null;
 	}
 
+	/**
+	 * A mark for a spell that seeks beings out where its caster looks (Heaven-Piercing Bamboo, Myriad Vine Binding, Thorn Spear
+	 * Forest): any foe or enemy (what {@link #friendly} isn't), and any person, a player or a cultivator, that the caster's spells
+	 * don't spare (PvP off, a sect fellow: {@link #spared}). Beasts and village folk minding their own business are left be.
+	 */
+	public static boolean mark(ServerPlayer p, LivingEntity e) {
+		if (spared(p, e)) return false;
+		return e instanceof Player || e instanceof CultivatorNpc || !friendly(p, e);
+	}
+
 	/** A foe of the caster's: a monster, or anything set on it (a mob or a cultivator with it as its target). */
 	public static boolean foe(ServerPlayer p, LivingEntity e) {
 		if (spared(p, e)) return false;

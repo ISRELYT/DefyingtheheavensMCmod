@@ -75,9 +75,10 @@ public class SoulProjectionGameTests implements FabricGameTest {
 			helper.assertTrue(body != null && body.getHealth() == 50 && body.getMaxHealth() == 65, "Its body sits on with the player's health");
 			helper.assertTrue(p.getMaxHealth() == 2 && p.getHealth() == 2, "The soul has 1 heart");
 			helper.assertTrue(c.isQiSenseOn(), "It sees by Qi Sense");
-			c.setAbilityEnabled(Ability.QI_SENSE, false);
-			helper.assertTrue(c.isQiSenseOn(), "...forced open, switched off or not");
-			c.setAbilityEnabled(Ability.QI_SENSE, true);
+			CultivationManager.toggleAbility(p, Ability.QI_SENSE.ordinal());
+			helper.assertTrue(!c.isQiSenseOn(), "...and may shut it while out");
+			CultivationManager.toggleAbility(p, Ability.QI_SENSE.ordinal());
+			helper.assertTrue(c.isQiSenseOn(), "...and open it again");
 
 			MeditationManager.start(p);
 			helper.assertTrue(!MeditationManager.isMeditating(p.getUUID()), "A soul can't meditate");

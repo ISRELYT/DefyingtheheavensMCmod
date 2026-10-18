@@ -129,7 +129,7 @@ public final class QiSenseClientHandler {
 
 	public static boolean isActive() {
 		Minecraft mc = Minecraft.getInstance();
-		// Switched on, or forced open while the soul is out of the body (it is how a nascent soul sees; see SoulProjection).
+		// Switched on (a soul sets out with it open, as it is how a nascent soul sees, but may shut it: see SoulProjection).
 		return mc.player != null && !mc.player.isSpectator() && ClientCultivationData.get().isQiSenseOn();
 	}
 

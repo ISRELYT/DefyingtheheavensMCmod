@@ -48,6 +48,11 @@ public final class CultivationManager {
 	public static void toggleAbility(ServerPlayer player, int index) {
 		Ability ability = Ability.byIndex(index);
 		PlayerCultivation c = get(player);
+		// The dead are all soul already: there is no body to send a soul out of (a Ghost King, or a creative ghost, neither).
+		if (ability == Ability.SOUL_PROJECTION && c.netherworld().ghost() && !c.isMortal() && c.getEffectiveRealm().canProjectSoul()) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_GHOST_CANNOT), true);
+			return;
+		}
 		if (ability == null || !ability.isUnlocked(c)) return;
 		// Soul Projection is an act: its switch sends the soul out, or calls it home (the switch shows where it is).
 		if (ability == Ability.SOUL_PROJECTION) {
@@ -63,8 +68,6 @@ public final class CultivationManager {
 			SpatialTrialHandler.tear(player);
 			return;
 		}
-		// While the soul is out, Qi Sense is how it sees: it stays open.
-		if (ability == Ability.QI_SENSE && SoulProjection.isActive(player.getUUID())) return;
 		c.setAbilityEnabled(ability, !c.isAbilityEnabled(ability));
 		markDirty(player.server);
 		sync(player);

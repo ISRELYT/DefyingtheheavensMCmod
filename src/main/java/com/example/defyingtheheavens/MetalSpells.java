@@ -73,13 +73,20 @@ public final class MetalSpells {
 	 * tips, its middle {@link #SEVER_LIFT} over the ground it set out from; it flies {@link #SEVER_RANGE} at {@link #SEVER_SPEED} a
 	 * tick and cuts only what its blade passes through. The client draws it to the same numbers (SpellProjectileRenderer).
 	 */
-	public static final double SEVER_RANGE = 240, SEVER_SPEED = 6;
+	public static final double SEVER_RANGE = 120, SEVER_SPEED = 6;
+	/**
+	 * The stroke that looses it (SpellField SEVER_SWING): a sword of light {@link #SEVER_SWORD} blocks long forms in the caster's
+	 * hand over {@link #SEVER_FORM} ticks and is swung level across their front over {@link #SEVER_SWING}; the slash leaves it
+	 * {@link #SEVER_RELEASE} ticks in, as its blade crosses the front, and the sword is gone {@link #SEVER_STROKE} ticks in.
+	 */
+	public static final float SEVER_SWORD = 34;
+	public static final int SEVER_FORM = 4, SEVER_SWING = 5, SEVER_RELEASE = 6, SEVER_STROKE = 22;
 	public static final float SEVER_DAMAGE = 300;
 	public static final float SEVER_RADIUS = 60, SEVER_SPAN = 2.3f, SEVER_THICK = 10, SEVER_LIFT = 1.3f;
 
 	/**
 	 * The severing slash's way, asked to load (out to its tips) and tick (round its middle) the moment it is cast, and again just
-	 * ahead of it as it flies: its 240 blocks run past the usual simulation distance, where it would otherwise stop dead and its cut
+	 * ahead of it as it flies: its 120 blocks (and its tips 55 out to either side) run past the usual simulation distance, where it would otherwise stop dead and its cut
 	 * with it (land never made before is made meanwhile; the slash waits at its edge until it is). Each lapses on its own.
 	 */
 	private static final TicketType<ChunkPos> SEVER_TICKET = TicketType.create("dth_sever", java.util.Comparator.comparingLong(ChunkPos::toLong), 300);
@@ -501,8 +508,9 @@ public final class MetalSpells {
 	// --- Four Axis ---
 
 	/**
-	 * Heaven-Severing Sword: one stroke, and a crescent of sword light about 110 blocks across flies out level from the caster's
-	 * chest the way they face, {@link #SEVER_SPEED} a tick for {@link #SEVER_RANGE} blocks. Nothing stops it, and it cuts only what
+	 * Heaven-Severing Sword: a sword of light as long as a tower forms in the caster's hand and is swung level across their front
+	 * ({@link SeverStroke}); as its blade crosses the front a crescent of sword light about 110 blocks across leaves it, flying out
+	 * level from the caster's chest the way they face, {@link #SEVER_SPEED} a tick for {@link #SEVER_RANGE} blocks. Nothing stops it, and it cuts only what
 	 * its blade passes through: a slit {@link #SEVER_THICK} blocks tall at its middle, thinning toward its tips, through hills,
 	 * mountains, trees and whatever is built in its way (the tops stand on above the cut), the land's far end of it cut in its
 	 * crescent's curve. Every being its blade passes through takes {@link #SEVER_DAMAGE} and is hurled ahead of it.
@@ -517,10 +525,52 @@ public final class MetalSpells {
 		int base = (int) Math.floor((ground != null ? ground : p.position()).y);
 		double bladeY = base + SEVER_LIFT;
 		double half = SEVER_RADIUS * Math.sin(SEVER_SPAN / 2);
-		java.util.Set<Long> columns = new java.util.HashSet<>();
-		java.util.Set<LivingEntity> struck = new java.util.HashSet<>();
 		Vec3 from = new Vec3(p.getX(), base + 1, p.getZ()).add(flat.scale(2.5));
 		for (int d = 0; d <= SEVER_RANGE + 16; d += 32) loadSeverWay(level, from.add(flat.scale(d)));
+		// The stroke: the sword forms in the hand and is swung; the slash leaves it as it crosses the front.
+		float yaw = (float) Math.toDegrees(Math.atan2(-flat.x, flat.z));
+		SpellField sword = SpellField.create(level, SpellField.Kind.SEVER_SWING, p.position().add(0, p.getBbHeight() * 0.65, 0), SEVER_SWORD, 0,
+				SEVER_STROKE, p).facing(yaw, 0).spawn();
+		HeavenSpells.sound(level, p.position(), SoundEvents.BEACON_ACTIVATE, 3.0f, 0.4f);
+		HeavenSpells.sound(level, p.position(), SoundEvents.TRIDENT_RETURN, 3.0f, 0.5f);
+		HeavenSpells.linger(new SeverStroke(p, sword, () -> release(p, spell, level, flat, side, from, base, bladeY, half)));
+	}
+
+	/**
+	 * The Heaven-Severing Sword's stroke (SpellField SEVER_SWING, drawn by the client to {@link #SEVER_FORM}, {@link #SEVER_SWING}):
+	 * the slash is released {@link #SEVER_RELEASE} ticks in, as the blade crosses the front, and the sword is gone at the end. Its
+	 * caster gone before the release (left, or another level), nothing is released.
+	 */
+	static final class SeverStroke extends HeavenSpells.Timed {
+		private final SpellField sword;
+		private final Runnable release;
+		private boolean released;
+
+		SeverStroke(ServerPlayer caster, SpellField sword, Runnable release) {
+			super(caster, SEVER_STROKE);
+			this.sword = sword;
+			this.release = release;
+		}
+
+		@Override
+		protected boolean run(long age, long now) {
+			if (!released && age >= SEVER_RELEASE) {
+				released = true;
+				if (casterHere()) release.run();
+			}
+			return true;
+		}
+
+		@Override
+		public void end() {
+			sword.discard();
+		}
+	}
+
+	/** The severing slash let go: it flies out from {@code from} along {@code flat}, cutting its way (see {@link #sever}). */
+	private static void release(ServerPlayer p, Spell spell, ServerLevel level, Vec3 flat, Vec3 side, Vec3 from, int base, double bladeY, double half) {
+		java.util.Set<Long> columns = new java.util.HashSet<>();
+		java.util.Set<LivingEntity> struck = new java.util.HashSet<>();
 		long[] ticketed = {Long.MIN_VALUE};
 		SpellProjectile.thrown(level, p, spell, SpellProjectile.Shape.HEAVEN_SLASH, 1.0f, from, flat.scale(SEVER_SPEED), SEVER_RANGE, new SpellProjectile.Behaviour() {
 			@Override
@@ -577,12 +627,12 @@ public final class MetalSpells {
 				}
 				if (missile.tickCount % 6 == 0) HeavenSpells.sound(level, at, SoundEvents.GENERIC_EXPLODE, 3.0f, 0.4f);
 			}
-		}).phasing().pierce(100000).hitSize(4.0f).data(Math.round(p.getYRot()));
-		SpellFx.send(level, SpellFx.Kind.FLASH, p.position().add(flat.scale(3)).add(0, 2, 0), Vec3.ZERO, 8, 0xFFF4D0, 256);
-		SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, p.position(), Vec3.ZERO, 14, 0, 256);
-		HeavenSpells.sound(level, p.position(), SoundEvents.TRIDENT_THUNDER, 4.0f, 0.5f);
-		HeavenSpells.sound(level, p.position(), SoundEvents.PLAYER_ATTACK_SWEEP, 4.0f, 0.3f);
-		HeavenSpells.sound(level, p.position(), SoundEvents.BEACON_ACTIVATE, 3.0f, 0.4f);
+		}).phasing().pierce(100000).hitSize(4.0f).data(Math.round((float) Math.toDegrees(Math.atan2(-flat.x, flat.z))));
+		Vec3 at = from.subtract(flat.scale(2.5));
+		SpellFx.send(level, SpellFx.Kind.FLASH, at.add(flat.scale(3)).add(0, 1, 0), Vec3.ZERO, 8, 0xFFF4D0, 256);
+		SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, at, Vec3.ZERO, 14, 0, 256);
+		HeavenSpells.sound(level, at, SoundEvents.TRIDENT_THUNDER, 4.0f, 0.5f);
+		HeavenSpells.sound(level, at, SoundEvents.PLAYER_ATTACK_SWEEP, 4.0f, 0.3f);
 	}
 
 	/**

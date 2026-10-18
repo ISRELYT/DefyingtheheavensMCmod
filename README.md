@@ -664,7 +664,7 @@ water puts out what burns.
 | Earth | **Mountain Seal** (52) | A mountain of stone bursts up over where you look, up to 48 blocks, 7 blocks round and 9 tall, tearing the land open round its foot in nine fissures out to 18 blocks: everything inside is entombed, held fast for 5 s and crushed for 60 earth harm a second. The mountain crumbles away after 20 s; its stone gives nothing. |
 | Water | **Absolute Zero** (48) | A beam of utter cold freezes the being you look at solid, within 48 blocks: 200 water harm, and it is held frozen for 5 s. When anything strikes it, or the cold lets go, it shatters for 60 more. |
 | Water | **Boundless Sea** (52) | A sphere of the sea 16 blocks round fills the place you look at, up to 48 blocks, for 8 s: every foe inside is held in it, drowning, and takes 22 water harm a second. When it lets go, the ground under it is left crushed into a basin 10 blocks round with a lake in it. |
-| Metal | **Heaven-Severing Sword** (48) | One stroke, and a giant crescent of sword light some 110 blocks across flies out level from your chest the way you face, 240 blocks, faster than anything can flee it: nothing stops it. It cuts through whatever its blade passes through, 10 blocks thick at its middle and thinner toward its tips: hills and mountains are sliced through (their tops left standing above the cut), trees felled, whatever is built in its way cut in two, and the land at its far end is cut in the crescent's curve. Every being its blade passes through takes 300 metal harm and is hurled ahead of it. |
+| Metal | **Heaven-Severing Sword** (48) | A sword of light as long as a tower forms in your hand and you swing it level across your front: a giant crescent of sword light some 110 blocks across leaves its edge and flies out level from your chest the way you face, 120 blocks, faster than anything can flee it: nothing stops it. It cuts through whatever its blade passes through, 10 blocks thick at its middle and thinner toward its tips: hills and mountains are sliced through (their tops left standing above the cut), trees felled, whatever is built in its way cut in two, and the land at its far end is cut in the crescent's curve. Every being its blade passes through takes 300 metal harm and is hurled ahead of it. |
 | Metal | **Four Swords Array** (52) | Four giant swords plant themselves at the corners of a square 32 blocks across round where you look, up to 48 blocks, each driven deep into the ground in a crater 4 blocks round: for 8 s every foe inside is held in by the walls of light between them and takes 80 metal harm a second. |
 
 Each spell's description in the Spells tab gives its numbers; the constants at the top of its element's class set them. Harm
@@ -675,10 +675,10 @@ Heavenly Being and 150-300 at Four Axis; qi costs likewise (8-20 at Qi Refining 
 phoenixes and falling mountains blow out craters (burnt to magma and blackstone, or broken to rubble), quakes and seals split it
 in fissures and sink it, the Heavenly River scours a channel, the Boundless Sea leaves a lake in a crushed basin, Piercing Sword
 Light bores a tunnel, Mountain Cleave cuts a slot through hills, and the Heaven-Severing Sword's crescent, some 110 blocks across,
-slices through whatever its blade passes through for 240 blocks: a slit 10 blocks tall at its middle and thinner toward its tips,
+slices through whatever its blade passes through for 120 blocks: a slit 10 blocks tall at its middle and thinner toward its tips,
 at the caster's chest, through hills and mountains (their tops left standing), its far end cut in the crescent's curve
 (`MetalSpells#severThickness`, `#severLag`; the client draws it to the same numbers). Its way is asked to load as it is cast and
-kept loading just ahead of it, since 240 blocks run past the usual simulation distance; land that was never made before is made
+kept loading just ahead of it, since 120 blocks (and its tips) run past the usual simulation distance; land that was never made before is made
 meanwhile, and the slash waits at its edge until it is. Every block goes by the same rule as the rest of the spells' terrain harm
 (`HeavenSpells#carvable`: nothing that holds items, nothing harder than obsidian, nothing a raised barrier shelters, nothing the
 caster couldn't dig) and is gone for good, dropping nothing; a few pieces are flung off as debris. A big wound is cut over
@@ -864,8 +864,8 @@ the day the soul forms, and the ability goes into the first empty slot of your w
   no penalty). Taking hold of a body costs 10% of your pool on top.
 - **What a soul can't do**: touch anything (save a seized body's own things, below). No blocks, chests, items (it picks nothing up and drops nothing), plates or
   tripwires; no meditating, no Inner Realm, no breakthroughs or tribulations (and you can't send the soul out during one),
-  no portals, rift or Spatial Gap; no Qi Flight, Sword Flight or Realm Suppress. Qi Sense is forced open: it is how a nascent
-  soul sees. Blasts, fire, lava, falls, drowning, suffocation, arrows and monsters can't harm it.
+  no portals, rift or Spatial Gap; no Qi Flight, Sword Flight or Realm Suppress. Qi Sense opens as it sets out (it is how a nascent
+  soul sees), and you can shut it while out; it goes back as it was when you return. Blasts, fire, lava, falls, drowning, suffocation, arrows and monsters can't harm it.
 - **Barriers**: a formation's barrier is qi, as the soul is. One that doesn't let you through and is stronger than you stops
   the soul at its shell (and a soul forced across anyway is set back and loses 5% of its pool); one you could break, you may
   pass, but it drains 2% of your pool a second while you're inside.
@@ -1491,8 +1491,10 @@ cultivator who walks both is stronger than one who walks either (`TwoPaths`):
   In all else you are still alive: you eat, mobs hunt you, arrows strike you. Below a Core Formation ghost path the living
   look human. You're told when your true form changes.
 - **The dead are the dead.** Whatever the realms of their two paths, the dead are drawn as the dead: a Ghost King crowned
-  (either path at Core Formation), the rest as common ghosts. They have no human form and no Form Shift; born again, their
-  forms are theirs again.
+  (either path at Core Formation), the rest as common ghosts. A **Ghost King has two forms**, ghost method or none: its true
+  form is the King's, and Form Shift takes its **human form**, in which it is drawn as a man and seen by everyone, as the
+  living are (`TwoPaths#inHumanForm`); in all else it keeps the rules of the dead. Common ghosts have no forms. Dying, or
+  born again, you start in your true form (Form Shift switched off).
 - **A mortal has no ghost path.** Its meridians are closed, for the ghost path as for the heaven path, until a **Marrow
   Cleansing Elixir** opens them: alive or dead, it can't take up a ghost method (steles, slips and teachers say so) or
   cultivate one, and any it knows lie dormant (no ghost path, spells, abilities or harmony). Only the living can drink the

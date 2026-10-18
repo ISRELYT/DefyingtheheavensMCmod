@@ -25,7 +25,8 @@ import java.util.function.Predicate;
  * The ability itself costs no qi. While it is on, the client draws the domain, outlines every living thing inside it
  * through walls and labels cultivators with their realm. This server half tells each user, twice a second, the realm and
  * stage of the cultivators in their domain (a client never learns other players' cultivation otherwise) and which other
- * active domains touch theirs, and alerts both cultivators when two domains first touch.
+ * active domains touch theirs, and alerts both cultivators when two domains first touch. Another's open domain is seen by
+ * anyone near it ({@link #SEEN_MARGIN}), their own domain open or not: the sphere only, nothing of what it senses.
  */
 public final class ConsciousnessDomainHandler {
 	public static final double BASE_RADIUS = 10;
@@ -38,6 +39,11 @@ public final class ConsciousnessDomainHandler {
 	 * at the edge don't set off the alert over and over.
 	 */
 	private static final double SEPARATION_MARGIN = 4;
+	/**
+	 * Another's open domain is seen (whether one's own is open or not) from inside it and from up to this far outside its shell:
+	 * a domain is felt, not only met.
+	 */
+	public static final double SEEN_MARGIN = 48;
 
 	/** A cultivator in someone's domain, as that someone senses them: the effective (displayed) realm and stage. */
 	public record SensedCultivator(int entityId, Realm realm, Stage stage, boolean pressed) {}
@@ -103,6 +109,14 @@ public final class ConsciousnessDomainHandler {
 			updateContacts(embodied, next);
 			updateNpcContacts(embodied, npcs, next);
 			for (ServerPlayer viewer : users) sendDomain(viewer, embodied, npcs, next);
+			// One whose own domain is shut still sees the open domains of others near (only the spheres: what is in them is the
+			// domain's owner's to sense).
+			for (ServerPlayer viewer : level.players()) {
+				if (users.contains(viewer)) continue;
+				List<TouchingDomain> near = new ArrayList<>();
+				addNear(viewer, embodied, near);
+				if (!near.isEmpty()) ModPackets.sendConsciousness(viewer, List.of(), near);
+			}
 		}
 		touching = next; // pairs that split up across dimensions or went inactive are simply not carried over
 	}
@@ -175,7 +189,27 @@ public final class ConsciousnessDomainHandler {
 			Vec3 c = center(npc);
 			domains.add(new TouchingDomain(npc.getId(), c.x, c.y, c.z, (float) npc.domainRadius()));
 		}
+		addNear(viewer, users, domains); // and those near that don't reach this one
 		ModPackets.sendConsciousness(viewer, cultivators, domains); // the client works its own radius out from its synced stage
+	}
+
+	/**
+	 * Adds to {@code domains} the open domains of {@code users} that {@code viewer} is inside or within {@link #SEEN_MARGIN} of,
+	 * and not already there: only of those whose owner the viewer's client is sent at all (a soul, or one of the dead, is only
+	 * for those who perceive them: SoulProjection#broadcastsTo).
+	 */
+	private static void addNear(ServerPlayer viewer, List<ServerPlayer> users, List<TouchingDomain> domains) {
+		Vec3 at = center(viewer);
+		for (ServerPlayer other : users) {
+			if (other == viewer || !SoulProjection.broadcastsTo(other, viewer)) continue;
+			boolean listed = false;
+			for (TouchingDomain domain : domains) listed |= domain.entityId() == other.getId();
+			if (listed) continue;
+			double radius = radius(CultivationManager.get(other));
+			Vec3 c = center(other);
+			if (c.distanceTo(at) > radius + SEEN_MARGIN) continue;
+			domains.add(new TouchingDomain(other.getId(), c.x, c.y, c.z, (float) radius));
+		}
 	}
 
 	public static void forget(UUID id) {

@@ -5,12 +5,17 @@ import com.example.defyingtheheavens.client.ClientSoul;
 import com.example.defyingtheheavens.client.SenseOverlay;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.world.entity.Entity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.function.Predicate;
 
 /**
  * Under a shader pack, the realm's own sky laid over the pack's (SkyLayer); then Qi Sense's monochrome and the senses' overlay,
@@ -23,6 +28,20 @@ public abstract class GameRendererMixin {
 	private void dth$senses(float partialTicks, long nanoTime, boolean renderLevel, CallbackInfo ci) {
 		com.example.defyingtheheavens.client.SkyLayer.composite();
 		SenseOverlay.beforeEntityOutline(partialTicks);
+	}
+
+	/**
+	 * A soul possessing a body looks out from inside it (its eyes sit at the body's, within the body's own box), and vanilla's pick
+	 * takes a box holding the eyes for a hit whenever that box comes later in the level's entity list than the true target: then
+	 * every swing landed on the host itself and was thrown away (so a creature possessed and moved about, then taken again by any
+	 * soul, struck nothing). The body it is in is never what its crosshair is on.
+	 */
+	@ModifyArg(method = "pick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/projectile/ProjectileUtil;getEntityHitResult(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;D)Lnet/minecraft/world/phys/EntityHitResult;"),
+			index = 4)
+	private Predicate<Entity> dth$notTheBodyItIsIn(Predicate<Entity> pickable) {
+		Minecraft mc = Minecraft.getInstance();
+		Entity host = mc.player == null || !ClientSoul.isOut() ? null : mc.player.getVehicle();
+		return host == null ? pickable : pickable.and(entity -> entity != host);
 	}
 
 	/** A projected soul touches no block, so none is outlined under its gaze. */

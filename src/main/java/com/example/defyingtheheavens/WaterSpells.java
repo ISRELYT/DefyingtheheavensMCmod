@@ -567,8 +567,10 @@ public final class WaterSpells {
 			this.to = ground != null ? ground : end;
 			Vec3 d = to.subtract(from);
 			float yaw = (float) Math.toDegrees(Math.atan2(-d.x, d.z));
+			// Its pitch is the ground's slope along the line, so the client lands the falls on the ground at its far end too.
+			float slope = (float) Math.toDegrees(Math.atan2(d.y, Math.max(1.0e-3, d.horizontalDistance())));
 			this.field = SpellField.create(level, SpellField.Kind.RIVER_TORRENT, from, (float) RIVER_WIDTH, (float) d.horizontalDistance(), RIVER_TICKS, caster)
-					.facing(yaw, 0).data(caster.getRandom().nextInt()).spawn();
+					.facing(yaw, slope).data(caster.getRandom().nextInt()).spawn();
 			HeavenSpells.sound(level, from, SoundEvents.AMBIENT_UNDERWATER_ENTER, 3.0f, 0.4f);
 			HeavenSpells.sound(level, to, SoundEvents.GENERIC_SPLASH, 3.0f, 0.4f);
 		}
@@ -664,12 +666,17 @@ public final class WaterSpells {
 					int top = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, x, z) - 1;
 					BlockPos pos = new BlockPos(x, top, z);
 					BlockState state = level.getBlockState(pos);
+					// A formation's barrier (a sect's dome) is invisible: frost laid on its shell hung in the air. Under it is the
+					// formation's own ground, which the cold doesn't reach (HeavenSpells#placeTemporary: sheltered).
+					if (state.is(ModBlocks.SECT_BARRIER)) continue;
 					int thaw = THAW_MIN + level.random.nextInt(THAW_MAX - THAW_MIN);
 					if (state.is(Blocks.WATER) && state.getFluidState().isSource()) {
 						HeavenSpells.placeTemporary(level, pos, Blocks.ICE.defaultBlockState(), thaw);
 					} else if (d <= FROST_RADIUS && state.isFaceSturdy(level, pos, net.minecraft.core.Direction.UP)) {
 						BlockPos above = pos.above();
-						if (level.getBlockState(above).isAir()) HeavenSpells.placeTemporary(level, above, Blocks.SNOW.defaultBlockState(), thaw);
+						BlockState snow = Blocks.SNOW.defaultBlockState();
+						// Only where snow could lie (as vanilla's own snowfall asks: not on a barrier, ice or the like).
+						if (level.getBlockState(above).isAir() && snow.canSurvive(level, above)) HeavenSpells.placeTemporary(level, above, snow, thaw);
 					}
 				}
 			}

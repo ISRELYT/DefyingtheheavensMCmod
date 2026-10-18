@@ -787,16 +787,16 @@ public class SpellProjectileRenderer extends EntityRenderer<SpellProjectile> {
 	private static final float SEVER_DROP = 3 - MetalSpells.SEVER_LIFT;
 
 	/**
-	 * Heaven-Severing Sword: a crescent of sword light lying level, about 110 blocks across (MetalSpells' numbers, the same the server
-	 * cuts by), sweeping bow-first at a caster's chest. Its body is see-through layers of light one over another, as thick as the
-	 * blade (thick at its middle, thinning to its tips, so it is lens-shaped seen from ahead), in a texture bright all through (not
-	 * only at the edge), with added light over it; its bow stands up as a band of white light so it shows from level with it too;
-	 * echoes stream behind it, stars flare at its tips and heart, and wakes of light trail from its tips and heart.
+	 * Heaven-Severing Sword: the edge of sword light the stroke threw (SpellFieldRenderer#severSwing), lying level, about 110 blocks
+	 * across (MetalSpells' numbers, the same the server cuts by), sweeping bow-first at a caster's chest. A keen blade, not a cloud:
+	 * its bow stands up as a band of white-hot light as tall as the blade is thick (thick at its middle, thinning to its tips), a
+	 * narrow sheet of light lies behind its edge, echoes of the edge stream behind it, small stars glint at its tips and wakes of
+	 * light trail from its tips and middle.
 	 */
 	private void heavenSlash(PoseStack pose, MultiBufferSource buffers, Quaternionf facing, Vec3 cam, List<Vec3> trail, float age, float yaw) {
 		float flicker = 0.9f + 0.1f * Mth.sin(age * 2.7f);
 		float r = MetalSpells.SEVER_RADIUS, span = MetalSpells.SEVER_SPAN, half = MetalSpells.SEVER_THICK / 2;
-		float depth = r * 0.24f;
+		float depth = r * 0.14f;
 		// Warm sword light (gold-white, as the other metal spells), which shows against a blue sky where pale blue-white is lost.
 		float[] pale = {1.0f, 0.86f, 0.52f}, edge = {1.0f, 0.97f, 0.86f};
 		pose.pushPose();
@@ -832,16 +832,13 @@ public class SpellProjectileRenderer extends EntityRenderer<SpellProjectile> {
 		float tipOut = r * Mth.sin(span / 2), tipBack = r * (1 - Mth.cos(span / 2));
 		for (int side = -1; side <= 1; side += 2) {
 			Vec3 tip = across.scale(side * tipOut).add(ahead.scale(-tipBack));
-			star(buffers, pose, facing, (float) tip.x, 0, (float) tip.z, 16, age * 0.25f, WHITE, flicker);
+			star(buffers, pose, facing, (float) tip.x, 0, (float) tip.z, 6, age * 0.25f, WHITE, flicker);
 			List<Vec3> wake = new ArrayList<>();
 			for (Vec3 point : trail) wake.add(point.add(tip));
 			streak(buffers, pose, wake, eye, SpellRender.GLOW, pale, 3.5f, 0.7f, 60, age * 0.05f);
 		}
-		star(buffers, pose, facing, 0, 0, 0, 18, -age * 0.1f, pale, 0.5f * flicker);
-		Vec3 heart = ahead.scale(-r * 0.1);
-		glowBall(buffers, pose, facing, (float) heart.x, 0, (float) heart.z, r * 0.6f, pale, 0.1f);
-		// Its heart's wake, burning white over the cut it leaves.
-		streak(buffers, pose, trail, eye, SpellRender.GLOW, edge, 8.0f, 0.8f, 90, age * 0.05f);
+		// Its middle's wake, burning white over the cut it leaves.
+		streak(buffers, pose, trail, eye, SpellRender.GLOW, edge, 4.0f, 0.7f, 90, age * 0.05f);
 		streak(buffers, pose, trail, eye, SpellRender.SLASH, WHITE, 3.0f, 0.9f, 60, age * 0.08f);
 		pose.popPose();
 	}

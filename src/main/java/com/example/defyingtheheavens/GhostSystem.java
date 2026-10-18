@@ -195,6 +195,8 @@ public final class GhostSystem {
 		s.setReforming(false);
 		s.setYinCorruption(0); // the yin has nothing left to take
 		MeditationManager.stop(p, false);
+		// A Ghost King's forms start from its true one, the King's: a Form Shift left on from life would show it human at once.
+		CultivationManager.get(p).setAbilityEnabled(Ability.FORM_SHIFT, false);
 		applyBody(p);
 		p.setHealth(p.getMaxHealth());
 		broadcast(p);
@@ -521,6 +523,7 @@ public final class GhostSystem {
 	private static void finishRevival(ServerPlayer p, NetherworldState s) {
 		s.setGhost(false);
 		s.setReforming(false);
+		CultivationManager.get(p).setAbilityEnabled(Ability.FORM_SHIFT, false); // alive again in its true form (TwoPaths)
 		removeBody(p);
 		gatherBody(p);
 		RealmSuppressionHandler.update(p);

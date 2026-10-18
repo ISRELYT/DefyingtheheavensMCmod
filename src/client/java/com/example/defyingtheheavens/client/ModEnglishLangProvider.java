@@ -317,7 +317,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case GHOST_FLIGHT -> "The dead fly at a drift (double-tap jump); with this, as swiftly as on qi, at a cost of %s ghost qi/s.";
 				case FORM_SHIFT -> "Your true form is the form of your higher path: now your %s. Switched on, you take your %s instead. "
 						+ "In a Ghost King's form you are seen as the dead are: outside the Netherworld, only by those who perceive souls. "
-						+ "Only while you live; no cost.";
+						+ "Dead, a Ghost King's true form is the King's, and its human form is seen by all as the living are. No cost.";
 				case CORE_DETONATION -> "The last resort. Use it twice within 5 s and your golden core breaks: 3 s later it bursts, everything within %s blocks "
 						+ "harmed by its distance and how far its realm stands below yours (a cultivator of your own realm in good armour may live). "
 						+ "You die, and the core is lost: you return at Foundation Building Grand Perfection.";
