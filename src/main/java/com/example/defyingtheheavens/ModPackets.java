@@ -479,6 +479,7 @@ public final class ModPackets {
 		}
 		for (Spell spell : Spell.values()) buf.writeVarInt(cooldownLeft.applyAsInt(spell));
 		buf.writeBoolean(s.ghost()); // what a ghost can cast and switch on (Spell#isKnown, Ability#isUnlocked)
+		buf.writeBoolean(s.reignedKing()); // a Ghost King's form kept, born again (TwoPaths#hasKingForm: Form Shift)
 		// The heaven methods (HeavenMethods): each known, its layer and progress, and the one practised.
 		HeavenState heaven = CultivationManager.get(player).heaven();
 		buf.writeVarInt(heaven.known().size());

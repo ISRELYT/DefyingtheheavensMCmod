@@ -798,7 +798,7 @@ public final class ModLang {
 	/** A form's name: this and its id (TwoPaths.Form). */
 	public static final String FORM_PREFIX = k("form.");
 	public static final String MSG_FORMS_OPEN = k("message.form.open");
-	public static final String MSG_FORMS_OPEN_DEAD = k("message.form.open_dead");
+	public static final String MSG_FORMS_KEPT = k("message.form.kept");
 	/** A mortal's closed meridians, alive (MSG_METHOD_MERIDIANS) or dead: no ghost method taken up or cultivated (GhostMethods#refusal). */
 	public static final String MSG_METHOD_MERIDIANS = k("message.method.meridians");
 	public static final String MSG_METHOD_MERIDIANS_DEAD = k("message.method.meridians_dead");

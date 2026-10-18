@@ -53,10 +53,11 @@ import java.util.function.Predicate;
  * are, hunted by no mob, passed through by arrows, cultivating only its method; outside the Netherworld only those who see
  * souls see it (SoulProjection#broadcastsTo).
  * <p>
- * How a player is drawn is told apart from what it is (TwoPaths#look): the dead are always drawn as the dead (a king crowned),
- * whatever their paths; one of the living whose ghost path has reached Core Formation has a human form and a Ghost King's, and
- * shows its true form or the other. In a Ghost King's form the living are seen as the dead are (outside the Netherworld, only by
- * those who perceive souls), and keep every other rule of the living.
+ * How a player is drawn is told apart from what it is (TwoPaths#look): the dead are drawn as the dead (a king crowned, or as a
+ * man in its human form), whatever their paths; one of the living whose ghost path has reached Core Formation, or who has reigned
+ * as a Ghost King among the dead, has a human form and a Ghost King's, and shows its true form or the other. In a Ghost King's
+ * form the living are seen as the dead are (outside the Netherworld, only by those who perceive souls), and keep every other rule
+ * of the living.
  * <p>
  * A creative ghost keeps the look and none of the rules.
  */
@@ -197,11 +198,13 @@ public final class GhostSystem {
 		MeditationManager.stop(p, false);
 		// A Ghost King's forms start from its true one, the King's: a Form Shift left on from life would show it human at once.
 		CultivationManager.get(p).setAbilityEnabled(Ability.FORM_SHIFT, false);
+		if (isKing(p)) s.setReignedKing(true); // a king from its death (its form kept when born again: TwoPaths#hasKingForm)
 		applyBody(p);
 		p.setHealth(p.getMaxHealth());
 		broadcast(p);
 		NetherworldManager.refresh(p);
 		CultivationManager.markDirty(p.server);
+		CultivationManager.sync(p); // the switch as the server has it (the client's would show Form Shift still on)
 	}
 
 	/**
@@ -312,13 +315,16 @@ public final class GhostSystem {
 
 	/**
 	 * Once a second: a ghost risen to Core Formation (or one that died there) is told it is a Ghost King, and its clients told too;
-	 * one stripped of its might (the Chief Judge's gaze) is told it is one of the common dead again. Born again, it simply isn't.
+	 * one stripped of its might (the Chief Judge's gaze) is told it is one of the common dead again. Born again it is no king, but
+	 * the King's form it had stays its own (NetherworldState#reignedKing, TwoPaths#hasKingForm).
 	 */
 	private static void watchKing(ServerPlayer p) {
 		boolean king = isKing(p);
 		if (king == KINGS.contains(p.getUUID())) return;
 		if (king) {
 			KINGS.add(p.getUUID());
+			state(p).setReignedKing(true); // its form stays its own, born again (TwoPaths#hasKingForm)
+			CultivationManager.markDirty(p.server);
 			p.sendSystemMessage(Component.translatable(ModLang.MSG_GHOST_KING).withStyle(ChatFormatting.LIGHT_PURPLE));
 			p.playNotifySound(SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.0f, 0.5f);
 			p.playNotifySound(SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.8f, 0.6f);
@@ -521,6 +527,7 @@ public final class GhostSystem {
 
 	/** Alive again, at full health; the ghost's state and hearts gone; Meng Po's soup honoured. Cultivation and ghostly qi kept. */
 	private static void finishRevival(ServerPlayer p, NetherworldState s) {
+		if (isKing(p)) s.setReignedKing(true); // a Ghost King born again keeps the King's form (TwoPaths#hasKingForm)
 		s.setGhost(false);
 		s.setReforming(false);
 		CultivationManager.get(p).setAbilityEnabled(Ability.FORM_SHIFT, false); // alive again in its true form (TwoPaths)
@@ -536,6 +543,7 @@ public final class GhostSystem {
 		broadcast(p);
 		NetherworldManager.refresh(p);
 		CultivationManager.markDirty(p.server);
+		CultivationManager.sync(p);
 		p.sendSystemMessage(Component.translatable(ModLang.MSG_REVIVED).withStyle(ChatFormatting.GOLD));
 		p.playNotifySound(SoundEvents.TOTEM_USE, SoundSource.PLAYERS, 0.6f, 1.3f);
 	}
@@ -605,7 +613,10 @@ public final class GhostSystem {
 			return;
 		}
 		if (s.reforming()) reform(p);
-		if (isKing(p)) KINGS.add(p.getUUID()); // a king already: no need to tell it again
+		if (isKing(p)) { // a king already: no need to tell it again
+			KINGS.add(p.getUUID());
+			s.setReignedKing(true);
+		}
 		applyBody(p);
 		broadcast(p);
 	}

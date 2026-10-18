@@ -24,7 +24,8 @@ import java.util.UUID;
  *       "Quasi-" the stage or realm it is on its way to.</li>
  *   <li><b>Spells of both paths</b> (Spell#isDual), one for each realm from Foundation Building, need both paths at that realm,
  *       and draw on both pools, qi and ghostly qi.</li>
- *   <li><b>The true form</b>, the living's only. Once the ghost path reaches Core Formation (a Ghost King's might) a living
+ *   <li><b>The true form</b>, the living's only. Once the ghost path reaches Core Formation (a Ghost King's might), or once
+ *       they have reigned as a Ghost King among the dead (kept when born again: {@link #hasKingForm}), a living
  *       cultivator has a second form beside the human one: the Ghost King's, crowned and drawn in the dead's deeper light. The
  *       true form is the higher path's ({@link #trueForm}; the paths level, the human); Form Shift (Ability#FORM_SHIFT) takes the
  *       other. In a Ghost King's form one is seen as the dead are: outside the Netherworld only by those who perceive souls
@@ -207,16 +208,20 @@ public final class TwoPaths {
 	/** How a player is drawn: as a man, as the dead's light, or as a Ghost King's (crowned). Synced (ModPackets#GHOST) by ordinal. */
 	public enum Look { HUMAN, DEAD, KING }
 
-	/** Whether {@code c}'s ghost path has the Ghost King's form in it: Core Formation, a Ghost King's might (dormant while it is dead). */
+	/**
+	 * Whether {@code c} has the Ghost King's form (dormant while it is dead): its ghost path at Core Formation, a Ghost King's might;
+	 * or, whatever its ghost path, having reigned as a Ghost King among the dead (NetherworldState#reignedKing), kept when born again.
+	 */
 	public static boolean hasKingForm(PlayerCultivation c) {
 		if (c.physique() == Physique.GHOST_DEVIL_BODY && !c.isMortal()) return true; // from birth, as strong as its ghost path (Physique)
+		if (c.netherworld().reignedKing() && !c.isMortal()) return true;
 		return ghostRank(c, false) >= GhostSystem.KING_RANK;
 	}
 
 	/**
-	 * Whether {@code c} has two forms to choose between now: the living, their ghost path at Core Formation; the dead, as Ghost
-	 * Kings (GhostSystem#isKing), whatever their ghost path, a king by its heaven path having its human form to take as well.
-	 * Common ghosts have none.
+	 * Whether {@code c} has two forms to choose between now: the living with the Ghost King's form ({@link #hasKingForm}: their ghost
+	 * path at Core Formation, or once a Ghost King among the dead); the dead, as Ghost Kings (GhostSystem#isKing), whatever their
+	 * ghost path, a king by its heaven path having its human form to take as well. Common ghosts have none.
 	 */
 	public static boolean formsOpen(PlayerCultivation c) {
 		return c.netherworld().ghost() ? GhostSystem.isKing(c) : hasKingForm(c);
@@ -276,17 +281,19 @@ public final class TwoPaths {
 	// --- Watching the paths (server) ---
 
 	/**
-	 * What each online player was last seen with: how they were drawn, whether their ghost path holds the Ghost King's form,
-	 * their true form (null: dead, or one form), the spells of both paths in reach.
+	 * What each online player was last seen with: how they were drawn, whether they were dead, whether the living had the Ghost
+	 * King's form ({@link #hasKingForm}; the dead are told theirs as Ghost Kings, GhostSystem#watchKing), their true form (null: one
+	 * form), the spells of both paths in reach.
 	 */
-	private record Seen(Look look, boolean kingForm, Form form, EnumSet<Spell> both) {}
+	private record Seen(Look look, boolean dead, boolean kingForm, Form form, EnumSet<Spell> both) {}
 
 	private static final Map<UUID, Seen> SEEN = new HashMap<>();
 
 	private static Seen see(PlayerCultivation c) {
 		EnumSet<Spell> both = EnumSet.noneOf(Spell.class);
 		for (Spell spell : Spell.values()) if (spell.isDual() && spell.isKnown(c)) both.add(spell);
-		return new Seen(look(c), hasKingForm(c), formsOpen(c) ? trueForm(c) : null, both);
+		boolean dead = c.netherworld().ghost();
+		return new Seen(look(c), dead, !dead && hasKingForm(c), formsOpen(c) ? trueForm(c) : null, both);
 	}
 
 	/** On joining: what they have now is simply theirs (nothing to tell them). */
@@ -306,12 +313,11 @@ public final class TwoPaths {
 		SEEN.put(p.getUUID(), now);
 		if (before == null) return;
 		if (now.kingForm() && !before.kingForm()) {
-			// The ghost path come to Core Formation: the form is theirs, to take while they live (the dead are simply the dead).
-			boolean dead = c.netherworld().ghost();
-			p.sendSystemMessage((dead ? Component.translatable(ModLang.MSG_FORMS_OPEN_DEAD)
+			// The ghost path come to Core Formation, or a Ghost King born again: the form is theirs, to take while they live.
+			p.sendSystemMessage((before.dead() ? Component.translatable(ModLang.MSG_FORMS_KEPT)
 					: Component.translatable(ModLang.MSG_FORMS_OPEN, trueForm(c).getDisplayName())).withStyle(ChatFormatting.LIGHT_PURPLE));
 			p.playNotifySound(SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 0.8f, 0.8f);
-			Journal.note(p, "two_forms", ModLang.JOURNAL_FORMS, Component.translatable(ModLang.JOURNAL_FORMS_TEXT));
+			if (!before.dead()) Journal.note(p, "two_forms", ModLang.JOURNAL_FORMS, Component.translatable(ModLang.JOURNAL_FORMS_TEXT));
 		} else if (now.form() != null && before.form() != null && now.form() != before.form()) {
 			p.sendSystemMessage(Component.translatable(ModLang.MSG_TRUE_FORM, now.form().getDisplayName()).withStyle(ChatFormatting.LIGHT_PURPLE));
 		}

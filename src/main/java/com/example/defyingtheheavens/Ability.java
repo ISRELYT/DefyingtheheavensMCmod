@@ -48,7 +48,8 @@ public enum Ability {
 	 */
 	GHOST_FLIGHT("ghost_flight", false, true, c -> c.netherworld().ghost() && c.netherworld().layer(GhostMethod.WANDERING_SOUL_STEPS) >= 4),
 	/**
-	 * From a ghost path of Core Formation, for the living, and for a Ghost King among the dead (TwoPaths): the other form. One's true form is the higher path's, human
+	 * From a ghost path of Core Formation, or once a Ghost King among the dead, for the living; and for a Ghost King among the dead
+	 * (TwoPaths#formsOpen): the other form. One's true form is the higher path's, human
 	 * or a Ghost King's; switched on, the other is shown instead. In a Ghost King's form one is seen as the dead are, outside the
 	 * Netherworld only by those who perceive souls. At no cost.
 	 */

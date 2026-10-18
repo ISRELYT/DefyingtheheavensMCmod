@@ -1435,7 +1435,8 @@ a king crowned, the rest as common ghosts. It is told so (the Journal keeps a no
   too: see **The two paths**.)
 
 Brought below Core Formation (the Chief Judge's gaze), it is one of the common dead again and told so. Born again at the
-Wheel, it is simply alive, its cultivation kept.
+Wheel, it is alive, its cultivation kept, and the King's form stays its own: Form Shift takes it, ghost method or none (see
+**The two paths**; `NetherworldState#reignedKing`).
 
 Code: `GhostSystem` (`isKing`, `KING_RANK`, `watchKing`, `attack`), `Incorporeal` (`is` leaves kings out, `isGhost` and
 `untouchable` keep them in), `SoulProjection#broadcastsTo`, `ModPackets#sendGhost` (the king flag); client `ClientGhosts`,
@@ -1481,15 +1482,16 @@ cultivator who walks both is stronger than one who walks either (`TwoPaths`):
   short of the next realm's Early: Foundation Building's comes about half way, Heavenly Being's most of it.
 - **Spells of both paths**, one for each realm from Foundation Building, need **both paths at that realm** and cost **qi
   as well as ghostly qi** (below). When both paths reach a realm you're told, and its spell goes on the spell wheel.
-- **Two forms, while you live.** Once your ghost path reaches Core Formation (a Ghost King's might) you have a **Ghost King
-  form** beside your human one: crowned, in the dead's deeper light, as the Ghost Kings are drawn. Your **true form** is the
+- **Two forms, while you live.** Once your ghost path reaches Core Formation (a Ghost King's might), or once you have been a
+  Ghost King among the dead (kept when you are born again, ghost method or none), you have a **Ghost King form** beside your
+  human one: crowned, in the dead's deeper light, as the Ghost Kings are drawn. Your **true form** is the
   form of your higher path: Four Axis on the heaven path and Nascent Soul on the ghost path, you look human; the ghost path
   higher, you look a Ghost King; level, human. The **Form Shift** ability (Abilities tab, or the ability wheel) takes the
   other form while it's on. In the Ghost King's form you are **seen as the dead are**: outside the Netherworld only by those
   who perceive souls (a Heavenly Being or above, a Nascent Soul with Qi Sense open, anyone with the Ghost Eye open, and the
   dead; `SoulProjection#seenOnlyBySeers`), so to anyone else's game you aren't there at all; in the Netherworld, by everyone.
-  In all else you are still alive: you eat, mobs hunt you, arrows strike you. Below a Core Formation ghost path the living
-  look human. You're told when your true form changes.
+  In all else you are still alive: you eat, mobs hunt you, arrows strike you. Without that form the living look human.
+  You're told when your true form changes, and when a Ghost King born again keeps its form.
 - **The dead are the dead.** Whatever the realms of their two paths, the dead are drawn as the dead: a Ghost King crowned
   (either path at Core Formation), the rest as common ghosts. A **Ghost King has two forms**, ghost method or none: its true
   form is the King's, and Form Shift takes its **human form**, in which it is drawn as a man and seen by everyone, as the

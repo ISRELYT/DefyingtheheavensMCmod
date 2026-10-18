@@ -37,6 +37,8 @@ public final class NetherworldState {
 	private CompoundTag savedRespawn;
 	/** Drank Meng Po's soup: medicinal toxicity is washed away at the next return to life. */
 	private boolean memoryCleansed;
+	/** Has been a Ghost King among the dead (GhostSystem#isKing): its form stays theirs, alive again too (TwoPaths#hasKingForm). */
+	private boolean reignedKing;
 
 	public boolean ghost() { return ghost; }
 	public void setGhost(boolean ghost) { this.ghost = ghost; }
@@ -46,6 +48,8 @@ public final class NetherworldState {
 	public void setReforming(boolean reforming) { this.reforming = reforming; }
 	public boolean memoryCleansed() { return memoryCleansed; }
 	public void setMemoryCleansed(boolean cleansed) { this.memoryCleansed = cleansed; }
+	public boolean reignedKing() { return reignedKing; }
+	public void setReignedKing(boolean reigned) { this.reignedKing = reigned; }
 
 	public boolean hasDeathPlace() { return !deathDimension.isEmpty(); }
 	public String deathDimension() { return deathDimension; }
@@ -185,6 +189,7 @@ public final class NetherworldState {
 		if (boundBelow) tag.putBoolean("BoundBelow", true);
 		if (reforming) tag.putBoolean("Reforming", true);
 		if (memoryCleansed) tag.putBoolean("MemoryCleansed", true);
+		if (reignedKing) tag.putBoolean("ReignedKing", true);
 		if (hasDeathPlace()) {
 			CompoundTag place = new CompoundTag();
 			place.putString("Dimension", deathDimension);
@@ -230,6 +235,7 @@ public final class NetherworldState {
 		boundBelow = tag.getBoolean("BoundBelow");
 		reforming = tag.getBoolean("Reforming");
 		memoryCleansed = tag.getBoolean("MemoryCleansed");
+		reignedKing = tag.getBoolean("ReignedKing");
 		CompoundTag place = tag.getCompound("DeathPlace");
 		if (place.contains("Dimension")) {
 			setDeathPlace(place.getString("Dimension"), new net.minecraft.core.BlockPos(place.getInt("X"), place.getInt("Y"), place.getInt("Z")));

@@ -50,6 +50,7 @@ public final class ClientMethods {
 		int[] cooldowns = new int[Spell.values().length];
 		for (int i = 0; i < cooldowns.length; i++) cooldowns[i] = buf.readVarInt();
 		boolean ghost = buf.readBoolean();
+		boolean reignedKing = buf.readBoolean();
 		int heavenCount = buf.readVarInt();
 		Map<HeavenMethod, double[]> heaven = new EnumMap<>(HeavenMethod.class);
 		for (int i = 0; i < heavenCount; i++) {
@@ -76,6 +77,7 @@ public final class ClientMethods {
 			for (int i = 0; i < wheel.length; i++) s.setSpellSlot(i, null);
 			for (int i = 0; i < wheel.length; i++) if (wheel[i] != null) s.setSpellSlot(i, wheel[i]);
 			s.setGhost(ghost);
+			s.setReignedKing(reignedKing);
 			System.arraycopy(cooldowns, 0, COOLDOWNS, 0, cooldowns.length);
 			receivedAt = now();
 		};
@@ -156,6 +158,7 @@ public final class ClientMethods {
 		s.setReadiedSpell(null);
 		for (int i = 0; i < Spells.WHEEL_SLOTS; i++) s.setSpellSlot(i, null);
 		s.setGhost(false);
+		s.setReignedKing(false);
 		java.util.Arrays.fill(COOLDOWNS, 0);
 		receivedAt = 0;
 	}

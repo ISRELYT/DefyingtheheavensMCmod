@@ -317,7 +317,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case GHOST_FLIGHT -> "The dead fly at a drift (double-tap jump); with this, as swiftly as on qi, at a cost of %s ghost qi/s.";
 				case FORM_SHIFT -> "Your true form is the form of your higher path: now your %s. Switched on, you take your %s instead. "
 						+ "In a Ghost King's form you are seen as the dead are: outside the Netherworld, only by those who perceive souls. "
-						+ "Dead, a Ghost King's true form is the King's, and its human form is seen by all as the living are. No cost.";
+						+ "Dead, a Ghost King's true form is the King's, and its human form is seen by all as the living are. "
+						+ "One who has reigned as a Ghost King keeps the King's form when born again. No cost.";
 				case CORE_DETONATION -> "The last resort. Use it twice within 5 s and your golden core breaks: 3 s later it bursts, everything within %s blocks "
 						+ "harmed by its distance and how far its realm stands below yours (a cultivator of your own realm in good armour may live). "
 						+ "You die, and the core is lost: you return at Foundation Building Grand Perfection.";
@@ -462,7 +463,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.FORM_PREFIX + "human", "human form");
 		t.add(ModLang.FORM_PREFIX + "ghost_king", "Ghost King form");
 		t.add(ModLang.MSG_FORMS_OPEN, "Your ghost path reached Core Formation: Form Shift (Abilities) takes a Ghost King's form.");
-		t.add(ModLang.MSG_FORMS_OPEN_DEAD, "Your ghost path reached Core Formation: a Ghost King's form is yours.");
+		t.add(ModLang.MSG_FORMS_KEPT, "You reigned as a Ghost King among the dead: its form is still yours. Form Shift (Abilities) takes it.");
 		t.add(ModLang.MSG_METHOD_MERIDIANS, "Your meridians are sealed: the ghost path, like the heaven path, opens only once a Marrow "
 				+ "Cleansing Elixir has opened them.");
 		t.add(ModLang.MSG_METHOD_MERIDIANS_DEAD, "Your meridians were never opened in life: the ghost path, like the heaven path, waits on a "
@@ -473,8 +474,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.JOURNAL_FORMS, "Two forms");
 		t.add(ModLang.JOURNAL_FORMS_TEXT, "My ghost path reached Core Formation, and I found a second form in me: a Ghost King's, crowned in "
 				+ "soul fire. While I live, the form of whichever path stands higher is my true one, and the other I can take at will "
-				+ "(Form Shift); in the Ghost King's, outside the Netherworld only those who perceive souls see me. In death I am simply "
-				+ "one of the dead.");
+				+ "(Form Shift); in the Ghost King's, outside the Netherworld only those who perceive souls see me. Dead, as a Ghost King, "
+				+ "it is my human form I take.");
 		t.add(ModLang.KEY_SPELL_WHEEL, "Spell Wheel (hold)");
 		t.add(ModLang.KEY_CAST_SPELL, "Cast Readied Spell");
 		t.add(ModLang.MSG_METHOD_LEARNED, "Learned the %s.");

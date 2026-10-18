@@ -391,6 +391,44 @@ public class TwoPathsGameTests implements FabricGameTest {
 		helper.succeed();
 	}
 
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void aGhostKingBornAgainKeepsItsForm(GameTestHelper helper) {
+		// Four Axis on the heaven path and no ghost path: alive, one form; dead, a Ghost King.
+		ServerPlayer king = cultivator(helper, Realm.FOUR_AXIS, Stage.GRAND_PERFECTION);
+		ServerPlayer common = cultivator(helper, Realm.QI_REFINING, Stage.EARLY);
+		helper.assertTrue(!TwoPaths.formsOpen(CultivationManager.get(king)), "Alive with no ghost path: one form");
+		GhostSystem.makeGhost(king);
+		GhostSystem.makeGhost(common);
+		helper.assertTrue(GhostSystem.isKing(king) && CultivationManager.get(king).netherworld().reignedKing(), "Dead, a Ghost King");
+		net.minecraft.server.players.PlayerList players = helper.getLevel().getServer().getPlayerList();
+		ServerPlayer kingReborn = null, commonReborn = null;
+		try {
+			GhostSystem.revive(king);
+			GhostSystem.revive(common);
+			kingReborn = players.getPlayer(king.getUUID());
+			commonReborn = players.getPlayer(common.getUUID());
+			helper.assertTrue(kingReborn != null && !GhostSystem.isGhost(kingReborn) && commonReborn != null, "Both born again");
+			PlayerCultivation c = CultivationManager.get(kingReborn);
+			// Born again, it keeps the King's form: its true form the human (it lives), Form Shift there to take the other.
+			helper.assertTrue(TwoPaths.formsOpen(c) && Ability.FORM_SHIFT.isUnlocked(c) && TwoPaths.trueForm(c) == TwoPaths.Form.HUMAN
+					&& TwoPaths.look(c) == TwoPaths.Look.HUMAN, "A Ghost King born again keeps its two forms");
+			CultivationManager.toggleAbility(kingReborn, Ability.FORM_SHIFT.ordinal());
+			helper.assertTrue(TwoPaths.look(c) == TwoPaths.Look.KING && TwoPaths.inGhostForm(c), "Form Shift: the Ghost King's form, alive");
+			CultivationManager.toggleAbility(kingReborn, Ability.FORM_SHIFT.ordinal());
+			helper.assertTrue(TwoPaths.look(c) == TwoPaths.Look.HUMAN, "...and back to the human");
+			// One of the common dead had no King's form to keep.
+			helper.assertTrue(!TwoPaths.formsOpen(CultivationManager.get(commonReborn)), "A common ghost born again: one form");
+		} finally {
+			GhostSystem.forget(king.getUUID());
+			GhostSystem.forget(common.getUUID());
+			TwoPaths.forget(king.getUUID());
+			TwoPaths.forget(common.getUUID());
+			if (kingReborn != null) players.remove(kingReborn);
+			if (commonReborn != null) players.remove(commonReborn);
+		}
+		helper.succeed();
+	}
+
 	/** Who the entity tracker sends {@code subject} to right now: the connections in its tracked entity's seenBy (ChunkMap, by reflection). */
 	@SuppressWarnings("unchecked")
 	private static java.util.Set<Object> seenBy(ServerLevel level, ServerPlayer subject) throws ReflectiveOperationException {
