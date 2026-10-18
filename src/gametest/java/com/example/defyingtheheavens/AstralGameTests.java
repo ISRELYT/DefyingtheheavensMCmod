@@ -32,7 +32,7 @@ public class AstralGameTests implements FabricGameTest {
 			kinds.merge(planet.kind(), 1, Integer::sum);
 			helper.assertTrue(planet.pos().y - planet.atmosphere() > AstralPlanets.SPACE_FLOOR && planet.pos().y + planet.atmosphere() < AstralPlanets.SPACE_CEILING,
 					planet.name() + " lies between space's floor and ceiling");
-			helper.assertTrue(planet.qi() > 0 && planet.qi() < PlayerCultivation.UPPER_REALM_QI_MULTIPLIER, planet.name() + "'s qi is never near the Upper Realm's");
+			helper.assertTrue(planet.qi() > 0 && planet.qi() <= 3.0 && AstralPlanets.MAX_QI <= 3.0, planet.name() + "'s qi never passes three times the lower realms' (" + planet.qi() + ")");
 			helper.assertTrue(planets.planetAt(planet.landX(), planet.landZ()) == planet, planet.name() + "'s land is its own");
 		}
 		helper.assertTrue(kinds.size() == AstralPlanets.Kind.values().length, "Every kind of planet is among them (" + kinds + ")");

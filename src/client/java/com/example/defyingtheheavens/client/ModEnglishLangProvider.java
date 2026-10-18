@@ -1144,7 +1144,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		// Talk phases 2-4 (TalkSystem, SparSystem, Rumours, CultivatorTrades) and spirit stones (SpiritStoneItem)
 		t.add("cultivation.defying-the-heavens.talk.interrupted", "The blow breaks off your talk with %s.");
 		t.add("cultivation.defying-the-heavens.talk.intent.spar", "Spar");
-		t.add("cultivation.defying-the-heavens.talk.intent.spar.hint", "A bout to first blood: it ends when either of you has lost a quarter of their health. Set terms: friendly, a wager on what you hold, or at their full strength.");
+		t.add("cultivation.defying-the-heavens.talk.intent.spar.hint", "A bout of several exchanges, its blows pulled to half strength: it ends when either of you has lost half their health. Set terms: friendly, a wager on what you hold, or at their full strength.");
 		t.add("cultivation.defying-the-heavens.talk.intent.trade", "Trade");
 		t.add("cultivation.defying-the-heavens.talk.intent.trade.hint", "Barter for spirit stones. They sell by their station, buy herbs, pills and fruit from you, and the better they like you, the better the deal.");
 		t.add("cultivation.defying-the-heavens.talk.intent.demand", "Demand");
@@ -1201,6 +1201,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add("cultivation.defying-the-heavens.spar.no_stake", "A wager needs a stake. Hold what you'd put up.");
 		t.add("cultivation.defying-the-heavens.spar.wagered", "No more wagers today; once is enough.");
 		t.add("cultivation.defying-the-heavens.spar.hold_stake", "(hold a herb, pill or stones)");
+		t.add("cultivation.defying-the-heavens.spar.beneath", "A wager, against you? I'd only be handing it over. A friendly bout, if you like.");
+		t.add("cultivation.defying-the-heavens.spar.friendly_only", "(friendly only: beneath your realm)");
 		t.add("cultivation.defying-the-heavens.spar.stakes", "Stakes: your %s against their %s. The winner takes both.");
 		t.add("cultivation.defying-the-heavens.spar.count", "%s %s");
 		t.add("cultivation.defying-the-heavens.spar.begin", "%s takes a stance. Three breaths, then begin!");

@@ -4,6 +4,7 @@ import com.example.defyingtheheavens.GhostSystem;
 import com.example.defyingtheheavens.HeavenSpells;
 import com.example.defyingtheheavens.Incorporeal;
 import com.example.defyingtheheavens.SoulProjection;
+import com.example.defyingtheheavens.SparSystem;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
@@ -63,6 +64,8 @@ public abstract class SoulLivingEntityMixin {
 		// A ghost takes only what reaches the dead, the living's blows by how clearly they see it (see GhostSystem).
 		float scaled = self instanceof ServerPlayer ghost && GhostSystem.isGhost(ghost) ? GhostSystem.scaleDamage(ghost, source, amount)
 				: SoulProjection.scaleSoulDamage(self, source, amount);
+		// A spar partner's blow is pulled (SparSystem#BLOW_SHARE).
+		if (!self.level().isClientSide) scaled = SparSystem.pulled(self, source, scaled);
 		// Then what the heaven methods' wards and the earth's passive make of it (HeavenSpells#incoming), on the server.
 		return scaled > 0 && !self.level().isClientSide ? HeavenSpells.incoming(self, source, scaled) : scaled;
 	}

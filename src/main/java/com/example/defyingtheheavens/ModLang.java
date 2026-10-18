@@ -331,6 +331,8 @@ public final class ModLang {
 	public static final String SPAR_NO_STAKE = k("spar.no_stake");
 	public static final String SPAR_WAGERED = k("spar.wagered");
 	public static final String SPAR_HOLD_STAKE = k("spar.hold_stake");
+	public static final String SPAR_BENEATH = k("spar.beneath");
+	public static final String SPAR_FRIENDLY_ONLY = k("spar.friendly_only");
 	public static final String SPAR_STAKES = k("spar.stakes");
 	public static final String SPAR_COUNT = k("spar.count");
 	public static final String SPAR_BEGIN = k("spar.begin");

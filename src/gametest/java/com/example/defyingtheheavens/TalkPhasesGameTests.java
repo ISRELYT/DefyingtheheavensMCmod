@@ -185,7 +185,7 @@ public class TalkPhasesGameTests implements FabricGameTest {
 	}
 
 	/**
-	 * One far stronger ends a spar with its first blow (a quarter of the partner's health in a stroke), and the next swing a
+	 * One far stronger ends a spar with its first blow (half the partner's health in a stroke), and the next swing a
 	 * moment later landed as an attack in earnest: the whole sect turned out and the barrier set its guest outside. Blows
 	 * between the two just after the end are pulled (SparSystem#AFTERMATH_TICKS); afterwards, blows are blows again.
 	 */
@@ -221,6 +221,81 @@ public class TalkPhasesGameTests implements FabricGameTest {
 				leave(made);
 			}
 		});
+	}
+
+	/**
+	 * One a realm or more beneath you won't wager (it can't win your stake, so its own was a thing a day for nothing): friendly
+	 * bouts only. And in a spar with a sect's member, your stray blows on its fellows (a sweep, a spell's spread) are pulled, in
+	 * the bout and the moment after: a friendly bout raises no alarm.
+	 */
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void theWeakSparFriendlyOnlyAndStrayBlowsArePulled(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		try {
+			ServerPlayer player = cultivator(helper, made, "towering", Realm.NASCENT_SOUL, Stage.EARLY);
+			player.setItemInHand(InteractionHand.MAIN_HAND, GinsengItem.create(ModItems.GINSENG, 600));
+			CultivatorNpc junior = npc(helper, new BlockPos(3, 2, 2), Realm.CORE_FORMATION, 0);
+			CultivatorNpc peer = npc(helper, new BlockPos(1, 2, 4), Realm.NASCENT_SOUL, 0);
+			helper.assertTrue(ModLang.SPAR_BENEATH.equals(SparSystem.refusal(player, junior, SparSystem.Terms.WAGER)), "A realm beneath you: no wager");
+			helper.assertTrue(SparSystem.refusal(player, junior, SparSystem.Terms.FRIENDLY) == null, "...a friendly bout, gladly");
+			helper.assertTrue(SparSystem.refusal(player, peer, SparSystem.Terms.WAGER) == null, "An equal takes the wager");
+			// A spar with a sect's member (all in this tick: the test's sect is on no rolls, and they'd leave it on their next second).
+			Sect sect = new Sect(UUID.randomUUID());
+			sect.dimension = helper.getLevel().dimension();
+			sect.core = helper.absolutePos(new BlockPos(1, 1, 1));
+			junior.joinSect(sect, 0);
+			CultivatorNpc fellow = npc(helper, new BlockPos(4, 2, 4), Realm.CORE_FORMATION, 0);
+			fellow.joinSect(sect, 1);
+			SparSystem.start(player, junior, SparSystem.Terms.FRIENDLY);
+			net.minecraft.world.damagesource.DamageSource blow = player.damageSources().playerAttack(player);
+			helper.assertTrue(SparSystem.allowDamage(junior, blow), "The partner takes the bout's blows");
+			helper.assertTrue(!SparSystem.allowDamage(fellow, blow) && !fellow.hurt(blow, 4), "A stray blow on its fellow is pulled");
+			helper.assertTrue(SparSystem.allowDamage(peer, blow), "...one on an outsider is not");
+			SparSystem.abandon(player);
+			helper.assertTrue(!SparSystem.allowDamage(fellow, blow), "...nor in the moment after the bout");
+			helper.succeed();
+		} finally {
+			leave(made);
+		}
+	}
+
+	/**
+	 * At a quarter's line, one blow from an equal ended a spar (up to Nascent Soul a blow takes more than that). Now nobody starts
+	 * a bout below three quarters of their health, its blows land at half strength, and it ends at half the health lost.
+	 */
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void aSparLastsSeveralBlows(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		try {
+			MinecraftServer server = helper.getLevel().getServer();
+			ServerPlayer player = cultivator(helper, made, "duellist", Realm.NASCENT_SOUL, Stage.EARLY);
+			CultivatorNpc partner = npc(helper, new BlockPos(3, 2, 2), Realm.NASCENT_SOUL, 0);
+			CultivatorNpc bystander = npc(helper, new BlockPos(1, 2, 4), Realm.NASCENT_SOUL, 0);
+			partner.setHealth(partner.getMaxHealth() * 0.7f);
+			helper.assertTrue(ModLang.SPAR_HURT.equals(SparSystem.refusal(player, partner, SparSystem.Terms.FRIENDLY)), "Under three quarters of its health, no bout");
+			partner.setHealth(partner.getMaxHealth());
+			SparSystem.start(player, partner, SparSystem.Terms.FRIENDLY);
+			for (int i = 0; i < SparSystem.COUNTDOWN_TICKS; i++) SparSystem.tick(server);
+			helper.assertTrue(SparSystem.pulled(partner, player.damageSources().playerAttack(player), 10) == 10 * SparSystem.BLOW_SHARE
+					&& SparSystem.pulled(bystander, player.damageSources().playerAttack(player), 10) == 10, "A blow on the partner is pulled; on anyone else, not");
+			float before = partner.getHealth(), otherBefore = bystander.getHealth();
+			partner.hurt(player.damageSources().playerAttack(player), 10);
+			bystander.hurt(player.damageSources().playerAttack(player), 10);
+			float pulled = before - partner.getHealth(), full = otherBefore - bystander.getHealth();
+			helper.assertTrue(pulled > 0 && pulled < full, "...and lands softer (" + pulled + " against " + full + ")");
+			SparSystem.tick(server);
+			helper.assertTrue(SparSystem.isSparring(player), "One blow doesn't end it");
+			float line = partner.getMaxHealth() * (1 - SparSystem.LINE_SHARE);
+			partner.setHealth(line + 1);
+			SparSystem.tick(server);
+			helper.assertTrue(SparSystem.isSparring(player), "Short of half its health lost, the bout goes on");
+			partner.setHealth(line - 0.5f);
+			SparSystem.tick(server);
+			helper.assertTrue(!SparSystem.isSparring(player) && partner.getHealth() >= line - 0.01f, "Past half, it is over, and its health stops at the line");
+			helper.succeed();
+		} finally {
+			leave(made);
+		}
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)

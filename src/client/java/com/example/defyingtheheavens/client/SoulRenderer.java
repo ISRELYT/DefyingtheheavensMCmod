@@ -192,12 +192,14 @@ public final class SoulRenderer {
 		if (model == null) return;
 		float age = soul.tickCount + partial;
 		float headYaw = Mth.rotLerp(partial, soul.yHeadRotO, soul.yHeadRot);
-		float yaw = look == Look.SOUL ? headYaw : Mth.rotLerp(partial, soul.yBodyRotO, soul.yBodyRot);
-		float pitch = Mth.lerp(partial, soul.xRotO, soul.getXRot());
+		// A soul turns whole to where it has been looking, nods as it has, and leans into its flight (up to 35 degrees at full
+		// pace), each steadied (see #drift); one of the Netherworld's dead turns by its body.
+		Drift drift = look == Look.SOUL ? drift(soul) : null;
+		float yaw = drift != null ? Mth.rotLerp(partial, drift.yawBefore, drift.yawNow) : Mth.rotLerp(partial, soul.yBodyRotO, soul.yBodyRot);
+		float pitch = drift != null ? Mth.lerp(partial, drift.pitchBefore, drift.pitchNow) : Mth.lerp(partial, soul.xRotO, soul.getXRot());
 		Vec3 cam = context.camera().getPosition();
 		Vec3 at = soul.getPosition(partial);
-		// A soul leans into its flight: up to 35 degrees at full pace.
-		float lean = look == Look.SOUL ? lean(soul, partial) : 0;
+		float lean = drift != null ? Mth.lerp(partial, drift.leanBefore, drift.leanNow) : 0;
 		// One of the dead in meditation sits cross-legged (HumanoidModelMixin), floating a little over the ground.
 		boolean seated = dead && LotusPose.meditating(soul);
 
@@ -388,50 +390,93 @@ public final class SoulRenderer {
 	}
 
 	/**
-	 * How many ticks' steps a soul's lean is taken over, and how far it eases each tick toward the lean that pace gives: long and
-	 * soft enough to ride out a stall of a few hundred milliseconds in another player's steps, settling in about a third of a second.
+	 * How many ticks of its gaze a soul's figure turns (and nods) by, how far it eases each tick toward their mean, and the most
+	 * it turns in a tick (degrees): an even count, so a gaze flicking one way and back with each update evens out to a still
+	 * figure rather than spinning it, and one flicking unevenly (as the network brings it) to a slow sway; a real turn settles in
+	 * about half a second, the figure some 20 degrees behind the gaze while it turns.
 	 */
-	private static final int LEAN_TICKS = 8;
-	private static final float LEAN_EASE = 0.5f;
-	/** Each soul's last steps and lean, by entity id (see #lean). */
-	private static final Map<Integer, Lean> LEANS = new HashMap<>();
+	private static final int FACING_TICKS = 10;
+	private static final float FACING_EASE = 0.4f;
+	private static final float FACING_RATE = 15.0f;
+	/**
+	 * How many ticks' steps a soul's lean is taken over, how far it eases each tick toward the lean that pace gives, the most it
+	 * changes in a tick (degrees), and the pace (blocks a tick) under which it stands upright: long and soft enough to ride out a
+	 * stall of a few hundred milliseconds in another player's steps, settling in about half a second.
+	 */
+	private static final int LEAN_TICKS = 12;
+	private static final float LEAN_EASE = 0.3f;
+	private static final float LEAN_RATE = 2.5f;
+	private static final float LEAN_FLOOR = 0.02f;
+	/** Each soul's last gazes and steps, its facing, nod and lean, by entity id (see #drift). */
+	private static final Map<Integer, Drift> DRIFTS = new HashMap<>();
 
-	private static final class Lean {
+	/** A soul's figure as drawn: last tick's facing, nod and lean ({@code before}) and this tick's ({@code now}), in degrees. */
+	private static final class Drift {
+		final float[] yaws = new float[FACING_TICKS];
+		final float[] pitches = new float[FACING_TICKS];
 		final float[] steps = new float[LEAN_TICKS];
-		float before, now;
+		float yawBefore, yawNow, pitchBefore, pitchNow, leanBefore, leanNow;
 		int tick;
 		long seen;
 	}
 
 	/**
-	 * How far {@code soul} leans into its flight (degrees, up to 35 at full pace): from its pace over its last few ticks, eased
-	 * toward and between ticks. Another player's steps reach this client in uneven batches (the server sends them every other tick,
-	 * and the network bunches them: a step, none, a double one), so a lean taken from each tick's step alone snapped between upright
-	 * and tipped over every tick or two, the whole figure flailing about its feet (seen in the user's recording); one's own steps
-	 * are even.
+	 * How {@code soul}'s figure turns, nods and leans this tick, taken once a tick and drawn eased between ticks: facing and nod
+	 * eased toward the mean of its gaze over its last {@link #FACING_TICKS} ticks; the lean from its pace over its last
+	 * {@link #LEAN_TICKS}.
+	 * Another player reaches this client only in the server's updates, every other tick, bunched by the network (a step, none, a
+	 * double one), and whatever their gaze or pace does between updates comes as a jump. Taken from each tick alone, the lean
+	 * snapped between upright and tipped over every tick or two (the user's recording of 2026-10-14), and the facing, the whole
+	 * figure turning with the head, snapped some 60 degrees aside and back every 0.1 s (the recording of 2026-10-18, a Ghost King
+	 * hosting); one's own gaze and steps are even.
 	 */
-	private static float lean(LivingEntity soul, float partial) {
+	private static Drift drift(LivingEntity soul) {
 		long time = soul.level().getGameTime();
 		double dx = soul.getX() - soul.xo, dz = soul.getZ() - soul.zo;
 		float step = (float) Math.sqrt(dx * dx + dz * dz);
-		Lean lean = LEANS.get(soul.getId());
-		if (lean == null || soul.tickCount < lean.tick || soul.tickCount - lean.tick > 20) {
-			// New (or another entity under its id, or long unseen): as it moves now.
-			if (lean == null) LEANS.put(soul.getId(), lean = new Lean());
-			Arrays.fill(lean.steps, step);
-			lean.before = lean.now = Math.min(35, step * 60);
-			lean.tick = soul.tickCount;
-		} else if (soul.tickCount != lean.tick) {
-			lean.steps[Math.floorMod(soul.tickCount, LEAN_TICKS)] = step;
-			float pace = 0;
-			for (float s : lean.steps) pace += s / LEAN_TICKS;
-			lean.before = lean.now;
-			lean.now += (Math.min(35, pace * 60) - lean.now) * LEAN_EASE;
-			lean.tick = soul.tickCount;
+		float yaw = soul.yHeadRot, pitch = soul.getXRot();
+		Drift drift = DRIFTS.get(soul.getId());
+		if (drift == null || soul.tickCount < drift.tick || soul.tickCount - drift.tick > 20) {
+			// New (or another entity under its id, or long unseen): as it looks and moves now.
+			if (drift == null) DRIFTS.put(soul.getId(), drift = new Drift());
+			Arrays.fill(drift.yaws, yaw);
+			Arrays.fill(drift.pitches, pitch);
+			Arrays.fill(drift.steps, step);
+			drift.yawBefore = drift.yawNow = yaw;
+			drift.pitchBefore = drift.pitchNow = pitch;
+			drift.leanBefore = drift.leanNow = leanAt(step);
+			drift.tick = soul.tickCount;
+		} else if (soul.tickCount != drift.tick) {
+			drift.yaws[Math.floorMod(soul.tickCount, FACING_TICKS)] = yaw;
+			drift.pitches[Math.floorMod(soul.tickCount, FACING_TICKS)] = pitch;
+			drift.steps[Math.floorMod(soul.tickCount, LEAN_TICKS)] = step;
+			// The gaze's mean, followed tick by tick from the oldest (so a quick spin is taken the way it went, not the short way).
+			int oldest = Math.floorMod(soul.tickCount + 1, FACING_TICKS);
+			float along = 0, turn = 0, nod = 0, pace = 0;
+			for (int k = 0; k < FACING_TICKS; k++) {
+				int i = (oldest + k) % FACING_TICKS;
+				if (k > 0) along += Mth.wrapDegrees(drift.yaws[i] - drift.yaws[(i + FACING_TICKS - 1) % FACING_TICKS]);
+				turn += along / FACING_TICKS;
+				nod += drift.pitches[i] / FACING_TICKS;
+			}
+			for (float s : drift.steps) pace += s / LEAN_TICKS;
+			float mean = drift.yaws[oldest] + turn;
+			drift.yawBefore = drift.yawNow;
+			drift.yawNow = Mth.wrapDegrees(drift.yawNow + Mth.clamp(Mth.wrapDegrees(mean - drift.yawNow) * FACING_EASE, -FACING_RATE, FACING_RATE));
+			drift.pitchBefore = drift.pitchNow;
+			drift.pitchNow += Mth.clamp((nod - drift.pitchNow) * FACING_EASE, -FACING_RATE, FACING_RATE);
+			drift.leanBefore = drift.leanNow;
+			drift.leanNow += Mth.clamp((leanAt(pace) - drift.leanNow) * LEAN_EASE, -LEAN_RATE, LEAN_RATE);
+			drift.tick = soul.tickCount;
 		}
-		lean.seen = time;
-		if (LEANS.size() > 64) LEANS.values().removeIf(l -> time - l.seen > 200);
-		return Mth.lerp(partial, lean.before, lean.now);
+		drift.seen = time;
+		if (DRIFTS.size() > 64) DRIFTS.values().removeIf(d -> time - d.seen > 200);
+		return drift;
+	}
+
+	/** The lean a pace gives (degrees): none while drifting slowly, up to 35 at full pace. */
+	private static float leanAt(float pace) {
+		return Mth.clamp((pace - LEAN_FLOOR) * 60, 0, 35);
 	}
 
 	/** Soul fire's own flame (its particle's picture), burning on a Ghost King's crown. */

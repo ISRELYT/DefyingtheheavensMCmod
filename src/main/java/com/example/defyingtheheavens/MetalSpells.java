@@ -239,13 +239,14 @@ public final class MetalSpells {
 
 			@Override
 			public void flying(SpellProjectile missile) {
-				// The slot it cuts: its width across its way, its height from a little under it up.
+				// The slot it cuts: its width across its way, its height from a little under it up. Sampled every half block, along
+				// and across: a block's step on a slant (its way not along the grid) stepped over whole columns, left standing in the slot.
 				Vec3 at = missile.position();
 				Vec3 step = missile.getDeltaMovement();
-				int steps = (int) Math.ceil(step.length());
+				int steps = (int) Math.ceil(step.length() * 2);
 				for (int s = 0; s <= steps; s++) {
 					Vec3 point = at.add(step.scale(s / (double) Math.max(1, steps)));
-					for (int w = -(width / 2); w <= width / 2; w++) {
+					for (double w = -(width / 2); w <= width / 2; w += 0.5) {
 						for (int h = 0; h < height; h++) {
 							BlockPos pos = BlockPos.containing(point.add(side.scale(w)).add(0, h - (height > 4 ? height / 3 : 0), 0));
 							if (!cut.add(pos)) continue;
@@ -542,14 +543,15 @@ public final class MetalSpells {
 				// How far out its bow is now and was a tick ago, along its way from where it set out (its caster stands just behind).
 				double bowNow = at.subtract(from).dot(flat), bowBefore = bowNow - SEVER_SPEED;
 				// What its blade passed through this tick: at each step out to the side, the blade lags its bow by the crescent's curve,
-				// and is as thick there as the crescent is.
+				// and is as thick there as the crescent is. Sampled every half block, along and across: a block's step, on a slant (its
+				// way not along the grid), stepped over whole columns and left them standing in the cut.
 				List<int[]> cut = new ArrayList<>();
-				for (int w = (int) -Math.floor(half); w <= (int) Math.floor(half); w++) {
+				for (double w = -Math.floor(half); w <= Math.floor(half); w += 0.5) {
 					double lag = severLag(w), thick = severThickness(w);
 					double fFrom = Math.max(0, bowBefore - lag), fTo = bowNow - lag;
 					if (fTo < 0 || thick <= 0) continue;
 					int yLo = (int) Math.floor(bladeY - thick / 2), yHi = (int) Math.floor(bladeY + thick / 2);
-					for (double f = Math.ceil(fFrom); f <= fTo; f++) {
+					for (double f = Math.ceil(fFrom * 2) / 2; f <= fTo; f += 0.5) {
 						BlockPos column = BlockPos.containing(from.add(flat.scale(f)).add(side.scale(w)));
 						if (columns.add(BlockPos.asLong(column.getX(), 0, column.getZ()))) cut.add(new int[]{column.getX(), column.getZ(), yLo, yHi});
 					}

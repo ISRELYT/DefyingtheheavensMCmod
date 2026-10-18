@@ -1896,7 +1896,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		seclusionMat = npc.contains("SeclusionMat") ? NbtUtils.readBlockPos(npc.getCompound("SeclusionMat")) : null;
 		concealment = npc.hasUUID("Concealment") ? npc.getUUID("Concealment") : null;
 		setFlag(FLAG_CONCEALED, npc.getBoolean("Concealed"));
-		lastSeen = npc.getLong("LastSeen");
+		// Missing (saved before it was kept): never seen, not seen at the world's first tick (that catch-up would be the world's age).
+		lastSeen = npc.contains("LastSeen") ? npc.getLong("LastSeen") : -1;
 		seclusionAttempts = npc.getInt("SeclusionAttempts");
 		aggressed.clear();
 		ListTag list = npc.getList("Aggressed", Tag.TAG_INT_ARRAY);

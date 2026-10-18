@@ -1,5 +1,6 @@
 package com.example.defyingtheheavens;
 
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
@@ -21,6 +22,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.ExperienceOrb;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.phys.Vec3;
@@ -91,6 +94,15 @@ public final class AstralRealm {
 		ServerLifecycleEvents.SERVER_STARTING.register(server -> AstralPlanets.forSeed(AstralPlanets.astralSeed(server.getWorldData().worldGenOptions().seed())));
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> sendSeed(handler.getPlayer()));
 		ServerTickEvents.END_SERVER_TICK.register(AstralRealm::tick);
+		// Things dropped in space (a death's too) and the experience let loose there hang where they are, slowing to a stop as
+		// anything dropped does: with no ground under them they fell into the void and were gone. Without the little hop up a
+		// thing is let go with (weightless, it carried them ten blocks up), they hang at the height they were let go.
+		ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> {
+			if (ModDimensions.isSpace(level.dimension()) && (entity instanceof ItemEntity || entity instanceof ExperienceOrb)) {
+				entity.setNoGravity(true);
+				entity.setDeltaMovement(entity.getDeltaMovement().multiply(1, 0, 1));
+			}
+		});
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> clear());
 		AstralCommand.register();
 	}

@@ -254,7 +254,8 @@ public final class CultivationEvents {
 
 		// A blow a heaven spell's ward has brought to nothing is refused outright: no knockback, no flinch (HeavenSpells#wardedOff).
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> !HeavenSpells.wardedOff(entity));
-		// A spar just ended: a blow between its two in the moment after (the next swing) is pulled, not taken for an attack (SparSystem).
+		// A spar just ended: a blow between its two in the moment after (the next swing) is pulled, not taken for an attack; and in a
+		// spar or just after, the player's stray blows on the partner's fellows are pulled too (SparSystem#allowDamage).
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> SparSystem.allowDamage(entity, source));
 		// Ghost Fire on a cultivator's hands (Spells): a blow of theirs sets what it strikes burning.
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {

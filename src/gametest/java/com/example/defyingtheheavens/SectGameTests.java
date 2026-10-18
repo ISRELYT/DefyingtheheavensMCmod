@@ -116,11 +116,11 @@ public class SectGameTests implements FabricGameTest {
 		elder.setLastHurtByMob(intruder);
 		master.setHealth(master.getMaxHealth() * 0.1f);
 		master.setLastHurtByMob(intruder);
-		// Being in a fight is worked out on the elder's own tick.
-		helper.runAfterDelay(5, () -> {
-			helper.assertTrue(elder.shouldFlee(), "Even an elder falls back once it is losing badly");
-			helper.assertTrue(!master.shouldFlee(), "The master never runs: it makes its last stand");
-			helper.succeed();
+		// Being in a fight is worked out on the elder's own tick: waited for, not counted (just after the test server starts, its
+		// entities may not tick for the first few ticks, and a fixed five failed now and then).
+		helper.succeedWhen(() -> {
+			helper.assertTrue(elder.isInCombat() && elder.shouldFlee(), "Even an elder falls back once it is losing badly");
+			helper.assertTrue(master.isInCombat() && !master.shouldFlee(), "The master never runs: it makes its last stand");
 		});
 	}
 
@@ -777,7 +777,8 @@ public class SectGameTests implements FabricGameTest {
 			int barriers = countBarriers(level, core, Formations.MIN_RADIUS);
 			helper.assertTrue(barriers > 50, "The barrier rises (" + barriers + " blocks)");
 			helper.setBlock(coreRel, Blocks.AIR);
-			helper.assertTrue(countBarriers(level, core, Formations.MIN_RADIUS) == 0, "Breaking the core takes every barrier block with it at once");
+			int left = countBarriers(level, core, Formations.MIN_RADIUS, true);
+			helper.assertTrue(left == 0, "Breaking the core takes every barrier block with it at once (" + left + " left)");
 			helper.succeed();
 		});
 	}
@@ -954,9 +955,17 @@ public class SectGameTests implements FabricGameTest {
 	}
 
 	private static int countBarriers(ServerLevel level, BlockPos center, int radius) {
+		return countBarriers(level, center, radius, false);
+	}
+
+	/**
+	 * Barrier blocks in the box round {@code center}; {@code strayOnly}: just those on no raised formation's shell, left behind
+	 * (the tests beside this one raise barriers of their own close by, and one of theirs reaching into the box failed it now and then).
+	 */
+	private static int countBarriers(ServerLevel level, BlockPos center, int radius, boolean strayOnly) {
 		int count = 0;
 		for (BlockPos pos : BlockPos.betweenClosed(center.offset(-radius - 1, -radius - 1, -radius - 1), center.offset(radius + 1, radius + 1, radius + 1))) {
-			if (level.getBlockState(pos).is(ModBlocks.SECT_BARRIER)) count++;
+			if (level.getBlockState(pos).is(ModBlocks.SECT_BARRIER) && (!strayOnly || Formations.at(level, pos) == null)) count++;
 		}
 		return count;
 	}

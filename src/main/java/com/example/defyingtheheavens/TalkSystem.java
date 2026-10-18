@@ -862,13 +862,17 @@ public final class TalkSystem {
 
 	// --- Sparring ---
 
-	/** The terms of a spar on offer: friendly, a wager (holding a herb or pill), and, with a stronger cultivator, at full strength. */
+	/**
+	 * The terms of a spar on offer: friendly, a wager (holding a herb or pill; never with one a realm or more beneath you, see
+	 * SparSystem#beneath), and, with a stronger cultivator, at full strength.
+	 */
 	private static List<Reply> sparTerms(ServerPlayer player, CultivatorNpc npc) {
 		List<Reply> terms = new ArrayList<>();
 		boolean stake = !SparSystem.stakeInHand(player).isEmpty();
 		boolean stronger = npc.sustainedRank() > CultivatorNpc.rankOf(player);
 		terms.add(term(SparSystem.Terms.FRIENDLY, true, null));
-		terms.add(term(SparSystem.Terms.WAGER, stake, stake ? null : Component.translatable(ModLang.SPAR_HOLD_STAKE)));
+		if (SparSystem.beneath(player, npc)) terms.add(term(SparSystem.Terms.WAGER, false, Component.translatable(ModLang.SPAR_FRIENDLY_ONLY)));
+		else terms.add(term(SparSystem.Terms.WAGER, stake, stake ? null : Component.translatable(ModLang.SPAR_HOLD_STAKE)));
 		if (stronger) {
 			terms.add(term(SparSystem.Terms.FULL, true, null));
 			terms.add(term(SparSystem.Terms.WAGER_FULL, stake, stake ? null : Component.translatable(ModLang.SPAR_HOLD_STAKE)));

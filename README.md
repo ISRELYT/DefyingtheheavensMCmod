@@ -1016,7 +1016,8 @@ rises out of its sky into space, over the Overworld's lit side. Weaker cultivato
 you fly among them. Everyone in space is always flying, **on no qi**, at a speed of their realm: Nascent Soul 0.12 (vanilla
 flying is 0.05), Heavenly Being 0.20, Four Axis 0.32, a little more each stage; sprint for twice that. Qi gathers at **a
 quarter** of the lower realms'. A star's heat burns whoever comes within 1.6 times its radius, and its fire consumes those who
-reach it.
+reach it. Anything dropped in space (a death's things too) and any experience let loose there **floats** where it is, slowing
+to a stop, rather than falling into the void below.
 - **The stars and planets.** Star systems lie about 16,000 blocks apart, scattered up and down as well as across (space is as
   deep as it is wide), each a star with two to seven planets, some with moons (32%) or rings (14%). The Overworld's star,
   Taiyang, has three to five planets besides it. Each planet has a **kind** (verdant, temperate, ocean, desert, mesa, frozen,
@@ -1042,8 +1043,9 @@ ready while you approach (you may be held a moment at the edge if it isn't). On 
   rivers, cones with lava standing in their craters), **ashen** (tuff, gravel and ash dunes, dead bushes), **crystal** (calcite
   and amethyst under a violet sky, glowing crystal spires) and **barren** (grey regolith and darker maria, craters great and
   small, no air: a black sky and the stars by day);
-- the planet's **own qi** (`AstralPlanets.Planet#qi`), from a fifth of the lower realms' on barren worlds to 3-4 times on crystal and
-  blossom ones (now and then a richer one), never near the Upper Realm's ten;
+- the planet's **own qi** (`AstralPlanets.Planet#qi`), from a fifth of the lower realms' on barren worlds to up to 3 times on
+  crystal and blossom ones (now and then a richer one), never past 3 times (it went to 6, and a rich planet outdid everything
+  short of the Upper Realm's ten);
 - its own **sky**: its star rising and setting with the day, sized by how near it is, its sister planets and moons where they truly
   hang, the stars by night (all day where there is no air), clouds only where there is air;
 - **flight costs no qi** anywhere in the Astral Realm, so nobody is stranded on a world of thin qi.
@@ -2087,7 +2089,8 @@ Players can join a sect and become one of its disciples (`SectMembership`).
   the sect cast out or who just left it (see below), one it loathes (its standing with you, or the elder's regard, Hostile or
   worse), and anyone stronger than its Sect Master.
 - **The entrance trial.** Otherwise the elder sets you a trial: Ask again, "take the entrance trial", within 5 minutes, and you
-  spar with them, holding back to your own realm. Win it, or stand your ground to the end, and you are taken in. Lose it and
+  spar with them, holding back to your own realm (fought as any spar is: blows pulled to half, lost at half your health).
+  Win it, or stand your ground to the end, and you are taken in. Lose it and
   that sect won't try you again until tomorrow. A body of **High grade or better** (Physiques), or an elder **Warm** to you,
   takes you in without the trial.
 - **Your title** is your strength among its members as they are: Outer Disciple, Inner Disciple, Elder or Grand Elder (the
@@ -2229,14 +2232,18 @@ Topics not open yet still show, greyed, with the regard they need.
   tells you a thing once; rogues have heard of things up to 2,500 blocks away, sect members only within 400. The index is
   fed as those things come and go (their block entities loading, a sect falling, a killing), never by scanning chunks.
   Everything you are told goes into the **Journal** tab of the cultivation menu, newest first.
-- **Spar** (`SparSystem`): a duel to first blood. Pick terms in the box: **friendly**, **a wager** (hold a herb, pill,
+- **Spar** (`SparSystem`): a bout of several exchanges. Pick terms in the box: **friendly**, **a wager** (hold a herb, pill,
   fruit or spirit stones: you stake one, they stake something of like worth of their own, the winner takes both; one
-  wager a day with each), and, with someone stronger, **don't hold back**. Three breaths, then it begins. It ends when
-  either of you has lost a quarter of your health since it began, when you walk 16 blocks off (a forfeit), or after three
-  minutes (a draw). Nobody dies: a blow from the other that would go past the line stops at it. A stronger cultivator
+  wager a day with each; never with one a realm or more beneath you, who couldn't win your stake: friendly only, the wager
+  greyed out), and, with someone stronger, **don't hold back**. Neither of you starts below three quarters of
+  your health. Three breaths, then it begins. Blows between you land at half strength (pulled), and it ends when either
+  of you has lost half your health since it began, when you walk 16 blocks off from them (a forfeit), or after three
+  minutes (a draw). (At a quarter's line, without pulled blows, one blow from an equal ended it at every realm up to
+  Nascent Soul: such a blow takes 28-39% of one's health.) Nobody dies: a blow from the other that would go past the line stops at it. A stronger cultivator
   holds back to your realm unless told not to. Blows in a spar are no attack on their sect, and blows between you in the
   three seconds after it ends are pulled (one far stronger often ends it with the first blow, and the next swing came a
-  moment later; it was taken for an attack, the whole sect turned out and the barrier put you outside). Losing to a senior who is
+  moment later; it was taken for an attack, the whole sect turned out and the barrier put you outside), as are your stray
+  blows on its sect's other members, in the bout or just after (a sweep or a spell's spread raises no alarm). Losing to a senior who is
   Warm to you can teach you their Insight. A weaker cultivator never runs from the one it is sparring with, however far
   above it they are (it would run from such a domain in a real fight); if it runs from someone else mid-bout, the spar ends
   with no result rather than as your forfeit.

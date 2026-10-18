@@ -43,8 +43,11 @@ public final class AstralPlanets {
 	 * fill the whole sky rather than a band along the horizon), and how far a system's planets stray from its star's plane.
 	 */
 	public static final double SYSTEM_HEIGHT = 9600, PLANET_TILT = 260;
-	/** Qi density never reaches the Upper Realm's ({@link PlayerCultivation#UPPER_REALM_QI_MULTIPLIER}). */
-	public static final double MAX_QI = 6.0;
+	/**
+	 * Qi density never passes three times the lower realms' (the user's cap, 2026-10-18: at six, a rich planet outdid everything
+	 * short of the Upper Realm's ten, {@link PlayerCultivation#UPPER_REALM_QI_MULTIPLIER}).
+	 */
+	public static final double MAX_QI = 3.0;
 	/** Where the Overworld hangs in space, and how large. */
 	public static final Vec3 OVERWORLD_POS = new Vec3(0, SPACE_Y, 0);
 	public static final float OVERWORLD_RADIUS = 360;
@@ -65,10 +68,10 @@ public final class AstralPlanets {
 		MUSHROOM("mushroom", 1.0, 2.4),
 		VOLCANIC("volcanic", 0.7, 1.8),
 		ASHEN("ashen", 0.3, 0.9),
-		CRYSTAL("crystal", 1.8, 4.0),
+		CRYSTAL("crystal", 1.8, 3.0),
 		SWAMP("swamp", 0.9, 1.9),
 		BARREN("barren", 0.2, 0.6),
-		BLOSSOM("blossom", 1.6, 3.6),
+		BLOSSOM("blossom", 1.6, 2.8),
 		SAVANNA("savanna", 0.7, 1.5),
 		TAIGA("taiga", 0.7, 1.6);
 
@@ -207,7 +210,7 @@ public final class AstralPlanets {
 
 	private static double qiFor(Kind kind, RandomSource random) {
 		double qi = Mth.lerp(random.nextDouble(), kind.qiLow, kind.qiHigh);
-		// Now and then a planet rich in qi beyond its kind: a spirit world (but never near the Upper Realm).
+		// Now and then a planet rich in qi beyond its kind: a spirit world (but never past MAX_QI).
 		if (random.nextFloat() < 0.04f) qi *= 1.6;
 		return Math.min(MAX_QI, Math.round(qi * 100) / 100.0);
 	}

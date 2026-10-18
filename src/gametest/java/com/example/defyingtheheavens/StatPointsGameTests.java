@@ -116,35 +116,71 @@ public class StatPointsGameTests implements FabricGameTest {
 		});
 	}
 
+	/** Where the slash test's caster faces: 30 degrees off the grid (head and body: the way a spell flies is the head's). */
+	private static final float SLASH_YAW = 30;
+
+	/** The block {@code ahead} along the slash test's facing and {@code across} to its side of the caster at {@code at}, {@code dy} up. */
+	private static BlockPos slashOffset(BlockPos at, double ahead, double across, int dy) {
+		Vec3 forward = Vec3.directionFromRotation(0, SLASH_YAW), side = new Vec3(-forward.z, 0, forward.x);
+		return BlockPos.containing(at.getX() + 0.5 + forward.x * ahead + side.x * across, at.getY() + dy, at.getZ() + 0.5 + forward.z * ahead + side.z * across);
+	}
+
+	/** The floor's blocks just ahead of the caster, all across its middle: every one of them in the cut, none stepped over. */
+	private static List<BlockPos> slashFloor(BlockPos at) {
+		List<BlockPos> floor = new ArrayList<>();
+		for (int f = 4; f <= 7; f++) for (int s = -3; s <= 3; s++) floor.add(slashOffset(at, f, s, -1));
+		return floor;
+	}
+
+	/**
+	 * Faced off the grid (a slash on a slant sampled its way a block at a time, along and across, and stepped over whole columns,
+	 * left standing in its cut), the slash cuts everything its blade passes through, and only that.
+	 */
 	@GameTest(template = EMPTY_STRUCTURE, batch = "sever_slash", timeoutTicks = 100)
 	public void theSeveringSlashLeavesItsCasterStanding(GameTestHelper helper) {
 		HeavenSpellTesting.Floor floor = HeavenSpellTesting.floor(helper, 8, 6);
 		ServerLevel level = helper.getLevel();
 		BlockPos at = floor.centre();
 		ServerPlayer p = HeavenSpellTesting.caster(helper, HeavenMethod.of(QiElement.METAL, Realm.FOUR_AXIS), at);
-		p.setYRot(0); // facing south, +z
+		p.setYRot(SLASH_YAW);
+		p.setYHeadRot(SLASH_YAW);
+		p.setYBodyRot(SLASH_YAW);
 		p.setXRot(0);
 		// Stone in its blade's way (ahead, and far out to one side) and stone above its blade.
-		BlockPos inBlade = at.offset(0, 3, 8), wide = at.offset(20, 0, 10), above = at.offset(0, 9, 8);
+		BlockPos inBlade = slashOffset(at, 8, 0, 3), wide = slashOffset(at, 10, 20, 0), above = slashOffset(at, 8, 0, 9);
 		for (BlockPos pos : new BlockPos[]{inBlade, wide, above}) level.setBlockAndUpdate(pos, Blocks.STONE.defaultBlockState());
 		Spells.setCooldown(p, Spell.HEAVEN_SEVERING_SWORD, 0);
 		Spells.cast(p, Spell.HEAVEN_SEVERING_SWORD);
-		helper.runAfterDelay(4, () -> {
-			try {
-				helper.assertTrue(!level.getBlockState(at.below()).isAir() && !level.getBlockState(at.offset(0, -1, -3)).isAir()
-						&& !level.getBlockState(at.offset(2, -1, 0)).isAir(), "The ground under its caster, and behind, still stands");
-				helper.assertTrue(level.getBlockState(at.offset(0, -1, 6)).isAir() && level.getBlockState(inBlade).isAir(),
-						"...its blade cuts what it passes through ahead of them");
-				helper.assertTrue(level.getBlockState(wide).isAir(), "...20 blocks out to the side too (it is about 110 across)");
-				helper.assertTrue(level.getBlockState(above).is(Blocks.STONE), "...and what stands above its blade is left standing");
-				helper.succeed();
-			} finally {
-				// The slash goes no further than this (it would run on through the other tests' ground).
-				level.getEntitiesOfClass(SpellProjectile.class, new net.minecraft.world.phys.AABB(at).inflate(64)).forEach(net.minecraft.world.entity.Entity::discard);
-				for (BlockPos pos : new BlockPos[]{inBlade, wide, above}) level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
-				HeavenSpellTesting.cleanUp(p, HeavenSpellTesting.spawned(), floor);
-			}
-		});
+		awaitSlash(helper, level, at, inBlade, wide, above, p, floor, 0);
+	}
+
+	/**
+	 * Checks the slash once its cut has reached the blocks ahead and to the side, or after four seconds whatever it did. The slash
+	 * waits at land not yet made (it asks for the land ahead and goes on once it is there), and the test world's land along its
+	 * way is often new. Once checked, it is stopped (it would run on through the other tests' ground).
+	 */
+	private static void awaitSlash(GameTestHelper helper, ServerLevel level, BlockPos at, BlockPos inBlade, BlockPos wide, BlockPos above,
+			ServerPlayer p, HeavenSpellTesting.Floor floor, int waited) {
+		List<BlockPos> standing = slashFloor(at).stream().filter(pos -> !level.getBlockState(pos).isAir()).toList();
+		boolean passed = standing.isEmpty() && level.getBlockState(inBlade).isAir() && level.getBlockState(wide).isAir();
+		if (!passed && waited < 80) {
+			helper.runAfterDelay(1, () -> awaitSlash(helper, level, at, inBlade, wide, above, p, floor, waited + 1));
+			return;
+		}
+		try {
+			helper.assertTrue(!level.getBlockState(at.below()).isAir() && !level.getBlockState(slashOffset(at, -3, 0, -1)).isAir()
+					&& !level.getBlockState(slashOffset(at, 0, 2, -1)).isAir(), "The ground under its caster, and behind, still stands");
+			helper.assertTrue(standing.isEmpty(), "...its blade cuts all the floor it passes over ahead of them, no block stepped over (left: " + standing + ")");
+			helper.assertTrue(level.getBlockState(inBlade).isAir(), "...and what it passes through above the floor");
+			helper.assertTrue(level.getBlockState(wide).isAir(), "...20 blocks out to the side too (it is about 110 across)");
+			helper.assertTrue(level.getBlockState(above).is(Blocks.STONE), "...and what stands above its blade is left standing");
+			helper.succeed();
+		} finally {
+			// The slash goes no further than this (it would run on through the other tests' ground).
+			level.getEntitiesOfClass(SpellProjectile.class, new net.minecraft.world.phys.AABB(at).inflate(64)).forEach(net.minecraft.world.entity.Entity::discard);
+			for (BlockPos pos : new BlockPos[]{inBlade, wide, above}) level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
+			HeavenSpellTesting.cleanUp(p, HeavenSpellTesting.spawned(), floor);
+		}
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)

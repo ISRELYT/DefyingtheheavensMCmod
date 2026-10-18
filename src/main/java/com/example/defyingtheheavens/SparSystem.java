@@ -22,10 +22,12 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Sparring with a cultivator (chosen from the talk wheel, see TalkSystem): a duel to first blood. It ends when either side
- * has lost {@link #LINE_SHARE} of their maximum health since it began, when the player walks {@link #WALK_AWAY} blocks off
- * (a forfeit), or after {@link #TIME_LIMIT_TICKS} (a draw). Nobody dies: a blow from the other duellist that would go past
- * the line stops at it. A stronger cultivator holds back to the player's realm, unless asked not to.
+ * Sparring with a cultivator (chosen from the talk wheel, see TalkSystem): a bout of several exchanges. It ends when either
+ * side has lost {@link #LINE_SHARE} of their maximum health since it began, when the player walks {@link #WALK_AWAY} blocks
+ * off (a forfeit), or after {@link #TIME_LIMIT_TICKS} (a draw). Blows between the two land at {@link #BLOW_SHARE} of their
+ * strength (pulled: at a quarter's line, one blow from an equal ended it, up to Nascent Soul). Nobody dies: a blow from the
+ * other duellist that would go past the line stops at it. A stronger cultivator holds back to the player's realm, unless
+ * asked not to. The entrance trial (Terms#TRIAL) is fought the same way.
  * <ul>
  *   <li><b>Wager</b>: the player stakes one of what they hold (a herb, a pill, a fruit, spirit stones); the cultivator stakes
  *   something of like worth from its own things (CultivatorLoot). The winner takes both.</li>
@@ -36,15 +38,19 @@ import java.util.UUID;
  *   Losing to a senior who is Warm to you can grant their Insight (once a day from each teacher).</li>
  * </ul>
  * Blows between the two are no attack on a sect (no alarm, no grudge; see CultivatorNpc#hurt), and neither of them dies of
- * the other's hand while it lasts; those that land in the moment after it ends are pulled ({@link #AFTERMATH_TICKS}).
+ * the other's hand while it lasts; those that land in the moment after it ends are pulled ({@link #AFTERMATH_TICKS}), and so are
+ * the player's stray blows on the partner's fellows in the bout or just after ({@link #allowDamage}). Wagers are only with
+ * one not beneath the player's realm ({@link #beneath}).
  */
 public final class SparSystem {
 	public static final int COUNTDOWN_TICKS = 60;
 	public static final int TIME_LIMIT_TICKS = 3 * 60 * 20;
 	public static final double WALK_AWAY = 16;
-	public static final float LINE_SHARE = 0.25f;
-	/** Neither side starts a spar below this share of their health. */
-	public static final float READY_SHARE = 0.5f;
+	public static final float LINE_SHARE = 0.5f;
+	/** Neither side starts a spar below this share of their health (so the line never lies below a quarter of it). */
+	public static final float READY_SHARE = 0.75f;
+	/** How hard blows between the two land: pulled, as one spars, not fights. */
+	public static final float BLOW_SHARE = 0.5f;
 
 	/** What the player asked for: a wager, and whether the cultivator holds back. */
 	public enum Terms {
@@ -81,6 +87,8 @@ public final class SparSystem {
 		final boolean junior;
 		/** It is the stronger of the two (by rank), so holding back or not makes a difference. */
 		final boolean stronger;
+		/** The cultivator's sect (null for none): the player's stray blows on its fellows are pulled ({@link #allowDamage}). */
+		final UUID sect;
 		float playerLine;
 		float npcLine;
 		int countdown = COUNTDOWN_TICKS;
@@ -99,6 +107,7 @@ public final class SparSystem {
 			this.senior = theirs > yours;
 			this.junior = theirs < yours;
 			this.stronger = npc.sustainedRank() > CultivatorNpc.rankOf(player);
+			this.sect = npc.getSectId();
 		}
 	}
 
@@ -107,13 +116,13 @@ public final class SparSystem {
 
 	/**
 	 * Blows between the two in this long after their spar ends are pulled ({@link #allowDamage}). The winning blow often ends it
-	 * at once (one far stronger takes a quarter of its partner's health in a stroke), and the next swing a moment later landed
+	 * at once (one far stronger takes half its partner's health in a stroke), and the next swing a moment later landed
 	 * as an attack in earnest: the whole sect turned out, and its barrier set its guest down outside.
 	 */
 	public static final int AFTERMATH_TICKS = 60;
 
-	/** A spar just over: the player's side, and until when (game time) blows between them are pulled. */
-	private record Aftermath(UUID player, long until) {}
+	/** A spar just over: the player's side, until when (game time) blows between them are pulled, and the cultivator's sect. */
+	private record Aftermath(UUID player, long until, UUID sect) {}
 
 	/** By the cultivator's id. */
 	private static final Map<UUID, Aftermath> AFTER = new HashMap<>();
@@ -145,9 +154,33 @@ public final class SparSystem {
 		return after != null && after.player().equals(a.getUUID()) && b.level().getGameTime() < after.until();
 	}
 
-	/** Whether a blow may land on {@code entity} (ALLOW_DAMAGE): not one from its partner in a spar just over. */
+	/** How much of a blow on {@code entity} from {@code source} lands: {@link #BLOW_SHARE} of one from its partner in a spar. */
+	public static float pulled(LivingEntity entity, DamageSource source, float amount) {
+		return !BY_PLAYER.isEmpty() && source.getEntity() != null && areSparring(entity, source.getEntity()) ? amount * BLOW_SHARE : amount;
+	}
+
+	/**
+	 * Whether a blow may land on {@code entity} (ALLOW_DAMAGE): not one from its partner in a spar just over, nor a sparring
+	 * player's on one of the partner's fellows, in the bout or just after (a sweep, a spell's spread, the next swing gone wide:
+	 * a stray blow raised the whole sect against a friendly bout).
+	 */
 	public static boolean allowDamage(LivingEntity entity, DamageSource source) {
-		return AFTER.isEmpty() || source.getEntity() == null || !justSparred(entity, source.getEntity());
+		if (BY_PLAYER.isEmpty() && AFTER.isEmpty()) return true;
+		Entity from = source.getEntity();
+		if (from == null) return true;
+		if (!AFTER.isEmpty() && justSparred(entity, from)) return false;
+		if (!(entity instanceof CultivatorNpc npc) || npc.getSectId() == null || !(from instanceof ServerPlayer) || areSparring(entity, from)) return true;
+		return !npc.getSectId().equals(sparSect(from, entity.level().getGameTime()));
+	}
+
+	/** The sect of the cultivator {@code player} is sparring with, or sparred with a moment ago; or null. */
+	private static UUID sparSect(Entity player, long now) {
+		Spar spar = BY_PLAYER.get(player.getUUID());
+		if (spar != null) return spar.sect;
+		for (Aftermath after : AFTER.values()) {
+			if (after.player().equals(player.getUUID()) && now < after.until()) return after.sect();
+		}
+		return null;
 	}
 
 	/** Still in the three breaths before it begins. */
@@ -168,10 +201,19 @@ public final class SparSystem {
 		if (player.getHealth() < player.getMaxHealth() * READY_SHARE || npc.getHealth() < npc.getMaxHealth() * READY_SHARE) {
 			return ModLang.SPAR_HURT;
 		}
+		// One a realm or more beneath you can't win your stake (it never holds back, only the stronger does), so it won't put up
+		// its own: friendly bouts only (a strong cultivator wagered against the weak for a thing a day from every one of them).
+		if (terms.wager && beneath(player, npc)) return ModLang.SPAR_BENEATH;
 		if (terms.wager && stakeInHand(player).isEmpty()) return ModLang.SPAR_NO_STAKE;
 		// One wager a day with each: no farming its things one bout after another.
 		if (terms.wager && npc.regardEntry(player).wagerDay == Regard.day(npc.level().getGameTime())) return ModLang.SPAR_WAGERED;
 		return null;
+	}
+
+	/** {@code npc} is a realm or more beneath {@code player} (as it shows itself): it spars with them friendly only. */
+	public static boolean beneath(ServerPlayer player, CultivatorNpc npc) {
+		TalkSystem.Standing standing = TalkSystem.standing(player, npc);
+		return standing == TalkSystem.Standing.BELOW || standing == TalkSystem.Standing.FAR_BELOW;
 	}
 
 	/** Begins a spar between {@code player} and {@code npc} on {@code terms}: stakes put up, three breaths, then the fight. */
@@ -278,7 +320,7 @@ public final class SparSystem {
 		BY_PLAYER.remove(spar.player);
 		BY_NPC.remove(spar.npc);
 		if (npc != null) npc.endSpar(player);
-		if (npc != null && player != null) AFTER.put(spar.npc, new Aftermath(spar.player, npc.level().getGameTime() + AFTERMATH_TICKS));
+		if (npc != null && player != null) AFTER.put(spar.npc, new Aftermath(spar.player, npc.level().getGameTime() + AFTERMATH_TICKS, spar.sect));
 		if (player == null) {
 			// Gone mid-spar (logged out): the cultivator keeps the stakes, the player's included.
 			if (npc != null) {
