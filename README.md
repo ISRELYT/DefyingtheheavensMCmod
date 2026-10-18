@@ -997,8 +997,8 @@ hand, a Ghost King's form; elytra don't open there), up and down as they like, a
 past the crossing or sink below the floor. Whoever can't fly falls: through the shallows, slowly through the lower layers, and
 out of the floor into the Overworld's sky. **A block crossed there is 20 in the world**, both ways: you step in at a twentieth of where you stood and out at twenty
 times where you are. The action bar shows where the world lies beneath you and how far the crossing (or the floor) is. Spatial
-pressure still presses: **2.5 a second in the shallows** (where you come in at Y 128, between Y 60 and Y 200), and **8.3** in the
-stormy layers above and below them (doubled 2026-10-17). Qi Flight climbs about 7.5 blocks a second (measured 2026-10-19): the
+pressure still presses: **2.5 a second in the shallows** (where you come in at Y 128, between Y 60 and Y 200), and **8.2** in the
+stormy layers above and below them (twice the old trial's 4.15 from 2026-10-17, eased to 8.2 on 2026-10-19). Qi Flight climbs about 7.5 blocks a second (measured 2026-10-19): the
 upper layers take some 21 seconds, about 175 harm, and the whole climb from Y 128 some 31 seconds and 200 harm, before Qi
 Sustenance's healing and the storms, so bring healing. **Tearing out (a Heavenly Being's way) only ever leads back to the realm you came in from**; to pass
 from one realm to the other you go **up or down**. Rise through the **upper layers** past **Y 360** and you are through, into

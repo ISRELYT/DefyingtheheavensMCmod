@@ -55,8 +55,8 @@ public final class SpatialTrialHandler {
 	}
 
 	/**
-	 * The gap's pressure a second, the stormy layers' half (it was the old trial's: see {@link #LAYER_PRESSURE}); ignores armor,
-	 * enchantments and effects (see ModDamageTypes). Health, regen, absorption and healing count.
+	 * The old trial's pressure a second (the stormy layers were twice it until 2026-10-19: see {@link #LAYER_PRESSURE}). The gap's
+	 * pressure ignores armor, enchantments and effects (see ModDamageTypes); health, regen, absorption and healing count.
 	 */
 	public static final float PRESSURE_DAMAGE = 4.15f;
 
@@ -94,11 +94,13 @@ public final class SpatialTrialHandler {
 	 */
 	public static final float SHALLOW_PRESSURE = 2.5f;
 	/**
-	 * The pressure a second in the gap's stormy upper and lower layers: twice the old trial's (the user's ask, 2026-10-17). Climbing
-	 * the upper layers on Qi Flight (160 blocks at ~7.5 a second, measured 2026-10-19: some 21 s) costs about 175 health, the whole
-	 * climb from where one comes in about 200; sinking through the lower ones (12 s) about 100 (both before any healing).
+	 * The pressure a second in the gap's stormy upper and lower layers: 8.2, the user's pick of 2026-10-19 (it was twice the old
+	 * trial's, 8.3, from 2026-10-17). Climbing the upper layers on Qi Flight (160 blocks at ~7.5 a second, measured 2026-10-19: some
+	 * 21 s) costs about 175 health, the whole climb from where one comes in about 200; sinking through the lower ones (12 s) about
+	 * 100 (both before any healing). With Qi Sustenance and base stats, a Heavenly Being Grand Perfection is the first to come through
+	 * the climb (1.3 health left), and a Nascent Soul Grand Perfection the first to live through falling out.
 	 */
-	public static final float LAYER_PRESSURE = PRESSURE_DAMAGE * 2;
+	public static final float LAYER_PRESSURE = 8.2f;
 	/** Tearing space open costs this share of the qi pool going in, and this coming out. */
 	public static final double TEAR_IN_QI = 0.25, TEAR_OUT_QI = 0.10;
 	/** Between one tear and the next (ticks). */

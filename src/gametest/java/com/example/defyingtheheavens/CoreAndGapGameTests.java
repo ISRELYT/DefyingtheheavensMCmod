@@ -190,10 +190,10 @@ public class CoreAndGapGameTests implements FabricGameTest {
 				&& SpatialTrialHandler.homeRealm(SpatialTrialHandler.Route.ASCEND, true) == net.minecraft.world.level.Level.OVERWORLD,
 				"...an old save's trial, to the realm it set out from (a descent's tear can't skip it)");
 		helper.assertTrue(SpatialTrialHandler.pressureAt(SpatialTrialHandler.TEAR_IN_Y) == SpatialTrialHandler.SHALLOW_PRESSURE
-				&& SpatialTrialHandler.pressureAt(SpatialTrialHandler.UPPER_LAYERS_Y) == SpatialTrialHandler.PRESSURE_DAMAGE * 2
-				&& SpatialTrialHandler.pressureAt(SpatialTrialHandler.LOWER_LAYERS_Y - 1) == SpatialTrialHandler.PRESSURE_DAMAGE * 2
+				&& SpatialTrialHandler.pressureAt(SpatialTrialHandler.UPPER_LAYERS_Y) == 8.2f
+				&& SpatialTrialHandler.pressureAt(SpatialTrialHandler.LOWER_LAYERS_Y - 1) == 8.2f
 				&& SpatialTrialHandler.pressureAt(SpatialTrialHandler.LOWER_LAYERS_Y) == SpatialTrialHandler.SHALLOW_PRESSURE,
-				"The shallows press lightly; the layers above and below twice as hard as the old trial");
+				"The shallows press lightly (2.5 a second); the layers above and below with 8.2");
 		helper.assertTrue(SpatialTrialHandler.inLowerLayers(SpatialTrialHandler.FLOOR_Y) && !SpatialTrialHandler.inLowerLayers(SpatialTrialHandler.FLOOR_Y - 1)
 				&& !SpatialTrialHandler.inLowerLayers(SpatialTrialHandler.LOWER_LAYERS_Y), "The lower layers run from their top down to the floor");
 		helper.assertTrue(SpatialStorms.targetAround(SpatialTrialHandler.LOWER_LAYERS_Y - 10) == SpatialStorms.targetAround(SpatialTrialHandler.UPPER_LAYERS_Y + 10)
