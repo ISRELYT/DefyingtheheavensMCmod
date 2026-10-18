@@ -1842,8 +1842,10 @@ crimson pillars and dark nether-brick roofs trimmed in red with soul lanterns fo
 - Worldgen that runs after structures can't spoil the grounds: no lake (vanilla lava lakes, the Upper Realm's spring
   basins) forms where it would reach into a sect (`mixin/LakeFeatureMixin`), no wild tree, bamboo, huge mushroom, mossy
   boulder or jungle vine grows on the grounds or within 4 blocks of them (`mixin/SectClearingMixin`; saplings planted
-  later grow as usual), and the sects build with nothing a water or lava spring can open in (the plaster is smooth quartz, not
-  calcite; checked by a game test).
+  later grow as usual), no ore blob reaches into a sect's buildings or a ghost palace (`mixin/OreFeatureMixin`: with
+  Terralith, which counts blackstone as Overworld stone, vanilla's gravel, dirt and ores used to come up through the demonic
+  sects' blackstone walls; the open grounds and what lies under them keep their ore), and the sects build with nothing a water
+  or lava spring can open in (the plaster is smooth quartz, not calcite; checked by a game test).
 - The layout is planned in code (`SectStructure`, `SectLayout`, `SectPiece`), not from jigsaw templates, so it fits its
   population, every door gets a footpath, and each building adapts its height to the ground. A game test lays out
   sects of every size and facing and checks there is a house for every elder, a home (an elder's house or a meditation

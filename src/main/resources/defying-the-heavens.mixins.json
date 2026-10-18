@@ -11,6 +11,7 @@
     "LakeFeatureMixin",
     "NaturalSpawnerMixin",
     "NetherPortalBlockMixin",
+    "OreFeatureMixin",
     "PatrolSpawnerMixin",
     "PlayerMixin",
     "PortalShapeMixin",
