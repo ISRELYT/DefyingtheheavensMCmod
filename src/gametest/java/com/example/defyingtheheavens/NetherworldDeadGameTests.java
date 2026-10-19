@@ -57,7 +57,8 @@ public class NetherworldDeadGameTests implements FabricGameTest {
 		GhostSystem.makeGhost(ghost);
 		try {
 			helper.assertTrue(GhostSystem.isGhost(ghost), "A ghost");
-			helper.assertTrue(Math.abs(ghost.getMaxHealth() - living * GhostSystem.HEALTH_SHARE) < 0.01, "Half its living hearts ("
+			// The heaven path alone, dead: half its strength, its hearts half the whole (TwoPaths#pathShare).
+			helper.assertTrue(Math.abs(ghost.getMaxHealth() - living * TwoPaths.HALF_PATH) < 0.01, "Half its living hearts ("
 					+ ghost.getMaxHealth() + " of " + living + ")");
 			// The rule itself (the test's mock players count as creative, and a creative ghost has none of the rules).
 			var sources = helper.getLevel().damageSources();

@@ -29,26 +29,29 @@ import net.minecraft.util.StringRepresentable;
  *       and from the fourth the free flight of the dead and of a Ghost King's form swifter (QiFlight#freeSpeed).</li>
  * </ul>
  * How often a method's stele turns up, against the others': {@link #steleWeight} across the Netherworld, {@link #peakWeight} on
- * the Nine Nether Peaks, where alone the deepest foundations are carved (MethodSteleFeature).
+ * the Nine Nether Peaks, where alone the deepest foundations are carved (MethodSteleFeature). The Netherworld Breathing Art is
+ * carved on no stele out in the realm: only on the one on the Ghost Gate's plaza, where the dead wake (the user's rule,
+ * 2026-10-19; GhostGate#STELE). {@link #knownWeight}: how often a ghost cultivator knows it, of the first three (GhostCultivatorNpc#method).
  */
 public enum GhostMethod implements StringRepresentable {
-	NETHERWORLD_BREATHING("netherworld_breathing", 600, 600, Realm.QI_REFINING),
-	GHOST_FIRE_SCRIPTURE("ghost_fire_scripture", 300, 300, null),
-	WANDERING_SOUL_STEPS("wandering_soul_steps", 200, 200, null),
-	YELLOW_SPRINGS_MARROW("yellow_springs_marrow", 150, 200, Realm.FOUNDATION_BUILDING),
-	GHOST_CORE_CANON("ghost_core_canon", 10, 40, Realm.CORE_FORMATION),
-	NINE_NETHER_SOUL_SUTRA("nine_nether_soul_sutra", 0, 20, Realm.NASCENT_SOUL),
-	YAMA_JUDGEMENT("yama_judgement", 0, 8, Realm.HEAVENLY_BEING),
-	SIX_PATHS_CANON("six_paths_canon", 0, 3, Realm.FOUR_AXIS);
+	NETHERWORLD_BREATHING("netherworld_breathing", 0, 0, 600, Realm.QI_REFINING),
+	GHOST_FIRE_SCRIPTURE("ghost_fire_scripture", 300, 300, 300, null),
+	WANDERING_SOUL_STEPS("wandering_soul_steps", 200, 200, 200, null),
+	YELLOW_SPRINGS_MARROW("yellow_springs_marrow", 150, 200, 0, Realm.FOUNDATION_BUILDING),
+	GHOST_CORE_CANON("ghost_core_canon", 10, 40, 0, Realm.CORE_FORMATION),
+	NINE_NETHER_SOUL_SUTRA("nine_nether_soul_sutra", 0, 20, 0, Realm.NASCENT_SOUL),
+	YAMA_JUDGEMENT("yama_judgement", 0, 8, 0, Realm.HEAVENLY_BEING),
+	SIX_PATHS_CANON("six_paths_canon", 0, 3, 0, Realm.FOUR_AXIS);
 
 	private final String id;
-	private final int steleWeight, peakWeight;
+	private final int steleWeight, peakWeight, knownWeight;
 	private final Realm realm;
 
-	GhostMethod(String id, int steleWeight, int peakWeight, Realm realm) {
+	GhostMethod(String id, int steleWeight, int peakWeight, int knownWeight, Realm realm) {
 		this.id = id;
 		this.steleWeight = steleWeight;
 		this.peakWeight = peakWeight;
+		this.knownWeight = knownWeight;
 		this.realm = realm;
 	}
 
@@ -59,6 +62,9 @@ public enum GhostMethod implements StringRepresentable {
 
 	/** ...and on the Nine Nether Peaks. */
 	public int peakWeight() { return peakWeight; }
+
+	/** Of the first three methods (the Breathing Art, the fire, the steps), how often a ghost cultivator knows it, against the others. */
+	public int knownWeight() { return knownWeight; }
 
 	/** The realm a foundation carries cultivation up to (from Qi Refining), or null for a method of its own (fire, steps). */
 	public Realm realm() { return realm; }

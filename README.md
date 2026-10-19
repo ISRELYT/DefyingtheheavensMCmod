@@ -366,15 +366,19 @@ once; a mortal on neither path has none. Each point is a share more of what its 
 | Constitution | +1% | Maximum health |
 | Agility | +0.5% | Walking speed and attack speed |
 | Endurance | +1% | Armour and its toughness |
-| Spirit | +1% | The qi pool |
-| Insight | +1% | Cultivation gathered meditating (and half as much to qi gathering) |
+| Spirit | +1% | Every path's pool: the qi pool and the ghostly qi pool |
+| Insight | +1% | Every path's cultivation gathered meditating, heaven and ghost alike (and half as much to qi and ghostly qi gathering) |
+
+**The stats are the cultivator's, not one path's** (the user's rule, 2026-10-19): every path's pool, gathering and
+cultivation goes through `StatPoints#poolFactor`, `#cultivationFactor` and `#gatherFactor`, and any path added later is to
+do the same. The methods' layers settle from the same gain, so Insight speeds them too.
 
 They're spent on the **Stat Points** page of the Stats tab (the two pages are buttons at its top; the Points button turns
 gold, with the count, while there are points to spend): each stat with its points, what they give, and a **+** (shift-click:
 five). The six stats' spread is drawn as a hexagon, each corner a stat, the gold shape reaching toward it as far as its points
 go against the most in any one. Should cultivation fall back below what was spent (a golden core detonated, the Chief Judge's
 gaze), every point is given back to spend again, and you're told. An op can take back all their own with `/cultivation
-resetstats`. Code: `StatPoints` (the attribute modifiers; the qi pool and gathering read them in `PlayerCultivation`), client
+resetstats`. Code: `StatPoints` (the attribute modifiers, and the shared factors the pools and gathering read), client
 `CultivationScreen#renderStatPoints`; tests `StatPointsGameTests`.
 
 ## Tribulations
@@ -394,9 +398,14 @@ ghost path drawn in (the Cultivation tab's Path button; the dead always), the Br
 it. It comes at the same breakthroughs as the heavens' (every Grand Perfection, every stage from Nascent Soul) with the same
 strikes, the same bolt sizes, but of **yin lightning** from a **dark teal storm**, its bolt cyan, and it comes **wherever you
 stand, the Netherworld included** (it is the dead's realm's, not the heavens'). Its bolt is turned by armour as the heavens'
-is, and the yin in it passes armour as magic does (`ModDamageTypes.YIN_LIGHTNING`, `YIN_TRIBULATION`); it reaches the dead,
-who take **half** of it (`TribulationManager.DEAD_SHARE`, my number: their hearts are half the living's, and they wear no
-armour but a Ghost King's). Survived, the ghost path is through to the next stage or realm, its bar empty, its methods' new
+is, and the yin in it passes armour as magic does (`ModDamageTypes.YIN_LIGHTNING`, `YIN_TRIBULATION`); it reaches the dead
+**as it does the living** (the user's ask, 2026-10-19): each strike, after their armour, takes the **same share of their
+hearts** as it would of a life's body on the same paths, both whole (`GhostSystem#livingShare`: x1 for one whose ghost path
+carries its body, as a life's heaven path would; less for one carried by half its heaven path). The living take it whole,
+so one on the ghost path alone faces it on half a body. One of the common dead, with no hands for armour, turns the bolt
+as an iron set would (`TribulationManager.GHOST_FORM_ARMOR`, what the balance table asks of the living at Core Formation,
+the last tribulation the common dead meet; a ghost path of Core Formation is a Ghost King's, who wears armour as the living
+do). Survived, the ghost path is through to the next stage or realm, its bar empty, its methods' new
 layers to settle in. Failed, **the ghost path falls a stage** and its cultivation there is lost: struck down (the living
 die; the dead scatter and reform at the Gate) or leaving mid-way (marked and saved at once, so you fall as you come back).
 A Heavenly Thunder Body drinks in only the heavens' lightning. The HUD names it "The Netherworld's Tribulation".
@@ -874,12 +883,18 @@ call it home: it is drawn back along its tether for **5 seconds** and you stand 
 the day the soul forms, and the ability goes into the first empty slot of your wheel.
 
 - **The body** stays sitting cross-legged where you left it, in your skin and armor, with your health and your armor's
-  protection. You're told whenever it is hurt (a warning, and its health on screen), monsters nearby go for it, and if it
-  is slain your soul dies with it. Players can only hurt it where they could hurt you (PvP).
+  protection, **in the form you set out in**: set out in a Ghost King's form (or as one of the dead) and it sits on in that
+  light, crowned for a Ghost King, seen as that form is (by everyone in the Netherworld and by the dead; elsewhere only by
+  those who perceive souls, as clearly as they see a soul; always by you). You're told whenever it is hurt (a warning, and its
+  health on screen), monsters nearby go for it, and if it is slain your soul dies with it. Players can only hurt it where
+  they could hurt you (PvP).
 - **The soul** is you, flying free of gravity through stone, wood and earth: it moves the way you look (look up and press
   forward to rise), jump and sneak lift and lower it, sprint doubles its pace, and it carries its momentum. It has its own
-  hearts, **1 at Nascent Soul Early and 3 more every stage** (10 at Grand Perfection, 13 at Heavenly Being Early, 34 at
-  Four Axis Grand Perfection), all its own: constitution's points and your body's health count for nothing there. **Out of
+  hearts, **by the ghost path alone** (the user's call, 2026-10-19; `PlayerCultivation#soulHearts`): **1, and 3 more for
+  every stage your ghost path stands past Nascent Soul Early** (10 at its Grand Perfection, 13 at Heavenly Being Early, 34 at
+  Four Axis Grand Perfection). The heaven path adds none: a soul born of the heaven path alone sets out on 1 heart however
+  high it stands (its tether still grows with it). They are all its own: constitution's points and your body's health count
+  for nothing there. **Out of
   every body they never heal**, and what the soul loses it keeps: coming home you have the body's health, not the soul's,
   and the soul's wounds wait for it. It **mends only while it rests in a body**: home in your own (gathering to go out too),
   or in a being it possesses, from nothing to whole in **2 minutes** (`SoulProjection.SOUL_MEND_SECONDS`), so it sets out
@@ -910,8 +925,15 @@ soul is near, no outline, no name. A cultivator with the **Ghost Eye** open (a g
 sees souls as a Nascent Soul with Qi Sense open would, whatever their realm.
 
 **Where it can't go.** The heavens can't see the Netherworld, and a nascent soul can't be sent out there or on the Soul
-River ("The heavens cannot see you here."); a soul already out can't take a rift up to it. The dead can't send out souls
-at all.
+River ("The heavens cannot see you here."); a soul already out can't take a rift up to it.
+
+**The dead send out their souls too** (the user's call, 2026-10-19): a ghost or Ghost King whose path stands at Nascent Soul
+sends its soul out of its ghostly form as the living do (a Ghost King come up into the living world, say), its form sitting
+on in its light. The soul's rules are a soul's; struck down out there it is back in its form, its nascent soul lost, and
+scattered to reform at the Gate as the dead are. **A soul of the dead takes a person's body too** (a player or an NPC
+cultivator, as a living soul does, below), and in it **it is that living body**: it breathes, burns, falls, touches and is
+touched as the living do, and no rule of the dead holds it (they go by the record it plays, `CultivationManager#get`). Out
+of the body it is one of the dead again; a Ghost King's crown waits for it, unannounced.
 
 **Harming a soul.** Only those who see it, by their own hand: a Nascent Soul cultivator (Qi Sense open) lands a quarter of
 a blow at Early, 40% at Mid, 55% at Late, 70% at Grand Perfection (it's a haze to them); a Heavenly Being or above lands it
@@ -934,7 +956,9 @@ it depends on what it is:
 body's place and **you play it as a player**, with everything a player can do: walk, sprint, swim, mine, build, fight, eat,
 use and throw things, open chests and your inventory, craft, ride. You have **what it carries, wears and holds**, its
 health, hunger, experience and effects, and **its look and name to everyone** (its skin and cape, the name over its head
-and in chat; in an NPC's body, its nameplate with its title and path). You have **its cultivation**: its realm and
+and in chat; in an NPC's body, its nameplate with its title and path; set out in a Ghost King's form, you are drawn as the
+body all the same, not in your form's light). An NPC set aside shoves nothing (it follows its body a tick behind, and its
+shove used to drift you on the way you last went). You have **its cultivation**: its realm and
 strength, its qi pool and gathering, its abilities and spells; meditating in it cultivates the body, not you (no
 breakthrough that brings a tribulation, though: a soul away from its own body can't face one), and **faster the higher
 your soul stands above it**: once more as fast for every realm between you, counted by the stage (a quarter a stage, a
@@ -1321,7 +1345,10 @@ A ghost:
   soul soil (`SoulEntityMixin`). In first person its own hand is the same cyan
   light (under a shader pack, a flat cyan glow); it swings its arm when it strikes, as the living do, and when it meditates it sits cross-legged, floating a
   quarter of a block off the ground.
-- has **half its living hearts**, plus a heart for every layer of its deepest foundation, and heals a heart every two seconds.
+- has **its body's hearts, as every stat, by the dead's share** (see "The two paths"): its ghost path's whole, as a life's
+  heaven path's (a ghost path of Nascent Soul Early, 65 health), its heaven path's half (one that died on the heaven path
+  alone, half its living hearts), and heals a heart every two seconds. (Before 2026-10-19: half the living's, and a heart
+  more for every layer of its deepest foundation.)
 - **flies freely**: the dead need no ground. Double-tap jump to fly, at every realm and as fast as Qi Flight (swifter from
   Wandering Soul Steps' fourth layer, +10% a layer), spending nothing (`TwoPaths#fliesFreely`; the living in a Ghost King's form fly so too, see "The two paths"); not on the Soul River,
   nor while a Ghost-Quelling Talisman binds it. Holding jump while falling, it drifts down gently.
@@ -1360,7 +1387,7 @@ A creative ghost keeps the look and none of the rules.
 
 | The dead | Value | Constant (`GhostSystem` unless named) |
 |---|---|---|
-| Hearts | half the living's, +1 per layer of the deepest foundation | `HEALTH_SHARE`, `HEALTH_PER_BREATHING_LAYER` |
+| Hearts (and every stat) | the ghost path's whole, the heaven path's half | `TwoPaths#pathShare`, `HALF_PATH` |
 | Healing | a heart every 2 s | `REGEN_PER_SECOND` |
 | Dispersal | reforms after 5 s with half health and qi | `DISPERSE_TICKS` |
 | A ghost's blow on the living | half a heart, +5% yin | `GHOSTLY_BLOW`, `YinCorruption.GHOSTLY_BLOW` |
@@ -1382,8 +1409,14 @@ and spells.
 
 **The ghost path.** A path of its own beside ordinary cultivation, and **neither builds on the other**: your ordinary realm
 neither opens a ghost method nor speeds it, and a Four Axis cultivator who comes down starts the ghost path at Qi Refining
-like anyone else. It **begins with the first foundation you learn**, at Qi Refining Early (`GhostMethods#ghostRank`, saved
-as `NetherworldState`'s "PathRank" and "PathCultivation"). But walking both paths makes you stronger than walking either
+like anyone else. It **begins**, at Qi Refining Early (`GhostMethods#ghostRank`, saved as `NetherworldState`'s "PathRank"
+and "PathCultivation"), with the first foundation you learn; or, **among the dead, with your first meditation on ghostly qi,
+method or none** (`GhostMethods#begin`; the user's ask, 2026-10-19), as the living need no method for the heaven path. A
+ghost path begun in death **stays yours when you are born again**: alive, the Path button draws in ghostly qi and you go on
+with it, method or none. With no foundation known it goes at the heaven path's no-method pace, **three quarters**
+(`GhostMethods#NO_METHOD_FACTOR`; "No ghost method" on the Cultivation tab), and no further than Qi Refining's Grand
+Perfection until a foundation of Foundation Building or deeper is found (the gate below). Mortals, alive or dead, still
+have no ghost path until their meridians are opened. But walking both paths makes you stronger than walking either
 (see **The two paths** below).
 
 **One qi or the other.** A meditation draws in **either** the heavens' qi **or** ghostly qi, never both: on both paths, the
@@ -1393,10 +1426,15 @@ the other from its next breath. The dead draw in only ghostly qi. Both pools fil
 cultivation follows the switch. The Breakthrough button breaks through on the path drawn in.
 
 **The bar.** Meditating while ghostly qi flows where you sit fills the ghost path's bar, and its stages step on by
-themselves, as the heaven path's do, up to the bottlenecks (below). A stage takes what its layers took before the bar
-(`GhostMethods#required`: a stage's layers' minutes x its realm's factor, in seconds of baseline meditation), so the
-pace is what it was: the Qi Refining stages 83 minutes in all, the whole way to Four Axis Grand Perfection about 57
-hours, at the baseline (a living ghost path of Nascent Soul in a Soul Sand Valley); ten times as fast in the Netherworld.
+themselves, as the heaven path's do, up to the bottlenecks (below). **Every stage takes longer than the one before**, from
+one realm to the next too, on both paths alike (`GhostMethods#required`: `STAGE_SECONDS` 1,150 x 1.6 a realm x the stage's
+time weight, the heaven path's own x1.3 / x1.5 / x1.67 / x1.88, `Stage#timeWeight`; the next realm's Early is x2.08): the
+Qi Refining stages about 25, 29, 32 and 36 minutes (2 hours in all), Foundation Building's Early 40, the whole way to Four
+Axis Grand Perfection about 53 hours, at the baseline (a living ghost path in a Soul Sand Valley); ten times as fast in the
+Netherworld. The heaven path steps the same way: its stages' cultivation is x1.3 / x1.65 / x2.0 / x2.45 the realm's base,
+cultivated at x1.0 / x1.1 / x1.2 / x1.3 (Qi Refining Early 130 s, Grand Perfection 189 s, Foundation Building Early 208 s,
+about 4.6 hours to Four Axis Grand Perfection at the bare rate). Before 2026-10-19 a new realm's Early was quicker than
+the Grand Perfection before it; the paths take as long in all as they did.
 The Cultivation tab's ghost column shows the bar (the stage's cultivation on it, amber at a bottleneck, gold at the top)
 and what meditating here adds a second.
 
@@ -1421,7 +1459,7 @@ own realm (its last nine layers):
 
 | Foundation | Carries the ghost path | Layers | Spells (layer) | Where it is found |
 |---|---|---|---|---|
-| **Netherworld Breathing Art** | Qi Refining | 9 | Ghostly Wail (5); abilities Ghost Eye (3), Netherworld Veil (6) | steles everywhere (the most common), one on the Gate's plaza; slips from ghost cultivators |
+| **Netherworld Breathing Art** | Qi Refining | 9 | Ghostly Wail (5); abilities Ghost Eye (3), Netherworld Veil (6) | **only** the stele on the Ghost Gate's plaza (none out in the realm); ghost cultivators teach it and sell its slip |
 | **Yellow Springs Marrow Art** | to Foundation Building | 18 | Yellow Springs Tide (12), Marrow Ward (16) | steles everywhere (uncommon); Foundation Building ghosts teach it, sell its slip (180 stones) and now and then drop it |
 | **Ghost Core Canon** | to Core Formation | 27 | Ghost Core Burst (21), King's Decree (25) | Core Formation Ghost Kings (most palaces); now and then a stele anywhere, more often on the Nine Nether Peaks |
 | **Nine Nether Soul Sutra** | to Nascent Soul | 36 | Soul Rend (30), Nine Nether Step (34) | Nascent Soul kings (about one palace in four); Nine Nether Peaks steles |
@@ -1449,11 +1487,12 @@ Besides the foundations, two methods of their own:
 **Learning one.** First your meridians must be open (a Marrow Cleansing Elixir): a mortal, alive or dead, can't take up or
 cultivate a ghost method (`GhostMethods#refusal`); anyone else can take up any of them. Meditate within 4 blocks of a
 **Method Stele** for 15 seconds and you learn its method. Steles
-stand on worn plinths across the Netherworld, one in about every 24 chunks: the Breathing Art's most often, then the
-fire's, the steps', the Marrow Art's, and now and then the Ghost Core Canon's (weights 600 / 300 / 200 / 150 / 10); on the
-**Nine Nether Peaks** the deeper foundations are carved too (the Marrow Art 200, the Ghost Core Canon 40, the Nine Nether
-Soul Sutra 20, Yama's Judgement Scripture 8, the Six Paths Reincarnation Canon 3, of 1,371; `GhostMethod#steleWeight`,
-`#peakWeight`). They're unbreakable; touch one to read what it teaches (the dead can too), and the Ghost Eye shows them
+stand on worn plinths across the Netherworld, one in about every 24 chunks: the fire's most often, then the steps', the
+Marrow Art's, and now and then the Ghost Core Canon's (weights 300 / 200 / 150 / 10, of 660); on the **Nine Nether Peaks**
+the deeper foundations are carved too (the fire 300, the steps 200, the Marrow Art 200, the Ghost Core Canon 40, the Nine
+Nether Soul Sutra 20, Yama's Judgement Scripture 8, the Six Paths Reincarnation Canon 3, of 771; `GhostMethod#steleWeight`,
+`#peakWeight`). **The Netherworld Breathing Art is carved on no stele out in the realm**: only on the one on the Ghost
+Gate's plaza, by where the dead wake (the user's rule, 2026-10-19; worlds generated before keep the ones they have). They're unbreakable; touch one to read what it teaches (the dead can too), and the Ghost Eye shows them
 through walls. A **Ghost Jade Slip**, read (right-click), teaches its method at once and isn't used up: ghost cultivators
 drop them now and then, and Ghost Elders sell their own. A ghost cultivator knows its own realm's foundation five times
 in ten (a Ghost King always), otherwise one of the first three methods, and one struck down leaves its foundation's slip
@@ -1471,18 +1510,17 @@ stele quickens you). The layers' costs, in minutes of baseline meditation (`Ghos
 | The fire, the steps (half of it settles one in) | 5 | 8 | 12 | 20 | 30 | 45 | 60 | 90 | 120 | 6.5 h |
 | A foundation, each realm's nine, before the realm's factor | 3 | 4 | 5 | 6 | 8 | 10 | 12 | 15 | 20 | 83 min |
 
-A ghost path's stage takes its layers' worth of the foundation row (Early the first two, Mid the next three, Late three,
-Grand Perfection the ninth alone) times the realm's factor (`MethodLayers.REALM_FACTOR`): x1 Qi Refining (83 minutes), x2
-Foundation Building (2.8 hours), x4 Core Formation (5.5 hours), x7 Nascent Soul (9.7 hours), x11 Heavenly Being (15 hours)
-and x16 Four Axis (22 hours), about 57 hours in all at the baseline: a living cultivator whose ghost path is at Nascent Soul,
-in a **Soul Sand Valley**. The rate is `BASE_RATE` x the density (a Soul Sand Valley's 1 the baseline:
+A ghost path's stages no longer go by these layers (see The bar): each realm takes 1.6 times the one before, Qi Refining
+2 hours, Foundation Building 3.2, Core Formation 5.2, Nascent Soul 8.3, Heavenly Being 13.3 and Four Axis 21.3, about 53
+hours in all at the baseline: a living cultivator in a **Soul Sand Valley** (the realm's factor below is taken back out of
+each stage's cultivation, so the ghost path's realm doesn't change how long a stage takes). The rate is `BASE_RATE` x the density (a Soul Sand Valley's 1 the baseline:
 `GhostQi.SOUL_SAND_VALLEY`) x the ghost path's factor (`realmFactor`: -10% a realm below Nascent Soul, +10% a realm above)
 x Qi Harmony x a Yin Gathering Pill's boost x 1.5 for the dead (`GHOST_FACTOR`) x 1.25 beside a stele of the method you're
 practising (`STELE_BONUS`, within 8 blocks) x a possessor's guidance (Possession). Your ordinary realm doesn't come into it.
 
 The ghost path can be cultivated **wherever ghostly qi flows**, the Overworld and the Nether included; the Netherworld is
 simply the best place for it. Its qi is ten times as dense, so the bar fills **ten times as fast** there (twelve on the Nine
-Nether Peaks): Qi Refining in about 8 minutes, the whole path in about 5.7 hours (the dead half as fast again). In a Soul
+Nether Peaks): Qi Refining in about 12 minutes, the whole path in about 5.3 hours (the dead half as fast again). In a Soul
 Sand Valley it goes at the baseline, in the rest of the Nether at half of it, and in the Overworld, the thinnest of all, at a
 quarter of it.
 
@@ -1547,10 +1585,18 @@ Code: `GhostSystem` (`isKing`, `KING_RANK`, `watchKing`, `attack`), `Incorporeal
 Ordinary cultivation is the **heaven path**; the ghost methods' is the **ghost path**. Neither builds on the other, but a
 cultivator who walks both is stronger than one who walks either (`TwoPaths`):
 
-- **The body follows the higher path.** Health, attack damage, speed, armour, toughness and knockback resistance come from
-  the realm and stage of whichever path stands higher (the same table either way, `TwoPaths#body`), so a living cultivator
-  whose ghost path is Nascent Soul and heaven path Core Formation has a Nascent Soul body. Realm Suppression and Realm
-  Suppress hold the ghost path down as they do the heaven path. Qi and its pool are still the heaven path's.
+- **The body follows the mightier path, by its share** (the user's rule, 2026-10-19; `TwoPaths#body`, `#pathShare`).
+  Health, attack damage, speed, armour, toughness and knockback resistance come from one path's realm and stage (the same
+  table either way), and **the living have the heaven path's whole and the ghost path's half; the dead, the ghost path's
+  whole and the heaven path's half**: half of every bonus, and half the **whole** of the health (the ten hearts a body
+  starts with too). The body takes whichever is the mightier so. A living cultivator on the ghost path alone is the weaker
+  for living: a ghost path of Nascent Soul Early gives 32.5 health alive (a heaven path's Nascent Soul Early, 65), and the
+  whole 65 once dead. **Walk both and you lose nothing**, alive or dead: the path that is yours whole there carries the body
+  as soon as it is the mightier for it (a heaven path of Core Formation Grand Perfection already outweighs half a Nascent
+  Soul's ghost path), and harmony comes on top. The Stats tab shows the share (a red "bonus" where half the health is less
+  than a body starts with), and the effective cultivation line names what it comes to. Stat points count by the higher
+  path's rank, alive or dead. Realm Suppression and Realm Suppress hold the ghost path down as they do the heaven path.
+  Qi and its pool are still the heaven path's.
 - **Harmony.** The two paths together add to that body, the more the closer they stand: **+30%** with both in the same
   realm, **+20%** a realm apart, **+10%** two apart, nothing further (`TwoPaths#HARMONY`, by realm, not stage), on top of
   Heaven's Favour. The Stats tab names the path the body follows and the harmony; on the Cultivation tab the two paths
@@ -1705,7 +1751,7 @@ and up) sell its Ghost Jade Slip (60 low-grade stones, 180 for the Yellow Spring
 foundation's slip 15% of the time. The dead fight back against whatever strikes them, Hungry Ghosts included (a king's
 court as one). A ghost talks with cultivators living and dead (in the Netherworld everyone sees the dead, living NPCs too:
 `CultivatorNpc#senses`) and, with the spirit stones and slips it carries, **trades and gives gifts** as the living do, by the
-same standing (one far above it greets, hears and takes a gift, but doesn't trade); it makes no demands. The dead sell Yin
+same standing (one far above it greets, hears, takes a gift and trades, Ghost Kings too); it makes no demands. The dead sell Yin
 Jade, Other-Shore Flowers and Yang Fire Talismans, to the living and the dead alike. Blows reach
 them as they reach any of the dead. Struck down they scatter in sparks, now and then leaving a jade slip (8%), Yin Jade
 (40%) or an Other-Shore Flower (15%). An NPC cultivator who ascends from the Nether goes to its rift and comes out at
@@ -1922,7 +1968,9 @@ guardians at the foot of its steps and two great braziers sending up smoke; insi
 bordered carpet to the Sect Master's mat on its dais, between lanterns. The **Meditation Hall** of mats,
 where the disciples live and meditate, and the **Treasury** face the way in across lawns from either side, a **pagoda**
 stands beside the main hall (every storey but the top is the sect's library, shelves and candles and lecterns, with the
-library chest on the ground floor; a ladder climbs to a meditation chamber at the top) with herb gardens (ginseng,
+library chest on the ground floor, which keeps **one or two Jade Slips** of heaven methods besides its books: Qi
+Refining's most often, Foundation Building's now and then, Core Formation's rarely, `chests/sect_library`; a ladder climbs
+to a meditation chamber at the top) with herb gardens (ginseng,
 Spirit Ginseng, fruit trees) by it, and the **elders' houses** (pavilions with two eaves, one per elder) stand apart
 round the grounds, each with an earthen footpath to its door. Out on the lawns rises the **Altar of Heaven**, round
 terraces of worked stone after Beijing's Circular Mound (one, two or three by the sect's size, built Modest, Grand and
@@ -2204,7 +2252,10 @@ the top.
   what it fears, and only then comes home; it gives up after 3 minutes. The refuge is kept within the area the world is
   simulating around players (so it doesn't freeze out there): fleeing from you, it ends up near the edge of your
   simulation distance if that is closer than 200 blocks (10-12 chunks by default, about 160-190 blocks). Badly hurt, a
-  cultivator only backs away. Struck by its pursuer at close quarters, a fleeing cultivator strikes back
+  cultivator only backs away, and keeps backing away **for as long as whoever last struck it is within 32 blocks**
+  (`CultivatorNpc#getPursuer`, `PURSUER_LOST`): not only for the five seconds vanilla remembers a blow, after which one
+  that kept ahead of a Hungry Ghost used to stop with it right behind (fixed 2026-10-19). Struck by its pursuer at close
+  quarters, a fleeing cultivator strikes back
   (`FLEE_DISTANCE`, `FLEE_SPREAD`, `FLEE_TIMEOUT` in `CultivatorNpc.java`). A fleeing cultivator is a little slower than a
   sprinting player of its own realm, and a badly hurt one well slower, on foot or in the air, so it can be run down
   (`RUN_SPEED`, `FLY_SPEED` in `CultivatorGoals.FleeGoal`).
@@ -2381,10 +2432,12 @@ Topics not open yet still show, greyed, with the regard they need.
   with no result rather than as your forfeit.
 - **Trade** (`CultivatorTrades`): barter on the trading screen, in spirit stones. They sell by station: Outer Disciples
   and commoners seeds and young herbs, Inner Disciples rarer seeds and Qi Gathering Pills, Elders pills and old herbs, the
-  Sect Master the best of both; rogues odd things from far away. The stock changes each day. Regard opens better offers
+  Sect Master the best of both; rogues odd things from far away. The stock changes each day. **Everyone trades, however
+  far above you** (a Ghost King too; before 2026-10-19 one two realms up wouldn't). Regard opens better offers
   (one more at each of Polite, Courteous, Warm and Trusted) and lowers prices (x1.3 when Resentful down to x0.75 when
-  Sworn). They also buy what you carry that a cultivator has use for (herbs, pills, fruit), for half to four-fifths of
-  its worth by regard.
+  Sworn); **the offers not open to you yet are shown all the same, crossed out**, "Locked: sold to those it regards as
+  Warm (you: Indifferent)" on the item (`CultivatorTrades#locked`), so you can see early what they have. They also buy
+  what you carry that a cultivator has use for (herbs, pills, fruit), for half to four-fifths of its worth by regard.
 - **Pressure**: two realms below you with your Realm Suppress on them, they talk on one knee. **Demand** takes tribute
   (something of what they keep, and spirit stones); **Release** lifts your pressure off them for five minutes, or until you
   switch Realm Suppress off (switched on again, it bears down on them like anyone else).

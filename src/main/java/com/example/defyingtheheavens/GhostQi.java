@@ -79,12 +79,19 @@ public final class GhostQi {
 	}
 
 	/**
-	 * This cultivator's pool size. Every ghost, and everyone who knows a ghost method, has one; a mortal's layers add nothing to it,
-	 * its methods dormant (GhostMethods#refusal).
+	 * This cultivator's pool size. Every ghost, everyone who knows a ghost method, and everyone whose ghost path has begun (one born
+	 * again who began it among the dead, with no method) has one; a mortal's layers add nothing to it, its methods dormant
+	 * (GhostMethods#refusal).
 	 */
 	public static double poolMax(PlayerCultivation c) {
 		NetherworldState s = c.netherworld();
-		return poolMax(s.ghost() || s.knowsAnyMethod(), GhostMethods.layersKnown(c), GhostMethods.foundationLayers(c));
+		return poolMax(s.ghost() || s.knowsAnyMethod() || s.pathRank() >= 0, GhostMethods.layersKnown(c), GhostMethods.foundationLayers(c))
+				* StatPoints.poolFactor(c); // Spirit, every path's pool alike
+	}
+
+	/** Ghostly qi filled a second at {@code density} for {@code c}: x half its Insight, as every path's qi is gathered (StatPoints#gatherFactor). */
+	public static double fillPerSecond(PlayerCultivation c, double density) {
+		return fillPerSecond(density) * StatPoints.gatherFactor(c);
 	}
 
 	/** Ghostly qi filled a second at {@code density}. */

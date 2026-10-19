@@ -106,11 +106,8 @@ public final class MeditationManager {
 			player.displayClientMessage(Component.translatable(GhostSystem.isGhost(player) ? ModLang.MSG_METHOD_MERIDIANS_DEAD : ModLang.MSG_MORTAL_MEDITATE), true);
 			return;
 		}
-		// The dead cultivate only the ghost path: one begun, or a method to learn from a stele close by.
-		if (GhostSystem.isGhost(player) && GhostMethods.ghostRank(CultivationManager.get(player).netherworld()) < 0 && unknownStelesNear(player).isEmpty()) {
-			player.displayClientMessage(Component.translatable(ModLang.MSG_GHOST_NO_METHOD), true);
-			return;
-		}
+		// The dead cultivate only the ghost path, and need no method to begin it (ghostMethods), as the living need none for the
+		// heaven path's.
 		if (HeavenRitual.isActive(player.getUUID())) { // kneeling before the heavens already
 			player.displayClientMessage(Component.translatable(ModLang.MSG_RITUAL_BUSY), true);
 			return;
@@ -376,7 +373,14 @@ public final class MeditationManager {
 				GhostMethods.learn(p, method);
 			}
 		}
-		if (!TwoPaths.cultivatesGhost(c) || GhostMethods.ghostRank(s) < 0 || s.density() <= 0) return;
+		if (!TwoPaths.cultivatesGhost(c) || s.density() <= 0) return;
+		// One of the dead begins the ghost path with its first breath of ghostly qi, method or none (the user's ask, 2026-10-19), and
+		// keeps it if born again: the living may go on with it then (the Cultivation tab's switch). The living begin it with a
+		// foundation learned (GhostMethods#give).
+		if (GhostMethods.ghostRank(s) < 0) {
+			if (!s.ghost()) return;
+			GhostMethods.begin(p);
+		}
 		GhostMethod active = s.activeMethod();
 		double rate = GhostMethods.ratePerSecond(c, s.density()) * circulationMultiplier(session, session.ticks)
 				* (active != null && session.stelesNear.contains(active) ? GhostMethods.STELE_BONUS : 1.0)
@@ -471,13 +475,6 @@ public final class MeditationManager {
 			if (pos.distToCenterSqr(p.getX(), p.getY() + 1, p.getZ()) <= radius * radius) found.add(state.getValue(MethodSteleBlock.METHOD));
 		}
 		return found;
-	}
-
-	/** The methods by whose steles {@code p} sits that they don't know yet. */
-	private static java.util.Set<GhostMethod> unknownStelesNear(ServerPlayer p) {
-		java.util.Set<GhostMethod> near = stelesWithin(p, GhostMethods.STELE_LEARN_RADIUS);
-		near.removeIf(CultivationManager.get(p).netherworld()::knows);
-		return near;
 	}
 
 	/**

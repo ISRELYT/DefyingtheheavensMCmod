@@ -75,9 +75,6 @@ public final class GhostSystem {
 	public static final int DISPERSE_TICKS = 5 * 20;
 	/** The Wheel turns, and the screen fades to gold, over this long before the ghost wakes alive. */
 	public static final int WHEEL_TICKS = 40;
-	/** A ghost's hearts: this share of its living maximum, and one heart more for each layer of Netherworld Breathing Art. */
-	public static final double HEALTH_SHARE = 0.5;
-	public static final double HEALTH_PER_BREATHING_LAYER = 2.0;
 	/** In the Netherworld a ghost mends this much health a second. */
 	public static final float REGEN_PER_SECOND = 1.0f;
 	/** A ghost's blow on the living: this much harm, and this much of the Netherworld's yin driven into them. */
@@ -200,6 +197,7 @@ public final class GhostSystem {
 		// A Ghost King's forms start from its true one, the King's: a Form Shift left on from life would show it human at once.
 		CultivationManager.get(p).setAbilityEnabled(Ability.FORM_SHIFT, false);
 		if (isKing(p)) s.setReignedKing(true); // a king from its death (its form kept when born again: TwoPaths#hasKingForm)
+		CultivationStats.apply(p, CultivationManager.get(p)); // the dead's body: the ghost path's whole, the heaven path's half
 		applyBody(p);
 		p.setHealth(p.getMaxHealth());
 		broadcast(p);
@@ -229,7 +227,7 @@ public final class GhostSystem {
 
 	// --- The ghost's body ---
 
-	/** Its hearts (a transient modifier), and nothing of the living body's needs. */
+	/** Its hearts, and nothing of the living body's needs. */
 	static void applyBody(ServerPlayer p) {
 		updateHearts(p);
 		p.getFoodData().setFoodLevel(20);
@@ -239,27 +237,33 @@ public final class GhostSystem {
 		p.setTicksFrozen(0);
 	}
 
-	/** Keeps a ghost's maximum health at its share of the living one, whatever else changes the attribute. */
+	/**
+	 * A ghost's hearts are its body's, as every stat is (CultivationStats, TwoPaths#pathShare since 2026-10-19: the ghost path's whole,
+	 * the heaven path's half): nothing of its own on top any more. The share it once added (half the living's, a heart a foundation
+	 * layer) is taken off any body still carrying it.
+	 */
 	private static void updateHearts(ServerPlayer p) {
 		AttributeInstance health = p.getAttribute(Attributes.MAX_HEALTH);
-		if (health == null) return;
-		AttributeModifier current = health.getModifier(GHOST_HEALTH_ID);
-		double living = health.getValue() - (current == null ? 0 : current.getAmount());
-		double wanted = Math.max(2.0, living * HEALTH_SHARE + HEALTH_PER_BREATHING_LAYER * breathingLayers(p)) - living;
-		if (current != null && Math.abs(current.getAmount() - wanted) < 1.0e-6) return;
+		if (health == null || health.getModifier(GHOST_HEALTH_ID) == null) return;
 		health.removeModifier(GHOST_HEALTH_ID);
-		health.addTransientModifier(new AttributeModifier(GHOST_HEALTH_ID, "Ghost's health", wanted, AttributeModifier.Operation.ADDITION));
 		if (p.getHealth() > p.getMaxHealth()) p.setHealth(p.getMaxHealth());
+	}
+
+	/**
+	 * A ghost's body against the life's it would be on the same paths, both whole (TwoPaths#wholeBody): what a blow that takes the
+	 * same share of each comes to, against the living's (the Netherworld's tribulation, TribulationManager). 1 for the living, and for
+	 * one of the dead whose ghost path gives its body (whole, as a life's heaven path would).
+	 */
+	public static double livingShare(ServerPlayer p) {
+		if (!isGhost(p)) return 1;
+		PlayerCultivation c = CultivationManager.get(p);
+		double whole = CultivationStats.bodyHealth(TwoPaths.wholeBody(c, true));
+		return whole <= 0 ? 1 : CultivationStats.bodyHealth(TwoPaths.body(c, true)) / whole;
 	}
 
 	private static void removeBody(ServerPlayer p) {
 		AttributeInstance health = p.getAttribute(Attributes.MAX_HEALTH);
 		if (health != null) health.removeModifier(GHOST_HEALTH_ID);
-	}
-
-	/** The foundations' layers (the Netherworld Breathing Art's and those after it): a heart more for each. */
-	private static int breathingLayers(ServerPlayer p) {
-		return GhostMethods.foundationLayers(CultivationManager.get(p));
 	}
 
 	public static void tick(net.minecraft.server.MinecraftServer server) {
@@ -321,6 +325,8 @@ public final class GhostSystem {
 	 * the King's form it had stays its own (NetherworldState#reignedKing, TwoPaths#hasKingForm).
 	 */
 	private static void watchKing(ServerPlayer p) {
+		// A king's soul in a living body (Possession) is that body for now: its crown waits for it, unannounced, when it comes out.
+		if (Possession.inhabits(p.getUUID())) return;
 		boolean king = isKing(p);
 		if (king == KINGS.contains(p.getUUID())) return;
 		if (king) {

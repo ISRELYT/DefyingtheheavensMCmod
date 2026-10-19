@@ -31,9 +31,9 @@ public final class StatPoints {
 		AGILITY("agility", 0.005),
 		/** Armour and its toughness. */
 		ENDURANCE("endurance", 0.01),
-		/** The qi pool. */
+		/** Every path's pool: the qi pool, the ghostly qi pool ({@link #poolFactor}). */
 		SPIRIT("spirit", 0.01),
-		/** Cultivation gathered meditating, and qi gathered (half as much). */
+		/** Every path's cultivation gathered meditating ({@link #cultivationFactor}), and its qi gathered, half as much ({@link #gatherFactor}). */
 		INSIGHT("insight", 0.01);
 
 		private final String id;
@@ -74,11 +74,12 @@ public final class StatPoints {
 		return points;
 	}
 
-	/** Points {@code c} has earned (from the higher path's true rank; a mortal on no path, none). */
+	/**
+	 * Points {@code c} has earned (from the higher path's true rank, alive or dead: not the body's, which goes by its path's share,
+	 * TwoPaths#pathShare; a mortal on no path, none).
+	 */
 	public static int earned(PlayerCultivation c) {
-		TwoPaths.Body body = TwoPaths.body(c, false);
-		if (c.isMortal() && !body.ghostPath()) return 0;
-		return earned(body.rank());
+		return earned(TwoPaths.higherRank(c, false));
 	}
 
 	/** Points {@code c} has left to spend. */
@@ -110,6 +111,25 @@ public final class StatPoints {
 	/** The share more that {@code c}'s points in {@code stat} give (0.12: twelve percent). */
 	public static double bonus(PlayerCultivation c, Stat stat) {
 		return c.getStatPoints(stat) * stat.perPoint;
+	}
+
+	// The cultivation stats are the cultivator's, not one path's (the user's rule, 2026-10-19: "i want the stats buffs to share
+	// between the two paths (and for other paths that we add later)"). Every path's pool, gathering and cultivation goes through
+	// these: the heaven path's (PlayerCultivation), the ghost path's (GhostQi, GhostMethods), and any path to come.
+
+	/** What every path's pool is multiplied by: Spirit. */
+	public static double poolFactor(PlayerCultivation c) {
+		return 1 + bonus(c, Stat.SPIRIT);
+	}
+
+	/** What every path's cultivation gathered meditating is multiplied by: Insight (its methods' layers settle the quicker with it). */
+	public static double cultivationFactor(PlayerCultivation c) {
+		return 1 + bonus(c, Stat.INSIGHT);
+	}
+
+	/** What every path's qi gathered (qi, ghostly qi) is multiplied by: half Insight's share. */
+	public static double gatherFactor(PlayerCultivation c) {
+		return 1 + bonus(c, Stat.INSIGHT) / 2;
 	}
 
 	/** (Re)applies the attribute modifiers of {@code c}'s points (CultivationStats#apply; the qi pool and gathering read them directly). */

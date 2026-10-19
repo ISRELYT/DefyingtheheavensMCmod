@@ -30,6 +30,11 @@ import java.util.UUID;
 public class SoulBodyEntity extends LivingEntity {
 	private static final EntityDataAccessor<Optional<UUID>> OWNER = SynchedEntityData.defineId(SoulBodyEntity.class,
 			EntityDataSerializers.OPTIONAL_UUID);
+	/**
+	 * How its owner was drawn as they set out (TwoPaths#look, by ordinal), and so how it sits on: as a man, or in the dead's light, a
+	 * Ghost King's crowned (one of the dead's form, or one of the living in a Ghost King's form). A form is kept while the soul is out.
+	 */
+	private static final EntityDataAccessor<Byte> LOOK = SynchedEntityData.defineId(SoulBodyEntity.class, EntityDataSerializers.BYTE);
 	private final NonNullList<ItemStack> armor = NonNullList.withSize(4, ItemStack.EMPTY);
 	private final NonNullList<ItemStack> hands = NonNullList.withSize(2, ItemStack.EMPTY);
 	/** The owner's armor and toughness as they set out (what the body's own attributes would miss: the cultivation's share). */
@@ -48,6 +53,7 @@ public class SoulBodyEntity extends LivingEntity {
 	public static SoulBodyEntity of(ServerPlayer player) {
 		SoulBodyEntity body = new SoulBodyEntity(ModEntities.SOUL_BODY, player.level());
 		body.entityData.set(OWNER, Optional.of(player.getUUID()));
+		body.entityData.set(LOOK, (byte) TwoPaths.look(CultivationManager.own(player)).ordinal());
 		body.moveTo(player.getX(), player.getY(), player.getZ(), player.getYRot(), 0);
 		body.setYBodyRot(player.getYRot());
 		body.setYHeadRot(player.getYRot());
@@ -64,9 +70,16 @@ public class SoulBodyEntity extends LivingEntity {
 	protected void defineSynchedData() {
 		super.defineSynchedData();
 		entityData.define(OWNER, Optional.empty());
+		entityData.define(LOOK, (byte) 0);
 	}
 
 	public UUID getOwnerId() { return entityData.get(OWNER).orElse(null); }
+
+	/** How it sits on: its owner's look as they set out ({@link #LOOK}). */
+	public TwoPaths.Look look() {
+		TwoPaths.Look[] looks = TwoPaths.Look.values();
+		return looks[Math.max(0, Math.min(looks.length - 1, entityData.get(LOOK)))];
+	}
 
 	@Override
 	public void tick() {

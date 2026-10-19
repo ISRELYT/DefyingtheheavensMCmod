@@ -602,7 +602,10 @@ public class CultivationScreen extends Screen {
 			pace = Component.translatable(ModLang.GHOST_COLUMN_NO_QI);
 		} else {
 			String rate = one(GhostMethods.ratePerSecond(c, density));
-			pace = active == null ? Component.translatable(ModLang.GHOST_COLUMN_PACE_SHORT, rate)
+			// No foundation known (one of the dead, or one born again who began the path so): said, as the heaven column says it.
+			pace = GhostMethods.deepestFoundation(s) == null ? fit(w, Component.translatable(ModLang.GHOST_COLUMN_PACE_NONE, rate),
+					Component.translatable(ModLang.GHOST_COLUMN_PACE_SHORT, rate))
+					: active == null ? Component.translatable(ModLang.GHOST_COLUMN_PACE_SHORT, rate)
 					: fit(w, Component.translatable(ModLang.GHOST_COLUMN_PACE, active.getDisplayName(), rate),
 					Component.translatable(ModLang.GHOST_COLUMN_PACE_SHORT, rate));
 			paceColor = 0x8FEAE4;
@@ -942,16 +945,30 @@ public class CultivationScreen extends Screen {
 		int cx = left + WIDTH / 2;
 		int x = left + 14;
 		int y = top + CONTENT_Y + METHOD_PAGE_ROW; // under the page buttons (Stats, Stat Points)
-		// The ghost path's strength is named so; and the two paths' harmony, if they are both walked near enough.
+		// The ghost path's strength is named so; and the two paths' harmony, if they are both walked near enough: on the same line
+		// if it fits, else on a line of its own under it ("Ghost path: Foundation Building - Grand Perfection, harmony +20%" ran
+		// past both edges of the panel). Returns the y of the last line drawn.
 		double harmony = TwoPaths.harmony(c);
-		java.util.function.Function<Component, Component> named = rank -> {
+		int textWidth = WIDTH - 28;
+		java.util.function.BiFunction<Component, Integer, Integer> drawNamed = (rank, at) -> {
 			Component line = body.ghostPath() ? Component.translatable(ModLang.STATS_GHOST_BODY, rank) : rank;
-			return harmony > 0 ? line.copy().append(Component.translatable(ModLang.STATS_HARMONY, Math.round(harmony * 100))) : line;
+			if (harmony <= 0) {
+				g.drawCenteredString(font, line, cx, at, 0xB39DDB);
+				return at;
+			}
+			Component joined = line.copy().append(Component.translatable(ModLang.STATS_HARMONY, Math.round(harmony * 100)));
+			if (font.width(joined) <= textWidth) {
+				g.drawCenteredString(font, joined, cx, at, 0xB39DDB);
+				return at;
+			}
+			g.drawCenteredString(font, line, cx, at, 0xB39DDB);
+			g.drawCenteredString(font, Component.translatable(ModLang.TWO_PATHS_LINE, Math.round(harmony * 100)), cx, at + 10, 0x8FEAE4);
+			return at + 10;
 		};
 
 		if (suppressed) {
 			// True cultivation, then what the lower realm or the pressure holds it to.
-			g.drawCenteredString(font, named.apply(PlayerCultivation.rankName(truth.realm(), truth.stage())), cx, y, 0xB39DDB);
+			y = drawNamed.apply(PlayerCultivation.rankName(truth.realm(), truth.stage()), y);
 			y += 11;
 			g.drawCenteredString(font, Component.translatable(c.isUnderPressure() ? ModLang.STATS_PRESSED : ModLang.STATS_SUPPRESSED),
 					cx, y, 0xFF6E6E);
@@ -960,7 +977,7 @@ public class CultivationScreen extends Screen {
 			if (c.isUnderPressure()) held = held.copy().append(" (-" + Math.round(c.getPressurePenalty() * 100) + "%)");
 			g.drawCenteredString(font, held, cx, y, 0xFF6E6E);
 		} else {
-			g.drawCenteredString(font, named.apply(PlayerCultivation.rankName(r, s)), cx, y, 0xB39DDB);
+			y = drawNamed.apply(PlayerCultivation.rankName(r, s), y);
 		}
 		// What the body comes to on one path (TwoPaths#effective), when the harmony or Heaven's Favour carry it past its own rank.
 		if (TwoPaths.strongerThanRank(c)) {
@@ -1727,19 +1744,30 @@ public class CultivationScreen extends Screen {
 	private void statRow(GuiGraphics g, Player player, StatLine line, TwoPaths.Body body, TwoPaths.Body trueBody, boolean suppressed, int y) {
 		Attribute attribute = line.attribute();
 		double base = player == null ? 0 : player.getAttributeBaseValue(attribute);
-		double bonus = line.bonus().applyAsDouble(body.realm(), body.stage()) * body.scale();
+		double bonus = bodyBonus(line, body);
 		double now = valueWith(player, attribute, bonus, true);
 		g.drawString(font, Component.translatable(line.nameKey()), left + 14, y, 0xE0E0E0);
 		right(g, Component.literal(one(base * line.scale()) + line.unit()), left + BASE_RIGHT, y, 0xA0A0A0);
 		if (suppressed) {
-			double truth = valueWith(player, attribute, line.bonus().applyAsDouble(trueBody.realm(), trueBody.stage()) * trueBody.scale(), false);
+			double truth = valueWith(player, attribute, bodyBonus(line, trueBody), false);
 			right(g, Component.literal(one(truth * line.scale()) + line.unit()), left + BONUS_RIGHT, y, 0xB39DDB);
 			right(g, Component.literal(one(now * line.scale()) + line.unit()), left + WIDTH - 14, y, now < truth ? 0xFF8A80 : 0xFFFFFF);
 		} else {
+			// Below nothing (half a path's health, of the whole: TwoPaths#pathShare), the "bonus" is a loss, in red.
 			double bonusShown = line.unit().isEmpty() ? bonus : bonus * 100;
-			right(g, Component.literal("+" + one(bonusShown) + line.unit()), left + BONUS_RIGHT, y, bonus > 0 ? 0x69F0AE : 0x9E9E9E);
+			right(g, Component.literal((bonus < 0 ? "" : "+") + one(bonusShown) + line.unit()), left + BONUS_RIGHT, y,
+					bonus > 0 ? 0x69F0AE : bonus < 0 ? 0xFF8A80 : 0x9E9E9E);
 			right(g, Component.literal(one(now * line.scale()) + line.unit()), left + WIDTH - 14, y, 0xFFFFFF);
 		}
+	}
+
+	/** The body's bonus to {@code line}'s stat, as CultivationStats#apply gives it (its path's share, on health of the whole). */
+	private static double bodyBonus(StatLine line, TwoPaths.Body body) {
+		double bonus = line.bonus().applyAsDouble(body.realm(), body.stage()) * body.scale();
+		if (line.attribute() == net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH) {
+			return (com.example.defyingtheheavens.CultivationStats.BASE_HEALTH + bonus) * body.share() - com.example.defyingtheheavens.CultivationStats.BASE_HEALTH;
+		}
+		return bonus * body.share();
 	}
 
 	/**

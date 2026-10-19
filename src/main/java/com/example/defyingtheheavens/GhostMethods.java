@@ -17,19 +17,24 @@ import java.util.UUID;
  * <b>The ghost path.</b> The ghost methods' path is one of its own beside ordinary cultivation, and neither builds on the other:
  * one's ordinary realm neither opens a ghost method nor speeds it. Since 2026-10-19 (the user's ask) it is cultivated as the
  * heaven path is: <b>its own bar</b> ({@link #ghostRank}, NetherworldState#pathRank), filled by meditating on ghostly qi, its
- * stages stepping on by themselves; the methods ride on it as the heaven methods ride on the heaven path's. It begins with the
- * first foundation learned (at Qi Refining Early). A meditation draws in one qi or the other (NetherworldState#cultivatingGhost,
- * the Cultivation tab's switch), so the two paths are never cultivated at once; the dead draw in only ghostly qi.
+ * stages stepping on by themselves; the methods ride on it as the heaven methods ride on the heaven path's. It begins (at Qi
+ * Refining Early) with the first foundation learned, or for one of the dead with its first meditation on ghostly qi, method or
+ * none ({@link #begin}: the user's ask, 2026-10-19), and stays begun when it is born again. A meditation draws in one qi or the
+ * other (NetherworldState#cultivatingGhost, the Cultivation tab's switch), so the two paths are never cultivated at once; the
+ * dead draw in only ghostly qi.
  * <p>
  * <b>The rate.</b> Meditating wherever ghostly qi flows, the bar fills at {@link #BASE_RATE} (a second a second, for a ghost
  * path of Nascent Soul, living, in a Soul Sand Valley) x the density / {@link GhostQi#SOUL_SAND_VALLEY} (so x10 in the Netherworld,
  * x12 on the Nine Nether Peaks, x0.5 in the rest of the Nether, x0.25 in the Overworld) x the ghost path's factor
  * ({@link #realmFactor}: -10% a realm below Nascent Soul, +10% above) x Qi Harmony x a Yin Gathering Pill x {@link #GHOST_FACTOR}
- * for the dead (made of yin) x {@link #STELE_BONUS} by a stele of the method practised x a possessor's guidance (Possession).
+ * for the dead (made of yin) x {@link #STELE_BONUS} by a stele of the method practised x a possessor's guidance (Possession);
+ * with no foundation known, x {@link #NO_METHOD_FACTOR}, as the heaven path without a method; x Insight (StatPoints#cultivationFactor,
+ * every path's).
  * <p>
- * <b>The bar.</b> A stage takes what its layers took before the bar (a layer's minutes x its realm's factor, in seconds of that
- * baseline meditation: {@link #required}), so the path's pace is what it was: the Qi Refining stages 83 minutes in all, the whole
- * way to Four Axis Grand Perfection about 57 hours, in a Soul Sand Valley; a tenth of that in the Netherworld. The stages step on
+ * <b>The bar.</b> Every stage takes longer than the one before, as on the heaven path, and by the same steps (the user's ask,
+ * 2026-10-19): each realm 1.6 times the one before ({@link #REALM_TIME_STEP}, the heaven path's eight times the cultivation for
+ * five times the gain), its stages by Stage#timeWeight ({@link #required}); the whole way to Four Axis Grand Perfection about 53
+ * hours in a Soul Sand Valley, a tenth of that in the Netherworld (what it was when a stage took its layers' cost). The stages step on
  * by themselves, but for the bottlenecks: the <b>ghost path's tribulation</b> at every Grand Perfection and at every stage from
  * Nascent Soul on (TribulationManager, the Netherworld's own: the user's ask, 2026-10-19), as on the heaven path.
  * <p>
@@ -59,6 +64,8 @@ public final class GhostMethods {
 	public static final double STELE_BONUS = 1.25;
 	public static final double STELE_LEARN_RADIUS = 4, STELE_BONUS_RADIUS = 8;
 	public static final double STELE_LEARN_SECONDS = 15;
+	/** The ghost path cultivated with no foundation known (one of the dead, or one born again who began it so): the heaven path's pace without a method. */
+	public static final double NO_METHOD_FACTOR = HeavenMethods.NO_METHOD_FACTOR;
 	/** A new stage's layers settle in over this share of their own cost, gathered on the ghost path (as the heaven methods'). */
 	public static final double SETTLE_SHARE = 0.5;
 	/** Each layer of Wandering Soul Steps quickens a ghost this much; each of Ghost Fire Scripture strengthens its blows this much. */
@@ -96,20 +103,23 @@ public final class GhostMethods {
 
 	// --- The ghost path ---
 
+	/** Seconds of baseline meditation (a Soul Sand Valley, the living, at Nascent Soul's pace) a Qi Refining stage of time weight 1 takes. */
+	public static final double STAGE_SECONDS = 1150;
+	/** Each realm's stages take this many times the realm before's, as on the heaven path (eight times the cultivation, five times the gain). */
+	public static final double REALM_TIME_STEP = 1.6;
+
 	/**
-	 * The ghost path's cultivation through the stage {@code rank} stands for: what its layers cost (MethodLayers#cost), so a stage
-	 * takes as long on the bar as its layers took (the pace from before the bar). 0 for none.
+	 * The ghost path's cultivation through the stage {@code rank} stands for: {@link #STAGE_SECONDS} x {@link #REALM_TIME_STEP} a
+	 * realm x the stage's time weight (Stage#timeWeight, the heaven path's own), x the realm's pace ({@link #realmFactor}) so the
+	 * time is that whatever the realm: every stage longer than the one before, a realm's Early longer than the Grand Perfection before
+	 * it (the user's ask, 2026-10-19: before, a stage took its layers' cost, and Grand Perfection was quicker than Mid). 0 for none.
 	 */
 	public static double required(int rank) {
 		if (rank < 0) return 0;
 		int stages = Stage.values().length;
 		Realm realm = Realm.byIndex(Math.min(Realm.values().length - 1, rank / stages));
 		Stage stage = Stage.byIndex(rank % stages);
-		double total = 0;
-		for (int within = 1; within <= MethodLayers.PER_REALM; within++) {
-			if (MethodLayers.stageAt(within) == stage) total += MethodLayers.cost(realm.ordinal() * MethodLayers.PER_REALM + within);
-		}
-		return total;
+		return Math.round(STAGE_SECONDS * Math.pow(REALM_TIME_STEP, realm.ordinal()) * stage.timeWeight() * realmFactor(realm));
 	}
 
 	/** The ghost path (a rank, see PlayerCultivation#rank) layer {@code layer} of the foundation {@code method} stands for; -1 for none. */
@@ -397,8 +407,12 @@ public final class GhostMethods {
 	/** The ghost path's factor on the rate: -10% a realm below Nascent Soul, +10% a realm above (not begun: as Qi Refining). */
 	public static double realmFactor(PlayerCultivation c) {
 		Realm realm = ghostRealm(c.netherworld());
-		int index = realm == null ? Realm.QI_REFINING.ordinal() : realm.ordinal();
-		return 1 + REALM_STEP * (index - Realm.NASCENT_SOUL.ordinal());
+		return realmFactor(realm == null ? Realm.QI_REFINING : realm);
+	}
+
+	/** {@link #realmFactor(PlayerCultivation)} of a ghost path in {@code realm}. */
+	public static double realmFactor(Realm realm) {
+		return 1 + REALM_STEP * (realm.ordinal() - Realm.NASCENT_SOUL.ordinal());
 	}
 
 	/**
@@ -407,7 +421,24 @@ public final class GhostMethods {
 	 */
 	public static double ratePerSecond(PlayerCultivation c, double density) {
 		return BASE_RATE * density / GhostQi.SOUL_SAND_VALLEY * realmFactor(c) * (c.netherworld().ghost() ? GHOST_FACTOR : 1.0)
-				* c.physique().ghostFactor(); // a Ghost Devil Body's, a Fallen True Immortal's (Physique)
+				* c.physique().ghostFactor() // a Ghost Devil Body's, a Fallen True Immortal's (Physique)
+				* (deepestFoundation(c.netherworld()) == null ? NO_METHOD_FACTOR : 1.0)
+				* StatPoints.cultivationFactor(c); // Insight, every path's alike
+	}
+
+	/**
+	 * One of the dead, meditating on ghostly qi with no ghost path yet, begins it (at Qi Refining Early) without a method, as the
+	 * living may the heaven path: it is told so, and the path stays its own if it is born again (MeditationManager#ghostMethods).
+	 */
+	static void begin(ServerPlayer player) {
+		NetherworldState s = CultivationManager.get(player).netherworld();
+		if (ghostRank(s) >= 0) return;
+		s.setPath(0, 0);
+		player.sendSystemMessage(Component.translatable(ModLang.MSG_GHOST_PATH_BEGINS, rankName(0)).withStyle(ChatFormatting.AQUA));
+		player.playNotifySound(SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.0f, 0.8f);
+		CultivationManager.markDirty(player.server);
+		CultivationManager.refresh(player);
+		Spells.sync(player); // the Cultivation tab's ghost column (ModPackets#sendMethods carries the path)
 	}
 
 	// --- Learning ---

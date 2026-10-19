@@ -1,6 +1,12 @@
 package com.example.defyingtheheavens;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -25,7 +31,8 @@ import java.util.Set;
  *   Disciples rarer seeds and Qi Gathering Pills, Elders pills and old herbs, the Sect Master the best of both; rogues carry
  *   odd things from far away. The stock is the same all day (it changes with the day), each line selling only so many.</li>
  *   <li><b>Regard</b> opens better offers (one more at Polite, Courteous, Warm and Trusted) and lowers prices, from
- *   x{@code 1.3} when Resentful to x{@code 0.75} when Sworn.</li>
+ *   x{@code 1.3} when Resentful to x{@code 0.75} when Sworn. Those not yet open are shown all the same, crossed out, the
+ *   regard they want written on them ({@link #locked}).</li>
  *   <li><b>It buys</b> what you carry that a cultivator has use for (herbs, pills, Cultivation Fruit), up to
  *   {@link #MAX_BUYS} kinds, paying {@link #buyShare} of what it is worth.</li>
  * </ul>
@@ -69,10 +76,17 @@ public final class CultivatorTrades {
 		double factor = priceFactor(regard);
 		for (int i = 0; i < goods.size(); i++) {
 			Goods g = goods.get(i);
-			if (regard < g.regard()) continue;
 			String key = "sell:" + i;
 			int price = Math.max(1, (int) Math.ceil(g.price() * factor));
 			ItemStack[] costs = costsFor(price);
+			if (regard < g.regard()) {
+				// Not yet opened to you (the user's ask, 2026-10-19): shown, crossed out (sold out to the screen, so nothing can be
+				// taken), the regard it wants and yours written on it.
+				MerchantOffer locked = new MerchantOffer(costs[0], costs[1], locked(g.item(), g.regard(), regard), g.maxUses(), g.maxUses(), 0, 0);
+				offers.add(locked);
+				keys.put(locked, "locked:" + i);
+				continue;
+			}
 			MerchantOffer offer = new MerchantOffer(costs[0], costs[1], g.item().copy(), uses.getOrDefault(key, 0), g.maxUses(), 0, 0);
 			offers.add(offer);
 			keys.put(offer, key);
@@ -94,6 +108,26 @@ public final class CultivatorTrades {
 			keys.put(offer, key);
 		}
 		return offers;
+	}
+
+	/** {@code item} as a line not yet open to one it regards at {@code have}: a line under its name, the regard it wants ({@code wants}) and theirs. */
+	static ItemStack locked(ItemStack item, int wants, int have) {
+		ItemStack shown = item.copy();
+		CompoundTag display = shown.getOrCreateTagElement("display");
+		ListTag lore = display.getList("Lore", Tag.TAG_STRING);
+		Component line = Component.translatable(ModLang.TRADE_LOCKED, Component.translatable(ModLang.talkRegardLevel(Regard.levelId(wants))),
+				Component.translatable(ModLang.talkRegardLevel(Regard.levelId(have)))).withStyle(style -> style.withColor(ChatFormatting.RED).withItalic(false));
+		lore.add(0, StringTag.valueOf(Component.Serializer.toJson(line)));
+		display.put("Lore", lore);
+		return shown;
+	}
+
+	/** Whether {@code offer} is a line shown but not yet open (see {@link #locked}): sold out to the screen from the start. */
+	public static boolean isLocked(MerchantOffer offer) {
+		CompoundTag display = offer.getResult().getTagElement("display");
+		if (display == null) return false;
+		ListTag lore = display.getList("Lore", Tag.TAG_STRING);
+		return !lore.isEmpty() && lore.getString(0).contains(ModLang.TRADE_LOCKED);
 	}
 
 	/** What one of {@code npc}'s station and path has to sell today, the regard-gated lines last. */

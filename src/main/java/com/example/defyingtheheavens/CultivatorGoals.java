@@ -230,7 +230,10 @@ public final class CultivatorGoals {
 
 		@Override
 		public void tick() {
-			Entity threat = npc.getFleeFrom() != null ? npc.getFleeFrom() : npc.getTarget() != null ? npc.getTarget() : npc.getLastHurtByMob();
+			// What it runs from: what it fears, its foe, whoever just struck it, or (that forgotten, vanilla's five seconds on) the
+			// one who did and is still after it (CultivatorNpc#getPursuer).
+			Entity threat = npc.getFleeFrom() != null ? npc.getFleeFrom() : npc.getTarget() != null ? npc.getTarget()
+					: npc.getLastHurtByMob() != null ? npc.getLastHurtByMob() : npc.getPursuer();
 			if (threat == null) return;
 			if (cooldown > 0) cooldown--;
 			if (threat instanceof LivingEntity pursuer && cornered(pursuer)) {

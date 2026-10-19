@@ -113,6 +113,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	private static final double REPULSE_REACH = CONCEALMENT_RADIUS + 3.5;
 	/** Share of an ascension attempt that ends in the Upper Realm (the rest are crushed in the Spatial Gap). */
 	public static final float ASCENSION_SUCCESS = 0.7f;
+	/** A pursuer this far off (blocks) has been left behind: a badly hurt cultivator stops running from it. */
+	public static final double PURSUER_LOST = 32;
 
 	public enum Lifecycle { SECT, ROGUE, DEPARTING, SEEKING_SECLUSION, SECLUDED, ASCENDING }
 
@@ -162,6 +164,13 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	private int seclusionAttempts;
 	private int combatTicks;
 	private Entity fleeFrom;
+	/**
+	 * Who last struck it (not an ally, not in a spar), kept until they are {@link #PURSUER_LOST} off, gone, or the quarrel is let go:
+	 * a badly hurt cultivator runs from them while they are near. Vanilla forgets the last attacker five seconds after its last blow,
+	 * so one that kept ahead of its pursuer had nothing left to run from and stopped, the pursuer right behind (the user's report,
+	 * 2026-10-19: wandering ghosts and Hungry Ghosts).
+	 */
+	private LivingEntity pursuer;
 	private int fleeTicks;
 	private BlockPos refuge;
 	private int repulseCooldown;
@@ -372,6 +381,15 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	@Override
 	public boolean isPushable() {
 		return !isVacant() && super.isPushable();
+	}
+
+	/**
+	 * Set aside, it shoves nothing either: it is put where its body stands a tick behind it, and its shove (the client's on its own
+	 * player too) pushed the soul in its body on, the way it last went, again and again: a steady drift.
+	 */
+	@Override
+	protected void pushEntities() {
+		if (!isVacant()) super.pushEntities();
 	}
 
 	@Override
@@ -617,6 +635,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	/** No quarrel with {@code opponent} any more (a spar ended; a ghost it fought scattered: GhostSystem#disperse), nor running from them. */
 	public void letGoOf(LivingEntity opponent) {
 		if (opponent != null && fleeFrom == opponent) reachRefuge();
+		if (pursuer == opponent) pursuer = null;
 		if (getTarget() == opponent) setTarget(null);
 		if (getLastHurtByMob() == opponent) setLastHurtByMob(null);
 		combatTicks = 0;
@@ -664,6 +683,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		stopBegging();
 		sparedBy.put(player.getUUID(), level().getGameTime() + SPARED_TICKS);
 		if (fleeFrom == player) reachRefuge();
+		if (pursuer == player) pursuer = null;
 		if (getTarget() == player) setTarget(null);
 		if (getLastHurtByMob() == player) setLastHurtByMob(null);
 		combatTicks = 0;
@@ -856,6 +876,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		else if (combatTicks > 0) combatTicks--;
 		tickQi();
 		if (fleeTicks > 0 && --fleeTicks == 0) reachRefuge(); // given up on getting there: it stops running all the same
+		if (pursuer != null && !pursuerNear()) pursuer = null; // left behind, or gone
 		if (talkTicks > 0 && talkingTo != null) tickTalk();
 		if (tradingPlayer != null) tickTrading();
 		if (begTicks > 0) {
@@ -1367,7 +1388,17 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	 */
 	public boolean shouldFlee() {
 		return fleeFrom != null && fleeFrom.isAlive() && !fleeFrom.isRemoved() && !holdsGround()
-				|| isBadlyHurt() && isInCombat() && !makesLastStand();
+				|| isBadlyHurt() && (isInCombat() || pursuerNear()) && !makesLastStand();
+	}
+
+	/** Who last struck it, while they are still after it ({@link #pursuer}), or null. */
+	public LivingEntity getPursuer() { return pursuerNear() ? pursuer : null; }
+
+	/** Its last attacker still about: alive, here, within {@link #PURSUER_LOST}. */
+	private boolean pursuerNear() {
+		return pursuer != null && pursuer.isAlive() && !pursuer.isRemoved() && pursuer.level() == level()
+				&& pursuer.distanceToSqr(this) <= PURSUER_LOST * PURSUER_LOST
+				&& !(pursuer instanceof Player player && (player.isCreative() || player.isSpectator()));
 	}
 
 	/** A Sect Master never runs, even from a beating: it makes its last stand in its own sect. Its elders may fall back. */
@@ -1719,6 +1750,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			if (attacker instanceof Player player && isBeggingTo(player)) stopBegging();
 			// Blows in a spar (SparSystem) are a contest: no alarm, no grudge, no broken seclusion.
 			if (attacker != null && SparSystem.areSparring(this, attacker)) return hurt;
+			if (attacker != null && attacker != this && !isAlly(attacker)) pursuer = attacker; // to run from, should it come to that
 			if (attacker != null && lifecycle == Lifecycle.SECLUDED && isConcealed() && attacker instanceof ServerPlayer player) {
 				onConcealmentAssailed(player);
 			}

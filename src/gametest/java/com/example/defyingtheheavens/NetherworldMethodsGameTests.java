@@ -54,7 +54,8 @@ public class NetherworldMethodsGameTests implements FabricGameTest {
 	public void eachCultivatorGoesAtTheirOwnPace(GameTestHelper helper) {
 		PlayerCultivation c = new PlayerCultivation();
 		NetherworldState s = c.netherworld();
-		helper.assertTrue(Math.abs(GhostMethods.ratePerSecond(c, GhostQi.SOUL_SAND_VALLEY) - 0.7) < 1.0e-9, "No ghost path yet: as its Qi Refining, -30%");
+		helper.assertTrue(Math.abs(GhostMethods.ratePerSecond(c, GhostQi.SOUL_SAND_VALLEY) - 0.7 * GhostMethods.NO_METHOD_FACTOR) < 1.0e-9,
+				"No ghost path yet: as its Qi Refining, -30%, and no foundation known: three quarters of that");
 		s.setMethod(GhostMethod.NINE_NETHER_SOUL_SUTRA, 1, 0);
 		GhostMethods.setPath(s, PlayerCultivation.rank(Realm.NASCENT_SOUL, Stage.EARLY)); // the ghost path at Nascent Soul
 		helper.assertTrue(Math.abs(GhostMethods.ratePerSecond(c, GhostQi.SOUL_SAND_VALLEY) - 1.0) < 1.0e-9,
@@ -112,9 +113,12 @@ public class NetherworldMethodsGameTests implements FabricGameTest {
 				"An old save's Ghost Core Canon at its third layer is its 21st now: Core Formation Mid as before");
 		// ...and saved before the ghost path had a bar of its own (2026-10-19): the bar starts where its deepest foundation stood, its
 		// progress through the layer the bar's; the foundations' settling starts afresh, the fire's kept.
-		helper.assertTrue(Math.abs(migrated.pathCultivation() - 42) < 1.0e-6 && migrated.progress(GhostMethod.GHOST_CORE_CANON) == 0
+		// (As far through the bar's Core Formation Mid as 42 seconds were through that stage's old layers, 21 to 23.)
+		double oldMid = MethodLayers.cost(21) + MethodLayers.cost(22) + MethodLayers.cost(23);
+		double expected = 42 / oldMid * GhostMethods.required(PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.MID));
+		helper.assertTrue(Math.abs(migrated.pathCultivation() - expected) < 1.0e-6 && migrated.progress(GhostMethod.GHOST_CORE_CANON) == 0
 				&& migrated.progress(GhostMethod.GHOST_FIRE_SCRIPTURE) == 42,
-				"The Canon's 42 seconds into its 21st layer: 42 into the bar's Core Formation Mid (" + migrated.pathCultivation() + ")");
+				"The Canon's 42 seconds into its 21st layer: as far into the bar's Core Formation Mid (" + migrated.pathCultivation() + ")");
 		NetherworldState again = new NetherworldState();
 		again.load(migrated.save());
 		helper.assertTrue(again.layer(GhostMethod.GHOST_CORE_CANON) == 21 && again.layer(GhostMethod.YELLOW_SPRINGS_MARROW) == 18, "...and moved only once");

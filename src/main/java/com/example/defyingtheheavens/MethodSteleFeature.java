@@ -11,10 +11,11 @@ import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConf
 
 /**
  * A Method Stele standing on a small worn plinth of blackstone bricks somewhere in the Netherworld, its method picked by the
- * methods' rarity (GhostMethod#steleWeight: the Breathing Art's steles most often, then the fire's, the steps', the Yellow
- * Springs Marrow Art's, now and then the Ghost Core Canon's). The deeper foundations are carved only on the Nine Nether Peaks,
- * and seldom (GhostMethod#peakWeight: of 1,371 steles there, 40 hold the Ghost Core Canon, 20 the Nine Nether Soul Sutra, 8
- * Yama's Judgement Scripture, and 3 the Six Paths Reincarnation Canon).
+ * methods' rarity (GhostMethod#steleWeight: the fire's steles most often, then the steps', the Yellow Springs Marrow Art's, now
+ * and then the Ghost Core Canon's). The Netherworld Breathing Art is on none of them: only on the Ghost Gate's plaza (the
+ * user's rule, 2026-10-19). The deeper foundations are carved only on the Nine Nether Peaks, and seldom (GhostMethod#peakWeight:
+ * of 771 steles there, 40 hold the Ghost Core Canon, 20 the Nine Nether Soul Sutra, 8 Yama's Judgement Scripture, and 3 the Six
+ * Paths Reincarnation Canon).
  */
 public class MethodSteleFeature extends Feature<NoneFeatureConfiguration> {
 	/** No other stele within this many blocks across (within the chunks a feature may touch) and this many up or down. */
@@ -62,6 +63,6 @@ public class MethodSteleFeature extends Feature<NoneFeatureConfiguration> {
 			roll -= peaks ? method.peakWeight() : method.steleWeight();
 			if (roll < 0) return method;
 		}
-		return GhostMethod.NETHERWORLD_BREATHING;
+		return GhostMethod.GHOST_FIRE_SCRIPTURE;
 	}
 }

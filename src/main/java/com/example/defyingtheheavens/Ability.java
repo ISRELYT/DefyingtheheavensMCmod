@@ -31,12 +31,12 @@ public enum Ability {
 	/** From Foundation Building: ride a sword held in the main hand through the air, for less qi than Qi Flight ({@link SwordFlight}). */
 	SWORD_FLIGHT("sword_flight", true, c -> c.getEffectiveRealm().canRideSword()),
 	/**
-	 * From Nascent Soul on either path, the living: send the nascent soul out of the body ({@link SoulProjection}; the soul is the
-	 * path's that awakened it, PlayerCultivation#soulPath). Unlike the others it is an act, not a standing switch: "on" while the
-	 * soul is out (or going out), "off" once it is back. The dead (a Ghost King too, in any game mode) are all soul already: no
-	 * body to leave behind, so it isn't theirs.
+	 * From Nascent Soul on either path, the living and the dead alike (the user's call, 2026-10-19): send the nascent soul out of the
+	 * body ({@link SoulProjection}; the soul is the path's that awakened it, PlayerCultivation#soulPath), a ghost's out of its ghostly
+	 * form, which sits on in its light. Unlike the others it is an act, not a standing switch: "on" while the soul is out (or going
+	 * out), "off" once it is back.
 	 */
-	SOUL_PROJECTION("soul_projection", false, c -> !c.netherworld().ghost() && TwoPaths.awakens(c, Realm.NASCENT_SOUL, true) != null),
+	SOUL_PROJECTION("soul_projection", false, c -> TwoPaths.awakens(c, Realm.NASCENT_SOUL, true) != null),
 	/**
 	 * Netherworld Breathing Art, third layer: ghosts, ghost cultivators and Method Steles glow through walls within 32 blocks;
 	 * outside the Netherworld, projected souls are seen as a Nascent Soul with Qi Sense open would see them. Ghostly qi upkeep.

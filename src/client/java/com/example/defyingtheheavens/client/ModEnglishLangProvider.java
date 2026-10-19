@@ -480,6 +480,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.GHOST_COLUMN_NO_QI, "No ghost qi here");
 		t.add(ModLang.GHOST_COLUMN_PACE, "%s: +%s/s");
 		t.add(ModLang.GHOST_COLUMN_PACE_SHORT, "+%s/s");
+		t.add(ModLang.GHOST_COLUMN_PACE_NONE, "No ghost method: +%s/s");
 		t.add(ModLang.COLUMN_RESTING, "Resting (not drawn in)");
 		t.add(ModLang.GHOST_BOTTLENECK, "Your ghost path's bottleneck: break through to %s (the Netherworld's tribulation).");
 		t.add(ModLang.GHOST_BOTTLENECK_SWITCH, "Your ghost path's bottleneck: draw in ghostly qi (Path: Ghost) to break through to %s.");
@@ -490,10 +491,11 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.BTN_PATH_GHOST, "Path: Ghost");
 		t.add(ModLang.MSG_PATH_HEAVEN, "You draw in the heavens' qi: meditating cultivates your heaven path.");
 		t.add(ModLang.MSG_PATH_GHOST, "You draw in ghostly qi: meditating cultivates your ghost path.");
-		t.add(ModLang.MSG_PATH_NO_GHOST, "You have no ghost path to cultivate: learn a ghost foundation first.");
+		t.add(ModLang.MSG_PATH_NO_GHOST, "You have no ghost path to cultivate: learn a ghost foundation first, or begin it among the dead.");
 		t.add(ModLang.MSG_GHOST_LAYER, "%s: layer %s settles in.");
 		t.add(ModLang.MSG_GHOST_LAYER_SPELL, "New spell: %3$s (%1$s, layer %2$s).");
 		t.add(ModLang.MSG_GHOST_PATH_RISES, "Your ghost path rises: %s!");
+		t.add(ModLang.MSG_GHOST_PATH_BEGINS, "Drawing in ghostly qi, your ghost path begins: %s. It stays yours, even if you return to the living.");
 		t.add(ModLang.MSG_GHOST_BOTTLENECK, "Your ghost path is at its bottleneck: break through in the cultivation menu to face the Netherworld's tribulation.");
 		t.add(ModLang.MSG_GHOST_TRIB_START, "The Netherworld answers your ghost path's rise to %s! Survive %s strikes of yin lightning!");
 		t.add(ModLang.MSG_GHOST_TRIB_START_SINGLE, "The Netherworld answers your ghost path's rise to %s! Survive its strike of yin lightning!");
@@ -529,7 +531,6 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_METHOD_LEARNED, "Learned the %s.");
 		t.add(ModLang.MSG_METHOD_LEARNED_AT, "Learned the %s, understood to layer %s.");
 		t.add(ModLang.MSG_METHOD_PRACTISED, "Your meditation now leans on the %s.");
-		t.add(ModLang.MSG_GHOST_NO_METHOD, "The dead cultivate only the ghost methods. Learn one at a Method Stele first.");
 		t.add(ModLang.MSG_GHOST_QI_SPENT, "Your ghost qi is spent. Your ghostly arts fade.");
 		t.add(ModLang.MSG_STELE_TEACHES, "This stele holds the %s. Meditate beside it to learn it.");
 		t.add(ModLang.MSG_STELE_KNOWN, "This stele holds the %s, which you know. Meditating beside it while you practise it is faster.");
@@ -1206,6 +1207,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add("cultivation.defying-the-heavens.talk.topic.soup", "Drink the soup");
 		t.add("cultivation.defying-the-heavens.talk.rumour.stele", "A stele of the %1$s stands %2$s of here, in the %3$s, some %4$s blocks off. Sit by it a while and it will teach you.");
 		t.add("cultivation.defying-the-heavens.talk.needs", "(needs %s)");
+		t.add(ModLang.TRADE_LOCKED, "Locked: sold to those it regards as %s (you: %s)");
 		t.add("cultivation.defying-the-heavens.talk.at_realm", "%s (%s)");
 		t.add("cultivation.defying-the-heavens.talk.line.self.years", "I have cultivated some %s years.");
 		t.add("cultivation.defying-the-heavens.talk.line.self.progress", "I'm about %s%% of the way through this stage.");
@@ -1430,7 +1432,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case CONSTITUTION -> "+%s%% max health";
 				case AGILITY -> "+%s%% speed, attack speed";
 				case ENDURANCE -> "+%s%% armour, toughness";
-				case SPIRIT -> "+%s%% qi pool";
+				case SPIRIT -> "+%s%% qi pools";
 				case INSIGHT -> "+%s%% cultivation, half in qi";
 			};
 			t.add(ModLang.STAT_POINT_PREFIX + stat.getId(), name);

@@ -158,8 +158,8 @@ public class NetherworldInhabitantsGameTests implements FabricGameTest {
 			int before = GhostMethods.ghostRank(s);
 			TalkSystem.teach(living, teacher);
 			if (method.isFoundation()) {
-				// Ten minutes: through Qi Refining Early's seven, three into Mid.
-				helper.assertTrue(GhostMethods.ghostRank(s) == 1 && Math.abs(s.pathCultivation() - (TalkSystem.TEACHING_PROGRESS - GhostMethods.required(0))) < 1.0e-9,
+				// Ten minutes: part way through Qi Refining Early (since 2026-10-19 its 1,047).
+				helper.assertTrue(GhostMethods.ghostRank(s) == before && Math.abs(s.pathCultivation() - TalkSystem.TEACHING_PROGRESS) < 1.0e-9,
 						"Known already: ten minutes on the ghost path's bar (" + GhostMethods.ghostRank(s) + ", " + s.pathCultivation() + ")");
 			} else {
 				helper.assertTrue(GhostMethods.ghostRank(s) == before, "Known already, with no ghost path begun: nothing to fill (" + method.getId() + ")");

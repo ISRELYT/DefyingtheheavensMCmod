@@ -22,6 +22,8 @@ public final class CultivationStats {
 	private static final UUID KNOCKBACK_ID = UUID.fromString("5f1e2a10-8b3c-4d77-a1e0-0c1d2e3f4a06");
 	private static final Set<UUID> MODIFIER_IDS = Set.of(HEALTH_ID, DAMAGE_ID, SPEED_ID, ARMOR_ID, TOUGHNESS_ID, KNOCKBACK_ID);
 	private static final int MAX_FOOD = 20;
+	/** The health a player's body has before any cultivation (vanilla's ten hearts). */
+	public static final double BASE_HEALTH = 20.0;
 
 	/** True for the attribute modifiers that carry the cultivation bonuses (lets the client recompute stats). */
 	public static boolean isCultivationModifier(UUID id) {
@@ -34,6 +36,11 @@ public final class CultivationStats {
 	}
 
 	public static double maxHealth(Realm r, Stage s) { return r.getMaxHealth() * s.getPowerMultiplier(); }
+
+	/** The health {@code body} gives (before stat points): the whole of it, the hearts a body starts with and the cultivation's, at its share. */
+	public static double bodyHealth(TwoPaths.Body body) {
+		return (BASE_HEALTH + maxHealth(body.realm(), body.stage()) * body.scale()) * body.share();
+	}
 	public static double attackDamage(Realm r, Stage s) { return r.getAttackDamage() * s.getPowerMultiplier(); }
 	/** Fraction added to base walking speed (0.25 = +25%). */
 	public static double moveSpeed(Realm r, Stage s) { return r.getMoveSpeed() * s.getPowerMultiplier(); }
@@ -56,8 +63,11 @@ public final class CultivationStats {
 		TwoPaths.Body body = TwoPaths.body(c, true);
 		Realm r = body.realm();
 		Stage s = body.stage();
-		double scale = body.scale();
-		set(player, Attributes.MAX_HEALTH, HEALTH_ID, "Cultivation max health", maxHealth(r, s) * scale);
+		// A path the body doesn't belong to gives it half its strength (TwoPaths#pathShare: the living's ghost path, the dead's heaven
+		// path): half of every bonus, and half of the whole of its health, the hearts it started with too.
+		double share = body.share();
+		double scale = body.scale() * share;
+		set(player, Attributes.MAX_HEALTH, HEALTH_ID, "Cultivation max health", bodyHealth(body) - BASE_HEALTH);
 		set(player, Attributes.ATTACK_DAMAGE, DAMAGE_ID, "Cultivation attack damage", attackDamage(r, s) * scale);
 		set(player, Attributes.MOVEMENT_SPEED, SPEED_ID, "Cultivation speed", moveSpeed(r, s) * scale);
 		set(player, Attributes.ARMOR, ARMOR_ID, "Cultivation armor", armor(r, s) * scale);

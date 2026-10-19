@@ -312,6 +312,8 @@ public final class ModLang {
 	public static final String TALK_GIFT_BACK = k("talk.gift_back");
 	public static final String TALK_BEGS = k("talk.begs");
 	public static final String TALK_NEEDS = k("talk.needs");
+	/** A line on a trading screen not yet open to you (CultivatorTrades#locked): the regard it wants, and theirs for you. */
+	public static final String TRADE_LOCKED = k("talk.trade_locked");
 	public static final String TALK_AT_REALM = k("talk.at_realm");
 	/** Rumours (see Rumours) and guidance: noted in the journal; a senior's Insight. */
 	public static final String TALK_JOURNAL_NOTED = k("talk.journal_noted");
@@ -737,7 +739,6 @@ public final class ModLang {
 	public static final String MSG_METHOD_LEARNED = k("message.method.learned");
 	public static final String MSG_METHOD_LEARNED_AT = k("message.method.learned_at");
 	public static final String MSG_METHOD_PRACTISED = k("message.method.practised");
-	public static final String MSG_GHOST_NO_METHOD = k("message.method.ghost_none");
 	public static final String MSG_GHOST_QI_SPENT = k("message.method.ghost_qi_spent");
 	public static final String MSG_STELE_TEACHES = k("message.stele.teaches");
 	public static final String MSG_STELE_KNOWN = k("message.stele.known");
@@ -816,6 +817,8 @@ public final class ModLang {
 	 */
 	public static final String GHOST_COLUMN_PACE = k("two_paths.ghost.pace");
 	public static final String GHOST_COLUMN_PACE_SHORT = k("two_paths.ghost.pace_short");
+	/** The ghost path cultivated with no foundation known (GhostMethods#NO_METHOD_FACTOR), as the heaven column's METHOD_LINE_NONE. */
+	public static final String GHOST_COLUMN_PACE_NONE = k("two_paths.ghost.pace_none");
 	/** Either path's column, its qi not drawn in. */
 	public static final String COLUMN_RESTING = k("two_paths.resting");
 	public static final String GHOST_BOTTLENECK = k("two_paths.ghost.bottleneck");
@@ -832,6 +835,8 @@ public final class ModLang {
 	public static final String MSG_GHOST_LAYER = k("message.ghost_method.layer");
 	public static final String MSG_GHOST_LAYER_SPELL = k("message.ghost_method.layer_spell");
 	public static final String MSG_GHOST_PATH_RISES = k("message.ghost_path.rises");
+	/** One of the dead begins the ghost path with no method (GhostMethods#begin). */
+	public static final String MSG_GHOST_PATH_BEGINS = k("message.ghost_path.begins");
 	public static final String MSG_GHOST_BOTTLENECK = k("message.ghost_path.bottleneck");
 	public static final String MSG_GHOST_TRIB_START = k("message.ghost_tribulation.start");
 	public static final String MSG_GHOST_TRIB_START_SINGLE = k("message.ghost_tribulation.start_single");

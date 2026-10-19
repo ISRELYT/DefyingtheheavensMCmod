@@ -48,7 +48,7 @@ public final class NetherworldManager {
 		refreshDensity(player, s);
 		double max = GhostQi.poolMax(c);
 		double before = s.ghostQi();
-		if (before < max) s.setGhostQi(Math.min(max, before + GhostQi.fillPerSecond(s.density())));
+		if (before < max) s.setGhostQi(Math.min(max, before + GhostQi.fillPerSecond(c, s.density())));
 		else if (before > max) s.setGhostQi(max);
 		// A soul in another's body (Possession) keeps its own pool apart, and it fills by the place as the body's does: a ghost path
 		// soul's upkeep comes out of it (SoulProjection#upkeep). Not a held body's owner: the soul in it plays their record, filled above.
@@ -56,7 +56,7 @@ public final class NetherworldManager {
 			PlayerCultivation own = CultivationManager.own(player);
 			NetherworldState mine = own.netherworld();
 			double ownMax = GhostQi.poolMax(own);
-			if (mine.ghostQi() < ownMax) mine.setGhostQi(Math.min(ownMax, mine.ghostQi() + GhostQi.fillPerSecond(s.density())));
+			if (mine.ghostQi() < ownMax) mine.setGhostQi(Math.min(ownMax, mine.ghostQi() + GhostQi.fillPerSecond(own, s.density())));
 			else if (mine.ghostQi() > ownMax) mine.setGhostQi(ownMax);
 		}
 		// The ghost abilities' upkeep, after the second's filling; a dry pool switches them all off.

@@ -7,6 +7,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.damagesource.CombatRules;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,8 +26,9 @@ import java.util.UUID;
  * <b>The Netherworld's tribulation</b> (the user's ask, 2026-10-19) is the ghost path's own ({@link #startGhost}; GhostMethods' bar
  * at its bottleneck): the same strikes at the same breakthroughs, of yin lightning (ModDamageTypes#YIN_LIGHTNING and #YIN_TRIBULATION)
  * from a dark teal storm, cyan bolts. It comes wherever its cultivator stands, the Netherworld too (it is the dead's realm's, not the
- * heavens'), and it reaches the dead, who take {@link #DEAD_SHARE} of it (their hearts are half the living's, and no armour but a
- * Ghost King's). Failed, the ghost path falls a stage: the living die, the dead scatter ({@link #onScattered}).
+ * heavens'), and it reaches the dead, each strike the same share of their hearts as of a living body's in the same armour (the common
+ * dead, with no hands for armour, as if in iron: {@link #GHOST_FORM_ARMOR}). Failed, the ghost path falls a stage: the living die,
+ * the dead scatter ({@link #onScattered}).
  */
 public final class TribulationManager {
 	private static final int FIRST_STRIKE_DELAY = 60;  // 3 s for the local cloud to gather before the first bolt
@@ -33,8 +36,12 @@ public final class TribulationManager {
 	private static final int FINISH_DELAY = 20;        // 1 s after the last strike before the breakthrough completes
 	/** All a tribulation's strikes drunk in by a Heavenly Thunder Body (Physique): this share of the new stage's cultivation. */
 	public static final double THUNDER_SHARE = 0.6;
-	/** What of the Netherworld's tribulation's strikes reaches one of the dead (my number, 2026-10-19: their hearts are half the living's). */
-	public static final float DEAD_SHARE = 0.5f;
+	/**
+	 * The armour one of the common dead (no hands for armour: Incorporeal#isRuledGhost) turns the Netherworld's tribulation's bolt with
+	 * at least: a full iron set's, as the balance table asks of the living at Core Formation, the last tribulation one of them meets
+	 * (a ghost path of Core Formation is a Ghost King's, whose hands are its own).
+	 */
+	public static final float GHOST_FORM_ARMOR = 15.0f;
 
 	/** One tribulation: a set number of identical strikes, each heavenly lightning (armor applies) plus magic (it doesn't). */
 	public record Strikes(int count, float bolt, float magic) {}
@@ -103,7 +110,7 @@ public final class TribulationManager {
 	 * Golden apples, Resistance/Regeneration potions and totems let a player get through a step below these,
 	 * and each worn Ring of Transcendence halves all strike damage on top of the table.
 	 * The Netherworld's tribulation strikes as this table says for the living (its yin lightning turned by armour as the heavens'
-	 * bolts are, the yin in it passing armour as magic does); the dead take DEAD_SHARE of it.
+	 * bolts are, the yin in it passing armour as magic does); the dead take the same share of their hearts (GhostSystem#livingShare).
 	 */
 
 	/** The tribulation for breaking through into this realm and stage. Before Nascent Soul only Early is ever a target. */
@@ -320,15 +327,29 @@ public final class TribulationManager {
 		// discarding the second hit; magic goes first so a killing strike usually reads "struck by lightning".
 		// It is cleared before the first part too: within half a second of another hit, vanilla only deals what exceeds
 		// that hit, so taking a big blow on purpose (an explosion against Blast Protection, say) would blunt the strike.
-		float multiplier = RingOfTranscendenceItem.damageMultiplier(p) * (t.ghost && GhostSystem.isGhost(p) ? DEAD_SHARE : 1.0f);
-		float magic = t.strikes.magic() * multiplier;
+		// The dead take each strike as the same share of their hearts as the living take of theirs, in the same armour (the user's ask,
+		// 2026-10-19): the bolt as their armour turns it, then the whole of it by their hearts against the living body's they are
+		// reckoned from (GhostSystem#livingShare), so a ghost's hearts, more or fewer, make it no easier or harder than a life.
+		boolean dead = GhostSystem.isGhost(p);
+		float multiplier = RingOfTranscendenceItem.damageMultiplier(p);
+		float share = dead ? (float) GhostSystem.livingShare(p) : 1.0f;
+		float magic = t.strikes.magic() * multiplier * share;
 		p.invulnerableTime = 0;
 		if (magic > 0) {
 			p.hurt(t.ghost ? ModDamageTypes.yinTribulation(level) : level.damageSources().magic(), magic);
 			p.invulnerableTime = 0;
 		}
 		if (p.isAlive() && ACTIVE.get(p.getUUID()) == t) {
-			p.hurt(t.ghost ? ModDamageTypes.yinLightning(level) : level.damageSources().lightningBolt(), t.strikes.bolt() * multiplier);
+			float harm = t.strikes.bolt() * multiplier;
+			if (dead) {
+				// Turned by armour here, before the share (the turning is no straight share of the blow), and dealt past it: one of the
+				// common dead, with no hands for armour, turns it as a ghostly form does, as an iron set would (GHOST_FORM_ARMOR).
+				float armour = Incorporeal.isRuledGhost(p) ? Math.max(p.getArmorValue(), GHOST_FORM_ARMOR) : p.getArmorValue();
+				harm = CombatRules.getDamageAfterAbsorb(harm, armour, (float) p.getAttributeValue(Attributes.ARMOR_TOUGHNESS)) * share;
+				p.hurt(ModDamageTypes.yinTribulation(level), harm);
+			} else {
+				p.hurt(t.ghost ? ModDamageTypes.yinLightning(level) : level.damageSources().lightningBolt(), harm);
+			}
 		}
 	}
 

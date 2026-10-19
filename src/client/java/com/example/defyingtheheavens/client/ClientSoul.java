@@ -162,7 +162,7 @@ public final class ClientSoul {
 	 * Soul cultivators that clears with each stage (a quarter at Early, whole at Grand Perfection); 0 without Qi Sense open. The
 	 * Ghost Eye sees them too, outside the Netherworld (GhostEye#soulClarity), whichever is clearer.
 	 */
-	public static float clarity(Player soul) {
+	public static float clarity(net.minecraft.world.entity.Entity soul) {
 		Minecraft mc = Minecraft.getInstance();
 		if (soul == mc.player) return 1;
 		if (mc.player == null || mc.player.isSpectator()) return 1;

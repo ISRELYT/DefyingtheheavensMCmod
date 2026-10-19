@@ -118,11 +118,14 @@ public final class TalkSystem {
 		return npc.getFaction().isEnemyOf(Alignment.factionOf(CultivatorNpc.alignmentOf(player)));
 	}
 
-	/** The intents a cultivator at {@code standing} entertains, before regard and pressure: far above you, or to a mortal, no insults. */
+	/**
+	 * The intents a cultivator at {@code standing} entertains, before regard and pressure: far above you, or to a mortal, no insults
+	 * and no bouts. Everyone trades, however far above you (a Ghost King too: the user's ask, 2026-10-19, to see what they have
+	 * early), what their regard hasn't opened shown but not sold (CultivatorTrades#offersFor).
+	 */
 	public static int intents(Standing standing) {
-		int mask = TalkIntent.GREET.bit() | TalkIntent.ASK.bit() | TalkIntent.GIFT.bit();
+		int mask = TalkIntent.GREET.bit() | TalkIntent.ASK.bit() | TalkIntent.GIFT.bit() | TalkIntent.TRADE.bit();
 		if (standing == Standing.FAR_ABOVE) return mask;
-		mask |= TalkIntent.TRADE.bit();
 		if (standing != Standing.MORTAL) mask |= TalkIntent.PROVOKE.bit() | TalkIntent.SPAR.bit();
 		return mask;
 	}

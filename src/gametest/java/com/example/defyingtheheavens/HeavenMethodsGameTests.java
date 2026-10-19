@@ -93,8 +93,8 @@ public class HeavenMethodsGameTests implements FabricGameTest {
 		helper.assertTrue(HeavenMethods.settle(s, fourAxis, 1.0e12, upTo) == 2 && s.layer(fourAxis) == 5 && s.progress(fourAxis) == 0 && !HeavenMethods.settling(c, fourAxis),
 				"...the rest settle, and nothing more is kept past the realm's last");
 		helper.assertTrue(near(HeavenMethods.settleCost(9), HeavenMethods.layerCost(9) * HeavenMethods.SETTLE_SHARE)
-				&& near(HeavenMethods.settleCost(3) + HeavenMethods.settleCost(4) + HeavenMethods.settleCost(5), 75),
-				"A stage's layers settle in on half the stage's cultivation (Mid's 150: 75)");
+				&& near(HeavenMethods.settleCost(3) + HeavenMethods.settleCost(4) + HeavenMethods.settleCost(5), 82.5),
+				"A stage's layers settle in on half the stage's cultivation (Mid's 165: 82.5)");
 		HeavenMethods.clampTo(s, PlayerCultivation.rank(Realm.QI_REFINING, Stage.EARLY));
 		helper.assertTrue(s.layer(fourAxis) == 2, "A fall to Early takes Mid's layers with it");
 		HeavenMethods.alignTo(s, PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION));
@@ -167,9 +167,9 @@ public class HeavenMethodsGameTests implements FabricGameTest {
 				"By its stele x1.25, a Qi Gathering Pill's +50% and clothing's +60% on top (" + HeavenMethods.methodFactor(c, 0.2, true) + ")");
 		helper.assertTrue(near(HeavenMethods.cultivationFactor(c, null, 0, false), 0.75 * 1.5 * 1.6), "...the boosts with no method too");
 		// A stage's layers cost what the stage does (their settling half that).
-		helper.assertTrue(near(HeavenMethods.layerCost(1) + HeavenMethods.layerCost(2), 100) && near(HeavenMethods.layerCost(3) + HeavenMethods.layerCost(4)
-				+ HeavenMethods.layerCost(5), 150) && near(HeavenMethods.layerCost(6) + HeavenMethods.layerCost(7) + HeavenMethods.layerCost(8), 200)
-				&& near(HeavenMethods.layerCost(9), 300), "Qi Refining's layers: Early's two 100 between them, Mid's three 150, Late's 200, Grand Perfection's 300");
+		helper.assertTrue(near(HeavenMethods.layerCost(1) + HeavenMethods.layerCost(2), 130) && near(HeavenMethods.layerCost(3) + HeavenMethods.layerCost(4)
+				+ HeavenMethods.layerCost(5), 165) && near(HeavenMethods.layerCost(6) + HeavenMethods.layerCost(7) + HeavenMethods.layerCost(8), 200)
+				&& near(HeavenMethods.layerCost(9), 245), "Qi Refining's layers: Early's two 130 between them, Mid's three 165, Late's 200, Grand Perfection's 245");
 		helper.assertTrue(near(HeavenMethods.layerCost(54), PlayerCultivation.required(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION))
 				&& HeavenMethods.layerCost(2) > HeavenMethods.layerCost(1), "Four Axis's last as its Grand Perfection; a stage's later layers dearer");
 		helper.succeed();
@@ -179,7 +179,8 @@ public class HeavenMethodsGameTests implements FabricGameTest {
 	public void cultivationIsItsOwnAndMethodsOpenOnlyRealms(GameTestHelper helper) {
 		PlayerCultivation c = new PlayerCultivation();
 		c.setState(Realm.QI_REFINING, Stage.EARLY, 0);
-		helper.assertTrue(c.addCultivation(100) && c.getStage() == Stage.MID && c.getCultivation() == 0, "No method needed: a full Early steps into Mid");
+		helper.assertTrue(c.addCultivation(PlayerCultivation.required(Realm.QI_REFINING, Stage.EARLY)) && c.getStage() == Stage.MID && c.getCultivation() == 0,
+				"No method needed: a full Early steps into Mid");
 		helper.assertTrue(!c.addCultivation(10_000) && c.getStage() == Stage.MID && c.isAtRitualGate(), "...and Mid waits full for the heavens' leave");
 		c.setHeavensLeave(true);
 		helper.assertTrue(c.addCultivation(0) && c.getStage() == Stage.LATE, "The leave granted, a full Mid steps into Late");

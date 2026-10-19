@@ -314,11 +314,8 @@ public final class SoulProjection {
 	/** Starts gathering the soul to go out: sitting still on steady, dry ground, outside any tribulation, with qi to spare. */
 	public static void begin(ServerPlayer player) {
 		PlayerCultivation c = CultivationManager.own(player);
+		// The dead too (the user's call, 2026-10-19): a ghost's soul goes out of its ghostly form, which sits on in its light.
 		if (!Ability.SOUL_PROJECTION.isUnlocked(c) || !player.isAlive() || player.isSpectator()) return;
-		if (GhostSystem.isGhost(player)) { // a ghost is already all soul (a creative one too: it has no living body to leave sitting)
-			player.displayClientMessage(Component.translatable(ModLang.MSG_GHOST_CANNOT), true);
-			return;
-		}
 		if (TribulationManager.isActive(player.getUUID())) {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_TRIB_BUSY), true);
 			return;
@@ -871,6 +868,8 @@ public final class SoulProjection {
 
 	/** Why {@code player}'s soul can't enter {@code target} (a lang key), or null if it can. */
 	private static String refusal(ServerPlayer player, LivingEntity target, int ownRealm) {
+		// A soul of the dead takes a person's body as a living soul does (the user's call, 2026-10-19): in it, it is the body (the dead's
+		// rules go by the record it plays, CultivationManager#get: a living body breathes, burns, touches and is touched).
 		if (target instanceof ServerPlayer victim) {
 			if (victim == player || victim.isCreative() || victim.isSpectator() || isActive(victim.getUUID()) || InnerRealm.isInside(victim)
 					|| Possession.isHeld(victim.getUUID())) {

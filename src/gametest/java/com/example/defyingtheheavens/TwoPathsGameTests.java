@@ -123,19 +123,26 @@ public class TwoPathsGameTests implements FabricGameTest {
 		helper.assertTrue(e.rank() == PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.GRAND_PERFECTION) && !e.quasi() && TwoPaths.strongerThanRank(c)
 				&& key(TwoPaths.effectiveName(e), -1).isEmpty() && key(TwoPaths.effectiveLabel(e), -1).isEmpty(),
 				"Early on both: Grand Perfection itself, no Quasi-, no per cent (" + e + ")");
-		// A realm apart (x1.2): Core Formation Early is Core Formation Late.
-		ghostPath(c, Realm.CORE_FORMATION, Stage.EARLY);
+		// A realm apart (x1.2): Core Formation Early is Core Formation Late. (The heaven path the higher: alive, the ghost path's would
+		// give half its strength, TwoPaths#pathShare.)
+		c.setState(Realm.CORE_FORMATION, Stage.EARLY, 0);
 		e = TwoPaths.effective(c, false);
 		helper.assertTrue(e.rank() == PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.LATE) && !e.quasi(), "A realm apart, Early: Late (" + e + ")");
 		// Two realms apart (x1.1): Nascent Soul Mid's 1.21 is just past Late's 1.2.
-		ghostPath(c, Realm.NASCENT_SOUL, Stage.MID);
+		c.setState(Realm.NASCENT_SOUL, Stage.MID, 0);
 		e = TwoPaths.effective(c, false);
 		helper.assertTrue(e.rank() == PlayerCultivation.rank(Realm.NASCENT_SOUL, Stage.LATE) && e.quasi()
 				&& key(TwoPaths.effectiveName(e), -1).equals(ModLang.EFFECTIVE_QUASI_STAGE)
 				&& key(TwoPaths.effectiveName(e), 0).equals(Realm.NASCENT_SOUL.getTranslationKey()), "Two realms apart, Mid: Nascent Soul - Quasi-Grand Perfection (" + e + ")");
 		// Three apart: no harmony, its own rank.
-		ghostPath(c, Realm.HEAVENLY_BEING, Stage.MID);
+		c.setState(Realm.HEAVENLY_BEING, Stage.MID, 0);
 		helper.assertTrue(!TwoPaths.strongerThanRank(c), "Three realms apart: no harmony, its own rank");
+		// The ghost path alone far above, alive: half its strength, worth less than its rank.
+		c.setState(Realm.QI_REFINING, Stage.EARLY, 0);
+		ghostPath(c, Realm.NASCENT_SOUL, Stage.EARLY);
+		e = TwoPaths.effective(c, false);
+		helper.assertTrue(e.rank() < PlayerCultivation.rank(Realm.NASCENT_SOUL, Stage.EARLY) && TwoPaths.strongerThanRank(c),
+				"The ghost path alone, alive: below its own rank (" + e + ")");
 		// Heaven's Favour on one path counts too: Early x1.05, past Early, short of Mid.
 		PlayerCultivation favoured = new PlayerCultivation();
 		favoured.setState(Realm.QI_REFINING, Stage.EARLY, 0);
@@ -171,13 +178,20 @@ public class TwoPathsGameTests implements FabricGameTest {
 		TwoPaths.Body body = TwoPaths.body(c, true);
 		helper.assertTrue(!body.ghostPath() && body.realm() == Realm.CORE_FORMATION && near(body.scale(), c.favourFactor()), "One path: the heaven path's body");
 		helper.assertTrue(near(player.getMaxHealth(), base + CultivationStats.maxHealth(Realm.CORE_FORMATION, Stage.EARLY) * body.scale()), "Its health");
-		// The ghost path above it: the ghost path's body, and the harmony of two paths a realm apart.
+		// The ghost path above it: the ghost path's body, and the harmony of two paths a realm apart. Alive, the ghost path gives half
+		// its strength (TwoPaths#pathShare), half the whole of its health; still more than Core Formation's whole.
 		ghostPath(player, Realm.NASCENT_SOUL, Stage.MID);
 		body = TwoPaths.body(c, true);
-		helper.assertTrue(body.ghostPath() && body.realm() == Realm.NASCENT_SOUL && body.stage() == Stage.MID, "The ghost path above: its body (" + body + ")");
+		helper.assertTrue(body.ghostPath() && body.realm() == Realm.NASCENT_SOUL && body.stage() == Stage.MID && body.share() == TwoPaths.HALF_PATH,
+				"The ghost path above: its body, at half (" + body + ")");
 		helper.assertTrue(near(TwoPaths.harmony(c), TwoPaths.HARMONY[1]) && near(body.scale(), c.favourFactor() * (1 + TwoPaths.HARMONY[1])), "A realm apart: +20%");
-		helper.assertTrue(near(player.getMaxHealth(), base + CultivationStats.maxHealth(Realm.NASCENT_SOUL, Stage.MID) * body.scale()),
-				"The body's health from the ghost path, harmony on it (" + player.getMaxHealth() + ")");
+		helper.assertTrue(near(player.getMaxHealth(), (base + CultivationStats.maxHealth(Realm.NASCENT_SOUL, Stage.MID) * body.scale()) * TwoPaths.HALF_PATH),
+				"The body's health from the ghost path, harmony on it, half the whole (" + player.getMaxHealth() + ")");
+		// Dead, the ghost path's whole.
+		c.netherworld().setGhost(true);
+		body = TwoPaths.body(c, true);
+		helper.assertTrue(body.ghostPath() && body.share() == 1.0, "Dead, the ghost path's body whole (" + body + ")");
+		c.netherworld().setGhost(false);
 		// The heaven path back above it.
 		heaven(player, Realm.HEAVENLY_BEING, Stage.EARLY);
 		body = TwoPaths.body(c, true);

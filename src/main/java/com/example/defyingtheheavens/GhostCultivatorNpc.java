@@ -275,8 +275,8 @@ public class GhostCultivatorNpc extends CultivatorNpc implements Ghostly {
 	/**
 	 * Its ghost method, the one it teaches and sells (picked from its UUID, so it never changes): null below Foundation Building;
 	 * a Ghost King its realm's foundation (the Ghost Core Canon, a Nascent Soul king the Nine Nether Soul Sutra); any other ghost
-	 * its realm's foundation five times in ten, else one of the first three (the Breathing Art, the fire, the steps) by their
-	 * steles' rarity.
+	 * its realm's foundation five times in ten, else one of the first three (the Breathing Art, the fire, the steps) by how often
+	 * the dead know them (GhostMethod#knownWeight: as their steles once stood, 600 / 300 / 200).
 	 */
 	public GhostMethod method() {
 		if (getRank() < PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.EARLY)) return null;
@@ -284,11 +284,11 @@ public class GhostCultivatorNpc extends CultivatorNpc implements Ghostly {
 		int hash = getUUID().hashCode() * 31 + 7;
 		if (own != null && (getRole() == Role.GHOST_KING || Math.floorMod(hash, 10) < OWN_FOUNDATION_IN_TEN)) return own;
 		int total = 0;
-		for (GhostMethod m : GhostMethod.values()) if (m.tier() <= 1) total += m.steleWeight();
+		for (GhostMethod m : GhostMethod.values()) if (m.tier() <= 1) total += m.knownWeight();
 		int roll = Math.floorMod(hash / 10, total);
 		for (GhostMethod m : GhostMethod.values()) {
 			if (m.tier() > 1) continue;
-			roll -= m.steleWeight();
+			roll -= m.knownWeight();
 			if (roll < 0) return m;
 		}
 		return GhostMethod.NETHERWORLD_BREATHING;

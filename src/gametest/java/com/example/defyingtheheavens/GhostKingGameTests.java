@@ -93,12 +93,17 @@ public class GhostKingGameTests implements FabricGameTest {
 			if (method.next() != null) helper.assertTrue(GhostMethods.floor(method.next(), method.layers() + 1) > GhostMethods.floor(method, method.layers()),
 					method.getId() + " ends where " + method.next().getId() + " goes on");
 		}
-		// The ghost path's own bar (2026-10-19): a stage takes what its layers cost, so the path's pace is what it was.
-		double all = 0, layers = 0;
-		for (int rank = 0; rank <= GhostMethods.LAST_RANK; rank++) all += GhostMethods.required(rank);
-		for (int layer = 1; layer <= MethodLayers.layers(Realm.FOUR_AXIS); layer++) layers += MethodLayers.cost(layer);
-		helper.assertTrue(GhostMethods.required(0) == MethodLayers.cost(1) + MethodLayers.cost(2) && Math.abs(all - layers) < 1.0e-6,
-				"Qi Refining Early takes its two layers' cost; the whole path, all 54 layers' (" + Math.round(all / 3600) + " h in a Soul Sand Valley)");
+		// The ghost path's own bar (2026-10-19): every stage takes longer than the one before, the whole path about as long as it was.
+		double all = 0, last = 0;
+		boolean rising = true;
+		for (int rank = 0; rank <= GhostMethods.LAST_RANK; rank++) {
+			double time = GhostMethods.required(rank) / GhostMethods.realmFactor(Realm.byIndex(rank / Stage.values().length));
+			rising &= time > last;
+			last = time;
+			all += time;
+		}
+		helper.assertTrue(rising && all > 50 * 3600 && all < 56 * 3600,
+				"Every stage longer than the one before; the whole path about 53 h in a Soul Sand Valley (" + Math.round(all / 3600) + " h)");
 		ServerPlayer ghost = cultivator(helper, Realm.QI_REFINING, Stage.EARLY);
 		PlayerCultivation c = CultivationManager.get(ghost);
 		NetherworldState s = c.netherworld();
@@ -198,13 +203,9 @@ public class GhostKingGameTests implements FabricGameTest {
 			helper.assertTrue(TwoPaths.inHumanForm(king) && !SoulProjection.seenOnlyBySeers(king) && SoulProjection.broadcastsTo(king, living),
 					"In its human form a Ghost King is seen by all");
 			CultivationManager.get(king).setAbilityEnabled(Ability.FORM_SHIFT, false);
-			// The dead are all soul already: no soul to send out of a body, no body left sitting (a creative ghost neither).
+			// The dead send their souls out of their forms too (the user's call, 2026-10-19: SoulFormsGameTests).
 			CultivationManager.get(king).setState(Realm.NASCENT_SOUL, Stage.EARLY, 0);
-			king.setGameMode(GameType.CREATIVE);
-			SoulProjection.toggle(king);
-			helper.assertTrue(!SoulProjection.isActive(king.getUUID()) && !Ability.SOUL_PROJECTION.isUnlocked(CultivationManager.get(king)),
-					"A Ghost King projects no soul, even in creative");
-			king.setGameMode(GameType.SURVIVAL);
+			helper.assertTrue(Ability.SOUL_PROJECTION.isUnlocked(CultivationManager.get(king)), "A Ghost King of Nascent Soul may send its soul out");
 			CultivationManager.get(king).setState(Realm.QI_REFINING, Stage.EARLY, 0);
 			GhostMethods.fallTo(CultivationManager.get(king).netherworld(), PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.GRAND_PERFECTION));
 			helper.assertTrue(!GhostSystem.isKing(king), "Its ghost path brought low (a ghost core detonated), a king no longer");

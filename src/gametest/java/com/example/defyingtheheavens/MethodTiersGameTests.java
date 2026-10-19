@@ -68,17 +68,20 @@ public class MethodTiersGameTests implements FabricGameTest {
 		helper.assertTrue(GhostMethods.stageProgress(s) == 0 && GhostMethods.addCultivation(s, 1000) == 0, "No foundation: no ghost path, nothing on its bar");
 		s.setPath(0, 0);
 		helper.assertTrue(GhostMethods.stageProgress(s) == 0, "Just begun: Early, none of it behind");
-		// Early is the first two layers' worth (3 and 4 minutes, 420 s): 180 s through, three sevenths of the way to Mid.
-		helper.assertTrue(GhostMethods.required(0) == 420, "Qi Refining Early takes 7 minutes in a Soul Sand Valley");
-		GhostMethods.addCultivation(s, 180);
-		helper.assertTrue(Math.abs(GhostMethods.stageProgress(s) - 3.0 / 7) < 1e-9, "180 s in: 3/7 (" + GhostMethods.stageProgress(s) + ")");
-		GhostMethods.addCultivation(s, 120);
-		helper.assertTrue(Math.abs(GhostMethods.stageProgress(s) - 5.0 / 7) < 1e-9, "...and two minutes more: 5/7 (" + GhostMethods.stageProgress(s) + ")");
-		helper.assertTrue(GhostMethods.addCultivation(s, 120) == 1 && GhostMethods.ghostRank(s) == 1 && GhostMethods.stageProgress(s) == 0,
+		// Early: its time weight of the path's base, at Qi Refining's pace (1,047, about 25 minutes in a Soul Sand Valley).
+		double early = GhostMethods.required(0);
+		helper.assertTrue(early == Math.round(GhostMethods.STAGE_SECONDS * Stage.EARLY.timeWeight() * GhostMethods.realmFactor(Realm.QI_REFINING)),
+				"Qi Refining Early: " + early);
+		GhostMethods.addCultivation(s, 449);
+		helper.assertTrue(Math.abs(GhostMethods.stageProgress(s) - 449 / early) < 1e-9, "449 s in (" + GhostMethods.stageProgress(s) + ")");
+		GhostMethods.addCultivation(s, 299);
+		helper.assertTrue(Math.abs(GhostMethods.stageProgress(s) - 748 / early) < 1e-9, "...and 299 more (" + GhostMethods.stageProgress(s) + ")");
+		helper.assertTrue(GhostMethods.addCultivation(s, early - 748) == 1 && GhostMethods.ghostRank(s) == 1 && GhostMethods.stageProgress(s) == 0,
 				"Full: on to Mid by itself, begun again from nothing");
-		s.setPath(PlayerCultivation.rank(Realm.QI_REFINING, Stage.GRAND_PERFECTION), GhostMethods.required(PlayerCultivation.rank(Realm.QI_REFINING, Stage.GRAND_PERFECTION)) / 4);
-		helper.assertTrue(Math.abs(GhostMethods.stageProgress(s) - 0.25) < 1e-9 && GhostMethods.required(GhostMethods.ghostRank(s)) == 1200,
-				"Grand Perfection is the ninth layer's 20 minutes alone: a quarter through it, a quarter (" + GhostMethods.stageProgress(s) + ")");
+		int gp = PlayerCultivation.rank(Realm.QI_REFINING, Stage.GRAND_PERFECTION);
+		s.setPath(gp, GhostMethods.required(gp) / 4);
+		helper.assertTrue(Math.abs(GhostMethods.stageProgress(s) - 0.25) < 1e-9 && GhostMethods.required(gp) > GhostMethods.required(gp - 1),
+				"Grand Perfection the longest of its realm: a quarter through it, a quarter (" + GhostMethods.stageProgress(s) + ")");
 		helper.succeed();
 	}
 
@@ -127,13 +130,15 @@ public class MethodTiersGameTests implements FabricGameTest {
 			if (m.tier() >= 4) helper.assertTrue(!lowlands.containsKey(m), m.getId() + " is never carved off the peaks");
 		}
 		int lowCanon = lowlands.getOrDefault(GhostMethod.GHOST_CORE_CANON, 0);
-		helper.assertTrue(lowCanon > 0 && lowCanon < lowlands.get(GhostMethod.YELLOW_SPRINGS_MARROW) && lowlands.get(GhostMethod.YELLOW_SPRINGS_MARROW) < lowlands.get(GhostMethod.NETHERWORLD_BREATHING),
-				"Off the peaks the Ghost Core Canon now and then, the Marrow Art more, the Breathing Art most of all (" + lowCanon + ")");
+		helper.assertTrue(lowCanon > 0 && lowCanon < lowlands.get(GhostMethod.YELLOW_SPRINGS_MARROW) && lowlands.get(GhostMethod.YELLOW_SPRINGS_MARROW) < lowlands.get(GhostMethod.GHOST_FIRE_SCRIPTURE),
+				"Off the peaks the Ghost Core Canon now and then, the Marrow Art more, the fire most of all (" + lowCanon + ")");
+		helper.assertTrue(!lowlands.containsKey(GhostMethod.NETHERWORLD_BREATHING) && !peaks.containsKey(GhostMethod.NETHERWORLD_BREATHING),
+				"The Breathing Art on no stele out in the realm: only the Ghost Gate's (the user's rule, 2026-10-19)");
 		int canon = peaks.getOrDefault(GhostMethod.GHOST_CORE_CANON, 0), sutra = peaks.getOrDefault(GhostMethod.NINE_NETHER_SOUL_SUTRA, 0),
 				yama = peaks.getOrDefault(GhostMethod.YAMA_JUDGEMENT, 0), six = peaks.getOrDefault(GhostMethod.SIX_PATHS_CANON, 0);
 		helper.assertTrue(canon > sutra && sutra > yama && yama > six && six > 0,
 				"On the peaks, each deeper rarer: " + canon + ", " + sutra + ", " + yama + ", " + six + " in 200,000");
-		helper.assertTrue(six > 200 && six < 800, "The Six Paths Reincarnation Canon about three times in 1,371 steles there (" + six + ")");
+		helper.assertTrue(six > 500 && six < 1100, "The Six Paths Reincarnation Canon about three times in 771 steles there (" + six + ")");
 		helper.assertTrue(GhostPalacePiece.kingRealm(0.01f) == Realm.FOUR_AXIS && GhostPalacePiece.kingRealm(0.1f) == Realm.HEAVENLY_BEING
 				&& GhostPalacePiece.kingRealm(0.3f) == Realm.NASCENT_SOUL && GhostPalacePiece.kingRealm(0.9f) == Realm.CORE_FORMATION,
 				"Palaces' kings: now and then Four Axis, more often Heavenly Being or Nascent Soul, most often Core Formation");

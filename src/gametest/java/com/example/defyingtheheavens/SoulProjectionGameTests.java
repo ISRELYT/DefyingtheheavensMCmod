@@ -47,12 +47,13 @@ public class SoulProjectionGameTests implements FabricGameTest {
 		helper.assertTrue(c.soulHearts() == 1 && c.soulTetherRadius() == 32, "Nascent Soul Early: 1 heart, 32 blocks");
 		helper.assertTrue(c.soulCostPerSecond(0, false) == 12.5 && c.soulCostPerSecond(1, false) == 50 && c.soulCostPerSecond(1, true) == 75,
 				"Half its gathering at the body, twice at the tether's end, a gathering more while possessing");
+		// Its tether grows with its path; its hearts with the ghost path alone (the user's call, 2026-10-19: SoulFormsGameTests).
 		c.setState(Realm.NASCENT_SOUL, Stage.GRAND_PERFECTION, 0);
-		helper.assertTrue(c.soulHearts() == 10 && c.soulTetherRadius() == 96, "Nascent Soul Grand Perfection: 10 hearts, 96 blocks");
+		helper.assertTrue(c.soulHearts() == 1 && c.soulTetherRadius() == 96, "Nascent Soul Grand Perfection: 96 blocks, still 1 heart");
 		c.setState(Realm.HEAVENLY_BEING, Stage.EARLY, 0);
-		helper.assertTrue(c.soulHearts() == 13 && c.soulTetherRadius() == 128, "Heavenly Being: it keeps growing");
+		helper.assertTrue(c.soulTetherRadius() == 128, "Heavenly Being: it keeps growing");
 		c.setState(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION, 0);
-		helper.assertTrue(c.soulHearts() == 34 && c.soulTetherRadius() == 256, "Four Axis Grand Perfection: 34 hearts, 256 blocks");
+		helper.assertTrue(c.soulTetherRadius() == 256, "Four Axis Grand Perfection: 256 blocks");
 		helper.succeed();
 	}
 
@@ -405,6 +406,9 @@ public class SoulProjectionGameTests implements FabricGameTest {
 		try {
 			ServerPlayer p = cultivator(helper, made, "soul-wounds", Realm.HEAVENLY_BEING, Stage.EARLY);
 			PlayerCultivation c = CultivationManager.get(p);
+			// A ghost path there too: a soul's hearts are its (PlayerCultivation#soulHearts), 13 at Heavenly Being Early.
+			c.netherworld().setMethod(GhostMethod.SIX_PATHS_CANON, 1, 0);
+			GhostMethods.setPath(c.netherworld(), PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.EARLY));
 			c.setStatPoints(StatPoints.Stat.CONSTITUTION, 20); // a fifth more health to the body, none to the soul
 			CultivationStats.apply(p, c);
 			p.setHealth(p.getMaxHealth());

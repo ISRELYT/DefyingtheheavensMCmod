@@ -435,9 +435,13 @@ public class PlayerCultivation {
 		return Math.max(rank(Realm.NASCENT_SOUL, Stage.EARLY), TwoPaths.rank(this, soulPath(), true));
 	}
 
-	/** Hearts the projected soul holds: 1 at Nascent Soul Early, 3 more each stage (10 at Grand Perfection, 34 at Four Axis's). */
+	/**
+	 * Hearts the projected soul holds: 1, and 3 more for each stage the ghost path stands past Nascent Soul Early (10 at its Grand
+	 * Perfection, 34 at Four Axis's), as wielded. The heaven path adds none (the user's call, 2026-10-19): a soul's strength is the
+	 * ghost path's, so one born of the heaven path alone sets out on a single heart.
+	 */
 	public int soulHearts() {
-		return 1 + 3 * (soulRank() - rank(Realm.NASCENT_SOUL, Stage.EARLY));
+		return 1 + 3 * Math.max(0, TwoPaths.ghostRank(this, true) - rank(Realm.NASCENT_SOUL, Stage.EARLY));
 	}
 
 	/** How far (blocks) the tether lets the soul stray from its body. */
@@ -708,7 +712,7 @@ public class PlayerCultivation {
 	public double maxQi() {
 		if (mortal) return 0;
 		return CultivationStats.maxQi(getEffectiveRealm(), getEffectiveStage()) * favourFactor() * (1 - pressurePenalty) * physique().qiFactor()
-				* (1 + StatPoints.bonus(this, StatPoints.Stat.SPIRIT));
+				* StatPoints.poolFactor(this);
 	}
 
 	/**
@@ -720,7 +724,7 @@ public class PlayerCultivation {
 		if (mortal) return 0;
 		return CultivationStats.qiGather(getEffectiveRealm(), getEffectiveStage()) * placeFactor()
 				* (1 + qiBoost) * (1 + gearQiBonus) * favourFactor() * (1 - pressurePenalty) * physique().qiFactor()
-				* (1 + StatPoints.bonus(this, StatPoints.Stat.INSIGHT) / 2)
+				* StatPoints.gatherFactor(this)
 				+ HeavenPassives.amount(this, QiElement.WATER); // Ceaseless Flow, the water methods' passive
 	}
 
@@ -787,7 +791,7 @@ public class PlayerCultivation {
 	public double meditationCultivationPerSecond(double bonus) {
 		if (mortal || isSuppressed()) return 0;
 		return (cultivationPerSecond() + bonus) * placeFactor() * favourFactor() * physique().cultivationFactor()
-				* (1 + StatPoints.bonus(this, StatPoints.Stat.INSIGHT));
+				* StatPoints.cultivationFactor(this);
 	}
 
 	/** Leaving this stage takes a tribulation: Grand Perfection always, and every stage from Nascent Soul on. */

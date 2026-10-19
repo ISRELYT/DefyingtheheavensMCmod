@@ -31,6 +31,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import com.example.defyingtheheavens.GhostCultivatorNpc;
 import com.example.defyingtheheavens.HungryGhost;
+import com.example.defyingtheheavens.SoulBodyEntity;
+import com.example.defyingtheheavens.TwoPaths;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -86,9 +88,21 @@ public final class SoulRenderer {
 	/** Any of the Netherworld's dead in this world (they are drawn here, not by their entity renderers). */
 	private static boolean anyGhostly(Minecraft mc) {
 		for (net.minecraft.world.entity.Entity entity : mc.level.entitiesForRendering()) {
-			if (entity instanceof com.example.defyingtheheavens.Ghostly) return true;
+			if (entity instanceof com.example.defyingtheheavens.Ghostly || inLight(entity)) return true;
 		}
 		return false;
+	}
+
+	/** A body its soul has left that sits on in the dead's light (its owner set out from a ghostly form: SoulBodyEntity#look). */
+	private static boolean inLight(net.minecraft.world.entity.Entity entity) {
+		return entity instanceof SoulBodyEntity body && body.look() != TwoPaths.Look.HUMAN;
+	}
+
+	/** Whether the player {@code id} wears the slim model (as the player list has it; broad if unknown). */
+	private static boolean slim(java.util.UUID id) {
+		Minecraft mc = Minecraft.getInstance();
+		net.minecraft.client.multiplayer.PlayerInfo info = id == null || mc.getConnection() == null ? null : mc.getConnection().getPlayerInfo(id);
+		return info != null && "slim".equals(info.getModelName());
 	}
 
 	/** The souls and tethers, into the sense layer (its blending and depth already set, see SenseOverlay#onWorldEnd). */
@@ -127,7 +141,8 @@ public final class SoulRenderer {
 		for (Player ghost : mc.level.players()) {
 			if (!ClientGhosts.drawnAsLight(ghost) || ghost.isInvisible() || ghost == mc.player && !camera.isDetached()) continue;
 			boolean dead = com.example.defyingtheheavens.GhostSystem.isGhost(ghost);
-			if (!dead && com.example.defyingtheheavens.SoulProjection.isSoul(ghost)) continue;
+			// Its soul out of its form (the dead's too, SoulProjection): drawn as a soul above, its form sitting where it left it (below).
+			if (com.example.defyingtheheavens.SoulProjection.isSoul(ghost)) continue;
 			float clarity = whole ? 1.0f : ClientSoul.clarity(ghost);
 			if (clarity <= 0) continue;
 			drawSoul(context, ghost, clarity, partial, true, ClientGhosts.crowned(ghost));
@@ -139,6 +154,16 @@ public final class SoulRenderer {
 			if (!(entity instanceof com.example.defyingtheheavens.Ghostly) || !(entity instanceof LivingEntity body)) continue;
 			if (body.isInvisible() || body.isRemoved() || body.distanceToSqr(eye) > GHOSTLY_RANGE * GHOSTLY_RANGE) continue;
 			drawDead(context, body, partial);
+		}
+		// A body its soul left from a ghostly form sits on in that light, a Ghost King's crowned, seen as its owner was: by all in the
+		// Netherworld and by the dead, elsewhere as clearly as a soul is seen; its own owner always.
+		for (net.minecraft.world.entity.Entity entity : mc.level.entitiesForRendering()) {
+			if (!inLight(entity) || !(entity instanceof SoulBodyEntity body) || body.isInvisible() || body.isRemoved()) continue;
+			boolean mine = mc.player.getUUID().equals(body.getOwnerId());
+			float clarity = whole || mine ? 1.0f : ClientSoul.clarity(body);
+			if (clarity <= 0) continue;
+			drawBody(context, body, InnerBodyRenderer.skinOf(body.getOwnerId()), slim(body.getOwnerId()), clarity, partial, true, Look.DEAD, null,
+					body.look() == TwoPaths.Look.KING);
 		}
 		// Additive from here: light, not cover.
 		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,

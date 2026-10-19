@@ -511,7 +511,19 @@ public class PossessionGameTests implements FabricGameTest {
 		boolean pvp = server.isPvpAllowed();
 		server.setPvpAllowed(true);
 		try {
-			ServerPlayer soul = projected(helper, made, "mend-soul", Realm.HEAVENLY_BEING);
+			// A ghost path at Heavenly Being too: a soul's hearts are its (PlayerCultivation#soulHearts), 13.
+			ServerPlayer soul = survivor(helper, made, "mend-soul");
+			PlayerCultivation mine = CultivationManager.get(soul);
+			mine.setState(Realm.HEAVENLY_BEING, Stage.EARLY, 0);
+			mine.netherworld().setMethod(GhostMethod.SIX_PATHS_CANON, 1, 0);
+			GhostMethods.setPath(mine.netherworld(), PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.EARLY));
+			CultivationStats.apply(soul, mine);
+			soul.setHealth(soul.getMaxHealth());
+			mine.setQi(mine.maxQi());
+			long now = helper.getLevel().getGameTime();
+			SoulProjection.toggle(soul);
+			for (int i = 0; i < SoulProjection.CHANNEL_TICKS; i++) SoulProjection.tick(soul, now);
+			helper.assertTrue(SoulProjection.isSoul(soul), "The soul is out");
 			ServerPlayer victim = victim(helper, made, "mend-victim", soul);
 			PlayerCultivation own = CultivationManager.own(soul), theirs = CultivationManager.own(victim);
 			theirs.setState(Realm.QI_REFINING, Stage.EARLY, 0);

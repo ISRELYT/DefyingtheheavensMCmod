@@ -9,8 +9,12 @@ import net.minecraft.world.entity.player.Player;
 
 /** The cross-legged meditation pose, shared by meditating players, their bodies, and the Nascent Soul in the Inner Realm. */
 public final class LotusPose {
-	/** Whether {@code entity} sits in meditation: a player (but a soul walking its Inner Realm stands and walks), an NPC cultivator. */
+	/**
+	 * Whether {@code entity} sits in meditation: a player (but a soul walking its Inner Realm stands and walks), an NPC cultivator,
+	 * a body its nascent soul has left (SoulBodyEntity).
+	 */
 	public static boolean meditating(LivingEntity entity) {
+		if (entity instanceof com.example.defyingtheheavens.SoulBodyEntity) return true;
 		return entity instanceof Player ? ClientMeditationTracker.isMeditating(entity.getUUID()) && !ModDimensions.isInnerRealm(entity.level().dimension())
 				: entity instanceof CultivatorNpc npc && npc.isMeditating();
 	}

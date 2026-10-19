@@ -40,7 +40,11 @@
       "com.example.defyingtheheavens.SectMembershipGameTests",
       "com.example.defyingtheheavens.StatPointsGameTests",
       "com.example.defyingtheheavens.AstralGameTests",
-      "com.example.defyingtheheavens.PossessionGameTests"
+      "com.example.defyingtheheavens.PossessionGameTests",
+      "com.example.defyingtheheavens.GhostPathBeginGameTests",
+      "com.example.defyingtheheavens.LockedGoodsGameTests",
+      "com.example.defyingtheheavens.SharedStatsGameTests",
+      "com.example.defyingtheheavens.SoulFormsGameTests"
     ]
   }
 }

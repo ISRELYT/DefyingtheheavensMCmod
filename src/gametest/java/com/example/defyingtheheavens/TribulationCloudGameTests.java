@@ -207,7 +207,7 @@ public class TribulationCloudGameTests implements FabricGameTest {
     }
 
     @GameTest(template = EMPTY_STRUCTURE)
-    public void theDeadFaceTheNetherworldsTribulationAtHalfAndScatterIfItFails(GameTestHelper helper) {
+    public void theDeadFaceTheNetherworldsTribulationAsTheLivingDoAndScatterIfItFails(GameTestHelper helper) {
         ServerPlayer player = isolated(helper);
         player.setGameMode(GameType.SURVIVAL);
         ((ServerPlayerAccessor) player).dth$setSpawnInvulnerableTime(0);
@@ -223,8 +223,17 @@ public class TribulationCloudGameTests implements FabricGameTest {
             CultivationManager.tryBreakthrough(player);
             helper.assertTrue(TribulationManager.isGhostTrial(player.getUUID()), "The dead break through on the ghost path");
             for (int tick = 0; tick < 60; tick++) TribulationManager.tick(helper.getLevel().getServer());
-            helper.assertTrue(Math.abs(full - player.getHealth() - 18 * TribulationManager.DEAD_SHARE) < 0.01f,
-                    "The yin reaches the dead, half of it (" + (full - player.getHealth()) + ")");
+            // As much of its hearts as of a living body's (GhostSystem#livingShare), the bolt turned first as a common ghost's form
+            // turns it, as an iron set would (TribulationManager#GHOST_FORM_ARMOR), the yin passing.
+            float share = (float) GhostSystem.livingShare(player);
+            // (The helper's mock player counts as creative, outside the dead's rules of touch: its own armour, none.)
+            float bolt = net.minecraft.world.damagesource.CombatRules.getDamageAfterAbsorb(13,
+                    Incorporeal.isRuledGhost(player) ? Math.max(player.getArmorValue(), TribulationManager.GHOST_FORM_ARMOR) : player.getArmorValue(),
+                    (float) player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR_TOUGHNESS));
+            // (Its body is its ghost path's whole now, dead, as a life's heaven path is: TwoPaths#pathShare. The same share, x1.)
+            helper.assertTrue(Math.abs(share - 1) < 1.0e-6 && Math.abs(full - player.getHealth() - (5 + bolt) * share) < 0.01f,
+                    "The yin reaches the dead, as great a share of its hearts as of a life's (" + (full - player.getHealth()) + " of "
+                            + player.getMaxHealth() + ", x" + share + ")");
             player.setHealth(2);
             for (int tick = 0; tick < 60 && TribulationManager.isActive(player.getUUID()); tick++) TribulationManager.tick(helper.getLevel().getServer());
             helper.assertTrue(!TribulationManager.isActive(player.getUUID()) && !s.inGhostTribulation()

@@ -301,6 +301,8 @@ public final class CultivationEvents {
 		// possessor's doing.
 		ServerLivingEntityEvents.ALLOW_DEATH.register((entity, source, amount) -> {
 			// A ghost doesn't die: it disperses and reforms at the Gate (GhostSystem). No death screen, none of death's bookkeeping.
+			// A ghost's soul struck down out of its form is back in it first, its nascent soul lost, as a living soul's is.
+			if (entity instanceof ServerPlayer ghost && GhostSystem.isGhost(ghost)) SoulProjection.onSoulDying(ghost);
 			if (entity instanceof ServerPlayer ghost && !GhostSystem.allowDeath(ghost)) return false;
 			// A heaven spell that holds off a death (HeavenSpells#allowDeath: a phoenix's rebirth, say).
 			if (!HeavenSpells.allowDeath(entity, source)) return false;

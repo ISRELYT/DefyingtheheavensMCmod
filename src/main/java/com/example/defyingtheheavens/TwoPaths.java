@@ -185,28 +185,59 @@ public final class TwoPaths {
 	 * the harmony; a mortal's tempering share), whether the ghost path gives them, and the rank (for comparing the wielded body
 	 * with the true one).
 	 */
-	public record Body(Realm realm, Stage stage, double scale, boolean ghostPath, int rank) {}
+	/**
+	 * {@code share}: how much of its path's strength the body has ({@link #pathShare}), on every bonus (on health, of the whole: the
+	 * hearts a body starts with too, CultivationStats).
+	 */
+	public record Body(Realm realm, Stage stage, double scale, boolean ghostPath, int rank, double share) {}
+
+	/** What a path the body doesn't belong to gives it: half its strength (the user's rule, 2026-10-19, {@link #pathShare}). */
+	public static final double HALF_PATH = 0.5;
 
 	/**
-	 * The body (see the class notes): the higher path's realm, the harmony on top. A mortal on no path: a tempered mortal body
-	 * growing toward Qi Refining Early's bonuses. {@code wielded}: as Realm Suppression and pressure leave the paths.
+	 * How much of {@code path}'s strength the body has (the user's rule, 2026-10-19): the living's is the heaven path's whole and the
+	 * ghost path's half; the dead's, the ghost path's whole and the heaven path's half. So one who walks both loses nothing alive or
+	 * dead, and one who walks the ghost path alone is the weaker for living (and one of the heaven path alone, for dying).
+	 */
+	public static double pathShare(PlayerCultivation c, Path path) {
+		return (path == Path.GHOST) == c.netherworld().ghost() ? 1.0 : HALF_PATH;
+	}
+
+	/**
+	 * The body (see the class notes): the path mightier for its share ({@link #pathShare}), the harmony on top. A mortal on no path: a
+	 * tempered mortal body growing toward Qi Refining Early's bonuses (half of it dead). {@code wielded}: as Realm Suppression and
+	 * pressure leave the paths.
 	 */
 	public static Body body(PlayerCultivation c, boolean wielded) {
+		return body(c, wielded, false);
+	}
+
+	/** {@link #body} as it would be with both paths whole (no {@link #pathShare}): what a life's body on these paths comes to. */
+	public static Body wholeBody(PlayerCultivation c, boolean wielded) {
+		return body(c, wielded, true);
+	}
+
+	private static Body body(PlayerCultivation c, boolean wielded, boolean whole) {
 		int heaven = heavenRank(c, wielded), ghost = ghostRank(c, wielded);
 		double scale = c.favourFactor() * (1 + harmony(c));
 		int stages = Stage.values().length;
-		// A Ghost Devil Body in its Ghost King's form is held to its ghost path's might, as Realm Suppression holds a realm (Physique).
+		double heavenShare = whole ? 1 : pathShare(c, Path.HEAVEN), ghostShare = whole ? 1 : pathShare(c, Path.GHOST);
+		// A Ghost Devil Body in its Ghost King's form is held to its ghost path's might, as Realm Suppression holds a realm, and has all
+		// of it, a Ghost King's from birth (Physique).
 		if (c.physique() == Physique.GHOST_DEVIL_BODY && inGhostForm(c)) {
 			int rank = Math.max(0, ghost);
-			return new Body(Realm.byIndex(rank / stages), Stage.byIndex(rank % stages), ghost < 0 ? 0.5 : scale, true, rank);
+			return new Body(Realm.byIndex(rank / stages), Stage.byIndex(rank % stages), ghost < 0 ? 0.5 : scale, true, rank, 1.0);
 		}
-		if (ghost > heaven) return new Body(Realm.byIndex(ghost / stages), Stage.byIndex(ghost % stages), scale, true, ghost);
+		if (ghost >= 0 && (heaven < 0 || might(ghost) * ghostShare > might(heaven) * heavenShare
+				|| might(ghost) * ghostShare == might(heaven) * heavenShare && ghostShare > heavenShare)) {
+			return new Body(Realm.byIndex(ghost / stages), Stage.byIndex(ghost % stages), scale, true, ghost, ghostShare);
+		}
 		if (heaven < 0 && c.getBodyRefining() > 0) { // shattered meridians' body refining: a cultivator's body, a stage higher for each
 			int rank = BodyRefining.rank(c.getBodyRefining());
-			return new Body(Realm.byIndex(rank / stages), Stage.byIndex(rank % stages), 1.0, false, -1);
+			return new Body(Realm.byIndex(rank / stages), Stage.byIndex(rank % stages), 1.0, false, -1, heavenShare);
 		}
-		if (heaven < 0) return new Body(Realm.QI_REFINING, Stage.EARLY, c.getMortalStage().bodyShare(), false, -1);
-		return new Body(Realm.byIndex(heaven / stages), Stage.byIndex(heaven % stages), scale, false, heaven);
+		if (heaven < 0) return new Body(Realm.QI_REFINING, Stage.EARLY, c.getMortalStage().bodyShare(), false, -1, heavenShare);
+		return new Body(Realm.byIndex(heaven / stages), Stage.byIndex(heaven % stages), scale, false, heaven, heavenShare);
 	}
 
 	// --- Effective cultivation: what the body's strength comes to on one path ---
@@ -241,9 +272,10 @@ public final class TwoPaths {
 	public static Effective effective(PlayerCultivation c, boolean wielded) {
 		Body body = body(c, wielded);
 		if (body.rank() < 0) return null;
-		double value = might(body.rank()) * body.scale();
+		double value = might(body.rank()) * body.scale() * body.share();
 		int last = PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION);
-		int rank = body.rank();
+		// Half a path's strength (pathShare) is worth less than its rank: weighed from the first stage up.
+		int rank = body.share() < 1 ? 0 : body.rank();
 		while (rank < last && might(rank + 1) <= value * (1 + EFFECTIVE_TOLERANCE)) rank++;
 		boolean quasi = value > might(rank) * (1 + EFFECTIVE_TOLERANCE);
 		double toward = rank >= last ? 0 : Math.max(0, Math.min(1, (value - might(rank)) / (might(rank + 1) - might(rank))));
@@ -253,7 +285,7 @@ public final class TwoPaths {
 	/** Whether {@code c}'s body is mightier than its own rank alone (the harmony, Heaven's Favour): its effective cultivation is worth saying. */
 	public static boolean strongerThanRank(PlayerCultivation c) {
 		Effective effective = effective(c, true);
-		return effective != null && (effective.quasi() || effective.rank() > body(c, true).rank());
+		return effective != null && (effective.quasi() || effective.rank() != body(c, true).rank());
 	}
 
 	/**
@@ -405,7 +437,13 @@ public final class TwoPaths {
 		Seen before = SEEN.get(p.getUUID());
 		Seen now = see(c);
 		SEEN.put(p.getUUID(), now);
-		if (before == null) return;
+		if (before == null) {
+			// Forgotten (a soul gone into a body or out of one: Possession#rebase): nothing to tell them, but how they are drawn is
+			// told to all again, for it may be another's now. Unsaid, a soul in an NPC's body went on drawn in its own Ghost King's form.
+			GhostSystem.broadcast(p);
+			SoulProjection.refreshTracking(p);
+			return;
+		}
 		if (now.kingForm() && !before.kingForm()) {
 			// The ghost path come to Core Formation, or a Ghost King born again: the form is theirs, to take while they live.
 			p.sendSystemMessage((before.dead() ? Component.translatable(ModLang.MSG_FORMS_KEPT)
@@ -455,6 +493,12 @@ public final class TwoPaths {
 		// The body follows the form at once (a Ghost Devil Body's Ghost King form is held to its ghost path: TwoPaths#body).
 		CultivationManager.refresh(p);
 		if (p.getHealth() > p.getMaxHealth()) p.setHealth(p.getMaxHealth());
+	}
+
+	/** Whether the next look ({@link #watch}) tells {@code p}'s clients how it is drawn: forgotten, or drawn otherwise than last seen. */
+	public static boolean watchWouldTell(ServerPlayer p) {
+		Seen before = SEEN.get(p.getUUID());
+		return before == null || before.look() != look(CultivationManager.get(p));
 	}
 
 	public static void forget(UUID id) {

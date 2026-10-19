@@ -57,8 +57,8 @@ public class TalkPhasesGameTests implements FabricGameTest {
 			senior.changeRegard(player, Regard.COURTEOUS);
 			helper.assertTrue((TalkSystem.intents(player, senior, TalkSystem.Standing.ABOVE) & TalkIntent.SPAR.bit()) != 0, "...and will after");
 			CultivatorNpc far = npc(helper, new BlockPos(2, 2, 4), Realm.HEAVENLY_BEING, 0);
-			helper.assertTrue(TalkSystem.intents(player, far, TalkSystem.standing(player, far)) == bits(TalkIntent.GREET, TalkIntent.ASK, TalkIntent.GIFT),
-					"Two realms above: only Greet, Ask, Gift");
+			helper.assertTrue(TalkSystem.intents(player, far, TalkSystem.standing(player, far)) == bits(TalkIntent.GREET, TalkIntent.ASK, TalkIntent.GIFT, TalkIntent.TRADE),
+					"Two realms above: Greet, Ask, Gift and Trade (everyone trades, since 2026-10-19), no bouts or insults");
 			CultivatorNpc commoner = npc(helper, new BlockPos(4, 2, 4), null, 0);
 			helper.assertTrue((TalkSystem.intents(player, commoner, TalkSystem.standing(player, commoner)) & TalkIntent.SPAR.bit()) == 0,
 					"No sparring with a commoner");
@@ -405,8 +405,11 @@ public class TalkPhasesGameTests implements FabricGameTest {
 			boolean buys = cold.stream().anyMatch(o -> o.getBaseCostA().is(ModItems.GINSENG) && o.getResult().getItem() instanceof SpiritStoneItem);
 			helper.assertTrue(stonesOnly && buys, "It sells for spirit stones and buys your ginseng");
 			elder.changeRegard(player, Regard.TRUSTED);
+			long lockedCold = cold.stream().filter(CultivatorTrades::isLocked).count();
 			MerchantOffers warm = CultivatorTrades.offersFor(elder, player, new HashMap<>(), keys);
-			helper.assertTrue(warm.size() > cold.size(), "Regard opens better offers");
+			long lockedWarm = warm.stream().filter(CultivatorTrades::isLocked).count();
+			helper.assertTrue(lockedCold > 0 && lockedWarm < lockedCold && warm.size() - lockedWarm > cold.size() - lockedCold,
+					"Regard opens better offers (those not yet open shown all along, locked)");
 			ItemStack[] costs = CultivatorTrades.costsFor(15);
 			helper.assertTrue(costs[0].is(ModItems.MID_SPIRIT_STONE) && costs[0].getCount() == 1 && costs[1].is(ModItems.LOW_SPIRIT_STONE)
 					&& costs[1].getCount() == 6, "15 Low stones: one Mid and six Low");
