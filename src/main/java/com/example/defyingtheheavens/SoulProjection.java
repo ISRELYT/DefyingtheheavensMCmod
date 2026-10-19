@@ -65,7 +65,9 @@ import java.util.function.Predicate;
  *   <li><b>The body</b> stays behind, sitting in meditation ({@link SoulBodyEntity}) with the player's health and armor. Harm to it
  *   is reported to the soul; if it is slain, the soul dies with it.</li>
  *   <li><b>The soul</b> is the player itself: it flies free of gravity through solid blocks (the client's free flight) within its
- *   tether ({@link PlayerCultivation#soulTetherRadius}), on {@link PlayerCultivation#soulHearts} hearts that never heal. It
+ *   tether ({@link PlayerCultivation#soulTetherRadius}), on its own {@link PlayerCultivation#soulHearts} hearts (constitution and
+ *   the body's health count for nothing there), which never heal while it is out: what it loses it carries home, and mends only
+ *   while it rests in a body, its own or one it possesses ({@link #mendSouls}; the user's rule, 2026-10-19). It
  *   touches nothing: no blocks, items, chests or meditation; no plates or tripwires; no portals or rifts. Its only act is to
  *   possess. Qi Sense opens as it sets out (it is how the soul sees; it may be shut while out), and its upkeep ({@link PlayerCultivation#soulCostPerSecond})
  *   grows with the distance from the body; out of qi, the soul snaps back at once.</li>
@@ -124,6 +126,11 @@ public final class SoulProjection {
 	 * 1 at the end): as though beside its body, so a soul may stay a while in the gap (the user's ask, 2026-10-18; it was the end).
 	 */
 	public static final double CROSS_REALM_REACH = 0;
+	/**
+	 * A wounded soul resting in a body mends this many seconds from nothing to whole (its hearts' worth a second's share of it): while
+	 * it is home in its own body, or possessing a being; never while it is out of every body.
+	 */
+	public static final int SOUL_MEND_SECONDS = 120;
 	/** The tether's reach by stage from Nascent Soul Early to Four Axis Grand Perfection. */
 	public static final int[] TETHER_RADII = {32, 48, 64, 96, 128, 144, 160, 176, 192, 208, 224, 256};
 	/**
@@ -384,11 +391,11 @@ public final class SoulProjection {
 			s.openedSense = true;
 		}
 
-		// The soul's own body of qi: its hearts by stage, whole as it sets out.
+		// The soul's own body of qi: its hearts by stage, as whole as the wounds it still carries leave it.
 		player.stopUsingItem();
 		player.clearFire();
 		updateSoulHealth(player, c);
-		player.setHealth(player.getMaxHealth());
+		player.setHealth(soulHealth(player, c));
 		Abilities abilities = player.getAbilities();
 		abilities.mayfly = true; // only for the server's flight check: the soul's own flight is the client's (see ClientSoul)
 		abilities.flying = true;
@@ -445,6 +452,7 @@ public final class SoulProjection {
 		level.getChunkSource().removeRegionTicket(BODY_TICKET, chunk, BODY_TICKET_RADIUS, chunk);
 
 		if (player.isPassenger()) player.stopRiding();
+		keepWounds(player, c); // what the soul lost out there it brings home, to mend in its body
 		removeSoulHealth(player);
 		if (player.level() != level) {
 			player.teleportTo(level, pos.x, pos.y, pos.z, yRot, player.getXRot());
@@ -486,6 +494,7 @@ public final class SoulProjection {
 	 */
 	private static void loseSoul(ServerPlayer player, String why) {
 		PlayerCultivation c = CultivationManager.own(player);
+		c.setSoulWounds(0); // the one formed again in its place is born whole
 		Component fallen;
 		if (c.soulPath() == TwoPaths.Path.GHOST) {
 			GhostMethods.fallTo(c.netherworld(), PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.GRAND_PERFECTION));
@@ -907,6 +916,7 @@ public final class SoulProjection {
 	 * the ground, its own hearts put by with its things; everything else it is now is the body's.
 	 */
 	private static boolean inhabit(ServerPlayer player, Session s, LivingEntity body) {
+		keepWounds(player, CultivationManager.own(player)); // they mend in there (mendSouls), and are what it comes out with
 		removeSoulHealth(player); // its own body's measure, for its health to be put by against (and come back to)
 		if (!Possession.enter(player, body)) {
 			updateSoulHealth(player, CultivationManager.own(player));
@@ -941,7 +951,8 @@ public final class SoulProjection {
 		s.ticks = 0;
 		PlayerCultivation c = CultivationManager.own(player);
 		player.clearFire();
-		updateSoulHealth(player, c); // its own hearts again (its health came back with its things)
+		updateSoulHealth(player, c); // its own hearts again
+		player.setHealth(soulHealth(player, c)); // as far as it mended in there
 		Abilities abilities = player.getAbilities();
 		abilities.mayfly = true;
 		abilities.flying = true;
@@ -1320,17 +1331,63 @@ public final class SoulProjection {
 		s.sensedBy.retainAll(inside);
 	}
 
-	/** Keeps the soul's maximum health at its hearts, whatever else is added to or taken from the attribute. */
+	/**
+	 * Keeps the soul's maximum health at its hearts, whatever else is added to or taken from the attribute: a share of all the rest
+	 * (multiplying last), so that nothing that multiplies it (constitution's points, StatPoints) moves the soul's hearts. Added
+	 * instead, it was multiplied by them in turn: a soul with points in constitution set out short of its hearts.
+	 */
 	private static void updateSoulHealth(ServerPlayer player, PlayerCultivation c) {
 		AttributeInstance health = player.getAttribute(Attributes.MAX_HEALTH);
 		if (health == null) return;
 		AttributeModifier current = health.getModifier(SOUL_HEALTH_ID);
-		double without = health.getValue() - (current == null ? 0 : current.getAmount());
-		double wanted = c.soulHearts() * 2.0 - without;
-		if (current != null && Math.abs(current.getAmount() - wanted) < 1.0e-6) return;
+		double without = current == null ? health.getValue() : health.getValue() / (1 + current.getAmount());
+		double share = c.soulHearts() * 2.0 / without - 1;
+		if (current != null && Math.abs(current.getAmount() - share) < 1.0e-9) return;
 		health.removeModifier(SOUL_HEALTH_ID);
-		health.addTransientModifier(new AttributeModifier(SOUL_HEALTH_ID, "Nascent soul's health", wanted, AttributeModifier.Operation.ADDITION));
+		health.addTransientModifier(new AttributeModifier(SOUL_HEALTH_ID, "Nascent soul's health", share, AttributeModifier.Operation.MULTIPLY_TOTAL));
 		if (player.getHealth() > player.getMaxHealth()) player.setHealth(player.getMaxHealth());
+	}
+
+	/** The soul's health as it goes out (or comes out of a body): its whole, less the wounds it carries (and at least a heart's half). */
+	private static float soulHealth(ServerPlayer player, PlayerCultivation c) {
+		return Math.max(1.0f, player.getMaxHealth() - c.getSoulWounds());
+	}
+
+	/** The soul's health is about to be put by (home, or into a person's body): what it is short of its whole is kept, to mend. */
+	private static void keepWounds(ServerPlayer player, PlayerCultivation c) {
+		c.setSoulWounds(player.getMaxHealth() - player.getHealth());
+		CultivationManager.markDirty(player.server);
+	}
+
+	/** Once a second (CultivationEvents): every wounded nascent soul resting in a body mends ({@link #mend}). */
+	public static void mendSouls(MinecraftServer server) {
+		if (server.getTickCount() % 20 != 0) return;
+		for (ServerPlayer player : server.getPlayerList().getPlayers()) mend(player);
+	}
+
+	/**
+	 * A second's mending of {@code player}'s nascent soul, a {@link #SOUL_MEND_SECONDS}th of its whole: its kept wounds while it
+	 * rests in its own body (gathering to go out, too) or in a person's body it is in; its own health while it rides a beast it
+	 * possesses (the player is the soul then; a soul's own healing is refused, SoulLivingEntityMixin). Out of every body, nothing.
+	 * Package-private for the game tests, whose fake players aren't in the player list.
+	 */
+	static void mend(ServerPlayer player) {
+		if (!player.isAlive()) return;
+		PlayerCultivation c = CultivationManager.own(player);
+		float step = c.soulHearts() * 2.0f / SOUL_MEND_SECONDS;
+		Session s = SESSIONS.get(player.getUUID());
+		if (s != null && (s.state == State.PROJECTED || s.state == State.RECALLING)) {
+			if (s.possessed != null && s.state == State.PROJECTED && player.getHealth() < player.getMaxHealth()) {
+				player.setHealth(Math.min(player.getMaxHealth(), player.getHealth() + step));
+			}
+			return;
+		}
+		float wounds = c.getSoulWounds();
+		if (wounds <= 0) return;
+		c.setSoulWounds(wounds - step);
+		CultivationManager.markDirty(player.server);
+		// The Abilities tab's word of it, as each half heart comes back (and once whole).
+		if (Math.ceil(wounds) != Math.ceil(c.getSoulWounds()) && s == null) CultivationManager.sync(player);
 	}
 
 	private static void removeSoulHealth(ServerPlayer player) {

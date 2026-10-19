@@ -33,6 +33,13 @@ public final class ModDamageTypes {
 	/** A golden core detonated (CoreDetonation): its own cultivator's death, tagged as {@link #SOUL_SEVERED}, so nothing holds it off. */
 	public static final ResourceKey<DamageType> CORE_DETONATION = ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("core_detonation"));
 	/**
+	 * The Netherworld's tribulation (TribulationManager, the ghost path's): its yin lightning, which armour turns as it turns the
+	 * heavens' bolts, and the yin in it that goes through armour as the heavens' magic does (tagged bypasses_armor). Both reach the
+	 * dead (GhostSystem#reaches), the tribulation's own (the heavens' lightning passes through them).
+	 */
+	public static final ResourceKey<DamageType> YIN_LIGHTNING = ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("yin_lightning"));
+	public static final ResourceKey<DamageType> YIN_TRIBULATION = ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("yin_tribulation"));
+	/**
 	 * The heaven methods' spells (HeavenSpells): the five elements' qi, one harm each, "qi_wood" to "qi_metal". Tagged to pass
 	 * armour (qi goes through steel), but Protection and Resistance still turn some of it. It reaches the dead as a living blow
 	 * does: only from one who sees souls (GhostSystem#reaches).
@@ -63,6 +70,8 @@ public final class ModDamageTypes {
 		context.register(SOUL_SEVERED, new DamageType(DefyingTheHeavens.MOD_ID + ".soul_severed", DamageScaling.NEVER, 0.0f));
 		context.register(SOUL_SEIZED, new DamageType(DefyingTheHeavens.MOD_ID + ".soul_seized", DamageScaling.NEVER, 0.0f));
 		context.register(CORE_DETONATION, new DamageType(DefyingTheHeavens.MOD_ID + ".core_detonation", DamageScaling.NEVER, 0.0f));
+		context.register(YIN_LIGHTNING, new DamageType(DefyingTheHeavens.MOD_ID + ".yin_lightning", DamageScaling.NEVER, 0.1f));
+		context.register(YIN_TRIBULATION, new DamageType(DefyingTheHeavens.MOD_ID + ".yin_tribulation", DamageScaling.NEVER, 0.0f));
 		for (QiElement element : QiElement.five()) {
 			ResourceKey<DamageType> key = qiType(element);
 			context.register(key, new DamageType(DefyingTheHeavens.MOD_ID + "." + key.location().getPath(), DamageScaling.NEVER, 0.1f));
@@ -104,6 +113,16 @@ public final class ModDamageTypes {
 
 	public static DamageSource soulScatter(Level level) {
 		return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(SOUL_SCATTER));
+	}
+
+	/** The Netherworld's tribulation's bolt (armour turns it). */
+	public static DamageSource yinLightning(Level level) {
+		return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(YIN_LIGHTNING));
+	}
+
+	/** The yin in the Netherworld's tribulation that goes through armour. */
+	public static DamageSource yinTribulation(Level level) {
+		return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(YIN_TRIBULATION));
 	}
 
 	/** One's own golden core, detonated. */

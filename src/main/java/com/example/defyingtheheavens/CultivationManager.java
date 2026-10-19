@@ -54,9 +54,16 @@ public final class CultivationManager {
 		sync(player);
 	}
 
-	/** Breakthrough button: no longer an instant rank-up, it starts the Heavenly Tribulation. */
+	/**
+	 * Breakthrough button: no longer an instant rank-up, it starts the tribulation of the path whose qi is drawn in
+	 * (TwoPaths#cultivatesGhost): the Heavenly Tribulation, or the ghost path's, the Netherworld's (the dead's only one).
+	 */
 	public static void tryBreakthrough(ServerPlayer player) {
-		if (Incorporeal.isGhost(player)) { // the dead break through nothing (a Ghost King neither: its method is its way)
+		if (TwoPaths.cultivatesGhost(get(player))) {
+			TribulationManager.startGhost(player);
+			return;
+		}
+		if (GhostSystem.isGhost(player)) { // a mortal's ghost: no path to break through on
 			player.displayClientMessage(Component.translatable(ModLang.MSG_GHOST_CANNOT), true);
 			return;
 		}

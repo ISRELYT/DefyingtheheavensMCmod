@@ -38,13 +38,13 @@ public class NetherworldQiGameTests implements FabricGameTest {
 		helper.assertTrue(near(GhostQi.density(ModDimensions.NETHERWORLD, biome(helper, ModBiomes.NINE_NETHER_PEAKS)), 12),
 				"The Nine Nether Peaks: x12");
 		helper.assertTrue(near(GhostQi.density(Level.NETHER, biome(helper, Biomes.SOUL_SAND_VALLEY)), 1), "A Soul Sand Valley: x1");
-		helper.assertTrue(near(GhostQi.density(Level.NETHER, biome(helper, Biomes.NETHER_WASTES)), 0.25), "The rest of the Nether: x0.25");
-		helper.assertTrue(near(GhostQi.density(Level.OVERWORLD, biome(helper, Biomes.PLAINS)), 0.5)
-				&& near(GhostQi.densityAt(helper.getLevel(), helper.absolutePos(new BlockPos(1, 2, 1))), 0.5), "The Overworld: x0.5, anywhere in it");
+		helper.assertTrue(near(GhostQi.density(Level.NETHER, biome(helper, Biomes.NETHER_WASTES)), 0.5), "The rest of the Nether: x0.5");
+		helper.assertTrue(near(GhostQi.density(Level.OVERWORLD, biome(helper, Biomes.PLAINS)), 0.25)
+				&& near(GhostQi.densityAt(helper.getLevel(), helper.absolutePos(new BlockPos(1, 2, 1))), 0.25), "The Overworld: x0.25 (the thinnest), anywhere in it");
 		helper.assertTrue(GhostQi.density(ModDimensions.UPPER_REALM, biome(helper, ModBiomes.SPIRIT_FOREST)) == 0
 				&& GhostQi.density(Level.END, biome(helper, Biomes.THE_END)) == 0, "None anywhere else");
 		helper.assertTrue(near(GhostQi.fillPerSecond(10), 2) && near(GhostQi.fillPerSecond(12), 2.4) && near(GhostQi.fillPerSecond(0.5), 0.1)
-				&& near(GhostQi.fillPerSecond(0.25), 0.05), "The pool fills at 2/s in the Netherworld, 2.4 on its peaks, 0.1 in the Overworld, 0.05 in the Nether");
+				&& near(GhostQi.fillPerSecond(0.25), 0.05), "The pool fills at 2/s in the Netherworld, 2.4 on its peaks, 0.1 in the Nether, 0.05 in the Overworld");
 		helper.assertTrue(GhostQi.poolMax(false, 5, 5) == 0 && near(GhostQi.poolMax(true, 0, 0), 30)
 				&& near(GhostQi.poolMax(true, 27, 9), 480), "No pool without one; 30, up to 480 with every layer");
 		helper.succeed();

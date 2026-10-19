@@ -46,7 +46,9 @@ public class TribulationCloudRenderer extends EntityRenderer<TribulationCloud> {
 		float formation = cloud.formationAge(partialTick);
 		int tier = cloud.stormTier();
 		float flash = cloud.flashStrength();
-		Vec3 color = ((ClientLevel) cloud.level()).getCloudColor(partialTick).scale(0.78 - tier * 0.09);
+		boolean ghost = cloud.isGhost(); // the Netherworld's tribulation's storm: dark teal, whatever the sky
+		Vec3 color = ghost ? GHOST_STORM.scale(1.0 - tier * 0.08)
+				: ((ClientLevel) cloud.level()).getCloudColor(partialTick).scale(0.78 - tier * 0.09);
 		poses.pushPose();
 		poses.scale(cloud.stormScale() * 2.0f, 1.5f + tier * 0.18f, cloud.stormScale() * 2.0f);
 		poses.mulPose(Axis.YP.rotationDegrees(Mth.sin(age * 0.0015f) * 8.0f));
@@ -70,10 +72,10 @@ public class TribulationCloudRenderer extends EntityRenderer<TribulationCloud> {
 				poses.scale(growth, growth, growth);
 				poses.translate(-cx, -bottom, -cz);
 				box(vertices, poses.last(), color, cx - halfWidth, bottom, cz - halfWidth,
-						cx + halfWidth, top, cz + halfWidth, 1.0f, flash);
+						cx + halfWidth, top, cz + halfWidth, 1.0f, flash, ghost);
 				if (x * x + z * z <= 2) {
 					box(vertices, poses.last(), color, cx - 1.25f, top - 0.2f, cz - 1.25f,
-							cx + 1.25f, top + 1.2f, cz + 1.25f, 1.0f, flash);
+							cx + 1.25f, top + 1.2f, cz + 1.25f, 1.0f, flash, ghost);
 				}
 				poses.popPose();
 			}
@@ -103,7 +105,7 @@ public class TribulationCloudRenderer extends EntityRenderer<TribulationCloud> {
 				poses.translate(-cx - dx, -y, -cz - dz);
 				box(vertices, poses.last(), color, cx + dx - halfX, y, cz + dz - halfZ,
 						cx + dx + halfX, y + 0.8f + morph * 0.3f, cz + dz + halfZ,
-						1.0f, flash);
+						1.0f, flash, ghost);
 				poses.popPose();
 			}
 		}
@@ -115,21 +117,25 @@ public class TribulationCloudRenderer extends EntityRenderer<TribulationCloud> {
 		return progress * progress * (3 - 2 * progress);
 	}
 
+	/** The Netherworld's tribulation's storm: a dark teal, the yin's colour, lit cyan by its bolts. */
+	private static final Vec3 GHOST_STORM = new Vec3(0.11, 0.25, 0.24);
+
 	private static void box(VertexConsumer v, PoseStack.Pose pose, Vec3 color, float x0, float y0, float z0,
-			float x1, float y1, float z1, float shade, float flash) {
-		face(v, pose, color, shade * 0.7f, flash, 0, -1, 0, x0,y0,z0, x1,y0,z0, x1,y0,z1, x0,y0,z1);
-		face(v, pose, color, shade, flash, 0, 1, 0, x0,y1,z1, x1,y1,z1, x1,y1,z0, x0,y1,z0);
-		face(v, pose, color, shade * 0.8f, flash, 0, 0, -1, x1,y0,z0, x0,y0,z0, x0,y1,z0, x1,y1,z0);
-		face(v, pose, color, shade * 0.8f, flash, 0, 0, 1, x0,y0,z1, x1,y0,z1, x1,y1,z1, x0,y1,z1);
-		face(v, pose, color, shade * 0.9f, flash, -1, 0, 0, x0,y0,z0, x0,y0,z1, x0,y1,z1, x0,y1,z0);
-		face(v, pose, color, shade * 0.9f, flash, 1, 0, 0, x1,y0,z1, x1,y0,z0, x1,y1,z0, x1,y1,z1);
+			float x1, float y1, float z1, float shade, float flash, boolean ghost) {
+		face(v, pose, color, shade * 0.7f, flash, ghost, 0, -1, 0, x0,y0,z0, x1,y0,z0, x1,y0,z1, x0,y0,z1);
+		face(v, pose, color, shade, flash, ghost, 0, 1, 0, x0,y1,z1, x1,y1,z1, x1,y1,z0, x0,y1,z0);
+		face(v, pose, color, shade * 0.8f, flash, ghost, 0, 0, -1, x1,y0,z0, x0,y0,z0, x0,y1,z0, x1,y1,z0);
+		face(v, pose, color, shade * 0.8f, flash, ghost, 0, 0, 1, x0,y0,z1, x1,y0,z1, x1,y1,z1, x0,y1,z1);
+		face(v, pose, color, shade * 0.9f, flash, ghost, -1, 0, 0, x0,y0,z0, x0,y0,z1, x0,y1,z1, x0,y1,z0);
+		face(v, pose, color, shade * 0.9f, flash, ghost, 1, 0, 0, x1,y0,z1, x1,y0,z0, x1,y1,z0, x1,y1,z1);
 	}
 
-	private static void face(VertexConsumer v, PoseStack.Pose pose, Vec3 color, float shade, float flash, float nx, float ny, float nz,
+	private static void face(VertexConsumer v, PoseStack.Pose pose, Vec3 color, float shade, float flash, boolean ghost, float nx, float ny, float nz,
 			float x0,float y0,float z0, float x1,float y1,float z1, float x2,float y2,float z2, float x3,float y3,float z3) {
-		float red = Math.min(1, (float) color.x * shade + flash * 0.16f);
-		float green = Math.min(1, (float) color.y * shade + flash * 0.20f);
-		float blue = Math.min(1, (float) color.z * shade + flash * 0.28f);
+		// A strike lights the cloud from within: the heavens' a pale blue, the Netherworld's a cyan.
+		float red = Math.min(1, (float) color.x * shade + flash * (ghost ? 0.08f : 0.16f));
+		float green = Math.min(1, (float) color.y * shade + flash * (ghost ? 0.30f : 0.20f));
+		float blue = Math.min(1, (float) color.z * shade + flash * (ghost ? 0.26f : 0.28f));
 		vertex(v, pose, x0,y0,z0, 0,0, nx,ny,nz, red,green,blue);
 		vertex(v, pose, x1,y1,z1, 1,0, nx,ny,nz, red,green,blue);
 		vertex(v, pose, x2,y2,z2, 1,1, nx,ny,nz, red,green,blue);

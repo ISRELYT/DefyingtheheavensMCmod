@@ -152,7 +152,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_GHOST_KING, "You are a Ghost King: you can touch the world again, and cross to the living.");
 		t.add(ModLang.MSG_GHOST_KING_LOST, "You are no longer a Ghost King.");
 		t.add(ModLang.JOURNAL_GHOST_KING, "A Ghost King");
-		t.add(ModLang.JOURNAL_GHOST_KING_TEXT, "Dead, I rose to Core Formation and became a Ghost King. My hands are my own again, and the "
+		t.add(ModLang.JOURNAL_GHOST_KING_TEXT, "Dead, with my ghost path at Core Formation, I am a Ghost King. My hands are my own again, and the "
 				+ "Soul River carries me down to the world of the living, unseen but by those who see souls.");
 		t.add(ModLang.MSG_GHOST_DISPERSED, "You scatter...");
 		t.add(ModLang.MSG_GHOST_REFORMED, "You gather yourself again at the Ghost Gate.");
@@ -305,7 +305,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case REALM_SUPPRESS -> "Your realm crushes weaker beings within %s blocks, harder the weaker they are. Costs qi per target.";
 				case INNER_REALM -> "After 10 s of meditation your soul turns inward (+50% cultivation). Walk freely; stop meditating to return. Harm to your body pulls you back.";
 				case SWORD_FLIGHT -> "Hold a sword and double-tap jump to ride it, at a cost of %s qi/s. Cheaper than Qi Flight but slower (75%% of its speed, at every realm); the sword takes no wear. Switching it on switches Qi Flight off.";
-				case SOUL_PROJECTION -> "Send your nascent soul out of your body (5 s to leave, 5 s to return) while your body sits on. It flies through walls on %s hearts, within %s blocks of your body, for %s-%s qi/s (more the farther it goes). Right-click a being a realm or more below you to possess it. If its tether is cut or your body slain, you die and fall to Core Formation.";
+				case SOUL_PROJECTION -> "Send your nascent soul out of your body (5 s to leave, 5 s to return) while your body sits on. It flies through walls on %s hearts (they mend only while it rests in a body, never while it's out), within %s blocks of your body, for %s-%s qi/s (more the farther it goes). Right-click a being a realm or more below you to possess it. If its tether is cut or your body slain, you die and fall to Core Formation.";
 				case GHOST_EYE -> "See the dead and the Method Steles through walls within 32 blocks. Costs %s ghost qi/s.";
 				case NETHERWORLD_VEIL -> "Wrap your body in the Netherworld's own yin: it seeps into you at half the rate. Costs %s ghost qi/s.";
 				case YIN_WIND_STEPS -> "Walk on the yin wind: %s%% swifter, and falls do you no harm. Costs %s ghost qi/s.";
@@ -331,7 +331,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		// The realm's abilities awakened by the ghost path rather than the heaven path (TwoPaths#awakens): paid in its ghost qi, and
 		// what is lost is the ghost path's.
 		t.add(ModLang.abilityKey(Ability.SOUL_PROJECTION.getId()) + ".description.ghost", "Send your nascent soul, born of your ghost path, out of "
-				+ "your body (5 s to leave, 5 s to return) while your body sits on. It flies through walls on %s hearts, within %s blocks of your body, "
+				+ "your body (5 s to leave, 5 s to return) while your body sits on. It flies through walls on %s hearts (they mend only while it rests "
+				+ "in a body, never while it's out), within %s blocks of your body, "
 				+ "for %s-%s ghost qi/s (more the farther it goes). Right-click a being a realm or more below you to possess it. If its tether is cut "
 				+ "or your body slain, you die and your ghost path falls to Core Formation.");
 		t.add(ModLang.abilityKey(Ability.CORE_DETONATION.getId()) + ".description.ghost", "The last resort. Use it twice within 5 s and your ghost "
@@ -473,17 +474,40 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.EFFECTIVE_TOWARD, "%s (%s%%)");
 		t.add(ModLang.METHOD_BAR, "%s, layer %s of %s");
 		t.add(ModLang.METHOD_BAR_SHORT, "%s, %s of %s");
-		t.add(ModLang.METHOD_BAR_PERFECTED, "%s: perfected");
-		t.add(ModLang.METHOD_BAR_SEEK, "Perfected: seek the %s");
 		t.add(ModLang.CULTIVATION_SHORT, "%s / %s");
 		t.add(ModLang.CULTIVATION_MAX_SHORT, "%s (Max)");
 		t.add(ModLang.METHOD_BAR_LAYERS, "Layer %s of %s");
-		t.add(ModLang.METHOD_BAR_SEEK_SHORT, "Seek a deeper foundation");
-		t.add(ModLang.GHOST_COLUMN_NONE, "No ghost method practised");
 		t.add(ModLang.GHOST_COLUMN_NO_QI, "No ghost qi here");
-		t.add(ModLang.GHOST_COLUMN_HELD, "Held at layer %s");
-		t.add(ModLang.GHOST_COLUMN_RATE, "%s: next layer ~%s min");
-		t.add(ModLang.GHOST_COLUMN_RATE_SHORT, "Next layer ~%s min");
+		t.add(ModLang.GHOST_COLUMN_PACE, "%s: +%s/s");
+		t.add(ModLang.GHOST_COLUMN_PACE_SHORT, "+%s/s");
+		t.add(ModLang.COLUMN_RESTING, "Resting (not drawn in)");
+		t.add(ModLang.GHOST_BOTTLENECK, "Your ghost path's bottleneck: break through to %s (the Netherworld's tribulation).");
+		t.add(ModLang.GHOST_BOTTLENECK_SWITCH, "Your ghost path's bottleneck: draw in ghostly qi (Path: Ghost) to break through to %s.");
+		t.add(ModLang.BOTTLENECK_SWITCH, "Heaven path's bottleneck! Draw in the heavens' qi (Path: Heaven) to break through.");
+		t.add(ModLang.GHOST_PINNACLE, "Your ghost path stands at its pinnacle.");
+		t.add(ModLang.GHOST_GATE_NONE, "Your ghost path needs a foundation of %s or deeper: seek a Method Stele, a Ghost Jade Slip or a ghost who teaches.");
+		t.add(ModLang.BTN_PATH_HEAVEN, "Path: Heaven");
+		t.add(ModLang.BTN_PATH_GHOST, "Path: Ghost");
+		t.add(ModLang.MSG_PATH_HEAVEN, "You draw in the heavens' qi: meditating cultivates your heaven path.");
+		t.add(ModLang.MSG_PATH_GHOST, "You draw in ghostly qi: meditating cultivates your ghost path.");
+		t.add(ModLang.MSG_PATH_NO_GHOST, "You have no ghost path to cultivate: learn a ghost foundation first.");
+		t.add(ModLang.MSG_GHOST_LAYER, "%s: layer %s settles in.");
+		t.add(ModLang.MSG_GHOST_LAYER_SPELL, "New spell: %3$s (%1$s, layer %2$s).");
+		t.add(ModLang.MSG_GHOST_PATH_RISES, "Your ghost path rises: %s!");
+		t.add(ModLang.MSG_GHOST_BOTTLENECK, "Your ghost path is at its bottleneck: break through in the cultivation menu to face the Netherworld's tribulation.");
+		t.add(ModLang.MSG_GHOST_TRIB_START, "The Netherworld answers your ghost path's rise to %s! Survive %s strikes of yin lightning!");
+		t.add(ModLang.MSG_GHOST_TRIB_START_SINGLE, "The Netherworld answers your ghost path's rise to %s! Survive its strike of yin lightning!");
+		t.add(ModLang.MSG_GHOST_BREAKTHROUGH, "The Netherworld's tribulation survived: your ghost path stands at %s!");
+		t.add(ModLang.MSG_GHOST_TRIB_FALL, "Backlash! Your ghost path falls to %s.");
+		t.add(ModLang.MSG_GHOST_TRIB_FLED, "You fled the Netherworld's tribulation. Backlash! Your ghost path falls to %s.");
+		t.add(ModLang.TRIB_HUD_GHOST, "The Netherworld's Tribulation (%s) - strikes left: %s");
+		t.add(ModLang.METHODS_GHOST_RESTING, "You draw in the heavens' qi: your ghost path and its methods rest. Switch to ghostly qi on the Cultivation tab to cultivate them.");
+		t.add(ModLang.METHODS_GHOST_NEXT, "The %s is understood as far as your ghost path: its next layer opens at %s.");
+		t.add(ModLang.METHODS_GHOST_REACH, "Your foundations open the ghost path's way as far as %s.");
+		t.add(ModLang.DEATH_YIN_LIGHTNING, "%1$s was struck down by the Netherworld's tribulation");
+		t.add(ModLang.DEATH_YIN_LIGHTNING + ".player", "%1$s was struck down by the Netherworld's tribulation while fighting %2$s");
+		t.add(ModLang.DEATH_YIN_TRIBULATION, "%1$s was unmade by the Netherworld's yin");
+		t.add(ModLang.DEATH_YIN_TRIBULATION + ".player", "%1$s was unmade by the Netherworld's yin while fighting %2$s");
 		t.add(ModLang.FORM_PREFIX + "human", "human form");
 		t.add(ModLang.FORM_PREFIX + "ghost_king", "Ghost King form");
 		t.add(ModLang.MSG_FORMS_OPEN, "Your ghost path reached Core Formation: Form Shift (Abilities) takes a Ghost King's form.");
@@ -503,11 +527,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.KEY_SPELL_WHEEL, "Spell Wheel (hold)");
 		t.add(ModLang.KEY_CAST_SPELL, "Cast Readied Spell");
 		t.add(ModLang.MSG_METHOD_LEARNED, "Learned the %s.");
-		t.add(ModLang.MSG_METHOD_LEARNED_AT, "Learned the %s, at layer %s.");
-		t.add(ModLang.MSG_METHOD_LAYER, "%s: layer %s reached.");
-		t.add(ModLang.MSG_METHOD_REALM_CAPPED, "The %s waits at layer %s until your ghost path reaches %s.");
-		t.add(ModLang.MSG_METHOD_FLOOR, "The %s carries your ghost path to %s.");
-		t.add(ModLang.MSG_METHOD_PRACTISED, "Your meditation now cultivates the %s.");
+		t.add(ModLang.MSG_METHOD_LEARNED_AT, "Learned the %s, understood to layer %s.");
+		t.add(ModLang.MSG_METHOD_PRACTISED, "Your meditation now leans on the %s.");
 		t.add(ModLang.MSG_GHOST_NO_METHOD, "The dead cultivate only the ghost methods. Learn one at a Method Stele first.");
 		t.add(ModLang.MSG_GHOST_QI_SPENT, "Your ghost qi is spent. Your ghostly arts fade.");
 		t.add(ModLang.MSG_STELE_TEACHES, "This stele holds the %s. Meditate beside it to learn it.");
@@ -529,14 +550,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.METHODS_LAYER, "Layer %s of %s");
 		t.add(ModLang.METHODS_LAYER_REALM, "Layer %s of %s: %s, %s of 9");
 		t.add(ModLang.METHODS_PERFECTED, "Perfected");
-		t.add(ModLang.METHODS_PROGRESS, "%s%% to the next layer");
-		t.add(ModLang.METHODS_RATE, "Meditating here, the %s's next layer comes in about %s min.");
-		t.add(ModLang.METHODS_NO_QI, "There is no ghostly qi here to cultivate with. It flows faintly in the Overworld, thicker in the Nether's Soul Sand Valleys, and ten times as dense in the Netherworld.");
+		t.add(ModLang.METHODS_NO_QI, "There is no ghostly qi here to cultivate with. It flows faintest in the Overworld, thicker in the Nether (thickest in its Soul Sand Valleys), and ten times as dense in the Netherworld.");
 		t.add(ModLang.BTN_SPELL_LIST, "Spell List");
-		t.add(ModLang.METHODS_REALM_CAPPED, "Held at layer %s until your ghost path reaches %s: practise your foundation method to raise it.");
-		t.add(ModLang.METHODS_FLOOR_NEXT, "Layer %s of the %s carries your ghost path to %s.");
-		t.add(ModLang.METHODS_SEEK_NEXT, "The %s is perfected. Only a foundation that goes further, the %s or one beyond it, carries your "
-				+ "ghost path on: seek it out.");
 		t.add(ModLang.METHODS_GHOST_PATH, "Ghost path: %s");
 		t.add(ModLang.METHODS_GHOST_PATH_NONE, "Ghost path: not yet begun");
 		t.add(ModLang.METHODS_GHOST_PATH_SEALED, "Ghost path: sealed, your meridians not yet opened (a Marrow Cleansing Elixir)");
@@ -1019,11 +1034,11 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModItems.YIN_GATHERING_PILL, "Yin Gathering Pill");
 		t.add(ModEffects.YANG_PRESERVATION, "Yang Preservation");
 		t.add(ModEffects.YIN_GATHERING, "Yin Gathering");
-		t.add(ModLang.MSG_PILL_NO_METHOD, "You know no ghost method for its yin to feed.");
+		t.add(ModLang.MSG_PILL_NO_METHOD, "You have no ghost path for its yin to feed: learn a ghost foundation first.");
 		t.add(ModLang.MSG_PILL_YANG, "Yang warmth spreads through you: the Netherworld's yin is held still for %s minutes");
-		t.add(ModLang.MSG_PILL_YIN, "+%s%% ghost method cultivation for %s minutes");
+		t.add(ModLang.MSG_PILL_YIN, "+%s%% ghost path cultivation for %s minutes");
 		t.add(ModLang.PILL_EFFECT_YANG, "Holds the Netherworld's yin still for %s minutes");
-		t.add(ModLang.PILL_EFFECT_YIN, "+%s%% ghost method cultivation for %s minutes");
+		t.add(ModLang.PILL_EFFECT_YIN, "+%s%% ghost path cultivation for %s minutes");
 		t.add(ModItems.GHOST_QUELLING_TALISMAN, "Ghost-Quelling Talisman");
 		t.add(ModLang.TOOLTIP_GHOST_QUELLING_TALISMAN, "Throw it at the dead: it strikes them and binds them where they stand for %s seconds");
 		t.add(ModEntities.GHOST_QUELLING_TALISMAN, "Ghost-Quelling Talisman");
@@ -1513,6 +1528,10 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_POSSESS_OWNER_BACK, "%s is back, watching through their body's eyes.");
 		t.add(ModLang.MSG_POSSESS_STILL_HELD, "%s's nascent soul still holds your body. You can only watch through its eyes until it lets go.");
 		t.add(ModLang.MSG_POSSESS_DIED_AWAY, "Your body died while another's soul held it.");
+		t.add(ModLang.MSG_POSSESS_GUIDANCE, "Your soul stands above this body: meditating in it, you cultivate it %s times as fast as it could alone.");
+		t.add(ModLang.MSG_POSSESS_MERIDIANS, "Your soul's might forces open %s's meridians: the body can cultivate now.");
+		t.add(ModLang.MSG_POSSESS_MERIDIANS_TAKEN, "The soul in your body has forced your meridians open: you can cultivate now.");
+		t.add(ModLang.ABILITY_SOUL_WOUNDED, "Your soul is wounded: %s of %s hearts. It mends while it rests in a body (yours, or one it possesses).");
 		t.add(ModLang.HUD_SOUL_GATHERING, "Leaving your body... %s s");
 		t.add(ModLang.HUD_SOUL_RECALLING, "Returning to your body... %s s");
 		t.add(ModLang.HUD_SOUL_TETHER, "Tether %s / %s");

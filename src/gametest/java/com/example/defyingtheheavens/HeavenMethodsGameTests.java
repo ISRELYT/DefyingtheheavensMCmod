@@ -273,6 +273,9 @@ public class HeavenMethodsGameTests implements FabricGameTest {
 		helper.setBlock(new BlockPos(1, 1, 1), Blocks.STONE);
 		ServerPlayer player = helper.makeMockServerPlayerInLevel();
 		player.setGameMode(GameType.SURVIVAL);
+		// Out of the other tests' fights: a Hungry Ghost of a neighbouring test went for this survival player, and a blow ends a
+		// meditation (CultivationEvents), so its layer never settled. Invulnerable, no mob takes it for prey and no stray blow lands.
+		player.getAbilities().invulnerable = true;
 		net.minecraft.world.phys.Vec3 at = net.minecraft.world.phys.Vec3.atBottomCenterOf(helper.absolutePos(new BlockPos(1, 2, 1)));
 		player.moveTo(at.x, at.y, at.z);
 		player.setOnGround(true);

@@ -171,7 +171,8 @@ public class PillItem extends Item {
 				return null;
 			case YIN_GATHERING:
 				if (c.isMortal()) return Component.translatable(ModLang.MSG_PILL_MORTAL); // its ghost methods lie dormant (GhostMethods#refusal)
-				return c.netherworld().knowsAnyMethod() ? null : Component.translatable(ModLang.MSG_PILL_NO_METHOD);
+				// Its yin feeds the ghost path's bar (GhostMethods): no path begun, nothing to feed.
+				return GhostMethods.ghostRank(c.netherworld()) >= 0 ? null : Component.translatable(ModLang.MSG_PILL_NO_METHOD);
 			default:
 				return null;
 		}

@@ -488,6 +488,10 @@ public final class ModLang {
 	public static final String MSG_POSSESS_OWNER_BACK = k("message.possess.owner_back");
 	public static final String MSG_POSSESS_STILL_HELD = k("message.possess.still_held");
 	public static final String MSG_POSSESS_DIED_AWAY = k("message.possess.died_away");
+	public static final String MSG_POSSESS_GUIDANCE = k("message.possess.guidance");
+	public static final String MSG_POSSESS_MERIDIANS = k("message.possess.meridians");
+	public static final String MSG_POSSESS_MERIDIANS_TAKEN = k("message.possess.meridians_taken");
+	public static final String ABILITY_SOUL_WOUNDED = k("ability.soul_wounded");
 	public static final String HUD_SOUL_TETHER_AWAY = k("hud.soul.tether_away");
 	public static final String HUD_SOUL_INSIDE = k("hud.soul.inside");
 	public static final String HUD_SOUL_OWN_QI_LABEL = k("hud.soul.own_qi_label");
@@ -731,9 +735,6 @@ public final class ModLang {
 	public static final String KEY_SPELL_WHEEL = "key." + DefyingTheHeavens.MOD_ID + ".spell_wheel";
 	public static final String KEY_CAST_SPELL = "key." + DefyingTheHeavens.MOD_ID + ".cast_spell";
 	public static final String MSG_METHOD_LEARNED = k("message.method.learned");
-	public static final String MSG_METHOD_LAYER = k("message.method.layer");
-	public static final String MSG_METHOD_REALM_CAPPED = k("message.method.realm_capped");
-	public static final String MSG_METHOD_FLOOR = k("message.method.floor");
 	public static final String MSG_METHOD_LEARNED_AT = k("message.method.learned_at");
 	public static final String MSG_METHOD_PRACTISED = k("message.method.practised");
 	public static final String MSG_GHOST_NO_METHOD = k("message.method.ghost_none");
@@ -755,11 +756,6 @@ public final class ModLang {
 	public static final String METHODS_LAYER = k("methods.layer");
 	public static final String METHODS_LAYER_REALM = k("methods.layer_realm");
 	public static final String METHODS_PERFECTED = k("methods.perfected");
-	public static final String METHODS_PROGRESS = k("methods.progress");
-	public static final String METHODS_RATE = k("methods.rate");
-	public static final String METHODS_REALM_CAPPED = k("methods.realm_capped");
-	public static final String METHODS_FLOOR_NEXT = k("methods.floor_next");
-	public static final String METHODS_SEEK_NEXT = k("methods.seek_next");
 	public static final String METHODS_GHOST_PATH = k("methods.ghost_path");
 	public static final String METHODS_GHOST_PATH_NONE = k("methods.ghost_path_none");
 	public static final String METHODS_UNKNOWN_DEEP = k("methods.unknown_deep");
@@ -803,28 +799,52 @@ public final class ModLang {
 	public static final String EFFECTIVE_BEYOND = k("two_paths.effective.beyond");
 	/** A Quasi- name and how far toward it ("%s (%s%%)"). */
 	public static final String EFFECTIVE_TOWARD = k("two_paths.effective.toward");
-	/**
-	 * What the ghost path's bar on the Cultivation tab says: its foundation and layer (in short where that won't fit), the
-	 * foundation perfected, or the one to seek next. The first also names the heaven method practised, at the very peak.
-	 */
+	/** The heaven method practised at the very peak, on the Cultivation tab's bar: its name and layer (in short where that won't fit). */
 	public static final String METHOD_BAR = k("method_bar");
 	public static final String METHOD_BAR_SHORT = k("method_bar.short");
-	public static final String METHOD_BAR_PERFECTED = k("method_bar.perfected");
-	public static final String METHOD_BAR_SEEK = k("method_bar.seek");
 	/**
 	 * The Cultivation tab on both paths, each path a column of its own (half the width): the bars' shortest words (the cultivation
-	 * without its label, the layer without the method's name, the foundation to seek unnamed), and the ghost path's column's line:
-	 * the practised ghost method's pace (or why there is none).
+	 * without its label, the layer without the method's name), and the ghost path's column's line when there is no ghostly qi.
 	 */
 	public static final String CULTIVATION_SHORT = k("cultivation.short");
 	public static final String CULTIVATION_MAX_SHORT = k("cultivation_max.short");
 	public static final String METHOD_BAR_LAYERS = k("method_bar.layers");
-	public static final String METHOD_BAR_SEEK_SHORT = k("method_bar.seek_short");
-	public static final String GHOST_COLUMN_NONE = k("two_paths.ghost.none");
 	public static final String GHOST_COLUMN_NO_QI = k("two_paths.ghost.no_qi");
-	public static final String GHOST_COLUMN_HELD = k("two_paths.ghost.held");
-	public static final String GHOST_COLUMN_RATE = k("two_paths.ghost.rate");
-	public static final String GHOST_COLUMN_RATE_SHORT = k("two_paths.ghost.rate_short");
+	/**
+	 * The ghost path's own bar (2026-10-19, GhostMethods): its column's pace line, what stands next on it, the Cultivation tab's switch
+	 * between the two qi, its layers settling, its gate, and the Netherworld's tribulation (TribulationManager, the ghost path's).
+	 */
+	public static final String GHOST_COLUMN_PACE = k("two_paths.ghost.pace");
+	public static final String GHOST_COLUMN_PACE_SHORT = k("two_paths.ghost.pace_short");
+	/** Either path's column, its qi not drawn in. */
+	public static final String COLUMN_RESTING = k("two_paths.resting");
+	public static final String GHOST_BOTTLENECK = k("two_paths.ghost.bottleneck");
+	/** At a path's bottleneck with the other's qi drawn in: the Breakthrough button is the other's, so switch first. */
+	public static final String GHOST_BOTTLENECK_SWITCH = k("two_paths.ghost.bottleneck_switch");
+	public static final String BOTTLENECK_SWITCH = k("two_paths.heaven.bottleneck_switch");
+	public static final String GHOST_PINNACLE = k("two_paths.ghost.pinnacle");
+	public static final String GHOST_GATE_NONE = k("two_paths.ghost.gate_none");
+	public static final String BTN_PATH_HEAVEN = k("button.path.heaven");
+	public static final String BTN_PATH_GHOST = k("button.path.ghost");
+	public static final String MSG_PATH_HEAVEN = k("message.path.heaven");
+	public static final String MSG_PATH_GHOST = k("message.path.ghost");
+	public static final String MSG_PATH_NO_GHOST = k("message.path.no_ghost");
+	public static final String MSG_GHOST_LAYER = k("message.ghost_method.layer");
+	public static final String MSG_GHOST_LAYER_SPELL = k("message.ghost_method.layer_spell");
+	public static final String MSG_GHOST_PATH_RISES = k("message.ghost_path.rises");
+	public static final String MSG_GHOST_BOTTLENECK = k("message.ghost_path.bottleneck");
+	public static final String MSG_GHOST_TRIB_START = k("message.ghost_tribulation.start");
+	public static final String MSG_GHOST_TRIB_START_SINGLE = k("message.ghost_tribulation.start_single");
+	public static final String MSG_GHOST_BREAKTHROUGH = k("message.ghost_tribulation.survived");
+	public static final String MSG_GHOST_TRIB_FALL = k("message.ghost_tribulation.fall");
+	public static final String MSG_GHOST_TRIB_FLED = k("message.ghost_tribulation.fled");
+	public static final String TRIB_HUD_GHOST = k("hud.ghost_tribulation");
+	public static final String METHODS_GHOST_RESTING = k("methods.ghost_resting");
+	public static final String METHODS_GHOST_NEXT = k("methods.ghost_next");
+	public static final String METHODS_GHOST_REACH = k("methods.ghost_reach");
+	/** The Netherworld's tribulation's yin lightning (ModDamageTypes): its bolt, and the yin that goes through armour. */
+	public static final String DEATH_YIN_LIGHTNING = "death.attack." + DefyingTheHeavens.MOD_ID + ".yin_lightning";
+	public static final String DEATH_YIN_TRIBULATION = "death.attack." + DefyingTheHeavens.MOD_ID + ".yin_tribulation";
 	public static final String MSG_SPELL_NO_BOTH = k("message.spell.no_both");
 	public static final String MSG_SPELL_BOTH_PATHS = k("message.spell.both_paths");
 	/** A form's name: this and its id (TwoPaths.Form). */

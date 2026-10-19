@@ -155,6 +155,114 @@ public class TribulationCloudGameTests implements FabricGameTest {
         }
     }
 
+    /**
+     * The ghost path at Foundation Building Grand Perfection, its bar full, the Ghost Core Canon known (its way into Core Formation
+     * open), the ghost path's qi drawn in: ready for the Netherworld's tribulation into Core Formation.
+     */
+    private static void readyForGhostCore(PlayerCultivation cultivation) {
+        cultivation.setState(Realm.QI_REFINING, Stage.EARLY, 0);
+        NetherworldState s = cultivation.netherworld();
+        for (GhostMethod method : new GhostMethod[]{GhostMethod.NETHERWORLD_BREATHING, GhostMethod.YELLOW_SPRINGS_MARROW, GhostMethod.GHOST_CORE_CANON}) {
+            s.setMethod(method, 1, 0);
+        }
+        int rank = PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.GRAND_PERFECTION);
+        GhostMethods.setPath(s, rank);
+        s.setPath(rank, GhostMethods.required(rank));
+        s.setCultivatingGhost(true);
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 400)
+    public void theGhostPathsTribulationIsTheNetherworlds(GameTestHelper helper) {
+        ServerPlayer player = isolated(helper);
+        player.setGameMode(GameType.SURVIVAL);
+        ((ServerPlayerAccessor) player).dth$setSpawnInvulnerableTime(0);
+        PlayerCultivation c = CultivationManager.get(player);
+        NetherworldState s = c.netherworld();
+        try {
+            readyForGhostCore(c);
+            player.getAttribute(Attributes.MAX_HEALTH).setBaseValue(100);
+            player.setHealth(player.getMaxHealth());
+            float full = player.getHealth();
+            helper.assertTrue(TwoPaths.cultivatesGhost(c) && GhostMethods.canBreakthrough(c) && !c.canBreakthrough(), "The ghost path at its bottleneck, its qi drawn in");
+            CultivationManager.tryBreakthrough(player);
+            helper.assertTrue(TribulationManager.isGhostTrial(player.getUUID()) && s.inGhostTribulation() && cloudFor(helper, player).isGhost(),
+                    "The Breakthrough button brings the Netherworld's tribulation: its own storm, the ghost path marked");
+            for (int tick = 0; tick < 60; tick++) TribulationManager.tick(helper.getLevel().getServer());
+            var bolts = helper.getLevel().getEntitiesOfClass(TribulationLightning.class, new AABB(player.blockPosition()).inflate(2));
+            helper.assertTrue(bolts.size() == 1 && bolts.get(0).isGhost()
+                    && Math.abs(bolts.get(0).renderScale() - TribulationManager.boltScale(Realm.CORE_FORMATION, Stage.EARLY)) < 1.0e-5,
+                    "Its one bolt, yin lightning, as big as the realm's");
+            helper.assertTrue(Math.abs(full - player.getHealth() - 18) < 0.01f, "The Core Formation strike in yin: 5 through armour and 13 more (" + (full - player.getHealth()) + ")");
+            bolts.forEach(net.minecraft.world.entity.Entity::discard);
+            for (int tick = 0; tick < 60 * 2 + 25 && TribulationManager.isActive(player.getUUID()); tick++) TribulationManager.tick(helper.getLevel().getServer());
+            helper.assertTrue(!TribulationManager.isActive(player.getUUID()) && !s.inGhostTribulation()
+                    && GhostMethods.ghostRank(s) == PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY) && c.getRealm() == Realm.QI_REFINING,
+                    "Survived: the ghost path into Core Formation, the heaven path where it was");
+            helper.succeed();
+        } finally {
+            TribulationManager.forget(player.getUUID());
+            helper.getLevel().getServer().getPlayerList().remove(player);
+            player.discard();
+        }
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE)
+    public void theDeadFaceTheNetherworldsTribulationAtHalfAndScatterIfItFails(GameTestHelper helper) {
+        ServerPlayer player = isolated(helper);
+        player.setGameMode(GameType.SURVIVAL);
+        ((ServerPlayerAccessor) player).dth$setSpawnInvulnerableTime(0);
+        PlayerCultivation c = CultivationManager.get(player);
+        NetherworldState s = c.netherworld();
+        try {
+            readyForGhostCore(c);
+            s.setCultivatingGhost(false); // the dead draw in ghostly qi whatever the switch says
+            GhostSystem.makeGhost(player);
+            helper.assertTrue(TwoPaths.cultivatesGhost(c), "The dead cultivate the ghost path alone");
+            player.setHealth(player.getMaxHealth());
+            float full = player.getHealth();
+            CultivationManager.tryBreakthrough(player);
+            helper.assertTrue(TribulationManager.isGhostTrial(player.getUUID()), "The dead break through on the ghost path");
+            for (int tick = 0; tick < 60; tick++) TribulationManager.tick(helper.getLevel().getServer());
+            helper.assertTrue(Math.abs(full - player.getHealth() - 18 * TribulationManager.DEAD_SHARE) < 0.01f,
+                    "The yin reaches the dead, half of it (" + (full - player.getHealth()) + ")");
+            player.setHealth(2);
+            for (int tick = 0; tick < 60 && TribulationManager.isActive(player.getUUID()); tick++) TribulationManager.tick(helper.getLevel().getServer());
+            helper.assertTrue(!TribulationManager.isActive(player.getUUID()) && !s.inGhostTribulation()
+                    && GhostMethods.ghostRank(s) == PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.LATE) && s.pathCultivation() == 0,
+                    "Struck down, it scatters: failed, the ghost path a stage down, its cultivation lost (" + GhostMethods.rankName(GhostMethods.ghostRank(s)).getString() + ")");
+            helper.succeed();
+        } finally {
+            TribulationManager.forget(player.getUUID());
+            GhostSystem.forget(player.getUUID());
+            helper.getLevel().getServer().getPlayerList().remove(player);
+            player.discard();
+        }
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE)
+    public void leavingTheNetherworldsTribulationFailsItOnReturn(GameTestHelper helper) {
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        try {
+            PlayerCultivation c = CultivationManager.get(player);
+            NetherworldState s = c.netherworld();
+            readyForGhostCore(c);
+            TribulationManager.startGhost(player);
+            helper.assertTrue(s.inGhostTribulation() && !c.isInTribulation(), "The ghost path's own mark, not the heaven path's");
+            TribulationManager.forget(player.getUUID());
+            helper.assertTrue(PlayerCultivation.load(c.save()).netherworld().inGhostTribulation(), "...saved");
+            helper.assertTrue(TribulationManager.onJoin(player) && !s.inGhostTribulation()
+                    && GhostMethods.ghostRank(s) == PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.LATE)
+                    && c.getRealm() == Realm.QI_REFINING && c.getStage() == Stage.EARLY,
+                    "Fled: on return the ghost path falls a stage, the heaven path untouched");
+            helper.assertTrue(!TribulationManager.onJoin(player), "It is paid only once");
+            helper.succeed();
+        } finally {
+            TribulationManager.forget(player.getUUID());
+            helper.getLevel().getServer().getPlayerList().remove(player);
+            player.discard();
+        }
+    }
+
     /** Qi Refining Grand Perfection, bar full, Foundation Pill taken, a heaven method opening the way: ready to break into Foundation Building. */
     private static void readyForFoundation(PlayerCultivation cultivation) {
         TestMethods.carryAll(cultivation);
@@ -172,6 +280,27 @@ public class TribulationCloudGameTests implements FabricGameTest {
         observerBolt.getEntityData().assignValues(serverBolt.getEntityData().getNonDefaultValues());
         helper.assertTrue(observerBolt.renderHeight() == 84,
                 "Observers receive the actual cloud-to-ground distance, not their own altitude or realm");
+        serverBolt.setScale(TribulationManager.boltScale(Realm.NASCENT_SOUL, Stage.MID));
+        observerBolt.getEntityData().assignValues(serverBolt.getEntityData().getNonDefaultValues());
+        helper.assertTrue(Math.abs(observerBolt.renderScale() - 2.0125f) < 1.0e-4, "...and its size (" + observerBolt.renderScale() + ")");
+        helper.succeed();
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE)
+    public void theBoltGrowsWithTheTribulationAsItsCloudDoes(GameTestHelper helper) {
+        helper.assertTrue(TribulationManager.boltScale(Realm.FOUNDATION_BUILDING, Stage.EARLY) == 1.0f
+                && Math.abs(TribulationManager.boltScale(Realm.CORE_FORMATION, Stage.EARLY) - 1.45f) < 1.0e-5,
+                "Foundation Building's bolt as vanilla's, Core Formation's as much thicker as its cloud is wider");
+        float last = 0;
+        boolean growing = true;
+        for (Realm realm : new Realm[]{Realm.NASCENT_SOUL, Realm.HEAVENLY_BEING, Realm.FOUR_AXIS}) {
+            for (Stage stage : Stage.values()) {
+                float scale = TribulationManager.boltScale(realm, stage);
+                growing &= scale > last;
+                last = scale;
+            }
+        }
+        helper.assertTrue(growing && Math.abs(last - 3.1375f) < 1.0e-4, "Every stage's bolt thicker than the last, Four Axis Grand Perfection's x3.14 (" + last + ")");
         helper.succeed();
     }
 

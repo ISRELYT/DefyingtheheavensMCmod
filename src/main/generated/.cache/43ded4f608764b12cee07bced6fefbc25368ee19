@@ -1,4 +1,4 @@
-// 1.20.1	2026-10-18T23:55:38.2540705	Defying The Heavens/Defying The Heavens worldgen
+// 1.20.1	2026-10-19T11:25:20.9998002	Defying The Heavens/Defying The Heavens worldgen
 05c9dae8197cd133a3df50b429c103563e50d6ba data\defying-the-heavens\worldgen\configured_feature\ore_jade_stone.json
 b4f722c579c262a977d582436d72dbf662eb393e data\defying-the-heavens\worldgen\placed_feature\netherworld\other_shore_flower_fields.json
 a5e5e91b20b93b402704e4ebf3f71fd596c34141 data\defying-the-heavens\worldgen\placed_feature\huangjing_upper_realm.json
@@ -12,14 +12,14 @@ c194236bac1b8209c3b344af506189720c78a968 data\defying-the-heavens\worldgen\place
 8e188bd6f359ff8eba9e1fcbaaf195938ec7305e data\defying-the-heavens\worldgen\placed_feature\ginseng_upper_realm.json
 218cb6cb739fdbea706ebeced9e21d504823eb93 data\defying-the-heavens\worldgen\configured_feature\netherworld\lake.json
 872032086a7487c92a7536186b9114b6dcba5eda data\defying-the-heavens\damage_type\qi_fire.json
-3f702eb9fc833eeac9e5ea06c71356173893c094 data\defying-the-heavens\worldgen\placed_feature\qi_vein.json
 f96800ed44fec9691aecc0cd7601b2fa4505db83 data\defying-the-heavens\worldgen\placed_feature\patch_berry_bush.json
+3f702eb9fc833eeac9e5ea06c71356173893c094 data\defying-the-heavens\worldgen\placed_feature\qi_vein.json
 6bd0c52fb5afbfadff29622782570a4710aca113 data\defying-the-heavens\worldgen\configured_feature\ore_diamond_buried.json
 ef92701b51f45fad0c72ce7440414845f22d7394 data\defying-the-heavens\worldgen\placed_feature\spring_lava.json
 94ad946826065fea427588b91a5967069e29fdb4 data\defying-the-heavens\worldgen\biome\nine_nether_peaks.json
 41bee6bd5f64946caf026f373836d76cca7a3474 data\defying-the-heavens\worldgen\configured_feature\ore_gold.json
-8c25d37e63251cf19a22574e559559bf40a405cf data\defying-the-heavens\worldgen\configured_feature\spirit_dew_grass.json
 3e3314edf2ec682a51fbcd2e9b153e9009a4d45b data\defying-the-heavens\worldgen\configured_feature\ore_granite.json
+8c25d37e63251cf19a22574e559559bf40a405cf data\defying-the-heavens\worldgen\configured_feature\spirit_dew_grass.json
 d91276685239c54af699872f04f655b1fed948fe data\defying-the-heavens\worldgen\noise\netherworld\edge.json
 346a5d0ce9d49a2491f8cbcca5e2601b7d237f98 data\defying-the-heavens\worldgen\placed_feature\spirit_lotus.json
 e1b9ab49e6f826687b0164eba7b22477e67ca0d1 data\defying-the-heavens\worldgen\placed_feature\ore_jade.json
@@ -55,11 +55,11 @@ df58d41507c29ae8f9e8113768b5db5f5a449ee9 data\defying-the-heavens\worldgen\confi
 34272f6f1d32d884e52b23b0b89a2d089ee09b67 data\defying-the-heavens\worldgen\placed_feature\netherworld\dead_tree_rare.json
 4b7d2771e4ce0ed76eb62b627a77c14051e79e88 data\defying-the-heavens\worldgen\configured_feature\dao_stele.json
 62913b13770381d5f32fb9970cfd5585cfdb9712 data\defying-the-heavens\worldgen\placed_feature\blue_spirit_tree.json
-c176a89e761d403d921297e492c7c136394fde0c data\defying-the-heavens\worldgen\biome\spatial_gap.json
 1ce06bbf274aaa5f14f783419277e0c775cf3db2 data\defying-the-heavens\worldgen\placed_feature\cultivation_fruit_upper_realm.json
+c176a89e761d403d921297e492c7c136394fde0c data\defying-the-heavens\worldgen\biome\spatial_gap.json
 186b17b2150fe565a586528cd7d0a895b5660104 data\defying-the-heavens\worldgen\configured_feature\cultivation_fruit.json
-601a2a55bc2ecaaf1606139368b244061522e927 data\defying-the-heavens\worldgen\placed_feature\spring_water.json
 64f7d6ca9927899379116c97896a1727becf761d data\defying-the-heavens\worldgen\placed_feature\ore_dirt.json
+601a2a55bc2ecaaf1606139368b244061522e927 data\defying-the-heavens\worldgen\placed_feature\spring_water.json
 9f2957ae6ae0da45cdc96b281b89d3a4f768c110 data\defying-the-heavens\worldgen\placed_feature\qi_vein_upper_realm.json
 6400d0602ce581afb1aded58f53e4e7506430723 data\defying-the-heavens\worldgen\placed_feature\spirit_dew_grass_upper_realm.json
 5c688240d6cc8c9fa28d2ad6220ccdd4cb3717e6 data\defying-the-heavens\worldgen\placed_feature\purple_lingzhi.json
@@ -89,6 +89,7 @@ d39454a5e968287d63a4ede5757e8219b3c929d4 data\defying-the-heavens\dimension_type
 653dc2d8c7dc0702e2698e00518bbb5b39eb74fa data\defying-the-heavens\worldgen\placed_feature\dao_stele.json
 080860928e9c5552b5cbc79ff401de6ec23bdbb3 data\defying-the-heavens\worldgen\configured_feature\white_blossom_tree.json
 8534e2fd3741624fae6b13993fbc313958d27713 data\defying-the-heavens\worldgen\placed_feature\netherworld\spider_lilies.json
+fb17ecee2cb886314db6845c86619541d53a53f5 data\defying-the-heavens\damage_type\yin_tribulation.json
 75f658b434f84eb9142a5da5a4d7aed09a8c07c3 data\defying-the-heavens\worldgen\placed_feature\flowers_forest.json
 d91276685239c54af699872f04f655b1fed948fe data\defying-the-heavens\worldgen\noise\upper_realm\edge.json
 dbed2df5de4af7b8aa6514fd64fd30739963faf1 data\defying-the-heavens\worldgen\placed_feature\ore_gold.json
@@ -107,6 +108,7 @@ c021e8baf54c20e19aff540457c0e96ba7d7d12f data\defying-the-heavens\worldgen\noise
 f8ec47da0510663b360db44e32b74c53859a97db data\defying-the-heavens\worldgen\configured_feature\netherworld\spring_water.json
 ba5f6a97210104313eddedb2e084a00ea0a1f8aa data\defying-the-heavens\worldgen\placed_feature\ore_lapis.json
 c021e8baf54c20e19aff540457c0e96ba7d7d12f data\defying-the-heavens\worldgen\noise\netherworld\low.json
+72d57e79ff59ee1f2fbc4bb0e4c784c446341ed8 data\defying-the-heavens\damage_type\yin_lightning.json
 241c6d75fd1d0dffccf81d2e3dcac5c3a16066cc data\defying-the-heavens\worldgen\biome\yellow_springs.json
 e24767380df6003e2d7f6fe1662bc32c7f078a06 data\defying-the-heavens\worldgen\noise_settings\spatial_gap_empty.json
 4e8828c6eb1562f502b32ab77cda47a6c8bcdb11 data\defying-the-heavens\worldgen\placed_feature\netherworld\blackstone_blobs.json
@@ -117,11 +119,11 @@ a4f50f9f2f2a16ed76cfd681bed2624477bd917d data\defying-the-heavens\worldgen\biome
 81de5428d58a768519b4a137bfa556c7fc6b4534 data\defying-the-heavens\worldgen\placed_feature\other_shore_flower_nether.json
 8bea3294b5afa479f7cda398e8ddf52125b60236 data\defying-the-heavens\damage_type\ghostly.json
 f0ecbe764df6e4227d2bcd654c8f9f0c002d6b83 data\defying-the-heavens\dimension_type\astral_void.json
-d8872c89cb2ad7824364436b5c4989e5aebdcae6 data\defying-the-heavens\damage_type\qi_earth.json
 58c3396ff4d32ede672f21f20539774e95fb91f8 data\defying-the-heavens\worldgen\placed_feature\ore_jade_stone.json
+d8872c89cb2ad7824364436b5c4989e5aebdcae6 data\defying-the-heavens\damage_type\qi_earth.json
 4922e6bd5e5e58d2401a4f158041586b5854df00 data\defying-the-heavens\worldgen\configured_feature\ore_lapis.json
-bba76f326429ddeda095f639e5d22eb6b443c676 data\defying-the-heavens\worldgen\placed_feature\dao_stele_upper_realm.json
 b89737a4caa5175e68f4f4f16fa10c58a32417c7 data\defying-the-heavens\worldgen\placed_feature\netherworld\lake_springs.json
+bba76f326429ddeda095f639e5d22eb6b443c676 data\defying-the-heavens\worldgen\placed_feature\dao_stele_upper_realm.json
 2fc6e1c2bc0a5ff69c317610f809112c4fab5ca8 data\defying-the-heavens\worldgen\placed_feature\huangjing.json
 e88440447584a6626e29a6b63c0f4dbf153d8bb9 data\defying-the-heavens\worldgen\configured_feature\purple_lingzhi.json
 3af7e71ff3ac2ccc1408378dd29ce26675cd4df1 data\defying-the-heavens\worldgen\configured_feature\netherworld\basalt_blobs.json
@@ -130,8 +132,8 @@ e88440447584a6626e29a6b63c0f4dbf153d8bb9 data\defying-the-heavens\worldgen\confi
 dc18ba14486078cf858b3f40a46e422bba90a038 data\defying-the-heavens\dimension_type\astral_surfaces.json
 c08c5cd06c96b4a8422605a6c6f655be81450269 data\defying-the-heavens\worldgen\placed_feature\spirit_forest_trees.json
 658cec24fb9cbd0081213a2d13d376f73a18f315 data\defying-the-heavens\worldgen\placed_feature\ore_spirit_stone.json
-169bf521c087a88d4c0ad7e8e003a53cb03d9b2f data\defying-the-heavens\worldgen\placed_feature\bamboo_grove.json
 0534cd3c99702b566f6029e2220441475438cef4 data\defying-the-heavens\worldgen\placed_feature\netherworld\netherworld_lotus.json
+169bf521c087a88d4c0ad7e8e003a53cb03d9b2f data\defying-the-heavens\worldgen\placed_feature\bamboo_grove.json
 b03598e2f2a63e2d8d54e3b5d9a9cbe9bc6b2537 data\defying-the-heavens\worldgen\configured_feature\netherworld\spider_lilies.json
 8c930b0953d1fbc3250fc3a1cfd62f73b5424417 data\defying-the-heavens\worldgen\configured_feature\lingzhi.json
 95e447fe02d06566b03cbbead424d969ba3d5c93 data\defying-the-heavens\worldgen\configured_feature\ore_clay.json
@@ -147,10 +149,10 @@ ee16bc9340e4186a81316adfc348d76bf8605c96 data\defying-the-heavens\worldgen\noise
 63bb5cf6ffff0da0a60f1b939e99306c1ebabe8e data\defying-the-heavens\worldgen\placed_feature\ochre_huangjing_upper_realm.json
 4ca26791206a7de5741365fb6c9db93ba3fa42ce data\defying-the-heavens\worldgen\placed_feature\ore_iron.json
 4a1d16f229d0d4dc0fdd501936bd59278ecef504 data\defying-the-heavens\worldgen\noise\netherworld\land.json
-1b1228fcfe53175909f34ec733a16b1a25afc5aa data\defying-the-heavens\worldgen\configured_feature\ore_redstone.json
 8f7f15ce5327babffcdb0a9cd6c89fc11f6ab56d data\defying-the-heavens\worldgen\configured_feature\netherworld\ore_yin_jade.json
-3df704193569d8283d3f86d62c845b76958d6a6b data\defying-the-heavens\worldgen\placed_feature\ore_redstone.json
+1b1228fcfe53175909f34ec733a16b1a25afc5aa data\defying-the-heavens\worldgen\configured_feature\ore_redstone.json
 6ecfc9ed8b64808bbe6976d34098f1e4d2a75693 data\defying-the-heavens\worldgen\placed_feature\netherworld\spring_water.json
+3df704193569d8283d3f86d62c845b76958d6a6b data\defying-the-heavens\worldgen\placed_feature\ore_redstone.json
 9a71b0fd42042507410649610f56d7ce6247b82a data\defying-the-heavens\worldgen\placed_feature\ore_andesite.json
 7779e4393f9e1ce9c4fb225b326ca4cc06ea17ae data\defying-the-heavens\worldgen\noise\netherworld\detail.json
 464c537318ec5c6c6c67018f8e4672caf848524c data\defying-the-heavens\worldgen\placed_feature\netherworld\lake_rare.json
@@ -190,8 +192,8 @@ df2a207ab781b790270a649196fa8b1965a37912 data\defying-the-heavens\worldgen\place
 0f689960ff9395c8633bdaa3362b3a1bca59521f data\defying-the-heavens\worldgen\configured_feature\ore_jade.json
 58f073b96837a10eae07c55bd3694315df0996b1 data\defying-the-heavens\worldgen\configured_feature\ore_quartz.json
 62592a7f33662a9ecb749ffed5672be5efe6c304 data\defying-the-heavens\worldgen\placed_feature\ore_rich_spirit_stone_upper_realm.json
-dfed1a8027a7eed391a38debe9060310f1b9112e data\defying-the-heavens\dimension_type\upper_realm.json
 18a5fc2ed7f009ee3f46ce3caa3f8880298b1400 data\defying-the-heavens\dimension_type\netherworld.json
+dfed1a8027a7eed391a38debe9060310f1b9112e data\defying-the-heavens\dimension_type\upper_realm.json
 29d3fc407a0a2f9f457efd99708267ab9c915681 data\defying-the-heavens\damage_type\soul_seized.json
 850cd73bcedeb9cc6ee069e8576c04f4ecdcde6f data\defying-the-heavens\worldgen\placed_feature\purple_lingzhi_upper_realm.json
 e3be3c56b64e317013a9cbb2dca69aee29d9ea49 data\defying-the-heavens\damage_type\qi_wood.json

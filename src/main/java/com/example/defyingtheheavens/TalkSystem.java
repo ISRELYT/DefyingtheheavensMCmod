@@ -691,12 +691,12 @@ public final class TalkSystem {
 		return answer;
 	}
 
-	/** Ghostly qi progress a teacher's guidance gives a method already known: ten minutes' worth (GhostMethods' seconds). */
+	/** The ghost path's cultivation a teacher's guidance gives one who knows its method already: ten minutes' worth (GhostMethods' seconds). */
 	public static final double TEACHING_PROGRESS = 10 * 60;
 
 	/**
-	 * A ghost teaches its method (once a day, to one it is Warm to): its first layer to one who doesn't know it, or ten minutes'
-	 * worth of progress ({@link #TEACHING_PROGRESS}) to one who does.
+	 * A ghost teaches its method (once a day, to one it is Warm to): the method to one who doesn't know it; to one who does, its
+	 * layers still settling in settled at once, and ten minutes' worth ({@link #TEACHING_PROGRESS}) on the ghost path's bar.
 	 */
 	static Component teach(ServerPlayer player, GhostCultivatorNpc ghost) {
 		GhostMethod method = ghost.method();
@@ -713,8 +713,11 @@ public final class TalkSystem {
 			return Component.translatable(ModLang.TALK_TEACH_LEARN, method.getDisplayName());
 		}
 		int ghostPathBefore = GhostMethods.ghostRank(s);
-		GhostMethods.cultivate(s, method, TEACHING_PROGRESS, GhostMethods.layerCap(CultivationManager.get(player), method));
-		GhostMethods.afterLayer(player, s, ghostPathBefore);
+		int upTo = GhostMethods.understoodTo(s, method);
+		if (s.layer(method) < upTo) s.setMethod(method, upTo, 0);
+		GhostMethods.addCultivation(s, TEACHING_PROGRESS);
+		GhostMethods.afterLayer(player, s);
+		GhostMethods.afterRank(player, ghostPathBefore);
 		CultivationManager.markDirty(player.server);
 		Spells.sync(player);
 		NetherworldManager.refresh(player);

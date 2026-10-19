@@ -66,9 +66,11 @@ public class GhostSightGameTests implements FabricGameTest {
 		return npc;
 	}
 
-	/** The ghost path at Nascent Soul Early: the Nine Nether Soul Sutra at its Nascent Soul's first layer (its 28th). */
+	/** The ghost path at Nascent Soul Early (its own bar, GhostMethods): the Nine Nether Soul Sutra known, understood as far. */
 	private static void nascentGhostPath(ServerPlayer player) {
-		CultivationManager.get(player).netherworld().setMethod(GhostMethod.NINE_NETHER_SOUL_SUTRA, MethodLayers.PER_REALM * Realm.NASCENT_SOUL.ordinal() + 1, 0);
+		NetherworldState s = CultivationManager.get(player).netherworld();
+		s.setMethod(GhostMethod.NINE_NETHER_SOUL_SUTRA, 1, 0);
+		GhostMethods.setPath(s, PlayerCultivation.rank(Realm.NASCENT_SOUL, Stage.EARLY));
 		CultivationManager.refresh(player);
 	}
 
@@ -160,7 +162,9 @@ public class GhostSightGameTests implements FabricGameTest {
 		});
 	}
 
-	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 400)
+	// Its own batch: the room reaches past the empty template into the neighbours' ground, and a neighbour building there walled
+	// the two apart (the Hungry Ghost saw the ascender at the first tick, never after).
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 400, batch = "ghost_sight_ascender")
 	public void anAscenderComeUpTheSoulRiverFightsOffAHungryGhost(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
 		// A closed stone room in the test's own ground: a Hungry Ghost goes for the living first, but only those it sees, so the other

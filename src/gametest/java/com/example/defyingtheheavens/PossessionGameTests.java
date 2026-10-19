@@ -504,6 +504,88 @@ public class PossessionGameTests implements FabricGameTest {
 		}
 	}
 
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void aSoulInABodyMendsAndQuickensItsCultivation(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		MinecraftServer server = helper.getLevel().getServer();
+		boolean pvp = server.isPvpAllowed();
+		server.setPvpAllowed(true);
+		try {
+			ServerPlayer soul = projected(helper, made, "mend-soul", Realm.HEAVENLY_BEING);
+			ServerPlayer victim = victim(helper, made, "mend-victim", soul);
+			PlayerCultivation own = CultivationManager.own(soul), theirs = CultivationManager.own(victim);
+			theirs.setState(Realm.QI_REFINING, Stage.EARLY, 0);
+			CultivationStats.apply(victim, theirs);
+			float whole = own.soulHearts() * 2.0f;
+			soul.setHealth(whole - 8);
+			helper.assertTrue(SoulProjection.tryPossess(soul, victim) == InteractionResult.SUCCESS, "Possessed");
+			helper.assertTrue(Math.abs(own.getSoulWounds() - 8) < 1.0e-3, "The soul takes its wounds in with it (" + own.getSoulWounds() + ")");
+			for (int i = 0; i < 12; i++) SoulProjection.mend(soul);
+			float mended = 12 * whole / SoulProjection.SOUL_MEND_SECONDS;
+			helper.assertTrue(Math.abs(own.getSoulWounds() - (8 - mended)) < 1.0e-3, "...and mends in there (" + own.getSoulWounds() + ")");
+			// Heavenly Being Early over Qi Refining Early: four realms above it, five times as fast.
+			helper.assertTrue(Possession.guidance(soul) == 5.0, "Meditating in it cultivates it by how far the soul stands above it ("
+					+ Possession.guidance(soul) + ")");
+			theirs.setState(Realm.CORE_FORMATION, Stage.MID, 0);
+			helper.assertTrue(Possession.guidance(soul) == 2.75, "...less, the less far (" + Possession.guidance(soul) + ")");
+			theirs.setState(Realm.QI_REFINING, Stage.EARLY, 0);
+
+			SoulProjection.toggle(soul);
+			helper.assertTrue(SoulProjection.isSoul(soul) && Math.abs(soul.getHealth() - (whole - 8 + mended)) < 1.0e-3,
+					"Out again, the soul is as whole as it mended (" + soul.getHealth() + ")");
+			helper.assertTrue(Possession.guidance(soul) == 1, "Out of the body, it quickens nothing");
+			helper.succeed();
+		} finally {
+			server.setPvpAllowed(pvp);
+			leave(made);
+		}
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void aMightySoulOpensAMortalsMeridians(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		MinecraftServer server = helper.getLevel().getServer();
+		boolean pvp = server.isPvpAllowed();
+		server.setPvpAllowed(true);
+		CultivatorNpc npc = null;
+		try {
+			ServerPlayer weaker = projected(helper, made, "meridian-weaker", Realm.HEAVENLY_BEING, Stage.LATE);
+			ServerPlayer victim = victim(helper, made, "meridian-victim", weaker);
+			PlayerCultivation theirs = CultivationManager.own(victim);
+			helper.assertTrue(SoulProjection.tryPossess(weaker, victim) == InteractionResult.SUCCESS && theirs.isMortal(),
+					"A Heavenly Being Late soul opens nothing");
+			SoulProjection.toggle(weaker);
+
+			ServerPlayer mighty = projected(helper, made, "meridian-mighty", Realm.HEAVENLY_BEING, Stage.GRAND_PERFECTION);
+			helper.assertTrue(!theirs.isMortalPeak(), "The mortal's body is far from Peak (no elixir would take)");
+			helper.assertTrue(SoulProjection.tryPossess(mighty, victim) == InteractionResult.SUCCESS, "A Heavenly Being Grand Perfection soul takes it");
+			helper.assertTrue(!theirs.isMortal() && theirs.getRealm() == Realm.QI_REFINING && theirs.getStage() == Stage.EARLY,
+					"...and forces its meridians open: Qi Refining Early");
+			SoulProjection.toggle(mighty);
+			helper.assertTrue(!CultivationManager.get(victim).isMortal(), "Theirs to keep, given back");
+
+			// An NPC mortal's too, and the way it then cultivates in it is its own after.
+			npc = helper.spawnWithNoFreeWill(ModEntities.CULTIVATOR, new BlockPos(3, 2, 2));
+			npc.setRank(CultivatorNpc.MORTAL);
+			npc.moveTo(mighty.getX() + 1, mighty.getY(), mighty.getZ(), 0, 0);
+			helper.assertTrue(SoulProjection.tryPossess(mighty, npc) == InteractionResult.SUCCESS, "The soul takes a mortal cultivator's body");
+			helper.assertTrue(!npc.cultivation().isMortal() && npc.getRank() == 0, "Its meridians open (" + npc.getRank() + ")");
+			PlayerCultivation body = CultivationManager.get(mighty);
+			body.addCultivation(body.cultivationRequired() + 3);
+			double progress = body.getCultivation();
+			SoulProjection.toggle(mighty);
+			helper.assertTrue(npc.getRank() == PlayerCultivation.rank(Realm.QI_REFINING, Stage.MID)
+					&& Math.abs(npc.cultivation().getCultivation() - progress) < 1.0e-6,
+					"Given back, it keeps the stage it came to and its way into the next (" + npc.getRank() + ", "
+							+ npc.cultivation().getCultivation() + " of " + progress + ")");
+			helper.succeed();
+		} finally {
+			server.setPvpAllowed(pvp);
+			leave(made);
+			if (npc != null) npc.discard();
+		}
+	}
+
 	// --- Helpers (as SoulProjectionGameTests') ---
 
 	/** A survival player in the player list (the helper's mock player is creative), remembered in {@code made} to take out after. */
@@ -530,9 +612,14 @@ public class PossessionGameTests implements FabricGameTest {
 
 	/** A cultivator of {@code realm} (Nascent Soul or above) with its soul already out, full of qi. */
 	private static ServerPlayer projected(GameTestHelper helper, List<ServerPlayer> made, String name, Realm realm) {
+		return projected(helper, made, name, realm, Stage.EARLY);
+	}
+
+	/** A cultivator of {@code realm} and {@code stage} (Nascent Soul or above) with its soul already out, full of qi. */
+	private static ServerPlayer projected(GameTestHelper helper, List<ServerPlayer> made, String name, Realm realm, Stage stage) {
 		ServerPlayer p = survivor(helper, made, name);
 		PlayerCultivation c = CultivationManager.get(p);
-		c.setState(realm, Stage.EARLY, 0);
+		c.setState(realm, stage, 0);
 		CultivationStats.apply(p, c);
 		p.setHealth(p.getMaxHealth());
 		c.setQi(c.maxQi());

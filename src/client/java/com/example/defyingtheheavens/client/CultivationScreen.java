@@ -131,6 +131,8 @@ public class CultivationScreen extends Screen {
 	private int top;
 	private Button meditateButton;
 	private Button breakthroughButton;
+	/** The Cultivation tab's switch between the two qi (TwoPaths#switchPath): which path a meditation cultivates. */
+	private Button pathButton;
 	private Button wheelButton;
 	/** The wheel editor's palette as drawn this frame, for {@link #mouseClicked}. Empty unless arranging. */
 	private final List<PaletteCell> palette = new ArrayList<>();
@@ -255,6 +257,9 @@ public class CultivationScreen extends Screen {
 						b -> ClientPlayNetworking.send(ModPackets.BREAKTHROUGH, PacketByteBufs.create()))
 				.bounds(left + WIDTH - 124, top + HEIGHT - 32, 112, 20).build());
 
+		pathButton = addRenderableWidget(Button.builder(Component.empty(), b -> ClientMethods.switchPath())
+				.bounds(left + (WIDTH - 112) / 2, top + HEIGHT - 32, 112, 20).build());
+
 		wheelButton = addRenderableWidget(Button.builder(Component.empty(), b -> {
 					arranging = !arranging;
 					dragged = null;
@@ -291,9 +296,24 @@ public class CultivationScreen extends Screen {
 		spellWheelButton.setMessage(Component.translatable(arrangingSpells ? ModLang.BTN_SPELL_LIST : ModLang.BTN_ARRANGE_WHEEL));
 		meditateButton.setMessage(Component.translatable(
 				ClientCultivationData.isMeditating() ? ModLang.BTN_STOP : ModLang.BTN_MEDITATE));
-		breakthroughButton.active = ClientCultivationData.get().canBreakthrough() && !ClientTribulationData.isActive();
-		meditateButton.active = !ClientCultivationData.get().isMortal(); // a mortal has no qi to gather
+		PlayerCultivation c = ClientCultivationData.get();
+		// The path whose qi is drawn in breaks through: the heaven path's tribulation, or the Netherworld's (the ghost path's).
+		boolean ghostQi = TwoPaths.cultivatesGhost(c);
+		breakthroughButton.active = (ghostQi ? GhostMethods.canBreakthrough(c) : c.canBreakthrough()) && !ClientTribulationData.isActive();
+		meditateButton.active = !c.isMortal(); // a mortal has no qi to gather
+		// The switch, for the living on both paths (the dead draw in only ghostly qi), between the two: then three share the row.
+		pathButton.visible = progressTab && TwoPaths.walksBoth(c) && !c.netherworld().ghost();
+		pathButton.setMessage(Component.translatable(ghostQi ? ModLang.BTN_PATH_GHOST : ModLang.BTN_PATH_HEAVEN));
+		int w = pathButton.visible ? (WIDTH - 24 - 2 * BUTTON_GAP) / 3 : 112;
+		meditateButton.setWidth(w);
+		breakthroughButton.setWidth(w);
+		breakthroughButton.setX(left + WIDTH - 12 - w);
+		pathButton.setWidth(w);
+		pathButton.setX(left + (WIDTH - w) / 2);
 	}
+
+	/** Between the Cultivation tab's three buttons, when the switch stands between Meditate and Breakthrough. */
+	private static final int BUTTON_GAP = 5;
 
 	@Override
 	public boolean isPauseScreen() {
@@ -436,7 +456,7 @@ public class CultivationScreen extends Screen {
 		List<Line> status = heldStatus(c, barW);
 		if (status.isEmpty()) {
 			status = heavenNext(c, barW);
-			if (both) status.addAll(ghostNext(c.netherworld(), barW));
+			if (both) status.addAll(ghostNext(c, barW));
 		}
 
 		// All of it fits above the meditation line: the lines drawn closer when there is much to say (never closer than the font's
@@ -527,97 +547,94 @@ public class CultivationScreen extends Screen {
 	private int heavenColumn(GuiGraphics g, Player player, PlayerCultivation c, HeavenMethod method, double boost, int x, int y, int w) {
 		int cx = x + w / 2;
 		g.drawCenteredString(font, Component.translatable(ModLang.METHODS_PAGE_HEAVEN), cx, y, 0xFFD700);
+		if (!TwoPaths.cultivatesGhost(c)) drawnInMark(g, cx, y, Component.translatable(ModLang.METHODS_PAGE_HEAVEN), 0xFFFFD700);
 		y += 11;
 		g.drawCenteredString(font, c.getRealm().getDisplayName(), cx, y, 0x7FDBFF);
 		y += 10;
 		g.drawCenteredString(font, c.getStage().getDisplayName(), cx, y, 0xB39DDB);
 		y += 12;
 		y = heavenBar(g, c, method, x, y, w);
+		if (TwoPaths.cultivatesGhost(c)) { // ghostly qi drawn in: the heaven path rests
+			g.drawCenteredString(font, Component.translatable(ModLang.COLUMN_RESTING), cx, y, 0x9E9E9E);
+			return y + 11;
+		}
 		return heavenMethodLine(g, player, c, method, boost, cx, y, w);
 	}
 
 	/**
-	 * The ghost path's column (both paths walked), the heaven path's mirror: its name, realm and stage (GhostMethods#ghostRank),
-	 * its bar (how far through the stage it stands, its deepest foundation's layer written on it; amber once that foundation is
-	 * perfected and only a deeper one carries it on, gold at the very last), and the ghost method practised and how soon
-	 * meditating here brings its next layer (or why it can't). (What carries it on goes under the details: {@link #ghostNext}.)
-	 * @return the y under it
+	 * The ghost path's column (both paths walked), the heaven path's mirror (GhostMethods: its own bar since 2026-10-19): its name,
+	 * realm and stage, its bar (the stage's cultivation written on it; amber at its bottleneck, the Netherworld's tribulation's or a
+	 * foundation wanted, gold at the very last), and what meditating here adds a second on ghostly qi (or why nothing: the heavens'
+	 * qi drawn in, or no ghostly qi here). (What stands next on it goes under the details: {@link #ghostNext}.) @return the y under it
 	 */
 	private int ghostColumn(GuiGraphics g, PlayerCultivation c, int x, int y, int w) {
 		int cx = x + w / 2;
 		NetherworldState s = c.netherworld();
 		int rank = Math.max(0, TwoPaths.ghostRank(c, false)), stages = Stage.values().length;
+		boolean drawing = TwoPaths.cultivatesGhost(c);
 		g.drawCenteredString(font, Component.translatable(ModLang.METHODS_PAGE_GHOST), cx, y, 0x8FEAE4);
+		if (drawing) drawnInMark(g, cx, y, Component.translatable(ModLang.METHODS_PAGE_GHOST), 0xFF8FEAE4);
 		y += 11;
 		g.drawCenteredString(font, Realm.byIndex(rank / stages).getDisplayName(), cx, y, 0x7FDBFF);
 		y += 10;
 		g.drawCenteredString(font, Stage.byIndex(rank % stages).getDisplayName(), cx, y, 0xB39DDB);
 		y += 12;
-		GhostMethod foundation = GhostMethods.deepestFoundation(s);
-		if (foundation != null) {
-			int layer = s.layer(foundation);
-			boolean perfected = layer >= foundation.layers();
-			GhostMethod next = foundation.next();
-			drawBar(g, x, y, w, perfected ? 1 : GhostMethods.stageProgress(s), 0xFF4DB6AC, !perfected ? 0 : next != null ? 0xFFFFC107 : 0xFFFFD700);
-			if (!perfected) {
-				barText(g, cx, y + 1, w, Component.translatable(ModLang.METHOD_BAR, foundation.getDisplayName(), layer, foundation.layers()),
-						Component.translatable(ModLang.METHOD_BAR_SHORT, foundation.getDisplayName(), layer, foundation.layers()),
-						Component.translatable(ModLang.METHOD_BAR_LAYERS, layer, foundation.layers()));
-			} else if (next != null) {
-				barText(g, cx, y + 1, w, Component.translatable(ModLang.METHOD_BAR_SEEK, next.getDisplayName()),
-						Component.translatable(ModLang.METHOD_BAR_SEEK_SHORT));
-			} else {
-				barText(g, cx, y + 1, w, Component.translatable(ModLang.METHOD_BAR_PERFECTED, foundation.getDisplayName()),
-						Component.translatable(ModLang.METHODS_PERFECTED));
-			}
+		double required = GhostMethods.required(rank);
+		boolean maxed = GhostMethods.isMaxed(s);
+		drawBar(g, x, y, w, GhostMethods.stageProgress(s), 0xFF4DB6AC, maxed ? 0xFFFFD700 : GhostMethods.atBottleneck(c) ? 0xFFFFC107 : 0);
+		if (maxed) {
+			barText(g, cx, y + 1, w, Component.translatable(ModLang.CULTIVATION_MAX, num(s.pathCultivation())),
+					Component.translatable(ModLang.CULTIVATION_MAX_SHORT, num(s.pathCultivation())));
+		} else {
+			barText(g, cx, y + 1, w, Component.translatable(ModLang.CULTIVATION, num(s.pathCultivation()), num(required)),
+					Component.translatable(ModLang.CULTIVATION_SHORT, num(s.pathCultivation()), num(required)));
 		}
 		y += 14;
-		// The practised ghost method's pace here (its ghostly qi: the Netherworld's, thinner in the Nether and the Overworld, none elsewhere).
+		// What meditating here adds a second on ghostly qi (the Netherworld's, thinner in the Nether, thinnest in the Overworld, none
+		// elsewhere), by the method practised's name; nothing while the heavens' qi is drawn in instead.
 		GhostMethod active = s.activeMethod();
 		Component pace;
 		int paceColor = 0x9E9E9E;
 		double density = ClientNetherworldData.density();
-		if (active == null) {
-			pace = Component.translatable(ModLang.GHOST_COLUMN_NONE);
+		if (!drawing) {
+			pace = Component.translatable(ModLang.COLUMN_RESTING);
 		} else if (density <= 0) {
 			pace = Component.translatable(ModLang.GHOST_COLUMN_NO_QI);
-		} else if (GhostMethods.heldByRealm(c, active)) {
-			pace = Component.translatable(ModLang.GHOST_COLUMN_HELD, GhostMethods.layerCap(c, active));
-			paceColor = 0xE0A040;
-		} else if (s.layer(active) >= active.layers()) {
-			pace = Component.translatable(ModLang.METHODS_PERFECTED);
-			paceColor = 0xFFD700;
 		} else {
-			double perSecond = GhostMethods.ratePerSecond(c, density);
-			double minutes = (GhostMethods.layerCost(active, s.layer(active)) - s.progress(active)) / Math.max(1.0e-6, perSecond) / 60.0;
-			String when = minutes < 1 ? "<1" : String.valueOf(Math.round(minutes));
-			pace = fit(w, Component.translatable(ModLang.GHOST_COLUMN_RATE, active.getDisplayName(), when),
-					Component.translatable(ModLang.GHOST_COLUMN_RATE_SHORT, when));
+			String rate = one(GhostMethods.ratePerSecond(c, density));
+			pace = active == null ? Component.translatable(ModLang.GHOST_COLUMN_PACE_SHORT, rate)
+					: fit(w, Component.translatable(ModLang.GHOST_COLUMN_PACE, active.getDisplayName(), rate),
+					Component.translatable(ModLang.GHOST_COLUMN_PACE_SHORT, rate));
 			paceColor = 0x8FEAE4;
 		}
 		g.drawCenteredString(font, fit(w, pace), cx, y, paceColor);
 		return y + 11;
 	}
 
+	/** A short rule under a column's name: the path whose qi a meditation draws in now (TwoPaths#cultivatesGhost). */
+	private void drawnInMark(GuiGraphics g, int cx, int y, Component name, int color) {
+		int half = font.width(name) / 2;
+		g.fill(cx - half, y + 9, cx + half, y + 10, color);
+	}
+
 	/**
-	 * What carries the ghost path on, wrapped to {@code width}: the deepest foundation's next layer that raises it
-	 * (GhostMethods#floor), or, perfected, the foundation to seek.
+	 * What stands next on the ghost path, wrapped to {@code width}: its pinnacle; a foundation the breakthrough waits on (said ahead
+	 * in grey at Grand Perfection, amber once the bar is full); or the Netherworld's tribulation waiting at its bottleneck.
 	 */
-	private List<Line> ghostNext(NetherworldState s, int width) {
+	private List<Line> ghostNext(PlayerCultivation c, int width) {
 		List<Line> lines = new ArrayList<>();
-		GhostMethod foundation = GhostMethods.deepestFoundation(s);
-		if (foundation == null) return lines;
-		int layer = s.layer(foundation);
-		int reached = GhostMethods.floor(foundation, layer);
-		for (int next = layer + 1; next <= foundation.layers(); next++) {
-			int floor = GhostMethods.floor(foundation, next);
-			if (floor > reached) {
-				addStatus(lines, Component.translatable(ModLang.METHODS_FLOOR_NEXT, next, foundation.getDisplayName(), GhostMethods.rankName(floor)), 0xB388FF, width);
-				return lines;
-			}
-		}
-		if (layer >= foundation.layers() && foundation.next() != null) {
-			addStatus(lines, Component.translatable(ModLang.METHODS_SEEK_NEXT, foundation.getDisplayName(), foundation.next().getDisplayName()), 0xFFC107, width);
+		NetherworldState s = c.netherworld();
+		int rank = GhostMethods.ghostRank(s);
+		if (rank < 0 || c.isMortal()) return lines;
+		int stages = Stage.values().length;
+		if (GhostMethods.isMaxed(s)) {
+			addStatus(lines, Component.translatable(ModLang.GHOST_PINNACLE), 0xFFD700, width);
+		} else if (Stage.byIndex(rank % stages).isLast() && !GhostMethods.opensWay(c, Realm.byIndex(rank / stages + 1))) {
+			addStatus(lines, GhostMethods.gateLine(c), GhostMethods.heldByMethod(c) ? 0xFFC107 : 0xA0A0A0, width);
+		} else if (GhostMethods.canBreakthrough(c)) {
+			// The Breakthrough button breaks through on the path drawn in: with the heavens' qi drawn in, the switch first.
+			addStatus(lines, Component.translatable(TwoPaths.cultivatesGhost(c) ? ModLang.GHOST_BOTTLENECK : ModLang.GHOST_BOTTLENECK_SWITCH,
+					GhostMethods.rankName(rank + 1)), 0x6FE8D8, width);
 		}
 		return lines;
 	}
@@ -661,7 +678,9 @@ public class CultivationScreen extends Screen {
 			// stage is full (the breakthrough waits on it).
 			addStatus(status, HeavenMethods.gateLine(c), c.isHeldByMethod() ? 0xFFC107 : 0xA0A0A0, width);
 		} else if (c.canBreakthrough()) {
-			addStatus(status, Component.translatable(ModLang.BOTTLENECK), 0xFFC107, width);
+			// With ghostly qi drawn in, the Breakthrough button breaks through on the ghost path: the switch first.
+			boolean switchFirst = TwoPaths.cultivatesGhost(c) && !c.netherworld().ghost();
+			addStatus(status, Component.translatable(switchFirst ? ModLang.BOTTLENECK_SWITCH : ModLang.BOTTLENECK), 0xFFC107, width);
 			addStatus(status, Component.translatable(ModLang.BOTTLENECK_NEXT, PlayerCultivation.rankName(c.breakthroughRealm(), c.breakthroughStage())),
 					0xFFC107, width);
 		} else if (c.getPreparedRealm() != null) {
@@ -1797,42 +1816,40 @@ public class CultivationScreen extends Screen {
 		double density = ClientNetherworldData.density();
 		List<FormattedCharSequence> rateLines = new ArrayList<>();
 		int rateColor = 0x8FEAE4;
-		// A mortal's methods lie dormant (GhostMethods#refusal): no pace, no next floor, only the sealed path below.
+		// A mortal's methods lie dormant (GhostMethods#refusal): no pace, no reach, only the sealed path below.
 		boolean sealed = c.isMortal();
 		if (active != null && !sealed) {
+			// The method practised's layers, as the heaven methods' (they are understood as far as the ghost path has come): its next
+			// one settling in, how soon here; or waiting on the path; or all of it understood. Drawing in the heavens' qi, it rests.
 			Component rate;
-			if (density <= 0) {
-				rate = Component.translatable(ModLang.METHODS_NO_QI);
+			int layer = s.layer(active);
+			if (!TwoPaths.cultivatesGhost(c)) {
+				rate = Component.translatable(ModLang.METHODS_GHOST_RESTING);
 				rateColor = 0x9E9E9E;
-			} else if (GhostMethods.heldByRealm(c, active)) {
-				int cap = GhostMethods.layerCap(c, active);
-				rate = Component.translatable(ModLang.METHODS_REALM_CAPPED, cap, GhostMethods.realmToPass(active, cap).getDisplayName());
-				rateColor = 0xE0A040;
-			} else if (s.layer(active) >= active.layers()) {
+			} else if (layer >= active.layers()) {
 				rate = Component.translatable(ModLang.METHODS_PERFECTED);
+				rateColor = 0xFFD700;
+			} else if (GhostMethods.settling(s, active)) {
+				if (density <= 0) {
+					rate = Component.translatable(ModLang.METHODS_NO_QI);
+					rateColor = 0x9E9E9E;
+				} else {
+					double perSecond = GhostMethods.ratePerSecond(c, density);
+					double minutes = (GhostMethods.settleCost(active, layer + 1) - s.progress(active)) / Math.max(1.0e-6, perSecond) / 60.0;
+					rate = Component.translatable(ModLang.METHODS_HEAVEN_RATE, layer + 1, active.getDisplayName(), minutes < 1 ? "<1" : String.valueOf(Math.round(minutes)));
+				}
 			} else {
-				double perSecond = GhostMethods.ratePerSecond(c, density);
-				double minutes = (GhostMethods.layerCost(active, s.layer(active)) - s.progress(active)) / Math.max(1.0e-6, perSecond) / 60.0;
-				rate = Component.translatable(ModLang.METHODS_RATE, active.getDisplayName(), minutes < 1 ? "<1" : String.valueOf(Math.round(minutes)));
+				rate = Component.translatable(ModLang.METHODS_GHOST_NEXT, active.getDisplayName(), GhostMethods.rankName(GhostMethods.opensAt(active, layer + 1)));
 			}
 			rateLines = font.split(rate, width);
 		}
-		// The deepest foundation's next layer that carries the ghost path on (GhostMethods#floor); or, perfected, the foundation that
-		// carries it further, to be sought out.
+		// How far the foundations known open the ghost path's way (GhostMethods#opensWay): the deepest realm a breakthrough may lead into.
 		List<FormattedCharSequence> floorLines = new ArrayList<>();
 		GhostMethod foundation = GhostMethods.deepestFoundation(s);
 		if (foundation != null && !sealed) {
-			int layer = s.layer(foundation);
-			int reached = GhostMethods.floor(foundation, layer);
-			Component floorLine = null;
-			for (int next = layer + 1; next <= foundation.layers() && floorLine == null; next++) {
-				int floor = GhostMethods.floor(foundation, next);
-				if (floor > reached) floorLine = Component.translatable(ModLang.METHODS_FLOOR_NEXT, next, foundation.getDisplayName(), GhostMethods.rankName(floor));
-			}
-			if (floorLine == null && layer >= foundation.layers() && foundation.next() != null) {
-				floorLine = Component.translatable(ModLang.METHODS_SEEK_NEXT, foundation.getDisplayName(), foundation.next().getDisplayName());
-			}
-			if (floorLine != null) floorLines = font.split(floorLine, width);
+			Realm reach = Realm.QI_REFINING;
+			for (GhostMethod method : s.knownMethods()) if (method.isFoundation() && method.realm().ordinal() > reach.ordinal()) reach = method.realm();
+			floorLines = font.split(Component.translatable(ModLang.METHODS_GHOST_REACH, reach.getDisplayName()), width);
 		}
 		List<List<FormattedCharSequence>> gains = new ArrayList<>();
 		int ghostPath = GhostMethods.ghostRank(s);
@@ -1904,15 +1921,20 @@ public class CultivationScreen extends Screen {
 					g.drawString(font, Component.translatable(ModLang.METHODS_LAYER, layer, method.layers()), x + 9 * 9 + 6, y, 0xB0B0B0);
 					y += 11;
 				}
+				// Its next layer: settling in behind the ghost path (how far), or waiting on the path to reach it; or all of it understood.
 				boolean perfected = layer >= method.layers();
-				double fraction = perfected ? 1 : Mth.clamp(s.progress(method) / GhostMethods.layerCost(method, layer), 0, 1);
+				boolean settling = !sealed && GhostMethods.settling(s, method);
+				double fraction = perfected ? 1 : settling ? Mth.clamp(s.progress(method) / GhostMethods.settleCost(method, layer + 1), 0, 1) : 0;
 				g.fill(x, y, rightEdge, y + 5, 0xFF6E5214);
 				g.fill(x + 1, y + 1, rightEdge - 1, y + 4, 0xFF0C0C14);
 				g.fill(x + 1, y + 1, x + 1 + (int) Math.round((rightEdge - x - 2) * fraction), y + 4, perfected ? 0xFFFFD700 : 0xFF4FC3D9);
 				y += 9;
+				Component opensAt = GhostMethods.rankName(GhostMethods.opensAt(method, layer + 1));
 				Component progress = perfected ? Component.translatable(ModLang.METHODS_PERFECTED)
-						: Component.translatable(ModLang.METHODS_PROGRESS, (int) Math.floor(fraction * 100));
-				g.drawString(font, progress, x, y, perfected ? 0xFFD700 : 0x8FEAE4);
+						: settling ? Component.translatable(ModLang.SETTLING_LINE, layer + 1, (int) Math.floor(fraction * 100))
+						: fit(rightEdge - x, Component.translatable(ModLang.METHODS_HEAVEN_OPENS, layer + 1, opensAt),
+						Component.translatable(ModLang.METHODS_HEAVEN_OPENS_SHORT, layer + 1, opensAt));
+				g.drawString(font, progress, x, y, perfected ? 0xFFD700 : settling ? 0x8FEAE4 : 0x9A9A9A);
 				y += 11;
 				for (FormattedCharSequence line : gains.get(i)) {
 					g.drawString(font, line, x, y, 0x8A8A8A);

@@ -46,8 +46,9 @@ import java.util.function.Predicate;
  * respawn point, as vanilla would choose it ({@link #useWheel}), leaving behind at the Wheel anything it still carried (a
  * visitor overtaken by yin: {@link #leaveBelongings}); in hardcore the Wheel refuses.
  * <p>
- * A <b>Ghost King</b> ({@link #isKing}) is one of the dead at Core Formation or above: one who died there, or whose ghost path
- * rose to it (GhostMethods#ghostRank, the Ghost Core Canon; never a mortal's ghost, whose meridians are closed). Its hands are its own again: it breaks and places, uses and
+ * A <b>Ghost King</b> ({@link #isKing}) is one of the dead whose ghost path stands at Core Formation or above (GhostMethods#ghostRank,
+ * the Ghost Core Canon; never a mortal's ghost, whose meridians are closed). The heaven path's realm makes no king, however high
+ * (the user's rule, 2026-10-19: one dead at Core Formation on it alone was crowned before). Its hands are its own again: it breaks and places, uses and
  * picks up, sets off plates, takes the rifts, the Soul River and portals down to the living world, and strikes as the living do
  * (Incorporeal#is leaves it out). It stays one of the dead in all else: drawn as their light (crowned), harmed only as they
  * are, hunted by no mob, passed through by arrows, cultivating only its method; outside the Netherworld only those who see
@@ -103,13 +104,13 @@ public final class GhostSystem {
 	}
 
 	/**
-	 * One of the dead whose true cultivation, or whose ghost path (TwoPaths#ghostRank: a mortal's lies dormant), is Core Formation
-	 * or above.
+	 * One of the dead whose ghost path (TwoPaths#ghostRank: a mortal's lies dormant) is Core Formation or above; its heaven path
+	 * counts for nothing here (the user's rule, 2026-10-19).
 	 */
 	public static boolean isKing(PlayerCultivation c) {
 		if (!c.netherworld().ghost()) return false;
 		if (c.physique() == Physique.GHOST_DEVIL_BODY && !c.isMortal()) return true; // a Ghost King from birth (Physique)
-		return TwoPaths.heavenRank(c, false) >= KING_RANK || TwoPaths.ghostRank(c, false) >= KING_RANK;
+		return TwoPaths.ghostRank(c, false) >= KING_RANK;
 	}
 
 	private static NetherworldState state(ServerPlayer p) {
@@ -314,8 +315,9 @@ public final class GhostSystem {
 	private static final Set<UUID> KINGS = new HashSet<>();
 
 	/**
-	 * Once a second: a ghost risen to Core Formation (or one that died there) is told it is a Ghost King, and its clients told too;
-	 * one stripped of its might (the Chief Judge's gaze) is told it is one of the common dead again. Born again it is no king, but
+	 * Once a second: a ghost whose ghost path has risen to Core Formation is told it is a Ghost King, and its clients told too;
+	 * one whose ghost path has fallen below it (or that was a king by the old rule's heaven path, in a world from before it) is
+	 * told it is one of the common dead again. Born again it is no king, but
 	 * the King's form it had stays its own (NetherworldState#reignedKing, TwoPaths#hasKingForm).
 	 */
 	private static void watchKing(ServerPlayer p) {
@@ -352,7 +354,7 @@ public final class GhostSystem {
 
 	/** The rule itself: whether {@code source} is something that reaches the dead at all. */
 	public static boolean reaches(DamageSource source) {
-		if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) || source.is(ModDamageTypes.GHOSTLY)) return true;
+		if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) || source.is(ModDamageTypes.GHOSTLY) || yinTribulation(source)) return true;
 		Entity attacker = source.getEntity();
 		if (isDead(attacker) || peachWood(source)) return true;
 		return attacker != null && source.getDirectEntity() == attacker && SoulProjection.harmFactor(attacker) > 0;
@@ -395,9 +397,14 @@ public final class GhostSystem {
 		return ghost.isCreative() ? amount : scaled(source, amount);
 	}
 
+	/** The Netherworld's tribulation's harm (ModDamageTypes#YIN_LIGHTNING, #YIN_TRIBULATION): its own, it reaches the dead in full. */
+	public static boolean yinTribulation(DamageSource source) {
+		return source.is(ModDamageTypes.YIN_LIGHTNING) || source.is(ModDamageTypes.YIN_TRIBULATION);
+	}
+
 	/** The rule itself: how much of {@code amount} from {@code source} lands on one of the dead. */
 	public static float scaled(DamageSource source, float amount) {
-		if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) || source.is(ModDamageTypes.GHOSTLY)) return amount;
+		if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) || source.is(ModDamageTypes.GHOSTLY) || yinTribulation(source)) return amount;
 		if (peachWood(source)) return amount * PeachWoodSwordItem.ON_THE_DEAD;
 		Entity attacker = source.getEntity();
 		if (attacker == null || isDead(attacker)) return amount;
@@ -435,6 +442,7 @@ public final class GhostSystem {
 	public static void disperse(ServerPlayer p) {
 		p.setHealth(1.0f);
 		if (DISPERSED.containsKey(p.getUUID())) return;
+		TribulationManager.onScattered(p); // the dead's tribulation is failed so, as the living's is by death
 		sparks(p, 80);
 		p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.ALLAY_DEATH, SoundSource.PLAYERS, 1.0f, 0.5f);
 		p.setInvisible(true);

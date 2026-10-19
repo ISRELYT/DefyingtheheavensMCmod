@@ -64,6 +64,7 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(Tempering::tick);
 		ServerTickEvents.END_SERVER_TICK.register(InnerRealm::tick);
 		ServerTickEvents.END_SERVER_TICK.register(SoulProjection::tick);
+		ServerTickEvents.END_SERVER_TICK.register(SoulProjection::mendSouls); // a wounded soul resting in a body mends
 		ServerTickEvents.END_SERVER_TICK.register(Possession::settle); // a body's health held to while its whole settles
 		ServerTickEvents.END_SERVER_TICK.register(SparSystem::tick);
 		ServerTickEvents.END_SERVER_TICK.register(Rumours::tick);

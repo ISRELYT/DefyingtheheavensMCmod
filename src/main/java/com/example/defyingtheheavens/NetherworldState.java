@@ -63,8 +63,33 @@ public final class NetherworldState {
 		this.sawHome = false; // a new death: the Terrace has something new to show
 	}
 
+	// The ghost path (see GhostMethods): its own cultivation bar since 2026-10-19 (the user's ask: ghostly qi fills it as qi fills
+	// the heaven path's; before, the deepest foundation's layers were the path).
+	/** Where the ghost path stands (a rank, PlayerCultivation#rank), or -1 if it isn't begun (no foundation learned). */
+	private int pathRank = -1;
+	/** The ghost path's cultivation through its stage, in seconds of baseline meditation (GhostMethods#required). */
+	private double pathCultivation;
+	/** A living cultivator on both paths meditates on the ghost path's qi rather than the heaven path's (the Cultivation tab's switch). */
+	private boolean cultivatingGhost;
+	/** Mid-way through the ghost path's tribulation (TribulationManager): saved at once, so leaving fails it, as the heaven path's does. */
+	private boolean inGhostTribulation;
+
+	public int pathRank() { return pathRank; }
+	public double pathCultivation() { return pathCultivation; }
+
+	/** The ghost path at {@code rank} (-1: not begun), {@code cultivation} through its stage. */
+	public void setPath(int rank, double cultivation) {
+		this.pathRank = Math.max(-1, Math.min(rank, PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION)));
+		this.pathCultivation = this.pathRank < 0 ? 0 : Math.max(0, cultivation);
+	}
+
+	public boolean cultivatingGhost() { return cultivatingGhost; }
+	public void setCultivatingGhost(boolean ghost) { this.cultivatingGhost = ghost; }
+	public boolean inGhostTribulation() { return inGhostTribulation; }
+	public void setInGhostTribulation(boolean value) { this.inGhostTribulation = value; }
+
 	// The ghost methods (see GhostMethods) and spells (see Spells): saved by id, never by ordinal.
-	/** Each method learned: the layer reached (1 to its last, GhostMethod#layers) and the progress through it. */
+	/** Each method learned: the layer understood (1 to its last, GhostMethod#layers) and the next one's settling (GhostMethods#settle). */
 	private final java.util.Map<GhostMethod, double[]> methods = new java.util.EnumMap<>(GhostMethod.class);
 	/** The method meditation cultivates (null: none chosen). */
 	private GhostMethod activeMethod;
@@ -189,7 +214,10 @@ public final class NetherworldState {
 		if (boundBelow) tag.putBoolean("BoundBelow", true);
 		if (reforming) tag.putBoolean("Reforming", true);
 		if (memoryCleansed) tag.putBoolean("MemoryCleansed", true);
-		if (reignedKing) tag.putBoolean("ReignedKing", true);
+		if (reignedKing) {
+			tag.putBoolean("ReignedKing", true);
+			tag.putBoolean("KingByGhostPath", true); // a reign under the ghost path's rule (see load)
+		}
 		if (hasDeathPlace()) {
 			CompoundTag place = new CompoundTag();
 			place.putString("Dimension", deathDimension);
@@ -221,6 +249,12 @@ public final class NetherworldState {
 		if (anySlot) tag.put("SpellWheel", wheel);
 		if (methodBoost > 0) tag.putDouble("MethodBoost", methodBoost);
 		if (sawHome) tag.putBoolean("SawHome", true);
+		if (pathRank >= 0 || !methods.isEmpty()) { // with methods known, even a path not begun is saved (else load would convert it)
+			tag.putInt("PathRank", pathRank);
+			if (pathRank >= 0) tag.putDouble("PathCultivation", pathCultivation);
+		}
+		if (cultivatingGhost) tag.putBoolean("CultivatingGhost", true);
+		if (inGhostTribulation) tag.putBoolean("InGhostTribulation", true);
 		return tag;
 	}
 
@@ -263,5 +297,23 @@ public final class NetherworldState {
 		for (int i = 0; i < Math.min(wheel.size(), spellWheel.length); i++) spellWheel[i] = Spell.byId(wheel.getString(i));
 		setMethodBoost(tag.getDouble("MethodBoost"));
 		sawHome = tag.getBoolean("SawHome");
+		cultivatingGhost = tag.getBoolean("CultivatingGhost");
+		inGhostTribulation = tag.getBoolean("InGhostTribulation");
+		if (tag.contains("PathRank")) {
+			setPath(tag.getInt("PathRank"), tag.getDouble("PathCultivation"));
+		} else {
+			// Saved before the ghost path had its own bar (2026-10-19): it stood where its deepest foundation's layers carried it,
+			// as far through the stage as they had come; every method's settling starts afresh (the deepest's went into the bar).
+			GhostMethod deepest = GhostMethods.deepestFoundation(this);
+			int rank = deepest == null ? -1 : GhostMethods.floor(deepest, layer(deepest));
+			setPath(rank, rank < 0 ? 0 : GhostMethods.layeredStageProgress(this) * GhostMethods.required(rank));
+			for (GhostMethod method : java.util.List.copyOf(methods.keySet())) {
+				if (method.isFoundation()) setMethod(method, layer(method), 0);
+			}
+		}
+		// Until 2026-10-19 one dead at Core Formation on the heaven path alone was crowned too, and kept the King's form born again;
+		// the user's rule since: the ghost path's Core Formation only (GhostSystem#isKing). A reign saved before it that the ghost path
+		// never reached is undone, once (saved again, a reign is marked as the new rule's).
+		if (reignedKing && !tag.getBoolean("KingByGhostPath") && GhostMethods.ghostRank(this) < GhostSystem.KING_RANK) reignedKing = false;
 	}
 }

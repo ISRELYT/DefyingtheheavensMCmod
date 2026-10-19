@@ -125,6 +125,11 @@ public class PlayerCultivation {
 	 */
 	private net.minecraft.nbt.CompoundTag soulReturn;
 	/**
+	 * The harm the nascent soul carries and hasn't mended yet (health below its whole, SoulProjection#mendSouls): kept from one going
+	 * out to the next, mended only while the soul rests in a body (its own, or one it possesses). Saved and synced; 0 when whole.
+	 */
+	private float soulWounds;
+	/**
 	 * A possession under way ({@link Possession}): for a soul in another's body, whose body and its own things put by ("Tenant",
 	 * "Body", "Npc", "Stash"); for a player whose body is held, by whom and their game mode before ("Held", "By", "Mode", and
 	 * "Returned": their body's things waiting for them after a crash). Saved, so a crash mid-way is put right as each comes back;
@@ -387,6 +392,10 @@ public class PlayerCultivation {
 	public net.minecraft.nbt.CompoundTag getSoulReturn() { return soulReturn; }
 
 	public void setSoulReturn(net.minecraft.nbt.CompoundTag back) { soulReturn = back; }
+
+	public float getSoulWounds() { return soulWounds; }
+
+	public void setSoulWounds(float wounds) { soulWounds = Math.max(0, wounds); }
 
 	public net.minecraft.nbt.CompoundTag getPossession() { return possession; }
 
@@ -908,6 +917,7 @@ public class PlayerCultivation {
 		tag.putDouble("MedicinalQi", medicinalQi);
 		if (innerReturn != null) tag.put("InnerReturn", innerReturn.copy());
 		if (soulReturn != null) tag.put("SoulReturn", soulReturn.copy());
+		if (soulWounds > 0) tag.putFloat("SoulWounds", soulWounds);
 		if (possession != null) tag.put("Possession", possession.copy());
 		tag.putInt("Realm", realm.ordinal());
 		tag.putInt("Stage", stage.ordinal());
@@ -990,6 +1000,7 @@ public class PlayerCultivation {
 		c.medicinalQi = Math.max(0, tag.getDouble("MedicinalQi"));
 		c.innerReturn = tag.contains("InnerReturn") ? tag.getCompound("InnerReturn").copy() : null;
 		c.soulReturn = tag.contains("SoulReturn") ? tag.getCompound("SoulReturn").copy() : null;
+		c.soulWounds = Math.max(0, tag.getFloat("SoulWounds"));
 		c.possession = tag.contains("Possession") ? tag.getCompound("Possession").copy() : null;
 		c.lowerRealmBound = tag.getBoolean("LowerRealmBound");
 		c.pendingTrial = SpatialTrialHandler.Route.byName(tag.getString("SpatialTrial"));

@@ -399,6 +399,46 @@ public class SoulProjectionGameTests implements FabricGameTest {
 		}
 	}
 
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void aWoundedSoulMendsOnlyInABody(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		try {
+			ServerPlayer p = cultivator(helper, made, "soul-wounds", Realm.HEAVENLY_BEING, Stage.EARLY);
+			PlayerCultivation c = CultivationManager.get(p);
+			c.setStatPoints(StatPoints.Stat.CONSTITUTION, 20); // a fifth more health to the body, none to the soul
+			CultivationStats.apply(p, c);
+			p.setHealth(p.getMaxHealth());
+			float bodyHealth = p.getHealth();
+			long now = helper.getLevel().getGameTime();
+			SoulProjection.toggle(p);
+			for (int i = 0; i < SoulProjection.CHANNEL_TICKS; i++) SoulProjection.tick(p, now);
+			float whole = c.soulHearts() * 2.0f;
+			helper.assertTrue(SoulProjection.isSoul(p) && Math.abs(p.getMaxHealth() - whole) < 1.0e-3 && Math.abs(p.getHealth() - whole) < 1.0e-3,
+					"The soul sets out whole on its own hearts, whatever constitution gives the body (" + p.getHealth() + " / " + p.getMaxHealth()
+							+ " of " + whole + ")");
+
+			p.setHealth(whole - 10);
+			SoulProjection.mend(p);
+			p.heal(5);
+			helper.assertTrue(p.getHealth() == whole - 10, "Out of its body it mends not at all, nor heals by any means (" + p.getHealth() + ")");
+			SoulProjection.toggle(p);
+			for (int i = 0; i < SoulProjection.CHANNEL_TICKS; i++) SoulProjection.tick(p, now);
+			helper.assertTrue(!SoulProjection.isActive(p.getUUID()) && Math.abs(c.getSoulWounds() - 10) < 1.0e-3 && p.getHealth() == bodyHealth,
+					"Home, the body has its own health, and the soul keeps its wounds (" + c.getSoulWounds() + ", " + p.getHealth() + ")");
+
+			for (int i = 0; i < 6; i++) SoulProjection.mend(p);
+			float mended = 6 * whole / SoulProjection.SOUL_MEND_SECONDS;
+			helper.assertTrue(Math.abs(c.getSoulWounds() - (10 - mended)) < 1.0e-3, "Resting in its body, it mends (" + c.getSoulWounds() + ")");
+			SoulProjection.toggle(p);
+			for (int i = 0; i < SoulProjection.CHANNEL_TICKS; i++) SoulProjection.tick(p, now);
+			helper.assertTrue(SoulProjection.isSoul(p) && Math.abs(p.getHealth() - (whole - 10 + mended)) < 1.0e-3,
+					"Out again, it is as whole as it mended (" + p.getHealth() + ")");
+			helper.succeed();
+		} finally {
+			leave(made);
+		}
+	}
+
 	/** A survival test player at the test's floor at {@code realm}/{@code stage}, healthy and full of qi. */
 	private static ServerPlayer cultivator(GameTestHelper helper, List<ServerPlayer> made, String name, Realm realm, Stage stage) {
 		ServerPlayer p = survivor(helper, made, name);

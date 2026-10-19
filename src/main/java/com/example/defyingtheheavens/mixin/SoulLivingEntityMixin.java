@@ -24,7 +24,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * Projected souls and the bodies they possess (see SoulProjection). A soul never heals (its hearts only run down), a totem in its
+ * Projected souls and the bodies they possess (see SoulProjection). A soul out of its body never heals by any means (what it loses
+ * it carries home: it mends only resting in a body, SoulProjection#mendSouls, which sets a beast-riding soul's health itself), a totem in its
  * hand doesn't hold off its death (the totem is the body's), it pushes nothing and nothing pushes it, and a blow on it lands only
  * as much as the attacker can see of it ({@link SoulProjection#harmFactor}). A possessed body moves as its soul steers it: the
  * soul's inputs and facing (what vanilla does for a ridden horse, for anything possessed), but at the body's own pace

@@ -60,6 +60,9 @@ public final class ClientMethods {
 			if (method != null) heaven.put(method, new double[]{layer, progress});
 		}
 		HeavenMethod heavenActive = HeavenMethod.byId(buf.readUtf(64));
+		int pathRank = buf.readVarInt();
+		double pathCultivation = buf.readDouble();
+		boolean cultivatingGhost = buf.readBoolean();
 		return () -> {
 			HeavenState h = ClientCultivationData.get().heaven();
 			for (HeavenMethod method : HeavenMethod.values()) {
@@ -78,6 +81,8 @@ public final class ClientMethods {
 			for (int i = 0; i < wheel.length; i++) if (wheel[i] != null) s.setSpellSlot(i, wheel[i]);
 			s.setGhost(ghost);
 			s.setReignedKing(reignedKing);
+			s.setPath(pathRank, pathCultivation);
+			s.setCultivatingGhost(cultivatingGhost);
 			System.arraycopy(cooldowns, 0, COOLDOWNS, 0, cooldowns.length);
 			receivedAt = now();
 		};
@@ -150,6 +155,11 @@ public final class ClientMethods {
 		ClientPlayNetworking.send(ModPackets.PRACTISE_HEAVEN_METHOD, buf);
 	}
 
+	/** The Cultivation tab's switch: draw in the other qi (TwoPaths#switchPath). */
+	static void switchPath() {
+		ClientPlayNetworking.send(ModPackets.SWITCH_PATH, PacketByteBufs.create());
+	}
+
 	/** Leaving a world: forget its methods and spells. */
 	static void clear() {
 		NetherworldState s = state();
@@ -159,6 +169,8 @@ public final class ClientMethods {
 		for (int i = 0; i < Spells.WHEEL_SLOTS; i++) s.setSpellSlot(i, null);
 		s.setGhost(false);
 		s.setReignedKing(false);
+		s.setPath(-1, 0);
+		s.setCultivatingGhost(false);
 		java.util.Arrays.fill(COOLDOWNS, 0);
 		receivedAt = 0;
 	}

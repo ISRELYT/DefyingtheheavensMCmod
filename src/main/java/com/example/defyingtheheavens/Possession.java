@@ -1,10 +1,13 @@
 package com.example.defyingtheheavens;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -89,6 +92,13 @@ public final class Possession {
 		boolean isNpc() { return npcBody; }
 	}
 
+	/**
+	 * A soul of this rank or above (its own path's, as it truly stands) forces a mortal body's meridians open as it enters: no
+	 * Marrow Cleansing Elixir, no tempering to Peak first (Heavenly Being Grand Perfection; the user's ask, 2026-10-19, my pick of
+	 * the two they named). Shattered meridians stay shut, as they do to the elixir.
+	 */
+	public static final int OPENS_MERIDIANS = PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.GRAND_PERFECTION);
+
 	private static final Map<UUID, Tenancy> BY_SOUL = new HashMap<>();
 	private static final Map<UUID, Tenancy> BY_BODY = new HashMap<>();
 	/** While a soul is being moved in or out here, a held player's view may be set (anything else trying it is refused: {@link #mayView}). */
@@ -145,6 +155,27 @@ public final class Possession {
 			if (t.record == c) return Ability.SPATIAL_TEAR.isUnlocked(CultivationManager.own(t.soulPlayer.server, t.soul));
 		}
 		return clientSoulTears.test(c);
+	}
+
+	/**
+	 * How many times as fast meditating cultivates the body {@code p}'s soul is in (MeditationManager, either path): once more for
+	 * each realm the soul stands above the body, counted by the stage, a quarter a stage (a mortal's body a stage below Qi Refining
+	 * Early). 1 when it is in none. The user's ask, 2026-10-19: the higher the one possessing, the faster the body cultivates.
+	 */
+	public static double guidance(ServerPlayer p) {
+		Tenancy t = BY_SOUL.isEmpty() ? null : BY_SOUL.get(p.getUUID());
+		return t == null ? 1 : guidance(CultivationManager.own(p), t.record);
+	}
+
+	/** {@link #guidance} of a soul whose own record is {@code soul} in the body whose record is {@code body}. */
+	public static double guidance(PlayerCultivation soul, PlayerCultivation body) {
+		int gap = soulRank(soul) - TwoPaths.higherRank(body, false);
+		return 1 + Math.max(0, gap) / (double) Stage.values().length;
+	}
+
+	/** Where a soul stands, for what it brings a body (#guidance, #OPENS_MERIDIANS): its own path's true rank (PlayerCultivation#soulPath). */
+	private static int soulRank(PlayerCultivation soul) {
+		return Math.max(0, TwoPaths.rank(soul, soul.soulPath(), false));
 	}
 
 	/** Who {@code player} is to the world's people: the one whose body they are in, or themselves (for regard, sects and the like). */
@@ -273,6 +304,12 @@ public final class Possession {
 			knowOwnMethod(npc, record);
 			sect = npc.getSectId();
 		}
+		// A soul mighty enough forces a mortal body's meridians open as it goes in: theirs to keep (OPENS_MERIDIANS).
+		boolean opened = record.isMortal() && !record.hasShatteredMeridians() && soulRank(own) >= OPENS_MERIDIANS;
+		if (opened) {
+			record.awaken(0);
+			if (npc != null) npc.setRank(PlayerCultivation.rank(Realm.QI_REFINING, Stage.EARLY)); // its record is the one awoken
+		}
 		CompoundTag mine = new CompoundTag();
 		mine.putString("Role", "Tenant");
 		mine.putUUID("Body", target.getUUID());
@@ -323,6 +360,18 @@ public final class Possession {
 		soul.sendSystemMessage(Component.translatable(ModLang.MSG_POSSESS_INHABIT, name).withStyle(ChatFormatting.LIGHT_PURPLE));
 		if (victim != null) {
 			victim.sendSystemMessage(Component.translatable(ModLang.MSG_POSSESS_TAKEN, soul.getGameProfile().getName()).withStyle(ChatFormatting.DARK_PURPLE));
+		}
+		if (opened) { // as the elixir's opening shows: the first breath of qi through the body
+			ServerLevel at = soul.serverLevel();
+			at.sendParticles(ParticleTypes.END_ROD, soul.getX(), soul.getY() + 1.0, soul.getZ(), 40, 0.5, 0.8, 0.5, 0.08);
+			at.playSound(null, soul.blockPosition(), SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 0.8f, 1.4f);
+			soul.sendSystemMessage(Component.translatable(ModLang.MSG_POSSESS_MERIDIANS, name).withStyle(ChatFormatting.GOLD));
+			if (victim != null) victim.sendSystemMessage(Component.translatable(ModLang.MSG_POSSESS_MERIDIANS_TAKEN).withStyle(ChatFormatting.GOLD));
+		}
+		double speed = guidance(own, record);
+		if (!record.isMortal() && speed > 1) {
+			String times = java.math.BigDecimal.valueOf(speed).stripTrailingZeros().toPlainString();
+			soul.sendSystemMessage(Component.translatable(ModLang.MSG_POSSESS_GUIDANCE, times).withStyle(ChatFormatting.LIGHT_PURPLE));
 		}
 		return true;
 	}
@@ -391,9 +440,12 @@ public final class Possession {
 					npc.moveTo(soul.getX(), soul.getY(), soul.getZ(), soul.getYRot(), 0);
 					npc.setYHeadRot(soul.getYHeadRot());
 					npc.setVacant(false);
-					// A stage its cultivation came to while borrowed is its own now; and so is the path its deeds turned it to.
+					// A stage its cultivation came to while borrowed is its own now, and its way into the next (setRank starts a new
+					// rank's afresh); and so is the path its deeds turned it to.
 					int rank = t.record.isMortal() ? CultivatorNpc.MORTAL : PlayerCultivation.rank(t.record.getRealm(), t.record.getStage());
+					double progress = t.record.getCultivation();
 					if (rank != npc.getRank()) npc.setRank(rank);
+					if (rank >= 0) npc.cultivation().setState(npc.cultivation().getRealm(), npc.cultivation().getStage(), progress);
 					npc.setAlignment(t.record.getAlignment());
 					giveTo(npc, body);
 				} else {

@@ -116,8 +116,16 @@ public enum Ability {
 			case QI_FLIGHT -> Component.translatable(key, Math.round(c.qiFlightCostPerSecond()));
 			case SWORD_FLIGHT -> Component.translatable(key, Math.round(c.swordFlightCostPerSecond()));
 			case CONSCIOUSNESS_DOMAIN, REALM_SUPPRESS -> Component.translatable(key, Math.round(ConsciousnessDomainHandler.radius(c)));
-			case SOUL_PROJECTION -> Component.translatable(key, c.soulHearts(), c.soulTetherRadius(), Math.round(c.soulCostPerSecond(0, false)),
-					Math.round(c.soulCostPerSecond(1, false)));
+			case SOUL_PROJECTION -> {
+				Component said = Component.translatable(key, c.soulHearts(), c.soulTetherRadius(), Math.round(c.soulCostPerSecond(0, false)),
+						Math.round(c.soulCostPerSecond(1, false)));
+				// Wounds it carries yet (SoulProjection#mendSouls): how many of its hearts it would set out on, to the half heart.
+				if (c.getSoulWounds() <= 0) yield said;
+				double whole = c.soulHearts();
+				double left = Math.max(0.5, Math.floor((whole * 2 - c.getSoulWounds())) / 2.0);
+				yield said.copy().append(" ").append(Component.translatable(ModLang.ABILITY_SOUL_WOUNDED,
+						left == Math.floor(left) ? String.valueOf((long) left) : String.valueOf(left), c.soulHearts()));
+			}
 			case GHOST_EYE -> Component.translatable(key, GhostMethods.GHOST_EYE_COST);
 			case NETHERWORLD_VEIL -> Component.translatable(key, Math.round(GhostMethods.VEIL_COST));
 			case YIN_WIND_STEPS -> Component.translatable(key, Math.round(GhostMethods.YIN_WIND_SPEED * 100), Math.round(GhostMethods.YIN_WIND_COST));

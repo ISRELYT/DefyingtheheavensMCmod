@@ -65,50 +65,52 @@ public class MethodTiersGameTests implements FabricGameTest {
 		PlayerCultivation c = new PlayerCultivation();
 		c.setState(Realm.QI_REFINING, Stage.EARLY, 0);
 		NetherworldState s = c.netherworld();
-		helper.assertTrue(GhostMethods.stageProgress(s) == 0, "No foundation: no ghost path, nothing on its bar");
-		GhostMethod art = GhostMethod.NETHERWORLD_BREATHING;
-		s.setMethod(art, 1, 0);
-		helper.assertTrue(GhostMethods.stageProgress(s) == 0, "Just learned: Early, none of it behind");
-		// Early is the first two layers (3 and 4 minutes): through the first, three sevenths of the way to Mid.
-		s.setMethod(art, 2, 0);
-		helper.assertTrue(Math.abs(GhostMethods.stageProgress(s) - 3.0 / 7) < 1e-9, "Through the first layer: 3/7 (" + GhostMethods.stageProgress(s) + ")");
-		s.setMethod(art, 2, GhostMethods.layerCost(art, 2) / 2);
-		helper.assertTrue(Math.abs(GhostMethods.stageProgress(s) - 5.0 / 7) < 1e-9, "...and half the second: 5/7 (" + GhostMethods.stageProgress(s) + ")");
-		s.setMethod(art, 3, 0);
-		helper.assertTrue(GhostMethods.stageProgress(s) == 0, "Mid, at the third: begun again from nothing");
-		GhostMethod marrow = GhostMethod.YELLOW_SPRINGS_MARROW;
-		s.setMethod(marrow, 9, GhostMethods.layerCost(marrow, 9) / 4);
-		helper.assertTrue(Math.abs(GhostMethods.stageProgress(s) - 0.25) < 1e-9,
-				"Grand Perfection is the ninth layer alone, the deepest foundation's: a quarter through it, a quarter (" + GhostMethods.stageProgress(s) + ")");
+		helper.assertTrue(GhostMethods.stageProgress(s) == 0 && GhostMethods.addCultivation(s, 1000) == 0, "No foundation: no ghost path, nothing on its bar");
+		s.setPath(0, 0);
+		helper.assertTrue(GhostMethods.stageProgress(s) == 0, "Just begun: Early, none of it behind");
+		// Early is the first two layers' worth (3 and 4 minutes, 420 s): 180 s through, three sevenths of the way to Mid.
+		helper.assertTrue(GhostMethods.required(0) == 420, "Qi Refining Early takes 7 minutes in a Soul Sand Valley");
+		GhostMethods.addCultivation(s, 180);
+		helper.assertTrue(Math.abs(GhostMethods.stageProgress(s) - 3.0 / 7) < 1e-9, "180 s in: 3/7 (" + GhostMethods.stageProgress(s) + ")");
+		GhostMethods.addCultivation(s, 120);
+		helper.assertTrue(Math.abs(GhostMethods.stageProgress(s) - 5.0 / 7) < 1e-9, "...and two minutes more: 5/7 (" + GhostMethods.stageProgress(s) + ")");
+		helper.assertTrue(GhostMethods.addCultivation(s, 120) == 1 && GhostMethods.ghostRank(s) == 1 && GhostMethods.stageProgress(s) == 0,
+				"Full: on to Mid by itself, begun again from nothing");
+		s.setPath(PlayerCultivation.rank(Realm.QI_REFINING, Stage.GRAND_PERFECTION), GhostMethods.required(PlayerCultivation.rank(Realm.QI_REFINING, Stage.GRAND_PERFECTION)) / 4);
+		helper.assertTrue(Math.abs(GhostMethods.stageProgress(s) - 0.25) < 1e-9 && GhostMethods.required(GhostMethods.ghostRank(s)) == 1200,
+				"Grand Perfection is the ninth layer's 20 minutes alone: a quarter through it, a quarter (" + GhostMethods.stageProgress(s) + ")");
 		helper.succeed();
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
-	public void anyFoundationIsTakenUpALaterOneWhereTheGhostPathStands(GameTestHelper helper) {
+	public void anyFoundationIsTakenUpAndUnderstoodWhereTheGhostPathStands(GameTestHelper helper) {
 		PlayerCultivation c = new PlayerCultivation();
 		c.setState(Realm.QI_REFINING, Stage.EARLY, 0); // its meridians open: a mortal takes up nothing (TwoPathsGameTests)
 		for (GhostMethod m : GhostMethod.values()) helper.assertTrue(GhostMethods.canLearn(c, m), "Anyone takes up " + m.getId() + ", from Qi Refining");
 		PlayerCultivation high = new PlayerCultivation();
 		high.setState(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION, 0);
-		helper.assertTrue(GhostMethods.startLayer(high.netherworld(), GhostMethod.SIX_PATHS_CANON)[0] == 1,
-				"However high one's ordinary cultivation, the ghost path starts at the first layer");
+		helper.assertTrue(GhostMethods.understoodTo(high.netherworld(), GhostMethod.SIX_PATHS_CANON) == 2,
+				"However high one's ordinary cultivation, the ghost path starts at Qi Refining Early's layers");
 
 		ServerPlayer player = cultivator(helper, Realm.QI_REFINING, Stage.GRAND_PERFECTION);
-		NetherworldState s = CultivationManager.get(player).netherworld();
+		PlayerCultivation pc = CultivationManager.get(player);
+		NetherworldState s = pc.netherworld();
 		try {
 			GhostMethods.learn(player, GhostMethod.NETHERWORLD_BREATHING);
 			GhostMethods.learn(player, GhostMethod.GHOST_FIRE_SCRIPTURE);
 			helper.assertTrue(s.activeMethod() == GhostMethod.NETHERWORLD_BREATHING, "The first learned is practised");
-			s.setMethod(GhostMethod.NETHERWORLD_BREATHING, 9, GhostMethods.layerCost(GhostMethod.NETHERWORLD_BREATHING, 9));
+			GhostMethods.setPath(s, PlayerCultivation.rank(Realm.QI_REFINING, Stage.GRAND_PERFECTION));
+			s.setPath(GhostMethods.ghostRank(s), GhostMethods.required(GhostMethods.ghostRank(s))); // at its bottleneck
 			helper.assertTrue(GhostMethods.learn(player, GhostMethod.YELLOW_SPRINGS_MARROW) && s.activeMethod() == GhostMethod.YELLOW_SPRINGS_MARROW
-					&& s.layer(GhostMethod.YELLOW_SPRINGS_MARROW) == 9, "The Marrow Art, learned, starts at the ninth and takes the practice over: it is the way on");
-			helper.assertTrue(GhostMethods.cultivate(s, GhostMethod.YELLOW_SPRINGS_MARROW, 1) == 1
-					&& GhostMethods.ghostRealm(s) == Realm.FOUNDATION_BUILDING, "...the Breathing Art's progress with it: a breath more, Foundation Building");
+					&& s.layer(GhostMethod.YELLOW_SPRINGS_MARROW) == 9, "The Marrow Art, learned, understood to the ninth, takes the practice over: it is the way on");
+			helper.assertTrue(GhostMethods.canBreakthrough(pc) && GhostMethods.breakthrough(s) && GhostMethods.ghostRealm(s) == Realm.FOUNDATION_BUILDING
+					&& GhostMethods.settling(s, GhostMethod.YELLOW_SPRINGS_MARROW), "...its way open: through to Foundation Building, its next layers to settle in");
 			Spells.practise(player, GhostMethod.GHOST_FIRE_SCRIPTURE);
 			GhostMethods.give(player, GhostMethod.GHOST_CORE_CANON);
-			helper.assertTrue(s.layer(GhostMethod.GHOST_CORE_CANON) == 10 && s.activeMethod() == GhostMethod.GHOST_FIRE_SCRIPTURE,
-					"The Canon at the depth reached (10); a method chosen over the foundations stays chosen");
-			helper.assertTrue(GhostMethods.deepestFoundation(s) == GhostMethod.GHOST_CORE_CANON, "Of two as deep, the one that goes further carries the ghost path");
+			helper.assertTrue(s.layer(GhostMethod.GHOST_CORE_CANON) == 11 && s.activeMethod() == GhostMethod.GHOST_FIRE_SCRIPTURE,
+					"The Canon understood as far as the path (11); a method chosen over the foundations stays chosen");
+			GhostMethods.alignTo(s);
+			helper.assertTrue(GhostMethods.deepestFoundation(s) == GhostMethod.GHOST_CORE_CANON, "Of two as deep, the one that goes further is the deepest");
 		} finally {
 			Spells.forget(player.getUUID());
 		}

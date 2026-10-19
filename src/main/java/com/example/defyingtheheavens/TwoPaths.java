@@ -123,6 +123,42 @@ public final class TwoPaths {
 		return heavenRank(c, false) >= 0 && ghostRank(c, false) >= 0;
 	}
 
+	// --- Which qi a meditation draws in (the user's ask, 2026-10-19: one or the other, never both at once) ---
+
+	/**
+	 * Whether {@code c}'s meditation draws in ghostly qi, cultivating the ghost path (GhostMethods), rather than the heaven path's qi:
+	 * the dead always (their meridians are the ghost path's); the living on both paths by the Cultivation tab's switch
+	 * (NetherworldState#cultivatingGhost). A mortal neither.
+	 */
+	public static boolean cultivatesGhost(PlayerCultivation c) {
+		if (c.isMortal()) return false;
+		NetherworldState s = c.netherworld();
+		return s.ghost() || s.cultivatingGhost() && GhostMethods.ghostRank(s) >= 0;
+	}
+
+	/**
+	 * The Cultivation tab's switch: {@code p} turns to drawing in the other qi (their ghost path's, or their heaven path's), told so
+	 * over the hotbar; a meditation under way goes on with the other from its next breath. Only the living on both paths have two.
+	 */
+	public static void switchPath(ServerPlayer p) {
+		PlayerCultivation c = CultivationManager.get(p);
+		NetherworldState s = c.netherworld();
+		if (c.isMortal() || s.ghost()) {
+			p.displayClientMessage(Component.translatable(ModLang.MSG_GHOST_CANNOT), true);
+			return;
+		}
+		if (GhostMethods.ghostRank(s) < 0) {
+			p.displayClientMessage(Component.translatable(ModLang.MSG_PATH_NO_GHOST), true);
+			return;
+		}
+		s.setCultivatingGhost(!s.cultivatingGhost());
+		CultivationManager.markDirty(p.server);
+		Spells.sync(p); // the Cultivation tab's switch and columns (ModPackets#sendMethods carries it)
+		CultivationManager.sync(p);
+		p.displayClientMessage(Component.translatable(s.cultivatingGhost() ? ModLang.MSG_PATH_GHOST : ModLang.MSG_PATH_HEAVEN)
+				.withStyle(s.cultivatingGhost() ? ChatFormatting.AQUA : ChatFormatting.GOLD), true);
+	}
+
 	/** How many realms apart the two paths stand (true cultivation), or -1 if not on both. */
 	public static int realmGap(PlayerCultivation c) {
 		if (!walksBoth(c)) return -1;
@@ -278,8 +314,8 @@ public final class TwoPaths {
 
 	/**
 	 * Whether {@code c} has two forms to choose between now: the living with the Ghost King's form ({@link #hasKingForm}: their ghost
-	 * path at Core Formation, or once a Ghost King among the dead); the dead, as Ghost Kings (GhostSystem#isKing), whatever their
-	 * ghost path, a king by its heaven path having its human form to take as well. Common ghosts have none.
+	 * path at Core Formation, or once a Ghost King among the dead); the dead, as Ghost Kings (GhostSystem#isKing: their ghost path
+	 * at Core Formation). Common ghosts have none.
 	 */
 	public static boolean formsOpen(PlayerCultivation c) {
 		return c.netherworld().ghost() ? GhostSystem.isKing(c) : hasKingForm(c);

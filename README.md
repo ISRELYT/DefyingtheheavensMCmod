@@ -377,6 +377,30 @@ gaze), every point is given back to spend again, and you're told. An op can take
 resetstats`. Code: `StatPoints` (the attribute modifiers; the qi pool and gathering read them in `PlayerCultivation`), client
 `CultivationScreen#renderStatPoints`; tests `StatPointsGameTests`.
 
+## Tribulations
+
+A breakthrough into a new realm (and, from Nascent Soul, into every stage) brings the **Heavenly Tribulation**: a storm
+gathers over you and strikes a set number of times, 3 seconds apart (`TribulationManager#strikes`). **The only lightning in
+it is the strike that hits you** (the scattered bolts it once threw about for show are gone, the user's call 2026-10-19),
+and the cloud brightens as each one lands. The storm grows with the realm you are breaking into (x1 at Foundation Building,
+45% wider each realm after: `TribulationCloud#stormScale`), and its bolt grows as much **thicker**, a quarter of a realm's
+growth more for each stage within the realm (`TribulationManager#boltScale`): vanilla's own at Foundation Building, x1.45 at
+Core Formation, x1.9 to x2.24 through Nascent Soul's stages, x3.14 at Four Axis Grand Perfection. Only its thickness: its
+zig-zag stays vanilla's (`TribulationLightningRenderer` draws vanilla's bolt from the same seed, every layer that much wider;
+scaled whole, the great tribulations' bolts sprawled across the sky). The Spatial Gap's storms are their own and unchanged.
+
+**The Netherworld's tribulation** is the ghost path's (the user's ask, 2026-10-19; `TribulationManager#startGhost`): with the
+ghost path drawn in (the Cultivation tab's Path button; the dead always), the Breakthrough button at its bottleneck brings
+it. It comes at the same breakthroughs as the heavens' (every Grand Perfection, every stage from Nascent Soul) with the same
+strikes, the same bolt sizes, but of **yin lightning** from a **dark teal storm**, its bolt cyan, and it comes **wherever you
+stand, the Netherworld included** (it is the dead's realm's, not the heavens'). Its bolt is turned by armour as the heavens'
+is, and the yin in it passes armour as magic does (`ModDamageTypes.YIN_LIGHTNING`, `YIN_TRIBULATION`); it reaches the dead,
+who take **half** of it (`TribulationManager.DEAD_SHARE`, my number: their hearts are half the living's, and they wear no
+armour but a Ghost King's). Survived, the ghost path is through to the next stage or realm, its bar empty, its methods' new
+layers to settle in. Failed, **the ghost path falls a stage** and its cultivation there is lost: struck down (the living
+die; the dead scatter and reform at the Gate) or leaving mid-way (marked and saved at once, so you fall as you come back).
+A Heavenly Thunder Body drinks in only the heavens' lightning. The HUD names it "The Netherworld's Tribulation".
+
 ## The Ritual to the Heavens
 
 Leaving **Qi Refining Mid** takes the heavens' **permission to cultivate**, not a tribulation: at Mid the cultivation bar stops full (pills,
@@ -855,7 +879,12 @@ the day the soul forms, and the ability goes into the first empty slot of your w
 - **The soul** is you, flying free of gravity through stone, wood and earth: it moves the way you look (look up and press
   forward to rise), jump and sneak lift and lower it, sprint doubles its pace, and it carries its momentum. It has its own
   hearts, **1 at Nascent Soul Early and 3 more every stage** (10 at Grand Perfection, 13 at Heavenly Being Early, 34 at
-  Four Axis Grand Perfection), and they never heal; coming home you have the body's health, not the soul's.
+  Four Axis Grand Perfection), all its own: constitution's points and your body's health count for nothing there. **Out of
+  every body they never heal**, and what the soul loses it keeps: coming home you have the body's health, not the soul's,
+  and the soul's wounds wait for it. It **mends only while it rests in a body**: home in your own (gathering to go out too),
+  or in a being it possesses, from nothing to whole in **2 minutes** (`SoulProjection.SOUL_MEND_SECONDS`), so it sets out
+  next time as whole as it has mended. While it's wounded, Soul Projection's description in the Abilities tab says how
+  many hearts it has. A soul lost and formed again is born whole.
 - **The tether**, a thread of bright blue light from your body's chest to the soul, lets it go **32 / 48 / 64 / 96** blocks
   through Nascent Soul's stages, 128-176 through Heavenly Being, 192-256 through Four Axis; it stretches against you as you
   near its end.
@@ -907,7 +936,14 @@ use and throw things, open chests and your inventory, craft, ride. You have **wh
 health, hunger, experience and effects, and **its look and name to everyone** (its skin and cape, the name over its head
 and in chat; in an NPC's body, its nameplate with its title and path). You have **its cultivation**: its realm and
 strength, its qi pool and gathering, its abilities and spells; meditating in it cultivates the body, not you (no
-breakthrough that brings a tribulation, though: a soul away from its own body can't face one). Its people take you for it:
+breakthrough that brings a tribulation, though: a soul away from its own body can't face one), and **faster the higher
+your soul stands above it**: once more as fast for every realm between you, counted by the stage (a quarter a stage, a
+mortal's body a stage below Qi Refining Early; your own path's true rank against the body's higher path's), on both
+paths, on top of every other boost (`Possession#guidance`): a Heavenly Being Early in a Qi Refining Early body cultivates
+it 5 times as fast, a Nascent Soul Grand Perfection in a Core Formation Early one 2.75 times. You're told by how much as
+you go in. **A soul of Heavenly Being Grand Perfection or above forces a mortal body's meridians open** as it goes in,
+player's or NPC's (`Possession.OPENS_MERIDIANS`): Qi Refining Early, theirs to keep, with no Marrow Cleansing Elixir and no
+tempering to Peak first (shattered meridians stay shut, as they do to the elixir). Its people take you for it:
 an NPC's sect lets you through its barrier and onto its grounds as its own, and NPCs think of you what they think of the
 body. Your own things wait for you, put by, and your soul's upkeep comes out of **your own pool**, apart from the body's
 (the **Qi** bar is the body's, what its spells and abilities draw on; under it an **Own Qi** bar, in violet, is yours, or
@@ -932,7 +968,7 @@ a possessed body wears a **violet veil**: the soul's light washed over it, breat
   right as each comes back.
 - **The NPC** is set aside, unseen and still, and goes where its body goes. Given back, it stands there again holding and
   wearing what the body does (anything else it took up, it carries among its winnings), at the body's health and any stage
-  its cultivation came to. If the body dies, it dies (its sect mourns it, and whatever struck it has the kill).
+  its cultivation came to, with its way into the next. If the body dies, it dies (its sect mourns it, and whatever struck it has the kill).
 - Your ender chest and spawn point stay your own. The dead have no body to take.
 
 **A beast or monster is ridden from inside**: you look out through its eyes and move it with its own speed and strength
@@ -1252,13 +1288,13 @@ The second kind of qi. Ordinary qi is the cultivator's own; ghostly qi belongs t
 are cultivated on and the **Ghost Qi** pool fills from. Under Qi Sense it is a sixth element, yin, its motes thick in the
 Netherworld.
 
-| Where | Density (a Soul Sand Valley = 1) | The pool fills, a second | Ghost methods go |
+| Where | Density (a Soul Sand Valley = 1) | The pool fills, a second | The ghost path goes |
 |---|---|---|---|
 | The Netherworld | 10 (`GhostQi.NETHERWORLD`) | 2 | x10 |
 | The Nine Nether Peaks | 12 (x `PEAKS_FACTOR`) | 2.4 | x12 |
 | A Soul Sand Valley | 1 (`SOUL_SAND_VALLEY`) | 0.2 | x1 (the baseline) |
-| The Overworld, anywhere in it | 0.5 (`OVERWORLD`) | 0.1 | x0.5 |
-| The rest of the Nether | 0.25 (`NETHER`) | 0.05 | x0.25 |
+| The rest of the Nether | 0.5 (`NETHER`) | 0.1 | x0.5 |
+| The Overworld, anywhere in it (the thinnest, the user's call 2026-10-19) | 0.25 (`OVERWORLD`) | 0.05 | x0.25 |
 | Everywhere else (the Upper Realm, the Spatial Gap, the End, the Astral Realm) | 0 | nothing | not at all |
 
 The pool fills at density x 0.2 a second (`FILL_PER_DENSITY`); spirit stones and Spirit Dew don't fill it. Everyone who
@@ -1339,20 +1375,49 @@ the dead's cyan), `ClientGhosts`, `mixin/GhostDriftMixin`, `mixin/SoulRenderDisp
 
 ### Ghost methods
 
-The ghost methods are cultivated on ghostly qi, by the dead and the living alike, layer by layer. Each layer brings
-something, and some bring abilities and spells.
+The ghost path is cultivated on ghostly qi, by the dead and the living alike, as the heaven path is on qi: **its own
+cultivation bar**, the ghost methods riding on it as the heaven methods ride on the heaven path's (the user's ask,
+2026-10-19; before, the deepest foundation's layers were the path). Each layer brings something, and some bring abilities
+and spells.
 
-**The ghost path.** The ghost methods are a path of their own beside ordinary cultivation, and **neither builds on the
-other**: the foundations carry the **ghost path** through the realms, never your ordinary cultivation, and your ordinary
-realm neither opens a ghost method nor speeds it. A Four Axis cultivator who comes down starts the ghost path at Qi
-Refining like anyone else. But walking both paths makes you stronger than walking either (see **The two paths** below).
-The Methods tab shows where your ghost path stands (`GhostMethods#ghostRank`).
+**The ghost path.** A path of its own beside ordinary cultivation, and **neither builds on the other**: your ordinary realm
+neither opens a ghost method nor speeds it, and a Four Axis cultivator who comes down starts the ghost path at Qi Refining
+like anyone else. It **begins with the first foundation you learn**, at Qi Refining Early (`GhostMethods#ghostRank`, saved
+as `NetherworldState`'s "PathRank" and "PathCultivation"). But walking both paths makes you stronger than walking either
+(see **The two paths** below).
+
+**One qi or the other.** A meditation draws in **either** the heavens' qi **or** ghostly qi, never both: on both paths, the
+Cultivation tab's **Path** button (between Meditate and Breakthrough) switches which, and the path drawn in has a short rule
+under its column's name (`TwoPaths#cultivatesGhost`, `#switchPath`). Switched mid-meditation, the meditation goes on with
+the other from its next breath. The dead draw in only ghostly qi. Both pools fill on their own as ever; only the
+cultivation follows the switch. The Breakthrough button breaks through on the path drawn in.
+
+**The bar.** Meditating while ghostly qi flows where you sit fills the ghost path's bar, and its stages step on by
+themselves, as the heaven path's do, up to the bottlenecks (below). A stage takes what its layers took before the bar
+(`GhostMethods#required`: a stage's layers' minutes x its realm's factor, in seconds of baseline meditation), so the
+pace is what it was: the Qi Refining stages 83 minutes in all, the whole way to Four Axis Grand Perfection about 57
+hours, at the baseline (a living ghost path of Nascent Soul in a Soul Sand Valley); ten times as fast in the Netherworld.
+The Cultivation tab's ghost column shows the bar (the stage's cultivation on it, amber at a bottleneck, gold at the top)
+and what meditating here adds a second.
+
+**The bottlenecks: the Netherworld's tribulation.** Leaving Grand Perfection, and from Nascent Soul every stage, takes the
+**ghost path's tribulation** (see Tribulations), as the heaven path's take the Heavenly Tribulation: the bar stops full and
+the Breakthrough button (with the ghost path drawn in) brings it on. **Breaking into a ghost realm also wants a foundation
+of that realm or deeper** (`GhostMethods#opensWay`): the Breathing Art carries the path no further than Qi Refining's Grand
+Perfection, and only a deeper foundation, found, opens the way on (said under the details, in amber once the bar is full).
+
+**The methods are understood as far as the path has come** (`GhostMethods#understoodTo`), as the heaven methods are: a
+foundation to the layer standing for the path's stage, the fire and the steps three layers a ghost realm (up to the sixth
+at Foundation Building, all nine from Core Formation). Learned, at once; and as the path reaches new stages, their new
+layers **settle in** while you meditate on ghostly qi (`GhostMethods#settle`: half a layer's own cost, gathered on the path,
+quicker by its own stele), every method you know at once, each told as it settles. A fall takes the layers past it
+(`#clampTo`).
 
 **The foundations** carry the ghost path **from Qi Refining up to their own realm**, nine layers to each realm they span
 (`MethodLayers`): the Netherworld Breathing Art has 9 layers (Qi Refining alone), the Yellow Springs Marrow Art 18 (Qi
 Refining, then Foundation Building), and so on to the Six Paths Reincarnation Canon's 54 (Qi Refining all the way through
-Four Axis). The deeper the foundation, the further it goes and the rarer it is; whichever you find, you can practise it
-from the start. Each foundation's spells come in its own realm (its last nine layers):
+Four Axis). The deeper the foundation, the further it opens the way and the rarer it is. Each foundation's spells come in its
+own realm (its last nine layers):
 
 | Foundation | Carries the ghost path | Layers | Spells (layer) | Where it is found |
 |---|---|---|---|---|
@@ -1369,10 +1434,10 @@ and always leaves the slip when it falls.
 
 Every layer of your deepest foundation adds +20 ghostly qi to the pool and a heart as a ghost, and (up to 18 layers) +10%
 to the living's stay among the yin. Foundations don't stack: they all lay out the realms the same way, so only the deepest
-counts (`GhostMethods#foundationDepth`). **A foundation found later is taken up where your ghost path already stands**
-(`GhostMethods#startLayer`): with the Breathing Art perfected, the Marrow Art starts at its ninth layer, progress and all,
-and goes on into Foundation Building; a lesser foundation you've outgrown is learned whole, perfected at once, its spells
-in reach. Learning a foundation that goes further than the one you practise makes it the one you practise.
+counts (`GhostMethods#foundationDepth`). **A foundation found later is understood where your ghost path already stands**:
+at Qi Refining Grand Perfection the Marrow Art is learned to its ninth layer and opens the way into Foundation Building; a
+lesser foundation you've outgrown is learned whole, perfected at once, its spells in reach. Learning a foundation that goes
+further than the one you practise makes it the one you practise (the one whose stele quickens you).
 
 Besides the foundations, two methods of their own:
 
@@ -1392,67 +1457,66 @@ Soul Sutra 20, Yama's Judgement Scripture 8, the Six Paths Reincarnation Canon 3
 through walls. A **Ghost Jade Slip**, read (right-click), teaches its method at once and isn't used up: ghost cultivators
 drop them now and then, and Ghost Elders sell their own. A ghost cultivator knows its own realm's foundation five times
 in ten (a Ghost King always), otherwise one of the first three methods, and one struck down leaves its foundation's slip
-15% of the time. One who is Warm to you will **teach** you its method once a day: the method, or ten minutes' progress
-if you know it.
+15% of the time. One who is Warm to you will **teach** you its method once a day: the method, or, if you know it, its
+layers still settling settled at once and ten minutes on your ghost path's bar (`TalkSystem#teach`).
 
-**Cultivating.** Meditate as usual: while ghostly qi flows where you sit, the method you practise gains progress on top
-of your ordinary cultivation (a ghost cultivates only the method). Choose which one in the cultivation menu's
-**Methods** tab: where your ghost path stands, every method you know, its layer and progress, how fast it's going here
-and why, and a **Practise** button. Progress is counted in seconds of baseline meditation, so a layer costs its minutes x
-60 (`GhostMethods#layerCost`):
+**Cultivating.** Meditate with ghostly qi drawn in (the Path button): while ghostly qi flows where you sit, the ghost path's
+bar fills and the methods' new layers settle in on it (a ghost cultivates only this). The **Methods** tab shows where your
+ghost path stands, how far your foundations open its way, every method you know, its layers understood (its next one
+settling, how far, or the stage of the path that opens it), and a **Practise** button (the method practised is the one whose
+stele quickens you). The layers' costs, in minutes of baseline meditation (`GhostMethods#layerCost`):
 
 | Layer | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | All nine |
 |---|---|---|---|---|---|---|---|---|---|---|
-| The fire, the steps | 5 | 8 | 12 | 20 | 30 | 45 | 60 | 90 | 120 | 6.5 h |
+| The fire, the steps (half of it settles one in) | 5 | 8 | 12 | 20 | 30 | 45 | 60 | 90 | 120 | 6.5 h |
 | A foundation, each realm's nine, before the realm's factor | 3 | 4 | 5 | 6 | 8 | 10 | 12 | 15 | 20 | 83 min |
 
-A foundation's layers cost the same whichever foundation it is: each realm's nine are the row above times the realm's
-factor (`MethodLayers.REALM_FACTOR`): x1 Qi Refining (83 minutes), x2 Foundation Building (2.8 hours), x4 Core Formation
-(5.5 hours), x7 Nascent Soul (9.7 hours), x11 Heavenly Being (15 hours) and x16 Four Axis (22 hours). So the Breathing Art
-takes 83 minutes, the Marrow Art those and 2.8 hours more, and the Six Paths Reincarnation Canon all of them, about 57
-hours, all at the baseline: a living cultivator whose ghost path is at Nascent Soul, in a **Soul Sand Valley**. The rate is
-`BASE_RATE` x the density (a Soul Sand Valley's 1 the baseline: `GhostQi.SOUL_SAND_VALLEY`) x the ghost path's factor
-(`realmFactor`: -10% a realm below Nascent Soul, +10% a realm above; a ghost path not yet begun counts as Qi Refining) x Qi
-Harmony x a Yin Gathering Pill's boost x 1.5 for the dead (`GHOST_FACTOR`) x 1.25 beside a stele of the method you're
-practising (`STELE_BONUS`, within 8 blocks). Your ordinary realm doesn't come into it.
+A ghost path's stage takes its layers' worth of the foundation row (Early the first two, Mid the next three, Late three,
+Grand Perfection the ninth alone) times the realm's factor (`MethodLayers.REALM_FACTOR`): x1 Qi Refining (83 minutes), x2
+Foundation Building (2.8 hours), x4 Core Formation (5.5 hours), x7 Nascent Soul (9.7 hours), x11 Heavenly Being (15 hours)
+and x16 Four Axis (22 hours), about 57 hours in all at the baseline: a living cultivator whose ghost path is at Nascent Soul,
+in a **Soul Sand Valley**. The rate is `BASE_RATE` x the density (a Soul Sand Valley's 1 the baseline:
+`GhostQi.SOUL_SAND_VALLEY`) x the ghost path's factor (`realmFactor`: -10% a realm below Nascent Soul, +10% a realm above)
+x Qi Harmony x a Yin Gathering Pill's boost x 1.5 for the dead (`GHOST_FACTOR`) x 1.25 beside a stele of the method you're
+practising (`STELE_BONUS`, within 8 blocks) x a possessor's guidance (Possession). Your ordinary realm doesn't come into it.
 
-Every layer can be cultivated **wherever ghostly qi flows**, the Overworld and the Nether included; the Netherworld is
-simply the best place for it. Its qi is ten times as dense, so methods go **ten times as fast** there (twelve on the Nine
-Nether Peaks): the Breathing Art in about 8 minutes, the Six Paths Reincarnation Canon in about 5.7 hours (the dead half as
-fast again). In a Soul Sand Valley they go at the baseline, in the Overworld at half of it, and in the rest of the Nether at
-a quarter of it.
+The ghost path can be cultivated **wherever ghostly qi flows**, the Overworld and the Nether included; the Netherworld is
+simply the best place for it. Its qi is ten times as dense, so the bar fills **ten times as fast** there (twelve on the Nine
+Nether Peaks): Qi Refining in about 8 minutes, the whole path in about 5.7 hours (the dead half as fast again). In a Soul
+Sand Valley it goes at the baseline, in the rest of the Nether at half of it, and in the Overworld, the thinnest of all, at a
+quarter of it.
 
-**The ghost path's realms.** A foundation carries the ghost path through each realm it spans (`GhostMethods#floor`; the
-deepest layer of any foundation you know counts), for the living and the dead alike. Within each realm's nine:
+**The foundations' layers and the path's stages.** Within each realm's nine:
 
 | Layer within the realm | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
 |---|---|---|---|---|---|---|---|---|---|
-| Ghost path, in that realm | Early | Early | Mid | Mid | Mid | Late | Late | Late | Grand Perfection |
+| Understood from the ghost path's | Early | Early | Mid | Mid | Mid | Late | Late | Late | Grand Perfection |
 
-So the Six Paths Reincarnation Canon's layer 10 is Foundation Building Early, its 21 Core Formation Mid, its 54 Four Axis
-Grand Perfection. There's no tribulation or ritual on the ghost path. A ghost whose ghost path reaches Core Formation (the
-Ghost Core Canon's 19th layer, or any deeper foundation's) is a Ghost King (below), whatever its ordinary cultivation. The
-Methods tab draws a foundation's layers realm by realm, names the next layer that carries the ghost path on, and once a
-foundation is perfected, says a deeper one must be sought out. Saves from before the foundations spanned the realms below
-their own are moved over once (`NetherworldState`, "MethodLayout"): a foundation's layer stands for the same stage as before.
+So the Six Paths Reincarnation Canon's layer 10 opens at Foundation Building Early, its 21 at Core Formation Mid, its 54 at
+Four Axis Grand Perfection (`GhostMethods#opensAt`). A ghost whose ghost path reaches Core Formation is a Ghost King (below),
+whatever its ordinary cultivation.
 
-**The ghost path's gate.** The fire and the steps go only as far as your ghost path carries them (`GhostMethods#layerCap`):
-three layers while it is at Qi Refining (or not begun), up to the sixth at Foundation Building, all nine from Core
-Formation, the living and the dead alike. At the gate the layer's bar stays full and the Methods tab says what your ghost
-path must reach.
+**Old worlds.** A ghost path saved before the bar (2026-10-19) starts its bar where its deepest foundation's layers stood,
+that layer's progress the bar's, the foundations' settling afresh (`NetherworldState#load`, once); saves from before the
+foundations spanned the realms below their own are moved over first ("MethodLayout").
 
 Code: `GhostMethod` (the methods, their realms, layers and rarity; ids saved, add new ones at the end), `MethodLayers`
-(the realm-by-realm layout, shared with the heaven methods), `GhostMethods` (the ghost path, rate, layers, learning, what
-each layer grants, the gate), `MethodSteleBlock`, `MethodSteleFeature` (`NW_STELE_CHUNKS`
-in `ModPlacedFeatures`), `GhostJadeSlipItem`, `MeditationManager#ghostMethods`, `TalkSystem#teach`,
-`GhostCultivatorNpc#method`; client `ClientMethods`, `CultivationScreen` (the Methods tab).
+(the realm-by-realm layout, shared with the heaven methods), `GhostMethods` (the ghost path's bar, its gate and bottlenecks,
+the rate, the layers understood and settling, learning, what each layer grants), `TwoPaths#cultivatesGhost` (which qi is
+drawn in), `MethodSteleBlock`, `MethodSteleFeature` (`NW_STELE_CHUNKS` in `ModPlacedFeatures`), `GhostJadeSlipItem`,
+`MeditationManager#ghostMethods`, `TalkSystem#teach`, `GhostCultivatorNpc#method`; client `ClientMethods`,
+`CultivationScreen` (the Cultivation tab's ghost column and Path button, the Methods tab); `/method path <realm> <stage>`
+and `/method progress <seconds>` (Commands).
 
 ### Ghost Kings
 
-One of the dead whose cultivation **or ghost path** is **Core Formation or above** is a **Ghost King**
-(`GhostSystem#isKing`): one who died there or later, or whose ghost path rose to it (taking up the Ghost Core Canon); never
-a mortal's ghost, whose ghost path lies dormant (below). Whichever path makes it one, the dead are always drawn as the dead:
-a king crowned, the rest as common ghosts. It is told so (the Journal keeps a note), and:
+One of the dead whose **ghost path** is **Core Formation or above** is a **Ghost King** (`GhostSystem#isKing`): it took
+the Ghost Core Canon (or a deeper foundation) to Core Formation, in life or in death. **The heaven path makes no king**,
+however high: a Four Axis cultivator with no ghost path dies one of the common dead (the user's rule, 2026-10-19; until
+then dying at Core Formation on the heaven path crowned one too, and a world from before has those reigns undone as it
+loads, unless the ghost path reached Core Formation as well). Never a mortal's ghost either, whose ghost path lies dormant
+(below); a Ghost Devil Body is one from birth (Physiques). The dead are always drawn as the dead: a king crowned, the rest as
+common ghosts. It is told so (the Journal keeps a note), and:
 
 - **its hands are its own again.** It breaks and places, uses items and blocks, picks things up and drops them, and strikes
   the living world as the living do (its blows are ordinary ones, no longer ghostly).
@@ -1490,13 +1554,14 @@ cultivator who walks both is stronger than one who walks either (`TwoPaths`):
 - **Harmony.** The two paths together add to that body, the more the closer they stand: **+30%** with both in the same
   realm, **+20%** a realm apart, **+10%** two apart, nothing further (`TwoPaths#HARMONY`, by realm, not stage), on top of
   Heaven's Favour. The Stats tab names the path the body follows and the harmony; on the Cultivation tab the two paths
-  stand **side by side, alike** (neither a side path): each its name, realm and stage, its bar (the heaven path's
-  cultivation; the ghost path's fills through the stage it stands at, its deepest foundation's layer written on it,
-  `GhostMethods#stageProgress`, amber once that foundation is perfected and gold at the last), and the method practised and
-  its pace (the ghost path's next layer in minutes, or why it can't come here). Words too long for a column are written
-  short ("Layer 4 of 54"). Under the two, the details (pills, path, harmony, favour, the Upper Realm's qi, ghostly qi, yin)
+  stand **side by side, alike** (neither a side path): each its name (a short rule under the one whose qi is drawn in), realm
+  and stage, its bar (each its own cultivation, the stage's written on it; amber at a bottleneck, gold at the last), and what
+  meditating here adds a second (the ghost path's by the method practised); the path whose qi isn't drawn in reads
+  "Resting (not drawn in)". The **Path** button between Meditate and Breakthrough (the three then share the row) switches
+  the qi drawn in (see Ghost methods), and a bottleneck on the resting path says to switch first. Words too long for a
+  column are written short. Under the two, the details (pills, path, harmony, favour, the Upper Realm's qi, ghostly qi, yin)
   share rows as they fit, then across the whole width what stands next on each path (the heaven path's breakthrough, pill
-  or ritual; then the ghost path's next floor, or the foundation to seek), or whatever holds you (pressure, Realm
+  or ritual; then the ghost path's tribulation, or the foundation its way waits on), or whatever holds you (pressure, Realm
   Suppress); the lines draw closer when there is much to say, so everything fits.
 - **The realm's abilities come from either path** (`TwoPaths#awakens`): Qi Sustenance at Foundation Building, Qi Sense and
   Golden Core Detonation at Core Formation, Soul Projection at Nascent Soul, the Spatial Tear at Heavenly Being. The heaven
@@ -1536,7 +1601,7 @@ cultivator who walks both is stronger than one who walks either (`TwoPaths`):
 - **Spells of both paths**, one for each realm from Foundation Building, need **both paths at that realm** and cost **qi
   as well as ghostly qi** (below). When both paths reach a realm you're told, and its spell goes on the spell wheel.
 - **Two forms, while you live.** Once your ghost path reaches Core Formation (a Ghost King's might), or once you have been a
-  Ghost King among the dead (kept when you are born again, ghost method or none), you have a **Ghost King form** beside your
+  Ghost King among the dead (kept when you are born again, even should your ghost path fall after), you have a **Ghost King form** beside your
   human one: crowned, in the dead's deeper light, as the Ghost Kings are drawn. Your **true form** is the
   form of your higher path: Four Axis on the heaven path and Nascent Soul on the ghost path, you look human; the ghost path
   higher, you look a Ghost King; level, human. The **Form Shift** ability (Abilities tab, or the ability wheel) takes the
@@ -1546,7 +1611,7 @@ cultivator who walks both is stronger than one who walks either (`TwoPaths`):
   In all else you are still alive: you eat, mobs hunt you, arrows strike you. Without that form the living look human.
   You're told when your true form changes, and when a Ghost King born again keeps its form.
 - **The dead are the dead.** Whatever the realms of their two paths, the dead are drawn as the dead: a Ghost King crowned
-  (either path at Core Formation), the rest as common ghosts. A **Ghost King has two forms**, ghost method or none: its true
+  (its ghost path at Core Formation; the heaven path's realm crowns no one), the rest as common ghosts. A **Ghost King has two forms**: its true
   form is the King's, and Form Shift takes its **human form**, in which it is drawn as a man and seen by everyone, as the
   living are (`TwoPaths#inHumanForm`); in all else it keeps the rules of the dead. Common ghosts have no forms. Dying, or
   born again, you start in your true form (Form Shift switched off).
@@ -1755,7 +1820,7 @@ one later (a demon race's tiger or snake head, say).
 | **Peach Wood Sword** | 2 cherry planks, a stick and a Peach Pit (shapeless) | a stone sword to the living; on the dead every blow lands in full, whoever swings it, and twice as hard (`PeachWoodSwordItem.ON_THE_DEAD`) |
 | **Ghost-Quelling Talisman** | 2 paper, redstone (the cinnabar) and Yin Jade with the Inscription Brush (shapeless; makes 2, the brush comes back a use more worn); the Gate's wardens sell them | thrown (right-click, like a snowball): see below |
 | **Yang Preservation Pill** | Alchemy Cauldron, 30 s: Ginseng, blaze powder, glowstone dust, a honey bottle | holds yin corruption still (above) |
-| **Yin Gathering Pill** | Alchemy Cauldron, 30 s: an Other-Shore Flower, a Netherworld Lotus, a ghast tear | the ghost methods go +25% faster per point of potency for 5 minutes (`PillItem.YIN_BOOST_PER_POTENCY`); only for one who knows a method |
+| **Yin Gathering Pill** | Alchemy Cauldron, 30 s: an Other-Shore Flower, a Netherworld Lotus, a ghast tear | the ghost path's bar fills +25% faster per point of potency for 5 minutes (`PillItem.YIN_BOOST_PER_POTENCY`); only for one whose ghost path has begun |
 
 **The Ghost-Quelling Talisman.** Thrown, it flies past the living (and through a projected soul) and strikes only the
 dead: a player's ghost, a ghost cultivator, a Hungry Ghost. It deals **6** of the dead's own harm, which lands in full, and
@@ -1787,8 +1852,9 @@ All act on yourself.
 /netherworld ghost          become a ghost where you stand
 /netherworld revive         return to life, as at the Wheel
 /netherworld corruption <percent>   set your yin corruption
-/method learn <id> [layer]  a ghost method at that layer (to 54; without one, as a stele teaches it), progress reset
-/method progress <seconds>  that many seconds of baseline meditation on the practised method (the outside cap ignored)
+/method learn <id> [layer]  a ghost method at that layer (to 54; without one, as a stele teaches it), nothing settling
+/method progress <seconds>  that many seconds of baseline meditation on the ghost path's bar (its layers settling on it too)
+/method path <realm> <stage>   the ghost path set there (1-6, 1-4), its methods understood as far
 /method forget <id>         as if it had never been learned
 /gamerule netherworldAfterDeath false   death as vanilla's, no ghosts
 ```

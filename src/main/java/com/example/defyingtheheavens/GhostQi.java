@@ -17,21 +17,25 @@ import net.minecraft.world.level.biome.Biomes;
  *   <tr><td>The Netherworld</td><td>{@link #NETHERWORLD} (x10)</td></tr>
  *   <tr><td>The Nine Nether Peaks</td><td>{@link #NETHERWORLD} x {@link #PEAKS_FACTOR} (x12)</td></tr>
  *   <tr><td>A Soul Sand Valley</td><td>{@link #SOUL_SAND_VALLEY} (x1)</td></tr>
- *   <tr><td>The Overworld</td><td>{@link #OVERWORLD} (x0.5)</td></tr>
- *   <tr><td>The rest of the Nether</td><td>{@link #NETHER} (x0.25)</td></tr>
+ *   <tr><td>The rest of the Nether</td><td>{@link #NETHER} (x0.5)</td></tr>
+ *   <tr><td>The Overworld</td><td>{@link #OVERWORLD} (x0.25)</td></tr>
  *   <tr><td>Everywhere else</td><td>0</td></tr>
  * </table>
  * The ghostly qi pool fills at density x {@link #FILL_PER_DENSITY} a second: 2 a second in the Netherworld (2.4 on its peaks),
- * 0.2 in a Soul Sand Valley, 0.1 in the Overworld, 0.05 in the rest of the Nether, nothing elsewhere. Spirit stones and Spirit Dew
+ * 0.2 in a Soul Sand Valley, 0.1 in the rest of the Nether, 0.05 in the Overworld, nothing elsewhere. Spirit stones and Spirit Dew
  * don't fill it.
  */
 public final class GhostQi {
 	public static final double NETHERWORLD = 10.0;
 	public static final double PEAKS_FACTOR = 1.2;
 	public static final double SOUL_SAND_VALLEY = 1.0;
-	public static final double NETHER = 0.25;
-	/** The living world's own faint yin, everywhere in the Overworld (the user's ask, 2026-10-18): half a Soul Sand Valley's. */
-	public static final double OVERWORLD = 0.5;
+	/** The rest of the Nether: half a Soul Sand Valley's (it was the Overworld's until 2026-10-19, when the user swapped the two). */
+	public static final double NETHER = 0.5;
+	/**
+	 * The living world's own faint yin, everywhere in the Overworld (the user's ask, 2026-10-18): a quarter of a Soul Sand Valley's,
+	 * the thinnest anywhere there is any (2026-10-19, the user's: the Overworld the worst place for the ghost path).
+	 */
+	public static final double OVERWORLD = 0.25;
 	/** The pool fills at the density times this, a second. */
 	public static final double FILL_PER_DENSITY = 0.2;
 	/**

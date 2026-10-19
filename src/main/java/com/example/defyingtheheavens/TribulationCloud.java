@@ -17,6 +17,8 @@ import net.minecraft.world.phys.AABB;
 public class TribulationCloud extends Entity {
 	public static final float BASE_HEIGHT_ABOVE_PLAYER = 32.0f;
 	public static final float HEIGHT_PER_TIER = 6.0f;
+	/** How much wider the storm grows each realm past Foundation Building (its bolt as much thicker: TribulationManager#boltScale). */
+	public static final float SCALE_PER_TIER = 0.45f;
 
 	/** Keep a moderate, realm-scaled gap above the cultivator in every dimension. */
 	public double cloudBaseY(double playerY) {
@@ -28,6 +30,8 @@ public class TribulationCloud extends Entity {
 	private static final int FLASH_DURATION = 6;
 	private static final EntityDataAccessor<Integer> STORM_TIER = SynchedEntityData.defineId(TribulationCloud.class, EntityDataSerializers.INT);
 	private static final EntityDataAccessor<Long> FORMED_AT = SynchedEntityData.defineId(TribulationCloud.class, EntityDataSerializers.LONG);
+	/** The Netherworld's tribulation's storm (the ghost path's, TribulationManager): drawn dark teal, its flashes cyan. */
+	private static final EntityDataAccessor<Boolean> GHOST = SynchedEntityData.defineId(TribulationCloud.class, EntityDataSerializers.BOOLEAN);
 
 	public TribulationCloud(EntityType<? extends TribulationCloud> type, Level level) {
 		super(type, level);
@@ -41,15 +45,24 @@ public class TribulationCloud extends Entity {
 		entityData.define(FLASH_TICKS, 0);
 		entityData.define(STORM_TIER, 0);
 		entityData.define(FORMED_AT, 0L);
+		entityData.define(GHOST, false);
 	}
 
 	public void configure(Realm targetRealm) {
-		entityData.set(STORM_TIER, Math.max(0, targetRealm.ordinal() - Realm.FOUNDATION_BUILDING.ordinal()));
-		entityData.set(FORMED_AT, level().getGameTime());
+		configure(targetRealm, false);
 	}
 
+	/** A storm for a breakthrough into {@code targetRealm}: the heavens', or the Netherworld's ({@code ghost}: the ghost path's). */
+	public void configure(Realm targetRealm, boolean ghost) {
+		entityData.set(STORM_TIER, Math.max(0, targetRealm.ordinal() - Realm.FOUNDATION_BUILDING.ordinal()));
+		entityData.set(FORMED_AT, level().getGameTime());
+		entityData.set(GHOST, ghost);
+	}
+
+	public boolean isGhost() { return entityData.get(GHOST); }
+
 	public int stormTier() { return entityData.get(STORM_TIER); }
-	public float stormScale() { return 1.0f + stormTier() * 0.45f; }
+	public float stormScale() { return 1.0f + stormTier() * SCALE_PER_TIER; }
 	public float heightAbovePlayer() { return BASE_HEIGHT_ABOVE_PLAYER + stormTier() * HEIGHT_PER_TIER; }
 
 	/** Server time prevents the formation animation restarting for late observers. */

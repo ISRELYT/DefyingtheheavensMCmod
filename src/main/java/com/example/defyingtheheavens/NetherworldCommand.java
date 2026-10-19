@@ -21,9 +21,11 @@ import net.minecraft.server.level.ServerPlayer;
  * the river), /netherworld leave (down the Soul River to the Nether), /netherworld gate (to the Ghost Gate), /netherworld ghost
  * (become a ghost where you stand), /netherworld revive (return to life, as at the Wheel),
  * /netherworld up (onto the Soul River from its start, going up), /netherworld corruption <percent> (set yin corruption).
- * And for the ghost methods: /method learn <id> [layer] (whether or not it could be taken up yet), /method progress <seconds> (on
- * the practised method; a layer's cost is its minutes x 60, GhostMethods#layerCost), /method forget <id>; for the heaven methods
- * the same under /heavenmethod (their progress in cultivation, HeavenMethods#layerCost).
+ * And for the ghost path and its methods: /method learn <id> [layer] (whether or not it could be taken up yet), /method progress
+ * <seconds> (on the ghost path's bar, its methods' layers settling on it too; a stage takes its layers' minutes x 60,
+ * GhostMethods#required), /method path <realm 1-6> <stage 1-4> (the ghost path set there, its methods understood as far:
+ * GhostMethods#setPath), /method forget <id>; for the heaven methods the same under /heavenmethod (their progress in
+ * cultivation, HeavenMethods#layerCost).
  */
 public final class NetherworldCommand {
 	public static void register() {
@@ -74,9 +76,27 @@ public final class NetherworldCommand {
 						.then(Commands.literal("progress")
 								.then(Commands.argument("amount", DoubleArgumentType.doubleArg(0))
 										.executes(ctx -> progress(ctx.getSource().getPlayerOrException(), DoubleArgumentType.getDouble(ctx, "amount")))))
+						.then(Commands.literal("path")
+								.then(Commands.argument("realm", IntegerArgumentType.integer(1, Realm.values().length))
+										.then(Commands.argument("stage", IntegerArgumentType.integer(1, Stage.values().length))
+												.executes(ctx -> path(ctx.getSource().getPlayerOrException(),
+														PlayerCultivation.rank(Realm.byIndex(IntegerArgumentType.getInteger(ctx, "realm") - 1),
+																Stage.byIndex(IntegerArgumentType.getInteger(ctx, "stage") - 1)))))))
 						.then(Commands.literal("forget")
 								.then(Commands.argument("id", StringArgumentType.word()).suggests(METHOD_IDS)
 										.executes(ctx -> forget(ctx.getSource().getPlayerOrException(), method(ctx)))))));
+	}
+
+	/** /method path <realm> <stage>: the ghost path set there (begun, if it wasn't), its stage's cultivation none, its methods understood as far. */
+	private static int path(ServerPlayer p, int rank) {
+		NetherworldState s = CultivationManager.get(p).netherworld();
+		int before = GhostMethods.ghostRank(s);
+		GhostMethods.setPath(s, rank);
+		GhostMethods.afterLayer(p, s);
+		GhostMethods.afterRank(p, before);
+		changed(p);
+		p.sendSystemMessage(Component.literal("Ghost path set: ").append(GhostMethods.rankName(GhostMethods.ghostRank(s))));
+		return 1;
 	}
 
 	private static final SuggestionProvider<CommandSourceStack> METHOD_IDS = (ctx, builder) ->
@@ -159,36 +179,39 @@ public final class NetherworldCommand {
 	}
 
 	/**
-	 * /method learn <id> [layer]: the method at that layer (no further than its last), its progress through it reset; with no
-	 * layer, learned as a stele teaches it (GhostMethods#startLayer), or left as it is if known.
+	 * /method learn <id> [layer]: the method at that layer (no further than its last, deeper than the ghost path too: an op's word),
+	 * nothing settling; with no layer, learned as a stele teaches it (understood as far as the ghost path), or left as it is if known.
 	 */
 	private static int learn(ServerPlayer p, GhostMethod method, int layer) {
 		NetherworldState s = CultivationManager.get(p).netherworld();
 		if (!s.knows(method)) GhostMethods.give(p, method); // an op's word: whatever stands in the way
 		if (layer > 0) {
-			int ghostPathBefore = GhostMethods.ghostRank(s);
 			s.setMethod(method, layer, 0);
-			GhostMethods.afterLayer(p, s, ghostPathBefore);
+			GhostMethods.afterLayer(p, s);
 		}
 		changed(p);
 		p.sendSystemMessage(Component.literal(method.getId() + " at layer " + s.layer(method) + " of " + method.layers() + "."));
 		return 1;
 	}
 
-	/** /method progress <amount>: that many seconds of baseline meditation on the active method, the ghost path's gate ignored. */
+	/**
+	 * /method progress <amount>: that many seconds of baseline meditation on the ghost path's bar (to its next bottleneck), the
+	 * methods' layers behind it settling on it too.
+	 */
 	private static int progress(ServerPlayer p, double amount) {
 		NetherworldState s = CultivationManager.get(p).netherworld();
-		GhostMethod active = s.activeMethod();
-		if (active == null) {
-			p.sendSystemMessage(Component.literal("No method is being practised."));
+		if (GhostMethods.ghostRank(s) < 0) {
+			p.sendSystemMessage(Component.literal("No ghost path begun: learn a foundation first."));
 			return 0;
 		}
-		int ghostPathBefore = GhostMethods.ghostRank(s);
-		int gained = GhostMethods.cultivate(s, active, amount);
-		if (gained > 0) GhostMethods.afterLayer(p, s, ghostPathBefore);
+		int before = GhostMethods.ghostRank(s);
+		GhostMethods.addCultivation(s, amount);
+		GhostMethods.meditate(p, amount, java.util.EnumSet.noneOf(GhostMethod.class));
+		GhostMethods.afterRank(p, before);
 		changed(p);
-		p.sendSystemMessage(Component.literal(active.getId() + ": layer " + s.layer(active) + ", " + Math.round(s.progress(active)) + " / "
-				+ Math.round(GhostMethods.layerCost(active, s.layer(active))) + " s."));
+		int rank = GhostMethods.ghostRank(s);
+		p.sendSystemMessage(Component.literal("Ghost path: ").append(GhostMethods.rankName(rank)).append(", " + Math.round(s.pathCultivation())
+				+ " / " + Math.round(GhostMethods.required(rank)) + " s."));
 		return 1;
 	}
 

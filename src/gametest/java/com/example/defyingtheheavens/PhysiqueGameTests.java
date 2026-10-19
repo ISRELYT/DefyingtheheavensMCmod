@@ -192,7 +192,8 @@ public class PhysiqueGameTests implements FabricGameTest {
 		ServerPlayer plain = player(helper);
 		CultivationManager.get(plain).awaken(0);
 		GhostMethods.give(plain, GhostMethod.GHOST_CORE_CANON);
-		helper.assertTrue(CultivationManager.get(plain).netherworld().layer(GhostMethod.GHOST_CORE_CANON) == 1, "An ordinary body starts a foundation at its first layer");
+		helper.assertTrue(CultivationManager.get(plain).netherworld().layer(GhostMethod.GHOST_CORE_CANON) == 2
+				&& TwoPaths.ghostRank(CultivationManager.get(plain), false) == 0, "An ordinary body begins the ghost path at Qi Refining Early, the foundation as far");
 
 		ServerPlayer devil = player(helper);
 		PlayerCultivation c = CultivationManager.get(devil);

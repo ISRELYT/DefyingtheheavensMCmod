@@ -130,6 +130,8 @@ public final class ModPackets {
 	public static final ResourceLocation PRACTISE_METHOD = new ResourceLocation(DefyingTheHeavens.MOD_ID, "practise_method");
 	/** C2S: practise this heaven method (its id): the one meditation cultivates (HeavenMethods#practise). */
 	public static final ResourceLocation PRACTISE_HEAVEN_METHOD = new ResourceLocation(DefyingTheHeavens.MOD_ID, "practise_heaven_method");
+	/** C2S: the Cultivation tab's switch: draw in the other qi, cultivating the other path (TwoPaths#switchPath). */
+	public static final ResourceLocation SWITCH_PATH = new ResourceLocation(DefyingTheHeavens.MOD_ID, "switch_path");
 	/** C2S: ready this spell for the cast key (its ordinal plus one; 0 clears it). */
 	public static final ResourceLocation READY_SPELL = new ResourceLocation(DefyingTheHeavens.MOD_ID, "ready_spell");
 	/** C2S: cast this spell now (its ordinal plus one; 0 the readied one). */
@@ -242,6 +244,8 @@ public final class ModPackets {
 			GhostMethod method = GhostMethod.byId(buf.readUtf(64));
 			server.execute(() -> Spells.practise(player, method));
 		});
+		ServerPlayNetworking.registerGlobalReceiver(SWITCH_PATH, (server, player, handler, buf, responseSender) ->
+				server.execute(() -> TwoPaths.switchPath(player)));
 		ServerPlayNetworking.registerGlobalReceiver(PRACTISE_HEAVEN_METHOD, (server, player, handler, buf, responseSender) -> {
 			HeavenMethod method = HeavenMethod.byId(buf.readUtf(64));
 			server.execute(() -> HeavenMethods.practise(player, method));
@@ -419,6 +423,8 @@ public final class ModPackets {
 		buf.writeVarInt(c.getSelectedAbility() == null ? 0 : c.getSelectedAbility().ordinal() + 1);
 		// How dense qi is where they stand (the Astral Realm's places: AstralRealm).
 		buf.writeDouble(c.getPlaceQi());
+		// What the nascent soul still has to mend (SoulProjection#mendSouls), for Soul Projection's word of its hearts.
+		buf.writeFloat(c.getSoulWounds());
 		ServerPlayNetworking.send(player, SYNC, buf);
 	}
 
@@ -528,6 +534,10 @@ public final class ModPackets {
 			buf.writeDouble(heaven.progress(method));
 		}
 		buf.writeUtf(heaven.activeMethod() == null ? "" : heaven.activeMethod().getId());
+		// The ghost path's own bar (GhostMethods), which qi a meditation draws in, and the Netherworld's tribulation's mark.
+		buf.writeVarInt(s.pathRank());
+		buf.writeDouble(s.pathCultivation());
+		buf.writeBoolean(s.cultivatingGhost());
 		ServerPlayNetworking.send(player, METHODS, buf);
 	}
 
@@ -735,12 +745,13 @@ public final class ModPackets {
 		return buf;
 	}
 
-	public static void sendTribulation(ServerPlayer player, boolean active, int strikesLeft, Realm targetRealm, Stage targetStage) {
+	public static void sendTribulation(ServerPlayer player, boolean active, int strikesLeft, Realm targetRealm, Stage targetStage, boolean ghost) {
 		FriendlyByteBuf buf = PacketByteBufs.create();
 		buf.writeBoolean(active);
 		buf.writeVarInt(strikesLeft);
 		buf.writeVarInt(targetRealm.ordinal());
 		buf.writeVarInt(targetStage.ordinal());
+		buf.writeBoolean(ghost); // the Netherworld's tribulation (the ghost path's), for the HUD's words
 		ServerPlayNetworking.send(player, TRIBULATION_STATE, buf);
 	}
 

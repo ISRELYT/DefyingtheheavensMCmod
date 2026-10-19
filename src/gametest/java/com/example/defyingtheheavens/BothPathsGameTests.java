@@ -29,9 +29,9 @@ public class BothPathsGameTests implements FabricGameTest {
 	private static void ghostPath(ServerPlayer player, Realm realm) {
 		NetherworldState s = CultivationManager.get(player).netherworld();
 		for (GhostMethod method : GhostMethod.values()) {
-			if (method.isFoundation()) s.setMethod(method, method.realm().ordinal() < realm.ordinal() ? method.layers()
-					: method.realm() == realm ? MethodLayers.PER_REALM * realm.ordinal() + 1 : 0, 0);
+			if (method.isFoundation()) s.setMethod(method, method.realm().ordinal() <= realm.ordinal() ? 1 : 0, 0);
 		}
+		GhostMethods.setPath(s, PlayerCultivation.rank(realm, Stage.EARLY)); // the ghost path's own bar (GhostMethods)
 		CultivationManager.refresh(player);
 	}
 

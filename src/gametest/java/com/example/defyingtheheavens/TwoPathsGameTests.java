@@ -31,20 +31,12 @@ public class TwoPathsGameTests implements FabricGameTest {
 		return player;
 	}
 
-	/** Sets the ghost path at {@code realm}'s {@code stage}: that realm's foundation to the layer that carries it there. */
+	/**
+	 * Sets the ghost path at {@code realm}'s {@code stage} (its bar, GhostMethods#setPath): the foundations up to that realm's own
+	 * known, understood as far as the path carries them.
+	 */
 	private static void ghostPath(ServerPlayer player, Realm realm, Stage stage) {
-		NetherworldState s = CultivationManager.get(player).netherworld();
-		int layer = switch (stage) {
-			case EARLY -> 1;
-			case MID -> 3;
-			case LATE -> 6;
-			case GRAND_PERFECTION -> 9;
-		};
-		// The foundations before the realm's own perfected, its own at that stage of its own realm (MethodLayers).
-		for (GhostMethod method : GhostMethod.values()) {
-			if (method.isFoundation()) s.setMethod(method, method.realm().ordinal() < realm.ordinal() ? method.layers()
-					: method.realm() == realm ? MethodLayers.PER_REALM * realm.ordinal() + layer : 0, 0);
-		}
+		ghostPath(CultivationManager.get(player), realm, stage);
 		CultivationManager.refresh(player);
 	}
 
@@ -57,18 +49,13 @@ public class TwoPathsGameTests implements FabricGameTest {
 		return Math.abs(a - b) < 1.0e-3;
 	}
 
-	/** {@link #ghostPath} for a bare cultivation, no player. */
+	/** {@link #ghostPath} for a bare cultivation, no player: the foundations to the realm's own known, deeper ones not. */
 	private static void ghostPath(PlayerCultivation c, Realm realm, Stage stage) {
-		int layer = switch (stage) {
-			case EARLY -> 1;
-			case MID -> 3;
-			case LATE -> 6;
-			case GRAND_PERFECTION -> 9;
-		};
+		NetherworldState s = c.netherworld();
 		for (GhostMethod method : GhostMethod.values()) {
-			if (method.isFoundation()) c.netherworld().setMethod(method, method.realm().ordinal() < realm.ordinal() ? method.layers()
-					: method.realm() == realm ? MethodLayers.PER_REALM * realm.ordinal() + layer : 0, 0);
+			if (method.isFoundation()) s.setMethod(method, method.realm().ordinal() <= realm.ordinal() ? 1 : 0, 0);
 		}
+		GhostMethods.setPath(s, PlayerCultivation.rank(realm, stage));
 	}
 
 	/** A name's translation key ("" for one that isn't translated as a whole, like a plain rank's), and its first argument's. */
@@ -76,6 +63,38 @@ public class TwoPathsGameTests implements FabricGameTest {
 		if (!(name.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t)) return "";
 		if (arg < 0) return t.getKey();
 		return t.getArgs()[arg] instanceof net.minecraft.network.chat.Component a ? key(a, -1) : "";
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 300)
+	public void aMeditationDrawsInOneQiOrTheOther(GameTestHelper helper) {
+		ServerPlayer player = cultivator(helper, Realm.QI_REFINING, Stage.EARLY);
+		// Out of the other tests' fights (a Hungry Ghost goes for a survival player, and a blow ends a meditation: CultivationEvents).
+		player.getAbilities().invulnerable = true;
+		PlayerCultivation c = CultivationManager.get(player);
+		NetherworldState s = c.netherworld();
+		helper.assertTrue(!TwoPaths.cultivatesGhost(c), "No ghost path: the heavens' qi");
+		TwoPaths.switchPath(player);
+		helper.assertTrue(!s.cultivatingGhost(), "...and no turning to a ghost path not begun");
+		ghostPath(player, Realm.QI_REFINING, Stage.EARLY);
+		helper.assertTrue(TwoPaths.walksBoth(c) && !TwoPaths.cultivatesGhost(c), "On both paths, the heaven path's qi until switched");
+		player.setOnGround(true);
+		MeditationManager.start(player);
+		helper.assertTrue(MeditationManager.isMeditating(player.getUUID()), "Sat down to meditate");
+		helper.runAfterDelay(60, () -> {
+			helper.assertTrue(c.getCultivation() > 0 && s.pathCultivation() == 0,
+					"Drawing in the heavens' qi, only the heaven path's bar fills (" + c.getCultivation() + ", " + s.pathCultivation() + ")");
+			double heaven = c.getCultivation();
+			TwoPaths.switchPath(player);
+			helper.assertTrue(TwoPaths.cultivatesGhost(c) && MeditationManager.isMeditating(player.getUUID()), "Switched, the meditation goes on");
+			helper.runAfterDelay(60, () -> {
+				helper.assertTrue(c.getCultivation() == heaven && s.pathCultivation() > 0,
+						"Drawing in ghostly qi, only the ghost path's (" + c.getCultivation() + ", " + s.pathCultivation() + ")");
+				MeditationManager.forget(player.getUUID());
+				TwoPaths.forget(player.getUUID());
+				player.server.getPlayerList().remove(player);
+				helper.succeed();
+			});
+		});
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
@@ -370,20 +389,20 @@ public class TwoPathsGameTests implements FabricGameTest {
 		c.setAbilityEnabled(Ability.FORM_SHIFT, true);
 		helper.assertTrue(TwoPaths.look(c) == TwoPaths.Look.HUMAN && TwoPaths.inHumanForm(c) && !TwoPaths.inGhostForm(c), "Form Shift on: its human form");
 		c.setAbilityEnabled(Ability.FORM_SHIFT, false);
-		// No ghost path at all, dead at Core Formation: a king by its heaven path, its forms as open.
+		// No ghost path at all, dead at Four Axis on the heaven path: one of the common dead, one form (the user's rule, 2026-10-19).
 		for (GhostMethod method : GhostMethod.values()) if (method.isFoundation()) s.setMethod(method, 0, 0);
-		heaven(player, Realm.CORE_FORMATION, Stage.EARLY);
-		helper.assertTrue(TwoPaths.ghostRank(c, false) < 0 && GhostSystem.isKing(c) && TwoPaths.formsOpen(c) && Ability.FORM_SHIFT.isUnlocked(c),
-				"A Ghost King without a ghost method can still switch forms");
-		heaven(player, Realm.FOUR_AXIS, Stage.EARLY);
+		s.setPath(-1, 0);
+		helper.assertTrue(TwoPaths.ghostRank(c, false) < 0 && !GhostSystem.isKing(c) && !TwoPaths.formsOpen(c) && !Ability.FORM_SHIFT.isUnlocked(c)
+				&& TwoPaths.look(c) == TwoPaths.Look.DEAD, "The heaven path's Four Axis alone crowns no ghost");
 		ghostPath(player, Realm.NASCENT_SOUL, Stage.EARLY);
-		// Either path at Core Formation makes a king of the dead; below it on both, a common ghost.
+		// Only the ghost path at Core Formation makes a king of the dead, whatever the heaven path; below it, a common ghost.
 		heaven(player, Realm.QI_REFINING, Stage.EARLY);
 		helper.assertTrue(TwoPaths.look(c) == TwoPaths.Look.KING, "Dead at Qi Refining with a Nascent Soul ghost path: a Ghost King");
 		ghostPath(player, Realm.FOUNDATION_BUILDING, Stage.GRAND_PERFECTION);
 		helper.assertTrue(TwoPaths.look(c) == TwoPaths.Look.DEAD, "Below Core Formation on both paths: a common ghost");
 		heaven(player, Realm.CORE_FORMATION, Stage.EARLY);
-		helper.assertTrue(TwoPaths.look(c) == TwoPaths.Look.KING, "Dead at Core Formation, the ghost path below it: a Ghost King");
+		helper.assertTrue(TwoPaths.look(c) == TwoPaths.Look.DEAD && !GhostSystem.isKing(c),
+				"Dead at Core Formation on the heaven path, the ghost path below it: a common ghost still");
 		// Alive again: the forms are its own again.
 		ghostPath(player, Realm.NASCENT_SOUL, Stage.EARLY);
 		s.setGhost(false);
@@ -393,39 +412,78 @@ public class TwoPathsGameTests implements FabricGameTest {
 
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void aGhostKingBornAgainKeepsItsForm(GameTestHelper helper) {
-		// Four Axis on the heaven path and no ghost path: alive, one form; dead, a Ghost King.
+		// Four Axis on the heaven path, the ghost path at Core Formation: dead, a Ghost King (by its ghost path).
 		ServerPlayer king = cultivator(helper, Realm.FOUR_AXIS, Stage.GRAND_PERFECTION);
-		ServerPlayer common = cultivator(helper, Realm.QI_REFINING, Stage.EARLY);
-		helper.assertTrue(!TwoPaths.formsOpen(CultivationManager.get(king)), "Alive with no ghost path: one form");
+		ghostPath(king, Realm.CORE_FORMATION, Stage.EARLY);
+		// Four Axis on the heaven path as the set command makes it, no ghost path: dead, one of the common dead (the user's rule).
+		ServerPlayer heavenOnly = cultivator(helper, Realm.QI_REFINING, Stage.EARLY);
+		CultivationCommand.set(CultivationManager.get(heavenOnly), Realm.FOUR_AXIS, Stage.GRAND_PERFECTION);
+		CultivationManager.refresh(heavenOnly);
+		helper.assertTrue(TwoPaths.ghostRank(CultivationManager.get(heavenOnly), false) < 0, "The set command sets the heaven path alone");
 		GhostSystem.makeGhost(king);
-		GhostSystem.makeGhost(common);
+		GhostSystem.makeGhost(heavenOnly);
 		helper.assertTrue(GhostSystem.isKing(king) && CultivationManager.get(king).netherworld().reignedKing(), "Dead, a Ghost King");
+		helper.assertTrue(!GhostSystem.isKing(heavenOnly) && !CultivationManager.get(heavenOnly).netherworld().reignedKing()
+				&& TwoPaths.look(CultivationManager.get(heavenOnly)) == TwoPaths.Look.DEAD, "Four Axis on the heaven path alone: a common ghost");
 		net.minecraft.server.players.PlayerList players = helper.getLevel().getServer().getPlayerList();
-		ServerPlayer kingReborn = null, commonReborn = null;
+		ServerPlayer kingReborn = null, heavenReborn = null;
 		try {
 			GhostSystem.revive(king);
-			GhostSystem.revive(common);
+			GhostSystem.revive(heavenOnly);
 			kingReborn = players.getPlayer(king.getUUID());
-			commonReborn = players.getPlayer(common.getUUID());
-			helper.assertTrue(kingReborn != null && !GhostSystem.isGhost(kingReborn) && commonReborn != null, "Both born again");
+			heavenReborn = players.getPlayer(heavenOnly.getUUID());
+			helper.assertTrue(kingReborn != null && !GhostSystem.isGhost(kingReborn) && heavenReborn != null, "Both born again");
 			PlayerCultivation c = CultivationManager.get(kingReborn);
-			// Born again, it keeps the King's form: its true form the human (it lives), Form Shift there to take the other.
+			// Born again, it keeps the King's form: its true form the human (the heaven path is the higher), Form Shift there for the other.
 			helper.assertTrue(TwoPaths.formsOpen(c) && Ability.FORM_SHIFT.isUnlocked(c) && TwoPaths.trueForm(c) == TwoPaths.Form.HUMAN
 					&& TwoPaths.look(c) == TwoPaths.Look.HUMAN, "A Ghost King born again keeps its two forms");
 			CultivationManager.toggleAbility(kingReborn, Ability.FORM_SHIFT.ordinal());
 			helper.assertTrue(TwoPaths.look(c) == TwoPaths.Look.KING && TwoPaths.inGhostForm(c), "Form Shift: the Ghost King's form, alive");
 			CultivationManager.toggleAbility(kingReborn, Ability.FORM_SHIFT.ordinal());
 			helper.assertTrue(TwoPaths.look(c) == TwoPaths.Look.HUMAN, "...and back to the human");
-			// One of the common dead had no King's form to keep.
-			helper.assertTrue(!TwoPaths.formsOpen(CultivationManager.get(commonReborn)), "A common ghost born again: one form");
+			// It reigned: the form stays its own even with its ghost path fallen below Core Formation (a ghost core detonated).
+			GhostMethods.fallTo(c.netherworld(), PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.GRAND_PERFECTION));
+			helper.assertTrue(TwoPaths.ghostRank(c, false) < GhostSystem.KING_RANK && TwoPaths.formsOpen(c), "...kept though its ghost path fell");
+			// The heaven path's Four Axis had no King's form to keep.
+			PlayerCultivation h = CultivationManager.get(heavenReborn);
+			helper.assertTrue(!TwoPaths.formsOpen(h) && !Ability.FORM_SHIFT.isUnlocked(h) && TwoPaths.look(h) == TwoPaths.Look.HUMAN,
+					"The heaven path's Four Axis born again: one form, the human");
 		} finally {
 			GhostSystem.forget(king.getUUID());
-			GhostSystem.forget(common.getUUID());
+			GhostSystem.forget(heavenOnly.getUUID());
 			TwoPaths.forget(king.getUUID());
-			TwoPaths.forget(common.getUUID());
+			TwoPaths.forget(heavenOnly.getUUID());
 			if (kingReborn != null) players.remove(kingReborn);
-			if (commonReborn != null) players.remove(commonReborn);
+			if (heavenReborn != null) players.remove(heavenReborn);
 		}
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void aReignTheGhostPathNeverReachedIsUndoneInOldWorlds(GameTestHelper helper) {
+		// Saved before 2026-10-19: reigned (crowned by the heaven path's Core Formation then), no ghost path. Undone as it loads.
+		net.minecraft.nbt.CompoundTag old = new net.minecraft.nbt.CompoundTag();
+		old.putBoolean("ReignedKing", true);
+		NetherworldState heavenKing = new NetherworldState();
+		heavenKing.load(old);
+		helper.assertTrue(!heavenKing.reignedKing(), "A reign the ghost path never reached is undone");
+		// The same, its ghost path at Core Formation: a true reign, kept.
+		PlayerCultivation scratch = new PlayerCultivation();
+		scratch.setState(Realm.QI_REFINING, Stage.EARLY, 0);
+		ghostPath(scratch, Realm.CORE_FORMATION, Stage.EARLY);
+		scratch.netherworld().setReignedKing(true);
+		net.minecraft.nbt.CompoundTag ghostKing = scratch.netherworld().save();
+		ghostKing.remove("KingByGhostPath"); // as an old world wrote it
+		NetherworldState kept = new NetherworldState();
+		kept.load(ghostKing);
+		helper.assertTrue(kept.reignedKing(), "A reign the ghost path reached is kept");
+		// Saved since, a reign stays whatever became of the ghost path after (a ghost core detonated).
+		NetherworldState fallen = new NetherworldState();
+		net.minecraft.nbt.CompoundTag since = new net.minecraft.nbt.CompoundTag();
+		since.putBoolean("ReignedKing", true);
+		since.putBoolean("KingByGhostPath", true);
+		fallen.load(since);
+		helper.assertTrue(fallen.reignedKing(), "A reign saved under the ghost path's rule is kept");
 		helper.succeed();
 	}
 
@@ -501,6 +559,7 @@ public class TwoPathsGameTests implements FabricGameTest {
 			s.setMethod(GhostMethod.NETHERWORLD_BREATHING, 9, 0);
 			s.setMethod(GhostMethod.YELLOW_SPRINGS_MARROW, 18, 0);
 			s.setMethod(GhostMethod.GHOST_CORE_CANON, 27, 0);
+			s.setPath(PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.GRAND_PERFECTION), 0);
 			helper.assertTrue(TwoPaths.ghostRank(c, false) == -1 && !Spell.GHOSTLY_WAIL.isKnown(c) && !Ability.GHOST_EYE.isUnlocked(c) && !GhostSystem.isKing(c),
 					"Its methods dormant");
 			helper.assertTrue(GhostQi.poolMax(c) == GhostQi.BASE_POOL && GhostMethods.foundationLayers(c) == 0,

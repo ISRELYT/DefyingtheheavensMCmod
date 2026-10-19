@@ -101,7 +101,9 @@ public final class ClientPacketHandlers {
 			for (int i = 0; i < statPoints.length; i++) statPoints[i] = buf.readVarInt();
 			com.example.defyingtheheavens.Ability selected = com.example.defyingtheheavens.Ability.byIndex(buf.readVarInt() - 1);
 			double placeQi = buf.readDouble();
+			float soulWounds = buf.readFloat();
 			client.execute(() -> {
+				ClientCultivationData.get().setSoulWounds(soulWounds);
 				ClientCultivationData.physique(physique, roots, bodyRefining); // first: a shattered body tempers past Peak
 				for (com.example.defyingtheheavens.StatPoints.Stat stat : com.example.defyingtheheavens.StatPoints.Stat.values()) {
 					ClientCultivationData.get().setStatPoints(stat, statPoints[stat.ordinal()]);
@@ -374,7 +376,8 @@ public final class ClientPacketHandlers {
 			int strikesLeft = buf.readVarInt();
 			int realm = buf.readVarInt();
 			int stage = buf.readVarInt();
-			client.execute(() -> ClientTribulationData.update(active, strikesLeft, realm, stage));
+			boolean ghost = buf.readBoolean();
+			client.execute(() -> ClientTribulationData.update(active, strikesLeft, realm, stage, ghost));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SPATIAL_STORMS, (client, handler, buf, sender) -> {

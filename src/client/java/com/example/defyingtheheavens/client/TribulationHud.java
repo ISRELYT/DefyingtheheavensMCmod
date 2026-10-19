@@ -15,9 +15,10 @@ public final class TribulationHud {
 
 			int w = mc.getWindow().getGuiScaledWidth();
 
+			boolean ghost = ClientTribulationData.isGhost(); // the Netherworld's: the ghost path's
 			graphics.drawCenteredString(mc.font,
-					Component.translatable(ModLang.TRIB_HUD, ClientTribulationData.getTargetName(), ClientTribulationData.getStrikesLeft()),
-					w / 2, 24, 0x8ECFFF);
+					Component.translatable(ghost ? ModLang.TRIB_HUD_GHOST : ModLang.TRIB_HUD, ClientTribulationData.getTargetName(), ClientTribulationData.getStrikesLeft()),
+					w / 2, 24, ghost ? 0x6FE8D8 : 0x8ECFFF);
 		});
 	}
 

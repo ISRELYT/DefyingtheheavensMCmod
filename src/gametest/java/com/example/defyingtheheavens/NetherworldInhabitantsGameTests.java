@@ -144,23 +144,26 @@ public class NetherworldInhabitantsGameTests implements FabricGameTest {
 					"The dead take up their money and writings, and read the slips; nothing else of the living world");
 			helper.assertTrue((TalkSystem.intents(living, teacher, TalkSystem.standing(living, teacher)) & TalkIntent.TRADE.bit()) != 0,
 					"The living trade with the dead");
-			// Its teaching: the first layer of its method, then (another day) ten minutes' progress.
+			// Its teaching: its method, then (another day) ten minutes on the ghost path's bar.
 			GhostMethod method = teacher.method();
 			NetherworldState s = CultivationManager.get(living).netherworld();
-			// Any foundation is taught to one with no ghost path at all: each carries it from Qi Refining.
+			// Any foundation is taught to one with no ghost path at all: each carries it from Qi Refining (and begins the path).
 			TalkSystem.teach(living, teacher);
-			helper.assertTrue(s.layer(method) == 1, "It teaches its method, from the first layer");
+			int learnedAt = s.layer(method);
+			helper.assertTrue(s.knows(method) && learnedAt == GhostMethods.understoodTo(s, method),
+					"It teaches its method, understood as far as the ghost path (" + method.getId() + ": " + learnedAt + ")");
 			TalkSystem.teach(living, teacher);
-			helper.assertTrue(s.progress(method) == 0, "...once a day");
+			helper.assertTrue(s.layer(method) == learnedAt && s.pathCultivation() == 0, "...once a day");
 			teacher.regardEntry(living).guidanceDay = -1;
-			int cap = GhostMethods.layerCap(CultivationManager.get(living), method);
+			int before = GhostMethods.ghostRank(s);
 			TalkSystem.teach(living, teacher);
-			// Ten minutes: through as many layers as they pay for, as far as the ghost path lets it go.
-			double left = TalkSystem.TEACHING_PROGRESS;
-			int layer = 1;
-			while (left >= GhostMethods.layerCost(method, layer) && layer < cap) left -= GhostMethods.layerCost(method, layer++);
-			helper.assertTrue(s.layer(method) == layer && Math.abs(s.progress(method) - Math.min(left, GhostMethods.layerCost(method, layer))) < 1.0e-9,
-					"Known already: ten minutes' progress (" + method.getId() + ": " + s.layer(method) + ", " + s.progress(method) + ")");
+			if (method.isFoundation()) {
+				// Ten minutes: through Qi Refining Early's seven, three into Mid.
+				helper.assertTrue(GhostMethods.ghostRank(s) == 1 && Math.abs(s.pathCultivation() - (TalkSystem.TEACHING_PROGRESS - GhostMethods.required(0))) < 1.0e-9,
+						"Known already: ten minutes on the ghost path's bar (" + GhostMethods.ghostRank(s) + ", " + s.pathCultivation() + ")");
+			} else {
+				helper.assertTrue(GhostMethods.ghostRank(s) == before, "Known already, with no ghost path begun: nothing to fill (" + method.getId() + ")");
+			}
 			// Meng Po's soup: for the dead.
 			GhostGate.drinkSoup(living);
 			helper.assertTrue(!s.memoryCleansed(), "The living are turned away");
@@ -257,11 +260,12 @@ public class NetherworldInhabitantsGameTests implements FabricGameTest {
 				"The Yang Preservation Pill holds the yin still (3 minutes a point of potency)");
 		ItemStack yin = PillItem.create(ModItems.YIN_GATHERING_PILL, PillGrade.LOW, 1);
 		yin.finishUsingItem(helper.getLevel(), player);
-		helper.assertTrue(!player.hasEffect(ModEffects.YIN_GATHERING), "No method known: the Yin Gathering Pill is refused");
+		helper.assertTrue(!player.hasEffect(ModEffects.YIN_GATHERING), "No ghost path begun: the Yin Gathering Pill is refused");
 		s.setMethod(GhostMethod.NETHERWORLD_BREATHING, 1, 0);
+		s.setPath(0, 0);
 		yin.finishUsingItem(helper.getLevel(), player);
 		helper.assertTrue(player.hasEffect(ModEffects.YIN_GATHERING) && Math.abs(s.methodBoost() - PillItem.yinBoost(yin)) < 1.0e-9,
-				"Known: +25% a point of potency to the ghost methods");
+				"Begun: +25% a point of potency to the ghost path's bar");
 		// The Netherworld's worldgen is all there (the registries are read even without its dimension).
 		var placed = helper.getLevel().registryAccess().registryOrThrow(Registries.PLACED_FEATURE);
 		for (var key : List.of(ModPlacedFeatures.NW_ORE_YIN_JADE, ModPlacedFeatures.NW_ORE_YIN_JADE_PEAKS, ModPlacedFeatures.NW_OTHER_SHORE_FLOWER,

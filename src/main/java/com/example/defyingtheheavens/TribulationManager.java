@@ -7,9 +7,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.core.BlockPos;
-import net.minecraft.util.Mth;
-import net.minecraft.world.level.levelgen.Heightmap;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,6 +20,12 @@ import java.util.UUID;
  * The trial itself is runtime-only and never survives a server restart or a disconnect, but leaving is no way out: the
  * player's cultivation is marked (and saved at once) while a trial runs, and a player who returns still marked has failed
  * it (see {@link #onJoin}).
+ * <p>
+ * <b>The Netherworld's tribulation</b> (the user's ask, 2026-10-19) is the ghost path's own ({@link #startGhost}; GhostMethods' bar
+ * at its bottleneck): the same strikes at the same breakthroughs, of yin lightning (ModDamageTypes#YIN_LIGHTNING and #YIN_TRIBULATION)
+ * from a dark teal storm, cyan bolts. It comes wherever its cultivator stands, the Netherworld too (it is the dead's realm's, not the
+ * heavens'), and it reaches the dead, who take {@link #DEAD_SHARE} of it (their hearts are half the living's, and no armour but a
+ * Ghost King's). Failed, the ghost path falls a stage: the living die, the dead scatter ({@link #onScattered}).
  */
 public final class TribulationManager {
 	private static final int FIRST_STRIKE_DELAY = 60;  // 3 s for the local cloud to gather before the first bolt
@@ -30,6 +33,8 @@ public final class TribulationManager {
 	private static final int FINISH_DELAY = 20;        // 1 s after the last strike before the breakthrough completes
 	/** All a tribulation's strikes drunk in by a Heavenly Thunder Body (Physique): this share of the new stage's cultivation. */
 	public static final double THUNDER_SHARE = 0.6;
+	/** What of the Netherworld's tribulation's strikes reaches one of the dead (my number, 2026-10-19: their hearts are half the living's). */
+	public static final float DEAD_SHARE = 0.5f;
 
 	/** One tribulation: a set number of identical strikes, each heavenly lightning (armor applies) plus magic (it doesn't). */
 	public record Strikes(int count, float bolt, float magic) {}
@@ -37,12 +42,13 @@ public final class TribulationManager {
 	private static final class Trial {
 		final Realm targetRealm;
 		final Stage targetStage;
+		/** The ghost path's (the Netherworld's tribulation), not the heaven path's. */
+		final boolean ghost;
 		final Strikes strikes;
 		int strikesLeft;
 		int nextStrikeIn = FIRST_STRIKE_DELAY;
 		int finishIn = FINISH_DELAY;
 		int age;
-		int ambientStrikeIn;
 		/** A Heavenly Thunder Body's share of the strikes drunk in (Physique): {@link #THUNDER_SHARE} of the new stage's cultivation at most. */
 		double absorbed;
 		TribulationCloud cloud;
@@ -52,9 +58,10 @@ public final class TribulationManager {
 			cloud = null;
 		}
 
-		Trial(Realm targetRealm, Stage targetStage) {
+		Trial(Realm targetRealm, Stage targetStage, boolean ghost) {
 			this.targetRealm = targetRealm;
 			this.targetStage = targetStage;
+			this.ghost = ghost;
 			this.strikes = strikes(targetRealm, targetStage);
 			this.strikesLeft = strikes.count();
 		}
@@ -68,6 +75,12 @@ public final class TribulationManager {
 
 	public static boolean isActive(UUID id) {
 		return ACTIVE.containsKey(id);
+	}
+
+	/** Whether {@code id} faces the Netherworld's tribulation (the ghost path's) right now. */
+	public static boolean isGhostTrial(UUID id) {
+		Trial t = ACTIVE.get(id);
+		return t != null && t.ghost;
 	}
 
 	/*
@@ -89,6 +102,8 @@ public final class TribulationManager {
 	 *   -> FA Grand Perfection  12 strikes   Protection IV + Resistance I + Regeneration I, or Resistance II (Resistance I dies)
 	 * Golden apples, Resistance/Regeneration potions and totems let a player get through a step below these,
 	 * and each worn Ring of Transcendence halves all strike damage on top of the table.
+	 * The Netherworld's tribulation strikes as this table says for the living (its yin lightning turned by armour as the heavens'
+	 * bolts are, the yin in it passing armour as magic does); the dead take DEAD_SHARE of it.
 	 */
 
 	/** The tribulation for breaking through into this realm and stage. Before Nascent Soul only Early is ever a target. */
@@ -160,8 +175,7 @@ public final class TribulationManager {
 		}
 
 		MeditationManager.stop(player, false); // no-op if not meditating
-		Trial trial = new Trial(c.breakthroughRealm(), c.breakthroughStage());
-		trial.ambientStrikeIn = 25 + player.getRandom().nextInt(20);
+		Trial trial = new Trial(c.breakthroughRealm(), c.breakthroughStage(), false);
 		ACTIVE.put(player.getUUID(), trial);
 		// Written to disk now, not at the next autosave, so not even closing the game this instant gets out of the trial.
 		c.setInTribulation(true);
@@ -169,11 +183,57 @@ public final class TribulationManager {
 		player.server.overworld().getDataStorage().save();
 
 		updateCloud(player, trial);
-		ModPackets.sendTribulation(player, true, trial.strikesLeft, trial.targetRealm, trial.targetStage);
+		ModPackets.sendTribulation(player, true, trial.strikesLeft, trial.targetRealm, trial.targetStage, false);
 		player.playNotifySound(SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 2.0f, 0.4f);
 		player.sendSystemMessage(trial.strikesLeft == 1
 				? Component.translatable(ModLang.MSG_TRIB_START_SINGLE, trial.targetName())
 				: Component.translatable(ModLang.MSG_TRIB_START, trial.targetName(), trial.strikesLeft));
+	}
+
+	/**
+	 * Entry point from the Breakthrough button with the ghost path drawn in (TwoPaths#cultivatesGhost): the Netherworld's
+	 * tribulation, wherever its cultivator stands (the Netherworld too).
+	 */
+	public static void startGhost(ServerPlayer player) {
+		if (!player.isAlive()) return;
+		if (isActive(player.getUUID())) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_TRIB_BUSY), true);
+			return;
+		}
+		if (ModDimensions.isInnerRealm(player.level().dimension())) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_INNER_TRIBULATION), true);
+			return;
+		}
+		if (SoulProjection.isActive(player.getUUID())) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_SOUL_BUSY), true);
+			return;
+		}
+		PlayerCultivation c = CultivationManager.get(player);
+		if (GhostMethods.heldByMethod(c)) {
+			player.sendSystemMessage(GhostMethods.gateLine(c).copy().withStyle(net.minecraft.ChatFormatting.GOLD));
+			return;
+		}
+		if (!GhostMethods.canBreakthrough(c)) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_NOT_READY), true);
+			return;
+		}
+
+		MeditationManager.stop(player, false);
+		int target = GhostMethods.ghostRank(c.netherworld()) + 1;
+		int stages = Stage.values().length;
+		Trial trial = new Trial(Realm.byIndex(target / stages), Stage.byIndex(target % stages), true);
+		ACTIVE.put(player.getUUID(), trial);
+		c.netherworld().setInGhostTribulation(true); // saved at once, as the heaven path's mark is: leaving fails it
+		CultivationManager.markDirty(player.server);
+		player.server.overworld().getDataStorage().save();
+
+		updateCloud(player, trial);
+		ModPackets.sendTribulation(player, true, trial.strikesLeft, trial.targetRealm, trial.targetStage, true);
+		player.playNotifySound(SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 2.0f, 0.3f);
+		player.playNotifySound(SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.5f, 0.5f);
+		player.sendSystemMessage((trial.strikesLeft == 1
+				? Component.translatable(ModLang.MSG_GHOST_TRIB_START_SINGLE, trial.targetName())
+				: Component.translatable(ModLang.MSG_GHOST_TRIB_START, trial.targetName(), trial.strikesLeft)).withStyle(net.minecraft.ChatFormatting.DARK_AQUA));
 	}
 
 	public static void tick(MinecraftServer server) {
@@ -193,19 +253,14 @@ public final class TribulationManager {
 
 			t.age++;
 			updateCloud(p, t);
-			if (--t.ambientStrikeIn <= 0) {
-				ambientStrike(p, t);
-				int tier = t.cloud == null ? 0 : t.cloud.stormTier();
-				t.ambientStrikeIn = 20 + p.getRandom().nextInt(45 - tier * 6);
-			}
 
 			if (t.strikesLeft > 0) {
 				if (--t.nextStrikeIn <= 0) {
 					strike(p, t);
-					if (ACTIVE.get(id) != t) continue; // died just now
+					if (ACTIVE.get(id) != t) continue; // died (or scattered) just now
 					t.strikesLeft--;
 					t.nextStrikeIn = STRIKE_INTERVAL;
-					ModPackets.sendTribulation(p, true, t.strikesLeft, t.targetRealm, t.targetStage);
+					ModPackets.sendTribulation(p, true, t.strikesLeft, t.targetRealm, t.targetStage, t.ghost);
 				}
 			} else if (--t.finishIn <= 0) {
 				survivors.add(p); // the last strike has faded
@@ -213,51 +268,44 @@ public final class TribulationManager {
 			}
 
 			if (t.age % 20 == 0) {
-				ModPackets.sendTribulation(p, true, t.strikesLeft, t.targetRealm, t.targetStage);
+				ModPackets.sendTribulation(p, true, t.strikesLeft, t.targetRealm, t.targetStage, t.ghost);
 			}
 		}
 		survivors.forEach(TribulationManager::succeed);
 	}
 
-	/** Atmospheric bolts only: no fire, damage, or terrain/chunk generation. */
-	private static void ambientStrike(ServerPlayer p, Trial t) {
-		if (t.cloud == null) return;
-		ServerLevel level = p.serverLevel();
-		int tier = t.cloud.stormTier();
-		double cloudY = t.cloud.getY();
-		for (int attempt = 0; attempt < 6; attempt++) {
-			double angle = p.getRandom().nextDouble() * Math.PI * 2;
-			double radius = 28 + p.getRandom().nextDouble() * (20 + tier * 10);
-			int x = Mth.floor(p.getX() + Math.cos(angle) * radius);
-			int z = Mth.floor(p.getZ() + Math.sin(angle) * radius);
-			if (!level.hasChunkAt(new BlockPos(x, p.getBlockY(), z))) continue;
-			int y = Formations.surface(level, Heightmap.Types.MOTION_BLOCKING, x, z);
-			if (y >= cloudY - 8) continue;
-			TribulationLightning bolt = ModEntities.TRIBULATION_LIGHTNING.create(level);
-			if (bolt == null) return;
-			bolt.moveTo(x + 0.5, y, z + 0.5);
-			bolt.setCloudBaseY(cloudY);
-			bolt.setVisualOnly(true);
-			level.addFreshEntity(bolt);
-			if (t.cloud != null) t.cloud.flash();
-			return;
-		}
+	/**
+	 * How much thicker a tribulation's bolt is drawn than vanilla's: as its cloud grows with the realm (TribulationCloud#stormScale,
+	 * {@link TribulationCloud#SCALE_PER_TIER} a realm past Foundation Building), and a quarter of that more for each stage within
+	 * the realm (the user's ask, 2026-10-19). Foundation Building x1, Core Formation x1.45, Nascent Soul Early x1.9 to Grand
+	 * Perfection x2.24, Four Axis Grand Perfection x3.14. Only its thickness: its zig-zag stays vanilla's (the user's word, the
+	 * same day, after the whole bolt scaled up sprawled across the sky).
+	 */
+	public static float boltScale(Realm target, Stage stage) {
+		int tier = Math.max(0, target.ordinal() - Realm.FOUNDATION_BUILDING.ordinal());
+		return 1.0f + TribulationCloud.SCALE_PER_TIER * (tier + stage.ordinal() / (float) Stage.values().length);
 	}
 
+	/**
+	 * A strike: the one bolt the cloud sends, at the cultivator (the only lightning a tribulation has: the scattered bolts it once
+	 * threw about for show were taken out at the user's word, 2026-10-19).
+	 */
 	private static void strike(ServerPlayer p, Trial t) {
 		ServerLevel level = p.serverLevel();
-		TribulationLightning bolt = ModEntities.TRIBULATION_LIGHTNING.create(level); // drawn bright blue by the client
+		TribulationLightning bolt = ModEntities.TRIBULATION_LIGHTNING.create(level); // drawn bright blue (cyan: the Netherworld's) by the client
 		if (bolt == null) return;
 		bolt.moveTo(p.getX(), p.getY(), p.getZ());
 		bolt.setCloudBaseY(t.cloud == null ? p.getY() + TribulationCloud.BASE_HEIGHT_ABOVE_PLAYER : t.cloud.getY());
+		bolt.setScale(boltScale(t.targetRealm, t.targetStage));
+		bolt.setGhost(t.ghost);
 		bolt.setVisualOnly(true); // 1.20.1 bolts always deal a flat 5, so the tribulation's hit is applied by hand below
 		level.addFreshEntity(bolt);
 		if (t.cloud != null) t.cloud.flash();
 
-		// A Heavenly Thunder Body drinks the bolt in: no harm, the qi pool filled, and a share of the new stage's cultivation banked
-		// for the breakthrough.
+		// A Heavenly Thunder Body drinks the heavens' bolt in: no harm, the qi pool filled, and a share of the new stage's cultivation
+		// banked for the breakthrough. (The Netherworld's yin is no thunder of its.)
 		PlayerCultivation c = CultivationManager.get(p);
-		if (c.physique() == Physique.HEAVENLY_THUNDER_BODY) {
+		if (!t.ghost && c.physique() == Physique.HEAVENLY_THUNDER_BODY) {
 			t.absorbed += 1.0 / Math.max(1, t.strikes.count());
 			c.setQi(c.maxQi());
 			p.heal(t.strikes.bolt() * 0.25f);
@@ -266,20 +314,21 @@ public final class TribulationManager {
 			CultivationManager.sync(p);
 			return;
 		}
+		if (t.ghost) level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, p.getX(), p.getY() + 1.0, p.getZ(), 30, 0.4, 0.9, 0.4, 0.05);
 
 		// Both parts land in the same tick as the bolt. Clearing the hurt cooldown in between stops vanilla from
 		// discarding the second hit; magic goes first so a killing strike usually reads "struck by lightning".
 		// It is cleared before the first part too: within half a second of another hit, vanilla only deals what exceeds
 		// that hit, so taking a big blow on purpose (an explosion against Blast Protection, say) would blunt the strike.
-		float multiplier = RingOfTranscendenceItem.damageMultiplier(p);
+		float multiplier = RingOfTranscendenceItem.damageMultiplier(p) * (t.ghost && GhostSystem.isGhost(p) ? DEAD_SHARE : 1.0f);
 		float magic = t.strikes.magic() * multiplier;
 		p.invulnerableTime = 0;
 		if (magic > 0) {
-			p.hurt(level.damageSources().magic(), magic);
+			p.hurt(t.ghost ? ModDamageTypes.yinTribulation(level) : level.damageSources().magic(), magic);
 			p.invulnerableTime = 0;
 		}
-		if (p.isAlive()) {
-			p.hurt(level.damageSources().lightningBolt(), t.strikes.bolt() * multiplier);
+		if (p.isAlive() && ACTIVE.get(p.getUUID()) == t) {
+			p.hurt(t.ghost ? ModDamageTypes.yinLightning(level) : level.damageSources().lightningBolt(), t.strikes.bolt() * multiplier);
 		}
 	}
 
@@ -288,9 +337,13 @@ public final class TribulationManager {
 		if (t == null) return;
 
 		t.removeCloud();
-		ModPackets.sendTribulation(p, false, 0, t.targetRealm, t.targetStage);
+		ModPackets.sendTribulation(p, false, 0, t.targetRealm, t.targetStage, t.ghost);
 
 		PlayerCultivation c = CultivationManager.get(p);
+		if (t.ghost) {
+			succeedGhost(p, c, t);
+			return;
+		}
 		c.setInTribulation(false);
 		CultivationManager.markDirty(p.server);
 		boolean sameTarget = c.breakthroughRealm() == t.targetRealm && c.breakthroughStage() == t.targetStage;
@@ -315,21 +368,67 @@ public final class TribulationManager {
 		p.sendSystemMessage(Component.translatable(ModLang.MSG_BREAKTHROUGH, t.targetName()));
 	}
 
+	/** The Netherworld's tribulation survived: the ghost path on to the stage it was struck for. */
+	private static void succeedGhost(ServerPlayer p, PlayerCultivation c, Trial t) {
+		NetherworldState s = c.netherworld();
+		s.setInGhostTribulation(false);
+		CultivationManager.markDirty(p.server);
+		int before = GhostMethods.ghostRank(s);
+		boolean sameTarget = before + 1 == PlayerCultivation.rank(t.targetRealm, t.targetStage);
+		if (!sameTarget || !GhostMethods.canBreakthrough(c) || !GhostMethods.breakthrough(s)) {
+			p.displayClientMessage(Component.translatable(ModLang.MSG_NOT_READY), true);
+			return;
+		}
+		GhostMethods.afterRank(p, before);
+		p.setHealth(p.getMaxHealth());
+		p.clearFire();
+		Spells.sync(p);
+		NetherworldManager.refresh(p);
+
+		ServerLevel level = p.serverLevel();
+		level.playSound(null, p.blockPosition(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1.0f, 0.8f);
+		level.playSound(null, p.blockPosition(), SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.2f, 0.6f);
+		level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, p.getX(), p.getY() + 1.0, p.getZ(), 80, 0.6, 1.0, 0.6, 0.1);
+		level.sendParticles(ParticleTypes.GLOW, p.getX(), p.getY() + 1.0, p.getZ(), 40, 0.5, 0.8, 0.5, 0.2);
+		p.sendSystemMessage(Component.translatable(ModLang.MSG_GHOST_BREAKTHROUGH, t.targetName()).withStyle(net.minecraft.ChatFormatting.AQUA));
+	}
+
 	/** Called from the AFTER_DEATH event (totems of undying prevent that event, so they save the player). */
 	public static void onDeath(ServerPlayer p) {
 		Trial t = ACTIVE.remove(p.getUUID());
 		if (t == null) return;
+		fail(p, t, false);
+		// The respawn event re-applies the lowered stats and re-syncs the client.
+	}
 
+	/** One of the dead scattered (GhostSystem#disperse): mid-way through the Netherworld's tribulation, it has failed it. */
+	public static void onScattered(ServerPlayer p) {
+		Trial t = ACTIVE.get(p.getUUID());
+		if (t == null || !t.ghost) return;
+		ACTIVE.remove(p.getUUID());
+		fail(p, t, false);
+		CultivationManager.refresh(p);
+	}
+
+	/** A trial failed (struck down, or fled: {@code fled}): its path falls one stage, its cultivation there lost. */
+	private static void fail(ServerPlayer p, Trial t, boolean fled) {
 		PlayerCultivation c = CultivationManager.get(p);
+		t.removeCloud();
+		ModPackets.sendTribulation(p, false, 0, t.targetRealm, t.targetStage, t.ghost);
+		p.server.getPlayerList().broadcastSystemMessage(Component.translatable(ModLang.MSG_TRIB_FAILED, p.getDisplayName()), false);
+		if (t.ghost) {
+			NetherworldState s = c.netherworld();
+			s.setInGhostTribulation(false);
+			GhostMethods.fallOneStage(s);
+			CultivationManager.markDirty(p.server);
+			p.sendSystemMessage(Component.translatable(fled ? ModLang.MSG_GHOST_TRIB_FLED : ModLang.MSG_GHOST_TRIB_FALL, GhostMethods.rankName(GhostMethods.ghostRank(s))));
+			Spells.sync(p);
+			return;
+		}
 		c.setInTribulation(false);
 		c.fallOneStage();
 		CultivationManager.markDirty(p.server);
-
-		t.removeCloud();
-		ModPackets.sendTribulation(p, false, 0, t.targetRealm, t.targetStage);
-		p.server.getPlayerList().broadcastSystemMessage(Component.translatable(ModLang.MSG_TRIB_FAILED, p.getDisplayName()), false);
-		p.sendSystemMessage(Component.translatable(ModLang.MSG_TRIB_FALL, PlayerCultivation.rankName(c.getRealm(), c.getStage())));
-		// The respawn event re-applies the lowered stats and re-syncs the client.
+		p.sendSystemMessage(Component.translatable(fled ? ModLang.MSG_TRIB_FLED : ModLang.MSG_TRIB_FALL, PlayerCultivation.rankName(c.getRealm(), c.getStage())));
 	}
 
 	/**
@@ -343,19 +442,31 @@ public final class TribulationManager {
 
 	/**
 	 * A player has joined. One who left mid-tribulation (logged out, quit, or the game closed) has failed it, just as if
-	 * struck down: they fall one minor stage and lose their cultivation.
+	 * struck down: they fall one minor stage and lose their cultivation (the ghost path's, for the Netherworld's).
 	 *
 	 * @return true if they fell
 	 */
 	public static boolean onJoin(ServerPlayer p) {
 		PlayerCultivation c = CultivationManager.get(p);
-		if (!c.isInTribulation() || isActive(p.getUUID())) return false;
-		c.setInTribulation(false);
-		c.fallOneStage();
-		CultivationManager.markDirty(p.server);
-		p.server.getPlayerList().broadcastSystemMessage(Component.translatable(ModLang.MSG_TRIB_FAILED, p.getDisplayName()), false);
-		p.sendSystemMessage(Component.translatable(ModLang.MSG_TRIB_FLED, PlayerCultivation.rankName(c.getRealm(), c.getStage())));
-		return true;
+		if (isActive(p.getUUID())) return false;
+		boolean fell = false;
+		if (c.isInTribulation()) {
+			c.setInTribulation(false);
+			c.fallOneStage();
+			p.server.getPlayerList().broadcastSystemMessage(Component.translatable(ModLang.MSG_TRIB_FAILED, p.getDisplayName()), false);
+			p.sendSystemMessage(Component.translatable(ModLang.MSG_TRIB_FLED, PlayerCultivation.rankName(c.getRealm(), c.getStage())));
+			fell = true;
+		}
+		NetherworldState s = c.netherworld();
+		if (s.inGhostTribulation()) {
+			s.setInGhostTribulation(false);
+			GhostMethods.fallOneStage(s);
+			p.server.getPlayerList().broadcastSystemMessage(Component.translatable(ModLang.MSG_TRIB_FAILED, p.getDisplayName()), false);
+			p.sendSystemMessage(Component.translatable(ModLang.MSG_GHOST_TRIB_FLED, GhostMethods.rankName(GhostMethods.ghostRank(s))));
+			fell = true;
+		}
+		if (fell) CultivationManager.markDirty(p.server);
+		return fell;
 	}
 
 	/**
@@ -365,10 +476,12 @@ public final class TribulationManager {
 	public static void abandon(ServerPlayer p) {
 		Trial t = ACTIVE.remove(p.getUUID());
 		if (t == null) return;
-		CultivationManager.get(p).setInTribulation(false);
+		PlayerCultivation c = CultivationManager.get(p);
+		if (t.ghost) c.netherworld().setInGhostTribulation(false);
+		else c.setInTribulation(false);
 		CultivationManager.markDirty(p.server);
 		t.removeCloud();
-		ModPackets.sendTribulation(p, false, 0, t.targetRealm, t.targetStage);
+		ModPackets.sendTribulation(p, false, 0, t.targetRealm, t.targetStage, t.ghost);
 		p.sendSystemMessage(Component.translatable(ModLang.MSG_TRIB_ABANDONED));
 	}
 
@@ -378,7 +491,7 @@ public final class TribulationManager {
 			trial.removeCloud();
 			trial.cloud = ModEntities.TRIBULATION_CLOUD.create(player.serverLevel());
 			if (trial.cloud == null) return;
-			trial.cloud.configure(trial.targetRealm);
+			trial.cloud.configure(trial.targetRealm, trial.ghost);
 			trial.cloud.setPos(player.getX(), trial.cloud.cloudBaseY(player.getY()), player.getZ());
 			player.serverLevel().addFreshEntity(trial.cloud);
 		}

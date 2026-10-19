@@ -30,42 +30,44 @@ public class GhostKingGameTests implements FabricGameTest {
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
-	public void theGhostPathGatesTheFireAndTheStepsNotTheOrdinaryRealm(GameTestHelper helper) {
+	public void theFireAndTheStepsAreUnderstoodAsFarAsTheGhostPath(GameTestHelper helper) {
 		GhostMethod fire = GhostMethod.GHOST_FIRE_SCRIPTURE;
 		PlayerCultivation c = new PlayerCultivation();
 		c.setState(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION, 0);
-		helper.assertTrue(GhostMethods.ghostRank(c.netherworld()) == -1 && GhostMethods.layerCap(c, fire) == 3,
+		NetherworldState s = c.netherworld();
+		helper.assertTrue(GhostMethods.ghostRank(s) == -1 && GhostMethods.understoodTo(s, fire) == 3,
 				"A Four Axis cultivator with no ghost path: three layers of the fire, its ordinary realm counts for nothing");
-		c.netherworld().setMethod(GhostMethod.NETHERWORLD_BREATHING, 9, 0);
-		helper.assertTrue(GhostMethods.layerCap(c, fire) == 3 && GhostMethods.realmToPass(fire, 3) == Realm.FOUNDATION_BUILDING,
-				"The ghost path at Qi Refining: three, until its Foundation Building");
-		c.netherworld().setMethod(GhostMethod.YELLOW_SPRINGS_MARROW, 10, 0);
-		helper.assertTrue(GhostMethods.layerCap(c, fire) == 6 && GhostMethods.realmToPass(fire, 6) == Realm.CORE_FORMATION,
-				"At its Foundation Building (the Marrow Art's tenth layer): six, until its Core Formation");
-		c.netherworld().setMethod(GhostMethod.GHOST_CORE_CANON, 19, 0);
-		helper.assertTrue(GhostMethods.layerCap(c, fire) == 9, "At its Core Formation: all nine");
-		helper.assertTrue(GhostMethods.layerCap(c, GhostMethod.SIX_PATHS_CANON) == 54 && GhostMethods.layerCap(c, GhostMethod.NETHERWORLD_BREATHING) == 9,
-				"A foundation, once taken up, all its own: the last 54, the Breathing Art 9");
+		s.setMethod(GhostMethod.NETHERWORLD_BREATHING, 1, 0);
+		GhostMethods.setPath(s, PlayerCultivation.rank(Realm.QI_REFINING, Stage.GRAND_PERFECTION));
+		helper.assertTrue(GhostMethods.understoodTo(s, fire) == 3 && GhostMethods.opensAt(fire, 4) == PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.EARLY),
+				"The ghost path at Qi Refining: three, the fourth from its Foundation Building");
+		GhostMethods.setPath(s, PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.EARLY));
+		helper.assertTrue(GhostMethods.understoodTo(s, fire) == 6 && GhostMethods.opensAt(fire, 7) == PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY),
+				"At its Foundation Building: six, the seventh from its Core Formation");
+		GhostMethods.setPath(s, PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY));
+		helper.assertTrue(GhostMethods.understoodTo(s, fire) == 9, "At its Core Formation: all nine");
+		GhostMethods.setPath(s, PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION));
+		helper.assertTrue(GhostMethods.understoodTo(s, GhostMethod.SIX_PATHS_CANON) == 54 && GhostMethods.understoodTo(s, GhostMethod.NETHERWORLD_BREATHING) == 9,
+				"A foundation understood as far as the path goes, no further than its own last: the last 54, the Breathing Art 9");
 		PlayerCultivation ghost = new PlayerCultivation();
 		ghost.netherworld().setGhost(true);
-		helper.assertTrue(GhostMethods.layerCap(ghost, fire) == 3, "The dead are held by the ghost path too");
+		helper.assertTrue(GhostMethods.understoodTo(ghost.netherworld(), fire) == 3, "The dead are held by the ghost path too");
 
-		NetherworldState s = new NetherworldState();
-		s.setMethod(fire, 3, 0);
-		helper.assertTrue(GhostMethods.cultivate(s, fire, 100_000, 3) == -2
-				&& s.layer(fire) == 3 && s.progress(fire) == GhostMethods.layerCost(fire, 3),
-				"Held at the end of the third, its progress full: the ghost path's gate");
-		PlayerCultivation held = new PlayerCultivation();
-		held.netherworld().setMethod(fire, 3, GhostMethods.layerCost(fire, 3));
-		helper.assertTrue(GhostMethods.heldByRealm(held, fire), "Shown as held");
-		held.netherworld().setMethod(GhostMethod.YELLOW_SPRINGS_MARROW, 10, 0);
-		helper.assertTrue(!GhostMethods.heldByRealm(held, fire), "The ghost path on to Foundation Building: no longer");
-		helper.assertTrue(GhostMethods.cultivate(s, fire, 1, 6) == 1 && s.layer(fire) == 4, "...and on it goes, to the fourth");
+		// A layer behind the path settles in, as a heaven method's does: half its cost, never past the path.
+		NetherworldState t = new NetherworldState();
+		t.setMethod(fire, 3, 0);
+		t.setPath(PlayerCultivation.rank(Realm.QI_REFINING, Stage.LATE), 0);
+		helper.assertTrue(!GhostMethods.settling(t, fire) && GhostMethods.settle(t, fire, 100_000, GhostMethods.understoodTo(t, fire)) == 0
+				&& t.layer(fire) == 3 && t.progress(fire) == 0, "At Qi Refining, the third is as far as it goes: nothing settles");
+		t.setPath(PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.EARLY), 0);
+		helper.assertTrue(GhostMethods.settling(t, fire) && GhostMethods.settleCost(fire, 4) == GhostMethods.SETTLE_SHARE * GhostMethods.layerCost(fire, 4),
+				"The path at Foundation Building: the fourth settles in, on half its cost");
+		helper.assertTrue(GhostMethods.settle(t, fire, GhostMethods.settleCost(fire, 4), 6) == 1 && t.layer(fire) == 4, "...and on it goes, to the fourth");
 		// The rate goes by the ghost path, not the ordinary realm.
 		PlayerCultivation low = new PlayerCultivation(), high = new PlayerCultivation();
 		high.setState(Realm.FOUR_AXIS, Stage.EARLY, 0);
 		helper.assertTrue(Math.abs(GhostMethods.ratePerSecond(low, GhostQi.NETHERWORLD) - GhostMethods.ratePerSecond(high, GhostQi.NETHERWORLD)) < 1.0e-9,
-				"A mortal and a Four Axis cultivator cultivate the ghost methods alike");
+				"A mortal and a Four Axis cultivator cultivate the ghost path alike");
 		helper.succeed();
 	}
 
@@ -91,32 +93,45 @@ public class GhostKingGameTests implements FabricGameTest {
 			if (method.next() != null) helper.assertTrue(GhostMethods.floor(method.next(), method.layers() + 1) > GhostMethods.floor(method, method.layers()),
 					method.getId() + " ends where " + method.next().getId() + " goes on");
 		}
+		// The ghost path's own bar (2026-10-19): a stage takes what its layers cost, so the path's pace is what it was.
+		double all = 0, layers = 0;
+		for (int rank = 0; rank <= GhostMethods.LAST_RANK; rank++) all += GhostMethods.required(rank);
+		for (int layer = 1; layer <= MethodLayers.layers(Realm.FOUR_AXIS); layer++) layers += MethodLayers.cost(layer);
+		helper.assertTrue(GhostMethods.required(0) == MethodLayers.cost(1) + MethodLayers.cost(2) && Math.abs(all - layers) < 1.0e-6,
+				"Qi Refining Early takes its two layers' cost; the whole path, all 54 layers' (" + Math.round(all / 3600) + " h in a Soul Sand Valley)");
 		ServerPlayer ghost = cultivator(helper, Realm.QI_REFINING, Stage.EARLY);
 		PlayerCultivation c = CultivationManager.get(ghost);
 		NetherworldState s = c.netherworld();
 		try {
 			GhostSystem.makeGhost(ghost);
-			s.setMethod(GhostMethod.NETHERWORLD_BREATHING, 9, 0);
-			GhostMethods.afterLayer(ghost, s, -1);
-			helper.assertTrue(GhostMethods.ghostRank(s) == PlayerCultivation.rank(Realm.QI_REFINING, Stage.GRAND_PERFECTION),
-					"The Breathing Art perfected: the ghost path at Qi Refining Grand Perfection");
+			GhostMethods.give(ghost, GhostMethod.NETHERWORLD_BREATHING);
+			helper.assertTrue(GhostMethods.ghostRank(s) == 0 && s.layer(GhostMethod.NETHERWORLD_BREATHING) == 2,
+					"The first foundation begins the ghost path at Qi Refining Early, understood as far (its two layers)");
+			int stages = GhostMethods.addCultivation(s, 1.0e9);
+			helper.assertTrue(stages == 3 && GhostMethods.ghostRank(s) == PlayerCultivation.rank(Realm.QI_REFINING, Stage.GRAND_PERFECTION)
+					&& GhostMethods.atBottleneck(c) && s.pathCultivation() == GhostMethods.required(GhostMethods.ghostRank(s)),
+					"Its stages step on by themselves, to Grand Perfection's bottleneck, the bar full (the Netherworld's tribulation's)");
 			helper.assertTrue(c.getRealm() == Realm.QI_REFINING && c.getStage() == Stage.EARLY, "...and the ordinary cultivation untouched");
-			s.setMethod(GhostMethod.YELLOW_SPRINGS_MARROW, 9, 0);
-			helper.assertTrue(GhostMethods.ghostRealm(s) == Realm.QI_REFINING, "The Marrow Art's ninth: still Qi Refining");
-			s.setMethod(GhostMethod.YELLOW_SPRINGS_MARROW, 10, 0);
-			helper.assertTrue(GhostMethods.ghostRealm(s) == Realm.FOUNDATION_BUILDING && !GhostSystem.isKing(ghost)
-					&& GhostMethods.deepestFoundation(s) == GhostMethod.YELLOW_SPRINGS_MARROW, "Its tenth: Foundation Building, no king");
-			s.setMethod(GhostMethod.GHOST_CORE_CANON, 19, 0);
+			helper.assertTrue(GhostMethods.heldByMethod(c) && !GhostMethods.canBreakthrough(c), "The Breathing Art opens no way into Foundation Building");
+			GhostMethods.give(ghost, GhostMethod.YELLOW_SPRINGS_MARROW);
+			helper.assertTrue(!GhostMethods.heldByMethod(c) && GhostMethods.canBreakthrough(c), "The Marrow Art opens it: the tribulation can be faced");
+			helper.assertTrue(GhostMethods.breakthrough(s) && GhostMethods.ghostRealm(s) == Realm.FOUNDATION_BUILDING && !GhostSystem.isKing(ghost)
+					&& s.pathCultivation() == 0, "Through: Foundation Building, the bar empty, no king");
+			GhostMethods.give(ghost, GhostMethod.GHOST_CORE_CANON);
+			GhostMethods.setPath(s, PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY));
 			helper.assertTrue(GhostMethods.ghostRealm(s) == Realm.CORE_FORMATION && GhostSystem.isKing(ghost) && c.getRealm() == Realm.QI_REFINING,
-					"The Ghost Core Canon's Core Formation: a Ghost King by its ghost path, its ordinary cultivation still Qi Refining");
-			s.setMethod(GhostMethod.SIX_PATHS_CANON, 54, 0);
-			helper.assertTrue(GhostMethods.ghostRank(s) == PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION), "The last perfected: Four Axis Grand Perfection");
+					"Its Core Formation: a Ghost King by its ghost path, its ordinary cultivation still Qi Refining");
+			GhostMethods.fallOneStage(s);
+			helper.assertTrue(GhostMethods.ghostRank(s) == PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.GRAND_PERFECTION)
+					&& s.layer(GhostMethod.GHOST_CORE_CANON) == MethodLayers.deepestAt(GhostMethods.ghostRank(s)),
+					"A tribulation failed: a stage down, the layers past it with it");
 		} finally {
 			GhostSystem.forget(ghost.getUUID());
 		}
 		PlayerCultivation mortalGhost = new PlayerCultivation();
 		mortalGhost.netherworld().setGhost(true);
-		mortalGhost.netherworld().setMethod(GhostMethod.GHOST_CORE_CANON, 21, 0);
+		mortalGhost.netherworld().setMethod(GhostMethod.GHOST_CORE_CANON, 1, 0);
+		GhostMethods.setPath(mortalGhost.netherworld(), PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.MID));
 		helper.assertTrue(mortalGhost.isMortal() && !GhostSystem.isKing(mortalGhost), "A mortal's ghost path lies dormant, its meridians closed: no king by it");
 		mortalGhost.awaken(0);
 		helper.assertTrue(GhostSystem.isKing(mortalGhost), "Its meridians opened (a Qi Refining cultivator now), a king by its ghost path");
@@ -124,30 +139,28 @@ public class GhostKingGameTests implements FabricGameTest {
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
-	public void anyFoundationStartsTheGhostPathAtQiRefiningAndALaterOneAtItsDepth(GameTestHelper helper) {
+	public void anyMethodLearnedIsUnderstoodAsFarAsTheGhostPath(GameTestHelper helper) {
 		ServerPlayer living = cultivator(helper, Realm.NASCENT_SOUL, Stage.EARLY);
 		PlayerCultivation c = CultivationManager.get(living);
 		NetherworldState s = c.netherworld();
 		try {
 			helper.assertTrue(GhostMethods.canLearn(c, GhostMethod.SIX_PATHS_CANON) && GhostMethods.learn(living, GhostMethod.NINE_NETHER_SOUL_SUTRA)
-					&& s.layer(GhostMethod.NINE_NETHER_SOUL_SUTRA) == 1 && GhostMethods.ghostRank(s) == PlayerCultivation.rank(Realm.QI_REFINING, Stage.EARLY),
-					"A Nascent Soul with no ghost path takes up the Nine Nether Soul Sutra at its first layer: the ghost path at Qi Refining Early");
+					&& s.layer(GhostMethod.NINE_NETHER_SOUL_SUTRA) == 2 && GhostMethods.ghostRank(s) == PlayerCultivation.rank(Realm.QI_REFINING, Stage.EARLY),
+					"A Nascent Soul with no ghost path takes up the Nine Nether Soul Sutra: the ghost path begun at Qi Refining Early, the Sutra understood as far");
 			helper.assertTrue(c.getRealm() == Realm.NASCENT_SOUL && c.getStage() == Stage.EARLY && s.activeMethod() == GhostMethod.NINE_NETHER_SOUL_SUTRA,
 					"Its ordinary cultivation as it was, the Sutra practised");
-			int before = GhostMethods.ghostRank(s);
-			s.setMethod(GhostMethod.NINE_NETHER_SOUL_SUTRA, 12, 100);
-			GhostMethods.afterLayer(living, s, before);
-			helper.assertTrue(GhostMethods.learn(living, GhostMethod.GHOST_CORE_CANON) && s.layer(GhostMethod.GHOST_CORE_CANON) == 12
-					&& s.progress(GhostMethod.GHOST_CORE_CANON) == 100 && s.activeMethod() == GhostMethod.NINE_NETHER_SOUL_SUTRA,
-					"The Canon taken up later starts where the ghost path stands (layer 12, progress and all); the Sutra, going further, still practised");
+			GhostMethods.setPath(s, PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.EARLY));
+			helper.assertTrue(s.layer(GhostMethod.NINE_NETHER_SOUL_SUTRA) == 11, "The path at Foundation Building Early: the Sutra to its eleventh layer");
+			helper.assertTrue(GhostMethods.learn(living, GhostMethod.GHOST_CORE_CANON) && s.layer(GhostMethod.GHOST_CORE_CANON) == 11
+					&& s.activeMethod() == GhostMethod.NINE_NETHER_SOUL_SUTRA,
+					"The Canon taken up later is understood as far as the path (layer 11); the Sutra, going further, still practised");
 			helper.assertTrue(GhostMethods.learn(living, GhostMethod.NETHERWORLD_BREATHING) && s.layer(GhostMethod.NETHERWORLD_BREATHING) == 9
-					&& s.progress(GhostMethod.NETHERWORLD_BREATHING) == GhostMethods.layerCost(GhostMethod.NETHERWORLD_BREATHING, 9)
 					&& Spell.GHOSTLY_WAIL.isKnown(c) && Ability.NETHERWORLD_VEIL.isUnlocked(c),
 					"The Breathing Art, outgrown, is learned whole: perfected at once, its spells in reach");
-			helper.assertTrue(GhostMethods.learn(living, GhostMethod.GHOST_FIRE_SCRIPTURE) && s.layer(GhostMethod.GHOST_FIRE_SCRIPTURE) == 1,
-					"The fire, a method of its own, from its first layer whatever the depth");
-			helper.assertTrue(GhostMethods.foundationLayers(c) == 12 && GhostMethods.layersKnown(c) == 13,
-					"The foundations count once, at their depth (12), with the fire's layer beside them");
+			helper.assertTrue(GhostMethods.learn(living, GhostMethod.GHOST_FIRE_SCRIPTURE) && s.layer(GhostMethod.GHOST_FIRE_SCRIPTURE) == 6,
+					"The fire too, as far as the path carries it: six layers at its Foundation Building");
+			helper.assertTrue(GhostMethods.foundationLayers(c) == 11 && GhostMethods.layersKnown(c) == 17,
+					"The foundations count once, at their depth (11), with the fire's layers beside them");
 		} finally {
 			Spells.forget(living.getUUID());
 		}
@@ -156,15 +169,19 @@ public class GhostKingGameTests implements FabricGameTest {
 
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void aGhostKingStrikesAsTheLivingAndWalksUnseenAbove(GameTestHelper helper) {
-		ServerPlayer common = cultivator(helper, Realm.FOUNDATION_BUILDING, Stage.LATE);
-		ServerPlayer king = cultivator(helper, Realm.CORE_FORMATION, Stage.EARLY);
+		// The heaven path's Core Formation crowns no ghost; the ghost path's does (the user's rule, 2026-10-19).
+		ServerPlayer common = cultivator(helper, Realm.CORE_FORMATION, Stage.LATE);
+		ServerPlayer king = cultivator(helper, Realm.QI_REFINING, Stage.EARLY);
+		CultivationManager.get(king).netherworld().setMethod(GhostMethod.GHOST_CORE_CANON, 1, 0); // its ghost path at Core Formation
+		GhostMethods.setPath(CultivationManager.get(king).netherworld(), PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY));
 		ServerPlayer living = cultivator(helper, Realm.QI_REFINING, Stage.MID);
 		ServerPlayer seer = cultivator(helper, Realm.HEAVENLY_BEING, Stage.EARLY);
 		try {
 			helper.assertTrue(!GhostSystem.isKing(king), "Alive, no king");
 			GhostSystem.makeGhost(common);
 			GhostSystem.makeGhost(king);
-			helper.assertTrue(GhostSystem.isKing(king) && !GhostSystem.isKing(common), "Dead at Core Formation: a Ghost King; below it, not");
+			helper.assertTrue(GhostSystem.isKing(king) && !GhostSystem.isKing(common),
+					"Dead with its ghost path at Core Formation: a Ghost King; at Core Formation on the heaven path alone, not");
 			PlayerCultivation mortalGhost = new PlayerCultivation();
 			mortalGhost.netherworld().setGhost(true);
 			helper.assertTrue(!GhostSystem.isKing(mortalGhost), "A mortal's ghost is no king");
@@ -188,9 +205,9 @@ public class GhostKingGameTests implements FabricGameTest {
 			helper.assertTrue(!SoulProjection.isActive(king.getUUID()) && !Ability.SOUL_PROJECTION.isUnlocked(CultivationManager.get(king)),
 					"A Ghost King projects no soul, even in creative");
 			king.setGameMode(GameType.SURVIVAL);
-			CultivationManager.get(king).setState(Realm.CORE_FORMATION, Stage.EARLY, 0);
-			CultivationManager.get(king).setState(Realm.FOUNDATION_BUILDING, Stage.GRAND_PERFECTION, 0);
-			helper.assertTrue(!GhostSystem.isKing(king), "Brought low (the Chief Judge's gaze), a king no longer");
+			CultivationManager.get(king).setState(Realm.QI_REFINING, Stage.EARLY, 0);
+			GhostMethods.fallTo(CultivationManager.get(king).netherworld(), PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.GRAND_PERFECTION));
+			helper.assertTrue(!GhostSystem.isKing(king), "Its ghost path brought low (a ghost core detonated), a king no longer");
 		} finally {
 			GhostSystem.forget(common.getUUID());
 			GhostSystem.forget(king.getUUID());
