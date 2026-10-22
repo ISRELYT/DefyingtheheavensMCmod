@@ -459,13 +459,16 @@ public final class ModPackets {
 		ServerPlayNetworking.send(player, SYNC, buf);
 	}
 
-	/** S2C space_years: the HUD's line in space (AstralRealm#tickSpace), or {@code inSpace} false to take it away. */
+	/**
+	 * S2C space_years: the HUD's line in space (AstralRealm#tickSpace), or {@code inSpace} false to take it away. Whole doubles: the
+	 * realms after Four Axis have billions of years left, past what a float (or an int) holds to the year.
+	 */
 	public static void sendSpaceYears(ServerPlayer player, boolean inSpace, double trip, double left, double home) {
 		FriendlyByteBuf buf = PacketByteBufs.create();
 		buf.writeBoolean(inSpace);
-		buf.writeFloat((float) trip);
-		buf.writeFloat((float) left);
-		buf.writeFloat((float) home);
+		buf.writeDouble(trip);
+		buf.writeDouble(left);
+		buf.writeDouble(home);
 		ServerPlayNetworking.send(player, SPACE_YEARS, buf);
 	}
 

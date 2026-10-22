@@ -81,10 +81,11 @@ public class SwiftAndMendingGameTests implements FabricGameTest {
 			float speed = shatterer.getAbilities().getFlyingSpeed();
 			helper.assertTrue(shatterer.getAbilities().mayfly && speed == QiFlight.realmSpeed(Realm.VOID_SHATTERING, Stage.EARLY),
 					"Void Shattering flies on qi at its realm's speed (" + speed + ")");
-			// In a lower realm Realm Suppression holds it to Heavenly Being's might: to Qi Flight's own speed.
+			// No lower realm holds Void Shattering (PlayerCultivation#FREE_OF_LOWER_REALMS): as swift there.
 			c.setLowerRealmBound(true);
 			QiFlight.tick(shatterer, c);
-			helper.assertTrue(shatterer.getAbilities().getFlyingSpeed() == SwordFlight.QI_FLIGHT_SPEED, "Held to Heavenly Being in a lower realm, at Qi Flight's own");
+			helper.assertTrue(shatterer.getAbilities().getFlyingSpeed() == QiFlight.realmSpeed(Realm.VOID_SHATTERING, Stage.EARLY),
+					"Held by no lower realm: as swift there (" + shatterer.getAbilities().getFlyingSpeed() + ")");
 			// The dead fly freely at their realm's speed.
 			GhostSystem.makeGhost(dead);
 			PlayerCultivation d = CultivationManager.get(dead);
@@ -159,6 +160,62 @@ public class SwiftAndMendingGameTests implements FabricGameTest {
 		AstralPlanets.Crossing wide = planets.atmosphereAlong(from.add(0, air * 1.5, 0), to.add(0, air * 1.5, 0));
 		AstralPlanets.Crossing away = planets.atmosphereAlong(to, to.add(200, 0, 0));
 		helper.assertTrue((wide == null || wide.planet() != moon) && (away == null || away.planet() != moon), "Not a way passing wide of it, nor one heading away");
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void theyMeditateInTheAirOnTheirFlight(GameTestHelper helper) {
+		var server = helper.getLevel().getServer();
+		ServerPlayer p = new ServerPlayer(server, helper.getLevel(), new GameProfile(UUID.randomUUID(), "air-sitter")) {
+			@Override
+			public boolean isSpectator() { return false; }
+
+			@Override
+			public boolean isCreative() { return false; }
+		};
+		server.getPlayerList().placeNewPlayer(new net.minecraft.network.Connection(net.minecraft.network.protocol.PacketFlow.SERVERBOUND), p);
+		try {
+			p.setGameMode(GameType.SURVIVAL);
+			net.minecraft.core.BlockPos at = helper.absolutePos(new net.minecraft.core.BlockPos(2, 8, 2));
+			p.teleportTo(helper.getLevel(), at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0, 0);
+			CultivationManager.get(p).setState(Realm.CORE_FORMATION, Stage.EARLY, 0);
+			CultivationManager.refresh(p);
+			p.getAbilities().invulnerable = true; // nothing about it to break the sitting
+			p.setOnGround(false);
+			p.getAbilities().mayfly = true;
+			p.getAbilities().flying = false;
+			MeditationManager.start(p);
+			helper.assertTrue(!MeditationManager.isMeditating(p.getUUID()), "Falling through the air: no meditation");
+			p.getAbilities().flying = true;
+			MeditationManager.start(p);
+			helper.assertTrue(MeditationManager.isMeditating(p.getUUID()), "Flying: a meditation in the air (the user's ask, 2026-10-22)");
+			MeditationManager.tick(server);
+			helper.assertTrue(MeditationManager.isMeditating(p.getUUID()), "...held up by its flight, it goes on");
+			p.getAbilities().flying = false; // its qi run dry (QiFlight#land)
+			MeditationManager.tick(server);
+			helper.assertTrue(!MeditationManager.isMeditating(p.getUUID()), "Its flight given out, the meditation ends");
+		} finally {
+			if (MeditationManager.isMeditating(p.getUUID())) MeditationManager.stop(p, false);
+			MeditationManager.forget(p.getUUID());
+			QiFlight.forget(p.getUUID());
+			Lifespan.forget(p.getUUID());
+			LifespanTribulation.forget(p.getUUID());
+			AstralRealm.forget(p.getUUID());
+			if (server.getPlayerList().getPlayer(p.getUUID()) == p) server.getPlayerList().remove(p);
+		}
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void theUpperRealmsWayOutLiesAboveItsLands(GameTestHelper helper) {
+		helper.assertTrue(AstralRealm.exitY(ModDimensions.UPPER_REALM) == AstralRealm.UPPER_EXIT_Y && AstralRealm.exitY(net.minecraft.world.level.Level.OVERWORLD) == AstralRealm.EXIT_Y
+				&& AstralRealm.exitY(ModDimensions.ASTRAL_SURFACES) == AstralRealm.EXIT_Y, "The Upper Realm's way out its own, the Overworld's and the planets' 340");
+		helper.assertTrue(AstralRealm.UPPER_ARRIVAL_Y < AstralRealm.UPPER_EXIT_Y, "Coming home from space below the way out again");
+		var types = helper.getLevel().getServer().registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.DIMENSION_TYPE);
+		net.minecraft.world.level.dimension.DimensionType upper = types.get(ModDimensions.UPPER_REALM_TYPE);
+		int top = upper == null ? 512 : upper.minY() + upper.height(); // the test server may know only vanilla's
+		helper.assertTrue(AstralRealm.UPPER_EXIT_Y > top && AstralRealm.UPPER_ARRIVAL_Y > top,
+				"Above the Upper Realm's build limit (" + top + "): its lands never reach the way out, and the way home lands over them");
 		helper.succeed();
 	}
 

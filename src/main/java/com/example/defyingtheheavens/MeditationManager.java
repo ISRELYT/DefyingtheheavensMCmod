@@ -34,6 +34,8 @@ public final class MeditationManager {
 
 		/** Ticks left in which a soul just arrived in the Inner Realm settles onto the island (moving doesn't count yet). */
 		int settling;
+		/** Begun in the air, held up by flight ({@link #steady}). */
+		boolean airborne;
 
 		// The ghost methods (see GhostMethods): the Method Steles near, re-read every few seconds; seconds spent by the stele of
 		// each method not yet known.
@@ -119,6 +121,7 @@ public final class MeditationManager {
 			return;
 		}
 		Session session = new Session(player.getX(), player.getY(), player.getZ());
+		session.airborne = !player.onGround();
 		session.boost = CultivationBoost.of(player);
 		SESSIONS.put(player.getUUID(), session);
 		ModPackets.broadcastMeditation(player, true);
@@ -148,14 +151,23 @@ public final class MeditationManager {
 		SoulCrystalBlock.forget(id);
 	}
 
-	/** Whether {@link #start} would begin a session right now: no tribulation running, and steady, dry ground. */
+	/** Whether {@link #start} would begin a session right now: no tribulation running, and steady, dry ground (or flight). */
 	public static boolean canStart(ServerPlayer player) {
 		return !TribulationManager.isActive(player.getUUID()) && !SoulProjection.isAwayFromBody(player.getUUID()) && canMeditate(player);
 	}
 
 	private static boolean canMeditate(ServerPlayer p) {
-		return p.isAlive() && !p.isSpectator() && p.onGround() && !p.isInWaterOrBubble()
-				&& !p.isPassenger() && !p.isSleeping() && !p.isFallFlying();
+		return p.isAlive() && !p.isSpectator() && steady(p) && !p.isInWaterOrBubble() && !p.isPassenger() && !p.isSleeping();
+	}
+
+	/**
+	 * Held steady to sit in meditation: on the ground, or flying (the user's ask, 2026-10-22: one may meditate in the air). The flight
+	 * goes on costing its qi as ever (QiFlight), so only a gathering that keeps up with it (Heavenly Being's everywhere, anyone's in
+	 * the Upper Realm) holds one up there for good; a pool run dry ends the flight, and with it the meditation ({@link #tick}). An
+	 * elytra's glide is no flight to sit on.
+	 */
+	private static boolean steady(ServerPlayer p) {
+		return (p.onGround() || p.getAbilities().flying) && !p.isFallFlying();
 	}
 
 	/** How much a run of clean qi circuits speeds meditation right now: x1, then x1.5, then x2. */
@@ -246,14 +258,20 @@ public final class MeditationManager {
 	private static boolean stillValid(ServerPlayer p, Session s) {
 		double dx = p.getX() - s.x;
 		double dz = p.getZ() - s.z;
-		return !p.isShiftKeyDown() && p.onGround() && !p.isInWaterOrBubble() && !p.isPassenger()
+		return !p.isShiftKeyDown() && steady(p) && !p.isInWaterOrBubble() && !p.isPassenger()
 				&& dx * dx + dz * dz <= MAX_DRIFT_SQR && Math.abs(p.getY() - s.y) <= 0.5;
+	}
+
+	/** A meditation in the air whose flight has given out (its qi run dry, QiFlight): it ends, and is told so as it falls. */
+	private static boolean fellFromTheAir(ServerPlayer p, Session s) {
+		return s.airborne && !p.onGround() && !p.getAbilities().flying;
 	}
 
 	public static void tick(MinecraftServer server) {
 		if (SESSIONS.isEmpty()) return;
 		int tick = server.getTickCount();
 		List<ServerPlayer> interrupted = new ArrayList<>();
+		List<ServerPlayer> fell = new ArrayList<>();
 		List<UUID> gone = new ArrayList<>();
 
 		for (Map.Entry<UUID, Session> entry : SESSIONS.entrySet()) {
@@ -263,12 +281,14 @@ public final class MeditationManager {
 			} else if (!p.isAlive() || (entry.getValue().settling <= 0 && !InnerRealm.isInside(p) && !stillValid(p, entry.getValue()))) {
 				// A soul in the Inner Realm walks freely: only the meditate key (or harm to the body) ends it.
 				interrupted.add(p);
+				if (p.isAlive() && fellFromTheAir(p, entry.getValue())) fell.add(p);
 			} else {
 				tickMeditation(p, entry.getValue(), tick);
 			}
 		}
 		gone.forEach(SESSIONS::remove);
 		interrupted.forEach(p -> stop(p, true));
+		fell.forEach(p -> p.displayClientMessage(Component.translatable(ModLang.MSG_MEDITATION_FELL), true));
 	}
 
 	private static void tickMeditation(ServerPlayer p, Session session, int tick) {
@@ -281,11 +301,12 @@ public final class MeditationManager {
 			session.y = p.getY();
 			session.z = p.getZ();
 		}
-		// After a while the soul turns inward (an ability that can be switched off), the eyes closing first.
-		if (session.ticks == InnerRealm.ENTER_AFTER_TICKS - InnerRealm.FADE_TICKS && InnerRealm.canEnter(p)) {
+		// After a while the soul turns inward (an ability that can be switched off), the eyes closing first. Only from a body on firm
+		// ground: one held up in the air by its flight would be held up by nothing while its soul was away (or for nothing: no qi paid).
+		if (session.ticks == InnerRealm.ENTER_AFTER_TICKS - InnerRealm.FADE_TICKS && p.onGround() && InnerRealm.canEnter(p)) {
 			ModPackets.sendInnerFade(p);
 		}
-		if (session.ticks == InnerRealm.ENTER_AFTER_TICKS && InnerRealm.enter(p)) {
+		if (session.ticks == InnerRealm.ENTER_AFTER_TICKS && p.onGround() && InnerRealm.enter(p)) {
 			session.settling = 40;
 			session.x = p.getX();
 			session.y = p.getY();

@@ -76,6 +76,18 @@ public final class QiSenseClientHandler {
 	/** Motes are born this far from a meditator, then drawn in. */
 	private static final double INFLOW_MIN = 4.5;
 	private static final double INFLOW_MAX = 7.0;
+	/**
+	 * A meditator draws in motes by how fast it gathers ({@link #inflow}): one more for every doubling of it in this many (some 0.8 a
+	 * realm), and past {@link #INFLOW_KNEE} (Four Axis's, in the Upper Realm) {@link #INFLOW_PAST_KNEE} times as many again, up to
+	 * {@link #INFLOW_CAP} a tick.
+	 */
+	private static final double INFLOW_PER_DOUBLING = 0.35;
+	/**
+	 * The old ceiling, 6 a tick, which Dao Integration reached so that every realm after it drew in as many (the user's ask, 2026-10-22:
+	 * "raise the qi particle cap so Dao Integration through True Immortal keep drawing visibly more"): past it each realm draws in some
+	 * 1.6 a tick more, Dao Integration Early about 7, Void Shattering 9, Sacred Vessel 10.5, Entering Nirvana 12, True Immortal 14.
+	 */
+	private static final double INFLOW_KNEE = 6, INFLOW_PAST_KNEE = 2, INFLOW_CAP = 16;
 	/** Corners of each mote's disc. */
 	private static final int GLOW_SEGMENTS = 8;
 	/** The glow around a mote: this many times its size, this bright at the middle. */
@@ -182,10 +194,9 @@ public final class QiSenseClientHandler {
 			float gathering = entry.getValue().rate();
 			if (meditator == null || gathering <= 0 || !ClientMeditationTracker.isMeditating(entry.getKey())
 					|| meditator.distanceToSqr(eye) > ABSORPTION_RANGE * ABSORPTION_RANGE) continue;
-			// Stronger gathering pulls in more: in the Upper Realm ~2 motes a tick at Qi Refining, ~5 for a Heavenly Being, 6 at
-			// most; the thin qi of the lower realms gives half that.
-			float inflow = Math.min(6f, 0.6f + 0.35f * (float) (Math.log1p(gathering) / Math.log(2)));
-			float carry = INFLOW_CARRY.getOrDefault(entry.getKey(), 0f) + inflow * (upperRealm ? 1 : LOWER_REALM_INFLOW);
+			// Stronger gathering pulls in more: in the Upper Realm ~2 motes a tick at Qi Refining, ~5 for a Heavenly Being, ~14 for a True
+			// Immortal (inflow); the thin qi of the lower realms gives half that.
+			float carry = INFLOW_CARRY.getOrDefault(entry.getKey(), 0f) + inflow(gathering) * (upperRealm ? 1 : LOWER_REALM_INFLOW);
 			while (carry >= 1 && MOTES.size() < MAX_MOTES) {
 				carry--;
 				spawnInflow(mc.level, meditator);
@@ -203,8 +214,7 @@ public final class QiSenseClientHandler {
 			Realm realm = npc.getDisplayedRealm();
 			double gathering = realm.getCultivationPerSecond() * npc.getDisplayedStage().getPowerMultiplier() * CultivatorNpc.NPC_RATE
 					* (upperRealm ? PlayerCultivation.UPPER_REALM_QI_MULTIPLIER : 1.0);
-			float inflow = Math.min(6f, 0.6f + 0.35f * (float) (Math.log1p(gathering) / Math.log(2)));
-			float carry = NPC_INFLOW_CARRY.getOrDefault(npc.getId(), 0f) + inflow * (upperRealm ? 1 : LOWER_REALM_INFLOW);
+			float carry = NPC_INFLOW_CARRY.getOrDefault(npc.getId(), 0f) + inflow(gathering) * (upperRealm ? 1 : LOWER_REALM_INFLOW);
 			while (carry >= 1 && MOTES.size() < MAX_MOTES) {
 				carry--;
 				spawnInflow(mc.level, npc);
@@ -232,6 +242,16 @@ public final class QiSenseClientHandler {
 			QiElement element = random.nextFloat() < 0.6f ? QiElement.WATER : QiElement.WOOD;
 			emit(element, from.x, from.y, from.z, velocity.x, velocity.y, velocity.z, 0.05f + random.nextFloat() * 0.03f, 25 + random.nextInt(15), null);
 		}
+	}
+
+	/**
+	 * Motes a tick drawn into a meditator gathering {@code gathering} cultivation a second: 0.6 and {@link #INFLOW_PER_DOUBLING} for
+	 * every doubling of it, those past {@link #INFLOW_KNEE} counting {@link #INFLOW_PAST_KNEE} times, at most {@link #INFLOW_CAP}.
+	 */
+	static float inflow(double gathering) {
+		double motes = 0.6 + INFLOW_PER_DOUBLING * Math.log1p(Math.max(0, gathering)) / Math.log(2);
+		if (motes > INFLOW_KNEE) motes = INFLOW_KNEE + (motes - INFLOW_KNEE) * INFLOW_PAST_KNEE;
+		return (float) Math.min(INFLOW_CAP, motes);
 	}
 
 	/** One step of a mote's life. @return false once it is spent */

@@ -162,6 +162,12 @@ a quarter block on every side; only the middle block is solid, so leave a block 
 checks, messages and cultivation gain as the meditation key. Right-click again, or move, to stop. Sitting on a mat speeds
 meditation (see below).
 
+**Meditating in the air** (the user's ask, 2026-10-22): one may sit in meditation while flying (Qi Flight, Sword Flight, the dead's
+free flight), not only on the ground. The flight goes on costing its qi all the while, so only where gathering keeps up with it
+(from Heavenly Being everywhere, anyone in the Upper Realm) can one stay up there and cultivate indefinitely; a pool run dry ends
+the flight and drops one out of the meditation ("Your qi can no longer hold you up"). Sneaking, drifting or rising end it as on the
+ground, and the soul turns inward to the Inner Realm only from firm ground (`MeditationManager#steady`).
+
 - Meditation Mat: three wheat over three Blue Spirit Planks (three wheat alone would clash with bread).
 - Red Silk Meditation Mat: a Meditation Mat, red carpet and a Jade (shapeless).
 
@@ -266,6 +272,12 @@ Spirit treasures are vessels of qi, so in the grey plane of Qi they keep their c
   from 5,000 years.
 - A pedestal feeding a meditator sends its qi into them as motes (in place of the grey particles).
 - Code: `client/QiSenseTreasures.java` (and `QiSenseClientHandler#emit`, `SenseOverlay`).
+
+A meditating cultivator draws the land's qi into itself as motes, as many as it truly gathers (`QiSenseClientHandler#inflow`,
+by its realm, stage and boosts): in the Upper Realm some 2 a tick at Qi Refining, 5 at Heavenly Being and 6 at Four Axis, and
+past that the more for every realm (the user's ask, 2026-10-22, when the realms after Four Axis all drew in Four Axis's 6): Dao
+Integration 7 to 8, Void Shattering 9, Sacred Vessel 11, Entering Nirvana 12, True Immortal 14, at most 16 with boosts. The lower
+realms' thin qi gives half as many; an NPC cultivator draws in as a player gathering a tenth as fast.
 
 ## The mortal path and alchemy
 
@@ -538,7 +550,12 @@ before they were built, 2026-10-22: the race was balanced to the whole road.) Co
   everywhere else, one ages as always; only flight in space counts (an arrival, a hold at a planet's edge, a teleport cost
   nothing). The HUD shows what the trip has cost, the years left and what flying straight home would cost, turning red (with a
   warning) once the years left can't pay for it; run out out there and the lifespan tribulation finds you there. The dead pay too;
-  creative players don't. Code: `AstralRealm#travel`, `YEARS_PER_BLOCK`, `#yearsPerBlock`.
+  creative players don't, nor a True Immortal (the line goes away when one becomes one on the way, and a new trip's comes back
+  if one stops being one). Fixed 2026-10-22 (the user's report): racing through space faster than its chunks load, a player's own
+  tick stopped and the line froze (`AstralRealm#keepTicking` ticks such a one), and its billions of years left were told as
+  2,147,483,647 (whole doubles now). Under it, in space, **the way home**: an arrow turned toward the Overworld from where you look,
+  whether it lies above or below you, and its distance in blocks (the user's ask, 2026-10-22; a planet just come down onto says how
+  to leave it again). Code: `AstralRealm#travel`, `YEARS_PER_BLOCK`, `#yearsPerBlock`, client `TribulationHud#drawWayHome`.
 - **Meditating faster**: the Cultivation tab's pace button beside Meditate, x1 / x2 / x3. At x2 every gain of a meditation comes
   twice as fast (both paths, the methods settling, pill and fruit qi refined, a body tempered), but **each bit of it costs twice
   the years** (above: four times the years a minute); at x3, three times as fast, each bit for **four times** the years. A reward
@@ -609,12 +626,19 @@ general super fast"). From Void Shattering on, Qi Flight and the free flight of 
 faster, the more with every stage (`QiFlight#realmSpeed`): Void Shattering 2.4 to 3 times vanilla's flying speed, Sacred Vessel
 3.2 to 3.8, Entering Nirvana 4 to 4.9, True Immortal 6 to 7.2 (some 27 to 80 blocks a second, twice that sprinting; Wandering Soul
 Steps' +60% on top for the dead). Space is swifter still (The Astral Realm: to the next star, Void Shattering half a minute, True
-Immortal five or six seconds). A sword stays a sword's speed. In the lower realms Realm Suppression holds them to Heavenly Being's
-might, and so to vanilla's speed there. Vanilla snaps back anyone but the game's host who moves more than 10 blocks in a tick; a
+Immortal five or six seconds). A sword stays a sword's speed. No lower realm holds them back (below), so they fly as swiftly
+there. Vanilla snaps back anyone but the game's host who moves more than 10 blocks in a tick; a
 flier may now move as far as its flight carries it, a second of it for packets that come in bunched (`QiFlight#moveAllowanceSq`,
 `ServerGamePacketListenerImplMixin`), so a guest isn't pulled back mid-flight. Unexplored land loads only as fast as the server
 makes it: at the top speeds over new land the client waits at the edge of what has loaded (space has none to wait for).
 NPC cultivators fly as before.
+
+**No lower realm holds Void Shattering** (the user's ask, 2026-10-22: "once reaching void shattering realm the lower realm no
+longer supresses you"). From Void Shattering on, on either path, Realm Suppression in the Overworld, the Nether and the End holds a
+cultivator no longer: its whole health, strength, qi pool, abilities and flight there (`PlayerCultivation#FREE_OF_LOWER_REALMS`,
+`#isSuppressed`, `#sustained`, `#wielded`; an NPC cultivator the same, `CultivatorNpc#sustainedRank`). It meditates there too, at the
+lower realms' thin qi, up to its stage's full bar; the breakthrough itself still waits for the Upper Realm (`#isBreakthroughLocked`).
+Four Axis and Dao Integration are held to Heavenly Being Grand Perfection there as before.
 
 **Mending** (the user's ask, 2026-10-22: the great bodies healed at vanilla's two a second, hours to mend). Natural regeneration
 goes by the realm's body (`CultivationStats#mendFactor`, `mixin/FoodDataMixin`): every heal vanilla gives a fed body is multiplied
@@ -1517,8 +1541,10 @@ Beyond the Overworld's sky lies the **Astral Realm**: space, where the Overworld
 **Getting there.** A **Nascent Soul** or stronger on either path (as the realm lets them wield it), flying up past **Y 340** in the
 Overworld, rises out of its sky into space, over the Overworld's lit side. Weaker cultivators are told the sky thins to nothing
 above them. (Y 340: just above the build limit, so a Nascent Soul's pool can carry them there from a hill, and Mid and up from
-the sea.) The **Upper Realm**'s sky is the same way out (since 2026-10-19: it is the heaven over the same world), and one who rose
-out of it comes home to it. Of the dead, only a **Ghost King** may rise (since 2026-10-19, for the four axes); it flies space as
+the sea.) The **Upper Realm**'s sky is the same way out (since 2026-10-19: it is the heaven over the same world), past **Y 540**
+there (since 2026-10-22, the user's ask: its islands rose past 340 and led out into space; 540 is above its build limit of 512, as
+340 is above the Overworld's 320), and one who rose out of it comes home to it, down from Y 525 over its nearest island
+(`AstralRealm#exitY`, `UPPER_EXIT_Y`, `UPPER_ARRIVAL_Y`). Of the dead, only a **Ghost King** may rise (since 2026-10-19, for the four axes); it flies space as
 everyone there does. Space speed goes by the higher path too.
 
 **Space** (`astral_void`). Nothing in it is a block: the stars and planets are drawn by the client where they truly are, and
@@ -1573,7 +1599,7 @@ it. Fly into the Overworld's atmosphere and you come down where you rose from (i
 Astral Realm is **no lower realm** (since 2026-10-19): no cap holds a breakthrough there and **nothing suppresses** a
 cultivator, so Four Axis cultivators roam it freely after their axes. A Heavenly Being Grand Perfection may break through into
 Four Axis **anywhere nothing suppresses them**, not only in the Upper Realm: the lower realms' cap holds only in the Overworld,
-the Nether and the End. No Nether portals and no sects there.
+the Nether and the End (and never on Void Shattering or above: The realms after Four Axis). No Nether portals and no sects there.
 
 **Settlements** (`Settlements`). The lower realms' people live on the worlds that would have them (not barren, ashen or volcanic
 ones): their land is laid out in squares of 640 blocks, and about every other square has a settlement somewhere in its middle,

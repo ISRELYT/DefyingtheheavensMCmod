@@ -12,7 +12,9 @@ import net.minecraft.world.level.Level;
  * {@link PlayerCultivation#LOWER_REALM_CAP_REALM} - {@link PlayerCultivation#LOWER_REALM_CAP_STAGE}.
  * In those dimensions a stronger cultivator's effective stage and stats are capped and nobody can progress past the cap;
  * entering a passage or a high realm (the Upper Realm, the Netherworld) restores the true stage at once. The true stage itself
- * is never changed. Breakthroughs past the cap (into and within Four Axis) are only possible in the Upper Realm itself.
+ * is never changed. Breakthroughs past the cap (into and within Four Axis) are only possible in the Upper Realm itself. From Void
+ * Shattering on (either path: PlayerCultivation#FREE_OF_LOWER_REALMS, the user's ask of 2026-10-22) the lower realms hold no one:
+ * the whole might there, and their thin qi gathered, though the breakthroughs still wait for the Upper Realm.
  */
 public final class RealmSuppressionHandler {
 	private static final int RECHECK_INTERVAL = 20;

@@ -101,6 +101,8 @@ public final class ModLang {
 	public static final String MSG_START = k("message.start");
 	public static final String MSG_STOP = k("message.stop");
 	public static final String MSG_INTERRUPTED = k("message.interrupted");
+	/** A meditation in the air ended by its flight giving out, its qi run dry (MeditationManager). */
+	public static final String MSG_MEDITATION_FELL = k("message.meditation_fell");
 	public static final String MSG_CANNOT = k("message.cannot_meditate");
 	public static final String MSG_STAGE_UP = k("message.stage_up");
 	public static final String MSG_BREAKTHROUGH = k("message.breakthrough");
@@ -465,6 +467,12 @@ public final class ModLang {
 	/** The Cultivation tab's word of the talent race (Lifespan#seclude): the years to the realm's peak, and those left. */
 	public static final String SECLUSION_LINE = k("line.seclusion");
 	public static final String HUD_SPACE_YEARS = k("hud.space_years");
+	/** In space, the way home (client TribulationHud#drawWayHome): the Overworld's distance, ahead or about, above, below. */
+	public static final String HUD_SPACE_HOME = k("hud.space_home");
+	public static final String HUD_SPACE_HOME_ABOVE = k("hud.space_home.above");
+	public static final String HUD_SPACE_HOME_BELOW = k("hud.space_home.below");
+	/** On a planet just come down onto: how to leave it (fly up past this height, out into space). */
+	public static final String HUD_PLANET_WAY_OUT = k("hud.planet_way_out");
 	public static final String MSG_SPACE_NO_WAY_HOME = k("message.astral.no_way_home");
 	public static final String MSG_OLD_AGE = k("message.lifespan.old_age");
 	/** Burn Lifespan (BurnLifespan): lit, put out, gone out by itself near the end, refused with too few years left. */

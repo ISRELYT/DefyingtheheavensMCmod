@@ -838,6 +838,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_START, "You sit and begin gathering qi.");
 		t.add(ModLang.MSG_STOP, "You open your eyes, ending your meditation.");
 		t.add(ModLang.MSG_INTERRUPTED, "Your meditation was interrupted!");
+		t.add(ModLang.MSG_MEDITATION_FELL, "Your qi can no longer hold you up: you fall from your meditation!");
 		t.add(ModLang.MSG_BOOST, "Cultivation speed +%s%% (%s)");
 		t.add(ModLang.MSG_BOOST_NONE, "Your surroundings no longer aid you.");
 		t.add(ModLang.BOOST_PEDESTAL, "1 Spirit Pedestal");
@@ -1543,6 +1544,10 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_MEDITATION_SLOWED, "Your years run short: your meditation slows to its own pace (×1). You may set it faster again.");
 		t.add(ModLang.SECLUSION_LINE, "Years to this realm's peak: %s (of %s left)");
 		t.add(ModLang.HUD_SPACE_YEARS, "Space: %s years spent · %s left · %s to fly home");
+		t.add(ModLang.HUD_SPACE_HOME, "Home, the Overworld: %s blocks");
+		t.add(ModLang.HUD_SPACE_HOME_ABOVE, "Home, the Overworld: %s blocks, above you");
+		t.add(ModLang.HUD_SPACE_HOME_BELOW, "Home, the Overworld: %s blocks, below you");
+		t.add(ModLang.HUD_PLANET_WAY_OUT, "To leave: fly up past Y %s, then follow the way home");
 		t.add(ModLang.MSG_SPACE_NO_WAY_HOME, "You no longer have the years to fly straight home: it would take %s, and you have %s left.");
 		t.add(ModLang.MSG_OLD_AGE, "Your body grows old: from now on it weakens, a little more every year (a cultivator's never does).");
 		t.add(ModLang.MSG_BURN_ON, "Your lifespan burns: %s years a second (%s%% of it).");

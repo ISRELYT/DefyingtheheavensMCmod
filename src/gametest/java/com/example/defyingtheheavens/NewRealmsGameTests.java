@@ -264,6 +264,44 @@ public class NewRealmsGameTests implements FabricGameTest {
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
+	public void noLowerRealmHoldsVoidShattering(GameTestHelper helper) {
+		int cap = PlayerCultivation.rank(PlayerCultivation.LOWER_REALM_CAP_REALM, PlayerCultivation.LOWER_REALM_CAP_STAGE);
+		PlayerCultivation c = new PlayerCultivation();
+		c.setState(Realm.DAO_INTEGRATION, Stage.GRAND_PERFECTION, 0);
+		c.setLowerRealmBound(true);
+		helper.assertTrue(c.isSuppressed() && c.effectiveRank() == cap && c.meditationCultivationPerSecond(0) == 0,
+				"Dao Integration in a lower realm: held to Heavenly Being Grand Perfection, gathering nothing");
+		c.setState(Realm.VOID_SHATTERING, Stage.EARLY, 0);
+		helper.assertTrue(!c.isSuppressed() && c.effectiveRank() == PlayerCultivation.rank(Realm.VOID_SHATTERING, Stage.EARLY)
+				&& c.wielded(PlayerCultivation.LAST_RANK) == PlayerCultivation.LAST_RANK && c.meditationCultivationPerSecond(0) > 0,
+				"Void Shattering: held by no lower realm (the user's ask, 2026-10-22), gathering its thin qi");
+		c.setState(Realm.VOID_SHATTERING, Stage.EARLY, PlayerCultivation.required(Realm.VOID_SHATTERING, Stage.EARLY));
+		helper.assertTrue(c.isAtBottleneck() && c.isBreakthroughLocked() && !c.canBreakthrough(), "...but it breaks through only in the Upper Realm");
+		// Either path: a heaven path of Four Axis is held by nothing once the ghost path stands at Void Shattering.
+		PlayerCultivation two = new PlayerCultivation();
+		two.setState(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION, 0);
+		two.setLowerRealmBound(true);
+		helper.assertTrue(two.isSuppressed() && two.effectiveRank() == cap, "Four Axis alone: held");
+		two.netherworld().setMethod(GhostMethod.SIX_PATHS_CANON, 1, 0);
+		GhostMethods.setPath(two.netherworld(), PlayerCultivation.rank(Realm.VOID_SHATTERING, Stage.EARLY));
+		helper.assertTrue(!two.isSuppressed() && two.effectiveRank() == PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION),
+				"...but not once its ghost path is Void Shattering");
+		// An NPC cultivator the same, in the test's world (a lower realm).
+		CultivatorNpc npc = CultivatorNpc.createFor(helper.getLevel());
+		if (npc == null) throw new net.minecraft.gametest.framework.GameTestAssertException("No cultivator made");
+		try {
+			npc.setRank(PlayerCultivation.rank(Realm.VOID_SHATTERING, Stage.MID), true);
+			helper.assertTrue(npc.sustainedRank() == PlayerCultivation.rank(Realm.VOID_SHATTERING, Stage.MID), "A Void Shattering NPC is held by no lower realm either");
+			npc.setRank(PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.EARLY), true);
+			helper.assertTrue(npc.sustainedRank() == cap, "...a Four Axis one is, as ever");
+		} finally {
+			HighRealms.gone(helper.getLevel().getServer(), npc.getUUID());
+			npc.discard();
+		}
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void theirCultivatorsCarryAndBearMore(GameTestHelper helper) {
 		RandomSource random = RandomSource.create(3);
 		for (Realm realm : AFTER) {

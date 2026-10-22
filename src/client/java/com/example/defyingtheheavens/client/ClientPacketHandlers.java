@@ -415,7 +415,7 @@ public final class ClientPacketHandlers {
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SPACE_YEARS, (client, handler, buf, sender) -> {
 			boolean inSpace = buf.readBoolean();
-			float trip = buf.readFloat(), left = buf.readFloat(), home = buf.readFloat();
+			double trip = buf.readDouble(), left = buf.readDouble(), home = buf.readDouble();
 			client.execute(() -> ClientTribulationData.updateSpace(inSpace, trip, left, home));
 		});
 

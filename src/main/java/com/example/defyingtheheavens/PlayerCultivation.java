@@ -15,7 +15,8 @@ import java.util.List;
  * <p>
  * realm/stage/cultivation are the player's TRUE cultivation and are never lowered by Realm Suppression. While the player
  * is in a lower realm (Overworld, Nether, End) the EFFECTIVE stage, which drives stats, is capped at
- * {@link #LOWER_REALM_CAP_REALM} - {@link #LOWER_REALM_CAP_STAGE}, and nothing may advance past that cap.
+ * {@link #LOWER_REALM_CAP_REALM} - {@link #LOWER_REALM_CAP_STAGE}, and nothing may advance past that cap; from
+ * {@link #FREE_OF_LOWER_REALMS} on (either path), nothing holds a cultivator there at all.
  * Breakthroughs past the cap can only happen in the Upper Realm itself, not in the Spatial Gap either. In the Upper Realm,
  * meditation gathers {@link #UPPER_REALM_QI_MULTIPLIER} times as much cultivation as in the lower realms, and the realms
  * only it can sustain (Four Axis and above) need that many times more cultivation, so lower cultivators who reach it race
@@ -45,6 +46,13 @@ public class PlayerCultivation {
 	public static final Realm LOWER_REALM_CAP_REALM = Realm.HEAVENLY_BEING;
 	public static final Stage LOWER_REALM_CAP_STAGE = Stage.GRAND_PERFECTION;
 	private static final int CAP_RANK = rank(LOWER_REALM_CAP_REALM, LOWER_REALM_CAP_STAGE);
+	/**
+	 * From this realm on (either path's), the lower realms hold no one down (the user's ask, 2026-10-22: "once reaching void shattering
+	 * realm the lower realm no longer supresses you"): a cultivator wields its whole might there, and gathers there as the thin qi lets
+	 * it ({@link #beyondLowerRealms}). Breaking through still wants the Upper Realm ({@link #isBreakthroughLocked}).
+	 */
+	public static final Realm FREE_OF_LOWER_REALMS = Realm.VOID_SHATTERING;
+	private static final int FREE_RANK = rank(FREE_OF_LOWER_REALMS, Stage.EARLY);
 	/** The very top of cultivation, either path's: the last realm's Grand Perfection (True Immortal's, 2026-10-22). */
 	public static final int LAST_RANK = rank(Realm.values()[Realm.values().length - 1], Stage.GRAND_PERFECTION);
 	/**
@@ -699,7 +707,15 @@ public class PlayerCultivation {
 	public static boolean isUpperRealmOnly(Realm realm) { return rank(realm, Stage.EARLY) > CAP_RANK; }
 
 	/** True cultivation exceeds what the current (lower) realm can sustain. */
-	public boolean isSuppressed() { return lowerRealmBound && rank(realm, stage) > CAP_RANK; }
+	public boolean isSuppressed() { return heldBelow() && rank(realm, stage) > CAP_RANK; }
+
+	/** Whether one of {@code rank} (its higher path's true rank) is beyond the lower realms' hold: {@link #FREE_OF_LOWER_REALMS} or above. */
+	public static boolean beyondLowerRealms(int rank) { return rank >= FREE_RANK; }
+
+	/** In a lower realm and held by it: below {@link #FREE_OF_LOWER_REALMS} on both paths (TwoPaths#higherRank, true ranks). */
+	private boolean heldBelow() {
+		return lowerRealmBound && !beyondLowerRealms(TwoPaths.higherRank(this, false));
+	}
 
 	/**
 	 * The rank the realm the player stands in lets them wield: the true rank, capped by Realm Suppression in the lower
@@ -716,7 +732,7 @@ public class PlayerCultivation {
 	 */
 	public int sustained(int rank) {
 		if (rank < 0) return rank;
-		return lowerRealmBound ? Math.min(rank, CAP_RANK) : rank;
+		return heldBelow() ? Math.min(rank, CAP_RANK) : rank;
 	}
 
 	/** {@link #sustainedRank()} less the stages another cultivator's pressure takes off; drives stats, qi and the domain. */
@@ -728,7 +744,7 @@ public class PlayerCultivation {
 	 */
 	public int wielded(int rank) {
 		if (rank < 0) return rank;
-		return Math.max(0, (lowerRealmBound ? Math.min(rank, CAP_RANK) : rank) - pressureStages);
+		return Math.max(0, (heldBelow() ? Math.min(rank, CAP_RANK) : rank) - pressureStages);
 	}
 
 	public Realm getEffectiveRealm() { return Realm.byIndex(effectiveRank() / Stage.values().length); }

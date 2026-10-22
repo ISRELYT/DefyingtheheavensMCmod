@@ -36,7 +36,8 @@ import java.util.UUID;
 /**
  * The Astral Realm (the user's, 2026-10-17): the sky beyond the sky, where the Overworld is one planet among thousands.
  * <ul>
- *   <li><b>Going up.</b> A Nascent Soul or above, flying up past {@link #EXIT_Y} in the Overworld or the Upper Realm, rises out of
+ *   <li><b>Going up.</b> A Nascent Soul or above, flying up past {@link #EXIT_Y} in the Overworld (the Upper Realm's taller lands:
+ *   {@link #UPPER_EXIT_Y}), rises out of
  *   its sky into space ({@link ModDimensions#ASTRAL_VOID}), over the Overworld's lit side. Below Nascent Soul the sky thins to nothing
  *   and they are told so. Where they rose from is remembered: flying back into the Overworld's sky brings them down there, in the
  *   realm they left (over the nearest island in the Upper Realm). No Realm Suppression holds anyone here (not a lower realm).</li>
@@ -56,8 +57,20 @@ import java.util.UUID;
 public final class AstralRealm {
 	/** Rising past this (in the Overworld or on a planet) leads out into space: above the build limit, below the gap's drop. */
 	public static final int EXIT_Y = 340;
+	/**
+	 * ...and in the Upper Realm past this: above its own build limit (512), as the Overworld's is above its 320 (the user's ask,
+	 * 2026-10-22: its islands rose past Y 340 and their heights led out into space). {@link #exitY}.
+	 */
+	public static final int UPPER_EXIT_Y = 540;
 	/** Coming down onto a planet: this high over its ground (never above {@link #ARRIVAL_MAX_Y}); onto the Overworld, at that. */
 	public static final int ARRIVAL_ABOVE = 50, ARRIVAL_MAX_Y = 325;
+	/** Coming down into the Upper Realm from space: over its highest lands, below {@link #UPPER_EXIT_Y} (the first landing harmless). */
+	public static final int UPPER_ARRIVAL_Y = UPPER_EXIT_Y - 15;
+
+	/** How high one rises in {@code dimension} before it leads out into space: {@link #UPPER_EXIT_Y} in the Upper Realm, else {@link #EXIT_Y}. */
+	public static int exitY(ResourceKey<Level> dimension) {
+		return dimension == ModDimensions.UPPER_REALM ? UPPER_EXIT_Y : EXIT_Y;
+	}
 	/** Out of a planet into space, one comes out this far beyond its atmosphere (so as not to fall straight back in). */
 	public static final double LEAVE_MARGIN = 40;
 	/** Space's thin qi: this share of the lower realms'. */
@@ -241,10 +254,13 @@ public final class AstralRealm {
 			try {
 				// Out of space (a death, a command, anything but the ways out below): the trip's years paid, its HUD line taken away.
 				if (dimension != ModDimensions.ASTRAL_VOID && TRIP.containsKey(id)) leftSpace(p);
-				if (dimension != ModDimensions.ASTRAL_VOID) ZOOMING.remove(id);
+				if (dimension != ModDimensions.ASTRAL_VOID) {
+					ZOOMING.remove(id);
+					TICK_SEEN.remove(id);
+				}
 				// Out of the Overworld's sky, or the Upper Realm's (its heaven, over the same world: the user's ask, 2026-10-19).
 				if (dimension == Level.OVERWORLD || dimension == ModDimensions.UPPER_REALM) {
-					if (p.getY() > EXIT_Y && rising && settled) riseFromOverworld(p, space, planets);
+					if (p.getY() > exitY(dimension) && rising && settled) riseFromOverworld(p, space, planets);
 				} else if (dimension == ModDimensions.ASTRAL_VOID) {
 					tickSpace(p, space, surfaces, planets, now);
 				} else if (dimension == ModDimensions.ASTRAL_SURFACES) {
@@ -293,6 +309,7 @@ public final class AstralRealm {
 
 	private static void tickSpace(ServerPlayer p, ServerLevel space, ServerLevel surfaces, AstralPlanets planets, int now) {
 		UUID id = p.getUUID();
+		keepTicking(p, space);
 		PlayerCultivation c = CultivationManager.get(p);
 		if (c.setPlaceQi(spaceQi(c))) CultivationManager.sync(p);
 
@@ -394,7 +411,11 @@ public final class AstralRealm {
 		UUID id = p.getUUID();
 		Vec3 at = p.position();
 		Vec3 last = LAST_POS.put(id, at);
-		if (p.isCreative() || p.isSpectator() || Lifespan.endless(CultivationManager.own(p))) return;
+		if (p.isCreative() || p.isSpectator() || Lifespan.endless(CultivationManager.own(p))) {
+			// Nothing to pay, or no end to pay it from (become a True Immortal on the way, say): its HUD line goes, if it was up.
+			if (TRIP.containsKey(id)) endTrip(p);
+			return;
+		}
 		double perBlock = yearsPerBlock(CultivationManager.get(p));
 		flown(id, last == null ? 0 : at.distanceTo(last), perBlock, maxStep(p));
 		if (p.tickCount % 10 != 0) return;
@@ -441,6 +462,21 @@ public final class AstralRealm {
 		return Math.max(MAX_STEP, QiFlight.reachAt(p.getAbilities().getFlyingSpeed()));
 	}
 
+	/** Each space-goer's own tick count as last seen, to tell a tick its level passed it over ({@link #keepTicking}). */
+	private static final Map<UUID, Integer> TICK_SEEN = new HashMap<>();
+
+	/**
+	 * The level ticks a player only where its chunk is ticking, and one racing space loads none ({@link #zooming}): its own tick (its
+	 * count, which so much goes by: the HUD's years, Burn Lifespan, the lifespan tribulation; its menus kept in step, its hurt time
+	 * running down) would stop while it raced (the user's report, 2026-10-22: the years line froze). One the level passed over this
+	 * tick is ticked here, as the level would have.
+	 */
+	private static void keepTicking(ServerPlayer p, ServerLevel space) {
+		Integer seen = TICK_SEEN.get(p.getUUID());
+		if (seen != null && seen == p.tickCount && p.isAlive() && p.level() == space) space.tickNonPassenger(p);
+		TICK_SEEN.put(p.getUUID(), p.tickCount);
+	}
+
 	/**
 	 * {@code p}'s step this tick {@code fast} (past {@link #ZOOM_STEP}) or not: zooming from a fast one until {@link #ZOOM_HOLD} after the
 	 * last, its chunks' loading told at once when that changes (ChunkMapMixin).
@@ -476,10 +512,15 @@ public final class AstralRealm {
 
 	/** Out of space: what the trip still owes paid, its HUD line taken away, and the next trip begun afresh. */
 	private static void leftSpace(ServerPlayer p) {
+		LAST_POS.remove(p.getUUID());
+		endTrip(p);
+	}
+
+	/** A trip's years done with: what it still owes paid (none by creative or spectating players), its HUD line taken away. */
+	private static void endTrip(ServerPlayer p) {
 		UUID id = p.getUUID();
 		if (!p.isCreative() && !p.isSpectator()) pay(p);
 		OWED.remove(id);
-		LAST_POS.remove(id);
 		TRIP.remove(id);
 		NO_WAY_HOME.remove(id);
 		ModPackets.sendSpaceYears(p, false, 0, 0, 0);
@@ -550,7 +591,7 @@ public final class AstralRealm {
 		if (from != null && from.length > 2 && from[2] > 0 && upper != null) {
 			BlockPos column = SpatialArrivals.target(upper, (int) Math.floor(x), (int) Math.floor(z));
 			SpatialArrivals.prepare(upper, column);
-			move(p, upper, new Vec3(column.getX() + 0.5, ARRIVAL_MAX_Y, column.getZ() + 0.5), null);
+			move(p, upper, new Vec3(column.getX() + 0.5, UPPER_ARRIVAL_Y, column.getZ() + 0.5), null);
 			p.sendSystemMessage(Component.translatable(ModLang.MSG_ASTRAL_HOME).withStyle(ChatFormatting.AQUA));
 			return;
 		}
@@ -632,6 +673,7 @@ public final class AstralRealm {
 		OWED.remove(id);
 		NO_WAY_HOME.remove(id);
 		ZOOMING.remove(id);
+		TICK_SEEN.remove(id);
 		VestigeSpawner.forget(id);
 		Settlements.forget(id);
 	}
@@ -647,6 +689,7 @@ public final class AstralRealm {
 		OWED.clear();
 		NO_WAY_HOME.clear();
 		ZOOMING.clear();
+		TICK_SEEN.clear();
 		VestigeSpawner.clear();
 		Settlements.clear();
 	}

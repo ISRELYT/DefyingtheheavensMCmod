@@ -16,7 +16,8 @@ import java.util.UUID;
  * up with the cost (the Upper Realm, and everywhere from Heavenly Being on; see {@link Realm}) flight never ends.
  * Elsewhere a pool that runs dry drops them out of the sky, and flight returns once it has gathered back to
  * {@link #RESUME_FRACTION} of its maximum. Never on the Soul River, whose current carries the living; in the Spatial Gap one
- * flies as anywhere (SpatialTrialHandler).
+ * flies as anywhere (SpatialTrialHandler). One may meditate in the air, the flight paid for all the while (MeditationManager#steady):
+ * a pool run dry drops the meditator out of it.
  * <p>
  * Sword Flight ({@link SwordFlight}, from Foundation Building) takes off the same way and is run here too: with a sword in
  * the main hand and that ability on, the cultivator rides the sword instead, at its lower cost and speed. Only one of the
@@ -213,8 +214,8 @@ public final class QiFlight {
 	}
 
 	/**
-	 * {@link #realmSpeed} of {@code c}'s higher path, as the realm lets them wield it (either path: TwoPaths#higherRank): Realm
-	 * Suppression holds one in the lower realms to Heavenly Being's might, and so to vanilla's speed.
+	 * {@link #realmSpeed} of {@code c}'s higher path, as the realm lets them wield it (either path: TwoPaths#higherRank). Realm
+	 * Suppression holds no one of these realms in the lower realms (PlayerCultivation#FREE_OF_LOWER_REALMS): they fly as swiftly there.
 	 */
 	public static float realmSpeed(PlayerCultivation c) {
 		int rank = TwoPaths.higherRank(c, true);

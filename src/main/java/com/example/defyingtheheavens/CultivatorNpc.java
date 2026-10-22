@@ -424,9 +424,10 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 
 	public int sustainedRank() {
 		if (isMortal()) return MORTAL;
-		boolean lower = ModDimensions.isLowerRealm(level().dimension());
+		// Held by a lower realm as a player is, but never from Void Shattering on (PlayerCultivation#FREE_OF_LOWER_REALMS).
+		boolean held = ModDimensions.isLowerRealm(level().dimension()) && !PlayerCultivation.beyondLowerRealms(getRank());
 		int cap = PlayerCultivation.rank(PlayerCultivation.LOWER_REALM_CAP_REALM, PlayerCultivation.LOWER_REALM_CAP_STAGE);
-		return lower ? Math.min(getRank(), cap) : getRank();
+		return held ? Math.min(getRank(), cap) : getRank();
 	}
 
 	/** Consciousness domain radius, from what it shows. */
