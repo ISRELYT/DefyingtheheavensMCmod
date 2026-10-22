@@ -71,32 +71,61 @@ public class StatPointsGameTests implements FabricGameTest {
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
-	public void fallingBackGivesEveryPointBack(GameTestHelper helper) {
-		ServerPlayer player = cultivator(helper, Realm.values()[2], Stage.EARLY);
+	public void fallingBackTakesOnlyTheLastPointsBack(GameTestHelper helper) {
+		// Points spent are locked in (the user's rule, 2026-10-19): a fall takes back only what the lost stages gave, the last put in.
+		ServerPlayer player = cultivator(helper, Realm.values()[1], Stage.EARLY);
 		PlayerCultivation c = CultivationManager.get(player);
-		StatPoints.spend(player, StatPoints.Stat.CONSTITUTION, StatPoints.earned(c));
-		helper.assertTrue(c.statPointsSpent() == StatPoints.earned(c) && player.getMaxHealth() > 0, "Every point spent");
+		c.clearStatPoints();
+		int atFoundation = StatPoints.earned(c);
+		StatPoints.spend(player, StatPoints.Stat.CONSTITUTION, atFoundation);
+		c.setState(Realm.values()[2], Stage.EARLY, 0);
+		CultivationManager.refresh(player);
+		int more = StatPoints.earned(c) - atFoundation;
+		StatPoints.spend(player, StatPoints.Stat.STRENGTH, 3);
+		StatPoints.spend(player, StatPoints.Stat.INSIGHT, more - 3);
+		helper.assertTrue(c.statPointsSpent() == StatPoints.earned(c) && StatPoints.unspent(c) == 0, "Every point spent");
 
 		c.setState(Realm.values()[1], Stage.EARLY, 0);
 		CultivationManager.refresh(player);
-		helper.assertTrue(c.statPointsSpent() == 0 && StatPoints.unspent(c) == StatPoints.earned(c),
-				"Cultivation fallen below what was spent: every point is given back to spend again");
+		helper.assertTrue(c.getStatPoints(StatPoints.Stat.CONSTITUTION) == atFoundation && c.getStatPoints(StatPoints.Stat.STRENGTH) == 0
+						&& c.getStatPoints(StatPoints.Stat.INSIGHT) == 0 && StatPoints.unspent(c) == 0,
+				"Fallen back to Foundation Building: the points Core Formation gave are gone, those spent before it stay ("
+						+ c.getStatPoints(StatPoints.Stat.CONSTITUTION) + "/" + c.getStatPoints(StatPoints.Stat.STRENGTH) + "/"
+						+ c.getStatPoints(StatPoints.Stat.INSIGHT) + ")");
 
-		c.setStatPoints(StatPoints.Stat.INSIGHT, 1);
+		// A smaller fall within the last spending: only its last few go, last in first out.
 		c.setState(Realm.values()[2], Stage.EARLY, 0);
 		CultivationManager.refresh(player);
-		helper.assertTrue(c.getStatPoints(StatPoints.Stat.INSIGHT) == 1, "Points within what was earned are kept");
+		StatPoints.spend(player, StatPoints.Stat.STRENGTH, 3);
+		StatPoints.spend(player, StatPoints.Stat.INSIGHT, StatPoints.unspent(c));
+		c.setState(Realm.values()[1], Stage.GRAND_PERFECTION, 0);
+		CultivationManager.refresh(player);
+		int kept = StatPoints.earned(c) - atFoundation;
+		helper.assertTrue(c.getStatPoints(StatPoints.Stat.CONSTITUTION) == atFoundation
+						&& c.getStatPoints(StatPoints.Stat.STRENGTH) == Math.min(3, kept) && c.getStatPoints(StatPoints.Stat.INSIGHT) == Math.max(0, kept - 3),
+				"A stage down: Insight, put in last, goes first");
+
+		// Saved and loaded, the order holds.
+		PlayerCultivation loaded = PlayerCultivation.load(c.save());
+		helper.assertTrue(java.util.Arrays.equals(loaded.statPointOrder(), c.statPointOrder()), "The order is saved");
 		helper.succeed();
 	}
 
-	@GameTest(template = EMPTY_STRUCTURE)
+	/**
+	 * A batch of its own (2026-10-19): in the default batch a neighbouring sect test's barrier now and then enclosed it (the batch's
+	 * tests aren't laid out the same each run), and ground under a raised formation is never carved (HeavenSpells#carvable).
+	 */
+	@GameTest(template = EMPTY_STRUCTURE, batch = "stat_points_devastation")
 	public void aColumnIsCutAndAWoundQueued(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
 		ServerPlayer player = cultivator(helper, Realm.values()[3], Stage.EARLY);
 		BlockPos base = helper.absolutePos(new BlockPos(1, 1, 1));
 		for (int i = 0; i < 3; i++) level.setBlockAndUpdate(base.above(i), Blocks.STONE.defaultBlockState());
+		String why = "temporary " + HeavenSpells.isTemporary(level, base) + ", sheltered " + Formations.shelters(level, base) + ", mayInteract "
+				+ level.mayInteract(player, base) + ", sect ground " + Formations.protectsGround(player, base) + ", mayBuild " + player.mayBuild()
+				+ ", at " + base + ", spawn " + level.getSharedSpawnPos();
 		int cut = Devastation.cutColumn(player, level, base.getX(), base.getZ(), base.getY(), base.getY() + 2, false);
-		helper.assertTrue(cut == 3 && level.getBlockState(base).isAir() && level.getBlockState(base.above(2)).isAir(), "A slash cuts the column through");
+		helper.assertTrue(cut == 3 && level.getBlockState(base).isAir() && level.getBlockState(base.above(2)).isAir(), "A slash cuts the column through (cut " + cut + "; " + why + ")");
 
 		BlockPos lake = helper.absolutePos(new BlockPos(3, 1, 3));
 		for (int dx = -1; dx <= 1; dx++) {

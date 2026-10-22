@@ -32,6 +32,13 @@ public class TribulationCloud extends Entity {
 	private static final EntityDataAccessor<Long> FORMED_AT = SynchedEntityData.defineId(TribulationCloud.class, EntityDataSerializers.LONG);
 	/** The Netherworld's tribulation's storm (the ghost path's, TribulationManager): drawn dark teal, its flashes cyan. */
 	private static final EntityDataAccessor<Boolean> GHOST = SynchedEntityData.defineId(TribulationCloud.class, EntityDataSerializers.BOOLEAN);
+	/**
+	 * How many times its realm's size the storm has grown (1: as it gathered): a lifespan tribulation's swells as its power does
+	 * (LifespanTribulation#growth; the user's ask, 2026-10-20), wider, higher and darker.
+	 */
+	private static final EntityDataAccessor<Float> GROWTH = SynchedEntityData.defineId(TribulationCloud.class, EntityDataSerializers.FLOAT);
+	/** Each time its realm's size it has grown, it rides this much higher above the cultivator. */
+	public static final float HEIGHT_PER_GROWTH = 10.0f;
 
 	public TribulationCloud(EntityType<? extends TribulationCloud> type, Level level) {
 		super(type, level);
@@ -46,6 +53,7 @@ public class TribulationCloud extends Entity {
 		entityData.define(STORM_TIER, 0);
 		entityData.define(FORMED_AT, 0L);
 		entityData.define(GHOST, false);
+		entityData.define(GROWTH, 1.0f);
 	}
 
 	public void configure(Realm targetRealm) {
@@ -61,9 +69,17 @@ public class TribulationCloud extends Entity {
 
 	public boolean isGhost() { return entityData.get(GHOST); }
 
+	/** Grown to {@code growth} times its realm's size (at least 1). */
+	public void setGrowth(float growth) {
+		float clamped = Math.max(1.0f, growth);
+		if (Math.abs(entityData.get(GROWTH) - clamped) > 0.005f) entityData.set(GROWTH, clamped);
+	}
+
+	public float growth() { return entityData.get(GROWTH); }
+
 	public int stormTier() { return entityData.get(STORM_TIER); }
-	public float stormScale() { return 1.0f + stormTier() * SCALE_PER_TIER; }
-	public float heightAbovePlayer() { return BASE_HEIGHT_ABOVE_PLAYER + stormTier() * HEIGHT_PER_TIER; }
+	public float stormScale() { return (1.0f + stormTier() * SCALE_PER_TIER) * growth(); }
+	public float heightAbovePlayer() { return BASE_HEIGHT_ABOVE_PLAYER + stormTier() * HEIGHT_PER_TIER + (growth() - 1.0f) * HEIGHT_PER_GROWTH; }
 
 	/** Server time prevents the formation animation restarting for late observers. */
 	public float formationAge(float partialTick) {

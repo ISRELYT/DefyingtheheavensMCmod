@@ -9,6 +9,7 @@
     "ExplosionMixin",
     "InventoryMenuMixin",
     "LakeFeatureMixin",
+    "LightningBoltMixin",
     "NaturalSpawnerMixin",
     "NetherPortalBlockMixin",
     "OreFeatureMixin",
@@ -17,6 +18,7 @@
     "PlayerMixin",
     "PortalShapeMixin",
     "ProjectileBarrierMixin",
+    "RangedAttributeAccessor",
     "SectClearingMixin",
     "ServerGamePacketListenerImplMixin",
     "SoulEntityMixin",
@@ -27,6 +29,7 @@
     "SoulServerPlayerMixin",
     "ServerPlayerAccessor",
     "SpellLivingEntityMixin",
+    "ThreatLootMixin",
     "WorldDimensionsMixin"
   ],
   "injectors": {

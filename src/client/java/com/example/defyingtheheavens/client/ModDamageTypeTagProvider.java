@@ -34,13 +34,13 @@ public class ModDamageTypeTagProvider extends FabricTagProvider<DamageType> {
 		// A True Immortal's gaze, like a severed soul's death: nothing stands between it and death, a totem included.
 		tag(DamageTypeTags.BYPASSES_RESISTANCE).add(ModDamageTypes.SOUL_SEVERED, ModDamageTypes.SOUL_SEIZED, ModDamageTypes.JUDGE_GAZE);
 		tag(DamageTypeTags.BYPASSES_INVULNERABILITY).add(ModDamageTypes.SOUL_SEVERED, ModDamageTypes.SOUL_SEIZED, ModDamageTypes.JUDGE_GAZE);
-		// One's own golden core detonated: nothing at all holds that death off.
-		tag(DamageTypeTags.BYPASSES_ARMOR).add(ModDamageTypes.CORE_DETONATION);
-		tag(DamageTypeTags.BYPASSES_ENCHANTMENTS).add(ModDamageTypes.CORE_DETONATION);
-		tag(DamageTypeTags.BYPASSES_EFFECTS).add(ModDamageTypes.CORE_DETONATION);
-		tag(DamageTypeTags.NO_IMPACT).add(ModDamageTypes.CORE_DETONATION);
-		tag(DamageTypeTags.BYPASSES_RESISTANCE).add(ModDamageTypes.CORE_DETONATION);
-		tag(DamageTypeTags.BYPASSES_INVULNERABILITY).add(ModDamageTypes.CORE_DETONATION);
+		// One's own golden core detonated, or one's years run out: nothing at all holds that death off.
+		tag(DamageTypeTags.BYPASSES_ARMOR).add(ModDamageTypes.CORE_DETONATION, ModDamageTypes.OLD_AGE);
+		tag(DamageTypeTags.BYPASSES_ENCHANTMENTS).add(ModDamageTypes.CORE_DETONATION, ModDamageTypes.OLD_AGE);
+		tag(DamageTypeTags.BYPASSES_EFFECTS).add(ModDamageTypes.CORE_DETONATION, ModDamageTypes.OLD_AGE);
+		tag(DamageTypeTags.NO_IMPACT).add(ModDamageTypes.CORE_DETONATION, ModDamageTypes.OLD_AGE);
+		tag(DamageTypeTags.BYPASSES_RESISTANCE).add(ModDamageTypes.CORE_DETONATION, ModDamageTypes.OLD_AGE);
+		tag(DamageTypeTags.BYPASSES_INVULNERABILITY).add(ModDamageTypes.CORE_DETONATION, ModDamageTypes.OLD_AGE);
 		// The heaven methods' qi goes through armour; Protection and Resistance still turn some of it.
 		tag(DamageTypeTags.BYPASSES_ARMOR).add(ModDamageTypes.QI_WOOD, ModDamageTypes.QI_WATER, ModDamageTypes.QI_FIRE, ModDamageTypes.QI_EARTH,
 				ModDamageTypes.QI_METAL);

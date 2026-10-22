@@ -47,6 +47,12 @@ public final class ModPackets {
 	public static final ResourceLocation MEDITATION_STATE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "meditation_state");
 	/** S2C: tribulation started/ended + strikes still to come, for the HUD overlay. */
 	public static final ResourceLocation TRIBULATION_STATE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "tribulation_state");
+	/** S2C: the lifespan tribulation running or not, its power, whether it waits (beyond the gap), the Netherworld's (LifespanTribulation). */
+	public static final ResourceLocation LIFESPAN_TRIBULATION = new ResourceLocation(DefyingTheHeavens.MOD_ID, "lifespan_tribulation");
+	/** S2C: the years flying through space has cost this trip, the years left, and the years flying straight home would cost (AstralRealm); or none, out of space. */
+	public static final ResourceLocation SPACE_YEARS = new ResourceLocation(DefyingTheHeavens.MOD_ID, "space_years");
+	/** C2S: the Cultivation tab's pace button: the next pace for meditating (Lifespan#cycleMeditationSpeed). */
+	public static final ResourceLocation MEDITATION_SPEED = new ResourceLocation(DefyingTheHeavens.MOD_ID, "meditation_speed");
 	/** S2C: every spatial storm in the gap, once a second, to everyone in the gap (see {@link SpatialStorms}). */
 	public static final ResourceLocation SPATIAL_STORMS = new ResourceLocation(DefyingTheHeavens.MOD_ID, "spatial_storms");
 	/** S2C: one spatial storm bolt, to everyone in the gap within range. */
@@ -153,6 +159,9 @@ public final class ModPackets {
 	public static final ResourceLocation STORAGE_RING_OPEN = new ResourceLocation(DefyingTheHeavens.MOD_ID, "storage_ring_open");
 	/** S2C: the Astral Realm's seed (AstralRealm#sendSeed), from which the client works out the stars and planets. */
 	public static final ResourceLocation ASTRAL_SEED = new ResourceLocation(DefyingTheHeavens.MOD_ID, "astral_seed");
+	/** S2C: "Name Your Obsession" (Obsession), before the tribulation into Heavenly Being; C2S: the one named (and whose path's tribulation). */
+	public static final ResourceLocation OBSESSION_ASK = new ResourceLocation(DefyingTheHeavens.MOD_ID, "obsession_ask");
+	public static final ResourceLocation OBSESSION_NAME = new ResourceLocation(DefyingTheHeavens.MOD_ID, "obsession_name");
 	/** Players further than this from a core can't work its screen. */
 	private static final double CORE_REACH = 8;
 
@@ -223,6 +232,11 @@ public final class ModPackets {
 				(server, player, handler, buf, responseSender) -> server.execute(() -> MeditationManager.toggle(player)));
 		ServerPlayNetworking.registerGlobalReceiver(BREAKTHROUGH,
 				(server, player, handler, buf, responseSender) -> server.execute(() -> CultivationManager.tryBreakthrough(player)));
+		ServerPlayNetworking.registerGlobalReceiver(OBSESSION_NAME, (server, player, handler, buf, responseSender) -> {
+			FourAxis.Axis obsession = FourAxis.Axis.byIndex(buf.readVarInt());
+			boolean ghost = buf.readBoolean();
+			server.execute(() -> Obsession.name(player, obsession, ghost));
+		});
 		ServerPlayNetworking.registerGlobalReceiver(CIRCULATION, (server, player, handler, buf, responseSender) -> {
 			int outcome = buf.readVarInt();
 			server.execute(() -> MeditationManager.onCirculation(player, outcome));
@@ -246,6 +260,8 @@ public final class ModPackets {
 		});
 		ServerPlayNetworking.registerGlobalReceiver(SWITCH_PATH, (server, player, handler, buf, responseSender) ->
 				server.execute(() -> TwoPaths.switchPath(player)));
+		ServerPlayNetworking.registerGlobalReceiver(MEDITATION_SPEED, (server, player, handler, buf, responseSender) ->
+				server.execute(() -> Lifespan.cycleMeditationSpeed(player)));
 		ServerPlayNetworking.registerGlobalReceiver(PRACTISE_HEAVEN_METHOD, (server, player, handler, buf, responseSender) -> {
 			HeavenMethod method = HeavenMethod.byId(buf.readUtf(64));
 			server.execute(() -> HeavenMethods.practise(player, method));
@@ -411,12 +427,16 @@ public final class ModPackets {
 		buf.writeVarInt(c.getSoulState().ordinal());
 		buf.writeBoolean(c.hasHeavensLeave());
 		buf.writeVarInt(c.getFavour());
-		// The body they were born with (Physique): its ordinal (-1 not yet rolled), the roots' elements as a bit mask, body refining.
+		// The body they were born with (Physique): its ordinal (-1 not yet rolled), the roots' elements as a bit mask, body refining,
+		// and a Myriad Form Body's forms as a bit mask over their ordinals.
 		buf.writeVarInt(c.getPhysique() == null ? -1 : c.getPhysique().ordinal());
 		int roots = 0;
 		for (QiElement element : c.getRootElements()) roots |= 1 << element.ordinal();
 		buf.writeVarInt(roots);
 		buf.writeVarInt(c.getBodyRefining());
+		long forms = 0;
+		for (Physique form : c.getForms()) forms |= 1L << form.ordinal();
+		buf.writeVarLong(forms);
 		// The points put into each stat (StatPoints), by the stat's place.
 		for (StatPoints.Stat stat : StatPoints.Stat.values()) buf.writeVarInt(c.getStatPoints(stat));
 		// The ability selected on the wheel, by its place (+1; 0 for none).
@@ -425,7 +445,35 @@ public final class ModPackets {
 		buf.writeDouble(c.getPlaceQi());
 		// What the nascent soul still has to mend (SoulProjection#mendSouls), for Soul Projection's word of its hearts.
 		buf.writeFloat(c.getSoulWounds());
+		// Their own years (Lifespan; a soul in another's body goes by its own): those used, the span, and whether they are dead.
+		PlayerCultivation own = CultivationManager.own(player);
+		buf.writeDouble(Lifespan.used(own));
+		buf.writeDouble(Lifespan.span(own));
+		buf.writeBoolean(own.netherworld().ghost());
+		buf.writeVarInt(c.longevityPills()); // the Longevity Pills taken this life, for the next one's tooltip (PillItem)
+		// The four axes of virtue (FourAxis), their own: how far each is filled, in its measure, by its place.
+		for (FourAxis.Axis axis : FourAxis.Axis.values()) buf.writeVarInt(own.axisProgress(axis));
+		// The obsession named (Obsession), the record's: -1 none.
+		buf.writeVarInt(c.obsession() == null ? -1 : c.obsession().ordinal());
+		buf.writeVarInt(own.meditationSpeed()); // the pace its meditation is set to (the Cultivation tab's button), their own
 		ServerPlayNetworking.send(player, SYNC, buf);
+	}
+
+	/** S2C space_years: the HUD's line in space (AstralRealm#tickSpace), or {@code inSpace} false to take it away. */
+	public static void sendSpaceYears(ServerPlayer player, boolean inSpace, double trip, double left, double home) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeBoolean(inSpace);
+		buf.writeFloat((float) trip);
+		buf.writeFloat((float) left);
+		buf.writeFloat((float) home);
+		ServerPlayNetworking.send(player, SPACE_YEARS, buf);
+	}
+
+	/** S2C obsession_ask: "Name Your Obsession" comes up, before the tribulation (the ghost path's, if {@code ghost}). */
+	public static void sendObsessionAsk(ServerPlayer player, boolean ghost) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeBoolean(ghost);
+		ServerPlayNetworking.send(player, OBSESSION_ASK, buf);
 	}
 
 	/** Opens the talk wheel on {@code npc}: its name, title, sect, the rank it shows (-1 a mortal), regard and the intents on offer. */
@@ -706,8 +754,8 @@ public final class ModPackets {
 		FriendlyByteBuf buf = PacketByteBufs.create();
 		buf.writeVarInt(other.getId());
 		buf.writeUtf(other.getDisplayName().getString()); // a soul in another's body goes by that body's name (Possession)
-		buf.writeVarInt(otherCultivation.getEffectiveRealm().ordinal());
-		buf.writeVarInt(otherCultivation.getEffectiveStage().ordinal());
+		buf.writeVarInt(TwoPaths.wieldedRealm(otherCultivation).ordinal()); // the body's, either path (TwoPaths#wieldedRank)
+		buf.writeVarInt(ConsciousnessDomainHandler.sensedStage(otherCultivation).ordinal());
 		ServerPlayNetworking.send(to, CONSCIOUSNESS_ALERT, buf);
 	}
 
@@ -743,6 +791,16 @@ public final class ModPackets {
 		buf.writeVarInt(player.getId());
 		buf.writeBoolean(riding);
 		return buf;
+	}
+
+	/** S2C lifespan_tribulation: its HUD line, and the client's record told of it (no Longevity Pill under it: PillItem). */
+	public static void sendLifespanTribulation(ServerPlayer player, boolean active, float power, boolean paused, boolean ghost) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeBoolean(active);
+		buf.writeFloat(power);
+		buf.writeBoolean(paused);
+		buf.writeBoolean(ghost);
+		ServerPlayNetworking.send(player, LIFESPAN_TRIBULATION, buf);
 	}
 
 	public static void sendTribulation(ServerPlayer player, boolean active, int strikesLeft, Realm targetRealm, Stage targetStage, boolean ghost) {

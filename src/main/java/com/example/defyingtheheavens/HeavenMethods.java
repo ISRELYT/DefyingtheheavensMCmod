@@ -255,7 +255,7 @@ public final class HeavenMethods {
 				continue;
 			}
 			int before = s.layer(method);
-			double amount = c.physique() == Physique.FALLEN_TRUE_IMMORTAL ? Double.POSITIVE_INFINITY // understood at once, no settling
+			double amount = c.hasPhysique(Physique.FALLEN_TRUE_IMMORTAL) ? Double.POSITIVE_INFINITY // understood at once, no settling
 					: gained * methodFactor(c, shareAt(player, method.element()), byStele.contains(method.element())) + refined;
 			if (settle(s, method, amount, upTo) <= 0) continue;
 			any = true;

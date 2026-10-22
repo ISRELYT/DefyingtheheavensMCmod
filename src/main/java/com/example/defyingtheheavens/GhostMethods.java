@@ -86,8 +86,8 @@ public final class GhostMethods {
 
 	/** Layers of the fire or the steps each of the ghost path's realms carries: three in Qi Refining, all nine from Core Formation. */
 	public static final int LAYERS_PER_REALM = 3;
-	/** The very top of the ghost path: Four Axis Grand Perfection. */
-	public static final int LAST_RANK = PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION);
+	/** The very top of the ghost path: True Immortal Grand Perfection, as the heaven path's (the user's ask, 2026-10-22; Four Axis's before). */
+	public static final int LAST_RANK = PlayerCultivation.LAST_RANK;
 
 	/** Seconds of baseline meditation through layer {@code layer} of {@code method} (1 to its last): what a layer stands for. */
 	public static double layerCost(GhostMethod method, int layer) {
@@ -196,7 +196,7 @@ public final class GhostMethods {
 		return stage.isLast() || Realm.byIndex(rank / Stage.values().length).hasStageTribulations();
 	}
 
-	/** The ghost path at its very top: Four Axis Grand Perfection. */
+	/** The ghost path at its very top: True Immortal Grand Perfection ({@link #LAST_RANK}). */
 	public static boolean isMaxed(NetherworldState s) {
 		return ghostRank(s) >= LAST_RANK;
 	}
@@ -227,7 +227,12 @@ public final class GhostMethods {
 
 	/** Ready for the ghost path's tribulation: at its bottleneck, not at the top, the way ahead open. */
 	public static boolean canBreakthrough(PlayerCultivation c) {
-		return atBottleneck(c) && !isMaxed(c.netherworld()) && !heldByMethod(c);
+		return atBottleneck(c) && !isMaxed(c.netherworld()) && !heldByMethod(c) && !heldByAxis(c);
+	}
+
+	/** At a Four Axis stage's bottleneck with its axis of virtue not yet complete (FourAxis: the cultivator's, both paths'). */
+	public static boolean heldByAxis(PlayerCultivation c) {
+		return atBottleneck(c) && FourAxis.holds(c, ghostRank(c.netherworld()));
 	}
 
 	/** Why the ghost path's breakthrough waits on a foundation ({@link #heldByMethod}): one of the realm ahead is wanted. */
@@ -377,7 +382,7 @@ public final class GhostMethods {
 				continue;
 			}
 			int before = s.layer(method);
-			double amount = c.physique() == Physique.FALLEN_TRUE_IMMORTAL ? Double.POSITIVE_INFINITY // understood at once, no settling
+			double amount = c.hasPhysique(Physique.FALLEN_TRUE_IMMORTAL) ? Double.POSITIVE_INFINITY // understood at once, no settling
 					: gained * (byStele.contains(method) ? STELE_BONUS : 1.0);
 			if (settle(s, method, amount, upTo) <= 0) continue;
 			any = true;
@@ -421,7 +426,7 @@ public final class GhostMethods {
 	 */
 	public static double ratePerSecond(PlayerCultivation c, double density) {
 		return BASE_RATE * density / GhostQi.SOUL_SAND_VALLEY * realmFactor(c) * (c.netherworld().ghost() ? GHOST_FACTOR : 1.0)
-				* c.physique().ghostFactor() // a Ghost Devil Body's, a Fallen True Immortal's (Physique)
+				* c.physiqueGhostFactor() // a Ghost Devil Body's, a Fallen True Immortal's, a Yin Soul's, a Nine Yang's (Physique)
 				* (deepestFoundation(c.netherworld()) == null ? NO_METHOD_FACTOR : 1.0)
 				* StatPoints.cultivationFactor(c); // Insight, every path's alike
 	}
@@ -489,7 +494,7 @@ public final class GhostMethods {
 		int before = ghostRank(s);
 		if (method.isFoundation() && before < 0) s.setPath(0, 0); // the ghost path begins
 		// A Ghost Devil Body (Physique) finding a foundation of Core Formation or deeper leaps to its realm's Early.
-		if (method.isFoundation() && c.physique() == Physique.GHOST_DEVIL_BODY && method.realm().ordinal() >= Realm.CORE_FORMATION.ordinal()) {
+		if (method.isFoundation() && c.hasPhysique(Physique.GHOST_DEVIL_BODY) && method.realm().ordinal() >= Realm.CORE_FORMATION.ordinal()) {
 			int leap = PlayerCultivation.rank(method.realm(), Stage.EARLY);
 			if (ghostRank(s) < leap) {
 				s.setPath(leap, 0);

@@ -118,7 +118,7 @@ public class AlchemyCauldronBlockEntity extends BlockEntity {
 			brewing = recipe.output();
 			brewTicks = 0;
 			brewTotal = recipe.brewTicks();
-			alchemyBody = CultivationManager.forPlayer(player).physique() == Physique.INNATE_ALCHEMY_BODY;
+			alchemyBody = CultivationManager.forPlayer(player).hasPhysique(Physique.INNATE_ALCHEMY_BODY);
 			setState(state.setValue(AlchemyCauldronBlock.BREWING, true));
 			level.playSound(null, worldPosition, SoundEvents.BREWING_STAND_BREW, SoundSource.BLOCKS, 0.8f, 0.8f);
 			tell(player, AlchemyCauldronBlock.isHeated(level, worldPosition)

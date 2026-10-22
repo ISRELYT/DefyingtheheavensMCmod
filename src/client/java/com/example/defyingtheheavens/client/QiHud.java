@@ -1,8 +1,6 @@
 package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.ModLang;
-import com.example.defyingtheheavens.PlayerCultivation;
-import com.example.defyingtheheavens.TwoPaths;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
@@ -13,22 +11,17 @@ import net.minecraft.network.chat.Component;
 import java.util.Locale;
 
 /**
- * The Qi bar in the top-left corner: a "Qi" label, then a thin lacquer bar trimmed in antique gold, with a scroll roller on
- * the left and a tapered tip on the right, notched at 25/50/75%, and the qi pool against its maximum beside it. While the
- * pool fills, a glint flows along the qi. In a person's body (Possession) the soul's own pool sits under it, in violet; the
- * ghostly qi pool, where there is one, under those in the same frame (see NetherworldHud), all drawn by the same {@link Pool}.
+ * The thin bars of the top-left stack, under the portrait and its health and qi bars (VitalsHud: the qi pool's own bar is there
+ * since 2026-10-22, the user's ask): each a label, then a thin lacquer bar trimmed in antique gold, with a scroll roller on the left
+ * and a tapered tip on the right, notched at 25/50/75%, and the pool against its maximum beside it, a glint flowing along it while
+ * it fills. Here, in a person's body (Possession), the soul's own pool, in violet; under it the ghostly qi pool, where there is one,
+ * and the rest of the Netherworld's (see NetherworldHud), all drawn by the same {@link Pool}.
  */
 public final class QiHud {
 	static final int X = 4;
-	static final int Y = 4;
 	/** From one bar's top to the next one's. */
 	static final int ROW = 12;
 
-	/** The qi, lit from above: highlight, body, body, shade. */
-	private static final int[] QI_ROWS = {0xFF9ADCFF, 0xFF4AAEEA, 0xFF2D88CC, 0xFF1C5C93};
-	private static final int QI_EDGE = 0xFFCFF0FF;
-	private static final int TEXT_QI = 0xCDEBFF;
-	private static final Pool QI = new Pool(QI_ROWS, QI_EDGE, TEXT_QI);
 	/** A soul's own pool while it is in a person's body (Possession): the soul's violet, lit from above. */
 	private static final int[] OWN_ROWS = {0xFFE4CCFF, 0xFFB57BFF, 0xFF9457E0, 0xFF64339E};
 	private static final Pool OWN = new Pool(OWN_ROWS, 0xFFF2E6FF, 0xE4D0FF);
@@ -37,21 +30,10 @@ public final class QiHud {
 		HudRenderCallback.EVENT.register((graphics, tickDelta) -> {
 			Minecraft mc = Minecraft.getInstance();
 			if (mc.level == null || mc.player == null || mc.options.hideGui || mc.options.renderDebug || mc.player.isSpectator()) return;
-
-			PlayerCultivation c = ClientCultivationData.get();
-			int y = Y;
-			if (!c.isMortal()) { // no qi to show until the meridians open
-				// The gathering glint shows while the pool is rising: not in a Qi Flight that costs more than gathering brings in (a
-				// ghostly form's flight costs nothing: TwoPaths#fliesFreely).
-				boolean draining = mc.player.getAbilities().flying && !mc.player.isCreative() && c.getEffectiveRealm().canFlyOnQi()
-						&& !c.isQiFlightSustained() && !TwoPaths.fliesFreely(c);
-				QI.draw(graphics, mc.font, y, barX(mc.font), Component.translatable(ModLang.HUD_QI_LABEL), c.getQi(), c.maxQi(), !draining);
-				y += ROW;
-			}
-			// In a person's body the bar above is the body's (its spells and abilities draw on it); the soul's own pool, which its
-			// upkeep and its own tear come out of, under it (in a mortal's body, in its place).
+			// In a person's body the qi bar above is the body's (its spells and abilities draw on it); the soul's own pool, which its
+			// upkeep and its own tear come out of, under it.
 			if (ownShowing()) {
-				OWN.draw(graphics, mc.font, y, barX(mc.font), Component.translatable(ownLabel()), ClientSoul.ownQi(), ClientSoul.ownMax(),
+				OWN.draw(graphics, mc.font, top(), barX(mc.font), Component.translatable(ownLabel()), ClientSoul.ownQi(), ClientSoul.ownMax(),
 						ClientSoul.ownRising());
 			} else {
 				OWN.reset();
@@ -59,19 +41,24 @@ public final class QiHud {
 		});
 	}
 
-	/** True when the qi bar is showing, so whatever goes under it knows to make room. */
-	static boolean showing() {
-		return !ClientCultivationData.get().isMortal();
+	/** Where the stack of thin bars starts: under the portrait and its bars (VitalsHud), else the corner. */
+	static int top() {
+		return VitalsHud.bottom();
 	}
 
-	/** True when the soul's own pool shows under it: in a person's body (Possession). */
+	/** True when the soul's own pool shows: in a person's body (Possession). */
 	static boolean ownShowing() {
 		return ClientSoul.isInside() && ClientSoul.ownMax() > 0;
 	}
 
-	/** The bars at the top of the stack: the qi bar, and the soul's own pool under it while in a person's body. */
+	/** The thin bars it draws at the top of the stack: the soul's own pool while in a person's body. */
 	static int rows() {
-		return (showing() ? 1 : 0) + (ownShowing() ? 1 : 0);
+		return ownShowing() ? 1 : 0;
+	}
+
+	/** Under the portrait's block, the rows of the whole stack of thin bars (this one's and the Netherworld's), for what goes under them. */
+	static int stackBottom() {
+		return top() + (rows() + NetherworldHud.rows()) * ROW;
 	}
 
 	private static String ownLabel() {
@@ -79,12 +66,11 @@ public final class QiHud {
 	}
 
 	/**
-	 * Where the bars start: past the widest label of the bars showing (this one's and the Netherworld's under it, see
+	 * Where the thin bars start: past the widest label of the bars showing (this one's and the Netherworld's under it, see
 	 * NetherworldHud), so they stand in one neat column whatever their labels say.
 	 */
 	static int barX(Font font) {
-		int widest = showing() ? font.width(Component.translatable(ModLang.HUD_QI_LABEL)) : 0;
-		if (ownShowing()) widest = Math.max(widest, font.width(Component.translatable(ownLabel())));
+		int widest = ownShowing() ? font.width(Component.translatable(ownLabel())) : 0;
 		widest = Math.max(widest, NetherworldHud.widestLabel(font));
 		return X + widest + Pool.LABEL_GAP + 2;
 	}

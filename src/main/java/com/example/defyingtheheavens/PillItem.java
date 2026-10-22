@@ -36,11 +36,13 @@ import java.util.List;
  *   ones.</li>
  *   <li>Yang Preservation Pill: holds the Netherworld's yin still in the body for a while (YinCorruption).</li>
  *   <li>Yin Gathering Pill: the ghost method practised is cultivated faster for a while (GhostMethods).</li>
+ *   <li>Longevity Pill (the user's ask, 2026-10-20): years of lifespan (Lifespan), the more the higher its grade; each one taken in a
+ *   life works {@link #LONGEVITY_FADE} as well as the one before (half: the user's, the same day, so none lives forever on pills).</li>
  * </ul>
- * A pill that can't do anything right now isn't eaten: the player is told why instead.
+ * A pill that can't do anything right now isn't eaten: the player is told why instead. (The Rebirth Pill is no brew: RebirthPillItem.)
  */
 public class PillItem extends Item {
-	public enum Kind { MARROW_CLEANSING, FOUNDATION, CORE, QI_GATHERING, CULTIVATION, YANG_PRESERVATION, YIN_GATHERING }
+	public enum Kind { MARROW_CLEANSING, FOUNDATION, CORE, QI_GATHERING, CULTIVATION, YANG_PRESERVATION, YIN_GATHERING, LONGEVITY }
 
 	public static final String GRADE_TAG = "PillGrade";
 	public static final String AGE_TAG = "PillAge";
@@ -59,6 +61,10 @@ public class PillItem extends Item {
 	/** Yin Gathering Pill: the ghost method cultivated faster by this much per point of potency, for {@link #YIN_BOOST_TICKS}. */
 	public static final double YIN_BOOST_PER_POTENCY = 0.25;
 	public static final int YIN_BOOST_TICKS = 5 * 60 * 20;
+	/** Longevity Pill: years of lifespan per point of potency (Low grade, fresh ingredients: 20; Immortal, 10,000-year ones: 200). */
+	public static final double YEARS_PER_POTENCY = 20;
+	/** Each Longevity Pill taken in a life works this share as well as the one before it: half (the user's, 2026-10-20). */
+	public static final double LONGEVITY_FADE = 0.5;
 	/** The colour of the impurities the Marrow Cleansing Elixir drives out: a dull, earthy grey. */
 	private static final org.joml.Vector3f IMPURITY = new org.joml.Vector3f(0.45f, 0.41f, 0.34f);
 
@@ -127,6 +133,16 @@ public class PillItem extends Item {
 		return YIN_BOOST_PER_POTENCY * potency(stack);
 	}
 
+	/** The years a Longevity Pill adds, as the first of a life. */
+	public static double longevityYears(ItemStack stack) {
+		return YEARS_PER_POTENCY * potency(stack);
+	}
+
+	/** The years a Longevity Pill adds to {@code c}'s lifespan now, after the ones it has taken this life ({@link #LONGEVITY_FADE}). */
+	public static double longevityYears(ItemStack stack, PlayerCultivation c) {
+		return longevityYears(stack) * Math.pow(LONGEVITY_FADE, c.longevityPills());
+	}
+
 	/** The pill a breakthrough into {@code target} needs, or null if it needs none. */
 	public static Item breakthroughPillFor(Realm target) {
 		if (target == Realm.FOUNDATION_BUILDING) return ModItems.FOUNDATION_PILL;
@@ -169,6 +185,11 @@ public class PillItem extends Item {
 				if (c.isMortal()) return Component.translatable(ModLang.MSG_PILL_MORTAL);
 				if (c.isStalled() || c.isSuppressed() || c.isMaxed()) return Component.translatable(ModLang.MSG_PILL_BOTTLENECK);
 				return null;
+			case LONGEVITY:
+				// No pill buys a spent life back from the heavens (LifespanTribulation): its few years would only end the tribulation for
+				// it to begin again from nothing (the user's ask, 2026-10-20). An immortal's years have no end to add to (Lifespan#endless).
+				if (Lifespan.endless(c)) return Component.translatable(ModLang.MSG_PILL_LONGEVITY_ENDLESS);
+				return c.lifespanTrial() >= 0 ? Component.translatable(ModLang.MSG_LIFE_TRIB_NO_PILL) : null;
 			case YIN_GATHERING:
 				if (c.isMortal()) return Component.translatable(ModLang.MSG_PILL_MORTAL); // its ghost methods lie dormant (GhostMethods#refusal)
 				// Its yin feeds the ghost path's bar (GhostMethods): no path begun, nothing to feed.
@@ -284,6 +305,18 @@ public class PillItem extends Item {
 				player.displayClientMessage(Component.translatable(ModLang.MSG_PILL_YIN, Math.round(yinBoost(stack) * 100),
 						YIN_BOOST_TICKS / 1200), true);
 			}
+			case LONGEVITY -> {
+				// Its years go on the lifespan won besides the realms' (Lifespan#span), and the next one this life works the less.
+				double years = longevityYears(stack, c);
+				c.setExtraYears(c.extraYears() + years);
+				c.setLongevityPills(c.longevityPills() + 1);
+				CultivationManager.markDirty(player.server);
+				CultivationManager.sync(player);
+				level.sendParticles(ParticleTypes.HAPPY_VILLAGER, player.getX(), player.getY() + 1.0, player.getZ(), 20, 0.4, 0.6, 0.4, 0.02);
+				level.playSound(null, player.blockPosition(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.0f, 1.3f);
+				player.displayClientMessage(Component.translatable(ModLang.MSG_PILL_LONGEVITY, Math.round(years),
+						(long) Math.floor(Lifespan.span(c))).withStyle(ChatFormatting.GREEN), true);
+			}
 		}
 	}
 
@@ -329,6 +362,14 @@ public class PillItem extends Item {
 					Math.round(preservationTicks(stack) / 1200.0)).withStyle(ChatFormatting.GOLD));
 			case YIN_GATHERING -> Tooltips.add(lines, Component.translatable(ModLang.PILL_EFFECT_YIN, Math.round(yinBoost(stack) * 100),
 					YIN_BOOST_TICKS / 1200).withStyle(ChatFormatting.AQUA));
+			case LONGEVITY -> {
+				Tooltips.add(lines, Component.translatable(ModLang.PILL_EFFECT_LONGEVITY, Math.round(longevityYears(stack))).withStyle(ChatFormatting.GREEN));
+				int taken = CultivationManager.clientMirror.get().longevityPills();
+				if (taken > 0) {
+					Tooltips.add(lines, Component.translatable(ModLang.PILL_EFFECT_LONGEVITY_LESS, Math.round(Math.pow(LONGEVITY_FADE, taken) * 100), taken)
+							.withStyle(ChatFormatting.RED));
+				}
+			}
 		}
 		Tooltips.add(lines, Component.translatable(ModLang.PILL_RECIPE, AlchemyRecipes.describe(this)).withStyle(ChatFormatting.DARK_GRAY));
 	}

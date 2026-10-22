@@ -25,6 +25,7 @@ import com.example.defyingtheheavens.MortalStage;
 import com.example.defyingtheheavens.BodyRefining;
 import com.example.defyingtheheavens.Physique;
 import com.example.defyingtheheavens.Physiques;
+import com.example.defyingtheheavens.FourAxis;
 import com.example.defyingtheheavens.PlayerCultivation;
 import com.example.defyingtheheavens.Realm;
 import com.example.defyingtheheavens.RealmSuppressSystem;
@@ -60,9 +61,12 @@ import net.minecraft.world.entity.player.Player;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.ToDoubleBiFunction;
 
 /**
@@ -133,6 +137,12 @@ public class CultivationScreen extends Screen {
 	private Button breakthroughButton;
 	/** The Cultivation tab's switch between the two qi (TwoPaths#switchPath): which path a meditation cultivates. */
 	private Button pathButton;
+	/**
+	 * The Cultivation tab's pace for meditating (x1 to x3, beside Meditate; Lifespan#cycleMeditationSpeed), its price in years told by
+	 * its tooltip; and the pace the tooltip was last made for.
+	 */
+	private Button paceButton;
+	private int paceShown;
 	private Button wheelButton;
 	/** The wheel editor's palette as drawn this frame, for {@link #mouseClicked}. Empty unless arranging. */
 	private final List<PaletteCell> palette = new ArrayList<>();
@@ -260,6 +270,11 @@ public class CultivationScreen extends Screen {
 		pathButton = addRenderableWidget(Button.builder(Component.empty(), b -> ClientMethods.switchPath())
 				.bounds(left + (WIDTH - 112) / 2, top + HEIGHT - 32, 112, 20).build());
 
+		paceButton = addRenderableWidget(Button.builder(Component.empty(),
+						b -> ClientPlayNetworking.send(ModPackets.MEDITATION_SPEED, PacketByteBufs.create()))
+				.bounds(left + 12 + 112 + BUTTON_GAP, top + HEIGHT - 32, PACE_W, 20).build());
+		paceShown = 0;
+
 		wheelButton = addRenderableWidget(Button.builder(Component.empty(), b -> {
 					arranging = !arranging;
 					dragged = null;
@@ -301,19 +316,31 @@ public class CultivationScreen extends Screen {
 		boolean ghostQi = TwoPaths.cultivatesGhost(c);
 		breakthroughButton.active = (ghostQi ? GhostMethods.canBreakthrough(c) : c.canBreakthrough()) && !ClientTribulationData.isActive();
 		meditateButton.active = !c.isMortal(); // a mortal has no qi to gather
+		// The pace, for whoever can meditate to some end (a body refined, a shattered one too), right of Meditate.
+		boolean pace = progressTab && (!c.isMortal() || c.hasShatteredMeridians());
+		paceButton.visible = pace;
+		paceButton.setMessage(Component.translatable(ModLang.BTN_PACE, c.meditationSpeed()));
+		if (paceShown != c.meditationSpeed()) {
+			paceShown = c.meditationSpeed();
+			paceButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable(ModLang.TIP_PACE[paceShown - 1])));
+		}
 		// The switch, for the living on both paths (the dead draw in only ghostly qi), between the two: then three share the row.
 		pathButton.visible = progressTab && TwoPaths.walksBoth(c) && !c.netherworld().ghost();
 		pathButton.setMessage(Component.translatable(ghostQi ? ModLang.BTN_PATH_GHOST : ModLang.BTN_PATH_HEAVEN));
-		int w = pathButton.visible ? (WIDTH - 24 - 2 * BUTTON_GAP) / 3 : 112;
+		int room = WIDTH - 24 - (pace ? PACE_W + BUTTON_GAP : 0);
+		int w = pathButton.visible ? (room - 2 * BUTTON_GAP) / 3 : 112;
 		meditateButton.setWidth(w);
+		paceButton.setX(left + 12 + w + BUTTON_GAP);
 		breakthroughButton.setWidth(w);
 		breakthroughButton.setX(left + WIDTH - 12 - w);
 		pathButton.setWidth(w);
-		pathButton.setX(left + (WIDTH - w) / 2);
+		pathButton.setX(pace ? left + 12 + w + BUTTON_GAP + PACE_W + BUTTON_GAP : left + (WIDTH - w) / 2);
 	}
 
 	/** Between the Cultivation tab's three buttons, when the switch stands between Meditate and Breakthrough. */
 	private static final int BUTTON_GAP = 5;
+	/** The pace button's width (it says only "x2"). */
+	private static final int PACE_W = 30;
 
 	@Override
 	public boolean isPauseScreen() {
@@ -354,7 +381,7 @@ public class CultivationScreen extends Screen {
 			case STATS -> {
 				// A mortal on neither path has only a tempered body; a mortal's ghost on the ghost path, that path's strength.
 				if (ClientCultivationData.get().isMortal() && !TwoPaths.body(ClientCultivationData.get(), false).ghostPath()) {
-					renderPlaceholder(g, ModLang.MORTAL, ModLang.MORTAL_STATS, ModLang.MORTAL_DETAIL);
+					renderMortalStats(g);
 				} else {
 					renderStatPages(g, mouseX, mouseY);
 					if (pointsPage) renderStatPoints(g, mouseX, mouseY);
@@ -423,6 +450,9 @@ public class CultivationScreen extends Screen {
 		// not yet refined, how much less the next Cultivation Pill will do), one's path (Alignment) in its colour, the two paths'
 		// harmony, Heaven's Favour from a generous offering at the Ritual to the Heavens.
 		List<Detail> details = netherworldDetails();
+		// What the rest of the realm's road costs in years by meditation (Lifespan#seclude: the talent race), against the years left.
+		Detail seclusion = seclusionDetail(c, player, method, boost);
+		if (seclusion != null) details.add(seclusion);
 		// The practised method's next layer settling in behind the realm (HeavenMethods#settle), and how far.
 		if (method != null && HeavenMethods.settling(c, method)) {
 			int next = c.heaven().layer(method) + 1;
@@ -456,28 +486,44 @@ public class CultivationScreen extends Screen {
 		List<Line> status = heldStatus(c, barW);
 		if (status.isEmpty()) {
 			status = heavenNext(c, barW);
-			if (both) status.addAll(ghostNext(c, barW));
+			if (both) {
+				// What the heaven path's has said already (an axis of virtue both paths stand at: FourAxis) is said once; its bar framed
+				// in amber if either path's breakthrough waits on it.
+				Set<String> said = new HashSet<>();
+				for (Line line : status) if (line.said() != null) said.add(line.said());
+				for (Line line : ghostNext(c, barW)) {
+					if (line.said() == null || !said.contains(line.said())) status.add(line);
+					else if (line.meter() != null && line.color() != 0) status.replaceAll(l -> line.said().equals(l.said()) ? line : l);
+				}
+			}
 		}
 
 		// All of it fits above the meditation line: the lines drawn closer when there is much to say (never closer than the font's
-		// own height), and in the rare case even that won't do, over the meditation line (the Meditate button says it too).
+		// own height), and in the rare case even that won't do, over the meditation line (the Meditate button says it too). An axis's
+		// bar takes a row of its own height.
 		int statusY = top + HEIGHT - 46;
 		int lines = rows.size() + status.size();
+		int bars = (int) status.stream().filter(line -> line.meter() != null).count();
 		int lineH = 11, gap = 6;
 		for (int[] spacing : SPACINGS) {
 			lineH = spacing[0];
 			gap = spacing[1];
-			if (fits(y, lines, lineH, gap, statusY)) break;
+			if (fits(y + bars * (AXIS_ROW - lineH), lines, lineH, gap, statusY)) break;
 		}
-		boolean roomForStatus = fits(y, lines, lineH, gap, statusY);
+		boolean roomForStatus = fits(y + bars * (AXIS_ROW - lineH), lines, lineH, gap, statusY);
 		for (List<Line> row : rows) {
 			drawDetailRow(g, row, cx, y);
 			y += lineH;
 		}
 		y += gap;
 		for (Line line : status) {
-			g.drawCenteredString(font, line.text(), cx, y, line.color());
-			y += lineH;
+			if (line.meter() != null) {
+				virtueBar(g, c, line.meter(), line.color(), x, y + 3, barW);
+				y += AXIS_ROW;
+			} else {
+				g.drawCenteredString(font, line.text(), cx, y, line.color());
+				y += lineH;
+			}
 		}
 
 		if (roomForStatus) {
@@ -489,6 +535,36 @@ public class CultivationScreen extends Screen {
 
 	/** Room between the two paths' columns on the Cultivation tab (a faint line down the middle of it). */
 	private static final int COLUMN_GAP = 10;
+
+	/**
+	 * The years meditation would cost from here to the realm's Grand Perfection on the path drawn in (Lifespan#seclusionYears: by
+	 * talent, what saves years here (Lifespan#saving: the meditation's boost {@code boost}, the method practised by its element's share
+	 * of the qi here, a spirit stone in hand, dense qi) and the pace), against the years left; red when they won't cover it. A stele's
+	 * part isn't known here, so it is left out (the server counts it). Null with no path to cultivate.
+	 */
+	private Detail seclusionDetail(PlayerCultivation c, Player player, HeavenMethod method, double boost) {
+		if (Double.isInfinite(ClientCultivationData.lifeSpan())) return null; // a True Immortal's cultivation costs no years
+		int stages = Stage.values().length;
+		boolean ghost = TwoPaths.cultivatesGhost(c);
+		int rank = ghost ? GhostMethods.ghostRank(c.netherworld()) : PlayerCultivation.rank(c.getRealm(), c.getStage());
+		if (rank < 0) return null;
+		double stone = player == null ? 1.0 : com.example.defyingtheheavens.SpiritStoneItem.meditationMultiplier(player);
+		double saving = ghost ? com.example.defyingtheheavens.Lifespan.saving(boost, 1, com.example.defyingtheheavens.Lifespan.ghostPlaceSaving(ClientNetherworldData.density()), stone)
+				: com.example.defyingtheheavens.Lifespan.saving(boost, method == null ? 1 : HeavenMethods.elementFactor(shareHere(method.element())),
+						com.example.defyingtheheavens.Lifespan.placeSaving(c), stone);
+		double cultivated = ghost ? c.netherworld().pathCultivation() : c.getCultivation();
+		double years = 0;
+		for (int r = rank; r < (rank / stages + 1) * stages; r++) {
+			Realm realm = Realm.byIndex(r / stages);
+			Stage stage = Stage.byIndex(r % stages);
+			double need = ghost ? GhostMethods.required(r) : PlayerCultivation.required(realm, stage);
+			if (need <= 0) continue;
+			years += com.example.defyingtheheavens.Lifespan.seclusionYears(c, realm, stage, r == rank ? Math.max(0, 1 - cultivated / need) : 1, saving);
+		}
+		double left = Math.max(0, ClientCultivationData.lifeSpan() - ClientCultivationData.lifeUsed());
+		return new Detail(Component.translatable(ModLang.SECLUSION_LINE, String.format(Locale.ROOT, "%,d", Math.round(years)),
+				String.format(Locale.ROOT, "%,d", (long) Math.floor(left))), years > left ? 0xFF6E6E : 0xC8B88A);
+	}
 
 	/**
 	 * The heaven path's cultivation bar, {@code w} wide: in the colour of the heaven method practised's element
@@ -518,12 +594,13 @@ public class CultivationScreen extends Screen {
 	/**
 	 * Under the heaven path's bar, the method practised and its layer understood, and what meditating here adds a second: what it
 	 * gathers, surroundings included (mats, fruit on pedestals, height, tranquillity, the Upper Realm's dense qi), by the method's
-	 * element's share of the qi here (HeavenMethods#cultivationFactor), or at a cultivator's pace with none; jade when boosted.
+	 * element's share of the qi here (HeavenMethods#cultivationFactor), or at a cultivator's pace with none, at the pace a meditation
+	 * is set to (x1 to x3: the pace button); jade when boosted.
 	 * @return the y under it
 	 */
 	private int heavenMethodLine(GuiGraphics g, Player player, PlayerCultivation c, HeavenMethod method, double boost, int cx, int y, int w) {
 		double rate = c.meditationCultivationPerSecond(RingOfPowerItem.cultivationBonus(player)) * boost // 0 while suppressed
-				* HeavenMethods.cultivationFactor(c, method, method == null ? 0 : shareHere(method.element()), false);
+				* HeavenMethods.cultivationFactor(c, method, method == null ? 0 : shareHere(method.element()), false) * c.meditationSpeed();
 		Component line;
 		if (method == null) {
 			line = Component.translatable(ModLang.METHOD_LINE_NONE, one(rate));
@@ -601,7 +678,7 @@ public class CultivationScreen extends Screen {
 		} else if (density <= 0) {
 			pace = Component.translatable(ModLang.GHOST_COLUMN_NO_QI);
 		} else {
-			String rate = one(GhostMethods.ratePerSecond(c, density));
+			String rate = one(GhostMethods.ratePerSecond(c, density) * c.meditationSpeed()); // at the pace a meditation is set to
 			// No foundation known (one of the dead, or one born again who began the path so): said, as the heaven column says it.
 			pace = GhostMethods.deepestFoundation(s) == null ? fit(w, Component.translatable(ModLang.GHOST_COLUMN_PACE_NONE, rate),
 					Component.translatable(ModLang.GHOST_COLUMN_PACE_SHORT, rate))
@@ -634,6 +711,9 @@ public class CultivationScreen extends Screen {
 			addStatus(lines, Component.translatable(ModLang.GHOST_PINNACLE), 0xFFD700, width);
 		} else if (Stage.byIndex(rank % stages).isLast() && !GhostMethods.opensWay(c, Realm.byIndex(rank / stages + 1))) {
 			addStatus(lines, GhostMethods.gateLine(c), GhostMethods.heldByMethod(c) ? 0xFFC107 : 0xA0A0A0, width);
+		} else if (FourAxis.holds(c, rank)) {
+			// A Four Axis stage: its axis of virtue (FourAxis, the cultivator's), and how it is filled once the bar is full.
+			addAxis(lines, FourAxis.wanted(rank), GhostMethods.heldByAxis(c), width);
 		} else if (GhostMethods.canBreakthrough(c)) {
 			// The Breakthrough button breaks through on the path drawn in: with the heavens' qi drawn in, the switch first.
 			addStatus(lines, Component.translatable(TwoPaths.cultivatesGhost(c) ? ModLang.GHOST_BOTTLENECK : ModLang.GHOST_BOTTLENECK_SWITCH,
@@ -661,6 +741,7 @@ public class CultivationScreen extends Screen {
 	private List<Line> heavenNext(PlayerCultivation c, int width) {
 		List<Line> status = new ArrayList<>();
 		if (c.isMaxed()) {
+			// True Immortal Grand Perfection (Four Axis's, with its last axis of virtue, before the realms after it: 2026-10-22).
 			addStatus(status, Component.translatable(ModLang.PINNACLE), 0xFFD700, width);
 		} else if (c.isAtBottleneck() && c.isBreakthroughLocked()) {
 			addStatus(status, Component.translatable(ModLang.BREAKTHROUGH_SEALED), 0xFF6E6E, width);
@@ -680,6 +761,10 @@ public class CultivationScreen extends Screen {
 			// Grand Perfection with no heaven method known of the realm ahead: one wanted, said ahead in grey, in amber once the
 			// stage is full (the breakthrough waits on it).
 			addStatus(status, HeavenMethods.gateLine(c), c.isHeldByMethod() ? 0xFFC107 : 0xA0A0A0, width);
+		} else if (c.getRealm() == Realm.FOUR_AXIS && FourAxis.wanted(PlayerCultivation.rank(c.getRealm(), c.getStage())) != null
+				&& (!c.isMaxed() || !FourAxis.allComplete(c)) && !FourAxis.complete(c, FourAxis.wanted(PlayerCultivation.rank(c.getRealm(), c.getStage())))) {
+			// A Four Axis stage: its axis of virtue (FourAxis), and how it is filled once the stage is full and the breakthrough waits on it.
+			addAxis(status, FourAxis.wanted(PlayerCultivation.rank(c.getRealm(), c.getStage())), c.isHeldByAxis(), width);
 		} else if (c.canBreakthrough()) {
 			// With ghostly qi drawn in, the Breakthrough button breaks through on the ghost path: the switch first.
 			boolean switchFirst = TwoPaths.cultivatesGhost(c) && !c.netherworld().ghost();
@@ -701,8 +786,16 @@ public class CultivationScreen extends Screen {
 	/** One of the Cultivation tab's details: a short line in its colour. */
 	private record Detail(Component text, int color) {}
 
-	/** A line as it is drawn (a detail, or a wrapped piece of one or of a status line) and its colour. */
-	private record Line(FormattedCharSequence text, int color) {}
+	/**
+	 * A line as it is drawn (a detail, or a wrapped piece of one or of a status line) and its colour; with {@code meter}, that axis of
+	 * virtue's bar in its place (its colour the bar's frame); {@code said}, what it says, so what both paths would say is said once (the
+	 * axis both stand at).
+	 */
+	private record Line(FormattedCharSequence text, int color, FourAxis.Axis meter, String said) {
+		Line(FormattedCharSequence text, int color) {
+			this(text, color, null, null);
+		}
+	}
 
 	/** Whether {@code lines} lines from {@code y}, {@code lineH} apart with {@code gap} before the status, end clear of the meditation line. */
 	private boolean fits(int y, int lines, int lineH, int gap, int statusY) {
@@ -712,6 +805,38 @@ public class CultivationScreen extends Screen {
 	/** {@code text} wrapped to {@code width}, each piece a status line in {@code color}. */
 	private void addStatus(List<Line> status, Component text, int color, int width) {
 		for (FormattedCharSequence line : font.split(text, width)) status.add(new Line(line, color));
+	}
+
+	/**
+	 * An axis of virtue a Four Axis stage's breakthrough waits on (FourAxis): its bar, like the cultivation bar (the user's ask,
+	 * 2026-10-20), framed in amber once the stage is full and the breakthrough waits on it ({@code held}), and then how it is filled.
+	 * The bar's line carries its frame in its colour (0: none).
+	 */
+	private void addAxis(List<Line> status, FourAxis.Axis axis, boolean held, int width) {
+		status.add(new Line(FormattedCharSequence.EMPTY, held ? 0xFFFFC107 : 0, axis, "meter." + axis.getId()));
+		if (!held) return;
+		for (FormattedCharSequence line : font.split(FourAxis.howLine(ClientCultivationData.get(), axis), width)) {
+			status.add(new Line(line, 0xFFC107, null, "how." + axis.getId()));
+		}
+	}
+
+	/** An axis of virtue's bar takes a row this tall among the status lines (the bar, its frame, room round it). */
+	private static final int AXIS_ROW = 17;
+
+	/** The axes' bars' fills: Longevity jade, Fortune gold, Merit vermilion, Enlightenment pearl. */
+	private static final Map<FourAxis.Axis, Integer> AXIS_FILLS = new EnumMap<>(Map.of(FourAxis.Axis.LONGEVITY, 0xFF43A865,
+			FourAxis.Axis.FORTUNE, 0xFFD9A62A, FourAxis.Axis.MERIT, 0xFFCC4535, FourAxis.Axis.ENLIGHTENMENT, 0xFFA889EE));
+
+	/**
+	 * {@code axis}'s bar, {@code w} wide at {@code x, y}, as the cultivation bar is drawn: filled to how far it stands of what
+	 * completes it, in the axis's colour, framed in {@code frame} as well (0: none), the two written on it in its measure ("230 / 500
+	 * years").
+	 */
+	private void virtueBar(GuiGraphics g, PlayerCultivation c, FourAxis.Axis axis, int frame, int x, int y, int w) {
+		int progress = FourAxis.progress(c, axis), need = FourAxis.need(c, axis);
+		drawBar(g, x, y, w, progress / (double) need, AXIS_FILLS.get(axis), frame);
+		barText(g, x + w / 2, y + 1, w, Component.translatable(ModLang.AXIS_BAR, axis.getDisplayName(), progress, need, axis.unit()),
+				Component.translatable(ModLang.AXIS_BAR_SHORT, progress, need, axis.unit()));
 	}
 
 	/** The details laid into rows of {@code width}, in order, as many to a row as fit; one too wide for any row is wrapped. */
@@ -987,16 +1112,49 @@ public class CultivationScreen extends Screen {
 				g.drawCenteredString(font, part, cx, y, 0xFFD54F);
 			}
 		}
-		// The body they were born with (Physique), its roots' elements; shattered meridians' body refining.
+		// The body they were born with (Physique), its roots' elements, shattered meridians' body refining; a Myriad Form Body's forms
+		// on a line of their own (wrapped), and the roots with them, or under it, when they don't fit beside it.
 		if (c.getPhysique() != null) {
 			y += 11;
 			Physique physique = c.getPhysique();
-			Component line = Component.translatable(ModLang.STATS_PHYSIQUE, physique.getDisplayName(), physique.grade().getDisplayName());
-			if (!c.getRootElements().isEmpty()) line = line.copy().append("  ").append(Component.translatable(ModLang.STATS_ROOTS, Physiques.rootsLine(c.getRootElements())));
+			// With its talent (Physique.Grade#talent): what the years meditation costs are divided by (Lifespan#seclude).
+			double talent = physique.grade().talent();
+			Component bare = Component.translatable(ModLang.STATS_PHYSIQUE, physique.getDisplayName(), physique.grade().getDisplayName(),
+					talent == Math.floor(talent) ? String.valueOf((long) talent) : String.valueOf(talent));
+			Component roots = c.getRootElements().isEmpty() ? null : Component.translatable(ModLang.STATS_ROOTS, Physiques.rootsLine(c.getRootElements()));
+			Component line = bare;
+			if (roots != null) line = line.copy().append("  ").append(roots);
 			if (c.getBodyRefining() > 0) line = line.copy().append("  ").append(Component.translatable(ModLang.STATS_BODY_REFINING, BodyRefining.name(c.getBodyRefining())));
-			g.drawCenteredString(font, fit(WIDTH - 20, line, Component.translatable(ModLang.STATS_PHYSIQUE, physique.getDisplayName(),
-					physique.grade().getDisplayName())), cx, y, 0xE0E0E0);
+			Component first = fit(WIDTH - 20, line, bare);
+			g.drawCenteredString(font, first, cx, y, 0xE0E0E0);
+			Component more = first == line || roots == null ? null : roots;
+			if (!c.getForms().isEmpty()) {
+				Component forms = Component.translatable(ModLang.STATS_FORMS, Physiques.formsLine(c.getForms()));
+				more = more == null ? forms : forms.copy().append("  ").append(more);
+			}
+			if (more != null) {
+				for (FormattedCharSequence part : font.split(more, WIDTH - 28)) {
+					y += 10;
+					g.drawCenteredString(font, part, cx, y, 0xE0E0E0);
+				}
+			}
 		}
+		// Their years (Lifespan): their age of their span, alive or dead (one clock); red in the last ten. Beside them the obsession
+		// they named (Obsession) and what it gives, as much as there is room for.
+		y += 11;
+		double used = ClientCultivationData.lifeUsed(), span = ClientCultivationData.lifeSpan();
+		boolean late = span - used <= com.example.defyingtheheavens.Lifespan.WARN_YEARS;
+		Component years = Double.isInfinite(span) ? Component.translatable(ModLang.STATS_LIFESPAN_ENDLESS, (long) Math.floor(used)) // a True Immortal's
+				: Component.translatable(ModLang.STATS_LIFESPAN, (long) Math.floor(used), (long) Math.floor(span));
+		com.example.defyingtheheavens.FourAxis.Axis obsession = c.obsession();
+		Component lifeLine = years;
+		if (obsession != null) {
+			Component named = com.example.defyingtheheavens.Obsession.displayName(obsession);
+			lifeLine = fit(WIDTH - 20,
+					years.copy().append("   ").append(Component.translatable(ModLang.STATS_OBSESSION_BOON, named, com.example.defyingtheheavens.Obsession.boon(obsession))),
+					years.copy().append("   ").append(Component.translatable(ModLang.STATS_OBSESSION, named)), years);
+		}
+		g.drawCenteredString(font, lifeLine, cx, y, late ? 0xFF6E6E : 0xC8B88A);
 		// (The sect they belong to, and their title in it, are on the Sect tab.)
 		y += 13;
 
@@ -1761,12 +1919,17 @@ public class CultivationScreen extends Screen {
 		}
 	}
 
-	/** The body's bonus to {@code line}'s stat, as CultivationStats#apply gives it (its path's share, on health of the whole). */
+	/**
+	 * The body's bonus to {@code line}'s stat, as CultivationStats#apply gives it (its path's share, on health of the whole; an Ancient
+	 * Holy Body's health and strength, CultivationStats#holyFactor).
+	 */
 	private static double bodyBonus(StatLine line, TwoPaths.Body body) {
 		double bonus = line.bonus().applyAsDouble(body.realm(), body.stage()) * body.scale();
+		double holy = com.example.defyingtheheavens.CultivationStats.holyFactor(ClientCultivationData.get());
 		if (line.attribute() == net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH) {
-			return (com.example.defyingtheheavens.CultivationStats.BASE_HEALTH + bonus) * body.share() - com.example.defyingtheheavens.CultivationStats.BASE_HEALTH;
+			return (com.example.defyingtheheavens.CultivationStats.BASE_HEALTH + bonus) * body.share() * holy - com.example.defyingtheheavens.CultivationStats.BASE_HEALTH;
 		}
+		if (line.attribute() == net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) return bonus * body.share() * holy;
 		return bonus * body.share();
 	}
 
@@ -1789,9 +1952,21 @@ public class CultivationScreen extends Screen {
 		}
 	}
 
-	/** Thousands separated, like the HUD: "8,000" and "2,000.0/s". */
+	/**
+	 * Thousands separated, like the HUD: "8,000" and "2,000.0/s"; the realms after Four Axis's pools and rates in short ("3.25M",
+	 * "81.3k/s"), so they keep to their columns.
+	 */
 	private static String qiText(double v, boolean rate) {
+		if (Math.abs(v) >= (rate ? 10_000 : 1_000_000)) return compact(v) + (rate ? "/s" : "");
 		return rate ? String.format(Locale.ROOT, "%,.1f/s", v) : num(v);
+	}
+
+	/** A great number in short: "81.3k", "3.25M", "1.60B". */
+	private static String compact(double v) {
+		double a = Math.abs(v);
+		if (a >= 1e9) return String.format(Locale.ROOT, "%.2fB", v / 1e9);
+		if (a >= 1e6) return String.format(Locale.ROOT, "%.2fM", v / 1e6);
+		return String.format(Locale.ROOT, "%.1fk", v / 1e3);
 	}
 
 	// --- Methods: the ghost methods learned, their layers, and which one meditation cultivates ---
@@ -1862,7 +2037,7 @@ public class CultivationScreen extends Screen {
 					rate = Component.translatable(ModLang.METHODS_NO_QI);
 					rateColor = 0x9E9E9E;
 				} else {
-					double perSecond = GhostMethods.ratePerSecond(c, density);
+					double perSecond = GhostMethods.ratePerSecond(c, density) * c.meditationSpeed(); // at the pace it is set to
 					double minutes = (GhostMethods.settleCost(active, layer + 1) - s.progress(active)) / Math.max(1.0e-6, perSecond) / 60.0;
 					rate = Component.translatable(ModLang.METHODS_HEAVEN_RATE, layer + 1, active.getDisplayName(), minutes < 1 ? "<1" : String.valueOf(Math.round(minutes)));
 				}
@@ -1939,7 +2114,7 @@ public class CultivationScreen extends Screen {
 				int layer = s.layer(method);
 				if (spansRealms(method)) {
 					// Nine small pips for each realm it spans, the realms apart; under them, the layer and where it stands in its realm.
-					drawRealmPips(g, x, y, layer, method.layers());
+					drawRealmPips(g, x, y, layer, method.layers(), rightEdge - x);
 					y += 11;
 					g.drawString(font, Component.translatable(ModLang.METHODS_LAYER_REALM, layer, method.layers(), MethodLayers.realmOf(layer).getDisplayName(),
 							MethodLayers.within(layer)), x, y, 0xB0B0B0);
@@ -2036,7 +2211,7 @@ public class CultivationScreen extends Screen {
 				Player player = minecraft == null ? null : minecraft.player;
 				double boost = player == null ? 1.0 : CultivationBoost.of(player).multiplier();
 				double perSecond = c.meditationCultivationPerSecond(RingOfPowerItem.cultivationBonus(player)) * boost
-						* HeavenMethods.methodFactor(c, share, false);
+						* HeavenMethods.methodFactor(c, share, false) * c.meditationSpeed(); // at the pace it is set to
 				if (perSecond > 0) {
 					double minutes = (HeavenMethods.settleCost(layer + 1) - h.progress(active)) / perSecond / 60.0;
 					addTop.accept(Component.translatable(ModLang.METHODS_HEAVEN_RATE, layer + 1, active.getDisplayName(),
@@ -2110,7 +2285,7 @@ public class CultivationScreen extends Screen {
 				y += 15;
 				int layer = h.layer(method);
 				if (method.layers() > MethodLayers.PER_REALM) {
-					drawRealmPips(g, x, y, layer, method.layers());
+					drawRealmPips(g, x, y, layer, method.layers(), rightEdge - x);
 					y += 11;
 					g.drawString(font, Component.translatable(ModLang.METHODS_LAYER_REALM, layer, method.layers(), MethodLayers.realmOf(layer).getDisplayName(),
 							MethodLayers.within(layer)), x, y, 0xB0B0B0);
@@ -2200,14 +2375,22 @@ public class CultivationScreen extends Screen {
 	 * A narrow pip for each of {@code total} layers, nine to a realm, a gap between realms: gold to the layer reached, the realm
 	 * it is in lit a little, dark beyond.
 	 */
-	private static void drawRealmPips(GuiGraphics g, int x, int y, int layer, int total) {
+	private static void drawRealmPips(GuiGraphics g, int x, int y, int layer, int total, int width) {
 		int realmNow = (Math.max(1, layer) - 1) / MethodLayers.PER_REALM;
+		int realms = (total + MethodLayers.PER_REALM - 1) / MethodLayers.PER_REALM;
+		// Narrower pips for the deepest methods (a True Immortal one's 99 layers), so they keep to the page.
+		int pitch = 4;
+		while (pitch > 2 && pitch * (total + realms - 1) > width) pitch--;
 		for (int i = 0; i < total; i++) {
 			int realm = i / MethodLayers.PER_REALM;
-			int px = x + i * 4 + realm * 4;
+			int px = x + (i + realm) * pitch;
 			boolean reached = i < layer;
-			g.fill(px, y, px + 3, y + 7, reached ? BORDER : realm == realmNow ? 0xFF4A4A5E : 0xFF2E2E3A);
-			g.fill(px + 1, y + 1, px + 2, y + 6, reached ? 0xFFFFD700 : 0xFF14141E);
+			if (pitch >= 4) {
+				g.fill(px, y, px + 3, y + 7, reached ? BORDER : realm == realmNow ? 0xFF4A4A5E : 0xFF2E2E3A);
+				g.fill(px + 1, y + 1, px + 2, y + 6, reached ? 0xFFFFD700 : 0xFF14141E);
+			} else {
+				g.fill(px, y, px + pitch - 1, y + 7, reached ? 0xFFFFD700 : realm == realmNow ? 0xFF4A4A5E : 0xFF2E2E3A);
+			}
 		}
 	}
 
@@ -2406,7 +2589,8 @@ public class CultivationScreen extends Screen {
 
 	// --- Placeholders: a title, what's missing, and a hint ---
 
-	private void renderPlaceholder(GuiGraphics g, String titleKey, String emptyKey, String hintKey) {
+	/** A tab with nothing of its own yet: its title, what it would hold, and a hint ({@code hintKey} null: none). @return the y under it */
+	private int renderPlaceholder(GuiGraphics g, String titleKey, String emptyKey, String hintKey) {
 		int cx = left + WIDTH / 2;
 		int y = top + CONTENT_Y + 30;
 		g.drawCenteredString(font, Component.translatable(titleKey), cx, y, 0xFFD700);
@@ -2415,10 +2599,28 @@ public class CultivationScreen extends Screen {
 			g.drawCenteredString(font, line, cx, y, 0xB0B0B0);
 			y += 11;
 		}
+		if (hintKey == null) return y;
 		for (FormattedCharSequence line : font.split(Component.translatable(hintKey), WIDTH - 28)) {
 			g.drawCenteredString(font, line, cx, y, 0x808080);
 			y += 11;
 		}
+		return y;
+	}
+
+	/**
+	 * A mortal's Stats tab: only a tempered body to speak of, and what comes next (tempering on to Peak, then the meridians to open;
+	 * a shattered body refines itself instead, on the Cultivation tab; a mortal's ghost tempers nothing), and their years (Lifespan)
+	 * as a cultivator's page says them.
+	 */
+	private void renderMortalStats(GuiGraphics g) {
+		PlayerCultivation c = ClientCultivationData.get();
+		String hint = c.hasShatteredMeridians() || ClientCultivationData.lifeDead() ? null
+				: c.getMortalStage().isLast() ? ModLang.MORTAL_DETAIL : ModLang.MORTAL_HOW;
+		int y = renderPlaceholder(g, ModLang.MORTAL, ModLang.MORTAL_STATS, hint) + 8;
+		double used = ClientCultivationData.lifeUsed(), span = ClientCultivationData.lifeSpan();
+		Component years = Double.isInfinite(span) ? Component.translatable(ModLang.STATS_LIFESPAN_ENDLESS, (long) Math.floor(used))
+				: Component.translatable(ModLang.STATS_LIFESPAN, (long) Math.floor(used), (long) Math.floor(span));
+		g.drawCenteredString(font, years, left + WIDTH / 2, y, span - used <= com.example.defyingtheheavens.Lifespan.WARN_YEARS ? 0xFF6E6E : 0xC8B88A);
 	}
 
 	private void right(GuiGraphics g, Component text, int rightX, int y, int color) {

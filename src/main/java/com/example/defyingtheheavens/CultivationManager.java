@@ -101,6 +101,8 @@ public final class CultivationManager {
 		if (ability == Ability.QI_SENSE) SoulProjection.refreshTracking(player);
 		// The other form taken, or the true one again, for all to see at once.
 		if (ability == Ability.FORM_SHIFT) TwoPaths.shifted(player);
+		// One's lifespan set alight, or put out (refused with too few years left).
+		if (ability == Ability.BURN_LIFESPAN) BurnLifespan.toggled(player);
 	}
 
 	/**

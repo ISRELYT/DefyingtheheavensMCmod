@@ -59,13 +59,18 @@ public class InnerRealmSkyRenderer implements DimensionRenderingRegistry.SkyRend
 	private static final int MAX_DEPTH = 4;
 
 	//                                      QR                     FB                    CF                    NS                    HB                    FA
-	private static final float[][] ZENITH = {{0.010f, 0.010f, 0.020f}, {0.020f, 0.030f, 0.075f}, {0.030f, 0.030f, 0.11f}, {0.05f, 0.03f, 0.16f}, {0.08f, 0.09f, 0.27f}, {0.16f, 0.20f, 0.43f}};
-	private static final float[][] HORIZON = {{0.030f, 0.030f, 0.050f}, {0.050f, 0.060f, 0.12f}, {0.09f, 0.07f, 0.17f}, {0.18f, 0.10f, 0.28f}, {0.30f, 0.24f, 0.48f}, {0.62f, 0.58f, 0.80f}};
-	private static final float[][] NADIR = {{0.000f, 0.000f, 0.010f}, {0.010f, 0.010f, 0.030f}, {0.010f, 0.010f, 0.040f}, {0.02f, 0.02f, 0.06f}, {0.03f, 0.03f, 0.10f}, {0.08f, 0.08f, 0.20f}};
-	private static final float[] STARS = {0.15f, 0.40f, 0.60f, 0.80f, 0.90f, 1.00f};
-	private static final float[][] LINE = {{0.35f, 0.45f, 0.60f}, {0.40f, 0.65f, 0.95f}, {0.50f, 0.75f, 1.00f}, {0.60f, 0.82f, 1.00f}, {0.75f, 0.90f, 1.00f}, {0.90f, 0.95f, 1.00f}};
-	private static final float[] LINE_ALPHA = {0.50f, 0.60f, 0.68f, 0.72f, 0.76f, 0.80f};
-	private static final float[] AURORA = {0, 0, 0, 0.18f, 0.40f, 0.45f};
+	// ... then Dao Integration, Void Shattering (the void's violet), Sacred Vessel, Entering Nirvana, True Immortal (turned to gold).
+	private static final float[][] ZENITH = {{0.010f, 0.010f, 0.020f}, {0.020f, 0.030f, 0.075f}, {0.030f, 0.030f, 0.11f}, {0.05f, 0.03f, 0.16f}, {0.08f, 0.09f, 0.27f}, {0.16f, 0.20f, 0.43f},
+			{0.20f, 0.22f, 0.46f}, {0.18f, 0.12f, 0.38f}, {0.24f, 0.20f, 0.36f}, {0.30f, 0.22f, 0.30f}, {0.42f, 0.36f, 0.24f}};
+	private static final float[][] HORIZON = {{0.030f, 0.030f, 0.050f}, {0.050f, 0.060f, 0.12f}, {0.09f, 0.07f, 0.17f}, {0.18f, 0.10f, 0.28f}, {0.30f, 0.24f, 0.48f}, {0.62f, 0.58f, 0.80f},
+			{0.66f, 0.62f, 0.84f}, {0.52f, 0.40f, 0.78f}, {0.70f, 0.60f, 0.74f}, {0.80f, 0.62f, 0.62f}, {0.95f, 0.85f, 0.55f}};
+	private static final float[][] NADIR = {{0.000f, 0.000f, 0.010f}, {0.010f, 0.010f, 0.030f}, {0.010f, 0.010f, 0.040f}, {0.02f, 0.02f, 0.06f}, {0.03f, 0.03f, 0.10f}, {0.08f, 0.08f, 0.20f},
+			{0.09f, 0.09f, 0.22f}, {0.06f, 0.03f, 0.18f}, {0.10f, 0.08f, 0.18f}, {0.12f, 0.08f, 0.14f}, {0.20f, 0.16f, 0.08f}};
+	private static final float[] STARS = {0.15f, 0.40f, 0.60f, 0.80f, 0.90f, 1.00f, 1.00f, 1.00f, 1.00f, 1.00f, 1.00f};
+	private static final float[][] LINE = {{0.35f, 0.45f, 0.60f}, {0.40f, 0.65f, 0.95f}, {0.50f, 0.75f, 1.00f}, {0.60f, 0.82f, 1.00f}, {0.75f, 0.90f, 1.00f}, {0.90f, 0.95f, 1.00f},
+			{0.92f, 0.96f, 1.00f}, {0.85f, 0.75f, 1.00f}, {0.95f, 0.90f, 1.00f}, {1.00f, 0.88f, 0.80f}, {1.00f, 0.92f, 0.60f}};
+	private static final float[] LINE_ALPHA = {0.50f, 0.60f, 0.68f, 0.72f, 0.76f, 0.80f, 0.82f, 0.84f, 0.86f, 0.88f, 0.92f};
+	private static final float[] AURORA = {0, 0, 0, 0.18f, 0.40f, 0.45f, 0.48f, 0.52f, 0.55f, 0.58f, 0.65f};
 	/** Black mist around the Nascent Soul, Early to Grand Perfection. */
 	private static final float[] MIST = {0.75f, 0.50f, 0.28f, 0.08f};
 
@@ -115,7 +120,7 @@ public class InnerRealmSkyRenderer implements DimensionRenderingRegistry.SkyRend
 			additive();
 			if (AURORA[tier] > 0) drawAurora(pose, AURORA[tier], time);
 			drawLeylines(pose, mc.player.getUUID(), tier, progress, time);
-			if (tier >= Realm.HEAVENLY_BEING.ordinal()) drawPillars(pose, tier == Realm.FOUR_AXIS.ordinal() ? 8 : 6, time);
+			if (tier >= Realm.HEAVENLY_BEING.ordinal()) drawPillars(pose, tier >= Realm.FOUR_AXIS.ordinal() ? 8 : 6, time);
 			if (tier >= Realm.FOUR_AXIS.ordinal()) drawRisingLines(pose, time);
 
 			if (tier < Realm.CORE_FORMATION.ordinal()) {

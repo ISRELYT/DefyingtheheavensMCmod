@@ -233,10 +233,9 @@ public final class Formations {
 
 	// --- Breaking through ---
 
-	/** A player's cultivation rank as a formation weighs it: their sustained rank, or -1 for a mortal. */
+	/** A player's cultivation rank as a formation weighs it: their sustained rank by either path (TwoPaths#weighedRank), or -1 for a mortal. */
 	public static int rankOf(Player player) {
-		PlayerCultivation c = CultivationManager.forPlayer(player);
-		return c.isMortal() ? -1 : c.sustainedRank();
+		return TwoPaths.weighedRank(CultivationManager.forPlayer(player));
 	}
 
 	/** Strong enough to force a way through (or simply let through). */

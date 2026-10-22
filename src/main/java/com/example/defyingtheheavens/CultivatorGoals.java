@@ -849,7 +849,78 @@ public final class CultivatorGoals {
 		}
 	}
 
-	/** A rogue's idle life: strolling about, and sitting down to meditate now and then. */
+	/** How far a settler strays from its home ground before it heads back (Settlements). */
+	public static final int SETTLER_ROAM = 18;
+
+	/**
+	 * A settler's people are threatened (a Merit wish's threat out: Settlements#alarmed): it goes home, into its hut (or to the well,
+	 * with no hut standing), and keeps there until the threat is gone, leaving it to the one who took it on (the user's ask,
+	 * 2026-10-20: two were drawn into a fight and wandered off with it). Its everyday life waits meanwhile (no strolls, no chats,
+	 * no meditating out of doors), and it fights back against none of the threat's creatures (RetaliateGoal); a player may still talk
+	 * with it there.
+	 */
+	public static class ShelterGoal extends Goal {
+		/** Within this of its shelter it is home. */
+		private static final double HOME = 1.2;
+		private final CultivatorNpc npc;
+		private BlockPos shelter;
+		private int repath;
+
+		public ShelterGoal(CultivatorNpc npc) {
+			this.npc = npc;
+			setFlags(EnumSet.of(Flag.MOVE));
+		}
+
+		/** Whether {@code npc}'s people are threatened now: a settler on its world, its own threat raised again after a restart. */
+		static boolean threatened(CultivatorNpc npc) {
+			BlockPos well = npc.settledAt();
+			if (well == null || npc.level().dimension() != ModDimensions.ASTRAL_SURFACES || npc.isVacant()) return false;
+			long now = npc.level().getGameTime();
+			if (npc.tickCount % 40 == 0) {
+				long until = Wishes.threatUntil(npc);
+				if (until > now) Settlements.raiseAlarm(npc, until);
+			}
+			return Settlements.alarmed(well, now);
+		}
+
+		@Override
+		public boolean canUse() {
+			return threatened(npc) && !npc.shouldFlee() && npc.getTarget() == null;
+		}
+
+		@Override
+		public boolean canContinueToUse() {
+			return threatened(npc) && !npc.shouldFlee() && npc.getTarget() == null;
+		}
+
+		@Override
+		public void start() {
+			shelter = Settlements.shelterFor(npc);
+			repath = 0;
+			npc.setMeditating(false);
+			NpcLife.end(npc);
+		}
+
+		@Override
+		public void tick() {
+			if (shelter == null) return;
+			if (npc.position().distanceToSqr(Vec3.atBottomCenterOf(shelter)) <= HOME * HOME) {
+				npc.getNavigation().stop(); // home: it keeps there
+				return;
+			}
+			if (--repath <= 0 || npc.getNavigation().isDone()) {
+				repath = 20;
+				npc.getNavigation().moveTo(shelter.getX() + 0.5, shelter.getY(), shelter.getZ() + 0.5, 1.0);
+			}
+		}
+
+		@Override
+		public void stop() {
+			shelter = null;
+		}
+	}
+
+	/** A rogue's idle life: strolling about, and sitting down to meditate now and then; a settler near its home ground. */
 	public static class WanderGoal extends Goal {
 		private final CultivatorNpc npc;
 		private int meditate;
@@ -885,7 +956,15 @@ public final class CultivatorGoals {
 				return;
 			}
 			if (npc.getRandom().nextInt(60) != 0) return;
-			Vec3 spot = LandRandomPos.getPos(npc, 14, 6);
+			// A settler (Settlements) keeps to its home ground: strayed too far, it walks back toward it. Its home is on the Astral
+			// Realm's worlds: carried off anywhere else (a soul took its body there), it has none to walk to.
+			net.minecraft.core.BlockPos home = npc.level().dimension() == ModDimensions.ASTRAL_SURFACES ? npc.settledAt() : null;
+			if (home != null && npc.blockPosition().distSqr(home) > SETTLER_ROAM * SETTLER_ROAM) {
+				Vec3 back = LandRandomPos.getPosTowards(npc, 10, 6, Vec3.atBottomCenterOf(home));
+				if (back != null) npc.getNavigation().moveTo(back.x, back.y, back.z, 0.8);
+				return;
+			}
+			Vec3 spot = LandRandomPos.getPos(npc, home != null ? 8 : 14, 6);
 			if (spot != null) {
 				strolls++;
 				npc.getNavigation().moveTo(spot.x, spot.y, spot.z, 0.8);
@@ -1094,6 +1173,8 @@ public final class CultivatorGoals {
 		@Override
 		public boolean canUse() {
 			LivingEntity attacker = npc.getLastHurtByMob();
+			// A settler leaves what preys on its people (a Merit wish's threat) to the one who took it on: home, not after it (ShelterGoal).
+			if (attacker != null && npc.settledAt() != null && Wishes.isThreat(attacker)) return false;
 			return attacker != null && !npc.isAlly(attacker) && !npc.shouldFlee() && super.canUse();
 		}
 
@@ -1123,7 +1204,7 @@ public final class CultivatorGoals {
 	/**
 	 * Goes for enemies of its path on sight: players and NPCs of the opposing path within sight (16 blocks), or within its open
 	 * domain even through walls. Sect members only within their territory; never Elders or the Master (they answer calls),
-	 * never in seclusion or on a journey.
+	 * never in seclusion or on a journey, never a settler.
 	 */
 	public static class HostilityGoal extends Goal {
 		private final CultivatorNpc npc;
@@ -1136,6 +1217,11 @@ public final class CultivatorGoals {
 
 		private boolean wants(LivingEntity target) {
 			if (npc.isConcealed() || npc.shouldFlee()) return false;
+			// A settler (Settlements) is of the lower realms' common folk: it seeks no fight, only defends itself (RetaliateGoal), and
+			// leaves what preys on its people to the one who took it on (Wishes).
+			if (npc.settledAt() != null) return false;
+			// What preys on them (a Merit wish's threat) is out for the one who took it on, and nobody else: not the settlers.
+			if (Wishes.isThreat(npc)) return target instanceof Player player && player.getUUID().equals(Wishes.takerOf(npc)) && npc.isEnemy(target);
 			CultivatorNpc.Lifecycle life = npc.getLifecycle();
 			if (life != CultivatorNpc.Lifecycle.SECT && life != CultivatorNpc.Lifecycle.ROGUE) return false;
 			if (npc.getTitle().isElderOrAbove()) return false;

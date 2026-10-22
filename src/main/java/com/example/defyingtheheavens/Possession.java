@@ -444,7 +444,7 @@ public final class Possession {
 					// rank's afresh); and so is the path its deeds turned it to.
 					int rank = t.record.isMortal() ? CultivatorNpc.MORTAL : PlayerCultivation.rank(t.record.getRealm(), t.record.getStage());
 					double progress = t.record.getCultivation();
-					if (rank != npc.getRank()) npc.setRank(rank);
+					if (rank != npc.getRank()) npc.setRank(rank, true); // what a player's soul cultivated, whatever room its world has (HighRealms)
 					if (rank >= 0) npc.cultivation().setState(npc.cultivation().getRealm(), npc.cultivation().getStage(), progress);
 					npc.setAlignment(t.record.getAlignment());
 					giveTo(npc, body);

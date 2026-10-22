@@ -470,7 +470,8 @@ public final class SectManager {
 		Realm seal = treasurySeal(level, sect);
 		if (seal == null) return false;
 		PlayerCultivation c = CultivationManager.get(player);
-		if (c.isMortal() || c.getEffectiveRealm().ordinal() <= seal.ordinal()) return false;
+		// By the stronger of their two paths, the body's (as a ghost palace's seal is: PalaceTreasury#touch).
+		if (c.isMortal() || TwoPaths.wieldedRealm(c).ordinal() <= seal.ordinal()) return false;
 		sect.sealBrokenUntil = level.getGameTime() + SEAL_RECAST;
 		dirty(level.getServer());
 		level.sendParticles(ParticleTypes.ENCHANT, at.getX() + 0.5, at.getY() + 0.8, at.getZ() + 0.5, 30, 0.5, 0.4, 0.5, 0.6);

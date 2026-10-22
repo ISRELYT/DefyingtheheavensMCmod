@@ -2,14 +2,18 @@ package com.example.defyingtheheavens;
 
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
  * Op-only testing helpers: /cultivation set <realm 1-6> <stage 1-4>, /cultivation addcultivation <amount>, /cultivation setqi
- * <amount> (the qi pool, capped at its maximum). Setting a cultivator back to or below Qi Refining Mid (or mortal) takes back the
+ * <amount> (the qi pool, capped at its maximum), /cultivation lifespan [set <years>] (Lifespan), /cultivation obsession [set <one|none>]
+ * (Obsession). Setting a cultivator back to or below Qi Refining Mid (or mortal) takes back the
  * heavens' leave and Favour, so the Ritual to the Heavens is asked again. Set leaves every heaven method known understood exactly as
  * far as the stage set (HeavenMethods#alignTo), nothing left to settle.
  */
@@ -95,7 +99,55 @@ public final class CultivationCommand {
 									ctx.getSource().sendSuccess(() -> Component.literal("Stat points given back: "
 											+ StatPoints.unspent(CultivationManager.get(p)) + " to spend."), false);
 									return 1;
-								}))));
+								}))
+						// Lifespan (Lifespan): how many years are used of how many; set the years used (the age, alive or dead), which
+						// ends the life at once if they reach the span.
+						.then(Commands.literal("lifespan")
+								.executes(ctx -> {
+									ServerPlayer p = ctx.getSource().getPlayerOrException();
+									PlayerCultivation c = CultivationManager.own(p);
+									ctx.getSource().sendSuccess(() -> Lifespan.endless(c)
+											? Component.translatable(ModLang.CMD_LIFESPAN_ENDLESS, p.getDisplayName(), Math.round(Lifespan.used(c)))
+											: Component.translatable(ModLang.CMD_LIFESPAN, p.getDisplayName(),
+											Math.round(Lifespan.used(c)), Math.round(Lifespan.span(c)), Math.round(Lifespan.left(c))), false);
+									return 1;
+								})
+								.then(Commands.literal("set")
+										.then(Commands.argument("years", DoubleArgumentType.doubleArg(0))
+												.executes(ctx -> {
+													ServerPlayer p = ctx.getSource().getPlayerOrException();
+													PlayerCultivation c = CultivationManager.own(p);
+													c.setAge(DoubleArgumentType.getDouble(ctx, "years"));
+													CultivationManager.markDirty(p.server);
+													CultivationManager.sync(p);
+													Lifespan.check(p);
+													return 1;
+												}))))
+						.then(obsession())));
+	}
+
+	/** /cultivation obsession [set <longevity|fortune|merit|enlightenment|none>] (Obsession): which is named, or name one (none: asked again). */
+	private static LiteralArgumentBuilder<CommandSourceStack> obsession() {
+		LiteralArgumentBuilder<CommandSourceStack> set = Commands.literal("set");
+		for (FourAxis.Axis axis : FourAxis.Axis.values()) set.then(Commands.literal(axis.getId()).executes(ctx -> setObsession(ctx.getSource(), axis)));
+		set.then(Commands.literal("none").executes(ctx -> setObsession(ctx.getSource(), null)));
+		return Commands.literal("obsession").executes(ctx -> reportObsession(ctx.getSource())).then(set);
+	}
+
+	private static int setObsession(CommandSourceStack source, FourAxis.Axis obsession) throws CommandSyntaxException {
+		ServerPlayer p = source.getPlayerOrException();
+		CultivationManager.get(p).setObsession(obsession);
+		CultivationManager.markDirty(p.server);
+		CultivationManager.sync(p);
+		return reportObsession(source);
+	}
+
+	private static int reportObsession(CommandSourceStack source) throws CommandSyntaxException {
+		ServerPlayer p = source.getPlayerOrException();
+		FourAxis.Axis obsession = CultivationManager.get(p).obsession();
+		source.sendSuccess(() -> obsession == null ? Component.translatable(ModLang.CMD_OBSESSION_NONE, p.getDisplayName())
+				: Component.translatable(ModLang.CMD_OBSESSION, p.getDisplayName(), Obsession.displayName(obsession), Obsession.boon(obsession)), false);
+		return 1;
 	}
 
 	private CultivationCommand() {}

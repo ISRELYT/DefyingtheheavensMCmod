@@ -24,6 +24,18 @@
       "model": "defying-the-heavens:block/method_stele_ghost_fire_scripture_upper",
       "y": 90
     },
+    "facing=east,method=hell_forged_vessel_sutra,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_hell_forged_vessel_sutra_lower",
+      "y": 90
+    },
+    "facing=east,method=hell_forged_vessel_sutra,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_hell_forged_vessel_sutra_middle",
+      "y": 90
+    },
+    "facing=east,method=hell_forged_vessel_sutra,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_hell_forged_vessel_sutra_upper",
+      "y": 90
+    },
     "facing=east,method=netherworld_breathing,part=lower": {
       "model": "defying-the-heavens:block/method_stele_netherworld_breathing_lower",
       "y": 90
@@ -34,6 +46,18 @@
     },
     "facing=east,method=netherworld_breathing,part=upper": {
       "model": "defying-the-heavens:block/method_stele_netherworld_breathing_upper",
+      "y": 90
+    },
+    "facing=east,method=netherworld_immortal_canon,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_netherworld_immortal_canon_lower",
+      "y": 90
+    },
+    "facing=east,method=netherworld_immortal_canon,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_netherworld_immortal_canon_middle",
+      "y": 90
+    },
+    "facing=east,method=netherworld_immortal_canon,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_netherworld_immortal_canon_upper",
       "y": 90
     },
     "facing=east,method=nine_nether_soul_sutra,part=lower": {
@@ -58,6 +82,42 @@
     },
     "facing=east,method=six_paths_canon,part=upper": {
       "model": "defying-the-heavens:block/method_stele_six_paths_canon_upper",
+      "y": 90
+    },
+    "facing=east,method=ten_thousand_ghosts_union,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_ten_thousand_ghosts_union_lower",
+      "y": 90
+    },
+    "facing=east,method=ten_thousand_ghosts_union,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_ten_thousand_ghosts_union_middle",
+      "y": 90
+    },
+    "facing=east,method=ten_thousand_ghosts_union,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_ten_thousand_ghosts_union_upper",
+      "y": 90
+    },
+    "facing=east,method=underworld_nirvana_scripture,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_underworld_nirvana_scripture_lower",
+      "y": 90
+    },
+    "facing=east,method=underworld_nirvana_scripture,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_underworld_nirvana_scripture_middle",
+      "y": 90
+    },
+    "facing=east,method=underworld_nirvana_scripture,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_underworld_nirvana_scripture_upper",
+      "y": 90
+    },
+    "facing=east,method=void_rending_nether_canon,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_void_rending_nether_canon_lower",
+      "y": 90
+    },
+    "facing=east,method=void_rending_nether_canon,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_void_rending_nether_canon_middle",
+      "y": 90
+    },
+    "facing=east,method=void_rending_nether_canon,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_void_rending_nether_canon_upper",
       "y": 90
     },
     "facing=east,method=wandering_soul_steps,part=lower": {
@@ -120,6 +180,18 @@
       "model": "defying-the-heavens:block/method_stele_ghost_fire_scripture_upper",
       "y": 0
     },
+    "facing=north,method=hell_forged_vessel_sutra,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_hell_forged_vessel_sutra_lower",
+      "y": 0
+    },
+    "facing=north,method=hell_forged_vessel_sutra,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_hell_forged_vessel_sutra_middle",
+      "y": 0
+    },
+    "facing=north,method=hell_forged_vessel_sutra,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_hell_forged_vessel_sutra_upper",
+      "y": 0
+    },
     "facing=north,method=netherworld_breathing,part=lower": {
       "model": "defying-the-heavens:block/method_stele_netherworld_breathing_lower",
       "y": 0
@@ -130,6 +202,18 @@
     },
     "facing=north,method=netherworld_breathing,part=upper": {
       "model": "defying-the-heavens:block/method_stele_netherworld_breathing_upper",
+      "y": 0
+    },
+    "facing=north,method=netherworld_immortal_canon,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_netherworld_immortal_canon_lower",
+      "y": 0
+    },
+    "facing=north,method=netherworld_immortal_canon,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_netherworld_immortal_canon_middle",
+      "y": 0
+    },
+    "facing=north,method=netherworld_immortal_canon,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_netherworld_immortal_canon_upper",
       "y": 0
     },
     "facing=north,method=nine_nether_soul_sutra,part=lower": {
@@ -154,6 +238,42 @@
     },
     "facing=north,method=six_paths_canon,part=upper": {
       "model": "defying-the-heavens:block/method_stele_six_paths_canon_upper",
+      "y": 0
+    },
+    "facing=north,method=ten_thousand_ghosts_union,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_ten_thousand_ghosts_union_lower",
+      "y": 0
+    },
+    "facing=north,method=ten_thousand_ghosts_union,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_ten_thousand_ghosts_union_middle",
+      "y": 0
+    },
+    "facing=north,method=ten_thousand_ghosts_union,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_ten_thousand_ghosts_union_upper",
+      "y": 0
+    },
+    "facing=north,method=underworld_nirvana_scripture,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_underworld_nirvana_scripture_lower",
+      "y": 0
+    },
+    "facing=north,method=underworld_nirvana_scripture,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_underworld_nirvana_scripture_middle",
+      "y": 0
+    },
+    "facing=north,method=underworld_nirvana_scripture,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_underworld_nirvana_scripture_upper",
+      "y": 0
+    },
+    "facing=north,method=void_rending_nether_canon,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_void_rending_nether_canon_lower",
+      "y": 0
+    },
+    "facing=north,method=void_rending_nether_canon,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_void_rending_nether_canon_middle",
+      "y": 0
+    },
+    "facing=north,method=void_rending_nether_canon,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_void_rending_nether_canon_upper",
       "y": 0
     },
     "facing=north,method=wandering_soul_steps,part=lower": {
@@ -216,6 +336,18 @@
       "model": "defying-the-heavens:block/method_stele_ghost_fire_scripture_upper",
       "y": 180
     },
+    "facing=south,method=hell_forged_vessel_sutra,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_hell_forged_vessel_sutra_lower",
+      "y": 180
+    },
+    "facing=south,method=hell_forged_vessel_sutra,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_hell_forged_vessel_sutra_middle",
+      "y": 180
+    },
+    "facing=south,method=hell_forged_vessel_sutra,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_hell_forged_vessel_sutra_upper",
+      "y": 180
+    },
     "facing=south,method=netherworld_breathing,part=lower": {
       "model": "defying-the-heavens:block/method_stele_netherworld_breathing_lower",
       "y": 180
@@ -226,6 +358,18 @@
     },
     "facing=south,method=netherworld_breathing,part=upper": {
       "model": "defying-the-heavens:block/method_stele_netherworld_breathing_upper",
+      "y": 180
+    },
+    "facing=south,method=netherworld_immortal_canon,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_netherworld_immortal_canon_lower",
+      "y": 180
+    },
+    "facing=south,method=netherworld_immortal_canon,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_netherworld_immortal_canon_middle",
+      "y": 180
+    },
+    "facing=south,method=netherworld_immortal_canon,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_netherworld_immortal_canon_upper",
       "y": 180
     },
     "facing=south,method=nine_nether_soul_sutra,part=lower": {
@@ -250,6 +394,42 @@
     },
     "facing=south,method=six_paths_canon,part=upper": {
       "model": "defying-the-heavens:block/method_stele_six_paths_canon_upper",
+      "y": 180
+    },
+    "facing=south,method=ten_thousand_ghosts_union,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_ten_thousand_ghosts_union_lower",
+      "y": 180
+    },
+    "facing=south,method=ten_thousand_ghosts_union,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_ten_thousand_ghosts_union_middle",
+      "y": 180
+    },
+    "facing=south,method=ten_thousand_ghosts_union,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_ten_thousand_ghosts_union_upper",
+      "y": 180
+    },
+    "facing=south,method=underworld_nirvana_scripture,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_underworld_nirvana_scripture_lower",
+      "y": 180
+    },
+    "facing=south,method=underworld_nirvana_scripture,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_underworld_nirvana_scripture_middle",
+      "y": 180
+    },
+    "facing=south,method=underworld_nirvana_scripture,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_underworld_nirvana_scripture_upper",
+      "y": 180
+    },
+    "facing=south,method=void_rending_nether_canon,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_void_rending_nether_canon_lower",
+      "y": 180
+    },
+    "facing=south,method=void_rending_nether_canon,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_void_rending_nether_canon_middle",
+      "y": 180
+    },
+    "facing=south,method=void_rending_nether_canon,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_void_rending_nether_canon_upper",
       "y": 180
     },
     "facing=south,method=wandering_soul_steps,part=lower": {
@@ -312,6 +492,18 @@
       "model": "defying-the-heavens:block/method_stele_ghost_fire_scripture_upper",
       "y": 270
     },
+    "facing=west,method=hell_forged_vessel_sutra,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_hell_forged_vessel_sutra_lower",
+      "y": 270
+    },
+    "facing=west,method=hell_forged_vessel_sutra,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_hell_forged_vessel_sutra_middle",
+      "y": 270
+    },
+    "facing=west,method=hell_forged_vessel_sutra,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_hell_forged_vessel_sutra_upper",
+      "y": 270
+    },
     "facing=west,method=netherworld_breathing,part=lower": {
       "model": "defying-the-heavens:block/method_stele_netherworld_breathing_lower",
       "y": 270
@@ -322,6 +514,18 @@
     },
     "facing=west,method=netherworld_breathing,part=upper": {
       "model": "defying-the-heavens:block/method_stele_netherworld_breathing_upper",
+      "y": 270
+    },
+    "facing=west,method=netherworld_immortal_canon,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_netherworld_immortal_canon_lower",
+      "y": 270
+    },
+    "facing=west,method=netherworld_immortal_canon,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_netherworld_immortal_canon_middle",
+      "y": 270
+    },
+    "facing=west,method=netherworld_immortal_canon,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_netherworld_immortal_canon_upper",
       "y": 270
     },
     "facing=west,method=nine_nether_soul_sutra,part=lower": {
@@ -346,6 +550,42 @@
     },
     "facing=west,method=six_paths_canon,part=upper": {
       "model": "defying-the-heavens:block/method_stele_six_paths_canon_upper",
+      "y": 270
+    },
+    "facing=west,method=ten_thousand_ghosts_union,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_ten_thousand_ghosts_union_lower",
+      "y": 270
+    },
+    "facing=west,method=ten_thousand_ghosts_union,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_ten_thousand_ghosts_union_middle",
+      "y": 270
+    },
+    "facing=west,method=ten_thousand_ghosts_union,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_ten_thousand_ghosts_union_upper",
+      "y": 270
+    },
+    "facing=west,method=underworld_nirvana_scripture,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_underworld_nirvana_scripture_lower",
+      "y": 270
+    },
+    "facing=west,method=underworld_nirvana_scripture,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_underworld_nirvana_scripture_middle",
+      "y": 270
+    },
+    "facing=west,method=underworld_nirvana_scripture,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_underworld_nirvana_scripture_upper",
+      "y": 270
+    },
+    "facing=west,method=void_rending_nether_canon,part=lower": {
+      "model": "defying-the-heavens:block/method_stele_void_rending_nether_canon_lower",
+      "y": 270
+    },
+    "facing=west,method=void_rending_nether_canon,part=middle": {
+      "model": "defying-the-heavens:block/method_stele_void_rending_nether_canon_middle",
+      "y": 270
+    },
+    "facing=west,method=void_rending_nether_canon,part=upper": {
+      "model": "defying-the-heavens:block/method_stele_void_rending_nether_canon_upper",
       "y": 270
     },
     "facing=west,method=wandering_soul_steps,part=lower": {

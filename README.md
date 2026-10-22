@@ -301,6 +301,9 @@ ingredients back out); an empty bucket takes the water back.
 | Cultivation Pill | Ginseng, Huangjing, Glistering Melon Slice | 30 s | A share of the current stage's cultivation |
 | Foundation Pill | Ginseng, Lingzhi, Spirit Ginseng, Jade | 45 s | Needed to break into Foundation Building |
 | Core Pill | Spirit Ginseng, Spirit Lotus, Cultivation Fruit, Blaze Powder | 60 s | Needed to break into Core Formation |
+| Longevity Pill | 2 Lingzhi, Huangjing, Golden Apple | 40 s | +20 years of lifespan per point of potency; each one taken in a life works half as well as the one before (Lifespan) |
+
+The **Rebirth Pill** is no brew: it's found in the Upper Realm (Lifespan, below).
 
 - **Grade.** Each pill comes out Low, Mid, High, Supreme or Immortal grade (white, green, aqua, purple, gold). The odds
   depend on the average age of the aged ingredients (the herbs, Cultivation Fruit): fresh ones give mostly Low; Immortal
@@ -330,29 +333,45 @@ ingredients back out); an empty bucket takes the water back.
 
 Every player is born with a **physique**, rolled the first time they join, told in chat and written in the journal; the
 Stats tab names it (and its roots), with its grade's colour. An op can change it: `/physique get|set <id>|reroll [player]`.
-The rarer the grade, the rarer the roll (out of about 100 births):
+The rarer the grade, the rarer the roll. Out of every 100 births (evened out 2026-10-20, the user's ask): **Low 56, Mid 24,
+High 12, Supreme 5, Immortal 3**. The grade is the body's **talent** (2026-10-21/22): what the years meditation costs are divided
+by, Low x1, Mid x1.5, High x2.1, Supreme x4.5, Immortal x16 (Lifespan: the talent race), and a small edge to its pace on both
+paths on top of the body's own, Low x1, Mid x1.1, High x1.2, Supreme x1.35, Immortal x1.5 (`Physique.Grade#talent`, `#speed`).
 
 | Physique | Grade | Births | What it does |
 |---|---|---|---|
-| Five Elements Spiritual Roots | Low | 24 | Any element's methods, at the ordinary pace |
-| Mortal Body | Low | 20 | Nothing |
+| Five Elements Spiritual Roots | Low | 40 | Any element's methods, at the ordinary pace: the plain body (it took the old Mortal Body's share, removed 2026-10-19 as the same body; a save that names it reads as this) |
 | Cursed Meridian Body | Low | 10 | Qi gathered 0.8 times as fast into a pool 0.8 times as deep |
-| Shattered Meridians | Low | 6 | Can't cultivate: no heaven methods, no Marrow Cleansing Elixir. **Body refining** instead: past Mortal Peak, eight stages (Copper Skin, Iron Flesh, Steel Sinew, Jade Bone, Silver Marrow, Golden Blood, Diamond Heart, Indestructible Body), each a body as strong as a cultivator's a stage higher, the last Core Formation Early's; tempered as a mortal is, and by meditation |
-| Three Elements Spiritual Roots | Mid | 9 | Methods of three elements only, cultivated 1.5 times as fast |
-| Heaven Sacred Body | Mid | 6 | No Ritual to the Heavens wanted at Qi Refining Mid; heaven methods 1.2 times as fast |
-| Yin Soul Body | Mid | 5 | Yin corruption never takes hold |
-| Innate Alchemy Body | Mid | 5 | Pills and elixirs brewed by its hands (it put in the last ingredient) work twice as strongly |
-| True Element Spiritual Root | High | 4 | One element's methods only, twice as fast |
-| Innate Consciousness Body | High | 3 | A Consciousness Domain as wide as a Four Axis cultivator's (160) from the day it opens; it never grows |
+| Shattered Meridians | Low | 6 | Can't cultivate: no heaven methods, no Marrow Cleansing Elixir. **Body refining** instead: past Mortal Peak, eight stages (Copper Skin, Iron Flesh, Steel Sinew, Jade Bone, Silver Marrow, Golden Blood, Diamond Heart, Indestructible Body), each a body as strong as a cultivator's a stage higher, the last Core Formation Early's; tempered as a mortal is, and by meditation. It lives as long as that cultivator too (Lifespan, below) |
+| Three Elements Spiritual Roots | Mid | 7 | Methods of three elements only, cultivated 1.5 times as fast |
+| Heaven Sacred Body | Mid | 5 | No Ritual to the Heavens wanted at Qi Refining Mid; heaven methods 1.2 times as fast |
+| Yin Soul Body | Mid | 4 | Yin corruption never takes hold; the ghost path 1.2 times as fast |
+| Innate Alchemy Body | Mid | 4 | Pills and elixirs brewed by its hands (it put in the last ingredient) work twice as strongly |
+| Spirit-Eye Body | Mid | 4 | Sees souls and the dead from its first day, a mortal's too, as the Ghost Eye does (outside the Netherworld; the dead and the Method Steles through walls within 32 blocks), clearly and for nothing |
+| True Element Spiritual Root | High | 3 | One element's methods only, twice as fast |
+| Innate Consciousness Body | High | 2 | A Consciousness Domain as wide as a Four Axis cultivator's (160) from the day it opens; it never grows |
 | Blessed Meridian Body | High | 3 | Qi gathered 1.5 times as fast into a pool 1.5 times as deep; Qi Sense from a mortal's first day |
-| Jade Poison Body | Supreme | 3 | No medicinal toxicity; a pill's or fruit's qi refined the moment it is taken (what doesn't fit before a bottleneck waits) |
-| Fallen True Immortal | Immortal | 0.8 | Any element; both paths five times as fast; a method's new layers need no settling |
-| Ghost Devil Body | Immortal | 0.8 | The ghost path twice as fast; a Ghost King's form of its own anywhere from the start (held to its ghost path's might while shown); a Ghost King when dead; learning a ghost foundation of Core Formation or deeper takes the ghost path straight to that realm's Early |
-| Heavenly Thunder Body | Immortal | 0.4 | A tribulation's lightning feeds it: no harm, the qi pool filled, and the strikes bank up to 60% of the new stage's cultivation for the breakthrough |
+| Nine Yang Body | High | 2 | Fire and lava never burn it (its flames go out; a star's heat is fire too); heaven methods 1.3 times as fast, the ghost path at half the pace |
+| Starborn Body | High | 2 | The void bears it from **Core Formation** (others need Nascent Soul); a star's heat never burns it; space's thin qi is whole to it (x1, not x0.25); it flies through space 1.5 times as fast, and pays the years of its flight there by as much less (a year every 150 blocks) |
+| Jade Poison Body | Supreme | 1.25 | No medicinal toxicity; a pill's or fruit's qi refined the moment it is taken (what doesn't fit before a bottleneck waits); no poison nor wither takes hold of it, and its blows poison (5 s: I, II from Core Formation, III from Heavenly Being) |
+| Ancient Holy Body | Supreme | 1.25 | Health (the whole of it) and strength 1.3 times; a tribulation's strikes three quarters as strong; tempering twice as fast |
+| Blood Demon Body | Supreme | 1.25 | Heals by 15% of the health its blows take (spells too) |
+| Hundred Refinements Body | Supreme | 1.25 | One stat point more at every breakthrough |
+| Fallen True Immortal | Immortal | 0.6 | Any element; both paths five times as fast; a method's new layers need no settling |
+| Ghost Devil Body | Immortal | 0.6 | The ghost path twice as fast; a Ghost King's form of its own anywhere from the start (held to its ghost path's might while shown); a Ghost King when dead; learning a ghost foundation of Core Formation or deeper takes the ghost path straight to that realm's Early |
+| Heaven-Defying Body | Immortal | 0.5 | **The heavens can't strike it down**: a tribulation's killing strike leaves it one heart, and the tribulation fails (the dead don't scatter for it). **No failed tribulation costs it a stage** (the user's, 2026-10-20): struck down, fled or killed by something else, it keeps its stage, its cultivation and any breakthrough pill taken, and may face the heavens again at once. The lifespan tribulation (Lifespan) is another thing: it dies to that as anyone does, and its life is ended. No Ritual to the Heavens wanted. Heaven methods 0.75 times as fast, and the righteous think 15 less of it |
+| Primordial Chaos Body | Immortal | 0.4 | Meditation feeds **both paths at once**, each at its full pace (the living, the ghost path begun); no element barred; its spells (the heaven methods' qi, the ghost path's harm) strike a quarter harder. The heavens hate it: every tribulation strikes half as many times again (rounded up: Core Formation's 6 become 9, Four Axis's 100 become 150), at its realm's pace, so it takes the longer; its lifespan tribulation strikes half as often again |
+| Soul-Devouring Body | Immortal | 0.4 | Every cultivator it slays, NPC or player, gives it a tenth of what the victim's stage takes, on the path it cultivates (as far as fits before a bottleneck); a player it slays loses a stage of their own, on their higher path (the user's ask, 2026-10-20: a friend killed again and again to feed one pays for every time); each righteous or neutral one drags its alignment 10 toward the demonic; the righteous think 20 less of it |
+| Heavenly Thunder Body | Immortal | 0.3 | A tribulation's lightning feeds it: no harm, the qi pool filled, and the strikes bank up to 60% of the new stage's cultivation for the breakthrough. The lifespan tribulation's it drinks whole only up to half its power (cultivation into its bar), less and less after: at the last it is too much even for this body |
+| Eternal Reincarnation Body | Immortal | 0.1 | Reborn (a life spent, a soul scattered, a Rebirth Pill) it keeps **this body, its methods and half its realm on each path** (Four Axis and Heavenly Being to Core Formation, Nascent Soul and Core Formation to Foundation Building, at Early, none of it cultivated, the methods understood no deeper); the rarest, with the next |
+| Myriad Form Body | Immortal | 0.1 | Born with **two more physiques** of Mid to Supreme grade, by their weights, with all their gifts (paces and pools multiply); never a pair that clashes: at most one of roots (Three or True Element), never the Nine Yang with the Yin Soul |
 
 Roots' elements are drawn at birth, the elements of any methods already known first (so a save from before keeps its methods);
-an element limit never touches the ghost path. A player already cultivating is never given Shattered Meridians. Code:
-`Physique`, `Physiques` (the roll, the command), `BodyRefining`; tests `PhysiqueGameTests`.
+a Myriad Form Body's form of roots gives the body its roots. An element limit never touches the ghost path. A player already
+cultivating is never given Shattered Meridians. Code asks `PlayerCultivation#hasPhysique` (a Myriad Form Body's forms count), its
+`physiqueCultivationFactor` / `GhostFactor` / `QiFactor`; `Physique`, `Physiques` (the roll, the command, the gifts that live in no
+other system: fire, poison, blood, devouring, Chaos's spells, the righteous's unease), `BodyRefining`; tests `PhysiqueGameTests`,
+`PhysiquesPillsGameTests`.
 
 ## Stat points
 
@@ -376,20 +395,251 @@ do the same. The methods' layers settle from the same gain, so Insight speeds th
 They're spent on the **Stat Points** page of the Stats tab (the two pages are buttons at its top; the Points button turns
 gold, with the count, while there are points to spend): each stat with its points, what they give, and a **+** (shift-click:
 five). The six stats' spread is drawn as a hexagon, each corner a stat, the gold shape reaching toward it as far as its points
-go against the most in any one. Should cultivation fall back below what was spent (a golden core detonated, the Chief Judge's
-gaze), every point is given back to spend again, and you're told. An op can take back all their own with `/cultivation
+go against the most in any one. **A point spent is locked in** (the user's rule, 2026-10-19). Should cultivation fall back below
+what was spent (a golden core detonated, the Chief Judge's gaze), only the points the lost stages gave are taken back, **the
+last put in first**; everything spent before the stage you fell to stays where it is, and you're told how many went. Climb
+back and those points are earned again, to spend anew (`PlayerCultivation#statPointOrder`, saved). An op can take back all their own with `/cultivation
 resetstats`. Code: `StatPoints` (the attribute modifiers, and the shared factors the pools and gathering read), client
 `CultivationScreen#renderStatPoints`; tests `StatPointsGameTests`.
+
+## Lifespan
+
+Everyone ages (the user's ask, 2026-10-19): **a year for every game day** spent online (20 minutes), from **16**. A mortal
+has **100 years**; each realm reached adds its years on top of all those before it, by the **higher of the two paths**:
+
+| Realm | Years it adds | Lifespan at it |
+|---|---|---|
+| Mortal / Qi Refining | none | 100 |
+| Foundation Building | +200 | 300 |
+| Core Formation | +400 | 700 |
+| Nascent Soul | +600 | 1,300 |
+| Heavenly Being | +1,200 | 2,500 |
+| Four Axis | +10,000 | 12,500 |
+| Dao Integration | +100,000 | 112,500 |
+| Void Shattering | +10 million | some 10.1 million |
+| Sacred Vessel | +100 million | some 110 million |
+| Entering Nirvana | +10 billion | some 10.1 billion |
+| True Immortal | without end | without end |
+
+The user's years for the realms after Four Axis (2026-10-21). **A True Immortal's years have no end** (`Lifespan#endless`): it no
+longer ages, no lifespan tribulation comes for it, and nothing costs it years: its meditation, flight through space, Life Force; nor
+can its years be drawn out of it, and a Longevity Pill refuses to be wasted on it. Burn Lifespan burns on for nothing (the user's
+call, 2026-10-22: left as it is for now). The Stats tab says "an immortal's years without end".
+
+**Body refining** (Shattered Meridians) counts as the realm each of its stages matches (2026-10-20): Foundation Building's
+years from Jade Bone, Core Formation's at the Indestructible Body.
+
+Years taken from the grateful (the Axis of Longevity's wishes, below) add to it, and so do **Longevity Pills** (Alchemy): 20
+years a point of potency, so 20 for a Low-Grade pill of fresh herbs up to 200 for an Immortal one of 10,000-year herbs (twice by
+an Innate Alchemy Body). Each one taken in a life works **half** as well as the one before (the user's call, 2026-10-20, so no
+one lives forever on pills: a life's Longevity Pills add at most twice the years of the best of them, so take the best first; the
+tooltip says how much less the next will do). Within 10 years of the end you're warned,
+and again at the last; the Stats tab shows your age against your span, in red within ten years. Your age **stops at your
+span's end** (the user's ask, 2026-10-20), so any years you win after it are yours in full.
+
+**The lifespan tribulation** (the user's ask, 2026-10-20; `LifespanTribulation`). A spent life isn't simply over: **the
+heavens come to collect it**, a storm over you that grows for **five minutes** to its full power, its strikes ever faster (one
+every 3 seconds at first, ten a second at the last) and ever heavier (a share of your max health: half a percent at first, two
+fifths at the last), its cloud and bolts **swelling to three times their size**. Nobody bears its full power. Its strikes pass
+armour, enchantments, effects, the heaven methods' wards and totems; healing holds it off for a while (unhealed, most last about
+two minutes), and you can go on **meditating** under it. The whole server is told it has begun, and the HUD shows its power.
+- **Nowhere to hide but the Spatial Gap**: it follows you into every realm, the Netherworld too, but in the gap the heavens
+  lose sight of you and it **waits, as strong as it was**, until you come out. Logging out, it waits the same (it's saved).
+- **It ends with years won again**: a breakthrough into a **new realm** (a Grand Perfection into the next realm's Early; a
+  stage's breakthrough gives no years, so it goes on), or years taken from the grateful (the Axis of Longevity). Your
+  breakthrough's own tribulation strikes on top of it. **No Longevity Pill may be taken under it** (a pill's few years would end
+  it, only for it to begin again from nothing). The server is told you have won new years.
+- **Any death while it runs ends the life whole**, its strike or anything else (a phoenix's rebirth holds off only other
+  deaths, never its own strike): everything cultivated goes with it, both paths, every method, spell and stat point, the axes
+  of virtue, and the body itself (a new physique is rolled), and you come back a mortal of 16. Only the journal remembers, and
+  the Netherworld's own bookkeeping. The death drops your things as any death does, but it doesn't take you to the Netherworld:
+  **you respawn at your own spawn point, alive** (your bed, or the world's spawn). An Eternal Reincarnation Body keeps itself, its
+  methods and half its realm (Physiques, above).
+- **Physiques**: a **Heaven-Defying Body** dies to it like anyone (no heart is left it here); a **Heavenly Thunder Body** drinks
+  its strikes whole up to half power (no harm, its qi full, cultivation into its bar), less and less after, and none at the last,
+  so it dies too; an Ancient Holy Body and Rings of Transcendence soften it as any tribulation; a Primordial Chaos Body is struck
+  half as often again.
+- **A soul out of its body** (Soul Projection, possession): the strikes fall on your **body** where it sits, and its death is the
+  whole life's. No soul goes out under it, and nobody may possess someone under it; one whose body another soul holds ages on
+  (only watching), and when their life runs out the possessor is driven out.
+- **Mortals** face it too. **The dead** face the Netherworld's version (yin lightning from a dark teal storm); struck down under it
+  (by it or anything else), the soul **scatters into the Soul River** and is born again alive, a mortal of 16. One reborn at the
+  Wheel mid-way is still spent: the heavens take over, as strong as it was.
+
+**The Rebirth Pill** (2026-10-20): a way out of a bad roll. Eaten (only while sneaking, so never by a slip), it ends the life's
+cultivation exactly as a spent life does, a new physique with it, **but you don't die**; the dead (a Ghost King, the one of them
+with hands to eat it) are born again alive, as when their years run out among the dead. Any number may be taken, so it is rare: no
+cauldron brews it, and it's found only in the **Upper Realm's** sect treasuries (one chest in 50; a treasury has three) and on
+their sect masters. Code: `RebirthPillItem`, `Lifespan#rebirth`, `loot_tables/chests/sect_treasury.json`.
+
+**One clock, alive and dead** (the user's ask, 2026-10-20): the dead go on aging as the living do, against the same span, so
+the lifespan limits the whole existence. Dying near the end gives no years back (the dead used to have a clock of their own,
+so a death gave a whole span again), and coming back to life gives none either. When the years run out among the dead, the
+Netherworld's lifespan tribulation comes (above). So the dead have reason to cultivate too. Creative and spectator players don't
+age (but one whose body another soul holds). Saves from before lifespans begin at 16; saves from before the one clock add the
+years they had spent among the dead to their age.
+
+**Meditation costs years: the talent race** (the user's vision, 2026-10-21: talent decides how far one gets; it is a race for
+most, not for the extraordinarily gifted). Every bit of cultivation won by meditating costs years, on either path and by body
+refining. A realm's whole cultivation costs a **share of the years the realm gives**, shared out over its four stages by how long
+each takes, and paid as it is won; it is **divided by your talent** (your physique's grade: shown on the Stats tab) and by **what
+saves years** where you sit, all four multiplied together (the user's calls, 2026-10-21/22; each only ever helps, so going without
+one never costs extra):
+- **the meditation's boost**: mats, pedestals, height, tranquillity, garments (the percentage told as you sit down), up to about x3.65;
+- **a method** practised: what it makes of the gain, by its element's share of the qi there (x1 at an even fifth, up to x1.5 where it
+  runs thick) and x1.25 beside its Dao Stele, so up to x1.875 (on the ghost path, its stele's x1.25);
+- **a spirit stone** burning in hand: x1.5;
+- **dense qi**, where it is denser than the realm's own place: the Upper Realm's (x10) to a Heavenly Being or below, a rich planet's
+  (up to x3) in the Astral Realm, the Nine Nether Peaks (x1.2) to the ghost path. Four Axis is cultivated only in the Upper Realm (its
+  needs are ten times another's already), so it is measured against the Upper Realm's own and no planet makes it cheaper; so the
+  dense qi helps the early realms, where the late ones decide the race.
+
+Only what is won is paid for: waiting at a bottleneck costs nothing, nor do a reward's seconds of meditation, a kill or a
+tribulation's strike. The Cultivation tab shows what the rest of your realm will cost against the years you have left (red when they
+won't cover it). Besides the years, the grade gives a small **edge to the pace** (Physiques, above: up to x1.5 for an Immortal grade),
+so the gifted get there a little sooner too; but the years decide how far.
+
+| Realm | Its years | Share | Years at x1 |
+|---|---|---|---|
+| Qi Refining | 84 (a body's own, from 16) | 0.6 | 50 |
+| Foundation Building | 200 | 0.9 | 180 |
+| Core Formation | 400 | 1.6 | 640 |
+| Nascent Soul | 600 | 2.3 | 1,380 |
+| Heavenly Being | 1,200 | 3.3 | 3,960 |
+| Four Axis | 10,000 | 4.8 | 48,000 |
+| Dao Integration | 100,000 | 8 | 800,000 |
+| Void Shattering | 10 million | 12 | 120 million |
+| Sacred Vessel | 100 million | 16 | 1.6 billion |
+| Entering Nirvana (the middle boundary's end) | 10 billion | 20.5 | 205 billion |
+| True Immortal | without end | none: its cultivation costs no years | |
+
+Where each gets to (the years left over from a realm carry into the next; a percentage is how far into that realm):
+
+| Saving | Low x1 | Mid x1.5 | High x2.1 | Supreme x4.5 | Immortal x16 |
+|---|---|---|---|---|---|
+| None | Core Formation (71%) | Nascent Soul (76%) | Heavenly Being (75%) | Dao Integration (56%) | Entering Nirvana (78%) |
+| Usual (x1.5: a mat, a method or a stone) | Nascent Soul (76%) | Heavenly Being (84%) | Four Axis (69%) | Dao Integration (88%) | **True Immortal** (17% to spare) |
+| Good planning (x5: mats and pedestals, a fitting method, a stone) | Dao Integration (64%) | Dao Integration (99%) | Void Shattering (88%) | **True Immortal** (10%) | True Immortal (290%) |
+| Everything right (x10.3, the most there is) | Void Shattering (86%) | Sacred Vessel (99%) | **True Immortal** (6%) | True Immortal (126%) | True Immortal (704%) |
+
+So (the user's asks): an Immortal grade becomes a True Immortal at ease, a Supreme one only with good planning, a High one only by
+doing everything right, and nobody lower; a Low grade with nothing saving years doesn't get past Core Formation. Longevity Pills,
+Life Force's years and the grateful's push a little further. (The realms after Four Axis were planned at these years and shares
+before they were built, 2026-10-22: the race was balanced to the whole road.) Code: `Lifespan#seclude`, `#seclusionYears`, `#saving`, `#placeSaving`,
+`#realmSeclusion`, `SECLUSION_SHARE`, `Physique.Grade#talent`, `#speed`; the scratchpad's `talent-ladder.ps1` made the table.
+
+**What years are spent on besides** (the user's asks, 2026-10-21, so that even a long life has to be watched):
+- **Flying through space**: every 100 blocks flown there costs a year, **the same at every realm**, so the stars are a risk to
+  everyone below Four Axis: the next star (some 16,000 blocks) about 160 years, the planets of one system tens of years apart. A
+  **Starborn Body** pays the less by its speed there (1.5 times as fast: a year every 150 blocks). On a planet's land, and
+  everywhere else, one ages as always; only flight in space counts (an arrival, a hold at a planet's edge, a teleport cost
+  nothing). The HUD shows what the trip has cost, the years left and what flying straight home would cost, turning red (with a
+  warning) once the years left can't pay for it; run out out there and the lifespan tribulation finds you there. The dead pay too;
+  creative players don't. Code: `AstralRealm#travel`, `YEARS_PER_BLOCK`, `#yearsPerBlock`.
+- **Meditating faster**: the Cultivation tab's pace button beside Meditate, x1 / x2 / x3. At x2 every gain of a meditation comes
+  twice as fast (both paths, the methods settling, pill and fruit qi refined, a body tempered), but **each bit of it costs twice
+  the years** (above: four times the years a minute); at x3, three times as fast, each bit for **four times** the years. A reward
+  of so many seconds of meditation (a Merit foe's, a fruit's) is still the plain pace's. With 10 years left, and again with one, a
+  fast meditation slows to x1 by itself (you may set it faster again). The base pace is unchanged. Code: `Lifespan#pacePrice`,
+  `#cycleMeditationSpeed`, `MeditationManager#pace`, `PlayerCultivation#meditationSpeed`.
+- **Burn Lifespan** (an ability from Qi Refining, for every cultivator, off until switched on): while it burns it costs **half a
+  percent of your whole lifespan a second** (a share, so every realm alike: 6.5 years a second at Nascent Soul, 62.5 at Four
+  Axis), and your blows and spells strike half again as hard and you move a quarter faster, wreathed in crimson. It goes out by
+  itself before it would leave you fewer than 10 years (and won't light then), when you die and when you log out. Code:
+  `BurnLifespan`.
+- **Life Force's years** (Wood, Foundation Building): Life Force Gain grows a herb or fruit on **your own years** (10 a second for
+  its 120 years of growth a second, never your last 10; a being is still healed with your health); Life Force Drain on another
+  player takes **10 of their years a second** with their life, half of them yours (aged to their span's end, the heavens come
+  for them). Beasts and NPCs have no lifespan to take; a herb drawn on still only heals you. Code: `WoodSpells.Life`,
+  `Lifespan#draw`.
+- **Old age weakens only mortals**: from 60% of their span a mortal's body fails a little more every year, to 40% less max
+  health, 20% less speed and 30% weaker blows at the span's end (years won back restore it). A cultivator keeps its vigour to the
+  very end, when the heavens come instead. Code: `Lifespan#oldAge`, `#weaken`.
+
+Op: `/cultivation lifespan` (your age against your span), `/cultivation lifespan set <years>` (your age, alive or dead). An
+obsession with Longevity (Name Your Obsession, below) makes the whole span x1.2. Code: `Lifespan`, `LifespanTribulation`,
+`PlayerCultivation#age`/`extraYears`/`longevityPills`/`lifespanTrial`/`lifeEnded`; tests `LifespanGameTests`, `LifespanCostsGameTests`,
+`PhysiquesPillsGameTests`.
+
+## The realms after Four Axis
+
+The user's realms (their order told 2026-10-17, built 2026-10-22): **Dao Integration**, **Void Shattering**, **Sacred Vessel**
+and **Entering Nirvana**, which ends the middle boundary, then **True Immortal**, the first of the major boundary and the last
+realm for now. Each has the four stages; all are the Upper Realm's alone, as Four Axis is (needing ten times the cultivation,
+broken into only there or wherever else the lower realms' cap doesn't hold), every stage longer than the one before. Saves are
+safe: realms are saved by their place in the line, and these come after Four Axis.
+
+| Realm (Early; Grand Perfection x1.3) | Health | Strength | Qi pool | Qi a second | Its might over the realm before |
+|---|---|---|---|---|---|
+| Four Axis | 180 | 50 | 8,000 | 200 | x2 |
+| Dao Integration | 360 | 100 | 18,000 | 450 | x2 |
+| Void Shattering | 1,440 | 400 | 60,000 | 1,500 | **x4** (the user's: a larger leap) |
+| Sacred Vessel | 2,880 | 800 | 130,000 | 3,250 | x2 |
+| Entering Nirvana | 5,760 | 1,600 | 280,000 | 7,000 | x2 |
+| True Immortal | 57,600 | 16,000 | 2,500,000 | 62,500 | **x10** (the user's: an immense leap) |
+
+Armour, toughness and knockback resistance stay at Four Axis's: vanilla's caps hold them there anyway (80% of a blow turned).
+**Vanilla's caps on max health (1,024) and attack damage (2,048) are lifted** (the user's ask; `BodyCaps`, a mixin accessor on
+`RangedAttribute`), on the server and the client alike. The pool refills in some 40 s as Four Axis's does, and flight and the
+sword never outrun the gathering. Breaking from Four Axis Grand Perfection into Dao Integration waits on the last axis of
+virtue, Enlightenment (each axis holds its own stage's breakthrough). The rest of the mod follows: the heaven methods (below,
+Heaven methods), the ghost path to True Immortal (Ghost methods), tribulations of 200 to 3,200 strikes (Tribulations), the years
+(Lifespan: a True Immortal's without end; the talent race's shares, above), their few cultivators (Sects and cultivators), the
+Netherworld's yin borne twice as long each realm, the Inner Realm's sky turning to the void's violet and then to gold, the
+Quasi- names ("Quasi-Dao Integration"; only past True Immortal Grand Perfection "beyond"). No new spells or abilities yet.
+
+**The top-left corner** (the user's asks, 2026-10-22, to pictures of theirs, in the mod's own style): with bodies of thousands of
+hearts, vanilla's hearts at the bottom are held to **one row of ten** (`client/mixin/GuiHeartsMixin`: each heart a tenth of the
+whole once past twenty; the armour row sits over it as for a body of twenty), and the top-left corner is a **portrait** of you in a
+lacquer frame trimmed in antique gold, your name small above it, with **two thick bars** beside it (`client/VitalsHud`): your
+**health** and your **qi**, each in the Qi bar's gold frame with its scroll roller and tapered tip, what it holds against its
+maximum written across it ("1,407/1,407"). The health crimson, lit from above, notched at the quarters, a blow's pale trail
+draining after the fill, absorption a band of gold along its top (its amount after the health, in gold); the qi the mod's blue, a
+glint flowing along it while it fills (not in a Qi Flight that costs more than gathering brings in). Nothing of hunger, air or
+armour up there (the user's word): those stay at the bottom, vanilla's. The health shows when vanilla's hearts do (not in creative
+or spectator), the qi once your meridians open; under them the thin bars go on (a soul's own pool in another's body, the ghostly
+qi, yin corruption, the readied spell and ability: `QiHud`, `NetherworldHud`), and under those the pressure mark and a projected
+soul's readout.
 
 ## Tribulations
 
 A breakthrough into a new realm (and, from Nascent Soul, into every stage) brings the **Heavenly Tribulation**: a storm
-gathers over you and strikes a set number of times, 3 seconds apart (`TribulationManager#strikes`). **The only lightning in
+gathers over you and strikes a set number of times (`TribulationManager#strikes`; the user's counts of 2026-10-20, Heavenly Being
+50 and Four Axis 100, the realms below in step; each realm after Four Axis twice the one before, 2026-10-22):
+
+| Into | Strikes | Apart | What lives through it (and the step below that dies) |
+|---|---|---|---|
+| Foundation Building | 2 | 3 s | nothing needed at full health |
+| Core Formation | 6 | 3 s | iron (leather dies) |
+| Nascent Soul, its Mid | 18 | ~1.5 s | diamond, or iron with Protection II (plain iron dies) |
+| NS Late | 18 | ~1.5 s | diamond with Protection I, or iron with Protection II (plain diamond dies) |
+| NS Grand Perfection | 18 | ~1.5 s | diamond with Protection II (Protection I dies) |
+| Heavenly Being, its Mid and Late | 50 | 0.53 s | diamond with Protection III (II dies) |
+| HB Grand Perfection | 50 | 0.53 s | Protection IV (III dies) |
+| Four Axis, its Mid and Late | 100 | 0.26 s | Protection IV and Resistance I (Protection IV alone dies) |
+| FA Grand Perfection | 100 | 0.26 s | Protection IV and Resistance II (Resistance I with Regeneration I dies) |
+| Dao Integration, every stage | 200 | 0.13 s | Protection IV and Resistance II (Resistance I with Regeneration I dies) |
+| Void Shattering | 400 | 15 a second | the same, against its own body's might |
+| Sacred Vessel | 800 | 31 a second | the same |
+| Entering Nirvana | 1,600 | 62 a second | the same |
+| True Immortal | 3,200 | 123 a second (six a tick) | the same |
+
+**No tribulation lasts more than 30 seconds** (the user's ask, 2026-10-22; `TribulationManager#MAX_TICKS`, but the lifespan
+tribulation): its clouds gather for 3 s, its strikes come 3 seconds apart while they fit, else all of them fitted evenly into
+the 26 seconds before the breakthrough's last second (`#strikeSpan`, `#strikesBy`), several a tick for the greatest; a Primordial
+Chaos Body's extra strikes too, the faster (they used to take the longer). Each strike is weaker the more there are, retuned for
+the new timing (a simulation of vanilla's damage rules, which gave the old table back exactly: scratchpad `trib-tune-1022b.ps1`)
+so the same gear as before lives and the step below dies, with Qi Sustenance's regeneration on; but at Four Axis Grand Perfection,
+where in 30 s Regeneration I heals too little to tell one kit from another, Resistance II is wanted now, as in every realm after
+it (Protection IV and a beacon are the best gear there is, so past Four Axis the body's own might bears the rest). Strikes in the
+same tenth of a second share the bolt drawn (`MIN_BOLT_INTERVAL`), and only one bolt a second lights up the whole sky (the rest
+don't, so a fast storm doesn't strobe). **The only lightning in
 it is the strike that hits you** (the scattered bolts it once threw about for show are gone, the user's call 2026-10-19),
 and the cloud brightens as each one lands. The storm grows with the realm you are breaking into (x1 at Foundation Building,
 45% wider each realm after: `TribulationCloud#stormScale`), and its bolt grows as much **thicker**, a quarter of a realm's
 growth more for each stage within the realm (`TribulationManager#boltScale`): vanilla's own at Foundation Building, x1.45 at
-Core Formation, x1.9 to x2.24 through Nascent Soul's stages, x3.14 at Four Axis Grand Perfection. Only its thickness: its
+Core Formation, x1.9 to x2.24 through Nascent Soul's stages, x3.14 at Four Axis Grand Perfection, on to x5.39 at True Immortal's
+(its storm some five times Foundation Building's across). Only its thickness: its
 zig-zag stays vanilla's (`TribulationLightningRenderer` draws vanilla's bolt from the same seed, every layer that much wider;
 scaled whole, the great tribulations' bolts sprawled across the sky). The Spatial Gap's storms are their own and unchanged.
 
@@ -409,6 +659,119 @@ do). Survived, the ghost path is through to the next stage or realm, its bar emp
 layers to settle in. Failed, **the ghost path falls a stage** and its cultivation there is lost: struck down (the living
 die; the dead scatter and reform at the Gate) or leaving mid-way (marked and saved at once, so you fall as you come back).
 A Heavenly Thunder Body drinks in only the heavens' lightning. The HUD names it "The Netherworld's Tribulation".
+
+**A Heaven-Defying Body** (Physiques) is struck down by neither: a killing strike leaves it one heart and the tribulation fails,
+and no failed tribulation of either kind, however it failed, costs it a stage, its cultivation or its breakthrough pill
+(`TribulationManager#holds`).
+
+## Name Your Obsession
+
+Before the tribulation out of **Nascent Soul Grand Perfection into Heavenly Being Early** (the user's ask, 2026-10-19), on either
+path (the heavens' tribulation, or the Netherworld's on the ghost path), the Breakthrough button brings up **"Name Your
+Obsession"**: the one thing your heart will not let go of. Pick one of four (click it, or press 1-4), then **Face the
+Tribulation** (or Enter): it is kept and the tribulation begins at once. Close the screen instead and nothing happens; the
+Breakthrough button asks again.
+
+| Obsession | Its boon | And at Four Axis |
+|---|---|---|
+| **Longevity** | lifespan x1.2 (all of it: the body's years, the realms', the years taken from the grateful) | the Axis of Longevity fills twice as fast (250 years) |
+| **Fortune** | x0.8 on every price you pay in trade, on top of what regard does | the Axis of Fortune fills twice as fast (100 stones' worth) |
+| **Merit** | +10 regard with everyone (every cultivator's baseline for you) | the Axis of Merit fills twice as fast (100 hearts) |
+| **Enlightenment** | cultivation x1.2, every path's (meditation's gain, the methods' layers settling with it) | the Axis of Enlightenment fills twice as fast (3 stages) |
+
+"Twice as fast": that axis needs half its measure (below; rounded up). It is **named once, and
+for good**: one obsession for the cultivator, whichever path asked first, never named again; only a spent life loses it, with
+everything else. A cultivator already past Heavenly Being Early when obsessions came in (an older save) is asked at their next
+tribulation. The Stats tab shows it beside your years. Op: `/cultivation obsession` (which, and what it gives), `/cultivation
+obsession set <longevity|fortune|merit|enlightenment|none>`. Code: `Obsession`, client `ObsessionScreen`,
+`PlayerCultivation#obsession`; tests `ObsessionGameTests`.
+
+## The four axes of virtue
+
+Four Axis is not climbed on qi alone (the user's ask, 2026-10-19). Each of its stages has its **axis of virtue**, and the
+breakthrough out of that stage, on either path, waits until the axis is complete. Each axis is filled by **its own measure**
+(the user's ask, 2026-10-20), and every bit of it comes through the wishes of the lower realms' people:
+
+| Stage | Axis | Its wishes | What fills it |
+|---|---|---|---|
+| Early | **Axis of Longevity** | the sick and fading: heal them with a quarter of your qi, then take what years they can spare | **500 years** taken from the healed (each year onto your own lifespan too) |
+| Mid | **Axis of Fortune** | bare stores: bring what they lack (an item and a count), and take a share of their fortune (3-5 Mid-grade Spirit Stones, marked as shared with you) | **200 Low-grade Spirit Stones' worth** of those shares, absorbed |
+| Late | **Axis of Merit** | something preys on them (below): take it on, and it comes out of the land 24-36 blocks off, glowing; slay all of it | **200 hearts**: each creature of a threat slain by your hand counts its hearts (max health, halved) |
+| Grand Perfection | **Axis of Enlightenment** | a lesser cultivator stuck at its wall: sit in meditation within 6 blocks of it for a minute, and it breaks through a stage; or take its body (Soul Projection's possession) and meditate in it until it breaks through a stage yourself | **6 stages** guided |
+
+The axis of your obsession (named before Heavenly Being, above) needs half: 250 years, 100 stones' worth, 100 hearts, 3 stages.
+Only the axis you stand at fills, the first incomplete one, **in order**: no Fortune before Longevity is done, even at Grand
+Perfection; nothing past what completes it counts. The axes are the cultivator's, shared by both paths and saved on the record;
+a spent life loses them. The Cultivation tab shows the axis you stand at as a **bar** like the cultivation bar, in the axis's
+colour (jade Longevity, gold Fortune, vermilion Merit, pearl Enlightenment), how far it stands written on it in its measure
+("Axis of Longevity: 230 / 500 years"), framed in amber at the bottleneck with the axis incomplete; then the tab (under the
+bar), meditation and the Breakthrough button say how it is filled. A save from before the measures (100 virtue an axis) comes
+over as far along in each, a complete axis still complete.
+
+**The Axis of Longevity's years.** Healed, the grateful offer what years they can spare (20-100 for a mortal, more for a
+cultivator: 40 more for every realm of theirs). Take none, a quarter, half or all of them: what you take fills the axis and goes
+onto your own lifespan, and only while you stand at this axis (no wish of Longevity is yours to grant otherwise). The more you
+take, the less they think of you (taking none is remembered warmly, and counts for nothing).
+
+**The Axis of Fortune's stones.** A settlement's share of its fortune is marked as shared with you (its tooltip says so).
+Absorbed by you, by holding use or by meditating it away, while you stand at the Axis of Fortune, each counts its worth (a
+Mid-grade stone 9), even with your qi pool full (the stone's qi goes where there is room). Stones of no wish, or a share given to
+someone else, fill no one's axis; crafted into other grades they lose the mark.
+
+**The Axis of Merit's threats** (`Wishes.Foe`; each settler says which preys on them):
+
+| Threat | What comes |
+|---|---|
+| A great beast | a ravager |
+| Raiders on a beast | a ravager, a pillager riding it |
+| A sorcerer | an evoker |
+| Something of many faces | an illusioner |
+| Raiders | two pillagers, two vindicators |
+| A coven | three witches |
+| The restless dead | four zombies (husks in deserts and badlands), two skeletons (strays in snow), helmed so the sun can't burn them |
+| Riders of bone | three skeletons on skeleton horses (the riders are the threat) |
+| A brood | three spiders, two cave spiders |
+| A wolf pack | four wolves, angry at you |
+| A demonic cultivator | a cultivator of the demonic path, Nascent Soul Early to Heavenly Being Late, out for you |
+
+Each one of them that falls by your hand (your blow, arrow or spell, or your Earth Golem's) fills the Axis of Merit by its
+hearts, as it stood before any Realm Suppress (a ravager 50, a pillager, vindicator or evoker 12, a wolf 4; a demonic
+cultivator by its rank). The wish is granted when **every one of them is dead and at least one fell by your hand**. Slain only
+by others (the sun, a fall, the settlers), or taken from the world some other way, the threat is gone but the wish stands, to be
+taken on again. A threat leaves its spoils (its loot and gear, an evoker's totem) only when it falls
+by your hand: slain by anything else it drops nothing, so letting it die and taking the wish on again farms nothing (the
+2026-10-20 sweep). The **demonic cultivator** is out for you and you alone, whatever your path: it never
+runs from your domain or a beating, never begs for its life, never goes off into seclusion or to ascend (a Heavenly Being of
+the lower realms would), and never turns on the settlers. On **Peaceful**, where no monster lives, whatever preys on them comes
+as a demonic cultivator (the wolves still come as wolves). A threat that dies
+while its settler's land is unloaded counts when the settler is next about, even if you are offline by then. A threat left a day
+lapses with its wish, and whatever of it is still about leaves too (any out of reach go when their land loads again).
+Settlers don't go looking for fights, even with enemies of their path; they only defend themselves, and leave the threat to
+whoever took it on. While a threat is out, **its settlement's people stay home** (the user's ask, 2026-10-20): each goes into its
+hut (or to the well, with no hut standing) and keeps there, strolls, chats and meditating outdoors set aside, until all of it is
+slain or the wish lapses; none of them fights the threat's creatures, or comes to your aid against them. You can still talk
+with them there.
+
+**Guidance from within.** Possess a settler who wishes for guidance and meditate in its body: when its cultivation breaks
+through a stage (at the speed your soul lends it), the wish is granted, as if you had sat beside it. The settler keeps the stage
+when you let go. It counts only if you could grant it (your own Four Axis, at the Axis of Enlightenment); otherwise the wish
+waits for someone who can.
+
+**Wishes** come from the settlements of the Astral Realm's worlds (below). Ask a settler under Ask, **"Their wish"**: anyone
+hears it, and only a Four Axis cultivator at that wish's axis is offered the grant (anyone else is told why not). A mortal never
+asks for guidance. A wish granted, the settler has another three days later. One taken on and left (a healed one's years never
+taken, a threat that wandered off) lapses after a day, and a guidance after the guide leaves, and can be taken on afresh.
+
+**The dead** fill their axes too (the user's ask, 2026-10-19): one of the dead whose **ghost path** is at Four Axis (a Ghost
+King) grants wishes as the living do; the dead's heaven path counts for nothing here. A Ghost King may rise into the Astral
+Realm (the common dead may not), but to the living it isn't there: the settlers (below Nascent Soul) see the dead only in a
+Ghost King's **human form** (Form Shift), and one who comes to them in its true form is told so. In its human form any of the
+living see it as one of their own. It heals out of its ghostly qi (none gathers in the Astral Realm, so come with a full pool),
+the years it takes lengthen its lifespan as the living's do, and the beasts and the dead of the Merit threats don't fight back
+against it (no mob of the living world hunts the dead), though a demonic cultivator, of Nascent Soul and above, sees it and does.
+
+Code: `FourAxis`, `Wishes`, `SpiritStoneItem#fillsFortune`, `PlayerCultivation#axisProgress`/`isHeldByAxis`, `GhostMethods#heldByAxis`,
+`Settlements#raiseAlarm`, `CultivatorGoals.ShelterGoal`; tests `FourAxisGameTests`.
 
 ## The Ritual to the Heavens
 
@@ -483,13 +846,27 @@ Humble (0-9 points) +0%, Modest (10-19) +10%, Grand (20-29) +20%, Magnificent (3
 
 The heaven methods are the living's techniques, cultivated on the qi of the five elements (wood, water, fire, earth and
 metal, the motes Qi Sense shows). Your cultivation is **its own bar**, as it always was: the methods speed it, bring spells
-and passives as it climbs, and open the way into new realms. There are **thirty**: one of each element for each realm, Qi
-Refining to Four Axis. Each has its own layers and a passive that grows with them, and teaches its element's **spells** of
+and passives as it climbs, and open the way into new realms. There are **fifty-five**: one of each element for each realm, Qi
+Refining to True Immortal (the twenty-five of the realms after Four Axis since 2026-10-22, the user's ask: their methods now, their
+own spells still to come). Each has its own layers and a passive that grows with them, and teaches its element's **spells** of
 its realm and every realm before it. The dead can't take one up (their meridians belong to the ghost path now), nor a mortal,
 nor one whose roots won't take its element (see Physiques).
 
+| Element | Dao Integration | Void Shattering | Sacred Vessel | Entering Nirvana | True Immortal |
+|---|---|---|---|---|---|
+| Wood | Myriad Woods Return to Dao Scripture | Void-Rooted Divine Tree Canon | Jianmu Sacred Vessel Sutra | Withering and Flourishing Nirvana Classic | Evergreen Immortal Sovereign Canon |
+| Water | Hundred Rivers Merging Dao Scripture | Abyssal Void Tide Canon | Sealed Ocean Vessel Sutra | Frozen Moon Nirvana Classic | Primordial Waters Immortal Canon |
+| Fire | One Flame Dao Scripture | Void-Burning Fire Lotus Canon | Heaven Furnace Vessel Sutra | Undying Ember Nirvana Classic | Primal Flame Immortal Canon |
+| Earth | Ten Thousand Mountains Return to One Scripture | World-Breaking Ground Canon | Nine Cauldrons Sacred Vessel Sutra | Buried World Nirvana Classic | Houtu Immortal Canon |
+| Metal | Myriad Swords Return to the Dao Scripture | Void-Splitting Sword Canon | Immortal-Forging Vessel Sutra | Sword Heart Nirvana Classic | Heaven-Slaying Immortal Sword Canon |
+
+Their layers past Four Axis strengthen the element's passive as the realms' own might grows (`HeavenPassives#PER_LAYER`: the
+healing, the qi and the edge with the realms' health, gathering and strength, Void Shattering's and True Immortal's leaps with
+them; the fury and the ward a little a realm), so a True Immortal method's last layer heals some 1,200 a second, gathers some
+10,150 qi more, swings 63% faster, turns 47.7% of a blow and edges a blow with some 6,840 more.
+
 **Layers.** A method of a realm spans **Qi Refining up to that realm**, nine layers a realm (`MethodLayers`, the same layout as
-the ghost foundations): a Qi Refining method has 9 layers, a Four Axis method 54. Within each realm's nine, layers 1-2 stand
+the ghost foundations): a Qi Refining method has 9 layers, a Four Axis method 54, a True Immortal one 99. Within each realm's nine, layers 1-2 stand
 for Early, 3-5 Mid, 6-8 Late and 9 Grand Perfection.
 - **Cultivation needs no method.** Meditation fills the bar, the stages step on by themselves, and the gates are the realm's:
   the Ritual to the Heavens at Qi Refining Mid, a tribulation at every Grand Perfection (and every stage from Nascent Soul),
@@ -540,12 +917,15 @@ realms as pips, its next layer settling (how far, and how long here) or the stag
   granite, quartz): about one in every 60 chunks across the Overworld and one in 32 in the Upper Realm. The land picks the
   element; rarity picks the realm (`DaoSteleFeature#WEIGHTS`):
 
-  | Where | Qi Refining | Foundation Building | Core Formation | Nascent Soul | Heavenly Being | Four Axis |
-  |---|---|---|---|---|---|---|
-  | The Overworld | 600 | 250 | 60 | 8 | 0 | 0 |
-  | Its rare lands (cherry groves, mushroom isles, ice spikes, eroded badlands, the deep jungles) | 300 | 250 | 150 | 40 | 3 | 0 |
-  | The Upper Realm | 0 | 40 | 150 | 100 | 40 | 10 |
-  | Its wondrous lands (Dense Qi Peaks, Thunder Peaks, Ancient Sword Graveyard, Spirit Forest, Peach Blossom Sanctuary) | 0 | 0 | 100 | 100 | 60 | 25 |
+  | Where | Qi Refining | Foundation Building | Core Formation | Nascent Soul | Heavenly Being | Four Axis | Dao Integration | Void Shattering | Sacred Vessel | Entering Nirvana | True Immortal |
+  |---|---|---|---|---|---|---|---|---|---|---|---|
+  | The Overworld | 600 | 250 | 60 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+  | Its rare lands (cherry groves, mushroom isles, ice spikes, eroded badlands, the deep jungles) | 300 | 250 | 150 | 40 | 3 | 0 | 0 | 0 | 0 | 0 | 0 |
+  | The Upper Realm | 0 | 40 | 150 | 100 | 40 | 10 | 2 | 0 | 0 | 0 | 0 |
+  | Its wondrous lands (Dense Qi Peaks, Thunder Peaks, Ancient Sword Graveyard, Spirit Forest, Peach Blossom Sanctuary) | 0 | 0 | 100 | 100 | 60 | 25 | 6 | 2 | 1 | 1 | 1 |
+
+  The realms after Four Axis are carved rarer and rarer, as the user would have their cultivators (below, Sects and
+  cultivators); their few cultivators teach and sell their own realm's method too.
 
   Meditate within 4 blocks of one for 15 seconds and you learn its method; touch it to read what it holds. They can't be
   broken.
@@ -627,8 +1007,8 @@ water puts out what burns.
 | Fire | **Remote Yang Bomb** (11) | Leaves a ball of yang fire on the surface you look at, within 16 blocks. Only you, and those with Qi Sense open, can see it. While it waits it draws 1 qi a second from you. Cast the spell again within 48 blocks to set it off: 14 fire harm to everything within 4 blocks, burning for 4 s, and a blast that throws them back. Setting it off costs nothing; the spell then rests for 15 s. It gutters out if your qi runs dry or you go far from it. |
 | Fire | **Flame Armour** (14) | For 30 s you are clad in armour made of red flame, from its burning crest to its greaves. It takes 10% off all harm you take, and 20% off metal's (metal spells, and blows of iron, gold, diamond or netherite weapons). A fire ward. |
 | Fire | **Fire Serpent** (17) | A serpent of fire coils out of your hand and swims through the air at where you aim, bending toward its mark as it goes, up to 48 blocks: 12 fire harm and burning for 4 s. |
-| Wood | **Life Force Drain** (11) | For 6 s you draw the life out of the being you look at or a herb growing there (a ginseng), within 12 blocks, or the years out of a single Cultivation Fruit or herb you hold (a fruit on its tree can't be drawn on). A being loses 1.5 health a second, and it heals you; a herb or fruit loses 60 years a second, and you heal 1 a second. A stream of emerald light runs from it to you. It breaks if you stray 16 blocks apart. Herbs in a sect's or a Ghost King's treasury can't be touched while its seal holds. |
-| Wood | **Life Force Gain** (14) | For 6 s you pour your own life into the being you look at, or into an aging herb or fruit growing within 12 blocks, or a single one you hold: you lose 1 health a second (never below 4), and a being heals 2 a second, or a herb gains 120 years a second. Herbs in a sealed treasury can't be touched. |
+| Wood | **Life Force Drain** (11) | For 6 s you draw the life out of the being you look at or a herb growing there (a ginseng), within 12 blocks, or the years out of a single Cultivation Fruit or herb you hold (a fruit on its tree can't be drawn on). A being loses 1.5 health a second, and it heals you; another cultivator (a player) loses 10 years of their lifespan a second with it, half of them yours (2026-10-21). A herb or fruit loses 60 years a second, and you heal 1 a second. A stream of emerald light runs from it to you. It breaks if you stray 16 blocks apart. Herbs in a sect's or a Ghost King's treasury can't be touched while its seal holds. |
+| Wood | **Life Force Gain** (14) | For 6 s you pour your own life into the being you look at, or into an aging herb or fruit growing within 12 blocks, or a single one you hold. A being heals 2 a second for 1 of your health a second (never below 4); a herb or fruit grows on your own years (2026-10-21): 120 years a second for 10 years of your lifespan a second, never your last 10. Herbs in a sealed treasury can't be touched. |
 | Wood | **Mysterious Bristle Prison** (17) | Thorny bristles burst up out of the ground round the being you look at, within 20 blocks, and close over it: it is held where it stands for 4 s, torn for 1.5 wood harm a second. Three blows on the cage break it, from outside or in; but each one the prisoner strikes from inside tears it for 2 more. |
 | Earth | **Earth Wall Technique** (11) | A wall of the ground you stand on, 6 blocks long and 4 tall, rises out of the earth 3 blocks ahead of you, across your way. If you are not on the ground, it forms in mid air, from its middle block outward. It stands for 30 s, then sinks back into the ground. |
 | Earth | **Boulder Throw** (14) | Tears a boulder out of the ground ahead of you, leaving a round hole two blocks deep, gathers it in the air and throws it at where you aim, up to 48 blocks: 16 earth harm and a heavy knock back. It tears it from whatever lies ahead, ground or what is built there (not inside a barrier). |
@@ -739,7 +1119,12 @@ entities `SpellProjectile`, `SpellField`, `SpellBlock`, `EarthGolem`, `DirtTide`
 After **10 seconds of meditation** the screen fades to black and your soul turns inward: you open your eyes on your own
 island in a void, while your body stays sitting where you were (other players see it, in your skin). Meditation inside is
 **x1.5** as fruitful, and still gets the mats, pedestals, height and biome bonuses from around your body; suppression and
-the Upper Realm's x10 also follow the body.
+the Upper Realm's x10 also follow the body. The ghost path's meditation is x1.5 inside too, on the ghostly qi where the body
+sits.
+
+**The dead turn inward too** (the user's call, 2026-10-19), from anywhere, the Netherworld included (the living still can't
+there): their ghostly form sits on where they meditated, in the dead's light (a Ghost King's crowned, seen as the dead are),
+and a heart demon reaches them and they it, as it does the living. Nothing else about the island changes.
 
 - **Walk freely.** The island is yours to walk, and you can step off it: a step below its top an unseen floor (barrier
   blocks) runs 48 blocks out from its middle, walled 3 blocks high round its edge, so there's room to walk off into the
@@ -1102,9 +1487,12 @@ Code: `SpatialTrialHandler` (the routes, `tear`, `homeRealm`, travel, the hold),
 Beyond the Overworld's sky lies the **Astral Realm**: space, where the Overworld is one planet among **3,600**, round some
 560 stars, and every other planet has land of its own to walk.
 
-**Getting there.** A **Nascent Soul** or stronger (as the realm lets them wield it), flying up past **Y 340** in the Overworld,
-rises out of its sky into space, over the Overworld's lit side. Weaker cultivators are told the sky thins to nothing above them.
-(Y 340: just above the build limit, so a Nascent Soul's pool can carry them there from a hill, and Mid and up from the sea.)
+**Getting there.** A **Nascent Soul** or stronger on either path (as the realm lets them wield it), flying up past **Y 340** in the
+Overworld, rises out of its sky into space, over the Overworld's lit side. Weaker cultivators are told the sky thins to nothing
+above them. (Y 340: just above the build limit, so a Nascent Soul's pool can carry them there from a hill, and Mid and up from
+the sea.) The **Upper Realm**'s sky is the same way out (since 2026-10-19: it is the heaven over the same world), and one who rose
+out of it comes home to it. Of the dead, only a **Ghost King** may rise (since 2026-10-19, for the four axes); it flies space as
+everyone there does. Space speed goes by the higher path too.
 
 **Space** (`astral_void`). Nothing in it is a block: the stars and planets are drawn by the client where they truly are, and
 you fly among them. Everyone in space is always flying, **on no qi**, at a speed of their realm: Nascent Soul 0.12 (vanilla
@@ -1145,9 +1533,29 @@ ready while you approach (you may be held a moment at the edge if it isn't). On 
 - **flight costs no qi** anywhere in the Astral Realm, so nobody is stranded on a world of thin qi.
 
 Fly up past **Y 340** on a planet and you rise out into space over it; fall off a land's edge and you fall out into space below
-it. Fly into the Overworld's atmosphere and you come down where you rose from. The Astral Realm is a **lower realm**: the cap
-holds there (Heavenly Being Grand Perfection), as in the Overworld. No Nether portals; no sects or rogue cultivators there yet
-(the worlds are wild).
+it. Fly into the Overworld's atmosphere and you come down where you rose from (in the Upper Realm, if you rose out of it). The
+Astral Realm is **no lower realm** (since 2026-10-19): no cap holds a breakthrough there and **nothing suppresses** a
+cultivator, so Four Axis cultivators roam it freely after their axes. A Heavenly Being Grand Perfection may break through into
+Four Axis **anywhere nothing suppresses them**, not only in the Upper Realm: the lower realms' cap holds only in the Overworld,
+the Nether and the End. No Nether portals and no sects there.
+
+**Settlements** (`Settlements`). The lower realms' people live on the worlds that would have them (not barren, ashen or volcanic
+ones): their land is laid out in squares of 640 blocks, and about every other square has a settlement somewhere in its middle,
+the same on every server of the seed. One is built when a player first comes within 96 blocks of its site: a **well**, **four
+huts** round it in the world's own wood (oak, spruce on frozen and taiga worlds, acacia on dry ones, jungle, cherry on blossom
+worlds, mangrove on swamps, dark oak on mushroom worlds, birch on crystal ones) with a doorway toward the well, windows, a
+barrel, a workbench and a lantern, and **5-8 settlers**: mortals nearly half of them, the rest cultivators of Qi Refining (most)
+to Core Formation (few), of the righteous path or none, each with a **wish** (the four axes, above) and keeping to within 18
+blocks of the well. Settlers seek no fights (not even with the demonic path); they only defend themselves. A site whose ground is
+water or lava stays empty. Each has a name ("Jade Spring Hamlet"), shown as you come
+within 40 blocks. One with an axis to fill is shown now and then, while out of sight of any, the **smoke** of the nearest
+settlement: how far, and which way. Which sites are built is saved with the Overworld.
+
+**Kept alive** (2026-10-20, the user's ask): no monster is born within **64 blocks** of a settlement's well, and one that has
+lost people takes in a **newcomer every two game days** from when it was first found short, until it has as many as it was built
+with (a mortal or a cultivator as its founders were, with a wish of their own, walking in from its edge; those near are told).
+Those whose time came while nobody was there arrive together. Its people are counted only while all its home ground is loaded.
+Settlements from before were built with at least five, so they're kept to five.
 
 **Vestiges of the Void** (`VoidVestige`). Black things of the deep void, shaped like the deep sea's dragonfish: a long eel's body
 that follows the path its head swims, a great fanged lower jaw jutting past its snout (snapping shut as it bites), a huge pale
@@ -1171,9 +1579,9 @@ and the Overworld's distance). Op: `/astral visit <kind>` (beside the nearest pl
 
 Code: `AstralPlanets` (the catalog from the world's seed), `PlanetTerrain` (a planet's land, shared with the painter),
 `PlanetSurfaceGenerator`, `PlanetBiomeSource`, `AstralRealm` (the ways in and out, qi, heat, `spaceSpeed`), `QiFlight` (space's
-flight), `VoidVestige`, `VestigeSpawner`, `AstralCommand`; client `AstralSky`, `AstralClient` (the planets' skies),
-`PlanetPainter`, `PlanetTextures`, `PlanetDraw`, `PlanetLooks`, `VestigeRenderer`; tests `AstralGameTests` (the game-test server
-has no Astral Realm, so the travel was checked in game).
+flight), `VoidVestige`, `VestigeSpawner`, `Settlements`, `AstralCommand`; client `AstralSky`, `AstralClient` (the planets' skies),
+`PlanetPainter`, `PlanetTextures`, `PlanetDraw`, `PlanetLooks`, `VestigeRenderer`; tests `AstralGameTests`, `FourAxisGameTests`
+(the game-test server has no Astral Realm, so the travel was checked in game; a settlement is built there on a floor of its own).
 
 ## The Netherworld
 
@@ -1181,9 +1589,11 @@ Above the Nether lies the **Netherworld**, the realm of the dead: misty plateaus
 Y 40 and 200 over a bottomless abyss, dim (the ground is seen without a torch, barely), under a sky of its own. It is a
 high realm, as the Upper Realm is above the Overworld: Realm Suppression doesn't reach it, portals don't work there, and
 NPC cultivators come up into it from below. But its riches are another kind of qi. Ordinary qi is as thin there as
-anywhere, and breakthroughs into Four Axis stay the Upper Realm's; what the Netherworld has is **ghostly qi**, which the
+anywhere, and though no realm lock holds a breakthrough into Four Axis here (since 2026-10-19 only the lower realms do), the
+heavens' tribulation can't come to take it; what the Netherworld has is **ghostly qi**, which the
 dead and those who learn the ghost methods cultivate on. And the heavens can't see it: no tribulation, Ritual to the
-Heavens, Inner Realm or Soul Projection there or on the river to it ("The heavens cannot see you here.").
+Heavens, Inner Realm or Soul Projection there or on the river to it ("The heavens cannot see you here."); but the dead,
+whose realm it is, turn inward there as anywhere (see The Inner Realm).
 
 There are two ways in: **die** (you wake there as a ghost), or **go up alive** from the Nether.
 
@@ -1287,6 +1697,7 @@ How long a stay fills it, by true realm:
 | Nascent Soul | 5 minutes | `STAY_NASCENT_SOUL` |
 | Heavenly Being | 10 minutes | `STAY_HEAVENLY_BEING` |
 | Four Axis | 20 minutes | `STAY_FOUR_AXIS` |
+| Each realm after it | twice the one before: Dao Integration 40 minutes ... True Immortal 640 | `STAY_REALM_STEP` |
 
 times the stage's power (Early 1.0 up to Grand Perfection 1.3), times 1 + 10% for each layer of your deepest foundation
 (up to 18: `BREATHING_STAY_PER_LAYER`, `STAY_LAYERS_MAX`): a Four Axis Grand Perfection stays 26 minutes, about 49 with the
@@ -1465,6 +1876,15 @@ own realm (its last nine layers):
 | **Nine Nether Soul Sutra** | to Nascent Soul | 36 | Soul Rend (30), Nine Nether Step (34) | Nascent Soul kings (about one palace in four); Nine Nether Peaks steles |
 | **Yama's Judgement Scripture** | to Heavenly Being | 45 | Yama's Verdict (39), Chains of Hell (43) | Heavenly Being kings (about one palace in eight); Nine Nether Peaks steles, rare |
 | **Six Paths Reincarnation Canon** | to Four Axis | 54 | Wheel of Samsara (48), Six Paths Annihilation (52) | Four Axis kings (one palace in twenty); Nine Nether Peaks steles, about three in 1,371 |
+| **Ten Thousand Ghosts Union Scripture** | to Dao Integration | 63 | none of its own yet | Nine Nether Peaks steles, about two in 1,377; the few Dao Integration ghosts |
+| **Void-Rending Nether Canon** | to Void Shattering | 72 | none yet | Peaks steles, about one in 1,377; the handful of Void Shattering ghosts |
+| **Hell-Forged Vessel Sutra** | to Sacred Vessel | 81 | none yet | Peaks steles, about one in 1,377; the one Sacred Vessel of the dead |
+| **Underworld Nirvana Scripture** | to Entering Nirvana | 90 | none yet | Peaks steles, about one in 1,377 |
+| **Netherworld Immortal Sovereign Canon** | to True Immortal | 99 | none yet | Peaks steles, about one in 1,377 |
+
+**The ghost path goes on to True Immortal** (the user's ask, 2026-10-22), its last five foundations those of the realms after
+Four Axis (their spells still to come), every stage of them longer than the one before as below it (`GhostMethods#required`), and
+its tribulation the heavens' strike counts.
 
 A king teaches its foundation to one it is Warm to, sells its slip to one it is Warm to (60 stones for the Breathing Art,
 three times as much for each foundation deeper: 180, 540, 1,620, 4,860, and 14,580 for the Six Paths Reincarnation Canon),
@@ -1620,6 +2040,12 @@ cultivator who walks both is stronger than one who walks either (`TwoPaths`):
   Foundation Building Grand Perfection. Who perceives a projected soul, how hard one may be struck, and how strong a player is
   to be possessed go by the higher path. **Qi Flight and Sword Flight stay the heaven path's**; the ghost path's flight is
   its form's (below).
+- **Others weigh you by your body**, whichever path gives it (`TwoPaths#weighedRank`, the 2026-10-20 sweep: only the heaven
+  path was weighed before): Realm Suppress, yours on others and theirs on you; how cultivators size you up (who is weaker in a
+  fight, whom they dare turn on, who begs, a spar's holding back, your title in a sect, "too strong to join"); a formation's
+  barrier and the strength of one you raise; the realm your Consciousness Domain reaches by and the realm others sense of you;
+  your standing in a talk; breaking a sect treasury's seal; striking a soul's tether. A ghost path of Heavenly Being with a heaven
+  path of Qi Refining is a Heavenly Being to them all.
 - **Ghostly creatures fly freely.** The dead, and the living in a Ghost King's form, fly at every realm, as fast as Qi
   Flight (and +10% a layer from Wandering Soul Steps' fourth, +60% at its ninth), spending nothing (`TwoPaths#fliesFreely`):
   double-tap jump (the Spatial Gap too). The Soul River still carries
@@ -1659,7 +2085,8 @@ cultivator who walks both is stronger than one who walks either (`TwoPaths`):
 - **The dead are the dead.** Whatever the realms of their two paths, the dead are drawn as the dead: a Ghost King crowned
   (its ghost path at Core Formation; the heaven path's realm crowns no one), the rest as common ghosts. A **Ghost King has two forms**: its true
   form is the King's, and Form Shift takes its **human form**, in which it is drawn as a man and seen by everyone, as the
-  living are (`TwoPaths#inHumanForm`); in all else it keeps the rules of the dead. Common ghosts have no forms. Dying, or
+  living are (`TwoPaths#inHumanForm`), the living's cultivators too, who talk and trade with it as with anyone (since
+  2026-10-19, `CultivatorNpc#senses`); in all else it keeps the rules of the dead. Common ghosts have no forms. Dying, or
   born again, you start in your true form (Form Shift switched off).
 - **A mortal has no ghost path.** Its meridians are closed, for the ghost path as for the heaven path, until a **Marrow
   Cleansing Elixir** opens them: alive or dead, it can't take up a ghost method (steles, slips and teachers say so) or
@@ -2234,7 +2661,8 @@ the top.
   about (an attempt every 30 seconds, 35% of the time), or 64-128 blocks ahead along the way of one travelling faster than
   7 blocks a second (flying, riding: an attempt every 5 seconds). Each attempt rolls a rank: a mortal 10% of the time,
   falling evenly with every stage to 0.1% for Heavenly Being Grand Perfection; in the Upper Realm the curve runs from Qi
-  Refining Early to Four Axis Grand Perfection (`NpcSpawner`). **Cultivators never despawn**, so rogues are kept rare by
+  Refining Early to Four Axis Grand Perfection, and a quarter of those at its peak are of Dao Integration instead
+  (`NpcSpawner#DAO_INTEGRATION_SHARE`). **Cultivators never despawn**, so rogues are kept rare by
   placement instead: there is never more than one wandering rogue within 160 blocks (sideways) of a player, because a new
   one keeps 352 blocks (twice that, plus room for strolling) from every other, loaded or not. Mortal wanderers are kept
   the same way among themselves, apart from the rogues, so you may meet one of each. `RogueIndex` remembers where each
@@ -2244,6 +2672,15 @@ the top.
   player are looked at within seconds of their coming, so this only holds a spawn back a little).
   None turns up while 40 rogues and wanderers are loaded in the level (sect members don't count). Flying over land you
   meet one every 350-650 blocks or so; over water, none.
+- **The few past Four Axis** (the user's lore, 2026-10-22; `HighRealms`): in a realm (a world of its own: the Upper Realm, the
+  Netherworld among the dead) cultivators of **Dao Integration are rare** (24 at most), of **Void Shattering a handful** (5), of
+  **Sacred Vessel one**; the many of **Entering Nirvana live elsewhere**, waiting for the way into the immortal realm to show itself,
+  and no True Immortal walks the realms below it. A cultivator rises into one of those realms (by its own cultivation, as
+  cultivators of the Upper Realm and the Netherworld do: no tribulation for them) only while its world has room in it, else it
+  waits at the Grand Perfection below; and it holds its place there until it dies or is taken out of the world (one unseen for
+  a hundred game days is given up as gone). Players are never held back, nor a body a player's soul cultivated (Possession). The
+  census is saved with the Overworld. They carry the stones of their realms (Supreme and Immortal spirit stones) and wield
+  netherite, and teach and sell their own realm's method.
 - **In a fight** cultivators use what their realm gives them: a Consciousness Domain (rogues always, sect members only
   in combat), Realm Suppression and Qi Flight or Sword Flight, but only while their qi can sustain them. They flee below a quarter of their
   health (all but the Sect Master, who makes a last stand), and rogues and disciples also flee from a hostile domain four or more stages stronger once their own domain
@@ -2366,8 +2803,8 @@ window closes with a line over the hotbar saying why (`TalkSystem`, `TalkWheelSc
 
 - **Greeting.** You bow to a senior and cup your fist to an equal or a junior; they answer in kind (`GesturePose`).
 - **Regard** (-100 to 100, five pips: Polite from 20, Courteous 40, Warm 60, Trusted 80, Sworn friend 90) is what they
-  think of you: their paths' baseline (+10 between two of the same strong path, -10 when you lean the other way), plus
-  their own regard, plus their sect's standing with you. At -50 or lower they attack you if they think they can win
+  think of you: their paths' baseline (+10 between two of the same strong path, -10 when you lean the other way; +10 more
+  from everyone for an obsession with Merit), plus their own regard, plus their sect's standing with you. At -50 or lower they attack you if they think they can win
   (`Regard`). Courteous opens rumours (and Spar with a senior), Warm a senior's guidance, Trusted the best trades; a
   Sworn friend gives you something now and then when you greet them, and comes to your aid when something attacks you
   within 24 blocks of them.
@@ -2405,6 +2842,7 @@ window closes with a line over the hotbar saying why (`TalkSystem`, `TalkWheelSc
 | Nearby | Anyone | The nearest other sect within 2,000 blocks: its name, path, direction and rough distance |
 | Rumours | Courteous, not far above you | One or two real things they have heard of (see below) |
 | Guidance | Warm, a realm or more above you | Their Insight: +25% cultivation from meditation for 10 minutes, once a day from each teacher |
+| Their wish | A settler of the Astral Realm with a wish waiting | What they wish for; a Four Axis cultivator at its axis may grant it (see the four axes of virtue) |
 
 Topics not open yet still show, greyed, with the regard they need.
 
@@ -2435,7 +2873,7 @@ Topics not open yet still show, greyed, with the regard they need.
   Sect Master the best of both; rogues odd things from far away. The stock changes each day. **Everyone trades, however
   far above you** (a Ghost King too; before 2026-10-19 one two realms up wouldn't). Regard opens better offers
   (one more at each of Polite, Courteous, Warm and Trusted) and lowers prices (x1.3 when Resentful down to x0.75 when
-  Sworn); **the offers not open to you yet are shown all the same, crossed out**, "Locked: sold to those it regards as
+  Sworn; an obsession with Fortune, x0.8 more on top); **the offers not open to you yet are shown all the same, crossed out**, "Locked: sold to those it regards as
   Warm (you: Indifferent)" on the item (`CultivatorTrades#locked`), so you can see early what they have. They also buy
   what you carry that a cultivator has use for (herbs, pills, fruit), for half to four-fifths of its worth by regard.
 - **Pressure**: two realms below you with your Realm Suppress on them, they talk on one knee. **Demand** takes tribute

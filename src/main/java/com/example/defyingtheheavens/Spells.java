@@ -307,7 +307,7 @@ public final class Spells {
 					Math.cos(a), 0.05, Math.sin(a), 0.25);
 		}
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(WAIL_RADIUS),
-				e -> e != p && e.isAlive() && e.distanceToSqr(p) <= WAIL_RADIUS * WAIL_RADIUS && !(e instanceof Player player && player.isSpectator()))) {
+				e -> !spared(p, e) && e.distanceToSqr(p) <= WAIL_RADIUS * WAIL_RADIUS)) {
 			target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, WAIL_TICKS, 1));
 			target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, WAIL_TICKS, 0));
 			Vec3 away = target.position().subtract(p.position()).multiply(1, 0, 1);
@@ -318,10 +318,13 @@ public final class Spells {
 
 	// --- The deeper foundations' spells ---
 
-	/** Spared by a caster's spells: the caster, spectators, and its own tamed creatures. */
+	/**
+	 * Spared by a caster's spells, as by the heaven spells (HeavenSpells#spared): the caster, spectators, its own tamed creatures, a
+	 * player it may not harm (PvP off, a team) and its sect's fellows. No hold, push or slowing reaches them either (only the harm
+	 * minded PvP before the 2026-10-20 sweep).
+	 */
 	private static boolean spared(ServerPlayer p, LivingEntity e) {
-		return e == p || !e.isAlive() || e instanceof Player player && player.isSpectator()
-				|| e instanceof net.minecraft.world.entity.OwnableEntity pet && p.getUUID().equals(pet.getOwnerUUID());
+		return HeavenSpells.spared(p, e);
 	}
 
 	/** A foe of the caster's: a monster, or anything set on it (a mob or a cultivator with it as its target). */

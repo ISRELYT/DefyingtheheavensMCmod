@@ -149,9 +149,10 @@ public class SoulFormsGameTests implements FabricGameTest {
 			helper.assertTrue(TribulationManager.isGhostTrial(p.getUUID()), "It faces the Netherworld's tribulation");
 			for (int tick = 0; tick < 60; tick++) TribulationManager.tick(helper.getLevel().getServer());
 			float share = (float) GhostSystem.livingShare(p);
-			float bolt = net.minecraft.world.damagesource.CombatRules.getDamageAfterAbsorb(13, TribulationManager.GHOST_FORM_ARMOR,
+			TribulationManager.Strikes core = TribulationManager.strikes(Realm.CORE_FORMATION, Stage.EARLY);
+			float bolt = net.minecraft.world.damagesource.CombatRules.getDamageAfterAbsorb(core.bolt(), TribulationManager.GHOST_FORM_ARMOR,
 					(float) p.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR_TOUGHNESS));
-			helper.assertTrue(Math.abs(full - p.getHealth() - (5 + bolt) * share) < 0.01f,
+			helper.assertTrue(Math.abs(full - p.getHealth() - (core.magic() + bolt) * share) < 0.01f,
 					"Its form turns the bolt as iron would, and the strike takes the share of its hearts it would of a life's ("
 							+ (full - p.getHealth()) + " of " + p.getMaxHealth() + ", x" + share + ")");
 			helper.succeed();
@@ -226,6 +227,40 @@ public class SoulFormsGameTests implements FabricGameTest {
 		}
 		helper.assertTrue(slips >= 20 && slips <= 40, "One or two a chest (" + slips + " in 20)");
 		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void theDeadTurnInwardToo(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		ServerPlayer p = null;
+		try {
+			p = survivor(helper, made, "dead-inward");
+			PlayerCultivation c = CultivationManager.own(p);
+			c.setState(Realm.QI_REFINING, Stage.EARLY, 0);
+			ghostPath(c, PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY));
+			GhostSystem.makeGhost(p);
+			helper.assertTrue(GhostSystem.isKing(p) && InnerRealm.mayTurnInward(p), "One of the dead may turn inward");
+			// (The game tests' server has no Inner Realm to go to: the way in is a world's that has one.)
+			if (InnerRealm.enter(p)) {
+				net.minecraft.nbt.CompoundTag back = c.getInnerReturn();
+				var level = helper.getLevel().getServer().getLevel(InnerRealm.bodyDimension(p));
+				helper.assertTrue(InnerRealm.isInside(p) && level != null && level.getEntity(back.getUUID("Body")) instanceof InnerBodyEntity body
+						&& body.look() == TwoPaths.Look.KING, "Its form sits on where it meditated, crowned");
+				InnerRealm.leave(p);
+			}
+			helper.assertTrue(TwoPaths.look(c) == TwoPaths.Look.KING, "...as it is drawn (InnerRealm#enter gives its body that look)");
+			HeartDemonEntity demon = new HeartDemonEntity(ModEntities.HEART_DEMON, p.serverLevel());
+			helper.assertTrue(GhostSystem.reaches(p.damageSources().mobAttack(demon)) && GhostSystem.attack(p, demon),
+					"Its heart demon reaches it, and it its heart demon");
+			demon.discard();
+			helper.succeed();
+		} finally {
+			if (p != null) {
+				InnerRealm.leave(p);
+				GhostSystem.forget(p.getUUID());
+			}
+			leave(made);
+		}
 	}
 
 	// --- Helpers ---

@@ -20,22 +20,28 @@ import java.util.UUID;
  * an element's methods don't stack, the five elements do. Only the living's, their meridians open. Applied once a second
  * (NetherworldManager's tick) and whenever the layers change.
  * <ul>
- *   <li>Wood, Evergreen Vitality: health regained each second (a Four Axis method's 54th layer, 8 a second).</li>
- *   <li>Water, Ceaseless Flow: qi gathered each second, on top of the realm's (PlayerCultivation#qiGatherPerSecond; up to 42.57).</li>
- *   <li>Fire, Fury of the Fanned Flame: attack speed, in per cent (up to 21.6%).</li>
- *   <li>Earth, Unshaken Mountain Body: less harm taken, in per cent (up to 18%), never against what passes through
- *       invulnerability, the mod's soul harms, or a heavenly tribulation's lightning (those stay as tuned).</li>
- *   <li>Metal, Whetted Edge: melee harm (up to 35.1).</li>
+ *   <li>Wood, Evergreen Vitality: health regained each second (a Four Axis method's 54th layer, 8 a second; a True Immortal one's
+ *       99th, some 1,200).</li>
+ *   <li>Water, Ceaseless Flow: qi gathered each second, on top of the realm's (PlayerCultivation#qiGatherPerSecond; 42.57 at Four
+ *       Axis's last layer, some 10,150 at True Immortal's).</li>
+ *   <li>Fire, Fury of the Fanned Flame: attack speed, in per cent (21.6% at Four Axis's last, 63% at True Immortal's).</li>
+ *   <li>Earth, Unshaken Mountain Body: less harm taken, in per cent (18% at Four Axis's last, 47.7% at True Immortal's), never
+ *       against what passes through invulnerability, the mod's soul harms, or a heavenly tribulation's lightning (those stay as tuned).</li>
+ *   <li>Metal, Whetted Edge: melee harm (35.1 at Four Axis's last, some 6,840 at True Immortal's).</li>
  * </ul>
  */
 public final class HeavenPassives {
-	/** Each element's amount a layer adds, by the realm the layer stands in (Qi Refining to Four Axis), in the five's order. */
+	/**
+	 * Each element's amount a layer adds, by the realm the layer stands in (Qi Refining to True Immortal), in the five's order. Past
+	 * Four Axis the healing, the qi and the edge grow as the realms' own health, gathering and strength do (Void Shattering's and True
+	 * Immortal's leaps with them); the fury and the ward a little a realm.
+	 */
 	static final double[][] PER_LAYER = {
-			{0.02, 0.04, 0.08, 0.15, 0.25, 0.35},
-			{0.02, 0.06, 0.15, 0.4, 1.1, 3},
-			{0.25, 0.3, 0.35, 0.4, 0.5, 0.6},
-			{0.2, 0.25, 0.3, 0.35, 0.4, 0.5},
-			{0.05, 0.1, 0.25, 0.5, 1, 2},
+			{0.02, 0.04, 0.08, 0.15, 0.25, 0.35, 0.7, 2.8, 5.6, 11.2, 112},
+			{0.02, 0.06, 0.15, 0.4, 1.1, 3, 7, 22, 49, 105, 940},
+			{0.25, 0.3, 0.35, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.2},
+			{0.2, 0.25, 0.3, 0.35, 0.4, 0.5, 0.55, 0.6, 0.65, 0.7, 0.8},
+			{0.05, 0.1, 0.25, 0.5, 1, 2, 4, 16, 32, 64, 640},
 	};
 
 	private static final UUID FIRE_ID = UUID.fromString("5b1f7c3e-8a24-4d61-9e0b-2c7a4f18d630");

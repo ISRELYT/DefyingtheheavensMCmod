@@ -36,7 +36,7 @@ public class HeavenMethodsGameTests implements FabricGameTest {
 
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void thirtyMethodsFiveElementsBySixRealmsEachFromQiRefining(GameTestHelper helper) {
-		helper.assertTrue(HeavenMethod.values().length == 30, "Thirty heaven methods");
+		helper.assertTrue(HeavenMethod.values().length == 55, "Fifty-five heaven methods (the realms after Four Axis' since 2026-10-22)");
 		java.util.Set<String> ids = new java.util.HashSet<>();
 		for (QiElement element : QiElement.five()) {
 			for (Realm realm : Realm.values()) {
@@ -66,7 +66,8 @@ public class HeavenMethodsGameTests implements FabricGameTest {
 		helper.assertTrue(spells == 70, "Seventy element spells (" + spells + ")");
 		for (QiElement element : QiElement.five()) {
 			for (Realm realm : Realm.values()) {
-				int want = realm.ordinal() <= Realm.FOUNDATION_BUILDING.ordinal() ? 3 : 2;
+				// The realms after Four Axis have their methods but no spells of their own yet (the user's ask, 2026-10-22).
+				int want = realm.ordinal() > Realm.FOUR_AXIS.ordinal() ? 0 : realm.ordinal() <= Realm.FOUNDATION_BUILDING.ordinal() ? 3 : 2;
 				helper.assertTrue(perSlot.getOrDefault(element + " " + realm, 0) == want, element + " " + realm + ": " + want + " spells");
 			}
 		}
@@ -440,7 +441,11 @@ public class HeavenMethodsGameTests implements FabricGameTest {
 		helper.succeed();
 	}
 
-	@GameTest(template = EMPTY_STRUCTURE)
+	/**
+	 * A batch of its own (2026-10-19): a spell's block is never set inside a raised formation's barrier (HeavenSpells#placeTemporary),
+	 * and now and then a neighbouring test's formation reached over this one's ground ("Into air once" failed).
+	 */
+	@GameTest(template = EMPTY_STRUCTURE, batch = "heaven_methods_spell_blocks")
 	public void aDaoSteleTeachesAndASpellsBlocksAreTakenUpAgain(GameTestHelper helper) {
 		BlockPos foot = helper.absolutePos(new BlockPos(2, 1, 2));
 		HeavenMethod method = HeavenMethod.of(QiElement.EARTH, Realm.CORE_FORMATION);

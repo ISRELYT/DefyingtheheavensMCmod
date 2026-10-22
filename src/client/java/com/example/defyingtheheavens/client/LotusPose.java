@@ -14,7 +14,7 @@ public final class LotusPose {
 	 * a body its nascent soul has left (SoulBodyEntity).
 	 */
 	public static boolean meditating(LivingEntity entity) {
-		if (entity instanceof com.example.defyingtheheavens.SoulBodyEntity) return true;
+		if (entity instanceof com.example.defyingtheheavens.SoulBodyEntity || entity instanceof com.example.defyingtheheavens.InnerBodyEntity) return true;
 		return entity instanceof Player ? ClientMeditationTracker.isMeditating(entity.getUUID()) && !ModDimensions.isInnerRealm(entity.level().dimension())
 				: entity instanceof CultivatorNpc npc && npc.isMeditating();
 	}

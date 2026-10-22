@@ -263,6 +263,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		goalSelector.addGoal(2, new CultivatorGoals.TalkGoal(this));
 		goalSelector.addGoal(3, new CultivatorGoals.JourneyGoal(this));
 		goalSelector.addGoal(3, new CultivatorGoals.SeclusionGoal(this));
+		goalSelector.addGoal(3, new CultivatorGoals.ShelterGoal(this)); // a settler, home while a threat is out (Settlements)
 		goalSelector.addGoal(4, new CultivatorGoals.ReturnToTerritoryGoal(this));
 		goalSelector.addGoal(5, new CultivatorGoals.LifeGoal(this));
 		goalSelector.addGoal(6, new CultivatorGoals.SectDutyGoal(this));
@@ -465,6 +466,10 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	 */
 	public int regard(Player player) {
 		int value = Regard.baseline(getFaction(), alignmentOf(player));
+		// One obsessed with Merit (Obsession) is thought the better of by everyone.
+		if (player instanceof ServerPlayer sp) value += Obsession.regardBonus(CultivationManager.get(sp));
+		// The righteous sense something wrong in a Heaven-Defying or a Soul-Devouring Body (Physique).
+		if (player instanceof ServerPlayer sp) value += Physiques.regardShift(CultivationManager.get(sp), getFaction());
 		UUID who = Possession.identity(player);
 		Regard.Entry entry = regard.get(who);
 		if (entry != null) value += entry.current(Regard.day(level().getGameTime()));
@@ -719,9 +724,24 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 
 	// --- Setting up ---
 
-	/** Makes this a cultivator of {@code rank} ({@link #MORTAL} for a mortal), re-applying its realm's strength. */
+	/**
+	 * Makes this a cultivator of {@code rank} ({@link #MORTAL} for a mortal), re-applying its realm's strength: no higher than its
+	 * world has room for in the realms after Four Axis (HighRealms).
+	 */
 	public void setRank(int rank) {
-		rank = Math.max(MORTAL, Math.min(rank, PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION)));
+		setRank(rank, false);
+	}
+
+	/**
+	 * {@link #setRank(int)}, or with {@code pastQuota} as it is, whatever room its world has (a body a player's soul cultivated:
+	 * Possession); its place is held all the same.
+	 */
+	public void setRank(int rank, boolean pastQuota) {
+		rank = Math.max(MORTAL, Math.min(rank, PlayerCultivation.LAST_RANK));
+		// The census is the server thread's alone (a palace's king is made on worldgen's, of Four Axis at most: it never asks).
+		boolean census = level() instanceof ServerLevel server && server.getServer().isSameThread()
+				&& Math.max(rank, getRank()) >= PlayerCultivation.rank(Realm.DAO_INTEGRATION, Stage.EARLY);
+		if (census && !pastQuota) rank = HighRealms.allowed((ServerLevel) level(), getUUID(), rank);
 		if (rank < 0) {
 			cultivation.setMortal(true);
 		} else {
@@ -730,6 +750,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		}
 		entityData.set(DATA_RANK, rank);
 		refreshStats();
+		if (census) HighRealms.hold(this, false);
 	}
 
 	public void setAlignment(int alignment) { entityData.set(DATA_ALIGNMENT, Alignment.clamp(alignment)); }
@@ -818,7 +839,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			case QI_REFINING -> random.nextBoolean() ? Items.STONE_SWORD : Items.IRON_SWORD;
 			case FOUNDATION_BUILDING, CORE_FORMATION -> Items.IRON_SWORD;
 			case NASCENT_SOUL, HEAVENLY_BEING -> Items.DIAMOND_SWORD;
-			case FOUR_AXIS -> Items.NETHERITE_SWORD;
+			case FOUR_AXIS, DAO_INTEGRATION, VOID_SHATTERING, SACRED_VESSEL, ENTERING_NIRVANA, TRUE_IMMORTAL -> Items.NETHERITE_SWORD;
 		};
 	}
 
@@ -872,6 +893,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			lastSeen = level.getGameTime();
 			secondTick(level);
 		}
+		// One of the realms after Four Axis: seen in the world, holding its place there (HighRealms).
+		if (tickCount % 100 == 1 && getRank() >= PlayerCultivation.rank(Realm.DAO_INTEGRATION, Stage.EARLY)) HighRealms.hold(this, true);
 		if (getTarget() != null || getLastHurtByMob() != null && tickCount - getLastHurtByMobTimestamp() < 100) combatTicks = 200;
 		else if (combatTicks > 0) combatTicks--;
 		tickQi();
@@ -987,8 +1010,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 
 	/**
 	 * Adds cultivation, passing every bottleneck but one (no tribulation for NPCs) and never past what the realm it stands in
-	 * can sustain. The one is Qi Refining Mid: there it waits on the heavens' leave, as a player does. Package-private for the
-	 * game tests.
+	 * can sustain, nor into a realm after Four Axis its world has no more room in (HighRealms: it waits at the Grand Perfection
+	 * below). The one is Qi Refining Mid: there it waits on the heavens' leave, as a player does. Package-private for the game tests.
 	 */
 	void advance(double amount) {
 		boolean lower = ModDimensions.isLowerRealm(level().dimension());
@@ -1004,6 +1027,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		double value = cultivation.getCultivation() + amount;
 		int cap = cultivation.isLowerRealmBound()
 				? PlayerCultivation.rank(PlayerCultivation.LOWER_REALM_CAP_REALM, PlayerCultivation.LOWER_REALM_CAP_STAGE)
+				: level() instanceof ServerLevel server ? HighRealms.allowed(server, getUUID(), PlayerCultivation.LAST_RANK)
 				: PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION);
 		for (int guard = 0; guard < 32; guard++) {
 			cultivation.setState(realm, stage, 0);
@@ -1024,6 +1048,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			entityData.set(DATA_RANK, after);
 			refreshStats();
 			setHealth(getMaxHealth());
+			if (Math.max(before, after) >= PlayerCultivation.rank(Realm.DAO_INTEGRATION, Stage.EARLY)) HighRealms.hold(this, true);
 			level().playSound(null, blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.NEUTRAL, 0.6f, 1.2f);
 			if (sectId != null && level() instanceof ServerLevel server) SectManager.onMemberRankChanged(server, this);
 			if (after > before && !catchingUp) NpcLife.onBreakthrough(this);
@@ -1281,19 +1306,21 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	/**
 	 * The Sect Master and its elders defend their sect against anyone, however far above them: no stronger domain sends them
 	 * running, only a beating, and not even that for the master (see {@link #shouldFlee}). Disciples and rogues have no such duty.
+	 * A Merit wish's threat (Wishes) came for the one who took it on, and doesn't run from them either.
 	 */
 	public boolean holdsGround() {
-		return lifecycle == Lifecycle.SECT && getTitle().isElderOrAbove();
+		return lifecycle == Lifecycle.SECT && getTitle().isElderOrAbove() || Wishes.isThreat(this);
 	}
 
 	/**
 	 * A player's or NPC's rank as cultivators weigh each other ({@link #MORTAL} for mortals, and for a cultivator hidden behind its
-	 * Concealment Barrier). Creative players keep their rank; who may take them for an enemy is decided elsewhere (isEnemy).
+	 * Concealment Barrier): a player's by either path (TwoPaths#weighedRank, its body's). Creative players keep their rank; who may
+	 * take them for an enemy is decided elsewhere (isEnemy).
 	 */
 	public static int rankOf(LivingEntity entity) {
 		if (entity instanceof ServerPlayer player) {
 			PlayerCultivation c = CultivationManager.get(player);
-			return c.isMortal() ? MORTAL : c.sustainedRank();
+			return c.isMortal() ? MORTAL : TwoPaths.weighedRank(c);
 		}
 		if (entity instanceof CultivatorNpc npc) return npc.isConcealed() ? MORTAL : npc.sustainedRank();
 		return MORTAL;
@@ -1323,13 +1350,16 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	 * Nascent Soul and above, who see it as players of those realms do; to the rest it doesn't exist. A player's ghost, likewise,
 	 * to the living (below Nascent Soul they couldn't touch it either: SoulProjection#harmFactor), but in the Netherworld, where
 	 * everyone sees the dead, to all; and one of the living in a Ghost King's form to none of the living at all
-	 * (TwoPaths#inGhostForm). The dead's own kind see the dead, and that form.
+	 * (TwoPaths#inGhostForm). The dead's own kind see the dead, and that form. A Ghost King in its human form is seen as the living
+	 * are, by everyone (TwoPaths#inHumanForm, as players see it: SoulProjection#seenOnlyBySeers), so the dead of Four Axis may walk
+	 * among the living and grant their wishes (Wishes).
 	 */
 	public boolean senses(LivingEntity other) {
 		if (!(other instanceof Player player)) return true;
 		if (SoulProjection.isSoul(player)) return seesSouls();
 		if (!GhostSystem.seenAsDead(player)) return true;
 		if (this instanceof Ghostly) return true;
+		if (player instanceof ServerPlayer sp && Incorporeal.isGhost(sp) && TwoPaths.inHumanForm(sp)) return true;
 		return Incorporeal.isGhost(player) && (seesSouls() || ModDimensions.isNetherworld(level().dimension()));
 	}
 
@@ -1343,6 +1373,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		if (other == this || !other.isAlive() || isAlly(other) || !senses(other)) return false;
 		if (other instanceof Player player) {
 			if (player.isCreative() || player.isSpectator()) return false;
+			// A Merit wish's threat (Wishes) is out for the one who took it on, whatever their path.
+			if (Wishes.isThreat(this) && player.getUUID().equals(Wishes.takerOf(this))) return true;
 			if (owesLife(player)) return false; // they spared its life: not today
 			if (SparSystem.areSparring(this, player)) return false; // a spar is a contest, not a feud
 			if (getFaction().isEnemyOf(Alignment.factionOf(alignmentOf(player)))) return true;
@@ -1401,9 +1433,12 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 				&& !(pursuer instanceof Player player && (player.isCreative() || player.isSpectator()));
 	}
 
-	/** A Sect Master never runs, even from a beating: it makes its last stand in its own sect. Its elders may fall back. */
+	/**
+	 * A Sect Master never runs, even from a beating: it makes its last stand in its own sect. Its elders may fall back. Nor does a
+	 * Merit wish's threat (Wishes): it fights to the end, never begging for its life (TalkSystem#wouldBeg).
+	 */
 	public boolean makesLastStand() {
-		return lifecycle == Lifecycle.SECT && getTitle() == NpcTitle.SECT_MASTER;
+		return lifecycle == Lifecycle.SECT && getTitle() == NpcTitle.SECT_MASTER || Wishes.isThreat(this);
 	}
 
 	/** Below {@link #FLEE_HEALTH} of its health. */
@@ -1488,7 +1523,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	 * and goes to join; with none to be had, it seeks seclusion there, to cultivate toward Four Axis.
 	 */
 	public void decideRogueCourse() {
-		if (lifecycle != Lifecycle.ROGUE || isMortal()) return;
+		// What preys on a settlement (a Merit wish's threat, Wishes) has one course: the one who took it on. No seclusion, no ascent.
+		if (lifecycle != Lifecycle.ROGUE || isMortal() || Wishes.isThreat(this)) return;
 		if (ModDimensions.isUpperRealm(level().dimension())) {
 			if (ascended && level() instanceof ServerLevel level) seekSectOrSeclusion(level);
 			return;
@@ -1774,6 +1810,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		super.die(source);
 		if (!(level() instanceof ServerLevel server)) return;
 		ServerPlayer killer = killerOf(source);
+		HighRealms.gone(server.getServer(), getUUID()); // a place among the few after Four Axis free again
 		NpcLife.end(this);
 		NpcLife.onDeath(server, this); // its fellows cry out, and mourn it where it fell
 		if (sectId != null) SectManager.onMemberDeath(server, this, killer != null);
@@ -1834,7 +1871,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		if (isMortal() || isGhost()) return null;
 		Sect sect = isSectMember() ? sect() : null;
 		QiElement element = sect != null ? sect.element() : QiElement.five()[(int) Math.floorMod(getUUID().getLeastSignificantBits() >>> 3, 5L)];
-		int own = Math.min(Realm.FOUR_AXIS.ordinal(), getRank() / Stage.values().length);
+		int own = Math.min(Realm.values().length - 1, getRank() / Stage.values().length);
 		int hash = getUUID().hashCode() * 17 + 3;
 		int realm = getTitle().isElderOrAbove() || Math.floorMod(hash, 10) < OWN_HEAVEN_METHOD_IN_TEN ? own : Math.floorMod(hash / 10, own + 1);
 		return HeavenMethod.of(element, Realm.byIndex(realm));
@@ -1864,6 +1901,15 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 				if (random.nextFloat() < 0.15f) stones.add(new ItemStack(ModItems.SUPREME_SPIRIT_STONE));
 				if (random.nextFloat() < 0.01f) stones.add(new ItemStack(ModItems.IMMORTAL_SPIRIT_STONE));
 			}
+			case DAO_INTEGRATION -> {
+				stones.add(new ItemStack(ModItems.SUPREME_SPIRIT_STONE, 1 + random.nextInt(3)));
+				if (random.nextFloat() < 0.05f) stones.add(new ItemStack(ModItems.IMMORTAL_SPIRIT_STONE));
+			}
+			case VOID_SHATTERING, SACRED_VESSEL -> {
+				stones.add(new ItemStack(ModItems.SUPREME_SPIRIT_STONE, 3 + random.nextInt(6)));
+				stones.add(new ItemStack(ModItems.IMMORTAL_SPIRIT_STONE, 1 + random.nextInt(realmOf(rank) == Realm.SACRED_VESSEL ? 3 : 1)));
+			}
+			case ENTERING_NIRVANA, TRUE_IMMORTAL -> stones.add(new ItemStack(ModItems.IMMORTAL_SPIRIT_STONE, 2 + random.nextInt(4)));
 		}
 		return stones;
 	}
@@ -1885,6 +1931,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			if (joiningSect != null) SectManager.release(server, joiningSect, getUUID());
 			lowerConcealment(server);
 			setSuppressing(false);
+			HighRealms.gone(server.getServer(), getUUID());
 		}
 		if (!level().isClientSide) NpcLife.end(this); // a talk or a bout it was in is off
 		super.remove(reason);
@@ -1982,8 +2029,22 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			npc.putBoolean("Vacant", true);
 			npc.putByte("VacantWas", vacantWas);
 		}
+		if (settledAt != null) npc.put("SettledAt", NbtUtils.writeBlockPos(settledAt));
+		if (wish != null) npc.put("Wish", wish.copy());
 		tag.put("Npc", npc);
 	}
+
+	// --- A settler's (Settlements, Wishes) ---
+
+	/** A settler's home ground (Settlements): it lives and wanders near it. Null for anyone else. */
+	private BlockPos settledAt;
+	/** The wish it would have granted (Wishes), as saved; null for none. */
+	private CompoundTag wish;
+
+	public BlockPos settledAt() { return settledAt; }
+	public void setSettledAt(BlockPos at) { settledAt = at == null ? null : at.immutable(); }
+	public CompoundTag wish() { return wish; }
+	public void setWish(CompoundTag tag) { wish = tag; }
 
 	@Override
 	public void readAdditionalSaveData(CompoundTag tag) {
@@ -2021,6 +2082,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		// Missing (saved before it was kept): never seen, not seen at the world's first tick (that catch-up would be the world's age).
 		lastSeen = npc.contains("LastSeen") ? npc.getLong("LastSeen") : -1;
 		seclusionAttempts = npc.getInt("SeclusionAttempts");
+		settledAt = npc.contains("SettledAt") ? NbtUtils.readBlockPos(npc.getCompound("SettledAt")) : null;
+		wish = npc.contains("Wish") ? npc.getCompound("Wish").copy() : null;
 		aggressed.clear();
 		ListTag list = npc.getList("Aggressed", Tag.TAG_INT_ARRAY);
 		for (Tag entry : list) aggressed.add(NbtUtils.loadUUID(entry));

@@ -44,7 +44,13 @@
       "com.example.defyingtheheavens.GhostPathBeginGameTests",
       "com.example.defyingtheheavens.LockedGoodsGameTests",
       "com.example.defyingtheheavens.SharedStatsGameTests",
-      "com.example.defyingtheheavens.SoulFormsGameTests"
+      "com.example.defyingtheheavens.SoulFormsGameTests",
+      "com.example.defyingtheheavens.LifespanGameTests",
+      "com.example.defyingtheheavens.FourAxisGameTests",
+      "com.example.defyingtheheavens.ObsessionGameTests",
+      "com.example.defyingtheheavens.PhysiquesPillsGameTests",
+      "com.example.defyingtheheavens.LifespanCostsGameTests",
+      "com.example.defyingtheheavens.NewRealmsGameTests"
     ]
   }
 }

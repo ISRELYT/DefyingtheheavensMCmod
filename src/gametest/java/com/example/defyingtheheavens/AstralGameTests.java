@@ -154,8 +154,16 @@ public class AstralGameTests implements FabricGameTest {
 			}
 		}
 		helper.assertTrue(AstralRealm.spaceSpeed(Realm.NASCENT_SOUL, Stage.EARLY) > SwordFlight.QI_FLIGHT_SPEED * 2, "Space's speed is well past Qi Flight's");
-		helper.assertTrue(ModDimensions.isLowerRealm(ModDimensions.ASTRAL_VOID) && ModDimensions.isLowerRealm(ModDimensions.ASTRAL_SURFACES),
-				"The Astral Realm is a lower realm (the cap holds there)");
+		// Since 2026-10-19 (the user's call) no lower realm: no cap holds there, and a Heavenly Being of Grand Perfection may break into
+		// Four Axis there, as anywhere not suppressed.
+		helper.assertTrue(!ModDimensions.isLowerRealm(ModDimensions.ASTRAL_VOID) && !ModDimensions.isLowerRealm(ModDimensions.ASTRAL_SURFACES),
+				"The Astral Realm is no lower realm (no cap holds there)");
+		PlayerCultivation c = new PlayerCultivation();
+		c.setState(Realm.HEAVENLY_BEING, Stage.GRAND_PERFECTION, PlayerCultivation.required(Realm.HEAVENLY_BEING, Stage.GRAND_PERFECTION));
+		c.setLowerRealmBound(true);
+		helper.assertTrue(c.isSuppressed() == false && c.isBreakthroughLocked(), "In the lower realms, Four Axis is out of reach");
+		c.setLowerRealmBound(false);
+		helper.assertTrue(!c.isBreakthroughLocked(), "Anywhere unsuppressed (the Astral Realm, not only the Upper Realm), within reach");
 		helper.succeed();
 	}
 }

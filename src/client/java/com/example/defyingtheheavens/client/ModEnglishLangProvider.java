@@ -182,6 +182,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.DEATH_SPATIAL_PRESSURE + ".player", "%1$s was crushed by spatial pressure while fighting %2$s");
 		t.add(ModLang.DEATH_SOUL_SEVERED, "%1$s's nascent soul was severed from their body");
 		t.add(ModLang.DEATH_SOUL_SEVERED + ".player", "%1$s's nascent soul was severed from their body by %2$s");
+		t.add(ModLang.DEATH_OLD_AGE, "%1$s's years ran out");
+		t.add(ModLang.DEATH_OLD_AGE + ".player", "%1$s's years ran out");
 		t.add(ModLang.DEATH_SOUL_SEIZED, "%1$s's body was seized by %2$s's nascent soul");
 		t.add(ModLang.DEATH_SOUL_SEIZED + ".item", "%1$s's body was seized by %2$s's nascent soul");
 		t.add(ModLang.DEATH_SOUL_SEIZED + ".player", "%1$s's body was seized by %2$s's nascent soul");
@@ -207,16 +209,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.KEY_ABILITY_WHEEL, "Ability Wheel (hold)");
 
 		// Realms and stages
-		for (Realm realm : Realm.values()) {
-			t.add(realm.getTranslationKey(), switch (realm) {
-				case QI_REFINING -> "Qi Refining";
-				case FOUNDATION_BUILDING -> "Foundation Building";
-				case CORE_FORMATION -> "Core Formation";
-				case NASCENT_SOUL -> "Nascent Soul";
-				case HEAVENLY_BEING -> "Heavenly Being";
-				case FOUR_AXIS -> "Four Axis";
-			});
-		}
+		for (Realm realm : Realm.values()) t.add(realm.getTranslationKey(), realmName(realm));
 		for (Stage stage : Stage.values()) {
 			t.add(stage.getTranslationKey(), switch (stage) {
 				case EARLY -> "Early";
@@ -239,7 +232,6 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.SETTLING_LINE, "Layer %s settling: %s%%");
 		t.add(ModLang.UPPER_REALM_LINE, "Upper Realm: qi x%s");
 		t.add(ModLang.HUD_QI, "%s / %s");
-		t.add(ModLang.HUD_QI_LABEL, "Qi");
 		t.add(ModLang.BOTTLENECK, "Bottleneck reached! Break through to advance.");
 		t.add(ModLang.BOTTLENECK_NEXT, "Next: %s");
 		t.add(ModLang.PINNACLE, "You stand at the pinnacle of cultivation.");
@@ -296,6 +288,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case FORM_SHIFT -> "Form Shift";
 				case CORE_DETONATION -> "Golden Core Detonation";
 				case SPATIAL_TEAR -> "Spatial Tear";
+				case BURN_LIFESPAN -> "Burn Lifespan";
 			});
 			t.add(key + ".description", switch (ability) {
 				case QI_SUSTENANCE -> "Qi keeps you fed. Hunger stays full.";
@@ -322,6 +315,9 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 						+ "each block crossing %s in the world, under spatial pressure (worse in its stormy layers: rise through the upper ones to cross "
 						+ "into the Upper Realm, or sink slowly through the lower ones to fall into the mortal world). "
 						+ "Costs %s%% of your qi to tear in, %s%% to tear out.";
+				case BURN_LIFESPAN -> "Set your own years alight for strength: while it burns, your blows and spells strike %2$s%% harder and you move "
+						+ "%3$s%% faster, for %1$s%% of your whole lifespan a second (the same share at every realm). It goes out by itself before "
+						+ "it would leave you fewer than %4$s years, and when you die or log out.";
 			});
 		}
 		// Soul Projection while the soul is in another's body (Possession): the way out of it.
@@ -361,6 +357,11 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case NINE_NETHER_SOUL_SUTRA -> "Nine Nether Soul Sutra";
 				case YAMA_JUDGEMENT -> "Yama's Judgement Scripture";
 				case SIX_PATHS_CANON -> "Six Paths Reincarnation Canon";
+				case TEN_THOUSAND_GHOSTS_UNION -> "Ten Thousand Ghosts Union Scripture";
+				case VOID_RENDING_NETHER_CANON -> "Void-Rending Nether Canon";
+				case HELL_FORGED_VESSEL_SUTRA -> "Hell-Forged Vessel Sutra";
+				case UNDERWORLD_NIRVANA_SCRIPTURE -> "Underworld Nirvana Scripture";
+				case NETHERWORLD_IMMORTAL_CANON -> "Netherworld Immortal Sovereign Canon";
 			});
 			t.add(ModLang.methodKey(method.getId()) + ".description", switch (method) {
 				case NETHERWORLD_BREATHING -> "The first foundation of the ghost cultivators: breathe the Netherworld's yin and keep it. It carries "
@@ -375,8 +376,18 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 						+ "your ghost path from Qi Refining through Nascent Soul.";
 				case YAMA_JUDGEMENT -> "The fifth foundation, the Judges' own: weigh souls as the courts of the underworld weigh them. It carries "
 						+ "your ghost path from Qi Refining through Heavenly Being.";
-				case SIX_PATHS_CANON -> "The last foundation, the law of the Wheel itself: the six paths of rebirth turn within you. It carries "
+				case SIX_PATHS_CANON -> "The sixth foundation, the law of the Wheel itself: the six paths of rebirth turn within you. It carries "
 						+ "your ghost path from Qi Refining all the way through Four Axis.";
+				case TEN_THOUSAND_GHOSTS_UNION -> "The seventh foundation: the yin of every soul that ever passed the Ghost Gate, gathered into one Dao "
+						+ "and made your own. It carries your ghost path from Qi Refining through Dao Integration.";
+				case VOID_RENDING_NETHER_CANON -> "The eighth foundation: a ghost's hand closes on the void between the realms and tears it like "
+						+ "cloth. Only a handful have ever read it. It carries your ghost path from Qi Refining through Void Shattering.";
+				case HELL_FORGED_VESSEL_SUTRA -> "The ninth foundation: the soul forged in the fires of the lowest hell into a vessel no heaven "
+						+ "can break. It carries your ghost path from Qi Refining through Sacred Vessel.";
+				case UNDERWORLD_NIRVANA_SCRIPTURE -> "The tenth foundation: to die a last time in the Nine Nethers and come out of it beyond "
+						+ "death. It carries your ghost path from Qi Refining through Entering Nirvana.";
+				case NETHERWORLD_IMMORTAL_CANON -> "The last foundation, written by the Chief Judge's own hand: the dead's way to immortality. It "
+						+ "carries your ghost path from Qi Refining all the way through True Immortal.";
 			});
 			t.add(ModLang.methodKey(method.getId()) + ".gains", switch (method) {
 				case NETHERWORLD_BREATHING -> "Qi Refining: layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection. Layer 3: Ghost Eye. Layer 5: Ghostly "
@@ -396,6 +407,9 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 						+ "Grand Perfection. Layer 39: Yama's Verdict. Layer 43: Chains of Hell. Every layer: +20 ghost qi.";
 				case SIX_PATHS_CANON -> "Qi Refining to Four Axis, nine layers each: of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand "
 						+ "Perfection. Layer 48: Wheel of Samsara. Layer 52: Six Paths Annihilation. Every layer: +20 ghost qi.";
+				case TEN_THOUSAND_GHOSTS_UNION, VOID_RENDING_NETHER_CANON, HELL_FORGED_VESSEL_SUTRA, UNDERWORLD_NIRVANA_SCRIPTURE,
+						NETHERWORLD_IMMORTAL_CANON -> "Qi Refining to " + realmName(method.realm()) + ", nine layers each: of each realm's nine, "
+						+ "layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection. No spells of its own yet. Every layer: +20 ghost qi.";
 			});
 		}
 		for (Spell spell : Spell.values()) {
@@ -629,16 +643,17 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.physiqueGradeKey("high"), "High");
 		t.add(ModLang.physiqueGradeKey("supreme"), "Supreme");
 		t.add(ModLang.physiqueGradeKey("immortal"), "Immortal");
-		physique(t, "mortal_body", "Mortal Body", "An ordinary body. Nothing helps it and nothing holds it back.");
 		physique(t, "five_element_spiritual_roots", "Five Elements Spiritual Roots",
 				"Roots of all five elements: any element's methods may be learned, at the ordinary pace.");
 		physique(t, "cursed_meridian_body", "Cursed Meridian Body", "Meridians that leak: qi gathers 0.8 times as fast into a pool 0.8 times as deep.");
 		physique(t, "shattered_meridians", "Shattered Meridians",
 				"Meridians that will never hold qi: no cultivation, no heaven methods, no spells. The body can be tempered on past a mortal's Peak instead, "
-						+ "eight stages of body refining, the last as strong as a Core Formation cultivator's. Meditation tempers it too.");
+						+ "eight stages of body refining, the last as strong as a Core Formation cultivator's. Meditation tempers it too. "
+						+ "It is never the lot of one already cultivating.");
 		physique(t, "three_element_spiritual_roots", "Three Elements Spiritual Roots",
 				"Roots of three elements only: methods of those three alone, cultivated 1.5 times as fast.");
-		physique(t, "yin_soul_body", "Yin Soul Body", "A soul at home in yin: yin corruption never takes hold of it.");
+		physique(t, "yin_soul_body", "Yin Soul Body",
+				"A soul at home in yin: yin corruption never takes hold of it, and the ghost path is cultivated 1.2 times as fast.");
 		physique(t, "heaven_sacred_body", "Heaven Sacred Body",
 				"The heavens favour it: no Ritual to the Heavens is wanted at Qi Refining Mid, and heaven methods are cultivated 1.2 times as fast.");
 		physique(t, "innate_alchemy_body", "Innate Alchemy Body", "Pills and elixirs brewed by its hands work twice as strongly.");
@@ -649,14 +664,48 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		physique(t, "blessed_meridian_body", "Blessed Meridian Body",
 				"Wide, clean meridians: qi gathers 1.5 times as fast into a pool 1.5 times as deep, and Qi Sense opens from a mortal's first day.");
 		physique(t, "jade_poison_body", "Jade Poison Body",
-				"No medicinal toxicity ever builds up, and the qi of pills and spirit fruit is refined the moment it is taken.");
+				"No medicinal toxicity ever builds up, and the qi of pills and spirit fruit is refined the moment it is taken. No poison nor wither "
+						+ "takes hold of it, and its blows poison what they strike, the more strongly the higher its realm.");
 		physique(t, "fallen_true_immortal", "Fallen True Immortal",
 				"An immortal reborn in a mortal body: any element, five times the pace on both paths, and a method's new layers need no settling.");
 		physique(t, "ghost_devil_body", "Ghost Devil Body",
 				"Half the dead's already: the ghost path at twice the pace, and a Ghost King's form of its own anywhere, even among the living, "
-						+ "as strong as its ghost methods allow. Find a ghost method of a deeper realm and the ghost path leaps to it.");
+						+ "as strong as its ghost methods allow. In that form it has the whole of its ghost path's strength, as the dead do; in its "
+						+ "human form, half, as any living cultivator's ghost path gives. Find a ghost method of a deeper realm and the ghost path leaps to it.");
 		physique(t, "heavenly_thunder_body", "Heavenly Thunder Body",
-				"The rarest of all. A tribulation's lightning feeds it instead of harming it: every bolt taken becomes cultivation and qi.");
+				"A tribulation's lightning feeds it instead of harming it: every bolt taken becomes cultivation and qi.");
+		physique(t, "spirit_eye_body", "Spirit-Eye Body",
+				"Eyes open to what others can't see: from its first day, as if the Ghost Eye were always open, it sees souls and the dead clearly, "
+						+ "and the dead and the Method Steles even through walls within 32 blocks, for nothing.");
+		physique(t, "nine_yang_body", "Nine Yang Body",
+				"A body of the blazing sun: fire and lava never burn it. Heaven methods are cultivated 1.3 times as fast; the ghost path, yin to its "
+						+ "yang, at half the pace.");
+		physique(t, "starborn_body", "Starborn Body",
+				"Born under the stars: the void bears it from Core Formation, a realm before anyone else. A star's heat never burns it, space's thin qi "
+						+ "is whole to it, and it flies through space 1.5 times as fast, paying the years of its flight there by as much less.");
+		physique(t, "ancient_holy_body", "Ancient Holy Body",
+				"A body of the ancient sages: health and strength 1.3 times another's, a tribulation's strikes a quarter weaker, and its tempering "
+						+ "twice as fast.");
+		physique(t, "blood_demon_body", "Blood Demon Body", "It feeds on the blood it spills: every blow it deals heals it by 15%% of the harm done.");
+		physique(t, "hundred_refinements_body", "Hundred Refinements Body", "Refined in a hundred fires: one stat point more at every breakthrough.");
+		physique(t, "primordial_chaos_body", "Primordial Chaos Body",
+				"The chaos from before heaven and earth parted: meditation feeds both paths at once, each at its full pace, no element is barred to it, "
+						+ "and its spells strike a quarter harder. The heavens hate it: every tribulation strikes half as many times again.");
+		physique(t, "heaven_defying_body", "Heaven-Defying Body",
+				"The heavens can't strike it down: a tribulation's killing strike leaves it one heart, and the tribulation fails instead. No failed "
+						+ "tribulation costs it a stage or its cultivation: it may face the heavens again at once. It asks no leave of the heavens (no "
+						+ "Ritual to the Heavens), but heaven methods come to it at 0.75 times the pace, and the righteous sense something wrong in it "
+						+ "(-15 regard).");
+		physique(t, "soul_devouring_body", "Soul-Devouring Body",
+				"It feeds on souls: every cultivator it slays, players too, gives it a tenth of what the victim's stage takes, on the path it "
+						+ "cultivates. Each righteous or neutral one drags its own path toward the demonic, and the righteous think the less of it "
+						+ "(-20 regard).");
+		physique(t, "eternal_reincarnation_body", "Eternal Reincarnation Body",
+				"The rarest of all. A soul that never wholly forgets: when its life is spent, its soul scatters, or a Rebirth Pill is taken, it is "
+						+ "born again with this same body, its methods, and half its realm on each path.");
+		physique(t, "myriad_form_body", "Myriad Form Body",
+				"As rare as the Eternal Reincarnation Body: born with two more physiques at once, of Mid to Supreme grade and never two that clash, "
+						+ "with all their gifts.");
 		t.add(ModLang.bodyRefiningKey("peak"), "Mortal Peak");
 		t.add(ModLang.bodyRefiningKey("copper_skin"), "Copper Skin");
 		t.add(ModLang.bodyRefiningKey("iron_flesh"), "Iron Flesh");
@@ -674,12 +723,21 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_THUNDER_ABSORBED, "Your body drinks in the lightning (+%s cultivation)");
 		t.add(ModLang.JOURNAL_PHYSIQUE, "My body");
 		t.add(ModLang.JOURNAL_PHYSIQUE_TEXT, "I was born with a %s, a %s grade physique. %s");
-		t.add(ModLang.STATS_PHYSIQUE, "Physique: %s (%s)");
+		t.add(ModLang.STATS_PHYSIQUE, "Physique: %s (%s, talent ×%s)");
 		t.add(ModLang.STATS_ROOTS, "Roots: %s");
 		t.add(ModLang.STATS_BODY_REFINING, "Body refining: %s");
 		t.add(ModLang.CMD_PHYSIQUE_GET, "%s was born with a %s");
 		t.add(ModLang.CMD_PHYSIQUE_SET, "%s now has a %s");
 		t.add(ModLang.CMD_PHYSIQUE_UNKNOWN, "No physique called %s");
+		t.add(ModLang.MSG_PHYSIQUE_FORMS, "Within it lie two more: %s.");
+		t.add(ModLang.JOURNAL_PHYSIQUE_FORM, "Within it, a %s: %s");
+		t.add(ModLang.STATS_FORMS, "Forms: %s");
+		t.add(ModLang.MSG_DEVOURED, "You devour %s's cultivation: +%s.");
+		t.add(ModLang.MSG_DEVOURED_DRAG, "Their blood drags your path toward the demonic (-%s): %s");
+		t.add(ModLang.MSG_DEVOURED_FALL, "%s devoured your cultivation: you fall to %s.");
+		t.add(ModLang.MSG_TRIB_DEFIED, "The heavens cannot strike you down! Their tribulation breaks against you, and fails.");
+		t.add(ModLang.MSG_TRIB_HOLDS, "Your cultivation holds: you stand at %s still, and may face the tribulation again.");
+		t.add(ModLang.MSG_REINCARNATED, "Your Eternal Reincarnation Body carries you on: your methods remembered, you begin again at %s.");
 		t.add(ModLang.PILL_ALCHEMY_BODY, "Brewed by an Innate Alchemy Body: twice as strong");
 		// The Storage Ring (StorageRingItem, StorageRings) and its screen
 		t.add(ModItems.STORAGE_RING, "Storage Ring");
@@ -1040,6 +1098,16 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_PILL_YIN, "+%s%% ghost path cultivation for %s minutes");
 		t.add(ModLang.PILL_EFFECT_YANG, "Holds the Netherworld's yin still for %s minutes");
 		t.add(ModLang.PILL_EFFECT_YIN, "+%s%% ghost path cultivation for %s minutes");
+		t.add(ModItems.LONGEVITY_PILL, "Longevity Pill");
+		t.add(ModLang.PILL_EFFECT_LONGEVITY, "+%s years of lifespan");
+		t.add(ModLang.PILL_EFFECT_LONGEVITY_LESS, "%s%% of that for you: %s taken already this life");
+		t.add(ModLang.MSG_PILL_LONGEVITY, "Your lifespan grows by %s years (%s in all)");
+		t.add(ModLang.MSG_PILL_LONGEVITY_ENDLESS, "An immortal's years have no end: the pill would add nothing to them.");
+		t.add(ModItems.REBIRTH_PILL, "Rebirth Pill");
+		t.add(ModLang.TOOLTIP_REBIRTH_PILL, "Ends this life's cultivation whole, as a spent life does, and begins it anew: a mortal again, in a body born anew");
+		t.add(ModLang.TOOLTIP_REBIRTH_PILL_WARN, "Eaten only while sneaking");
+		t.add(ModLang.MSG_REBIRTH_CONFIRM, "It would end everything you have cultivated: eat it while sneaking to begin your life anew.");
+		t.add(ModLang.MSG_REBIRTH, "The pill dissolves all you were. You begin your life anew.");
 		t.add(ModItems.GHOST_QUELLING_TALISMAN, "Ghost-Quelling Talisman");
 		t.add(ModLang.TOOLTIP_GHOST_QUELLING_TALISMAN, "Throw it at the dead: it strikes them and binds them where they stand for %s seconds");
 		t.add(ModEntities.GHOST_QUELLING_TALISMAN, "Ghost-Quelling Talisman");
@@ -1188,6 +1256,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add("cultivation.defying-the-heavens.talk.pick", "Click, or press 1-%s");
 		t.add("cultivation.defying-the-heavens.talk.possessed", "%s doesn't seem to hear you.");
 		t.add(ModLang.TALK_UNSEEN, "%s looks straight through you, as if nobody were there.");
+		t.add(ModLang.TALK_UNSEEN_KING, "%s looks straight through you: the living don't see the dead. In your human form (Form Shift) they would.");
 		// Talk phases 2-4 (TalkSystem, SparSystem, Rumours, CultivatorTrades) and spirit stones (SpiritStoneItem)
 		t.add("cultivation.defying-the-heavens.talk.interrupted", "The blow breaks off your talk with %s.");
 		t.add("cultivation.defying-the-heavens.talk.intent.spar", "Spar");
@@ -1294,6 +1363,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add("cultivation.defying-the-heavens.stone.absorb", "Hold use to absorb: +%s qi");
 		t.add("cultivation.defying-the-heavens.stone.meditate", "Held while meditating: +%s%% cultivation");
 		t.add("cultivation.defying-the-heavens.stone.qi_left", "Qi left in this stone: %s%%");
+		t.add(ModLang.STONE_FORTUNE, "A settlement's fortune, shared with %s: absorbed by them, it fills their Axis of Fortune");
 		t.add("cultivation.defying-the-heavens.tab.journal", "Journal");
 		t.add("cultivation.defying-the-heavens.journal.empty", "Nothing yet. Cultivators who think well enough of you (Courteous) will tell you rumours if you ask; what they tell you is noted here.");
 		t.add("cultivation.defying-the-heavens.journal.entry", "Day %s, from %s");
@@ -1438,7 +1508,144 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 			t.add(ModLang.STAT_POINT_PREFIX + stat.getId(), name);
 			t.add(ModLang.STAT_POINT_PREFIX + stat.getId() + ".effect", effect);
 		}
-		t.add(ModLang.MSG_STAT_POINTS_RETURNED, "Your cultivation has fallen below what your stat points were spent from: every point is given back to spend again (Stats tab, Stat Points).");
+		t.add(ModLang.MSG_LIFESPAN_WARN, "Your body grows old: %s years of your lifespan remain. Break through to a new realm, or win years another way, before they run out: the heavens come to collect a spent life.");
+		t.add(ModLang.MSG_LIFESPAN_END, "Your spent life is over. Everything you cultivated went with it: you begin again as a mortal, in a body born anew.");
+		t.add(ModLang.MSG_SOUL_TIME_WARN, "Your soul thins among the dead: %s years of your lifespan remain before the Netherworld comes to collect it.");
+		t.add(ModLang.MSG_SOUL_TIME_END, "Your lifespan is spent among the dead. Your soul scatters into the Soul River and is born again, a mortal remembering nothing of its cultivation.");
+		t.add(ModLang.STATS_LIFESPAN, "Age: %s of %s years");
+		t.add(ModLang.STATS_LIFESPAN_ENDLESS, "Age: %s, an immortal's years without end");
+		t.add(ModLang.CMD_LIFESPAN, "%s: %s of %s years (%s left)");
+		t.add(ModLang.CMD_LIFESPAN_ENDLESS, "%s: %s years lived, an immortal's without end");
+		t.add(ModLang.LIFE_TRIB_HUD, "Lifespan Tribulation: %s%%");
+		t.add(ModLang.LIFE_TRIB_HUD_DEAD, "The Netherworld's Lifespan Tribulation: %s%%");
+		t.add(ModLang.LIFE_TRIB_HUD_WAITING, "Lifespan Tribulation, waiting beyond the gap: %s%%");
+		t.add(ModLang.MSG_LIFE_TRIB_START, "Your lifespan is spent, and the heavens come to collect it: a tribulation that grows until nothing can bear it. Break through into a new realm, or take years from the grateful, before it takes you.");
+		t.add(ModLang.MSG_LIFE_TRIB_START_DEAD, "Your lifespan is spent, and the Netherworld comes to collect your soul: a yin tribulation that grows until nothing can bear it. Break through into a new realm before it scatters you into the Soul River.");
+		t.add(ModLang.MSG_LIFE_TRIB_BROADCAST, "The heavens come for %s: their lifespan is spent.");
+		t.add(ModLang.MSG_LIFE_TRIB_PAUSED, "The heavens lose sight of you in the Spatial Gap: your lifespan tribulation waits, as strong as it was, until you come out.");
+		t.add(ModLang.MSG_LIFE_TRIB_RESUMED, "The heavens find you again: your lifespan tribulation goes on, as strong as it was.");
+		t.add(ModLang.MSG_LIFE_TRIB_RENEWED, "Your lifespan is renewed: the heavens withdraw.");
+		t.add(ModLang.MSG_LIFE_TRIB_RENEWED_BROADCAST, "%s has won new years: the heavens withdraw.");
+		t.add(ModLang.MSG_LIFE_TRIB_NO_PILL, "No pill buys a spent life back from the heavens.");
+		t.add(ModLang.MSG_POSSESS_HEAVENS, "The heavens come for %s's spent life: you are driven out of the body.");
+		t.add(ModLang.MSG_SOUL_BODY_TAKEN, "The heavens strike your body down where it sits: your soul goes with it.");
+		// What years are spent on besides (the user's asks, 2026-10-21): the meditation's pace, space travel, Burn Lifespan, Life
+		// Force's years, a mortal's old age.
+		t.add(ModLang.BTN_PACE, "×%s");
+		t.add(ModLang.TIP_PACE_1, "Meditation pace ×1: your own pace. Click for ×2 (twice as fast, each bit of it for twice the years).");
+		t.add(ModLang.TIP_PACE_2, "Meditation pace ×2: you cultivate twice as fast, but each bit of it costs twice the years (four times the years a minute). Click for ×3.");
+		t.add(ModLang.TIP_PACE_3, "Meditation pace ×3: you cultivate three times as fast, but each bit of it costs four times the years (twelve times the years a minute). Click for ×1.");
+		t.add(ModLang.MSG_PACE_1, "Meditation pace ×1: your own pace.");
+		t.add(ModLang.MSG_PACE_2, "Meditation pace ×2: twice as fast, each bit for twice the years.");
+		t.add(ModLang.MSG_PACE_3, "Meditation pace ×3: three times as fast, each bit for four times the years.");
+		t.add(ModLang.MSG_MEDITATION_SLOWED, "Your years run short: your meditation slows to its own pace (×1). You may set it faster again.");
+		t.add(ModLang.SECLUSION_LINE, "Years to this realm's peak: %s (of %s left)");
+		t.add(ModLang.HUD_SPACE_YEARS, "Space: %s years spent · %s left · %s to fly home");
+		t.add(ModLang.MSG_SPACE_NO_WAY_HOME, "You no longer have the years to fly straight home: it would take %s, and you have %s left.");
+		t.add(ModLang.MSG_OLD_AGE, "Your body grows old: from now on it weakens, a little more every year (a cultivator's never does).");
+		t.add(ModLang.MSG_BURN_ON, "Your lifespan burns: %s years a second (%s%% of it).");
+		t.add(ModLang.MSG_BURN_ON_ENDLESS, "Your lifespan burns, and an immortal's years have no end: it costs you nothing.");
+		t.add(ModLang.MSG_BURN_OFF, "Your lifespan stops burning.");
+		t.add(ModLang.MSG_BURN_OUT, "Too little of your life is left to burn: the flame goes out.");
+		t.add(ModLang.MSG_BURN_TOO_FEW, "Too little of your life is left to burn.");
+		t.add(ModLang.MSG_LIFE_YEARS_DRAWN, "You drew %s years of life out of %s (%s of them are yours).");
+		t.add(ModLang.MSG_LIFE_YEARS_LOST, "%s drew %s years of your life away.");
+		t.add(ModLang.MSG_LIFE_YEARS_GIVEN, "You gave it %s years of your life: %s years of growth.");
+		t.add(ModLang.MSG_LIFE_YEARS_TOO_FEW, "Your years are too few to give any away.");
+		t.add(ModLang.AXIS_PREFIX + "longevity", "Axis of Longevity");
+		t.add(ModLang.AXIS_PREFIX + "fortune", "Axis of Fortune");
+		t.add(ModLang.AXIS_PREFIX + "merit", "Axis of Merit");
+		t.add(ModLang.AXIS_PREFIX + "enlightenment", "Axis of Enlightenment");
+		t.add(ModLang.AXIS_UNIT_PREFIX + "longevity", "years");
+		t.add(ModLang.AXIS_UNIT_PREFIX + "fortune", "stones' worth");
+		t.add(ModLang.AXIS_UNIT_PREFIX + "merit", "hearts");
+		t.add(ModLang.AXIS_UNIT_PREFIX + "enlightenment", "stages");
+		t.add(ModLang.AXIS_HOW_PREFIX + "longevity", "Heal the sick in the settlements of the Astral Realm's worlds and take years of life from them, "
+				+ "%s in all. Each year taken goes onto your own lifespan too.");
+		t.add(ModLang.AXIS_HOW_PREFIX + "fortune", "Bring the settlements of the Astral Realm's worlds what they lack, and absorb the spirit stones "
+				+ "they share with you in turn: %s Low-grade Spirit Stones' worth in all.");
+		t.add(ModLang.AXIS_HOW_PREFIX + "merit", "Rid the settlements of the Astral Realm's worlds of what preys on them: each of it slain by your "
+				+ "own hand counts its hearts, %s in all.");
+		t.add(ModLang.AXIS_HOW_PREFIX + "enlightenment", "Guide the lesser cultivators in the settlements of the Astral Realm's worlds through "
+				+ "their walls, beside them or from within their bodies: %s stages in all.");
+		t.add(ModLang.AXIS_GATE, "Your %s stands at %s / %s %s: complete it before you break through.");
+		t.add(ModLang.AXIS_BAR, "%s: %s / %s %s");
+		t.add(ModLang.AXIS_BAR_SHORT, "%s / %s %s");
+		t.add(ModLang.MSG_AXIS_PROGRESS, "+%s toward your %s (%s / %s %s)");
+		t.add(ModLang.MSG_AXIS_COMPLETE, "Your %s stands complete.");
+		t.add("cultivation.defying-the-heavens.talk.topic.wish", "Their wish");
+		t.add(ModLang.WISH_NOT_FOUR_AXIS, "(Only one of Four Axis could grant it.)");
+		t.add(ModLang.WISH_AXES_DONE, "(Your four axes stand complete: there is no more virtue for you in it.)");
+		t.add(ModLang.WISH_AXIS_DONE, "(Your axis stands complete: break through before you seek the next.)");
+		t.add(ModLang.WISH_OTHER_AXIS, "(It would serve the %s, not the axis you stand at.)");
+		t.add(ModLang.WISH_NONE, "We want for nothing now, thanks to you. Perhaps some other day.");
+		t.add(ModLang.WISH_SAY + "longevity.1", "My mother lies sick, and fades more each day. No herb of ours can touch it.");
+		t.add(ModLang.WISH_SAY + "longevity.2", "My brother took a fever three nights ago and has not woken since.");
+		t.add(ModLang.WISH_SAY + "longevity.3", "Our elder is dying. Without her we would not know how to live on this world.");
+		t.add(ModLang.WISH_SAY + "fortune.1", "Our stores are bare and the season turns against us. If only we had %s %s.");
+		t.add(ModLang.WISH_SAY + "fortune.2", "We came here with too little. %s %s would see us through.");
+		t.add(ModLang.WISH_SAY + "fortune.3", "The traders stopped coming. We need %s %s, and no one here can spare them.");
+		t.add(ModLang.WISH_SAY + "merit.beast", "A great beast comes out of the wilds at night and tramples everything in its way. We cannot stand against it.");
+		t.add(ModLang.WISH_SAY + "merit.rider", "Raiders ride a great beast down on us and take whatever they like. We cannot stand against them.");
+		t.add(ModLang.WISH_SAY + "merit.sorcerer", "A sorcerer haunts the land past our fields. Two of ours went out and did not come back.");
+		t.add(ModLang.WISH_SAY + "merit.illusionist", "Something that wears many faces haunts the woods. Those who follow it come back blind, or not at all.");
+		t.add(ModLang.WISH_SAY + "merit.raiders", "Raiders come every few nights and take what we have grown. Next time they will take us.");
+		t.add(ModLang.WISH_SAY + "merit.coven", "Witches have made their home nearby. Our children sicken, and our well tastes of their brews.");
+		t.add(ModLang.WISH_SAY + "merit.undead", "The dead walk out of the old barrows, and they no longer rest even by day.");
+		t.add(ModLang.WISH_SAY + "merit.horsemen", "Riders of bone come out of the storms. Whoever they pass falls down dead.");
+		t.add(ModLang.WISH_SAY + "merit.brood", "A brood of great spiders nests in the hills. They take whatever strays from the village.");
+		t.add(ModLang.WISH_SAY + "merit.pack", "A wolf pack has learned how easy our flocks are. Soon it will learn how easy we are.");
+		t.add(ModLang.WISH_SAY + "merit.demonic", "A cultivator of the demonic path has made us a hunting ground. Each moon one of us is taken for a cauldron.");
+		t.add(ModLang.WISH_SAY + "enlightenment.1", "I have sat at the same wall for years. I can feel the way through and cannot take it.");
+		t.add(ModLang.WISH_SAY + "enlightenment.2", "My cultivation is stuck. If someone far above me would sit with me only once...");
+		t.add(ModLang.WISH_SAY + "enlightenment.3", "There is no master on this world. I have gone as far as I can alone.");
+		t.add(ModLang.WISH_HEALED, "They breathe easy, colour in their face again. They owe you their life: %s years they could give you, if you would take them.");
+		t.add(ModLang.WISH_THREAT_OUT, "It is out there now, and it has your scent. Kill it and we are free of it.");
+		t.add(ModLang.WISH_GUIDE_SIT, "Sit with me in meditation, close by. (%s seconds more)");
+		t.add(ModLang.WISH_TAKE_NONE, "Take nothing.");
+		t.add(ModLang.WISH_TAKE_FEW, "Take a few years (%s).");
+		t.add(ModLang.WISH_TAKE_SHARE, "Take a share (%s years).");
+		t.add(ModLang.WISH_TAKE_ALL, "Take all they can spare (%s years).");
+		t.add(ModLang.WISH_GRANT_HEAL, "Heal them with your qi.");
+		t.add(ModLang.WISH_GRANT_GIVE, "Give %s %s.");
+		t.add(ModLang.WISH_GRANT_THREAT, "I'll deal with it.");
+		t.add(ModLang.WISH_GRANT_GUIDE, "I'll guide you.");
+		t.add(ModLang.WISH_HEAL_QI, "(Healing them takes %s%% of your qi, and you haven't that much now.)");
+		t.add(ModLang.WISH_TOOK_NONE, "You ask for nothing? We will never forget you.");
+		t.add(ModLang.WISH_TOOK, "It is fair, for a life. %s years are yours.");
+		t.add(ModLang.WISH_GIVE_LACK, "(You haven't %s %s on you.)");
+		t.add(ModLang.WISH_GIVEN, "You've saved us. Take these, it's little enough: %s Mid-grade Spirit Stones, a share of all we have. "
+				+ "(Absorb them to fill your Axis of Fortune.)");
+		t.add(ModLang.WISH_THREAT_SLAIN, "The threat to %s's people is slain.");
+		t.add(ModLang.WISH_GUIDED, "Guided by you, %s breaks through to %s.");
+		t.add(ModLang.WISH_NOT_FOUR_AXIS_DEAD, "(Only one of Four Axis could grant it: of the dead, one whose ghost path is.)");
+		t.add(ModLang.WISH_THREAT_OUT_MANY, "They are out there now, %s of them, and they have your scent. Kill them all and we are free of them.");
+		t.add(ModLang.WISH_THREAT_LOST, "What preyed on %s's people is gone, but not by your hand: their wish still stands.");
+		t.add(ModLang.WISH_GUIDED_WITHIN, "From within, you carry %s through its wall to %s.");
+		t.add(ModLang.MSG_SETTLEMENT_NEAR, "A settlement of the lower realms' people: %s");
+		t.add(ModLang.OBSESSION_PREFIX + "longevity", "Longevity");
+		t.add(ModLang.OBSESSION_PREFIX + "fortune", "Fortune");
+		t.add(ModLang.OBSESSION_PREFIX + "merit", "Merit");
+		t.add(ModLang.OBSESSION_PREFIX + "enlightenment", "Enlightenment");
+		t.add(ModLang.OBSESSION_BOON_PREFIX + "longevity", "Lifespan x1.2");
+		t.add(ModLang.OBSESSION_BOON_PREFIX + "fortune", "You pay x0.8 in trade");
+		t.add(ModLang.OBSESSION_BOON_PREFIX + "merit", "+10 regard with everyone");
+		t.add(ModLang.OBSESSION_BOON_PREFIX + "enlightenment", "Cultivation x1.2");
+		t.add(ModLang.OBSESSION_TITLE, "Name Your Obsession");
+		t.add(ModLang.OBSESSION_INTRO, "Before the tribulation, name the one thing your heart will not let go of. Your road will bend toward it, and it can never be named again.");
+		t.add(ModLang.OBSESSION_AXIS, "Its axis fills twice as fast");
+		t.add(ModLang.OBSESSION_CHOOSE, "Choose one, then face the tribulation.");
+		t.add(ModLang.OBSESSION_CHOSEN, "Your obsession: %s");
+		t.add(ModLang.OBSESSION_CONFIRM, "Face the Tribulation");
+		t.add(ModLang.MSG_OBSESSION_NAMED, "You name your obsession: %s (%s). Your road bends toward it, for good.");
+		t.add(ModLang.STATS_OBSESSION, "Obsession: %s");
+		t.add(ModLang.STATS_OBSESSION_BOON, "Obsession: %s (%s)");
+		t.add(ModLang.CMD_OBSESSION, "%s's obsession: %s (%s)");
+		t.add(ModLang.CMD_OBSESSION_NONE, "%s has named no obsession yet");
+		t.add(ModLang.MSG_SETTLEMENT_SMOKE, "Smoke rises from a settlement some %s blocks to the %s.");
+		t.add(ModLang.MSG_SETTLER_ARRIVES, "A newcomer has come to %s.");
+		t.add(ModLang.MSG_STAT_POINTS_RETURNED, "Your cultivation has fallen: the %s stat points its lost stages gave are gone with them, the last you put in. "
+				+ "The rest stay where you put them; climb back and they are yours to spend again.");
 		t.add(ModLang.BTN_STAT_POINTS, "Stat Points");
 		t.add(ModLang.BTN_STAT_LIST, "Stats");
 		t.add(ModLang.STAT_POINTS_UNSPENT, "Points to spend: %s");
@@ -1609,5 +1816,22 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 	private static void physique(TranslationBuilder t, String id, String name, String description) {
 		t.add(ModLang.physiqueKey(id), name);
 		t.add(ModLang.physiqueKey(id) + ".description", description);
+	}
+
+	/** A realm's English name (its lang entry, and the texts that name it). */
+	static String realmName(Realm realm) {
+		return switch (realm) {
+			case QI_REFINING -> "Qi Refining";
+			case FOUNDATION_BUILDING -> "Foundation Building";
+			case CORE_FORMATION -> "Core Formation";
+			case NASCENT_SOUL -> "Nascent Soul";
+			case HEAVENLY_BEING -> "Heavenly Being";
+			case FOUR_AXIS -> "Four Axis";
+			case DAO_INTEGRATION -> "Dao Integration";
+			case VOID_SHATTERING -> "Void Shattering";
+			case SACRED_VESSEL -> "Sacred Vessel";
+			case ENTERING_NIRVANA -> "Entering Nirvana";
+			case TRUE_IMMORTAL -> "True Immortal";
+		};
 	}
 }

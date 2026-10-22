@@ -39,7 +39,6 @@ public final class SuppressionClient {
 	private static final float MARKER_SIZE = 0.2f;
 	private static final float[] MARKER_RGB = {0.55f, 0.05f, 0.07f};
 	private static final int HUD_X = 4;
-	private static final int HUD_Y = 17;
 
 	/** An entity under pressure; {@code heavy} when the suppressor is a whole realm above. */
 	public record Pressed(int entityId, float penalty, boolean heavy) {}
@@ -156,7 +155,7 @@ public final class SuppressionClient {
 		PlayerCultivation c = ClientCultivationData.get();
 		if (mc.player == null || mc.options.hideGui || mc.options.renderDebug || mc.player.isSpectator() || !c.isUnderPressure()) return;
 		int x = HUD_X;
-		int y = HUD_Y + NetherworldHud.rowsUnderQi() * QiHud.ROW; // under the ghostly qi bar too, when there is one
+		int y = QiHud.stackBottom() + 1; // under the stack of bars, the ghostly qi's too when there is one
 		// Two stacked chevrons, 7 pixels wide, in crimson over a dark edge.
 		for (int stack = 0; stack < 2; stack++) {
 			int top = y + stack * 3;

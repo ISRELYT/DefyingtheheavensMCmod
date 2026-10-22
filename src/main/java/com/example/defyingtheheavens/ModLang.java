@@ -38,7 +38,6 @@ public final class ModLang {
 	/** The Upper Realm's dense qi, among the Cultivation tab's details. */
 	public static final String UPPER_REALM_LINE = k("upper_realm_line");
 	public static final String HUD_QI = k("hud.qi");
-	public static final String HUD_QI_LABEL = k("hud.qi_label");
 	public static final String BOTTLENECK = k("bottleneck");
 	public static final String BOTTLENECK_NEXT = k("bottleneck_next");
 	public static final String PINNACLE = k("pinnacle");
@@ -306,6 +305,8 @@ public final class ModLang {
 	public static final String TALK_POSSESSED = k("talk.possessed");
 	/** One of the living who can't see you (you in a Ghost King's form, or dead, to one below Nascent Soul: CultivatorNpc#senses). */
 	public static final String TALK_UNSEEN = k("talk.unseen");
+	/** The same, to a Ghost King of the dead: told how it would be seen (its human form, TwoPaths#inHumanForm). */
+	public static final String TALK_UNSEEN_KING = k("talk.unseen_king");
 	/** Struck mid-talk; a Sworn friend's aid and gift; one begging for its life; a topic's regard; a junior's realm. */
 	public static final String TALK_INTERRUPTED = k("talk.interrupted");
 	public static final String TALK_AID = k("talk.aid");
@@ -343,6 +344,8 @@ public final class ModLang {
 	public static final String STONE_ABSORB = k("stone.absorb");
 	public static final String STONE_MEDITATE = k("stone.meditate");
 	public static final String STONE_QI_LEFT = k("stone.qi_left");
+	/** A settlement's share of its fortune (SpiritStoneItem#fortune): whom it was shared with, and what it fills. */
+	public static final String STONE_FORTUNE = k("stone.fortune");
 	// The menu's Journal tab (see Journal)
 	public static final String TAB_JOURNAL = k("tab.journal");
 	public static final String JOURNAL_EMPTY = k("journal.empty");
@@ -418,6 +421,128 @@ public final class ModLang {
 	/** Stat points (StatPoints): each stat's name ("stat_point.<id>") and effect (".effect"), and the Stats tab's Points page. */
 	public static final String STAT_POINT_PREFIX = k("stat_point.");
 	public static final String MSG_STAT_POINTS_RETURNED = k("message.stat_points.returned");
+	/** Lifespan (Lifespan): its warnings and its end, alive and dead, and the Stats tab's line. */
+	public static final String MSG_LIFESPAN_WARN = k("message.lifespan.warn");
+	public static final String MSG_LIFESPAN_END = k("message.lifespan.end");
+	public static final String MSG_SOUL_TIME_WARN = k("message.soul_time.warn");
+	public static final String MSG_SOUL_TIME_END = k("message.soul_time.end");
+	public static final String STATS_LIFESPAN = k("stats.lifespan");
+	/** ...a True Immortal's (Lifespan#endless): its age, and no end to its years. */
+	public static final String STATS_LIFESPAN_ENDLESS = k("stats.lifespan_endless");
+	public static final String CMD_LIFESPAN = k("command.lifespan");
+	public static final String CMD_LIFESPAN_ENDLESS = k("command.lifespan_endless");
+	/**
+	 * The lifespan tribulation (LifespanTribulation): its HUD line (the heavens', the Netherworld's, waiting beyond the gap), its
+	 * coming (alive, dead), the server told, its waiting and finding one again, its end, and what it forbids.
+	 */
+	public static final String LIFE_TRIB_HUD = k("life_trib.hud");
+	public static final String LIFE_TRIB_HUD_DEAD = k("life_trib.hud.dead");
+	public static final String LIFE_TRIB_HUD_WAITING = k("life_trib.hud.waiting");
+	public static final String MSG_LIFE_TRIB_START = k("message.life_trib.start");
+	public static final String MSG_LIFE_TRIB_START_DEAD = k("message.life_trib.start_dead");
+	public static final String MSG_LIFE_TRIB_BROADCAST = k("message.life_trib.broadcast");
+	public static final String MSG_LIFE_TRIB_PAUSED = k("message.life_trib.paused");
+	public static final String MSG_LIFE_TRIB_RESUMED = k("message.life_trib.resumed");
+	public static final String MSG_LIFE_TRIB_RENEWED = k("message.life_trib.renewed");
+	public static final String MSG_LIFE_TRIB_RENEWED_BROADCAST = k("message.life_trib.renewed_broadcast");
+	public static final String MSG_LIFE_TRIB_NO_PILL = k("message.life_trib.no_pill");
+	public static final String MSG_POSSESS_HEAVENS = k("message.life_trib.possess_heavens");
+	public static final String MSG_SOUL_BODY_TAKEN = k("message.life_trib.body_taken");
+	/**
+	 * What years are spent on besides (the user's asks, 2026-10-21; Lifespan): the meditation's pace (its button and tooltips, its price
+	 * told on changing it), a fast meditation slowed near the end, space travel's HUD line and its warning, a mortal's old age.
+	 */
+	public static final String BTN_PACE = k("button.pace");
+	public static final String TIP_PACE_1 = k("tooltip.pace.1");
+	public static final String TIP_PACE_2 = k("tooltip.pace.2");
+	public static final String TIP_PACE_3 = k("tooltip.pace.3");
+	public static final String[] TIP_PACE = {TIP_PACE_1, TIP_PACE_2, TIP_PACE_3};
+	public static final String MSG_PACE_1 = k("message.pace.1");
+	public static final String MSG_PACE_2 = k("message.pace.2");
+	public static final String MSG_PACE_3 = k("message.pace.3");
+	public static final String[] MSG_PACE = {MSG_PACE_1, MSG_PACE_2, MSG_PACE_3};
+	public static final String MSG_MEDITATION_SLOWED = k("message.pace.slowed");
+	/** The Cultivation tab's word of the talent race (Lifespan#seclude): the years to the realm's peak, and those left. */
+	public static final String SECLUSION_LINE = k("line.seclusion");
+	public static final String HUD_SPACE_YEARS = k("hud.space_years");
+	public static final String MSG_SPACE_NO_WAY_HOME = k("message.astral.no_way_home");
+	public static final String MSG_OLD_AGE = k("message.lifespan.old_age");
+	/** Burn Lifespan (BurnLifespan): lit, put out, gone out by itself near the end, refused with too few years left. */
+	public static final String MSG_BURN_ON = k("message.burn_lifespan.on");
+	/** ...lit by a True Immortal (Lifespan#endless): its years have no end, so it burns for nothing. */
+	public static final String MSG_BURN_ON_ENDLESS = k("message.burn_lifespan.on_endless");
+	public static final String MSG_BURN_OFF = k("message.burn_lifespan.off");
+	public static final String MSG_BURN_OUT = k("message.burn_lifespan.out");
+	public static final String MSG_BURN_TOO_FEW = k("message.burn_lifespan.too_few");
+	/** Life Force's years (WoodSpells): drawn out of another (told to both), given to a herb, refused with too few years left. */
+	public static final String MSG_LIFE_YEARS_DRAWN = k("message.spell.life_years_drawn");
+	public static final String MSG_LIFE_YEARS_LOST = k("message.spell.life_years_lost");
+	public static final String MSG_LIFE_YEARS_GIVEN = k("message.spell.life_years_given");
+	public static final String MSG_LIFE_YEARS_TOO_FEW = k("message.spell.life_years_too_few");
+	/**
+	 * The four axes of virtue (FourAxis): each axis's name ("axis.&lt;id&gt;"), what it is measured in ("axis_unit.&lt;id&gt;"), how
+	 * it is filled ("axis_how.&lt;id&gt;"), its gate, what was won toward it and its completion.
+	 */
+	public static final String AXIS_PREFIX = k("axis.");
+	public static final String AXIS_UNIT_PREFIX = k("axis_unit.");
+	public static final String AXIS_HOW_PREFIX = k("axis_how.");
+	public static final String AXIS_GATE = k("axis_gate");
+	/** The Cultivation tab's axis bar: what is written on it (and where that won't fit, the short); under it, once the breakthrough waits on it, how it is filled. */
+	public static final String AXIS_BAR = k("axis_bar");
+	public static final String AXIS_BAR_SHORT = k("axis_bar.short");
+	public static final String MSG_AXIS_PROGRESS = k("message.axis.progress");
+	public static final String MSG_AXIS_COMPLETE = k("message.axis.complete");
+	/** A settler's wish (Wishes): why one can't grant it, how it's said ("wish.say.<axis>.<1-3>"), its grant and its outcomes. */
+	public static final String WISH_NOT_FOUR_AXIS = k("wish.not_four_axis");
+	public static final String WISH_AXES_DONE = k("wish.axes_done");
+	public static final String WISH_AXIS_DONE = k("wish.axis_done");
+	public static final String WISH_OTHER_AXIS = k("wish.other_axis");
+	public static final String WISH_NONE = k("wish.none");
+	public static final String WISH_SAY = k("wish.say.");
+	public static final String WISH_HEALED = k("wish.healed");
+	public static final String WISH_THREAT_OUT = k("wish.threat_out");
+	public static final String WISH_GUIDE_SIT = k("wish.guide_sit");
+	public static final String WISH_TAKE_NONE = k("wish.take.none");
+	public static final String WISH_TAKE_FEW = k("wish.take.few");
+	public static final String WISH_TAKE_SHARE = k("wish.take.share");
+	public static final String WISH_TAKE_ALL = k("wish.take.all");
+	public static final String WISH_GRANT_HEAL = k("wish.grant.heal");
+	public static final String WISH_GRANT_GIVE = k("wish.grant.give");
+	public static final String WISH_GRANT_THREAT = k("wish.grant.threat");
+	public static final String WISH_GRANT_GUIDE = k("wish.grant.guide");
+	public static final String WISH_HEAL_QI = k("wish.heal_qi");
+	public static final String WISH_TOOK_NONE = k("wish.took_none");
+	public static final String WISH_TOOK = k("wish.took");
+	public static final String WISH_GIVE_LACK = k("wish.give_lack");
+	public static final String WISH_GIVEN = k("wish.given");
+	public static final String WISH_THREAT_SLAIN = k("wish.threat_slain");
+	public static final String WISH_GUIDED = k("wish.guided");
+	public static final String WISH_NOT_FOUR_AXIS_DEAD = k("wish.not_four_axis_dead");
+	public static final String WISH_THREAT_OUT_MANY = k("wish.threat_out_many");
+	public static final String WISH_THREAT_LOST = k("wish.threat_lost");
+	public static final String WISH_GUIDED_WITHIN = k("wish.guided_within");
+	/**
+	 * "Name Your Obsession" (Obsession): each obsession's name ("obsession.&lt;axis id&gt;") and what it gives ("obsession.boon.&lt;id&gt;"),
+	 * the screen's lines, the naming, the Stats tab's line, the command's report.
+	 */
+	public static final String OBSESSION_PREFIX = k("obsession.");
+	public static final String OBSESSION_BOON_PREFIX = k("obsession.boon.");
+	public static final String OBSESSION_TITLE = k("obsession.title");
+	public static final String OBSESSION_INTRO = k("obsession.intro");
+	public static final String OBSESSION_AXIS = k("obsession.axis");
+	public static final String OBSESSION_CHOOSE = k("obsession.choose");
+	public static final String OBSESSION_CHOSEN = k("obsession.chosen");
+	public static final String OBSESSION_CONFIRM = k("obsession.confirm");
+	public static final String MSG_OBSESSION_NAMED = k("message.obsession_named");
+	public static final String STATS_OBSESSION = k("stats.obsession");
+	public static final String STATS_OBSESSION_BOON = k("stats.obsession_boon");
+	public static final String CMD_OBSESSION = k("command.obsession");
+	public static final String CMD_OBSESSION_NONE = k("command.obsession_none");
+	/** A settlement of the Astral Realm's worlds (Settlements): its name on coming near. */
+	public static final String MSG_SETTLEMENT_NEAR = k("message.settlement_near");
+	public static final String MSG_SETTLEMENT_SMOKE = k("message.settlement_smoke");
+	/** A newcomer come to a settlement that has lost people (Settlements#replenish). */
+	public static final String MSG_SETTLER_ARRIVES = k("message.settler_arrives");
 	public static final String BTN_STAT_POINTS = k("button.stat_points");
 	public static final String BTN_STAT_LIST = k("button.stat_list");
 	public static final String STAT_POINTS_UNSPENT = k("stat_points.unspent");
@@ -504,6 +629,7 @@ public final class ModLang {
 	public static final String HUD_SOUL_BODY = k("hud.soul.body");
 	public static final String HUD_SOUL_POSSESSING = k("hud.soul.possessing");
 	public static final String DEATH_SOUL_SEVERED = "death.attack." + DefyingTheHeavens.MOD_ID + ".soul_severed";
+	public static final String DEATH_OLD_AGE = "death.attack." + DefyingTheHeavens.MOD_ID + ".old_age";
 	public static final String DEATH_SOUL_SEIZED = "death.attack." + DefyingTheHeavens.MOD_ID + ".soul_seized";
 	// The Ritual to the Heavens (see HeavenRitual, HeavenAltar)
 	public static String ritualOffering(String id) { return k("ritual.offering." + id); }
@@ -651,6 +777,20 @@ public final class ModLang {
 	public static final String CMD_PHYSIQUE_GET = k("command.physique.get");
 	public static final String CMD_PHYSIQUE_SET = k("command.physique.set");
 	public static final String CMD_PHYSIQUE_UNKNOWN = k("command.physique.unknown");
+	/** A Myriad Form Body's forms: told when born, in its journal, on the Stats tab. */
+	public static final String MSG_PHYSIQUE_FORMS = k("message.physique.forms");
+	public static final String JOURNAL_PHYSIQUE_FORM = k("journal.physique.form");
+	public static final String STATS_FORMS = k("stats.forms");
+	/** A Soul-Devouring Body's kill: the cultivation devoured; the drag on its path. */
+	public static final String MSG_DEVOURED = k("message.physique.devoured");
+	public static final String MSG_DEVOURED_DRAG = k("message.physique.devoured_drag");
+	/** To a player a Soul-Devouring Body slew: who devoured them, and the stage they fell to. */
+	public static final String MSG_DEVOURED_FALL = k("message.physique.devoured_fall");
+	/** A Heaven-Defying Body's killing strike, defied (TribulationManager#allowDeath); any tribulation of its failed, costing it nothing (#holds). */
+	public static final String MSG_TRIB_DEFIED = k("message.tribulation.defied");
+	public static final String MSG_TRIB_HOLDS = k("message.tribulation.holds");
+	/** An Eternal Reincarnation Body born again, at the rank it begins from (Lifespan#reincarnate). */
+	public static final String MSG_REINCARNATED = k("message.physique.reincarnated");
 	/** A pill brewed by an Innate Alchemy Body (PillItem#ALCHEMY_BODY_TAG). */
 	public static final String PILL_ALCHEMY_BODY = k("tooltip.pill.alchemy_body");
 	// The Storage Ring (StorageRingItem, StorageRings) and its screen
@@ -875,6 +1015,17 @@ public final class ModLang {
 	public static final String MSG_PILL_YIN = k("message.pill.yin");
 	public static final String PILL_EFFECT_YANG = k("pill.effect.yang");
 	public static final String PILL_EFFECT_YIN = k("pill.effect.yin");
+	/** A Longevity Pill: the years it adds (and how much less it works for those taken before it this life); eaten. */
+	public static final String PILL_EFFECT_LONGEVITY = k("pill.effect.longevity");
+	public static final String PILL_EFFECT_LONGEVITY_LESS = k("pill.effect.longevity_less");
+	public static final String MSG_PILL_LONGEVITY = k("message.pill.longevity");
+	/** A Longevity Pill refused by a True Immortal (Lifespan#endless): it has no end to its years to add to. */
+	public static final String MSG_PILL_LONGEVITY_ENDLESS = k("message.pill.longevity_endless");
+	/** A Rebirth Pill (RebirthPillItem): its tooltip, the warning that it is eaten only sneaking, and its working. */
+	public static final String TOOLTIP_REBIRTH_PILL = k("tooltip.rebirth_pill");
+	public static final String TOOLTIP_REBIRTH_PILL_WARN = k("tooltip.rebirth_pill.warn");
+	public static final String MSG_REBIRTH_CONFIRM = k("message.rebirth_pill.confirm");
+	public static final String MSG_REBIRTH = k("message.rebirth_pill");
 	public static final String MSG_TERRACE = k("message.terrace");
 	public static final String TERRACE_PLACE = k("terrace.place");
 	public static final String JOURNAL_TERRACE = k("journal.terrace");

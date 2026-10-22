@@ -157,6 +157,8 @@ public class ModModelProvider extends FabricModelProvider {
 		items.generateFlatItem(ModItems.NETHERWORLD_LOTUS_SEEDS, ModelTemplates.FLAT_ITEM);
 		pill(items, ModItems.YANG_PRESERVATION_PILL);
 		pill(items, ModItems.YIN_GATHERING_PILL);
+		pill(items, ModItems.LONGEVITY_PILL);
+		items.generateFlatItem(ModItems.REBIRTH_PILL, ModelTemplates.FLAT_ITEM); // no grade: no halo
 		items.generateFlatItem(ModItems.JADE, ModelTemplates.FLAT_ITEM);
 		// Spirit stones have a hand-made oval model (resources: models/item/spirit_stone.json), not a flat sprite.
 	}

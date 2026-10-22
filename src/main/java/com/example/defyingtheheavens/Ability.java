@@ -70,7 +70,14 @@ public enum Ability {
 	 * (SpatialTrialHandler, Route TRAVEL), for that path's pool. A block crossed in the gap is twenty in the world. An act: "on"
 	 * while in the gap by one's own tear.
 	 */
-	SPATIAL_TEAR("spatial_tear", false, c -> !c.netherworld().ghost() && TwoPaths.awakens(c, Realm.HEAVENLY_BEING, false) != null);
+	SPATIAL_TEAR("spatial_tear", false, c -> !c.netherworld().ghost() && TwoPaths.awakens(c, Realm.HEAVENLY_BEING, false) != null),
+	/**
+	 * From Qi Refining, for every cultivator, the living and the dead (the user's ask, 2026-10-21): one's own years set alight for
+	 * strength (BurnLifespan), a standing switch: while on, BurnLifespan#SPAN_PER_SECOND of one's whole span a second (a share, so
+	 * every realm alike), for blows and spells half again as hard and a quarter more speed. It goes out by itself before it would
+	 * leave fewer than Lifespan#WARN_YEARS.
+	 */
+	BURN_LIFESPAN("burn_lifespan", false, c -> true);
 
 	private final String id;
 	private final boolean onByDefault;
@@ -99,7 +106,7 @@ public enum Ability {
 	 * meridians are closed, the realm's abilities and the ghost methods' alike.
 	 */
 	public boolean isUnlocked(PlayerCultivation c) {
-		if (this == QI_SENSE && c.physique() == Physique.BLESSED_MERIDIANS) return true; // open from a mortal's first day (Physique)
+		if (this == QI_SENSE && c.hasPhysique(Physique.BLESSED_MERIDIANS)) return true; // open from a mortal's first day (Physique)
 		// A soul in another's body (Possession), a mortal's too, keeps the way out of it, and its own tear if the body has none.
 		if (this == SOUL_PROJECTION && Possession.isBorrowed(c) || this == SPATIAL_TEAR && Possession.soulTears(c)) return true;
 		return !c.isMortal() && unlocked.test(c);
@@ -134,6 +141,8 @@ public enum Ability {
 			case CORE_DETONATION -> Component.translatable(key, Math.round(CoreDetonation.radius(c)));
 			case SPATIAL_TEAR -> Component.translatable(key, SpatialTrialHandler.GAP_SCALE, Math.round(SpatialTrialHandler.TEAR_IN_QI * 100),
 					Math.round(SpatialTrialHandler.TEAR_OUT_QI * 100));
+			case BURN_LIFESPAN -> Component.translatable(key, BurnLifespan.percent(), Math.round((BurnLifespan.HARM - 1) * 100),
+					Math.round((BurnLifespan.SPEED - 1) * 100), (long) Lifespan.WARN_YEARS);
 			default -> Component.translatable(key);
 		};
 	}

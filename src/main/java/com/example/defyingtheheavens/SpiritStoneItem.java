@@ -2,6 +2,7 @@ package com.example.defyingtheheavens;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Spirit stones: heaven and earth's qi, condensed over ages into small, smooth oval stones with a pearl's sheen. Cultivators
@@ -35,6 +37,9 @@ import java.util.List;
  *   <li><b>Meditating</b> with one in either hand cultivates {@link #MEDITATION_BOOST} faster while its qi lasts:
  *   {@link #SECONDS_PER_LOW} seconds for every Low stone's worth, then the stone is spent (how much is left shows on it).</li>
  * </ul>
+ * A settlement's share of its fortune (Wishes#give) is marked as shared with the one who brought it what it lacked ({@link
+ * #fortune}): absorbed by them either way while they stand at the Axis of Fortune, its worth fills that axis ({@link
+ * #fillsFortune}; FourAxis), whether or not their pool has room for its qi.
  */
 public class SpiritStoneItem extends Item {
 	/** The five grades, each worth nine of the one below ({@link #value}, in Low stones). */
@@ -75,6 +80,8 @@ public class SpiritStoneItem extends Item {
 	public static final int SECONDS_PER_LOW = 30;
 	/** Seconds of meditation already drawn from the stone on top of a stack. */
 	private static final String DRAWN_TAG = "QiDrawn";
+	/** On a settlement's share of its fortune ({@link #fortune}): whom it was shared with, and their name (for the tooltip). */
+	private static final String FORTUNE_TAG = "FortuneOf", FORTUNE_NAME = "FortuneName";
 
 	private final Grade grade;
 
@@ -119,13 +126,39 @@ public class SpiritStoneItem extends Item {
 		return stacks;
 	}
 
+	// --- A settlement's fortune (the Axis of Fortune) ---
+
+	/** {@code stack} (spirit stones) marked as a settlement's fortune shared with {@code granter}: theirs to absorb toward their Axis of Fortune. */
+	public static ItemStack fortune(ItemStack stack, Player granter) {
+		stack.getOrCreateTag().putUUID(FORTUNE_TAG, granter.getUUID());
+		stack.getOrCreateTag().putString(FORTUNE_NAME, granter.getGameProfile().getName());
+		return stack;
+	}
+
+	/** Whom {@code stack} is a settlement's fortune shared with, or null (stones of no wish). */
+	public static UUID fortuneOf(ItemStack stack) {
+		CompoundTag tag = stack.getTag();
+		return tag != null && tag.hasUUID(FORTUNE_TAG) ? tag.getUUID(FORTUNE_TAG) : null;
+	}
+
+	/**
+	 * Whether {@code player} absorbing {@code stack} (or spending it in meditation) fills their Axis of Fortune: a settlement's fortune
+	 * shared with them, while that is the axis they stand at (their own record's, whatever body their soul is in).
+	 */
+	public static boolean fillsFortune(Player player, ItemStack stack) {
+		if (!player.getUUID().equals(fortuneOf(stack))) return false;
+		PlayerCultivation own = player instanceof ServerPlayer serverPlayer ? CultivationManager.own(serverPlayer) : CultivationManager.forPlayer(player);
+		return FourAxis.current(own) == FourAxis.Axis.FORTUNE;
+	}
+
 	// --- Absorbing ---
 
 	@Override
 	public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
 		ItemStack stack = player.getItemInHand(hand);
 		PlayerCultivation c = CultivationManager.forPlayer(player);
-		if (c.isMortal() || c.getQi() >= c.maxQi() - 0.5) {
+		// A settlement's fortune is absorbed toward the axis whether or not there is room for its qi.
+		if (!fillsFortune(player, stack) && (c.isMortal() || c.getQi() >= c.maxQi() - 0.5)) {
 			if (!level.isClientSide) {
 				player.displayClientMessage(Component.translatable(c.isMortal() ? ModLang.MSG_STONE_MORTAL : ModLang.MSG_STONE_QI_FULL), true);
 			}
@@ -166,13 +199,17 @@ public class SpiritStoneItem extends Item {
 	public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity user) {
 		if (!(user instanceof ServerPlayer player)) return stack;
 		PlayerCultivation c = CultivationManager.get(player);
-		double before = c.getQi();
-		c.setQi(Math.min(c.maxQi(), before + QI_PER_VALUE * grade.value()));
-		int gained = (int) Math.round(c.getQi() - before);
-		CultivationManager.markDirty(player.server);
-		CultivationManager.sync(player);
+		boolean fortune = fillsFortune(player, stack);
+		if (!c.isMortal()) {
+			double before = c.getQi();
+			c.setQi(Math.min(c.maxQi(), before + QI_PER_VALUE * grade.value()));
+			int gained = (int) Math.round(c.getQi() - before);
+			CultivationManager.markDirty(player.server);
+			CultivationManager.sync(player);
+			if (!fortune) player.displayClientMessage(Component.translatable(ModLang.MSG_STONE_ABSORBED, gained), true);
+		}
 		level.playSound(null, player.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1.0f, 1.3f);
-		player.displayClientMessage(Component.translatable(ModLang.MSG_STONE_ABSORBED, gained), true);
+		if (fortune) FourAxis.add(player, FourAxis.Axis.FORTUNE, grade.value()); // says how the axis stands
 		if (!player.getAbilities().instabuild) stack.shrink(1);
 		return stack;
 	}
@@ -205,6 +242,7 @@ public class SpiritStoneItem extends Item {
 		int drawn = stack.getOrCreateTag().getInt(DRAWN_TAG) + 1;
 		if (drawn >= secondsPerStone(stone.grade)) {
 			stack.removeTagKey(DRAWN_TAG);
+			if (fillsFortune(player, stack)) FourAxis.add(player, FourAxis.Axis.FORTUNE, stone.grade.value());
 			if (!player.getAbilities().instabuild) stack.shrink(1);
 			player.level().playSound(null, player.blockPosition(), SoundEvents.AMETHYST_BLOCK_BREAK, SoundSource.PLAYERS, 0.6f, 1.4f);
 		} else {
@@ -238,5 +276,8 @@ public class SpiritStoneItem extends Item {
 		tooltip.add(Component.translatable(ModLang.STONE_MEDITATE, (int) Math.round(MEDITATION_BOOST * 100)).withStyle(ChatFormatting.DARK_AQUA));
 		double left = qiLeft(stack);
 		if (left < 1.0) tooltip.add(Component.translatable(ModLang.STONE_QI_LEFT, (int) Math.round(left * 100)).withStyle(ChatFormatting.YELLOW));
+		if (fortuneOf(stack) != null) {
+			tooltip.add(Component.translatable(ModLang.STONE_FORTUNE, stack.getTag().getString(FORTUNE_NAME)).withStyle(ChatFormatting.GOLD));
+		}
 	}
 }

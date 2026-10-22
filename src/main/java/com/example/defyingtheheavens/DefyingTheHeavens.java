@@ -11,6 +11,7 @@ public class DefyingTheHeavens implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
+		BodyCaps.lift(); // max health and attack damage past vanilla's caps, for the realms after Four Axis
 		ModBlocks.register();
 		ModEffects.register();
 		ModBlockEntities.register();

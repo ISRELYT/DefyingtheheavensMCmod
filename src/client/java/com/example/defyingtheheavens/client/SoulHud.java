@@ -15,7 +15,8 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class SoulHud {
 	private static final int X = 4;
-	private static final int Y = 30;
+	/** Below the stack of bars (QiHud#stackBottom), past the room the pressure mark takes there (SuppressionClient). */
+	private static final int UNDER_STACK = 14;
 	private static final int BAR_W = 74;
 	private static final int GOLD = 0xFFB8860B;
 	private static final int LACQUER = 0xD0101420;
@@ -26,7 +27,7 @@ public final class SoulHud {
 		if (mc.player == null || mc.options.hideGui || mc.options.renderDebug) return;
 		SoulProjection.State state = ClientSoul.state();
 		if (state == SoulProjection.State.NONE) return;
-		int y = Y + NetherworldHud.rowsUnderQi() * QiHud.ROW; // under the ghostly qi bar too, when there is one
+		int y = QiHud.stackBottom() + UNDER_STACK; // under the stack of bars, the ghostly qi's too when there is one
 		if (state == SoulProjection.State.PROJECTING || state == SoulProjection.State.RECALLING) {
 			float seconds = ClientSoul.ticksLeft() / 20f;
 			String key = state == SoulProjection.State.PROJECTING ? ModLang.HUD_SOUL_GATHERING : ModLang.HUD_SOUL_RECALLING;
@@ -63,6 +64,19 @@ public final class SoulHud {
 		// In a person's body (Possession): the soul's own pool has its own bar in the stack above, under the body's (QiHud).
 		Component name = ClientBodies.name(mc.player);
 		g.drawString(mc.font, Component.translatable(ModLang.HUD_SOUL_INSIDE, name == null ? Component.literal("?") : name), X, y, 0xD9B8FF);
+	}
+
+	/** The y under its last row, so TribulationHud's lines go below it (0 with the soul at home). */
+	static int bottom() {
+		SoulProjection.State state = ClientSoul.state();
+		if (state == SoulProjection.State.NONE) return 0;
+		int rows = state == SoulProjection.State.PROJECTING || state == SoulProjection.State.RECALLING ? 1 : 0;
+		if (state != SoulProjection.State.PROJECTING) {
+			Minecraft mc = Minecraft.getInstance();
+			boolean host = ClientSoul.host() >= 0 && mc.level != null && mc.level.getEntity(ClientSoul.host()) != null;
+			rows += 2 + (host || ClientSoul.isInside() ? 1 : 0); // the tether, the body, and the body it holds
+		}
+		return QiHud.stackBottom() + UNDER_STACK + rows * 12;
 	}
 
 	/** A thin gold-framed bar, filled to {@code fill}. */

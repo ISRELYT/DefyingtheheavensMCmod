@@ -82,28 +82,32 @@ public class GhostKingGameTests implements FabricGameTest {
 				&& GhostMethods.floor(GhostMethod.SIX_PATHS_CANON, 54) == PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION)
 				&& GhostMethods.floor(GhostMethod.GHOST_FIRE_SCRIPTURE, 9) == -1,
 				"The Breathing Art ends at Qi Refining's Grand Perfection; the last foundation goes from Qi Refining to Four Axis's; the fire carries nothing");
+		// Measured against the deepest foundation there is (True Immortal's since 2026-10-22; the Six Paths Canon's before).
+		GhostMethod deepest = GhostMethod.foundationOf(Realm.values()[Realm.values().length - 1]);
 		for (GhostMethod method : GhostMethod.values()) {
 			if (!method.isFoundation()) continue;
 			helper.assertTrue(method.layers() == 9 * method.tier(), method.getId() + ": nine layers a realm, Qi Refining to its own");
 			for (int layer = 1; layer <= method.layers(); layer++) {
-				helper.assertTrue(GhostMethods.floor(method, layer) == GhostMethods.floor(GhostMethod.SIX_PATHS_CANON, layer)
-						&& GhostMethods.layerCost(method, layer) == GhostMethods.layerCost(GhostMethod.SIX_PATHS_CANON, layer),
+				helper.assertTrue(GhostMethods.floor(method, layer) == GhostMethods.floor(deepest, layer)
+						&& GhostMethods.layerCost(method, layer) == GhostMethods.layerCost(deepest, layer),
 						method.getId() + "'s layer " + layer + " stands and costs as every foundation's does");
 			}
 			if (method.next() != null) helper.assertTrue(GhostMethods.floor(method.next(), method.layers() + 1) > GhostMethods.floor(method, method.layers()),
 					method.getId() + " ends where " + method.next().getId() + " goes on");
 		}
-		// The ghost path's own bar (2026-10-19): every stage takes longer than the one before, the whole path about as long as it was.
+		// The ghost path's own bar (2026-10-19): every stage takes longer than the one before, the way to Four Axis Grand Perfection about
+		// as long as it was (the realms after it go on in the same steps, 2026-10-22).
 		double all = 0, last = 0;
 		boolean rising = true;
+		int axis = PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION);
 		for (int rank = 0; rank <= GhostMethods.LAST_RANK; rank++) {
 			double time = GhostMethods.required(rank) / GhostMethods.realmFactor(Realm.byIndex(rank / Stage.values().length));
 			rising &= time > last;
 			last = time;
-			all += time;
+			if (rank <= axis) all += time;
 		}
 		helper.assertTrue(rising && all > 50 * 3600 && all < 56 * 3600,
-				"Every stage longer than the one before; the whole path about 53 h in a Soul Sand Valley (" + Math.round(all / 3600) + " h)");
+				"Every stage longer than the one before; the way to Four Axis Grand Perfection about 53 h in a Soul Sand Valley (" + Math.round(all / 3600) + " h)");
 		ServerPlayer ghost = cultivator(helper, Realm.QI_REFINING, Stage.EARLY);
 		PlayerCultivation c = CultivationManager.get(ghost);
 		NetherworldState s = c.netherworld();

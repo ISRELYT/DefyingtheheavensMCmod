@@ -32,7 +32,16 @@ import java.util.UUID;
  */
 public final class TribulationManager {
 	private static final int FIRST_STRIKE_DELAY = 60;  // 3 s for the local cloud to gather before the first bolt
-	private static final int STRIKE_INTERVAL = 60;     // 3 s between strikes
+	public static final int STRIKE_INTERVAL = 60;      // 3 s between strikes, while a tribulation's strikes fit so into its time
+	/**
+	 * The longest a tribulation lasts, from its clouds gathering to the breakthrough (the user's ask, 2026-10-22: 30 seconds ever, but
+	 * the lifespan tribulation): its strikes are fitted into it ({@link #strikeSpan}), several a tick for the greatest.
+	 */
+	public static final int MAX_TICKS = 30 * 20;
+	/** Strikes closer than this (ticks) share the bolt drawn for the first: ten bolts a second at most (each strike's harm lands all the same). */
+	public static final int MIN_BOLT_INTERVAL = 2;
+	/** A storm's bolts flash the whole sky at most this often (ticks); those between are dim (TribulationLightning#setDim): no strobing. */
+	public static final int FLASH_EVERY = 20;
 	private static final int FINISH_DELAY = 20;        // 1 s after the last strike before the breakthrough completes
 	/** All a tribulation's strikes drunk in by a Heavenly Thunder Body (Physique): this share of the new stage's cultivation. */
 	public static final double THUNDER_SHARE = 0.6;
@@ -42,6 +51,12 @@ public final class TribulationManager {
 	 * (a ghost path of Core Formation is a Ghost King's, whose hands are its own).
 	 */
 	public static final float GHOST_FORM_ARMOR = 15.0f;
+	/** The heavens hate a Primordial Chaos Body (Physique): its every tribulation strikes this many times as often (rounded up). */
+	public static final double CHAOS_STRIKES = 1.5;
+	/** An Ancient Holy Body (Physique) takes a tribulation's strikes at this share. */
+	public static final float HOLY_STRIKES = 0.75f;
+	/** What a Heaven-Defying Body (Physique) is left with by the strike that would have killed it: one heart. */
+	public static final float DEFIED_HEALTH = 2.0f;
 
 	/** One tribulation: a set number of identical strikes, each heavenly lightning (armor applies) plus magic (it doesn't). */
 	public record Strikes(int count, float bolt, float magic) {}
@@ -52,10 +67,17 @@ public final class TribulationManager {
 		/** The ghost path's (the Netherworld's tribulation), not the heaven path's. */
 		final boolean ghost;
 		final Strikes strikes;
+		/** Ticks from its first strike to its last, all of them evenly spread over it ({@link #strikeSpan}). */
+		final int span;
 		int strikesLeft;
-		int nextStrikeIn = FIRST_STRIKE_DELAY;
+		/** Ticks since its first strike (below 0 while its clouds gather). */
+		int sinceFirst = -FIRST_STRIKE_DELAY;
 		int finishIn = FINISH_DELAY;
 		int age;
+		/** Ticks since its last bolt that flashed the sky ({@link #FLASH_EVERY}). */
+		int sinceFlash = FLASH_EVERY;
+		/** Ticks since its last bolt was drawn ({@link #MIN_BOLT_INTERVAL}). */
+		int sinceBolt = MIN_BOLT_INTERVAL;
 		/** A Heavenly Thunder Body's share of the strikes drunk in (Physique): {@link #THUNDER_SHARE} of the new stage's cultivation at most. */
 		double absorbed;
 		TribulationCloud cloud;
@@ -65,12 +87,16 @@ public final class TribulationManager {
 			cloud = null;
 		}
 
-		Trial(Realm targetRealm, Stage targetStage, boolean ghost) {
+		/** {@code hated}: a Primordial Chaos Body's, struck {@link #CHAOS_STRIKES} times as often. */
+		Trial(Realm targetRealm, Stage targetStage, boolean ghost, boolean hated) {
 			this.targetRealm = targetRealm;
 			this.targetStage = targetStage;
 			this.ghost = ghost;
-			this.strikes = strikes(targetRealm, targetStage);
+			this.strikes = strikes(targetRealm, targetStage, hated);
 			this.strikesLeft = strikes.count();
+			// A Primordial Chaos Body's extra strikes come in the same time, the faster (no tribulation outlasts MAX_TICKS: the user's ask,
+			// 2026-10-22; they used to take the longer).
+			this.span = strikeSpan(strikes.count());
 		}
 
 		Component targetName() {
@@ -91,53 +117,127 @@ public final class TribulationManager {
 	}
 
 	/*
-	 * Balance. A set number of strikes lands 3 s apart, after 3 s of gathering clouds. From Foundation Building on, the Qi
-	 * Sustenance ability (if left switched on) regenerates 6 health between strikes, so only damage above that wears the player down. Lightning is cut by armor
-	 * (up to 80%); the magic part ignores armor but not Protection enchantments, Resistance or absorption.
-	 * Every strike of a tribulation is the same, so the outcome is certain. Tuned (deterministic simulation, starting at full
-	 * health, no potions/apples/totems) so a mortal survives with this full armor set and dies with the step below
+	 * Balance (retuned 2026-10-22 for the user's 30-second cap, and for the realms after Four Axis; the strike counts are the user's,
+	 * 2026-10-20: Heavenly Being 50, Four Axis 100, the realms below in step, and those after it each twice the one before). A set
+	 * number of strikes lands after 3 s of gathering clouds, 3 s apart while they fit, else all fitted evenly into the 26 s left
+	 * before the breakthrough's last second ({@link #strikeSpan}: Nascent Soul's 18 some 1.5 s apart, Heavenly Being's 50 a half
+	 * second, Four Axis's 100 a quarter, True Immortal's 3,200 six a tick; strikes in the same tenth of a second share the bolt drawn).
+	 * From Foundation Building on, the Qi Sustenance ability (if left switched on) keeps vanilla's fast regeneration running, 2
+	 * health a second, so only damage above that wears the player down. Lightning is cut by armor (up to 80%, and the more the
+	 * smaller the hit); the magic part ignores armor but not Protection enchantments, Resistance or absorption.
+	 * Every strike of a tribulation is the same, so the outcome is certain. Tuned (deterministic simulation of vanilla's damage
+	 * rules tick by tick, starting at full health, no potions/apples/totems; it reproduced the old table exactly; scratchpad
+	 * trib-tune-1022b.ps1 of session 59448793) so a cultivator survives with this full armor set and dies with the step below
 	 * (netherite counts as diamond):
-	 *   -> Foundation Building   1 strike    nothing needed at full health (16 lightning against 22.6 health)
-	 *   -> Core Formation        3 strikes   iron (leather dies)
-	 *   -> Nascent Soul          6 strikes   diamond, or iron with Protection II (plain iron dies) - also NS Mid
-	 *   -> NS Late               6 strikes   diamond with Protection I, or iron with Protection II (plain diamond dies)
-	 *   -> NS Grand Perfection   6 strikes   diamond with Protection II (Protection I dies)
-	 *   -> Heavenly Being        9 strikes   Protection III (II dies) - also HB Mid and Late
-	 *   -> HB Grand Perfection   9 strikes   Protection IV (III dies)
+	 *   -> Foundation Building   2 strikes    nothing needed at full health (16 lightning against 22.6 health)
+	 *   -> Core Formation        6 strikes    iron (leather dies)
+	 *   -> Nascent Soul         18 strikes    diamond, or iron with Protection II (plain iron dies) - also NS Mid
+	 *   -> NS Late              18 strikes    diamond with Protection I, or iron with Protection II (plain diamond dies)
+	 *   -> NS Grand Perfection  18 strikes    diamond with Protection II (Protection I dies)
+	 *   -> Heavenly Being       50 strikes    Protection III (II dies) - also HB Mid and Late
+	 *   -> HB Grand Perfection  50 strikes    Protection IV (III dies)
 	 * Protection IV is the best gear there is, so Four Axis asks for a beacon on top of it:
-	 *   -> Four Axis            12 strikes   Protection IV + Resistance I (Protection IV alone dies) - also FA Mid and Late
-	 *   -> FA Grand Perfection  12 strikes   Protection IV + Resistance I + Regeneration I, or Resistance II (Resistance I dies)
+	 *   -> Four Axis           100 strikes    Protection IV + Resistance I (Protection IV alone dies) - also FA Mid and Late
+	 *   -> FA Grand Perfection 100 strikes    Protection IV + Resistance II (Resistance I with Regeneration I dies; in 30 s
+	 *                                         Regeneration I heals too little to tell one from the other, as it did in 35)
+	 * and every tribulation after it asks the same, a beacon's whole Resistance on Protection IV, against the body's own might:
+	 *   -> Dao Integration     200 strikes    and every stage of it, Void Shattering's 400, Sacred Vessel's 800, Entering
+	 *      ... True Immortal 3,200            Nirvana's 1,600, True Immortal's 3,200 (Resistance I with Regeneration I dies)
 	 * Golden apples, Resistance/Regeneration potions and totems let a player get through a step below these,
 	 * and each worn Ring of Transcendence halves all strike damage on top of the table.
 	 * The Netherworld's tribulation strikes as this table says for the living (its yin lightning turned by armour as the heavens'
 	 * bolts are, the yin in it passing armour as magic does); the dead take the same share of their hearts (GhostSystem#livingShare).
+	 * The common dead's iron (GHOST_FORM_ARMOR) only meets the tribulations into Foundation Building and Core Formation, iron being
+	 * what the living need for Core Formation's: no easier for the dead than for a life in iron.
 	 */
 
 	/** The tribulation for breaking through into this realm and stage. Before Nascent Soul only Early is ever a target. */
 	public static Strikes strikes(Realm target, Stage stage) {
 		return switch (target) {
 			case QI_REFINING -> new Strikes(0, 0.0f, 0.0f); // never a breakthrough target
-			case FOUNDATION_BUILDING -> new Strikes(1, 16.0f, 0.0f);
-			case CORE_FORMATION -> new Strikes(3, 13.0f, 5.0f);
+			case FOUNDATION_BUILDING -> new Strikes(2, 8.0f, 0.0f);
+			case CORE_FORMATION -> new Strikes(6, 12.5f, 1.5f);
 			case NASCENT_SOUL -> switch (stage) {
-				case EARLY -> new Strikes(6, 18.0f, 7.5f);
-				case MID -> new Strikes(6, 23.0f, 10.0f);
-				case LATE -> new Strikes(6, 28.0f, 12.0f);
-				case GRAND_PERFECTION -> new Strikes(6, 36.5f, 15.5f);
+				case EARLY -> new Strikes(18, 14.25f, 1.5f);
+				case MID -> new Strikes(18, 19.0f, 2.0f);
+				case LATE -> new Strikes(18, 11.75f, 5.0f); // more of it magic, so Protection tells diamond from diamond and Protection I
+				case GRAND_PERFECTION -> new Strikes(18, 14.75f, 6.25f);
 			};
 			case HEAVENLY_BEING -> switch (stage) {
-				case EARLY -> new Strikes(9, 23.5f, 19.0f);
-				case MID -> new Strikes(9, 29.5f, 23.5f);
-				case LATE -> new Strikes(9, 31.0f, 25.0f);
-				case GRAND_PERFECTION -> new Strikes(9, 45.0f, 36.0f);
+				case EARLY -> new Strikes(50, 4.25f, 3.5f);
+				case MID -> new Strikes(50, 5.25f, 4.5f);
+				case LATE -> new Strikes(50, 5.75f, 4.5f);
+				case GRAND_PERFECTION -> new Strikes(50, 8.25f, 6.75f);
 			};
 			case FOUR_AXIS -> switch (stage) { // even at Grand Perfection, armor still reaches its 80% cap
-				case EARLY -> new Strikes(12, 26.5f, 47.5f);
-				case MID -> new Strikes(12, 34.5f, 62.0f);
-				case LATE -> new Strikes(12, 36.5f, 66.0f);
-				case GRAND_PERFECTION -> new Strikes(12, 44.5f, 80.5f);
+				case EARLY -> new Strikes(100, 2.75f, 5.25f);
+				case MID -> new Strikes(100, 3.75f, 7.0f);
+				case LATE -> new Strikes(100, 4.0f, 7.5f);
+				case GRAND_PERFECTION -> new Strikes(100, 5.75f, 10.5f);
+			};
+			// Each realm's Early is the might of the realm before's Grand Perfection to bear (Void Shattering's and True Immortal's the
+			// smaller beside their own stages after the leap in power).
+			case DAO_INTEGRATION -> switch (stage) {
+				case EARLY -> new Strikes(200, 3.0f, 5.75f);
+				case MID -> new Strikes(200, 4.25f, 8.0f);
+				case LATE -> new Strikes(200, 4.5f, 8.5f);
+				case GRAND_PERFECTION -> new Strikes(200, 5.0f, 9.25f);
+			};
+			case VOID_SHATTERING -> switch (stage) {
+				case EARLY -> new Strikes(400, 2.75f, 5.0f);
+				case MID -> new Strikes(400, 7.5f, 13.75f);
+				case LATE -> new Strikes(400, 8.0f, 15.0f);
+				case GRAND_PERFECTION -> new Strikes(400, 8.75f, 16.25f);
+			};
+			case SACRED_VESSEL -> switch (stage) {
+				case EARLY -> new Strikes(800, 4.75f, 8.75f);
+				case MID -> new Strikes(800, 7.25f, 13.5f);
+				case LATE -> new Strikes(800, 8.0f, 14.75f);
+				case GRAND_PERFECTION -> new Strikes(800, 8.5f, 16.0f);
+			};
+			case ENTERING_NIRVANA -> switch (stage) {
+				case EARLY -> new Strikes(1600, 4.75f, 8.75f);
+				case MID -> new Strikes(1600, 7.0f, 13.25f);
+				case LATE -> new Strikes(1600, 7.75f, 14.5f);
+				case GRAND_PERFECTION -> new Strikes(1600, 8.5f, 15.75f);
+			};
+			case TRUE_IMMORTAL -> switch (stage) {
+				case EARLY -> new Strikes(3200, 4.5f, 8.5f);
+				case MID -> new Strikes(3200, 35.25f, 65.0f);
+				case LATE -> new Strikes(3200, 38.75f, 72.0f);
+				case GRAND_PERFECTION -> new Strikes(3200, 42.0f, 78.0f);
 			};
 		};
+	}
+
+	/** {@link #strikes(Realm, Stage)}, for a Primordial Chaos Body ({@code hated}: Physique) {@link #CHAOS_STRIKES} times as many, rounded up. */
+	public static Strikes strikes(Realm target, Stage stage, boolean hated) {
+		Strikes base = strikes(target, stage);
+		return hated ? new Strikes((int) Math.ceil(base.count() * CHAOS_STRIKES), base.bolt(), base.magic()) : base;
+	}
+
+	/**
+	 * Ticks from the first strike of a tribulation of {@code count} to its last, all of them evenly spread over it (the user's asks:
+	 * 2026-10-20, so the greater tribulations don't take an age; 2026-10-22, none longer than {@link #MAX_TICKS}): {@link
+	 * #STRIKE_INTERVAL} apart while they fit so, else fitted into what the gathering and the breakthrough's last second leave of it,
+	 * several a tick for the greatest ({@link #strikesBy}): Nascent Soul's 18 some 31 ticks apart, Heavenly Being's 50 every 10.6,
+	 * Four Axis's 100 every 5.3, True Immortal's 3,200 six a tick.
+	 */
+	public static int strikeSpan(int count) {
+		if (count <= 1) return 0;
+		return Math.min((count - 1) * STRIKE_INTERVAL, MAX_TICKS - FIRST_STRIKE_DELAY - FINISH_DELAY);
+	}
+
+	/** How many of a tribulation of {@code count} strikes spread over {@code span} ticks ({@link #strikeSpan}) have landed {@code since} ticks after its first. */
+	public static int strikesBy(int count, int span, int since) {
+		if (since < 0) return 0;
+		if (span <= 0) return count;
+		return (int) Math.min(count, (long) since * (count - 1) / span + 1);
+	}
+
+	/** How long a tribulation of {@code count} strikes lasts, from its clouds gathering to the breakthrough (ticks): {@link #MAX_TICKS} at most. */
+	public static int duration(int count) {
+		return FIRST_STRIKE_DELAY + strikeSpan(count) + FINISH_DELAY;
 	}
 
 	/** Entry point from the Breakthrough button. */
@@ -176,13 +276,23 @@ public final class TribulationManager {
 			return;
 		}
 		if (held) return;
+		if (c.isHeldByAxis()) { // a Four Axis stage's axis of virtue not yet complete (FourAxis)
+			player.sendSystemMessage(FourAxis.gateLine(c, PlayerCultivation.rank(c.getRealm(), c.getStage())).copy().withStyle(net.minecraft.ChatFormatting.GOLD));
+			return;
+		}
 		if (!c.canBreakthrough()) {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_NOT_READY), true);
 			return;
 		}
+		// Into Heavenly Being (or on from there, for one with none named yet), the obsession is named first (Obsession): its
+		// screen comes up, and naming it brings the tribulation.
+		if (Obsession.asks(c, PlayerCultivation.rank(c.getRealm(), c.getStage()))) {
+			Obsession.ask(player, false);
+			return;
+		}
 
 		MeditationManager.stop(player, false); // no-op if not meditating
-		Trial trial = new Trial(c.breakthroughRealm(), c.breakthroughStage(), false);
+		Trial trial = new Trial(c.breakthroughRealm(), c.breakthroughStage(), false, c.hasPhysique(Physique.PRIMORDIAL_CHAOS_BODY));
 		ACTIVE.put(player.getUUID(), trial);
 		// Written to disk now, not at the next autosave, so not even closing the game this instant gets out of the trial.
 		c.setInTribulation(true);
@@ -220,15 +330,23 @@ public final class TribulationManager {
 			player.sendSystemMessage(GhostMethods.gateLine(c).copy().withStyle(net.minecraft.ChatFormatting.GOLD));
 			return;
 		}
+		if (GhostMethods.heldByAxis(c)) { // a Four Axis stage's axis of virtue not yet complete (FourAxis)
+			player.sendSystemMessage(FourAxis.gateLine(c, GhostMethods.ghostRank(c.netherworld())).copy().withStyle(net.minecraft.ChatFormatting.GOLD));
+			return;
+		}
 		if (!GhostMethods.canBreakthrough(c)) {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_NOT_READY), true);
+			return;
+		}
+		if (Obsession.asks(c, GhostMethods.ghostRank(c.netherworld()))) { // as the heaven path's (Obsession): one obsession, either path
+			Obsession.ask(player, true);
 			return;
 		}
 
 		MeditationManager.stop(player, false);
 		int target = GhostMethods.ghostRank(c.netherworld()) + 1;
 		int stages = Stage.values().length;
-		Trial trial = new Trial(Realm.byIndex(target / stages), Stage.byIndex(target % stages), true);
+		Trial trial = new Trial(Realm.byIndex(target / stages), Stage.byIndex(target % stages), true, c.hasPhysique(Physique.PRIMORDIAL_CHAOS_BODY));
 		ACTIVE.put(player.getUUID(), trial);
 		c.netherworld().setInGhostTribulation(true); // saved at once, as the heaven path's mark is: leaving fails it
 		CultivationManager.markDirty(player.server);
@@ -259,16 +377,22 @@ public final class TribulationManager {
 			if (!p.isAlive()) continue; // onDeath() handles failure
 
 			t.age++;
+			t.sinceFlash++;
+			t.sinceBolt++;
 			updateCloud(p, t);
 
 			if (t.strikesLeft > 0) {
-				if (--t.nextStrikeIn <= 0) {
+				// Every strike due by now lands (several a tick for the greatest tribulations: strikeSpan).
+				int due = strikesBy(t.strikes.count(), t.span, ++t.sinceFirst);
+				boolean struck = false;
+				while (t.strikes.count() - t.strikesLeft < due) {
 					strike(p, t);
-					if (ACTIVE.get(id) != t) continue; // died (or scattered) just now
+					if (ACTIVE.get(id) != t) break; // died (or scattered) just now
 					t.strikesLeft--;
-					t.nextStrikeIn = STRIKE_INTERVAL;
-					ModPackets.sendTribulation(p, true, t.strikesLeft, t.targetRealm, t.targetStage, t.ghost);
+					struck = true;
 				}
+				if (ACTIVE.get(id) != t) continue;
+				if (struck) ModPackets.sendTribulation(p, true, t.strikesLeft, t.targetRealm, t.targetStage, t.ghost);
 			} else if (--t.finishIn <= 0) {
 				survivors.add(p); // the last strike has faded
 				continue;
@@ -299,29 +423,40 @@ public final class TribulationManager {
 	 */
 	private static void strike(ServerPlayer p, Trial t) {
 		ServerLevel level = p.serverLevel();
-		TribulationLightning bolt = ModEntities.TRIBULATION_LIGHTNING.create(level); // drawn bright blue (cyan: the Netherworld's) by the client
-		if (bolt == null) return;
-		bolt.moveTo(p.getX(), p.getY(), p.getZ());
-		bolt.setCloudBaseY(t.cloud == null ? p.getY() + TribulationCloud.BASE_HEIGHT_ABOVE_PLAYER : t.cloud.getY());
-		bolt.setScale(boltScale(t.targetRealm, t.targetStage));
-		bolt.setGhost(t.ghost);
-		bolt.setVisualOnly(true); // 1.20.1 bolts always deal a flat 5, so the tribulation's hit is applied by hand below
-		level.addFreshEntity(bolt);
-		if (t.cloud != null) t.cloud.flash();
+		// Strikes closer together than MIN_BOLT_INTERVAL share the first one's bolt (and its sparks and sound): each one's harm lands.
+		boolean drawn = t.sinceBolt >= MIN_BOLT_INTERVAL;
+		if (drawn) {
+			t.sinceBolt = 0;
+			TribulationLightning bolt = ModEntities.TRIBULATION_LIGHTNING.create(level); // drawn bright blue (cyan: the Netherworld's) by the client
+			if (bolt != null) {
+				bolt.moveTo(p.getX(), p.getY(), p.getZ());
+				bolt.setCloudBaseY(t.cloud == null ? p.getY() + TribulationCloud.BASE_HEIGHT_ABOVE_PLAYER : t.cloud.getY());
+				bolt.setScale(boltScale(t.targetRealm, t.targetStage));
+				bolt.setGhost(t.ghost);
+				bolt.setVisualOnly(true); // 1.20.1 bolts always deal a flat 5, so the tribulation's hit is applied by hand below
+				// Strikes in quick succession: only one a second lights the whole sky (it would strobe otherwise).
+				bolt.setDim(t.sinceFlash < FLASH_EVERY);
+				if (!bolt.isDim()) t.sinceFlash = 0;
+				level.addFreshEntity(bolt);
+			}
+			if (t.cloud != null) t.cloud.flash();
+		}
 
 		// A Heavenly Thunder Body drinks the heavens' bolt in: no harm, the qi pool filled, and a share of the new stage's cultivation
 		// banked for the breakthrough. (The Netherworld's yin is no thunder of its.)
 		PlayerCultivation c = CultivationManager.get(p);
-		if (!t.ghost && c.physique() == Physique.HEAVENLY_THUNDER_BODY) {
+		if (!t.ghost && c.hasPhysique(Physique.HEAVENLY_THUNDER_BODY)) {
 			t.absorbed += 1.0 / Math.max(1, t.strikes.count());
 			c.setQi(c.maxQi());
 			p.heal(t.strikes.bolt() * 0.25f);
-			level.sendParticles(ParticleTypes.ELECTRIC_SPARK, p.getX(), p.getY() + 1.0, p.getZ(), 60, 0.5, 0.9, 0.5, 0.3);
-			level.playSound(null, p.blockPosition(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 1.0f, 1.6f);
-			CultivationManager.sync(p);
+			if (drawn) {
+				level.sendParticles(ParticleTypes.ELECTRIC_SPARK, p.getX(), p.getY() + 1.0, p.getZ(), 60, 0.5, 0.9, 0.5, 0.3);
+				level.playSound(null, p.blockPosition(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 1.0f, 1.6f);
+				CultivationManager.sync(p);
+			}
 			return;
 		}
-		if (t.ghost) level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, p.getX(), p.getY() + 1.0, p.getZ(), 30, 0.4, 0.9, 0.4, 0.05);
+		if (t.ghost && drawn) level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, p.getX(), p.getY() + 1.0, p.getZ(), 30, 0.4, 0.9, 0.4, 0.05);
 
 		// Both parts land in the same tick as the bolt. Clearing the hurt cooldown in between stops vanilla from
 		// discarding the second hit; magic goes first so a killing strike usually reads "struck by lightning".
@@ -331,26 +466,53 @@ public final class TribulationManager {
 		// 2026-10-19): the bolt as their armour turns it, then the whole of it by their hearts against the living body's they are
 		// reckoned from (GhostSystem#livingShare), so a ghost's hearts, more or fewer, make it no easier or harder than a life.
 		boolean dead = GhostSystem.isGhost(p);
-		float multiplier = RingOfTranscendenceItem.damageMultiplier(p);
+		// An Ancient Holy Body takes the strikes the more lightly (Physique).
+		float multiplier = RingOfTranscendenceItem.damageMultiplier(p) * (c.hasPhysique(Physique.ANCIENT_HOLY_BODY) ? HOLY_STRIKES : 1.0f);
 		float share = dead ? (float) GhostSystem.livingShare(p) : 1.0f;
 		float magic = t.strikes.magic() * multiplier * share;
-		p.invulnerableTime = 0;
-		if (magic > 0) {
-			p.hurt(t.ghost ? ModDamageTypes.yinTribulation(level) : level.damageSources().magic(), magic);
+		striking = p.getUUID(); // a killing strike, here, is the tribulation's (#allowDeath)
+		try {
 			p.invulnerableTime = 0;
-		}
-		if (p.isAlive() && ACTIVE.get(p.getUUID()) == t) {
-			float harm = t.strikes.bolt() * multiplier;
-			if (dead) {
-				// Turned by armour here, before the share (the turning is no straight share of the blow), and dealt past it: one of the
-				// common dead, with no hands for armour, turns it as a ghostly form does, as an iron set would (GHOST_FORM_ARMOR).
-				float armour = Incorporeal.isRuledGhost(p) ? Math.max(p.getArmorValue(), GHOST_FORM_ARMOR) : p.getArmorValue();
-				harm = CombatRules.getDamageAfterAbsorb(harm, armour, (float) p.getAttributeValue(Attributes.ARMOR_TOUGHNESS)) * share;
-				p.hurt(ModDamageTypes.yinTribulation(level), harm);
-			} else {
-				p.hurt(t.ghost ? ModDamageTypes.yinLightning(level) : level.damageSources().lightningBolt(), harm);
+			if (magic > 0) {
+				p.hurt(t.ghost ? ModDamageTypes.yinTribulation(level) : level.damageSources().magic(), magic);
+				p.invulnerableTime = 0;
 			}
+			if (p.isAlive() && ACTIVE.get(p.getUUID()) == t) {
+				float harm = t.strikes.bolt() * multiplier;
+				if (dead) {
+					// Turned by armour here, before the share (the turning is no straight share of the blow), and dealt past it: one of the
+					// common dead, with no hands for armour, turns it as a ghostly form does, as an iron set would (GHOST_FORM_ARMOR).
+					float armour = Incorporeal.isRuledGhost(p) ? Math.max(p.getArmorValue(), GHOST_FORM_ARMOR) : p.getArmorValue();
+					harm = CombatRules.getDamageAfterAbsorb(harm, armour, (float) p.getAttributeValue(Attributes.ARMOR_TOUGHNESS)) * share;
+					p.hurt(ModDamageTypes.yinTribulation(level), harm);
+				} else {
+					p.hurt(t.ghost ? ModDamageTypes.yinLightning(level) : level.damageSources().lightningBolt(), harm);
+				}
+			}
+		} finally {
+			striking = null;
 		}
+	}
+
+	/** The cultivator a tribulation's strike is landing on this moment, or null. */
+	private static UUID striking;
+
+	/**
+	 * ALLOW_DEATH: the heavens can't strike a Heaven-Defying Body down (Physique; the user's ask, 2026-10-20: not spared its
+	 * tribulations, only their killing). Its strike's killing blow leaves it {@link #DEFIED_HEALTH} and the tribulation fails, costing
+	 * it nothing ({@link #holds}); the dead don't scatter for it either. @return false to hold off the death
+	 */
+	public static boolean allowDeath(ServerPlayer p) {
+		if (!p.getUUID().equals(striking)) return true;
+		Trial t = ACTIVE.get(p.getUUID());
+		if (t == null || !CultivationManager.get(p).hasPhysique(Physique.HEAVEN_DEFYING_BODY)) return true;
+		ACTIVE.remove(p.getUUID());
+		p.setHealth(DEFIED_HEALTH);
+		p.sendSystemMessage(Component.translatable(ModLang.MSG_TRIB_DEFIED).withStyle(net.minecraft.ChatFormatting.DARK_RED));
+		p.level().playSound(null, p.blockPosition(), SoundEvents.WITHER_SPAWN, SoundSource.PLAYERS, 0.6f, 1.4f);
+		fail(p, t, false);
+		CultivationManager.refresh(p);
+		return false;
 	}
 
 	private static void succeed(ServerPlayer p) {
@@ -431,25 +593,42 @@ public final class TribulationManager {
 		CultivationManager.refresh(p);
 	}
 
-	/** A trial failed (struck down, or fled: {@code fled}): its path falls one stage, its cultivation there lost. */
+	/**
+	 * Whether a failed tribulation costs {@code c} nothing: a Heaven-Defying Body (Physique; the user's ask, 2026-10-20) falls no stage
+	 * for it, however it failed (struck, fled, killed or scattered by something else), and keeps its cultivation and any breakthrough
+	 * pill's preparing, to face the heavens again at once.
+	 */
+	public static boolean holds(PlayerCultivation c) {
+		return c.hasPhysique(Physique.HEAVEN_DEFYING_BODY);
+	}
+
+	/** {@link #holds}: told so, at the rank ({@code rank}) it still stands at. */
+	private static Component held(Component rank) {
+		return Component.translatable(ModLang.MSG_TRIB_HOLDS, rank).withStyle(net.minecraft.ChatFormatting.GOLD);
+	}
+
+	/** A trial failed (struck down, or fled: {@code fled}): its path falls one stage, its cultivation there lost; but see {@link #holds}. */
 	private static void fail(ServerPlayer p, Trial t, boolean fled) {
 		PlayerCultivation c = CultivationManager.get(p);
+		boolean holds = holds(c);
 		t.removeCloud();
 		ModPackets.sendTribulation(p, false, 0, t.targetRealm, t.targetStage, t.ghost);
 		p.server.getPlayerList().broadcastSystemMessage(Component.translatable(ModLang.MSG_TRIB_FAILED, p.getDisplayName()), false);
 		if (t.ghost) {
 			NetherworldState s = c.netherworld();
 			s.setInGhostTribulation(false);
-			GhostMethods.fallOneStage(s);
+			if (!holds) GhostMethods.fallOneStage(s);
 			CultivationManager.markDirty(p.server);
-			p.sendSystemMessage(Component.translatable(fled ? ModLang.MSG_GHOST_TRIB_FLED : ModLang.MSG_GHOST_TRIB_FALL, GhostMethods.rankName(GhostMethods.ghostRank(s))));
+			Component rank = GhostMethods.rankName(GhostMethods.ghostRank(s));
+			p.sendSystemMessage(holds ? held(rank) : Component.translatable(fled ? ModLang.MSG_GHOST_TRIB_FLED : ModLang.MSG_GHOST_TRIB_FALL, rank));
 			Spells.sync(p);
 			return;
 		}
 		c.setInTribulation(false);
-		c.fallOneStage();
+		if (!holds) c.fallOneStage();
 		CultivationManager.markDirty(p.server);
-		p.sendSystemMessage(Component.translatable(fled ? ModLang.MSG_TRIB_FLED : ModLang.MSG_TRIB_FALL, PlayerCultivation.rankName(c.getRealm(), c.getStage())));
+		Component rank = PlayerCultivation.rankName(c.getRealm(), c.getStage());
+		p.sendSystemMessage(holds ? held(rank) : Component.translatable(fled ? ModLang.MSG_TRIB_FLED : ModLang.MSG_TRIB_FALL, rank));
 	}
 
 	/**
@@ -463,31 +642,34 @@ public final class TribulationManager {
 
 	/**
 	 * A player has joined. One who left mid-tribulation (logged out, quit, or the game closed) has failed it, just as if
-	 * struck down: they fall one minor stage and lose their cultivation (the ghost path's, for the Netherworld's).
+	 * struck down: they fall one minor stage and lose their cultivation (the ghost path's, for the Netherworld's); a Heaven-Defying
+	 * Body loses nothing ({@link #holds}).
 	 *
 	 * @return true if they fell
 	 */
 	public static boolean onJoin(ServerPlayer p) {
 		PlayerCultivation c = CultivationManager.get(p);
 		if (isActive(p.getUUID())) return false;
-		boolean fell = false;
+		boolean holds = holds(c), failed = false;
 		if (c.isInTribulation()) {
 			c.setInTribulation(false);
-			c.fallOneStage();
+			if (!holds) c.fallOneStage();
 			p.server.getPlayerList().broadcastSystemMessage(Component.translatable(ModLang.MSG_TRIB_FAILED, p.getDisplayName()), false);
-			p.sendSystemMessage(Component.translatable(ModLang.MSG_TRIB_FLED, PlayerCultivation.rankName(c.getRealm(), c.getStage())));
-			fell = true;
+			Component rank = PlayerCultivation.rankName(c.getRealm(), c.getStage());
+			p.sendSystemMessage(holds ? held(rank) : Component.translatable(ModLang.MSG_TRIB_FLED, rank));
+			failed = true;
 		}
 		NetherworldState s = c.netherworld();
 		if (s.inGhostTribulation()) {
 			s.setInGhostTribulation(false);
-			GhostMethods.fallOneStage(s);
+			if (!holds) GhostMethods.fallOneStage(s);
 			p.server.getPlayerList().broadcastSystemMessage(Component.translatable(ModLang.MSG_TRIB_FAILED, p.getDisplayName()), false);
-			p.sendSystemMessage(Component.translatable(ModLang.MSG_GHOST_TRIB_FLED, GhostMethods.rankName(GhostMethods.ghostRank(s))));
-			fell = true;
+			Component rank = GhostMethods.rankName(GhostMethods.ghostRank(s));
+			p.sendSystemMessage(holds ? held(rank) : Component.translatable(ModLang.MSG_GHOST_TRIB_FLED, rank));
+			failed = true;
 		}
-		if (fell) CultivationManager.markDirty(p.server);
-		return fell;
+		if (failed) CultivationManager.markDirty(p.server);
+		return failed && !holds;
 	}
 
 	/**

@@ -74,7 +74,8 @@ public class GhostSightGameTests implements FabricGameTest {
 		CultivationManager.refresh(player);
 	}
 
-	@GameTest(template = EMPTY_STRUCTURE)
+	/** A batch of its own (2026-10-20): its Hungry Ghost goes by line of sight too, as the one below's does (a neighbour's blocks cut it once). */
+	@GameTest(template = EMPTY_STRUCTURE, batch = "ghost_sight_king_form")
 	public void theLivingWorldDoesntSeeAGhostKingsForm(GameTestHelper helper) {
 		ServerPlayer subject = cultivator(helper, Realm.CORE_FORMATION, Stage.EARLY);
 		try {
@@ -98,7 +99,8 @@ public class GhostSightGameTests implements FabricGameTest {
 		helper.succeed();
 	}
 
-	@GameTest(template = EMPTY_STRUCTURE)
+	/** A batch of its own (2026-10-19): "A Hungry Ghost does" goes by line of sight, which a neighbouring test's blocks now and then cut. */
+	@GameTest(template = EMPTY_STRUCTURE, batch = "ghost_sight_hunted")
 	public void theDeadAreHuntedByTheDeadAndSeenByTheLivingFromNascentSoul(GameTestHelper helper) {
 		ServerPlayer dead = cultivator(helper, Realm.FOUNDATION_BUILDING, Stage.EARLY);
 		try {

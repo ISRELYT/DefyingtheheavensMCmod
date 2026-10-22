@@ -41,8 +41,11 @@ public final class ClientCultivationData {
 		ClientCultivationData.meditating = meditating;
 	}
 
-	/** The body the local player was born with (Physique): its ordinal (-1 none yet), its roots' elements as a bit mask, body refining. */
-	public static void physique(int physique, int roots, int bodyRefining) {
+	/**
+	 * The body the local player was born with (Physique): its ordinal (-1 none yet), its roots' elements as a bit mask, body refining,
+	 * and a Myriad Form Body's forms as a bit mask over their ordinals.
+	 */
+	public static void physique(int physique, int roots, int bodyRefining, long forms) {
 		DATA.setPhysique(com.example.defyingtheheavens.Physique.byIndex(physique));
 		java.util.List<com.example.defyingtheheavens.QiElement> elements = new java.util.ArrayList<>();
 		for (com.example.defyingtheheavens.QiElement element : com.example.defyingtheheavens.QiElement.five()) {
@@ -50,14 +53,36 @@ public final class ClientCultivationData {
 		}
 		DATA.setRootElements(elements);
 		DATA.setBodyRefining(bodyRefining);
+		java.util.List<com.example.defyingtheheavens.Physique> bodies = new java.util.ArrayList<>();
+		for (com.example.defyingtheheavens.Physique form : com.example.defyingtheheavens.Physique.values()) {
+			if ((forms & 1L << form.ordinal()) != 0) bodies.add(form);
+		}
+		DATA.setForms(bodies);
 	}
+
+	/** The local player's own years (Lifespan): those used, the span, and whether they are dead. */
+	private static double lifeUsed = com.example.defyingtheheavens.Lifespan.START_AGE, lifeSpan = com.example.defyingtheheavens.Lifespan.BASE_YEARS;
+	private static boolean lifeDead;
+
+	static void lifespan(double used, double span, boolean dead) {
+		lifeUsed = used;
+		lifeSpan = span;
+		lifeDead = dead;
+	}
+
+	public static double lifeUsed() { return lifeUsed; }
+	public static double lifeSpan() { return lifeSpan; }
+	public static boolean lifeDead() { return lifeDead; }
 
 	/** Disconnect: don't show the last world's cultivation on the next server. */
 	public static void clear() {
-		physique(-1, 0, 0);
+		lifespan(com.example.defyingtheheavens.Lifespan.START_AGE, com.example.defyingtheheavens.Lifespan.BASE_YEARS, false);
+		physique(-1, 0, 0, 0);
+		DATA.setLongevityPills(0);
 		DATA.setState(Realm.QI_REFINING, Stage.EARLY, 0);
 		DATA.setHeavensLeave(false);
 		DATA.setFavour(0);
+		DATA.setObsession(null);
 		DATA.setMortal(true);
 		DATA.setMortalState(MortalStage.LOW, 0);
 		DATA.prepareBreakthrough(null, 0);

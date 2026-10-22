@@ -37,7 +37,8 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		net.minecraft.world.item.Item[] pills = {com.example.defyingtheheavens.ModItems.MARROW_CLEANSING_ELIXIR,
 				com.example.defyingtheheavens.ModItems.FOUNDATION_PILL, com.example.defyingtheheavens.ModItems.CORE_PILL,
 				com.example.defyingtheheavens.ModItems.QI_GATHERING_PILL, com.example.defyingtheheavens.ModItems.CULTIVATION_PILL,
-				com.example.defyingtheheavens.ModItems.YANG_PRESERVATION_PILL, com.example.defyingtheheavens.ModItems.YIN_GATHERING_PILL};
+				com.example.defyingtheheavens.ModItems.YANG_PRESERVATION_PILL, com.example.defyingtheheavens.ModItems.YIN_GATHERING_PILL,
+				com.example.defyingtheheavens.ModItems.LONGEVITY_PILL};
 		for (net.minecraft.world.item.Item pill : pills) {
 			net.minecraft.client.renderer.item.ItemProperties.register(pill, DefyingTheHeavens.id("grade"),
 					(stack, level, entity, seed) -> com.example.defyingtheheavens.PillItem.grade(stack).ordinal() / 4.0f);
@@ -81,6 +82,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		ModKeybinds.register();
 		BaublePanel.register();
 		ClientPacketHandlers.register();
+		VitalsHud.register(); // the portrait, health and qi in the top-left corner (vanilla's hearts held to ten: GuiHeartsMixin)
 		QiHud.register();
 		QiSurgeHud.register();
 		TribulationHud.register();

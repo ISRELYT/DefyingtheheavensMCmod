@@ -36,6 +36,10 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(SoulRiver::tick);
 		ServerTickEvents.END_SERVER_TICK.register(NetherworldManager::tick);
 		ServerTickEvents.END_SERVER_TICK.register(GhostSystem::tick);
+		ServerTickEvents.END_SERVER_TICK.register(Lifespan::tick);
+		ServerTickEvents.END_SERVER_TICK.register(LifespanTribulation::tick); // the heavens collecting a spent life
+		ServerTickEvents.END_SERVER_TICK.register(BurnLifespan::tick); // years set alight for strength
+		Wishes.register();
 		ServerTickEvents.END_SERVER_TICK.register(Spells::tick);
 		ServerTickEvents.END_SERVER_TICK.register(GhostGate::keepOfficials);
 		// Whoever starts seeing a player is told whether it is a ghost and how it is drawn (TwoPaths#look: one of the living may wear
@@ -97,6 +101,7 @@ public final class CultivationEvents {
 		// First: every soul goes home, no penalty, while its player is still in the world to be saved there.
 		ServerLifecycleEvents.SERVER_STOPPING.register(SoulProjection::returnAll);
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> TribulationManager.clear());
+		ServerLifecycleEvents.SERVER_STOPPING.register(server -> LifespanTribulation.clear()); // their power is on the records already
 		// Spars end without a result, stakes back to the players still here, before anyone is saved.
 		ServerLifecycleEvents.SERVER_STOPPING.register(SparSystem::clear);
 		// Before players and chunks are saved, so nobody is saved with the pressure's lowered health.
@@ -128,6 +133,7 @@ public final class CultivationEvents {
 			SectMembership.clear();
 			TalkSystem.clearTrials();
 			SpatialTrialHandler.clear();
+			Wishes.clear();
 		});
 
 		// A formation's shell runs through the ground too: those who couldn't break the barrier can't dig under it either.
@@ -203,6 +209,7 @@ public final class CultivationEvents {
 			// out of its body: home, no penalty.
 			Possession.onJoin(player);
 			SoulProjection.onJoin(player);
+			LifespanTribulation.onJoin(player); // a spent life ended by a death they never came back from: born anew now
 			Physiques.onJoin(player); // the body they were born with, the first time
 			CoreDetonation.onJoin(player); // no act's switch left on from a server that stopped mid-way
 			RealmSuppressionHandler.update(player);
@@ -244,6 +251,10 @@ public final class CultivationEvents {
 			QiFlight.forget(handler.getPlayer().getUUID());
 			Tempering.forget(handler.getPlayer().getUUID());
 			HeavenRitual.forget(handler.getPlayer().getUUID());
+			Lifespan.forget(handler.getPlayer().getUUID());
+			LifespanTribulation.forget(handler.getPlayer().getUUID()); // it waits on the record, as strong as it was
+			BurnLifespan.onDisconnect(handler.getPlayer()); // a lifespan burning goes out (not lit again by logging in)
+			Wishes.forget(handler.getPlayer().getUUID());
 		});
 
 		// Rings stay on through the End portal and with keepInventory; on a normal death dropEquipment already emptied them.
@@ -259,6 +270,8 @@ public final class CultivationEvents {
 			// A death's respawn wakes a ghost at the Ghost Gate; the Wheel's wakes the living (GhostSystem).
 			GhostSystem.onRespawn(newPlayer, alive);
 			NetherworldManager.refresh(newPlayer);
+			// Born again after a spent life's death (LifespanTribulation): the record made anew, a mortal of 16.
+			if (!alive) LifespanTribulation.onRespawn(newPlayer);
 		});
 
 		// A blow a heaven spell's ward has brought to nothing is refused outright: no knockback, no flinch (HeavenSpells#wardedOff).
@@ -266,11 +279,13 @@ public final class CultivationEvents {
 		// A spar just ended: a blow between its two in the moment after (the next swing) is pulled, not taken for an attack; and in a
 		// spar or just after, the player's stray blows on the partner's fellows are pulled too (SparSystem#allowDamage).
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> SparSystem.allowDamage(entity, source));
-		// Ghost Fire on a cultivator's hands (Spells): a blow of theirs sets what it strikes burning.
+		// Ghost Fire on a cultivator's hands (Spells): a blow of theirs sets what it strikes burning; a Jade Poison Body's poisons it
+		// (Physiques).
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
 			if (source.getEntity() instanceof ServerPlayer attacker && source.getDirectEntity() == attacker
 					&& source.is(net.minecraft.world.damagesource.DamageTypes.PLAYER_ATTACK) && entity != attacker) {
 				Spells.onMeleeHit(attacker, entity);
+				Physiques.onMeleeHit(attacker, entity);
 			}
 			return true;
 		});
@@ -288,8 +303,8 @@ public final class CultivationEvents {
 			}
 			// A soul in the Inner Realm fights on (its heart demon): only a defeat there sends it back.
 			if (InnerRealm.isInside(sp)) return QiSurges.allowInnerDamage(sp, source, amount);
-			// Any damage breaks concentration.
-			if (amount > 0 && MeditationManager.isMeditating(sp.getUUID())) {
+			// Any damage breaks concentration: but the lifespan tribulation's strikes, meditated through (LifespanTribulation).
+			if (amount > 0 && MeditationManager.isMeditating(sp.getUUID()) && !LifespanTribulation.isStriking(sp)) {
 				MeditationManager.stop(sp, true);
 			}
 			// And any talk (being struck is no time for words); Sworn friends nearby come to help (TalkSystem).
@@ -300,6 +315,14 @@ public final class CultivationEvents {
 		// Before a death goes ahead: a soul dies where its body sat and loses the nascent soul; a possessed body's death is its
 		// possessor's doing.
 		ServerLivingEntityEvents.ALLOW_DEATH.register((entity, source, amount) -> {
+			// Under the lifespan tribulation, first: its own killing strike is held off by nothing, and one of the dead struck down by
+			// anything scatters for good (LifespanTribulation#allowDeath).
+			if (entity instanceof ServerPlayer spent) {
+				Boolean lifespan = LifespanTribulation.allowDeath(spent, source);
+				if (lifespan != null) return lifespan;
+			}
+			// A tribulation's killing strike on a Heaven-Defying Body: one heart left, and the tribulation failed (TribulationManager).
+			if (entity instanceof ServerPlayer defier && !TribulationManager.allowDeath(defier)) return false;
 			// A ghost doesn't die: it disperses and reforms at the Gate (GhostSystem). No death screen, none of death's bookkeeping.
 			// A ghost's soul struck down out of its form is back in it first, its nascent soul lost, as a living soul's is.
 			if (entity instanceof ServerPlayer ghost && GhostSystem.isGhost(ghost)) SoulProjection.onSoulDying(ghost);
@@ -324,10 +347,15 @@ public final class CultivationEvents {
 
 		ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> {
 			if (entity instanceof ServerPlayer sp) {
+				// A death under the lifespan tribulation, of anything, ends the life whole (made anew at the respawn): first, so a
+				// breakthrough's tribulation under way goes with it unremarked.
+				boolean spent = LifespanTribulation.onDeath(sp);
 				TribulationManager.onDeath(sp); // dying mid-tribulation fails the breakthrough
 				SpatialTrialHandler.onDeath(sp); // dying in the Spatial Gap ends the trial
 				SoulRiver.onDeath(sp); // and on the Soul River, the journey
-				GhostSystem.onDeath(sp); // bound for the Netherworld (the gamerule on): the respawn will be the Ghost Gate's
+				// Bound for the Netherworld (the gamerule on): the respawn will be the Ghost Gate's. Not a spent life's (LifespanTribulation):
+				// it is born again at its own spawn point, a living mortal (the user's ask, 2026-10-20).
+				if (!spent && !source.is(ModDamageTypes.OLD_AGE)) GhostSystem.onDeath(sp);
 				SoulProjection.onDeath(sp); // nothing of a soul's journey outlives a death
 				SparSystem.abandon(sp); // killed mid-spar by something else: the spar is forfeit
 				RealmSuppressSystem.refreshNow(); // a fallen suppressor's pressure lifts at once

@@ -36,9 +36,9 @@ import java.util.UUID;
  *   realm, at most {@link #MAX_REALM_PENALTY}) of max health, attack and speed: about 40-60% in all.</li>
  *   <li>Equal and stronger cultivators are untouched.</li>
  * </ul>
- * Cultivators are compared by {@link PlayerCultivation#sustainedRank()}: their true rank as the land they stand in allows
- * it, so a Four Axis cultivator in the lower realms counts as Heavenly Being Grand Perfection, and pressure on a suppressor
- * doesn't weaken their own.
+ * Cultivators are compared by their true rank as the land they stand in allows it (a player's by either path, its body's:
+ * TwoPaths#weighedRank), so a Four Axis cultivator in the lower realms counts as Heavenly Being Grand Perfection, and pressure on a
+ * suppressor doesn't weaken their own.
  * <p>
  * Every target costs the suppressor qi each second, charged by {@link QiManager} after Qi Flight: a mortal
  * {@link #MORTAL_COST_PER_HEALTH} per point of its base max health, a cultivator {@link #CULTIVATOR_COST} times its own qi
@@ -207,7 +207,7 @@ public final class RealmSuppressSystem {
 					UPKEEP.remove(suppressor.getUUID());
 					continue;
 				}
-				int rank = c.sustainedRank();
+				int rank = TwoPaths.weighedRank(c); // either path's (its body's), as it is weighed (rankOf)
 				double cost = 0;
 				List<LivingEntity> inReach = ConsciousnessDomainHandler.entitiesIn(suppressor, ConsciousnessDomainHandler.radius(c),
 						LivingEntity.class, target -> canBePressed(target, suppressor, leaving));
@@ -280,11 +280,11 @@ public final class RealmSuppressSystem {
 		return !(target instanceof OwnableEntity pet) || !suppressor.getUUID().equals(pet.getOwnerUUID());
 	}
 
-	/** A cultivator's rank as Realm Suppress weighs it, or -1 for a mortal. */
+	/** A cultivator's rank as Realm Suppress weighs it, or -1 for a mortal: a player's by either path (TwoPaths#weighedRank, its body's). */
 	private static int rankOf(LivingEntity entity) {
 		if (entity instanceof ServerPlayer player) {
 			PlayerCultivation c = CultivationManager.get(player);
-			return c.isMortal() ? -1 : c.sustainedRank(); // a player who hasn't begun cultivating is weighed as a mortal
+			return c.isMortal() ? -1 : TwoPaths.weighedRank(c); // a player who hasn't begun cultivating is weighed as a mortal
 		}
 		if (entity instanceof CultivatorEntity npc && !npc.isMortal()) return PlayerCultivation.rank(npc.getCultivationRealm(), npc.getCultivationStage());
 		return -1;
@@ -364,6 +364,14 @@ public final class RealmSuppressSystem {
 		if (instance == null) return;
 		instance.removeModifier(id);
 		instance.addTransientModifier(new AttributeModifier(id, name, -penalty, AttributeModifier.Operation.MULTIPLY_TOTAL));
+	}
+
+	/** {@code entity}'s max health as it would stand unpressed (the pressure takes its share of it while it lasts). */
+	public static float unpressedMaxHealth(LivingEntity entity) {
+		AttributeInstance health = entity.getAttribute(Attributes.MAX_HEALTH);
+		AttributeModifier pressure = health == null ? null : health.getModifier(HEALTH_ID);
+		if (pressure == null || pressure.getAmount() <= -1) return entity.getMaxHealth();
+		return (float) (entity.getMaxHealth() / (1 + pressure.getAmount()));
 	}
 
 	/** Max health moved: keep the same fraction of it, so pressure neither heals nor wounds by itself. */

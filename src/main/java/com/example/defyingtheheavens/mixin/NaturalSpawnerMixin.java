@@ -1,6 +1,7 @@
 package com.example.defyingtheheavens.mixin;
 
 import com.example.defyingtheheavens.Formations;
+import com.example.defyingtheheavens.Settlements;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.NaturalSpawner;
@@ -12,12 +13,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 /**
  * No monster is born inside a raised formation, sect barrier or Concealment Barrier alike: the world's own spawning (in the
  * dark, at night, in caves under the grounds) passes over every spot a formation encloses. The mob has already been placed
- * where it would spawn when this is asked (see Formations#shelters).
+ * where it would spawn when this is asked (see Formations#shelters). Nor near a settlement of the Astral Realm's worlds
+ * (Settlements#shelters).
  */
 @Mixin(NaturalSpawner.class)
 public abstract class NaturalSpawnerMixin {
 	@Inject(method = "isValidPositionForMob", at = @At("HEAD"), cancellable = true)
 	private static void dth$notInsideAFormation(ServerLevel level, Mob mob, double distanceSqr, CallbackInfoReturnable<Boolean> cir) {
-		if (Formations.isMonster(mob) && Formations.shelters(level, mob.blockPosition())) cir.setReturnValue(false);
+		if (!Formations.isMonster(mob)) return;
+		if (Formations.shelters(level, mob.blockPosition()) || Settlements.shelters(level, mob.blockPosition())) cir.setReturnValue(false);
 	}
 }

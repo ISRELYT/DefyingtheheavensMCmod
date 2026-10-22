@@ -15,8 +15,9 @@ import java.util.UUID;
  * Stat points (the user's ask, 2026-10-17): every breakthrough of a stage gives {@link #STAGE_POINTS} points to put into the
  * body's six stats, a breakthrough of a realm {@link #REALM_POINTS}; they are counted from the cultivation reached (the higher
  * path's, TwoPaths), so a cultivator who was already far along has theirs at once. Each point is a share more of what its stat
- * governs. Should cultivation fall back below what was spent (a golden core detonated, the Chief Judge's gaze), every point is
- * given back to spend again. The Stats tab's Points page spends them and draws their spread as a hexagon.
+ * governs. A point spent is spent for good; should cultivation fall back below what was spent (a golden core detonated, the
+ * Chief Judge's gaze), only the points the lost stages gave are taken back, the last put in first ({@link #settle}). The Stats
+ * tab's Points page spends them and draws their spread as a hexagon.
  */
 public final class StatPoints {
 	public static final int STAGE_POINTS = 2, REALM_POINTS = 5;
@@ -76,10 +77,11 @@ public final class StatPoints {
 
 	/**
 	 * Points {@code c} has earned (from the higher path's true rank, alive or dead: not the body's, which goes by its path's share,
-	 * TwoPaths#pathShare; a mortal on no path, none).
+	 * TwoPaths#pathShare; a mortal on no path, none); a Hundred Refinements Body one more for every breakthrough (Physique).
 	 */
 	public static int earned(PlayerCultivation c) {
-		return earned(TwoPaths.higherRank(c, false));
+		int rank = TwoPaths.higherRank(c, false);
+		return earned(rank) + (c.hasPhysique(Physique.HUNDRED_REFINEMENTS_BODY) ? Math.max(0, rank) : 0);
 	}
 
 	/** Points {@code c} has left to spend. */
@@ -98,13 +100,16 @@ public final class StatPoints {
 	}
 
 	/**
-	 * Cultivation fallen below what was spent: every point is given back to spend again, and they are told. Returns whether it was.
-	 * (Called whenever the body is refreshed.)
+	 * Cultivation fallen below what was spent: the points it no longer earns are taken back, the last put in first, and the rest
+	 * stay where they were put (the user's rule, 2026-10-19: points are locked in; a fall loses only what the stages lost gave).
+	 * They are told how many. Climbing back earns them again to spend. Returns whether any were taken. (Called whenever the body is
+	 * refreshed.)
 	 */
 	public static boolean settle(ServerPlayer player, PlayerCultivation c) {
-		if (c.statPointsSpent() <= earned(c)) return false;
-		c.clearStatPoints();
-		player.displayClientMessage(Component.translatable(ModLang.MSG_STAT_POINTS_RETURNED).withStyle(ChatFormatting.GOLD), false);
+		int over = c.statPointsSpent() - earned(c);
+		if (over <= 0) return false;
+		for (int i = 0; i < over; i++) c.takeBackLastStatPoint();
+		player.displayClientMessage(Component.translatable(ModLang.MSG_STAT_POINTS_RETURNED, over).withStyle(ChatFormatting.GOLD), false);
 		return true;
 	}
 
@@ -122,9 +127,12 @@ public final class StatPoints {
 		return 1 + bonus(c, Stat.SPIRIT);
 	}
 
-	/** What every path's cultivation gathered meditating is multiplied by: Insight (its methods' layers settle the quicker with it). */
+	/**
+	 * What every path's cultivation gathered meditating is multiplied by: Insight (its methods' layers settle the quicker with it),
+	 * and an obsession with Enlightenment (Obsession#cultivationFactor), the cultivator's as the stats are.
+	 */
 	public static double cultivationFactor(PlayerCultivation c) {
-		return 1 + bonus(c, Stat.INSIGHT);
+		return (1 + bonus(c, Stat.INSIGHT)) * Obsession.cultivationFactor(c);
 	}
 
 	/** What every path's qi gathered (qi, ghostly qi) is multiplied by: half Insight's share. */

@@ -1,0 +1,7 @@
+{
+  "parent": "defying-the-heavens:block/method_stele_part",
+  "textures": {
+    "front": "defying-the-heavens:block/method_stele_ten_thousand_ghosts_union",
+    "side": "defying-the-heavens:block/method_stele_side"
+  }
+}

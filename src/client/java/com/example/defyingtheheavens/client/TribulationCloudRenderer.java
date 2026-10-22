@@ -47,10 +47,13 @@ public class TribulationCloudRenderer extends EntityRenderer<TribulationCloud> {
 		int tier = cloud.stormTier();
 		float flash = cloud.flashStrength();
 		boolean ghost = cloud.isGhost(); // the Netherworld's tribulation's storm: dark teal, whatever the sky
-		Vec3 color = ghost ? GHOST_STORM.scale(1.0 - tier * 0.08)
-				: ((ClientLevel) cloud.level()).getCloudColor(partialTick).scale(0.78 - tier * 0.09);
+		// A lifespan tribulation's storm grows as its power does (TribulationCloud#growth): thicker, and darker, as well as wider.
+		float grown = cloud.growth() - 1.0f;
+		double darker = Math.max(0.35, 1.0 - grown * 0.18);
+		Vec3 color = (ghost ? GHOST_STORM.scale(1.0 - tier * 0.08)
+				: ((ClientLevel) cloud.level()).getCloudColor(partialTick).scale(0.78 - tier * 0.09)).scale(darker);
 		poses.pushPose();
-		poses.scale(cloud.stormScale() * 2.0f, 1.5f + tier * 0.18f, cloud.stormScale() * 2.0f);
+		poses.scale(cloud.stormScale() * 2.0f, (1.5f + tier * 0.18f) * (1.0f + grown * 0.5f), cloud.stormScale() * 2.0f);
 		poses.mulPose(Axis.YP.rotationDegrees(Mth.sin(age * 0.0015f) * 8.0f));
 		VertexConsumer vertices = buffers.getBuffer(CLOUD_LAYER);
 

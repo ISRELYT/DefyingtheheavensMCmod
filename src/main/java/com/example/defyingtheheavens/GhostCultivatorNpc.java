@@ -280,7 +280,7 @@ public class GhostCultivatorNpc extends CultivatorNpc implements Ghostly {
 	 */
 	public GhostMethod method() {
 		if (getRank() < PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.EARLY)) return null;
-		GhostMethod own = GhostMethod.foundationOf(Realm.byIndex(Math.min(Realm.FOUR_AXIS.ordinal(), getRank() / Stage.values().length)));
+		GhostMethod own = GhostMethod.foundationOf(Realm.byIndex(Math.min(Realm.values().length - 1, getRank() / Stage.values().length)));
 		int hash = getUUID().hashCode() * 31 + 7;
 		if (own != null && (getRole() == Role.GHOST_KING || Math.floorMod(hash, 10) < OWN_FOUNDATION_IN_TEN)) return own;
 		int total = 0;

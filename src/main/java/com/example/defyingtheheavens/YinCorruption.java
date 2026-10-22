@@ -32,6 +32,8 @@ public final class YinCorruption {
 	public static final int STAY_NASCENT_SOUL = 5 * 60;
 	public static final int STAY_HEAVENLY_BEING = 10 * 60;
 	public static final int STAY_FOUR_AXIS = 20 * 60;
+	/** Each realm after Four Axis bears it twice as long as the one before (Dao Integration 40 minutes, True Immortal 640). */
+	public static final int STAY_REALM_STEP = 2;
 	public static final double BREATHING_STAY_PER_LAYER = 0.10;
 	/** Foundation layers past this many lengthen the stay no further: two foundations' worth, +180%. */
 	public static final int STAY_LAYERS_MAX = 18;
@@ -57,7 +59,7 @@ public final class YinCorruption {
 			base = switch (c.getRealm()) {
 				case NASCENT_SOUL -> STAY_NASCENT_SOUL;
 				case HEAVENLY_BEING -> STAY_HEAVENLY_BEING;
-				default -> STAY_FOUR_AXIS;
+				default -> STAY_FOUR_AXIS * Math.pow(STAY_REALM_STEP, c.getRealm().ordinal() - Realm.FOUR_AXIS.ordinal());
 			};
 		}
 		if (!c.isMortal()) power = c.getStage().getPowerMultiplier();
@@ -66,7 +68,7 @@ public final class YinCorruption {
 
 	/** Corruption gained a second in the Netherworld (1 is full), with the Veil on or off. */
 	public static double perSecond(PlayerCultivation c, int breathingLayers, boolean veil) {
-		if (c.physique() == Physique.YIN_SOUL_BODY) return 0; // never takes hold
+		if (c.hasPhysique(Physique.YIN_SOUL_BODY)) return 0; // never takes hold
 		return 1.0 / fullStaySeconds(c, breathingLayers) * (veil ? VEIL_FACTOR : 1.0);
 	}
 
@@ -76,7 +78,7 @@ public final class YinCorruption {
 	 */
 	public static boolean affects(ServerPlayer player) {
 		return player.isAlive() && !player.isCreative() && !player.isSpectator() && !GhostSystem.isGhost(player)
-				&& CultivationManager.get(player).physique() != Physique.YIN_SOUL_BODY;
+				&& !CultivationManager.get(player).hasPhysique(Physique.YIN_SOUL_BODY);
 	}
 
 	/**

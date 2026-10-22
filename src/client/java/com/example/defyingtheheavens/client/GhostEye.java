@@ -41,18 +41,25 @@ public final class GhostEye {
 	private static final List<BlockPos> STELES = new ArrayList<>();
 	private static int scanIn;
 
+	/** The Ghost Eye open, or a Spirit-Eye Body's own eyes (Physique: as if it were, from its first day, for nothing). */
 	public static boolean isActive() {
 		Minecraft mc = Minecraft.getInstance();
-		return mc.player != null && !mc.player.isSpectator() && ClientCultivationData.get().isAbilityActive(Ability.GHOST_EYE);
+		return mc.player != null && !mc.player.isSpectator() && (ClientCultivationData.get().isAbilityActive(Ability.GHOST_EYE) || spiritEye());
+	}
+
+	/** Born with a Spirit-Eye Body (Physique). */
+	private static boolean spiritEye() {
+		return ClientCultivationData.get().hasPhysique(com.example.defyingtheheavens.Physique.SPIRIT_EYE_BODY);
 	}
 
 	/**
 	 * How clearly the Ghost Eye shows projected souls outside the Netherworld: a haze at its third layer (as a Nascent Soul
-	 * Early's Qi Sense), whole at the ninth; 0 when it's off, or in the Netherworld.
+	 * Early's Qi Sense), whole at the ninth, and whole to a Spirit-Eye Body; 0 when it's off, or in the Netherworld.
 	 */
 	public static float soulClarity() {
 		Minecraft mc = Minecraft.getInstance();
 		if (!isActive() || mc.level == null || ModDimensions.isNetherworld(mc.level.dimension())) return 0;
+		if (spiritEye()) return 1;
 		int layer = ClientCultivationData.get().netherworld().layer(GhostMethod.NETHERWORLD_BREATHING);
 		return Mth.clamp(0.25f + 0.75f * (layer - 3) / 6.0f, 0.25f, 1.0f);
 	}

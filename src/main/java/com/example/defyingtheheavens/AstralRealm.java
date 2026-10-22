@@ -36,12 +36,14 @@ import java.util.UUID;
 /**
  * The Astral Realm (the user's, 2026-10-17): the sky beyond the sky, where the Overworld is one planet among thousands.
  * <ul>
- *   <li><b>Going up.</b> A Nascent Soul or above, flying up past {@link #EXIT_Y} in the Overworld, rises out of its sky into space
- *   ({@link ModDimensions#ASTRAL_VOID}), over the Overworld's lit side. Below Nascent Soul the sky thins to nothing and they are
- *   told so. Where they rose from is remembered: flying back into the Overworld brings them down there.</li>
+ *   <li><b>Going up.</b> A Nascent Soul or above, flying up past {@link #EXIT_Y} in the Overworld or the Upper Realm, rises out of
+ *   its sky into space ({@link ModDimensions#ASTRAL_VOID}), over the Overworld's lit side. Below Nascent Soul the sky thins to nothing
+ *   and they are told so. Where they rose from is remembered: flying back into the Overworld's sky brings them down there, in the
+ *   realm they left (over the nearest island in the Upper Realm). No Realm Suppression holds anyone here (not a lower realm).</li>
  *   <li><b>Space.</b> Stars and their planets (AstralPlanets), drawn by the client; nothing there is a block. One always flies there,
  *   at a speed of one's realm ({@link #spaceSpeed}), on no qi; qi gathers at a quarter of the lower realms' ({@link #SPACE_QI}). A
- *   star burns whoever comes too near. Vestiges of the Void hunt there (VoidVestige).</li>
+ *   star burns whoever comes too near. Vestiges of the Void hunt there (VoidVestige). Every block flown there costs years, the same
+ *   for everyone ({@link #YEARS_PER_BLOCK}: the user's ask, 2026-10-21; {@link #travel}).</li>
  *   <li><b>The planets.</b> Flying into a planet's atmosphere sets one down in its sky (ModDimensions#ASTRAL_SURFACES), over the very
  *   land one flew down toward (PlanetTerrain#landUnder), the first landing harmless; the land there is made ready ahead, and if it
  *   isn't yet, one is held a moment at the edge. Each planet has its own qi (AstralPlanets.Planet#qi). Flying back up past
@@ -70,6 +72,15 @@ public final class AstralRealm {
 	public static final double STAR_HEAT = 1.6;
 	/** After arriving in a world, this long (ticks) before rising out of it again counts. */
 	private static final int SETTLE_TICKS = 100;
+	/**
+	 * Flying through space costs years (the user's ask, 2026-10-21): this many for every block flown there, the same at every realm,
+	 * so the way between the stars is a risk to all below Four Axis (to the next star, some 16,000 blocks, about 160 years); a Starborn
+	 * Body pays the less by its speed there ({@link #yearsPerBlock}). Only flight counts (an arrival, a hold at a planet's edge, a
+	 * teleport are none); on a planet's land one ages as anywhere (Lifespan).
+	 */
+	public static final double YEARS_PER_BLOCK = 0.01;
+	/** A step longer than this in a tick is no flight but a teleport, and costs nothing. */
+	private static final double MAX_STEP = 64;
 
 	/** Where each player's height was last tick, to tell rising from falling. */
 	private static final Map<UUID, Double> LAST_Y = new HashMap<>();
@@ -81,6 +92,12 @@ public final class AstralRealm {
 	private static final Map<UUID, Hold> HOLDS = new HashMap<>();
 	/** The land asked for ahead for each player's approach, so it isn't asked for every tick. */
 	private static final Map<UUID, Long> PREPARED = new HashMap<>();
+	/** Space travel's years (YEARS_PER_BLOCK): each player's place last tick, what this trip out into space has cost, what is still to pay. */
+	private static final Map<UUID, Vec3> LAST_POS = new HashMap<>();
+	private static final Map<UUID, Double> TRIP = new HashMap<>();
+	private static final Map<UUID, Double> OWED = new HashMap<>();
+	/** Those told they no longer have the years to fly straight home (told again only once they have, and then haven't). */
+	private static final java.util.Set<UUID> NO_WAY_HOME = new java.util.HashSet<>();
 
 	private record Hold(int planet, Vec3 at, BlockPos column, int since) {}
 
@@ -127,15 +144,44 @@ public final class AstralRealm {
 		};
 	}
 
+	/**
+	 * {@link #spaceSpeed} of the higher path, as the realm lets them wield it (either path: TwoPaths#higherRank); a Starborn Body's
+	 * {@link #starborn} times that.
+	 */
 	public static float spaceSpeed(PlayerCultivation c) {
-		return c.isMortal() ? 0.08f : spaceSpeed(c.getEffectiveRealm(), c.getEffectiveStage());
+		int rank = TwoPaths.higherRank(c, true);
+		float speed = c.isMortal() || rank < 0 ? 0.08f : spaceSpeed(Realm.byIndex(rank / Stage.values().length), Stage.byIndex(rank % Stage.values().length));
+		return c.hasPhysique(Physique.STARBORN_BODY) ? starborn(speed) : speed;
 	}
 
-	/** Strong enough to bear the void: a Nascent Soul or above (as the realm lets them wield it); creative and spectators always. */
+	/** A Starborn Body (Physique) flies through space this many times as fast. */
+	public static final float STARBORN_SPEED = 1.5f;
+
+	/** {@code speed} as a Starborn Body flies it. */
+	public static float starborn(float speed) {
+		return speed * STARBORN_SPEED;
+	}
+
+	/** The realm from which the void bears a Starborn Body (Physique), a realm before anyone else. */
+	public static final Realm STARBORN_REALM = Realm.CORE_FORMATION;
+
+	/** Space's qi as {@code c} draws it: {@link #SPACE_QI}, whole to a Starborn Body (Physique). */
+	public static double spaceQi(PlayerCultivation c) {
+		return c.hasPhysique(Physique.STARBORN_BODY) ? 1.0 : SPACE_QI;
+	}
+
+	/**
+	 * Strong enough to bear the void: a Nascent Soul or above on either path (as the realm lets them wield it), a Starborn Body from
+	 * Core Formation; creative and spectators always. Of the dead, only a Ghost King, whose hands are its own (Incorporeal#isRuledGhost):
+	 * the dead of Four Axis on the ghost path seek their axes among the settlements too (the user's ask, 2026-10-19; FourAxis,
+	 * Settlements).
+	 */
 	public static boolean canBearTheVoid(ServerPlayer p) {
 		if (p.isCreative() || p.isSpectator()) return true;
 		PlayerCultivation c = CultivationManager.get(p);
-		return !c.isMortal() && c.getEffectiveRealm().ordinal() >= MIN_REALM.ordinal() && !SoulProjection.isSoul(p) && !Incorporeal.isGhost(p);
+		Realm least = c.hasPhysique(Physique.STARBORN_BODY) ? STARBORN_REALM : MIN_REALM;
+		return !c.isMortal() && TwoPaths.higherRank(c, true) >= PlayerCultivation.rank(least, Stage.EARLY) && !SoulProjection.isSoul(p)
+				&& !Incorporeal.isRuledGhost(p);
 	}
 
 	public static void tick(MinecraftServer server) {
@@ -153,7 +199,10 @@ public final class AstralRealm {
 			boolean settled = now - ARRIVED.getOrDefault(id, -SETTLE_TICKS) >= SETTLE_TICKS;
 			ResourceKey<Level> dimension = p.level().dimension();
 			try {
-				if (dimension == Level.OVERWORLD) {
+				// Out of space (a death, a command, anything but the ways out below): the trip's years paid, its HUD line taken away.
+				if (dimension != ModDimensions.ASTRAL_VOID && TRIP.containsKey(id)) leftSpace(p);
+				// Out of the Overworld's sky, or the Upper Realm's (its heaven, over the same world: the user's ask, 2026-10-19).
+				if (dimension == Level.OVERWORLD || dimension == ModDimensions.UPPER_REALM) {
 					if (p.getY() > EXIT_Y && rising && settled) riseFromOverworld(p, space, planets);
 				} else if (dimension == ModDimensions.ASTRAL_VOID) {
 					tickSpace(p, space, surfaces, planets, now);
@@ -167,6 +216,7 @@ public final class AstralRealm {
 			}
 		}
 		VestigeSpawner.tick(space, planets);
+		Settlements.tick(server, surfaces, planets);
 	}
 
 	// --- The Overworld's sky ---
@@ -176,7 +226,7 @@ public final class AstralRealm {
 			tell(p, ModLang.MSG_ASTRAL_TOO_WEAK, 100);
 			return;
 		}
-		AstralData.get(p.server).setDeparture(p.getUUID(), p.getX(), p.getZ());
+		AstralData.get(p.server).setDeparture(p.getUUID(), p.getX(), p.getZ(), ModDimensions.isUpperRealm(p.level().dimension()));
 		AstralPlanets.Planet overworld = planets.overworld();
 		Vec3 way = overworldWay(planets, p.getX(), p.getZ());
 		Vec3 at = overworld.pos().add(way.scale(overworld.atmosphere() + LEAVE_MARGIN));
@@ -203,7 +253,7 @@ public final class AstralRealm {
 	private static void tickSpace(ServerPlayer p, ServerLevel space, ServerLevel surfaces, AstralPlanets planets, int now) {
 		UUID id = p.getUUID();
 		PlayerCultivation c = CultivationManager.get(p);
-		if (c.setPlaceQi(SPACE_QI)) CultivationManager.sync(p);
+		if (c.setPlaceQi(spaceQi(c))) CultivationManager.sync(p);
 
 		// Space has a floor and a ceiling, far above and below anything in it: one is kept between them.
 		if (p.getY() < AstralPlanets.SPACE_FLOOR || p.getY() > AstralPlanets.SPACE_CEILING) {
@@ -223,6 +273,7 @@ public final class AstralRealm {
 			return;
 		}
 
+		travel(p, planets);
 		Vec3 at = p.position();
 		AstralPlanets.Planet into = planets.atmosphereAt(at);
 		if (into != null) {
@@ -255,8 +306,8 @@ public final class AstralRealm {
 			}
 		}
 
-		// A star's heat.
-		if (now % 20 == 0 && !p.isCreative() && !p.isSpectator()) {
+		// A star's heat (never a Starborn Body's harm: Physique).
+		if (now % 20 == 0 && !p.isCreative() && !p.isSpectator() && !c.hasPhysique(Physique.STARBORN_BODY)) {
 			AstralPlanets.Star star = planets.starNear(at, STAR_HEAT);
 			if (star != null) {
 				double d = at.distanceTo(star.pos()) / star.radius();
@@ -266,6 +317,73 @@ public final class AstralRealm {
 				tell(p, ModLang.MSG_ASTRAL_STAR_HEAT, 60, star.name());
 			}
 		}
+	}
+
+	/**
+	 * A tick in space: what {@code p} flew since the last costs its years ({@link #YEARS_PER_BLOCK}), paid every half second (Lifespan#age:
+	 * to the span's end and no further, when the heavens come for them out here); the HUD told what the trip has cost, the years left
+	 * and what flying straight home would cost, and they are warned once those left can't pay for it. Creative and spectating players
+	 * pay nothing, nor a True Immortal (Lifespan#endless: its years have no end).
+	 */
+	private static void travel(ServerPlayer p, AstralPlanets planets) {
+		UUID id = p.getUUID();
+		Vec3 at = p.position();
+		Vec3 last = LAST_POS.put(id, at);
+		if (p.isCreative() || p.isSpectator() || Lifespan.endless(CultivationManager.own(p))) return;
+		double perBlock = yearsPerBlock(CultivationManager.get(p));
+		flown(id, last == null ? 0 : at.distanceTo(last), perBlock);
+		if (p.tickCount % 10 != 0) return;
+		pay(p);
+		double left = Lifespan.left(CultivationManager.own(p)), home = homeYears(planets, at, perBlock);
+		ModPackets.sendSpaceYears(p, true, TRIP.get(id), left, home);
+		if (left >= home) {
+			NO_WAY_HOME.remove(id);
+		} else if (NO_WAY_HOME.add(id)) {
+			p.sendSystemMessage(Component.translatable(ModLang.MSG_SPACE_NO_WAY_HOME, (long) Math.ceil(home), (long) Math.max(0, Math.floor(left)))
+					.withStyle(ChatFormatting.RED));
+		}
+	}
+
+	/**
+	 * What a block flown through space costs one of {@code c}: {@link #YEARS_PER_BLOCK}, the less by its speed for a Starborn Body (the
+	 * user's ask, 2026-10-21: it flies there {@link #STARBORN_SPEED} times as fast, so it pays as much less).
+	 */
+	public static double yearsPerBlock(PlayerCultivation c) {
+		return c.hasPhysique(Physique.STARBORN_BODY) ? YEARS_PER_BLOCK / STARBORN_SPEED : YEARS_PER_BLOCK;
+	}
+
+	/**
+	 * {@code blocks} flown through space by {@code id} this tick, owed in years on its trip at {@code perBlock} ({@link #yearsPerBlock});
+	 * a step longer than {@link #MAX_STEP} is a teleport, and owes nothing. Package-private for the game tests, as {@link #pay}.
+	 */
+	static void flown(UUID id, double blocks, double perBlock) {
+		TRIP.putIfAbsent(id, 0.0);
+		if (blocks <= 0 || blocks > MAX_STEP) return;
+		OWED.merge(id, blocks * perBlock, Double::sum);
+		TRIP.merge(id, blocks * perBlock, Double::sum);
+	}
+
+	/** What {@code p}'s flight owes, paid (Lifespan#age: to the span's end and no further). */
+	static void pay(ServerPlayer p) {
+		Double owed = OWED.remove(p.getUUID());
+		if (owed != null && owed > 0) Lifespan.age(p, owed);
+	}
+
+	/** The years flying straight from {@code at} into the Overworld's air (home: {@link #comeHome}) would cost at {@code perBlock}. */
+	static double homeYears(AstralPlanets planets, Vec3 at, double perBlock) {
+		AstralPlanets.Planet home = planets.overworld();
+		return Math.max(0, at.distanceTo(home.pos()) - home.atmosphere()) * perBlock;
+	}
+
+	/** Out of space: what the trip still owes paid, its HUD line taken away, and the next trip begun afresh. */
+	private static void leftSpace(ServerPlayer p) {
+		UUID id = p.getUUID();
+		if (!p.isCreative() && !p.isSpectator()) pay(p);
+		OWED.remove(id);
+		LAST_POS.remove(id);
+		TRIP.remove(id);
+		NO_WAY_HOME.remove(id);
+		ModPackets.sendSpaceYears(p, false, 0, 0, 0);
 	}
 
 	/**
@@ -328,6 +446,15 @@ public final class AstralRealm {
 			z = spawn.getZ() + 0.5;
 		}
 		CultivationManager.get(p).setFallProtected(true);
+		// Risen out of the Upper Realm: back down into it, over the island nearest where they left (SpatialArrivals).
+		ServerLevel upper = p.server.getLevel(ModDimensions.UPPER_REALM);
+		if (from != null && from.length > 2 && from[2] > 0 && upper != null) {
+			BlockPos column = SpatialArrivals.target(upper, (int) Math.floor(x), (int) Math.floor(z));
+			SpatialArrivals.prepare(upper, column);
+			move(p, upper, new Vec3(column.getX() + 0.5, ARRIVAL_MAX_Y, column.getZ() + 0.5), null);
+			p.sendSystemMessage(Component.translatable(ModLang.MSG_ASTRAL_HOME).withStyle(ChatFormatting.AQUA));
+			return;
+		}
 		move(p, overworld, new Vec3(x, ARRIVAL_MAX_Y, z), null);
 		p.sendSystemMessage(Component.translatable(ModLang.MSG_ASTRAL_HOME).withStyle(ChatFormatting.AQUA));
 	}
@@ -337,7 +464,7 @@ public final class AstralRealm {
 	private static void tickSurface(ServerPlayer p, ServerLevel space, AstralPlanets planets, boolean risingOut) {
 		AstralPlanets.Planet planet = planets.planetAt(p.getX(), p.getZ());
 		PlayerCultivation c = CultivationManager.get(p);
-		if (c.setPlaceQi(planet == null ? SPACE_QI : planet.qi())) CultivationManager.sync(p);
+		if (c.setPlaceQi(planet == null ? spaceQi(c) : planet.qi())) CultivationManager.sync(p);
 		// Up past the sky, or fallen off the land's edge into the void below it: out into space over the planet.
 		boolean fellOff = p.getY() < PlanetTerrain.MIN_Y - 24;
 		if (!(p.getY() > EXIT_Y && risingOut) && !fellOff) return;
@@ -372,6 +499,9 @@ public final class AstralRealm {
 		boolean flying = p.getAbilities().flying;
 		HOLDS.remove(p.getUUID());
 		PREPARED.remove(p.getUUID());
+		// Space travel's years: out of space, the trip paid and its line taken away; into it, a new trip (the arrival is no flight).
+		if (ModDimensions.isSpace(p.level().dimension()) && to.dimension() != p.level().dimension()) leftSpace(p);
+		LAST_POS.remove(p.getUUID());
 		p.teleportTo(to, at.x, at.y, at.z, yaw, pitch);
 		p.fallDistance = 0;
 		ARRIVED.put(p.getUUID(), p.server.getTickCount());
@@ -398,7 +528,12 @@ public final class AstralRealm {
 		TOLD.remove(id);
 		HOLDS.remove(id);
 		PREPARED.remove(id);
+		LAST_POS.remove(id);
+		TRIP.remove(id);
+		OWED.remove(id);
+		NO_WAY_HOME.remove(id);
 		VestigeSpawner.forget(id);
+		Settlements.forget(id);
 	}
 
 	public static void clear() {
@@ -407,10 +542,18 @@ public final class AstralRealm {
 		TOLD.clear();
 		HOLDS.clear();
 		PREPARED.clear();
+		LAST_POS.clear();
+		TRIP.clear();
+		OWED.clear();
+		NO_WAY_HOME.clear();
 		VestigeSpawner.clear();
+		Settlements.clear();
 	}
 
-	/** Where each player last rose out of the Overworld (its x and z), so flying back into it brings them down there. Saved. */
+	/**
+	 * Where each player last rose out of the Overworld or the Upper Realm (its x and z, and 1 if the Upper Realm), so flying back into
+	 * the Overworld's sky brings them down there, in the realm they left. Saved.
+	 */
 	public static final class AstralData extends SavedData {
 		private static final String NAME = DefyingTheHeavens.MOD_ID + "_astral";
 		private final Map<UUID, double[]> departures = new HashMap<>();
@@ -419,10 +562,11 @@ public final class AstralRealm {
 			return server.overworld().getDataStorage().computeIfAbsent(AstralData::load, AstralData::new, NAME);
 		}
 
+		/** {x, z, 1 if they rose out of the Upper Realm else 0}, or null. */
 		public double[] departure(UUID player) { return departures.get(player); }
 
-		public void setDeparture(UUID player, double x, double z) {
-			departures.put(player, new double[] {x, z});
+		public void setDeparture(UUID player, double x, double z, boolean upper) {
+			departures.put(player, new double[] {x, z, upper ? 1 : 0});
 			setDirty();
 		}
 
@@ -434,6 +578,7 @@ public final class AstralRealm {
 				entry.putUUID("Player", player);
 				entry.putDouble("X", at[0]);
 				entry.putDouble("Z", at[1]);
+				if (at.length > 2 && at[2] > 0) entry.putBoolean("Upper", true);
 				list.add(entry);
 			});
 			tag.put("Departures", list);
@@ -444,7 +589,8 @@ public final class AstralRealm {
 			AstralData data = new AstralData();
 			for (Tag t : tag.getList("Departures", Tag.TAG_COMPOUND)) {
 				CompoundTag entry = (CompoundTag) t;
-				if (entry.hasUUID("Player")) data.departures.put(entry.getUUID("Player"), new double[] {entry.getDouble("X"), entry.getDouble("Z")});
+				if (entry.hasUUID("Player")) data.departures.put(entry.getUUID("Player"),
+						new double[] {entry.getDouble("X"), entry.getDouble("Z"), entry.getBoolean("Upper") ? 1 : 0});
 			}
 			return data;
 		}

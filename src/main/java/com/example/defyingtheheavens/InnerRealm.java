@@ -170,12 +170,18 @@ public final class InnerRealm {
 	}
 
 	public static boolean canEnter(ServerPlayer player) {
+		return mayTurnInward(player) && player.server.getLevel(ModDimensions.INNER_REALM) != null;
+	}
+
+	/** Whether {@code player} may turn inward now, by the rules (the Inner Realm itself aside: a world without it has no way in). */
+	public static boolean mayTurnInward(ServerPlayer player) {
 		PlayerCultivation c = CultivationManager.get(player);
-		// Not from a passage, nor from the Netherworld, where the heavens don't see (the soul's own realm is heaven-made).
+		// Not from a passage, nor (for the living) from the Netherworld, where the heavens don't see (the soul's own realm is
+		// heaven-made). The dead turn inward too (the user's call, 2026-10-19), their form left sitting, and from their own realm.
+		boolean dead = Incorporeal.isGhost(player);
 		return c.isAbilityActive(Ability.INNER_REALM) && !ModDimensions.isInnerRealm(player.level().dimension()) && !SoulProjection.isActive(player.getUUID())
-				&& !ModDimensions.isPassage(player.level().dimension()) && !ModDimensions.isUnseenByHeaven(player.level().dimension())
-				&& !TribulationManager.isActive(player.getUUID()) && !Incorporeal.isGhost(player) // the dead have no body to leave
-				&& player.isAlive() && player.server.getLevel(ModDimensions.INNER_REALM) != null;
+				&& !ModDimensions.isPassage(player.level().dimension()) && (dead || !ModDimensions.isUnseenByHeaven(player.level().dimension()))
+				&& !TribulationManager.isActive(player.getUUID()) && player.isAlive();
 	}
 
 	/** Leaves the body sitting here and takes the soul to the island. Returns false if it couldn't. */
@@ -187,6 +193,7 @@ public final class InnerRealm {
 
 		InnerBodyEntity body = new InnerBodyEntity(ModEntities.INNER_BODY, here);
 		body.setOwner(player);
+		body.setLook(TwoPaths.look(c)); // one of the dead (or in a Ghost King's form) sits on in that light
 		body.moveTo(player.getX(), player.getY(), player.getZ(), player.getYRot(), 0);
 		body.setYBodyRot(player.getYRot());
 		body.setYHeadRot(player.getYRot());

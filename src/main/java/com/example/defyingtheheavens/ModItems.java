@@ -74,6 +74,11 @@ public final class ModItems {
 	public static final Item YANG_PRESERVATION_PILL = register("yang_preservation_pill",
 			new PillItem(PillItem.Kind.YANG_PRESERVATION, new Item.Properties()));
 	public static final Item YIN_GATHERING_PILL = register("yin_gathering_pill", new PillItem(PillItem.Kind.YIN_GATHERING, new Item.Properties()));
+	/** Years of lifespan, the more the higher its grade (PillItem). */
+	public static final Item LONGEVITY_PILL = register("longevity_pill", new PillItem(PillItem.Kind.LONGEVITY, new Item.Properties()));
+	/** No brew: found in the Upper Realm's sect treasuries; it begins a life anew (RebirthPillItem). */
+	public static final Item REBIRTH_PILL = register("rebirth_pill",
+			new RebirthPillItem(new Item.Properties().stacksTo(16).rarity(net.minecraft.world.item.Rarity.EPIC)));
 
 	/** Paints seals of qi ink, the lines that carry a Qi Vein's qi to a Formation Core (see InscriptionBrushItem). */
 	public static final Item INSCRIPTION_BRUSH = register("inscription_brush", new InscriptionBrushItem(new Item.Properties().durability(256)));
@@ -150,9 +155,10 @@ public final class ModItems {
 	public static void register() {
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.FOOD_AND_DRINKS).register(entries -> {
 			entries.accept(CultivationFruitItem.create(1));
-			for (Item pill : new Item[] {MARROW_CLEANSING_ELIXIR, QI_GATHERING_PILL, CULTIVATION_PILL, FOUNDATION_PILL, CORE_PILL}) {
+			for (Item pill : new Item[] {MARROW_CLEANSING_ELIXIR, QI_GATHERING_PILL, CULTIVATION_PILL, FOUNDATION_PILL, CORE_PILL, LONGEVITY_PILL}) {
 				entries.accept(PillItem.create(pill, PillGrade.LOW, 1));
 			}
+			entries.accept(REBIRTH_PILL);
 		});
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.NATURAL_BLOCKS).register(entries -> {
 			entries.accept(PEACH_PIT);

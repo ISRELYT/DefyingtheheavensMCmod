@@ -83,11 +83,11 @@ public final class ModDimensions {
 	public static final float NETHERWORLD_AMBIENT_LIGHT = 0.15f;
 
 	/**
-	 * Overworld, Nether and End, and the Astral Realm the Overworld hangs in: the lower realms, where Realm Suppression applies
-	 * (space and the planets are the mortal world's sky, its qi never near the Upper Realm's).
+	 * Overworld, Nether and End: the lower realms, where Realm Suppression applies. Not the Astral Realm since 2026-10-19 (the user's
+	 * call): Four Axis cultivators roam it unsuppressed, after their axes of virtue (FourAxis); its qi is still its places' own.
 	 */
 	public static boolean isLowerRealm(ResourceKey<Level> dimension) {
-		return dimension == Level.OVERWORLD || dimension == Level.NETHER || dimension == Level.END || isAstral(dimension);
+		return dimension == Level.OVERWORLD || dimension == Level.NETHER || dimension == Level.END;
 	}
 
 	/** Space or a planet's land: the Astral Realm (see {@link AstralRealm}). */

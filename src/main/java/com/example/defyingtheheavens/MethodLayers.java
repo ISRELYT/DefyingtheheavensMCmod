@@ -3,7 +3,7 @@ package com.example.defyingtheheavens;
 /**
  * How a realm-carrying method's layers are laid out, for the ghost path's foundations (GhostMethod) and the heaven methods
  * (HeavenMethod) alike. A method of a realm carries cultivation from Qi Refining up to that realm: nine layers for each realm it
- * spans ({@link #PER_REALM}), so the Netherworld Breathing Art (Qi Refining) has 9, a Four Axis method 54. Within each realm's
+ * spans ({@link #PER_REALM}), so the Netherworld Breathing Art (Qi Refining) has 9, a Four Axis method 54, a True Immortal one 99. Within each realm's
  * nine, layer 1 stands for its Early stage, 3 for Mid, 6 for Late, 9 for Grand Perfection ({@link #floor}); a layer costs its
  * place's minutes ({@link #MINUTES}) times its realm's factor ({@link #REALM_FACTOR}) in seconds of baseline meditation, so a
  * rarer method's lower realms cost what a commoner one's do, and it simply goes further.
@@ -13,8 +13,8 @@ public final class MethodLayers {
 	public static final int PER_REALM = 9;
 	/** Minutes of baseline meditation for each of a realm's nine layers, before the realm's factor. */
 	public static final int[] MINUTES = {3, 4, 5, 6, 8, 10, 12, 15, 20};
-	/** Each realm's factor on {@link #MINUTES}: Qi Refining's layers x1 up to Four Axis's x16. */
-	public static final int[] REALM_FACTOR = {1, 2, 4, 7, 11, 16};
+	/** Each realm's factor on {@link #MINUTES}: Qi Refining's layers x1 up to Four Axis's x16, and on in the same steps to True Immortal's x56. */
+	public static final int[] REALM_FACTOR = {1, 2, 4, 7, 11, 16, 22, 29, 37, 46, 56};
 
 	/** All the layers of a method whose own realm is {@code top} (it spans Qi Refining up to it). */
 	public static int layers(Realm top) {

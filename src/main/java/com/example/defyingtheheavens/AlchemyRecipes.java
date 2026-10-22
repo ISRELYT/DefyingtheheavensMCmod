@@ -57,7 +57,9 @@ public final class AlchemyRecipes {
 					// The Netherworld's: yang warmth to hold its yin still in the living, and yin to feed the ghost methods.
 					recipe(ModItems.YANG_PRESERVATION_PILL, 30, ModItems.GINSENG, 1, Items.BLAZE_POWDER, 1, Items.GLOWSTONE_DUST, 1,
 							Items.HONEY_BOTTLE, 1),
-					recipe(ModItems.YIN_GATHERING_PILL, 30, ModItems.OTHER_SHORE_FLOWER, 1, ModItems.NETHERWORLD_LOTUS, 1, Items.GHAST_TEAR, 1));
+					recipe(ModItems.YIN_GATHERING_PILL, 30, ModItems.OTHER_SHORE_FLOWER, 1, ModItems.NETHERWORLD_LOTUS, 1, Items.GHAST_TEAR, 1),
+					// Years of life: the lingzhi, the herb of immortality, with huangjing and a golden apple.
+					recipe(ModItems.LONGEVITY_PILL, 40, ModItems.LINGZHI, 2, ModItems.HUANGJING, 1, Items.GOLDEN_APPLE, 1));
 		}
 		return recipes;
 	}

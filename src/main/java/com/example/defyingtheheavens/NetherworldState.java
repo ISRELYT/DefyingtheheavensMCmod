@@ -79,7 +79,7 @@ public final class NetherworldState {
 
 	/** The ghost path at {@code rank} (-1: not begun), {@code cultivation} through its stage. */
 	public void setPath(int rank, double cultivation) {
-		this.pathRank = Math.max(-1, Math.min(rank, PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION)));
+		this.pathRank = Math.max(-1, Math.min(rank, PlayerCultivation.LAST_RANK));
 		this.pathCultivation = this.pathRank < 0 ? 0 : Math.max(0, cultivation);
 	}
 

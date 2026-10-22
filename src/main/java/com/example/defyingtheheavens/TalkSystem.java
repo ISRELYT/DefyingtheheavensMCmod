@@ -84,7 +84,9 @@ public final class TalkSystem {
 		/** The entrance trial, once an elder has set it: a spar with them (SparSystem.Terms#TRIAL). */
 		TRIAL("trial"),
 		/** Leaving the sect one belongs to (an elder releases you). */
-		LEAVE_SECT("leave_sect");
+		LEAVE_SECT("leave_sect"),
+		/** A settler's wish (Wishes), only a Four Axis cultivator can grant; its own choices follow under Wishes#ACTIONS. */
+		WISH("wish");
 
 		private final String id;
 
@@ -106,7 +108,7 @@ public final class TalkSystem {
 		PlayerCultivation c = CultivationManager.get(player);
 		if (c.isMortal()) return npc.isMortal() ? Standing.PEER : Standing.MORTAL;
 		int theirs = npc.isMortal() ? -1 : npc.getDisplayedRealm().ordinal();
-		int gap = theirs - c.getEffectiveRealm().ordinal();
+		int gap = theirs - TwoPaths.wieldedRealm(c).ordinal(); // the player's body, either path (TwoPaths#wieldedRank)
 		if (gap >= 2) return Standing.FAR_ABOVE;
 		if (gap == 1) return Standing.ABOVE;
 		if (gap == 0) return Standing.PEER;
@@ -168,8 +170,12 @@ public final class TalkSystem {
 	static String refusal(ServerPlayer player, CultivatorNpc npc) {
 		// Someone else's soul sits in it (SoulProjection): nobody answers, and nothing gives away why.
 		if (SoulProjection.isPossessed(npc)) return ModLang.TALK_POSSESSED;
-		// It doesn't see you at all (in a Ghost King's form, to the living: CultivatorNpc#senses): there is nobody there to answer.
-		if (!npc.senses(player)) return ModLang.TALK_UNSEEN;
+		// It doesn't see you at all (in a Ghost King's form, to the living: CultivatorNpc#senses): there is nobody there to answer. A
+		// Ghost King of the dead is told how it would be seen: in its human form.
+		if (!npc.senses(player)) {
+			return Incorporeal.isGhost(player) && GhostSystem.isKing(player) && !ModDimensions.isNetherworld(npc.level().dimension())
+					? ModLang.TALK_UNSEEN_KING : ModLang.TALK_UNSEEN;
+		}
 		// Begging for its life, it hears nothing but the one it begs.
 		if (npc.isBeggingTo(player)) return null;
 		if (npc.isBegging()) return ModLang.TALK_BUSY;
@@ -282,6 +288,8 @@ public final class TalkSystem {
 			if (friend.getTarget() != null || friend.isInCombat() || friend.isAlly(attacker) || friend.isBegging() || friend.isConcealed()) continue;
 			// Sworn friends, and one's own sect's members (SectMembership): they stand by their own.
 			if (SoulProjection.isPossessed(friend) || SparSystem.isSparring(friend)) continue;
+			// What preys on a settlement (a Merit wish's threat) is its taker's to slay: its settlers keep home (CultivatorGoals.ShelterGoal).
+			if (friend.settledAt() != null && Wishes.isThreat(attacker)) continue;
 			if (friend.regard(player) < Regard.SWORN && !SectMembership.areFellows(friend, player)) continue;
 			friend.setMeditating(false);
 			friend.setTarget(attacker);
@@ -550,6 +558,9 @@ public final class TalkSystem {
 				if (trialSet(player, npc)) replies.add(topic(Topic.TRIAL));
 			}
 		}
+		// A settler's wish (Wishes): said to anyone, granted by a Four Axis cultivator at that wish's axis (the dead by their ghost path).
+		TalkSystem.Reply wish = Wishes.reply(player, npc, Topic.WISH.ordinal());
+		if (wish != null) replies.add(wish);
 		return replies;
 	}
 
@@ -625,7 +636,7 @@ public final class TalkSystem {
 	/** A realm or more above the player (as it shows itself). */
 	private static boolean isSenior(ServerPlayer player, CultivatorNpc npc) {
 		PlayerCultivation c = CultivationManager.get(player);
-		return !npc.isMortal() && (c.isMortal() || npc.getDisplayedRealm().ordinal() > c.getEffectiveRealm().ordinal());
+		return !npc.isMortal() && (c.isMortal() || npc.getDisplayedRealm().ordinal() > TwoPaths.wieldedRealm(c).ordinal());
 	}
 
 	private static Reply topic(Topic topic) {
@@ -641,6 +652,15 @@ public final class TalkSystem {
 	public static void topic(ServerPlayer player, int entityId, int replyId) {
 		CultivatorNpc npc = partner(player, entityId);
 		if (npc == null) return;
+		// A wish's own choices (Wishes): grant it, the years taken.
+		if (replyId >= Wishes.ACTIONS) {
+			npc.beginTalk(player);
+			Component said = Wishes.act(player, npc, replyId - Wishes.ACTIONS);
+			List<Reply> replies = new ArrayList<>(replies(player, npc, standing(player, npc)));
+			replies.addAll(Wishes.actions(player, npc));
+			ModPackets.sendTalkDialogue(player, npc, npc.regard(player), TalkIntent.ASK, speech(said), replies);
+			return;
+		}
 		if (replyId >= SPAR_TERMS) {
 			sparOn(player, npc, SparSystem.Terms.byIndex(replyId - SPAR_TERMS));
 			return;
@@ -671,9 +691,12 @@ public final class TalkSystem {
 			case JOIN -> askToJoin(player, npc);
 			case TRIAL -> beginTrial(player, npc);
 			case LEAVE_SECT -> leaveSect(player, npc);
+			case WISH -> Wishes.tell(player, npc);
 		};
 		if (answer == null) return; // the trial began: the talk is over (SparSystem#start closed it)
-		ModPackets.sendTalkDialogue(player, npc, npc.regard(player), TalkIntent.ASK, speech(answer), replies(player, npc, standing));
+		List<Reply> after = new ArrayList<>(replies(player, npc, standing));
+		if (topic == Topic.WISH) after.addAll(Wishes.actions(player, npc));
+		ModPackets.sendTalkDialogue(player, npc, npc.regard(player), TalkIntent.ASK, speech(answer), after);
 	}
 
 	private static Component aboutSelf(CultivatorNpc npc, boolean freely) {

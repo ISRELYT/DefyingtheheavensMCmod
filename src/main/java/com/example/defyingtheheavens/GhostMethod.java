@@ -20,6 +20,10 @@ import net.minecraft.util.StringRepresentable;
  *   <li>Nine Nether Soul Sutra (九幽魂经), Nascent Soul: Soul Rend, Nine Nether Step.</li>
  *   <li>Yama's Judgement Scripture (阎罗判经), Heavenly Being: Yama's Judgement, Chains of Hell.</li>
  *   <li>Six Paths Reincarnation Canon (六道轮回经), Four Axis: Wheel of Samsara, Six Paths Annihilation.</li>
+ *   <li>The realms after it (2026-10-22, their spells still to come): the Ten Thousand Ghosts Union Scripture (万鬼合道经), Dao
+ *       Integration; the Void-Rending Nether Canon (碎虚冥经), Void Shattering; the Hell-Forged Vessel Sutra (炼狱圣器经), Sacred
+ *       Vessel; the Underworld Nirvana Scripture (幽冥涅槃经), Entering Nirvana; the Netherworld Immortal Sovereign Canon
+ *       (冥界仙尊经), True Immortal.</li>
  * </ul>
  * And two methods of their own, beside the foundations:
  * <ul>
@@ -41,7 +45,13 @@ public enum GhostMethod implements StringRepresentable {
 	GHOST_CORE_CANON("ghost_core_canon", 10, 40, 0, Realm.CORE_FORMATION),
 	NINE_NETHER_SOUL_SUTRA("nine_nether_soul_sutra", 0, 20, 0, Realm.NASCENT_SOUL),
 	YAMA_JUDGEMENT("yama_judgement", 0, 8, 0, Realm.HEAVENLY_BEING),
-	SIX_PATHS_CANON("six_paths_canon", 0, 3, 0, Realm.FOUR_AXIS);
+	SIX_PATHS_CANON("six_paths_canon", 0, 3, 0, Realm.FOUR_AXIS),
+	// The ghost path past Four Axis to True Immortal, as the heaven path (the user's ask, 2026-10-22): on the Peaks alone, hardly ever.
+	TEN_THOUSAND_GHOSTS_UNION("ten_thousand_ghosts_union", 0, 2, 0, Realm.DAO_INTEGRATION),
+	VOID_RENDING_NETHER_CANON("void_rending_nether_canon", 0, 1, 0, Realm.VOID_SHATTERING),
+	HELL_FORGED_VESSEL_SUTRA("hell_forged_vessel_sutra", 0, 1, 0, Realm.SACRED_VESSEL),
+	UNDERWORLD_NIRVANA_SCRIPTURE("underworld_nirvana_scripture", 0, 1, 0, Realm.ENTERING_NIRVANA),
+	NETHERWORLD_IMMORTAL_CANON("netherworld_immortal_canon", 0, 1, 0, Realm.TRUE_IMMORTAL);
 
 	private final String id;
 	private final int steleWeight, peakWeight, knownWeight;
@@ -71,7 +81,7 @@ public enum GhostMethod implements StringRepresentable {
 
 	public boolean isFoundation() { return realm != null; }
 
-	/** A foundation's place in the line: 1 for the Breathing Art up to 6 for Four Axis's; 0 for the others. */
+	/** A foundation's place in the line: 1 for the Breathing Art up to 11 for True Immortal's; 0 for the others. */
 	public int tier() { return realm == null ? 0 : realm.ordinal() + 1; }
 
 	/** Its layers: a foundation nine to each realm it spans (MethodLayers), the fire and the steps nine. */

@@ -41,7 +41,9 @@ public class PhysiqueGameTests implements FabricGameTest {
 		for (Physique physique : Physique.values()) helper.assertTrue(counts.getOrDefault(physique, 0) > 0, physique.getId() + " is born sometimes");
 		helper.assertTrue(counts.get(Physique.FIVE_ELEMENT_ROOTS) > counts.get(Physique.CURSED_MERIDIANS)
 				&& counts.get(Physique.CURSED_MERIDIANS) > counts.get(Physique.TRUE_ELEMENT_ROOT), "Common bodies are common, rarer grades rarer");
-		helper.assertTrue(counts.get(Physique.HEAVENLY_THUNDER_BODY) < counts.get(Physique.FALLEN_TRUE_IMMORTAL), "The Heavenly Thunder Body the rarest");
+		helper.assertTrue(counts.get(Physique.HEAVENLY_THUNDER_BODY) < counts.get(Physique.FALLEN_TRUE_IMMORTAL), "The Heavenly Thunder Body rarer than a Fallen True Immortal");
+		helper.assertTrue(counts.get(Physique.ETERNAL_REINCARNATION_BODY) < counts.get(Physique.HEAVENLY_THUNDER_BODY)
+				&& counts.get(Physique.MYRIAD_FORM_BODY) < counts.get(Physique.HEAVENLY_THUNDER_BODY), "The Eternal Reincarnation and Myriad Form Bodies the rarest");
 
 		EnumSet<QiElement> three = Physique.rollRoots(Physique.THREE_ELEMENT_ROOTS, List.of(QiElement.FIRE), random);
 		helper.assertTrue(three.size() == 3 && three.contains(QiElement.FIRE), "Three roots, the element of a method known among them");
@@ -57,23 +59,33 @@ public class PhysiqueGameTests implements FabricGameTest {
 		c.awaken(0);
 		double max = c.maxQi(), gather = c.qiGatherPerSecond(), pace = c.meditationCultivationPerSecond(0);
 		double ghost = GhostMethods.ratePerSecond(c, GhostQi.SOUL_SAND_VALLEY);
-		helper.assertTrue(c.getPhysique() == null && c.physique() == Physique.MORTAL_BODY, "Unrolled: a plain Mortal Body");
+		helper.assertTrue(c.getPhysique() == null && c.physique() == Physique.FIVE_ELEMENT_ROOTS, "Unrolled: the plain body, Five Element Spiritual Roots");
+		// The Mortal Body is gone (2026-10-19): a save that names it is read as the same plain body.
+		net.minecraft.nbt.CompoundTag old = c.save();
+		old.putString("Physique", "mortal_body");
+		helper.assertTrue(PlayerCultivation.load(old).getPhysique() == Physique.FIVE_ELEMENT_ROOTS && Physique.byId("mortal_body") == Physique.FIVE_ELEMENT_ROOTS,
+				"An old Mortal Body is Five Element Spiritual Roots now");
+		double total = 0;
+		for (Physique physique : Physique.values()) total += physique.weight();
+		helper.assertTrue(Math.abs(total - 100) < 1.0e-9 && Physique.FIVE_ELEMENT_ROOTS.weight() == 40, "Still out of a hundred, the plain body 40 of them");
 		c.setPhysique(Physique.BLESSED_MERIDIANS);
 		helper.assertTrue(near(c.maxQi(), max * 1.5) && near(c.qiGatherPerSecond(), gather * 1.5), "Blessed meridians: 1.5 times the pool and the gathering");
 		c.setPhysique(Physique.CURSED_MERIDIANS);
 		helper.assertTrue(near(c.maxQi(), max * 0.8) && near(c.qiGatherPerSecond(), gather * 0.8), "Cursed meridians: 0.8 times");
 		double[][] paces = {{Physique.THREE_ELEMENT_ROOTS.ordinal(), 1.5}, {Physique.TRUE_ELEMENT_ROOT.ordinal(), 2.0},
 				{Physique.FALLEN_TRUE_IMMORTAL.ordinal(), 5.0}, {Physique.HEAVEN_SACRED_BODY.ordinal(), 1.2}, {Physique.FIVE_ELEMENT_ROOTS.ordinal(), 1.0}};
+		// Each with its grade's small edge on top (Physique.Grade#speed: the user's pick, 2026-10-22).
 		for (double[] row : paces) {
 			Physique physique = Physique.byIndex((int) row[0]);
 			c.setPhysique(physique);
-			helper.assertTrue(near(c.meditationCultivationPerSecond(0), pace * row[1]), physique.getId() + ": the heaven path x" + row[1]);
+			helper.assertTrue(near(c.meditationCultivationPerSecond(0), pace * row[1] * physique.grade().speed()), physique.getId() + ": the heaven path x" + row[1]);
 		}
 		c.setPhysique(Physique.GHOST_DEVIL_BODY);
-		helper.assertTrue(near(GhostMethods.ratePerSecond(c, GhostQi.SOUL_SAND_VALLEY), ghost * 2), "A Ghost Devil Body: the ghost path twice as fast");
-		helper.assertTrue(near(c.meditationCultivationPerSecond(0), pace), "...and the heaven path as ever");
+		double immortal = Physique.Grade.IMMORTAL.speed();
+		helper.assertTrue(near(GhostMethods.ratePerSecond(c, GhostQi.SOUL_SAND_VALLEY), ghost * 2 * immortal), "A Ghost Devil Body: the ghost path twice as fast");
+		helper.assertTrue(near(c.meditationCultivationPerSecond(0), pace * immortal), "...and the heaven path as ever (but for its grade's edge)");
 		c.setPhysique(Physique.FALLEN_TRUE_IMMORTAL);
-		helper.assertTrue(near(GhostMethods.ratePerSecond(c, GhostQi.SOUL_SAND_VALLEY), ghost * 5), "A Fallen True Immortal: both paths five times");
+		helper.assertTrue(near(GhostMethods.ratePerSecond(c, GhostQi.SOUL_SAND_VALLEY), ghost * 5 * immortal), "A Fallen True Immortal: both paths five times");
 
 		PlayerCultivation saved = PlayerCultivation.load(c.save());
 		helper.assertTrue(saved.getPhysique() == Physique.FALLEN_TRUE_IMMORTAL, "The physique is saved");

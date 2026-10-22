@@ -47,6 +47,12 @@ public final class WoodSpells {
 	public static final int LIFE_TICKS = 6 * 20;
 	public static final float DRAIN_PER_SECOND = 1.5f, PLANT_DRAIN_HEAL = 1.0f, GAIN_COST = 1.0f, GAIN_HEAL = 2.0f, GAIN_FLOOR = 4.0f;
 	public static final int DRAIN_YEARS = 60, GAIN_YEARS = 120;
+	/**
+	 * Life Force's lifespan (the user's ask, 2026-10-21): Gain gives a herb or a fruit the caster's own years, this many a second (each
+	 * second's {@link #GAIN_YEARS} of growth), never the last Lifespan#WARN_YEARS of them; Drain draws this many a second out of another
+	 * player's years while it lands on them, the drawer keeping Lifespan#DRAWN_KEPT of them (Lifespan#draw).
+	 */
+	public static final double GAIN_LIFE_YEARS = 10, DRAIN_LIFE_YEARS = 10;
 	public static final double PRISON_RANGE = 20;
 	public static final int PRISON_TICKS = 4 * 20, PRISON_STRIKES = 3;
 	public static final float PRISON_DAMAGE = 1.5f, PRISON_THORNS = 2;
@@ -369,9 +375,11 @@ public final class WoodSpells {
 	/**
 	 * Life Force Drain or Gain on one being, one herb growing, or one fruit or herb held: for {@link #LIFE_TICKS}, a stream of
 	 * emerald motes runs between it and its caster (SpellField LIFE_STREAM). Drawing: the being's life ({@link #DRAIN_PER_SECOND} of
-	 * wood a second) mends the caster, a herb's or fruit's years ({@link #DRAIN_YEARS} a second) are lost and mend the caster a
-	 * little. Giving: the caster's own life runs out ({@link #GAIN_COST} a second, never below {@link #GAIN_FLOOR}) to heal a being or
-	 * age a herb. It breaks if they stray apart, or the one held leaves the hand.
+	 * wood a second) mends the caster, and another player's years go with it ({@link #DRAIN_LIFE_YEARS} a second, half of them the
+	 * caster's: Lifespan#draw); a herb's or fruit's years ({@link #DRAIN_YEARS} a second) are lost and mend the caster a little.
+	 * Giving: the caster's own life runs out ({@link #GAIN_COST} a second, never below {@link #GAIN_FLOOR}) to heal a being; a herb or
+	 * fruit is given the caster's own years ({@link #GAIN_LIFE_YEARS} a second for {@link #GAIN_YEARS} of growth, never the last ten
+	 * of them). It breaks if they stray apart, or the one held leaves the hand; the years it moved are told as it ends.
 	 */
 	public static final class Life extends HeavenSpells.Timed {
 		private final Spell spell;
@@ -381,6 +389,9 @@ public final class WoodSpells {
 		/** The hand holding the fruit or herb drawn on (or given to), or null. */
 		public final net.minecraft.world.InteractionHand hand;
 		private final SpellField field;
+		/** The years of a lifespan it has moved (drawn out of another, or given a herb), and the growth it gave, for the word as it ends. */
+		private double yearsMoved;
+		private int growthGiven;
 
 		Life(ServerPlayer caster, Spell spell, boolean drain, LivingEntity being, BlockPos plant, net.minecraft.world.InteractionHand hand) {
 			super(caster, LIFE_TICKS);
@@ -421,6 +432,8 @@ public final class WoodSpells {
 				if (being != null) {
 					float taken = HeavenSpells.strikeAgain(caster, being, DRAIN_PER_SECOND / 2, spell);
 					HeavenSpells.mend(caster, taken);
+					// Another player's years go with the life it draws (the user's ask, 2026-10-21); a beast's or an NPC's have no lifespan.
+					if (taken > 0 && being instanceof ServerPlayer victim) yearsMoved += Lifespan.draw(caster, victim, DRAIN_LIFE_YEARS / 2);
 				} else {
 					int years = plant != null ? plantAge(level, plant) : heldAge(held());
 					if (years <= 1) return false;
@@ -428,12 +441,26 @@ public final class WoodSpells {
 					else setHeldAge(held(), Math.max(1, years - DRAIN_YEARS / 2));
 					HeavenSpells.mend(caster, PLANT_DRAIN_HEAL / 2);
 				}
-			} else {
+			} else if (being != null) {
 				if (caster.getHealth() <= GAIN_FLOOR) return false;
 				caster.setHealth(Math.max(GAIN_FLOOR, caster.getHealth() - GAIN_COST / 2));
-				if (being != null) HeavenSpells.mend(being, GAIN_HEAL / 2);
-				else if (plant != null) setPlantAge(level, plant, Math.min(FruitAge.MAX_YEARS, plantAge(level, plant) + GAIN_YEARS / 2));
-				else setHeldAge(held(), Math.min(FruitAge.MAX_YEARS, heldAge(held()) + GAIN_YEARS / 2));
+				HeavenSpells.mend(being, GAIN_HEAL / 2);
+			} else {
+				// A herb or a fruit grows on the caster's own years (the user's ask, 2026-10-21), never the last of them.
+				int years = plant != null ? plantAge(level, plant) : heldAge(held());
+				if (years >= FruitAge.MAX_YEARS) return false;
+				if (!caster.isCreative()) {
+					if (Lifespan.left(CultivationManager.own(caster)) - GAIN_LIFE_YEARS / 2 < Lifespan.WARN_YEARS) {
+						caster.displayClientMessage(net.minecraft.network.chat.Component.translatable(ModLang.MSG_LIFE_YEARS_TOO_FEW), true);
+						return false;
+					}
+					Lifespan.age(caster, GAIN_LIFE_YEARS / 2);
+					yearsMoved += GAIN_LIFE_YEARS / 2;
+				}
+				int grown = Math.min(FruitAge.MAX_YEARS, years + GAIN_YEARS / 2);
+				growthGiven += grown - years;
+				if (plant != null) setPlantAge(level, plant, grown);
+				else setHeldAge(held(), grown);
 			}
 			if (age % 20 == 19) HeavenSpells.sound(level, at, SoundEvents.AMETHYST_BLOCK_CHIME, 0.6f, drain ? 0.7f : 1.5f);
 			return true;
@@ -443,6 +470,17 @@ public final class WoodSpells {
 		public void end() {
 			field.discard();
 			if (being != null) SpellAuras.remove(being, SpellAura.LIFE_FLOW);
+			// The years it moved, told: drawn out of another (to them both), or given a herb or fruit.
+			if (yearsMoved <= 0) return;
+			long years = Math.round(yearsMoved);
+			if (drain && being instanceof ServerPlayer victim) {
+				caster.sendSystemMessage(net.minecraft.network.chat.Component.translatable(ModLang.MSG_LIFE_YEARS_DRAWN, years, victim.getDisplayName(),
+						Math.round(yearsMoved * Lifespan.DRAWN_KEPT)).withStyle(net.minecraft.ChatFormatting.DARK_GREEN));
+				victim.sendSystemMessage(net.minecraft.network.chat.Component.translatable(ModLang.MSG_LIFE_YEARS_LOST, caster.getDisplayName(), years)
+						.withStyle(net.minecraft.ChatFormatting.RED));
+			} else if (!drain) {
+				caster.displayClientMessage(net.minecraft.network.chat.Component.translatable(ModLang.MSG_LIFE_YEARS_GIVEN, years, growthGiven), true);
+			}
 		}
 	}
 

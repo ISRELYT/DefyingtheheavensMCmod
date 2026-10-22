@@ -106,7 +106,7 @@ public final class GhostSystem {
 	 */
 	public static boolean isKing(PlayerCultivation c) {
 		if (!c.netherworld().ghost()) return false;
-		if (c.physique() == Physique.GHOST_DEVIL_BODY && !c.isMortal()) return true; // a Ghost King from birth (Physique)
+		if (c.hasPhysique(Physique.GHOST_DEVIL_BODY) && !c.isMortal()) return true; // a Ghost King from birth (Physique)
 		return TwoPaths.ghostRank(c, false) >= KING_RANK;
 	}
 
@@ -362,7 +362,8 @@ public final class GhostSystem {
 	public static boolean reaches(DamageSource source) {
 		if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) || source.is(ModDamageTypes.GHOSTLY) || yinTribulation(source)) return true;
 		Entity attacker = source.getEntity();
-		if (isDead(attacker) || peachWood(source)) return true;
+		// A heart demon is the soul's own, the dead's too (the Inner Realm): it reaches them, and they it (#attack).
+		if (isDead(attacker) || attacker instanceof HeartDemonEntity || peachWood(source)) return true;
 		return attacker != null && source.getDirectEntity() == attacker && SoulProjection.harmFactor(attacker) > 0;
 	}
 
@@ -423,9 +424,15 @@ public final class GhostSystem {
 	 * cancel the ordinary attack.
 	 */
 	public static boolean attack(ServerPlayer ghost, Entity target) {
-		if (isDead(target) || isKing(ghost)) return true; // a Ghost King strikes as the living do
+		// A Ghost King strikes as the living do; and any ghost its own heart demon (the Inner Realm).
+		if (isDead(target) || isKing(ghost) || target instanceof HeartDemonEntity) return true;
 		if (target instanceof ServerPlayer living && YinCorruption.affects(living)) {
-			living.hurt(ModDamageTypes.ghostly(ghost.level(), ghost), GHOSTLY_BLOW);
+			blow = true; // its own hand, no spell (Physiques#outgoing)
+			try {
+				living.hurt(ModDamageTypes.ghostly(ghost.level(), ghost), GHOSTLY_BLOW);
+			} finally {
+				blow = false;
+			}
 			Spells.onMeleeHit(ghost, living); // Ghost Fire on its hands sets them burning
 			NetherworldState s = CultivationManager.get(living).netherworld();
 			s.setYinCorruption(s.yinCorruption() + YinCorruption.GHOSTLY_BLOW);
@@ -433,6 +440,12 @@ public final class GhostSystem {
 		}
 		return false;
 	}
+
+	/** Set while one of the dead's own blows lands ({@link #attack}): ghostly harm that is no spell. */
+	private static boolean blow;
+
+	/** Whether the ghostly harm landing now is one of the dead's own blows, not a spell's (Physiques#outgoing). */
+	public static boolean isBlow() { return blow; }
 
 	/** ALLOW_DEATH for a ghost: it doesn't die, it disperses. */
 	public static boolean allowDeath(ServerPlayer p) {

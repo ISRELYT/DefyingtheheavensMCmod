@@ -53,6 +53,7 @@ public class TribulationCloudGameTests implements FabricGameTest {
             cultivation.setLowerRealmBound(false);
             cultivation.setInUpperRealm(true);
             cultivation.addCultivation(cultivation.cultivationRequired());
+            cultivation.setObsession(FourAxis.Axis.LONGEVITY); // named at Heavenly Being's gate (Obsession), so no screen comes first
             TribulationManager.start(player);
 
             TribulationCloud fourAxis = cloudFor(helper, player);
@@ -145,8 +146,9 @@ public class TribulationCloudGameTests implements FabricGameTest {
             for (int tick = 0; tick < 59; tick++) TribulationManager.tick(helper.getLevel().getServer());
             helper.assertTrue(player.getHealth() == 100, "No strike has landed yet");
             player.hurt(helper.getLevel().damageSources().generic(), 10); // a blow taken just before the strike
-            TribulationManager.tick(helper.getLevel().getServer()); // the first Core Formation strike: 5 magic + 13 lightning
-            helper.assertTrue(Math.abs(player.getHealth() - 72) < 0.01f, "The whole strike lands on top of the blow: " + player.getHealth());
+            TribulationManager.tick(helper.getLevel().getServer()); // the first Core Formation strike, its magic and its lightning
+            TribulationManager.Strikes core = TribulationManager.strikes(Realm.CORE_FORMATION, Stage.EARLY);
+            helper.assertTrue(Math.abs(player.getHealth() - (90 - core.bolt() - core.magic())) < 0.01f, "The whole strike lands on top of the blow: " + player.getHealth());
             helper.succeed();
         } finally {
             TribulationManager.forget(player.getUUID());
@@ -192,9 +194,12 @@ public class TribulationCloudGameTests implements FabricGameTest {
             helper.assertTrue(bolts.size() == 1 && bolts.get(0).isGhost()
                     && Math.abs(bolts.get(0).renderScale() - TribulationManager.boltScale(Realm.CORE_FORMATION, Stage.EARLY)) < 1.0e-5,
                     "Its one bolt, yin lightning, as big as the realm's");
-            helper.assertTrue(Math.abs(full - player.getHealth() - 18) < 0.01f, "The Core Formation strike in yin: 5 through armour and 13 more (" + (full - player.getHealth()) + ")");
+            TribulationManager.Strikes core = TribulationManager.strikes(Realm.CORE_FORMATION, Stage.EARLY);
+            helper.assertTrue(Math.abs(full - player.getHealth() - core.bolt() - core.magic()) < 0.01f,
+                    "The Core Formation strike in yin: its magic through armour and its bolt (" + (full - player.getHealth()) + ")");
             bolts.forEach(net.minecraft.world.entity.Entity::discard);
-            for (int tick = 0; tick < 60 * 2 + 25 && TribulationManager.isActive(player.getUUID()); tick++) TribulationManager.tick(helper.getLevel().getServer());
+            int rest = TribulationManager.strikeSpan(core.count()) + 25;
+            for (int tick = 0; tick < rest && TribulationManager.isActive(player.getUUID()); tick++) TribulationManager.tick(helper.getLevel().getServer());
             helper.assertTrue(!TribulationManager.isActive(player.getUUID()) && !s.inGhostTribulation()
                     && GhostMethods.ghostRank(s) == PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY) && c.getRealm() == Realm.QI_REFINING,
                     "Survived: the ghost path into Core Formation, the heaven path where it was");
@@ -226,12 +231,13 @@ public class TribulationCloudGameTests implements FabricGameTest {
             // As much of its hearts as of a living body's (GhostSystem#livingShare), the bolt turned first as a common ghost's form
             // turns it, as an iron set would (TribulationManager#GHOST_FORM_ARMOR), the yin passing.
             float share = (float) GhostSystem.livingShare(player);
+            TribulationManager.Strikes core = TribulationManager.strikes(Realm.CORE_FORMATION, Stage.EARLY);
             // (The helper's mock player counts as creative, outside the dead's rules of touch: its own armour, none.)
-            float bolt = net.minecraft.world.damagesource.CombatRules.getDamageAfterAbsorb(13,
+            float bolt = net.minecraft.world.damagesource.CombatRules.getDamageAfterAbsorb(core.bolt(),
                     Incorporeal.isRuledGhost(player) ? Math.max(player.getArmorValue(), TribulationManager.GHOST_FORM_ARMOR) : player.getArmorValue(),
                     (float) player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR_TOUGHNESS));
             // (Its body is its ghost path's whole now, dead, as a life's heaven path is: TwoPaths#pathShare. The same share, x1.)
-            helper.assertTrue(Math.abs(share - 1) < 1.0e-6 && Math.abs(full - player.getHealth() - (5 + bolt) * share) < 0.01f,
+            helper.assertTrue(Math.abs(share - 1) < 1.0e-6 && Math.abs(full - player.getHealth() - (core.magic() + bolt) * share) < 0.01f,
                     "The yin reaches the dead, as great a share of its hearts as of a life's (" + (full - player.getHealth()) + " of "
                             + player.getMaxHealth() + ", x" + share + ")");
             player.setHealth(2);

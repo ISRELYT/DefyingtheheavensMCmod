@@ -27,7 +27,7 @@ public abstract class SoulRenderDispatcherMixin {
 			return;
 		}
 		// A body left sitting in the dead's light (its owner set out from a ghostly form): drawn as that light (SoulRenderer).
-		if (entity instanceof com.example.defyingtheheavens.SoulBodyEntity body && body.look() != com.example.defyingtheheavens.TwoPaths.Look.HUMAN) {
+		if (com.example.defyingtheheavens.client.SoulRenderer.inLight(entity)) {
 			cir.setReturnValue(false);
 			return;
 		}

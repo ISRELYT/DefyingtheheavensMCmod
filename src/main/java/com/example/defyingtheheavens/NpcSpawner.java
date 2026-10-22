@@ -37,6 +37,12 @@ import java.util.UUID;
 public final class NpcSpawner {
 	public static final double MORTAL_CHANCE = 0.10;
 	public static final double PEAK_CHANCE = 0.001;
+	/**
+	 * Of the Upper Realm's rogues found at Four Axis Grand Perfection (its curve's peak), this share are of Dao Integration instead,
+	 * while the realm has room for one (HighRealms: the realms after it rare, the user's lore, 2026-10-22); the realms past it come only
+	 * by cultivating.
+	 */
+	public static final double DAO_INTEGRATION_SHARE = 0.25;
 	/** Ticks between looks around each player (5 seconds). */
 	private static final int CHECK = 100;
 	/** Around a player who stays about: an attempt every 30 seconds, made 35% of the time, 40-80 blocks off. */
@@ -155,8 +161,15 @@ public final class NpcSpawner {
 		if (npc == null) return;
 		npc.moveTo(spot.getX() + 0.5, spot.getY(), spot.getZ() + 0.5, random.nextFloat() * 360, 0);
 		// The land's wandering ghosts stop short of Ghost King: the kings keep their palaces (GhostPalacePiece).
-		if (npc instanceof GhostCultivatorNpc ghost) ghost.becomeGhost(Math.min(GhostCultivatorNpc.WANDERER_CAP, rank), Alignment.randomRogue(random), random);
-		else npc.becomeRogue(rank, Alignment.randomRogue(random), random);
+		if (npc instanceof GhostCultivatorNpc ghost) {
+			ghost.becomeGhost(Math.min(GhostCultivatorNpc.WANDERER_CAP, rank), Alignment.randomRogue(random), random);
+		} else {
+			// Now and then the Upper Realm's peak is one of Dao Integration (setRank holds it to the room the realm has).
+			if (upper && rank == PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION) && random.nextDouble() < DAO_INTEGRATION_SHARE) {
+				rank = PlayerCultivation.rank(Realm.DAO_INTEGRATION, Stage.EARLY) + random.nextInt(Stage.values().length);
+			}
+			npc.becomeRogue(rank, Alignment.randomRogue(random), random);
+		}
 		level.addFreshEntity(npc);
 	}
 

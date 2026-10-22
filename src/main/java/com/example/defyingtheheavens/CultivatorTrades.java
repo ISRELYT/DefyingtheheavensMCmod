@@ -73,7 +73,8 @@ public final class CultivatorTrades {
 		long day = Regard.day(npc.level().getGameTime());
 		RandomSource random = RandomSource.create(npc.getUUID().getMostSignificantBits() ^ (day * 0x9E3779B97F4A7C15L));
 		List<Goods> goods = goodsFor(npc, random);
-		double factor = priceFactor(regard);
+		// x0.8 more for one obsessed with Fortune (Obsession), on top of what regard does.
+		double factor = priceFactor(regard) * Obsession.priceFactor(CultivationManager.get(player));
 		for (int i = 0; i < goods.size(); i++) {
 			Goods g = goods.get(i);
 			String key = "sell:" + i;

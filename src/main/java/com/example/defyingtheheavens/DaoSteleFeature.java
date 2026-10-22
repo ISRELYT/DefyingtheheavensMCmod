@@ -20,7 +20,7 @@ import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConf
  * and Nascent Soul's seldom; its rare lands (cherry groves, mushroom isles, ice spikes, eroded badlands, the deep jungles) the
  * deeper ones more often. Heavenly Being methods are carved almost only in the Upper Realm, and Four Axis methods there alone, the
  * most in its own wondrous lands (the Dense Qi Peaks, the Thunder Peaks, the Ancient Sword Graveyard, the Spirit Forest, the
- * Peach Blossom Sanctuary).
+ * Peach Blossom Sanctuary); the realms' after it rarer and rarer, Void Shattering's to True Immortal's in those lands alone.
  */
 public class DaoSteleFeature extends Feature<NoneFeatureConfiguration> {
 	/** No other stele within this many blocks across and this many up or down. */
@@ -29,12 +29,16 @@ public class DaoSteleFeature extends Feature<NoneFeatureConfiguration> {
 	/** Where a stele stands, for its realm's rarity. */
 	public enum Lands { OVERWORLD, OVERWORLD_RARE, UPPER_REALM, UPPER_REALM_RARE }
 
-	/** Each kind of land's weights for a stele's realm, Qi Refining to Four Axis. */
+	/**
+	 * Each kind of land's weights for a stele's realm, Qi Refining to True Immortal: past Four Axis's (2026-10-22) carved only in the
+	 * Upper Realm, Dao Integration's rarely, the rest hardly ever and only in its wondrous lands (as the user would have those realms'
+	 * cultivators: a handful of Void Shattering in the realm, one Sacred Vessel).
+	 */
 	static final int[][] WEIGHTS = {
-			{600, 250, 60, 8, 0, 0},
-			{300, 250, 150, 40, 3, 0},
-			{0, 40, 150, 100, 40, 10},
-			{0, 0, 100, 100, 60, 25},
+			{600, 250, 60, 8, 0, 0, 0, 0, 0, 0, 0},
+			{300, 250, 150, 40, 3, 0, 0, 0, 0, 0, 0},
+			{0, 40, 150, 100, 40, 10, 2, 0, 0, 0, 0},
+			{0, 0, 100, 100, 60, 25, 6, 2, 1, 1, 1},
 	};
 
 	public DaoSteleFeature() {

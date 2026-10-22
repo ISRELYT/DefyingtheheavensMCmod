@@ -94,8 +94,21 @@ public final class SoulRenderer {
 	}
 
 	/** A body its soul has left that sits on in the dead's light (its owner set out from a ghostly form: SoulBodyEntity#look). */
-	private static boolean inLight(net.minecraft.world.entity.Entity entity) {
-		return entity instanceof SoulBodyEntity body && body.look() != TwoPaths.Look.HUMAN;
+	public static boolean inLight(net.minecraft.world.entity.Entity entity) {
+		return bodyLook(entity) != TwoPaths.Look.HUMAN;
+	}
+
+	/** How a body left sitting is drawn (its soul out, SoulBodyEntity; or turned inward, InnerBodyEntity); HUMAN for anything else. */
+	private static TwoPaths.Look bodyLook(net.minecraft.world.entity.Entity entity) {
+		if (entity instanceof SoulBodyEntity body) return body.look();
+		if (entity instanceof com.example.defyingtheheavens.InnerBodyEntity body) return body.look();
+		return TwoPaths.Look.HUMAN;
+	}
+
+	private static java.util.UUID bodyOwner(net.minecraft.world.entity.Entity entity) {
+		if (entity instanceof SoulBodyEntity body) return body.getOwnerId();
+		if (entity instanceof com.example.defyingtheheavens.InnerBodyEntity body) return body.getOwnerId();
+		return null;
 	}
 
 	/** Whether the player {@code id} wears the slim model (as the player list has it; broad if unknown). */
@@ -158,12 +171,13 @@ public final class SoulRenderer {
 		// A body its soul left from a ghostly form sits on in that light, a Ghost King's crowned, seen as its owner was: by all in the
 		// Netherworld and by the dead, elsewhere as clearly as a soul is seen; its own owner always.
 		for (net.minecraft.world.entity.Entity entity : mc.level.entitiesForRendering()) {
-			if (!inLight(entity) || !(entity instanceof SoulBodyEntity body) || body.isInvisible() || body.isRemoved()) continue;
-			boolean mine = mc.player.getUUID().equals(body.getOwnerId());
+			if (!inLight(entity) || !(entity instanceof LivingEntity body) || body.isInvisible() || body.isRemoved()) continue;
+			java.util.UUID owner = bodyOwner(body);
+			boolean mine = mc.player.getUUID().equals(owner);
 			float clarity = whole || mine ? 1.0f : ClientSoul.clarity(body);
 			if (clarity <= 0) continue;
-			drawBody(context, body, InnerBodyRenderer.skinOf(body.getOwnerId()), slim(body.getOwnerId()), clarity, partial, true, Look.DEAD, null,
-					body.look() == TwoPaths.Look.KING);
+			drawBody(context, body, InnerBodyRenderer.skinOf(owner), slim(owner), clarity, partial, true, Look.DEAD, null,
+					bodyLook(body) == TwoPaths.Look.KING);
 		}
 		// Additive from here: light, not cover.
 		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,

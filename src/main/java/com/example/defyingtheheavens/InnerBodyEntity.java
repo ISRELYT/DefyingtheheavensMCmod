@@ -27,6 +27,8 @@ import java.util.UUID;
 public class InnerBodyEntity extends LivingEntity {
 	private static final EntityDataAccessor<Optional<UUID>> OWNER = SynchedEntityData.defineId(InnerBodyEntity.class,
 			EntityDataSerializers.OPTIONAL_UUID);
+	/** How its owner was drawn as they turned inward (TwoPaths#look, by ordinal): as a man, or in the dead's light (SoulBodyEntity's too). */
+	private static final EntityDataAccessor<Byte> LOOK = SynchedEntityData.defineId(InnerBodyEntity.class, EntityDataSerializers.BYTE);
 	private Vec3 anchor;
 
 	public InnerBodyEntity(EntityType<? extends InnerBodyEntity> type, Level level) {
@@ -42,9 +44,18 @@ public class InnerBodyEntity extends LivingEntity {
 	protected void defineSynchedData() {
 		super.defineSynchedData();
 		entityData.define(OWNER, Optional.empty());
+		entityData.define(LOOK, (byte) 0);
 	}
 
 	public void setOwner(Player player) { entityData.set(OWNER, Optional.of(player.getUUID())); }
+
+	public void setLook(TwoPaths.Look look) { entityData.set(LOOK, (byte) look.ordinal()); }
+
+	/** How it sits on: its owner's look as they turned inward. */
+	public TwoPaths.Look look() {
+		TwoPaths.Look[] looks = TwoPaths.Look.values();
+		return looks[Math.max(0, Math.min(looks.length - 1, entityData.get(LOOK)))];
+	}
 
 	public UUID getOwnerId() { return entityData.get(OWNER).orElse(null); }
 
@@ -93,11 +104,13 @@ public class InnerBodyEntity extends LivingEntity {
 		super.addAdditionalSaveData(tag);
 		UUID id = getOwnerId();
 		if (id != null) tag.putUUID("Owner", id);
+		tag.putByte("Look", entityData.get(LOOK));
 	}
 
 	@Override
 	public void readAdditionalSaveData(CompoundTag tag) {
 		super.readAdditionalSaveData(tag);
 		if (tag.hasUUID("Owner")) entityData.set(OWNER, Optional.of(tag.getUUID("Owner")));
+		entityData.set(LOOK, tag.getByte("Look"));
 	}
 }

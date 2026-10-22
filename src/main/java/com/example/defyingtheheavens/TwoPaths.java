@@ -224,7 +224,7 @@ public final class TwoPaths {
 		double heavenShare = whole ? 1 : pathShare(c, Path.HEAVEN), ghostShare = whole ? 1 : pathShare(c, Path.GHOST);
 		// A Ghost Devil Body in its Ghost King's form is held to its ghost path's might, as Realm Suppression holds a realm, and has all
 		// of it, a Ghost King's from birth (Physique).
-		if (c.physique() == Physique.GHOST_DEVIL_BODY && inGhostForm(c)) {
+		if (c.hasPhysique(Physique.GHOST_DEVIL_BODY) && inGhostForm(c)) {
 			int rank = Math.max(0, ghost);
 			return new Body(Realm.byIndex(rank / stages), Stage.byIndex(rank % stages), ghost < 0 ? 0.5 : scale, true, rank, 1.0);
 		}
@@ -273,13 +273,33 @@ public final class TwoPaths {
 		Body body = body(c, wielded);
 		if (body.rank() < 0) return null;
 		double value = might(body.rank()) * body.scale() * body.share();
-		int last = PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION);
+		int last = PlayerCultivation.LAST_RANK;
 		// Half a path's strength (pathShare) is worth less than its rank: weighed from the first stage up.
 		int rank = body.share() < 1 ? 0 : body.rank();
 		while (rank < last && might(rank + 1) <= value * (1 + EFFECTIVE_TOLERANCE)) rank++;
 		boolean quasi = value > might(rank) * (1 + EFFECTIVE_TOLERANCE);
 		double toward = rank >= last ? 0 : Math.max(0, Math.min(1, (value - might(rank)) / (might(rank + 1) - might(rank))));
 		return new Effective(rank, quasi, toward);
+	}
+
+	/**
+	 * Where {@code c} stands as others weigh it, players and cultivators alike (Realm Suppress, a formation's barrier, a cultivator
+	 * sizing it up, a sect's titles): its body's rank ({@link #body}, the path mightier for its share), as the land it stands in lets it
+	 * be wielded but before another's pressure (so a pressed presser presses on: no chains), or -1 for a mortal. Both paths alike (the
+	 * user's rule, 2026-10-18: both are ways to the same heights), where only the heaven path was weighed before (the 2026-10-20 sweep).
+	 */
+	public static int weighedRank(PlayerCultivation c) {
+		return c.isMortal() ? -1 : c.sustained(body(c, false).rank());
+	}
+
+	/** The rank {@code c}'s body is wielded at now ({@link #body}: the land and another's pressure included), or -1 for a mortal: what others sense of it. */
+	public static int wieldedRank(PlayerCultivation c) {
+		return c.isMortal() ? -1 : body(c, true).rank();
+	}
+
+	/** The realm {@code c}'s body is wielded at now ({@link #wieldedRank}): Qi Refining for a mortal. */
+	public static Realm wieldedRealm(PlayerCultivation c) {
+		return Realm.byIndex(Math.max(0, wieldedRank(c)) / Stage.values().length);
 	}
 
 	/** Whether {@code c}'s body is mightier than its own rank alone (the harmony, Heaven's Favour): its effective cultivation is worth saying. */
@@ -298,7 +318,7 @@ public final class TwoPaths {
 		Realm realm = Realm.byIndex(effective.rank() / stages);
 		Stage stage = Stage.byIndex(effective.rank() % stages);
 		if (!effective.quasi()) return PlayerCultivation.rankName(realm, stage);
-		if (effective.rank() >= PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION)) {
+		if (effective.rank() >= PlayerCultivation.LAST_RANK) {
 			return Component.translatable(ModLang.EFFECTIVE_BEYOND, realm.getDisplayName(), stage.getDisplayName());
 		}
 		if (stage.isLast()) return Component.translatable(ModLang.EFFECTIVE_QUASI_REALM, realm.next().getDisplayName());
@@ -311,7 +331,7 @@ public final class TwoPaths {
 	 */
 	public static Component effectiveLabel(Effective effective) {
 		Component name = effectiveName(effective);
-		if (!effective.quasi() || effective.rank() >= PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION)) return name;
+		if (!effective.quasi() || effective.rank() >= PlayerCultivation.LAST_RANK) return name;
 		long percent = Math.max(1, Math.min(99, Math.round(effective.toward() * 100)));
 		return Component.translatable(ModLang.EFFECTIVE_TOWARD, name, percent);
 	}
@@ -339,7 +359,7 @@ public final class TwoPaths {
 	 * or, whatever its ghost path, having reigned as a Ghost King among the dead (NetherworldState#reignedKing), kept when born again.
 	 */
 	public static boolean hasKingForm(PlayerCultivation c) {
-		if (c.physique() == Physique.GHOST_DEVIL_BODY && !c.isMortal()) return true; // from birth, as strong as its ghost path (Physique)
+		if (c.hasPhysique(Physique.GHOST_DEVIL_BODY) && !c.isMortal()) return true; // from birth, as strong as its ghost path (Physique)
 		if (c.netherworld().reignedKing() && !c.isMortal()) return true;
 		return ghostRank(c, false) >= GhostSystem.KING_RANK;
 	}

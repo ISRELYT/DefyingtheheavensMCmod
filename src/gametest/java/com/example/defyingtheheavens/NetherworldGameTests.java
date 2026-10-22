@@ -54,7 +54,10 @@ public class NetherworldGameTests implements FabricGameTest {
 		helper.assertTrue(c.qiGatherPerSecond() == lowerQi && c.meditationCultivationPerSecond(0) == lowerRate,
 				"Ordinary qi and cultivation run at the lower realms' rate, not x10");
 		c.setState(Realm.HEAVENLY_BEING, Stage.GRAND_PERFECTION, c.cultivationRequired());
-		helper.assertTrue(c.isAtBottleneck() && c.isBreakthroughLocked(), "Breakthroughs past Heavenly Being Grand Perfection stay locked");
+		// Not suppressed, so no realm lock (the user's call, 2026-10-19: Four Axis is in reach anywhere not suppressed); but the heavens
+		// can't see the Netherworld, so no heavenly tribulation comes there to take it (TribulationManager#start).
+		helper.assertTrue(c.isAtBottleneck() && !c.isBreakthroughLocked() && ModDimensions.isUnseenByHeaven(ModDimensions.NETHERWORLD),
+				"Breakthroughs past Heavenly Being Grand Perfection aren't locked by the realm, but the heavens don't see here");
 		RealmSuppressionHandler.applyRealm(c, ModDimensions.UPPER_REALM);
 		helper.assertTrue(!c.isBreakthroughLocked() && Math.abs(c.qiGatherPerSecond() - lowerQi * PlayerCultivation.UPPER_REALM_QI_MULTIPLIER) < 1.0e-9,
 				"...and open in the Upper Realm, with its x10");

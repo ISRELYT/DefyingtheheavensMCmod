@@ -42,6 +42,13 @@ public final class CultivationStats {
 		return (BASE_HEALTH + maxHealth(body.realm(), body.stage()) * body.scale()) * body.share();
 	}
 	public static double attackDamage(Realm r, Stage s) { return r.getAttackDamage() * s.getPowerMultiplier(); }
+	/** An Ancient Holy Body's health and strength (Physique) are this many times another's. */
+	public static final double HOLY_BODY = 1.3;
+
+	/** What {@code c}'s health (the whole of it) and its strength's bonus are multiplied by: {@link #HOLY_BODY} for an Ancient Holy Body. */
+	public static double holyFactor(PlayerCultivation c) {
+		return c.hasPhysique(Physique.ANCIENT_HOLY_BODY) ? HOLY_BODY : 1.0;
+	}
 	/** Fraction added to base walking speed (0.25 = +25%). */
 	public static double moveSpeed(Realm r, Stage s) { return r.getMoveSpeed() * s.getPowerMultiplier(); }
 	public static double armor(Realm r, Stage s) { return r.getArmor() * s.getPowerMultiplier(); }
@@ -67,8 +74,9 @@ public final class CultivationStats {
 		// path): half of every bonus, and half of the whole of its health, the hearts it started with too.
 		double share = body.share();
 		double scale = body.scale() * share;
-		set(player, Attributes.MAX_HEALTH, HEALTH_ID, "Cultivation max health", bodyHealth(body) - BASE_HEALTH);
-		set(player, Attributes.ATTACK_DAMAGE, DAMAGE_ID, "Cultivation attack damage", attackDamage(r, s) * scale);
+		double holy = holyFactor(c); // an Ancient Holy Body's health (the whole of it) and strength
+		set(player, Attributes.MAX_HEALTH, HEALTH_ID, "Cultivation max health", bodyHealth(body) * holy - BASE_HEALTH);
+		set(player, Attributes.ATTACK_DAMAGE, DAMAGE_ID, "Cultivation attack damage", attackDamage(r, s) * scale * holy);
 		set(player, Attributes.MOVEMENT_SPEED, SPEED_ID, "Cultivation speed", moveSpeed(r, s) * scale);
 		set(player, Attributes.ARMOR, ARMOR_ID, "Cultivation armor", armor(r, s) * scale);
 		set(player, Attributes.ARMOR_TOUGHNESS, TOUGHNESS_ID, "Cultivation toughness", toughness(r, s) * scale);

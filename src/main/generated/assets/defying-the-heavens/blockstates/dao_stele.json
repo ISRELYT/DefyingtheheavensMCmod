@@ -1,5 +1,17 @@
 {
   "variants": {
+    "facing=east,method=abyssal_void_tide_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_water_lower",
+      "y": 90
+    },
+    "facing=east,method=abyssal_void_tide_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_water_middle",
+      "y": 90
+    },
+    "facing=east,method=abyssal_void_tide_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_water_upper",
+      "y": 90
+    },
     "facing=east,method=ancient_cypress_art,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_wood_lower",
       "y": 90
@@ -22,6 +34,18 @@
     },
     "facing=east,method=boundless_four_seas_canon,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_water_upper",
+      "y": 90
+    },
+    "facing=east,method=buried_world_nirvana_classic,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_earth_lower",
+      "y": 90
+    },
+    "facing=east,method=buried_world_nirvana_classic,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_earth_middle",
+      "y": 90
+    },
+    "facing=east,method=buried_world_nirvana_classic,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_earth_upper",
       "y": 90
     },
     "facing=east,method=clear_fount_cleansing_manual,part=lower": {
@@ -84,6 +108,18 @@
       "model": "defying-the-heavens:block/dao_stele_wood_upper",
       "y": 90
     },
+    "facing=east,method=evergreen_immortal_sovereign_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_wood_lower",
+      "y": 90
+    },
+    "facing=east,method=evergreen_immortal_sovereign_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_wood_middle",
+      "y": 90
+    },
+    "facing=east,method=evergreen_immortal_sovereign_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_wood_upper",
+      "y": 90
+    },
     "facing=east,method=five_sacred_peaks_classic,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_earth_lower",
       "y": 90
@@ -118,6 +154,18 @@
     },
     "facing=east,method=four_swords_immortal_slaying_canon,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_metal_upper",
+      "y": 90
+    },
+    "facing=east,method=frozen_moon_nirvana_classic,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_water_lower",
+      "y": 90
+    },
+    "facing=east,method=frozen_moon_nirvana_classic,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_water_middle",
+      "y": 90
+    },
+    "facing=east,method=frozen_moon_nirvana_classic,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_water_upper",
       "y": 90
     },
     "facing=east,method=furnace_heart_manual,part=lower": {
@@ -192,6 +240,18 @@
       "model": "defying-the-heavens:block/dao_stele_fire_upper",
       "y": 90
     },
+    "facing=east,method=heaven_furnace_vessel_sutra,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_fire_lower",
+      "y": 90
+    },
+    "facing=east,method=heaven_furnace_vessel_sutra,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_fire_middle",
+      "y": 90
+    },
+    "facing=east,method=heaven_furnace_vessel_sutra,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_fire_upper",
+      "y": 90
+    },
     "facing=east,method=heaven_severing_sword_scripture,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_metal_lower",
       "y": 90
@@ -201,6 +261,18 @@
       "y": 90
     },
     "facing=east,method=heaven_severing_sword_scripture,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_metal_upper",
+      "y": 90
+    },
+    "facing=east,method=heaven_slaying_immortal_sword_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_metal_lower",
+      "y": 90
+    },
+    "facing=east,method=heaven_slaying_immortal_sword_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_metal_middle",
+      "y": 90
+    },
+    "facing=east,method=heaven_slaying_immortal_sword_canon,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_metal_upper",
       "y": 90
     },
@@ -216,6 +288,18 @@
       "model": "defying-the-heavens:block/dao_stele_water_upper",
       "y": 90
     },
+    "facing=east,method=houtu_immortal_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_earth_lower",
+      "y": 90
+    },
+    "facing=east,method=houtu_immortal_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_earth_middle",
+      "y": 90
+    },
+    "facing=east,method=houtu_immortal_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_earth_upper",
+      "y": 90
+    },
     "facing=east,method=hundred_forged_lodestone_art,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_metal_lower",
       "y": 90
@@ -226,6 +310,42 @@
     },
     "facing=east,method=hundred_forged_lodestone_art,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_metal_upper",
+      "y": 90
+    },
+    "facing=east,method=hundred_rivers_dao_scripture,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_water_lower",
+      "y": 90
+    },
+    "facing=east,method=hundred_rivers_dao_scripture,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_water_middle",
+      "y": 90
+    },
+    "facing=east,method=hundred_rivers_dao_scripture,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_water_upper",
+      "y": 90
+    },
+    "facing=east,method=immortal_forging_vessel_sutra,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_metal_lower",
+      "y": 90
+    },
+    "facing=east,method=immortal_forging_vessel_sutra,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_metal_middle",
+      "y": 90
+    },
+    "facing=east,method=immortal_forging_vessel_sutra,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_metal_upper",
+      "y": 90
+    },
+    "facing=east,method=jianmu_sacred_vessel_sutra,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_wood_lower",
+      "y": 90
+    },
+    "facing=east,method=jianmu_sacred_vessel_sutra,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_wood_middle",
+      "y": 90
+    },
+    "facing=east,method=jianmu_sacred_vessel_sutra,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_wood_upper",
       "y": 90
     },
     "facing=east,method=moon_mirror_lake_sutra,part=lower": {
@@ -252,6 +372,30 @@
       "model": "defying-the-heavens:block/dao_stele_water_upper",
       "y": 90
     },
+    "facing=east,method=myriad_swords_return_scripture,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_metal_lower",
+      "y": 90
+    },
+    "facing=east,method=myriad_swords_return_scripture,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_metal_middle",
+      "y": 90
+    },
+    "facing=east,method=myriad_swords_return_scripture,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_metal_upper",
+      "y": 90
+    },
+    "facing=east,method=myriad_woods_dao_union_scripture,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_wood_lower",
+      "y": 90
+    },
+    "facing=east,method=myriad_woods_dao_union_scripture,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_wood_middle",
+      "y": 90
+    },
+    "facing=east,method=myriad_woods_dao_union_scripture,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_wood_upper",
+      "y": 90
+    },
     "facing=east,method=nine_bells_sword_soul_classic,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_metal_lower",
       "y": 90
@@ -276,6 +420,42 @@
       "model": "defying-the-heavens:block/dao_stele_water_upper",
       "y": 90
     },
+    "facing=east,method=nine_cauldrons_vessel_sutra,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_earth_lower",
+      "y": 90
+    },
+    "facing=east,method=nine_cauldrons_vessel_sutra,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_earth_middle",
+      "y": 90
+    },
+    "facing=east,method=nine_cauldrons_vessel_sutra,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_earth_upper",
+      "y": 90
+    },
+    "facing=east,method=one_flame_dao_scripture,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_fire_lower",
+      "y": 90
+    },
+    "facing=east,method=one_flame_dao_scripture,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_fire_middle",
+      "y": 90
+    },
+    "facing=east,method=one_flame_dao_scripture,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_fire_upper",
+      "y": 90
+    },
+    "facing=east,method=primal_flame_immortal_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_fire_lower",
+      "y": 90
+    },
+    "facing=east,method=primal_flame_immortal_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_fire_middle",
+      "y": 90
+    },
+    "facing=east,method=primal_flame_immortal_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_fire_upper",
+      "y": 90
+    },
     "facing=east,method=primeval_forest_canon,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_wood_lower",
       "y": 90
@@ -286,6 +466,18 @@
     },
     "facing=east,method=primeval_forest_canon,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_wood_upper",
+      "y": 90
+    },
+    "facing=east,method=primordial_waters_immortal_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_water_lower",
+      "y": 90
+    },
+    "facing=east,method=primordial_waters_immortal_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_water_middle",
+      "y": 90
+    },
+    "facing=east,method=primordial_waters_immortal_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_water_upper",
       "y": 90
     },
     "facing=east,method=rammed_earth_manual,part=lower": {
@@ -300,6 +492,18 @@
       "model": "defying-the-heavens:block/dao_stele_earth_upper",
       "y": 90
     },
+    "facing=east,method=sealed_ocean_vessel_sutra,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_water_lower",
+      "y": 90
+    },
+    "facing=east,method=sealed_ocean_vessel_sutra,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_water_middle",
+      "y": 90
+    },
+    "facing=east,method=sealed_ocean_vessel_sutra,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_water_upper",
+      "y": 90
+    },
     "facing=east,method=sovereign_earth_myriad_bearing_sutra,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_earth_lower",
       "y": 90
@@ -309,6 +513,30 @@
       "y": 90
     },
     "facing=east,method=sovereign_earth_myriad_bearing_sutra,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_earth_upper",
+      "y": 90
+    },
+    "facing=east,method=sword_heart_nirvana_classic,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_metal_lower",
+      "y": 90
+    },
+    "facing=east,method=sword_heart_nirvana_classic,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_metal_middle",
+      "y": 90
+    },
+    "facing=east,method=sword_heart_nirvana_classic,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_metal_upper",
+      "y": 90
+    },
+    "facing=east,method=ten_thousand_mountains_scripture,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_earth_lower",
+      "y": 90
+    },
+    "facing=east,method=ten_thousand_mountains_scripture,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_earth_middle",
+      "y": 90
+    },
+    "facing=east,method=ten_thousand_mountains_scripture,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_earth_upper",
       "y": 90
     },
@@ -324,6 +552,18 @@
       "model": "defying-the-heavens:block/dao_stele_earth_upper",
       "y": 90
     },
+    "facing=east,method=undying_ember_nirvana_classic,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_fire_lower",
+      "y": 90
+    },
+    "facing=east,method=undying_ember_nirvana_classic,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_fire_middle",
+      "y": 90
+    },
+    "facing=east,method=undying_ember_nirvana_classic,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_fire_upper",
+      "y": 90
+    },
     "facing=east,method=vermilion_bird_sutra,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_fire_lower",
       "y": 90
@@ -334,6 +574,42 @@
     },
     "facing=east,method=vermilion_bird_sutra,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_fire_upper",
+      "y": 90
+    },
+    "facing=east,method=void_burning_fire_lotus_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_fire_lower",
+      "y": 90
+    },
+    "facing=east,method=void_burning_fire_lotus_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_fire_middle",
+      "y": 90
+    },
+    "facing=east,method=void_burning_fire_lotus_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_fire_upper",
+      "y": 90
+    },
+    "facing=east,method=void_rooted_divine_tree_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_wood_lower",
+      "y": 90
+    },
+    "facing=east,method=void_rooted_divine_tree_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_wood_middle",
+      "y": 90
+    },
+    "facing=east,method=void_rooted_divine_tree_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_wood_upper",
+      "y": 90
+    },
+    "facing=east,method=void_splitting_sword_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_metal_lower",
+      "y": 90
+    },
+    "facing=east,method=void_splitting_sword_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_metal_middle",
+      "y": 90
+    },
+    "facing=east,method=void_splitting_sword_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_metal_upper",
       "y": 90
     },
     "facing=east,method=whetstone_edge_manual,part=lower": {
@@ -348,6 +624,30 @@
       "model": "defying-the-heavens:block/dao_stele_metal_upper",
       "y": 90
     },
+    "facing=east,method=withering_flourishing_nirvana_classic,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_wood_lower",
+      "y": 90
+    },
+    "facing=east,method=withering_flourishing_nirvana_classic,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_wood_middle",
+      "y": 90
+    },
+    "facing=east,method=withering_flourishing_nirvana_classic,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_wood_upper",
+      "y": 90
+    },
+    "facing=east,method=world_breaking_ground_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_earth_lower",
+      "y": 90
+    },
+    "facing=east,method=world_breaking_ground_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_earth_middle",
+      "y": 90
+    },
+    "facing=east,method=world_breaking_ground_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_earth_upper",
+      "y": 90
+    },
     "facing=east,method=yellow_dragon_earth_vein_canon,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_earth_lower",
       "y": 90
@@ -359,6 +659,18 @@
     "facing=east,method=yellow_dragon_earth_vein_canon,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_earth_upper",
       "y": 90
+    },
+    "facing=north,method=abyssal_void_tide_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_water_lower",
+      "y": 0
+    },
+    "facing=north,method=abyssal_void_tide_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_water_middle",
+      "y": 0
+    },
+    "facing=north,method=abyssal_void_tide_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_water_upper",
+      "y": 0
     },
     "facing=north,method=ancient_cypress_art,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_wood_lower",
@@ -382,6 +694,18 @@
     },
     "facing=north,method=boundless_four_seas_canon,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_water_upper",
+      "y": 0
+    },
+    "facing=north,method=buried_world_nirvana_classic,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_earth_lower",
+      "y": 0
+    },
+    "facing=north,method=buried_world_nirvana_classic,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_earth_middle",
+      "y": 0
+    },
+    "facing=north,method=buried_world_nirvana_classic,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_earth_upper",
       "y": 0
     },
     "facing=north,method=clear_fount_cleansing_manual,part=lower": {
@@ -444,6 +768,18 @@
       "model": "defying-the-heavens:block/dao_stele_wood_upper",
       "y": 0
     },
+    "facing=north,method=evergreen_immortal_sovereign_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_wood_lower",
+      "y": 0
+    },
+    "facing=north,method=evergreen_immortal_sovereign_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_wood_middle",
+      "y": 0
+    },
+    "facing=north,method=evergreen_immortal_sovereign_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_wood_upper",
+      "y": 0
+    },
     "facing=north,method=five_sacred_peaks_classic,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_earth_lower",
       "y": 0
@@ -478,6 +814,18 @@
     },
     "facing=north,method=four_swords_immortal_slaying_canon,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_metal_upper",
+      "y": 0
+    },
+    "facing=north,method=frozen_moon_nirvana_classic,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_water_lower",
+      "y": 0
+    },
+    "facing=north,method=frozen_moon_nirvana_classic,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_water_middle",
+      "y": 0
+    },
+    "facing=north,method=frozen_moon_nirvana_classic,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_water_upper",
       "y": 0
     },
     "facing=north,method=furnace_heart_manual,part=lower": {
@@ -552,6 +900,18 @@
       "model": "defying-the-heavens:block/dao_stele_fire_upper",
       "y": 0
     },
+    "facing=north,method=heaven_furnace_vessel_sutra,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_fire_lower",
+      "y": 0
+    },
+    "facing=north,method=heaven_furnace_vessel_sutra,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_fire_middle",
+      "y": 0
+    },
+    "facing=north,method=heaven_furnace_vessel_sutra,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_fire_upper",
+      "y": 0
+    },
     "facing=north,method=heaven_severing_sword_scripture,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_metal_lower",
       "y": 0
@@ -561,6 +921,18 @@
       "y": 0
     },
     "facing=north,method=heaven_severing_sword_scripture,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_metal_upper",
+      "y": 0
+    },
+    "facing=north,method=heaven_slaying_immortal_sword_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_metal_lower",
+      "y": 0
+    },
+    "facing=north,method=heaven_slaying_immortal_sword_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_metal_middle",
+      "y": 0
+    },
+    "facing=north,method=heaven_slaying_immortal_sword_canon,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_metal_upper",
       "y": 0
     },
@@ -576,6 +948,18 @@
       "model": "defying-the-heavens:block/dao_stele_water_upper",
       "y": 0
     },
+    "facing=north,method=houtu_immortal_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_earth_lower",
+      "y": 0
+    },
+    "facing=north,method=houtu_immortal_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_earth_middle",
+      "y": 0
+    },
+    "facing=north,method=houtu_immortal_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_earth_upper",
+      "y": 0
+    },
     "facing=north,method=hundred_forged_lodestone_art,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_metal_lower",
       "y": 0
@@ -586,6 +970,42 @@
     },
     "facing=north,method=hundred_forged_lodestone_art,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_metal_upper",
+      "y": 0
+    },
+    "facing=north,method=hundred_rivers_dao_scripture,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_water_lower",
+      "y": 0
+    },
+    "facing=north,method=hundred_rivers_dao_scripture,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_water_middle",
+      "y": 0
+    },
+    "facing=north,method=hundred_rivers_dao_scripture,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_water_upper",
+      "y": 0
+    },
+    "facing=north,method=immortal_forging_vessel_sutra,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_metal_lower",
+      "y": 0
+    },
+    "facing=north,method=immortal_forging_vessel_sutra,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_metal_middle",
+      "y": 0
+    },
+    "facing=north,method=immortal_forging_vessel_sutra,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_metal_upper",
+      "y": 0
+    },
+    "facing=north,method=jianmu_sacred_vessel_sutra,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_wood_lower",
+      "y": 0
+    },
+    "facing=north,method=jianmu_sacred_vessel_sutra,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_wood_middle",
+      "y": 0
+    },
+    "facing=north,method=jianmu_sacred_vessel_sutra,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_wood_upper",
       "y": 0
     },
     "facing=north,method=moon_mirror_lake_sutra,part=lower": {
@@ -612,6 +1032,30 @@
       "model": "defying-the-heavens:block/dao_stele_water_upper",
       "y": 0
     },
+    "facing=north,method=myriad_swords_return_scripture,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_metal_lower",
+      "y": 0
+    },
+    "facing=north,method=myriad_swords_return_scripture,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_metal_middle",
+      "y": 0
+    },
+    "facing=north,method=myriad_swords_return_scripture,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_metal_upper",
+      "y": 0
+    },
+    "facing=north,method=myriad_woods_dao_union_scripture,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_wood_lower",
+      "y": 0
+    },
+    "facing=north,method=myriad_woods_dao_union_scripture,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_wood_middle",
+      "y": 0
+    },
+    "facing=north,method=myriad_woods_dao_union_scripture,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_wood_upper",
+      "y": 0
+    },
     "facing=north,method=nine_bells_sword_soul_classic,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_metal_lower",
       "y": 0
@@ -636,6 +1080,42 @@
       "model": "defying-the-heavens:block/dao_stele_water_upper",
       "y": 0
     },
+    "facing=north,method=nine_cauldrons_vessel_sutra,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_earth_lower",
+      "y": 0
+    },
+    "facing=north,method=nine_cauldrons_vessel_sutra,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_earth_middle",
+      "y": 0
+    },
+    "facing=north,method=nine_cauldrons_vessel_sutra,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_earth_upper",
+      "y": 0
+    },
+    "facing=north,method=one_flame_dao_scripture,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_fire_lower",
+      "y": 0
+    },
+    "facing=north,method=one_flame_dao_scripture,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_fire_middle",
+      "y": 0
+    },
+    "facing=north,method=one_flame_dao_scripture,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_fire_upper",
+      "y": 0
+    },
+    "facing=north,method=primal_flame_immortal_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_fire_lower",
+      "y": 0
+    },
+    "facing=north,method=primal_flame_immortal_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_fire_middle",
+      "y": 0
+    },
+    "facing=north,method=primal_flame_immortal_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_fire_upper",
+      "y": 0
+    },
     "facing=north,method=primeval_forest_canon,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_wood_lower",
       "y": 0
@@ -646,6 +1126,18 @@
     },
     "facing=north,method=primeval_forest_canon,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_wood_upper",
+      "y": 0
+    },
+    "facing=north,method=primordial_waters_immortal_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_water_lower",
+      "y": 0
+    },
+    "facing=north,method=primordial_waters_immortal_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_water_middle",
+      "y": 0
+    },
+    "facing=north,method=primordial_waters_immortal_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_water_upper",
       "y": 0
     },
     "facing=north,method=rammed_earth_manual,part=lower": {
@@ -660,6 +1152,18 @@
       "model": "defying-the-heavens:block/dao_stele_earth_upper",
       "y": 0
     },
+    "facing=north,method=sealed_ocean_vessel_sutra,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_water_lower",
+      "y": 0
+    },
+    "facing=north,method=sealed_ocean_vessel_sutra,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_water_middle",
+      "y": 0
+    },
+    "facing=north,method=sealed_ocean_vessel_sutra,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_water_upper",
+      "y": 0
+    },
     "facing=north,method=sovereign_earth_myriad_bearing_sutra,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_earth_lower",
       "y": 0
@@ -669,6 +1173,30 @@
       "y": 0
     },
     "facing=north,method=sovereign_earth_myriad_bearing_sutra,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_earth_upper",
+      "y": 0
+    },
+    "facing=north,method=sword_heart_nirvana_classic,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_metal_lower",
+      "y": 0
+    },
+    "facing=north,method=sword_heart_nirvana_classic,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_metal_middle",
+      "y": 0
+    },
+    "facing=north,method=sword_heart_nirvana_classic,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_metal_upper",
+      "y": 0
+    },
+    "facing=north,method=ten_thousand_mountains_scripture,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_earth_lower",
+      "y": 0
+    },
+    "facing=north,method=ten_thousand_mountains_scripture,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_earth_middle",
+      "y": 0
+    },
+    "facing=north,method=ten_thousand_mountains_scripture,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_earth_upper",
       "y": 0
     },
@@ -684,6 +1212,18 @@
       "model": "defying-the-heavens:block/dao_stele_earth_upper",
       "y": 0
     },
+    "facing=north,method=undying_ember_nirvana_classic,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_fire_lower",
+      "y": 0
+    },
+    "facing=north,method=undying_ember_nirvana_classic,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_fire_middle",
+      "y": 0
+    },
+    "facing=north,method=undying_ember_nirvana_classic,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_fire_upper",
+      "y": 0
+    },
     "facing=north,method=vermilion_bird_sutra,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_fire_lower",
       "y": 0
@@ -694,6 +1234,42 @@
     },
     "facing=north,method=vermilion_bird_sutra,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_fire_upper",
+      "y": 0
+    },
+    "facing=north,method=void_burning_fire_lotus_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_fire_lower",
+      "y": 0
+    },
+    "facing=north,method=void_burning_fire_lotus_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_fire_middle",
+      "y": 0
+    },
+    "facing=north,method=void_burning_fire_lotus_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_fire_upper",
+      "y": 0
+    },
+    "facing=north,method=void_rooted_divine_tree_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_wood_lower",
+      "y": 0
+    },
+    "facing=north,method=void_rooted_divine_tree_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_wood_middle",
+      "y": 0
+    },
+    "facing=north,method=void_rooted_divine_tree_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_wood_upper",
+      "y": 0
+    },
+    "facing=north,method=void_splitting_sword_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_metal_lower",
+      "y": 0
+    },
+    "facing=north,method=void_splitting_sword_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_metal_middle",
+      "y": 0
+    },
+    "facing=north,method=void_splitting_sword_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_metal_upper",
       "y": 0
     },
     "facing=north,method=whetstone_edge_manual,part=lower": {
@@ -708,6 +1284,30 @@
       "model": "defying-the-heavens:block/dao_stele_metal_upper",
       "y": 0
     },
+    "facing=north,method=withering_flourishing_nirvana_classic,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_wood_lower",
+      "y": 0
+    },
+    "facing=north,method=withering_flourishing_nirvana_classic,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_wood_middle",
+      "y": 0
+    },
+    "facing=north,method=withering_flourishing_nirvana_classic,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_wood_upper",
+      "y": 0
+    },
+    "facing=north,method=world_breaking_ground_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_earth_lower",
+      "y": 0
+    },
+    "facing=north,method=world_breaking_ground_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_earth_middle",
+      "y": 0
+    },
+    "facing=north,method=world_breaking_ground_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_earth_upper",
+      "y": 0
+    },
     "facing=north,method=yellow_dragon_earth_vein_canon,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_earth_lower",
       "y": 0
@@ -719,6 +1319,18 @@
     "facing=north,method=yellow_dragon_earth_vein_canon,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_earth_upper",
       "y": 0
+    },
+    "facing=south,method=abyssal_void_tide_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_water_lower",
+      "y": 180
+    },
+    "facing=south,method=abyssal_void_tide_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_water_middle",
+      "y": 180
+    },
+    "facing=south,method=abyssal_void_tide_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_water_upper",
+      "y": 180
     },
     "facing=south,method=ancient_cypress_art,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_wood_lower",
@@ -742,6 +1354,18 @@
     },
     "facing=south,method=boundless_four_seas_canon,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_water_upper",
+      "y": 180
+    },
+    "facing=south,method=buried_world_nirvana_classic,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_earth_lower",
+      "y": 180
+    },
+    "facing=south,method=buried_world_nirvana_classic,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_earth_middle",
+      "y": 180
+    },
+    "facing=south,method=buried_world_nirvana_classic,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_earth_upper",
       "y": 180
     },
     "facing=south,method=clear_fount_cleansing_manual,part=lower": {
@@ -804,6 +1428,18 @@
       "model": "defying-the-heavens:block/dao_stele_wood_upper",
       "y": 180
     },
+    "facing=south,method=evergreen_immortal_sovereign_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_wood_lower",
+      "y": 180
+    },
+    "facing=south,method=evergreen_immortal_sovereign_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_wood_middle",
+      "y": 180
+    },
+    "facing=south,method=evergreen_immortal_sovereign_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_wood_upper",
+      "y": 180
+    },
     "facing=south,method=five_sacred_peaks_classic,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_earth_lower",
       "y": 180
@@ -838,6 +1474,18 @@
     },
     "facing=south,method=four_swords_immortal_slaying_canon,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_metal_upper",
+      "y": 180
+    },
+    "facing=south,method=frozen_moon_nirvana_classic,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_water_lower",
+      "y": 180
+    },
+    "facing=south,method=frozen_moon_nirvana_classic,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_water_middle",
+      "y": 180
+    },
+    "facing=south,method=frozen_moon_nirvana_classic,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_water_upper",
       "y": 180
     },
     "facing=south,method=furnace_heart_manual,part=lower": {
@@ -912,6 +1560,18 @@
       "model": "defying-the-heavens:block/dao_stele_fire_upper",
       "y": 180
     },
+    "facing=south,method=heaven_furnace_vessel_sutra,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_fire_lower",
+      "y": 180
+    },
+    "facing=south,method=heaven_furnace_vessel_sutra,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_fire_middle",
+      "y": 180
+    },
+    "facing=south,method=heaven_furnace_vessel_sutra,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_fire_upper",
+      "y": 180
+    },
     "facing=south,method=heaven_severing_sword_scripture,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_metal_lower",
       "y": 180
@@ -921,6 +1581,18 @@
       "y": 180
     },
     "facing=south,method=heaven_severing_sword_scripture,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_metal_upper",
+      "y": 180
+    },
+    "facing=south,method=heaven_slaying_immortal_sword_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_metal_lower",
+      "y": 180
+    },
+    "facing=south,method=heaven_slaying_immortal_sword_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_metal_middle",
+      "y": 180
+    },
+    "facing=south,method=heaven_slaying_immortal_sword_canon,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_metal_upper",
       "y": 180
     },
@@ -936,6 +1608,18 @@
       "model": "defying-the-heavens:block/dao_stele_water_upper",
       "y": 180
     },
+    "facing=south,method=houtu_immortal_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_earth_lower",
+      "y": 180
+    },
+    "facing=south,method=houtu_immortal_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_earth_middle",
+      "y": 180
+    },
+    "facing=south,method=houtu_immortal_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_earth_upper",
+      "y": 180
+    },
     "facing=south,method=hundred_forged_lodestone_art,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_metal_lower",
       "y": 180
@@ -946,6 +1630,42 @@
     },
     "facing=south,method=hundred_forged_lodestone_art,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_metal_upper",
+      "y": 180
+    },
+    "facing=south,method=hundred_rivers_dao_scripture,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_water_lower",
+      "y": 180
+    },
+    "facing=south,method=hundred_rivers_dao_scripture,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_water_middle",
+      "y": 180
+    },
+    "facing=south,method=hundred_rivers_dao_scripture,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_water_upper",
+      "y": 180
+    },
+    "facing=south,method=immortal_forging_vessel_sutra,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_metal_lower",
+      "y": 180
+    },
+    "facing=south,method=immortal_forging_vessel_sutra,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_metal_middle",
+      "y": 180
+    },
+    "facing=south,method=immortal_forging_vessel_sutra,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_metal_upper",
+      "y": 180
+    },
+    "facing=south,method=jianmu_sacred_vessel_sutra,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_wood_lower",
+      "y": 180
+    },
+    "facing=south,method=jianmu_sacred_vessel_sutra,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_wood_middle",
+      "y": 180
+    },
+    "facing=south,method=jianmu_sacred_vessel_sutra,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_wood_upper",
       "y": 180
     },
     "facing=south,method=moon_mirror_lake_sutra,part=lower": {
@@ -972,6 +1692,30 @@
       "model": "defying-the-heavens:block/dao_stele_water_upper",
       "y": 180
     },
+    "facing=south,method=myriad_swords_return_scripture,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_metal_lower",
+      "y": 180
+    },
+    "facing=south,method=myriad_swords_return_scripture,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_metal_middle",
+      "y": 180
+    },
+    "facing=south,method=myriad_swords_return_scripture,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_metal_upper",
+      "y": 180
+    },
+    "facing=south,method=myriad_woods_dao_union_scripture,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_wood_lower",
+      "y": 180
+    },
+    "facing=south,method=myriad_woods_dao_union_scripture,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_wood_middle",
+      "y": 180
+    },
+    "facing=south,method=myriad_woods_dao_union_scripture,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_wood_upper",
+      "y": 180
+    },
     "facing=south,method=nine_bells_sword_soul_classic,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_metal_lower",
       "y": 180
@@ -996,6 +1740,42 @@
       "model": "defying-the-heavens:block/dao_stele_water_upper",
       "y": 180
     },
+    "facing=south,method=nine_cauldrons_vessel_sutra,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_earth_lower",
+      "y": 180
+    },
+    "facing=south,method=nine_cauldrons_vessel_sutra,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_earth_middle",
+      "y": 180
+    },
+    "facing=south,method=nine_cauldrons_vessel_sutra,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_earth_upper",
+      "y": 180
+    },
+    "facing=south,method=one_flame_dao_scripture,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_fire_lower",
+      "y": 180
+    },
+    "facing=south,method=one_flame_dao_scripture,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_fire_middle",
+      "y": 180
+    },
+    "facing=south,method=one_flame_dao_scripture,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_fire_upper",
+      "y": 180
+    },
+    "facing=south,method=primal_flame_immortal_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_fire_lower",
+      "y": 180
+    },
+    "facing=south,method=primal_flame_immortal_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_fire_middle",
+      "y": 180
+    },
+    "facing=south,method=primal_flame_immortal_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_fire_upper",
+      "y": 180
+    },
     "facing=south,method=primeval_forest_canon,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_wood_lower",
       "y": 180
@@ -1006,6 +1786,18 @@
     },
     "facing=south,method=primeval_forest_canon,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_wood_upper",
+      "y": 180
+    },
+    "facing=south,method=primordial_waters_immortal_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_water_lower",
+      "y": 180
+    },
+    "facing=south,method=primordial_waters_immortal_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_water_middle",
+      "y": 180
+    },
+    "facing=south,method=primordial_waters_immortal_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_water_upper",
       "y": 180
     },
     "facing=south,method=rammed_earth_manual,part=lower": {
@@ -1020,6 +1812,18 @@
       "model": "defying-the-heavens:block/dao_stele_earth_upper",
       "y": 180
     },
+    "facing=south,method=sealed_ocean_vessel_sutra,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_water_lower",
+      "y": 180
+    },
+    "facing=south,method=sealed_ocean_vessel_sutra,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_water_middle",
+      "y": 180
+    },
+    "facing=south,method=sealed_ocean_vessel_sutra,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_water_upper",
+      "y": 180
+    },
     "facing=south,method=sovereign_earth_myriad_bearing_sutra,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_earth_lower",
       "y": 180
@@ -1029,6 +1833,30 @@
       "y": 180
     },
     "facing=south,method=sovereign_earth_myriad_bearing_sutra,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_earth_upper",
+      "y": 180
+    },
+    "facing=south,method=sword_heart_nirvana_classic,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_metal_lower",
+      "y": 180
+    },
+    "facing=south,method=sword_heart_nirvana_classic,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_metal_middle",
+      "y": 180
+    },
+    "facing=south,method=sword_heart_nirvana_classic,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_metal_upper",
+      "y": 180
+    },
+    "facing=south,method=ten_thousand_mountains_scripture,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_earth_lower",
+      "y": 180
+    },
+    "facing=south,method=ten_thousand_mountains_scripture,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_earth_middle",
+      "y": 180
+    },
+    "facing=south,method=ten_thousand_mountains_scripture,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_earth_upper",
       "y": 180
     },
@@ -1044,6 +1872,18 @@
       "model": "defying-the-heavens:block/dao_stele_earth_upper",
       "y": 180
     },
+    "facing=south,method=undying_ember_nirvana_classic,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_fire_lower",
+      "y": 180
+    },
+    "facing=south,method=undying_ember_nirvana_classic,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_fire_middle",
+      "y": 180
+    },
+    "facing=south,method=undying_ember_nirvana_classic,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_fire_upper",
+      "y": 180
+    },
     "facing=south,method=vermilion_bird_sutra,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_fire_lower",
       "y": 180
@@ -1054,6 +1894,42 @@
     },
     "facing=south,method=vermilion_bird_sutra,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_fire_upper",
+      "y": 180
+    },
+    "facing=south,method=void_burning_fire_lotus_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_fire_lower",
+      "y": 180
+    },
+    "facing=south,method=void_burning_fire_lotus_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_fire_middle",
+      "y": 180
+    },
+    "facing=south,method=void_burning_fire_lotus_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_fire_upper",
+      "y": 180
+    },
+    "facing=south,method=void_rooted_divine_tree_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_wood_lower",
+      "y": 180
+    },
+    "facing=south,method=void_rooted_divine_tree_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_wood_middle",
+      "y": 180
+    },
+    "facing=south,method=void_rooted_divine_tree_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_wood_upper",
+      "y": 180
+    },
+    "facing=south,method=void_splitting_sword_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_metal_lower",
+      "y": 180
+    },
+    "facing=south,method=void_splitting_sword_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_metal_middle",
+      "y": 180
+    },
+    "facing=south,method=void_splitting_sword_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_metal_upper",
       "y": 180
     },
     "facing=south,method=whetstone_edge_manual,part=lower": {
@@ -1068,6 +1944,30 @@
       "model": "defying-the-heavens:block/dao_stele_metal_upper",
       "y": 180
     },
+    "facing=south,method=withering_flourishing_nirvana_classic,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_wood_lower",
+      "y": 180
+    },
+    "facing=south,method=withering_flourishing_nirvana_classic,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_wood_middle",
+      "y": 180
+    },
+    "facing=south,method=withering_flourishing_nirvana_classic,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_wood_upper",
+      "y": 180
+    },
+    "facing=south,method=world_breaking_ground_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_earth_lower",
+      "y": 180
+    },
+    "facing=south,method=world_breaking_ground_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_earth_middle",
+      "y": 180
+    },
+    "facing=south,method=world_breaking_ground_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_earth_upper",
+      "y": 180
+    },
     "facing=south,method=yellow_dragon_earth_vein_canon,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_earth_lower",
       "y": 180
@@ -1079,6 +1979,18 @@
     "facing=south,method=yellow_dragon_earth_vein_canon,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_earth_upper",
       "y": 180
+    },
+    "facing=west,method=abyssal_void_tide_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_water_lower",
+      "y": 270
+    },
+    "facing=west,method=abyssal_void_tide_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_water_middle",
+      "y": 270
+    },
+    "facing=west,method=abyssal_void_tide_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_water_upper",
+      "y": 270
     },
     "facing=west,method=ancient_cypress_art,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_wood_lower",
@@ -1102,6 +2014,18 @@
     },
     "facing=west,method=boundless_four_seas_canon,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_water_upper",
+      "y": 270
+    },
+    "facing=west,method=buried_world_nirvana_classic,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_earth_lower",
+      "y": 270
+    },
+    "facing=west,method=buried_world_nirvana_classic,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_earth_middle",
+      "y": 270
+    },
+    "facing=west,method=buried_world_nirvana_classic,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_earth_upper",
       "y": 270
     },
     "facing=west,method=clear_fount_cleansing_manual,part=lower": {
@@ -1164,6 +2088,18 @@
       "model": "defying-the-heavens:block/dao_stele_wood_upper",
       "y": 270
     },
+    "facing=west,method=evergreen_immortal_sovereign_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_wood_lower",
+      "y": 270
+    },
+    "facing=west,method=evergreen_immortal_sovereign_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_wood_middle",
+      "y": 270
+    },
+    "facing=west,method=evergreen_immortal_sovereign_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_wood_upper",
+      "y": 270
+    },
     "facing=west,method=five_sacred_peaks_classic,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_earth_lower",
       "y": 270
@@ -1198,6 +2134,18 @@
     },
     "facing=west,method=four_swords_immortal_slaying_canon,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_metal_upper",
+      "y": 270
+    },
+    "facing=west,method=frozen_moon_nirvana_classic,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_water_lower",
+      "y": 270
+    },
+    "facing=west,method=frozen_moon_nirvana_classic,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_water_middle",
+      "y": 270
+    },
+    "facing=west,method=frozen_moon_nirvana_classic,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_water_upper",
       "y": 270
     },
     "facing=west,method=furnace_heart_manual,part=lower": {
@@ -1272,6 +2220,18 @@
       "model": "defying-the-heavens:block/dao_stele_fire_upper",
       "y": 270
     },
+    "facing=west,method=heaven_furnace_vessel_sutra,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_fire_lower",
+      "y": 270
+    },
+    "facing=west,method=heaven_furnace_vessel_sutra,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_fire_middle",
+      "y": 270
+    },
+    "facing=west,method=heaven_furnace_vessel_sutra,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_fire_upper",
+      "y": 270
+    },
     "facing=west,method=heaven_severing_sword_scripture,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_metal_lower",
       "y": 270
@@ -1281,6 +2241,18 @@
       "y": 270
     },
     "facing=west,method=heaven_severing_sword_scripture,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_metal_upper",
+      "y": 270
+    },
+    "facing=west,method=heaven_slaying_immortal_sword_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_metal_lower",
+      "y": 270
+    },
+    "facing=west,method=heaven_slaying_immortal_sword_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_metal_middle",
+      "y": 270
+    },
+    "facing=west,method=heaven_slaying_immortal_sword_canon,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_metal_upper",
       "y": 270
     },
@@ -1296,6 +2268,18 @@
       "model": "defying-the-heavens:block/dao_stele_water_upper",
       "y": 270
     },
+    "facing=west,method=houtu_immortal_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_earth_lower",
+      "y": 270
+    },
+    "facing=west,method=houtu_immortal_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_earth_middle",
+      "y": 270
+    },
+    "facing=west,method=houtu_immortal_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_earth_upper",
+      "y": 270
+    },
     "facing=west,method=hundred_forged_lodestone_art,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_metal_lower",
       "y": 270
@@ -1306,6 +2290,42 @@
     },
     "facing=west,method=hundred_forged_lodestone_art,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_metal_upper",
+      "y": 270
+    },
+    "facing=west,method=hundred_rivers_dao_scripture,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_water_lower",
+      "y": 270
+    },
+    "facing=west,method=hundred_rivers_dao_scripture,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_water_middle",
+      "y": 270
+    },
+    "facing=west,method=hundred_rivers_dao_scripture,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_water_upper",
+      "y": 270
+    },
+    "facing=west,method=immortal_forging_vessel_sutra,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_metal_lower",
+      "y": 270
+    },
+    "facing=west,method=immortal_forging_vessel_sutra,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_metal_middle",
+      "y": 270
+    },
+    "facing=west,method=immortal_forging_vessel_sutra,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_metal_upper",
+      "y": 270
+    },
+    "facing=west,method=jianmu_sacred_vessel_sutra,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_wood_lower",
+      "y": 270
+    },
+    "facing=west,method=jianmu_sacred_vessel_sutra,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_wood_middle",
+      "y": 270
+    },
+    "facing=west,method=jianmu_sacred_vessel_sutra,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_wood_upper",
       "y": 270
     },
     "facing=west,method=moon_mirror_lake_sutra,part=lower": {
@@ -1332,6 +2352,30 @@
       "model": "defying-the-heavens:block/dao_stele_water_upper",
       "y": 270
     },
+    "facing=west,method=myriad_swords_return_scripture,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_metal_lower",
+      "y": 270
+    },
+    "facing=west,method=myriad_swords_return_scripture,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_metal_middle",
+      "y": 270
+    },
+    "facing=west,method=myriad_swords_return_scripture,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_metal_upper",
+      "y": 270
+    },
+    "facing=west,method=myriad_woods_dao_union_scripture,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_wood_lower",
+      "y": 270
+    },
+    "facing=west,method=myriad_woods_dao_union_scripture,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_wood_middle",
+      "y": 270
+    },
+    "facing=west,method=myriad_woods_dao_union_scripture,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_wood_upper",
+      "y": 270
+    },
     "facing=west,method=nine_bells_sword_soul_classic,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_metal_lower",
       "y": 270
@@ -1356,6 +2400,42 @@
       "model": "defying-the-heavens:block/dao_stele_water_upper",
       "y": 270
     },
+    "facing=west,method=nine_cauldrons_vessel_sutra,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_earth_lower",
+      "y": 270
+    },
+    "facing=west,method=nine_cauldrons_vessel_sutra,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_earth_middle",
+      "y": 270
+    },
+    "facing=west,method=nine_cauldrons_vessel_sutra,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_earth_upper",
+      "y": 270
+    },
+    "facing=west,method=one_flame_dao_scripture,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_fire_lower",
+      "y": 270
+    },
+    "facing=west,method=one_flame_dao_scripture,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_fire_middle",
+      "y": 270
+    },
+    "facing=west,method=one_flame_dao_scripture,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_fire_upper",
+      "y": 270
+    },
+    "facing=west,method=primal_flame_immortal_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_fire_lower",
+      "y": 270
+    },
+    "facing=west,method=primal_flame_immortal_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_fire_middle",
+      "y": 270
+    },
+    "facing=west,method=primal_flame_immortal_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_fire_upper",
+      "y": 270
+    },
     "facing=west,method=primeval_forest_canon,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_wood_lower",
       "y": 270
@@ -1366,6 +2446,18 @@
     },
     "facing=west,method=primeval_forest_canon,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_wood_upper",
+      "y": 270
+    },
+    "facing=west,method=primordial_waters_immortal_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_water_lower",
+      "y": 270
+    },
+    "facing=west,method=primordial_waters_immortal_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_water_middle",
+      "y": 270
+    },
+    "facing=west,method=primordial_waters_immortal_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_water_upper",
       "y": 270
     },
     "facing=west,method=rammed_earth_manual,part=lower": {
@@ -1380,6 +2472,18 @@
       "model": "defying-the-heavens:block/dao_stele_earth_upper",
       "y": 270
     },
+    "facing=west,method=sealed_ocean_vessel_sutra,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_water_lower",
+      "y": 270
+    },
+    "facing=west,method=sealed_ocean_vessel_sutra,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_water_middle",
+      "y": 270
+    },
+    "facing=west,method=sealed_ocean_vessel_sutra,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_water_upper",
+      "y": 270
+    },
     "facing=west,method=sovereign_earth_myriad_bearing_sutra,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_earth_lower",
       "y": 270
@@ -1389,6 +2493,30 @@
       "y": 270
     },
     "facing=west,method=sovereign_earth_myriad_bearing_sutra,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_earth_upper",
+      "y": 270
+    },
+    "facing=west,method=sword_heart_nirvana_classic,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_metal_lower",
+      "y": 270
+    },
+    "facing=west,method=sword_heart_nirvana_classic,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_metal_middle",
+      "y": 270
+    },
+    "facing=west,method=sword_heart_nirvana_classic,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_metal_upper",
+      "y": 270
+    },
+    "facing=west,method=ten_thousand_mountains_scripture,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_earth_lower",
+      "y": 270
+    },
+    "facing=west,method=ten_thousand_mountains_scripture,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_earth_middle",
+      "y": 270
+    },
+    "facing=west,method=ten_thousand_mountains_scripture,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_earth_upper",
       "y": 270
     },
@@ -1404,6 +2532,18 @@
       "model": "defying-the-heavens:block/dao_stele_earth_upper",
       "y": 270
     },
+    "facing=west,method=undying_ember_nirvana_classic,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_fire_lower",
+      "y": 270
+    },
+    "facing=west,method=undying_ember_nirvana_classic,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_fire_middle",
+      "y": 270
+    },
+    "facing=west,method=undying_ember_nirvana_classic,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_fire_upper",
+      "y": 270
+    },
     "facing=west,method=vermilion_bird_sutra,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_fire_lower",
       "y": 270
@@ -1416,6 +2556,42 @@
       "model": "defying-the-heavens:block/dao_stele_fire_upper",
       "y": 270
     },
+    "facing=west,method=void_burning_fire_lotus_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_fire_lower",
+      "y": 270
+    },
+    "facing=west,method=void_burning_fire_lotus_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_fire_middle",
+      "y": 270
+    },
+    "facing=west,method=void_burning_fire_lotus_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_fire_upper",
+      "y": 270
+    },
+    "facing=west,method=void_rooted_divine_tree_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_wood_lower",
+      "y": 270
+    },
+    "facing=west,method=void_rooted_divine_tree_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_wood_middle",
+      "y": 270
+    },
+    "facing=west,method=void_rooted_divine_tree_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_wood_upper",
+      "y": 270
+    },
+    "facing=west,method=void_splitting_sword_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_metal_lower",
+      "y": 270
+    },
+    "facing=west,method=void_splitting_sword_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_metal_middle",
+      "y": 270
+    },
+    "facing=west,method=void_splitting_sword_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_metal_upper",
+      "y": 270
+    },
     "facing=west,method=whetstone_edge_manual,part=lower": {
       "model": "defying-the-heavens:block/dao_stele_metal_lower",
       "y": 270
@@ -1426,6 +2602,30 @@
     },
     "facing=west,method=whetstone_edge_manual,part=upper": {
       "model": "defying-the-heavens:block/dao_stele_metal_upper",
+      "y": 270
+    },
+    "facing=west,method=withering_flourishing_nirvana_classic,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_wood_lower",
+      "y": 270
+    },
+    "facing=west,method=withering_flourishing_nirvana_classic,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_wood_middle",
+      "y": 270
+    },
+    "facing=west,method=withering_flourishing_nirvana_classic,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_wood_upper",
+      "y": 270
+    },
+    "facing=west,method=world_breaking_ground_canon,part=lower": {
+      "model": "defying-the-heavens:block/dao_stele_earth_lower",
+      "y": 270
+    },
+    "facing=west,method=world_breaking_ground_canon,part=middle": {
+      "model": "defying-the-heavens:block/dao_stele_earth_middle",
+      "y": 270
+    },
+    "facing=west,method=world_breaking_ground_canon,part=upper": {
+      "model": "defying-the-heavens:block/dao_stele_earth_upper",
       "y": 270
     },
     "facing=west,method=yellow_dragon_earth_vein_canon,part=lower": {

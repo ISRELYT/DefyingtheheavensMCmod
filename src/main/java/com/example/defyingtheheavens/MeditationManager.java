@@ -29,6 +29,8 @@ public final class MeditationManager {
 		int lastCircuitTick = -CIRCULATION_LASTS;
 		/** Cultivation won from surge games (wisps, a walked sequence, a slain heart demon), added on the next gain. */
 		double bonusCultivation;
+		/** What the heaven method practised saves of the years its gain costs (Lifespan#saving), as heavenMethods last reckoned it. */
+		double methodSaving = 1;
 
 		/** Ticks left in which a soul just arrived in the Inner Realm settles onto the island (moving doesn't count yet). */
 		int settling;
@@ -223,6 +225,15 @@ public final class MeditationManager {
 	}
 
 	/**
+	 * The pace a meditation is set to (the Cultivation tab: x1 its own to x3; Lifespan#pacePrice: what it wins the dearer in years), by
+	 * which every gain of it comes the faster: both paths' cultivation, the methods' settling on it, pill and fruit qi refined, a
+	 * body tempered. Not a reward of so many seconds of it (addBonusSeconds): that is the meditation's own pace's.
+	 */
+	private static int pace(ServerPlayer p) {
+		return CultivationManager.own(p).meditationSpeed();
+	}
+
+	/**
 	 * A spirit stone in hand (SpiritStoneItem), a teacher's Insight (TalkSystem guidance), one's own sect's grounds
 	 * (SectMembership#groundsMultiplier) and, for a soul meditating in another's body, how far it stands above that body
 	 * (Possession#guidance), each speeding the gain.
@@ -284,7 +295,17 @@ public final class MeditationManager {
 		if (session.ticks % BOOST_REFRESH_TICKS == 0) session.boost = CultivationBoost.of(p);
 		if (session.ticks >= BOOST_ANNOUNCE_DELAY) announceBoost(p, session);
 		if (c.isMortal()) { // shattered meridians: no qi to circulate, blood instead, tempering the body (BodyRefining)
-			if (tick % 10 == 0) Tempering.gain(p, BodyRefining.meditationPerSecond(c) * 0.5 * heldAndTaught(p));
+			if (tick % 10 == 0) {
+				// A body refined past a mortal's Peak pays its years as cultivation does, each stage as the rank it matches (Lifespan#seclude).
+				boolean refining = c.hasShatteredMeridians() && c.getMortalStage().isLast();
+				int stage = c.getBodyRefining();
+				double before = c.getTempering();
+				Tempering.gain(p, BodyRefining.meditationPerSecond(c) * 0.5 * heldAndTaught(p) * pace(p));
+				if (refining) Lifespan.seclude(p, BodyRefining.rank(stage), before, BodyRefining.rank(c.getBodyRefining()), c.getTempering(),
+						BodyRefining::toNext, Lifespan.saving(session.boost.multiplier(), 1, 1, SpiritStoneItem.meditationMultiplier(p)), 1.0);
+			}
+			// A stone in hand feeds a tempering body as it does a cultivator's, and is spent so (it was free here before 2026-10-22).
+			if (tick % 20 == 0 && c.hasShatteredMeridians()) SpiritStoneItem.drainWhileMeditating(p);
 			if (tick % 20 == 0) ModPackets.broadcastMeditation(p, true);
 			return;
 		}
@@ -298,26 +319,36 @@ public final class MeditationManager {
 		}
 
 		// A meditation draws in one qi or the other, never both (TwoPaths#cultivatesGhost: the Cultivation tab's switch; the dead's
-		// always the ghost path's): the ghost path's as often, its steles read either way (ghostMethods); the heaven path's below.
+		// always the ghost path's): the ghost path's as often, its steles read either way (ghostMethods); the heaven path's below. A
+		// living Primordial Chaos Body draws in both at once, each at its full pace (Physique).
 		if (tick % 10 == 0) ghostMethods(p, c, session, tick);
 		boolean ghostQi = TwoPaths.cultivatesGhost(c);
-		// Drawing in ghostly qi, a Dao Stele still teaches the living what it carves (learning isn't cultivating).
-		if (tick % 10 == 0 && ghostQi && HeavenMethods.canLearn(c)) learnFromDaoSteles(p, c, session, tick);
+		boolean heavenQi = !GhostSystem.isGhost(p) && (!ghostQi || drawsBoth(p, c));
+		// Drawing in ghostly qi only, a Dao Stele still teaches the living what it carves (learning isn't cultivating).
+		if (tick % 10 == 0 && ghostQi && !heavenQi && HeavenMethods.canLearn(c)) learnFromDaoSteles(p, c, session, tick);
 		// Gain cultivation twice a second so the menu bar moves smoothly. The dead's meditation feeds only their ghost path.
-		if (tick % 10 == 0 && !GhostSystem.isGhost(p) && !ghostQi) {
+		if (tick % 10 == 0 && heavenQi) {
 			boolean wasBottleneck = c.isAtBottleneck();
 			boolean wasAtGate = c.isAtRitualGate();
 			boolean wasHeld = c.isHeldByMethod();
-			// Mats, fruit on pedestals, height and tranquillity speed the gain (see CultivationBoost).
-			double perSecond = ratePerSecond(p, session);
+			// Mats, fruit on pedestals, height and tranquillity speed the gain (see CultivationBoost); and the pace it is set to.
+			double perSecond = ratePerSecond(p, session) * pace(p);
 			// Unrefined qi from pills and fruit is refined on top, at REFINE_RATE times the meditation rate.
 			double refined = c.refine(perSecond * PlayerCultivation.REFINE_RATE * 0.5);
-			double gathered = perSecond * 0.5 + session.bonusCultivation;
+			double bonus = session.bonusCultivation;
+			double gathered = perSecond * 0.5 + bonus;
 			session.bonusCultivation = 0;
 			// What is gathered goes by the heaven method practised (its element's qi here: HeavenMethods#cultivationFactor), and the
 			// methods' layers behind the realm settle in on it.
 			double factor = heavenMethods(p, c, session, tick, gathered, refined);
-			boolean advanced = c.addCultivation(gathered * factor + refined);
+			int rankBefore = PlayerCultivation.rank(c.getRealm(), c.getStage());
+			double before = c.getCultivation(), won = gathered * factor + refined;
+			boolean advanced = c.addCultivation(won);
+			// What it won costs years (Lifespan#seclude: the talent race), but for a reward's seconds of meditation.
+			Lifespan.seclude(p, rankBefore, before, PlayerCultivation.rank(c.getRealm(), c.getStage()), c.getCultivation(),
+					rank -> PlayerCultivation.required(Realm.byIndex(rank / Stage.values().length), Stage.byIndex(rank % Stage.values().length)),
+					Lifespan.saving(session.boost.multiplier(), session.methodSaving, Lifespan.placeSaving(c), SpiritStoneItem.meditationMultiplier(p)),
+					won <= 0 ? 0 : 1 - bonus * factor / won);
 			CultivationManager.refresh(p); // re-applies stats (cheap), marks dirty, syncs
 
 			if (advanced) {
@@ -340,6 +371,10 @@ public final class MeditationManager {
 			}
 			// Not else-if: a pill and a method may both be wanted.
 			if (!wasHeld && c.isHeldByMethod()) p.sendSystemMessage(HeavenMethods.gateLine(c).copy().withStyle(net.minecraft.ChatFormatting.GOLD));
+			// A Four Axis stage full: its axis of virtue, if not yet complete, is wanted too (FourAxis).
+			if (!wasBottleneck && c.isHeldByAxis()) {
+				p.sendSystemMessage(FourAxis.gateLine(c, PlayerCultivation.rank(c.getRealm(), c.getStage())).copy().withStyle(net.minecraft.ChatFormatting.GOLD));
+			}
 		}
 
 		if (tick % 20 == 0) {
@@ -357,6 +392,11 @@ public final class MeditationManager {
 	 * every tenth): the session's own count is offset from it, so tested against that, the steles were never re-read and the
 	 * Cultivation tab's bar never sent but at a new stage.
 	 */
+	/** One of the living born with a Primordial Chaos Body (Physique): its meditation feeds both paths, each at its full pace. */
+	static boolean drawsBoth(ServerPlayer p, PlayerCultivation c) {
+		return !c.isMortal() && !GhostSystem.isGhost(p) && c.hasPhysique(Physique.PRIMORDIAL_CHAOS_BODY);
+	}
+
 	private static void ghostMethods(ServerPlayer p, PlayerCultivation c, Session session, int tick) {
 		if (c.isMortal()) return; // a mortal's meridians are closed: nothing learned, nothing cultivated (it can't sit down to it either)
 		NetherworldState s = c.netherworld();
@@ -373,7 +413,8 @@ public final class MeditationManager {
 				GhostMethods.learn(p, method);
 			}
 		}
-		if (!TwoPaths.cultivatesGhost(c) || s.density() <= 0) return;
+		boolean both = drawsBoth(p, c) && GhostMethods.ghostRank(s) >= 0; // a Primordial Chaos Body's ghost path, begun, drawn in too
+		if (!TwoPaths.cultivatesGhost(c) && !both || s.density() <= 0) return;
 		// One of the dead begins the ghost path with its first breath of ghostly qi, method or none (the user's ask, 2026-10-19), and
 		// keeps it if born again: the living may go on with it then (the Cultivation tab's switch). The living begin it with a
 		// foundation learned (GhostMethods#give).
@@ -385,11 +426,19 @@ public final class MeditationManager {
 		double rate = GhostMethods.ratePerSecond(c, s.density()) * circulationMultiplier(session, session.ticks)
 				* (active != null && session.stelesNear.contains(active) ? GhostMethods.STELE_BONUS : 1.0)
 				* (1 + (p.hasEffect(ModEffects.YIN_GATHERING) ? s.methodBoost() : 0)) // a Yin Gathering Pill
-				* Possession.guidance(p); // a soul in another's body, by how far it stands above it
+				* (InnerRealm.isInside(p) ? InnerRealm.CULTIVATION_BONUS : 1.0) // turned inward, as the heaven path is (the body's ghostly qi)
+				* Possession.guidance(p) // a soul in another's body, by how far it stands above it
+				* pace(p); // the pace it is set to (its years paid in Lifespan#tick)
 		double gained = rate * 0.5;
 		int before = GhostMethods.ghostRank(s);
+		double was = s.pathCultivation();
 		boolean wasBottleneck = GhostMethods.atBottleneck(c);
 		int stages = GhostMethods.addCultivation(s, gained);
+		// What it won costs years, as the heaven path's does (Lifespan#seclude: the talent race): its boost, its method's stele, the
+		// Peaks' denser yin and a stone in hand saving them.
+		Lifespan.seclude(p, before, was, GhostMethods.ghostRank(s), s.pathCultivation(), GhostMethods::required,
+				Lifespan.saving(session.boost.multiplier(), active != null && session.stelesNear.contains(active) ? GhostMethods.STELE_BONUS : 1.0,
+						Lifespan.ghostPlaceSaving(s.density()), SpiritStoneItem.meditationMultiplier(p)), 1.0);
 		boolean settled = GhostMethods.meditate(p, gained, session.stelesNear);
 		if (stages > 0) {
 			p.serverLevel().playSound(null, p.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.8f, 0.7f);
@@ -399,6 +448,7 @@ public final class MeditationManager {
 		}
 		if (!wasBottleneck && GhostMethods.atBottleneck(c)) {
 			p.sendSystemMessage(GhostMethods.heldByMethod(c) ? GhostMethods.gateLine(c).copy().withStyle(net.minecraft.ChatFormatting.GOLD)
+					: GhostMethods.heldByAxis(c) ? FourAxis.gateLine(c, GhostMethods.ghostRank(s)).copy().withStyle(net.minecraft.ChatFormatting.GOLD)
 					: Component.translatable(ModLang.MSG_GHOST_BOTTLENECK).withStyle(net.minecraft.ChatFormatting.AQUA));
 		}
 		CultivationManager.markDirty(p.server);
@@ -413,7 +463,10 @@ public final class MeditationManager {
 	 * factor here (by its stele, more: HeavenMethods#cultivationFactor), or a cultivator's with none, who is told so once a login.
 	 */
 	private static double heavenMethods(ServerPlayer p, PlayerCultivation c, Session session, int tick, double gathered, double refined) {
-		if (!HeavenMethods.canLearn(c)) return HeavenMethods.cultivationFactor(c, null, 0, false);
+		if (!HeavenMethods.canLearn(c)) {
+			session.methodSaving = 1;
+			return HeavenMethods.cultivationFactor(c, null, 0, false);
+		}
 		HeavenState s = c.heaven();
 		learnFromDaoSteles(p, c, session, tick);
 		java.util.Set<QiElement> byStele = java.util.EnumSet.noneOf(QiElement.class);
@@ -429,8 +482,12 @@ public final class MeditationManager {
 			CultivationManager.markDirty(p.server);
 			if (tick % 20 == 0 && !settled) Spells.sync(p); // the Methods tab's bars (a layer settled has synced already)
 		}
-		return HeavenMethods.cultivationFactor(c, practised, practised == null ? 0 : HeavenMethods.shareAt(p, practised.element()),
-				practised != null && byStele.contains(practised.element()));
+		double share = practised == null ? 0 : HeavenMethods.shareAt(p, practised.element());
+		boolean stele = practised != null && byStele.contains(practised.element());
+		// What the method saves of the years (Lifespan#saving, the user's call, 2026-10-22): its own part of the gain, by its element's
+		// share of the qi here and its stele (not a pill's nor the clothing's part).
+		session.methodSaving = practised == null ? 1 : HeavenMethods.elementFactor(share) * (stele ? HeavenMethods.STELE_BONUS : 1);
+		return HeavenMethods.cultivationFactor(c, practised, share, stele);
 	}
 
 	/** Half a second by the Dao Steles in reach: a step toward learning each heaven method not yet known that one's roots can read. */

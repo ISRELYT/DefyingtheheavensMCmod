@@ -97,14 +97,29 @@ public final class ClientPacketHandlers {
 			int physique = buf.readVarInt();
 			int roots = buf.readVarInt();
 			int bodyRefining = buf.readVarInt();
+			long forms = buf.readVarLong();
 			int[] statPoints = new int[com.example.defyingtheheavens.StatPoints.Stat.values().length];
 			for (int i = 0; i < statPoints.length; i++) statPoints[i] = buf.readVarInt();
 			com.example.defyingtheheavens.Ability selected = com.example.defyingtheheavens.Ability.byIndex(buf.readVarInt() - 1);
 			double placeQi = buf.readDouble();
 			float soulWounds = buf.readFloat();
+			double lifeUsed = buf.readDouble(), lifeSpan = buf.readDouble();
+			boolean lifeDead = buf.readBoolean();
+			int longevityPills = buf.readVarInt();
+			int[] axisProgress = new int[com.example.defyingtheheavens.FourAxis.Axis.values().length];
+			for (int i = 0; i < axisProgress.length; i++) axisProgress[i] = buf.readVarInt();
+			com.example.defyingtheheavens.FourAxis.Axis obsession = com.example.defyingtheheavens.FourAxis.Axis.byIndex(buf.readVarInt());
+			int pace = buf.readVarInt();
 			client.execute(() -> {
+				for (com.example.defyingtheheavens.FourAxis.Axis axis : com.example.defyingtheheavens.FourAxis.Axis.values()) {
+					ClientCultivationData.get().setAxisProgress(axis, axisProgress[axis.ordinal()]);
+				}
+				ClientCultivationData.get().setObsession(obsession);
+				ClientCultivationData.get().setMeditationSpeed(pace);
 				ClientCultivationData.get().setSoulWounds(soulWounds);
-				ClientCultivationData.physique(physique, roots, bodyRefining); // first: a shattered body tempers past Peak
+				ClientCultivationData.lifespan(lifeUsed, lifeSpan, lifeDead);
+				ClientCultivationData.get().setLongevityPills(longevityPills);
+				ClientCultivationData.physique(physique, roots, bodyRefining, forms); // first: a shattered body tempers past Peak
 				for (com.example.defyingtheheavens.StatPoints.Stat stat : com.example.defyingtheheavens.StatPoints.Stat.values()) {
 					ClientCultivationData.get().setStatPoints(stat, statPoints[stat.ordinal()]);
 				}
@@ -120,6 +135,12 @@ public final class ClientPacketHandlers {
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.ASTRAL_SEED, (client, handler, buf, sender) -> {
 			long seed = buf.readLong();
 			client.execute(() -> com.example.defyingtheheavens.AstralPlanets.forSeed(seed));
+		});
+
+		// "Name Your Obsession" before the tribulation into Heavenly Being (Obsession).
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.OBSESSION_ASK, (client, handler, buf, sender) -> {
+			boolean ghost = buf.readBoolean();
+			client.execute(() -> client.setScreen(new ObsessionScreen(ghost)));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SOUL_SELF, (client, handler, buf, sender) -> {
@@ -378,6 +399,24 @@ public final class ClientPacketHandlers {
 			int stage = buf.readVarInt();
 			boolean ghost = buf.readBoolean();
 			client.execute(() -> ClientTribulationData.update(active, strikesLeft, realm, stage, ghost));
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.LIFESPAN_TRIBULATION, (client, handler, buf, sender) -> {
+			boolean active = buf.readBoolean();
+			float power = buf.readFloat();
+			boolean paused = buf.readBoolean();
+			boolean ghost = buf.readBoolean();
+			client.execute(() -> {
+				ClientTribulationData.updateLifespan(active, power, paused, ghost);
+				// The client's record knows it too: no Longevity Pill under it (PillItem's refusal, on both sides).
+				ClientCultivationData.get().setLifespanTrial(active ? Math.round(power * com.example.defyingtheheavens.LifespanTribulation.FULL_POWER_TICKS) : -1);
+			});
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SPACE_YEARS, (client, handler, buf, sender) -> {
+			boolean inSpace = buf.readBoolean();
+			float trip = buf.readFloat(), left = buf.readFloat(), home = buf.readFloat();
+			client.execute(() -> ClientTribulationData.updateSpace(inSpace, trip, left, home));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SPATIAL_STORMS, (client, handler, buf, sender) -> {

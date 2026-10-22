@@ -53,9 +53,10 @@ public final class ModCreativeTab {
 			// Taken for qi and cultivation
 			add(CultivationFruitItem.create(1));
 			for (Item pill : new Item[] {ModItems.MARROW_CLEANSING_ELIXIR, ModItems.QI_GATHERING_PILL, ModItems.CULTIVATION_PILL,
-					ModItems.FOUNDATION_PILL, ModItems.CORE_PILL}) {
+					ModItems.FOUNDATION_PILL, ModItems.CORE_PILL, ModItems.LONGEVITY_PILL}) {
 				for (PillGrade grade : PillGrade.values()) add(PillItem.create(pill, grade, 1));
 			}
+			add(ModItems.REBIRTH_PILL);
 			add(ModItems.SPIRIT_DEW);
 			// Herbs (a year old), and what they're grown from
 			for (Item herb : new Item[] {ModItems.GINSENG, ModItems.SPIRIT_GINSENG, ModItems.LINGZHI, ModItems.PURPLE_LINGZHI,

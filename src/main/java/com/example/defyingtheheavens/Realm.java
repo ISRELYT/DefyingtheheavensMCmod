@@ -7,7 +7,7 @@ import net.minecraft.network.chat.Component;
  * Bonus values are for EARLY stage; later stages multiply them by {@link Stage#getPowerMultiplier()}.
  * <p>
  * Cultivation (cultBase, cult/sec) is the progress toward the next stage. Qi (maxQi, qi/sec) is the spendable energy pool
- * for spells and techniques: it refills on its own, from ~100 s for an empty Qi Refining pool down to ~40 s at Four Axis.
+ * for spells and techniques: it refills on its own, from ~100 s for an empty Qi Refining pool down to ~40 s from Four Axis on.
  * Flying on qi (fly/sec, from Core Formation) costs a flat amount per second while the pool keeps gathering, so flight only
  * ends where gathering falls short of the cost:
  * <ul>
@@ -34,7 +34,16 @@ public enum Realm {
 	HEAVENLY_BEING(     "heavenly_being",   409600,    625,    3500,    70,     60,       48,     90,   24.0,  0.40,   15,     8,   0.60),
 	// First realm beyond what the lower realms can sustain: only reachable through breakthroughs in the Upper Realm.
 	// Its cultivation requirement is 10x this base (PlayerCultivation.cultivationRequired) to offset the Upper Realm's dense qi.
-	FOUR_AXIS(          "four_axis",       3276800,   3125,    8000,   200,    150,      110,    180,   50.0,  0.55,   22,    14,   0.80);
+	FOUR_AXIS(          "four_axis",       3276800,   3125,    8000,   200,    150,      110,    180,   50.0,  0.55,   22,    14,   0.80),
+	// The realms after Four Axis (the user's order, 2026-10-22), Upper Realm only as it is: Dao Integration twice Four Axis's might,
+	// Void Shattering a larger leap (four times), Sacred Vessel and Entering Nirvana twice again, which ends the middle boundary;
+	// True Immortal, the first of the major boundary, an immense leap (ten times). Armour, toughness and knockback stay at Four
+	// Axis's: vanilla's own caps hold them there (80% of a blow turned, full immunity to knockback at Grand Perfection).
+	DAO_INTEGRATION(    "dao_integration",  26214400,  15625,   18000,   450,    300,      220,    360,  100.0,  0.62,   22,    14,   0.80),
+	VOID_SHATTERING(    "void_shattering", 209715200,  78125,   60000,  1500,   1000,      700,   1440,  400.0,  0.72,   22,    14,   0.80),
+	SACRED_VESSEL(      "sacred_vessel",  1677721600, 390625,  130000,  3250,   2000,     1500,   2880,  800.0,  0.78,   22,    14,   0.80),
+	ENTERING_NIRVANA(   "entering_nirvana", 13421772800.0, 1953125, 280000, 7000, 4500,   3300,   5760, 1600.0,  0.84,   22,    14,   0.80),
+	TRUE_IMMORTAL(      "true_immortal", 107374182400.0, 9765625, 2500000, 62500, 40000, 30000, 57600, 16000.0,  0.95,   22,    14,   0.80);
 
 	private final String id;
 	private final double cultivationBase;

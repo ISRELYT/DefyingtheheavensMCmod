@@ -255,12 +255,15 @@ public final class SoulProjection {
 	/**
 	 * Whether {@code viewer}'s client is sent the soul at all: Heavenly Beings and above always (they may strike at it, and see it
 	 * under Qi Sense), Nascent Soul cultivators only with Qi Sense open, spectators always, and outside the Netherworld anyone with
-	 * the Ghost Eye open (Netherworld Breathing Art); nobody else. The realm is the higher path's (TwoPaths#higherRank).
+	 * the Ghost Eye open (Netherworld Breathing Art) or born with a Spirit-Eye Body (Physique), a mortal too; nobody else. The realm is
+	 * the higher path's (TwoPaths#higherRank).
 	 */
 	public static boolean perceives(ServerPlayer viewer) {
 		if (viewer.isSpectator()) return true;
 		PlayerCultivation c = CultivationManager.get(viewer);
-		if (c.isAbilityActive(Ability.GHOST_EYE) && !ModDimensions.isNetherworld(viewer.level().dimension())) return true;
+		if ((c.isAbilityActive(Ability.GHOST_EYE) || c.hasPhysique(Physique.SPIRIT_EYE_BODY)) && !ModDimensions.isNetherworld(viewer.level().dimension())) {
+			return true;
+		}
 		if (c.isMortal()) return false;
 		Realm realm = Realm.byIndex(Math.max(0, TwoPaths.higherRank(c, true)) / Stage.values().length);
 		if (realm.ordinal() > Realm.NASCENT_SOUL.ordinal()) return true;
@@ -316,7 +319,7 @@ public final class SoulProjection {
 		PlayerCultivation c = CultivationManager.own(player);
 		// The dead too (the user's call, 2026-10-19): a ghost's soul goes out of its ghostly form, which sits on in its light.
 		if (!Ability.SOUL_PROJECTION.isUnlocked(c) || !player.isAlive() || player.isSpectator()) return;
-		if (TribulationManager.isActive(player.getUUID())) {
+		if (TribulationManager.isActive(player.getUUID()) || LifespanTribulation.isRunning(player.getUUID())) {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_TRIB_BUSY), true);
 			return;
 		}
@@ -546,7 +549,8 @@ public final class SoulProjection {
 
 	private static void tickChannel(ServerPlayer player, Session s) {
 		double dx = player.getX() - s.anchor.x, dz = player.getZ() - s.anchor.z;
-		if (dx * dx + dz * dz > CHANNEL_DRIFT_SQR || !player.onGround() || TribulationManager.isActive(player.getUUID())) {
+		if (dx * dx + dz * dz > CHANNEL_DRIFT_SQR || !player.onGround() || TribulationManager.isActive(player.getUUID())
+				|| LifespanTribulation.isRunning(player.getUUID())) {
 			cancelChannel(player, ModLang.MSG_SOUL_MOVED);
 			return;
 		}
@@ -741,10 +745,28 @@ public final class SoulProjection {
 		player.playNotifySound(SoundEvents.NOTE_BLOCK_BASS.value(), SoundSource.PLAYERS, 1.0f, 0.5f);
 	}
 
-	/** The body was slain: the soul dies with it. */
+	/**
+	 * The body was slain: the soul dies with it. Under the lifespan tribulation the death is the whole life's (LifespanTribulation):
+	 * no nascent soul is lost first, for all of it goes.
+	 */
 	public static void onBodySlain(UUID owner, MinecraftServer server) {
 		ServerPlayer player = server.getPlayerList().getPlayer(owner);
-		if (player != null) sever(player, ModLang.MSG_SOUL_BODY_SLAIN);
+		if (player == null) return;
+		if (LifespanTribulation.isRunning(owner)) {
+			Session s = SESSIONS.get(owner);
+			if (s != null && s.state != State.PROJECTING) merge(player, s);
+			player.sendSystemMessage(Component.translatable(ModLang.MSG_SOUL_BODY_TAKEN).withStyle(net.minecraft.ChatFormatting.DARK_RED));
+			LifespanTribulation.takeLife(player); // past every ward, as its strikes are
+			return;
+		}
+		sever(player, ModLang.MSG_SOUL_BODY_SLAIN);
+	}
+
+	/** The soul's own body where it sits (its SoulBodyEntity) while the soul is out of it or in another's; null with the soul at home. */
+	public static LivingEntity ownBodyEntity(ServerPlayer player) {
+		Session s = SESSIONS.get(player.getUUID());
+		if (s == null || s.state == State.PROJECTING) return null;
+		return ownBody(player, s) instanceof SoulBodyEntity body && body.isAlive() ? body : null;
 	}
 
 	/** Whether {@code body} is still the body of a soul out of it (so it stays in the world). */
@@ -765,7 +787,8 @@ public final class SoulProjection {
 	public static void strikeTether(ServerPlayer striker, int soulId) {
 		if (!striker.isAlive() || striker.isSpectator() || isSoul(striker) || isActive(striker.getUUID())) return;
 		PlayerCultivation c = CultivationManager.get(striker);
-		if (c.isMortal() || c.effectiveRank() < PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.EARLY) || !c.isQiSenseOn()) return;
+		// Either path's Heavenly Being, as it strikes souls (harmFactor), where the heaven path's alone could before.
+		if (c.isMortal() || TwoPaths.higherRank(c, true) < PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.EARLY) || !c.isQiSenseOn()) return;
 		// A soul out of its body, or one in a person's body (its tether runs to that body): only in its own body's realm.
 		if (!(striker.serverLevel().getEntity(soulId) instanceof ServerPlayer soul) || soul == striker) return;
 		if (!isSoul(soul) && !Possession.inhabits(soul.getUUID()) || !soul.canHarmPlayer(striker)) return;
@@ -878,6 +901,7 @@ public final class SoulProjection {
 			if (GhostSystem.isGhost(victim)) return ModLang.MSG_POSSESS_DEAD; // the dead have no body to take
 			if (!victim.canHarmPlayer(player) || !player.server.isPvpAllowed()) return ModLang.MSG_POSSESS_PVP;
 			if (TribulationManager.isActive(victim.getUUID()) || HeavenRitual.isActive(victim.getUUID())
+					|| LifespanTribulation.isRunning(victim.getUUID()) // the heavens' own, collecting a spent life: no body to take
 					|| CoreDetonation.isCharging(victim.getUUID())) { // a core already breaking bursts as it would, theirs
 				return ModLang.MSG_POSSESS_CANNOT;
 			}
@@ -1191,6 +1215,18 @@ public final class SoulProjection {
 		}
 	}
 
+	/** Back in its own body at once, no penalty, wherever it was (a life ending: Lifespan). Nothing if it isn't out. */
+	public static void bringHome(ServerPlayer player) {
+		Session s = SESSIONS.get(player.getUUID());
+		if (s == null) return;
+		if (s.state == State.PROJECTING) {
+			SESSIONS.remove(player.getUUID());
+			setState(player, State.NONE);
+		} else {
+			merge(player, s);
+		}
+	}
+
 	/** The server is stopping: every soul goes home, no penalty, before the players are saved. */
 	public static void returnAll(MinecraftServer server) {
 		for (UUID id : new ArrayList<>(SESSIONS.keySet())) {
@@ -1317,7 +1353,7 @@ public final class SoulProjection {
 		for (ServerPlayer other : soul.serverLevel().players()) {
 			if (other == soul || isSoul(other) || !ConsciousnessDomainHandler.isActive(other)) continue;
 			PlayerCultivation c = CultivationManager.get(other);
-			if (c.isMortal() || c.effectiveRank() < threshold) continue;
+			if (c.isMortal() || TwoPaths.higherRank(c, true) < threshold) continue; // either path, as the domain's own reach goes
 			double radius = ConsciousnessDomainHandler.radius(c);
 			if (ConsciousnessDomainHandler.center(other).distanceToSqr(soul.position().add(0, 1, 0)) > radius * radius) continue;
 			inside.add(other.getUUID());

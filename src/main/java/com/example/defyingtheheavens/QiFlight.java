@@ -97,8 +97,9 @@ public final class QiFlight {
 			}
 			return 0;
 		}
-		// Space (AstralRealm): there is no ground, so everyone there flies, always, on no qi, at a speed of their realm.
-		if (ModDimensions.isSpace(p.level().dimension()) && !Incorporeal.isGhost(p)) {
+		// Space (AstralRealm): there is no ground, so everyone there flies, always, on no qi, at a speed of their realm; a Ghost King
+		// too, the one of the dead the void bears (AstralRealm#canBearTheVoid).
+		if (ModDimensions.isSpace(p.level().dimension()) && !Incorporeal.isRuledGhost(p)) {
 			SwordFlight.update(p, false);
 			EXHAUSTED.remove(id);
 			if (p.isSpectator()) return 0;
@@ -210,7 +211,12 @@ public final class QiFlight {
 		if (speed == SwordFlight.QI_FLIGHT_SPEED || speed == SwordFlight.SWORD_SPEED || speed == GHOST_SPEED
 				|| Float.valueOf(speed).equals(SPEED_SET.get(id))) return true;
 		for (int layer = GhostMethods.STEPS_FLIGHT_FROM; layer <= GhostMethods.LAYERS; layer++) if (speed == freeSpeed(layer)) return true;
-		for (Realm realm : Realm.values()) for (Stage stage : Stage.values()) if (speed == AstralRealm.spaceSpeed(realm, stage)) return true;
+		for (Realm realm : Realm.values()) {
+			for (Stage stage : Stage.values()) {
+				float space = AstralRealm.spaceSpeed(realm, stage);
+				if (speed == space || speed == AstralRealm.starborn(space)) return true; // a Starborn Body's too
+			}
+		}
 		return false;
 	}
 

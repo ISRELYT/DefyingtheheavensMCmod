@@ -45,6 +45,8 @@ public class PlayerCultivation {
 	public static final Realm LOWER_REALM_CAP_REALM = Realm.HEAVENLY_BEING;
 	public static final Stage LOWER_REALM_CAP_STAGE = Stage.GRAND_PERFECTION;
 	private static final int CAP_RANK = rank(LOWER_REALM_CAP_REALM, LOWER_REALM_CAP_STAGE);
+	/** The very top of cultivation, either path's: the last realm's Grand Perfection (True Immortal's, 2026-10-22). */
+	public static final int LAST_RANK = rank(Realm.values()[Realm.values().length - 1], Stage.GRAND_PERFECTION);
 	/**
 	 * The Upper Realm's dense qi: everything meditation gathers there (Ring of Power bonus included) and the qi pool's
 	 * refill are multiplied by this. The cultivation requirements of upper-realm-only realms are multiplied by it too (see
@@ -154,7 +156,9 @@ public class PlayerCultivation {
 
 	/** The body they were born with (see Physique): null until rolled, on their first join. Saved and synced. */
 	private Physique physique;
-	/** Three or True Element Roots: the elements whose heaven methods they may take up. Saved and synced. */
+	/** A Myriad Form Body's two forms (Physique#rollForms): bodies it was born with besides, all their gifts its own. Saved and synced. */
+	private final EnumSet<Physique> forms = EnumSet.noneOf(Physique.class);
+	/** Three or True Element Roots (or a form of them): the elements whose heaven methods they may take up. Saved and synced. */
 	private final EnumSet<QiElement> rootElements = EnumSet.noneOf(QiElement.class);
 	/**
 	 * Shattered Meridians: how far past a mortal's Peak the body has been refined (BodyRefining's stage, 0 none yet); the progress
@@ -218,8 +222,14 @@ public class PlayerCultivation {
 		ritualFailedDay = -1;
 	}
 
-	/** At the stage only the heavens' leave lets one leave, without it: Qi Refining Mid. A Heaven Sacred Body has it from birth. */
-	public boolean needsHeavensLeave() { return !mortal && !heavensLeave && physique != Physique.HEAVEN_SACRED_BODY && rank(realm, stage) == RITUAL_RANK; }
+	/**
+	 * At the stage only the heavens' leave lets one leave, without it: Qi Refining Mid. A Heaven Sacred Body has it from birth, and a
+	 * Heaven-Defying Body never asks it.
+	 */
+	public boolean needsHeavensLeave() {
+		return !mortal && !heavensLeave && !hasPhysique(Physique.HEAVEN_SACRED_BODY) && !hasPhysique(Physique.HEAVEN_DEFYING_BODY)
+				&& rank(realm, stage) == RITUAL_RANK;
+	}
 
 	// --- The body they were born with (see Physique) ---
 
@@ -227,9 +237,48 @@ public class PlayerCultivation {
 	public Physique getPhysique() { return physique; }
 
 	/** Their physique, or a plain mortal body until one is rolled. */
-	public Physique physique() { return physique == null ? Physique.MORTAL_BODY : physique; }
+	public Physique physique() { return physique == null ? Physique.FIVE_ELEMENT_ROOTS : physique; }
 
 	public void setPhysique(Physique physique) { this.physique = physique; }
+
+	/** A Myriad Form Body's forms (empty for any other body). */
+	public java.util.Set<Physique> getForms() { return forms; }
+
+	public void setForms(java.util.Collection<Physique> bodies) {
+		forms.clear();
+		forms.addAll(bodies);
+	}
+
+	/** Born with {@code body}: their physique, or one of a Myriad Form Body's forms. Ask this, not {@link #physique()} ==. */
+	public boolean hasPhysique(Physique body) { return physique() == body || forms.contains(body); }
+
+	/** What the heaven path's cultivation is multiplied by for the body they were born with (Physique#cultivationFactor, its forms' too). */
+	public double physiqueCultivationFactor() {
+		double factor = physique().cultivationFactor() * physique().grade().speed(); // its grade's small edge (Physique.Grade#speed)
+		for (Physique form : forms) factor *= form.cultivationFactor();
+		return factor;
+	}
+
+	/** What the ghost path's cultivation is multiplied by for the body they were born with (Physique#ghostFactor, its forms' too). */
+	public double physiqueGhostFactor() {
+		double factor = physique().ghostFactor() * physique().grade().speed(); // its grade's small edge (Physique.Grade#speed)
+		for (Physique form : forms) factor *= form.ghostFactor();
+		return factor;
+	}
+
+	/** What the qi pool and its gathering are multiplied by for the body they were born with (Physique#qiFactor, its forms' too). */
+	public double physiqueQiFactor() {
+		double factor = physique().qiFactor();
+		for (Physique form : forms) factor *= form.qiFactor();
+		return factor;
+	}
+
+	/** How many elements their roots are of (0: no limit), a form's roots counting as the body's own. */
+	public int rootCount() {
+		int count = physique().rootCount();
+		for (Physique form : forms) count = Math.max(count, form.rootCount());
+		return count;
+	}
 
 	/** Three or True Element Roots: their roots' elements (empty for any other physique). */
 	public java.util.Set<QiElement> getRootElements() { return rootElements; }
@@ -240,17 +289,105 @@ public class PlayerCultivation {
 	}
 
 	/** Whether their roots let them take up a heaven method of {@code element}. */
-	public boolean rootsAllow(QiElement element) { return physique().allows(element, rootElements); }
+	public boolean rootsAllow(QiElement element) { return rootCount() == 0 || rootElements.contains(element); }
 
 	/** Shattered Meridians: the stage of body refining past a mortal's Peak (0 none yet). */
 	public int getBodyRefining() { return bodyRefining; }
 
+	// --- Lifespan (Lifespan) ---
+
+	/** The age, in years (a game day online a year): one clock, alive and dead alike (Lifespan). */
+	private double age = Lifespan.START_AGE;
+	/**
+	 * Years of lifespan won besides the realms' (the Axis of Longevity's, taken from those whose wishes were granted; Longevity
+	 * Pills').
+	 */
+	private double extraYears;
+	/** Longevity Pills taken this life: each works a share less than the one before (PillItem#longevityYears). Saved. */
+	private int longevityPills;
+
+	public double age() { return age; }
+	public void setAge(double years) { age = Math.max(0, years); }
+	public double extraYears() { return extraYears; }
+	public void setExtraYears(double years) { extraYears = Math.max(0, years); }
+
+	/** The lifespan tribulation's ticks of power so far (LifespanTribulation), or -1: none. Saved, so it waits through a logout. */
+	private int lifespanTrial = -1;
+	/** Died while the lifespan tribulation ran: the life ends whole as they come back (LifespanTribulation#onRespawn). Saved. */
+	private boolean lifeEnded;
+
+	public int lifespanTrial() { return lifespanTrial; }
+	public void setLifespanTrial(int ticks) { lifespanTrial = Math.max(-1, ticks); }
+	public boolean lifeEnded() { return lifeEnded; }
+	public void setLifeEnded(boolean ended) { lifeEnded = ended; }
+	public int longevityPills() { return longevityPills; }
+	public void setLongevityPills(int count) { longevityPills = Math.max(0, count); }
+
+	/**
+	 * The pace its meditation goes at (the Cultivation tab: x1 its own, up to Lifespan#MEDITATION_SPEEDS), its years paid as it goes
+	 * (Lifespan#pacePrice: what it wins costs the more years, Lifespan#seclude). Saved.
+	 */
+	private int meditationSpeed = 1;
+
+	public int meditationSpeed() { return meditationSpeed; }
+	public void setMeditationSpeed(int speed) { meditationSpeed = Math.max(1, Math.min(Lifespan.MEDITATION_SPEEDS, speed)); }
+
+	// --- The four axes of virtue (FourAxis) ---
+
+	/** How far each axis is filled, in its own measure (FourAxis#need: years, a stone's worth, hearts, stages), by its place. */
+	private final int[] axisProgress = new int[FourAxis.Axis.values().length];
+
+	public int axisProgress(FourAxis.Axis axis) { return axisProgress[axis.ordinal()]; }
+	public void setAxisProgress(FourAxis.Axis axis, int progress) { axisProgress[axis.ordinal()] = Math.max(0, progress); }
+
+	/** The obsession named before the tribulation into Heavenly Being (Obsession), or null: none named yet. Lost only with a spent life. */
+	private FourAxis.Axis obsession;
+
+	public FourAxis.Axis obsession() { return obsession; }
+	public void setObsession(FourAxis.Axis obsession) { this.obsession = obsession; }
+
+	/** At a Four Axis stage's bottleneck with its axis of virtue not yet complete: the breakthrough waits on it (FourAxis). */
+	public boolean isHeldByAxis() {
+		return isAtBottleneck() && FourAxis.holds(this, rank(realm, stage));
+	}
+
 	/** Points put into each stat (StatPoints), by the stat's place. */
 	private final int[] statPoints = new int[StatPoints.Stat.values().length];
 
+	/**
+	 * The order the points were put in (a stat's place for each point, the first first): a fall in cultivation takes back the last
+	 * put in first, and keeps the rest where they were put (StatPoints#settle). Saved; a save from before it is read in stat order.
+	 */
+	private final java.util.ArrayList<Integer> statPointOrder = new java.util.ArrayList<>();
+
 	public int getStatPoints(StatPoints.Stat stat) { return statPoints[stat.ordinal()]; }
 
-	public void setStatPoints(StatPoints.Stat stat, int points) { statPoints[stat.ordinal()] = Math.max(0, points); }
+	/** Sets {@code stat}'s points: more are put in last (in {@link #statPointOrder}); fewer are taken from its latest. */
+	public void setStatPoints(StatPoints.Stat stat, int points) {
+		int i = stat.ordinal();
+		int target = Math.max(0, points);
+		while (statPoints[i] < target) {
+			statPointOrder.add(i);
+			statPoints[i]++;
+		}
+		while (statPoints[i] > target) {
+			statPointOrder.remove(statPointOrder.lastIndexOf(i));
+			statPoints[i]--;
+		}
+	}
+
+	/** Takes back the point put in last (StatPoints#settle). @return its stat, or null if none is spent */
+	public StatPoints.Stat takeBackLastStatPoint() {
+		if (statPointOrder.isEmpty()) return null;
+		int i = statPointOrder.remove(statPointOrder.size() - 1);
+		statPoints[i] = Math.max(0, statPoints[i] - 1);
+		return StatPoints.Stat.byIndex(i);
+	}
+
+	/** The points' order (a stat's place for each point, the first first), for saving and the game tests. */
+	public int[] statPointOrder() {
+		return statPointOrder.stream().mapToInt(Integer::intValue).toArray();
+	}
 
 	/** Every point spent, all stats together. */
 	public int statPointsSpent() {
@@ -259,7 +396,10 @@ public class PlayerCultivation {
 		return spent;
 	}
 
-	public void clearStatPoints() { java.util.Arrays.fill(statPoints, 0); }
+	public void clearStatPoints() {
+		java.util.Arrays.fill(statPoints, 0);
+		statPointOrder.clear();
+	}
 
 	/** The ability selected on the ability wheel, which the Use Selected Ability key switches (null: none yet). */
 	private Ability selectedAbility;
@@ -472,13 +612,13 @@ public class PlayerCultivation {
 		medicinalQi += taken;
 		addPillResistance();
 		// A Jade Poison Body refines it the moment it is taken (what doesn't fit before the next bottleneck waits, refined as soon as it does).
-		if (physique == Physique.JADE_POISON_BODY) refineAtOnce();
+		if (hasPhysique(Physique.JADE_POISON_BODY)) refineAtOnce();
 		return taken;
 	}
 
 	/** A Jade Poison Body's unrefined qi, refined into cultivation at once as far as it fits. @return whether any was */
 	public boolean refineAtOnce() {
-		if (physique != Physique.JADE_POISON_BODY || medicinalQi <= 0) return false;
+		if (!hasPhysique(Physique.JADE_POISON_BODY) || medicinalQi <= 0) return false;
 		double refined = refine(medicinalQi);
 		if (refined <= 0) return false;
 		addCultivation(refined);
@@ -513,7 +653,7 @@ public class PlayerCultivation {
 
 	/** A Cultivation Pill was taken: the next one works {@link #PILL_RESISTANCE_PER_PILL} less (a Jade Poison Body builds up no toxicity). */
 	public void addPillResistance() {
-		if (physique != Physique.JADE_POISON_BODY) setPillResistance(pillResistance + PILL_RESISTANCE_PER_PILL);
+		if (!hasPhysique(Physique.JADE_POISON_BODY)) setPillResistance(pillResistance + PILL_RESISTANCE_PER_PILL);
 	}
 
 	// --- Alignment and clothing ---
@@ -567,7 +707,15 @@ public class PlayerCultivation {
 	 * suppressed suppressors).
 	 */
 	public int sustainedRank() {
-		int rank = rank(realm, stage);
+		return sustained(rank(realm, stage));
+	}
+
+	/**
+	 * Any rank as the realm the player stands in lets them sustain it ({@link #sustainedRank} is the heaven path's): capped by Realm
+	 * Suppression in the lower realms, another's pressure left out (TwoPaths#weighedRank). -1 (none) stays -1.
+	 */
+	public int sustained(int rank) {
+		if (rank < 0) return rank;
 		return lowerRealmBound ? Math.min(rank, CAP_RANK) : rank;
 	}
 
@@ -625,9 +773,13 @@ public class PlayerCultivation {
 	/** How many times the lower realms' qi this place gives: the Upper Realm's {@link #UPPER_REALM_QI_MULTIPLIER}, else the place's own density. */
 	public double placeFactor() { return inUpperRealm ? UPPER_REALM_QI_MULTIPLIER : placeQi; }
 
-	/** Outside the Upper Realm (lower realms and the Spatial Gap alike), no breakthrough may lead past the cap. */
+	/**
+	 * Where Realm Suppression holds (the lower realms), no breakthrough may lead past the cap. Anywhere else (the Upper Realm, the
+	 * Astral Realm, the Netherworld's ways...) a Heavenly Being of Grand Perfection may break into Four Axis, and a Four Axis
+	 * cultivator through its stages (the user's call, 2026-10-19: "anywhere there isnt suppression").
+	 */
 	public boolean isBreakthroughLocked() {
-		return !inUpperRealm && !isMaxed() && rank(breakthroughRealm(), breakthroughStage()) > CAP_RANK;
+		return lowerRealmBound && !isMaxed() && rank(breakthroughRealm(), breakthroughStage()) > CAP_RANK;
 	}
 
 	// --- Spatial Gap bookkeeping ---
@@ -711,7 +863,7 @@ public class PlayerCultivation {
 	 */
 	public double maxQi() {
 		if (mortal) return 0;
-		return CultivationStats.maxQi(getEffectiveRealm(), getEffectiveStage()) * favourFactor() * (1 - pressurePenalty) * physique().qiFactor()
+		return CultivationStats.maxQi(getEffectiveRealm(), getEffectiveStage()) * favourFactor() * (1 - pressurePenalty) * physiqueQiFactor()
 				* StatPoints.poolFactor(this);
 	}
 
@@ -723,7 +875,7 @@ public class PlayerCultivation {
 	public double qiGatherPerSecond() {
 		if (mortal) return 0;
 		return CultivationStats.qiGather(getEffectiveRealm(), getEffectiveStage()) * placeFactor()
-				* (1 + qiBoost) * (1 + gearQiBonus) * favourFactor() * (1 - pressurePenalty) * physique().qiFactor()
+				* (1 + qiBoost) * (1 + gearQiBonus) * favourFactor() * (1 - pressurePenalty) * physiqueQiFactor()
 				* StatPoints.gatherFactor(this)
 				+ HeavenPassives.amount(this, QiElement.WATER); // Ceaseless Flow, the water methods' passive
 	}
@@ -790,7 +942,7 @@ public class PlayerCultivation {
 	 */
 	public double meditationCultivationPerSecond(double bonus) {
 		if (mortal || isSuppressed()) return 0;
-		return (cultivationPerSecond() + bonus) * placeFactor() * favourFactor() * physique().cultivationFactor()
+		return (cultivationPerSecond() + bonus) * placeFactor() * favourFactor() * physiqueCultivationFactor()
 				* StatPoints.cultivationFactor(this);
 	}
 
@@ -805,7 +957,7 @@ public class PlayerCultivation {
 	 * realm, a heaven method of it or deeper known ({@link #isHeldByMethod}).
 	 */
 	public boolean canBreakthrough() {
-		return isAtBottleneck() && !isMaxed() && !isBreakthroughLocked() && !isMissingBreakthroughPill() && !isHeldByMethod();
+		return isAtBottleneck() && !isMaxed() && !isBreakthroughLocked() && !isMissingBreakthroughPill() && !isHeldByMethod() && !isHeldByAxis();
 	}
 
 	/** Grand Perfection of the highest realm (currently Four Axis). */
@@ -936,13 +1088,21 @@ public class PlayerCultivation {
 		tag.putBoolean("InTribulation", inTribulation);
 		tag.putInt("Alignment", alignment);
 		if (physique != null) tag.putString("Physique", physique.getId());
+		if (!forms.isEmpty()) {
+			ListTag bodies = new ListTag();
+			for (Physique form : forms) bodies.add(StringTag.valueOf(form.getId()));
+			tag.put("PhysiqueForms", bodies);
+		}
 		if (!rootElements.isEmpty()) {
 			ListTag roots = new ListTag();
 			for (QiElement element : rootElements) roots.add(StringTag.valueOf(element.name()));
 			tag.put("RootElements", roots);
 		}
 		if (bodyRefining > 0) tag.putInt("BodyRefining", bodyRefining);
-		if (statPointsSpent() > 0) tag.putIntArray("StatPoints", statPoints.clone());
+		if (statPointsSpent() > 0) {
+			tag.putIntArray("StatPoints", statPoints.clone());
+			tag.putIntArray("StatPointOrder", statPointOrder());
+		}
 		if (selectedAbility != null) tag.putString("SelectedAbility", selectedAbility.getId());
 		tag.putBoolean("HeavensLeave", heavensLeave);
 		tag.putInt("Favour", favour);
@@ -959,6 +1119,18 @@ public class PlayerCultivation {
 		for (Ability ability : wheel) wheelTag.add(StringTag.valueOf(ability == null ? "" : ability.getId()));
 		tag.put("AbilityWheel", wheelTag);
 		if (!journal.isEmpty()) tag.put("Journal", Journal.save(journal));
+		tag.putDouble("Age", age);
+		for (int v : axisProgress) {
+			if (v <= 0) continue;
+			tag.putIntArray("AxisProgress", axisProgress.clone());
+			break;
+		}
+		if (obsession != null) tag.putString("Obsession", obsession.getId());
+		if (extraYears > 0) tag.putDouble("ExtraYears", extraYears);
+		if (lifespanTrial >= 0) tag.putInt("LifespanTrial", lifespanTrial);
+		if (lifeEnded) tag.putBoolean("LifeEnded", true);
+		if (longevityPills > 0) tag.putInt("LongevityPills", longevityPills);
+		if (meditationSpeed > 1) tag.putInt("MeditationSpeed", meditationSpeed);
 		CompoundTag nether = netherworld.save();
 		if (!nether.isEmpty()) tag.put("Netherworld", nether);
 		CompoundTag methods = heaven.save();
@@ -983,6 +1155,11 @@ public class PlayerCultivation {
 		c.mortal = tag.contains("Mortal") && tag.getBoolean("Mortal");
 		// The body first: shattered meridians temper on past a mortal's Peak (saves from before physiques roll one on joining).
 		c.physique = tag.contains("Physique") ? Physique.byId(tag.getString("Physique")) : null;
+		ListTag bodies = tag.getList("PhysiqueForms", Tag.TAG_STRING);
+		for (int i = 0; i < bodies.size(); i++) {
+			Physique form = Physique.byId(bodies.getString(i));
+			if (form != null && c.physique == Physique.MYRIAD_FORM_BODY) c.forms.add(form);
+		}
 		ListTag roots = tag.getList("RootElements", Tag.TAG_STRING);
 		for (int i = 0; i < roots.size(); i++) {
 			try {
@@ -993,7 +1170,20 @@ public class PlayerCultivation {
 		}
 		c.setBodyRefining(tag.getInt("BodyRefining"));
 		int[] points = tag.getIntArray("StatPoints"); // none spent (or a save from before them): all zero
-		for (int i = 0; i < points.length && i < c.statPoints.length; i++) c.statPoints[i] = Math.max(0, points[i]);
+		int[] order = tag.getIntArray("StatPointOrder");
+		int[] counted = new int[c.statPoints.length];
+		boolean whole = true;
+		for (int i : order) {
+			if (i < 0 || i >= counted.length) whole = false;
+			else counted[i]++;
+		}
+		for (int i = 0; i < c.statPoints.length; i++) whole &= counted[i] == (i < points.length ? Math.max(0, points[i]) : 0);
+		if (whole) {
+			for (int i : order) c.statPointOrder.add(i);
+			for (int i = 0; i < c.statPoints.length; i++) c.statPoints[i] = counted[i];
+		} else { // from before the order was kept (or not matching it): in stat order
+			for (int i = 0; i < points.length && i < c.statPoints.length; i++) c.setStatPoints(StatPoints.Stat.byIndex(i), points[i]);
+		}
 		c.selectedAbility = Ability.byId(tag.getString("SelectedAbility")); // none yet: null
 		c.setMortalState(MortalStage.byIndex(tag.getInt("MortalStage")), tag.getDouble("Tempering"));
 		int prepared = tag.contains("PreparedRealm") ? tag.getInt("PreparedRealm") : -1;
@@ -1034,6 +1224,25 @@ public class PlayerCultivation {
 			for (int i = 0; i < WHEEL_SLOTS && i < wheelTag.size(); i++) c.setWheelSlot(i, Ability.byId(wheelTag.getString(i)));
 		}
 		Journal.load(tag.getList("Journal", Tag.TAG_COMPOUND), c.journal);
+		c.age = tag.contains("Age") ? Math.max(0, tag.getDouble("Age")) : Lifespan.START_AGE; // from before lifespans: just come of age
+		// From before one clock (2026-10-20): the soul's years among the dead, its own clock then, are years of its life now.
+		c.age += Math.max(0, tag.getDouble("SoulYears"));
+		c.extraYears = Math.max(0, tag.getDouble("ExtraYears"));
+		c.lifespanTrial = tag.contains("LifespanTrial") ? Math.max(0, tag.getInt("LifespanTrial")) : -1;
+		c.lifeEnded = tag.getBoolean("LifeEnded");
+		c.longevityPills = Math.max(0, tag.getInt("LongevityPills"));
+		c.setMeditationSpeed(tag.contains("MeditationSpeed") ? tag.getInt("MeditationSpeed") : 1);
+		c.obsession = FourAxis.Axis.byId(tag.getString("Obsession"));
+		if (tag.contains("AxisProgress", Tag.TAG_INT_ARRAY)) {
+			int[] progress = tag.getIntArray("AxisProgress");
+			for (int i = 0; i < progress.length && i < c.axisProgress.length; i++) c.axisProgress[i] = Math.max(0, progress[i]);
+		} else {
+			// Saves from before the axes had their own measures (2026-10-20): virtue, 100 an axis, in each one's measure now.
+			int[] virtue = tag.getIntArray("AxisVirtue");
+			for (int i = 0; i < virtue.length && i < c.axisProgress.length; i++) {
+				c.axisProgress[i] = FourAxis.fromVirtue(c, FourAxis.Axis.byIndex(i), virtue[i]);
+			}
+		}
 		c.netherworld.load(tag.getCompound("Netherworld")); // an empty compound when missing: every default
 		c.heaven.load(tag.getCompound("HeavenMethods"));
 		// Saves from before: every method known understood as far as the realm, none behind it or past it.

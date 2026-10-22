@@ -120,9 +120,16 @@ public class NpcLifeGameTests implements FabricGameTest {
 		helper.succeed();
 	}
 
-	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 60)
+	/**
+	 * The hall is built out past the test's own one-block structure, and the seat search reaches past it again (rows of five, to the
+	 * hall's end). Sharing a batch, the neighbours' floors, players and builds came into that ground over the 20 ticks it once waited,
+	 * now and then taking seats away or the whole hall ("no room", "2 seats"; 2026-10-19). So: a batch of its own, and the ground
+	 * the search reaches cleared first.
+	 */
+	@GameTest(template = EMPTY_STRUCTURE, batch = "npc_life_lecture_hall", timeoutTicks = 60)
 	public void theLectureIsHeldInTheMainHall(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
+		for (int x = -1; x <= 10; x++) for (int z = -3; z <= 10; z++) for (int y = 1; y <= 7; y++) helper.setBlock(new BlockPos(x, y, z), Blocks.AIR);
 		// A hall in miniature: a stone floor, a roof over its far end; the master's seat at the back, the plaza (core) ahead.
 		for (int x = 0; x < 8; x++) for (int z = 0; z < 8; z++) {
 			helper.setBlock(new BlockPos(x, 1, z), Blocks.STONE);
@@ -131,6 +138,7 @@ public class NpcLifeGameTests implements FabricGameTest {
 		Sect sect = new Sect(UUID.randomUUID());
 		sect.core = helper.absolutePos(new BlockPos(30, 2, 3));
 		sect.posts(Sect.Post.MASTER_SEAT).add(helper.absolutePos(new BlockPos(0, 4, 3)));
+		// "Roofed" goes by the sky's light (NpcLife#roofed), which takes some ticks to settle under a new roof.
 		helper.runAfterDelay(20, () -> {
 			NpcLife.LectureLayout layout = NpcLife.lectureLayout(level, sect);
 			helper.assertTrue(layout != null, "There's room for a lecture");

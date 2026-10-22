@@ -32,6 +32,8 @@ public final class ModDamageTypes {
 	public static final ResourceKey<DamageType> JUDGE_GAZE = ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("judge_gaze"));
 	/** A golden core detonated (CoreDetonation): its own cultivator's death, tagged as {@link #SOUL_SEVERED}, so nothing holds it off. */
 	public static final ResourceKey<DamageType> CORE_DETONATION = ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("core_detonation"));
+	/** A lifespan run out (Lifespan): tagged as {@link #CORE_DETONATION}, so nothing holds it off. */
+	public static final ResourceKey<DamageType> OLD_AGE = ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("old_age"));
 	/**
 	 * The Netherworld's tribulation (TribulationManager, the ghost path's): its yin lightning, which armour turns as it turns the
 	 * heavens' bolts, and the yin in it that goes through armour as the heavens' magic does (tagged bypasses_armor). Both reach the
@@ -70,6 +72,7 @@ public final class ModDamageTypes {
 		context.register(SOUL_SEVERED, new DamageType(DefyingTheHeavens.MOD_ID + ".soul_severed", DamageScaling.NEVER, 0.0f));
 		context.register(SOUL_SEIZED, new DamageType(DefyingTheHeavens.MOD_ID + ".soul_seized", DamageScaling.NEVER, 0.0f));
 		context.register(CORE_DETONATION, new DamageType(DefyingTheHeavens.MOD_ID + ".core_detonation", DamageScaling.NEVER, 0.0f));
+		context.register(OLD_AGE, new DamageType(DefyingTheHeavens.MOD_ID + ".old_age", DamageScaling.NEVER, 0.0f));
 		context.register(YIN_LIGHTNING, new DamageType(DefyingTheHeavens.MOD_ID + ".yin_lightning", DamageScaling.NEVER, 0.1f));
 		context.register(YIN_TRIBULATION, new DamageType(DefyingTheHeavens.MOD_ID + ".yin_tribulation", DamageScaling.NEVER, 0.0f));
 		for (QiElement element : QiElement.five()) {
@@ -128,6 +131,11 @@ public final class ModDamageTypes {
 	/** One's own golden core, detonated. */
 	public static DamageSource coreDetonation(Level level) {
 		return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(CORE_DETONATION));
+	}
+
+	/** A lifespan run out. */
+	public static DamageSource oldAge(Level level) {
+		return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(OLD_AGE));
 	}
 
 	public static DamageSource soulSevered(Level level) {

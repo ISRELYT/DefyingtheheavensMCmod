@@ -60,10 +60,19 @@ public final class ConsciousnessDomainHandler {
 		return BASE_RADIUS * Math.pow(MAX_RADIUS / BASE_RADIUS, rank / (double) MAX_RANK);
 	}
 
-	/** A player's domain, from their effective stage: a stronger cultivator's pressure narrows it. */
+	/**
+	 * A player's domain, from where their body stands as wielded (either path: TwoPaths#wieldedRank; the heaven path's alone, before
+	 * the 2026-10-20 sweep, left a ghost path's Heavenly Being a Qi Refining domain): a stronger cultivator's pressure narrows it.
+	 */
 	public static double radius(PlayerCultivation c) {
-		if (c.physique() == Physique.INNATE_CONSCIOUSNESS_BODY) return MAX_RADIUS; // a Four Axis cultivator's from the first day (Physique)
-		return radius(c.getEffectiveRealm(), c.getEffectiveStage());
+		if (c.hasPhysique(Physique.INNATE_CONSCIOUSNESS_BODY)) return MAX_RADIUS; // a Four Axis cultivator's from the first day (Physique)
+		int rank = Math.max(0, TwoPaths.wieldedRank(c)), stages = Stage.values().length;
+		return radius(Realm.byIndex(rank / stages), Stage.byIndex(rank % stages));
+	}
+
+	/** Where a player is sensed to stand (by a domain, as the alert names it): their body as wielded, either path (TwoPaths#wieldedRank). */
+	public static Stage sensedStage(PlayerCultivation c) {
+		return Stage.byIndex(Math.max(0, TwoPaths.wieldedRank(c)) % Stage.values().length);
 	}
 
 	/** Where a domain is centred: the middle of its owner's body. */
@@ -170,7 +179,7 @@ public final class ConsciousnessDomainHandler {
 				if (SoulProjection.isSoul(player)) continue; // no outline, no realm: a soul is only sensed as near
 				PlayerCultivation c = CultivationManager.get(player);
 				if (c.isMortal()) continue; // shows as a mortal: an outline, no realm
-				cultivators.add(new SensedCultivator(player.getId(), c.getEffectiveRealm(), c.getEffectiveStage(), c.isUnderPressure()));
+				cultivators.add(new SensedCultivator(player.getId(), TwoPaths.wieldedRealm(c), sensedStage(c), c.isUnderPressure()));
 			} else if (entity instanceof CultivatorEntity npc) {
 				if (npc.isConcealed()) continue; // a Concealment Barrier masks it
 				if (npc instanceof CultivatorNpc set && set.isVacant()) continue; // set aside, unseen, while a soul uses its body (Possession)

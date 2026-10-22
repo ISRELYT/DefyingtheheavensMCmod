@@ -49,6 +49,30 @@ public class TwoPathsGameTests implements FabricGameTest {
 		return Math.abs(a - b) < 1.0e-3;
 	}
 
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void othersWeighEitherPath(GameTestHelper helper) {
+		// The heaven path at Qi Refining, the ghost path at Heavenly Being: weighed as its body, the ghost path's (the 2026-10-20 sweep:
+		// the heaven path's alone was weighed before, so Realm Suppress, cultivators, barriers and the domain took it for Qi Refining).
+		ServerPlayer player = cultivator(helper, Realm.QI_REFINING, Stage.EARLY);
+		ghostPath(player, Realm.HEAVENLY_BEING, Stage.EARLY);
+		PlayerCultivation c = CultivationManager.get(player);
+		int hb = PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.EARLY), cf = PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY);
+		helper.assertTrue(TwoPaths.body(c, false).rank() == hb, "Its body is the ghost path's Heavenly Being");
+		helper.assertTrue(TwoPaths.weighedRank(c) == hb && CultivatorNpc.rankOf(player) == hb && Formations.rankOf(player) == hb,
+				"Cultivators and barriers weigh it a Heavenly Being (" + CultivatorNpc.rankOf(player) + ")");
+		helper.assertTrue(TwoPaths.wieldedRealm(c) == Realm.HEAVENLY_BEING
+				&& near(ConsciousnessDomainHandler.radius(c), ConsciousnessDomainHandler.radius(Realm.HEAVENLY_BEING, Stage.EARLY)),
+				"Sensed a Heavenly Being, its domain one's (" + ConsciousnessDomainHandler.radius(c) + ")");
+		helper.assertTrue(RealmSuppressSystem.pressureOn(cf, TwoPaths.weighedRank(c)) == null && RealmSuppressSystem.pressureOn(hb, cf) != null,
+				"A Core Formation cultivator's Realm Suppress can't press it; its own presses one");
+		// Pressure on it doesn't lower how it is weighed (no chains of pressed pressers), but what it wields, and is sensed at.
+		c.setPressure(Stage.values().length, 0.25);
+		helper.assertTrue(TwoPaths.weighedRank(c) == hb && TwoPaths.wieldedRank(c) == hb - Stage.values().length, "Pressed: weighed as before, sensed lower");
+		c.setPressure(0, 0);
+		helper.assertTrue(TwoPaths.weighedRank(new PlayerCultivation()) == -1, "A mortal weighs as one");
+		helper.succeed();
+	}
+
 	/** {@link #ghostPath} for a bare cultivation, no player: the foundations to the realm's own known, deeper ones not. */
 	private static void ghostPath(PlayerCultivation c, Realm realm, Stage stage) {
 		NetherworldState s = c.netherworld();
@@ -149,10 +173,10 @@ public class TwoPathsGameTests implements FabricGameTest {
 		favoured.setFavour(1);
 		e = TwoPaths.effective(favoured, false);
 		helper.assertTrue(e.rank() == PlayerCultivation.rank(Realm.QI_REFINING, Stage.EARLY) && e.quasi() && near(e.toward(), 0.5), "Favour: Quasi-Mid, half way (" + e + ")");
-		// The very last, with harmony: beyond Four Axis Grand Perfection.
+		// The very last, with harmony: beyond True Immortal Grand Perfection (Four Axis's before the realms after it, 2026-10-22).
 		PlayerCultivation top = new PlayerCultivation();
-		top.setState(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION, 0);
-		ghostPath(top, Realm.FOUR_AXIS, Stage.GRAND_PERFECTION);
+		top.setState(Realm.TRUE_IMMORTAL, Stage.GRAND_PERFECTION, 0);
+		ghostPath(top, Realm.TRUE_IMMORTAL, Stage.GRAND_PERFECTION);
 		e = TwoPaths.effective(top, false);
 		helper.assertTrue(e.quasi() && key(TwoPaths.effectiveName(e), -1).equals(ModLang.EFFECTIVE_BEYOND), "Beyond the very last (" + e + ")");
 		// Harmony and Favour at their most never make a body a realm's: each realm's Grand Perfection x1.3 x1.15 stops short of the next.

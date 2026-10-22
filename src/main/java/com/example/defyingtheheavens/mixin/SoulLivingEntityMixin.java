@@ -3,8 +3,11 @@ package com.example.defyingtheheavens.mixin;
 import com.example.defyingtheheavens.GhostSystem;
 import com.example.defyingtheheavens.HeavenSpells;
 import com.example.defyingtheheavens.Incorporeal;
+import com.example.defyingtheheavens.Physiques;
 import com.example.defyingtheheavens.SoulProjection;
 import com.example.defyingtheheavens.SparSystem;
+import com.llamalad7.mixinextras.sugar.Share;
+import com.llamalad7.mixinextras.sugar.ref.LocalFloatRef;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
@@ -52,16 +55,35 @@ public abstract class SoulLivingEntityMixin {
 		else if (!self.level().isClientSide && amount > 0 && !HeavenSpells.allowHeal(self, amount)) ci.cancel();
 	}
 
-	/** A heaven spell's ward against effects: the dawn's light, a severed fate (HeavenSpells#allowEffect). */
+	/**
+	 * A heaven spell's ward against effects: the dawn's light, a severed fate (HeavenSpells#allowEffect); and a Jade Poison Body's,
+	 * against poison and wither (Physiques#allowEffect).
+	 */
 	@Inject(method = "canBeAffected", at = @At("HEAD"), cancellable = true)
 	private void dth$heavenWardsEffects(net.minecraft.world.effect.MobEffectInstance effect, CallbackInfoReturnable<Boolean> cir) {
 		LivingEntity self = (LivingEntity) (Object) this;
-		if (!self.level().isClientSide && !HeavenSpells.allowEffect(self, effect)) cir.setReturnValue(false);
+		if (!self.level().isClientSide && (!HeavenSpells.allowEffect(self, effect) || !Physiques.allowEffect(self, effect))) cir.setReturnValue(false);
+	}
+
+	/** The health before a blow, for what it took (a Blood Demon Body heals by a share of it: Physiques#onHurt). */
+	@Inject(method = "hurt", at = @At("HEAD"))
+	private void dth$healthBefore(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir, @Share("health") LocalFloatRef health) {
+		health.set(((LivingEntity) (Object) this).getHealth());
+	}
+
+	@Inject(method = "hurt", at = @At("RETURN"))
+	private void dth$bloodDrawn(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir, @Share("health") LocalFloatRef health) {
+		LivingEntity self = (LivingEntity) (Object) this;
+		if (!self.level().isClientSide && cir.getReturnValueZ()) Physiques.onHurt(self, source, health.get() - self.getHealth());
 	}
 
 	@ModifyVariable(method = "hurt", at = @At("HEAD"), argsOnly = true)
 	private float dth$soulTakesWhatIsSeen(float amount, DamageSource source, float original) {
 		LivingEntity self = (LivingEntity) (Object) this;
+		// The lifespan tribulation's strike lands whole: no ward, aura or passive of the mod's turns it (LifespanTribulation).
+		if (!self.level().isClientSide && com.example.defyingtheheavens.LifespanTribulation.isStriking(self)) return amount;
+		// First what the blow is as dealt: a Primordial Chaos Body's spells harder (Physiques#outgoing).
+		if (!self.level().isClientSide) amount = Physiques.outgoing(source, amount);
 		// A ghost takes only what reaches the dead, the living's blows by how clearly they see it (see GhostSystem).
 		float scaled = self instanceof ServerPlayer ghost && GhostSystem.isGhost(ghost) ? GhostSystem.scaleDamage(ghost, source, amount)
 				: SoulProjection.scaleSoulDamage(self, source, amount);

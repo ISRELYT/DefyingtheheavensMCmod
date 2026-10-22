@@ -19,6 +19,12 @@ public class TribulationLightning extends LightningBolt {
     /** The Netherworld's tribulation's yin lightning (the ghost path's): drawn cyan. */
     private static final EntityDataAccessor<Boolean> GHOST = SynchedEntityData.defineId(
             TribulationLightning.class, EntityDataSerializers.BOOLEAN);
+    /**
+     * One of strikes in quick succession: drawn and heard, but without vanilla's flash of the whole sky (LightningBoltMixin), so a
+     * storm's many bolts don't strobe it.
+     */
+    private static final EntityDataAccessor<Boolean> DIM = SynchedEntityData.defineId(
+            TribulationLightning.class, EntityDataSerializers.BOOLEAN);
 
     public TribulationLightning(EntityType<? extends LightningBolt> type, Level level) {
         super(type, level);
@@ -30,11 +36,16 @@ public class TribulationLightning extends LightningBolt {
         entityData.define(HEIGHT, TribulationCloud.BASE_HEIGHT_ABOVE_PLAYER);
         entityData.define(SCALE, 1.0f);
         entityData.define(GHOST, false);
+        entityData.define(DIM, false);
     }
 
     public void setGhost(boolean ghost) { entityData.set(GHOST, ghost); }
 
     public boolean isGhost() { return entityData.get(GHOST); }
+
+    public void setDim(boolean dim) { entityData.set(DIM, dim); }
+
+    public boolean isDim() { return entityData.get(DIM); }
 
     /** Call after positioning the strike, before spawning it on the server. */
     public void setCloudBaseY(double cloudY) {

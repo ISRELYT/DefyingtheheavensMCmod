@@ -22,6 +22,12 @@ public class CultivationSavedData extends SavedData {
 		return players.computeIfAbsent(id, k -> new PlayerCultivation());
 	}
 
+	/** {@code id}'s record is {@code fresh} from now on (a life ended and begun anew: Lifespan#wipe). */
+	public void replace(UUID id, PlayerCultivation fresh) {
+		players.put(id, fresh);
+		setDirty();
+	}
+
 	public static CultivationSavedData load(CompoundTag tag) {
 		CultivationSavedData data = new CultivationSavedData();
 		CompoundTag all = tag.getCompound("Players");

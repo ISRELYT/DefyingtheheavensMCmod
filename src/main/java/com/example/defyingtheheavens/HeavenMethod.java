@@ -4,10 +4,11 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.StringRepresentable;
 
 /**
- * The heaven path's methods (see HeavenMethods): one for each of the five elements of qi in each realm, thirty in all, cultivated
- * by the living from Qi Refining up to the method's own realm, nine layers to each realm (MethodLayers), each layer opening as
- * their heaven realm reaches the stage it stands for. Each teaches its element's spells of every realm it spans (Spell#taughtBy),
- * and every layer strengthens its element's passive. Saved by id: add new ones at the end.
+ * The heaven path's methods (see HeavenMethods): one for each of the five elements of qi in each realm, fifty-five in all (the
+ * twenty-five of the realms after Four Axis since 2026-10-22, spells of their own still to come), cultivated by the living from Qi
+ * Refining up to the method's own realm, nine layers to each realm (MethodLayers), each layer opening as their heaven realm reaches
+ * the stage it stands for. Each teaches its element's spells of every realm it spans (Spell#taughtBy), and every layer strengthens
+ * its element's passive. Saved by id: add new ones at the end.
  */
 public enum HeavenMethod implements StringRepresentable {
 	WOOD_QI_REFINING("green_sprout_breathing_manual", QiElement.WOOD, Realm.QI_REFINING),
@@ -39,7 +40,34 @@ public enum HeavenMethod implements StringRepresentable {
 	METAL_CORE_FORMATION("golden_thunder_core_sutra", QiElement.METAL, Realm.CORE_FORMATION),
 	METAL_NASCENT_SOUL("nine_bells_sword_soul_classic", QiElement.METAL, Realm.NASCENT_SOUL),
 	METAL_HEAVENLY_BEING("heaven_severing_sword_scripture", QiElement.METAL, Realm.HEAVENLY_BEING),
-	METAL_FOUR_AXIS("four_swords_immortal_slaying_canon", QiElement.METAL, Realm.FOUR_AXIS);
+	METAL_FOUR_AXIS("four_swords_immortal_slaying_canon", QiElement.METAL, Realm.FOUR_AXIS),
+	// The realms after Four Axis (the user's ask, 2026-10-22: their methods now, their spells later): the deeper, the rarer
+	// (DaoSteleFeature#WEIGHTS; the few cultivators of those realms teach their own).
+	WOOD_DAO_INTEGRATION("myriad_woods_dao_union_scripture", QiElement.WOOD, Realm.DAO_INTEGRATION),
+	WOOD_VOID_SHATTERING("void_rooted_divine_tree_canon", QiElement.WOOD, Realm.VOID_SHATTERING),
+	WOOD_SACRED_VESSEL("jianmu_sacred_vessel_sutra", QiElement.WOOD, Realm.SACRED_VESSEL),
+	WOOD_ENTERING_NIRVANA("withering_flourishing_nirvana_classic", QiElement.WOOD, Realm.ENTERING_NIRVANA),
+	WOOD_TRUE_IMMORTAL("evergreen_immortal_sovereign_canon", QiElement.WOOD, Realm.TRUE_IMMORTAL),
+	WATER_DAO_INTEGRATION("hundred_rivers_dao_scripture", QiElement.WATER, Realm.DAO_INTEGRATION),
+	WATER_VOID_SHATTERING("abyssal_void_tide_canon", QiElement.WATER, Realm.VOID_SHATTERING),
+	WATER_SACRED_VESSEL("sealed_ocean_vessel_sutra", QiElement.WATER, Realm.SACRED_VESSEL),
+	WATER_ENTERING_NIRVANA("frozen_moon_nirvana_classic", QiElement.WATER, Realm.ENTERING_NIRVANA),
+	WATER_TRUE_IMMORTAL("primordial_waters_immortal_canon", QiElement.WATER, Realm.TRUE_IMMORTAL),
+	FIRE_DAO_INTEGRATION("one_flame_dao_scripture", QiElement.FIRE, Realm.DAO_INTEGRATION),
+	FIRE_VOID_SHATTERING("void_burning_fire_lotus_canon", QiElement.FIRE, Realm.VOID_SHATTERING),
+	FIRE_SACRED_VESSEL("heaven_furnace_vessel_sutra", QiElement.FIRE, Realm.SACRED_VESSEL),
+	FIRE_ENTERING_NIRVANA("undying_ember_nirvana_classic", QiElement.FIRE, Realm.ENTERING_NIRVANA),
+	FIRE_TRUE_IMMORTAL("primal_flame_immortal_canon", QiElement.FIRE, Realm.TRUE_IMMORTAL),
+	EARTH_DAO_INTEGRATION("ten_thousand_mountains_scripture", QiElement.EARTH, Realm.DAO_INTEGRATION),
+	EARTH_VOID_SHATTERING("world_breaking_ground_canon", QiElement.EARTH, Realm.VOID_SHATTERING),
+	EARTH_SACRED_VESSEL("nine_cauldrons_vessel_sutra", QiElement.EARTH, Realm.SACRED_VESSEL),
+	EARTH_ENTERING_NIRVANA("buried_world_nirvana_classic", QiElement.EARTH, Realm.ENTERING_NIRVANA),
+	EARTH_TRUE_IMMORTAL("houtu_immortal_canon", QiElement.EARTH, Realm.TRUE_IMMORTAL),
+	METAL_DAO_INTEGRATION("myriad_swords_return_scripture", QiElement.METAL, Realm.DAO_INTEGRATION),
+	METAL_VOID_SHATTERING("void_splitting_sword_canon", QiElement.METAL, Realm.VOID_SHATTERING),
+	METAL_SACRED_VESSEL("immortal_forging_vessel_sutra", QiElement.METAL, Realm.SACRED_VESSEL),
+	METAL_ENTERING_NIRVANA("sword_heart_nirvana_classic", QiElement.METAL, Realm.ENTERING_NIRVANA),
+	METAL_TRUE_IMMORTAL("heaven_slaying_immortal_sword_canon", QiElement.METAL, Realm.TRUE_IMMORTAL);
 
 	private final String id;
 	private final QiElement element;
@@ -55,9 +83,9 @@ public enum HeavenMethod implements StringRepresentable {
 	public QiElement element() { return element; }
 	/** The realm whose method it is, the last it carries one through (from Qi Refining). */
 	public Realm realm() { return realm; }
-	/** 1 for a Qi Refining method, up to 6 for a Four Axis one. */
+	/** 1 for a Qi Refining method, up to 11 for a True Immortal one. */
 	public int tier() { return realm.ordinal() + 1; }
-	/** Its layers: nine to each realm it spans (MethodLayers), 9 for a Qi Refining method up to 54 for a Four Axis one. */
+	/** Its layers: nine to each realm it spans (MethodLayers), 9 for a Qi Refining method up to 99 for a True Immortal one. */
 	public int layers() { return MethodLayers.layers(realm); }
 	/** Its layer standing for {@code within} (1 to 9) of its own realm, where its spells come. */
 	public int ownLayer(int within) { return layers() - MethodLayers.PER_REALM + within; }

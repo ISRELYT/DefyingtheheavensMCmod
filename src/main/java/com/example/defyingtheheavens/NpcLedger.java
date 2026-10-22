@@ -96,7 +96,8 @@ public class NpcLedger extends SavedData {
 	 * the gate in {@link #GATE_RETRY}, or when it reaches the gate if that's later.
 	 */
 	static Long dueAt(CultivatorNpc npc, ServerLevel level) {
-		if (npc.isMortal()) return null;
+		// A Merit wish's threat (Wishes) has no step of a life ahead: it hunts, or lapses with its wish.
+		if (npc.isMortal() || Wishes.isThreat(npc)) return null;
 		// Mid-journey (frozen when its land unloaded), looking for seclusion, or just come up with its course to choose, in any
 		// realm (in the Upper Realm, one going to join a sect): at once.
 		CultivatorNpc.Lifecycle life = npc.getLifecycle();

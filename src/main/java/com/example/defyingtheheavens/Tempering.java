@@ -85,6 +85,9 @@ public final class Tempering {
 		return HERB * PillGrade.ageFactor(GinsengItem.age(stack)) * rare;
 	}
 
+	/** An Ancient Holy Body (Physique) tempers this many times as fast. */
+	public static final double HOLY_TEMPERING = 2.0;
+
 	/**
 	 * Adds tempering to a mortal below Peak, or one with shattered meridians below the last body refining (BodyRefining); anyone
 	 * else: nothing. Returns true if it did anything.
@@ -92,6 +95,7 @@ public final class Tempering {
 	public static boolean gain(ServerPlayer player, double amount) {
 		PlayerCultivation c = CultivationManager.get(player);
 		if (!c.canTemper() || amount <= 0) return false;
+		if (c.hasPhysique(Physique.ANCIENT_HOLY_BODY)) amount *= HOLY_TEMPERING;
 		boolean refining = c.getMortalStage().isLast();
 		if (c.addTempering(amount)) {
 			MortalStage stage = c.getMortalStage();
