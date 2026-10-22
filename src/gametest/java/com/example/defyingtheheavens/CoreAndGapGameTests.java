@@ -43,6 +43,19 @@ public class CoreAndGapGameTests implements FabricGameTest {
 		helper.succeed();
 	}
 
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+	public void everyHigherRealmBlastsFurther(GameTestHelper helper) {
+		for (Realm realm = Realm.CORE_FORMATION; !realm.isLast(); realm = realm.next()) {
+			for (Stage stage : Stage.values()) {
+				helper.assertTrue(CoreDetonation.radius(realm.next(), stage) > CoreDetonation.radius(realm, stage),
+						realm.next().getId() + " " + stage + ": reaches further than " + realm.getId() + "'s");
+			}
+		}
+		helper.assertTrue(CoreDetonation.radius(Realm.TRUE_IMMORTAL, Stage.EARLY) > 3 * CoreDetonation.radius(Realm.FOUR_AXIS, Stage.EARLY),
+				"A True Immortal's reaches past three times a Four Axis's");
+		helper.succeed();
+	}
+
 	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 200)
 	public void theCoreBreaksOnlyWhenAskedTwiceAndIsLost(GameTestHelper helper) {
 		ServerPlayer p = helper.makeMockServerPlayerInLevel();

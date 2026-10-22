@@ -1,7 +1,6 @@
 package com.example.defyingtheheavens;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
@@ -13,7 +12,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -29,21 +27,28 @@ import java.util.UUID;
  * Building Grand Perfection, their heaven methods understood no deeper. Everything living within the blast's reach
  * ({@link #radius}) takes its harm ({@link #harm}): a full body's worth of the cultivator's own stage at the heart, less with
  * distance, more for every realm a victim stands below, far less for every realm above. A cultivator of the same realm in good
- * armour (Blast Protection best) may live through it. The ground at its heart is blown away.
+ * armour (Blast Protection best) may live through it. The ground at its heart is blown away, a share at a time (Devastation), so
+ * even a True Immortal's crater never stalls the world. The deeper the core, the further the blast reaches, the deeper its crater
+ * and the further off it is heard.
  */
 public final class CoreDetonation {
 	/** The second asking must come within this of the first, and no sooner than {@link #CONFIRM_MIN_TICKS} after it. */
 	public static final int CONFIRM_TICKS = 100, CONFIRM_MIN_TICKS = 10;
 	/** From the second asking to the blast. */
 	public static final int CHARGE_TICKS = 60;
-	/** The blast's reach by realm (Core Formation first), and a tenth more for each stage within it. */
-	private static final double[] RADIUS = {10, 16, 22, 28};
+	/**
+	 * The blast's reach by realm, Core Formation to True Immortal, and a tenth more for each stage within it. To Four Axis, six blocks
+	 * a realm; after it (the user's ask, 2026-10-23: the higher the realm, the larger the blast), eight for every doubling of the
+	 * realm's might (Realm): Dao Integration twice Four Axis's (+8), Void Shattering four times (+16), Sacred Vessel and Entering
+	 * Nirvana twice again (+8 each), True Immortal ten times (+28).
+	 */
+	private static final double[] RADIUS = {10, 16, 22, 28, 36, 52, 60, 68, 96};
 	/** The harm at the heart: this many times the whole health of a body of the cultivator's own stage. */
 	public static final double HEART_HARM = 1.1;
 	/** Each realm a victim stands below the cultivator, the harm grows by the whole of it again; each realm above, it is this much. */
 	public static final double ABOVE_FACTOR = 0.3;
-	/** The crater: this share of the blast's reach. */
-	private static final double CRATER_SHARE = 0.32;
+	/** The crater: this share of the blast's reach across, and this share of that deep. */
+	private static final double CRATER_SHARE = 0.32, CRATER_DEPTH = 0.79;
 
 	private static final Map<UUID, Long> ASKED = new HashMap<>();
 	private static final Map<UUID, Integer> CHARGING = new HashMap<>();
@@ -186,8 +191,9 @@ public final class CoreDetonation {
 		SpellFx.send(level, SpellFx.Kind.CORE_DETONATION, heart, Vec3.ZERO, (float) radius, 0, radius * 8);
 		level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, heart.x, heart.y, heart.z, 3, radius * 0.2, radius * 0.1, radius * 0.2, 0);
 		level.sendParticles(ParticleTypes.FLASH, heart.x, heart.y, heart.z, 2, 0, 0, 0, 0);
-		level.playSound(null, p.blockPosition(), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 8.0f, 0.5f);
-		level.playSound(null, p.blockPosition(), SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 6.0f, 0.6f);
+		// Heard sixteen blocks off for each of its volume: a deeper core's from further away (a low realm's as loud as ever).
+		level.playSound(null, p.blockPosition(), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, (float) Math.max(8, radius * 0.25), 0.5f);
+		level.playSound(null, p.blockPosition(), SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, (float) Math.max(6, radius * 0.2), 0.6f);
 
 		// Everything living within reach: harmed by its distance and its realm, and thrown outward.
 		for (LivingEntity victim : level.getEntitiesOfClass(LivingEntity.class, new AABB(heart, heart).inflate(radius), e -> e != p && e.isAlive())) {
@@ -202,7 +208,10 @@ public final class CoreDetonation {
 			victim.push(away.x, 0.4 + away.y * 0.5, away.z);
 			victim.hurtMarked = true;
 		}
-		crater(level, p, BlockPos.containing(heart), radius * CRATER_SHARE);
+		// The crater, a ragged bowl a third of the blast's reach, as deep as it was when it was carved here at once: now carved by
+		// Devastation a share a tick, nearest the heart first, its pieces flung, since a high realm's would stall the world.
+		double crater = radius * CRATER_SHARE;
+		Devastation.crater(p, level, heart, crater, crater * CRATER_DEPTH, Devastation.Floor.NONE);
 
 		// The core lost: they wake at Foundation Building Grand Perfection, the methods understood no deeper than that: on the heaven
 		// path, or on the ghost path if the core was its (its methods held there: GhostMethods#fallTo).
@@ -223,23 +232,6 @@ public final class CoreDetonation {
 			c.setAbilityEnabled(Ability.CORE_DETONATION, false);
 		}
 		CultivationManager.sync(p);
-	}
-
-	/** Blows away the ground round {@code centre} out to {@code r}, a ragged bowl, nothing dropped: what a spell may carve, no more. */
-	private static void crater(ServerLevel level, ServerPlayer p, BlockPos centre, double r) {
-		int reach = (int) Math.ceil(r);
-		for (int dx = -reach; dx <= reach; dx++) {
-			for (int dy = -reach; dy <= reach; dy++) {
-				for (int dz = -reach; dz <= reach; dz++) {
-					double d = Math.sqrt(dx * dx + dy * dy * 1.6 + dz * dz);
-					double edge = r * (0.8 + 0.2 * Mth.frac(Math.sin((centre.getX() + dx) * 12.9898 + (centre.getZ() + dz) * 78.233) * 43758.5453));
-					if (d > edge) continue;
-					BlockPos pos = centre.offset(dx, dy, dz);
-					if (!HeavenSpells.carvable(level, pos, p)) continue;
-					level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
-				}
-			}
-		}
 	}
 
 	/**
