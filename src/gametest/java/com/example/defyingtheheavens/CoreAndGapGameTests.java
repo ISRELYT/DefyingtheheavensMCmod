@@ -56,7 +56,9 @@ public class CoreAndGapGameTests implements FabricGameTest {
 		helper.succeed();
 	}
 
-	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 200)
+	// A batch of its own: a Core Formation blast reaches some sixty blocks, past the tests laid out round it, so it runs when no other
+	// test is underway.
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 200, batch = "core_detonation")
 	public void theCoreBreaksOnlyWhenAskedTwiceAndIsLost(GameTestHelper helper) {
 		ServerPlayer p = helper.makeMockServerPlayerInLevel();
 		p.setGameMode(GameType.SURVIVAL);
@@ -74,7 +76,7 @@ public class CoreAndGapGameTests implements FabricGameTest {
 		near.setNoAi(true);
 		helper.getLevel().addFreshEntity(near);
 		Husk far = EntityType.HUSK.create(helper.getLevel());
-		far.moveTo(at.x + 40, at.y, at.z);
+		far.moveTo(at.x + CoreDetonation.radius(Realm.CORE_FORMATION, Stage.MID) + 8, at.y, at.z);
 		far.setNoAi(true);
 		helper.getLevel().addFreshEntity(far);
 		CoreDetonation.toggle(p);

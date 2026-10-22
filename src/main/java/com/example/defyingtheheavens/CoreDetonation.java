@@ -37,18 +37,22 @@ public final class CoreDetonation {
 	/** From the second asking to the blast. */
 	public static final int CHARGE_TICKS = 60;
 	/**
-	 * The blast's reach by realm, Core Formation to True Immortal, and a tenth more for each stage within it. To Four Axis, six blocks
-	 * a realm; after it (the user's ask, 2026-10-23: the higher the realm, the larger the blast), eight for every doubling of the
-	 * realm's might (Realm): Dao Integration twice Four Axis's (+8), Void Shattering four times (+16), Sacred Vessel and Entering
-	 * Nirvana twice again (+8 each), True Immortal ten times (+28).
+	 * The blast's reach by realm, Core Formation to True Immortal, and a tenth more for each stage within it (the user's asks,
+	 * 2026-10-23: the higher the realm, the larger the blast, a Heavenly Being's some 125 blocks and the rest scaled from it). To Four
+	 * Axis, 35 blocks a realm; after it, some 45 for every doubling of the realm's might (Realm): Dao Integration twice Four Axis's
+	 * (+45), Void Shattering four times (+90), Sacred Vessel and Entering Nirvana twice again (+45 each), True Immortal ten times
+	 * (+160).
 	 */
-	private static final double[] RADIUS = {10, 16, 22, 28, 36, 52, 60, 68, 96};
+	private static final double[] RADIUS = {55, 90, 125, 160, 205, 295, 340, 385, 545};
 	/** The harm at the heart: this many times the whole health of a body of the cultivator's own stage. */
 	public static final double HEART_HARM = 1.1;
 	/** Each realm a victim stands below the cultivator, the harm grows by the whole of it again; each realm above, it is this much. */
 	public static final double ABOVE_FACTOR = 0.3;
-	/** The crater: this share of the blast's reach across, and this share of that deep. */
-	private static final double CRATER_SHARE = 0.32, CRATER_DEPTH = 0.79;
+	/**
+	 * The crater: this share of the blast's reach across, never more than {@link #CRATER_MAX} (a Heavenly Being's; a True Immortal's
+	 * at a third of its reach would take minutes to carve), and this share of that deep.
+	 */
+	private static final double CRATER_SHARE = 0.32, CRATER_MAX = 48, CRATER_DEPTH = 0.79;
 
 	private static final Map<UUID, Long> ASKED = new HashMap<>();
 	private static final Map<UUID, Integer> CHARGING = new HashMap<>();
@@ -208,9 +212,9 @@ public final class CoreDetonation {
 			victim.push(away.x, 0.4 + away.y * 0.5, away.z);
 			victim.hurtMarked = true;
 		}
-		// The crater, a ragged bowl a third of the blast's reach, as deep as it was when it was carved here at once: now carved by
-		// Devastation a share a tick, nearest the heart first, its pieces flung, since a high realm's would stall the world.
-		double crater = radius * CRATER_SHARE;
+		// The crater, a ragged bowl a third of the blast's reach (to a Heavenly Being's, no larger), carved by Devastation a share a
+		// tick, nearest the heart first, its pieces flung, since a high realm's would stall the world carved at once.
+		double crater = Math.min(radius * CRATER_SHARE, CRATER_MAX);
 		Devastation.crater(p, level, heart, crater, crater * CRATER_DEPTH, Devastation.Floor.NONE);
 
 		// The core lost: they wake at Foundation Building Grand Perfection, the methods understood no deeper than that: on the heaven

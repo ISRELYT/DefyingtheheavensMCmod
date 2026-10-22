@@ -1465,15 +1465,16 @@ comes after the pack's own passes), and a ghost's own first-person hand as flat 
 From **Core Formation**, the living have a last resort on the ability wheel: detonating the golden core. Used once, the core
 only trembles and you are warned; used again within 5 seconds (but not in the same half second: a double click is ignored),
 it breaks (those near enough to be caught in it are warned on their action bar; nothing goes to chat), swells for 3 seconds
-while you can barely move, and bursts. The higher your realm, the larger the blast. Everything living within its reach (10
-blocks at Core Formation, 16 at Nascent Soul, 22 at Heavenly Being, 28 at Four Axis, 36 at Dao Integration, 52 at Void
-Shattering, 60 at Sacred Vessel, 68 at Entering Nirvana, 96 at True Immortal, a tenth more for each stage) takes its harm: at the heart 1.1 times the whole health of a
+while you can barely move, and bursts. The higher your realm, the larger the blast. Everything living within its reach (55
+blocks at Core Formation, 90 at Nascent Soul, 125 at Heavenly Being, 160 at Four Axis, 205 at Dao Integration, 295 at Void
+Shattering, 340 at Sacred Vessel, 385 at Entering Nirvana, 545 at True Immortal, a tenth more for each stage) takes its harm: at the heart 1.1 times the whole health of a
 body of your own stage, falling off with distance to nothing at the edge; for every realm a victim stands below you the harm
 grows by the whole of it again, and for every realm above it is 0.3 times as much. It is an explosion, so armour and Blast
 Protection turn some of it: a cultivator of your own realm in good armour may live through it, anything weaker near the heart
-won't. The ground at its heart is blown away, a crater a third of the blast's reach across (what a spell may carve, nothing
-dropped), carved outward from the heart over the next few moments like the great spells' craters, so even a True Immortal's
-never stalls the world; the bigger the blast, the further off it is heard. **You die** (nothing saves you, a totem
+won't. The ground at its heart is blown away, a crater a third of the blast's reach across up to a Heavenly Being's (about
+96 blocks wide; no larger beyond it) (what a spell may carve, nothing dropped), carved outward from the heart over the next few
+moments like the great spells' craters, so it never stalls the world; the bigger the blast, the further off it is heard.
+**You die** (nothing saves you, a totem
 neither), and the core is lost: you return at **Foundation Building Grand Perfection**, your heaven methods understood no deeper
 than that. Leaving the game while it breaks doesn't escape it. A creative player's core bursts without the death. Code:
 `CoreDetonation`.
