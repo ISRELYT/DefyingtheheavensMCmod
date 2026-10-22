@@ -87,8 +87,12 @@ public enum Physique {
 	 */
 	SOUL_DEVOURING_BODY("soul_devouring_body", Grade.IMMORTAL, 0.4),
 	/**
-	 * Reborn (a life spent, a soul scattered, a Rebirth Pill), it keeps its methods, half its realm on each path and this body, the
-	 * only one a new life doesn't roll anew (Lifespan#wipe). The rarest of all, with the Myriad Form Body.
+	 * Reborn (a life spent, a soul scattered; a Rebirth Pill has no hold on it, RebirthPillItem#refuses), it keeps all its cultivation
+	 * and this body, the only one a new life doesn't roll anew (Lifespan#wipe, PlayerCultivation#carryOver), but has a Low grade's
+	 * talent and pace for all its grade ({@link
+	 * #talent}, {@link #speed}): the user's ask of 2026-10-22, "you can reach it if you work hard and you dont lose stuff". A Low talent
+	 * keeping everything reaches True Immortal in some 4 to 60 lives, by how much saves its years (scratchpad eternal-rebirth.ps1 of
+	 * session 59448793). The rarest of all, with the Myriad Form Body.
 	 */
 	ETERNAL_REINCARNATION_BODY("eternal_reincarnation_body", Grade.IMMORTAL, 0.1),
 	/** Born with two more physiques of Mid to Supreme grade, never a pair that clashes, and all three's gifts ({@link #rollForms}). */
@@ -137,6 +141,16 @@ public enum Physique {
 	public String getId() { return id; }
 	public Grade grade() { return grade; }
 	public double weight() { return weight; }
+
+	/** What the years a meditation costs are divided by (Lifespan#talent): its grade's, but a Low grade's for the Eternal Reincarnation Body. */
+	public double talent() {
+		return this == ETERNAL_REINCARNATION_BODY ? Grade.LOW.talent() : grade.talent();
+	}
+
+	/** Its small edge to either path's pace (PlayerCultivation#physiqueCultivationFactor): its grade's, none for the Eternal Reincarnation Body. */
+	public double speed() {
+		return this == ETERNAL_REINCARNATION_BODY ? Grade.LOW.speed() : grade.speed();
+	}
 
 	public Component getDisplayName() { return Component.translatable(ModLang.physiqueKey(id)).withStyle(grade.colour()); }
 	public Component getDescription() { return Component.translatable(ModLang.physiqueKey(id) + ".description"); }

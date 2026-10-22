@@ -34,9 +34,9 @@ import java.util.function.IntToDoubleFunction;
  * killed by anything while it runs, alive one is born again at one's own spawn point; dead, the soul scatters into the Soul River
  * and is born again. Either way the life is ended whole ({@link #wipe}): both paths, every method and spell, the stat points, the
  * physique (rolled anew), back to a mortal of {@link #START_AGE}. Only what the journal remembers, and the dead's passage (where
- * they died, their own respawn) carry over; and an Eternal Reincarnation Body keeps itself, its methods and half its realm on each
- * path. Falling a realm takes its years away again, and a life past its new span faces the heavens at once. A Rebirth Pill ends a
- * life so without its death ({@link #rebirth}).
+ * they died, their own respawn) carry over; and an Eternal Reincarnation Body keeps itself and all its cultivation, its years begun
+ * anew ({@link #reincarnate}). Falling a realm takes its years away again, and a life past its new span faces the heavens at once. A
+ * Rebirth Pill ends a life so without its death ({@link #rebirth}).
  * <p>
  * Body refining (Shattered Meridians, BodyRefining) counts for the realm each of its stages matches (the user's ask, 2026-10-20):
  * Foundation Building's years from Jade Bone, Core Formation's at the Indestructible Body.
@@ -92,9 +92,9 @@ public final class Lifespan {
 		return realmSeclusion(realm) * stage.timeWeight() / all;
 	}
 
-	/** {@code c}'s talent: its physique's grade's (Physique.Grade#talent), a Low grade's with none yet. */
+	/** {@code c}'s talent: its physique's (Physique#talent: its grade's, but an Eternal Reincarnation Body's a Low one's), a Low grade's with none yet. */
 	public static double talent(PlayerCultivation c) {
-		return c.getPhysique() == null ? Physique.Grade.LOW.talent() : c.getPhysique().grade().talent();
+		return c.getPhysique() == null ? Physique.Grade.LOW.talent() : c.getPhysique().talent();
 	}
 
 	/**
@@ -379,7 +379,8 @@ public final class Lifespan {
 
 	/**
 	 * A Rebirth Pill: the life's cultivation ends whole as a spent life's does ({@link #wipe}: a new physique with it), but the living
-	 * don't die for it, and the dead are born again, as when their years run out among the dead.
+	 * don't die for it, and the dead are born again, as when their years run out among the dead. (An Eternal Reincarnation Body can't
+	 * take one: RebirthPillItem#refuses.)
 	 */
 	public static void rebirth(ServerPlayer p) {
 		boolean dead = CultivationManager.own(p).netherworld().ghost();
@@ -393,7 +394,7 @@ public final class Lifespan {
 	 * The life ends whole: a fresh record in its place (a mortal of {@link #START_AGE}, no path, no method, no point, the physique
 	 * rolled anew), keeping only the journal and the dead's passage (where they died and their own respawn, and, for {@code
 	 * stillDead}, that they are dead: the Wheel takes them back). A soul out of its body, or in another's, comes home first. An
-	 * Eternal Reincarnation Body (Physique) keeps itself, its methods, and half its realm on each path ({@link #reincarnate}).
+	 * Eternal Reincarnation Body (Physique) keeps itself and all its cultivation ({@link #reincarnate}).
 	 */
 	public static void wipe(ServerPlayer p, boolean stillDead) {
 		SoulProjection.bringHome(p);
@@ -442,26 +443,13 @@ public final class Lifespan {
 	}
 
 	/**
-	 * An Eternal Reincarnation Body born again (Physique): into {@code fresh} go {@code old}'s heaven and ghost methods, and each path
-	 * it had begun at half its realm (Four Axis to Core Formation, Heavenly Being to Core Formation, Nascent Soul to Foundation
-	 * Building...), at that realm's Early with none of it cultivated, the methods understood no deeper than that. A mortal's
-	 * meridians stay closed.
+	 * An Eternal Reincarnation Body born again (Physique; the user's ask, 2026-10-22: "you can reach it if you work hard and you dont lose
+	 * stuff"): into {@code fresh}, a life begun anew at {@link #START_AGE} with its realm's years ahead of it, goes all {@code old}'s
+	 * cultivation (PlayerCultivation#carryOver). Until then it was set back to half its realm on each path, which a Low talent never
+	 * outgrew.
 	 */
 	static void reincarnate(PlayerCultivation old, PlayerCultivation fresh) {
-		fresh.heaven().load(old.heaven().save());
-		if (!old.isMortal()) fresh.setBackTo(Realm.byIndex(old.getRealm().ordinal() / 2), Stage.EARLY);
-		else HeavenMethods.clampTo(fresh.heaven(), 0);
-		NetherworldState from = old.netherworld(), to = fresh.netherworld();
-		for (GhostMethod method : from.knownMethods()) to.setMethod(method, from.layer(method), 0);
-		to.setActiveMethod(from.activeMethod());
-		int ghost = GhostMethods.ghostRank(from);
-		if (ghost >= 0) {
-			to.setPath(ghost, 0);
-			GhostMethods.fallTo(to, PlayerCultivation.rank(Realm.byIndex(ghost / Stage.values().length / 2), Stage.EARLY));
-			to.setPath(GhostMethods.ghostRank(to), 0); // none of the new stage cultivated, if it fell no further
-		} else {
-			GhostMethods.clampTo(to, 0);
-		}
+		fresh.carryOver(old);
 	}
 
 	public static void forget(UUID id) {

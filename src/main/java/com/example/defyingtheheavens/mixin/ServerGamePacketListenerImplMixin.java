@@ -40,6 +40,16 @@ public abstract class ServerGamePacketListenerImplMixin {
 		return hardcore && !GhostSystem.isGhost(player);
 	}
 
+	/**
+	 * Vanilla snaps back anyone but the game's host who moves more than 10 blocks in one movement packet (the squared limit, 100); from
+	 * Void Shattering on one flies far faster than that (QiFlight#realmSpeed, AstralRealm#spaceSpeed). A flier may move as far as its
+	 * flight carries it, several ticks of it for packets that come in bunched (QiFlight#moveAllowanceSq).
+	 */
+	@ModifyExpressionValue(method = "handleMovePlayer", at = @At(value = "CONSTANT", args = "floatValue=100.0"))
+	private float dth$roomForTheSwift(float limit) {
+		return com.example.defyingtheheavens.QiFlight.moveAllowanceSq(player, limit);
+	}
+
 	/** One whose body is held by another's soul (Possession) is a spectator only to watch it: no teleporting off to anyone else. */
 	@org.spongepowered.asm.mixin.injection.Inject(method = "handleTeleportToEntityPacket", cancellable = true, at = @At(value = "INVOKE",
 			target = "Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/server/level/ServerLevel;)V",

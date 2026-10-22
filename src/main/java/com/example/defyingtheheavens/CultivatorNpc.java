@@ -921,8 +921,9 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		// Asleep only while it means to be (NpcLife): anything that took it away from its bed has woken it.
 		if (hasPose(Pose.SLEEPING) && (activity == null || activity.kind != NpcLife.Kind.SLEEP || !NpcLife.canLive(this))) setPose(Pose.STANDING);
 		if (isMeditating() && !isMortal()) cultivate(1.0, meditationMultiplier(level));
-		// Natural recovery out of combat: quicker once qi sustains the body.
-		if (!isInCombat() && getHealth() < getMaxHealth()) heal(isMortal() || getRank() < 4 ? 0.5f : 2.0f);
+		// Natural recovery out of combat: quicker once qi sustains the body, the whole of a great one mended in half a minute
+		// (CultivationStats#mendPerSecond: the high realms' bodies took hours at two a second).
+		if (!isInCombat() && getHealth() < getMaxHealth()) heal(isMortal() || getRank() < 4 ? 0.5f : CultivationStats.mendPerSecond(getMaxHealth()));
 		setFlag(FLAG_DOMAIN, !isMortal() && (!isSectMember() || isInCombat()) && !isConcealed());
 		if (isDomainOpen()) senseDomains(level);
 		if (sectId != null) {

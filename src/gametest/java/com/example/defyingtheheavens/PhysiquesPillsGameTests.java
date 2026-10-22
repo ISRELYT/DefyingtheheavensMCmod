@@ -409,28 +409,39 @@ public class PhysiquesPillsGameTests implements FabricGameTest {
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
-	public void anEternalReincarnationBodyKeepsHalf(GameTestHelper helper) {
+	public void anEternalReincarnationBodyKeepsEverything(GameTestHelper helper) {
 		ServerPlayer p = survivor(helper);
 		PlayerCultivation c = CultivationManager.own(p);
-		c.setState(Realm.NASCENT_SOUL, Stage.MID, 0);
+		c.setState(Realm.NASCENT_SOUL, Stage.MID, 1234);
 		HeavenMethod fire = HeavenMethod.of(QiElement.FIRE, Realm.NASCENT_SOUL);
 		c.heaven().setMethod(fire, 5, 0);
 		NetherworldState s = c.netherworld();
 		s.setMethod(GhostMethod.SIX_PATHS_CANON, 1, 0);
-		GhostMethods.setPath(s, PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.EARLY));
+		int ghostRank = PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.EARLY);
+		GhostMethods.setPath(s, ghostRank);
+		s.setPath(ghostRank, 77);
+		c.setStatPoints(StatPoints.Stat.values()[0], 2);
+		c.setStatPoints(StatPoints.Stat.values()[2], 1);
+		c.setObsession(FourAxis.Axis.LONGEVITY);
+		c.setFavour(2);
 		c.setPhysique(Physique.ETERNAL_REINCARNATION_BODY);
 		c.setAge(300);
+		int[] order = c.statPointOrder();
+		int layer = c.heaven().layer(fire);
 		Lifespan.wipe(p, false);
 		PlayerCultivation after = CultivationManager.own(p);
 		helper.assertTrue(after != c && after.getPhysique() == Physique.ETERNAL_REINCARNATION_BODY && after.age() == Lifespan.START_AGE && p.isAlive(),
 				"Born again as itself, a life begun anew");
-		helper.assertTrue(!after.isMortal() && after.getRealm() == Realm.FOUNDATION_BUILDING && after.getStage() == Stage.EARLY && after.getCultivation() == 0,
-				"Half its realm: Nascent Soul to Foundation Building, at its Early");
-		helper.assertTrue(after.heaven().knows(fire) && after.heaven().layer(fire) <= Math.max(1, MethodLayers.deepestAt(PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.EARLY))),
-				"Its method kept, understood no deeper than its new realm");
+		helper.assertTrue(!after.isMortal() && after.getRealm() == Realm.NASCENT_SOUL && after.getStage() == Stage.MID && after.getCultivation() == 1234,
+				"Its realm, stage and cultivation whole (the user's ask, 2026-10-22: it loses nothing)");
+		helper.assertTrue(after.heaven().knows(fire) && after.heaven().layer(fire) == layer, "Its method as deep as it was (" + after.heaven().layer(fire) + " of " + layer + ")");
 		NetherworldState ghost = after.netherworld();
-		helper.assertTrue(ghost.knows(GhostMethod.SIX_PATHS_CANON) && GhostMethods.ghostRank(ghost) == PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY),
-				"The ghost path too: Heavenly Being to Core Formation (" + GhostMethods.ghostRank(ghost) + ")");
+		helper.assertTrue(ghost.knows(GhostMethod.SIX_PATHS_CANON) && GhostMethods.ghostRank(ghost) == ghostRank && ghost.pathCultivation() == 77,
+				"The ghost path too, whole (" + GhostMethods.ghostRank(ghost) + ", " + ghost.pathCultivation() + ")");
+		helper.assertTrue(java.util.Arrays.equals(after.statPointOrder(), order) && after.obsession() == FourAxis.Axis.LONGEVITY && after.getFavour() == 2,
+				"Its stat points as they were put in, its obsession, Heaven's Favour");
+		helper.assertTrue(Physique.ETERNAL_REINCARNATION_BODY.grade() == Physique.Grade.IMMORTAL && Lifespan.talent(after) == Physique.Grade.LOW.talent()
+				&& Physique.ETERNAL_REINCARNATION_BODY.speed() == Physique.Grade.LOW.speed(), "For all its grade, a Low one's talent and pace");
 		helper.succeed();
 	}
 
@@ -468,6 +479,20 @@ public class PhysiquesPillsGameTests implements FabricGameTest {
 		PlayerCultivation after = CultivationManager.own(p);
 		helper.assertTrue(after != c && after.isMortal() && after.age() == Lifespan.START_AGE && after.heaven().known().isEmpty() && after.longevityPills() == 0
 				&& after.extraYears() == 0 && p.isAlive() && rebirth.getCount() == 1, "Born anew: a mortal of 16, its years and methods gone, alive, one pill fewer");
+		// It has no hold on an Eternal Reincarnation Body (the user's call, 2026-10-22): not eaten, sneaking or not, nothing changed.
+		TestMethods.setAt(after, Realm.FOUNDATION_BUILDING, Stage.MID);
+		after.setPhysique(Physique.ETERNAL_REINCARNATION_BODY);
+		after.setAge(200);
+		p.setShiftKeyDown(true);
+		try {
+			helper.assertTrue(rebirth.use(p.level(), p, InteractionHand.MAIN_HAND).getResult() == InteractionResult.FAIL && !p.isUsingItem(),
+					"An Eternal Reincarnation Body won't eat it, sneaking or not");
+			rebirth.finishUsingItem(p.level(), p);
+		} finally {
+			p.setShiftKeyDown(false);
+		}
+		helper.assertTrue(CultivationManager.own(p) == after && after.getRealm() == Realm.FOUNDATION_BUILDING && after.getStage() == Stage.MID
+				&& after.age() == 200 && rebirth.getCount() == 1, "...and nothing comes of it: the same life, the pill kept");
 		helper.succeed();
 	}
 

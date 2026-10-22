@@ -39,6 +39,7 @@ public final class VestigeSpawner {
 		for (ServerPlayer p : space.players()) {
 			if (!p.isAlive() || p.isCreative() || p.isSpectator()) continue;
 			int ticks = IN_SPACE.merge(p.getUUID(), 1, Integer::sum);
+			if (AstralRealm.zooming(p)) continue; // nothing loaded round the swift: one would hang there unmoving
 			if (ticks < GRACE || ticks % INTERVAL != 0 || p.getRandom().nextFloat() >= CHANCE) continue;
 			if (planets.atmosphereAt(p.position(), VoidVestige.AIR_MARGIN * 2) != null) continue;
 			int near = space.getEntitiesOfClass(VoidVestige.class, new AABB(p.blockPosition()).inflate(220)).size();

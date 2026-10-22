@@ -1,8 +1,10 @@
 package com.example.defyingtheheavens.mixin;
 
+import com.example.defyingtheheavens.AstralRealm;
 import com.example.defyingtheheavens.RingContainer;
 import com.example.defyingtheheavens.RingHolder;
 import com.example.defyingtheheavens.Tempering;
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -23,7 +25,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * Gives every player a ring container, saves it with the player and drops it on death like the rest of the inventory.
- * Also keeps Qi Flight from cushioning falls.
+ * Also keeps Qi Flight from cushioning falls, and lets the swift fly through space unchecked for blocks.
  */
 @Mixin(Player.class)
 public abstract class PlayerMixin implements RingHolder {
@@ -75,5 +77,15 @@ public abstract class PlayerMixin implements RingHolder {
 	@Redirect(method = "causeFallDamage", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/player/Abilities;mayfly:Z", opcode = Opcodes.GETFIELD))
 	private boolean dth$qiFlightTakesFallDamage(Abilities abilities) {
 		return abilities.mayfly && abilities.invulnerable;
+	}
+
+	/**
+	 * Vanilla sets a player's {@code noPhysics} from being a spectator at the start of every tick (both sides). One flying space
+	 * faster than Four Axis can (AstralRealm#passesThrough: from Void Shattering on) has it too: there is no block there to meet,
+	 * and sweeping a way of a hundred blocks and more a tick for one would cost dearly.
+	 */
+	@ModifyExpressionValue(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;isSpectator()Z", ordinal = 0))
+	private boolean dth$throughTheVoid(boolean spectator) {
+		return spectator || AstralRealm.passesThrough((Player) (Object) this);
 	}
 }

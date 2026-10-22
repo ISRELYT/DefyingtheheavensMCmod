@@ -1026,6 +1026,8 @@ public final class ModLang {
 	public static final String TOOLTIP_REBIRTH_PILL_WARN = k("tooltip.rebirth_pill.warn");
 	public static final String MSG_REBIRTH_CONFIRM = k("message.rebirth_pill.confirm");
 	public static final String MSG_REBIRTH = k("message.rebirth_pill");
+	/** ...refused by an Eternal Reincarnation Body (RebirthPillItem#refuses). */
+	public static final String MSG_REBIRTH_ETERNAL = k("message.rebirth_pill.eternal");
 	public static final String MSG_TERRACE = k("message.terrace");
 	public static final String TERRACE_PLACE = k("terrace.place");
 	public static final String JOURNAL_TERRACE = k("journal.terrace");

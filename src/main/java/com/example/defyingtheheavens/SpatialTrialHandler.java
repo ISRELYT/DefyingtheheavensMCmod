@@ -98,7 +98,9 @@ public final class SpatialTrialHandler {
 	 * trial's, 8.3, from 2026-10-17). Climbing the upper layers on Qi Flight (160 blocks at ~7.5 a second, measured 2026-10-19: some
 	 * 21 s) costs about 175 health, the whole climb from where one comes in about 200; sinking through the lower ones (12 s) about
 	 * 100 (both before any healing). With Qi Sustenance and base stats, a Heavenly Being Grand Perfection is the first to come through
-	 * the climb (1.3 health left), and a Nascent Soul Grand Perfection the first to live through falling out.
+	 * the climb (1.3 health left), and a Nascent Soul Grand Perfection the first to live through falling out. (That at vanilla's
+	 * mending: since 2026-10-22 a body mends at its realm's pace, CultivationStats#mendFactor, so from Nascent Soul up the gap presses
+	 * the lighter, the user's word: "its okay if they become easier".)
 	 */
 	public static final float LAYER_PRESSURE = 8.2f;
 	/** Tearing space open costs this share of the qi pool going in, and this coming out. */

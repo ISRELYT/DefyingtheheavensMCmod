@@ -99,8 +99,32 @@ public final class CultivationStats {
 	}
 
 	/**
+	 * A body mends from nothing to whole in about this long, whatever its realm (the user's ask, 2026-10-22: the great bodies took
+	 * hours at vanilla's two a second), fed as Qi Sustenance keeps it; the small bodies of the first realms keep vanilla's own pace,
+	 * which is quicker. In tribulations and the gap too (the user's word, the same day: "its okay if they become easier").
+	 */
+	public static final double MEND_SECONDS = 30;
+	/** What vanilla's quick regeneration (2 health a second) mends in {@link #MEND_SECONDS}: a greater body mends the faster. */
+	private static final double VANILLA_MENDS = 2 * MEND_SECONDS;
+
+	/**
+	 * How many times vanilla's natural regeneration {@code p}'s body heals at (FoodDataMixin; the dead's in the Netherworld too,
+	 * GhostSystem): its realm's body ({@link #bodyHealth}: the higher path, as wielded) over {@link #VANILLA_MENDS}, never less than
+	 * once. Four Axis Grand Perfection about 4, Void Shattering's some 30, a True Immortal's over 1,000.
+	 */
+	public static double mendFactor(ServerPlayer p) {
+		return Math.max(1, bodyHealth(TwoPaths.body(CultivationManager.get(p), true)) / VANILLA_MENDS);
+	}
+
+	/** Health a second a body of {@code maxHealth} mends at rest (an NPC cultivator's out of combat): two, or the whole of it in {@link #MEND_SECONDS}. */
+	public static float mendPerSecond(float maxHealth) {
+		return (float) Math.max(2.0, maxHealth / MEND_SECONDS);
+	}
+
+	/**
 	 * Every tick, tops up food and saturation for players with Qi Sustenance active (awakened and switched on). Full food plus
-	 * saturation keeps vanilla's fast natural regen (1 health per half second) running, as if always freshly fed.
+	 * saturation keeps vanilla's fast natural regen (1 health per half second, times the realm's: {@link #mendFactor}) running, as
+	 * if always freshly fed.
 	 */
 	public static void tickHunger(MinecraftServer server) {
 		for (ServerPlayer player : server.getPlayerList().getPlayers()) {

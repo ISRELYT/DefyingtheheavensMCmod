@@ -701,8 +701,9 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 						+ "cultivates. Each righteous or neutral one drags its own path toward the demonic, and the righteous think the less of it "
 						+ "(-20 regard).");
 		physique(t, "eternal_reincarnation_body", "Eternal Reincarnation Body",
-				"The rarest of all. A soul that never wholly forgets: when its life is spent, its soul scatters, or a Rebirth Pill is taken, it is "
-						+ "born again with this same body, its methods, and half its realm on each path.");
+				"The rarest of all, and no gift to cultivation: a Low grade's talent and pace. A soul that never forgets: when its life is spent "
+						+ "or its soul scatters, it is born again with this same body and all its cultivation, every realm, stage and method on each "
+						+ "path, its years begun anew (a Rebirth Pill has no hold on it). Whoever keeps at it reaches True Immortal in the end.");
 		physique(t, "myriad_form_body", "Myriad Form Body",
 				"As rare as the Eternal Reincarnation Body: born with two more physiques at once, of Mid to Supreme grade and never two that clash, "
 						+ "with all their gifts.");
@@ -737,7 +738,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_DEVOURED_FALL, "%s devoured your cultivation: you fall to %s.");
 		t.add(ModLang.MSG_TRIB_DEFIED, "The heavens cannot strike you down! Their tribulation breaks against you, and fails.");
 		t.add(ModLang.MSG_TRIB_HOLDS, "Your cultivation holds: you stand at %s still, and may face the tribulation again.");
-		t.add(ModLang.MSG_REINCARNATED, "Your Eternal Reincarnation Body carries you on: your methods remembered, you begin again at %s.");
+		t.add(ModLang.MSG_REINCARNATED, "Your Eternal Reincarnation Body carries you on: nothing of your cultivation lost, a new life begun at %s.");
 		t.add(ModLang.PILL_ALCHEMY_BODY, "Brewed by an Innate Alchemy Body: twice as strong");
 		// The Storage Ring (StorageRingItem, StorageRings) and its screen
 		t.add(ModItems.STORAGE_RING, "Storage Ring");
@@ -1108,6 +1109,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.TOOLTIP_REBIRTH_PILL_WARN, "Eaten only while sneaking");
 		t.add(ModLang.MSG_REBIRTH_CONFIRM, "It would end everything you have cultivated: eat it while sneaking to begin your life anew.");
 		t.add(ModLang.MSG_REBIRTH, "The pill dissolves all you were. You begin your life anew.");
+		t.add(ModLang.MSG_REBIRTH_ETERNAL, "Your Eternal Reincarnation Body is born again as itself, whatever comes: the pill has no hold on it.");
 		t.add(ModItems.GHOST_QUELLING_TALISMAN, "Ghost-Quelling Talisman");
 		t.add(ModLang.TOOLTIP_GHOST_QUELLING_TALISMAN, "Throw it at the dead: it strikes them and binds them where they stand for %s seconds");
 		t.add(ModEntities.GHOST_QUELLING_TALISMAN, "Ghost-Quelling Talisman");

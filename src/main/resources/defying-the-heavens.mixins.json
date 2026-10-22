@@ -4,9 +4,11 @@
   "package": "com.example.defyingtheheavens.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "ChunkMapMixin",
     "EndPortalBlockMixin",
     "EnderEyeItemMixin",
     "ExplosionMixin",
+    "FoodDataMixin",
     "InventoryMenuMixin",
     "LakeFeatureMixin",
     "LightningBoltMixin",

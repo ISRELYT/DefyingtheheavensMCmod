@@ -83,6 +83,22 @@ public final class NetherworldState {
 		this.pathCultivation = this.pathRank < 0 ? 0 : Math.max(0, cultivation);
 	}
 
+	/**
+	 * Born again with {@code old}'s ghost path (an Eternal Reincarnation Body: PlayerCultivation#carryOver): its rank and what of the
+	 * stage it had cultivated, its methods as deep as they were and the one it cultivates, the path its meditation takes, the spell wheel
+	 * and the spell readied. Where it died, its passage below and the like are the new record's own (Lifespan#wipe).
+	 */
+	public void carryOver(NetherworldState old) {
+		pathRank = old.pathRank;
+		pathCultivation = old.pathCultivation;
+		cultivatingGhost = old.cultivatingGhost;
+		methods.clear();
+		for (java.util.Map.Entry<GhostMethod, double[]> entry : old.methods.entrySet()) methods.put(entry.getKey(), entry.getValue().clone());
+		activeMethod = old.activeMethod;
+		readiedSpell = old.readiedSpell;
+		System.arraycopy(old.spellWheel, 0, spellWheel, 0, spellWheel.length);
+	}
+
 	public boolean cultivatingGhost() { return cultivatingGhost; }
 	public void setCultivatingGhost(boolean ghost) { this.cultivatingGhost = ghost; }
 	public boolean inGhostTribulation() { return inGhostTribulation; }

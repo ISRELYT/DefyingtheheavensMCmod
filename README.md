@@ -336,7 +336,8 @@ Stats tab names it (and its roots), with its grade's colour. An op can change it
 The rarer the grade, the rarer the roll. Out of every 100 births (evened out 2026-10-20, the user's ask): **Low 56, Mid 24,
 High 12, Supreme 5, Immortal 3**. The grade is the body's **talent** (2026-10-21/22): what the years meditation costs are divided
 by, Low x1, Mid x1.5, High x2.1, Supreme x4.5, Immortal x16 (Lifespan: the talent race), and a small edge to its pace on both
-paths on top of the body's own, Low x1, Mid x1.1, High x1.2, Supreme x1.35, Immortal x1.5 (`Physique.Grade#talent`, `#speed`).
+paths on top of the body's own, Low x1, Mid x1.1, High x1.2, Supreme x1.35, Immortal x1.5 (`Physique.Grade#talent`, `#speed`;
+`Physique#talent`, `#speed`: the Eternal Reincarnation Body, for all its Immortal grade, has a Low one's).
 
 | Physique | Grade | Births | What it does |
 |---|---|---|---|
@@ -363,7 +364,7 @@ paths on top of the body's own, Low x1, Mid x1.1, High x1.2, Supreme x1.35, Immo
 | Primordial Chaos Body | Immortal | 0.4 | Meditation feeds **both paths at once**, each at its full pace (the living, the ghost path begun); no element barred; its spells (the heaven methods' qi, the ghost path's harm) strike a quarter harder. The heavens hate it: every tribulation strikes half as many times again (rounded up: Core Formation's 6 become 9, Four Axis's 100 become 150), at its realm's pace, so it takes the longer; its lifespan tribulation strikes half as often again |
 | Soul-Devouring Body | Immortal | 0.4 | Every cultivator it slays, NPC or player, gives it a tenth of what the victim's stage takes, on the path it cultivates (as far as fits before a bottleneck); a player it slays loses a stage of their own, on their higher path (the user's ask, 2026-10-20: a friend killed again and again to feed one pays for every time); each righteous or neutral one drags its alignment 10 toward the demonic; the righteous think 20 less of it |
 | Heavenly Thunder Body | Immortal | 0.3 | A tribulation's lightning feeds it: no harm, the qi pool filled, and the strikes bank up to 60% of the new stage's cultivation for the breakthrough. The lifespan tribulation's it drinks whole only up to half its power (cultivation into its bar), less and less after: at the last it is too much even for this body |
-| Eternal Reincarnation Body | Immortal | 0.1 | Reborn (a life spent, a soul scattered, a Rebirth Pill) it keeps **this body, its methods and half its realm on each path** (Four Axis and Heavenly Being to Core Formation, Nascent Soul and Core Formation to Foundation Building, at Early, none of it cultivated, the methods understood no deeper); the rarest, with the next |
+| Eternal Reincarnation Body | Immortal | 0.1 | **A Low grade's talent and pace** (x1, no edge) for all its grade, but reborn (a life spent, a soul scattered; a Rebirth Pill has no hold on it, below) it **keeps this body and all its cultivation** (the user's ask, 2026-10-22: "you can reach it if you work hard and you dont lose stuff"): each path's realm, stage and progress, every method as deep as it was, the stat points, the axes of virtue and the obsession, Heaven's Favour, a breakthrough pill taken, its alignment, its abilities and wheels; only the life is new (16, its realm's years ahead of it). A Low talent that keeps everything reaches True Immortal in some 60 lives with nothing saving its years, 4 with all of it (it was set back to half its realm until then, which a Low talent never outgrew: `PlayerCultivation#carryOver`); the rarest, with the next |
 | Myriad Form Body | Immortal | 0.1 | Born with **two more physiques** of Mid to Supreme grade, by their weights, with all their gifts (paces and pools multiply); never a pair that clashes: at most one of roots (Three or True Element), never the Nine Yang with the Yin Soul |
 
 Roots' elements are drawn at birth, the elements of any methods already known first (so a save from before keeps its methods);
@@ -453,8 +454,8 @@ two minutes), and you can go on **meditating** under it. The whole server is tol
   deaths, never its own strike): everything cultivated goes with it, both paths, every method, spell and stat point, the axes
   of virtue, and the body itself (a new physique is rolled), and you come back a mortal of 16. Only the journal remembers, and
   the Netherworld's own bookkeeping. The death drops your things as any death does, but it doesn't take you to the Netherworld:
-  **you respawn at your own spawn point, alive** (your bed, or the world's spawn). An Eternal Reincarnation Body keeps itself, its
-  methods and half its realm (Physiques, above).
+  **you respawn at your own spawn point, alive** (your bed, or the world's spawn). An Eternal Reincarnation Body keeps itself and
+  all its cultivation, its years begun anew (Physiques, above).
 - **Physiques**: a **Heaven-Defying Body** dies to it like anyone (no heart is left it here); a **Heavenly Thunder Body** drinks
   its strikes whole up to half power (no harm, its qi full, cultivation into its bar), less and less after, and none at the last,
   so it dies too; an Ancient Holy Body and Rings of Transcendence soften it as any tribulation; a Primordial Chaos Body is struck
@@ -470,7 +471,9 @@ two minutes), and you can go on **meditating** under it. The whole server is tol
 cultivation exactly as a spent life does, a new physique with it, **but you don't die**; the dead (a Ghost King, the one of them
 with hands to eat it) are born again alive, as when their years run out among the dead. Any number may be taken, so it is rare: no
 cauldron brews it, and it's found only in the **Upper Realm's** sect treasuries (one chest in 50; a treasury has three) and on
-their sect masters. Code: `RebirthPillItem`, `Lifespan#rebirth`, `loot_tables/chests/sect_treasury.json`.
+their sect masters. **It has no hold on an Eternal Reincarnation Body** (the user's call, 2026-10-22: born again losing nothing, it
+would have had a whole new life of years from it): such a body won't eat it, sneaking or not, and is told so. Code:
+`RebirthPillItem` (`#refuses`), `Lifespan#rebirth`, `loot_tables/chests/sect_treasury.json`.
 
 **One clock, alive and dead** (the user's ask, 2026-10-20): the dead go on aging as the living do, against the same span, so
 the lifespan limits the whole existence. Dying near the end gives no years back (the dead used to have a clock of their own,
@@ -601,6 +604,27 @@ or spectator), the qi once your meridians open; under them the thin bars go on (
 qi, yin corruption, the readied spell and ability: `QiHud`, `NetherworldHud`), and under those the pressure mark and a projected
 soul's readout.
 
+**Swift** (the user's ask, 2026-10-22: "void shattering beings and onwards should be able to travel through space or just in
+general super fast"). From Void Shattering on, Qi Flight and the free flight of the dead and of a Ghost King's form are far
+faster, the more with every stage (`QiFlight#realmSpeed`): Void Shattering 2.4 to 3 times vanilla's flying speed, Sacred Vessel
+3.2 to 3.8, Entering Nirvana 4 to 4.9, True Immortal 6 to 7.2 (some 27 to 80 blocks a second, twice that sprinting; Wandering Soul
+Steps' +60% on top for the dead). Space is swifter still (The Astral Realm: to the next star, Void Shattering half a minute, True
+Immortal five or six seconds). A sword stays a sword's speed. In the lower realms Realm Suppression holds them to Heavenly Being's
+might, and so to vanilla's speed there. Vanilla snaps back anyone but the game's host who moves more than 10 blocks in a tick; a
+flier may now move as far as its flight carries it, a second of it for packets that come in bunched (`QiFlight#moveAllowanceSq`,
+`ServerGamePacketListenerImplMixin`), so a guest isn't pulled back mid-flight. Unexplored land loads only as fast as the server
+makes it: at the top speeds over new land the client waits at the edge of what has loaded (space has none to wait for).
+NPC cultivators fly as before.
+
+**Mending** (the user's ask, 2026-10-22: the great bodies healed at vanilla's two a second, hours to mend). Natural regeneration
+goes by the realm's body (`CultivationStats#mendFactor`, `mixin/FoodDataMixin`): every heal vanilla gives a fed body is multiplied
+by the realm's body over 60, so with Qi Sustenance on a body of any realm mends from nothing to whole in about **30 seconds**
+(the first realms' small bodies keep vanilla's quicker pace): Four Axis Grand Perfection about 4 times vanilla's, Void Shattering
+some 30, a True Immortal over 1,000. Its food costs stay vanilla's. The dead's mending in the Netherworld goes by it too
+(`GhostSystem`), and an NPC cultivator at rest mends its whole body in 30 s (`CultivationStats#mendPerSecond`; 2 a second at
+least, as before). It runs in tribulations, the Spatial Gap and a star's heat too (the user's word: "its okay if they become
+easier"), so from Nascent Soul up those are gentler than their tables say.
+
 ## Tribulations
 
 A breakthrough into a new realm (and, from Nascent Soul, into every stage) brings the **Heavenly Tribulation**: a storm
@@ -629,7 +653,9 @@ tribulation): its clouds gather for 3 s, its strikes come 3 seconds apart while 
 the 26 seconds before the breakthrough's last second (`#strikeSpan`, `#strikesBy`), several a tick for the greatest; a Primordial
 Chaos Body's extra strikes too, the faster (they used to take the longer). Each strike is weaker the more there are, retuned for
 the new timing (a simulation of vanilla's damage rules, which gave the old table back exactly: scratchpad `trib-tune-1022b.ps1`)
-so the same gear as before lives and the step below dies, with Qi Sustenance's regeneration on; but at Four Axis Grand Perfection,
+so the same gear as before lives and the step below dies, with Qi Sustenance's regeneration on (at vanilla's 2 a second: since
+2026-10-22 a body mends at its realm's pace, here too at the user's word, so from Nascent Soul up the table asks less than it says;
+The realms after Four Axis, Mending); but at Four Axis Grand Perfection,
 where in 30 s Regeneration I heals too little to tell one kit from another, Resistance II is wanted now, as in every realm after
 it (Protection IV and a beacon are the best gear there is, so past Four Axis the body's own might bears the rest). Strikes in the
 same tenth of a second share the bolt drawn (`MIN_BOLT_INTERVAL`), and only one bolt a second lights up the whole sky (the rest
@@ -1445,7 +1471,8 @@ times where you are. The action bar shows where the world lies beneath you and h
 pressure still presses: **2.5 a second in the shallows** (where you come in at Y 128, between Y 60 and Y 200), and **8.2** in the
 stormy layers above and below them (twice the old trial's 4.15 from 2026-10-17, eased to 8.2 on 2026-10-19). Qi Flight climbs about 7.5 blocks a second (measured 2026-10-19): the
 upper layers take some 21 seconds, about 175 harm, and the whole climb from Y 128 some 31 seconds and 200 harm, before Qi
-Sustenance's healing and the storms, so bring healing. **Tearing out (a Heavenly Being's way) only ever leads back to the realm you came in from**; to pass
+Sustenance's healing and the storms, so bring healing (a body mends at its realm's pace since 2026-10-22, in the gap too, so from
+Nascent Soul up it presses the lighter: The realms after Four Axis, Mending). **Tearing out (a Heavenly Being's way) only ever leads back to the realm you came in from**; to pass
 from one realm to the other you go **up or down**. Rise through the **upper layers** past **Y 360** and you are through, into
 the Upper Realm, where the gap's place there lies (the arrival finds an island). Sink through the **lower layers** (under Y 60)
 below **Y 12** and you fall out of the gap into the Overworld's sky (the first landing harmless); the gap is thick there, and
@@ -1496,7 +1523,16 @@ everyone there does. Space speed goes by the higher path too.
 
 **Space** (`astral_void`). Nothing in it is a block: the stars and planets are drawn by the client where they truly are, and
 you fly among them. Everyone in space is always flying, **on no qi**, at a speed of their realm: Nascent Soul 0.12 (vanilla
-flying is 0.05), Heavenly Being 0.20, Four Axis 0.32, a little more each stage; sprint for twice that. Qi gathers at **a
+flying is 0.05), Heavenly Being 0.20, Four Axis 0.32, Dao Integration 0.44, a little more each stage; sprint for twice that. From
+**Void Shattering** on, far swifter (the user's ask, 2026-10-22): Void Shattering 1.2, Sacred Vessel 2.0, Entering Nirvana 3.0, True
+Immortal 6.0, more each stage (to the next star sprinting: Four Axis about two minutes, Void Shattering half a minute, True Immortal
+five or six seconds, some 2,700 blocks a second). So swift a flier goes through space unswept for blocks (there are none:
+`AstralRealm#passesThrough`), the client doesn't hold it while space's empty chunks load (`client/mixin/SpaceLoadingMixin`), and an
+atmosphere crossed between two ticks still sets it down where its way met it (`AstralPlanets#atmosphereAlong`; the land there made
+ready two seconds ahead along its way). Flying space faster than a chunk a tick loads none of its chunks meanwhile
+(`AstralRealm#zooming`, `mixin/ChunkMapMixin`, as vanilla spares spectators): making, sending and saving a True Immortal's hundred
+chunks a tick held the server at 60 to 100 ms a tick; they load round the flier two seconds after it slows (`ZOOM_HOLD`: its packets
+come in bunched, and loading them at every lull cost as much), and no Vestige rises round it while it races. Qi gathers at **a
 quarter** of the lower realms'. A star's heat burns whoever comes within 1.6 times its radius, and its fire consumes those who
 reach it. Anything dropped in space (a death's things too) and any experience let loose there **floats** where it is, slowing
 to a stop, rather than falling into the void below.
@@ -1578,10 +1614,12 @@ and the Overworld's distance). Op: `/astral visit <kind>` (beside the nearest pl
 `/astral vestige <rank>` (12 Nascent Soul Early to 19 Heavenly Being Grand Perfection, near you in space).
 
 Code: `AstralPlanets` (the catalog from the world's seed), `PlanetTerrain` (a planet's land, shared with the painter),
-`PlanetSurfaceGenerator`, `PlanetBiomeSource`, `AstralRealm` (the ways in and out, qi, heat, `spaceSpeed`), `QiFlight` (space's
-flight), `VoidVestige`, `VestigeSpawner`, `Settlements`, `AstralCommand`; client `AstralSky`, `AstralClient` (the planets' skies),
-`PlanetPainter`, `PlanetTextures`, `PlanetDraw`, `PlanetLooks`, `VestigeRenderer`; tests `AstralGameTests`, `FourAxisGameTests`
-(the game-test server has no Astral Realm, so the travel was checked in game; a settlement is built there on a floor of its own).
+`PlanetSurfaceGenerator`, `PlanetBiomeSource`, `AstralRealm` (the ways in and out, qi, heat, `spaceSpeed`, the swift's crossings
+and `zooming`), `QiFlight` (space's flight), `VoidVestige`, `VestigeSpawner`, `Settlements`, `AstralCommand`, mixins `PlayerMixin`
+(the swift unswept), `ChunkMapMixin` (no chunks round them); client `AstralSky`, `AstralClient` (the planets' skies), `PlanetPainter`,
+`PlanetTextures`, `PlanetDraw`, `PlanetLooks`, `VestigeRenderer`, `mixin/SpaceLoadingMixin`; tests `AstralGameTests`,
+`FourAxisGameTests`, `SwiftAndMendingGameTests` (the game-test server has no Astral Realm, so the travel was checked in game, runs 17
+and 17b of 2026-10-22 too; a settlement is built there on a floor of its own).
 
 ## The Netherworld
 

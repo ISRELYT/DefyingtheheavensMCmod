@@ -356,6 +356,50 @@ public final class AstralPlanets {
 		return null;
 	}
 
+	/** Where a straight way through space first meets a planet's atmosphere ({@link #atmosphereAlong}). */
+	public record Crossing(Planet planet, Vec3 at) {}
+
+	/**
+	 * The planet (or the Overworld) whose atmosphere the straight way from {@code from} to {@code to} meets first, and where it meets
+	 * it; or null. For the swift (AstralRealm#spaceSpeed), who can cross an atmosphere's edge, or a moon's whole air, in one tick.
+	 */
+	public Crossing atmosphereAlong(Vec3 from, Vec3 to) {
+		Vec3 way = to.subtract(from);
+		double length = way.length();
+		if (length < 1.0e-6) return null;
+		Vec3 dir = way.scale(1 / length);
+		Crossing first = null;
+		double nearest = length;
+		double t = meets(from, dir, nearest, overworld.pos(), overworld.atmosphere());
+		if (t >= 0) {
+			first = new Crossing(overworld, from.add(dir.scale(t)));
+			nearest = t;
+		}
+		double minX = Math.min(from.x, to.x), maxX = Math.max(from.x, to.x), minZ = Math.min(from.z, to.z), maxZ = Math.max(from.z, to.z);
+		for (Planet planet : planets) {
+			double air = planet.atmosphere();
+			Vec3 c = planet.pos();
+			if (c.x < minX - air || c.x > maxX + air || c.z < minZ - air || c.z > maxZ + air) continue;
+			t = meets(from, dir, nearest, c, air);
+			if (t >= 0) {
+				first = new Crossing(planet, from.add(dir.scale(t)));
+				nearest = t;
+			}
+		}
+		return first;
+	}
+
+	/** How far along the way from {@code from} (heading {@code dir}, a unit) it meets the sphere, no farther than {@code reach}; or -1. */
+	private static double meets(Vec3 from, Vec3 dir, double reach, Vec3 centre, double radius) {
+		Vec3 off = from.subtract(centre);
+		double b = off.dot(dir), c = off.lengthSqr() - radius * radius;
+		if (c <= 0) return 0; // starting inside it
+		double disc = b * b - c;
+		if (b > 0 || disc < 0) return -1; // heading away, or passing wide
+		double t = -b - Math.sqrt(disc);
+		return t <= reach ? t : -1;
+	}
+
 	/** The star whose heat {@code at} is inside (within {@code reach} times its radius), or null. */
 	public Star starNear(Vec3 at, double reach) {
 		for (Star star : stars) {

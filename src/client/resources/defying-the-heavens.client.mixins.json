@@ -35,6 +35,7 @@
     "SoulInputMixin",
     "SoulRiverMixin",
     "SoulRenderDispatcherMixin",
+    "SpaceLoadingMixin",
     "SpinAttackEffectLayerMixin"
   ],
   "injectors": {

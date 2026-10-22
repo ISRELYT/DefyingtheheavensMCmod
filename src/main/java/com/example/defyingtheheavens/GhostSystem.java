@@ -75,7 +75,7 @@ public final class GhostSystem {
 	public static final int DISPERSE_TICKS = 5 * 20;
 	/** The Wheel turns, and the screen fades to gold, over this long before the ghost wakes alive. */
 	public static final int WHEEL_TICKS = 40;
-	/** In the Netherworld a ghost mends this much health a second. */
+	/** In the Netherworld a ghost mends this much health a second, times its realm's mending (CultivationStats#mendFactor). */
 	public static final float REGEN_PER_SECOND = 1.0f;
 	/** A ghost's blow on the living: this much harm, and this much of the Netherworld's yin driven into them. */
 	public static final float GHOSTLY_BLOW = 1.0f;
@@ -308,7 +308,7 @@ public final class GhostSystem {
 			if (second) {
 				applyBody(p);
 				if (ModDimensions.isNetherworld(p.level().dimension()) && p.getHealth() < p.getMaxHealth() && !DISPERSED.containsKey(p.getUUID())) {
-					p.heal(REGEN_PER_SECOND);
+					p.heal((float) (REGEN_PER_SECOND * CultivationStats.mendFactor(p)));
 				}
 				GhostGate.terrace(p); // atop the Terrace for Gazing Homeward: the place it died
 			}

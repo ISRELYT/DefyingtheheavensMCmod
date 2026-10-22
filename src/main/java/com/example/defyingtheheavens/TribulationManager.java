@@ -123,7 +123,9 @@ public final class TribulationManager {
 	 * before the breakthrough's last second ({@link #strikeSpan}: Nascent Soul's 18 some 1.5 s apart, Heavenly Being's 50 a half
 	 * second, Four Axis's 100 a quarter, True Immortal's 3,200 six a tick; strikes in the same tenth of a second share the bolt drawn).
 	 * From Foundation Building on, the Qi Sustenance ability (if left switched on) keeps vanilla's fast regeneration running, 2
-	 * health a second, so only damage above that wears the player down. Lightning is cut by armor (up to 80%, and the more the
+	 * health a second, so only damage above that wears the player down. (Since 2026-10-22 a body mends at its realm's pace,
+	 * CultivationStats#mendFactor, here too at the user's word, "its okay if they become easier": from Nascent Soul up the table
+	 * below, weighed at vanilla's 2 a second, asks less than it says.) Lightning is cut by armor (up to 80%, and the more the
 	 * smaller the hit); the magic part ignores armor but not Protection enchantments, Resistance or absorption.
 	 * Every strike of a tribulation is the same, so the outcome is certain. Tuned (deterministic simulation of vanilla's damage
 	 * rules tick by tick, starting at full health, no potions/apples/totems; it reproduced the old table exactly; scratchpad

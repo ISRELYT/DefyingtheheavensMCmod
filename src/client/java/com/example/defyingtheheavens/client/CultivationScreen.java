@@ -1117,8 +1117,9 @@ public class CultivationScreen extends Screen {
 		if (c.getPhysique() != null) {
 			y += 11;
 			Physique physique = c.getPhysique();
-			// With its talent (Physique.Grade#talent): what the years meditation costs are divided by (Lifespan#seclude).
-			double talent = physique.grade().talent();
+			// With its talent (Physique#talent: its grade's, an Eternal Reincarnation Body's a Low one's): what the years meditation costs
+			// are divided by (Lifespan#seclude).
+			double talent = physique.talent();
 			Component bare = Component.translatable(ModLang.STATS_PHYSIQUE, physique.getDisplayName(), physique.grade().getDisplayName(),
 					talent == Math.floor(talent) ? String.valueOf((long) talent) : String.valueOf(talent));
 			Component roots = c.getRootElements().isEmpty() ? null : Component.translatable(ModLang.STATS_ROOTS, Physiques.rootsLine(c.getRootElements()));

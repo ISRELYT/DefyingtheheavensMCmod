@@ -79,8 +79,25 @@ public final class AstralRealm {
 	 * teleport are none); on a planet's land one ages as anywhere (Lifespan).
 	 */
 	public static final double YEARS_PER_BLOCK = 0.01;
-	/** A step longer than this in a tick is no flight but a teleport, and costs nothing. */
+	/** A step longer than this in a tick is no flight but a teleport, and costs nothing (the swiftest step farther: {@link #maxStep}). */
 	private static final double MAX_STEP = 64;
+	/** One flying faster than this a tick (blocks) can cross the look-ahead between two looks: the planet its way meets is looked for instead. */
+	private static final double SWIFT_AHEAD = LOAD_AHEAD / 20;
+	/** ...that far ahead along its way (ticks). */
+	private static final int AHEAD_TICKS = 40;
+	/**
+	 * One flying space faster than this a tick (blocks: a chunk a tick) loads none of its empty chunks while it does ({@link #zooming}):
+	 * the server can't make them as fast, and making, sending and saving the ones it can ate its ticks (measured 2026-10-22: a True
+	 * Immortal's sprint, over a hundred chunks a tick, held the server at 60 to 100 ms a tick).
+	 */
+	private static final double ZOOM_STEP = 16;
+	/**
+	 * ...and for this long after its last such step (ticks): a flier's packets come in bunched, two one tick and none the next, and
+	 * its chunks loaded and let go again at every lull cost as much as loading them all along.
+	 */
+	private static final int ZOOM_HOLD = 40;
+	/** Those flying space faster than {@link #ZOOM_STEP}, and the server tick of their last step so swift. */
+	private static final Map<UUID, Integer> ZOOMING = new HashMap<>();
 
 	/** Where each player's height was last tick, to tell rising from falling. */
 	private static final Map<UUID, Double> LAST_Y = new HashMap<>();
@@ -133,15 +150,38 @@ public final class AstralRealm {
 		ServerPlayNetworking.send(player, ModPackets.ASTRAL_SEED, buf);
 	}
 
-	/** How fast one flies in space (vanilla flying speed): by the realm one wields, faster with every stage. */
+	/**
+	 * How fast one flies in space (vanilla flying speed): by the realm one wields, faster with every stage; from Void Shattering on, as
+	 * no one below it can (the user's ask, 2026-10-22: "void shattering beings and onwards should be able to travel through space ...
+	 * super fast"): Void Shattering some four times Four Axis's, Sacred Vessel six, Entering Nirvana nine, True Immortal nineteen and
+	 * more. To the next star (some 16,000 blocks) sprinting: Four Axis about two minutes, Void Shattering half a minute, True Immortal
+	 * five or six seconds. So swift a flier passes through space unchecked for blocks ({@link #passesThrough}).
+	 */
 	public static float spaceSpeed(Realm realm, Stage stage) {
 		int s = stage.ordinal();
 		if (realm.ordinal() < MIN_REALM.ordinal()) return 0.08f;
 		return switch (realm) {
 			case NASCENT_SOUL -> 0.12f + s * 0.012f;
 			case HEAVENLY_BEING -> 0.20f + s * 0.016f;
-			default -> 0.32f + s * 0.02f;
+			case DAO_INTEGRATION -> 0.44f + s * 0.03f;
+			case VOID_SHATTERING -> 1.2f + s * 0.1f;
+			case SACRED_VESSEL -> 2.0f + s * 0.15f;
+			case ENTERING_NIRVANA -> 3.0f + s * 0.25f;
+			case TRUE_IMMORTAL -> 6.0f + s * 0.5f;
+			default -> 0.32f + s * 0.02f; // Four Axis
 		};
+	}
+
+	/** Flying space faster than this (vanilla flying speed: past any Four Axis, a Starborn Body's too) one passes through it unchecked ({@link #passesThrough}). */
+	public static final float SWIFT = 1.0f;
+
+	/**
+	 * Whether {@code p} flies space faster than {@link #SWIFT}: nothing there is a block (the client draws the stars and planets), and a
+	 * way of a hundred blocks and more a tick, swept for anything to bump into, would cost the server and the client dearly, so it goes
+	 * through as a spectator does (PlayerMixin). Both sides tell it alike, by the flight's speed (vanilla sends it to the client).
+	 */
+	public static boolean passesThrough(net.minecraft.world.entity.player.Player p) {
+		return ModDimensions.isSpace(p.level().dimension()) && p.getAbilities().flying && p.getAbilities().getFlyingSpeed() > SWIFT;
 	}
 
 	/**
@@ -201,6 +241,7 @@ public final class AstralRealm {
 			try {
 				// Out of space (a death, a command, anything but the ways out below): the trip's years paid, its HUD line taken away.
 				if (dimension != ModDimensions.ASTRAL_VOID && TRIP.containsKey(id)) leftSpace(p);
+				if (dimension != ModDimensions.ASTRAL_VOID) ZOOMING.remove(id);
 				// Out of the Overworld's sky, or the Upper Realm's (its heaven, over the same world: the user's ask, 2026-10-19).
 				if (dimension == Level.OVERWORLD || dimension == ModDimensions.UPPER_REALM) {
 					if (p.getY() > EXIT_Y && rising && settled) riseFromOverworld(p, space, planets);
@@ -273,9 +314,21 @@ public final class AstralRealm {
 			return;
 		}
 
+		Vec3 from = LAST_POS.get(id); // where it was last tick (none just come out into space)
 		travel(p, planets);
 		Vec3 at = p.position();
 		AstralPlanets.Planet into = planets.atmosphereAt(at);
+		// The swift (spaceSpeed: Void Shattering on) can cross an atmosphere's edge, or a small moon's whole air, between two ticks:
+		// they come down where their way met it.
+		boolean flew = from != null && from.distanceToSqr(at) > 1 && from.distanceTo(at) <= maxStep(p);
+		zoom(p, flew && from.distanceToSqr(at) > ZOOM_STEP * ZOOM_STEP, now);
+		if (into == null && flew) {
+			AstralPlanets.Crossing crossing = planets.atmosphereAlong(from, at);
+			if (crossing != null) {
+				into = crossing.planet();
+				at = crossing.at();
+			}
+		}
 		if (into != null) {
 			if (into.isOverworld()) {
 				comeHome(p);
@@ -292,11 +345,23 @@ public final class AstralRealm {
 			return;
 		}
 
-		// Nearing a planet: the land under one's way in is made ready ahead, on the world-generation threads.
+		// Nearing a planet: the land under one's way in is made ready ahead, on the world-generation threads. One too swift for the
+		// look-ahead to catch between two looks has the land made ready where its way will meet a planet in the next two seconds.
 		if (now % 10 == 0) {
-			AstralPlanets.Planet near = planets.atmosphereAt(at, LOAD_AHEAD);
+			AstralPlanets.Planet near = null;
+			Vec3 meet = at;
+			Vec3 step = flew ? at.subtract(from) : Vec3.ZERO;
+			if (step.lengthSqr() > SWIFT_AHEAD * SWIFT_AHEAD) {
+				AstralPlanets.Crossing ahead = planets.atmosphereAlong(at, at.add(step.scale(AHEAD_TICKS)));
+				if (ahead != null) {
+					near = ahead.planet();
+					meet = ahead.at();
+				}
+			} else {
+				near = planets.atmosphereAt(at, LOAD_AHEAD);
+			}
 			if (near != null && !near.isOverworld()) {
-				BlockPos column = landingColumn(near, at);
+				BlockPos column = landingColumn(near, meet);
 				Long last = PREPARED.get(id);
 				long key = new net.minecraft.world.level.ChunkPos(column).toLong();
 				if (last == null || last != key) {
@@ -331,7 +396,7 @@ public final class AstralRealm {
 		Vec3 last = LAST_POS.put(id, at);
 		if (p.isCreative() || p.isSpectator() || Lifespan.endless(CultivationManager.own(p))) return;
 		double perBlock = yearsPerBlock(CultivationManager.get(p));
-		flown(id, last == null ? 0 : at.distanceTo(last), perBlock);
+		flown(id, last == null ? 0 : at.distanceTo(last), perBlock, maxStep(p));
 		if (p.tickCount % 10 != 0) return;
 		pay(p);
 		double left = Lifespan.left(CultivationManager.own(p)), home = homeYears(planets, at, perBlock);
@@ -357,10 +422,44 @@ public final class AstralRealm {
 	 * a step longer than {@link #MAX_STEP} is a teleport, and owes nothing. Package-private for the game tests, as {@link #pay}.
 	 */
 	static void flown(UUID id, double blocks, double perBlock) {
+		flown(id, blocks, perBlock, MAX_STEP);
+	}
+
+	/** {@link #flown}, a step longer than {@code maxStep} (the flier's: {@link #maxStep}) a teleport. */
+	static void flown(UUID id, double blocks, double perBlock, double maxStep) {
 		TRIP.putIfAbsent(id, 0.0);
-		if (blocks <= 0 || blocks > MAX_STEP) return;
+		if (blocks <= 0 || blocks > maxStep) return;
 		OWED.merge(id, blocks * perBlock, Double::sum);
 		TRIP.merge(id, blocks * perBlock, Double::sum);
+	}
+
+	/**
+	 * The longest step a tick {@code p}'s flight can make as the server takes it (QiFlight#reachAt: several ticks' flight, for a
+	 * server behind its client), {@link #MAX_STEP} at least: anything longer is a teleport.
+	 */
+	static double maxStep(ServerPlayer p) {
+		return Math.max(MAX_STEP, QiFlight.reachAt(p.getAbilities().getFlyingSpeed()));
+	}
+
+	/**
+	 * {@code p}'s step this tick {@code fast} (past {@link #ZOOM_STEP}) or not: zooming from a fast one until {@link #ZOOM_HOLD} after the
+	 * last, its chunks' loading told at once when that changes (ChunkMapMixin).
+	 */
+	private static void zoom(ServerPlayer p, boolean fast, int now) {
+		UUID id = p.getUUID();
+		boolean was = ZOOMING.containsKey(id);
+		if (fast) ZOOMING.put(id, now);
+		else if (was && now - ZOOMING.get(id) > ZOOM_HOLD) ZOOMING.remove(id);
+		if (was != ZOOMING.containsKey(id)) p.serverLevel().getChunkSource().move(p);
+	}
+
+	/**
+	 * Whether {@code p} flies space faster than {@link #ZOOM_STEP}, and so loads none of space's chunks round it (ChunkMapMixin): it
+	 * meets nothing there (nothing is a block, and the client flies on without them: client SpaceLoadingMixin), and they load round it
+	 * {@link #ZOOM_HOLD} after it slows. No Vestige rises round it meanwhile (VestigeSpawner: it would hang unmoving where nothing is loaded).
+	 */
+	public static boolean zooming(ServerPlayer p) {
+		return ZOOMING.containsKey(p.getUUID()) && ModDimensions.isSpace(p.level().dimension());
 	}
 
 	/** What {@code p}'s flight owes, paid (Lifespan#age: to the span's end and no further). */
@@ -532,6 +631,7 @@ public final class AstralRealm {
 		TRIP.remove(id);
 		OWED.remove(id);
 		NO_WAY_HOME.remove(id);
+		ZOOMING.remove(id);
 		VestigeSpawner.forget(id);
 		Settlements.forget(id);
 	}
@@ -546,6 +646,7 @@ public final class AstralRealm {
 		TRIP.clear();
 		OWED.clear();
 		NO_WAY_HOME.clear();
+		ZOOMING.clear();
 		VestigeSpawner.clear();
 		Settlements.clear();
 	}

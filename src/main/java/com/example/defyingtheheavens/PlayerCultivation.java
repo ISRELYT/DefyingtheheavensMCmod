@@ -254,14 +254,14 @@ public class PlayerCultivation {
 
 	/** What the heaven path's cultivation is multiplied by for the body they were born with (Physique#cultivationFactor, its forms' too). */
 	public double physiqueCultivationFactor() {
-		double factor = physique().cultivationFactor() * physique().grade().speed(); // its grade's small edge (Physique.Grade#speed)
+		double factor = physique().cultivationFactor() * physique().speed(); // its grade's small edge (Physique#speed)
 		for (Physique form : forms) factor *= form.cultivationFactor();
 		return factor;
 	}
 
 	/** What the ghost path's cultivation is multiplied by for the body they were born with (Physique#ghostFactor, its forms' too). */
 	public double physiqueGhostFactor() {
-		double factor = physique().ghostFactor() * physique().grade().speed(); // its grade's small edge (Physique.Grade#speed)
+		double factor = physique().ghostFactor() * physique().speed(); // its grade's small edge (Physique#speed)
 		for (Physique form : forms) factor *= form.ghostFactor();
 		return factor;
 	}
@@ -1038,6 +1038,43 @@ public class PlayerCultivation {
 	public void setBackTo(Realm realm, Stage stage) {
 		setState(realm, stage, 0);
 		HeavenMethods.clampTo(heaven, rank(realm, stage));
+	}
+
+	/**
+	 * Born again with {@code old}'s cultivation (an Eternal Reincarnation Body: Lifespan#reincarnate; the user's ask, 2026-10-22: "you
+	 * dont lose stuff"): a mortal's tempering, or each path's realm, stage and what of the stage it had cultivated (NetherworldState#
+	 * carryOver), the heaven and ghost methods as deep as they were understood, the qi in its pool, the stat points as they were put
+	 * in, the axes of virtue as far as they were filled and the obsession named, the heavens' leave and Heaven's Favour, a breakthrough
+	 * pill taken, its alignment, and its abilities, wheels and pace as they were set. The life's own (its years and what was owed of
+	 * them, its pills' and wounds' marks) stay this record's, begun anew.
+	 */
+	public void carryOver(PlayerCultivation old) {
+		mortal = old.mortal;
+		mortalStage = old.mortalStage;
+		tempering = old.tempering;
+		bodyRefining = old.bodyRefining;
+		realm = old.realm;
+		stage = old.stage;
+		cultivation = old.cultivation;
+		qi = old.qi;
+		lowerRealmBound = old.lowerRealmBound; // where it is born again, it stands: held there as before
+		preparedRealm = old.preparedRealm;
+		preparedBonus = old.preparedBonus;
+		heavensLeave = old.heavensLeave;
+		favour = old.favour;
+		ritualFailedDay = old.ritualFailedDay;
+		alignment = old.alignment;
+		clearStatPoints();
+		for (int i : old.statPointOrder) setStatPoints(StatPoints.Stat.byIndex(i), statPoints[i] + 1); // in the order they were put in
+		System.arraycopy(old.axisProgress, 0, axisProgress, 0, axisProgress.length);
+		obsession = old.obsession;
+		selectedAbility = old.selectedAbility;
+		disabledAbilities.clear();
+		disabledAbilities.addAll(old.disabledAbilities);
+		System.arraycopy(old.wheel, 0, wheel, 0, wheel.length);
+		meditationSpeed = old.meditationSpeed;
+		heaven.load(old.heaven.save());
+		netherworld.carryOver(old.netherworld);
 	}
 
 	/**

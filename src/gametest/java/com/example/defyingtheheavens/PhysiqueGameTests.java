@@ -73,13 +73,15 @@ public class PhysiqueGameTests implements FabricGameTest {
 		c.setPhysique(Physique.CURSED_MERIDIANS);
 		helper.assertTrue(near(c.maxQi(), max * 0.8) && near(c.qiGatherPerSecond(), gather * 0.8), "Cursed meridians: 0.8 times");
 		double[][] paces = {{Physique.THREE_ELEMENT_ROOTS.ordinal(), 1.5}, {Physique.TRUE_ELEMENT_ROOT.ordinal(), 2.0},
-				{Physique.FALLEN_TRUE_IMMORTAL.ordinal(), 5.0}, {Physique.HEAVEN_SACRED_BODY.ordinal(), 1.2}, {Physique.FIVE_ELEMENT_ROOTS.ordinal(), 1.0}};
-		// Each with its grade's small edge on top (Physique.Grade#speed: the user's pick, 2026-10-22).
+				{Physique.FALLEN_TRUE_IMMORTAL.ordinal(), 5.0}, {Physique.HEAVEN_SACRED_BODY.ordinal(), 1.2}, {Physique.FIVE_ELEMENT_ROOTS.ordinal(), 1.0},
+				{Physique.ETERNAL_REINCARNATION_BODY.ordinal(), 1.0}};
+		// Each with its grade's small edge on top (Physique#speed: the user's pick, 2026-10-22), none for an Eternal Reincarnation Body.
 		for (double[] row : paces) {
 			Physique physique = Physique.byIndex((int) row[0]);
 			c.setPhysique(physique);
-			helper.assertTrue(near(c.meditationCultivationPerSecond(0), pace * row[1] * physique.grade().speed()), physique.getId() + ": the heaven path x" + row[1]);
+			helper.assertTrue(near(c.meditationCultivationPerSecond(0), pace * row[1] * physique.speed()), physique.getId() + ": the heaven path x" + row[1]);
 		}
+		helper.assertTrue(near(Physique.ETERNAL_REINCARNATION_BODY.speed(), 1.0), "An Eternal Reincarnation Body: an Immortal grade at a Low one's pace");
 		c.setPhysique(Physique.GHOST_DEVIL_BODY);
 		double immortal = Physique.Grade.IMMORTAL.speed();
 		helper.assertTrue(near(GhostMethods.ratePerSecond(c, GhostQi.SOUL_SAND_VALLEY), ghost * 2 * immortal), "A Ghost Devil Body: the ghost path twice as fast");
