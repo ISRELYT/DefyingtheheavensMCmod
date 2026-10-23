@@ -622,15 +622,13 @@ qi, yin corruption, the readied spell and ability: `QiHud`, `NetherworldHud`), a
 soul's readout.
 
 **Swift** (the user's ask, 2026-10-22: "void shattering beings and onwards should be able to travel through space or just in
-general super fast"). From Void Shattering on, Qi Flight and the free flight of the dead and of a Ghost King's form are far
-faster, the more with every stage (`QiFlight#realmSpeed`): Void Shattering 2.4 to 3 times vanilla's flying speed, Sacred Vessel
-3.2 to 3.8, Entering Nirvana 4 to 4.9, True Immortal 6 to 7.2 (some 27 to 80 blocks a second, twice that sprinting; Wandering Soul
-Steps' +60% on top for the dead). Space is swifter still (The Astral Realm: to the next star, Void Shattering half a minute, True
-Immortal five or six seconds). A sword stays a sword's speed. No lower realm holds them back (below), so they fly as swiftly
-there. Vanilla snaps back anyone but the game's host who moves more than 10 blocks in a tick; a
-flier may now move as far as its flight carries it, a second of it for packets that come in bunched (`QiFlight#moveAllowanceSq`,
-`ServerGamePacketListenerImplMixin`), so a guest isn't pulled back mid-flight. Unexplored land loads only as fast as the server
-makes it: at the top speeds over new land the client waits at the edge of what has loaded (space has none to wait for).
+general super fast"). From Void Shattering on, Qi Flight and the free flight were made far faster, the more with every stage
+(Void Shattering 2.4 to 3 times vanilla's flying speed up to True Immortal 6 to 7.2); since 2026-10-23 that swiftness is
+**Meteor Flight's** (below, Meteor Flight: True Immortal 200 blocks a second), switched on and off, and Qi Flight is creative
+flight's own speed at every realm, for fine work. Space is swifter still (The Astral Realm: to the next star, Void Shattering half
+a minute, True Immortal five or six seconds). A sword stays a sword's speed. Vanilla snaps back anyone but the game's host who
+moves more than 10 blocks in a tick; a flier may now move as far as its flight carries it, a second of it for packets that come
+in bunched (`QiFlight#moveAllowanceSq`, `ServerGamePacketListenerImplMixin`), so a guest isn't pulled back mid-flight.
 NPC cultivators fly as before.
 
 **No lower realm holds Void Shattering** (the user's ask, 2026-10-22: "once reaching void shattering realm the lower realm no
@@ -1314,6 +1312,54 @@ both flights for players), `Realm` (the sword/sec column), `CultivatorNpc` (`isS
 `client/mixin/LivingEntityRendererMixin` (the sideways stance), `client/mixin/ItemInHandLayerMixin` /
 `ItemInHandRendererMixin` (the hand left empty); tests in `SwordFlightGameTests`.
 
+## Meteor Flight
+
+**Qi Flight's fast mode** (the user's ask, 2026-10-23, after a "Viltrumite" flight they saw in a video). Qi Flight itself, and
+the free flight of the dead and of a Ghost King's form, now fly at **creative flight's own speed at every realm** (11 blocks a
+second, 22 sprinting), so even a True Immortal can make fine adjustments; swiftness is this ability's. From **Core Formation**
+on either path, **Meteor Flight** (Abilities tab, the wheel, X; **off by default**) switches it on and off:
+
+- **Hold forward to fly where you look**, free of gravity, your body laid out flat along the way you go (head first diving,
+  upright climbing, a fist out ahead; others see it too). Forward alone cruises (40% of your top speed, never slower than Qi
+  Flight's sprint); **sprint** speeds you up over a second and a half to your realm's **top speed**: Core Formation 45 blocks a
+  second, Nascent Soul 60, Heavenly Being 75, Four Axis 95, Dao Integration 115, Void Shattering 135, Sacred Vessel 155, Entering
+  Nirvana 175, True Immortal 200, each stage 4% more (`MeteorFlight#topSpeed`). Let go of forward and you hover and steer as in
+  normal flight, the momentum running off.
+- **The land has to keep up.** Minecraft makes and sends land as you go: where it hasn't come yet within a second and a half's
+  flight ahead, you're slowed to reach its edge no sooner (`MeteorFlightClient#landAhead`), so you never fly into nothing; over
+  land already made you go at full speed.
+- **The sound barrier.** Past 60% of your top speed it breaks: a boom (heard by all near) and a ring of air left hanging where it
+  broke, then a white vapour trail behind you. Once, until you've slowed well below it again (and at most every three seconds).
+- **Ablaze (from Nascent Soul).** Hold 90% of your top speed or more for two seconds and the heat rises: within half a second you
+  are **engulfed in flames** (only a sight: nothing burns, you take no harm), as in the video: your body itself turns to glowing
+  gold, your skin showing dimly through, with flame flowing back over it (`SpellAuraLayer#meteorHeat`; no little flames or glow
+  thrown about you, the user's word). While ablaze and pressing on, **you smash through what's in your way**: a tube three blocks across about
+  your body, torn open a little ahead of you as you go (`MeteorFlight#carve`), gone for good and dropping nothing, a few pieces
+  flung aside. It follows the great spells' rules (`HeavenSpells#carvable`): nothing harder than obsidian, nothing with things
+  kept in it (chests, furnaces), no barrier, nothing a formation shelters, no ground you couldn't dig (spawn protection, Adventure
+  mode, a sect's grounds); what it can't take stops you as any wall. The gamerule **`meteorFlightSmashes`** (on by default)
+  turns the smashing off for the whole server. **Slowing, you cool off**: the flames go after about four seconds, then your
+  body glows red, fading over about four more.
+- **Seen by others** as by you: laid out, golden, cooling red. While you fly fast (and two seconds after) the server tells
+  those watching where you are outright each update (`mixin/ServerEntityMixin`): vanilla tells one who starts watching a moving
+  player where it is, but counts later moves from where it last told the others, so at these speeds a newcomer saw you blocks
+  ahead of where you were for up to twenty seconds.
+- **Qi.** Flying fast costs **three times Qi Flight's qi**; from Heavenly Being on never more than you gather, so it never runs
+  you dry (Qi Flight never does there either). Hovering in it costs what Qi Flight does. The dead's free flight costs nothing.
+- **Not** in space (its own flight, swifter still), the Spatial Gap or on the Soul River, nor on a sword, nor in creative. So the
+  swiftness isn't lost there (the user's ask, 2026-10-23): **in the Spatial Gap, Meteor Flight switched on gives Qi Flight (and
+  the free flight) the speed it had there before** (`QiFlight#speedIn`: Void Shattering 2.4 to 3 times creative flight's, Sacred
+  Vessel 3.2 to 3.8, Entering Nirvana 4 to 4.9, True Immortal 6 to 7.2; creative speed below Void Shattering, as it always was);
+  switched off, creative speed. Space keeps its own speeds either way, unchanged (The Astral Realm). Nobody flies on the Soul
+  River, whose current carries the living.
+- **No flying punches** (the user's call).
+
+Code: `MeteorFlight.java` (speeds, cost, the barrier, the heat, the smashing, syncing: packets `meteor_streak` C2S,
+`meteor_state` and `meteor_boom` S2C), `QiFlight.java` (normal speed for all, the cost, room on the server for a second of top
+speed a packet: `#moveAllowanceSq`), `ModGameRules#METEOR_FLIGHT_SMASHES`, `client/MeteorFlightClient.java` (steering, the land
+ahead, the pose, the glow, trails, flames and rings), `client/mixin/MeteorFlightMixin` (the flight, in place of `Player#travel`),
+`client/mixin/LivingEntityRendererMixin` and `HumanoidModelMixin` (laid out); tests in `MeteorFlightGameTests`.
+
 ## Soul Projection
 
 From **Nascent Soul Early** on either path, a cultivator can send their nascent soul out of the body (born of the ghost path,
@@ -1382,8 +1428,11 @@ of the body it is one of the dead again; a Ghost King's crown waits for it, unan
 **Harming a soul.** Only those who see it, by their own hand: a Nascent Soul cultivator (Qi Sense open) lands a quarter of
 a blow at Early, 40% at Mid, 55% at Late, 70% at Grand Perfection (it's a haze to them); a Heavenly Being or above lands it
 all, and can strike blind without Qi Sense. A Heavenly Being or above with Qi Sense open can also **strike the tether**:
-swing at the thread itself. It holds 20 plus the soul's own health, mends if left alone for 10 seconds, and when it is cut
-the soul is lost.
+swing at the thread itself, within 5 blocks, up to 0.9 of a block off it (the server allows a little more, for the soul
+having moved on). The swing is tested against the thread as it is drawn, sagging under its own length (up to 3 blocks at
+its middle), and exactly along every piece of it (`SoulProjection#aimAtTether`; before 2026-10-23 it was tested at 24 points
+on the straight line between the ends, blocks apart on a long tether, so it was hard to hit). It holds 20 plus the soul's
+own health, mends if left alone for 10 seconds, and when it is cut the soul is lost.
 
 **Losing the soul.** A cut tether, a slain body, a soul struck down, or **logging out within 10 seconds of harm to the soul
 or the body** (fleeing a fight) kills you where your body sat (your things fall there) and costs you the nascent soul: you
@@ -1530,6 +1579,16 @@ upkeep**, anywhere in any realm.
   relog doesn't end it; the user's pick after the bug sweep of 2026-10-23). One drawn back in is no clone lost. **Your
   main body slain where it sits, you die** (your own death, by that blow), and the clone dissolves with you. Whenever you die,
   or your life ends whole, a clone out dissolves.
+- **Both bodies have a consciousness** (the user's ask, 2026-10-23). While your Consciousness Domain is switched on, the
+  body you aren't playing (your main body sitting, or the clone standing) has its own domain where it is, as well as the
+  one you play: others near see its sphere and sense the body in theirs with a realm over its head, and a domain that touches
+  it alerts its owner as yours would. You're told which of your bodies felt whom ("Your clone's consciousness touches
+  another's", or "Your main body's"). The **clone's domain and the realm and stage it is sensed at are its effective
+  cultivation**, what half your strength comes to (`TwoPaths#cloneRank`; about a realm lower: a Heavenly Being Mid's clone
+  is sensed at Nascent Soul Mid, with that domain), not your true realm, whether you play it or it stands. Your main body
+  keeps your true realm and domain. Switching the domain off shuts both. To you, your other body's domain, its outline and
+  its realm label are **blue like your own domain**, not the red of a stranger's (it is an extension of yourself; the user's
+  ask, 2026-10-23); everyone else sees both your bodies in red as any cultivator's (`TouchingDomain#own`).
 - Logging out in the clone, or the server stopping, puts you back in your main body first (the clone stands on); a crash is
   put right as you come back. A soul can't take a player who is in their clone.
 
@@ -1912,7 +1971,7 @@ A ghost:
   alone, half its living hearts), and heals a heart every two seconds. (Before 2026-10-19: half the living's, and a heart
   more for every layer of its deepest foundation.)
 - **flies freely**: the dead need no ground. Double-tap jump to fly, at every realm and as fast as Qi Flight (swifter from
-  Wandering Soul Steps' fourth layer, +10% a layer), spending nothing (`TwoPaths#fliesFreely`; the living in a Ghost King's form fly so too, see "The two paths"); not on the Soul River,
+  Wandering Soul Steps' fourth layer, +10% a layer; Meteor Flight's fast mode from a Core Formation path, see Meteor Flight), spending nothing (`TwoPaths#fliesFreely`; the living in a Ghost King's form fly so too, see "The two paths"); not on the Soul River,
   nor while a Ghost-Quelling Talisman binds it. Holding jump while falling, it drifts down gently.
 - **touches nothing of the living world.** It can't break or place, use items or blocks (but it can use the dead's own:
   steles, Meng Po's pot, the Wheel, a ghost palace's treasury chests; and read a Ghost Jade Slip or a Jade Slip, though it

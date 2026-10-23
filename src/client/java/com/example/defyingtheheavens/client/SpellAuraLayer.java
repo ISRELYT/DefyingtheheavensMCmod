@@ -37,7 +37,7 @@ public class SpellAuraLayer<T extends LivingEntity, M extends HumanoidModel<T>> 
 	@Override
 	public void render(PoseStack pose, MultiBufferSource source, int light, T entity, float walk, float walkSpeed, float partial, float age, float headYaw,
 					   float headPitch) {
-		if (!ClientSpellAuras.any(entity) || entity.isInvisible()) return;
+		if (!ClientSpellAuras.any(entity) && MeteorFlightClient.heat(entity) < 0.02f || entity.isInvisible()) return;
 		MultiBufferSource buffers = SpellBuffers.begin(source);
 		try {
 			draw(pose, buffers, light, entity, partial, age);
@@ -83,6 +83,30 @@ public class SpellAuraLayer<T extends LivingEntity, M extends HumanoidModel<T>> 
 			fists(pose, buffers, parent.rightArm, -1, age, fist);
 			fists(pose, buffers, parent.leftArm, 1, age + 7, fist);
 		}
+		float heat = MeteorFlightClient.heat(entity);
+		if (heat > 0.02f) meteorHeat(pose, buffers, parent, age, heat);
+	}
+
+	/**
+	 * Meteor Flight's heat (MeteorFlightClient), as the user's video shows it (2026-10-23: "not just a glow around them"): ablaze,
+	 * the body itself turned to glowing gold, the skin showing dimly through, flame flowing over it; cooling, a red glow over the
+	 * body that fades. No flames thrown off it.
+	 */
+	private void meteorHeat(PoseStack pose, MultiBufferSource buffers, M parent, float age, float heat) {
+		float[] rgb = MeteorFlightClient.heatColour(heat);
+		float ablaze = Mth.clamp((heat - 0.4f) / 0.2f, 0, 1);
+		float cooling = Math.min(1, heat / com.example.defyingtheheavens.MeteorFlight.ABLAZE);
+		if (ablaze > 0) {
+			// Gold over the body, near solid, and its light added on top: it glows whatever the light.
+			skin(pose, buffers, thin, SpellRender.clear(SpellRender.GOLD), rgb, 0.78f * ablaze, SpellRender.FULL_BRIGHT);
+			skin(pose, buffers, parent, SpellRender.glow(SpellRender.GOLD), rgb, 0.7f * ablaze, SpellRender.FULL_BRIGHT);
+			// Flame flowing back over it.
+			float[] fv = SpellRender.frame(age, 0.6f, SpellRender.FLAME_FRAMES);
+			skin(pose, buffers, thin, RenderType.energySwirl(SpellRender.FLAME, age * 0.03f, fv[0]), new float[] {1.0f, 0.75f, 0.35f}, 0.85f * ablaze,
+					SpellRender.FULL_BRIGHT);
+		}
+		// Cooling (and as it catches): the body glowing red over its skin, fading as it cools.
+		if (ablaze < 1) skin(pose, buffers, parent, SpellRender.glow(SpellRender.GOLD), rgb, 0.8f * cooling * (1 - ablaze), SpellRender.FULL_BRIGHT);
 	}
 
 	/** A skin over the whole body in {@code type}, posed as the body. */

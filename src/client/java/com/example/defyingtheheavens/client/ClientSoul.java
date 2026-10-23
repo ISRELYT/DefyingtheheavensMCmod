@@ -284,9 +284,10 @@ public final class ClientSoul {
 		for (Map.Entry<Integer, Seen> entry : SEEN.entrySet()) {
 			if (entry.getValue().tether() < 0 || !(mc.level.getEntity(entry.getKey()) instanceof Player soul)) continue; // no tether here
 			Vec3[] ends = tetherEnds(soul, entry.getValue(), 1.0f);
-			if (SoulProjection.rayToSegment(eye, look, SoulProjection.TETHER_STRIKE_REACH, ends[0], ends[1]) > SoulProjection.TETHER_STRIKE_WIDTH) continue;
+			SoulProjection.TetherAim aim = SoulProjection.aimAtTether(eye, look, SoulProjection.TETHER_STRIKE_REACH, ends[0], ends[1]);
+			if (aim.distance() > SoulProjection.TETHER_STRIKE_WIDTH) continue;
 			// Only if the tether is nearer than whatever the crosshair is on (a wall, the soul itself, anyone else).
-			if (strikeDistance(eye, look, ends[0], ends[1]) < nearest - 0.3) {
+			if (aim.along() < nearest - 0.3) {
 				target = entry.getKey();
 				break;
 			}
@@ -298,21 +299,6 @@ public final class ClientSoul {
 		player.swing(InteractionHand.MAIN_HAND);
 		player.resetAttackStrengthTicker();
 		return true;
-	}
-
-	/** How far along the line of sight the tether a-b passes closest to it. */
-	private static double strikeDistance(Vec3 eye, Vec3 look, Vec3 a, Vec3 b) {
-		double best = Double.MAX_VALUE, bestAlong = SoulProjection.TETHER_STRIKE_REACH;
-		for (int i = 0; i <= 24; i++) {
-			Vec3 p = a.add(b.subtract(a).scale(i / 24.0));
-			double along = Math.max(0, Math.min(SoulProjection.TETHER_STRIKE_REACH, p.subtract(eye).dot(look)));
-			double d = eye.add(look.scale(along)).distanceTo(p);
-			if (d < best) {
-				best = d;
-				bestAlong = along;
-			}
-		}
-		return bestAlong;
 	}
 
 	/** Where a soul's tether runs: from its body's chest to the soul (or the body it possesses), at {@code partial}. */

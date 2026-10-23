@@ -23,6 +23,7 @@
     "ProjectileBarrierMixin",
     "RangedAttributeAccessor",
     "SectClearingMixin",
+    "ServerEntityMixin",
     "ServerGamePacketListenerImplMixin",
     "SoulEntityMixin",
     "SoulLivingEntityMixin",

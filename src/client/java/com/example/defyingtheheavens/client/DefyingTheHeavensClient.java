@@ -154,6 +154,8 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		// Sword Flight: the sword under each rider's feet, and the trail of light behind it.
 		WorldRenderEvents.AFTER_ENTITIES.register(SwordFlightClient::renderSwords);
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(SwordFlightClient::renderTrails);
+		// Meteor Flight: the heat's glow, the trail of vapour or fire, the ring where the sound barrier broke.
+		WorldRenderEvents.AFTER_TRANSLUCENT.register(MeteorFlightClient::render);
 		// Under a shader pack, the realm's own sky laid over the pack's where the sky is all the mod's (space, the dead's).
 		SkyLayer.register();
 		WorldRenderEvents.END.register(SkyLayer::onWorldEnd);
@@ -194,6 +196,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			QiSurgeHud.clear();
 			InnerRealmFade.clear();
 			SwordFlightClient.clear();
+			MeteorFlightClient.clear();
 			ClientSoul.clear();
 			ClientBodies.clear();
 			ClientGestures.clear();
@@ -215,6 +218,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			SuppressionClient.tick(client);
 			InnerRealmFade.tick(client);
 			SwordFlightClient.tick(client);
+			MeteorFlightClient.tick(client);
 			ClientSoul.tick(client);
 			ClientSpellTrails.tick(client);
 			ClientSpellAuras.tick();

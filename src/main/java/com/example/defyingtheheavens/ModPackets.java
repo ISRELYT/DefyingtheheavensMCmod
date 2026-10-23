@@ -103,6 +103,12 @@ public final class ModPackets {
 	public static final ResourceLocation SOUL_SEEN = new ResourceLocation(DefyingTheHeavens.MOD_ID, "soul_seen");
 	/** C2S: a Heavenly Being with Qi Sense on strikes at the tether of the soul with this entity id (checked on the server). */
 	public static final ResourceLocation SOUL_TETHER_STRIKE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "soul_tether_strike");
+	/** C2S: forward held in Meteor Flight, or let go (MeteorFlight#setStreaking; the server checks it may). */
+	public static final ResourceLocation METEOR_STREAK = new ResourceLocation(DefyingTheHeavens.MOD_ID, "meteor_streak");
+	/** S2C: a player (entity id) flying fast in Meteor Flight or not, and how hot (0-255), to them and those tracking them. */
+	public static final ResourceLocation METEOR_STATE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "meteor_state");
+	/** S2C: a player (entity id) broke the sound barrier here, going this way: the ring of air (MeteorFlightClient). */
+	public static final ResourceLocation METEOR_BOOM = new ResourceLocation(DefyingTheHeavens.MOD_ID, "meteor_boom");
 	/** S2C: a talk with a cultivator opens (see {@link TalkSystem}): who they are, what they think of you, the intents on offer. */
 	public static final ResourceLocation TALK_OPEN = new ResourceLocation(DefyingTheHeavens.MOD_ID, "talk_open");
 	/** S2C: the dialogue box: what they say, and the replies on offer. */
@@ -308,6 +314,10 @@ public final class ModPackets {
 		ServerPlayNetworking.registerGlobalReceiver(SOUL_TETHER_STRIKE, (server, player, handler, buf, responseSender) -> {
 			int soul = buf.readVarInt();
 			server.execute(() -> SoulProjection.strikeTether(player, soul));
+		});
+		ServerPlayNetworking.registerGlobalReceiver(METEOR_STREAK, (server, player, handler, buf, responseSender) -> {
+			boolean on = buf.readBoolean();
+			server.execute(() -> MeteorFlight.setStreaking(player, on));
 		});
 		ServerPlayNetworking.registerGlobalReceiver(STORAGE_RING_ACTION, (server, player, handler, buf, responseSender) -> {
 			int action = buf.readVarInt();
@@ -802,6 +812,7 @@ public final class ModPackets {
 			buf.writeDouble(domain.y());
 			buf.writeDouble(domain.z());
 			buf.writeFloat(domain.radius());
+			buf.writeBoolean(domain.own());
 		}
 		ServerPlayNetworking.send(to, CONSCIOUSNESS_DOMAIN, buf);
 	}
@@ -811,7 +822,7 @@ public final class ModPackets {
 		FriendlyByteBuf buf = PacketByteBufs.create();
 		buf.writeVarInt(other.getId());
 		buf.writeUtf(other.getDisplayName().getString()); // a soul in another's body goes by that body's name (Possession)
-		buf.writeVarInt(TwoPaths.wieldedRealm(otherCultivation).ordinal()); // the body's, either path (TwoPaths#wieldedRank)
+		buf.writeVarInt(ConsciousnessDomainHandler.sensedRealm(otherCultivation).ordinal()); // the body's, either path, or their clone's (TwoPaths#sensedRank)
 		buf.writeVarInt(ConsciousnessDomainHandler.sensedStage(otherCultivation).ordinal());
 		ServerPlayNetworking.send(to, CONSCIOUSNESS_ALERT, buf);
 	}
@@ -832,6 +843,32 @@ public final class ModPackets {
 		ServerPlayNetworking.send(player, MEDITATION_STATE, meditationBuf(player, meditating));
 		for (ServerPlayer other : PlayerLookup.tracking(player)) {
 			ServerPlayNetworking.send(other, MEDITATION_STATE, meditationBuf(player, meditating));
+		}
+	}
+
+	/** Tells the flier and everyone tracking them whether they fly fast in Meteor Flight, and how hot they are. */
+	public static void broadcastMeteorState(ServerPlayer player, boolean streaking, float heat) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(player.getId());
+		buf.writeBoolean(streaking);
+		buf.writeByte(Math.round(Math.max(0, Math.min(1, heat)) * 255));
+		ServerPlayNetworking.send(player, METEOR_STATE, new FriendlyByteBuf(buf.copy()));
+		for (ServerPlayer other : PlayerLookup.tracking(player)) ServerPlayNetworking.send(other, METEOR_STATE, new FriendlyByteBuf(buf.copy()));
+	}
+
+	/** Tells the flier and everyone near that they broke the sound barrier at {@code at}, going {@code dir}. */
+	public static void broadcastMeteorBoom(ServerPlayer player, Vec3 at, Vec3 dir) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(player.getId());
+		buf.writeDouble(at.x);
+		buf.writeDouble(at.y);
+		buf.writeDouble(at.z);
+		buf.writeFloat((float) dir.x);
+		buf.writeFloat((float) dir.y);
+		buf.writeFloat((float) dir.z);
+		ServerPlayNetworking.send(player, METEOR_BOOM, new FriendlyByteBuf(buf.copy()));
+		for (ServerPlayer other : PlayerLookup.around(player.serverLevel(), at, 160)) {
+			if (other != player) ServerPlayNetworking.send(other, METEOR_BOOM, new FriendlyByteBuf(buf.copy()));
 		}
 	}
 

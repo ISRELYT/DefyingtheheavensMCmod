@@ -356,7 +356,8 @@ public final class ClientPacketHandlers {
 			int domainCount = buf.readVarInt();
 			List<ConsciousnessRenderer.Domain> domains = new ArrayList<>(domainCount);
 			for (int i = 0; i < domainCount; i++) {
-				domains.add(new ConsciousnessRenderer.Domain(buf.readVarInt(), buf.readDouble(), buf.readDouble(), buf.readDouble(), buf.readFloat()));
+				domains.add(new ConsciousnessRenderer.Domain(buf.readVarInt(), buf.readDouble(), buf.readDouble(), buf.readDouble(), buf.readFloat(),
+						buf.readBoolean()));
 			}
 			client.execute(() -> ConsciousnessRenderer.update(cultivators, domains));
 		});
@@ -378,6 +379,18 @@ public final class ClientPacketHandlers {
 			client.execute(() -> SuppressionClient.update(pressed));
 		});
 
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.METEOR_STATE, (client, handler, buf, sender) -> {
+			int entityId = buf.readVarInt();
+			boolean streaking = buf.readBoolean();
+			float heat = (buf.readByte() & 0xFF) / 255f;
+			client.execute(() -> MeteorFlightClient.set(entityId, streaking, heat));
+		});
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.METEOR_BOOM, (client, handler, buf, sender) -> {
+			buf.readVarInt();
+			net.minecraft.world.phys.Vec3 at = new net.minecraft.world.phys.Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble());
+			net.minecraft.world.phys.Vec3 dir = new net.minecraft.world.phys.Vec3(buf.readFloat(), buf.readFloat(), buf.readFloat());
+			client.execute(() -> MeteorFlightClient.boom(at, dir));
+		});
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SWORD_FLIGHT, (client, handler, buf, sender) -> {
 			int entityId = buf.readVarInt();
 			boolean riding = buf.readBoolean();

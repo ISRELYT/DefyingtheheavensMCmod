@@ -1124,6 +1124,8 @@ public final class ModLang {
 	public static final String MSG_CLONE_FELL = k("message.clone.fell");
 	public static final String MSG_CLONE_CANNOT = k("message.clone.cannot");
 	public static final String MSG_CLONE_REFORMING = k("message.clone.reforming");
+	public static final String MSG_CLONE_DOMAIN_MET = k("message.clone.domain_met");
+	public static final String MSG_BODY_DOMAIN_MET = k("message.clone.body_domain_met");
 	public static final String HUD_CLONE_MAIN = k("hud.clone.main");
 	public static final String HUD_CLONE_IN = k("hud.clone.in");
 

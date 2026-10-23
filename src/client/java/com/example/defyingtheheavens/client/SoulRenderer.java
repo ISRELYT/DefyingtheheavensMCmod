@@ -32,6 +32,7 @@ import net.minecraft.world.entity.player.Player;
 import com.example.defyingtheheavens.GhostCultivatorNpc;
 import com.example.defyingtheheavens.HungryGhost;
 import com.example.defyingtheheavens.SoulBodyEntity;
+import com.example.defyingtheheavens.SoulProjection;
 import com.example.defyingtheheavens.TwoPaths;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -57,7 +58,6 @@ public final class SoulRenderer {
 	private static ShaderInstance soulShader;
 	private static PlayerModel<Player> wide;
 	private static PlayerModel<Player> slim;
-	private static final int TETHER_SEGMENTS = 28;
 	private static final float[] TETHER_CORE = {0.55f, 0.88f, 1.0f};
 	private static final float[] TETHER_GLOW = {0.2f, 0.55f, 1.0f};
 	/** The mist a hazily seen soul trails (violet), and the faint trail a ghost leaves (cyan). */
@@ -813,17 +813,16 @@ public final class SoulRenderer {
 		Vec3 cam = context.camera().getPosition();
 		Matrix4f matrix = context.matrixStack().last().pose();
 		float time = (Minecraft.getInstance().level.getGameTime() + context.tickDelta()) * 0.08f;
-		double length = a.distanceTo(b);
-		double sag = Math.min(3.0, length * 0.06);
+		// Hanging as it is struck (SoulProjection#aimAtTether), with a little sway on top.
+		double sag = SoulProjection.tetherSag(a, b);
 		Vec3 along = b.subtract(a).normalize();
 		Vec3 side = along.cross(new Vec3(0, 1, 0));
 		side = side.lengthSqr() < 1.0e-4 ? new Vec3(1, 0, 0) : side.normalize();
-		Vec3[] points = new Vec3[TETHER_SEGMENTS + 1];
-		for (int i = 0; i <= TETHER_SEGMENTS; i++) {
-			double t = i / (double) TETHER_SEGMENTS;
-			double hang = 4 * t * (1 - t);
-			double wave = Math.sin(t * Math.PI * 3 + time + seed) * 0.12 * hang;
-			points[i] = a.add(b.subtract(a).scale(t)).add(0, -sag * hang, 0).add(side.scale(wave)).subtract(cam);
+		Vec3[] points = new Vec3[SoulProjection.TETHER_PIECES + 1];
+		for (int i = 0; i <= SoulProjection.TETHER_PIECES; i++) {
+			double t = i / (double) SoulProjection.TETHER_PIECES;
+			double wave = Math.sin(t * Math.PI * 3 + time + seed) * 0.12 * 4 * t * (1 - t);
+			points[i] = SoulProjection.tetherPoint(a, b, sag, t).add(side.scale(wave)).subtract(cam);
 		}
 		float flicker = strength < 0.5f ? 0.6f + 0.4f * Mth.sin(time * 9) : 1;
 		float width = 0.035f + 0.03f * strength;

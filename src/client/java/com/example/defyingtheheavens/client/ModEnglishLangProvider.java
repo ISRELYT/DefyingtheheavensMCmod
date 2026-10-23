@@ -291,6 +291,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case SPATIAL_TEAR -> "Spatial Tear";
 				case BURN_LIFESPAN -> "Burn Lifespan";
 				case CLONE -> "Clone";
+				case METEOR_FLIGHT -> "Meteor Flight";
 			});
 			t.add(key + ".description", switch (ability) {
 				case QI_SUSTENANCE -> "Qi keeps you fed. Hunger stays full.";
@@ -326,6 +327,12 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 						+ "standing). Sneak and use it within %3$s blocks of the other body to draw the clone back in, its qi and its things "
 						+ "with it. It needs no tether and nothing to stay out; what it spends comes from your own pool. Slain, it dissolves and "
 						+ "you wake in your body, and no other can be split off for %4$s minutes; if your body is slain, you die.";
+				case METEOR_FLIGHT -> "Qi Flight's fast mode (switched off, you fly at normal speed at every realm, for fine control). Hold forward "
+						+ "to fly where you look, laid out flat; sprint to speed up to %1$s blocks a second. Past the speed of sound you break "
+						+ "the barrier with a boom. From Nascent Soul, holding top speed sets you ablaze, and you smash through what's in your way "
+						+ "(not obsidian or anything harder, nor barriers or ground you couldn't dig). Flying fast costs %2$s qi/s (from Heavenly "
+						+ "Being, never more than you gather). Let go of forward to hover and steer as usual. In the Spatial Gap, where it can't be "
+						+ "flown, it gives your normal flight your realm's old swiftness instead (from Void Shattering); space keeps its own speeds.";
 			});
 		}
 		// Clone while playing the clone (Clones): the way back.
@@ -859,6 +866,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_CLONE_FELL, "Your clone dissolves: you wake in your body. Another can be split off in %s minutes.");
 		t.add(ModLang.MSG_CLONE_CANNOT, "A clone can't do that: your body can.");
 		t.add(ModLang.MSG_CLONE_REFORMING, "Your last clone was lost: another can be split off in %s.");
+		t.add(ModLang.MSG_CLONE_DOMAIN_MET, "Your clone's consciousness touches another's: %s (%s)");
+		t.add(ModLang.MSG_BODY_DOMAIN_MET, "Your main body's consciousness touches another's: %s (%s)");
 		t.add(ModLang.HUD_CLONE_IN, "In your clone");
 		t.add(ModLang.HUD_CLONE_MAIN, "Body %s / %s");
 		t.add(ModLang.ITEM_JADE_SLIP_OF, "Jade Slip: %s");
@@ -916,6 +925,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_QI_FLIGHT_GAINED, "Your golden core can carry you. Double-tap jump to fly.");
 		t.add(ModLang.MSG_QI_FLIGHT_EXHAUSTED, "Out of qi! Flight returns at %s%%.");
 		t.add(ModLang.MSG_SWORD_FLIGHT_GAINED, "Sword Flight: hold a sword and double-tap jump to ride it.");
+		t.add("gamerule.meteorFlightSmashes", "Meteor Flight smashes through blocks");
 		t.add(ModLang.MSG_FLIGHT_EXCLUSIVE, "One flight at a time: Qi Flight on, Sword Flight off.");
 		t.add(ModLang.MSG_QI_SENSE_GAINED, "You can now peer into the plane of Qi.");
 		t.add(ModLang.MSG_SUPPRESS_EXHAUSTED, "Out of qi: your pressure lifts. It returns at %s%%.");

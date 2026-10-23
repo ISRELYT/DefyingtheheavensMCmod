@@ -48,8 +48,12 @@ public final class ConsciousnessDomainHandler {
 	/** A cultivator in someone's domain, as that someone senses them: the effective (displayed) realm and stage. */
 	public record SensedCultivator(int entityId, Realm realm, Stage stage, boolean pressed) {}
 
-	/** Another active domain touching the user's; the position is for clients that don't have its owner loaded. */
-	public record TouchingDomain(int entityId, double x, double y, double z, float radius) {}
+	/**
+	 * Another active domain touching the user's; the position is for clients that don't have its owner loaded. {@code own}: the
+	 * domain of the user's own other body (Clones), drawn as theirs is, not as a stranger's (the user's ask, 2026-10-23: "it is an
+	 * extension of yourself and not an enemy").
+	 */
+	public record TouchingDomain(int entityId, double x, double y, double z, float radius, boolean own) {}
 
 	/** Domain users whose domains touch, both directions stored. */
 	private static Map<UUID, Set<UUID>> touching = new HashMap<>();
@@ -63,17 +67,36 @@ public final class ConsciousnessDomainHandler {
 	/**
 	 * A player's domain, from where their body stands as wielded (either path: TwoPaths#wieldedRank; the heaven path's alone, before
 	 * the 2026-10-20 sweep, left a ghost path's Heavenly Being a Qi Refining domain): a stronger cultivator's pressure narrows it.
+	 * In their clone, the clone's: as its stats come to (TwoPaths#sensedRank; the user's ask, 2026-10-23).
 	 */
 	public static double radius(PlayerCultivation c) {
+		return radiusAt(c, TwoPaths.sensedRank(c));
+	}
+
+	/** The domain of one of {@code c}'s bodies standing at {@code rank} (a clone's, Clones#sensedRank, may be lower than its maker's). */
+	public static double radiusAt(PlayerCultivation c, int rank) {
 		if (c.hasPhysique(Physique.INNATE_CONSCIOUSNESS_BODY)) return MAX_RADIUS; // a Four Axis cultivator's from the first day (Physique)
-		int rank = Math.max(0, TwoPaths.wieldedRank(c)), stages = Stage.values().length;
+		rank = Math.max(0, rank);
+		int stages = Stage.values().length;
 		return radius(Realm.byIndex(rank / stages), Stage.byIndex(rank % stages));
 	}
 
-	/** Where a player is sensed to stand (by a domain, as the alert names it): their body as wielded, either path (TwoPaths#wieldedRank). */
+	/** Where a player is sensed to stand (by a domain, as the alert names it): their body as wielded, or their clone's (TwoPaths#sensedRank). */
 	public static Stage sensedStage(PlayerCultivation c) {
-		return Stage.byIndex(Math.max(0, TwoPaths.wieldedRank(c)) % Stage.values().length);
+		return Stage.byIndex(Math.max(0, TwoPaths.sensedRank(c)) % Stage.values().length);
 	}
+
+	/** The realm a player is sensed at ({@link #sensedStage}'s). */
+	public static Realm sensedRealm(PlayerCultivation c) {
+		return Realm.byIndex(Math.max(0, TwoPaths.sensedRank(c)) / Stage.values().length);
+	}
+
+	/**
+	 * The open domain of a body its owner isn't playing (Clones; the user's ask, 2026-10-23: "both the clone and the main body should
+	 * have a consciousness"): their main body sitting, or their clone standing, while their Consciousness Domain is switched on. Others
+	 * see it and sense the body in theirs, and a domain that touches it is felt by both sides, as the owner's own would be.
+	 */
+	record BodyDomain(CloneBodyEntity body, ServerPlayer owner, int rank, double radius) {}
 
 	/** Where a domain is centred: the middle of its owner's body. */
 	public static Vec3 center(Entity entity) {
@@ -103,13 +126,24 @@ public final class ConsciousnessDomainHandler {
 
 	public static void tick(MinecraftServer server) {
 		if (server.getTickCount() % SCAN_INTERVAL != 0) return;
+		scan(server);
+	}
+
+	/** Whether the domains of {@code a} and {@code b} (players, NPC cultivators, the bodies not played: by UUID) touch, as last scanned. */
+	static boolean touches(UUID a, UUID b) {
+		return touching.getOrDefault(a, Set.of()).contains(b);
+	}
+
+	/** Every open domain looked over once (each {@link #SCAN_INTERVAL} ticks; the game tests' at once). */
+	static void scan(MinecraftServer server) {
 		Map<UUID, Set<UUID>> next = new HashMap<>();
 		for (ServerLevel level : server.getAllLevels()) {
 			List<ServerPlayer> users = new ArrayList<>();
 			for (ServerPlayer player : level.players()) {
 				if (isActive(player)) users.add(player);
 			}
-			if (users.isEmpty()) continue;
+			List<BodyDomain> bodies = bodyDomains(server, level);
+			if (users.isEmpty() && bodies.isEmpty()) continue;
 			// A nascent soul out of its body still sees through its domain, but touches no one's: it is only sensed as near (see
 			// SoulProjection#senseDomains), never met.
 			List<ServerPlayer> embodied = new ArrayList<>(users);
@@ -117,13 +151,14 @@ public final class ConsciousnessDomainHandler {
 			List<CultivatorNpc> npcs = CultivatorNpc.openDomains(level);
 			updateContacts(embodied, next);
 			updateNpcContacts(embodied, npcs, next);
-			for (ServerPlayer viewer : users) sendDomain(viewer, embodied, npcs, next);
+			updateBodyContacts(embodied, npcs, bodies, next);
+			for (ServerPlayer viewer : users) sendDomain(viewer, embodied, npcs, bodies, next);
 			// One whose own domain is shut still sees the open domains of others near (only the spheres: what is in them is the
 			// domain's owner's to sense).
 			for (ServerPlayer viewer : level.players()) {
 				if (users.contains(viewer)) continue;
 				List<TouchingDomain> near = new ArrayList<>();
-				addNear(viewer, embodied, near);
+				addNear(viewer, embodied, bodies, near);
 				if (!near.isEmpty()) ModPackets.sendConsciousness(viewer, List.of(), near);
 			}
 		}
@@ -149,6 +184,61 @@ public final class ConsciousnessDomainHandler {
 		}
 	}
 
+	/** The open domains of the bodies their owners aren't playing in {@code level} ({@link BodyDomain}): of owners online, domain on. */
+	private static List<BodyDomain> bodyDomains(MinecraftServer server, ServerLevel level) {
+		List<BodyDomain> found = new ArrayList<>();
+		for (ServerPlayer owner : server.getPlayerList().getPlayers()) {
+			PlayerCultivation own = CultivationManager.own(owner);
+			if (own.getClone() == null || !owner.isAlive() || own.isMortal() || !own.isAbilityActive(Ability.CONSCIOUSNESS_DOMAIN)) continue;
+			CloneBodyEntity body = Clones.bodyNotPlayed(server, own);
+			if (body == null || body.level() != level) continue;
+			int rank = Clones.sensedRank(body, own);
+			if (rank >= 0) found.add(new BodyDomain(body, owner, rank, radiusAt(own, rank)));
+		}
+		return found;
+	}
+
+	/**
+	 * Which domains the bodies' ({@link BodyDomain}) touch now, players' and cultivators' alike: a player is alerted as by any domain
+	 * that meets theirs, and the owner told which of their bodies felt whom (one's own other body is no stranger: not counted).
+	 */
+	private static void updateBodyContacts(List<ServerPlayer> users, List<CultivatorNpc> npcs, List<BodyDomain> bodies, Map<UUID, Set<UUID>> next) {
+		int stages = Stage.values().length;
+		for (BodyDomain body : bodies) {
+			UUID key = body.body().getUUID();
+			Set<UUID> was = touching.getOrDefault(key, Set.of());
+			Vec3 at = center(body.body());
+			for (ServerPlayer player : users) {
+				if (player == body.owner()) continue;
+				PlayerCultivation c = CultivationManager.get(player);
+				double reach = body.radius() + radius(c);
+				double distance = center(player).distanceTo(at);
+				boolean met = was.contains(player.getUUID());
+				if (distance > reach && (!met || distance > reach + SEPARATION_MARGIN)) continue;
+				next.computeIfAbsent(key, id -> new HashSet<>()).add(player.getUUID());
+				next.computeIfAbsent(player.getUUID(), id -> new HashSet<>()).add(key);
+				if (met) continue;
+				ModPackets.sendConsciousnessAlert(player, body.body().getId(), body.owner().getGameProfile().getName(),
+						Realm.byIndex(body.rank() / stages), Stage.byIndex(body.rank() % stages));
+				tellOwner(body, player.getDisplayName(), sensedRealm(c), sensedStage(c));
+			}
+			for (CultivatorNpc npc : npcs) {
+				double reach = body.radius() + npc.domainRadius();
+				double distance = center(npc).distanceTo(at);
+				boolean met = was.contains(npc.getUUID());
+				if (distance > reach && (!met || distance > reach + SEPARATION_MARGIN)) continue;
+				next.computeIfAbsent(key, id -> new HashSet<>()).add(npc.getUUID());
+				if (!met) tellOwner(body, npc.describe(), npc.getDisplayedRealm(), npc.getDisplayedStage());
+			}
+		}
+	}
+
+	/** {@code body}'s owner told that the domain of the body they aren't playing has met {@code who}'s, sensed at {@code realm} {@code stage}. */
+	private static void tellOwner(BodyDomain body, net.minecraft.network.chat.Component who, Realm realm, Stage stage) {
+		body.owner().sendSystemMessage(net.minecraft.network.chat.Component.translatable(body.body().isSitting() ? ModLang.MSG_BODY_DOMAIN_MET
+				: ModLang.MSG_CLONE_DOMAIN_MET, who, PlayerCultivation.rankName(realm, stage)).withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE));
+	}
+
 	/** Which pairs of domains in one level touch now; alerts both sides of each pair that has just met. */
 	private static void updateContacts(List<ServerPlayer> users, Map<UUID, Set<UUID>> next) {
 		for (int i = 0; i < users.size(); i++) {
@@ -171,15 +261,24 @@ public final class ConsciousnessDomainHandler {
 	}
 
 	/** The cultivators inside {@code viewer}'s domain, and the domains touching it. */
-	private static void sendDomain(ServerPlayer viewer, List<ServerPlayer> users, List<CultivatorNpc> npcs, Map<UUID, Set<UUID>> contacts) {
+	private static void sendDomain(ServerPlayer viewer, List<ServerPlayer> users, List<CultivatorNpc> npcs, List<BodyDomain> bodies,
+			Map<UUID, Set<UUID>> contacts) {
 		double radius = radius(CultivationManager.get(viewer));
+		int stages = Stage.values().length;
 		List<SensedCultivator> cultivators = new ArrayList<>();
-		for (Entity entity : entitiesIn(viewer, radius, Entity.class, e -> CultivatorEntity.isCultivator(e) && e.isAlive() && !e.isSpectator())) {
+		for (Entity entity : entitiesIn(viewer, radius, Entity.class, e -> (CultivatorEntity.isCultivator(e) || e instanceof CloneBodyEntity)
+				&& e.isAlive() && !e.isSpectator())) {
 			if (entity instanceof ServerPlayer player) {
 				if (SoulProjection.isSoul(player)) continue; // no outline, no realm: a soul is only sensed as near
 				PlayerCultivation c = CultivationManager.get(player);
 				if (c.isMortal()) continue; // shows as a mortal: an outline, no realm
-				cultivators.add(new SensedCultivator(player.getId(), TwoPaths.wieldedRealm(c), sensedStage(c), c.isUnderPressure()));
+				// One in their clone, at the clone's rank, as its stats come to (TwoPaths#sensedRank), not their true body's.
+				cultivators.add(new SensedCultivator(player.getId(), sensedRealm(c), sensedStage(c), c.isUnderPressure()));
+			} else if (entity instanceof CloneBodyEntity body) {
+				// A body its owner isn't playing (Clones): their main body as they wield theirs, their clone as its stats come to.
+				if (body.getOwnerId() == null) continue;
+				int rank = Clones.sensedRank(body, CultivationManager.own(viewer.server, body.getOwnerId()));
+				if (rank >= 0) cultivators.add(new SensedCultivator(body.getId(), Realm.byIndex(rank / stages), Stage.byIndex(rank % stages), false));
 			} else if (entity instanceof CultivatorEntity npc) {
 				if (npc.isConcealed()) continue; // a Concealment Barrier masks it
 				if (npc instanceof CultivatorNpc set && set.isVacant()) continue; // set aside, unseen, while a soul uses its body (Possession)
@@ -192,14 +291,19 @@ public final class ConsciousnessDomainHandler {
 		for (ServerPlayer other : users) {
 			if (other == viewer || !met.contains(other.getUUID())) continue;
 			Vec3 c = center(other);
-			domains.add(new TouchingDomain(other.getId(), c.x, c.y, c.z, (float) radius(CultivationManager.get(other))));
+			domains.add(new TouchingDomain(other.getId(), c.x, c.y, c.z, (float) radius(CultivationManager.get(other)), false));
 		}
 		for (CultivatorNpc npc : npcs) {
 			if (!met.contains(npc.getUUID())) continue;
 			Vec3 c = center(npc);
-			domains.add(new TouchingDomain(npc.getId(), c.x, c.y, c.z, (float) npc.domainRadius()));
+			domains.add(new TouchingDomain(npc.getId(), c.x, c.y, c.z, (float) npc.domainRadius(), false));
 		}
-		addNear(viewer, users, domains); // and those near that don't reach this one
+		for (BodyDomain body : bodies) {
+			if (!met.contains(body.body().getUUID())) continue;
+			Vec3 c = center(body.body());
+			domains.add(new TouchingDomain(body.body().getId(), c.x, c.y, c.z, (float) body.radius(), body.owner() == viewer));
+		}
+		addNear(viewer, users, bodies, domains); // and those near that don't reach this one
 		ModPackets.sendConsciousness(viewer, cultivators, domains); // the client works its own radius out from its synced stage
 	}
 
@@ -208,7 +312,7 @@ public final class ConsciousnessDomainHandler {
 	 * and not already there: only of those whose owner the viewer's client is sent at all (a soul, or one of the dead, is only
 	 * for those who perceive them: SoulProjection#broadcastsTo).
 	 */
-	private static void addNear(ServerPlayer viewer, List<ServerPlayer> users, List<TouchingDomain> domains) {
+	private static void addNear(ServerPlayer viewer, List<ServerPlayer> users, List<BodyDomain> bodies, List<TouchingDomain> domains) {
 		Vec3 at = center(viewer);
 		for (ServerPlayer other : users) {
 			if (other == viewer || !SoulProjection.broadcastsTo(other, viewer)) continue;
@@ -218,7 +322,17 @@ public final class ConsciousnessDomainHandler {
 			double radius = radius(CultivationManager.get(other));
 			Vec3 c = center(other);
 			if (c.distanceTo(at) > radius + SEEN_MARGIN) continue;
-			domains.add(new TouchingDomain(other.getId(), c.x, c.y, c.z, (float) radius));
+			domains.add(new TouchingDomain(other.getId(), c.x, c.y, c.z, (float) radius, false));
+		}
+		// The bodies' (BodyDomain): their owners' too, who see the domain of the body they left as anyone near it does, but as their
+		// own (TouchingDomain#own).
+		for (BodyDomain body : bodies) {
+			boolean listed = false;
+			for (TouchingDomain domain : domains) listed |= domain.entityId() == body.body().getId();
+			if (listed) continue;
+			Vec3 c = center(body.body());
+			if (c.distanceTo(at) > body.radius() + SEEN_MARGIN) continue;
+			domains.add(new TouchingDomain(body.body().getId(), c.x, c.y, c.z, (float) body.radius(), body.owner() == viewer));
 		}
 	}
 

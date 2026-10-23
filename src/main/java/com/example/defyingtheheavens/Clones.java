@@ -97,6 +97,21 @@ public final class Clones {
 		return clientCloneRecord.test(c);
 	}
 
+	/** The body {@code own}'s owner isn't playing now, where it is and loaded: their main body sitting, or their clone standing; else null. */
+	public static CloneBodyEntity bodyNotPlayed(MinecraftServer server, PlayerCultivation own) {
+		CompoundTag tag = own.getClone();
+		return tag == null ? null : standIn(server, tag);
+	}
+
+	/**
+	 * The rank {@code body} is sensed at (ConsciousnessDomainHandler: its own domain's reach, and the realm and stage others' domains
+	 * name it by), from {@code own}, its owner's record: a main body sitting, as its owner's body is wielded (TwoPaths#wieldedRank); a
+	 * clone standing, as its stats come to (TwoPaths#cloneRank). -1 for a mortal.
+	 */
+	public static int sensedRank(CloneBodyEntity body, PlayerCultivation own) {
+		return body.isSitting() ? TwoPaths.wieldedRank(own) : TwoPaths.cloneRank(own);
+	}
+
 	/** Whether {@code p} has a clone out (played or standing). */
 	public static boolean hasClone(ServerPlayer p) {
 		return CultivationManager.own(p).getClone() != null;

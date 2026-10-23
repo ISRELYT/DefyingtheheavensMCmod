@@ -1,6 +1,7 @@
 package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.Ability;
+import com.example.defyingtheheavens.CloneBodyEntity;
 import com.example.defyingtheheavens.ConsciousnessDomainHandler;
 import com.example.defyingtheheavens.CultivatorEntity;
 import com.example.defyingtheheavens.ModLang;
@@ -42,11 +43,12 @@ import java.util.List;
  * <ul>
  *   <li>the domain itself, a translucent blue sphere around the player, and any other cultivator's domain touching it in
  *   red (another player's open domain near is shown in red whether the ability is on or not), drawn on {@link SenseOverlay} so
- *   Qi Sense's monochrome doesn't grey them. From inside a sphere its fill is kept
+ *   Qi Sense's monochrome doesn't grey them. The domain of one's own other body (Clones: the main body sitting, the clone
+ *   standing) is blue like one's own: it is oneself, not a stranger. From inside a sphere its fill is kept
  *   faint (it would tint everything beyond it) and a lattice of latitude and longitude lines marks the boundary instead;</li>
  *   <li>every living thing inside the domain outlined through walls (vanilla's glowing outline, through MinecraftMixin and
  *   LevelRendererMixin; EntityRendererMixin keeps them drawn past vanilla's entity render distance): mortals white,
- *   cultivators red;</li>
+ *   cultivators red, one's own other body blue;</li>
  *   <li>each cultivator's realm and stage over their head, drawn on the HUD at a fixed size so it can be read across a
  *   10-chunk domain;</li>
  *   <li>a banner and a chime when another cultivator's domain first touches this one.</li>
@@ -62,8 +64,11 @@ public final class ConsciousnessRenderer {
 	private static final float GRID_ALPHA = 0.3f;
 	private static final int MORTAL_OUTLINE = 0xFFFFFF;
 	private static final int CULTIVATOR_OUTLINE = 0xFF2B2B;
+	/** One's own other body (Clones), in the own domain's blue. */
+	private static final int OWN_OUTLINE = 0x3380FF;
 	private static final int LABEL_COLOR = 0xFF7A7A;
 	private static final int LABEL_PRESSED_COLOR = 0xC04848;
+	private static final int OWN_LABEL_COLOR = 0x7AB0FF;
 	/** Sphere mesh: bands from pole to pole and segments around. */
 	private static final int LAT = 24;
 	private static final int LON = 48;
@@ -77,8 +82,8 @@ public final class ConsciousnessRenderer {
 	/** A cultivator in the domain, as the server last described them. */
 	public record Sensed(int entityId, Realm realm, Stage stage, boolean pressed) {}
 
-	/** Another domain touching this one; the position is used when its owner isn't loaded on this client. */
-	public record Domain(int entityId, double x, double y, double z, float radius) {}
+	/** Another domain touching this one; the position is used when its owner isn't loaded on this client. {@code own}: one's own other body's. */
+	public record Domain(int entityId, double x, double y, double z, float radius, boolean own) {}
 
 	private static final Int2ObjectOpenHashMap<Sensed> SENSED = new Int2ObjectOpenHashMap<>();
 	private static List<Domain> domains = List.of();
@@ -148,10 +153,17 @@ public final class ConsciousnessRenderer {
 			if (entity == self || !(entity instanceof LivingEntity) || entity instanceof ArmorStand || !entity.isAlive() || entity.isSpectator()) continue;
 			if (entity instanceof CultivatorEntity hidden && hidden.isConcealed()) continue; // masked by a Concealment Barrier
 			if (entity.getBoundingBox().getCenter().distanceToSqr(center) > radiusSqr) continue;
-			// Players count as cultivators only once they've begun (the server lists them in SENSED); mortal players look mortal.
-			boolean cultivator = entity instanceof Player ? SENSED.containsKey(entity.getId()) : CultivatorEntity.isCultivator(entity);
-			OUTLINES.put(entity.getId(), cultivator ? CULTIVATOR_OUTLINE : MORTAL_OUTLINE);
+			// Players count as cultivators only once they've begun (the server lists them in SENSED); mortal players look mortal. So
+			// do the bodies players aren't playing (Clones: a main body sitting, a clone standing).
+			boolean cultivator = entity instanceof Player || entity instanceof CloneBodyEntity ? SENSED.containsKey(entity.getId())
+					: CultivatorEntity.isCultivator(entity);
+			OUTLINES.put(entity.getId(), isOwnBody(entity, self) ? OWN_OUTLINE : cultivator ? CULTIVATOR_OUTLINE : MORTAL_OUTLINE);
 		}
+	}
+
+	/** Whether {@code entity} is {@code self}'s own other body (Clones: their main body sitting, or their clone standing). */
+	private static boolean isOwnBody(Entity entity, Player self) {
+		return entity instanceof CloneBodyEntity body && self.getUUID().equals(body.getOwnerId());
 	}
 
 	/** For MinecraftMixin: inside the domain, so it shows through walls. */
@@ -212,7 +224,8 @@ public final class ConsciousnessRenderer {
 				center = new Vec3(Mth.lerp(progress, before.x(), domain.x()), Mth.lerp(progress, before.y(), domain.y()),
 						Mth.lerp(progress, before.z(), domain.z()));
 			}
-			sphere(buffer, matrix, center.subtract(camera), domain.radius(), OTHER, beat); // another's, whether one's own is open or not
+			// Another's, whether one's own is open or not; one's own other body's in one's own colour.
+			sphere(buffer, matrix, center.subtract(camera), domain.radius(), domain.own() ? OWN : OTHER, beat);
 		}
 		BufferUploader.drawWithShader(buffer.end());
 	}
@@ -325,7 +338,8 @@ public final class ConsciousnessRenderer {
 			}
 			placed.add(new int[] {left, top});
 			graphics.fill(left - 2, top - 1, left + textWidth + 2, top + 9, 0x90000000);
-			graphics.drawString(font, text, left, top, sensed.pressed() ? LABEL_PRESSED_COLOR : LABEL_COLOR, false);
+			int color = isOwnBody(entity, mc.player) ? OWN_LABEL_COLOR : sensed.pressed() ? LABEL_PRESSED_COLOR : LABEL_COLOR;
+			graphics.drawString(font, text, left, top, color, false);
 		}
 	}
 

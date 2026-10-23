@@ -38,33 +38,28 @@ public class SwiftAndMendingGameTests implements FabricGameTest {
 
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void fromVoidShatteringOnTheyFlyFarSwifter(GameTestHelper helper) {
-		float lastFlight = 0, lastSpace = 0;
+		// Since 2026-10-23 the swiftness outside space is Meteor Flight's (MeteorFlightGameTests): space's own climbs as it did.
+		float lastSpace = 0;
 		for (Realm realm : Realm.values()) {
 			for (Stage stage : Stage.values()) {
-				float flight = QiFlight.realmSpeed(realm, stage), space = AstralRealm.spaceSpeed(realm, stage);
-				if (realm.ordinal() < Realm.VOID_SHATTERING.ordinal()) {
-					helper.assertTrue(flight == SwordFlight.QI_FLIGHT_SPEED, "Below Void Shattering, Qi Flight's own speed: " + realm.getId());
-				} else {
-					helper.assertTrue(flight > lastFlight && flight > SwordFlight.QI_FLIGHT_SPEED * 2,
-							"Swifter with every stage from Void Shattering: " + realm.getId() + " " + stage.getId() + " (" + flight + ")");
-				}
+				float space = AstralRealm.spaceSpeed(realm, stage);
 				if (realm.ordinal() >= AstralRealm.MIN_REALM.ordinal()) {
 					helper.assertTrue(space > lastSpace, "Space's speed swifter with every stage: " + realm.getId() + " " + stage.getId() + " (" + space + ")");
 				}
-				lastFlight = flight;
 				lastSpace = space;
 			}
 		}
 		float axis = AstralRealm.spaceSpeed(Realm.FOUR_AXIS, Stage.EARLY);
 		helper.assertTrue(AstralRealm.spaceSpeed(Realm.VOID_SHATTERING, Stage.EARLY) > 3.5 * axis
 				&& AstralRealm.spaceSpeed(Realm.TRUE_IMMORTAL, Stage.EARLY) > 18 * axis, "Void Shattering some four times Four Axis's in space, True Immortal nineteen");
-		helper.assertTrue(QiFlight.realmSpeed(Realm.TRUE_IMMORTAL, Stage.GRAND_PERFECTION) > 7 * SwordFlight.QI_FLIGHT_SPEED, "A True Immortal's Qi Flight seven times vanilla's");
+		helper.assertTrue(MeteorFlight.topSpeed(Realm.TRUE_IMMORTAL, Stage.GRAND_PERFECTION) > 7 * sprint(SwordFlight.QI_FLIGHT_SPEED),
+				"A True Immortal's Meteor Flight past seven times Qi Flight's sprint");
 		// To the next star, sprinting: Four Axis about two minutes, Void Shattering half a minute, True Immortal a few seconds.
 		double star = AstralPlanets.SYSTEM_SPACING;
 		helper.assertTrue(star / sprint(axis) > 100 && star / sprint(AstralRealm.spaceSpeed(Realm.VOID_SHATTERING, Stage.EARLY)) < 35
 				&& star / sprint(AstralRealm.spaceSpeed(Realm.TRUE_IMMORTAL, Stage.EARLY)) < 8, "The way to the next star");
-		helper.assertTrue(Math.abs(QiFlight.freeSpeed(QiFlight.realmSpeed(Realm.TRUE_IMMORTAL, Stage.GRAND_PERFECTION), GhostMethods.LAYERS)
-				- QiFlight.realmSpeed(Realm.TRUE_IMMORTAL, Stage.GRAND_PERFECTION) * 1.6f) < 1e-6, "The steps' +60% on the realm's speed");
+		helper.assertTrue(Math.abs(QiFlight.freeSpeed(SwordFlight.QI_FLIGHT_SPEED, GhostMethods.LAYERS) - SwordFlight.QI_FLIGHT_SPEED * 1.6f) < 1e-6,
+				"The steps' +60% on Qi Flight's speed");
 		helper.succeed();
 	}
 
@@ -79,24 +74,25 @@ public class SwiftAndMendingGameTests implements FabricGameTest {
 			c.setQi(c.maxQi());
 			QiFlight.tick(shatterer, c);
 			float speed = shatterer.getAbilities().getFlyingSpeed();
-			helper.assertTrue(shatterer.getAbilities().mayfly && speed == QiFlight.realmSpeed(Realm.VOID_SHATTERING, Stage.EARLY),
-					"Void Shattering flies on qi at its realm's speed (" + speed + ")");
-			// No lower realm holds Void Shattering (PlayerCultivation#FREE_OF_LOWER_REALMS): as swift there.
+			// Qi Flight is creative flight's own at every realm since 2026-10-23 (fine work: the swiftness is Meteor Flight's).
+			helper.assertTrue(shatterer.getAbilities().mayfly && speed == SwordFlight.QI_FLIGHT_SPEED,
+					"Void Shattering flies on qi at creative flight's speed (" + speed + ")");
+			// No lower realm holds Void Shattering (PlayerCultivation#FREE_OF_LOWER_REALMS): its flight there is its own.
 			c.setLowerRealmBound(true);
 			QiFlight.tick(shatterer, c);
-			helper.assertTrue(shatterer.getAbilities().getFlyingSpeed() == QiFlight.realmSpeed(Realm.VOID_SHATTERING, Stage.EARLY),
-					"Held by no lower realm: as swift there (" + shatterer.getAbilities().getFlyingSpeed() + ")");
-			// The dead fly freely at their realm's speed.
+			helper.assertTrue(shatterer.getAbilities().mayfly && shatterer.getAbilities().getFlyingSpeed() == SwordFlight.QI_FLIGHT_SPEED,
+					"Held by no lower realm: it flies there too (" + shatterer.getAbilities().getFlyingSpeed() + ")");
+			// The dead fly freely, at the same speed.
 			GhostSystem.makeGhost(dead);
 			PlayerCultivation d = CultivationManager.get(dead);
 			QiFlight.tick(dead, d);
-			helper.assertTrue(dead.getAbilities().mayfly && dead.getAbilities().getFlyingSpeed() == QiFlight.realmSpeed(Realm.TRUE_IMMORTAL, Stage.LATE),
-					"A True Immortal of the dead flies freely at its realm's speed (" + dead.getAbilities().getFlyingSpeed() + ")");
-			// Saved with the player and brought back after a relog, the new speeds are still known as flight's: one without flight now
-			// goes back to vanilla's.
+			helper.assertTrue(dead.getAbilities().mayfly && dead.getAbilities().getFlyingSpeed() == SwordFlight.QI_FLIGHT_SPEED,
+					"A True Immortal of the dead flies freely at creative flight's speed (" + dead.getAbilities().getFlyingSpeed() + ")");
+			// Saved with the player and brought back after a relog, the speeds flight had before (True Immortal Grand Perfection's
+			// 0.36, a Sacred Vessel Mid ghost's 0.17 with six layers of the steps) are still known as flight's, as is space's: one
+			// without flight now goes back to vanilla's.
 			PlayerCultivation w = CultivationManager.get(walker);
-			float[] saved = {QiFlight.realmSpeed(Realm.TRUE_IMMORTAL, Stage.GRAND_PERFECTION),
-					QiFlight.freeSpeed(QiFlight.realmSpeed(Realm.SACRED_VESSEL, Stage.MID), 6), AstralRealm.spaceSpeed(Realm.ENTERING_NIRVANA, Stage.LATE)};
+			float[] saved = {0.30f + 3 * 0.02f, QiFlight.freeSpeed(0.16f + 0.01f, 6), AstralRealm.spaceSpeed(Realm.ENTERING_NIRVANA, Stage.LATE)};
 			for (float s : saved) {
 				walker.getAbilities().setFlyingSpeed(s);
 				QiFlight.forget(walker.getUUID());

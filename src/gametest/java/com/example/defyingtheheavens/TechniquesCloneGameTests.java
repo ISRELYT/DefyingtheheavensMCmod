@@ -397,6 +397,93 @@ public class TechniquesCloneGameTests implements FabricGameTest {
 		helper.succeed();
 	}
 
+	// --- Both bodies' consciousness (the user's ask, 2026-10-23) ---
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void aCloneIsSensedAndSensesAtItsOwnStrength(GameTestHelper helper) {
+		List<ServerPlayer> made = new ArrayList<>();
+		try {
+			ServerPlayer p = survivor(helper, made, "clone_domain", Realm.HEAVENLY_BEING, Stage.MID);
+			ServerPlayer watcher = survivor(helper, made, "domain_watcher", Realm.HEAVENLY_BEING, Stage.MID);
+			watcher.teleportTo(watcher.getX() + 3, watcher.getY(), watcher.getZ());
+			PlayerCultivation own = CultivationManager.get(p);
+			own.learnTechnique(Technique.CLONE);
+			own.setQi(own.maxQi());
+			int whole = TwoPaths.wieldedRank(own), half = TwoPaths.cloneRank(own);
+			int stages = Stage.values().length;
+			helper.assertTrue(half >= 0 && half < whole, "A clone's cultivation, at half the strength, below its maker's rank (" + half + " / " + whole + ")");
+			helper.assertTrue(half == PlayerCultivation.rank(Realm.NASCENT_SOUL, Stage.MID), "A Heavenly Being Mid's clone comes to Nascent Soul Mid (" + half + ")");
+			double wholeRadius = ConsciousnessDomainHandler.radiusAt(own, whole), halfRadius = ConsciousnessDomainHandler.radiusAt(own, half);
+			helper.assertTrue(Math.abs(ConsciousnessDomainHandler.radius(own) - wholeRadius) < 1e-9 && halfRadius < wholeRadius,
+					"Their own domain as wielded; the clone's narrower (" + halfRadius + " / " + wholeRadius + ")");
+			for (ServerPlayer one : List.of(p, watcher)) {
+				CultivationManager.get(one).setAbilityEnabled(Ability.CONSCIOUSNESS_DOMAIN, true);
+				helper.assertTrue(CultivationManager.get(one).isAbilityActive(Ability.CONSCIOUSNESS_DOMAIN), "The domain open: " + one.getGameProfile().getName());
+			}
+
+			// Standing, the clone is sensed as its stats come to, and its own domain is open.
+			Clones.act(p);
+			CloneBodyEntity standing = body(helper, p, false);
+			helper.assertTrue(standing != null && Clones.sensedRank(standing, own) == half, "The standing clone sensed at its own strength");
+			ConsciousnessDomainHandler.scan(p.server);
+			helper.assertTrue(ConsciousnessDomainHandler.touches(standing.getUUID(), watcher.getUUID())
+					&& ConsciousnessDomainHandler.touches(watcher.getUUID(), standing.getUUID()), "The standing clone's domain meets another's, both ways");
+			helper.assertTrue(!ConsciousnessDomainHandler.touches(standing.getUUID(), p.getUUID()), "Not its own maker's: no stranger");
+
+			// Played, the player's domain is the clone's, and they are sensed at its rank; the main body sits with its own.
+			Clones.act(p);
+			helper.assertTrue(Clones.inClone(p) && TwoPaths.sensedRank(own) == half, "In the clone, sensed at its rank");
+			helper.assertTrue(Math.abs(ConsciousnessDomainHandler.radius(own) - halfRadius) < 1e-9, "Their domain the clone's (" + ConsciousnessDomainHandler.radius(own) + ")");
+			helper.assertTrue(ConsciousnessDomainHandler.sensedRealm(own) == Realm.byIndex(half / stages)
+					&& ConsciousnessDomainHandler.sensedStage(own) == Stage.byIndex(half % stages), "Named by the clone's realm and stage");
+			CloneBodyEntity sitting = body(helper, p, true);
+			helper.assertTrue(sitting != null && Clones.sensedRank(sitting, own) == whole, "The main body sensed at the true rank");
+			ConsciousnessDomainHandler.scan(p.server);
+			helper.assertTrue(ConsciousnessDomainHandler.touches(sitting.getUUID(), watcher.getUUID()), "The main body's domain meets another's");
+			helper.assertTrue(ConsciousnessDomainHandler.touches(p.getUUID(), watcher.getUUID()), "...and so does the clone's they play");
+
+			// Its domain shut, neither body's is open.
+			CultivationManager.toggleAbility(p, Ability.CONSCIOUSNESS_DOMAIN.ordinal());
+			helper.assertTrue(!own.isAbilityActive(Ability.CONSCIOUSNESS_DOMAIN), "Shut from the clone");
+			ConsciousnessDomainHandler.scan(p.server);
+			helper.assertTrue(!ConsciousnessDomainHandler.touches(sitting.getUUID(), watcher.getUUID()) && !ConsciousnessDomainHandler.touches(p.getUUID(), watcher.getUUID()),
+					"Shut, neither");
+		} finally {
+			leave(made);
+		}
+		helper.succeed();
+	}
+
+	// --- Striking a tether ---
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void aTetherIsStruckWhereItHangs(GameTestHelper helper) {
+		Vec3 a = new Vec3(0, 100, 0), b = new Vec3(100, 100, 0);
+		double sag = SoulProjection.tetherSag(a, b);
+		helper.assertTrue(Math.abs(sag - 3) < 1e-9, "A long tether sags three blocks at its middle (" + sag + ")");
+		Vec3 middle = SoulProjection.tetherPoint(a, b, sag, 0.5);
+		helper.assertTrue(middle.distanceTo(new Vec3(50, 97, 0)) < 1e-9, "Its middle hangs below the straight line");
+		double reach = SoulProjection.TETHER_STRIKE_REACH;
+		// Swung at where it is drawn, the middle, from three blocks off: struck (the straight line it was struck along lay three blocks above).
+		SoulProjection.TetherAim aim = SoulProjection.aimAtTether(middle.add(0, 0, 3), new Vec3(0, 0, -1), reach, a, b);
+		helper.assertTrue(aim.distance() < 0.05 && Math.abs(aim.along() - 3) < 0.05 && aim.point().distanceTo(middle) < 0.1,
+				"Struck where it hangs (" + aim.distance() + " off, " + aim.along() + " along)");
+		// Between where 24 points along it lay (4 blocks apart on a hundred-block tether): struck all the same.
+		for (double t : new double[] {0.021, 0.27, 0.521, 0.98}) {
+			Vec3 on = SoulProjection.tetherPoint(a, b, sag, t);
+			SoulProjection.TetherAim between = SoulProjection.aimAtTether(on.add(0, 0, 2), new Vec3(0, 0, -1), reach, a, b);
+			helper.assertTrue(between.distance() < 0.05, "Struck anywhere along it (" + t + ": " + between.distance() + " off)");
+		}
+		// Slantwise across it, a little off: inside the swing's width; looking away, or out of reach: not.
+		Vec3 slant = new Vec3(0.3, -0.2, -1).normalize();
+		helper.assertTrue(SoulProjection.aimAtTether(middle.add(-1, 1.2, 3), slant, reach, a, b).distance() <= SoulProjection.TETHER_STRIKE_WIDTH,
+				"A swing just past it still strikes");
+		helper.assertTrue(SoulProjection.aimAtTether(middle.add(0, 0, 3), new Vec3(0, 0, 1), reach, a, b).distance() > 2.5, "Not looking away");
+		helper.assertTrue(SoulProjection.aimAtTether(middle.add(0, 0, reach + 2), new Vec3(0, 0, -1), reach, a, b).distance() > 1.5, "Not out of reach");
+		helper.assertTrue(SoulProjection.TETHER_STRIKE_WIDTH >= 0.9, "A wider swing than it was (" + SoulProjection.TETHER_STRIKE_WIDTH + ")");
+		helper.succeed();
+	}
+
 	// --- Helpers ---
 
 	/** A survival player in the player list (as FourAxisGameTests'), of {@code realm} {@code stage}, wielding it whole. */

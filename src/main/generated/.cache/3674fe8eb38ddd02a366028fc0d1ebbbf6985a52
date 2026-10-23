@@ -1,4 +1,4 @@
-// 1.20.1	2026-10-23T12:53:48.8649114	Defying The Heavens/Model Definitions
+// 1.20.1	2026-10-23T15:42:27.7286831	Defying The Heavens/Model Definitions
 2a37dff13a81a9b17eb809fba4b736f445728126 assets\defying-the-heavens\models\item\jade_ore.json
 6e19ed319a3f65b6678d96013549e5ddab50a243 assets\defying-the-heavens\models\block\dao_stele_water_upper.json
 f4125133876ff3cdf20bb5bc48fc24e6cc6789ee assets\defying-the-heavens\models\block\deepslate_jade_ore.json
@@ -71,9 +71,9 @@ da7a1c3fc0e87b9c781c74138e9608fcedf25064 assets\defying-the-heavens\models\block
 29b29a055fff84dd52e834e927edc8ca56e1696c assets\defying-the-heavens\blockstates\rich_spirit_stone_ore.json
 44d93fc3984c32e6e2c7daf31efad53c2d7f21f4 assets\defying-the-heavens\models\block\method_stele_ghost_fire_scripture_middle.json
 2bacabe79dbf5574954bc191623f366054cdc0c9 assets\defying-the-heavens\models\block\method_stele_six_paths_canon_lower.json
+25e495c12668a34d90fbc34fa1586143b5e91b33 assets\defying-the-heavens\models\block\blue_spirit_log_horizontal.json
 da7a1c3fc0e87b9c781c74138e9608fcedf25064 assets\defying-the-heavens\models\block\method_stele_ghost_core_canon_upper.json
 9eb21d55270d4dd3eb1b2ed51956cce567930443 assets\defying-the-heavens\models\block\method_stele_yellow_springs_marrow_middle.json
-25e495c12668a34d90fbc34fa1586143b5e91b33 assets\defying-the-heavens\models\block\blue_spirit_log_horizontal.json
 a697b8997087eab3181f59b2813ce982ced0d0ee assets\defying-the-heavens\models\item\white_blossom_leaves.json
 d4d15be2eff29a8fb0020cba0fc501bcdf2df5ae assets\defying-the-heavens\models\block\dao_stele_metal_middle.json
 2bacabe79dbf5574954bc191623f366054cdc0c9 assets\defying-the-heavens\models\block\method_stele_ghost_fire_scripture_lower.json

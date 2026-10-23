@@ -270,12 +270,20 @@ public final class TwoPaths {
 	 * Realm Suppression and pressure leave it (the stats it has now).
 	 */
 	public static Effective effective(PlayerCultivation c, boolean wielded) {
+		return effective(c, wielded, Clones.strength(c));
+	}
+
+	/**
+	 * {@link #effective} at {@code strength} of the body's might: a clone's (Clones#STAT_SHARE, the user's ask, 2026-10-23: its
+	 * cultivation as its stats come to, not its maker's realm), whether or not it is the one played now.
+	 */
+	public static Effective effective(PlayerCultivation c, boolean wielded, double strength) {
 		Body body = body(c, wielded);
 		if (body.rank() < 0) return null;
-		double value = might(body.rank()) * body.scale() * body.share();
+		double value = might(body.rank()) * body.scale() * body.share() * strength;
 		int last = PlayerCultivation.LAST_RANK;
-		// Half a path's strength (pathShare) is worth less than its rank: weighed from the first stage up.
-		int rank = body.share() < 1 ? 0 : body.rank();
+		// Half a path's strength (pathShare), or a clone's share of the body's, is worth less than its rank: weighed from the first stage up.
+		int rank = body.share() < 1 || strength < 1 ? 0 : body.rank();
 		while (rank < last && might(rank + 1) <= value * (1 + EFFECTIVE_TOLERANCE)) rank++;
 		boolean quasi = value > might(rank) * (1 + EFFECTIVE_TOLERANCE);
 		double toward = rank >= last ? 0 : Math.max(0, Math.min(1, (value - might(rank)) / (might(rank + 1) - might(rank))));
@@ -300,6 +308,23 @@ public final class TwoPaths {
 	/** The realm {@code c}'s body is wielded at now ({@link #wieldedRank}): Qi Refining for a mortal. */
 	public static Realm wieldedRealm(PlayerCultivation c) {
 		return Realm.byIndex(Math.max(0, wieldedRank(c)) / Stage.values().length);
+	}
+
+	/**
+	 * The rank {@code c}'s clone stands at (Clones: its realm is its maker's, its strength half theirs): the effective cultivation its
+	 * body comes to ({@link #effective} at Clones#STAT_SHARE), the whole rank below a "Quasi-" one; -1 for a mortal.
+	 */
+	public static int cloneRank(PlayerCultivation c) {
+		Effective effective = c.isMortal() ? null : effective(c, true, Clones.STAT_SHARE);
+		return effective == null ? -1 : effective.rank();
+	}
+
+	/**
+	 * The rank {@code c} is sensed at (the reach of a Consciousness Domain, and the realm and stage others' domains name it by): its
+	 * body as wielded ({@link #wieldedRank}), or, played as a clone (Clones#isCloneRecord), the clone's ({@link #cloneRank}).
+	 */
+	public static int sensedRank(PlayerCultivation c) {
+		return Clones.isCloneRecord(c) ? cloneRank(c) : wieldedRank(c);
 	}
 
 	/** Whether {@code c}'s body is mightier than its own rank alone (the harmony, Heaven's Favour): its effective cultivation is worth saying. */

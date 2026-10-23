@@ -82,7 +82,14 @@ public enum Ability {
 	 * A technique, not the realm's (Technique#CLONE, from its manual; the user's ask, 2026-10-23), wielded from Nascent Soul by the
 	 * living: split a clone off one's body, go into it and back, and draw it back in (Clones). An act: "on" while one is out.
 	 */
-	CLONE("clone", false, c -> !c.netherworld().ghost() && c.knowsTechnique(Technique.CLONE) && Technique.CLONE.wieldable(c));
+	CLONE("clone", false, c -> !c.netherworld().ghost() && c.knowsTechnique(Technique.CLONE) && Technique.CLONE.wieldable(c)),
+	/**
+	 * From Core Formation on either path (the user's ask, 2026-10-23): Qi Flight's fast mode, a standing switch, off by default
+	 * ({@link MeteorFlight}). Off, every realm flies at creative flight's own speed, for fine work; on, one flies where one looks,
+	 * as fast as one's realm allows, and from Nascent Soul one comes ablaze and smashes through what stands in the way. The free
+	 * flight of the dead and of a Ghost King's form goes by it too.
+	 */
+	METEOR_FLIGHT("meteor_flight", false, c -> TwoPaths.awakens(c, Realm.CORE_FORMATION, true) != null);
 
 	private final String id;
 	private final boolean onByDefault;
@@ -157,6 +164,8 @@ public enum Ability {
 			case CLONE -> Clones.isCloneRecord(c) ? Component.translatable(key + ".clone", Math.round(Clones.ABSORB_RANGE))
 					: Component.translatable(key, Math.round(Clones.STAT_SHARE * 100), Math.round(Clones.SUMMON_SHARE * 100), Math.round(Clones.ABSORB_RANGE),
 							Clones.REFORM_TICKS / 1200);
+			// Its top speed, and what it costs flying fast (three times Qi Flight's; from Heavenly Being never more than one gathers).
+			case METEOR_FLIGHT -> Component.translatable(key, Math.round(MeteorFlight.topSpeed(c)), Math.round(MeteorFlight.streakCost(c, c.qiFlightCostPerSecond())));
 			default -> Component.translatable(key);
 		};
 	}

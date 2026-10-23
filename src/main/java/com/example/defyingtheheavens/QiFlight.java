@@ -32,9 +32,12 @@ import java.util.UUID;
  * and swifter by each layer of Wandering Soul Steps from the fourth ({@link #freeSpeed}), spending nothing. Qi Flight and Sword
  * Flight themselves are the heaven path's.
  * <p>
- * From Void Shattering on, Qi Flight and the free flight are far swifter, the more with every stage ({@link #realmSpeed}: the
- * user's ask, 2026-10-22), and space's flight swifter still (AstralRealm#spaceSpeed). The server lets such a flier move as far a
- * packet as its flight carries it ({@link #moveAllowanceSq}), or a guest of the game would be snapped back.
+ * Qi Flight and the free flight fly at creative flight's own speed at every realm, for fine work (the user's ask, 2026-10-23: from
+ * Void Shattering on they had been far swifter, the more with every stage, and hard to steer finely); swiftness is Meteor Flight's,
+ * their fast mode, switched on and off ({@link MeteorFlight}: where one looks, as fast as one's realm allows). Where that isn't flown,
+ * in the Spatial Gap, switching it on gives this flight the realm's former swiftness instead ({@link #speedIn}). Space's flight is its
+ * own, swifter still (AstralRealm#spaceSpeed). The server lets a flier move as far a packet as its flight carries it
+ * ({@link #moveAllowanceSq}), or a guest of the game would be snapped back.
  */
 public final class QiFlight {
 	/** After running dry, flight returns (silently) at this fraction of the pool. */
@@ -61,6 +64,14 @@ public final class QiFlight {
 	 *         gathering
 	 */
 	static double tick(ServerPlayer p, PlayerCultivation c) {
+		double cost = fly(p, c);
+		// Meteor Flight, the fast mode of Qi Flight and of the free flight (MeteorFlight): flying fast on qi costs more.
+		MeteorFlight.update(p, c);
+		return cost > 0 && MeteorFlight.isStreaking(p) ? MeteorFlight.streakCost(c, cost) : cost;
+	}
+
+	/** {@link #tick}'s flight: granted or not, at what speed, and what it costs a second at Qi Flight's own rate. */
+	private static double fly(ServerPlayer p, PlayerCultivation c) {
 		UUID id = p.getUUID();
 		// Carried into another dimension by a teleport (ServerPlayer#teleportTo: the rifts, the Soul River, the Netherworld's ways, a
 		// ghost's return to the living world), the client rebuilds its player with no right to fly, and nothing tells it otherwise
@@ -126,7 +137,7 @@ public final class QiFlight {
 		if (Incorporeal.isGhost(p)) {
 			SwordFlight.update(p, false);
 			EXHAUSTED.remove(id);
-			if (!ModDimensions.isSoulRiver(p.level().dimension()) && !p.hasEffect(ModEffects.QUELLED)) setFlight(p, true, freeSpeed(c));
+			if (!ModDimensions.isSoulRiver(p.level().dimension()) && !p.hasEffect(ModEffects.QUELLED)) setFlight(p, true, freeSpeed(p, c));
 			else land(p);
 			return 0;
 		}
@@ -138,7 +149,7 @@ public final class QiFlight {
 		if (TwoPaths.inGhostForm(c) && !carried) {
 			SwordFlight.update(p, false);
 			EXHAUSTED.remove(id);
-			if (!p.hasEffect(ModEffects.QUELLED)) setFlight(p, true, freeSpeed(c));
+			if (!p.hasEffect(ModEffects.QUELLED)) setFlight(p, true, freeSpeed(p, c));
 			else land(p);
 			return 0;
 		}
@@ -160,7 +171,7 @@ public final class QiFlight {
 		}
 		// Granted before any flight is paid for: a player flying without mayfly (a flight carried over from a relog, say)
 		// would otherwise be kicked by dedicated servers for "floating too long".
-		setFlight(p, true, onSword ? SwordFlight.SWORD_SPEED : realmSpeed(c));
+		setFlight(p, true, onSword ? SwordFlight.SWORD_SPEED : speedIn(p.level().dimension(), c));
 		if (!p.getAbilities().flying) {
 			SwordFlight.update(p, false);
 			return 0;
@@ -196,13 +207,12 @@ public final class QiFlight {
 	}
 
 	/**
-	 * Qi Flight's speed (vanilla flying speed) for one who wields {@code realm} at {@code stage}: vanilla's own ({@link
-	 * SwordFlight#QI_FLIGHT_SPEED}, 11 blocks a second, twice that sprinting) up to Dao Integration; from Void Shattering on far
-	 * beyond it, the more with every stage (the user's ask, 2026-10-22: "void shattering beings and onwards should be able to travel
-	 * ... super fast"): Void Shattering 2.4 to 3 times it, Sacred Vessel 3.2 to 3.8, Entering Nirvana 4 to 4.9, True Immortal 6 to
-	 * 7.2 (27 to 80 blocks a second). Space has its own, swifter yet (AstralRealm#spaceSpeed); a sword none of these (SwordFlight).
+	 * The speed Qi Flight and the free flight had from Void Shattering on, before they went back to creative flight's at every realm
+	 * (2026-10-23, Meteor Flight's coming): Void Shattering 2.4 to 3 times vanilla's, Sacred Vessel 3.2 to 3.8, Entering Nirvana 4 to
+	 * 4.9, True Immortal 6 to 7.2. Still theirs in the Spatial Gap with Meteor Flight switched on ({@link #speedIn}), and known as this
+	 * class's when saved with a player ({@link #isOurs}).
 	 */
-	public static float realmSpeed(Realm realm, Stage stage) {
+	private static float formerSpeed(Realm realm, Stage stage) {
 		int s = stage.ordinal();
 		return switch (realm) {
 			case VOID_SHATTERING -> 0.12f + s * 0.01f;
@@ -213,23 +223,38 @@ public final class QiFlight {
 		};
 	}
 
-	/**
-	 * {@link #realmSpeed} of {@code c}'s higher path, as the realm lets them wield it (either path: TwoPaths#higherRank). Realm
-	 * Suppression holds no one of these realms in the lower realms (PlayerCultivation#FREE_OF_LOWER_REALMS): they fly as swiftly there.
-	 */
-	public static float realmSpeed(PlayerCultivation c) {
+	/** {@link #formerSpeed} of {@code c}'s higher path, as the realm lets them wield it (either path: TwoPaths#higherRank). */
+	private static float formerSpeed(PlayerCultivation c) {
 		int rank = TwoPaths.higherRank(c, true);
 		if (c.isMortal() || rank < 0) return SwordFlight.QI_FLIGHT_SPEED;
 		int stages = Stage.values().length;
-		return realmSpeed(Realm.byIndex(rank / stages), Stage.byIndex(rank % stages));
+		return formerSpeed(Realm.byIndex(rank / stages), Stage.byIndex(rank % stages));
 	}
 
 	/**
-	 * How fast one who flies freely flies (TwoPaths#fliesFreely): Qi Flight's speed at its realm ({@link #realmSpeed}), and from the
-	 * fourth layer of Wandering Soul Steps (GhostMethods#STEPS_FLIGHT_FROM) a tenth more for each layer, +60% at the ninth.
+	 * Qi Flight's speed (and the free flight's, before Wandering Soul Steps) for {@code c} in {@code dimension}: creative flight's own;
+	 * but where Meteor Flight's own flight isn't flown and this one is (the Spatial Gap: MeteorFlight#flownIn), with Meteor Flight
+	 * switched on, the swiftness the realm had there before Meteor Flight came ({@link #formerSpeed}: Void Shattering 2.4 to 3 times
+	 * creative flight's up to True Immortal 6 to 7.2; the user's ask, 2026-10-23: "make sure you can still reach previous flight speeds
+	 * in space and the spatial gap"). Space has its own speeds either way (AstralRealm#spaceSpeed).
+	 */
+	static float speedIn(net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dimension, PlayerCultivation c) {
+		if (c.isAbilityActive(Ability.METEOR_FLIGHT) && !MeteorFlight.flownIn(dimension)) return formerSpeed(c);
+		return SwordFlight.QI_FLIGHT_SPEED;
+	}
+
+	/**
+	 * How fast one who flies freely flies (TwoPaths#fliesFreely): Qi Flight's speed (creative flight's, at every realm), and from the
+	 * fourth layer of Wandering Soul Steps (GhostMethods#STEPS_FLIGHT_FROM) a tenth more for each layer, +60% at the ninth. Swifter
+	 * yet is Meteor Flight's (MeteorFlight).
 	 */
 	public static float freeSpeed(PlayerCultivation c) {
-		return freeSpeed(realmSpeed(c), c.netherworld().layer(GhostMethod.WANDERING_SOUL_STEPS));
+		return freeSpeed(SwordFlight.QI_FLIGHT_SPEED, c.netherworld().layer(GhostMethod.WANDERING_SOUL_STEPS));
+	}
+
+	/** {@link #freeSpeed} where {@code p} is: in the Spatial Gap with Meteor Flight on, from the realm's former swiftness ({@link #speedIn}). */
+	private static float freeSpeed(ServerPlayer p, PlayerCultivation c) {
+		return freeSpeed(speedIn(p.level().dimension(), c), c.netherworld().layer(GhostMethod.WANDERING_SOUL_STEPS));
 	}
 
 	static float freeSpeed(float base, int stepsLayer) {
@@ -258,24 +283,28 @@ public final class QiFlight {
 
 	/**
 	 * How far (squared) the server lets {@code p} move in one movement packet (ServerGamePacketListenerImplMixin): vanilla's
-	 * {@code limit} (10 blocks, whoever hosts the game unchecked), or for a flier the more its flight carries it ({@link #reachAt}):
-	 * from Void Shattering on ({@link #realmSpeed}, AstralRealm#spaceSpeed) a guest would be snapped back mid-flight otherwise.
+	 * {@code limit} (10 blocks, whoever hosts the game unchecked), or for a flier the more its flight carries it ({@link #reachAt},
+	 * or {@link #BUNCHED_TICKS} ticks of Meteor Flight's top speed: MeteorFlight#topPerTick): in space (AstralRealm#spaceSpeed) or
+	 * flying fast, a guest would be snapped back mid-flight otherwise.
 	 */
 	public static float moveAllowanceSq(ServerPlayer p, float limit) {
 		if (!p.getAbilities().flying) return limit;
 		double reach = reachAt(p.getAbilities().getFlyingSpeed());
+		PlayerCultivation c = CultivationManager.get(p);
+		if (MeteorFlight.mayStreak(p, c)) reach = Math.max(reach, MeteorFlight.topPerTick(c) * BUNCHED_TICKS);
 		return (float) Math.max(limit, reach * reach);
 	}
 
 	/**
-	 * Whether {@code speed} is one set here: Qi Flight's (at any realm), a sword's, the free flight's, space's or the last one set
-	 * for that player. Told by value, so a speed saved with the player (vanilla keeps it) is still known after a relog.
+	 * Whether {@code speed} is one set here: Qi Flight's (at any realm, as it is or was: {@link #formerSpeed}), a sword's, the free
+	 * flight's, space's or the last one set for that player. Told by value, so a speed saved with the player (vanilla keeps it) is
+	 * still known after a relog.
 	 */
 	private static boolean isOurs(UUID id, float speed) {
 		if (speed == SwordFlight.SWORD_SPEED || speed == GHOST_SPEED || Float.valueOf(speed).equals(SPEED_SET.get(id))) return true;
 		for (Realm realm : Realm.values()) {
 			for (Stage stage : Stage.values()) {
-				float flight = realmSpeed(realm, stage), space = AstralRealm.spaceSpeed(realm, stage);
+				float flight = formerSpeed(realm, stage), space = AstralRealm.spaceSpeed(realm, stage);
 				if (speed == flight || speed == space || speed == AstralRealm.starborn(space)) return true; // a Starborn Body's too
 				for (int layer = GhostMethods.STEPS_FLIGHT_FROM; layer <= GhostMethods.LAYERS; layer++) if (speed == freeSpeed(flight, layer)) return true;
 			}
@@ -311,6 +340,7 @@ public final class QiFlight {
 		REALM_ALLOWED_SWORD.remove(id);
 		DIMENSION.remove(id);
 		SwordFlight.forget(id);
+		MeteorFlight.forget(id);
 	}
 
 	private QiFlight() {}

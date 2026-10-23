@@ -25,6 +25,7 @@
     "KeyMappingMixin",
     "LevelRendererMixin",
     "LivingEntityRendererMixin",
+    "MeteorFlightMixin",
     "MinecraftMixin",
     "PlayerRendererMixin",
     "PostChainAccessor",

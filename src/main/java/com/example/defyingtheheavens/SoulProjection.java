@@ -148,9 +148,13 @@ public final class SoulProjection {
 	/** The tether holds this much against blows, plus the soul's own health; it mends if left alone for {@link #TETHER_MEND_TICKS}. */
 	private static final double TETHER_BASE_STRENGTH = 20;
 	private static final int TETHER_MEND_TICKS = 200;
-	/** A Heavenly Being's strike reaches a tether this far from their eyes, and hits it within this of the line. */
+	/** A Heavenly Being's strike reaches a tether this far from their eyes, and hits it within this of the line (as the client aims). */
 	public static final double TETHER_STRIKE_REACH = 5.0;
-	public static final double TETHER_STRIKE_WIDTH = 0.6;
+	public static final double TETHER_STRIKE_WIDTH = 0.9;
+	/** The server's allowance on top of {@link #TETHER_STRIKE_WIDTH}: the soul it sees has moved on a little from where the striker saw it. */
+	private static final double TETHER_STRIKE_SLACK = 0.6;
+	/** The hanging tether is struck along this many straight pieces (and drawn by as many: SoulRenderer). */
+	public static final int TETHER_PIECES = 28;
 	/** Going out is broken off by moving this far (squared, horizontally). */
 	private static final double CHANNEL_DRIFT_SQR = 0.3 * 0.3;
 	/** A soul found this far past the end of its tether is pulled back (the client keeps it inside; this catches the rest). */
@@ -809,9 +813,8 @@ public final class SoulProjection {
 		Vec3 a = s.bodyPos.add(0, 1.0, 0);
 		Entity holder = s.possessed != null && soul.getVehicle() != null ? soul.getVehicle() : soul;
 		Vec3 b = holder.position().add(0, holder.getBbHeight() * 0.55, 0);
-		Vec3 eye = striker.getEyePosition();
-		Vec3 look = striker.getViewVector(1.0f);
-		if (rayToSegment(eye, look, TETHER_STRIKE_REACH, a, b) > TETHER_STRIKE_WIDTH) return;
+		TetherAim aim = aimAtTether(striker.getEyePosition(), striker.getViewVector(1.0f), TETHER_STRIKE_REACH, a, b);
+		if (aim.distance() > TETHER_STRIKE_WIDTH + TETHER_STRIKE_SLACK) return;
 		float charge = striker.getAttackStrengthScale(0.5f);
 		striker.resetAttackStrengthTicker();
 		if (charge < 0.3f) return;
@@ -821,7 +824,7 @@ public final class SoulProjection {
 		s.tetherStruck = now;
 		s.lastHurt = now;
 		ServerLevel level = striker.serverLevel();
-		Vec3 hit = closestOnSegment(eye, look, a, b);
+		Vec3 hit = aim.point();
 		level.sendParticles(new DustParticleOptions(new Vector3f(0.4f, 0.75f, 1.0f), 1.0f), hit.x, hit.y, hit.z, 12, 0.15, 0.15, 0.15, 0.02);
 		level.playSound(null, BlockPos.containing(hit), SoundEvents.AMETHYST_BLOCK_HIT, SoundSource.PLAYERS, 1.0f, 0.6f);
 		soul.displayClientMessage(Component.translatable(ModLang.MSG_SOUL_TETHER_STRUCK, striker.getDisplayName()), true);
@@ -832,34 +835,64 @@ public final class SoulProjection {
 		}
 	}
 
+	/** How far a tether from {@code a} to {@code b} sags at its middle under its own length (as drawn, and as struck): up to 3 blocks. */
+	public static double tetherSag(Vec3 a, Vec3 b) {
+		return Math.min(3.0, a.distanceTo(b) * 0.06);
+	}
+
+	/** The point {@code t} (0-1) along the tether from {@code a} to {@code b}, hanging {@code sag} ({@link #tetherSag}) at its middle. */
+	public static Vec3 tetherPoint(Vec3 a, Vec3 b, double sag, double t) {
+		return a.add(b.subtract(a).scale(t)).add(0, -sag * 4 * t * (1 - t), 0);
+	}
+
+	/** Where a line of sight passes nearest a tether: how far along it, the point on the tether, and how far from it. */
+	public record TetherAim(double along, Vec3 point, double distance) {}
+
 	/**
-	 * Shortest distance between a ray ({@code origin} along unit {@code dir}, up to {@code reach}) and the segment a-b. Also used by
-	 * the client to decide whether a swing could have struck a tether.
+	 * Where the line of sight from {@code origin} along unit {@code dir}, up to {@code reach}, passes nearest the tether a-b as it
+	 * hangs ({@link #tetherPoint}). Used by the client too, to decide whether a swing struck a tether. Exact for each of the
+	 * {@link #TETHER_PIECES} pieces: points sampled along the whole tether lay blocks apart on a long one, so a swing through it
+	 * between them missed (the user's report, 2026-10-23: tethers hard to hit), as did one at the sagging line drawn rather than
+	 * the straight one struck before.
 	 */
-	public static double rayToSegment(Vec3 origin, Vec3 dir, double reach, Vec3 a, Vec3 b) {
-		double best = Double.MAX_VALUE;
-		int steps = 24;
-		for (int i = 0; i <= steps; i++) {
-			Vec3 p = a.add(b.subtract(a).scale(i / (double) steps));
-			double t = Math.max(0, Math.min(reach, p.subtract(origin).dot(dir)));
-			best = Math.min(best, origin.add(dir.scale(t)).distanceTo(p));
+	public static TetherAim aimAtTether(Vec3 origin, Vec3 dir, double reach, Vec3 a, Vec3 b) {
+		double sag = tetherSag(a, b);
+		TetherAim best = null;
+		Vec3 from = a;
+		for (int i = 1; i <= TETHER_PIECES; i++) {
+			Vec3 to = tetherPoint(a, b, sag, i / (double) TETHER_PIECES);
+			TetherAim aim = nearest(origin, dir.scale(reach), from, to);
+			if (best == null || aim.distance() < best.distance()) best = aim;
+			from = to;
 		}
 		return best;
 	}
 
-	private static Vec3 closestOnSegment(Vec3 origin, Vec3 dir, Vec3 a, Vec3 b) {
-		Vec3 best = a;
-		double bestDistance = Double.MAX_VALUE;
-		for (int i = 0; i <= 24; i++) {
-			Vec3 p = a.add(b.subtract(a).scale(i / 24.0));
-			double t = Math.max(0, Math.min(TETHER_STRIKE_REACH, p.subtract(origin).dot(dir)));
-			double d = origin.add(dir.scale(t)).distanceTo(p);
-			if (d < bestDistance) {
-				bestDistance = d;
-				best = p;
+	/** The nearest points of the segments {@code p}..{@code p + d1} (the line of sight) and {@code q0}..{@code q1} (a piece of tether). */
+	private static TetherAim nearest(Vec3 p, Vec3 d1, Vec3 q0, Vec3 q1) {
+		Vec3 d2 = q1.subtract(q0);
+		Vec3 r = p.subtract(q0);
+		double aa = d1.dot(d1), e = d2.dot(d2), f = d2.dot(r);
+		double s, t;
+		if (e < 1.0e-9) {
+			t = 0;
+			s = aa < 1.0e-9 ? 0 : Mth.clamp(-d1.dot(r) / aa, 0, 1);
+		} else {
+			double c = d1.dot(r), bb = d1.dot(d2);
+			double denom = aa * e - bb * bb;
+			s = denom > 1.0e-9 ? Mth.clamp((bb * f - c * e) / denom, 0, 1) : 0;
+			t = (bb * s + f) / e;
+			if (t < 0) {
+				t = 0;
+				s = Mth.clamp(-c / aa, 0, 1);
+			} else if (t > 1) {
+				t = 1;
+				s = Mth.clamp((bb - c) / aa, 0, 1);
 			}
 		}
-		return best;
+		Vec3 onSight = p.add(d1.scale(s));
+		Vec3 onTether = q0.add(d2.scale(t));
+		return new TetherAim(Math.sqrt(aa) * s, onTether, onSight.distanceTo(onTether));
 	}
 
 	// --- Possession ---

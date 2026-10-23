@@ -33,6 +33,11 @@ public abstract class HumanoidModelMixin {
 			SwordStance.apply((HumanoidModel<?>) (Object) this, netHeadYaw, SwordFlightClient.bodyOffset(entity, partialTick));
 			return;
 		}
+		// Flying fast in Meteor Flight: laid out, a fist out ahead.
+		if (com.example.defyingtheheavens.client.MeteorFlightClient.isStreaking(entity)) {
+			com.example.defyingtheheavens.client.MeteorFlightClient.pose((HumanoidModel<?>) (Object) this, ageInTicks);
+			return;
+		}
 		// Steel Hurricane: both arms thrust ahead with the weapon as the body spins along its dash; a Dirt Tide's rider stands on its
 		// crest, legs braced apart and arms out (SpellPoses).
 		if (com.example.defyingtheheavens.client.ClientSpellAuras.has(entity, com.example.defyingtheheavens.SpellAura.STEEL_HURRICANE)) {
