@@ -124,6 +124,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	private static final EntityDataAccessor<Integer> DATA_ALIGNMENT = SynchedEntityData.defineId(CultivatorNpc.class, EntityDataSerializers.INT);
 	private static final EntityDataAccessor<Byte> DATA_FLAGS = SynchedEntityData.defineId(CultivatorNpc.class, EntityDataSerializers.BYTE);
 	private static final EntityDataAccessor<Byte> DATA_SKIN = SynchedEntityData.defineId(CultivatorNpc.class, EntityDataSerializers.BYTE);
+	/** Its race (Bloodline, by ordinal) and the race's colouring: ordinal times 4 plus colouring. 0: a man's. */
+	private static final EntityDataAccessor<Byte> DATA_RACE = SynchedEntityData.defineId(CultivatorNpc.class, EntityDataSerializers.BYTE);
 	/** Set aside while a nascent soul uses its body ({@link #isVacant}). */
 	private static final EntityDataAccessor<Boolean> DATA_VACANT = SynchedEntityData.defineId(CultivatorNpc.class, EntityDataSerializers.BOOLEAN);
 
@@ -251,6 +253,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		entityData.define(DATA_ALIGNMENT, 0);
 		entityData.define(DATA_FLAGS, (byte) 0);
 		entityData.define(DATA_SKIN, (byte) 0);
+		entityData.define(DATA_RACE, (byte) 0);
 		entityData.define(DATA_VACANT, false);
 	}
 
@@ -302,6 +305,33 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	public int getAlignment() { return entityData.get(DATA_ALIGNMENT); }
 	public Alignment.Faction getFaction() { return Alignment.factionOf(getAlignment()); }
 	public int getSkin() { return entityData.get(DATA_SKIN); }
+
+	/** Its race: a man's (HUMAN), or a demon's (its race's whole form, as a demon player's: ClientBloodlines#look). */
+	public Bloodline getBloodline() {
+		Bloodline race = Bloodline.byIndex((entityData.get(DATA_RACE) & 0xFF) >> 2);
+		return race == null ? Bloodline.HUMAN : race;
+	}
+
+	/** Its race's colouring (Bloodline#variantId), 0 to 2. */
+	public int getRaceVariant() { return entityData.get(DATA_RACE) & 3; }
+
+	/** One of the demon races (a clan's, or a demon rogue). */
+	public boolean isDemon() { return getBloodline().isBeast(); }
+
+	/**
+	 * Makes it of {@code race} in {@code variant} (0 to 2). A demon cultivates the Demon Path (its rank is that path's; the same realms
+	 * and stages): born with its demon core, so never a mortal, and with no Ritual to the Heavens on its way (that is the heaven path's
+	 * gate); its record carries its blood (DemonPath#bloodline: the race's gifts in a body a player's soul possesses, its years).
+	 */
+	public void setRace(Bloodline race, int variant) {
+		if (race == null) race = Bloodline.HUMAN;
+		entityData.set(DATA_RACE, (byte) (race.ordinal() << 2 | Mth.clamp(variant, 0, 2)));
+		cultivation.demon().setBloodline(race);
+		if (!race.isBeast()) return;
+		cultivation.setHeavensLeave(true);
+		if (isMortal()) setRank(0);
+	}
+
 	public UUID getSectId() { return sectId; }
 	public boolean isSectMember() { return sectId != null; }
 	public Lifecycle getLifecycle() { return lifecycle; }
@@ -436,7 +466,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	}
 
 	public Component describe() {
-		return Component.translatable(ModLang.NPC_TITLE_BRACKETS, getTitle().getDisplayName());
+		return Component.translatable(ModLang.NPC_TITLE_BRACKETS, getTitle().getDisplayName(isDemon()));
 	}
 
 	/** Its personal name ("Mo Lian"), the same everywhere it is named (see {@link NpcNames}); a name tag's name if it has one. */
@@ -471,6 +501,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		if (player instanceof ServerPlayer sp) value += Obsession.regardBonus(CultivationManager.get(sp));
 		// The righteous sense something wrong in a Heaven-Defying or a Soul-Devouring Body (Physique).
 		if (player instanceof ServerPlayer sp) value += Physiques.regardShift(CultivationManager.get(sp), getFaction()) + RaceGifts.regardShift(CultivationManager.get(sp));
+		// A demon minds one's blood: wary of men, warm to its own (Regard#bloodShift).
+		if (player instanceof ServerPlayer sp) value += Regard.bloodShift(getBloodline(), DemonPath.bloodline(CultivationManager.get(sp)));
 		UUID who = Possession.identity(player);
 		Regard.Entry entry = regard.get(who);
 		if (entry != null) value += entry.current(Regard.day(level().getGameTime()));
@@ -998,7 +1030,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	// --- The Ritual to the Heavens (see NpcLife) ---
 
 	/** At Qi Refining Mid with its cultivation full and no leave from the heavens yet: it needs the Ritual to the Heavens. */
-	public boolean awaitsHeavensLeave() { return !isMortal() && cultivation.isAtRitualGate(); }
+	public boolean awaitsHeavensLeave() { return !isMortal() && !isDemon() && cultivation.isAtRitualGate(); }
 
 	/** The heavens grant their leave: it steps on into Qi Refining Late at once if its cultivation is full. */
 	public void grantHeavensLeave() {
@@ -1380,6 +1412,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			if (owesLife(player)) return false; // they spared its life: not today
 			if (SparSystem.areSparring(this, player)) return false; // a spar is a contest, not a feud
 			if (getFaction().isEnemyOf(Alignment.factionOf(alignmentOf(player)))) return true;
+			// A man on a demon clan's grounds (the user's pick, 2026-10-23: wary, so attacked there, let be outside unless provoked).
+			if (!level().isClientSide && isDemon() && trespassingMan(player)) return true;
 			// Loathing turns it on a player too, if it thinks it can win.
 			return !level().isClientSide && regard(player) <= Regard.HOSTILE && rankOf(this) >= rankOf(player);
 		}
@@ -1400,6 +1434,13 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		if (other == this || isAlly(other) || !senses(other)) return false;
 		if (getTarget() == other || getLastHurtByMob() == other) return true;
 		return other instanceof Mob mob && mob.getTarget() == this;
+	}
+
+	/** {@code player} is a man (no beast's blood: DemonPath#isDemon) on the grounds of its clan; never one of the clan's own players. */
+	private boolean trespassingMan(Player player) {
+		Sect sect = sect();
+		if (sect == null || !sect.isClan() || !(player instanceof ServerPlayer sp) || sect.disciples.containsKey(sp.getUUID())) return false;
+		return !DemonPath.isDemon(CultivationManager.get(sp)) && sect.dimension == level().dimension() && sect.inTerritory(player.blockPosition());
 	}
 
 	public static int alignmentOf(Player player) {
@@ -1880,7 +1921,9 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	public HeavenMethod heavenMethod() {
 		if (isMortal() || isGhost()) return null;
 		Sect sect = isSectMember() ? sect() : null;
-		QiElement element = sect != null ? sect.element() : QiElement.five()[(int) Math.floorMod(getUUID().getLeastSignificantBits() >>> 3, 5L)];
+		// A demon's blood is its element's (DemonPath#element), as its clan's is.
+		QiElement element = sect != null ? sect.element() : isDemon() ? DemonPath.element(getBloodline())
+				: QiElement.five()[(int) Math.floorMod(getUUID().getLeastSignificantBits() >>> 3, 5L)];
 		int own = Math.min(Realm.values().length - 1, getRank() / Stage.values().length);
 		int hash = getUUID().hashCode() * 17 + 3;
 		int realm = getTitle().isElderOrAbove() || Math.floorMod(hash, 10) < OWN_HEAVEN_METHOD_IN_TEN ? own : Math.floorMod(hash / 10, own + 1);
@@ -2002,6 +2045,10 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		npc.putInt("Alignment", getAlignment());
 		npc.putInt("Title", getTitle().ordinal());
 		npc.putInt("Skin", getSkin());
+		if (isDemon()) {
+			npc.putString("Race", getBloodline().getId());
+			npc.putInt("RaceVariant", getRaceVariant());
+		}
 		npc.putString("Lifecycle", lifecycle.name());
 		if (sectId != null) npc.putUUID("Sect", sectId);
 		npc.putInt("Home", homeIndex);
@@ -2075,6 +2122,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		setAlignment(npc.getInt("Alignment"));
 		entityData.set(DATA_TITLE, (byte) NpcTitle.byIndex(npc.getInt("Title")).ordinal());
 		entityData.set(DATA_SKIN, (byte) Mth.clamp(npc.getInt("Skin"), 0, SKINS - 1));
+		if (npc.contains("Race")) setRace(Bloodline.byId(npc.getString("Race")), npc.getInt("RaceVariant"));
 		try {
 			lifecycle = Lifecycle.valueOf(npc.getString("Lifecycle"));
 		} catch (IllegalArgumentException e) {

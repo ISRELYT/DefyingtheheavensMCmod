@@ -1213,6 +1213,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case GHOST_RETAINER -> "Ghost Retainer";
 			});
 		}
+		t.add(ModLang.titleKey("clan_head"), "Clan Head"); // a demon clan's master (NpcTitle#getDisplayName(boolean))
 		t.add(ModLang.NPC_TITLE_BRACKETS, "[%s]");
 		t.add(ModLang.NPC_GATE_GUARD, "Gate Guard");
 		t.add(ModLang.NPC_OF_SECT, "%s of the %s");
@@ -1831,6 +1832,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				+ "Win, or stand your ground until the time runs out, and you are one of us. Say when you are ready.");
 		t.add(ModLang.talkLine("join.gifted"), "A body like yours needs no testing. Welcome to the %s: from today you are %s.");
 		t.add(ModLang.talkLine("join.friend"), "You have long been a friend to us. Welcome to the %s: from today you are %s.");
+		t.add(ModLang.talkLine("join.kin"), "Our own blood runs in you: there is nothing to test. Welcome to the %s: from today you are %s.");
+		t.add(ModLang.talkLine("join.human"), "You smell of men. A clan of our blood takes no one without a beast's blood in them. Go.");
 		t.add(ModLang.talkLine("join.passed"), "Well fought. From today you are one of us. Our gates are open to you.");
 		t.add(ModLang.talkLine("join.failed"), "Not yet. Train, and come back tomorrow.");
 		t.add(ModLang.talkLine("leave.disciple"), "Only an elder can release you from the sect.");

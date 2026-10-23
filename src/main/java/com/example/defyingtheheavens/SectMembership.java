@@ -107,6 +107,8 @@ public final class SectMembership {
 	public static String refusal(ServerPlayer player, CultivatorNpc npc, Sect sect, Object[] arg) {
 		PlayerCultivation c = CultivationManager.get(player);
 		if (GhostSystem.isGhost(player)) return "join.ghost";
+		// A demon clan takes only the demon races (the user's pick, 2026-10-23: any of them), wary of men.
+		if (sect.isClan() && !DemonPath.isDemon(c)) return "join.human";
 		if (c.isMortal()) return "join.mortal";
 		Sect other = sectOf(player.server, player.getUUID());
 		if (other != null) {
@@ -186,10 +188,15 @@ public final class SectMembership {
 		if (changed) Formations.syncSoon();
 	}
 
-	/** Taken in without the trial: a body of High grade or better, or an elder Warm to them. */
+	/** Taken in without the trial: a body of High grade or better, an elder Warm to them, or one of a clan's own blood ({@link #kin}). */
 	public static boolean excused(ServerPlayer player, CultivatorNpc npc) {
 		Physique physique = CultivationManager.get(player).getPhysique();
-		return physique != null && physique.grade().ordinal() >= Physique.Grade.HIGH.ordinal() || npc.regard(player) >= Regard.WARM;
+		return physique != null && physique.grade().ordinal() >= Physique.Grade.HIGH.ordinal() || npc.regard(player) >= Regard.WARM || kin(player, npc.sect());
+	}
+
+	/** {@code player} is of {@code sect}'s own race, a demon clan's (the user's pick, 2026-10-23: they need no trial). */
+	public static boolean kin(ServerPlayer player, Sect sect) {
+		return sect != null && sect.isClan() && DemonPath.bloodline(CultivationManager.get(player)) == sect.race;
 	}
 
 	/** Already tried (and failed) the trial with {@code sect} today. */

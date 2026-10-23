@@ -78,7 +78,7 @@ public class SectStructure extends Structure {
 	/** How many of the 13 ground samples may be water (a pond or a stream across the grounds is filled in). */
 	private static final int MAX_WET = 3;
 
-	private enum Size {
+	enum Size {
 		//    reach min max  treasury(w,d) meditation(w,d) main(w) pagoda tiers garden(w,d) trees bamboo
 		// Reach spread out to the barrier's limit (Formations.MAX_RADIUS 64 = the largest reach + 2) on 2026-10-12.
 		// The treasury grew on 2026-10-13 (it was 13x11 / 15x13 / 17x15, squat under its roof): never larger than the meditation
@@ -125,13 +125,13 @@ public class SectStructure extends Structure {
 		}
 	}
 
-	private static final int MAIN_DEPTH = 21;
+	static final int MAIN_DEPTH = 21;
 	/** How far out a garden may reach (SectLayout#outline): it is low and fenced, so it may come nearer the edge than a house. */
 	private static final double GARDEN_LIMIT = 0.97;
 	/** How far beyond the buildings' reach the gates stand: well outside the barrier, which closes 2 past the buildings. */
-	private static final int GATE_BEYOND = 8;
+	static final int GATE_BEYOND = 8;
 	/** The lawn between the way up the middle and the halls of the front court, and between the main hall and its neighbours. */
-	private static final int SET_BACK = 8;
+	static final int SET_BACK = 8;
 
 	public SectStructure(StructureSettings settings) {
 		super(settings);
@@ -156,7 +156,9 @@ public class SectStructure extends Structure {
 			return platformY == NO_SITE ? Optional.empty() : Optional.of(stub(random, rolled, frame, platformY, false));
 		}
 		// The Upper Realm is mostly open sky, and few islands are wide enough: the sect stands wherever near the middle of its
-		// cell an island will hold it (see ISLAND_SEARCH), and ground too small for the size rolled takes a smaller sect.
+		// cell an island will hold it (see ISLAND_SEARCH), and ground too small for the size rolled takes a smaller sect. A
+		// demon clan's cell has none (DenStructure#clanCell): the den stands there.
+		if (DenStructure.clanCell(context.seed(), chunk)) return Optional.empty();
 		for (Size size = rolled; size != null; size = size.smaller()) {
 			for (Frame frame : islandSpots(context, size, facing, x, z)) {
 				int platformY = groundLevel(context, size, frame, true);
@@ -171,7 +173,7 @@ public class SectStructure extends Structure {
 		return new GenerationStub(new BlockPos(frame.cx(), platformY, frame.cz()), builder -> plan(builder, random, size, frame, platformY, upper));
 	}
 
-	private static final int NO_SITE = Integer.MIN_VALUE;
+	static final int NO_SITE = Integer.MIN_VALUE;
 	/**
 	 * How far from its start chunk's middle an Upper Realm sect may stand, in steps of {@link #ISLAND_STEP}. The Upper Realm's
 	 * sects are spread one to a 256-block cell round each start chunk (structure set sects_upper_realm: spacing 16, separation
@@ -194,7 +196,7 @@ public class SectStructure extends Structure {
 	 * {@link #ISLAND_TRIES}. The masks cost next to nothing, while the generator takes ~10 ms to find each point's surface
 	 * (mostly sky), so most sites, which are open sky, are passed over at once.
 	 */
-	private static List<Frame> islandSpots(GenerationContext context, Size size, Direction facing, int x, int z) {
+	static List<Frame> islandSpots(GenerationContext context, Size size, Direction facing, int x, int z) {
 		List<Frame> spots = new ArrayList<>();
 		List<Double> depths = new ArrayList<>();
 		for (int dx = -ISLAND_SEARCH; dx <= ISLAND_SEARCH; dx += ISLAND_STEP) {
@@ -248,7 +250,7 @@ public class SectStructure extends Structure {
 	 * out of a gate. Too uneven, too wet or (in the Upper Realm) over the edge of an island, and there's no sect here. The
 	 * platform's level is the buildings' ground's.
 	 */
-	private static int groundLevel(GenerationContext context, Size size, Frame frame, boolean upper) {
+	static int groundLevel(GenerationContext context, Size size, Frame frame, boolean upper) {
 		ChunkGenerator generator = context.chunkGenerator();
 		LevelHeightAccessor heights = context.heightAccessor();
 		RandomState state = context.randomState();
@@ -369,7 +371,7 @@ public class SectStructure extends Structure {
 	 * An Upper Realm biome (tagged {@link ModTags#IS_UPPER_REALM}): the sect is laid out the Upper Realm's way, on an island. The
 	 * Netherworld's biomes are the mod's too, but no sect stands there (its biomes have no has_structure/sect tag).
 	 */
-	private static boolean isUpperRealm(GenerationContext context, BlockPos pos) {
+	static boolean isUpperRealm(GenerationContext context, BlockPos pos) {
 		Holder<Biome> biome = context.biomeSource().getNoiseBiome(QuartPos.fromBlock(pos.getX()), QuartPos.fromBlock(pos.getY()),
 				QuartPos.fromBlock(pos.getZ()), context.randomState().sampler());
 		return isUpperRealmBiome(biome);
@@ -384,7 +386,7 @@ public class SectStructure extends Structure {
 	 * The compound's frame: u from left to right across its front, v from the gate inward, as in SectPiece, laid in the world
 	 * by {@code facing} (the way it extends from its gate).
 	 */
-	private record Frame(Direction facing, int cx, int cz, int w, int d) {
+	record Frame(Direction facing, int cx, int cz, int w, int d) {
 		/** The world column of compound point (u, v). */
 		BlockPos world(int u, int v) {
 			return switch (facing) {

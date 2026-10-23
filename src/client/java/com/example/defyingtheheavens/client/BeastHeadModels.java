@@ -146,6 +146,14 @@ public final class BeastHeadModels {
 			}
 		}
 
+		/**
+		 * As {@link #render}, every face pushed out {@code grow} blocks along its normal: a skin laid over the beast's head and tail as an
+		 * armour model's is over the body (a spell's ward, Meteor Flight's heat: SpellAuraLayer), drawn into that skin's {@code buffer}.
+		 */
+		public void renderGrown(PoseStack pose, VertexConsumer buffer, float grow, int light, int overlay, float red, float green, float blue, float alpha) {
+			render(pose, grow == 0 ? buffer : new Grown(buffer, grow), light, overlay, red, green, blue, alpha);
+		}
+
 		/** Moves {@code pose} (at the model's origin) to its brow, where a talisman hangs from (see {@link Brow}). */
 		void toBrow(PoseStack pose) {
 			headAnchor.translateAndRotate(pose);
@@ -159,10 +167,37 @@ public final class BeastHeadModels {
 			return wearer instanceof LivingEntity living ? Math.min(1, living.walkAnimation.speed(partial)) : 0;
 		}
 
+		/** How far its wearer has walked (vanilla's limb swing): it only grows, the faster the faster it walks. */
+		float stride(float partial) {
+			return wearer instanceof LivingEntity living ? living.walkAnimation.position(partial) : 0;
+		}
+
 		/** Whether its wearer is striking now. */
 		boolean striking(float partial) {
 			return wearer instanceof LivingEntity living && living.getAttackAnim(partial) > 0;
 		}
+	}
+
+	/**
+	 * Vertices written on into {@code inner}, each pushed {@code grow} blocks along its normal (GeckoLib writes every vertex whole, with
+	 * its normal, as vanilla's models do; both already in the view's space).
+	 */
+	private record Grown(VertexConsumer inner, float grow) implements VertexConsumer {
+		@Override
+		public void vertex(float x, float y, float z, float red, float green, float blue, float alpha, float u, float v, int overlay, int light,
+						   float nx, float ny, float nz) {
+			inner.vertex(x + nx * grow, y + ny * grow, z + nz * grow, red, green, blue, alpha, u, v, overlay, light, nx, ny, nz);
+		}
+
+		@Override public VertexConsumer vertex(double x, double y, double z) { inner.vertex(x, y, z); return this; }
+		@Override public VertexConsumer color(int red, int green, int blue, int alpha) { inner.color(red, green, blue, alpha); return this; }
+		@Override public VertexConsumer uv(float u, float v) { inner.uv(u, v); return this; }
+		@Override public VertexConsumer overlayCoords(int u, int v) { inner.overlayCoords(u, v); return this; }
+		@Override public VertexConsumer uv2(int u, int v) { inner.uv2(u, v); return this; }
+		@Override public VertexConsumer normal(float x, float y, float z) { inner.normal(x, y, z); return this; }
+		@Override public void endVertex() { inner.endVertex(); }
+		@Override public void defaultColor(int red, int green, int blue, int alpha) { inner.defaultColor(red, green, blue, alpha); }
+		@Override public void unsetDefaultColor() { inner.unsetDefaultColor(); }
 	}
 
 	/** Moves {@code pose} (at the model's origin) to a man's brow, the human {@code head} posed. */
@@ -219,14 +254,25 @@ public final class BeastHeadModels {
 		@Override
 		public AnimatableInstanceCache getAnimatableInstanceCache() { return cache; }
 
+		/**
+		 * One clock for every wearer, to the frame: the client's game time (Part#draw starts each wearer on it at 0). The model's
+		 * animation time is one for all who wear this beast, so a clock of each wearer's own (its age) jolted it from one to the next;
+		 * and whole ticks moved a tail only once a tick, so it jumped from pose to pose.
+		 */
 		@Override
 		public double getTick(Object object) {
-			return head.wearer == null ? 0 : head.wearer.tickCount;
+			Minecraft mc = Minecraft.getInstance();
+			return mc.level == null ? 0 : mc.level.getGameTime() + (double) mc.getFrameTime();
 		}
 	}
 
 	/** A head's or a tail's model: its geometry, the head's texture as worn, the head's kind's animations. */
 	static final class Model extends GeoModel<Beast> {
+		/** A tail's sway standing: how wide (radians) and how fast (a tick). */
+		private static final float IDLE_SWAY = 0.12f, IDLE_PACE = 0.08f;
+		/** Its swing walking: how wide, and how much a block walked (of vanilla's limb swing) swings it, about a swing a stride. */
+		private static final float WALK_SWAY = 0.37f, STRIDE_PACE = 0.333f;
+
 		private final Head head;
 		private final ResourceLocation geometry, animations;
 
@@ -242,7 +288,10 @@ public final class BeastHeadModels {
 
 		/**
 		 * A tail's sway: each piece turned a little more than the one before it, slow standing and swinging wide as the wearer walks; a
-		 * fox's tails fanned out evenly, as many shown as it has (Bloodline#tails), the rest hidden.
+		 * fox's tails fanned out evenly, as many shown as it has (Bloodline#tails), the rest hidden. Standing it sways by the time at a
+		 * steady pace; walking it swings in step with the stride ({@link Head#stride}). (The swing was once the time by a pace that grew
+		 * with the walking: the time is tens of thousands of ticks, so the least change of pace at each step threw the swing anywhere,
+		 * and the tail thrashed as its wearer walked.)
 		 */
 		@Override
 		public void setCustomAnimations(Beast beast, long instanceId, AnimationState<Beast> state) {
@@ -250,7 +299,7 @@ public final class BeastHeadModels {
 			float partial = state.getPartialTick();
 			float time = head.wearer.tickCount + partial;
 			float walk = head.walking(partial);
-			float sway = 0.12f + 0.25f * walk, pace = 0.08f + 0.22f * walk;
+			float stride = head.stride(partial) * STRIDE_PACE;
 			if (head.kind == BeastHead.FOX) {
 				// Fanned up behind the back, as a peacock's tail is: each raised (the more tails, the higher), then rolled about the
 				// way they point, so they stand in an arc over the back rather than round the waist.
@@ -264,10 +313,10 @@ public final class BeastHeadModels {
 					float at = tails == 1 ? 0 : -spread + 2 * spread * (i - 1) / (tails - 1);
 					float up = root.getInitialSnapshot().getRotX();
 					float raise = Math.copySign(0.08f * (tails - 1), up == 0 ? 1 : up);
-					turn(root, raise, Mth.sin(time * pace + i) * sway * 0.35f, at);
+					turn(root, raise, swing(time, stride, walk, i) * 0.35f, at);
 					for (int s = 1; s <= 2; s++) {
 						CoreGeoBone piece = getAnimationProcessor().getBone("tail_" + i + "_" + s);
-						if (piece != null) turn(piece, 0, Mth.sin(time * pace + i - s * 0.7f) * sway * 0.5f, 0);
+						if (piece != null) turn(piece, 0, swing(time, stride, walk, i - s * 0.7f) * 0.5f, 0);
 					}
 				}
 				return;
@@ -275,8 +324,13 @@ public final class BeastHeadModels {
 			for (int s = 0; ; s++) {
 				CoreGeoBone piece = getAnimationProcessor().getBone("tail_" + s);
 				if (piece == null) break;
-				turn(piece, Mth.sin(time * pace * 0.7f - s * 0.5f) * 0.04f, Mth.sin(time * pace - s * 0.6f) * sway, 0);
+				turn(piece, Mth.sin(time * IDLE_PACE * 0.7f - s * 0.5f) * 0.04f, swing(time, stride, walk, -s * 0.6f), 0);
 			}
+		}
+
+		/** How far a tail swings at the standing sway, by the time, and the walking swing, by the stride ({@code walk} between them). */
+		private static float swing(float time, float stride, float walk, float lag) {
+			return Mth.sin(time * IDLE_PACE + lag) * IDLE_SWAY * (1 - walk) + Mth.sin(stride + lag) * WALK_SWAY * walk;
 		}
 
 		/** {@code bone} turned this much (radians) from where the model has it. */
@@ -305,6 +359,8 @@ public final class BeastHeadModels {
 			this.green = green;
 			this.blue = blue;
 			this.alpha = alpha;
+			AnimatableManager<Beast> manager = beast.getAnimatableInstanceCache().getManagerForId(instance);
+			if (manager.getFirstTickTime() == -1) manager.startedAt(0); // every wearer on the one clock from its start (Beast#getTick)
 			render(pose, beast, source, type, buffer, light);
 		}
 

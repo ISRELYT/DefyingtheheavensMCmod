@@ -66,7 +66,9 @@ public final class SectManager {
 		Sect sect = new Sect(UUID.randomUUID());
 		RandomSource random = RandomSource.create(blueprint.getLong("Seed") ^ core.getBlockPos().asLong());
 		sect.alignment = Alignment.clamp(blueprint.getInt("Alignment"));
-		sect.name = SectNames.generate(random, Alignment.factionOf(sect.alignment));
+		// A demon clan's blueprint names its race (DenStructure): all its people of it.
+		if (blueprint.contains("Race")) sect.race = Bloodline.byId(blueprint.getString("Race"));
+		sect.name = sect.isClan() ? SectNames.clan(random, sect.race) : SectNames.generate(random, Alignment.factionOf(sect.alignment));
 		sect.dimension = level.dimension();
 		sect.core = core.getBlockPos();
 		sect.barrierRadius = Math.max(Formations.MIN_RADIUS, Math.min(Formations.MAX_RADIUS, blueprint.getInt("Radius")));
@@ -139,6 +141,7 @@ public final class SectManager {
 		if (npc == null) return null;
 		npc.randomizeSkin(random);
 		npc.setRank(rank);
+		if (sect.isClan()) npc.setRace(sect.race, random.nextInt(3)); // of the clan's race, in any of its colourings
 		npc.joinSect(sect, home);
 		Sect.Member member = new Sect.Member(npc.getUUID(), rank, home);
 		sect.members.put(member.id, member);
@@ -255,18 +258,24 @@ public final class SectManager {
 	 */
 	public static Sect findOpening(ServerLevel level, CultivatorNpc npc) {
 		Alignment.Faction faction = Alignment.factionOf(npc.getAlignment());
-		Sect best = null;
-		double bestDistance = JOIN_RANGE * JOIN_RANGE;
+		// A demon goes to a clan, of its own race if one will have it, else any; a man to a sect of men (clans take only demons).
+		Sect best = null, kin = null;
+		double bestDistance = JOIN_RANGE * JOIN_RANGE, kinDistance = bestDistance;
 		for (Sect sect : SectData.get(level.getServer()).all()) {
 			if (sect.extinct || sect.dimension != level.dimension() || !sect.canTakeIn(npc.getRank()) || Alignment.factionOf(sect.alignment) != faction) continue;
+			if (sect.isClan() != npc.isDemon()) continue;
 			double dx = sect.core.getX() - npc.getX(), dz = sect.core.getZ() - npc.getZ();
 			double distance = dx * dx + dz * dz;
 			if (distance <= bestDistance) {
 				bestDistance = distance;
 				best = sect;
 			}
+			if (sect.race == npc.getBloodline() && distance <= kinDistance) {
+				kinDistance = distance;
+				kin = sect;
+			}
 		}
-		return best;
+		return npc.isDemon() && kin != null ? kin : best;
 	}
 
 	/**

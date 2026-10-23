@@ -351,8 +351,8 @@ The **Rebirth Pill** is no brew: it's found in the Upper Realm (Lifespan, below)
 
 ## Bloodlines: the demon races
 
-**Built so far: two of four parts** (the user's ask, 2026-10-23): the races and their looks, then the Demon Path and the races'
-gifts (below). Demon clans and the true beast forms come next, and a bloodline awakened in a human after them.
+**Built so far: three of four parts** (the user's ask, 2026-10-23): the races and their looks, the Demon Path and the races'
+gifts, and the demon clans in their dens (below). The true beast forms come next, and a bloodline awakened in a human after them.
 
 The first time a player joins, **Choose Your Bloodline** comes up: **Human**, or one of the demon races, **Tiger**, **Lizard**,
 **Fox** or **Dragon**, each in three colourings (Golden, White, Black Tiger; Jade, Black, Crimson Lizard; Red, Snow, Silver
@@ -373,7 +373,9 @@ time one joins. A character from a world before bloodlines gets it once too, kee
   - **Dragon:** antlers, whiskers, a mane and a beard, with a long scaled tail ridged along its back and tufted at its end.
 - **Where the look shows:** everyone sees it, including on one's body sitting while the soul is out, a clone, a meditator's
   body, a heart demon, a soul vessel's likeness, and one's soul or ghost (drawn in its light). The top-left portrait shows it.
-  A player in another's body wears the body's blood; in an NPC's, the NPC's look.
+  A player in another's body wears the body's blood; in an NPC's, the NPC's look. **Whatever coats a body coats the whole form**
+  (the user's rule, 2026-10-23, for every race to come): the wards' skins, Flame Armour, Meteor Flight's heat, a possessed body's
+  violet veil, a heart demon's shadow, the light of souls and the dead all take in the beast's head and tail.
 - **Where it's kept:** with the world (`Bloodlines`), not in a life's record, so it stays one's own through every life.
 - **Changing it:** `/cultivation bloodline` tells which; `set <human|tiger|lizard|fox|dragon> [colouring 1-3]` makes it one;
   `choose` undoes the choice and brings the picker back. A bloodline awakened in a human comes later.
@@ -418,6 +420,44 @@ slips teach demons if they are studying heaven path."
 Not yet: the Demon Path's tribulation wears the heaven path's look. Code: `DemonState` (saved in the record as "Demon"),
 `DemonPath`, `RaceGifts`, the Path switch in `TwoPaths`, `MeditationManager#demonPath`, `TribulationManager#startDemon`; tests in
 `DemonPathGameTests`.
+
+### Demon clans
+
+A **demon clan** is a sect of one demon race (the user's design, 2026-10-23), named for it ("Iron Fang Tiger Clan", "Jade Scale
+Lizard Clan", "Nine Tails Fox Clan", "Azure Cloud Dragon Clan"), living as a sect lives (titles by strength, the barrier and core,
+the treasury and its seal, off-screen lives, replacements, ascension), its master the **Clan Head**, its element its race's (its
+elders teach that element's heaven methods). Its people are demons of its race in the race's whole form (skin, head and tail, any
+of the three colourings, a fox's tails by its realm), cultivating the Demon Path: never mortals, no Ritual to the Heavens on the
+way.
+
+- **Where:** in the Overworld about half as many as sects, kept clear of villages and of wherever a sect may stand, each race in
+  its own lands (tags `clan/<race>`): **Tiger** the forests, dark forests, taigas and jungles; **Lizard** the swamps, mangroves,
+  deserts, badlands and savannas; **Fox** the birch woods, cherry groves and snowy plains and taigas; **Dragon** the highlands
+  (meadows, windswept hills and forests, groves). In the Upper Realm a quarter of the sects' cells are clans' instead, of any
+  race, a dragon's two times in five. They come into being unseen near players, the spawn and the rift, as sects do.
+- **Their dens** (the user's pick: wilder dens, a layout of each race's own), hollow mounds and caves on level ground, along
+  trails, among the land's trees and undergrowth, with the core on its plaza in the middle:
+  - **Tiger:** boulder mounds of mossy stone; the Clan Head's cave hall at the back (fires, bones, furs); the elders' smaller
+    mounds; a long rock overhang where the disciples sleep; a hoard cave; a ring of standing stones to spar in, with clawed posts;
+    two standing stones for a gate; boulders about the grounds.
+  - **Lizard:** domes of mud brick and packed mud under arching mangrove roots; a basking pool in the head's dome; a low burrow
+    and a hoard; a root arch for a gate; pools with reeds and lily pads about the grounds.
+  - **Fox:** grassy hillocks with round birch-framed doors; the head's little white shrine with vermilion pillars on the
+    greatest of them, steps up to it through a cutting; a tunnel of red torii up the way from the gate; stone lanterns.
+  - **Dragon:** one great hollow crag of dark rock banded with jade, snow on its top, at the back of the grounds: inside, the
+    disciples' mats across the floor, the head's floor raised at the back, the hoard (gold, raw gold, amethyst, chests, pedestals)
+    in an alcove, the elders' ledges up the walls; rock spires and a pool before it.
+- **Men** (the user's pick: wary): a clan thinks 20 the less of a man, 10 the more of another demon, 20 the more of its own race
+  (`Regard#bloodShift`; demon rogues too). A man on a clan's grounds is set upon; off them he is let be unless he provokes it.
+  A clan takes no man ("You smell of men..."), so its barrier never opens to one as its guest.
+- **Joining** (the user's pick: any demon): as a sect, by asking an elder; one of the clan's own race needs no trial.
+- **Cultivators from below:** a demon ascended to the Upper Realm joins a clan, of its own race if one will have it; a man, a
+  sect of men.
+- **Demon rogues:** one wandering cultivator in eight is a demon of the race whose land it is in (any race in the Upper Realm).
+
+Code: `DenStructure` (the den's plan, its sites), `DenPieces` (the dens drawn), `SectPalette#ofRace`, `Sect#race`,
+`CultivatorNpc#setRace` (synced, saved "Race"), `SectNames#clan`, `SectSites` (clans' sites too), data
+`worldgen/structure/demon_clan*.json`, `structure_set/demon_clans*.json`, `tags/worldgen/biome/clan/*`; tests in `ClanGameTests`.
 
 ## Physiques
 

@@ -34,6 +34,18 @@ public final class ModStructures {
 	public static final StructurePieceType SECT_PIECE = Registry.register(BuiltInRegistries.STRUCTURE_PIECE,
 			DefyingTheHeavens.id("sect_piece"), (StructurePieceType.ContextlessType) SectPiece::new);
 
+	/**
+	 * The demon clans' dens (DenStructure): {@code worldgen/structure/demon_clan.json}, biomes {@code #has_structure/demon_clan}
+	 * (the races' lands, tags {@code clan/<race>}), placed by {@code structure_set/demon_clans.json} (one try per 44 x 44 chunks,
+	 * kept clear of villages; of sects by DenStructure itself); and {@code demon_clan_upper_realm.json} on the Upper Realm's islands
+	 * ({@code structure_set/demon_clans_upper_realm.json}).
+	 */
+	public static final ResourceKey<Structure> DEMON_CLAN = ResourceKey.create(Registries.STRUCTURE, DefyingTheHeavens.id("demon_clan"));
+	public static final ResourceKey<Structure> DEMON_CLAN_UPPER_REALM = ResourceKey.create(Registries.STRUCTURE, DefyingTheHeavens.id("demon_clan_upper_realm"));
+	public static final Codec<DenStructure> DEN_CODEC = Structure.simpleCodec(DenStructure::new);
+	public static final StructureType<DenStructure> DEN_TYPE = Registry.register(BuiltInRegistries.STRUCTURE_TYPE,
+			DefyingTheHeavens.id("den"), () -> DEN_CODEC);
+
 	public static final ResourceKey<Structure> GHOST_PALACE = ResourceKey.create(Registries.STRUCTURE, DefyingTheHeavens.id("ghost_palace"));
 	public static final Codec<GhostPalaceStructure> GHOST_PALACE_CODEC = Structure.simpleCodec(GhostPalaceStructure::new);
 	public static final StructureType<GhostPalaceStructure> GHOST_PALACE_TYPE = Registry.register(BuiltInRegistries.STRUCTURE_TYPE,

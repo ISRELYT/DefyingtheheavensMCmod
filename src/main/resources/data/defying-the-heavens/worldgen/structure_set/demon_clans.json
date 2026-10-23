@@ -1,0 +1,15 @@
+{
+  "structures": [
+    {"structure": "defying-the-heavens:demon_clan", "weight": 1}
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 734118291,
+    "spacing": 40,
+    "separation": 20,
+    "exclusion_zone": {
+      "other_set": "minecraft:villages",
+      "chunk_count": 8
+    }
+  }
+}

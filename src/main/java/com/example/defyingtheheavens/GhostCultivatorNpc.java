@@ -225,6 +225,7 @@ public class GhostCultivatorNpc extends CultivatorNpc implements Ghostly {
 		ghost.setUUID(living.getUUID());
 		ghost.becomeGhost(Math.max(0, living.getRank()), living.getAlignment(), netherworld.getRandom());
 		ghost.setSkin(living.getSkin());
+		ghost.setRace(living.getBloodline(), living.getRaceVariant()); // a demon's soul keeps its race's form
 		if (living.hasCustomName()) ghost.setCustomName(living.getCustomName());
 		return ghost;
 	}

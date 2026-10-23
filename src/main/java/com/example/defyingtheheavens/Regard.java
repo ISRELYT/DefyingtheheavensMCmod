@@ -164,6 +164,19 @@ public final class Regard {
 		};
 	}
 
+	/**
+	 * What a demon cultivator (a clan's, or a demon rogue) thinks the more or less of one for their blood (the user's pick, 2026-10-23:
+	 * the clans are wary of men): a man {@link #WARY_OF_MEN} the colder, another demon {@link #DEMON_KIN} the warmer, one of its own
+	 * race {@link #OWN_BLOOD}. A man's regard minds no one's blood.
+	 */
+	public static final int WARY_OF_MEN = -20, DEMON_KIN = 10, OWN_BLOOD = 20;
+
+	public static int bloodShift(Bloodline npc, Bloodline player) {
+		if (!npc.isBeast()) return 0;
+		if (!player.isBeast()) return WARY_OF_MEN;
+		return player == npc ? OWN_BLOOD : DEMON_KIN;
+	}
+
 	public static int clamp(int regard) {
 		return Mth.clamp(regard, MIN, MAX);
 	}

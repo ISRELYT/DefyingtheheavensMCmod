@@ -47,6 +47,11 @@ public enum NpcTitle {
 	/** "Sect Master"; the nameplate puts it in brackets. */
 	public Component getDisplayName() { return Component.translatable(ModLang.titleKey(id)); }
 
+	/** As {@link #getDisplayName}, a demon clan's master its "Clan Head" (the user's design, 2026-10-23); the other titles a sect's. */
+	public Component getDisplayName(boolean clan) {
+		return clan && this == SECT_MASTER ? Component.translatable(ModLang.titleKey("clan_head")) : getDisplayName();
+	}
+
 	public static NpcTitle byIndex(int index) {
 		return index >= 0 && index < values().length ? values()[index] : ROGUE;
 	}

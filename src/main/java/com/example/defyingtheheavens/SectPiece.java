@@ -46,8 +46,19 @@ import net.minecraft.world.level.material.Fluids;
  * seed, never the chunk's, so a building split across chunks comes out whole.
  */
 public class SectPiece extends StructurePiece {
-	/** TERRACE is the grounds; TOWER (the old walled sects' corner towers) is kept only so their saved pieces still load. */
-	public enum Kind { TERRACE, GATE, TOWER, PLAZA, MEDITATION_HALL, TREASURY, MAIN_HALL, PAGODA, GARDEN, DWELLING, ELDER_HOUSE, TORII, ALTAR, TRAINING }
+	/**
+	 * TERRACE is the grounds; TOWER (the old walled sects' corner towers) is kept only so their saved pieces still load. The DEN_ kinds
+	 * are a demon clan's (DenStructure, drawn by DenPieces): its head's den, an elder's, the disciples' burrow, the hoard (its
+	 * treasury), a gate, the sparring ring, the dragons' crag (all of a dragon clan's under one), and the rest that stands about the
+	 * grounds (boulders, pools, spires, a row of torii).
+	 */
+	public enum Kind {
+		TERRACE, GATE, TOWER, PLAZA, MEDITATION_HALL, TREASURY, MAIN_HALL, PAGODA, GARDEN, DWELLING, ELDER_HOUSE, TORII, ALTAR, TRAINING,
+		DEN_HALL, DEN_ELDER, DEN_BURROW, DEN_HOARD, DEN_GATE, DEN_RING, DEN_CRAG, DEN_FEATURE;
+
+		/** One of a demon clan's (DenPieces). */
+		public boolean isDen() { return name().startsWith("DEN_"); }
+	}
 
 	public static final ResourceLocation TREASURY_LOOT = DefyingTheHeavens.id("chests/sect_treasury");
 	public static final ResourceLocation DWELLING_LOOT = DefyingTheHeavens.id("chests/sect_dwelling");
@@ -60,19 +71,27 @@ public class SectPiece extends StructurePiece {
 	private static final int MAX_FOUNDATION = 12;
 
 	private final Kind kind;
-	private final long seed;
+	final long seed;
 	private final Alignment.Faction faction;
-	private final boolean upper;
+	final boolean upper;
 	/** Per-kind data: the plaza's sect blueprint, the size of a hall, a garden's pond. */
 	private final CompoundTag extra;
+	/** Whose it is: a sect of men's (HUMAN), or a demon clan's den, built in its race's way (SectPalette#ofRace, DenPieces). */
+	final Bloodline race;
 
 	public SectPiece(Kind kind, BoundingBox box, Direction orientation, long seed, Alignment.Faction faction, boolean upper, CompoundTag extra) {
+		this(kind, box, orientation, seed, faction, upper, extra, Bloodline.HUMAN);
+	}
+
+	public SectPiece(Kind kind, BoundingBox box, Direction orientation, long seed, Alignment.Faction faction, boolean upper, CompoundTag extra,
+			Bloodline race) {
 		super(ModStructures.SECT_PIECE, 0, box);
 		this.kind = kind;
 		this.seed = seed;
 		this.faction = faction;
 		this.upper = upper;
 		this.extra = extra == null ? new CompoundTag() : extra;
+		this.race = race == null ? Bloodline.HUMAN : race;
 		setOrientation(orientation);
 	}
 
@@ -89,6 +108,7 @@ public class SectPiece extends StructurePiece {
 		this.faction = Alignment.Faction.values()[Math.max(0, Math.min(Alignment.Faction.values().length - 1, tag.getInt("Faction")))];
 		this.upper = tag.getBoolean("Upper");
 		this.extra = tag.getCompound("Extra");
+		this.race = tag.contains("Race") ? Bloodline.byId(tag.getString("Race")) : Bloodline.HUMAN;
 	}
 
 	@Override
@@ -98,6 +118,7 @@ public class SectPiece extends StructurePiece {
 		tag.putInt("Faction", faction.ordinal());
 		tag.putBoolean("Upper", upper);
 		tag.put("Extra", extra);
+		if (race.isBeast()) tag.putString("Race", race.getId());
 	}
 
 	public Kind kind() { return kind; }
@@ -145,7 +166,11 @@ public class SectPiece extends StructurePiece {
 	@Override
 	public void postProcess(WorldGenLevel level, StructureManager structures, ChunkGenerator generator, RandomSource random, BoundingBox chunk,
 			ChunkPos chunkPos, BlockPos pivot) {
-		SectPalette p = SectPalette.of(faction, upper);
+		SectPalette p = race.isBeast() ? SectPalette.ofRace(race, upper) : SectPalette.of(faction, upper);
+		if (kind.isDen()) {
+			DenPieces.draw(this, level, chunk, p);
+			return;
+		}
 		switch (kind) {
 			case TERRACE -> terrace(level, chunk, p);
 			case GATE -> gate(level, chunk, p);
@@ -169,7 +194,7 @@ public class SectPiece extends StructurePiece {
 	// =====================================================================================================================
 
 	/** A random source for one spot of this piece: the same on every chunk that draws it. */
-	private RandomSource rand(int x, int z, int salt) {
+	RandomSource rand(int x, int z, int salt) {
 		return RandomSource.create(seed ^ (x * 341873128712L + z * 132897987541L + salt * 42317861L));
 	}
 
@@ -177,7 +202,7 @@ public class SectPiece extends StructurePiece {
 	 * Places a block in the piece's frame, turned with the piece. Blocks whose shape depends on their neighbours (stairs,
 	 * fences, walls, bars, panes) are settled once the whole chunk is generated, so they join up across the building.
 	 */
-	private void put(WorldGenLevel level, BoundingBox chunk, int x, int y, int z, BlockState state) {
+	void put(WorldGenLevel level, BoundingBox chunk, int x, int y, int z, BlockState state) {
 		BlockPos pos = getWorldPos(x, y, z);
 		if (!chunk.isInside(pos)) return;
 		if (getMirror() != net.minecraft.world.level.block.Mirror.NONE) state = state.mirror(getMirror());
@@ -191,11 +216,11 @@ public class SectPiece extends StructurePiece {
 		if (!state.getFluidState().isEmpty()) level.scheduleTick(pos, state.getFluidState().getType(), 0);
 	}
 
-	private void put(WorldGenLevel level, BoundingBox chunk, int x, int y, int z, Block block) {
+	void put(WorldGenLevel level, BoundingBox chunk, int x, int y, int z, Block block) {
 		put(level, chunk, x, y, z, block.defaultBlockState());
 	}
 
-	private void fill(WorldGenLevel level, BoundingBox chunk, int x0, int y0, int z0, int x1, int y1, int z1, BlockState state) {
+	void fill(WorldGenLevel level, BoundingBox chunk, int x0, int y0, int z0, int x1, int y1, int z1, BlockState state) {
 		boolean clearing = state.isAir();
 		for (int y = Math.min(y0, y1); y <= Math.max(y0, y1); y++) {
 			for (int x = Math.min(x0, x1); x <= Math.max(x0, x1); x++) {
@@ -211,20 +236,20 @@ public class SectPiece extends StructurePiece {
 		}
 	}
 
-	private void fill(WorldGenLevel level, BoundingBox chunk, int x0, int y0, int z0, int x1, int y1, int z1, Block block) {
+	void fill(WorldGenLevel level, BoundingBox chunk, int x0, int y0, int z0, int x1, int y1, int z1, Block block) {
 		fill(level, chunk, x0, y0, z0, x1, y1, z1, block.defaultBlockState());
 	}
 
-	private void air(WorldGenLevel level, BoundingBox chunk, int x0, int y0, int z0, int x1, int y1, int z1) {
+	void air(WorldGenLevel level, BoundingBox chunk, int x0, int y0, int z0, int x1, int y1, int z1) {
 		fill(level, chunk, x0, y0, z0, x1, y1, z1, Blocks.AIR.defaultBlockState());
 	}
 
-	private BlockState at(WorldGenLevel level, BoundingBox chunk, int x, int y, int z) {
+	BlockState at(WorldGenLevel level, BoundingBox chunk, int x, int y, int z) {
 		return getBlock(level, x, y, z, chunk);
 	}
 
 	/** Fills below {@code y} down to the ground (at most {@link #MAX_FOUNDATION}), so nothing floats over a dip. */
-	private void foundation(WorldGenLevel level, BoundingBox chunk, int x, int y, int z, BlockState state) {
+	void foundation(WorldGenLevel level, BoundingBox chunk, int x, int y, int z, BlockState state) {
 		BlockPos.MutableBlockPos pos = getWorldPos(x, y - 1, z);
 		if (!chunk.isInside(pos)) return;
 		for (int i = 0; i < MAX_FOUNDATION && pos.getY() > level.getMinBuildHeight(); i++) {
@@ -235,29 +260,29 @@ public class SectPiece extends StructurePiece {
 		}
 	}
 
-	private void pillar(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x, int y0, int y1, int z) {
+	void pillar(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x, int y0, int y1, int z) {
 		fill(level, chunk, x, y0, z, x, y1, z, p.pillar(Direction.Axis.Y));
 	}
 
-	private void lanternHanging(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x, int y, int z) {
+	void lanternHanging(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x, int y, int z) {
 		put(level, chunk, x, y, z, p.lantern.defaultBlockState().setValue(LanternBlock.HANGING, true));
 	}
 
-	private void lanternStanding(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x, int y, int z) {
+	void lanternStanding(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x, int y, int z) {
 		put(level, chunk, x, y, z, p.lantern.defaultBlockState().setValue(LanternBlock.HANGING, false));
 	}
 
 	/** A stone lantern: a post with the lantern standing on it (no cap: a slab on top read as clutter). */
-	private void stoneLantern(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x, int y, int z) {
+	void stoneLantern(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x, int y, int z) {
 		put(level, chunk, x, y, z, p.baseWall);
 		lanternStanding(level, chunk, p, x, y + 1, z);
 	}
 
-	private void candles(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x, int y, int z, int count) {
+	void candles(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x, int y, int z, int count) {
 		put(level, chunk, x, y, z, p.candle.defaultBlockState().setValue(CandleBlock.CANDLES, Math.max(1, Math.min(4, count))).setValue(CandleBlock.LIT, true));
 	}
 
-	private void chest(WorldGenLevel level, BoundingBox chunk, int x, int y, int z, Direction facing, ResourceLocation loot) {
+	void chest(WorldGenLevel level, BoundingBox chunk, int x, int y, int z, Direction facing, ResourceLocation loot) {
 		BlockPos pos = getWorldPos(x, y, z);
 		if (!chunk.isInside(pos)) return;
 		put(level, chunk, x, y, z, Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, facing));
@@ -265,14 +290,14 @@ public class SectPiece extends StructurePiece {
 	}
 
 	/** A Spirit Pedestal showing {@code treasure}. */
-	private void pedestal(WorldGenLevel level, BoundingBox chunk, int x, int y, int z, ItemStack treasure) {
+	void pedestal(WorldGenLevel level, BoundingBox chunk, int x, int y, int z, ItemStack treasure) {
 		BlockPos pos = getWorldPos(x, y, z);
 		if (!chunk.isInside(pos)) return;
 		put(level, chunk, x, y, z, ModBlocks.SPIRIT_PEDESTAL);
 		if (level.getBlockEntity(pos) instanceof SpiritPedestalBlockEntity pedestal) pedestal.setFruit(treasure);
 	}
 
-	private void wallBanner(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x, int y, int z, Direction facing) {
+	void wallBanner(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x, int y, int z, Direction facing) {
 		put(level, chunk, x, y, z, p.wallBanner.defaultBlockState().setValue(WallBannerBlock.FACING, facing));
 	}
 
@@ -502,7 +527,11 @@ public class SectPiece extends StructurePiece {
 				switch (code) {
 					case SectLayout.LANTERN -> stoneLantern(level, chunk, p, x, 1, z);
 					case SectLayout.TREE -> tree(level, chunk, p, x, z, rand(x, z, 7));
-					default -> bamboo(level, chunk, x, z, rand(x, z, 9));
+					// A den's undergrowth where a sect has bamboo (DenPieces#brush).
+					default -> {
+						if (race.isBeast()) DenPieces.brush(this, level, chunk, p, x, z, rand(x, z, 9));
+						else bamboo(level, chunk, x, z, rand(x, z, 9));
+					}
 				}
 			}
 		}
@@ -547,7 +576,7 @@ public class SectPiece extends StructurePiece {
 	 * A tree of the palette's wood and leaves (persistent, so they never decay): a blossom tree, its crown spreading wide and
 	 * hanging at the rim like a cherry's, or for the spruce of the neutral sects a tall tiered fir.
 	 */
-	private void tree(WorldGenLevel level, BoundingBox chunk, SectPalette p, int cx, int cz, RandomSource random) {
+	void tree(WorldGenLevel level, BoundingBox chunk, SectPalette p, int cx, int cz, RandomSource random) {
 		BlockState log = p.trunk.defaultBlockState();
 		if (log.hasProperty(RotatedPillarBlock.AXIS)) log = log.setValue(RotatedPillarBlock.AXIS, Direction.Axis.Y);
 		BlockState leaf = p.leaves.defaultBlockState();
@@ -602,7 +631,7 @@ public class SectPiece extends StructurePiece {
 	}
 
 	/** A stalk of bamboo, 5 to 11 tall, leafy at the top. */
-	private void bamboo(WorldGenLevel level, BoundingBox chunk, int x, int z, RandomSource random) {
+	void bamboo(WorldGenLevel level, BoundingBox chunk, int x, int z, RandomSource random) {
 		int height = 5 + random.nextInt(7);
 		BlockState stalk = Blocks.BAMBOO.defaultBlockState().setValue(BambooStalkBlock.AGE, 1);
 		for (int y = 1; y <= height; y++) {
@@ -612,7 +641,7 @@ public class SectPiece extends StructurePiece {
 	}
 
 	/** A pillar standing free on the ground: a stone footing under it and stone feet round its foot. */
-	private void post(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x, int z, int top) {
+	void post(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x, int z, int top) {
 		put(level, chunk, x, 0, z, p.foundation);
 		pillar(level, chunk, p, x, 1, top, z);
 		put(level, chunk, x - 1, 1, z, p.baseStair(Direction.EAST));
@@ -622,7 +651,7 @@ public class SectPiece extends StructurePiece {
 	}
 
 	/** A tie beam from x0 to x1 at height {@code y} over row z, through (not over) the pillars standing at {@code pillars}. */
-	private void tieBeam(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x0, int x1, int y, int z, int... pillars) {
+	void tieBeam(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x0, int x1, int y, int z, int... pillars) {
 		for (int x = x0; x <= x1; x++) {
 			final int at = x;
 			if (java.util.Arrays.stream(pillars).noneMatch(px -> px == at)) put(level, chunk, x, y, z, p.beam(Direction.Axis.X));
@@ -633,7 +662,7 @@ public class SectPiece extends StructurePiece {
 	 * A lintel of the trim colour from x0 to x1 at height {@code y} over row z, capped with slabs, its ends ({@code flareLeft},
 	 * {@code flareRight}) reaching one further and sweeping up: the crowning beam of a torii or a paifang.
 	 */
-	private void lintel(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x0, int x1, int y, int z, boolean flareLeft, boolean flareRight) {
+	void lintel(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x0, int x1, int y, int z, boolean flareLeft, boolean flareRight) {
 		fill(level, chunk, x0, y, z, x1, y, z, p.roofTrim);
 		fill(level, chunk, x0, y + 1, z, x1, y + 1, z, p.trimSlab(false));
 		if (flareLeft) {
@@ -875,7 +904,7 @@ public class SectPiece extends StructurePiece {
 	}
 
 	/** What the treasury's pedestals hold: centuries-old fruit and ginseng, Spirit Ginseng, and the odd fine pill or ring. */
-	private ItemStack treasure(RandomSource random, int index) {
+	ItemStack treasure(RandomSource random, int index) {
 		int roll = random.nextInt(10);
 		if (index == 0 || roll < 3) return CultivationFruitItem.create(300 + (int) (Math.pow(random.nextFloat(), 2) * 4700));
 		if (roll < 6) return GinsengItem.create(ModItems.SPIRIT_GINSENG, 200 + (int) (Math.pow(random.nextFloat(), 2) * 3800));

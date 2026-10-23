@@ -1,0 +1,7 @@
+{
+  "type": "defying-the-heavens:den",
+  "biomes": "#defying-the-heavens:has_structure/demon_clan",
+  "spawn_overrides": {},
+  "step": "surface_structures",
+  "terrain_adaptation": "beard_thin"
+}

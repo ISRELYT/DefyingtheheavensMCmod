@@ -34,10 +34,13 @@ public final class SectPalette {
 	public final Block baseWall;
 	public final Block lantern, candle, banner, wallBanner, leaves, trunk;
 	public final boolean soulFire;
+	/** The people it builds for: men (a sect, in its path's colours), or a demon race (a clan's den: {@link #ofRace}). */
+	public final Bloodline race;
 
 	private SectPalette(Alignment.Faction faction, boolean upper) {
 		this.faction = faction;
 		this.upper = upper;
+		this.race = Bloodline.HUMAN;
 		switch (faction) {
 			case DEVILISH -> {
 				foundation = Blocks.POLISHED_BLACKSTONE_BRICKS;
@@ -130,6 +133,157 @@ public final class SectPalette {
 				soulFire = false;
 			}
 		}
+	}
+
+	/**
+	 * A demon clan's den (DenStructure, DenPieces), by its race: for the grounds, the plaza round the core, the lights along the trails,
+	 * the trees, the gate and the chests. Its ways are trails, not paving:
+	 * <ul>
+	 *   <li>Tiger: coarse dirt and podzol trails edged with mossy cobble, spruce, lanterns on mossy cobble posts.</li>
+	 *   <li>Lizard: packed mud and rooted dirt edged with mud brick, mangroves, lanterns on mud brick posts.</li>
+	 *   <li>Fox: gravel edged with stone brick, cherry trees, stone lanterns, vermilion torii.</li>
+	 *   <li>Dragon: worked stone and tuff edged with deepslate tiles, firs, lanterns on deepslate posts; jade at the core.</li>
+	 * </ul>
+	 * Nothing springs open in (see the class's note): no plain stone, dirt, deepslate or tuff in what stands, only underfoot.
+	 */
+	private SectPalette(Bloodline race, boolean upper) {
+		this.faction = Alignment.Faction.NEUTRAL;
+		this.upper = upper;
+		this.race = race;
+		switch (race) {
+			case LIZARD -> {
+				foundation = Blocks.MUD_BRICKS;
+				paving = Blocks.ROOTED_DIRT;
+				path = Blocks.PACKED_MUD;
+				wallBase = Blocks.MUD_BRICKS;
+				wall = Blocks.PACKED_MUD;
+				pillar = Blocks.MANGROVE_LOG;
+				beam = Blocks.STRIPPED_MANGROVE_LOG;
+				floor = Blocks.PACKED_MUD;
+				roof = Blocks.MUD_BRICKS;
+				roofStairs = (StairBlock) Blocks.MUD_BRICK_STAIRS;
+				roofSlab = (SlabBlock) Blocks.MUD_BRICK_SLAB;
+				roofTrim = Blocks.MOSS_BLOCK;
+				trimStairs = (StairBlock) Blocks.MANGROVE_STAIRS;
+				trimSlab = (SlabBlock) Blocks.MANGROVE_SLAB;
+				accent = upper ? ModBlocks.JADE_STONE : Blocks.MOSS_BLOCK;
+				window = Blocks.MANGROVE_FENCE;
+				carpet = Blocks.MOSS_CARPET;
+				carpetAlt = Blocks.GREEN_CARPET;
+				baseStairs = (StairBlock) Blocks.MUD_BRICK_STAIRS;
+				baseSlab = (SlabBlock) Blocks.MUD_BRICK_SLAB;
+				baseWall = Blocks.MUD_BRICK_WALL;
+				lantern = Blocks.LANTERN;
+				candle = Blocks.LIME_CANDLE;
+				banner = Blocks.GREEN_BANNER;
+				wallBanner = Blocks.GREEN_WALL_BANNER;
+				leaves = Blocks.MANGROVE_LEAVES;
+				trunk = Blocks.MANGROVE_LOG;
+				soulFire = false;
+			}
+			case FOX -> {
+				foundation = Blocks.STONE_BRICKS;
+				paving = Blocks.GRAVEL;
+				path = Blocks.GRAVEL;
+				wallBase = Blocks.STONE_BRICKS;
+				wall = Blocks.SMOOTH_QUARTZ;
+				pillar = Blocks.STRIPPED_MANGROVE_LOG; // vermilion
+				beam = Blocks.STRIPPED_DARK_OAK_LOG;
+				floor = Blocks.CHERRY_PLANKS;
+				roof = Blocks.DEEPSLATE_TILES;
+				roofStairs = (StairBlock) Blocks.DEEPSLATE_TILE_STAIRS;
+				roofSlab = (SlabBlock) Blocks.DEEPSLATE_TILE_SLAB;
+				roofTrim = Blocks.RED_NETHER_BRICKS;
+				trimStairs = (StairBlock) Blocks.RED_NETHER_BRICK_STAIRS;
+				trimSlab = (SlabBlock) Blocks.RED_NETHER_BRICK_SLAB;
+				accent = upper ? ModBlocks.JADE_STONE : Blocks.RED_NETHER_BRICKS;
+				window = Blocks.CHERRY_FENCE;
+				carpet = Blocks.RED_CARPET;
+				carpetAlt = Blocks.WHITE_CARPET;
+				baseStairs = (StairBlock) Blocks.STONE_BRICK_STAIRS;
+				baseSlab = (SlabBlock) Blocks.STONE_BRICK_SLAB;
+				baseWall = Blocks.STONE_BRICK_WALL;
+				lantern = Blocks.LANTERN;
+				candle = Blocks.RED_CANDLE;
+				banner = Blocks.RED_BANNER;
+				wallBanner = Blocks.RED_WALL_BANNER;
+				leaves = upper ? ModBlocks.WHITE_BLOSSOM_LEAVES : Blocks.CHERRY_LEAVES;
+				trunk = Blocks.CHERRY_LOG;
+				soulFire = false;
+			}
+			case DRAGON -> {
+				foundation = Blocks.DEEPSLATE_TILES;
+				paving = Blocks.TUFF;
+				path = Blocks.COBBLED_DEEPSLATE;
+				wallBase = Blocks.DEEPSLATE_TILES;
+				wall = Blocks.DEEPSLATE_BRICKS;
+				pillar = Blocks.POLISHED_BASALT;
+				beam = Blocks.STRIPPED_DARK_OAK_LOG;
+				floor = Blocks.POLISHED_DEEPSLATE;
+				roof = Blocks.DEEPSLATE_TILES;
+				roofStairs = (StairBlock) Blocks.DEEPSLATE_TILE_STAIRS;
+				roofSlab = (SlabBlock) Blocks.DEEPSLATE_TILE_SLAB;
+				roofTrim = Blocks.GOLD_BLOCK;
+				trimStairs = (StairBlock) Blocks.POLISHED_BLACKSTONE_STAIRS;
+				trimSlab = (SlabBlock) Blocks.POLISHED_BLACKSTONE_SLAB;
+				accent = ModBlocks.JADE_STONE;
+				window = Blocks.DARK_OAK_FENCE;
+				carpet = Blocks.CYAN_CARPET;
+				carpetAlt = Blocks.YELLOW_CARPET;
+				baseStairs = (StairBlock) Blocks.DEEPSLATE_TILE_STAIRS;
+				baseSlab = (SlabBlock) Blocks.DEEPSLATE_TILE_SLAB;
+				baseWall = Blocks.DEEPSLATE_TILE_WALL;
+				lantern = Blocks.LANTERN;
+				candle = Blocks.YELLOW_CANDLE;
+				banner = Blocks.CYAN_BANNER;
+				wallBanner = Blocks.CYAN_WALL_BANNER;
+				leaves = upper ? ModBlocks.WHITE_BLOSSOM_LEAVES : Blocks.SPRUCE_LEAVES;
+				trunk = Blocks.SPRUCE_LOG;
+				soulFire = false;
+			}
+			default -> { // TIGER (and a man's, which never builds a den)
+				foundation = Blocks.MOSSY_COBBLESTONE;
+				paving = Blocks.PODZOL;
+				path = Blocks.COARSE_DIRT;
+				wallBase = Blocks.MOSSY_COBBLESTONE;
+				wall = Blocks.COBBLESTONE;
+				pillar = Blocks.STRIPPED_SPRUCE_LOG;
+				beam = Blocks.SPRUCE_LOG;
+				floor = Blocks.COARSE_DIRT;
+				roof = Blocks.MOSSY_COBBLESTONE;
+				roofStairs = (StairBlock) Blocks.MOSSY_COBBLESTONE_STAIRS;
+				roofSlab = (SlabBlock) Blocks.MOSSY_COBBLESTONE_SLAB;
+				roofTrim = Blocks.MOSSY_STONE_BRICKS;
+				trimStairs = (StairBlock) Blocks.MOSSY_STONE_BRICK_STAIRS;
+				trimSlab = (SlabBlock) Blocks.MOSSY_STONE_BRICK_SLAB;
+				accent = upper ? ModBlocks.JADE_STONE : Blocks.MOSSY_STONE_BRICKS;
+				window = Blocks.SPRUCE_FENCE;
+				carpet = Blocks.BROWN_CARPET;
+				carpetAlt = Blocks.ORANGE_CARPET;
+				baseStairs = (StairBlock) Blocks.MOSSY_COBBLESTONE_STAIRS;
+				baseSlab = (SlabBlock) Blocks.MOSSY_COBBLESTONE_SLAB;
+				baseWall = Blocks.MOSSY_COBBLESTONE_WALL;
+				lantern = Blocks.LANTERN;
+				candle = Blocks.ORANGE_CANDLE;
+				banner = Blocks.ORANGE_BANNER;
+				wallBanner = Blocks.ORANGE_WALL_BANNER;
+				leaves = upper ? ModBlocks.WHITE_BLOSSOM_LEAVES : Blocks.SPRUCE_LEAVES;
+				trunk = Blocks.SPRUCE_LOG;
+				soulFire = false;
+			}
+		}
+	}
+
+	private static final SectPalette[][] RACE_CACHE = new SectPalette[Bloodline.values().length][2];
+
+	/** A demon clan's den's palette (see the race constructor), cached. */
+	public static SectPalette ofRace(Bloodline race, boolean upper) {
+		SectPalette palette = RACE_CACHE[race.ordinal()][upper ? 1 : 0];
+		if (palette == null) {
+			palette = new SectPalette(race, upper);
+			RACE_CACHE[race.ordinal()][upper ? 1 : 0] = palette;
+		}
+		return palette;
 	}
 
 	private static final SectPalette[][] CACHE = new SectPalette[Alignment.Faction.values().length][2];

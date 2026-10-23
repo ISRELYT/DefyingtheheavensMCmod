@@ -22,13 +22,16 @@ final class GhostlyRenderers {
 	private static final ResourceLocation HORSE_FACE = DefyingTheHeavens.id("textures/entity/ghost/horse_face.png");
 	private static final ResourceLocation MENG_PO = DefyingTheHeavens.id("textures/entity/ghost/meng_po.png");
 
-	/** A ghost cultivator's skin: its own face from life (a Ghost King's and its retainers' too), or the Gate's keepers' own. */
+	/**
+	 * A ghost cultivator's skin: its own face from life (a Ghost King's and its retainers' too; a demon's its race's), or the Gate's
+	 * keepers' own.
+	 */
 	static ResourceLocation skin(GhostCultivatorNpc ghost) {
 		return switch (ghost.getRole()) {
 			case OX_HEAD -> OX_HEAD;
 			case HORSE_FACE -> HORSE_FACE;
 			case MENG_PO -> MENG_PO;
-			case NONE, GHOST_KING, COURTIER -> CultivatorNpcRenderer.skinOf(ghost.getSkin());
+			case NONE, GHOST_KING, COURTIER -> CultivatorNpcRenderer.skinFor(ghost);
 		};
 	}
 

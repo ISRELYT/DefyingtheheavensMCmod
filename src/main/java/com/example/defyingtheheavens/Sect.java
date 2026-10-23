@@ -104,6 +104,11 @@ public final class Sect {
 	public BlockPos core = BlockPos.ZERO;
 	public int barrierRadius = 48;
 	public int alignment;
+	/**
+	 * Its people's race: a sect of men (HUMAN), or a demon clan (one of the demon races, all its members of it: the user's design,
+	 * 2026-10-23), in its den (DenStructure), cultivating the Demon Path, its element its race's.
+	 */
+	public Bloodline race = Bloodline.HUMAN;
 	public int capacity;
 	public boolean extinct;
 	/** The barrier is down against the sect's will (out of qi, shattered or its core destroyed) since this game time; -1 if up. */
@@ -141,8 +146,12 @@ public final class Sect {
 	 * (CultivatorNpc#heavenMethod). Picked from who the sect is, so it never changes and needs no saving.
 	 */
 	public QiElement element() {
+		if (isClan()) return DemonPath.element(race); // a clan's blood's (Tiger Metal, Lizard Earth, Fox Fire, Dragon Wood)
 		return QiElement.five()[(int) Math.floorMod(id.getMostSignificantBits() ^ id.getLeastSignificantBits(), 5L)];
 	}
+
+	/** A demon clan: its people of one demon race ({@link #race}). */
+	public boolean isClan() { return race.isBeast(); }
 
 	public Sect(UUID id) {
 		this.id = id;
@@ -340,6 +349,7 @@ public final class Sect {
 		tag.putLong("Core", core.asLong());
 		tag.putInt("BarrierRadius", barrierRadius);
 		tag.putInt("Alignment", alignment);
+		if (isClan()) tag.putString("Race", race.getId());
 		tag.putInt("Capacity", capacity);
 		tag.putBoolean("Extinct", extinct);
 		tag.putLong("BarrierDownSince", barrierDownSince);
@@ -430,6 +440,7 @@ public final class Sect {
 		sect.core = BlockPos.of(tag.getLong("Core"));
 		sect.barrierRadius = tag.getInt("BarrierRadius");
 		sect.alignment = tag.getInt("Alignment");
+		if (tag.contains("Race")) sect.race = Bloodline.byId(tag.getString("Race"));
 		sect.capacity = tag.getInt("Capacity");
 		sect.extinct = tag.getBoolean("Extinct");
 		sect.barrierDownSince = tag.getLong("BarrierDownSince");

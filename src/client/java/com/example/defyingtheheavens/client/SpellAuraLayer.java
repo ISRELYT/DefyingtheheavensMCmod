@@ -21,12 +21,18 @@ import org.joml.Vector3f;
  * The spell auras that clothe a body (on everything drawn with a humanoid model: players, cultivators): a skin over it of the ward's
  * stuff (Hardened Body's thin stone, Azure Coating's water, Ancient Bark Skin, Mountain Stance's slabs, Vajra Body's gold, Emerald
  * Healing's green shimmer, Crimson Tempering's ember veins), Flame Armour's armour of living flame with its crest and shoulder fires,
- * and Flame Fist's fire round both fists. Each grows in as it is cast and fades as it ends.
+ * and Flame Fist's fire round both fists. Each grows in as it is cast and fades as it ends. A demon's beast's head and tail (BeastLayer)
+ * are clothed in each skin too, in place of the man's head (the user's rule, 2026-10-23: whatever coats the body coats a race's whole
+ * form).
  */
 public class SpellAuraLayer<T extends LivingEntity, M extends HumanoidModel<T>> extends RenderLayer<T, M> {
 	private static final float[] WHITE = {1, 1, 1};
 	private static final float[] FIRE_MID = {1.0f, 0.55f, 0.15f}, FIRE_CORE = {1.0f, 0.92f, 0.65f};
+	/** How far (blocks) the thin and thick shells stand off the body (the armour models' 0.5 and 1 pixel, drawn at 15/16): a beast's skin as far off it. */
+	private static final float THIN_GROW = 0.03f, THICK_GROW = 0.06f;
 	private final HumanoidModel<T> thin, thick;
+	/** The beast's head and tail of the body being drawn now (BeastHeadModels), posed as it, or null for a man's. */
+	private BeastHeadModels.Head beast;
 
 	public SpellAuraLayer(RenderLayerParent<T, M> parent, EntityRendererProvider.Context context) {
 		super(parent);
@@ -39,10 +45,13 @@ public class SpellAuraLayer<T extends LivingEntity, M extends HumanoidModel<T>> 
 					   float headPitch) {
 		if (!ClientSpellAuras.any(entity) && MeteorFlightClient.heat(entity) < 0.02f || entity.isInvisible()) return;
 		MultiBufferSource buffers = SpellBuffers.begin(source);
+		beast = BeastHeadModels.of(entity);
+		if (beast != null) beast.follow(getParentModel());
 		try {
 			draw(pose, buffers, light, entity, partial, age);
 		} finally {
 			SpellBuffers.end();
+			beast = null;
 		}
 	}
 
@@ -118,13 +127,21 @@ public class SpellAuraLayer<T extends LivingEntity, M extends HumanoidModel<T>> 
 		if (ablaze < 1) skin.draw(SpellRender.glow(SpellRender.GOLD), false, rgb, 0.8f * cooling * (1 - ablaze));
 	}
 
-	/** A skin over the whole body in {@code type}, posed as the body. */
+	/** A skin over the whole body in {@code type}, posed as the body: a beast's head and tail too, in place of a man's head. */
 	private void skin(PoseStack pose, MultiBufferSource buffers, HumanoidModel<T> shell, RenderType type, float[] rgb, float alpha, int light) {
 		if (shell != getParentModel()) getParentModel().copyPropertiesTo(shell);
 		shell.setAllVisible(true);
 		shell.hat.visible = false;
+		shell.head.visible = beast == null;
 		VertexConsumer vc = buffers.getBuffer(type);
 		shell.renderToBuffer(pose, vc, light, OverlayTexture.NO_OVERLAY, rgb[0], rgb[1], rgb[2], alpha);
+		shell.head.visible = true; // (the body's own model, for whatever draws it after)
+		if (beast != null) beast.renderGrown(pose, vc, grow(shell), light, OverlayTexture.NO_OVERLAY, rgb[0], rgb[1], rgb[2], alpha);
+	}
+
+	/** How far {@code shell}'s skin stands off the body, for a beast's head and tail to be clothed alike (0: on the body itself). */
+	private float grow(HumanoidModel<T> shell) {
+		return shell == thick ? THICK_GROW : shell == thin ? THIN_GROW : 0;
 	}
 
 	/**
@@ -136,8 +153,11 @@ public class SpellAuraLayer<T extends LivingEntity, M extends HumanoidModel<T>> 
 		parent.copyPropertiesTo(thick);
 		thick.setAllVisible(true);
 		thick.hat.visible = false;
-		thick.renderToBuffer(pose, buffers.getBuffer(RenderType.energySwirl(SpellRender.FLAME, age * 0.01f, fv[0])), SpellRender.FULL_BRIGHT, OverlayTexture.NO_OVERLAY,
-				1.0f, 0.6f, 0.25f, 0.9f * shown);
+		thick.head.visible = beast == null;
+		VertexConsumer fire = buffers.getBuffer(RenderType.energySwirl(SpellRender.FLAME, age * 0.01f, fv[0]));
+		thick.renderToBuffer(pose, fire, SpellRender.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, 1.0f, 0.6f, 0.25f, 0.9f * shown);
+		thick.head.visible = true;
+		if (beast != null) beast.renderGrown(pose, fire, THICK_GROW, SpellRender.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, 1.0f, 0.6f, 0.25f, 0.9f * shown);
 		VertexConsumer flames = buffers.getBuffer(SpellRender.glow(SpellRender.FLAME));
 		// The helm's crest and horns.
 		tongues(pose, flames, parent.head, new Vector3f(0, -9.5f, -1), 0.32f, 0.7f, age, shown, 3);

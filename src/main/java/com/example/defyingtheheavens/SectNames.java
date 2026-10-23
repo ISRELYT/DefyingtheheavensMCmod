@@ -47,5 +47,31 @@ public final class SectNames {
 		return a + " " + b + " " + k;
 	}
 
+	/** A demon clan's two words, by its race, before "<Race> Clan": "Iron Fang Tiger Clan", "Jade Scale Lizard Clan", "Nine Tails Fox Clan". */
+	private static final String[][] CLAN_FIRST = {
+			{"Iron", "Golden", "White", "Black", "Thunder", "Mountain", "Bloodstripe", "Savage", "Roaring", "Ember"},
+			{"Jade", "Black", "Crimson", "Mire", "Sunbaked", "Sunken", "Stone", "Venom", "Silent", "Old"},
+			{"Nine", "Red", "Silver", "Moonlit", "Misty", "Snow", "Laughing", "Shrine", "Foxfire", "Hidden"},
+			{"Azure", "Golden", "Crimson", "Cloud", "Storm", "Heavenly", "Pearl", "Ancient", "Thunder", "Celestial"}};
+	private static final String[][] CLAN_SECOND = {
+			{"Fang", "Claw", "Stripe", "Roar", "Pelt", "Peak", "Forest", "Hunt"},
+			{"Scale", "Tongue", "Marsh", "Coil", "Sand", "Fen", "Hide", "Root"},
+			{"Tails", "Moon", "Shrine", "Fire", "Whisper", "Grove", "Mask", "Lantern"},
+			{"Cloud", "Pearl", "Horn", "Scale", "Mountain", "Mist", "Whisker", "Gate"}};
+
+	/** A demon clan's name: two words of its race's, then the race and "Clan" (the user's ask, 2026-10-23). */
+	public static String clan(RandomSource random, Bloodline race) {
+		int r = Math.max(0, Math.min(CLAN_FIRST.length - 1, race.ordinal() - 1)); // HUMAN is first; the demon races after it
+		String a = CLAN_FIRST[r][random.nextInt(CLAN_FIRST[r].length)];
+		String b = CLAN_SECOND[r][random.nextInt(CLAN_SECOND[r].length)];
+		// Never two words of one stem ("Stone Stone", a "Moonlit Moon").
+		for (int i = 0; i < 6 && a.regionMatches(true, 0, b, 0, Math.min(4, Math.min(a.length(), b.length()))); i++) {
+			b = CLAN_SECOND[r][random.nextInt(CLAN_SECOND[r].length)];
+		}
+		// (The race's word from its id: a server has no mod language to read a display name in. Sects' names are English too.)
+		String word = Character.toUpperCase(race.getId().charAt(0)) + race.getId().substring(1);
+		return a + " " + b + " " + word + " Clan";
+	}
+
 	private SectNames() {}
 }

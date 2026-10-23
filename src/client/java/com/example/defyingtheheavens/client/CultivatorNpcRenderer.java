@@ -57,7 +57,13 @@ public class CultivatorNpcRenderer extends HumanoidMobRenderer<CultivatorNpc, Pl
 
 	@Override
 	public ResourceLocation getTextureLocation(CultivatorNpc npc) {
-		return skinOf(npc.getSkin());
+		return skinFor(npc);
+	}
+
+	/** Its skin: a demon's its race's (ClientBloodlines#npcLook; its beast's head and tail by BeastLayer), else its own face. */
+	static ResourceLocation skinFor(CultivatorNpc npc) {
+		ClientBloodlines.Look look = ClientBloodlines.npcLook(npc);
+		return look != null ? ClientBloodlines.skinOf(look) : skinOf(npc.getSkin());
 	}
 
 	/** One of the cultivator skins (CultivatorNpc#getSkin). */
@@ -148,7 +154,7 @@ public class CultivatorNpcRenderer extends HumanoidMobRenderer<CultivatorNpc, Pl
 
 		// The title, in its colour (a gate guard's post rather than its rank).
 		Component title = Component.translatable(ModLang.NPC_TITLE_BRACKETS,
-				npc.isGateGuard() ? Component.translatable(ModLang.NPC_GATE_GUARD) : npc.getTitle().getDisplayName());
+				npc.isGateGuard() ? Component.translatable(ModLang.NPC_GATE_GUARD) : npc.getTitle().getDisplayName(npc.isDemon()));
 		int titleColor = 0xFF000000 | npc.getTitle().getColor();
 		float tx = -font.width(title) / 2f;
 		font.drawInBatch(title, tx, -24, 0x20FFFFFF, false, matrix, buffers, Font.DisplayMode.SEE_THROUGH, background, light);

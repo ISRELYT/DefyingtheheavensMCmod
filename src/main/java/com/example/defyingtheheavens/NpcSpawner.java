@@ -169,9 +169,17 @@ public final class NpcSpawner {
 				rank = PlayerCultivation.rank(Realm.DAO_INTEGRATION, Stage.EARLY) + random.nextInt(Stage.values().length);
 			}
 			npc.becomeRogue(rank, Alignment.randomRogue(random), random);
+			// Now and then a demon (the user's design, 2026-10-23): of the race whose land this is; in the Upper Realm, of any.
+			if (!mortal && random.nextInt(DEMON_IN) == 0) {
+				Bloodline race = upper ? DenStructure.upperRace(random) : DenStructure.raceOfLand(level.getBiome(spot));
+				if (race != null) npc.setRace(race, random.nextInt(3));
+			}
 		}
 		level.addFreshEntity(npc);
 	}
+
+	/** One wandering cultivator in this many is a demon, where its race's land is (DenStructure#raceOfLand). */
+	public static final int DEMON_IN = 8;
 
 	/** A spot 40-80 blocks from the player, in any direction. */
 	private static BlockPos findSpot(ServerLevel level, ServerPlayer player, RandomSource random, boolean mortal) {

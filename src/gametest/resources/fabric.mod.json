@@ -55,7 +55,8 @@
       "com.example.defyingtheheavens.TechniquesCloneGameTests",
       "com.example.defyingtheheavens.MeteorFlightGameTests",
       "com.example.defyingtheheavens.BloodlinesGameTests",
-      "com.example.defyingtheheavens.DemonPathGameTests"
+      "com.example.defyingtheheavens.DemonPathGameTests",
+      "com.example.defyingtheheavens.ClanGameTests"
     ]
   }
 }

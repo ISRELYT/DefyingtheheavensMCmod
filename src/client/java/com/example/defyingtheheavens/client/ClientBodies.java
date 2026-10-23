@@ -111,7 +111,7 @@ public final class ClientBodies {
 		if (look == null) return null;
 		if (look.player() != null) return playerSkin(look);
 		CultivatorNpc npc = npc(player);
-		return npc == null ? null : CultivatorNpcRenderer.skinOf(npc.getSkin());
+		return npc == null ? null : CultivatorNpcRenderer.skinFor(npc); // a demon's its race's
 	}
 
 	/** The model ("default", "slim") {@code player} is drawn with, or null for their own. NPC cultivators are broad-armed. */

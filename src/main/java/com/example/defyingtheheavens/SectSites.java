@@ -57,8 +57,8 @@ public class SectSites extends SavedData {
 	 */
 	private static final double FOUNDED_NEAR = 64;
 
-	/** Per dimension, the placement regions decided (as ChunkPos.asLong(region x, region z)). */
-	private final Map<ResourceKey<Level>, Set<Long>> decided = new HashMap<>();
+	/** Per dimension, the placement regions decided (as ChunkPos.asLong(region x, region z)): the sects' sites, and the demon clans'. */
+	private final Map<ResourceKey<Level>, Set<Long>> decided = new HashMap<>(), decidedClans = new HashMap<>();
 
 	/**
 	 * The site the generator is being asked about, off the server thread: the answer means sampling the ground across the
@@ -69,14 +69,16 @@ public class SectSites extends SavedData {
 	private static ResourceKey<Level> pendingDimension;
 	private static BlockPos pendingHeart;
 	private static long pendingRegion;
+	private static boolean pendingClan;
 	private static long pendingSince;
 	/** Which place to start from at the next look (each in turn). */
 	private static int turn;
 
-	private record Place(ServerLevel level, Holder<Structure> structure, RandomSpreadStructurePlacement placement, BlockPos anchor, int reach) {}
+	/** {@code clan}: a demon clan's dens' sites (DenStructure), else the sects'. */
+	private record Place(ServerLevel level, Holder<Structure> structure, RandomSpreadStructurePlacement placement, BlockPos anchor, int reach, boolean clan) {}
 
 	/** The answer: where the sect's heart would be, or empty for no sect. */
-	private record Asking(ResourceKey<Level> dimension, long region, ChunkPos chunk, CompletableFuture<Optional<BlockPos>> answer) {}
+	private record Asking(ResourceKey<Level> dimension, long region, ChunkPos chunk, CompletableFuture<Optional<BlockPos>> answer, boolean clan) {}
 
 	public static SectSites get(MinecraftServer server) {
 		return server.overworld().getDataStorage().computeIfAbsent(SectSites::load, SectSites::new, NAME);
@@ -121,7 +123,7 @@ public class SectSites extends SavedData {
 		ServerLevel level = place.level();
 		ChunkGeneratorStructureState state = level.getChunkSource().getGeneratorState();
 		if (!place.placement().isStructureChunk(state, chunk.x, chunk.z) || foundedNear(level, chunk.getMiddleBlockPosition(0))) {
-			data.decide(level.dimension(), region);
+			data.decide(level.dimension(), region, place.clan());
 			return false;
 		}
 		// What worldgen does to decide whether to start a sect in that chunk (and /locate to find one), short of generating it.
@@ -132,7 +134,7 @@ public class SectSites extends SavedData {
 				structure.biomes()::contains);
 		asking = new Asking(level.dimension(), region, chunk,
 				CompletableFuture.supplyAsync(() -> structure.findValidGenerationPoint(context).map(Structure.GenerationStub::position),
-						Util.backgroundExecutor()));
+						Util.backgroundExecutor()), place.clan());
 		return true;
 	}
 
@@ -146,12 +148,13 @@ public class SectSites extends SavedData {
 			heart = Optional.empty();
 		}
 		if (heart.isEmpty() || foundedNear(level, heart.get())) {
-			data.decide(level.dimension(), answered.region());
+			data.decide(level.dimension(), answered.region(), answered.clan());
 			return false;
 		}
 		pendingDimension = level.dimension();
 		pendingHeart = heart.get();
 		pendingRegion = answered.region();
+		pendingClan = answered.clan();
 		pendingSince = level.getServer().overworld().getGameTime();
 		NpcLedger.wake(level, pendingHeart);
 		return true;
@@ -163,7 +166,7 @@ public class SectSites extends SavedData {
 		long now = server.overworld().getGameTime();
 		boolean founded = level != null && foundedNear(level, pendingHeart);
 		if (level == null || founded || now - pendingSince > GIVE_UP) {
-			if (level != null) data.decide(level.dimension(), pendingRegion);
+			if (level != null) data.decide(level.dimension(), pendingRegion, pendingClan);
 			if (level != null && !founded) DefyingTheHeavens.LOGGER.info("No sect came of the site at {} in {}", pendingHeart.toShortString(), pendingDimension.location());
 			pendingHeart = null;
 			pendingDimension = null;
@@ -174,7 +177,7 @@ public class SectSites extends SavedData {
 	}
 
 	private static long[] nearestUndecided(SectSites data, Place place) {
-		return nearestUndecided(data.decided.getOrDefault(place.level().dimension(), Set.of()), place.placement(),
+		return nearestUndecided((place.clan() ? data.decidedClans : data.decided).getOrDefault(place.level().dimension(), Set.of()), place.placement(),
 				place.level().getChunkSource().getGeneratorState().getLevelSeed(), place.anchor(), place.reach());
 	}
 
@@ -211,8 +214,11 @@ public class SectSites extends SavedData {
 	 */
 	public static boolean unsettled(ServerLevel level, BlockPos pos, int reach) {
 		if (!level.getServer().getWorldData().worldGenOptions().generateStructures()) return false;
-		Place place = place(level, pos, reach + SITE_DRIFT);
-		return place != null && nearestUndecided(get(level.getServer()), place) != null;
+		for (boolean clan : new boolean[] {false, true}) {
+			Place place = place(level, pos, reach + SITE_DRIFT, clan);
+			if (place != null && nearestUndecided(get(level.getServer()), place) != null) return true;
+		}
+		return false;
 	}
 
 	/** How far a sect's heart may stand from its start chunk's middle (SectStructure#ISLAND_SEARCH, either way). */
@@ -226,10 +232,13 @@ public class SectSites extends SavedData {
 		for (net.minecraft.server.level.ServerPlayer player : server.getPlayerList().getPlayers()) {
 			if (player.isSpectator()) continue;
 			ServerLevel level = player.serverLevel();
-			if (level == overworld || level == upper) add(places, place(level, player.blockPosition(), PLAYER_REACH));
+			if (level != overworld && level != upper) continue;
+			for (boolean clan : new boolean[] {false, true}) add(places, place(level, player.blockPosition(), PLAYER_REACH, clan));
 		}
-		add(places, place(overworld, overworld.getSharedSpawnPos(), SPAWN_REACH));
-		if (upper != null) add(places, place(upper, new BlockPos(SpatialRiftBlock.RIFT_X, 0, SpatialRiftBlock.RIFT_Z), RIFT_REACH));
+		for (boolean clan : new boolean[] {false, true}) {
+			add(places, place(overworld, overworld.getSharedSpawnPos(), SPAWN_REACH, clan));
+			if (upper != null) add(places, place(upper, new BlockPos(SpatialRiftBlock.RIFT_X, 0, SpatialRiftBlock.RIFT_Z), RIFT_REACH, clan));
+		}
 		return places;
 	}
 
@@ -237,15 +246,15 @@ public class SectSites extends SavedData {
 		if (place != null) places.add(place);
 	}
 
-	/** Round {@code anchor} in {@code level}, the sites of its sects: null in a dimension without them. */
-	private static Place place(ServerLevel level, BlockPos anchor, int reach) {
-		ResourceKey<Structure> key = level.dimension() == Level.OVERWORLD ? ModStructures.SECT
-				: ModDimensions.isUpperRealm(level.dimension()) ? ModStructures.SECT_UPPER_REALM : null;
+	/** Round {@code anchor} in {@code level}, the sites of its sects (or, {@code clan}, its demon clans): null in a dimension without them. */
+	private static Place place(ServerLevel level, BlockPos anchor, int reach, boolean clan) {
+		ResourceKey<Structure> key = level.dimension() == Level.OVERWORLD ? (clan ? ModStructures.DEMON_CLAN : ModStructures.SECT)
+				: ModDimensions.isUpperRealm(level.dimension()) ? (clan ? ModStructures.DEMON_CLAN_UPPER_REALM : ModStructures.SECT_UPPER_REALM) : null;
 		if (key == null) return null;
 		Holder<Structure> structure = level.registryAccess().registryOrThrow(Registries.STRUCTURE).getHolder(key).orElse(null);
 		if (structure == null) return null;
 		for (StructurePlacement placement : level.getChunkSource().getGeneratorState().getPlacementsForStructure(structure)) {
-			if (placement instanceof RandomSpreadStructurePlacement spread) return new Place(level, structure, spread, anchor, reach);
+			if (placement instanceof RandomSpreadStructurePlacement spread) return new Place(level, structure, spread, anchor, reach, clan);
 		}
 		return null;
 	}
@@ -261,7 +270,11 @@ public class SectSites extends SavedData {
 	}
 
 	void decide(ResourceKey<Level> dimension, long region) {
-		decided.computeIfAbsent(dimension, d -> new HashSet<>()).add(region);
+		decide(dimension, region, false);
+	}
+
+	void decide(ResourceKey<Level> dimension, long region, boolean clan) {
+		(clan ? decidedClans : decided).computeIfAbsent(dimension, d -> new HashSet<>()).add(region);
 		setDirty();
 	}
 
@@ -271,6 +284,12 @@ public class SectSites extends SavedData {
 
 	@Override
 	public CompoundTag save(CompoundTag tag) {
+		tag.put("Decided", saveDecided(decided));
+		tag.put("DecidedClans", saveDecided(decidedClans));
+		return tag;
+	}
+
+	private static ListTag saveDecided(Map<ResourceKey<Level>, Set<Long>> decided) {
 		ListTag list = new ListTag();
 		for (Map.Entry<ResourceKey<Level>, Set<Long>> e : decided.entrySet()) {
 			CompoundTag d = new CompoundTag();
@@ -278,21 +297,24 @@ public class SectSites extends SavedData {
 			d.putLongArray("Regions", e.getValue().stream().mapToLong(Long::longValue).toArray());
 			list.add(d);
 		}
-		tag.put("Decided", list);
-		return tag;
+		return list;
 	}
 
 	public static SectSites load(CompoundTag tag) {
 		SectSites data = new SectSites();
-		ListTag list = tag.getList("Decided", Tag.TAG_COMPOUND);
+		loadDecided(tag.getList("Decided", Tag.TAG_COMPOUND), data.decided);
+		loadDecided(tag.getList("DecidedClans", Tag.TAG_COMPOUND), data.decidedClans);
+		return data;
+	}
+
+	private static void loadDecided(ListTag list, Map<ResourceKey<Level>, Set<Long>> decided) {
 		for (int i = 0; i < list.size(); i++) {
 			CompoundTag d = list.getCompound(i);
 			ResourceLocation dimension = ResourceLocation.tryParse(d.getString("Dimension"));
 			if (dimension == null) continue;
 			Set<Long> regions = new HashSet<>();
 			for (long region : d.getLongArray("Regions")) regions.add(region);
-			data.decided.put(ResourceKey.create(Registries.DIMENSION, dimension), regions);
+			decided.put(ResourceKey.create(Registries.DIMENSION, dimension), regions);
 		}
-		return data;
 	}
 }

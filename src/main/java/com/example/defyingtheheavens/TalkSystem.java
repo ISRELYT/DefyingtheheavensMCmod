@@ -595,8 +595,9 @@ public final class TalkSystem {
 		if (SectMembership.excused(player, npc)) {
 			boolean gifted = CultivationManager.get(player).getPhysique() != null
 					&& CultivationManager.get(player).getPhysique().grade().ordinal() >= Physique.Grade.HIGH.ordinal();
+			boolean kin = SectMembership.kin(player, sect);
 			SectMembership.join(player, sect);
-			return Component.translatable(ModLang.talkLine(gifted ? "join.gifted" : "join.friend"), sect.name,
+			return Component.translatable(ModLang.talkLine(kin ? "join.kin" : gifted ? "join.gifted" : "join.friend"), sect.name,
 					SectMembership.titleOf(sect, player).getDisplayName());
 		}
 		if (SectMembership.triedToday(player, sect, npc.level().getGameTime())) return Component.translatable(ModLang.talkLine("join.tried"));
@@ -710,7 +711,7 @@ public final class TalkSystem {
 		Sect sect = npc.sect();
 		String path = npc.getFaction().getId();
 		Component who = sect != null
-				? Component.translatable(ModLang.talkLine("self.sect", path), name, npc.getTitle().getDisplayName(), sect.name, realm)
+				? Component.translatable(ModLang.talkLine("self.sect", path), name, npc.getTitle().getDisplayName(sect.isClan()), sect.name, realm)
 				: Component.translatable(ModLang.talkLine("self.rogue", path), name, realm);
 		MutableComponent answer = Component.empty().append(who).append(" ")
 				.append(Component.translatable(ModLang.talkLine("self.years"), npc.yearsCultivated()));

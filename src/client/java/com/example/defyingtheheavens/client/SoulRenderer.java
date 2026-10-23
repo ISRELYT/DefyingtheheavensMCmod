@@ -254,6 +254,10 @@ public final class SoulRenderer {
 		model.leftLeg.resetPose();
 		model.setupAnim(body, body.walkAnimation.position(partial), Math.min(1, body.walkAnimation.speed(partial)), age,
 				Mth.wrapDegrees(headYaw - bodyYaw), pitch);
+		// A demon's body veiled whole: its beast's head and tail in the veil too, in place of a man's head.
+		BeastHeadModels.Head beast = BeastHeadModels.of(body);
+		if (beast != null) beast.follow(model);
+		model.head.visible = model.hat.visible = beast == null;
 		ResourceLocation skin = client.getSkinTextureLocation();
 		RenderSystem.setShaderTexture(0, skin);
 		RenderSystem.setShader(() -> soulShader);
@@ -261,11 +265,12 @@ public final class SoulRenderer {
 		// Light over the body, not cover: the soul's violet edge light about it, a fainter haze beyond, and a wash of its violet on it.
 		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
 				GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
-		drawModel(pose, model, skin, null, 0, 1, 1, veil, VEIL_SIZE);
-		drawModel(pose, model, skin, null, 0, 1, 1, veil * 0.45f, VEIL_SIZE * 1.1f);
-		drawModel(pose, model, skin, null, 1, 1, 1, veil * 0.5f, 1.02f);
+		drawModel(pose, model, skin, beast, 0, 1, 1, veil, VEIL_SIZE);
+		drawModel(pose, model, skin, beast, 0, 1, 1, veil * 0.45f, VEIL_SIZE * 1.1f);
+		drawModel(pose, model, skin, beast, 1, 1, 1, veil * 0.5f, 1.02f);
 		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
 				GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+		model.head.visible = model.hat.visible = true;
 		pose.popPose();
 	}
 
@@ -277,8 +282,9 @@ public final class SoulRenderer {
 		boolean hungry = body instanceof HungryGhost;
 		ResourceLocation skin = hungry ? GhostlyRenderers.HUNGRY_GHOST_SKIN
 				: body instanceof GhostCultivatorNpc ghost ? GhostlyRenderers.skin(ghost) : GhostlyRenderers.HUNGRY_GHOST_SKIN;
+		// Ox-Head's and Horse-Face's beasts' heads; one of the demon races its race's head and tail (BeastHeadModels#of).
 		BeastHeadModels.Head beast = body instanceof GhostCultivatorNpc ghost && ghost.getRole().beastHead() != null
-				? BeastHeadModels.get(ghost.getRole().beastHead()).on(body, null) : null;
+				? BeastHeadModels.get(ghost.getRole().beastHead()).on(body, null) : BeastHeadModels.of(body);
 		boolean king = body instanceof GhostCultivatorNpc ghost && ghost.getRole() == GhostCultivatorNpc.Role.GHOST_KING;
 		drawBody(context, body, skin, false, 1.0f, partial, true, hungry ? Look.HUNGRY : Look.DEAD, beast, king);
 	}

@@ -1,6 +1,7 @@
 package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.Bloodline;
+import com.example.defyingtheheavens.CultivatorNpc;
 import com.example.defyingtheheavens.DefyingTheHeavens;
 import com.example.defyingtheheavens.InnerBodyEntity;
 import com.example.defyingtheheavens.CloneBodyEntity;
@@ -74,9 +75,23 @@ public final class ClientBloodlines {
 		return null;
 	}
 
-	/** The bloodline {@code entity} is drawn in (see {@link #owner}), or null for a human's look. */
+	/**
+	 * The bloodline {@code entity} is drawn in (see {@link #owner}), or null for a human's look: a demon cultivator's its own race
+	 * ({@link #npcLook}), and so a player's soul in one's body.
+	 */
 	public static Look look(Entity entity) {
+		if (entity instanceof CultivatorNpc npc) return npcLook(npc);
+		if (entity instanceof AbstractClientPlayer player && ClientBodies.disguised(player)) {
+			CultivatorNpc npc = ClientBodies.npc(player);
+			if (npc != null) return npcLook(npc);
+		}
 		return of(owner(entity));
+	}
+
+	/** A demon cultivator's race as worn (CultivatorNpc#getBloodline), a fox's tails by the realm it shows; null for a man. */
+	public static Look npcLook(CultivatorNpc npc) {
+		Bloodline race = npc.getBloodline();
+		return race.isBeast() ? new Look(race, npc.getRaceVariant(), race.tails(npc.getDisplayedRealm())) : null;
 	}
 
 	/** {@code id}'s race skin (in place of their own), or null: their own. */

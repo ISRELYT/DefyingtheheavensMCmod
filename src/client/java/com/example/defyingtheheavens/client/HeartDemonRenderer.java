@@ -13,6 +13,9 @@ import net.minecraft.resources.ResourceLocation;
 
 /** A heart demon: its owner, in their own skin, but shadow-dark and half see-through, trailing smoke. */
 public class HeartDemonRenderer extends HumanoidMobRenderer<HeartDemonEntity, PlayerModel<HeartDemonEntity>> {
+	/** The shadow's tint (red, green, blue, alpha) on its owner's colours: a demon's beast's head and tail take it too (BeastLayer). */
+	static final float[] SHADOW = {0.16f, 0.1f, 0.22f, 0.82f};
+
 	public HeartDemonRenderer(EntityRendererProvider.Context context) {
 		super(context, new ShadowModel(context.bakeLayer(ModelLayers.PLAYER)), 0.0f);
 	}
@@ -35,7 +38,7 @@ public class HeartDemonRenderer extends HumanoidMobRenderer<HeartDemonEntity, Pl
 
 		@Override
 		public void renderToBuffer(PoseStack pose, VertexConsumer consumer, int light, int overlay, float r, float g, float b, float a) {
-			super.renderToBuffer(pose, consumer, light, overlay, r * 0.16f, g * 0.1f, b * 0.22f, a * 0.82f);
+			super.renderToBuffer(pose, consumer, light, overlay, r * SHADOW[0], g * SHADOW[1], b * SHADOW[2], a * SHADOW[3]);
 		}
 	}
 }
