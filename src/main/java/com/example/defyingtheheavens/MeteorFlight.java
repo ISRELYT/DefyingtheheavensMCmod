@@ -7,11 +7,13 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -30,6 +32,9 @@ import java.util.UUID;
  * they tear through what stands in their way ({@link #carve}), as the great spells' wounds do (HeavenSpells#carvable: nothing harder
  * than obsidian, nothing kept in it, nothing a barrier shelters, no ground they couldn't dig; gone for good, dropping nothing),
  * unless the gamerule meteorFlightSmashes is off. Slowing, they cool off: still glowing a while, then not.
+ * <p>
+ * At any realm, flying fast with the boost held, the way ahead is bulldozed ({@link Bulldozer}): the flier's client clears what it
+ * would run into before it gets there and names it here ({@link #bulldoze}), so they keep their speed (the user's ask, 2026-10-23).
  * <p>
  * Flying fast costs {@link #STREAK_COST} times Qi Flight's qi; from Heavenly Being on never more than one gathers, so it never runs
  * one dry ({@link #streakCost}). The dead fly freely, for nothing, as they do. Not in space (its own flight), the Spatial Gap or on
@@ -100,7 +105,7 @@ public final class MeteorFlight {
 		long soundAt = Long.MIN_VALUE / 2;
 		/** Game time it last flew fast. */
 		long streakedAt = Long.MIN_VALUE / 2;
-		boolean sentStreaking, sentAblaze;
+		boolean sentStreaking, sentAblaze, sentSmashes;
 		float sentHeat;
 		int sinceSent;
 		/** Booms so far (tests). */
@@ -338,6 +343,39 @@ public final class MeteorFlight {
 		return cut;
 	}
 
+	/**
+	 * From the flier's client (C2S meteor_doze): the blocks its bulldozer cleared ahead of it (Bulldozer#sweep), already gone on its
+	 * screen. Those it may take go here too (flying in Meteor Flight, the gamerule on, near enough to where it was last seen, and as
+	 * the great spells' wounds may: HeavenSpells#carvable), a few crumbling for those near; then the word is acknowledged up to
+	 * {@code sequence}, and whatever wasn't taken comes back on its screen (vanilla's block prediction). @return how many went
+	 */
+	public static int bulldoze(ServerPlayer p, int sequence, List<BlockPos> asked) {
+		int cut = 0;
+		try {
+			ServerLevel level = p.serverLevel();
+			if (!mayStreak(p, CultivationManager.get(p)) || !level.getGameRules().getBoolean(ModGameRules.METEOR_FLIGHT_SMASHES)) return 0;
+			Vec3 middle = p.position().add(0, p.getBbHeight() * 0.5, 0);
+			double reach = Bulldozer.MOST_REACH + Bulldozer.SLACK;
+			int shown = 0;
+			for (BlockPos pos : asked) {
+				if (cut >= Bulldozer.MOST_A_TICK) break;
+				if (Vec3.atCenterOf(pos).distanceToSqr(middle) > reach * reach || !level.isLoaded(pos)) continue;
+				BlockState state = level.getBlockState(pos);
+				if (state.getCollisionShape(level, pos).isEmpty() || !HeavenSpells.carvable(level, pos, p)) continue;
+				level.removeBlock(pos, false);
+				cut++;
+				// Crumbling, for those near (the flier saw its own already): a few, not every block.
+				if (shown < Bulldozer.SHOWN_A_TICK && level.random.nextInt(3) == 0) {
+					shown++;
+					level.levelEvent(p, 2001, pos, Block.getId(state));
+				}
+			}
+			return cut;
+		} finally {
+			if (p.connection != null) p.connection.ackBlockChangesUpTo(sequence);
+		}
+	}
+
 	/** The sound barrier broken: a boom where it broke, and a ring of air there for all near to see (MeteorFlightClient). */
 	private static void boom(ServerPlayer p, State s, Vec3 from, Vec3 to) {
 		s.booms++;
@@ -350,18 +388,23 @@ public final class MeteorFlight {
 		ModPackets.broadcastMeteorBoom(p, at, dir);
 	}
 
-	/** Those watching (and the flier) told whether it streaks and how hot it is: as that changes, and now and then while it lasts. */
+	/**
+	 * Those watching (and the flier) told whether it streaks and how hot it is, and whether the gamerule lets its bulldozer clear the
+	 * way: as that changes, and now and then while it lasts.
+	 */
 	private static void sync(ServerPlayer p, State s) {
 		boolean ablaze = s.heat >= ABLAZE;
+		boolean smashes = p.serverLevel().getGameRules().getBoolean(ModGameRules.METEOR_FLIGHT_SMASHES);
 		s.sinceSent++;
-		boolean changed = s.streaking != s.sentStreaking || ablaze != s.sentAblaze || s.heat == 0 && s.sentHeat > 0;
+		boolean changed = s.streaking != s.sentStreaking || ablaze != s.sentAblaze || s.heat == 0 && s.sentHeat > 0 || smashes != s.sentSmashes;
 		boolean beat = (s.streaking || s.heat > 0) && s.sinceSent >= SYNC_EVERY;
 		if (!changed && !beat) return;
 		s.sentStreaking = s.streaking;
 		s.sentAblaze = ablaze;
 		s.sentHeat = s.heat;
+		s.sentSmashes = smashes;
 		s.sinceSent = 0;
-		ModPackets.broadcastMeteorState(p, s.streaking, s.heat);
+		ModPackets.broadcastMeteorState(p, s.streaking, s.heat, smashes);
 	}
 
 	public static void forget(UUID id) {

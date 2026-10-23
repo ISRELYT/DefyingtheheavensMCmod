@@ -14,8 +14,8 @@ public final class ModGameRules {
 			GameRuleRegistry.register("netherworldAfterDeath", GameRules.Category.PLAYER, GameRuleFactory.createBooleanRule(true));
 
 	/**
-	 * One ablaze in Meteor Flight (MeteorFlight) tears through what stands in their way. Off, nothing is broken: they are stopped by
-	 * it as by any wall.
+	 * One ablaze in Meteor Flight (MeteorFlight) tears through what stands in their way, and one flying fast with the boost held
+	 * bulldozes the way ahead (Bulldozer). Off, nothing is broken: they are stopped by it as by any wall.
 	 */
 	public static final GameRules.Key<GameRules.BooleanValue> METEOR_FLIGHT_SMASHES =
 			GameRuleRegistry.register("meteorFlightSmashes", GameRules.Category.PLAYER, GameRuleFactory.createBooleanRule(true));

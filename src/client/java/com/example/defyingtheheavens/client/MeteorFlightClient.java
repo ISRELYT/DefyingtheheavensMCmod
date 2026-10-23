@@ -1,9 +1,11 @@
 package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.Ability;
+import com.example.defyingtheheavens.Bulldozer;
 import com.example.defyingtheheavens.MeteorFlight;
 import com.example.defyingtheheavens.ModPackets;
 import com.example.defyingtheheavens.PlayerCultivation;
+import com.example.defyingtheheavens.client.mixin.ClientLevelAccessor;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -19,8 +21,11 @@ import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.multiplayer.prediction.BlockStatePredictionHandler;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.FriendlyByteBuf;
@@ -29,6 +34,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
@@ -49,6 +56,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * a trail of vapour behind one flying fast, and a ring of air where the sound barrier broke. The heat is on the body itself, glowing
  * gold ablaze and red as it cools (SpellAuraLayer#meteorHeat): no flames or glow thrown about it (the user's word, 2026-10-23); in
  * first person on one's arm (SpellAuraLayer#firstPersonArm) and at the screen's edges ({@link #renderHud}).
+ * <p>
+ * With the boost held (sprint) and going fast, the way ahead is bulldozed ({@link #clearAhead}, Bulldozer): what one would run into
+ * is gone on one's own screen before one reaches it, and the server told; skimming the ground (or a ceiling) slides along it at speed
+ * rather than losing it; and the ground never ends the flight ({@link #keepAloft}: the user's ask, 2026-10-23).
  */
 public final class MeteorFlightClient {
 	/** The top speed is reached from a standstill in this many ticks; a lower aim is come down to twice as fast. */
@@ -80,6 +91,8 @@ public final class MeteorFlightClient {
 	private static Vec3 heading;
 	/** Forward held in Meteor Flight this tick; the boost held down with it (sprinting); and what the server was last told of each. */
 	private static boolean steering, flatOut, told, toldFlat;
+	/** Whether the server's gamerule lets the bulldozer clear the way (its word, MeteorFlight#sync; nothing cleared until it says). */
+	private static boolean smashes;
 
 	/** Whether the local player flies by Meteor Flight now (as MeteorFlight#mayStreak on the server). */
 	public static boolean active(LocalPlayer p) {
@@ -116,18 +129,74 @@ public final class MeteorFlightClient {
 		Vec3 v = heading.scale(speed);
 		// Never into the void below the world.
 		if (player.getY() + v.y < player.level().getMinBuildHeight() - 2 && v.y < 0) v = new Vec3(v.x, 0, v.z);
+		// Fast with the boost held: the way ahead bulldozed before it's flown.
+		boolean dozing = sprinting && smashes && speed >= Bulldozer.FROM_SPEED;
+		if (dozing && v.lengthSqr() > 1.0e-6) clearAhead(player, v.normalize(), speed);
 		Vec3 before = player.position();
 		player.setDeltaMovement(v);
 		player.move(MoverType.SELF, v);
-		// Stopped short (what it can't go through, or what isn't torn away yet): the speed is what it went.
 		double went = player.position().distanceTo(before);
+		// Met the ground (or a ceiling) and nothing ahead: the rest of the way along it, the speed kept, not lost to it.
+		if (went < speed * 0.9 && player.verticalCollision && !player.horizontalCollision) {
+			Vec3 along = new Vec3(v.x, 0, v.z);
+			if (along.lengthSqr() > 1.0e-6) {
+				along = along.normalize();
+				double rest = speed - went;
+				if (dozing) clearAhead(player, along, rest);
+				Vec3 mid = player.position();
+				player.move(MoverType.SELF, along.scale(rest));
+				went += player.position().distanceTo(mid);
+			}
+		}
+		// Stopped short (what it can't go through, or what the bulldozer may not take): the speed is what it went.
 		if (went < speed * 0.9) speed = went;
 		// The boost held down (all the heat asks of a flier the land holds back, at MeteorFlight#HEAT_FLOOR or more).
 		flatOut = sprinting;
 		player.setDeltaMovement(heading.scale(speed));
 		player.fallDistance = 0;
+		keepAloft(player);
 		player.calculateEntityAnimation(false);
 		return true;
+	}
+
+	/**
+	 * (At the end of the flight's tick, MeteorFlightMixin.) In Meteor Flight with the boost held, on the ground or not, not taken for
+	 * standing on it: LocalPlayer#aiStep ends one's flight the moment one touches the ground, and swooping low it set one walking
+	 * (the user's ask, 2026-10-23). Let go of the boost to land.
+	 */
+	public static void keepAloft(LocalPlayer player) {
+		if (player.onGround() && active(player) && Minecraft.getInstance().options.keySprint.isDown()) player.setOnGround(false);
+	}
+
+	/**
+	 * The bulldozer (Bulldozer): what stands in the way of the body flown {@code dir} (a unit vector) at {@code speed}, out to
+	 * Bulldozer#reach, cleared on this client at once (as a block one mines is, through vanilla's block prediction), a few crumbling,
+	 * and named to the server (C2S meteor_doze), which takes it too and acknowledges: whatever it won't take comes back.
+	 */
+	private static void clearAhead(LocalPlayer player, Vec3 dir, double speed) {
+		Minecraft mc = Minecraft.getInstance();
+		ClientLevel level = mc.level;
+		if (level == null) return;
+		List<BlockPos> cleared = Bulldozer.sweep(level, player, player.getBoundingBox(), dir, Bulldozer.reach(speed), player.getY(), Bulldozer.MOST_A_TICK);
+		if (cleared.isEmpty()) return;
+		int sequence = 0;
+		int shown = 0;
+		try (BlockStatePredictionHandler predicting = ((ClientLevelAccessor) level).dth$getPredictions().startPredicting()) {
+			sequence = predicting.currentSequence();
+			for (BlockPos pos : cleared) {
+				BlockState state = level.getBlockState(pos);
+				if (shown < Bulldozer.SHOWN_A_TICK && (shown == 0 || level.random.nextInt(3) == 0)) {
+					shown++;
+					level.levelEvent(player, 2001, pos, Block.getId(state)); // its sound and pieces, here at once
+				}
+				level.setBlock(pos, state.getFluidState().createLegacyBlock(), 11); // as vanilla clears a block one mines
+			}
+		}
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(sequence);
+		buf.writeVarInt(cleared.size());
+		for (BlockPos pos : cleared) buf.writeLong(pos.asLong());
+		ClientPlayNetworking.send(ModPackets.METEOR_DOZE, buf);
 	}
 
 	/**
@@ -153,9 +222,11 @@ public final class MeteorFlightClient {
 	/** Heat as drawn, by entity id, eased toward the server's word. */
 	private static final Map<Integer, Float> SHOWN = new HashMap<>();
 
-	/** The server's word (S2C meteor_state) about a player: flying fast or not, and how hot. */
-	public static void set(int entityId, boolean streaking, float heat) {
+	/** The server's word (S2C meteor_state) about a player: flying fast or not, how hot, and (for oneself) if the way may be cleared. */
+	public static void set(int entityId, boolean streaking, float heat, boolean smashes) {
 		SEEN.put(entityId, new Seen(streaking, heat, System.currentTimeMillis()));
+		LocalPlayer self = Minecraft.getInstance().player;
+		if (self != null && self.getId() == entityId) MeteorFlightClient.smashes = smashes;
 	}
 
 	/** Whether {@code entity} flies fast now: the local player by its own steering, others by the server's word. */
@@ -616,7 +687,7 @@ public final class MeteorFlightClient {
 		BOOMS.clear();
 		speed = 0;
 		heading = null;
-		steering = flatOut = told = toldFlat = false;
+		steering = flatOut = told = toldFlat = smashes = false;
 	}
 
 	private MeteorFlightClient() {}

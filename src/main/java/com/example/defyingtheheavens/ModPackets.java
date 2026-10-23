@@ -11,6 +11,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -105,7 +106,15 @@ public final class ModPackets {
 	public static final ResourceLocation SOUL_TETHER_STRIKE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "soul_tether_strike");
 	/** C2S: forward held in Meteor Flight, or let go, and flying flat out or not (MeteorFlight#setStreaking; the server checks it may). */
 	public static final ResourceLocation METEOR_STREAK = new ResourceLocation(DefyingTheHeavens.MOD_ID, "meteor_streak");
-	/** S2C: a player (entity id) flying fast in Meteor Flight or not, and how hot (0-255), to them and those tracking them. */
+	/**
+	 * C2S: the blocks Meteor Flight's bulldozer cleared ahead on the flier's screen (Bulldozer), and the prediction sequence they were
+	 * cleared under (MeteorFlight#bulldoze takes what may go and acknowledges it).
+	 */
+	public static final ResourceLocation METEOR_DOZE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "meteor_doze");
+	/**
+	 * S2C: a player (entity id) flying fast in Meteor Flight or not, how hot (0-255), and whether the gamerule lets the bulldozer
+	 * clear the way, to them and those tracking them.
+	 */
 	public static final ResourceLocation METEOR_STATE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "meteor_state");
 	/** S2C: a player (entity id) broke the sound barrier here, going this way: the ring of air (MeteorFlightClient). */
 	public static final ResourceLocation METEOR_BOOM = new ResourceLocation(DefyingTheHeavens.MOD_ID, "meteor_boom");
@@ -318,6 +327,16 @@ public final class ModPackets {
 		ServerPlayNetworking.registerGlobalReceiver(METEOR_STREAK, (server, player, handler, buf, responseSender) -> {
 			boolean on = buf.readBoolean(), flatOut = buf.readBoolean();
 			server.execute(() -> MeteorFlight.setStreaking(player, on, flatOut));
+		});
+		ServerPlayNetworking.registerGlobalReceiver(METEOR_DOZE, (server, player, handler, buf, responseSender) -> {
+			int sequence = buf.readVarInt();
+			int count = Math.max(0, Math.min(buf.readVarInt(), buf.readableBytes() / Long.BYTES));
+			List<BlockPos> cleared = new ArrayList<>(Math.min(count, Bulldozer.MOST_A_TICK));
+			for (int i = 0; i < count; i++) {
+				long pos = buf.readLong();
+				if (cleared.size() < Bulldozer.MOST_A_TICK) cleared.add(BlockPos.of(pos));
+			}
+			server.execute(() -> MeteorFlight.bulldoze(player, sequence, cleared));
 		});
 		ServerPlayNetworking.registerGlobalReceiver(STORAGE_RING_ACTION, (server, player, handler, buf, responseSender) -> {
 			int action = buf.readVarInt();
@@ -846,12 +865,13 @@ public final class ModPackets {
 		}
 	}
 
-	/** Tells the flier and everyone tracking them whether they fly fast in Meteor Flight, and how hot they are. */
-	public static void broadcastMeteorState(ServerPlayer player, boolean streaking, float heat) {
+	/** Tells the flier and everyone tracking them whether they fly fast in Meteor Flight, how hot they are, and if the way may be cleared. */
+	public static void broadcastMeteorState(ServerPlayer player, boolean streaking, float heat, boolean smashes) {
 		FriendlyByteBuf buf = PacketByteBufs.create();
 		buf.writeVarInt(player.getId());
 		buf.writeBoolean(streaking);
 		buf.writeByte(Math.round(Math.max(0, Math.min(1, heat)) * 255));
+		buf.writeBoolean(smashes);
 		ServerPlayNetworking.send(player, METEOR_STATE, new FriendlyByteBuf(buf.copy()));
 		for (ServerPlayer other : PlayerLookup.tracking(player)) ServerPlayNetworking.send(other, METEOR_STATE, new FriendlyByteBuf(buf.copy()));
 	}

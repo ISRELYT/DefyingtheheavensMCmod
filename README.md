@@ -1333,6 +1333,25 @@ on either path, **Meteor Flight** (Abilities tab, the wheel, X; **off by default
   second, Nascent Soul 60, Heavenly Being 75, Four Axis 95, Dao Integration 115, Void Shattering 135, Sacred Vessel 155, Entering
   Nirvana 175, True Immortal 200, each stage 4% more (`MeteorFlight#topSpeed`). Let go of forward and you hover and steer as in
   normal flight, the momentum running off.
+- **Sprint held, the ground doesn't land you** (the user's ask, 2026-10-23): swooping low no longer sets you walking the moment
+  you touch it (vanilla ends flight on touching ground; `MeteorFlightClient#keepAloft`, from `mixin/MeteorFlightMixin`). Let go
+  of sprint to land. Meeting the ground (or a ceiling) at an angle, you **slide along it at your speed** rather than losing it.
+- **The bulldozer** (the user's ask, 2026-10-23: running into things at speed stopped you dead). Flying faster than Qi Flight's
+  sprint with **sprint held**, at any realm, the way ahead is cleared before you reach it, so you keep your speed:
+  - **What's swept:** your body's own box (a hair wider), swept along the way you go every half block, out to this tick's
+    move and three ticks more (+1.5 blocks; at most 48): so the reach grows with your speed (`Bulldozer#sweep`, `#reach`). A
+    swept box rather than a single ray, so nothing the feet or shoulders would hit is missed, and nothing between ticks skipped.
+  - **Only obstacles:** blocks you'd collide with (grass and flowers you fly through), and **never the ground under your feet**:
+    skimming low clears what stands up ahead and slides along the floor, no trench. The hole is your own size; the ablaze carve
+    (below) is the big tube.
+  - **On your screen at once, settled by the server** (client-side prediction and server reconciliation, as vanilla does for
+    a block you mine): your client clears the blocks immediately and tells the server (`meteor_doze` C2S, with a prediction
+    sequence); the server takes what may go (`MeteorFlight#bulldoze`: flying in Meteor Flight, near where it saw you, and the
+    great spells' rule, `HeavenSpells#carvable`) and acknowledges; whatever it refused (a sect's grounds, spawn protection, a
+    formation's shelter) reappears and stops you as any wall. Waiting on the server alone left the wall standing on your screen
+    for your latency, which is what stopped you.
+  - **Cheap:** at most 384 blocks a tick, gone for good and dropping nothing; a few crumble with sound and pieces (yours at
+    once, others' from the server). Off with the gamerule `meteorFlightSmashes` (your client is told, so it doesn't predict).
 - **The land has to keep up.** Minecraft makes and sends land as you go: where it hasn't come yet within a second and a half's
   flight ahead, you're slowed to reach its edge no sooner (`MeteorFlightClient#landAhead`), so you never fly into nothing; over
   land already made you go at full speed.
@@ -1371,8 +1390,9 @@ on either path, **Meteor Flight** (Abilities tab, the wheel, X; **off by default
   River, whose current carries the living.
 - **No flying punches** (the user's call).
 
-Code: `MeteorFlight.java` (speeds, cost, the barrier, the heat, the smashing, syncing: packets `meteor_streak` C2S,
-`meteor_state` and `meteor_boom` S2C), `QiFlight.java` (normal speed for all, the cost, room on the server for a second of top
+Code: `MeteorFlight.java` (speeds, cost, the barrier, the heat, the smashing, the bulldozer's server side, syncing: packets
+`meteor_streak` and `meteor_doze` C2S, `meteor_state` and `meteor_boom` S2C), `Bulldozer.java` (the sweep, the reach, what looks
+carvable), `client/mixin/ClientLevelAccessor` (vanilla's block prediction, for the bulldozer), `QiFlight.java` (normal speed for all, the cost, room on the server for a second of top
 speed a packet: `#moveAllowanceSq`), `ModGameRules#METEOR_FLIGHT_SMASHES`, `client/MeteorFlightClient.java` (steering, the land
 ahead, the pose, the heat at the screen's edges, trails and rings), `client/SpellAuraLayer` (the heat on the body, and on one's
 arm in first person), `client/mixin/MeteorFlightMixin` (the flight, in place of `Player#travel`),

@@ -13,6 +13,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -204,6 +205,53 @@ public class MeteorFlightGameTests implements FabricGameTest {
 			level.getGameRules().getRule(ModGameRules.METEOR_FLIGHT_SMASHES).set(rule, level.getServer());
 			for (BlockPos pos : BlockPos.betweenClosed(wall.offset(-1, -1, -2), wall.offset(1, 3, 2))) level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
 			forget(soul);
+		}
+		helper.succeed();
+	}
+
+	/**
+	 * The bulldozer (the user's ask, 2026-10-23): the body's box swept ahead takes the wall in its way but not the floor under the feet,
+	 * nor the wall's sides beyond the body, nor obsidian or a chest; the server takes what the client names only with the gamerule on,
+	 * and never what the spells' wounds couldn't. Its own batch: it builds and breaks blocks, and switches the gamerule.
+	 */
+	@GameTest(template = EMPTY_STRUCTURE, batch = "meteor_flight_smash")
+	public void theBulldozerClearsTheWayAheadButNotTheGroundBelow(GameTestHelper helper) {
+		ServerLevel level = helper.getLevel();
+		ServerPlayer core = cultivator(level, Realm.CORE_FORMATION, Stage.EARLY);
+		BlockPos wall = helper.absolutePos(new BlockPos(4, 2, 1));
+		boolean rule = level.getGameRules().getBoolean(ModGameRules.METEOR_FLIGHT_SMASHES);
+		try {
+			build(level, wall);
+			for (int dx = -4; dx <= 1; dx++) {
+				for (int dz = -1; dz <= 1; dz++) level.setBlock(wall.offset(dx, -1, dz), Blocks.STONE.defaultBlockState(), 3);
+			}
+			// Feet on the floor, three blocks short of the wall, flying at it.
+			PlayerCultivation c = flying(core, true);
+			Vec3 feet = Vec3.atBottomCenterOf(wall.offset(-3, 0, 0));
+			core.moveTo(feet.x, feet.y, feet.z);
+			List<BlockPos> ahead = Bulldozer.sweep(level, core, core.getBoundingBox(), new Vec3(1, 0, 0), 6, core.getY(), Bulldozer.MOST_A_TICK);
+			helper.assertTrue(ahead.contains(wall) && ahead.contains(wall.above()), "The stone in the body's way is swept: " + ahead);
+			helper.assertTrue(!ahead.contains(wall.offset(0, 0, 1)) && !ahead.contains(wall.offset(0, 0, -1)), "Not the obsidian, nor the chest");
+			helper.assertTrue(!ahead.contains(wall.offset(0, 1, 1)) && !ahead.contains(wall.offset(0, 1, -1)), "Nor the wall beyond the body's width");
+			helper.assertTrue(ahead.stream().allMatch(pos -> pos.getY() >= wall.getY()), "Nor the ground under the feet");
+			helper.assertTrue(!ahead.contains(wall.above(2)), "Nor above the head");
+			// The client's word: the gamerule off, nothing goes; on, the way goes; never what isn't to be taken.
+			level.getGameRules().getRule(ModGameRules.METEOR_FLIGHT_SMASHES).set(false, level.getServer());
+			helper.assertTrue(MeteorFlight.bulldoze(core, 1, ahead) == 0 && level.getBlockState(wall).is(Blocks.STONE), "The gamerule off: the wall stands");
+			level.getGameRules().getRule(ModGameRules.METEOR_FLIGHT_SMASHES).set(true, level.getServer());
+			int cut = MeteorFlight.bulldoze(core, 2, ahead);
+			helper.assertTrue(cut == ahead.size() && level.getBlockState(wall).isAir() && level.getBlockState(wall.above()).isAir(), "On: through it (" + cut + ")");
+			int more = MeteorFlight.bulldoze(core, 3, List.of(wall.offset(0, 0, 1), wall.offset(0, 0, -1), wall.offset(0, 0, -1).above(200)));
+			helper.assertTrue(more == 0 && level.getBlockState(wall.offset(0, 0, 1)).is(Blocks.OBSIDIAN) && level.getBlockState(wall.offset(0, 0, -1)).is(Blocks.CHEST),
+					"Obsidian, a chest and what's far off are not taken however the client asks");
+			// Not flying in Meteor Flight: nothing.
+			level.setBlock(wall, Blocks.STONE.defaultBlockState(), 3);
+			c.setAbilityEnabled(Ability.METEOR_FLIGHT, false);
+			helper.assertTrue(MeteorFlight.bulldoze(core, 4, List.of(wall)) == 0 && level.getBlockState(wall).is(Blocks.STONE), "Meteor Flight off: the wall stands");
+		} finally {
+			level.getGameRules().getRule(ModGameRules.METEOR_FLIGHT_SMASHES).set(rule, level.getServer());
+			for (BlockPos pos : BlockPos.betweenClosed(wall.offset(-4, -1, -2), wall.offset(1, 3, 2))) level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+			forget(core);
 		}
 		helper.succeed();
 	}

@@ -383,7 +383,8 @@ public final class ClientPacketHandlers {
 			int entityId = buf.readVarInt();
 			boolean streaking = buf.readBoolean();
 			float heat = (buf.readByte() & 0xFF) / 255f;
-			client.execute(() -> MeteorFlightClient.set(entityId, streaking, heat));
+			boolean smashes = buf.readBoolean();
+			client.execute(() -> MeteorFlightClient.set(entityId, streaking, heat, smashes));
 		});
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.METEOR_BOOM, (client, handler, buf, sender) -> {
 			buf.readVarInt();
