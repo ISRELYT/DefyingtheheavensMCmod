@@ -57,6 +57,23 @@ public final class Devastation {
 
 	private static final List<Job> JOBS = new ArrayList<>();
 
+	// --- How great ---
+
+	/**
+	 * How great a spell's wounds in the land are by the realm it is of (the user's ask, 2026-10-23: as a golden core's blast grows by
+	 * the realm, CoreDetonation#radius, so do the great spells' wounds): its realm's blast against Four Axis's, Core Formation 0.34,
+	 * Nascent Soul 0.56, Heavenly Being 0.78, Four Axis 1. Heaven-Severing, Four Axis's, is the yardstick the rest are sized by. Only the
+	 * spells meant to lay the land waste go by it; the small carvings of the realms below (a cave, a cleave's slot) stay as they are.
+	 */
+	public static double scale(Realm realm) {
+		return CoreDetonation.radius(realm, Stage.EARLY) / CoreDetonation.radius(Realm.FOUR_AXIS, Stage.EARLY);
+	}
+
+	/** A wound {@code atFourAxis} blocks great (round, long, deep) as a spell of Four Axis would cut it, cut by one of {@code realm} ({@link #scale}). */
+	public static double sized(Realm realm, double atFourAxis) {
+		return atFourAxis * scale(realm);
+	}
+
 	// --- The wounds ---
 
 	/**
@@ -277,35 +294,50 @@ public final class Devastation {
 		JOBS.add(new Job(level, p, cells, heart, after, debris));
 	}
 
-	/** Every tick (HeavenSpells#tick): the wounds underway cut a share further, {@link #BUDGET} blocks in all. */
+	/**
+	 * Every tick (HeavenSpells#tick): the wounds underway cut a share further, {@link #BUDGET} blocks in all, shared out evenly among
+	 * them (what one doesn't need goes round again to the rest), so a small wound isn't kept waiting behind a great one.
+	 */
 	public static void tick(MinecraftServer server) {
 		if (!WAITING.isEmpty()) cutWaiting();
 		if (JOBS.isEmpty()) return;
 		int budget = BUDGET;
-		for (Iterator<Job> it = JOBS.iterator(); it.hasNext() && budget > 0; ) {
-			Job job = it.next();
-			while (job.next < job.cells.size() && budget > 0) {
-				BlockPos pos = job.cells.get(job.next++);
-				budget--;
-				if (!job.level.isLoaded(pos)) continue;
-				BlockState state = job.level.getBlockState(pos);
-				if (state.isAir() || !HeavenSpells.carvable(job.level, pos, job.caster)) continue;
-				job.level.removeBlock(pos, false);
-				if (job.flung < job.debris && job.level.random.nextInt(Math.max(8, job.cells.size() / (job.debris * 2))) == 0) {
-					job.flung++;
-					Vec3 from = Vec3.atBottomCenterOf(pos);
-					Vec3 out = from.subtract(job.heart).multiply(1, 0, 1);
-					out = out.lengthSqr() < 1.0e-4 ? new Vec3(job.level.random.nextGaussian(), 0, job.level.random.nextGaussian()) : out.normalize();
-					double far = 4 + job.level.random.nextDouble() * 8;
-					SpellBlock.show(job.level, HeavenSpells.asEarth(state), from.add(0, 0.5, 0), out.scale(far).add(0, 1 + job.level.random.nextDouble() * 3, 0), 0,
-							14 + job.level.random.nextInt(10), SpellBlock.Motion.FLY, 0);
+		List<Job> done = new ArrayList<>();
+		while (budget > 0 && !JOBS.isEmpty()) {
+			int share = Math.max(1, budget / JOBS.size());
+			for (Iterator<Job> it = JOBS.iterator(); it.hasNext() && budget > 0; ) {
+				Job job = it.next();
+				budget -= cut(job, Math.min(share, budget));
+				if (job.next >= job.cells.size()) {
+					it.remove();
+					done.add(job);
 				}
 			}
-			if (job.next >= job.cells.size()) {
-				it.remove();
-				if (job.after != null) job.after.run();
+		}
+		for (Job job : done) if (job.after != null) job.after.run();
+	}
+
+	/** {@code job} cut up to {@code most} cells further. @return how many it went through */
+	private static int cut(Job job, int most) {
+		int went = 0;
+		while (job.next < job.cells.size() && went < most) {
+			BlockPos pos = job.cells.get(job.next++);
+			went++;
+			if (!job.level.isLoaded(pos)) continue;
+			BlockState state = job.level.getBlockState(pos);
+			if (state.isAir() || !HeavenSpells.carvable(job.level, pos, job.caster)) continue;
+			job.level.removeBlock(pos, false);
+			if (job.flung < job.debris && job.level.random.nextInt(Math.max(8, job.cells.size() / (job.debris * 2))) == 0) {
+				job.flung++;
+				Vec3 from = Vec3.atBottomCenterOf(pos);
+				Vec3 out = from.subtract(job.heart).multiply(1, 0, 1);
+				out = out.lengthSqr() < 1.0e-4 ? new Vec3(job.level.random.nextGaussian(), 0, job.level.random.nextGaussian()) : out.normalize();
+				double far = 4 + job.level.random.nextDouble() * 8;
+				SpellBlock.show(job.level, HeavenSpells.asEarth(state), from.add(0, 0.5, 0), out.scale(far).add(0, 1 + job.level.random.nextDouble() * 3, 0), 0,
+						14 + job.level.random.nextInt(10), SpellBlock.Motion.FLY, 0);
 			}
 		}
+		return went;
 	}
 
 	/** Server stopping: whatever is underway stops where it is. */

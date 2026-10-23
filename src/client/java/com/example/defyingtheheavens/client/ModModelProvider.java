@@ -149,6 +149,8 @@ public class ModModelProvider extends FabricModelProvider {
 		items.generateFlatItem(ModItems.YANG_FIRE_TALISMAN, ModelTemplates.FLAT_ITEM);
 		items.generateFlatItem(ModItems.GHOST_QUELLING_TALISMAN, ModelTemplates.FLAT_ITEM);
 		items.generateFlatItem(ModItems.GHOST_JADE_SLIP, ModelTemplates.FLAT_ITEM);
+		items.generateFlatItem(ModItems.TECHNIQUE_MANUAL, ModelTemplates.FLAT_ITEM);
+		items.generateFlatItem(ModItems.BLANK_MANUAL, ModelTemplates.FLAT_ITEM);
 		items.generateFlatItem(ModItems.YIN_JADE, ModelTemplates.FLAT_ITEM);
 		items.generateFlatItem(ModItems.PEACH_WOOD_SWORD, ModelTemplates.FLAT_HANDHELD_ITEM);
 		items.generateFlatItem(ModItems.OTHER_SHORE_FLOWER, ModelTemplates.FLAT_ITEM);

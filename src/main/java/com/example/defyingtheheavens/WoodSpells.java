@@ -66,7 +66,8 @@ public final class WoodSpells {
 	public static final double LOTUS_RADIUS = 10;
 	public static final int LOTUS_TICKS = 10 * 20;
 	public static final float LOTUS_HEAL = 3;
-	public static final double BAMBOO_RANGE = 48, BAMBOO_RADIUS = 24, BAMBOO_BREAK = 2.5;
+	/** The ground each bamboo bursts out of, broken {@link #BAMBOO_BREAK} round (4, by its realm: Devastation#sized). */
+	public static final double BAMBOO_RANGE = 48, BAMBOO_RADIUS = 24, BAMBOO_BREAK = Devastation.sized(Realm.HEAVENLY_BEING, 5);
 	public static final int BAMBOO_TARGETS = 6;
 	public static final float BAMBOO_DAMAGE = 70;
 	public static final double SPRING_RADIUS = 32;
@@ -75,7 +76,8 @@ public final class WoodSpells {
 	public static final double VINES_RANGE = 64, VINES_RADIUS = 40;
 	public static final int VINES_TARGETS = 12, VINES_TICKS = 5 * 20;
 	public static final float VINES_DAMAGE = 22;
-	public static final double TREE_RANGE = 24, TREE_REACH = 32;
+	/** The tree's vines reach {@link #TREE_REACH}; the land splits round its roots out to {@link #TREE_FISSURES} (40, by its realm). */
+	public static final double TREE_RANGE = 24, TREE_REACH = 32, TREE_FISSURES = Devastation.sized(Realm.FOUR_AXIS, 40);
 	public static final int TREE_TICKS = 12 * 20;
 	public static final float TREE_DRAIN = 10;
 
@@ -797,7 +799,7 @@ public final class WoodSpells {
 			this.field = SpellField.create(level, SpellField.Kind.WORLD_TREE, trunk, (float) TREE_REACH, 40, TREE_TICKS, caster)
 					.data(caster.getRandom().nextInt()).spawn();
 			// Its roots heave the land open as it grows.
-			Devastation.fissures(caster, level, trunk, TREE_REACH * 0.55, 8, 3, 4);
+			Devastation.fissures(caster, level, trunk, TREE_FISSURES, 12, 4, 4);
 			HeavenSpells.sound(level, trunk, SoundEvents.ROOTED_DIRT_BREAK, 4.0f, 0.3f);
 			HeavenSpells.sound(level, trunk, SoundEvents.WARDEN_EMERGE, 2.0f, 0.6f);
 		}

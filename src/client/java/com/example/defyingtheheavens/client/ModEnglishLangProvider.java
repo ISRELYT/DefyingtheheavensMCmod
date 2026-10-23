@@ -13,6 +13,7 @@ import net.minecraft.world.item.ArmorItem;
 import com.example.defyingtheheavens.ModEntities;
 import com.example.defyingtheheavens.ModEffects;
 import com.example.defyingtheheavens.ModItems;
+import com.example.defyingtheheavens.Technique;
 import com.example.defyingtheheavens.ModLang;
 import com.example.defyingtheheavens.MortalStage;
 import com.example.defyingtheheavens.NpcLines;
@@ -289,6 +290,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case CORE_DETONATION -> "Golden Core Detonation";
 				case SPATIAL_TEAR -> "Spatial Tear";
 				case BURN_LIFESPAN -> "Burn Lifespan";
+				case CLONE -> "Clone";
 			});
 			t.add(key + ".description", switch (ability) {
 				case QI_SUSTENANCE -> "Qi keeps you fed. Hunger stays full.";
@@ -318,12 +320,33 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case BURN_LIFESPAN -> "Set your own years alight for strength: while it burns, your blows and spells strike %2$s%% harder and you move "
 						+ "%3$s%% faster, for %1$s%% of your whole lifespan a second (the same share at every realm). It goes out by itself before "
 						+ "it would leave you fewer than %4$s years, and when you die or log out.";
+				case CLONE -> "A technique (from its manual). Use it to split a clone off your body, at your own realm with your abilities and "
+						+ "spells but %1$s%% of your strength (health, blows, armour, qi pool); splitting it off takes %2$s%% of your qi. Use it "
+						+ "again to go into the clone (your body sits down in meditation where it was) and again to come back (the clone stays "
+						+ "standing). Sneak and use it within %3$s blocks of the other body to draw the clone back in, its qi and its things "
+						+ "with it. It needs no tether and nothing to stay out; what it spends comes from your own pool. Slain, it dissolves and "
+						+ "you wake in your body, and no other can be split off for %4$s minutes; if your body is slain, you die.";
 			});
 		}
+		// Clone while playing the clone (Clones): the way back.
+		t.add(ModLang.abilityKey(Ability.CLONE.getId()) + ".description.clone", "You are in your clone. Use this to go back to your body "
+				+ "(the clone stays standing where it is). Sneak and use it within %s blocks of your body to draw the clone back in. A clone "
+				+ "can't meditate, project its soul, break through or detonate a core.");
 		// Soul Projection while the soul is in another's body (Possession): the way out of it.
 		t.add(ModLang.abilityKey(Ability.SOUL_PROJECTION.getId()) + ".description.leave", "You are in another's body, using it as your own: "
 				+ "its things, its strength, its cultivation. Use this to leave it; your soul goes out where the body stands, and the body is "
 				+ "its owner's again.");
+		// From Void Shattering the soul's tether has no end (PlayerCultivation#soulTetherEndless): it costs what it does beside the body anywhere.
+		t.add(ModLang.abilityKey(Ability.SOUL_PROJECTION.getId()) + ".description.endless", "Send your nascent soul out of your body (5 s to leave, "
+				+ "5 s to return) while your body sits on. It flies through walls on %s hearts (they mend only while it rests in a body, never while "
+				+ "it's out), as far from your body as you like: from Void Shattering its tether has no end. It costs %s qi/s wherever it goes "
+				+ "(more while it possesses). Right-click a being a realm or more below you to possess it. If its tether is cut or your body slain, "
+				+ "you die and fall to Core Formation.");
+		t.add(ModLang.abilityKey(Ability.SOUL_PROJECTION.getId()) + ".description.ghost.endless", "Send your nascent soul, born of your ghost "
+				+ "path, out of your body (5 s to leave, 5 s to return) while your body sits on. It flies through walls on %s hearts (they mend only "
+				+ "while it rests in a body, never while it's out), as far from your body as you like: from Void Shattering its tether has no end. "
+				+ "It costs %s ghost qi/s wherever it goes (more while it possesses). Right-click a being a realm or more below you to possess it. "
+				+ "If its tether is cut or your body slain, you die and your ghost path falls to Core Formation.");
 		// The realm's abilities awakened by the ghost path rather than the heaven path (TwoPaths#awakens): paid in its ghost qi, and
 		// what is lost is the ghost path's.
 		t.add(ModLang.abilityKey(Ability.SOUL_PROJECTION.getId()) + ".description.ghost", "Send your nascent soul, born of your ghost path, out of "
@@ -798,6 +821,46 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_DAO_STELE_TEACHES, "This stele holds the %s (%s, to %s). Meditate beside it to learn it.");
 		t.add(ModLang.MSG_DAO_STELE_KNOWN, "This stele holds the %s (%s, to %s), which you know. Meditating beside a stele of its element while you practise it is faster.");
 		t.add(ModLang.MSG_DAO_STELE_READING, "You read the %s carved in the stele...");
+		// Techniques and their manuals (Technique, TechniqueManualItem), and writing them out
+		t.add(ModLang.techniqueKey(Technique.CLONE.getId()), "Clone");
+		t.add(ModLang.techniqueKey(Technique.CLONE.getId()) + ".description", "Split a clone off your body and walk in it as yourself: your "
+				+ "realm, abilities and spells, half your strength.");
+		t.add(ModItems.TECHNIQUE_MANUAL, "Technique Manual");
+		t.add(ModLang.ITEM_TECHNIQUE_MANUAL_OF, "Technique Manual: %s");
+		t.add(ModLang.ITEM_SPELL_MANUAL_OF, "Spell Manual: %s");
+		t.add(ModLang.TOOLTIP_MANUAL, "Read it to learn what it holds (it isn't used up)");
+		t.add(ModLang.TOOLTIP_MANUAL_REALM, "Wants %s");
+		t.add(ModLang.TOOLTIP_MANUAL_GHOST, "%s (ghost path)");
+		t.add(ModLang.TOOLTIP_MANUAL_AUTHOR, "Written out by %s");
+		t.add(ModItems.BLANK_MANUAL, "Blank Manual");
+		t.add(ModLang.TOOLTIP_BLANK_MANUAL, "Hold it in one hand and an Inscription Brush in the other, and use the brush to write out a technique or a spell you know");
+		t.add(ModLang.MSG_MANUAL_LEARNED, "You have learned %s.");
+		t.add(ModLang.MSG_MANUAL_KNOWN, "You already know %s.");
+		t.add(ModLang.MSG_MANUAL_TOO_LOW, "You can't grasp %s yet: it wants %s.");
+		t.add(ModLang.MSG_MANUAL_ROOTS, "Your roots won't take %s's element.");
+		t.add(ModLang.MSG_MANUAL_DEAD, "The dead can't take up %s: it is the heaven path's.");
+		t.add(ModLang.INSCRIBE_TITLE, "Write Out a Manual");
+		t.add(ModLang.INSCRIBE_HINT, "Choose what to write on the Blank Manual");
+		t.add(ModLang.INSCRIBE_NONE, "You know nothing that can be written out yet.");
+		t.add(ModLang.INSCRIBE_TECHNIQUE, "Technique: %s");
+		t.add(ModLang.MSG_INSCRIBED, "You write out %s.");
+		// Clone (Clones)
+		t.add(ModEntities.CLONE_BODY, "Body");
+		t.add(ModLang.MSG_CLONE_BUSY, "Not while your soul is away, in another's body, or in a tribulation.");
+		t.add(ModLang.MSG_CLONE_SPLIT, "A clone of you splits off and stands beside you.");
+		t.add(ModLang.MSG_CLONE_LOST, "Your clone is beyond reach.");
+		t.add(ModLang.MSG_CLONE_INTO, "You are in your clone. Your body sits on in meditation.");
+		t.add(ModLang.MSG_CLONE_BACK, "You are back in your body. Your clone stands where you left it.");
+		t.add(ModLang.MSG_CLONE_ABSORBED, "You draw your clone back into yourself.");
+		t.add(ModLang.MSG_CLONE_HURT, "Your clone is under attack! (%s / %s)");
+		t.add(ModLang.MSG_CLONE_MAIN_HURT, "Your body is under attack! (%s / %s)");
+		t.add(ModLang.MSG_CLONE_SLAIN, "Your clone was slain, and dissolves. Another can be split off in %s minutes.");
+		t.add(ModLang.MSG_CLONE_MAIN_SLAIN, "Your body was slain where it sat. Your clone dissolves with you.");
+		t.add(ModLang.MSG_CLONE_FELL, "Your clone dissolves: you wake in your body. Another can be split off in %s minutes.");
+		t.add(ModLang.MSG_CLONE_CANNOT, "A clone can't do that: your body can.");
+		t.add(ModLang.MSG_CLONE_REFORMING, "Your last clone was lost: another can be split off in %s.");
+		t.add(ModLang.HUD_CLONE_IN, "In your clone");
+		t.add(ModLang.HUD_CLONE_MAIN, "Body %s / %s");
 		t.add(ModLang.ITEM_JADE_SLIP_OF, "Jade Slip: %s");
 		t.add(ModLang.TOOLTIP_JADE_SLIP, "Read it to learn the method");
 		t.add(ModLang.TOOLTIP_JADE_SLIP_ELEMENT, "A %s method, to %s");
@@ -1326,6 +1389,12 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add("cultivation.defying-the-heavens.spar.stakes", "Stakes: your %s against their %s. The winner takes both.");
 		t.add("cultivation.defying-the-heavens.spar.count", "%s %s");
 		t.add("cultivation.defying-the-heavens.spar.begin", "%s takes a stance. Three breaths, then begin!");
+		t.add(ModLang.SPAR_FOLLOW, "%s leads the way to the sparring ground. Follow: the bout begins there.");
+		t.add(ModLang.SPAR_LEADING, "Follow %s to the sparring ground.");
+		t.add(ModLang.SPAR_WAITING, "%s waits for you at the sparring ground.");
+		t.add("cultivation.defying-the-heavens.talk.line.spar.called_off.righteous", "You did not come. Another day, then.");
+		t.add("cultivation.defying-the-heavens.talk.line.spar.called_off.neutral", "Not coming? Then there's no bout.");
+		t.add("cultivation.defying-the-heavens.talk.line.spar.called_off.demonic", "Wasting my time. Begone.");
 		t.add("cultivation.defying-the-heavens.spar.countdown", "%s...");
 		t.add("cultivation.defying-the-heavens.spar.fight", "Begin!");
 		t.add("cultivation.defying-the-heavens.talk.line.spar.won.righteous", "Well fought. I am bested, and gladly.");
@@ -1466,6 +1535,9 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_SECT_EXPELLED, "You have been cast out of the %s: %s");
 		t.add(ModLang.MSG_SECT_EXPELLED_TREASURY, "you laid hands on the elders' treasury again.");
 		t.add(ModLang.MSG_SECT_EXPELLED_VIOLENCE, "you struck one of your own sect.");
+		t.add(ModLang.MSG_SECT_EXPELLED_BANISHED, "by the word of one of its seniors.");
+		t.add(ModLang.MSG_SECT_BODY_LEFT, "%s leaves the %s.");
+		t.add(ModLang.MSG_SECT_BANISHED, "%s is cast out of the %s.");
 		t.add(ModLang.MSG_SECT_TREASURY_WARNING, "The treasury is the elders' alone. Lay hands on it again and you will be cast out.");
 		t.add(ModLang.MSG_SECT_TITLE, "By your strength you are now %s of the %s.");
 		t.add(ModLang.STATS_SECT, "%s - %s");
@@ -1491,6 +1563,10 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.SECT_TAB_LEAVE, "To leave, ask an elder.");
 		t.add(ModLang.SECT_TAB_PLAYER, "%s (player)");
 		t.add(ModLang.SECT_TAB_OFFLINE, "away");
+		t.add(ModLang.SECT_TAB_BODY, "As the body you are in:");
+		t.add(ModLang.SECT_TAB_LEAVE_BUTTON, "[Leave the sect]");
+		t.add(ModLang.SECT_TAB_BANISH_BUTTON, "[Banish]");
+		t.add(ModLang.SECT_TAB_SURE, "[Sure?]");
 		for (StatPoints.Stat stat : StatPoints.Stat.values()) {
 			String name = switch (stat) {
 				case STRENGTH -> "Strength";
@@ -1757,6 +1833,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.HUD_SOUL_OWN_QI_LABEL, "Own Qi");
 		t.add(ModLang.HUD_SOUL_OWN_GHOST_QI_LABEL, "Own Ghost Qi");
 		t.add(ModLang.HUD_SOUL_TETHER_AWAY, "Tether across the realms");
+		t.add(ModLang.HUD_SOUL_TETHER_ENDLESS, "Body %s blocks off (the tether has no end)");
 
 		// The Ritual to the Heavens (HeavenRitual, HeavenAltar)
 		t.add(ModBlocks.HEAVEN_ALTAR, "Heaven Altar");

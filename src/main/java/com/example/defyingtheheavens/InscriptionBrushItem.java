@@ -4,9 +4,12 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -23,16 +26,38 @@ import java.util.List;
  * The Inscription Brush paints seals of qi ink ({@link SealBlock}) on the top of a block or the side of a wall, one per use,
  * each costing a point of durability; used while sneaking, it wipes away the seal on that face instead. Either is a soft
  * brush stroke to the ear (vanilla's brushing sound, quiet; lower when wiping). The ink can only be seen with Qi Sense on.
+ * With a Blank Manual in the other hand, it writes out a technique or a spell its holder knows instead ({@link #use}).
  */
 public class InscriptionBrushItem extends Item {
 	public InscriptionBrushItem(Properties properties) {
 		super(properties);
 	}
 
+	/**
+	 * With a Blank Manual in the other hand, the brush writes out a technique or spell its holder knows (TechniqueManualItem#offerInscription:
+	 * what to write is picked from a list) instead of painting.
+	 */
+	@Override
+	public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+		ItemStack brush = player.getItemInHand(hand);
+		if (!blankInOtherHand(player, hand)) return InteractionResultHolder.pass(brush);
+		if (player instanceof ServerPlayer sp) TechniqueManualItem.offerInscription(sp);
+		return InteractionResultHolder.sidedSuccess(brush, level.isClientSide);
+	}
+
+	private static boolean blankInOtherHand(Player player, InteractionHand hand) {
+		return player.getItemInHand(hand == InteractionHand.MAIN_HAND ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND).is(ModItems.BLANK_MANUAL);
+	}
+
 	@Override
 	public InteractionResult useOn(UseOnContext context) {
 		Level level = context.getLevel();
 		Player player = context.getPlayer();
+		// Writing out a manual, not painting a seal, while a Blank Manual is in the other hand.
+		if (player != null && blankInOtherHand(player, context.getHand())) {
+			if (player instanceof ServerPlayer sp) TechniqueManualItem.offerInscription(sp);
+			return InteractionResult.sidedSuccess(level.isClientSide);
+		}
 		Direction face = context.getClickedFace();
 		BlockPos clicked = context.getClickedPos();
 		BlockPos target = clicked.relative(face);

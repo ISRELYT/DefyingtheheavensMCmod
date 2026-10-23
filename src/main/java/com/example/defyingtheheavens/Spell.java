@@ -240,12 +240,31 @@ public enum Spell {
 		if (isHeaven()) {
 			if (c.isMortal() || c.netherworld().ghost() || PlayerCultivation.rank(c.getRealm(), c.getStage()) < realmNeeded()) return false;
 			for (HeavenMethod known : c.heaven().known()) if (taughtBy(known) && c.heaven().layer(known) >= layer) return true;
-			return false;
+			return byManual(c);
 		}
-		return !c.isMortal() && c.netherworld().layer(method) >= layer;
+		return !c.isMortal() && (c.netherworld().layer(method) >= layer || byManual(c));
 	}
 
-	/** A heaven method's spell: the realm and stage (a rank, PlayerCultivation#rank) one's cultivation must reach for it, its layer's. */
+	/**
+	 * Whether {@code c} wields this spell as learned from a manual (TechniqueManualItem), apart from any method: only at its realm (the
+	 * user's rule, 2026-10-23: "only those of the required realm can learn it and use it"): an element's by the heaven path's rank
+	 * (and roots that take its element), a ghost method's by the ghost path's. A spell of both paths is no manual's.
+	 */
+	public boolean byManual(PlayerCultivation c) {
+		return c.knowsByManual(this) && manualReach(c);
+	}
+
+	/** Whether {@code c} stands where this spell's manual asks ({@link #byManual}), known or not. */
+	public boolean manualReach(PlayerCultivation c) {
+		if (isDual() || c.isMortal()) return false;
+		if (isHeaven()) return !c.netherworld().ghost() && c.rootsAllow(element) && PlayerCultivation.rank(c.getRealm(), c.getStage()) >= realmNeeded();
+		return GhostMethods.ghostRank(c.netherworld()) >= realmNeeded();
+	}
+
+	/**
+	 * The realm and stage (a rank, PlayerCultivation#rank) one's cultivation must reach for it, its layer's: the heaven path's for an
+	 * element's spell, the ghost path's for a ghost method's (their layers are counted alike: MethodLayers).
+	 */
 	public int realmNeeded() {
 		return MethodLayers.floor(layer);
 	}

@@ -84,6 +84,9 @@ public final class ModCreativeTab {
 			}
 			for (GhostMethod method : GhostMethod.values()) add(GhostJadeSlipItem.of(method));
 			for (HeavenMethod method : HeavenMethod.values()) add(JadeSlipItem.of(method));
+			// The techniques' manuals, and the blank one a technique or spell is written out on
+			for (Technique technique : Technique.values()) add(TechniqueManualItem.of(technique));
+			add(ModItems.BLANK_MANUAL);
 			// Clothing: each path's colours, every grade, crown to boots
 			for (ClothingStyle style : ClothingStyle.values()) {
 				for (ClothingTier tier : ClothingTier.values()) {

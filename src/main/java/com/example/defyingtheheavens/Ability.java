@@ -77,7 +77,12 @@ public enum Ability {
 	 * every realm alike), for blows and spells half again as hard and a quarter more speed. It goes out by itself before it would
 	 * leave fewer than Lifespan#WARN_YEARS.
 	 */
-	BURN_LIFESPAN("burn_lifespan", false, c -> true);
+	BURN_LIFESPAN("burn_lifespan", false, c -> true),
+	/**
+	 * A technique, not the realm's (Technique#CLONE, from its manual; the user's ask, 2026-10-23), wielded from Nascent Soul by the
+	 * living: split a clone off one's body, go into it and back, and draw it back in (Clones). An act: "on" while one is out.
+	 */
+	CLONE("clone", false, c -> !c.netherworld().ghost() && c.knowsTechnique(Technique.CLONE) && Technique.CLONE.wieldable(c));
 
 	private final String id;
 	private final boolean onByDefault;
@@ -109,6 +114,8 @@ public enum Ability {
 		if (this == QI_SENSE && c.hasPhysique(Physique.BLESSED_MERIDIANS)) return true; // open from a mortal's first day (Physique)
 		// A soul in another's body (Possession), a mortal's too, keeps the way out of it, and its own tear if the body has none.
 		if (this == SOUL_PROJECTION && Possession.isBorrowed(c) || this == SPATIAL_TEAR && Possession.soulTears(c)) return true;
+		// A clone (Clones) keeps the way back to its main body, whatever its own realm.
+		if (this == CLONE && Clones.isCloneRecord(c)) return true;
 		return !c.isMortal() && unlocked.test(c);
 	}
 
@@ -124,8 +131,11 @@ public enum Ability {
 			case SWORD_FLIGHT -> Component.translatable(key, Math.round(c.swordFlightCostPerSecond()));
 			case CONSCIOUSNESS_DOMAIN, REALM_SUPPRESS -> Component.translatable(key, Math.round(ConsciousnessDomainHandler.radius(c)));
 			case SOUL_PROJECTION -> {
-				Component said = Component.translatable(key, c.soulHearts(), c.soulTetherRadius(), Math.round(c.soulCostPerSecond(0, false)),
-						Math.round(c.soulCostPerSecond(1, false)));
+				// From Void Shattering its tether has no end, and it costs what it does beside the body wherever it goes.
+				Component said = c.soulTetherEndless()
+						? Component.translatable(key + ".endless", c.soulHearts(), Math.round(c.soulCostPerSecond(0, false)))
+						: Component.translatable(key, c.soulHearts(), c.soulTetherRadius(), Math.round(c.soulCostPerSecond(0, false)),
+								Math.round(c.soulCostPerSecond(1, false)));
 				// Wounds it carries yet (SoulProjection#mendSouls): how many of its hearts it would set out on, to the half heart.
 				if (c.getSoulWounds() <= 0) yield said;
 				double whole = c.soulHearts();
@@ -143,6 +153,10 @@ public enum Ability {
 					Math.round(SpatialTrialHandler.TEAR_OUT_QI * 100));
 			case BURN_LIFESPAN -> Component.translatable(key, BurnLifespan.percent(), Math.round((BurnLifespan.HARM - 1) * 100),
 					Math.round((BurnLifespan.SPEED - 1) * 100), (long) Lifespan.WARN_YEARS);
+			// In the clone: the way back (and, near the main body, in); else the clone, its realm and its cost.
+			case CLONE -> Clones.isCloneRecord(c) ? Component.translatable(key + ".clone", Math.round(Clones.ABSORB_RANGE))
+					: Component.translatable(key, Math.round(Clones.STAT_SHARE * 100), Math.round(Clones.SUMMON_SHARE * 100), Math.round(Clones.ABSORB_RANGE),
+							Clones.REFORM_TICKS / 1200);
 			default -> Component.translatable(key);
 		};
 	}

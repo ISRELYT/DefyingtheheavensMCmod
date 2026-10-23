@@ -67,6 +67,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.ToDoubleBiFunction;
 
 /**
@@ -190,6 +191,15 @@ public class CultivationScreen extends Screen {
 	/** The Sect tab's member list's scrolling. */
 	private int sectScroll;
 	private int sectMaxScroll;
+	/**
+	 * The Sect tab's buttons for a soul in a member's body (SectMembership#leaveAsBody, #banish): Leave ({@link #LEAVE_SECT}) and each
+	 * Banish (the member's id); the first click on one asks "Sure?" for {@link #CONFIRM_MS}, the second does it.
+	 */
+	private final List<RowButton<UUID>> sectButtons = new ArrayList<>();
+	private static final UUID LEAVE_SECT = new UUID(0, 0);
+	private static final long CONFIRM_MS = 3000;
+	private UUID sectConfirm;
+	private long sectConfirmAt;
 
 	/** A small button on a row of a list (Practise, Ready): what it acts on, and where it was drawn. */
 	private record RowButton<T>(T value, int x, int y, int w) {
@@ -375,6 +385,7 @@ public class CultivationScreen extends Screen {
 		spellPalette.clear();
 		statPageButtons.clear();
 		statPlusButtons.clear();
+		sectButtons.clear();
 		bar = null;
 		switch (tab) {
 			case CULTIVATION -> renderCultivation(g, player);
@@ -1397,14 +1408,27 @@ public class CultivationScreen extends Screen {
 		long cultivators = info.members().stream().filter(member -> !member.player()).count();
 		g.drawString(font, Component.translatable(ModLang.SECT_TAB_MEMBERS, cultivators, info.members().size() - cultivators), x, y, 0xE0E0E0);
 		y += 11;
-		g.drawString(font, Component.translatable(ModLang.SECT_TAB_DAYS, Math.max(1, info.ticksMember() / HeavenRitual.DAY + 1)), x, y, 0x9E9E9E);
-		y += 13;
+		if (info.inBody()) {
+			// In one of its people's bodies (Possession): the body may leave it from here (the first click asks again).
+			g.drawString(font, Component.translatable(ModLang.SECT_TAB_BODY), x, y + 3, 0x9E9E9E);
+			Component label = Component.translatable(confirming(LEAVE_SECT) ? ModLang.SECT_TAB_SURE : ModLang.SECT_TAB_LEAVE_BUTTON);
+			int w = font.width(label) + 8;
+			RowButton<UUID> leave = new RowButton<>(LEAVE_SECT, left + LIST_RIGHT - w, y, w);
+			sectButtons.add(leave);
+			drawRowButton(g, leave, label, leave.contains(mouseX, mouseY), 0xFF6E6E);
+			y += SWITCH_H + 2;
+		} else {
+			g.drawString(font, Component.translatable(ModLang.SECT_TAB_DAYS, Math.max(1, info.ticksMember() / HeavenRitual.DAY + 1)), x, y, 0x9E9E9E);
+			y += 13;
+		}
 		g.fill(x, y, left + LIST_RIGHT, y + 1, 0xFF3A3A4A);
 		y += 3;
 
-		// The members, by seniority (the strongest first), players after them.
+		// The members, by seniority (the strongest first), players after them; in a senior's body, a Banish button by those below it.
 		int viewTop = y, viewBottom = top + HEIGHT - 8;
-		int rowHeight = 10;
+		boolean banishing = info.members().stream().anyMatch(ClientSect.Member::banishable);
+		int rowHeight = banishing ? SWITCH_H + 1 : 10;
+		int textOffset = banishing ? (SWITCH_H - 8) / 2 : 0;
 		int contentHeight = info.members().size() * rowHeight + 4;
 		sectMaxScroll = Math.max(0, contentHeight - (viewBottom - viewTop));
 		sectScroll = Mth.clamp(sectScroll, 0, sectMaxScroll);
@@ -1417,17 +1441,32 @@ public class CultivationScreen extends Screen {
 				int colour = member.title() == null ? 0x8A8A8A : member.title().getColor();
 				Component realm = member.rank() < 0 ? Component.translatable(ModLang.SECT_TAB_OFFLINE)
 						: PlayerCultivation.rankName(CultivatorNpc.realmOf(member.rank()), CultivatorNpc.stageOf(member.rank()));
-				right(g, realm, left + LIST_RIGHT, ry, 0x9E9E9E);
-				// The name gets what the realm leaves, cut short with an ellipsis if it must be.
+				right(g, realm, left + LIST_RIGHT, ry + textOffset, 0x9E9E9E);
+				// The name gets what the realm (and a Banish button) leaves, cut short with an ellipsis if it must be.
 				int room = left + LIST_RIGHT - font.width(realm) - 6 - x;
+				if (member.banishable()) {
+					Component label = Component.translatable(confirming(member.id()) ? ModLang.SECT_TAB_SURE : ModLang.SECT_TAB_BANISH_BUTTON);
+					int w = font.width(label) + 6;
+					RowButton<UUID> banish = new RowButton<>(member.id(), left + LIST_RIGHT - font.width(realm) - 6 - w, ry, w);
+					// Pressable only while the whole of it shows (not half hidden at the list's edge).
+					boolean shown = ry >= viewTop && ry + SWITCH_H <= viewBottom;
+					if (shown) sectButtons.add(banish);
+					drawRowButton(g, banish, label, shown && banish.contains(mouseX, mouseY), 0xFF6E6E);
+					room -= w + 4;
+				}
 				String name = row.getString();
 				if (font.width(name) > room) name = font.plainSubstrByWidth(name, Math.max(0, room - font.width("..."))) + "...";
-				g.drawString(font, name, x, ry, member.player() ? 0x8FEAE4 : colour);
+				g.drawString(font, name, x, ry + textOffset, member.player() ? 0x8FEAE4 : colour);
 			}
 			ry += rowHeight;
 		}
 		g.disableScissor();
 		scrollbar(g, viewTop, viewBottom, contentHeight, sectScroll, sectMaxScroll, mouseX, mouseY);
+	}
+
+	/** Whether the Sect tab's button for {@code id} has been clicked once and is asking "Sure?" still. */
+	private boolean confirming(UUID id) {
+		return id.equals(sectConfirm) && System.currentTimeMillis() - sectConfirmAt < CONFIRM_MS;
 	}
 
 	// --- Abilities: what the realm has awakened, each switchable on and off ---
@@ -1787,6 +1826,20 @@ public class CultivationScreen extends Screen {
 			}
 		}
 		if (button == 0) {
+			for (RowButton<UUID> act : sectButtons) {
+				if (!act.contains(mouseX, mouseY)) continue;
+				// The first click asks "Sure?"; the second, while it asks, does it.
+				if (confirming(act.value())) {
+					sectConfirm = null;
+					if (act.value().equals(LEAVE_SECT)) ClientSect.leaveAsBody();
+					else ClientSect.banish(act.value());
+				} else {
+					sectConfirm = act.value();
+					sectConfirmAt = System.currentTimeMillis();
+				}
+				if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+				return true;
+			}
 			for (RowButton<Boolean> page : statPageButtons) {
 				if (!page.contains(mouseX, mouseY)) continue;
 				pointsPage = page.value();

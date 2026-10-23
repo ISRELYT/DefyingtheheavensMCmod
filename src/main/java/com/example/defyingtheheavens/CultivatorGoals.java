@@ -691,7 +691,8 @@ public final class CultivatorGoals {
 
 		@Override
 		public boolean canUse() {
-			if (npc.getLifecycle() != CultivatorNpc.Lifecycle.SECT || npc.getTarget() != null || npc.shouldFlee()) return false;
+			// Not in a spar, either: leading its partner to the sparring ground (SparSystem#LEAD_TICKS), its post would pull it back.
+			if (npc.getLifecycle() != CultivatorNpc.Lifecycle.SECT || npc.getTarget() != null || npc.shouldFlee() || SparSystem.isSparring(npc)) return false;
 			Sect sect = npc.sect();
 			return sect != null && npc.level().dimension() == sect.dimension && sect.inTerritory(npc.blockPosition());
 		}

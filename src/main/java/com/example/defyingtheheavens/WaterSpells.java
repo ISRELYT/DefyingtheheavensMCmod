@@ -63,7 +63,8 @@ public final class WaterSpells {
 	public static final float SPEAR_DAMAGE = 11;
 	public static final double TIDE_LENGTH = 30, TIDE_PACE = 0.75, TIDE_WIDTH = 14, TIDE_HEIGHT = 10;
 	public static final float TIDE_DAMAGE = 30;
-	public static final double RIVER_LENGTH = 32, RIVER_WIDTH = 2.5, RIVER_SCOUR = 1.8;
+	/** The channel the river scours where it lands: 3 round, by its realm (Devastation#sized). */
+	public static final double RIVER_LENGTH = 32, RIVER_WIDTH = 2.5, RIVER_SCOUR = Devastation.sized(Realm.HEAVENLY_BEING, 3.8);
 	public static final int RIVER_TICKS = 2 * 20;
 	public static final float RIVER_DAMAGE = 60;
 	public static final double FROZEN_RADIUS = 64, FROST_RADIUS = 32;
@@ -72,7 +73,8 @@ public final class WaterSpells {
 	public static final double ZERO_RANGE = 48;
 	public static final int ZERO_TICKS = 5 * 20;
 	public static final float ZERO_DAMAGE = 200, ZERO_SHATTER = 60;
-	public static final double SEA_RANGE = 48, SEA_RADIUS = 16, SEA_BASIN = 10;
+	/** The basin the sea leaves behind: 18 round, by its realm (Devastation#sized). */
+	public static final double SEA_RANGE = 48, SEA_RADIUS = 16, SEA_BASIN = Devastation.sized(Realm.FOUR_AXIS, 18);
 	public static final int SEA_TICKS = 8 * 20;
 	public static final float SEA_DAMAGE = 22;
 

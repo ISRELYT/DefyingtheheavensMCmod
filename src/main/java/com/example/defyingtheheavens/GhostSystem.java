@@ -213,6 +213,14 @@ public final class GhostSystem {
 	 */
 	public static void overtakenByYin(ServerPlayer p) {
 		if (state(p).ghost()) return;
+		// A clone's body (Clones: it plays its maker's record) is the one that gives way: it dissolves as one slain does, the yin it took
+		// in going with it, and its maker wakes in their own body, alive.
+		if (Clones.inClone(p)) {
+			state(p).setYinCorruption(0);
+			Clones.giveWay(p);
+			CultivationManager.markDirty(p.server);
+			return;
+		}
 		if (!afterDeathOn(p)) {
 			state(p).setYinCorruption(0.99);
 			SoulRiver.beginDescent(p, false);

@@ -146,6 +146,17 @@ public class PlayerCultivation {
 	 * null otherwise.
 	 */
 	private net.minecraft.nbt.CompoundTag possession;
+	/** The techniques learned from manuals (Technique: TechniqueManualItem), known for good. Saved and synced. */
+	private final java.util.EnumSet<Technique> techniques = java.util.EnumSet.noneOf(Technique.class);
+	/** Spells learned from a manual, apart from any method (TechniqueManualItem; Spell#isKnown). Saved and synced. */
+	private final java.util.EnumSet<Spell> manualSpells = java.util.EnumSet.noneOf(Spell.class);
+	/**
+	 * A clone split off this body (Clones): where the body not played stands, what it carries, the clone's own cultivation (its qi),
+	 * and whether its player is in it now. Saved, so it outlasts a logout or a crash; null with none out.
+	 */
+	private net.minecraft.nbt.CompoundTag clone;
+	/** The game time before which no clone may be split off again, after one was lost (Clones#REFORM_TICKS): saved; 0 for none. */
+	private long cloneReadyAt;
 	/** The nascent soul's state ({@link SoulProjection.State} ordinal): synced, never saved. */
 	private int soulState;
 
@@ -549,6 +560,44 @@ public class PlayerCultivation {
 
 	public void setPossession(net.minecraft.nbt.CompoundTag tag) { possession = tag; }
 
+	public boolean knowsTechnique(Technique technique) { return techniques.contains(technique); }
+
+	public java.util.Set<Technique> techniques() { return java.util.Collections.unmodifiableSet(techniques); }
+
+	/** @return whether it was new */
+	public boolean learnTechnique(Technique technique) { return techniques.add(technique); }
+
+	public boolean knowsByManual(Spell spell) { return manualSpells.contains(spell); }
+
+	public java.util.Set<Spell> manualSpells() { return java.util.Collections.unmodifiableSet(manualSpells); }
+
+	/** @return whether it was new */
+	public boolean learnFromManual(Spell spell) { return manualSpells.add(spell); }
+
+	/** The client's mirror, as synced (ModPackets#sendSync): the techniques and manual spells as the server has them. */
+	public void setTechniques(java.util.Set<Technique> known) {
+		techniques.clear();
+		techniques.addAll(known);
+	}
+
+	public void setManualSpells(java.util.Set<Spell> known) {
+		manualSpells.clear();
+		manualSpells.addAll(known);
+	}
+
+	public net.minecraft.nbt.CompoundTag getClone() { return clone; }
+
+	/** The game time a new clone may be split off from, after one was lost (Clones#REFORM_TICKS); 0 or past: now. */
+	public long cloneReadyAt() { return cloneReadyAt; }
+
+	public void setCloneReadyAt(long gameTime) { cloneReadyAt = Math.max(0, gameTime); }
+
+	/** A clone out (Clones), or none: the Clone switch shows which (on, as Soul Projection's is while the soul is out). */
+	public void setClone(net.minecraft.nbt.CompoundTag tag) {
+		clone = tag;
+		setAbilityEnabled(Ability.CLONE, tag != null);
+	}
+
 	public SoulProjection.State getSoulState() { return SoulProjection.State.byIndex(soulState); }
 
 	public void setSoulState(SoulProjection.State state) { soulState = state.ordinal(); }
@@ -592,20 +641,30 @@ public class PlayerCultivation {
 		return 1 + 3 * Math.max(0, TwoPaths.ghostRank(this, true) - rank(Realm.NASCENT_SOUL, Stage.EARLY));
 	}
 
-	/** How far (blocks) the tether lets the soul stray from its body. */
+	/** How far (blocks) the tether lets the soul stray from its body: from Void Shattering, without end ({@link #soulTetherEndless}). */
 	public int soulTetherRadius() {
+		if (soulTetherEndless()) return SoulProjection.ENDLESS_TETHER;
 		return SoulProjection.TETHER_RADII[Math.min(SoulProjection.TETHER_RADII.length - 1, soulRank() - rank(Realm.NASCENT_SOUL, Stage.EARLY))];
 	}
 
 	/**
-	 * Qi a second the soul costs at {@code reach} (0 at the body, 1 at the tether's end): half the realm's own gathering at the
-	 * body, twice it at the end of the tether, and that much again on top while possessing. Reckoned from the realm's plain
-	 * gathering, so whatever adds to gathering (clothing, pills, the Upper Realm's dense qi) helps keep the soul out. A soul born of
-	 * the ghost path ({@link #soulPath}) costs ghost qi, reckoned the same way from what that pool gathers in the Netherworld
+	 * From Void Shattering on (the soul's path, as wielded) the tether has no end (the user's ask, 2026-10-23): the soul goes as far as
+	 * it will, at what it costs beside its body ({@link #soulCostPerSecond}, its reach always nothing).
+	 */
+	public boolean soulTetherEndless() {
+		return soulRank() >= rank(Realm.VOID_SHATTERING, Stage.EARLY);
+	}
+
+	/**
+	 * Qi a second the soul costs at {@code reach} (0 at the body, 1 at the tether's end): half of SoulProjection#SOUL_QI_BASE at the
+	 * body, twice it at the end of the tether, and that much again on top while possessing. The same at every realm (the user's ask,
+	 * 2026-10-23: it was the realm's own gathering, the same share of the pool at every realm, which ran a True Immortal's soul as dry
+	 * as a Nascent Soul's): a Nascent Soul's still runs dry, a Heavenly Being's hardly, from Four Axis never. A soul born of the ghost
+	 * path ({@link #soulPath}) costs ghost qi, reckoned the same way from what that pool gathers in the Netherworld
 	 * (SoulProjection#GHOST_SOUL_BASE): it fills by the place's ghostly density, not by the realm.
 	 */
 	public double soulCostPerSecond(double reach, boolean possessing) {
-		double base = soulPath() == TwoPaths.Path.GHOST ? SoulProjection.GHOST_SOUL_BASE : CultivationStats.qiGather(getEffectiveRealm(), getEffectiveStage());
+		double base = soulPath() == TwoPaths.Path.GHOST ? SoulProjection.GHOST_SOUL_BASE : SoulProjection.SOUL_QI_BASE;
 		return base * (0.5 + 1.5 * Math.max(0, Math.min(1, reach))) + (possessing ? base : 0);
 	}
 
@@ -880,7 +939,7 @@ public class PlayerCultivation {
 	public double maxQi() {
 		if (mortal) return 0;
 		return CultivationStats.maxQi(getEffectiveRealm(), getEffectiveStage()) * favourFactor() * (1 - pressurePenalty) * physiqueQiFactor()
-				* StatPoints.poolFactor(this);
+				* StatPoints.poolFactor(this) * Clones.strength(this); // a clone's pool half its maker's
 	}
 
 	/**
@@ -889,8 +948,13 @@ public class PlayerCultivation {
 	 * slowed by pressure. A mortal gathers none.
 	 */
 	public double qiGatherPerSecond() {
+		return qiGatherAt(placeFactor());
+	}
+
+	/** {@link #qiGatherPerSecond} as if where they are gave {@code place} (a clone's main body, where it sits: Clones#feed). */
+	public double qiGatherAt(double place) {
 		if (mortal) return 0;
-		return CultivationStats.qiGather(getEffectiveRealm(), getEffectiveStage()) * placeFactor()
+		return CultivationStats.qiGather(getEffectiveRealm(), getEffectiveStage()) * place
 				* (1 + qiBoost) * (1 + gearQiBonus) * favourFactor() * (1 - pressurePenalty) * physiqueQiFactor()
 				* StatPoints.gatherFactor(this)
 				+ HeavenPassives.amount(this, QiElement.WATER); // Ceaseless Flow, the water methods' passive
@@ -1091,6 +1155,8 @@ public class PlayerCultivation {
 		meditationSpeed = old.meditationSpeed;
 		heaven.load(old.heaven.save());
 		netherworld.carryOver(old.netherworld);
+		techniques.addAll(old.techniques); // and the techniques and spells learned from manuals
+		manualSpells.addAll(old.manualSpells);
 	}
 
 	/**
@@ -1128,6 +1194,18 @@ public class PlayerCultivation {
 		if (soulReturn != null) tag.put("SoulReturn", soulReturn.copy());
 		if (soulWounds > 0) tag.putFloat("SoulWounds", soulWounds);
 		if (possession != null) tag.put("Possession", possession.copy());
+		if (!techniques.isEmpty()) {
+			ListTag known = new ListTag();
+			for (Technique technique : techniques) known.add(StringTag.valueOf(technique.getId()));
+			tag.put("Techniques", known);
+		}
+		if (!manualSpells.isEmpty()) {
+			ListTag spells = new ListTag();
+			for (Spell spell : manualSpells) spells.add(StringTag.valueOf(spell.getId()));
+			tag.put("ManualSpells", spells);
+		}
+		if (clone != null) tag.put("Clone", clone.copy());
+		if (cloneReadyAt > 0) tag.putLong("CloneReadyAt", cloneReadyAt);
 		tag.putInt("Realm", realm.ordinal());
 		tag.putInt("Stage", stage.ordinal());
 		tag.putDouble("Cultivation", cultivation);
@@ -1249,6 +1327,18 @@ public class PlayerCultivation {
 		c.soulReturn = tag.contains("SoulReturn") ? tag.getCompound("SoulReturn").copy() : null;
 		c.soulWounds = Math.max(0, tag.getFloat("SoulWounds"));
 		c.possession = tag.contains("Possession") ? tag.getCompound("Possession").copy() : null;
+		ListTag known = tag.getList("Techniques", Tag.TAG_STRING);
+		for (int i = 0; i < known.size(); i++) {
+			Technique technique = Technique.byId(known.getString(i));
+			if (technique != null) c.techniques.add(technique); // one no longer known: dropped
+		}
+		ListTag spells = tag.getList("ManualSpells", Tag.TAG_STRING);
+		for (int i = 0; i < spells.size(); i++) {
+			Spell spell = Spell.byId(spells.getString(i));
+			if (spell != null) c.manualSpells.add(spell);
+		}
+		c.clone = tag.contains("Clone") ? tag.getCompound("Clone").copy() : null;
+		c.cloneReadyAt = tag.getLong("CloneReadyAt");
 		c.lowerRealmBound = tag.getBoolean("LowerRealmBound");
 		c.pendingTrial = SpatialTrialHandler.Route.byName(tag.getString("SpatialTrial"));
 		c.fallProtected = tag.getBoolean("FallProtected");

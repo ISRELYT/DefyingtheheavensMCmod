@@ -1,5 +1,6 @@
 package com.example.defyingtheheavens;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -14,6 +15,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -51,6 +53,14 @@ public final class SparSystem {
 	public static final float READY_SHARE = 0.75f;
 	/** How hard blows between the two land: pulled, as one spars, not fights. */
 	public static final float BLOW_SHARE = 0.5f;
+	/**
+	 * One of a sect's people on its own grounds leads its partner to where bouts are held, its training ground's sparring ring (the
+	 * plaza for a sect without one), and the bout begins there (the user's ask, 2026-10-23: not on the spot): once it stands in its
+	 * place and its partner within {@link #ARRIVED} of theirs. Not followed within {@link #LEAD_TICKS}, it is called off. Unable to
+	 * reach its place for {@link #LEAD_STUCK_TICKS}, it begins where it stands, its partner by it. A rogue spars where it stands.
+	 */
+	public static final int LEAD_TICKS = 90 * 20, LEAD_STUCK_TICKS = 60 * 20;
+	public static final double ARRIVED = 3;
 
 	/** What the player asked for: a wager, and whether the cultivator holds back. */
 	public enum Terms {
@@ -71,7 +81,8 @@ public final class SparSystem {
 		}
 	}
 
-	public enum Outcome { WON, LOST, FORFEIT, DRAW, VOID }
+	/** How a bout ended; CALLED_OFF: it never began, its partner never came to the sparring ground ({@link #LEAD_TICKS}). */
+	public enum Outcome { WON, LOST, FORFEIT, DRAW, VOID, CALLED_OFF }
 
 	/** One spar under way. */
 	static final class Spar {
@@ -93,6 +104,9 @@ public final class SparSystem {
 		float npcLine;
 		int countdown = COUNTDOWN_TICKS;
 		int ticks;
+		/** Led to the sparring ground ({@link #LEAD_TICKS}): the cultivator's place and its partner's there, and ticks since it set off (-1: there, or none). */
+		BlockPos npcSpot, playerSpot;
+		int leading = -1;
 
 		Spar(ServerPlayer player, CultivatorNpc npc, Terms terms, List<ItemStack> playerStake, List<ItemStack> npcStake) {
 			this.player = player.getUUID();
@@ -236,10 +250,17 @@ public final class SparSystem {
 		npc.beginSpar(player, holdBack ? Math.max(0, yours) : CultivatorNpc.NO_HOLD_BACK);
 		spar.playerLine = Math.max(1, player.getHealth() - player.getMaxHealth() * LINE_SHARE);
 		spar.npcLine = Math.max(1, npc.getHealth() - npc.getMaxHealth() * LINE_SHARE);
+		// One of a sect's people on its grounds takes them to its sparring ground first (LEAD_TICKS).
+		BlockPos[] spots = sparringGround(npc);
+		if (spots != null) {
+			spar.npcSpot = spots[0];
+			spar.playerSpot = spots[1];
+			spar.leading = 0;
+		}
 		BY_PLAYER.put(spar.player, spar);
 		BY_NPC.put(spar.npc, spar);
 		Component stakes = npcStake.isEmpty() ? Component.empty() : Component.translatable(ModLang.SPAR_STAKES, describe(playerStake), describe(npcStake));
-		TalkSystem.breakOff(player, npc, ModLang.SPAR_BEGIN);
+		TalkSystem.breakOff(player, npc, spots != null ? ModLang.SPAR_FOLLOW : ModLang.SPAR_BEGIN);
 		if (!npcStake.isEmpty()) player.sendSystemMessage(stakes);
 		npc.level().playSound(null, npc.blockPosition(), SoundEvents.ANVIL_PLACE, SoundSource.NEUTRAL, 0.4f, 1.6f);
 	}
@@ -274,6 +295,11 @@ public final class SparSystem {
 				end(spar, Outcome.VOID, player, npc);
 				continue;
 			}
+			// On the way to the sparring ground: the bout begins once both are there.
+			if (spar.leading >= 0) {
+				lead(spar, player, npc);
+				continue;
+			}
 			if (spar.countdown > 0) {
 				npc.getNavigation().stop();
 				npc.getLookControl().setLookAt(player, 30.0f, 30.0f);
@@ -302,6 +328,45 @@ public final class SparSystem {
 			} else if (++spar.ticks >= TIME_LIMIT_TICKS) {
 				end(spar, Outcome.DRAW, player, npc);
 			}
+		}
+	}
+
+	/**
+	 * Where {@code npc} would hold a bout: on its own sect's grounds, its place and its partner's in the sparring ring (NpcLife#boutSpots);
+	 * null for a rogue, one off its grounds, or a ring with no room to stand: it spars where it stands.
+	 */
+	static BlockPos[] sparringGround(CultivatorNpc npc) {
+		Sect sect = npc.sect();
+		if (sect == null || sect.extinct || !(npc.level() instanceof ServerLevel level) || sect.dimension != level.dimension()
+				|| !sect.inTerritory(npc.blockPosition())) {
+			return null;
+		}
+		return NpcLife.boutSpots(level, sect, level.random);
+	}
+
+	/** A tick of {@code npc} leading {@code player} to the sparring ground ({@link #LEAD_TICKS}): the countdown once both are there. */
+	private static void lead(Spar spar, ServerPlayer player, CultivatorNpc npc) {
+		spar.leading++;
+		Vec3 spot = Vec3.atBottomCenterOf(spar.npcSpot);
+		boolean there = npc.position().distanceToSqr(spot) <= 1.5 * 1.5;
+		if (!there) {
+			if (npc.getNavigation().isDone() || spar.leading % 20 == 0) npc.getNavigation().moveTo(spot.x, spot.y, spot.z, 0.9);
+		} else {
+			npc.getNavigation().stop();
+			npc.getLookControl().setLookAt(player, 30.0f, 30.0f);
+		}
+		boolean come = player.position().distanceToSqr(Vec3.atBottomCenterOf(spar.playerSpot)) <= ARRIVED * ARRIVED;
+		if (there && come || spar.leading >= LEAD_STUCK_TICKS && player.distanceTo(npc) <= 6) {
+			spar.leading = -1; // both there: its three breaths, from the next tick
+			npc.getNavigation().stop();
+			return;
+		}
+		if (spar.leading >= LEAD_TICKS) {
+			end(spar, Outcome.CALLED_OFF, player, npc);
+			return;
+		}
+		if (spar.leading % 60 == 0) {
+			player.displayClientMessage(Component.translatable(there ? ModLang.SPAR_WAITING : ModLang.SPAR_LEADING, Possession.nameOf(npc)), true);
 		}
 	}
 
@@ -340,7 +405,7 @@ public final class SparSystem {
 			case WON -> spar.terms.full && spar.stronger ? Regard.SPAR_WIN_FULL : spar.senior ? Regard.SPAR_WIN_SENIOR : Regard.SPAR_WIN;
 			case LOST -> spar.junior ? Regard.SPAR_LOSS_BADLY : Regard.SPAR_LOSS;
 			case FORFEIT -> Regard.SPAR_LOSS_BADLY;
-			case DRAW, VOID -> 0;
+			case DRAW, VOID, CALLED_OFF -> 0;
 		};
 		// A spar moves its regard once a day; later bouts the same day are for the practice.
 		Regard.Entry entry = npc.regardEntry(player);
@@ -357,12 +422,17 @@ public final class SparSystem {
 				npc.keepWinnings(spar.playerStake);
 				npc.keepWinnings(spar.npcStake);
 			}
-			case DRAW, VOID -> {
+			case DRAW, VOID, CALLED_OFF -> {
 				give(player, spar.playerStake);
 				npc.keepWinnings(spar.npcStake);
 			}
 		}
 		if (npc.isVacant()) return; // its body taken by a soul (Possession): set aside, it says nothing
+		if (outcome == Outcome.CALLED_OFF) {
+			// Never came to the sparring ground: no bout, and no trial tried (it may be asked again).
+			TalkSystem.say(player, npc, TalkSystem.line("spar.called_off", npc), 0);
+			return;
+		}
 		if (spar.terms == Terms.TRIAL && outcome != Outcome.VOID) {
 			// The entrance trial: won or held to the time, the elder takes them in; else not today (SectMembership#onTrial).
 			TalkSystem.say(player, npc, Component.translatable(ModLang.talkLine(SectMembership.onTrial(player, npc, outcome))), delta);
@@ -373,7 +443,7 @@ public final class SparSystem {
 			case WON -> "spar.won";
 			case LOST -> "spar.lost";
 			case FORFEIT -> "spar.forfeit";
-			case DRAW, VOID -> "spar.draw";
+			case DRAW, VOID, CALLED_OFF -> "spar.draw";
 		};
 		TalkSystem.say(player, npc, TalkSystem.line(line, npc), delta);
 		npc.level().playSound(null, npc.blockPosition(), SoundEvents.ANVIL_LAND, SoundSource.NEUTRAL, 0.3f, 1.8f);
@@ -381,12 +451,9 @@ public final class SparSystem {
 		if (outcome == Outcome.LOST && spar.senior && spar.regardBefore >= Regard.WARM) TalkSystem.grantInsight(player, npc);
 	}
 
-	/** Into the player's inventory, or at their feet. */
+	/** Into the player's inventory, what doesn't fit at their feet (vanilla's add keeps no part it couldn't place, if any fit). */
 	private static void give(ServerPlayer player, List<ItemStack> stacks) {
-		for (ItemStack stack : stacks) {
-			ItemStack copy = stack.copy();
-			if (!player.getInventory().add(copy)) player.drop(copy, false);
-		}
+		for (ItemStack stack : stacks) player.getInventory().placeItemBackInInventory(stack.copy());
 	}
 
 	/** Any spar the player is in ends at once (they die, leave, or the server stops). */

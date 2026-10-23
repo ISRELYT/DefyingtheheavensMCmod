@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {"item": "minecraft:book"},
+    {"item": "defying-the-heavens:jade"}
+  ],
+  "result": {"item": "defying-the-heavens:blank_manual"}
+}

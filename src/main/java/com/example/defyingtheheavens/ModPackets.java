@@ -35,6 +35,19 @@ public final class ModPackets {
 	/** C2S: the Sect tab opening asks for its page; S2C SECT_INFO is it (SectMembership#sendInfo). */
 	public static final ResourceLocation SECT_INFO_REQUEST = new ResourceLocation(DefyingTheHeavens.MOD_ID, "sect_info_request");
 	public static final ResourceLocation SECT_INFO = new ResourceLocation(DefyingTheHeavens.MOD_ID, "sect_info");
+	/**
+	 * C2S: the Sect tab's buttons for a soul in a sect member's body (SectMembership#leaveAsBody, #banish): 0 leave the sect as the
+	 * body, or 1 and a member's id to cast them out.
+	 */
+	public static final ResourceLocation SECT_ACT = new ResourceLocation(DefyingTheHeavens.MOD_ID, "sect_act");
+	/** S2C: whether the player is in their clone now, and how their main body fares where it sits (Clones), for the HUD. */
+	public static final ResourceLocation CLONE_STATE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "clone_state");
+	/**
+	 * S2C: what the player can write out on the Blank Manual in their off hand (TechniqueManualItem#writable): kinds (0 a technique, 1 a
+	 * spell) and ordinals, opening the inscription screen; C2S inscribe: the one chosen.
+	 */
+	public static final ResourceLocation INSCRIBE_OPTIONS = new ResourceLocation(DefyingTheHeavens.MOD_ID, "inscribe_options");
+	public static final ResourceLocation INSCRIBE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "inscribe");
 	/** C2S: put points into a stat (StatPoints): the stat's place, then how many. */
 	public static final ResourceLocation SPEND_STAT_POINTS = new ResourceLocation(DefyingTheHeavens.MOD_ID, "spend_stat_points");
 	/** C2S: select an ability on the wheel for the Use Selected Ability key: its place (-1: none). */
@@ -223,6 +236,19 @@ public final class ModPackets {
 				(server, player, handler, buf, responseSender) -> server.execute(() -> sendJournal(player)));
 		ServerPlayNetworking.registerGlobalReceiver(SECT_INFO_REQUEST,
 				(server, player, handler, buf, responseSender) -> server.execute(() -> SectMembership.sendInfo(player)));
+		ServerPlayNetworking.registerGlobalReceiver(INSCRIBE, (server, player, handler, buf, responseSender) -> {
+			int kind = buf.readVarInt();
+			int index = buf.readVarInt();
+			server.execute(() -> TechniqueManualItem.inscribe(player, kind, index));
+		});
+		ServerPlayNetworking.registerGlobalReceiver(SECT_ACT, (server, player, handler, buf, responseSender) -> {
+			int act = buf.readVarInt();
+			UUID target = act == 1 ? buf.readUUID() : null;
+			server.execute(() -> {
+				if (act == 0 && SectMembership.leaveAsBody(player)) SectMembership.sendInfo(player);
+				else if (act == 1) SectMembership.banish(player, target);
+			});
+		});
 		ServerPlayNetworking.registerGlobalReceiver(SPEND_STAT_POINTS, (server, player, handler, buf, responseSender) -> {
 			int stat = buf.readVarInt();
 			int count = buf.readVarInt();
@@ -456,7 +482,35 @@ public final class ModPackets {
 		// The obsession named (Obsession), the record's: -1 none.
 		buf.writeVarInt(c.obsession() == null ? -1 : c.obsession().ordinal());
 		buf.writeVarInt(own.meditationSpeed()); // the pace its meditation is set to (the Cultivation tab's button), their own
+		// The techniques learned from manuals (a bit mask over their ordinals), the spells learned from them (their ordinals), and
+		// whether they play their clone now (Clones: its way back stays on the wheel).
+		int techniques = 0;
+		for (Technique technique : c.techniques()) techniques |= 1 << technique.ordinal();
+		buf.writeVarInt(techniques);
+		buf.writeVarInt(c.manualSpells().size());
+		for (Spell spell : c.manualSpells()) buf.writeVarInt(spell.ordinal());
+		buf.writeBoolean(Clones.inClone(player));
 		ServerPlayNetworking.send(player, SYNC, buf);
+	}
+
+	/** S2C clone_state: in their clone now or not, and their main body's health and its whole where it sits (Clones). */
+	public static void sendCloneState(ServerPlayer player, boolean in, float mainHealth, float mainMax) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeBoolean(in);
+		buf.writeFloat(mainHealth);
+		buf.writeFloat(mainMax);
+		ServerPlayNetworking.send(player, CLONE_STATE, buf);
+	}
+
+	/** S2C inscribe_options: what {@code player} may write out ({@code options}: kind, then ordinal), opening the inscription screen. */
+	public static void sendInscribeOptions(ServerPlayer player, List<int[]> options) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(options.size());
+		for (int[] option : options) {
+			buf.writeVarInt(option[0]);
+			buf.writeVarInt(option[1]);
+		}
+		ServerPlayNetworking.send(player, INSCRIBE_OPTIONS, buf);
 	}
 
 	/**

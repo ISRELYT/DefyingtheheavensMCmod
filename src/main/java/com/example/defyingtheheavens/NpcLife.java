@@ -1015,9 +1015,12 @@ public final class NpcLife {
 		}
 	}
 
-	/** Two disciples meet in the training ground's sparring ring for a practice bout (a sect without one: on the plaza). */
-	private static void startBout(ServerLevel level, Sect sect, CultivatorNpc a, CultivatorNpc b, long now) {
-		RandomSource random = level.random;
+	/**
+	 * Where two meet for a bout on {@code sect}'s grounds: two open spots four blocks apart in its training ground's sparring ring (a sect
+	 * without one: on the plaza), or null if none is free to stand on. A practice bout's, and a player's spar with one of its people
+	 * (SparSystem: it leads them there).
+	 */
+	static BlockPos[] boutSpots(ServerLevel level, Sect sect, RandomSource random) {
 		BlockPos ring = sect.sparringRing();
 		for (int attempt = 0; attempt < 8; attempt++) {
 			double angle = random.nextDouble() * Math.PI * 2, facing = random.nextDouble() * Math.PI;
@@ -1036,18 +1039,27 @@ public final class NpcLife {
 			BlockPos one = BlockPos.containing(cx + ox, y, cz + oz);
 			BlockPos two = BlockPos.containing(cx - ox, y, cz - oz);
 			if (one.equals(two) || !standable(level, one) || !standable(level, two) || roofed(level, one) || roofed(level, two)) continue;
-			long until = now + WALK_LIMIT + 600 + random.nextInt(300);
-			Activity first = new Activity(Kind.SPAR, one, until);
-			first.partner = b.getUUID();
-			first.lead = true;
-			first.face = Vec3.atBottomCenterOf(two).add(0, 1.5, 0);
-			Activity second = new Activity(Kind.SPAR, two, until);
-			second.partner = a.getUUID();
-			second.face = Vec3.atBottomCenterOf(one).add(0, 1.5, 0);
-			begin(a, first);
-			begin(b, second);
-			return;
+			return new BlockPos[] {one, two};
 		}
+		return null;
+	}
+
+	/** Two disciples meet in the training ground's sparring ring for a practice bout (a sect without one: on the plaza). */
+	private static void startBout(ServerLevel level, Sect sect, CultivatorNpc a, CultivatorNpc b, long now) {
+		RandomSource random = level.random;
+		BlockPos[] spots = boutSpots(level, sect, random);
+		if (spots == null) return;
+		BlockPos one = spots[0], two = spots[1];
+		long until = now + WALK_LIMIT + 600 + random.nextInt(300);
+		Activity first = new Activity(Kind.SPAR, one, until);
+		first.partner = b.getUUID();
+		first.lead = true;
+		first.face = Vec3.atBottomCenterOf(two).add(0, 1.5, 0);
+		Activity second = new Activity(Kind.SPAR, two, until);
+		second.partner = a.getUUID();
+		second.face = Vec3.atBottomCenterOf(one).add(0, 1.5, 0);
+		begin(a, first);
+		begin(b, second);
 	}
 
 	/**

@@ -51,7 +51,8 @@
       "com.example.defyingtheheavens.PhysiquesPillsGameTests",
       "com.example.defyingtheheavens.LifespanCostsGameTests",
       "com.example.defyingtheheavens.NewRealmsGameTests",
-      "com.example.defyingtheheavens.SwiftAndMendingGameTests"
+      "com.example.defyingtheheavens.SwiftAndMendingGameTests",
+      "com.example.defyingtheheavens.TechniquesCloneGameTests"
     ]
   }
 }

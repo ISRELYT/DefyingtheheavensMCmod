@@ -263,6 +263,11 @@ public final class TribulationManager {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_SOUL_BUSY), true);
 			return;
 		}
+		// Nor a clone (Clones): here too, as naming an obsession (Obsession#name) comes straight here.
+		if (Clones.inClone(player)) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_CLONE_CANNOT), true);
+			return;
+		}
 		PlayerCultivation c = CultivationManager.get(player);
 		if (c.isAtBottleneck() && c.isBreakthroughLocked()) {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_REALM_LOCKED,
@@ -321,6 +326,10 @@ public final class TribulationManager {
 		}
 		if (ModDimensions.isInnerRealm(player.level().dimension())) {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_INNER_TRIBULATION), true);
+			return;
+		}
+		if (Clones.inClone(player)) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_CLONE_CANNOT), true);
 			return;
 		}
 		if (SoulProjection.isActive(player.getUUID())) {

@@ -57,16 +57,18 @@ public final class FireSpells {
 	public static final int KARMIC_TICKS = 8 * 20, KARMIC_CLEANSE = 2;
 	public static final double METEOR_RANGE = 48, METEOR_RADIUS = 6;
 	public static final float METEOR_DAMAGE = 45;
-	public static final int METEOR_FALL = 30, METEOR_CRATER = 6;
+	/** The craters, by the spell's realm (Devastation#sized): the meteor's 13, the phoenix's 7, each falling sun's 9. */
+	public static final int METEOR_FALL = 30, METEOR_CRATER = (int) Math.round(Devastation.sized(Realm.NASCENT_SOUL, 23));
 	public static final double PHOENIX_SPEED = 1.6, PHOENIX_RANGE = 64, PHOENIX_RADIUS = 5;
 	public static final float PHOENIX_DAMAGE = 90;
-	public static final int PHOENIX_CRATER = 4;
-	public static final double SEA_RANGE = 48, SEA_RADIUS = 20, SEA_FIRES = 0.12;
+	public static final int PHOENIX_CRATER = (int) Math.round(Devastation.sized(Realm.HEAVENLY_BEING, 9));
+	/** Sea of Flames burns foes {@link #SEA_RADIUS} round; the land it scorches reaches {@link #SEA_SCORCH} (31, by its realm: Devastation#sized). */
+	public static final double SEA_RANGE = 48, SEA_RADIUS = 20, SEA_FIRES = 0.12, SEA_SCORCH = Devastation.sized(Realm.HEAVENLY_BEING, 40);
 	public static final int SEA_TICKS = 10 * 20;
 	public static final float SEA_DAMAGE = 20;
 	public static final double SUNS_RANGE = 64, SUNS_SPREAD = 10, SUNS_RADIUS = 7;
 	public static final float SUNS_DAMAGE = 150;
-	public static final int SUNS_CRATER = 6;
+	public static final int SUNS_CRATER = (int) Math.round(Devastation.sized(Realm.FOUR_AXIS, 9));
 	public static final int NIRVANA_TICKS = 60 * 20;
 	public static final double NIRVANA_RADIUS = 10;
 	public static final float NIRVANA_DAMAGE = 200;
@@ -590,7 +592,7 @@ public final class FireSpells {
 			this.field = SpellField.create(level, SpellField.Kind.SEA_OF_FLAMES, at, (float) SEA_RADIUS, 3, SEA_TICKS, caster)
 					.data(caster.getRandom().nextInt()).spawn();
 			// The land itself takes fire: scorched, patches of it molten, flames on what stands there (trees catch, and spread it).
-			Devastation.burn(caster, level, at, SEA_RADIUS, SEA_FIRES);
+			Devastation.burn(caster, level, at, SEA_SCORCH, SEA_FIRES);
 			HeavenSpells.sound(level, at, SoundEvents.BLAZE_SHOOT, 3.0f, 0.3f);
 			HeavenSpells.sound(level, at, SoundEvents.FIRECHARGE_USE, 3.0f, 0.4f);
 		}

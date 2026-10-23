@@ -58,12 +58,15 @@ public final class MetalSpells {
 	public static final float RAIN_DAMAGE = 6;
 	public static final float BELL_HOLD = 40;
 	public static final int BELL_TICKS = 10 * 20;
-	public static final double LIGHT_RANGE = 64, LIGHT_BORE = 1.6;
+	/** The sword light's tunnel: 2.5 round, by its realm (Devastation#sized). */
+	public static final double LIGHT_RANGE = 64, LIGHT_BORE = Devastation.sized(Realm.NASCENT_SOUL, 4.4);
 	public static final float LIGHT_DAMAGE = 55;
 	public static final int VAJRA_TICKS = 12 * 20;
 	public static final double MOUNTAIN_SPEED = 4.0, MOUNTAIN_RANGE = 140;
 	public static final float MOUNTAIN_DAMAGE = 150;
-	public static final int MOUNTAIN_WIDTH = 4, MOUNTAIN_HEIGHT = 16;
+	/** The slot Mountain Cleave cuts: 6 wide and 23 tall, by its realm (Devastation#sized); its crescent drawn as large. */
+	public static final int MOUNTAIN_WIDTH = (int) Devastation.sized(Realm.HEAVENLY_BEING, 8), MOUNTAIN_HEIGHT = (int) Devastation.sized(Realm.HEAVENLY_BEING, 30);
+	public static final float MOUNTAIN_SCALE = 4.0f * MOUNTAIN_HEIGHT / 16f;
 	public static final double DOMAIN_RADIUS = 10;
 	public static final int DOMAIN_TICKS = 12 * 20;
 	public static final float DOMAIN_DAMAGE = 20;
@@ -82,7 +85,8 @@ public final class MetalSpells {
 	public static final float SEVER_SWORD = 34;
 	public static final int SEVER_FORM = 4, SEVER_SWING = 5, SEVER_RELEASE = 6, SEVER_STROKE = 22;
 	public static final float SEVER_DAMAGE = 300;
-	public static final float SEVER_RADIUS = 60, SEVER_SPAN = 2.3f, SEVER_THICK = 10, SEVER_LIFT = 1.3f;
+	/** Its slit {@link #SEVER_THICK} tall at its middle: half what it was (the user's ask, 2026-10-23; 10). */
+	public static final float SEVER_RADIUS = 60, SEVER_SPAN = 2.3f, SEVER_THICK = 5, SEVER_LIFT = 1.3f;
 
 	/**
 	 * The severing slash's way, asked to load (out to its tips) and tick (round its middle) the moment it is cast, and again just
@@ -113,8 +117,8 @@ public final class MetalSpells {
 	public static final double ARRAY_RANGE = 48, ARRAY_HALF = 16;
 	public static final int ARRAY_TICKS = 8 * 20;
 	public static final float ARRAY_DAMAGE = 80;
-	/** Where each of the Four Swords is driven in: a crater this round and deep. */
-	public static final double ARRAY_CRATER = 4, ARRAY_CRATER_DEPTH = 7;
+	/** Where each of the Four Swords is driven in: a crater this round and deep (by its realm, Devastation#sized). */
+	public static final double ARRAY_CRATER = Devastation.sized(Realm.FOUR_AXIS, 7), ARRAY_CRATER_DEPTH = Devastation.sized(Realm.FOUR_AXIS, 10);
 
 	static boolean canCast(ServerPlayer p, Spell spell) {
 		return true;
@@ -146,7 +150,7 @@ public final class MetalSpells {
 				HeavenSpells.sound(level, p.position(), SoundEvents.BEACON_POWER_SELECT, 1.0f, 1.2f);
 			}
 			case MOUNTAIN_CLEAVE -> cleave(p, spell, SpellProjectile.Shape.MOUNTAIN_SLASH, MOUNTAIN_SPEED, MOUNTAIN_RANGE, MOUNTAIN_DAMAGE, MOUNTAIN_WIDTH,
-					MOUNTAIN_HEIGHT, 4.0f);
+					MOUNTAIN_HEIGHT, MOUNTAIN_SCALE);
 			case SWORD_DOMAIN -> {
 				HeavenSpells.endLingering(p.getUUID(), Domain.class);
 				HeavenSpells.linger(new Domain(p, spell));
@@ -336,9 +340,7 @@ public final class MetalSpells {
 			BlockState state = level.getBlockState(pos);
 			List<ItemStack> drops = Block.getDrops(state, level, pos, null, p, ItemStack.EMPTY);
 			level.setBlock(pos, rockOf(state), 3);
-			for (ItemStack drop : drops) {
-				if (!p.getInventory().add(drop)) p.drop(drop, false);
-			}
+			for (ItemStack drop : drops) p.getInventory().placeItemBackInInventory(drop); // what doesn't fit at their feet
 			if (count++ < 64 || count % 4 == 0) SpellFx.send(level, SpellFx.Kind.STREAK, Vec3.atCenterOf(pos), to, 1, oreColour(state));
 		}
 		p.containerMenu.broadcastChanges();

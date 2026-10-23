@@ -336,6 +336,10 @@ public final class ModLang {
 	public static final String SPAR_STAKES = k("spar.stakes");
 	public static final String SPAR_COUNT = k("spar.count");
 	public static final String SPAR_BEGIN = k("spar.begin");
+	/** A sect's people lead the way to their sparring ground first (SparSystem#LEAD_TICKS): setting off, on the way, waiting there. */
+	public static final String SPAR_FOLLOW = k("spar.follow");
+	public static final String SPAR_LEADING = k("spar.leading");
+	public static final String SPAR_WAITING = k("spar.waiting");
 	public static final String SPAR_COUNTDOWN = k("spar.countdown");
 	public static final String SPAR_FIGHT = k("spar.fight");
 	// Spirit stones (SpiritStoneItem)
@@ -394,6 +398,10 @@ public final class ModLang {
 	public static final String MSG_SECT_EXPELLED = k("message.sect.expelled");
 	public static final String MSG_SECT_EXPELLED_TREASURY = k("message.sect.expelled.treasury");
 	public static final String MSG_SECT_EXPELLED_VIOLENCE = k("message.sect.expelled.violence");
+	/** As the body one's soul is in (SectMembership#leaveAsBody, #banish): it leaves; one cast out by the master's or an elder's word. */
+	public static final String MSG_SECT_EXPELLED_BANISHED = k("message.sect.expelled.banished");
+	public static final String MSG_SECT_BODY_LEFT = k("message.sect.body_left");
+	public static final String MSG_SECT_BANISHED = k("message.sect.banished");
 	public static final String MSG_SECT_TREASURY_WARNING = k("message.sect.treasury_warning");
 	public static final String MSG_SECT_TITLE = k("message.sect.title");
 	public static final String STATS_SECT = k("stats.sect");
@@ -420,6 +428,11 @@ public final class ModLang {
 	public static final String SECT_TAB_LEAVE = k("sect_tab.leave");
 	public static final String SECT_TAB_PLAYER = k("sect_tab.player");
 	public static final String SECT_TAB_OFFLINE = k("sect_tab.offline");
+	/** The Sect tab's buttons for a soul in a sect member's body: leave as it; a senior's, cast one below out; and the second click's. */
+	public static final String SECT_TAB_BODY = k("sect_tab.body");
+	public static final String SECT_TAB_LEAVE_BUTTON = k("sect_tab.leave_button");
+	public static final String SECT_TAB_BANISH_BUTTON = k("sect_tab.banish_button");
+	public static final String SECT_TAB_SURE = k("sect_tab.sure");
 	/** Stat points (StatPoints): each stat's name ("stat_point.<id>") and effect (".effect"), and the Stats tab's Points page. */
 	public static final String STAT_POINT_PREFIX = k("stat_point.");
 	public static final String MSG_STAT_POINTS_RETURNED = k("message.stat_points.returned");
@@ -628,6 +641,7 @@ public final class ModLang {
 	public static final String MSG_POSSESS_MERIDIANS_TAKEN = k("message.possess.meridians_taken");
 	public static final String ABILITY_SOUL_WOUNDED = k("ability.soul_wounded");
 	public static final String HUD_SOUL_TETHER_AWAY = k("hud.soul.tether_away");
+	public static final String HUD_SOUL_TETHER_ENDLESS = k("hud.soul.tether_endless");
 	public static final String HUD_SOUL_INSIDE = k("hud.soul.inside");
 	public static final String HUD_SOUL_OWN_QI_LABEL = k("hud.soul.own_qi_label");
 	public static final String HUD_SOUL_OWN_GHOST_QI_LABEL = k("hud.soul.own_ghost_qi_label");
@@ -1076,6 +1090,42 @@ public final class ModLang {
 
 	/** A planet's kind, as told (verdant, volcanic, ...). */
 	public static String astralKind(AstralPlanets.Kind kind) { return k("astral.kind." + kind.getId()); }
+
+	// Techniques (Technique) and their manuals (TechniqueManualItem; written out with the Inscription Brush)
+	public static String techniqueKey(String id) { return "technique." + DefyingTheHeavens.MOD_ID + "." + id; }
+	public static final String ITEM_TECHNIQUE_MANUAL_OF = "item." + DefyingTheHeavens.MOD_ID + ".technique_manual.of";
+	public static final String ITEM_SPELL_MANUAL_OF = "item." + DefyingTheHeavens.MOD_ID + ".technique_manual.spell_of";
+	public static final String TOOLTIP_MANUAL = k("tooltip.technique_manual");
+	public static final String TOOLTIP_MANUAL_REALM = k("tooltip.technique_manual.realm");
+	public static final String TOOLTIP_MANUAL_AUTHOR = k("tooltip.technique_manual.author");
+	public static final String TOOLTIP_MANUAL_GHOST = k("tooltip.technique_manual.ghost");
+	public static final String TOOLTIP_BLANK_MANUAL = k("tooltip.blank_manual");
+	public static final String MSG_MANUAL_LEARNED = k("message.manual.learned");
+	public static final String MSG_MANUAL_KNOWN = k("message.manual.known");
+	public static final String MSG_MANUAL_TOO_LOW = k("message.manual.too_low");
+	public static final String MSG_MANUAL_ROOTS = k("message.manual.roots");
+	public static final String MSG_MANUAL_DEAD = k("message.manual.dead");
+	public static final String INSCRIBE_TITLE = k("inscribe.title");
+	public static final String INSCRIBE_HINT = k("inscribe.hint");
+	public static final String INSCRIBE_NONE = k("inscribe.none");
+	public static final String INSCRIBE_TECHNIQUE = k("inscribe.technique");
+	public static final String MSG_INSCRIBED = k("message.inscribed");
+	// Clone (Clones)
+	public static final String MSG_CLONE_BUSY = k("message.clone.busy");
+	public static final String MSG_CLONE_SPLIT = k("message.clone.split");
+	public static final String MSG_CLONE_LOST = k("message.clone.lost");
+	public static final String MSG_CLONE_INTO = k("message.clone.into");
+	public static final String MSG_CLONE_BACK = k("message.clone.back");
+	public static final String MSG_CLONE_ABSORBED = k("message.clone.absorbed");
+	public static final String MSG_CLONE_HURT = k("message.clone.hurt");
+	public static final String MSG_CLONE_MAIN_HURT = k("message.clone.main_hurt");
+	public static final String MSG_CLONE_SLAIN = k("message.clone.slain");
+	public static final String MSG_CLONE_MAIN_SLAIN = k("message.clone.main_slain");
+	public static final String MSG_CLONE_FELL = k("message.clone.fell");
+	public static final String MSG_CLONE_CANNOT = k("message.clone.cannot");
+	public static final String MSG_CLONE_REFORMING = k("message.clone.reforming");
+	public static final String HUD_CLONE_MAIN = k("hud.clone.main");
+	public static final String HUD_CLONE_IN = k("hud.clone.in");
 
 	private ModLang() {}
 }

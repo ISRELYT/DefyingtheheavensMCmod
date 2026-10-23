@@ -53,6 +53,8 @@ public class SectPiece extends StructurePiece {
 	public static final ResourceLocation DWELLING_LOOT = DefyingTheHeavens.id("chests/sect_dwelling");
 	public static final ResourceLocation ELDER_LOOT = DefyingTheHeavens.id("chests/sect_elder");
 	public static final ResourceLocation LIBRARY_LOOT = DefyingTheHeavens.id("chests/sect_library");
+	/** The master's own chests in the main hall: an elder's riches, and now and then a technique's manual (TechniqueManualItem). */
+	public static final ResourceLocation MASTER_HALL_LOOT = DefyingTheHeavens.id("chests/sect_master_hall");
 
 	/** How far a building's base may be filled down to meet the ground before it is left to stand on its own. */
 	private static final int MAX_FOUNDATION = 12;
@@ -974,8 +976,8 @@ public class SectPiece extends StructurePiece {
 		chainedLantern(level, chunk, p, f.cx(), top - 1, floor + 5, hz0 + 2);
 		stoneLantern(level, chunk, p, f.x0 + 1, floor + 1, dz);
 		stoneLantern(level, chunk, p, f.x1 - 1, floor + 1, dz);
-		chest(level, chunk, f.x0 + 1, floor + 1, f.z1 - 1, Direction.SOUTH, ELDER_LOOT);
-		chest(level, chunk, f.x1 - 1, floor + 1, f.z1 - 1, Direction.SOUTH, ELDER_LOOT);
+		chest(level, chunk, f.x0 + 1, floor + 1, f.z1 - 1, Direction.SOUTH, MASTER_HALL_LOOT);
+		chest(level, chunk, f.x1 - 1, floor + 1, f.z1 - 1, Direction.SOUTH, MASTER_HALL_LOOT);
 
 		// Outside: a plaque over the door; on the porch, lanterns and potted plants; flag poles bearing the sect's banners at the
 		// terrace's front corners; at the foot of the steps a stone guardian either side, and beyond them two great braziers

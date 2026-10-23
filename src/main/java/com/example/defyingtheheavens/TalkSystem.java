@@ -367,7 +367,7 @@ public final class TalkSystem {
 		if (gift.isEmpty()) gift = CultivatorNpc.carriedStones(npc.getRank(), npc.getRandom()).stream().findFirst().orElse(ItemStack.EMPTY);
 		if (gift.isEmpty()) return;
 		player.sendSystemMessage(Component.translatable(ModLang.TALK_GIFT_BACK, nameOf(npc), gift.getHoverName()));
-		if (!player.getInventory().add(gift.copy())) player.drop(gift.copy(), false);
+		player.getInventory().placeItemBackInInventory(gift.copy()); // what doesn't fit at their feet
 	}
 
 	/** What a gift is worth to a cultivator of the first realm (and what spirit stones it would fetch); a stronger one makes less of it. Zero: no use to them. */
@@ -481,9 +481,7 @@ public final class TalkSystem {
 			if (tribute.size() < 2 && !stack.isEmpty()) tribute.add(stack);
 		}
 		tribute.addAll(CultivatorNpc.carriedStones(npc.getRank(), npc.getRandom()));
-		for (ItemStack stack : tribute) {
-			if (!player.getInventory().add(stack.copy())) player.drop(stack.copy(), false);
-		}
+		for (ItemStack stack : tribute) player.getInventory().placeItemBackInInventory(stack.copy()); // what doesn't fit at their feet
 		npc.changeRegard(player, Regard.TRIBUTE);
 		shiftAlignment(player, -5);
 		say(player, npc, line("tribute", npc), Regard.TRIBUTE);
@@ -619,6 +617,12 @@ public final class TalkSystem {
 	private static Component leaveSect(ServerPlayer player, CultivatorNpc npc) {
 		Sect sect = npc.sect();
 		if (sect == null || !npc.getTitle().isElderOrAbove()) return Component.translatable(ModLang.talkLine("leave.disciple"));
+		// In one of its people's bodies (Possession), it is the body that leaves (the user's ask, 2026-10-23): its master's too.
+		if (Possession.inhabits(player.getUUID())) {
+			SectMembership.Seat seat = SectMembership.seat(player);
+			if (seat == null || seat.sect() != sect || !SectMembership.leaveAsBody(player)) return Component.translatable(ModLang.talkLine("leave.disciple"));
+			return Component.translatable(ModLang.talkLine("leave.done"));
+		}
 		SectMembership.leave(player, sect);
 		return Component.translatable(ModLang.talkLine("leave.done"));
 	}

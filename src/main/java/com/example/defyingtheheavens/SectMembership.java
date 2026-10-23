@@ -253,6 +253,110 @@ public final class SectMembership {
 		sendStatus(player);
 	}
 
+	// --- As the body one is in ---
+
+	/**
+	 * Where {@code player} stands in a sect, as they act in it (the user's ask, 2026-10-23: a soul may do anything with the body it is
+	 * in): in another's body (Possession) as that body, its NPC cultivator a member, its player a disciple; else as themselves.
+	 * {@code who} is the one on its rolls, {@code npc} the cultivator whose body it is (null for a player). Null if none of them belongs.
+	 */
+	public record Seat(Sect sect, UUID who, NpcTitle title, CultivatorNpc npc, boolean inBody) {}
+
+	public static Seat seat(ServerPlayer player) {
+		if (!Possession.inhabits(player.getUUID())) {
+			Sect sect = sectOf(player.server, player.getUUID());
+			return sect == null ? null : new Seat(sect, player.getUUID(), titleOf(sect, player), null, false);
+		}
+		UUID id = Possession.sectOfBody(player.getUUID());
+		Sect sect = id == null ? null : SectManager.get(player.server, id);
+		if (sect == null || sect.extinct) return null;
+		CultivatorNpc npc = Possession.npcBody(player);
+		if (npc != null) {
+			Sect.Member member = sect.members.get(npc.getUUID());
+			return member == null ? null : new Seat(sect, npc.getUUID(), member.title, npc, true);
+		}
+		UUID body = Possession.identity(player);
+		return sect.disciples.containsKey(body) ? new Seat(sect, body, titleOf(sect, player), null, true) : null;
+	}
+
+	/** A disciple's title in {@code sect} by their strength, online or not (one in no body's place: their own record's). */
+	static NpcTitle discipleTitle(MinecraftServer server, Sect sect, UUID id) {
+		ServerPlayer online = server.getPlayerList().getPlayer(id);
+		if (online != null && !Possession.isHeld(id)) return titleOf(sect, online);
+		ServerPlayer tenant = Possession.tenantOf(id);
+		if (tenant != null) return titleOf(sect, tenant); // their body played by another's soul: its strength as it is now
+		PlayerCultivation c = CultivationManager.own(server, id);
+		return sect.titleAmong(c.isMortal() ? CultivatorNpc.MORTAL : TwoPaths.weighedRank(c), c.getCultivation());
+	}
+
+	/**
+	 * Whether one seated as {@code seat} may cast out {@code target}, titled {@code title}: only a soul in the body of a Sect Master
+	 * (anyone) or an elder (those below it), Possession; a player's own title, Elder or Grand Elder, casts out no one (the user's
+	 * pick after the bug sweep of 2026-10-23: it let one player empty a sect of its lower ranks).
+	 */
+	public static boolean mayBanish(Seat seat, UUID target, NpcTitle title) {
+		return seat != null && seat.inBody() && seat.title().isElderOrAbove() && title != null && !target.equals(seat.who())
+				&& title.ordinal() > seat.title().ordinal();
+	}
+
+	/**
+	 * {@code player} leaves the sect of the body their soul is in (C2S sect_act, or asking an elder: TalkSystem): its NPC cultivator
+	 * leaves it, to make its own way once its body is its own again (its seat, the master's too, goes to the strongest left:
+	 * SectManager#retitle), or its player is no disciple of it any more. @return whether the body left
+	 */
+	public static boolean leaveAsBody(ServerPlayer player) {
+		Seat seat = seat(player);
+		if (seat == null || !seat.inBody()) return false;
+		Sect sect = seat.sect();
+		if (seat.npc() != null && seat.npc().level() instanceof ServerLevel level) {
+			seat.npc().leaveToWander(level);
+		} else if (seat.npc() == null && remove(player.server, sect, seat.who())) {
+			sect.barredUntil.put(seat.who(), player.level().getGameTime() + LEFT_DAYS * HeavenRitual.DAY);
+			sect.changeStanding(seat.who(), LEFT);
+		} else {
+			return false;
+		}
+		Possession.bodyLeftSect(seat.who());
+		SectManager.dirty(player.server);
+		Formations.syncSoon(); // its barrier no longer takes the soul in it for one of its own
+		Component name = Possession.displayName(player);
+		player.sendSystemMessage(Component.translatable(ModLang.MSG_SECT_BODY_LEFT, name == null ? player.getDisplayName() : name, sect.name)
+				.withStyle(ChatFormatting.GRAY));
+		return true;
+	}
+
+	/**
+	 * {@code player}, seated as a Sect Master or an elder (in such a one's body: Possession), casts {@code target} out of the sect (C2S
+	 * sect_act, the Sect tab): a cultivator sets off as a rogue (SectManager#banish), a player is expelled as for violence, barred for
+	 * {@link #EXPELLED_DAYS} days.
+	 */
+	public static void banish(ServerPlayer player, UUID target) {
+		Seat seat = seat(player);
+		if (seat == null) return;
+		Sect sect = seat.sect();
+		Sect.Member member = sect.members.get(target);
+		Sect.Disciple disciple = sect.disciples.get(target);
+		NpcTitle title = member != null ? member.title : disciple != null ? discipleTitle(player.server, sect, target) : null;
+		if (!mayBanish(seat, target, title)) return;
+		if (member != null) {
+			SectManager.banish(player.server, sect, target);
+			player.sendSystemMessage(Component.translatable(ModLang.MSG_SECT_BANISHED, NpcNames.of(target), sect.name).withStyle(ChatFormatting.GOLD));
+		} else {
+			ServerPlayer online = player.server.getPlayerList().getPlayer(target);
+			if (online != null && !Possession.isHeld(target)) {
+				expel(online, sect, ModLang.MSG_SECT_EXPELLED_BANISHED);
+			} else if (remove(player.server, sect, target)) {
+				sect.barredUntil.put(target, player.level().getGameTime() + EXPELLED_DAYS * HeavenRitual.DAY);
+				sect.changeStanding(target, EXPELLED);
+			}
+			player.sendSystemMessage(Component.translatable(ModLang.MSG_SECT_BANISHED, disciple.name, sect.name).withStyle(ChatFormatting.GOLD));
+		}
+		Possession.bodyLeftSect(target);
+		SectManager.dirty(player.server);
+		player.level().playSound(null, player.blockPosition(), SoundEvents.BELL_BLOCK, SoundSource.PLAYERS, 1.0f, 0.5f);
+		sendInfo(player);
+	}
+
 	/** Takes {@code player} off {@code sect}'s rolls. @return whether they were on them */
 	private static boolean remove(MinecraftServer server, Sect sect, UUID player) {
 		if (sect.disciples.remove(player) == null) return false;
@@ -361,22 +465,26 @@ public final class SectMembership {
 	 */
 	public static void sendInfo(ServerPlayer player) {
 		FriendlyByteBuf buf = PacketByteBufs.create();
-		Sect sect = sectOf(player.server, player.getUUID());
+		// In another's body (Possession), the body's sect as the body sees it: its title, and a way out of it (and, a senior's, a way to
+		// cast others out); else their own as its disciple.
+		Seat seat = seat(player);
+		Sect sect = seat == null ? null : seat.sect();
 		buf.writeBoolean(sect != null);
 		if (sect != null) {
 			buf.writeUtf(sect.name);
 			buf.writeInt(sect.alignment);
-			buf.writeVarInt(titleOf(sect, player).ordinal());
-			buf.writeInt(sect.standing(player.getUUID()));
+			buf.writeVarInt(seat.title().ordinal());
+			buf.writeInt(sect.standing(seat.who()));
 			boolean here = sect.dimension == player.level().dimension();
 			buf.writeBoolean(here && sect.inTerritory(player.blockPosition()));
 			buf.writeVarInt(here ? (int) Math.sqrt(sect.core.distSqr(player.blockPosition())) : -1);
 			buf.writeUtf(here ? TalkSystem.direction(player.blockPosition(), sect.core) : "");
 			buf.writeBoolean(!sect.isBarrierDown());
-			Sect.Disciple disciple = sect.disciples.get(player.getUUID());
+			Sect.Disciple disciple = sect.disciples.get(seat.who());
 			buf.writeVarInt(disciple == null ? 0 : disciple.treasuryTries);
-			buf.writeBoolean(isElder(sect, player));
+			buf.writeBoolean(seat.title().isElderOrAbove());
 			buf.writeVarLong(disciple == null ? 0 : Math.max(0, player.level().getGameTime() - disciple.joined));
+			buf.writeBoolean(seat.inBody());
 			java.util.List<Sect.Member> members = new java.util.ArrayList<>(sect.members.values());
 			members.sort(Sect.SENIORITY);
 			buf.writeVarInt(members.size() + sect.disciples.size());
@@ -385,6 +493,8 @@ public final class SectMembership {
 				buf.writeVarInt(member.title.ordinal() + 1);
 				buf.writeVarInt(member.rank + 1);
 				buf.writeBoolean(false);
+				buf.writeUUID(member.id);
+				buf.writeBoolean(mayBanish(seat, member.id, member.title));
 			}
 			for (Sect.Disciple d : sect.disciples.values()) {
 				ServerPlayer online = player.server.getPlayerList().getPlayer(d.id);
@@ -392,6 +502,8 @@ public final class SectMembership {
 				buf.writeVarInt(online != null ? titleOf(sect, online).ordinal() + 1 : 0);
 				buf.writeVarInt(online != null ? CultivatorNpc.rankOf(online) + 1 : 0);
 				buf.writeBoolean(true);
+				buf.writeUUID(d.id);
+				buf.writeBoolean(mayBanish(seat, d.id, discipleTitle(player.server, sect, d.id)));
 			}
 		} else {
 			Sect near = null;

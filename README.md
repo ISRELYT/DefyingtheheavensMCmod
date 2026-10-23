@@ -1090,45 +1090,45 @@ water puts out what burns.
 | Element | Spell (layer) | What it does |
 |---|---|---|
 | Fire | **Karmic Fire** (30) | Sets karmic fire on the being you look at, within 32 blocks, for 8 s, burning away its sins: each second it takes 1 harm if it is guiltless, up to 11 for a devil (by its alignment), 6 for a monster, a little for a beast or a villager. A sinner's alignment burns 2 a second toward neutral. |
-| Fire | **Blazing Meteor** (34) | Calls a burning meteor down out of the sky onto where you look, up to 48 blocks, its mark glowing on the ground as it falls: 45 fire harm to everything within 6 blocks, burning for 6 s, and a crater 6 blocks round blown out of the ground (or whatever is built there), its floor burnt to magma and blackstone, fires round it. |
+| Fire | **Blazing Meteor** (34) | Calls a burning meteor down out of the sky onto where you look, up to 48 blocks, its mark glowing on the ground as it falls: 45 fire harm to everything within 6 blocks, burning for 6 s, and a crater 13 blocks round blown out of the ground (or whatever is built there), its floor burnt to magma and blackstone, fires round it. |
 | Wood | **Thorn Spear Forest** (30) | Spears of thorny wood burst out of the ground 6 blocks round where you look, up to 32 blocks: every foe there takes 35 wood harm and is held where it stands for 2 s. |
 | Wood | **Lotus of Rebirth** (34) | A great lotus opens at your feet for 10 s: you and every friendly being within 10 blocks are cleansed of harmful effects and fire at once, and heal 3 health a second while it blooms. |
 | Earth | **Summon Golem** (30) | Raises an earth golem out of the ground beside you for 90 s. It flies (at three fifths of a cultivator's flight), keeps by you and fights for you: whatever strikes you or you strike, or a monster that comes for you. 80 health, 18 earth harm a blow. Two at most: a third sends the oldest back to the earth. |
-| Earth | **Earthquake** (34) | The ground shakes 20 blocks round you for 4 s and splits: nine fissures up to 5 blocks deep run out from near you to its edge, and every foe on the ground takes 14 earth harm a second, is slowed hard and thrown about. |
+| Earth | **Earthquake** (34) | The ground shakes 20 blocks round you for 4 s and splits: fourteen fissures up to 7 blocks deep run out from near you as far as 40 blocks, and every foe on the shaking ground takes 14 earth harm a second, is slowed hard and thrown about. |
 | Water | **Glacial Spears** (30) | Five spears of ice form over your head and fly in a fan at where you look: 11 water harm each, slowness for 3 s and the cold's frost. |
 | Water | **Great Tide** (34) | A wave 10 blocks tall and 14 wide rolls out 30 blocks the way you face: whatever it overtakes takes 30 water harm, is swept along hard and put out. |
-| Metal | **Piercing Sword Light** (30) | A beam of sword light pierces everything along your look for 64 blocks, walls and hills too: it bores a tunnel 3 blocks across through whatever stands in its way, and every being along it takes 55 metal harm. |
+| Metal | **Piercing Sword Light** (30) | A beam of sword light pierces everything along your look for 64 blocks, walls and hills too: it bores a tunnel 5 blocks across through whatever stands in its way, and every being along it takes 55 metal harm. |
 | Metal | **Vajra Body** (34) | For 12 s your skin turns to gold: 35% less harm taken (70% less of wood's), nothing can knock you back, and whoever strikes you in melee takes 4 metal harm. A metal ward. |
 
 **Heavenly Being**
 
 | Element | Spell (layer) | What it does |
 |---|---|---|
-| Fire | **Phoenix Descent** (39) | A phoenix of fire takes wing from you and flies at where you aim, bending toward its mark, up to 64 blocks, and bursts there: 90 fire harm to everything within 5 blocks, burning for 6 s, and a scorched crater 4 blocks round. |
-| Fire | **Sea of Flames** (43) | The ground 20 blocks round where you look, up to 48 blocks, becomes a sea of flame for 10 s: the land itself burns (grass scorched, patches turned to magma and netherrack, fires on whatever stands there, trees catching), and every foe standing in it takes 20 fire harm a second. |
-| Wood | **Heaven-Piercing Bamboo** (39) | Giant bamboo bursts up out of the ground under as many as 6 foes within 24 blocks of where you look, breaking the ground open: 70 wood harm each, and they are thrown high into the air. |
+| Fire | **Phoenix Descent** (39) | A phoenix of fire takes wing from you and flies at where you aim, bending toward its mark, up to 64 blocks, and bursts there: 90 fire harm to everything within 5 blocks, burning for 6 s, and a scorched crater 7 blocks round. |
+| Fire | **Sea of Flames** (43) | The ground round where you look, up to 48 blocks, becomes a sea of flame for 10 s: the land itself burns 31 blocks round (grass scorched, patches turned to magma and netherrack, fires on whatever stands there, trees catching), and every foe standing within 20 blocks of its heart takes 20 fire harm a second. |
+| Wood | **Heaven-Piercing Bamboo** (39) | Giant bamboo bursts up out of the ground under as many as 6 foes within 24 blocks of where you look, breaking the ground open 4 blocks round each: 70 wood harm each, and they are thrown high into the air. |
 | Wood | **Spring of Myriad Life** (43) | A green rain of life falls 32 blocks round you for 10 s: you and every friendly being in it heal 40 health at once, then 4 a second. |
-| Earth | **Falling Mountain** (39) | A mountain of rock forms in the sky over where you look, up to 64 blocks, and falls on it: 140 earth harm to everything within 10 blocks, a shockwave, a crater 12 blocks round and 7 deep (its floor broken rubble), and seven fissures splitting the land out to 26 blocks. |
-| Earth | **Heavy Earth Seal** (43) | Every foe within 24 blocks of you is pressed to the ground for 6 s: it cannot jump or fly (a flier is brought down), is slowed hard, and takes 20 earth harm a second. Under its weight the land 24 blocks round you sinks by up to 2 blocks, cracked and split by ten fissures (all but where you stand). |
-| Water | **Heavenly River Torrent** (39) | A river pours out of the sky along a line from you to where you look, 32 blocks, for 2 s: everyone in its fall takes 60 water harm and is swept along it, and the river scours a channel 3 blocks across into the ground along its line. |
+| Earth | **Falling Mountain** (39) | A mountain of rock forms in the sky over where you look, up to 64 blocks, and falls on it: 140 earth harm to everything within 10 blocks, a shockwave, a crater 22 blocks round and 13 deep (its floor broken rubble), and ten fissures splitting the land out to 48 blocks. |
+| Earth | **Heavy Earth Seal** (43) | Every foe within 24 blocks of you is pressed to the ground for 6 s: it cannot jump or fly (a flier is brought down), is slowed hard, and takes 20 earth harm a second. Under its weight the land 37 blocks round you sinks by up to 3 blocks, cracked and split by fourteen fissures (all but where you stand). |
+| Water | **Heavenly River Torrent** (39) | A river pours out of the sky along a line from you to where you look, 32 blocks, for 2 s: everyone in its fall takes 60 water harm and is swept along it, and the river scours a channel 6 blocks across into the ground along its line. |
 | Water | **Frozen Field** (43) | The cold runs out from you to 64 blocks round over two and a half seconds: open water freezes, frost lies on the ground within 32 blocks, and every being it reaches (but your allies and pets) is frozen solid for 3 s. The ice thaws over the next 20 to 40 s, and until it has, every being in the field takes 3 water harm a second. |
-| Metal | **Mountain Cleave** (39) | Flings a crescent of sword qi as tall as a tower the way you look. It flies 140 blocks, cutting a slot 4 blocks wide and 16 tall through hills and mountains alike (what it cuts is gone), and cleaves every being in its way for 150 metal harm. |
+| Metal | **Mountain Cleave** (39) | Flings a crescent of sword qi as tall as a tower the way you look. It flies 140 blocks, cutting a slot 6 blocks wide and 23 tall through hills and mountains alike (what it cuts is gone), and cleaves every being in its way for 150 metal harm. |
 | Metal | **Sword Domain** (43) | Thirty-six swords circle you 10 blocks round for 12 s: every foe within takes 20 metal harm every half second. |
 
 **Four Axis**
 
 | Element | Spell (layer) | What it does |
 |---|---|---|
-| Fire | **Nine Suns Descend** (48) | Nine suns fall out of the sky, one after another, onto where you look and round it, up to 64 blocks: each bursts for 150 fire harm 7 blocks round, burning for 6 s, and blows a scorched crater 6 blocks round out of the ground: together they leave the land a burning field of craters 16 blocks round. |
+| Fire | **Nine Suns Descend** (48) | Nine suns fall out of the sky, one after another, onto where you look and round it, up to 64 blocks: each bursts for 150 fire harm 7 blocks round, burning for 6 s, and blows a scorched crater 9 blocks round out of the ground: together they leave the land a burning field of craters 19 blocks round. |
 | Fire | **Phoenix Nirvana** (52) | For 60 s the phoenix's fire waits in you: if you would die, you rise again instead at full health, harmful effects burnt away, in a burst of flame that strikes everyone but your allies within 10 blocks for 200 fire harm. Once. |
 | Wood | **Myriad Vine Binding** (48) | Vines burst up and seize as many as 12 foes within 40 blocks of where you look, up to 64 blocks: each is held fast for 5 s and takes 22 wood harm a second. |
-| Wood | **World Tree** (52) | The World Tree grows out of the ground where you look (or before you), its roots heaving the land open in eight fissures, and towers over all for 12 s. Its vines reach from its boughs for every being but you within 32 blocks of its trunk (your pets spared), lift them into its branches and hold them there, drinking 10 of their health a second into you. |
+| Wood | **World Tree** (52) | The World Tree grows out of the ground where you look (or before you), its roots heaving the land open in twelve fissures out to 40 blocks, and towers over all for 12 s. Its vines reach from its boughs for every being but you within 32 blocks of its trunk (your pets spared), lift them into its branches and hold them there, drinking 10 of their health a second into you. |
 | Earth | **Earthen Titan** (48) | Raises an earth titan three times a golem's size beside you for 60 s: it flies, keeps by you and fights for you, 400 health and 80 earth harm a blow, its fist striking the ground round its mark too. One at a time. |
-| Earth | **Mountain Seal** (52) | A mountain of stone bursts up over where you look, up to 48 blocks, 7 blocks round and 9 tall, tearing the land open round its foot in nine fissures out to 18 blocks: everything inside is entombed, held fast for 5 s and crushed for 60 earth harm a second. The mountain crumbles away after 20 s; its stone gives nothing. |
+| Earth | **Mountain Seal** (52) | A mountain of stone bursts up over where you look, up to 48 blocks, 7 blocks round and 9 tall, tearing the land open round its foot in fourteen fissures out to 40 blocks: everything inside is entombed, held fast for 5 s and crushed for 60 earth harm a second. The mountain crumbles away after 20 s; its stone gives nothing. |
 | Water | **Absolute Zero** (48) | A beam of utter cold freezes the being you look at solid, within 48 blocks: 200 water harm, and it is held frozen for 5 s. When anything strikes it, or the cold lets go, it shatters for 60 more. |
-| Water | **Boundless Sea** (52) | A sphere of the sea 16 blocks round fills the place you look at, up to 48 blocks, for 8 s: every foe inside is held in it, drowning, and takes 22 water harm a second. When it lets go, the ground under it is left crushed into a basin 10 blocks round with a lake in it. |
-| Metal | **Heaven-Severing Sword** (48) | A sword of light as long as a tower forms in your hand and you swing it level across your front: a giant crescent of sword light some 110 blocks across leaves its edge and flies out level from your chest the way you face, 120 blocks, faster than anything can flee it: nothing stops it. It cuts through whatever its blade passes through, 10 blocks thick at its middle and thinner toward its tips: hills and mountains are sliced through (their tops left standing above the cut), trees felled, whatever is built in its way cut in two, and the land at its far end is cut in the crescent's curve. Every being its blade passes through takes 300 metal harm and is hurled ahead of it. |
-| Metal | **Four Swords Array** (52) | Four giant swords plant themselves at the corners of a square 32 blocks across round where you look, up to 48 blocks, each driven deep into the ground in a crater 4 blocks round: for 8 s every foe inside is held in by the walls of light between them and takes 80 metal harm a second. |
+| Water | **Boundless Sea** (52) | A sphere of the sea 16 blocks round fills the place you look at, up to 48 blocks, for 8 s: every foe inside is held in it, drowning, and takes 22 water harm a second. When it lets go, the ground under it is left crushed into a basin 18 blocks round with a lake in it. |
+| Metal | **Heaven-Severing Sword** (48) | A sword of light as long as a tower forms in your hand and you swing it level across your front: a giant crescent of sword light some 110 blocks across leaves its edge and flies out level from your chest the way you face, 120 blocks, faster than anything can flee it: nothing stops it. It cuts through whatever its blade passes through, 5 blocks thick at its middle and thinner toward its tips: hills and mountains are sliced through (their tops left standing above the cut), trees felled, whatever is built in its way cut in two, and the land at its far end is cut in the crescent's curve. Every being its blade passes through takes 300 metal harm and is hurled ahead of it. |
+| Metal | **Four Swords Array** (52) | Four giant swords plant themselves at the corners of a square 32 blocks across round where you look, up to 48 blocks, each driven deep into the ground in a crater 7 blocks round: for 8 s every foe inside is held in by the walls of light between them and takes 80 metal harm a second. |
 
 Each spell's description in the Spells tab gives its numbers; the constants at the top of its element's class set them. Harm
 grows by realm: about 5 at Qi Refining, 8-16 at Foundation Building, 16-30 at Core Formation, 30-60 at Nascent Soul, 60-150 at
@@ -1138,15 +1138,21 @@ Heavenly Being and 150-300 at Four Axis; qi costs likewise (8-20 at Qi Refining 
 phoenixes and falling mountains blow out craters (burnt to magma and blackstone, or broken to rubble), quakes and seals split it
 in fissures and sink it, the Heavenly River scours a channel, the Boundless Sea leaves a lake in a crushed basin, Piercing Sword
 Light bores a tunnel, Mountain Cleave cuts a slot through hills, and the Heaven-Severing Sword's crescent, some 110 blocks across,
-slices through whatever its blade passes through for 120 blocks: a slit 10 blocks tall at its middle and thinner toward its tips,
+slices through whatever its blade passes through for 120 blocks: a slit 5 blocks tall at its middle (it was 10) and thinner toward its tips,
 at the caster's chest, through hills and mountains (their tops left standing), its far end cut in the crescent's curve
 (`MetalSpells#severThickness`, `#severLag`; the client draws it to the same numbers). Its way is asked to load as it is cast and
 kept loading just ahead of it, since 120 blocks (and its tips) run past the usual simulation distance; land that was never made before is made
 meanwhile, and the slash waits at its edge until it is. Every block goes by the same rule as the rest of the spells' terrain harm
 (`HeavenSpells#carvable`: nothing that holds items, nothing harder than obsidian, nothing a raised barrier shelters, nothing the
 caster couldn't dig) and is gone for good, dropping nothing; a few pieces are flung off as debris. A big wound is cut over
-several ticks, nearest its heart first, 2,500 blocks a tick for all of them together (`Devastation`), so no tick has to take it
-all. Water and wood were brought down beside metal and earth: Frozen Field reaches 64 blocks (was 100) and holds for 3 s,
+several ticks, nearest its heart first, 2,500 blocks a tick for all of them together, shared out evenly among the wounds
+underway so a small one isn't kept waiting behind a great one (`Devastation`), so no tick has to take it all.
+
+**How great by the realm** (the user's ask, 2026-10-23): the great spells' wounds grow with their realm as a golden core's
+blast does (`Devastation#scale`: the realm's blast radius against Four Axis's, `CoreDetonation#radius`): Nascent Soul's are
+0.56 of Four Axis's, Heavenly Being's 0.78, and Four Axis's own the yardstick, the Heaven-Severing Sword's scale. Only the
+spells meant to lay the land waste go by it (craters, fissures, basins, channels, bores, cleaves; the sizes above); the small
+carvings of the lower realms (a cleave's slot, a cave) stay as they were. Water and wood were brought down beside metal and earth: Frozen Field reaches 64 blocks (was 100) and holds for 3 s,
 Absolute Zero holds 5 s and shatters for 60, Boundless Sea and Water Prison hold for less, the World Tree drinks 10 a second for
 12 s, Myriad Vine Binding and Heaven-Piercing Bamboo strike fewer and softer, Lotus of Rebirth and the Spring of Myriad Life heal
 less.
@@ -1337,11 +1343,14 @@ the day the soul forms, and the ability goes into the first empty slot of your w
   many hearts it has. A soul lost and formed again is born whole.
 - **The tether**, a thread of bright blue light from your body's chest to the soul, lets it go **32 / 48 / 64 / 96** blocks
   through Nascent Soul's stages, 128-176 through Heavenly Being, 192-256 through Four Axis; it stretches against you as you
-  near its end.
-- **Qi**: half your realm's gathering a second at the body, rising to twice your gathering at the tether's end, and that
-  much again while possessing (so clothing, pills and the Upper Realm's dense qi all help; there it costs nothing net).
-  A Nascent Soul Early pool lasts about a minute at the tether's end. **Run dry and the soul snaps home at once** (no 5 s,
-  no penalty). Taking hold of a body costs 10% of your pool on top.
+  near its end. **From Void Shattering it has no end** (the user's ask, 2026-10-23; `PlayerCultivation#soulTetherEndless`):
+  the soul goes as far as it will, at what it costs beside the body, and nothing pulls it back.
+- **Qi**: the same at every realm (the user's ask, 2026-10-23: it was the realm's own gathering, the same share of the pool
+  at every realm, which ran a True Immortal's soul as dry as a Nascent Soul's): half a Nascent Soul Early's gathering a second
+  at the body (`SoulProjection.SOUL_QI_BASE`), rising to twice it at the tether's end, and that much again while possessing.
+  So a Nascent Soul Early pool lasts about a minute at the tether's end, a Heavenly Being's hardly runs down, and from Four
+  Axis it never does. **Run dry and the soul snaps home at once** (no 5 s, no penalty). Taking hold of a body costs 10% of
+  your pool on top.
 - **What a soul can't do**: touch anything (in a person's body it can do all a player can: below). No blocks, chests, items (it picks nothing up and drops nothing), plates or
   tripwires; no meditating, no Inner Realm, no breakthroughs or tribulations (and you can't send the soul out during one),
   no portals, rift or Spatial Gap; no Qi Flight, Sword Flight or Realm Suppress. Qi Sense opens as it sets out (it is how a nascent
@@ -1416,8 +1425,14 @@ a possessed body wears a **violet veil**: the soul's light washed over it, breat
   as its owner, its core lost (its owner falls to Foundation Building Grand Perfection), and your soul is thrown out.
 - **Other realms**: take the body through a portal, a rift, your tear, the Soul River or a fall from the Upper Realm and
   your soul goes with it. Away from the realm your own body is in, the tether reaches across the realms: no thread to see
-  or strike, and it costs only what it would beside your own body, so a Heavenly Being's full pool lasts about 100 seconds
-  in the gap while possessing (about 60 after the tear). Let go of the body there and your soul goes home at once.
+  or strike, and it costs only what it would beside your own body (the same at every realm, as above). Let go of the body
+  there and your soul goes home at once.
+- **Its sect**: in a sect member's body you are that member (the user's ask, 2026-10-23): the Sect tab shows its sect and
+  its title, and **Leave Sect** (or asking one of its elders to leave) takes the body out of it: an NPC cultivator goes its
+  own way once its body is its own again (its seat, a Sect Master's too, passes to the strongest left), a player is a
+  disciple no more. In a **Sect Master's or an elder's** body you can **banish** members below its title from the Sect tab:
+  a cultivator cast out sets off as a rogue (a new one is taken in in time), a player is expelled as for violence (barred
+  30 days).
 - **The player** isn't killed: they **watch through their body's eyes**, a spectator held to it (no other view, no
   teleporting off, nothing touched), and get it back where it stands, with whatever was done with it, when you leave.
   **If the body dies, they die**, as their own death by that blow (their things fall as keepInventory says), and you're
@@ -1459,6 +1474,74 @@ keeps its colour under Qi Sense), `SoulHud.java`, `SoulBodyRenderer` / `SoulVess
 `SoulInputMixin`, `SoulRenderDispatcherMixin`; tests in `SoulProjectionGameTests` and `PossessionGameTests`. Resource packs that replace core shaders
 fall back to a plain violet translucent soul; under an Iris shader pack souls and ghosts are drawn as ever (the sense layer
 comes after the pack's own passes), and a ghost's own first-person hand as flat glowing cyan (`compat/ShaderPacks`).
+
+## Techniques and their manuals
+
+**Techniques** (the user's ask, 2026-10-23; `Technique`) are ways of the cultivator learned from a **Technique Manual**, not
+awakened by a realm as the realm's abilities are. The first is **Clone** (Nascent Soul, below); more will come.
+
+- **Finding them.** The sects keep them: each chest in a Sect Master's main hall holds one now and then (one roll in
+  about twelve; `loot_tables/chests/sect_master_hall.json`, an elder's riches besides), and a library pagoda's chest more
+  rarely (one in twenty; `sect_library.json`). Later structures will keep them too.
+- **Reading one** (use it): you learn what it holds if you stand at its realm, on either path as you wield it, and the
+  manual isn't used up (pass it on). Below its realm you're told which realm it wants. A technique once learned is yours
+  for good (saved with your cultivation, kept through death and rebirth), but **used only at its realm**: fall below it and
+  it waits until you rise again.
+- **Spell manuals** hold one spell (`TechniqueManualItem`, "Spell Manual: ..."): learned from one, it is yours apart from any
+  method, and cast only at its realm (`Spell#byManual`): an element's spell by the heaven path's rank and roots that take its
+  element (never by the dead), a ghost method's by the ghost path's. Spells of both paths have no manual.
+- **Writing one out** (for whoever lost theirs, or never had it): craft a **Blank Manual** (a book and jade), hold it in one
+  hand and the **Inscription Brush** in the other, and use the brush. A list opens of what you may write (your techniques at
+  their realm, and every spell you can cast but those of both paths); pick one, and the blank (one of a stack) becomes its
+  manual, "Written out by" you, the brush a use more worn. A reader still needs its realm.
+
+Code: `Technique`, `TechniqueManualItem`, `BlankManualItem`, `InscriptionBrushItem#use` (the brush opens it), packets
+`inscribe_options` / `inscribe`, client `InscribeScreen`; `PlayerCultivation` (NBT "Techniques", "ManualSpells"). Tests in
+`TechniquesCloneGameTests`.
+
+### Clone
+
+From **Nascent Soul**, with Clone's manual read, the living can split a second body off their own (`Clones`; the ability
+**Clone**, on the wheel; its switch shows On while a clone is out). It is played as yourself, not possessed: **no tether, no
+upkeep**, anywhere in any realm.
+
+- **Split it off** (use the ability): it takes **half your qi** (the clone's to begin with) and stands a step before you,
+  in your likeness with your name over it, carrying nothing (only the body is split off).
+- **Go into it** (use it again): your **main body sits down in meditation** where you are (its health, armour and gear
+  seen on it; its land kept loaded), and you are in the clone wherever it stands. The clone is you **at your own realm and
+  stage** (the user's call, 2026-10-23: half the realm would leave a True Immortal a Four Axis clone), with your methods,
+  techniques, spells, physique, stat points and both wheels, but **half your strength**: half your health, the strength of
+  your blows, armour, toughness and footing, and half your qi pool (`Clones.STAT_SHARE`). Your speed and flight are your own.
+  **It is you**: it plays your own record, so what it learns, does and earns is yours (methods from slips and steles,
+  techniques, pills and fruit, alignment, wishes granted, stat points; the bug sweep of 2026-10-23: it played a copy, and all of
+  that was lost on the way back). Its pool is its own while you play it; your main body's is kept apart (its tag's "MainQi").
+  It gathers nothing of itself: what it spends (flight, spells, pressing down) is **made up from your main pool**, which
+  goes on gathering where your body sits. Overtaken by the Netherworld's yin, it is the clone's body that gives way (it
+  dissolves as one slain does, the yin with it), not yours. It can't meditate, project its soul, break through, detonate a core or split off
+  clones of its own. The HUD says "In your clone" with your body's health under it.
+- **Go back** (use it again in the clone): you wake in your main body where it sat, wherever the clone has gone; **the clone
+  is left standing** where it was, holding what it carried. Each body's things are its own, kept for it while you play the
+  other.
+- **Draw it back in**: sneak and use the ability within **8 blocks** of the other body (from either): its qi, its things and
+  its experience are yours again, and you are in your main body.
+- **Harm.** The body you aren't playing can be struck (by players only where they could strike you), and you're told. A
+  clone slain dissolves, what it carried falling where it fell; slain while you play it, you wake in your main body. A clone
+  lost so (or to the Netherworld's yin), **no other can be split off for 5 minutes** (`Clones.REFORM_TICKS`; saved, so a
+  relog doesn't end it; the user's pick after the bug sweep of 2026-10-23). One drawn back in is no clone lost. **Your
+  main body slain where it sits, you die** (your own death, by that blow), and the clone dissolves with you. Whenever you die,
+  or your life ends whole, a clone out dissolves.
+- Logging out in the clone, or the server stopping, puts you back in your main body first (the clone stands on); a crash is
+  put right as you come back. A soul can't take a player who is in their clone.
+
+**Leaving the game** (every system's logout work: the clone, a held body, a soul out, a spar, a core breaking, the Inner
+Realm; `CultivationEvents#leaving`) is done on the server thread before the player is saved, once a login: Fabric tells of a
+logout on the network thread as the connection closes, and the save raced it (found 2026-10-23: a clone's player saved in
+the clone's place). A mixin at the head of vanilla's `onDisconnect` makes sure of it (`ServerGamePacketListenerImplMixin`).
+
+Code: `Clones` (the rules), `CloneBodyEntity` (the body not played: the clone standing or the main body sitting), the
+clone's record answers for its player while they play it (`CultivationManager#get`, `Clones#record`), its strength in
+`CultivationStats#apply` and `PlayerCultivation#maxQi`, its qi in `QiManager` (`Clones#feed`); client `CloneBodyRenderer`,
+`ClientClone` (packet `clone_state`), `SoulHud`. Tests in `TechniquesCloneGameTests`.
 
 ## Golden Core Detonation
 
@@ -2777,7 +2860,8 @@ Players can join a sect and become one of its disciples (`SectMembership`).
   the sect cast out or who just left it (see below), one it loathes (its standing with you, or the elder's regard, Hostile or
   worse), and anyone stronger than its Sect Master.
 - **The entrance trial.** Otherwise the elder sets you a trial: Ask again, "take the entrance trial", within 5 minutes, and you
-  spar with them, holding back to your own realm (fought as any spar is: blows pulled to half, lost at half your health).
+  spar with them, holding back to your own realm (fought as any spar is: blows pulled to half, lost at half your health),
+  on the sect's sparring ground (they lead you there first: see Spar below).
   Win it, or stand your ground to the end, and you are taken in. Lose it and
   that sect won't try you again until tomorrow. A body of **High grade or better** (Physiques), or an elder **Warm** to you,
   takes you in without the trial.
@@ -2790,12 +2874,19 @@ Players can join a sect and become one of its disciples (`SectMembership`).
   each with their title and realm (players after, "away" when not online), scrolling. Without a sect it says how to join
   one and names the nearest sect known within 4,000 blocks, how far and which way (and how many days it won't hear you, if
   it has barred you). The page is asked of the server as the tab opens (`SectMembership#sendInfo`, client `ClientSect`).
+  In another's body (Possession) it is that body's sect and title (`SectMembership#seat`), with a **Leave Sect** button for
+  the body. In the body of a Sect Master or an elder (only so: a player's own Elder or Grand Elder title casts out no one,
+  the user's pick after the bug sweep of 2026-10-23), each member below its title has a **Banish** button (click it twice
+  to be sure): a cultivator is cast out to wander as a rogue (`SectManager#banish`), a player expelled and barred **30
+  days** (C2S `sect_act`).
 - **Belonging.** Its barrier lets you through. Its members are your fellows: never hostile to you, they come to your aid when
   you are struck near them, and your spells spare them. On its grounds you cultivate **a quarter faster**. Its elders teach
   you its method once Courteous (others need Warm).
 - **Its rules.** The treasury belongs to its elders. Below Elder, the first hand you lay on it (opening or breaking) is stopped
   with a warning; the second casts you out, and after that you are an outsider there like anyone (the seal, theft). Striking a
-  fellow member outside a spar also casts you out. Cast out, the sect won't hear you for **30 days**.
+  fellow member outside a spar also casts you out. Cast out, the sect won't hear you for **30 days**. No hopper (or hopper
+  minecart) draws anything out of a treasury's chests, a sect's or a ghost palace's (`HopperBlockEntityMixin`,
+  `SectManager#treasuryAt`): one set under a chest emptied it with no hand laid on it.
 - **Leaving.** Ask an elder to "leave the sect". It takes you back after **3 days**.
 - Commands (op): `/sect join <player>` joins the nearest sect, `/sect leave <player>`; `/sect info` lists its disciples too.
 
@@ -2925,7 +3016,11 @@ Topics not open yet still show, greyed, with the regard they need.
   fruit or spirit stones: you stake one, they stake something of like worth of their own, the winner takes both; one
   wager a day with each; never with one a realm or more beneath you, who couldn't win your stake: friendly only, the wager
   greyed out), and, with someone stronger, **don't hold back**. Neither of you starts below three quarters of
-  your health. Three breaths, then it begins. Blows between you land at half strength (pulled), and it ends when either
+  your health. **One of a sect's people on its own grounds leads you to its sparring ground first** (the user's ask,
+  2026-10-23; an entrance trial too): its training ground's ring, or the plaza for a sect without one ("Follow me to the
+  sparring ground"). It walks to its place there and you to yours across from it (within 3 blocks); not followed within
+  **90 seconds**, the bout is called off, and if it can't reach its place in a minute it begins wherever it stands, once
+  you are by it. A rogue, or one off its grounds, spars where it stands. Three breaths, then it begins. Blows between you land at half strength (pulled), and it ends when either
   of you has lost half your health since it began, when you walk 16 blocks off from them (a forfeit), or after three
   minutes (a draw). (At a quarter's line, without pulled blows, one blow from an equal ended it at every realm up to
   Nascent Soul: such a blow takes 28-39% of one's health.) Nobody dies: a blow from the other that would go past the line stops at it. A stronger cultivator
@@ -2960,7 +3055,8 @@ the stone lit from within so it still shows in the dark. A Low stone barely glea
 and slowly breathe (`SpiritStoneGlow`).
 
 - **Absorb**: hold right-click for a second and a half to draw a stone's qi into your pool, 25 qi for every Low stone's
-  worth (225 for a Mid, and so on); the stone is used up.
+  worth (225 for a Mid, and so on); the stone is used up. A stone part spent by meditation gives only the qi left in it
+  (it gave all of it before the bug sweep of 2026-10-23), and the next of its stack starts whole.
 - **Meditate** with one in either hand to cultivate 50% faster while its qi lasts: 30 seconds for every Low stone's
   worth, then it is spent (how much is left shows on it).
 - **Where they come from**: Spirit Stone Veins (Low stones) through Overworld stone, the deepslate kind with the odd Mid;

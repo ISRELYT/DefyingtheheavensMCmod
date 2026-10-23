@@ -71,8 +71,11 @@ public final class Possession {
 		CultivatorNpc npc;
 		/** The body's cultivation: its player's own record, or the NPC's. */
 		final PlayerCultivation record;
-		/** The sect the body belongs to (its player as a disciple, or the NPC), or null: its grounds and barrier take the soul for one of its own. */
-		final UUID sect;
+		/**
+		 * The sect the body belongs to (its player as a disciple, or the NPC), or null: its grounds and barrier take the soul for one of its
+		 * own. None once the body leaves it or is cast out of it ({@link #bodyLeftSect}).
+		 */
+		UUID sect;
 		/** Where Soul Projection was put on the body's ability wheel, to leave by (-1: it was there already, or the wheel was full). */
 		int wheelSlot = -1;
 
@@ -192,10 +195,16 @@ public final class Possession {
 		return t == null ? null : t.sect;
 	}
 
+	/** {@code body} (a player's or an NPC's) belongs to no sect any more (it left, or was cast out): a soul in it is no sect's either. */
+	public static void bodyLeftSect(UUID body) {
+		Tenancy t = BY_BODY.isEmpty() ? null : BY_BODY.get(body);
+		if (t != null) t.sect = null;
+	}
+
 	/** The souls in bodies of {@code sect} (its barrier lets them through as its own: SectMembership#guestsOf). */
 	public static List<UUID> tenantsOf(UUID sect) {
 		List<UUID> found = new ArrayList<>();
-		for (Tenancy t : BY_SOUL.values()) if (sect.equals(t.sect)) found.add(t.soul);
+		for (Tenancy t : BY_SOUL.values()) if (t.sect != null && t.sect.equals(sect)) found.add(t.soul);
 		return found;
 	}
 
@@ -276,6 +285,7 @@ public final class Possession {
 		ServerPlayer victim = target instanceof ServerPlayer p ? p : null;
 		CultivatorNpc npc = target instanceof CultivatorNpc n && !n.isGhost() ? n : null;
 		if (victim == null && npc == null) return false;
+		if (victim != null && Clones.inClone(victim)) return false; // a clone has no soul of its own to take the place of (Clones)
 		MinecraftServer server = soul.server;
 		PlayerCultivation own = CultivationManager.own(soul);
 
@@ -851,7 +861,7 @@ public final class Possession {
 	}
 
 	/** Everything {@code body} carries, into {@code p}'s things alongside their own (what won't fit falls at their feet). */
-	private static void addAll(ServerPlayer p, CompoundTag body) {
+	static void addAll(ServerPlayer p, CompoundTag body) {
 		Inventory loaded = new Inventory(p);
 		loaded.load(body.getList("Inventory", Tag.TAG_COMPOUND));
 		for (int i = 0; i < loaded.getContainerSize(); i++) {
@@ -867,7 +877,7 @@ public final class Possession {
 	}
 
 	/** Everything {@code body} carries falls where {@code at} stands. */
-	private static void dropAll(ServerPlayer at, CompoundTag body) {
+	static void dropAll(ServerPlayer at, CompoundTag body) {
 		Inventory loaded = new Inventory(at);
 		loaded.load(body.getList("Inventory", Tag.TAG_COMPOUND));
 		for (int i = 0; i < loaded.getContainerSize(); i++) {
@@ -902,7 +912,7 @@ public final class Possession {
 	 * Whatever {@code p} was in the middle of with others as the body changes hands: a screen open (its cursor and crafting grid back
 	 * into their things), a talk with an NPC cultivator, a bout (forfeited).
 	 */
-	private static void endDealings(ServerPlayer p) {
+	static void endDealings(ServerPlayer p) {
 		p.closeContainer();
 		for (CultivatorNpc npc : CultivatorNpc.talkingWith(p)) {
 			npc.endTalk(p);
@@ -952,7 +962,7 @@ public final class Possession {
 	 * What each player's systems last noted of them, forgotten as they change bodies (or get theirs back): the next look takes what
 	 * they are as it finds it, with no word of flight, sense, forms or spells newly "gained".
 	 */
-	private static void rebase(ServerPlayer p) {
+	static void rebase(ServerPlayer p) {
 		UUID id = p.getUUID();
 		QiFlight.forget(id);
 		QiSense.forget(id);

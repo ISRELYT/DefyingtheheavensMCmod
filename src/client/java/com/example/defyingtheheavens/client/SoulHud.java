@@ -26,7 +26,20 @@ public final class SoulHud {
 		Minecraft mc = Minecraft.getInstance();
 		if (mc.player == null || mc.options.hideGui || mc.options.renderDebug) return;
 		SoulProjection.State state = ClientSoul.state();
-		if (state == SoulProjection.State.NONE) return;
+		if (state == SoulProjection.State.NONE) {
+			// In one's clone (Clones): that one is, and how the main body fares where it sits.
+			if (ClientCultivationData.inClone()) {
+				int y = QiHud.stackBottom() + UNDER_STACK;
+				g.drawString(mc.font, Component.translatable(ModLang.HUD_CLONE_IN), X, y - 1, 0xD9B8FF);
+				y += 12;
+				float max = ClientClone.mainMax();
+				float health = max <= 0 ? 0 : ClientClone.mainHealth() / max;
+				bar(g, y, health, health < 0.35f ? 0xFFE0524A : 0xFF7BD37B);
+				g.drawString(mc.font, Component.translatable(ModLang.HUD_CLONE_MAIN, Math.round(ClientClone.mainHealth()), Math.round(max)),
+						X + BAR_W + 6, y - 1, TEXT);
+			}
+			return;
+		}
 		int y = QiHud.stackBottom() + UNDER_STACK; // under the stack of bars, the ghostly qi's too when there is one
 		if (state == SoulProjection.State.PROJECTING || state == SoulProjection.State.RECALLING) {
 			float seconds = ClientSoul.ticksLeft() / 20f;
@@ -38,7 +51,12 @@ public final class SoulHud {
 		if (state == SoulProjection.State.PROJECTING) return;
 
 		int radius = ClientSoul.radius();
-		if (ClientSoul.bodyHere()) {
+		if (ClientSoul.bodyHere() && radius == SoulProjection.ENDLESS_TETHER) {
+			// From Void Shattering the tether has no end: only how far off the body is.
+			Vec3 at = mc.player.isPassenger() && mc.player.getVehicle() != null ? mc.player.getVehicle().position() : mc.player.position();
+			bar(g, y, 0, 0xFF59C3FF);
+			g.drawString(mc.font, Component.translatable(ModLang.HUD_SOUL_TETHER_ENDLESS, Math.round(at.distanceTo(ClientSoul.body()))), X + BAR_W + 6, y - 1, TEXT);
+		} else if (ClientSoul.bodyHere()) {
 			Vec3 at = mc.player.isPassenger() && mc.player.getVehicle() != null ? mc.player.getVehicle().position() : mc.player.position();
 			double distance = at.distanceTo(ClientSoul.body());
 			float reach = radius <= 0 ? 0 : (float) Math.min(1, distance / radius);
@@ -69,7 +87,7 @@ public final class SoulHud {
 	/** The y under its last row, so TribulationHud's lines go below it (0 with the soul at home). */
 	static int bottom() {
 		SoulProjection.State state = ClientSoul.state();
-		if (state == SoulProjection.State.NONE) return 0;
+		if (state == SoulProjection.State.NONE) return ClientCultivationData.inClone() ? QiHud.stackBottom() + UNDER_STACK + 2 * 12 : 0;
 		int rows = state == SoulProjection.State.PROJECTING || state == SoulProjection.State.RECALLING ? 1 : 0;
 		if (state != SoulProjection.State.PROJECTING) {
 			Minecraft mc = Minecraft.getInstance();

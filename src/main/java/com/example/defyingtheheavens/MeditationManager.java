@@ -88,6 +88,9 @@ public final class MeditationManager {
 	public static void toggle(ServerPlayer player) {
 		if (isMeditating(player.getUUID())) {
 			stop(player, false);
+		} else if (Clones.inClone(player)) {
+			// A clone cultivates nothing (Clones): its maker's cultivation is the main body's, sitting where it was.
+			player.displayClientMessage(Component.translatable(ModLang.MSG_CLONE_CANNOT), true);
 		} else {
 			start(player);
 		}
@@ -274,7 +277,10 @@ public final class MeditationManager {
 		List<ServerPlayer> fell = new ArrayList<>();
 		List<UUID> gone = new ArrayList<>();
 
-		for (Map.Entry<UUID, Session> entry : SESSIONS.entrySet()) {
+		// Over a copy: a meditation's tick reaches far (surges, steles, years, the Inner Realm), and a session ended on the way would
+		// otherwise break the loop.
+		for (Map.Entry<UUID, Session> entry : new ArrayList<>(SESSIONS.entrySet())) {
+			if (SESSIONS.get(entry.getKey()) != entry.getValue()) continue; // ended (or begun anew) by one before it this tick
 			ServerPlayer p = server.getPlayerList().getPlayer(entry.getKey());
 			if (p == null) {
 				gone.add(entry.getKey());

@@ -72,6 +72,11 @@ public final class CoreDetonation {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_SOUL_BUSY), true);
 			return;
 		}
+		// A clone holds no core of its own (Clones): its maker's is in the main body.
+		if (Clones.inClone(player)) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_CLONE_CANNOT), true);
+			return;
+		}
 		long now = player.level().getGameTime();
 		Long asked = ASKED.get(id);
 		// A second asking hard on the first is a double click on the wheel, not a decision: it is let pass.

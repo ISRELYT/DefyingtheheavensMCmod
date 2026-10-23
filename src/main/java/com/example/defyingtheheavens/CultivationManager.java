@@ -19,6 +19,7 @@ public final class CultivationManager {
 	public static PlayerCultivation get(ServerPlayer player) {
 		PlayerCultivation body = Possession.borrowed(player);
 		if (body != null) return body;
+		// (In their clone it is their own, played at the clone's strength: Clones#strength.)
 		if (Possession.isHeld(player.getUUID())) return Possession.sealed();
 		return own(player);
 	}
@@ -59,6 +60,11 @@ public final class CultivationManager {
 	 * (TwoPaths#cultivatesGhost): the Heavenly Tribulation, or the ghost path's, the Netherworld's (the dead's only one).
 	 */
 	public static void tryBreakthrough(ServerPlayer player) {
+		// A clone breaks through to nothing (Clones): its realm is its maker's, sitting in the main body.
+		if (Clones.inClone(player)) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_CLONE_CANNOT), true);
+			return;
+		}
 		if (TwoPaths.cultivatesGhost(get(player))) {
 			TribulationManager.startGhost(player);
 			return;
@@ -87,6 +93,11 @@ public final class CultivationManager {
 		}
 		if (ability == Ability.SPATIAL_TEAR) {
 			SpatialTrialHandler.tear(player);
+			return;
+		}
+		// And the clone (Clones): split one off, go into it or back, or (sneaking, near the other body) draw it back in.
+		if (ability == Ability.CLONE) {
+			Clones.act(player);
 			return;
 		}
 		c.setAbilityEnabled(ability, !c.isAbilityEnabled(ability));

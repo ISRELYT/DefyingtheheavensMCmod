@@ -38,7 +38,10 @@ public final class QiManager {
 			double soulCost = SoulProjection.upkeep(player, c);
 			// Flight is paid first: running dry should end the pressure, not drop the cultivator out of the sky.
 			double suppressCost = RealmSuppressSystem.upkeep(player, c, flightCost + soulCost);
-			if (!c.gatherQi(1 / 20.0, flightCost + soulCost + suppressCost)) continue;
+			// A clone (Clones) gathers none of itself: what it spends is made up from its maker's pool, which gathers where it sits.
+			boolean fed = Clones.inClone(player) ? Clones.feed(player, c, flightCost + soulCost + suppressCost)
+					: c.gatherQi(1 / 20.0, flightCost + soulCost + suppressCost);
+			if (!fed) continue;
 			changed = true;
 			if (syncTick || c.getQi() >= c.maxQi() || c.getQi() <= 0) {
 				CultivationManager.sync(player);

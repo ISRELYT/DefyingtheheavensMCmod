@@ -200,9 +200,13 @@ public class SpiritStoneItem extends Item {
 		if (!(user instanceof ServerPlayer player)) return stack;
 		PlayerCultivation c = CultivationManager.get(player);
 		boolean fortune = fillsFortune(player, stack);
+		// Only the qi still in it: a stone half drawn by a meditation (drainWhileMeditating) gives half (it gave its whole before the
+		// sweep of 2026-10-23, so a stone meditated nearly dry could be absorbed for all of it).
+		double left = qiLeft(stack);
+		stack.removeTagKey(DRAWN_TAG); // the stone drawn on is the one absorbed: the next of the stack starts whole
 		if (!c.isMortal()) {
 			double before = c.getQi();
-			c.setQi(Math.min(c.maxQi(), before + QI_PER_VALUE * grade.value()));
+			c.setQi(Math.min(c.maxQi(), before + QI_PER_VALUE * grade.value() * left));
 			int gained = (int) Math.round(c.getQi() - before);
 			CultivationManager.markDirty(player.server);
 			CultivationManager.sync(player);

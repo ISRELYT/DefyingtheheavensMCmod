@@ -420,7 +420,7 @@ public final class Wishes {
 		// A share of their fortune in turn: spirit stones that fill the giver's Axis of Fortune as they absorb them.
 		int stones = SHARE_STONES + npc.getRandom().nextInt(SHARE_MORE + 1);
 		ItemStack share = SpiritStoneItem.fortune(new ItemStack(ModItems.MID_SPIRIT_STONE, stones), player);
-		if (!player.getInventory().add(share)) player.drop(share, false);
+		player.getInventory().placeItemBackInInventory(share); // what doesn't fit at their feet
 		npc.changeRegard(player, 20);
 		done(npc, wish);
 		return Component.translatable(ModLang.WISH_GIVEN, stones);

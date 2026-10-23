@@ -97,6 +97,9 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		ClientBodies.register(); // a soul in another's body wears its look and name (Possession)
 		SoulRenderer.register();
 		EntityRendererRegistry.register(ModEntities.SOUL_BODY, SoulBodyRenderer::new);
+		// A clone standing (or the main body sitting) while its player plays the other (Clones).
+		EntityRendererRegistry.register(ModEntities.CLONE_BODY, CloneBodyRenderer::new);
+		ClientClone.register();
 		EntityRendererRegistry.register(ModEntities.SOUL_VESSEL, SoulVesselRenderer::new);
 		EntityRendererRegistry.register(ModEntities.TRIBULATION_LIGHTNING, TribulationLightningRenderer::new);
 		EntityRendererRegistry.register(ModEntities.TRIBULATION_CLOUD, TribulationCloudRenderer::new);
@@ -174,6 +177,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> client.execute(() -> {
 			ClientTribulationData.clear();
 			ClientCultivationData.clear();
+			ClientClone.clear();
 			ClientSect.clear();
 			QuickAbilities.clear();
 			SpatialGapAmbience.clear();

@@ -1503,6 +1503,14 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		setOff(level, false);
 	}
 
+	/**
+	 * Leaves its sect of its own accord, to make its own way as one who departs does (a replacement is sent for): as a soul in its body
+	 * would have it (SectMembership#leaveAsBody); it sets off once the body is its own again.
+	 */
+	public void leaveToWander(ServerLevel level) {
+		setOff(level, true);
+	}
+
 	private void setOff(ServerLevel level, boolean replaced) {
 		Sect sect = sect();
 		BlockPos from = sect == null ? blockPosition() : sect.core;

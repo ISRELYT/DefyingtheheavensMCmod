@@ -398,6 +398,7 @@ public final class Lifespan {
 	 */
 	public static void wipe(ServerPlayer p, boolean stillDead) {
 		SoulProjection.bringHome(p);
+		Clones.lifeEnds(p); // out of a clone, and it dissolves (its things falling where it stood): nothing of the old life goes on
 		// The heavens' storm over a spent life goes with it (the new one has its years).
 		if (LifespanTribulation.isRunning(p.getUUID())) ModPackets.sendLifespanTribulation(p, false, 0, false, false);
 		LifespanTribulation.forget(p.getUUID());

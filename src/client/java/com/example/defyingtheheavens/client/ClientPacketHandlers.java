@@ -110,7 +110,22 @@ public final class ClientPacketHandlers {
 			for (int i = 0; i < axisProgress.length; i++) axisProgress[i] = buf.readVarInt();
 			com.example.defyingtheheavens.FourAxis.Axis obsession = com.example.defyingtheheavens.FourAxis.Axis.byIndex(buf.readVarInt());
 			int pace = buf.readVarInt();
+			int techniques = buf.readVarInt();
+			java.util.Set<com.example.defyingtheheavens.Technique> known = java.util.EnumSet.noneOf(com.example.defyingtheheavens.Technique.class);
+			for (com.example.defyingtheheavens.Technique technique : com.example.defyingtheheavens.Technique.values()) {
+				if ((techniques & (1 << technique.ordinal())) != 0) known.add(technique);
+			}
+			int manualCount = buf.readVarInt();
+			java.util.Set<com.example.defyingtheheavens.Spell> manual = java.util.EnumSet.noneOf(com.example.defyingtheheavens.Spell.class);
+			for (int i = 0; i < manualCount; i++) {
+				com.example.defyingtheheavens.Spell spell = com.example.defyingtheheavens.Spell.byIndex(buf.readVarInt());
+				if (spell != null) manual.add(spell);
+			}
+			boolean inClone = buf.readBoolean();
 			client.execute(() -> {
+				ClientCultivationData.get().setTechniques(known);
+				ClientCultivationData.get().setManualSpells(manual);
+				ClientCultivationData.setInClone(inClone);
 				for (com.example.defyingtheheavens.FourAxis.Axis axis : com.example.defyingtheheavens.FourAxis.Axis.values()) {
 					ClientCultivationData.get().setAxisProgress(axis, axisProgress[axis.ordinal()]);
 				}
@@ -212,6 +227,19 @@ public final class ClientPacketHandlers {
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SECT_INFO, (client, handler, buf, sender) -> {
 			ClientSect.Info info = ClientSect.read(buf);
 			client.execute(() -> ClientSect.setInfo(info));
+		});
+		// In one's clone or not, and how the main body fares (Clones), for the HUD.
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.CLONE_STATE, (client, handler, buf, sender) -> {
+			boolean in = buf.readBoolean();
+			float health = buf.readFloat(), max = buf.readFloat();
+			client.execute(() -> ClientClone.set(in, health, max));
+		});
+		// What may be written out on a Blank Manual (TechniqueManualItem#offerInscription): the screen to pick it from.
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.INSCRIBE_OPTIONS, (client, handler, buf, sender) -> {
+			int count = buf.readVarInt();
+			List<int[]> options = new ArrayList<>(count);
+			for (int i = 0; i < count; i++) options.add(new int[] {buf.readVarInt(), buf.readVarInt()});
+			client.execute(() -> client.setScreen(new InscribeScreen(options)));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.FORMATIONS, (client, handler, buf, sender) -> {

@@ -74,6 +74,13 @@ public final class ClientCultivationData {
 	public static double lifeSpan() { return lifeSpan; }
 	public static boolean lifeDead() { return lifeDead; }
 
+	/** The local player plays their clone now (Clones): the record shown is the clone's, its way back on the wheel. */
+	private static boolean inClone;
+
+	static void setInClone(boolean in) { inClone = in; }
+
+	public static boolean inClone() { return inClone; }
+
 	/** Disconnect: don't show the last world's cultivation on the next server. */
 	public static void clear() {
 		lifespan(com.example.defyingtheheavens.Lifespan.START_AGE, com.example.defyingtheheavens.Lifespan.BASE_YEARS, false);
@@ -100,7 +107,10 @@ public final class ClientCultivationData {
 		DATA.setInUpperRealm(false);
 		DATA.setPressure(0, 0);
 		DATA.setSoulState(com.example.defyingtheheavens.SoulProjection.State.NONE);
+		DATA.setTechniques(java.util.Set.of());
+		DATA.setManualSpells(java.util.Set.of());
 		meditating = false;
+		inClone = false;
 	}
 
 	private ClientCultivationData() {}

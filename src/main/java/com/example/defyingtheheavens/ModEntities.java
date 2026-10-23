@@ -83,6 +83,18 @@ public final class ModEntities {
 					.clientTrackingRange(10)
 					.build("soul_body"));
 
+	/**
+	 * A body of a cultivator with a clone out that isn't being played (see {@link Clones}): the clone standing, player-sized, or the main
+	 * body sitting ({@link CloneBodyEntity#getDimensions}). Saved: it outlasts its owner's logout.
+	 */
+	public static final EntityType<CloneBodyEntity> CLONE_BODY = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("clone_body"),
+			EntityType.Builder.<CloneBodyEntity>of(CloneBodyEntity::new, MobCategory.MISC)
+					.noSummon()
+					.sized(0.6f, 1.8f)
+					.clientTrackingRange(10)
+					.build("clone_body"));
+
 	/** A player's body seized by another cultivator's nascent soul (see {@link SoulVesselEntity}). Player-sized. */
 	public static final EntityType<SoulVesselEntity> SOUL_VESSEL = Registry.register(BuiltInRegistries.ENTITY_TYPE,
 			DefyingTheHeavens.id("soul_vessel"),
@@ -180,6 +192,7 @@ public final class ModEntities {
 		FabricDefaultAttributeRegistry.register(INNER_BODY, InnerBodyEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(HEART_DEMON, HeartDemonEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(SOUL_BODY, SoulBodyEntity.createAttributes());
+		FabricDefaultAttributeRegistry.register(CLONE_BODY, CloneBodyEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(SOUL_VESSEL, SoulVesselEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(EARTH_GOLEM, EarthGolem.createAttributes());
 	}

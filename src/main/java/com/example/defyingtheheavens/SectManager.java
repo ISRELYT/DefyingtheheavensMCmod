@@ -216,6 +216,23 @@ public final class SectManager {
 		retitle(level, sect);
 	}
 
+	/**
+	 * A member cast out by one of the sect's seniors (SectMembership#banish: a soul in its master's or an elder's body): it sets off to
+	 * make its own way as a rogue (woken for it, if its land isn't loaded, as one let go to make room is), and a new disciple is sent
+	 * for in a few days.
+	 */
+	public static void banish(MinecraftServer server, Sect sect, UUID memberId) {
+		Sect.Member out = sect.members.remove(memberId);
+		if (out == null) return;
+		ServerLevel home = server.getLevel(sect.dimension);
+		if (home != null && home.getEntity(memberId) instanceof CultivatorNpc banished) banished.dismiss(home);
+		else sect.letGo.put(memberId, new Sect.LetGo(out.lastAt, out.home));
+		long now = home != null ? home.getGameTime() : server.overworld().getGameTime();
+		if (!sect.extinct) scheduleReplacement(sect, now, server.overworld().getRandom());
+		if (home != null) retitle(home, sect);
+		else dirty(server);
+	}
+
 	private static void scheduleReplacement(Sect sect, long now, RandomSource random) {
 		sect.replacements.add(now + Sect.REPLACEMENT_MIN + random.nextInt((int) Sect.REPLACEMENT_SPREAD));
 	}
@@ -479,6 +496,19 @@ public final class SectManager {
 		level.playSound(null, at, SoundEvents.AMETHYST_BLOCK_BREAK, SoundSource.BLOCKS, 1.0f, 0.6f);
 		level.playSound(null, at, SoundEvents.GLASS_BREAK, SoundSource.BLOCKS, 0.7f, 0.8f);
 		return true;
+	}
+
+	/**
+	 * Whether {@code pos} lies in a treasury no hopper may draw from (HopperBlockEntityMixin; the user's pick after the bug sweep of
+	 * 2026-10-23: a hopper under a treasury chest emptied it with no hand laid on it): a sect's, whose rules are for hands (the
+	 * warning, the casting out, the seal: SectMembership#treasury), or a ghost palace's (PalaceTreasury).
+	 */
+	public static boolean treasuryAt(ServerLevel level, BlockPos pos) {
+		// Every sect's, not the first whose grounds hold the place (sectAt): grounds that overlap would hide a treasury.
+		for (Sect sect : SectData.get(level.getServer()).all()) {
+			if (!sect.extinct && sect.dimension == level.dimension() && sect.bounds.isInside(pos) && sect.treasury.isInside(pos)) return true;
+		}
+		return PalaceTreasury.isTreasury(level, pos);
 	}
 
 	/** The sect whose sealed treasury {@code pos} lies in (see {@link #treasurySealed}), or null. */

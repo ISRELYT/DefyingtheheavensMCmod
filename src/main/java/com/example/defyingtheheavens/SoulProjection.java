@@ -117,6 +117,13 @@ public final class SoulProjection {
 	 */
 	public static final double GHOST_SOUL_BASE = GhostQi.fillPerSecond(GhostQi.NETHERWORLD);
 	/**
+	 * What a soul born of the heaven path reckons its upkeep from, in qi a second, at every realm alike (PlayerCultivation#soulCostPerSecond;
+	 * the user's ask, 2026-10-23): a Nascent Soul Early cultivator's gathering, 25.
+	 */
+	public static final double SOUL_QI_BASE = CultivationStats.qiGather(Realm.NASCENT_SOUL, Stage.EARLY);
+	/** The tether's reach once it has no end (PlayerCultivation#soulTetherEndless: Void Shattering and above). */
+	public static final int ENDLESS_TETHER = Integer.MAX_VALUE;
+	/**
 	 * A possessed being must stand at least this many realms below the soul (a mortal or a beast counts as below Qi Refining): one,
 	 * the user's rule of 2026-10-18 (it was three).
 	 */
@@ -298,6 +305,11 @@ public final class SoulProjection {
 	public static void toggle(ServerPlayer player) {
 		Session s = SESSIONS.get(player.getUUID());
 		if (s == null) {
+			// A clone has no nascent soul of its own to send out (Clones): its maker's sits in the main body.
+			if (Clones.inClone(player)) {
+				player.displayClientMessage(Component.translatable(ModLang.MSG_CLONE_CANNOT), true);
+				return;
+			}
 			begin(player);
 			return;
 		}

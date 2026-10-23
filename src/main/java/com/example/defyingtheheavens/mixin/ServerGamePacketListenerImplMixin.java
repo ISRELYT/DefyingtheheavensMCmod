@@ -50,6 +50,15 @@ public abstract class ServerGamePacketListenerImplMixin {
 		return com.example.defyingtheheavens.QiFlight.moveAllowanceSq(player, limit);
 	}
 
+	/**
+	 * A player leaving: the mod's work on it (CultivationEvents#leaving) here, on the server thread, before vanilla saves and removes
+	 * them. Fabric's DISCONNECT may come first on the network thread (the connection closed), and vanilla's save would race it.
+	 */
+	@org.spongepowered.asm.mixin.injection.Inject(method = "onDisconnect", at = @At("HEAD"))
+	private void dth$leaving(net.minecraft.network.chat.Component reason, org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+		com.example.defyingtheheavens.CultivationEvents.leaving(player);
+	}
+
 	/** One whose body is held by another's soul (Possession) is a spectator only to watch it: no teleporting off to anyone else. */
 	@org.spongepowered.asm.mixin.injection.Inject(method = "handleTeleportToEntityPacket", cancellable = true, at = @At(value = "INVOKE",
 			target = "Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/server/level/ServerLevel;)V",

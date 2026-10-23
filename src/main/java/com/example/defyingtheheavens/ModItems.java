@@ -91,6 +91,11 @@ public final class ModItems {
 	public static final Item GHOST_JADE_SLIP = register("ghost_jade_slip", new GhostJadeSlipItem(new Item.Properties().stacksTo(1)));
 	/** Holds a heaven method; read, it teaches it, and isn't used up (see JadeSlipItem). */
 	public static final Item JADE_SLIP = register("jade_slip", new JadeSlipItem(new Item.Properties().stacksTo(1)));
+	/** Holds a technique or a spell; read, it teaches it at its realm, and isn't used up (see TechniqueManualItem). */
+	public static final Item TECHNIQUE_MANUAL = register("technique_manual",
+			new TechniqueManualItem(new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.RARE)));
+	/** Written on with the Inscription Brush, it becomes a manual of what one knows (see BlankManualItem). */
+	public static final Item BLANK_MANUAL = register("blank_manual", new BlankManualItem(new Item.Properties().stacksTo(16)));
 	/** The exorcist's weapon: a stone sword to the living, every blow landing twice over on the dead (see PeachWoodSwordItem). */
 	public static final Item PEACH_WOOD_SWORD = register("peach_wood_sword", new PeachWoodSwordItem(new Item.Properties()));
 	public static final Item CULTIVATOR_SPAWN_EGG = register("cultivator_spawn_egg",
