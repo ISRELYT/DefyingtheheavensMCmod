@@ -80,7 +80,7 @@ public final class QiFlight {
 		if (DIMENSION.put(id, p.level().dimension()) != p.level().dimension()) p.onUpdateAbilities();
 		// Announced by the true realm: Realm Suppress can hold a cultivator below Core Formation for a while (grounding them),
 		// and the greeting shouldn't repeat each time that lifts.
-		boolean awakened = c.getRealm().canFlyOnQi();
+		boolean awakened = c.canFlyOnQi();
 		Boolean before = REALM_ALLOWED.put(id, awakened);
 		if (awakened && Boolean.FALSE.equals(before)) {
 			p.sendSystemMessage(Component.translatable(ModLang.MSG_QI_FLIGHT_GAINED));
@@ -91,7 +91,7 @@ public final class QiFlight {
 				flightsChanged(p, swordWasOn);
 			}
 		}
-		boolean swordAwakened = !c.isMortal() && c.getRealm().canRideSword();
+		boolean swordAwakened = !c.isMortal() && c.canRideSword();
 		Boolean swordBefore = REALM_ALLOWED_SWORD.put(id, swordAwakened);
 		if (swordAwakened && Boolean.FALSE.equals(swordBefore)) {
 			p.sendSystemMessage(Component.translatable(ModLang.MSG_SWORD_FLIGHT_GAINED));
@@ -155,7 +155,7 @@ public final class QiFlight {
 		}
 		// At most one of these is switched on (Ability#exclusiveWith); a rider without a sword in hand has no flight.
 		boolean onSword = SwordFlight.canRide(p, c);
-		boolean onQi = !onSword && c.getEffectiveRealm().canFlyOnQi() && c.isAbilityEnabled(Ability.QI_FLIGHT);
+		boolean onQi = !onSword && c.canFlyOnQi() && c.isAbilityEnabled(Ability.QI_FLIGHT);
 		// Neither (switched off on the Abilities tab, no sword in hand): no flight, and one in progress ends.
 		if (!onQi && !onSword || carried) {
 			land(p);

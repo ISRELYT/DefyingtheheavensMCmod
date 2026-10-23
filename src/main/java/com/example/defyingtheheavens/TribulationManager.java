@@ -66,6 +66,8 @@ public final class TribulationManager {
 		final Stage targetStage;
 		/** The ghost path's (the Netherworld's tribulation), not the heaven path's. */
 		final boolean ghost;
+		/** The Demon Path's (DemonPath): the heavens' lightning, the harder ({@link DemonPath#TRIBULATION_HARM}). */
+		boolean demon;
 		final Strikes strikes;
 		/** Ticks from its first strike to its last, all of them evenly spread over it ({@link #strikeSpan}). */
 		final int span;
@@ -372,6 +374,65 @@ public final class TribulationManager {
 				: Component.translatable(ModLang.MSG_GHOST_TRIB_START, trial.targetName(), trial.strikesLeft)).withStyle(net.minecraft.ChatFormatting.DARK_AQUA));
 	}
 
+	/**
+	 * Entry point from the Breakthrough button with the Demon Path drawn in (TwoPaths#cultivatesDemon): the heavens' tribulation, as the
+	 * heaven path's but for the Demon Path's stage and the harder ({@link DemonPath#TRIBULATION_HARM}). No pill, ritual or method holds it:
+	 * the lower realms' cap and the axes of virtue do.
+	 */
+	public static void startDemon(ServerPlayer player) {
+		if (!player.isAlive()) return;
+		if (isActive(player.getUUID())) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_TRIB_BUSY), true);
+			return;
+		}
+		if (ModDimensions.isInnerRealm(player.level().dimension())) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_INNER_TRIBULATION), true);
+			return;
+		}
+		if (ModDimensions.isUnseenByHeaven(player.level().dimension())) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_HEAVENS_BLIND), true);
+			return;
+		}
+		if (SoulProjection.isActive(player.getUUID())) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_SOUL_BUSY), true);
+			return;
+		}
+		if (Clones.inClone(player)) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_CLONE_CANNOT), true);
+			return;
+		}
+		PlayerCultivation c = CultivationManager.get(player);
+		if (DemonPath.atBottleneck(c) && DemonPath.locked(c)) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_REALM_LOCKED,
+					PlayerCultivation.rankName(PlayerCultivation.LOWER_REALM_CAP_REALM, PlayerCultivation.LOWER_REALM_CAP_STAGE)), true);
+			return;
+		}
+		if (DemonPath.heldByAxis(c)) {
+			player.sendSystemMessage(FourAxis.gateLine(c, DemonPath.rank(c)).copy().withStyle(net.minecraft.ChatFormatting.GOLD));
+			return;
+		}
+		if (!DemonPath.canBreakthrough(c)) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_NOT_READY), true);
+			return;
+		}
+		MeditationManager.stop(player, false);
+		int target = DemonPath.rank(c) + 1;
+		Trial trial = new Trial(DemonPath.realm(target), DemonPath.stage(target), false, c.hasPhysique(Physique.PRIMORDIAL_CHAOS_BODY));
+		trial.demon = true;
+		ACTIVE.put(player.getUUID(), trial);
+		c.demon().setInTribulation(true); // saved at once, as the heaven path's mark is: leaving fails it
+		CultivationManager.markDirty(player.server);
+		player.server.overworld().getDataStorage().save();
+
+		updateCloud(player, trial);
+		ModPackets.sendTribulation(player, true, trial.strikesLeft, trial.targetRealm, trial.targetStage, false);
+		player.playNotifySound(SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 2.0f, 0.35f);
+		player.playNotifySound(SoundEvents.ENDER_DRAGON_GROWL, SoundSource.PLAYERS, 0.6f, 0.7f);
+		player.sendSystemMessage((trial.strikesLeft == 1
+				? Component.translatable(ModLang.MSG_DEMON_TRIB_START_SINGLE, trial.targetName())
+				: Component.translatable(ModLang.MSG_DEMON_TRIB_START, trial.targetName(), trial.strikesLeft)).withStyle(net.minecraft.ChatFormatting.RED));
+	}
+
 	public static void tick(MinecraftServer server) {
 		if (ACTIVE.isEmpty()) return;
 		List<ServerPlayer> survivors = new ArrayList<>();
@@ -478,7 +539,8 @@ public final class TribulationManager {
 		// reckoned from (GhostSystem#livingShare), so a ghost's hearts, more or fewer, make it no easier or harder than a life.
 		boolean dead = GhostSystem.isGhost(p);
 		// An Ancient Holy Body takes the strikes the more lightly (Physique).
-		float multiplier = RingOfTranscendenceItem.damageMultiplier(p) * (c.hasPhysique(Physique.ANCIENT_HOLY_BODY) ? HOLY_STRIKES : 1.0f);
+		float multiplier = RingOfTranscendenceItem.damageMultiplier(p) * (c.hasPhysique(Physique.ANCIENT_HOLY_BODY) ? HOLY_STRIKES : 1.0f)
+				* (t.demon ? DemonPath.TRIBULATION_HARM : 1.0f); // the heavens hate demons
 		float share = dead ? (float) GhostSystem.livingShare(p) : 1.0f;
 		float magic = t.strikes.magic() * multiplier * share;
 		striking = p.getUUID(); // a killing strike, here, is the tribulation's (#allowDeath)
@@ -538,6 +600,10 @@ public final class TribulationManager {
 			succeedGhost(p, c, t);
 			return;
 		}
+		if (t.demon) {
+			succeedDemon(p, c, t);
+			return;
+		}
 		c.setInTribulation(false);
 		CultivationManager.markDirty(p.server);
 		boolean sameTarget = c.breakthroughRealm() == t.targetRealm && c.breakthroughStage() == t.targetStage;
@@ -585,6 +651,28 @@ public final class TribulationManager {
 		level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, p.getX(), p.getY() + 1.0, p.getZ(), 80, 0.6, 1.0, 0.6, 0.1);
 		level.sendParticles(ParticleTypes.GLOW, p.getX(), p.getY() + 1.0, p.getZ(), 40, 0.5, 0.8, 0.5, 0.2);
 		p.sendSystemMessage(Component.translatable(ModLang.MSG_GHOST_BREAKTHROUGH, t.targetName()).withStyle(net.minecraft.ChatFormatting.AQUA));
+	}
+
+	/** The Demon Path's tribulation survived: on to the stage it was struck for. */
+	private static void succeedDemon(ServerPlayer p, PlayerCultivation c, Trial t) {
+		c.demon().setInTribulation(false);
+		CultivationManager.markDirty(p.server);
+		int before = DemonPath.rank(c);
+		boolean sameTarget = before + 1 == PlayerCultivation.rank(t.targetRealm, t.targetStage);
+		if (!sameTarget || !DemonPath.canBreakthrough(c) || !DemonPath.breakthrough(c)) {
+			p.displayClientMessage(Component.translatable(ModLang.MSG_NOT_READY), true);
+			return;
+		}
+		DemonPath.afterRank(p, before);
+		p.setHealth(p.getMaxHealth());
+		p.clearFire();
+
+		ServerLevel level = p.serverLevel();
+		level.playSound(null, p.blockPosition(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1.0f, 0.9f);
+		level.playSound(null, p.blockPosition(), SoundEvents.ENDER_DRAGON_GROWL, SoundSource.PLAYERS, 0.8f, 0.8f);
+		level.sendParticles(ParticleTypes.FLAME, p.getX(), p.getY() + 1.0, p.getZ(), 80, 0.6, 1.0, 0.6, 0.12);
+		level.sendParticles(ParticleTypes.CRIMSON_SPORE, p.getX(), p.getY() + 1.0, p.getZ(), 60, 0.6, 1.0, 0.6, 0.2);
+		p.sendSystemMessage(Component.translatable(ModLang.MSG_DEMON_BREAKTHROUGH, t.targetName()).withStyle(net.minecraft.ChatFormatting.RED));
 	}
 
 	/** Called from the AFTER_DEATH event (totems of undying prevent that event, so they save the player). */
@@ -635,6 +723,15 @@ public final class TribulationManager {
 			Spells.sync(p);
 			return;
 		}
+		if (t.demon) {
+			c.demon().setInTribulation(false);
+			if (!holds) DemonPath.fallOneStage(c);
+			CultivationManager.markDirty(p.server);
+			Component rank = DemonPath.rankName(DemonPath.rank(c));
+			p.sendSystemMessage(holds ? held(rank) : Component.translatable(fled ? ModLang.MSG_DEMON_TRIB_FLED : ModLang.MSG_DEMON_TRIB_FALL, rank));
+			Spells.sync(p);
+			return;
+		}
 		c.setInTribulation(false);
 		if (!holds) c.fallOneStage();
 		CultivationManager.markDirty(p.server);
@@ -679,6 +776,14 @@ public final class TribulationManager {
 			p.sendSystemMessage(holds ? held(rank) : Component.translatable(ModLang.MSG_GHOST_TRIB_FLED, rank));
 			failed = true;
 		}
+		if (c.demon().inTribulation()) { // the Demon Path's, left mid-way
+			c.demon().setInTribulation(false);
+			if (!holds) DemonPath.fallOneStage(c);
+			p.server.getPlayerList().broadcastSystemMessage(Component.translatable(ModLang.MSG_TRIB_FAILED, p.getDisplayName()), false);
+			Component rank = DemonPath.rankName(DemonPath.rank(c));
+			p.sendSystemMessage(holds ? held(rank) : Component.translatable(ModLang.MSG_DEMON_TRIB_FLED, rank));
+			failed = true;
+		}
 		if (failed) CultivationManager.markDirty(p.server);
 		return failed && !holds;
 	}
@@ -692,6 +797,7 @@ public final class TribulationManager {
 		if (t == null) return;
 		PlayerCultivation c = CultivationManager.get(p);
 		if (t.ghost) c.netherworld().setInGhostTribulation(false);
+		else if (t.demon) c.demon().setInTribulation(false);
 		else c.setInTribulation(false);
 		CultivationManager.markDirty(p.server);
 		t.removeCloud();

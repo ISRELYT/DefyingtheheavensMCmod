@@ -1,0 +1,68 @@
+{
+	"format_version": "1.12.0",
+	"minecraft:geometry": [
+		{
+			"description": {
+				"identifier": "geometry.lizard_tail",
+				"texture_width": 64,
+				"texture_height": 64,
+				"visible_bounds_width": 4,
+				"visible_bounds_height": 4,
+				"visible_bounds_offset": [0, 0, 0]
+			},
+			"bones": [
+				{
+					"name": "tail_0",
+					"pivot": [0, -10.5, 2],
+					"rotation": [-60, 0, 0],
+					"cubes": [
+						{"origin": [-1.5, -12, 2], "size": [3, 3, 5], "uv": [0, 19]}
+					]
+				},
+				{
+					"name": "tail_1",
+					"parent": "tail_0",
+					"pivot": [0, -10.5, 7],
+					"rotation": [-15, 0, 0],
+					"cubes": [
+						{"origin": [-1.4, -11.9, 7], "size": [2.8, 2.8, 5], "uv": [16, 19]}
+					]
+				},
+				{
+					"name": "tail_2",
+					"parent": "tail_1",
+					"pivot": [0, -10.5, 12],
+					"rotation": [60, 0, 0],
+					"cubes": [
+						{"origin": [-1.25, -11.75, 12], "size": [2.5, 2.5, 5], "uv": [32, 19]}
+					]
+				},
+				{
+					"name": "tail_3",
+					"parent": "tail_2",
+					"pivot": [0, -10.5, 17],
+					"rotation": [15, 0, 0],
+					"cubes": [
+						{"origin": [-1.1, -11.6, 17], "size": [2.2, 2.2, 5], "uv": [48, 19]}
+					]
+				},
+				{
+					"name": "tail_4",
+					"parent": "tail_3",
+					"pivot": [0, -10.5, 22],
+					"cubes": [
+						{"origin": [-0.9, -11.4, 22], "size": [1.8, 1.8, 4], "uv": [0, 27]}
+					]
+				},
+				{
+					"name": "tail_5",
+					"parent": "tail_4",
+					"pivot": [0, -10.5, 26],
+					"cubes": [
+						{"origin": [-0.6, -11.1, 26], "size": [1.2, 1.2, 3], "uv": [12, 27]}
+					]
+				}
+			]
+		}
+	]
+}

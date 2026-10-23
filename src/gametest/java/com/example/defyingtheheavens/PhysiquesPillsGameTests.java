@@ -362,7 +362,7 @@ public class PhysiquesPillsGameTests implements FabricGameTest {
 			victim.hurt(player.damageSources().playerAttack(player), Float.MAX_VALUE);
 			helper.assertTrue(!victim.isAlive() && near(c.getCultivation(), Physiques.DEVOUR_SHARE * PlayerCultivation.required(Realm.QI_REFINING, Stage.EARLY)),
 					"A cultivator slain: a tenth of what its stage takes, devoured (" + c.getCultivation() + ")");
-			helper.assertTrue(c.getAlignment() <= alignment - Physiques.DEVOUR_SHIFT, "A neutral one drags its path toward the demonic (" + alignment + " -> " + c.getAlignment() + ")");
+			helper.assertTrue(c.getAlignment() <= alignment - Physiques.DEVOUR_SHIFT, "A neutral one drags its path toward the devilish (" + alignment + " -> " + c.getAlignment() + ")");
 			double was = c.getCultivation();
 			CultivatorNpc mortal = helper.spawnWithNoFreeWill(ModEntities.CULTIVATOR, new BlockPos(2, 2, 1));
 			made.add(mortal);

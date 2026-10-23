@@ -103,7 +103,7 @@ public final class VitalsHud {
 		float max = Math.max(1, player.getMaxHealth());
 		float now = Mth.clamp(player.getHealth(), 0, max);
 		float absorption = player.getAbsorptionAmount();
-		String healthText = whole(Math.ceil(now)) + "/" + whole(Math.round(max));
+		String healthText = whole(Math.ceil(now)) + "/" + whole(Math.ceil(max)); // both up, so a whole body never reads over its max
 		String extra = absorption > 0 ? " +" + whole(Math.ceil(absorption)) : "";
 		String qiText = whole(c.getQi()) + "/" + whole(c.maxQi());
 		int w = MIN_W;

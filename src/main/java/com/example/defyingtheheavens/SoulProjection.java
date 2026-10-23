@@ -516,6 +516,10 @@ public final class SoulProjection {
 			GhostMethods.fallTo(c.netherworld(), PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.GRAND_PERFECTION));
 			fallen = GhostMethods.rankName(TwoPaths.ghostRank(c, false));
 			CultivationManager.refresh(player);
+		} else if (c.soulPath() == TwoPaths.Path.DEMON) { // a Demon Path's nascent soul (DemonPath)
+			DemonPath.fallTo(c, PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.GRAND_PERFECTION));
+			fallen = DemonPath.rankName(DemonPath.rank(c));
+			CultivationManager.refresh(player);
 		} else {
 			c.loseNascentSoul();
 			fallen = PlayerCultivation.rankName(c.getRealm(), c.getStage());
@@ -675,7 +679,7 @@ public final class SoulProjection {
 		// Carried into another realm in a body, the tether reaches across the realms: reckoned as CROSS_REALM_REACH along it.
 		double reach = inOwnRealm(player, s) ? at.distanceTo(s.bodyPos) / c.soulTetherRadius() : CROSS_REALM_REACH;
 		double cost = c.soulCostPerSecond(reach, s.possessed != null || s.state == State.INHABITING);
-		if (c != body && c.soulPath() == TwoPaths.Path.HEAVEN) {
+		if (c != body && c.soulPath() != TwoPaths.Path.GHOST) { // the heaven path's soul, or the Demon Path's (its pool the same)
 			// In a person's body, whose qi is the body's own (QiManager gathers it), the soul keeps its own pool apart: it gathers and
 			// pays here, a tick's share at a time.
 			CultivationManager.markDirty(player.server);

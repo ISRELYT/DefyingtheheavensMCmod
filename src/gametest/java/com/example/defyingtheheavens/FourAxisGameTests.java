@@ -602,8 +602,8 @@ public class FourAxisGameTests implements FabricGameTest {
 					case UNDEAD -> helper.assertTrue(foes.size() == 6 && foes.stream().allMatch(e -> e.getItemBySlot(EquipmentSlot.HEAD).hasTag()
 							&& e.getItemBySlot(EquipmentSlot.HEAD).getTag().getBoolean("Unbreakable")) && foes.stream().anyMatch(e -> e instanceof Zombie),
 							"Six of the dead, helmed against the sun");
-					case DEMONIC -> helper.assertTrue(foes.size() == 1 && foes.get(0) instanceof CultivatorNpc demon && demon.getAlignment() < Alignment.DEMONIC_BELOW
-							&& demon.getRank() >= Wishes.DEMONIC_LOW && demon.getRank() <= Wishes.DEMONIC_HIGH, "A cultivator of the demonic path, Nascent Soul to Heavenly Being");
+					case DEVILISH -> helper.assertTrue(foes.size() == 1 && foes.get(0) instanceof CultivatorNpc devil && devil.getAlignment() < Alignment.DEVILISH_BELOW
+							&& devil.getRank() >= Wishes.DEVILISH_LOW && devil.getRank() <= Wishes.DEVILISH_HIGH, "A cultivator of the devilish path, Nascent Soul to Heavenly Being");
 					default -> { }
 				}
 			}

@@ -82,7 +82,7 @@ import java.util.UUID;
  * <p>
  * <b>Fighting.</b> Rogues always hold their consciousness domain open, sect members only in combat. In combat it presses down
  * on weaker foes with Realm Suppress and flies after flying ones, but only while its qi can carry the cost; it flees when badly
- * hurt or when it senses a hostile domain a realm or more above its own. The righteous and the demonic attack each other (and
+ * hurt or when it senses a hostile domain a realm or more above its own. The righteous and the devilish attack each other (and
  * players of the other path) on sight; see {@link CultivatorGoals} for who fights when.
  * <p>
  * <b>Everyday life.</b> Around its duties it lives a day (see {@link NpcLife}): sleeps at night, sits the morning lecture,
@@ -470,7 +470,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		// One obsessed with Merit (Obsession) is thought the better of by everyone.
 		if (player instanceof ServerPlayer sp) value += Obsession.regardBonus(CultivationManager.get(sp));
 		// The righteous sense something wrong in a Heaven-Defying or a Soul-Devouring Body (Physique).
-		if (player instanceof ServerPlayer sp) value += Physiques.regardShift(CultivationManager.get(sp), getFaction());
+		if (player instanceof ServerPlayer sp) value += Physiques.regardShift(CultivationManager.get(sp), getFaction()) + RaceGifts.regardShift(CultivationManager.get(sp));
 		UUID who = Possession.identity(player);
 		Regard.Entry entry = regard.get(who);
 		if (entry != null) value += entry.current(Regard.day(level().getGameTime()));
@@ -1370,7 +1370,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		return !isMortal() && sustainedRank() >= PlayerCultivation.rank(Realm.NASCENT_SOUL, Stage.EARLY);
 	}
 
-	/** The righteous and the demonic are enemies wherever they meet; the neutral are nobody's. */
+	/** The righteous and the devilish are enemies wherever they meet; the neutral are nobody's. */
 	public boolean isEnemy(LivingEntity other) {
 		if (other == this || !other.isAlive() || isAlly(other) || !senses(other)) return false;
 		if (other instanceof Player player) {

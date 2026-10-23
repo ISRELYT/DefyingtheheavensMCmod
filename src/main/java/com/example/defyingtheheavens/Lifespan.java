@@ -223,7 +223,8 @@ public final class Lifespan {
 
 	/**
 	 * {@code c}'s span in years: the body's, every realm its higher path has reached, and the years won besides; all of it x1.2 for
-	 * an obsession with Longevity (Obsession#lifespanFactor). Infinite for a True Immortal ({@link #endless}).
+	 * an obsession with Longevity (Obsession#lifespanFactor), x1.5 for a demon (DemonPath#LIFESPAN: the beasts are long-lived). Infinite
+	 * for a True Immortal ({@link #endless}).
 	 */
 	public static double span(PlayerCultivation c) {
 		double years = BASE_YEARS + c.extraYears();
@@ -232,7 +233,7 @@ public final class Lifespan {
 			Realm top = Realm.byIndex(rank / Stage.values().length);
 			for (Realm realm : Realm.values()) if (realm.ordinal() <= top.ordinal()) years += realmYears(realm);
 		}
-		return years * Obsession.lifespanFactor(c);
+		return years * Obsession.lifespanFactor(c) * (DemonPath.isDemon(c) ? DemonPath.LIFESPAN : 1.0);
 	}
 
 	/** The rank whose realms' years {@code c}'s span counts: the higher path's, or a body refined past a mortal's Peak's; -1 a mortal's. */

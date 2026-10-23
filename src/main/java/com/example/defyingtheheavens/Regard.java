@@ -154,12 +154,12 @@ public final class Regard {
 		return gameTime / 24_000L;
 	}
 
-	/** Where regard starts from their paths: a righteous cultivator warms to the righteous and cools to those leaning demonic. */
+	/** Where regard starts from their paths: a righteous cultivator warms to the righteous and cools to those leaning devilish. */
 	public static int baseline(Alignment.Faction faction, int playerAlignment) {
 		Alignment.Faction player = Alignment.factionOf(playerAlignment);
 		return switch (faction) {
 			case RIGHTEOUS -> player == Alignment.Faction.RIGHTEOUS ? 10 : playerAlignment < 0 ? -10 : 0;
-			case DEMONIC -> player == Alignment.Faction.DEMONIC ? 10 : playerAlignment > 0 ? -10 : 0;
+			case DEVILISH -> player == Alignment.Faction.DEVILISH ? 10 : playerAlignment > 0 ? -10 : 0;
 			case NEUTRAL -> 0;
 		};
 	}

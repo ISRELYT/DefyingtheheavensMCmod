@@ -349,6 +349,76 @@ The **Rebirth Pill** is no brew: it's found in the Upper Realm (Lifespan, below)
 /give @s defying-the-heavens:core_pill{PillGrade:4,PillAge:10000}   an Immortal-grade pill (grades 0-4)
 ```
 
+## Bloodlines: the demon races
+
+**Built so far: two of four parts** (the user's ask, 2026-10-23): the races and their looks, then the Demon Path and the races'
+gifts (below). Demon clans and the true beast forms come next, and a bloodline awakened in a human after them.
+
+The first time a player joins, **Choose Your Bloodline** comes up: **Human**, or one of the demon races, **Tiger**, **Lizard**,
+**Fox** or **Dragon**, each in three colourings (Golden, White, Black Tiger; Jade, Black, Crimson Lizard; Red, Snow, Silver
+Fox; Azure, Golden, Crimson Dragon). One's own figure on the left wears what is picked, turning to follow the mouse. Begin
+(or Enter) chooses it, **once and for good**. The screen can't be put aside: until something is chosen it comes up again each
+time one joins. A character from a world before bloodlines gets it once too, keeping its realm and all.
+
+- **A demon wears its race's whole look** (the user's rule: "Your own skin MUST change to match that of your race, if you're
+  human, it stays as it is"):
+  - its race's own skin in place of the player's, broad-armed: fur or scales all over, a lighter belly, clawed hands and
+    feet, loose trousers and a sash, in first person too;
+  - its beast's head (see Beasts' heads) and its tail.
+  - **Tiger:** striped, with round ears, fangs and white cheek ruffs, and a long ringed tail with a dark tip.
+  - **Lizard:** scaled, with slit eyes and a forked tongue, and a long tail down to the ground and along it behind. (First
+    named a snake; the user renamed it for how it looks, 2026-10-23. An old "snake" bloodline reads as a lizard.)
+  - **Fox:** tall dark-tipped ears, a white muzzle and chest, dark socks. **It has one bushy white-tipped tail per realm**:
+    one at Qi Refining, nine at Sacred Vessel (the higher of its paths).
+  - **Dragon:** antlers, whiskers, a mane and a beard, with a long scaled tail ridged along its back and tufted at its end.
+- **Where the look shows:** everyone sees it, including on one's body sitting while the soul is out, a clone, a meditator's
+  body, a heart demon, a soul vessel's likeness, and one's soul or ghost (drawn in its light). The top-left portrait shows it.
+  A player in another's body wears the body's blood; in an NPC's, the NPC's look.
+- **Where it's kept:** with the world (`Bloodlines`), not in a life's record, so it stays one's own through every life.
+- **Changing it:** `/cultivation bloodline` tells which; `set <human|tiger|lizard|fox|dragon> [colouring 1-3]` makes it one;
+  `choose` undoes the choice and brings the picker back. A bloodline awakened in a human comes later.
+
+Not the **devilish** path of the alignments (formerly "demonic"; renamed at the user's word, 2026-10-23), which a demon may walk
+as well as a man. Code: `Bloodline.java`, `Bloodlines.java` (packets `bloodline_ask` S2C, `bloodline_choose` C2S, `bloodlines`
+S2C), client `BloodlineScreen`, `ClientBloodlines`, `BeastLayer`, `BeastHeadModels`, `mixin/AbstractClientPlayerMixin`
+(the race's skin) and `LivingEntityRendererMixin` (the man's head taken off); tests in `BloodlinesGameTests`.
+
+### The Demon Path
+
+A third path beside the heaven path and the ghost path, with **the same realm and stage names** (the user's pick) and its own
+cultivation bar. The user's rule: "you should be able to cultivate both the heaven and demon path as a demon or human, but as
+demons you have a demon core already however as humans you need to form one after receiving a bloodline of a beast. human jade
+slips teach demons if they are studying heaven path."
+
+- **A demon is born with its demon core:** its Demon Path begun at Qi Refining Early, told in chat and the journal. The core
+  opens its meridians, so a demon is never a mortal: its heaven path starts at Qi Refining Early too (but Shattered Meridians,
+  which no core mends). A human has no Demon Path until it receives a beast's bloodline (the awakening comes later).
+- **One qi a meditation:** the Path button on the Cultivation tab steps through the paths one has (Heaven, Demon, Ghost) and
+  meditation fills the one drawn in. The tab shows a column per path (the drawn one marked), side by side.
+- **Its pace:** its realm's and stage's own rate, as the heaven path's, by the race's pace (a dragon's 0.8, the slowest). The
+  years it costs, its bottlenecks and seclusion as the heaven path's; each stage's gate is **its own tribulation** (the
+  Breakthrough button with the Demon Path drawn in), its strikes 1.25 times as hard. Failing it costs a stage of the Demon
+  Path (none for one whose physique holds its stage).
+- **What it teaches:** no methods. Its blood teaches the spells of its element as the Demon Path reaches each one's realm (onto
+  the spell wheel): **Tiger Metal, Lizard Earth, Fox Fire, Dragon Wood**. The heaven path's jade slips and methods teach a demon
+  as they teach a man, for the heaven path.
+- **Its body:** where the Demon Path stands above the heaven path the body takes its strength from it, 1.2 times; the paths'
+  harmony from the two highest. Its qi pool is shared: the larger of the heaven path's and 0.85 of the Demon Path's realm's. A
+  demon lives **half again as long**. The realm's abilities (Qi Flight and the rest) come from whichever path reaches the realm.
+- **The races' gifts**, whatever path they walk (`RaceGifts`):
+  - **Tiger:** its own blows 1.15 times as hard; it sees in the dark. From Core Formation, **Tiger's Roar** (ability wheel): all
+    within 10 blocks two stages or more below it weakened and slowed for 5 s (10% of its qi, every 30 s).
+  - **Lizard:** venomous blows (poison 5 s, stronger from Core Formation and again from Heavenly Being); it swims fast and
+    breathes underwater; **Shed Skin**: brought below a quarter of its health, it heals to half (once in ten minutes).
+  - **Fox:** Charm (NPCs think 10 the better of it); its tails. From Core Formation, **Illusion** (ability wheel): unseen for
+    6 s, broken by a blow of its own (10% of its qi, every 45 s).
+  - **Dragon:** Qi Flight from Foundation Building (at Core Formation's cost); 1.2 times the health; **Dragon's Might**: those
+    within 8 blocks two realms or more below it are slowed while near; the slowest Demon Path.
+
+Not yet: the Demon Path's tribulation wears the heaven path's look. Code: `DemonState` (saved in the record as "Demon"),
+`DemonPath`, `RaceGifts`, the Path switch in `TwoPaths`, `MeditationManager#demonPath`, `TribulationManager#startDemon`; tests in
+`DemonPathGameTests`.
+
 ## Physiques
 
 Every player is born with a **physique**, rolled the first time they join, told in chat and written in the journal; the
@@ -382,7 +452,7 @@ paths on top of the body's own, Low x1, Mid x1.1, High x1.2, Supreme x1.35, Immo
 | Ghost Devil Body | Immortal | 0.6 | The ghost path twice as fast; a Ghost King's form of its own anywhere from the start (held to its ghost path's might while shown); a Ghost King when dead; learning a ghost foundation of Core Formation or deeper takes the ghost path straight to that realm's Early |
 | Heaven-Defying Body | Immortal | 0.5 | **The heavens can't strike it down**: a tribulation's killing strike leaves it one heart, and the tribulation fails (the dead don't scatter for it). **No failed tribulation costs it a stage** (the user's, 2026-10-20): struck down, fled or killed by something else, it keeps its stage, its cultivation and any breakthrough pill taken, and may face the heavens again at once. The lifespan tribulation (Lifespan) is another thing: it dies to that as anyone does, and its life is ended. No Ritual to the Heavens wanted. Heaven methods 0.75 times as fast, and the righteous think 15 less of it |
 | Primordial Chaos Body | Immortal | 0.4 | Meditation feeds **both paths at once**, each at its full pace (the living, the ghost path begun); no element barred; its spells (the heaven methods' qi, the ghost path's harm) strike a quarter harder. The heavens hate it: every tribulation strikes half as many times again (rounded up: Core Formation's 6 become 9, Four Axis's 100 become 150), at its realm's pace, so it takes the longer; its lifespan tribulation strikes half as often again |
-| Soul-Devouring Body | Immortal | 0.4 | Every cultivator it slays, NPC or player, gives it a tenth of what the victim's stage takes, on the path it cultivates (as far as fits before a bottleneck); a player it slays loses a stage of their own, on their higher path (the user's ask, 2026-10-20: a friend killed again and again to feed one pays for every time); each righteous or neutral one drags its alignment 10 toward the demonic; the righteous think 20 less of it |
+| Soul-Devouring Body | Immortal | 0.4 | Every cultivator it slays, NPC or player, gives it a tenth of what the victim's stage takes, on the path it cultivates (as far as fits before a bottleneck); a player it slays loses a stage of their own, on their higher path (the user's ask, 2026-10-20: a friend killed again and again to feed one pays for every time); each righteous or neutral one drags its alignment 10 toward the devilish; the righteous think 20 less of it |
 | Heavenly Thunder Body | Immortal | 0.3 | A tribulation's lightning feeds it: no harm, the qi pool filled, and the strikes bank up to 60% of the new stage's cultivation for the breakthrough. The lifespan tribulation's it drinks whole only up to half its power (cultivation into its bar), less and less after: at the last it is too much even for this body |
 | Eternal Reincarnation Body | Immortal | 0.1 | **A Low grade's talent and pace** (x1, no edge) for all its grade, but reborn (a life spent, a soul scattered; a Rebirth Pill has no hold on it, below) it **keeps this body and all its cultivation** (the user's ask, 2026-10-22: "you can reach it if you work hard and you dont lose stuff"): each path's realm, stage and progress, every method as deep as it was, the stat points, the axes of virtue and the obsession, Heaven's Favour, a breakthrough pill taken, its alignment, its abilities and wheels; only the life is new (16, its realm's years ahead of it). A Low talent that keeps everything reaches True Immortal in some 60 lives with nothing saving its years, 4 with all of it (it was set back to half its realm until then, which a Low talent never outgrew: `PlayerCultivation#carryOver`); the rarest, with the next |
 | Myriad Form Body | Immortal | 0.1 | Born with **two more physiques** of Mid to Supreme grade, by their weights, with all their gifts (paces and pools multiply); never a pair that clashes: at most one of roots (Three or True Element), never the Nine Yang with the Yin Soul |
@@ -788,18 +858,18 @@ someone else, fill no one's axis; crafted into other grades they lose the mark.
 | Riders of bone | three skeletons on skeleton horses (the riders are the threat) |
 | A brood | three spiders, two cave spiders |
 | A wolf pack | four wolves, angry at you |
-| A demonic cultivator | a cultivator of the demonic path, Nascent Soul Early to Heavenly Being Late, out for you |
+| A devilish cultivator | a cultivator of the devilish path, Nascent Soul Early to Heavenly Being Late, out for you |
 
 Each one of them that falls by your hand (your blow, arrow or spell, or your Earth Golem's) fills the Axis of Merit by its
-hearts, as it stood before any Realm Suppress (a ravager 50, a pillager, vindicator or evoker 12, a wolf 4; a demonic
+hearts, as it stood before any Realm Suppress (a ravager 50, a pillager, vindicator or evoker 12, a wolf 4; a devilish
 cultivator by its rank). The wish is granted when **every one of them is dead and at least one fell by your hand**. Slain only
 by others (the sun, a fall, the settlers), or taken from the world some other way, the threat is gone but the wish stands, to be
 taken on again. A threat leaves its spoils (its loot and gear, an evoker's totem) only when it falls
 by your hand: slain by anything else it drops nothing, so letting it die and taking the wish on again farms nothing (the
-2026-10-20 sweep). The **demonic cultivator** is out for you and you alone, whatever your path: it never
+2026-10-20 sweep). The **devilish cultivator** is out for you and you alone, whatever your path: it never
 runs from your domain or a beating, never begs for its life, never goes off into seclusion or to ascend (a Heavenly Being of
 the lower realms would), and never turns on the settlers. On **Peaceful**, where no monster lives, whatever preys on them comes
-as a demonic cultivator (the wolves still come as wolves). A threat that dies
+as a devilish cultivator (the wolves still come as wolves). A threat that dies
 while its settler's land is unloaded counts when the settler is next about, even if you are offline by then. A threat left a day
 lapses with its wish, and whatever of it is still about leaves too (any out of reach go when their land loads again).
 Settlers don't go looking for fights, even with enemies of their path; they only defend themselves, and leave the threat to
@@ -824,7 +894,7 @@ Realm (the common dead may not), but to the living it isn't there: the settlers 
 Ghost King's **human form** (Form Shift), and one who comes to them in its true form is told so. In its human form any of the
 living see it as one of their own. It heals out of its ghostly qi (none gathers in the Astral Realm, so come with a full pool),
 the years it takes lengthen its lifespan as the living's do, and the beasts and the dead of the Merit threats don't fight back
-against it (no mob of the living world hunts the dead), though a demonic cultivator, of Nascent Soul and above, sees it and does.
+against it (no mob of the living world hunts the dead), though a devilish cultivator, of Nascent Soul and above, sees it and does.
 
 Code: `FourAxis`, `Wishes`, `SpiritStoneItem#fillsFortune`, `PlayerCultivation#axisProgress`/`isHeldByAxis`, `GhostMethods#heldByAxis`,
 `Settlements#raiseAlarm`, `CultivatorGoals.ShelterGoal`; tests `FourAxisGameTests`.
@@ -1801,7 +1871,7 @@ huts** round it in the world's own wood (oak, spruce on frozen and taiga worlds,
 worlds, mangrove on swamps, dark oak on mushroom worlds, birch on crystal ones) with a doorway toward the well, windows, a
 barrel, a workbench and a lantern, and **5-8 settlers**: mortals nearly half of them, the rest cultivators of Qi Refining (most)
 to Core Formation (few), of the righteous path or none, each with a **wish** (the four axes, above) and keeping to within 18
-blocks of the well. Settlers seek no fights (not even with the demonic path); they only defend themselves. A site whose ground is
+blocks of the well. Settlers seek no fights (not even with the devilish path); they only defend themselves. A site whose ground is
 water or lava stays empty. Each has a name ("Jade Spring Hamlet"), shown as you come
 within 40 blocks. One with an axis to fill is shown now and then, while out of sight of any, the **smoke** of the nearest
 settlement: how far, and which way. Which sites are built is saved with the Overworld.
@@ -2520,24 +2590,26 @@ they died), `TalkSystem` (the soup, teaching), `CultivatorTrades#ghostGoods`, `C
 
 ### Beasts' heads
 
-A beast's head worn on a man's body is its own little model, built from cubes as vanilla's models are, and drawn in
-place of the human head and its hat layer: it turns and nods with the head it replaces (its pivot is the neck), so any
-humanoid body can wear one. Ox-Head and Horse-Face are the first; the same pieces are there for whatever comes to wear
-one later (a demon race's tiger or snake head, say).
+A beast's head worn on a man's body is a GeckoLib model of its own, drawn in place of the human head and its hat layer:
+it turns and nods with the head it replaces (its pivot is the neck), so any humanoid body can wear one. Ox-Head and
+Horse-Face wear them, and the demon races (Bloodlines, below) wear theirs with a tail. Since 2026-10-23 they are animated
+(the user's ask: "actual beast heads instead of the stuck on model"): the ears flick now and then, the eyes blink, a
+lizard's tongue flicks, a dragon's whiskers and mane drift, Ox-Head and Horse-Face chew, and the jaw drops as one strikes;
+a tail sways standing and swings as its wearer walks, a fox spirit's fanned out one for each tail it has.
 
-- **The list** is `BeastHead` (shared by both sides, so the server can name one and sync it): `OX`, `HORSE`. Saved and
-  synced by id; add new heads at the end.
-- **The models** are in client `BeastHeadModels`: each a model layer, `defying-the-heavens:beast_head/<id>`, with its mesh
-  (in the model's pixels: the human head is the box from (-4, -8, -4) to (4, 0, 4) about the neck, the face toward -z, -x
-  its right), and a 64 x 64 texture, `textures/entity/beast_head/<id>.png`. Each mesh's comment lists its boxes' texture
-  corners. A head also names its **brow**, where a talisman sealed to it hangs (on the long face of a horse it lies along
-  the top of the face).
-- **Wearing one**: hide the body model's `head` and `hat`, call the head's `follow(model.head)` after the body's
-  `setupAnim`, and draw it with the same transforms (and the same render type) as the body, in its own texture.
-  `SoulRenderer#drawBody` does so for the dead (`drawDead` picks the head from `GhostCultivatorNpc.Role#beastHead`); a living
-  wearer would do the same from a render layer with an ordinary entity render type.
-- **A new head**: an entry in `BeastHead`, its mesh in `BeastHeadModels#definition` and its brow in `#brow`, and its texture.
-  The textures here were drawn by a small generator, box by box (fur fill, then eyes, nose, blaze and the like).
+- **The list** is `BeastHead` (shared by both sides, so the server can name one and sync it): `OX`, `HORSE`, `TIGER`,
+  `LIZARD`, `FOX`, `DRAGON`. Saved and synced by id; add new heads at the end.
+- **The models** are GeckoLib models (Blockbench's Bedrock geometry: pixels, y up, the face toward -z, about the neck; a tail
+  about the top of the body): `geo/beast/<id>_head.geo.json` and `<id>_tail.geo.json`, animations
+  `animations/beast/<id>.animation.json` ("idle", "strike"), textures `textures/entity/beast_head/<id>.png` (Ox-Head's,
+  Horse-Face's) or `textures/entity/bloodline/<race>_<colouring>_beast.png` (a race's head and tail on one texture). Client
+  `BeastHeadModels` draws them (a tail's sway in code); each head names its **brow**, where a talisman sealed to it hangs.
+- **Wearing one**: hide the body model's `head` and `hat`, `on(wearer, look)` (whose animations, which colouring),
+  `follow(model)` after the body's `setupAnim`, and draw it with the same transforms as the body, in its `texture()`.
+  `SoulRenderer#drawBody` does so for souls and the dead, `BeastLayer` for the living.
+- **Making or changing one**: the models, their animations and all the textures (the race skins too) are written by
+  `tools/beast-art` (`java BeastArt.java <the mod's assets folder>`; JDK 22 or later), cube by cube with a painter for each
+  (fur, stripes, scales, eyes, nose...). The .geo.json files open in Blockbench as GeckoLib models to be tuned by hand there.
 
 ### Herbs, Yin Jade and the exorcist's tools
 
@@ -2666,7 +2738,7 @@ bamboo grow on the open grass between. Buildings stand on stone bases, with plai
 (set evenly and mirrored about the door, which always stands in the middle of a bay), under tiled roofs whose
 ridges, eaves and upturned corners are picked out in the trim colour; the colours go by the sect's path: grey stone, red
 pillars and slate roofs trimmed in bronze for the righteous, Blue Spirit Wood and teal roofs for the neutral, black stone,
-crimson pillars and dark nether-brick roofs trimmed in red with soul lanterns for the demonic.
+crimson pillars and dark nether-brick roofs trimmed in red with soul lanterns for the devilish.
 
 - Three sizes, for 10-12, 13-16 and 17-20 members. They only generate on fairly level, mostly dry land (at most 20
   blocks between the highest and lowest ground under the grounds, 24 in the Upper Realm; the grounds are levelled, a
@@ -2699,7 +2771,7 @@ crimson pillars and dark nether-brick roofs trimmed in red with soul lanterns fo
   basins) forms where it would reach into a sect (`mixin/LakeFeatureMixin`), no wild tree, bamboo, huge mushroom, mossy
   boulder or jungle vine grows on the grounds or within 4 blocks of them (`mixin/SectClearingMixin`; saplings planted
   later grow as usual), no ore blob reaches into a sect's buildings or a ghost palace (`mixin/OreFeatureMixin`: with
-  Terralith, which counts blackstone as Overworld stone, vanilla's gravel, dirt and ores used to come up through the demonic
+  Terralith, which counts blackstone as Overworld stone, vanilla's gravel, dirt and ores used to come up through the devilish
   sects' blackstone walls; the open grounds and what lies under them keep their ore), and the sects build with nothing a water
   or lava spring can open in (the plaster is smooth quartz, not calcite; checked by a game test).
 - The layout is planned in code (`SectStructure`, `SectLayout`, `SectPiece`), not from jigsaw templates, so it fits its
@@ -2863,7 +2935,7 @@ the top.
   the abyss is empty there), never over the void; one flying in the world bound for open sky between islands goes on
   to the nearest island, and one held up over open sky (talking, say) hovers rather than sink into the abyss.
 - **Coming up.** A cultivator who makes it through to the Upper Realm looks once for the nearest sect of its path
-  (righteous, neutral or demonic) that will take it, as far as 8,192 blocks off (nearest first, so it goes further only
+  (righteous, neutral or devilish) that will take it, as far as 8,192 blocks off (nearest first, so it goes further only
   when there's none nearer; that far takes it about 17 minutes unseen): one with a free slot (a member it lost, dying to
   anything but a player, whose replacement hasn't come yet), or a full one with a member weaker than the newcomer, and no
   other newcomer already on the way. Only sects already founded are known: those within 2,048 blocks of the rift are
@@ -3033,12 +3105,12 @@ in each path's voice, is in `NpcLines`).
 
 ### Alignment
 
-Alignment runs from -200 to +200: **Demonic** below -50 (red on black), **Neutral** from -50 to 50 (blue), **Righteous**
-above 50 (white). A sect shares one alignment (40% righteous, 30% neutral, 30% demonic); rogues are random.
+Alignment runs from -200 to +200: **Devilish** below -50 (red on black), **Neutral** from -50 to 50 (blue), **Righteous**
+above 50 (white). A sect shares one alignment (40% righteous, 30% neutral, 30% devilish); rogues are random.
 
-- Neutral cultivators are peaceful unless provoked. Righteous and demonic cultivators attack each other on sight, and a
+- Neutral cultivators are peaceful unless provoked. Righteous and devilish cultivators attack each other on sight, and a
   sect treats players the same way by alignment.
-- Killing a cultivator who hadn't provoked you costs 10 alignment, plus 2 for each realm of theirs; killing a demonic one
+- Killing a cultivator who hadn't provoked you costs 10 alignment, plus 2 for each realm of theirs; killing a devilish one
   gains 6, plus 2 per realm (`Alignment.killShift`).
 
 ### Talking to cultivators
@@ -3056,7 +3128,7 @@ window closes with a line over the hotbar saying why (`TalkSystem`, `TalkWheelSc
 - **Names.** Every cultivator has a personal name ("Mo Lian", "Gu Hanyu"), worked out from its UUID (`NpcNames`).
 - **Standing.** Their realm against yours, as each side shows it (so Realm Suppression and concealment change it), sets
   how they speak to you and what they entertain. Their path sets the tone: the righteous are formal, the neutral terse,
-  the demonic mocking. A mortal player is spoken to as a mortal (Greet, Ask, Trade, Gift).
+  the devilish mocking. A mortal player is spoken to as a mortal (Greet, Ask, Trade, Gift).
 
 | Their realm against yours | How they treat you | What the wheel offers |
 | --- | --- | --- |
@@ -3084,7 +3156,7 @@ window closes with a line over the hotbar saying why (`TalkSystem`, `TalkWheelSc
 | Kill someone who was attacking them | +20 (+5 to their sect) |
 | Wake them from meditation (elders and the master on duty don't mind) | -2 |
 | Press up against a secluded cultivator's barrier to talk | -5, once a day |
-| Provoke them | -15, and they may attack: likelier on the demonic path or if they are stronger, never if a realm below you |
+| Provoke them | -15, and they may attack: likelier on the devilish path or if they are stronger, never if a realm below you |
 | Demand tribute | -20 (and -5 alignment), once a day |
 | Strike them | -30, once a fight |
 | Kill one of their sect | -40 to the whole sect |
@@ -3188,7 +3260,7 @@ tribulations are balanced against vanilla gear. What sets clothing apart is what
   enchantments, name and wear: Mortal to Spirit 2 Spirit Dew + a gold ingot; Spirit to Earth a Qi Vein + a diamond;
   Earth to Heaven 2 Qi Veins + netherite scrap; Heaven to Immortal 2 Qi Veins + a netherite ingot + Spirit Ginseng.
 - **Dye** a piece: white dye for righteous white and blue-grey, blue or light blue for neutral blue, red and black dye
-  together for demonic black and crimson.
+  together for devilish black and crimson.
 - Cultivators wear it too, better grades for higher titles, and drop each piece 12% of the time; sect chests hold it.
 - Code: `ClothingTier`, `ClothingItem`, `ClothingStyle`, `ClothingRecipes`; client `ClothingModels` (the robe's skirt,
   sleeves and the guan's crown), `ClothingArmorRenderer`.

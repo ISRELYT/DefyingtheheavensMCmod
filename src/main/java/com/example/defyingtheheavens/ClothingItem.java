@@ -107,7 +107,7 @@ public class ClothingItem extends ArmorItem {
 	@Override
 	public void appendHoverText(ItemStack stack, Level level, List<Component> lines, TooltipFlag flag) {
 		ClothingStyle style = style(stack);
-		lines.add(style.getDisplayName().copy().withStyle(s -> s.withColor(style == ClothingStyle.DEMONIC ? style.getAccent() : style.getCloth())));
+		lines.add(style.getDisplayName().copy().withStyle(s -> s.withColor(style == ClothingStyle.DEVILISH ? style.getAccent() : style.getCloth())));
 		lines.add(Component.translatable(ModLang.CLOTHING_QI, Math.round(tier.getQiGatherPerPiece() * 100)).withStyle(ChatFormatting.AQUA));
 		lines.add(Component.translatable(ModLang.CLOTHING_MEDITATION, Math.round(tier.getMeditationPerPiece() * 100)).withStyle(ChatFormatting.GREEN));
 		if (!tier.isLast()) lines.add(Component.translatable(ModLang.CLOTHING_UPGRADE_HINT).withStyle(ChatFormatting.DARK_GRAY));

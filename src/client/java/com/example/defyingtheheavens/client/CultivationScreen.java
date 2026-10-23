@@ -7,6 +7,7 @@ import com.example.defyingtheheavens.ModItems;
 import com.example.defyingtheheavens.PillItem;
 import com.example.defyingtheheavens.CultivationBoost;
 import com.example.defyingtheheavens.CultivationStats;
+import com.example.defyingtheheavens.DemonPath;
 import com.example.defyingtheheavens.GhostMethod;
 import com.example.defyingtheheavens.GhostMethods;
 import com.example.defyingtheheavens.HeavenMethod;
@@ -322,10 +323,12 @@ public class CultivationScreen extends Screen {
 		meditateButton.setMessage(Component.translatable(
 				ClientCultivationData.isMeditating() ? ModLang.BTN_STOP : ModLang.BTN_MEDITATE));
 		PlayerCultivation c = ClientCultivationData.get();
-		// The path whose qi is drawn in breaks through: the heaven path's tribulation, or the Netherworld's (the ghost path's).
-		boolean ghostQi = TwoPaths.cultivatesGhost(c);
-		breakthroughButton.active = (ghostQi ? GhostMethods.canBreakthrough(c) : c.canBreakthrough()) && !ClientTribulationData.isActive();
-		meditateButton.active = !c.isMortal(); // a mortal has no qi to gather
+		// The path whose qi is drawn in breaks through: the heaven path's tribulation, the Netherworld's (the ghost path's), or the
+		// heavens' harder one (the Demon Path's).
+		TwoPaths.Path drawn = TwoPaths.drawnIn(c);
+		breakthroughButton.active = (drawn == TwoPaths.Path.GHOST ? GhostMethods.canBreakthrough(c) : drawn == TwoPaths.Path.DEMON ? DemonPath.canBreakthrough(c)
+				: c.canBreakthrough()) && !ClientTribulationData.isActive();
+		meditateButton.active = !c.isMortal() || DemonPath.rank(c) >= 0; // a mortal has no qi to gather (a demon's core has)
 		// The pace, for whoever can meditate to some end (a body refined, a shattered one too), right of Meditate.
 		boolean pace = progressTab && (!c.isMortal() || c.hasShatteredMeridians());
 		paceButton.visible = pace;
@@ -335,8 +338,9 @@ public class CultivationScreen extends Screen {
 			paceButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable(ModLang.TIP_PACE[paceShown - 1])));
 		}
 		// The switch, for the living on both paths (the dead draw in only ghostly qi), between the two: then three share the row.
-		pathButton.visible = progressTab && TwoPaths.walksBoth(c) && !c.netherworld().ghost();
-		pathButton.setMessage(Component.translatable(ghostQi ? ModLang.BTN_PATH_GHOST : ModLang.BTN_PATH_HEAVEN));
+		pathButton.visible = progressTab && TwoPaths.drawable(c).size() >= 2 && !c.netherworld().ghost();
+		pathButton.setMessage(Component.translatable(drawn == TwoPaths.Path.GHOST ? ModLang.BTN_PATH_GHOST
+				: drawn == TwoPaths.Path.DEMON ? ModLang.BTN_PATH_DEMON : ModLang.BTN_PATH_HEAVEN));
 		int room = WIDTH - 24 - (pace ? PACE_W + BUTTON_GAP : 0);
 		int w = pathButton.visible ? (room - 2 * BUTTON_GAP) / 3 : 112;
 		meditateButton.setWidth(w);
@@ -431,13 +435,29 @@ public class CultivationScreen extends Screen {
 		// On both paths (TwoPaths) the two stand side by side, each in full and alike: name, realm and stage, bar, the method
 		// practised and its pace, what stands next on it (the user's ask, 2026-10-18: both are ways to the heights, neither a side
 		// path). On the heaven path alone, its realm and stage over the whole width.
-		boolean both = TwoPaths.walksBoth(c);
+		// A demon's Demon Path stands among them too, between the heaven path and the ghost path (DemonPath): three columns on all three.
+		List<TwoPaths.Path> columns = new ArrayList<>();
+		columns.add(TwoPaths.Path.HEAVEN);
+		if (DemonPath.rank(c) >= 0) columns.add(TwoPaths.Path.DEMON);
+		if (TwoPaths.ghostRank(c, false) >= 0) columns.add(TwoPaths.Path.GHOST);
+		boolean both = columns.size() >= 2;
 		if (both) {
-			int colW = (barW - COLUMN_GAP) / 2;
-			int heavenEnd = heavenColumn(g, player, c, method, boost, x, y, colW);
-			int ghostEnd = ghostColumn(g, c, x + colW + COLUMN_GAP, y, colW);
-			int end = Math.max(heavenEnd, ghostEnd);
-			g.fill(cx, y + 2, cx + 1, end - 2, 0x50B8860B); // a faint bronze line between the two
+			int n = columns.size();
+			int colW = (barW - (n - 1) * COLUMN_GAP) / n;
+			int end = y;
+			for (int i = 0; i < n; i++) {
+				int cx0 = x + i * (colW + COLUMN_GAP);
+				int columnEnd = switch (columns.get(i)) {
+					case HEAVEN -> heavenColumn(g, player, c, method, boost, cx0, y, colW);
+					case DEMON -> demonColumn(g, c, cx0, y, colW);
+					case GHOST -> ghostColumn(g, c, cx0, y, colW);
+				};
+				end = Math.max(end, columnEnd);
+			}
+			for (int i = 1; i < n; i++) {
+				int line = x + i * (colW + COLUMN_GAP) - COLUMN_GAP / 2;
+				g.fill(line, y + 2, line + 1, end - 2, 0x50B8860B); // a faint bronze line between each two
+			}
 			y = end + 2;
 		} else {
 			g.drawCenteredString(font, Component.translatable(ModLang.REALM, c.getRealm().getDisplayName()), cx, y, 0x7FDBFF);
@@ -483,7 +503,7 @@ public class CultivationScreen extends Screen {
 			details.add(new Detail(Component.translatable(ModLang.PILL_RESISTANCE_LINE, Math.round(c.getPillResistance() * 100)), 0x9E9E9E));
 		}
 		details.add(new Detail(Component.translatable(ModLang.ALIGNMENT_LINE, Alignment.describe(c.getAlignment())), 0xA0A0A0));
-		if (both && TwoPaths.harmony(c) > 0) {
+		if (TwoPaths.realmGap(c) >= 0 && TwoPaths.harmony(c) > 0) {
 			details.add(new Detail(Component.translatable(ModLang.TWO_PATHS_LINE, Math.round(TwoPaths.harmony(c) * 100)), 0x8FEAE4));
 		}
 		if (c.getFavour() > 0) {
@@ -497,7 +517,8 @@ public class CultivationScreen extends Screen {
 		List<Line> status = heldStatus(c, barW);
 		if (status.isEmpty()) {
 			status = heavenNext(c, barW);
-			if (both) {
+			status.addAll(demonNext(c, barW));
+			if (TwoPaths.ghostRank(c, false) >= 0 && TwoPaths.heavenRank(c, false) >= 0) {
 				// What the heaven path's has said already (an axis of virtue both paths stand at: FourAxis) is said once; its bar framed
 				// in amber if either path's breakthrough waits on it.
 				Set<String> said = new HashSet<>();
@@ -556,19 +577,20 @@ public class CultivationScreen extends Screen {
 	private Detail seclusionDetail(PlayerCultivation c, Player player, HeavenMethod method, double boost) {
 		if (Double.isInfinite(ClientCultivationData.lifeSpan())) return null; // a True Immortal's cultivation costs no years
 		int stages = Stage.values().length;
-		boolean ghost = TwoPaths.cultivatesGhost(c);
-		int rank = ghost ? GhostMethods.ghostRank(c.netherworld()) : PlayerCultivation.rank(c.getRealm(), c.getStage());
+		boolean ghost = TwoPaths.cultivatesGhost(c), demon = TwoPaths.cultivatesDemon(c);
+		int rank = ghost ? GhostMethods.ghostRank(c.netherworld()) : demon ? DemonPath.rank(c) : PlayerCultivation.rank(c.getRealm(), c.getStage());
 		if (rank < 0) return null;
 		double stone = player == null ? 1.0 : com.example.defyingtheheavens.SpiritStoneItem.meditationMultiplier(player);
 		double saving = ghost ? com.example.defyingtheheavens.Lifespan.saving(boost, 1, com.example.defyingtheheavens.Lifespan.ghostPlaceSaving(ClientNetherworldData.density()), stone)
+				: demon ? com.example.defyingtheheavens.Lifespan.saving(boost, 1, com.example.defyingtheheavens.Lifespan.placeSaving(c), stone)
 				: com.example.defyingtheheavens.Lifespan.saving(boost, method == null ? 1 : HeavenMethods.elementFactor(shareHere(method.element())),
 						com.example.defyingtheheavens.Lifespan.placeSaving(c), stone);
-		double cultivated = ghost ? c.netherworld().pathCultivation() : c.getCultivation();
+		double cultivated = ghost ? c.netherworld().pathCultivation() : demon ? c.demon().cultivation() : c.getCultivation();
 		double years = 0;
 		for (int r = rank; r < (rank / stages + 1) * stages; r++) {
 			Realm realm = Realm.byIndex(r / stages);
 			Stage stage = Stage.byIndex(r % stages);
-			double need = ghost ? GhostMethods.required(r) : PlayerCultivation.required(realm, stage);
+			double need = ghost ? GhostMethods.required(r) : demon ? DemonPath.required(r) : PlayerCultivation.required(realm, stage);
 			if (need <= 0) continue;
 			years += com.example.defyingtheheavens.Lifespan.seclusionYears(c, realm, stage, r == rank ? Math.max(0, 1 - cultivated / need) : 1, saving);
 		}
@@ -635,14 +657,15 @@ public class CultivationScreen extends Screen {
 	private int heavenColumn(GuiGraphics g, Player player, PlayerCultivation c, HeavenMethod method, double boost, int x, int y, int w) {
 		int cx = x + w / 2;
 		g.drawCenteredString(font, Component.translatable(ModLang.METHODS_PAGE_HEAVEN), cx, y, 0xFFD700);
-		if (!TwoPaths.cultivatesGhost(c)) drawnInMark(g, cx, y, Component.translatable(ModLang.METHODS_PAGE_HEAVEN), 0xFFFFD700);
+		boolean drawing = TwoPaths.drawnIn(c) == TwoPaths.Path.HEAVEN;
+		if (drawing) drawnInMark(g, cx, y, Component.translatable(ModLang.METHODS_PAGE_HEAVEN), 0xFFFFD700);
 		y += 11;
-		g.drawCenteredString(font, c.getRealm().getDisplayName(), cx, y, 0x7FDBFF);
+		centered(g, c.getRealm().getDisplayName(), cx, y, w, 0x7FDBFF);
 		y += 10;
-		g.drawCenteredString(font, c.getStage().getDisplayName(), cx, y, 0xB39DDB);
+		centered(g, c.getStage().getDisplayName(), cx, y, w, 0xB39DDB);
 		y += 12;
 		y = heavenBar(g, c, method, x, y, w);
-		if (TwoPaths.cultivatesGhost(c)) { // ghostly qi drawn in: the heaven path rests
+		if (!drawing) { // another path's qi drawn in: the heaven path rests
 			g.drawCenteredString(font, Component.translatable(ModLang.COLUMN_RESTING), cx, y, 0x9E9E9E);
 			return y + 11;
 		}
@@ -663,9 +686,9 @@ public class CultivationScreen extends Screen {
 		g.drawCenteredString(font, Component.translatable(ModLang.METHODS_PAGE_GHOST), cx, y, 0x8FEAE4);
 		if (drawing) drawnInMark(g, cx, y, Component.translatable(ModLang.METHODS_PAGE_GHOST), 0xFF8FEAE4);
 		y += 11;
-		g.drawCenteredString(font, Realm.byIndex(rank / stages).getDisplayName(), cx, y, 0x7FDBFF);
+		centered(g, Realm.byIndex(rank / stages).getDisplayName(), cx, y, w, 0x7FDBFF);
 		y += 10;
-		g.drawCenteredString(font, Stage.byIndex(rank % stages).getDisplayName(), cx, y, 0xB39DDB);
+		centered(g, Stage.byIndex(rank % stages).getDisplayName(), cx, y, w, 0xB39DDB);
 		y += 12;
 		double required = GhostMethods.required(rank);
 		boolean maxed = GhostMethods.isMaxed(s);
@@ -700,6 +723,81 @@ public class CultivationScreen extends Screen {
 		}
 		g.drawCenteredString(font, fit(w, pace), cx, y, paceColor);
 		return y + 11;
+	}
+
+	/**
+	 * The Demon Path's column (DemonPath), the others' mirror: its name in blood red, realm and stage, its bar (amber at its bottleneck,
+	 * gold at the very last), and what meditating gathers a second by the race's blood (or that it rests, another path drawn in).
+	 * @return the y under it
+	 */
+	private int demonColumn(GuiGraphics g, PlayerCultivation c, int x, int y, int w) {
+		int cx = x + w / 2;
+		int rank = Math.max(0, DemonPath.rank(c));
+		boolean drawing = TwoPaths.cultivatesDemon(c);
+		Component name = Component.translatable(ModLang.METHODS_PAGE_DEMON);
+		g.drawCenteredString(font, name, cx, y, 0xE8584A);
+		if (drawing) drawnInMark(g, cx, y, name, 0xFFE8584A);
+		y += 11;
+		centered(g, DemonPath.realm(rank).getDisplayName(), cx, y, w, 0x7FDBFF);
+		y += 10;
+		centered(g, DemonPath.stage(rank).getDisplayName(), cx, y, w, 0xB39DDB);
+		y += 12;
+		double required = DemonPath.required(rank), done = c.demon().cultivation();
+		boolean maxed = DemonPath.isMaxed(c);
+		drawBar(g, x, y, w, DemonPath.stageProgress(c), 0xFFC8423A, maxed ? 0xFFFFD700 : DemonPath.atBottleneck(c) ? 0xFFFFC107 : 0);
+		if (maxed) {
+			barText(g, cx, y + 1, w, Component.translatable(ModLang.CULTIVATION_MAX, num(done)), Component.translatable(ModLang.CULTIVATION_MAX_SHORT, num(done)));
+		} else {
+			barText(g, cx, y + 1, w, Component.translatable(ModLang.CULTIVATION, num(done), num(required)),
+					Component.translatable(ModLang.CULTIVATION_SHORT, num(done), num(required)));
+		}
+		y += 14;
+		Component pace;
+		int paceColor = 0x9E9E9E;
+		if (!drawing) {
+			pace = Component.translatable(ModLang.COLUMN_RESTING);
+		} else {
+			String rate = one(DemonPath.perSecond(c, 0) * c.meditationSpeed());
+			pace = fit(w, Component.translatable(ModLang.DEMON_COLUMN_PACE, DemonPath.bloodline(c).getDisplayName(), rate),
+					Component.translatable(ModLang.DEMON_COLUMN_PACE_SHORT, rate));
+			paceColor = 0xF08070;
+		}
+		g.drawCenteredString(font, fit(w, pace), cx, y, paceColor);
+		return y + 11;
+	}
+
+	/** What stands next on the Demon Path, wrapped to {@code width}: its pinnacle, the lower realms' cap, an axis of virtue, or its tribulation. */
+	private List<Line> demonNext(PlayerCultivation c, int width) {
+		List<Line> lines = new ArrayList<>();
+		int rank = DemonPath.rank(c);
+		if (rank < 0) return lines;
+		if (DemonPath.isMaxed(c)) {
+			addStatus(lines, Component.translatable(ModLang.DEMON_PINNACLE), 0xFFD700, width);
+		} else if (DemonPath.atBottleneck(c) && DemonPath.locked(c)) {
+			addStatus(lines, Component.translatable(ModLang.MSG_REALM_LOCKED,
+					PlayerCultivation.rankName(PlayerCultivation.LOWER_REALM_CAP_REALM, PlayerCultivation.LOWER_REALM_CAP_STAGE)), 0xFFC107, width);
+		} else if (FourAxis.holds(c, rank)) {
+			addAxis(lines, FourAxis.wanted(rank), DemonPath.heldByAxis(c), width);
+		} else if (DemonPath.canBreakthrough(c)) {
+			addStatus(lines, Component.translatable(TwoPaths.cultivatesDemon(c) ? ModLang.DEMON_BOTTLENECK : ModLang.DEMON_BOTTLENECK_SWITCH,
+					DemonPath.rankName(rank + 1)), 0xF08070, width);
+		}
+		return lines;
+	}
+
+	/** {@code text} centred on {@code cx}, drawn smaller if it is wider than {@code w} (a realm's name in a third of the tab). */
+	private void centered(GuiGraphics g, Component text, int cx, int y, int w, int color) {
+		int width = font.width(text);
+		if (width <= w) {
+			g.drawCenteredString(font, text, cx, y, color);
+			return;
+		}
+		float scale = (float) w / width;
+		g.pose().pushPose();
+		g.pose().translate(cx, y + 4 * (1 - scale), 0);
+		g.pose().scale(scale, scale, 1);
+		g.drawCenteredString(font, text, 0, 0, color);
+		g.pose().popPose();
 	}
 
 	/** A short rule under a column's name: the path whose qi a meditation draws in now (TwoPaths#cultivatesGhost). */
@@ -778,7 +876,7 @@ public class CultivationScreen extends Screen {
 			addAxis(status, FourAxis.wanted(PlayerCultivation.rank(c.getRealm(), c.getStage())), c.isHeldByAxis(), width);
 		} else if (c.canBreakthrough()) {
 			// With ghostly qi drawn in, the Breakthrough button breaks through on the ghost path: the switch first.
-			boolean switchFirst = TwoPaths.cultivatesGhost(c) && !c.netherworld().ghost();
+			boolean switchFirst = TwoPaths.drawnIn(c) != TwoPaths.Path.HEAVEN && !c.netherworld().ghost();
 			addStatus(status, Component.translatable(switchFirst ? ModLang.BOTTLENECK_SWITCH : ModLang.BOTTLENECK), 0xFFC107, width);
 			addStatus(status, Component.translatable(ModLang.BOTTLENECK_NEXT, PlayerCultivation.rankName(c.breakthroughRealm(), c.breakthroughStage())),
 					0xFFC107, width);
@@ -1981,7 +2079,8 @@ public class CultivationScreen extends Screen {
 		double bonus = line.bonus().applyAsDouble(body.realm(), body.stage()) * body.scale();
 		double holy = com.example.defyingtheheavens.CultivationStats.holyFactor(ClientCultivationData.get());
 		if (line.attribute() == net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH) {
-			return (com.example.defyingtheheavens.CultivationStats.BASE_HEALTH + bonus) * body.share() * holy - com.example.defyingtheheavens.CultivationStats.BASE_HEALTH;
+			return (com.example.defyingtheheavens.CultivationStats.BASE_HEALTH + bonus) * body.share() * holy
+					* com.example.defyingtheheavens.RaceGifts.healthFactor(ClientCultivationData.get()) - com.example.defyingtheheavens.CultivationStats.BASE_HEALTH;
 		}
 		if (line.attribute() == net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) return bonus * body.share() * holy;
 		return bonus * body.share();

@@ -63,7 +63,7 @@ import java.util.UUID;
  *   <li><b>Fortune</b>: their stores are bare. Bring what they lack (an item and a count), and take a share of their fortune in turn:
  *   spirit stones marked as theirs shared with you ({@link #give}), which fill the axis by their worth as one absorbs them
  *   (SpiritStoneItem#fillsFortune).</li>
- *   <li><b>Merit</b>: something preys on them ({@link Foe}: a beast, raiders, a sorcerer, the restless dead, a demonic cultivator...).
+ *   <li><b>Merit</b>: something preys on them ({@link Foe}: a beast, raiders, a sorcerer, the restless dead, a devilish cultivator...).
  *   Take it on, and it comes out of the land nearby, glowing; each of it slain by one's own hand fills the axis by its hearts
  *   ({@link #hearts}), and slain, all of it, with one's own hand among the slayers, the wish is granted ({@link #onThreatDeath}).</li>
  *   <li><b>Enlightenment</b>: a lesser cultivator is stuck at its wall. Sit in meditation within {@link #GUIDE_REACH} of it for
@@ -86,9 +86,9 @@ public final class Wishes {
 	/** Guidance: this close to the one guided, in meditation, this many seconds. */
 	public static final double GUIDE_REACH = 6;
 	public static final int GUIDE_SECONDS = 60;
-	/** A demonic cultivator preying on settlers is of these ranks: Nascent Soul Early to Heavenly Being Late. */
-	public static final int DEMONIC_LOW = PlayerCultivation.rank(Realm.NASCENT_SOUL, Stage.EARLY),
-			DEMONIC_HIGH = PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.LATE);
+	/** A devilish cultivator preying on settlers is of these ranks: Nascent Soul Early to Heavenly Being Late. */
+	public static final int DEVILISH_LOW = PlayerCultivation.rank(Realm.NASCENT_SOUL, Stage.EARLY),
+			DEVILISH_HIGH = PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.LATE);
 	/**
 	 * Tags on a wish's threat: it is one; whose wish and whose taking-on it is; and the game time it lapses with the wish (an old
 	 * threat come back with its land, its wish long lapsed, slips away).
@@ -130,11 +130,11 @@ public final class Wishes {
 		BROOD("brood", true),
 		/** Four wolves, angry at whoever takes them on. */
 		PACK("pack", false),
-		/** A cultivator of the demonic path ({@link #DEMONIC_LOW} to {@link #DEMONIC_HIGH}), out for whoever takes it on. */
-		DEMONIC("demonic", false);
+		/** A cultivator of the devilish path ({@link #DEVILISH_LOW} to {@link #DEVILISH_HIGH}), out for whoever takes it on. */
+		DEVILISH("devilish", false);
 
 		private final String id;
-		/** Made of monsters, which Peaceful takes from the world the moment they come: there, a demonic cultivator comes instead. */
+		/** Made of monsters, which Peaceful takes from the world the moment they come: there, a devilish cultivator comes instead. */
 		private final boolean monsters;
 
 		Foe(String id, boolean monsters) {
@@ -144,9 +144,9 @@ public final class Wishes {
 
 		public String getId() { return id; }
 
-		/** What comes for this threat on {@code difficulty}: itself, or on Peaceful (no monster lives there) a demonic cultivator. */
+		/** What comes for this threat on {@code difficulty}: itself, or on Peaceful (no monster lives there) a devilish cultivator. */
 		public Foe on(Difficulty difficulty) {
-			return monsters && difficulty == Difficulty.PEACEFUL ? DEMONIC : this;
+			return monsters && difficulty == Difficulty.PEACEFUL ? DEVILISH : this;
 		}
 
 		public static Foe byId(String id) {
@@ -526,17 +526,17 @@ public final class Wishes {
 			case PACK -> {
 				for (int i = 0; i < 4; i++) add(foes, roots, mob(level, EntityType.WOLF, at, random));
 			}
-			case DEMONIC -> {
-				CultivatorNpc demon = CultivatorNpc.createFor(level);
-				if (demon != null) {
+			case DEVILISH -> {
+				CultivatorNpc devil = CultivatorNpc.createFor(level);
+				if (devil != null) {
 					// A threat before it is anything else: becoming a rogue decides its course at once, and a threat's is to hunt
 					// (a Heavenly Being of the lower realms would otherwise go off into seclusion: CultivatorNpc#decideRogueCourse).
-					demon.addTag(THREAT_TAG);
-					int alignment = Alignment.DEMONIC_BELOW - 10 - random.nextInt(Alignment.DEMONIC_BELOW - 10 - Alignment.MIN + 1);
-					demon.becomeRogue(DEMONIC_LOW + random.nextInt(DEMONIC_HIGH - DEMONIC_LOW + 1), alignment, random);
+					devil.addTag(THREAT_TAG);
+					int alignment = Alignment.DEVILISH_BELOW - 10 - random.nextInt(Alignment.DEVILISH_BELOW - 10 - Alignment.MIN + 1);
+					devil.becomeRogue(DEVILISH_LOW + random.nextInt(DEVILISH_HIGH - DEVILISH_LOW + 1), alignment, random);
 					BlockPos spot = spot(level, at, random);
-					demon.moveTo(spot.getX() + 0.5, spot.getY(), spot.getZ() + 0.5, random.nextFloat() * 360, 0);
-					add(foes, roots, demon);
+					devil.moveTo(spot.getX() + 0.5, spot.getY(), spot.getZ() + 0.5, random.nextFloat() * 360, 0);
+					add(foes, roots, devil);
 				}
 			}
 		}

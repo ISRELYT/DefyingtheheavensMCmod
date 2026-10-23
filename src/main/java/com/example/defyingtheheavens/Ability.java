@@ -18,8 +18,8 @@ public enum Ability {
 	 * saturation always stay full ({@link CultivationStats#tickHunger}).
 	 */
 	QI_SUSTENANCE("qi_sustenance", true, c -> TwoPaths.awakens(c, Realm.FOUNDATION_BUILDING, false) != null),
-	/** From Core Formation on the heaven path (the user's call: the ghost path's own flight is a ghostly form's, TwoPaths#fliesFreely): fly on qi ({@link QiFlight}). */
-	QI_FLIGHT("qi_flight", true, c -> c.getEffectiveRealm().canFlyOnQi()),
+	/** From Core Formation on the heaven path or the Demon Path (PlayerCultivation#flightRealm; the ghost path's own flight is a ghostly form's, TwoPaths#fliesFreely): fly on qi ({@link QiFlight}). */
+	QI_FLIGHT("qi_flight", true, PlayerCultivation::canFlyOnQi),
 	/** From Core Formation, on either path: see the plane of Qi, free of cost ({@link QiSense}, drawn by the client). */
 	QI_SENSE("qi_sense", true, c -> TwoPaths.awakens(c, Realm.CORE_FORMATION, true) != null),
 	/** From the start: see everything inside the consciousness domain, free of cost ({@link ConsciousnessDomainHandler}). */
@@ -29,7 +29,7 @@ public enum Ability {
 	/** From the start: after meditating a while, the soul turns inward to the Inner Realm ({@link InnerRealm}). */
 	INNER_REALM("inner_realm", true, c -> true),
 	/** From Foundation Building: ride a sword held in the main hand through the air, for less qi than Qi Flight ({@link SwordFlight}). */
-	SWORD_FLIGHT("sword_flight", true, c -> c.getEffectiveRealm().canRideSword()),
+	SWORD_FLIGHT("sword_flight", true, PlayerCultivation::canRideSword),
 	/**
 	 * From Nascent Soul on either path, the living and the dead alike (the user's call, 2026-10-19): send the nascent soul out of the
 	 * body ({@link SoulProjection}; the soul is the path's that awakened it, PlayerCultivation#soulPath), a ghost's out of its ghostly
@@ -89,7 +89,14 @@ public enum Ability {
 	 * as fast as one's realm allows, and from Nascent Soul one comes ablaze and smashes through what stands in the way. The free
 	 * flight of the dead and of a Ghost King's form goes by it too.
 	 */
-	METEOR_FLIGHT("meteor_flight", false, c -> TwoPaths.awakens(c, Realm.CORE_FORMATION, true) != null);
+	METEOR_FLIGHT("meteor_flight", false, c -> TwoPaths.awakens(c, Realm.CORE_FORMATION, true) != null),
+	/**
+	 * A tiger's, from Core Formation on any path (RaceGifts#roar): those near and far enough below it weakened and slowed. An act, for qi,
+	 * with a cooldown.
+	 */
+	TIGERS_ROAR("tigers_roar", false, c -> RaceGifts.hasAct(c, Bloodline.TIGER)),
+	/** A fox spirit's, from Core Formation on any path (RaceGifts#illusion): a while unseen, till it strikes. An act, for qi, with a cooldown. */
+	ILLUSION("illusion", false, c -> RaceGifts.hasAct(c, Bloodline.FOX));
 
 	private final String id;
 	private final boolean onByDefault;
@@ -166,6 +173,9 @@ public enum Ability {
 							Clones.REFORM_TICKS / 1200);
 			// Its top speed, and what it costs flying fast (three times Qi Flight's; from Heavenly Being never more than one gathers).
 			case METEOR_FLIGHT -> Component.translatable(key, Math.round(MeteorFlight.topSpeed(c)), Math.round(MeteorFlight.streakCost(c, c.qiFlightCostPerSecond())));
+			case TIGERS_ROAR -> Component.translatable(key, RaceGifts.ROAR_RADIUS, RaceGifts.ROAR_STAGES_BELOW, RaceGifts.ROAR_TICKS / 20,
+					RaceGifts.ROAR_COOLDOWN / 20, Math.round(RaceGifts.ROAR_QI * 100));
+			case ILLUSION -> Component.translatable(key, RaceGifts.ILLUSION_TICKS / 20, RaceGifts.ILLUSION_COOLDOWN / 20, Math.round(RaceGifts.ILLUSION_QI * 100));
 			default -> Component.translatable(key);
 		};
 	}

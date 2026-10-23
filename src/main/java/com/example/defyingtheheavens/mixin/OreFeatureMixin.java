@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 /**
  * No ore blob where it would reach into one of the mod's buildings (SectStructure#cutsIntoBuildings). Ore is placed after
  * structures, and where it may take their stone it came up through their walls: with Terralith, which counts blackstone as the
- * Overworld's stone, vanilla's gravel, dirt and ores appeared in a demonic sect's blackstone walls (the user's, 2026-10-18), and
+ * Overworld's stone, vanilla's gravel, dirt and ores appeared in a devilish sect's blackstone walls (the user's, 2026-10-18), and
  * the Upper Realm's quartz and the Netherworld's yin jade take blackstone themselves. The blob's reach is vanilla's own
  * (OreFeature#place writes nothing outside it): ceil(size / 8) + i blocks sideways and 2 + i up and down, i = ceil((size / 8 + 1) / 2).
  */

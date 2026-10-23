@@ -80,8 +80,8 @@ public class TalkGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void regardBaselineAndLevels(GameTestHelper helper) {
 		helper.assertTrue(Regard.baseline(Alignment.Faction.RIGHTEOUS, 120) == 10, "The righteous warm to the righteous");
-		helper.assertTrue(Regard.baseline(Alignment.Faction.RIGHTEOUS, -20) == -10, "...and cool to a demonic lean");
-		helper.assertTrue(Regard.baseline(Alignment.Faction.DEMONIC, -150) == 10, "The demonic warm to their own");
+		helper.assertTrue(Regard.baseline(Alignment.Faction.RIGHTEOUS, -20) == -10, "...and cool to a devilish lean");
+		helper.assertTrue(Regard.baseline(Alignment.Faction.DEVILISH, -150) == 10, "The devilish warm to their own");
 		helper.assertTrue(Regard.baseline(Alignment.Faction.NEUTRAL, 150) == 0, "The neutral care for no one's path");
 		helper.assertTrue(Regard.pips(45) == 2 && Regard.levelId(45).equals("courteous"), "45 is two pips, Courteous");
 		helper.assertTrue(Regard.pips(-30) == 0 && Regard.levelId(-30).equals("resentful"), "Below zero: Resentful, no pips");
@@ -118,11 +118,11 @@ public class TalkGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void insultsAndDirections(GameTestHelper helper) {
 		int stages = Stage.values().length;
-		helper.assertTrue(TalkSystem.provokeChance(Alignment.Faction.DEMONIC, 0, 3 * stages) == 0, "Far weaker cultivators swallow an insult");
-		helper.assertTrue(TalkSystem.provokeChance(Alignment.Faction.DEMONIC, stages, 2 * stages) == 0, "Exactly a realm below you, they swallow it too");
-		helper.assertTrue(TalkSystem.provokeChance(Alignment.Faction.DEMONIC, stages + 1, 2 * stages) > 0, "Three stages below, they may still lash out");
-		helper.assertTrue(TalkSystem.provokeChance(Alignment.Faction.DEMONIC, 10, 5) > TalkSystem.provokeChance(Alignment.Faction.RIGHTEOUS, 10, 5),
-				"The demonic are quicker to fight than the righteous");
+		helper.assertTrue(TalkSystem.provokeChance(Alignment.Faction.DEVILISH, 0, 3 * stages) == 0, "Far weaker cultivators swallow an insult");
+		helper.assertTrue(TalkSystem.provokeChance(Alignment.Faction.DEVILISH, stages, 2 * stages) == 0, "Exactly a realm below you, they swallow it too");
+		helper.assertTrue(TalkSystem.provokeChance(Alignment.Faction.DEVILISH, stages + 1, 2 * stages) > 0, "Three stages below, they may still lash out");
+		helper.assertTrue(TalkSystem.provokeChance(Alignment.Faction.DEVILISH, 10, 5) > TalkSystem.provokeChance(Alignment.Faction.RIGHTEOUS, 10, 5),
+				"The devilish are quicker to fight than the righteous");
 		helper.assertTrue(TalkSystem.provokeChance(Alignment.Faction.NEUTRAL, 10, 5) > TalkSystem.provokeChance(Alignment.Faction.NEUTRAL, 5, 5),
 				"A stronger cultivator is quicker to fight");
 		BlockPos o = BlockPos.ZERO;

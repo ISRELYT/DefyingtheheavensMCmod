@@ -1,0 +1,52 @@
+{
+	"format_version": "1.12.0",
+	"minecraft:geometry": [
+		{
+			"description": {
+				"identifier": "geometry.tiger_tail",
+				"texture_width": 64,
+				"texture_height": 64,
+				"visible_bounds_width": 4,
+				"visible_bounds_height": 4,
+				"visible_bounds_offset": [0, 0, 0]
+			},
+			"bones": [
+				{
+					"name": "tail_0",
+					"pivot": [0, -10.5, 2],
+					"rotation": [-35, 0, 0],
+					"cubes": [
+						{"origin": [-1, -11.5, 2], "size": [2, 2, 5], "uv": [16, 25]}
+					]
+				},
+				{
+					"name": "tail_1",
+					"parent": "tail_0",
+					"pivot": [0, -10.5, 7],
+					"rotation": [-25, 0, 0],
+					"cubes": [
+						{"origin": [-0.9, -11.4, 7], "size": [1.8, 1.8, 5], "uv": [30, 25]}
+					]
+				},
+				{
+					"name": "tail_2",
+					"parent": "tail_1",
+					"pivot": [0, -10.5, 12],
+					"rotation": [20, 0, 0],
+					"cubes": [
+						{"origin": [-0.8, -11.3, 12], "size": [1.6, 1.6, 4.5], "uv": [44, 25]}
+					]
+				},
+				{
+					"name": "tail_3",
+					"parent": "tail_2",
+					"pivot": [0, -10.5, 16.5],
+					"rotation": [30, 0, 0],
+					"cubes": [
+						{"origin": [-0.8, -11.3, 16.5], "size": [1.6, 1.6, 3], "uv": [0, 32]}
+					]
+				}
+			]
+		}
+	]
+}

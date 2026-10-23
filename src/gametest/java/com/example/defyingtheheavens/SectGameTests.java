@@ -210,13 +210,13 @@ public class SectGameTests implements FabricGameTest {
 
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void alignmentRules(GameTestHelper helper) {
-		helper.assertTrue(Alignment.factionOf(-51) == Alignment.Faction.DEMONIC && Alignment.factionOf(-50) == Alignment.Faction.NEUTRAL
+		helper.assertTrue(Alignment.factionOf(-51) == Alignment.Faction.DEVILISH && Alignment.factionOf(-50) == Alignment.Faction.NEUTRAL
 				&& Alignment.factionOf(50) == Alignment.Faction.NEUTRAL && Alignment.factionOf(51) == Alignment.Faction.RIGHTEOUS, "Thresholds at +-50");
-		helper.assertTrue(Alignment.killShift(-150, true, Realm.CORE_FORMATION, false) > 0, "Slaying the demonic raises alignment");
+		helper.assertTrue(Alignment.killShift(-150, true, Realm.CORE_FORMATION, false) > 0, "Slaying the devilish raises alignment");
 		helper.assertTrue(Alignment.killShift(0, false, Realm.QI_REFINING, false) < 0, "Killing a peaceful neutral lowers it");
 		helper.assertTrue(Alignment.killShift(120, true, Realm.QI_REFINING, false) == 0, "Killing one who attacked first changes nothing");
-		helper.assertTrue(Alignment.Faction.RIGHTEOUS.isEnemyOf(Alignment.Faction.DEMONIC) && !Alignment.Faction.NEUTRAL.isEnemyOf(Alignment.Faction.DEMONIC),
-				"Righteous and demonic are enemies; the neutral are nobody's");
+		helper.assertTrue(Alignment.Faction.RIGHTEOUS.isEnemyOf(Alignment.Faction.DEVILISH) && !Alignment.Faction.NEUTRAL.isEnemyOf(Alignment.Faction.DEVILISH),
+				"Righteous and devilish are enemies; the neutral are nobody's");
 		helper.assertTrue(Alignment.clamp(999) == Alignment.MAX && Alignment.clamp(-999) == Alignment.MIN, "Alignment stays within -200..200");
 		helper.succeed();
 	}
@@ -740,7 +740,7 @@ public class SectGameTests implements FabricGameTest {
 		CultivatorNpc newcomer = ModEntities.CULTIVATOR.create(level);
 		newcomer.setPos(x0, 100, 0);
 		newcomer.becomeRogue(PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.MID), 0, level.getRandom());
-		helper.assertTrue(Alignment.factionOf(-300) == Alignment.Faction.DEMONIC, "-300 is demonic");
+		helper.assertTrue(Alignment.factionOf(-300) == Alignment.Faction.DEVILISH, "-300 is devilish");
 		Sect otherPath = farSect(helper, x0 + 100, -300, 3);
 		Sect nearest = farSect(helper, x0 + 3000, 0, 3);
 		Sect further = farSect(helper, x0 - 6000, 0, 3);
@@ -1299,19 +1299,19 @@ public class SectGameTests implements FabricGameTest {
 		grid.setItem(1, new ItemStack(Items.RED_DYE));
 		grid.setItem(2, new ItemStack(Items.BLACK_DYE));
 		ClothingRecipes.DyeRecipe dye = new ClothingRecipes.DyeRecipe(DefyingTheHeavens.id("test_dye"), net.minecraft.world.item.crafting.CraftingBookCategory.EQUIPMENT);
-		helper.assertTrue(dye.matches(grid, helper.getLevel()), "Red and black dye makes demonic robes");
-		helper.assertTrue(ClothingItem.style(dye.assemble(grid, helper.getLevel().registryAccess())) == ClothingStyle.DEMONIC, "... red and black");
+		helper.assertTrue(dye.matches(grid, helper.getLevel()), "Red and black dye makes devilish robes");
+		helper.assertTrue(ClothingItem.style(dye.assemble(grid, helper.getLevel().registryAccess())) == ClothingStyle.DEVILISH, "... red and black");
 
 		TransientCraftingContainer up = new TransientCraftingContainer(player.inventoryMenu, 3, 3);
-		ItemStack demonic = ClothingItem.create(ModItems.clothing(ClothingTier.MORTAL, ArmorItem.Type.CHESTPLATE), ClothingStyle.DEMONIC);
-		up.setItem(0, demonic);
+		ItemStack devilish = ClothingItem.create(ModItems.clothing(ClothingTier.MORTAL, ArmorItem.Type.CHESTPLATE), ClothingStyle.DEVILISH);
+		up.setItem(0, devilish);
 		up.setItem(1, new ItemStack(ModItems.SPIRIT_DEW));
 		up.setItem(2, new ItemStack(ModItems.SPIRIT_DEW));
 		up.setItem(3, new ItemStack(Items.GOLD_INGOT));
 		ClothingRecipes.UpgradeRecipe upgrade = new ClothingRecipes.UpgradeRecipe(DefyingTheHeavens.id("test_upgrade"), net.minecraft.world.item.crafting.CraftingBookCategory.EQUIPMENT);
 		helper.assertTrue(upgrade.matches(up, helper.getLevel()), "Spirit Dew and gold raise a Mortal robe");
 		ItemStack result = upgrade.assemble(up, helper.getLevel().registryAccess());
-		helper.assertTrue(result.getItem() == ModItems.clothing(ClothingTier.SPIRIT, ArmorItem.Type.CHESTPLATE) && ClothingItem.style(result) == ClothingStyle.DEMONIC,
+		helper.assertTrue(result.getItem() == ModItems.clothing(ClothingTier.SPIRIT, ArmorItem.Type.CHESTPLATE) && ClothingItem.style(result) == ClothingStyle.DEVILISH,
 				"... to Spirit grade, keeping its colours");
 		up.setItem(3, new ItemStack(Items.IRON_INGOT));
 		helper.assertTrue(!upgrade.matches(up, helper.getLevel()), "The wrong materials don't");

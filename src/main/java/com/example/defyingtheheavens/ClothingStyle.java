@@ -4,13 +4,13 @@ import net.minecraft.network.chat.Component;
 
 /**
  * The colours cultivator clothing is dyed in, one per path (see {@link Alignment}): the white of the righteous, the blue of
- * the neutral, the red and black of the demonic. Each piece's cloth is drawn in {@link #getCloth()} with its lapels, sash
+ * the neutral, the red and black of the devilish. Each piece's cloth is drawn in {@link #getCloth()} with its lapels, sash
  * and cuffs in {@link #getAccent()}; the embroidery takes its grade's colour ({@link ClothingTier#getTrimColor()}).
  */
 public enum ClothingStyle {
 	RIGHTEOUS("righteous", 0xF4F1EA, 0x9FB4C8),
 	NEUTRAL("neutral", 0x3D6FC0, 0xE6EEF8),
-	DEMONIC("demonic", 0x23191C, 0xB0202A);
+	DEVILISH("devilish", 0x23191C, 0xB0202A);
 
 	private final String id;
 	private final int cloth;
@@ -32,7 +32,7 @@ public enum ClothingStyle {
 		return switch (faction) {
 			case RIGHTEOUS -> RIGHTEOUS;
 			case NEUTRAL -> NEUTRAL;
-			case DEMONIC -> DEMONIC;
+			case DEVILISH -> DEVILISH;
 		};
 	}
 

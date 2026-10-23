@@ -292,6 +292,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case BURN_LIFESPAN -> "Burn Lifespan";
 				case CLONE -> "Clone";
 				case METEOR_FLIGHT -> "Meteor Flight";
+				case TIGERS_ROAR -> "Tiger's Roar";
+				case ILLUSION -> "Illusion";
 			});
 			t.add(key + ".description", switch (ability) {
 				case QI_SUSTENANCE -> "Qi keeps you fed. Hunger stays full.";
@@ -333,6 +335,9 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 						+ "(not obsidian or anything harder, nor barriers or ground you couldn't dig). Flying fast costs %2$s qi/s (from Heavenly "
 						+ "Being, never more than you gather). Let go of forward to hover and steer as usual. In the Spatial Gap, where it can't be "
 						+ "flown, it gives your normal flight your realm's old swiftness instead (from Void Shattering); space keeps its own speeds.";
+				case TIGERS_ROAR -> "Your tiger blood's roar: everything within %1$s blocks standing %2$s stages or more below you is weakened and "
+						+ "slowed for %3$s s. Every %4$s s, for %5$s%% of your qi.";
+				case ILLUSION -> "Your fox blood's illusion: unseen for %1$s s, until you strike. Every %2$s s, for %3$s%% of your qi.";
 			});
 		}
 		// Clone while playing the clone (Clones): the way back.
@@ -728,7 +733,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 						+ "(-15 regard).");
 		physique(t, "soul_devouring_body", "Soul-Devouring Body",
 				"It feeds on souls: every cultivator it slays, players too, gives it a tenth of what the victim's stage takes, on the path it "
-						+ "cultivates. Each righteous or neutral one drags its own path toward the demonic, and the righteous think the less of it "
+						+ "cultivates. Each righteous or neutral one drags its own path toward the devilish, and the righteous think the less of it "
 						+ "(-20 regard).");
 		physique(t, "eternal_reincarnation_body", "Eternal Reincarnation Body",
 				"The rarest of all, and no gift to cultivation: a Low grade's talent and pace. A soul that never forgets: when its life is spent "
@@ -764,7 +769,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.JOURNAL_PHYSIQUE_FORM, "Within it, a %s: %s");
 		t.add(ModLang.STATS_FORMS, "Forms: %s");
 		t.add(ModLang.MSG_DEVOURED, "You devour %s's cultivation: +%s.");
-		t.add(ModLang.MSG_DEVOURED_DRAG, "Their blood drags your path toward the demonic (-%s): %s");
+		t.add(ModLang.MSG_DEVOURED_DRAG, "Their blood drags your path toward the devilish (-%s): %s");
 		t.add(ModLang.MSG_DEVOURED_FALL, "%s devoured your cultivation: you fall to %s.");
 		t.add(ModLang.MSG_TRIB_DEFIED, "The heavens cannot strike you down! Their tribulation breaks against you, and fails.");
 		t.add(ModLang.MSG_TRIB_HOLDS, "Your cultivation holds: you stand at %s still, and may face the tribulation again.");
@@ -1074,7 +1079,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 			t.add(ModLang.factionKey(faction.getId()), switch (faction) {
 				case RIGHTEOUS -> "Righteous";
 				case NEUTRAL -> "Neutral";
-				case DEMONIC -> "Demonic";
+				case DEVILISH -> "Devilish";
 			});
 		}
 		t.add(ModLang.ALIGNMENT_VALUE, "%s (%s)");
@@ -1213,7 +1218,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.NPC_OF_SECT, "%s of the %s");
 		t.add(ModLang.NPC_GREET_RIGHTEOUS, "%s nods to you: \"May your path be clear and your heart steady.\"");
 		t.add(ModLang.NPC_GREET_NEUTRAL, "%s regards you calmly and goes back to their own affairs.");
-		t.add(ModLang.NPC_GREET_DEMONIC, "%s smiles thinly: \"Walk carefully, little one.\"");
+		t.add(ModLang.NPC_GREET_DEVILISH, "%s smiles thinly: \"Walk carefully, little one.\"");
 		t.add(ModLang.NPC_GREET_HOSTILE, "%s glares at you with open killing intent.");
 		t.add(ModLang.NPC_GREET_SECLUDED, "%s sits in deep seclusion and does not stir.");
 		// Talking to cultivators (TalkSystem): the wheel, the dialogue box, and what they say.
@@ -1239,12 +1244,12 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add("cultivation.defying-the-heavens.talk.intent.provoke.hint", "Insult them. They will think less of you, and they may decide to teach you a lesson.");
 		t.add("cultivation.defying-the-heavens.talk.line.ask.commoner", "Me, Immortal? I know very little, but ask.");
 		t.add("cultivation.defying-the-heavens.talk.line.ask.commoner.mortal", "Ask away, friend.");
-		t.add("cultivation.defying-the-heavens.talk.line.ask.demonic.above", "Questions cost nothing. Answers might.");
-		t.add("cultivation.defying-the-heavens.talk.line.ask.demonic.below", "Senior wishes to know? Ask, ask.");
-		t.add("cultivation.defying-the-heavens.talk.line.ask.demonic.far_above", "You want something from me? How bold. Ask, before I lose interest.");
-		t.add("cultivation.defying-the-heavens.talk.line.ask.demonic.far_below", "This one will hold nothing back from Senior!");
-		t.add("cultivation.defying-the-heavens.talk.line.ask.demonic.mortal", "A curious mortal. Ask; it amuses me.");
-		t.add("cultivation.defying-the-heavens.talk.line.ask.demonic.peer", "Ask. I'll decide what's true.");
+		t.add("cultivation.defying-the-heavens.talk.line.ask.devilish.above", "Questions cost nothing. Answers might.");
+		t.add("cultivation.defying-the-heavens.talk.line.ask.devilish.below", "Senior wishes to know? Ask, ask.");
+		t.add("cultivation.defying-the-heavens.talk.line.ask.devilish.far_above", "You want something from me? How bold. Ask, before I lose interest.");
+		t.add("cultivation.defying-the-heavens.talk.line.ask.devilish.far_below", "This one will hold nothing back from Senior!");
+		t.add("cultivation.defying-the-heavens.talk.line.ask.devilish.mortal", "A curious mortal. Ask; it amuses me.");
+		t.add("cultivation.defying-the-heavens.talk.line.ask.devilish.peer", "Ask. I'll decide what's true.");
 		t.add("cultivation.defying-the-heavens.talk.line.ask.neutral.above", "Ask.");
 		t.add("cultivation.defying-the-heavens.talk.line.ask.neutral.below", "Ask, Senior.");
 		t.add("cultivation.defying-the-heavens.talk.line.ask.neutral.far_above", "Be brief.");
@@ -1258,33 +1263,33 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add("cultivation.defying-the-heavens.talk.line.ask.righteous.mortal", "Ask, then. Briefly.");
 		t.add("cultivation.defying-the-heavens.talk.line.ask.righteous.peer", "Ask, fellow Daoist. I'll answer what I can.");
 		t.add("cultivation.defying-the-heavens.talk.line.gift.enough.commoner", "You've given me plenty today, Immortal. Keep it.");
-		t.add("cultivation.defying-the-heavens.talk.line.gift.enough.demonic", "Again? Keep your trinkets.");
+		t.add("cultivation.defying-the-heavens.talk.line.gift.enough.devilish", "Again? Keep your trinkets.");
 		t.add("cultivation.defying-the-heavens.talk.line.gift.enough.neutral", "You've given me enough of those today.");
 		t.add("cultivation.defying-the-heavens.talk.line.gift.enough.righteous", "You are too generous. Keep it, friend.");
 		t.add("cultivation.defying-the-heavens.talk.line.gift.good.commoner", "This is too much, Immortal. Thank you!");
-		t.add("cultivation.defying-the-heavens.talk.line.gift.good.demonic", "Now this is a proper gift.");
+		t.add("cultivation.defying-the-heavens.talk.line.gift.good.devilish", "Now this is a proper gift.");
 		t.add("cultivation.defying-the-heavens.talk.line.gift.good.neutral", "Useful. My thanks.");
 		t.add("cultivation.defying-the-heavens.talk.line.gift.good.righteous", "This is generous. I won't forget it.");
 		t.add("cultivation.defying-the-heavens.talk.line.gift.great.commoner", "I... I don't know what to say. Thank you, Immortal!");
-		t.add("cultivation.defying-the-heavens.talk.line.gift.great.demonic", "Ha! You do understand how the world works.");
+		t.add("cultivation.defying-the-heavens.talk.line.gift.great.devilish", "Ha! You do understand how the world works.");
 		t.add("cultivation.defying-the-heavens.talk.line.gift.great.neutral", "This is worth a great deal. I'll remember it.");
 		t.add("cultivation.defying-the-heavens.talk.line.gift.great.righteous", "Such a treasure... this one is in your debt.");
 		t.add("cultivation.defying-the-heavens.talk.line.gift.refuse.commoner", "I couldn't take that, Immortal.");
-		t.add("cultivation.defying-the-heavens.talk.line.gift.refuse.demonic", "Are you mocking me?");
+		t.add("cultivation.defying-the-heavens.talk.line.gift.refuse.devilish", "Are you mocking me?");
 		t.add("cultivation.defying-the-heavens.talk.line.gift.refuse.neutral", "What would I do with that?");
 		t.add("cultivation.defying-the-heavens.talk.line.gift.refuse.righteous", "This one cannot accept that.");
 		t.add("cultivation.defying-the-heavens.talk.line.gift.small.commoner", "For me? Thank you, Immortal.");
-		t.add("cultivation.defying-the-heavens.talk.line.gift.small.demonic", "Is that all?");
+		t.add("cultivation.defying-the-heavens.talk.line.gift.small.devilish", "Is that all?");
 		t.add("cultivation.defying-the-heavens.talk.line.gift.small.neutral", "Hm. Thank you.");
 		t.add("cultivation.defying-the-heavens.talk.line.gift.small.righteous", "A kind thought. Thank you.");
 		t.add("cultivation.defying-the-heavens.talk.line.greet.commoner", "Greetings, Immortal. Safe travels.");
 		t.add("cultivation.defying-the-heavens.talk.line.greet.commoner.mortal", "Good day to you, traveller.");
-		t.add("cultivation.defying-the-heavens.talk.line.greet.demonic.above", "Little one, you have manners. They might even keep you alive.");
-		t.add("cultivation.defying-the-heavens.talk.line.greet.demonic.below", "Senior... this one meant no offence. None at all.");
-		t.add("cultivation.defying-the-heavens.talk.line.greet.demonic.far_above", "An ant that bows. How sweet. Crawl along.");
-		t.add("cultivation.defying-the-heavens.talk.line.greet.demonic.far_below", "S-senior! This worthless one greets Senior!");
-		t.add("cultivation.defying-the-heavens.talk.line.greet.demonic.mortal", "A mortal, walking right up to me. Brave, or stupid?");
-		t.add("cultivation.defying-the-heavens.talk.line.greet.demonic.peer", "Fellow Daoist. Tea? It isn't poisoned. Probably.");
+		t.add("cultivation.defying-the-heavens.talk.line.greet.devilish.above", "Little one, you have manners. They might even keep you alive.");
+		t.add("cultivation.defying-the-heavens.talk.line.greet.devilish.below", "Senior... this one meant no offence. None at all.");
+		t.add("cultivation.defying-the-heavens.talk.line.greet.devilish.far_above", "An ant that bows. How sweet. Crawl along.");
+		t.add("cultivation.defying-the-heavens.talk.line.greet.devilish.far_below", "S-senior! This worthless one greets Senior!");
+		t.add("cultivation.defying-the-heavens.talk.line.greet.devilish.mortal", "A mortal, walking right up to me. Brave, or stupid?");
+		t.add("cultivation.defying-the-heavens.talk.line.greet.devilish.peer", "Fellow Daoist. Tea? It isn't poisoned. Probably.");
 		t.add("cultivation.defying-the-heavens.talk.line.greet.neutral.above", "Junior. What is it?");
 		t.add("cultivation.defying-the-heavens.talk.line.greet.neutral.below", "Senior. This one is listening.");
 		t.add("cultivation.defying-the-heavens.talk.line.greet.neutral.far_above", "Hm.");
@@ -1306,27 +1311,27 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add("cultivation.defying-the-heavens.talk.line.people.no_elders", "Sect Master %1$s keeps the main hall. We have no elders now.");
 		t.add("cultivation.defying-the-heavens.talk.line.people.no_master", "Guarding the treasury and the core: %1$s. We have no master now.");
 		t.add("cultivation.defying-the-heavens.talk.line.provoke.attack.commoner", "That's enough! I won't be spoken to like that!");
-		t.add("cultivation.defying-the-heavens.talk.line.provoke.attack.demonic", "I was hoping you'd say that.");
+		t.add("cultivation.defying-the-heavens.talk.line.provoke.attack.devilish", "I was hoping you'd say that.");
 		t.add("cultivation.defying-the-heavens.talk.line.provoke.attack.neutral", "You'll regret that.");
 		t.add("cultivation.defying-the-heavens.talk.line.provoke.attack.righteous", "Then let your blade speak for you!");
 		t.add("cultivation.defying-the-heavens.talk.line.provoke.scorn.commoner", "Please, Immortal, I don't want any trouble.");
-		t.add("cultivation.defying-the-heavens.talk.line.provoke.scorn.demonic", "Barking at me? Cute.");
+		t.add("cultivation.defying-the-heavens.talk.line.provoke.scorn.devilish", "Barking at me? Cute.");
 		t.add("cultivation.defying-the-heavens.talk.line.provoke.scorn.neutral", "I've no time for fools.");
 		t.add("cultivation.defying-the-heavens.talk.line.provoke.scorn.righteous", "Your words dirty only yourself.");
 		t.add("cultivation.defying-the-heavens.talk.line.sect", "The %1$s: %2$s of us, on the %3$s path, led by Sect Master %4$s at %5$s.");
 		t.add("cultivation.defying-the-heavens.talk.line.sect.no_master", "The %1$s: %2$s of us, on the %3$s path.");
 		t.add("cultivation.defying-the-heavens.talk.line.sect.self_master", "The %1$s: %2$s of us, on the %3$s path. I lead it.");
 		t.add("cultivation.defying-the-heavens.talk.line.self.commoner", "%1$s. I'm only a mortal, Immortal. I have no cultivation to speak of.");
-		t.add("cultivation.defying-the-heavens.talk.line.self.rogue.demonic", "%1$s, at %2$s. I answer to no sect, and to no one.");
+		t.add("cultivation.defying-the-heavens.talk.line.self.rogue.devilish", "%1$s, at %2$s. I answer to no sect, and to no one.");
 		t.add("cultivation.defying-the-heavens.talk.line.self.rogue.neutral", "%1$s. %2$s. I go where the qi is.");
 		t.add("cultivation.defying-the-heavens.talk.line.self.rogue.righteous", "I am %1$s, a wandering cultivator at %2$s. No sect, only the road.");
-		t.add("cultivation.defying-the-heavens.talk.line.self.sect.demonic", "%1$s, %2$s of the %3$s, at %4$s. Remember the name. It may be the last one you learn.");
+		t.add("cultivation.defying-the-heavens.talk.line.self.sect.devilish", "%1$s, %2$s of the %3$s, at %4$s. Remember the name. It may be the last one you learn.");
 		t.add("cultivation.defying-the-heavens.talk.line.self.sect.neutral", "%1$s, %2$s of the %3$s. %4$s. That's all there is to say.");
 		t.add("cultivation.defying-the-heavens.talk.line.self.sect.righteous", "I am %1$s, %2$s of the %3$s, at %4$s. I walk the righteous path.");
 		t.add("cultivation.defying-the-heavens.talk.list", ", ");
 		t.add("cultivation.defying-the-heavens.talk.mortal", "Mortal");
 		t.add("cultivation.defying-the-heavens.talk.occupied", "%s is speaking with someone else.");
-		t.add("cultivation.defying-the-heavens.talk.path.demonic", "demonic");
+		t.add("cultivation.defying-the-heavens.talk.path.devilish", "devilish");
 		t.add("cultivation.defying-the-heavens.talk.path.neutral", "neutral");
 		t.add("cultivation.defying-the-heavens.talk.path.righteous", "righteous");
 		t.add("cultivation.defying-the-heavens.talk.pick", "Click, or press 1-%s");
@@ -1372,19 +1377,19 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add("cultivation.defying-the-heavens.talk.rumour.subject.peach_tree", "A Spirit Peach Tree");
 		t.add("cultivation.defying-the-heavens.talk.line.rumour.none.righteous", "I've heard nothing worth repeating, I'm afraid.");
 		t.add("cultivation.defying-the-heavens.talk.line.rumour.none.neutral", "Nothing new.");
-		t.add("cultivation.defying-the-heavens.talk.line.rumour.none.demonic", "Gossip? Go bore someone else.");
+		t.add("cultivation.defying-the-heavens.talk.line.rumour.none.devilish", "Gossip? Go bore someone else.");
 		t.add("cultivation.defying-the-heavens.talk.line.rumour.none.commoner", "Nothing, I fear. Quiet times.");
 		t.add("cultivation.defying-the-heavens.talk.journal_noted", "Noted in your journal.");
 		t.add("cultivation.defying-the-heavens.talk.line.guidance.righteous", "Breathe out slower than you breathe in, and let the qi settle at the dantian before you push. Sit with that.");
 		t.add("cultivation.defying-the-heavens.talk.line.guidance.neutral", "Your circulation stumbles at the third meridian. Fix it.");
-		t.add("cultivation.defying-the-heavens.talk.line.guidance.demonic", "You force your qi like a drunk forcing a door. Coax it. There: free advice.");
+		t.add("cultivation.defying-the-heavens.talk.line.guidance.devilish", "You force your qi like a drunk forcing a door. Coax it. There: free advice.");
 		t.add("cultivation.defying-the-heavens.talk.line.guidance.again.righteous", "That is enough for one day. Let it settle.");
 		t.add("cultivation.defying-the-heavens.talk.line.guidance.again.neutral", "Enough for today.");
-		t.add("cultivation.defying-the-heavens.talk.line.guidance.again.demonic", "Greedy. Come back tomorrow.");
+		t.add("cultivation.defying-the-heavens.talk.line.guidance.again.devilish", "Greedy. Come back tomorrow.");
 		t.add("cultivation.defying-the-heavens.talk.insight", "%s's guidance: +%s%% cultivation from meditation, for %s minutes.");
 		t.add("cultivation.defying-the-heavens.talk.line.spar.terms.righteous", "A friendly bout? Gladly. Name your terms, and we keep to them.");
 		t.add("cultivation.defying-the-heavens.talk.line.spar.terms.neutral", "A spar. Terms?");
-		t.add("cultivation.defying-the-heavens.talk.line.spar.terms.demonic", "You want to trade blows with me? Name your terms, and try not to weep.");
+		t.add("cultivation.defying-the-heavens.talk.line.spar.terms.devilish", "You want to trade blows with me? Name your terms, and try not to weep.");
 		t.add("cultivation.defying-the-heavens.talk.spar_terms.friendly", "A friendly spar");
 		t.add("cultivation.defying-the-heavens.talk.spar_terms.wager", "For a wager: what I hold");
 		t.add("cultivation.defying-the-heavens.talk.spar_terms.full", "Don't hold back");
@@ -1404,36 +1409,36 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.SPAR_WAITING, "%s waits for you at the sparring ground.");
 		t.add("cultivation.defying-the-heavens.talk.line.spar.called_off.righteous", "You did not come. Another day, then.");
 		t.add("cultivation.defying-the-heavens.talk.line.spar.called_off.neutral", "Not coming? Then there's no bout.");
-		t.add("cultivation.defying-the-heavens.talk.line.spar.called_off.demonic", "Wasting my time. Begone.");
+		t.add("cultivation.defying-the-heavens.talk.line.spar.called_off.devilish", "Wasting my time. Begone.");
 		t.add("cultivation.defying-the-heavens.spar.countdown", "%s...");
 		t.add("cultivation.defying-the-heavens.spar.fight", "Begin!");
 		t.add("cultivation.defying-the-heavens.talk.line.spar.won.righteous", "Well fought. I am bested, and gladly.");
 		t.add("cultivation.defying-the-heavens.talk.line.spar.won.neutral", "You win.");
-		t.add("cultivation.defying-the-heavens.talk.line.spar.won.demonic", "Tch. Lucky. Next time I won't be so kind.");
+		t.add("cultivation.defying-the-heavens.talk.line.spar.won.devilish", "Tch. Lucky. Next time I won't be so kind.");
 		t.add("cultivation.defying-the-heavens.talk.line.spar.lost.righteous", "A good bout. Mind your footwork, and you'll have me next time.");
 		t.add("cultivation.defying-the-heavens.talk.line.spar.lost.neutral", "Again, when you're stronger.");
-		t.add("cultivation.defying-the-heavens.talk.line.spar.lost.demonic", "Pathetic. Come back when you can stand.");
+		t.add("cultivation.defying-the-heavens.talk.line.spar.lost.devilish", "Pathetic. Come back when you can stand.");
 		t.add("cultivation.defying-the-heavens.talk.line.spar.forfeit.righteous", "You leave mid-bout? That is no way to spar.");
 		t.add("cultivation.defying-the-heavens.talk.line.spar.forfeit.neutral", "Walked off. Hm.");
-		t.add("cultivation.defying-the-heavens.talk.line.spar.forfeit.demonic", "Running already? I'll remember that.");
+		t.add("cultivation.defying-the-heavens.talk.line.spar.forfeit.devilish", "Running already? I'll remember that.");
 		t.add("cultivation.defying-the-heavens.talk.line.spar.draw.righteous", "Neither yields. An honourable draw.");
 		t.add("cultivation.defying-the-heavens.talk.line.spar.draw.neutral", "Even. Enough for today.");
-		t.add("cultivation.defying-the-heavens.talk.line.spar.draw.demonic", "We'll finish this another day.");
+		t.add("cultivation.defying-the-heavens.talk.line.spar.draw.devilish", "We'll finish this another day.");
 		t.add("cultivation.defying-the-heavens.talk.line.tribute.righteous", "Take it, then. The heavens see what you do.");
 		t.add("cultivation.defying-the-heavens.talk.line.tribute.neutral", "Take it. Go.");
-		t.add("cultivation.defying-the-heavens.talk.line.tribute.demonic", "Hah... take it. I won't forget your face.");
+		t.add("cultivation.defying-the-heavens.talk.line.tribute.devilish", "Hah... take it. I won't forget your face.");
 		t.add("cultivation.defying-the-heavens.talk.line.tribute.commoner", "Please, take it, take it all...");
 		t.add("cultivation.defying-the-heavens.talk.line.tribute.again.righteous", "I have nothing more to give you today.");
 		t.add("cultivation.defying-the-heavens.talk.line.tribute.again.neutral", "Nothing left.");
-		t.add("cultivation.defying-the-heavens.talk.line.tribute.again.demonic", "You've bled me once today already.");
+		t.add("cultivation.defying-the-heavens.talk.line.tribute.again.devilish", "You've bled me once today already.");
 		t.add("cultivation.defying-the-heavens.talk.line.tribute.again.commoner", "There's nothing more, I swear it!");
 		t.add("cultivation.defying-the-heavens.talk.line.release.righteous", "Senior is merciful. This one thanks you.");
 		t.add("cultivation.defying-the-heavens.talk.line.release.neutral", "...Thank you.");
-		t.add("cultivation.defying-the-heavens.talk.line.release.demonic", "Hah. Generous of you.");
+		t.add("cultivation.defying-the-heavens.talk.line.release.devilish", "Hah. Generous of you.");
 		t.add("cultivation.defying-the-heavens.talk.line.release.commoner", "Thank you, immortal, thank you!");
 		t.add("cultivation.defying-the-heavens.talk.line.spared.righteous", "This one owes you a life. I will not forget it.");
 		t.add("cultivation.defying-the-heavens.talk.line.spared.neutral", "I owe you. I won't forget.");
-		t.add("cultivation.defying-the-heavens.talk.line.spared.demonic", "...You let me live? Fool. Or perhaps not.");
+		t.add("cultivation.defying-the-heavens.talk.line.spared.devilish", "...You let me live? Fool. Or perhaps not.");
 		t.add("cultivation.defying-the-heavens.talk.line.spared.commoner", "Bless you, immortal! Bless you!");
 		t.add("cultivation.defying-the-heavens.talk.begs", "%s throws themself to the ground and begs for their life. (Right-click them to answer.)");
 		t.add("cultivation.defying-the-heavens.talk.aid", "%s comes to your aid!");
@@ -1482,7 +1487,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 			t.add(ModLang.clothingStyleKey(style.getId()), switch (style) {
 				case RIGHTEOUS -> "Righteous white";
 				case NEUTRAL -> "Neutral blue";
-				case DEMONIC -> "Demonic red and black";
+				case DEVILISH -> "Devilish red and black";
 			});
 		}
 		for (ClothingTier tier : ClothingTier.values()) {
@@ -1688,7 +1693,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.WISH_SAY + "merit.horsemen", "Riders of bone come out of the storms. Whoever they pass falls down dead.");
 		t.add(ModLang.WISH_SAY + "merit.brood", "A brood of great spiders nests in the hills. They take whatever strays from the village.");
 		t.add(ModLang.WISH_SAY + "merit.pack", "A wolf pack has learned how easy our flocks are. Soon it will learn how easy we are.");
-		t.add(ModLang.WISH_SAY + "merit.demonic", "A cultivator of the demonic path has made us a hunting ground. Each moon one of us is taken for a cauldron.");
+		t.add(ModLang.WISH_SAY + "merit.devilish", "A cultivator of the devilish path has made us a hunting ground. Each moon one of us is taken for a cauldron.");
 		t.add(ModLang.WISH_SAY + "enlightenment.1", "I have sat at the same wall for years. I can feel the way through and cannot take it.");
 		t.add(ModLang.WISH_SAY + "enlightenment.2", "My cultivation is stuck. If someone far above me would sit with me only once...");
 		t.add(ModLang.WISH_SAY + "enlightenment.3", "There is no master on this world. I have gone as far as I can alone.");
@@ -1735,6 +1740,71 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.STATS_OBSESSION_BOON, "Obsession: %s (%s)");
 		t.add(ModLang.CMD_OBSESSION, "%s's obsession: %s (%s)");
 		t.add(ModLang.CMD_OBSESSION_NONE, "%s has named no obsession yet");
+		// Bloodlines: the races, their colourings and lore; the picker; what one is told; the command.
+		t.add(ModLang.bloodlineKey("human"), "Human");
+		t.add(ModLang.bloodlineKey("tiger"), "Tiger");
+		t.add(ModLang.bloodlineKey("lizard"), "Lizard");
+		t.add(ModLang.bloodlineKey("fox"), "Fox");
+		t.add(ModLang.bloodlineKey("dragon"), "Dragon");
+		t.add(ModLang.bloodlineVariantKey("tiger", "golden"), "Golden Tiger");
+		t.add(ModLang.bloodlineVariantKey("tiger", "white"), "White Tiger");
+		t.add(ModLang.bloodlineVariantKey("tiger", "black"), "Black Tiger");
+		t.add(ModLang.bloodlineVariantKey("lizard", "jade"), "Jade Lizard");
+		t.add(ModLang.bloodlineVariantKey("lizard", "black"), "Black Lizard");
+		t.add(ModLang.bloodlineVariantKey("lizard", "crimson"), "Crimson Lizard");
+		t.add(ModLang.bloodlineVariantKey("fox", "red"), "Red Fox");
+		t.add(ModLang.bloodlineVariantKey("fox", "snow"), "Snow Fox");
+		t.add(ModLang.bloodlineVariantKey("fox", "silver"), "Silver Fox");
+		t.add(ModLang.bloodlineVariantKey("dragon", "azure"), "Azure Dragon");
+		t.add(ModLang.bloodlineVariantKey("dragon", "gold"), "Golden Dragon");
+		t.add(ModLang.bloodlineVariantKey("dragon", "crimson"), "Crimson Dragon");
+		t.add(ModLang.bloodlineLoreKey("human"), "Born of men, with your own face. The heavens' path is yours by birth; a beast's blood may yet be awakened in you.");
+		t.add(ModLang.bloodlineLoreKey("tiger"), "Kin of the White Tiger of the west. Striped and fierce, born with a demon core, its blows heavy and its eyes keen in the dark.");
+		t.add(ModLang.bloodlineLoreKey("lizard"), "Of the great lizards that bask on sun-hot stones and hunt the marshes. Cold-blooded and patient, born with a demon core, quick as a whip.");
+		t.add(ModLang.bloodlineLoreKey("fox"), "A fox spirit, born with a demon core and one tail. Another grows with every realm, until nine tails fan out behind it.");
+		t.add(ModLang.bloodlineLoreKey("dragon"), "Of the true dragons, rarest of the demon races. Born with a demon core, horned and whiskered, slow to grow and mighty when it has.");
+		t.add(ModLang.BLOODLINE_TITLE, "Choose Your Bloodline");
+		t.add(ModLang.BLOODLINE_INTRO, "Whose blood runs in you? A demon beast wears its race's whole form; a human keeps their own.");
+		t.add(ModLang.BLOODLINE_COLOURING, "%s");
+		t.add(ModLang.BLOODLINE_OWN_SKIN, "Your own skin");
+		t.add(ModLang.BLOODLINE_CORE, "Born with a demon core");
+		t.add(ModLang.BLOODLINE_CONFIRM, "Begin");
+		t.add(ModLang.BLOODLINE_FINAL, "Chosen once, for good.");
+		t.add(ModLang.MSG_BLOODLINE_BEAST, "You are of the %s's blood: a demon of the %s race, born with a demon core.");
+		t.add(ModLang.MSG_BLOODLINE_HUMAN, "You are human, born of men. A beast's blood may yet be awakened in you.");
+		t.add(ModLang.JOURNAL_BLOODLINE, "Your Bloodline");
+		t.add(ModLang.CMD_BLOODLINE, "%s is of the %s race: %s");
+		t.add(ModLang.CMD_BLOODLINE_HUMAN, "%s is human");
+		t.add(ModLang.CMD_BLOODLINE_NONE, "%s has chosen no bloodline yet");
+		t.add(ModLang.CMD_BLOODLINE_ASKED, "%s is asked to choose a bloodline again");
+		// The Demon Path.
+		t.add(ModLang.MSG_DEMON_CORE, "A demon core burns in you, as in every %s born: your Demon Path begins at Qi Refining Early. Your blood's inheritance is %s.");
+		t.add(ModLang.JOURNAL_DEMON_PATH, "The Demon Path");
+		t.add(ModLang.JOURNAL_DEMON_PATH_TEXT, "Born of the %s race with a demon core, you walk the Demon Path beside the heavens' own: the same realms, its own bar. No method, pill or ritual carries it; your blood does, and as it climbs it teaches you your inheritance's spells, %s. Its body is the mightier and its life the longer, but the heavens strike it the harder. Switch the Cultivation tab's Path to Demon to cultivate it.");
+		t.add(ModLang.MSG_DEMON_STAGE_UP, "Demon Path: %s");
+		t.add(ModLang.MSG_DEMON_INHERITS, "Your blood remembers: you have inherited %s.");
+		t.add(ModLang.MSG_DEMON_BOTTLENECK, "Your Demon Path is at its bottleneck: break through in the cultivation menu to face the heavens' tribulation.");
+		t.add(ModLang.MSG_DEMON_TRIB_START, "The heavens see a demon rise to %s, and hate it! Survive %s strikes!");
+		t.add(ModLang.MSG_DEMON_TRIB_START_SINGLE, "The heavens see a demon rise to %s, and hate it! Survive the strike!");
+		t.add(ModLang.MSG_DEMON_BREAKTHROUGH, "The heavens' hatred survived: your Demon Path stands at %s!");
+		t.add(ModLang.MSG_DEMON_TRIB_FALL, "Backlash! Your Demon Path falls to %s.");
+		t.add(ModLang.MSG_DEMON_TRIB_FLED, "You fled the heavens' tribulation. Backlash! Your Demon Path falls to %s.");
+		t.add(ModLang.MSG_PATH_DEMON, "You draw on your demon core: meditating cultivates your Demon Path.");
+		t.add(ModLang.BTN_PATH_DEMON, "Path: Demon");
+		t.add(ModLang.METHODS_PAGE_DEMON, "Demon Path");
+		t.add(ModLang.DEMON_COLUMN_PACE, "%s blood: +%s/s");
+		t.add(ModLang.DEMON_COLUMN_PACE_SHORT, "+%s/s");
+		t.add(ModLang.DEMON_BOTTLENECK, "Your Demon Path's bottleneck: break through to %s (the heavens' tribulation, the harder).");
+		t.add(ModLang.DEMON_BOTTLENECK_SWITCH, "Your Demon Path's bottleneck: draw on your demon core (Path: Demon) to break through to %s.");
+		t.add(ModLang.DEMON_PINNACLE, "Your Demon Path stands at its very pinnacle.");
+		t.add(ModLang.STATS_DEMON_BODY, "Demon Path: %s");
+		// The races' gifts.
+		t.add(ModLang.MSG_SHED_SKIN, "You shed your skin and rise again, whole enough to fight on. (Again in %s minutes.)");
+		t.add(ModLang.MSG_GIFT_COOLDOWN, "Not yet: %s s.");
+		t.add(ModLang.MSG_GIFT_NO_QI, "Not enough qi (%s).");
+		t.add(ModLang.MSG_ROARED, "You roar! %s cowed.");
+		t.add(ModLang.MSG_ILLUSION, "You fade into an illusion for %s s.");
+		t.add(ModLang.MSG_ILLUSION_BROKEN, "Your strike breaks the illusion.");
 		t.add(ModLang.MSG_SETTLEMENT_SMOKE, "Smoke rises from a settlement some %s blocks to the %s.");
 		t.add(ModLang.MSG_SETTLER_ARRIVES, "A newcomer has come to %s.");
 		t.add(ModLang.MSG_STAT_POINTS_RETURNED, "Your cultivation has fallen: the %s stat points its lost stages gave are gone with them, the last you put in. "

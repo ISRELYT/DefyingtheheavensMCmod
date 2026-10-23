@@ -53,7 +53,9 @@
       "com.example.defyingtheheavens.NewRealmsGameTests",
       "com.example.defyingtheheavens.SwiftAndMendingGameTests",
       "com.example.defyingtheheavens.TechniquesCloneGameTests",
-      "com.example.defyingtheheavens.MeteorFlightGameTests"
+      "com.example.defyingtheheavens.MeteorFlightGameTests",
+      "com.example.defyingtheheavens.BloodlinesGameTests",
+      "com.example.defyingtheheavens.DemonPathGameTests"
     ]
   }
 }

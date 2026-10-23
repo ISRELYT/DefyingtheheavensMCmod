@@ -59,7 +59,7 @@ public class GhostCultivatorNpc extends CultivatorNpc implements Ghostly {
 	/** A keeper of the Gate on its way back to its post that gets no nearer for this long (ticks) is set down there again. */
 	private static final int KEEPER_STRAY_TICKS = 200;
 	/** The ways the dead tell how they died (Ask, about themselves): one picked from each ghost's UUID, so it never changes. */
-	public static final String[] DEATHS = {"tribulation", "deviation", "sect_war", "demonic_palm", "old_age", "poison", "betrayal",
+	public static final String[] DEATHS = {"tribulation", "deviation", "sect_war", "devilish_palm", "old_age", "poison", "betrayal",
 			"beast", "duel", "breakthrough", "starvation", "plague", "drowning", "assassin", "ascension"};
 
 	/** Which of the Gate's keepers it is, if any; or a Ghost King, or a retainer of a king's court (appended: synced by ordinal). */

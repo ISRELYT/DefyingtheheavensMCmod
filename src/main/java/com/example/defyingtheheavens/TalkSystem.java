@@ -115,7 +115,7 @@ public final class TalkSystem {
 		return gap == -1 ? Standing.BELOW : Standing.FAR_BELOW;
 	}
 
-	/** The righteous and the demonic: they don't talk, only fight (or, far beneath you, beg). */
+	/** The righteous and the devilish: they don't talk, only fight (or, far beneath you, beg). */
 	public static boolean isPathEnemy(ServerPlayer player, CultivatorNpc npc) {
 		return npc.getFaction().isEnemyOf(Alignment.factionOf(CultivatorNpc.alignmentOf(player)));
 	}
@@ -436,13 +436,13 @@ public final class TalkSystem {
 		say(player, npc, line(delta <= 3 ? "gift.small" : delta <= 10 ? "gift.good" : "gift.great", npc), delta);
 	}
 
-	/** The chance an insult starts a fight: likelier on the demonic path, and from someone stronger than you; never from the weaker. */
+	/** The chance an insult starts a fight: likelier on the devilish path, and from someone stronger than you; never from the weaker. */
 	public static float provokeChance(Alignment.Faction faction, int theirRank, int yourRank) {
 		if (theirRank <= yourRank - Stage.values().length) return 0; // a realm or more below you: they swallow it
 		float chance = switch (faction) {
 			case RIGHTEOUS -> 0.15f;
 			case NEUTRAL -> 0.35f;
-			case DEMONIC -> 0.6f;
+			case DEVILISH -> 0.6f;
 		};
 		if (theirRank > yourRank) chance += 0.3f;
 		return Mth.clamp(chance, 0, 1);
@@ -466,7 +466,7 @@ public final class TalkSystem {
 
 	/**
 	 * Demand tribute from one kneeling under your pressure: something from what it (or its sect) keeps for one of its station,
-	 * for {@link Regard#TRIBUTE} and 5 alignment toward the demonic. Once a day from each.
+	 * for {@link Regard#TRIBUTE} and 5 alignment toward the devilish. Once a day from each.
 	 */
 	private static void demand(ServerPlayer player, CultivatorNpc npc) {
 		Regard.Entry entry = npc.regardEntry(player);

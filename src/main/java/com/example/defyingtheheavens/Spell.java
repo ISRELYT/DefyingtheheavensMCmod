@@ -238,6 +238,8 @@ public enum Spell {
 	public boolean isKnown(PlayerCultivation c) {
 		if (isDual()) return TwoPaths.bothReach(c, dualRealm);
 		if (isHeaven()) {
+			// A demon's bloodline teaches its race's element's spells as its Demon Path climbs, no method wanted (DemonPath#inherits).
+			if (DemonPath.inherits(c, this)) return true;
 			if (c.isMortal() || c.netherworld().ghost() || PlayerCultivation.rank(c.getRealm(), c.getStage()) < realmNeeded()) return false;
 			for (HeavenMethod known : c.heaven().known()) if (taughtBy(known) && c.heaven().layer(known) >= layer) return true;
 			return byManual(c);

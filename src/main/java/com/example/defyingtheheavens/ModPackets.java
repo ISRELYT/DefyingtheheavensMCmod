@@ -190,6 +190,10 @@ public final class ModPackets {
 	/** S2C: "Name Your Obsession" (Obsession), before the tribulation into Heavenly Being; C2S: the one named (and whose path's tribulation). */
 	public static final ResourceLocation OBSESSION_ASK = new ResourceLocation(DefyingTheHeavens.MOD_ID, "obsession_ask");
 	public static final ResourceLocation OBSESSION_NAME = new ResourceLocation(DefyingTheHeavens.MOD_ID, "obsession_name");
+	/** S2C: choose your bloodline (Bloodlines: the race picker); C2S: the one chosen and its colouring; S2C: players' bloodlines. */
+	public static final ResourceLocation BLOODLINE_ASK = new ResourceLocation(DefyingTheHeavens.MOD_ID, "bloodline_ask");
+	public static final ResourceLocation BLOODLINE_CHOOSE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "bloodline_choose");
+	public static final ResourceLocation BLOODLINES = new ResourceLocation(DefyingTheHeavens.MOD_ID, "bloodlines");
 	/** Players further than this from a core can't work its screen. */
 	private static final double CORE_REACH = 8;
 
@@ -277,6 +281,11 @@ public final class ModPackets {
 			FourAxis.Axis obsession = FourAxis.Axis.byIndex(buf.readVarInt());
 			boolean ghost = buf.readBoolean();
 			server.execute(() -> Obsession.name(player, obsession, ghost));
+		});
+		ServerPlayNetworking.registerGlobalReceiver(BLOODLINE_CHOOSE, (server, player, handler, buf, responseSender) -> {
+			Bloodline bloodline = Bloodline.byIndex(buf.readVarInt());
+			int variant = buf.readVarInt();
+			server.execute(() -> Bloodlines.choose(player, bloodline, variant));
 		});
 		ServerPlayNetworking.registerGlobalReceiver(CIRCULATION, (server, player, handler, buf, responseSender) -> {
 			int outcome = buf.readVarInt();
@@ -519,6 +528,11 @@ public final class ModPackets {
 		buf.writeVarInt(c.manualSpells().size());
 		for (Spell spell : c.manualSpells()) buf.writeVarInt(spell.ordinal());
 		buf.writeBoolean(Clones.inClone(player));
+		// The Demon Path (DemonPath): its rank (-1 none), its stage's cultivation, whether a meditation draws it in, the record's blood.
+		buf.writeVarInt(c.demon().rank());
+		buf.writeDouble(c.demon().cultivation());
+		buf.writeBoolean(c.demon().cultivating());
+		buf.writeVarInt(c.demon().bloodline().ordinal());
 		ServerPlayNetworking.send(player, SYNC, buf);
 	}
 

@@ -199,6 +199,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			MeteorFlightClient.clear();
 			ClientSoul.clear();
 			ClientBodies.clear();
+			ClientBloodlines.clear();
 			ClientGestures.clear();
 			ClientJournal.clear();
 			ClientNpcSpeech.clear();
@@ -273,11 +274,15 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		};
 	}
 
-	/** The spells' auras on a renderer drawing a man's shape (players, cultivators...): SpellAuraLayer. */
+	/**
+	 * The spells' auras on a renderer drawing a man's shape (players, cultivators...): SpellAuraLayer; and a demon's beast's head and
+	 * tail (BeastLayer), before the auras so they lie over it.
+	 */
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	private static void registerAuraLayer(net.minecraft.client.renderer.entity.LivingEntityRenderer<?, ?> renderer,
 										  net.fabricmc.fabric.api.client.rendering.v1.LivingEntityFeatureRendererRegistrationCallback.RegistrationHelper helper,
 										  net.minecraft.client.renderer.entity.EntityRendererProvider.Context context) {
+		helper.register(new BeastLayer(renderer));
 		helper.register(new SpellAuraLayer(renderer, context));
 	}
 }

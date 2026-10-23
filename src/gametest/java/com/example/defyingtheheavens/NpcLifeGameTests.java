@@ -63,7 +63,7 @@ public class NpcLifeGameTests implements FabricGameTest {
 		for (int i = 0; i < 20; i++) {
 			helper.assertTrue(lang.has(key(NpcLines.line("pass.peer", righteous))), "A passing remark is in the file");
 			helper.assertTrue(lang.has(key(NpcLines.line("lecture", commoner))), "A commoner without a lecture of its own speaks as the neutral do");
-			for (String line : NpcLines.script("chat.progress", "demonic", righteous.getRandom())) helper.assertTrue(lang.has(line), "A talk's lines are in the file");
+			for (String line : NpcLines.script("chat.progress", "devilish", righteous.getRandom())) helper.assertTrue(lang.has(line), "A talk's lines are in the file");
 		}
 		helper.assertTrue(NpcLines.line("no.such.line", righteous) == null, "Nothing to say to what isn't there");
 		helper.succeed();
@@ -208,7 +208,7 @@ public class NpcLifeGameTests implements FabricGameTest {
 			helper.assertTrue(key(NpcLife.remarkOn(guard, strong, false)).startsWith(ModLang.npcSay("gate.welcome.")), "...and welcomes a friend");
 			strong.getInventory().setItem(strong.getInventory().selected, new net.minecraft.world.item.ItemStack(ModItems.IMMORTAL_SPIRIT_STONE));
 			CultivatorNpc greedy = npc(helper, new BlockPos(4, 2, 4), Realm.NASCENT_SOUL, -120);
-			helper.assertTrue(key(NpcLife.remarkOn(greedy, strong, false)).startsWith(ModLang.npcSay("pass.stone.demonic.")), "An Immortal stone in hand gets noticed");
+			helper.assertTrue(key(NpcLife.remarkOn(greedy, strong, false)).startsWith(ModLang.npcSay("pass.stone.devilish.")), "An Immortal stone in hand gets noticed");
 			helper.succeed();
 		} finally {
 			leave(made);

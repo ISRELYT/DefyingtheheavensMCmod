@@ -350,7 +350,10 @@ public final class MeditationManager {
 		// living Primordial Chaos Body draws in both at once, each at its full pace (Physique).
 		if (tick % 10 == 0) ghostMethods(p, c, session, tick);
 		boolean ghostQi = TwoPaths.cultivatesGhost(c);
-		boolean heavenQi = !GhostSystem.isGhost(p) && (!ghostQi || drawsBoth(p, c));
+		// The Demon Path drawn in (TwoPaths#cultivatesDemon: the switch), the heaven path rests.
+		boolean demonQi = TwoPaths.cultivatesDemon(c);
+		if (tick % 10 == 0 && demonQi) demonPath(p, c, session);
+		boolean heavenQi = !GhostSystem.isGhost(p) && !demonQi && (!ghostQi || drawsBoth(p, c));
 		// Drawing in ghostly qi only, a Dao Stele still teaches the living what it carves (learning isn't cultivating).
 		if (tick % 10 == 0 && ghostQi && !heavenQi && HeavenMethods.canLearn(c)) learnFromDaoSteles(p, c, session, tick);
 		// Gain cultivation twice a second so the menu bar moves smoothly. The dead's meditation feeds only their ghost path.
@@ -419,6 +422,41 @@ public final class MeditationManager {
 	 * every tenth): the session's own count is offset from it, so tested against that, the steles were never re-read and the
 	 * Cultivation tab's bar never sent but at a new stage.
 	 */
+	/**
+	 * Half a second of the Demon Path (DemonPath), drawn in by the switch: its bar fills at its realm's own rate by every boost the heaven
+	 * path's has (a mat, a pedestal, a stone in hand, the pace...), by the race's pace, its stages stepping on to a bottleneck, the spells
+	 * its inheritance teaches told as they come; its years paid as the heaven path's are (Lifespan#seclude).
+	 */
+	private static void demonPath(ServerPlayer p, PlayerCultivation c, Session session) {
+		double rate = DemonPath.perSecond(c, RingOfPowerItem.cultivationBonus(p)) * session.boost.multiplier()
+				* circulationMultiplier(session, session.ticks) * (InnerRealm.isInside(p) ? InnerRealm.CULTIVATION_BONUS : 1.0)
+				* heldAndTaught(p) * pace(p);
+		double bonus = session.bonusCultivation;
+		session.bonusCultivation = 0;
+		double gained = rate * 0.5 + bonus;
+		int before = DemonPath.rank(c);
+		double was = c.demon().cultivation();
+		boolean wasBottleneck = DemonPath.atBottleneck(c);
+		int stages = DemonPath.addCultivation(c, gained);
+		Lifespan.seclude(p, before, was, DemonPath.rank(c), c.demon().cultivation(), DemonPath::required,
+				Lifespan.saving(session.boost.multiplier(), 1, Lifespan.placeSaving(c), SpiritStoneItem.meditationMultiplier(p)),
+				gained <= 0 ? 0 : 1 - bonus / gained);
+		if (stages > 0) {
+			p.serverLevel().playSound(null, p.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.8f, 0.9f);
+			DemonPath.afterRank(p, before);
+			p.setHealth(p.getMaxHealth());
+		} else {
+			CultivationManager.markDirty(p.server);
+			CultivationManager.sync(p);
+		}
+		if (!wasBottleneck && DemonPath.atBottleneck(c)) {
+			p.sendSystemMessage(DemonPath.heldByAxis(c) ? FourAxis.gateLine(c, DemonPath.rank(c)).copy().withStyle(net.minecraft.ChatFormatting.GOLD)
+					: DemonPath.locked(c) ? Component.translatable(ModLang.MSG_REALM_LOCKED,
+					PlayerCultivation.rankName(PlayerCultivation.LOWER_REALM_CAP_REALM, PlayerCultivation.LOWER_REALM_CAP_STAGE))
+					: Component.translatable(ModLang.MSG_DEMON_BOTTLENECK).withStyle(net.minecraft.ChatFormatting.RED));
+		}
+	}
+
 	/** One of the living born with a Primordial Chaos Body (Physique): its meditation feeds both paths, each at its full pace. */
 	static boolean drawsBoth(ServerPlayer p, PlayerCultivation c) {
 		return !c.isMortal() && !GhostSystem.isGhost(p) && c.hasPhysique(Physique.PRIMORDIAL_CHAOS_BODY);

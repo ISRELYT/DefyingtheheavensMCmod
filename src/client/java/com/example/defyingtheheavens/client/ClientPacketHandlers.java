@@ -122,7 +122,14 @@ public final class ClientPacketHandlers {
 				if (spell != null) manual.add(spell);
 			}
 			boolean inClone = buf.readBoolean();
+			int demonRank = buf.readVarInt();
+			double demonCultivation = buf.readDouble();
+			boolean demonDrawn = buf.readBoolean();
+			com.example.defyingtheheavens.Bloodline blood = com.example.defyingtheheavens.Bloodline.byIndex(buf.readVarInt());
 			client.execute(() -> {
+				ClientCultivationData.get().demon().set(demonRank, demonCultivation);
+				ClientCultivationData.get().demon().setCultivating(demonDrawn);
+				ClientCultivationData.get().demon().setBloodline(blood);
 				ClientCultivationData.get().setTechniques(known);
 				ClientCultivationData.get().setManualSpells(manual);
 				ClientCultivationData.setInClone(inClone);
@@ -156,6 +163,12 @@ public final class ClientPacketHandlers {
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.OBSESSION_ASK, (client, handler, buf, sender) -> {
 			boolean ghost = buf.readBoolean();
 			client.execute(() -> client.setScreen(new ObsessionScreen(ghost)));
+		});
+		// Bloodlines: choose one's own (the race picker), and everyone's as worn.
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.BLOODLINE_ASK, (client, handler, buf, sender) -> client.execute(BloodlineScreen::ask));
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.BLOODLINES, (client, handler, buf, sender) -> {
+			net.minecraft.network.FriendlyByteBuf copy = new net.minecraft.network.FriendlyByteBuf(buf.copy());
+			client.execute(() -> ClientBloodlines.read(copy));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SOUL_SELF, (client, handler, buf, sender) -> {

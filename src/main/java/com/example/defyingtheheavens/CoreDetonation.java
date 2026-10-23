@@ -251,6 +251,8 @@ public final class CoreDetonation {
 			int fall = PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.GRAND_PERFECTION);
 			if (path == TwoPaths.Path.GHOST) {
 				GhostMethods.fallTo(c.netherworld(), fall);
+			} else if (path == TwoPaths.Path.DEMON) { // a demon core, of the Demon Path's (DemonPath)
+				DemonPath.fallTo(c, fall);
 			} else {
 				c.setState(Realm.FOUNDATION_BUILDING, Stage.GRAND_PERFECTION, 0);
 				HeavenMethods.clampTo(c.heaven(), fall);

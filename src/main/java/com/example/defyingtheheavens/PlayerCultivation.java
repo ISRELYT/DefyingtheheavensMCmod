@@ -100,6 +100,8 @@ public class PlayerCultivation {
 	private final NetherworldState netherworld = new NetherworldState();
 	/** The heaven methods known (see HeavenMethods). Saved only when one is. */
 	private final HeavenState heaven = new HeavenState();
+	/** The Demon Path, the demon races' (DemonPath), and the blood the record is of. Saved when begun. */
+	private final DemonState demon = new DemonState();
 	/** Synced but not saved: re-evaluated from the player's dimension on every join. */
 	private boolean inUpperRealm;
 	/**
@@ -937,8 +939,10 @@ public class PlayerCultivation {
 	 * mortal has none.
 	 */
 	public double maxQi() {
-		if (mortal) return 0;
-		return CultivationStats.maxQi(getEffectiveRealm(), getEffectiveStage()) * favourFactor() * (1 - pressurePenalty) * physiqueQiFactor()
+		// The pool the higher of the heaven path and the Demon Path gives (DemonPath#poolBase: its share the smaller); a mortal's none.
+		double base = Math.max(mortal ? 0 : CultivationStats.maxQi(getEffectiveRealm(), getEffectiveStage()), DemonPath.poolBase(this));
+		if (base <= 0) return 0;
+		return base * favourFactor() * (1 - pressurePenalty) * physiqueQiFactor()
 				* StatPoints.poolFactor(this) * Clones.strength(this); // a clone's pool half its maker's
 	}
 
@@ -953,8 +957,9 @@ public class PlayerCultivation {
 
 	/** {@link #qiGatherPerSecond} as if where they are gave {@code place} (a clone's main body, where it sits: Clones#feed). */
 	public double qiGatherAt(double place) {
-		if (mortal) return 0;
-		return CultivationStats.qiGather(getEffectiveRealm(), getEffectiveStage()) * place
+		double base = Math.max(mortal ? 0 : CultivationStats.qiGather(getEffectiveRealm(), getEffectiveStage()), DemonPath.gatherBase(this));
+		if (base <= 0) return 0;
+		return base * place
 				* (1 + qiBoost) * (1 + gearQiBonus) * favourFactor() * (1 - pressurePenalty) * physiqueQiFactor()
 				* StatPoints.gatherFactor(this)
 				+ HeavenPassives.amount(this, QiElement.WATER); // Ceaseless Flow, the water methods' passive
@@ -982,13 +987,41 @@ public class PlayerCultivation {
 	 * Qi a second of flight costs. Follows the effective realm, and doesn't grow with the stage, so later stages fly longer on
 	 * their larger pools.
 	 */
-	public double qiFlightCostPerSecond() { return getEffectiveRealm().getQiFlightCost(); }
+	public double qiFlightCostPerSecond() {
+		Realm realm = flightRealm();
+		// A true dragon flies a realm sooner (DemonPath, RaceGifts), at the cost Core Formation's flight takes.
+		return (realm.canFlyOnQi() ? realm : Realm.CORE_FORMATION).getQiFlightCost();
+	}
+
+	/**
+	 * The realm flight goes by: the higher of the heaven path's (as the land and pressure leave it) and a demon's Demon Path's, which
+	 * shares the qi pool and so its flight (DemonPath; Qi Flight and Sword Flight were the heaven path's alone before it).
+	 */
+	public Realm flightRealm() {
+		Realm heaven = getEffectiveRealm();
+		int demon = wielded(DemonPath.rank(this));
+		if (demon < 0) return heaven;
+		Realm demonRealm = DemonPath.realm(demon);
+		return demonRealm.ordinal() > heaven.ordinal() ? demonRealm : heaven;
+	}
+
+	/** Whether Qi Flight is awakened: Core Formation by {@link #flightRealm}, a true dragon's from Foundation Building (RaceGifts). */
+	public boolean canFlyOnQi() {
+		if (flightRealm().canFlyOnQi()) return true;
+		return DemonPath.bloodline(this) == Bloodline.DRAGON && DemonPath.rank(this) >= 0
+				&& DemonPath.realm(wielded(DemonPath.rank(this))).ordinal() >= Realm.FOUNDATION_BUILDING.ordinal();
+	}
+
+	/** Whether Sword Flight is awakened: Foundation Building by {@link #flightRealm}. */
+	public boolean canRideSword() {
+		return flightRealm().canRideSword();
+	}
 
 	/** Gathering here keeps up with Qi Flight, so it can go on forever (always in the Upper Realm, everywhere from Heavenly Being). */
 	public boolean isQiFlightSustained() { return qiGatherPerSecond() >= qiFlightCostPerSecond(); }
 
 	/** Qi a second of riding a sword costs ({@link SwordFlight}): less than Qi Flight, by the effective realm, not the stage. */
-	public double swordFlightCostPerSecond() { return getEffectiveRealm().getSwordFlightCost(); }
+	public double swordFlightCostPerSecond() { return flightRealm().getSwordFlightCost(); }
 
 	/** Spends qi for a spell or technique. @return false, spending nothing, if the pool holds less than {@code amount} */
 	public boolean consumeQi(double amount) {
@@ -1155,6 +1188,7 @@ public class PlayerCultivation {
 		meditationSpeed = old.meditationSpeed;
 		heaven.load(old.heaven.save());
 		netherworld.carryOver(old.netherworld);
+		demon.carryOver(old.demon); // and the Demon Path
 		techniques.addAll(old.techniques); // and the techniques and spells learned from manuals
 		manualSpells.addAll(old.manualSpells);
 	}
@@ -1266,6 +1300,8 @@ public class PlayerCultivation {
 		if (!nether.isEmpty()) tag.put("Netherworld", nether);
 		CompoundTag methods = heaven.save();
 		if (!methods.isEmpty()) tag.put("HeavenMethods", methods);
+		CompoundTag demonPath = demon.save();
+		if (!demonPath.isEmpty()) tag.put("Demon", demonPath);
 		tag.putInt("PathModel", PATH_MODEL);
 		return tag;
 	}
@@ -1388,6 +1424,7 @@ public class PlayerCultivation {
 		}
 		c.netherworld.load(tag.getCompound("Netherworld")); // an empty compound when missing: every default
 		c.heaven.load(tag.getCompound("HeavenMethods"));
+		c.demon.load(tag.getCompound("Demon"));
 		// Saves from before: every method known understood as far as the realm, none behind it or past it.
 		if (tag.getInt("PathModel") < PATH_MODEL && !c.mortal) HeavenMethods.alignTo(c.heaven, rank(c.realm, c.stage));
 		return c;
@@ -1401,6 +1438,11 @@ public class PlayerCultivation {
 	/** The heaven methods this cultivator knows (see HeavenMethods). */
 	public HeavenState heaven() {
 		return heaven;
+	}
+
+	/** The Demon Path, and the blood this record is of (see DemonPath). */
+	public DemonState demon() {
+		return demon;
 	}
 
 	/** The rumours this player has been told (see Journal), newest first. Not part of the sync packet: sent on its own. */

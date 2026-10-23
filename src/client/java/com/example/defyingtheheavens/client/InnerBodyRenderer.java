@@ -23,9 +23,14 @@ public class InnerBodyRenderer extends LivingEntityRenderer<InnerBodyEntity, Pla
 		return skinOf(body.getOwnerId());
 	}
 
-	/** A player's skin, from the tab list when they're known to this client, else their default skin. */
+	/**
+	 * A player's skin: a demon's its race's (ClientBloodlines), else from the tab list when they're known to this client, else their
+	 * default skin.
+	 */
 	static ResourceLocation skinOf(UUID id) {
 		if (id == null) return DefaultPlayerSkin.getDefaultSkin();
+		ResourceLocation race = ClientBloodlines.skin(id);
+		if (race != null) return race;
 		Minecraft mc = Minecraft.getInstance();
 		PlayerInfo info = mc.getConnection() == null ? null : mc.getConnection().getPlayerInfo(id);
 		return info != null ? info.getSkinLocation() : DefaultPlayerSkin.getDefaultSkin(id);

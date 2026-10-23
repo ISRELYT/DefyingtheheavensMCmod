@@ -248,7 +248,7 @@ public final class SectManager {
 	public static final long RESERVE_TIME = 3 * HeavenRitual.DAY;
 
 	/**
-	 * The nearest sect {@code npc} could join: in its realm, of its path (righteous, neutral or demonic), within
+	 * The nearest sect {@code npc} could join: in its realm, of its path (righteous, neutral or devilish), within
 	 * {@link #JOIN_RANGE}, still standing, and either with a slot nobody fills or has reserved, or full with a member weaker
 	 * than {@code npc} to let go (Sect#canTakeIn). Only sects already founded are known: those within SectSites#RIFT_REACH of
 	 * the rift, where newcomers arrive, and those near where players have been. Null if none.

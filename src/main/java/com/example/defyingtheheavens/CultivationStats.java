@@ -77,7 +77,8 @@ public final class CultivationStats {
 		double holy = holyFactor(c); // an Ancient Holy Body's health (the whole of it) and strength
 		// A clone (Clones) has half its maker's strength: its health (the whole of it), blows, armour, toughness and footing; not its speed.
 		double clone = Clones.strength(c);
-		set(player, Attributes.MAX_HEALTH, HEALTH_ID, "Cultivation max health", bodyHealth(body) * holy * clone - BASE_HEALTH);
+		double race = RaceGifts.healthFactor(c); // a true dragon's health the more (the whole of it)
+		set(player, Attributes.MAX_HEALTH, HEALTH_ID, "Cultivation max health", bodyHealth(body) * holy * race * clone - BASE_HEALTH);
 		set(player, Attributes.ATTACK_DAMAGE, DAMAGE_ID, "Cultivation attack damage", attackDamage(r, s) * scale * holy * clone);
 		set(player, Attributes.MOVEMENT_SPEED, SPEED_ID, "Cultivation speed", moveSpeed(r, s) * scale);
 		set(player, Attributes.ARMOR, ARMOR_ID, "Cultivation armor", armor(r, s) * scale * clone);

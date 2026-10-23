@@ -15,10 +15,10 @@ import net.minecraft.world.level.block.state.properties.SlabType;
  * <ul>
  *   <li>Righteous: white plaster walls on grey stone, red-lacquered pillars, dark slate tiles with bronze ridges.</li>
  *   <li>Neutral: white plaster, pillars of Blue Spirit Wood, teal prismarine tiles.</li>
- *   <li>Demonic: black stone, crimson pillars, dark nether-brick tiles with red trim, soul-fire lanterns.</li>
+ *   <li>Devilish: black stone, crimson pillars, dark nether-brick tiles with red trim, soul-fire lanterns.</li>
  * </ul>
  * The trim (the roofs' ridges, eaves and upturned corners, the gates' lintels) is bronze for the righteous, prismarine for the
- * neutral and red nether brick for the demonic.
+ * neutral and red nether brick for the devilish.
  * In the Upper Realm the accents turn to jade and the trees bloom white.
  * <p>
  * Nothing here may be a block springs can open in (vanilla's spring_water and spring_lava take stone, granite, diorite,
@@ -39,7 +39,7 @@ public final class SectPalette {
 		this.faction = faction;
 		this.upper = upper;
 		switch (faction) {
-			case DEMONIC -> {
+			case DEVILISH -> {
 				foundation = Blocks.POLISHED_BLACKSTONE_BRICKS;
 				paving = Blocks.POLISHED_BLACKSTONE;
 				path = Blocks.CHISELED_POLISHED_BLACKSTONE;

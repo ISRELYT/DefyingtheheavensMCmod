@@ -65,6 +65,7 @@ public final class CultivationEvents {
 		Spells.forget(player.getUUID());
 		PortalRestrictionHandler.forget(player.getUUID());
 		QiFlight.forget(player.getUUID());
+		RaceGifts.forget(player.getUUID()); // an Illusion's, a roar's cooldowns (Shed Skin's outlasts a logout)
 		Tempering.forget(player.getUUID());
 		HeavenRitual.forget(player.getUUID());
 		Lifespan.forget(player.getUUID());
@@ -122,6 +123,8 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(NpcLife::tick);
 		ServerTickEvents.END_SERVER_TICK.register(HeavenRitual::tick);
 		ServerTickEvents.END_SERVER_TICK.register(Physiques::tick);
+		ServerTickEvents.END_SERVER_TICK.register(Bloodlines::tick); // a fox spirit's tails shown as its realm grows them
+		ServerTickEvents.END_SERVER_TICK.register(RaceGifts::tick); // a tiger's sight, a lizard's in the water, a dragon's might
 		ServerTickEvents.END_SERVER_TICK.register(CoreDetonation::tick);
 		ServerTickEvents.END_SERVER_TICK.register(StorageRings::flush);
 		Physiques.register();
@@ -262,6 +265,8 @@ public final class CultivationEvents {
 			Clones.onJoin(player); // back from a crash in their clone: in their main body again, a tick on
 			LifespanTribulation.onJoin(player); // a spent life ended by a death they never came back from: born anew now
 			Physiques.onJoin(player); // the body they were born with, the first time
+			Bloodlines.onJoin(player); // everyone's bloodline told; theirs chosen, the first time
+			DemonPath.born(player); // a demon's demon core, from birth (and its blood on its record)
 			CoreDetonation.onJoin(player); // no act's switch left on from a server that stopped mid-way
 			RealmSuppressionHandler.update(player);
 			if (fled) player.setHealth(Math.min(player.getHealth(), player.getMaxHealth())); // the lower stage's smaller body
@@ -296,6 +301,7 @@ public final class CultivationEvents {
 			NetherworldManager.refresh(newPlayer);
 			// Born again after a spent life's death (LifespanTribulation): the record made anew, a mortal of 16.
 			if (!alive) LifespanTribulation.onRespawn(newPlayer);
+			DemonPath.born(newPlayer); // a demon born again is born with its demon core again
 		});
 
 		// A blow a heaven spell's ward has brought to nothing is refused outright: no knockback, no flinch (HeavenSpells#wardedOff).

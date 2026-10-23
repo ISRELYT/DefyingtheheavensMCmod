@@ -83,7 +83,7 @@ public enum Physique {
 	HEAVEN_DEFYING_BODY("heaven_defying_body", Grade.IMMORTAL, 0.5),
 	/**
 	 * Every cultivator it slays, players too, gives it a tenth of what the victim's stage takes (Physiques#onKill); each righteous or
-	 * neutral one drags its path toward the demonic, and the righteous think the less of it.
+	 * neutral one drags its path toward the devilish, and the righteous think the less of it.
 	 */
 	SOUL_DEVOURING_BODY("soul_devouring_body", Grade.IMMORTAL, 0.4),
 	/**

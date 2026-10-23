@@ -13,7 +13,7 @@ import net.minecraft.server.level.ServerPlayer;
 /**
  * Op-only testing helpers: /cultivation set <realm 1-6> <stage 1-4>, /cultivation addcultivation <amount>, /cultivation setqi
  * <amount> (the qi pool, capped at its maximum), /cultivation lifespan [set <years>] (Lifespan), /cultivation obsession [set <one|none>]
- * (Obsession). Setting a cultivator back to or below Qi Refining Mid (or mortal) takes back the
+ * (Obsession), /cultivation bloodline [set <race> [colouring] | choose] (Bloodlines). Setting a cultivator back to or below Qi Refining Mid (or mortal) takes back the
  * heavens' leave and Favour, so the Ritual to the Heavens is asked again. Set leaves every heaven method known understood exactly as
  * far as the stage set (HeavenMethods#alignTo), nothing left to settle.
  */
@@ -123,7 +123,44 @@ public final class CultivationCommand {
 													Lifespan.check(p);
 													return 1;
 												}))))
-						.then(obsession())));
+						.then(obsession())
+						.then(bloodline())));
+	}
+
+	/**
+	 * /cultivation bloodline [set <race> [colouring]] | choose (Bloodlines): whose blood one is of; make it a race (its first colouring
+	 * unless one is given); or undo the choice, the race picker brought up again.
+	 */
+	private static LiteralArgumentBuilder<CommandSourceStack> bloodline() {
+		LiteralArgumentBuilder<CommandSourceStack> set = Commands.literal("set");
+		for (Bloodline b : Bloodline.values()) {
+			set.then(Commands.literal(b.getId()).executes(ctx -> setBloodline(ctx.getSource(), b, 0))
+					.then(Commands.argument("colouring", IntegerArgumentType.integer(1, Math.max(1, b.variants())))
+							.executes(ctx -> setBloodline(ctx.getSource(), b, IntegerArgumentType.getInteger(ctx, "colouring") - 1))));
+		}
+		return Commands.literal("bloodline").executes(ctx -> reportBloodline(ctx.getSource())).then(set)
+				.then(Commands.literal("choose").executes(ctx -> {
+					ServerPlayer p = ctx.getSource().getPlayerOrException();
+					Bloodlines.forget(p.server, p.getUUID());
+					ctx.getSource().sendSuccess(() -> Component.translatable(ModLang.CMD_BLOODLINE_ASKED, p.getDisplayName()), false);
+					return 1;
+				}));
+	}
+
+	private static int setBloodline(CommandSourceStack source, Bloodline bloodline, int variant) throws CommandSyntaxException {
+		ServerPlayer p = source.getPlayerOrException();
+		Bloodlines.set(p.server, p.getUUID(), bloodline, variant);
+		return reportBloodline(source);
+	}
+
+	private static int reportBloodline(CommandSourceStack source) throws CommandSyntaxException {
+		ServerPlayer p = source.getPlayerOrException();
+		Bloodlines.Entry entry = Bloodlines.entry(p.server, p.getUUID());
+		source.sendSuccess(() -> entry == null ? Component.translatable(ModLang.CMD_BLOODLINE_NONE, p.getDisplayName())
+				: entry.bloodline().isBeast() ? Component.translatable(ModLang.CMD_BLOODLINE, p.getDisplayName(), entry.bloodline().getDisplayName(),
+				entry.bloodline().variantName(entry.variant()))
+				: Component.translatable(ModLang.CMD_BLOODLINE_HUMAN, p.getDisplayName()), false);
+		return 1;
 	}
 
 	/** /cultivation obsession [set <longevity|fortune|merit|enlightenment|none>] (Obsession): which is named, or name one (none: asked again). */

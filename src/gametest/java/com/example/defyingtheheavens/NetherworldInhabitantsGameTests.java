@@ -186,18 +186,18 @@ public class NetherworldInhabitantsGameTests implements FabricGameTest {
 				&& ox.hasCustomName(), "Ox-Head: Four Axis Grand Perfection, a Gate Warden, by name");
 		helper.assertTrue(mengPo.getTitle() == NpcTitle.BRIDGE_KEEPER && mengPo.isInvulnerable() && !mengPo.isHostileTo(cultivator(helper, Realm.QI_REFINING)),
 				"Meng Po keeps the bridge, fights nobody, and nobody harms her");
-		// No one's path makes a foe of them: a demonic Heavenly Being once drew Meng Po off her post to cut it down (HostilityGoal).
-		ServerPlayer demon = cultivator(helper, Realm.HEAVENLY_BEING);
+		// No one's path makes a foe of them: a devilish Heavenly Being once drew Meng Po off her post to cut it down (HostilityGoal).
+		ServerPlayer devil = cultivator(helper, Realm.HEAVENLY_BEING);
 		try {
-			CultivationManager.get(demon).setAlignment(Alignment.MIN);
-			helper.assertTrue(!mengPo.isEnemy(demon) && !ox.isEnemy(demon), "A demonic cultivator passing is no foe of the keepers");
-			ox.setLastHurtByMob(demon);
-			mengPo.setLastHurtByMob(demon);
-			helper.assertTrue(ox.isEnemy(demon) && !mengPo.isEnemy(demon), "Ox-Head fights whoever strikes it; Meng Po not even then");
+			CultivationManager.get(devil).setAlignment(Alignment.MIN);
+			helper.assertTrue(!mengPo.isEnemy(devil) && !ox.isEnemy(devil), "A devilish cultivator passing is no foe of the keepers");
+			ox.setLastHurtByMob(devil);
+			mengPo.setLastHurtByMob(devil);
+			helper.assertTrue(ox.isEnemy(devil) && !mengPo.isEnemy(devil), "Ox-Head fights whoever strikes it; Meng Po not even then");
 			helper.assertTrue(ox.holdsGround() && mengPo.holdsGround() && ox.makesLastStand() && !ghost(helper, Realm.QI_REFINING).holdsGround(),
 					"The keepers never run from their posts; a wandering ghost may");
 		} finally {
-			helper.getLevel().getServer().getPlayerList().remove(demon);
+			helper.getLevel().getServer().getPlayerList().remove(devil);
 		}
 		helper.assertTrue(NpcLines.english().containsKey(ModLang.npcSay("warden.greet.1")) && NpcLines.english().containsKey(ModLang.npcSay("warden.warn.1"))
 				&& NpcLines.english().containsKey(ModLang.npcSay("meng_po.call.1")), "Their words, in English");

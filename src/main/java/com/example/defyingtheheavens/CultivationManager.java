@@ -69,6 +69,10 @@ public final class CultivationManager {
 			TribulationManager.startGhost(player);
 			return;
 		}
+		if (TwoPaths.cultivatesDemon(get(player))) { // the Demon Path's, the heavens' own, the harder (DemonPath)
+			TribulationManager.startDemon(player);
+			return;
+		}
 		if (GhostSystem.isGhost(player)) { // a mortal's ghost: no path to break through on
 			player.displayClientMessage(Component.translatable(ModLang.MSG_GHOST_CANNOT), true);
 			return;
@@ -98,6 +102,15 @@ public final class CultivationManager {
 		// And the clone (Clones): split one off, go into it or back, or (sneaking, near the other body) draw it back in.
 		if (ability == Ability.CLONE) {
 			Clones.act(player);
+			return;
+		}
+		// The races' acts (RaceGifts): a tiger's roar, a fox's illusion.
+		if (ability == Ability.TIGERS_ROAR) {
+			RaceGifts.roar(player);
+			return;
+		}
+		if (ability == Ability.ILLUSION) {
+			RaceGifts.illusion(player);
 			return;
 		}
 		c.setAbilityEnabled(ability, !c.isAbilityEnabled(ability));

@@ -1,4 +1,4 @@
-// 1.20.1	2026-10-23T15:42:27.7286831	Defying The Heavens/Model Definitions
+// 1.20.1	2026-10-23T18:43:54.0250731	Defying The Heavens/Model Definitions
 2a37dff13a81a9b17eb809fba4b736f445728126 assets\defying-the-heavens\models\item\jade_ore.json
 6e19ed319a3f65b6678d96013549e5ddab50a243 assets\defying-the-heavens\models\block\dao_stele_water_upper.json
 f4125133876ff3cdf20bb5bc48fc24e6cc6789ee assets\defying-the-heavens\models\block\deepslate_jade_ore.json
@@ -85,13 +85,13 @@ a5b6d377c39209c7f72ab1c30d0510dc81c5f5f0 assets\defying-the-heavens\models\item\
 a7272af6b2be065470f02af22e19a6f5153be4dc assets\defying-the-heavens\blockstates\yin_jade_block.json
 84a528459ea7fcd54c627af9728b2c265bf87c06 assets\defying-the-heavens\models\item\other_shore_flower_seeds.json
 2bacabe79dbf5574954bc191623f366054cdc0c9 assets\defying-the-heavens\models\block\method_stele_wandering_soul_steps_lower.json
-4b4cb9921e084a73b3f8eec989cfb1daea2a156a assets\defying-the-heavens\models\item\jade.json
 7ccd9918ccd0b739d970a4a60026bb83c15ab291 assets\defying-the-heavens\models\block\method_stele_yama_judgement_middle.json
+4b4cb9921e084a73b3f8eec989cfb1daea2a156a assets\defying-the-heavens\models\item\jade.json
 12925a560d5897bf8ba3ed9a617b184b8ae40a41 assets\defying-the-heavens\models\item\ring_of_power.json
 87d1a11ffdd6e7585093c14c0486eeb6c7556133 assets\defying-the-heavens\models\item\yang_fire_talisman.json
 81624f8a9539ff17ffbb317e4cfa0ac488dac53e assets\defying-the-heavens\blockstates\blue_spirit_planks.json
-2bacabe79dbf5574954bc191623f366054cdc0c9 assets\defying-the-heavens\models\block\method_stele_underworld_nirvana_scripture_lower.json
 2bacabe79dbf5574954bc191623f366054cdc0c9 assets\defying-the-heavens\models\block\method_stele_yellow_springs_marrow_lower.json
+2bacabe79dbf5574954bc191623f366054cdc0c9 assets\defying-the-heavens\models\block\method_stele_underworld_nirvana_scripture_lower.json
 af4c86b34af08f52606bed1ff3f567af23dafc3a assets\defying-the-heavens\models\block\deepslate_spirit_stone_ore.json
 2bacabe79dbf5574954bc191623f366054cdc0c9 assets\defying-the-heavens\models\block\method_stele_void_rending_nether_canon_lower.json
 1f9e43c057177b8740746e833a8ab182eb9e3127 assets\defying-the-heavens\models\item\technique_manual.json

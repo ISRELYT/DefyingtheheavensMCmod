@@ -41,7 +41,7 @@ public final class Physiques {
 	public static final int POISON_TICKS = 5 * 20;
 	/** A Soul-Devouring Body takes this share of what the stage of a cultivator it slays takes. */
 	public static final double DEVOUR_SHARE = 0.1;
-	/** Each righteous or neutral cultivator a Soul-Devouring Body slays drags its path this far toward the demonic. */
+	/** Each righteous or neutral cultivator a Soul-Devouring Body slays drags its path this far toward the devilish. */
 	public static final int DEVOUR_SHIFT = 10;
 	/** What the righteous think the less of a Heaven-Defying Body, and of a Soul-Devouring Body. */
 	public static final int HEAVEN_DEFYING_REGARD = -15, SOUL_DEVOURING_REGARD = -20;
@@ -185,6 +185,7 @@ public final class Physiques {
 
 	/** {@code attacker}'s own blow lands on {@code target}: a Jade Poison Body's poisons it, the more strongly the higher its realm. */
 	public static void onMeleeHit(ServerPlayer attacker, LivingEntity target) {
+		RaceGifts.onMeleeHit(attacker, target); // a lizard's venom; a fox's Illusion broken
 		PlayerCultivation c = CultivationManager.get(attacker);
 		if (!c.hasPhysique(Physique.JADE_POISON_BODY)) return;
 		int realm = Math.max(0, TwoPaths.higherRank(c, true)) / Stage.values().length;
@@ -193,6 +194,7 @@ public final class Physiques {
 
 	/** {@code victim} has lost {@code lost} health to a blow from {@code source}: a Blood Demon Body that dealt it heals by its share. */
 	public static void onHurt(LivingEntity victim, DamageSource source, float lost) {
+		if (lost > 0) RaceGifts.onHurt(victim); // a lizard's Shed Skin
 		if (lost <= 0 || !(source.getEntity() instanceof ServerPlayer attacker) || attacker == victim || !attacker.isAlive()) return;
 		if (CultivationManager.get(attacker).hasPhysique(Physique.BLOOD_DEMON_BODY)) attacker.heal(lost * BLOOD_SHARE);
 	}
@@ -205,6 +207,7 @@ public final class Physiques {
 	public static float outgoing(DamageSource source, float amount) {
 		if (!(source.getEntity() instanceof ServerPlayer caster)) return amount;
 		amount = BurnLifespan.outgoing(caster, amount);
+		amount = RaceGifts.outgoing(caster, source, amount); // a tiger's blows the harder
 		boolean spell = HeavenSpells.isQi(source) || source.is(ModDamageTypes.GHOSTLY) && !GhostSystem.isBlow();
 		return spell && CultivationManager.get(caster).hasPhysique(Physique.PRIMORDIAL_CHAOS_BODY) ? amount * CHAOS_SPELLS : amount;
 	}
@@ -220,7 +223,7 @@ public final class Physiques {
 
 	/**
 	 * AFTER_DEATH: a cultivator slain (an NPC's, or a player's on either path) by a Soul-Devouring Body feeds the path it draws on,
-	 * a tenth of what the victim's stage takes ({@link #devour}); a righteous or neutral one drags its path toward the demonic too.
+	 * a tenth of what the victim's stage takes ({@link #devour}); a righteous or neutral one drags its path toward the devilish too.
 	 */
 	private static void onDeath(LivingEntity victim, DamageSource source) {
 		ServerPlayer killer = source.getEntity() instanceof ServerPlayer p ? p : victim.getKillCredit() instanceof ServerPlayer p ? p : null;
@@ -246,7 +249,7 @@ public final class Physiques {
 			killer.sendSystemMessage(Component.translatable(ModLang.MSG_DEVOURED, victim.getDisplayName(), Math.round(gained))
 					.withStyle(ChatFormatting.DARK_RED));
 		}
-		if (Alignment.factionOf(alignment) != Alignment.Faction.DEMONIC) {
+		if (Alignment.factionOf(alignment) != Alignment.Faction.DEVILISH) {
 			c.setAlignment(c.getAlignment() - DEVOUR_SHIFT);
 			CultivationManager.markDirty(killer.server);
 			CultivationManager.sync(killer);
@@ -284,6 +287,14 @@ public final class Physiques {
 		int stages = Stage.values().length;
 		Realm realm = Realm.byIndex(Math.min(Realm.values().length - 1, victimRank / stages));
 		Stage stage = Stage.byIndex(victimRank % stages);
+		if (TwoPaths.cultivatesDemon(c)) { // the Demon Path drawn on (DemonPath): its bar
+			double gained = DEVOUR_SHARE * DemonPath.required(victimRank);
+			int before = DemonPath.rank(c);
+			if (DemonPath.addCultivation(c, gained) > 0) DemonPath.afterRank(killer, before);
+			CultivationManager.markDirty(killer.server);
+			CultivationManager.sync(killer);
+			return gained;
+		}
 		if (TwoPaths.cultivatesGhost(c)) {
 			NetherworldState s = c.netherworld();
 			if (GhostMethods.ghostRank(s) < 0) return 0;

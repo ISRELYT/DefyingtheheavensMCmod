@@ -24,7 +24,7 @@ import java.util.function.Predicate;
  * The two special crafting recipes for cultivator clothing (shapeless, any grid):
  * <ul>
  *   <li>{@code clothing_dye}: one piece plus white dye (righteous white), blue or light blue dye (neutral blue), or red dye
- *   and black dye together (demonic red and black).</li>
+ *   and black dye together (devilish red and black).</li>
  *   <li>{@code clothing_upgrade}: one piece plus its grade's materials gives the same piece a grade higher, keeping its
  *   colours, enchantments, name and wear: Mortal to Spirit 2 Spirit Dew and a gold ingot; Spirit to Earth a Qi Vein and a
  *   diamond; Earth to Heaven 2 Qi Veins and netherite scrap; Heaven to Immortal 2 Qi Veins, a netherite ingot and a Spirit
@@ -88,7 +88,7 @@ public final class ClothingRecipes {
 	static ClothingStyle styleOfDyes(List<ItemStack> dyes) {
 		if (dyes.size() == 1 && dyes.get(0).is(Items.WHITE_DYE)) return ClothingStyle.RIGHTEOUS;
 		if (dyes.size() == 1 && (dyes.get(0).is(Items.BLUE_DYE) || dyes.get(0).is(Items.LIGHT_BLUE_DYE))) return ClothingStyle.NEUTRAL;
-		if (exactly(dyes, List.of(stack -> stack.is(Items.RED_DYE), stack -> stack.is(Items.BLACK_DYE)))) return ClothingStyle.DEMONIC;
+		if (exactly(dyes, List.of(stack -> stack.is(Items.RED_DYE), stack -> stack.is(Items.BLACK_DYE)))) return ClothingStyle.DEVILISH;
 		return null;
 	}
 

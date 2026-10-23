@@ -245,7 +245,7 @@ public class GhostKingGameTests implements FabricGameTest {
 		GhostCultivatorNpc retainer = helper.spawn(ModEntities.GHOST_CULTIVATOR, new BlockPos(4, 2, 3));
 		retainer.becomeCourtier(PlayerCultivation.rank(Realm.NASCENT_SOUL, Stage.EARLY), -150, helper.absolutePos(new BlockPos(4, 2, 3)), level.getRandom());
 		helper.assertTrue(king.isAlly(retainer) && retainer.isAlly(king) && !king.isEnemy(retainer),
-				"One court: allies, even a righteous king and a demonic retainer");
+				"One court: allies, even a righteous king and a devilish retainer");
 		helper.assertTrue(!king.isAlly(risen) && !risen.isAlly(king), "A king of no palace is no ally of another's court");
 		helper.assertTrue(retainer.getRole().isCourt() && retainer.getTitle() == NpcTitle.GHOST_RETAINER && retainer.getRank() <= GhostCultivatorNpc.WANDERER_CAP,
 				"A retainer, never a king's equal");

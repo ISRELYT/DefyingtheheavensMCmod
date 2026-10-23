@@ -63,10 +63,22 @@ public final class TwoPaths {
 		return wielded ? c.wielded(rank) : rank;
 	}
 
-	// --- The realm's abilities, from either path ---
+	/**
+	 * The Demon Path's rank (DemonPath), or -1: no demon core. A demon's core is its own, open whatever its meridians (so not -1 for a
+	 * mortal's). {@code wielded}: as Realm Suppression and pressure leave it.
+	 */
+	public static int demonRank(PlayerCultivation c, boolean wielded) {
+		int rank = DemonPath.rank(c);
+		return wielded ? c.wielded(rank) : rank;
+	}
 
-	/** The two paths, for which of them awakens one of the realm's abilities, and so pays for it. */
-	public enum Path { HEAVEN, GHOST }
+	// --- The realm's abilities, from any path ---
+
+	/**
+	 * The paths, for which of them awakens one of the realm's abilities, and so pays for it: the heaven path and the Demon Path from
+	 * the qi pool (DemonPath shares it), the ghost path from its ghostly qi. Saved and synced nowhere by ordinal; add new ones at the end.
+	 */
+	public enum Path { HEAVEN, GHOST, DEMON }
 
 	/**
 	 * Which path awakens an ability of {@code realm} (Ability): the heaven path if it stands there, else the ghost path if it does;
@@ -77,18 +89,23 @@ public final class TwoPaths {
 	public static Path awakens(PlayerCultivation c, Realm realm, boolean wielded) {
 		int needed = PlayerCultivation.rank(realm, Stage.EARLY);
 		if (heavenRank(c, wielded) >= needed) return Path.HEAVEN;
+		if (demonRank(c, wielded) >= needed) return Path.DEMON;
 		if (ghostRank(c, wielded) >= needed) return Path.GHOST;
 		return null;
 	}
 
 	/** {@code path}'s rank (PlayerCultivation#rank), or -1. */
 	public static int rank(PlayerCultivation c, Path path, boolean wielded) {
-		return path == Path.GHOST ? ghostRank(c, wielded) : heavenRank(c, wielded);
+		return switch (path) {
+			case HEAVEN -> heavenRank(c, wielded);
+			case GHOST -> ghostRank(c, wielded);
+			case DEMON -> demonRank(c, wielded);
+		};
 	}
 
-	/** The higher of the two paths' ranks, or -1 on neither: where the cultivator stands, for what either path brings alike. */
+	/** The highest of the paths' ranks, or -1 on none: where the cultivator stands, for what any path brings alike. */
 	public static int higherRank(PlayerCultivation c, boolean wielded) {
-		return Math.max(heavenRank(c, wielded), ghostRank(c, wielded));
+		return Math.max(Math.max(heavenRank(c, wielded), ghostRank(c, wielded)), demonRank(c, wielded));
 	}
 
 	/** {@code path}'s pool now: qi, or the ghostly qi (GhostQi). */
@@ -137,36 +154,67 @@ public final class TwoPaths {
 	}
 
 	/**
-	 * The Cultivation tab's switch: {@code p} turns to drawing in the other qi (their ghost path's, or their heaven path's), told so
-	 * over the hotbar; a meditation under way goes on with the other from its next breath. Only the living on both paths have two.
+	 * Whether {@code c}'s meditation cultivates the Demon Path (DemonPath) now: the living with a demon core, by the Cultivation tab's
+	 * switch (DemonState#cultivating), the ghost path's qi not drawn in. The dead's meditation is their ghost path's.
+	 */
+	public static boolean cultivatesDemon(PlayerCultivation c) {
+		return !c.netherworld().ghost() && c.demon().cultivating() && DemonPath.rank(c) >= 0 && !cultivatesGhost(c);
+	}
+
+	/** The paths {@code c}'s meditation may draw in, in the switch's turn: heaven, Demon, ghost (the living's; the dead have the ghost path's). */
+	public static java.util.List<Path> drawable(PlayerCultivation c) {
+		java.util.List<Path> paths = new java.util.ArrayList<>();
+		if (c.netherworld().ghost()) return paths;
+		if (!c.isMortal()) paths.add(Path.HEAVEN);
+		if (DemonPath.rank(c) >= 0) paths.add(Path.DEMON);
+		if (!c.isMortal() && GhostMethods.ghostRank(c.netherworld()) >= 0) paths.add(Path.GHOST);
+		return paths;
+	}
+
+	/** The path {@code c}'s meditation draws in now. */
+	public static Path drawnIn(PlayerCultivation c) {
+		return cultivatesGhost(c) ? Path.GHOST : cultivatesDemon(c) ? Path.DEMON : Path.HEAVEN;
+	}
+
+	/**
+	 * The Cultivation tab's switch: {@code p} turns to drawing in the next of their paths' qi (heaven, Demon, ghost, round again), told
+	 * so over the hotbar; a meditation under way goes on with it from its next breath. Only the living on two paths or more have one.
 	 */
 	public static void switchPath(ServerPlayer p) {
 		PlayerCultivation c = CultivationManager.get(p);
 		NetherworldState s = c.netherworld();
-		if (c.isMortal() || s.ghost()) {
+		if (s.ghost()) {
 			p.displayClientMessage(Component.translatable(ModLang.MSG_GHOST_CANNOT), true);
 			return;
 		}
-		if (GhostMethods.ghostRank(s) < 0) {
-			p.displayClientMessage(Component.translatable(ModLang.MSG_PATH_NO_GHOST), true);
+		java.util.List<Path> paths = drawable(c);
+		if (paths.size() < 2) {
+			p.displayClientMessage(Component.translatable(c.isMortal() ? ModLang.MSG_GHOST_CANNOT : ModLang.MSG_PATH_NO_GHOST), true);
 			return;
 		}
-		s.setCultivatingGhost(!s.cultivatingGhost());
+		Path next = paths.get((Math.max(0, paths.indexOf(drawnIn(c))) + 1) % paths.size());
+		s.setCultivatingGhost(next == Path.GHOST);
+		c.demon().setCultivating(next == Path.DEMON);
 		CultivationManager.markDirty(p.server);
 		Spells.sync(p); // the Cultivation tab's switch and columns (ModPackets#sendMethods carries it)
 		CultivationManager.sync(p);
-		p.displayClientMessage(Component.translatable(s.cultivatingGhost() ? ModLang.MSG_PATH_GHOST : ModLang.MSG_PATH_HEAVEN)
-				.withStyle(s.cultivatingGhost() ? ChatFormatting.AQUA : ChatFormatting.GOLD), true);
+		p.displayClientMessage(Component.translatable(next == Path.GHOST ? ModLang.MSG_PATH_GHOST : next == Path.DEMON ? ModLang.MSG_PATH_DEMON
+				: ModLang.MSG_PATH_HEAVEN).withStyle(next == Path.GHOST ? ChatFormatting.AQUA : next == Path.DEMON ? ChatFormatting.RED : ChatFormatting.GOLD), true);
 	}
 
-	/** How many realms apart the two paths stand (true cultivation), or -1 if not on both. */
+	/**
+	 * How many realms apart the two highest of the paths walked stand (true cultivation), or -1 on one path (the heaven path and the
+	 * ghost path; a demon's Demon Path beside either).
+	 */
 	public static int realmGap(PlayerCultivation c) {
-		if (!walksBoth(c)) return -1;
+		int[] ranks = {heavenRank(c, false), ghostRank(c, false), demonRank(c, false)};
+		java.util.Arrays.sort(ranks);
+		if (ranks[1] < 0) return -1;
 		int stages = Stage.values().length;
-		return Math.abs(heavenRank(c, false) / stages - ghostRank(c, false) / stages);
+		return Math.abs(ranks[2] / stages - ranks[1] / stages);
 	}
 
-	/** The harmony of the two paths: a share added to the body ({@link #HARMONY} by {@link #realmGap}); 0 on one path. */
+	/** The harmony of the paths: a share added to the body ({@link #HARMONY} by {@link #realmGap}); 0 on one path. */
 	public static double harmony(PlayerCultivation c) {
 		int gap = realmGap(c);
 		return gap < 0 || gap >= HARMONY.length ? 0 : HARMONY[gap];
@@ -200,7 +248,7 @@ public final class TwoPaths {
 	 * dead, and one who walks the ghost path alone is the weaker for living (and one of the heaven path alone, for dying).
 	 */
 	public static double pathShare(PlayerCultivation c, Path path) {
-		return (path == Path.GHOST) == c.netherworld().ghost() ? 1.0 : HALF_PATH;
+		return (path == Path.GHOST) == c.netherworld().ghost() ? 1.0 : HALF_PATH; // the Demon Path the living's, as the heaven path
 	}
 
 	/**
@@ -227,6 +275,15 @@ public final class TwoPaths {
 		if (c.hasPhysique(Physique.GHOST_DEVIL_BODY) && inGhostForm(c)) {
 			int rank = Math.max(0, ghost);
 			return new Body(Realm.byIndex(rank / stages), Stage.byIndex(rank % stages), ghost < 0 ? 0.5 : scale, true, rank, 1.0);
+		}
+		// A demon's Demon Path, mightier than the others for its share (its body the mightier still: DemonPath#BODY), gives the body.
+		int demon = demonRank(c, wielded);
+		double demonShare = (whole ? 1 : pathShare(c, Path.DEMON)) * DemonPath.BODY;
+		if (demon >= 0) {
+			double mightiest = might(demon) * demonShare;
+			if ((heaven < 0 || mightiest > might(heaven) * heavenShare) && (ghost < 0 || mightiest > might(ghost) * ghostShare)) {
+				return new Body(Realm.byIndex(demon / stages), Stage.byIndex(demon % stages), scale, false, demon, demonShare);
+			}
 		}
 		if (ghost >= 0 && (heaven < 0 || might(ghost) * ghostShare > might(heaven) * heavenShare
 				|| might(ghost) * ghostShare == might(heaven) * heavenShare && ghostShare > heavenShare)) {

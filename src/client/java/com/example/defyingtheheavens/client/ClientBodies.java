@@ -124,6 +124,12 @@ public final class ClientBodies {
 		return MODELS.getOrDefault(look.player(), DefaultPlayerSkin.getSkinModelName(look.player()));
 	}
 
+	/** The player whose body {@code player} is in, or null: their own, or an NPC's (ClientBloodlines#owner: whose race it wears). */
+	public static UUID bodyPlayer(AbstractClientPlayer player) {
+		Look look = of(player);
+		return look == null ? null : look.player();
+	}
+
 	/** Whether {@code player} wears another's look at all (their cape, then, is the body's or none). */
 	public static boolean disguised(AbstractClientPlayer player) {
 		return of(player) != null;

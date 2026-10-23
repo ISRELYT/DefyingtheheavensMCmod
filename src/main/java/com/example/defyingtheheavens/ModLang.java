@@ -272,7 +272,7 @@ public final class ModLang {
 	public static final String NPC_OF_SECT = k("npc.of_sect");
 	public static final String NPC_GREET_RIGHTEOUS = k("npc.greet.righteous");
 	public static final String NPC_GREET_NEUTRAL = k("npc.greet.neutral");
-	public static final String NPC_GREET_DEMONIC = k("npc.greet.demonic");
+	public static final String NPC_GREET_DEVILISH = k("npc.greet.devilish");
 	public static final String NPC_GREET_HOSTILE = k("npc.greet.hostile");
 	public static final String NPC_GREET_SECLUDED = k("npc.greet.secluded");
 	/** Something a cultivator says of its own accord (NpcLines: {@code key} is the line's key and variant number). */
@@ -559,6 +559,54 @@ public final class ModLang {
 	public static final String STATS_OBSESSION_BOON = k("stats.obsession_boon");
 	public static final String CMD_OBSESSION = k("command.obsession");
 	public static final String CMD_OBSESSION_NONE = k("command.obsession_none");
+
+	/** Bloodlines (Bloodline): each race's name, its colourings', and its lore (on the picker's card and in the journal). */
+	public static String bloodlineKey(String id) { return "bloodline." + DefyingTheHeavens.MOD_ID + "." + id; }
+	public static String bloodlineVariantKey(String id, String variant) { return "bloodline." + DefyingTheHeavens.MOD_ID + "." + id + "." + variant; }
+	public static String bloodlineLoreKey(String id) { return "bloodline." + DefyingTheHeavens.MOD_ID + "." + id + ".lore"; }
+	/** The race picker, the first time one joins. */
+	public static final String BLOODLINE_TITLE = k("bloodline.title");
+	public static final String BLOODLINE_INTRO = k("bloodline.intro");
+	public static final String BLOODLINE_COLOURING = k("bloodline.colouring");
+	public static final String BLOODLINE_OWN_SKIN = k("bloodline.own_skin");
+	public static final String BLOODLINE_CORE = k("bloodline.core");
+	public static final String BLOODLINE_CONFIRM = k("bloodline.confirm");
+	public static final String BLOODLINE_FINAL = k("bloodline.final");
+	public static final String MSG_BLOODLINE_BEAST = k("message.bloodline_beast");
+	public static final String MSG_BLOODLINE_HUMAN = k("message.bloodline_human");
+	public static final String JOURNAL_BLOODLINE = k("journal.bloodline");
+	public static final String CMD_BLOODLINE = k("command.bloodline");
+	public static final String CMD_BLOODLINE_HUMAN = k("command.bloodline_human");
+	public static final String CMD_BLOODLINE_NONE = k("command.bloodline_none");
+	public static final String CMD_BLOODLINE_ASKED = k("command.bloodline_asked");
+	/** The Demon Path (DemonPath): born with it, its stages and inheritance, its bottleneck and tribulation, the switch to it, its column. */
+	public static final String MSG_DEMON_CORE = k("message.demon_core");
+	public static final String JOURNAL_DEMON_PATH = k("journal.demon_path");
+	public static final String JOURNAL_DEMON_PATH_TEXT = k("journal.demon_path.text");
+	public static final String MSG_DEMON_STAGE_UP = k("message.demon_stage_up");
+	public static final String MSG_DEMON_INHERITS = k("message.demon_inherits");
+	public static final String MSG_DEMON_BOTTLENECK = k("message.demon_bottleneck");
+	public static final String MSG_DEMON_TRIB_START = k("message.demon_trib_start");
+	public static final String MSG_DEMON_TRIB_START_SINGLE = k("message.demon_trib_start_single");
+	public static final String MSG_DEMON_BREAKTHROUGH = k("message.demon_breakthrough");
+	public static final String MSG_DEMON_TRIB_FALL = k("message.demon_trib_fall");
+	public static final String MSG_DEMON_TRIB_FLED = k("message.demon_trib_fled");
+	public static final String MSG_PATH_DEMON = k("message.path_demon");
+	public static final String BTN_PATH_DEMON = k("button.path_demon");
+	public static final String METHODS_PAGE_DEMON = k("methods.page.demon");
+	public static final String DEMON_COLUMN_PACE = k("demon_column.pace");
+	public static final String DEMON_COLUMN_PACE_SHORT = k("demon_column.pace_short");
+	public static final String DEMON_BOTTLENECK = k("demon_bottleneck");
+	public static final String DEMON_BOTTLENECK_SWITCH = k("demon_bottleneck_switch");
+	public static final String DEMON_PINNACLE = k("demon_pinnacle");
+	public static final String STATS_DEMON_BODY = k("stats.demon_body");
+	/** The races' gifts (RaceGifts). */
+	public static final String MSG_SHED_SKIN = k("message.shed_skin");
+	public static final String MSG_GIFT_COOLDOWN = k("message.gift_cooldown");
+	public static final String MSG_GIFT_NO_QI = k("message.gift_no_qi");
+	public static final String MSG_ROARED = k("message.roared");
+	public static final String MSG_ILLUSION = k("message.illusion");
+	public static final String MSG_ILLUSION_BROKEN = k("message.illusion_broken");
 	/** A settlement of the Astral Realm's worlds (Settlements): its name on coming near. */
 	public static final String MSG_SETTLEMENT_NEAR = k("message.settlement_near");
 	public static final String MSG_SETTLEMENT_SMOKE = k("message.settlement_smoke");

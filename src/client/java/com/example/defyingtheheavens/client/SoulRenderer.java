@@ -111,8 +111,9 @@ public final class SoulRenderer {
 		return null;
 	}
 
-	/** Whether the player {@code id} wears the slim model (as the player list has it; broad if unknown). */
+	/** Whether the player {@code id} wears the slim model (as the player list has it; broad if unknown, and a demon's race skin always). */
 	private static boolean slim(java.util.UUID id) {
+		if (ClientBloodlines.of(id) != null) return false;
 		Minecraft mc = Minecraft.getInstance();
 		net.minecraft.client.multiplayer.PlayerInfo info = id == null || mc.getConnection() == null ? null : mc.getConnection().getPlayerInfo(id);
 		return info != null && "slim".equals(info.getModelName());
@@ -176,7 +177,7 @@ public final class SoulRenderer {
 			boolean mine = mc.player.getUUID().equals(owner);
 			float clarity = whole || mine ? 1.0f : ClientSoul.clarity(body);
 			if (clarity <= 0) continue;
-			drawBody(context, body, InnerBodyRenderer.skinOf(owner), slim(owner), clarity, partial, true, Look.DEAD, null,
+			drawBody(context, body, InnerBodyRenderer.skinOf(owner), slim(owner), clarity, partial, true, Look.DEAD, BeastHeadModels.of(body),
 					bodyLook(body) == TwoPaths.Look.KING);
 		}
 		// Additive from here: light, not cover.
@@ -217,9 +218,9 @@ public final class SoulRenderer {
 	/** One drawn as the dead (see GhostSystem, TwoPaths#look), in their cyan rather than a soul's violet, a faint trail drifting from it. */
 	private static void drawSoul(WorldRenderContext context, Player soul, float clarity, float partial, boolean dead, boolean crowned) {
 		boolean slimModel = soul instanceof AbstractClientPlayer client && "slim".equals(client.getModelName());
-		// A player wears a man's head (a beast's, should a demon race give one: its BeastHead here); a Ghost King, a crown on it.
-		drawBody(context, soul, ((AbstractClientPlayer) soul).getSkinTextureLocation(), slimModel, clarity, partial, dead, Look.SOUL, null,
-				dead && crowned);
+		// A player wears a man's head, or a demon its beast's (and its tail: ClientBloodlines); a Ghost King, a crown on it.
+		drawBody(context, soul, ((AbstractClientPlayer) soul).getSkinTextureLocation(), slimModel, clarity, partial, dead, Look.SOUL,
+				BeastHeadModels.of(soul), dead && crowned);
 	}
 
 	/** How strongly a possessed body's veil shows at its clearest (it breathes a little about this), and how far it stands off the body. */
@@ -276,7 +277,8 @@ public final class SoulRenderer {
 		boolean hungry = body instanceof HungryGhost;
 		ResourceLocation skin = hungry ? GhostlyRenderers.HUNGRY_GHOST_SKIN
 				: body instanceof GhostCultivatorNpc ghost ? GhostlyRenderers.skin(ghost) : GhostlyRenderers.HUNGRY_GHOST_SKIN;
-		BeastHeadModels.Head beast = body instanceof GhostCultivatorNpc ghost ? BeastHeadModels.get(ghost.getRole().beastHead()) : null;
+		BeastHeadModels.Head beast = body instanceof GhostCultivatorNpc ghost && ghost.getRole().beastHead() != null
+				? BeastHeadModels.get(ghost.getRole().beastHead()).on(body, null) : null;
 		boolean king = body instanceof GhostCultivatorNpc ghost && ghost.getRole() == GhostCultivatorNpc.Role.GHOST_KING;
 		drawBody(context, body, skin, false, 1.0f, partial, true, hungry ? Look.HUNGRY : Look.DEAD, beast, king);
 	}
@@ -334,8 +336,8 @@ public final class SoulRenderer {
 			if (look == Look.HUNGRY) reachingPose(model, age);
 			if (model.attackTime > 0) swingPose(model, soul, age);
 		}
-		// A beast's head in place of the man's: posed as his would be, his head and hat hidden while the body is drawn.
-		if (beast != null) beast.follow(model.head);
+		// A beast's head in place of the man's: posed as his would be, his head and hat hidden while the body is drawn; its tail on the body.
+		if (beast != null) beast.follow(model);
 		model.head.visible = model.hat.visible = beast == null;
 
 		boolean shader = soulShader != null;
