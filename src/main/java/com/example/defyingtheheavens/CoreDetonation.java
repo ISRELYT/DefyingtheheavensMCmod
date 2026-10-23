@@ -241,8 +241,9 @@ public final class CoreDetonation {
 			victim.hurtMarked = true;
 		}
 		// The crater, a ragged bowl (craterRadius, craterDepth), carved by Devastation a share a tick, nearest the heart first, its
-		// pieces flung, since a high realm's would stall the world carved at once.
-		Devastation.crater(p, level, heart, craterRadius(realm, stage), craterDepth(realm, stage), Devastation.Floor.NONE);
+		// pieces flung, since a high realm's would stall the world carved at once. Nothing in it is spared that the ground would be
+		// (the user's ask, 2026-10-23): water and lava go with it, and lecterns, pedestals and any mod's blocks, their contents thrown out.
+		Devastation.crater(p, level, heart, craterRadius(realm, stage), craterDepth(realm, stage), Devastation.Floor.NONE, true);
 
 		// The core lost: they wake at Foundation Building Grand Perfection, the methods understood no deeper than that: on the heaven
 		// path, or on the ghost path if the core was its (its methods held there: GhostMethods#fallTo).

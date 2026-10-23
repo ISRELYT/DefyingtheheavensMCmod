@@ -9,6 +9,7 @@ import net.minecraft.server.level.TicketType;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.BaseFireBlock;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -28,7 +29,8 @@ import java.util.Map;
  * The great spells' wounds in the land, as a walking disaster leaves them (the user's ask, 2026-10-17): craters where meteors,
  * mountains and suns come down, the ground sinking under a seal's weight, fissures running out from a quake, a canyon where a
  * slash has passed, the land scorched under a sea of flames. Every block goes by HeavenSpells#carvable (nothing kept in it, nothing
- * harder than obsidian, nothing a barrier shelters, nothing its caster couldn't dig) and is gone for good, dropping nothing; a
+ * harder than obsidian, nothing a barrier shelters, nothing its caster couldn't dig; a burst golden core's takes water, lava and
+ * what holds things too, {@link #obliterate}) and is gone for good, dropping nothing; a
  * few are flung off as debris. A big wound is taken a share at a time ({@link #BUDGET} blocks a tick for all of them together),
  * nearest its heart first, so no tick has to take it all. Its cells are kept packed ({@link BlockPos#asLong}), and its land kept
  * loaded while it's cut ({@link #KEEP_LOADED}), so even a True Immortal's crater (CoreDetonation, 256 blocks across) is cut whole.
@@ -61,9 +63,11 @@ public final class Devastation {
 		/** Its heart's chunk, and how many chunks round its land is kept loaded (0: not). */
 		final ChunkPos keepAt;
 		final int keep;
+		/** Taken as a burst golden core takes the land: water, lava and what holds things too (HeavenSpells#carvable, {@link #obliterate}). */
+		final boolean utter;
 		int next, flung, age;
 
-		Job(ServerLevel level, ServerPlayer caster, long[] cells, Vec3 heart, Runnable after, int debris, int keep) {
+		Job(ServerLevel level, ServerPlayer caster, long[] cells, Vec3 heart, Runnable after, int debris, int keep, boolean utter) {
 			this.level = level;
 			this.caster = caster;
 			this.cells = cells;
@@ -72,6 +76,7 @@ public final class Devastation {
 			this.debris = debris;
 			this.keepAt = new ChunkPos(BlockPos.containing(heart));
 			this.keep = keep;
+			this.utter = utter;
 		}
 	}
 
@@ -101,6 +106,14 @@ public final class Devastation {
 	 * blown away up to six tenths of the radius above it), its floor then made {@code floor}.
 	 */
 	public static void crater(ServerPlayer p, ServerLevel level, Vec3 at, double radius, double depth, Floor floor) {
+		crater(p, level, at, radius, depth, floor, false);
+	}
+
+	/**
+	 * As {@link #crater(ServerPlayer, ServerLevel, Vec3, double, double, Floor)}, or, {@code utter}, everything in it taken (a burst
+	 * golden core's, CoreDetonation): water and lava, lecterns, pedestals and whatever else holds something, besides the ground.
+	 */
+	public static void crater(ServerPlayer p, ServerLevel level, Vec3 at, double radius, double depth, Floor floor, boolean utter) {
 		BlockPos centre = BlockPos.containing(at);
 		int r = (int) Math.ceil(radius), d = (int) Math.ceil(depth), up = (int) Math.ceil(radius * 0.6);
 		LongArrayList cells = new LongArrayList();
@@ -124,7 +137,7 @@ public final class Devastation {
 				}
 			}
 		}
-		queue(level, p, cells.toLongArray(), at, () -> lay(p, level, lowest, floor, centre.getY()), DEBRIS);
+		queue(level, p, cells.toLongArray(), at, () -> lay(p, level, lowest, floor, centre.getY()), DEBRIS, utter);
 	}
 
 	/**
@@ -315,11 +328,11 @@ public final class Devastation {
 	private static void queue(ServerLevel level, ServerPlayer p, List<BlockPos> cells, Vec3 heart, Runnable after, int debris) {
 		long[] packed = new long[cells.size()];
 		for (int i = 0; i < packed.length; i++) packed[i] = cells.get(i).asLong();
-		queue(level, p, packed, heart, after, debris);
+		queue(level, p, packed, heart, after, debris, false);
 	}
 
 	/** {@code cells} (packed) sorted nearest {@code heart} first, and cut from the next tick. */
-	private static void queue(ServerLevel level, ServerPlayer p, long[] cells, Vec3 heart, Runnable after, int debris) {
+	private static void queue(ServerLevel level, ServerPlayer p, long[] cells, Vec3 heart, Runnable after, int debris, boolean utter) {
 		if (cells.length == 0) {
 			if (after != null) after.run();
 			return;
@@ -336,7 +349,7 @@ public final class Devastation {
 		for (int i = 0; i < keys.length; i++) sorted[i] = cells[(int) (keys[i] & INDEX_MASK)];
 		double furthest = Math.sqrt(keys[keys.length - 1] >>> INDEX_BITS);
 		int keep = furthest > KEEP_FROM ? Math.min(KEEP_MOST, (int) Math.ceil(furthest / 16) + 1) : 0;
-		JOBS.add(new Job(level, p, sorted, heart, after, debris, keep));
+		JOBS.add(new Job(level, p, sorted, heart, after, debris, keep, utter));
 	}
 
 	/** A cell's place in its list, in the low bits of its sorting key (a wound of up to 268 million cells). */
@@ -377,8 +390,14 @@ public final class Devastation {
 			went++;
 			if (!job.level.isLoaded(pos)) continue;
 			BlockState state = job.level.getBlockState(pos);
-			if (state.isAir() || !HeavenSpells.carvable(job.level, pos, job.caster)) continue;
-			job.level.removeBlock(pos, false);
+			if (state.isAir() || !HeavenSpells.carvable(job.level, pos, job.caster, job.utter)) continue;
+			if (job.utter) {
+				obliterate(job.level, pos);
+				// Water, lava and things that hold something are never flung as pieces: only the ground.
+				if (!state.getFluidState().isEmpty() && state.canBeReplaced() || state.hasBlockEntity()) continue;
+			} else {
+				job.level.removeBlock(pos, false);
+			}
 			if (job.flung < job.debris && job.level.random.nextInt(Math.max(8, job.cells.length / (job.debris * 2))) == 0) {
 				job.flung++;
 				Vec3 from = Vec3.atBottomCenterOf(pos);
@@ -390,6 +409,18 @@ public final class Devastation {
 			}
 		}
 		return went;
+	}
+
+	/**
+	 * A block taken by a burst golden core: gone to air outright (water and lava too, and no waterlogged block leaves its water
+	 * behind). What it holds is thrown out: a chest's, a lectern's book, the mod's cauldrons and altars spill as they always do when
+	 * removed, and a Spirit Pedestal (whose fruit only its loot table gives back, never a removal) lets its fruit fall.
+	 */
+	private static void obliterate(ServerLevel level, BlockPos pos) {
+		if (level.getBlockEntity(pos) instanceof SpiritPedestalBlockEntity pedestal && pedestal.hasFruit()) {
+			Block.popResource(level, pos, pedestal.getFruit().copy());
+		}
+		level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
 	}
 
 	/** Server stopping: whatever is underway stops where it is. */

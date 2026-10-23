@@ -36,6 +36,7 @@ import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
@@ -57,9 +58,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * gold ablaze and red as it cools (SpellAuraLayer#meteorHeat): no flames or glow thrown about it (the user's word, 2026-10-23); in
  * first person on one's arm (SpellAuraLayer#firstPersonArm) and at the screen's edges ({@link #renderHud}).
  * <p>
- * With the boost held (sprint) and going fast, the way ahead is bulldozed ({@link #clearAhead}, Bulldozer): what one would run into
+ * With the boost held (sprint) and going fast, the way ahead is bulldozed ({@link #clearPath}, Bulldozer): what one would run into
  * is gone on one's own screen before one reaches it, and the server told; skimming the ground (or a ceiling) slides along it at speed
- * rather than losing it; and the ground never ends the flight ({@link #keepAloft}: the user's ask, 2026-10-23).
+ * rather than losing it; and the ground never ends the flight ({@link #keepAloft}: the user's ask, 2026-10-23). Polished against
+ * being caught mid-flight (the user's report, 2026-10-23): the bulldozer clears the path a move truly takes ({@link #legsOf}), a
+ * low lip is hopped over ({@link #hop}), and a tick flown in legs ends where the server's one move of it ends, never snapped back.
  */
 public final class MeteorFlightClient {
 	/** The top speed is reached from a standstill in this many ticks; a lower aim is come down to twice as fast. */
@@ -131,22 +134,49 @@ public final class MeteorFlightClient {
 		if (player.getY() + v.y < player.level().getMinBuildHeight() - 2 && v.y < 0) v = new Vec3(v.x, 0, v.z);
 		// Fast with the boost held: the way ahead bulldozed before it's flown.
 		boolean dozing = sprinting && smashes && speed >= Bulldozer.FROM_SPEED;
-		if (dozing && v.lengthSqr() > 1.0e-6) clearAhead(player, v.normalize(), speed);
-		Vec3 before = player.position();
+		shownThisTick = 0;
+		Vec3 start = player.position();
+		boolean wasOnGround = player.onGround();
 		player.setDeltaMovement(v);
-		player.move(MoverType.SELF, v);
-		double went = player.position().distanceTo(before);
-		// Met the ground (or a ceiling) and nothing ahead: the rest of the way along it, the speed kept, not lost to it.
-		if (went < speed * 0.9 && player.verticalCollision && !player.horizontalCollision) {
-			Vec3 along = new Vec3(v.x, 0, v.z);
-			if (along.lengthSqr() > 1.0e-6) {
-				along = along.normalize();
-				double rest = speed - went;
-				if (dozing) clearAhead(player, along, rest);
-				Vec3 mid = player.position();
-				player.move(MoverType.SELF, along.scale(rest));
-				went += player.position().distanceTo(mid);
+		// The tick's flight, a leg at a time: where a leg is stopped short, the rest goes on along what stopped it, or over it.
+		Vec3 leg = v;
+		double left = v.length(), path = 0;
+		int legs = 0;
+		boolean hopped = false;
+		while (legs < MOST_LEGS && left > LEAST_LEFT && leg.lengthSqr() > 1.0e-8) {
+			Vec3 before = player.position();
+			if (dozing) clearPath(player, leg, legs == 0 ? speed : 0);
+			player.move(MoverType.SELF, leg);
+			legs++;
+			Vec3 gone = player.position().subtract(before);
+			path += gone.length();
+			left -= gone.length();
+			boolean bx = blocked(leg.x, gone.x), by = blocked(leg.y, gone.y), bz = blocked(leg.z, gone.z);
+			if (left <= LEAST_LEFT || !bx && !by && !bz) break;
+			Vec3 rest = leg.subtract(gone);
+			Vec3 hop = !hopped && (bx || bz) ? hop(player, new Vec3(rest.x, 0, rest.z)) : null;
+			if (hop != null) {
+				// A low lip (a step of the land, a block standing up) hopped over rather than stopping one dead.
+				hopped = true;
+				leg = hop.length() > left ? hop.scale(left / hop.length()) : hop;
+			} else if (by && !bx && !bz) {
+				// Met the ground (or a ceiling) and nothing ahead: the rest of the way along it, the speed kept, not lost to it.
+				Vec3 across = new Vec3(leg.x, 0, leg.z);
+				leg = across.lengthSqr() > 1.0e-6 ? across.normalize().scale(left) : Vec3.ZERO;
+			} else {
+				break; // a wall: what of the way ran along it was gone already
 			}
+		}
+		double went = path;
+		// The server goes the whole tick's flight as one move, and snaps one back if it ends anywhere else (vanilla's "moved
+		// wrongly"): flown in legs, the flight is gone again from where it began as that one move, so both end in the same place.
+		if (legs > 1) {
+			Vec3 end = player.position(), total = end.subtract(start);
+			player.setPos(start.x, start.y, start.z);
+			player.setOnGround(wasOnGround);
+			if (dozing) clearPath(player, total, 0);
+			player.move(MoverType.SELF, total);
+			if (player.position().distanceToSqr(end) > 0.01) went = player.position().distanceTo(start);
 		}
 		// Stopped short (what it can't go through, or what the bulldozer may not take): the speed is what it went.
 		if (went < speed * 0.9) speed = went;
@@ -168,30 +198,96 @@ public final class MeteorFlightClient {
 		if (player.onGround() && active(player) && Minecraft.getInstance().options.keySprint.isDown()) player.setOnGround(false);
 	}
 
+	/** At most this many legs to a tick's flight (MeteorFlightClient#travel): the way, then on along the ground or over a lip. */
+	private static final int MOST_LEGS = 3;
+	/** A lip this high or lower (blocks over the feet; the least that clears it is tried first) is hopped over, not stopped at. */
+	private static final double[] HOP_LIFTS = {0.6, 1.25};
+	/** Less of a tick's way than this left over is let go (blocks): not worth another leg. */
+	private static final double LEAST_LEFT = 0.05;
+
+	/** Whether a move asked to go {@code asked} along an axis went short of it: stopped there by something. */
+	private static boolean blocked(double asked, double went) {
+		return Math.abs(went) < Math.abs(asked) - 1.0e-4;
+	}
+
 	/**
-	 * The bulldozer (Bulldozer): what stands in the way of the body flown {@code dir} (a unit vector) at {@code speed}, out to
-	 * Bulldozer#reach, cleared on this client at once (as a block one mines is, through vanilla's block prediction), a few crumbling,
-	 * and named to the server (C2S meteor_doze), which takes it too and acknowledges: whatever it won't take comes back.
+	 * Stopped going {@code across} (level) by something low: lifted the least of {@link #HOP_LIFTS} that frees the way, the move
+	 * over it (lift, then across, as far as it then goes), or null if no lift gets it half a block further.
 	 */
-	private static void clearAhead(LocalPlayer player, Vec3 dir, double speed) {
+	private static Vec3 hop(LocalPlayer p, Vec3 across) {
+		if (across.lengthSqr() < 0.01) return null;
+		AABB box = p.getBoundingBox();
+		double now = Entity.collideBoundingBox(p, across, box, p.level(), List.of()).horizontalDistance();
+		for (double lift : HOP_LIFTS) {
+			double up = Entity.collideBoundingBox(p, new Vec3(0, lift, 0), box, p.level(), List.of()).y;
+			if (up < lift - 1.0e-4) return null; // no room overhead
+			Vec3 over = Entity.collideBoundingBox(p, across, box.move(0, up, 0), p.level(), List.of());
+			if (over.horizontalDistance() >= now + 0.5) return new Vec3(over.x, up, over.z);
+		}
+		return null;
+	}
+
+	/**
+	 * A move as vanilla goes it (Entity#collide): up or down first, then across along the lesser of x and z, then the greater. At
+	 * many blocks a tick that is a long L, not the straight line it looks: what stands in its corner is met though the line passes
+	 * clear of it.
+	 */
+	private static Vec3[] legsOf(Vec3 move) {
+		boolean zFirst = Math.abs(move.x) < Math.abs(move.z);
+		Vec3 x = new Vec3(move.x, 0, 0), z = new Vec3(0, 0, move.z);
+		return new Vec3[] {new Vec3(0, move.y, 0), zFirst ? z : x, zFirst ? x : z};
+	}
+
+	/**
+	 * The bulldozer (Bulldozer): what stands in the way of the body's {@code move} this tick, swept along the very legs the move
+	 * goes ({@link #legsOf}: the straight line alone missed what the move itself then met, and stopped one dead), each from where the
+	 * last one stops, the ground under each leg kept; then, flying at {@code lead} (0: none), out ahead along the line to
+	 * Bulldozer#reach, so the way is open before one gets there. Cleared on this client at once (as a block one mines is, through
+	 * vanilla's block prediction), a few crumbling, and named to the server (C2S meteor_doze), which takes it too and acknowledges:
+	 * whatever it won't take comes back.
+	 */
+	private static void clearPath(LocalPlayer player, Vec3 move, double lead) {
 		Minecraft mc = Minecraft.getInstance();
 		ClientLevel level = mc.level;
-		if (level == null) return;
-		List<BlockPos> cleared = Bulldozer.sweep(level, player, player.getBoundingBox(), dir, Bulldozer.reach(speed), player.getY(), Bulldozer.MOST_A_TICK);
-		if (cleared.isEmpty()) return;
+		if (level == null || move.lengthSqr() < 1.0e-8) return;
+		List<BlockPos> cleared = new ArrayList<>();
 		int sequence = 0;
-		int shown = 0;
 		try (BlockStatePredictionHandler predicting = ((ClientLevelAccessor) level).dth$getPredictions().startPredicting()) {
 			sequence = predicting.currentSequence();
-			for (BlockPos pos : cleared) {
-				BlockState state = level.getBlockState(pos);
-				if (shown < Bulldozer.SHOWN_A_TICK && (shown == 0 || level.random.nextInt(3) == 0)) {
-					shown++;
-					level.levelEvent(player, 2001, pos, Block.getId(state)); // its sound and pieces, here at once
-				}
-				level.setBlock(pos, state.getFluidState().createLegacyBlock(), 11); // as vanilla clears a block one mines
+			AABB box = player.getBoundingBox();
+			for (Vec3 leg : legsOf(move)) {
+				double length = leg.length();
+				if (length < 1.0e-4) continue;
+				clear(level, player, Bulldozer.sweep(level, player, box, leg.scale(1 / length), length, box.minY, Bulldozer.MOST_A_TICK - cleared.size()), cleared);
+				box = box.move(Entity.collideBoundingBox(player, leg, box, level, List.of()));
+			}
+			if (lead > 0) {
+				clear(level, player, Bulldozer.sweep(level, player, player.getBoundingBox(), move.normalize(), Bulldozer.reach(lead), player.getY(),
+						Bulldozer.MOST_A_TICK - cleared.size()), cleared);
 			}
 		}
+		if (cleared.isEmpty()) return;
+		send(sequence, cleared);
+	}
+
+	/** {@code found} cleared on this client (the first with its crumbling, a few more), and added to {@code cleared}. */
+	private static void clear(ClientLevel level, LocalPlayer player, List<BlockPos> found, List<BlockPos> cleared) {
+		for (BlockPos pos : found) {
+			BlockState state = level.getBlockState(pos);
+			if (shownThisTick < Bulldozer.SHOWN_A_TICK && (shownThisTick == 0 || level.random.nextInt(3) == 0)) {
+				shownThisTick++;
+				level.levelEvent(player, 2001, pos, Block.getId(state)); // its sound and pieces, here at once
+			}
+			level.setBlock(pos, state.getFluidState().createLegacyBlock(), 11); // as vanilla clears a block one mines
+			cleared.add(pos);
+		}
+	}
+
+	/** Crumbling shown so far this tick (Bulldozer#SHOWN_A_TICK, however many sweeps the tick's flight takes). */
+	private static int shownThisTick;
+
+	/** The server told what was cleared (C2S meteor_doze), to take it too and acknowledge up to {@code sequence}. */
+	private static void send(int sequence, List<BlockPos> cleared) {
 		FriendlyByteBuf buf = PacketByteBufs.create();
 		buf.writeVarInt(sequence);
 		buf.writeVarInt(cleared.size());

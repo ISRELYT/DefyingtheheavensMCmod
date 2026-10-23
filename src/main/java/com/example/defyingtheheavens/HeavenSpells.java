@@ -518,11 +518,24 @@ public final class HeavenSpells {
 	 * (Adventure mode, spawn protection, a sect's ground).
 	 */
 	public static boolean carvable(ServerLevel level, BlockPos pos, ServerPlayer p) {
+		return carvable(level, pos, p, false);
+	}
+
+	/**
+	 * As {@link #carvable(ServerLevel, BlockPos, ServerPlayer)}, or, {@code utter}, as a burst golden core takes the land
+	 * (CoreDetonation; the user's ask, 2026-10-23): water and lava too, and what holds or keeps something (a lectern, a chest, a
+	 * Spirit Pedestal, any mod's block with a block entity), its contents thrown out as it goes (Devastation#obliterate). Still
+	 * never what is unbreakable or harder than obsidian, a barrier, a spell's own block, or ground sheltered or not the caster's.
+	 */
+	public static boolean carvable(ServerLevel level, BlockPos pos, ServerPlayer p, boolean utter) {
 		if (!level.isInWorldBounds(pos)) return false;
 		BlockState state = level.getBlockState(pos);
-		if (state.isAir() || !state.getFluidState().isEmpty() && state.canBeReplaced()) return false;
-		float hardness = state.getDestroySpeed(level, pos);
-		if (hardness < 0 || hardness >= 50 || state.hasBlockEntity() || state.getBlock() instanceof SectBarrierBlock) return false;
+		if (state.isAir()) return false;
+		boolean fluid = !state.getFluidState().isEmpty() && state.canBeReplaced();
+		if (fluid && !utter) return false;
+		// A fluid's own block is as hard as can be (water and lava 100), though nothing breaks it by hand: it is let go by that.
+		float hardness = fluid ? 0 : state.getDestroySpeed(level, pos);
+		if (hardness < 0 || hardness >= 50 || state.hasBlockEntity() && !utter || state.getBlock() instanceof SectBarrierBlock) return false;
 		if (isTemporary(level, pos) || Formations.shelters(level, pos)) return false;
 		// Nor what the caster couldn't dig by hand: in Adventure mode, or under the server's spawn protection.
 		return p == null || p.mayBuild() && level.mayInteract(p, pos) && !Formations.protectsGround(p, pos);

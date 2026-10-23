@@ -25,7 +25,7 @@ import java.util.Set;
  * <li><b>A reach that grows with the speed</b> ({@link #reach}): this tick's move and {@link #LEAD_TICKS} more, so what's in the way
  * is gone a moment before one gets there, at most {@link #MOST_REACH}.</li>
  * <li><b>Predicted on the flier's client, settled by the server</b> (client-side prediction and server reconciliation): the client
- * clears what it swept at once (MeteorFlightClient#clearAhead, through vanilla's own BlockStatePredictionHandler, as it breaks a
+ * clears what it swept at once (MeteorFlightClient#clearPath, through vanilla's own BlockStatePredictionHandler, as it breaks a
  * block one mines) and names it to the server, which takes away what it agrees may go (MeteorFlight#bulldoze) and acknowledges the
  * word; whatever it refused comes back on the client, so nothing is lost to a ghost block. Waiting on the server instead (as the
  * ablaze carve did alone) left a wall standing on the flier's screen for its latency, and it stopped them dead.</li>
