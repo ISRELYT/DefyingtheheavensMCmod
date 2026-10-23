@@ -1,5 +1,6 @@
 package com.example.defyingtheheavens.client.mixin;
 
+import com.example.defyingtheheavens.client.MeteorFlightClient;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.client.gui.Font;
@@ -10,7 +11,9 @@ import net.minecraft.util.FormattedCharSequence;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Slice;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
 
@@ -18,6 +21,7 @@ import java.util.List;
  * A message over the hotbar too wide for the screen (a stele telling what it holds, at a large GUI scale) is wrapped onto more
  * lines, each centred, going up from where vanilla's one line sits, instead of running off both edges. Not required: should
  * another mod have changed how that line is drawn, the message is left as it draws it rather than the game failing to start.
+ * And Meteor Flight's fire round the screen in first person is drawn first, under the whole HUD (MeteorFlightClient#renderHud).
  */
 @Mixin(Gui.class)
 public abstract class GuiMixin {
@@ -26,6 +30,11 @@ public abstract class GuiMixin {
 
 	@Shadow
 	private int screenWidth;
+
+	@Inject(method = "render", at = @At("HEAD"))
+	private void dth$meteorFire(GuiGraphics graphics, float partialTick, CallbackInfo ci) {
+		MeteorFlightClient.renderHud(graphics, partialTick);
+	}
 
 	@WrapOperation(method = "render", require = 0,
 			at =@At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphics;drawString(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;III)I"),

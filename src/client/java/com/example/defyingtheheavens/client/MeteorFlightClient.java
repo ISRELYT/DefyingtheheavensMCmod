@@ -17,6 +17,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.GameRenderer;
@@ -46,7 +47,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * ahead hasn't come yet; the word to the server whether forward is held; who flies fast and how hot they are, from the server's
  * word (oneself too); the body laid out along the way it goes, a fist out ahead ({@link #layOut}, {@link #pose}); and the sights:
  * a trail of vapour behind one flying fast, and a ring of air where the sound barrier broke. The heat is on the body itself, glowing
- * gold ablaze and red as it cools (SpellAuraLayer#meteorHeat): no flames or glow thrown about it (the user's word, 2026-10-23).
+ * gold ablaze and red as it cools (SpellAuraLayer#meteorHeat): no flames or glow thrown about it (the user's word, 2026-10-23); in
+ * first person on one's arm (SpellAuraLayer#firstPersonArm) and at the screen's edges ({@link #renderHud}).
  */
 public final class MeteorFlightClient {
 	/** The top speed is reached from a standstill in this many ticks; a lower aim is come down to twice as fast. */
@@ -76,8 +78,8 @@ public final class MeteorFlightClient {
 	/** Blocks a tick along the way flown, and that way. */
 	private static double speed;
 	private static Vec3 heading;
-	/** Forward held in Meteor Flight this tick; and what the server was last told. */
-	private static boolean steering, told;
+	/** Forward held in Meteor Flight this tick; the boost held down with it (sprinting); and what the server was last told of each. */
+	private static boolean steering, flatOut, told, toldFlat;
 
 	/** Whether the local player flies by Meteor Flight now (as MeteorFlight#mayStreak on the server). */
 	public static boolean active(LocalPlayer p) {
@@ -96,12 +98,14 @@ public final class MeteorFlightClient {
 		if (!steering) {
 			speed = player.getDeltaMovement().length();
 			heading = null;
+			flatOut = false;
 			return false;
 		}
 		Minecraft mc = Minecraft.getInstance();
 		PlayerCultivation c = ClientCultivationData.get();
 		double top = MeteorFlight.topPerTick(c);
-		double aim = mc.options.keySprint.isDown() ? top : MeteorFlight.cruisePerTick(c);
+		boolean sprinting = mc.options.keySprint.isDown();
+		double aim = sprinting ? top : MeteorFlight.cruisePerTick(c);
 		Vec3 look = player.getViewVector(1.0f);
 		Vec3 turned = heading == null ? look : heading.lerp(look, TURN);
 		heading = turned.lengthSqr() < 1.0e-6 ? look : turned.normalize();
@@ -118,6 +122,8 @@ public final class MeteorFlightClient {
 		// Stopped short (what it can't go through, or what isn't torn away yet): the speed is what it went.
 		double went = player.position().distanceTo(before);
 		if (went < speed * 0.9) speed = went;
+		// The boost held down (all the heat asks of a flier the land holds back, at MeteorFlight#HEAT_FLOOR or more).
+		flatOut = sprinting;
 		player.setDeltaMovement(heading.scale(speed));
 		player.fallDistance = 0;
 		player.calculateEntityAnimation(false);
@@ -237,11 +243,13 @@ public final class MeteorFlightClient {
 	/** Each client tick: the word to the server, the heat eased, the trails laid and let fade, and the rings aged. */
 	public static void tick(Minecraft mc) {
 		if (mc.level == null || mc.player == null) return;
-		boolean want = steering && active(mc.player);
-		if (want != told) {
+		boolean want = steering && active(mc.player), flat = want && flatOut;
+		if (want != told || flat != toldFlat) {
 			told = want;
+			toldFlat = flat;
 			FriendlyByteBuf buf = PacketByteBufs.create();
 			buf.writeBoolean(want);
+			buf.writeBoolean(flat);
 			ClientPlayNetworking.send(ModPackets.METEOR_STREAK, buf);
 		}
 		if (mc.isPaused()) return;
@@ -326,6 +334,215 @@ public final class MeteorFlightClient {
 		return lerp(heat / 0.5f, new float[] {0.85f, 0.12f, 0.05f}, new float[] {1.0f, 0.45f, 0.12f});
 	}
 
+	/** How far the flames have caught at {@code heat}, 0 to 1 (about MeteorFlight#ABLAZE). */
+	public static float ablaze(float heat) {
+		return Mth.clamp((heat - 0.4f) / 0.2f, 0, 1);
+	}
+
+	/** How strongly the body glows as it cools at {@code heat}, 0 to 1 (whole from MeteorFlight#ABLAZE up). */
+	public static float cooling(float heat) {
+		return Math.min(1, heat / MeteorFlight.ABLAZE);
+	}
+
+	// --- In first person ---
+
+	/** The hotbar and what sits over it, this far either side of the bottom's middle (GUI pixels): the fire lies lowest there. */
+	private static final float HOTBAR_CLEAR = 125;
+	/** How deep the fire may go (of its deepest, at the bottom's corners): under the hotbar, at the top's corners, over its middle. */
+	private static final float BOTTOM_LOW = 0.3f, TOP_CORNER = 0.55f, TOP_MIDDLE = 0.35f;
+	/** Points of the fire's front this far apart along the edge (GUI pixels), and this many round each corner. */
+	private static final float FRONT_STEP = 3;
+	private static final int CORNER_POINTS = 8;
+	/** The fire from the edge (0) to its tips (1): how far in each band is, and its colour there; then its heart, in added light. */
+	private static final float[] BANDS = {0, 0.3f, 0.65f, 1};
+	private static final float[][] BAND_RGBA = {{1.0f, 0.92f, 0.6f, 0.95f}, {1.0f, 0.68f, 0.18f, 0.9f}, {1.0f, 0.36f, 0.06f, 0.6f}, {0.75f, 0.1f, 0.02f, 0}};
+	private static final float[] HEART_BANDS = {0, 0.25f, 0.55f};
+	private static final float[][] HEART_RGBA = {{1.0f, 0.9f, 0.6f, 0.4f}, {1.0f, 0.7f, 0.3f, 0.2f}, {1.0f, 0.5f, 0.2f, 0}};
+
+	/**
+	 * (GuiMixin, before the rest of the HUD, which is drawn over it.) One's own heat round the screen, in first person (the user's
+	 * asks, 2026-10-23: the fire seen there too, all the way round, flowing, not rows of little flames alike crossing at the corners):
+	 * ablaze, one front of fire round the whole edge, its flames each their own height and shifting, rising from the bottom's middle
+	 * up both sides and over the top, deepest at the bottom's corners and lowest under the hotbar, over a glow of their colour; as it
+	 * cools the fire dies down to the edge, which glows red, fading.
+	 */
+	public static void renderHud(GuiGraphics graphics, float tickDelta) {
+		Minecraft mc = Minecraft.getInstance();
+		if (mc.player == null || mc.options.hideGui || !mc.options.getCameraType().isFirstPerson() || mc.getCameraEntity() != mc.player) return;
+		float heat = heat(mc.player);
+		if (heat < 0.02f) return;
+		int width = graphics.guiWidth(), height = graphics.guiHeight();
+		float time = mc.player.tickCount + tickDelta;
+		// Behind all the HUD draws after it: the hotbar is drawn back at -90, and the glow at 0 hid it (run 13 of 2026-10-23).
+		graphics.pose().pushPose();
+		graphics.pose().translate(0, 0, -200);
+		// No hotter than orange: yellow-white is lost against the sky (run 11 of 2026-10-23).
+		float[] rgb = heatColour(Math.min(heat, 0.6f));
+		float ablaze = ablaze(heat);
+		float glow = 0.5f * ablaze + 0.85f * cooling(heat) * (1 - ablaze);
+		int colour = (int) (rgb[0] * 255) << 16 | (int) (rgb[1] * 255) << 8 | (int) (rgb[2] * 255);
+		float pulse = 0.85f + 0.15f * Mth.sin(time * 0.4f);
+		int depth = Math.max(16, Math.min(width, height) / 6);
+		for (int i = 0; i < 12; i++) {
+			int alpha = (int) (130 * glow * pulse * (1 - i / 12f) * (1 - i / 12f));
+			if (alpha <= 0) continue;
+			int argb = alpha << 24 | colour;
+			int step = depth * i / 12, next = depth * (i + 1) / 12;
+			graphics.fill(0, step, width, next, argb);
+			graphics.fill(0, height - next, width, height - step, argb);
+			graphics.fill(step, next, next, height - next, argb);
+			graphics.fill(width - next, next, width - step, height - next, argb);
+		}
+		if (ablaze > 0) fire(graphics, width, height, time, ablaze);
+		graphics.pose().popPose();
+	}
+
+	/** The fire round the edge, {@code fade} of its full strength (lower as it dies down). */
+	private static void fire(GuiGraphics graphics, int width, int height, float time, float fade) {
+		Front front = new Front(width, height, Math.min(width, height) * 0.24f * (0.35f + 0.65f * fade));
+		int n = front.points.size();
+		float whole = front.u, blend = front.deepest * 2;
+		float[] depth = new float[n], flicker = new float[n];
+		for (int i = 0; i < n; i++) {
+			float[] p = front.points.get(i);
+			float u = p[5];
+			// Each half its own fire, flowing from the bottom's middle; the two meet over the top's.
+			float right = smooth((u - (whole / 2 - blend)) / (2 * blend));
+			depth[i] = front.deepest * p[4] * Mth.lerp(right, flame(u, time, 0), flame(whole - u, time, 57.3f));
+			flicker[i] = 0.8f + 0.2f * noise(u * 0.2f, time * 0.15f);
+		}
+		graphics.flush();
+		RenderSystem.enableBlend();
+		RenderSystem.disableDepthTest();
+		RenderSystem.disableCull();
+		RenderSystem.setShader(GameRenderer::getPositionColorShader);
+		Matrix4f m = graphics.pose().last().pose();
+		RenderSystem.defaultBlendFunc();
+		bands(m, front.points, depth, flicker, BANDS, BAND_RGBA, fade);
+		RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
+		bands(m, front.points, depth, flicker, HEART_BANDS, HEART_RGBA, fade);
+		RenderSystem.enableCull();
+		RenderSystem.enableDepthTest();
+		RenderSystem.defaultBlendFunc();
+		RenderSystem.disableBlend();
+	}
+
+	/** The fire's bands from each point of the front to the next: from {@code at[b]} of the flame's depth in to {@code at[b + 1]}. */
+	private static void bands(Matrix4f m, List<float[]> points, float[] depth, float[] flicker, float[] at, float[][] rgba, float fade) {
+		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
+		buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+		for (int i = 0; i + 1 < points.size(); i++) {
+			for (int b = 0; b + 1 < at.length; b++) {
+				bandVertex(buffer, m, points.get(i), depth[i], at, rgba, b, fade * (b == 0 ? 1 : flicker[i]));
+				bandVertex(buffer, m, points.get(i + 1), depth[i + 1], at, rgba, b, fade * (b == 0 ? 1 : flicker[i + 1]));
+				bandVertex(buffer, m, points.get(i + 1), depth[i + 1], at, rgba, b + 1, fade * flicker[i + 1]);
+				bandVertex(buffer, m, points.get(i), depth[i], at, rgba, b + 1, fade * flicker[i]);
+			}
+		}
+		BufferUploader.drawWithShader(buffer.end());
+	}
+
+	private static void bandVertex(BufferBuilder buffer, Matrix4f m, float[] p, float depth, float[] at, float[][] rgba, int band, float alpha) {
+		float in = depth * at[band];
+		float[] c = rgba[band];
+		buffer.vertex(m, p[0] + p[2] * in, p[1] + p[3] * in, 0).color(c[0], c[1], c[2], c[3] * alpha).endVertex();
+	}
+
+	/**
+	 * The fire's height at {@code u} along the way round (0 to about 1.2): broad licks flowing along it and changing as they go,
+	 * sharp tongues among them.
+	 */
+	private static float flame(float u, float time, float seed) {
+		float body = Mth.clamp((noise((u - time * 1.8f) * 0.04f + seed, time * 0.03f) - 0.2f) / 0.6f, 0, 1);
+		body = body * body * (3 - 2 * body);
+		float tongue = 1 - Math.abs(noise((u - time * 3.2f) * 0.13f + seed * 2, time * 0.08f) * 2 - 1);
+		tongue *= tongue * tongue;
+		return 0.22f + 0.6f * body + 0.35f * tongue * (0.35f + 0.65f * body);
+	}
+
+	/** Smooth noise, 0 to 1, a new value at each whole {@code x} and {@code y}. */
+	private static float noise(float x, float y) {
+		int x0 = Mth.floor(x), y0 = Mth.floor(y);
+		float fx = smooth(x - x0), fy = smooth(y - y0);
+		return Mth.lerp(fy, Mth.lerp(fx, hash(x0, y0), hash(x0 + 1, y0)), Mth.lerp(fx, hash(x0, y0 + 1), hash(x0 + 1, y0 + 1)));
+	}
+
+	private static float hash(int x, int y) {
+		int h = x * 374761393 + y * 668265263;
+		h = (h ^ h >>> 13) * 1274126177;
+		return ((h ^ h >>> 16) & 0xFFFFFF) / (float) 0xFFFFFF;
+	}
+
+	private static float smooth(float t) {
+		t = Mth.clamp(t, 0, 1);
+		return t * t * (3 - 2 * t);
+	}
+
+	/**
+	 * The way round the screen's edge, from the bottom's middle left, up, over, down and home. Each point: where it is on the edge,
+	 * the way in from there (swept round the corners, so the fire's tips round them on a quarter circle), how deep its fire may go
+	 * (of the deepest), and how far round it is.
+	 */
+	private static final class Front {
+		final List<float[]> points = new ArrayList<>();
+		final float deepest;
+		float u, lastX, lastY;
+
+		Front(int width, int height, float deepest) {
+			this.deepest = deepest;
+			float w = width, h = height, mid = w / 2, clear = Math.min(HOTBAR_CLEAR, mid * 0.6f);
+			for (float x = mid; x > 0; x -= FRONT_STEP) edge(x, h, 0, -1, bottom(x, mid, clear));
+			turn(0, h, -90, 0, 1);
+			for (float y = h; y > 0; y -= FRONT_STEP) edge(0, y, 1, 0, side(y, h));
+			turn(0, 0, 0, 90, TOP_CORNER);
+			for (float x = 0; x < w; x += FRONT_STEP) edge(x, 0, 0, 1, top(x, mid));
+			turn(w, 0, 90, 180, TOP_CORNER);
+			for (float y = 0; y < h; y += FRONT_STEP) edge(w, y, -1, 0, side(y, h));
+			turn(w, h, 180, 270, 1);
+			for (float x = w; x > mid; x -= FRONT_STEP) edge(x, h, 0, -1, bottom(x, mid, clear));
+			edge(mid, h, 0, -1, BOTTOM_LOW);
+		}
+
+		private void edge(float x, float y, float nx, float ny, float reach) {
+			if (!points.isEmpty()) u += (float) Math.hypot(x - lastX, y - lastY);
+			points.add(new float[] {x, y, nx, ny, reach, u});
+			lastX = x;
+			lastY = y;
+		}
+
+		/** Round a corner at (x, y): the way in swept from {@code from} to {@code to} degrees. */
+		private void turn(float x, float y, float from, float to, float reach) {
+			float arc = deepest * reach * (float) (Math.PI / 2) / CORNER_POINTS;
+			for (int i = 0; i < CORNER_POINTS; i++) {
+				if (i == 0) u += (float) Math.hypot(x - lastX, y - lastY);
+				else u += arc;
+				double a = Math.toRadians(from + (to - from) * i / CORNER_POINTS);
+				points.add(new float[] {x, y, (float) Math.cos(a), (float) Math.sin(a), reach, u});
+			}
+			u += arc;
+			lastX = x;
+			lastY = y;
+		}
+
+		/** Along the bottom: lowest under the hotbar, deepest at the corners. */
+		private static float bottom(float x, float mid, float clear) {
+			float off = Math.abs(x - mid);
+			if (off <= clear) return BOTTOM_LOW;
+			return BOTTOM_LOW + (1 - BOTTOM_LOW) * (float) Math.pow((off - clear) / Math.max(1, mid - clear), 0.7);
+		}
+
+		/** Up the sides: deeper toward the bottom. */
+		private static float side(float y, float h) {
+			return TOP_CORNER + (1 - TOP_CORNER) * (float) Math.pow(y / h, 1.3);
+		}
+
+		/** Along the top: thinner, least over its middle. */
+		private static float top(float x, float mid) {
+			float e = Math.abs(x - mid) / mid;
+			return TOP_MIDDLE + (TOP_CORNER - TOP_MIDDLE) * e * e;
+		}
+	}
+
 	private static float[] lerp(float t, float[] a, float[] b) {
 		return new float[] {Mth.lerp(t, a[0], b[0]), Mth.lerp(t, a[1], b[1]), Mth.lerp(t, a[2], b[2])};
 	}
@@ -399,7 +616,7 @@ public final class MeteorFlightClient {
 		BOOMS.clear();
 		speed = 0;
 		heading = null;
-		steering = told = false;
+		steering = flatOut = told = toldFlat = false;
 	}
 
 	private MeteorFlightClient() {}

@@ -93,20 +93,29 @@ public class SpellAuraLayer<T extends LivingEntity, M extends HumanoidModel<T>> 
 	 * body that fades. No flames thrown off it.
 	 */
 	private void meteorHeat(PoseStack pose, MultiBufferSource buffers, M parent, float age, float heat) {
+		heatSkins(heat, age, (type, outer, rgb, alpha) -> skin(pose, buffers, outer ? thin : parent, type, rgb, alpha, SpellRender.FULL_BRIGHT));
+	}
+
+	/** One skin of the heat: in {@code type}, over the body itself or (outer) just over it, tinted {@code rgb} at {@code alpha}. */
+	private interface HeatSkin {
+		void draw(RenderType type, boolean outer, float[] rgb, float alpha);
+	}
+
+	/**
+	 * The skins Meteor Flight's heat lays over a body (all of it: {@link #meteorHeat}; one's own arm in first person: {@link
+	 * #firstPersonArm}): ablaze, gold near solid with its light added on top and flame flowing back over it; cooling (and as it
+	 * catches), a red glow over it that fades.
+	 */
+	private static void heatSkins(float heat, float age, HeatSkin skin) {
 		float[] rgb = MeteorFlightClient.heatColour(heat);
-		float ablaze = Mth.clamp((heat - 0.4f) / 0.2f, 0, 1);
-		float cooling = Math.min(1, heat / com.example.defyingtheheavens.MeteorFlight.ABLAZE);
+		float ablaze = MeteorFlightClient.ablaze(heat), cooling = MeteorFlightClient.cooling(heat);
 		if (ablaze > 0) {
-			// Gold over the body, near solid, and its light added on top: it glows whatever the light.
-			skin(pose, buffers, thin, SpellRender.clear(SpellRender.GOLD), rgb, 0.78f * ablaze, SpellRender.FULL_BRIGHT);
-			skin(pose, buffers, parent, SpellRender.glow(SpellRender.GOLD), rgb, 0.7f * ablaze, SpellRender.FULL_BRIGHT);
-			// Flame flowing back over it.
+			skin.draw(SpellRender.clear(SpellRender.GOLD), true, rgb, 0.78f * ablaze);
+			skin.draw(SpellRender.glow(SpellRender.GOLD), false, rgb, 0.7f * ablaze);
 			float[] fv = SpellRender.frame(age, 0.6f, SpellRender.FLAME_FRAMES);
-			skin(pose, buffers, thin, RenderType.energySwirl(SpellRender.FLAME, age * 0.03f, fv[0]), new float[] {1.0f, 0.75f, 0.35f}, 0.85f * ablaze,
-					SpellRender.FULL_BRIGHT);
+			skin.draw(RenderType.energySwirl(SpellRender.FLAME, age * 0.03f, fv[0]), true, new float[] {1.0f, 0.75f, 0.35f}, 0.85f * ablaze);
 		}
-		// Cooling (and as it catches): the body glowing red over its skin, fading as it cools.
-		if (ablaze < 1) skin(pose, buffers, parent, SpellRender.glow(SpellRender.GOLD), rgb, 0.8f * cooling * (1 - ablaze), SpellRender.FULL_BRIGHT);
+		if (ablaze < 1) skin.draw(SpellRender.glow(SpellRender.GOLD), false, rgb, 0.8f * cooling * (1 - ablaze));
 	}
 
 	/** A skin over the whole body in {@code type}, posed as the body. */
@@ -208,11 +217,11 @@ public class SpellAuraLayer<T extends LivingEntity, M extends HumanoidModel<T>> 
 	}
 
 	/**
-	 * First person: the auras on the player's own arm (PlayerRendererMixin): Flame Fist's fire round the fist, and the skins of the
-	 * wards (the arm drawn again in them).
+	 * First person: the auras on the player's own arm (PlayerRendererMixin): Flame Fist's fire round the fist, the skins of the
+	 * wards (the arm drawn again in them), and Meteor Flight's heat (the user's ask, 2026-10-23: the fire seen in first person too).
 	 */
 	public static void firstPersonArm(PoseStack pose, MultiBufferSource source, LivingEntity player, ModelPart arm, ModelPart sleeve, int light, boolean right) {
-		if (!ClientSpellAuras.any(player)) return;
+		if (!ClientSpellAuras.any(player) && MeteorFlightClient.heat(player) < 0.02f) return;
 		MultiBufferSource buffers = SpellBuffers.begin(source);
 		try {
 			firstPersonAuras(pose, buffers, player, arm, right);
@@ -241,6 +250,8 @@ public class SpellAuraLayer<T extends LivingEntity, M extends HumanoidModel<T>> 
 			VertexConsumer glow = buffers.getBuffer(SpellRender.glow(SpellRender.GLOW));
 			crossed(pose, glow, at(arm, new Vector3f(right ? -0.5f : 0.5f, 10, 0)), 0.6f, 0.6f, 0.3f, FIRE_MID, 0.6f * fist, 0, 0, 1, 1);
 		}
+		float heat = MeteorFlightClient.heat(player);
+		if (heat > 0.02f) heatSkins(heat, age, (type, outer, rgb, alpha) -> armSkin(pose, buffers, arm, type, rgb, alpha));
 	}
 
 	private static void armSkin(PoseStack pose, MultiBufferSource buffers, ModelPart arm, RenderType type, float[] rgb, float alpha) {

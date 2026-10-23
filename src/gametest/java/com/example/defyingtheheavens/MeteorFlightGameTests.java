@@ -114,7 +114,7 @@ public class MeteorFlightGameTests implements FabricGameTest {
 			PlayerCultivation c = flying(core, true);
 			double base = QiFlight.tick(core, c);
 			helper.assertTrue(Math.abs(base - c.qiFlightCostPerSecond()) < 1e-9, "Hovering in Meteor Flight: Qi Flight's own cost (" + base + ")");
-			MeteorFlight.setStreaking(core, true);
+			MeteorFlight.setStreaking(core, true, false);
 			double fast = QiFlight.tick(core, c);
 			helper.assertTrue(MeteorFlight.isStreaking(core) && Math.abs(fast - base * MeteorFlight.STREAK_COST) < 1e-9,
 					"Flying fast: three times it (" + fast + " for " + base + ")");
@@ -122,7 +122,7 @@ public class MeteorFlightGameTests implements FabricGameTest {
 			c.setAbilityEnabled(Ability.METEOR_FLIGHT, false);
 			helper.assertTrue(QiFlight.tick(core, c) == base && !MeteorFlight.isStreaking(core), "Switched off: Qi Flight's cost");
 			PlayerCultivation b = flying(being, true);
-			MeteorFlight.setStreaking(being, true);
+			MeteorFlight.setStreaking(being, true, false);
 			double cost = QiFlight.tick(being, b), gather = b.qiGatherPerSecond();
 			helper.assertTrue(MeteorFlight.isStreaking(being) && cost > b.qiFlightCostPerSecond() && cost <= Math.max(b.qiFlightCostPerSecond(), gather) + 1e-9,
 					"A Heavenly Being flying fast never spends more than it gathers (" + cost + " for " + gather + " gathered)");
@@ -141,7 +141,7 @@ public class MeteorFlightGameTests implements FabricGameTest {
 			Vec3 sky = new Vec3(helper.absolutePos(BlockPos.ZERO).getX() + 0.5, helper.getLevel().getMaxBuildHeight() - 8, helper.absolutePos(BlockPos.ZERO).getZ() + 0.5);
 			for (ServerPlayer p : new ServerPlayer[] {core, soul}) {
 				PlayerCultivation c = flying(p, true);
-				MeteorFlight.setStreaking(p, true);
+				MeteorFlight.setStreaking(p, true, false);
 				double top = MeteorFlight.topPerTick(c);
 				Vec3 at = sky;
 				for (int tick = 0; tick < MeteorFlight.HEAT_AFTER + 30; tick++) {
@@ -193,7 +193,7 @@ public class MeteorFlightGameTests implements FabricGameTest {
 			// Flown at, ablaze: the gamerule off, nothing; on, through.
 			build(level, wall);
 			PlayerCultivation c = flying(soul, true);
-			MeteorFlight.setStreaking(soul, true);
+			MeteorFlight.setStreaking(soul, true, false);
 			level.getGameRules().getRule(ModGameRules.METEOR_FLIGHT_SMASHES).set(false, level.getServer());
 			heat(soul, c, from, to);
 			helper.assertTrue(MeteorFlight.heat(soul) >= MeteorFlight.ABLAZE && level.getBlockState(wall).is(Blocks.STONE), "The gamerule off: ablaze, but the wall stands");
@@ -222,6 +222,44 @@ public class MeteorFlightGameTests implements FabricGameTest {
 		double top = MeteorFlight.topPerTick(c);
 		Vec3 step = to.subtract(from).normalize().scale(top);
 		for (int tick = 0; tick < MeteorFlight.HEAT_AFTER + 30; tick++) MeteorFlight.observe(p, c, true, from, from.add(step));
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void aTrueImmortalHeldBackByTheLandStillComesAblaze(GameTestHelper helper) {
+		// The user's report (2026-10-23): a True Immortal caught alight and went out for good, held back by land never made before
+		// below the 180 blocks a second its own 90% asks. Flat out as fast as the land lets it (the client's word), it burns.
+		ServerPlayer immortal = cultivator(helper.getLevel(), Realm.TRUE_IMMORTAL, Stage.EARLY);
+		try {
+			PlayerCultivation c = flying(immortal, true);
+			Vec3 sky = new Vec3(helper.absolutePos(BlockPos.ZERO).getX() + 0.5, helper.getLevel().getMaxBuildHeight() - 8, helper.absolutePos(BlockPos.ZERO).getZ() + 0.5);
+			double held = 4.5; // blocks a tick: 90 a second, under half its top
+			run(immortal, c, sky, held, MeteorFlight.HEAT_AFTER + 30, false);
+			helper.assertTrue(MeteorFlight.heat(immortal) == 0, "Held back and not flat out: no heat (" + MeteorFlight.heat(immortal) + ")");
+			helper.assertTrue(MeteorFlight.booms(immortal) == 1, "...but past the sound barrier, which breaks by 60 a second (" + MeteorFlight.booms(immortal) + " booms)");
+			run(immortal, c, sky, held, MeteorFlight.HEAT_AFTER + 30, true);
+			helper.assertTrue(MeteorFlight.heat(immortal) >= MeteorFlight.ABLAZE, "Flat out as fast as the land lets it: ablaze (" + MeteorFlight.heat(immortal) + ")");
+			float hot = MeteorFlight.heat(immortal);
+			run(immortal, c, sky, held, 20, true);
+			helper.assertTrue(MeteorFlight.heat(immortal) >= hot, "...and it stays alight while it keeps on so");
+			MeteorFlight.forget(immortal.getUUID());
+			c = flying(immortal, true);
+			run(immortal, c, sky, 1.5, MeteorFlight.HEAT_AFTER + 30, true);
+			helper.assertTrue(MeteorFlight.heat(immortal) == 0, "The boost held but crawling (30 a second, under the floor of 40): no heat");
+		} finally {
+			forget(immortal);
+		}
+		helper.succeed();
+	}
+
+	/** {@code p} flown {@code ticks} ticks at {@code perTick} blocks a tick, the client saying it is {@code flatOut}. */
+	private static void run(ServerPlayer p, PlayerCultivation c, Vec3 from, double perTick, int ticks, boolean flatOut) {
+		MeteorFlight.setStreaking(p, true, flatOut);
+		Vec3 at = from;
+		for (int tick = 0; tick < ticks; tick++) {
+			Vec3 next = at.add(perTick, 0, 0);
+			MeteorFlight.observe(p, c, true, at, next);
+			at = next;
+		}
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)

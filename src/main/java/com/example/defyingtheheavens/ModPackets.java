@@ -103,7 +103,7 @@ public final class ModPackets {
 	public static final ResourceLocation SOUL_SEEN = new ResourceLocation(DefyingTheHeavens.MOD_ID, "soul_seen");
 	/** C2S: a Heavenly Being with Qi Sense on strikes at the tether of the soul with this entity id (checked on the server). */
 	public static final ResourceLocation SOUL_TETHER_STRIKE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "soul_tether_strike");
-	/** C2S: forward held in Meteor Flight, or let go (MeteorFlight#setStreaking; the server checks it may). */
+	/** C2S: forward held in Meteor Flight, or let go, and flying flat out or not (MeteorFlight#setStreaking; the server checks it may). */
 	public static final ResourceLocation METEOR_STREAK = new ResourceLocation(DefyingTheHeavens.MOD_ID, "meteor_streak");
 	/** S2C: a player (entity id) flying fast in Meteor Flight or not, and how hot (0-255), to them and those tracking them. */
 	public static final ResourceLocation METEOR_STATE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "meteor_state");
@@ -316,8 +316,8 @@ public final class ModPackets {
 			server.execute(() -> SoulProjection.strikeTether(player, soul));
 		});
 		ServerPlayNetworking.registerGlobalReceiver(METEOR_STREAK, (server, player, handler, buf, responseSender) -> {
-			boolean on = buf.readBoolean();
-			server.execute(() -> MeteorFlight.setStreaking(player, on));
+			boolean on = buf.readBoolean(), flatOut = buf.readBoolean();
+			server.execute(() -> MeteorFlight.setStreaking(player, on, flatOut));
 		});
 		ServerPlayNetworking.registerGlobalReceiver(STORAGE_RING_ACTION, (server, player, handler, buf, responseSender) -> {
 			int action = buf.readVarInt();

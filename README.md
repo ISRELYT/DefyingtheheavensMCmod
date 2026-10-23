@@ -18,6 +18,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\launcher\Build-Launcher.ps
 
 See [launcher/README.md](launcher/README.md) for setup and troubleshooting.
 
+### Libraries
+
+**GeckoLib** 4.8.4 (animated entity, armour and item models, made in Blockbench) is packed inside the mod's jar (jar-in-jar:
+`include` in `build.gradle`), so players don't install it themselves; one who has a newer GeckoLib of their own (another
+mod's) gets that one instead, as Fabric picks the newest. It comes from GeckoLib's Cloudsmith maven (`build.gradle`,
+repositories); its version is `geckolib_version` in `gradle.properties`. Added 2026-10-23, ready for models to come: nothing
+uses it yet.
+
 ## Creative tab
 
 Everything the mod adds has its own creative tab, **Defying The Heavens** (`ModCreativeTab`, shown with a Cultivation
@@ -1328,12 +1336,21 @@ on either path, **Meteor Flight** (Abilities tab, the wheel, X; **off by default
 - **The land has to keep up.** Minecraft makes and sends land as you go: where it hasn't come yet within a second and a half's
   flight ahead, you're slowed to reach its edge no sooner (`MeteorFlightClient#landAhead`), so you never fly into nothing; over
   land already made you go at full speed.
-- **The sound barrier.** Past 60% of your top speed it breaks: a boom (heard by all near) and a ring of air left hanging where it
-  broke, then a white vapour trail behind you. Once, until you've slowed well below it again (and at most every three seconds).
-- **Ablaze (from Nascent Soul).** Hold 90% of your top speed or more for two seconds and the heat rises: within half a second you
+- **The sound barrier.** Past 60% of your top speed (60 blocks a second at most, so the high realms break it too where the land
+  holds them back) it breaks: a boom (heard by all near) and a ring of air left hanging where it broke, then a white vapour trail
+  behind you. Once, until you've slowed well below it again (and at most every three seconds).
+- **Ablaze (from Nascent Soul).** Hold 90% of your top speed or more for two seconds, or fly **flat out** (sprinting, as fast as the
+  land ahead lets you: your client says so) no slower than 54 blocks a second, and the heat rises. (A True Immortal's 90% is 180
+  blocks a second, faster than land never made before comes: held back by it, it once caught alight and went out for good, the
+  user's report 2026-10-23.) Within half a second you
   are **engulfed in flames** (only a sight: nothing burns, you take no harm), as in the video: your body itself turns to glowing
   gold, your skin showing dimly through, with flame flowing back over it (`SpellAuraLayer#meteorHeat`; no little flames or glow
-  thrown about you, the user's word). While ablaze and pressing on, **you smash through what's in your way**: a tube three blocks across about
+  thrown about you, the user's word). **In first person too** (the user's ask): your arm glows gold with the flame flowing over
+  it (when your hand is empty, as Minecraft shows it then), and fire burns all the way round the screen's edge: one front of
+  flames, each its own height and changing as it goes (not rows of little flames alike), flowing from the bottom's middle out,
+  up both sides and over the top, deepest at the bottom's corners and lowest under the hotbar, yellow-white at the edge to red at
+  the tips, under the whole HUD so the hotbar and bars stay readable; the middle is left clear to steer by. Cooling, the fire
+  dies down to the edge, which glows red and fades with you (`MeteorFlightClient#renderHud`, drawn first by `mixin/GuiMixin`). While ablaze and pressing on, **you smash through what's in your way**: a tube three blocks across about
   your body, torn open a little ahead of you as you go (`MeteorFlight#carve`), gone for good and dropping nothing, a few pieces
   flung aside. It follows the great spells' rules (`HeavenSpells#carvable`): nothing harder than obsidian, nothing with things
   kept in it (chests, furnaces), no barrier, nothing a formation shelters, no ground you couldn't dig (spawn protection, Adventure
@@ -1357,7 +1374,8 @@ on either path, **Meteor Flight** (Abilities tab, the wheel, X; **off by default
 Code: `MeteorFlight.java` (speeds, cost, the barrier, the heat, the smashing, syncing: packets `meteor_streak` C2S,
 `meteor_state` and `meteor_boom` S2C), `QiFlight.java` (normal speed for all, the cost, room on the server for a second of top
 speed a packet: `#moveAllowanceSq`), `ModGameRules#METEOR_FLIGHT_SMASHES`, `client/MeteorFlightClient.java` (steering, the land
-ahead, the pose, the glow, trails, flames and rings), `client/mixin/MeteorFlightMixin` (the flight, in place of `Player#travel`),
+ahead, the pose, the heat at the screen's edges, trails and rings), `client/SpellAuraLayer` (the heat on the body, and on one's
+arm in first person), `client/mixin/MeteorFlightMixin` (the flight, in place of `Player#travel`),
 `client/mixin/LivingEntityRendererMixin` and `HumanoidModelMixin` (laid out); tests in `MeteorFlightGameTests`.
 
 ## Soul Projection

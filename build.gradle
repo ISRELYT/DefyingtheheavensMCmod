@@ -14,6 +14,15 @@ repositories {
 		url = "https://api.modrinth.com/maven"
 		content { includeGroup "maven.modrinth" }
 	}
+	// GeckoLib (animated models: see dependencies), and the math library it brings, hosted beside it.
+	maven {
+		name = "GeckoLib"
+		url = "https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/"
+		content {
+			includeGroup "software.bernie.geckolib"
+			includeGroup "com.eliotlash.mclib"
+		}
+	}
 }
 
 loom {
@@ -47,6 +56,10 @@ dependencies {
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	// GeckoLib: animated entity, armour and item models (made as Blockbench projects). Packed inside our jar (jar-in-jar), so
+	// players don't install it; a newer one they have themselves (another mod's) is used instead.
+	modImplementation include("software.bernie.geckolib:geckolib-fabric-1.20.1:${project.geckolib_version}")
 
 	// Optional integrations: compiled against, never required at runtime (put the mod in run/mods to test with it).
 	modCompileOnly "maven.modrinth:jade:${project.jade_version}"

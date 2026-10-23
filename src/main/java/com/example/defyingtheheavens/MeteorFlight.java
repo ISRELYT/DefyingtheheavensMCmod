@@ -22,9 +22,11 @@ import java.util.UUID;
  * realm (QiFlight), for fine work. On, holding forward flies the cultivator where they look, laid out flat (the client steers,
  * MeteorFlightClient, and says here whether forward is held: {@link #setStreaking}), sprinting up to their realm's top speed
  * ({@link #topSpeed}: Core Formation 45 blocks a second up to True Immortal 200), slowed by the client where the land ahead hasn't
- * come yet. Past {@link #BARRIER_SHARE} of it the sound barrier breaks: a boom, and a ring of air for all to see.
+ * come yet. Past {@link #BARRIER_SHARE} of it (60 blocks a second at most) the sound barrier breaks: a boom, and a ring of air for all
+ * to see.
  * <p>
- * From Nascent Soul, held at top speed for {@link #HEAT_AFTER} ticks, the flier comes ablaze (only a sight: nothing burns). Ablaze,
+ * From Nascent Soul, held at top speed for {@link #HEAT_AFTER} ticks (or flat out as fast as the land ahead lets one go, no slower than
+ * {@link #HEAT_FLOOR}), the flier comes ablaze (only a sight: nothing burns). Ablaze,
  * they tear through what stands in their way ({@link #carve}), as the great spells' wounds do (HeavenSpells#carvable: nothing harder
  * than obsidian, nothing kept in it, nothing a barrier shelters, no ground they couldn't dig; gone for good, dropping nothing),
  * unless the gamerule meteorFlightSmashes is off. Slowing, they cool off: still glowing a while, then not.
@@ -41,10 +43,16 @@ public final class MeteorFlight {
 	public static final double CRUISE_SHARE = 0.4;
 	/** Qi Flight's sprint at vanilla's flying speed, blocks a tick (QiFlight#stepAt's across). */
 	public static final double NORMAL_SPRINT = 22.2 * SwordFlight.QI_FLIGHT_SPEED;
-	/** The sound barrier, as a share of the top speed. */
-	public static final double BARRIER_SHARE = 0.6;
-	/** At this share of the top speed or more the heat builds. */
-	public static final double FLAME_SHARE = 0.9;
+	/** The sound barrier, as a share of the top speed, and never past {@link #BARRIER_CAP} (blocks a tick: 60 a second). */
+	public static final double BARRIER_SHARE = 0.6, BARRIER_CAP = 3.0;
+	/**
+	 * At this share of the top speed or more the heat builds; or holding the boost down (sprinting: the client's word, {@link
+	 * #setStreaking}; "if you continue to hold it down", as the video has it) no slower than {@link #HEAT_FLOOR} (blocks a tick: 40 a
+	 * second), however the land ahead holds one back. A True Immortal's 90% is 180 blocks a second, faster than land never made before
+	 * comes: held back by it, it caught alight and went out again for good (the user's report, 2026-10-23); a line that followed the
+	 * land's own limit flickered with it and did no better (run 8).
+	 */
+	public static final double FLAME_SHARE = 0.9, HEAT_FLOOR = 2.0;
 	/** Ticks held at top speed before the heat rises; then it rises {@link #HEAT_RISE} a tick, and falls {@link #HEAT_FALL} a tick below it. */
 	public static final int HEAT_AFTER = 40;
 	public static final float HEAT_RISE = 0.05f, HEAT_FALL = 0.006f;
@@ -60,16 +68,19 @@ public final class MeteorFlight {
 	/** ...this many blocks at most a tick, out ahead of the body ({@link #ahead}) at least {@link #LEAST_AHEAD} and at most {@link #MOST_AHEAD}. */
 	private static final int MOST_A_TICK = 1200;
 	private static final double LEAST_AHEAD = 3, MOST_AHEAD = 48;
-	/** A tick's movement past this many top speeds is a teleport (a rift, a command, the clone), not flight. */
-	private static final double TELEPORT_STEPS = 4;
+	/**
+	 * A tick's movement past this many top speeds is a teleport (a rift, a command, the clone), not flight: many, since a server held up
+	 * a moment (land being made) takes all the moves it missed in its next tick.
+	 */
+	private static final double TELEPORT_STEPS = 12;
 	/** Those watching are told how hot a flier is this often (ticks) while it lasts, besides whenever it streaks, stops or catches. */
 	private static final int SYNC_EVERY = 10;
 	/** How many ticks' moves the speed is the mean of. */
 	private static final int WINDOW = 10;
 
 	private static final class State {
-		/** The client says forward is held in Meteor Flight. */
-		boolean wants;
+		/** The client says forward is held in Meteor Flight; and that the boost is held down with it (sprinting). */
+		boolean wants, flatOut;
 		/** It wants it where and as it may: this tick's word. */
 		boolean streaking;
 		Vec3 last;
@@ -154,9 +165,14 @@ public final class MeteorFlight {
 
 	// --- Underway ---
 
-	/** From the client (C2S meteor_streak): whether forward is held in Meteor Flight. */
-	public static void setStreaking(ServerPlayer p, boolean on) {
-		STATES.computeIfAbsent(p.getUUID(), id -> new State()).wants = on;
+	/**
+	 * From the client (C2S meteor_streak): whether forward is held in Meteor Flight, and whether the boost is held down with it
+	 * (sprinting: MeteorFlightClient#travel). Only a word for the heat, which still wants {@link #HEAT_FLOOR} as the server sees it.
+	 */
+	public static void setStreaking(ServerPlayer p, boolean on, boolean flatOut) {
+		State s = STATES.computeIfAbsent(p.getUUID(), id -> new State());
+		s.wants = on;
+		s.flatOut = on && flatOut;
 	}
 
 	/** Whether {@code p} is flying fast this tick (its flight costs {@link #streakCost}). */
@@ -232,17 +248,19 @@ public final class MeteorFlight {
 		long now = p.level().getGameTime();
 		if (s.streaking) s.streakedAt = now;
 		// The sound barrier: a boom as it breaks (not again for a while, nor until well below it once more).
-		if (speed >= top * BARRIER_SHARE) {
+		double barrier = Math.min(top * BARRIER_SHARE, BARRIER_CAP);
+		if (speed >= barrier) {
 			if (!s.pastBarrier && now - s.boomAt >= BOOM_COOLDOWN) {
 				s.boomAt = now;
 				boom(p, s, from, to);
 			}
 			s.pastBarrier = true;
-		} else if (speed < top * BARRIER_SHARE * BOOM_RESET) {
+		} else if (speed < barrier * BOOM_RESET) {
 			s.pastBarrier = false;
 		}
-		// The heat: from Nascent Soul, held at top speed.
-		if (speed >= top * FLAME_SHARE && canBurn(c)) {
+		// The heat: from Nascent Soul, held at top speed, or with the boost held down, however the land holds one back.
+		boolean flatOut = speed >= top * FLAME_SHARE || s.flatOut && speed >= HEAT_FLOOR;
+		if (flatOut && canBurn(c)) {
 			if (++s.fastTicks > HEAT_AFTER) s.heat = Math.min(1, s.heat + HEAT_RISE);
 		} else {
 			s.fastTicks = 0;
