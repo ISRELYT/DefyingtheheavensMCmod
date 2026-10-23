@@ -5,14 +5,20 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.TicketType;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.BaseFireBlock;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -24,34 +30,48 @@ import java.util.Map;
  * slash has passed, the land scorched under a sea of flames. Every block goes by HeavenSpells#carvable (nothing kept in it, nothing
  * harder than obsidian, nothing a barrier shelters, nothing its caster couldn't dig) and is gone for good, dropping nothing; a
  * few are flung off as debris. A big wound is taken a share at a time ({@link #BUDGET} blocks a tick for all of them together),
- * nearest its heart first, so no tick has to take it all.
+ * nearest its heart first, so no tick has to take it all. Its cells are kept packed ({@link BlockPos#asLong}), and its land kept
+ * loaded while it's cut ({@link #KEEP_LOADED}), so even a True Immortal's crater (CoreDetonation, 256 blocks across) is cut whole.
  */
 public final class Devastation {
 	/** Blocks taken away at most in one tick, every wound together. */
 	static final int BUDGET = 2500;
 	/** Pieces flung off a wound, at most (a slash's swath is many small wounds, a few each). */
 	private static final int DEBRIS = 36, SHEAR_DEBRIS = 4;
+	/**
+	 * A wound reaching further than {@link #KEEP_FROM} blocks from its heart keeps its land loaded till it's cut (its caster may be
+	 * gone: a burst core's is dead and may wake far off), out to {@link #KEEP_MOST} chunks round, the word renewed every
+	 * {@link #KEEP_EVERY} ticks and lapsing {@link #KEEP_TICKS} after the last (never saved with the world).
+	 */
+	private static final double KEEP_FROM = 40;
+	private static final int KEEP_MOST = 10, KEEP_EVERY = 20, KEEP_TICKS = 100;
+	private static final TicketType<ChunkPos> KEEP_LOADED = TicketType.create("defying_the_heavens_devastation", Comparator.comparingLong(ChunkPos::toLong), KEEP_TICKS);
 
 	/** What the floor of a wound becomes once it is cut: left as it is, burnt (magma, blackstone, fires), broken (rubble), or a lake in it. */
 	public enum Floor { NONE, SCORCHED, RUBBLE, LAKE }
 
-	/** A wound being cut: its cells, nearest its heart first, how far through, and what follows. */
+	/** A wound being cut: its cells (packed), nearest its heart first, how far through, what follows, and its land kept loaded. */
 	private static final class Job {
 		final ServerLevel level;
 		final ServerPlayer caster;
-		final List<BlockPos> cells;
+		final long[] cells;
 		final Vec3 heart;
 		final Runnable after;
 		final int debris;
-		int next, flung;
+		/** Its heart's chunk, and how many chunks round its land is kept loaded (0: not). */
+		final ChunkPos keepAt;
+		final int keep;
+		int next, flung, age;
 
-		Job(ServerLevel level, ServerPlayer caster, List<BlockPos> cells, Vec3 heart, Runnable after, int debris) {
+		Job(ServerLevel level, ServerPlayer caster, long[] cells, Vec3 heart, Runnable after, int debris, int keep) {
 			this.level = level;
 			this.caster = caster;
 			this.cells = cells;
 			this.heart = heart;
 			this.after = after;
 			this.debris = debris;
+			this.keepAt = new ChunkPos(BlockPos.containing(heart));
+			this.keep = keep;
 		}
 	}
 
@@ -83,7 +103,7 @@ public final class Devastation {
 	public static void crater(ServerPlayer p, ServerLevel level, Vec3 at, double radius, double depth, Floor floor) {
 		BlockPos centre = BlockPos.containing(at);
 		int r = (int) Math.ceil(radius), d = (int) Math.ceil(depth), up = (int) Math.ceil(radius * 0.6);
-		List<BlockPos> cells = new ArrayList<>();
+		LongArrayList cells = new LongArrayList();
 		Map<Long, Integer> lowest = new HashMap<>();
 		long seed = centre.asLong();
 		for (int dx = -r; dx <= r; dx++) {
@@ -91,16 +111,20 @@ public final class Devastation {
 				double flat = (dx * dx + dz * dz) / (radius * radius);
 				double rag = 1 + 0.18 * (noise(seed, dx, dz) - 0.5);
 				if (flat > rag) continue;
-				for (int dy = -d; dy <= up; dy++) {
+				int x = centre.getX() + dx, z = centre.getZ() + dz;
+				// Nothing above what stands highest there: only air (a great crater's dome of it, millions of cells, cost its budget).
+				int top = up;
+				if (level.hasChunk(x >> 4, z >> 4)) top = Math.min(up, level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1 - centre.getY());
+				for (int dy = -d; dy <= top; dy++) {
 					double v = dy < 0 ? (dy / depth) * (dy / depth) : (dy / (radius * 0.6)) * (dy / (radius * 0.6));
 					if (flat + v > rag) continue;
-					BlockPos cell = centre.offset(dx, dy, dz);
-					cells.add(cell);
-					lowest.merge(BlockPos.asLong(cell.getX(), 0, cell.getZ()), cell.getY(), Math::min);
+					int y = centre.getY() + dy;
+					cells.add(BlockPos.asLong(x, y, z));
+					lowest.merge(BlockPos.asLong(x, 0, z), y, Math::min);
 				}
 			}
 		}
-		queue(level, p, cells, at, () -> lay(p, level, lowest, floor, centre.getY()));
+		queue(level, p, cells.toLongArray(), at, () -> lay(p, level, lowest, floor, centre.getY()), DEBRIS);
 	}
 
 	/**
@@ -289,10 +313,35 @@ public final class Devastation {
 	}
 
 	private static void queue(ServerLevel level, ServerPlayer p, List<BlockPos> cells, Vec3 heart, Runnable after, int debris) {
-		BlockPos centre = BlockPos.containing(heart);
-		cells.sort(java.util.Comparator.comparingDouble(c -> c.distSqr(centre)));
-		JOBS.add(new Job(level, p, cells, heart, after, debris));
+		long[] packed = new long[cells.size()];
+		for (int i = 0; i < packed.length; i++) packed[i] = cells.get(i).asLong();
+		queue(level, p, packed, heart, after, debris);
 	}
+
+	/** {@code cells} (packed) sorted nearest {@code heart} first, and cut from the next tick. */
+	private static void queue(ServerLevel level, ServerPlayer p, long[] cells, Vec3 heart, Runnable after, int debris) {
+		if (cells.length == 0) {
+			if (after != null) after.run();
+			return;
+		}
+		BlockPos centre = BlockPos.containing(heart);
+		// Sorted by a key of the distance and the place in the list: a sort of plain numbers, not of millions of objects.
+		long[] keys = new long[cells.length];
+		for (int i = 0; i < cells.length; i++) {
+			long dx = BlockPos.getX(cells[i]) - centre.getX(), dy = BlockPos.getY(cells[i]) - centre.getY(), dz = BlockPos.getZ(cells[i]) - centre.getZ();
+			keys[i] = (dx * dx + dy * dy + dz * dz) << INDEX_BITS | i;
+		}
+		Arrays.sort(keys);
+		long[] sorted = new long[cells.length];
+		for (int i = 0; i < keys.length; i++) sorted[i] = cells[(int) (keys[i] & INDEX_MASK)];
+		double furthest = Math.sqrt(keys[keys.length - 1] >>> INDEX_BITS);
+		int keep = furthest > KEEP_FROM ? Math.min(KEEP_MOST, (int) Math.ceil(furthest / 16) + 1) : 0;
+		JOBS.add(new Job(level, p, sorted, heart, after, debris, keep));
+	}
+
+	/** A cell's place in its list, in the low bits of its sorting key (a wound of up to 268 million cells). */
+	private static final int INDEX_BITS = 28;
+	private static final long INDEX_MASK = (1L << INDEX_BITS) - 1;
 
 	/**
 	 * Every tick (HeavenSpells#tick): the wounds underway cut a share further, {@link #BUDGET} blocks in all, shared out evenly among
@@ -307,8 +356,11 @@ public final class Devastation {
 			int share = Math.max(1, budget / JOBS.size());
 			for (Iterator<Job> it = JOBS.iterator(); it.hasNext() && budget > 0; ) {
 				Job job = it.next();
+				if (job.keep > 0 && job.age++ % KEEP_EVERY == 0) {
+					job.level.getChunkSource().addRegionTicket(KEEP_LOADED, job.keepAt, job.keep, job.keepAt);
+				}
 				budget -= cut(job, Math.min(share, budget));
-				if (job.next >= job.cells.size()) {
+				if (job.next >= job.cells.length) {
 					it.remove();
 					done.add(job);
 				}
@@ -320,14 +372,14 @@ public final class Devastation {
 	/** {@code job} cut up to {@code most} cells further. @return how many it went through */
 	private static int cut(Job job, int most) {
 		int went = 0;
-		while (job.next < job.cells.size() && went < most) {
-			BlockPos pos = job.cells.get(job.next++);
+		while (job.next < job.cells.length && went < most) {
+			BlockPos pos = BlockPos.of(job.cells[job.next++]);
 			went++;
 			if (!job.level.isLoaded(pos)) continue;
 			BlockState state = job.level.getBlockState(pos);
 			if (state.isAir() || !HeavenSpells.carvable(job.level, pos, job.caster)) continue;
 			job.level.removeBlock(pos, false);
-			if (job.flung < job.debris && job.level.random.nextInt(Math.max(8, job.cells.size() / (job.debris * 2))) == 0) {
+			if (job.flung < job.debris && job.level.random.nextInt(Math.max(8, job.cells.length / (job.debris * 2))) == 0) {
 				job.flung++;
 				Vec3 from = Vec3.atBottomCenterOf(pos);
 				Vec3 out = from.subtract(job.heart).multiply(1, 0, 1);
@@ -349,7 +401,7 @@ public final class Devastation {
 	/** Blocks still to be cut, all wounds together (tests). */
 	public static int pending() {
 		int left = 0;
-		for (Job job : JOBS) left += job.cells.size() - job.next;
+		for (Job job : JOBS) left += job.cells.length - job.next;
 		return left;
 	}
 

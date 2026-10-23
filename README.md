@@ -1651,9 +1651,18 @@ Shattering, 340 at Sacred Vessel, 385 at Entering Nirvana, 545 at True Immortal,
 body of your own stage, falling off with distance to nothing at the edge; for every realm a victim stands below you the harm
 grows by the whole of it again, and for every realm above it is 0.3 times as much. It is an explosion, so armour and Blast
 Protection turn some of it: a cultivator of your own realm in good armour may live through it, anything weaker near the heart
-won't. The ground at its heart is blown away, a crater a third of the blast's reach across up to a Heavenly Being's (about
-96 blocks wide; no larger beyond it) (what a spell may carve, nothing dropped), carved outward from the heart over the next few
-moments like the great spells' craters, so it never stalls the world; the bigger the blast, the further off it is heard.
+won't. The ground at its heart is blown away (what a spell may carve, nothing dropped): a crater a third of the blast's reach
+round up to **Heavenly Being Grand Perfection** (48 blocks round, 96 across, 38 deep); beyond it it goes on growing (the user's
+ask, 2026-10-23: a True Immortal's had stopped at a Heavenly Being's), as the blast's reach to the power 2/3, shallower for its
+size the greater it is, as great craters are (`CoreDetonation#craterRadius`, `#craterDepth`):
+
+| Grand Perfection of | Heavenly Being | Four Axis | Dao Integration | Void Shattering | Sacred Vessel | Entering Nirvana | True Immortal |
+|---|---|---|---|---|---|---|---|
+| Crater across, deep (blocks) | 96, 38 | 114, 41 | 134, 45 | 170, 50 | 188, 53 | 204, 55 | **256, 62** |
+
+It is carved outward from the heart like the great spells' craters, a share a tick so it never stalls the world (a True
+Immortal's over some forty seconds, its land kept loaded till it's done even once you've woken elsewhere); the bigger the
+blast, the further off it is heard.
 **You die** (nothing saves you, a totem
 neither), and the core is lost: you return at **Foundation Building Grand Perfection**, your heaven methods understood no deeper
 than that. Leaving the game while it breaks doesn't escape it. A creative player's core bursts without the death. Code:

@@ -27,8 +27,8 @@ import java.util.UUID;
  * Building Grand Perfection, their heaven methods understood no deeper. Everything living within the blast's reach
  * ({@link #radius}) takes its harm ({@link #harm}): a full body's worth of the cultivator's own stage at the heart, less with
  * distance, more for every realm a victim stands below, far less for every realm above. A cultivator of the same realm in good
- * armour (Blast Protection best) may live through it. The ground at its heart is blown away, a share at a time (Devastation), so
- * even a True Immortal's crater never stalls the world. The deeper the core, the further the blast reaches, the deeper its crater
+ * armour (Blast Protection best) may live through it. The ground at its heart is blown away ({@link #craterRadius}), a share at a
+ * time (Devastation), so even a True Immortal's crater never stalls the world. The deeper the core, the further the blast reaches, the deeper its crater
  * and the further off it is heard.
  */
 public final class CoreDetonation {
@@ -49,10 +49,19 @@ public final class CoreDetonation {
 	/** Each realm a victim stands below the cultivator, the harm grows by the whole of it again; each realm above, it is this much. */
 	public static final double ABOVE_FACTOR = 0.3;
 	/**
-	 * The crater: this share of the blast's reach across, never more than {@link #CRATER_MAX} (a Heavenly Being's; a True Immortal's
-	 * at a third of its reach would take minutes to carve), and this share of that deep.
+	 * The crater, to Heavenly Being Grand Perfection: this share of the blast's reach round (48 blocks there, {@link #CRATER_PIVOT}),
+	 * and this share of that deep.
 	 */
-	private static final double CRATER_SHARE = 0.32, CRATER_MAX = 48, CRATER_DEPTH = 0.79;
+	private static final double CRATER_SHARE = 0.32, CRATER_PIVOT = 48, CRATER_DEPTH = 0.79;
+	/**
+	 * Past Heavenly Being Grand Perfection the crater goes on growing (the user's ask, 2026-10-23: a True Immortal Grand Perfection's
+	 * was no bigger than a Heavenly Being Grand Perfection's, which is where a Heavenly Being's should stand; the True Immortal's to
+	 * be much bigger): round as the blast's reach (against Heavenly Being Grand Perfection's) to the power {@link #CRATER_GROWTH}, so a
+	 * True Immortal Grand Perfection's is 128 blocks round, 256 across; deep as its roundness to the power {@link #DEPTH_GROWTH},
+	 * shallower for its size the greater it is, as great craters are (62 deep at True Immortal Grand Perfection), and so carved in
+	 * well under a minute (Devastation's budget).
+	 */
+	private static final double CRATER_GROWTH = 2.0 / 3.0, DEPTH_GROWTH = 0.5;
 
 	private static final Map<UUID, Long> ASKED = new HashMap<>();
 	private static final Map<UUID, Integer> CHARGING = new HashMap<>();
@@ -173,6 +182,20 @@ public final class CoreDetonation {
 		return RADIUS[r] * (1 + 0.1 * stage.ordinal());
 	}
 
+	/** How far round the crater of a cultivator of {@code realm} and {@code stage} is (blocks): {@link #CRATER_SHARE}, then {@link #CRATER_GROWTH}. */
+	public static double craterRadius(Realm realm, Stage stage) {
+		double blast = radius(realm, stage), pivot = radius(Realm.HEAVENLY_BEING, Stage.GRAND_PERFECTION);
+		if (blast <= pivot) return Math.min(blast * CRATER_SHARE, CRATER_PIVOT);
+		return CRATER_PIVOT * Math.pow(blast / pivot, CRATER_GROWTH);
+	}
+
+	/** How deep that crater is (blocks): {@link #CRATER_DEPTH} of its roundness, then {@link #DEPTH_GROWTH}. */
+	public static double craterDepth(Realm realm, Stage stage) {
+		double round = craterRadius(realm, stage);
+		if (round <= CRATER_PIVOT) return round * CRATER_DEPTH;
+		return CRATER_PIVOT * CRATER_DEPTH * Math.pow(round / CRATER_PIVOT, DEPTH_GROWTH);
+	}
+
 	/**
 	 * What the blast does to one {@code distance} from its heart, from a cultivator of {@code realm}-{@code stage} ({@code radius}
 	 * its reach), to a victim whose realm index is {@code victimRealm} (-1 for a mortal or a beast): before armour.
@@ -217,10 +240,9 @@ public final class CoreDetonation {
 			victim.push(away.x, 0.4 + away.y * 0.5, away.z);
 			victim.hurtMarked = true;
 		}
-		// The crater, a ragged bowl a third of the blast's reach (to a Heavenly Being's, no larger), carved by Devastation a share a
-		// tick, nearest the heart first, its pieces flung, since a high realm's would stall the world carved at once.
-		double crater = Math.min(radius * CRATER_SHARE, CRATER_MAX);
-		Devastation.crater(p, level, heart, crater, crater * CRATER_DEPTH, Devastation.Floor.NONE);
+		// The crater, a ragged bowl (craterRadius, craterDepth), carved by Devastation a share a tick, nearest the heart first, its
+		// pieces flung, since a high realm's would stall the world carved at once.
+		Devastation.crater(p, level, heart, craterRadius(realm, stage), craterDepth(realm, stage), Devastation.Floor.NONE);
 
 		// The core lost: they wake at Foundation Building Grand Perfection, the methods understood no deeper than that: on the heaven
 		// path, or on the ghost path if the core was its (its methods held there: GhostMethods#fallTo).
