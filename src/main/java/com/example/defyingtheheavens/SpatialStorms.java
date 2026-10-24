@@ -230,25 +230,40 @@ public final class SpatialStorms {
 	}
 
 	/**
-	 * A storm bolt hits as hard as one strike of the Heavenly Tribulation that brought the player to their realm and stage
-	 * (Qi Refining, which none did, takes the first: Foundation Building's), worn Rings of Transcendence halving it as they
-	 * do there. Ascension and descension are meant to be punishing: on top of the pressure, one unprotected hit is often
-	 * the end.
+	 * A storm bolt hits as hard as one strike of the Heavenly Tribulation that brought the player to their realm and stage, on the
+	 * higher of their paths (Qi Refining, which none did, takes the first: Foundation Building's), worn Rings of Transcendence halving
+	 * it as they do there. Ascension and descension are meant to be punishing: on top of the pressure, one unprotected hit is often
+	 * the end. The dead (a Ghost King: only it rises into the gap) are struck too, as the Netherworld's tribulation strikes them: the
+	 * same share of their hearts as the living's (GhostSystem#livingShare), the bolt turned by their armour (a ruled ghost's at least a
+	 * ghostly form's). The user's pick, 2026-10-24: the storms passed through the dead before, as the heavens' lightning does.
 	 */
 	private static void hurt(ServerLevel gap, ServerPlayer target) {
 		PlayerCultivation c = CultivationManager.get(target);
-		TribulationManager.Strikes strike = TribulationManager.strikes(c.getRealm(), c.getStage());
+		int rank = Math.max(0, TwoPaths.higherRank(c, false)), stages = Stage.values().length;
+		TribulationManager.Strikes strike = TribulationManager.strikes(Realm.byIndex(Math.min(Realm.values().length - 1, rank / stages)), Stage.byIndex(rank % stages));
 		if (strike.count() == 0) strike = TribulationManager.strikes(Realm.FOUNDATION_BUILDING, Stage.EARLY);
 		float multiplier = RingOfTranscendenceItem.damageMultiplier(target);
+		boolean dead = GhostSystem.isGhost(target);
+		float share = dead ? (float) GhostSystem.livingShare(target) : 1.0f;
 
 		// Both parts land in the same tick, magic first, like a tribulation's. The hurt cooldown is cleared around them so
 		// neither part, nor the next second's pressure, is swallowed by the one before it.
 		target.invulnerableTime = 0;
 		if (strike.magic() > 0) {
-			target.hurt(gap.damageSources().magic(), strike.magic() * multiplier);
+			target.hurt(dead ? ModDamageTypes.yinTribulation(gap) : gap.damageSources().magic(), strike.magic() * multiplier * share);
 			target.invulnerableTime = 0;
 		}
-		if (target.isAlive()) target.hurt(gap.damageSources().lightningBolt(), strike.bolt() * multiplier);
+		if (target.isAlive()) {
+			float bolt = strike.bolt() * multiplier;
+			if (dead) {
+				float armour = Incorporeal.isRuledGhost(target) ? Math.max(target.getArmorValue(), TribulationManager.GHOST_FORM_ARMOR) : target.getArmorValue();
+				bolt = net.minecraft.world.damagesource.CombatRules.getDamageAfterAbsorb(bolt, armour,
+						(float) target.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR_TOUGHNESS)) * share;
+				target.hurt(ModDamageTypes.yinTribulation(gap), bolt);
+			} else {
+				target.hurt(gap.damageSources().lightningBolt(), bolt);
+			}
+		}
 		target.invulnerableTime = 0;
 	}
 

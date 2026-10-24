@@ -535,6 +535,32 @@ public final class SectManager {
 		}
 	}
 
+	/** When each player's spells last spoiled a sect's grounds ({@link #spoiled}): answered no more than once a second. */
+	private static final Map<UUID, Long> SPOILED_AT = new java.util.HashMap<>();
+	private static final long SPOILED_EVERY = 20;
+
+	/**
+	 * {@code player}'s spell or Meteor Flight takes or changes the block at {@code pos} (HeavenSpells#carvable, Devastation#mayChange,
+	 * Mineral Purification): on a sect's grounds not their own, trespass as by hand ({@link #onTrespass}: theft, in the treasury), once a
+	 * second however many blocks one blow takes. The user's pick, 2026-10-24: before, a spell or a streak smashed a sect's grounds outside
+	 * its barrier (all of them, the barrier down) and nobody minded, where digging there by hand was answered.
+	 */
+	public static void spoiled(ServerLevel level, ServerPlayer player, BlockPos pos) {
+		if (player == null || player.isCreative() || player.isSpectator()) return;
+		long now = level.getGameTime();
+		Long last = SPOILED_AT.get(player.getUUID());
+		if (last != null && now >= last && now - last < SPOILED_EVERY) return;
+		Sect sect = sectAt(level, pos);
+		if (sect == null || sect.members.isEmpty()) return;
+		// One's own sect's grounds are no trespass (as by hand: CultivationEvents#ownSect), the body's sect for one in another's body.
+		UUID own = Possession.inhabits(player.getUUID()) ? Possession.sectOfBody(player.getUUID())
+				: sect.disciples.containsKey(player.getUUID()) ? sect.id : null;
+		if (sect.id.equals(own)) return;
+		if (SPOILED_AT.size() > 64) SPOILED_AT.values().removeIf(at -> now < at || now - at >= SPOILED_EVERY);
+		SPOILED_AT.put(player.getUUID(), now);
+		onTrespass(level, player, pos.immutable());
+	}
+
 	/** A player broke a block or opened something on a sect's grounds: theft from the treasury, or plain trespass. */
 	public static void onTrespass(ServerLevel level, ServerPlayer player, BlockPos pos) {
 		if (player.isCreative() || player.isSpectator()) return;

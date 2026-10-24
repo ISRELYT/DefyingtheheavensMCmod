@@ -28,6 +28,11 @@ public abstract class ExplosionMixin {
 	@Inject(method = "explode", at = @At("TAIL"))
 	private void dth$spareSealedTreasuries(CallbackInfo ci) {
 		if (level instanceof ServerLevel server) SectManager.spareSealedTreasuries(server, getToBlow());
+		// Nor a Ghost King's palace's treasury chests while their seal holds (PalaceTreasury#sealed: a bed set off beside them in the
+		// Netherworld spilled them before the sweep of 2026-10-23).
+		if (level instanceof ServerLevel server) {
+			getToBlow().removeIf(pos -> com.example.defyingtheheavens.PalaceTreasury.isTreasury(server, pos) && com.example.defyingtheheavens.PalaceTreasury.sealed(server, pos));
+		}
 		// Nor anything on the Ghost Gate's ground (GhostGate#protects).
 		GhostGate.spareFromBlast(level, getToBlow());
 		// A spell's own blocks are taken up, not blown into loot (HeavenSpells#spareTemporaryFromBlast).

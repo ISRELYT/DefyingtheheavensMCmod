@@ -48,6 +48,11 @@ public final class ModDamageTypes {
 	 */
 	public static final ResourceKey<DamageType> QI_WOOD = qiKey(QiElement.WOOD), QI_WATER = qiKey(QiElement.WATER), QI_FIRE = qiKey(QiElement.FIRE),
 			QI_EARTH = qiKey(QiElement.EARTH), QI_METAL = qiKey(QiElement.METAL);
+	/**
+	 * The spells of both paths (HeavenDemonSpells): heaven's light and a demon's qi as one. Tagged as the five elements' qi (through armour;
+	 * Protection and Resistance still turn some of it), no element's ward reading it; the dead it reaches as a living blow does.
+	 */
+	public static final ResourceKey<DamageType> HEAVEN_DEMON = ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("heaven_demon"));
 
 	private static ResourceKey<DamageType> qiKey(QiElement element) {
 		return ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("qi_" + element.name().toLowerCase(java.util.Locale.ROOT)));
@@ -79,6 +84,12 @@ public final class ModDamageTypes {
 			ResourceKey<DamageType> key = qiType(element);
 			context.register(key, new DamageType(DefyingTheHeavens.MOD_ID + "." + key.location().getPath(), DamageScaling.NEVER, 0.1f));
 		}
+		context.register(HEAVEN_DEMON, new DamageType(DefyingTheHeavens.MOD_ID + ".heaven_demon", DamageScaling.NEVER, 0.1f));
+	}
+
+	/** A spell of both paths' harm (HeavenDemonSpells), cast by {@code attacker} (null for none: a seal whose caster is gone). */
+	public static DamageSource heavenDemon(Level level, net.minecraft.world.entity.Entity attacker) {
+		return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(HEAVEN_DEMON), attacker);
 	}
 
 	/** {@code element}'s qi, cast by {@code attacker} (null for none: a zone left burning, say). */

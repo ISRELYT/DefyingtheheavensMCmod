@@ -108,7 +108,9 @@ public class GhostPathBeginGameTests implements FabricGameTest {
 		helper.assertTrue(npc.shouldFlee() && npc.getPursuer() == husk, "Badly hurt by the husk: it runs from it");
 		helper.runAfterDelay(330, () -> {
 			helper.assertTrue(npc.getLastHurtByMob() == null && !npc.isInCombat(), "The blow long forgotten (vanilla's five seconds), the fight gone quiet");
-			helper.assertTrue(npc.getPursuer() == husk && npc.shouldFlee(), "...it still runs from the one who struck it, close by");
+			helper.assertTrue(npc.getPursuer() == husk && npc.shouldFlee(), "...it still runs from the one who struck it, close by (running from "
+					+ npc.getPursuer() + "; the husk " + (husk.isRemoved() ? "removed: " + husk.getRemovalReason() : husk.isAlive()
+					? "alive " + String.format(java.util.Locale.ROOT, "%.1f", husk.distanceTo(npc)) + " off" : "dead") + ")");
 			husk.teleportTo(husk.getX() + CultivatorNpc.PURSUER_LOST + 16, husk.getY(), husk.getZ());
 			helper.runAfterDelay(5, () -> {
 				helper.assertTrue(npc.getPursuer() == null && !npc.shouldFlee(), "Left far behind: it stops");

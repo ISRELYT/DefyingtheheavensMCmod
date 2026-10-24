@@ -69,7 +69,7 @@ public class EarthGolem extends PathfinderMob {
 	}
 
 	/** Raises a golem (or a titan) for {@code caster} at {@code at}, for {@code life} ticks. */
-	public static EarthGolem raise(ServerPlayer caster, Vec3 at, boolean titan, int life) {
+	public static EarthGolem raise(LivingEntity caster, Vec3 at, boolean titan, int life) {
 		EarthGolem golem = new EarthGolem(ModEntities.EARTH_GOLEM, caster.level());
 		golem.owner = caster.getUUID();
 		golem.entityData.set(LIFE, life);
@@ -117,10 +117,10 @@ public class EarthGolem extends PathfinderMob {
 
 	public UUID ownerId() { return owner; }
 
-	/** Its caster, while in this world. */
-	public ServerPlayer caster() {
+	/** Its caster (a player, or a cultivator: CultivatorSpells), while in this world. */
+	public LivingEntity caster() {
 		if (owner == null || !(level() instanceof ServerLevel level)) return null;
-		return level.getServer().getPlayerList().getPlayer(owner);
+		return level.getEntity(owner) instanceof LivingEntity caster ? caster : null;
 	}
 
 	@Override
@@ -134,7 +134,7 @@ public class EarthGolem extends PathfinderMob {
 		super.tick();
 		if (!level().isClientSide) {
 			entityData.set(SWING, Math.min(100, entityData.get(SWING) + 1));
-			ServerPlayer caster = caster();
+			LivingEntity caster = caster();
 			if (caster == null || !caster.isAlive() || caster.level() != level() || tickCount > life()) {
 				crumble();
 				return;
@@ -155,7 +155,7 @@ public class EarthGolem extends PathfinderMob {
 	}
 
 	/** Its caster's foe: whoever struck them or they struck lately, else a monster after them or it. */
-	private void chooseFoe(ServerPlayer caster) {
+	private void chooseFoe(LivingEntity caster) {
 		LivingEntity current = getTarget();
 		if (current != null && current.isAlive() && !HeavenSpells.ally(caster, current) && current != caster && distanceToSqr(current) < 32 * 32) return;
 		LivingEntity foe = null;
@@ -205,7 +205,7 @@ public class EarthGolem extends PathfinderMob {
 		if (!(level() instanceof ServerLevel level) || !(target instanceof LivingEntity living)) return false;
 		entityData.set(SWING, 0);
 		float damage = (float) getAttributeValue(Attributes.ATTACK_DAMAGE);
-		ServerPlayer caster = caster();
+		LivingEntity caster = caster();
 		boolean hit = living.hurt(ModDamageTypes.qi(level, QiElement.EARTH, isTitan() ? Realm.FOUR_AXIS : Realm.NASCENT_SOUL, this, caster), damage);
 		if (hit) {
 			HeavenSpells.push(position(), living, isTitan() ? 2.5 : 1.2);
@@ -294,7 +294,7 @@ public class EarthGolem extends PathfinderMob {
 
 		@Override
 		public void tick() {
-			ServerPlayer caster = caster();
+			LivingEntity caster = caster();
 			if (caster == null) return;
 			Vec3 side = Vec3.directionFromRotation(0, caster.getYRot() + (getId() % 2 == 0 ? 120 : -120)).scale(KEEP_NEAR * size());
 			Vec3 at = caster.position().add(side).add(0, 0.5 + 0.3 * Math.sin(tickCount * 0.08), 0);

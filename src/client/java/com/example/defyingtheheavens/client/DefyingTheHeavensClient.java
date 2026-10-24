@@ -115,6 +115,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		ClothingArmorRenderer.register();
 		// Beasts' heads worn in place of a man's (the Ghost Gate's Ox-Head and Horse-Face; see BeastHead).
 		BeastHeadModels.register();
+		BeastModels.register(); // the wild demon beasts, what they throw, and the demon cores' looks
 		GhostKingCrown.register(); // a Ghost King's crown (GhostSystem#isKing)
 		ClientFormations.register();
 		com.example.defyingtheheavens.QiVeinBlock.clientEffects = QiSenseClientHandler::veinGathers;
@@ -130,6 +131,9 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		// leave on beings (on the body's model, and round it in the world); their passing moments.
 		EntityRendererRegistry.register(ModEntities.SPELL_PROJECTILE, SpellProjectileRenderer::new);
 		EntityRendererRegistry.register(ModEntities.SPELL_FIELD, SpellFieldRenderer::new);
+		EntityRendererRegistry.register(ModEntities.SPELL_CONSTRUCT, SpellConstructRenderer::new); // the great spells' GeckoLib shapes
+		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> SpellConstructRenderer.preloadSoon());
+		ClientTickEvents.END_CLIENT_TICK.register(SpellConstructRenderer::tick);
 		EntityRendererRegistry.register(ModEntities.SPELL_BLOCK, SpellBlockRenderer::new);
 		EntityRendererRegistry.register(ModEntities.EARTH_GOLEM, EarthGolemRenderer::new);
 		EntityRendererRegistry.register(ModEntities.DIRT_TIDE, DirtTideRenderer::new);

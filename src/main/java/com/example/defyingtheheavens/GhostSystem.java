@@ -357,8 +357,9 @@ public final class GhostSystem {
 
 	/**
 	 * ALLOW_DAMAGE for a ghost: only what can touch the dead does. Ghostly harm (the dead's blows, ghost fire, the Peach Wood
-	 * Sword), another ghost's hand, the living who can see it (SoulProjection#harmFactor), and what touches anything (/kill, the
-	 * Chief Judge). Lava, falls, arrows, blasts and ordinary mobs pass straight through.
+	 * Sword), another ghost's hand, the living who can see it (SoulProjection#harmFactor), the void's own beasts (a Void Vestige: the
+	 * user's pick, 2026-10-24) and what touches anything (/kill, the Chief Judge). Lava, falls, arrows, blasts and ordinary mobs pass
+	 * straight through.
 	 */
 	public static boolean allowDamage(ServerPlayer ghost, DamageSource source) {
 		if (DISPERSED.containsKey(ghost.getUUID())) return false; // nothing left to strike
@@ -366,12 +367,17 @@ public final class GhostSystem {
 		return reaches(source);
 	}
 
-	/** The rule itself: whether {@code source} is something that reaches the dead at all. */
+	/**
+	 * The rule itself: whether {@code source} is something that reaches the dead at all. The Spatial Gap's pressure does, as it does the
+	 * living's souls (it passed through the dead before the sweep of 2026-10-23: the gap's stormy layers were nothing to them).
+	 */
 	public static boolean reaches(DamageSource source) {
-		if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) || source.is(ModDamageTypes.GHOSTLY) || yinTribulation(source)) return true;
+		if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) || source.is(ModDamageTypes.GHOSTLY) || yinTribulation(source)
+				|| source.is(ModDamageTypes.SPATIAL_PRESSURE)) return true;
 		Entity attacker = source.getEntity();
-		// A heart demon is the soul's own, the dead's too (the Inner Realm): it reaches them, and they it (#attack).
-		if (isDead(attacker) || attacker instanceof HeartDemonEntity || peachWood(source)) return true;
+		// A heart demon is the soul's own, the dead's too (the Inner Realm): it reaches them, and they it (#attack). The void's
+		// beasts hunt whatever crosses space, the dead among them (the user's pick, 2026-10-24: their bites passed through).
+		if (isDead(attacker) || attacker instanceof HeartDemonEntity || attacker instanceof VoidVestige || peachWood(source)) return true;
 		return attacker != null && source.getDirectEntity() == attacker && SoulProjection.harmFactor(attacker) > 0;
 	}
 
@@ -419,10 +425,13 @@ public final class GhostSystem {
 
 	/** The rule itself: how much of {@code amount} from {@code source} lands on one of the dead. */
 	public static float scaled(DamageSource source, float amount) {
-		if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) || source.is(ModDamageTypes.GHOSTLY) || yinTribulation(source)) return amount;
+		if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) || source.is(ModDamageTypes.GHOSTLY) || yinTribulation(source)
+				|| source.is(ModDamageTypes.SPATIAL_PRESSURE)) return amount;
 		if (peachWood(source)) return amount * PeachWoodSwordItem.ON_THE_DEAD;
 		Entity attacker = source.getEntity();
-		if (attacker == null || isDead(attacker)) return amount;
+		// In full: the dead's own, a heart demon's (it reached the dead but landed as nothing before 2026-10-24, so no ghost turned
+		// inward could lose to its own), the void's beasts'.
+		if (attacker == null || isDead(attacker) || attacker instanceof HeartDemonEntity || attacker instanceof VoidVestige) return amount;
 		return amount * SoulProjection.harmFactor(attacker);
 	}
 
@@ -435,16 +444,24 @@ public final class GhostSystem {
 		// A Ghost King strikes as the living do; and any ghost its own heart demon (the Inner Realm).
 		if (isDead(target) || isKing(ghost) || target instanceof HeartDemonEntity) return true;
 		if (target instanceof ServerPlayer living && YinCorruption.affects(living)) {
+			// The swing's strength, its ticker begun again as vanilla's own attack (cancelled here) would: before the sweep of 2026-10-23
+			// every click, landed or not, at any strength, laid the yin on.
+			float strength = ghost.getAttackStrengthScale(0.5f);
+			ghost.resetAttackStrengthTicker();
+			boolean landed;
 			blow = true; // its own hand, no spell (Physiques#outgoing)
 			try {
-				living.hurt(ModDamageTypes.ghostly(ghost.level(), ghost), GHOSTLY_BLOW);
+				landed = living.hurt(ModDamageTypes.ghostly(ghost.level(), ghost), GHOSTLY_BLOW);
 			} finally {
 				blow = false;
 			}
+			if (!landed) return false;
 			Spells.onMeleeHit(ghost, living); // Ghost Fire on its hands sets them burning
-			NetherworldState s = CultivationManager.get(living).netherworld();
-			s.setYinCorruption(s.yinCorruption() + YinCorruption.GHOSTLY_BLOW);
-			NetherworldManager.refresh(living);
+			if (strength > 0.9f) { // the yin of a whole blow
+				NetherworldState s = CultivationManager.get(living).netherworld();
+				s.setYinCorruption(s.yinCorruption() + YinCorruption.GHOSTLY_BLOW);
+				NetherworldManager.refresh(living);
+			}
 		}
 		return false;
 	}
@@ -469,6 +486,8 @@ public final class GhostSystem {
 	public static void disperse(ServerPlayer p) {
 		p.setHealth(1.0f);
 		if (DISPERSED.containsKey(p.getUUID())) return;
+		// A Wheel turning for it stops (before the sweep of 2026-10-23 it went on: born again, then "reformed" at the Gate alive).
+		TURNING.remove(p.getUUID());
 		TribulationManager.onScattered(p); // the dead's tribulation is failed so, as the living's is by death
 		sparks(p, 80);
 		p.level().playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.ALLAY_DEATH, SoundSource.PLAYERS, 1.0f, 0.5f);
@@ -596,6 +615,7 @@ public final class GhostSystem {
 	 * server would go on moving and breaking for the ghost's removed body at the Gate while the client stood in the world).
 	 */
 	private static void reincarnate(ServerPlayer p) {
+		DISPERSED.remove(p.getUUID()); // no scattering left to reform from (revive: commands, tests)
 		leaveBelongings(p);
 		REVIVING.add(p.getUUID());
 		p.connection.player = p.server.getPlayerList().respawn(p, true);
@@ -611,6 +631,10 @@ public final class GhostSystem {
 	static void leaveBelongings(ServerPlayer p) {
 		if (p.level().getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_KEEPINVENTORY) || p.getAbilities().instabuild
 				|| p.isSpectator()) return;
+		// What is held on the cursor and lies in the crafting grid goes into the inventory first, to be left with the rest (it came back
+		// to life with them before the sweep of 2026-10-23): a container open is closed, and the inventory's own grid emptied.
+		if (p.containerMenu != p.inventoryMenu) p.closeContainer();
+		p.inventoryMenu.removed(p);
 		net.minecraft.world.entity.player.Inventory inventory = p.getInventory();
 		RingContainer rings = RingContainer.of(p);
 		boolean carried = !inventory.isEmpty() || !rings.isEmpty();

@@ -20,6 +20,10 @@ public final class ModGameRules {
 	public static final GameRules.Key<GameRules.BooleanValue> METEOR_FLIGHT_SMASHES =
 			GameRuleRegistry.register("meteorFlightSmashes", GameRules.Category.PLAYER, GameRuleFactory.createBooleanRule(true));
 
+	/** Wild demon beasts turn up round players (BeastSpawner). Off, none come of themselves (those already out stay). */
+	public static final GameRules.Key<GameRules.BooleanValue> DEMON_BEASTS_SPAWN =
+			GameRuleRegistry.register("demonBeastsSpawn", GameRules.Category.SPAWNING, GameRuleFactory.createBooleanRule(true));
+
 	/** Touching this class registers the rules. */
 	public static void register() {}
 

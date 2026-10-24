@@ -43,11 +43,35 @@ public abstract class ServerGamePacketListenerImplMixin {
 	/**
 	 * Vanilla snaps back anyone but the game's host who moves more than 10 blocks in one movement packet (the squared limit, 100); from
 	 * Void Shattering on one flies far faster than that (QiFlight#realmSpeed, AstralRealm#spaceSpeed). A flier may move as far as its
-	 * flight carries it, several ticks of it for packets that come in bunched (QiFlight#moveAllowanceSq).
+	 * flight carries it in the time since it was last where vanilla measures from (QiFlight#moveAllowanceSq): packets that come in
+	 * bunched (a stutter, a stalled server) waited that long.
 	 */
 	@ModifyExpressionValue(method = "handleMovePlayer", at = @At(value = "CONSTANT", args = "floatValue=100.0"))
 	private float dth$roomForTheSwift(float limit) {
-		return com.example.defyingtheheavens.QiFlight.moveAllowanceSq(player, limit);
+		double ticks = (System.nanoTime() - dth$firstGoodAt) / 5.0e7;
+		return com.example.defyingtheheavens.QiFlight.moveAllowanceSq(player, limit, ticks);
+	}
+
+	/** When the last movement packet was dealt with (real time), and when the player last moved to where vanilla measures from now. */
+	@org.spongepowered.asm.mixin.Unique private long dth$movedAt = System.nanoTime();
+	@org.spongepowered.asm.mixin.Unique private long dth$firstGoodAt = System.nanoTime();
+
+	@org.spongepowered.asm.mixin.injection.Inject(method = "handleMovePlayer", at = @At("RETURN"))
+	private void dth$moved(net.minecraft.network.protocol.game.ServerboundMovePlayerPacket packet, org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+		dth$movedAt = System.nanoTime();
+	}
+
+	/** Vanilla measures moves from here on (each tick, and after a teleport): from where the player last moved to, and when. */
+	@org.spongepowered.asm.mixin.injection.Inject(method = "resetPosition", at = @At("TAIL"))
+	private void dth$measuredFrom(org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+		dth$firstGoodAt = dth$movedAt;
+	}
+
+	/** The server moving the player itself (every teleport comes here): a jump, not a flight, for space's years (AstralRealm#teleported). */
+	@org.spongepowered.asm.mixin.injection.Inject(method = "teleport(DDDFFLjava/util/Set;)V", at = @At("HEAD"))
+	private void dth$teleported(double x, double y, double z, float yaw, float pitch, java.util.Set<net.minecraft.world.entity.RelativeMovement> relative,
+								 org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+		com.example.defyingtheheavens.AstralRealm.teleported(player);
 	}
 
 	/**

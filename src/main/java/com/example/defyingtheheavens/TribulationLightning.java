@@ -25,6 +25,12 @@ public class TribulationLightning extends LightningBolt {
      */
     private static final EntityDataAccessor<Boolean> DIM = SynchedEntityData.defineId(
             TribulationLightning.class, EntityDataSerializers.BOOLEAN);
+    /**
+     * A spell's bolt in a colour of its own (0xRRGGBB; 0: the tribulation's blue, or the ghost's cyan): Spring Thunder of the Azure
+     * Emperor's jade (WoodSpells).
+     */
+    private static final EntityDataAccessor<Integer> TINT = SynchedEntityData.defineId(
+            TribulationLightning.class, EntityDataSerializers.INT);
 
     public TribulationLightning(EntityType<? extends LightningBolt> type, Level level) {
         super(type, level);
@@ -37,7 +43,12 @@ public class TribulationLightning extends LightningBolt {
         entityData.define(SCALE, 1.0f);
         entityData.define(GHOST, false);
         entityData.define(DIM, false);
+        entityData.define(TINT, 0);
     }
+
+    public void setTint(int rgb) { entityData.set(TINT, rgb & 0xFFFFFF); }
+
+    public int tint() { return entityData.get(TINT); }
 
     public void setGhost(boolean ghost) { entityData.set(GHOST, ghost); }
 

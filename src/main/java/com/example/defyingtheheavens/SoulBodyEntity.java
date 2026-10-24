@@ -127,6 +127,13 @@ public class SoulBodyEntity extends LivingEntity {
 	}
 
 	@Override protected void dropAllDeathLoot(DamageSource source) { }
+	/**
+	 * It stays where its soul left it: no portal carries it off, no piston or current moves it (the soul's tether, its upkeep and its
+	 * way home reckon from where it sits; a body carried off left them reckoning from nowhere before the sweep of 2026-10-23).
+	 */
+	@Override public boolean canChangeDimensions() { return false; }
+	@Override public boolean isPushedByFluid() { return false; }
+	@Override public net.minecraft.world.level.material.PushReaction getPistonPushReaction() { return net.minecraft.world.level.material.PushReaction.IGNORE; }
 	@Override public boolean isPushable() { return false; }
 	@Override public boolean isPickable() { return !isRemoved(); }
 	@Override public boolean canBeCollidedWith() { return false; }

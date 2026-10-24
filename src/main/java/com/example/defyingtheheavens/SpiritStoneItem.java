@@ -213,7 +213,10 @@ public class SpiritStoneItem extends Item {
 			if (!fortune) player.displayClientMessage(Component.translatable(ModLang.MSG_STONE_ABSORBED, gained), true);
 		}
 		level.playSound(null, player.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1.0f, 1.3f);
-		if (fortune) FourAxis.add(player, FourAxis.Axis.FORTUNE, grade.value()); // says how the axis stands
+		if (fortune) {
+			FourAxis.add(player, FourAxis.Axis.FORTUNE, grade.value()); // says how the axis stands
+			Wishes.absorbedFortune(player, grade.value()); // owed the less (Wishes#give shares no more than the axis wants)
+		}
 		if (!player.getAbilities().instabuild) stack.shrink(1);
 		return stack;
 	}
@@ -246,7 +249,10 @@ public class SpiritStoneItem extends Item {
 		int drawn = stack.getOrCreateTag().getInt(DRAWN_TAG) + 1;
 		if (drawn >= secondsPerStone(stone.grade)) {
 			stack.removeTagKey(DRAWN_TAG);
-			if (fillsFortune(player, stack)) FourAxis.add(player, FourAxis.Axis.FORTUNE, stone.grade.value());
+			if (fillsFortune(player, stack)) {
+				FourAxis.add(player, FourAxis.Axis.FORTUNE, stone.grade.value());
+				Wishes.absorbedFortune(player, stone.grade.value());
+			}
 			if (!player.getAbilities().instabuild) stack.shrink(1);
 			player.level().playSound(null, player.blockPosition(), SoundEvents.AMETHYST_BLOCK_BREAK, SoundSource.PLAYERS, 0.6f, 1.4f);
 		} else {

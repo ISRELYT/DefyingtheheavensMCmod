@@ -1,0 +1,24 @@
+{
+  "replace": false,
+  "values": [
+    "#minecraft:is_savanna",
+    "#minecraft:is_badlands",
+    "minecraft:plains",
+    "minecraft:windswept_savanna",
+    "defying-the-heavens:thunder_peaks",
+    "defying-the-heavens:dense_qi_peaks",
+    {"id": "terralith:ancient_sands", "required": false},
+    {"id": "terralith:arid_highlands", "required": false},
+    {"id": "terralith:ashen_savanna", "required": false},
+    {"id": "terralith:brushland", "required": false},
+    {"id": "terralith:fractured_savanna", "required": false},
+    {"id": "terralith:hot_shrubland", "required": false},
+    {"id": "terralith:mountain_steppe", "required": false},
+    {"id": "terralith:painted_mountains", "required": false},
+    {"id": "terralith:savanna_badlands", "required": false},
+    {"id": "terralith:savanna_slopes", "required": false},
+    {"id": "terralith:shrubland", "required": false},
+    {"id": "terralith:steppe", "required": false},
+    {"id": "terralith:white_mesa", "required": false}
+  ]
+}

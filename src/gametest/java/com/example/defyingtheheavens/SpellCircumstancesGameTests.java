@@ -26,19 +26,26 @@ import java.util.function.Consumer;
  * cooldown begun) or is refused with nothing paid. Each in a batch of its own on a floor high over its spot (HeavenSpellTesting).
  */
 public class SpellCircumstancesGameTests implements FabricGameTest {
+	/** A master of every element's spells: Void Shattering's Grand Perfection, each element's method of that realm understood whole. */
 	private static ServerPlayer master(GameTestHelper helper, BlockPos at) {
 		ServerPlayer p = HeavenSpellTesting.caster(helper, HeavenMethod.FIRE_FOUR_AXIS, at);
-		HeavenState s = CultivationManager.get(p).heaven();
+		PlayerCultivation c = CultivationManager.get(p);
+		c.setState(Realm.VOID_SHATTERING, Stage.GRAND_PERFECTION, 0);
+		HeavenState s = c.heaven();
 		for (QiElement element : QiElement.five()) {
-			HeavenMethod method = HeavenMethod.of(element, Realm.FOUR_AXIS);
+			HeavenMethod method = HeavenMethod.of(element, Realm.VOID_SHATTERING);
 			s.setMethod(method, method.layers(), 0);
 		}
+		CultivationManager.refresh(p);
+		c.setQi(c.maxQi());
+		p.setHealth(p.getMaxHealth());
 		return p;
 	}
 
 	private static void sweep(ServerLevel level, Vec3 at, double radius) {
 		for (Entity e : level.getEntities((Entity) null, new AABB(at, at).inflate(radius),
-				e -> e instanceof SpellProjectile || e instanceof SpellField || e instanceof SpellBlock || e instanceof EarthGolem || e instanceof DirtTide)) {
+				e -> e instanceof SpellProjectile || e instanceof SpellField || e instanceof SpellBlock || e instanceof EarthGolem || e instanceof DirtTide
+						|| e instanceof SpellConstruct)) {
 			e.discard();
 		}
 	}
@@ -156,7 +163,8 @@ public class SpellCircumstancesGameTests implements FabricGameTest {
 
 	/** The ticks each spell is given to play out in the ticking tours. */
 	private static final int PLAY_OUT = 12;
-	private static final int TOUR_TICKS = 72 * PLAY_OUT + 200;
+	/** Room for every element spell's play (80 since Dao Integration's, 2026-10-24; up to 140, as the realms after it come). */
+	private static final int TOUR_TICKS = 140 * PLAY_OUT + 200;
 
 	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE, batch = "spells_underwater", timeoutTicks = TOUR_TICKS)
 	public void everySpellUnderWater(GameTestHelper helper) {
@@ -262,7 +270,7 @@ public class SpellCircumstancesGameTests implements FabricGameTest {
 			List<String> tookHold = new ArrayList<>();
 			// What earlier tests left flying about (a crater's flung pieces) isn't counted against these casts.
 			java.util.function.Predicate<Entity> spellMade = e -> e instanceof SpellProjectile || e instanceof SpellField || e instanceof SpellBlock
-					|| e instanceof EarthGolem || e instanceof DirtTide;
+					|| e instanceof EarthGolem || e instanceof DirtTide || e instanceof SpellConstruct;
 			java.util.Set<Entity> before = new java.util.HashSet<>(level.getEntities((Entity) null, new AABB(home, home).inflate(60), spellMade));
 			for (Spell spell : Spell.values()) {
 				if (!spell.isHeaven() || spell.qiCost() <= 0) continue;
@@ -284,7 +292,7 @@ public class SpellCircumstancesGameTests implements FabricGameTest {
 		}
 	}
 
-	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE, batch = "spells_cooldown", timeoutTicks = 200)
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE, batch = "spells_cooldown", timeoutTicks = 900)
 	public void aSpellCoolingDownIsRefusedUnpaid(GameTestHelper helper) {
 		HeavenSpellTesting.Floor floor = HeavenSpellTesting.floor(helper, 12, 12);
 		ServerLevel level = helper.getLevel();
@@ -314,9 +322,10 @@ public class SpellCircumstancesGameTests implements FabricGameTest {
 				sweep(level, home, 140);
 			}
 			helper.assertTrue(twice.isEmpty(), "A spell cast again while cooling down is refused, nothing paid (paid twice: " + twice + ")");
-			helper.succeed();
-		} finally {
+			HeavenSpellTesting.succeedOnceHealed(helper, p, spawned, floor);
+		} catch (RuntimeException e) {
 			HeavenSpellTesting.cleanUp(p, spawned, floor);
+			throw e;
 		}
 	}
 
@@ -336,6 +345,8 @@ public class SpellCircumstancesGameTests implements FabricGameTest {
 				for (int dx = -5; dx <= 5; dx++) {
 					for (int dz = -3; dz <= 10; dz++) level.setBlock(floor.centre().offset(dx, -1, dz), Blocks.STONE.defaultBlockState(), 2);
 				}
+				// An ore in the floor for Mineral Purification to draw out (finding none, it takes no hold).
+				if (spell == Spell.MINERAL_PURIFICATION) level.setBlock(floor.centre().offset(5, -1, -3), Blocks.IRON_ORE.defaultBlockState(), 2);
 				CultivationManager.get(p).setQi(1);
 			}, refused, spell -> {
 				if (CultivationManager.get(p).getQi() < 1 - 1.0e-6) paid.add(spell.getId());

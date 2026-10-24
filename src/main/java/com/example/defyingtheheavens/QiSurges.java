@@ -87,8 +87,6 @@ public final class QiSurges {
 	}
 
 	private static final Map<UUID, State> STATES = new HashMap<>();
-	/** When each player last met their heart demon (server tick), across meditations. */
-	private static final Map<UUID, Integer> LAST_DEMON = new HashMap<>();
 	private static final RandomSource RANDOM = RandomSource.create();
 
 	/** The game running for this player right now, or null. */
@@ -128,9 +126,10 @@ public final class QiSurges {
 			if (g.screen) weight = 1;
 			else if (InnerRealm.isInside(p)) {
 				if (g == Game.HEART_DEMON) {
-					boolean ready = CultivationManager.get(p).getRealm().ordinal() >= Realm.NASCENT_SOUL.ordinal()
-							&& (!LAST_DEMON.containsKey(p.getUUID())
-									|| p.server.getTickCount() - LAST_DEMON.get(p.getUUID()) >= DEMON_COOLDOWN);
+					// From Nascent Soul on any path (the heaven path's alone before the sweep of 2026-10-23), once in DEMON_COOLDOWN.
+					long last = CultivationManager.own(p).heartDemonAt();
+					boolean ready = TwoPaths.higherRank(CultivationManager.get(p), false) >= PlayerCultivation.rank(Realm.NASCENT_SOUL, Stage.EARLY)
+							&& (last <= 0 || p.serverLevel().getGameTime() - last >= DEMON_COOLDOWN);
 					weight = ready ? 2 : 0;
 				} else weight = 3;
 			}
@@ -172,7 +171,8 @@ public final class QiSurges {
 				p.displayClientMessage(Component.translatable(ModLang.MSG_SEQUENCE), true);
 			}
 			case HEART_DEMON -> {
-				LAST_DEMON.put(p.getUUID(), p.server.getTickCount());
+				CultivationManager.own(p).setHeartDemonAt(level.getGameTime());
+				CultivationManager.markDirty(p.server);
 				HeartDemonEntity demon = HeartDemonEntity.summon(p);
 				s.demon = demon == null ? null : demon.getUUID();
 				if (demon == null) finish(p, s, ticks);
@@ -206,7 +206,6 @@ public final class QiSurges {
 
 	public static void forget(UUID id) {
 		STATES.remove(id);
-		LAST_DEMON.remove(id);
 	}
 
 	/**
@@ -361,7 +360,9 @@ public final class QiSurges {
 		if (source.is(net.minecraft.tags.DamageTypeTags.IS_FALL)) return false;
 		if (amount < p.getHealth()) return true;
 		PlayerCultivation c = CultivationManager.get(p);
-		c.setQi(c.getQi() - c.maxQi() * DEMON_QI_LOSS);
+		// Drained of the pool its meditation draws on: the ghost qi, for the ghost path (one of the dead's always).
+		TwoPaths.Path path = TwoPaths.cultivatesGhost(c) ? TwoPaths.Path.GHOST : TwoPaths.Path.HEAVEN;
+		TwoPaths.spend(c, path, Math.min(TwoPaths.pool(c, path), TwoPaths.poolMax(c, path) * DEMON_QI_LOSS));
 		p.setHealth(Math.max(1.0f, p.getMaxHealth() * 0.2f));
 		p.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 120, 0));
 		p.displayClientMessage(Component.translatable(ModLang.MSG_DEMON_LOSE), true);

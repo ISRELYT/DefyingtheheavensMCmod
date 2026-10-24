@@ -40,8 +40,43 @@ import java.util.function.Predicate;
  * your eyes (SpellBlock), its passing moments (SpellFx) and the auras it leaves on beings (SpellAuras).
  */
 public final class HeavenSpells {
+	// --- The caster ---
+	// Whoever casts: a player, or (2026-10-24, the user's ask) a cultivator NPC (CultivatorSpells, Spells#castBy). Every spell takes its
+	// caster as a living being; what only a player has (its messages, its inventory, creative play, the server's PvP rule) is asked
+	// of a player only, and a cultivator's spells leave the land as it was (carvesLand).
+
+	/** The level {@code caster} casts in (always a server's: spells are cast on the server). */
+	public static ServerLevel level(LivingEntity caster) {
+		return (ServerLevel) caster.level();
+	}
+
+	/** {@code caster}'s cultivation: a player's as they have it now (CultivationManager#get: a possessed body's), a cultivator's own; else null. */
+	public static PlayerCultivation cultivation(LivingEntity caster) {
+		if (caster instanceof ServerPlayer player) return CultivationManager.get(player);
+		return caster instanceof CultivatorNpc npc ? npc.cultivation() : null;
+	}
+
+	/** Tells {@code caster} {@code message} over the hotbar; a cultivator casts in silence. */
+	public static void tell(LivingEntity caster, net.minecraft.network.chat.Component message) {
+		if (caster instanceof ServerPlayer player) player.displayClientMessage(message, true);
+	}
+
+	/** A player in creative play (spells cost nothing; the Ghost Gate's ground is theirs to change). */
+	public static boolean creative(LivingEntity caster) {
+		return caster instanceof Player player && player.getAbilities().instabuild;
+	}
+
+	/**
+	 * Whether {@code caster}'s spells change the land for good (craters, cuts, fissures, lakes, fires left burning): a player's do; a
+	 * cultivator's never (the user's rule, 2026-10-24: they fight wherever they are, unwatched, and would wreck sects, villages and
+	 * homes). Blocks a spell sets down for a while (walls, trees, ice: {@link #placeTemporary}) are set down for either.
+	 */
+	public static boolean carvesLand(LivingEntity caster) {
+		return caster == null || caster instanceof ServerPlayer;
+	}
+
 	/** Whether {@code spell} can take hold for {@code p} now (its element's say); refused, nothing is paid. */
-	public static boolean canCast(ServerPlayer p, Spell spell) {
+	public static boolean canCast(LivingEntity p, Spell spell) {
 		return switch (spell.element()) {
 			case WOOD -> WoodSpells.canCast(p, spell);
 			case WATER -> WaterSpells.canCast(p, spell);
@@ -52,13 +87,13 @@ public final class HeavenSpells {
 	}
 
 	/** Nothing for a spell to take hold of (no being, no ground looked at): said, and false, so nothing is paid. */
-	public static boolean refuse(ServerPlayer p) {
-		p.displayClientMessage(net.minecraft.network.chat.Component.translatable(ModLang.MSG_SPELL_NO_HOLD), true);
+	public static boolean refuse(LivingEntity p) {
+		tell(p, net.minecraft.network.chat.Component.translatable(ModLang.MSG_SPELL_NO_HOLD));
 		return false;
 	}
 
 	/** Casts {@code spell} (Spells#cast has paid for it). */
-	public static void cast(ServerPlayer p, Spell spell) {
+	public static void cast(LivingEntity p, Spell spell) {
 		if (!spell.isHeaven()) return;
 		switch (spell.element()) {
 			case WOOD -> WoodSpells.cast(p, spell);
@@ -171,14 +206,14 @@ public final class HeavenSpells {
 	 * ends ({@link #end}, which an effect may move). Its {@link #tick} returns false past the end, or when {@link #run} does.
 	 */
 	public abstract static class Timed implements Lingering {
-		protected final ServerPlayer caster;
+		protected final LivingEntity caster;
 		protected final ServerLevel level;
 		protected final long start;
 		protected long end;
 
-		protected Timed(ServerPlayer caster, int ticks) {
+		protected Timed(LivingEntity caster, int ticks) {
 			this.caster = caster;
-			this.level = caster.serverLevel();
+			this.level = HeavenSpells.level(caster);
 			this.start = level.getGameTime();
 			this.end = start + ticks;
 		}
@@ -205,9 +240,11 @@ public final class HeavenSpells {
 	}
 
 	/** One the caster's blessings reach: itself, or any being not its enemy and not a monster (villagers, beasts, peaceful folk, allies). */
-	public static boolean friendly(ServerPlayer p, LivingEntity e) {
+	public static boolean friendly(LivingEntity p, LivingEntity e) {
 		if (e == p) return true;
 		if (!e.isAlive() || e instanceof Player other && other.isSpectator()) return false;
+		// A cultivator's blessings are for its own (its sect, its pupils), not its partner in a spar.
+		if (!(p instanceof ServerPlayer)) return p instanceof CultivatorNpc npc && npc.isAlly(e) && !SparSystem.areSparring(npc, e);
 		return !(e instanceof Enemy) && !enemy(p, e);
 	}
 
@@ -283,7 +320,7 @@ public final class HeavenSpells {
 
 	/** A lingering effect that hears of a player casting any spell (a mist that hides it, broken by the cast). */
 	public interface CastListener {
-		void onCast(ServerPlayer caster, Spell spell);
+		void onCast(LivingEntity caster, Spell spell);
 	}
 
 	/** The element spells cast on oneself (wards, a body's arts, a field round one): their seal is under the caster only. */
@@ -291,22 +328,23 @@ public final class HeavenSpells {
 			Spell.VERDANT_GROWTH, Spell.HARDENED_BODY, Spell.DIRT_TIDE, Spell.AZURE_COATING_TECHNIQUE, Spell.AZURE_BREATHING_TECHNIQUE, Spell.BLADE_POLISH,
 			Spell.FLAME_ARMOUR, Spell.MINERAL_PURIFICATION, Spell.SOLAR_FIELD, Spell.ANCIENT_BARK_SKIN, Spell.MOUNTAIN_STANCE, Spell.MIST_VEIL,
 			Spell.GOLDEN_BELL_SHIELD, Spell.LOTUS_OF_REBIRTH, Spell.EARTHQUAKE, Spell.VAJRA_BODY, Spell.SEA_OF_FLAMES, Spell.SPRING_OF_MYRIAD_LIFE,
-			Spell.FROZEN_FIELD, Spell.SWORD_DOMAIN, Spell.PHOENIX_NIRVANA, Spell.WORLD_TREE, Spell.ABSOLUTE_ZERO, Spell.BOUNDLESS_SEA, Spell.FOUR_SWORDS_ARRAY);
+			Spell.FROZEN_FIELD, Spell.SWORD_DOMAIN, Spell.PHOENIX_NIRVANA, Spell.WORLD_TREE, Spell.ABSOLUTE_ZERO, Spell.BOUNDLESS_SEA, Spell.FOUR_SWORDS_ARRAY,
+			Spell.MYRIAD_WOODS_RETURN, Spell.BLACK_TORTOISE_BASTION);
 
 	/**
 	 * An element spell's casting seal (SpellFx CAST_SEAL), seen by all near: its element's seal turning under the caster, the larger
 	 * and grander the deeper its realm, and for one cast at something a smaller one upright before them, facing the way.
 	 */
-	public static void castSeal(ServerPlayer caster, Spell spell) {
+	public static void castSeal(LivingEntity caster, Spell spell) {
 		if (!spell.isHeaven()) return;
 		int realm = spell.heavenRealm().ordinal();
 		float radius = 1.4f + 0.75f * realm;
 		Vec3 way = ON_ONESELF.contains(spell) ? Vec3.ZERO : caster.getLookAngle();
-		SpellFx.send(caster.serverLevel(), SpellFx.Kind.CAST_SEAL, caster.position(), way, radius, spell.element().ordinal() + 16 * realm);
+		SpellFx.send(level(caster), SpellFx.Kind.CAST_SEAL, caster.position(), way, radius, spell.element().ordinal() + 16 * realm);
 	}
 
 	/** {@code caster} is casting {@code spell} (paid for, about to take hold). */
-	public static void onCast(ServerPlayer caster, Spell spell) {
+	public static void onCast(LivingEntity caster, Spell spell) {
 		if (LINGERING.isEmpty()) return;
 		for (Lingering l : new ArrayList<>(LINGERING)) {
 			if (l instanceof CastListener listener) {
@@ -327,6 +365,9 @@ public final class HeavenSpells {
 	 * ward brings to nothing is refused outright ({@link #wardedOff}, ALLOW_DAMAGE).
 	 */
 	public static float incoming(LivingEntity target, net.minecraft.world.damagesource.DamageSource source, float amount) {
+		// A tribulation's strike is the heavens' own: no ward, bell or earth turns any of it (the user's pick, 2026-10-24: the wards and
+		// a Golden Bell took the sting out of tribulations).
+		if (TribulationManager.isStriking(target)) return amount;
 		// First the auras: a ward of the element that overcomes the blow's, a Golden Bell, a polished blade (SpellAuras).
 		amount = SpellAuras.incoming(target, source, amount);
 		if (amount <= 0) {
@@ -403,7 +444,8 @@ public final class HeavenSpells {
 
 	/** Whether {@code entity}'s death goes ahead: false if a lingering effect holds it off. */
 	public static boolean allowDeath(LivingEntity entity, net.minecraft.world.damagesource.DamageSource source) {
-		if (LINGERING.isEmpty()) return true;
+		// Nor does a rebirth (Phoenix Nirvana) undo a tribulation's killing strike (the user's pick, 2026-10-24): the tribulation is failed.
+		if (LINGERING.isEmpty() || TribulationManager.isStriking(entity)) return true;
 		for (Lingering l : new ArrayList<>(LINGERING)) {
 			if (l instanceof DeathListener listener) {
 				try {
@@ -515,9 +557,10 @@ public final class HeavenSpells {
 	 * Whether a spell may take the block at {@code pos} away for good (a boulder torn from the ground, a cave carved, a slash cut
 	 * through a hillside): something there, not a spell's own block, nothing kept in it (a chest, a furnace), no harder than
 	 * obsidian's toughness and not unbreakable, not a barrier, and not under a formation's shelter or ground {@code p} may not dig
-	 * (Adventure mode, spawn protection, a sect's ground).
+	 * (Adventure mode, spawn protection, a sect's ground). On a sect's grounds not {@code p}'s own, taking it is trespass, as a hand's
+	 * would be (SectManager#spoiled).
 	 */
-	public static boolean carvable(ServerLevel level, BlockPos pos, ServerPlayer p) {
+	public static boolean carvable(ServerLevel level, BlockPos pos, LivingEntity p) {
 		return carvable(level, pos, p, false);
 	}
 
@@ -527,8 +570,8 @@ public final class HeavenSpells {
 	 * Spirit Pedestal, any mod's block with a block entity), its contents thrown out as it goes (Devastation#obliterate). Still
 	 * never what is unbreakable or harder than obsidian, a barrier, a spell's own block, or ground sheltered or not the caster's.
 	 */
-	public static boolean carvable(ServerLevel level, BlockPos pos, ServerPlayer p, boolean utter) {
-		if (!level.isInWorldBounds(pos)) return false;
+	public static boolean carvable(ServerLevel level, BlockPos pos, LivingEntity p, boolean utter) {
+		if (!carvesLand(p) || !level.isInWorldBounds(pos)) return false; // a cultivator's spells take nothing from the land
 		BlockState state = level.getBlockState(pos);
 		if (state.isAir()) return false;
 		boolean fluid = !state.getFluidState().isEmpty() && state.canBeReplaced();
@@ -536,9 +579,23 @@ public final class HeavenSpells {
 		// A fluid's own block is as hard as can be (water and lava 100), though nothing breaks it by hand: it is let go by that.
 		float hardness = fluid ? 0 : state.getDestroySpeed(level, pos);
 		if (hardness < 0 || hardness >= 50 || state.hasBlockEntity() && !utter || state.getBlock() instanceof SectBarrierBlock) return false;
-		if (isTemporary(level, pos) || Formations.shelters(level, pos)) return false;
+		if (isTemporary(level, pos) || Formations.shelters(level, pos) || guarded(level, pos, p)) return false;
+		if (!(p instanceof ServerPlayer player)) return true;
 		// Nor what the caster couldn't dig by hand: in Adventure mode, or under the server's spawn protection.
-		return p == null || p.mayBuild() && level.mayInteract(p, pos) && !Formations.protectsGround(p, pos);
+		if (!player.mayBuild() || !level.mayInteract(player, pos) || Formations.protectsGroundQuietly(player, pos)) return false;
+		SectManager.spoiled(level, player, pos);
+		return true;
+	}
+
+	/**
+	 * Kept safe from whatever the mod takes away (the great spells, Meteor Flight's way, a burst core's crater, as from a hand or a
+	 * blast): the Ghost Gate's ground (for all but the creative: GhostGate#protects), and a treasury while its seal holds, a sect's or a
+	 * Ghost King's palace's (SectManager#sealedTreasuryAt, PalaceTreasury#sealed). Before the sweep of 2026-10-23 only hands and blasts
+	 * were kept off them: a crater spell carved the Gate away for good, a burst core spilled a sealed treasury.
+	 */
+	public static boolean guarded(ServerLevel level, BlockPos pos, LivingEntity p) {
+		if (GhostGate.protects(level, pos) && !(p instanceof Player player && player.isCreative())) return true;
+		return SectManager.sealedTreasuryAt(level, pos) != null || PalaceTreasury.isTreasury(level, pos) && PalaceTreasury.sealed(level, pos);
 	}
 
 	/** What a block of {@code state} looks like as moved earth: grassy and snowy tops come as their soil. */
@@ -554,20 +611,60 @@ public final class HeavenSpells {
 
 	/**
 	 * Spared by a caster's spells: the caster, the dead and fallen, spectators, its own tamed creatures, and any player it may not
-	 * harm (PvP off, or a team that won't hurt its own), and the members of its own sect (SectMembership): no hold, push, drowning
-	 * or burning reaches them either, not only the harm.
+	 * harm (PvP off, or a team that won't hurt its own), and the members of its own sect (SectMembership), and any being behind a
+	 * barrier it couldn't break ({@link #walled}): no hold, push, drowning or burning reaches them either, not only the harm.
 	 */
-	public static boolean spared(ServerPlayer p, LivingEntity e) {
-		return e == p || !e.isAlive() || e instanceof Player player && (player.isSpectator() || !p.canHarmPlayer(player))
-				|| e instanceof OwnableEntity pet && p.getUUID().equals(pet.getOwnerUUID())
-				|| e instanceof CultivatorNpc npc && SectMembership.areFellows(npc, p);
+	public static boolean spared(LivingEntity p, LivingEntity e) {
+		if (e == p || !e.isAlive() || e instanceof Player player && player.isSpectator()) return true;
+		// A cultivator's spells reach only whom it fights ({@link #fightsWith}): its sect, its pupils, the village folk, passers-by, spared.
+		if (!(p instanceof ServerPlayer sp)) return !fightsWith(p, e) || walled(p, e);
+		return e instanceof Player player && !sp.canHarmPlayer(player) || e instanceof OwnableEntity pet && p.getUUID().equals(pet.getOwnerUUID())
+				|| e instanceof CultivatorNpc npc && SectMembership.areFellows(npc, sp) || bodySpared(sp, e) || walled(p, e);
+	}
+
+	/**
+	 * Whom a caster that isn't a player (a cultivator: CultivatorSpells) turns its spells on: the one it fights, whoever struck it a
+	 * moment ago, a monster, anything set on it, and anyone it holds for an enemy (CultivatorNpc#isEnemy: the other path's, a threat's
+	 * taker...); never one of its own (CultivatorNpc#isAlly: but its partner in a spar), nor anyone else standing by.
+	 */
+	public static boolean fightsWith(LivingEntity caster, LivingEntity e) {
+		if (e == caster || !e.isAlive() || e instanceof Player player && (player.isSpectator() || player.isCreative())) return false;
+		if (caster instanceof Mob mob && mob.getTarget() == e) return true;
+		if (caster instanceof CultivatorNpc npc && npc.isAlly(e)) return false;
+		if (caster.getLastHurtByMob() == e && caster.tickCount - caster.getLastHurtByMobTimestamp() < QUARREL_TICKS) return true;
+		if (e instanceof Mob mob && mob.getTarget() == caster) return true;
+		if (caster instanceof CultivatorNpc npc && npc.isEnemy(e)) return true;
+		return e instanceof Enemy && !(e instanceof CultivatorNpc);
+	}
+
+	/**
+	 * On the far side of a raised barrier from the caster, one the caster couldn't break or be let through (Formations#walls): its
+	 * spells stop at the barrier as its blows and its projectiles do. Before 2026-10-24 a zone, a quake or a sweep cast beside a
+	 * sect's barrier reached everyone inside it.
+	 */
+	public static boolean walled(LivingEntity p, LivingEntity e) {
+		return e != p && e.level() == p.level() && Formations.walls(level(p), p.blockPosition(), e.blockPosition(), p);
+	}
+
+	/**
+	 * A player's body left sitting or standing (a projected soul's, a clone's or the main body's, an Inner Realm meditator's) is spared
+	 * as its owner would be: the caster's own always, another's where the caster may not harm them (PvP off, a team). Before the sweep
+	 * of 2026-10-23 a spell's fire or water could kill a sitting soul's body with PvP off, or the caster's own main body.
+	 */
+	static boolean bodySpared(ServerPlayer p, LivingEntity e) {
+		UUID owner = e instanceof SoulBodyEntity body ? body.getOwnerId() : e instanceof CloneBodyEntity clone ? clone.getOwnerId()
+				: e instanceof InnerBodyEntity inner ? inner.getOwnerId() : null;
+		if (owner == null) return false;
+		if (owner.equals(p.getUUID())) return true;
+		ServerPlayer player = p.server.getPlayerList().getPlayer(owner);
+		return player != null ? !p.canHarmPlayer(player) : !p.server.isPvpAllowed();
 	}
 
 	/**
 	 * The first being along the look within {@code range} that a blessing may reach (Life Force Gain): any but the caster, the dead and
 	 * spectators, a player too where the server keeps players from harming each other (which {@link #aimed} spares).
 	 */
-	public static LivingEntity aimedAny(ServerPlayer p, double range) {
+	public static LivingEntity aimedAny(LivingEntity p, double range) {
 		Vec3 from = p.getEyePosition();
 		Vec3 to = beamEnd(p, range);
 		EntityHitResult hit = ProjectileUtil.getEntityHitResult(p.level(), p, from, to, new AABB(from, to).inflate(1.0),
@@ -580,25 +677,25 @@ public final class HeavenSpells {
 	 * Forest): any foe or enemy (what {@link #friendly} isn't), and any person, a player or a cultivator, that the caster's spells
 	 * don't spare (PvP off, a sect fellow: {@link #spared}). Beasts and village folk minding their own business are left be.
 	 */
-	public static boolean mark(ServerPlayer p, LivingEntity e) {
+	public static boolean mark(LivingEntity p, LivingEntity e) {
 		if (spared(p, e)) return false;
-		return e instanceof Player || e instanceof CultivatorNpc || !friendly(p, e);
+		return !(p instanceof ServerPlayer) || e instanceof Player || e instanceof CultivatorNpc || !friendly(p, e);
 	}
 
-	/** A foe of the caster's: a monster, or anything set on it (a mob or a cultivator with it as its target). */
-	public static boolean foe(ServerPlayer p, LivingEntity e) {
+	/** A foe of the caster's: a monster, or anything set on it (a mob or a cultivator with it as its target); a cultivator's, whom it fights. */
+	public static boolean foe(LivingEntity p, LivingEntity e) {
 		if (spared(p, e)) return false;
-		return e instanceof Enemy || e instanceof Mob mob && mob.getTarget() == p;
+		return !(p instanceof ServerPlayer) || e instanceof Enemy || e instanceof Mob mob && mob.getTarget() == p;
 	}
 
 	/**
 	 * An enemy of the caster's: a foe ({@link #foe}), or a player at odds with it, one that struck it or that it struck in the
 	 * last {@link #QUARREL_TICKS} (so a duel's spells find their mark, and a passing player is never taken for a foe).
 	 */
-	public static boolean enemy(ServerPlayer p, LivingEntity e) {
+	public static boolean enemy(LivingEntity p, LivingEntity e) {
 		if (spared(p, e)) return false;
 		if (foe(p, e)) return true;
-		if (!(e instanceof Player other)) return false;
+		if (!(p instanceof ServerPlayer) || !(e instanceof Player other)) return false;
 		return p.getLastHurtByMob() == other && p.tickCount - p.getLastHurtByMobTimestamp() < QUARREL_TICKS
 				|| other.getLastHurtByMob() == p && other.tickCount - other.getLastHurtByMobTimestamp() < QUARREL_TICKS;
 	}
@@ -616,10 +713,13 @@ public final class HeavenSpells {
 				|| e.getMaxHealth() >= 300;
 	}
 
-	/** Whether {@code source} is one of the heaven spells' qi harms (never reflected or caught again by another spell). */
+	/**
+	 * Whether {@code source} is one of the heaven spells' qi harms, or the spells of both paths' heaven-and-demon qi (never reflected or
+	 * caught again by another spell, never taken for a blow).
+	 */
 	public static boolean isQi(net.minecraft.world.damagesource.DamageSource source) {
 		for (QiElement element : QiElement.five()) if (source.is(ModDamageTypes.qiType(element))) return true;
-		return false;
+		return source.is(ModDamageTypes.HEAVEN_DEMON);
 	}
 
 	/** Takes {@code e} to {@code to} at once, keeping its facing (a player through its connection), its motion and fall stilled. */
@@ -658,6 +758,73 @@ public final class HeavenSpells {
 		return null;
 	}
 
+	/**
+	 * How great a spell of {@code realm} is beside one of Four Axis (the user's ask, 2026-10-24: "make sure the scale of spells increases
+	 * with realm not just the destruction capability"): its reach, its areas and its living shape's size (SpellConstruct#size) grow by its
+	 * realm as its wounds in the land do (Devastation#scale: Dao Integration 1.28, Void Shattering 1.84, Sacred Vessel 2.13, Entering
+	 * Nirvana 2.41, True Immortal 3.41). The spells of the realms after Four Axis are sized by it ({@link #span}); Four Axis's and those
+	 * below keep their own sizes, the yardstick.
+	 */
+	public static double greatness(Realm realm) {
+		return Devastation.scale(realm);
+	}
+
+	/** A spell's reach or area that would be {@code atFourAxis} for one of Four Axis, for one of {@code realm} ({@link #greatness}). */
+	public static double span(Realm realm, double atFourAxis) {
+		return atFourAxis * greatness(realm);
+	}
+
+	/**
+	 * The land's height every block along a line from {@code from} the way {@code way} (level, a unit) for {@code length} blocks: the top of
+	 * what stands there (leaves not counted), or {@code from}'s own height where the land isn't loaded. For what runs or flies along it.
+	 */
+	public static double[] floorAlong(ServerLevel level, Vec3 from, Vec3 way, int length) {
+		double[] floor = new double[length + 1];
+		for (int d = 0; d <= length; d++) {
+			int x = net.minecraft.util.Mth.floor(from.x + way.x * d), z = net.minecraft.util.Mth.floor(from.z + way.z * d);
+			floor[d] = level.hasChunk(x >> 4, z >> 4) ? level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) : from.y;
+		}
+		return floor;
+	}
+
+	/** {@code floor} with, at each point, the highest of it within {@code reach} (what flies low over it clears its hills in good time). */
+	public static double[] highestNear(double[] floor, int reach) {
+		double[] high = new double[floor.length];
+		for (int i = 0; i < floor.length; i++) {
+			double h = floor[i];
+			for (int j = Math.max(0, i - reach); j <= Math.min(floor.length - 1, i + reach); j++) h = Math.max(h, floor[j]);
+			high[i] = h;
+		}
+		return high;
+	}
+
+	/** {@code floor} evened out over {@code reach} each way (what runs on it doesn't jolt over every block). */
+	public static double[] evened(double[] floor, int reach) {
+		double[] even = new double[floor.length];
+		for (int i = 0; i < floor.length; i++) {
+			double sum = 0;
+			int n = 0;
+			for (int j = Math.max(0, i - reach); j <= Math.min(floor.length - 1, i + reach); j++, n++) sum += floor[j];
+			even[i] = sum / n;
+		}
+		return even;
+	}
+
+	/** The height {@code d} blocks along a line of heights a block apart ({@link #floorAlong}), between its points. */
+	public static double along(double[] heights, double d) {
+		if (d <= 0) return heights[0];
+		if (d >= heights.length - 1) return heights[heights.length - 1];
+		int i = (int) Math.floor(d);
+		return heights[i] + (heights[i + 1] - heights[i]) * (d - i);
+	}
+
+	/** The yaw (degrees) and pitch a spell's living shape (SpellConstruct) takes to face the way {@code way}. */
+	public static float[] facing(Vec3 way) {
+		if (way.lengthSqr() < 1.0e-8) return new float[] {0, 0};
+		Vec3 unit = way.normalize();
+		return new float[] {(float) Math.toDegrees(Math.atan2(-unit.x, unit.z)), (float) -Math.toDegrees(Math.asin(net.minecraft.util.Mth.clamp(unit.y, -1, 1)))};
+	}
+
 	/** Plays {@code sound} at {@code at} for everyone near. */
 	public static void sound(ServerLevel level, Vec3 at, net.minecraft.sounds.SoundEvent sound, float volume, float pitch) {
 		level.playSound(null, at.x, at.y, at.z, sound, net.minecraft.sounds.SoundSource.PLAYERS, volume, pitch);
@@ -678,16 +845,20 @@ public final class HeavenSpells {
 		return e != null && e.isAlive() && !e.isRemoved() && e.level() == level;
 	}
 
-	/** An ally of the caster's to ward or mend: another player (where they could not harm each other, too), or its tamed creature. */
-	public static boolean ally(ServerPlayer p, LivingEntity e) {
+	/**
+	 * An ally of the caster's to ward or mend: another player (where they could not harm each other, too), or its tamed creature; a
+	 * cultivator's, its own ({@link #friendly}).
+	 */
+	public static boolean ally(LivingEntity p, LivingEntity e) {
 		if (e == p || !e.isAlive()) return false;
+		if (!(p instanceof ServerPlayer)) return friendly(p, e);
 		if (e instanceof OwnableEntity pet && p.getUUID().equals(pet.getOwnerUUID())) return true;
 		return e instanceof Player other && !other.isSpectator() && !enemy(p, e);
 	}
 
 	/** Every being within {@code radius} of the caster that {@code which} takes. */
-	public static List<LivingEntity> around(ServerPlayer p, double radius, Predicate<LivingEntity> which) {
-		return aroundPoint(p.serverLevel(), p.position(), radius, which);
+	public static List<LivingEntity> around(LivingEntity p, double radius, Predicate<LivingEntity> which) {
+		return aroundPoint(level(p), p.position(), radius, which);
 	}
 
 	/** Every being within {@code radius} of {@code centre} (by its feet) that {@code which} takes. */
@@ -697,7 +868,7 @@ public final class HeavenSpells {
 	}
 
 	/** Where the look meets a wall within {@code range}, or the end of the range. */
-	public static Vec3 beamEnd(ServerPlayer p, double range) {
+	public static Vec3 beamEnd(LivingEntity p, double range) {
 		Vec3 from = p.getEyePosition();
 		Vec3 to = from.add(p.getViewVector(1.0f).scale(range));
 		BlockHitResult hit = p.level().clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p));
@@ -705,7 +876,7 @@ public final class HeavenSpells {
 	}
 
 	/** The block the look meets within {@code range} (its top face's centre if it was struck from above), or null. */
-	public static BlockHitResult lookedBlock(ServerPlayer p, double range) {
+	public static BlockHitResult lookedBlock(LivingEntity p, double range) {
 		Vec3 from = p.getEyePosition();
 		Vec3 to = from.add(p.getViewVector(1.0f).scale(range));
 		BlockHitResult hit = p.level().clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p));
@@ -713,12 +884,12 @@ public final class HeavenSpells {
 	}
 
 	/** The point looked at within {@code range}: where the look meets a wall or the ground, else the end of the range. */
-	public static Vec3 lookPoint(ServerPlayer p, double range) {
+	public static Vec3 lookPoint(LivingEntity p, double range) {
 		return beamEnd(p, range);
 	}
 
 	/** The first being along the look within {@code range}, short of a wall, that {@code which} takes; or null. */
-	public static LivingEntity aimed(ServerPlayer p, double range, Predicate<LivingEntity> which) {
+	public static LivingEntity aimed(LivingEntity p, double range, Predicate<LivingEntity> which) {
 		Vec3 from = p.getEyePosition();
 		Vec3 to = beamEnd(p, range);
 		EntityHitResult hit = ProjectileUtil.getEntityHitResult(p.level(), p, from, to, new AABB(from, to).inflate(1.0),
@@ -727,12 +898,12 @@ public final class HeavenSpells {
 	}
 
 	/** The first being along the look within {@code range} that the caster's spells don't spare; or null. */
-	public static LivingEntity aimed(ServerPlayer p, double range) {
+	public static LivingEntity aimed(LivingEntity p, double range) {
 		return aimed(p, range, e -> true);
 	}
 
 	/** Every being along the look within {@code range} (a line {@code width} wide), short of a wall, nearest first. */
-	public static List<LivingEntity> alongLook(ServerPlayer p, double range, double width) {
+	public static List<LivingEntity> alongLook(LivingEntity p, double range, double width) {
 		Vec3 from = p.getEyePosition();
 		Vec3 to = beamEnd(p, range);
 		Vec3 dir = to.subtract(from);
@@ -751,7 +922,7 @@ public final class HeavenSpells {
 	}
 
 	/** Where a cast from the hands sets out: before the chest, clear of the caster's own eyes. */
-	public static Vec3 fromHands(ServerPlayer p) {
+	public static Vec3 fromHands(LivingEntity p) {
 		return p.getEyePosition().subtract(0, 0.45, 0).add(p.getViewVector(1.0f).scale(1.2));
 	}
 
@@ -764,11 +935,13 @@ public final class HeavenSpells {
 
 	/**
 	 * Strikes {@code target} for {@code amount} of {@code element}'s qi harm by {@code p}, and returns how much it took (health
-	 * and absorption). The dead take it only from one who sees souls, as any living blow (GhostSystem#reaches).
+	 * and absorption). The dead take it only from one who sees souls, as any living blow (GhostSystem#reaches); one behind a barrier
+	 * the caster couldn't break not at all ({@link #walled}).
 	 */
-	public static float strike(ServerPlayer p, LivingEntity target, float amount, QiElement element) {
+	public static float strike(LivingEntity p, LivingEntity target, float amount, QiElement element) {
+		if (walled(p, target)) return 0;
 		float before = target.getHealth() + target.getAbsorptionAmount();
-		target.hurt(ModDamageTypes.qi(p.serverLevel(), element, p), amount);
+		target.hurt(ModDamageTypes.qi(level(p), element, p), amount);
 		return Math.max(0, before - target.getHealth() - target.getAbsorptionAmount());
 	}
 
@@ -776,7 +949,8 @@ public final class HeavenSpells {
 	 * Strikes {@code target} for {@code amount} of {@code spell}'s element's qi harm (of its realm, for the wards: SpellAuras) by
 	 * {@code p} ({@code via}: the thing that struck, or null for the caster's own hand), and returns how much it took.
 	 */
-	public static float strike(ServerPlayer p, LivingEntity target, float amount, Spell spell, net.minecraft.world.entity.Entity via) {
+	public static float strike(LivingEntity p, LivingEntity target, float amount, Spell spell, net.minecraft.world.entity.Entity via) {
+		if (walled(p, target)) return 0;
 		float before = target.getHealth() + target.getAbsorptionAmount();
 		ServerLevel level = (ServerLevel) target.level();
 		target.hurt(ModDamageTypes.qi(level, spell.element(), spell.heavenRealm(), via, p), amount);
@@ -784,18 +958,18 @@ public final class HeavenSpells {
 	}
 
 	/** {@link #strike(ServerPlayer, LivingEntity, float, Spell, net.minecraft.world.entity.Entity)} by the caster's own hand. */
-	public static float strike(ServerPlayer p, LivingEntity target, float amount, Spell spell) {
+	public static float strike(LivingEntity p, LivingEntity target, float amount, Spell spell) {
 		return strike(p, target, amount, spell, null);
 	}
 
 	/** Strikes without the struck flinching away from the next blow's harm (a zone's ticks, a chain's leaps). */
-	public static float strikeAgain(ServerPlayer p, LivingEntity target, float amount, QiElement element) {
+	public static float strikeAgain(LivingEntity p, LivingEntity target, float amount, QiElement element) {
 		target.invulnerableTime = 0;
 		return strike(p, target, amount, element);
 	}
 
 	/** {@link #strike(ServerPlayer, LivingEntity, float, Spell)} without the struck flinching away from the next (a zone's ticks). */
-	public static float strikeAgain(ServerPlayer p, LivingEntity target, float amount, Spell spell) {
+	public static float strikeAgain(LivingEntity p, LivingEntity target, float amount, Spell spell) {
 		target.invulnerableTime = 0;
 		return strike(p, target, amount, spell);
 	}

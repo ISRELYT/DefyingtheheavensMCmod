@@ -20,10 +20,11 @@ import net.minecraft.util.StringRepresentable;
  *   <li>Nine Nether Soul Sutra (九幽魂经), Nascent Soul: Soul Rend, Nine Nether Step.</li>
  *   <li>Yama's Judgement Scripture (阎罗判经), Heavenly Being: Yama's Judgement, Chains of Hell.</li>
  *   <li>Six Paths Reincarnation Canon (六道轮回经), Four Axis: Wheel of Samsara, Six Paths Annihilation.</li>
- *   <li>The realms after it (2026-10-22, their spells still to come): the Ten Thousand Ghosts Union Scripture (万鬼合道经), Dao
- *       Integration; the Void-Rending Nether Canon (碎虚冥经), Void Shattering; the Hell-Forged Vessel Sutra (炼狱圣器经), Sacred
- *       Vessel; the Underworld Nirvana Scripture (幽冥涅槃经), Entering Nirvana; the Netherworld Immortal Sovereign Canon
- *       (冥界仙尊经), True Immortal.</li>
+ *   <li>The realms after it (2026-10-22; their spells GhostSpells', those of Dao Integration and Void Shattering so far): the Ten
+ *       Thousand Ghosts Union Scripture (万鬼合道经), Dao Integration: Procession of Ten Thousand Ghosts, Gate of Ten Thousand Ghosts;
+ *       the Void-Rending Nether Canon (碎虚冥经), Void Shattering: Rift to the Nine Nethers, Bridge of No Return; the Hell-Forged
+ *       Vessel Sutra (炼狱圣器经), Sacred Vessel; the Underworld Nirvana Scripture (幽冥涅槃经), Entering Nirvana; the Netherworld
+ *       Immortal Sovereign Canon (冥界仙尊经), True Immortal.</li>
  * </ul>
  * And two methods of their own, beside the foundations:
  * <ul>

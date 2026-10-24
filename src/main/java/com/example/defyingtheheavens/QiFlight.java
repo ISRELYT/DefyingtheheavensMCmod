@@ -132,6 +132,11 @@ public final class QiFlight {
 			setFlight(p, p.getAbilities().mayfly, SwordFlight.QI_FLIGHT_SPEED);
 			return 0;
 		}
+		// Under the Weak Water nothing flies, the living or the dead (weighDown).
+		if (weighedDown(p)) {
+			land(p);
+			return 0;
+		}
 		// A ghost flies on no qi and no sword, at every realm and as fast as Qi Flight or more (TwoPaths#fliesFreely: ghostly creatures
 		// need no ground; the user's rule, 2026-10-18). Never on the Soul River, nor while a Ghost-Quelling Talisman binds it (QuelledEffect).
 		if (Incorporeal.isGhost(p)) {
@@ -281,17 +286,26 @@ public final class QiFlight {
 		return stepAt(speed) * BUNCHED_TICKS;
 	}
 
+	/** A flier that went still (a stutter, a stalled server) may make up at most this many ticks of its flight at once ({@link #moveAllowanceSq})... */
+	private static final double MOST_SAVED_TICKS = 100;
+	/** ...and this many ticks more of it, for packets' jitter (two in one tick, none the next). */
+	private static final double SLACK_TICKS = 2;
+
 	/**
-	 * How far (squared) the server lets {@code p} move in one movement packet (ServerGamePacketListenerImplMixin): vanilla's
-	 * {@code limit} (10 blocks, whoever hosts the game unchecked), or for a flier the more its flight carries it ({@link #reachAt},
-	 * or {@link #BUNCHED_TICKS} ticks of Meteor Flight's top speed: MeteorFlight#topPerTick): in space (AstralRealm#spaceSpeed) or
-	 * flying fast, a guest would be snapped back mid-flight otherwise.
+	 * How far (squared) the server lets {@code p} move from where its tick began (ServerGamePacketListenerImplMixin), {@code ticks}
+	 * (real time) after it last moved there: vanilla's {@code limit} (10 blocks, whoever hosts the game unchecked) for one not flying,
+	 * else as far as its flight carries it in that time ({@link #stepAt}, or Meteor Flight's top speed: MeteorFlight#topPerTick) and
+	 * {@link #SLACK_TICKS} more: in space (AstralRealm#spaceSpeed) or flying fast, a guest would be snapped back mid-flight otherwise,
+	 * and packets bunched by a stutter or a stalled server still pass, the time they waited counted. Before the user's pick of
+	 * 2026-10-24 every packet was let go a second of the flight ({@link #BUNCHED_TICKS}), five packets a tick: a client that sent them
+	 * so flew twenty times as fast.
 	 */
-	public static float moveAllowanceSq(ServerPlayer p, float limit) {
+	public static float moveAllowanceSq(ServerPlayer p, float limit, double ticks) {
 		if (!p.getAbilities().flying) return limit;
-		double reach = reachAt(p.getAbilities().getFlyingSpeed());
+		double step = stepAt(p.getAbilities().getFlyingSpeed());
 		PlayerCultivation c = CultivationManager.get(p);
-		if (MeteorFlight.mayStreak(p, c)) reach = Math.max(reach, MeteorFlight.topPerTick(c) * BUNCHED_TICKS);
+		if (MeteorFlight.mayStreak(p, c)) step = Math.max(step, MeteorFlight.topPerTick(c));
+		double reach = step * (Math.min(MOST_SAVED_TICKS, Math.max(1, ticks)) + SLACK_TICKS);
 		return (float) Math.max(limit, reach * reach);
 	}
 
@@ -333,8 +347,29 @@ public final class QiFlight {
 	/** The last speed set here for each player (space's speeds vary by realm, so "ours" can't be told by value alone). */
 	private static final Map<UUID, Float> SPEED_SET = new HashMap<>();
 
+	/** Players weighed down out of the air, and until when (game time): the Weak Water's (WaterSpells#WeakWater). */
+	private static final Map<UUID, Long> WEIGHED = new HashMap<>();
+
+	/**
+	 * {@code p} can't fly for the next {@code ticks}, by no flight of any kind, the dead's too (the Weak Water bears nothing up, not even a
+	 * feather: WaterSpells#WeakWater); a flight under way ends. Space alone, where there is no ground, still bears them.
+	 */
+	public static void weighDown(ServerPlayer p, int ticks) {
+		WEIGHED.merge(p.getUUID(), p.level().getGameTime() + ticks, Math::max);
+	}
+
+	/** Whether {@code p} is weighed down out of the air now ({@link #weighDown}). */
+	public static boolean weighedDown(ServerPlayer p) {
+		Long until = WEIGHED.get(p.getUUID());
+		if (until == null) return false;
+		if (p.level().getGameTime() < until) return true;
+		WEIGHED.remove(p.getUUID());
+		return false;
+	}
+
 	public static void forget(UUID id) {
 		EXHAUSTED.remove(id);
+		WEIGHED.remove(id);
 		SPEED_SET.remove(id);
 		REALM_ALLOWED.remove(id);
 		REALM_ALLOWED_SWORD.remove(id);

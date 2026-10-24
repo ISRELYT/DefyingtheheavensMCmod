@@ -5,6 +5,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.ChunkPos;
@@ -50,12 +51,13 @@ public final class Devastation {
 	private static final TicketType<ChunkPos> KEEP_LOADED = TicketType.create("defying_the_heavens_devastation", Comparator.comparingLong(ChunkPos::toLong), KEEP_TICKS);
 
 	/** What the floor of a wound becomes once it is cut: left as it is, burnt (magma, blackstone, fires), broken (rubble), or a lake in it. */
-	public enum Floor { NONE, SCORCHED, RUBBLE, LAKE }
+	/** A wound's floor: as it was cut, burnt to magma and blackstone, broken rubble, a lake, or melted to obsidian glass (a white flame's). */
+	public enum Floor { NONE, SCORCHED, RUBBLE, LAKE, GLASSY }
 
 	/** A wound being cut: its cells (packed), nearest its heart first, how far through, what follows, and its land kept loaded. */
 	private static final class Job {
 		final ServerLevel level;
-		final ServerPlayer caster;
+		final LivingEntity caster;
 		final long[] cells;
 		final Vec3 heart;
 		final Runnable after;
@@ -67,7 +69,7 @@ public final class Devastation {
 		final boolean utter;
 		int next, flung, age;
 
-		Job(ServerLevel level, ServerPlayer caster, long[] cells, Vec3 heart, Runnable after, int debris, int keep, boolean utter) {
+		Job(ServerLevel level, LivingEntity caster, long[] cells, Vec3 heart, Runnable after, int debris, int keep, boolean utter) {
 			this.level = level;
 			this.caster = caster;
 			this.cells = cells;
@@ -105,7 +107,7 @@ public final class Devastation {
 	 * A crater {@code radius} round and {@code depth} deep at {@code at} (a bowl, ragged at its edge; what stood on the ground there
 	 * blown away up to six tenths of the radius above it), its floor then made {@code floor}.
 	 */
-	public static void crater(ServerPlayer p, ServerLevel level, Vec3 at, double radius, double depth, Floor floor) {
+	public static void crater(LivingEntity p, ServerLevel level, Vec3 at, double radius, double depth, Floor floor) {
 		crater(p, level, at, radius, depth, floor, false);
 	}
 
@@ -113,7 +115,8 @@ public final class Devastation {
 	 * As {@link #crater(ServerPlayer, ServerLevel, Vec3, double, double, Floor)}, or, {@code utter}, everything in it taken (a burst
 	 * golden core's, CoreDetonation): water and lava, lecterns, pedestals and whatever else holds something, besides the ground.
 	 */
-	public static void crater(ServerPlayer p, ServerLevel level, Vec3 at, double radius, double depth, Floor floor, boolean utter) {
+	public static void crater(LivingEntity p, ServerLevel level, Vec3 at, double radius, double depth, Floor floor, boolean utter) {
+		if (!HeavenSpells.carvesLand(p)) return; // a cultivator's spells leave the land as it was (HeavenSpells#carvesLand)
 		BlockPos centre = BlockPos.containing(at);
 		int r = (int) Math.ceil(radius), d = (int) Math.ceil(depth), up = (int) Math.ceil(radius * 0.6);
 		LongArrayList cells = new LongArrayList();
@@ -145,7 +148,8 @@ public final class Devastation {
 	 * edge; the new ground cracked (stone to cobblestone, earth to coarse dirt). Trees keep their footing, and so does whoever
 	 * stands within {@code spare} of the heart (the caster).
 	 */
-	public static void subside(ServerPlayer p, ServerLevel level, Vec3 at, double radius, int drop, double spare) {
+	public static void subside(LivingEntity p, ServerLevel level, Vec3 at, double radius, int drop, double spare) {
+		if (!HeavenSpells.carvesLand(p)) return; // a cultivator's spells leave the land as it was (HeavenSpells#carvesLand)
 		BlockPos centre = BlockPos.containing(at);
 		int r = (int) Math.ceil(radius);
 		List<BlockPos> cells = new ArrayList<>();
@@ -169,7 +173,8 @@ public final class Devastation {
 	 * {@code count} fissures running out from {@code from} blocks off {@code at} to {@code radius}, jagged, a block or two wide and
 	 * {@code depth} deep (shallower toward their ends).
 	 */
-	public static void fissures(ServerPlayer p, ServerLevel level, Vec3 at, double radius, int count, int depth, double from) {
+	public static void fissures(LivingEntity p, ServerLevel level, Vec3 at, double radius, int count, int depth, double from) {
+		if (!HeavenSpells.carvesLand(p)) return; // a cultivator's spells leave the land as it was (HeavenSpells#carvesLand)
 		BlockPos centre = BlockPos.containing(at);
 		List<BlockPos> cells = new ArrayList<>();
 		java.util.Set<Long> columns = new java.util.HashSet<>();
@@ -194,8 +199,18 @@ public final class Devastation {
 		queue(level, p, cells, at, null);
 	}
 
+	/**
+	 * {@code cells} a spell has shaped itself (Void-Severing Sword Light's chasm along its line: MetalSpells.Severing), cut like any wound,
+	 * nearest {@code heart} first, a few pieces flung.
+	 */
+	public static void cut(LivingEntity p, ServerLevel level, List<BlockPos> cells, Vec3 heart) {
+		if (!HeavenSpells.carvesLand(p)) return; // a cultivator's spells leave the land as it was (HeavenSpells#carvesLand)
+		queue(level, p, cells, heart, null);
+	}
+
 	/** A tunnel {@code radius} round bored from {@code from} to {@code to} through whatever stands between, nearest {@code from} first. */
-	public static void bore(ServerPlayer p, ServerLevel level, Vec3 from, Vec3 to, double radius) {
+	public static void bore(LivingEntity p, ServerLevel level, Vec3 from, Vec3 to, double radius) {
+		if (!HeavenSpells.carvesLand(p)) return; // a cultivator's spells leave the land as it was (HeavenSpells#carvesLand)
 		Vec3 line = to.subtract(from);
 		double length = line.length();
 		if (length < 1.0e-3) return;
@@ -223,7 +238,8 @@ public final class Devastation {
 	 * The cross-section of a slash at column {@code x, z}, from {@code yMin} to {@code yMax}: cut away at once (the slash itself
 	 * paces it, a column at a time). Returns how many blocks went.
 	 */
-	public static int cutColumn(ServerPlayer p, ServerLevel level, int x, int z, int yMin, int yMax, boolean debris) {
+	public static int cutColumn(LivingEntity p, ServerLevel level, int x, int z, int yMin, int yMax, boolean debris) {
+		if (!HeavenSpells.carvesLand(p)) return 0;
 		int cut = 0;
 		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 		for (int y = yMin; y <= yMax; y++) {
@@ -246,7 +262,8 @@ public final class Devastation {
 	 * lowest y, highest y}) cut from its top (or the top of what stands there, if lower) down to its bottom, like any wound,
 	 * nearest {@code heart} first, a few pieces flung.
 	 */
-	public static void shear(ServerPlayer p, ServerLevel level, List<int[]> spans, Vec3 heart) {
+	public static void shear(LivingEntity p, ServerLevel level, List<int[]> spans, Vec3 heart) {
+		if (!HeavenSpells.carvesLand(p)) return; // a cultivator's spells leave the land as it was (HeavenSpells#carvesLand)
 		List<BlockPos> cells = new ArrayList<>();
 		for (int[] span : spans) {
 			// Land still loading (the slash asks for it as it goes) is cut once it has come, if it comes in time.
@@ -265,7 +282,7 @@ public final class Devastation {
 	}
 
 	/** A span of a slash's blade over land that wasn't loaded yet, waiting for it until {@code until} (game time). */
-	private record Waiting(ServerLevel level, ServerPlayer caster, int[] span, Vec3 heart, long until) {}
+	private record Waiting(ServerLevel level, LivingEntity caster, int[] span, Vec3 heart, long until) {}
 
 	private static final List<Waiting> WAITING = new ArrayList<>();
 	/** How long a span waits for its land (ticks): long enough for land never made before to be made. */
@@ -294,7 +311,8 @@ public final class Devastation {
 	 * The land {@code radius} round {@code at} set ablaze: grass and earth scorched to coarse dirt, now and then a patch of magma or
 	 * netherrack, and fires on {@code share} of it (on whatever stands highest there: a tree's crown catches too).
 	 */
-	public static void burn(ServerPlayer p, ServerLevel level, Vec3 at, double radius, double share) {
+	public static void burn(LivingEntity p, ServerLevel level, Vec3 at, double radius, double share) {
+		if (!HeavenSpells.carvesLand(p)) return; // a cultivator's spells leave the land as it was (HeavenSpells#carvesLand)
 		BlockPos centre = BlockPos.containing(at);
 		int r = (int) Math.ceil(radius);
 		for (int dx = -r; dx <= r; dx++) {
@@ -319,20 +337,50 @@ public final class Devastation {
 		}
 	}
 
+	/**
+	 * The land between {@code from} and {@code to} round {@code at} withered, its life drunk out of it (Void Withering): grass, moss, podzol and
+	 * mycelium gone to coarse dirt, and what grew on them dead (a dead bush here and there, else gone). Nothing is taken away.
+	 */
+	public static void wither(LivingEntity p, ServerLevel level, Vec3 at, double from, double to) {
+		if (!HeavenSpells.carvesLand(p)) return; // a cultivator's spells leave the land as it was (HeavenSpells#carvesLand)
+		BlockPos centre = BlockPos.containing(at);
+		int r = (int) Math.ceil(to);
+		for (int dx = -r; dx <= r; dx++) {
+			for (int dz = -r; dz <= r; dz++) {
+				double dist = Math.sqrt(dx * dx + dz * dz);
+				if (dist < from || dist > to) continue;
+				BlockPos ground = groundTop(level, centre.getX() + dx, centre.getZ() + dz);
+				if (ground == null || !HeavenSpells.carvable(level, ground, p)) continue;
+				BlockState was = level.getBlockState(ground);
+				if (was.is(Blocks.GRASS_BLOCK) || was.is(Blocks.PODZOL) || was.is(Blocks.MYCELIUM) || was.is(Blocks.MOSS_BLOCK) || was.is(Blocks.ROOTED_DIRT)) {
+					level.setBlock(ground, Blocks.COARSE_DIRT.defaultBlockState(), 3);
+				}
+				BlockPos above = ground.above();
+				BlockState plant = level.getBlockState(above);
+				if (!plant.isAir() && !plant.is(BlockTags.LEAVES) && (plant.is(BlockTags.FLOWERS) || plant.is(BlockTags.SAPLINGS) || plant.is(Blocks.GRASS) || plant.is(Blocks.FERN)
+						|| plant.is(Blocks.TALL_GRASS) || plant.is(Blocks.LARGE_FERN) || plant.is(Blocks.MOSS_CARPET)) && mayChange(p, level, above)) {
+					boolean tall = plant.is(Blocks.TALL_GRASS) || plant.is(Blocks.LARGE_FERN) || plant.is(BlockTags.TALL_FLOWERS);
+					if (tall) level.setBlock(above.above(), Blocks.AIR.defaultBlockState(), 2 | 16);
+					level.setBlock(above, level.random.nextInt(5) == 0 ? Blocks.DEAD_BUSH.defaultBlockState() : Blocks.AIR.defaultBlockState(), 3);
+				}
+			}
+		}
+	}
+
 	// --- Underway ---
 
-	private static void queue(ServerLevel level, ServerPlayer p, List<BlockPos> cells, Vec3 heart, Runnable after) {
+	private static void queue(ServerLevel level, LivingEntity p, List<BlockPos> cells, Vec3 heart, Runnable after) {
 		queue(level, p, cells, heart, after, DEBRIS);
 	}
 
-	private static void queue(ServerLevel level, ServerPlayer p, List<BlockPos> cells, Vec3 heart, Runnable after, int debris) {
+	private static void queue(ServerLevel level, LivingEntity p, List<BlockPos> cells, Vec3 heart, Runnable after, int debris) {
 		long[] packed = new long[cells.size()];
 		for (int i = 0; i < packed.length; i++) packed[i] = cells.get(i).asLong();
 		queue(level, p, packed, heart, after, debris, false);
 	}
 
 	/** {@code cells} (packed) sorted nearest {@code heart} first, and cut from the next tick. */
-	private static void queue(ServerLevel level, ServerPlayer p, long[] cells, Vec3 heart, Runnable after, int debris, boolean utter) {
+	private static void queue(ServerLevel level, LivingEntity p, long[] cells, Vec3 heart, Runnable after, int debris, boolean utter) {
 		if (cells.length == 0) {
 			if (after != null) after.run();
 			return;
@@ -413,12 +461,18 @@ public final class Devastation {
 
 	/**
 	 * A block taken by a burst golden core: gone to air outright (water and lava too, and no waterlogged block leaves its water
-	 * behind). What it holds is thrown out: a chest's, a lectern's book, the mod's cauldrons and altars spill as they always do when
-	 * removed, and a Spirit Pedestal (whose fruit only its loot table gives back, never a removal) lets its fruit fall.
+	 * behind). What it holds is thrown out: whatever holds items (a chest, a shulker box, any mod's container) spills them here and is
+	 * emptied first, so nothing is spilled twice (a shulker box, which keeps its things only in its own loot, took them with it before
+	 * the sweep of 2026-10-23); a lectern's book, the mod's cauldrons and altars spill as they always do when removed; a Spirit Pedestal
+	 * (whose fruit only its loot table gives back, never a removal) lets its fruit fall.
 	 */
 	private static void obliterate(ServerLevel level, BlockPos pos) {
-		if (level.getBlockEntity(pos) instanceof SpiritPedestalBlockEntity pedestal && pedestal.hasFruit()) {
+		net.minecraft.world.level.block.entity.BlockEntity held = level.getBlockEntity(pos);
+		if (held instanceof SpiritPedestalBlockEntity pedestal && pedestal.hasFruit()) {
 			Block.popResource(level, pos, pedestal.getFruit().copy());
+		} else if (held instanceof net.minecraft.world.Container container && !container.isEmpty()) {
+			net.minecraft.world.Containers.dropContents(level, pos, container);
+			container.clearContent();
 		}
 		level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
 	}
@@ -442,7 +496,7 @@ public final class Devastation {
 	 * A wound's floor laid: the block under each column's deepest cut made {@code floor}'s (and fires on a burnt one); a lake's
 	 * water set in the cut itself, up to two below the ground's level ({@code surfaceY}) so it stays in its basin.
 	 */
-	private static void lay(ServerPlayer p, ServerLevel level, Map<Long, Integer> lowest, Floor floor, int surfaceY) {
+	private static void lay(LivingEntity p, ServerLevel level, Map<Long, Integer> lowest, Floor floor, int surfaceY) {
 		if (floor == Floor.NONE) return;
 		for (Map.Entry<Long, Integer> e : lowest.entrySet()) {
 			BlockPos below = new BlockPos(BlockPos.getX(e.getKey()), e.getValue() - 1, BlockPos.getZ(e.getKey()));
@@ -461,6 +515,10 @@ public final class Devastation {
 				else if (roll < 0.45) level.setBlock(below, Blocks.BLACKSTONE.defaultBlockState(), 3);
 				else if (roll < 0.6) level.setBlock(below, Blocks.NETHERRACK.defaultBlockState(), 3);
 				if (level.random.nextDouble() < 0.18) ignite(p, level, below.above());
+			} else if (floor == Floor.GLASSY) {
+				if (roll < 0.55) level.setBlock(below, Blocks.OBSIDIAN.defaultBlockState(), 3);
+				else if (roll < 0.75) level.setBlock(below, Blocks.MAGMA_BLOCK.defaultBlockState(), 3);
+				else if (roll < 0.9) level.setBlock(below, Blocks.BLACK_STAINED_GLASS.defaultBlockState(), 3);
 			} else {
 				if (roll < 0.3) level.setBlock(below, Blocks.COBBLESTONE.defaultBlockState(), 3);
 				else if (roll < 0.45) level.setBlock(below, Blocks.GRAVEL.defaultBlockState(), 3);
@@ -470,15 +528,23 @@ public final class Devastation {
 	}
 
 	/** A fire set at {@code pos} if one can burn there and {@code p} may change it. */
-	static void ignite(ServerPlayer p, ServerLevel level, BlockPos pos) {
+	static void ignite(LivingEntity p, ServerLevel level, BlockPos pos) {
 		if (!level.isLoaded(pos) || !level.getBlockState(pos).isAir() || !BaseFireBlock.canBePlacedAt(level, pos, Direction.UP)) return;
 		if (!mayChange(p, level, pos)) return;
 		level.setBlock(pos, BaseFireBlock.getState(level, pos), 11);
 	}
 
-	/** Whether a spell of {@code p}'s may set something at {@code pos}: not under a barrier's shelter, ground they may change. */
-	private static boolean mayChange(ServerPlayer p, ServerLevel level, BlockPos pos) {
-		return !Formations.shelters(level, pos) && (p == null || !Formations.protectsGround(p, pos) && p.mayBuild() && level.mayInteract(p, pos));
+	/**
+	 * Whether a spell of {@code p}'s may set something at {@code pos}: not under a barrier's shelter, ground they may change, nothing
+	 * kept safe (HeavenSpells#guarded). On a sect's grounds not {@code p}'s own, that is trespass (SectManager#spoiled).
+	 */
+	static boolean mayChange(LivingEntity p, ServerLevel level, BlockPos pos) {
+		if (Formations.shelters(level, pos) || HeavenSpells.guarded(level, pos, p)) return false;
+		if (p == null) return true;
+		if (!(p instanceof ServerPlayer player)) return false; // a cultivator's spells set nothing in the land (HeavenSpells#carvesLand)
+		if (Formations.protectsGroundQuietly(player, pos) || !player.mayBuild() || !level.mayInteract(player, pos)) return false;
+		SectManager.spoiled(level, player, pos);
+		return true;
 	}
 
 	/** The topmost ground block of column {@code x, z} (below plants, trunks and leaves), or null if its land isn't loaded. */

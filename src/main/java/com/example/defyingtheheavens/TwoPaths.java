@@ -19,11 +19,12 @@ import java.util.UUID;
  * <ul>
  *   <li><b>The body</b> takes its strength from the higher of the two ({@link #body}: health, harm, speed, armour, toughness and
  *       knockback resistance by that path's realm and stage, as CultivationStats has them), and the two paths' <b>harmony</b>
- *       adds to it, the more the closer they stand: {@link #HARMONY} for realms the same, one apart, two apart. What that body
+ *       adds to it, the more the closer they stand: {@link #HARMONY} for the same stage, one stage apart, two apart. What that body
  *       comes to is named as one path's rank would be ({@link #effective}, "effective cultivation"): a stage it equals, or
  *       "Quasi-" the stage or realm it is on its way to.</li>
- *   <li><b>Spells of both paths</b> (Spell#isDual), one for each realm from Foundation Building, need both paths at that realm,
- *       and draw on both pools, qi and ghostly qi.</li>
+ *   <li><b>Spells of both paths</b> (Spell#isDual, HeavenDemonSpells), one for each realm from Foundation Building, are the heaven
+ *       path's and the Demon Path's ({@link #bothReach}; the user's ask, 2026-10-24: the heaven path's and the ghost path's before):
+ *       both at that realm, cast by the living on qi (the Demon Path shares the qi pool).</li>
  *   <li><b>The realm's abilities</b> (Qi Sustenance, Qi Sense, Soul Projection, Core Detonation, the Spatial Tear) come from
  *       either path reaching their realm ({@link #awakens}), paid from that path's pool; Qi Flight and Sword Flight are the heaven
  *       path's alone. The dead and the living in a Ghost King's form fly freely at every realm ({@link #fliesFreely}).</li>
@@ -42,7 +43,11 @@ import java.util.UUID;
  * its methods can't be taken up or cultivated (GhostMethods#refusal), and any it knows lie dormant ({@link #ghostRank}).
  */
 public final class TwoPaths {
-	/** The harmony of the two paths, added to the body: both in the same realm, one realm apart, two apart (and none further). */
+	/**
+	 * The harmony of the two paths, added to the body: both at the same stage, one stage apart, two apart (and none further; counted
+	 * across realms, so Four Axis Grand Perfection and Dao Integration Early are one apart: {@link #stageGap}). By realm before the
+	 * user's call of 2026-10-24 (within three realms was too generous).
+	 */
 	public static final double[] HARMONY = {0.30, 0.20, 0.10};
 
 	// --- The paths ---
@@ -140,6 +145,11 @@ public final class TwoPaths {
 		return heavenRank(c, false) >= 0 && ghostRank(c, false) >= 0;
 	}
 
+	/** On the heaven path and the Demon Path (a cultivator with a demon core): whose the spells of both paths are ({@link #bothReach}). */
+	public static boolean walksHeavenAndDemon(PlayerCultivation c) {
+		return heavenRank(c, false) >= 0 && demonRank(c, false) >= 0;
+	}
+
 	// --- Which qi a meditation draws in (the user's ask, 2026-10-19: one or the other, never both at once) ---
 
 	/**
@@ -203,27 +213,30 @@ public final class TwoPaths {
 	}
 
 	/**
-	 * How many realms apart the two highest of the paths walked stand (true cultivation), or -1 on one path (the heaven path and the
-	 * ghost path; a demon's Demon Path beside either).
+	 * How many stages apart the two highest of the paths walked stand (true cultivation, counted across realms), or -1 on one path
+	 * (the heaven path and the ghost path; a demon's Demon Path beside either).
 	 */
-	public static int realmGap(PlayerCultivation c) {
+	public static int stageGap(PlayerCultivation c) {
 		int[] ranks = {heavenRank(c, false), ghostRank(c, false), demonRank(c, false)};
 		java.util.Arrays.sort(ranks);
 		if (ranks[1] < 0) return -1;
-		int stages = Stage.values().length;
-		return Math.abs(ranks[2] / stages - ranks[1] / stages);
+		return ranks[2] - ranks[1];
 	}
 
-	/** The harmony of the paths: a share added to the body ({@link #HARMONY} by {@link #realmGap}); 0 on one path. */
+	/** The harmony of the paths: a share added to the body ({@link #HARMONY} by {@link #stageGap}); 0 on one path. */
 	public static double harmony(PlayerCultivation c) {
-		int gap = realmGap(c);
+		int gap = stageGap(c);
 		return gap < 0 || gap >= HARMONY.length ? 0 : HARMONY[gap];
 	}
 
-	/** Whether both paths stand at {@code realm} or beyond (true cultivation): a spell of both paths of that realm is in reach. */
+	/**
+	 * Whether the heaven path and the Demon Path both stand at {@code realm} or beyond (true cultivation): a spell of both paths of that
+	 * realm is in reach (cast by the living: Spell#isKnown). The ghost path's before 2026-10-24 (the user's ask: "the dual path spells are
+	 * now from demon and heaven path instead of heaven and ghost").
+	 */
 	public static boolean bothReach(PlayerCultivation c, Realm realm) {
 		int needed = PlayerCultivation.rank(realm, Stage.EARLY);
-		return heavenRank(c, false) >= needed && ghostRank(c, false) >= needed;
+		return heavenRank(c, false) >= needed && demonRank(c, false) >= needed;
 	}
 
 	// --- The body ---
@@ -456,12 +469,13 @@ public final class TwoPaths {
 	}
 
 	/**
-	 * The true form, with forms open: for the living the higher path's (true cultivation), the paths level the human (it lives);
-	 * for a Ghost King, the King's (it is dead).
+	 * The true form, with forms open: for the living the higher path's (true cultivation): the King's only where the ghost path stands
+	 * above every living path (the heaven path and the Demon Path: before the sweep of 2026-10-23 a demon's Demon Path, highest, still
+	 * left it the King's form true), level the human (it lives); for a Ghost King, the King's (it is dead).
 	 */
 	public static Form trueForm(PlayerCultivation c) {
 		if (c.netherworld().ghost()) return Form.GHOST_KING;
-		return ghostRank(c, false) > heavenRank(c, false) ? Form.GHOST_KING : Form.HUMAN;
+		return ghostRank(c, false) > Math.max(heavenRank(c, false), demonRank(c, false)) ? Form.GHOST_KING : Form.HUMAN;
 	}
 
 	/** The form shown, with forms open: the true one, or the other while Form Shift is on. */
@@ -511,7 +525,7 @@ public final class TwoPaths {
 	/**
 	 * What each online player was last seen with: how they were drawn, whether they were dead, whether the living had the Ghost
 	 * King's form ({@link #hasKingForm}; the dead are told theirs as Ghost Kings, GhostSystem#watchKing), their true form (null: one
-	 * form), the spells of both paths in reach.
+	 * form), the spells of both paths in reach (by the paths alone: one who dies and is born again isn't told them afresh).
 	 */
 	private record Seen(Look look, boolean dead, boolean kingForm, Form form, EnumSet<Spell> both) {}
 
@@ -519,7 +533,7 @@ public final class TwoPaths {
 
 	private static Seen see(PlayerCultivation c) {
 		EnumSet<Spell> both = EnumSet.noneOf(Spell.class);
-		for (Spell spell : Spell.values()) if (spell.isDual() && spell.isKnown(c)) both.add(spell);
+		for (Spell spell : Spell.values()) if (spell.isDual() && bothReach(c, spell.dualRealm())) both.add(spell);
 		boolean dead = c.netherworld().ghost();
 		return new Seen(look(c), dead, !dead && hasKingForm(c), formsOpen(c) ? trueForm(c) : null, both);
 	}

@@ -128,8 +128,12 @@ public class DemonPathGameTests implements FabricGameTest {
 			TwoPaths.Body body = TwoPaths.body(t, false);
 			helper.assertTrue(body.rank() == core && Math.abs(body.share() - DemonPath.BODY) < 1.0e-9 && !body.ghostPath(),
 					"The Demon Path above the heaven path gives the body, the mightier (" + body + ")");
-			helper.assertTrue(TwoPaths.realmGap(t) == 2 && TwoPaths.harmony(t) == TwoPaths.HARMONY[2],
-					"Core Formation and Qi Refining: two realms apart, the least harmony (" + TwoPaths.harmony(t) + ")");
+			helper.assertTrue(TwoPaths.stageGap(t) == 8 && TwoPaths.harmony(t) == 0,
+					"Core Formation Early and Qi Refining Early: eight stages apart, no harmony (" + TwoPaths.harmony(t) + ")");
+			t.setState(Realm.FOUNDATION_BUILDING, Stage.LATE, 0);
+			helper.assertTrue(TwoPaths.stageGap(t) == 2 && TwoPaths.harmony(t) == TwoPaths.HARMONY[2],
+					"The heaven path at Foundation Building Late: two stages apart, the least harmony (" + TwoPaths.harmony(t) + ")");
+			t.setState(Realm.QI_REFINING, Stage.EARLY, 0);
 			double demonPool = CultivationStats.maxQi(Realm.CORE_FORMATION, Stage.EARLY) * DemonPath.QI_SHARE;
 			helper.assertTrue(Math.abs(DemonPath.poolBase(t) - demonPool) < 1.0e-6 && t.maxQi() < h.maxQi() && t.maxQi() > 0,
 					"Its qi pool its realm's, the smaller share (" + Math.round(t.maxQi()) + " against a human's " + Math.round(h.maxQi()) + ")");

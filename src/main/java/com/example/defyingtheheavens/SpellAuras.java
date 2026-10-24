@@ -241,8 +241,10 @@ public final class SpellAuras {
 		}
 		amount *= (float) factor;
 		if (amount > 0 && mine.containsKey(SpellAura.GOLDEN_BELL)) amount = ring(target, element, amount);
+		// Thorns answer a blow of the hand, never qi: two Vajra Bodies' thorns would answer each other's without end (a stack overflow
+		// that took the server down, found in the sweep of 2026-10-23).
 		if (amount > 0 && mine.containsKey(SpellAura.VAJRA_BODY) && source.getEntity() instanceof LivingEntity striker && source.getDirectEntity() == striker
-				&& striker != target && !source.is(DamageTypeTags.IS_PROJECTILE) && target.level() instanceof ServerLevel level) {
+				&& striker != target && !source.is(DamageTypeTags.IS_PROJECTILE) && !HeavenSpells.isQi(source) && target.level() instanceof ServerLevel level) {
 			striker.hurt(ModDamageTypes.qi(level, QiElement.METAL, Realm.NASCENT_SOUL, null, target), VAJRA_THORNS);
 		}
 		return amount;

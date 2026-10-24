@@ -123,7 +123,16 @@ public final class Lifespan {
 	 * PlayerCultivation#isUpperRealmOnly), else over the mortal world's.
 	 */
 	public static double placeSaving(PlayerCultivation c) {
-		return c.placeFactor() / (PlayerCultivation.isUpperRealmOnly(c.getRealm()) ? PlayerCultivation.UPPER_REALM_QI_MULTIPLIER : 1.0);
+		return placeSaving(c, c.getRealm());
+	}
+
+	/**
+	 * The same for a path standing at {@code realm}: the Demon Path's own (DemonPath#realm), whose Four Axis bar is the heaven path's and
+	 * as much the greater. Before the sweep of 2026-10-23 the Demon Path was weighed by the heaven path's realm: a Four Axis demon with
+	 * its heaven path lower was saved ten times the years in the Upper Realm.
+	 */
+	public static double placeSaving(PlayerCultivation c, Realm realm) {
+		return c.placeFactor() / (PlayerCultivation.isUpperRealmOnly(realm) ? PlayerCultivation.UPPER_REALM_QI_MULTIPLIER : 1.0);
 	}
 
 	/** The ghost path's ghostly qi at {@code density} against the Netherworld's, its own place ({@link #saving}): more only on the Peaks. */
@@ -439,6 +448,9 @@ public final class Lifespan {
 			p.sendSystemMessage(Component.translatable(ModLang.MSG_REINCARNATED, rank < 0 ? Component.translatable(ModLang.MORTAL)
 					: PlayerCultivation.rankName(Realm.byIndex(rank / stages), Stage.byIndex(rank % stages))).withStyle(ChatFormatting.GOLD));
 		}
+		// A demon is born again with its demon core (its blood is the world's, Bloodlines) at once, not only at its next respawn or login:
+		// until then (before the sweep of 2026-10-23) the fresh record was a human's, its race's gifts and its path gone.
+		DemonPath.born(p);
 		Spells.sync(p);
 		GhostSystem.broadcast(p);
 		CultivationManager.markDirty(p.server);

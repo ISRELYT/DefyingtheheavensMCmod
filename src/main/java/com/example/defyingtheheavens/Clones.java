@@ -312,12 +312,14 @@ public final class Clones {
 		float mainYaw = tag.getFloat("YRot");
 		CompoundTag mainBody = tag.getCompound("Body");
 		CloneBodyEntity sitting = standIn(server, tag);
+		// The land held where the body was set down (#ticket) is let go there, wherever it has since been moved (it was let go where it
+		// stood, before the sweep of 2026-10-23: a body knocked into the next chunk left its first held loaded for good).
+		if (mainLevel != null) ticket(mainLevel, mainAt, false);
 		if (sitting != null) {
 			mainBody.putFloat("Health", sitting.getHealth());
 			mainAt = sitting.position();
 			sitting.discard();
 		}
-		if (mainLevel != null) ticket(mainLevel, mainAt, false);
 		CompoundTag next = null;
 		if (leaveClone) {
 			CloneBodyEntity standing = CloneBodyEntity.of(p, p, false, cloneBody);
@@ -491,7 +493,7 @@ public final class Clones {
 			CloneBodyEntity sitting = standIn(p.server, tag);
 			Vec3 at = sitting != null ? sitting.position() : posOf(tag);
 			if (sitting != null) sitting.discard();
-			ticket(level, at, false);
+			ticket(level, posOf(tag), false); // where it was held, as it was set down
 			drop(level, at, tag.getCompound("Body"));
 			return;
 		}

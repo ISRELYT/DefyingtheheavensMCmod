@@ -276,9 +276,11 @@ public class PillItem extends Item {
 						QI_BOOST_TICKS / 1200), true);
 			}
 			case CULTIVATION -> {
-				// Its qi goes into the unrefined pool, refined into cultivation by meditating.
+				// Its qi goes into the unrefined pool, refined into cultivation by meditating (a Jade Poison Body's at once, its years
+				// paid for that: Physiques#refinedAtOnce).
 				double effectiveness = 1 - c.getPillResistance();
-				double amount = c.takeMedicine(c.cultivationRequired() * cultivationShare(stack));
+				double dose = c.cultivationRequired() * cultivationShare(stack);
+				double amount = Physiques.refinedAtOnce(player, c, () -> c.takeMedicine(dose));
 				CultivationManager.refresh(player);
 				level.playSound(null, player.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 0.8f, 1.1f);
 				player.displayClientMessage(Component.translatable(ModLang.MSG_PILL_CULTIVATION, Math.round(amount),

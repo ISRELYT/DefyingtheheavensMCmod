@@ -1,0 +1,29 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:desert",
+    "#minecraft:is_badlands",
+    "#minecraft:is_savanna",
+    "defying-the-heavens:spirit_forest",
+    "defying-the-heavens:peach_blossom_sanctuary",
+    {"id": "terralith:ancient_sands", "required": false},
+    {"id": "terralith:ashen_savanna", "required": false},
+    {"id": "terralith:basalt_cliffs", "required": false},
+    {"id": "terralith:brushland", "required": false},
+    {"id": "terralith:bryce_canyon", "required": false},
+    {"id": "terralith:desert_canyon", "required": false},
+    {"id": "terralith:desert_oasis", "required": false},
+    {"id": "terralith:desert_spires", "required": false},
+    {"id": "terralith:hot_shrubland", "required": false},
+    {"id": "terralith:lush_desert", "required": false},
+    {"id": "terralith:painted_mountains", "required": false},
+    {"id": "terralith:red_oasis", "required": false},
+    {"id": "terralith:sandstone_valley", "required": false},
+    {"id": "terralith:savanna_badlands", "required": false},
+    {"id": "terralith:shrubland", "required": false},
+    {"id": "terralith:volcanic_crater", "required": false},
+    {"id": "terralith:volcanic_peaks", "required": false},
+    {"id": "terralith:warped_mesa", "required": false},
+    {"id": "terralith:white_mesa", "required": false}
+  ]
+}

@@ -42,26 +42,42 @@ public class ElementSpellsGameTests implements FabricGameTest {
 		return p;
 	}
 
+	/** A master of every element's spells, Dao Integration's and Void Shattering's too: that realm's Grand Perfection, each element's method of it understood whole. */
+	private static ServerPlayer grandMaster(GameTestHelper helper, BlockPos at) {
+		ServerPlayer p = HeavenSpellTesting.caster(helper, HeavenMethod.FIRE_FOUR_AXIS, at);
+		PlayerCultivation c = CultivationManager.get(p);
+		c.setState(Realm.VOID_SHATTERING, Stage.GRAND_PERFECTION, 0);
+		for (QiElement element : QiElement.five()) {
+			HeavenMethod method = HeavenMethod.of(element, Realm.VOID_SHATTERING);
+			c.heaven().setMethod(method, method.layers(), 0);
+		}
+		CultivationManager.refresh(p);
+		c.setQi(c.maxQi());
+		p.setHealth(p.getMaxHealth());
+		return p;
+	}
+
 	private static Husk mark(ServerLevel level, Vec3 at, List<LivingEntity> spawned) {
 		Husk husk = HeavenSpellTesting.idle(level, EntityType.HUSK, at, 4000, spawned);
 		husk.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.FIRE_RESISTANCE, 20 * 600, 0, false, false));
 		return husk;
 	}
 
-	/** Every spell entity (missiles, fields, moving blocks, golems, tides) round {@code at} discarded. */
+	/** Every spell entity (missiles, fields, moving blocks, golems, tides, the great spells' living shapes) round {@code at} discarded. */
 	private static void sweep(ServerLevel level, Vec3 at, double radius) {
 		for (Entity e : level.getEntities((Entity) null, new AABB(at, at).inflate(radius),
-				e -> e instanceof SpellProjectile || e instanceof SpellField || e instanceof SpellBlock || e instanceof EarthGolem || e instanceof DirtTide)) {
+				e -> e instanceof SpellProjectile || e instanceof SpellField || e instanceof SpellBlock || e instanceof EarthGolem || e instanceof DirtTide
+						|| e instanceof SpellConstruct)) {
 			e.discard();
 		}
 	}
 
-	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE, batch = "element_spells_all", timeoutTicks = 200)
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE, batch = "element_spells_all", timeoutTicks = 900)
 	public void everySpellTakesHold(GameTestHelper helper) {
 		HeavenSpellTesting.Floor floor = HeavenSpellTesting.floor(helper, 14, 14);
 		ServerLevel level = helper.getLevel();
 		List<LivingEntity> spawned = HeavenSpellTesting.spawned();
-		ServerPlayer p = master(helper, floor.centre());
+		ServerPlayer p = grandMaster(helper, floor.centre());
 		Vec3 home = p.position();
 		Husk husk = mark(level, home.add(0, 0, 7), spawned);
 		List<String> refused = new ArrayList<>();
@@ -81,7 +97,9 @@ public class ElementSpellsGameTests implements FabricGameTest {
 				p.setOnGround(true);
 				p.setHealth(p.getMaxHealth());
 				CultivationManager.get(p).setQi(CultivationManager.get(p).maxQi());
-				helper.assertTrue(spell.isKnown(CultivationManager.get(p)), spell.getId() + " is known to a Four Axis master of every element");
+				// An ore in the floor for Mineral Purification to draw out (finding none, it takes no hold and pays nothing).
+				if (spell == Spell.MINERAL_PURIFICATION) level.setBlock(floor.centre().offset(5, -1, -3), Blocks.IRON_ORE.defaultBlockState(), 2);
+				helper.assertTrue(spell.isKnown(CultivationManager.get(p)), spell.getId() + " is known to a Void Shattering master of every element");
 				// Look at the mark; for a spell wanting a surface, at the floor before it.
 				HeavenSpellTesting.lookAt(p, HeavenSpells.middle(husk));
 				boolean paid = HeavenSpellTesting.cast(p, spell);
@@ -98,10 +116,12 @@ public class ElementSpellsGameTests implements FabricGameTest {
 				husk.clearFire();
 			}
 			helper.assertTrue(refused.isEmpty(), "Every element spell takes hold and is paid for (refused: " + refused + ")");
-			helper.succeed();
-		} finally {
+			sweep(level, home, 140);
+			HeavenSpellTesting.succeedOnceHealed(helper, p, spawned, floor);
+		} catch (RuntimeException e) {
 			sweep(level, home, 140);
 			HeavenSpellTesting.cleanUp(p, spawned, floor);
+			throw e;
 		}
 	}
 
@@ -320,7 +340,11 @@ public class ElementSpellsGameTests implements FabricGameTest {
 		ServerPlayer p = master(helper, floor.centre());
 		try {
 			helper.assertTrue(HeavenSpellTesting.cast(p, Spell.PHOENIX_NIRVANA), "Cast");
-			DamageSource death = helper.getLevel().damageSources().genericKill();
+			// What nothing holds off (/kill, old age, one's own core: HeavenPassives#untouchedByWards) it doesn't either, nor is it spent
+			// on it (the bug sweep of 2026-10-23).
+			helper.assertTrue(HeavenSpells.allowDeath(p, helper.getLevel().damageSources().genericKill()) && SpellAuras.has(p, SpellAura.PHOENIX_NIRVANA),
+					"/kill is not undone, and leaves it be");
+			DamageSource death = helper.getLevel().damageSources().generic();
 			helper.assertTrue(!HeavenSpells.allowDeath(p, death) && near(p.getHealth(), p.getMaxHealth()) && !SpellAuras.has(p, SpellAura.PHOENIX_NIRVANA),
 					"The first death is undone, at full health");
 			helper.assertTrue(HeavenSpells.allowDeath(p, death), "...the second is not");

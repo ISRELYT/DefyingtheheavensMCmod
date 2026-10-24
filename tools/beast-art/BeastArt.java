@@ -22,7 +22,8 @@ import java.util.Map;
  * boxes packed onto the texture as they come; a cube may share another's box (a fox's nine tails, alike). The models open in
  * Blockbench (File, Open, a .geo.json as a GeckoLib model) to be tuned there.
  * <p>
- * Run: {@code java BeastArt.java <the mod's src/main/resources/assets/defying-the-heavens>}.
+ * Run: {@code java BeastArt.java <the mod's src/main/resources/assets/defying-the-heavens>}; with {@code bodies} after it, the wild demon
+ * beasts' whole bodies and the demon cores instead (Bodies, Cores).
  */
 public class BeastArt {
 	// --- Colours ---
@@ -103,8 +104,15 @@ public class BeastArt {
 		int bh() { return box(size[1]); }
 		int bd() { return box(size[2]); }
 
-		static int box(double s) { return Math.max(1, (int) Math.ceil(s - 1e-6)); }
+		/**
+		 * A box's side on the texture. GeckoLib maps a box UV face over the floor of the cube's size (BakedModelFactory), so the demon
+		 * beasts' bodies are packed that way ({@link #floorBoxes}); the races' heads and tails were packed rounding up, and are left so.
+		 */
+		static int box(double s) { return Math.max(1, floorBoxes ? (int) Math.floor(s + 1e-6) : (int) Math.ceil(s - 1e-6)); }
 	}
+
+	/** Pack and paint boxes by the floor of their cubes' sizes, as GeckoLib maps them (Bodies). */
+	static boolean floorBoxes;
 
 	static final class Bone {
 		final String name, parent;
@@ -326,12 +334,18 @@ public class BeastArt {
 		ImageIO.write(img, "png", file.toFile());
 	}
 
+	/** {@code java BeastArt.java <assets>} writes the races' and wardens' heads; {@code ... <assets> bodies}, the wild demon beasts and their cores. */
 	public static void main(String[] args) throws Exception {
-		if (args.length != 1) {
-			System.err.println("java BeastArt.java <the mod's src/main/resources/assets/defying-the-heavens>");
+		if (args.length < 1 || args.length > 2 || args.length == 2 && !args[1].equals("bodies")) {
+			System.err.println("java BeastArt.java <the mod's src/main/resources/assets/defying-the-heavens> [bodies]");
 			System.exit(1);
 		}
-		Beasts.writeAll(Path.of(args[0]));
+		if (args.length == 2) {
+			floorBoxes = true;
+			Bodies.writeAll(Path.of(args[0]));
+		} else {
+			Beasts.writeAll(Path.of(args[0]));
+		}
 		System.out.println("written");
 	}
 }

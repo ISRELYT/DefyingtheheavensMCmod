@@ -101,12 +101,15 @@ public class Bloodlines extends SavedData {
 		}
 	}
 
-	/** How many tails {@code id} shows: its realm's for a fox spirit (the higher of its paths), one for any other. */
+	/**
+	 * How many tails {@code id} shows: its realm's for a fox spirit (the higher of its paths), one for any other. By its own record, as
+	 * its blood is its own: in another's body (Possession) it showed that body's realm's tails before the sweep of 2026-10-23.
+	 */
 	public static int tails(MinecraftServer server, UUID id) {
 		if (of(server, id) != Bloodline.FOX) return 1;
 		ServerPlayer player = server.getPlayerList().getPlayer(id);
 		if (player == null) return TOLD_TAILS.getOrDefault(id, 1);
-		PlayerCultivation c = CultivationManager.get(player);
+		PlayerCultivation c = CultivationManager.own(player);
 		if (c.isMortal()) return 1;
 		return Bloodline.tails(Realm.byIndex(TwoPaths.higherRank(c, false) / Stage.values().length));
 	}

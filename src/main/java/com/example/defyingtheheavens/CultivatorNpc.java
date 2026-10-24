@@ -263,6 +263,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		goalSelector.addGoal(0, new CultivatorGoals.BegGoal(this));
 		goalSelector.addGoal(1, new CultivatorGoals.FleeGoal(this));
 		goalSelector.addGoal(2, new CultivatorGoals.CombatGoal(this));
+		goalSelector.addGoal(2, new CultivatorSpells.SpellGoal(this)); // its spells, alongside the fight (the user's ask, 2026-10-24)
 		goalSelector.addGoal(2, new CultivatorGoals.TalkGoal(this));
 		goalSelector.addGoal(3, new CultivatorGoals.JourneyGoal(this));
 		goalSelector.addGoal(3, new CultivatorGoals.SeclusionGoal(this));
@@ -807,12 +808,17 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		setPersistenceRequired();
 	}
 
+	/** The rank it fights at: its own as it can wield it here, or, holding back in a spar (SparSystem), its opponent's realm's. */
+	public int fightingRank() {
+		return sparHoldBack == NO_HOLD_BACK ? sustainedRank() : Math.min(sustainedRank(), Math.max(0, sparHoldBack));
+	}
+
 	/** Strength from realm and stage, as players get it; speed by the square root, since a mob's speed counts twice. */
 	private void refreshStats() {
 		float oldMax = getMaxHealth();
 		float oldHealth = getHealth();
 		// Holding back in a spar (SparSystem), it fights with the strength of its opponent's realm.
-		int rank = sparHoldBack == NO_HOLD_BACK ? sustainedRank() : Math.min(sustainedRank(), Math.max(0, sparHoldBack));
+		int rank = fightingRank();
 		Realm realm = isMortal() ? Realm.QI_REFINING : realmOf(rank);
 		Stage stage = isMortal() ? Stage.EARLY : stageOf(rank);
 		CultivationStats.applyNpc(this, realm, stage, isMortal());
@@ -1233,6 +1239,23 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		return lifecycle == Lifecycle.DEPARTING || lifecycle == Lifecycle.ASCENDING || getTarget() != null && isInCombat();
 	}
 
+	/** About how fast it comes down landing ({@link #tickFlight}: it settles near 5 blocks a second), with a margin. */
+	private static final double DESCENT_PER_SECOND = 4;
+
+	/**
+	 * In a spar, flying with qi for no more than coming down gently from where it is and two seconds over: it comes down then
+	 * (CombatGoal) rather than drop out of the sky as in earnest ({@link #tickQi}). A fall in a friendly bout stops at no line
+	 * (SparSystem#allowDeath stops only the partner's blows there).
+	 */
+	public boolean runningLowAloft() {
+		if (!isQiFlying() || !SparSystem.isSparring(this) || !(level() instanceof ServerLevel level)) return false;
+		double cost = isSwordFlying() ? cultivation.swordFlightCostPerSecond() : cultivation.qiFlightCostPerSecond();
+		double shortfall = cost - cultivation.qiGatherPerSecond();
+		if (shortfall <= 0) return false;
+		int ground = Formations.surface(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, getBlockX(), getBlockZ());
+		return cultivation.getQi() < shortfall * (2 + Math.max(0, getY() - ground) / DESCENT_PER_SECOND);
+	}
+
 	/**
 	 * In the air on qi it goes as fast as its realm lets it walk; on its sword, at the sword's share of its base walking
 	 * speed, the same at every realm (a sword is no faster for a stronger rider, see {@link SwordFlight}).
@@ -1348,8 +1371,9 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 
 	/**
 	 * A player's or NPC's rank as cultivators weigh each other ({@link #MORTAL} for mortals, and for a cultivator hidden behind its
-	 * Concealment Barrier): a player's by either path (TwoPaths#weighedRank, its body's). Creative players keep their rank; who may
-	 * take them for an enemy is decided elsewhere (isEnemy).
+	 * Concealment Barrier): a player's by either path (TwoPaths#weighedRank, its body's); a demon beast's (or any other CultivatorEntity's)
+	 * its own, where before the sweep of 2026-10-23 it was weighed a mortal (a core blast's share, a cultivator holding back from it).
+	 * Creative players keep their rank; who may take them for an enemy is decided elsewhere (isEnemy).
 	 */
 	public static int rankOf(LivingEntity entity) {
 		if (entity instanceof ServerPlayer player) {
@@ -1357,6 +1381,9 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			return c.isMortal() ? MORTAL : TwoPaths.weighedRank(c);
 		}
 		if (entity instanceof CultivatorNpc npc) return npc.isConcealed() ? MORTAL : npc.sustainedRank();
+		if (entity instanceof CultivatorEntity other) {
+			return other.isMortal() || other.isConcealed() ? MORTAL : PlayerCultivation.rank(other.getCultivationRealm(), other.getCultivationStage());
+		}
 		return MORTAL;
 	}
 
@@ -1436,10 +1463,15 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		return other instanceof Mob mob && mob.getTarget() == this;
 	}
 
-	/** {@code player} is a man (no beast's blood: DemonPath#isDemon) on the grounds of its clan; never one of the clan's own players. */
+	/**
+	 * {@code player} is a man (no beast's blood: DemonPath#isDemon) on the grounds of its clan; never one of the clan's own players, nor
+	 * one sparring with one of the clan (or who did a moment ago: SparSystem#sparsWithSect), whom the rest of the clan set on mid-bout
+	 * before the sweep of 2026-10-23.
+	 */
 	private boolean trespassingMan(Player player) {
 		Sect sect = sect();
 		if (sect == null || !sect.isClan() || !(player instanceof ServerPlayer sp) || sect.disciples.containsKey(sp.getUUID())) return false;
+		if (SparSystem.sparsWithSect(sp, sect.id)) return false;
 		return !DemonPath.isDemon(CultivationManager.get(sp)) && sect.dimension == level().dimension() && sect.inTerritory(player.blockPosition());
 	}
 
@@ -1681,12 +1713,18 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		if (isQiFlying()) landing = true;
 	}
 
-	/** While flying: lands when asked to or when nothing is steering it any more; drops out of the sky with no qi left. */
-	private void tickFlight(ServerLevel level) {
+	/**
+	 * While flying: lands when asked to or when nothing is steering it any more; drops out of the sky with no qi left. Package-private
+	 * for the game tests.
+	 */
+	void tickFlight(ServerLevel level) {
 		if (!isQiFlying()) {
 			landing = false;
 			return;
 		}
+		// Borne up, it falls only from where it leaves the air (as vanilla's flying players do). Before 2026-10-24 a gentle landing
+		// struck it with the whole way down: its flight ends a little above the ground.
+		resetFallDistance();
 		// Nothing has steered it for half a second (the goal that took it up has ended): it comes down.
 		if (!landing && tickCount - lastSteered > 10) landing = true;
 		if (landing) {
@@ -1896,11 +1934,13 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 
 	/**
 	 * What it carries falls when it dies: spirit stones by its realm (SpiritStoneItem; a mortal now and then has a Low one or
-	 * two), whatever it won in spars, and now and then the slip of its heaven method.
+	 * two), whatever it won in spars, and now and then the slip of its heaven method. A demon leaves its demon core besides, always
+	 * (DemonCoreItem: its rank's, its race's element), unless it is one of the dead, whose body is long gone.
 	 */
 	@Override
 	protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
 		super.dropCustomDeathLoot(source, looting, recentlyHit);
+		if (isDemon() && !isMortal() && !isGhost()) spawnAtLocation(DemonCoreItem.of(getRank(), DemonPath.element(getBloodline()), getName()));
 		for (ItemStack stack : carriedStones(getRank(), random)) spawnAtLocation(stack);
 		for (ItemStack stack : winnings) spawnAtLocation(stack);
 		winnings.clear();
@@ -1967,13 +2007,28 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		return stones;
 	}
 
-	/** Who answers for its death: the player who struck it, whose arrow or pet did, or who last hurt it before it fell. */
+	/**
+	 * Who answers for its death: the player who struck it, whose arrow or pet did, or who last hurt it before it fell; else the player
+	 * still hunting it ({@link #pursuer}), or the one who last struck it within {@link #STRUCK_MEMORY} (its fall from a knock, its fire,
+	 * its poison come later than vanilla's five seconds: such a death was nobody's before the sweep of 2026-10-23, its sect none the wiser).
+	 */
 	private ServerPlayer killerOf(DamageSource source) {
 		Entity entity = source.getEntity();
 		if (entity instanceof ServerPlayer player) return player;
 		if (entity instanceof OwnableEntity pet && pet.getOwner() instanceof ServerPlayer owner) return owner;
 		if (lastHurtByPlayer instanceof ServerPlayer player && lastHurtByPlayerTime > 0) return player;
-		return getKillCredit() instanceof ServerPlayer player ? player : null;
+		if (getKillCredit() instanceof ServerPlayer player) return player;
+		if (pursuer instanceof ServerPlayer player && pursuerNear()) return player;
+		long now = level().getGameTime(), latest = Long.MIN_VALUE;
+		ServerPlayer struck = null;
+		for (Map.Entry<UUID, Long> blow : struckAt.entrySet()) {
+			if (now - blow.getValue() > STRUCK_MEMORY || blow.getValue() <= latest || level().getServer() == null) continue;
+			ServerPlayer player = level().getServer().getPlayerList().getPlayer(blow.getKey());
+			if (player == null) continue;
+			struck = player;
+			latest = blow.getValue();
+		}
+		return struck;
 	}
 
 	@Override
@@ -1986,8 +2041,19 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			setSuppressing(false);
 			HighRealms.gone(server.getServer(), getUUID());
 		}
-		if (!level().isClientSide) NpcLife.end(this); // a talk or a bout it was in is off
+		if (!level().isClientSide) {
+			NpcLife.end(this); // a talk or a bout it was in is off
+			Spells.forget(getUUID()); // what its spells left lingering ends with it (CultivatorSpells)
+		}
 		super.remove(reason);
+	}
+
+	/** A blow it lands carries what its spells lend its hands (Flame Fist's fire: SpellAuras#onMelee), as a player's does. */
+	@Override
+	public boolean doHurtTarget(net.minecraft.world.entity.Entity target) {
+		boolean hit = super.doHurtTarget(target);
+		if (hit && target instanceof LivingEntity living && !level().isClientSide) SpellAuras.onMelee(this, living);
+		return hit;
 	}
 
 	/**

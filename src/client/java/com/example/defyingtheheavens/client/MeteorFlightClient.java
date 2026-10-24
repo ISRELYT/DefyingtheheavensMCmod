@@ -2,6 +2,7 @@ package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.Ability;
 import com.example.defyingtheheavens.Bulldozer;
+import com.example.defyingtheheavens.Incorporeal;
 import com.example.defyingtheheavens.MeteorFlight;
 import com.example.defyingtheheavens.ModPackets;
 import com.example.defyingtheheavens.PlayerCultivation;
@@ -132,10 +133,11 @@ public final class MeteorFlightClient {
 		Vec3 v = heading.scale(speed);
 		// Never into the void below the world.
 		if (player.getY() + v.y < player.level().getMinBuildHeight() - 2 && v.y < 0) v = new Vec3(v.x, 0, v.z);
-		// Fast with the boost held: the way ahead bulldozed before it's flown. Diving steeply, into the ground too (burrowing), and
-		// at any speed: set off from just over the ground, the ground stopped one before one was ever fast enough to clear it.
+		// Fast with the boost held: the way ahead bulldozed before it's flown (not by one of the dead, who breaks nothing: Incorporeal).
+		// Diving steeply, into the ground too (burrowing), and at any speed: set off from just over the ground, the ground stopped one
+		// before one was ever fast enough to clear it.
 		boolean burrowing = Bulldozer.burrowing(heading);
-		boolean dozing = sprinting && smashes && (speed >= Bulldozer.FROM_SPEED || burrowing);
+		boolean dozing = sprinting && smashes && (speed >= Bulldozer.FROM_SPEED || burrowing) && !Incorporeal.is(player);
 		shownThisTick = 0;
 		Vec3 start = player.position();
 		boolean wasOnGround = player.onGround();

@@ -6,6 +6,9 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 
+import java.util.EnumMap;
+import java.util.Map;
+
 public final class ModEntities {
 	/** Shared, temporary cloud bank above an active cultivator; ordinary entity tracking includes late observers. */
 	public static final EntityType<TribulationCloud> TRIBULATION_CLOUD = Registry.register(BuiltInRegistries.ENTITY_TYPE,
@@ -133,6 +136,19 @@ public final class ModEntities {
 					.updateInterval(1)
 					.build("spell_field"));
 
+	/**
+	 * A great spell's living shape (see {@link SpellConstruct}: a spirit beast, a tree, a seal, a vortex of swords): GeckoLib's, moved
+	 * by its spell every tick and seen from far, since they are vast.
+	 */
+	public static final EntityType<SpellConstruct> SPELL_CONSTRUCT = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("spell_construct"),
+			EntityType.Builder.<SpellConstruct>of(SpellConstruct::new, MobCategory.MISC)
+					.noSave().noSummon().fireImmune()
+					.sized(0.1f, 0.1f)
+					.clientTrackingRange(16)
+					.updateInterval(1)
+					.build("spell_construct"));
+
 	/** A block a spell moves before your eyes (see {@link SpellBlock}): it never moves itself, so it is never updated. */
 	public static final EntityType<SpellBlock> SPELL_BLOCK = Registry.register(BuiltInRegistries.ENTITY_TYPE,
 			DefyingTheHeavens.id("spell_block"),
@@ -181,8 +197,41 @@ public final class ModEntities {
 					.updateInterval(1)
 					.build("void_vestige"));
 
+	/** A demon beast's burning stone or jet of water (see {@link BeastShot}): small and quick, like a snowball. */
+	public static final EntityType<BeastShot> BEAST_SHOT = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("beast_shot"),
+			EntityType.Builder.<BeastShot>of(BeastShot::new, MobCategory.MISC)
+					.noSave().noSummon()
+					.sized(0.3f, 0.3f)
+					.clientTrackingRange(6)
+					.updateInterval(5)
+					.build("beast_shot"));
+
+	/**
+	 * The wild demon beasts (see {@link DemonBeast}), each kind its own type ({@code defying-the-heavens:<kind's id>}), sized as its kind at
+	 * its least rank (DemonBeast#getDimensions grows it with its rank).
+	 */
+	private static final Map<BeastKind, EntityType<DemonBeast>> BEASTS = new EnumMap<>(BeastKind.class);
+
+	static {
+		for (BeastKind kind : BeastKind.values()) {
+			EntityType<DemonBeast> type = Registry.register(BuiltInRegistries.ENTITY_TYPE, DefyingTheHeavens.id(kind.getId()),
+					EntityType.Builder.<DemonBeast>of(DemonBeast::new, MobCategory.MONSTER)
+							.sized(kind.width, kind.height)
+							.clientTrackingRange(10)
+							.build(kind.getId()));
+			DemonBeast.bind(type, kind);
+			BEASTS.put(kind, type);
+		}
+	}
+
+	public static EntityType<DemonBeast> beast(BeastKind kind) {
+		return BEASTS.get(kind);
+	}
+
 	/** Touching this class registers the entity types and their attributes. */
 	public static void register() {
+		for (EntityType<DemonBeast> beast : BEASTS.values()) FabricDefaultAttributeRegistry.register(beast, DemonBeast.createAttributes());
 		FabricDefaultAttributeRegistry.register(VOID_VESTIGE, VoidVestige.createAttributes());
 		FabricDefaultAttributeRegistry.register(CULTIVATOR, CultivatorNpc.createAttributes());
 		FabricDefaultAttributeRegistry.register(GHOST_CULTIVATOR, CultivatorNpc.createAttributes());

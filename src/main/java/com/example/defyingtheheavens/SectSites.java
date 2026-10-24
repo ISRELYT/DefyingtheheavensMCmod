@@ -50,6 +50,8 @@ public class SectSites extends SavedData {
 	/** Ticks between looks; how long a woken site may take to found its sect. */
 	private static final int STEP = 10;
 	private static final long GIVE_UP = 1200;
+	/** A site's heart lived in longer than this (ticks of a player nearby: LevelChunk#getInhabitedTime) with no sect: none is coming. */
+	private static final long LIVED_IN = 600;
 	/**
 	 * A sect founded this close (sideways) to a site's heart is that site's: its core stands there (its start chunk's middle,
 	 * or in the Upper Realm up to 48 blocks off it each way, SectStructure#ISLAND_SEARCH); no two sects' cores are nearer
@@ -148,6 +150,14 @@ public class SectSites extends SavedData {
 			heart = Optional.empty();
 		}
 		if (heart.isEmpty() || foundedNear(level, heart.get())) {
+			data.decide(level.dimension(), answered.region(), answered.clan());
+			return false;
+		}
+		// Its land made and lived in a while already (players were by it: its inhabited time) with no sect there: none will come of it
+		// (the land came before the sect could, or the generator put none there after all). Decided at once, where before the sweep of
+		// 2026-10-23 it was woken and waited on to the end (GIVE_UP), the next site waiting behind it.
+		net.minecraft.world.level.chunk.LevelChunk made = level.getChunkSource().getChunkNow(heart.get().getX() >> 4, heart.get().getZ() >> 4);
+		if (made != null && made.getInhabitedTime() > LIVED_IN) {
 			data.decide(level.dimension(), answered.region(), answered.clan());
 			return false;
 		}

@@ -178,10 +178,27 @@ public final class StorageRings extends SavedData {
 		}
 	}
 
-	/** Whether {@code stack} may go into a ring's space: anything but another Storage Ring (no space folded inside another). */
+	/**
+	 * Whether {@code stack} may go into a ring's space: anything but another Storage Ring (no space folded inside another), nor anything
+	 * carrying one (a shulker box's, a bundle's things: one went in so before the sweep of 2026-10-23).
+	 */
 	public static boolean mayHold(ItemStack stack) {
-		return !(stack.getItem() instanceof StorageRingItem);
+		return !(stack.getItem() instanceof StorageRingItem) && (!stack.hasTag() || !carriesRing(stack.getTag(), 0));
 	}
+
+	/** Whether {@code tag} (an item's, or any part of it) holds a Storage Ring among what it carries, however deep (to a limit). */
+	private static boolean carriesRing(Tag tag, int depth) {
+		if (depth > 12) return false;
+		if (tag instanceof CompoundTag compound) {
+			if (compound.contains("id", Tag.TAG_STRING) && RING_ID.equals(compound.getString("id"))) return true;
+			for (String key : compound.getAllKeys()) if (carriesRing(compound.get(key), depth + 1)) return true;
+		} else if (tag instanceof ListTag list) {
+			for (Tag one : list) if (carriesRing(one, depth + 1)) return true;
+		}
+		return false;
+	}
+
+	private static final String RING_ID = DefyingTheHeavens.MOD_ID + ":storage_ring";
 
 	private final Map<UUID, Space> spaces = new HashMap<>();
 
@@ -325,7 +342,8 @@ public final class StorageRings extends SavedData {
 		Grade next = StorageRingItem.grade(ring).next();
 		if (next == null) return Component.translatable(ModLang.MSG_STORAGE_LAST_GRADE);
 		PlayerCultivation c = CultivationManager.forPlayer(player);
-		if (c.isMortal() || c.getRealm().ordinal() < next.realm().ordinal()) {
+		// Of the realm on any path (TwoPaths#awakens: the heaven path's alone before the sweep of 2026-10-23).
+		if (c.isMortal() || TwoPaths.awakens(c, next.realm(), false) == null) {
 			return Component.translatable(ModLang.MSG_STORAGE_REALM, next.realm().getDisplayName(), next.getDisplayName());
 		}
 		if (!player.getAbilities().instabuild) {

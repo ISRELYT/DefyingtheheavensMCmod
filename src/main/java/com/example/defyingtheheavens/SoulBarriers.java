@@ -45,17 +45,20 @@ final class SoulBarriers {
 				continue;
 			}
 			if (Formations.canBreak(soul, formation)) {
-				if (distance < radius && c.getQi() > 0) {
-					c.setQi(Math.max(0, c.getQi() - c.maxQi() * INSIDE_DRAIN_PER_SECOND / 10));
-				}
+				if (distance < radius) drain(c, INSIDE_DRAIN_PER_SECOND / 10);
 				continue;
 			}
+			Boolean was = sides.get(formation.id);
 			if (Math.abs(distance - radius) > SHELL_BAND) {
-				sides.put(formation.id, distance < radius);
-				continue;
+				// Clearly on one side: noted, unless it was last clearly on the other (across the shell between two looks, faster than
+				// its band: a soul in flight crosses it in two ticks, and passed through so before the sweep of 2026-10-23).
+				if (was == null || was == distance < radius) {
+					sides.put(formation.id, distance < radius);
+					continue;
+				}
 			}
-			// On the shell: back to the side it came from.
-			boolean inside = sides.getOrDefault(formation.id, false);
+			// On the shell, or across it: back to the side it came from.
+			boolean inside = was != null && was;
 			Vec3 out = at.subtract(center);
 			out = out.lengthSqr() < 1.0e-4 ? new Vec3(0, 1, 0) : out.normalize();
 			Vec3 to = center.add(out.scale(inside ? radius - SHELL_BAND - 1 : radius + SHELL_BAND + 1)).subtract(0, 1, 0);
@@ -64,12 +67,22 @@ final class SoulBarriers {
 			Integer last = LAST_BUMP.get(soul.getUUID());
 			if (last == null || now - last > BUMP_COOLDOWN) {
 				LAST_BUMP.put(soul.getUUID(), now);
-				c.setQi(Math.max(0, c.getQi() - c.maxQi() * BUMP_QI));
+				drain(c, BUMP_QI);
 				soul.displayClientMessage(Component.translatable(ModLang.MSG_SOUL_BARRIER), true);
 				soul.serverLevel().playSound(null, soul.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1.0f, 0.5f);
 			}
 		}
 		CultivationManager.markDirty(soul.server);
+	}
+
+	/**
+	 * Takes {@code share} of the soul's own pool, down to nothing: its path's (PlayerCultivation#soulPath), the qi or a ghost path
+	 * soul's ghost qi, which before the sweep of 2026-10-23 paid nothing here (the qi did, though the soul never draws on it).
+	 */
+	private static void drain(PlayerCultivation c, double share) {
+		TwoPaths.Path path = c.soulPath();
+		double pool = TwoPaths.pool(c, path);
+		if (pool > 0) TwoPaths.spend(c, path, Math.min(pool, TwoPaths.poolMax(c, path) * share));
 	}
 
 	static void forget(UUID soul) {

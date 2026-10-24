@@ -324,11 +324,18 @@ public final class CultivatorGoals {
 		}
 
 		private boolean valid(LivingEntity target) {
+			return fights(npc, target);
+		}
+
+		/** Whether {@code npc} fights {@code target} (its target) now. Package-private for the game tests. */
+		static boolean fights(CultivatorNpc npc, LivingEntity target) {
 			if (target == null || !target.isAlive() || target.isRemoved() || target.level() != npc.level()) return false;
 			if (target instanceof Player player && (player.isCreative() || player.isSpectator())) return false;
 			// A soul it can't sense isn't there for it; one hidden inside the body it possesses can't be struck (strike the body).
 			if (!npc.senses(target) || target instanceof Player player && SoulProjection.isSoul(player) && player.isPassenger()) return false;
-			if (npc.isAlly(target) || npc.shouldFlee()) return false;
+			// None of its own, but in a spar (SparSystem): a bout with a fellow disciple is fought as any other. Before 2026-10-24 it
+			// stood there and was beaten, its stake won for nothing.
+			if (npc.isAlly(target) && !SparSystem.areSparring(npc, target) || npc.shouldFlee()) return false;
 			// A leashed member chases only so far past its territory, but anywhere within it: when the whole sect turns out
 			// (SectManager#alert), members come from the far side of the grounds.
 			if (npc.isLeashed()) {
@@ -386,6 +393,8 @@ public final class CultivatorGoals {
 			boolean roofed = !npc.level().canSeeSky(npc.blockPosition().above());
 			if (grounded > 0) grounded--;
 			if (npc.isQiFlying() && roofed && npc.horizontalCollision) grounded = 60;
+			// In a spar it comes down while its qi still bears it, and rests a while before it takes to the air again.
+			if (npc.isQiFlying() && npc.runningLowAloft()) grounded = 200;
 			if (airborne && !npc.isQiFlying() && grounded == 0 && !roofed && npc.canFlySustainably()) npc.setQiFlying(true);
 			if (npc.isQiFlying()) {
 				if (grounded > 0 || !airborne && target.onGround() && distanceSqr < 25) {

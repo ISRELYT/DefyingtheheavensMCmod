@@ -240,9 +240,13 @@ public class VoidVestige extends Monster {
 		setTarget(best);
 	}
 
-	/** Here in space with it, alive, and neither creative nor a spectator. */
+	/**
+	 * Here in space with it, alive, and neither creative nor a spectator, nor a ghost scattered (invulnerable while it reforms: the
+	 * dead are its prey too since 2026-10-24, GhostSystem#reaches).
+	 */
 	private boolean huntable(ServerPlayer player) {
-		return player.isAlive() && !player.isRemoved() && player.level() == level() && !player.isCreative() && !player.isSpectator();
+		return player.isAlive() && !player.isRemoved() && player.level() == level() && !player.isCreative() && !player.isSpectator()
+				&& !player.isInvulnerable();
 	}
 
 	/** Its jaws within reach of {@code target}: its head's reach out from its hitbox. */

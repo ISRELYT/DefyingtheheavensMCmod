@@ -106,6 +106,9 @@ public final class SectMembership {
 	 */
 	public static String refusal(ServerPlayer player, CultivatorNpc npc, Sect sect, Object[] arg) {
 		PlayerCultivation c = CultivationManager.get(player);
+		// A soul in another's body (Possession) joins as no one: it would have joined itself by that body's blood and strength (before
+		// the sweep of 2026-10-23).
+		if (Possession.inhabits(player.getUUID())) return "join.possessed";
 		if (GhostSystem.isGhost(player)) return "join.ghost";
 		// A demon clan takes only the demon races (the user's pick, 2026-10-23: any of them), wary of men.
 		if (sect.isClan() && !DemonPath.isDemon(c)) return "join.human";
@@ -492,6 +495,7 @@ public final class SectMembership {
 			buf.writeBoolean(seat.title().isElderOrAbove());
 			buf.writeVarLong(disciple == null ? 0 : Math.max(0, player.level().getGameTime() - disciple.joined));
 			buf.writeBoolean(seat.inBody());
+			buf.writeBoolean(sect.isClan()); // a demon clan's master its Clan Head (NpcTitle#getDisplayName(boolean))
 			java.util.List<Sect.Member> members = new java.util.ArrayList<>(sect.members.values());
 			members.sort(Sect.SENIORITY);
 			buf.writeVarInt(members.size() + sect.disciples.size());

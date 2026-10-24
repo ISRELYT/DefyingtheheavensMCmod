@@ -243,6 +243,22 @@ public final class Formations {
 		return formation.allows(player) || rankOf(player) >= formation.getRank();
 	}
 
+	/**
+	 * Whether a raised barrier stands between {@code a} and {@code b} (it encloses the one and not the other) that {@code crossing}
+	 * couldn't break or be let through ({@link #canBreak}; a cultivator by its own rank and sect): what it casts reaches no further
+	 * than it could go itself (HeavenSpells#walled). Never for a creative player.
+	 */
+	public static boolean walls(ServerLevel level, BlockPos a, BlockPos b, LivingEntity crossing) {
+		if (crossing instanceof Player player && player.getAbilities().instabuild) return false;
+		for (Formation formation : FormationData.get(level).all()) {
+			if (!formation.isRaised() || formation.encloses(a) == formation.encloses(b)) continue;
+			boolean passes = crossing instanceof Player player ? canBreak(player, formation)
+					: formation.allows(crossing) || CultivatorNpc.rankOf(crossing) >= formation.getRank();
+			if (!passes) return true;
+		}
+		return false;
+	}
+
 	/** Ticks breaking one barrier block takes {@code player}, or -1 if they can't. */
 	public static int breakTicks(Player player, Formation formation) {
 		if (!canBreak(player, formation)) return -1;
@@ -250,13 +266,21 @@ public final class Formations {
 		return Math.max(4, BREAK_TICKS_AT_EQUAL >> Math.min(gap, 5));
 	}
 
-	/** Whether {@code player} may dig the block at {@code pos}: false where a formation's shell runs through the ground. */
+	/** Whether {@code player} may dig the block at {@code pos}: false where a formation's shell runs through the ground (told so). */
 	public static boolean protectsGround(ServerPlayer player, BlockPos pos) {
-		if (player.isCreative()) return false;
-		Formation formation = groundAt(player.serverLevel(), pos);
-		if (formation == null || canBreak(player, formation)) return false;
+		if (!protectsGroundQuietly(player, pos)) return false;
 		player.displayClientMessage(Component.translatable(ModLang.MSG_BARRIER_GROUND), true);
 		return true;
+	}
+
+	/**
+	 * {@link #protectsGround} untold: for what takes many blocks at once (a spell's carving, Meteor Flight's way, a core's crater), which
+	 * told it once a block, hundreds of times a tick.
+	 */
+	public static boolean protectsGroundQuietly(ServerPlayer player, BlockPos pos) {
+		if (player.isCreative()) return false;
+		Formation formation = groundAt(player.serverLevel(), pos);
+		return formation != null && !canBreak(player, formation);
 	}
 
 	/** A player struck a barrier block (whether or not they can break it). Throttled to once a second per player. */
@@ -394,7 +418,10 @@ public final class Formations {
 		if (state.canBeReplaced()) return SectBarrierBlock.holding(held(state.getFluidState()));
 		if (state.getDestroySpeed(level, pos) < 0 || state.getBlock() instanceof NetherPortalBlock || state.getBlock() instanceof EndPortalBlock
 				|| state.getBlock() instanceof EndGatewayBlock) return null;
-		if (isWall(level, pos, state)) return null;
+		// Leaves (and what a tree grows through) are walls that don't last: they decay, and kept in the shell they opened it as they went
+		// (before the sweep of 2026-10-23). They are displaced as any plant is (unless they are the sect's own, below).
+		boolean passing = state.is(net.minecraft.tags.BlockTags.LEAVES) || state.is(net.minecraft.tags.BlockTags.REPLACEABLE_BY_TREES);
+		if (!passing && isWall(level, pos, state)) return null;
 		if (formation.getSect() != null) {
 			Sect sect = SectManager.get(level.getServer(), formation.getSect());
 			if (sect != null && sect.bounds.isInside(pos)) return null; // a pagoda's spire through the dome: the sect's own, kept

@@ -23,9 +23,9 @@ import net.minecraft.server.level.ServerPlayer;
  * /netherworld up (onto the Soul River from its start, going up), /netherworld corruption <percent> (set yin corruption).
  * And for the ghost path and its methods: /method learn <id> [layer] (whether or not it could be taken up yet), /method progress
  * <seconds> (on the ghost path's bar, its methods' layers settling on it too; a stage takes its layers' minutes x 60,
- * GhostMethods#required), /method path <realm 1-6> <stage 1-4> (the ghost path set there, its methods understood as far:
- * GhostMethods#setPath), /method forget <id>; for the heaven methods the same under /heavenmethod (their progress in
- * cultivation, HeavenMethods#layerCost).
+ * GhostMethods#required), /method path <realm> <stage> (the ghost path set there, its methods understood as far:
+ * GhostMethods#setPath; /cultivation set ghost and addcultivation ghost do the same, CultivationCommand), /method forget <id>; for
+ * the heaven methods the same under /heavenmethod (their progress in cultivation, HeavenMethods#layerCost).
  */
 public final class NetherworldCommand {
 	public static void register() {
@@ -87,8 +87,11 @@ public final class NetherworldCommand {
 										.executes(ctx -> forget(ctx.getSource().getPlayerOrException(), method(ctx)))))));
 	}
 
-	/** /method path <realm> <stage>: the ghost path set there (begun, if it wasn't), its stage's cultivation none, its methods understood as far. */
-	private static int path(ServerPlayer p, int rank) {
+	/**
+	 * /method path <realm> <stage> (and /cultivation set ghost, CultivationCommand): the ghost path set there (begun, if it wasn't), its
+	 * stage's cultivation none, its methods understood as far.
+	 */
+	static int path(ServerPlayer p, int rank) {
 		NetherworldState s = CultivationManager.get(p).netherworld();
 		int before = GhostMethods.ghostRank(s);
 		GhostMethods.setPath(s, rank);
@@ -195,13 +198,13 @@ public final class NetherworldCommand {
 	}
 
 	/**
-	 * /method progress <amount>: that many seconds of baseline meditation on the ghost path's bar (to its next bottleneck), the
-	 * methods' layers behind it settling on it too.
+	 * /method progress <amount> (and /cultivation addcultivation ghost, CultivationCommand): that many seconds of baseline meditation
+	 * on the ghost path's bar (to its next bottleneck), the methods' layers behind it settling on it too.
 	 */
-	private static int progress(ServerPlayer p, double amount) {
+	static int progress(ServerPlayer p, double amount) {
 		NetherworldState s = CultivationManager.get(p).netherworld();
 		if (GhostMethods.ghostRank(s) < 0) {
-			p.sendSystemMessage(Component.literal("No ghost path begun: learn a foundation first."));
+			p.sendSystemMessage(Component.literal("No ghost path begun: learn a foundation first (or /cultivation set ghost <realm> <stage>)."));
 			return 0;
 		}
 		int before = GhostMethods.ghostRank(s);

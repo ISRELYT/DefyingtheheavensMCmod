@@ -3,19 +3,26 @@ package com.example.defyingtheheavens;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.Locale;
+
 /**
- * Op-only testing helpers: /cultivation set <realm 1-6> <stage 1-4>, /cultivation addcultivation <amount>, /cultivation setqi
- * <amount> (the qi pool, capped at its maximum), /cultivation lifespan [set <years>] (Lifespan), /cultivation obsession [set <one|none>]
- * (Obsession), /cultivation bloodline [set <race> [colouring] | choose] (Bloodlines). Setting a cultivator back to or below Qi Refining Mid (or mortal) takes back the
- * heavens' leave and Favour, so the Ritual to the Heavens is asked again. Set leaves every heaven method known understood exactly as
- * far as the stage set (HeavenMethods#alignTo), nothing left to settle.
+ * Op-only testing helpers: /cultivation set [heaven|ghost|demon] <realm 1-11> <stage 1-4>, /cultivation addcultivation
+ * [heaven|ghost|demon] <amount> (the heaven path's without a path named; the user's ask, 2026-10-24: every path, not only the
+ * heaven path's), /cultivation setqi <amount> (the qi pool, capped at its maximum), /cultivation lifespan [set <years>] (Lifespan),
+ * /cultivation obsession [set <one|none>] (Obsession), /cultivation bloodline [set <race> [colouring] | choose] (Bloodlines). Setting
+ * a cultivator back to or below Qi Refining Mid (or mortal) takes back the heavens' leave and Favour, so the Ritual to the Heavens is
+ * asked again. Set leaves every heaven method known understood exactly as far as the stage set (HeavenMethods#alignTo), nothing left
+ * to settle; the ghost path's set leaves its methods so (GhostMethods#setPath, as /method path), and opens a mortal's meridians, whose
+ * ghost path would lie dormant; the Demon Path is a demon race's alone (DemonPath#rank).
  */
 public final class CultivationCommand {
 	/**
@@ -33,21 +40,7 @@ public final class CultivationCommand {
 		CommandRegistrationCallback.EVENT.register((dispatcher, buildContext, selection) ->
 				dispatcher.register(Commands.literal("cultivation")
 						.requires(src -> src.hasPermission(2))
-						.then(Commands.literal("set")
-								.then(Commands.argument("realm", IntegerArgumentType.integer(1, Realm.values().length))
-										.then(Commands.argument("stage", IntegerArgumentType.integer(1, Stage.values().length))
-												.executes(ctx -> {
-													ServerPlayer p = ctx.getSource().getPlayerOrException();
-													Realm r = Realm.byIndex(IntegerArgumentType.getInteger(ctx, "realm") - 1);
-													Stage s = Stage.byIndex(IntegerArgumentType.getInteger(ctx, "stage") - 1);
-													PlayerCultivation c = CultivationManager.get(p);
-													set(c, r, s);
-													CultivationManager.refresh(p);
-													HeavenMethods.afterLayer(p); // the methods' layers as the stage's
-													ctx.getSource().sendSuccess(() -> Component.literal("Cultivation set.").append(" ")
-															.append(r.getDisplayName()).append(" - ").append(s.getDisplayName()), false);
-													return 1;
-												}))))
+						.then(setCommand())
 						.then(Commands.literal("mortal")
 								.executes(ctx -> {
 									// Back to the start of the path (for testing the Marrow Cleansing Elixir).
@@ -72,14 +65,7 @@ public final class CultivationCommand {
 											ctx.getSource().sendSuccess(() -> Component.literal("Tempering added."), false);
 											return 1;
 										})))
-						.then(Commands.literal("addcultivation")
-								.then(Commands.argument("amount", DoubleArgumentType.doubleArg(0))
-										.executes(ctx -> {
-											ServerPlayer p = ctx.getSource().getPlayerOrException();
-											CultivationManager.get(p).addCultivation(DoubleArgumentType.getDouble(ctx, "amount"));
-											CultivationManager.refresh(p);
-											return 1;
-										})))
+						.then(addCultivationCommand())
 						.then(Commands.literal("setqi")
 								.then(Commands.argument("amount", DoubleArgumentType.doubleArg(0))
 										.executes(ctx -> {
@@ -125,6 +111,117 @@ public final class CultivationCommand {
 												}))))
 						.then(obsession())
 						.then(bloodline())));
+	}
+
+	private static final SimpleCommandExceptionType NO_DEMON_PATH = new SimpleCommandExceptionType(Component.literal(
+			"Only the demon races walk the Demon Path: give yourself a beast's blood first (/cultivation bloodline set <race>)."));
+
+	/** A path's word in /cultivation set and addcultivation: heaven, ghost, demon. */
+	private static String word(TwoPaths.Path path) {
+		return path.name().toLowerCase(Locale.ROOT);
+	}
+
+	/** /cultivation set [heaven|ghost|demon] <realm> <stage>: that path there (the heaven path without one named). */
+	private static LiteralArgumentBuilder<CommandSourceStack> setCommand() {
+		LiteralArgumentBuilder<CommandSourceStack> set = Commands.literal("set").then(realmAndStage(TwoPaths.Path.HEAVEN));
+		for (TwoPaths.Path path : TwoPaths.Path.values()) set.then(Commands.literal(word(path)).then(realmAndStage(path)));
+		return set;
+	}
+
+	private static RequiredArgumentBuilder<CommandSourceStack, Integer> realmAndStage(TwoPaths.Path path) {
+		return Commands.argument("realm", IntegerArgumentType.integer(1, Realm.values().length))
+				.then(Commands.argument("stage", IntegerArgumentType.integer(1, Stage.values().length))
+						.executes(ctx -> setPath(ctx.getSource(), path, Realm.byIndex(IntegerArgumentType.getInteger(ctx, "realm") - 1),
+								Stage.byIndex(IntegerArgumentType.getInteger(ctx, "stage") - 1))));
+	}
+
+	/**
+	 * {@code path} set at {@code realm} and {@code stage}, its stage's cultivation none: the heaven path as {@link #set}; the ghost path
+	 * as /method path (NetherworldCommand#path), a mortal's meridians opened first (its ghost path would lie dormant: TwoPaths); the
+	 * Demon Path a demon's alone, its inheritance's spells for the stages risen through put on the wheel (DemonPath#afterRank).
+	 */
+	private static int setPath(CommandSourceStack source, TwoPaths.Path path, Realm realm, Stage stage) throws CommandSyntaxException {
+		ServerPlayer p = source.getPlayerOrException();
+		PlayerCultivation c = CultivationManager.get(p);
+		int rank = PlayerCultivation.rank(realm, stage);
+		switch (path) {
+			case HEAVEN -> {
+				set(c, realm, stage);
+				CultivationManager.refresh(p);
+				HeavenMethods.afterLayer(p); // the methods' layers as the stage's
+				source.sendSuccess(() -> Component.literal("Cultivation set.").append(" ")
+						.append(realm.getDisplayName()).append(" - ").append(stage.getDisplayName()), false);
+			}
+			case GHOST -> {
+				boolean mortal = c.isMortal();
+				if (mortal) c.awaken(0);
+				NetherworldCommand.path(p, rank);
+				if (mortal) {
+					CultivationManager.refresh(p);
+					source.sendSuccess(() -> Component.literal("A mortal's ghost path lies dormant: your meridians were opened (heaven path at Qi Refining Early)."), false);
+				}
+			}
+			case DEMON -> {
+				int before = DemonPath.rank(c);
+				if (before < 0) throw NO_DEMON_PATH.create();
+				c.demon().set(rank, 0);
+				if (rank > before) DemonPath.afterRank(p, before); // its inheritance's spells for the stages risen through
+				else {
+					CultivationManager.markDirty(p.server);
+					CultivationManager.refresh(p);
+					Spells.sync(p);
+				}
+				source.sendSuccess(() -> Component.literal("Demon Path set: ").append(DemonPath.rankName(rank)), false);
+			}
+		}
+		return 1;
+	}
+
+	/** /cultivation addcultivation [heaven|ghost|demon] <amount>: that much on the path's bar (the heaven path's without one named). */
+	private static LiteralArgumentBuilder<CommandSourceStack> addCultivationCommand() {
+		LiteralArgumentBuilder<CommandSourceStack> add = Commands.literal("addcultivation").then(amount(TwoPaths.Path.HEAVEN));
+		for (TwoPaths.Path path : TwoPaths.Path.values()) add.then(Commands.literal(word(path)).then(amount(path)));
+		return add;
+	}
+
+	private static RequiredArgumentBuilder<CommandSourceStack, Double> amount(TwoPaths.Path path) {
+		return Commands.argument("amount", DoubleArgumentType.doubleArg(0))
+				.executes(ctx -> addCultivation(ctx.getSource(), path, DoubleArgumentType.getDouble(ctx, "amount")));
+	}
+
+	/**
+	 * {@code amount} on {@code path}'s bar, its stages stepping on by themselves to a bottleneck: the heaven path's (nothing for a mortal,
+	 * or one the land holds below its realm: PlayerCultivation#addCultivation); the ghost path's in seconds of baseline meditation, its
+	 * methods' layers settling on it too, as /method progress (NetherworldCommand#progress); the Demon Path's, a demon's alone.
+	 */
+	private static int addCultivation(CommandSourceStack source, TwoPaths.Path path, double amount) throws CommandSyntaxException {
+		ServerPlayer p = source.getPlayerOrException();
+		PlayerCultivation c = CultivationManager.get(p);
+		switch (path) {
+			case HEAVEN -> {
+				c.addCultivation(amount);
+				CultivationManager.refresh(p);
+				source.sendSuccess(() -> c.isMortal() ? Component.literal("A mortal's meridians hold no cultivation.")
+						: Component.literal("Heaven path: ").append(PlayerCultivation.rankName(c.getRealm(), c.getStage()))
+						.append(", " + Math.round(c.getCultivation()) + " / " + Math.round(c.cultivationRequired()) + "."), false);
+			}
+			case GHOST -> {
+				return NetherworldCommand.progress(p, amount);
+			}
+			case DEMON -> {
+				int before = DemonPath.rank(c);
+				if (before < 0) throw NO_DEMON_PATH.create();
+				if (DemonPath.addCultivation(c, amount) > 0) DemonPath.afterRank(p, before);
+				else {
+					CultivationManager.markDirty(p.server);
+					CultivationManager.sync(p);
+				}
+				int rank = DemonPath.rank(c);
+				source.sendSuccess(() -> Component.literal("Demon Path: ").append(DemonPath.rankName(rank))
+						.append(", " + Math.round(c.demon().cultivation()) + " / " + Math.round(DemonPath.required(rank)) + "."), false);
+			}
+		}
+		return 1;
 	}
 
 	/**

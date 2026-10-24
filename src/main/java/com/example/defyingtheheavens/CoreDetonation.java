@@ -65,6 +65,12 @@ public final class CoreDetonation {
 
 	private static final Map<UUID, Long> ASKED = new HashMap<>();
 	private static final Map<UUID, Integer> CHARGING = new HashMap<>();
+	/**
+	 * The record whose core is breaking (CultivationManager#get as it broke: a possessed body's, the player's own). Should the player be in
+	 * another body when it bursts (thrown out of the one it held, or come back to its own), it fizzles ({@link #fizzle}): before the sweep
+	 * of 2026-10-23 the core of whatever body they then stood in burst, their own lost for a body's they had left.
+	 */
+	private static final Map<UUID, PlayerCultivation> BROKEN_IN = new HashMap<>();
 
 	public static boolean isCharging(UUID id) { return CHARGING.containsKey(id); }
 
@@ -105,6 +111,7 @@ public final class CoreDetonation {
 	static void begin(ServerPlayer player) {
 		CHARGING.put(player.getUUID(), CHARGE_TICKS);
 		PlayerCultivation c = CultivationManager.get(player);
+		BROKEN_IN.put(player.getUUID(), c);
 		c.setAbilityEnabled(Ability.CORE_DETONATION, true);
 		CultivationManager.sync(player);
 		MeditationManager.stop(player, true);
@@ -125,6 +132,7 @@ public final class CoreDetonation {
 			ServerPlayer p = server.getPlayerList().getPlayer(entry.getKey());
 			if (p == null || !p.isAlive()) {
 				it.remove();
+				BROKEN_IN.remove(entry.getKey());
 				continue;
 			}
 			int left = entry.getValue() - 1;
@@ -132,9 +140,25 @@ public final class CoreDetonation {
 			swell(p, CHARGE_TICKS - left);
 			if (left <= 0) {
 				it.remove();
-				detonate(p);
+				burst(p, BROKEN_IN.remove(entry.getKey()));
 			}
 		}
+	}
+
+	/** The charge done: the core that broke bursts, if {@code p} still stands in the body it broke in ({@link #BROKEN_IN}). */
+	private static void burst(ServerPlayer p, PlayerCultivation brokenIn) {
+		if (brokenIn == null || brokenIn == CultivationManager.get(p)) detonate(p);
+		else fizzle(p, brokenIn);
+	}
+
+	/** The core broke in a body {@code p} no longer stands in: nothing bursts, and its switch is off again on both records. */
+	private static void fizzle(ServerPlayer p, PlayerCultivation brokenIn) {
+		brokenIn.setAbilityEnabled(Ability.CORE_DETONATION, false);
+		CultivationManager.get(p).setAbilityEnabled(Ability.CORE_DETONATION, false);
+		CultivationManager.markDirty(p.server);
+		CultivationManager.sync(p);
+		p.displayClientMessage(Component.translatable(ModLang.MSG_CORE_FIZZLED).withStyle(ChatFormatting.GRAY), true);
+		p.level().playSound(null, p.blockPosition(), SoundEvents.BEACON_DEACTIVATE, SoundSource.PLAYERS, 1.5f, 0.5f);
 	}
 
 	/** The core's light swelling in the cultivator's chest, qi rushing inward; they can barely move. */
@@ -198,7 +222,8 @@ public final class CoreDetonation {
 
 	/**
 	 * What the blast does to one {@code distance} from its heart, from a cultivator of {@code realm}-{@code stage} ({@code radius}
-	 * its reach), to a victim whose realm index is {@code victimRealm} (-1 for a mortal or a beast): before armour.
+	 * its reach), to a victim whose realm index is {@code victimRealm} (-1 for a mortal, or a creature of no realm; a demon beast stands
+	 * at its own, CultivatorNpc#rankOf): before armour.
 	 */
 	public static double harm(Realm realm, Stage stage, double radius, double distance, int victimRealm) {
 		if (distance >= radius) return 0;
@@ -290,13 +315,15 @@ public final class CoreDetonation {
 	/** A player leaving while their core breaks doesn't escape it: it bursts as they go. */
 	public static void onDisconnect(ServerPlayer player) {
 		ASKED.remove(player.getUUID());
-		if (CHARGING.remove(player.getUUID()) != null && player.isAlive()) detonate(player);
+		PlayerCultivation brokenIn = BROKEN_IN.remove(player.getUUID());
+		if (CHARGING.remove(player.getUUID()) != null && player.isAlive()) burst(player, brokenIn);
 	}
 
 	/** Server stop: nothing held. */
 	public static void clear() {
 		ASKED.clear();
 		CHARGING.clear();
+		BROKEN_IN.clear();
 	}
 
 	private CoreDetonation() {}

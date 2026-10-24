@@ -1,0 +1,4 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {"layer0": "defying-the-heavens:item/demon_core_3", "layer1": "defying-the-heavens:item/demon_core_3_glow"}
+}

@@ -275,6 +275,9 @@ public final class RealmSuppressSystem {
 		if (!target.isAlive() || target.isRemoved() || target instanceof ArmorStand || target.getUUID().equals(leaving)) return false;
 		if (suppressor instanceof ServerPlayer player && released(player, target)) return false; // let up off (Release pressure)
 		if (target instanceof ServerPlayer player) return !player.isSpectator() && !player.isCreative() && !Incorporeal.untouchable(player);
+		// A player's body left sitting or standing (a projected soul's, a clone's or the main body's, an Inner Realm meditator's) isn't
+		// a mortal's to press: weighed as one, its health was halved, and its owner came back into it so (the sweep of 2026-10-23).
+		if (target instanceof SoulBodyEntity || target instanceof CloneBodyEntity || target instanceof InnerBodyEntity) return false;
 		// Map makers' invulnerable NPCs stay as they are, and a cultivator's own companions are spared.
 		if (target.isInvulnerable()) return false;
 		return !(target instanceof OwnableEntity pet) || !suppressor.getUUID().equals(pet.getOwnerUUID());

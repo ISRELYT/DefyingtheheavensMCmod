@@ -160,9 +160,31 @@ public final class Physiques {
 		if (server.getTickCount() % 20 != 0) return;
 		for (ServerPlayer player : server.getPlayerList().getPlayers()) {
 			PlayerCultivation c = CultivationManager.get(player);
-			if (c.hasPhysique(Physique.JADE_POISON_BODY) && c.getMedicinalQi() > 0 && c.refineAtOnce()) CultivationManager.refresh(player);
+			if (c.hasPhysique(Physique.JADE_POISON_BODY) && c.getMedicinalQi() > 0 && refinedAtOnce(player, c, c::refineAtOnce)) CultivationManager.refresh(player);
 			if (c.hasPhysique(Physique.NINE_YANG_BODY) && player.isOnFire()) player.clearFire();
 		}
+	}
+
+	/**
+	 * {@code refining} (a pill or a fruit taken, PlayerCultivation#takeMedicine, or its qi waiting behind a bottleneck refined,
+	 * #refineAtOnce): what a Jade Poison Body refines at once costs its years as meditation's refining would (Lifespan#seclude: by its
+	 * talent, at the meditation's own pace whatever pace is set, saved only by the qi where it stands). The user's pick, 2026-10-24: it
+	 * cost none before, pills the one road up that spent no years. Returns what {@code refining} did.
+	 */
+	public static <T> T refinedAtOnce(ServerPlayer player, PlayerCultivation c, java.util.function.Supplier<T> refining) {
+		int stages = Stage.values().length;
+		boolean jade = c.hasPhysique(Physique.JADE_POISON_BODY) && !c.isMortal();
+		int rankBefore = PlayerCultivation.rank(c.getRealm(), c.getStage());
+		double before = c.getCultivation();
+		T result = refining.get();
+		if (!jade) return result;
+		int rankAfter = PlayerCultivation.rank(c.getRealm(), c.getStage());
+		double after = c.getCultivation();
+		if (rankAfter < rankBefore || rankAfter == rankBefore && after <= before) return result;
+		Lifespan.seclude(player, rankBefore, before, rankAfter, after,
+				rank -> PlayerCultivation.required(Realm.byIndex(rank / stages), Stage.byIndex(rank % stages)),
+				Lifespan.saving(1, 1, Lifespan.placeSaving(c), 1), 1.0 / Lifespan.pacePrice(CultivationManager.own(player).meditationSpeed()));
+		return result;
 	}
 
 	// --- The gifts that live here ---
@@ -196,6 +218,7 @@ public final class Physiques {
 	public static void onHurt(LivingEntity victim, DamageSource source, float lost) {
 		if (lost > 0) RaceGifts.onHurt(victim); // a lizard's Shed Skin
 		if (lost <= 0 || !(source.getEntity() instanceof ServerPlayer attacker) || attacker == victim || !attacker.isAlive()) return;
+		RaceGifts.breakIllusion(attacker); // a fox's Illusion broken by any harm it does
 		if (CultivationManager.get(attacker).hasPhysique(Physique.BLOOD_DEMON_BODY)) attacker.heal(lost * BLOOD_SHARE);
 	}
 
@@ -260,13 +283,19 @@ public final class Physiques {
 
 	/**
 	 * A player slain by a Soul-Devouring Body loses a stage of its cultivation (the user's ask, 2026-10-20, so a friend killed again and
-	 * again to feed one pays for each): on the higher of its paths, the one devoured (the ghost path's if it stands higher, else the
-	 * heaven path's), its cultivation there lost with the methods' layers past it, as a failed tribulation's fall. Told so.
+	 * again to feed one pays for each): on the highest of its paths, the one devoured (the Demon Path's if it stands highest, the ghost
+	 * path's if it stands higher than the heaven path's, else the heaven path's), its cultivation there lost with the methods' layers past
+	 * it, as a failed tribulation's fall. Told so. (A demon's Demon Path, highest, cost it its heaven path's stage instead before the sweep
+	 * of 2026-10-23.)
 	 */
 	static void devoured(ServerPlayer slain, PlayerCultivation v, ServerPlayer killer) {
 		if (v.isMortal()) return;
 		Component fallen;
-		if (TwoPaths.ghostRank(v, false) > TwoPaths.heavenRank(v, false)) {
+		int demon = TwoPaths.demonRank(v, false);
+		if (demon >= 0 && demon > TwoPaths.ghostRank(v, false) && demon > TwoPaths.heavenRank(v, false)) {
+			DemonPath.fallOneStage(v);
+			fallen = DemonPath.rankName(DemonPath.rank(v));
+		} else if (TwoPaths.ghostRank(v, false) > TwoPaths.heavenRank(v, false)) {
 			GhostMethods.fallOneStage(v.netherworld());
 			fallen = GhostMethods.rankName(TwoPaths.ghostRank(v, false));
 		} else {

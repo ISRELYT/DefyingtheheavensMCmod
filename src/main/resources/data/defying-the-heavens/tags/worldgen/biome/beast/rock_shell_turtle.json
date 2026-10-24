@@ -1,0 +1,24 @@
+{
+  "replace": false,
+  "values": [
+    "#minecraft:is_beach",
+    "#minecraft:is_river",
+    "minecraft:stony_shore",
+    "minecraft:swamp",
+    "minecraft:mangrove_swamp",
+    {"id": "terralith:alpha_islands", "required": false},
+    {"id": "terralith:alpha_islands_winter", "required": false},
+    {"id": "terralith:basalt_cliffs", "required": false},
+    {"id": "terralith:caldera", "required": false},
+    {"id": "terralith:desert_oasis", "required": false},
+    {"id": "terralith:frozen_cliffs", "required": false},
+    {"id": "terralith:granite_cliffs", "required": false},
+    {"id": "terralith:gravel_beach", "required": false},
+    {"id": "terralith:ice_marsh", "required": false},
+    {"id": "terralith:mirage_isles", "required": false},
+    {"id": "terralith:orchid_swamp", "required": false},
+    {"id": "terralith:red_oasis", "required": false},
+    {"id": "terralith:warm_river", "required": false},
+    {"id": "terralith:white_cliffs", "required": false}
+  ]
+}

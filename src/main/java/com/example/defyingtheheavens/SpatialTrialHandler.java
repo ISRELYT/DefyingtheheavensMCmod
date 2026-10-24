@@ -261,6 +261,11 @@ public final class SpatialTrialHandler {
 			p.displayClientMessage(Component.translatable(ModLang.MSG_SOUL_BUSY), true);
 			return;
 		}
+		// Space locked round it (Earth Veins Lock the Void): it won't tear.
+		if (EarthSpells.spaceLocked(p)) {
+			p.displayClientMessage(Component.translatable(ModLang.MSG_SPACE_LOCKED), true);
+			return;
+		}
 		// Paid from the pool of the path that awakened the tear (TwoPaths#awakens): the qi, or the ghost qi. A soul in a body that can't
 		// tear space tears it with its own, from its own pool (Possession#soulTears).
 		PlayerCultivation payer = Ability.SPATIAL_TEAR.awakenedBy(c) == null && Possession.inhabits(p.getUUID()) ? CultivationManager.own(p) : c;
@@ -711,9 +716,11 @@ public final class SpatialTrialHandler {
 		for (ServerPlayer p : server.getPlayerList().getPlayers()) {
 			PlayerCultivation c = CultivationManager.get(p);
 			if (!c.isFallProtected()) continue;
-			// (Coming down onto a planet out of space is protected the same way: AstralRealm.)
+			// (Coming down onto a planet out of space is protected the same way, and into the Upper Realm's sky out of it: AstralRealm,
+			// whose protection there was cleared the moment it was given before the sweep of 2026-10-23.)
 			boolean landed = (p.onGround() && p.fallDistance <= 0) || p.isInWater() || p.getAbilities().flying || !p.isAlive()
-					|| p.level().dimension() != Level.OVERWORLD && !ModDimensions.isPlanetSurface(p.level().dimension());
+					|| p.level().dimension() != Level.OVERWORLD && p.level().dimension() != ModDimensions.UPPER_REALM
+					&& !ModDimensions.isPlanetSurface(p.level().dimension());
 			if (landed) {
 				c.setFallProtected(false);
 				CultivationManager.markDirty(server);

@@ -75,6 +75,12 @@ import java.util.UUID;
 public final class Wishes {
 	/** A Fortune wish's share of the settlement's fortune: this many Mid Spirit Stones and up to {@link #SHARE_MORE} more. */
 	public static final int SHARE_STONES = 3, SHARE_MORE = 2;
+	/**
+	 * Fortune shared and not yet absorbed ({@link #owedFortune}) lapses over this many game days. While it and what one has absorbed
+	 * would already complete the Axis of Fortune, no settler shares more ({@link #give}): the user's pick, 2026-10-24, its wishes were an
+	 * endless spring of spirit stones to one who never absorbed them. Lapsing, a share lost or spent is given again in time.
+	 */
+	public static final int FORTUNE_LAPSE_DAYS = 10;
 	/** The dialogue's reply ids for a wish's own choices: grant it ({@code +0}), take no years ({@code +1}) ... all they can spare ({@code +4}). */
 	public static final int ACTIONS = 200;
 	/** How long after a wish is granted the settler has another. */
@@ -414,16 +420,42 @@ public final class Wishes {
 		if (player.getInventory().countItem(item) < count && !player.getAbilities().instabuild) {
 			return Component.translatable(ModLang.WISH_GIVE_LACK, count, item.getDescription());
 		}
+		// No more of their fortune than the axis still wants, what one carries unabsorbed counted (FORTUNE_LAPSE_DAYS): their
+		// goods are left them, and the wish open.
+		PlayerCultivation own = CultivationManager.own(player);
+		long day = player.level().getGameTime() / HeavenRitual.DAY;
+		double owed = owedFortune(own, day);
+		double room = FourAxis.need(own, FourAxis.Axis.FORTUNE) - FourAxis.progress(own, FourAxis.Axis.FORTUNE) - owed;
+		int mid = SpiritStoneItem.Grade.MID.value();
+		if (room <= 0) return Component.translatable(ModLang.WISH_GIVE_OWED);
 		if (!player.getAbilities().instabuild) {
 			player.getInventory().clearOrCountMatchingItems(stack -> stack.is(item), count, player.inventoryMenu.getCraftSlots());
 		}
 		// A share of their fortune in turn: spirit stones that fill the giver's Axis of Fortune as they absorb them.
-		int stones = SHARE_STONES + npc.getRandom().nextInt(SHARE_MORE + 1);
+		int stones = Math.min(SHARE_STONES + npc.getRandom().nextInt(SHARE_MORE + 1), Math.max(1, (int) Math.ceil(room / mid)));
 		ItemStack share = SpiritStoneItem.fortune(new ItemStack(ModItems.MID_SPIRIT_STONE, stones), player);
 		player.getInventory().placeItemBackInInventory(share); // what doesn't fit at their feet
+		own.setFortuneOwed(owed + stones * mid, day);
+		CultivationManager.markDirty(player.server);
 		npc.changeRegard(player, 20);
 		done(npc, wish);
 		return Component.translatable(ModLang.WISH_GIVEN, stones);
+	}
+
+	/**
+	 * The settlements' fortune {@code c} has been given and not yet absorbed, in Low stones' worth, on game day {@code day}: what was
+	 * owed, less a {@link #FORTUNE_LAPSE_DAYS}th of the Axis of Fortune's need for each day since it was last reckoned.
+	 */
+	public static double owedFortune(PlayerCultivation c, long day) {
+		long days = Math.max(0, day - c.fortuneOwedDay());
+		return Math.max(0, c.fortuneOwed() - days * FourAxis.need(c, FourAxis.Axis.FORTUNE) / (double) FORTUNE_LAPSE_DAYS);
+	}
+
+	/** {@code player} absorbed {@code worth} of a settlement's fortune toward their axis (SpiritStoneItem): owed the less. */
+	public static void absorbedFortune(ServerPlayer player, int worth) {
+		PlayerCultivation own = CultivationManager.own(player);
+		long day = player.level().getGameTime() / HeavenRitual.DAY;
+		own.setFortuneOwed(owedFortune(own, day) - worth, day);
 	}
 
 	// --- Merit ---

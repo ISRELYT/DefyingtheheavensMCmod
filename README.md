@@ -145,7 +145,8 @@ jade at the sides, the pearl in the middle). Right-click to open it; sneak-right
 **Storage Ring key (B)** opens the one worn (or else the first one carried). Its screen, in lacquer and gold: what it holds
 as a grid (one well a kind, how many beneath it, shortened to k/M/B), a search line, how full it is, and the pack below.
 Click a kind to take a stack (right-click: half; shift-click: straight into the pack); click with something carried to put
-it in (right-click: one); shift-click the pack to put a stack in. Rings can't go inside rings, and the open ring can't be moved.
+it in (right-click: one); shift-click the pack to put a stack in. Rings can't go inside rings, nor anything carrying one (a
+shulker box, a bundle: the bug sweep of 2026-10-23), and the open ring can't be moved. Refining wants the realm on any path.
 A ring lying on the ground never despawns and is proof against fire, cactus and blasts (the void still takes it).
 
 What it holds lives with the world, keyed by the ring: the ring goes where it goes (a fallen cultivator's ring is the
@@ -226,7 +227,8 @@ cherry-wood trunk with green leaves and peach blossoms, about 6 blocks tall.
   and grows 10 years a day like a fruit, and grows fruit under the tree's leaves: up to 3 at a time, one about every
   5 minutes while there is room. New fruit start at 1 year and age normally, so a tree's fruit is never older than the tree.
 - **Pouring qi into the tree:** sneak and right-click the heart with an empty hand. Only a cultivator with a Golden Core
-  (Core Formation or higher) can do it. It spends as much of your qi as buys whole years, and ages the tree and every
+  (Core Formation or higher, on any path, paid from that path's pool: the ghost path's ghost qi) can do it. It spends as much of
+  your qi as buys whole years, and ages the tree and every
   fruit on it by that many years. Each year costs more the older the tree is: about 20 qi for a young tree, 180 at 750
   years, 800 at 5,000 years and 1,300 at 9,000. As a guide, taking a tree from nothing to 1,000 years takes about 4 hours
   of feeding at Core Formation, 1 hour at Nascent Soul and 25 minutes at Heavenly Being; 10,000 years takes about 9 hours
@@ -393,29 +395,45 @@ demons you have a demon core already however as humans you need to form one afte
 slips teach demons if they are studying heaven path."
 
 - **A demon is born with its demon core:** its Demon Path begun at Qi Refining Early, told in chat and the journal. The core
-  opens its meridians, so a demon is never a mortal: its heaven path starts at Qi Refining Early too (but Shattered Meridians,
-  which no core mends). A human has no Demon Path until it receives a beast's bloodline (the awakening comes later).
+  opens its meridians, so a demon is never a mortal: its heaven path starts at Qi Refining Early too. No demon keeps Shattered
+  Meridians: one that rolled them as it joined (before its blood was chosen) is given another physique as its core opens them
+  (the bug sweep of 2026-10-23: such a demon stayed a mortal with a core it could never cultivate; existing ones are mended as
+  they next join). A life spent whole is born again with its core at once, and a body freed of a possessing soul gets the core
+  it was born to meanwhile. A human has no Demon Path until it receives a beast's bloodline (the awakening comes later).
 - **One qi a meditation:** the Path button on the Cultivation tab steps through the paths one has (Heaven, Demon, Ghost) and
   meditation fills the one drawn in. The tab shows a column per path (the drawn one marked), side by side.
 - **Its pace:** its realm's and stage's own rate, as the heaven path's, by the race's pace (a dragon's 0.8, the slowest). The
-  years it costs, its bottlenecks and seclusion as the heaven path's; each stage's gate is **its own tribulation** (the
-  Breakthrough button with the Demon Path drawn in), its strikes 1.25 times as hard. Failing it costs a stage of the Demon
-  Path (none for one whose physique holds its stage).
+  years it costs (dense qi weighed against its own realm's place), its bottlenecks and seclusion as the heaven path's; each
+  stage's gate is **its own tribulation** (the Breakthrough button with the Demon Path drawn in), its strikes 1.25 times as
+  hard, Name Your Obsession before its Heavenly Being as on the other paths, and a Heavenly Thunder Body's drunk lightning
+  banked into its new stage. Failing it costs a stage of the Demon Path (none for one whose physique holds its stage). A
+  surge's reward (wisps, a sequence, a heart demon) counts at the drawn path's rate, the ghost path's too; the heart demon
+  comes from Nascent Soul on any path, once in five minutes however often one logs in again.
 - **What it teaches:** no methods. Its blood teaches the spells of its element as the Demon Path reaches each one's realm (onto
   the spell wheel): **Tiger Metal, Lizard Earth, Fox Fire, Dragon Wood**. The heaven path's jade slips and methods teach a demon
-  as they teach a man, for the heaven path.
+  as they teach a man, for the heaven path. **With the heaven path beside it**, it opens the **spells of both paths**, one a
+  realm from Foundation Building, heaven's gold light and a demon's crimson qi as one (since 2026-10-24; see The two paths).
 - **Its body:** where the Demon Path stands above the heaven path the body takes its strength from it, 1.2 times; the paths'
   harmony from the two highest. Its qi pool is shared: the larger of the heaven path's and 0.85 of the Demon Path's realm's. A
   demon lives **half again as long**. The realm's abilities (Qi Flight and the rest) come from whichever path reaches the realm.
 - **The races' gifts**, whatever path they walk (`RaceGifts`):
-  - **Tiger:** its own blows 1.15 times as hard; it sees in the dark. From Core Formation, **Tiger's Roar** (ability wheel): all
-    within 10 blocks two stages or more below it weakened and slowed for 5 s (10% of its qi, every 30 s).
+  - **Tiger:** its own blows of the hand 1.15 times as hard (not its spells, a flight's smash or a core's blast); it sees in the
+    dark. From Core Formation, **Tiger's Roar** (ability wheel): all within 10 blocks two stages or more below it weakened and
+    slowed for 5 s (10% of its qi, every 30 s).
   - **Lizard:** venomous blows (poison 5 s, stronger from Core Formation and again from Heavenly Being); it swims fast and
     breathes underwater; **Shed Skin**: brought below a quarter of its health, it heals to half (once in ten minutes).
-  - **Fox:** Charm (NPCs think 10 the better of it); its tails. From Core Formation, **Illusion** (ability wheel): unseen for
-    6 s, broken by a blow of its own (10% of its qi, every 45 s).
+  - **Fox:** Charm (NPCs think 10 the better of it); its tails (by its own realm, in another's body too). From Core Formation,
+    **Illusion** (ability wheel): unseen for 6 s, broken by a blow of its own, any harm it does (an arrow, a spell) or a spell it
+    casts (10% of its qi, every 45 s); a logout ends it.
   - **Dragon:** Qi Flight from Foundation Building (at Core Formation's cost); 1.2 times the health; **Dragon's Might**: those
     within 8 blocks two realms or more below it are slowed while near; the slowest Demon Path.
+  - The roar and the might weigh a demon beast by its own rank, and spare what a spell spares (allies, pets, sect fellows,
+    players one may not harm, bodies left sitting) and souls and the dead; the acts aren't a soul's out of its body nor a ruled
+    ghost's. Their cooldowns outlast a logout (the bug sweep of 2026-10-23).
+
+Op: `/cultivation set demon <realm> <stage>` sets it there (its blood's spells for the stages risen through onto the wheel), and
+`/cultivation addcultivation demon <amount>` adds to its bar (stepping on to the next bottleneck); a human has none, so both refuse
+until it has a beast's blood (`/cultivation bloodline set <race>`).
 
 Not yet: the Demon Path's tribulation wears the heaven path's look. Code: `DemonState` (saved in the record as "Demon"),
 `DemonPath`, `RaceGifts`, the Path switch in `TwoPaths`, `MeditationManager#demonPath`, `TribulationManager#startDemon`; tests in
@@ -435,6 +453,11 @@ way.
   deserts, badlands and savannas; **Fox** the birch woods, cherry groves and snowy plains and taigas; **Dragon** the highlands
   (meadows, windswept hills and forests, groves). In the Upper Realm a quarter of the sects' cells are clans' instead, of any
   race, a dragon's two times in five. They come into being unseen near players, the spawn and the rift, as sects do.
+  **With Terralith** (the user's ask, 2026-10-23), 60 of its 85 surface biomes are a race's too, by the same rule: Tiger its
+  jungles and conifer forests (the Siberian taiga and grove, the shield, lush valley); Lizard its deserts, oases, mesas,
+  savannas, shrublands and the orchid swamp; Fox its birch, sakura, lavender and moonlight woods and its snowy woods and
+  shrublands; Dragon its highlands, misty and cloud mountains, windswept spires and plateaus. Its cliffs, peaks, volcanoes,
+  sky islands, isles, beach, river and wastes are no race's. They are optional entries: without Terralith nothing changes.
 - **Their dens** (the user's pick: wilder dens, a layout of each race's own), hollow mounds and caves on level ground, along
   trails, among the land's trees and undergrowth, with the core on its plaza in the middle:
   - **Tiger:** boulder mounds of mossy stone; the Clan Head's cave hall at the back (fires, bones, furs); the elders' smaller
@@ -448,9 +471,12 @@ way.
     disciples' mats across the floor, the head's floor raised at the back, the hoard (gold, raw gold, amethyst, chests, pedestals)
     in an alcove, the elders' ledges up the walls; rock spires and a pool before it.
 - **Men** (the user's pick: wary): a clan thinks 20 the less of a man, 10 the more of another demon, 20 the more of its own race
-  (`Regard#bloodShift`; demon rogues too). A man on a clan's grounds is set upon; off them he is let be unless he provokes it.
-  A clan takes no man ("You smell of men..."), so its barrier never opens to one as its guest.
-- **Joining** (the user's pick: any demon): as a sect, by asking an elder; one of the clan's own race needs no trial.
+  (`Regard#bloodShift`; demon rogues too). A man on a clan's grounds is set upon (not while he spars with one of them, or just
+  after); off them he is let be unless he provokes it. A clan takes no man ("You smell of men..."), so its barrier never opens
+  to one as its guest.
+- **Joining** (the user's pick: any demon): as a sect, by asking an elder; one of the clan's own race needs no trial. No soul
+  joins in another's body ("There is another soul behind those eyes..."), a sect of men neither. The Sect tab and `/sect info`
+  name a clan's master its Clan Head. Clans keep 10 chunks from villages, as sects do.
 - **Cultivators from below:** a demon ascended to the Upper Realm joins a clan, of its own race if one will have it; a man, a
   sect of men.
 - **Demon rogues:** one wandering cultivator in eight is a demon of the race whose land it is in (any race in the Upper Realm).
@@ -458,6 +484,52 @@ way.
 Code: `DenStructure` (the den's plan, its sites), `DenPieces` (the dens drawn), `SectPalette#ofRace`, `Sect#race`,
 `CultivatorNpc#setRace` (synced, saved "Race"), `SectNames#clan`, `SectSites` (clans' sites too), data
 `worldgen/structure/demon_clan*.json`, `structure_set/demon_clans*.json`, `tags/worldgen/biome/clan/*`; tests in `ClanGameTests`.
+
+### Wild demon beasts and demon cores
+
+**Wild demon beasts** (the user's ask, 2026-10-23): beasts in their animal forms, with no mind yet (mobs), each with a rank on the
+cultivation scale from Qi Refining Early up to **Core Formation Grand Perfection**, as strong as a cultivator of that rank (its
+kind's health and armour on top) and the larger the higher it stands (a twelfth for each stage above its kind's least). A
+consciousness domain senses its realm; Realm Suppress weighs it as a cultivator's. Sixteen kinds, each with its own animated model
+(the user's pick: own models), in three tiers:
+
+| Tier | Ranks | Kinds (signature move) |
+|---|---|---|
+| Common | QR Early..GP | Iron-Hide Boar (charge), Shadow Wolf (packs; a quarter harder at night), Jade Viper (venom), Rock-Shell Turtle (draws into its shell), Wind Hawk (swoops), Fire Monkey (throws burning stones, in troops) |
+| Uncommon | QR Late..FB GP | Bloodfang Tiger (pounce), Frost Ape (ice slam: slows, freezes), Earthquake Bear (ground pound: throws all near up and back), Iron-Jaw Crocodile (holds, drags under in water), Lightning Antelope (spark charge), Ember Fox (fire breath) |
+| Rare | FB Late..CF GP | Golden-Winged Roc (dive with a gust), Jade-Scaled Python (coils round its prey and crushes), Horned Thunder Rhino (stunning charge), Flood Dragon (water serpent: jets of water) |
+
+- **Temper** (the user's pick: territorial): most go for players and cultivators who come near (14 blocks); the turtle and the
+  antelope only fight back. None goes for one a realm or more (four stages) above it. Only the hunters keep a player from sleep.
+- **Where:** they turn up round players by day and night, 24-64 blocks off and out of sight, in their kinds' lands (biome tags
+  `beast/<id>`: e.g. tigers in jungles, savannas and dark forests; frost apes in the snows; flood dragons in oceans and rivers,
+  in water deep enough), at most 6 round a player and 80 in a world, never within a sect's or clan's barrier or close to its
+  grounds, and not in peace. The rare are rare (tier weights 60/30/10); in the Upper Realm they come far oftener (20/40/40) and
+  stand higher. Gamerule `demonBeastsSpawn` (on) turns them off, and so does the world's own `doMobSpawning`. The caps hold for
+  each of a pack. They wander off when no one is near, as monsters do. One brought into the world some other way with no rank
+  (a command, another mod) is given one at once, whole at it.
+- **Their moves** reach only what they see (no slam, breath or gust through a wall), throw the heavy the less by their knockback
+  resistance, and never touch souls, the dead, spectators or the invulnerable; a roc's gust comes only with a dive that lands;
+  a python's coil lets go of what is no longer its prey and puts it back only where there is room, never through a wall; a
+  wolf pack turns only on what it may attack (the bug sweep of 2026-10-23).
+  **With Terralith** (the user's ask, 2026-10-23) every one of its 85 surface biomes is some beasts' land, by its climate and
+  look (tigers and wolves in the Siberian taiga, crocodiles and turtles at the oases, hawks and rocs over the sky islands, ember
+  foxes and fire monkeys on the volcanoes...), as optional entries: without Terralith nothing changes.
+  (`BeastGameTests#terralithsLandsHaveTheirBeastsAndClans` holds the list to Terralith 2.5.4's real biomes.)
+- **Demon cores** (`DemonCoreItem`): one item, its realm, stage and element (the beast's, or the race's) and what it was taken from
+  on it; it looks its realm (five looks, Qi Refining to Heavenly Being and beyond, larger and brighter, its light its element's
+  colour). No use yet: it is to be essential to crafting and artifact forging. Who leaves one (the user's picks: rises with rank,
+  slain by a player): a wild beast a third of the time at Qi Refining, two times in three at Foundation Building, always at Core
+  Formation; a demon cultivator (clan member or rogue) always, of its rank (above Core Formation too); a demon player only when
+  slain by another player (the killing blow's, or the kill's credit: struck by them and finished by a fall), never by another
+  mod's machine (a FakePlayer), and they lose nothing else by it.
+- Besides its core a beast leaves its kind's remains (hide, meat, bones, feathers, scales, blaze powder, prismarine).
+
+Code: `BeastKind` (the kinds, tiers, signature moves, lands), `DemonBeast` (the mob: rank, strength, size, temper, drops),
+`DemonBeastGoals` (moves and targets), `BeastShot` (stones and water jets), `BeastSpawner`, `DemonCoreItem`; client
+`BeastModels` (renderer, code-driven animation: gaits, head turning, tails, winding serpents, wings, acts); art from
+`tools/beast-art` (`java BeastArt.java <assets> bodies`: `Bodies` for the models, textures and glow masks, `Cores` for the core
+icons and models); data `tags/worldgen/biome/beast/*`; tests in `BeastGameTests`.
 
 ## Physiques
 
@@ -491,7 +563,7 @@ paths on top of the body's own, Low x1, Mid x1.1, High x1.2, Supreme x1.35, Immo
 | Fallen True Immortal | Immortal | 0.6 | Any element; both paths five times as fast; a method's new layers need no settling |
 | Ghost Devil Body | Immortal | 0.6 | The ghost path twice as fast; a Ghost King's form of its own anywhere from the start (held to its ghost path's might while shown); a Ghost King when dead; learning a ghost foundation of Core Formation or deeper takes the ghost path straight to that realm's Early |
 | Heaven-Defying Body | Immortal | 0.5 | **The heavens can't strike it down**: a tribulation's killing strike leaves it one heart, and the tribulation fails (the dead don't scatter for it). **No failed tribulation costs it a stage** (the user's, 2026-10-20): struck down, fled or killed by something else, it keeps its stage, its cultivation and any breakthrough pill taken, and may face the heavens again at once. The lifespan tribulation (Lifespan) is another thing: it dies to that as anyone does, and its life is ended. No Ritual to the Heavens wanted. Heaven methods 0.75 times as fast, and the righteous think 15 less of it |
-| Primordial Chaos Body | Immortal | 0.4 | Meditation feeds **both paths at once**, each at its full pace (the living, the ghost path begun); no element barred; its spells (the heaven methods' qi, the ghost path's harm) strike a quarter harder. The heavens hate it: every tribulation strikes half as many times again (rounded up: Core Formation's 6 become 9, Four Axis's 100 become 150), at its realm's pace, so it takes the longer; its lifespan tribulation strikes half as often again |
+| Primordial Chaos Body | Immortal | 0.4 | Meditation feeds **both paths at once**, each at its full pace (the living, the ghost path begun); no element barred; its spells (the heaven methods' qi, both paths' heaven-and-demon qi, the ghost path's harm) strike a quarter harder. The heavens hate it: every tribulation strikes half as many times again (rounded up: Core Formation's 6 become 9, Four Axis's 100 become 150), at its realm's pace, so it takes the longer; its lifespan tribulation strikes half as often again |
 | Soul-Devouring Body | Immortal | 0.4 | Every cultivator it slays, NPC or player, gives it a tenth of what the victim's stage takes, on the path it cultivates (as far as fits before a bottleneck); a player it slays loses a stage of their own, on their higher path (the user's ask, 2026-10-20: a friend killed again and again to feed one pays for every time); each righteous or neutral one drags its alignment 10 toward the devilish; the righteous think 20 less of it |
 | Heavenly Thunder Body | Immortal | 0.3 | A tribulation's lightning feeds it: no harm, the qi pool filled, and the strikes bank up to 60% of the new stage's cultivation for the breakthrough. The lifespan tribulation's it drinks whole only up to half its power (cultivation into its bar), less and less after: at the last it is too much even for this body |
 | Eternal Reincarnation Body | Immortal | 0.1 | **A Low grade's talent and pace** (x1, no edge) for all its grade, but reborn (a life spent, a soul scattered; a Rebirth Pill has no hold on it, below) it **keeps this body and all its cultivation** (the user's ask, 2026-10-22: "you can reach it if you work hard and you dont lose stuff"): each path's realm, stage and progress, every method as deep as it was, the stat points, the axes of virtue and the obsession, Heaven's Favour, a breakthrough pill taken, its alignment, its abilities and wheels; only the life is new (16, its realm's years ahead of it). A Low talent that keeps everything reaches True Immortal in some 60 lives with nothing saving its years, 4 with all of it (it was set back to half its realm until then, which a Low talent never outgrew: `PlayerCultivation#carryOver`); the rarest, with the next |
@@ -724,7 +796,10 @@ virtue, Enlightenment (each axis holds its own stage's breakthrough). The rest o
 Heaven methods), the ghost path to True Immortal (Ghost methods), tribulations of 200 to 3,200 strikes (Tribulations), the years
 (Lifespan: a True Immortal's without end; the talent race's shares, above), their few cultivators (Sects and cultivators), the
 Netherworld's yin borne twice as long each realm, the Inner Realm's sky turning to the void's violet and then to gold, the
-Quasi- names ("Quasi-Dao Integration"; only past True Immortal Grand Perfection "beyond"). No new spells or abilities yet.
+Quasi- names ("Quasi-Dao Integration"; only past True Immortal Grand Perfection "beyond"). Dao Integration has its own spells
+(2026-10-24: the five elements' guardian beasts and the realm's methods' arts, below, Heaven spells: Dao Integration), and so does
+Void Shattering (2026-10-24: space torn open and what comes through it, Heaven spells: Void Shattering); the realms after it none
+yet, nor new abilities.
 
 **The top-left corner** (the user's asks, 2026-10-22, to pictures of theirs, in the mod's own style): with bodies of thousands of
 hearts, vanilla's hearts at the bottom are held to **one row of ten** (`client/mixin/GuiHeartsMixin`: each heart a tenth of the
@@ -882,7 +957,11 @@ take, the less they think of you (taking none is remembered warmly, and counts f
 **The Axis of Fortune's stones.** A settlement's share of its fortune is marked as shared with you (its tooltip says so).
 Absorbed by you, by holding use or by meditating it away, while you stand at the Axis of Fortune, each counts its worth (a
 Mid-grade stone 9), even with your qi pool full (the stone's qi goes where there is room). Stones of no wish, or a share given to
-someone else, fill no one's axis; crafted into other grades they lose the mark.
+someone else, fill no one's axis; crafted into other grades they lose the mark. **No more is shared than the axis still wants**
+(the user's pick, 2026-10-24: wishes were an endless spring of stones): a share is cut to what is left of the axis' need, less
+what you already carry unabsorbed, and while you carry enough to complete it a settler won't take your goods ("Take it into
+yourself first"). What you carry is forgotten a tenth of the axis' need a day (`Wishes#owedFortune`), so stones lost or given away
+never bar you for good.
 
 **The Axis of Merit's threats** (`Wishes.Foe`; each settler says which preys on them):
 
@@ -1013,8 +1092,8 @@ Humble (0-9 points) +0%, Modest (10-19) +10%, Grand (20-29) +20%, Magnificent (3
 The heaven methods are the living's techniques, cultivated on the qi of the five elements (wood, water, fire, earth and
 metal, the motes Qi Sense shows). Your cultivation is **its own bar**, as it always was: the methods speed it, bring spells
 and passives as it climbs, and open the way into new realms. There are **fifty-five**: one of each element for each realm, Qi
-Refining to True Immortal (the twenty-five of the realms after Four Axis since 2026-10-22, the user's ask: their methods now, their
-own spells still to come). Each has its own layers and a passive that grows with them, and teaches its element's **spells** of
+Refining to True Immortal (the twenty-five of the realms after Four Axis since 2026-10-22, the user's ask: their methods then;
+Dao Integration's and Void Shattering's own spells since 2026-10-24, the realms after them still to come). Each has its own layers and a passive that grows with them, and teaches its element's **spells** of
 its realm and every realm before it. The dead can't take one up (their meridians belong to the ghost path now), nor a mortal,
 nor one whose roots won't take its element (see Physiques).
 
@@ -1236,7 +1315,7 @@ water puts out what burns.
 | Element | Spell (layer) | What it does |
 |---|---|---|
 | Fire | **Nine Suns Descend** (48) | Nine suns fall out of the sky, one after another, onto where you look and round it, up to 64 blocks: each bursts for 150 fire harm 7 blocks round, burning for 6 s, and blows a scorched crater 9 blocks round out of the ground: together they leave the land a burning field of craters 19 blocks round. |
-| Fire | **Phoenix Nirvana** (52) | For 60 s the phoenix's fire waits in you: if you would die, you rise again instead at full health, harmful effects burnt away, in a burst of flame that strikes everyone but your allies within 10 blocks for 200 fire harm. Once. |
+| Fire | **Phoenix Nirvana** (52) | For 60 s the phoenix's fire waits in you: if you would die, you rise again instead at full health, harmful effects burnt away, in a burst of flame that strikes everyone but your allies within 10 blocks for 200 fire harm. Once. A tribulation's killing strike it doesn't hold off. |
 | Wood | **Myriad Vine Binding** (48) | Vines burst up and seize as many as 12 foes within 40 blocks of where you look, up to 64 blocks: each is held fast for 5 s and takes 22 wood harm a second. |
 | Wood | **World Tree** (52) | The World Tree grows out of the ground where you look (or before you), its roots heaving the land open in twelve fissures out to 40 blocks, and towers over all for 12 s. Its vines reach from its boughs for every being but you within 32 blocks of its trunk (your pets spared), lift them into its branches and hold them there, drinking 10 of their health a second into you. |
 | Earth | **Earthen Titan** (48) | Raises an earth titan three times a golem's size beside you for 60 s: it flies, keeps by you and fights for you, 400 health and 80 earth harm a blow, its fist striking the ground round its mark too. One at a time. |
@@ -1246,9 +1325,98 @@ water puts out what burns.
 | Metal | **Heaven-Severing Sword** (48) | A sword of light as long as a tower forms in your hand and you swing it level across your front: a giant crescent of sword light some 110 blocks across leaves its edge and flies out level from your chest the way you face, 120 blocks, faster than anything can flee it: nothing stops it. It cuts through whatever its blade passes through, 5 blocks thick at its middle and thinner toward its tips: hills and mountains are sliced through (their tops left standing above the cut), trees felled, whatever is built in its way cut in two, and the land at its far end is cut in the crescent's curve. Every being its blade passes through takes 300 metal harm and is hurled ahead of it. |
 | Metal | **Four Swords Array** (52) | Four giant swords plant themselves at the corners of a square 32 blocks across round where you look, up to 48 blocks, each driven deep into the ground in a crater 7 blocks round: for 8 s every foe inside is held in by the walls of light between them and takes 80 metal harm a second. |
 
+**Dao Integration** (2026-10-24, the user's ask: the five elements' guardian beasts at layer 57, the realm's methods' own arts at 61)
+
+| Element | Spell (layer) | What it does |
+|---|---|---|
+| Wood | **Azure Dragon** (57) | The Azure Dragon of the east, a dragon of living wood with jade light in its grain, bursts out of the ground where you look, up to 82 blocks, and coils up into the sky, 56 blocks high. Everything within 18 blocks of where it rises takes 480 wood harm and is caught in its coils, carried up with it and held there for 3 s. The land it bursts from is torn open in fourteen fissures out to 51 blocks. |
+| Wood | **Myriad Woods Return to the Dao** (61) | A spirit tree of jade light grows where you stand and holds the land 41 blocks round for 15 s: every foe in it is rooted and drained of 40 health a second, all of it shared out as healing to you and your own within the woods. |
+| Fire | **Vermilion Bird's Descent** (57) | The Vermilion Bird of the south, a bird of living flame, its wings 53 blocks across, stoops out of the sky behind you and sweeps low along your look for 154 blocks, over the hills in its way: everything in its 20-block path takes 450 fire harm and burns for 8 s, and the land beneath it is scorched into a burning trench. |
+| Fire | **One Flame Burns the Heavens** (61) | A seed of white flame flies from your hand to where you look, up to 82 blocks, and blooms into a pillar of fire 10 blocks round that rises to the clouds, 118 blocks, for 6 s: everything in it takes 120 fire harm a second and burns (a water ward of a lower realm only halves it), and the ground under it melts into a glassy pit 10 blocks round. |
+| Earth | **Qilin Tramples the Land** (57) | A qilin of rock, molten gold in its cracks, rears beside you and stamps, then gallops out along your look for 128 blocks, over the land: every stride cracks a crater in it, and everything it tramples takes 480 earth harm and is thrown high. |
+| Earth | **Seal of Ten Thousand Mountains** (61) | An imperial seal of carved stone as great as a hill falls out of the sky onto where you look, up to 82 blocks: 550 earth harm to everything within 18 blocks, held pressed to the ground for 3 s, and the land 41 blocks across pressed down 4 blocks, split by twelve fissures out to 40. The seal stands there a while, then fades. |
+| Water | **Black Tortoise Bastion** (57) | The Black Tortoise of the north, black water under a dome of warding light, rises round you, its serpent a stream coiled about its shell, and keeps by you for 12 s: you and your own within 10 blocks of you take 40% less harm, and fire's not at all (a fire spell of a deeper realm still breaks half through), and its serpent strikes a foe within 20 blocks every second for 200 water harm, throwing it back. A water ward. |
+| Water | **Hundred Rivers Converge** (61) | A hundred streams pour together into a great whirlpool where you look, up to 82 blocks, for 5 s: every foe within 31 blocks is dragged into it and held, taking 90 water harm a second. When it bursts it flings them out, and leaves the ground crushed into a basin 23 blocks round with a lake in it. |
+| Metal | **White Tiger's Pounce** (57) | The White Tiger of the west, made of steel and sword light, leaps from you onto where you look, up to 82 blocks: 500 metal harm to everything within 10 blocks where it lands. Then its claws rake out ahead of it: four gouges 102 blocks long are cut through the land, and everything in them takes 300 metal harm. |
+| Metal | **Myriad Swords Return to One** (61) | Ten thousand swords gather in a turning vortex high over where you look, up to 82 blocks, and fuse into one colossal sword 53 blocks long that falls: 600 metal harm to everything within 15 blocks, a cross of slots 60 blocks out each way and a pit 19 deep where it is driven in. It stands there a while, then fades. |
+
+**Void Shattering** (2026-10-24, the user's ask: space torn open and what comes through it, at layers 66 and 70; Jianmu Pierces the
+Heavens, a tree, became Spring Thunder of the Azure Emperor, two spells already growing one)
+
+| Element | Spell (layer) | What it does |
+|---|---|---|
+| Wood | **Spring Thunder of the Azure Emperor** (66) | A storm cloud of jade, the thunder trigram ☳ burning under it, gathers 40 blocks over where you look, up to 118 blocks, and calls spring thunder down in six volleys a second apart: every foe within 26 blocks of the spot is struck by a bolt of jade lightning for 220 wood harm and rooted where it stands, and two more bolts strike the land in each volley, each leaving a little crater. |
+| Wood | **Void Withering** (70) | Space tears open in a slash across the sky 33 blocks over where you look, up to 118 blocks, and once it is open the roots of the Void-Rooted Divine Tree spill down out of it. For 8 s they reach out and drink: a root lashes down to each foe within 37 blocks (eight at most at once), coils round it and hauls it 9 blocks up into the air (a great beast is only held where it stands), and every foe within reach loses 200 health a second, weakened and slowed, all of it shared out as healing to you and your own within reach; the land under them withers outward from their heart (grass to coarse dirt, plants dead). Then they let go (what they held lands unharmed by the fall) and draw back up into the rift. |
+| Fire | **Golden Crow Descends** (66) | The sky tears open 61 blocks over where you look, up to 118 blocks, and the Golden Crow, the three-legged crow that carries the sun, made of the sun's own fire, bursts out of it and dives: everything within 22 blocks of where it strikes takes 1,600 fire harm and burns for 10 s, and the land melts into a glassy crater 13 blocks round, burning 26 round. |
+| Fire | **Sun Pulled Through the Void** (70) | Space tears open in a slash across the sky over where you look, up to 118 blocks, and a sun is dragged out of it, swelling as it comes, down clear of it to hang 29 blocks over the land; the rift shrinks away behind it. It hangs there 5 s: everything within 41 blocks beneath it takes 100 fire harm a second and burns, and the land scorches. Then it collapses and bursts: 1,200 fire harm to everything within 26 blocks, thrown out and burning, and a glassy crater 17 blocks round and 9 deep. |
+| Earth | **Buzhou Falls** (66) | The sky tears open 70 blocks over where you look, up to 118 blocks, and the broken pillar of Mount Buzhou, that once held up heaven, falls out of it, 59 blocks long: everything within 22 blocks takes 1,600 earth harm and is pinned to the ground for 2 s, the land is smashed into a crater 17 blocks round and 13 deep, and fourteen fissures split it out to 70. The pillar stands in it 5 s, then fades. |
+| Earth | **Earth Veins Lock the Void** (70) | The earth itself heaves up round you: nine ribs of rough rock burst out of the land and bend in to meet over you in a dome 26 blocks round, the earth's molten gold showing in their cracks, boulders torn up drifting inside it, the earth trigram ☷ burning under its keystone, and for 6 s space inside it is locked: every foe in it, or that comes in, is held where it stands (it can't walk, fly or be thrown out), crushed for 200 earth harm a second, and can't step through space (Nine Nether Step, a Spatial Tear). Then the veins sink back, and the land is left as it was. |
+| Water | **Weak Water from the Void** (66) | Space tears open 41 blocks over where you look, up to 118 blocks, and the Weak Water, that bears nothing up, not even a feather, pours out of it onto the land for 6 s: everything within 26 blocks of where it falls sinks (nothing flies in it, the dead neither), is slowed, has its fires put out, and takes 160 water harm a second; the land under it sinks into a basin 18 blocks round with a lake in it. |
+| Water | **Kun Rises from the Northern Abyss** (70) | The land where you look, up to 118 blocks, opens onto the northern abyss, 41 blocks across, and the Kun, the great fish of the north made of the abyss's black water, breaches out of it and leaps 59 blocks high across your sight: everything within 22 blocks takes 1,500 water harm and is thrown high; as it dives back in, 500 more, and the land there is crushed into a basin 18 blocks round with a lake in it. |
+| Metal | **Void-Severing Sword Light** (66) | A sword of light thrusts out of your hands along your look, 147 blocks in a third of a second, through everything, and cleaves the land under it into a chasm in the shape of the rift it leaves: pointed at both ends, some 13 blocks across and 17 deep at its middle, deepest along its middle, its sides and floor ragged (and a slot through whatever stands on its line). Every being on its line or down in the chasm takes 1,500 metal harm and is hurled on along it. Behind it space stays cut open for 3 s, and whoever stands in the cut, on the line or down in the chasm, takes 400 more a second. |
+| Metal | **Ten-Direction Sword Prison** (70) | Space tears open in ten places round where you look, up to 118 blocks: out of eight rifts in a ring 41 blocks up, great swords plunge into the land 13 blocks round the spot (walls of sword light between them, a crater at each), and for 6 s every foe inside is held in and takes 150 metal harm a second. Then the last two swords, out of a rift high over its heart and one torn in the ground beneath it, meet in its heart: 1,000 metal harm to everything inside, and a pit 7 blocks round where they met. |
+
+**The great spells' living shapes** (the user's ask: "use geckolib for animations and also use unique and well-crafted detailed
+models"). Each of Dao Integration's and Void Shattering's spells comes as a living shape of its own, a GeckoLib entity (`SpellConstruct`,
+its kind one of thirty: Dao Integration's seventeen, the dragon, the spirit tree, the bird, the flame's seed and its pillar, the qilin,
+the seal, the tortoise, the whirlpool, the tiger, the vortex of swords and the colossal sword, the ghost foundation's procession and gate
+of the dead, the Heaven-Demon Avatar of both paths and its two hands, heaven's palm and the demon's claw; Void Shattering's thirteen, the
+jade storm cloud, the void tree's roots, the Golden Crow, the sun, Buzhou's broken pillar in its chains, the dome of the earth's rock,
+the Weak Water's fall, the Kun, the sword of light, the sword prison, the Nine Nethers' rings of ghost fire, the Naihe Bridge's spans, and
+the Heaven-Demon fist), drawn see-through and full bright with its glow (`SpellConstructRenderer`,
+GeckoLib's `AutoGlowingGeoLayer`). Its spell moves and turns it tick by tick (on every watcher's screen) and calls its moves: the
+dragon's roar, the bird's stoop and flare, the seed's bloom, the pillar's eruption, the qilin's rearing, the seal's stamp (its face's
+four characters of seal script spreading over the ground round it), the serpent's strike, the whirlpool's burst, the tiger's pounce
+and its claw, the swords' fusing, the gate's slam, the avatar's two strikes; the cloud's flash at each volley, the roots drawing back,
+the crow's strike, the sun's collapse, the pillar's impact, the veins sinking, the water drying up, the prison's last two swords
+meeting, the Nethers' sealing, the fist's impact. No glyph drawn on any of them makes a swastika
+(`Fire#glyph` draws another in its place). A shape forms in its first pose and fades in; a spell ended lets its shape fade out over half a
+second (`SpellConstruct#dissolve`), and the flame's seed and the vortex of swords fade into the pillar and the sword they become.
+Every move and enter keys each bone its shape's loop moves (what it leaves out goes on with the loop's own motion) and ends where the
+loop begins, so nothing snaps from one to the next; checked in game frame by frame, every bone logged (2026-10-24). They are never
+saved. The five spirit beasts are made of their elements (the user's ask: "made out of the element they are cast from rather than
+looking like actual animals"): the dragon of living wood, the bird of flame, the qilin of rock and molten gold, the tortoise of black
+water under its dome of light, the tiger of steel and sword-light; the true beasts they first were are kept for later in
+`tools/spell-art/stored` (`java SpellArt.java --stored <dir>` writes them again; their files go back into the assets as they are). The
+models, their textures and
+animations are written by code (`tools/spell-art`, run with JDK 22 or later: `java SpellArt.java <assets> [ids]`, and
+`java Preview.java <assets> <out dir> <id>` to draw what it wrote), as the demon beasts' are (`tools/beast-art`); a model's every face
+is painted at its own density, so a thin feather or flame takes texture only on its two broad sides. Their icons too
+(`java Icons.java <assets>`).
+
+**Tears in space** (Void Shattering's, the user's ask: "make sure ... the rifts and tears/cracks in space looks cool"). What comes
+through space comes through a tear in it: a `SpellConstruct` with no model, drawn by the client's own hand (`RiftRenderer`, as a
+Heavenly Being's Spatial Tear is, but greater; its size its length in blocks). Its rim is ragged and crackling, white-hot at its very
+edge, glowing the colour of what comes through it (`SpellConstruct#tint`: the sun's gold for the crow and the sun, the earth's amber
+for Buzhou, the Weak Water's pale blue, the northern abyss's deep blue, sword light's white, ghost fire's teal, gold for the Void
+Shatter; the void's own violet for the void tree's roots), and haloed; within it is the void, black, a nebula of its colour turning
+slowly round its heart, stars twinkling, motes of light drawn in; round it space is cracked like glass, cracks running out from its rim
+and forking, shards of space breaking off its edge and tumbling away. It opens as it forms, a slit that widens with its cracks running
+out after it, and closes as its spell lets it go. Four kinds: a tear standing in the air, turned to whoever looks at it, upright or
+lying across the sky as a slash (`VOID_RIFT`, its yaw turning it on the watcher's screen: the crow's, Buzhou's, the Weak Water's and the
+sword prison's ten upright; the sun's and the roots' slashes across the sky, the sun's shrinking away once its sun is out, the user's
+ask, 2026-10-24, the two had overlapped); an abyss lying open in the ground, its shards
+rising out of it (`ABYSS_RIFT`: the Kun's, the Nine Nethers', the one under the sword prison); a cut along a line, running out as fast
+as the stroke that cut it (`RIFT_LINE`: the Severing Sword Light's); and space shattered round a point like a struck pane, pieces
+fallen out of it showing the void (`SHATTERED_SPACE`: the Void Shatter's).
+
+**The void tree's grasping roots** (Void Withering's, the user's ask, 2026-10-24: "having branches actually reach out and grab things
+would be cool"): each root that seizes a foe is a `SpellConstruct` of its own (`VOID_TENDRIL`) that knows whom it holds (synced to its
+watchers), drawn by hand (`TendrilRenderer`): from the rift's underside down to its catch, wherever that is hauled to, aimed afresh each
+frame, a tapering root of the void tree's black wood, gnarled, ridged and thorned, lashing out (a third of a second), then winding twice
+round its catch from its chest to its knees, writhing as it holds; two threads of green-white life wind up it in swells running up toward
+the rift, drops of the life it drinks well up it from its catch, and its catch glows where it is held. Let go, it unwinds and draws back up
+into the rift as it fades.
+
+Cultivators cast these spells too (see Sect members: Cultivators cast spells), by the same code and with the same harm, but their
+spells never wound the land. Any caster, player or cultivator, goes through one kit (`HeavenSpells#level`, `#cultivation`, `#tell`,
+`#carvesLand`, `#fightsWith`); a player's own (messages, inventory, the PvP rule, creative play) is asked of a player only.
+
 Each spell's description in the Spells tab gives its numbers; the constants at the top of its element's class set them. Harm
 grows by realm: about 5 at Qi Refining, 8-16 at Foundation Building, 16-30 at Core Formation, 30-60 at Nascent Soul, 60-150 at
-Heavenly Being and 150-300 at Four Axis; qi costs likewise (8-20 at Qi Refining up to 1,000-2,000 at Four Axis).
+Heavenly Being, 150-300 at Four Axis, 450-600 at Dao Integration and 1,500-1,600 a blow at Void Shattering (100-400 a second for
+what lingers); qi costs likewise (8-20 at Qi Refining up to 1,000-2,000 at Four Axis, 2,600-3,800 at Dao Integration and 9,000-12,500
+at Void Shattering).
 
 **Wounds in the land.** From Nascent Soul up the great spells leave the land the way a walking disaster would: meteors, suns,
 phoenixes and falling mountains blow out craters (burnt to magma and blackstone, or broken to rubble), quakes and seals split it
@@ -1266,7 +1434,16 @@ underway so a small one isn't kept waiting behind a great one (`Devastation`), s
 
 **How great by the realm** (the user's ask, 2026-10-23): the great spells' wounds grow with their realm as a golden core's
 blast does (`Devastation#scale`: the realm's blast radius against Four Axis's, `CoreDetonation#radius`): Nascent Soul's are
-0.56 of Four Axis's, Heavenly Being's 0.78, and Four Axis's own the yardstick, the Heaven-Severing Sword's scale. Only the
+0.56 of Four Axis's, Heavenly Being's 0.78, and Four Axis's own the yardstick, the Heaven-Severing Sword's scale; Dao Integration's
+1.28 (the Azure Dragon's fissures to 51, the bird's burning trench 5 round and 3 deep along its 154 blocks, One Flame's glassy pit
+10 round, the qilin's stride craters, the seal's land sunk 20 round and split to 40, the whirlpool's lake basin 23 round, the tiger's
+four gouges 102 long and 4 deep, the colossal sword's pit 19 deep and its cross of slots 60 out each way). **Not only their
+wounds** (the user's ask, 2026-10-24: "make sure the scale of spells increases with realm not just the destruction capability"):
+the spells of the realms after Four Axis are greater in every way by the same measure (`HeavenSpells#greatness`, `#span`), their
+reach, their areas and their living shapes' size alike (`SpellConstruct#sizedFor`): Dao Integration's reach 82 where Four Axis's
+would reach 64, its dragon 54 blocks long, its bird's wings 53 across, its seal 36 blocks square, its pillar of fire 118 tall;
+Void Shattering's 1.84 times Four Axis's (its reach 118, Buzhou's pillar 59 blocks long and its fissures out to 70, the sword light
+147 long, the crow's glassy crater 13 round); the realms after them will be 2.13, 2.41 and 3.41 times Four Axis's. Only the
 spells meant to lay the land waste go by it (craters, fissures, basins, channels, bores, cleaves; the sizes above); the small
 carvings of the lower realms (a cleave's slot, a cave) stay as they were. Water and wood were brought down beside metal and earth: Frozen Field reaches 64 blocks (was 100) and holds for 3 s,
 Absolute Zero holds 5 s and shatters for 60, Boundless Sea and Water Prison hold for less, the World Tree drinks 10 a second for
@@ -1276,9 +1453,9 @@ less.
 **Commands (op):** `/heavenmethod learn <id> [layer]`, `/heavenmethod progress <amount>` (that much settling on the practised
 method, no further than the realm), `/heavenmethod forget <id>`.
 
-Code: `HeavenMethod` (the thirty, their ids and realms), `HeavenState` (what you know, saved), `HeavenMethods` (who, how far
-understood, settling, the gate, the rate, learning), `HeavenPassives`, `MethodLayers`, `Spell` (the seventy, by element, realm
-and layer), `HeavenSpells` (the kit: who is spared, targets, what lingers, temporary blocks, the elements' qi harm), `SpellAura`
+Code: `HeavenMethod` (the fifty-five, their ids and realms), `HeavenState` (what you know, saved), `HeavenMethods` (who, how far
+understood, settling, the gate, the rate, learning), `HeavenPassives`, `MethodLayers`, `Spell` (the ninety element spells, by element,
+realm and layer), `HeavenSpells` (the kit: who is spared, targets, what lingers, temporary blocks, the elements' qi harm), `SpellAura`
 and `SpellAuras` (wards and auras, synced), `FireSpells`, `WoodSpells`, `EarthSpells`, `WaterSpells`, `MetalSpells`, the spell
 entities `SpellProjectile`, `SpellField`, `SpellBlock`, `EarthGolem`, `DirtTide`, `SpellFx` (passing moments) and
 `Devastation` (craters, fissures, channels, the slash's canyon; budgeted); client
@@ -1335,7 +1512,8 @@ The sky is your cultivation made visible (`InnerRealmSkyRenderer.java`), drawn i
   thins each stage and is gone at Grand Perfection. Nebula colours and a faint aurora appear.
 - **Heavenly Being**: brighter aurora, pillars of light rising from the lines. **Four Axis**: a celestial sky, and the
   lines rise up and meet far overhead.
-- The island grows with the realm (radius 3 to 8).
+- The island grows with the realm: radius 3 at Qi Refining and one more each realm, 13 at True Immortal (`InnerRealm#islandRadius`;
+  the README said 3 to 8, from before the realms past Heavenly Being, until 2026-10-24).
 
 Code: `InnerRealm.java` (entering, leaving, the island, `ENTER_AFTER_TICKS`, `FADE_TICKS`, `CULTIVATION_BONUS`),
 `InnerBodyEntity.java`, `client/InnerRealmFade.java` (and `client/mixin/ReceivingLevelScreenMixin.java`),
@@ -1456,12 +1634,16 @@ on either path, **Meteor Flight** (Abilities tab, the wheel, X; **off by default
     (below) is the big tube.
   - **On your screen at once, settled by the server** (client-side prediction and server reconciliation, as vanilla does for
     a block you mine): your client clears the blocks immediately and tells the server (`meteor_doze` C2S, with a prediction
-    sequence); the server takes what may go (`MeteorFlight#bulldoze`: flying in Meteor Flight, near where it saw you, and the
-    great spells' rule, `HeavenSpells#carvable`) and acknowledges; whatever it refused (a sect's grounds, spawn protection, a
-    formation's shelter) reappears and stops you as any wall. Waiting on the server alone left the wall standing on your screen
-    for your latency, which is what stopped you.
-  - **Cheap:** at most 384 blocks a tick, gone for good and dropping nothing; a few crumble with sound and pieces (yours at
-    once, others' from the server). Off with the gamerule `meteorFlightSmashes` (your client is told, so it doesn't predict).
+    sequence); the server takes what may go (`MeteorFlight#bulldoze`: flying in Meteor Flight with forward and sprint held,
+    going fast as the server itself sees you (a quarter of the bulldozer's speed at least, its own measure lagging a flier
+    setting off), in a cone ahead of where you look near where it saw you, and the great spells' rule, `HeavenSpells#carvable`)
+    and acknowledges; whatever it refused (a sect's grounds, spawn protection, a formation's shelter) reappears and stops you as
+    any wall. Waiting on the server alone left the wall standing on your screen for your latency, which is what stopped you.
+    (Before the bug sweep of 2026-10-23 the server took any block within 72 of a hovering flier on its client's word, 384 a
+    packet: a modified client could clear the land about it.)
+  - **Cheap:** at most 384 blocks a tick however many words come, gone for good and dropping nothing; a few crumble with sound
+    and pieces (yours at once, others' from the server). Off with the gamerule `meteorFlightSmashes` (your client is told, so it
+    doesn't predict). **The dead don't bulldoze or smash** (they touch nothing of the living world), nor predict it.
 - **The land has to keep up.** Minecraft makes and sends land as you go: where it hasn't come yet within a second and a half's
   flight ahead, you're slowed to reach its edge no sooner (`MeteorFlightClient#landAhead`), so you never fly into nothing; over
   land already made you go at full speed.
@@ -1775,8 +1957,10 @@ Immortal's over some forty seconds, its land kept loaded till it's done even onc
 blast, the further off it is heard.
 **You die** (nothing saves you, a totem
 neither), and the core is lost: you return at **Foundation Building Grand Perfection**, your heaven methods understood no deeper
-than that. Leaving the game while it breaks doesn't escape it. A creative player's core bursts without the death. Code:
-`CoreDetonation`.
+than that. Leaving the game while it breaks doesn't escape it. A creative player's core bursts without the death. The core is
+the body's it broke in: should you stand in another when it would burst (thrown out of a body you held, back in your own), its
+light goes out and nothing bursts (the bug sweep of 2026-10-23: the core of whatever body you then stood in burst instead). A demon
+beast takes the blast by its own realm, as a cultivator does. Code: `CoreDetonation`.
 
 ## The Spatial Gap, the Spatial Tear and floating meditation
 
@@ -2243,14 +2427,14 @@ own realm (its last nine layers):
 | **Nine Nether Soul Sutra** | to Nascent Soul | 36 | Soul Rend (30), Nine Nether Step (34) | Nascent Soul kings (about one palace in four); Nine Nether Peaks steles |
 | **Yama's Judgement Scripture** | to Heavenly Being | 45 | Yama's Verdict (39), Chains of Hell (43) | Heavenly Being kings (about one palace in eight); Nine Nether Peaks steles, rare |
 | **Six Paths Reincarnation Canon** | to Four Axis | 54 | Wheel of Samsara (48), Six Paths Annihilation (52) | Four Axis kings (one palace in twenty); Nine Nether Peaks steles, about three in 1,371 |
-| **Ten Thousand Ghosts Union Scripture** | to Dao Integration | 63 | none of its own yet | Nine Nether Peaks steles, about two in 1,377; the few Dao Integration ghosts |
-| **Void-Rending Nether Canon** | to Void Shattering | 72 | none yet | Peaks steles, about one in 1,377; the handful of Void Shattering ghosts |
+| **Ten Thousand Ghosts Union Scripture** | to Dao Integration | 63 | Procession of Ten Thousand Ghosts (57), Gate of Ten Thousand Ghosts (61) | Nine Nether Peaks steles, about two in 1,377; the few Dao Integration ghosts |
+| **Void-Rending Nether Canon** | to Void Shattering | 72 | Rift to the Nine Nethers (66), Bridge of No Return (70) | Peaks steles, about one in 1,377; the handful of Void Shattering ghosts |
 | **Hell-Forged Vessel Sutra** | to Sacred Vessel | 81 | none yet | Peaks steles, about one in 1,377; the one Sacred Vessel of the dead |
 | **Underworld Nirvana Scripture** | to Entering Nirvana | 90 | none yet | Peaks steles, about one in 1,377 |
 | **Netherworld Immortal Sovereign Canon** | to True Immortal | 99 | none yet | Peaks steles, about one in 1,377 |
 
 **The ghost path goes on to True Immortal** (the user's ask, 2026-10-22), its last five foundations those of the realms after
-Four Axis (their spells still to come), every stage of them longer than the one before as below it (`GhostMethods#required`), and
+Four Axis (Dao Integration's and Void Shattering's spells built, 2026-10-24: `GhostSpells`; the rest still to come), every stage of them longer than the one before as below it (`GhostMethods#required`), and
 its tribulation the heavens' strike counts.
 
 A king teaches its foundation to one it is Warm to, sells its slip to one it is Warm to (60 stones for the Breathing Art,
@@ -2384,9 +2568,10 @@ cultivator who walks both is stronger than one who walks either (`TwoPaths`):
   than a body starts with), and the effective cultivation line names what it comes to. Stat points count by the higher
   path's rank, alive or dead. Realm Suppression and Realm Suppress hold the ghost path down as they do the heaven path.
   Qi and its pool are still the heaven path's.
-- **Harmony.** The two paths together add to that body, the more the closer they stand: **+30%** with both in the same
-  realm, **+20%** a realm apart, **+10%** two apart, nothing further (`TwoPaths#HARMONY`, by realm, not stage), on top of
-  Heaven's Favour. The Stats tab names the path the body follows and the harmony; on the Cultivation tab the two paths
+- **Harmony.** The two paths together add to that body, the more the closer they stand: **+30%** with both at the same
+  stage, **+20%** a stage apart, **+10%** two stages apart, nothing further (`TwoPaths#HARMONY`, `#stageGap`; the stages are
+  counted across realms, so Four Axis Grand Perfection and Dao Integration Early are one apart), on top of Heaven's Favour.
+  (By realm, within three realms, before the user's call of 2026-10-24: too generous.) The Stats tab names the path the body follows and the harmony; on the Cultivation tab the two paths
   stand **side by side, alike** (neither a side path): each its name (a short rule under the one whose qi is drawn in), realm
   and stage, its bar (each its own cultivation, the stage's written on it; amber at a bottleneck, gold at the last), and what
   meditating here adds a second (the ghost path's by the method practised); the path whose qi isn't drawn in reads
@@ -2430,15 +2615,18 @@ cultivator who walks both is stronger than one who walks either (`TwoPaths`):
 
   | Paths | Harmony | Early body | Mid | Late | Grand Perfection |
   |---|---|---|---|---|---|
-  | in one realm | x1.3 | Grand Perfection | Quasi- next realm | Quasi- next realm | Quasi- next realm |
-  | a realm apart | x1.2 | Late | Quasi- next realm | Quasi- next realm | Quasi- next realm |
-  | two apart | x1.1 | Mid | Quasi-Grand Perfection | Quasi- next realm | Quasi- next realm |
+  | at the same stage | x1.3 | Grand Perfection | Quasi- next realm | Quasi- next realm | Quasi- next realm |
+  | a stage apart | x1.2 | Late | Quasi- next realm | Quasi- next realm | Quasi- next realm |
+  | two stages apart | x1.1 | Mid | Quasi-Grand Perfection | Quasi- next realm | Quasi- next realm |
 
-  (The body is the higher path's, so "Mid" means the higher path at Mid.) Mid on both paths in one realm comes 5% (Qi Refining)
+  (The body is the higher path's, so "Mid" means the higher path at Mid.) Mid on both paths comes 5% (Qi Refining)
   to 18% (Heavenly Being) of the way to the next realm. Even Grand Perfection on both paths with full Favour (x1.3 x1.15) stops
   short of the next realm's Early: Foundation Building's comes about half way, Heavenly Being's most of it.
-- **Spells of both paths**, one for each realm from Foundation Building, need **both paths at that realm** and cost **qi
-  as well as ghostly qi** (below). When both paths reach a realm you're told, and its spell goes on the spell wheel.
+- **Spells of both paths**, one for each realm from Foundation Building, are the **heaven path's and the Demon Path's**
+  (the user's ask, 2026-10-24: "the dual path spells are now from demon and heaven path instead of heaven and ghost"): they need
+  **both of those at that realm**, are cast by the living alone, and cost **qi alone** (the Demon Path shares the qi pool; below).
+  The heaven path and the ghost path have none together now: the five they had were built on the ghost path's half, so they were
+  made anew. When both paths reach a realm you're told, and its spell goes on the spell wheel.
 - **Two forms, while you live.** Once your ghost path reaches Core Formation (a Ghost King's might), or once you have been a
   Ghost King among the dead (kept when you are born again, even should your ghost path fall after), you have a **Ghost King form** beside your
   human one: crowned, in the dead's deeper light, as the Ghost Kings are drawn. Your **true form** is the
@@ -2460,23 +2648,40 @@ cultivator who walks both is stronger than one who walks either (`TwoPaths`):
   cultivate one, and any it knows lie dormant (no ghost path, spells, abilities or harmony). Only the living can drink the
   elixir, so a mortal's ghost must be born again at the Wheel first.
 
-| Spell of both paths | Both paths at | Qi | Ghostly qi | Cooldown | What it does |
-|---|---|---|---|---|---|
-| **Yin-Yang Palm** | Foundation Building | 20 | 15 | 6 s | a palm of light and shadow strikes the first being within 16 blocks: 5 hearts of harm and thrown back; a quarter of the harm mends you |
-| **Taiji Shield** | Core Formation | 60 | 25 | 30 s | light and dark turn round you for 10 s: arrows, fireballs and anything else shot at you from within 3.5 blocks are turned back, the shooter's no longer; Resistance I |
-| **Life and Death Seal** | Nascent Soul | 150 | 40 | 20 s | the being you look at (32 blocks) is sealed for 8 s: it loses 2 hearts a second and half of it mends you; slowed while sealed |
-| **Heaven and Hell Pillar** | Heavenly Being | 350 | 60 | 25 s | where you look (32 blocks) heaven's light falls and hell's fire rises: everything within 5 blocks takes 15 hearts of harm, is thrown up and set burning with ghost fire |
-| **Primordial Chaos** | Four Axis | 800 | 120 | 2 min | the two paths made one: everything within 16 blocks is dragged in and takes 25 hearts of harm; a tenth of all of it mends you, and Strength II for 10 s |
+| Spell of both paths | Heaven and Demon Paths at | Qi | Cooldown | What it does |
+|---|---|---|---|---|
+| **Heaven-Demon Palm** | Foundation Building | 35 | 6 s | a palm of gold light, a demon's crimson claw within it, strikes the first being within 16 blocks: 5 hearts of harm, raked and thrown back; a quarter of the harm mends you |
+| **Heaven-Demon Mantle** | Core Formation | 85 | 30 s | gold light and crimson demon scales wrap you for 10 s: arrows, fireballs and anything else shot at you from within 3.5 blocks are turned back, the shooter's no longer; Resistance I |
+| **Devouring Seal** | Nascent Soul | 190 | 20 s | the being you look at (32 blocks) is sealed under heaven's gold seal for 8 s while a demon's maw devours it: it loses 2 hearts a second and half of it mends you; slowed while sealed. Looking at nothing, it isn't cast (nothing paid) |
+| **Heaven-Demon Claw** | Heavenly Being | 410 | 25 s | a great claw of gold light and crimson qi rakes down where you look (32 blocks): everything within 5 blocks takes 15 hearts of harm, is thrown up and weakened for 5 s |
+| **Heaven and Demon as One** | Four Axis | 920 | 2 min | heaven and demon made one: everything within 16 blocks is dragged in and takes 25 hearts of harm; a tenth of all of it mends you, and Strength II for 10 s |
+| **Heaven-Demon Avatar** | Dao Integration | 3,200 | 100 s | a colossal avatar of gold light and crimson demon qi, 41 blocks tall, rises behind you for 8 s (a living shape: below), turning to where you look; twice its hands come down out of the sky where you look (82 blocks), heaven's palm then the demon's claw: each strikes everything within 14 blocks for 140 harm, throws it down and slows it; a fifth of all the harm mends you. The land is left as it was |
+| **Heaven-Demon Void Shatter** | Void Shattering | 11,000 | 100 s | a colossal fist forms over your shoulder, heaven's gauntlet of gold plates closed round a demon's crimson claws (a living shape), and punches out to where you look (118 blocks): where it lands space shatters like glass (Heaven methods: Tears in space): everything within 18 blocks takes 520 harm and is thrown out, and the shattered space, 37 blocks across, hangs there for 5 s, cutting whoever stays in it for 60 a second. The land is left as it was |
 
-Their harm is the dead's kind (ghostly), so it reaches the living and the dead alike. Icons: the Palm an open hand, half
-ivory and half cyan; the Shield a taiji in a gold rim; the Seal a red seal crossed light and dark; the Pillar a gold beam
-falling into cold fire; Chaos two arms, light and dark, wound round a black heart; Form Shift a face half a man's and half
-a crowned ghost's.
+They took the places of the heaven and ghost paths' five (Yin-Yang Palm, Taiji Shield, Life and Death Seal, Heaven and Hell
+Pillar, Primordial Chaos), keeping their reach and strength, their costs the two pools' added into qi. Their harm is heaven's and
+a demon's qi as one (`ModDamageTypes#HEAVEN_DEMON`): through armour, as the elements' qi, no element's ward reading it; it reaches
+the dead as a living blow does. Cultivators don't cast them. Icons: the Palm an open gold hand with three crimson claw-marks;
+the Mantle a round mantle, gold light above and crimson scales below, an arrow turned back off it; the Seal a crimson maw in a
+ring of gold; the Claw four crimson rakes edged with gold; As One two arms, gold and crimson, wound into a heart of white light;
+the Avatar its split head, haloed and horned; the Void Shatter a fist, gold and crimson, struck into space, cracks running out from
+where it struck; Form Shift a face half a man's and half a crowned ghost's.
 
-Code: `TwoPaths` (the paths, `body`, `harmony`, `bothReach`, the forms and `look`, and the once-a-second watch that tells
-of new forms and spells), `CultivationStats#apply`, `Spell` (`isDual`, `dualRealm`, `qiCost`; appended), `Spells` (`palm`,
-`taiji` and `turnBack`, `seal` and `drawOff`, `pillar`, `chaos`, `tick`; `PALM_*`, `TAIJI_*`, `SEAL_*`, `PILLAR_*`,
-`CHAOS_*`), `Ability#FORM_SHIFT`, `ModPackets#sendGhost` (the look); client `ClientGhosts#drawnAsLight`/`crowned`,
+Op commands for every path (the user's ask, 2026-10-24: before, only the heaven path's could be set). Without a path named they
+are the heaven path's, as they always were:
+
+```
+/cultivation set [heaven|ghost|demon] <realm 1-11> <stage 1-4>   that path there, its stage's cultivation none
+/cultivation addcultivation [heaven|ghost|demon] <amount>       that much on its bar (the ghost path's in seconds of meditation)
+```
+
+The ghost path's set opens a mortal's meridians (a mortal's ghost path lies dormant) and leaves its methods understood exactly as
+far as it (as `/method path`; `/method learn <id>` gives one). The Demon Path is a demon race's alone: a human's refuses.
+
+Code: `TwoPaths` (the paths, `body`, `harmony`, `bothReach`, `walksHeavenAndDemon`, the forms and `look`, and the once-a-second
+watch that tells of new forms and spells), `CultivationStats#apply`, `Spell` (`isDual`, `dualRealm`, `qiCost`, `realm`),
+`HeavenDemonSpells` (`palm`, `Mantle`, `Seal`, `claw`, `asOne`, `Avatar`, `Shatter`; `PALM_*`, `MANTLE_*`, `SEAL_*`, `CLAW_*`, `ONE_*`,
+`AVATAR_*`, `SHATTER_*`), `Ability#FORM_SHIFT`, `ModPackets#sendGhost` (the look); client `ClientGhosts#drawnAsLight`/`crowned`,
 `SoulRenderer`, `mixin/SoulRenderDispatcherMixin`, `mixin/PlayerRendererMixin`, `CultivationScreen` (Stats, Spells).
 
 ### Ghost abilities and spells
@@ -2497,7 +2702,7 @@ so the saved switches after it keep their places.)
 **Spells** are cast at will, and live on a **spell wheel** of their own, never the ability wheel. **Hold V** (rebindable:
 "Spell Wheel (hold)") and an eight-slot wheel opens: **click** a slot to ready its spell, **right-click** to cast it at
 once. **C** ("Cast Readied Spell") casts the readied one; its name, and the seconds left while it cools, sit under the
-bars top left. Each costs ghostly qi (the spells of both paths, above, qi too) and has a cooldown; none can be cast on the
+bars top left. Each costs ghostly qi (the spells of both paths, above, cost qi instead) and has a cooldown; none can be cast on the
 Soul River or while dispersed. A
 spell you learn goes into the first empty slot. The cultivation menu's **Spells** tab lists every spell (cost, cooldown,
 the layer it needs, whether it's ready), and its **Arrange Wheel** button lays the wheel out as the ability wheel's
@@ -2519,10 +2724,21 @@ editor does. A mortal, alive or dead, can't shape one: its meridians are closed.
 | **Chains of Hell** | Yama's Judgement 43 | 60 | 30 s | every foe within 12 blocks is dragged to you and held fast (Slowness VII, Weakness II) for 3 s |
 | **Wheel of Samsara** | Six Paths Canon 48 | 80 | 2 min | your health made whole, harmful effects gone, and half your yin corruption with them |
 | **Six Paths Annihilation** | Six Paths Canon 52 | 150 | 90 s | six pillars of cold fire rise round you: everything within 12 blocks takes 20 hearts of ghostly harm and is hurled away |
+| **Procession of Ten Thousand Ghosts** | Ten Thousand Ghosts Union 57 | 200 | 45 s | a column of the dead, ghost fire and mist, pours out along your look for 61 blocks (short of a wall), 8 wide: every being it passes through takes 90 ghostly harm and is slowed and weakened for 5 s; the dead take half as much again |
+| **Gate of Ten Thousand Ghosts** | Ten Thousand Ghosts Union 61 | 300 | 90 s | a gate of the dead, bone-white mist and ghost fire, rises where you look (82 blocks) facing you and opens for 8 s: every foe within 18 blocks is dragged toward its doorway and takes 30 ghostly harm a second; then it slams shut, 120 ghostly harm to everything within 18 blocks; a quarter of all its harm mends you |
+| **Rift to the Nine Nethers** | Void-Rending Nether Canon 66 | 280 | 60 s | the ground where you look (118 blocks) tears open onto the Nine Nethers, nine rings of ghost fire turning down into it, each narrower and deeper: for 6 s every foe within 22 blocks is dragged toward it and down and takes 100 ghostly harm a second; then it seals, 300 ghostly harm to everything within 8 blocks of it, weakened for 8 s; the dead take half as much again |
+| **Bridge of No Return** | Void-Rending Nether Canon 70 | 400 | 90 s | the Naihe Bridge, that the dead cross over the River of Forgetting, rises out of the mist along your level look, span after span, 118 blocks: every being within 6 blocks of a span as it rises takes 300 ghostly harm and forgets every blessing on it (its good effects gone); then for 5 s whoever stays on or under it is slowed and pays its toll, 50 ghostly harm a second; the dead take half as much again |
 
 None of a caster's spells touch the caster, spectators or the caster's own tamed creatures; harm to another player needs
 PvP on. The numbers are the `Spell` enum (layer, cost, cooldown) and `Spells` (`GHOST_FIRE_*`, `BOLT_*`, `DASH_*`, `WAIL_*`,
-`TIDE_*`, `WARD_TICKS`, `BURST_*`, `DECREE_*`, `REND_*`, `STEP_*`, `VERDICT_*`, `CHAINS_*`, `ANNIHILATION_*`).
+`TIDE_*`, `WARD_TICKS`, `BURST_*`, `DECREE_*`, `REND_*`, `STEP_*`, `VERDICT_*`, `CHAINS_*`, `ANNIHILATION_*`); Dao Integration's
+and Void Shattering's, `GhostSpells` (`PROCESSION_*`, `GATE_*`, `NETHERS_*`, `BRIDGE_*`): living shapes of GeckoLib's as the realms'
+heaven spells' (the column of the dead, its lantern and soul-banners; the gate of bone under its roof, its doors of black lacquer
+swinging in on a whirl of ghost fire, hands of the dead reaching out; the nine rings of ghost fire turning down into the rift, souls
+drawn down between them and talismans round its rim; the bridge's spans of bone-white stone, lanterns of ghost fire on them, the
+dark river and red lilies under them), the rift onto the Nine Nethers a tear in space as Void Shattering's heaven spells' are (Heaven
+methods: Tears in space), their sizes by their realm, their harm on their own scale, below the heaven spells'; they leave the land
+as it was, and ghost cultivators cast them too.
 
 **Icons** (32x32, `textures/gui/ability/<id>.png` and `textures/gui/spell/<id>.png`): Ghost Eye a slit-pupilled cyan
 eye, Netherworld Veil a dark hood with two cold eyes, Yin Wind Steps a pale footprint on curling wind, Ghost Flight (retired) a
@@ -2696,8 +2912,10 @@ All act on yourself.
 /netherworld corruption <percent>   set your yin corruption
 /method learn <id> [layer]  a ghost method at that layer (to 54; without one, as a stele teaches it), nothing settling
 /method progress <seconds>  that many seconds of baseline meditation on the ghost path's bar (its layers settling on it too)
-/method path <realm> <stage>   the ghost path set there (1-6, 1-4), its methods understood as far
+/method path <realm> <stage>   the ghost path set there (1-11, 1-4), its methods understood as far
 /method forget <id>         as if it had never been learned
+/cultivation set ghost <realm> <stage>        the same as /method path (a mortal's meridians opened: its ghost path would lie dormant)
+/cultivation addcultivation ghost <seconds>   the same as /method progress
 /gamerule netherworldAfterDeath false   death as vanilla's, no ghosts
 ```
 
@@ -2873,6 +3091,12 @@ player too weak to break the barrier who ends up inside that way is set down jus
 (`Formations.guard`). The owner, the players they trust, anyone strong enough to break it, and players in creative or
 spectator stay where they are. Rogue cultivators never spawn inside a barrier either.
 
+**Spells stop at the barrier** (the user's pick, 2026-10-24). Whoever the barrier keeps out (too weak to break it, not let
+through, not in creative) reaches nobody on its other side with a spell, just as their blows and projectiles don't. No zone,
+quake, sweep, hold, push, rain or roar of theirs crosses the shell either way (`Formations#walls`, `HeavenSpells#walled`).
+Anyone strong enough to break it, and those it lets through, cast across it as before. Before, a weak cultivator's area spells
+cast beside a sect's barrier reached everyone inside.
+
 A barrier is raised, mended and watched over only while its land ticks (a player near enough, or the land held for a
 moment: `NpcLedger`). Land that is merely loaded is left alone, so it can unload: reading its blocks every tick used to
 hold it loaded for good, freezing the cultivators in it.
@@ -2938,7 +3162,25 @@ the top.
 - **The whole sect turns out** (every member in its territory, the elders and the Sect Master too) when a player or a
   cultivator attacks any member anywhere in the territory (the barrier plus 30 blocks, so the gate guards too), or when
   someone breaks a block of the barrier to force a way in. Striking the barrier without breaking it, trespassing, and
-  monsters only rouse the members near by, as above (`SectManager.alert`).
+  monsters only rouse the members near by, as above (`SectManager.alert`). **Trespass** is breaking anything on a sect's
+  grounds, by hand, or by a spell or Meteor Flight (the user's pick, 2026-10-24: wrecking them with a spell or a streak
+  from outside the barrier, or anywhere with it down, went unanswered; `SectManager#spoiled`). A spell that takes or burns
+  their ground, floods it, or strips its ores is answered as a pick would be, once a second however much it takes
+  (theft, in the treasury). Its own disciples, and creative players, are no trespassers.
+- **Cultivators cast spells** (the user's ask, 2026-10-24; `CultivatorSpells`, `Spells#castBy`).
+  - **What they know:** a living cultivator knows its heaven method's element's spells, up to its method's realm and as far as its
+    rank has come, as a player who knew that method would. That element is its sect's, its blood's, or its own. One of the dead
+    knows its ghost foundation's spells.
+  - **When they cast:** in a fight, every three to six seconds, out of their own qi and on their own cooldowns. They face their
+    foe to cast. Badly hurt, they ward or mend themselves first; with a foe close, they cast a spell about themselves; otherwise
+    one at their foe, the deepest the most often. Flying, they keep ten seconds of their flight's qi back.
+  - **Whom they hit:** only whom they fight: their foe, whoever struck them, monsters, anything set on them, and their enemies.
+    Their sect, their pupils, villagers and passers-by are spared, and their blessings are for their own.
+  - **No terrain:** their spells leave the land as it was. No crater, cut, tunnel, fissure, lake or lasting fire, even where a
+    player's spell would carve; walls, trees and ice set down for a while still come and go.
+  - **In a spar** they cast nothing deeper than the realm they hold back to.
+  - **Not theirs:** the spells that carry the caster (dashes, waves, a tree's lift, water walking), the yang bomb, those that take
+    the land or its ore, and Life Force Gain stay a player's.
 - Members below Heavenly Being stay within the barrier plus 30 blocks, leaving only to chase someone (anywhere in the
   territory and up to 48 blocks past it). One you strike keeps after you just as far (not only while you are within 32
   blocks or in its sight). Chasing a flier, a member takes off only under the open sky (from inside a hall, or under
@@ -3231,9 +3473,11 @@ Topics not open yet still show, greyed, with the regard they need.
   fed as those things come and go (their block entities loading, a sect falling, a killing), never by scanning chunks.
   Everything you are told goes into the **Journal** tab of the cultivation menu, newest first.
 - **Spar** (`SparSystem`): a bout of several exchanges. Pick terms in the box: **friendly**, **a wager** (hold a herb, pill,
-  fruit or spirit stones: you stake one, they stake something of like worth of their own, the winner takes both; one
-  wager a day with each; never with one a realm or more beneath you, who couldn't win your stake: friendly only, the wager
-  greyed out), and, with someone stronger, **don't hold back**. Neither of you starts below three quarters of
+  fruit or spirit stones: you stake one, they stake something of like worth of their own, the winner takes both; lost,
+  forfeit or left unsettled, theirs is never theirs to keep: it was only put up to be won (the bug sweep of 2026-10-23: they
+  kept it too, richer for every wager, dropping it all when slain); one wager a day with each; never with one a realm or more
+  beneath you, who couldn't win your stake: friendly only, the wager greyed out), and, with someone stronger, **don't hold
+  back**. Who is senior goes by your body's realm on any path. A clan's other people leave a man sparring with one of them be. Neither of you starts below three quarters of
   your health. **One of a sect's people on its own grounds leads you to its sparring ground first** (the user's ask,
   2026-10-23; an entrance trial too): its training ground's ring, or the plaza for a sect without one ("Follow me to the
   sparring ground"). It walks to its place there and you to yours across from it (within 3 blocks); not followed within
@@ -3248,7 +3492,10 @@ Topics not open yet still show, greyed, with the regard they need.
   blows on its sect's other members, in the bout or just after (a sweep or a spell's spread raises no alarm). Losing to a senior who is
   Warm to you can teach you their Insight. A weaker cultivator never runs from the one it is sparring with, however far
   above it they are (it would run from such a domain in a real fight); if it runs from someone else mid-bout, the spar ends
-  with no result rather than as your forfeit.
+  with no result rather than as your forfeit. **A spar may go into the air** (the user's call, 2026-10-24: fine for you, and
+  for them too). A cultivator that can fly (Core Formation and up, or Foundation Building on a sword) takes off after you as in
+  a real fight. With its qi too low to stay up much longer, it comes down gently instead of dropping out of the sky, and rests
+  ten seconds before flying again. One of your own sect fights a spar too: before, it stood there and was beaten.
 - **Trade** (`CultivatorTrades`): barter on the trading screen, in spirit stones. They sell by station: Outer Disciples
   and commoners seeds and young herbs, Inner Disciples rarer seeds and Qi Gathering Pills, Elders pills and old herbs, the
   Sect Master the best of both; rogues odd things from far away. The stock changes each day. **Everyone trades, however
@@ -3331,6 +3578,65 @@ Sects and cultivators' off-screen journeys are saved in the Overworld's `data/de
 
 The Netherworld's own commands (`/netherworld`, `/method`) are listed under The Netherworld. Its Ghost Gate is remembered
 as built in the Netherworld's `data/defying-the-heavens_ghost_gate.dat`.
+
+## The second bug sweep (2026-10-23, night)
+
+A sweep of the whole mod for bugs and holes (the user's ask: "Sweep the code for any bugs and gameplay loopholes or fall
+throughs"). Besides what is told above where it belongs (the Demon Path, the races' gifts, the bulldozer, a breaking core, the
+wager, the beasts, rings, qi feeding, the clans), it put right:
+
+- **Spells:** a Vajra Body's thorns answer only blows of the hand (two Vajra Bodies' qi blows bounced off each other until the
+  server crashed); an Earth spell's wall is raised from natural ground only (it copied a floor's planks, ores or anything built);
+  Mineral Purification finding no ore pays nothing (its qi given back, its cooldown lifted), never takes a spell's own ore or what
+  the caster couldn't dig by hand, nor anything in a sealed treasury or the Ghost Gate; no spell's terrain, fire, lake or
+  devastation touches a sealed treasury, a palace's under its king's seal (an explosion neither) or the Ghost Gate; a container a
+  great spell destroys spills what it held; spells spare the bodies of souls, clones and those turned inward as they spare their
+  owners; spell cooldowns are kept on the record (a relog made them ready at once); a projected soul casts nothing; the Ghost
+  Fire Bolt sets only what it harmed burning, and spares whom spells spare; Phoenix Nirvana holds off no death that nothing holds
+  off (/kill, old age, one's own core), nor a soul's out of its body; the Remote Yang Bomb's setting off costs nothing; a melee
+  blow's element touch comes after the blow, not inside it; Realm Suppress weighs no body left sitting.
+- **The Chief Judge's eye** spares a True Immortal (it spared no one), and strips every path back, the Demon Path's and the
+  ghost path's (a Ghost King kept its crown).
+- **The dead and souls:** the Spatial Gap's pressure reaches the dead; a ghost's blow lays on its yin only if it lands at full
+  strength; the Wheel's turn stops if the ghost is scattered meanwhile; one of the dead beaten by its heart demon is sent back to
+  its body as the living are; the cursor's and crafting grid's things are left behind at the Wheel with the rest; a soul out of
+  its body pays a barrier from its own path's pool, and is set back however fast it crossed the shell; a soul's sitting body is
+  carried off by no portal, piston or current; the land held loaded about a soul's or a clone's body is let go where it was held.
+- **Possession:** Burn Lifespan goes out going into a body and coming out of it; a soul spends no body's stat points; a
+  possessed beast's half-done move ends, and its blows (the soul's) strike no player it may not harm.
+- **The rest:** coming down from space into the Upper Realm is fall-protected until one lands; a clone can't sit to meditate
+  or turn inward by any way; a cultivator slain of a blow's after-effects (a fall, fire, poison) within half a minute answers to
+  whoever struck it; leaves on a formation's shell are displaced (they decayed into holes); a dragon clan's third hoard guard
+  stands on the alcove's floor (it stood in a pedestal); a site lived in a while with no sect is decided at once.
+
+What it left alone, for the user to decide, is listed in the session's report. Tests: `SweepGameTests`.
+
+### The user's picks (2026-10-24)
+
+Of what the sweep left for the user to decide, these were closed. The rest stand as they were, at the user's word.
+
+- **Every ward gives way to a tribulation's strike.** No aura or bell takes anything from it, and no rebirth (Phoenix Nirvana, a
+  lingering spell) holds off a killing one (`TribulationManager#isStriking`). Before, Vajra, Mountain Stance, Ancient Bark and the
+  Golden Bell stacked against the heavens' strikes.
+- **A Jade Poison Body's pills cost their years.** What it refines the moment it is taken (a pill, a fruit) costs the years
+  meditating it would have, by its talent and savers (`Physiques#refinedAtOnce`). It cost none.
+- **Fortune wishes give no more than the axis wants** (see The four axes of virtue). They were an endless spring of spirit stones.
+- **The server's movement allowance.** A move may carry a flier only as far as their speed covers since the server last took
+  their position (five seconds at most), plus two ticks' slack (`QiFlight#moveAllowanceSq`). Every packet was allowed a second's
+  flight, so a client sending five a tick flew twenty times as fast.
+- **Long steps through space pay their years.** A step longer than a tick's flight is free only when the server itself moved you
+  (a command, a pearl, a rift: `AstralRealm#teleported`). Every long step was free.
+- **The void and the gap reach the dead.** The Vestiges of the Void hunt ghosts and bite them in full. The Spatial Gap's storms strike
+  the dead as the Netherworld's tribulation does (`SpatialStorms#hurt`): their ghost-form share of it, the bolt turned by ghost
+  armour. A heart demon's blows land on the dead (they landed as nothing). A storm's strength goes by the higher of your paths.
+- **The Inner Realm's island** is now told at its true size (above).
+- **Spells stop at barriers** (see Protective formations).
+- **Spars may go into the air** (see Talking to cultivators). Every cultivator's gentle landing no longer strikes it with the whole
+  way down as a fall: its flight ends a little above the ground.
+- **Wrecking a sect's grounds with a spell or Meteor Flight is trespass**, as digging there by hand is (see Sect members).
+- **A Four Axis Ghost King's seal** stays breakable from Dao Integration, a full realm above it, as every seal is (the user's call).
+
+Tests: `LoopholePicksGameTests`.
 
 ## Shader packs (Iris)
 

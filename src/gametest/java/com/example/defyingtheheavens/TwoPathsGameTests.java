@@ -45,6 +45,14 @@ public class TwoPathsGameTests implements FabricGameTest {
 		CultivationManager.refresh(player);
 	}
 
+	/** A tiger's demon core, its Demon Path at {@code realm}'s {@code stage} (DemonPath: a human has none, TwoPaths#demonRank). */
+	private static void demonPath(ServerPlayer player, Realm realm, Stage stage) {
+		PlayerCultivation c = CultivationManager.get(player);
+		c.demon().setBloodline(Bloodline.TIGER);
+		c.demon().set(PlayerCultivation.rank(realm, stage), 0);
+		CultivationManager.refresh(player);
+	}
+
 	private static boolean near(double a, double b) {
 		return Math.abs(a - b) < 1.0e-3;
 	}
@@ -147,20 +155,22 @@ public class TwoPathsGameTests implements FabricGameTest {
 		helper.assertTrue(e.rank() == PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.GRAND_PERFECTION) && !e.quasi() && TwoPaths.strongerThanRank(c)
 				&& key(TwoPaths.effectiveName(e), -1).isEmpty() && key(TwoPaths.effectiveLabel(e), -1).isEmpty(),
 				"Early on both: Grand Perfection itself, no Quasi-, no per cent (" + e + ")");
-		// A realm apart (x1.2): Core Formation Early is Core Formation Late. (The heaven path the higher: alive, the ghost path's would
-		// give half its strength, TwoPaths#pathShare.)
+		// A stage apart (x1.2), counted across the realm's border: Core Formation Early beside Foundation Building Grand Perfection is
+		// Core Formation Late. (The heaven path the higher: alive, the ghost path's would give half its strength, TwoPaths#pathShare.)
+		ghostPath(c, Realm.FOUNDATION_BUILDING, Stage.GRAND_PERFECTION);
 		c.setState(Realm.CORE_FORMATION, Stage.EARLY, 0);
 		e = TwoPaths.effective(c, false);
-		helper.assertTrue(e.rank() == PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.LATE) && !e.quasi(), "A realm apart, Early: Late (" + e + ")");
-		// Two realms apart (x1.1): Nascent Soul Mid's 1.21 is just past Late's 1.2.
+		helper.assertTrue(e.rank() == PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.LATE) && !e.quasi(), "A stage apart, Early: Late (" + e + ")");
+		// Two stages apart (x1.1): Nascent Soul Mid's 1.21 is just past Late's 1.2.
+		ghostPath(c, Realm.CORE_FORMATION, Stage.GRAND_PERFECTION);
 		c.setState(Realm.NASCENT_SOUL, Stage.MID, 0);
 		e = TwoPaths.effective(c, false);
 		helper.assertTrue(e.rank() == PlayerCultivation.rank(Realm.NASCENT_SOUL, Stage.LATE) && e.quasi()
 				&& key(TwoPaths.effectiveName(e), -1).equals(ModLang.EFFECTIVE_QUASI_STAGE)
-				&& key(TwoPaths.effectiveName(e), 0).equals(Realm.NASCENT_SOUL.getTranslationKey()), "Two realms apart, Mid: Nascent Soul - Quasi-Grand Perfection (" + e + ")");
-		// Three apart: no harmony, its own rank.
-		c.setState(Realm.HEAVENLY_BEING, Stage.MID, 0);
-		helper.assertTrue(!TwoPaths.strongerThanRank(c), "Three realms apart: no harmony, its own rank");
+				&& key(TwoPaths.effectiveName(e), 0).equals(Realm.NASCENT_SOUL.getTranslationKey()), "Two stages apart, Mid: Nascent Soul - Quasi-Grand Perfection (" + e + ")");
+		// Three apart: no harmony, its own rank (a realm apart is four).
+		c.setState(Realm.NASCENT_SOUL, Stage.LATE, 0);
+		helper.assertTrue(!TwoPaths.strongerThanRank(c), "Three stages apart: no harmony, its own rank");
 		// The ghost path alone far above, alive: half its strength, worth less than its rank.
 		c.setState(Realm.QI_REFINING, Stage.EARLY, 0);
 		ghostPath(c, Realm.NASCENT_SOUL, Stage.EARLY);
@@ -202,15 +212,21 @@ public class TwoPathsGameTests implements FabricGameTest {
 		TwoPaths.Body body = TwoPaths.body(c, true);
 		helper.assertTrue(!body.ghostPath() && body.realm() == Realm.CORE_FORMATION && near(body.scale(), c.favourFactor()), "One path: the heaven path's body");
 		helper.assertTrue(near(player.getMaxHealth(), base + CultivationStats.maxHealth(Realm.CORE_FORMATION, Stage.EARLY) * body.scale()), "Its health");
-		// The ghost path above it: the ghost path's body, and the harmony of two paths a realm apart. Alive, the ghost path gives half
-		// its strength (TwoPaths#pathShare), half the whole of its health; still more than Core Formation's whole.
+		// The ghost path above it: the ghost path's body (five stages apart, no harmony: TwoPaths#HARMONY). Alive, the ghost path gives
+		// half its strength (TwoPaths#pathShare), half the whole of its health; still more than Core Formation's whole.
 		ghostPath(player, Realm.NASCENT_SOUL, Stage.MID);
 		body = TwoPaths.body(c, true);
 		helper.assertTrue(body.ghostPath() && body.realm() == Realm.NASCENT_SOUL && body.stage() == Stage.MID && body.share() == TwoPaths.HALF_PATH,
 				"The ghost path above: its body, at half (" + body + ")");
-		helper.assertTrue(near(TwoPaths.harmony(c), TwoPaths.HARMONY[1]) && near(body.scale(), c.favourFactor() * (1 + TwoPaths.HARMONY[1])), "A realm apart: +20%");
+		helper.assertTrue(TwoPaths.harmony(c) == 0 && near(body.scale(), c.favourFactor()), "Five stages apart: no harmony");
 		helper.assertTrue(near(player.getMaxHealth(), (base + CultivationStats.maxHealth(Realm.NASCENT_SOUL, Stage.MID) * body.scale()) * TwoPaths.HALF_PATH),
-				"The body's health from the ghost path, harmony on it, half the whole (" + player.getMaxHealth() + ")");
+				"The body's health from the ghost path, half the whole (" + player.getMaxHealth() + ")");
+		// A stage apart: the harmony on the body (the heaven path's now, whole alive, the mightier).
+		heaven(player, Realm.NASCENT_SOUL, Stage.EARLY);
+		body = TwoPaths.body(c, true);
+		helper.assertTrue(near(TwoPaths.harmony(c), TwoPaths.HARMONY[1]) && near(body.scale(), c.favourFactor() * (1 + TwoPaths.HARMONY[1])), "A stage apart: +20%");
+		helper.assertTrue(near(player.getMaxHealth(), (base + CultivationStats.maxHealth(body.realm(), body.stage()) * body.scale()) * body.share()),
+				"...on the body's health (" + player.getMaxHealth() + ", " + body + ")");
 		// Dead, the ghost path's whole.
 		c.netherworld().setGhost(true);
 		body = TwoPaths.body(c, true);
@@ -234,62 +250,80 @@ public class TwoPathsGameTests implements FabricGameTest {
 		ServerPlayer player = cultivator(helper, Realm.FOUR_AXIS, Stage.LATE);
 		PlayerCultivation c = CultivationManager.get(player);
 		helper.assertTrue(TwoPaths.harmony(c) == 0 && !TwoPaths.walksBoth(c), "No ghost path: no harmony");
-		Realm[] ghost = {Realm.FOUR_AXIS, Realm.HEAVENLY_BEING, Realm.NASCENT_SOUL, Realm.CORE_FORMATION, Realm.QI_REFINING};
+		// By stage (the user's call, 2026-10-24; by realm, within three, was too generous): the heaven path at Four Axis Late.
+		Realm[] realm = {Realm.FOUR_AXIS, Realm.FOUR_AXIS, Realm.FOUR_AXIS, Realm.HEAVENLY_BEING, Realm.NASCENT_SOUL};
+		Stage[] stage = {Stage.LATE, Stage.MID, Stage.EARLY, Stage.GRAND_PERFECTION, Stage.LATE};
 		double[] wanted = {0.30, 0.20, 0.10, 0, 0};
-		for (int i = 0; i < ghost.length; i++) {
-			ghostPath(player, ghost[i], Stage.EARLY);
-			helper.assertTrue(near(TwoPaths.harmony(c), wanted[i]), "Ghost path at " + ghost[i].getId() + ": harmony " + wanted[i] + " (" + TwoPaths.harmony(c) + ")");
+		for (int i = 0; i < realm.length; i++) {
+			ghostPath(player, realm[i], stage[i]);
+			helper.assertTrue(near(TwoPaths.harmony(c), wanted[i]),
+					"Ghost path at " + realm[i].getId() + " " + stage[i] + ": harmony " + wanted[i] + " (" + TwoPaths.harmony(c) + ")");
 		}
-		// The stage within the realm doesn't matter, nor which path is the higher.
+		// The stages are counted across a realm's border, whichever path is the higher.
 		heaven(player, Realm.QI_REFINING, Stage.GRAND_PERFECTION);
-		ghostPath(player, Realm.QI_REFINING, Stage.EARLY);
-		helper.assertTrue(near(TwoPaths.harmony(c), 0.30), "Both in Qi Refining: the fullest harmony");
-		ghostPath(player, Realm.FOUNDATION_BUILDING, Stage.GRAND_PERFECTION);
-		helper.assertTrue(near(TwoPaths.harmony(c), 0.20), "The ghost path a realm above: +20% too");
+		ghostPath(player, Realm.FOUNDATION_BUILDING, Stage.EARLY);
+		helper.assertTrue(TwoPaths.stageGap(c) == 1 && near(TwoPaths.harmony(c), 0.20), "Qi Refining Grand Perfection and Foundation Building Early: a stage apart, +20%");
+		ghostPath(player, Realm.QI_REFINING, Stage.GRAND_PERFECTION);
+		helper.assertTrue(near(TwoPaths.harmony(c), 0.30), "The same stage: the fullest harmony");
+		ghostPath(player, Realm.FOUNDATION_BUILDING, Stage.LATE);
+		helper.assertTrue(TwoPaths.stageGap(c) == 3 && TwoPaths.harmony(c) == 0, "Three stages apart: none (the ghost path above)");
 		helper.succeed();
 	}
 
+	/**
+	 * The spells of both paths are the heaven path's and the Demon Path's (the user's ask, 2026-10-24: the heaven path's and the ghost
+	 * path's before): neither path alone, nor the heaven path with the ghost path, reaches them; the dead cast none.
+	 */
 	@GameTest(template = EMPTY_STRUCTURE)
-	public void theSpellsOfBothPathsNeedBoth(GameTestHelper helper) {
+	public void theSpellsOfBothPathsNeedHeavenAndDemon(GameTestHelper helper) {
 		ServerPlayer player = cultivator(helper, Realm.NASCENT_SOUL, Stage.EARLY);
 		PlayerCultivation c = CultivationManager.get(player);
 		NetherworldState s = c.netherworld();
-		for (Spell spell : Spell.values()) if (spell.isDual()) helper.assertTrue(!spell.isKnown(c), spell.getId() + ": not on the heaven path alone");
-		TwoPaths.onJoin(player);
-		ghostPath(player, Realm.CORE_FORMATION, Stage.EARLY);
-		helper.assertTrue(Spell.YIN_YANG_PALM.isKnown(c) && Spell.TAIJI_SHIELD.isKnown(c) && !Spell.LIFE_DEATH_SEAL.isKnown(c),
-				"Both paths at Core Formation: the palm and the shield, not the seal");
-		TwoPaths.watch(player);
-		boolean onWheel = false;
-		for (int i = 0; i < Spells.WHEEL_SLOTS; i++) onWheel |= s.spellSlot(i) == Spell.TAIJI_SHIELD;
-		helper.assertTrue(onWheel, "Newly in reach, the shield goes on the wheel");
-		ghostPath(player, Realm.FOUR_AXIS, Stage.EARLY);
-		helper.assertTrue(Spell.LIFE_DEATH_SEAL.isKnown(c) && !Spell.HEAVEN_HELL_PILLAR.isKnown(c), "The ghost path far above: only as far as the heaven path, Nascent Soul");
-		heaven(player, Realm.FOUR_AXIS, Stage.EARLY);
-		for (Spell spell : Spell.values()) if (spell.isDual()) helper.assertTrue(spell.isKnown(c), spell.getId() + ": both paths at Four Axis");
-		c.setMortal(true);
-		s.setGhost(true);
-		for (Spell spell : Spell.values()) if (spell.isDual()) helper.assertTrue(!spell.isKnown(c), spell.getId() + ": a mortal's ghost walks one path");
-		TwoPaths.forget(player.getUUID());
+		try {
+			for (Spell spell : Spell.values()) if (spell.isDual()) helper.assertTrue(!spell.isKnown(c), spell.getId() + ": not on the heaven path alone");
+			ghostPath(player, Realm.FOUR_AXIS, Stage.EARLY);
+			for (Spell spell : Spell.values()) if (spell.isDual()) helper.assertTrue(!spell.isKnown(c), spell.getId() + ": nor with the ghost path beside it");
+			TwoPaths.onJoin(player);
+			demonPath(player, Realm.CORE_FORMATION, Stage.EARLY);
+			helper.assertTrue(Spell.HEAVEN_DEMON_PALM.isKnown(c) && Spell.HEAVEN_DEMON_MANTLE.isKnown(c) && !Spell.DEVOURING_SEAL.isKnown(c),
+					"The Demon Path at Core Formation beside the heaven path: the palm and the mantle, not the seal");
+			TwoPaths.watch(player);
+			boolean onWheel = false;
+			for (int i = 0; i < Spells.WHEEL_SLOTS; i++) onWheel |= s.spellSlot(i) == Spell.HEAVEN_DEMON_MANTLE;
+			helper.assertTrue(onWheel, "Newly in reach, the mantle goes on the wheel");
+			demonPath(player, Realm.DAO_INTEGRATION, Stage.EARLY);
+			helper.assertTrue(Spell.DEVOURING_SEAL.isKnown(c) && !Spell.HEAVEN_DEMON_CLAW.isKnown(c), "The Demon Path far above: only as far as the heaven path, Nascent Soul");
+			heaven(player, Realm.DAO_INTEGRATION, Stage.EARLY);
+			for (Spell spell : Spell.values()) {
+				if (!spell.isDual()) continue;
+				boolean reached = spell.dualRealm().ordinal() <= Realm.DAO_INTEGRATION.ordinal();
+				helper.assertTrue(spell.isKnown(c) == reached, spell.getId() + (reached ? ": both paths at Dao Integration" : ": not till both paths reach its realm"));
+			}
+			s.setGhost(true);
+			for (Spell spell : Spell.values()) if (spell.isDual()) helper.assertTrue(!spell.isKnown(c), spell.getId() + ": the dead cast none of them");
+			s.setGhost(false);
+		} finally {
+			TwoPaths.forget(player.getUUID());
+		}
 		helper.succeed();
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
-	public void aSpellOfBothPathsDrawsOnBothPools(GameTestHelper helper) {
+	public void aSpellOfBothPathsCostsQiAlone(GameTestHelper helper) {
 		ServerPlayer player = cultivator(helper, Realm.CORE_FORMATION, Stage.EARLY);
 		PlayerCultivation c = CultivationManager.get(player);
 		NetherworldState s = c.netherworld();
 		try {
-			ghostPath(player, Realm.FOUNDATION_BUILDING, Stage.EARLY);
+			demonPath(player, Realm.FOUNDATION_BUILDING, Stage.EARLY);
 			s.setGhostQi(100);
 			c.setQi(0);
-			Spells.cast(player, Spell.YIN_YANG_PALM);
-			helper.assertTrue(near(s.ghostQi(), 100) && Spells.cooldownLeft(player, Spell.YIN_YANG_PALM) == 0, "No qi: not cast, the ghost qi kept");
+			Spells.cast(player, Spell.HEAVEN_DEMON_PALM);
+			helper.assertTrue(Spells.cooldownLeft(player, Spell.HEAVEN_DEMON_PALM) == 0, "No qi: not cast");
 			c.setQi(100);
-			Spells.cast(player, Spell.YIN_YANG_PALM);
-			helper.assertTrue(near(s.ghostQi(), 100 - Spell.YIN_YANG_PALM.cost()) && near(c.getQi(), 100 - Spell.YIN_YANG_PALM.qiCost()),
-					"Cast: both pools drawn on (" + s.ghostQi() + ", " + c.getQi() + ")");
-			helper.assertTrue(Spells.cooldownLeft(player, Spell.YIN_YANG_PALM) > 0, "And it cools");
+			Spells.cast(player, Spell.HEAVEN_DEMON_PALM);
+			helper.assertTrue(near(c.getQi(), 100 - Spell.HEAVEN_DEMON_PALM.qiCost()) && near(s.ghostQi(), 100),
+					"Cast: qi alone drawn on, the ghost qi untouched (" + c.getQi() + ", " + s.ghostQi() + ")");
+			helper.assertTrue(Spells.cooldownLeft(player, Spell.HEAVEN_DEMON_PALM) > 0, "And it cools");
 		} finally {
 			Spells.forget(player.getUUID());
 		}
@@ -327,54 +361,59 @@ public class TwoPathsGameTests implements FabricGameTest {
 		}
 		ServerPlayer player = cultivator(helper, Realm.FOUR_AXIS, Stage.EARLY);
 		PlayerCultivation c = CultivationManager.get(player);
-		ghostPath(player, Realm.FOUR_AXIS, Stage.EARLY);
-		c.netherworld().setGhostQi(10_000);
+		demonPath(player, Realm.FOUR_AXIS, Stage.EARLY);
 		List<net.minecraft.world.entity.Entity> made = new ArrayList<>();
 		standAt(player, 0, 0, 0); // facing south, +z
-		// Yin-Yang Palm: the first ahead struck, and the harm mends the caster.
+		// Heaven-Demon Palm: the first ahead struck, and the harm mends the caster.
 		Zombie palmed = zombie(level, 0, 4);
 		made.add(palmed);
 		player.setHealth(player.getMaxHealth() / 2);
 		float hurt = player.getHealth();
 		c.setQi(100_000);
-		Spells.cast(player, Spell.YIN_YANG_PALM);
+		Spells.cast(player, Spell.HEAVEN_DEMON_PALM);
 		helper.assertTrue(palmed.getHealth() < palmed.getMaxHealth() && player.getHealth() > hurt, "The palm strikes, and mends (" + player.getHealth() + ")");
-		// Taiji Shield: an arrow flying at the caster turned back on its way.
-		Spells.cast(player, Spell.TAIJI_SHIELD);
-		helper.assertTrue(Spells.shielded(player) && player.hasEffect(MobEffects.DAMAGE_RESISTANCE), "The shield turns round it");
+		helper.assertTrue(palmed.getLastDamageSource() != null && palmed.getLastDamageSource().is(ModDamageTypes.HEAVEN_DEMON), "...with heaven's and a demon's qi");
+		// Heaven-Demon Mantle: an arrow flying at the caster turned back on its way.
+		Spells.cast(player, Spell.HEAVEN_DEMON_MANTLE);
+		helper.assertTrue(HeavenDemonSpells.mantled(player) && player.hasEffect(MobEffects.DAMAGE_RESISTANCE), "The mantle wraps it");
 		Arrow arrow = new Arrow(level, SPELL_GROUND.getX() + 0.5, SPELL_GROUND.getY() + 1, SPELL_GROUND.getZ() + 3.0);
 		arrow.setDeltaMovement(new Vec3(0, 0, -1.0));
 		arrow.setOwner(palmed);
 		level.addFreshEntity(arrow);
 		made.add(arrow);
-		// Life and Death Seal on a fresh one.
+		// Devouring Seal on a fresh one; looking at nothing, it isn't cast (nothing paid).
 		Zombie sealed = zombie(level, 2, 6);
 		made.add(sealed);
-		standAt(player, 0, 0, (float) Math.toDegrees(Math.atan2(-2, 6))); // a little east of south, at it
+		standAt(player, 0, 0, 180);
 		c.setQi(100_000);
-		Spells.cast(player, Spell.LIFE_DEATH_SEAL);
-		helper.assertTrue(Spells.sealed(sealed), "Sealed (look " + player.getViewVector(1.0f) + " from " + player.getEyePosition() + " at " + sealed.position()
-				+ ", qi " + c.getQi() + ", ghost qi " + c.netherworld().ghostQi() + ", cooling " + Spells.cooldownLeft(player, Spell.LIFE_DEATH_SEAL) + ")");
+		double full = c.getQi();
+		Spells.cast(player, Spell.DEVOURING_SEAL);
+		helper.assertTrue(near(c.getQi(), full) && Spells.cooldownLeft(player, Spell.DEVOURING_SEAL) == 0, "Nothing to seal: refused, nothing paid (" + full + " -> " + c.getQi() + ")");
+		standAt(player, 0, 0, (float) Math.toDegrees(Math.atan2(-2, 6))); // a little east of south, at it
+		Spells.cast(player, Spell.DEVOURING_SEAL);
+		helper.assertTrue(HeavenDemonSpells.sealed(sealed), "Sealed (look " + player.getViewVector(1.0f) + " from " + player.getEyePosition() + " at " + sealed.position()
+				+ ", qi " + c.getQi() + ", cooling " + Spells.cooldownLeft(player, Spell.DEVOURING_SEAL) + ")");
 		helper.runAfterDelay(30, () -> {
 			try {
 				helper.assertTrue(arrow.getOwner() == player && arrow.getDeltaMovement().z > 0, "The arrow is turned back, the caster's own now (" + arrow.getDeltaMovement() + ")");
-				helper.assertTrue(!sealed.isAlive() || sealed.getHealth() < sealed.getMaxHealth(), "The seal draws its life off (" + sealed.getHealth() + ")");
-				// Heaven and Hell Pillar where it looks: a fresh one struck, thrown up and burning (the palmed one out of the way).
+				helper.assertTrue(!sealed.isAlive() || sealed.getHealth() < sealed.getMaxHealth(), "The seal devours its life (" + sealed.getHealth() + ")");
+				// Heaven-Demon Claw where it looks: a fresh one struck, thrown up and weakened (the palmed one out of the way).
 				palmed.discard();
 				standAt(player, 0, 0, 0);
-				Zombie pillared = zombie(level, 0, 7);
-				made.add(pillared);
+				Zombie clawed = zombie(level, 0, 7);
+				clawed.getAttribute(Attributes.MAX_HEALTH).setBaseValue(100);
+				clawed.setHealth(100);
+				made.add(clawed);
 				c.setQi(100_000);
-				Spells.cast(player, Spell.HEAVEN_HELL_PILLAR);
-				helper.assertTrue(!pillared.isAlive() || pillared.getHealth() < pillared.getMaxHealth() && pillared.hasEffect(ModEffects.GHOST_FIRE),
-						"The pillar strikes and burns");
-				// Primordial Chaos: all round dragged in and unmade; the caster made strong.
+				Spells.cast(player, Spell.HEAVEN_DEMON_CLAW);
+				helper.assertTrue(clawed.getHealth() < clawed.getMaxHealth() && clawed.hasEffect(MobEffects.WEAKNESS), "The claw strikes and weakens (" + clawed.getHealth() + ")");
+				// Heaven and Demon as One: all round dragged in and unmade; the caster made strong.
 				Zombie a = zombie(level, 6, -4), b = zombie(level, -7, 2);
 				made.add(a);
 				made.add(b);
 				c.setQi(100_000);
-				Spells.cast(player, Spell.PRIMORDIAL_CHAOS);
-				helper.assertTrue(!a.isAlive() && !b.isAlive(), "Unmade by Primordial Chaos");
+				Spells.cast(player, Spell.HEAVEN_AND_DEMON_AS_ONE);
+				helper.assertTrue(!a.isAlive() && !b.isAlive(), "Unmade by Heaven and Demon as One");
 				helper.assertTrue(player.hasEffect(MobEffects.DAMAGE_BOOST), "Made strong by it");
 				helper.succeed();
 			} finally {

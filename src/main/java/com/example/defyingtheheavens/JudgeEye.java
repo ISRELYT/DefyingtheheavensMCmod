@@ -72,11 +72,11 @@ public final class JudgeEye {
 	}
 
 	/**
-	 * Who it spares. Only a True Immortal could meet a True Immortal's gaze, and nobody can cultivate that far yet; when they
-	 * can, this is where they become immune.
+	 * Who it spares: only a True Immortal can meet a True Immortal's gaze, on any of its paths (True Immortal was reached from 2026-10-22,
+	 * and this still spared no one until the sweep of 2026-10-23).
 	 */
 	public static boolean isImmune(PlayerCultivation c) {
-		return false;
+		return TwoPaths.higherRank(c, false) >= PlayerCultivation.rank(Realm.TRUE_IMMORTAL, Stage.EARLY);
 	}
 
 	/** The gaze's share, 0 to 1, after one tick of looking ({@code looking}) or not. */
@@ -107,8 +107,9 @@ public final class JudgeEye {
 	}
 
 	/**
-	 * The gaze has unmade them: their cultivation stripped back to Qi Refining Early, their heaven methods' layers with it (a mortal
-	 * has none to lose), and death.
+	 * The gaze has unmade them: their cultivation stripped back to Qi Refining Early on every path (the heaven path's methods' layers
+	 * with it, the ghost path's and the Demon Path's too: a Ghost King's crown kept by its ghost path before the sweep of 2026-10-23),
+	 * a mortal having none to lose, and death.
 	 */
 	private static void judge(ServerPlayer p) {
 		forget(p);
@@ -118,8 +119,10 @@ public final class JudgeEye {
 			c.setBackTo(Realm.QI_REFINING, Stage.EARLY);
 			c.prepareBreakthrough(null, 0);
 			c.setQi(0);
-			CultivationManager.refresh(p);
 		}
+		GhostMethods.fallTo(c.netherworld(), 0);
+		DemonPath.fallTo(c, 0);
+		if (!mortal) CultivationManager.refresh(p);
 		p.sendSystemMessage(Component.translatable(mortal ? ModLang.MSG_JUDGE_MORTAL : ModLang.MSG_JUDGE_STRIPPED).withStyle(ChatFormatting.DARK_RED));
 		p.hurt(ModDamageTypes.judgeGaze(p.level()), Float.MAX_VALUE);
 		DefyingTheHeavens.LOGGER.info("{} met the Chief Judge's gaze on the Soul River{}", p.getScoreboardName(), mortal ? "" : "; stripped to Qi Refining Early");

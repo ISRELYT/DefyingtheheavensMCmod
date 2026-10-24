@@ -126,6 +126,8 @@ public final class AstralRealm {
 	private static final Map<UUID, Vec3> LAST_POS = new HashMap<>();
 	private static final Map<UUID, Double> TRIP = new HashMap<>();
 	private static final Map<UUID, Double> OWED = new HashMap<>();
+	/** The server tick each player was last moved by the server itself (a teleport: {@link #teleported}), to tell a jump from a flight. */
+	private static final Map<UUID, Integer> TELEPORTED = new HashMap<>();
 	/** Those told they no longer have the years to fly straight home (told again only once they have, and then haven't). */
 	private static final java.util.Set<UUID> NO_WAY_HOME = new java.util.HashSet<>();
 
@@ -417,7 +419,8 @@ public final class AstralRealm {
 			return;
 		}
 		double perBlock = yearsPerBlock(CultivationManager.get(p));
-		flown(id, last == null ? 0 : at.distanceTo(last), perBlock, maxStep(p));
+		Integer jumped = TELEPORTED.get(id);
+		flown(id, last == null ? 0 : at.distanceTo(last), perBlock, maxStep(p), jumped != null && p.server.getTickCount() - jumped <= 2);
 		if (p.tickCount % 10 != 0) return;
 		pay(p);
 		double left = Lifespan.left(CultivationManager.own(p)), home = homeYears(planets, at, perBlock);
@@ -439,19 +442,28 @@ public final class AstralRealm {
 	}
 
 	/**
-	 * {@code blocks} flown through space by {@code id} this tick, owed in years on its trip at {@code perBlock} ({@link #yearsPerBlock});
-	 * a step longer than {@link #MAX_STEP} is a teleport, and owes nothing. Package-private for the game tests, as {@link #pay}.
+	 * {@code blocks} flown through space by {@code id} this tick, owed in years on its trip at {@code perBlock} ({@link #yearsPerBlock}).
+	 * Package-private for the game tests, as {@link #pay}.
 	 */
 	static void flown(UUID id, double blocks, double perBlock) {
-		flown(id, blocks, perBlock, MAX_STEP);
+		flown(id, blocks, perBlock, MAX_STEP, false);
 	}
 
-	/** {@link #flown}, a step longer than {@code maxStep} (the flier's: {@link #maxStep}) a teleport. */
-	static void flown(UUID id, double blocks, double perBlock, double maxStep) {
+	/**
+	 * {@link #flown}: a step longer than {@code maxStep} (the flier's: {@link #maxStep}) owes nothing only when the server itself moved
+	 * them ({@code teleported}: a command, a pearl, a rift: {@link #teleported}); any other is flight, and owes its every block (the user's
+	 * pick, 2026-10-24: every long step went free before, so a client sending its moves so crossed space for nothing).
+	 */
+	static void flown(UUID id, double blocks, double perBlock, double maxStep, boolean teleported) {
 		TRIP.putIfAbsent(id, 0.0);
-		if (blocks <= 0 || blocks > maxStep) return;
+		if (blocks <= 0 || blocks > maxStep && teleported) return;
 		OWED.merge(id, blocks * perBlock, Double::sum);
 		TRIP.merge(id, blocks * perBlock, Double::sum);
+	}
+
+	/** The server is moving {@code player} itself (ServerGamePacketListenerImplMixin, at its teleport): the step it makes is no flight. */
+	public static void teleported(ServerPlayer player) {
+		TELEPORTED.put(player.getUUID(), player.server.getTickCount());
 	}
 
 	/**
@@ -671,6 +683,7 @@ public final class AstralRealm {
 		LAST_POS.remove(id);
 		TRIP.remove(id);
 		OWED.remove(id);
+		TELEPORTED.remove(id);
 		NO_WAY_HOME.remove(id);
 		ZOOMING.remove(id);
 		TICK_SEEN.remove(id);
@@ -687,6 +700,7 @@ public final class AstralRealm {
 		LAST_POS.clear();
 		TRIP.clear();
 		OWED.clear();
+		TELEPORTED.clear();
 		NO_WAY_HOME.clear();
 		ZOOMING.clear();
 		TICK_SEEN.clear();

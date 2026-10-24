@@ -44,6 +44,8 @@ public class ModDamageTypeTagProvider extends FabricTagProvider<DamageType> {
 		// The heaven methods' qi goes through armour; Protection and Resistance still turn some of it.
 		tag(DamageTypeTags.BYPASSES_ARMOR).add(ModDamageTypes.QI_WOOD, ModDamageTypes.QI_WATER, ModDamageTypes.QI_FIRE, ModDamageTypes.QI_EARTH,
 				ModDamageTypes.QI_METAL);
+		// The spells of both paths' heaven-and-demon qi, as the elements' qi.
+		tag(DamageTypeTags.BYPASSES_ARMOR).add(ModDamageTypes.HEAVEN_DEMON);
 		// The Netherworld's tribulation as the heavens': its yin lightning turned by armour, the yin in it through armour as magic is
 		// (Protection and Resistance still turn some of both); neither knocks one about, as a tribulation's strike doesn't.
 		tag(DamageTypeTags.BYPASSES_ARMOR).add(ModDamageTypes.YIN_TRIBULATION);

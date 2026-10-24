@@ -13,7 +13,8 @@ import net.minecraft.world.entity.LightningBolt;
 import org.joml.Matrix4f;
 
 /**
- * Heavenly Tribulation lightning: vanilla's bolt shape, recoloured bright blue (the Netherworld's tribulation's cyan). Vanilla
+ * Heavenly Tribulation lightning: vanilla's bolt shape, recoloured bright blue (the Netherworld's tribulation's cyan; a spell's bolt its
+ * own colour, Spring Thunder's jade: TribulationLightning#tint). Vanilla
  * draws its layered quads in (0.45, 0.45, 0.5) with additive blending; the same layers in this blue build up to a glowing blue
  * core. Drawn here rather than by vanilla's renderer so the greater tribulations' bolts can be thicker
  * (TribulationManager#boltScale) while their zig-zag stays vanilla's: scaled whole, the bigger bolts sprawled far across the
@@ -41,9 +42,12 @@ public class TribulationLightningRenderer extends LightningBoltRenderer {
 		// Thicker the greater the tribulation (TribulationManager#boltScale); the zig-zag as vanilla's whatever the tribulation.
 		float thickness = bolt instanceof TribulationLightning stormBolt ? stormBolt.renderScale() : 1.0f;
 		boolean ghost = bolt instanceof TribulationLightning stormBolt && stormBolt.isGhost();
+		// A spell's bolt in its own colour (Spring Thunder's jade: TribulationLightning#tint).
+		int tint = bolt instanceof TribulationLightning stormBolt ? stormBolt.tint() : 0;
 		poseStack.scale(1.0f, height / 128.0f, 1.0f);
 		drawBolt(bolt.seed, poseStack.last().pose(), buffers.getBuffer(RenderType.lightning()), thickness,
-				ghost ? GHOST_RED : RED, ghost ? GHOST_GREEN : GREEN, ghost ? GHOST_BLUE : BLUE);
+				tint != 0 ? tint >> 16 & 255 : ghost ? GHOST_RED : RED, tint != 0 ? tint >> 8 & 255 : ghost ? GHOST_GREEN : GREEN,
+				tint != 0 ? tint & 255 : ghost ? GHOST_BLUE : BLUE);
 		poseStack.popPose();
 	}
 

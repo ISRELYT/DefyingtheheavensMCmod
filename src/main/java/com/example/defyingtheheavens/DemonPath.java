@@ -208,8 +208,8 @@ public final class DemonPath {
 	/**
 	 * {@code player}'s record takes its blood from the world's Bloodlines; a demon's demon core is there from birth: its Demon Path
 	 * begun at Qi Refining Early if it wasn't, and (its meridians opened by its core) never a mortal, its heaven path at Qi Refining
-	 * Early too (but Shattered Meridians, which no core mends). Told the first time. On joining, on choosing or being given its blood,
-	 * and born again.
+	 * Early too. Shattered Meridians are no demon's ({@link #mendShattered}). Told the first time. On joining, on choosing or being given
+	 * its blood, and born again.
 	 */
 	public static void born(ServerPlayer player) {
 		if (Possession.isHeld(player.getUUID())) return;
@@ -217,6 +217,7 @@ public final class DemonPath {
 		Bloodline bloodline = Bloodlines.of(player.server, player.getUUID());
 		boolean changed = c.demon().bloodline() != bloodline;
 		c.demon().setBloodline(bloodline);
+		if (bloodline.isBeast()) changed |= mendShattered(player, c);
 		if (bloodline.isBeast() && !c.demon().begun()) {
 			c.demon().set(0, 0);
 			if (c.isMortal() && !c.hasShatteredMeridians()) {
@@ -235,6 +236,25 @@ public final class DemonPath {
 			CultivationManager.refresh(player);
 			Spells.sync(player);
 		}
+	}
+
+	/**
+	 * A demon's core opens the meridians it is born with, so no demon keeps Shattered Meridians: one rolled them as it joined, before its
+	 * blood was chosen, is given another physique (rolled again until it isn't those: Physiques#give tells it), and the core it was born
+	 * with opens them (as {@link #born}), its Demon Path begun or not. Before the sweep of 2026-10-23 such a demon stayed a mortal with a
+	 * demon core it could never cultivate. Not while its soul is in another's body (Physiques#give would give the body the physique): it
+	 * is mended the next time it is born. Returns whether anything changed.
+	 */
+	private static boolean mendShattered(ServerPlayer player, PlayerCultivation c) {
+		if (!c.hasShatteredMeridians() || CultivationManager.get(player) != c) return false;
+		Physique physique = Physique.roll(player.getRandom());
+		while (physique == Physique.SHATTERED_MERIDIANS) physique = Physique.roll(player.getRandom());
+		Physiques.give(player, physique);
+		if (c.isMortal() && c.demon().begun()) {
+			c.awaken(0);
+			c.setMortal(false);
+		}
+		return true;
 	}
 
 	/** A stage or more gained ({@code before} the rank it stood at): told, the spells its inheritance now teaches put on the wheel. */

@@ -320,6 +320,10 @@ public final class Possession {
 			record.awaken(0);
 			if (npc != null) npc.setRank(PlayerCultivation.rank(Realm.QI_REFINING, Stage.EARLY)); // its record is the one awoken
 		}
+		// Burn Lifespan goes out on both records going in (its switch is the record's the body answers to: before the sweep of 2026-10-23
+		// a victim taken burning burnt the soul's own years for its strength, and one the soul lit in the body went home burning in it).
+		record.setAbilityEnabled(Ability.BURN_LIFESPAN, false);
+		own.setAbilityEnabled(Ability.BURN_LIFESPAN, false);
 		CompoundTag mine = new CompoundTag();
 		mine.putString("Role", "Tenant");
 		mine.putUUID("Body", target.getUUID());
@@ -395,6 +399,7 @@ public final class Possession {
 		Tenancy t = BY_SOUL.get(soul.getUUID());
 		if (t == null) return;
 		MinecraftServer server = soul.server;
+		t.record.setAbilityEnabled(Ability.BURN_LIFESPAN, false); // and coming out: the body's own goes back unlit (#enter)
 		if (MeditationManager.isMeditating(soul.getUUID())) MeditationManager.stop(soul, false);
 		soul.stopUsingItem();
 		endDealings(soul); // whatever it had open, the talk or the bout it was in, were the body's
@@ -427,6 +432,8 @@ public final class Possession {
 					giveTo(victim, body);
 					Spells.sync(victim);
 					NetherworldManager.refresh(victim);
+					// Born while held (a join, a blood chosen: DemonPath#born waits out a hold), its demon core on its record now.
+					DemonPath.born(victim);
 					victim.sendSystemMessage(Component.translatable(ModLang.MSG_POSSESS_FREED).withStyle(ChatFormatting.LIGHT_PURPLE));
 				} else {
 					// Away (logged out, their body held on): it waits in their record for when they are back, and so does where it

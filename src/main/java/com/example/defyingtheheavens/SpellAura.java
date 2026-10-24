@@ -36,7 +36,9 @@ public enum SpellAura {
 	/** The phoenix's flame waiting to rise from a death (Phoenix Nirvana). */
 	PHOENIX_NIRVANA,
 	/** Life being drawn out of it (Life Force Drain) or poured into it (Life Force Gain). */
-	LIFE_FLOW;
+	LIFE_FLOW,
+	/** Under the Black Tortoise's shell (Black Tortoise Bastion): -40% harm, fire's stopped outright. A water ward (its shape is the tortoise). */
+	BLACK_TORTOISE(QiElement.WATER, Realm.DAO_INTEGRATION, 0.40, 1.0);
 
 	private final QiElement ward;
 	private final Realm wardRealm;

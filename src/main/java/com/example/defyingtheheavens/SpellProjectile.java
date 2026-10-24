@@ -108,7 +108,7 @@ public class SpellProjectile extends Projectile {
 	 * A missile of {@code shape} for {@code spell}, cast by {@code caster}: it forms for {@code formTicks} at {@code formAt} (right,
 	 * up, ahead of the caster's eyes), then flies {@code speed} blocks a tick for up to {@code range} blocks.
 	 */
-	public static SpellProjectile cast(ServerPlayer caster, Spell spell, Shape shape, float scale, int formTicks, Vec3 formAt, double speed,
+	public static SpellProjectile cast(LivingEntity caster, Spell spell, Shape shape, float scale, int formTicks, Vec3 formAt, double speed,
 									   double range, Behaviour behaviour) {
 		SpellProjectile missile = new SpellProjectile(ModEntities.SPELL_PROJECTILE, caster.level());
 		missile.setOwner(caster);
@@ -128,7 +128,7 @@ public class SpellProjectile extends Projectile {
 	}
 
 	/** A missile that sets off from {@code from} at once along {@code velocity} (one of a ring of swords plunging, a falling sun). */
-	public static SpellProjectile thrown(ServerLevel level, ServerPlayer caster, Spell spell, Shape shape, float scale, Vec3 from, Vec3 velocity,
+	public static SpellProjectile thrown(ServerLevel level, LivingEntity caster, Spell spell, Shape shape, float scale, Vec3 from, Vec3 velocity,
 										 double range, Behaviour behaviour) {
 		SpellProjectile missile = new SpellProjectile(ModEntities.SPELL_PROJECTILE, level);
 		missile.setOwner(caster);
@@ -227,7 +227,7 @@ public class SpellProjectile extends Projectile {
 		Entity owner = getOwner();
 		Vec3 from = position();
 		Vec3 to;
-		if (owner instanceof ServerPlayer caster) {
+		if (owner instanceof LivingEntity caster) {
 			LivingEntity aimed = HeavenSpells.aimed(caster, range);
 			to = aimed != null ? HeavenSpells.middle(aimed) : HeavenSpells.lookPoint(caster, range);
 			if (homingRate > 0 && aimed != null && entityData.get(HOMING) <= 0) entityData.set(HOMING, aimed.getId());
@@ -295,7 +295,7 @@ public class SpellProjectile extends Projectile {
 		Entity target = homingTarget();
 		if (target == null || !target.isAlive()) {
 			target = null;
-			if (getOwner() instanceof ServerPlayer caster) {
+			if (getOwner() instanceof LivingEntity caster) {
 				double best = 0;
 				for (LivingEntity e : level().getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(10), e -> HeavenSpells.enemy(caster, e))) {
 					Vec3 to = HeavenSpells.middle(e).subtract(position());
@@ -332,7 +332,7 @@ public class SpellProjectile extends Projectile {
 	protected boolean canHitEntity(Entity target) {
 		if (!(target instanceof LivingEntity living) || struck.contains(target.getId()) || target == getOwner()) return false;
 		if (target.isSpectator() || !target.isAlive()) return false;
-		if (getOwner() instanceof ServerPlayer caster && HeavenSpells.spared(caster, living)) return false;
+		if (getOwner() instanceof LivingEntity caster && HeavenSpells.spared(caster, living)) return false;
 		return !(target instanceof net.minecraft.world.entity.player.Player player && Incorporeal.untouchable(player));
 	}
 

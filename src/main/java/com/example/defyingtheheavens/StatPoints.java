@@ -92,6 +92,12 @@ public final class StatPoints {
 	/** {@code player} puts {@code count} points into {@code stat} (as many as they have, at most). */
 	public static void spend(ServerPlayer player, Stat stat, int count) {
 		if (stat == null || count <= 0) return;
+		// Not a body's points by the soul in it (Possession): they are its owner's to place, and placed for good (a soul spent them
+		// before the sweep of 2026-10-23).
+		if (Possession.inhabits(player.getUUID())) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_SOUL_BUSY), true);
+			return;
+		}
 		PlayerCultivation c = CultivationManager.get(player);
 		int spend = Math.min(count, unspent(c));
 		if (spend <= 0) return;

@@ -117,9 +117,10 @@ public class SwiftAndMendingGameTests implements FabricGameTest {
 		flier.getAbilities().flying = true;
 		flier.getAbilities().setFlyingSpeed(top);
 		double step = QiFlight.stepAt(top);
-		helper.assertTrue(step > 150 && QiFlight.moveAllowanceSq(flier, 100) >= (float) (step * step * 4),
-				"A True Immortal's flight through space (" + Math.round(step) + " blocks a tick) has room, bunched packets too");
-		helper.assertTrue(QiFlight.moveAllowanceSq(walker, 100) == 100, "One on foot: vanilla's ten blocks");
+		helper.assertTrue(step > 150 && QiFlight.moveAllowanceSq(flier, 100, 1) >= (float) (step * step * 4)
+				&& QiFlight.moveAllowanceSq(flier, 100, 10) >= (float) (step * step * 100),
+				"A True Immortal's flight through space (" + Math.round(step) + " blocks a tick) has room, bunched packets too (by the time they waited)");
+		helper.assertTrue(QiFlight.moveAllowanceSq(walker, 100, 1) == 100, "One on foot: vanilla's ten blocks");
 		helper.assertTrue(AstralRealm.maxStep(flier) >= 2 * step && AstralRealm.maxStep(walker) == 64, "Its steps flight, not teleports: the years they cost are paid");
 		helper.assertTrue(!AstralRealm.passesThrough(flier), "Unchecked for blocks nowhere but space");
 		// The test server has only vanilla's dimensions: space's own half is seen in game.

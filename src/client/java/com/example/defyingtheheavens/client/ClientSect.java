@@ -28,11 +28,11 @@ public final class ClientSect {
 
 	/**
 	 * A disciple's own sect (the first fields), or the sect of the body their soul is in ({@code inBody}: it may be left from here), or,
-	 * for one of no sect, the nearest one ({@code nearest...}; empty name: none).
+	 * for one of no sect, the nearest one ({@code nearest...}; empty name: none). {@code clan}: a demon clan's, its master its Clan Head.
 	 */
 	public record Info(boolean member, String sectName, int alignment, NpcTitle title, int standing, boolean onGrounds, int distance,
 					   String direction, boolean barrierUp, int treasuryTries, boolean elder, long ticksMember, boolean inBody, List<Member> members,
-					   int nearestDistance, int barredDays) {}
+					   int nearestDistance, int barredDays, boolean clan) {}
 
 	static void set(String sectName, int titleIndex) {
 		name = sectName == null ? "" : sectName;
@@ -54,6 +54,7 @@ public final class ClientSect {
 			boolean elder = buf.readBoolean();
 			long ticks = buf.readVarLong();
 			boolean inBody = buf.readBoolean();
+			boolean clan = buf.readBoolean();
 			int count = buf.readVarInt();
 			List<Member> members = new ArrayList<>(count);
 			for (int i = 0; i < count; i++) {
@@ -65,15 +66,15 @@ public final class ClientSect {
 				boolean banishable = buf.readBoolean();
 				members.add(new Member(memberName, t < 0 ? null : NpcTitle.byIndex(t), rank, player, id, banishable));
 			}
-			return new Info(true, sectName, alignment, mine, standing, onGrounds, distance, direction, barrierUp, tries, elder, ticks, inBody, members, 0, 0);
+			return new Info(true, sectName, alignment, mine, standing, onGrounds, distance, direction, barrierUp, tries, elder, ticks, inBody, members, 0, 0, clan);
 		}
-		if (!buf.readBoolean()) return new Info(false, "", 0, null, 0, false, -1, "", false, 0, false, 0, false, List.of(), -1, 0);
+		if (!buf.readBoolean()) return new Info(false, "", 0, null, 0, false, -1, "", false, 0, false, 0, false, List.of(), -1, 0, false);
 		String near = buf.readUtf();
 		int alignment = buf.readInt();
 		int distance = buf.readVarInt();
 		String direction = buf.readUtf();
 		int barred = buf.readVarInt();
-		return new Info(false, near, alignment, null, 0, false, distance, direction, false, 0, false, 0, false, List.of(), distance, barred);
+		return new Info(false, near, alignment, null, 0, false, distance, direction, false, 0, false, 0, false, List.of(), distance, barred, false);
 	}
 
 	/** The Sect tab's Leave button (in a member's body): the body leaves its sect. */

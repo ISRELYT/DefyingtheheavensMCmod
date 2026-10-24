@@ -65,9 +65,13 @@ public class LifespanCostsGameTests implements FabricGameTest {
 				c.setAge(100);
 				double perBlock = AstralRealm.yearsPerBlock(c);
 				for (int i = 0; i < 40; i++) AstralRealm.flown(p.getUUID(), 25, perBlock); // 1,000 blocks flown, a tick at a time
-				AstralRealm.flown(p.getUUID(), 500, perBlock); // a teleport's jump
+				AstralRealm.flown(p.getUUID(), 500, perBlock, 64, true); // a teleport's jump
 				AstralRealm.pay(p);
 				helper.assertTrue(Math.abs(c.age() - 110) < 1e-6, c.getRealm().getId() + ": 1,000 blocks flown cost 10 years, a jump none (" + c.age() + ")");
+				// A step as long, the server not having moved them (a client sending its moves so): flight, every block of it owed.
+				AstralRealm.flown(p.getUUID(), 500, perBlock, 64, false);
+				AstralRealm.pay(p);
+				helper.assertTrue(Math.abs(c.age() - 115) < 1e-6, c.getRealm().getId() + ": a long step that was no teleport owes its 500 blocks (" + c.age() + ")");
 			}
 			PlayerCultivation starborn = new PlayerCultivation();
 			starborn.setPhysique(Physique.STARBORN_BODY);

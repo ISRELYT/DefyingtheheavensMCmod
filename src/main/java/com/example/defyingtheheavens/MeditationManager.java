@@ -27,8 +27,12 @@ public final class MeditationManager {
 		/** Qi Harmony (see {@link #harmony}): surges played well in a row, and when the last one was. */
 		int circuitStreak;
 		int lastCircuitTick = -CIRCULATION_LASTS;
-		/** Cultivation won from surge games (wisps, a walked sequence, a slain heart demon), added on the next gain. */
-		double bonusCultivation;
+		/**
+		 * Seconds of this meditation won from surge games (wisps, a walked sequence, a slain heart demon), added on the drawn path's next
+		 * gain at its own rate (before the sweep of 2026-10-23 they were reckoned at the heaven path's, whatever was drawn, and the ghost
+		 * path never had them: they waited for the heaven path's next gain).
+		 */
+		double bonusSeconds;
 		/** What the heaven method practised saves of the years its gain costs (Lifespan#saving), as heavenMethods last reckoned it. */
 		double methodSaving = 1;
 
@@ -88,15 +92,18 @@ public final class MeditationManager {
 	public static void toggle(ServerPlayer player) {
 		if (isMeditating(player.getUUID())) {
 			stop(player, false);
-		} else if (Clones.inClone(player)) {
-			// A clone cultivates nothing (Clones): its maker's cultivation is the main body's, sitting where it was.
-			player.displayClientMessage(Component.translatable(ModLang.MSG_CLONE_CANNOT), true);
 		} else {
 			start(player);
 		}
 	}
 
 	public static void start(ServerPlayer player) {
+		// A clone cultivates nothing (Clones): its maker's cultivation is the main body's, sitting where it was. Here, not only at the
+		// key (#toggle): every way into a meditation comes through here (before the sweep of 2026-10-23 the others let a clone sit).
+		if (Clones.inClone(player)) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_CLONE_CANNOT), true);
+			return;
+		}
 		if (TribulationManager.isActive(player.getUUID())) {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_TRIB_BUSY), true);
 			return;
@@ -219,10 +226,10 @@ public final class MeditationManager {
 		p.displayClientMessage(Component.translatable(ModLang.MSG_HARMONY, s.circuitStreak == 1 ? "1.5" : "2"), true);
 	}
 
-	/** Cultivation worth {@code seconds} of this meditation's current rate, added with the next gain. */
+	/** Cultivation worth {@code seconds} of this meditation's current rate on the path drawn in, added with its next gain. */
 	public static void addBonusSeconds(ServerPlayer p, double seconds) {
 		Session s = SESSIONS.get(p.getUUID());
-		if (s != null) s.bonusCultivation += ratePerSecond(p, s) * seconds;
+		if (s != null) s.bonusSeconds += Math.max(0, seconds);
 	}
 
 	/** How long the player has been meditating (ticks), or 0. */
@@ -362,12 +369,12 @@ public final class MeditationManager {
 			boolean wasAtGate = c.isAtRitualGate();
 			boolean wasHeld = c.isHeldByMethod();
 			// Mats, fruit on pedestals, height and tranquillity speed the gain (see CultivationBoost); and the pace it is set to.
-			double perSecond = ratePerSecond(p, session) * pace(p);
+			double steady = ratePerSecond(p, session), perSecond = steady * pace(p);
 			// Unrefined qi from pills and fruit is refined on top, at REFINE_RATE times the meditation rate.
 			double refined = c.refine(perSecond * PlayerCultivation.REFINE_RATE * 0.5);
-			double bonus = session.bonusCultivation;
+			double bonus = steady * session.bonusSeconds; // a reward's seconds at the meditation's own pace, not the pace set
 			double gathered = perSecond * 0.5 + bonus;
-			session.bonusCultivation = 0;
+			session.bonusSeconds = 0;
 			// What is gathered goes by the heaven method practised (its element's qi here: HeavenMethods#cultivationFactor), and the
 			// methods' layers behind the realm settle in on it.
 			double factor = heavenMethods(p, c, session, tick, gathered, refined);
@@ -428,18 +435,19 @@ public final class MeditationManager {
 	 * its inheritance teaches told as they come; its years paid as the heaven path's are (Lifespan#seclude).
 	 */
 	private static void demonPath(ServerPlayer p, PlayerCultivation c, Session session) {
-		double rate = DemonPath.perSecond(c, RingOfPowerItem.cultivationBonus(p)) * session.boost.multiplier()
+		double steady = DemonPath.perSecond(c, RingOfPowerItem.cultivationBonus(p)) * session.boost.multiplier()
 				* circulationMultiplier(session, session.ticks) * (InnerRealm.isInside(p) ? InnerRealm.CULTIVATION_BONUS : 1.0)
-				* heldAndTaught(p) * pace(p);
-		double bonus = session.bonusCultivation;
-		session.bonusCultivation = 0;
+				* heldAndTaught(p);
+		double rate = steady * pace(p);
+		double bonus = steady * session.bonusSeconds; // a reward's seconds at its own rate (and the meditation's own pace)
+		session.bonusSeconds = 0;
 		double gained = rate * 0.5 + bonus;
 		int before = DemonPath.rank(c);
 		double was = c.demon().cultivation();
 		boolean wasBottleneck = DemonPath.atBottleneck(c);
 		int stages = DemonPath.addCultivation(c, gained);
 		Lifespan.seclude(p, before, was, DemonPath.rank(c), c.demon().cultivation(), DemonPath::required,
-				Lifespan.saving(session.boost.multiplier(), 1, Lifespan.placeSaving(c), SpiritStoneItem.meditationMultiplier(p)),
+				Lifespan.saving(session.boost.multiplier(), 1, Lifespan.placeSaving(c, DemonPath.realm(before)), SpiritStoneItem.meditationMultiplier(p)),
 				gained <= 0 ? 0 : 1 - bonus / gained);
 		if (stages > 0) {
 			p.serverLevel().playSound(null, p.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.8f, 0.9f);
@@ -488,13 +496,18 @@ public final class MeditationManager {
 			GhostMethods.begin(p);
 		}
 		GhostMethod active = s.activeMethod();
-		double rate = GhostMethods.ratePerSecond(c, s.density()) * circulationMultiplier(session, session.ticks)
+		double steady = GhostMethods.ratePerSecond(c, s.density()) * circulationMultiplier(session, session.ticks)
 				* (active != null && session.stelesNear.contains(active) ? GhostMethods.STELE_BONUS : 1.0)
 				* (1 + (p.hasEffect(ModEffects.YIN_GATHERING) ? s.methodBoost() : 0)) // a Yin Gathering Pill
 				* (InnerRealm.isInside(p) ? InnerRealm.CULTIVATION_BONUS : 1.0) // turned inward, as the heaven path is (the body's ghostly qi)
-				* Possession.guidance(p) // a soul in another's body, by how far it stands above it
-				* pace(p); // the pace it is set to (its years paid in Lifespan#tick)
-		double gained = rate * 0.5;
+				* Possession.guidance(p); // a soul in another's body, by how far it stands above it
+		double rate = steady * pace(p); // the pace it is set to (its years paid as it wins: Lifespan#seclude)
+		// A reward's seconds (addBonusSeconds) are the drawn path's: the ghost path's when it is drawn alone (a Primordial Chaos Body
+		// drawing both has them on the heaven path).
+		boolean drawn = TwoPaths.cultivatesGhost(c) && !both;
+		double bonus = drawn ? steady * session.bonusSeconds : 0;
+		if (drawn) session.bonusSeconds = 0;
+		double gained = rate * 0.5 + bonus;
 		int before = GhostMethods.ghostRank(s);
 		double was = s.pathCultivation();
 		boolean wasBottleneck = GhostMethods.atBottleneck(c);
@@ -503,7 +516,7 @@ public final class MeditationManager {
 		// Peaks' denser yin and a stone in hand saving them.
 		Lifespan.seclude(p, before, was, GhostMethods.ghostRank(s), s.pathCultivation(), GhostMethods::required,
 				Lifespan.saving(session.boost.multiplier(), active != null && session.stelesNear.contains(active) ? GhostMethods.STELE_BONUS : 1.0,
-						Lifespan.ghostPlaceSaving(s.density()), SpiritStoneItem.meditationMultiplier(p)), 1.0);
+						Lifespan.ghostPlaceSaving(s.density()), SpiritStoneItem.meditationMultiplier(p)), gained <= 0 ? 0 : 1 - bonus / gained);
 		boolean settled = GhostMethods.meditate(p, gained, session.stelesNear);
 		if (stages > 0) {
 			p.serverLevel().playSound(null, p.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.8f, 0.7f);

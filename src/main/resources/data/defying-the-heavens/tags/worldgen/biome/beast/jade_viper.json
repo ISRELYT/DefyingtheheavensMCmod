@@ -1,0 +1,32 @@
+{
+  "replace": false,
+  "values": [
+    "#minecraft:is_jungle",
+    "minecraft:swamp",
+    "minecraft:mangrove_swamp",
+    "minecraft:flower_forest",
+    "defying-the-heavens:spirit_forest",
+    {"id": "terralith:amethyst_canyon", "required": false},
+    {"id": "terralith:amethyst_rainforest", "required": false},
+    {"id": "terralith:blooming_plateau", "required": false},
+    {"id": "terralith:blooming_valley", "required": false},
+    {"id": "terralith:cloud_forest", "required": false},
+    {"id": "terralith:desert_oasis", "required": false},
+    {"id": "terralith:jungle_mountains", "required": false},
+    {"id": "terralith:lavender_forest", "required": false},
+    {"id": "terralith:lavender_valley", "required": false},
+    {"id": "terralith:lush_desert", "required": false},
+    {"id": "terralith:lush_valley", "required": false},
+    {"id": "terralith:mirage_isles", "required": false},
+    {"id": "terralith:moonlight_grove", "required": false},
+    {"id": "terralith:moonlight_valley", "required": false},
+    {"id": "terralith:orchid_swamp", "required": false},
+    {"id": "terralith:red_oasis", "required": false},
+    {"id": "terralith:rocky_jungle", "required": false},
+    {"id": "terralith:sakura_grove", "required": false},
+    {"id": "terralith:sakura_valley", "required": false},
+    {"id": "terralith:skylands_spring", "required": false},
+    {"id": "terralith:skylands_summer", "required": false},
+    {"id": "terralith:tropical_jungle", "required": false}
+  ]
+}

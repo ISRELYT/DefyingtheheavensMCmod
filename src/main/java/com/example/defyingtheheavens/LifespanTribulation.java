@@ -254,7 +254,9 @@ public final class LifespanTribulation {
 			double drink = drunk(power);
 			if (drink > 0) {
 				c.setQi(c.maxQi());
-				c.addCultivation(drink * THUNDER_CULTIVATION * c.cultivationRequired());
+				// Into the path drawn in: the Demon Path's bar with it drawn (the heaven path's always, before the sweep of 2026-10-23).
+				if (TwoPaths.cultivatesDemon(c)) DemonPath.addCultivation(c, drink * THUNDER_CULTIVATION * DemonPath.required(DemonPath.rank(c)));
+				else c.addCultivation(drink * THUNDER_CULTIVATION * c.cultivationRequired());
 				target.heal((float) (harm * drink * 0.25));
 				harm *= 1 - drink;
 				level.sendParticles(ParticleTypes.ELECTRIC_SPARK, target.getX(), target.getY() + 1.0, target.getZ(), 30, 0.5, 0.9, 0.5, 0.3);

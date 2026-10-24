@@ -133,6 +133,40 @@ final class HeavenSpellTesting {
 		floor.remove();
 	}
 
+	/**
+	 * Ends a test whose spells wound the land: it succeeds once every wound is cut (Devastation goes on cutting after the casts, a few
+	 * thousand blocks a tick), what they left drained away ({@link #drain}) and the test cleaned up. Before 2026-10-24 the tests that cast
+	 * every spell ended at once, their wounds still cutting and a lake still pouring through the cut floor onto the ground the later tests
+	 * stand on (the same spot, batch after batch): a later floor was cut, and a fleeing cultivator's husk carried off (one run in three).
+	 */
+	static void succeedOnceHealed(GameTestHelper helper, ServerPlayer player, List<LivingEntity> spawned, Floor floor) {
+		helper.succeedWhen(() -> {
+			helper.assertTrue(Devastation.pending() == 0, "...its spells' wounds still being cut");
+			drain(floor.level(), floor.centre(), floor.radius() + 36);
+			cleanUp(player, spawned, floor);
+		});
+	}
+
+	/**
+	 * Takes up every fluid and fire within {@code radius} round a floor's {@code centre}, from the ground under it (its spot's) to its air's
+	 * height: what its spells left (a lake in a basin, the water falling from it through the floor, a burning trench).
+	 */
+	static void drain(ServerLevel level, BlockPos centre, int radius) {
+		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+		for (int dx = -radius; dx <= radius; dx++) {
+			for (int dz = -radius; dz <= radius; dz++) {
+				for (int dy = -FLOOR_HEIGHT - 1; dy <= 16; dy++) {
+					pos.set(centre.getX() + dx, centre.getY() + dy, centre.getZ() + dz);
+					net.minecraft.world.level.block.state.BlockState state = level.getBlockState(pos);
+					if (state.getFluidState().isEmpty() && !state.is(net.minecraft.tags.BlockTags.FIRE)) continue;
+					// A waterlogged block keeps itself, its water gone; anything else holding fluid (water, lava, kelp) goes.
+					var wet = net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED;
+					level.setBlock(pos, state.hasProperty(wet) ? state.setValue(wet, false) : Blocks.AIR.defaultBlockState(), 2);
+				}
+			}
+		}
+	}
+
 	static List<LivingEntity> spawned() {
 		return new ArrayList<>();
 	}

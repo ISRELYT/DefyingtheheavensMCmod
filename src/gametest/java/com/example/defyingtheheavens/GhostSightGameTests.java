@@ -185,6 +185,9 @@ public class GhostSightGameTests implements FabricGameTest {
 		level.addFreshEntity(ascender);
 		HungryGhost hungry = ModEntities.HUNGRY_GHOST.create(level);
 		hungry.moveTo(b.getX() + 0.5, b.getY(), b.getZ() + 0.5, 90, 0);
+		// Kept: a mob not kept despawns the moment the nearest player is past 128 blocks (vanilla's Mob#checkDespawn), and another
+		// test's player left some 400 off took the ghost before it had chosen (found 2026-10-24, when new batches reordered the run).
+		hungry.setPersistenceRequired();
 		level.addFreshEntity(hungry);
 		boolean[] went = {false};
 		helper.onEachTick(() -> went[0] |= hungry.getTarget() == ascender);

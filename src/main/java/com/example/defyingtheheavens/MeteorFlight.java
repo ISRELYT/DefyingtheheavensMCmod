@@ -110,7 +110,23 @@ public final class MeteorFlight {
 		int sinceSent;
 		/** Booms so far (tests). */
 		int booms;
+		/** The bulldozer's blocks taken in the game tick {@link #dozedAt} ({@link #bulldoze}: one budget a tick, however many words come). */
+		int dozed;
+		long dozedAt = Long.MIN_VALUE;
 	}
+
+	/**
+	 * The bulldozer's word ({@link #bulldoze}) is taken only from one the server sees going this share of Bulldozer#FROM_SPEED or faster
+	 * (State#speed, the mean of its moves, which lags a flier setting off: a True Immortal's comes to a quarter of it as its client
+	 * starts clearing), or diving steeply, burrowing (Bulldozer#burrowing), close by...
+	 */
+	private static final double DOZE_SPEED_SHARE = 0.25;
+	/**
+	 * ...and only for blocks in a cone ahead of where it looks: this far to the side of the line through its middle, its speed (a tick's
+	 * legs go round an L, Bulldozer) and this much more for each block out along it (a look a tick stale, a turn); and no more than
+	 * this (and a tick's flight) behind its middle.
+	 */
+	private static final double DOZE_SIDE = 4, DOZE_WIDENS = 0.6, DOZE_BEHIND = 4;
 
 	private static final Map<UUID, State> STATES = new HashMap<>();
 
@@ -271,8 +287,10 @@ public final class MeteorFlight {
 			s.fastTicks = 0;
 			s.heat = Math.max(0, s.heat - HEAT_FALL);
 		}
-		// Ablaze and still pressing on (stopped short by a wall too, the way ahead opened for it): through what stands in the way.
-		if (s.streaking && s.heat >= ABLAZE && p.serverLevel().getGameRules().getBoolean(ModGameRules.METEOR_FLIGHT_SMASHES)) {
+		// Ablaze and still pressing on (stopped short by a wall too, the way ahead opened for it): through what stands in the way. Not
+		// one of the dead the dead's rules hold (Incorporeal: they break nothing of the living world; they did, before the sweep of
+		// 2026-10-23).
+		if (s.streaking && s.heat >= ABLAZE && !Incorporeal.is(p) && p.serverLevel().getGameRules().getBoolean(ModGameRules.METEOR_FLIGHT_SMASHES)) {
 			int cut = carve(p, p.serverLevel(), from, to, ahead(p, speed));
 			if (cut > 0 && now - s.soundAt >= 5) {
 				s.soundAt = now;
@@ -345,25 +363,43 @@ public final class MeteorFlight {
 
 	/**
 	 * From the flier's client (C2S meteor_doze): the blocks its bulldozer cleared ahead of it (Bulldozer#sweep), already gone on its
-	 * screen. Those it may take go here too (flying in Meteor Flight, the gamerule on, near enough to where it was last seen, and as
-	 * the great spells' wounds may: HeavenSpells#carvable), a few crumbling for those near; then the word is acknowledged up to
-	 * {@code sequence}, and whatever wasn't taken comes back on its screen (vanilla's block prediction). @return how many went
+	 * screen. Those it may take go here too (flying in Meteor Flight with forward and the boost held, the gamerule on, going fast as the
+	 * server sees it ({@link #DOZE_SPEED_SHARE}), in the cone ahead of where it looks ({@link #DOZE_SIDE}) near enough to where it was
+	 * last seen, at most Bulldozer#MOST_A_TICK a tick however many words come, and as the great spells' wounds may: HeavenSpells#carvable),
+	 * a few crumbling for those near; then the word is acknowledged up to {@code sequence}, and whatever wasn't taken comes back on its
+	 * screen (vanilla's block prediction). Before the sweep of 2026-10-23 any block within 72 of a hovering flier was taken on its
+	 * word, 384 a packet, as many packets as it sent. @return how many went
 	 */
 	public static int bulldoze(ServerPlayer p, int sequence, List<BlockPos> asked) {
 		int cut = 0;
 		try {
 			ServerLevel level = p.serverLevel();
-			if (!mayStreak(p, CultivationManager.get(p)) || !level.getGameRules().getBoolean(ModGameRules.METEOR_FLIGHT_SMASHES)) return 0;
+			if (!mayStreak(p, CultivationManager.get(p)) || Incorporeal.is(p) || !level.getGameRules().getBoolean(ModGameRules.METEOR_FLIGHT_SMASHES)) return 0;
+			State s = STATES.get(p.getUUID());
+			Vec3 look = Vec3.directionFromRotation(p.getXRot(), p.getYRot()); // the look as its moves send it (not the head's, which lags)
+			// Slower than the bulldozer wants, only a steep dive's burrow is taken (Bulldozer#burrowing: at any speed, as its client's,
+			// MeteorFlightClient#travel; toast's of 2026-10-24), and only close: its way down and its lead at that speed, not the slack a
+			// fast flier's lagging moves need (a hovering flier's word for a cone of land below it is still not taken).
+			boolean slow = s != null && s.speed < Bulldozer.FROM_SPEED * DOZE_SPEED_SHARE;
+			if (s == null || !s.wants || !s.flatOut || slow && !Bulldozer.burrowing(look)) return 0;
+			long now = level.getGameTime();
+			if (s.dozedAt != now) {
+				s.dozedAt = now;
+				s.dozed = 0;
+			}
 			Vec3 middle = p.position().add(0, p.getBbHeight() * 0.5, 0);
-			double reach = Bulldozer.MOST_REACH + Bulldozer.SLACK;
+			double reach = slow ? Bulldozer.reach(Bulldozer.FROM_SPEED) : Math.min(Bulldozer.MOST_REACH, Bulldozer.reach(s.speed)) + Bulldozer.SLACK;
 			int shown = 0;
 			for (BlockPos pos : asked) {
-				if (cut >= Bulldozer.MOST_A_TICK) break;
-				if (Vec3.atCenterOf(pos).distanceToSqr(middle) > reach * reach || !level.isLoaded(pos)) continue;
+				if (s.dozed >= Bulldozer.MOST_A_TICK) break;
+				Vec3 rel = Vec3.atCenterOf(pos).subtract(middle);
+				double along = rel.dot(look), side = DOZE_SIDE + s.speed + DOZE_WIDENS * Math.max(0, along);
+				if (along < -DOZE_BEHIND - s.speed || along > reach || rel.lengthSqr() - along * along > side * side || !level.isLoaded(pos)) continue;
 				BlockState state = level.getBlockState(pos);
 				if (state.getCollisionShape(level, pos).isEmpty() || !HeavenSpells.carvable(level, pos, p)) continue;
 				level.removeBlock(pos, false);
 				cut++;
+				s.dozed++;
 				// Crumbling, for those near (the flier saw its own already): a few, not every block.
 				if (shown < Bulldozer.SHOWN_A_TICK && level.random.nextInt(3) == 0) {
 					shown++;
@@ -372,7 +408,8 @@ public final class MeteorFlight {
 			}
 			return cut;
 		} finally {
-			if (p.connection != null) p.connection.ackBlockChangesUpTo(sequence);
+			// Never below 0 (vanilla throws on it: a forged word's).
+			if (p.connection != null) p.connection.ackBlockChangesUpTo(Math.max(0, sequence));
 		}
 	}
 

@@ -117,7 +117,10 @@ public final class SparSystem {
 			this.npcStake = npcStake;
 			this.regardBefore = npc.regard(player);
 			int theirs = npc.isMortal() ? -1 : CultivatorNpc.realmOf(npc.getRank()).ordinal();
-			int yours = CultivationManager.get(player).getRealm().ordinal();
+			// The player's realm as its body is wielded, on any path (TwoPaths#wieldedRank; a mortal's none): by the heaven path's alone
+			// before the sweep of 2026-10-23, so a ghost or demon path elder beat a "senior" it stood far above.
+			int wielded = TwoPaths.wieldedRank(CultivationManager.get(player));
+			int yours = wielded < 0 ? -1 : wielded / Stage.values().length;
 			this.senior = theirs > yours;
 			this.junior = theirs < yours;
 			this.stronger = npc.sustainedRank() > CultivatorNpc.rankOf(player);
@@ -185,6 +188,11 @@ public final class SparSystem {
 		if (!AFTER.isEmpty() && justSparred(entity, from)) return false;
 		if (!(entity instanceof CultivatorNpc npc) || npc.getSectId() == null || !(from instanceof ServerPlayer) || areSparring(entity, from)) return true;
 		return !npc.getSectId().equals(sparSect(from, entity.level().getGameTime()));
+	}
+
+	/** Whether {@code player} is sparring with one of the sect {@code sect}'s people, or did a moment ago (its bout's aftermath). */
+	public static boolean sparsWithSect(Entity player, UUID sect) {
+		return sect != null && (!BY_PLAYER.isEmpty() || !AFTER.isEmpty()) && sect.equals(sparSect(player, player.level().getGameTime()));
 	}
 
 	/** The sect of the cultivator {@code player} is sparring with, or sparred with a moment ago; or null. */
@@ -387,12 +395,12 @@ public final class SparSystem {
 		BY_NPC.remove(spar.npc);
 		if (npc != null) npc.endSpar(player);
 		if (npc != null && player != null) AFTER.put(spar.npc, new Aftermath(spar.player, npc.level().getGameTime() + AFTERMATH_TICKS, spar.sect));
+		// The cultivator's own stake is only ever what it puts up to be won (CultivatorLoot#stakeFor makes it, at the wager): only the
+		// player takes it, winning. It kept it too before the sweep of 2026-10-23, however a bout ended but won, so each wager made it
+		// that much richer out of nothing, for whoever slew it after.
 		if (player == null) {
-			// Gone mid-spar (logged out): the cultivator keeps the stakes, the player's included.
-			if (npc != null) {
-				npc.keepWinnings(spar.playerStake);
-				npc.keepWinnings(spar.npcStake);
-			}
+			// Gone mid-spar (logged out): the cultivator keeps the player's stake.
+			if (npc != null) npc.keepWinnings(spar.playerStake);
 			return;
 		}
 		if (player.getLastHurtByMob() == npc) player.setLastHurtByMob(null);
@@ -418,14 +426,8 @@ public final class SparSystem {
 				give(player, spar.playerStake);
 				give(player, spar.npcStake);
 			}
-			case LOST, FORFEIT -> {
-				npc.keepWinnings(spar.playerStake);
-				npc.keepWinnings(spar.npcStake);
-			}
-			case DRAW, VOID, CALLED_OFF -> {
-				give(player, spar.playerStake);
-				npc.keepWinnings(spar.npcStake);
-			}
+			case LOST, FORFEIT -> npc.keepWinnings(spar.playerStake);
+			case DRAW, VOID, CALLED_OFF -> give(player, spar.playerStake);
 		}
 		if (npc.isVacant()) return; // its body taken by a soul (Possession): set aside, it says nothing
 		if (outcome == Outcome.CALLED_OFF) {

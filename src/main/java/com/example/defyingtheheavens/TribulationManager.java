@@ -415,6 +415,12 @@ public final class TribulationManager {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_NOT_READY), true);
 			return;
 		}
+		// As the heaven path's (Obsession): one obsession, every path (the screen's answer comes back as the heaven path's, Obsession#name
+		// telling the Demon Path's by what is drawn in).
+		if (Obsession.asks(c, DemonPath.rank(c))) {
+			Obsession.ask(player, false);
+			return;
+		}
 		MeditationManager.stop(player, false);
 		int target = DemonPath.rank(c) + 1;
 		Trial trial = new Trial(DemonPath.realm(target), DemonPath.stage(target), false, c.hasPhysique(Physique.PRIMORDIAL_CHAOS_BODY));
@@ -571,6 +577,14 @@ public final class TribulationManager {
 	private static UUID striking;
 
 	/**
+	 * Whether a tribulation's strike is landing on {@code entity} this moment: the heavens' (or the Netherworld's) own, which no heaven
+	 * spell's ward, Golden Bell or rebirth turns (HeavenSpells#incoming, #allowDeath; the user's pick, 2026-10-24).
+	 */
+	public static boolean isStriking(net.minecraft.world.entity.Entity entity) {
+		return striking != null && entity != null && striking.equals(entity.getUUID());
+	}
+
+	/**
 	 * ALLOW_DEATH: the heavens can't strike a Heaven-Defying Body down (Physique; the user's ask, 2026-10-20: not spared its
 	 * tribulations, only their killing). Its strike's killing blow leaves it {@link #DEFIED_HEALTH} and the tribulation fails, costing
 	 * it nothing ({@link #holds}); the dead don't scatter for it either. @return false to hold off the death
@@ -662,6 +676,13 @@ public final class TribulationManager {
 		if (!sameTarget || !DemonPath.canBreakthrough(c) || !DemonPath.breakthrough(c)) {
 			p.displayClientMessage(Component.translatable(ModLang.MSG_NOT_READY), true);
 			return;
+		}
+		// A Heavenly Thunder Body's banked lightning becomes cultivation in the new stage, as on the heaven path (it was drunk for
+		// nothing here before the sweep of 2026-10-23).
+		if (t.absorbed > 0) {
+			double gained = Math.min(1, t.absorbed) * THUNDER_SHARE * DemonPath.required(DemonPath.rank(c));
+			DemonPath.addCultivation(c, gained);
+			p.displayClientMessage(Component.translatable(ModLang.MSG_THUNDER_ABSORBED, Math.round(gained)).withStyle(net.minecraft.ChatFormatting.AQUA), true);
 		}
 		DemonPath.afterRank(p, before);
 		p.setHealth(p.getMaxHealth());

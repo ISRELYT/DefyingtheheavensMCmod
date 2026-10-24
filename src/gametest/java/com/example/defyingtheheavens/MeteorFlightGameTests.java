@@ -245,6 +245,38 @@ public class MeteorFlightGameTests implements FabricGameTest {
 			level.getGameRules().getRule(ModGameRules.METEOR_FLIGHT_SMASHES).set(false, level.getServer());
 			helper.assertTrue(MeteorFlight.bulldoze(core, 1, ahead) == 0 && level.getBlockState(wall).is(Blocks.STONE), "The gamerule off: the wall stands");
 			level.getGameRules().getRule(ModGameRules.METEOR_FLIGHT_SMASHES).set(true, level.getServer());
+			// Hovering (the server sees no speed), or not holding forward and the boost: the word is not taken (the sweep of 2026-10-23).
+			core.setYRot(-90); // looking along +x, at the wall
+			core.setYHeadRot(-90);
+			core.setXRot(0);
+			helper.assertTrue(MeteorFlight.bulldoze(core, 2, ahead) == 0 && level.getBlockState(wall).is(Blocks.STONE), "Hovering: the wall stands");
+			// ...but diving steeply it burrows at any speed, as its client does (toast's burrow, 2026-10-24): hovering eight blocks up and
+			// looking straight down, the stone just under its feet goes; not the floor below, further than a slow burrow goes.
+			MeteorFlight.setStreaking(core, true, true);
+			core.moveTo(feet.x, feet.y + 8, feet.z);
+			core.setXRot(90);
+			BlockPos near = wall.offset(-3, 7, 0), floor = wall.offset(-3, -1, 0);
+			level.setBlock(near, Blocks.STONE.defaultBlockState(), 3);
+			try {
+				helper.assertTrue(MeteorFlight.bulldoze(core, 2, List.of(near, floor)) == 1 && level.getBlockState(near).isAir() && level.getBlockState(floor).is(Blocks.STONE),
+						"Hovering but diving straight down: it burrows into what is under its feet, and no further");
+			} finally {
+				level.setBlock(near, Blocks.AIR.defaultBlockState(), 3);
+				core.moveTo(feet.x, feet.y, feet.z);
+				core.setXRot(0);
+			}
+			for (int i = 0; i < 10; i++) MeteorFlight.observe(core, c, true, feet.subtract(1.5, 0, 0), feet); // the server sees it fly at 30 a second
+			MeteorFlight.setStreaking(core, true, false);
+			helper.assertTrue(MeteorFlight.bulldoze(core, 2, ahead) == 0 && level.getBlockState(wall).is(Blocks.STONE), "The boost let go: the wall stands");
+			MeteorFlight.setStreaking(core, true, true);
+			// Behind it, or off to the side of where it looks: not taken.
+			BlockPos behind = wall.offset(-12, 0, 0), aside = wall.offset(-3, 0, 9);
+			level.setBlock(behind, Blocks.STONE.defaultBlockState(), 3);
+			level.setBlock(aside, Blocks.STONE.defaultBlockState(), 3);
+			helper.assertTrue(MeteorFlight.bulldoze(core, 2, List.of(behind, aside)) == 0 && level.getBlockState(behind).is(Blocks.STONE)
+					&& level.getBlockState(aside).is(Blocks.STONE), "Behind it and off to its side, nothing goes");
+			level.setBlock(behind, Blocks.AIR.defaultBlockState(), 3);
+			level.setBlock(aside, Blocks.AIR.defaultBlockState(), 3);
 			int cut = MeteorFlight.bulldoze(core, 2, ahead);
 			helper.assertTrue(cut == ahead.size() && level.getBlockState(wall).isAir() && level.getBlockState(wall.above()).isAir(), "On: through it (" + cut + ")");
 			int more = MeteorFlight.bulldoze(core, 3, List.of(wall.offset(0, 0, 1), wall.offset(0, 0, -1), wall.offset(0, 0, -1).above(200)));
@@ -257,6 +289,8 @@ public class MeteorFlightGameTests implements FabricGameTest {
 		} finally {
 			level.getGameRules().getRule(ModGameRules.METEOR_FLIGHT_SMASHES).set(rule, level.getServer());
 			for (BlockPos pos : BlockPos.betweenClosed(wall.offset(-4, -1, -2), wall.offset(1, 3, 2))) level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+			level.setBlock(wall.offset(-12, 0, 0), Blocks.AIR.defaultBlockState(), 3);
+			level.setBlock(wall.offset(-3, 0, 9), Blocks.AIR.defaultBlockState(), 3);
 			forget(core);
 		}
 		helper.succeed();
@@ -353,11 +387,17 @@ public class MeteorFlightGameTests implements FabricGameTest {
 		ServerPlayer immortal = cultivator(helper.getLevel(), Realm.TRUE_IMMORTAL, Stage.EARLY);
 		try {
 			PlayerCultivation c = flying(immortal, false);
-			float before = QiFlight.moveAllowanceSq(immortal, 100);
+			float before = QiFlight.moveAllowanceSq(immortal, 100, 1);
 			c.setAbilityEnabled(Ability.METEOR_FLIGHT, true);
-			double reach = MeteorFlight.topPerTick(c) * 20;
-			helper.assertTrue(MeteorFlight.mayStreak(immortal, c) && QiFlight.moveAllowanceSq(immortal, 100) >= (float) (reach * reach) && before < reach * reach,
-					"Room on the server for a second of top speed in a packet, only with it on (" + before + " -> " + QiFlight.moveAllowanceSq(immortal, 100) + ")");
+			double reach = MeteorFlight.topPerTick(c);
+			float after = QiFlight.moveAllowanceSq(immortal, 100, 1);
+			helper.assertTrue(MeteorFlight.mayStreak(immortal, c) && after >= (float) (reach * reach) && before < after,
+					"Room on the server for a tick of top speed, only with it on (" + before + " -> " + after + ")");
+			// As much as the time it was still (packets bunched by a stutter or a stalled server), never a second's for every packet: the
+			// user's pick, 2026-10-24.
+			double second = MeteorFlight.topPerTick(c) * 20;
+			helper.assertTrue(QiFlight.moveAllowanceSq(immortal, 100, 20) >= (float) (second * second) && QiFlight.moveAllowanceSq(immortal, 100, 1) < second * second / 16,
+					"A second's room after a second still, a few ticks' after one");
 			immortal.setGameMode(GameType.CREATIVE);
 			helper.assertTrue(!MeteorFlight.mayStreak(immortal, c), "Not for creative flight, which is vanilla's");
 		} finally {

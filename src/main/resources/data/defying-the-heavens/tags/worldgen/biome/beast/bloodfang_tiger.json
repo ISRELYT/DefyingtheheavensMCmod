@@ -1,0 +1,19 @@
+{
+  "replace": false,
+  "values": [
+    "#minecraft:is_jungle",
+    "#minecraft:is_savanna",
+    "minecraft:dark_forest",
+    "defying-the-heavens:spirit_forest",
+    "defying-the-heavens:ancient_sword_graveyard",
+    {"id": "terralith:amethyst_rainforest", "required": false},
+    {"id": "terralith:arid_highlands", "required": false},
+    {"id": "terralith:fractured_savanna", "required": false},
+    {"id": "terralith:jungle_mountains", "required": false},
+    {"id": "terralith:rocky_jungle", "required": false},
+    {"id": "terralith:savanna_slopes", "required": false},
+    {"id": "terralith:siberian_grove", "required": false},
+    {"id": "terralith:siberian_taiga", "required": false},
+    {"id": "terralith:tropical_jungle", "required": false}
+  ]
+}

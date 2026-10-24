@@ -34,8 +34,9 @@ public final class Incorporeal {
 	}
 
 	/**
-	 * Nothing of the living world touches it: arrows and blasts pass through, currents and shoves don't move it, no mob hunts it.
-	 * A soul, and any of the dead, a Ghost King too.
+	 * Nothing of the living world touches it: arrows and blasts pass through, currents and shoves don't move it, no mob hunts it (but
+	 * the void's Vestiges and the gap's storms, which reach the dead: GhostSystem#reaches, SpatialStorms). A soul, and any of the dead,
+	 * a Ghost King too.
 	 */
 	public static boolean untouchable(Player player) {
 		return SoulProjection.isSoul(player) || isGhost(player);

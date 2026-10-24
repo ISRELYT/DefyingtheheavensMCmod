@@ -352,6 +352,12 @@ public final class ModLang {
 	public static final String STONE_QI_LEFT = k("stone.qi_left");
 	/** A settlement's share of its fortune (SpiritStoneItem#fortune): whom it was shared with, and what it fills. */
 	public static final String STONE_FORTUNE = k("stone.fortune");
+	// Demon cores (DemonCoreItem): "Foundation Building Demon Core", its rank, element, whence, and what it is for
+	public static final String CORE_NAME = k("demon_core.name");
+	public static final String CORE_RANK = k("demon_core.rank");
+	public static final String CORE_ELEMENT = k("demon_core.element");
+	public static final String CORE_FROM = k("demon_core.from");
+	public static final String CORE_USE = k("demon_core.use");
 	// The menu's Journal tab (see Journal)
 	public static final String TAB_JOURNAL = k("tab.journal");
 	public static final String JOURNAL_EMPTY = k("journal.empty");
@@ -535,6 +541,7 @@ public final class ModLang {
 	public static final String WISH_TOOK_NONE = k("wish.took_none");
 	public static final String WISH_TOOK = k("wish.took");
 	public static final String WISH_GIVE_LACK = k("wish.give_lack");
+	public static final String WISH_GIVE_OWED = k("wish.give_owed");
 	public static final String WISH_GIVEN = k("wish.given");
 	public static final String WISH_THREAT_SLAIN = k("wish.threat_slain");
 	public static final String WISH_GUIDED = k("wish.guided");
@@ -900,6 +907,7 @@ public final class ModLang {
 	public static final String MSG_CORE_CONFIRM = k("message.core_detonation.confirm");
 	public static final String MSG_CORE_TOO_LATE = k("message.core_detonation.too_late");
 	public static final String MSG_CORE_BREAKING = k("message.core_detonation.breaking");
+	public static final String MSG_CORE_FIZZLED = k("message.core_detonation.fizzled");
 	public static final String DEATH_CORE_DETONATION = "death.attack." + DefyingTheHeavens.MOD_ID + ".core_detonation";
 	// The Spatial Tear and travel through the gap (SpatialTrialHandler#tear)
 	public static final String MSG_GAP_TRAVEL = k("message.spatial_gap.travel");
@@ -988,7 +996,6 @@ public final class ModLang {
 	public static final String SPELLS_COOLING = k("spells.cooling");
 	public static final String SPELLS_ON_WHEEL = k("spells.on_wheel");
 	public static final String SPELLS_ARRANGE_HINT = k("spells.arrange_hint");
-	public static final String SPELLS_COST_BOTH = k("spells.cost_both");
 	public static final String SPELLS_QI_COST = k("spells.qi_cost");
 	public static final String SPELLS_LOCKED_BOTH = k("spells.locked_both");
 	public static final String SPELL_WHEEL_TITLE = k("spell_wheel.title");
@@ -1060,7 +1067,8 @@ public final class ModLang {
 	/** The Netherworld's tribulation's yin lightning (ModDamageTypes): its bolt, and the yin that goes through armour. */
 	public static final String DEATH_YIN_LIGHTNING = "death.attack." + DefyingTheHeavens.MOD_ID + ".yin_lightning";
 	public static final String DEATH_YIN_TRIBULATION = "death.attack." + DefyingTheHeavens.MOD_ID + ".yin_tribulation";
-	public static final String MSG_SPELL_NO_BOTH = k("message.spell.no_both");
+	/** The spells of both paths' heaven-and-demon qi (ModDamageTypes#HEAVEN_DEMON). */
+	public static final String DEATH_HEAVEN_DEMON = "death.attack." + DefyingTheHeavens.MOD_ID + ".heaven_demon";
 	public static final String MSG_SPELL_BOTH_PATHS = k("message.spell.both_paths");
 	/** A form's name: this and its id (TwoPaths.Form). */
 	public static final String FORM_PREFIX = k("form.");
@@ -1121,6 +1129,8 @@ public final class ModLang {
 	public static final String MSG_QUELLED = k("message.quelled");
 	public static final String MSG_QUELLED_OTHER = k("message.quelled.other");
 	public static final String MSG_QUELLED_HELD = k("message.quelled.held");
+	/** Space locked round one (Earth Veins Lock the Void: EarthSpells#spaceLocked): no step through it, no tear in it. */
+	public static final String MSG_SPACE_LOCKED = k("message.space_locked");
 	// The Astral Realm
 	public static final String DIMENSION_ASTRAL_VOID = k("dimension.astral_void");
 	public static final String DIMENSION_ASTRAL_SURFACES = k("dimension.astral_surfaces");

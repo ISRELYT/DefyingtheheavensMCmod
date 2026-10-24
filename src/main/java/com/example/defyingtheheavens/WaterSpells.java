@@ -39,6 +39,9 @@ import java.util.UUID;
  *   <li>Nascent Soul: Glacial Spears, Great Tide.</li>
  *   <li>Heavenly Being: Heavenly River Torrent, Frozen Field (all within 100 frozen; its thaw hurts).</li>
  *   <li>Four Axis: Absolute Zero, Boundless Sea.</li>
+ *   <li>Dao Integration: Black Tortoise Bastion (a water ward, and its serpent), Hundred Rivers Converge (a whirlpool).</li>
+ *   <li>Void Shattering: Weak Water from the Void (the water that bears nothing up pours out of a rift: all under it sink, fliers too), Kun
+ *       Rises from the Northern Abyss (the land opens onto the abyss and the Kun breaches out of it).</li>
  * </ul>
  */
 public final class WaterSpells {
@@ -77,10 +80,51 @@ public final class WaterSpells {
 	public static final double SEA_RANGE = 48, SEA_RADIUS = 16, SEA_BASIN = Devastation.sized(Realm.FOUR_AXIS, 18);
 	public static final int SEA_TICKS = 8 * 20;
 	public static final float SEA_DAMAGE = 22;
+	/**
+	 * Black Tortoise Bastion: whom its shell wards (within {@link #TORTOISE_RADIUS} of its caster: SpellAura BLACK_TORTOISE), its serpent's
+	 * reach and harm; how long it keeps by its caster, how often its serpent strikes, how long after it rears back it lands, and when it
+	 * may first strike (once the tortoise has risen: its rise takes 24 ticks) (ticks).
+	 */
+	public static final double TORTOISE_RADIUS = HeavenSpells.span(Realm.DAO_INTEGRATION, 8), TORTOISE_REACH = HeavenSpells.span(Realm.DAO_INTEGRATION, 16);
+	public static final float TORTOISE_DAMAGE = 200;
+	public static final int TORTOISE_TICKS = 12 * 20, TORTOISE_STRIKE_EVERY = 20, TORTOISE_LUNGE = 6, TORTOISE_RISEN = 30;
+	/**
+	 * Hundred Rivers Converge: where (up to {@link #RIVERS_RANGE}), whom it drags in (within {@link #RIVERS_RADIUS}), its harm a second, how
+	 * long it turns and its burst (ticks); the basin it leaves (23 round, 5 deep, a lake in it: by its realm, Devastation#sized).
+	 */
+	public static final double RIVERS_RANGE = HeavenSpells.span(Realm.DAO_INTEGRATION, 64), RIVERS_RADIUS = HeavenSpells.span(Realm.DAO_INTEGRATION, 24), RIVERS_BASIN = Devastation.sized(Realm.DAO_INTEGRATION, 18),
+			RIVERS_BASIN_DEPTH = Devastation.sized(Realm.DAO_INTEGRATION, 4);
+	public static final float RIVERS_DAMAGE = 90;
+	public static final int RIVERS_TICKS = 5 * 20, RIVERS_BURST = 16;
+	/**
+	 * Weak Water from the Void: where (up to {@link #WEAK_RANGE}, 118 by its realm), how high its rift opens (40: its fall's model is that long,
+	 * SpellConstruct#sizedFor) and how long the rift is, how far round where it falls it reaches ({@link #WEAK_RADIUS}, 26), its harm a second;
+	 * the basin it leaves (18 round, 6 deep, a lake in it: by its realm); how long the rift takes to open, and how long it pours (ticks).
+	 */
+	public static final double WEAK_RANGE = HeavenSpells.span(Realm.VOID_SHATTERING, 64), WEAK_HIGH = HeavenSpells.span(Realm.VOID_SHATTERING, 22),
+			WEAK_RIFT = HeavenSpells.span(Realm.VOID_SHATTERING, 15), WEAK_RADIUS = HeavenSpells.span(Realm.VOID_SHATTERING, 14),
+			WEAK_BASIN = Devastation.sized(Realm.VOID_SHATTERING, 10), WEAK_BASIN_DEPTH = Devastation.sized(Realm.VOID_SHATTERING, 3);
+	public static final float WEAK_DAMAGE = 160;
+	public static final int WEAK_OPENS = 14, WEAK_TICKS = 6 * 20;
+	/** The Weak Water's pale blue: its rift glows so. */
+	public static final int WEAK_PALE = 0xA6D6FF;
+	/**
+	 * Kun Rises from the Northern Abyss: where (up to {@link #KUN_RANGE}, 118), the abyss's breadth (40), whom it strikes as it breaches and
+	 * as it dives back (within {@link #KUN_RADIUS}, 22) and how hard; how high its body's middle leaps (59) and how far its arc reaches to either
+	 * side (13); the basin its dive leaves (18 round, 7 deep, a lake in it: by its realm); how long the abyss takes to open, its leap, and how
+	 * long the abyss stays open after it has gone (ticks).
+	 */
+	public static final double KUN_RANGE = HeavenSpells.span(Realm.VOID_SHATTERING, 64), KUN_ABYSS = HeavenSpells.span(Realm.VOID_SHATTERING, 22),
+			KUN_RADIUS = HeavenSpells.span(Realm.VOID_SHATTERING, 12), KUN_LEAP = HeavenSpells.span(Realm.VOID_SHATTERING, 32), KUN_SWING = HeavenSpells.span(Realm.VOID_SHATTERING, 7),
+			KUN_BASIN = Devastation.sized(Realm.VOID_SHATTERING, 10), KUN_BASIN_DEPTH = Devastation.sized(Realm.VOID_SHATTERING, 4);
+	public static final float KUN_DAMAGE = 1500, KUN_DIVE_DAMAGE = 500;
+	public static final int KUN_OPENS = 16, KUN_LEAPS = 60, KUN_AFTER = 14;
+	/** The northern abyss's deep blue: its rift glows so. */
+	public static final int ABYSS_BLUE = 0x3F7CFF;
 
 	private static final UUID RAIN_ID = UUID.fromString("4c1e9a72-0b5f-4e3d-8f26-d91a7b3e5c08");
 
-	static boolean canCast(ServerPlayer p, Spell spell) {
+	static boolean canCast(LivingEntity p, Spell spell) {
 		return switch (spell) {
 			case WATER_PRISON -> HeavenSpells.aimed(p, PRISON_RANGE) != null || HeavenSpells.refuse(p);
 			case ABSOLUTE_ZERO -> HeavenSpells.aimed(p, ZERO_RANGE) != null || HeavenSpells.refuse(p);
@@ -88,8 +132,8 @@ public final class WaterSpells {
 		};
 	}
 
-	static void cast(ServerPlayer p, Spell spell) {
-		ServerLevel level = p.serverLevel();
+	static void cast(LivingEntity p, Spell spell) {
+		ServerLevel level = HeavenSpells.level(p);
 		switch (spell) {
 			case WATER_ARROW -> arrow(p, spell);
 			case AZURE_COATING_TECHNIQUE -> {
@@ -126,6 +170,22 @@ public final class WaterSpells {
 				if (target != null) HeavenSpells.linger(new Zero(p, spell, target));
 			}
 			case BOUNDLESS_SEA -> HeavenSpells.linger(new Sea(p, spell));
+			case BLACK_TORTOISE_BASTION -> {
+				HeavenSpells.endLingering(p.getUUID(), Tortoise.class);
+				HeavenSpells.linger(new Tortoise(p, spell));
+			}
+			case HUNDRED_RIVERS_CONVERGE -> {
+				LivingEntity aimed = HeavenSpells.aimed(p, RIVERS_RANGE);
+				HeavenSpells.linger(new Rivers(p, spell, aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, RIVERS_RANGE)));
+			}
+			case WEAK_WATER_FROM_THE_VOID -> {
+				LivingEntity aimed = HeavenSpells.aimed(p, WEAK_RANGE);
+				HeavenSpells.linger(new WeakWater(p, spell, aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, WEAK_RANGE)));
+			}
+			case KUN_RISES_FROM_THE_ABYSS -> {
+				LivingEntity aimed = HeavenSpells.aimed(p, KUN_RANGE);
+				HeavenSpells.linger(new Kun(p, spell, aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, KUN_RANGE)));
+			}
 			default -> {}
 		}
 	}
@@ -136,40 +196,40 @@ public final class WaterSpells {
 	}
 
 	/** Water strikes {@code target}: harm, and whatever burnt on it is put out. */
-	static void soak(ServerPlayer p, LivingEntity target, float damage, Spell spell, net.minecraft.world.entity.Entity via) {
+	static void soak(LivingEntity p, LivingEntity target, float damage, Spell spell, net.minecraft.world.entity.Entity via) {
 		HeavenSpells.strike(p, target, damage, spell, via);
 		if (target.isOnFire()) {
 			target.clearFire();
-			SpellFx.send(p.serverLevel(), SpellFx.Kind.STEAM, HeavenSpells.middle(target), Vec3.ZERO, 0.6f, 0);
+			SpellFx.send(HeavenSpells.level(p), SpellFx.Kind.STEAM, HeavenSpells.middle(target), Vec3.ZERO, 0.6f, 0);
 		}
 	}
 
 	// --- Qi Refining ---
 
-	private static void arrow(ServerPlayer p, Spell spell) {
+	private static void arrow(LivingEntity p, Spell spell) {
 		SpellProjectile.cast(p, spell, SpellProjectile.Shape.WATER_ARROW, 1.0f, 5, new Vec3(0.3, -0.2, 1.2), ARROW_SPEED, ARROW_RANGE,
 				new SpellProjectile.Behaviour() {
 					@Override
 					public boolean hitEntity(SpellProjectile missile, LivingEntity target) {
 						soak(p, target, ARROW_DAMAGE, spell, missile);
-						SpellFx.send(p.serverLevel(), SpellFx.Kind.SPLASH, missile.position(), missile.getDeltaMovement(), 0.7f, 0);
-						HeavenSpells.sound(p.serverLevel(), target.position(), SoundEvents.GENERIC_SPLASH, 0.8f, 1.4f);
+						SpellFx.send(HeavenSpells.level(p), SpellFx.Kind.SPLASH, missile.position(), missile.getDeltaMovement(), 0.7f, 0);
+						HeavenSpells.sound(HeavenSpells.level(p), target.position(), SoundEvents.GENERIC_SPLASH, 0.8f, 1.4f);
 						return false;
 					}
 
 					@Override
 					public void hitBlock(SpellProjectile missile, BlockHitResult hit) {
-						SpellFx.send(p.serverLevel(), SpellFx.Kind.SPLASH, hit.getLocation(), missile.getDeltaMovement(), 0.7f, 0);
-						HeavenSpells.sound(p.serverLevel(), hit.getLocation(), SoundEvents.GENERIC_SPLASH, 0.6f, 1.5f);
-						douse(p.serverLevel(), hit.getBlockPos().relative(hit.getDirection()), 1);
+						SpellFx.send(HeavenSpells.level(p), SpellFx.Kind.SPLASH, hit.getLocation(), missile.getDeltaMovement(), 0.7f, 0);
+						HeavenSpells.sound(HeavenSpells.level(p), hit.getLocation(), SoundEvents.GENERIC_SPLASH, 0.6f, 1.5f);
+						douse(HeavenSpells.level(p), hit.getBlockPos().relative(hit.getDirection()), 1);
 					}
 
 					@Override
 					public void launched(SpellProjectile missile) {
-						HeavenSpells.sound(p.serverLevel(), missile.position(), SoundEvents.TRIDENT_RIPTIDE_1, 0.6f, 1.6f);
+						HeavenSpells.sound(HeavenSpells.level(p), missile.position(), SoundEvents.TRIDENT_RIPTIDE_1, 0.6f, 1.6f);
 					}
 				});
-		HeavenSpells.sound(p.serverLevel(), p.position(), SoundEvents.BUCKET_FILL, 0.8f, 1.5f);
+		HeavenSpells.sound(HeavenSpells.level(p), p.position(), SoundEvents.BUCKET_FILL, 0.8f, 1.5f);
 	}
 
 	/** Fires within {@code radius} of {@code centre} put out. */
@@ -190,7 +250,7 @@ public final class WaterSpells {
 		private final SpellField field;
 		private final Set<LivingEntity> slowed = new HashSet<>();
 
-		Rain(ServerPlayer caster) {
+		Rain(LivingEntity caster) {
 			super(caster, RAIN_TICKS);
 			Vec3 ground = HeavenSpells.groundBelow(level, caster.position(), 0, 16);
 			this.at = ground != null ? ground : caster.position();
@@ -205,7 +265,7 @@ public final class WaterSpells {
 				Set<LivingEntity> under = new HashSet<>();
 				for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, new AABB(at, at).inflate(RAIN_RADIUS, RAIN_HEIGHT, RAIN_RADIUS),
 						e -> e != caster && e.isAlive() && e.position().multiply(1, 0, 1).distanceToSqr(at.multiply(1, 0, 1)) <= RAIN_RADIUS * RAIN_RADIUS
-								&& e.getY() >= at.y - 3 && e.getY() <= at.y + RAIN_HEIGHT)) {
+								&& e.getY() >= at.y - 3 && e.getY() <= at.y + RAIN_HEIGHT && !HeavenSpells.walled(caster, e))) {
 					under.add(e);
 					if (slowed.add(e)) slow(e, true);
 					if (e.isOnFire()) e.clearFire();
@@ -249,7 +309,7 @@ public final class WaterSpells {
 		private final WoodSpells.Bound bound;
 		private float struck;
 
-		Prison(ServerPlayer caster, Spell spell, LivingEntity target, int ticks, float damage, float force, SpellField.Kind kind) {
+		Prison(LivingEntity caster, Spell spell, LivingEntity target, int ticks, float damage, float force, SpellField.Kind kind) {
 			super(caster, ticks);
 			this.spell = spell;
 			this.target = target;
@@ -298,8 +358,8 @@ public final class WaterSpells {
 		}
 	}
 
-	private static void spring(ServerPlayer p, Spell spell) {
-		ServerLevel level = p.serverLevel();
+	private static void spring(LivingEntity p, Spell spell) {
+		ServerLevel level = HeavenSpells.level(p);
 		Vec3 gather = p.getEyePosition().add(Vec3.directionFromRotation(0, p.getYRot()).scale(4)).add(0, 4, 0);
 		SpellField.create(level, SpellField.Kind.WATER_GATHER, gather, 2.2f, 2.2f, SPRING_GATHER, p).data(level.random.nextInt()).spawn();
 		HeavenSpells.sound(level, gather, SoundEvents.BUBBLE_COLUMN_UPWARDS_INSIDE, 2.0f, 0.6f);
@@ -341,7 +401,7 @@ public final class WaterSpells {
 	}
 
 	/** A small lake where the spring fell: a bowl {@link #LAKE_RADIUS} round pressed into the ground (or what is built on it), filled with water. */
-	static void lake(ServerPlayer p, ServerLevel level, Vec3 at) {
+	static void lake(LivingEntity p, ServerLevel level, Vec3 at) {
 		BlockPos centre = BlockPos.containing(at.x, at.y - 0.5, at.z);
 		int surface = centre.getY();
 		List<BlockPos> fill = new ArrayList<>();
@@ -354,7 +414,9 @@ public final class WaterSpells {
 					BlockPos pos = new BlockPos(centre.getX() + dx, surface + dy, centre.getZ() + dz);
 					BlockState state = level.getBlockState(pos);
 					if (state.isAir() || state.canBeReplaced()) {
-						fill.add(pos);
+						// Water only where the caster may change the land (spawn protection, Adventure mode, a barrier's ground, the
+						// Ghost Gate: Devastation#mayChange; the lake once filled past them all).
+						if (Devastation.mayChange(p, level, pos)) fill.add(pos);
 						continue;
 					}
 					if (HeavenSpells.carvable(level, pos, p)) {
@@ -390,7 +452,7 @@ public final class WaterSpells {
 		private final Spell spell;
 		private final SpellField field;
 
-		Lance(ServerPlayer caster, Spell spell) {
+		Lance(LivingEntity caster, Spell spell) {
 			super(caster, LANCE_TICKS);
 			this.spell = spell;
 			this.field = SpellField.create(level, SpellField.Kind.TIDAL_LANCE, HeavenSpells.fromHands(caster), 0.4f, 1, LANCE_TICKS, caster).spawn();
@@ -429,7 +491,7 @@ public final class WaterSpells {
 		private final SpellField field;
 		private final Set<Integer> slowedShots = new HashSet<>();
 
-		Mist(ServerPlayer caster) {
+		Mist(LivingEntity caster) {
 			super(caster, MIST_TICKS);
 			this.field = SpellField.create(level, SpellField.Kind.MIST_VEIL, caster.position(), (float) MIST_RADIUS, 6, MIST_TICKS, caster)
 					.data(caster.getRandom().nextInt()).spawn();
@@ -467,7 +529,7 @@ public final class WaterSpells {
 
 	// --- Nascent Soul ---
 
-	private static void spears(ServerPlayer p, Spell spell) {
+	private static void spears(LivingEntity p, Spell spell) {
 		for (int i = 0; i < 5; i++) {
 			double side = (i - 2) * 0.9;
 			double lift = 1.2 - Math.abs(i - 2) * 0.25;
@@ -480,27 +542,27 @@ public final class WaterSpells {
 							target.invulnerableTime = 0;
 							target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 2));
 							target.setTicksFrozen(Math.max(target.getTicksFrozen(), 140));
-							SpellFx.send(p.serverLevel(), SpellFx.Kind.ICE_BURST, missile.position(), Vec3.ZERO, 0.8f, 0);
-							HeavenSpells.sound(p.serverLevel(), target.position(), SoundEvents.GLASS_BREAK, 1.0f, 1.2f);
+							SpellFx.send(HeavenSpells.level(p), SpellFx.Kind.ICE_BURST, missile.position(), Vec3.ZERO, 0.8f, 0);
+							HeavenSpells.sound(HeavenSpells.level(p), target.position(), SoundEvents.GLASS_BREAK, 1.0f, 1.2f);
 							return false;
 						}
 
 						@Override
 						public void hitBlock(SpellProjectile missile, BlockHitResult hit) {
-							SpellFx.send(p.serverLevel(), SpellFx.Kind.ICE_BURST, hit.getLocation(), Vec3.ZERO, 0.8f, 0);
-							HeavenSpells.sound(p.serverLevel(), hit.getLocation(), SoundEvents.GLASS_BREAK, 0.8f, 1.3f);
+							SpellFx.send(HeavenSpells.level(p), SpellFx.Kind.ICE_BURST, hit.getLocation(), Vec3.ZERO, 0.8f, 0);
+							HeavenSpells.sound(HeavenSpells.level(p), hit.getLocation(), SoundEvents.GLASS_BREAK, 0.8f, 1.3f);
 						}
 
 						@Override
 						public void launched(SpellProjectile missile) {
 							// A fan: each its own few degrees off the aim.
 							missile.setDeltaMovement(missile.getDeltaMovement().yRot((float) Math.toRadians(spread)));
-							HeavenSpells.sound(p.serverLevel(), missile.position(), SoundEvents.TRIDENT_THROW, 0.8f, 1.4f);
+							HeavenSpells.sound(HeavenSpells.level(p), missile.position(), SoundEvents.TRIDENT_THROW, 0.8f, 1.4f);
 						}
 					});
 			spear.data(i);
 		}
-		HeavenSpells.sound(p.serverLevel(), p.position(), SoundEvents.AMETHYST_BLOCK_RESONATE, 1.5f, 1.6f);
+		HeavenSpells.sound(HeavenSpells.level(p), p.position(), SoundEvents.AMETHYST_BLOCK_RESONATE, 1.5f, 1.6f);
 	}
 
 	/**
@@ -513,7 +575,7 @@ public final class WaterSpells {
 		private final SpellField field;
 		private final Set<LivingEntity> struck = new HashSet<>();
 
-		Tide(ServerPlayer caster, Spell spell) {
+		Tide(LivingEntity caster, Spell spell) {
 			super(caster, (int) (TIDE_LENGTH / TIDE_PACE) + 10);
 			this.spell = spell;
 			this.from = caster.position();
@@ -560,7 +622,7 @@ public final class WaterSpells {
 		private final SpellField field;
 		private final Set<LivingEntity> struck = new HashSet<>();
 
-		River(ServerPlayer caster, Spell spell) {
+		River(LivingEntity caster, Spell spell) {
 			super(caster, RIVER_TICKS);
 			this.spell = spell;
 			this.from = caster.position().add(Vec3.directionFromRotation(0, caster.getYRot()).scale(2));
@@ -618,7 +680,7 @@ public final class WaterSpells {
 		private final Set<LivingEntity> frozen = new HashSet<>();
 		private int reached;
 
-		Frozen(ServerPlayer caster, Spell spell) {
+		Frozen(LivingEntity caster, Spell spell) {
 			super(caster, FREEZE_SPREAD + THAW_MAX);
 			this.spell = spell;
 			this.centre = caster.position();
@@ -703,7 +765,7 @@ public final class WaterSpells {
 		private final WoodSpells.Bound bound;
 		private boolean shattered;
 
-		Zero(ServerPlayer caster, Spell spell, LivingEntity target) {
+		Zero(LivingEntity caster, Spell spell, LivingEntity target) {
 			super(caster, ZERO_TICKS);
 			this.spell = spell;
 			this.target = target;
@@ -757,7 +819,7 @@ public final class WaterSpells {
 		private final SpellField field;
 		private final Set<LivingEntity> held = new HashSet<>();
 
-		Sea(ServerPlayer caster, Spell spell) {
+		Sea(LivingEntity caster, Spell spell) {
 			super(caster, SEA_TICKS);
 			this.spell = spell;
 			LivingEntity aimed = HeavenSpells.aimed(caster, SEA_RANGE);
@@ -798,6 +860,308 @@ public final class WaterSpells {
 			// The sea's weight leaves the ground under it crushed into a basin, and a lake in it.
 			Vec3 ground = HeavenSpells.groundBelow(level, at, 2, (int) SEA_RADIUS + 4);
 			if (ground != null) Devastation.crater(caster, level, ground, SEA_BASIN, SEA_BASIN * 0.45, Devastation.Floor.LAKE);
+		}
+	}
+
+	// --- Dao Integration ---
+
+	/**
+	 * Black Tortoise Bastion: the Black Tortoise of the north (SpellConstruct BLACK_TORTOISE, its own GeckoLib model: its shell a dome of
+	 * warding light) rises round its caster and keeps by them {@link #TORTOISE_TICKS}: they and their own within {@link #TORTOISE_RADIUS}
+	 * are under its shell (SpellAura BLACK_TORTOISE, renewed while they stay in it), and every {@link #TORTOISE_STRIKE_EVERY} ticks its
+	 * serpent strikes the nearest foe within {@link #TORTOISE_REACH} for {@link #TORTOISE_DAMAGE}, throwing it back, the tortoise turning
+	 * to face it.
+	 */
+	public static final class Tortoise extends HeavenSpells.Timed {
+		private final Spell spell;
+		private final SpellConstruct tortoise;
+		private float yaw;
+		/** The foe its serpent is striking (it lands {@link #TORTOISE_LUNGE} after it rears back), and when it began. */
+		private LivingEntity striking;
+		private long struckAt;
+
+		Tortoise(LivingEntity caster, Spell spell) {
+			super(caster, TORTOISE_TICKS);
+			this.spell = spell;
+			this.yaw = caster.getYRot();
+			this.tortoise = SpellConstruct.create(level, SpellConstruct.Kind.BLACK_TORTOISE, caster.position(), yaw, 0, TORTOISE_TICKS, caster).sizedFor(spell).spawn();
+			HeavenSpells.sound(level, caster.position(), SoundEvents.CONDUIT_ACTIVATE, 2.0f, 0.5f);
+			HeavenSpells.sound(level, caster.position(), SoundEvents.TURTLE_AMBIENT_LAND, 2.0f, 0.4f);
+			SpellFx.send(level, SpellFx.Kind.SPLASH, caster.position(), Vec3.ZERO, (float) TORTOISE_RADIUS, 0);
+		}
+
+		@Override
+		protected boolean run(long age, long now) {
+			if (!casterHere()) return false;
+			// Its shell wards its caster and their own while they stay within it.
+			if (age % 10 == 0) {
+				for (LivingEntity e : HeavenSpells.around(caster, TORTOISE_RADIUS, e -> HeavenSpells.friendly(caster, e) || HeavenSpells.ally(caster, e))) {
+					SpellAuras.put(e, SpellAura.BLACK_TORTOISE, 15);
+				}
+			}
+			// Its serpent strikes the nearest foe within reach, once the tortoise has risen (struck as it rose, it was cut short in its rising).
+			if (striking == null && age >= TORTOISE_RISEN && age % TORTOISE_STRIKE_EVERY == TORTOISE_RISEN % TORTOISE_STRIKE_EVERY) {
+				LivingEntity foe = null;
+				for (LivingEntity e : HeavenSpells.around(caster, TORTOISE_REACH, e -> e != caster && !HeavenSpells.friendly(caster, e) && !HeavenSpells.spared(caster, e))) {
+					if (foe == null || e.distanceToSqr(caster) < foe.distanceToSqr(caster)) foe = e;
+				}
+				if (foe != null) {
+					striking = foe;
+					struckAt = age;
+					tortoise.act("strike");
+					HeavenSpells.sound(level, caster.position(), SoundEvents.HOGLIN_ATTACK, 2.0f, 1.4f);
+				}
+			}
+			if (striking != null && age >= struckAt + TORTOISE_LUNGE) {
+				if (HeavenSpells.present(striking, level) && striking.distanceTo(caster) <= TORTOISE_REACH + 4) {
+					HeavenSpells.strike(caster, striking, TORTOISE_DAMAGE, spell);
+					HeavenSpells.push(caster.position(), striking, 1.6);
+					SpellFx.send(level, SpellFx.Kind.SPLASH, HeavenSpells.middle(striking), Vec3.ZERO, 2.0f, 0);
+					HeavenSpells.sound(level, striking.position(), SoundEvents.GENERIC_SPLASH, 2.0f, 0.6f);
+				}
+				striking = null;
+			}
+			// It keeps by its caster, turning to face the foe its serpent strikes, else the way its caster faces.
+			float want = striking != null ? HeavenSpells.facing(striking.position().subtract(caster.position()))[0] : caster.getYRot();
+			yaw = net.minecraft.util.Mth.approachDegrees(yaw, want, 14);
+			tortoise.place(caster.position(), yaw, 0);
+			if (age % 40 == 0) HeavenSpells.sound(level, caster.position(), SoundEvents.CONDUIT_AMBIENT, 1.5f, 0.6f);
+			return true;
+		}
+
+		@Override
+		public void end() {
+			tortoise.dissolve();
+		}
+	}
+
+	/**
+	 * Hundred Rivers Converge: a hundred streams pour together into a great whirlpool (SpellConstruct HUNDRED_RIVERS) where its caster
+	 * looks, for {@link #RIVERS_TICKS}: every foe within {@link #RIVERS_RADIUS} is dragged round and into it and held, taking
+	 * {@link #RIVERS_DAMAGE} a second. When it bursts it flings them out, and leaves the ground crushed into a basin with a lake in it.
+	 */
+	public static final class Rivers extends HeavenSpells.Timed {
+		private final Spell spell;
+		private final Vec3 ground;
+		private final SpellConstruct vortex;
+		private final Set<LivingEntity> held = new HashSet<>();
+
+		Rivers(LivingEntity caster, Spell spell, Vec3 point) {
+			super(caster, RIVERS_TICKS + RIVERS_BURST);
+			this.spell = spell;
+			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 32);
+			this.ground = below != null ? below : point;
+			this.vortex = SpellConstruct.create(level, SpellConstruct.Kind.HUNDRED_RIVERS, ground, caster.getYRot(), 0, RIVERS_TICKS + RIVERS_BURST, caster).sizedFor(spell).spawn();
+			HeavenSpells.sound(level, ground, SoundEvents.BUBBLE_COLUMN_WHIRLPOOL_AMBIENT, 4.0f, 0.4f);
+			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_SPLASH, 4.0f, 0.5f);
+		}
+
+		@Override
+		protected boolean run(long age, long now) {
+			if (age < RIVERS_TICKS) {
+				// Dragged round and in, and held off the ground at its heart.
+				for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, RIVERS_RADIUS + 8, e -> !HeavenSpells.friendly(caster, e) && !HeavenSpells.spared(caster, e))) {
+					Vec3 rel = e.position().subtract(ground).multiply(1, 0, 1);
+					double dist = rel.length();
+					if (dist > RIVERS_RADIUS || e.getY() > ground.y + 16 || e.getY() < ground.y - 6) continue;
+					held.add(e);
+					if (HeavenSpells.greatBeast(e)) continue;
+					Vec3 in = dist < 1.0e-3 ? Vec3.ZERO : rel.scale(-1 / dist), round = new Vec3(-in.z, 0, in.x);
+					double lift = (ground.y + 1.5 - e.getY()) * 0.15;
+					HeavenSpells.move(e, in.scale(Math.min(dist, 0.55)).add(round.scale(0.45 * Math.min(1, dist / 4))).add(0, lift, 0));
+					e.resetFallDistance();
+				}
+				if (age % 20 == 10) {
+					for (LivingEntity e : held) {
+						if (!HeavenSpells.present(e, level) || e.position().distanceTo(ground) > RIVERS_RADIUS + 6) continue;
+						HeavenSpells.strikeAgain(caster, e, RIVERS_DAMAGE, spell);
+						SpellFx.send(level, SpellFx.Kind.SPLASH, HeavenSpells.middle(e), Vec3.ZERO, 1.2f, 0);
+					}
+					HeavenSpells.sound(level, ground, SoundEvents.BUBBLE_COLUMN_WHIRLPOOL_AMBIENT, 4.0f, 0.5f);
+				}
+				return true;
+			}
+			if (age == RIVERS_TICKS) {
+				// It bursts: those it held flung out, the ground under it crushed into a basin, a lake left in it.
+				vortex.act("burst");
+				for (LivingEntity e : held) {
+					if (!HeavenSpells.present(e, level) || HeavenSpells.greatBeast(e)) continue;
+					Vec3 out = e.position().subtract(ground).multiply(1, 0, 1);
+					out = out.lengthSqr() < 1.0e-4 ? new Vec3(1, 0, 0) : out.normalize();
+					HeavenSpells.move(e, out.scale(2.4).add(0, 1.2, 0));
+					HeavenSpells.safeFall(e, 80);
+				}
+				Devastation.crater(caster, level, ground, RIVERS_BASIN, RIVERS_BASIN_DEPTH, Devastation.Floor.LAKE);
+				SpellFx.send(level, SpellFx.Kind.SPLASH, ground, Vec3.ZERO, (float) RIVERS_RADIUS, 0, 192);
+				SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) RIVERS_RADIUS * 1.4f, 0, 192);
+				HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 3.0f, 0.6f);
+				HeavenSpells.sound(level, ground, SoundEvents.GENERIC_SPLASH, 4.0f, 0.4f);
+			}
+			return true;
+		}
+
+		@Override
+		public void end() {
+			vortex.dissolve();
+		}
+	}
+
+	// --- Void Shattering ---
+
+	/**
+	 * Weak Water from the Void (弱水, the water that bears nothing up, not even a feather): space tears open {@link #WEAK_HIGH} over where its
+	 * caster looks (SpellConstruct VOID_RIFT, the Weak Water's pale blue) and the Weak Water pours out of it onto the land (WEAK_WATER_FALL, its
+	 * own GeckoLib model) for {@link #WEAK_TICKS}: everything within {@link #WEAK_RADIUS} of where it falls sinks (nothing flies in it, the
+	 * dead neither: QiFlight#weighDown), is slowed, its fires put out, and takes {@link #WEAK_DAMAGE} a second; the land under it sinks into a
+	 * basin, and a lake is left in it.
+	 */
+	public static final class WeakWater extends HeavenSpells.Timed {
+		private final Spell spell;
+		private final Vec3 ground, mouth;
+		private final SpellConstruct rift;
+		private SpellConstruct fall;
+
+		WeakWater(LivingEntity caster, Spell spell, Vec3 point) {
+			super(caster, WEAK_OPENS + WEAK_TICKS + SpellConstruct.FADE);
+			this.spell = spell;
+			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
+			this.ground = below != null ? below : point;
+			this.mouth = ground.add(0, WEAK_HIGH, 0);
+			this.rift = SpellConstruct.create(level, SpellConstruct.Kind.VOID_RIFT, mouth, 0, 0, (int) (end - start), caster).size((float) WEAK_RIFT).tint(WEAK_PALE).spawn();
+			HeavenSpells.sound(level, mouth, SoundEvents.END_PORTAL_SPAWN, 3.0f, 0.7f);
+			HeavenSpells.sound(level, mouth, SoundEvents.CONDUIT_ACTIVATE, 3.0f, 0.5f);
+		}
+
+		@Override
+		protected boolean run(long age, long now) {
+			if (age < WEAK_OPENS) return true;
+			long pouring = age - WEAK_OPENS;
+			if (pouring == 0) {
+				fall = SpellConstruct.create(level, SpellConstruct.Kind.WEAK_WATER_FALL, ground, caster.getYRot(), 0, WEAK_TICKS + SpellConstruct.FADE, caster).sizedFor(spell).spawn();
+				HeavenSpells.sound(level, ground, SoundEvents.GENERIC_SPLASH, 4.0f, 0.3f);
+				HeavenSpells.sound(level, mouth, SoundEvents.BUBBLE_COLUMN_WHIRLPOOL_AMBIENT, 4.0f, 0.4f);
+			}
+			if (pouring == 20) Devastation.crater(caster, level, ground, WEAK_BASIN, WEAK_BASIN_DEPTH, Devastation.Floor.LAKE); // the land sinking under it
+			if (pouring == WEAK_TICKS - 16) fall.act("dry");
+			if (pouring >= WEAK_TICKS) return true;
+			boolean harm = pouring % 20 == 10;
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, WEAK_RADIUS + WEAK_HIGH, e -> !HeavenSpells.spared(caster, e))) {
+				if (Math.hypot(e.getX() - ground.x, e.getZ() - ground.z) > WEAK_RADIUS || e.getY() > mouth.y || e.getY() < ground.y - 16) continue;
+				// Nothing is borne up by it: down they go, and nothing flies in it.
+				if (e instanceof net.minecraft.server.level.ServerPlayer player) QiFlight.weighDown(player, 10);
+				if (e instanceof CultivatorNpc npc && npc.isQiFlying()) npc.setQiFlying(false);
+				if (!HeavenSpells.greatBeast(e)) {
+					Vec3 v = e.getDeltaMovement();
+					HeavenSpells.move(e, new Vec3(v.x * 0.6, Math.min(v.y, -0.45), v.z * 0.6));
+				}
+				e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 20, 2));
+				if (e.isOnFire()) e.clearFire();
+				if (harm) {
+					e.invulnerableTime = 0;
+					soak(caster, e, WEAK_DAMAGE, spell, null);
+					SpellFx.send(level, SpellFx.Kind.SPLASH, HeavenSpells.middle(e), Vec3.ZERO, 1.2f, 0);
+				}
+			}
+			if (pouring % 10 == 0) SpellFx.send(level, SpellFx.Kind.SPLASH, ground, Vec3.ZERO, (float) WEAK_RADIUS * 0.6f, 0, 160);
+			if (pouring % 20 == 0) HeavenSpells.sound(level, ground, SoundEvents.WATER_AMBIENT, 4.0f, 0.4f);
+			return true;
+		}
+
+		@Override
+		public void end() {
+			rift.dissolve();
+			if (fall != null) fall.dissolve();
+		}
+	}
+
+	/**
+	 * Kun Rises from the Northern Abyss: the land where its caster looks opens onto the northern abyss (SpellConstruct ABYSS_RIFT, its deep
+	 * blue), and the Kun, the fish of the northern abyss that becomes the Peng, made of the abyss's black water (KUN, its own GeckoLib model),
+	 * breaches out of it, leaping {@link #KUN_LEAP} high across the caster's sight and diving back in ({@link #KUN_LEAPS} ticks): as it breaches,
+	 * everything within {@link #KUN_RADIUS} takes {@link #KUN_DAMAGE} and is thrown high; as it dives back, {@link #KUN_DIVE_DAMAGE} more, and
+	 * the land there is crushed into a basin with a lake in it. Then the abyss closes.
+	 */
+	public static final class Kun extends HeavenSpells.Timed {
+		private static final double FROM = -0.95, TO = Math.PI + 0.95, BREACH = -0.45, DIVE = Math.PI + 0.45;
+		private final Spell spell;
+		private final Vec3 ground, across;
+		private final SpellConstruct abyss;
+		private SpellConstruct kun;
+		private boolean breached, dived;
+
+		Kun(LivingEntity caster, Spell spell, Vec3 point) {
+			super(caster, KUN_OPENS + KUN_LEAPS + KUN_AFTER);
+			this.spell = spell;
+			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
+			this.ground = below != null ? below : point;
+			// It leaps across the caster's sight, from their left to their right: seen from the side, whole.
+			Vec3 look = Vec3.directionFromRotation(0, caster.getYRot());
+			this.across = new Vec3(-look.z, 0, look.x);
+			this.abyss = SpellConstruct.create(level, SpellConstruct.Kind.ABYSS_RIFT, ground.add(0, 0.06, 0), HeavenSpells.facing(across)[0], 0, (int) (end - start), caster)
+					.size((float) KUN_ABYSS).tint(ABYSS_BLUE).spawn();
+			HeavenSpells.sound(level, ground, SoundEvents.END_PORTAL_SPAWN, 3.0f, 0.4f);
+			HeavenSpells.sound(level, ground, SoundEvents.ELDER_GUARDIAN_AMBIENT, 3.0f, 0.5f);
+		}
+
+		/** How far round its leap it has come {@code f} of the way through it: swifter out of the abyss and back into it, hanging at the top. */
+		private static double angle(double f) {
+			double eased = f + 0.35 * Math.sin(2 * Math.PI * f) / (2 * Math.PI);
+			return FROM + (TO - FROM) * eased;
+		}
+
+		/** Where its body's middle is at {@code angle} round its leap. */
+		private Vec3 at(double angle) {
+			return ground.add(across.scale(-KUN_SWING * Math.cos(angle))).add(0, KUN_LEAP * Math.sin(angle), 0);
+		}
+
+		@Override
+		protected boolean run(long age, long now) {
+			if (age < KUN_OPENS) return true;
+			long leaping = age - KUN_OPENS;
+			if (leaping > KUN_LEAPS) return true;
+			double a = angle(leaping / (double) KUN_LEAPS);
+			Vec3 here = at(a);
+			float[] face = HeavenSpells.facing(at(angle((leaping + 1) / (double) KUN_LEAPS)).subtract(here));
+			if (leaping == 0) {
+				kun = SpellConstruct.create(level, SpellConstruct.Kind.KUN, here, face[0], face[1], KUN_LEAPS + SpellConstruct.FADE, caster).sizedFor(spell).spawn();
+				HeavenSpells.sound(level, ground, SoundEvents.ELDER_GUARDIAN_CURSE, 3.0f, 0.4f);
+			}
+			kun.place(here, face[0], face[1]);
+			if (!breached && a >= BREACH) {
+				breached = true;
+				strike(KUN_DAMAGE, true);
+			}
+			if (!dived && a >= DIVE) {
+				dived = true;
+				strike(KUN_DIVE_DAMAGE, false);
+				Devastation.crater(caster, level, ground, KUN_BASIN, KUN_BASIN_DEPTH, Devastation.Floor.LAKE);
+			}
+			if (leaping % 4 == 0 && here.y > ground.y - 2) SpellFx.send(level, SpellFx.Kind.SPLASH, here, Vec3.ZERO, 4, 0, 192);
+			return true;
+		}
+
+		/** It breaks out of the abyss (thrown high) or crashes back into it: all near it struck. */
+		private void strike(float damage, boolean breach) {
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, KUN_RADIUS + 16, e -> !HeavenSpells.spared(caster, e))) {
+				if (Math.hypot(e.getX() - ground.x, e.getZ() - ground.z) > KUN_RADIUS || e.getY() > ground.y + (breach ? 20 : 40) || e.getY() < ground.y - 12) continue;
+				e.invulnerableTime = 0;
+				soak(caster, e, damage, spell, null);
+				if (HeavenSpells.greatBeast(e)) continue;
+				Vec3 out = e.position().subtract(ground).multiply(1, 0, 1);
+				out = out.lengthSqr() < 1.0e-4 ? across : out.normalize();
+				HeavenSpells.move(e, breach ? out.scale(0.7).add(0, 2.4, 0) : out.scale(1.8).add(0, 0.6, 0));
+				HeavenSpells.safeFall(e, 100);
+			}
+			SpellFx.send(level, SpellFx.Kind.SPLASH, ground, Vec3.ZERO, (float) KUN_RADIUS, 0, 192);
+			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) KUN_RADIUS * 1.6f, 0, 192);
+			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_SPLASH, 5.0f, 0.3f);
+			HeavenSpells.sound(level, ground, breach ? SoundEvents.ELDER_GUARDIAN_CURSE : SoundEvents.GENERIC_EXPLODE, 4.0f, 0.4f);
+		}
+
+		@Override
+		public void end() {
+			abyss.dissolve();
+			if (kun != null) kun.dissolve();
 		}
 	}
 

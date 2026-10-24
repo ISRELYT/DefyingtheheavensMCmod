@@ -192,6 +192,11 @@ public final class SoulProjection {
 		UUID body;
 		ResourceKey<Level> dimension;
 		Vec3 bodyPos = Vec3.ZERO;
+		/**
+		 * The chunk its body's land is held loaded round (BODY_TICKET), where it was set down: let go there, wherever the body was moved
+		 * to since (let go where the body last stood before the sweep of 2026-10-23, its first chunk held loaded for good).
+		 */
+		ChunkPos ticket;
 		int bodyMissing;
 		/** The being the soul is in, or null. */
 		UUID possessed;
@@ -384,6 +389,7 @@ public final class SoulProjection {
 		level.addFreshEntity(body);
 		ChunkPos chunk = new ChunkPos(body.blockPosition());
 		level.getChunkSource().addRegionTicket(BODY_TICKET, chunk, BODY_TICKET_RADIUS, chunk);
+		s.ticket = chunk;
 		s.body = body.getUUID();
 		s.dimension = level.dimension();
 		s.bodyPos = body.position();
@@ -464,7 +470,7 @@ public final class SoulProjection {
 		} else if (back != null && pos.equals(Vec3.ZERO)) {
 			pos = new Vec3(back.getDouble("X"), back.getDouble("Y"), back.getDouble("Z"));
 		}
-		ChunkPos chunk = new ChunkPos(BlockPos.containing(pos));
+		ChunkPos chunk = s.ticket != null ? s.ticket : new ChunkPos(BlockPos.containing(pos));
 		level.getChunkSource().removeRegionTicket(BODY_TICKET, chunk, BODY_TICKET_RADIUS, chunk);
 
 		if (player.isPassenger()) player.stopRiding();
@@ -1062,6 +1068,9 @@ public final class SoulProjection {
 	private static void possess(ServerPlayer player, Session s, Mob host) {
 		host.getNavigation().stop();
 		host.setTarget(null);
+		// A demon beast's move under way ends (its mind silent now, a charge, a coil or a shell drawn in would hold on unended: a turtle
+		// ridden in its shell took a fifth of every blow, before the sweep of 2026-10-23).
+		if (host instanceof DemonBeast beast) beast.calm();
 		if (host instanceof CultivatorNpc npc) {
 			npc.setMeditating(false);
 			if (npc.isQiFlying()) npc.land();
@@ -1232,6 +1241,9 @@ public final class SoulProjection {
 	public static void hostAttack(ServerPlayer player, Entity target) {
 		if (!(player.getVehicle() instanceof Mob host) || target == host || !(target instanceof LivingEntity living)) return;
 		if (host.distanceTo(target) > 4.5 + target.getBbWidth()) return;
+		// The soul's blow, so where it may strike: not a player it may not harm (PvP off, a team), nor a body left sitting that is theirs
+		// (HeavenSpells#bodySpared). Before the sweep of 2026-10-23 a host struck them all the same.
+		if (living instanceof Player victim && victim != player && !player.canHarmPlayer(victim) || HeavenSpells.bodySpared(player, living)) return;
 		// The blow is the soul's: whatever it kills through its host, it killed (a sect member slain so is murdered, not replaced).
 		living.setLastHurtByPlayer(player);
 		host.swing(InteractionHand.MAIN_HAND);

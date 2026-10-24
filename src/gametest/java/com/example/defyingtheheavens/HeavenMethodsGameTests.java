@@ -58,16 +58,17 @@ public class HeavenMethodsGameTests implements FabricGameTest {
 			boolean early = spell.heavenRealm().ordinal() <= Realm.FOUNDATION_BUILDING.ordinal();
 			helper.assertTrue(MethodLayers.realmOf(spell.layer()) == spell.heavenRealm() && (early ? within == 2 || within == 5 || within == 8 : within == 3 || within == 7)
 					&& spell.cost() == 0 && spell.qiCost() > 0, spell.getId() + " comes at its place in its own realm, on qi");
-			helper.assertTrue(spell.taughtBy(HeavenMethod.of(spell.element(), spell.heavenRealm())) && spell.taughtBy(HeavenMethod.of(spell.element(), Realm.FOUR_AXIS))
+			helper.assertTrue(spell.taughtBy(HeavenMethod.of(spell.element(), spell.heavenRealm())) && spell.taughtBy(HeavenMethod.of(spell.element(), Realm.TRUE_IMMORTAL))
 					&& (spell.heavenRealm() == Realm.QI_REFINING || !spell.taughtBy(HeavenMethod.of(spell.element(), spell.heavenRealm().previous()))),
 					spell.getId() + ": taught by its realm's method and deeper, never shallower");
 			perSlot.merge(spell.element() + " " + spell.heavenRealm(), 1, Integer::sum);
 		}
-		helper.assertTrue(spells == 70, "Seventy element spells (" + spells + ")");
+		helper.assertTrue(spells == 90, "Ninety element spells (" + spells + ")");
 		for (QiElement element : QiElement.five()) {
 			for (Realm realm : Realm.values()) {
-				// The realms after Four Axis have their methods but no spells of their own yet (the user's ask, 2026-10-22).
-				int want = realm.ordinal() > Realm.FOUR_AXIS.ordinal() ? 0 : realm.ordinal() <= Realm.FOUNDATION_BUILDING.ordinal() ? 3 : 2;
+				// The realms after Void Shattering have their methods but no spells of their own yet (the user's ask, 2026-10-22; Dao
+				// Integration's and Void Shattering's came 2026-10-24).
+				int want = realm.ordinal() > Realm.VOID_SHATTERING.ordinal() ? 0 : realm.ordinal() <= Realm.FOUNDATION_BUILDING.ordinal() ? 3 : 2;
 				helper.assertTrue(perSlot.getOrDefault(element + " " + realm, 0) == want, element + " " + realm + ": " + want + " spells");
 			}
 		}

@@ -106,6 +106,21 @@ public final class ModItems {
 	public static final Item HUNGRY_GHOST_SPAWN_EGG = register("hungry_ghost_spawn_egg",
 			new SpawnEggItem(ModEntities.HUNGRY_GHOST, 0x0E2A30, 0x5FE6DC, new Item.Properties()));
 
+	/** A demon's whole cultivation condensed, left when it dies: its realm, stage and element on it (see DemonCoreItem). */
+	public static final Item DEMON_CORE = register("demon_core", new DemonCoreItem(new Item.Properties().stacksTo(16)));
+	/** The wild demon beasts' spawn eggs: "iron_hide_boar_spawn_egg" and so on (see BeastKind). */
+	private static final Map<BeastKind, Item> BEAST_EGGS = new EnumMap<>(BeastKind.class);
+
+	static {
+		for (BeastKind kind : BeastKind.values()) {
+			BEAST_EGGS.put(kind, register(kind.getId() + "_spawn_egg", new SpawnEggItem(ModEntities.beast(kind), kind.eggBase, kind.eggSpots, new Item.Properties())));
+		}
+	}
+
+	public static Item beastEgg(BeastKind kind) {
+		return BEAST_EGGS.get(kind);
+	}
+
 	/** Cultivator clothing, every grade and piece ({@link ClothingItem}): "spirit_cultivator_robe" and so on. */
 	private static final Map<ClothingTier, Map<ArmorItem.Type, Item>> CLOTHING = new EnumMap<>(ClothingTier.class);
 
@@ -182,6 +197,8 @@ public final class ModItems {
 			entries.accept(SPIRIT_DEW);
 			entries.accept(JADE);
 			for (SpiritStoneItem.Grade grade : SpiritStoneItem.Grade.values()) entries.accept(SpiritStoneItem.of(grade));
+			// A demon core in each of its looks (DemonCoreItem#look), at each realm's first stage.
+			for (int look = 0; look < DemonCoreItem.LOOKS; look++) entries.accept(DemonCoreItem.of(look * Stage.values().length, null, null));
 		});
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(entries -> {
 			entries.accept(RING_OF_POWER);
@@ -197,7 +214,10 @@ public final class ModItems {
 				}
 			}
 		});
-		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.SPAWN_EGGS).register(entries -> entries.accept(CULTIVATOR_SPAWN_EGG));
+		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.SPAWN_EGGS).register(entries -> {
+			entries.accept(CULTIVATOR_SPAWN_EGG);
+			for (BeastKind kind : BeastKind.values()) entries.accept(BEAST_EGGS.get(kind));
+		});
 	}
 
 	private ModItems() {}

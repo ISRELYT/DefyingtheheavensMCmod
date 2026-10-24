@@ -145,6 +145,9 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(death + "earth.player", "%1$s was crushed beneath %2$s's earth qi");
 		t.add(death + "metal", "%1$s was cut down by metal qi");
 		t.add(death + "metal.player", "%1$s was cut down by %2$s's metal qi");
+		// The spells of both paths' heaven-and-demon qi (ModDamageTypes#heavenDemon)
+		t.add(ModLang.DEATH_HEAVEN_DEMON, "%1$s was torn apart by heaven's light and a demon's qi");
+		t.add(ModLang.DEATH_HEAVEN_DEMON + ".player", "%1$s was torn apart by %2$s's heaven and demon qi");
 		t.add(ModLang.GAMERULE_AFTER_DEATH, "The dead go to the Netherworld");
 		t.add(ModLang.GAMERULE_AFTER_DEATH + ".description", "Players who die wake at the Ghost Gate as ghosts, and return to life at the Wheel of Reincarnation.");
 		t.add(ModLang.MSG_GHOST_WAKE, "You are dead. The Wheel of Reincarnation, across the bridge, will return you to life.");
@@ -442,7 +445,12 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 						+ "Grand Perfection. Layer 39: Yama's Verdict. Layer 43: Chains of Hell. Every layer: +20 ghost qi.";
 				case SIX_PATHS_CANON -> "Qi Refining to Four Axis, nine layers each: of each realm's nine, layer 1 Early, 3 Mid, 6 Late, 9 Grand "
 						+ "Perfection. Layer 48: Wheel of Samsara. Layer 52: Six Paths Annihilation. Every layer: +20 ghost qi.";
-				case TEN_THOUSAND_GHOSTS_UNION, VOID_RENDING_NETHER_CANON, HELL_FORGED_VESSEL_SUTRA, UNDERWORLD_NIRVANA_SCRIPTURE,
+				case TEN_THOUSAND_GHOSTS_UNION -> "Qi Refining to Dao Integration, nine layers each: of each realm's nine, layer 1 Early, 3 Mid, "
+						+ "6 Late, 9 Grand Perfection. Layer 57: Procession of Ten Thousand Ghosts. Layer 61: Gate of Ten Thousand Ghosts. Every "
+						+ "layer: +20 ghost qi.";
+				case VOID_RENDING_NETHER_CANON -> "Qi Refining to Void Shattering, nine layers each: of each realm's nine, layer 1 Early, 3 Mid, "
+						+ "6 Late, 9 Grand Perfection. Layer 66: Rift to the Nine Nethers. Layer 70: Bridge of No Return. Every layer: +20 ghost qi.";
+				case HELL_FORGED_VESSEL_SUTRA, UNDERWORLD_NIRVANA_SCRIPTURE,
 						NETHERWORLD_IMMORTAL_CANON -> "Qi Refining to " + realmName(method.realm()) + ", nine layers each: of each realm's nine, "
 						+ "layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection. No spells of its own yet. Every layer: +20 ghost qi.";
 			});
@@ -464,11 +472,17 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case HELL_CHAINS -> "Chains of Hell";
 				case SAMSARA_WHEEL -> "Wheel of Samsara";
 				case SIX_PATHS_ANNIHILATION -> "Six Paths Annihilation";
-				case YIN_YANG_PALM -> "Yin-Yang Palm";
-				case TAIJI_SHIELD -> "Taiji Shield";
-				case LIFE_DEATH_SEAL -> "Life and Death Seal";
-				case HEAVEN_HELL_PILLAR -> "Heaven and Hell Pillar";
-				case PRIMORDIAL_CHAOS -> "Primordial Chaos";
+				case PROCESSION_OF_TEN_THOUSAND_GHOSTS -> "Procession of Ten Thousand Ghosts";
+				case GATE_OF_TEN_THOUSAND_GHOSTS -> "Gate of Ten Thousand Ghosts";
+				case HEAVEN_DEMON_PALM -> "Heaven-Demon Palm";
+				case HEAVEN_DEMON_MANTLE -> "Heaven-Demon Mantle";
+				case DEVOURING_SEAL -> "Devouring Seal";
+				case HEAVEN_DEMON_CLAW -> "Heaven-Demon Claw";
+				case HEAVEN_AND_DEMON_AS_ONE -> "Heaven and Demon as One";
+				case HEAVEN_DEMON_AVATAR -> "Heaven-Demon Avatar";
+				case RIFT_TO_THE_NINE_NETHERS -> "Rift to the Nine Nethers";
+				case BRIDGE_OF_NO_RETURN -> "Bridge of No Return";
+				case HEAVEN_DEMON_VOID_SHATTER -> "Heaven-Demon Void Shatter";
 				default -> throw new IllegalStateException(spell.getId()); // a heaven spell: skipped above
 			});
 			t.add(ModLang.spellKey(spell.getId()) + ".description", switch (spell) {
@@ -493,24 +507,46 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 						+ "corruption with them.";
 				case SIX_PATHS_ANNIHILATION -> "Six pillars of cold fire rise round you: everything within 12 blocks takes 20 hearts of ghostly "
 						+ "harm and is hurled away.";
-				case YIN_YANG_PALM -> "A spell of both paths. A palm of light and shadow strikes the first being within 16 blocks: 5 hearts of "
-						+ "harm, living or dead, and it is thrown back. A quarter of the harm mends you.";
-				case TAIJI_SHIELD -> "A spell of both paths. Light and dark turn round you for 10 seconds: arrows and fireballs shot at you are "
-						+ "turned back on whoever shot them, and you have Resistance I.";
-				case LIFE_DEATH_SEAL -> "A spell of both paths. Seal the being you look at, up to 32 blocks: for 8 seconds it loses 2 hearts a "
-						+ "second, living or dead, and half of it comes to you. It is slowed while sealed.";
-				case HEAVEN_HELL_PILLAR -> "A spell of both paths. Where you look, up to 32 blocks, heaven's light falls and hell's fire rises: "
-						+ "everything within 5 blocks takes 15 hearts of harm, is thrown up and set burning.";
-				case PRIMORDIAL_CHAOS -> "A spell of both paths, made one again. Everything within 16 blocks is dragged in and takes 25 hearts of "
-						+ "harm; a tenth of all of it mends you, and you have Strength II for 10 seconds.";
+				// Dao Integration's: their numbers as the realm's heaven spells give theirs (health, not hearts; sizes by its realm).
+				case PROCESSION_OF_TEN_THOUSAND_GHOSTS -> "A column of the dead, ghost fire and mist, pours out along your look for 61 blocks, "
+						+ "8 wide: every being it passes through takes 90 ghostly harm and is slowed and weakened for 5 s. The dead take half as much "
+						+ "again.";
+				case GATE_OF_TEN_THOUSAND_GHOSTS -> "A gate of the dead, bone-white mist and ghost fire, opens where you look, up to 82 blocks, "
+						+ "for 8 s: every foe within 18 blocks of it is dragged toward it and takes 30 ghostly harm a second. Then it slams shut: 120 "
+						+ "ghostly harm to everything within 18 blocks. A quarter of all the harm it does mends you.";
+				case HEAVEN_DEMON_PALM -> "A spell of both paths, heaven and demon. A palm of gold light, a demon's crimson claw within it, strikes "
+						+ "the first being within 16 blocks: 5 hearts of harm, and it is thrown back. A quarter of the harm mends you.";
+				case HEAVEN_DEMON_MANTLE -> "A spell of both paths, heaven and demon. Gold light and crimson demon scales wrap you for 10 seconds: "
+						+ "arrows and fireballs shot at you are turned back on whoever shot them, and you have Resistance I.";
+				case DEVOURING_SEAL -> "A spell of both paths, heaven and demon. Seal the being you look at, up to 32 blocks: heaven's seal holds "
+						+ "it while a demon's maw devours it, for 8 seconds. It loses 2 hearts a second and is slowed, and half of it comes to you.";
+				case HEAVEN_DEMON_CLAW -> "A spell of both paths, heaven and demon. A great claw of gold light and crimson demon qi rakes down where "
+						+ "you look, up to 32 blocks: everything within 5 blocks takes 15 hearts of harm, is thrown up and weakened for 5 seconds.";
+				case HEAVEN_AND_DEMON_AS_ONE -> "A spell of both paths, heaven and demon made one. Everything within 16 blocks is dragged in and "
+						+ "takes 25 hearts of harm; a tenth of all of it mends you, and you have Strength II for 10 seconds.";
+				case HEAVEN_DEMON_AVATAR -> "A spell of both paths, heaven and demon. A colossal avatar of gold light and crimson demon qi, 41 "
+						+ "blocks tall, rises behind you for 8 s, and twice its hands come down where you look, up to 82 blocks: heaven's palm, then "
+						+ "the demon's claw. Each strikes everything within 14 blocks for 140 harm and throws it down, slowed; a fifth of all the harm "
+						+ "mends you. The land is left as it was.";
+				// Void Shattering's.
+				case RIFT_TO_THE_NINE_NETHERS -> "The ground where you look, up to 118 blocks, tears open onto the Nine Nethers, nine rings of ghost "
+						+ "fire turning down into it, for 6 s: every foe within 22 blocks is dragged toward it and down, and takes 100 ghostly harm a "
+						+ "second. Then it seals: 300 ghostly harm to everything within 8 blocks of it, and Weakness II for 8 s. The dead take half as "
+						+ "much again. The land is left as it was.";
+				case BRIDGE_OF_NO_RETURN -> "The Naihe Bridge, that the dead cross over the River of Forgetting, rises out of the mist along your "
+						+ "look, span after span, 118 blocks: everything within 6 blocks of it as it rises takes 300 ghostly harm and forgets every "
+						+ "blessing on it (its good effects are gone). Then for 5 s whoever is on or under it is slowed and pays its toll, 50 ghostly "
+						+ "harm a second. The dead take half as much again.";
+				case HEAVEN_DEMON_VOID_SHATTER -> "A spell of both paths, heaven and demon. A colossal fist, heaven's gauntlet of gold plates round a "
+						+ "demon's crimson claws, forms over your shoulder and punches out to where you look, up to 118 blocks: where it lands, space "
+						+ "itself shatters like glass. Everything within 18 blocks takes 520 harm, through armour, and is thrown out; the shattered "
+						+ "space hangs there for 5 s, cutting whoever stays in it for 60 harm a second. The land is left as it was.";
 				default -> throw new IllegalStateException(spell.getId()); // a heaven spell: skipped above
 			});
 		}
-		t.add(ModLang.SPELLS_COST_BOTH, "%s qi and %s ghost qi");
 		t.add(ModLang.SPELLS_QI_COST, "%s qi");
-		t.add(ModLang.SPELLS_LOCKED_BOTH, "Both paths at %s");
-		t.add(ModLang.MSG_SPELL_NO_BOTH, "Not enough qi for %s: a spell of both paths draws on your qi and your ghost qi.");
-		t.add(ModLang.MSG_SPELL_BOTH_PATHS, "New spell: %2$s (both paths at %1$s).");
+		t.add(ModLang.SPELLS_LOCKED_BOTH, "Heaven and Demon Paths at %s");
+		t.add(ModLang.MSG_SPELL_BOTH_PATHS, "New spell: %2$s (the heaven path and the Demon Path at %1$s).");
 		t.add(ModLang.STATS_GHOST_BODY, "Ghost path: %s");
 		t.add(ModLang.STATS_HARMONY, ", harmony +%s%%");
 		t.add(ModLang.TWO_PATHS_LINE, "Paths in harmony: +%s%%");
@@ -814,6 +850,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_CORE_CONFIRM, "Detonate again within %s seconds to break your golden core. You will die.");
 		t.add(ModLang.MSG_CORE_TOO_LATE, "Your core is already breaking. Nothing can stop it now.");
 		t.add(ModLang.MSG_CORE_BREAKING, "%s's golden core is breaking apart! Get away!");
+		t.add(ModLang.MSG_CORE_FIZZLED, "The core you broke is no longer in the body you stand in. Its light goes out.");
 		t.add(ModLang.DEATH_CORE_DETONATION, "%1$s detonated their golden core");
 		t.add(ModLang.DEATH_CORE_DETONATION + ".player", "%1$s detonated their golden core against %2$s");
 		// The Spatial Tear and travel through the gap
@@ -1095,6 +1132,37 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModItems.GHOST_CULTIVATOR_SPAWN_EGG, "Ghost Cultivator Spawn Egg");
 		t.add(ModEntities.HUNGRY_GHOST, "Hungry Ghost");
 		t.add(ModItems.HUNGRY_GHOST_SPAWN_EGG, "Hungry Ghost Spawn Egg");
+		// The wild demon beasts (BeastKind) and their spawn eggs; a projectile of theirs; the demon cores they leave (DemonCoreItem)
+		for (com.example.defyingtheheavens.BeastKind kind : com.example.defyingtheheavens.BeastKind.values()) {
+			String name = switch (kind) {
+				case IRON_HIDE_BOAR -> "Iron-Hide Boar";
+				case SHADOW_WOLF -> "Shadow Wolf";
+				case JADE_VIPER -> "Jade Viper";
+				case ROCK_SHELL_TURTLE -> "Rock-Shell Turtle";
+				case WIND_HAWK -> "Wind Hawk";
+				case FIRE_MONKEY -> "Fire Monkey";
+				case BLOODFANG_TIGER -> "Bloodfang Tiger";
+				case FROST_APE -> "Frost Ape";
+				case EARTHQUAKE_BEAR -> "Earthquake Bear";
+				case IRON_JAW_CROCODILE -> "Iron-Jaw Crocodile";
+				case LIGHTNING_ANTELOPE -> "Lightning Antelope";
+				case EMBER_FOX -> "Ember Fox";
+				case GOLDEN_WINGED_ROC -> "Golden-Winged Roc";
+				case JADE_SCALED_PYTHON -> "Jade-Scaled Python";
+				case HORNED_THUNDER_RHINO -> "Horned Thunder Rhino";
+				case FLOOD_DRAGON -> "Flood Dragon";
+			};
+			t.add(ModEntities.beast(kind), name);
+			t.add(ModItems.beastEgg(kind), name + " Spawn Egg");
+		}
+		t.add(ModEntities.BEAST_SHOT, "Beast's Shot");
+		t.add("gamerule.demonBeastsSpawn", "Wild demon beasts spawn");
+		t.add(ModItems.DEMON_CORE, "Demon Core");
+		t.add(ModLang.CORE_NAME, "%s Demon Core");
+		t.add(ModLang.CORE_RANK, "Formed at %s");
+		t.add(ModLang.CORE_ELEMENT, "Element: %s");
+		t.add(ModLang.CORE_FROM, "Taken from: %s");
+		t.add(ModLang.CORE_USE, "A demon's whole cultivation, condensed: prized for crafting and artifact forging");
 		t.add(ModLang.officialName("ox_head"), "Ox-Head");
 		t.add(ModLang.officialName("horse_face"), "Horse-Face");
 		t.add(ModLang.officialName("meng_po"), "Meng Po");
@@ -1196,6 +1264,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_QUELLED, "A talisman seals your brow: you are bound where you stand!");
 		t.add(ModLang.MSG_QUELLED_OTHER, "The talisman binds %s where they stand");
 		t.add(ModLang.MSG_QUELLED_HELD, "The talisman holds you where you stand.");
+		t.add(ModLang.MSG_SPACE_LOCKED, "The earth's veins lock space here: it won't open for you.");
 		for (NpcTitle title : NpcTitle.values()) {
 			t.add(ModLang.titleKey(title.getId()), switch (title) {
 				case SECT_MASTER -> "Sect Master";
@@ -1713,6 +1782,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.WISH_TOOK_NONE, "You ask for nothing? We will never forget you.");
 		t.add(ModLang.WISH_TOOK, "It is fair, for a life. %s years are yours.");
 		t.add(ModLang.WISH_GIVE_LACK, "(You haven't %s %s on you.)");
+		t.add(ModLang.WISH_GIVE_OWED, "You already carry enough of others' fortune to complete your axis. Take it into yourself first; "
+				+ "we would not have you carry what you don't need.");
 		t.add(ModLang.WISH_GIVEN, "You've saved us. Take these, it's little enough: %s Mid-grade Spirit Stones, a share of all we have. "
 				+ "(Absorb them to fill your Axis of Fortune.)");
 		t.add(ModLang.WISH_THREAT_SLAIN, "The threat to %s's people is slain.");
@@ -1822,6 +1893,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.talkLine("join.disciple"), "I am only a disciple. Speak to one of our elders: they decide who joins us. "
 				+ "Go in, our barrier will let you pass.");
 		t.add(ModLang.talkLine("join.ghost"), "The dead have no place in a sect of the living.");
+		t.add(ModLang.talkLine("join.possessed"), "There is another soul behind those eyes. Come to us in your own body, if you would join us.");
 		t.add(ModLang.talkLine("join.mortal"), "You have not even begun to cultivate. Open your meridians first, then come to us.");
 		t.add(ModLang.talkLine("join.other_sect"), "You are already a disciple of the %s. A cultivator serves one sect.");
 		t.add(ModLang.talkLine("join.barred"), "We will not take you back yet. Come again in %s days, if you still wish it.");

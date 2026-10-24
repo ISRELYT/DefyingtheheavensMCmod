@@ -179,9 +179,10 @@ public final class InnerRealm {
 		// Not from a passage, nor (for the living) from the Netherworld, where the heavens don't see (the soul's own realm is
 		// heaven-made). The dead turn inward too (the user's call, 2026-10-19), their form left sitting, and from their own realm.
 		boolean dead = Incorporeal.isGhost(player);
+		// Nor in a clone (Clones): its soul is its maker's, in the main body (it turned inward from a clone before the sweep of 2026-10-23).
 		return c.isAbilityActive(Ability.INNER_REALM) && !ModDimensions.isInnerRealm(player.level().dimension()) && !SoulProjection.isActive(player.getUUID())
 				&& !ModDimensions.isPassage(player.level().dimension()) && (dead || !ModDimensions.isUnseenByHeaven(player.level().dimension()))
-				&& !TribulationManager.isActive(player.getUUID()) && player.isAlive();
+				&& !TribulationManager.isActive(player.getUUID()) && player.isAlive() && !Clones.inClone(player);
 	}
 
 	/** Leaves the body sitting here and takes the soul to the island. Returns false if it couldn't. */

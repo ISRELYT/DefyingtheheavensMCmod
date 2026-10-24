@@ -6,6 +6,19 @@
     "minecraft:windswept_forest",
     "minecraft:windswept_gravelly_hills",
     "minecraft:windswept_savanna",
-    "minecraft:grove"
+    "minecraft:grove",
+    {"id": "terralith:alpine_grove", "required": false},
+    {"id": "terralith:alpine_highlands", "required": false},
+    {"id": "terralith:blooming_plateau", "required": false},
+    {"id": "terralith:cloud_forest", "required": false},
+    {"id": "terralith:forested_highlands", "required": false},
+    {"id": "terralith:haze_mountain", "required": false},
+    {"id": "terralith:highlands", "required": false},
+    {"id": "terralith:mountain_steppe", "required": false},
+    {"id": "terralith:scarlet_mountains", "required": false},
+    {"id": "terralith:shield_clearing", "required": false},
+    {"id": "terralith:stony_spires", "required": false},
+    {"id": "terralith:temperate_highlands", "required": false},
+    {"id": "terralith:windswept_spires", "required": false}
   ]
 }

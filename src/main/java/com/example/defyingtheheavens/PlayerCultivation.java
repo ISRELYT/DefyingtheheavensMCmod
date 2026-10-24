@@ -159,6 +159,11 @@ public class PlayerCultivation {
 	private net.minecraft.nbt.CompoundTag clone;
 	/** The game time before which no clone may be split off again, after one was lost (Clones#REFORM_TICKS): saved; 0 for none. */
 	private long cloneReadyAt;
+	/**
+	 * The game time this one last met its heart demon (QiSurges#DEMON_COOLDOWN): saved; 0 for never. Kept only in memory by server
+	 * tick before the sweep of 2026-10-23, a relog brought the demon (and its reward) back at once.
+	 */
+	private long heartDemonAt;
 	/** The nascent soul's state ({@link SoulProjection.State} ordinal): synced, never saved. */
 	private int soulState;
 
@@ -331,6 +336,20 @@ public class PlayerCultivation {
 	public void setAge(double years) { age = Math.max(0, years); }
 	public double extraYears() { return extraYears; }
 	public void setExtraYears(double years) { extraYears = Math.max(0, years); }
+
+	/**
+	 * Settlements' fortune shared with this one (Wishes#give) and not yet absorbed toward its Axis of Fortune, in Low stones' worth, as
+	 * reckoned on the game day {@link #fortuneOwedDay} (Wishes#owedFortune lets it lapse day by day). Saved.
+	 */
+	private double fortuneOwed;
+	private long fortuneOwedDay;
+
+	public double fortuneOwed() { return fortuneOwed; }
+	public long fortuneOwedDay() { return fortuneOwedDay; }
+	public void setFortuneOwed(double worth, long day) {
+		fortuneOwed = Math.max(0, worth);
+		fortuneOwedDay = day;
+	}
 
 	/** The lifespan tribulation's ticks of power so far (LifespanTribulation), or -1: none. Saved, so it waits through a logout. */
 	private int lifespanTrial = -1;
@@ -593,6 +612,11 @@ public class PlayerCultivation {
 	public long cloneReadyAt() { return cloneReadyAt; }
 
 	public void setCloneReadyAt(long gameTime) { cloneReadyAt = Math.max(0, gameTime); }
+
+	/** The game time this one last met its heart demon (QiSurges); 0: never. */
+	public long heartDemonAt() { return heartDemonAt; }
+
+	public void setHeartDemonAt(long gameTime) { heartDemonAt = Math.max(0, gameTime); }
 
 	/** A clone out (Clones), or none: the Clone switch shows which (on, as Soul Projection's is while the soul is out). */
 	public void setClone(net.minecraft.nbt.CompoundTag tag) {
@@ -1240,6 +1264,7 @@ public class PlayerCultivation {
 		}
 		if (clone != null) tag.put("Clone", clone.copy());
 		if (cloneReadyAt > 0) tag.putLong("CloneReadyAt", cloneReadyAt);
+		if (heartDemonAt > 0) tag.putLong("HeartDemonAt", heartDemonAt);
 		tag.putInt("Realm", realm.ordinal());
 		tag.putInt("Stage", stage.ordinal());
 		tag.putDouble("Cultivation", cultivation);
@@ -1292,6 +1317,10 @@ public class PlayerCultivation {
 		}
 		if (obsession != null) tag.putString("Obsession", obsession.getId());
 		if (extraYears > 0) tag.putDouble("ExtraYears", extraYears);
+		if (fortuneOwed > 0) {
+			tag.putDouble("FortuneOwed", fortuneOwed);
+			tag.putLong("FortuneOwedDay", fortuneOwedDay);
+		}
 		if (lifespanTrial >= 0) tag.putInt("LifespanTrial", lifespanTrial);
 		if (lifeEnded) tag.putBoolean("LifeEnded", true);
 		if (longevityPills > 0) tag.putInt("LongevityPills", longevityPills);
@@ -1375,6 +1404,7 @@ public class PlayerCultivation {
 		}
 		c.clone = tag.contains("Clone") ? tag.getCompound("Clone").copy() : null;
 		c.cloneReadyAt = tag.getLong("CloneReadyAt");
+		c.heartDemonAt = tag.getLong("HeartDemonAt");
 		c.lowerRealmBound = tag.getBoolean("LowerRealmBound");
 		c.pendingTrial = SpatialTrialHandler.Route.byName(tag.getString("SpatialTrial"));
 		c.fallProtected = tag.getBoolean("FallProtected");
@@ -1407,6 +1437,7 @@ public class PlayerCultivation {
 		// From before one clock (2026-10-20): the soul's years among the dead, its own clock then, are years of its life now.
 		c.age += Math.max(0, tag.getDouble("SoulYears"));
 		c.extraYears = Math.max(0, tag.getDouble("ExtraYears"));
+		c.setFortuneOwed(tag.getDouble("FortuneOwed"), tag.getLong("FortuneOwedDay"));
 		c.lifespanTrial = tag.contains("LifespanTrial") ? Math.max(0, tag.getInt("LifespanTrial")) : -1;
 		c.lifeEnded = tag.getBoolean("LifeEnded");
 		c.longevityPills = Math.max(0, tag.getInt("LongevityPills"));

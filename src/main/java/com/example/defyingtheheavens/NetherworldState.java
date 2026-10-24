@@ -113,6 +113,13 @@ public final class NetherworldState {
 	private Spell readiedSpell;
 	/** The spell wheel's slots, clockwise from the top (null: empty). */
 	private final Spell[] spellWheel = new Spell[Spells.WHEEL_SLOTS];
+	/**
+	 * When each spell may be cast again (game time: Spells#cooldowns). Saved (the sweep of 2026-10-23): kept only in memory, a relog
+	 * made every cooldown ready at once.
+	 */
+	private final java.util.Map<Spell, Long> spellReady = new java.util.EnumMap<>(Spell.class);
+
+	public java.util.Map<Spell, Long> spellReady() { return spellReady; }
 
 	/** The layer reached in {@code method}: 0 if it isn't known. */
 	public int layer(GhostMethod method) {
@@ -263,6 +270,11 @@ public final class NetherworldState {
 			anySlot |= spell != null;
 		}
 		if (anySlot) tag.put("SpellWheel", wheel);
+		if (!spellReady.isEmpty()) {
+			CompoundTag ready = new CompoundTag();
+			for (java.util.Map.Entry<Spell, Long> entry : spellReady.entrySet()) if (entry.getValue() > 0) ready.putLong(entry.getKey().getId(), entry.getValue());
+			if (!ready.isEmpty()) tag.put("SpellReady", ready);
+		}
 		if (methodBoost > 0) tag.putDouble("MethodBoost", methodBoost);
 		if (sawHome) tag.putBoolean("SawHome", true);
 		if (pathRank >= 0 || !methods.isEmpty()) { // with methods known, even a path not begun is saved (else load would convert it)
@@ -311,6 +323,12 @@ public final class NetherworldState {
 		java.util.Arrays.fill(spellWheel, null);
 		net.minecraft.nbt.ListTag wheel = tag.getList("SpellWheel", net.minecraft.nbt.Tag.TAG_STRING);
 		for (int i = 0; i < Math.min(wheel.size(), spellWheel.length); i++) spellWheel[i] = Spell.byId(wheel.getString(i));
+		spellReady.clear();
+		CompoundTag ready = tag.getCompound("SpellReady");
+		for (String id : ready.getAllKeys()) {
+			Spell spell = Spell.byId(id);
+			if (spell != null) spellReady.put(spell, ready.getLong(id));
+		}
 		setMethodBoost(tag.getDouble("MethodBoost"));
 		sawHome = tag.getBoolean("SawHome");
 		cultivatingGhost = tag.getBoolean("CultivatingGhost");

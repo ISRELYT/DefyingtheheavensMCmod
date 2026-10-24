@@ -40,14 +40,16 @@ public final class Obsession {
 	/**
 	 * {@code player} names {@code obsession} on the screen: kept for good, and the tribulation it stood before begins. Only while
 	 * they still stand at that breakthrough with none named (a stale or forged answer names nothing); one named already goes
-	 * straight to the tribulation.
+	 * straight to the tribulation. Not the ghost path's ({@code ghost} false): the heaven path's, or the Demon Path's with it drawn in
+	 * (TwoPaths#cultivatesDemon), whose tribulation out of Nascent Soul Grand Perfection asked none before the sweep of 2026-10-23.
 	 */
 	public static void name(ServerPlayer player, FourAxis.Axis obsession, boolean ghost) {
 		if (obsession == null || !player.isAlive()) return;
 		PlayerCultivation c = CultivationManager.get(player);
+		boolean demon = !ghost && TwoPaths.cultivatesDemon(c);
 		if (c.obsession() == null) {
-			int from = ghost ? GhostMethods.ghostRank(c.netherworld()) : PlayerCultivation.rank(c.getRealm(), c.getStage());
-			boolean ready = ghost ? GhostMethods.canBreakthrough(c) : !c.isMortal() && c.canBreakthrough();
+			int from = ghost ? GhostMethods.ghostRank(c.netherworld()) : demon ? DemonPath.rank(c) : PlayerCultivation.rank(c.getRealm(), c.getStage());
+			boolean ready = ghost ? GhostMethods.canBreakthrough(c) : demon ? DemonPath.canBreakthrough(c) : !c.isMortal() && c.canBreakthrough();
 			if (!asks(c, from) || !ready) return;
 			c.setObsession(obsession);
 			CultivationManager.markDirty(player.server);
@@ -57,6 +59,7 @@ public final class Obsession {
 			player.playNotifySound(SoundEvents.BELL_RESONATE, SoundSource.PLAYERS, 1.0f, 0.8f);
 		}
 		if (ghost) TribulationManager.startGhost(player);
+		else if (demon) TribulationManager.startDemon(player);
 		else TribulationManager.start(player);
 	}
 

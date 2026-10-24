@@ -22,15 +22,27 @@ import net.minecraft.network.chat.Component;
  *   <li>Yama's Judgement Scripture: Yama's Verdict (one foe judged, the weak twice over), Chains of Hell (foes dragged in and
  *       held).</li>
  *   <li>Six Paths Reincarnation Canon: Wheel of Samsara (made whole), Six Paths Annihilation (all around unmade).</li>
+ *   <li>Ten Thousand Ghosts Union (GhostSpells): Procession of Ten Thousand Ghosts (a column of the dead pours out along the look),
+ *       Gate of Ten Thousand Ghosts (a gate of the dead opens where you look, drags all near into it, and slams shut).</li>
+ *   <li>Void-Rending Nether Canon (GhostSpells): Rift to the Nine Nethers (the ground torn open onto the underworld, all near dragged
+ *       down into it), Bridge of No Return (the Naihe Bridge rises along the look, and whoever it passes forgets every blessing).</li>
  * </ul>
- * And the spells of both paths ({@link #isDual}, see TwoPaths), of no method: one for each realm from Foundation Building, in
- * reach once the heaven path and the ghost path both stand there, costing qi as well as ghostly qi:
+ * And the spells of both paths ({@link #isDual}, see TwoPaths; HeavenDemonSpells), of no method: one for each realm from Foundation
+ * Building, in reach once the heaven path and the Demon Path both stand there, cast by the living on qi alone (the Demon Path shares
+ * the qi pool): heaven's gold light and a demon's crimson qi as one. Before 2026-10-24 they were the heaven path's and the ghost
+ * path's (the user's ask: "the dual path spells are now from demon and heaven path"), and those five, built on the ghost path, were
+ * made anew:
  * <ul>
- *   <li>Yin-Yang Palm (Foundation Building): a palm of light and shadow strikes the first being ahead, and its harm mends you.</li>
- *   <li>Taiji Shield (Core Formation): the two turning round you turn back what is shot at you.</li>
- *   <li>Life and Death Seal (Nascent Soul): one foe sealed, its life drawn off into yours.</li>
- *   <li>Heaven and Hell Pillar (Heavenly Being): heaven's light falls and hell's fire rises where you look.</li>
- *   <li>Primordial Chaos (Four Axis): the two made one again: all around dragged in and unmade, and you made strong.</li>
+ *   <li>Heaven-Demon Palm (Foundation Building): a palm of gold light, a demon's claw in it, strikes the first being ahead, and its
+ *       harm mends you.</li>
+ *   <li>Heaven-Demon Mantle (Core Formation): gold light and crimson demon scales wrap you, and turn back what is shot at you.</li>
+ *   <li>Devouring Seal (Nascent Soul): one foe sealed, its life devoured into yours.</li>
+ *   <li>Heaven-Demon Claw (Heavenly Being): a great claw of gold light and crimson qi rakes down where you look.</li>
+ *   <li>Heaven and Demon as One (Four Axis): the two made one: all around dragged in and struck, and you made strong.</li>
+ *   <li>Heaven-Demon Avatar (Dao Integration): a colossal avatar of the two rises behind you, and twice its hands come down where
+ *       you look.</li>
+ *   <li>Heaven-Demon Void Shatter (Void Shattering): a colossal fist of the two punches where you look, and space shatters there like
+ *       glass.</li>
  * </ul>
  * And the five elements' spells ({@link #isHeaven}; HeavenSpells and the kits of the elements, FireSpells to MetalSpells), cast
  * by the living on qi: each of an element and a realm, at a place among that realm's nine layers, and taught by every heaven
@@ -53,12 +65,14 @@ public enum Spell {
 	HELL_CHAINS("hell_chains", GhostMethod.YAMA_JUDGEMENT, 7, 60, 30 * 20),
 	SAMSARA_WHEEL("samsara_wheel", GhostMethod.SIX_PATHS_CANON, 3, 80, 120 * 20),
 	SIX_PATHS_ANNIHILATION("six_paths_annihilation", GhostMethod.SIX_PATHS_CANON, 7, 150, 90 * 20),
-	// The spells of both paths: realm, ghostly qi, qi, cooldown.
-	YIN_YANG_PALM("yin_yang_palm", Realm.FOUNDATION_BUILDING, 15, 20, 6 * 20),
-	TAIJI_SHIELD("taiji_shield", Realm.CORE_FORMATION, 25, 60, 30 * 20),
-	LIFE_DEATH_SEAL("life_death_seal", Realm.NASCENT_SOUL, 40, 150, 20 * 20),
-	HEAVEN_HELL_PILLAR("heaven_hell_pillar", Realm.HEAVENLY_BEING, 60, 350, 25 * 20),
-	PRIMORDIAL_CHAOS("primordial_chaos", Realm.FOUR_AXIS, 120, 800, 120 * 20),
+	// The spells of both paths, the heaven path and the Demon Path (HeavenDemonSpells): realm, qi, cooldown. In the places of the heaven
+	// and ghost paths' five (Yin-Yang Palm, Taiji Shield, Life and Death Seal, Heaven and Hell Pillar, Primordial Chaos), their qi and
+	// ghostly qi added together.
+	HEAVEN_DEMON_PALM("heaven_demon_palm", Realm.FOUNDATION_BUILDING, 35, 6 * 20),
+	HEAVEN_DEMON_MANTLE("heaven_demon_mantle", Realm.CORE_FORMATION, 85, 30 * 20),
+	DEVOURING_SEAL("devouring_seal", Realm.NASCENT_SOUL, 190, 20 * 20),
+	HEAVEN_DEMON_CLAW("heaven_demon_claw", Realm.HEAVENLY_BEING, 410, 25 * 20),
+	HEAVEN_AND_DEMON_AS_ONE("heaven_and_demon_as_one", Realm.FOUR_AXIS, 920, 120 * 20),
 	// The five elements' spells (HeavenSpells), taught by any heaven method of the element that reaches their realm: element, realm,
 	// place among the realm's nine layers (Qi Refining and Foundation Building three spells at 2, 5 and 8, the deeper realms two at 3
 	// and 7), qi, cooldown.
@@ -131,7 +145,40 @@ public enum Spell {
 	ABSOLUTE_ZERO("absolute_zero", QiElement.WATER, Realm.FOUR_AXIS, 3, 1200, 30 * 20),
 	BOUNDLESS_SEA("boundless_sea", QiElement.WATER, Realm.FOUR_AXIS, 7, 2000, 120 * 20),
 	HEAVEN_SEVERING_SWORD("heaven_severing_sword", QiElement.METAL, Realm.FOUR_AXIS, 3, 1500, 60 * 20),
-	FOUR_SWORDS_ARRAY("four_swords_array", QiElement.METAL, Realm.FOUR_AXIS, 7, 2000, 180 * 20);
+	FOUR_SWORDS_ARRAY("four_swords_array", QiElement.METAL, Realm.FOUR_AXIS, 7, 2000, 180 * 20),
+	// Dao Integration (the user's ask, 2026-10-24; their shapes GeckoLib's: SpellConstruct): at the third layer the five elements' guardian
+	// beasts, at the seventh the realm's methods' own arts.
+	AZURE_DRAGON("azure_dragon", QiElement.WOOD, Realm.DAO_INTEGRATION, 3, 2800, 70 * 20),
+	MYRIAD_WOODS_RETURN("myriad_woods_return", QiElement.WOOD, Realm.DAO_INTEGRATION, 7, 3600, 120 * 20),
+	VERMILION_BIRD_DESCENT("vermilion_bird_descent", QiElement.FIRE, Realm.DAO_INTEGRATION, 3, 3000, 70 * 20),
+	ONE_FLAME_BURNS_THE_HEAVENS("one_flame_burns_the_heavens", QiElement.FIRE, Realm.DAO_INTEGRATION, 7, 3800, 120 * 20),
+	QILIN_TRAMPLES_THE_LAND("qilin_tramples_the_land", QiElement.EARTH, Realm.DAO_INTEGRATION, 3, 2800, 70 * 20),
+	SEAL_OF_TEN_THOUSAND_MOUNTAINS("seal_of_ten_thousand_mountains", QiElement.EARTH, Realm.DAO_INTEGRATION, 7, 3800, 120 * 20),
+	BLACK_TORTOISE_BASTION("black_tortoise_bastion", QiElement.WATER, Realm.DAO_INTEGRATION, 3, 2600, 90 * 20),
+	HUNDRED_RIVERS_CONVERGE("hundred_rivers_converge", QiElement.WATER, Realm.DAO_INTEGRATION, 7, 3800, 120 * 20),
+	WHITE_TIGER_POUNCE("white_tiger_pounce", QiElement.METAL, Realm.DAO_INTEGRATION, 3, 3000, 70 * 20),
+	MYRIAD_SWORDS_RETURN("myriad_swords_return", QiElement.METAL, Realm.DAO_INTEGRATION, 7, 3800, 120 * 20),
+	// Dao Integration's ghost foundation's (GhostSpells), at the third and seventh layers of its realm, and its spell of both paths
+	// (HeavenDemonSpells): living shapes of GeckoLib's too.
+	PROCESSION_OF_TEN_THOUSAND_GHOSTS("procession_of_ten_thousand_ghosts", GhostMethod.TEN_THOUSAND_GHOSTS_UNION, 3, 200, 45 * 20),
+	GATE_OF_TEN_THOUSAND_GHOSTS("gate_of_ten_thousand_ghosts", GhostMethod.TEN_THOUSAND_GHOSTS_UNION, 7, 300, 90 * 20),
+	HEAVEN_DEMON_AVATAR("heaven_demon_avatar", Realm.DAO_INTEGRATION, 3200, 100 * 20),
+	// Void Shattering (the user's ask, 2026-10-24: "void shattering doesn't have to be limited to rifts and special spells but it wouldn't hurt
+	// to have some in there"): space torn open, and what comes through it. The five elements' at the third and seventh layers, the ghost
+	// foundation's at its own, and the spell of both paths.
+	SPRING_THUNDER_OF_THE_AZURE_EMPEROR("spring_thunder_of_the_azure_emperor", QiElement.WOOD, Realm.VOID_SHATTERING, 3, 9000, 70 * 20),
+	VOID_WITHERING("void_withering", QiElement.WOOD, Realm.VOID_SHATTERING, 7, 11500, 120 * 20),
+	GOLDEN_CROW_DESCENDS("golden_crow_descends", QiElement.FIRE, Realm.VOID_SHATTERING, 3, 9500, 70 * 20),
+	SUN_THROUGH_THE_VOID("sun_through_the_void", QiElement.FIRE, Realm.VOID_SHATTERING, 7, 12500, 120 * 20),
+	BUZHOU_FALLS("buzhou_falls", QiElement.EARTH, Realm.VOID_SHATTERING, 3, 10000, 80 * 20),
+	EARTH_VEINS_LOCK_THE_VOID("earth_veins_lock_the_void", QiElement.EARTH, Realm.VOID_SHATTERING, 7, 11000, 120 * 20),
+	WEAK_WATER_FROM_THE_VOID("weak_water_from_the_void", QiElement.WATER, Realm.VOID_SHATTERING, 3, 9500, 70 * 20),
+	KUN_RISES_FROM_THE_ABYSS("kun_rises_from_the_abyss", QiElement.WATER, Realm.VOID_SHATTERING, 7, 12500, 120 * 20),
+	VOID_SEVERING_SWORD_LIGHT("void_severing_sword_light", QiElement.METAL, Realm.VOID_SHATTERING, 3, 10000, 80 * 20),
+	TEN_DIRECTION_SWORD_PRISON("ten_direction_sword_prison", QiElement.METAL, Realm.VOID_SHATTERING, 7, 12000, 120 * 20),
+	RIFT_TO_THE_NINE_NETHERS("rift_to_the_nine_nethers", GhostMethod.VOID_RENDING_NETHER_CANON, 3, 280, 60 * 20),
+	BRIDGE_OF_NO_RETURN("bridge_of_no_return", GhostMethod.VOID_RENDING_NETHER_CANON, 7, 400, 90 * 20),
+	HEAVEN_DEMON_VOID_SHATTER("heaven_demon_void_shatter", Realm.VOID_SHATTERING, 11000, 100 * 20);
 
 	private final String id;
 	private final GhostMethod method;
@@ -153,8 +200,9 @@ public enum Spell {
 		this(id, method, layer, null, cost, 0, cooldownTicks);
 	}
 
-	Spell(String id, Realm dualRealm, double cost, double qiCost, int cooldownTicks) {
-		this(id, null, 0, dualRealm, cost, qiCost, cooldownTicks);
+	/** A spell of both paths: of {@code dualRealm}, costing qi alone. */
+	Spell(String id, Realm dualRealm, double qiCost, int cooldownTicks) {
+		this(id, null, 0, dualRealm, 0, qiCost, cooldownTicks);
 	}
 
 	/** An element's spell: of {@code realm}, at {@code place} among its nine layers (1 to 9), costing qi alone. */
@@ -220,12 +268,23 @@ public enum Spell {
 		}
 		return best != null ? best : heavenMethod();
 	}
-	/** A spell of both paths (TwoPaths): of no method, in reach once both paths stand at {@link #dualRealm}. */
+	/** A spell of both paths (TwoPaths): of no method, in reach once the heaven path and the Demon Path stand at {@link #dualRealm}. */
 	public boolean isDual() { return dualRealm != null; }
 	public Realm dualRealm() { return dualRealm; }
-	/** Ghostly qi it costs. */
+
+	/**
+	 * The realm whose greatness it has (HeavenSpells#span, SpellConstruct#sizedFor): an element's spell's, a ghost foundation's, both
+	 * paths'; null for the dead's arts (the fire, the steps), which have none.
+	 */
+	public Realm realm() {
+		if (heavenRealm != null) return heavenRealm;
+		if (dualRealm != null) return dualRealm;
+		return method == null ? null : method.realm();
+	}
+
+	/** Ghostly qi it costs (a ghost method's spell). */
 	public double cost() { return cost; }
-	/** Qi it costs (the heaven methods' spells, and those of both paths as well as ghostly qi). */
+	/** Qi it costs (the heaven methods' spells and those of both paths). */
 	public double qiCost() { return qiCost; }
 	public int cooldownTicks() { return cooldownTicks; }
 
@@ -233,10 +292,11 @@ public enum Spell {
 	 * Whether this cultivator can cast it: the method cultivated to the spell's layer, a ghost method's by a ghost or a living
 	 * cultivator, a heaven method's by the living alone (never a mortal, alive or dead: its meridians are closed, its methods
 	 * dormant) and once their cultivation has reached the stage the layer stands for (the method may run ahead of the realm, its
-	 * spells not: {@link #realmNeeded}); a spell of both paths, both paths at its realm.
+	 * spells not: {@link #realmNeeded}); a spell of both paths, by the living, the heaven path and the Demon Path both at its realm (the
+	 * dead's paths are the dead's, as a bloodline's inheritance is the living's: DemonPath#inherits).
 	 */
 	public boolean isKnown(PlayerCultivation c) {
-		if (isDual()) return TwoPaths.bothReach(c, dualRealm);
+		if (isDual()) return !c.netherworld().ghost() && TwoPaths.bothReach(c, dualRealm);
 		if (isHeaven()) {
 			// A demon's bloodline teaches its race's element's spells as its Demon Path climbs, no method wanted (DemonPath#inherits).
 			if (DemonPath.inherits(c, this)) return true;

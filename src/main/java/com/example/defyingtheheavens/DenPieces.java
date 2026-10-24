@@ -103,7 +103,8 @@ final class DenPieces {
 
 	/** The elders' posts at the hoard, {x, y, z}: either side of its door outside, and inside by the chests; a dragon's at its alcove. */
 	static int[][] hoardGuards(SectPiece piece) {
-		if (piece.kind() == SectPiece.Kind.DEN_CRAG) return new int[][] {{HOARD_X1 + 2, 1, HOARD_Z0 + 1}, {HOARD_X1 + 2, 1, HOARD_Z1 - 1}, {HOARD_X0 + 2, 1, (HOARD_Z0 + HOARD_Z1) / 2}};
+		// (The third inside by the chests, on the alcove's open floor: it stood in the hoard's own wall before the sweep of 2026-10-23.)
+		if (piece.kind() == SectPiece.Kind.DEN_CRAG) return new int[][] {{HOARD_X1 + 2, 1, HOARD_Z0 + 1}, {HOARD_X1 + 2, 1, HOARD_Z1 - 1}, {HOARD_X0 + 3, 1, 11}};
 		int cx = piece.width() / 2;
 		return new int[][] {{cx - 3, 1, -2}, {cx + 3, 1, -2}, {cx, 1, piece.depth() - 4}};
 	}

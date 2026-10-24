@@ -215,7 +215,7 @@ public final class SectCommand {
 		List<Sect.Member> members = new ArrayList<>(sect.members.values());
 		members.sort(Sect.SENIORITY);
 		for (Sect.Member member : members) {
-			MutableComponent line = Component.literal("  ").append(Component.translatable(ModLang.NPC_TITLE_BRACKETS, member.title.getDisplayName())
+			MutableComponent line = Component.literal("  ").append(Component.translatable(ModLang.NPC_TITLE_BRACKETS, member.title.getDisplayName(sect.isClan()))
 					.withStyle(style -> style.withColor(member.title.getColor())));
 			line.append(" ").append(PlayerCultivation.rankName(CultivatorNpc.realmOf(member.rank), CultivatorNpc.stageOf(member.rank)));
 			lines.add(line);

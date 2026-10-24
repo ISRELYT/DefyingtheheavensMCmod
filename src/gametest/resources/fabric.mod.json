@@ -56,7 +56,14 @@
       "com.example.defyingtheheavens.MeteorFlightGameTests",
       "com.example.defyingtheheavens.BloodlinesGameTests",
       "com.example.defyingtheheavens.DemonPathGameTests",
-      "com.example.defyingtheheavens.ClanGameTests"
+      "com.example.defyingtheheavens.ClanGameTests",
+      "com.example.defyingtheheavens.BeastGameTests",
+      "com.example.defyingtheheavens.SweepGameTests",
+      "com.example.defyingtheheavens.LoopholePicksGameTests",
+      "com.example.defyingtheheavens.NpcSpellsGameTests",
+      "com.example.defyingtheheavens.DaoIntegrationSpellsGameTests",
+      "com.example.defyingtheheavens.VoidShatteringSpellsGameTests",
+      "com.example.defyingtheheavens.PathCommandsGameTests"
     ]
   }
 }

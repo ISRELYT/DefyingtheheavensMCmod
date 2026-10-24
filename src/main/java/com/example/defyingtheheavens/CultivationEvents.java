@@ -65,7 +65,7 @@ public final class CultivationEvents {
 		Spells.forget(player.getUUID());
 		PortalRestrictionHandler.forget(player.getUUID());
 		QiFlight.forget(player.getUUID());
-		RaceGifts.forget(player.getUUID()); // an Illusion's, a roar's cooldowns (Shed Skin's outlasts a logout)
+		RaceGifts.onDisconnect(player); // an Illusion up ends (the gifts' cooldowns outlast a logout)
 		Tempering.forget(player.getUUID());
 		HeavenRitual.forget(player.getUUID());
 		Lifespan.forget(player.getUUID());
@@ -107,6 +107,7 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(SectManager::tick);
 		ServerTickEvents.END_SERVER_TICK.register(SectMembership::tick); // disciples told of their title as it changes
 		ServerTickEvents.END_SERVER_TICK.register(NpcSpawner::tick);
+		ServerTickEvents.END_SERVER_TICK.register(BeastSpawner::tick); // the wild demon beasts, round players by their lands
 		ServerTickEvents.END_SERVER_TICK.register(RogueIndex::tick);
 		ServerTickEvents.END_SERVER_TICK.register(NpcTravel::tick);
 		ServerTickEvents.END_SERVER_TICK.register(NpcLedger::tick);
@@ -187,6 +188,7 @@ public final class CultivationEvents {
 			TalkSystem.clearTrials();
 			SpatialTrialHandler.clear();
 			Wishes.clear();
+			RaceGifts.clear();
 		});
 
 		// A formation's shell runs through the ground too: those who couldn't break the barrier can't dig under it either.
@@ -325,8 +327,13 @@ public final class CultivationEvents {
 			if (source.is(DamageTypeTags.IS_FALL) && Spells.fallIsSafe(sp)) return false;
 			// A projected soul is harmed only by cultivators who see it, by their own hand (see SoulProjection#allowSoulDamage).
 			if (SoulProjection.isSoul(sp)) return SoulProjection.allowSoulDamage(sp, source);
-			// A ghost, only by what reaches the dead (see GhostSystem#allowDamage).
-			if (GhostSystem.isGhost(sp)) return GhostSystem.allowDamage(sp, source);
+			// A ghost, only by what reaches the dead (see GhostSystem#allowDamage). One turned inward (made a ghost there: the yin) fights
+			// its heart demon as the living do, a defeat sending it back to its body (it scattered there, before the sweep of 2026-10-23,
+			// and reformed at the Gate with its body left sitting and the Inner Realm still its).
+			if (GhostSystem.isGhost(sp)) {
+				if (!GhostSystem.allowDamage(sp, source)) return false;
+				return !InnerRealm.isInside(sp) || QiSurges.allowInnerDamage(sp, source, amount);
+			}
 			// The drop back into the Overworld sky after descension doesn't kill on landing.
 			if (source.is(DamageTypeTags.IS_FALL) && SpatialTrialHandler.consumeFallProtection(sp)) {
 				return false;
@@ -379,6 +386,8 @@ public final class CultivationEvents {
 
 		ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> {
 			if (entity instanceof ServerPlayer sp) {
+				// A demon slain by another player leaves its demon core (DemonCoreItem), read from its record before anything changes it.
+				DemonCoreItem.onPlayerDeath(sp, source);
 				// A death under the lifespan tribulation, of anything, ends the life whole (made anew at the respawn): first, so a
 				// breakthrough's tribulation under way goes with it unremarked.
 				boolean spent = LifespanTribulation.onDeath(sp);

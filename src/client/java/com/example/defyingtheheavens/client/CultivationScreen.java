@@ -503,7 +503,7 @@ public class CultivationScreen extends Screen {
 			details.add(new Detail(Component.translatable(ModLang.PILL_RESISTANCE_LINE, Math.round(c.getPillResistance() * 100)), 0x9E9E9E));
 		}
 		details.add(new Detail(Component.translatable(ModLang.ALIGNMENT_LINE, Alignment.describe(c.getAlignment())), 0xA0A0A0));
-		if (TwoPaths.realmGap(c) >= 0 && TwoPaths.harmony(c) > 0) {
+		if (TwoPaths.stageGap(c) >= 0 && TwoPaths.harmony(c) > 0) {
 			details.add(new Detail(Component.translatable(ModLang.TWO_PATHS_LINE, Math.round(TwoPaths.harmony(c) * 100)), 0x8FEAE4));
 		}
 		if (c.getFavour() > 0) {
@@ -582,7 +582,7 @@ public class CultivationScreen extends Screen {
 		if (rank < 0) return null;
 		double stone = player == null ? 1.0 : com.example.defyingtheheavens.SpiritStoneItem.meditationMultiplier(player);
 		double saving = ghost ? com.example.defyingtheheavens.Lifespan.saving(boost, 1, com.example.defyingtheheavens.Lifespan.ghostPlaceSaving(ClientNetherworldData.density()), stone)
-				: demon ? com.example.defyingtheheavens.Lifespan.saving(boost, 1, com.example.defyingtheheavens.Lifespan.placeSaving(c), stone)
+				: demon ? com.example.defyingtheheavens.Lifespan.saving(boost, 1, com.example.defyingtheheavens.Lifespan.placeSaving(c, DemonPath.realm(rank)), stone)
 				: com.example.defyingtheheavens.Lifespan.saving(boost, method == null ? 1 : HeavenMethods.elementFactor(shareHere(method.element())),
 						com.example.defyingtheheavens.Lifespan.placeSaving(c), stone);
 		double cultivated = ghost ? c.netherworld().pathCultivation() : demon ? c.demon().cultivation() : c.getCultivation();
@@ -1485,7 +1485,7 @@ public class CultivationScreen extends Screen {
 		g.drawCenteredString(font, Alignment.describe(info.alignment()), cx, y, 0xB0B0B0);
 		y += 15;
 		NpcTitle title = info.title();
-		g.drawString(font, Component.translatable(ModLang.SECT_TAB_TITLE, title.getDisplayName()), x, y, title.getColor());
+		g.drawString(font, Component.translatable(ModLang.SECT_TAB_TITLE, title.getDisplayName(info.clan())), x, y, title.getColor());
 		y += 11;
 		g.drawString(font, Component.translatable(ModLang.SECT_TAB_STANDING, Component.translatable(ModLang.talkRegardLevel(Regard.levelId(info.standing()))),
 				(info.standing() >= 0 ? "+" : "") + info.standing()), x, y, 0xE0E0E0);
@@ -1534,7 +1534,8 @@ public class CultivationScreen extends Screen {
 		int ry = viewTop + 2 - sectScroll;
 		for (ClientSect.Member member : info.members()) {
 			if (ry > viewTop - rowHeight && ry < viewBottom) {
-				MutableComponent row = member.title() == null ? Component.literal("") : Component.translatable(ModLang.NPC_TITLE_BRACKETS, member.title().getDisplayName()).append(" ");
+				MutableComponent row = member.title() == null ? Component.literal("")
+						: Component.translatable(ModLang.NPC_TITLE_BRACKETS, member.title().getDisplayName(info.clan())).append(" ");
 				row.append(member.player() ? Component.translatable(ModLang.SECT_TAB_PLAYER, member.name()) : Component.literal(member.name()));
 				int colour = member.title() == null ? 0x8A8A8A : member.title().getColor();
 				Component realm = member.rank() < 0 ? Component.translatable(ModLang.SECT_TAB_OFFLINE)
@@ -2587,8 +2588,9 @@ public class CultivationScreen extends Screen {
 		int rightEdge = left + LIST_RIGHT;
 		int viewTop = top + CONTENT_Y;
 		int viewBottom = top + ABILITIES_BOTTOM;
-		// A method's spells once the method is known; the spells of both paths (TwoPaths) once both are walked.
-		boolean both = TwoPaths.walksBoth(ClientCultivationData.get());
+		// A method's spells once the method is known; the spells of both paths (TwoPaths) once the heaven path and the Demon Path are both
+		// walked, to the living.
+		boolean both = !s.ghost() && TwoPaths.walksHeavenAndDemon(ClientCultivationData.get());
 		// A heaven method's spells once it is known, to the living (the dead cast none of them).
 		PlayerCultivation self = ClientCultivationData.get();
 		List<Spell> shown = Arrays.stream(Spell.values()).filter(spell -> spell.isDual() ? both
@@ -2624,8 +2626,7 @@ public class CultivationScreen extends Screen {
 				drawRowButton(g, button, label, visible && button.contains(mouseX, mouseY), readied ? 0x69F0AE : 0xB0B0B0);
 			}
 			y += 15;
-			Component cost = spell.isDual() ? Component.translatable(ModLang.SPELLS_COST_BOTH, Math.round(spell.qiCost()), Math.round(spell.cost()))
-					: spell.isHeaven() ? Component.translatable(ModLang.SPELLS_QI_COST, Math.round(spell.qiCost()))
+			Component cost = spell.isHeaven() || spell.isDual() ? Component.translatable(ModLang.SPELLS_QI_COST, Math.round(spell.qiCost()))
 					: Component.translatable(ModLang.SPELLS_COST, Math.round(spell.cost()));
 			Component teacher = spell.isHeaven() ? spell.teacher(self.heaven()).getDisplayName() : spell.isDual() ? Component.empty() : spell.method().getDisplayName();
 			Component detail = known

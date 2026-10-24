@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
@@ -63,11 +64,38 @@ public final class RaceGifts {
 		return TwoPaths.higherRank(c, true);
 	}
 
-	/** Where another stands to be cowed or pressed: a player by its body (TwoPaths#weighedRank), a cultivator by its rank, anything else as a mortal. */
+	/**
+	 * Where another stands to be cowed or pressed: a player by its body (TwoPaths#weighedRank), a cultivator by its rank, a demon beast
+	 * (or any other CultivatorEntity) by its own, anything else as a mortal. Before the sweep of 2026-10-23 a beast stood as a mortal:
+	 * a roar cowed a Core Formation one, and a dragon's might slowed it.
+	 */
 	private static int rankOf(LivingEntity entity) {
 		if (entity instanceof ServerPlayer player) return TwoPaths.weighedRank(CultivationManager.get(player));
 		if (entity instanceof CultivatorNpc npc) return npc.isMortal() ? -1 : npc.getRank();
+		if (entity instanceof CultivatorEntity other) return other.isMortal() ? -1 : PlayerCultivation.rank(other.getCultivationRealm(), other.getCultivationStage());
 		return -1;
+	}
+
+	/**
+	 * Who a race's gift may weigh on: not its own, the spared (HeavenSpells#spared: allies, pets, players it may not harm), nor a soul or
+	 * one of the dead out of the living's reach (Incorporeal).
+	 */
+	private static boolean reaches(ServerPlayer from, LivingEntity other) {
+		return other != from && other.isAlive() && !HeavenSpells.spared(from, other) && !(other instanceof Player player && Incorporeal.is(player));
+	}
+
+	/** Whether {@code player} may use a race's act now: alive and in the world, in a body (no soul out, none of the ruled dead). */
+	private static boolean mayAct(ServerPlayer player) {
+		if (!player.isAlive() || player.isSpectator()) return false;
+		if (SoulProjection.isAwayFromBody(player.getUUID()) || SoulProjection.isSoul(player)) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_SOUL_BUSY), true);
+			return false;
+		}
+		if (Incorporeal.isRuledGhost(player)) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_GHOST_CANNOT), true);
+			return false;
+		}
+		return true;
 	}
 
 	// --- Once a second ---
@@ -94,14 +122,18 @@ public final class RaceGifts {
 		ILLUSION_UNTIL.values().removeIf(until -> until < now);
 	}
 
-	/** Dragon's Might: those within {@link #MIGHT_RADIUS} standing {@link #MIGHT_REALMS_BELOW} realms or more below it are slowed while near. */
+	/**
+	 * Dragon's Might: those within {@link #MIGHT_RADIUS} standing {@link #MIGHT_REALMS_BELOW} realms or more below it are slowed while near;
+	 * not by a dragon's soul out of its body or its ghost, nor on those it spares ({@link #reaches}).
+	 */
 	private static void dragonsMight(ServerPlayer dragon) {
+		if (Incorporeal.is(dragon) || SoulProjection.isAwayFromBody(dragon.getUUID())) return;
 		int realm = rank(CultivationManager.get(dragon));
 		if (realm < 0) return;
 		int stages = Stage.values().length;
 		int dragonRealm = realm / stages;
 		for (LivingEntity other : dragon.serverLevel().getEntitiesOfClass(LivingEntity.class, dragon.getBoundingBox().inflate(MIGHT_RADIUS),
-				e -> e != dragon && e.isAlive() && e.distanceToSqr(dragon) <= MIGHT_RADIUS * MIGHT_RADIUS)) {
+				e -> reaches(dragon, e) && e.distanceToSqr(dragon) <= MIGHT_RADIUS * MIGHT_RADIUS)) {
 			int otherRank = rankOf(other);
 			int otherRealm = otherRank < 0 ? -1 : otherRank / stages;
 			if (dragonRealm - otherRealm < MIGHT_REALMS_BELOW) continue;
@@ -111,9 +143,12 @@ public final class RaceGifts {
 
 	// --- Blows ---
 
-	/** What {@code caster}'s blow from {@code source} comes to: a tiger's own blows (not its spells) {@link #TIGER_HARM} as hard. */
+	/**
+	 * What {@code caster}'s blow from {@code source} comes to: a tiger's own blows of the hand (a player's attack: not its spells, nor
+	 * a flight's smash or a core's blast, which also came {@link #TIGER_HARM} as hard before the sweep of 2026-10-23) the harder.
+	 */
 	public static float outgoing(ServerPlayer caster, DamageSource source, float amount) {
-		if (race(caster) != Bloodline.TIGER || source.getDirectEntity() != caster || HeavenSpells.isQi(source)) return amount;
+		if (race(caster) != Bloodline.TIGER || source.getDirectEntity() != caster || !source.is(DamageTypes.PLAYER_ATTACK) || HeavenSpells.isQi(source)) return amount;
 		return amount * TIGER_HARM;
 	}
 
@@ -125,10 +160,17 @@ public final class RaceGifts {
 			int amplifier = realm >= Realm.HEAVENLY_BEING.ordinal() ? 2 : realm >= Realm.CORE_FORMATION.ordinal() ? 1 : 0;
 			target.addEffect(new MobEffectInstance(MobEffects.POISON, VENOM_TICKS, amplifier), attacker);
 		}
-		if (ILLUSION_UNTIL.remove(attacker.getUUID()) != null) {
-			attacker.removeEffect(MobEffects.INVISIBILITY);
-			attacker.displayClientMessage(Component.translatable(ModLang.MSG_ILLUSION_BROKEN), true);
-		}
+		breakIllusion(attacker);
+	}
+
+	/**
+	 * A fox's Illusion broken, if it is up: by a blow of its own, any harm it does (an arrow, a spell: Physiques#onHurt) or a spell it casts
+	 * (Spells#cast). Before the sweep of 2026-10-23 only a blow of the hand broke it, so a fox unseen could cast and shoot freely.
+	 */
+	public static void breakIllusion(ServerPlayer fox) {
+		if (ILLUSION_UNTIL.remove(fox.getUUID()) == null) return;
+		fox.removeEffect(MobEffects.INVISIBILITY);
+		fox.displayClientMessage(Component.translatable(ModLang.MSG_ILLUSION_BROKEN), true);
 	}
 
 	/** {@code victim} has lost health: a lizard brought below {@link #SHED_BELOW} of its health sheds its skin, once in {@link #SHED_COOLDOWN}. */
@@ -149,6 +191,7 @@ public final class RaceGifts {
 
 	/** Tiger's Roar (Ability#TIGERS_ROAR): those within {@link #ROAR_RADIUS} {@link #ROAR_STAGES_BELOW} stages or more below it weakened and slowed. */
 	public static void roar(ServerPlayer tiger) {
+		if (!mayAct(tiger)) return;
 		PlayerCultivation c = CultivationManager.get(tiger);
 		long now = tiger.serverLevel().getGameTime();
 		long ready = ROAR_READY.getOrDefault(tiger.getUUID(), 0L);
@@ -165,7 +208,7 @@ public final class RaceGifts {
 		int rank = rank(c);
 		int cowed = 0;
 		for (LivingEntity other : tiger.serverLevel().getEntitiesOfClass(LivingEntity.class, tiger.getBoundingBox().inflate(ROAR_RADIUS),
-				e -> e != tiger && e.isAlive() && e.distanceToSqr(tiger) <= ROAR_RADIUS * ROAR_RADIUS)) {
+				e -> reaches(tiger, e) && e.distanceToSqr(tiger) <= ROAR_RADIUS * ROAR_RADIUS)) {
 			if (rank - rankOf(other) < ROAR_STAGES_BELOW) continue;
 			other.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, ROAR_TICKS, 1), tiger);
 			other.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, ROAR_TICKS, 1), tiger);
@@ -181,6 +224,7 @@ public final class RaceGifts {
 
 	/** Illusion (Ability#ILLUSION): unseen for {@link #ILLUSION_TICKS}; a blow of its own breaks it. */
 	public static void illusion(ServerPlayer fox) {
+		if (!mayAct(fox)) return;
 		PlayerCultivation c = CultivationManager.get(fox);
 		long now = fox.serverLevel().getGameTime();
 		long ready = ILLUSION_READY.getOrDefault(fox.getUUID(), 0L);
@@ -220,10 +264,28 @@ public final class RaceGifts {
 		return DemonPath.bloodline(c) == race && TwoPaths.awakens(c, Realm.CORE_FORMATION, true) != null;
 	}
 
+	/**
+	 * {@code player} is leaving: an Illusion up ends (its invisibility with it, else saved on the player to hide them past it as they come
+	 * back), while the roar's, the shed's and the Illusion's cooldowns outlast the logout (before the sweep of 2026-10-23 a relog made the
+	 * roar and the Illusion ready again at once). They go with the server ({@link #clear}).
+	 */
+	public static void onDisconnect(ServerPlayer player) {
+		if (ILLUSION_UNTIL.remove(player.getUUID()) != null) player.removeEffect(MobEffects.INVISIBILITY);
+	}
+
+	/** Everything of {@code id}'s (the game tests). */
 	public static void forget(UUID id) {
 		ROAR_READY.remove(id);
 		ILLUSION_READY.remove(id);
 		ILLUSION_UNTIL.remove(id);
+	}
+
+	/** The server stopped: game times mean nothing in the next world opened. */
+	public static void clear() {
+		ROAR_READY.clear();
+		SHED_READY.clear();
+		ILLUSION_READY.clear();
+		ILLUSION_UNTIL.clear();
 	}
 
 	/** For the game tests: Shed Skin ready again. */
