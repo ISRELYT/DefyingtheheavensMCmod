@@ -41,7 +41,7 @@ public class SpellConstruct extends Entity implements GeoEntity {
 	/**
 	 * How it is drawn: a GeckoLib model ({@link #SHAPE}); or space torn open, drawn by the client's own hand (RiftRenderer), its size the
 	 * tear's length in blocks and its glow its {@link #tint}: a jagged {@link #TEAR} standing in the air (turned to whoever looks at it,
-	 * upright, or turned on their screen by its yaw: 90, a slash lying across the sky), an
+	 * upright, or turned on their screen by its yaw: 90, a slash lying across the sky; or, pitched 90, lying flat in the sky open below), an
 	 * {@link #ABYSS} lying open in the ground, a {@link #LINE} cut along its facing from where it stands, or space {@link #SHATTER}ed like
 	 * glass round a point; or a {@link #TENDRIL}, a root drawn by hand too (TendrilRenderer), lashing from where it stands to the being it
 	 * holds ({@link #target}) and coiled round it, its size its girth.

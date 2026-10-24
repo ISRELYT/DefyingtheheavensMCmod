@@ -300,6 +300,9 @@ public class SpellCircumstancesGameTests implements FabricGameTest {
 		ServerPlayer p = master(helper, floor.centre());
 		Vec3 home = p.position();
 		Husk husk = mark(level, home.add(0, 0, 6), spawned);
+		// Players' cooldowns are kept only with the gamerule on (off by default since 2026-10-24): on for these casts, all of them this tick.
+		boolean rule = level.getGameRules().getBoolean(ModGameRules.SPELL_COOLDOWNS);
+		level.getGameRules().getRule(ModGameRules.SPELL_COOLDOWNS).set(true, level.getServer());
 		try {
 			List<String> twice = new ArrayList<>();
 			for (Spell spell : Spell.values()) {
@@ -321,9 +324,11 @@ public class SpellCircumstancesGameTests implements FabricGameTest {
 				SpellAuras.forget(p);
 				sweep(level, home, 140);
 			}
+			level.getGameRules().getRule(ModGameRules.SPELL_COOLDOWNS).set(rule, level.getServer());
 			helper.assertTrue(twice.isEmpty(), "A spell cast again while cooling down is refused, nothing paid (paid twice: " + twice + ")");
 			HeavenSpellTesting.succeedOnceHealed(helper, p, spawned, floor);
 		} catch (RuntimeException e) {
+			level.getGameRules().getRule(ModGameRules.SPELL_COOLDOWNS).set(rule, level.getServer());
 			HeavenSpellTesting.cleanUp(p, spawned, floor);
 			throw e;
 		}

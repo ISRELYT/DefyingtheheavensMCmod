@@ -144,6 +144,60 @@ public final class Devastation {
 	}
 
 	/**
+	 * A flood's basin, a ring of it at a time (Weak Water from the Void, Hundred Rivers Converge; the user's ask, 2026-10-24: the water
+	 * "should come out during it not after, and should cover the area the spells cover not just the center"): the bowl {@code radius}
+	 * round and {@code depth} deep at its heart at {@code at}, its columns between {@code from} and {@code to} out from the heart cut
+	 * (from the bowl's floor up to the land's top) and, as soon as they are, filled with water up to a block under the land's level at
+	 * the heart: called again and again with the ring moving, the water spreads out over the whole of it (or pours in from its rim). A
+	 * rise of the land more than {@link #FLOOD_HILL} over the heart is left standing out of it; a hollow under it is filled no deeper
+	 * than the bowl's floor.
+	 */
+	public static void flood(LivingEntity p, ServerLevel level, Vec3 at, double radius, double depth, double from, double to) {
+		if (!HeavenSpells.carvesLand(p) || to <= from) return; // a cultivator's spells leave the land as it was (HeavenSpells#carvesLand)
+		BlockPos centre = BlockPos.containing(at);
+		int r = (int) Math.ceil(Math.min(to, radius * 1.1));
+		LongArrayList cells = new LongArrayList();
+		Map<Long, Integer> lowest = new HashMap<>();
+		long seed = centre.asLong();
+		for (int dx = -r; dx <= r; dx++) {
+			for (int dz = -r; dz <= r; dz++) {
+				double dist = Math.sqrt(dx * dx + dz * dz);
+				if (dist < from || dist >= to) continue;
+				double flat = dist * dist / (radius * radius), rag = 1 + 0.12 * (noise(seed, dx, dz) - 0.5);
+				if (flat > rag) continue;
+				int x = centre.getX() + dx, z = centre.getZ() + dz;
+				if (!level.hasChunk(x >> 4, z >> 4)) continue;
+				BlockPos ground = groundTop(level, x, z);
+				if (ground == null || ground.getY() > centre.getY() + FLOOD_HILL) continue; // a hill stands out of the flood
+				int surface = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1; // what stands on it swept away with it
+				int bowl = centre.getY() - (int) Math.ceil(depth * Math.sqrt(Math.max(0, 1 - flat / rag)));
+				for (int y = bowl; y <= Math.max(surface, centre.getY()); y++) cells.add(BlockPos.asLong(x, y, z));
+				lowest.put(BlockPos.asLong(x, 0, z), bowl);
+			}
+		}
+		queue(level, p, cells.toLongArray(), at, () -> fill(p, level, lowest, centre.getY() - 1), DEBRIS / 3, false);
+	}
+
+	/** How far over a flood's heart the land may rise and still be flooded (Devastation#flood): higher, it stands out of the water. */
+	static final int FLOOD_HILL = 3;
+
+	/** Water set in each column's open cells, from its floor ({@code lowest}) up to {@code waterY}. */
+	private static void fill(LivingEntity p, ServerLevel level, Map<Long, Integer> lowest, int waterY) {
+		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+		for (Map.Entry<Long, Integer> e : lowest.entrySet()) {
+			int x = BlockPos.getX(e.getKey()), z = BlockPos.getZ(e.getKey());
+			for (int y = e.getValue(); y <= waterY; y++) {
+				pos.set(x, y, z);
+				if (!level.isLoaded(pos)) break;
+				BlockState state = level.getBlockState(pos);
+				if (!state.isAir() && !state.canBeReplaced() || !state.getFluidState().isEmpty() && state.getFluidState().isSource()) continue;
+				if (!mayChange(p, level, pos)) continue;
+				level.setBlock(pos, Blocks.WATER.defaultBlockState(), 3);
+			}
+		}
+	}
+
+	/**
 	 * The ground {@code radius} round {@code at} sinking under a weight: up to {@code drop} blocks at the heart, less toward the
 	 * edge; the new ground cracked (stone to cobblestone, earth to coarse dirt). Trees keep their footing, and so does whoever
 	 * stands within {@code spare} of the heart (the caster).
@@ -206,6 +260,109 @@ public final class Devastation {
 	public static void cut(LivingEntity p, ServerLevel level, List<BlockPos> cells, Vec3 heart) {
 		if (!HeavenSpells.carvesLand(p)) return; // a cultivator's spells leave the land as it was (HeavenSpells#carvesLand)
 		queue(level, p, cells, heart, null);
+	}
+
+	/**
+	 * A gouge raked through the land from {@code from} to {@code to} (a claw's: the Heaven-Demon Avatar's), {@code width} across and
+	 * {@code depth} deep, following the land's top: deepest midway along it and down its middle, shallowing to nothing at its ends and edges.
+	 */
+	public static void gouge(LivingEntity p, ServerLevel level, Vec3 from, Vec3 to, double width, double depth) {
+		if (!HeavenSpells.carvesLand(p)) return; // a cultivator's spells leave the land as it was (HeavenSpells#carvesLand)
+		Vec3 line = to.subtract(from).multiply(1, 0, 1);
+		double length = line.length();
+		if (length < 1.0e-3) return;
+		Vec3 along = line.scale(1 / length), across = new Vec3(-along.z, 0, along.x);
+		java.util.Map<Long, Integer> deepest = new java.util.LinkedHashMap<>();
+		for (double t = 0; t <= length; t += 0.5) {
+			double lengthwise = Math.pow(Math.sin(Math.PI * t / length), 0.6);
+			for (double off = -width / 2; off <= width / 2; off += 0.5) {
+				double crosswise = 1 - Math.pow(off / (width / 2 + 0.25), 2);
+				int deep = (int) Math.round(depth * lengthwise * crosswise);
+				if (deep <= 0) continue;
+				Vec3 at = from.add(along.scale(t)).add(across.scale(off));
+				deepest.merge(BlockPos.asLong((int) Math.floor(at.x), 0, (int) Math.floor(at.z)), deep, Math::max);
+			}
+		}
+		List<BlockPos> cells = new ArrayList<>();
+		for (Map.Entry<Long, Integer> e : deepest.entrySet()) {
+			BlockPos top = groundTop(level, BlockPos.getX(e.getKey()), BlockPos.getZ(e.getKey()));
+			if (top == null) continue;
+			// What stands on it goes with it (a tree's trunk, a wall), and the ground down to the gouge's floor.
+			int surface = level.getHeight(Heightmap.Types.WORLD_SURFACE, top.getX(), top.getZ()) - 1;
+			for (int y = surface; y > top.getY() - e.getValue(); y--) cells.add(new BlockPos(top.getX(), y, top.getZ()));
+		}
+		queue(level, p, cells, from.add(to).scale(0.5), null);
+	}
+
+	/**
+	 * A shaft burnt straight up from {@code base} to the open sky (One Flame Burns the Heavens; the user's ask, 2026-10-24: "using it
+	 * underground should create a tunnel to the surface ridden with fire"): {@code radius} round at its foot, wider toward the top, ragged,
+	 * through whatever stands over it up to the highest land within it (no more than {@code mostUp}); once it is cut its walls are burnt
+	 * ({@link #scorchShaft}): magma, netherrack and blackstone, and fire on every ledge.
+	 */
+	public static void shaft(LivingEntity p, ServerLevel level, Vec3 base, double radius, int mostUp) {
+		if (!HeavenSpells.carvesLand(p)) return; // a cultivator's spells leave the land as it was (HeavenSpells#carvesLand)
+		BlockPos centre = BlockPos.containing(base);
+		int r = (int) Math.ceil(radius * 1.35);
+		int top = centre.getY();
+		for (int dx = -r; dx <= r; dx += 2) {
+			for (int dz = -r; dz <= r; dz += 2) {
+				int x = centre.getX() + dx, z = centre.getZ() + dz;
+				if (level.hasChunk(x >> 4, z >> 4)) top = Math.max(top, level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z));
+			}
+		}
+		top = Math.min(Math.min(top + 2, centre.getY() + mostUp), level.getMaxBuildHeight() - 1);
+		LongArrayList cells = new LongArrayList();
+		long seed = centre.asLong() * 31;
+		for (int y = centre.getY(); y <= top; y++) {
+			double flare = shaftWidth(radius, y - centre.getY(), top - centre.getY());
+			int fr = (int) Math.ceil(flare * 1.15);
+			for (int dx = -fr; dx <= fr; dx++) {
+				for (int dz = -fr; dz <= fr; dz++) {
+					double rag = 1 + 0.25 * (noise(seed + y / 3, dx, dz) - 0.5);
+					if (dx * dx + dz * dz > flare * flare * rag * rag) continue;
+					cells.add(BlockPos.asLong(centre.getX() + dx, y, centre.getZ() + dz));
+				}
+			}
+		}
+		int height = top - centre.getY();
+		queue(level, p, cells.toLongArray(), base, () -> scorchShaft(p, level, centre, radius, height), DEBRIS, false);
+	}
+
+	/** How wide a shaft ({@link #shaft}) is {@code up} blocks over its foot, of {@code height}: its {@code radius} there, a third more at its top. */
+	private static double shaftWidth(double radius, int up, int height) {
+		return radius * (0.9 + 0.35 * up / (double) Math.max(1, height));
+	}
+
+	/** A burnt shaft's walls ({@link #shaft}): the rock round it burnt to magma, netherrack and blackstone, fires set on its ledges and its burning ground. */
+	private static void scorchShaft(LivingEntity p, ServerLevel level, BlockPos centre, double radius, int height) {
+		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+		for (int up = -1; up <= height; up++) {
+			double flare = shaftWidth(radius, Math.max(0, up), height);
+			// The band its ragged edge can lie in (its cut ±1/8 of its width), and the floor's ring under it.
+			double inner = up < 0 ? 0 : flare * 0.85, outerEdge = flare * 1.15 + 1.5;
+			int outer = (int) Math.ceil(outerEdge);
+			for (int dx = -outer; dx <= outer; dx++) {
+				for (int dz = -outer; dz <= outer; dz++) {
+					double d = Math.sqrt(dx * dx + dz * dz);
+					if (d < inner || d > outerEdge) continue;
+					pos.set(centre.getX() + dx, centre.getY() + up, centre.getZ() + dz);
+					if (!level.isLoaded(pos)) continue;
+					BlockState state = level.getBlockState(pos);
+					if (state.isAir() || !state.isSolid()) continue;
+					// Only the wall's face: a block with the shaft's air beside or above it.
+					boolean face = level.getBlockState(pos.above()).isAir() || level.getBlockState(pos.north()).isAir() || level.getBlockState(pos.south()).isAir()
+							|| level.getBlockState(pos.east()).isAir() || level.getBlockState(pos.west()).isAir();
+					if (!face || !HeavenSpells.carvable(level, pos, p)) continue;
+					double roll = level.random.nextDouble();
+					BlockState burnt = roll < 0.22 ? Blocks.MAGMA_BLOCK.defaultBlockState() : roll < 0.58 ? Blocks.NETHERRACK.defaultBlockState()
+							: roll < 0.8 ? Blocks.BLACKSTONE.defaultBlockState() : null;
+					if (burnt != null) level.setBlock(pos, burnt, 3);
+					BlockPos above = pos.above();
+					if (level.getBlockState(above).isAir() && (burnt != null && burnt.is(Blocks.NETHERRACK) || level.random.nextDouble() < 0.35)) ignite(p, level, above.immutable());
+				}
+			}
+		}
 	}
 
 	/** A tunnel {@code radius} round bored from {@code from} to {@code to} through whatever stands between, nearest {@code from} first. */
@@ -539,7 +696,7 @@ public final class Devastation {
 	 * kept safe (HeavenSpells#guarded). On a sect's grounds not {@code p}'s own, that is trespass (SectManager#spoiled).
 	 */
 	static boolean mayChange(LivingEntity p, ServerLevel level, BlockPos pos) {
-		if (Formations.shelters(level, pos) || HeavenSpells.guarded(level, pos, p)) return false;
+		if (Formations.sheltersFrom(level, pos, p) || HeavenSpells.guarded(level, pos, p)) return false;
 		if (p == null) return true;
 		if (!(p instanceof ServerPlayer player)) return false; // a cultivator's spells set nothing in the land (HeavenSpells#carvesLand)
 		if (Formations.protectsGroundQuietly(player, pos) || !player.mayBuild() || !level.mayInteract(player, pos)) return false;

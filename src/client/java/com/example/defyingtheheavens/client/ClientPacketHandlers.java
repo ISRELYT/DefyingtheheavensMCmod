@@ -126,7 +126,13 @@ public final class ClientPacketHandlers {
 			double demonCultivation = buf.readDouble();
 			boolean demonDrawn = buf.readBoolean();
 			com.example.defyingtheheavens.Bloodline blood = com.example.defyingtheheavens.Bloodline.byIndex(buf.readVarInt());
+			int bloodRealm = buf.readVarInt(), halfIndex = buf.readVarInt();
+			double purity = buf.readDouble();
 			client.execute(() -> {
+				// What of a race's blood it has drunk (DemonBlood): the Cultivation tab's purity and blood gate, a drink's refusal before it's drunk.
+				ClientCultivationData.get().demon().setHalfBlood(halfIndex < 0 ? null : com.example.defyingtheheavens.Bloodline.byIndex(halfIndex));
+				ClientCultivationData.get().demon().setBloodRealm(bloodRealm);
+				ClientCultivationData.get().demon().setPurity(purity);
 				ClientCultivationData.get().demon().set(demonRank, demonCultivation);
 				ClientCultivationData.get().demon().setCultivating(demonDrawn);
 				ClientCultivationData.get().demon().setBloodline(blood);
@@ -265,10 +271,11 @@ public final class ClientPacketHandlers {
 				int radius = buf.readVarInt();
 				int rank = buf.readInt();
 				UUID owner = buf.readBoolean() ? buf.readUUID() : null;
+				UUID sect = buf.readBoolean() ? buf.readUUID() : null;
 				int trustedCount = buf.readVarInt();
 				List<UUID> trusted = new ArrayList<>(trustedCount);
 				for (int t = 0; t < trustedCount; t++) trusted.add(buf.readUUID());
-				formations.add(Formation.view(id, kind, center, radius, rank, owner, trusted));
+				formations.add(Formation.view(id, kind, center, radius, rank, owner, sect, trusted));
 			}
 			client.execute(() -> ClientFormations.update(formations));
 		});

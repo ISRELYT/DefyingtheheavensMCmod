@@ -358,6 +358,37 @@ public final class ModLang {
 	public static final String CORE_ELEMENT = k("demon_core.element");
 	public static final String CORE_FROM = k("demon_core.from");
 	public static final String CORE_USE = k("demon_core.use");
+	// A demon race's blood (DemonBloodItem, DemonBlood): "Core Formation Tiger Blood", what it does, why a drink won't take, what it did
+	public static final String BLOOD_NAME = k("demon_blood.name");
+	public static final String BLOOD_UNKNOWN = k("demon_blood.unknown");
+	public static final String BLOOD_USE = k("demon_blood.use");
+	public static final String BLOOD_TURN_TIP = k("demon_blood.turn_tip");
+	public static final String MSG_BLOOD_UNKNOWN = k("message.blood.unknown");
+	public static final String MSG_BLOOD_ELSEWHERE = k("message.blood.elsewhere");
+	public static final String MSG_BLOOD_DEAD = k("message.blood.dead");
+	public static final String MSG_BLOOD_MORTAL = k("message.blood.mortal");
+	public static final String MSG_BLOOD_OTHER = k("message.blood.other");
+	public static final String MSG_BLOOD_HELD = k("message.blood.held");
+	public static final String MSG_BLOOD_WARN = k("message.blood.warn");
+	public static final String MSG_BLOOD_CORE = k("message.blood.core");
+	public static final String MSG_BLOOD_AWAKENS = k("message.blood.awakens");
+	public static final String MSG_BLOOD_PURITY = k("message.blood.purity");
+	public static final String MSG_BLOOD_TURNED = k("message.blood.turned");
+	public static final String JOURNAL_HALF_BLOOD = k("journal.half_blood");
+	public static final String JOURNAL_HALF_BLOOD_TEXT = k("journal.half_blood.text");
+	public static final String JOURNAL_TURNED = k("journal.turned");
+	public static final String JOURNAL_TURNED_TEXT = k("journal.turned.text");
+	/** The Cultivation tab: a half-blood's purity; the Demon Path held at a realm's gate for want of blood. */
+	public static final String HALF_BLOOD_LINE = k("half_blood.line");
+	public static final String DEMON_HELD_BY_BLOOD = k("demon_held_by_blood");
+	public static final String CMD_BLOODLINE_HALF = k("command.bloodline_half");
+	// A sect's guest pass (SectPassItem): "Guest Pass of the Azure Cloud Sect", what it does, how long it is good for, taken back
+	public static final String PASS_NAME = k("sect_pass.name");
+	public static final String PASS_BLANK = k("sect_pass.blank");
+	public static final String PASS_USE = k("sect_pass.use");
+	public static final String PASS_LEFT = k("sect_pass.left");
+	public static final String PASS_LAPSED = k("sect_pass.lapsed");
+	public static final String MSG_PASS_REVOKED = k("message.sect_pass.revoked");
 	// The menu's Journal tab (see Journal)
 	public static final String TAB_JOURNAL = k("tab.journal");
 	public static final String JOURNAL_EMPTY = k("journal.empty");

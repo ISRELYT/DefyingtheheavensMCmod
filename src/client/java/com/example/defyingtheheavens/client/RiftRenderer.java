@@ -26,7 +26,8 @@ import org.joml.Matrix4f;
  *       drifting away tumbling, some of them pale glass, some of them pieces of the void itself;</li>
  * </ul>
  * opening as it forms (a slit that widens, its cracks running out after it: {@link #OPENS}) and closing as it goes (SpellConstruct#FADE).
- * A {@code TEAR} stands in the air facing whoever looks at it (upright, or lying across their sight: its yaw turns it on their screen); an
+ * A {@code TEAR} stands in the air facing whoever looks at it (upright, or lying across their sight: its yaw turns it on their screen), or,
+ * pitched 90, lies flat in the sky open below, its shards falling out of it; an
  * {@code ABYSS} lies open in the ground, its shards rising out of it; a
  * {@code LINE} is cut from where it stands along its facing, running out as fast as the stroke that cut it ({@link #CUT_RUNS}), and turns
  * about its length to face whoever looks; {@code SHATTER} is space shattered round a point like a pane struck: cracks out from a hole of
@@ -58,6 +59,14 @@ final class RiftRenderer {
 		try {
 			switch (rift.kind().form) {
 				case TEAR -> {
+					if (rift.getXRot() >= 45) {
+						// Lying flat in the sky, open below, its length along its facing (pitch 90: what pours out of it falls from its
+						// underside; the user's ask, 2026-10-24, for Weak Water's); its shards fall out of it (its own z is down).
+						pose.mulPose(Axis.YP.rotationDegrees(-rift.getYRot()));
+						pose.mulPose(Axis.XP.rotationDegrees(90));
+						tear(buffers, pose, seed, length / 2, length * 0.5f, open, time, colours, 1);
+						break;
+					}
 					// Faces whoever looks at it, upright on their screen, or turned on it by its yaw (90: a slash lying across the sky).
 					pose.mulPose(camera.rotation());
 					if (rift.getYRot() != 0) pose.mulPose(Axis.ZP.rotationDegrees(rift.getYRot()));
@@ -195,7 +204,8 @@ final class RiftRenderer {
 
 	/**
 	 * A tear {@code half} long each way from its heart and {@code wide} across at its widest, opened {@code open} of the way, at {@code time}:
-	 * {@code lift} which way its shards rise out of its plane (0: they drift in it; -1: along its own -z, up out of an abyss lying flat).
+	 * {@code lift} which way its shards rise out of its plane (0: they drift in it; -1: along its own -z, up out of an abyss lying flat; 1: along
+	 * its own z, down out of a tear lying flat in the sky).
 	 */
 	private static void tear(MultiBufferSource buffers, PoseStack pose, long seed, float half, float wide, float open, float time, Palette colours, int lift) {
 		Matrix4f m = pose.last().pose();
@@ -347,7 +357,7 @@ final class RiftRenderer {
 
 	/**
 	 * Shards of space breaking off a tear's rim (or {@code xs, ys}, any outline) and drifting off, tumbling and fading, one after another:
-	 * pale glass, or pieces of the void itself; out of its plane along its own -z if {@code lift} (an abyss's, rising up out of it).
+	 * pale glass, or pieces of the void itself; out of its plane along its own z times {@code lift} if it has one (an abyss's -1, rising up out of it; a sky's tear's 1, falling out of it).
 	 */
 	private static void shards(MultiBufferSource buffers, long seed, PoseStack pose, float[] xs, float[] ys, int n, float halfWidth, float half, float open, float time,
 			Palette colours, int lift) {

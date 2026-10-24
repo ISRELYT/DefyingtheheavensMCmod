@@ -24,6 +24,13 @@ public final class ModGameRules {
 	public static final GameRules.Key<GameRules.BooleanValue> DEMON_BEASTS_SPAWN =
 			GameRuleRegistry.register("demonBeastsSpawn", GameRules.Category.SPAWNING, GameRuleFactory.createBooleanRule(true));
 
+	/**
+	 * A player's spells wait out their cooldowns (Spells#cast). Off (the user's ask, 2026-10-24: "remove spell cooldowns for now
+	 * completely"), a player casts again at once: the cooldown still runs on its record, unshown and unheeded. Cultivators keep theirs.
+	 */
+	public static final GameRules.Key<GameRules.BooleanValue> SPELL_COOLDOWNS =
+			GameRuleRegistry.register("spellCooldowns", GameRules.Category.PLAYER, GameRuleFactory.createBooleanRule(false));
+
 	/** Touching this class registers the rules. */
 	public static void register() {}
 

@@ -17,8 +17,8 @@ import java.util.Set;
  * The mod's own creative tab, "Defying The Heavens": everything it adds in one place, the way a cultivator would look for
  * it. First what cultivation is done with (mats, pedestal, altar, cauldron, formation core, brush, rings), then what is
  * taken (fruit, every pill at every grade, spirit dew), herbs and what they're grown from, spirit stones and jade, the
- * blocks of the world (ores, qi veins, spirit wood, leaves), the clothing (every style, grade and piece), and last the
- * spawn egg. An item the list doesn't name (one added later) still turns up, at the end, so none is ever missing. The items
+ * blocks of the world (ores, qi veins, spirit wood, leaves), the slips and manuals (every method's, technique's and spell's),
+ * a demon core of every realm, the clothing (every style, grade and piece), and last the spawn eggs. An item the list doesn't name (one added later) still turns up, at the end, so none is ever missing. The items
  * stay in vanilla's tabs too (ModItems#register, ModBlocks#register).
  */
 public final class ModCreativeTab {
@@ -84,9 +84,17 @@ public final class ModCreativeTab {
 			}
 			for (GhostMethod method : GhostMethod.values()) add(GhostJadeSlipItem.of(method));
 			for (HeavenMethod method : HeavenMethod.values()) add(JadeSlipItem.of(method));
-			// The techniques' manuals, and the blank one a technique or spell is written out on
+			// The techniques' manuals, every spell's that can be written out (TechniqueManualItem#writable: all but both paths'), and
+			// the blank one a technique or spell is written out on
 			for (Technique technique : Technique.values()) add(TechniqueManualItem.of(technique));
+			for (Spell spell : Spell.values()) if (!spell.isDual()) add(TechniqueManualItem.of(spell));
 			add(ModItems.BLANK_MANUAL);
+			// Demon cores, one of each realm (formed at its Early stage)
+			for (Realm realm : Realm.values()) add(DemonCoreItem.of(PlayerCultivation.rank(realm, Stage.EARLY), null, null));
+			// Each demon race's blood, of every realm (DemonBloodItem)
+			for (Bloodline race : Bloodline.values()) {
+				if (race.isBeast()) for (Realm realm : Realm.values()) add(DemonBloodItem.of(race, realm));
+			}
 			// Clothing: each path's colours, every grade, crown to boots
 			for (ClothingStyle style : ClothingStyle.values()) {
 				for (ClothingTier tier : ClothingTier.values()) {

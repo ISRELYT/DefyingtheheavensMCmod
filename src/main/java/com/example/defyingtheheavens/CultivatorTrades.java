@@ -29,7 +29,8 @@ import java.util.Set;
  * <ul>
  *   <li><b>Its goods</b> come from its station and path: Outer Disciples (and commoners) sell seeds and young herbs, Inner
  *   Disciples rarer seeds and Qi Gathering Pills, Elders pills and old herbs, the Sect Master the best of both; rogues carry
- *   odd things from far away. The stock is the same all day (it changes with the day), each line selling only so many.</li>
+ *   odd things from far away. The stock is the same all day (it changes with the day), each line selling only so many. One of a
+ *   sect's (or a clan's) people sells a guest pass of it first (SectPassItem), one a day, to one it isn't resentful toward.</li>
  *   <li><b>Regard</b> opens better offers (one more at Polite, Courteous, Warm and Trusted) and lowers prices, from
  *   x{@code 1.3} when Resentful to x{@code 0.75} when Sworn. Those not yet open are shown all the same, crossed out, the
  *   regard they want written on them ({@link #locked}).</li>
@@ -134,6 +135,10 @@ public final class CultivatorTrades {
 	/** What one of {@code npc}'s station and path has to sell today, the regard-gated lines last. */
 	static List<Goods> goodsFor(CultivatorNpc npc, RandomSource random) {
 		List<Goods> goods = new ArrayList<>();
+		// First, one of its sect's people (a clan's too): a guest pass of it, good a day, to one it isn't resentful toward (SectPassItem: the
+		// user's ask, 2026-10-24, a way in for one too strong to be let in as a guest).
+		Sect own = npc.getSectId() == null || npc.getServer() == null ? null : SectManager.get(npc.getServer(), npc.getSectId());
+		if (own != null && !own.extinct) goods.add(new Goods(SectPassItem.of(own, npc.level().getGameTime() + SectPassItem.LASTS), SectPassItem.PRICE, 1, 0));
 		if (npc.isMortal()) {
 			goods.add(new Goods(new ItemStack(Items.BREAD, 4), 1, 8, 0));
 			goods.add(new Goods(new ItemStack(pick(random, ModItems.GINSENG_SEEDS, ModItems.LINGZHI_SPORES, ModItems.HUANGJING_SEEDS)), 3, 4, 0));

@@ -28,6 +28,10 @@ import java.util.UUID;
  *   <li><b>Dragon:</b> Qi Flight a realm sooner (PlayerCultivation#canFlyOnQi); {@link #DRAGON_HEALTH} the health; Dragon's Might on
  *       what stands far below it; and it cultivates the Demon Path the slowest (DemonPath#racePace).</li>
  * </ul>
+ * A half-blood (DemonPath#isHalfBlood: a human with a race's blood in it, the user's ask, 2026-10-24) has them at half strength
+ * ({@link #strength}): the blows ×1.075, the venom, roar and Illusion half as long (the roar milder), Shed Skin to 37.5%, Charm 5, a
+ * dragon's health ×1.1 and its might half as far; sight in the dark and breath under water whole (they can't be halved), but not a
+ * lizard's swift swimming nor a dragon's early flight.
  */
 public final class RaceGifts {
 	public static final float TIGER_HARM = 1.15f;
@@ -55,8 +59,14 @@ public final class RaceGifts {
 	/** Those unseen by their Illusion now, and until when: a blow of theirs breaks it. */
 	private static final Map<UUID, Long> ILLUSION_UNTIL = new HashMap<>();
 
+	/** The race whose gifts {@code player} has: its own, or a half-blood's (DemonPath#race). */
 	private static Bloodline race(ServerPlayer player) {
-		return DemonPath.bloodline(CultivationManager.get(player));
+		return DemonPath.race(CultivationManager.get(player));
+	}
+
+	/** How strong they are in it: a demon's whole, a half-blood's half (DemonPath#giftStrength). */
+	private static double strength(ServerPlayer player) {
+		return DemonPath.giftStrength(CultivationManager.get(player));
 	}
 
 	/** {@code c}'s rank for the gifts that weigh it: the highest of its paths (-1 none). */
@@ -110,7 +120,8 @@ public final class RaceGifts {
 				case LIZARD -> {
 					if (player.isInWaterOrBubble()) {
 						player.addEffect(new MobEffectInstance(MobEffects.WATER_BREATHING, 60, 0, true, false, false));
-						player.addEffect(new MobEffectInstance(MobEffects.DOLPHINS_GRACE, 60, 0, true, false, false));
+						// The swift swimming a whole lizard's: a half-blood only breathes there.
+						if (strength(player) >= 1) player.addEffect(new MobEffectInstance(MobEffects.DOLPHINS_GRACE, 60, 0, true, false, false));
 					}
 				}
 				case DRAGON -> dragonsMight(player);
@@ -132,8 +143,9 @@ public final class RaceGifts {
 		if (realm < 0) return;
 		int stages = Stage.values().length;
 		int dragonRealm = realm / stages;
-		for (LivingEntity other : dragon.serverLevel().getEntitiesOfClass(LivingEntity.class, dragon.getBoundingBox().inflate(MIGHT_RADIUS),
-				e -> reaches(dragon, e) && e.distanceToSqr(dragon) <= MIGHT_RADIUS * MIGHT_RADIUS)) {
+		double radius = MIGHT_RADIUS * strength(dragon); // a half-blood's, half as far
+		for (LivingEntity other : dragon.serverLevel().getEntitiesOfClass(LivingEntity.class, dragon.getBoundingBox().inflate(radius),
+				e -> reaches(dragon, e) && e.distanceToSqr(dragon) <= radius * radius)) {
 			int otherRank = rankOf(other);
 			int otherRealm = otherRank < 0 ? -1 : otherRank / stages;
 			if (dragonRealm - otherRealm < MIGHT_REALMS_BELOW) continue;
@@ -149,7 +161,7 @@ public final class RaceGifts {
 	 */
 	public static float outgoing(ServerPlayer caster, DamageSource source, float amount) {
 		if (race(caster) != Bloodline.TIGER || source.getDirectEntity() != caster || !source.is(DamageTypes.PLAYER_ATTACK) || HeavenSpells.isQi(source)) return amount;
-		return amount * TIGER_HARM;
+		return (float) (amount * (1 + (TIGER_HARM - 1) * strength(caster)));
 	}
 
 	/** {@code attacker}'s own blow lands on {@code target}: a lizard's venom (stronger from Core Formation, again from Heavenly Being); a fox's Illusion broken. */
@@ -158,7 +170,7 @@ public final class RaceGifts {
 		if (race == Bloodline.LIZARD) {
 			int realm = Math.max(0, rank(CultivationManager.get(attacker))) / Stage.values().length;
 			int amplifier = realm >= Realm.HEAVENLY_BEING.ordinal() ? 2 : realm >= Realm.CORE_FORMATION.ordinal() ? 1 : 0;
-			target.addEffect(new MobEffectInstance(MobEffects.POISON, VENOM_TICKS, amplifier), attacker);
+			target.addEffect(new MobEffectInstance(MobEffects.POISON, (int) Math.round(VENOM_TICKS * strength(attacker)), amplifier), attacker);
 		}
 		breakIllusion(attacker);
 	}
@@ -180,7 +192,7 @@ public final class RaceGifts {
 		long now = player.serverLevel().getGameTime();
 		if (SHED_READY.getOrDefault(player.getUUID(), 0L) > now) return;
 		SHED_READY.put(player.getUUID(), now + SHED_COOLDOWN);
-		player.setHealth(player.getMaxHealth() * SHED_TO);
+		player.setHealth((float) (player.getMaxHealth() * (SHED_BELOW + (SHED_TO - SHED_BELOW) * strength(player))));
 		ServerLevel level = player.serverLevel();
 		level.sendParticles(ParticleTypes.ITEM_SLIME, player.getX(), player.getY() + 1, player.getZ(), 30, 0.4, 0.6, 0.4, 0.1);
 		level.playSound(null, player.blockPosition(), SoundEvents.ARMOR_EQUIP_TURTLE, SoundSource.PLAYERS, 1.0f, 0.7f);
@@ -206,12 +218,14 @@ public final class RaceGifts {
 		}
 		ROAR_READY.put(tiger.getUUID(), now + ROAR_COOLDOWN);
 		int rank = rank(c);
+		double strength = strength(tiger);
+		int ticks = (int) Math.round(ROAR_TICKS * strength), amplifier = strength >= 1 ? 1 : 0; // a half-blood's, half as long and milder
 		int cowed = 0;
 		for (LivingEntity other : tiger.serverLevel().getEntitiesOfClass(LivingEntity.class, tiger.getBoundingBox().inflate(ROAR_RADIUS),
 				e -> reaches(tiger, e) && e.distanceToSqr(tiger) <= ROAR_RADIUS * ROAR_RADIUS)) {
 			if (rank - rankOf(other) < ROAR_STAGES_BELOW) continue;
-			other.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, ROAR_TICKS, 1), tiger);
-			other.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, ROAR_TICKS, 1), tiger);
+			other.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, ticks, amplifier), tiger);
+			other.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, ticks, amplifier), tiger);
 			cowed++;
 		}
 		ServerLevel level = tiger.serverLevel();
@@ -237,13 +251,14 @@ public final class RaceGifts {
 			fox.displayClientMessage(Component.translatable(ModLang.MSG_GIFT_NO_QI, Math.round(cost)), true);
 			return;
 		}
+		int unseen = (int) Math.round(ILLUSION_TICKS * strength(fox)); // a half-blood's, half as long
 		ILLUSION_READY.put(fox.getUUID(), now + ILLUSION_COOLDOWN);
-		ILLUSION_UNTIL.put(fox.getUUID(), now + ILLUSION_TICKS);
-		fox.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, ILLUSION_TICKS, 0, false, false, true));
+		ILLUSION_UNTIL.put(fox.getUUID(), now + unseen);
+		fox.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, unseen, 0, false, false, true));
 		ServerLevel level = fox.serverLevel();
 		level.sendParticles(ParticleTypes.WITCH, fox.getX(), fox.getY() + 1, fox.getZ(), 40, 0.4, 0.8, 0.4, 0.05);
 		level.playSound(null, fox.blockPosition(), SoundEvents.ILLUSIONER_MIRROR_MOVE, SoundSource.PLAYERS, 1.0f, 1.2f);
-		fox.displayClientMessage(Component.translatable(ModLang.MSG_ILLUSION, ILLUSION_TICKS / 20), true);
+		fox.displayClientMessage(Component.translatable(ModLang.MSG_ILLUSION, unseen / 20), true);
 		CultivationManager.sync(fox);
 	}
 
@@ -251,17 +266,17 @@ public final class RaceGifts {
 
 	/** What NPCs think the more of {@code c} for its blood: a fox's Charm. */
 	public static int regardShift(PlayerCultivation c) {
-		return DemonPath.bloodline(c) == Bloodline.FOX ? CHARM : 0;
+		return DemonPath.race(c) == Bloodline.FOX ? (int) Math.round(CHARM * DemonPath.giftStrength(c)) : 0;
 	}
 
 	/** What {@code c}'s health is multiplied by for its blood: a dragon's the more. */
 	public static double healthFactor(PlayerCultivation c) {
-		return DemonPath.bloodline(c) == Bloodline.DRAGON ? DRAGON_HEALTH : 1.0;
+		return DemonPath.race(c) == Bloodline.DRAGON ? 1 + (DRAGON_HEALTH - 1) * DemonPath.giftStrength(c) : 1.0;
 	}
 
 	/** Whether {@code c} has a race's gift-ability of {@code race}, from Core Formation on any path. */
 	public static boolean hasAct(PlayerCultivation c, Bloodline race) {
-		return DemonPath.bloodline(c) == race && TwoPaths.awakens(c, Realm.CORE_FORMATION, true) != null;
+		return DemonPath.race(c) == race && TwoPaths.awakens(c, Realm.CORE_FORMATION, true) != null;
 	}
 
 	/**

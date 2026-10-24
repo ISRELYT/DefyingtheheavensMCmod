@@ -224,8 +224,16 @@ public class FormationCoreBlockEntity extends BlockEntity {
 
 	/** A barrier block was broken: mending the breach strains the battery, and an empty battery shatters the barrier. */
 	public void onBreach() {
+		batter(BREACH_COST);
+	}
+
+	/**
+	 * The barrier struck by one strong enough to break it (Formations#batter): its stored qi, its health, takes {@code cost}, and empty, the
+	 * whole barrier shatters ({@link #SHATTER_COOLDOWN} before it can rise again).
+	 */
+	public void batter(double cost) {
 		if (!(level instanceof ServerLevel server)) return;
-		battery = Math.max(0, battery - BREACH_COST);
+		battery = Math.max(0, battery - cost);
 		setChanged();
 		if (battery <= 0) collapse(server, true);
 	}

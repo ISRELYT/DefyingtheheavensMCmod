@@ -574,12 +574,16 @@ public final class HeavenSpells {
 		if (!carvesLand(p) || !level.isInWorldBounds(pos)) return false; // a cultivator's spells take nothing from the land
 		BlockState state = level.getBlockState(pos);
 		if (state.isAir()) return false;
+		// A barrier's cell: taken as the land is by one strong enough to break it, the barrier the worse for it (Formations#yields: since
+		// 2026-10-24, the user's ask; no spell touched a barrier before, however strong).
+		if (state.getBlock() instanceof SectBarrierBlock) return Formations.yields(level, pos, p);
 		boolean fluid = !state.getFluidState().isEmpty() && state.canBeReplaced();
 		if (fluid && !utter) return false;
 		// A fluid's own block is as hard as can be (water and lava 100), though nothing breaks it by hand: it is let go by that.
 		float hardness = fluid ? 0 : state.getDestroySpeed(level, pos);
-		if (hardness < 0 || hardness >= 50 || state.hasBlockEntity() && !utter || state.getBlock() instanceof SectBarrierBlock) return false;
-		if (isTemporary(level, pos) || Formations.shelters(level, pos) || guarded(level, pos, p)) return false;
+		if (hardness < 0 || hardness >= 50 || state.hasBlockEntity() && !utter) return false;
+		// What a barrier shelters only from one too weak to break it (Formations#sheltersFrom).
+		if (isTemporary(level, pos) || Formations.sheltersFrom(level, pos, p) || guarded(level, pos, p)) return false;
 		if (!(p instanceof ServerPlayer player)) return true;
 		// Nor what the caster couldn't dig by hand: in Adventure mode, or under the server's spawn protection.
 		if (!player.mayBuild() || !level.mayInteract(player, pos) || Formations.protectsGroundQuietly(player, pos)) return false;
@@ -674,12 +678,23 @@ public final class HeavenSpells {
 
 	/**
 	 * A mark for a spell that seeks beings out where its caster looks (Heaven-Piercing Bamboo, Myriad Vine Binding, Thorn Spear
-	 * Forest): any foe or enemy (what {@link #friendly} isn't), and any person, a player or a cultivator, that the caster's spells
-	 * don't spare (PvP off, a sect fellow: {@link #spared}). Beasts and village folk minding their own business are left be.
+	 * Forest), or picks out foes in its reach (a Sword Prison, a whirlpool, a void tree's roots, a lock on space...: before 2026-10-24
+	 * those took only what {@link #friendly} isn't, so a rogue cultivator minding its own business took nothing: the user's report):
+	 * any foe or enemy, and any person, a player or a cultivator, that the caster's spells don't spare (PvP off, a sect fellow:
+	 * {@link #spared}). Beasts and village folk minding their own business are left be.
 	 */
 	public static boolean mark(LivingEntity p, LivingEntity e) {
 		if (spared(p, e)) return false;
 		return !(p instanceof ServerPlayer) || e instanceof Player || e instanceof CultivatorNpc || !friendly(p, e);
+	}
+
+	/**
+	 * One a caster's healing and wards reach: {@link #friendly}, but no cultivator its spells would strike ({@link #mark}: since
+	 * 2026-10-24 the spells that pick out foes take any cultivator not spared, so a rogue held in a Sword Prison isn't mended by the
+	 * same caster's Void Withering). Players stay as friendly has them.
+	 */
+	public static boolean blessed(LivingEntity p, LivingEntity e) {
+		return friendly(p, e) && !(e instanceof CultivatorNpc && mark(p, e));
 	}
 
 	/** A foe of the caster's: a monster, or anything set on it (a mob or a cultivator with it as its target); a cultivator's, whom it fights. */

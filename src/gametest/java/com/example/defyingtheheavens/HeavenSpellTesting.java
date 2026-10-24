@@ -140,11 +140,35 @@ final class HeavenSpellTesting {
 	 * stand on (the same spot, batch after batch): a later floor was cut, and a fleeing cultivator's husk carried off (one run in three).
 	 */
 	static void succeedOnceHealed(GameTestHelper helper, ServerPlayer player, List<LivingEntity> spawned, Floor floor) {
+		succeedOnceHealed(helper, player, spawned, floor, () -> {});
+	}
+
+	/** As {@link #succeedOnceHealed(GameTestHelper, ServerPlayer, List, Floor)}, {@code after} run before the floor goes (a thickening's taking up). */
+	static void succeedOnceHealed(GameTestHelper helper, ServerPlayer player, List<LivingEntity> spawned, Floor floor, Runnable after) {
 		helper.succeedWhen(() -> {
 			helper.assertTrue(Devastation.pending() == 0, "...its spells' wounds still being cut");
 			drain(floor.level(), floor.centre(), floor.radius() + 36);
+			after.run();
 			cleanUp(player, spawned, floor);
 		});
+	}
+
+	/**
+	 * The floor made {@code depth} deeper {@code radius} round {@code x, z}: for a spell whose wound would cut through the one block of it and
+	 * drop what stands there out of its reach (the Avatar's palm crater did, 2026-10-24). @return what takes the thickening up again
+	 */
+	static Runnable thicken(Floor floor, double x, double z, int radius, int depth) {
+		BlockPos top = BlockPos.containing(x, floor.centre().getY() - 1, z);
+		java.util.function.Consumer<net.minecraft.world.level.block.state.BlockState> fill = state -> {
+			for (int dx = -radius; dx <= radius; dx++) {
+				for (int dz = -radius; dz <= radius; dz++) {
+					if (dx * dx + dz * dz > radius * radius) continue;
+					for (int dy = 1; dy <= depth; dy++) floor.level().setBlock(top.offset(dx, -dy, dz), state, 2);
+				}
+			}
+		};
+		fill.accept(Blocks.STONE.defaultBlockState());
+		return () -> fill.accept(Blocks.AIR.defaultBlockState());
 	}
 
 	/**

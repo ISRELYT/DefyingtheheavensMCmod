@@ -549,7 +549,7 @@ public final class EarthSpells {
 		@Override
 		protected boolean run(long age, long now) {
 			if (age % 10 == 5) {
-				for (LivingEntity e : HeavenSpells.aroundPoint(level, field.position(), QUAKE_RADIUS, e -> !HeavenSpells.friendly(caster, e) && !HeavenSpells.spared(caster, e))) {
+				for (LivingEntity e : HeavenSpells.aroundPoint(level, field.position(), QUAKE_RADIUS, e -> HeavenSpells.mark(caster, e))) {
 					if (!e.onGround()) continue;
 					HeavenSpells.strikeAgain(caster, e, QUAKE_DAMAGE / 2, spell);
 					e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 30, 2));
@@ -643,7 +643,7 @@ public final class EarthSpells {
 		@Override
 		protected boolean run(long age, long now) {
 			if (age % 5 == 0) {
-				for (LivingEntity e : HeavenSpells.aroundPoint(level, field.position(), SEAL_RADIUS, e -> !HeavenSpells.friendly(caster, e) && !HeavenSpells.spared(caster, e))) {
+				for (LivingEntity e : HeavenSpells.aroundPoint(level, field.position(), SEAL_RADIUS, e -> HeavenSpells.mark(caster, e))) {
 					if (pressed.add(e)) SpellAuras.put(e, SpellAura.PRESSED, (int) (end - level.getGameTime()));
 				}
 			}
@@ -1065,7 +1065,7 @@ public final class EarthSpells {
 
 		/** Whether {@code e} is in its grip now: within it, not its caster's own. */
 		boolean grips(LivingEntity e) {
-			return locking() && e.level() == level && e.position().distanceTo(at) <= LOCK_RADIUS && !HeavenSpells.friendly(caster, e) && !HeavenSpells.spared(caster, e);
+			return locking() && e.level() == level && e.position().distanceTo(at) <= LOCK_RADIUS && HeavenSpells.mark(caster, e);
 		}
 
 		@Override

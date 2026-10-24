@@ -41,16 +41,20 @@ import java.util.Optional;
  *       ledges, the disciples' mats), rock spires and a pool before it.</li>
  * </ul>
  * Which race a den is for, the land decides ({@link #raceOf}): each race's own biomes (tags {@code clan/<race>}); in the Upper Realm
- * any race, a dragon's most often. In the Overworld about half as many as sects ({@code structure_set/demon_clans}), kept clear of
- * villages and of wherever a sect may stand ({@link #nearSectSite}). The Upper Realm's sects stand one to a cell that tiles the whole
- * realm (SectStructure#ISLAND_SEARCH), so there a den takes a cell of their own instead ({@link #clanCell}: a quarter of them),
- * where no sect is looked for.
+ * any race, a dragon's most often. In the Overworld some three in five as many as sects ({@code structure_set/demon_clans}, 28 chunks
+ * apart), kept clear of villages and of wherever a sect may stand ({@link #nearSectSite}). The Upper Realm's sects stand one to a cell
+ * that tiles the whole realm (SectStructure#ISLAND_SEARCH), so there a den takes a cell of their own instead ({@link #clanCell}: 45 in
+ * a hundred of them), where no sect is looked for.
  */
 public class DenStructure extends SectStructure {
-	/** How near (chunks, either way) a sect's possible start keeps a den off: two grounds' half-widths. */
-	private static final int SECT_CLEARANCE = 9;
-	/** The Upper Realm's cells (16 chunks, its sects' structure set's spacing) a den takes, of each. */
-	private static final double CLAN_CELLS = 0.25;
+	/**
+	 * How near (chunks, either way) a sect's possible start keeps a den off: a little more than two grounds' half-widths. (9 before
+	 * 2026-10-24, with the dens' structure set 40 chunks apart: the clans came to a fifth as many as the sects, not half: the user's
+	 * report, "demon clans are super rare". Now 7, and 28 apart: near three in five.)
+	 */
+	private static final int SECT_CLEARANCE = 7;
+	/** The Upper Realm's cells (16 chunks, its sects' structure set's spacing) a den takes, of each (a quarter, a third as many as sects, before 2026-10-24). */
+	private static final double CLAN_CELLS = 0.45;
 	private static final long CELL_SALT = 0x5A7E_C1A2_D0E5L;
 	/** A den's members, by size (SMALL, MEDIUM: SectStructure's): its share of the sizes rolled. */
 	private static final float SMALL_SHARE = 0.6f;

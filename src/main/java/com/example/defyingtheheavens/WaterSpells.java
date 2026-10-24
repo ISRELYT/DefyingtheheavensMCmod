@@ -90,22 +90,24 @@ public final class WaterSpells {
 	public static final int TORTOISE_TICKS = 12 * 20, TORTOISE_STRIKE_EVERY = 20, TORTOISE_LUNGE = 6, TORTOISE_RISEN = 30;
 	/**
 	 * Hundred Rivers Converge: where (up to {@link #RIVERS_RANGE}), whom it drags in (within {@link #RIVERS_RADIUS}), its harm a second, how
-	 * long it turns and its burst (ticks); the basin it leaves (23 round, 5 deep, a lake in it: by its realm, Devastation#sized).
+	 * long it turns and its burst (ticks); the flood its rivers pour in over the whole of its reach as it turns, a basin of it as wide (8
+	 * deep at its heart: by its realm, Devastation#sized), poured in from its rim over {@link #RIVERS_POUR} ticks.
 	 */
-	public static final double RIVERS_RANGE = HeavenSpells.span(Realm.DAO_INTEGRATION, 64), RIVERS_RADIUS = HeavenSpells.span(Realm.DAO_INTEGRATION, 24), RIVERS_BASIN = Devastation.sized(Realm.DAO_INTEGRATION, 18),
-			RIVERS_BASIN_DEPTH = Devastation.sized(Realm.DAO_INTEGRATION, 4);
+	public static final double RIVERS_RANGE = HeavenSpells.span(Realm.DAO_INTEGRATION, 64), RIVERS_RADIUS = HeavenSpells.span(Realm.DAO_INTEGRATION, 24),
+			RIVERS_BASIN = RIVERS_RADIUS, RIVERS_BASIN_DEPTH = Devastation.sized(Realm.DAO_INTEGRATION, 6);
 	public static final float RIVERS_DAMAGE = 90;
-	public static final int RIVERS_TICKS = 5 * 20, RIVERS_BURST = 16;
+	public static final int RIVERS_TICKS = 5 * 20, RIVERS_BURST = 16, RIVERS_POUR = 60;
 	/**
 	 * Weak Water from the Void: where (up to {@link #WEAK_RANGE}, 118 by its realm), how high its rift opens (40: its fall's model is that long,
 	 * SpellConstruct#sizedFor) and how long the rift is, how far round where it falls it reaches ({@link #WEAK_RADIUS}, 26), its harm a second;
-	 * the basin it leaves (18 round, 6 deep, a lake in it: by its realm); how long the rift takes to open, and how long it pours (ticks).
+	 * the flood it spreads as it pours over the whole of that reach, the land sinking under it into a basin as wide (7 deep at its heart: by
+	 * its realm), out from where it falls over {@link #WEAK_SPREAD} ticks; how long the rift takes to open, and how long it pours (ticks).
 	 */
 	public static final double WEAK_RANGE = HeavenSpells.span(Realm.VOID_SHATTERING, 64), WEAK_HIGH = HeavenSpells.span(Realm.VOID_SHATTERING, 22),
 			WEAK_RIFT = HeavenSpells.span(Realm.VOID_SHATTERING, 15), WEAK_RADIUS = HeavenSpells.span(Realm.VOID_SHATTERING, 14),
-			WEAK_BASIN = Devastation.sized(Realm.VOID_SHATTERING, 10), WEAK_BASIN_DEPTH = Devastation.sized(Realm.VOID_SHATTERING, 3);
+			WEAK_BASIN = WEAK_RADIUS, WEAK_BASIN_DEPTH = Devastation.sized(Realm.VOID_SHATTERING, 4);
 	public static final float WEAK_DAMAGE = 160;
-	public static final int WEAK_OPENS = 14, WEAK_TICKS = 6 * 20;
+	public static final int WEAK_OPENS = 14, WEAK_TICKS = 6 * 20, WEAK_SPREAD = 50;
 	/** The Weak Water's pale blue: its rift glows so. */
 	public static final int WEAK_PALE = 0xA6D6FF;
 	/**
@@ -833,7 +835,7 @@ public final class WaterSpells {
 		@Override
 		protected boolean run(long age, long now) {
 			if (age % 5 == 0) {
-				for (LivingEntity e : HeavenSpells.aroundPoint(level, at.subtract(0, 1, 0), SEA_RADIUS, e -> !HeavenSpells.friendly(caster, e) && !HeavenSpells.spared(caster, e))) {
+				for (LivingEntity e : HeavenSpells.aroundPoint(level, at.subtract(0, 1, 0), SEA_RADIUS, e -> HeavenSpells.mark(caster, e))) {
 					if (held.add(e)) HeavenSpells.linger(new WoodSpells.Bound(caster, e, e.position(), (int) (end - level.getGameTime())));
 				}
 			}
@@ -895,14 +897,14 @@ public final class WaterSpells {
 			if (!casterHere()) return false;
 			// Its shell wards its caster and their own while they stay within it.
 			if (age % 10 == 0) {
-				for (LivingEntity e : HeavenSpells.around(caster, TORTOISE_RADIUS, e -> HeavenSpells.friendly(caster, e) || HeavenSpells.ally(caster, e))) {
+				for (LivingEntity e : HeavenSpells.around(caster, TORTOISE_RADIUS, e -> HeavenSpells.blessed(caster, e) || HeavenSpells.ally(caster, e))) {
 					SpellAuras.put(e, SpellAura.BLACK_TORTOISE, 15);
 				}
 			}
 			// Its serpent strikes the nearest foe within reach, once the tortoise has risen (struck as it rose, it was cut short in its rising).
 			if (striking == null && age >= TORTOISE_RISEN && age % TORTOISE_STRIKE_EVERY == TORTOISE_RISEN % TORTOISE_STRIKE_EVERY) {
 				LivingEntity foe = null;
-				for (LivingEntity e : HeavenSpells.around(caster, TORTOISE_REACH, e -> e != caster && !HeavenSpells.friendly(caster, e) && !HeavenSpells.spared(caster, e))) {
+				for (LivingEntity e : HeavenSpells.around(caster, TORTOISE_REACH, e -> e != caster && HeavenSpells.mark(caster, e))) {
 					if (foe == null || e.distanceToSqr(caster) < foe.distanceToSqr(caster)) foe = e;
 				}
 				if (foe != null) {
@@ -938,13 +940,17 @@ public final class WaterSpells {
 	/**
 	 * Hundred Rivers Converge: a hundred streams pour together into a great whirlpool (SpellConstruct HUNDRED_RIVERS) where its caster
 	 * looks, for {@link #RIVERS_TICKS}: every foe within {@link #RIVERS_RADIUS} is dragged round and into it and held, taking
-	 * {@link #RIVERS_DAMAGE} a second. When it bursts it flings them out, and leaves the ground crushed into a basin with a lake in it.
+	 * {@link #RIVERS_DAMAGE} a second. As it turns its rivers pour in from its rim, flooding the whole of its reach ({@link #RIVERS_POUR}
+	 * ticks: Devastation#flood, the land scoured into a basin full to the brim; the user's ask, 2026-10-24, the water out during the spell
+	 * over all it covers, not a lake at its heart after). When it bursts it flings them out, and the lake stays.
 	 */
 	public static final class Rivers extends HeavenSpells.Timed {
 		private final Spell spell;
 		private final Vec3 ground;
 		private final SpellConstruct vortex;
 		private final Set<LivingEntity> held = new HashSet<>();
+		/** How far in from its rim its rivers have poured (the flood's front, closing on its heart). */
+		private double poured = RIVERS_BASIN * 1.1;
 
 		Rivers(LivingEntity caster, Spell spell, Vec3 point) {
 			super(caster, RIVERS_TICKS + RIVERS_BURST);
@@ -958,9 +964,19 @@ public final class WaterSpells {
 
 		@Override
 		protected boolean run(long age, long now) {
+			// Its rivers pour in from its rim as it turns, flooding the whole of its reach, the land under it scoured into a basin.
+			if (age % 5 == 0 && poured > 0) {
+				double in = RIVERS_BASIN * Math.max(0, 1 - (age + 5) / (double) RIVERS_POUR);
+				Devastation.flood(caster, level, ground, RIVERS_BASIN, RIVERS_BASIN_DEPTH, in, poured);
+				poured = in;
+				for (int k = 0; k < 10; k++) { // the streams running in
+					double a = Math.PI * 2 * k / 10 + age * 0.05;
+					SpellFx.send(level, SpellFx.Kind.SPLASH, ground.add(Math.cos(a) * (in + 1.5), 0.5, Math.sin(a) * (in + 1.5)), Vec3.ZERO, 2.0f, 0, 160);
+				}
+			}
 			if (age < RIVERS_TICKS) {
 				// Dragged round and in, and held off the ground at its heart.
-				for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, RIVERS_RADIUS + 8, e -> !HeavenSpells.friendly(caster, e) && !HeavenSpells.spared(caster, e))) {
+				for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, RIVERS_RADIUS + 8, e -> HeavenSpells.mark(caster, e))) {
 					Vec3 rel = e.position().subtract(ground).multiply(1, 0, 1);
 					double dist = rel.length();
 					if (dist > RIVERS_RADIUS || e.getY() > ground.y + 16 || e.getY() < ground.y - 6) continue;
@@ -982,7 +998,7 @@ public final class WaterSpells {
 				return true;
 			}
 			if (age == RIVERS_TICKS) {
-				// It bursts: those it held flung out, the ground under it crushed into a basin, a lake left in it.
+				// It bursts: those it held flung out; the flood it poured in stays, a lake in its basin.
 				vortex.act("burst");
 				for (LivingEntity e : held) {
 					if (!HeavenSpells.present(e, level) || HeavenSpells.greatBeast(e)) continue;
@@ -991,7 +1007,6 @@ public final class WaterSpells {
 					HeavenSpells.move(e, out.scale(2.4).add(0, 1.2, 0));
 					HeavenSpells.safeFall(e, 80);
 				}
-				Devastation.crater(caster, level, ground, RIVERS_BASIN, RIVERS_BASIN_DEPTH, Devastation.Floor.LAKE);
 				SpellFx.send(level, SpellFx.Kind.SPLASH, ground, Vec3.ZERO, (float) RIVERS_RADIUS, 0, 192);
 				SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) RIVERS_RADIUS * 1.4f, 0, 192);
 				HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 3.0f, 0.6f);
@@ -1010,16 +1025,21 @@ public final class WaterSpells {
 
 	/**
 	 * Weak Water from the Void (弱水, the water that bears nothing up, not even a feather): space tears open {@link #WEAK_HIGH} over where its
-	 * caster looks (SpellConstruct VOID_RIFT, the Weak Water's pale blue) and the Weak Water pours out of it onto the land (WEAK_WATER_FALL, its
+	 * caster looks (SpellConstruct VOID_RIFT, the Weak Water's pale blue, lying flat across their sight, open below: the user's ask, 2026-10-24,
+	 * so the water falls out of it, not past an upright slit) and the Weak Water pours out of it onto the land (WEAK_WATER_FALL, its
 	 * own GeckoLib model) for {@link #WEAK_TICKS}: everything within {@link #WEAK_RADIUS} of where it falls sinks (nothing flies in it, the
-	 * dead neither: QiFlight#weighDown), is slowed, its fires put out, and takes {@link #WEAK_DAMAGE} a second; the land under it sinks into a
-	 * basin, and a lake is left in it.
+	 * dead neither: QiFlight#weighDown), is slowed, its fires put out, and takes {@link #WEAK_DAMAGE} a second. As it pours its flood runs out
+	 * from where it falls over the whole of that reach ({@link #WEAK_SPREAD} ticks), the land sinking under it into a basin full to the brim
+	 * (Devastation#flood: the user's ask, 2026-10-24, the water out during the spell over all it covers, not a lake at its heart after),
+	 * and the lake stays.
 	 */
 	public static final class WeakWater extends HeavenSpells.Timed {
 		private final Spell spell;
 		private final Vec3 ground, mouth;
 		private final SpellConstruct rift;
 		private SpellConstruct fall;
+		/** How far out from where it falls the flood has spread. */
+		private double flooded;
 
 		WeakWater(LivingEntity caster, Spell spell, Vec3 point) {
 			super(caster, WEAK_OPENS + WEAK_TICKS + SpellConstruct.FADE);
@@ -1027,7 +1047,8 @@ public final class WaterSpells {
 			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
 			this.ground = below != null ? below : point;
 			this.mouth = ground.add(0, WEAK_HIGH, 0);
-			this.rift = SpellConstruct.create(level, SpellConstruct.Kind.VOID_RIFT, mouth, 0, 0, (int) (end - start), caster).size((float) WEAK_RIFT).tint(WEAK_PALE).spawn();
+			this.rift = SpellConstruct.create(level, SpellConstruct.Kind.VOID_RIFT, mouth, caster.getYRot() + 90, 90, (int) (end - start), caster).size((float) WEAK_RIFT)
+					.tint(WEAK_PALE).spawn();
 			HeavenSpells.sound(level, mouth, SoundEvents.END_PORTAL_SPAWN, 3.0f, 0.7f);
 			HeavenSpells.sound(level, mouth, SoundEvents.CONDUIT_ACTIVATE, 3.0f, 0.5f);
 		}
@@ -1041,7 +1062,16 @@ public final class WaterSpells {
 				HeavenSpells.sound(level, ground, SoundEvents.GENERIC_SPLASH, 4.0f, 0.3f);
 				HeavenSpells.sound(level, mouth, SoundEvents.BUBBLE_COLUMN_WHIRLPOOL_AMBIENT, 4.0f, 0.4f);
 			}
-			if (pouring == 20) Devastation.crater(caster, level, ground, WEAK_BASIN, WEAK_BASIN_DEPTH, Devastation.Floor.LAKE); // the land sinking under it
+			// The flood spreads out from where it falls as it pours, the land sinking under it, till it covers the whole of its reach.
+			if (pouring % 5 == 0 && flooded < WEAK_BASIN) {
+				double out = WEAK_BASIN * Math.min(1, (pouring + 5) / (double) WEAK_SPREAD);
+				Devastation.flood(caster, level, ground, WEAK_BASIN, WEAK_BASIN_DEPTH, flooded, out);
+				flooded = out;
+				for (int k = 0; k < 8; k++) { // its front breaking as it runs out
+					double a = Math.PI * 2 * k / 8 + pouring * 0.3;
+					SpellFx.send(level, SpellFx.Kind.SPLASH, ground.add(Math.cos(a) * out, 0.5, Math.sin(a) * out), Vec3.ZERO, 2.5f, 0, 160);
+				}
+			}
 			if (pouring == WEAK_TICKS - 16) fall.act("dry");
 			if (pouring >= WEAK_TICKS) return true;
 			boolean harm = pouring % 20 == 10;

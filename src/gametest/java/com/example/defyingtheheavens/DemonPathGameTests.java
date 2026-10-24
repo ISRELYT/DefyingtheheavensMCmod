@@ -74,8 +74,10 @@ public class DemonPathGameTests implements FabricGameTest {
 			}
 			int gained = DemonPath.addCultivation(c, 1.0e9);
 			int gp = PlayerCultivation.rank(Realm.QI_REFINING, Stage.GRAND_PERFECTION);
-			helper.assertTrue(gained == 3 && DemonPath.rank(c) == gp && DemonPath.atBottleneck(c) && DemonPath.canBreakthrough(c),
-					"Its stages step on to Grand Perfection's bottleneck, and wait there for the heavens (" + DemonPath.rank(c) + ")");
+			helper.assertTrue(gained == 3 && DemonPath.rank(c) == gp && DemonPath.atBottleneck(c) && DemonPath.heldByBlood(c) && !DemonPath.canBreakthrough(c),
+					"Its stages step on to Grand Perfection's bottleneck, Foundation Building shut to it with its blood awake only to Qi Refining (" + DemonPath.rank(c) + ")");
+			c.demon().setBloodRealm(Realm.FOUNDATION_BUILDING.ordinal()); // as Foundation Building fox blood drunk (DemonBlood)
+			helper.assertTrue(DemonPath.canBreakthrough(c), "...its blood awake to it, it waits there for the heavens");
 			helper.assertTrue(DemonPath.breakthrough(c) && DemonPath.rank(c) == gp + 1 && c.demon().cultivation() == 0, "Its tribulation survived: Foundation Building");
 			DemonPath.fallOneStage(c);
 			helper.assertTrue(DemonPath.rank(c) == gp, "...and failed: a stage down again");
@@ -157,6 +159,7 @@ public class DemonPathGameTests implements FabricGameTest {
 			lizard.moveTo(helper.absoluteVec(new net.minecraft.world.phys.Vec3(1.5, 2, 1.5)));
 			DemonPath.addCultivation(c, 1.0e9);
 			c.demon().setCultivating(true);
+			c.demon().setBloodRealm(Realm.FOUNDATION_BUILDING.ordinal()); // its blood awake to the realm ahead (DemonBlood)
 			int gp = DemonPath.rank(c);
 			CultivationManager.tryBreakthrough(lizard);
 			helper.assertTrue(TribulationManager.isActive(lizard.getUUID()) && c.demon().inTribulation(), "The Breakthrough button brings the Demon Path's tribulation");

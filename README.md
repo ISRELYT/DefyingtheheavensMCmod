@@ -399,7 +399,26 @@ slips teach demons if they are studying heaven path."
   Meridians: one that rolled them as it joined (before its blood was chosen) is given another physique as its core opens them
   (the bug sweep of 2026-10-23: such a demon stayed a mortal with a core it could never cultivate; existing ones are mended as
   they next join). A life spent whole is born again with its core at once, and a body freed of a possessing soul gets the core
-  it was born to meanwhile. A human has no Demon Path until it receives a beast's bloodline (the awakening comes later).
+  it was born to meanwhile. A human has no Demon Path until it drinks a demon race's blood (below).
+- **Demon blood** (the user's ask, 2026-10-24: "blood lines should be a physical item like slips... treated as methods basically,
+  they just unlock your potential"): **Tiger, Lizard, Fox and Dragon Blood**, each of a realm ("Core Formation Fox Blood"), drunk
+  like a potion; the phial finer the higher its realm, its blood its race's hue. It drops from the race's demons (a clan's cultivator
+  one time in three, with its core; a demon player slain by another, with its core: blood of the realm its blood is awake to) and
+  from the wild beasts of its kin, as often as their cores (the bloodfang tiger's tiger blood, the ember fox's fox blood, the jade
+  viper's, jade-scaled python's and iron-jaw crocodile's lizard blood, the flood dragon's dragon blood); the creative tab has all 44.
+  - **A demon** drinks its own race's alone. Its blood is awake to Qi Refining from birth; at a realm's Grand Perfection its Demon
+    Path breaks through into the next realm only once it has drunk its race's blood of that realm or higher (as the heaven path
+    waits on a method of the realm ahead), the Cultivation tab saying so. Blood it already holds is refused, not wasted. A demon
+    from before blood has its blood awake as far as its Demon Path came.
+  - **A human** drinks it and a demon core forms: a **half-blood**, its Demon Path begun at Qi Refining Early and its blood's
+    element spells coming as it climbs. It still looks human (no tells: the user's word), lives a human's span and is a human to
+    every sect and clan, but has its race's gifts at **half strength** (below). Each drink makes its blood purer: 4% for blood below
+    the higher of its heaven and ghost paths' realms, 8% at it, 30% a realm above, 15% for blood it already holds. At 100%, or
+    drinking blood two realms or more above those paths, it **turns**: wholly that race's (body, look, gifts, a demon's span), its
+    Demon Path kept. A drink that would turn it is refused with a warning unless drunk sneaking; there is no way back, and once of a
+    race no other race's blood takes. Never a mortal's (meridians sealed), the dead's, nor in another's body.
+  - `/cultivation bloodline` tells a half-blood's race, purity and the realm its blood is awake to; the Cultivation tab shows its
+    purity under the Demon Path's column.
 - **One qi a meditation:** the Path button on the Cultivation tab steps through the paths one has (Heaven, Demon, Ghost) and
   meditation fills the one drawn in. The tab shows a column per path (the drawn one marked), side by side.
 - **Its pace:** its realm's and stage's own rate, as the heaven path's, by the race's pace (a dragon's 0.8, the slowest). The
@@ -409,14 +428,16 @@ slips teach demons if they are studying heaven path."
   banked into its new stage. Failing it costs a stage of the Demon Path (none for one whose physique holds its stage). A
   surge's reward (wisps, a sequence, a heart demon) counts at the drawn path's rate, the ghost path's too; the heart demon
   comes from Nascent Soul on any path, once in five minutes however often one logs in again.
-- **What it teaches:** no methods. Its blood teaches the spells of its element as the Demon Path reaches each one's realm (onto
+- **What it teaches:** no methods (its blood opens its realms: above). Its blood teaches the spells of its element as the Demon Path reaches each one's realm (onto
   the spell wheel): **Tiger Metal, Lizard Earth, Fox Fire, Dragon Wood**. The heaven path's jade slips and methods teach a demon
   as they teach a man, for the heaven path. **With the heaven path beside it**, it opens the **spells of both paths**, one a
   realm from Foundation Building, heaven's gold light and a demon's crimson qi as one (since 2026-10-24; see The two paths).
 - **Its body:** where the Demon Path stands above the heaven path the body takes its strength from it, 1.2 times; the paths'
   harmony from the two highest. Its qi pool is shared: the larger of the heaven path's and 0.85 of the Demon Path's realm's. A
   demon lives **half again as long**. The realm's abilities (Qi Flight and the rest) come from whichever path reaches the realm.
-- **The races' gifts**, whatever path they walk (`RaceGifts`):
+- **The races' gifts**, whatever path they walk (`RaceGifts`; a half-blood's at half strength: blows ×1.075, venom, roar and
+  Illusion half as long and the roar milder, Shed Skin to 37.5%, Charm 5, a dragon's health ×1.1 and its might 4 blocks; sight in
+  the dark and breath under water whole, but no swift swimming nor a dragon's early flight):
   - **Tiger:** its own blows of the hand 1.15 times as hard (not its spells, a flight's smash or a core's blast); it sees in the
     dark. From Core Formation, **Tiger's Roar** (ability wheel): all within 10 blocks two stages or more below it weakened and
     slowed for 5 s (10% of its qi, every 30 s).
@@ -448,10 +469,11 @@ elders teach that element's heaven methods). Its people are demons of its race i
 of the three colourings, a fox's tails by its realm), cultivating the Demon Path: never mortals, no Ritual to the Heavens on the
 way.
 
-- **Where:** in the Overworld about half as many as sects, kept clear of villages and of wherever a sect may stand, each race in
+- **Where:** in the Overworld some three in five as many as sects (since 2026-10-24: they came to a fifth, "super rare", 40 chunks
+  apart and kept 9 chunks off every place a sect might stand; now 28 apart and 7 off), kept clear of villages and of wherever a sect may stand, each race in
   its own lands (tags `clan/<race>`): **Tiger** the forests, dark forests, taigas and jungles; **Lizard** the swamps, mangroves,
   deserts, badlands and savannas; **Fox** the birch woods, cherry groves and snowy plains and taigas; **Dragon** the highlands
-  (meadows, windswept hills and forests, groves). In the Upper Realm a quarter of the sects' cells are clans' instead, of any
+  (meadows, windswept hills and forests, groves). In the Upper Realm 45 in a hundred of the sects' cells are clans' instead (a quarter before 2026-10-24), of any
   race, a dragon's two times in five. They come into being unseen near players, the spawn and the rift, as sects do.
   **With Terralith** (the user's ask, 2026-10-23), 60 of its 85 surface biomes are a race's too, by the same rule: Tiger its
   jungles and conifer forests (the Siberian taiga and grove, the shield, lush valley); Lizard its deserts, oases, mesas,
@@ -529,7 +551,9 @@ Code: `BeastKind` (the kinds, tiers, signature moves, lands), `DemonBeast` (the 
 `DemonBeastGoals` (moves and targets), `BeastShot` (stones and water jets), `BeastSpawner`, `DemonCoreItem`; client
 `BeastModels` (renderer, code-driven animation: gaits, head turning, tails, winding serpents, wings, acts); art from
 `tools/beast-art` (`java BeastArt.java <assets> bodies`: `Bodies` for the models, textures and glow masks, `Cores` for the core
-icons and models); data `tags/worldgen/biome/beast/*`; tests in `BeastGameTests`.
+icons and models; every cube's UVs are written face by face, `BeastArt#faceUv`: GeckoLib lays a box UV out by the cube's size
+rounded down, so the beasts' many cubes a fraction of a pixel thick read the wrong pixels until 2026-10-24); data
+`tags/worldgen/biome/beast/*`; tests in `BeastGameTests`.
 
 ## Physiques
 
@@ -1203,11 +1227,15 @@ and 8th layers of the realm, its Early, Mid and Late), **two** from Core Formati
 all. A spell belongs to its element and realm, not to one method: any heaven method of that element **of that realm or
 deeper** teaches it once it is understood to the spell's layer (and your cultivation has reached the stage the layer stands
 for), so a Four Axis fire method carries every fire spell. The Spells tab shows each one locked with both. They go on the spell
-wheel (V) as they come, never the ability wheel, cost heaven qi and have cooldowns. A spell that needs something to take hold
+wheel (V) as they come, never the ability wheel, cost heaven qi and have cooldowns (a player's spells wait them out only with the
+gamerule `spellCooldowns` on: off by default since 2026-10-24, the user's ask; cultivators keep theirs). A spell that needs something to take hold
 of (a being looked at, the ground, earth to draw on) isn't cast without it, and nothing is paid. Their qi harm is the
 element's own and passes armour; none touches its caster, spectators or its tamed creatures, and nothing of one (harm, hold,
 push, drowning, burning) touches another player unless the server lets players harm each other (PvP on, teams allowing);
-blessings like Life Force Gain still reach them. Terrain a spell carves or tears up is gone for good, the ground and whatever
+blessings like Life Force Gain still reach them. The spells that pick out foes in their reach (a Sword Prison, a whirlpool, the
+void tree's roots, a lock on space, a quake's field, a sea of flames) take any cultivator your spells don't spare, minding its own
+business or not (since 2026-10-24: a rogue took nothing from a Sword Prison), and their healing mends none of them; beasts and
+village folk minding their own business are left be. Terrain a spell carves or tears up is gone for good, the ground and whatever
 is built on it alike (never a chest or anything else holding something, nor obsidian or anything harder), but nothing inside a
 raised barrier (protective or concealment) is touched, nor the ground its shell runs through by anyone weaker than it; and
 spawn protection and Adventure mode are respected.
@@ -1332,11 +1360,11 @@ water puts out what burns.
 | Wood | **Azure Dragon** (57) | The Azure Dragon of the east, a dragon of living wood with jade light in its grain, bursts out of the ground where you look, up to 82 blocks, and coils up into the sky, 56 blocks high. Everything within 18 blocks of where it rises takes 480 wood harm and is caught in its coils, carried up with it and held there for 3 s. The land it bursts from is torn open in fourteen fissures out to 51 blocks. |
 | Wood | **Myriad Woods Return to the Dao** (61) | A spirit tree of jade light grows where you stand and holds the land 41 blocks round for 15 s: every foe in it is rooted and drained of 40 health a second, all of it shared out as healing to you and your own within the woods. |
 | Fire | **Vermilion Bird's Descent** (57) | The Vermilion Bird of the south, a bird of living flame, its wings 53 blocks across, stoops out of the sky behind you and sweeps low along your look for 154 blocks, over the hills in its way: everything in its 20-block path takes 450 fire harm and burns for 8 s, and the land beneath it is scorched into a burning trench. |
-| Fire | **One Flame Burns the Heavens** (61) | A seed of white flame flies from your hand to where you look, up to 82 blocks, and blooms into a pillar of fire 10 blocks round that rises to the clouds, 118 blocks, for 6 s: everything in it takes 120 fire harm a second and burns (a water ward of a lower realm only halves it), and the ground under it melts into a glassy pit 10 blocks round. |
+| Fire | **One Flame Burns the Heavens** (61) | A seed of white flame flies from your hand to where you look, up to 82 blocks, and blooms into a pillar of fire 10 blocks round that rises to the clouds, 118 blocks, for 6 s: everything in it takes 120 fire harm a second and burns (a water ward of a lower realm only halves it). The ground under it melts into a glassy pit 20 blocks round and 13 deep, it burns a shaft up through whatever stands over it to the open sky (cast underground, a tunnel of fire to the surface: its walls magma, netherrack and blackstone, fire on every ledge), and the land 33 blocks round where it breaks out is set ablaze. |
 | Earth | **Qilin Tramples the Land** (57) | A qilin of rock, molten gold in its cracks, rears beside you and stamps, then gallops out along your look for 128 blocks, over the land: every stride cracks a crater in it, and everything it tramples takes 480 earth harm and is thrown high. |
 | Earth | **Seal of Ten Thousand Mountains** (61) | An imperial seal of carved stone as great as a hill falls out of the sky onto where you look, up to 82 blocks: 550 earth harm to everything within 18 blocks, held pressed to the ground for 3 s, and the land 41 blocks across pressed down 4 blocks, split by twelve fissures out to 40. The seal stands there a while, then fades. |
 | Water | **Black Tortoise Bastion** (57) | The Black Tortoise of the north, black water under a dome of warding light, rises round you, its serpent a stream coiled about its shell, and keeps by you for 12 s: you and your own within 10 blocks of you take 40% less harm, and fire's not at all (a fire spell of a deeper realm still breaks half through), and its serpent strikes a foe within 20 blocks every second for 200 water harm, throwing it back. A water ward. |
-| Water | **Hundred Rivers Converge** (61) | A hundred streams pour together into a great whirlpool where you look, up to 82 blocks, for 5 s: every foe within 31 blocks is dragged into it and held, taking 90 water harm a second. When it bursts it flings them out, and leaves the ground crushed into a basin 23 blocks round with a lake in it. |
+| Water | **Hundred Rivers Converge** (61) | A hundred streams pour together into a great whirlpool where you look, up to 82 blocks, for 5 s: every foe within 31 blocks is dragged into it and held, taking 90 water harm a second. As it turns its rivers pour in from its rim and flood the whole of it within 3 s, the land scoured into a basin as wide (8 deep at its heart) full to the brim. When it bursts it flings them out, and the lake stays. |
 | Metal | **White Tiger's Pounce** (57) | The White Tiger of the west, made of steel and sword light, leaps from you onto where you look, up to 82 blocks: 500 metal harm to everything within 10 blocks where it lands. Then its claws rake out ahead of it: four gouges 102 blocks long are cut through the land, and everything in them takes 300 metal harm. |
 | Metal | **Myriad Swords Return to One** (61) | Ten thousand swords gather in a turning vortex high over where you look, up to 82 blocks, and fuse into one colossal sword 53 blocks long that falls: 600 metal harm to everything within 15 blocks, a cross of slots 60 blocks out each way and a pit 19 deep where it is driven in. It stands there a while, then fades. |
 
@@ -1346,12 +1374,12 @@ Heavens, a tree, became Spring Thunder of the Azure Emperor, two spells already 
 | Element | Spell (layer) | What it does |
 |---|---|---|
 | Wood | **Spring Thunder of the Azure Emperor** (66) | A storm cloud of jade, the thunder trigram ☳ burning under it, gathers 40 blocks over where you look, up to 118 blocks, and calls spring thunder down in six volleys a second apart: every foe within 26 blocks of the spot is struck by a bolt of jade lightning for 220 wood harm and rooted where it stands, and two more bolts strike the land in each volley, each leaving a little crater. |
-| Wood | **Void Withering** (70) | Space tears open in a slash across the sky 33 blocks over where you look, up to 118 blocks, and once it is open the roots of the Void-Rooted Divine Tree spill down out of it. For 8 s they reach out and drink: a root lashes down to each foe within 37 blocks (eight at most at once), coils round it and hauls it 9 blocks up into the air (a great beast is only held where it stands), and every foe within reach loses 200 health a second, weakened and slowed, all of it shared out as healing to you and your own within reach; the land under them withers outward from their heart (grass to coarse dirt, plants dead). Then they let go (what they held lands unharmed by the fall) and draw back up into the rift. |
+| Wood | **Void Withering** (70) | Space tears open in a slash across the sky 33 blocks over where you look, up to 118 blocks, and once it is open the roots of the Void-Rooted Divine Tree spill down out of it. For 8 s they reach out and drink: a root lashes down to each foe within 52 blocks, from a little over the rift down to 40 blocks under the land beneath it (eight at most at once; 37 round and 16 down before 2026-10-24, the user's ask for longer roots), coils round it and hauls it 9 blocks up into the air (a great beast is only held where it stands), and every foe within reach loses 200 health a second, weakened and slowed, all of it shared out as healing to you and your own within reach; the land under them withers outward from their heart (grass to coarse dirt, plants dead). Then they let go (what they held lands unharmed by the fall) and draw back up into the rift. |
 | Fire | **Golden Crow Descends** (66) | The sky tears open 61 blocks over where you look, up to 118 blocks, and the Golden Crow, the three-legged crow that carries the sun, made of the sun's own fire, bursts out of it and dives: everything within 22 blocks of where it strikes takes 1,600 fire harm and burns for 10 s, and the land melts into a glassy crater 13 blocks round, burning 26 round. |
 | Fire | **Sun Pulled Through the Void** (70) | Space tears open in a slash across the sky over where you look, up to 118 blocks, and a sun is dragged out of it, swelling as it comes, down clear of it to hang 29 blocks over the land; the rift shrinks away behind it. It hangs there 5 s: everything within 41 blocks beneath it takes 100 fire harm a second and burns, and the land scorches. Then it collapses and bursts: 1,200 fire harm to everything within 26 blocks, thrown out and burning, and a glassy crater 17 blocks round and 9 deep. |
 | Earth | **Buzhou Falls** (66) | The sky tears open 70 blocks over where you look, up to 118 blocks, and the broken pillar of Mount Buzhou, that once held up heaven, falls out of it, 59 blocks long: everything within 22 blocks takes 1,600 earth harm and is pinned to the ground for 2 s, the land is smashed into a crater 17 blocks round and 13 deep, and fourteen fissures split it out to 70. The pillar stands in it 5 s, then fades. |
 | Earth | **Earth Veins Lock the Void** (70) | The earth itself heaves up round you: nine ribs of rough rock burst out of the land and bend in to meet over you in a dome 26 blocks round, the earth's molten gold showing in their cracks, boulders torn up drifting inside it, the earth trigram ☷ burning under its keystone, and for 6 s space inside it is locked: every foe in it, or that comes in, is held where it stands (it can't walk, fly or be thrown out), crushed for 200 earth harm a second, and can't step through space (Nine Nether Step, a Spatial Tear). Then the veins sink back, and the land is left as it was. |
-| Water | **Weak Water from the Void** (66) | Space tears open 41 blocks over where you look, up to 118 blocks, and the Weak Water, that bears nothing up, not even a feather, pours out of it onto the land for 6 s: everything within 26 blocks of where it falls sinks (nothing flies in it, the dead neither), is slowed, has its fires put out, and takes 160 water harm a second; the land under it sinks into a basin 18 blocks round with a lake in it. |
+| Water | **Weak Water from the Void** (66) | Space tears open 41 blocks over where you look, up to 118 blocks, lying flat across the sky and open below, and the Weak Water, that bears nothing up, not even a feather, pours out of its underside onto the land for 6 s: everything within 26 blocks of where it falls sinks (nothing flies in it, the dead neither), is slowed, has its fires put out, and takes 160 water harm a second. As it pours its flood runs out from where it falls over all 26 blocks within 2.5 s, the land sinking under it into a basin (7 deep at its heart) full to the brim, and the lake stays. |
 | Water | **Kun Rises from the Northern Abyss** (70) | The land where you look, up to 118 blocks, opens onto the northern abyss, 41 blocks across, and the Kun, the great fish of the north made of the abyss's black water, breaches out of it and leaps 59 blocks high across your sight: everything within 22 blocks takes 1,500 water harm and is thrown high; as it dives back in, 500 more, and the land there is crushed into a basin 18 blocks round with a lake in it. |
 | Metal | **Void-Severing Sword Light** (66) | A sword of light thrusts out of your hands along your look, 147 blocks in a third of a second, through everything, and cleaves the land under it into a chasm in the shape of the rift it leaves: pointed at both ends, some 13 blocks across and 17 deep at its middle, deepest along its middle, its sides and floor ragged (and a slot through whatever stands on its line). Every being on its line or down in the chasm takes 1,500 metal harm and is hurled on along it. Behind it space stays cut open for 3 s, and whoever stands in the cut, on the line or down in the chasm, takes 400 more a second. |
 | Metal | **Ten-Direction Sword Prison** (70) | Space tears open in ten places round where you look, up to 118 blocks: out of eight rifts in a ring 41 blocks up, great swords plunge into the land 13 blocks round the spot (walls of sword light between them, a crater at each), and for 6 s every foe inside is held in and takes 150 metal harm a second. Then the last two swords, out of a rift high over its heart and one torn in the ground beneath it, meet in its heart: 1,000 metal harm to everything inside, and a pit 7 blocks round where they met. |
@@ -1393,9 +1421,10 @@ Shatter; the void's own violet for the void tree's roots), and haloed; within it
 slowly round its heart, stars twinkling, motes of light drawn in; round it space is cracked like glass, cracks running out from its rim
 and forking, shards of space breaking off its edge and tumbling away. It opens as it forms, a slit that widens with its cracks running
 out after it, and closes as its spell lets it go. Four kinds: a tear standing in the air, turned to whoever looks at it, upright or
-lying across the sky as a slash (`VOID_RIFT`, its yaw turning it on the watcher's screen: the crow's, Buzhou's, the Weak Water's and the
+lying across the sky as a slash (`VOID_RIFT`, its yaw turning it on the watcher's screen: the crow's, Buzhou's and the
 sword prison's ten upright; the sun's and the roots' slashes across the sky, the sun's shrinking away once its sun is out, the user's
-ask, 2026-10-24, the two had overlapped); an abyss lying open in the ground, its shards
+ask, 2026-10-24, the two had overlapped), or, pitched 90, lying flat in the sky open below, its shards falling out of it (the Weak
+Water's, the user's ask, 2026-10-24: its water falls out of the rift's underside, not past an upright slit); an abyss lying open in the ground, its shards
 rising out of it (`ABYSS_RIFT`: the Kun's, the Nine Nethers', the one under the sword prison); a cut along a line, running out as fast
 as the stroke that cut it (`RIFT_LINE`: the Severing Sword Light's); and space shattered round a point like a struck pane, pieces
 fallen out of it showing the void (`SHATTERED_SPACE`: the Void Shatter's).
@@ -1422,7 +1451,9 @@ at Void Shattering).
 phoenixes and falling mountains blow out craters (burnt to magma and blackstone, or broken to rubble), quakes and seals split it
 in fissures and sink it, the Heavenly River scours a channel, the Boundless Sea leaves a lake in a crushed basin, Piercing Sword
 Light bores a tunnel, Mountain Cleave cuts a slot through hills, and the Heaven-Severing Sword's crescent, some 110 blocks across,
-slices through whatever its blade passes through for 120 blocks: a slit 5 blocks tall at its middle (it was 10) and thinner toward its tips,
+slices through whatever its blade passes through for 120 blocks: a slit cut in the land 2.5 blocks tall at its middle (it was 10,
+then 5; since 2026-10-24 the lower half of its blade's height, the ground under it still scoured: `MetalSpells#SEVER_CUT_SHARE`;
+what it strikes, its whole blade) and thinner toward its tips,
 at the caster's chest, through hills and mountains (their tops left standing), its far end cut in the crescent's curve
 (`MetalSpells#severThickness`, `#severLag`; the client draws it to the same numbers). Its way is asked to load as it is cast and
 kept loading just ahead of it, since 120 blocks (and its tips) run past the usual simulation distance; land that was never made before is made
@@ -2655,8 +2686,8 @@ cultivator who walks both is stronger than one who walks either (`TwoPaths`):
 | **Devouring Seal** | Nascent Soul | 190 | 20 s | the being you look at (32 blocks) is sealed under heaven's gold seal for 8 s while a demon's maw devours it: it loses 2 hearts a second and half of it mends you; slowed while sealed. Looking at nothing, it isn't cast (nothing paid) |
 | **Heaven-Demon Claw** | Heavenly Being | 410 | 25 s | a great claw of gold light and crimson qi rakes down where you look (32 blocks): everything within 5 blocks takes 15 hearts of harm, is thrown up and weakened for 5 s |
 | **Heaven and Demon as One** | Four Axis | 920 | 2 min | heaven and demon made one: everything within 16 blocks is dragged in and takes 25 hearts of harm; a tenth of all of it mends you, and Strength II for 10 s |
-| **Heaven-Demon Avatar** | Dao Integration | 3,200 | 100 s | a colossal avatar of gold light and crimson demon qi, 41 blocks tall, rises behind you for 8 s (a living shape: below), turning to where you look; twice its hands come down out of the sky where you look (82 blocks), heaven's palm then the demon's claw: each strikes everything within 14 blocks for 140 harm, throws it down and slows it; a fifth of all the harm mends you. The land is left as it was |
-| **Heaven-Demon Void Shatter** | Void Shattering | 11,000 | 100 s | a colossal fist forms over your shoulder, heaven's gauntlet of gold plates closed round a demon's crimson claws (a living shape), and punches out to where you look (118 blocks): where it lands space shatters like glass (Heaven methods: Tears in space): everything within 18 blocks takes 520 harm and is thrown out, and the shattered space, 37 blocks across, hangs there for 5 s, cutting whoever stays in it for 60 a second. The land is left as it was |
+| **Heaven-Demon Avatar** | Dao Integration | 3,200 | 100 s | a colossal avatar of gold light and crimson demon qi, 41 blocks tall, rises behind you for 8 s (a living shape: below), turning to where you look; twice its hands come down out of the sky where you look (82 blocks), heaven's palm then the demon's claw: each strikes everything within 14 blocks for 140 harm, throws it down and slows it; a fifth of all the harm mends you. The palm crushes a crater 18 blocks round and 8 deep into the land with cracks running out 40 blocks; the claw rakes four gouges 28 blocks long and 8 deep through it, and a lesser crater where it struck |
+| **Heaven-Demon Void Shatter** | Void Shattering | 11,000 | 100 s | a colossal fist forms over your shoulder, heaven's gauntlet of gold plates closed round a demon's crimson claws (a living shape), and punches out to where you look (118 blocks): where it lands space shatters like glass (Heaven methods: Tears in space): everything within 18 blocks takes 520 harm and is thrown out, and the shattered space, 37 blocks across, hangs there for 5 s, cutting whoever stays in it for 60 a second. The land under it shatters too (landing within 18 blocks of it): a crater 28 blocks round and 15 deep, twelve cracks running out of it 55 blocks like a pane's |
 
 They took the places of the heaven and ghost paths' five (Yin-Yang Palm, Taiji Shield, Life and Death Seal, Heaven and Hell
 Pillar, Primordial Chaos), keeping their reach and strength, their costs the two pools' added into qi. Their harm is heaven's and
@@ -3097,6 +3128,21 @@ quake, sweep, hold, push, rain or roar of theirs crosses the shell either way (`
 Anyone strong enough to break it, and those it lets through, cast across it as before. Before, a weak cultivator's area spells
 cast beside a sect's barrier reached everyone inside.
 
+**The strong break barriers** (the user's ask, 2026-10-24). The battery's stored qi is the barrier's health:
+- Anyone strong enough to break it (its rank or above) wears it down with each blow on the shell, each shot that strikes it
+  and each spell cast across it: 40 qi a blow from one just strong enough (a shot half, a spell twice), doubling for every two
+  stages above it; once a second at most for each of them. Their spells' wounds also carve the ground it shelters and the
+  cells of its shell as any land, each cell taken costing it as one broken by hand.
+- One a **whole realm above it** (a True Immortal over all but the strongest barriers) empties it at once, with any blow, shot or
+  spell: the whole barrier shatters, and can't rise for 2 minutes. A concealment barrier simply comes down.
+- The weaker do nothing to it, as before. A sect is told its barrier was assailed either way.
+
+**A guest pass** (the user's ask, 2026-10-24: there was no peaceful way in for one too strong to be welcomed as a guest). Every
+cultivator of a sect (or clan) sells a **Guest Pass of** its sect first on its trade list: 30 Low spirit stones before regard,
+one a day, to anyone at all it isn't resentful toward, weak or strong. Carried anywhere about you (the inventory or a hand), the sect's barrier lets
+you through as it does its own, for a day (20 minutes) from its sale; the tooltip says how long is left. Raise the sect's
+alarm and every pass of it you carry crumbles. Code: `SectPassItem`, `Formation#allows`, `CultivatorTrades#goodsFor`.
+
 A barrier is raised, mended and watched over only while its land ticks (a player near enough, or the land held for a
 moment: `NpcLedger`). Land that is merely loaded is left alone, so it can unload: reading its blocks every tick used to
 hold it loaded for good, freezing the cultivators in it.
@@ -3104,7 +3150,8 @@ hold it loaded for good, freezing the cultivators in it.
 - **Power.** The core holds a battery of 2,000 qi. The barrier costs `0.5 + radius² / 80` qi per second (1.3 at radius 8,
   13 at 32, 52 at 64); each **Qi Vein** joined to the core gathers 8 qi per second. A raised barrier stays up while the
   veins and battery can carry it. Each barrier block broken drains 40 qi and each one mended costs 5, so a sustained
-  assault can empty the battery and shatter the barrier, which then can't rise for 2 minutes.
+  assault can empty the battery and shatter the barrier, which then can't rise for 2 minutes (blows and spells of the strong
+  drain it too: above).
 - **Qi Veins** are an ore about as rare as diamond (1-4 to a vein; many more in the Upper Realm), mined with a diamond
   pickaxe. With Qi Sense you can see them breathing qi.
 - **Seals.** The **Inscription Brush** paints seals of qi ink on floors and walls (sneak to wipe one away). Seals that

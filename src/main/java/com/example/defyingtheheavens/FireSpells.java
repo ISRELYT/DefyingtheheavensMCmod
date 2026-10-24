@@ -87,11 +87,14 @@ public final class FireSpells {
 	public static final int BIRD_STOOP = 20, BIRD_SWEEP_TICKS = 60, BIRD_CLIMB = 24, BIRD_BURN_SECONDS = 8;
 	/**
 	 * One Flame Burns the Heavens: where the seed flies (up to {@link #FLAME_RANGE}); the pillar ({@link #FLAME_RADIUS} round,
-	 * {@link #FLAME_HEIGHT} high, {@link #FLAME_DAMAGE} a second); the glassy pit (10 round, 6 deep: by its realm); the seed's flight and
-	 * bloom and the pillar's burning (ticks).
+	 * {@link #FLAME_HEIGHT} high, {@link #FLAME_DAMAGE} a second); the glassy pit (20 round, 13 deep: by its realm; twice what it was before
+	 * 2026-10-24, the user's ask for far more) and the land set ablaze round where it breaks out ({@link #FLAME_SCORCH}, 33); the seed's
+	 * flight and bloom and the pillar's burning (ticks).
 	 */
-	public static final double FLAME_RANGE = HeavenSpells.span(Realm.DAO_INTEGRATION, 64), FLAME_RADIUS = HeavenSpells.span(Realm.DAO_INTEGRATION, 8), FLAME_HEIGHT = HeavenSpells.span(Realm.DAO_INTEGRATION, 92), FLAME_PIT = Devastation.sized(Realm.DAO_INTEGRATION, 8),
-			FLAME_PIT_DEPTH = Devastation.sized(Realm.DAO_INTEGRATION, 5);
+	public static final double FLAME_RANGE = HeavenSpells.span(Realm.DAO_INTEGRATION, 64), FLAME_RADIUS = HeavenSpells.span(Realm.DAO_INTEGRATION, 8), FLAME_HEIGHT = HeavenSpells.span(Realm.DAO_INTEGRATION, 92), FLAME_PIT = Devastation.sized(Realm.DAO_INTEGRATION, 16),
+			FLAME_PIT_DEPTH = Devastation.sized(Realm.DAO_INTEGRATION, 10), FLAME_SCORCH = Devastation.sized(Realm.DAO_INTEGRATION, 26);
+	/** Its shaft burnt up to the open sky over it (Devastation#shaft): as wide as its pillar, up to this far (through a mountain, out of a deep cave). */
+	public static final int FLAME_SHAFT_MOST = 256;
 	public static final float FLAME_DAMAGE = 120;
 	public static final int FLAME_FLIGHT = 16, FLAME_BLOOM = 18, FLAME_TICKS = 6 * 20, FLAME_BURN_SECONDS = 4;
 	/** The sun's gold, beyond the void: the rifts the Golden Crow and the sun come through glow so. */
@@ -668,7 +671,7 @@ public final class FireSpells {
 		@Override
 		protected boolean run(long age, long now) {
 			if (age % 20 == 10) {
-				for (LivingEntity e : HeavenSpells.aroundPoint(level, at, SEA_RADIUS + 2, e -> !HeavenSpells.friendly(caster, e) && !HeavenSpells.spared(caster, e))) {
+				for (LivingEntity e : HeavenSpells.aroundPoint(level, at, SEA_RADIUS + 2, e -> HeavenSpells.mark(caster, e))) {
 					if (e.getY() > at.y + 4 || e.position().multiply(1, 0, 1).distanceTo(at.multiply(1, 0, 1)) > SEA_RADIUS) continue;
 					burn(caster, e, null, SEA_DAMAGE, 3, spell);
 				}
@@ -837,7 +840,9 @@ public final class FireSpells {
 	 * One Flame Burns the Heavens: a seed of white flame (SpellConstruct ONE_FLAME_SEED) flies from its caster's hands to where they look
 	 * ({@link #FLAME_FLIGHT} ticks), blooms there ({@link #FLAME_BLOOM}) and erupts into a pillar of fire (ONE_FLAME_PILLAR)
 	 * {@link #FLAME_RADIUS} round that rises to the clouds for {@link #FLAME_TICKS}: everything in it takes {@link #FLAME_DAMAGE} a second
-	 * and burns; the ground under it melts into a glassy pit {@link #FLAME_PIT} round.
+	 * and burns; the ground under it melts into a glassy pit {@link #FLAME_PIT} round, it burns a shaft up through whatever is over it to the
+	 * open sky, its walls magma, netherrack and blackstone and on fire (Devastation#shaft: cast underground, a tunnel of fire to the surface),
+	 * and the land round where it breaks out is set ablaze ({@link #FLAME_SCORCH}).
 	 */
 	public static final class OneFlame extends HeavenSpells.Timed {
 		private final Spell spell;
@@ -874,6 +879,12 @@ public final class FireSpells {
 				seed.dissolve();
 				pillar = SpellConstruct.create(level, SpellConstruct.Kind.ONE_FLAME_PILLAR, ground, 0, 0, FLAME_TICKS, caster).sizedFor(spell).spawn();
 				Devastation.crater(caster, level, ground, FLAME_PIT, FLAME_PIT_DEPTH, Devastation.Floor.GLASSY);
+				// It burns its way up to the sky through whatever is over it (underground, a fiery shaft to the surface), and the land
+				// round where it breaks out is set ablaze.
+				Devastation.shaft(caster, level, ground, FLAME_RADIUS, FLAME_SHAFT_MOST);
+				BlockPos column = BlockPos.containing(ground);
+				double sky = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, column.getX(), column.getZ());
+				Devastation.burn(caster, level, sky > ground.y + 4 ? new Vec3(ground.x, sky, ground.z) : ground, FLAME_SCORCH, 0.22);
 				SpellFx.send(level, SpellFx.Kind.FIRE_EXPLOSION, ground, Vec3.ZERO, (float) FLAME_RADIUS * 1.4f, 0, 192);
 				SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) FLAME_RADIUS * 2.5f, 0, 192);
 				HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.5f);

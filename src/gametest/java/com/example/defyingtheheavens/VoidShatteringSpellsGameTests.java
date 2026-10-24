@@ -610,12 +610,15 @@ public class VoidShatteringSpellsGameTests implements FabricGameTest {
 
 	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE, batch = "void_shatter", timeoutTicks = 300)
 	public void theFistOfBothPathsShattersSpace(GameTestHelper helper) {
-		HeavenSpellTesting.Floor floor = HeavenSpellTesting.floor(helper, 40, 14);
+		// Wide enough for its cracks (HeavenDemonSpells#SHATTER_CRACK_REACH): past the floor they would cut the test world's own ground.
+		HeavenSpellTesting.Floor floor = HeavenSpellTesting.floor(helper, 80, 14);
 		ServerLevel level = helper.getLevel();
 		List<LivingEntity> spawned = HeavenSpellTesting.spawned();
 		ServerPlayer p = demonCaster(helper, floor.centre());
 		Vec3 home = p.position(), point = home.add(0, 0, 22);
 		Husk struck = husk(level, point, spawned), cut = husk(level, point.add(5, 0, 2), spawned), beyond = husk(level, point.add(-(HeavenDemonSpells.SHATTER_RADIUS + 6), 0, 0), spawned);
+		// Ground under where it lands: its crater would cut the one-block floor and drop those it cuts out of its shattered space.
+		Runnable thinned = HeavenSpellTesting.thicken(floor, point.x, point.z, 31, 18);
 		HeavenSpellTesting.lookAt(p, HeavenSpells.middle(struck));
 		int stone = floorLeft(level, floor.centre(), point, 10);
 		boolean quiet = Devastation.pending() == 0;
@@ -624,6 +627,7 @@ public class VoidShatteringSpellsGameTests implements FabricGameTest {
 		helper.assertTrue(constructs(level, home, 10, SpellConstruct.Kind.HEAVEN_DEMON_FIST).size() == 1, "...its fist forms over its caster's shoulder");
 		helper.runAfterDelay(HeavenDemonSpells.SHATTER_FLIGHT + 2, () -> {
 			if (struck.getHealth() > 4000 - HeavenDemonSpells.SHATTER_DAMAGE + 1 || constructs(level, point, 8, SpellConstruct.Kind.SHATTERED_SPACE).size() != 1) {
+				thinned.run();
 				finish(helper, p, spawned, floor);
 				helper.fail("It lands where its caster looks, and space shatters there (" + struck.getHealth() + ")");
 				return;
@@ -632,11 +636,16 @@ public class VoidShatteringSpellsGameTests implements FabricGameTest {
 				try {
 					helper.assertTrue(cut.getHealth() <= 4000 - HeavenDemonSpells.SHATTER_DAMAGE - HeavenDemonSpells.SHATTER_CUTS + 1, "...its shattered space cutting whoever stays in it (" + cut.getHealth() + ")");
 					helper.assertTrue(beyond.getHealth() == beyond.getMaxHealth(), "...not what stands beyond its reach");
-					helper.assertTrue(landKept(level, floor, point, 10, stone, quiet), "...and the land is left as it was");
-					helper.succeed();
-				} finally {
+					// The land shatters with the space over it (since 2026-10-24: it was left as it was).
+					helper.assertTrue(floorLeft(level, floor.centre(), point, 10) < stone, "...and the land under it shattered into a crater");
+				} catch (RuntimeException e) {
+					thinned.run();
 					finish(helper, p, spawned, floor);
+					throw e;
 				}
+				HeavenSpells.forget(p.getUUID());
+				for (SpellConstruct c : level.getEntitiesOfClass(SpellConstruct.class, new AABB(floor.centre()).inflate(200))) c.discard();
+				HeavenSpellTesting.succeedOnceHealed(helper, p, spawned, floor, thinned);
 			});
 		});
 	}

@@ -114,7 +114,7 @@ public final class CultivationCommand {
 	}
 
 	private static final SimpleCommandExceptionType NO_DEMON_PATH = new SimpleCommandExceptionType(Component.literal(
-			"Only the demon races walk the Demon Path: give yourself a beast's blood first (/cultivation bloodline set <race>)."));
+			"No demon core: drink a demon race's blood first (Demon Blood), or become one (/cultivation bloodline set <race>)."));
 
 	/** A path's word in /cultivation set and addcultivation: heaven, ghost, demon. */
 	private static String word(TwoPaths.Path path) {
@@ -165,6 +165,7 @@ public final class CultivationCommand {
 				int before = DemonPath.rank(c);
 				if (before < 0) throw NO_DEMON_PATH.create();
 				c.demon().set(rank, 0);
+				c.demon().setBloodRealm(Math.max(c.demon().bloodRealm(), realm.ordinal())); // its blood awake as far as it is set (DemonBlood)
 				if (rank > before) DemonPath.afterRank(p, before); // its inheritance's spells for the stages risen through
 				else {
 					CultivationManager.markDirty(p.server);
@@ -253,6 +254,12 @@ public final class CultivationCommand {
 	private static int reportBloodline(CommandSourceStack source) throws CommandSyntaxException {
 		ServerPlayer p = source.getPlayerOrException();
 		Bloodlines.Entry entry = Bloodlines.entry(p.server, p.getUUID());
+		PlayerCultivation c = CultivationManager.own(p);
+		if (DemonPath.isHalfBlood(c)) { // a human with a race's blood in it (DemonBlood)
+			source.sendSuccess(() -> Component.translatable(ModLang.CMD_BLOODLINE_HALF, p.getDisplayName(), DemonPath.race(c).getDisplayName(),
+					Math.round(c.demon().purity() * 100), Realm.byIndex(Math.max(0, c.demon().bloodRealm())).getDisplayName()), false);
+			return 1;
+		}
 		source.sendSuccess(() -> entry == null ? Component.translatable(ModLang.CMD_BLOODLINE_NONE, p.getDisplayName())
 				: entry.bloodline().isBeast() ? Component.translatable(ModLang.CMD_BLOODLINE, p.getDisplayName(), entry.bloodline().getDisplayName(),
 				entry.bloodline().variantName(entry.variant()))

@@ -7,6 +7,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -195,12 +196,15 @@ public class DaoIntegrationSpellsGameTests implements FabricGameTest {
 
 	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE, batch = "dao_flame", timeoutTicks = 200)
 	public void oneFlameBlooms(GameTestHelper helper) {
-		HeavenSpellTesting.Floor floor = HeavenSpellTesting.floor(helper, 30, 12);
+		// Wide enough for the land it sets ablaze (FireSpells#FLAME_SCORCH): past the floor it would burn the test world's own ground.
+		HeavenSpellTesting.Floor floor = HeavenSpellTesting.floor(helper, 56, 12);
 		ServerLevel level = helper.getLevel();
 		List<LivingEntity> spawned = HeavenSpellTesting.spawned();
 		ServerPlayer p = caster(helper, QiElement.FIRE, floor.centre());
 		Vec3 home = p.position(), point = home.add(0, 0, 18);
 		Husk inside = husk(level, point.add(3, 0, 0), spawned), outside = husk(level, point.add(14, 0, 0), spawned);
+		// Beside the pillar, in the land it sets ablaze: kept from those fires, so only the pillar's own harm is asked after.
+		outside.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 400, 0));
 		HeavenSpellTesting.lookAt(p, point);
 		int stone = floorLeft(level, floor.centre(), point, 6);
 		helper.assertTrue(HeavenSpellTesting.cast(p, Spell.ONE_FLAME_BURNS_THE_HEAVENS), "One Flame Burns the Heavens is cast, paid for");
@@ -213,10 +217,14 @@ public class DaoIntegrationSpellsGameTests implements FabricGameTest {
 				helper.assertTrue(inside.getHealth() <= 4000 - FireSpells.FLAME_DAMAGE + 1, "What stands in it burns (" + inside.getHealth() + ")");
 				helper.assertTrue(outside.getHealth() == outside.getMaxHealth(), "...not what stands beside it (" + outside.getHealth() + ")");
 				helper.assertTrue(floorLeft(level, floor.centre(), point, 6) < stone, "...and the ground under it melts away into its pit");
-				helper.succeed();
-			} finally {
+			} catch (RuntimeException e) {
 				finish(helper, p, spawned, floor);
+				throw e;
 			}
+			// Its pit, shaft and the land it set ablaze cut and put out before the floor goes (HeavenSpellTesting#succeedOnceHealed).
+			HeavenSpells.forget(p.getUUID());
+			for (SpellConstruct c : level.getEntitiesOfClass(SpellConstruct.class, new AABB(floor.centre()).inflate(200))) c.discard();
+			HeavenSpellTesting.succeedOnceHealed(helper, p, spawned, floor);
 		});
 	}
 
@@ -560,12 +568,15 @@ public class DaoIntegrationSpellsGameTests implements FabricGameTest {
 
 	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE, batch = "dao_avatar", timeoutTicks = 300)
 	public void theAvatarsHandsComeDownWhereItsCasterLooks(GameTestHelper helper) {
-		HeavenSpellTesting.Floor floor = HeavenSpellTesting.floor(helper, 40, 16);
+		// Wide enough for its palm's cracks: past the floor they would cut the test world's own ground.
+		HeavenSpellTesting.Floor floor = HeavenSpellTesting.floor(helper, 68, 16);
 		ServerLevel level = helper.getLevel();
 		List<LivingEntity> spawned = HeavenSpellTesting.spawned();
 		ServerPlayer p = demonCaster(helper, floor.centre());
 		Vec3 home = p.position(), point = home.add(0, 0, 24);
 		Husk struck = husk(level, point.add(3, 0, 0), spawned), aside = husk(level, point.add(-(HeavenDemonSpells.AVATAR_RADIUS + 6), 0, 0), spawned);
+		// Ground under where its hands come down: its palm's crater would cut the one-block floor and drop the struck out of the claw's reach.
+		Runnable thinned = HeavenSpellTesting.thicken(floor, point.x, point.z, 24, 12);
 		HeavenSpellTesting.lookAt(p, point);
 		int stone = floorLeft(level, floor.centre(), point, 12);
 		boolean quiet = Devastation.pending() == 0;
@@ -574,21 +585,29 @@ public class DaoIntegrationSpellsGameTests implements FabricGameTest {
 		int first = HeavenDemonSpells.AVATAR_STRIKES[0] + HeavenDemonSpells.AVATAR_FALL, second = HeavenDemonSpells.AVATAR_STRIKES[1] + HeavenDemonSpells.AVATAR_FALL;
 		helper.runAfterDelay(first + 2, () -> {
 			if (struck.getHealth() > 4000 - HeavenDemonSpells.AVATAR_DAMAGE + 1 || constructs(level, point, 20, SpellConstruct.Kind.AVATAR_PALM).size() != 1) {
+				thinned.run();
 				finish(helper, p, spawned, floor);
 				helper.fail("Heaven's palm comes down where its caster looks (" + struck.getHealth() + ")");
 				return;
 			}
+			// Its crater took the ground its caster's look met: looking at the struck now (thrown down into it), as it rises for the claw.
+			helper.runAfterDelay(HeavenDemonSpells.AVATAR_STRIKES[1] - first - 4, () -> HeavenSpellTesting.lookAt(p, HeavenSpells.middle(struck)));
 			helper.runAfterDelay(second - first, () -> {
 				try {
 					helper.assertTrue(struck.getHealth() <= 4000 - 2 * HeavenDemonSpells.AVATAR_DAMAGE + 1 && constructs(level, point, 20, SpellConstruct.Kind.AVATAR_CLAW).size() == 1,
 							"...then the demon's claw (" + struck.getHealth() + ")");
 					helper.assertTrue(struck.hasEffect(MobEffects.MOVEMENT_SLOWDOWN), "...the struck slowed");
 					helper.assertTrue(aside.getHealth() == aside.getMaxHealth(), "...not what stands beyond their reach");
-					helper.assertTrue(landKept(level, floor, point, 12, stone, quiet), "...and the land is left as it was");
-					helper.succeed();
-				} finally {
+					// Its hands wound the land (since 2026-10-24: it was left as it was).
+					helper.assertTrue(floorLeft(level, floor.centre(), point, 12) < stone, "...and the land is cratered and gouged where they came down");
+				} catch (RuntimeException e) {
+					thinned.run();
 					finish(helper, p, spawned, floor);
+					throw e;
 				}
+				HeavenSpells.forget(p.getUUID());
+				for (SpellConstruct c : level.getEntitiesOfClass(SpellConstruct.class, new AABB(floor.centre()).inflate(200))) c.discard();
+				HeavenSpellTesting.succeedOnceHealed(helper, p, spawned, floor, thinned);
 			});
 		});
 	}

@@ -137,10 +137,11 @@ public final class SectMembership {
 		Formations.syncSoon();
 	}
 
-	/** A guest who turns on the sect (an alarm raised over them: SectManager#alert) is a guest no longer. */
+	/** A guest who turns on the sect (an alarm raised over them: SectManager#alert) is a guest no longer: every pass of it they carry crumbles too (SectPassItem). */
 	public static void revokeGuest(ServerPlayer player, Sect sect) {
 		Map<UUID, Long> passes = GUESTS.get(player.getUUID());
 		if (passes != null && passes.remove(sect.id) != null) Formations.syncSoon();
+		SectPassItem.revoke(player, sect.id);
 	}
 
 	/**

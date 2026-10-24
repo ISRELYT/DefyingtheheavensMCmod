@@ -459,6 +459,7 @@ public final class MeditationManager {
 		}
 		if (!wasBottleneck && DemonPath.atBottleneck(c)) {
 			p.sendSystemMessage(DemonPath.heldByAxis(c) ? FourAxis.gateLine(c, DemonPath.rank(c)).copy().withStyle(net.minecraft.ChatFormatting.GOLD)
+					: DemonPath.heldByBlood(c) ? DemonPath.bloodGateLine(c).copy().withStyle(net.minecraft.ChatFormatting.GOLD)
 					: DemonPath.locked(c) ? Component.translatable(ModLang.MSG_REALM_LOCKED,
 					PlayerCultivation.rankName(PlayerCultivation.LOWER_REALM_CAP_REALM, PlayerCultivation.LOWER_REALM_CAP_STAGE))
 					: Component.translatable(ModLang.MSG_DEMON_BOTTLENECK).withStyle(net.minecraft.ChatFormatting.RED));

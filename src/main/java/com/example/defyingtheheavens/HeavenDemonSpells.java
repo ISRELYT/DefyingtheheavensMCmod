@@ -1,5 +1,6 @@
 package com.example.defyingtheheavens;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -23,7 +24,8 @@ import java.util.List;
  * Palm, Taiji Shield, Life and Death Seal, Heaven and Hell Pillar, Primordial Chaos), all built on the ghost path's half: these take
  * their places, their reach and strength kept. Dao Integration's, the Heaven-Demon Avatar, is a living shape of GeckoLib's
  * (SpellConstruct HEAVEN_DEMON_AVATAR, its hands AVATAR_PALM and AVATAR_CLAW); Void Shattering's, the Heaven-Demon Void Shatter, a fist of
- * the two that shatters space where it lands (HEAVEN_DEMON_FIST, SHATTERED_SPACE). None of them changes the land.
+ * the two that shatters space where it lands (HEAVEN_DEMON_FIST, SHATTERED_SPACE). Those two wound the land (since 2026-10-24: the
+ * Avatar's hands crater and gouge it, the Void Shatter's blow craters and cracks it); the rest leave it as it was.
  */
 public final class HeavenDemonSpells {
 	/** Heaven's gold and its paler light; a demon's crimson and the dark of its blood. */
@@ -57,6 +59,15 @@ public final class HeavenDemonSpells {
 			AVATAR_HEIGHT = HeavenSpells.span(Realm.DAO_INTEGRATION, 32), AVATAR_BEHIND = HeavenSpells.span(Realm.DAO_INTEGRATION, 5);
 	public static final float AVATAR_DAMAGE = 140, AVATAR_MENDS = 0.2f, AVATAR_TURN = 4;
 	public static final int AVATAR_TICKS = 8 * 20, AVATAR_FALL = 14, AVATAR_PRESS = 26, AVATAR_SLOWS = 3 * 20;
+	/**
+	 * What its hands leave in the land (the user's ask, 2026-10-24: more of it): heaven's palm a crater (18 round, 8 deep: by its realm,
+	 * Devastation#sized) with cracks running out from it; the demon's claw four gouges (28 long, 2.5 wide, 8 deep) raked through the land
+	 * the way it came down, and a lesser crater where it struck.
+	 */
+	public static final double AVATAR_PALM_CRATER = Devastation.sized(Realm.DAO_INTEGRATION, 14), AVATAR_PALM_DEPTH = Devastation.sized(Realm.DAO_INTEGRATION, 6),
+			AVATAR_GOUGE = Devastation.sized(Realm.DAO_INTEGRATION, 22), AVATAR_GOUGE_WIDTH = 2.5, AVATAR_GOUGE_DEPTH = Devastation.sized(Realm.DAO_INTEGRATION, 6),
+			AVATAR_CLAW_CRATER = Devastation.sized(Realm.DAO_INTEGRATION, 7);
+	public static final int AVATAR_GOUGES = 4;
 	/** When (ticks after it rises) its hands are raised, each to come down {@link #AVATAR_FALL} later: heaven's palm, then the demon's claw. */
 	public static final int[] AVATAR_STRIKES = {40, 100};
 	/**
@@ -68,6 +79,14 @@ public final class HeavenDemonSpells {
 			SHATTER_SPACE = HeavenSpells.span(Realm.VOID_SHATTERING, 20);
 	public static final float SHATTER_DAMAGE = 520, SHATTER_CUTS = 60;
 	public static final int SHATTER_FLIGHT = 12, SHATTER_TICKS = 5 * 20;
+	/**
+	 * What its blow leaves in the land where it lands near the ground (the user's ask, 2026-10-24): a crater (28 round, 15 deep: by its
+	 * realm) and {@link #SHATTER_CRACKS} cracks running out from it like a pane's, to {@link #SHATTER_CRACK_REACH}; nothing if it lands
+	 * further than {@link #SHATTER_GROUND} over the land (its blow is space's, there).
+	 */
+	public static final double SHATTER_CRATER = Devastation.sized(Realm.VOID_SHATTERING, 15), SHATTER_CRATER_DEPTH = Devastation.sized(Realm.VOID_SHATTERING, 8),
+			SHATTER_CRACK_REACH = Devastation.sized(Realm.VOID_SHATTERING, 30), SHATTER_GROUND = HeavenSpells.span(Realm.VOID_SHATTERING, 10);
+	public static final int SHATTER_CRACKS = 12, SHATTER_CRACK_DEPTH = 9;
 
 	/** Whether {@code spell} can take hold for {@code p} now: a seal wants a being to seal (refused, nothing is paid). */
 	public static boolean canCast(LivingEntity p, Spell spell) {
@@ -377,7 +396,8 @@ public final class HeavenDemonSpells {
 	 * stands {@link #AVATAR_TICKS}, turning to where its caster looks. Twice ({@link #AVATAR_STRIKES}) it raises a hand and that hand comes
 	 * down out of the sky where its caster looks (up to {@link #AVATAR_RANGE}; AVATAR_PALM, then AVATAR_CLAW): all within
 	 * {@link #AVATAR_RADIUS} are struck for {@link #AVATAR_DAMAGE}, thrown down and slowed, and {@link #AVATAR_MENDS} of all of it mends the
-	 * caster. The land is left as it was. Its caster gone, it goes.
+	 * caster. The palm crushes a crater into the land, the claw rakes gouges through it ({@link #wound}; the user's ask, 2026-10-24: before,
+	 * the land was left as it was). Its caster gone, it goes.
 	 */
 	public static final class Avatar extends HeavenSpells.Timed {
 		private final Spell spell;
@@ -453,8 +473,30 @@ public final class HeavenDemonSpells {
 			SpellFx.send(level, SpellFx.Kind.FLASH, hand.ground().add(0, 2, 0), Vec3.ZERO, 5.0f, hand.palm() ? GOLD : CRIMSON, 192);
 			HeavenSpells.ring(level, hand.ground().add(0, 0.3, 0), AVATAR_RADIUS, hand.palm() ? gold(2.5f) : crimson(2.5f), 72);
 			if (!hand.palm()) rake(level, hand.ground().add(0, 1, 0), hand.ground().subtract(avatar.position()), AVATAR_RADIUS * 1.2, 5);
+			wound(hand);
 			HeavenSpells.sound(level, hand.ground(), SoundEvents.GENERIC_EXPLODE, 4.0f, 0.6f);
 			HeavenSpells.sound(level, hand.ground(), hand.palm() ? SoundEvents.ANVIL_LAND : SoundEvents.RAVAGER_ATTACK, 3.0f, 0.5f);
+		}
+
+		/**
+		 * The land under a hand come down (a player's: Devastation): heaven's palm crushes a crater with cracks running out of it; the
+		 * demon's claw rakes {@link #AVATAR_GOUGES} gouges across the way it came down, its claws' marks, and a lesser crater where it struck.
+		 */
+		private void wound(Hand hand) {
+			Vec3 at = hand.ground();
+			if (hand.palm()) {
+				Devastation.crater(caster, level, at, AVATAR_PALM_CRATER, AVATAR_PALM_DEPTH, Devastation.Floor.RUBBLE);
+				Devastation.fissures(caster, level, at, AVATAR_PALM_CRATER * 2.2, 8, 6, AVATAR_PALM_CRATER * 0.8);
+				return;
+			}
+			Vec3 way = at.subtract(avatar.position()).multiply(1, 0, 1);
+			way = way.lengthSqr() < 1.0e-4 ? new Vec3(0, 0, 1) : way.normalize();
+			Vec3 side = new Vec3(-way.z, 0, way.x);
+			for (int k = 0; k < AVATAR_GOUGES; k++) {
+				Vec3 middle = at.add(way.scale((k - (AVATAR_GOUGES - 1) / 2.0) * (AVATAR_GOUGE_WIDTH + 2.5)));
+				Devastation.gouge(caster, level, middle.subtract(side.scale(AVATAR_GOUGE / 2)), middle.add(side.scale(AVATAR_GOUGE / 2)), AVATAR_GOUGE_WIDTH, AVATAR_GOUGE_DEPTH);
+			}
+			Devastation.crater(caster, level, at, AVATAR_CLAW_CRATER, AVATAR_GOUGE_DEPTH * 0.6, Devastation.Floor.RUBBLE);
 		}
 
 		@Override
@@ -471,7 +513,8 @@ public final class HeavenDemonSpells {
 	 * heaven's gauntlet of gold plates, a demon's crimson claws closed in it) and punches out to where they look (the being looked at, up to
 	 * {@link #SHATTER_RANGE}; {@link #SHATTER_FLIGHT} ticks): where it lands space itself shatters like glass (SHATTERED_SPACE): everything
 	 * within {@link #SHATTER_RADIUS} takes {@link #SHATTER_DAMAGE} and is thrown out, and the shattered space hangs there {@link #SHATTER_TICKS},
-	 * cutting whoever stays in it for {@link #SHATTER_CUTS} a second. The land is left as it was.
+	 * cutting whoever stays in it for {@link #SHATTER_CUTS} a second. The land under it shatters too: a crater, cracks running out of it
+	 * (the user's ask, 2026-10-24: before, the land was left as it was).
 	 */
 	public static final class Shatter extends HeavenSpells.Timed {
 		private final Vec3 from, point;
@@ -526,6 +569,13 @@ public final class HeavenDemonSpells {
 			}
 			shattered = SpellConstruct.create(level, SpellConstruct.Kind.SHATTERED_SPACE, point, face[0], face[1], SHATTER_TICKS + SpellConstruct.FADE, caster)
 					.size((float) SHATTER_SPACE).tint(GOLD).spawn();
+			// The land shatters with the space over it (a player's: Devastation): a crater where it struck, cracks running out of it like a
+			// pane's; struck into a hillside or a wall, there; landed high over the land, none.
+			Vec3 land = level.getBlockState(BlockPos.containing(point)).isSolid() ? point : HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, (int) SHATTER_GROUND);
+			if (land != null) {
+				Devastation.crater(caster, level, land, SHATTER_CRATER, SHATTER_CRATER_DEPTH, Devastation.Floor.RUBBLE);
+				Devastation.fissures(caster, level, land, SHATTER_CRACK_REACH, SHATTER_CRACKS, SHATTER_CRACK_DEPTH, SHATTER_CRATER * 0.8);
+			}
 			SpellFx.send(level, SpellFx.Kind.FLASH, point, Vec3.ZERO, 10, GOLD_PALE, 192);
 			SpellFx.send(level, SpellFx.Kind.FLASH, point, Vec3.ZERO, 6, CRIMSON, 192);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, point, Vec3.ZERO, (float) SHATTER_RADIUS * 1.5f, 0, 192);

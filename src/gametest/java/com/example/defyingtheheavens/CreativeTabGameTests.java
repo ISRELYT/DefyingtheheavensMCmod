@@ -39,6 +39,14 @@ public class CreativeTabGameTests implements FabricGameTest {
 			helper.assertTrue(shown.stream().anyMatch(stack -> stack.is(ModItems.CORE_PILL) && PillItem.grade(stack) == grade), "Core Pills at " + grade + " grade");
 		}
 		helper.assertTrue(shown.size() > mods, "Some items show more than once, at each grade or style (" + shown.size() + " stacks, " + mods + " items)");
+		// Every realm's demon core (only Qi Refining's showed before: the user's report, 2026-10-24), and the spells' manuals.
+		for (Realm realm : Realm.values()) {
+			helper.assertTrue(shown.stream().anyMatch(stack -> stack.is(ModItems.DEMON_CORE) && DemonCoreItem.realm(stack) == realm), "A " + realm.getId() + " demon core");
+		}
+		for (Spell spell : Spell.values()) {
+			if (spell.isDual()) continue;
+			helper.assertTrue(shown.stream().anyMatch(stack -> TechniqueManualItem.spell(stack) == spell), "The manual of " + spell.getId());
+		}
 
 		JsonObject lang;
 		try (InputStream in = CreativeTabGameTests.class.getResourceAsStream("/assets/defying-the-heavens/lang/en_us.json")) {
@@ -48,6 +56,12 @@ public class CreativeTabGameTests implements FabricGameTest {
 			throw new RuntimeException(e);
 		}
 		helper.assertTrue(lang.has(ModLang.CREATIVE_TAB), "The tab's title is in the lang file");
+		// Every spell named and described in it: Void Shattering's showed their raw keys on the wheel, datagen not run after them
+		// (the user's report, 2026-10-24).
+		for (Spell spell : Spell.values()) {
+			String key = ModLang.spellKey(spell.getId());
+			helper.assertTrue(lang.has(key) && lang.has(key + ".description"), "The lang file names and describes " + spell.getId() + " (run runDatagen)");
+		}
 		helper.succeed();
 	}
 }

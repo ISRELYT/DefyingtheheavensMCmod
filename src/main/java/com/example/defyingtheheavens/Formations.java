@@ -243,6 +243,76 @@ public final class Formations {
 		return formation.allows(player) || rankOf(player) >= formation.getRank();
 	}
 
+	// --- The strong against a barrier (the user's ask, 2026-10-24) ---
+
+	/** A being this many stages (a realm) or more above a barrier empties it with any blow, shot or spell: the whole of it shatters. */
+	public static final int SHATTER_ABOVE = 4;
+	/**
+	 * What a blow on a barrier (its weight 1; a shot's 0.5, a spell's reach across it 2) costs its stored qi, its health
+	 * (FormationCoreBlockEntity#batter), from one just strong enough to break it: doubling for every two stages it stands above it.
+	 */
+	public static final double BATTER_COST = FormationCoreBlockEntity.BREACH_COST;
+	/** When each being last battered each barrier (game time): once a second at most. */
+	private static final Map<String, Long> BATTERED = new HashMap<>();
+
+	/** Whether {@code being} may break {@code formation} or is let through it: a player as {@link #canBreak}, any other by its rank and sect. */
+	public static boolean strongEnough(LivingEntity being, Formation formation) {
+		if (being == null) return false;
+		if (being instanceof Player player) return canBreak(player, formation);
+		return formation.allows(being) || CultivatorNpc.rankOf(being) >= formation.getRank();
+	}
+
+	/**
+	 * Whether a raised barrier enclosing {@code pos} keeps {@code caster}'s spells' wounds off it: one it isn't strong enough to break. One
+	 * strong enough carves the ground a barrier shelters as any other (before 2026-10-24 no spell touched it, however strong).
+	 */
+	public static boolean sheltersFrom(ServerLevel level, BlockPos pos, LivingEntity caster) {
+		for (Formation formation : FormationData.get(level).all()) {
+			if (formation.isRaised() && formation.encloses(pos) && !strongEnough(caster, formation)) return true;
+		}
+		return false;
+	}
+
+	/**
+	 * A spell's wound reaching a barrier's cell at {@code pos} (HeavenSpells#carvable): it takes the cell as it would the land if its caster
+	 * is strong enough to break the barrier, the breach costing the barrier as a cell broken by hand does (FormationCoreBlockEntity#onBreach)
+	 * and the blow battering it ({@link #batter}); else it stands. A cell no barrier claims goes. @return whether the cell may be taken
+	 */
+	public static boolean yields(ServerLevel level, BlockPos pos, LivingEntity caster) {
+		Formation formation = onShell(level, pos, null);
+		if (formation == null) return true;
+		if (!strongEnough(caster, formation)) return false;
+		batter(level, formation, caster, 2, pos);
+		if (formation.isRaised() && formation.kind == Formation.Kind.CORE && level.getBlockEntity(formation.center) instanceof FormationCoreBlockEntity core) core.onBreach();
+		return true;
+	}
+
+	/**
+	 * {@code by} assails {@code formation} at {@code at}, with {@code weight} (a blow 1, a shot 0.5, a spell 2; once a second for each being
+	 * and barrier): nothing from one too weak to break it, one it lets through, or a creative player; else its stored qi, its health, takes
+	 * {@link #BATTER_COST} times the weight, doubling for every two stages it stands above the barrier, and from one a realm or more above
+	 * it ({@link #SHATTER_ABOVE}: a True Immortal over all but the strongest) all of it: the whole barrier shatters at once
+	 * (FormationCoreBlockEntity#batter; a concealment, its cultivator's own, comes down). A sect is told it was assailed.
+	 */
+	public static void batter(ServerLevel level, Formation formation, LivingEntity by, double weight, BlockPos at) {
+		if (by == null || !formation.isRaised() || formation.allows(by) || by instanceof Player player && (player.isCreative() || player.isSpectator())) return;
+		int gap = CultivatorNpc.rankOf(by) - formation.getRank();
+		if (gap < 0) return;
+		long now = level.getGameTime();
+		String key = by.getUUID() + "/" + formation.id;
+		Long last = BATTERED.get(key);
+		if (last != null && now - last < 20) return;
+		BATTERED.put(key, now);
+		boolean shatters = gap >= SHATTER_ABOVE;
+		if (formation.kind == Formation.Kind.CORE && level.getBlockEntity(formation.center) instanceof FormationCoreBlockEntity core) {
+			core.batter(shatters ? Double.MAX_VALUE : BATTER_COST * weight * Math.pow(2, gap / 2.0));
+		} else if (shatters) {
+			lower(level, formation);
+		}
+		struck(level, at, shatters ? 3.0f : 1.4f);
+		if (by instanceof ServerPlayer player) assailed(level, formation, player, at, false);
+	}
+
 	/**
 	 * Whether a raised barrier stands between {@code a} and {@code b} (it encloses the one and not the other) that {@code crossing}
 	 * couldn't break or be let through ({@link #canBreak}; a cultivator by its own rank and sect): what it casts reaches no further
@@ -250,11 +320,15 @@ public final class Formations {
 	 */
 	public static boolean walls(ServerLevel level, BlockPos a, BlockPos b, LivingEntity crossing) {
 		if (crossing instanceof Player player && player.getAbilities().instabuild) return false;
-		for (Formation formation : FormationData.get(level).all()) {
+		for (Formation formation : java.util.List.copyOf(FormationData.get(level).all())) {
 			if (!formation.isRaised() || formation.encloses(a) == formation.encloses(b)) continue;
 			boolean passes = crossing instanceof Player player ? canBreak(player, formation)
 					: formation.allows(crossing) || CultivatorNpc.rankOf(crossing) >= formation.getRank();
 			if (!passes) return true;
+			// What it casts across a barrier it is strong enough for batters it (a realm above, shatters it): since 2026-10-24.
+			Vec3 heart = Vec3.atCenterOf(formation.center), toward = Vec3.atCenterOf(formation.encloses(b) ? a : b).subtract(heart);
+			if (toward.lengthSqr() < 1.0e-6) toward = new Vec3(1, 0, 0);
+			batter(level, formation, crossing, 2, BlockPos.containing(heart.add(toward.normalize().scale(formation.getRadius()))));
 		}
 		return false;
 	}
@@ -295,6 +369,7 @@ public final class Formations {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_BARRIER_TOO_STRONG), true);
 		}
 		assailed(level, formation, player, pos, false);
+		batter(level, formation, player, 1, pos); // one strong enough wears it down; a realm above it, shatters it
 	}
 
 	/** A player broke through a barrier block. */
@@ -676,7 +751,14 @@ public final class Formations {
 	}
 
 	/** Server stopped: nothing runtime-only may leak into the next world. */
+	/** A shot by {@code shooter} struck the barrier's cell at {@code pos} (ProjectileBarrierMixin): it batters the barrier as a blow does, at half. */
+	public static void shot(ServerLevel level, BlockPos pos, net.minecraft.world.entity.Entity shooter) {
+		Formation formation = onShell(level, pos, null);
+		if (formation != null && shooter instanceof LivingEntity living) batter(level, formation, living, 0.5, pos);
+	}
+
 	public static void clear() {
+		BATTERED.clear();
 		SWEEPS.clear();
 		ATTACK_COOLDOWN.clear();
 		syncSoon = false;

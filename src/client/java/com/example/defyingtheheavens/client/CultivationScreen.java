@@ -636,7 +636,7 @@ public class CultivationScreen extends Screen {
 				* HeavenMethods.cultivationFactor(c, method, method == null ? 0 : shareHere(method.element()), false) * c.meditationSpeed();
 		Component line;
 		if (method == null) {
-			line = Component.translatable(ModLang.METHOD_LINE_NONE, one(rate));
+			line = fit(w, Component.translatable(ModLang.METHOD_LINE_NONE, one(rate)), Component.literal("+" + one(rate) + "/s"));
 		} else {
 			int layer = c.heaven().layer(method);
 			line = c.isMaxed() ? fit(w, Component.translatable(ModLang.METHOD_BAR, method.getDisplayName(), layer, method.layers()),
@@ -646,7 +646,7 @@ public class CultivationScreen extends Screen {
 					Component.translatable(ModLang.METHOD_LINE_NAME, method.getDisplayName(), one(rate)),
 					Component.translatable(ModLang.METHOD_LINE_SHORT, layer, method.layers(), one(rate)));
 		}
-		g.drawCenteredString(font, line, cx, y, boost > 1.0 && rate > 0 ? 0x7FE0A0 : 0xB8B8B8);
+		centered(g, line, cx, y, w, boost > 1.0 && rate > 0 ? 0x7FE0A0 : 0xB8B8B8);
 		return y + 11;
 	}
 
@@ -666,7 +666,7 @@ public class CultivationScreen extends Screen {
 		y += 12;
 		y = heavenBar(g, c, method, x, y, w);
 		if (!drawing) { // another path's qi drawn in: the heaven path rests
-			g.drawCenteredString(font, Component.translatable(ModLang.COLUMN_RESTING), cx, y, 0x9E9E9E);
+			centered(g, Component.translatable(ModLang.COLUMN_RESTING), cx, y, w, 0x9E9E9E);
 			return y + 11;
 		}
 		return heavenMethodLine(g, player, c, method, boost, cx, y, w);
@@ -721,7 +721,7 @@ public class CultivationScreen extends Screen {
 					Component.translatable(ModLang.GHOST_COLUMN_PACE_SHORT, rate));
 			paceColor = 0x8FEAE4;
 		}
-		g.drawCenteredString(font, fit(w, pace), cx, y, paceColor);
+		centered(g, pace, cx, y, w, paceColor);
 		return y + 11;
 	}
 
@@ -758,11 +758,11 @@ public class CultivationScreen extends Screen {
 			pace = Component.translatable(ModLang.COLUMN_RESTING);
 		} else {
 			String rate = one(DemonPath.perSecond(c, 0) * c.meditationSpeed());
-			pace = fit(w, Component.translatable(ModLang.DEMON_COLUMN_PACE, DemonPath.bloodline(c).getDisplayName(), rate),
+			pace = fit(w, Component.translatable(ModLang.DEMON_COLUMN_PACE, DemonPath.race(c).getDisplayName(), rate),
 					Component.translatable(ModLang.DEMON_COLUMN_PACE_SHORT, rate));
 			paceColor = 0xF08070;
 		}
-		g.drawCenteredString(font, fit(w, pace), cx, y, paceColor);
+		centered(g, pace, cx, y, w, paceColor);
 		return y + 11;
 	}
 
@@ -771,6 +771,16 @@ public class CultivationScreen extends Screen {
 		List<Line> lines = new ArrayList<>();
 		int rank = DemonPath.rank(c);
 		if (rank < 0) return lines;
+		// A half-blood's blood, and how pure it has grown (DemonBlood: at the whole, it turns).
+		if (DemonPath.isHalfBlood(c)) {
+			addStatus(lines, Component.translatable(ModLang.HALF_BLOOD_LINE, DemonPath.race(c).getDisplayName(), Math.round(c.demon().purity() * 100)), 0xD06060, width);
+		}
+		if (DemonPath.heldByBlood(c)) {
+			// The realm ahead shut to it for want of its race's blood (DemonPath#heldByBlood), as a method wanted holds the heaven path.
+			addStatus(lines, Component.translatable(ModLang.DEMON_HELD_BY_BLOOD, DemonPath.realm(rank).getDisplayName(), DemonPath.race(c).getDisplayName(),
+					DemonPath.realm(rank + 1).getDisplayName()), 0xFFC107, width);
+			return lines;
+		}
 		if (DemonPath.isMaxed(c)) {
 			addStatus(lines, Component.translatable(ModLang.DEMON_PINNACLE), 0xFFD700, width);
 		} else if (DemonPath.atBottleneck(c) && DemonPath.locked(c)) {
@@ -2816,8 +2826,16 @@ public class CultivationScreen extends Screen {
 		return attribute.sanitizeValue(value);
 	}
 
+	/**
+	 * {@code v} to one decimal; from 100,000 by thousands, millions, billions or trillions (104.8B), so a high realm's numbers (a True
+	 * Immortal's cultivation a second runs to eleven figures) fit their columns.
+	 */
 	private static String one(double v) {
-		return String.format(Locale.ROOT, "%.1f", v);
+		double a = Math.abs(v);
+		if (a < 100_000) return String.format(Locale.ROOT, "%.1f", v);
+		String[] units = {"K", "M", "B", "T"};
+		int u = Math.min(units.length - 1, (int) (Math.log10(a) / 3) - 1);
+		return String.format(Locale.ROOT, "%.1f%s", v / Math.pow(1000, u + 1), units[u]);
 	}
 
 	private static String num(double v) {

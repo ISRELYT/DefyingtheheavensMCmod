@@ -3,6 +3,7 @@ package com.example.defyingtheheavens.client;
 import com.example.defyingtheheavens.BeastKind;
 import com.example.defyingtheheavens.DefyingTheHeavens;
 import com.example.defyingtheheavens.DemonBeast;
+import com.example.defyingtheheavens.DemonBloodItem;
 import com.example.defyingtheheavens.DemonCoreItem;
 import com.example.defyingtheheavens.ModEntities;
 import com.example.defyingtheheavens.ModItems;
@@ -41,6 +42,10 @@ public final class BeastModels {
 		ItemProperties.register(ModItems.DEMON_CORE, DefyingTheHeavens.id("realm"),
 				(stack, level, entity, seed) -> DemonCoreItem.look(stack) / (float) (DemonCoreItem.LOOKS - 1));
 		ColorProviderRegistry.ITEM.register((stack, tint) -> tint == 1 ? DemonCoreItem.glow(stack) : -1, ModItems.DEMON_CORE);
+		// A race's blood likewise: its phial by its realm (models/item/demon_blood_*), its blood (layer 1) its race's hue.
+		ItemProperties.register(ModItems.DEMON_BLOOD, DefyingTheHeavens.id("realm"),
+				(stack, level, entity, seed) -> DemonBloodItem.look(stack) / (float) (DemonBloodItem.LOOKS - 1));
+		ColorProviderRegistry.ITEM.register((stack, tint) -> tint == 1 ? DemonBloodItem.tint(stack) : -1, ModItems.DEMON_BLOOD);
 	}
 
 	/** Draws a beast of {@code kind}: its model grown by its rank, its shadow with it, what of it glows glowing in the dark. */

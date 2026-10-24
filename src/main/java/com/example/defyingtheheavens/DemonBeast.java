@@ -390,6 +390,9 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 		super.dropCustomDeathLoot(source, looting, recentlyHit);
 		int realm = Math.min(CORE_CHANCE.length - 1, getCultivationRealm().ordinal());
 		if (random.nextFloat() < CORE_CHANCE[realm]) spawnAtLocation(DemonCoreItem.of(Math.max(0, getRank()), kind().element, kind().getDisplayName()));
+		// A beast of a demon race's kin leaves that race's blood, of its realm, as often as its core (DemonBlood#kin).
+		Bloodline kin = DemonBlood.kin(kind());
+		if (kin != null && random.nextFloat() < CORE_CHANCE[realm]) spawnAtLocation(DemonBloodItem.of(kin, getCultivationRealm()));
 		for (net.minecraft.world.item.Item remains : kind().remains()) {
 			int count = random.nextInt(2 + looting) + (getRank() >= kind().tier.maxRank - 1 ? 1 : 0);
 			if (count > 0) spawnAtLocation(new ItemStack(remains, count));

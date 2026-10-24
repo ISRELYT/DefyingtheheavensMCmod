@@ -90,6 +90,8 @@ public final class MetalSpells {
 	public static final float SEVER_DAMAGE = 300;
 	/** Its slit {@link #SEVER_THICK} tall at its middle: half what it was (the user's ask, 2026-10-23; 10). */
 	public static final float SEVER_RADIUS = 60, SEVER_SPAN = 2.3f, SEVER_THICK = 5, SEVER_LIFT = 1.3f;
+	/** The slit it cuts in the land, of its blade's height: half (the user's ask, 2026-10-24: the slash's wound half as tall again). */
+	public static final double SEVER_CUT_SHARE = 0.5;
 
 	/**
 	 * The severing slash's way, asked to load (out to its tips) and tick (round its middle) the moment it is cast, and again just
@@ -564,7 +566,7 @@ public final class MetalSpells {
 			if (!casterHere()) return false;
 			field.setPos(caster.getX(), caster.getY(), caster.getZ());
 			if (age % 10 == 5) {
-				for (LivingEntity e : HeavenSpells.around(caster, DOMAIN_RADIUS, e -> !HeavenSpells.friendly(caster, e) && !HeavenSpells.spared(caster, e))) {
+				for (LivingEntity e : HeavenSpells.around(caster, DOMAIN_RADIUS, e -> HeavenSpells.mark(caster, e))) {
 					HeavenSpells.strikeAgain(caster, e, DOMAIN_DAMAGE, spell);
 					SpellFx.send(level, SpellFx.Kind.STREAK, HeavenSpells.middle(caster).add(0, 1, 0), HeavenSpells.middle(e), 1, 0xF4F0D8);
 					SpellFx.send(level, SpellFx.Kind.METAL_SPARKS, HeavenSpells.middle(e), Vec3.ZERO, 0.6f, 0);
@@ -675,7 +677,9 @@ public final class MetalSpells {
 					double lag = severLag(w), thick = severThickness(w);
 					double fFrom = Math.max(0, bowBefore - lag), fTo = bowNow - lag;
 					if (fTo < 0 || thick <= 0) continue;
-					int yLo = (int) Math.floor(bladeY - thick / 2), yHi = (int) Math.floor(bladeY + thick / 2);
+					// The land cut half as tall as the blade (SEVER_CUT_SHARE: the user's ask, 2026-10-24), from the blade's lower edge up: the
+					// ground under it still scoured, the slit in a hill half as high; what it strikes, its whole height.
+					int yLo = (int) Math.floor(bladeY - thick / 2), yHi = (int) Math.floor(bladeY - thick / 2 + thick * SEVER_CUT_SHARE);
 					for (double f = Math.ceil(fFrom * 2) / 2; f <= fTo; f += 0.5) {
 						BlockPos column = BlockPos.containing(from.add(flat.scale(f)).add(side.scale(w)));
 						if (columns.add(BlockPos.asLong(column.getX(), 0, column.getZ()))) cut.add(new int[]{column.getX(), column.getZ(), yLo, yHi});
@@ -749,7 +753,7 @@ public final class MetalSpells {
 				HeavenSpells.sound(level, at, SoundEvents.GENERIC_EXPLODE, 5.0f, 0.4f);
 			}
 			for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, new net.minecraft.world.phys.AABB(at, at).inflate(ARRAY_HALF + 3, 32, ARRAY_HALF + 3),
-					e -> !HeavenSpells.friendly(caster, e) && !HeavenSpells.spared(caster, e))) {
+					e -> HeavenSpells.mark(caster, e))) {
 				if (!inside(e.position(), 2.5)) continue;
 				// Held in: at its edge, thrown back toward its middle.
 				if (!inside(e.position(), -1.0)) {
@@ -1188,7 +1192,7 @@ public final class MetalSpells {
 			if (age == meetsAt) meet();
 			if (age < landsAt || age >= closesAt) return true;
 			long holding = age - landsAt;
-			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, PRISON_RADIUS + 30, e -> !HeavenSpells.friendly(caster, e) && !HeavenSpells.spared(caster, e))) {
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, PRISON_RADIUS + 30, e -> HeavenSpells.mark(caster, e))) {
 				if (!inside(e, 2.5)) continue;
 				// Held in: at its edge, thrown back toward its heart.
 				if (!inside(e, -1.0)) {
@@ -1206,7 +1210,7 @@ public final class MetalSpells {
 
 		/** The last two swords meet in its heart: every foe inside struck, a pit where they met. */
 		private void meet() {
-			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, PRISON_RADIUS + 30, e -> !HeavenSpells.friendly(caster, e) && !HeavenSpells.spared(caster, e))) {
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, PRISON_RADIUS + 30, e -> HeavenSpells.mark(caster, e))) {
 				if (!inside(e, 1.5)) continue;
 				e.invulnerableTime = 0;
 				HeavenSpells.strike(caster, e, PRISON_MEETING, spell);

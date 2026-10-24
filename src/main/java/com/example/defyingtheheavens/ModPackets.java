@@ -533,6 +533,10 @@ public final class ModPackets {
 		buf.writeDouble(c.demon().cultivation());
 		buf.writeBoolean(c.demon().cultivating());
 		buf.writeVarInt(c.demon().bloodline().ordinal());
+		// What of a race's blood it has drunk (DemonBlood): the realm its blood is awake to (-1 none), a half-blood's race (-1 none), its purity.
+		buf.writeVarInt(c.demon().bloodRealm());
+		buf.writeVarInt(c.demon().halfBlood() == null ? -1 : c.demon().halfBlood().ordinal());
+		buf.writeDouble(c.demon().purity());
 		ServerPlayNetworking.send(player, SYNC, buf);
 	}
 
@@ -764,6 +768,8 @@ public final class ModPackets {
 			buf.writeInt(formation.getRank());
 			buf.writeBoolean(formation.getOwner() != null);
 			if (formation.getOwner() != null) buf.writeUUID(formation.getOwner());
+			buf.writeBoolean(formation.getSect() != null); // its sect: a guest pass of it carried lets one through (SectPassItem)
+			if (formation.getSect() != null) buf.writeUUID(formation.getSect());
 			// A sect's barrier lets its player disciples and its guests through (SectMembership): on the client they are among the trusted.
 			java.util.Set<UUID> trusted = new java.util.LinkedHashSet<>(formation.getTrusted());
 			Sect sect = formation.getSect() == null ? null : SectManager.get(to.server, formation.getSect());

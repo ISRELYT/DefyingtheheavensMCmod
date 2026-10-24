@@ -63,7 +63,10 @@
       "com.example.defyingtheheavens.NpcSpellsGameTests",
       "com.example.defyingtheheavens.DaoIntegrationSpellsGameTests",
       "com.example.defyingtheheavens.VoidShatteringSpellsGameTests",
-      "com.example.defyingtheheavens.PathCommandsGameTests"
+      "com.example.defyingtheheavens.PathCommandsGameTests",
+      "com.example.defyingtheheavens.DemonBloodGameTests",
+      "com.example.defyingtheheavens.SpellFixesGameTests",
+      "com.example.defyingtheheavens.BarrierPassGameTests"
     ]
   }
 }

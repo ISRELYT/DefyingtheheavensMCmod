@@ -256,9 +256,13 @@ public class FormationCoreScreen extends Screen {
 		y += 3;
 		Component status = state.cooldown() > 0 ? Component.translatable(ModLang.CORE_SHATTERED, state.cooldown())
 				: Component.translatable(state.raised() ? ModLang.CORE_RAISED : ModLang.CORE_LOWERED);
-		g.drawCenteredString(font, status, cx, y, state.raised() ? 0x69F0AE : 0xFFC107);
+		// Wrapped to the panel, as the lines above it are (the shattered barrier's countdown ran out past both its sides: 2026-10-24).
+		for (FormattedCharSequence line : font.split(status, WIDTH - 24)) {
+			g.drawCenteredString(font, line, cx, y, state.raised() ? 0x69F0AE : 0xFFC107);
+			y += 10;
+		}
 		if (state.veins() == 0) {
-			int hy = y + 12;
+			int hy = y + 2;
 			for (FormattedCharSequence line : font.split(Component.translatable(ModLang.CORE_HINT), WIDTH - 24)) {
 				g.drawCenteredString(font, line, cx, hy, 0x8A8A9A);
 				hy += 10;

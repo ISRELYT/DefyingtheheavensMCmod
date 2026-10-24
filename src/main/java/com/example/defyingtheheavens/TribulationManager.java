@@ -411,6 +411,10 @@ public final class TribulationManager {
 			player.sendSystemMessage(FourAxis.gateLine(c, DemonPath.rank(c)).copy().withStyle(net.minecraft.ChatFormatting.GOLD));
 			return;
 		}
+		if (DemonPath.heldByBlood(c)) { // the realm ahead shut for want of its race's blood (DemonBlood)
+			player.sendSystemMessage(DemonPath.bloodGateLine(c).copy().withStyle(net.minecraft.ChatFormatting.GOLD));
+			return;
+		}
 		if (!DemonPath.canBreakthrough(c)) {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_NOT_READY), true);
 			return;

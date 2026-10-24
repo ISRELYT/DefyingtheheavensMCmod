@@ -14,9 +14,12 @@ import net.minecraft.sounds.SoundSource;
  * <ul>
  *   <li><b>A demon</b> (Bloodline#isBeast) is born with its demon core: its Demon Path begins at Qi Refining Early, and it is never a
  *       mortal, its core having opened its meridians ({@link #born}: on joining, on choosing its blood, born again).</li>
- *   <li><b>A human</b> forms a demon core only once a beast's bloodline is awakened in it (to come): until then the path is closed to it.</li>
- *   <li><b>No method, pill or ritual</b> carries it: its bloodline does. The bloodline's inheritance teaches the race's own element's
- *       spells as the path climbs ({@link #inherits}): the Tiger's Metal, the Lizard's Earth, the Fox's Fire, the Dragon's Wood.</li>
+ *   <li><b>A human</b> forms a demon core by drinking a race's blood (DemonBlood, the user's ask, 2026-10-24): a half-blood
+ *       ({@link #isHalfBlood}), its look its own, its race's gifts at half strength; too much blood, or blood far above its other
+ *       paths, and it is that race's wholly. Until then the path is closed to it.</li>
+ *   <li><b>No method, pill or ritual</b> carries it: its blood does. The race's blood, drunk, opens its realms as a method does the
+ *       heaven path's ({@link #heldByBlood}); the bloodline's inheritance teaches the race's own element's spells as the path climbs
+ *       ({@link #inherits}): the Tiger's Metal, the Lizard's Earth, the Fox's Fire, the Dragon's Wood.</li>
  *   <li>It is cultivated as the heaven path is, at its own realm's pace, by its race's ({@link #racePace}: the Dragon slowest).</li>
  *   <li>Its body is the mightier ({@link #BODY}); it shares the qi pool, its own share of it smaller ({@link #QI_SHARE}).</li>
  * </ul>
@@ -46,15 +49,43 @@ public final class DemonPath {
 		};
 	}
 
-	/** {@code c}'s blood (DemonState#bloodline, kept as the world's Bloodlines says). */
+	/** {@code c}'s blood (DemonState#bloodline, kept as the world's Bloodlines says): a half-blood's is a human's. */
 	public static Bloodline bloodline(PlayerCultivation c) {
 		return c.demon().bloodline();
 	}
 
-	/** One of the demon races. */
+	/** One of the demon races (born to it, or turned: DemonBlood). A half-blood is not. */
 	public static boolean isDemon(PlayerCultivation c) {
 		return bloodline(c).isBeast();
 	}
+
+	/**
+	 * A human with a race's blood in it (DemonBlood, the user's ask, 2026-10-24): a demon core and the Demon Path, its race's gifts at
+	 * half strength ({@link #giftStrength}), its look and all else a human's.
+	 */
+	public static boolean isHalfBlood(PlayerCultivation c) {
+		return !isDemon(c) && c.demon().halfBlood() != null;
+	}
+
+	/** The race whose demon core {@code c} has: its own (a demon's), the blood it drank (a half-blood's), or a human's (none). */
+	public static Bloodline race(PlayerCultivation c) {
+		if (isDemon(c)) return bloodline(c);
+		Bloodline half = c.demon().halfBlood();
+		return half == null ? Bloodline.HUMAN : half;
+	}
+
+	/** Whether {@code c} has a demon core: a demon, or a half-blood. */
+	public static boolean hasCore(PlayerCultivation c) {
+		return race(c).isBeast();
+	}
+
+	/** How strong its race's gifts are in {@code c} (RaceGifts): a demon's whole, a half-blood's half, a human's none. */
+	public static double giftStrength(PlayerCultivation c) {
+		return isDemon(c) ? 1.0 : isHalfBlood(c) ? HALF_BLOOD_GIFTS : 0.0;
+	}
+
+	/** A half-blood's gifts, of a demon's. */
+	public static final double HALF_BLOOD_GIFTS = 0.5;
 
 	/** How fast {@code bloodline} cultivates the Demon Path: the Dragon the slowest, the rest alike. */
 	public static double racePace(Bloodline bloodline) {
@@ -65,7 +96,7 @@ public final class DemonPath {
 
 	/** The Demon Path's rank (PlayerCultivation#rank), or -1: no demon core (a human's, or not begun). */
 	public static int rank(PlayerCultivation c) {
-		return isDemon(c) ? c.demon().rank() : -1;
+		return hasCore(c) ? c.demon().rank() : -1;
 	}
 
 	public static Realm realm(int rank) {
@@ -113,9 +144,24 @@ public final class DemonPath {
 		return atBottleneck(c) && FourAxis.holds(c, rank(c));
 	}
 
+	/**
+	 * At a realm's Grand Perfection with its blood not awakened to the realm ahead (DemonState#bloodRealm): the breakthrough waits on
+	 * drinking its race's blood of that realm or higher (DemonBlood), as the heaven path's waits on a method of it.
+	 */
+	public static boolean heldByBlood(PlayerCultivation c) {
+		int rank = rank(c);
+		return atBottleneck(c) && stage(rank).isLast() && !isMaxed(c) && c.demon().bloodRealm() < realm(rank).ordinal() + 1;
+	}
+
+	/** Why its breakthrough waits on blood ({@link #heldByBlood}): its race's of the realm ahead, or higher. */
+	public static Component bloodGateLine(PlayerCultivation c) {
+		int rank = rank(c);
+		return Component.translatable(ModLang.DEMON_HELD_BY_BLOOD, realm(rank).getDisplayName(), race(c).getDisplayName(), realm(rank + 1).getDisplayName());
+	}
+
 	/** Ready for its tribulation. */
 	public static boolean canBreakthrough(PlayerCultivation c) {
-		return atBottleneck(c) && !isMaxed(c) && !locked(c) && !heldByAxis(c);
+		return atBottleneck(c) && !isMaxed(c) && !locked(c) && !heldByAxis(c) && !heldByBlood(c);
 	}
 
 	public static Component rankName(int rank) {
@@ -155,7 +201,7 @@ public final class DemonPath {
 		int rank = rank(c);
 		if (rank < 0 || c.sustained(rank) < rank) return 0;
 		double rate = realm(rank).getCultivationPerSecond() * stage(rank).getPowerMultiplier() + bonus;
-		return rate * c.placeFactor() * c.favourFactor() * c.physiqueCultivationFactor() * StatPoints.cultivationFactor(c) * racePace(bloodline(c));
+		return rate * c.placeFactor() * c.favourFactor() * c.physiqueCultivationFactor() * StatPoints.cultivationFactor(c) * racePace(race(c));
 	}
 
 	/** Its tribulation survived: on to the next stage, its bar empty. */
@@ -199,7 +245,7 @@ public final class DemonPath {
 	 * dead's).
 	 */
 	public static boolean inherits(PlayerCultivation c, Spell spell) {
-		QiElement element = element(bloodline(c));
+		QiElement element = element(race(c));
 		return element != null && spell.element() == element && !c.netherworld().ghost() && rank(c) >= spell.realmNeeded();
 	}
 
@@ -218,6 +264,10 @@ public final class DemonPath {
 		boolean changed = c.demon().bloodline() != bloodline;
 		c.demon().setBloodline(bloodline);
 		if (bloodline.isBeast()) changed |= mendShattered(player, c);
+		if (bloodline.isBeast() && c.demon().halfBlood() != null) { // a half-blood turned (DemonBlood#turn): wholly its race's now
+			c.demon().setHalfBlood(null);
+			changed = true;
+		}
 		if (bloodline.isBeast() && !c.demon().begun()) {
 			c.demon().set(0, 0);
 			if (c.isMortal() && !c.hasShatteredMeridians()) {
@@ -229,6 +279,10 @@ public final class DemonPath {
 			player.playNotifySound(SoundEvents.ENDER_DRAGON_GROWL, SoundSource.PLAYERS, 0.4f, 1.6f);
 			Journal.note(player, "demon_path", ModLang.JOURNAL_DEMON_PATH, Component.translatable(ModLang.JOURNAL_DEMON_PATH_TEXT,
 					bloodline.getDisplayName(), element(bloodline).getDisplayName()));
+			changed = true;
+		}
+		if (bloodline.isBeast() && c.demon().bloodRealm() < 0) { // born with its race's blood awake to Qi Refining
+			c.demon().setBloodRealm(Realm.QI_REFINING.ordinal());
 			changed = true;
 		}
 		if (changed) {
@@ -264,7 +318,7 @@ public final class DemonPath {
 		player.displayClientMessage(Component.translatable(ModLang.MSG_DEMON_STAGE_UP, rankName(rank)).withStyle(ChatFormatting.RED), true);
 		boolean any = false;
 		for (Spell spell : Spell.values()) {
-			if (spell.element() == null || spell.element() != element(bloodline(c))) continue;
+			if (spell.element() == null || spell.element() != element(race(c))) continue;
 			if (spell.realmNeeded() <= before || spell.realmNeeded() > rank) continue;
 			c.netherworld().addToWheel(spell);
 			player.sendSystemMessage(Component.translatable(ModLang.MSG_DEMON_INHERITS, spell.getDisplayName()).withStyle(ChatFormatting.RED));

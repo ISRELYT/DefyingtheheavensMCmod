@@ -25,7 +25,8 @@ import java.util.UUID;
 
 /**
  * Casting spells (see Spell). The spell wheel (held open by its key) readies a spell with a click, or casts one at once with a
- * right click; the cast key casts the readied one. A cast needs the spell's layer, its ghostly qi, and its cooldown past; not
+ * right click; the cast key casts the readied one. A cast needs the spell's layer, its ghostly qi, and its cooldown past (a
+ * player's only while the gamerule spellCooldowns is on: off by default since 2026-10-24, {@link #cooldownsHeld}); not
  * on the Soul River, and not while dispersed. A spell of both paths (TwoPaths, HeavenDemonSpells) needs the heaven path and the
  * Demon Path at its realm, and costs qi alone; the ghost foundations' great spells from Dao Integration on are GhostSpells'.
  */
@@ -110,7 +111,7 @@ public final class Spells {
 		}
 		long now = p.level().getGameTime();
 		long readyAt = cooldowns(p).getOrDefault(spell, 0L);
-		if (now < readyAt) {
+		if (now < readyAt && cooldownsHeld(p)) {
 			HeavenSpells.tell(p, Component.translatable(ModLang.MSG_SPELL_COOLING, spell.getDisplayName(), (readyAt - now + 19) / 20));
 			return;
 		}
@@ -190,6 +191,11 @@ public final class Spells {
 		if (p instanceof ServerPlayer player) return CultivationManager.own(player).netherworld().spellReady();
 		if (p instanceof CultivatorNpc npc) return npc.cultivation().netherworld().spellReady();
 		return new java.util.EnumMap<>(Spell.class);
+	}
+
+	/** Whether {@code p}'s spells wait out their cooldowns: a cultivator's always, a player's while the gamerule spellCooldowns is on. */
+	public static boolean cooldownsHeld(LivingEntity p) {
+		return !(p instanceof ServerPlayer player) || player.serverLevel().getGameRules().getBoolean(ModGameRules.SPELL_COOLDOWNS);
 	}
 
 	/** Ticks until {@code spell} can be cast again by {@code p}. */
@@ -618,9 +624,10 @@ public final class Spells {
 		sync(p);
 	}
 
-	/** Tells the client its methods, active method, readied spell, spell wheel and cooldowns. */
+	/** Tells the client its methods, active method, readied spell, spell wheel and cooldowns (none, while they aren't heeded). */
 	public static void sync(ServerPlayer p) {
-		ModPackets.sendMethods(p, CultivationManager.get(p).netherworld(), spell -> cooldownLeft(p, spell));
+		boolean held = cooldownsHeld(p);
+		ModPackets.sendMethods(p, CultivationManager.get(p).netherworld(), spell -> held ? cooldownLeft(p, spell) : 0);
 	}
 
 	public static void forget(UUID id) {

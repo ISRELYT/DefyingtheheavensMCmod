@@ -1940,7 +1940,11 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	@Override
 	protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
 		super.dropCustomDeathLoot(source, looting, recentlyHit);
-		if (isDemon() && !isMortal() && !isGhost()) spawnAtLocation(DemonCoreItem.of(getRank(), DemonPath.element(getBloodline()), getName()));
+		if (isDemon() && !isMortal() && !isGhost()) {
+			spawnAtLocation(DemonCoreItem.of(getRank(), DemonPath.element(getBloodline()), getName()));
+			// Now and then its race's blood, of its realm (DemonBlood).
+			if (random.nextFloat() < DemonBlood.NPC_CHANCE) spawnAtLocation(DemonBloodItem.of(getBloodline(), DemonPath.realm(getRank())));
+		}
 		for (ItemStack stack : carriedStones(getRank(), random)) spawnAtLocation(stack);
 		for (ItemStack stack : winnings) spawnAtLocation(stack);
 		winnings.clear();

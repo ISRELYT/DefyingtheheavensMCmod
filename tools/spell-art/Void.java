@@ -346,8 +346,9 @@ public class Void {
 		boolean reaches = k < ROOTS;
 		int i = reaches ? k : k - ROOTS;
 		double th = Math.toRadians(reaches ? 360.0 * i / ROOTS + 14 * Math.sin(i * 2.3) : 360.0 * (i + 0.5) / HANGING + 20 * Math.sin(i * 1.7));
-		double reach = reaches ? 34 + 26 * SpellArt.hash(i, 3, 91) : 10 + 18 * SpellArt.hash(i, 5, 91);
-		double depth = reaches ? ROOT_DROP + 2 : ROOT_DROP * (0.22 + 0.36 * SpellArt.hash(i, 7, 91));
+		// The hanging ones half to nine tenths of the way down to the land (a quarter to half before 2026-10-24: the user's ask for longer roots).
+		double reach = reaches ? 34 + 26 * SpellArt.hash(i, 3, 91) : 12 + 22 * SpellArt.hash(i, 5, 91);
+		double depth = reaches ? ROOT_DROP + 2 : ROOT_DROP * (0.5 + 0.4 * SpellArt.hash(i, 7, 91));
 		double out = reach * Math.pow(Math.sin(s * Math.PI / 2), reaches ? 1.4 : 1.1), down = depth * Math.pow(s, reaches ? 1.3 : 1.15);
 		double wobble = (reaches ? 3.5 : 2.5) * Math.sin(s * 6 + k * 1.3);
 		return SpellArt.v3(Math.sin(th) * out + Math.cos(th) * wobble, -down, Math.cos(th) * out - Math.sin(th) * wobble);
@@ -361,8 +362,8 @@ public class Void {
 
 	/**
 	 * Void Withering's roots, spilling out of the rift they come through (just over the origin): a gnarled knot of the void tree's black wood
-	 * ("knot") and fourteen roots ("hang_<k>", each of three bones "", "_1", "_2" down it) hanging from it, dangling, a quarter to half the way
-	 * down to the land; threads of green-white life winding up them all. (Great roots reaching the land, "root_<k>", if {@link #ROOTS} had any:
+	 * ("knot") and fourteen roots ("hang_<k>", each of three bones "", "_1", "_2" down it) hanging from it, dangling, half to nine tenths of
+	 * the way down to the land; threads of green-white life winding up them all. (Great roots reaching the land, "root_<k>", if {@link #ROOTS} had any:
 	 * since 2026-10-24 the roots that reach out are the spell's grasping ones, drawn by hand.)
 	 */
 	static void voidRoots(SpellArt.Model m) {

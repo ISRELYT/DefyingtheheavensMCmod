@@ -114,13 +114,14 @@ public final class WoodSpells {
 	public static final int THUNDER_JADE = 0x5CF0A0;
 	/**
 	 * Void Withering: where (up to {@link #WITHER_RANGE}, 118), how high over the land its rift opens (33) and how long it is, how far round
-	 * the void tree's roots reach and drink (37), how high they haul what they seize (9, by its realm) and how many they hold at once; what each
-	 * foe is drained a second; when the roots come out of the rift (it open), when they begin to seize and drink, how long they drink, and how
-	 * long a seizing root takes to lash out to its catch (TendrilRenderer#LASH: then it hauls).
+	 * the void tree's roots reach and drink (52; 37 before 2026-10-24, the user's ask for longer roots), how far over the rift and down into
+	 * the land under it ({@link #WITHER_OVER}, {@link #WITHER_BELOW}), how high they haul what they seize (9, by its realm) and how many they
+	 * hold at once; what each foe is drained a second; when the roots come out of the rift (it open), when they begin to seize and drink, how
+	 * long they drink, and how long a seizing root takes to lash out to its catch (TendrilRenderer#LASH: then it hauls).
 	 */
 	public static final double WITHER_RANGE = HeavenSpells.span(Realm.VOID_SHATTERING, 64), WITHER_HIGH = HeavenSpells.span(Realm.VOID_SHATTERING, 18),
-			WITHER_RIFT = HeavenSpells.span(Realm.VOID_SHATTERING, 13), WITHER_RADIUS = HeavenSpells.span(Realm.VOID_SHATTERING, 20),
-			WITHER_LIFT = HeavenSpells.span(Realm.VOID_SHATTERING, 5);
+			WITHER_RIFT = HeavenSpells.span(Realm.VOID_SHATTERING, 13), WITHER_RADIUS = HeavenSpells.span(Realm.VOID_SHATTERING, 28),
+			WITHER_LIFT = HeavenSpells.span(Realm.VOID_SHATTERING, 5), WITHER_OVER = 8, WITHER_BELOW = HeavenSpells.span(Realm.VOID_SHATTERING, 22);
 	public static final float WITHER_DRAIN = 200;
 	public static final int WITHER_GRASPS = 8, WITHER_ROOTS = 10, WITHER_OPENS = 20, WITHER_TICKS = 8 * 20, WITHER_LASH = 7;
 
@@ -701,7 +702,7 @@ public final class WoodSpells {
 			super(caster, LOTUS_TICKS);
 			this.at = caster.position();
 			this.field = SpellField.create(level, SpellField.Kind.LOTUS, at, (float) LOTUS_RADIUS, 2, LOTUS_TICKS, caster).spawn();
-			for (LivingEntity e : HeavenSpells.aroundPoint(level, at, LOTUS_RADIUS, e -> HeavenSpells.friendly(caster, e))) {
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, at, LOTUS_RADIUS, e -> HeavenSpells.blessed(caster, e))) {
 				for (MobEffectInstance effect : List.copyOf(e.getActiveEffects())) {
 					if (effect.getEffect().getCategory() == MobEffectCategory.HARMFUL) e.removeEffect(effect.getEffect());
 				}
@@ -714,7 +715,7 @@ public final class WoodSpells {
 		@Override
 		protected boolean run(long age, long now) {
 			if (age % 20 == 10) {
-				for (LivingEntity e : HeavenSpells.aroundPoint(level, at, LOTUS_RADIUS, e -> HeavenSpells.friendly(caster, e))) HeavenSpells.mend(e, LOTUS_HEAL);
+				for (LivingEntity e : HeavenSpells.aroundPoint(level, at, LOTUS_RADIUS, e -> HeavenSpells.blessed(caster, e))) HeavenSpells.mend(e, LOTUS_HEAL);
 			}
 			return true;
 		}
@@ -770,7 +771,7 @@ public final class WoodSpells {
 		Spring(LivingEntity caster) {
 			super(caster, SPRING_TICKS);
 			this.field = SpellField.create(level, SpellField.Kind.SPRING_RAIN, caster.position(), (float) SPRING_RADIUS, 18, SPRING_TICKS, caster).spawn();
-			for (LivingEntity e : HeavenSpells.around(caster, SPRING_RADIUS, e -> HeavenSpells.friendly(caster, e))) {
+			for (LivingEntity e : HeavenSpells.around(caster, SPRING_RADIUS, e -> HeavenSpells.blessed(caster, e))) {
 				HeavenSpells.mend(e, SPRING_BURST);
 				SpellFx.send(level, SpellFx.Kind.LEAVES, HeavenSpells.middle(e), Vec3.ZERO, 0.6f, 0);
 			}
@@ -783,7 +784,7 @@ public final class WoodSpells {
 			if (!casterHere()) return false;
 			field.setPos(caster.getX(), caster.getY(), caster.getZ());
 			if (age % 20 == 10) {
-				for (LivingEntity e : HeavenSpells.around(caster, SPRING_RADIUS, e -> HeavenSpells.friendly(caster, e))) HeavenSpells.mend(e, SPRING_HEAL);
+				for (LivingEntity e : HeavenSpells.around(caster, SPRING_RADIUS, e -> HeavenSpells.blessed(caster, e))) HeavenSpells.mend(e, SPRING_HEAL);
 			}
 			return true;
 		}
@@ -1026,13 +1027,13 @@ public final class WoodSpells {
 			if (age % 20 != 10) return true;
 			float drawn = 0;
 			Vec3 crown = at.add(0, 10, 0);
-			for (LivingEntity e : HeavenSpells.aroundPoint(level, at, WOODS_RADIUS, e -> !HeavenSpells.friendly(caster, e) && !HeavenSpells.spared(caster, e))) {
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, at, WOODS_RADIUS, e -> HeavenSpells.mark(caster, e))) {
 				drawn += HeavenSpells.strikeAgain(caster, e, WOODS_DRAIN, spell);
 				e.addEffect(new MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, 30, 3)); // rooted
 				SpellFx.send(level, SpellFx.Kind.LIFE_MOTES, HeavenSpells.middle(e), crown.subtract(HeavenSpells.middle(e)), 1, 0); // its life, drawn to the tree
 			}
 			if (drawn > 0) {
-				List<LivingEntity> own = HeavenSpells.aroundPoint(level, at, WOODS_RADIUS, e -> HeavenSpells.friendly(caster, e));
+				List<LivingEntity> own = HeavenSpells.aroundPoint(level, at, WOODS_RADIUS, e -> HeavenSpells.blessed(caster, e));
 				if (!own.contains(caster)) own.add(caster);
 				for (LivingEntity e : own) {
 					HeavenSpells.mend(e, drawn / own.size());
@@ -1163,14 +1164,15 @@ public final class WoodSpells {
 
 		/** Whether {@code e} is one its roots may seize and drink: a foe within reach of the land beneath the rift. */
 		private boolean within(LivingEntity e) {
-			return Math.hypot(e.getX() - ground.x, e.getZ() - ground.z) <= WITHER_RADIUS && e.getY() <= mouth.y && e.getY() >= ground.y - 16;
+			// From a little over the rift down into the land far below it (37 round and 16 down before 2026-10-24: its roots often reached nothing).
+			return Math.hypot(e.getX() - ground.x, e.getZ() - ground.z) <= WITHER_RADIUS && e.getY() <= mouth.y + WITHER_OVER && e.getY() >= ground.y - WITHER_BELOW;
 		}
 
 		/** Foes within reach not yet held, nearest first, seized by a root each, as many as it may hold. */
 		private void seize(long age) {
 			if (held.size() >= WITHER_GRASPS) return;
 			List<LivingEntity> near = HeavenSpells.aroundPoint(level, ground, WITHER_RADIUS + WITHER_HIGH,
-					e -> !held.containsKey(e) && within(e) && !HeavenSpells.friendly(caster, e) && !HeavenSpells.spared(caster, e));
+					e -> !held.containsKey(e) && within(e) && HeavenSpells.mark(caster, e));
 			near.sort(java.util.Comparator.comparingDouble(e -> e.distanceToSqr(ground)));
 			for (LivingEntity e : near) {
 				if (held.size() >= WITHER_GRASPS) break;
@@ -1245,7 +1247,7 @@ public final class WoodSpells {
 			Devastation.wither(caster, level, ground, withered, reach);
 			withered = reach;
 			float drawn = 0;
-			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, WITHER_RADIUS + WITHER_HIGH, e -> !HeavenSpells.friendly(caster, e) && !HeavenSpells.spared(caster, e))) {
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, WITHER_RADIUS + WITHER_HIGH, e -> HeavenSpells.mark(caster, e))) {
 				if (!within(e) && !held.containsKey(e)) continue; // one hauled up still drinks
 				drawn += HeavenSpells.strikeAgain(caster, e, WITHER_DRAIN, spell);
 				e.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 30, 1));
@@ -1253,7 +1255,7 @@ public final class WoodSpells {
 				SpellFx.send(level, SpellFx.Kind.LIFE_MOTES, HeavenSpells.middle(e), mouth.subtract(HeavenSpells.middle(e)), 1, 0); // its life, drunk up into the void
 			}
 			if (drawn > 0) {
-				List<LivingEntity> own = HeavenSpells.aroundPoint(level, ground, WITHER_RADIUS, e -> HeavenSpells.friendly(caster, e));
+				List<LivingEntity> own = HeavenSpells.aroundPoint(level, ground, WITHER_RADIUS, e -> HeavenSpells.blessed(caster, e));
 				if (!own.contains(caster)) own.add(caster);
 				for (LivingEntity e : own) {
 					HeavenSpells.mend(e, drawn / own.size());

@@ -1,0 +1,10 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {"layer0": "defying-the-heavens:item/demon_blood_0", "layer1": "defying-the-heavens:item/demon_blood_0_blood"},
+  "overrides": [
+    {"predicate": {"defying-the-heavens:realm": 0.25}, "model": "defying-the-heavens:item/demon_blood_1"},
+    {"predicate": {"defying-the-heavens:realm": 0.5}, "model": "defying-the-heavens:item/demon_blood_2"},
+    {"predicate": {"defying-the-heavens:realm": 0.75}, "model": "defying-the-heavens:item/demon_blood_3"},
+    {"predicate": {"defying-the-heavens:realm": 1}, "model": "defying-the-heavens:item/demon_blood_4"}
+  ]
+}

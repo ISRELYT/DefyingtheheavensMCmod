@@ -186,7 +186,11 @@ public class NetherworldMethodsGameTests implements FabricGameTest {
 			Spells.cast(player, Spell.GHOST_FIRE_BOLT);
 			helper.assertTrue(Math.abs(s.ghostQi() - (20 - Spell.GHOST_FIRE_BOLT.cost())) < 1.0e-9, "The bolt costs its ghostly qi");
 			helper.assertTrue(Spells.cooldownLeft(player, Spell.GHOST_FIRE_BOLT) == Spell.GHOST_FIRE_BOLT.cooldownTicks(), "...and cools down");
+			// Heeded only with the gamerule on (off by default since 2026-10-24): on for this one cast.
+			boolean rule = helper.getLevel().getGameRules().getBoolean(ModGameRules.SPELL_COOLDOWNS);
+			helper.getLevel().getGameRules().getRule(ModGameRules.SPELL_COOLDOWNS).set(true, helper.getLevel().getServer());
 			Spells.cast(player, Spell.GHOST_FIRE_BOLT);
+			helper.getLevel().getGameRules().getRule(ModGameRules.SPELL_COOLDOWNS).set(rule, helper.getLevel().getServer());
 			helper.assertTrue(Math.abs(s.ghostQi() - (20 - Spell.GHOST_FIRE_BOLT.cost())) < 1.0e-9, "Not again while it cools");
 			s.setGhostQi(1);
 			Spells.cast(player, Spell.GHOST_FIRE);

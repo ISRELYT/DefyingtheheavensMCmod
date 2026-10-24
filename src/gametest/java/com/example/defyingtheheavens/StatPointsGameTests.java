@@ -175,8 +175,9 @@ public class StatPointsGameTests implements FabricGameTest {
 		p.setYHeadRot(SLASH_YAW);
 		p.setYBodyRot(SLASH_YAW);
 		p.setXRot(0);
-		// Stone in its blade's way (ahead, and far out to one side) and stone above its blade.
-		BlockPos inBlade = slashOffset(at, 8, 0, 3), wide = slashOffset(at, 10, 20, 0), above = slashOffset(at, 8, 0, 9);
+		// Stone in its cut's way (ahead, and far out to one side) and stone above its blade. Its cut in the land is the lower half of its
+		// blade since 2026-10-24 (MetalSpells#SEVER_CUT_SHARE): a block a step up is in it (3 up was, when it cut its whole height).
+		BlockPos inBlade = slashOffset(at, 8, 0, 1), wide = slashOffset(at, 10, 20, 0), above = slashOffset(at, 8, 0, 9);
 		for (BlockPos pos : new BlockPos[]{inBlade, wide, above}) level.setBlockAndUpdate(pos, Blocks.STONE.defaultBlockState());
 		Spells.setCooldown(p, Spell.HEAVEN_SEVERING_SWORD, 0);
 		Spells.cast(p, Spell.HEAVEN_SEVERING_SWORD);

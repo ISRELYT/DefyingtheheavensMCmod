@@ -108,6 +108,10 @@ public final class ModItems {
 
 	/** A demon's whole cultivation condensed, left when it dies: its realm, stage and element on it (see DemonCoreItem). */
 	public static final Item DEMON_CORE = register("demon_core", new DemonCoreItem(new Item.Properties().stacksTo(16)));
+	/** A demon race's blood in a phial, of a realm: drunk, it awakens a demon's blood or makes a human a half-blood (see DemonBloodItem, DemonBlood). */
+	public static final Item DEMON_BLOOD = register("demon_blood", new DemonBloodItem(new Item.Properties().stacksTo(16)));
+	/** A sect's guest pass: carried, its barrier lets one through until it lapses (see SectPassItem). */
+	public static final Item SECT_PASS = register("sect_pass", new SectPassItem(new Item.Properties().stacksTo(1)));
 	/** The wild demon beasts' spawn eggs: "iron_hide_boar_spawn_egg" and so on (see BeastKind). */
 	private static final Map<BeastKind, Item> BEAST_EGGS = new EnumMap<>(BeastKind.class);
 
@@ -199,6 +203,8 @@ public final class ModItems {
 			for (SpiritStoneItem.Grade grade : SpiritStoneItem.Grade.values()) entries.accept(SpiritStoneItem.of(grade));
 			// A demon core in each of its looks (DemonCoreItem#look), at each realm's first stage.
 			for (int look = 0; look < DemonCoreItem.LOOKS; look++) entries.accept(DemonCoreItem.of(look * Stage.values().length, null, null));
+			// Each race's blood at Qi Refining (the mod's own tab has every realm's).
+			for (Bloodline race : Bloodline.values()) if (race.isBeast()) entries.accept(DemonBloodItem.of(race, Realm.QI_REFINING));
 		});
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(entries -> {
 			entries.accept(RING_OF_POWER);

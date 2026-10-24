@@ -111,12 +111,15 @@ public final class Formation {
 	/**
 	 * Walks through the barrier as if it weren't there: the player who owns it and those they trust, the NPC whose concealment
 	 * it is, and every member of the sect it protects: its cultivators, and its player disciples, and its guests on their way to an
-	 * elder (SectMembership; on the client, among the trusted, as ModPackets#sendFormations sends them).
+	 * elder (SectMembership; on the client, among the trusted, as ModPackets#sendFormations sends them), and whoever carries a guest
+	 * pass of it (SectPassItem).
 	 */
 	public boolean allows(Entity entity) {
 		if (entity == null) return false;
 		if (owner != null && owner.equals(entity.getUUID())) return true;
 		if (entity instanceof Player && trusted.contains(entity.getUUID())) return true;
+		// One carrying a guest pass of its sect, bought of one of its people (SectPassItem; the user's ask, 2026-10-24), on either side.
+		if (sect != null && entity instanceof Player player && SectPassItem.carries(player, sect)) return true;
 		if (sect != null && entity instanceof net.minecraft.server.level.ServerPlayer player
 				&& (SectMembership.isDisciple(player.server, sect, player.getUUID())
 				|| SectMembership.isGuest(sect, player.getUUID(), player.level().getGameTime()))) return true;
@@ -140,12 +143,13 @@ public final class Formation {
 		return tag;
 	}
 
-	/** A raised formation as the client hears of it (see ModPackets#sendFormations). */
-	public static Formation view(UUID id, Kind kind, BlockPos center, int radius, int rank, UUID owner, Collection<UUID> trusted) {
+	/** A raised formation as the client hears of it (see ModPackets#sendFormations): its sect's too, for a guest pass carried (SectPassItem). */
+	public static Formation view(UUID id, Kind kind, BlockPos center, int radius, int rank, UUID owner, UUID sect, Collection<UUID> trusted) {
 		Formation f = new Formation(id, kind, center, radius);
 		f.raised = true;
 		f.rank = rank;
 		f.owner = owner;
+		f.sect = sect;
 		f.trusted.addAll(trusted);
 		return f;
 	}
