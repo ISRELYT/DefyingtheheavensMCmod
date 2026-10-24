@@ -132,8 +132,10 @@ public final class MeteorFlightClient {
 		Vec3 v = heading.scale(speed);
 		// Never into the void below the world.
 		if (player.getY() + v.y < player.level().getMinBuildHeight() - 2 && v.y < 0) v = new Vec3(v.x, 0, v.z);
-		// Fast with the boost held: the way ahead bulldozed before it's flown.
-		boolean dozing = sprinting && smashes && speed >= Bulldozer.FROM_SPEED;
+		// Fast with the boost held: the way ahead bulldozed before it's flown. Diving steeply, into the ground too (burrowing), and
+		// at any speed: set off from just over the ground, the ground stopped one before one was ever fast enough to clear it.
+		boolean burrowing = Bulldozer.burrowing(heading);
+		boolean dozing = sprinting && smashes && (speed >= Bulldozer.FROM_SPEED || burrowing);
 		shownThisTick = 0;
 		Vec3 start = player.position();
 		boolean wasOnGround = player.onGround();
@@ -145,7 +147,7 @@ public final class MeteorFlightClient {
 		boolean hopped = false;
 		while (legs < MOST_LEGS && left > LEAST_LEFT && leg.lengthSqr() > 1.0e-8) {
 			Vec3 before = player.position();
-			if (dozing) clearPath(player, leg, legs == 0 ? speed : 0);
+			if (dozing) clearPath(player, leg, legs == 0 ? speed : 0, burrowing);
 			player.move(MoverType.SELF, leg);
 			legs++;
 			Vec3 gone = player.position().subtract(before);
@@ -159,8 +161,10 @@ public final class MeteorFlightClient {
 				// A low lip (a step of the land, a block standing up) hopped over rather than stopping one dead.
 				hopped = true;
 				leg = hop.length() > left ? hop.scale(left / hop.length()) : hop;
-			} else if (by && !bx && !bz) {
-				// Met the ground (or a ceiling) and nothing ahead: the rest of the way along it, the speed kept, not lost to it.
+			} else if (by && !bx && !bz && !burrowing) {
+				// Met the ground (or a ceiling) and nothing ahead: the rest of the way along it, the speed kept, not lost to it. Not
+				// diving steeply: what stops a burrow (bedrock, obsidian, the bulldozer off) stops it, rather than throwing all its
+				// speed sideways along the ground (looking straight down sent one off level at full tilt: 2026-10-24).
 				Vec3 across = new Vec3(leg.x, 0, leg.z);
 				leg = across.lengthSqr() > 1.0e-6 ? across.normalize().scale(left) : Vec3.ZERO;
 			} else {
@@ -174,7 +178,7 @@ public final class MeteorFlightClient {
 			Vec3 end = player.position(), total = end.subtract(start);
 			player.setPos(start.x, start.y, start.z);
 			player.setOnGround(wasOnGround);
-			if (dozing) clearPath(player, total, 0);
+			if (dozing) clearPath(player, total, 0, burrowing);
 			player.move(MoverType.SELF, total);
 			if (player.position().distanceToSqr(end) > 0.01) went = player.position().distanceTo(start);
 		}
@@ -242,11 +246,12 @@ public final class MeteorFlightClient {
 	 * The bulldozer (Bulldozer): what stands in the way of the body's {@code move} this tick, swept along the very legs the move
 	 * goes ({@link #legsOf}: the straight line alone missed what the move itself then met, and stopped one dead), each from where the
 	 * last one stops, the ground under each leg kept; then, flying at {@code lead} (0: none), out ahead along the line to
-	 * Bulldozer#reach, so the way is open before one gets there. Cleared on this client at once (as a block one mines is, through
+	 * Bulldozer#reach, so the way is open before one gets there; {@code burrowing} (Bulldozer#burrowing), the ground under it too.
+	 * Cleared on this client at once (as a block one mines is, through
 	 * vanilla's block prediction), a few crumbling, and named to the server (C2S meteor_doze), which takes it too and acknowledges:
 	 * whatever it won't take comes back.
 	 */
-	private static void clearPath(LocalPlayer player, Vec3 move, double lead) {
+	private static void clearPath(LocalPlayer player, Vec3 move, double lead, boolean burrowing) {
 		Minecraft mc = Minecraft.getInstance();
 		ClientLevel level = mc.level;
 		if (level == null || move.lengthSqr() < 1.0e-8) return;
@@ -258,12 +263,13 @@ public final class MeteorFlightClient {
 			for (Vec3 leg : legsOf(move)) {
 				double length = leg.length();
 				if (length < 1.0e-4) continue;
-				clear(level, player, Bulldozer.sweep(level, player, box, leg.scale(1 / length), length, box.minY, Bulldozer.MOST_A_TICK - cleared.size()), cleared);
+				clear(level, player, Bulldozer.sweep(level, player, box, leg.scale(1 / length), length, Bulldozer.floor(burrowing, box.minY),
+						Bulldozer.MOST_A_TICK - cleared.size()), cleared);
 				box = box.move(Entity.collideBoundingBox(player, leg, box, level, List.of()));
 			}
 			if (lead > 0) {
-				clear(level, player, Bulldozer.sweep(level, player, player.getBoundingBox(), move.normalize(), Bulldozer.reach(lead), player.getY(),
-						Bulldozer.MOST_A_TICK - cleared.size()), cleared);
+				clear(level, player, Bulldozer.sweep(level, player, player.getBoundingBox(), move.normalize(), Bulldozer.reach(lead),
+						Bulldozer.floor(burrowing, player.getY()), Bulldozer.MOST_A_TICK - cleared.size()), cleared);
 			}
 		}
 		if (cleared.isEmpty()) return;

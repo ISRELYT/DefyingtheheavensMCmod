@@ -30,7 +30,8 @@ import java.util.Set;
  * word; whatever it refused comes back on the client, so nothing is lost to a ghost block. Waiting on the server instead (as the
  * ablaze carve did alone) left a wall standing on the flier's screen for its latency, and it stopped them dead.</li>
  * <li><b>Only obstacles</b>: blocks one would collide with (grass and flowers are flown through), and never the ground under one's
- * feet ({@code floor}): skimming low clears what stands up ahead and slides along the floor rather than ploughing a trench.</li>
+ * feet ({@code floor}): skimming low clears what stands up ahead and slides along the floor rather than ploughing a trench. Diving
+ * steeply ({@link #burrowing}) there is no floor: one burrows straight in.</li>
  * <li><b>A budget</b>: at most {@link #MOST_A_TICK} blocks a tick, and the crumbling shown on only a few of them.</li>
  * </ul>
  * What may go is the great spells' rule (HeavenSpells#carvable; {@link #looksCarvable} is the part a client can see), and nothing
@@ -51,6 +52,22 @@ public final class Bulldozer {
 	public static final int MOST_A_TICK = 384;
 	/** The crumbling (sound and pieces) shown on at most this many of a tick's blocks. */
 	public static final int SHOWN_A_TICK = 3;
+	/**
+	 * Flying down steeper than this (the sine of 35 degrees below level), one burrows: the ground under the feet is in the way like
+	 * anything else, not a floor to skim. Shallower, a swoop to the ground slides along it. (The floor was kept however steep the dive,
+	 * so looking down to burrow straight into the earth only skimmed off along it: the user's report, 2026-10-24.)
+	 */
+	public static final double BURROW_SLOPE = 0.574;
+
+	/** Whether flying along {@code dir} (a unit vector) burrows into the ground rather than skimming it ({@link #BURROW_SLOPE}). */
+	public static boolean burrowing(Vec3 dir) {
+		return dir.y < -BURROW_SLOPE;
+	}
+
+	/** The floor to {@link #sweep} by, the feet at {@code feet}: the feet skimming, none {@code burrowing}. */
+	public static double floor(boolean burrowing, double feet) {
+		return burrowing ? Double.NEGATIVE_INFINITY : feet;
+	}
 
 	/** How far ahead the way is cleared, flying {@code speed} blocks a tick. */
 	public static double reach(double speed) {

@@ -101,7 +101,7 @@ public class Beasts {
 		BeastArt.Bone jaw = head.bone("jaw", "head", 0, 0.5, -4.5);
 		jaw.cube(-2, -0.5, -7.2, 4, 1, 2.7, (f, x, y, w, hh, d) -> f == BeastArt.Face.UP ? p.inner : BeastArt.fur(p.light, x, y, 9));
 		ears(head, p, 2, 8, -1.5, 2.5, 2, 1, -2, true);
-		lids(head, p, -3.5, 4.5, -4.7, 7);
+		lids(head, p, frontLid(-3.5, 4, 2, 1, -4.5), frontLid(1.5, 4, 2, 1, -4.5));
 
 		stripedTail(tail, p, new double[] {-35, -25, 20, 30}, new double[] {2, 1.8, 1.6, 1.6}, new double[] {5, 5, 4.5, 3}, true);
 	}
@@ -120,10 +120,21 @@ public class Beasts {
 		}
 	}
 
-	/** Eyelids before the eyes, shut only as it blinks (scaled from nothing: the "idle" animation). */
-	static void lids(BeastArt.Model head, Palette p, double x, double y, double z, double w) {
-		BeastArt.Bone lids = head.bone("lids", "head", 0, y + 1.5, z + 0.1);
-		lids.cube(x, y, z, w, 1.5, 0.2, BeastArt.furred(p.base, 13));
+	/**
+	 * Eyelids, one over each eye and only over the eye, shut only as it blinks (scaled from nothing down from their top edge: the
+	 * "idle" animation). Each is {x, y, z, w, h, d}: the eye's own pixels on the face, the lid a fifth of a pixel proud of it, so it
+	 * must be placed where the eye is painted (they once sat a row or two above the eyes, blinking on the forehead).
+	 */
+	static void lids(BeastArt.Model head, Palette p, double[]... eyes) {
+		double top = Double.NEGATIVE_INFINITY;
+		for (double[] e : eyes) top = Math.max(top, e[1] + e[4]);
+		BeastArt.Bone lids = head.bone("lids", "head", 0, top, eyes[0][2]);
+		for (double[] e : eyes) lids.cube(e[0], e[1], e[2], e[3], e[4], e[5], BeastArt.furred(p.base, 13));
+	}
+
+	/** An eyelid over an eye painted on a face toward -z, at x..x+w, y..y+h, the face at z: a fifth of a pixel before it. */
+	static double[] frontLid(double x, double y, double w, double h, double faceZ) {
+		return new double[] {x - 0.05, y - 0.05, faceZ - 0.2, w + 0.1, h + 0.1, 0.2};
 	}
 
 	/** A tail in pieces from the small of the back, each turned from the one before ({@code bend} degrees about x), ringed if {@code stripes}, its tip dark. */
@@ -171,7 +182,8 @@ public class Beasts {
 			if (f == BeastArt.Face.UP || f == BeastArt.Face.DOWN) return y == 0 ? BeastArt.CLEAR : p.nose;
 			return p.nose;
 		});
-		lids(head, p, -4, 0.5, -5.1, 8);
+		// The eyes wrap the front corners (a pixel on the front, two on the side): a lid over each corner.
+		lids(head, p, new double[] {-4.1, 2.95, -5.1, 1.15, 1.1, 2.2}, new double[] {2.95, 2.95, -5.1, 1.15, 1.1, 2.2});
 		// Long: down from the small of the back to the ground, and along it behind.
 		stripedTail(tail, p, new double[] {-60, -15, 60, 15, 0, 0}, new double[] {3, 2.8, 2.5, 2.2, 1.8, 1.2}, new double[] {5, 5, 5, 5, 4, 3}, false);
 	}
@@ -182,15 +194,18 @@ public class Beasts {
 		BeastArt.Bone h = head.bone("head", null, 0, 0, 0);
 		h.cube(-4, 0, -4, 8, 7, 8, (f, x, y, w, hh, d) -> {
 			if (f == BeastArt.Face.FRONT) {
-				if (y == 3 && (x == 1 || x == 2 || x == 5 || x == 6)) return (x == 2 || x == 5) ? 0xFF0A0A0A : p.eye;
+				// The eyes a row above the white of the cheeks, fur between them and the muzzle (they once sat on the cheeks' edge,
+				// level with the nose).
+				if (y == 2 && (x == 1 || x == 2 || x == 5 || x == 6)) return (x == 2 || x == 5) ? 0xFF0A0A0A : p.eye;
 				if (y >= 4) return BeastArt.fur(p.light, x, y, 40);
 			}
 			if ((f == BeastArt.Face.SIDE_A || f == BeastArt.Face.SIDE_B) && y >= 4) return BeastArt.fur(p.light, x, y, 41);
 			return BeastArt.fur(p.base, x + f.ordinal() * 13, y, 42);
 		});
+		// The muzzle: the fur running down its bridge, white below, the black nose at its tip; so it stands out from the white cheeks.
 		h.cube(-2, 0.5, -7.5, 4, 2.5, 3.5, (f, x, y, w, hh, d) -> {
 			if (f == BeastArt.Face.FRONT && y == 0 && x >= 1 && x <= 2) return p.nose;
-			if (f == BeastArt.Face.UP) return BeastArt.fur(p.base, x, y, 43);
+			if (f == BeastArt.Face.UP || y == 0 && f != BeastArt.Face.DOWN) return BeastArt.fur(p.base, x, y, 43);
 			return BeastArt.fur(p.light, x, y, 44);
 		});
 		h.cube(-5, 0, -3, 1, 3, 3, (f, x, y, w, hh, d) -> BeastArt.fur(p.light, x, y, 45));
@@ -198,7 +213,7 @@ public class Beasts {
 		BeastArt.Bone jaw = head.bone("jaw", "head", 0, 0.5, -4);
 		jaw.cube(-1.5, -0.3, -7.2, 3, 0.8, 3.2, (f, x, y, w, hh, d) -> f == BeastArt.Face.UP ? p.inner : BeastArt.fur(p.light, x, y, 47));
 		ears(head, p, 1.5, 7, -1, 3, 4, 1, -10, false);
-		lids(head, p, -3.5, 4.5, -4.2, 7);
+		lids(head, p, frontLid(-3, 4, 2, 1, -4), frontLid(1, 4, 2, 1, -4));
 
 		// Nine tails, alike, fanned out in code as many as the realm gives (BeastHeadModels.Model): each from the small of the back,
 		// held up and back, bushy in the middle, white-tipped.
@@ -257,7 +272,7 @@ public class Beasts {
 		BeastArt.Bone mane = head.bone("mane", "head", 0, 4, 3);
 		mane.cube(-1.5, 1, 2.5, 3, 7.5, 3, (f, x, y, w, hh, d) -> BeastArt.fur(p.mane, x * 3, y, 67));
 		mane.cube(-1, -4, 3.5, 2, 5, 2, (f, x, y, w, hh, d) -> BeastArt.fur(p.mane, x * 3, y, 68));
-		lids(head, p, -3.5, 3.5, -4.2, 7);
+		lids(head, p, frontLid(-3, 4, 2, 1, -4), frontLid(1, 4, 2, 1, -4));
 
 		// Long and scaled, ridged along its back, tufted with the mane at its end.
 		double[] bend = {-50, -20, 55, 15, 5, 5}, thick = {3, 2.8, 2.6, 2.3, 2, 1.6}, length = {5, 5, 5, 5, 4, 3};
@@ -312,7 +327,7 @@ public class Beasts {
 		}
 		BeastArt.Bone jaw = head.bone("jaw", "head", 0, 0, -4.5);
 		jaw.cube(-3, -1, -8, 6, 1, 3.5, (f, x, y, w, hh, d) -> f == BeastArt.Face.UP ? p.inner : BeastArt.fur(p.light, x, y, 86));
-		lids(head, p, -3.5, 4.5, -4.7, 7);
+		lids(head, p, frontLid(-3.5, 5, 2, 1, -4.5), frontLid(1.5, 5, 2, 1, -4.5));
 	}
 
 	static void horse(BeastArt.Model head) {
@@ -344,7 +359,8 @@ public class Beasts {
 		mane.cube(-1, -6, 3.5, 2, 15, 2, (f, x, y, w, hh, d) -> BeastArt.fur(p.mane, x * 3, y, 98));
 		mane.cube(-1, 9, -2, 2, 2, 6, (f, x, y, w, hh, d) -> BeastArt.fur(p.mane, x * 3, y, 99));
 		h.cube(-1.5, 6.5, -4.2, 3, 3, 0.8, (f, x, y, w, hh, d) -> BeastArt.fur(p.mane, x * 3, y, 100));
-		lids(head, p, -3.5, 3.5, -3.7, 7);
+		// Its eyes are on the sides of the head, at the front: a lid on each side.
+		lids(head, p, new double[] {3.5, 4.95, -3.55, 0.2, 1.1, 2.1}, new double[] {-3.7, 4.95, -3.55, 0.2, 1.1, 2.1});
 	}
 
 	// --- Animations ---

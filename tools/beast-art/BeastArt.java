@@ -240,7 +240,7 @@ public class BeastArt {
 				for (int j = 0; j < b.cubes.size(); j++) {
 					Cube c = b.cubes.get(j);
 					s.append("\t\t\t\t\t\t{\"origin\": ").append(vec(c.origin)).append(", \"size\": ").append(vec(c.size))
-							.append(", \"uv\": [").append(c.u).append(", ").append(c.v).append("]");
+							.append(", \"uv\": ").append(faceUv(c));
 					if (c.inflate != 0) s.append(", \"inflate\": ").append(num(c.inflate));
 					s.append("}").append(j + 1 < b.cubes.size() ? ",\n" : "\n");
 				}
@@ -250,6 +250,23 @@ public class BeastArt {
 		}
 		s.append("\t\t\t]\n\t\t}\n\t]\n}\n");
 		return s.toString();
+	}
+
+	/**
+	 * A cube's UVs, face by face: each face where {@link #paintBox} painted it, its box the cube's size rounded up ({@link Cube#bw}).
+	 * Not box UV ({@code "uv": [u, v]}): GeckoLib lays a box out by the size rounded <i>down</i>, so on a cube a fraction of a pixel
+	 * in any way (a fox's snout 2.5 high, its lids a fifth deep) every face read the wrong pixels: the snout's face its top's, with a
+	 * hole through it, the lids half see-through. Face by face, each face reads just what was painted for it (stretched a little over
+	 * a fraction of a pixel), and the cube opens the same in Blockbench (per-face UV).
+	 */
+	static String faceUv(Cube c) {
+		int u = c.u, v = c.v, w = c.bw(), h = c.bh(), d = c.bd();
+		return "{" + face("north", u + d, v + d, w, h) + ", " + face("east", u, v + d, d, h) + ", " + face("south", u + 2 * d + w, v + d, w, h)
+				+ ", " + face("west", u + d + w, v + d, d, h) + ", " + face("up", u + d, v, w, d) + ", " + face("down", u + d + w, v + d, w, -d) + "}";
+	}
+
+	static String face(String name, int u, int v, int w, int h) {
+		return "\"" + name + "\": {\"uv\": [" + u + ", " + v + "], \"uv_size\": [" + w + ", " + h + "]}";
 	}
 
 	/** An animation's keyframes for a bone: channel ("rotation", "position", "scale") to time to value. */

@@ -235,6 +235,12 @@ public class MeteorFlightGameTests implements FabricGameTest {
 			helper.assertTrue(!ahead.contains(wall.offset(0, 1, 1)) && !ahead.contains(wall.offset(0, 1, -1)), "Nor the wall beyond the body's width");
 			helper.assertTrue(ahead.stream().allMatch(pos -> pos.getY() >= wall.getY()), "Nor the ground under the feet");
 			helper.assertTrue(!ahead.contains(wall.above(2)), "Nor above the head");
+			// Diving steeply (burrowing, the user's report of 2026-10-24) the ground under the feet is in the way too; a shallow swoop skims it.
+			Vec3 down = new Vec3(0, -1, 0);
+			List<BlockPos> below = Bulldozer.sweep(level, core, core.getBoundingBox(), down, 2, Bulldozer.floor(Bulldozer.burrowing(down), core.getY()), Bulldozer.MOST_A_TICK);
+			helper.assertTrue(below.contains(wall.offset(-3, -1, 0)), "Burrowing straight down: the stone under the feet is swept: " + below);
+			helper.assertTrue(!Bulldozer.burrowing(new Vec3(1, -0.3, 0).normalize()) && Bulldozer.burrowing(new Vec3(0.3, -1, 0).normalize()),
+					"A shallow swoop skims the floor; a steep dive burrows");
 			// The client's word: the gamerule off, nothing goes; on, the way goes; never what isn't to be taken.
 			level.getGameRules().getRule(ModGameRules.METEOR_FLIGHT_SMASHES).set(false, level.getServer());
 			helper.assertTrue(MeteorFlight.bulldoze(core, 1, ahead) == 0 && level.getBlockState(wall).is(Blocks.STONE), "The gamerule off: the wall stands");
