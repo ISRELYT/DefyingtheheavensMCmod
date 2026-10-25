@@ -687,11 +687,12 @@ public class Void {
 		for (int s = -1; s <= 1; s += 2) {
 			String w = "wing_" + (s > 0 ? "l" : "r");
 			int ss = s;
-			a.sample(w, "rotation", 0, T, steps, t -> new double[] {1.6 * Math.sin(2 * Math.PI * t / T * 10), -ss * DIVE_SWEEP, ss * (DIVE_DIP + 2 * Math.sin(2 * Math.PI * t / T * 10 + 0.6))});
-			a.sample(w + "_mid", "rotation", 0, T, steps, t -> new double[] {0, -ss * DIVE_MID, ss * 2 * Math.sin(2 * Math.PI * t / T * 10 - 0.4)});
-			a.sample(w + "_tip", "rotation", 0, T, steps, t -> new double[] {1.4 * Math.sin(2 * Math.PI * t / T * 10 + 1), -ss * DIVE_TIP, ss * 3 * Math.sin(2 * Math.PI * t / T * 10 - 0.9)});
+			// Half closed, still beating in the rush, the hand whipping after the arm (the user's ask, 2026-10-25: the beasts too rigid).
+			a.sample(w, "rotation", 0, T, steps, t -> new double[] {2.5 * Math.sin(2 * Math.PI * t / T * 5), -ss * (DIVE_SWEEP + 6 * Math.sin(2 * Math.PI * t / T * 5 + 0.5)), ss * (DIVE_DIP + 14 * Math.sin(2 * Math.PI * t / T * 5))});
+			a.sample(w + "_mid", "rotation", 0, T, steps, t -> new double[] {0, -ss * DIVE_MID, ss * 11 * Math.sin(2 * Math.PI * t / T * 5 - 0.9)});
+			a.sample(w + "_tip", "rotation", 0, T, steps, t -> new double[] {3 * Math.sin(2 * Math.PI * t / T * 10 + 1), -ss * DIVE_TIP, ss * (13 * Math.sin(2 * Math.PI * t / T * 5 - 1.7) + 3 * Math.sin(2 * Math.PI * t / T * 10 - 0.9))});
 		}
-		a.sample("tail", "rotation", 0, T, steps, t -> new double[] {2.4 * Math.sin(2 * Math.PI * t / T * 10 + 2), 1.6 * Math.sin(2 * Math.PI * t / T * 5), 0});
+		a.sample("tail", "rotation", 0, T, steps, t -> new double[] {6 * Math.sin(2 * Math.PI * t / T * 5 + 2), 4 * Math.sin(2 * Math.PI * t / T * 5), 0});
 		a.sample("neck", "rotation", 0, T, 8, t -> new double[] {4 + 1.5 * Math.sin(2 * Math.PI * t / T * 2), 0, 0});
 		a.sample("head", "rotation", 0, T, 8, t -> new double[] {3 + 1.5 * Math.sin(2 * Math.PI * t / T * 2 + 1), 0, 0});
 		a.sample("beak_low", "rotation", 0, T, 8, t -> new double[] {4 + 3 * Math.sin(2 * Math.PI * t / T * 2), 0, 0});
@@ -1701,18 +1702,19 @@ public class Void {
 		double T = 2.0;
 		SpellArt.Anim a = m.anim("swim", T, "true");
 		double w = 2 * Math.PI / T;
-		a.sample("front", "rotation", 0, T, 16, t -> new double[] {0, -3 * Math.sin(w * t + 0.6), 0});
-		a.sample("head", "rotation", 0, T, 16, t -> new double[] {0, -2 * Math.sin(w * t + 1.2), 0});
+		// A great fish's thrash (the user's ask, 2026-10-25: the beasts too rigid): its tail sweeping wide, its body flexing up and down a little too.
+		a.sample("front", "rotation", 0, T, 24, t -> new double[] {2 * Math.sin(w * t + 1.4), -6 * Math.sin(w * t + 0.6), 0});
+		a.sample("head", "rotation", 0, T, 24, t -> new double[] {1.5 * Math.sin(w * t + 2), -4 * Math.sin(w * t + 1.2), 0});
 		String[] back = {"back_0", "back_1", "back_2", "tail"};
-		double[] amp = {5, 8, 11, 15};
+		double[] amp = {9, 15, 22, 30};
 		for (int i = 0; i < back.length; i++) {
 			int ii = i;
-			a.sample(back[i], "rotation", 0, T, 16, t -> new double[] {0, amp[ii] * Math.sin(w * t - ii * 0.8), 0});
+			a.sample(back[i], "rotation", 0, T, 24, t -> new double[] {amp[ii] * 0.25 * Math.sin(w * t - ii * 0.8 + 1.2), amp[ii] * Math.sin(w * t - ii * 0.85), 0});
 		}
 		a.sample("jaw", "rotation", 0, T, 8, t -> new double[] {6 + 4 * Math.sin(w * t), 0, 0});
 		for (int s = -1; s <= 1; s += 2) {
 			int ss = s;
-			a.sample("fin_" + (s > 0 ? "l" : "r"), "rotation", 0, T, 16, t -> new double[] {0, 0, ss * 14 * Math.sin(w * t + 0.4)});
+			a.sample("fin_" + (s > 0 ? "l" : "r"), "rotation", 0, T, 24, t -> new double[] {6 * Math.sin(w * t + 1.4), 0, ss * 30 * Math.sin(w * t + 0.4)});
 			for (int k = 0; k < 4; k++) {
 				int kk = k;
 				a.sample("barbel_" + (s > 0 ? "l" : "r") + "_" + k, "rotation", 0, T, 12, t -> new double[] {8 * Math.sin(w * t - kk * 0.9), ss * 10 * Math.sin(w * t - kk * 0.7 + 1), 0});

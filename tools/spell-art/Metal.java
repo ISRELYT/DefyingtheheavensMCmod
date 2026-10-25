@@ -521,27 +521,57 @@ public class Metal {
 		}
 	}
 
-	/** The prowl: a stalking walk (hind left, fore left, hind right, fore right), the head held low and steady, the tail swaying. */
+	/**
+	 * The prowl (the user's ask, 2026-10-25: "look at how tigers actually move"): a great cat's stalking walk. Its feet fall in the lateral
+	 * order, the left hind, the left fore, the right hind, the right fore, a quarter of the stride apart, each on the ground three fifths of it,
+	 * so two or three always bear it. A leg on the ground sweeps back under the body as it goes over it, the shoulder blade rising over the spine
+	 * as the fore takes its weight; one in the air lifts low and swings forward, the fore's wrist folding so its paw turns up behind it, then
+	 * reaching out ahead, the paw laid down softly, flat; the hind's hock flexing under it. The body slung low between its legs, its spine
+	 * swaying side to side with each pair of steps; the head held low and level, still while the body moves under it; the tail hanging low in a
+	 * long curve, its tip curled up, swinging slowly behind.
+	 */
 	static void prowl(SpellArt.Model m) {
-		double T = 1.5;
+		double T = 1.8;
 		SpellArt.Anim a = m.anim("prowl", T, "true");
-		int steps = 12;
-		String[] legs = {"leg_fl", "leg_fr", "leg_bl", "leg_br"};
-		double[] phase = {0.25, 0.75, 0, 0.5};
+		int steps = 36;
+		String[] legs = {"leg_bl", "leg_fl", "leg_br", "leg_fr"};
+		double[] down = {0.0, 0.25, 0.5, 0.75};
+		double duty = 0.62;
+		// Each joint round its own stride (SpellArt#keyed: from its paw set down, through its stance to duty, through its swing): the upper leg
+		// (less than nought: forward), the elbow or hock, the wrist or the hind paw.
+		double[][] foreUpper = {{0, -22}, {duty * 0.5, -2}, {duty, 18}, {duty + 0.1, 22}, {duty + 0.24, 2}, {duty + 0.34, -24}, {0.97, -23}};
+		double[][] foreElbow = {{0, 4}, {duty * 0.5, 12}, {duty, 8}, {duty + 0.08, 40}, {duty + 0.18, 56}, {duty + 0.3, 14}, {duty + 0.35, -2}};
+		double[][] forePaw = {{0, 0}, {duty * 0.6, 4}, {duty, -12}, {duty + 0.09, -46}, {duty + 0.2, -38}, {duty + 0.32, 4}, {duty + 0.36, 1}};
+		double[][] hindUpper = {{0, -16}, {duty * 0.5, 6}, {duty, 26}, {duty + 0.1, 24}, {duty + 0.26, -4}, {duty + 0.35, -18}};
+		double[][] hindHock = {{0, -4}, {duty * 0.5, -14}, {duty, 6}, {duty + 0.1, -48}, {duty + 0.22, -60}, {duty + 0.33, -12}, {duty + 0.36, -5}};
+		double[][] hindPaw = {{0, 0}, {duty * 0.6, -6}, {duty, 20}, {duty + 0.1, 50}, {duty + 0.24, 32}, {duty + 0.34, -2}, {duty + 0.37, 0}};
 		for (int k = 0; k < 4; k++) {
-			double p = phase[k];
-			boolean front = k < 2;
-			a.sample(legs[k], "rotation", 0, T, steps, t -> new double[] {-(front ? 20 : 16) * Math.cos(2 * Math.PI * (t / T - p)), 0, 0});
-			a.sample(legs[k] + "_low", "rotation", 0, T, steps, t -> new double[] {(front ? 36 : -28) * Math.max(0, -Math.sin(2 * Math.PI * (t / T - p))), 0, 0});
-			a.sample(legs[k] + "_paw", "rotation", 0, T, steps, t -> new double[] {(front ? -14 : 26) * Math.max(0, -Math.sin(2 * Math.PI * (t / T - p) - 0.3)), 0, 0});
+			double at = down[k];
+			boolean front = k % 2 == 1;
+			double[][] upper = front ? foreUpper : hindUpper, mid = front ? foreElbow : hindHock, paw = front ? forePaw : hindPaw;
+			a.sample(legs[k], "rotation", 0, T, steps, t -> new double[] {SpellArt.keyed(SpellArt.stride(t / T, at), upper), 0, 0});
+			a.sample(legs[k] + "_low", "rotation", 0, T, steps, t -> new double[] {SpellArt.keyed(SpellArt.stride(t / T, at), mid), 0, 0});
+			a.sample(legs[k] + "_paw", "rotation", 0, T, steps, t -> new double[] {SpellArt.keyed(SpellArt.stride(t / T, at), paw), 0, 0});
+			// The shoulder blade (and, less, the hip) rising over the spine as the leg takes the weight.
+			a.sample(legs[k], "position", 0, T, steps, t -> {
+				double s = SpellArt.stride(t / T, at);
+				return new double[] {0, s < duty ? (front ? 1.1 : 0.5) * Math.sin(Math.PI * s / duty) : 0, 0};
+			});
 		}
-		a.sample("root", "position", 0, T, steps, t -> new double[] {0, 0.7 * Math.cos(4 * Math.PI * t / T), 0});
-		a.sample("body", "rotation", 0, T, steps, t -> new double[] {0, 1.5 * Math.sin(2 * Math.PI * t / T), 2 * Math.sin(2 * Math.PI * t / T)});
-		a.sample("neck", "rotation", 0, T, steps, t -> new double[] {5, -1.5 * Math.sin(2 * Math.PI * t / T), 0});
-		a.sample("head", "rotation", 0, T, steps, t -> new double[] {2 + Math.sin(4 * Math.PI * t / T), 3 * Math.sin(2 * Math.PI * t / T + 0.5), 0});
+		// Slung low, bobbing a little at each step; the spine swaying side to side, the shoulders rolling with the steps.
+		a.sample("root", "position", 0, T, steps, t -> new double[] {0, -0.5 + 0.45 * Math.cos(4 * Math.PI * (t / T - 0.1)), 0});
+		a.sample("body", "rotation", 0, T, steps, t -> new double[] {0.8 * Math.cos(4 * Math.PI * t / T), 4 * Math.sin(2 * Math.PI * (t / T - 0.12)),
+				2.6 * Math.sin(2 * Math.PI * (t / T - 0.3))});
+		// The head low and level, held still as the body sways and rolls under it.
+		a.sample("neck", "rotation", 0, T, steps, t -> new double[] {9 - 0.6 * Math.cos(4 * Math.PI * t / T), -3 * Math.sin(2 * Math.PI * (t / T - 0.12)), 0});
+		a.sample("head", "rotation", 0, T, steps, t -> new double[] {2 - 0.8 * Math.cos(4 * Math.PI * (t / T - 0.1)), -1.4 * Math.sin(2 * Math.PI * (t / T - 0.12)),
+				-2.2 * Math.sin(2 * Math.PI * (t / T - 0.3))});
+		// The tail hanging low in a long curve, its tip curled up, swinging slowly, each part a little behind the one before it.
+		double[] curve = {-24, -8, 0, 12, 24, 32}; // (more than nought: up) drooping from its root, the tip curled up
 		for (int k = 0; k < 6; k++) {
 			int kk = k;
-			a.sample("tail_" + k, "rotation", 0, T, steps, t -> new double[] {(kk == 0 ? -10 : 2) + 2 * Math.sin(2 * Math.PI * t / T - kk * 0.5), 9 * Math.sin(2 * Math.PI * t / T - kk * 0.6), 0});
+			a.sample("tail_" + k, "rotation", 0, T, steps, t -> new double[] {curve[kk] + 2 * Math.sin(2 * Math.PI * (t / T - 0.1 * kk)),
+					(4 + 2.4 * kk) * Math.sin(2 * Math.PI * (t / T - 0.25 - 0.11 * kk)), 0});
 		}
 	}
 

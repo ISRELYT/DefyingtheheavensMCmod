@@ -383,6 +383,9 @@ public final class SoulRenderer {
 			mc.gameRenderer.overlayTexture().teardownOverlayColor();
 		}
 		model.head.visible = model.hat.visible = true;
+		// Ghost Fire kindled in its hands (SpellAura GHOST_FIRE): the dead's own hands burn with it too, as the living's do (SpellAuraLayer).
+		float ghostFire = ClientSpellAuras.shown(soul, com.example.defyingtheheavens.SpellAura.GHOST_FIRE, partial, 6, 16);
+		if (ghostFire > 0) SpellAuraLayer.ghostHandsOn(pose, model, age, ghostFire);
 		// A Ghost King: its crown on its head.
 		if (king) drawCrown(pose, model, age, clarity);
 		// Bound by a Ghost-Quelling Talisman: the talisman on its brow.

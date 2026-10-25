@@ -576,43 +576,56 @@ public class Earth {
 		}
 	}
 
-	/** The gallop: a beat of four (the hind left, the hind right, the fore left, the fore right), the body rocking, mane and tail streaming. */
+	/**
+	 * The gallop (the user's ask, 2026-10-25: "look at how ... horses actually gallop"): a horse's transverse gallop, four beats and then the
+	 * legs gathered in the air. The left hind lands, then the right hind, then the left fore, then the right fore (the leading fore), each on
+	 * the ground a third of the stride; then all four are off it, gathered under the body, before the hind lands again. A leg on the ground
+	 * sweeps back under the body as it goes on over it; one in the air swings forward: a fore's knee folding tight, its hoof flicked up under it,
+	 * then reaching out straight ahead to land; a hind's hock flexing as it swings under the belly, then reaching to land under the hips. The
+	 * body rocks as a rocking horse does, its forehand thrown up as the hinds drive and sinking as the fores take it, highest in the air; the
+	 * neck and head nod down once a stride as the fores land, holding the gaze steady; the mane and tail stream back, rippling.
+	 */
 	static void gallop(SpellArt.Model m) {
-		double T = 0.72;
+		double T = 0.9;
 		SpellArt.Anim a = m.anim("gallop", T, "true");
-		int steps = 12;
-		String[] legs = {"leg_fl", "leg_fr", "leg_bl", "leg_br"};
-		double[] phase = {0.5, 0.62, 0, 0.12};
+		int steps = 36;
+		String[] legs = {"leg_bl", "leg_br", "leg_fl", "leg_fr"};
+		// When each hoof lands (of the stride), and how long it is down: the hinds left then right, the fores left then right, then the air.
+		double[] down = {0.00, 0.10, 0.30, 0.40};
+		double duty = 0.32;
+		// Each joint round its own stride (SpellArt#keyed: from its hoof landing, through its stance to duty, through its swing): the upper leg
+		// (less than nought: forward), the knee or hock, the fetlock and hoof.
+		double[][] foreUpper = {{0, -38}, {duty * 0.5, -4}, {duty, 32}, {duty + 0.12, 40}, {duty + 0.4, 4}, {duty + 0.58, -44}, {0.94, -42}};
+		double[][] foreKnee = {{0, 2}, {duty * 0.5, 6}, {duty, 10}, {duty + 0.12, 70}, {duty + 0.28, 96}, {duty + 0.46, 50}, {duty + 0.58, -4}, {0.94, -2}};
+		double[][] foreHoof = {{0, 0}, {duty * 0.5, -10}, {duty, 18}, {duty + 0.12, 44}, {duty + 0.3, 40}, {duty + 0.5, 6}, {0.94, 0}};
+		double[][] hindUpper = {{0, -28}, {duty * 0.5, 6}, {duty, 40}, {duty + 0.14, 34}, {duty + 0.4, -12}, {duty + 0.56, -32}, {0.94, -30}};
+		double[][] hindHock = {{0, -4}, {duty * 0.45, -16}, {duty, 6}, {duty + 0.12, -40}, {duty + 0.28, -66}, {duty + 0.46, -34}, {duty + 0.58, -6}, {0.94, -4}};
+		double[][] hindHoof = {{0, 0}, {duty * 0.5, -10}, {duty, 26}, {duty + 0.14, 48}, {duty + 0.34, 30}, {duty + 0.52, 4}, {0.94, 0}};
 		for (int k = 0; k < 4; k++) {
-			double p = phase[k];
-			boolean front = k < 2;
-			a.sample(legs[k], "rotation", 0, T, steps, t -> {
-				double ph = 2 * Math.PI * (t / T - p);
-				return new double[] {-(front ? 36 : 30) * Math.cos(ph), 0, 0};
-			});
-			a.sample(legs[k] + "_low", "rotation", 0, T, steps, t -> {
-				double lift = Math.max(0, -Math.sin(2 * Math.PI * (t / T - p)));
-				return new double[] {(front ? 70 : -42) * lift, 0, 0};
-			});
-			a.sample(legs[k] + "_hoof", "rotation", 0, T, steps, t -> {
-				double lift = Math.max(0, -Math.sin(2 * Math.PI * (t / T - p) - 0.4));
-				return new double[] {(front ? 20 : 60) * lift, 0, 0};
-			});
+			double at = down[k];
+			boolean front = k >= 2;
+			double[][] upper = front ? foreUpper : hindUpper, knee = front ? foreKnee : hindHock, hoof = front ? foreHoof : hindHoof;
+			a.sample(legs[k], "rotation", 0, T, steps, t -> new double[] {SpellArt.keyed(SpellArt.stride(t / T, at), upper), 0, 0});
+			a.sample(legs[k] + "_low", "rotation", 0, T, steps, t -> new double[] {SpellArt.keyed(SpellArt.stride(t / T, at), knee), 0, 0});
+			a.sample(legs[k] + "_hoof", "rotation", 0, T, steps, t -> new double[] {SpellArt.keyed(SpellArt.stride(t / T, at), hoof), 0, 0});
 		}
-		a.sample("root", "position", 0, T, steps, t -> new double[] {0, 1.8 * Math.cos(4 * Math.PI * t / T), 0});
-		a.sample("body", "rotation", 0, T, steps, t -> new double[] {3 * Math.sin(2 * Math.PI * t / T), 0, 0});
-		a.sample("neck", "rotation", 0, T, steps, t -> new double[] {-5 * Math.sin(2 * Math.PI * t / T + 0.5), 0, 0});
-		a.sample("head", "rotation", 0, T, steps, t -> new double[] {3 * Math.sin(2 * Math.PI * t / T + 1), 0, 0});
-		a.sample("jaw", "rotation", 0, T, 6, t -> new double[] {4 + 3 * Math.sin(2 * Math.PI * t / T), 0, 0});
-		a.sample("mane", "rotation", 0, T, steps, t -> new double[] {-6 * Math.sin(2 * Math.PI * t / T - 0.8), 0, 0});
+		// Highest gathered in the air, lowest as the fores take it; the forehand thrown up as the hinds drive, sinking as the fores land.
+		a.sample("root", "position", 0, T, steps, t -> new double[] {0, 3.2 * Math.cos(2 * Math.PI * (t / T - 0.86)), 0});
+		a.sample("body", "rotation", 0, T, steps, t -> new double[] {6 * Math.sin(2 * Math.PI * (t / T - 0.22)), 0, 1.2 * Math.sin(2 * Math.PI * t / T)});
+		// The neck and head nodding down once a stride as the fores land, holding the gaze steady against the body's rocking.
+		a.sample("neck", "rotation", 0, T, steps, t -> new double[] {-3 * Math.sin(2 * Math.PI * (t / T - 0.22)) + 8 * Math.sin(2 * Math.PI * (t / T - 0.32)), 0, 0});
+		a.sample("head", "rotation", 0, T, steps, t -> new double[] {-4 * Math.sin(2 * Math.PI * (t / T - 0.36)), 1.5 * Math.sin(2 * Math.PI * t / T), 0});
+		a.sample("jaw", "rotation", 0, T, 12, t -> new double[] {5 + 4 * Math.sin(2 * Math.PI * (t / T - 0.5)), 0, 0});
+		a.sample("mane", "rotation", 0, T, steps, t -> new double[] {-10 - 6 * Math.sin(2 * Math.PI * (t / T - 0.45)), 0, 0});
 		for (int k = 0; k < 4; k++) {
 			int kk = k;
-			a.sample("tail_" + k, "rotation", 0, T, steps, t -> new double[] {(kk == 0 ? -14 : 0) + 7 * Math.sin(2 * Math.PI * t / T - kk * 0.8), 5 * Math.sin(2 * Math.PI * t / T - kk * 0.6 + 1), 0});
+			a.sample("tail_" + k, "rotation", 0, T, steps, t -> new double[] {(kk == 0 ? 14 : -2) + (5 + 3 * kk) * Math.sin(2 * Math.PI * (t / T - 0.5 - 0.12 * kk)),
+					(3 + 2 * kk) * Math.sin(2 * Math.PI * (t / T - 0.2 - 0.1 * kk)), 0});
 		}
 		for (String side : new String[] {"l", "r"}) {
 			for (int k = 0; k < 3; k++) {
 				int kk = k;
-				a.sample("whisker_" + side + "_" + k, "rotation", 0, T, steps, t -> new double[] {(4 + kk * 3) * Math.sin(2 * Math.PI * t / T - kk * 0.9), 0, 0});
+				a.sample("whisker_" + side + "_" + k, "rotation", 0, T, steps, t -> new double[] {-6 + (5 + kk * 3) * Math.sin(2 * Math.PI * (t / T - 0.4 - kk * 0.14)), 0, 0});
 			}
 		}
 	}

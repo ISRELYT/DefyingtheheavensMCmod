@@ -96,6 +96,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		ClientSoul.register();
 		ClientBodies.register(); // a soul in another's body wears its look and name (Possession)
 		SoulRenderer.register();
+		SpellGhosts.register(); // the spirit shader the spells' White Impermanence, Black Impermanence and avatar are drawn in
 		EntityRendererRegistry.register(ModEntities.SOUL_BODY, SoulBodyRenderer::new);
 		// A clone standing (or the main body sitting) while its player plays the other (Clones).
 		EntityRendererRegistry.register(ModEntities.CLONE_BODY, CloneBodyRenderer::new);
@@ -142,6 +143,9 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			if (renderer.getModel() instanceof net.minecraft.client.model.HumanoidModel<?>) registerAuraLayer(renderer, helper, context);
 		});
 		com.example.defyingtheheavens.SpellAuras.clientView = ClientSpellAuras::has;
+		// The masteries as this client was told them (water's bears its own player up: HeavenPassives#masters).
+		com.example.defyingtheheavens.HeavenPassives.clientView = (e, element) -> e == net.minecraft.client.Minecraft.getInstance().player
+				&& com.example.defyingtheheavens.HeavenPassives.masters(ClientCultivationData.get(), element);
 		WorldRenderEvents.AFTER_ENTITIES.register(SpellAuraWorld::render);
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(ClientSpellFx::render);
 		UpperRealmClient.register();
@@ -210,6 +214,8 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			ClientSpellAuras.clear();
 			ClientSpellFx.clear();
 			ClientSpellTrails.clear();
+			ClientSpellSounds.clear();
+			BlockMasses.clear();
 		}));
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -227,6 +233,8 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			ClientSpellTrails.tick(client);
 			ClientSpellAuras.tick();
 			ClientSpellFx.tick();
+			ClientSpellSounds.tick();
+			BlockMasses.tick(client);
 			while (ModKeybinds.OPEN_MENU.consumeClick()) {
 				if (client.player != null && client.screen == null) {
 					client.setScreen(new CultivationScreen());

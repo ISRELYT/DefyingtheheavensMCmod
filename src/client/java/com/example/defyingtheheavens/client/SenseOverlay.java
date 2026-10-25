@@ -37,7 +37,7 @@ public final class SenseOverlay {
 		boolean domains = ConsciousnessRenderer.hasDomains();
 		boolean treasures = QiSenseTreasures.hasGlow();
 		boolean barriers = ClientFormations.hasDomes();
-		boolean souls = SoulRenderer.hasWork();
+		boolean souls = SoulRenderer.hasWork() || SpellGhosts.hasWork();
 		boolean eye = GhostEye.hasWork();
 		if (!motes && !domains && !treasures && !barriers && !souls && !eye) return;
 
@@ -70,6 +70,8 @@ public final class SenseOverlay {
 		if (souls) {
 			layerState();
 			SoulRenderer.render(context); // projected nascent souls and their tethers, the dead
+			layerState();
+			SpellGhosts.render(context); // the dead the ghost path's spells call up, drawn as the dead are
 		}
 		if (eye) {
 			layerState();

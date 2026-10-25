@@ -715,34 +715,44 @@ public class Fire {
 		}
 	}
 
-	/** The glide: slow, deep wingbeats, the hand lagging the arm; the body riding them, the head held steady; the streamers rippling. */
+	/**
+	 * The glide: deep, strong wingbeats (the user's ask, 2026-10-25: the beasts "are very rigid their animations need to be more fluid"), each
+	 * part of the wing whipping after the one before it, swept forward on the downstroke and back on the up (a figure of eight); the body rising
+	 * on each downstroke and rolling a little, the neck and head riding it to hold the gaze steady; the streamers lashing out behind in waves.
+	 */
 	static void glide(SpellArt.Model m) {
-		double T = 2.8;
+		double T = 2.0;
 		SpellArt.Anim a = m.anim("glide", T, "true");
-		int steps = 16;
+		int steps = 24;
 		for (int s = -1; s <= 1; s += 2) {
 			String w = "wing_" + (s > 0 ? "l" : "r");
 			int ss = s;
-			a.sample(w, "rotation", 0, T, steps, t -> new double[] {0, -ss * 3 * Math.sin(2 * Math.PI * t / T + 0.5), ss * 15 * Math.sin(2 * Math.PI * t / T)});
-			a.sample(w + "_mid", "rotation", 0, T, steps, t -> new double[] {0, 0, ss * 8 * Math.sin(2 * Math.PI * t / T - 0.7)});
+			a.sample(w, "rotation", 0, T, steps, t -> {
+				double ph = 2 * Math.PI * t / T;
+				return new double[] {2 * Math.sin(ph + 1.2), -ss * 9 * Math.sin(ph + 0.6), ss * (6 + 34 * Math.sin(ph))};
+			});
+			a.sample(w + "_mid", "rotation", 0, T, steps, t -> {
+				double ph = 2 * Math.PI * t / T;
+				return new double[] {0, -ss * 6 * Math.max(0, -Math.sin(ph - 0.9)), ss * 24 * Math.sin(ph - 0.9)};
+			});
 			a.sample(w + "_tip", "rotation", 0, T, steps, t -> {
 				double ph = 2 * Math.PI * t / T;
-				return new double[] {0, -ss * 7 * Math.max(0, -Math.sin(ph - 1.2)), ss * 12 * Math.sin(ph - 1.3)};
+				return new double[] {0, -ss * 12 * Math.max(0, -Math.sin(ph - 1.6)), ss * 28 * Math.sin(ph - 1.6)};
 			});
 		}
-		a.sample("root", "position", 0, T, steps, t -> new double[] {0, 2.2 * Math.sin(2 * Math.PI * t / T - 0.5), 0});
-		a.sample("body", "rotation", 0, T, steps, t -> new double[] {2.2 * Math.sin(2 * Math.PI * t / T - 0.3), 0, 0});
-		a.sample("neck", "rotation", 0, T, steps, t -> new double[] {-2 * Math.sin(2 * Math.PI * t / T - 0.5), 0, 0});
-		a.sample("head", "rotation", 0, T, steps, t -> new double[] {-2.4 * Math.sin(2 * Math.PI * t / T - 0.2), 0, 0});
-		a.sample("beak_low", "rotation", 0, T, 8, t -> new double[] {3 + 2 * Math.sin(2 * Math.PI * t / T), 0, 0});
-		a.sample("crest", "rotation", 0, T, steps, t -> new double[] {4 * Math.sin(4 * Math.PI * t / T - 1), 0, 0});
-		a.sample("tail", "rotation", 0, T, steps, t -> new double[] {3 * Math.sin(2 * Math.PI * t / T - 1.5), 2 * Math.sin(2 * Math.PI * t / T - 2), 0});
+		a.sample("root", "position", 0, T, steps, t -> new double[] {0, 4.5 * Math.sin(2 * Math.PI * t / T - 0.5), 0});
+		a.sample("body", "rotation", 0, T, steps, t -> new double[] {4 * Math.sin(2 * Math.PI * t / T - 0.3), 0, 2.5 * Math.sin(2 * Math.PI * t / T + 1.0)});
+		a.sample("neck", "rotation", 0, T, steps, t -> new double[] {-4 * Math.sin(2 * Math.PI * t / T - 0.5), 0, 0});
+		a.sample("head", "rotation", 0, T, steps, t -> new double[] {-3.5 * Math.sin(2 * Math.PI * t / T - 0.2), 3 * Math.sin(2 * Math.PI * t / T + 0.6), -2.5 * Math.sin(2 * Math.PI * t / T + 1.0)});
+		a.sample("beak_low", "rotation", 0, T, 8, t -> new double[] {3 + 3 * Math.sin(2 * Math.PI * t / T), 0, 0});
+		a.sample("crest", "rotation", 0, T, steps, t -> new double[] {7 * Math.sin(4 * Math.PI * t / T - 1), 0, 0});
+		a.sample("tail", "rotation", 0, T, steps, t -> new double[] {6 * Math.sin(2 * Math.PI * t / T - 1.5), 4 * Math.sin(2 * Math.PI * t / T - 2), 0});
 		for (int k = 0; k < 5; k++) {
 			for (int j = 0; j < PLUME_SECTIONS.length; j++) {
 				int kk = k, jj = j;
 				a.sample("plume_" + k + "_" + j, "rotation", 0, T, steps, t -> {
 					double ph = 2 * Math.PI * t / T;
-					return new double[] {(3 + 3 * jj) * Math.sin(ph - 1.8 - 0.8 * jj - 0.3 * kk), (2 + 2.5 * jj) * Math.sin(ph - 0.9 * jj + 1.1 * kk), 0};
+					return new double[] {(5 + 5 * jj) * Math.sin(ph - 1.8 - 1.0 * jj - 0.3 * kk), (4 + 4 * jj) * Math.sin(ph - 1.1 * jj + 1.1 * kk), 0};
 				});
 			}
 		}

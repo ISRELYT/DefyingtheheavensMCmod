@@ -177,6 +177,13 @@ public final class ModPackets {
 	/** S2C: a spell's passing moment to draw (SpellFx): its kind, where, a way, and two numbers of its own. */
 	public static final ResourceLocation SPELL_FX = new ResourceLocation(DefyingTheHeavens.MOD_ID, "spell_fx");
 	/**
+	 * S2C: a sound under a spell's voice (SpellSounds#play): its voice, its handle, the sound, where, the thing it follows (0: none), its
+	 * volume and pitch, and whether it loops.
+	 */
+	public static final ResourceLocation SPELL_SOUND = new ResourceLocation(DefyingTheHeavens.MOD_ID, "spell_sound");
+	/** S2C: a spell's voice hushed (SpellSounds#hush): the voice, the handle (0: all its sounds), and how many ticks they fade over. */
+	public static final ResourceLocation SPELL_SOUND_HUSH = new ResourceLocation(DefyingTheHeavens.MOD_ID, "spell_sound_hush");
+	/**
 	 * S2C: an open Storage Ring's space (StorageRings#send): the screen's id, the ring's grade, whether this begins the space afresh,
 	 * then its entries (each the item and how many, a flag before each), in as many packets as it takes.
 	 */
@@ -983,6 +990,32 @@ public final class ModPackets {
 		buf.writeFloat(a);
 		buf.writeFloat(b);
 		ServerPlayNetworking.send(to, SPELL_FX, buf);
+	}
+
+	/** A sound under a spell's voice (SpellSounds#play) for {@code to} to hear. */
+	public static void sendSpellSound(ServerPlayer to, long voice, int handle, net.minecraft.sounds.SoundEvent sound, Vec3 at, int follow, float volume, float pitch,
+			boolean loop) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarLong(voice);
+		buf.writeVarInt(handle);
+		buf.writeResourceLocation(sound.getLocation());
+		buf.writeDouble(at.x);
+		buf.writeDouble(at.y);
+		buf.writeDouble(at.z);
+		buf.writeVarInt(follow);
+		buf.writeFloat(volume);
+		buf.writeFloat(pitch);
+		buf.writeBoolean(loop);
+		ServerPlayNetworking.send(to, SPELL_SOUND, buf);
+	}
+
+	/** A spell's voice hushed (SpellSounds#hush) for {@code to}. */
+	public static void sendSpellSoundHush(ServerPlayer to, long voice, int handle, int fade) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarLong(voice);
+		buf.writeVarInt(handle);
+		buf.writeVarInt(fade);
+		ServerPlayNetworking.send(to, SPELL_SOUND_HUSH, buf);
 	}
 
 	private ModPackets() {}

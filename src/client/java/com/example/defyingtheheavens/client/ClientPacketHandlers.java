@@ -454,6 +454,23 @@ public final class ClientPacketHandlers {
 			client.execute(() -> ClientSpellFx.add(kind, at, way, a, b));
 		});
 
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SPELL_SOUND, (client, handler, buf, sender) -> {
+			long voice = buf.readVarLong();
+			int handle = buf.readVarInt();
+			net.minecraft.resources.ResourceLocation sound = buf.readResourceLocation();
+			net.minecraft.world.phys.Vec3 at = new net.minecraft.world.phys.Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble());
+			int follow = buf.readVarInt();
+			float volume = buf.readFloat(), pitch = buf.readFloat();
+			boolean loop = buf.readBoolean();
+			client.execute(() -> ClientSpellSounds.play(voice, handle, sound, at, follow, volume, pitch, loop));
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SPELL_SOUND_HUSH, (client, handler, buf, sender) -> {
+			long voice = buf.readVarLong();
+			int handle = buf.readVarInt(), fade = buf.readVarInt();
+			client.execute(() -> ClientSpellSounds.hush(voice, handle, fade));
+		});
+
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.TRIBULATION_STATE, (client, handler, buf, sender) -> {
 			boolean active = buf.readBoolean();
 			int strikesLeft = buf.readVarInt();

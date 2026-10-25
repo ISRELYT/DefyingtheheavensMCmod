@@ -31,6 +31,16 @@ public final class ModGameRules {
 	public static final GameRules.Key<GameRules.BooleanValue> SPELL_COOLDOWNS =
 			GameRuleRegistry.register("spellCooldowns", GameRules.Category.PLAYER, GameRuleFactory.createBooleanRule(false));
 
+	/**
+	 * A player's spells change the land for good (the user's ask, 2026-10-25: "a grief toggle"): their craters, cuts, fissures and bores,
+	 * the lakes and floods of the water spells, the ice and the flowers they leave, and fire that catches and spreads. Off, they leave the
+	 * land as it was (HeavenSpells#carvesLand): nothing carved or filled for good, and their fire only a moment's, catching nothing and
+	 * putting itself out (Devastation#ignite, FireBlockMixin); the water they pour drains away again. What a spell sets down for a while
+	 * (walls, ice, thorns, cages) comes and goes either way. Cultivators' spells never change the land, whatever this says.
+	 */
+	public static final GameRules.Key<GameRules.BooleanValue> SPELL_GRIEFING =
+			GameRuleRegistry.register("spellGriefing", GameRules.Category.PLAYER, GameRuleFactory.createBooleanRule(true));
+
 	/** Touching this class registers the rules. */
 	public static void register() {}
 

@@ -820,6 +820,38 @@ public class SpellArt {
 		return t * t;
 	}
 
+	// --- Gaits (the user's ask, 2026-10-25: "look at how tigers actually move and how horses actually gallop") ---
+
+	/**
+	 * Where a leg is in its own stride, {@code phase} of the beast's (0 to 1): its foot set down at {@code down} of the stride and on the ground
+	 * {@code duty} of it. Its own stride runs from its foot touching down (0) through its stance (to {@code duty}) and its swing (to 1).
+	 */
+	static double stride(double phase, double down) {
+		double s = (phase - down) % 1;
+		return s < 0 ? s + 1 : s;
+	}
+
+	/**
+	 * A joint's angle {@code s} of the way round its own stride ({@link #stride}), through {@code keys} ({s, degrees} in order, from 0 below 1),
+	 * on a looping Catmull-Rom curve: no stop at any key, its last joined smoothly to its first round the stride's end.
+	 */
+	static double keyed(double s, double[][] keys) {
+		int n = keys.length;
+		s = ((s % 1) + 1) % 1;
+		int i = n - 1;
+		for (int k = 0; k < n; k++) if (keys[k][0] <= s) i = k;
+		// Its neighbours round the loop, their times carried past its ends.
+		double t1 = keys[i][0], v1 = keys[i][1];
+		double t2 = i + 1 < n ? keys[i + 1][0] : keys[0][0] + 1, v2 = keys[(i + 1) % n][1];
+		double t0 = i - 1 >= 0 ? keys[i - 1][0] : keys[n - 1][0] - 1, v0 = keys[(i - 1 + n) % n][1];
+		double t3 = i + 2 < n ? keys[i + 2][0] : keys[(i + 2) % n][0] + 1, v3 = keys[(i + 2) % n][1];
+		if (s < t1) s += 1;
+		double h = t2 - t1, u = (s - t1) / h;
+		double m1 = (v2 - v0) / (t2 - t0) * h, m2 = (v3 - v1) / (t3 - t1) * h;
+		double u2 = u * u, u3 = u2 * u;
+		return (2 * u3 - 3 * u2 + 1) * v1 + (u3 - 2 * u2 + u) * m1 + (-2 * u3 + 3 * u2) * v2 + (u3 - u2) * m2;
+	}
+
 	// --- Writing ---
 
 	static String num(double v) {

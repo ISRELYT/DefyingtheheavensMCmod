@@ -293,10 +293,10 @@ public final class HeavenDemonSpells {
 		Mantle(LivingEntity caster) {
 			super(caster, MANTLE_TICKS);
 			caster.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, MANTLE_TICKS, 0));
-			HeavenSpells.sound(level, caster.position(), SoundEvents.BEACON_ACTIVATE, 1.0f, 1.5f);
-			HeavenSpells.sound(level, caster.position(), SoundEvents.ARMOR_EQUIP_NETHERITE, 1.0f, 0.7f);
+			sound(caster.position(), SoundEvents.BEACON_ACTIVATE, 1.0f, 1.5f);
+			sound(caster.position(), SoundEvents.ARMOR_EQUIP_NETHERITE, 1.0f, 0.7f);
 			this.mantle = SpellConstruct.create(level, SpellConstruct.Kind.HD_MANTLE, caster.position(), 0, 0, MANTLE_TICKS + 10, caster)
-					.size(caster.getBbHeight() / 2).spawn();
+					.size(caster.getBbHeight() / 2).anchor(caster, SpellAnchor.POSITION, Vec3.ZERO).spawn();
 			wrap(0);
 		}
 
@@ -343,7 +343,7 @@ public final class HeavenDemonSpells {
 				shot.hurtMarked = true;
 				level.sendParticles(crimson(1.2f), shot.getX(), shot.getY(), shot.getZ(), 6, 0.15, 0.15, 0.15, 0);
 				level.sendParticles(ParticleTypes.END_ROD, shot.getX(), shot.getY(), shot.getZ(), 4, 0.1, 0.1, 0.1, 0.05);
-				HeavenSpells.sound(level, shot.position(), SoundEvents.SHIELD_BLOCK, 0.8f, 1.4f);
+				sound(shot.position(), SoundEvents.SHIELD_BLOCK, 0.8f, 1.4f);
 			}
 		}
 	}
@@ -372,8 +372,8 @@ public final class HeavenDemonSpells {
 			twined(level, HeavenSpells.fromHands(caster), HeavenSpells.middle(sealed), 2.5);
 			this.seal = SpellConstruct.create(level, SpellConstruct.Kind.DEVOURING_SEAL, sealed.position(), caster.getRandom().nextFloat() * 360, 0, SEAL_TICKS + 10, caster)
 					.size(Math.max(sealed.getBbHeight() / 2, sealed.getBbWidth() / 0.75f)).spawn();
-			HeavenSpells.sound(level, caster.position(), SoundEvents.EVOKER_PREPARE_ATTACK, 1.0f, 0.7f);
-			HeavenSpells.sound(level, sealed.position(), SoundEvents.BELL_RESONATE, 1.0f, 1.4f);
+			sound(caster.position(), SoundEvents.EVOKER_PREPARE_ATTACK, 1.0f, 0.7f);
+			sound(sealed.position(), SoundEvents.BELL_RESONATE, 1.0f, 1.4f);
 		}
 
 		@Override
@@ -397,7 +397,7 @@ public final class HeavenDemonSpells {
 				// Its life, drawn off to the caster in crimson.
 				HeavenSpells.line(level, HeavenSpells.middle(sealed), HeavenSpells.middle(caster), crimson(0.9f), 0.6);
 			}
-			HeavenSpells.sound(level, sealed.position(), SoundEvents.GENERIC_EAT, 0.8f, 0.5f);
+			sound(sealed.position(), SoundEvents.GENERIC_EAT, 0.8f, 0.5f);
 			return true;
 		}
 	}
@@ -491,9 +491,9 @@ public final class HeavenDemonSpells {
 			Vec3 below = HeavenSpells.groundBelow(level, behind.add(0, 2, 0), 4, 24);
 			Vec3 at = below != null ? below : behind.subtract(0, 6, 0); // aloft: on its own cloud, below its caster
 			this.avatar = SpellConstruct.create(level, SpellConstruct.Kind.HEAVEN_DEMON_AVATAR, at, caster.getYRot(), 0, AVATAR_TICKS, caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, at, SoundEvents.BEACON_ACTIVATE, 3.0f, 0.5f);
-			HeavenSpells.sound(level, at, SoundEvents.ENDER_DRAGON_GROWL, 2.5f, 0.6f);
-			HeavenSpells.sound(level, at, SoundEvents.WARDEN_EMERGE, 2.0f, 0.8f);
+			sound(at, SoundEvents.BEACON_ACTIVATE, 3.0f, 0.5f);
+			sound(at, SoundEvents.ENDER_DRAGON_GROWL, 2.5f, 0.6f);
+			sound(at, SoundEvents.WARDEN_EMERGE, 2.0f, 0.8f);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, at, Vec3.ZERO, (float) AVATAR_RADIUS, 0, 192);
 		}
 
@@ -531,8 +531,8 @@ public final class HeavenDemonSpells {
 			sent.add(SpellConstruct.create(level, palm ? SpellConstruct.Kind.AVATAR_PALM : SpellConstruct.Kind.AVATAR_CLAW, ground, yaw, 0, AVATAR_FALL + AVATAR_PRESS, caster)
 					.sizedFor(spell).spawn());
 			falling.add(new Hand(ground, palm, age + AVATAR_FALL));
-			HeavenSpells.sound(level, avatar.position().add(0, AVATAR_HEIGHT * 0.7, 0), palm ? SoundEvents.BEACON_POWER_SELECT : SoundEvents.RAVAGER_ROAR, 3.0f, 0.5f);
-			HeavenSpells.sound(level, ground, SoundEvents.ELYTRA_FLYING, 2.0f, 0.6f);
+			sound(avatar.position().add(0, AVATAR_HEIGHT * 0.7, 0), palm ? SoundEvents.BEACON_POWER_SELECT : SoundEvents.RAVAGER_ROAR, 3.0f, 0.5f);
+			sound(ground, SoundEvents.ELYTRA_FLYING, 2.0f, 0.6f);
 		}
 
 		/** A hand come down: all within its reach struck, thrown down and slowed; a share of all it did mends the caster. */
@@ -549,8 +549,8 @@ public final class HeavenDemonSpells {
 			HeavenSpells.ring(level, hand.ground().add(0, 0.3, 0), AVATAR_RADIUS, hand.palm() ? gold(2.5f) : crimson(2.5f), 72);
 			if (!hand.palm()) rake(level, hand.ground().add(0, 1, 0), hand.ground().subtract(avatar.position()), AVATAR_RADIUS * 1.2, 5);
 			wound(hand);
-			HeavenSpells.sound(level, hand.ground(), SoundEvents.GENERIC_EXPLODE, 4.0f, 0.6f);
-			HeavenSpells.sound(level, hand.ground(), hand.palm() ? SoundEvents.ANVIL_LAND : SoundEvents.RAVAGER_ATTACK, 3.0f, 0.5f);
+			sound(hand.ground(), SoundEvents.GENERIC_EXPLODE, 4.0f, 0.6f);
+			sound(hand.ground(), hand.palm() ? SoundEvents.ANVIL_LAND : SoundEvents.RAVAGER_ATTACK, 3.0f, 0.5f);
 		}
 
 		/**
@@ -604,9 +604,9 @@ public final class HeavenDemonSpells {
 			this.from = caster.getEyePosition().add(Vec3.directionFromRotation(0, caster.getYRot()).scale(-3)).add(0, 2.5, 0);
 			this.face = HeavenSpells.facing(point.subtract(from));
 			this.fist = SpellConstruct.create(level, SpellConstruct.Kind.HEAVEN_DEMON_FIST, from, face[0], face[1], SHATTER_FLIGHT + 16, caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, from, SoundEvents.BEACON_POWER_SELECT, 3.0f, 0.5f);
-			HeavenSpells.sound(level, from, SoundEvents.RAVAGER_ROAR, 2.5f, 0.6f);
-			HeavenSpells.sound(level, from, SoundEvents.ELYTRA_FLYING, 2.0f, 0.8f);
+			sound(from, SoundEvents.BEACON_POWER_SELECT, 3.0f, 0.5f);
+			sound(from, SoundEvents.RAVAGER_ROAR, 2.5f, 0.6f);
+			sound(from, SoundEvents.ELYTRA_FLYING, 2.0f, 0.8f);
 		}
 
 		@Override
@@ -626,7 +626,7 @@ public final class HeavenDemonSpells {
 					strike(caster, e, SHATTER_CUTS);
 					level.sendParticles(ParticleTypes.END_ROD, e.getX(), e.getY() + e.getBbHeight() / 2, e.getZ(), 6, 0.3, 0.4, 0.3, 0.05);
 				}
-				HeavenSpells.sound(level, point, SoundEvents.AMETHYST_CLUSTER_BREAK, 3.0f, 0.5f);
+				sound(point, SoundEvents.AMETHYST_CLUSTER_BREAK, 3.0f, 0.5f);
 			}
 			return true;
 		}
@@ -654,9 +654,9 @@ public final class HeavenDemonSpells {
 			SpellFx.send(level, SpellFx.Kind.FLASH, point, Vec3.ZERO, 10, GOLD_PALE, 192);
 			SpellFx.send(level, SpellFx.Kind.FLASH, point, Vec3.ZERO, 6, CRIMSON, 192);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, point, Vec3.ZERO, (float) SHATTER_RADIUS * 1.5f, 0, 192);
-			HeavenSpells.sound(level, point, SoundEvents.GLASS_BREAK, 5.0f, 0.4f);
-			HeavenSpells.sound(level, point, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.5f);
-			HeavenSpells.sound(level, point, SoundEvents.ANVIL_LAND, 3.0f, 0.4f);
+			sound(point, SoundEvents.GLASS_BREAK, 5.0f, 0.4f);
+			sound(point, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.5f);
+			sound(point, SoundEvents.ANVIL_LAND, 3.0f, 0.4f);
 		}
 
 		@Override
@@ -691,7 +691,7 @@ public final class HeavenDemonSpells {
 			this.landed = BELL_FALL;
 			this.risen = BELL_FALL + BELL_FIRST + (BELL_TOLLS - 1) * BELL_EVERY + 10;
 			this.bell = SpellConstruct.create(level, SpellConstruct.Kind.HEAVEN_DEMON_BELL, sky, caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, sky, SoundEvents.BELL_RESONATE, 4.0f, 0.3f);
+			sound(sky, SoundEvents.BELL_RESONATE, 4.0f, 0.3f);
 		}
 
 		@Override
@@ -715,8 +715,8 @@ public final class HeavenDemonSpells {
 		private void land() {
 			Devastation.crater(caster, level, ground, BELL_CRATER, BELL_CRATER_DEPTH, Devastation.Floor.RUBBLE);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) BELL_RADIUS * 1.5f, 0, 192);
-			HeavenSpells.sound(level, ground, SoundEvents.ANVIL_LAND, 5.0f, 0.3f);
-			HeavenSpells.sound(level, ground, SoundEvents.BELL_BLOCK, 5.0f, 0.3f);
+			sound(ground, SoundEvents.ANVIL_LAND, 5.0f, 0.3f);
+			sound(ground, SoundEvents.BELL_BLOCK, 5.0f, 0.3f);
 		}
 
 		/** It tolls: everything under it struck through armour, its wave striking and throwing back all round it, the land cracking. */
@@ -741,8 +741,8 @@ public final class HeavenDemonSpells {
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) BELL_WAVE, 0, 192);
 			SpellFx.send(level, SpellFx.Kind.FLASH, ground.add(0, BELL_RADIUS * 0.6, 0), Vec3.ZERO, 10, GOLD, 192);
 			SpellFx.send(level, SpellFx.Kind.FLASH, ground.add(0, BELL_RADIUS * 0.4, 0), Vec3.ZERO, 8, CRIMSON, 192);
-			HeavenSpells.sound(level, ground, SoundEvents.BELL_BLOCK, 6.0f, 0.4f);
-			HeavenSpells.sound(level, ground, SoundEvents.BELL_RESONATE, 5.0f, 0.5f);
+			sound(ground, SoundEvents.BELL_BLOCK, 6.0f, 0.4f);
+			sound(ground, SoundEvents.BELL_RESONATE, 5.0f, 0.5f);
 		}
 
 		@Override
@@ -770,8 +770,8 @@ public final class HeavenDemonSpells {
 			this.ground = below != null ? below : point;
 			this.sky = ground.add(0, ECLIPSE_HIGH, 0);
 			this.eclipse = SpellConstruct.create(level, SpellConstruct.Kind.HEAVEN_DEMON_ECLIPSE, sky, caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, sky, SoundEvents.BEACON_ACTIVATE, 4.0f, 0.4f);
-			HeavenSpells.sound(level, sky, SoundEvents.WITHER_AMBIENT, 3.0f, 0.4f);
+			sound(sky, SoundEvents.BEACON_ACTIVATE, 4.0f, 0.4f);
+			sound(sky, SoundEvents.WITHER_AMBIENT, 3.0f, 0.4f);
 		}
 
 		@Override
@@ -797,8 +797,8 @@ public final class HeavenDemonSpells {
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) ECLIPSE_RADIUS * 1.4f, 0, 192);
 			SpellFx.send(level, SpellFx.Kind.FLASH, ground.add(0, 3, 0), Vec3.ZERO, 10, CRIMSON, 192);
 			SpellFx.send(level, SpellFx.Kind.FLASH, sky, Vec3.ZERO, 14, GOLD, 192);
-			HeavenSpells.sound(level, ground, SoundEvents.WARDEN_SONIC_BOOM, 4.0f, 0.4f + 0.1f * k);
-			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.5f);
+			sound(ground, SoundEvents.WARDEN_SONIC_BOOM, 4.0f, 0.4f + 0.1f * k);
+			sound(ground, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.5f);
 		}
 
 		@Override
@@ -826,8 +826,8 @@ public final class HeavenDemonSpells {
 			this.ground = below != null ? below : point;
 			this.heart = ground.add(0, CHAOS_HIGH, 0);
 			this.sphere = SpellConstruct.create(level, SpellConstruct.Kind.CHAOS_SPHERE, heart, caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, heart, SoundEvents.BEACON_ACTIVATE, 5.0f, 0.3f);
-			HeavenSpells.sound(level, heart, SoundEvents.WITHER_AMBIENT, 4.0f, 0.3f);
+			sound(heart, SoundEvents.BEACON_ACTIVATE, 5.0f, 0.3f);
+			sound(heart, SoundEvents.WITHER_AMBIENT, 4.0f, 0.3f);
 		}
 
 		@Override
@@ -836,12 +836,12 @@ public final class HeavenDemonSpells {
 			long churning = age - CHAOS_SWELLS;
 			if (churning < CHAOS_TICKS) {
 				draw(churning % CHAOS_EVERY == 0);
-				if (churning % 20 == 0) HeavenSpells.sound(level, heart, SoundEvents.WARDEN_HEARTBEAT, 5.0f, 0.4f);
+				if (churning % 20 == 0) sound(heart, SoundEvents.WARDEN_HEARTBEAT, 5.0f, 0.4f);
 				return true;
 			}
 			if (churning == CHAOS_TICKS) {
 				sphere.act("burst");
-				HeavenSpells.sound(level, heart, SoundEvents.WARDEN_SONIC_CHARGE, 5.0f, 0.5f);
+				sound(heart, SoundEvents.WARDEN_SONIC_CHARGE, 5.0f, 0.5f);
 			}
 			if (churning == CHAOS_TICKS + CHAOS_BURSTS) burst();
 			return true;
@@ -881,8 +881,8 @@ public final class HeavenDemonSpells {
 			SpellFx.send(level, SpellFx.Kind.FLASH, heart, Vec3.ZERO, 16, CRIMSON, 256);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) CHAOS_BURST_RADIUS * 1.6f, 0, 256);
 			SpellFx.send(level, SpellFx.Kind.FIRE_EXPLOSION, heart, Vec3.ZERO, (float) CHAOS_RADIUS, 0, 256);
-			HeavenSpells.sound(level, heart, SoundEvents.GENERIC_EXPLODE, 7.0f, 0.4f);
-			HeavenSpells.sound(level, heart, SoundEvents.WARDEN_SONIC_BOOM, 6.0f, 0.4f);
+			sound(heart, SoundEvents.GENERIC_EXPLODE, 7.0f, 0.4f);
+			sound(heart, SoundEvents.WARDEN_SONIC_BOOM, 6.0f, 0.4f);
 		}
 
 		@Override

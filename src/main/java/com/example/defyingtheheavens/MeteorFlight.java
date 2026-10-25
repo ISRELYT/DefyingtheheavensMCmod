@@ -341,7 +341,7 @@ public final class MeteorFlight {
 						if (px * px + py * py + pz * pz > rr) continue;
 						if (!level.isLoaded(cell)) continue;
 						BlockState state = level.getBlockState(cell);
-						if (state.isAir() || !HeavenSpells.carvable(level, cell, p)) continue;
+						if (state.isAir() || !HeavenSpells.carvableAnyway(level, cell, p)) continue;
 						BlockPos pos = cell.immutable();
 						level.removeBlock(pos, false);
 						cut++;
@@ -396,7 +396,7 @@ public final class MeteorFlight {
 				double along = rel.dot(look), side = DOZE_SIDE + s.speed + DOZE_WIDENS * Math.max(0, along);
 				if (along < -DOZE_BEHIND - s.speed || along > reach || rel.lengthSqr() - along * along > side * side || !level.isLoaded(pos)) continue;
 				BlockState state = level.getBlockState(pos);
-				if (state.getCollisionShape(level, pos).isEmpty() || !HeavenSpells.carvable(level, pos, p)) continue;
+				if (state.getCollisionShape(level, pos).isEmpty() || !HeavenSpells.carvableAnyway(level, pos, p)) continue;
 				level.removeBlock(pos, false);
 				cut++;
 				s.dozed++;

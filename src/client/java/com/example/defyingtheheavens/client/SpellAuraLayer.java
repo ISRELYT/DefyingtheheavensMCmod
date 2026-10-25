@@ -92,8 +92,84 @@ public class SpellAuraLayer<T extends LivingEntity, M extends HumanoidModel<T>> 
 			fists(pose, buffers, parent.rightArm, -1, age, fist);
 			fists(pose, buffers, parent.leftArm, 1, age + 7, fist);
 		}
+		float ghost = ClientSpellAuras.shown(entity, SpellAura.GHOST_FIRE, partial, 6, 16);
+		if (ghost > 0) {
+			ghostHands(pose, buffers, parent.rightArm, -1, age, ghost, false);
+			ghostHands(pose, buffers, parent.leftArm, 1, age + 11, ghost, false);
+		}
 		float heat = MeteorFlightClient.heat(entity);
 		if (heat > 0.02f) meteorHeat(pose, buffers, parent, age, heat);
+	}
+
+	/** Minecraft's own soul fire (the ghost fire of the Nether's soul sand): its strip of 32 frames. */
+	private static final net.minecraft.resources.ResourceLocation SOUL_FIRE = new net.minecraft.resources.ResourceLocation("minecraft", "textures/block/soul_fire_0.png");
+	private static final int SOUL_FIRE_FRAMES = 32;
+	private static final float[] GHOST_CORE = {0.75f, 1.0f, 0.97f}, GHOST_GLOW = {0.2f, 0.85f, 0.9f}, GHOST_WISP = {0.55f, 1.0f, 0.95f};
+
+	/**
+	 * Ghost Fire kindled in the hands (SpellAura GHOST_FIRE, the user's ask, 2026-10-25: "go around my hands and not just two random balls"):
+	 * Minecraft's own soul fire wrapping the hand at the end of {@code arm} and licking up the forearm, a cold glow in the palm within a wider
+	 * teal one, and wisps of it circling the wrist, drifting up off it. {@code firstPerson}: one's own arm, drawn larger before the eye.
+	 */
+	private static void ghostHands(PoseStack pose, MultiBufferSource buffers, ModelPart arm, int side, float age, float shown, boolean firstPerson) {
+		VertexConsumer fire = buffers.getBuffer(SpellRender.glow(SOUL_FIRE));
+		float scale = firstPerson ? 0.75f : 1;
+		// Flames wrapped round the hand: tongues from four points about it, and a ring of smaller ones about the wrist.
+		for (int k = 0; k < 4; k++) {
+			double a = Math.PI / 2 * k + age * 0.05;
+			Vector3f round = new Vector3f(side * 0.5f + (float) Math.cos(a) * 2.2f, 9.2f, (float) Math.sin(a) * 2.2f);
+			soulTongues(pose, fire, arm, round, 0.42f * scale, 0.62f * scale, age + k * 5, shown, 2);
+		}
+		soulTongues(pose, fire, arm, new Vector3f(side * 0.5f, 6.5f, 0), 0.5f * scale, 0.5f * scale, age + 3, shown, 3);
+		VertexConsumer glow = buffers.getBuffer(SpellRender.glow(SpellRender.GLOW));
+		Vector3f hand = at(arm, new Vector3f(side * 0.5f, 10, 0));
+		float breathe = 0.85f + 0.15f * Mth.sin(age * 0.3f);
+		crossed(pose, glow, hand, 1.2f * scale * breathe, 1.2f * scale * breathe, 0.3f, GHOST_GLOW, 0.5f * shown, 0, 0, 1, 1);
+		crossed(pose, glow, hand, 0.5f * scale, 0.5f * scale, 0.3f, GHOST_CORE, 0.85f * shown, 0, 0, 1, 1);
+		// Wisps circling the wrist, rising off it as they go round.
+		VertexConsumer wisps = buffers.getBuffer(SpellRender.glow(SpellRender.SPARK));
+		for (int i = 0; i < 5; i++) {
+			float t = (age * 0.045f + i / 5f) % 1;
+			double a = Math.PI * 2 * (t * 1.6 + i / 5.0) * side;
+			float r = (0.32f - 0.12f * t) * scale;
+			Vector3f wisp = new Vector3f(hand.x + (float) Math.cos(a) * r, hand.y - 0.1f - t * 0.75f * scale, hand.z + (float) Math.sin(a) * r);
+			crossed(pose, wisps, wisp, 0.13f * scale, 0.13f * scale, 0.3f, GHOST_WISP, shown * (1 - t) * 0.9f, 0, 0, 1, 1);
+		}
+	}
+
+	/**
+	 * Ghost Fire on the hands of one drawn as the dead's light (SoulRenderer: a ghost, one in a Ghost King's form), its {@code model} posed as
+	 * drawn and the pose at its feet, facing set: the same fire as the living's ({@link #ghostHands}), drawn into the sense layer, whose state
+	 * is put back after.
+	 */
+	static void ghostHandsOn(PoseStack pose, HumanoidModel<?> model, float age, float shown) {
+		pose.pushPose();
+		pose.scale(-1.0f, -1.0f, 1.0f);
+		pose.scale(0.9375f, 0.9375f, 0.9375f);
+		pose.translate(0.0f, -1.501f, 0.0f);
+		MultiBufferSource.BufferSource source = net.minecraft.client.Minecraft.getInstance().renderBuffers().bufferSource();
+		MultiBufferSource buffers = SpellBuffers.begin(source);
+		try {
+			ghostHands(pose, buffers, model.rightArm, -1, age, shown, false);
+			ghostHands(pose, buffers, model.leftArm, 1, age + 11, shown, false);
+		} finally {
+			SpellBuffers.end();
+		}
+		source.endBatch();
+		SenseOverlay.layerState(); // the batch's end turned blending and the depth test off
+		pose.popPose();
+	}
+
+	/** {@link #tongues} of soul fire (its own colours, a frame of its strip each), rising from {@code local} of {@code part}. */
+	private static void soulTongues(PoseStack pose, VertexConsumer vc, ModelPart part, Vector3f local, float width, float height, float age, float shown, int count) {
+		Vector3f at = at(part, local);
+		for (int i = 0; i < count; i++) {
+			float jitterX = (SpellRender.hash(i * 7L + (long) (local.x * 31)) - 0.5f) * width * 0.5f;
+			float jitterZ = (SpellRender.hash(i * 13L + (long) (local.z * 31)) - 0.5f) * width * 0.5f;
+			float tall = height * (0.7f + 0.4f * Mth.sin(age * 0.37f + i * 2.3f)) * shown;
+			float[] fv = SpellRender.frame(age + i * 4, 0.6f, SOUL_FIRE_FRAMES);
+			crossed(pose, vc, new Vector3f(at.x + jitterX, at.y + 0.06f, at.z + jitterZ), width * shown, tall, 0, WHITE, 0.95f * shown, 0, fv[0], 1, fv[1]);
+		}
 	}
 
 	/**
@@ -270,6 +346,8 @@ public class SpellAuraLayer<T extends LivingEntity, M extends HumanoidModel<T>> 
 			VertexConsumer glow = buffers.getBuffer(SpellRender.glow(SpellRender.GLOW));
 			crossed(pose, glow, at(arm, new Vector3f(right ? -0.5f : 0.5f, 10, 0)), 0.6f, 0.6f, 0.3f, FIRE_MID, 0.6f * fist, 0, 0, 1, 1);
 		}
+		float ghost = ClientSpellAuras.shown(player, SpellAura.GHOST_FIRE, partial, 6, 16);
+		if (ghost > 0) ghostHands(pose, buffers, arm, right ? -1 : 1, age + (right ? 0 : 11), ghost, true);
 		float heat = MeteorFlightClient.heat(player);
 		if (heat > 0.02f) heatSkins(heat, age, (type, outer, rgb, alpha) -> armSkin(pose, buffers, arm, type, rgb, alpha));
 	}

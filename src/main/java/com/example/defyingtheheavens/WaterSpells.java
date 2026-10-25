@@ -180,7 +180,9 @@ public final class WaterSpells {
 			GLACIER_HALF = HeavenSpells.span(Realm.TRUE_IMMORTAL, 7), GLACIER_DEPTH = HeavenSpells.span(Realm.TRUE_IMMORTAL, 8),
 			GLACIER_CALVE_REACH = HeavenSpells.span(Realm.TRUE_IMMORTAL, 6);
 	public static final float GLACIER_GRIND = 2500, GLACIER_CALVE = 10000;
-	public static final int GLACIER_RISES = 20, GLACIER_TICKS = 5 * 20, GLACIER_EVERY = 5, GLACIER_CALVES = 20, GLACIER_AFTER = 10;
+	public static final int GLACIER_RISES = 20, GLACIER_TICKS = 10 * 20, GLACIER_EVERY = 10, GLACIER_CALVES = 20, GLACIER_AFTER = 16;
+	/** How high over its foot it carves its way through the land (its seracs' height: BlockMasses' glacier). */
+	public static final int GLACIER_CARVE_HIGH = 24;
 	/**
 	 * The Primordial Sea: where (218 by its realm), how far round its ring of waves stands (39: its model's); the lake it leaves (27 round, 9
 	 * deep, by its realm); what it drowns every foe within of each time, and its waves' crash; how long it takes to rise, how long it churns, how
@@ -347,7 +349,7 @@ public final class WaterSpells {
 			this.at = ground != null ? ground : caster.position();
 			this.field = SpellField.create(level, SpellField.Kind.RAIN_CLOUD, at.add(0, RAIN_HEIGHT, 0), (float) RAIN_RADIUS, (float) RAIN_HEIGHT, RAIN_TICKS, caster)
 					.data(caster.getRandom().nextInt()).spawn();
-			HeavenSpells.sound(level, at, SoundEvents.WEATHER_RAIN_ABOVE, 2.0f, 1.0f);
+			sound(at, SoundEvents.WEATHER_RAIN_ABOVE, 2.0f, 1.0f);
 		}
 
 		@Override
@@ -369,7 +371,7 @@ public final class WaterSpells {
 				}
 				if (age % 40 == 0) douse(level, BlockPos.containing(at), (int) RAIN_RADIUS);
 			}
-			if (age % 60 == 0) HeavenSpells.sound(level, at, SoundEvents.WEATHER_RAIN, 1.5f, 1.0f);
+			if (age % 60 == 0) sound(at, SoundEvents.WEATHER_RAIN, 1.5f, 1.0f);
 			return true;
 		}
 
@@ -411,8 +413,8 @@ public final class WaterSpells {
 					.data(caster.getRandom().nextInt()).strikeable(this::hit).spawn();
 			this.bound = new WoodSpells.Bound(caster, target, target.position(), ticks);
 			HeavenSpells.linger(bound);
-			HeavenSpells.sound(level, target.position(), SoundEvents.GENERIC_SPLASH, 1.5f, 0.6f);
-			HeavenSpells.sound(level, target.position(), SoundEvents.BUBBLE_COLUMN_WHIRLPOOL_INSIDE, 1.5f, 1.0f);
+			sound(target.position(), SoundEvents.GENERIC_SPLASH, 1.5f, 0.6f);
+			sound(target.position(), SoundEvents.BUBBLE_COLUMN_WHIRLPOOL_INSIDE, 1.5f, 1.0f);
 			if (breathes(target)) target.setAirSupply(0);
 		}
 
@@ -420,7 +422,7 @@ public final class WaterSpells {
 			if (sphere.isRemoved()) return;
 			struck += Math.max(1, amount);
 			sphere.value(Math.max(0, 1 - struck / force));
-			HeavenSpells.sound(level, sphere.position(), SoundEvents.GENERIC_SPLASH, 1.0f, 1.2f);
+			sound(sphere.position(), SoundEvents.GENERIC_SPLASH, 1.0f, 1.2f);
 			if (struck >= force) end = level.getGameTime();
 		}
 
@@ -443,7 +445,7 @@ public final class WaterSpells {
 		@Override
 		public void end() {
 			SpellFx.send(level, SpellFx.Kind.SPLASH, field.position().add(0, field.radius(), 0), Vec3.ZERO, field.radius() * 1.5f, 0);
-			HeavenSpells.sound(level, field.position(), SoundEvents.GENERIC_SPLASH, 1.5f, 0.7f);
+			sound(field.position(), SoundEvents.GENERIC_SPLASH, 1.5f, 0.7f);
 			field.discard();
 			HeavenSpells.stop(bound);
 		}
@@ -546,8 +548,9 @@ public final class WaterSpells {
 		Lance(LivingEntity caster, Spell spell) {
 			super(caster, LANCE_TICKS);
 			this.spell = spell;
-			this.field = SpellField.create(level, SpellField.Kind.TIDAL_LANCE, HeavenSpells.fromHands(caster), 0.4f, 1, LANCE_TICKS, caster).spawn();
-			HeavenSpells.sound(level, caster.position(), SoundEvents.TRIDENT_RIPTIDE_3, 1.2f, 0.8f);
+			this.field = SpellField.create(level, SpellField.Kind.TIDAL_LANCE, HeavenSpells.fromHands(caster), 0.4f, 1, LANCE_TICKS, caster)
+					.anchor(caster, SpellAnchor.HANDS, Vec3.ZERO).spawn();
+			sound(caster.position(), SoundEvents.TRIDENT_RIPTIDE_3, 1.2f, 0.8f);
 		}
 
 		@Override
@@ -564,7 +567,7 @@ public final class WaterSpells {
 				HeavenSpells.move(first, first.getDeltaMovement().add(way.scale(0.8)).add(0, 0.1, 0));
 				SpellFx.send(level, SpellFx.Kind.SPLASH, to, way.scale(-1), 0.8f, 0);
 			}
-			if (age % 8 == 0) HeavenSpells.sound(level, to, SoundEvents.WATER_AMBIENT, 1.0f, 1.6f);
+			if (age % 8 == 0) sound(to, SoundEvents.WATER_AMBIENT, 1.0f, 1.6f);
 			return true;
 		}
 
@@ -585,8 +588,8 @@ public final class WaterSpells {
 		Mist(LivingEntity caster) {
 			super(caster, MIST_TICKS);
 			this.field = SpellField.create(level, SpellField.Kind.MIST_VEIL, caster.position(), (float) MIST_RADIUS, 6, MIST_TICKS, caster)
-					.data(caster.getRandom().nextInt()).spawn();
-			HeavenSpells.sound(level, caster.position(), SoundEvents.FIRE_EXTINGUISH, 1.5f, 0.5f);
+					.data(caster.getRandom().nextInt()).anchor(caster, SpellAnchor.POSITION, Vec3.ZERO).spawn();
+			sound(caster.position(), SoundEvents.FIRE_EXTINGUISH, 1.5f, 0.5f);
 		}
 
 		@Override
@@ -673,8 +676,8 @@ public final class WaterSpells {
 			this.way = Vec3.directionFromRotation(0, caster.getYRot());
 			this.field = SpellField.create(level, SpellField.Kind.GREAT_TIDE, from, (float) TIDE_WIDTH, (float) TIDE_HEIGHT, (int) (end - start), caster)
 					.facing(caster.getYRot(), 0).data(caster.getRandom().nextInt()).spawn();
-			HeavenSpells.sound(level, from, SoundEvents.ELDER_GUARDIAN_CURSE, 1.0f, 0.5f);
-			HeavenSpells.sound(level, from, SoundEvents.AMBIENT_UNDERWATER_ENTER, 2.0f, 0.6f);
+			sound(from, SoundEvents.ELDER_GUARDIAN_CURSE, 1.0f, 0.5f);
+			sound(from, SoundEvents.AMBIENT_UNDERWATER_ENTER, 2.0f, 0.6f);
 		}
 
 		@Override
@@ -690,7 +693,7 @@ public final class WaterSpells {
 				if (struck.add(e)) soak(caster, e, TIDE_DAMAGE, spell, null);
 				HeavenSpells.move(e, way.scale(TIDE_PACE * 1.6).add(0, 0.25, 0));
 			}
-			if (age % 6 == 0) HeavenSpells.sound(level, front, SoundEvents.GENERIC_SPLASH, 1.5f, 0.6f);
+			if (age % 6 == 0) sound(front, SoundEvents.GENERIC_SPLASH, 1.5f, 0.6f);
 			if (age % 4 == 0) WaterSpells.douse(level, BlockPos.containing(front), 3);
 			return true;
 		}
@@ -726,8 +729,8 @@ public final class WaterSpells {
 			float slope = (float) Math.toDegrees(Math.atan2(d.y, Math.max(1.0e-3, d.horizontalDistance())));
 			this.field = SpellField.create(level, SpellField.Kind.RIVER_TORRENT, from, (float) RIVER_WIDTH, (float) d.horizontalDistance(), RIVER_TICKS, caster)
 					.facing(yaw, slope).data(caster.getRandom().nextInt()).spawn();
-			HeavenSpells.sound(level, from, SoundEvents.AMBIENT_UNDERWATER_ENTER, 3.0f, 0.4f);
-			HeavenSpells.sound(level, to, SoundEvents.GENERIC_SPLASH, 3.0f, 0.4f);
+			sound(from, SoundEvents.AMBIENT_UNDERWATER_ENTER, 3.0f, 0.4f);
+			sound(to, SoundEvents.GENERIC_SPLASH, 3.0f, 0.4f);
 		}
 
 		@Override
@@ -746,7 +749,7 @@ public final class WaterSpells {
 				HeavenSpells.move(e, dir.scale(0.9).add(0, -0.1, 0));
 			}
 			if (age % 5 == 0) {
-				HeavenSpells.sound(level, from.add(dir.scale(length * level.random.nextDouble())), SoundEvents.GENERIC_SPLASH, 2.0f, 0.5f);
+				sound(from.add(dir.scale(length * level.random.nextDouble())), SoundEvents.GENERIC_SPLASH, 2.0f, 0.5f);
 				WaterSpells.douse(level, BlockPos.containing(from.add(dir.scale(length / 2))), 2);
 			}
 			return true;
@@ -776,9 +779,9 @@ public final class WaterSpells {
 			this.spell = spell;
 			this.centre = caster.position();
 			this.field = SpellField.create(level, SpellField.Kind.FROZEN_FIELD, centre, (float) FROZEN_RADIUS, 4, FREEZE_SPREAD + THAW_MAX, caster).spawn();
-			HeavenSpells.sound(level, centre, SoundEvents.GLASS_BREAK, 3.0f, 0.4f);
-			HeavenSpells.sound(level, centre, SoundEvents.POWDER_SNOW_STEP, 3.0f, 0.5f);
-			HeavenSpells.sound(level, centre, SoundEvents.ELDER_GUARDIAN_CURSE, 1.5f, 1.4f);
+			sound(centre, SoundEvents.GLASS_BREAK, 3.0f, 0.4f);
+			sound(centre, SoundEvents.POWDER_SNOW_STEP, 3.0f, 0.5f);
+			sound(centre, SoundEvents.ELDER_GUARDIAN_CURSE, 1.5f, 1.4f);
 		}
 
 		private boolean spared(LivingEntity e) {
@@ -797,7 +800,7 @@ public final class WaterSpells {
 					SpellFx.send(level, SpellFx.Kind.ICE_BURST, HeavenSpells.middle(e), Vec3.ZERO, 0.8f, 0);
 				}
 				reached = radius;
-				if (age % 10 == 0) HeavenSpells.sound(level, centre, SoundEvents.GLASS_PLACE, 2.0f, 0.5f);
+				if (age % 10 == 0) sound(centre, SoundEvents.GLASS_PLACE, 2.0f, 0.5f);
 			}
 			// Until the ice is gone, the cold bites whoever stays in the field.
 			if (age % 20 == 10) {
@@ -870,8 +873,8 @@ public final class WaterSpells {
 			target.setTicksFrozen(Math.max(target.getTicksFrozen(), 400));
 			this.bound = new WoodSpells.Bound(caster, target, target.position(), ZERO_TICKS);
 			HeavenSpells.linger(bound);
-			HeavenSpells.sound(level, target.position(), SoundEvents.GLASS_BREAK, 2.0f, 0.4f);
-			HeavenSpells.sound(level, caster.position(), SoundEvents.BEACON_DEACTIVATE, 1.5f, 1.6f);
+			sound(target.position(), SoundEvents.GLASS_BREAK, 2.0f, 0.4f);
+			sound(caster.position(), SoundEvents.BEACON_DEACTIVATE, 1.5f, 1.6f);
 		}
 
 		@Override
@@ -900,7 +903,7 @@ public final class WaterSpells {
 			HeavenSpells.stop(bound);
 			if (target.isAlive()) HeavenSpells.strikeAgain(caster, target, ZERO_SHATTER, spell);
 			SpellFx.send(level, SpellFx.Kind.ICE_BURST, HeavenSpells.middle(target), Vec3.ZERO, 2.5f, 0);
-			HeavenSpells.sound(level, target.position(), SoundEvents.GLASS_BREAK, 2.0f, 0.6f);
+			sound(target.position(), SoundEvents.GLASS_BREAK, 2.0f, 0.6f);
 		}
 
 		@Override
@@ -927,8 +930,8 @@ public final class WaterSpells {
 			this.at = aimed != null ? HeavenSpells.middle(aimed) : HeavenSpells.lookPoint(caster, SEA_RANGE);
 			this.field = SpellField.create(level, SpellField.Kind.BOUNDLESS_SEA, at, (float) SEA_RADIUS, (float) SEA_RADIUS * 2, SEA_TICKS, caster)
 					.data(caster.getRandom().nextInt()).spawn();
-			HeavenSpells.sound(level, at, SoundEvents.AMBIENT_UNDERWATER_ENTER, 4.0f, 0.4f);
-			HeavenSpells.sound(level, at, SoundEvents.ELDER_GUARDIAN_CURSE, 2.0f, 0.4f);
+			sound(at, SoundEvents.AMBIENT_UNDERWATER_ENTER, 4.0f, 0.4f);
+			sound(at, SoundEvents.ELDER_GUARDIAN_CURSE, 2.0f, 0.4f);
 		}
 
 		@Override
@@ -950,7 +953,7 @@ public final class WaterSpells {
 				}
 				if (age % 10 == 5) HeavenSpells.strikeAgain(caster, e, SEA_DAMAGE / 2, spell);
 			}
-			if (age % 30 == 0) HeavenSpells.sound(level, at, SoundEvents.BUBBLE_COLUMN_WHIRLPOOL_AMBIENT, 3.0f, 0.5f);
+			if (age % 30 == 0) sound(at, SoundEvents.BUBBLE_COLUMN_WHIRLPOOL_AMBIENT, 3.0f, 0.5f);
 			return true;
 		}
 
@@ -985,9 +988,10 @@ public final class WaterSpells {
 			super(caster, TORTOISE_TICKS);
 			this.spell = spell;
 			this.yaw = caster.getYRot();
-			this.tortoise = SpellConstruct.create(level, SpellConstruct.Kind.BLACK_TORTOISE, caster.position(), yaw, 0, TORTOISE_TICKS, caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, caster.position(), SoundEvents.CONDUIT_ACTIVATE, 2.0f, 0.5f);
-			HeavenSpells.sound(level, caster.position(), SoundEvents.TURTLE_AMBIENT_LAND, 2.0f, 0.4f);
+			this.tortoise = SpellConstruct.create(level, SpellConstruct.Kind.BLACK_TORTOISE, caster.position(), yaw, 0, TORTOISE_TICKS, caster).sizedFor(spell)
+					.anchor(caster, SpellAnchor.POSITION, Vec3.ZERO).spawn();
+			sound(caster.position(), SoundEvents.CONDUIT_ACTIVATE, 2.0f, 0.5f);
+			sound(caster.position(), SoundEvents.TURTLE_AMBIENT_LAND, 2.0f, 0.4f);
 			SpellFx.send(level, SpellFx.Kind.SPLASH, caster.position(), Vec3.ZERO, (float) TORTOISE_RADIUS, 0);
 		}
 
@@ -1010,7 +1014,7 @@ public final class WaterSpells {
 					striking = foe;
 					struckAt = age;
 					tortoise.act("strike");
-					HeavenSpells.sound(level, caster.position(), SoundEvents.HOGLIN_ATTACK, 2.0f, 1.4f);
+					sound(caster.position(), SoundEvents.HOGLIN_ATTACK, 2.0f, 1.4f);
 				}
 			}
 			if (striking != null && age >= struckAt + TORTOISE_LUNGE) {
@@ -1018,7 +1022,7 @@ public final class WaterSpells {
 					HeavenSpells.strike(caster, striking, TORTOISE_DAMAGE, spell);
 					HeavenSpells.push(caster.position(), striking, 1.6);
 					SpellFx.send(level, SpellFx.Kind.SPLASH, HeavenSpells.middle(striking), Vec3.ZERO, 2.0f, 0);
-					HeavenSpells.sound(level, striking.position(), SoundEvents.GENERIC_SPLASH, 2.0f, 0.6f);
+					sound(striking.position(), SoundEvents.GENERIC_SPLASH, 2.0f, 0.6f);
 				}
 				striking = null;
 			}
@@ -1026,7 +1030,7 @@ public final class WaterSpells {
 			float want = striking != null ? HeavenSpells.facing(striking.position().subtract(caster.position()))[0] : caster.getYRot();
 			yaw = net.minecraft.util.Mth.approachDegrees(yaw, want, 14);
 			tortoise.place(caster.position(), yaw, 0);
-			if (age % 40 == 0) HeavenSpells.sound(level, caster.position(), SoundEvents.CONDUIT_AMBIENT, 1.5f, 0.6f);
+			if (age % 40 == 0) sound(caster.position(), SoundEvents.CONDUIT_AMBIENT, 1.5f, 0.6f);
 			return true;
 		}
 
@@ -1057,8 +1061,8 @@ public final class WaterSpells {
 			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 32);
 			this.ground = below != null ? below : point;
 			this.vortex = SpellConstruct.create(level, SpellConstruct.Kind.HUNDRED_RIVERS, ground, caster.getYRot(), 0, RIVERS_TICKS + RIVERS_BURST, caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, ground, SoundEvents.BUBBLE_COLUMN_WHIRLPOOL_AMBIENT, 4.0f, 0.4f);
-			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_SPLASH, 4.0f, 0.5f);
+			sound(ground, SoundEvents.BUBBLE_COLUMN_WHIRLPOOL_AMBIENT, 4.0f, 0.4f);
+			sound(ground, SoundEvents.GENERIC_SPLASH, 4.0f, 0.5f);
 		}
 
 		@Override
@@ -1092,7 +1096,7 @@ public final class WaterSpells {
 						HeavenSpells.strikeAgain(caster, e, RIVERS_DAMAGE, spell);
 						SpellFx.send(level, SpellFx.Kind.SPLASH, HeavenSpells.middle(e), Vec3.ZERO, 1.2f, 0);
 					}
-					HeavenSpells.sound(level, ground, SoundEvents.BUBBLE_COLUMN_WHIRLPOOL_AMBIENT, 4.0f, 0.5f);
+					sound(ground, SoundEvents.BUBBLE_COLUMN_WHIRLPOOL_AMBIENT, 4.0f, 0.5f);
 				}
 				return true;
 			}
@@ -1108,8 +1112,8 @@ public final class WaterSpells {
 				}
 				SpellFx.send(level, SpellFx.Kind.SPLASH, ground, Vec3.ZERO, (float) RIVERS_RADIUS, 0, 192);
 				SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) RIVERS_RADIUS * 1.4f, 0, 192);
-				HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 3.0f, 0.6f);
-				HeavenSpells.sound(level, ground, SoundEvents.GENERIC_SPLASH, 4.0f, 0.4f);
+				sound(ground, SoundEvents.GENERIC_EXPLODE, 3.0f, 0.6f);
+				sound(ground, SoundEvents.GENERIC_SPLASH, 4.0f, 0.4f);
 			}
 			return true;
 		}
@@ -1148,8 +1152,8 @@ public final class WaterSpells {
 			this.mouth = ground.add(0, WEAK_HIGH, 0);
 			this.rift = SpellConstruct.create(level, SpellConstruct.Kind.VOID_RIFT, mouth, caster.getYRot() + 90, 90, (int) (end - start), caster).size((float) WEAK_RIFT)
 					.tint(WEAK_PALE).spawn();
-			HeavenSpells.sound(level, mouth, SoundEvents.END_PORTAL_SPAWN, 3.0f, 0.7f);
-			HeavenSpells.sound(level, mouth, SoundEvents.CONDUIT_ACTIVATE, 3.0f, 0.5f);
+			sound(mouth, SoundEvents.END_PORTAL_SPAWN, 3.0f, 0.7f);
+			sound(mouth, SoundEvents.CONDUIT_ACTIVATE, 3.0f, 0.5f);
 		}
 
 		@Override
@@ -1158,8 +1162,8 @@ public final class WaterSpells {
 			long pouring = age - WEAK_OPENS;
 			if (pouring == 0) {
 				fall = SpellConstruct.create(level, SpellConstruct.Kind.WEAK_WATER_FALL, ground, caster.getYRot(), 0, WEAK_TICKS + SpellConstruct.FADE, caster).sizedFor(spell).spawn();
-				HeavenSpells.sound(level, ground, SoundEvents.GENERIC_SPLASH, 4.0f, 0.3f);
-				HeavenSpells.sound(level, mouth, SoundEvents.BUBBLE_COLUMN_WHIRLPOOL_AMBIENT, 4.0f, 0.4f);
+				sound(ground, SoundEvents.GENERIC_SPLASH, 4.0f, 0.3f);
+				sound(mouth, SoundEvents.BUBBLE_COLUMN_WHIRLPOOL_AMBIENT, 4.0f, 0.4f);
 			}
 			// The flood spreads out from where it falls as it pours, the land sinking under it, till it covers the whole of its reach.
 			if (pouring % 5 == 0 && flooded < WEAK_BASIN) {
@@ -1192,7 +1196,7 @@ public final class WaterSpells {
 				}
 			}
 			if (pouring % 10 == 0) SpellFx.send(level, SpellFx.Kind.SPLASH, ground, Vec3.ZERO, (float) WEAK_RADIUS * 0.6f, 0, 160);
-			if (pouring % 20 == 0) HeavenSpells.sound(level, ground, SoundEvents.WATER_AMBIENT, 4.0f, 0.4f);
+			if (pouring % 20 == 0) sound(ground, SoundEvents.WATER_AMBIENT, 4.0f, 0.4f);
 			return true;
 		}
 
@@ -1228,8 +1232,8 @@ public final class WaterSpells {
 			this.across = new Vec3(-look.z, 0, look.x);
 			this.abyss = SpellConstruct.create(level, SpellConstruct.Kind.ABYSS_RIFT, ground.add(0, 0.06, 0), HeavenSpells.facing(across)[0], 0, (int) (end - start), caster)
 					.size((float) KUN_ABYSS).tint(ABYSS_BLUE).spawn();
-			HeavenSpells.sound(level, ground, SoundEvents.END_PORTAL_SPAWN, 3.0f, 0.4f);
-			HeavenSpells.sound(level, ground, SoundEvents.ELDER_GUARDIAN_AMBIENT, 3.0f, 0.5f);
+			sound(ground, SoundEvents.END_PORTAL_SPAWN, 3.0f, 0.4f);
+			sound(ground, SoundEvents.ELDER_GUARDIAN_AMBIENT, 3.0f, 0.5f);
 		}
 
 		/** How far round its leap it has come {@code f} of the way through it: swifter out of the abyss and back into it, hanging at the top. */
@@ -1253,7 +1257,7 @@ public final class WaterSpells {
 			float[] face = HeavenSpells.facing(at(angle((leaping + 1) / (double) KUN_LEAPS)).subtract(here));
 			if (leaping == 0) {
 				kun = SpellConstruct.create(level, SpellConstruct.Kind.KUN, here, face[0], face[1], KUN_LEAPS + SpellConstruct.FADE, caster).sizedFor(spell).spawn();
-				HeavenSpells.sound(level, ground, SoundEvents.ELDER_GUARDIAN_CURSE, 3.0f, 0.4f);
+				sound(ground, SoundEvents.ELDER_GUARDIAN_CURSE, 3.0f, 0.4f);
 			}
 			kun.place(here, face[0], face[1]);
 			if (!breached && a >= BREACH) {
@@ -1283,8 +1287,8 @@ public final class WaterSpells {
 			}
 			SpellFx.send(level, SpellFx.Kind.SPLASH, ground, Vec3.ZERO, (float) KUN_RADIUS, 0, 192);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) KUN_RADIUS * 1.6f, 0, 192);
-			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_SPLASH, 5.0f, 0.3f);
-			HeavenSpells.sound(level, ground, breach ? SoundEvents.ELDER_GUARDIAN_CURSE : SoundEvents.GENERIC_EXPLODE, 4.0f, 0.4f);
+			sound(ground, SoundEvents.GENERIC_SPLASH, 5.0f, 0.3f);
+			sound(ground, breach ? SoundEvents.ELDER_GUARDIAN_CURSE : SoundEvents.GENERIC_EXPLODE, 4.0f, 0.4f);
 		}
 
 		@Override
@@ -1320,8 +1324,8 @@ public final class WaterSpells {
 				pearls[i] = SpellConstruct.create(level, SpellConstruct.Kind.SEA_PEARL, circle(i, 0), 0, 0, (int) (end - start), caster)
 						.size((float) HeavenSpells.greatness(Realm.SACRED_VESSEL) * PEARL_SIZE).spawn();
 			}
-			HeavenSpells.sound(level, caster.position(), SoundEvents.CONDUIT_ACTIVATE, 2.0f, 1.2f);
-			HeavenSpells.sound(level, caster.position(), SoundEvents.AMETHYST_BLOCK_CHIME, 2.0f, 0.8f);
+			sound(caster.position(), SoundEvents.CONDUIT_ACTIVATE, 2.0f, 1.2f);
+			sound(caster.position(), SoundEvents.AMETHYST_BLOCK_CHIME, 2.0f, 0.8f);
 		}
 
 		/** Pearl {@code i}'s place in the circle round its caster, {@code age} ticks in (it unwinds outward as it forms, turning). */
@@ -1364,7 +1368,7 @@ public final class WaterSpells {
 				to[i] = HeavenSpells.lookPoint(caster, PEARLS_REACH);
 			}
 			loosed[i] = age;
-			HeavenSpells.sound(level, from[i], SoundEvents.TRIDENT_THROW, 1.5f, 1.4f);
+			sound(from[i], SoundEvents.TRIDENT_THROW, 1.5f, 1.4f);
 		}
 
 		/** Pearl {@code i} bursts at {@code where}: everything near it struck by the sea's weight, a little crater, and it is gone. */
@@ -1378,8 +1382,8 @@ public final class WaterSpells {
 			Vec3 ground = HeavenSpells.groundBelow(level, where, 1, 3);
 			if (ground != null) Devastation.crater(caster, level, ground, PEARL_CRATER, PEARL_CRATER_DEPTH, Devastation.Floor.NONE);
 			SpellFx.send(level, SpellFx.Kind.SPLASH, where, Vec3.ZERO, (float) PEARL_BLAST, 0, 160);
-			HeavenSpells.sound(level, where, SoundEvents.GENERIC_SPLASH, 2.0f, 0.8f);
-			HeavenSpells.sound(level, where, SoundEvents.AMETHYST_CLUSTER_BREAK, 1.5f, 0.6f);
+			sound(where, SoundEvents.GENERIC_SPLASH, 2.0f, 0.8f);
+			sound(where, SoundEvents.AMETHYST_CLUSTER_BREAK, 1.5f, 0.6f);
 			pearls[i].dissolve();
 		}
 
@@ -1411,8 +1415,8 @@ public final class WaterSpells {
 			this.ground = below != null ? below : point;
 			this.mouth = ground.add(0, VASE_HIGH, 0);
 			this.vase = SpellConstruct.create(level, SpellConstruct.Kind.OCEAN_VASE, mouth, caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, mouth, SoundEvents.CONDUIT_ACTIVATE, 3.0f, 0.5f);
-			HeavenSpells.sound(level, mouth, SoundEvents.AMETHYST_BLOCK_CHIME, 3.0f, 0.5f);
+			sound(mouth, SoundEvents.CONDUIT_ACTIVATE, 3.0f, 0.5f);
+			sound(mouth, SoundEvents.AMETHYST_BLOCK_CHIME, 3.0f, 0.5f);
 		}
 
 		@Override
@@ -1421,7 +1425,7 @@ public final class WaterSpells {
 			long drinking = age - VASE_COMES;
 			if (drinking == 0) {
 				Devastation.drain(caster, level, ground, VASE_RADIUS, 8, VASE_DRAIN_DOWN);
-				HeavenSpells.sound(level, mouth, SoundEvents.BUBBLE_COLUMN_WHIRLPOOL_AMBIENT, 4.0f, 0.4f);
+				sound(mouth, SoundEvents.BUBBLE_COLUMN_WHIRLPOOL_AMBIENT, 4.0f, 0.4f);
 			}
 			if (drinking < VASE_TICKS) {
 				drink(drinking);
@@ -1429,7 +1433,7 @@ public final class WaterSpells {
 			}
 			if (drinking == VASE_TICKS) {
 				vase.act("seal");
-				HeavenSpells.sound(level, mouth, SoundEvents.BOTTLE_FILL, 4.0f, 0.4f);
+				sound(mouth, SoundEvents.BOTTLE_FILL, 4.0f, 0.4f);
 			}
 			long falling = drinking - VASE_TICKS - VASE_SEALS;
 			if (falling >= 0 && falling <= VASE_FALL) {
@@ -1467,7 +1471,7 @@ public final class WaterSpells {
 					if (!HeavenSpells.present(e, level)) continue;
 					HeavenSpells.strikeAgain(caster, e, VASE_CRUSH, spell);
 				}
-				HeavenSpells.sound(level, mouth, SoundEvents.GENERIC_SPLASH, 3.0f, 0.5f);
+				sound(mouth, SoundEvents.GENERIC_SPLASH, 3.0f, 0.5f);
 			}
 			if (drinking % 3 == 0) {
 				// Streams drawn up out of the land into its mouth.
@@ -1507,8 +1511,8 @@ public final class WaterSpells {
 			Devastation.crater(caster, level, ground, VASE_CRATER, VASE_CRATER_DEPTH, Devastation.Floor.LAKE);
 			SpellFx.send(level, SpellFx.Kind.SPLASH, ground, Vec3.ZERO, (float) VASE_SLAM_RADIUS, 0, 192);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) VASE_SLAM_RADIUS * 1.6f, 0, 192);
-			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_SPLASH, 5.0f, 0.3f);
-			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.5f);
+			sound(ground, SoundEvents.GENERIC_SPLASH, 5.0f, 0.3f);
+			sound(ground, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.5f);
 		}
 
 		@Override
@@ -1537,8 +1541,8 @@ public final class WaterSpells {
 			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
 			this.ground = below != null ? below : point;
 			this.moon = SpellConstruct.create(level, SpellConstruct.Kind.FROZEN_MOON, ground.add(0, 0.1, 0), caster.getYRot() + 180, 0, (int) (end - start), caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, ground, SoundEvents.AMETHYST_BLOCK_CHIME, 4.0f, 0.5f);
-			HeavenSpells.sound(level, ground, SoundEvents.GLASS_PLACE, 3.0f, 0.4f);
+			sound(ground, SoundEvents.AMETHYST_BLOCK_CHIME, 4.0f, 0.5f);
+			sound(ground, SoundEvents.GLASS_PLACE, 3.0f, 0.4f);
 		}
 
 		private boolean within(LivingEntity e) {
@@ -1564,7 +1568,7 @@ public final class WaterSpells {
 						SpellFx.send(level, SpellFx.Kind.ICE_BURST, HeavenSpells.middle(e), Vec3.ZERO, 1.5f, 0);
 					}
 				}
-				if (holding % 20 == 10) HeavenSpells.sound(level, ground, SoundEvents.POWDER_SNOW_STEP, 3.0f, 0.4f);
+				if (holding % 20 == 10) sound(ground, SoundEvents.POWDER_SNOW_STEP, 3.0f, 0.4f);
 				return true;
 			}
 			if (holding == WELL_TICKS) shatter();
@@ -1582,8 +1586,8 @@ public final class WaterSpells {
 			SpellFx.send(level, SpellFx.Kind.ICE_BURST, ground.add(0, WELL_RADIUS, 0), Vec3.ZERO, (float) WELL_RADIUS, 0, 192);
 			SpellFx.send(level, SpellFx.Kind.FLASH, ground.add(0, WELL_RADIUS * 1.2, 0), Vec3.ZERO, 14, MOON_LIGHT, 192);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) WELL_RADIUS * 1.4f, 0, 192);
-			HeavenSpells.sound(level, ground, SoundEvents.GLASS_BREAK, 5.0f, 0.4f);
-			HeavenSpells.sound(level, ground, SoundEvents.AMETHYST_CLUSTER_BREAK, 5.0f, 0.5f);
+			sound(ground, SoundEvents.GLASS_BREAK, 5.0f, 0.4f);
+			sound(ground, SoundEvents.AMETHYST_CLUSTER_BREAK, 5.0f, 0.5f);
 		}
 
 		@Override
@@ -1612,8 +1616,8 @@ public final class WaterSpells {
 			// It comes to rest half sunk into what it smashed (its model's twenty pixels round: as great as its realm makes it).
 			this.rest = ground.add(0, HeavenSpells.greatness(Realm.ENTERING_NIRVANA) * 20 / 16.0 * 4 * 0.3, 0);
 			this.moon = SpellConstruct.create(level, SpellConstruct.Kind.ICE_MOON, sky, caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, sky, SoundEvents.GLASS_PLACE, 4.0f, 0.3f);
-			HeavenSpells.sound(level, sky, SoundEvents.ELYTRA_FLYING, 4.0f, 0.5f);
+			sound(sky, SoundEvents.GLASS_PLACE, 4.0f, 0.3f);
+			sound(sky, SoundEvents.ELYTRA_FLYING, 4.0f, 0.5f);
 		}
 
 		@Override
@@ -1647,8 +1651,8 @@ public final class WaterSpells {
 			SpellFx.send(level, SpellFx.Kind.ICE_BURST, rest, Vec3.ZERO, (float) FALLS_RADIUS, 0, 192);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) FALLS_FROST, 0, 192);
 			SpellFx.send(level, SpellFx.Kind.FLASH, rest, Vec3.ZERO, 18, MOON_LIGHT, 192);
-			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 6.0f, 0.4f);
-			HeavenSpells.sound(level, ground, SoundEvents.GLASS_BREAK, 6.0f, 0.3f);
+			sound(ground, SoundEvents.GENERIC_EXPLODE, 6.0f, 0.4f);
+			sound(ground, SoundEvents.GLASS_BREAK, 6.0f, 0.3f);
 		}
 
 		@Override
@@ -1660,19 +1664,24 @@ public final class WaterSpells {
 	// --- True Immortal ---
 
 	/**
-	 * Glacier of the First Age: a wall of ancient ice, ranks of seracs taller toward its back (SpellConstruct PRIMAL_GLACIER, its own GeckoLib
-	 * model), heaves up out of the land {@link #GLACIER_START} ahead of its caster ({@link #GLACIER_RISES}) and grinds forward along their look,
-	 * {@link #GLACIER_REACH} in {@link #GLACIER_TICKS}, {@link #GLACIER_HALF} either side of its middle: every foe before its face is shoved
-	 * along with it (one it overruns thrown out ahead; a great beast only ground past), struck for {@link #GLACIER_GRIND} every
-	 * {@link #GLACIER_EVERY} ticks and chilled, and the land in its wake frozen. At its end the great slabs of its face calve forward
-	 * ({@link #GLACIER_CALVES}): {@link #GLACIER_CALVE} to everything within {@link #GLACIER_CALVE_REACH} before it.
+	 * Glacier of the First Age: a wall of the first age's ice, ranks of seracs taller toward its back, made of the world's own ice (SpellConstruct
+	 * GLACIER_MASS: BlockMasses; the user's ask, 2026-10-25: it "tries to track over land and looks very dumb and should just carve through
+	 * slowly, and there should be like misty ice vfx at the bottom of it"), heaves up out of the land {@link #GLACIER_START} ahead of its caster
+	 * ({@link #GLACIER_RISES}) and grinds forward along their look, level, slowly, {@link #GLACIER_REACH} in {@link #GLACIER_TICKS},
+	 * {@link #GLACIER_HALF} either side of its middle: never riding up over the land, it carves through whatever stands in its way (a player's,
+	 * the spells' griefing on: Devastation#cut), cold mist rolling off its foot. Every foe before its face is shoved along with it (one it overruns
+	 * thrown out ahead; a great beast only ground past), struck for {@link #GLACIER_GRIND} every {@link #GLACIER_EVERY} ticks and chilled, and
+	 * the land in its wake frozen. At its end the great slabs of its face calve forward ({@link #GLACIER_CALVES}): {@link #GLACIER_CALVE} to
+	 * everything within {@link #GLACIER_CALVE_REACH} before it.
 	 */
 	public static final class Glacier extends HeavenSpells.Timed {
 		private final Spell spell;
-		private final Vec3 forward, side;
+		private final Vec3 forward, side, rose;
 		private final float yaw;
 		private final SpellConstruct glacier;
 		private Vec3 front;
+		/** How far on from where it rose it has carved its way (whole blocks). */
+		private int carved;
 
 		Glacier(LivingEntity caster, Spell spell) {
 			super(caster, GLACIER_RISES + GLACIER_TICKS + GLACIER_CALVES + GLACIER_AFTER);
@@ -1680,11 +1689,15 @@ public final class WaterSpells {
 			this.yaw = caster.getYRot();
 			this.forward = Vec3.directionFromRotation(0, yaw);
 			this.side = new Vec3(-forward.z, 0, forward.x);
-			Vec3 at = caster.position().add(forward.scale(GLACIER_START)), below = HeavenSpells.groundBelow(level, at.add(0, 6, 0), 8, 24);
-			this.front = below != null ? below : at;
-			this.glacier = SpellConstruct.create(level, SpellConstruct.Kind.PRIMAL_GLACIER, front, yaw, 0, (int) (end - start), caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, front, SoundEvents.GLASS_BREAK, 5.0f, 0.3f);
-			HeavenSpells.sound(level, front, SoundEvents.WARDEN_EMERGE, 5.0f, 0.6f);
+			// It rises at its caster's level (or the land's ahead, if that is lower), and holds that level all the way.
+			Vec3 at = caster.position().add(forward.scale(GLACIER_START)), below = HeavenSpells.groundBelow(level, at.add(0, 2, 0), 2, 24);
+			this.front = below != null ? new Vec3(at.x, Math.min(below.y, caster.getY()), at.z) : new Vec3(at.x, caster.getY(), at.z);
+			this.rose = front;
+			this.glacier = SpellConstruct.create(level, SpellConstruct.Kind.GLACIER_MASS, front, yaw, 0, (int) (end - start) + SpellConstruct.FADE, caster)
+					.size((float) GLACIER_HALF).value((float) GLACIER_DEPTH).tint(level.random.nextInt()).spawn();
+			sound(front, SoundEvents.GLASS_BREAK, 5.0f, 0.3f);
+			sound(front, SoundEvents.WARDEN_EMERGE, 5.0f, 0.6f);
+			sound(front, SoundEvents.STONE_BREAK, 5.0f, 0.3f);
 		}
 
 		/** How far ahead of its face (back into its body less than nought), to the side of its middle, and over its foot {@code e} is. */
@@ -1695,27 +1708,55 @@ public final class WaterSpells {
 
 		@Override
 		protected boolean run(long age, long now) {
-			if (age < GLACIER_RISES) return true;
+			if (age < GLACIER_RISES) {
+				if (age % 4 == 0) SpellFx.send(level, SpellFx.Kind.ICE_BURST, front.add(side.scale((level.random.nextDouble() * 2 - 1) * GLACIER_HALF)), Vec3.ZERO, 4, 0, 256);
+				return true;
+			}
 			long grinding = age - GLACIER_RISES;
 			if (grinding < GLACIER_TICKS) {
-				Vec3 next = front.add(forward.scale(GLACIER_REACH / GLACIER_TICKS)), below = HeavenSpells.groundBelow(level, next.add(0, 6, 0), 6, 16);
-				front = below != null ? below : next;
+				// On, level: never up over the land, but through it.
+				front = front.add(forward.scale(GLACIER_REACH / GLACIER_TICKS));
 				glacier.place(front, yaw, 0);
+				carve();
 				grind(grinding % GLACIER_EVERY == 0);
 				if (grinding % 10 == 5) Devastation.freeze(caster, level, front.subtract(forward.scale(GLACIER_DEPTH * 0.6)), GLACIER_HALF);
-				if (grinding % 3 == 0) {
-					Vec3 at = front.add(side.scale((level.random.nextDouble() * 2 - 1) * GLACIER_HALF)).add(0, 1, 0);
-					SpellFx.send(level, SpellFx.Kind.ICE_BURST, at, Vec3.ZERO, 2.5f, 0, 192);
+				if (grinding % 4 == 0) {
+					Vec3 at = front.add(side.scale((level.random.nextDouble() * 2 - 1) * GLACIER_HALF)).add(forward.scale(0.5)).add(0, 1, 0);
+					SpellFx.send(level, SpellFx.Kind.ICE_BURST, at, Vec3.ZERO, 3.5f, 0, 256);
 				}
-				if (grinding % 16 == 0) HeavenSpells.sound(level, front, SoundEvents.GLASS_BREAK, 4.0f, 0.3f + 0.01f * (grinding / 16));
+				// Its grinding: ice groaning and cracking, the land breaking before it.
+				if (grinding % 16 == 0) sound(front, SoundEvents.GLASS_BREAK, 4.0f, 0.3f + 0.04f * level.random.nextFloat());
+				if (grinding % 11 == 3) sound(front, SoundEvents.STONE_BREAK, 4.0f, 0.35f + 0.1f * level.random.nextFloat());
+				if (grinding % 23 == 7) sound(front, SoundEvents.AMETHYST_BLOCK_BREAK, 4.0f, 0.35f);
+				if (grinding % 37 == 20) sound(front, SoundEvents.WARDEN_HEARTBEAT, 5.0f, 0.5f);
 				return true;
 			}
 			if (grinding == GLACIER_TICKS) {
 				glacier.act("calve");
-				HeavenSpells.sound(level, front, SoundEvents.GLASS_BREAK, 6.0f, 0.4f);
+				sound(front, SoundEvents.GLASS_BREAK, 6.0f, 0.4f);
+				sound(front, SoundEvents.WARDEN_SONIC_CHARGE, 4.0f, 0.4f);
 			}
 			if (grinding == GLACIER_TICKS + GLACIER_CALVES / 2) calve();
 			return true;
+		}
+
+		/**
+		 * The land in its way carved away as its face comes to it (the spells' griefing on; a cultivator's leaves it): a slab its whole width and
+		 * height for every block it goes on, from a little under its foot up past its seracs.
+		 */
+		private void carve() {
+			int reached = (int) Math.floor(front.subtract(rose).dot(forward));
+			if (reached <= carved) return;
+			List<BlockPos> cells = new ArrayList<>();
+			for (int d = carved + 1; d <= reached; d++) {
+				Vec3 slab = rose.add(forward.scale(d + 0.5));
+				for (double w = -GLACIER_HALF; w <= GLACIER_HALF; w += 0.7) {
+					Vec3 column = slab.add(side.scale(w));
+					for (int y = -1; y <= GLACIER_CARVE_HIGH; y++) cells.add(BlockPos.containing(column.x, rose.y + y, column.z));
+				}
+			}
+			carved = reached;
+			Devastation.cut(caster, level, cells, front, 3);
 		}
 
 		/** A tick of its grinding on: every foe before its face, or overrun by it, shoved along ahead of it; struck if {@code strike}. */
@@ -1726,7 +1767,7 @@ public final class WaterSpells {
 				if (Math.abs(o[1]) > GLACIER_HALF + e.getBbWidth() / 2 || o[0] < -GLACIER_DEPTH || o[0] > 3 + e.getBbWidth() / 2 || o[2] > 30 || o[2] < -8) continue;
 				if (!HeavenSpells.greatBeast(caster, e)) {
 					if (o[0] < 0) HeavenSpells.teleport(e, front.add(forward.scale(1.5 + e.getBbWidth() / 2)).add(side.scale(o[1])).add(0, Math.max(0, o[2]), 0));
-					HeavenSpells.move(e, forward.scale(speed + 0.3).add(0, 0.05, 0));
+					HeavenSpells.move(e, forward.scale(speed + 0.25).add(0, 0.05, 0));
 				}
 				e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 20, 2));
 				e.setTicksFrozen(Math.max(e.getTicksFrozen(), e.getTicksRequiredToFreeze() + 20));
@@ -1750,10 +1791,12 @@ public final class WaterSpells {
 			}
 			Vec3 fell = front.add(forward.scale(GLACIER_CALVE_REACH * 0.5));
 			Devastation.freeze(caster, level, fell, GLACIER_HALF);
-			for (int i = -2; i <= 2; i++) SpellFx.send(level, SpellFx.Kind.ICE_BURST, fell.add(side.scale(i * GLACIER_HALF / 2.5)), Vec3.ZERO, 6, 0, 256);
-			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, fell, Vec3.ZERO, (float) GLACIER_HALF * 1.3f, 0, 256);
-			HeavenSpells.sound(level, fell, SoundEvents.GENERIC_EXPLODE, 6.0f, 0.5f);
-			HeavenSpells.sound(level, fell, SoundEvents.GLASS_BREAK, 6.0f, 0.4f);
+			for (int i = -2; i <= 2; i++) SpellFx.send(level, SpellFx.Kind.ICE_BURST, fell.add(side.scale(i * GLACIER_HALF / 2.5)), Vec3.ZERO, 7, 0, 256);
+			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, fell, Vec3.ZERO, (float) GLACIER_HALF * 1.6f, 0, 256);
+			SpellFx.send(level, SpellFx.Kind.DUST, fell, Vec3.ZERO, (float) GLACIER_HALF, 0, 256);
+			sound(fell, SoundEvents.GENERIC_EXPLODE, 6.0f, 0.5f);
+			sound(fell, SoundEvents.GLASS_BREAK, 6.0f, 0.4f);
+			sound(fell, SoundEvents.ANVIL_LAND, 5.0f, 0.4f);
 		}
 
 		@Override
@@ -1780,8 +1823,8 @@ public final class WaterSpells {
 			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
 			this.ground = below != null ? below : point;
 			this.sea = SpellConstruct.create(level, SpellConstruct.Kind.PRIMORDIAL_SEA, ground.add(0, 0.1, 0), caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, ground, SoundEvents.AMBIENT_UNDERWATER_ENTER, 5.0f, 0.4f);
-			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_SPLASH, 5.0f, 0.3f);
+			sound(ground, SoundEvents.AMBIENT_UNDERWATER_ENTER, 5.0f, 0.4f);
+			sound(ground, SoundEvents.GENERIC_SPLASH, 5.0f, 0.3f);
 		}
 
 		private List<LivingEntity> within() {
@@ -1798,12 +1841,12 @@ public final class WaterSpells {
 					double a = level.random.nextDouble() * Math.PI * 2, r = PRIMAL_SEA_RADIUS * (0.2 + 0.8 * level.random.nextDouble());
 					SpellFx.send(level, SpellFx.Kind.SPLASH, ground.add(Math.cos(a) * r, 1.5, Math.sin(a) * r), Vec3.ZERO, 3, 0, 192);
 				}
-				if (churning % 20 == 0) HeavenSpells.sound(level, ground, SoundEvents.AMBIENT_UNDERWATER_LOOP_ADDITIONS, 5.0f, 0.5f);
+				if (churning % 20 == 0) sound(ground, SoundEvents.AMBIENT_UNDERWATER_LOOP_ADDITIONS, 5.0f, 0.5f);
 				return true;
 			}
 			if (churning == PRIMAL_SEA_TICKS) {
 				sea.act("close");
-				HeavenSpells.sound(level, ground, SoundEvents.GENERIC_SPLASH, 6.0f, 0.4f);
+				sound(ground, SoundEvents.GENERIC_SPLASH, 6.0f, 0.4f);
 			}
 			if (churning == PRIMAL_SEA_TICKS + PRIMAL_SEA_CLOSES) crash();
 			return true;
@@ -1840,8 +1883,8 @@ public final class WaterSpells {
 			SpellFx.send(level, SpellFx.Kind.SPLASH, ground.add(0, 4, 0), Vec3.ZERO, (float) PRIMAL_SEA_RADIUS, 0, 256);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) PRIMAL_SEA_RADIUS * 1.4f, 0, 256);
 			SpellFx.send(level, SpellFx.Kind.RIPPLE, ground.add(0, 1, 0), Vec3.ZERO, (float) PRIMAL_SEA_RADIUS, 0, 256);
-			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 6.0f, 0.5f);
-			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_SPLASH, 6.0f, 0.3f);
+			sound(ground, SoundEvents.GENERIC_EXPLODE, 6.0f, 0.5f);
+			sound(ground, SoundEvents.GENERIC_SPLASH, 6.0f, 0.3f);
 		}
 
 		@Override

@@ -667,9 +667,10 @@ public final class MetalSpells {
 		Domain(LivingEntity caster, Spell spell) {
 			super(caster, DOMAIN_TICKS);
 			this.spell = spell;
-			this.domain = SpellConstruct.create(level, SpellConstruct.Kind.SWORD_DOMAIN, caster.position(), 0, 0, DOMAIN_TICKS + 10, caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, caster.position(), SoundEvents.BEACON_ACTIVATE, 1.5f, 1.8f);
-			HeavenSpells.sound(level, caster.position(), SoundEvents.ANVIL_USE, 1.0f, 1.5f);
+			this.domain = SpellConstruct.create(level, SpellConstruct.Kind.SWORD_DOMAIN, caster.position(), 0, 0, DOMAIN_TICKS + 10, caster).sizedFor(spell)
+					.anchor(caster, SpellAnchor.POSITION, Vec3.ZERO).spawn();
+			sound(caster.position(), SoundEvents.BEACON_ACTIVATE, 1.5f, 1.8f);
+			sound(caster.position(), SoundEvents.ANVIL_USE, 1.0f, 1.5f);
 		}
 
 		@Override
@@ -684,7 +685,7 @@ public final class MetalSpells {
 				}
 				if (age % 20 == 5) {
 					domain.act("strike");
-					HeavenSpells.sound(level, caster.position(), SoundEvents.PLAYER_ATTACK_SWEEP, 1.0f, 1.6f);
+					sound(caster.position(), SoundEvents.PLAYER_ATTACK_SWEEP, 1.0f, 1.6f);
 				}
 			}
 			return true;
@@ -845,8 +846,8 @@ public final class MetalSpells {
 			Vec3 ground = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 32);
 			this.at = ground != null ? ground : point;
 			this.field = SpellField.create(level, SpellField.Kind.SWORD_ARRAY, at, (float) ARRAY_HALF, 24, ARRAY_TICKS, caster).spawn();
-			HeavenSpells.sound(level, at, SoundEvents.ANVIL_LAND, 4.0f, 0.3f);
-			HeavenSpells.sound(level, at, SoundEvents.BEACON_ACTIVATE, 3.0f, 0.5f);
+			sound(at, SoundEvents.ANVIL_LAND, 4.0f, 0.3f);
+			sound(at, SoundEvents.BEACON_ACTIVATE, 3.0f, 0.5f);
 		}
 
 		private boolean inside(Vec3 pos, double margin) {
@@ -864,7 +865,7 @@ public final class MetalSpells {
 					SpellFx.send(level, SpellFx.Kind.EARTH_BURST, corner, Vec3.ZERO, 4, Block.getId(Blocks.STONE.defaultBlockState()), 192);
 				}
 				SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, at, Vec3.ZERO, (float) ARRAY_HALF * 2.5f, 0, 256);
-				HeavenSpells.sound(level, at, SoundEvents.GENERIC_EXPLODE, 5.0f, 0.4f);
+				sound(at, SoundEvents.GENERIC_EXPLODE, 5.0f, 0.4f);
 			}
 			for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, new net.minecraft.world.phys.AABB(at, at).inflate(ARRAY_HALF + 3, 32, ARRAY_HALF + 3),
 					e -> HeavenSpells.mark(caster, e))) {
@@ -876,7 +877,7 @@ public final class MetalSpells {
 				}
 				if (age % 10 == 0) HeavenSpells.strikeAgain(caster, e, ARRAY_DAMAGE / 2, spell);
 			}
-			if (age % 20 == 0) HeavenSpells.sound(level, at, SoundEvents.BEACON_AMBIENT, 3.0f, 1.6f);
+			if (age % 20 == 0) sound(at, SoundEvents.BEACON_AMBIENT, 3.0f, 1.6f);
 			return true;
 		}
 
@@ -931,8 +932,8 @@ public final class MetalSpells {
 			this.way = flat.lengthSqr() > 4 ? flat.normalize() : Vec3.directionFromRotation(0, caster.getYRot());
 			this.tiger = SpellConstruct.create(level, SpellConstruct.Kind.WHITE_TIGER, from, HeavenSpells.facing(way)[0], 0, (int) (end - start), caster).sizedFor(spell).spawn();
 			tiger.act("pounce");
-			HeavenSpells.sound(level, from, SoundEvents.RAVAGER_ROAR, 3.0f, 1.2f);
-			HeavenSpells.sound(level, from, SoundEvents.TRIDENT_RIPTIDE_3, 2.0f, 0.8f);
+			sound(from, SoundEvents.RAVAGER_ROAR, 3.0f, 1.2f);
+			sound(from, SoundEvents.TRIDENT_RIPTIDE_3, 2.0f, 0.8f);
 		}
 
 		@Override
@@ -950,14 +951,14 @@ public final class MetalSpells {
 					}
 					SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, land, Vec3.ZERO, (float) TIGER_RADIUS * 1.5f, 0, 192);
 					SpellFx.send(level, SpellFx.Kind.METAL_SPARKS, land.add(0, 1, 0), Vec3.ZERO, (float) TIGER_RADIUS, 0, 192);
-					HeavenSpells.sound(level, land, SoundEvents.ANVIL_LAND, 3.0f, 0.6f);
-					HeavenSpells.sound(level, land, SoundEvents.RAVAGER_ROAR, 3.0f, 0.9f);
+					sound(land, SoundEvents.ANVIL_LAND, 3.0f, 0.6f);
+					sound(land, SoundEvents.RAVAGER_ROAR, 3.0f, 0.9f);
 				}
 				return true;
 			}
 			if (age == landAt + TIGER_CLAW) {
 				tiger.act("claw");
-				HeavenSpells.sound(level, land, SoundEvents.PLAYER_ATTACK_SWEEP, 3.0f, 0.5f);
+				sound(land, SoundEvents.PLAYER_ATTACK_SWEEP, 3.0f, 0.5f);
 			}
 			if (age >= rakeAt && raking < TIGER_GOUGE) {
 				// The rake: four gouges running out ahead of it, cut through whatever stands in them, striking what they pass.
@@ -984,7 +985,7 @@ public final class MetalSpells {
 					SpellFx.send(level, SpellFx.Kind.METAL_SPARKS, HeavenSpells.middle(e), Vec3.ZERO, 1.2f, 0);
 				}
 				raking = d1;
-				if (age % 3 == 0) HeavenSpells.sound(level, mid, SoundEvents.GRINDSTONE_USE, 3.0f, 0.5f);
+				if (age % 3 == 0) sound(mid, SoundEvents.GRINDSTONE_USE, 3.0f, 0.5f);
 			}
 			return true;
 		}
@@ -1017,18 +1018,18 @@ public final class MetalSpells {
 			this.yaw = caster.getYRot();
 			// Bright till they fuse, then fading as the sword they become fades in.
 			this.vortex = SpellConstruct.create(level, SpellConstruct.Kind.MYRIAD_SWORDS, ground.add(0, SWORDS_HIGH - SWORDS_LOW, 0), yaw, 0, fuseAt + SpellConstruct.FADE, caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, ground.add(0, SWORDS_HIGH, 0), SoundEvents.TRIDENT_RETURN, 3.0f, 0.5f);
-			HeavenSpells.sound(level, caster.position(), SoundEvents.BEACON_ACTIVATE, 2.0f, 1.6f);
+			sound(ground.add(0, SWORDS_HIGH, 0), SoundEvents.TRIDENT_RETURN, 3.0f, 0.5f);
+			sound(caster.position(), SoundEvents.BEACON_ACTIVATE, 2.0f, 1.6f);
 		}
 
 		@Override
 		protected boolean run(long age, long now) {
 			if (age == SWORDS_GATHER) {
 				vortex.act("merge");
-				HeavenSpells.sound(level, ground.add(0, SWORDS_HIGH, 0), SoundEvents.BEACON_POWER_SELECT, 3.0f, 1.4f);
+				sound(ground.add(0, SWORDS_HIGH, 0), SoundEvents.BEACON_POWER_SELECT, 3.0f, 1.4f);
 			}
 			if (age < fuseAt) {
-				if (age % 8 == 0) HeavenSpells.sound(level, ground.add(0, SWORDS_HIGH, 0), SoundEvents.TRIDENT_RIPTIDE_1, 2.5f, 1.2f + age * 0.01f);
+				if (age % 8 == 0) sound(ground.add(0, SWORDS_HIGH, 0), SoundEvents.TRIDENT_RIPTIDE_1, 2.5f, 1.2f + age * 0.01f);
 				return true;
 			}
 			if (age == fuseAt) {
@@ -1057,9 +1058,9 @@ public final class MetalSpells {
 				Devastation.shear(caster, level, spans, ground);
 				SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) SWORDS_SLOT * 0.6f, 0, 192);
 				SpellFx.send(level, SpellFx.Kind.METAL_SPARKS, ground.add(0, 2, 0), Vec3.ZERO, (float) SWORDS_RADIUS, 0, 192);
-				HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.5f);
-				HeavenSpells.sound(level, ground, SoundEvents.ANVIL_LAND, 4.0f, 0.4f);
-				HeavenSpells.sound(level, ground, SoundEvents.BELL_BLOCK, 4.0f, 0.5f);
+				sound(ground, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.5f);
+				sound(ground, SoundEvents.ANVIL_LAND, 4.0f, 0.4f);
+				sound(ground, SoundEvents.BELL_BLOCK, 4.0f, 0.5f);
 			}
 			return true;
 		}
@@ -1110,9 +1111,9 @@ public final class MetalSpells {
 			this.light = SpellConstruct.create(level, SpellConstruct.Kind.SEVERING_LIGHT, from, face[0], face[1], SEVERING_THRUST + SpellConstruct.FADE, caster).sizedFor(spell).spawn();
 			this.rift = SpellConstruct.create(level, SpellConstruct.Kind.RIFT_LINE, from, face[0], face[1], (int) (end - start), caster).size((float) SEVERING_LENGTH)
 					.tint(SWORD_WHITE).spawn();
-			HeavenSpells.sound(level, from, SoundEvents.TRIDENT_THUNDER, 2.0f, 1.4f);
-			HeavenSpells.sound(level, from, SoundEvents.BEACON_POWER_SELECT, 2.0f, 1.8f);
-			HeavenSpells.sound(level, from, SoundEvents.END_PORTAL_SPAWN, 2.0f, 1.6f);
+			sound(from, SoundEvents.TRIDENT_THUNDER, 2.0f, 1.4f);
+			sound(from, SoundEvents.BEACON_POWER_SELECT, 2.0f, 1.8f);
+			sound(from, SoundEvents.END_PORTAL_SPAWN, 2.0f, 1.6f);
 		}
 
 		/** Its chasm's half-width {@code s} blocks along its line: nothing at its ends, widest about its middle, wandering as it goes. */
@@ -1215,7 +1216,7 @@ public final class MetalSpells {
 				cut = reach;
 				if (age == SEVERING_THRUST) {
 					SpellFx.send(level, SpellFx.Kind.FLASH, from.add(way.scale(SEVERING_LENGTH)), Vec3.ZERO, 6, SWORD_WHITE, 192);
-					HeavenSpells.sound(level, from.add(way.scale(SEVERING_LENGTH * 0.5)), SoundEvents.GLASS_BREAK, 4.0f, 0.4f);
+					sound(from.add(way.scale(SEVERING_LENGTH * 0.5)), SoundEvents.GLASS_BREAK, 4.0f, 0.4f);
 				}
 				return true;
 			}
@@ -1226,7 +1227,7 @@ public final class MetalSpells {
 					HeavenSpells.strikeAgain(caster, e, SEVERING_RIFT_DAMAGE, spell);
 					SpellFx.send(level, SpellFx.Kind.METAL_SPARKS, HeavenSpells.middle(e), Vec3.ZERO, 1.2f, 0);
 				}
-				HeavenSpells.sound(level, from.add(way.scale(SEVERING_LENGTH * 0.3)), SoundEvents.AMETHYST_BLOCK_CHIME, 3.0f, 0.5f);
+				sound(from.add(way.scale(SEVERING_LENGTH * 0.3)), SoundEvents.AMETHYST_BLOCK_CHIME, 3.0f, 0.5f);
 			}
 			return true;
 		}
@@ -1270,8 +1271,8 @@ public final class MetalSpells {
 			}
 			this.top = SpellConstruct.create(level, SpellConstruct.Kind.VOID_RIFT, ground.add(0, PRISON_TOP, 0), 0, 0, closesAt + 8 + SpellConstruct.FADE, caster)
 					.size((float) PRISON_RIFT * 1.6f).tint(SWORD_WHITE).spawn();
-			HeavenSpells.sound(level, ground.add(0, PRISON_HIGH, 0), SoundEvents.END_PORTAL_SPAWN, 3.0f, 1.2f);
-			HeavenSpells.sound(level, caster.position(), SoundEvents.TRIDENT_RETURN, 2.0f, 0.5f);
+			sound(ground.add(0, PRISON_HIGH, 0), SoundEvents.END_PORTAL_SPAWN, 3.0f, 1.2f);
+			sound(caster.position(), SoundEvents.TRIDENT_RETURN, 2.0f, 0.5f);
 		}
 
 		/** Where the ring's {@code k}th sword stands (its model's: the eight quarters round its facing). */
@@ -1294,14 +1295,14 @@ public final class MetalSpells {
 					SpellFx.send(level, SpellFx.Kind.EARTH_BURST, at, Vec3.ZERO, 3, Block.getId(Blocks.STONE.defaultBlockState()), 192);
 				}
 				SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) PRISON_RADIUS * 2.2f, 0, 192);
-				HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.5f);
-				HeavenSpells.sound(level, ground, SoundEvents.ANVIL_LAND, 4.0f, 0.5f);
+				sound(ground, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.5f);
+				sound(ground, SoundEvents.ANVIL_LAND, 4.0f, 0.5f);
 			}
 			if (age == closesAt) {
 				prison.act("converge");
 				below = SpellConstruct.create(level, SpellConstruct.Kind.ABYSS_RIFT, ground.add(0, 0.06, 0), prison.getYRot(), 0, PRISON_MEET + 8 + SpellConstruct.FADE, caster)
 						.size((float) PRISON_RIFT * 1.6f).tint(SWORD_WHITE).spawn();
-				HeavenSpells.sound(level, ground, SoundEvents.TRIDENT_RIPTIDE_3, 4.0f, 0.6f);
+				sound(ground, SoundEvents.TRIDENT_RIPTIDE_3, 4.0f, 0.6f);
 			}
 			if (age == meetsAt) meet();
 			if (age < landsAt || age >= closesAt) return true;
@@ -1318,7 +1319,7 @@ public final class MetalSpells {
 					SpellFx.send(level, SpellFx.Kind.METAL_SPARKS, HeavenSpells.middle(e), Vec3.ZERO, 1.0f, 0);
 				}
 			}
-			if (holding % 20 == 0) HeavenSpells.sound(level, ground, SoundEvents.BEACON_AMBIENT, 3.0f, 1.4f);
+			if (holding % 20 == 0) sound(ground, SoundEvents.BEACON_AMBIENT, 3.0f, 1.4f);
 			return true;
 		}
 
@@ -1334,9 +1335,9 @@ public final class MetalSpells {
 			SpellFx.send(level, SpellFx.Kind.FLASH, ground.add(0, 6, 0), Vec3.ZERO, 12, SWORD_WHITE, 192);
 			SpellFx.send(level, SpellFx.Kind.METAL_SPARKS, ground.add(0, 3, 0), Vec3.ZERO, (float) PRISON_RADIUS, 0, 192);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) PRISON_RADIUS * 2.5f, 0, 192);
-			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 5.0f, 0.5f);
-			HeavenSpells.sound(level, ground, SoundEvents.BELL_BLOCK, 4.0f, 0.5f);
-			HeavenSpells.sound(level, ground, SoundEvents.ANVIL_LAND, 4.0f, 0.4f);
+			sound(ground, SoundEvents.GENERIC_EXPLODE, 5.0f, 0.5f);
+			sound(ground, SoundEvents.BELL_BLOCK, 4.0f, 0.5f);
+			sound(ground, SoundEvents.ANVIL_LAND, 4.0f, 0.4f);
 			top.dissolve();
 		}
 
@@ -1374,8 +1375,8 @@ public final class MetalSpells {
 			this.ground = below != null ? below : point;
 			this.ring = ground.add(0, ROPES_HIGH, 0);
 			this.coil = SpellConstruct.create(level, SpellConstruct.Kind.BINDING_RING, ring, caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, ring, SoundEvents.BELL_RESONATE, 3.0f, 1.2f);
-			HeavenSpells.sound(level, ring, SoundEvents.ARMOR_EQUIP_GOLD, 3.0f, 0.5f);
+			sound(ring, SoundEvents.BELL_RESONATE, 3.0f, 1.2f);
+			sound(ring, SoundEvents.ARMOR_EQUIP_GOLD, 3.0f, 0.5f);
 		}
 
 		/** Where the {@code i}th of {@code n} bound hangs: in a ring under the ring, a little out from its heart. */
@@ -1413,7 +1414,7 @@ public final class MetalSpells {
 					e.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 30, 3));
 				}
 			}
-			if (holding % 20 == 10) HeavenSpells.sound(level, ring, SoundEvents.CHAIN_STEP, 3.0f, 0.6f);
+			if (holding % 20 == 10) sound(ring, SoundEvents.CHAIN_STEP, 3.0f, 0.6f);
 			return true;
 		}
 
@@ -1430,7 +1431,7 @@ public final class MetalSpells {
 				// A great beast bound where it stands; the rest held by the haul itself (a binding would hold them down against it).
 				if (HeavenSpells.greatBeast(caster, e)) WoodSpells.bind(caster, e, ROPES_TICKS);
 			}
-			if (!bound.isEmpty()) HeavenSpells.sound(level, ring, SoundEvents.LEASH_KNOT_PLACE, 3.0f, 0.6f);
+			if (!bound.isEmpty()) sound(ring, SoundEvents.LEASH_KNOT_PLACE, 3.0f, 0.6f);
 		}
 
 		/** The ropes cinch, and let go. */
@@ -1444,8 +1445,8 @@ public final class MetalSpells {
 				SpellFx.send(level, SpellFx.Kind.METAL_SPARKS, HeavenSpells.middle(e), Vec3.ZERO, 2, 0);
 			}
 			for (SpellConstruct rope : ropes) rope.dissolve();
-			HeavenSpells.sound(level, ring, SoundEvents.CHAIN_BREAK, 4.0f, 0.5f);
-			HeavenSpells.sound(level, ring, SoundEvents.BELL_BLOCK, 3.0f, 0.8f);
+			sound(ring, SoundEvents.CHAIN_BREAK, 4.0f, 0.5f);
+			sound(ring, SoundEvents.BELL_BLOCK, 3.0f, 0.8f);
 		}
 
 		@Override
@@ -1483,15 +1484,15 @@ public final class MetalSpells {
 			this.base = ground.subtract(along.scale(SCISSORS_LENGTH / 2));
 			this.pivot = base.add(0, SCISSORS_HIGH, 0);
 			this.scissors = SpellConstruct.create(level, SpellConstruct.Kind.DRAGON_SCISSORS, pivot, yaw, 0, (int) (end - start), caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, pivot, SoundEvents.ARMOR_EQUIP_GOLD, 4.0f, 0.4f);
-			HeavenSpells.sound(level, pivot, SoundEvents.BEACON_ACTIVATE, 3.0f, 0.7f);
+			sound(pivot, SoundEvents.ARMOR_EQUIP_GOLD, 4.0f, 0.4f);
+			sound(pivot, SoundEvents.BEACON_ACTIVATE, 3.0f, 0.7f);
 		}
 
 		@Override
 		protected boolean run(long age, long now) {
 			if (age == SCISSORS_OPENS + SCISSORS_HOLD) {
 				scissors.act("snap");
-				HeavenSpells.sound(level, pivot, SoundEvents.SHEEP_SHEAR, 5.0f, 0.3f);
+				sound(pivot, SoundEvents.SHEEP_SHEAR, 5.0f, 0.3f);
 			}
 			if (age == SCISSORS_OPENS + SCISSORS_HOLD + SCISSORS_SNAP) snap();
 			return true;
@@ -1520,8 +1521,8 @@ public final class MetalSpells {
 			SpellFx.send(level, SpellFx.Kind.STREAK, a.add(0, 1.5, 0), b.subtract(a), 0, 0xFFD54A, 192);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) (SCISSORS_LENGTH * 0.6), 0, 192);
 			SpellFx.send(level, SpellFx.Kind.METAL_SPARKS, pivot, Vec3.ZERO, 6, 0, 192);
-			HeavenSpells.sound(level, pivot, SoundEvents.ANVIL_LAND, 5.0f, 0.5f);
-			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.7f);
+			sound(pivot, SoundEvents.ANVIL_LAND, 5.0f, 0.5f);
+			sound(ground, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.7f);
 		}
 
 		@Override
@@ -1554,8 +1555,8 @@ public final class MetalSpells {
 			this.ground = below != null ? below : point;
 			this.yaw = caster.getYRot();
 			this.grave = SpellConstruct.create(level, SpellConstruct.Kind.SWORD_TOMB, ground, yaw, 0, (int) (end - start), caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, ground, SoundEvents.SOUL_ESCAPE, 3.0f, 0.5f);
-			HeavenSpells.sound(level, ground, SoundEvents.ANVIL_PLACE, 3.0f, 0.4f);
+			sound(ground, SoundEvents.SOUL_ESCAPE, 3.0f, 0.5f);
+			sound(ground, SoundEvents.ANVIL_PLACE, 3.0f, 0.4f);
 		}
 
 		@Override
@@ -1568,12 +1569,12 @@ public final class MetalSpells {
 			long rising = age - TOMB_ERUPTS - TOMB_STANDS;
 			if (rising == 0) {
 				grave.act("rise");
-				HeavenSpells.sound(level, ground, SoundEvents.TRIDENT_RETURN, 4.0f, 0.5f);
+				sound(ground, SoundEvents.TRIDENT_RETURN, 4.0f, 0.5f);
 			}
 			long raining = rising - TOMB_RISES;
 			if (raining == 0) {
 				grave.act("rain");
-				HeavenSpells.sound(level, ground, SoundEvents.TRIDENT_THROW, 4.0f, 0.6f);
+				sound(ground, SoundEvents.TRIDENT_THROW, 4.0f, 0.6f);
 			}
 			long landing = raining - TOMB_PLUNGE;
 			if (landing >= 0 && landing % TOMB_EVERY == 0 && landing / TOMB_EVERY < TOMB_SWORDS) land((int) (landing / TOMB_EVERY));
@@ -1594,8 +1595,8 @@ public final class MetalSpells {
 				SpellFx.send(level, SpellFx.Kind.EARTH_BURST, at, Vec3.ZERO, 3, net.minecraft.world.level.block.Block.getId(net.minecraft.world.level.block.Blocks.COARSE_DIRT.defaultBlockState()), 192);
 			}
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) TOMB_RING * 1.3f, 0, 192);
-			HeavenSpells.sound(level, ground, SoundEvents.ROOTED_DIRT_BREAK, 4.0f, 0.5f);
-			HeavenSpells.sound(level, ground, SoundEvents.ANVIL_LAND, 3.0f, 0.6f);
+			sound(ground, SoundEvents.ROOTED_DIRT_BREAK, 4.0f, 0.5f);
+			sound(ground, SoundEvents.ANVIL_LAND, 3.0f, 0.6f);
 		}
 
 		/** Sword {@code k} plunges into the heart: everything near where it lands struck; the last leaves a crater. */
@@ -1606,12 +1607,12 @@ public final class MetalSpells {
 				HeavenSpells.strikeAgain(caster, e, TOMB_SWORD, spell);
 			}
 			SpellFx.send(level, SpellFx.Kind.METAL_SPARKS, at.add(0, 1, 0), Vec3.ZERO, 2.5f, 0, 160);
-			if (k % 3 == 0) HeavenSpells.sound(level, at, SoundEvents.TRIDENT_HIT, 3.0f, 0.6f + 0.02f * k);
+			if (k % 3 == 0) sound(at, SoundEvents.TRIDENT_HIT, 3.0f, 0.6f + 0.02f * k);
 			if (k == TOMB_SWORDS - 1) {
 				Devastation.crater(caster, level, ground, TOMB_CRATER, TOMB_CRATER_DEPTH, Devastation.Floor.RUBBLE);
 				SpellFx.send(level, SpellFx.Kind.FLASH, ground.add(0, 2, 0), Vec3.ZERO, 10, TOMB_LIGHT, 192);
 				SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) TOMB_RING, 0, 192);
-				HeavenSpells.sound(level, ground, SoundEvents.ANVIL_LAND, 4.0f, 0.4f);
+				sound(ground, SoundEvents.ANVIL_LAND, 4.0f, 0.4f);
 			}
 		}
 
@@ -1648,8 +1649,8 @@ public final class MetalSpells {
 			this.yaw = caster.getYRot();
 			this.sword = SpellConstruct.create(level, SpellConstruct.Kind.REBIRTH_SWORD, hilt, sweepYaw(0, 0), sweepPitch(0, 0), (int) (end - start), caster)
 					.sizedFor(spell).spawn();
-			HeavenSpells.sound(level, ground, SoundEvents.BLAZE_SHOOT, 3.0f, 1.4f);
-			HeavenSpells.sound(level, ground, SoundEvents.BEACON_ACTIVATE, 3.0f, 1.2f);
+			sound(ground, SoundEvents.BLAZE_SHOOT, 3.0f, 1.4f);
+			sound(ground, SoundEvents.BEACON_ACTIVATE, 3.0f, 1.2f);
 		}
 
 		/** Sweep {@code k}'s way {@code f} of the way through it: each begun 135 degrees on from the last, turning the other way. */
@@ -1686,7 +1687,7 @@ public final class MetalSpells {
 			} else if (after < REBIRTH_RISES + REBIRTH_FALL) {
 				double f = (after - REBIRTH_RISES + 1) / (double) REBIRTH_FALL;
 				sword.place(ground.add(0, REBIRTH_BLADE * (1.35 - 0.5 * f * f), 0), sweepYaw(REBIRTHS - 1, 1), 90);
-				if (after == REBIRTH_RISES) HeavenSpells.sound(level, ground, SoundEvents.TRIDENT_THROW, 5.0f, 0.4f);
+				if (after == REBIRTH_RISES) sound(ground, SoundEvents.TRIDENT_THROW, 5.0f, 0.4f);
 			}
 			if (!plunged && after >= REBIRTH_RISES + REBIRTH_FALL - 1) plunge();
 			return true;
@@ -1696,8 +1697,8 @@ public final class MetalSpells {
 		private void sweep(int k, long into) {
 			if (into == 0) {
 				struck.clear();
-				HeavenSpells.sound(level, hilt, SoundEvents.PLAYER_ATTACK_SWEEP, 5.0f, 0.5f + 0.06f * k);
-				HeavenSpells.sound(level, hilt, SoundEvents.BLAZE_SHOOT, 3.0f, 1.3f);
+				sound(hilt, SoundEvents.PLAYER_ATTACK_SWEEP, 5.0f, 0.5f + 0.06f * k);
+				sound(hilt, SoundEvents.BLAZE_SHOOT, 3.0f, 1.3f);
 			}
 			double f0 = into / (double) REBIRTH_SWEEP, f1 = (into + 1) / (double) REBIRTH_SWEEP;
 			float from = sweepYaw(k, f0), to = sweepYaw(k, f1), pitch = sweepPitch(k, f1);
@@ -1726,8 +1727,8 @@ public final class MetalSpells {
 			else sword.place(at, sweepYaw(REBIRTHS - 1, 1), 90);
 			sword.act("reborn");
 			SpellFx.send(level, SpellFx.Kind.FLASH, at, Vec3.ZERO, k < REBIRTHS ? 8 : 12, REBIRTH_LIGHT, 192);
-			HeavenSpells.sound(level, at, SoundEvents.FIRECHARGE_USE, 4.0f, 0.6f + 0.05f * k);
-			if (k == REBIRTHS) HeavenSpells.sound(level, at, SoundEvents.BEACON_POWER_SELECT, 5.0f, 0.8f);
+			sound(at, SoundEvents.FIRECHARGE_USE, 4.0f, 0.6f + 0.05f * k);
+			if (k == REBIRTHS) sound(at, SoundEvents.BEACON_POWER_SELECT, 5.0f, 0.8f);
 		}
 
 		/** Its last rebirth plunges into the heart: everything near struck, the land glassed into a crater and cracked round it. */
@@ -1745,8 +1746,8 @@ public final class MetalSpells {
 			SpellFx.send(level, SpellFx.Kind.FLASH, ground.add(0, 3, 0), Vec3.ZERO, 16, REBIRTH_LIGHT, 256);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) REBIRTH_PLUNGE_RADIUS * 1.3f, 0, 256);
 			SpellFx.send(level, SpellFx.Kind.METAL_SPARKS, ground.add(0, 2, 0), Vec3.ZERO, 8, 0, 256);
-			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 5.0f, 0.5f);
-			HeavenSpells.sound(level, ground, SoundEvents.ANVIL_LAND, 5.0f, 0.4f);
+			sound(ground, SoundEvents.GENERIC_EXPLODE, 5.0f, 0.5f);
+			sound(ground, SoundEvents.ANVIL_LAND, 5.0f, 0.4f);
 		}
 
 		@Override
@@ -1785,8 +1786,8 @@ public final class MetalSpells {
 			this.ground = below != null ? below : point;
 			this.yaw = caster.getYRot();
 			this.sword = SpellConstruct.create(level, SpellConstruct.Kind.HEAVEN_SLAYING_SWORD, ground, yaw, 0, (int) (end - start), caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, ground, SoundEvents.ROOTED_DIRT_BREAK, 5.0f, 0.3f);
-			HeavenSpells.sound(level, ground, SoundEvents.TRIDENT_THROW, 5.0f, 0.4f);
+			sound(ground, SoundEvents.ROOTED_DIRT_BREAK, 5.0f, 0.3f);
+			sound(ground, SoundEvents.TRIDENT_THROW, 5.0f, 0.4f);
 			SpellFx.send(level, SpellFx.Kind.EARTH_BURST, ground, Vec3.ZERO, 8, Block.getId(Blocks.STONE.defaultBlockState()), 192);
 		}
 
@@ -1812,8 +1813,8 @@ public final class MetalSpells {
 			}
 			SpellFx.send(level, SpellFx.Kind.FLASH, ground.add(0, 6, 0), Vec3.ZERO, 14, SLAYER_LIGHT, 256);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) SLAYER_RADIUS * 3, 0, 256);
-			HeavenSpells.sound(level, ground, SoundEvents.ANVIL_LAND, 5.0f, 0.5f);
-			HeavenSpells.sound(level, ground, SoundEvents.BEACON_ACTIVATE, 5.0f, 1.2f);
+			sound(ground, SoundEvents.ANVIL_LAND, 5.0f, 0.5f);
+			sound(ground, SoundEvents.BEACON_ACTIVATE, 5.0f, 1.2f);
 		}
 
 		/** It flares: its cuts run out from its foot, everything near one struck, the land cut along them. */
@@ -1835,8 +1836,8 @@ public final class MetalSpells {
 			}
 			SpellFx.send(level, SpellFx.Kind.FLASH, ground.add(0, 30, 0), Vec3.ZERO, 20, SLAYER_LIGHT, 256);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) SLAYER_CUTS, 0, 256);
-			HeavenSpells.sound(level, ground, SoundEvents.PLAYER_ATTACK_SWEEP, 6.0f, 0.4f);
-			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 5.0f, 0.6f);
+			sound(ground, SoundEvents.PLAYER_ATTACK_SWEEP, 6.0f, 0.4f);
+			sound(ground, SoundEvents.GENERIC_EXPLODE, 5.0f, 0.6f);
 		}
 
 		@Override
@@ -1866,15 +1867,15 @@ public final class MetalSpells {
 			Vec3 at = caster.position().subtract(forward.scale(AXE_BACK)), below = HeavenSpells.groundBelow(level, at.add(0, 4, 0), 6, 24);
 			this.haft = below != null ? below : at;
 			this.axe = SpellConstruct.create(level, SpellConstruct.Kind.PANGU_AXE, haft, yaw, 0, (int) (end - start), caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, haft, SoundEvents.ANVIL_PLACE, 5.0f, 0.3f);
-			HeavenSpells.sound(level, haft, SoundEvents.BEACON_ACTIVATE, 5.0f, 0.4f);
+			sound(haft, SoundEvents.ANVIL_PLACE, 5.0f, 0.3f);
+			sound(haft, SoundEvents.BEACON_ACTIVATE, 5.0f, 0.4f);
 		}
 
 		@Override
 		protected boolean run(long age, long now) {
 			if (age == AXE_RAISES + AXE_HOLDS) {
 				axe.act("chop");
-				HeavenSpells.sound(level, haft, SoundEvents.PLAYER_ATTACK_SWEEP, 6.0f, 0.3f);
+				sound(haft, SoundEvents.PLAYER_ATTACK_SWEEP, 6.0f, 0.3f);
 			}
 			if (age == AXE_RAISES + AXE_HOLDS + AXE_CHOPS) chop();
 			return true;
@@ -1899,9 +1900,9 @@ public final class MetalSpells {
 			}
 			SpellFx.send(level, SpellFx.Kind.FLASH, b.add(0, 4, 0), Vec3.ZERO, 20, CHAOS_SPLIT, 256);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, b, Vec3.ZERO, (float) AXE_CRACKS, 0, 256);
-			HeavenSpells.sound(level, b, SoundEvents.GENERIC_EXPLODE, 8.0f, 0.3f);
-			HeavenSpells.sound(level, b, SoundEvents.WARDEN_SONIC_BOOM, 6.0f, 0.4f);
-			HeavenSpells.sound(level, b, SoundEvents.ANVIL_LAND, 6.0f, 0.3f);
+			sound(b, SoundEvents.GENERIC_EXPLODE, 8.0f, 0.3f);
+			sound(b, SoundEvents.WARDEN_SONIC_BOOM, 6.0f, 0.4f);
+			sound(b, SoundEvents.ANVIL_LAND, 6.0f, 0.3f);
 		}
 
 		@Override

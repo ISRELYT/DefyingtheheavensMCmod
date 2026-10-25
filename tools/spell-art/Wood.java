@@ -726,13 +726,14 @@ public class Wood {
 		int steps = 16;
 		for (int i = 0; i < SEGMENTS; i++) {
 			int ii = i;
-			double env = i == 0 ? 0.3 : i < 3 ? 0.7 : 1 + i * 0.012;
+			double env = i == 0 ? 0.35 : i < 3 ? 0.75 : 1 + i * 0.015;
+			// A serpent's S-curves (the user's ask, 2026-10-25: the beasts too rigid): side to side as much as up and down, each a little behind.
 			a.sample("seg_" + i, "rotation", 0, T, steps, t -> {
-				double ph = 2 * Math.PI * t / T - ii * 0.55;
-				return new double[] {7.5 * env * Math.sin(ph), 3.5 * env * Math.sin(ph + 1.3), 0};
+				double ph = 2 * Math.PI * t / T - ii * 0.5;
+				return new double[] {8 * env * Math.sin(ph), 9 * env * Math.sin(ph + 1.3), 2.5 * env * Math.sin(ph + 2.2)};
 			});
 		}
-		a.sample("head", "rotation", 0, T, steps, t -> new double[] {3 * Math.sin(2 * Math.PI * t / T + 0.6), 2.5 * Math.sin(2 * Math.PI * t / T + 1.9), 0});
+		a.sample("head", "rotation", 0, T, steps, t -> new double[] {4.5 * Math.sin(2 * Math.PI * t / T + 0.6), 6 * Math.sin(2 * Math.PI * t / T + 1.9), 3 * Math.sin(2 * Math.PI * t / T + 1.1)});
 		a.sample("jaw", "rotation", 0, T, 8, t -> new double[] {4 + 3 * Math.sin(2 * Math.PI * t / T), 0, 0});
 		for (String side : new String[] {"l", "r"}) {
 			int s = side.equals("l") ? 1 : -1;
@@ -740,7 +741,7 @@ public class Wood {
 				int kk = k;
 				a.sample("whisker_" + side + "_" + k, "rotation", 0, T, steps, t -> {
 					double ph = 2 * Math.PI * t / T - kk * 0.9;
-					return new double[] {(5 + kk * 2) * Math.sin(ph), s * (4 + kk * 2) * Math.sin(ph + 0.7), 0};
+					return new double[] {(8 + kk * 4) * Math.sin(ph), s * (7 + kk * 4) * Math.sin(ph + 0.7), 0};
 				});
 			}
 			a.sample("mane_" + side, "rotation", 0, T, steps, t -> new double[] {-5 * Math.sin(2 * Math.PI * t / T - 0.8), 0, s * 4 * Math.sin(2 * Math.PI * t / T - 0.4)});
@@ -753,7 +754,7 @@ public class Wood {
 			a.sample(legs[k], "rotation", 0, T, steps, t -> new double[] {26 * Math.sin(2 * Math.PI * t / T + p), 0, 0});
 			a.sample(legs[k] + "_low", "rotation", 0, T, steps, t -> new double[] {-22 * Math.sin(2 * Math.PI * t / T + p - 1.0), 0, 0});
 		}
-		a.sample("tail", "rotation", 0, T, steps, t -> new double[] {8 * Math.sin(2 * Math.PI * t / T - SEGMENTS * 0.55 - 0.5), 12 * Math.sin(2 * Math.PI * t / T - SEGMENTS * 0.55 + 0.8), 0});
+		a.sample("tail", "rotation", 0, T, steps, t -> new double[] {12 * Math.sin(2 * Math.PI * t / T - SEGMENTS * 0.5 - 0.5), 20 * Math.sin(2 * Math.PI * t / T - SEGMENTS * 0.5 + 0.8), 0});
 	}
 
 	/** The roar: the head rears and the jaw gapes, the neck arching under it, whiskers and mane flung back; then it settles. */

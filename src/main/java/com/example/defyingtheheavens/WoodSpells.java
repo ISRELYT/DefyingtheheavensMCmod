@@ -147,6 +147,24 @@ public final class WoodSpells {
 	/** The seven treasures' colours (gold, silver, lapis, crystal, pearl, agate, coral): the light they burst into as the branch has swept. */
 	public static final int[] TREASURES = {0xFFD54A, 0xE6EEF4, 0x2F5BD9, 0xBFF4FF, 0xFFF6E8, 0xD8502E, 0xFF8A9A};
 	/**
+	 * Seven-Treasure Bodhi Branch, the tree it grows into (Branch, 2026-10-25): its height (32 by its realm), how far round its roots seize (30),
+	 * how wide a treasure bursts where it falls; a treasure's harm; how long the tree takes to grow, how long it stands before its treasures
+	 * fall, how far apart they fall, and how long it takes to shed its leaves and go (ticks).
+	 */
+	public static final double BODHI_HEIGHT = HeavenSpells.span(Realm.SACRED_VESSEL, 15), BODHI_RADIUS = HeavenSpells.span(Realm.SACRED_VESSEL, 14),
+			BODHI_BURST = HeavenSpells.span(Realm.SACRED_VESSEL, 2.6);
+	public static final float BODHI_TREASURE = 650;
+	public static final int BODHI_GROWS = 34, BODHI_HOLDS = 14, BODHI_EVERY = 7, BODHI_SHEDS = 26;
+
+	/**
+	 * Where the bodhi tree's treasure {@code i} (of the seven) hangs from its foot, the tree {@code height} tall: under the end of one of its
+	 * boughs, round its crown (BlockMasses lays its boughs out to them, and draws them hanging there; its spell lets them fall from there).
+	 */
+	public static Vec3 treasureAt(int i, double height) {
+		double a = Math.PI * 2 * i / 7 + 0.3, r = height * (i % 2 == 0 ? 0.34 : 0.27), y = height * (0.52 + 0.05 * (i % 3));
+		return new Vec3(Math.cos(a) * r, y, Math.sin(a) * r);
+	}
+	/**
 	 * Seed of Withering Rebirth: how far it flies for the being looked at (154 by its realm); what it drinks a second out of what it roots in,
 	 * and the share of it mending its caster; its bloom's harm to what it rooted in, and to every other foe within its burst (12 round); how
 	 * far round the land flourishes where it blooms (29, by its realm); how long it flies, how long it roots, how long it holds in bloom, and
@@ -156,6 +174,14 @@ public final class WoodSpells {
 			SEED_FLOURISH = Devastation.sized(Realm.ENTERING_NIRVANA, 12);
 	public static final float SEED_DRAIN = 500, SEED_MENDS = 0.5f, SEED_BLOOM = 2500, SEED_BLOOM_AROUND = 1200;
 	public static final int SEED_FLIGHT = 14, SEED_ROOTS = 5 * 20, SEED_HOLDS = 30, SEED_WITHERS = 26;
+	/**
+	 * The seed shot (Seed: the user's ask, 2026-10-25): how fast it flies (blocks a tick), how much it falls as it goes (a tick, each tick), how
+	 * long it may fly before it withers in the air, how far round it its roots reach once planted (14 by its realm), what each of them drinks a
+	 * second, and what a being struck in its flight takes as it strikes.
+	 */
+	public static final double SEED_SPEED = 2.0, SEED_FALL = 0.035, SEED_REACH = HeavenSpells.span(Realm.ENTERING_NIRVANA, 6);
+	public static final int SEED_FLIES = 80;
+	public static final float SEED_DRAIN_EACH = 300, SEED_STRUCK = 600;
 	/** The flower of rebirth's blush: the light of its bloom. */
 	public static final int REBIRTH_BLUSH = 0xFFC0DA;
 	/**
@@ -258,10 +284,7 @@ public final class WoodSpells {
 				HeavenSpells.endLingering(p.getUUID(), Branch.class);
 				HeavenSpells.linger(new Branch(p, spell));
 			}
-			case SEED_OF_WITHERING_REBIRTH -> {
-				LivingEntity aimed = HeavenSpells.aimed(p, SEED_RANGE);
-				HeavenSpells.linger(new Seed(p, spell, aimed, aimed != null ? HeavenSpells.middle(aimed) : HeavenSpells.lookPoint(p, SEED_RANGE)));
-			}
+			case SEED_OF_WITHERING_REBIRTH -> HeavenSpells.linger(new Seed(p, spell)); // shot along the look, rooting in what it strikes
 			case WITHERING_AND_FLOURISHING -> {
 				HeavenSpells.endLingering(p.getUUID(), Seasons.class);
 				LivingEntity aimed = HeavenSpells.aimed(p, SEASONS_RANGE);
@@ -372,7 +395,7 @@ public final class WoodSpells {
 		Growth(LivingEntity caster) {
 			super(caster, GROWTH_TICKS + 20);
 			this.base = caster.blockPosition();
-			HeavenSpells.sound(level, caster.position(), SoundEvents.ROOTED_DIRT_BREAK, 1.2f, 0.7f);
+			sound(caster.position(), SoundEvents.ROOTED_DIRT_BREAK, 1.2f, 0.7f);
 			SpellFx.send(level, SpellFx.Kind.LEAVES, caster.position(), Vec3.ZERO, 1.0f, 0);
 		}
 
@@ -393,7 +416,7 @@ public final class WoodSpells {
 				if (!HeavenSpells.placeTemporary(level, pos, LOG, GROWTH_LASTS) && !level.getBlockState(pos).is(LOG.getBlock())) break;
 				SpellBlock.show(level, LOG, Vec3.atBottomCenterOf(pos).subtract(0, 1, 0), new Vec3(0, 1, 0), 0, 3, SpellBlock.Motion.SLIDE, 0);
 				placed++;
-				if (placed % 3 == 0) HeavenSpells.sound(level, Vec3.atCenterOf(pos), SoundEvents.WOOD_PLACE, 0.8f, 0.6f + placed * 0.04f);
+				if (placed % 3 == 0) sound(Vec3.atCenterOf(pos), SoundEvents.WOOD_PLACE, 0.8f, 0.6f + placed * 0.04f);
 			}
 			// The caster rides the top of the trunk: lifted to just over it.
 			double top = base.getY() + placed;
@@ -424,7 +447,7 @@ public final class WoodSpells {
 				}
 			}
 			if (HeavenSpells.placeTemporary(level, top.below(), LOG, GROWTH_LASTS)) placed++;
-			HeavenSpells.sound(level, Vec3.atCenterOf(top), SoundEvents.AZALEA_LEAVES_PLACE, 1.5f, 0.8f);
+			sound(Vec3.atCenterOf(top), SoundEvents.AZALEA_LEAVES_PLACE, 1.5f, 0.8f);
 			SpellFx.send(level, SpellFx.Kind.LEAVES, Vec3.atCenterOf(top), Vec3.ZERO, 2.0f, 0);
 			Spells.safeFall(caster, 60);
 		}
@@ -616,7 +639,7 @@ public final class WoodSpells {
 				if (plant != null) setPlantAge(level, plant, grown);
 				else setHeldAge(held(), grown);
 			}
-			if (age % 20 == 19) HeavenSpells.sound(level, at, SoundEvents.AMETHYST_BLOCK_CHIME, 0.6f, drain ? 0.7f : 1.5f);
+			if (age % 20 == 19) sound(at, SoundEvents.AMETHYST_BLOCK_CHIME, 0.6f, drain ? 0.7f : 1.5f);
 			return true;
 		}
 
@@ -673,7 +696,7 @@ public final class WoodSpells {
 			if (cage.isRemoved()) return;
 			strikes++;
 			cage.value(1 - strikes / (float) PRISON_STRIKES);
-			HeavenSpells.sound(level, cage.position(), SoundEvents.SWEET_BERRY_BUSH_BREAK, 1.2f, 0.8f);
+			sound(cage.position(), SoundEvents.SWEET_BERRY_BUSH_BREAK, 1.2f, 0.8f);
 			if (source.getEntity() == target) HeavenSpells.strikeAgain(caster, target, PRISON_THORNS, spell);
 			if (strikes >= PRISON_STRIKES) end = level.getGameTime(); // broken: it ends this tick
 		}
@@ -689,7 +712,7 @@ public final class WoodSpells {
 		public void end() {
 			if (strikes >= PRISON_STRIKES) {
 				SpellFx.send(level, SpellFx.Kind.THORNS_BREAK, field.position().add(0, field.height() / 2, 0), Vec3.ZERO, field.radius(), 0);
-				HeavenSpells.sound(level, field.position(), SoundEvents.WOOD_BREAK, 1.5f, 0.6f);
+				sound(field.position(), SoundEvents.WOOD_BREAK, 1.5f, 0.6f);
 			} else {
 				SpellFx.send(level, SpellFx.Kind.SPLINTERS, field.position().add(0, field.height() / 2, 0), Vec3.ZERO, 1.0f, 0);
 			}
@@ -708,7 +731,7 @@ public final class WoodSpells {
 		LeafStorm(LivingEntity caster, Spell spell) {
 			super(caster, LEAVES + 2);
 			this.spell = spell;
-			HeavenSpells.sound(level, caster.position(), SoundEvents.AZALEA_LEAVES_BREAK, 1.5f, 1.4f);
+			sound(caster.position(), SoundEvents.AZALEA_LEAVES_BREAK, 1.5f, 1.4f);
 		}
 
 		@Override
@@ -735,7 +758,7 @@ public final class WoodSpells {
 			leaf.setDeltaMovement(leaf.getDeltaMovement().add((level.random.nextDouble() - 0.5) * 0.25, (level.random.nextDouble() - 0.5) * 0.15,
 					(level.random.nextDouble() - 0.5) * 0.25));
 			thrown++;
-			if (thrown % 4 == 0) HeavenSpells.sound(level, caster.position(), SoundEvents.AZALEA_LEAVES_STEP, 1.0f, 1.6f);
+			if (thrown % 4 == 0) sound(caster.position(), SoundEvents.AZALEA_LEAVES_STEP, 1.0f, 1.6f);
 			return true;
 		}
 	}
@@ -801,8 +824,8 @@ public final class WoodSpells {
 				}
 				e.clearFire();
 			}
-			HeavenSpells.sound(level, at, SoundEvents.BEACON_ACTIVATE, 1.5f, 1.4f);
-			HeavenSpells.sound(level, at, SoundEvents.AMETHYST_BLOCK_CHIME, 2.0f, 0.8f);
+			sound(at, SoundEvents.BEACON_ACTIVATE, 1.5f, 1.4f);
+			sound(at, SoundEvents.AMETHYST_BLOCK_CHIME, 2.0f, 0.8f);
 		}
 
 		@Override
@@ -865,13 +888,14 @@ public final class WoodSpells {
 
 		Spring(LivingEntity caster) {
 			super(caster, SPRING_TICKS);
-			this.field = SpellField.create(level, SpellField.Kind.SPRING_RAIN, caster.position(), (float) SPRING_RADIUS, 18, SPRING_TICKS, caster).spawn();
+			this.field = SpellField.create(level, SpellField.Kind.SPRING_RAIN, caster.position(), (float) SPRING_RADIUS, 18, SPRING_TICKS, caster)
+					.anchor(caster, SpellAnchor.POSITION, Vec3.ZERO).spawn();
 			for (LivingEntity e : HeavenSpells.around(caster, SPRING_RADIUS, e -> HeavenSpells.blessed(caster, e))) {
 				HeavenSpells.mend(e, SPRING_BURST);
 				SpellFx.send(level, SpellFx.Kind.LEAVES, HeavenSpells.middle(e), Vec3.ZERO, 0.6f, 0);
 			}
-			HeavenSpells.sound(level, caster.position(), SoundEvents.BEACON_ACTIVATE, 2.0f, 1.6f);
-			HeavenSpells.sound(level, caster.position(), SoundEvents.WEATHER_RAIN_ABOVE, 2.0f, 1.2f);
+			sound(caster.position(), SoundEvents.BEACON_ACTIVATE, 2.0f, 1.6f);
+			sound(caster.position(), SoundEvents.WEATHER_RAIN_ABOVE, 2.0f, 1.2f);
 		}
 
 		@Override
@@ -965,8 +989,8 @@ public final class WoodSpells {
 					.data(caster.getRandom().nextInt()).spawn();
 			// Its roots heave the land open as it grows.
 			Devastation.fissures(caster, level, trunk, TREE_FISSURES, 12, 4, 4);
-			HeavenSpells.sound(level, trunk, SoundEvents.ROOTED_DIRT_BREAK, 4.0f, 0.3f);
-			HeavenSpells.sound(level, trunk, SoundEvents.WARDEN_EMERGE, 2.0f, 0.6f);
+			sound(trunk, SoundEvents.ROOTED_DIRT_BREAK, 4.0f, 0.3f);
+			sound(trunk, SoundEvents.WARDEN_EMERGE, 2.0f, 0.6f);
 		}
 
 		@Override
@@ -979,7 +1003,7 @@ public final class WoodSpells {
 					seized.put(e, trunk.add(Math.cos(a) * r, 14 + level.random.nextDouble() * 14, Math.sin(a) * r));
 					vines.put(e, SpellField.create(level, SpellField.Kind.TREE_VINE, trunk, (float) a, 24, (int) (end - level.getGameTime()), caster)
 							.target(e).data(level.random.nextInt()).spawn());
-					HeavenSpells.sound(level, e.position(), SoundEvents.ROOTED_DIRT_PLACE, 1.5f, 0.5f);
+					sound(e.position(), SoundEvents.ROOTED_DIRT_PLACE, 1.5f, 0.5f);
 				}
 			}
 			for (java.util.Iterator<java.util.Map.Entry<LivingEntity, Vec3>> it = seized.entrySet().iterator(); it.hasNext(); ) {
@@ -1048,8 +1072,8 @@ public final class WoodSpells {
 			SpellFx.send(level, SpellFx.Kind.EARTH_BURST, ground, Vec3.ZERO, (float) DRAGON_RADIUS * 0.6f,
 					net.minecraft.world.level.block.Block.getId(Blocks.ROOTED_DIRT.defaultBlockState()));
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) DRAGON_RADIUS, 0, 192);
-			HeavenSpells.sound(level, ground, SoundEvents.ENDER_DRAGON_GROWL, 3.0f, 1.5f);
-			HeavenSpells.sound(level, ground, SoundEvents.ROOTED_DIRT_BREAK, 3.0f, 0.5f);
+			sound(ground, SoundEvents.ENDER_DRAGON_GROWL, 3.0f, 1.5f);
+			sound(ground, SoundEvents.ROOTED_DIRT_BREAK, 3.0f, 0.5f);
 		}
 
 		/** Where its head is {@code t} ticks into its climb: once round a coil {@link #DRAGON_COIL} round its rising, up {@link #DRAGON_HEIGHT}. */
@@ -1072,7 +1096,7 @@ public final class WoodSpells {
 			if (age <= DRAGON_RISE) face(age);
 			if (age == DRAGON_RISE) {
 				dragon.act("roar");
-				HeavenSpells.sound(level, dragon.position(), SoundEvents.ENDER_DRAGON_GROWL, 4.0f, 1.2f);
+				sound(dragon.position(), SoundEvents.ENDER_DRAGON_GROWL, 4.0f, 1.2f);
 				SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, dragon.position(), Vec3.ZERO, 12, 0, 192);
 			}
 			// Those in its coils go up with it, round its rising, and hang there till it lets go.
@@ -1101,6 +1125,48 @@ public final class WoodSpells {
 	}
 
 	/**
+	 * The living roots a wood spell drinks through, made seen (the user's ask, 2026-10-25: "a lot of the wood tree moves just summon a tree and
+	 * people die, like theres no visuals as to why they are dying"): one reaching up out of the land from its tree's foot to each being it drinks
+	 * from (SpellConstruct LIVING_ROOT: TendrilRenderer), coiled round it, the life drawn down it to the tree, kept on it as long as it is held
+	 * and let go as it leaves the tree's reach or dies. At most {@link #MOST} at once.
+	 */
+	static final class Rooting {
+		static final int MOST = 16;
+		private final LivingEntity caster;
+		private final ServerLevel level;
+		private final Vec3 from;
+		private final float girth;
+		private final java.util.Map<LivingEntity, SpellConstruct> roots = new java.util.LinkedHashMap<>();
+
+		Rooting(LivingEntity caster, ServerLevel level, Vec3 from, float girth) {
+			this.caster = caster;
+			this.level = level;
+			this.from = from.add(0, 0.1, 0);
+			this.girth = girth;
+		}
+
+		/** It holds {@code drinking} now, for at most {@code left} ticks more: a root to each newly held, those no longer held let go. */
+		void hold(java.util.Collection<LivingEntity> drinking, int left) {
+			roots.entrySet().removeIf(e -> {
+				boolean gone = !drinking.contains(e.getKey()) || !HeavenSpells.present(e.getKey(), level);
+				if (gone) e.getValue().dissolve();
+				return gone;
+			});
+			for (LivingEntity e : drinking) {
+				if (roots.containsKey(e) || roots.size() >= MOST) continue;
+				roots.put(e, SpellConstruct.create(level, SpellConstruct.Kind.LIVING_ROOT, from, 0, 0, Math.max(10, left) + SpellConstruct.FADE, caster).size(girth).target(e).spawn());
+				level.playSound(null, e.getX(), e.getY(), e.getZ(), SoundEvents.ROOTED_DIRT_BREAK, net.minecraft.sounds.SoundSource.PLAYERS, 1.2f, 0.6f);
+			}
+		}
+
+		/** Every root let go. */
+		void release() {
+			for (SpellConstruct root : roots.values()) root.dissolve();
+			roots.clear();
+		}
+	}
+
+	/**
 	 * Myriad Woods Return to the Dao: a spirit tree of jade light (SpellConstruct DAO_TREE) grows where its caster stands and holds the land
 	 * {@link #WOODS_RADIUS} round for {@link #WOODS_TICKS}: every second each foe in it is rooted and drained of {@link #WOODS_DRAIN}, all of it
 	 * shared out as healing to the caster and its own within the woods. It withers away at the end; the land is left as it was.
@@ -1109,6 +1175,8 @@ public final class WoodSpells {
 		private final Spell spell;
 		private final Vec3 at;
 		private final SpellConstruct tree;
+		/** Its roots to every foe it drinks from (Rooting). */
+		private final Rooting rooting;
 
 		Woods(LivingEntity caster, Spell spell) {
 			super(caster, WOODS_TICKS);
@@ -1116,8 +1184,9 @@ public final class WoodSpells {
 			Vec3 below = HeavenSpells.groundBelow(level, caster.position().add(0, 1, 0), 2, 16);
 			this.at = below != null ? below : caster.position();
 			this.tree = SpellConstruct.create(level, SpellConstruct.Kind.DAO_TREE, at, caster.getYRot(), 0, WOODS_TICKS, caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, at, SoundEvents.AZALEA_LEAVES_PLACE, 3.0f, 0.5f);
-			HeavenSpells.sound(level, at, SoundEvents.BEACON_ACTIVATE, 2.0f, 1.4f);
+			this.rooting = new Rooting(caster, level, at, 1.5f);
+			sound(at, SoundEvents.AZALEA_LEAVES_PLACE, 3.0f, 0.5f);
+			sound(at, SoundEvents.BEACON_ACTIVATE, 2.0f, 1.4f);
 			SpellFx.send(level, SpellFx.Kind.LEAVES, at.add(0, 2, 0), Vec3.ZERO, 4, 0);
 		}
 
@@ -1128,7 +1197,9 @@ public final class WoodSpells {
 			if (age % 20 != 10) return true;
 			float drawn = 0;
 			Vec3 crown = at.add(0, 10, 0);
-			for (LivingEntity e : HeavenSpells.aroundPoint(level, at, WOODS_RADIUS, e -> HeavenSpells.mark(caster, e))) {
+			List<LivingEntity> drinking = HeavenSpells.aroundPoint(level, at, WOODS_RADIUS, e -> HeavenSpells.mark(caster, e));
+			rooting.hold(drinking, (int) (end - level.getGameTime()));
+			for (LivingEntity e : drinking) {
 				drawn += HeavenSpells.strikeAgain(caster, e, WOODS_DRAIN, spell);
 				e.addEffect(new MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, 30, 3)); // rooted
 				SpellFx.send(level, SpellFx.Kind.LIFE_MOTES, HeavenSpells.middle(e), crown.subtract(HeavenSpells.middle(e)), 1, 0); // its life, drawn to the tree
@@ -1141,12 +1212,13 @@ public final class WoodSpells {
 					SpellFx.send(level, SpellFx.Kind.LIFE_MOTES, crown, HeavenSpells.middle(e).subtract(crown), 0, 0); // and given to its own
 				}
 			}
-			if (age % 60 == 10) HeavenSpells.sound(level, at, SoundEvents.AZALEA_LEAVES_BREAK, 2.0f, 0.7f);
+			if (age % 60 == 10) sound(at, SoundEvents.AZALEA_LEAVES_BREAK, 2.0f, 0.7f);
 			return true;
 		}
 
 		@Override
 		public void end() {
+			rooting.release();
 			tree.dissolve();
 		}
 	}
@@ -1174,14 +1246,14 @@ public final class WoodSpells {
 			this.ground = below != null ? below : point;
 			this.cloud = SpellConstruct.create(level, SpellConstruct.Kind.AZURE_THUNDER_CLOUD, ground.add(0, THUNDER_HIGH, 0), caster.getYRot(), 0, (int) (end - start), caster)
 					.sizedFor(spell).spawn();
-			HeavenSpells.sound(level, ground.add(0, THUNDER_HIGH, 0), SoundEvents.LIGHTNING_BOLT_THUNDER, 3.0f, 0.5f);
-			HeavenSpells.sound(level, caster.position(), SoundEvents.BEACON_ACTIVATE, 2.0f, 1.2f);
+			sound(ground.add(0, THUNDER_HIGH, 0), SoundEvents.LIGHTNING_BOLT_THUNDER, 3.0f, 0.5f);
+			sound(caster.position(), SoundEvents.BEACON_ACTIVATE, 2.0f, 1.2f);
 		}
 
 		@Override
 		protected boolean run(long age, long now) {
 			if (age < THUNDER_GATHER || (age - THUNDER_GATHER) % THUNDER_EVERY != 0 || volleys >= THUNDER_VOLLEYS) {
-				if (age % 30 == 15) HeavenSpells.sound(level, ground.add(0, THUNDER_HIGH, 0), SoundEvents.LIGHTNING_BOLT_THUNDER, 2.0f, 0.4f);
+				if (age % 30 == 15) sound(ground.add(0, THUNDER_HIGH, 0), SoundEvents.LIGHTNING_BOLT_THUNDER, 2.0f, 0.4f);
 				return true;
 			}
 			volleys++;
@@ -1259,7 +1331,7 @@ public final class WoodSpells {
 			this.yaw = caster.getYRot();
 			// A slash lying across the sky (RiftRenderer: a tear's yaw turns it on its watchers' screens), the roots to come out of its underside.
 			this.rift = SpellConstruct.create(level, SpellConstruct.Kind.VOID_RIFT, mouth, 90, 0, (int) (end - start), caster).size((float) WITHER_RIFT).spawn();
-			HeavenSpells.sound(level, mouth, SoundEvents.END_PORTAL_SPAWN, 3.0f, 0.6f);
+			sound(mouth, SoundEvents.END_PORTAL_SPAWN, 3.0f, 0.6f);
 			SpellFx.send(level, SpellFx.Kind.FLASH, mouth, Vec3.ZERO, 6, SpellConstruct.VOID, 192);
 		}
 
@@ -1284,7 +1356,7 @@ public final class WoodSpells {
 				// Hauled up off the land, drawn in a little under the rift.
 				Vec3 to = new Vec3(ground.x + (e.getX() - ground.x) * 0.6, ground.y + WITHER_LIFT, ground.z + (e.getZ() - ground.z) * 0.6);
 				held.put(e, new Held(root, to, age));
-				HeavenSpells.sound(level, from, SoundEvents.ROOTED_DIRT_BREAK, 2.5f, 0.5f);
+				sound(from, SoundEvents.ROOTED_DIRT_BREAK, 2.5f, 0.5f);
 			}
 		}
 
@@ -1300,7 +1372,7 @@ public final class WoodSpells {
 					continue;
 				}
 				if (age - h.since() < WITHER_LASH) continue; // its root still reaching it
-				if (age - h.since() == WITHER_LASH) HeavenSpells.sound(level, e.position(), SoundEvents.ROOTED_DIRT_PLACE, 2.0f, 0.6f);
+				if (age - h.since() == WITHER_LASH) sound(e.position(), SoundEvents.ROOTED_DIRT_PLACE, 2.0f, 0.6f);
 				// Nothing flies out of its grip (QiFlight#weighDown: a held player's flight given up while it holds; a cultivator's too).
 				if (e instanceof net.minecraft.server.level.ServerPlayer player) QiFlight.weighDown(player, 10);
 				if (e instanceof CultivatorNpc npc && npc.isQiFlying()) npc.setQiFlying(false);
@@ -1330,13 +1402,13 @@ public final class WoodSpells {
 				// Out of the rift once it is open: the knot swelling out of it, the roots growing down out of the knot (its model's descend).
 				roots = SpellConstruct.create(level, SpellConstruct.Kind.VOID_ROOTS, mouth.add(0, -2, 0), yaw, 0, (int) (end - level.getGameTime()), caster).sizedFor(spell)
 						.spawn();
-				HeavenSpells.sound(level, mouth, SoundEvents.ROOTED_DIRT_BREAK, 3.0f, 0.4f);
+				sound(mouth, SoundEvents.ROOTED_DIRT_BREAK, 3.0f, 0.4f);
 			}
 			long drinking = age - WITHER_OPENS;
 			if (drinking == WITHER_TICKS - 20) {
 				roots.act("withdraw");
 				release();
-				HeavenSpells.sound(level, mouth, SoundEvents.ROOTED_DIRT_BREAK, 3.0f, 0.6f);
+				sound(mouth, SoundEvents.ROOTED_DIRT_BREAK, 3.0f, 0.6f);
 			}
 			if (drinking >= 0 && drinking < WITHER_TICKS - 20) {
 				if (drinking % 5 == 0) seize(age);
@@ -1363,7 +1435,7 @@ public final class WoodSpells {
 					SpellFx.send(level, SpellFx.Kind.LIFE_MOTES, mouth, HeavenSpells.middle(e).subtract(mouth), 0, 0); // and given to its own
 				}
 			}
-			if (drinking % 60 == 10) HeavenSpells.sound(level, mouth, SoundEvents.ROOTED_DIRT_PLACE, 3.0f, 0.4f);
+			if (drinking % 60 == 10) sound(mouth, SoundEvents.ROOTED_DIRT_PLACE, 3.0f, 0.4f);
 			return true;
 		}
 
@@ -1398,8 +1470,8 @@ public final class WoodSpells {
 			this.ground = below != null ? below : point;
 			this.mouth = ground.add(0, GOURD_HIGH, 0);
 			this.gourd = SpellConstruct.create(level, SpellConstruct.Kind.SWALLOWING_GOURD, mouth, caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, mouth, SoundEvents.AZALEA_LEAVES_PLACE, 3.0f, 0.4f);
-			HeavenSpells.sound(level, mouth, SoundEvents.BEACON_ACTIVATE, 3.0f, 0.6f);
+			sound(mouth, SoundEvents.AZALEA_LEAVES_PLACE, 3.0f, 0.4f);
+			sound(mouth, SoundEvents.BEACON_ACTIVATE, 3.0f, 0.6f);
 		}
 
 		@Override
@@ -1410,7 +1482,7 @@ public final class WoodSpells {
 				// The stopper flies, and the land under it is torn up into it.
 				SpellFx.send(level, SpellFx.Kind.LEAVES, mouth, Vec3.ZERO, 4, 0, 192);
 				Devastation.crater(caster, level, ground, GOURD_STRIP, GOURD_STRIP_DEPTH, Devastation.Floor.RUBBLE);
-				HeavenSpells.sound(level, mouth, SoundEvents.BOTTLE_EMPTY, 4.0f, 0.3f);
+				sound(mouth, SoundEvents.BOTTLE_EMPTY, 4.0f, 0.3f);
 			}
 			if (drawing < GOURD_TICKS) {
 				draw(drawing);
@@ -1430,7 +1502,7 @@ public final class WoodSpells {
 				if (d <= GOURD_MOUTH && !HeavenSpells.greatBeast(caster, e)) {
 					swallowed.add(e);
 					SpellFx.send(level, SpellFx.Kind.LEAVES, HeavenSpells.middle(e), Vec3.ZERO, 2, 0);
-					HeavenSpells.sound(level, mouth, SoundEvents.GENERIC_DRINK, 3.0f, 0.4f);
+					sound(mouth, SoundEvents.GENERIC_DRINK, 3.0f, 0.4f);
 					continue;
 				}
 				double pull = HeavenSpells.greatBeast(caster, e) ? 0.12 : 0.35 + 0.9 * (1 - Math.min(1, d / (GOURD_RADIUS + GOURD_HIGH)));
@@ -1466,7 +1538,7 @@ public final class WoodSpells {
 				}
 			}
 			if (drawing % 4 == 0) SpellFx.send(level, SpellFx.Kind.LEAVES, ground.add(0, 2, 0), mouth.subtract(ground), 3, 0, 160);
-			if (drawing % 20 == 0) HeavenSpells.sound(level, mouth, SoundEvents.ELYTRA_FLYING, 3.0f, 0.5f);
+			if (drawing % 20 == 0) sound(mouth, SoundEvents.ELYTRA_FLYING, 3.0f, 0.5f);
 		}
 
 		/** It spits them out: the swallowed struck and hurled far; anything still being dragged flung away too. */
@@ -1483,8 +1555,8 @@ public final class WoodSpells {
 			swallowed.clear();
 			SpellFx.send(level, SpellFx.Kind.LEAVES, mouth, Vec3.ZERO, 8, 0, 192);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) GOURD_RADIUS, 0, 192);
-			HeavenSpells.sound(level, mouth, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.6f);
-			HeavenSpells.sound(level, mouth, SoundEvents.SNIFFER_SNIFFING, 4.0f, 0.4f);
+			sound(mouth, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.6f);
+			sound(mouth, SoundEvents.SNIFFER_SNIFFING, 4.0f, 0.4f);
 		}
 
 		@Override
@@ -1495,198 +1567,346 @@ public final class WoodSpells {
 	}
 
 	/**
-	 * Seven-Treasure Bodhi Branch: a colossal branch of the bodhi tree, hung with the seven treasures (SpellConstruct BODHI_BRANCH, its own
-	 * GeckoLib model), forms at its caster's left, high ({@link #BRANCH_FORMS}), and sweeps down and across their front in an arc
-	 * {@link #BRANCH_ARC} degrees wide out to {@link #BRANCH_REACH} ({@link #BRANCH_SWEEP}): everything it sweeps through takes
-	 * {@link #BRANCH_DAMAGE} and is swept away along its stroke, and the land it passes over is scoured away to {@link #BRANCH_DEPTH} (shallow
-	 * by the caster, deepest midway out, nothing within {@link #BRANCH_SPARE} of them). Then its treasures burst into their seven lights.
+	 * Seven-Treasure Bodhi Branch (made over, 2026-10-25, the user's ask: "the move that looks the stupidest by far is Seven-Treasure Bodhi
+	 * Branch, please either redo it completely or just swap it out for something else"; it was a stick swept across its caster's front): a
+	 * branch of the bodhi tree, hung with the seven treasures, is planted where its caster looks (up to {@link #BRANCH_REACH}) and bursts up out
+	 * of the land into a towering bodhi tree of the world's own wood and leaves (SpellConstruct BODHI_TREE: BlockMasses; {@link #BODHI_GROWS}),
+	 * {@link #BODHI_HEIGHT} tall, the land round its foot heaving. As it grows its roots burst up out of the land round it and seize every foe
+	 * within {@link #BODHI_RADIUS} (SpellConstruct LIVING_ROOT: Rooting), holding them where they stand. Then its seven treasures, hanging
+	 * glowing from its boughs (gold, silver, lapis, crystal, the white of the giant clam, red coral, carnelian), fall one after another
+	 * ({@link #BODHI_EVERY} apart), each on one of those it holds in turn: each bursts in its own light, {@link #BODHI_TREASURE} to everything
+	 * within {@link #BODHI_BURST} of where it falls, thrown out. Then the tree sheds its leaves in a storm of them and sinks back into the land
+	 * ({@link #BODHI_SHEDS}), letting them go.
 	 */
 	public static final class Branch extends HeavenSpells.Timed {
 		private final Spell spell;
-		private final Vec3 base;
-		private final float look;
-		private final SpellConstruct branch;
-		private final java.util.Set<LivingEntity> swept = new java.util.HashSet<>();
-		private double sweptTo;
+		private final Vec3 ground;
+		private final SpellConstruct tree;
+		private final Rooting rooting;
+		private final List<LivingEntity> held = new ArrayList<>();
+		private int fallen;
 
 		Branch(LivingEntity caster, Spell spell) {
-			super(caster, BRANCH_FORMS + BRANCH_SWEEP + BRANCH_AFTER);
+			super(caster, BODHI_GROWS + BODHI_HOLDS + 7 * BODHI_EVERY + BODHI_SHEDS);
 			this.spell = spell;
-			this.base = caster.position().add(0, 2.5, 0);
-			this.look = caster.getYRot();
-			this.sweptTo = -BRANCH_ARC / 2;
-			// Raised high at their left (a positive pitch tips a shape down: SpellConstructRenderer), swept down low across their front.
-			this.branch = SpellConstruct.create(level, SpellConstruct.Kind.BODHI_BRANCH, base, look - (float) (BRANCH_ARC / 2), -35, (int) (end - start), caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, base, SoundEvents.AMETHYST_BLOCK_CHIME, 3.0f, 0.5f);
-			HeavenSpells.sound(level, base, SoundEvents.BEACON_ACTIVATE, 3.0f, 0.8f);
+			Vec3 point = HeavenSpells.lookPoint(caster, BRANCH_REACH);
+			if (point.distanceToSqr(caster.position()) < 12 * 12) point = caster.position().add(Vec3.directionFromRotation(0, caster.getYRot()).scale(14));
+			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
+			this.ground = below != null ? below : point;
+			this.tree = SpellConstruct.create(level, SpellConstruct.Kind.BODHI_TREE, ground, 0, 0, (int) (end - start) + SpellConstruct.FADE, caster)
+					.size((float) BODHI_HEIGHT).tint(level.random.nextInt()).spawn();
+			this.rooting = new Rooting(caster, level, ground, 2.2f);
+			sound(ground, SoundEvents.ROOTED_DIRT_BREAK, 4.0f, 0.4f);
+			sound(ground, SoundEvents.WARDEN_EMERGE, 3.0f, 1.3f);
+			sound(ground, SoundEvents.AMETHYST_BLOCK_CHIME, 3.0f, 0.5f);
+			SpellFx.send(level, SpellFx.Kind.EARTH_BURST, ground, Vec3.ZERO, 6, net.minecraft.world.level.block.Block.getId(Blocks.ROOTED_DIRT.defaultBlockState()), 192);
 		}
 
 		@Override
 		protected boolean run(long age, long now) {
-			if (age < BRANCH_FORMS) return true;
-			long sweeping = age - BRANCH_FORMS;
-			if (sweeping == 0) {
-				branch.act("sweep");
-				HeavenSpells.sound(level, base, SoundEvents.ELYTRA_FLYING, 4.0f, 0.4f);
-			}
-			if (sweeping < BRANCH_SWEEP) {
-				// Eased: slow to begin, swiftest across the middle of the caster's front.
-				double f = (sweeping + 1) / (double) BRANCH_SWEEP, eased = f * f * (3 - 2 * f);
-				double to = -BRANCH_ARC / 2 + BRANCH_ARC * eased;
-				sweep(sweptTo, to);
-				sweptTo = to;
-				branch.place(base, look + (float) to, (float) (-35 + 38 * Math.sin(Math.PI * eased)));
+			if (age < BODHI_GROWS) {
+				// It bursts up out of the land, groaning as it grows, its leaves unfurling.
+				if (age % 5 == 0) {
+					sound(ground.add(0, BODHI_HEIGHT * age / BODHI_GROWS, 0), SoundEvents.WOOD_BREAK, 4.0f, 0.35f + 0.25f * level.random.nextFloat());
+					SpellFx.send(level, SpellFx.Kind.DUST, ground, Vec3.ZERO, (float) BODHI_HEIGHT * 0.5f, 0, 192);
+				}
+				if (age % 7 == 3) sound(ground.add(0, BODHI_HEIGHT * 0.6, 0), SoundEvents.AZALEA_LEAVES_PLACE, 4.0f, 0.5f);
+				if (age == BODHI_GROWS / 3) Devastation.fissures(caster, level, ground, BODHI_HEIGHT * 0.55, 8, 3, BODHI_HEIGHT * 0.12);
+				if (age == BODHI_GROWS / 2) seize();
 				return true;
 			}
-			if (sweeping == BRANCH_SWEEP) {
-				Vec3 at = base.add(Vec3.directionFromRotation(0, look + (float) (BRANCH_ARC / 2)).scale(BRANCH_REACH * 0.6));
-				for (int i = 0; i < TREASURES.length; i++) {
-					Vec3 spot = at.add((i - 3) * 2.5, 3 + (i % 2) * 2, 0);
-					SpellFx.send(level, SpellFx.Kind.FLASH, spot, Vec3.ZERO, 6, TREASURES[i], 192);
-				}
-				HeavenSpells.sound(level, at, SoundEvents.AMETHYST_CLUSTER_BREAK, 4.0f, 0.6f);
+			// Its roots keep their hold (a root to each held foe: Rooting).
+			held.removeIf(e -> !HeavenSpells.present(e, level));
+			rooting.hold(held, (int) (end - level.getGameTime()));
+			for (LivingEntity e : held) HeavenSpells.still(e);
+			long falling = age - BODHI_GROWS - BODHI_HOLDS;
+			if (falling >= 0 && falling % BODHI_EVERY == 0 && fallen < 7) fall(fallen++);
+			if (fallen >= 7 && falling == 7L * BODHI_EVERY + 6) shed();
+			if (age % 9 == 0) {
+				Vec3 crown = ground.add((level.random.nextDouble() - 0.5) * BODHI_HEIGHT * 0.6, BODHI_HEIGHT * (0.5 + 0.3 * level.random.nextDouble()),
+						(level.random.nextDouble() - 0.5) * BODHI_HEIGHT * 0.6);
+				level.sendParticles(net.minecraft.core.particles.ParticleTypes.CHERRY_LEAVES, crown.x, crown.y, crown.z, 4, 2, 1, 2, 0.0);
 			}
 			return true;
 		}
 
-		/** The arc from {@code from} to {@code to} degrees off the look swept: everything in it struck and swept on, the land under it scoured. */
-		private void sweep(double from, double to) {
-			Vec3 ground = new Vec3(base.x, caster.getY(), base.z);
-			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, BRANCH_REACH + 8, e -> !swept.contains(e) && !HeavenSpells.spared(caster, e))) {
-				double dx = e.getX() - base.x, dz = e.getZ() - base.z, d = Math.hypot(dx, dz);
-				if (d > BRANCH_REACH || d < 1.5 || e.getY() > ground.y + 24 || e.getY() < ground.y - 16) continue;
-				double off = Mth.wrapDegrees(Math.toDegrees(Math.atan2(-dx, dz)) - look);
-				if (off < from - 4 || off > to + 4) continue;
-				swept.add(e);
+		/** Its roots burst up out of the land round it and seize every foe near, binding them where they stand. */
+		private void seize() {
+			held.addAll(HeavenSpells.aroundPoint(level, ground, BODHI_RADIUS, e -> HeavenSpells.mark(caster, e)));
+			held.sort(java.util.Comparator.comparingDouble(e -> e.distanceToSqr(ground)));
+			int holding = (int) (end - level.getGameTime());
+			for (LivingEntity e : held) WoodSpells.bind(caster, e, holding);
+			rooting.hold(held, holding);
+			sound(ground, SoundEvents.ROOTED_DIRT_PLACE, 4.0f, 0.4f);
+			sound(ground, SoundEvents.MANGROVE_ROOTS_BREAK, 4.0f, 0.45f);
+		}
+
+		/** Treasure {@code i} falls from its bough onto the next it holds (or round its foot, with none), and bursts in its own light. */
+		private void fall(int i) {
+			tree.value(i + 1);
+			Vec3 from = ground.add(treasureAt(i, BODHI_HEIGHT));
+			LivingEntity target = held.isEmpty() ? null : held.get(i % held.size());
+			Vec3 to;
+			if (target != null) to = HeavenSpells.middle(target);
+			else {
+				double a = level.random.nextDouble() * Math.PI * 2, r = BODHI_RADIUS * (0.3 + 0.5 * level.random.nextDouble());
+				Vec3 spot = ground.add(Math.cos(a) * r, 4, Math.sin(a) * r), land = HeavenSpells.groundBelow(level, spot, 8, 24);
+				to = land != null ? land : spot.subtract(0, 4, 0);
+			}
+			int colour = TREASURES[i];
+			SpellFx.send(level, SpellFx.Kind.STREAK, from, to.subtract(from), 0, colour, 192);
+			sound(from, SoundEvents.AMETHYST_BLOCK_RESONATE, 3.0f, 0.6f + i * 0.12f);
+			Vec3 strike = to;
+			HeavenSpells.linger(new FireSpells.Delayed(caster, 4, () -> burst(strike, colour, i)));
+		}
+
+		/** A treasure bursts where it fell: all near struck and thrown out, in its own light. */
+		private void burst(Vec3 at, int colour, int i) {
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, at, BODHI_BURST + 2, e -> !HeavenSpells.spared(caster, e))) {
+				if (HeavenSpells.middle(e).distanceTo(at) > BODHI_BURST + e.getBbWidth()) continue;
 				e.invulnerableTime = 0;
-				HeavenSpells.strike(caster, e, BRANCH_DAMAGE, spell);
-				if (!HeavenSpells.greatBeast(caster, e)) {
-					Vec3 along = Vec3.directionFromRotation(0, look + (float) to + 90);
-					HeavenSpells.move(e, along.scale(2.6).add(0, 1.1, 0));
-					HeavenSpells.safeFall(e, 120);
-				}
-				SpellFx.send(level, SpellFx.Kind.LEAVES, HeavenSpells.middle(e), Vec3.ZERO, 2, 0);
+				HeavenSpells.strike(caster, e, BODHI_TREASURE, spell);
+				if (!held.contains(e)) HeavenSpells.push(at, e, 1.2);
 			}
-			// The land it passes over, scoured: every column in the swept slice, shallow by the caster and at its far end, deepest midway.
-			List<BlockPos> cells = new ArrayList<>();
-			java.util.Set<Long> columns = new java.util.HashSet<>();
-			for (double d = BRANCH_SPARE; d <= BRANCH_REACH; d += 0.7) {
-				double step = Math.toDegrees(0.7 / d);
-				for (double a = from; a <= to; a += step) {
-					Vec3 at = base.add(Vec3.directionFromRotation(0, look + (float) a).scale(d));
-					int x = Mth.floor(at.x), z = Mth.floor(at.z);
-					if (!columns.add(BlockPos.asLong(x, 0, z))) continue;
-					BlockPos top = Devastation.groundTop(level, x, z);
-					if (top == null || Math.abs(top.getY() - ground.y) > 20) continue;
-					double f = (d - BRANCH_SPARE) / (BRANCH_REACH - BRANCH_SPARE);
-					int deep = (int) Math.round(BRANCH_DEPTH * Math.pow(Math.sin(Math.PI * Math.min(1, f * 1.1)), 0.7));
-					int surface = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-					for (int y = surface; y > top.getY() - deep; y--) cells.add(new BlockPos(x, y, z));
-				}
-			}
-			Devastation.cut(caster, level, cells, ground, 3);
-			SpellFx.send(level, SpellFx.Kind.LEAVES, base.add(Vec3.directionFromRotation(0, look + (float) to).scale(BRANCH_REACH * 0.6)), Vec3.ZERO, 5, 0, 192);
+			SpellFx.send(level, SpellFx.Kind.FLASH, at, Vec3.ZERO, 9, colour, 192);
+			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, at.subtract(0, 0.8, 0), Vec3.ZERO, (float) BODHI_BURST * 1.6f, 0, 192);
+			SpellFx.send(level, SpellFx.Kind.LEAVES, at, Vec3.ZERO, 2.5f, 0, 160);
+			HeavenSpells.sound(level, at, SoundEvents.AMETHYST_CLUSTER_BREAK, 3.5f, 0.5f + i * 0.08f);
+			HeavenSpells.sound(level, at, SoundEvents.BELL_BLOCK, 2.5f, 0.6f + i * 0.1f);
+			HeavenSpells.sound(level, at, SoundEvents.GENERIC_EXPLODE, 2.0f, 1.1f);
+		}
+
+		/** It sheds its leaves in a storm of them and sinks back into the land, its roots letting go. */
+		private void shed() {
+			tree.act("shed");
+			rooting.release();
+			Vec3 crown = ground.add(0, BODHI_HEIGHT * 0.65, 0);
+			SpellFx.send(level, SpellFx.Kind.LEAVES, crown, Vec3.ZERO, (float) BODHI_HEIGHT * 0.5f, 0, 256);
+			level.sendParticles(net.minecraft.core.particles.ParticleTypes.CHERRY_LEAVES, crown.x, crown.y, crown.z, 120, BODHI_HEIGHT * 0.35, BODHI_HEIGHT * 0.25, BODHI_HEIGHT * 0.35, 0.02);
+			sound(crown, SoundEvents.AZALEA_LEAVES_BREAK, 5.0f, 0.4f);
+			sound(ground, SoundEvents.ROOTED_DIRT_BREAK, 4.0f, 0.3f);
 		}
 
 		@Override
 		public void end() {
-			branch.dissolve();
+			rooting.release();
+			for (LivingEntity e : held) if (HeavenSpells.present(e, level)) HeavenSpells.safeFall(e, 40);
+			held.clear();
+			tree.dissolve();
 		}
 	}
 
 	// --- Entering Nirvana ---
 
 	/**
-	 * Seed of Withering Rebirth: a seed half withered and half alive (SpellConstruct REBIRTH_SEED, its own GeckoLib model) flies from its caster's
-	 * hands to the being they look at ({@link #SEED_FLIGHT}; to where they look, with none) and roots in it: it is bound where it stands, and for
-	 * {@link #SEED_ROOTS} the seed's vines drink {@link #SEED_DRAIN} a second out of it, {@link #SEED_MENDS} of it mending its caster. Then the
-	 * flower of rebirth blooms out of it, thrown open: {@link #SEED_BLOOM} to what it rooted in, {@link #SEED_BLOOM_AROUND} to every other foe
-	 * within {@link #SEED_BURST}, and the land round it flourishes ({@link #SEED_FLOURISH}). The flower holds a while in bloom, then withers.
+	 * Seed of Withering Rebirth: a seed half withered and half alive (SpellConstruct REBIRTH_SEED, its own GeckoLib model) shot from its caster's
+	 * hands along their look (the user's ask, 2026-10-25: "if I shot it and it could only activate when it hits the ground, so it flys through the
+	 * air but will only plant in the ground, also make it so a player will get trapped in it if they are hit by the seed, and if no player it
+	 * just does what it normally does"). It flies on, falling a little as it goes ({@link #SEED_SPEED}, {@link #SEED_FALL}), for as long as
+	 * {@link #SEED_FLIES}:
+	 * <ul>
+	 *   <li>Striking a being on its way (one its caster's spells don't spare), it roots in it and grows about it: the being is sealed in a pod
+	 *       of mangrove roots, flowering on one side and bare on the other (blocks set down for a while: HeavenSpells#placeTemporary), bound
+	 *       where it stands, and for {@link #SEED_ROOTS} the seed drinks {@link #SEED_DRAIN} a second out of it, {@link #SEED_MENDS} of it
+	 *       mending its caster. Then the flower of rebirth bursts the pod open out of it: {@link #SEED_BLOOM} to it,
+	 *       {@link #SEED_BLOOM_AROUND} to every other foe within {@link #SEED_BURST}.</li>
+	 *   <li>Striking the ground, it plants itself there: living roots reach up out of the land to every foe within {@link #SEED_REACH} of it
+	 *       (SpellConstruct LIVING_ROOT), binding them where they stand and drinking {@link #SEED_DRAIN_EACH} a second out of each for
+	 *       {@link #SEED_ROOTS}, as much mending its caster; then the flower blooms out of the seed: {@link #SEED_BLOOM} to every foe its roots
+	 *       held, {@link #SEED_BLOOM_AROUND} to every other within {@link #SEED_BURST}.</li>
+	 * </ul>
+	 * Either way the land round it flourishes ({@link #SEED_FLOURISH}); the flower holds a while in bloom, then withers. Striking nothing (shot
+	 * into the open sky), it withers in the air.
 	 */
 	public static final class Seed extends HeavenSpells.Timed {
 		private final Spell spell;
-		private final LivingEntity target;
-		private final Vec3 from;
-		private Vec3 at;
 		private final SpellConstruct seed;
+		private Vec3 at, velocity;
+		/** The being it struck and sealed in its pod (null: none). */
+		private LivingEntity trapped;
+		/** Where it planted itself (null: it hasn't, or it is in a being). */
+		private Vec3 planted;
+		/** When it rooted (in a being or the ground), ticks in; -1, still flying. */
+		private long rooted = -1;
+		private final java.util.Map<LivingEntity, SpellConstruct> roots = new java.util.LinkedHashMap<>();
+		private final List<BlockPos> pod = new ArrayList<>();
 
-		Seed(LivingEntity caster, Spell spell, LivingEntity target, Vec3 point) {
-			super(caster, SEED_FLIGHT + SEED_ROOTS + SEED_HOLDS + SEED_WITHERS);
+		Seed(LivingEntity caster, Spell spell) {
+			super(caster, SEED_FLIES + SEED_ROOTS + SEED_HOLDS + SEED_WITHERS);
 			this.spell = spell;
-			this.target = target;
-			this.from = HeavenSpells.fromHands(caster);
-			this.at = point;
-			this.seed = SpellConstruct.create(level, SpellConstruct.Kind.REBIRTH_SEED, from, caster.getYRot(), 90, (int) (end - start), caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, from, SoundEvents.AZALEA_PLACE, 2.0f, 0.5f);
-			HeavenSpells.sound(level, from, SoundEvents.AMETHYST_BLOCK_CHIME, 2.0f, 0.6f);
+			this.at = HeavenSpells.fromHands(caster);
+			this.velocity = caster.getViewVector(1.0f).scale(SEED_SPEED);
+			float[] face = HeavenSpells.facing(velocity);
+			this.seed = SpellConstruct.create(level, SpellConstruct.Kind.REBIRTH_SEED, at, face[0], 90 + face[1], (int) (end - start) + SpellConstruct.FADE, caster)
+					.sizedFor(spell).spawn();
+			sound(at, SoundEvents.AZALEA_PLACE, 2.0f, 0.5f);
+			sound(at, SoundEvents.TRIDENT_THROW, 1.6f, 0.6f);
+			sound(at, SoundEvents.AMETHYST_BLOCK_CHIME, 2.0f, 0.6f);
 		}
 
-		private boolean holds() {
-			return target != null && HeavenSpells.present(target, level) && target.isAlive();
+		/** It has rooted, {@code age} ticks in: the rest of its life counted from now. */
+		private void rootedNow(long age) {
+			rooted = age;
+			end = level.getGameTime() + SEED_ROOTS + SEED_HOLDS + SEED_WITHERS;
 		}
 
 		@Override
 		protected boolean run(long age, long now) {
-			if (holds()) at = HeavenSpells.middle(target);
-			if (age <= SEED_FLIGHT) {
-				double f = age / (double) SEED_FLIGHT;
-				Vec3 here = from.lerp(at, f).add(0, Math.sin(Math.PI * f) * Math.min(6, from.distanceTo(at) * 0.15), 0);
-				float[] face = HeavenSpells.facing(at.subtract(from).multiply(1, 0, 1));
-				seed.place(here, face[0], 90);
-				if (age == SEED_FLIGHT) root();
-				return true;
-			}
-			long rooting = age - SEED_FLIGHT;
-			if (rooting < SEED_ROOTS) {
-				seed.place(at, seed.getYRot(), 0);
-				if (rooting % 20 == 10 && holds()) {
-					float took = HeavenSpells.strikeAgain(caster, target, SEED_DRAIN, spell);
-					HeavenSpells.mend(caster, took * SEED_MENDS);
-					SpellFx.send(level, SpellFx.Kind.LIFE_MOTES, at, HeavenSpells.middle(caster).subtract(at), 2, 0);
-					HeavenSpells.sound(level, at, SoundEvents.ROOTED_DIRT_BREAK, 2.0f, 0.6f);
-				}
-				return true;
-			}
+			if (rooted < 0) return fly(age);
+			long rooting = age - rooted;
+			if (rooting < SEED_ROOTS) drink(rooting);
 			if (rooting == SEED_ROOTS) bloom();
 			if (rooting == SEED_ROOTS + SEED_HOLDS) {
 				seed.act("wither");
-				HeavenSpells.sound(level, at, SoundEvents.AZALEA_LEAVES_BREAK, 2.0f, 0.4f);
+				sound(seed.position(), SoundEvents.AZALEA_LEAVES_BREAK, 2.0f, 0.4f);
 			}
 			return true;
 		}
 
-		/** It strikes and roots in what it struck (or the ground where it lands), binding it. */
-		private void root() {
-			seed.act("root");
-			if (holds()) WoodSpells.bind(caster, target, SEED_ROOTS);
-			SpellFx.send(level, SpellFx.Kind.LEAVES, at, Vec3.ZERO, 2.5f, 0, 160);
-			HeavenSpells.sound(level, at, SoundEvents.ROOTED_DIRT_PLACE, 3.0f, 0.5f);
+		/** A tick of its flight: on along its way, falling a little; a being struck, or the ground, and it roots. */
+		private boolean fly(long age) {
+			if (age > SEED_FLIES) {
+				// Shot into the open: it withers in the air.
+				seed.act("wither");
+				rooted = age - SEED_ROOTS - SEED_HOLDS - 1;
+				end = level.getGameTime() + SEED_WITHERS;
+				return true;
+			}
+			Vec3 next = at.add(velocity);
+			net.minecraft.world.phys.BlockHitResult block = level.clip(new net.minecraft.world.level.ClipContext(at, next,
+					net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.ANY, caster));
+			Vec3 reach = block.getType() == net.minecraft.world.phys.HitResult.Type.MISS ? next : block.getLocation();
+			net.minecraft.world.phys.EntityHitResult hit = net.minecraft.world.entity.projectile.ProjectileUtil.getEntityHitResult(level, caster, at, reach,
+					new net.minecraft.world.phys.AABB(at, reach).inflate(1.2), e -> e instanceof LivingEntity living && living.isAlive() && !HeavenSpells.spared(caster, living));
+			if (hit != null && hit.getEntity() instanceof LivingEntity struck) {
+				trap(struck, age);
+				return true;
+			}
+			if (block.getType() != net.minecraft.world.phys.HitResult.Type.MISS) {
+				plant(block.getLocation(), age);
+				return true;
+			}
+			at = next;
+			velocity = velocity.scale(0.995).add(0, -SEED_FALL, 0);
+			float[] face = HeavenSpells.facing(velocity);
+			seed.place(at, face[0], 90 + face[1]);
+			level.sendParticles(net.minecraft.core.particles.ParticleTypes.CHERRY_LEAVES, at.x, at.y, at.z, 2, 0.2, 0.2, 0.2, 0.0);
+			if (age % 2 == 0) level.sendParticles(net.minecraft.core.particles.ParticleTypes.COMPOSTER, at.x, at.y, at.z, 1, 0.1, 0.1, 0.1, 0.0);
+			return true;
 		}
 
-		/** It blooms: the flower thrown open out of what it rooted in, its burst striking round it, the land flourishing. */
+		/** It strikes {@code e} and grows about it: sealed in a pod of roots, flowering on one side and bare on the other, bound where it stands. */
+		private void trap(LivingEntity e, long age) {
+			trapped = e;
+			rootedNow(age);
+			seed.act("root");
+			WoodSpells.bind(caster, e, SEED_ROOTS + 4);
+			e.invulnerableTime = 0;
+			HeavenSpells.strike(caster, e, SEED_STRUCK, spell);
+			net.minecraft.world.phys.AABB box = e.getBoundingBox();
+			int x0 = Mth.floor(box.minX) - 1, y0 = Mth.floor(box.minY) - 1, z0 = Mth.floor(box.minZ) - 1;
+			int x1 = Mth.floor(box.maxX) + 1, y1 = Mth.floor(box.maxY) + 1, z1 = Mth.floor(box.maxZ) + 1;
+			double faceX = caster.getX() - e.getX(), faceZ = caster.getZ() - e.getZ();
+			for (int x = x0; x <= x1; x++) for (int y = y0; y <= y1; y++) for (int z = z0; z <= z1; z++) {
+				boolean shell = x == x0 || x == x1 || y == y0 || y == y1 || z == z0 || z == z1;
+				if (!shell) continue;
+				BlockPos pos = new BlockPos(x, y, z);
+				// Its living side toward its caster flowers; its withered side is bare roots.
+				boolean alive = (x + 0.5 - e.getX()) * faceX + (z + 0.5 - e.getZ()) * faceZ > 0;
+				BlockState part = y == y1 || alive && level.random.nextInt(3) == 0 ? Blocks.FLOWERING_AZALEA_LEAVES.defaultBlockState()
+						.setValue(net.minecraft.world.level.block.LeavesBlock.PERSISTENT, true) : Blocks.MANGROVE_ROOTS.defaultBlockState();
+				if (HeavenSpells.placeTemporary(level, pos, part, SEED_ROOTS + 6)) pod.add(pos);
+			}
+			SpellFx.send(level, SpellFx.Kind.LEAVES, HeavenSpells.middle(e), Vec3.ZERO, 3f, 0, 160);
+			sound(e.position(), SoundEvents.ROOTED_DIRT_PLACE, 3.0f, 0.5f);
+			sound(e.position(), SoundEvents.MANGROVE_ROOTS_PLACE, 3.0f, 0.6f);
+			sound(e.position(), SoundEvents.AZALEA_LEAVES_PLACE, 3.0f, 0.5f);
+		}
+
+		/** It strikes the ground and plants itself: living roots reach up out of the land to every foe near, binding them. */
+		private void plant(Vec3 where, long age) {
+			planted = where;
+			rootedNow(age);
+			seed.place(where, seed.getYRot(), 0);
+			seed.act("root");
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, where, SEED_REACH, e -> HeavenSpells.mark(caster, e))) {
+				roots.put(e, SpellConstruct.create(level, SpellConstruct.Kind.LIVING_ROOT, where.add(0, 0.1, 0), 0, 0, SEED_ROOTS + SpellConstruct.FADE * 2, caster)
+						.size(1.6f).target(e).spawn());
+				WoodSpells.bind(caster, e, SEED_ROOTS);
+			}
+			SpellFx.send(level, SpellFx.Kind.EARTH_BURST, where, Vec3.ZERO, 3, net.minecraft.world.level.block.Block.getId(Blocks.ROOTED_DIRT.defaultBlockState()), 160);
+			SpellFx.send(level, SpellFx.Kind.LEAVES, where, Vec3.ZERO, 3.5f, 0, 160);
+			sound(where, SoundEvents.ROOTED_DIRT_PLACE, 3.0f, 0.5f);
+			sound(where, SoundEvents.ROOTED_DIRT_BREAK, 3.0f, 0.4f);
+			if (!roots.isEmpty()) sound(where, SoundEvents.MANGROVE_ROOTS_BREAK, 3.0f, 0.5f);
+		}
+
+		/** A tick of its drinking: once a second, out of what it holds, mending its caster. */
+		private void drink(long rooting) {
+			if (trapped != null) {
+				if (HeavenSpells.present(trapped, level)) seed.place(HeavenSpells.middle(trapped), seed.getYRot(), 0);
+				if (rooting % 20 == 10 && HeavenSpells.present(trapped, level)) {
+					float took = HeavenSpells.strikeAgain(caster, trapped, SEED_DRAIN, spell);
+					HeavenSpells.mend(caster, took * SEED_MENDS);
+					SpellFx.send(level, SpellFx.Kind.LIFE_MOTES, HeavenSpells.middle(trapped), HeavenSpells.middle(caster).subtract(HeavenSpells.middle(trapped)), 2, 0);
+					sound(trapped.position(), SoundEvents.ROOTED_DIRT_BREAK, 2.0f, 0.6f);
+				}
+				return;
+			}
+			if (rooting % 20 != 10) return;
+			float took = 0;
+			for (LivingEntity e : roots.keySet()) {
+				if (!HeavenSpells.present(e, level)) continue;
+				took += HeavenSpells.strikeAgain(caster, e, SEED_DRAIN_EACH, spell);
+			}
+			if (took > 0) {
+				HeavenSpells.mend(caster, took * SEED_MENDS);
+				SpellFx.send(level, SpellFx.Kind.LIFE_MOTES, planted.add(0, 1, 0), HeavenSpells.middle(caster).subtract(planted.add(0, 1, 0)), 2, 0);
+				sound(planted, SoundEvents.ROOTED_DIRT_BREAK, 2.0f, 0.6f);
+			}
+		}
+
+		/** It blooms: the flower of rebirth thrown open (bursting its pod, out of the being it held, or out of the ground), its burst round it. */
 		private void bloom() {
 			seed.act("bloom");
-			if (holds()) {
-				target.invulnerableTime = 0;
-				HeavenSpells.strike(caster, target, SEED_BLOOM, spell);
+			Vec3 heart = trapped != null && HeavenSpells.present(trapped, level) ? HeavenSpells.middle(trapped) : planted != null ? planted : seed.position();
+			java.util.Set<LivingEntity> held = new java.util.HashSet<>(roots.keySet());
+			if (trapped != null) held.add(trapped);
+			for (LivingEntity e : held) {
+				if (!HeavenSpells.present(e, level)) continue;
+				e.invulnerableTime = 0;
+				HeavenSpells.strike(caster, e, SEED_BLOOM, spell);
 			}
-			for (LivingEntity e : HeavenSpells.aroundPoint(level, at, SEED_BURST + 2, e -> e != target && !HeavenSpells.spared(caster, e))) {
-				if (HeavenSpells.middle(e).distanceTo(at) > SEED_BURST) continue;
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, heart, SEED_BURST + 2, e -> !held.contains(e) && !HeavenSpells.spared(caster, e))) {
+				if (HeavenSpells.middle(e).distanceTo(heart) > SEED_BURST) continue;
 				e.invulnerableTime = 0;
 				HeavenSpells.strike(caster, e, SEED_BLOOM_AROUND, spell);
-				HeavenSpells.push(at, e, 1.0);
+				HeavenSpells.push(heart, e, 1.0);
 			}
-			Vec3 below = HeavenSpells.groundBelow(level, at, 2, 24);
-			Devastation.flourish(caster, level, below != null ? below : at, 0, SEED_FLOURISH, 0.35);
-			SpellFx.send(level, SpellFx.Kind.LEAVES, at, Vec3.ZERO, 8, 0, 192);
-			SpellFx.send(level, SpellFx.Kind.FLASH, at.add(0, 2, 0), Vec3.ZERO, 10, REBIRTH_BLUSH, 192);
-			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, below != null ? below : at, Vec3.ZERO, (float) SEED_BURST, 0, 192);
-			HeavenSpells.sound(level, at, SoundEvents.AMETHYST_CLUSTER_BREAK, 4.0f, 0.5f);
-			HeavenSpells.sound(level, at, SoundEvents.BEACON_POWER_SELECT, 3.0f, 1.2f);
+			// The pod burst open, its roots and blossom thrown off.
+			for (int i = 0; i < pod.size(); i++) {
+				BlockPos pos = pod.get(i);
+				if (i % 3 == 0) level.levelEvent(2001, pos, net.minecraft.world.level.block.Block.getId(level.getBlockState(pos)));
+				HeavenSpells.removeTemporary(level, pos);
+			}
+			pod.clear();
+			for (SpellConstruct root : roots.values()) root.dissolve();
+			Vec3 below = HeavenSpells.groundBelow(level, heart, 2, 24);
+			Devastation.flourish(caster, level, below != null ? below : heart, 0, SEED_FLOURISH, 0.35);
+			SpellFx.send(level, SpellFx.Kind.LEAVES, heart, Vec3.ZERO, 8, 0, 192);
+			SpellFx.send(level, SpellFx.Kind.FLASH, heart.add(0, 2, 0), Vec3.ZERO, 10, REBIRTH_BLUSH, 192);
+			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, below != null ? below : heart, Vec3.ZERO, (float) SEED_BURST, 0, 192);
+			level.sendParticles(net.minecraft.core.particles.ParticleTypes.CHERRY_LEAVES, heart.x, heart.y + 1, heart.z, 60, SEED_BURST * 0.3, 1.5, SEED_BURST * 0.3, 0.02);
+			sound(heart, SoundEvents.AMETHYST_CLUSTER_BREAK, 4.0f, 0.5f);
+			sound(heart, SoundEvents.BEACON_POWER_SELECT, 3.0f, 1.2f);
+			sound(heart, SoundEvents.AZALEA_LEAVES_BREAK, 4.0f, 0.6f);
 		}
 
 		@Override
 		public void end() {
+			for (BlockPos pos : pod) HeavenSpells.removeTemporary(level, pos);
+			pod.clear();
+			for (SpellConstruct root : roots.values()) root.dissolve();
 			seed.dissolve();
 		}
 	}
@@ -1703,6 +1923,8 @@ public final class WoodSpells {
 		private final Vec3 ground;
 		private final float yaw;
 		private final SpellConstruct wheel;
+		/** Its roots, from the tree at its heart to every foe it drinks from (Rooting). */
+		private final Rooting rooting;
 
 		Seasons(LivingEntity caster, Spell spell, Vec3 point) {
 			super(caster, SEASONS_GROWS + SEASONS_TICKS + SEASONS_AFTER);
@@ -1711,8 +1933,9 @@ public final class WoodSpells {
 			this.ground = below != null ? below : point;
 			this.yaw = caster.getYRot();
 			this.wheel = SpellConstruct.create(level, SpellConstruct.Kind.SEASON_WHEEL, ground.add(0, 0.1, 0), yaw, 0, (int) (end - start), caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, ground, SoundEvents.AZALEA_LEAVES_PLACE, 3.0f, 0.4f);
-			HeavenSpells.sound(level, ground, SoundEvents.BEACON_ACTIVATE, 3.0f, 0.6f);
+			this.rooting = new Rooting(caster, level, ground, 1.8f);
+			sound(ground, SoundEvents.AZALEA_LEAVES_PLACE, 3.0f, 0.4f);
+			sound(ground, SoundEvents.BEACON_ACTIVATE, 3.0f, 0.6f);
 		}
 
 		/** Whether {@code e} stands within the wheel. */
@@ -1742,8 +1965,9 @@ public final class WoodSpells {
 		/** A second of its turning: every foe within drained and slowed, a share of it mending its caster and their own within. */
 		private void drink() {
 			float drunk = 0;
-			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, SEASONS_RADIUS + 16, e -> !HeavenSpells.spared(caster, e))) {
-				if (!within(e)) continue;
+			List<LivingEntity> drinking = HeavenSpells.aroundPoint(level, ground, SEASONS_RADIUS + 16, e -> !HeavenSpells.spared(caster, e) && within(e));
+			rooting.hold(drinking, (int) (end - level.getGameTime()));
+			for (LivingEntity e : drinking) {
 				drunk += HeavenSpells.strikeAgain(caster, e, SEASONS_DRAIN, spell);
 				e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 30, 1));
 				SpellFx.send(level, SpellFx.Kind.LIFE_MOTES, HeavenSpells.middle(e), ground.add(0, 3, 0).subtract(HeavenSpells.middle(e)), 1.5f, 0);
@@ -1751,12 +1975,13 @@ public final class WoodSpells {
 			List<LivingEntity> own = new ArrayList<>(HeavenSpells.aroundPoint(level, ground, SEASONS_RADIUS + 16, e -> HeavenSpells.own(caster, e) && within(e)));
 			if (within(caster) || own.isEmpty()) own.add(caster);
 			for (LivingEntity e : own) HeavenSpells.mend(e, drunk * SEASONS_MENDS / own.size());
-			HeavenSpells.sound(level, ground, SoundEvents.AZALEA_LEAVES_HIT, 3.0f, 0.5f);
+			sound(ground, SoundEvents.AZALEA_LEAVES_HIT, 3.0f, 0.5f);
 		}
 
 		/** Its last turn: the wheel spun round, every foe within struck, a share of it mending its caster. */
 		private void turn() {
 			wheel.act("flip");
+			rooting.release();
 			float dealt = 0;
 			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, SEASONS_RADIUS + 16, e -> !HeavenSpells.spared(caster, e))) {
 				if (!within(e)) continue;
@@ -1768,12 +1993,13 @@ public final class WoodSpells {
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) SEASONS_RADIUS, 0, 192);
 			SpellFx.send(level, SpellFx.Kind.LEAVES, ground.add(0, 3, 0), Vec3.ZERO, 10, 0, 192);
 			SpellFx.send(level, SpellFx.Kind.FLASH, ground.add(0, 4, 0), Vec3.ZERO, 12, REBIRTH_BLUSH, 192);
-			HeavenSpells.sound(level, ground, SoundEvents.BEACON_POWER_SELECT, 4.0f, 0.6f);
-			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 3.0f, 0.8f);
+			sound(ground, SoundEvents.BEACON_POWER_SELECT, 4.0f, 0.6f);
+			sound(ground, SoundEvents.GENERIC_EXPLODE, 3.0f, 0.8f);
 		}
 
 		@Override
 		public void end() {
+			rooting.release();
 			wheel.dissolve();
 		}
 	}
@@ -1819,8 +2045,8 @@ public final class WoodSpells {
 			this.yaw = caster.getYRot();
 			this.way = Vec3.directionFromRotation(0, yaw);
 			this.cyclone = SpellConstruct.create(level, SpellConstruct.Kind.PRIMORDIAL_CYCLONE, foot, yaw, 0, (int) (end - start), caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, foot, SoundEvents.ELYTRA_FLYING, 4.0f, 0.5f);
-			HeavenSpells.sound(level, foot, SoundEvents.AZALEA_LEAVES_PLACE, 3.0f, 0.4f);
+			sound(foot, SoundEvents.ELYTRA_FLYING, 4.0f, 0.5f);
+			sound(foot, SoundEvents.AZALEA_LEAVES_PLACE, 3.0f, 0.4f);
 		}
 
 		@Override
@@ -1838,7 +2064,7 @@ public final class WoodSpells {
 					double a = level.random.nextDouble() * Math.PI * 2, r = WIND_RADIUS * (0.3 + 0.7 * level.random.nextDouble());
 					SpellFx.send(level, SpellFx.Kind.LEAVES, foot.add(Math.cos(a) * r, 2 + level.random.nextDouble() * WIND_HIGH * 1.5, Math.sin(a) * r), Vec3.ZERO, 2.5f, 0, 192);
 				}
-				if (whirling % 24 == 0) HeavenSpells.sound(level, foot, SoundEvents.ELYTRA_FLYING, 4.0f, 0.4f + 0.02f * (whirling / 24));
+				if (whirling % 24 == 0) sound(foot, SoundEvents.ELYTRA_FLYING, 4.0f, 0.4f + 0.02f * (whirling / 24));
 			} else if (!flung) {
 				flung = true;
 				fling();
@@ -1882,8 +2108,8 @@ public final class WoodSpells {
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, foot, Vec3.ZERO, (float) WIND_PULL, 0, 192);
 			SpellFx.send(level, SpellFx.Kind.LEAVES, foot.add(0, WIND_HIGH * 0.5, 0), Vec3.ZERO, 14, 0, 192);
 			SpellFx.send(level, SpellFx.Kind.FLASH, foot.add(0, WIND_HIGH * 0.5, 0), Vec3.ZERO, 12, CREATION_LIGHT, 192);
-			HeavenSpells.sound(level, foot, SoundEvents.PLAYER_ATTACK_SWEEP, 5.0f, 0.4f);
-			HeavenSpells.sound(level, foot, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.8f);
+			sound(foot, SoundEvents.PLAYER_ATTACK_SWEEP, 5.0f, 0.4f);
+			sound(foot, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.8f);
 		}
 
 		@Override
@@ -1904,6 +2130,8 @@ public final class WoodSpells {
 		private final Spell spell;
 		private final Vec3 ground;
 		private final SpellConstruct seed;
+		/** Its roots, from the seed to every foe it drinks from (Rooting). */
+		private final Rooting rooting;
 
 		Creation(LivingEntity caster, Spell spell, Vec3 point) {
 			super(caster, CREATION_GROWS + CREATION_TICKS + CREATION_BLOOMS + CREATION_AFTER);
@@ -1911,8 +2139,9 @@ public final class WoodSpells {
 			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
 			this.ground = below != null ? below : point;
 			this.seed = SpellConstruct.create(level, SpellConstruct.Kind.CREATION_SEED, ground.add(0, 0.1, 0), caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, ground, SoundEvents.BEACON_ACTIVATE, 4.0f, 0.5f);
-			HeavenSpells.sound(level, ground, SoundEvents.ROOTED_DIRT_PLACE, 4.0f, 0.4f);
+			this.rooting = new Rooting(caster, level, ground, 2.6f);
+			sound(ground, SoundEvents.BEACON_ACTIVATE, 4.0f, 0.5f);
+			sound(ground, SoundEvents.ROOTED_DIRT_PLACE, 4.0f, 0.4f);
 		}
 
 		private List<LivingEntity> within() {
@@ -1934,7 +2163,7 @@ public final class WoodSpells {
 			}
 			if (drinking == CREATION_TICKS) {
 				seed.act("bloom");
-				HeavenSpells.sound(level, ground, SoundEvents.BEACON_POWER_SELECT, 5.0f, 0.5f);
+				sound(ground, SoundEvents.BEACON_POWER_SELECT, 5.0f, 0.5f);
 			}
 			if (drinking == CREATION_TICKS + 6) bloom();
 			return true;
@@ -1954,17 +2183,20 @@ public final class WoodSpells {
 		private void drink() {
 			float drunk = 0;
 			Vec3 heart = ground.add(0, HeavenSpells.span(Realm.TRUE_IMMORTAL, 3), 0);
-			for (LivingEntity e : within()) {
+			List<LivingEntity> drinking = within();
+			rooting.hold(drinking, (int) (end - level.getGameTime()));
+			for (LivingEntity e : drinking) {
 				drunk += HeavenSpells.strikeAgain(caster, e, CREATION_DRAIN, spell);
 				e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 30, 2));
 				SpellFx.send(level, SpellFx.Kind.LIFE_MOTES, HeavenSpells.middle(e), heart.subtract(HeavenSpells.middle(e)), 2, 0);
 			}
 			shareMending(caster, level, ground, CREATION_RADIUS, drunk * CREATION_MENDS);
-			HeavenSpells.sound(level, ground, SoundEvents.AZALEA_LEAVES_HIT, 4.0f, 0.4f);
+			sound(ground, SoundEvents.AZALEA_LEAVES_HIT, 4.0f, 0.4f);
 		}
 
 		/** The tree of creation bursts up: every foe within struck and thrown up, a share of it mending its own, the land flourishing. */
 		private void bloom() {
+			rooting.release();
 			float dealt = 0;
 			for (LivingEntity e : within()) {
 				e.invulnerableTime = 0;
@@ -1978,12 +2210,13 @@ public final class WoodSpells {
 			SpellFx.send(level, SpellFx.Kind.FLASH, crown, Vec3.ZERO, 18, CREATION_LIGHT, 256);
 			SpellFx.send(level, SpellFx.Kind.LEAVES, crown, Vec3.ZERO, 16, 0, 256);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) CREATION_RADIUS, 0, 256);
-			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 5.0f, 0.6f);
-			HeavenSpells.sound(level, ground, SoundEvents.AMETHYST_BLOCK_CHIME, 5.0f, 0.5f);
+			sound(ground, SoundEvents.GENERIC_EXPLODE, 5.0f, 0.6f);
+			sound(ground, SoundEvents.AMETHYST_BLOCK_CHIME, 5.0f, 0.5f);
 		}
 
 		@Override
 		public void end() {
+			rooting.release();
 			seed.dissolve();
 		}
 	}

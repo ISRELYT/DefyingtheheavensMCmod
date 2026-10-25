@@ -59,6 +59,12 @@ public class SpellField extends Entity {
 	/** How much of it is left or done, 0 to 1 (a cage's strength, a beam's length). */
 	private static final EntityDataAccessor<Float> VALUE = SynchedEntityData.defineId(SpellField.class, EntityDataSerializers.FLOAT);
 	private static final EntityDataAccessor<Boolean> STRIKEABLE = SynchedEntityData.defineId(SpellField.class, EntityDataSerializers.BOOLEAN);
+	/** The being it is held on (SpellAnchor: 0, none), how, and where on it (x to its right, y up, z ahead). */
+	private static final EntityDataAccessor<Integer> ANCHOR = SynchedEntityData.defineId(SpellField.class, EntityDataSerializers.INT);
+	private static final EntityDataAccessor<Byte> ANCHOR_HOW = SynchedEntityData.defineId(SpellField.class, EntityDataSerializers.BYTE);
+	private static final EntityDataAccessor<org.joml.Vector3f> ANCHOR_OFFSET = SynchedEntityData.defineId(SpellField.class, EntityDataSerializers.VECTOR3);
+	/** The frame's share of its tick while a watcher draws it (its facing then as its anchor's this frame: {@link #yaw}); -1 between draws. */
+	private float drawing = -1;
 
 	private Strikes strikes;
 
@@ -107,8 +113,49 @@ public class SpellField extends Entity {
 	public float height() { return entityData.get(HEIGHT); }
 	public int life() { return entityData.get(LIFE); }
 	public int data() { return entityData.get(DATA); }
-	public float yaw() { return entityData.get(YAW); }
-	public float pitch() { return entityData.get(PITCH); }
+
+	/** The way it faces: its spell's word, or (drawn while held on a being that turns it: {@link #anchor}) as that being faces this frame. */
+	public float yaw() {
+		Entity on = drawing < 0 ? null : anchored();
+		return on == null ? entityData.get(YAW) : anchoring().yaw(on, drawing, entityData.get(YAW));
+	}
+
+	public float pitch() {
+		Entity on = drawing < 0 ? null : anchored();
+		return on == null ? entityData.get(PITCH) : anchoring().pitch(on, drawing, entityData.get(PITCH));
+	}
+
+	/**
+	 * Held on {@code on} ({@link SpellAnchor}: the user's ask, 2026-10-25, what tracks its caster lagged behind them): drawn where {@code on}
+	 * is drawn each frame, {@code offset} on it, turned {@code how}; its spell still moves it on the server.
+	 */
+	public SpellField anchor(Entity on, SpellAnchor how, Vec3 offset) {
+		entityData.set(ANCHOR, on == null ? 0 : on.getId());
+		entityData.set(ANCHOR_HOW, (byte) how.ordinal());
+		entityData.set(ANCHOR_OFFSET, offset.toVector3f());
+		if (on != null) moveTo(how.at(on, offset, 1, getYRot()));
+		return this;
+	}
+
+	/** The being it is held on, or null. */
+	public Entity anchored() {
+		int id = entityData.get(ANCHOR);
+		return id <= 0 || anchoring() == SpellAnchor.NONE ? null : level().getEntity(id);
+	}
+
+	public SpellAnchor anchoring() { return SpellAnchor.byIndex(entityData.get(ANCHOR_HOW)); }
+
+	/**
+	 * A watcher begins drawing it, {@code partial} of the way through the tick (-1: done drawing), and how far from its own eased place it is
+	 * drawn: nothing, unless it is held on a being, then the way to where that being is drawn this very frame.
+	 */
+	public Vec3 drawing(float partial) {
+		drawing = partial;
+		Entity on = partial < 0 ? null : anchored();
+		if (on == null) return Vec3.ZERO;
+		Vec3 own = new Vec3(net.minecraft.util.Mth.lerp(partial, xo, getX()), net.minecraft.util.Mth.lerp(partial, yo, getY()), net.minecraft.util.Mth.lerp(partial, zo, getZ()));
+		return anchoring().at(on, new Vec3(entityData.get(ANCHOR_OFFSET)), partial, entityData.get(YAW)).subtract(own);
+	}
 	public float value() { return entityData.get(VALUE); }
 
 	public Entity owner() {
@@ -139,6 +186,9 @@ public class SpellField extends Entity {
 		entityData.define(PITCH, 0.0f);
 		entityData.define(VALUE, 1.0f);
 		entityData.define(STRIKEABLE, false);
+		entityData.define(ANCHOR, 0);
+		entityData.define(ANCHOR_HOW, (byte) 0);
+		entityData.define(ANCHOR_OFFSET, new org.joml.Vector3f());
 	}
 
 	@Override
@@ -156,6 +206,11 @@ public class SpellField extends Entity {
 	@Override
 	public void tick() {
 		super.tick();
+		// Held on a being: kept where it is on a watcher's screen (it is drawn where that being is drawn each frame: #drawing).
+		if (level().isClientSide) {
+			Entity on = anchored();
+			if (on != null) setPos(anchoring().at(on, new Vec3(entityData.get(ANCHOR_OFFSET)), 1, entityData.get(YAW)));
+		}
 		// Its spell ends it; this is only lest one be left behind (its spell gone with the server or its caster).
 		if (!level().isClientSide && tickCount > life() + 100) discard();
 	}

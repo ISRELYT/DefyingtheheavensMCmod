@@ -38,7 +38,12 @@ public enum SpellAura {
 	/** Life being drawn out of it (Life Force Drain) or poured into it (Life Force Gain). */
 	LIFE_FLOW,
 	/** Under the Black Tortoise's shell (Black Tortoise Bastion): -40% harm, fire's stopped outright. A water ward (its shape is the tortoise). */
-	BLACK_TORTOISE(QiElement.WATER, Realm.DAO_INTEGRATION, 0.40, 1.0);
+	BLACK_TORTOISE(QiElement.WATER, Realm.DAO_INTEGRATION, 0.40, 1.0),
+	/**
+	 * Ghost Fire kindled in the hands (Spells#ghostFire), while its blows last: drawn as cold fire wreathing both hands (SpellAuraLayer, and
+	 * in first person), the user's ask, 2026-10-25: "make ghost fire go around my hands and not just two random balls".
+	 */
+	GHOST_FIRE;
 
 	private final QiElement ward;
 	private final Realm wardRealm;

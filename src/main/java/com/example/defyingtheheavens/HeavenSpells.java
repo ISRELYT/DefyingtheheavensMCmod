@@ -72,7 +72,15 @@ public final class HeavenSpells {
 	 * homes). Blocks a spell sets down for a while (walls, trees, ice: {@link #placeTemporary}) are set down for either.
 	 */
 	public static boolean carvesLand(LivingEntity caster) {
-		return caster == null || caster instanceof ServerPlayer;
+		return caster == null || caster instanceof ServerPlayer player && griefs(player.serverLevel());
+	}
+
+	/**
+	 * Whether the spells may change the land for good in {@code level} (the gamerule spellGriefing, the user's ask, 2026-10-25: on, the
+	 * default, its craters, lakes and spreading fire stay; off, nothing a spell does to the land lasts, its fire tame: Devastation#ignite).
+	 */
+	public static boolean griefs(ServerLevel level) {
+		return level.getGameRules().getBoolean(ModGameRules.SPELL_GRIEFING);
 	}
 
 	/** Whether {@code spell} can take hold for {@code p} now (its element's say); refused, nothing is paid. */
@@ -237,6 +245,46 @@ public final class HeavenSpells {
 		protected boolean casterHere() {
 			return caster.isAlive() && !caster.isRemoved() && caster.level() == level;
 		}
+
+		// --- Its voice (SpellSounds): what it sounds is kept to it, and fades out with it when it is over ---
+
+		private final long voice = SpellSounds.voice();
+		private final java.util.Set<ServerPlayer> heard = new java.util.HashSet<>();
+
+		/** {@code sound} at {@code at}, once, under its voice: faded out with it when it is over (or sooner, {@link #hush}). Returns its handle. */
+		protected int sound(Vec3 at, net.minecraft.sounds.SoundEvent sound, float volume, float pitch) {
+			return SpellSounds.play(level, voice, heard, at, null, sound, volume, pitch, false);
+		}
+
+		/** {@code sound} following {@code thing} (its living shape, a being) as it goes, once, under its voice. */
+		protected int sound(Entity thing, net.minecraft.sounds.SoundEvent sound, float volume, float pitch) {
+			return SpellSounds.play(level, voice, heard, thing.position(), thing, sound, volume, pitch, false);
+		}
+
+		/** {@code sound} at {@code at} over and over, under its voice, until it is over or {@link #hush}ed. */
+		protected int loop(Vec3 at, net.minecraft.sounds.SoundEvent sound, float volume, float pitch) {
+			return SpellSounds.play(level, voice, heard, at, null, sound, volume, pitch, true);
+		}
+
+		/** {@code sound} following {@code thing} over and over, under its voice, until it is over or {@link #hush}ed. */
+		protected int loop(Entity thing, net.minecraft.sounds.SoundEvent sound, float volume, float pitch) {
+			return SpellSounds.play(level, voice, heard, thing.position(), thing, sound, volume, pitch, true);
+		}
+
+		/** The sound {@code handle} faded out over {@code fade} ticks (a part of it over: a loop of its rising, a roar cut short). */
+		protected void hush(int handle, int fade) {
+			SpellSounds.hush(voice, handle, heard, fade);
+		}
+
+		/** How long what it still sounds fades once it is over (ticks): about as its living shape fades (SpellConstruct#FADE). */
+		protected int hushFade() {
+			return 12;
+		}
+
+		/** It is over: everything it still sounds fades out (HeavenSpells#endQuietly). */
+		final void hushAll() {
+			if (!heard.isEmpty()) SpellSounds.hush(voice, 0, heard, hushFade());
+		}
 	}
 
 	/** One the caster's blessings reach: itself, or any being not its enemy and not a monster (villagers, beasts, peaceful folk, allies). */
@@ -280,6 +328,8 @@ public final class HeavenSpells {
 		} catch (Exception e) {
 			DefyingTheHeavens.LOGGER.error("Ending a lingering heaven spell failed", e);
 		}
+		// What it still sounds fades out with it (SpellSounds: the user's ask, 2026-10-25, a move over and its sound still playing).
+		if (l instanceof Timed timed) timed.hushAll();
 	}
 
 	// --- Hooks: harm coming in, blows going out, a death ---
@@ -368,7 +418,13 @@ public final class HeavenSpells {
 		// A tribulation's strike is the heavens' own: no ward, bell or earth turns any of it (the user's pick, 2026-10-24: the wards and
 		// a Golden Bell took the sting out of tribulations).
 		if (TribulationManager.isStriking(target)) return amount;
-		// First the auras: a ward of the element that overcomes the blow's, a Golden Bell, a polished blade (SpellAuras).
+		// One's own fire, to one who has mastered fire (HeavenPassives#ownFireSpares, Flame-Kin): nothing, and its flames put out on them.
+		if (HeavenPassives.ownFireSpares(target, source)) {
+			target.clearFire();
+			WARDED_OFF.add(target);
+			return 0;
+		}
+		// First the auras:a ward of the element that overcomes the blow's, a Golden Bell, a polished blade (SpellAuras).
 		amount = SpellAuras.incoming(target, source, amount);
 		if (amount <= 0) {
 			WARDED_OFF.add(target);
@@ -583,8 +639,21 @@ public final class HeavenSpells {
 		return carvable(level, pos, p, false, false);
 	}
 
+	/**
+	 * {@link #carvable(ServerLevel, BlockPos, LivingEntity)} for what goes by a rule of its own rather than the spells' griefing (Meteor
+	 * Flight's way: the gamerule meteorFlightSmashes), the rest of the rule the same.
+	 */
+	public static boolean carvableAnyway(ServerLevel level, BlockPos pos, LivingEntity p) {
+		return carvable(level, pos, p, false, true, false);
+	}
+
 	private static boolean carvable(ServerLevel level, BlockPos pos, LivingEntity p, boolean utter, boolean taking) {
-		if (!carvesLand(p) || !level.isInWorldBounds(pos)) return false; // a cultivator's spells take nothing from the land
+		return carvable(level, pos, p, utter, taking, true);
+	}
+
+	private static boolean carvable(ServerLevel level, BlockPos pos, LivingEntity p, boolean utter, boolean taking, boolean heedGriefing) {
+		// A cultivator's spells take nothing from the land; nor a player's with the spells' griefing off (unless by a rule of its own).
+		if (!(heedGriefing ? carvesLand(p) : p == null || p instanceof ServerPlayer) || !level.isInWorldBounds(pos)) return false;
 		BlockState state = level.getBlockState(pos);
 		if (state.isAir()) return false;
 		// A barrier's cell: taken as the land is by one strong enough to break it, the barrier the worse for it (Formations#yields: since

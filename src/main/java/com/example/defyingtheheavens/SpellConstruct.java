@@ -46,7 +46,7 @@ public class SpellConstruct extends Entity implements GeoEntity {
 	 * glass round a point; or a {@link #TENDRIL}, a root drawn by hand too (TendrilRenderer), lashing from where it stands to the being it
 	 * holds ({@link #target}) and coiled round it, its size its girth.
 	 */
-	public enum Form { SHAPE, TEAR, ABYSS, LINE, SHATTER, TENDRIL }
+	public enum Form { SHAPE, TEAR, ABYSS, LINE, SHATTER, TENDRIL, GHOSTS, BLOCKS }
 
 	/**
 	 * What it is: its model's id (geo/spell/&lt;id&gt;.geo.json, its texture and animations alike), the move it enters with (or null),
@@ -191,7 +191,31 @@ public class SpellConstruct extends Entity implements GeoEntity {
 		HELL_GATE("hell_gate", "open", "burn", 2.0f),
 		HELL_CHAIN("hell_chain", Form.TENDRIL),
 		SAMSARA_WHEEL("samsara_wheel", "appear", "turn", 2.0f),
-		SIX_PATHS("six_paths", 3, "erupt", "burn", 4.0f, "collapse");
+		SIX_PATHS("six_paths", 3, "erupt", "burn", 4.0f, "collapse"),
+		// The ghost path's dead as the mod's own ghosts are drawn (Form GHOSTS: the soul shader's cyan light in a body's own shape, SoulRenderer;
+		// the user's ask, 2026-10-25: "make ghost dash my own players ghost ... why tf would u make these shitty ghost models? we already have
+		// ghosts in the mod"), drawn by hand (SpellGhosts): the caster's own ghost a Soul Dash leaves along its way, and the giant one that
+		// wails over them; the dead pouring out in the Procession; the dead dragged down into the Nine Nethers; the helix of ten thousand souls;
+		// the White and the Black Impermanence.
+		SOUL_AFTERIMAGE("soul_afterimage", Form.GHOSTS),
+		WAIL_SPECTRE("wail_spectre", Form.GHOSTS, "wail"),
+		GHOST_PROCESSION("ghost_procession", Form.GHOSTS),
+		NETHER_DESCENT("nether_descent", Form.GHOSTS, "seal"),
+		SOUL_ASCENT("soul_ascent", Form.GHOSTS, "descend"),
+		WHITE_WUCHANG("white_wuchang", Form.GHOSTS, "strike", "take"),
+		BLACK_WUCHANG("black_wuchang", Form.GHOSTS, "strike", "take"),
+		// Made of the world's own blocks (Form BLOCKS: laid out block by block, the same for its seed, its tint, on every screen, and drawn as the
+		// game draws its land: BlockMasses; the user's ask, 2026-10-25): Falling Continent's land, its round its size; Glacier of the First Age's
+		// wall of ice, the half of its width its size and how far back it runs its value.
+		CONTINENT_MASS("continent_mass", Form.BLOCKS, "impact"),
+		GLACIER_MASS("glacier_mass", Form.BLOCKS, "calve"),
+		// A living root reaching up out of the ground to the being it binds and drinking from it (drawn by hand: TendrilRenderer), its size its
+		// girth: the Seed of Withering Rebirth's, planted (WoodSpells), and the woods' that drain the land round them.
+		LIVING_ROOT("living_root", Form.TENDRIL),
+		// Seven-Treasure Bodhi Branch's tree (WoodSpells#Branch, the user's ask, 2026-10-25: "redo it completely"): the branch planted grown into a
+		// towering bodhi tree of the world's own wood and leaves, its height its size, the seven treasures hanging from its boughs (how many have
+		// fallen, its value); it sheds its leaves as it goes ({@code shed}).
+		BODHI_TREE("bodhi_tree", Form.BLOCKS, "shed");
 
 		public final String id, enter, loop;
 		public final float scale;
@@ -214,14 +238,17 @@ public class SpellConstruct extends Entity implements GeoEntity {
 			this.form = Form.SHAPE;
 		}
 
-		/** A tear in space, or a tendril: no model, no moves; its size a tear's length in blocks, a tendril's girth. */
-		Kind(String id, Form form) {
+		/**
+		 * A tear in space, a tendril, or ghosts drawn by hand: no model; its size a tear's length in blocks, a tendril's girth, the ghosts' own
+		 * measure; its {@code moves} (the ghosts') called as phases its watchers draw it by ({@link #act}, {@link #phase}).
+		 */
+		Kind(String id, Form form, String... moves) {
 			this.id = id;
 			this.fadeIn = FADE;
 			this.enter = null;
 			this.loop = null;
 			this.scale = 1.0f;
-			this.moves = new String[0];
+			this.moves = moves;
 			this.form = form;
 		}
 
@@ -249,6 +276,17 @@ public class SpellConstruct extends Entity implements GeoEntity {
 	private static final EntityDataAccessor<Integer> TINT = SynchedEntityData.defineId(SpellConstruct.class, EntityDataSerializers.INT);
 	/** The entity id of the being a tendril holds (0: none). */
 	private static final EntityDataAccessor<Integer> TARGET = SynchedEntityData.defineId(SpellConstruct.class, EntityDataSerializers.INT);
+	/** The being it is held on (SpellAnchor: 0, none), how, and where on it (x to its right, y up, z ahead). */
+	private static final EntityDataAccessor<Integer> ANCHOR = SynchedEntityData.defineId(SpellConstruct.class, EntityDataSerializers.INT);
+	private static final EntityDataAccessor<Byte> ANCHOR_HOW = SynchedEntityData.defineId(SpellConstruct.class, EntityDataSerializers.BYTE);
+	private static final EntityDataAccessor<org.joml.Vector3f> ANCHOR_OFFSET = SynchedEntityData.defineId(SpellConstruct.class, EntityDataSerializers.VECTOR3);
+	/**
+	 * A shape drawn by hand's phase (one of its kind's moves called: {@link #act}; 0, none yet) and the tick it was called at, so its
+	 * watchers draw it from the moment it began; and a number of its kind's own (how far a procession pours out, how high a helix rises).
+	 */
+	private static final EntityDataAccessor<Integer> PHASE = SynchedEntityData.defineId(SpellConstruct.class, EntityDataSerializers.INT);
+	private static final EntityDataAccessor<Integer> PHASE_AT = SynchedEntityData.defineId(SpellConstruct.class, EntityDataSerializers.INT);
+	private static final EntityDataAccessor<Float> VALUE = SynchedEntityData.defineId(SpellConstruct.class, EntityDataSerializers.FLOAT);
 
 	private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 	/** Whether it is fading away (its spell done with it): it goes when its life is out. */
@@ -293,6 +331,53 @@ public class SpellConstruct extends Entity implements GeoEntity {
 	/** A tendril holding {@code held} (its watchers draw it reaching to it, wherever it goes). */
 	public SpellConstruct target(Entity held) { entityData.set(TARGET, held == null ? 0 : held.getId()); return this; }
 
+	/**
+	 * Held on {@code on} ({@link SpellAnchor}: the user's ask, 2026-10-25, a shape worn on its caster lagged a step behind them): drawn where
+	 * {@code on} is drawn each frame, {@code offset} on it, turned {@code how}; its spell's {@link #place} keeps it near for the server's sake.
+	 */
+	public SpellConstruct anchor(Entity on, SpellAnchor how, Vec3 offset) {
+		entityData.set(ANCHOR, on == null ? 0 : on.getId());
+		entityData.set(ANCHOR_HOW, (byte) how.ordinal());
+		entityData.set(ANCHOR_OFFSET, offset.toVector3f());
+		if (on != null) moveTo(how.at(on, offset, 1, getYRot()));
+		return this;
+	}
+
+	/** The being it is held on, or null. */
+	public Entity anchored() {
+		int id = entityData.get(ANCHOR);
+		return id <= 0 || SpellAnchor.byIndex(entityData.get(ANCHOR_HOW)) == SpellAnchor.NONE ? null : level().getEntity(id);
+	}
+
+	public SpellAnchor anchoring() { return SpellAnchor.byIndex(entityData.get(ANCHOR_HOW)); }
+
+	private Vec3 anchorOffset() { return new Vec3(entityData.get(ANCHOR_OFFSET)); }
+
+	/**
+	 * How far from where it would be drawn this frame (its own place, eased between ticks) its watchers draw it: nothing, unless it is held
+	 * on a being ({@link #anchor}), then the way to where that being is drawn this very frame.
+	 */
+	public Vec3 anchorShift(float partial) {
+		Entity on = anchored();
+		if (on == null) return Vec3.ZERO;
+		Vec3 own = new Vec3(net.minecraft.util.Mth.lerp(partial, xo, getX()), net.minecraft.util.Mth.lerp(partial, yo, getY()), net.minecraft.util.Mth.lerp(partial, zo, getZ()));
+		return anchoring().at(on, anchorOffset(), partial, drawnYaw(partial)).subtract(own);
+	}
+
+	/** The yaw it is drawn facing this frame: its own, eased between ticks, or (held on a being) as that being turns. */
+	public float drawnYaw(float partial) {
+		float own = net.minecraft.util.Mth.rotLerp(partial, yRotO, getYRot());
+		Entity on = anchored();
+		return on == null ? own : anchoring().yaw(on, partial, own);
+	}
+
+	/** The pitch it is drawn facing this frame, likewise. */
+	public float drawnPitch(float partial) {
+		float own = net.minecraft.util.Mth.lerp(partial, xRotO, getXRot());
+		Entity on = anchored();
+		return on == null ? own : anchoring().pitch(on, partial, own);
+	}
+
 	public Kind kind() { return Kind.byIndex(entityData.get(KIND)); }
 	public float size() { return entityData.get(SIZE); }
 	public int life() { return entityData.get(LIFE); }
@@ -316,10 +401,39 @@ public class SpellConstruct extends Entity implements GeoEntity {
 		setXRot(pitch);
 	}
 
-	/** Plays one of its kind's moves once ({@link Kind#moves}: a roar, a dive, a strike), on every watcher's screen. */
+	/**
+	 * Plays one of its kind's moves once ({@link Kind#moves}: a roar, a dive, a strike), on every watcher's screen; for a shape drawn by hand,
+	 * begins it as its phase ({@link #phase}).
+	 */
 	public void act(String move) {
+		if (!kind().modelled()) {
+			String[] moves = kind().moves;
+			for (int i = 0; i < moves.length; i++) {
+				if (moves[i].equals(move)) {
+					entityData.set(PHASE, i + 1);
+					entityData.set(PHASE_AT, tickCount);
+				}
+			}
+			return;
+		}
 		triggerAnim("main", move);
 	}
+
+	/** Its phase now: the move last called ({@link #act}), or null before any. */
+	public String phase() {
+		int i = entityData.get(PHASE);
+		String[] moves = kind().moves;
+		return i <= 0 || i > moves.length ? null : moves[i - 1];
+	}
+
+	/** How long its phase has run, in ticks ({@code partial} of this one in): 0 before any. */
+	public float phaseAge(float partial) {
+		return entityData.get(PHASE) <= 0 ? 0 : Math.max(0, tickCount + partial - entityData.get(PHASE_AT));
+	}
+
+	/** Its kind's own number (a procession's reach, a helix's height). */
+	public SpellConstruct value(float value) { entityData.set(VALUE, value); return this; }
+	public float value() { return entityData.get(VALUE); }
 
 	/**
 	 * Lets it go as its spell ends with it: it fades out over what is left of its last {@link #FADE} ticks and is gone (taken away at once,
@@ -339,6 +453,12 @@ public class SpellConstruct extends Entity implements GeoEntity {
 		entityData.define(OWNER, 0);
 		entityData.define(TINT, 0);
 		entityData.define(TARGET, 0);
+		entityData.define(ANCHOR, 0);
+		entityData.define(ANCHOR_HOW, (byte) 0);
+		entityData.define(ANCHOR_OFFSET, new org.joml.Vector3f());
+		entityData.define(PHASE, 0);
+		entityData.define(PHASE_AT, 0);
+		entityData.define(VALUE, 0.0f);
 	}
 
 	/** Where its spell last put it, as a watcher heard it ({@link #lerpTo}), and whether that is still to be taken. */
@@ -370,6 +490,9 @@ public class SpellConstruct extends Entity implements GeoEntity {
 				setPos(lerpX, lerpY, lerpZ);
 				setRot(lerpYRot, lerpXRot);
 			}
+			// Held on a being: kept where it is (it is drawn where that being is drawn each frame: #anchorShift).
+			Entity on = anchored();
+			if (on != null) setPos(anchoring().at(on, anchorOffset(), 1, getYRot()));
 			if (!kind().modelled()) motes();
 			return;
 		}
@@ -386,7 +509,8 @@ public class SpellConstruct extends Entity implements GeoEntity {
 	 * abyss, off its shattering) and wisps of its glow; more the greater it is.
 	 */
 	private void motes() {
-		if (kind().form == Form.TENDRIL || tickCount < 6 || tickCount > life() - FADE) return; // a tendril's light is its own (TendrilRenderer)
+		// A tendril's light is its own (TendrilRenderer), and so are the ghosts' (SpellGhosts).
+		if (kind().form == Form.TENDRIL || kind().form == Form.GHOSTS || kind().form == Form.BLOCKS || tickCount < 6 || tickCount > life() - FADE) return;
 		float length = size() * kind().scale;
 		int rgb = tint() != 0 ? tint() : VOID;
 		double r = (rgb >> 16 & 255) / 255.0, g = (rgb >> 8 & 255) / 255.0, b = (rgb & 255) / 255.0;

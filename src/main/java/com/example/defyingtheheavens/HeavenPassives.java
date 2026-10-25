@@ -98,9 +98,90 @@ public final class HeavenPassives {
 				|| source.is(ModDamageTypes.SOUL_SEIZED) || source.is(ModDamageTypes.SOUL_SCATTER) || source.is(ModDamageTypes.JUDGE_GAZE);
 	}
 
+	// --- The masteries (the user's ask, 2026-10-25) ---
+
+	/**
+	 * The layer of an element's method (understood as far as one's cultivation has come) from which its mastery shows: the first of Core
+	 * Formation. Fire's, Flame-Kin: one's own fire no longer burns one ({@link #ownFireSpares}: the fire one's spells set, the ground they
+	 * scorch, and the burning one takes from them). Water's, Water-Treading: water bears one up as the ground does, to walk on as it is (sneak
+	 * to sink into it), and a fall onto it does no harm (SpellLivingEntityMixin).
+	 */
+	public static final int MASTERY_LAYER = 19;
+
+	/** Whether {@code c} has mastered {@code element}: its deepest method understood to {@link #MASTERY_LAYER} or past. The living's only. */
+	public static boolean masters(PlayerCultivation c, QiElement element) {
+		if (c == null || c.isMortal() || c.netherworld().ghost() || !c.heaven().knowsAny()) return false;
+		int understood = Math.min(HeavenMethods.depth(c.heaven(), element), MethodLayers.deepestAt(PlayerCultivation.rank(c.getRealm(), c.getStage())));
+		return understood >= MASTERY_LAYER;
+	}
+
+	/** The client's word on a mastery: its own player's, as its cultivation was told it (set by the client; nothing elsewhere). */
+	public static java.util.function.BiPredicate<LivingEntity, QiElement> clientView = (e, element) -> false;
+
+	/** Whether {@code e}, a player, has mastered {@code element} (on a client, as it was told: its own player only). */
+	public static boolean masters(LivingEntity e, QiElement element) {
+		if (e.level().isClientSide) return clientView.test(e, element);
+		return e instanceof ServerPlayer p && masters(CultivationManager.get(p), element);
+	}
+
+	/** Land a player's spells set burning: where, how far round, and until when it is still theirs. */
+	private record Blaze(net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> level, net.minecraft.world.phys.Vec3 at, double radius, long until) {}
+
+	/** Each player's own fire, its burning land (merged as it spreads), the newest last. */
+	private static final Map<UUID, java.util.List<Blaze>> OWN_FIRE = new HashMap<>();
+	/** When each player last stood in their own fire (the burning it left on them is theirs too, a while). */
+	private static final Map<UUID, Long> IN_OWN_FIRE = new HashMap<>();
+	/** How long the land a player's spells set burning stays their own fire (it may spread a while), and how long the burning it leaves on them is. */
+	static final int OWN_FIRE_TICKS = 20 * 180, OWN_BURNING_TICKS = 20 * 10;
+
+	/**
+	 * {@code caster}'s spells set the land {@code radius} round {@code at} burning (Devastation: a fire set, a scorched or glassy floor, a burnt
+	 * shaft): it is their own fire a while ({@link #OWN_FIRE_TICKS}). Fires set close together are taken as one blaze, grown to hold them.
+	 */
+	public static void ownFire(LivingEntity caster, net.minecraft.server.level.ServerLevel level, net.minecraft.world.phys.Vec3 at, double radius) {
+		if (!(caster instanceof ServerPlayer)) return;
+		java.util.List<Blaze> mine = OWN_FIRE.computeIfAbsent(caster.getUUID(), k -> new java.util.ArrayList<>());
+		long now = level.getGameTime(), until = now + OWN_FIRE_TICKS;
+		mine.removeIf(b -> b.until() < now);
+		for (int i = 0; i < mine.size(); i++) {
+			Blaze b = mine.get(i);
+			double apart = b.at().distanceTo(at);
+			if (b.level() != level.dimension() || apart > b.radius() + 3) continue;
+			mine.set(i, new Blaze(b.level(), b.at(), Math.min(256, Math.max(b.radius(), apart + radius)), until));
+			return;
+		}
+		if (mine.size() >= 32) mine.remove(0);
+		mine.add(new Blaze(level.dimension(), at, radius, until));
+	}
+
+	/**
+	 * Whether {@code source} is {@code target}'s own fire, that one who has mastered fire takes nothing from (Flame-Kin, {@link #MASTERY_LAYER}):
+	 * standing in fire or on magma within the land their own spells set burning ({@link #ownFire}), or burning from it a while after. Asked as
+	 * the harm comes (HeavenSpells#incoming); the flames on them are put out with it.
+	 */
+	public static boolean ownFireSpares(LivingEntity target, DamageSource source) {
+		if (!(target instanceof ServerPlayer p) || OWN_FIRE.isEmpty()) return false;
+		boolean standing = source.is(net.minecraft.world.damagesource.DamageTypes.IN_FIRE) || source.is(net.minecraft.world.damagesource.DamageTypes.HOT_FLOOR);
+		boolean burning = source.is(net.minecraft.world.damagesource.DamageTypes.ON_FIRE);
+		if (!standing && !burning) return false;
+		java.util.List<Blaze> mine = OWN_FIRE.get(p.getUUID());
+		if (mine == null || !masters(p, QiElement.FIRE)) return false;
+		long now = p.level().getGameTime();
+		for (Blaze b : mine) {
+			if (b.until() >= now && b.level() == p.level().dimension() && b.at().distanceTo(p.position()) <= b.radius() + 1.5) {
+				IN_OWN_FIRE.put(p.getUUID(), now);
+				return true;
+			}
+		}
+		Long last = IN_OWN_FIRE.get(p.getUUID());
+		return burning && last != null && now - last <= OWN_BURNING_TICKS;
+	}
+
 	/** A player left. */
 	public static void forget(UUID id) {
 		EARTH.remove(id);
+		OWN_FIRE.remove(id);
+		IN_OWN_FIRE.remove(id);
 	}
 
 	private static void set(ServerPlayer p, Attribute attribute, UUID id, String name, double amount, AttributeModifier.Operation operation) {

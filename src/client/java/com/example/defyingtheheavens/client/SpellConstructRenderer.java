@@ -74,6 +74,16 @@ public final class SpellConstructRenderer extends GeoEntityRenderer<SpellConstru
 
 	@Override
 	public void render(SpellConstruct construct, float yaw, float partialTick, PoseStack pose, MultiBufferSource buffers, int light) {
+		if (construct.kind().form == SpellConstruct.Form.GHOSTS) return; // the dead, drawn as the mod's ghosts are, on the sense layer (SpellGhosts)
+		if (construct.kind().form == SpellConstruct.Form.BLOCKS) {
+			// Made of the world's own blocks, drawn as the land is (BlockMasses).
+			net.minecraft.world.phys.Vec3 shift = construct.anchorShift(partialTick);
+			pose.pushPose();
+			pose.translate(shift.x, shift.y, shift.z);
+			BlockMasses.render(construct, partialTick, pose, buffers, light);
+			pose.popPose();
+			return;
+		}
 		if (construct.kind().form == SpellConstruct.Form.TENDRIL) {
 			TendrilRenderer.render(construct, partialTick, pose, buffers); // a grasping root, drawn by hand
 			return;
@@ -82,14 +92,22 @@ public final class SpellConstructRenderer extends GeoEntityRenderer<SpellConstru
 			RiftRenderer.render(construct, partialTick, pose, buffers); // a tear in space, drawn by hand
 			return;
 		}
+		// Held on a being (SpellConstruct#anchor): drawn where it is drawn this very frame, never a step behind it.
+		net.minecraft.world.phys.Vec3 shift = construct.anchorShift(partialTick);
+		pose.pushPose();
+		pose.translate(shift.x, shift.y, shift.z);
 		super.render(construct, yaw, partialTick, pose, buffers, LightTexture.FULL_BRIGHT); // qi's own light
+		pose.popPose();
 	}
 
-	/** Turned as its spell faces it (its yaw, then its pitch: nose down for a downward look), not as a living body's. */
+	/**
+	 * Turned as its spell faces it (its yaw, then its pitch: nose down for a downward look), not as a living body's; held on a being, as that
+	 * being turns this frame (SpellConstruct#drawnYaw).
+	 */
 	@Override
 	protected void applyRotations(SpellConstruct construct, PoseStack pose, float ageInTicks, float rotationYaw, float partialTick) {
-		float yaw = Mth.rotLerp(partialTick, construct.yRotO, construct.getYRot());
-		float pitch = Mth.lerp(partialTick, construct.xRotO, construct.getXRot());
+		float yaw = construct.drawnYaw(partialTick);
+		float pitch = construct.drawnPitch(partialTick);
 		pose.mulPose(Axis.YP.rotationDegrees(180.0f - yaw));
 		pose.mulPose(Axis.XP.rotationDegrees(-pitch));
 	}

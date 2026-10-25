@@ -91,7 +91,7 @@ final class RiverSouls {
 			float tumble = u4 < 0.15f ? time * 0.6f * (u5 < 0.5f ? 1 : -1) : 8 * Mth.sin(time * 0.03f + u0 * 10);
 			try {
 				if (u5 < HUMAN_SHARE) drawPerson(pose, cam, at, yaw, tumble, clarity, time + i * 37, i);
-				else drawBeast(mc, level, pose, cam, at, yaw, tumble, clarity, time + i * 37, KINDS[(int) (u4 * 997) % KINDS.length]);
+				else beast(pose, cam, at, yaw, tumble, clarity, time + i * 37, KINDS[(int) (u4 * 997) % KINDS.length], 1);
 			} catch (Exception e) {
 				DefyingTheHeavens.LOGGER.debug("A river soul couldn't be drawn", e);
 			}
@@ -99,10 +99,19 @@ final class RiverSouls {
 		RenderSystem.disableCull();
 	}
 
+	/**
+	 * One of the dead in a beast's (or a villager's, a monster's) own shape and the dead's cyan light, {@code scale} times its size, wading on
+	 * as though in a current (and drawn so by the spells that call up the dead too: SpellGhosts). The soul shader must be there.
+	 */
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	private static void drawBeast(Minecraft mc, ClientLevel level, PoseStack pose, Vec3 cam, Vec3 at, float yaw, float tumble, float clarity,
-								  float age, EntityType<?> kind) {
-		if (BROKEN.contains(kind)) return;
+	static void beast(PoseStack pose, Vec3 cam, Vec3 at, float yaw, float tumble, float clarity, float age, EntityType<?> kind, float scale) {
+		Minecraft mc = Minecraft.getInstance();
+		ClientLevel level = mc.level;
+		if (level == null || SoulRenderer.shader() == null || BROKEN.contains(kind)) return;
+		if (level != madeFor) {
+			BODIES.clear();
+			madeFor = level;
+		}
 		LivingEntity body = BODIES.computeIfAbsent(kind, type -> type.create(level) instanceof LivingEntity living ? living : null);
 		if (body == null) {
 			BROKEN.add(kind);
@@ -127,7 +136,7 @@ final class RiverSouls {
 			DefyingTheHeavens.LOGGER.debug("No river soul for {}", kind, e);
 			return;
 		}
-		draw(pose, cam, at, yaw, tumble, clarity, body.getBbHeight(), texture, model);
+		draw(pose, cam, at, yaw, tumble, clarity, body.getBbHeight(), texture, model, scale);
 	}
 
 	private static void drawPerson(PoseStack pose, Vec3 cam, Vec3 at, float yaw, float tumble, float clarity, float age, int seed) {
@@ -144,7 +153,7 @@ final class RiverSouls {
 		model.body.xRot = 0;
 		model.body.yRot = 0;
 		SoulRenderer.ghostPose(model, age);
-		draw(pose, cam, at, yaw, tumble, clarity, 1.8f, DefaultPlayerSkin.getDefaultSkin(id), model);
+		draw(pose, cam, at, yaw, tumble, clarity, 1.8f, DefaultPlayerSkin.getDefaultSkin(id), model, 1);
 	}
 
 	private static PlayerModel<Player> personModel(boolean slimModel) {
@@ -159,9 +168,10 @@ final class RiverSouls {
 
 	/** The body, then its glow added on a little larger, both in the dead's cyan (vertex green 0). */
 	private static void draw(PoseStack pose, Vec3 cam, Vec3 at, float yaw, float tumble, float clarity, float height,
-							 ResourceLocation texture, EntityModel<?> model) {
+							 ResourceLocation texture, EntityModel<?> model, float scale) {
 		pose.pushPose();
 		pose.translate(at.x - cam.x, at.y - cam.y - height / 2, at.z - cam.z);
+		if (scale != 1) pose.scale(scale, scale, scale);
 		pose.mulPose(Axis.YP.rotationDegrees(180.0f - yaw));
 		pose.translate(0, height / 2, 0);
 		pose.mulPose(Axis.XP.rotationDegrees(tumble));

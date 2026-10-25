@@ -57,16 +57,22 @@ public class SpellFieldRenderer extends EntityRenderer<SpellField> {
 	@Override
 	public void render(SpellField field, float entityYaw, float partial, PoseStack pose, MultiBufferSource parent, int light) {
 		MultiBufferSource buffers = SpellBuffers.begin(parent);
+		// Held on a being (SpellField#anchor): drawn where that being is this very frame, facing as it does, never a step behind it.
+		Vec3 shift = field.drawing(partial);
+		pose.pushPose();
+		pose.translate(shift.x, shift.y, shift.z);
 		try {
 			draw(field, partial, pose, buffers, light);
 		} finally {
+			pose.popPose();
+			field.drawing(-1);
 			SpellBuffers.end();
 		}
 	}
 
 	private void draw(SpellField field, float partial, PoseStack pose, MultiBufferSource buffers, int light) {
 		float age = field.tickCount + partial;
-		Vec3 at = field.getPosition(partial);
+		Vec3 at = field.getPosition(partial).add(field.drawing(partial)); // where it is drawn (held on a being: where that being is)
 		Vec3 cam = entityRenderDispatcher.camera.getPosition().subtract(at);
 		Quaternionf facing = entityRenderDispatcher.cameraOrientation();
 		float life = Math.max(1, field.life());

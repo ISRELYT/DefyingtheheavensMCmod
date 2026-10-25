@@ -56,10 +56,18 @@ final class TendrilRenderer {
 	private static final Style CHAIN = new Style(new float[][] {SpellRender.rgb(0x111217), SpellRender.rgb(0x2A2D36), SpellRender.rgb(0x505664), SpellRender.rgb(0x9098A8)},
 			SpellRender.rgb(0x56EEE2), SpellRender.rgb(0xC4FFF6), SpellRender.rgb(0x18A6A8), false, 0, 0, true, 0.32f);
 
+	/**
+	 * A living root of the woods' (LIVING_ROOT, the user's ask, 2026-10-25: the wood spells' trees drained their foes with nothing to show why):
+	 * brown bark with a green sheen, thorned, reaching up out of the ground in a low arc, the life it drinks running green down it to its root.
+	 */
+	private static final Style LIVING = new Style(new float[][] {SpellRender.rgb(0x24160B), SpellRender.rgb(0x553820), SpellRender.rgb(0x84653B), SpellRender.rgb(0xA6C46A)},
+			SpellRender.rgb(0x7CFF6E), SpellRender.rgb(0xE6FFD8), SpellRender.rgb(0x46E07A), true, 0.14f, 0.75f, false, 0.22f);
+
 	private static Style style(SpellConstruct tendril) {
 		return switch (tendril.kind()) {
 			case GOLDEN_ROPE -> ROPE;
 			case HELL_CHAIN -> CHAIN;
+			case LIVING_ROOT -> LIVING;
 			default -> ROOT;
 		};
 	}

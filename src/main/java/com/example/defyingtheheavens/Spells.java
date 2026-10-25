@@ -82,7 +82,7 @@ public final class Spells {
 	 * fire kindled in the hands, the bolt's flight, the wraith a dash leaves, the wail's face, the tide, the ward's bones kept on its caster, the
 	 * core's burst, the decree, the ways through the dark, Yama's tablet, the wheel, the six pillars; Soul Rend's beam (a SpellField).
 	 */
-	static final int KINDLE_SHOWN = 18, BOLT_FLIGHT = 4, WRAITH_SHOWN = 14, WAIL_SHOWN = 28, TIDE_SHOWN = 26, WARD_SHOWN = 50, BURST_SHOWN = 22,
+	static final int KINDLE_SHOWN = 18, BOLT_FLIGHT = 4, WRAITH_SHOWN = 24, WAIL_SHOWN = 34, TIDE_SHOWN = 26, WARD_SHOWN = 50, BURST_SHOWN = 22,
 			DECREE_SHOWN = 44, POOL_SHOWN = 20, VERDICT_SHOWN = 36, SAMSARA_SHOWN = 50, SIX_SHOWN = 36, REND_SHOWN = 12;
 
 	/** Ghost Fire on the hands: blows left, and until when. */
@@ -233,12 +233,15 @@ public final class Spells {
 	private static void ghostFire(LivingEntity p) {
 		FIRE.put(p.getUUID(), new long[]{GHOST_FIRE_BLOWS, p.level().getGameTime() + GHOST_FIRE_ARMED_TICKS});
 		ServerLevel level = HeavenSpells.level(p);
-		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 0.8f, 1.6f);
-		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.0f, 1.2f);
-		// About the hands, a little ahead and below the eyes: the cold fire kindled in them (SpellConstruct GHOST_KINDLE), flaring and dying down.
-		Vec3 hands = p.position().add(p.getViewVector(1.0f).multiply(0.7, 0, 0.7)).add(0, 0.9, 0);
-		level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, hands.x, hands.y, hands.z, 8, 0.3, 0.2, 0.3, 0.02);
-		shown(p, SpellConstruct.create(level, SpellConstruct.Kind.GHOST_KINDLE, hands, p.getYRot(), 0, KINDLE_SHOWN, p).spawn());
+		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.0f, 0.8f);
+		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 0.5f, 0.5f);
+		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.SOUL_SAND_BREAK, SoundSource.PLAYERS, 0.8f, 0.6f);
+		// The cold fire kindled in the hands themselves (SpellAura GHOST_FIRE: wreathing both hands as long as its blows last, drawn on the arms by
+		// every watcher and in first person: SpellAuraLayer; the user's ask, 2026-10-25, it was two balls of it hanging before the caster).
+		SpellAuras.put(p, SpellAura.GHOST_FIRE, GHOST_FIRE_ARMED_TICKS);
+		Vec3 hands = p.position().add(p.getViewVector(1.0f).multiply(0.5, 0, 0.5)).add(0, p.getBbHeight() * 0.45, 0);
+		level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, hands.x, hands.y, hands.z, 10, 0.35, 0.15, 0.35, 0.015);
+		level.sendParticles(ParticleTypes.SOUL, hands.x, hands.y, hands.z, 3, 0.3, 0.1, 0.3, 0.02);
 		HeavenSpells.tell(p, Component.translatable(ModLang.MSG_GHOST_FIRE_ARMED, GHOST_FIRE_BLOWS));
 	}
 
@@ -260,12 +263,14 @@ public final class Spells {
 		if (fire == null) return;
 		if (attacker.level().getGameTime() > fire[1] || fire[0] <= 0) {
 			FIRE.remove(attacker.getUUID());
+			SpellAuras.remove(attacker, SpellAura.GHOST_FIRE);
 			return;
 		}
 		NetherworldState s = CultivationManager.get(attacker).netherworld();
 		boolean free = attacker.getAbilities().instabuild;
 		if (!free && s.ghostQi() < GHOST_FIRE_PER_HIT) {
 			FIRE.remove(attacker.getUUID());
+			SpellAuras.remove(attacker, SpellAura.GHOST_FIRE);
 			attacker.displayClientMessage(Component.translatable(ModLang.MSG_SPELL_NO_QI, Spell.GHOST_FIRE.getDisplayName()), true);
 			return;
 		}
@@ -280,7 +285,10 @@ public final class Spells {
 				break;
 			}
 		}
-		if (--fire[0] <= 0) FIRE.remove(attacker.getUUID());
+		if (--fire[0] <= 0) {
+			FIRE.remove(attacker.getUUID());
+			SpellAuras.remove(attacker, SpellAura.GHOST_FIRE); // its last blow struck: the fire on the hands gutters out
+		}
 		NetherworldManager.refresh(attacker);
 	}
 
@@ -332,12 +340,14 @@ public final class Spells {
 		p.fallDistance = 0;
 		SAFE_FALL.put(p.getUUID(), p.level().getGameTime() + DASH_SAFE_TICKS);
 		ServerLevel level = HeavenSpells.level(p);
-		level.sendParticles(ParticleTypes.SOUL, p.getX(), p.getY() + 1.0, p.getZ(), 6, 0.3, 0.6, 0.3, 0.02);
-		level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, p.getX(), p.getY() + 0.5, p.getZ(), 10, 0.3, 0.3, 0.3, 0.05);
-		// A wraith of mist left where it stood (SpellConstruct SOUL_WRAITH), lunging after it and thinning away.
+		level.sendParticles(ParticleTypes.SOUL, p.getX(), p.getY() + 1.0, p.getZ(), 4, 0.3, 0.6, 0.3, 0.02);
+		level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, p.getX(), p.getY() + 0.5, p.getZ(), 6, 0.3, 0.3, 0.3, 0.04);
+		// The caster's own ghost left along its way (SpellConstruct SOUL_AFTERIMAGE: their own skin in the dead's light, one where they were each
+		// tick of the dash, lunging after it and thinning away: SpellGhosts; the user's ask, 2026-10-25, it was a wraith of a model of its own).
 		float yaw = along.horizontalDistanceSqr() < 1.0e-4 ? p.getYRot() : HeavenSpells.facing(along)[0];
-		shown(p, SpellConstruct.create(level, SpellConstruct.Kind.SOUL_WRAITH, p.position(), yaw, 0, WRAITH_SHOWN, p).spawn());
-		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.PHANTOM_FLAP, SoundSource.PLAYERS, 1.0f, 1.4f);
+		shown(p, SpellConstruct.create(level, SpellConstruct.Kind.SOUL_AFTERIMAGE, p.position(), yaw, 0, WRAITH_SHOWN, p).spawn());
+		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.PHANTOM_SWOOP, SoundSource.PLAYERS, 0.9f, 1.3f);
+		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.0f, 1.5f);
 	}
 
 	/** Whether a fall should do {@code p} no harm: just after a Soul Dash, or on Yin Wind Steps. */
@@ -346,21 +356,38 @@ public final class Spells {
 		return until != null && p.level().getGameTime() <= until || p instanceof ServerPlayer player && CultivationManager.get(player).isAbilityActive(Ability.YIN_WIND_STEPS);
 	}
 
+	/** Ticks from a Ghostly Wail's casting to its cry breaking out (its ghost risen over its caster: SpellGhosts' WAIL_AT). */
+	static final int WAIL_RISES = 8;
+
+	/**
+	 * Ghostly Wail: the caster's own ghost rises out of them, swelling giant at their back (SpellConstruct WAIL_SPECTRE, held on them, drawn as
+	 * the dead are: SpellGhosts; the user's ask, 2026-10-25, it was a face of a model of its own), and as it throws its head forward its cry
+	 * breaks out ({@link #WAIL_RISES} after): everything within {@link #WAIL_RADIUS} is driven back, slowed and weakened, the dead struck.
+	 */
 	private static void wail(LivingEntity p, NetherworldState s) {
 		ServerLevel level = HeavenSpells.level(p);
-		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.GHAST_SCREAM, SoundSource.PLAYERS, 2.0f, 0.45f);
-		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.WARDEN_SONIC_CHARGE, SoundSource.PLAYERS, 1.0f, 1.3f);
-		level.sendParticles(ParticleTypes.SONIC_BOOM, p.getX(), p.getY() + 1.2, p.getZ(), 1, 0, 0, 0, 0);
-		// A great face of the dead looming over it, wailing, the cries flying out to the wail's reach (SpellConstruct GHOST_WAIL).
-		shown(p, SpellConstruct.create(level, SpellConstruct.Kind.GHOST_WAIL, p.position(), p.getYRot(), 0, WAIL_SHOWN, p).spawn());
-		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(WAIL_RADIUS),
-				e -> !spared(p, e) && e.distanceToSqr(p) <= WAIL_RADIUS * WAIL_RADIUS)) {
-			target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, WAIL_TICKS, 1));
-			target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, WAIL_TICKS, 0));
-			Vec3 away = target.position().subtract(p.position()).multiply(1, 0, 1);
-			if (away.lengthSqr() > 1.0e-4) target.knockback(1.0, -away.x, -away.z);
-			if (GhostSystem.isDead(target)) target.hurt(ModDamageTypes.ghostly(level, p), WAIL_DEAD_DAMAGE); // ghosts and the dead's kind
-		}
+		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.5f, 0.5f);
+		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.WARDEN_SONIC_CHARGE, SoundSource.PLAYERS, 0.8f, 1.6f);
+		SpellConstruct spectre = SpellConstruct.create(level, SpellConstruct.Kind.WAIL_SPECTRE, p.position(), p.yBodyRot, 0, WAIL_SHOWN, p)
+				.anchor(p, SpellAnchor.BODY, Vec3.ZERO).spawn();
+		shown(p, spectre);
+		HeavenSpells.linger(new FireSpells.Delayed(p, WAIL_RISES, () -> {
+			if (!p.isAlive() || p.level() != level) return;
+			spectre.act("wail");
+			level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.SCULK_SHRIEKER_SHRIEK, SoundSource.PLAYERS, 2.0f, 0.75f);
+			level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.GHAST_SCREAM, SoundSource.PLAYERS, 2.0f, 0.4f);
+			level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.VEX_CHARGE, SoundSource.PLAYERS, 1.5f, 0.6f);
+			level.sendParticles(ParticleTypes.SONIC_BOOM, p.getX(), p.getY() + 1.6, p.getZ(), 1, 0, 0, 0, 0);
+			for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(WAIL_RADIUS),
+					e -> !spared(p, e) && e.distanceToSqr(p) <= WAIL_RADIUS * WAIL_RADIUS)) {
+				target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, WAIL_TICKS, 1));
+				target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, WAIL_TICKS, 0));
+				Vec3 away = target.position().subtract(p.position()).multiply(1, 0, 1);
+				if (away.lengthSqr() > 1.0e-4) target.knockback(1.2, -away.x, -away.z);
+				level.sendParticles(ParticleTypes.SCULK_SOUL, target.getX(), target.getY() + target.getBbHeight() * 0.6, target.getZ(), 4, 0.2, 0.3, 0.2, 0.03);
+				if (GhostSystem.isDead(target)) target.hurt(ModDamageTypes.ghostly(level, p), WAIL_DEAD_DAMAGE); // ghosts and the dead's kind
+			}
+		}));
 	}
 
 	// --- The deeper foundations' spells ---
@@ -558,25 +585,86 @@ public final class Spells {
 		level.playSound(null, target.getX(), target.getY(), target.getZ(), SoundEvents.ANVIL_LAND, SoundSource.PLAYERS, 1.0f, 0.5f);
 	}
 
-	/** Chains of Hell: every foe near is dragged in on chains and held fast. */
+	/** Chains of Hell: how long its chains take to lash out to what they bind, how long they haul it in, and how thick their links are. */
+	static final int CHAINS_LASH = 7, CHAINS_HAUL = 16;
+	static final float CHAINS_GIRTH = 2.2f;
+
 	private static void chains(LivingEntity p) {
-		ServerLevel level = HeavenSpells.level(p);
-		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.CHAIN_BREAK, SoundSource.PLAYERS, 1.5f, 0.5f);
-		// A way down to hell torn open at its feet (SpellConstruct HELL_GATE), and out of it a chain lashing to each foe and winding round it
-		// (HELL_CHAIN, drawn by hand: TendrilRenderer), however it is dragged, until it is let go.
-		SpellConstruct gate = SpellConstruct.create(level, SpellConstruct.Kind.HELL_GATE, p.position(), 0, 0, CHAINS_TICKS + 2 * SpellConstruct.FADE, p).spawn();
-		HeavenSpells.linger(new FireSpells.Delayed(p, CHAINS_TICKS + SpellConstruct.FADE, gate::dissolve));
-		for (LivingEntity target : around(p, CHAINS_RADIUS, e -> foe(p, e))) {
-			Vec3 in = p.position().subtract(target.position());
-			double distance = in.length();
-			if (distance > 2) target.setDeltaMovement(in.normalize().scale(Math.min(1.6, distance * 0.2)).add(0, 0.25, 0));
-			target.hurtMarked = true;
-			target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, CHAINS_TICKS, 6));
-			target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, CHAINS_TICKS, 1));
-			SpellConstruct chain = SpellConstruct.create(level, SpellConstruct.Kind.HELL_CHAIN, p.position().add(0, 0.1, 0), 0, 0, CHAINS_TICKS + SpellConstruct.FADE, p)
-					.target(target).spawn();
-			HeavenSpells.linger(new FireSpells.Delayed(p, CHAINS_TICKS, chain::dissolve));
-			level.playSound(null, target.getX(), target.getY(), target.getZ(), SoundEvents.CHAIN_PLACE, SoundSource.PLAYERS, 1.0f, 0.6f);
+		HeavenSpells.endLingering(p.getUUID(), Chains.class);
+		HeavenSpells.linger(new Chains(p));
+	}
+
+	/**
+	 * Chains of Hell (the user's report, 2026-10-25: "using chains of hell literally does nothing, no chains": it took only what had its caster for
+	 * its target, and its links were drawn a hair thick): a way down to hell tears open at its caster's feet (SpellConstruct HELL_GATE) and out of
+	 * it a chain of black iron, ghost fire running along it, lashes to each foe within {@link #CHAINS_RADIUS} (HeavenSpells#mark: a monster, a
+	 * person not spared; with none, the nearest living thing it may take) and winds round it (HELL_CHAIN, drawn by hand: TendrilRenderer). Once
+	 * bound ({@link #CHAINS_LASH}) it is hauled in to the way to hell over {@link #CHAINS_HAUL} and held fast there, slowed to a crawl and
+	 * weakened, for {@link #CHAINS_TICKS}; then the chains let go and draw back down.
+	 */
+	static final class Chains extends HeavenSpells.Timed {
+		private final Vec3 root;
+		private final SpellConstruct gate;
+		private final Map<LivingEntity, SpellConstruct> bound = new java.util.LinkedHashMap<>();
+
+		Chains(LivingEntity caster) {
+			super(caster, CHAINS_LASH + CHAINS_TICKS + SpellConstruct.FADE);
+			this.root = caster.position();
+			int life = (int) (end - start) + SpellConstruct.FADE;
+			this.gate = SpellConstruct.create(level, SpellConstruct.Kind.HELL_GATE, root, 0, 0, life, caster).spawn();
+			java.util.List<LivingEntity> taken = around(caster, CHAINS_RADIUS, e -> HeavenSpells.mark(caster, e) || foe(caster, e));
+			if (taken.isEmpty()) {
+				// None to take for a foe: the nearest living thing its spells don't spare, so the chains never lash at nothing.
+				LivingEntity nearest = null;
+				for (LivingEntity e : around(caster, CHAINS_RADIUS, e -> !spared(caster, e))) if (nearest == null || e.distanceToSqr(caster) < nearest.distanceToSqr(caster)) nearest = e;
+				if (nearest != null) taken = java.util.List.of(nearest);
+			}
+			for (LivingEntity target : taken) {
+				bound.put(target, SpellConstruct.create(level, SpellConstruct.Kind.HELL_CHAIN, root.add(0, 0.1, 0), 0, 0, life, caster).size(CHAINS_GIRTH).target(target).spawn());
+			}
+			sound(root, SoundEvents.CHAIN_BREAK, 1.6f, 0.5f);
+			sound(root, SoundEvents.RESPAWN_ANCHOR_DEPLETE.value(), 1.4f, 0.6f);
+			sound(root, SoundEvents.SOUL_ESCAPE, 1.6f, 0.4f);
+			level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, root.x, root.y + 0.2, root.z, 24, 1.2, 0.1, 1.2, 0.04);
+		}
+
+		@Override
+		protected boolean run(long age, long now) {
+			if (age == CHAINS_LASH) {
+				for (LivingEntity target : bound.keySet()) {
+					if (!HeavenSpells.present(target, level)) continue;
+					target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, CHAINS_TICKS, 6));
+					target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, CHAINS_TICKS, 1));
+					sound(target, SoundEvents.CHAIN_PLACE, 1.4f, 0.55f);
+					level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(), 10, 0.3, 0.4, 0.3, 0.03);
+				}
+				sound(root, SoundEvents.IRON_GOLEM_DAMAGE, 1.2f, 0.5f);
+			}
+			if (age < CHAINS_LASH) return true;
+			// Hauled in to the way to hell, then held fast there (a great beast only held where it stands).
+			for (LivingEntity target : bound.keySet()) {
+				if (!HeavenSpells.present(target, level)) continue;
+				Vec3 in = root.subtract(target.position());
+				double distance = in.multiply(1, 0, 1).length();
+				if (HeavenSpells.greatBeast(caster, target)) HeavenSpells.still(target);
+				else if (age < CHAINS_LASH + CHAINS_HAUL && distance > 2.2) {
+					HeavenSpells.move(target, in.normalize().scale(Math.min(1.4, 0.35 + distance * 0.12)).add(0, distance > 4 ? 0.12 : 0, 0));
+				} else if (distance > 3) HeavenSpells.move(target, in.normalize().scale(0.4));
+				else HeavenSpells.still(target);
+				target.resetFallDistance();
+			}
+			if ((age - CHAINS_LASH) % 14 == 7 && !bound.isEmpty()) sound(root, SoundEvents.CHAIN_STEP, 1.5f, 0.5f + level.random.nextFloat() * 0.2f);
+			if (age % 3 == 0) level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, root.x, root.y + 0.15, root.z, 3, 0.9, 0.05, 0.9, 0.02);
+			return true;
+		}
+
+		@Override
+		public void end() {
+			for (SpellConstruct chain : bound.values()) chain.dissolve();
+			for (LivingEntity target : bound.keySet()) if (HeavenSpells.present(target, level)) HeavenSpells.safeFall(target, 40);
+			bound.clear();
+			gate.dissolve();
+			HeavenSpells.sound(level, root, SoundEvents.CHAIN_BREAK, 1.2f, 0.7f);
 		}
 	}
 
@@ -674,6 +762,7 @@ public final class Spells {
 			this.ticks = ticks;
 			this.move = move;
 			this.yaw = caster.yBodyRot;
+			shape.anchor(caster, SpellAnchor.BODY, Vec3.ZERO); // drawn on its caster each frame, never a step behind them
 		}
 
 		@Override

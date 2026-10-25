@@ -8,6 +8,7 @@
     "EndPortalBlockMixin",
     "EnderEyeItemMixin",
     "ExplosionMixin",
+    "FireBlockMixin",
     "FoodDataMixin",
     "HopperBlockEntityMixin",
     "InventoryMenuMixin",

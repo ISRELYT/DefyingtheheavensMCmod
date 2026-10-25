@@ -133,6 +133,8 @@ public final class Devastation {
 	 */
 	public static void crater(LivingEntity p, ServerLevel level, Vec3 at, double radius, double depth, Floor floor, boolean utter) {
 		if (!HeavenSpells.carvesLand(p)) return; // a cultivator's spells leave the land as it was (HeavenSpells#carvesLand)
+		// A burnt floor is its caster's own fire (HeavenPassives#ownFire: one who has mastered fire walks it unburnt).
+		if (floor == Floor.SCORCHED || floor == Floor.GLASSY) HeavenPassives.ownFire(p, level, at, radius + 2);
 		BlockPos centre = BlockPos.containing(at);
 		int r = (int) Math.ceil(radius), d = (int) Math.ceil(depth), up = (int) Math.ceil(radius * 0.6);
 		LongArrayList cells = new LongArrayList();
@@ -325,6 +327,7 @@ public final class Devastation {
 	 * ({@link #scorchShaft}): magma, netherrack and blackstone, and fire on every ledge.
 	 */
 	public static void shaft(LivingEntity p, ServerLevel level, Vec3 base, double radius, int mostUp) {
+		if (HeavenSpells.carvesLand(p)) HeavenPassives.ownFire(p, level, base, radius + 3); // its burnt walls its caster's own fire
 		if (!HeavenSpells.carvesLand(p)) return; // a cultivator's spells leave the land as it was (HeavenSpells#carvesLand)
 		BlockPos centre = BlockPos.containing(base);
 		int r = (int) Math.ceil(radius * 1.35);
@@ -493,14 +496,18 @@ public final class Devastation {
 	 * netherrack, and fires on {@code share} of it (on whatever stands highest there: a tree's crown catches too).
 	 */
 	public static void burn(LivingEntity p, ServerLevel level, Vec3 at, double radius, double share) {
-		if (!HeavenSpells.carvesLand(p)) return; // a cultivator's spells leave the land as it was (HeavenSpells#carvesLand)
+		// A cultivator's spells leave the land as it was (HeavenSpells#carvesLand); a player's with the spells' griefing off set only tame
+		// fires (#ignite), the ground left unscorched.
+		boolean scorches = HeavenSpells.carvesLand(p);
+		if (!scorches && !(p instanceof ServerPlayer)) return;
+		HeavenPassives.ownFire(p, level, at, radius + 2); // its caster's own fire (one who has mastered fire walks it unburnt)
 		BlockPos centre = BlockPos.containing(at);
 		int r = (int) Math.ceil(radius);
 		for (int dx = -r; dx <= r; dx++) {
 			for (int dz = -r; dz <= r; dz++) {
 				if (dx * dx + dz * dz > radius * radius) continue;
 				int x = centre.getX() + dx, z = centre.getZ() + dz;
-				BlockPos ground = groundTop(level, x, z);
+				BlockPos ground = scorches ? groundTop(level, x, z) : null;
 				if (ground != null && HeavenSpells.carvable(level, ground, p)) {
 					BlockState was = level.getBlockState(ground);
 					double roll = level.random.nextDouble();
@@ -969,23 +976,47 @@ public final class Devastation {
 		}
 	}
 
-	/** A fire set at {@code pos} if one can burn there and {@code p} may change it. */
+	/** How long a tame fire burns (a spell's, its griefing off: {@link #ignite}), in ticks: this, and up to as long again. */
+	public static final int TAME_FIRE = 70;
+
+	/**
+	 * A fire set at {@code pos} if one can burn there and {@code p} may change it. With the spells' griefing off (HeavenSpells#griefs, the
+	 * user's ask, 2026-10-25: "fire will not spread and just put itself out after a bit"), a tame one: set down for a moment
+	 * (HeavenSpells#placeTemporary, {@link #TAME_FIRE} or so), catching nothing round it and burning nothing away (FireBlockMixin), then out.
+	 */
 	static void ignite(LivingEntity p, ServerLevel level, BlockPos pos) {
 		if (!level.isLoaded(pos) || !level.getBlockState(pos).isAir() || !BaseFireBlock.canBePlacedAt(level, pos, Direction.UP)) return;
+		if (p instanceof ServerPlayer && !HeavenSpells.griefs(level)) {
+			if (allowed(p, level, pos, false) && HeavenSpells.placeTemporary(level, pos, BaseFireBlock.getState(level, pos), TAME_FIRE + level.random.nextInt(TAME_FIRE))) {
+				HeavenPassives.ownFire(p, level, Vec3.atCenterOf(pos), 2.5);
+			}
+			return;
+		}
 		if (!mayChange(p, level, pos)) return;
 		level.setBlock(pos, BaseFireBlock.getState(level, pos), 11);
+		HeavenPassives.ownFire(p, level, Vec3.atCenterOf(pos), 2.5); // its caster's own fire (one who has mastered fire walks it unburnt)
 	}
 
 	/**
-	 * Whether a spell of {@code p}'s may set something at {@code pos}: not under a barrier's shelter, ground they may change, nothing
-	 * kept safe (HeavenSpells#guarded). On a sect's grounds not {@code p}'s own, that is trespass (SectManager#spoiled).
+	 * Whether a spell of {@code p}'s may set something at {@code pos} for good: not under a barrier's shelter, ground they may change, nothing
+	 * kept safe (HeavenSpells#guarded), and the spells' griefing on (HeavenSpells#griefs). On a sect's grounds not {@code p}'s own, that is
+	 * trespass (SectManager#spoiled).
 	 */
 	static boolean mayChange(LivingEntity p, ServerLevel level, BlockPos pos) {
+		if (p instanceof ServerPlayer && !HeavenSpells.griefs(level)) return false;
+		return allowed(p, level, pos, true);
+	}
+
+	/**
+	 * {@link #mayChange}'s rule, the griefing aside: a tame fire ({@link #ignite}) or water that drains away again goes only where a lasting
+	 * change might, but trespasses on nothing ({@code taking} false).
+	 */
+	static boolean allowed(LivingEntity p, ServerLevel level, BlockPos pos, boolean taking) {
 		if (Formations.sheltersFrom(level, pos, p) || HeavenSpells.guarded(level, pos, p)) return false;
 		if (p == null) return true;
 		if (!(p instanceof ServerPlayer player)) return false; // a cultivator's spells set nothing in the land (HeavenSpells#carvesLand)
 		if (Formations.protectsGroundQuietly(player, pos) || !player.mayBuild() || !level.mayInteract(player, pos)) return false;
-		SectManager.spoiled(level, player, pos);
+		if (taking) SectManager.spoiled(level, player, pos);
 		return true;
 	}
 

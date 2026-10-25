@@ -502,8 +502,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case GHOST_FIRE -> "Wreathe your hands in cold fire: your next 3 blows within 20 seconds set what they strike burning (3 ghost qi each). "
 						+ "It burns the dead three times as hard.";
 				case GHOST_FIRE_BOLT -> "Throw a bolt of ghost fire up to 24 blocks: it strikes the first being in its path and sets it burning.";
-				case SOUL_DASH -> "Rush forward on the yin wind, about eight blocks. Falls do you no harm for a moment after.";
-				case GHOSTLY_WAIL -> "A cry of the dead: everything within 8 blocks is driven back, slowed and weakened, and the dead are torn at.";
+				case SOUL_DASH -> "Rush forward on the yin wind, about eight blocks, your own ghost left along the way. Falls do you no harm for a moment after.";
+				case GHOSTLY_WAIL -> "Your own ghost rises giant at your back and wails: everything within 8 blocks is driven back, slowed and weakened, and the dead are torn at.";
 				case YELLOW_SPRINGS_TIDE -> "A surge of the Yellow Springs' water rushes 7 blocks ahead: all it reaches is driven back and slowed, "
 						+ "and the dead take 3 hearts.";
 				case MARROW_WARD -> "Your bones hold like iron for 10 seconds: Resistance II and 4 hearts of absorption.";
@@ -515,7 +515,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 						+ "moment after.";
 				case YAMA_VERDICT -> "Judge the being you look at, up to 32 blocks: 10 hearts of ghostly harm, twice that if it is below half "
 						+ "its health.";
-				case HELL_CHAINS -> "Chains drag every foe within 12 blocks to you and hold them fast for 3 seconds.";
+				case HELL_CHAINS -> "A way to hell tears open at your feet and chains of black iron lash out of it to every foe within 12 blocks (with none, the nearest living thing your spells may take), haul them to you and hold them fast for 3 seconds.";
 				case SAMSARA_WHEEL -> "The six paths turn: your health is made whole, your harmful effects are gone, and half your yin "
 						+ "corruption with them.";
 				case SIX_PATHS_ANNIHILATION -> "Six pillars of cold fire rise round you: everything within 12 blocks takes 20 hearts of ghostly "

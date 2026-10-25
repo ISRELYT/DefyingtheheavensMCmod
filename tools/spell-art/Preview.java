@@ -26,6 +26,9 @@ import java.util.TreeMap;
  * [at=<name>:<t>] [focus=<bone>,...] [scale=4] [w=480] [h=360] [cols=2] [tag=<name>]} writes {@code <out dir>/<id>[_<tag>].png}: the views
  * asked for (posed at {@code at}, else at rest), then the animation's frames (seen from {@code animview}); {@code focus} fits each view to
  * those bones (a name ending in * : and all that hangs from it). Views: front, face, side, left, frontl, back, top, high, below, low.
+ * <p>
+ * {@code gif=<name>:<seconds>:<fps>} writes {@code <out dir>/<id>_<name>.gif} instead: that animation played from its start for that long,
+ * looping, seen from {@code animview}, every frame fitted alike (to show a move or a loop as it plays in game).
  */
 public class Preview {
 	// --- A little JSON ---
@@ -558,11 +561,71 @@ public class Preview {
 		return out;
 	}
 
+	/** {@code name} played as a looping GIF (see the class's note), its frames {@code 1/fps} apart. */
+	static void gif(Path assets, Path out, String id, List<GBone> tops, Map<String, Anim> anims, String name, double seconds, double fps, String animView,
+			double renderScale, int w, int h) throws Exception {
+		Anim a = anims.get(name);
+		if (a == null) throw new IllegalArgumentException(id + " has no animation " + name + " (has " + anims.keySet() + ")");
+		List<Frame> frames = new ArrayList<>();
+		int count = Math.max(1, (int) Math.round(seconds * fps));
+		for (int k = 0; k < count; k++) {
+			double t = k / fps;
+			frames.add(new Frame(view(animView), posed(tops, a, t), id + "  " + name + " @ " + String.format(Locale.ROOT, "%.2f", t) + " s", true));
+		}
+		double groundY = 1e9;
+		for (WQuad q : posed(tops, null, 0)) for (double[] p : q.p) groundY = Math.min(groundY, p[1]);
+		double cell = 4 / renderScale;
+		double[] fit = {1e9, 1e9, -1e9, -1e9};
+		for (Frame f : frames) bounds(f.view, f.quads, fit);
+		Files.createDirectories(out);
+		Path file = out.resolve(id + "_" + name + ".gif");
+		javax.imageio.ImageWriter writer = ImageIO.getImageWritersByFormatName("gif").next();
+		try (javax.imageio.stream.ImageOutputStream stream = ImageIO.createImageOutputStream(file.toFile())) {
+			writer.setOutput(stream);
+			writer.prepareWriteSequence(null);
+			int delay = (int) Math.max(2, Math.round(100 / fps));
+			for (int k = 0; k < frames.size(); k++) {
+				BufferedImage img = draw(frames.get(k), fit, w, h, cell, groundY);
+				javax.imageio.ImageTypeSpecifier type = javax.imageio.ImageTypeSpecifier.createFromRenderedImage(img);
+				javax.imageio.metadata.IIOMetadata meta = writer.getDefaultImageMetadata(type, null);
+				String format = meta.getNativeMetadataFormatName();
+				javax.imageio.metadata.IIOMetadataNode root = (javax.imageio.metadata.IIOMetadataNode) meta.getAsTree(format);
+				javax.imageio.metadata.IIOMetadataNode control = node(root, "GraphicControlExtension");
+				control.setAttribute("disposalMethod", "none");
+				control.setAttribute("userInputFlag", "FALSE");
+				control.setAttribute("transparentColorFlag", "FALSE");
+				control.setAttribute("delayTime", Integer.toString(delay));
+				control.setAttribute("transparentColorIndex", "0");
+				if (k == 0) {
+					javax.imageio.metadata.IIOMetadataNode apps = node(root, "ApplicationExtensions");
+					javax.imageio.metadata.IIOMetadataNode app = new javax.imageio.metadata.IIOMetadataNode("ApplicationExtension");
+					app.setAttribute("applicationID", "NETSCAPE");
+					app.setAttribute("authenticationCode", "2.0");
+					app.setUserObject(new byte[] {1, 0, 0}); // loop for ever
+					apps.appendChild(app);
+				}
+				meta.setFromTree(format, root);
+				writer.writeToSequence(new javax.imageio.IIOImage(img, null, meta), null);
+			}
+			writer.endWriteSequence();
+		}
+		writer.dispose();
+		System.out.println(file);
+	}
+
+	static javax.imageio.metadata.IIOMetadataNode node(javax.imageio.metadata.IIOMetadataNode root, String name) {
+		for (int i = 0; i < root.getLength(); i++) if (root.item(i).getNodeName().equalsIgnoreCase(name)) return (javax.imageio.metadata.IIOMetadataNode) root.item(i);
+		javax.imageio.metadata.IIOMetadataNode node = new javax.imageio.metadata.IIOMetadataNode(name);
+		root.appendChild(node);
+		return node;
+	}
+
 	public static void main(String[] args) throws Exception {
 		Path assets = Path.of(args[0]), out = Path.of(args[1]);
 		String id = args[2];
 		List<String> views = new ArrayList<>(List.of("front", "side", "top", "back"));
-		String animName = null, atName = null, tag = null, animView = "front";
+		String animName = null, atName = null, tag = null, animView = "front", gifName = null;
+		double gifSeconds = 0, gifFps = 20;
 		List<Double> times = new ArrayList<>();
 		double atTime = 0, renderScale = 4;
 		int w = 480, h = 360, cols = 2;
@@ -584,6 +647,12 @@ public class Preview {
 			else if (a.startsWith("tag=")) tag = a.substring(4);
 			else if (a.startsWith("animview=")) animView = a.substring(9);
 			else if (a.startsWith("focus=")) focus = List.of(a.substring(6).split(","));
+			else if (a.startsWith("gif=")) {
+				String[] p = a.substring(4).split(":");
+				gifName = p[0];
+				gifSeconds = Double.parseDouble(p[1]);
+				if (p.length > 2) gifFps = Double.parseDouble(p[2]);
+			}
 		}
 		List<GBone> tops = load(assets.resolve("geo/spell/" + id + ".geo.json"));
 		Map<String, Anim> anims = loadAnims(assets.resolve("animations/spell/" + id + ".animation.json"));
@@ -601,6 +670,10 @@ public class Preview {
 				glowTex[i] = (ma > 0 ? ma : ba) << 24 | base[i] & 0xFFFFFF;
 				base[i] = 0;
 			}
+		}
+		if (gifName != null) {
+			gif(assets, out, id, tops, anims, gifName, gifSeconds, gifFps, animView, renderScale, w, h);
+			return;
 		}
 		Anim at = atName == null ? null : anims.get(atName);
 		if (atName != null && at == null) throw new IllegalArgumentException(id + " has no animation " + atName + " (has " + anims.keySet() + ")");

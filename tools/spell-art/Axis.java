@@ -465,12 +465,13 @@ public class Axis {
 		for (int s = -1; s <= 1; s += 2) {
 			String w = "wing_" + (s > 0 ? "l" : "r");
 			int ss = s;
-			a.sample(w, "rotation", 0, T, steps, t -> new double[] {0, -ss * 6 * wave(t, T, 1, 0.5), ss * 30 * wave(t, T, 1, 0)});
-			a.sample(w + "_mid", "rotation", 0, T, steps, t -> new double[] {0, 0, ss * 12 * wave(t, T, 1, -0.7)});
-			a.sample(w + "_tip", "rotation", 0, T, steps, t -> new double[] {0, -ss * 6 * Math.max(0, -wave(t, T, 1, -1.2)), ss * 16 * wave(t, T, 1, -1.3)});
+			// Deeper, each part of the wing whipping after the last (the user's ask, 2026-10-25: the beasts too rigid).
+			a.sample(w, "rotation", 0, T, steps, t -> new double[] {0, -ss * 9 * wave(t, T, 1, 0.5), ss * (4 + 36 * wave(t, T, 1, 0))});
+			a.sample(w + "_mid", "rotation", 0, T, steps, t -> new double[] {0, -ss * 5 * Math.max(0, -wave(t, T, 1, -0.9)), ss * 22 * wave(t, T, 1, -0.9)});
+			a.sample(w + "_tip", "rotation", 0, T, steps, t -> new double[] {0, -ss * 10 * Math.max(0, -wave(t, T, 1, -1.5)), ss * 26 * wave(t, T, 1, -1.6)});
 		}
-		a.sample("root", "position", 0, T, steps, t -> new double[] {0, PHOENIX_UP + 1.6 * wave(t, T, 1, -0.5), 0});
-		a.sample("body", "rotation", 0, T, steps, t -> new double[] {2.5 * wave(t, T, 1, -0.3), 0, 0});
+		a.sample("root", "position", 0, T, steps, t -> new double[] {0, PHOENIX_UP + 3 * wave(t, T, 1, -0.5), 0});
+		a.sample("body", "rotation", 0, T, steps, t -> new double[] {4 * wave(t, T, 1, -0.3), 0, 2 * wave(t, T, 1, 1.0)});
 		a.sample("neck", "rotation", 0, T, steps, t -> new double[] {-2 * wave(t, T, 1, -0.5), 0, 0});
 		a.sample("head", "rotation", 0, T, steps, t -> new double[] {-2.5 * wave(t, T, 1, -0.2), 2 * wave(t, T, 1, 1), 0});
 		a.sample("beak_low", "rotation", 0, T, 8, t -> new double[] {3 + 2 * wave(t, T, 1, 0), 0, 0});
@@ -479,7 +480,7 @@ public class Axis {
 		for (int k = 0; k < 5; k++) {
 			for (int j = 0; j < PHOENIX_SECTIONS.length; j++) {
 				int kk = k, jj = j;
-				a.sample("plume_" + k + "_" + j, "rotation", 0, T, steps, t -> new double[] {(4 + 4 * jj) * wave(t, T, 1, -1.8 - 0.8 * jj - 0.3 * kk), (3 + 3 * jj) * wave(t, T, 1, -0.9 * jj + 1.1 * kk), 0});
+				a.sample("plume_" + k + "_" + j, "rotation", 0, T, steps, t -> new double[] {(6 + 6 * jj) * wave(t, T, 1, -1.8 - 1.0 * jj - 0.3 * kk), (4 + 4 * jj) * wave(t, T, 1, -1.1 * jj + 1.1 * kk), 0});
 			}
 		}
 	}

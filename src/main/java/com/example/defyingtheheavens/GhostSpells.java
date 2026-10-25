@@ -39,6 +39,8 @@ public final class GhostSpells {
 	public static final double PROCESSION_RANGE = HeavenSpells.span(Realm.DAO_INTEGRATION, 48), PROCESSION_WIDTH = HeavenSpells.span(Realm.DAO_INTEGRATION, 6.25);
 	public static final float PROCESSION_DAMAGE = 90, PROCESSION_DEAD_FACTOR = 1.5f;
 	public static final int PROCESSION_WEAKENS = 5 * 20, PROCESSION_TICKS = 40;
+	/** How long the last of the dead stream on past the procession's end once its head is there (ticks): they are drawn till then. */
+	public static final int PROCESSION_TAIL = 40;
 	/**
 	 * Gate of Ten Thousand Ghosts: how far off it opens (82, by its realm), how high its doorway's middle stands, whom it drags (within 18)
 	 * and how hard, its drain a second, its slam's harm, the share of all its harm that mends the caster; how long it takes to open, how long
@@ -97,6 +99,9 @@ public final class GhostSpells {
 	public static final double IMPERMANENCE_RANGE = HeavenSpells.span(Realm.ENTERING_NIRVANA, 30), IMPERMANENCE_BESIDE = HeavenSpells.span(Realm.ENTERING_NIRVANA, 3);
 	public static final float IMPERMANENCE_STRIKE = 500, IMPERMANENCE_CHAIN = 300, IMPERMANENCE_SHARE = 0.1f, IMPERMANENCE_MOST = 1200, IMPERMANENCE_DEAD_FACTOR = 1.5f;
 	public static final int IMPERMANENCE_COMES = 20, IMPERMANENCE_HOOK = 10, IMPERMANENCE_HOLDS = 3 * 20, IMPERMANENCE_AFTER = 20;
+	/** How tall the White and the Black stand (in men: SpellGhosts), and how long they take to draw the soul out at the last (ticks). */
+	public static final float IMPERMANENCE_SIZE = 3.0f;
+	public static final int IMPERMANENCE_TAKES = 20;
 	/**
 	 * Book of Life and Death: how far round its caster it finds the names to strike out (72 by its realm), how far over their head and behind it
 	 * the book opens (8, 2); its harm a second on the marked, its last stroke, and the share of its whole health below which a marked soul is
@@ -205,29 +210,33 @@ public final class GhostSpells {
 		private final Set<LivingEntity> struck = new HashSet<>();
 
 		Procession(LivingEntity caster, Spell spell) {
-			super(caster, PROCESSION_TICKS + SpellConstruct.FADE);
+			super(caster, PROCESSION_TICKS + PROCESSION_TAIL);
 			this.from = caster.getEyePosition().subtract(0, 0.5, 0);
 			this.way = caster.getViewVector(1.0f).normalize();
 			this.length = Math.max(4, HeavenSpells.beamEnd(caster, PROCESSION_RANGE).distanceTo(caster.getEyePosition()));
 			float[] facing = HeavenSpells.facing(way);
-			this.column = SpellConstruct.create(level, SpellConstruct.Kind.PROCESSION, from, facing[0], facing[1], PROCESSION_TICKS + SpellConstruct.FADE, caster)
-					.sizedFor(spell).spawn();
-			HeavenSpells.sound(level, from, SoundEvents.GHAST_SCREAM, 2.5f, 0.35f);
-			HeavenSpells.sound(level, from, SoundEvents.SOUL_ESCAPE, 3.0f, 0.5f);
-			HeavenSpells.sound(level, from, SoundEvents.WARDEN_SONIC_CHARGE, 1.5f, 0.7f);
+			// The dead themselves pouring out, drawn as the mod's ghosts are (SpellConstruct GHOST_PROCESSION: SpellGhosts; the user's ask,
+			// 2026-10-25, it was a column of a model of its own): its reach its value, its width its size. It stays where it set out from.
+			this.column = SpellConstruct.create(level, SpellConstruct.Kind.GHOST_PROCESSION, from, facing[0], facing[1],
+					PROCESSION_TICKS + PROCESSION_TAIL + SpellConstruct.FADE, caster).size((float) PROCESSION_WIDTH).value((float) length).spawn();
+			sound(from, SoundEvents.GHAST_SCREAM, 2.5f, 0.35f);
+			sound(from, SoundEvents.SOUL_ESCAPE, 3.0f, 0.5f);
+			sound(from, SoundEvents.VEX_CHARGE, 2.0f, 0.45f);
 		}
 
-		/** How far along its head has come {@code age} ticks in: out to its length, then on a little as it fades. */
+		/** How far along its head has come {@code age} ticks in: out to its length, where it stays as the dead stream on past it. */
 		private double head(double age) {
-			double speed = length / PROCESSION_TICKS;
-			return age <= PROCESSION_TICKS ? length * (age / PROCESSION_TICKS) : length + (age - PROCESSION_TICKS) * speed * 0.5;
+			return length * Math.min(1, age / PROCESSION_TICKS);
 		}
 
 		@Override
 		protected boolean run(long age, long now) {
 			double head = head(age);
-			column.place(from.add(way.scale(head)), column.getYRot(), column.getXRot());
-			if (age > PROCESSION_TICKS) return true; // spent: it only fades
+			if (age > PROCESSION_TICKS) {
+				// Spent: the last of the dead stream on past its end, moaning as they go.
+				if (age % 9 == 0) sound(from.add(way.scale(length * level.random.nextDouble())), SoundEvents.GHAST_AMBIENT, 1.6f, 0.4f + level.random.nextFloat() * 0.2f);
+				return true;
+			}
 			// All the column's head has passed through (a line from where it set out to its head, as wide as it), each once.
 			double reach = Math.min(head, length), half = PROCESSION_WIDTH / 2;
 			Vec3 end = from.add(way.scale(reach));
@@ -240,13 +249,14 @@ public final class GhostSpells {
 				e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, PROCESSION_WEAKENS, 1));
 				e.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, PROCESSION_WEAKENS, 1));
 				HeavenSpells.particles(level, ParticleTypes.SCULK_SOUL, HeavenSpells.middle(e), 10, 0.4, 0.05);
-				HeavenSpells.sound(level, e.position(), SoundEvents.SOUL_ESCAPE, 1.2f, 0.6f);
+				sound(e.position(), SoundEvents.SOUL_ESCAPE, 1.2f, 0.6f);
 			}
 			// Ghost fire and souls trailing off its head.
 			Vec3 at = from.add(way.scale(reach));
 			HeavenSpells.particles(level, ParticleTypes.SOUL_FIRE_FLAME, at, 6, half * 0.6, 0.02);
 			HeavenSpells.particles(level, ParticleTypes.SCULK_SOUL, at, 3, half * 0.5, 0.02);
-			if (age % 8 == 0) HeavenSpells.sound(level, at, SoundEvents.SOUL_ESCAPE, 2.0f, 0.4f + level.random.nextFloat() * 0.3f);
+			if (age % 8 == 0) sound(at, SoundEvents.SOUL_ESCAPE, 2.0f, 0.4f + level.random.nextFloat() * 0.3f);
+			if (age % 11 == 3) sound(at, SoundEvents.GHAST_AMBIENT, 1.8f, 0.4f + level.random.nextFloat() * 0.25f);
 			return true;
 		}
 
@@ -276,9 +286,9 @@ public final class GhostSpells {
 			this.mouth = at.add(0, GATE_MOUTH, 0);
 			float yaw = HeavenSpells.facing(caster.position().subtract(at).multiply(1, 0, 1))[0];
 			this.gate = SpellConstruct.create(level, SpellConstruct.Kind.GHOST_GATE, at, yaw, 0, GATE_OPENS + GATE_TICKS + GATE_CLOSING, caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, at, SoundEvents.SOUL_ESCAPE, 4.0f, 0.4f);
-			HeavenSpells.sound(level, at, SoundEvents.IRON_DOOR_OPEN, 4.0f, 0.4f);
-			HeavenSpells.sound(level, at, SoundEvents.WITHER_AMBIENT, 2.0f, 0.5f);
+			sound(at, SoundEvents.SOUL_ESCAPE, 4.0f, 0.4f);
+			sound(at, SoundEvents.IRON_DOOR_OPEN, 4.0f, 0.4f);
+			sound(at, SoundEvents.WITHER_AMBIENT, 2.0f, 0.5f);
 		}
 
 		@Override
@@ -288,7 +298,7 @@ public final class GhostSpells {
 			if (open <= GATE_TICKS) draw(open); // its last second's drain as its doors begin to swing
 			if (open == GATE_TICKS) {
 				gate.act("slam");
-				HeavenSpells.sound(level, at, SoundEvents.IRON_DOOR_CLOSE, 4.0f, 0.4f);
+				sound(at, SoundEvents.IRON_DOOR_CLOSE, 4.0f, 0.4f);
 			}
 			if (open == GATE_TICKS + GATE_SHUT) slam();
 			return true;
@@ -314,7 +324,7 @@ public final class GhostSpells {
 			}
 			if (dealt > 0 && casterHere()) HeavenSpells.mend(caster, dealt * GATE_MENDS);
 			if (open % 4 == 0) HeavenSpells.particles(level, ParticleTypes.SOUL_FIRE_FLAME, mouth, 8, GATE_MOUTH * 0.5, 0.03);
-			if (open % 30 == 0) HeavenSpells.sound(level, mouth, SoundEvents.SOUL_ESCAPE, 3.0f, 0.4f);
+			if (open % 30 == 0) sound(mouth, SoundEvents.SOUL_ESCAPE, 3.0f, 0.4f);
 		}
 
 		/** Its doors meet: everything near it struck and thrown off. */
@@ -328,9 +338,9 @@ public final class GhostSpells {
 			if (dealt > 0 && casterHere()) HeavenSpells.mend(caster, dealt * GATE_MENDS);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, at, Vec3.ZERO, (float) GATE_RADIUS, 0, 192);
 			HeavenSpells.particles(level, ParticleTypes.SCULK_SOUL, mouth, 40, GATE_MOUTH, 0.1);
-			HeavenSpells.sound(level, at, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.5f);
-			HeavenSpells.sound(level, at, SoundEvents.ANVIL_LAND, 3.0f, 0.4f);
-			HeavenSpells.sound(level, at, SoundEvents.GHAST_SCREAM, 2.0f, 0.3f);
+			sound(at, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.5f);
+			sound(at, SoundEvents.ANVIL_LAND, 3.0f, 0.4f);
+			sound(at, SoundEvents.GHAST_SCREAM, 2.0f, 0.3f);
 		}
 
 		@Override
@@ -365,10 +375,13 @@ public final class GhostSpells {
 			int life = (int) (end - start);
 			this.rift = SpellConstruct.create(level, SpellConstruct.Kind.ABYSS_RIFT, ground.add(0, 0.06, 0), caster.getYRot(), 0, life, caster).size((float) NETHERS_RIFT)
 					.tint(NETHER_TEAL).spawn();
-			this.rings = SpellConstruct.create(level, SpellConstruct.Kind.NINE_NETHERS, ground, caster.getYRot(), 0, life, caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, ground, SoundEvents.END_PORTAL_SPAWN, 3.0f, 0.4f);
-			HeavenSpells.sound(level, ground, SoundEvents.SOUL_ESCAPE, 4.0f, 0.3f);
-			HeavenSpells.sound(level, ground, SoundEvents.WITHER_AMBIENT, 2.0f, 0.4f);
+			// Its nine rings of ghost fire and the dead dragged down into it, drawn as the mod's ghosts are (SpellConstruct NETHER_DESCENT:
+			// SpellGhosts; the user's ask, 2026-10-25): the rift's round its size, how far round it drags its value.
+			this.rings = SpellConstruct.create(level, SpellConstruct.Kind.NETHER_DESCENT, ground, caster.getYRot(), 0, life, caster).size((float) NETHERS_RIFT)
+					.value((float) NETHERS_RADIUS).spawn();
+			sound(ground, SoundEvents.END_PORTAL_SPAWN, 3.0f, 0.4f);
+			sound(ground, SoundEvents.SOUL_ESCAPE, 4.0f, 0.3f);
+			sound(ground, SoundEvents.WITHER_AMBIENT, 2.0f, 0.4f);
 		}
 
 		@Override
@@ -378,7 +391,7 @@ public final class GhostSpells {
 			if (open < NETHERS_TICKS) drag(open);
 			if (open == NETHERS_TICKS) {
 				rings.act("seal");
-				HeavenSpells.sound(level, ground, SoundEvents.IRON_DOOR_CLOSE, 4.0f, 0.3f);
+				sound(ground, SoundEvents.IRON_DOOR_CLOSE, 4.0f, 0.3f);
 			}
 			if (open == NETHERS_TICKS + NETHERS_SEALS) seal();
 			return true;
@@ -409,7 +422,9 @@ public final class GhostSpells {
 					HeavenSpells.particles(level, ParticleTypes.SOUL_FIRE_FLAME, ground.add(Math.cos(a) * r, 0.4, Math.sin(a) * r), 2, 0.3, 0.02);
 				}
 			}
-			if (open % 30 == 0) HeavenSpells.sound(level, ground, SoundEvents.SOUL_ESCAPE, 3.0f, 0.3f);
+			if (open % 30 == 0) sound(ground, SoundEvents.SOUL_ESCAPE, 3.0f, 0.3f);
+			// The dead wailing as they go down.
+			if (open % 13 == 6) sound(ground.add(level.random.nextGaussian() * 4, 1, level.random.nextGaussian() * 4), SoundEvents.GHAST_AMBIENT, 2.4f, 0.35f + level.random.nextFloat() * 0.2f);
 		}
 
 		/** It seals: everything at its mouth struck and weakened; the rift closes. */
@@ -424,8 +439,8 @@ public final class GhostSpells {
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) NETHERS_RADIUS, 0, 192);
 			SpellFx.send(level, SpellFx.Kind.FLASH, ground.add(0, 1, 0), Vec3.ZERO, 6, NETHER_TEAL, 192);
 			HeavenSpells.particles(level, ParticleTypes.SCULK_SOUL, ground.add(0, 1, 0), 50, NETHERS_MOUTH * 0.6, 0.12);
-			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.4f);
-			HeavenSpells.sound(level, ground, SoundEvents.GHAST_SCREAM, 2.5f, 0.3f);
+			sound(ground, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.4f);
+			sound(ground, SoundEvents.GHAST_SCREAM, 2.5f, 0.3f);
 			rift.dissolve();
 			rings.dissolve();
 		}
@@ -466,8 +481,8 @@ public final class GhostSpells {
 			this.yaw = caster.getYRot();
 			this.high = HeavenSpells.highestNear(HeavenSpells.floorAlong(level, from, way, (int) BRIDGE_LENGTH + 2), (int) Math.ceil(BRIDGE_SPAN / 2));
 			this.spell = spell;
-			HeavenSpells.sound(level, from, SoundEvents.SOUL_ESCAPE, 3.0f, 0.4f);
-			HeavenSpells.sound(level, from, SoundEvents.BELL_RESONATE, 2.0f, 0.5f);
+			sound(from, SoundEvents.SOUL_ESCAPE, 3.0f, 0.4f);
+			sound(from, SoundEvents.BELL_RESONATE, 2.0f, 0.5f);
 		}
 
 		/** Span {@code i}'s middle, at its feet: over the land's highest beneath it. */
@@ -505,8 +520,8 @@ public final class GhostSpells {
 				HeavenSpells.particles(level, ParticleTypes.SCULK_SOUL, HeavenSpells.middle(e), 12, 0.4, 0.04);
 			}
 			HeavenSpells.particles(level, ParticleTypes.SOUL_FIRE_FLAME, at.add(0, 2, 0), 16, BRIDGE_SPAN * 0.3, 0.02);
-			HeavenSpells.sound(level, at, SoundEvents.STONE_PLACE, 3.0f, 0.4f);
-			HeavenSpells.sound(level, at, SoundEvents.SOUL_ESCAPE, 2.5f, 0.5f);
+			sound(at, SoundEvents.STONE_PLACE, 3.0f, 0.4f);
+			sound(at, SoundEvents.SOUL_ESCAPE, 2.5f, 0.5f);
 		}
 
 		/** Whatever blessed {@code e} is forgotten: every good effect on it gone (as the river's water makes the dead forget their lives). */
@@ -530,7 +545,7 @@ public final class GhostSpells {
 				strike(caster, e, onTheDead(e, BRIDGE_TOLL, BRIDGE_DEAD_FACTOR));
 				e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 30, 2));
 			}
-			HeavenSpells.sound(level, middle(spans.size() / 2), SoundEvents.SOUL_ESCAPE, 2.0f, 0.4f);
+			sound(middle(spans.size() / 2), SoundEvents.SOUL_ESCAPE, 2.0f, 0.4f);
 		}
 
 		@Override
@@ -556,9 +571,10 @@ public final class GhostSpells {
 		Mirror(LivingEntity caster, Spell spell) {
 			super(caster, MIRROR_TICKS + 16);
 			this.spell = spell;
-			this.mirror = SpellConstruct.create(level, SpellConstruct.Kind.KARMA_MIRROR, before(), caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, caster.position(), SoundEvents.SOUL_ESCAPE, 3.0f, 0.4f);
-			HeavenSpells.sound(level, caster.position(), SoundEvents.BEACON_ACTIVATE, 3.0f, 0.4f);
+			this.mirror = SpellConstruct.create(level, SpellConstruct.Kind.KARMA_MIRROR, before(), caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell)
+					.anchor(caster, SpellAnchor.LOOK, new Vec3(0, caster.getBbHeight() + MIRROR_OVER, -MIRROR_BEHIND)).spawn();
+			sound(caster.position(), SoundEvents.SOUL_ESCAPE, 3.0f, 0.4f);
+			sound(caster.position(), SoundEvents.BEACON_ACTIVATE, 3.0f, 0.4f);
 		}
 
 		/** Where it stands: over its caster's head and a little behind it, so its stand of bone clears them. */
@@ -591,7 +607,7 @@ public final class GhostSpells {
 					e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, MIRROR_SHOWN, 1));
 					e.addEffect(new MobEffectInstance(MobEffects.GLOWING, MIRROR_SHOWN, 0));
 				}
-				HeavenSpells.sound(level, mirror.position(), SoundEvents.SOUL_ESCAPE, 2.0f, 0.6f);
+				sound(mirror.position(), SoundEvents.SOUL_ESCAPE, 2.0f, 0.6f);
 			}
 			if (age % 3 == 0) {
 				// Its light along the look: a few rays out to its reach.
@@ -609,7 +625,7 @@ public final class GhostSpells {
 					strike(caster, e, onTheDead(e, MIRROR_FLASH, MIRROR_DEAD_FACTOR));
 				}
 				SpellFx.send(level, SpellFx.Kind.FLASH, mirror.position(), Vec3.ZERO, 12, NETHER_TEAL, 192);
-				HeavenSpells.sound(level, mirror.position(), SoundEvents.WARDEN_SONIC_BOOM, 3.0f, 0.6f);
+				sound(mirror.position(), SoundEvents.WARDEN_SONIC_BOOM, 3.0f, 0.6f);
 			}
 			return true;
 		}
@@ -641,8 +657,8 @@ public final class GhostSpells {
 			this.ground = below != null ? below : point;
 			this.sky = ground.add(0, PAGODA_HIGH, 0);
 			this.pagoda = SpellConstruct.create(level, SpellConstruct.Kind.SOUL_PAGODA, sky, caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, sky, SoundEvents.BELL_RESONATE, 4.0f, 0.3f);
-			HeavenSpells.sound(level, sky, SoundEvents.SOUL_ESCAPE, 3.0f, 0.3f);
+			sound(sky, SoundEvents.BELL_RESONATE, 4.0f, 0.3f);
+			sound(sky, SoundEvents.SOUL_ESCAPE, 3.0f, 0.3f);
 		}
 
 		@Override
@@ -663,13 +679,13 @@ public final class GhostSpells {
 						strike(caster, e, onTheDead(e, PAGODA_DRAIN, PAGODA_DEAD_FACTOR));
 						SpellFx.send(level, SpellFx.Kind.LIFE_MOTES, HeavenSpells.middle(e), ground.add(0, PAGODA_HEIGHT * 0.5, 0).subtract(HeavenSpells.middle(e)), 1, 0);
 					}
-					HeavenSpells.sound(level, ground, SoundEvents.SOUL_ESCAPE, 3.0f, 0.4f);
+					sound(ground, SoundEvents.SOUL_ESCAPE, 3.0f, 0.4f);
 				}
 				return true;
 			}
 			if (holding == PAGODA_TICKS) {
 				pagoda.act("seal");
-				HeavenSpells.sound(level, ground, SoundEvents.BELL_BLOCK, 4.0f, 0.3f);
+				sound(ground, SoundEvents.BELL_BLOCK, 4.0f, 0.3f);
 			}
 			if (holding < PAGODA_TICKS + PAGODA_SEALS) hold();
 			if (holding == PAGODA_TICKS + PAGODA_SEALS) seal();
@@ -687,8 +703,8 @@ public final class GhostSpells {
 			}
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) PAGODA_RADIUS * 1.6f, 0, 192);
 			SpellFx.send(level, SpellFx.Kind.FLASH, ground.add(0, 2, 0), Vec3.ZERO, 8, NETHER_TEAL, 192);
-			HeavenSpells.sound(level, ground, SoundEvents.ANVIL_LAND, 4.0f, 0.3f);
-			HeavenSpells.sound(level, ground, SoundEvents.CHAIN_PLACE, 4.0f, 0.4f);
+			sound(ground, SoundEvents.ANVIL_LAND, 4.0f, 0.3f);
+			sound(ground, SoundEvents.CHAIN_PLACE, 4.0f, 0.4f);
 		}
 
 		/** The locked kept within its walls (brought back to them if they stray, held under its spire). */
@@ -719,7 +735,7 @@ public final class GhostSpells {
 			}
 			locked.clear();
 			SpellFx.send(level, SpellFx.Kind.FLASH, ground.add(0, PAGODA_HEIGHT * 0.5, 0), Vec3.ZERO, 14, NETHER_TEAL, 192);
-			HeavenSpells.sound(level, ground, SoundEvents.WARDEN_SONIC_BOOM, 3.0f, 0.5f);
+			sound(ground, SoundEvents.WARDEN_SONIC_BOOM, 3.0f, 0.5f);
 		}
 
 		@Override
@@ -743,32 +759,50 @@ public final class GhostSpells {
 		private final LivingEntity target;
 		private Vec3 at;
 		private final SpellConstruct white, black;
+		/** The Black's chain of hell, from its hand to its quarry while it holds it (null before it lashes, and after). */
+		private SpellConstruct chain;
 
 		Impermanence(LivingEntity caster, Spell spell, LivingEntity target, Vec3 point) {
 			super(caster, IMPERMANENCE_COMES + IMPERMANENCE_HOOK + IMPERMANENCE_HOLDS + IMPERMANENCE_AFTER);
 			this.target = target;
 			this.at = point;
 			Vec3[] places = places();
-			this.white = SpellConstruct.create(level, SpellConstruct.Kind.WHITE_IMPERMANENCE, places[0], facing(places[0]), 0, (int) (end - start), caster).sizedFor(spell).spawn();
-			this.black = SpellConstruct.create(level, SpellConstruct.Kind.BLACK_IMPERMANENCE, places[1], facing(places[1]), 0, (int) (end - start), caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, at, SoundEvents.SOUL_ESCAPE, 4.0f, 0.3f);
-			HeavenSpells.sound(level, at, SoundEvents.BELL_RESONATE, 3.0f, 0.4f);
+			// The two themselves, tall in their hats, drawn as the dead are (SpellConstruct WHITE_WUCHANG, BLACK_WUCHANG: SpellGhosts, the White in its
+			// bone-white light and the Black in ink smoke; the user's ask, 2026-10-25, they were models of their own): their size their height in men.
+			int life = (int) (end - start);
+			this.white = SpellConstruct.create(level, SpellConstruct.Kind.WHITE_WUCHANG, places[0], facing(places[0]), 0, life, caster).size(IMPERMANENCE_SIZE).target(target).spawn();
+			this.black = SpellConstruct.create(level, SpellConstruct.Kind.BLACK_WUCHANG, places[1], facing(places[1]), 0, life, caster).size(IMPERMANENCE_SIZE).target(target).spawn();
+			sound(at, SoundEvents.SOUL_ESCAPE, 4.0f, 0.3f);
+			sound(at, SoundEvents.BELL_RESONATE, 3.0f, 0.4f);
+			sound(at, SoundEvents.SCULK_SHRIEKER_SHRIEK, 2.5f, 0.45f);
 		}
 
 		private boolean holds() {
 			return target != null && HeavenSpells.present(target, level) && target.isAlive();
 		}
 
-		/** Where the White and the Black stand: to either side of their quarry, across its caster's look at it. */
+		/** Where the White and the Black stand: to either side of their quarry, across its caster's look at it, on the ground. */
 		private Vec3[] places() {
 			Vec3 way = at.subtract(caster.position()).multiply(1, 0, 1);
 			way = way.lengthSqr() < 1.0e-4 ? Vec3.directionFromRotation(0, caster.getYRot()) : way.normalize();
 			Vec3 side = new Vec3(-way.z, 0, way.x).scale(IMPERMANENCE_BESIDE);
-			return new Vec3[] {at.add(side), at.subtract(side)};
+			Vec3[] places = {at.add(side), at.subtract(side)};
+			for (int i = 0; i < 2; i++) {
+				Vec3 ground = HeavenSpells.groundBelow(level, places[i].add(0, 3, 0), 3, 8);
+				if (ground != null) places[i] = ground;
+			}
+			return places;
 		}
 
 		private float facing(Vec3 from) {
 			return HeavenSpells.facing(at.subtract(from).multiply(1, 0, 1))[0];
+		}
+
+		/** The Black's hand thrust out at its quarry (its chain's root): at its shoulder, an arm's length on toward it. */
+		private Vec3 blackHand(Vec3 place) {
+			Vec3 toward = at.subtract(place).multiply(1, 0, 1);
+			toward = toward.lengthSqr() < 1.0e-4 ? Vec3.ZERO : toward.normalize();
+			return place.add(0, IMPERMANENCE_SIZE * 1.35, 0).add(toward.scale(IMPERMANENCE_SIZE * 0.6));
 		}
 
 		@Override
@@ -777,37 +811,57 @@ public final class GhostSpells {
 			Vec3[] places = places();
 			white.place(places[0], facing(places[0]), 0);
 			black.place(places[1], facing(places[1]), 0);
+			if (chain != null) chain.place(blackHand(places[1]), 0, 0);
 			if (age == IMPERMANENCE_COMES) {
+				// The White's staff swung down on its quarry (it lands as the swing does: SpellGhosts' WUCHANG_STRIKES).
 				white.act("strike");
+				sound(places[0], SoundEvents.PHANTOM_SWOOP, 3.0f, 0.5f);
+			}
+			if (age == IMPERMANENCE_COMES + 6) {
 				if (holds()) {
 					target.invulnerableTime = 0;
 					strike(caster, target, onTheDead(target, IMPERMANENCE_STRIKE, IMPERMANENCE_DEAD_FACTOR));
 					target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 2));
 				}
 				SpellFx.send(level, SpellFx.Kind.FLASH, at.add(0, 2, 0), Vec3.ZERO, 6, 0xF2FFFD, 192);
-				HeavenSpells.sound(level, at, SoundEvents.PHANTOM_BITE, 3.0f, 0.5f);
+				sound(at, SoundEvents.PHANTOM_BITE, 3.0f, 0.5f);
+				sound(at, SoundEvents.SOUL_ESCAPE, 3.0f, 1.1f);
 			}
 			long hooked = age - IMPERMANENCE_COMES - IMPERMANENCE_HOOK;
 			if (hooked == 0) {
+				// The Black's chain lashes out of its hand and binds its quarry (a chain of hell, drawn by hand: TendrilRenderer).
 				black.act("strike");
-				HeavenSpells.sound(level, at, SoundEvents.CHAIN_PLACE, 4.0f, 0.5f);
+				if (holds()) {
+					chain = SpellConstruct.create(level, SpellConstruct.Kind.HELL_CHAIN, blackHand(places[1]), 0, 0, (int) (end - level.getGameTime()) + SpellConstruct.FADE, caster)
+							.size(2.0f).target(target).spawn();
+				}
+				sound(at, SoundEvents.CHAIN_PLACE, 4.0f, 0.5f);
+				sound(places[1], SoundEvents.CHAIN_BREAK, 3.0f, 0.45f);
 			}
-			if (hooked >= 0 && hooked < IMPERMANENCE_HOLDS && holds()) {
+			if (hooked >= 0 && hooked < IMPERMANENCE_HOLDS + IMPERMANENCE_TAKES && holds()) {
 				HeavenSpells.still(target);
-				if (hooked % 20 == 10) {
+				if (hooked < IMPERMANENCE_HOLDS && hooked % 20 == 10) {
 					target.invulnerableTime = 0;
 					strike(caster, target, onTheDead(target, IMPERMANENCE_CHAIN, IMPERMANENCE_DEAD_FACTOR));
 					SpellFx.send(level, SpellFx.Kind.LIFE_MOTES, HeavenSpells.middle(target), places[1].add(0, 6, 0).subtract(HeavenSpells.middle(target)), 1.5f, 0);
-					HeavenSpells.sound(level, at, SoundEvents.CHAIN_STEP, 3.0f, 0.5f);
+					sound(at, SoundEvents.CHAIN_STEP, 3.0f, 0.5f);
 				}
 			}
-			if (hooked == IMPERMANENCE_HOLDS && holds()) {
+			if (hooked == IMPERMANENCE_HOLDS) {
+				// Both reach for its soul and draw it half out of its body toward them (SpellGhosts' take)...
+				white.act("take");
+				black.act("take");
+				sound(at, SoundEvents.SOUL_ESCAPE, 4.0f, 0.4f);
+				sound(at, SoundEvents.WARDEN_SONIC_CHARGE, 2.5f, 0.8f);
+			}
+			if (hooked == IMPERMANENCE_HOLDS + IMPERMANENCE_TAKES / 2 && holds()) {
+				// ...and tear away their share of it.
 				float share = Math.min(IMPERMANENCE_MOST, target.getMaxHealth() * IMPERMANENCE_SHARE);
 				target.invulnerableTime = 0;
 				strike(caster, target, onTheDead(target, share, IMPERMANENCE_DEAD_FACTOR));
 				SpellFx.send(level, SpellFx.Kind.FLASH, HeavenSpells.middle(target), Vec3.ZERO, 8, NETHER_TEAL, 192);
-				HeavenSpells.sound(level, at, SoundEvents.SOUL_ESCAPE, 4.0f, 0.6f);
-				HeavenSpells.sound(level, at, SoundEvents.WARDEN_SONIC_BOOM, 2.0f, 1.2f);
+				sound(at, SoundEvents.SOUL_ESCAPE, 4.0f, 0.6f);
+				sound(at, SoundEvents.WARDEN_SONIC_BOOM, 2.0f, 1.2f);
 			}
 			return true;
 		}
@@ -816,6 +870,7 @@ public final class GhostSpells {
 		public void end() {
 			white.dissolve();
 			black.dissolve();
+			if (chain != null) chain.dissolve();
 		}
 	}
 
@@ -833,9 +888,10 @@ public final class GhostSpells {
 
 		Book(LivingEntity caster, Spell spell) {
 			super(caster, BOOK_OPENS + BOOK_WRITES + BOOK_STROKE + BOOK_AFTER);
-			this.book = SpellConstruct.create(level, SpellConstruct.Kind.LIFE_DEATH_BOOK, over(), caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, caster.position(), SoundEvents.BOOK_PAGE_TURN, 4.0f, 0.4f);
-			HeavenSpells.sound(level, caster.position(), SoundEvents.SOUL_ESCAPE, 3.0f, 0.4f);
+			this.book = SpellConstruct.create(level, SpellConstruct.Kind.LIFE_DEATH_BOOK, over(), caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell)
+					.anchor(caster, SpellAnchor.LOOK_LEVEL, new Vec3(0, caster.getBbHeight() + BOOK_OVER, -BOOK_BEHIND)).spawn();
+			sound(caster.position(), SoundEvents.BOOK_PAGE_TURN, 4.0f, 0.4f);
+			sound(caster.position(), SoundEvents.SOUL_ESCAPE, 3.0f, 0.4f);
 		}
 
 		/** Where it opens: over its caster's head, a little behind it. */
@@ -856,11 +912,11 @@ public final class GhostSpells {
 					e.invulnerableTime = 0;
 					strike(caster, e, onTheDead(e, BOOK_MARK, BOOK_DEAD_FACTOR));
 				}
-				HeavenSpells.sound(level, caster.position(), SoundEvents.BOOK_PAGE_TURN, 3.0f, 0.6f);
+				sound(caster.position(), SoundEvents.BOOK_PAGE_TURN, 3.0f, 0.6f);
 			}
 			if (writing == BOOK_WRITES) {
 				book.act("strike");
-				HeavenSpells.sound(level, caster.position(), SoundEvents.BOOK_PUT, 4.0f, 0.4f);
+				sound(caster.position(), SoundEvents.BOOK_PUT, 4.0f, 0.4f);
 			}
 			if (writing == BOOK_WRITES + BOOK_STROKE) strikeOut();
 			return true;
@@ -893,7 +949,7 @@ public final class GhostSpells {
 				SpellFx.send(level, SpellFx.Kind.STREAK, from, HeavenSpells.middle(e).subtract(from), 0, CINNABAR, 192);
 			}
 			SpellFx.send(level, SpellFx.Kind.FLASH, from, Vec3.ZERO, 10, CINNABAR, 192);
-			HeavenSpells.sound(level, caster.position(), SoundEvents.WARDEN_SONIC_BOOM, 3.0f, 0.8f);
+			sound(caster.position(), SoundEvents.WARDEN_SONIC_BOOM, 3.0f, 0.8f);
 		}
 
 		@Override
@@ -930,8 +986,8 @@ public final class GhostSpells {
 				float[] face = HeavenSpells.facing(ground.subtract(spot).multiply(1, 0, 1));
 				walls[k] = SpellConstruct.create(level, SpellConstruct.Kind.FENGDU_WALL, spot, face[0], 0, (int) (end - start), caster).sizedFor(Spell.FENGDU_WALLS_RISE).spawn();
 			}
-			HeavenSpells.sound(level, ground, SoundEvents.WARDEN_EMERGE, 5.0f, 0.4f);
-			HeavenSpells.sound(level, ground, SoundEvents.SOUL_ESCAPE, 5.0f, 0.4f);
+			sound(ground, SoundEvents.WARDEN_EMERGE, 5.0f, 0.4f);
+			sound(ground, SoundEvents.SOUL_ESCAPE, 5.0f, 0.4f);
 		}
 
 		private List<LivingEntity> within() {
@@ -949,7 +1005,7 @@ public final class GhostSpells {
 			}
 			if (standing == FENGDU_TICKS) {
 				for (SpellConstruct wall : walls) wall.act("fall");
-				HeavenSpells.sound(level, ground, SoundEvents.WITHER_BREAK_BLOCK, 5.0f, 0.4f);
+				sound(ground, SoundEvents.WITHER_BREAK_BLOCK, 5.0f, 0.4f);
 			}
 			if (standing == FENGDU_TICKS + FENGDU_FALLS) fall();
 			return true;
@@ -976,7 +1032,7 @@ public final class GhostSpells {
 				double a = level.random.nextDouble() * Math.PI * 2, r = inner * level.random.nextDouble();
 				HeavenSpells.particles(level, ParticleTypes.SOUL_FIRE_FLAME, ground.add(Math.cos(a) * r, 1 + level.random.nextDouble() * 4, Math.sin(a) * r), 8, 1.0, 0.02);
 			}
-			HeavenSpells.sound(level, ground, SoundEvents.SOUL_ESCAPE, 4.0f, 0.5f);
+			sound(ground, SoundEvents.SOUL_ESCAPE, 4.0f, 0.5f);
 		}
 
 		/** Its walls topple in on its heart: every foe within struck. */
@@ -987,8 +1043,8 @@ public final class GhostSpells {
 			}
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) FENGDU_RADIUS * 1.2f, 0, 256);
 			SpellFx.send(level, SpellFx.Kind.FLASH, ground.add(0, 4, 0), Vec3.ZERO, 14, NETHER_TEAL, 256);
-			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 5.0f, 0.4f);
-			HeavenSpells.sound(level, ground, SoundEvents.WARDEN_SONIC_BOOM, 4.0f, 0.5f);
+			sound(ground, SoundEvents.GENERIC_EXPLODE, 5.0f, 0.4f);
+			sound(ground, SoundEvents.WARDEN_SONIC_BOOM, 4.0f, 0.5f);
 		}
 
 		@Override
@@ -1013,9 +1069,12 @@ public final class GhostSpells {
 			super(caster, SOULS_RISES + SOULS_TICKS + SOULS_DESCENDS + SOULS_AFTER);
 			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
 			this.ground = below != null ? below : point;
-			this.helix = SpellConstruct.create(level, SpellConstruct.Kind.SOUL_HELIX, ground, caster.getYRot(), 0, (int) (end - start), caster).sizedFor(Spell.TEN_THOUSAND_SOULS_ASCEND).spawn();
-			HeavenSpells.sound(level, ground, SoundEvents.SOUL_ESCAPE, 5.0f, 0.3f);
-			HeavenSpells.sound(level, ground, SoundEvents.WARDEN_EMERGE, 4.0f, 0.7f);
+			// The helix of the dead itself, drawn as the mod's ghosts are (SpellConstruct SOUL_ASCENT: SpellGhosts; the user's ask, 2026-10-25,
+			// "why are these retarded looking ghosts here"): its round its size, its height its value (it winds on above whom it carries up).
+			this.helix = SpellConstruct.create(level, SpellConstruct.Kind.SOUL_ASCENT, ground, caster.getYRot(), 0, (int) (end - start), caster)
+					.size((float) SOULS_RADIUS).value((float) (SOULS_HIGH * 2.2)).spawn();
+			sound(ground, SoundEvents.SOUL_ESCAPE, 5.0f, 0.3f);
+			sound(ground, SoundEvents.WARDEN_EMERGE, 4.0f, 0.7f);
 		}
 
 		@Override
@@ -1028,7 +1087,9 @@ public final class GhostSpells {
 					double a = level.random.nextDouble() * Math.PI * 2;
 					HeavenSpells.particles(level, ParticleTypes.SCULK_SOUL, ground.add(Math.cos(a) * SOULS_RADIUS * 0.7, level.random.nextDouble() * SOULS_HIGH * 3, Math.sin(a) * SOULS_RADIUS * 0.7), 6, 1.0, 0.04);
 				}
-				if (spiralling % 20 == 0) HeavenSpells.sound(level, ground, SoundEvents.SOUL_ESCAPE, 4.0f, 0.5f);
+				if (spiralling % 20 == 0) sound(ground, SoundEvents.SOUL_ESCAPE, 4.0f, 0.5f);
+				// The ten thousand wailing as they wind up.
+				if (spiralling % 10 == 5) sound(ground.add(0, level.random.nextDouble() * SOULS_HIGH * 2, 0), SoundEvents.GHAST_AMBIENT, 3.0f, 0.45f + level.random.nextFloat() * 0.3f);
 				return true;
 			}
 			if (spiralling == SOULS_TICKS) descend();
@@ -1068,8 +1129,8 @@ public final class GhostSpells {
 			}
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) SOULS_PULL, 0, 256);
 			SpellFx.send(level, SpellFx.Kind.FLASH, ground.add(0, 2, 0), Vec3.ZERO, 12, NETHER_TEAL, 256);
-			HeavenSpells.sound(level, ground, SoundEvents.WARDEN_SONIC_BOOM, 4.0f, 0.4f);
-			HeavenSpells.sound(level, ground, SoundEvents.SOUL_ESCAPE, 5.0f, 0.3f);
+			sound(ground, SoundEvents.WARDEN_SONIC_BOOM, 4.0f, 0.4f);
+			sound(ground, SoundEvents.SOUL_ESCAPE, 5.0f, 0.3f);
 		}
 
 		@Override

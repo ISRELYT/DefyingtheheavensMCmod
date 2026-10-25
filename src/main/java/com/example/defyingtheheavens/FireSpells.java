@@ -515,11 +515,7 @@ public final class FireSpells {
 					break;
 				}
 				if (level.random.nextInt(3) == 0) {
-					BlockPos fire = BlockPos.containing(at.x + Math.cos(a + 2) * r, at.y + 0.2, at.z + Math.sin(a + 2) * r);
-					if (level.getBlockState(fire).isAir() && BaseFireBlock.canBePlacedAt(level, fire, net.minecraft.core.Direction.UP)
-							&& Devastation.mayChange(caster, level, fire)) {
-						level.setBlock(fire, BaseFireBlock.getState(level, fire), 11);
-					}
+					Devastation.ignite(caster, level, BlockPos.containing(at.x + Math.cos(a + 2) * r, at.y + 0.2, at.z + Math.sin(a + 2) * r));
 				}
 			}
 		}
@@ -537,9 +533,9 @@ public final class FireSpells {
 		Sun(LivingEntity caster, Spell spell) {
 			super(caster, SOLAR_TICKS);
 			this.field = SpellField.create(level, SpellField.Kind.SOLAR_SUN, caster.position().add(0, SOLAR_HEIGHT, 0), 2.5f, (float) SOLAR_RADIUS,
-					SOLAR_TICKS, caster).spawn();
-			HeavenSpells.sound(level, caster.position(), SoundEvents.BEACON_ACTIVATE, 2.0f, 0.5f);
-			HeavenSpells.sound(level, caster.position(), SoundEvents.BLAZE_SHOOT, 2.0f, 0.3f);
+					SOLAR_TICKS, caster).anchor(caster, SpellAnchor.POSITION, new Vec3(0, SOLAR_HEIGHT, 0)).spawn();
+			sound(caster.position(), SoundEvents.BEACON_ACTIVATE, 2.0f, 0.5f);
+			sound(caster.position(), SoundEvents.BLAZE_SHOOT, 2.0f, 0.3f);
 		}
 
 		@Override
@@ -552,7 +548,7 @@ public final class FireSpells {
 					if (e.fireImmune() || SpellAuras.wardedBy(e, QiElement.WATER)) continue;
 					e.setSecondsOnFire(SOLAR_BURN_SECONDS);
 				}
-				if (age % 60 == 10) HeavenSpells.sound(level, sun, SoundEvents.FIRE_AMBIENT, 2.0f, 0.5f);
+				if (age % 60 == 10) sound(sun, SoundEvents.FIRE_AMBIENT, 2.0f, 0.5f);
 			}
 			return true;
 		}
@@ -616,7 +612,7 @@ public final class FireSpells {
 				} else if (target instanceof CultivatorNpc npc && npc.getAlignment() < 0) {
 					npc.setAlignment(Math.min(0, npc.getAlignment() + KARMIC_CLEANSE));
 				}
-				HeavenSpells.sound(level, target.position(), SoundEvents.FIRE_AMBIENT, 1.0f, 0.6f);
+				sound(target.position(), SoundEvents.FIRE_AMBIENT, 1.0f, 0.6f);
 			}
 			return true;
 		}
@@ -696,11 +692,7 @@ public final class FireSpells {
 			BlockPos pos = centre.offset(level.random.nextInt(crater * 4 + 1) - crater * 2, 0, level.random.nextInt(crater * 4 + 1) - crater * 2);
 			Vec3 ground = HeavenSpells.groundBelow(level, Vec3.atBottomCenterOf(pos), 3, 6);
 			if (ground == null) continue;
-			BlockPos fire = BlockPos.containing(ground.x, ground.y + 0.1, ground.z);
-			if (level.getBlockState(fire).isAir() && BaseFireBlock.canBePlacedAt(level, fire, net.minecraft.core.Direction.UP)
-					&& Devastation.mayChange(p, level, fire)) {
-				level.setBlock(fire, BaseFireBlock.getState(level, fire), 11);
-			}
+			Devastation.ignite(p, level, BlockPos.containing(ground.x, ground.y + 0.1, ground.z));
 		}
 	}
 
@@ -778,8 +770,8 @@ public final class FireSpells {
 					.data(caster.getRandom().nextInt()).spawn();
 			// The land itself takes fire: scorched, patches of it molten, flames on what stands there (trees catch, and spread it).
 			Devastation.burn(caster, level, at, SEA_SCORCH, SEA_FIRES);
-			HeavenSpells.sound(level, at, SoundEvents.BLAZE_SHOOT, 3.0f, 0.3f);
-			HeavenSpells.sound(level, at, SoundEvents.FIRECHARGE_USE, 3.0f, 0.4f);
+			sound(at, SoundEvents.BLAZE_SHOOT, 3.0f, 0.3f);
+			sound(at, SoundEvents.FIRECHARGE_USE, 3.0f, 0.4f);
 		}
 
 		@Override
@@ -789,7 +781,7 @@ public final class FireSpells {
 					if (e.getY() > at.y + 4 || e.position().multiply(1, 0, 1).distanceTo(at.multiply(1, 0, 1)) > SEA_RADIUS) continue;
 					burn(caster, e, null, SEA_DAMAGE, 3, spell);
 				}
-				if (age % 40 == 10) HeavenSpells.sound(level, at, SoundEvents.FIRE_AMBIENT, 3.0f, 0.5f);
+				if (age % 40 == 10) sound(at, SoundEvents.FIRE_AMBIENT, 3.0f, 0.5f);
 			}
 			return true;
 		}
@@ -850,10 +842,10 @@ public final class FireSpells {
 					phoenix = null;
 				} else {
 					phoenix.place(before(caster), caster.getYRot() + 180, 0);
-					if (age == 16) HeavenSpells.sound(level, caster.position(), SoundEvents.PARROT_IMITATE_BLAZE, 1.6f, 0.6f);
+					if (age == 16) sound(caster.position(), SoundEvents.PARROT_IMITATE_BLAZE, 1.6f, 0.6f);
 					if (age == PHOENIX_ENFOLD) {
 						phoenix.act("enfold");
-						HeavenSpells.sound(level, caster.position(), SoundEvents.FIRECHARGE_USE, 1.4f, 0.6f);
+						sound(caster.position(), SoundEvents.FIRECHARGE_USE, 1.4f, 0.6f);
 					}
 				}
 			}
@@ -883,9 +875,9 @@ public final class FireSpells {
 			SpellConstruct reborn = SpellConstruct.create(level, SpellConstruct.Kind.NIRVANA_REBIRTH, caster.position(), caster.getYRot(), 0, PHOENIX_REBORN, caster)
 					.sizedFor(spell).spawn();
 			HeavenSpells.linger(new Delayed(caster, PHOENIX_REBORN - SpellConstruct.FADE, reborn::dissolve));
-			HeavenSpells.sound(level, caster.position(), SoundEvents.TOTEM_USE, 1.5f, 0.6f);
-			HeavenSpells.sound(level, caster.position(), SoundEvents.BLAZE_SHOOT, 2.0f, 0.4f);
-			HeavenSpells.sound(level, caster.position(), SoundEvents.PARROT_IMITATE_BLAZE, 2.0f, 0.5f);
+			sound(caster.position(), SoundEvents.TOTEM_USE, 1.5f, 0.6f);
+			sound(caster.position(), SoundEvents.BLAZE_SHOOT, 2.0f, 0.4f);
+			sound(caster.position(), SoundEvents.PARROT_IMITATE_BLAZE, 2.0f, 0.5f);
 			HeavenSpells.tell(caster, Component.translatable(ModLang.MSG_PHOENIX_REBORN));
 			return false;
 		}
@@ -928,8 +920,8 @@ public final class FireSpells {
 			this.high = caster.position().add(way.scale(-BIRD_BEHIND)).add(0, BIRD_ON_HIGH, 0);
 			this.bird = SpellConstruct.create(level, SpellConstruct.Kind.VERMILION_BIRD, high, caster.getYRot(), 50, (int) (end - start), caster).sizedFor(spell).spawn();
 			bird.act("dive");
-			HeavenSpells.sound(level, high, SoundEvents.PARROT_IMITATE_BLAZE, 3.0f, 0.5f);
-			HeavenSpells.sound(level, caster.position(), SoundEvents.PHANTOM_SWOOP, 3.0f, 0.4f);
+			sound(high, SoundEvents.PARROT_IMITATE_BLAZE, 3.0f, 0.5f);
+			sound(caster.position(), SoundEvents.PHANTOM_SWOOP, 3.0f, 0.4f);
 		}
 
 		/** Where it is {@code t} ticks in: stooping down from on high behind, then along its sweep over the land, then up and away. */
@@ -954,8 +946,8 @@ public final class FireSpells {
 			bird.place(here, face[0], face[1]);
 			if (age == BIRD_STOOP) {
 				SpellFx.send(level, SpellFx.Kind.FIRE_EXPLOSION, here, Vec3.ZERO, 10, 0, 192);
-				HeavenSpells.sound(level, here, SoundEvents.GENERIC_EXPLODE, 3.0f, 0.7f);
-				HeavenSpells.sound(level, here, SoundEvents.PARROT_IMITATE_BLAZE, 4.0f, 0.4f);
+				sound(here, SoundEvents.GENERIC_EXPLODE, 3.0f, 0.7f);
+				sound(here, SoundEvents.PARROT_IMITATE_BLAZE, 4.0f, 0.4f);
 			}
 			if (age < BIRD_STOOP - 4 || age > BIRD_STOOP + BIRD_SWEEP_TICKS) return true;
 			// Whatever is low under it, and to either side, burns.
@@ -975,7 +967,7 @@ public final class FireSpells {
 				cut += BIRD_TRENCH_EVERY;
 			}
 			if (age % 5 == 0) SpellFx.send(level, SpellFx.Kind.FLAME_BURST, here.add(0, -2, 0), Vec3.ZERO, 3, 0);
-			if (age % 10 == 0) HeavenSpells.sound(level, here, SoundEvents.BLAZE_SHOOT, 3.0f, 0.5f);
+			if (age % 10 == 0) sound(here, SoundEvents.BLAZE_SHOOT, 3.0f, 0.5f);
 			return true;
 		}
 
@@ -1007,8 +999,8 @@ public final class FireSpells {
 			this.from = HeavenSpells.fromHands(caster);
 			// Bright till it erupts, then fading as the pillar it becomes fades in.
 			this.seed = SpellConstruct.create(level, SpellConstruct.Kind.ONE_FLAME_SEED, from, caster.getYRot(), 0, FLAME_FLIGHT + FLAME_BLOOM + SpellConstruct.FADE, caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, from, SoundEvents.BLAZE_SHOOT, 2.0f, 1.6f);
-			HeavenSpells.sound(level, from, SoundEvents.BEACON_ACTIVATE, 1.5f, 1.8f);
+			sound(from, SoundEvents.BLAZE_SHOOT, 2.0f, 1.6f);
+			sound(from, SoundEvents.BEACON_ACTIVATE, 1.5f, 1.8f);
 		}
 
 		@Override
@@ -1019,7 +1011,7 @@ public final class FireSpells {
 				seed.place(from.lerp(ground.add(0, 2.5, 0), f).add(0, Math.sin(Math.PI * f) * 6, 0), seed.getYRot() + 18, 0);
 				if (age == FLAME_FLIGHT) {
 					seed.act("bloom");
-					HeavenSpells.sound(level, ground, SoundEvents.BEACON_POWER_SELECT, 2.0f, 1.5f);
+					sound(ground, SoundEvents.BEACON_POWER_SELECT, 2.0f, 1.5f);
 				}
 				return true;
 			}
@@ -1036,8 +1028,8 @@ public final class FireSpells {
 				Devastation.burn(caster, level, sky > ground.y + 4 ? new Vec3(ground.x, sky, ground.z) : ground, FLAME_SCORCH, 0.22);
 				SpellFx.send(level, SpellFx.Kind.FIRE_EXPLOSION, ground, Vec3.ZERO, (float) FLAME_RADIUS * 1.4f, 0, 192);
 				SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) FLAME_RADIUS * 2.5f, 0, 192);
-				HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.5f);
-				HeavenSpells.sound(level, ground, SoundEvents.BLAZE_SHOOT, 4.0f, 0.3f);
+				sound(ground, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.5f);
+				sound(ground, SoundEvents.BLAZE_SHOOT, 4.0f, 0.3f);
 			}
 			if (burning >= 0 && burning % 20 == 0) {
 				Vec3 middle = ground.add(0, FLAME_HEIGHT / 2, 0);
@@ -1047,7 +1039,7 @@ public final class FireSpells {
 					e.invulnerableTime = 0;
 					burn(caster, e, null, FLAME_DAMAGE, FLAME_BURN_SECONDS, spell);
 				}
-				HeavenSpells.sound(level, ground, SoundEvents.FIRE_AMBIENT, 4.0f, 0.4f);
+				sound(ground, SoundEvents.FIRE_AMBIENT, 4.0f, 0.4f);
 			}
 			return true;
 		}
@@ -1085,8 +1077,8 @@ public final class FireSpells {
 			this.mouth = ground.add(toward.scale(CROW_HIGH * 0.35)).add(0, CROW_HIGH, 0);
 			this.rift = SpellConstruct.create(level, SpellConstruct.Kind.VOID_RIFT, mouth, 0, 0, CROW_OPENS + 10 + SpellConstruct.FADE, caster).size((float) CROW_RIFT)
 					.tint(SUN_GOLD).spawn();
-			HeavenSpells.sound(level, mouth, SoundEvents.END_PORTAL_SPAWN, 3.0f, 0.8f);
-			HeavenSpells.sound(level, caster.position(), SoundEvents.BLAZE_SHOOT, 2.0f, 0.5f);
+			sound(mouth, SoundEvents.END_PORTAL_SPAWN, 3.0f, 0.8f);
+			sound(caster.position(), SoundEvents.BLAZE_SHOOT, 2.0f, 0.5f);
 		}
 
 		@Override
@@ -1096,8 +1088,8 @@ public final class FireSpells {
 			if (age == CROW_OPENS) {
 				crow = SpellConstruct.create(level, SpellConstruct.Kind.GOLDEN_CROW, mouth, face[0], face[1], CROW_DIVE + CROW_AFTER, caster).sizedFor(spell).spawn();
 				SpellFx.send(level, SpellFx.Kind.FLASH, mouth, Vec3.ZERO, 8, SUN_GOLD, 192);
-				HeavenSpells.sound(level, mouth, SoundEvents.PARROT_IMITATE_BLAZE, 4.0f, 0.4f);
-				HeavenSpells.sound(level, mouth, SoundEvents.FIRECHARGE_USE, 3.0f, 0.5f);
+				sound(mouth, SoundEvents.PARROT_IMITATE_BLAZE, 4.0f, 0.4f);
+				sound(mouth, SoundEvents.FIRECHARGE_USE, 3.0f, 0.5f);
 			}
 			if (age == CROW_OPENS + 10) rift.dissolve(); // the crow through, the sky closes behind it
 			long diving = age - CROW_OPENS;
@@ -1124,8 +1116,8 @@ public final class FireSpells {
 			SpellFx.send(level, SpellFx.Kind.FIRE_EXPLOSION, ground, Vec3.ZERO, (float) CROW_RADIUS, 0, 192);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) CROW_RADIUS * 1.8f, 0, 192);
 			SpellFx.send(level, SpellFx.Kind.FLASH, ground.add(0, 4, 0), Vec3.ZERO, 10, SUN_GOLD, 192);
-			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.5f);
-			HeavenSpells.sound(level, ground, SoundEvents.PARROT_IMITATE_BLAZE, 4.0f, 0.3f);
+			sound(ground, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.5f);
+			sound(ground, SoundEvents.PARROT_IMITATE_BLAZE, 4.0f, 0.3f);
 		}
 
 		@Override
@@ -1163,8 +1155,8 @@ public final class FireSpells {
 			// it shrinks away once the sun is out.
 			this.rift = SpellConstruct.create(level, SpellConstruct.Kind.VOID_RIFT, mouth, 90, 0, SUN_COMES + SpellConstruct.FADE, caster).size((float) SUN_RIFT)
 					.tint(SUN_GOLD).spawn();
-			HeavenSpells.sound(level, mouth, SoundEvents.END_PORTAL_SPAWN, 3.0f, 0.6f);
-			HeavenSpells.sound(level, mouth, SoundEvents.BEACON_ACTIVATE, 3.0f, 0.5f);
+			sound(mouth, SoundEvents.END_PORTAL_SPAWN, 3.0f, 0.6f);
+			sound(mouth, SoundEvents.BEACON_ACTIVATE, 3.0f, 0.5f);
 		}
 
 		@Override
@@ -1175,7 +1167,7 @@ public final class FireSpells {
 				sun = SpellConstruct.create(level, SpellConstruct.Kind.VOID_SUN, mouth, yaw, 0, SUN_PULL + SUN_TICKS + SUN_COLLAPSE + SpellConstruct.FADE, caster)
 						.sizedFor(spell).spawn();
 				SpellFx.send(level, SpellFx.Kind.FLASH, mouth, Vec3.ZERO, 8, SUN_GOLD, 192);
-				HeavenSpells.sound(level, mouth, SoundEvents.FIRECHARGE_USE, 4.0f, 0.4f);
+				sound(mouth, SoundEvents.FIRECHARGE_USE, 4.0f, 0.4f);
 			}
 			long burning = age - SUN_COMES;
 			if (burning < 0) {
@@ -1189,13 +1181,13 @@ public final class FireSpells {
 			if (burning == 0) {
 				sun.place(at, yaw, 0);
 				rift.dissolve(); // the sun out, the sky closes behind it
-				HeavenSpells.sound(level, mouth, SoundEvents.END_PORTAL_SPAWN, 2.0f, 1.4f);
+				sound(mouth, SoundEvents.END_PORTAL_SPAWN, 2.0f, 1.4f);
 			}
 			if (burning < SUN_TICKS && burning % 20 == 0) scorch(burning);
 			if (burning == SUN_TICKS) {
 				sun.act("collapse");
-				HeavenSpells.sound(level, at, SoundEvents.BEACON_DEACTIVATE, 4.0f, 0.4f);
-				HeavenSpells.sound(level, at, SoundEvents.WARDEN_SONIC_CHARGE, 3.0f, 0.6f);
+				sound(at, SoundEvents.BEACON_DEACTIVATE, 4.0f, 0.4f);
+				sound(at, SoundEvents.WARDEN_SONIC_CHARGE, 3.0f, 0.6f);
 			}
 			if (burning == SUN_TICKS + SUN_COLLAPSE) burst();
 			return true;
@@ -1209,8 +1201,8 @@ public final class FireSpells {
 				burn(caster, e, null, SUN_DAMAGE, SUN_BURN_SECONDS, spell);
 			}
 			if (burning == 20) Devastation.burn(caster, level, ground, SUN_SCORCH, 0.06);
-			HeavenSpells.sound(level, at, SoundEvents.FIRE_AMBIENT, 4.0f, 0.4f);
-			HeavenSpells.sound(level, at, SoundEvents.BLAZE_BURN, 3.0f, 0.4f);
+			sound(at, SoundEvents.FIRE_AMBIENT, 4.0f, 0.4f);
+			sound(at, SoundEvents.BLAZE_BURN, 3.0f, 0.4f);
 		}
 
 		/** It bursts: everything under it struck and thrown out, the land melted into a glassy crater. */
@@ -1225,8 +1217,8 @@ public final class FireSpells {
 			SpellFx.send(level, SpellFx.Kind.FIRE_EXPLOSION, at, Vec3.ZERO, (float) SUN_BLAST, 0, 192);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) SUN_RADIUS, 0, 192);
 			SpellFx.send(level, SpellFx.Kind.FLASH, at, Vec3.ZERO, 16, SUN_GOLD, 192);
-			HeavenSpells.sound(level, at, SoundEvents.GENERIC_EXPLODE, 5.0f, 0.4f);
-			HeavenSpells.sound(level, at, SoundEvents.DRAGON_FIREBALL_EXPLODE, 4.0f, 0.5f);
+			sound(at, SoundEvents.GENERIC_EXPLODE, 5.0f, 0.4f);
+			sound(at, SoundEvents.DRAGON_FIREBALL_EXPLODE, 4.0f, 0.5f);
 			sun.dissolve();
 		}
 
@@ -1268,8 +1260,8 @@ public final class FireSpells {
 				wheels[i] = SpellConstruct.create(level, SpellConstruct.Kind.WIND_FIRE_WHEEL, at, caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
 				last[i] = ground(at);
 			}
-			HeavenSpells.sound(level, origin, SoundEvents.BLAZE_SHOOT, 3.0f, 0.4f);
-			HeavenSpells.sound(level, origin, SoundEvents.ELYTRA_FLYING, 2.0f, 1.4f);
+			sound(origin, SoundEvents.BLAZE_SHOOT, 3.0f, 0.4f);
+			sound(origin, SoundEvents.ELYTRA_FLYING, 2.0f, 1.4f);
 		}
 
 		/** Wheel {@code i}'s place {@code t} of the way along its run: out to its side and back, crossing the other midway, meeting it at the end. */
@@ -1309,7 +1301,7 @@ public final class FireSpells {
 				}
 				if (rolling % 3 == 0) SpellFx.send(level, SpellFx.Kind.FLAME_BURST, on.add(0, 1, 0), Vec3.ZERO, 3, 0);
 			}
-			if (rolling % 10 == 0) HeavenSpells.sound(level, place(0, t), SoundEvents.FIRECHARGE_USE, 3.0f, 0.5f);
+			if (rolling % 10 == 0) sound(place(0, t), SoundEvents.FIRECHARGE_USE, 3.0f, 0.5f);
 			if (rolling == WHEELS_RUN) burst(place(0, 1).subtract(0, wheelHigh, 0));
 			return true;
 		}
@@ -1326,7 +1318,7 @@ public final class FireSpells {
 			Devastation.crater(caster, level, at, WHEELS_CRATER, WHEELS_CRATER_DEPTH, Devastation.Floor.SCORCHED);
 			SpellFx.send(level, SpellFx.Kind.FIRE_EXPLOSION, at, Vec3.ZERO, (float) WHEELS_BLAST, 0, 192);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, at, Vec3.ZERO, (float) WHEELS_BLAST * 1.6f, 0, 192);
-			HeavenSpells.sound(level, at, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.6f);
+			sound(at, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.6f);
 		}
 
 		@Override
@@ -1358,8 +1350,8 @@ public final class FireSpells {
 			this.sky = ground.add(0, FURNACE_HIGH, 0);
 			this.yaw = caster.getYRot();
 			this.furnace = SpellConstruct.create(level, SpellConstruct.Kind.TRIGRAM_FURNACE, sky, yaw, 0, (int) (end - start), caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, sky, SoundEvents.BLAZE_AMBIENT, 4.0f, 0.4f);
-			HeavenSpells.sound(level, sky, SoundEvents.BEACON_ACTIVATE, 3.0f, 0.5f);
+			sound(sky, SoundEvents.BLAZE_AMBIENT, 4.0f, 0.4f);
+			sound(sky, SoundEvents.BEACON_ACTIVATE, 3.0f, 0.5f);
 		}
 
 		@Override
@@ -1378,7 +1370,7 @@ public final class FireSpells {
 			}
 			if (burning == FURNACE_TICKS) {
 				furnace.act("burst");
-				HeavenSpells.sound(level, ground, SoundEvents.BLAZE_SHOOT, 4.0f, 0.3f);
+				sound(ground, SoundEvents.BLAZE_SHOOT, 4.0f, 0.3f);
 			}
 			if (burning == FURNACE_TICKS + FURNACE_BURSTS) burst();
 			return true;
@@ -1394,8 +1386,8 @@ public final class FireSpells {
 			Devastation.crater(caster, level, ground, FURNACE_CRATER, FURNACE_CRATER_DEPTH, Devastation.Floor.SCORCHED);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) FURNACE_RADIUS, 0, 192);
 			SpellFx.send(level, SpellFx.Kind.FLAME_BURST, ground.add(0, 2, 0), Vec3.ZERO, 8, 0, 192);
-			HeavenSpells.sound(level, ground, SoundEvents.ANVIL_LAND, 4.0f, 0.3f);
-			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.6f);
+			sound(ground, SoundEvents.ANVIL_LAND, 4.0f, 0.3f);
+			sound(ground, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.6f);
 		}
 
 		/** A tick of its burning: foes drawn into its belly and held there, burnt every second. */
@@ -1412,7 +1404,7 @@ public final class FireSpells {
 			}
 			if (burning % 20 == 10) {
 				SpellFx.send(level, SpellFx.Kind.FLAME_BURST, ground.add(0, FURNACE_INSIDE * 0.8, 0), Vec3.ZERO, 6, 0, 192);
-				HeavenSpells.sound(level, ground, SoundEvents.FIRE_AMBIENT, 4.0f, 0.5f);
+				sound(ground, SoundEvents.FIRE_AMBIENT, 4.0f, 0.5f);
 			}
 		}
 
@@ -1441,7 +1433,7 @@ public final class FireSpells {
 					SpellFx.send(level, SpellFx.Kind.FLAME_BURST, from.add(way.scale(along)).add(0, 1, 0), Vec3.ZERO, 3.5f, 0, 192);
 				}
 			}
-			HeavenSpells.sound(level, ground, SoundEvents.BLAZE_SHOOT, 4.0f, 0.5f);
+			sound(ground, SoundEvents.BLAZE_SHOOT, 4.0f, 0.5f);
 		}
 
 		/** It bursts open: everything near struck and hurled out, the ground under it melted into a glassy pit, the land round it burning. */
@@ -1458,8 +1450,8 @@ public final class FireSpells {
 			SpellFx.send(level, SpellFx.Kind.FIRE_EXPLOSION, ground.add(0, 3, 0), Vec3.ZERO, (float) FURNACE_RADIUS, 0, 192);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) FURNACE_RADIUS * 1.8f, 0, 192);
 			SpellFx.send(level, SpellFx.Kind.FLASH, ground.add(0, 6, 0), Vec3.ZERO, 14, SAMADHI_GOLD, 192);
-			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 5.0f, 0.4f);
-			HeavenSpells.sound(level, ground, SoundEvents.DRAGON_FIREBALL_EXPLODE, 4.0f, 0.5f);
+			sound(ground, SoundEvents.GENERIC_EXPLODE, 5.0f, 0.4f);
+			sound(ground, SoundEvents.DRAGON_FIREBALL_EXPLODE, 4.0f, 0.5f);
 			furnace.dissolve();
 		}
 
@@ -1490,8 +1482,8 @@ public final class FireSpells {
 			this.rest = ground.add(0, EMBER_HOVER, 0);
 			this.from = HeavenSpells.fromHands(caster);
 			this.ember = SpellConstruct.create(level, SpellConstruct.Kind.UNDYING_EMBER, from, caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, from, SoundEvents.BLAZE_SHOOT, 2.0f, 0.7f);
-			HeavenSpells.sound(level, from, SoundEvents.FIRECHARGE_USE, 2.0f, 0.5f);
+			sound(from, SoundEvents.BLAZE_SHOOT, 2.0f, 0.7f);
+			sound(from, SoundEvents.FIRECHARGE_USE, 2.0f, 0.5f);
 		}
 
 		@Override
@@ -1509,7 +1501,7 @@ public final class FireSpells {
 			if (since % EMBER_EVERY == 0 && k >= 1 && k <= 2) burst(k);
 			if (since % EMBER_EVERY == EMBER_DIMS && k < 2) {
 				ember.act("dim");
-				HeavenSpells.sound(level, rest, SoundEvents.FIRE_EXTINGUISH, 2.0f, 0.5f);
+				sound(rest, SoundEvents.FIRE_EXTINGUISH, 2.0f, 0.5f);
 			}
 			if (since % 4 == 0 && k < 2) SpellFx.send(level, SpellFx.Kind.FLAME_BURST, rest, Vec3.ZERO, 1.5f, 0);
 			return true;
@@ -1531,8 +1523,8 @@ public final class FireSpells {
 			SpellFx.send(level, SpellFx.Kind.FIRE_EXPLOSION, rest, Vec3.ZERO, (float) blast, 0, 192);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) blast * 1.4f, 0, 192);
 			SpellFx.send(level, SpellFx.Kind.FLASH, rest, Vec3.ZERO, (float) (6 + 3 * k), SAMADHI_GOLD, 192);
-			HeavenSpells.sound(level, rest, SoundEvents.GENERIC_EXPLODE, 3.0f + k, 0.9f - 0.15f * k);
-			HeavenSpells.sound(level, rest, SoundEvents.BLAZE_SHOOT, 3.0f, 0.4f);
+			sound(rest, SoundEvents.GENERIC_EXPLODE, 3.0f + k, 0.9f - 0.15f * k);
+			sound(rest, SoundEvents.BLAZE_SHOOT, 3.0f, 0.4f);
 		}
 
 		@Override
@@ -1559,8 +1551,8 @@ public final class FireSpells {
 			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
 			this.ground = below != null ? below : point;
 			this.pyre = SpellConstruct.create(level, SpellConstruct.Kind.HEAVEN_PYRE, ground, caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, ground, SoundEvents.BLAZE_AMBIENT, 4.0f, 0.4f);
-			HeavenSpells.sound(level, ground, SoundEvents.FIRECHARGE_USE, 4.0f, 0.3f);
+			sound(ground, SoundEvents.BLAZE_AMBIENT, 4.0f, 0.4f);
+			sound(ground, SoundEvents.FIRECHARGE_USE, 4.0f, 0.3f);
 		}
 
 		@Override
@@ -1575,7 +1567,7 @@ public final class FireSpells {
 			}
 			if (burning == PYRE_TICKS) {
 				pyre.act("collapse");
-				HeavenSpells.sound(level, ground, SoundEvents.WOOD_BREAK, 4.0f, 0.4f);
+				sound(ground, SoundEvents.WOOD_BREAK, 4.0f, 0.4f);
 			}
 			if (burning == PYRE_TICKS + PYRE_FALLS) collapse();
 			return true;
@@ -1604,7 +1596,7 @@ public final class FireSpells {
 				double a = level.random.nextDouble() * Math.PI * 2, r = PYRE_RADIUS * (0.2 + 0.75 * level.random.nextDouble());
 				SpellFx.send(level, SpellFx.Kind.FLAME_BURST, ground.add(Math.cos(a) * r, 1, Math.sin(a) * r), Vec3.ZERO, 3 + k * 0.4f, 0, 192);
 			}
-			HeavenSpells.sound(level, ground, SoundEvents.FIRE_AMBIENT, 4.0f, 0.4f + 0.05f * k);
+			sound(ground, SoundEvents.FIRE_AMBIENT, 4.0f, 0.4f + 0.05f * k);
 		}
 
 		/** It collapses on its heart: every foe within struck and thrown out, the land blown into a vast scorched crater. */
@@ -1621,8 +1613,8 @@ public final class FireSpells {
 			SpellFx.send(level, SpellFx.Kind.FIRE_EXPLOSION, ground.add(0, 3, 0), Vec3.ZERO, (float) PYRE_RADIUS, 0, 192);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) PYRE_RADIUS * 1.6f, 0, 192);
 			SpellFx.send(level, SpellFx.Kind.FLASH, ground.add(0, 6, 0), Vec3.ZERO, 16, SAMADHI_GOLD, 192);
-			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 6.0f, 0.4f);
-			HeavenSpells.sound(level, ground, SoundEvents.DRAGON_FIREBALL_EXPLODE, 5.0f, 0.4f);
+			sound(ground, SoundEvents.GENERIC_EXPLODE, 6.0f, 0.4f);
+			sound(ground, SoundEvents.DRAGON_FIREBALL_EXPLODE, 5.0f, 0.4f);
 		}
 
 		@Override
@@ -1652,8 +1644,8 @@ public final class FireSpells {
 			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
 			this.ground = below != null ? below : point;
 			this.pillars = SpellConstruct.create(level, SpellConstruct.Kind.SAMADHI_PILLARS, ground, caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, ground, SoundEvents.BLAZE_SHOOT, 5.0f, 0.4f);
-			HeavenSpells.sound(level, ground, SoundEvents.FIRECHARGE_USE, 5.0f, 0.5f);
+			sound(ground, SoundEvents.BLAZE_SHOOT, 5.0f, 0.4f);
+			sound(ground, SoundEvents.FIRECHARGE_USE, 5.0f, 0.5f);
 		}
 
 		@Override
@@ -1671,7 +1663,7 @@ public final class FireSpells {
 			}
 			if (burning == TRUE_FIRE_TICKS) {
 				pillars.act("converge");
-				HeavenSpells.sound(level, ground, SoundEvents.BEACON_POWER_SELECT, 5.0f, 1.4f);
+				sound(ground, SoundEvents.BEACON_POWER_SELECT, 5.0f, 1.4f);
 			}
 			if (burning == TRUE_FIRE_TICKS + TRUE_FIRE_MEETS) flare();
 			return true;
@@ -1699,8 +1691,8 @@ public final class FireSpells {
 				double a = level.random.nextDouble() * Math.PI * 2, r = TRUE_FIRE_RADIUS * level.random.nextDouble();
 				SpellFx.send(level, SpellFx.Kind.FLAME_BURST, ground.add(Math.cos(a) * r, 1 + level.random.nextDouble() * 20, Math.sin(a) * r), Vec3.ZERO, 3, 0, 192);
 			}
-			HeavenSpells.sound(level, ground, SoundEvents.FIRE_AMBIENT, 5.0f, 0.5f);
-			HeavenSpells.sound(level, ground, SoundEvents.BLAZE_BURN, 3.0f, 0.4f);
+			sound(ground, SoundEvents.FIRE_AMBIENT, 5.0f, 0.5f);
+			sound(ground, SoundEvents.BLAZE_BURN, 3.0f, 0.4f);
 		}
 
 		/** The three meet in one white flare: every foe within struck and thrown out, the land burnt into a scorched crater. */
@@ -1717,8 +1709,8 @@ public final class FireSpells {
 			SpellFx.send(level, SpellFx.Kind.FLASH, ground.add(0, 8, 0), Vec3.ZERO, 18, 0xFFFBEA, 256);
 			SpellFx.send(level, SpellFx.Kind.FIRE_EXPLOSION, ground.add(0, 4, 0), Vec3.ZERO, (float) TRUE_FIRE_FLARE_RADIUS, 0, 256);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) TRUE_FIRE_FLARE_RADIUS * 1.4f, 0, 256);
-			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 6.0f, 0.5f);
-			HeavenSpells.sound(level, ground, SoundEvents.DRAGON_FIREBALL_EXPLODE, 5.0f, 0.6f);
+			sound(ground, SoundEvents.GENERIC_EXPLODE, 6.0f, 0.5f);
+			sound(ground, SoundEvents.DRAGON_FIREBALL_EXPLODE, 5.0f, 0.6f);
 		}
 
 		@Override
@@ -1745,8 +1737,8 @@ public final class FireSpells {
 			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
 			this.ground = below != null ? below : point;
 			this.flower = SpellConstruct.create(level, SpellConstruct.Kind.CHAOS_FLOWER, ground.add(0, 0.2, 0), caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
-			HeavenSpells.sound(level, ground, SoundEvents.BLAZE_SHOOT, 5.0f, 0.3f);
-			HeavenSpells.sound(level, ground, SoundEvents.BEACON_ACTIVATE, 5.0f, 0.4f);
+			sound(ground, SoundEvents.BLAZE_SHOOT, 5.0f, 0.3f);
+			sound(ground, SoundEvents.BEACON_ACTIVATE, 5.0f, 0.4f);
 		}
 
 		private List<LivingEntity> within() {
@@ -1764,7 +1756,7 @@ public final class FireSpells {
 			}
 			if (burning == FIRST_FLAME_TICKS) {
 				flower.act("implode");
-				HeavenSpells.sound(level, ground, SoundEvents.WARDEN_SONIC_CHARGE, 5.0f, 0.6f);
+				sound(ground, SoundEvents.WARDEN_SONIC_CHARGE, 5.0f, 0.6f);
 			}
 			long imploding = burning - FIRST_FLAME_TICKS;
 			if (imploding >= 0 && imploding < FIRST_FLAME_IMPLODES) draw();
@@ -1783,7 +1775,7 @@ public final class FireSpells {
 				double a = level.random.nextDouble() * Math.PI * 2, r = FIRST_FLAME_RADIUS * (0.2 + 0.8 * level.random.nextDouble());
 				SpellFx.send(level, SpellFx.Kind.FLAME_BURST, ground.add(Math.cos(a) * r, 1 + level.random.nextDouble() * 4, Math.sin(a) * r), Vec3.ZERO, 3, i % 2 == 0 ? CHAOS_WHITE : CHAOS_BLACK, 192);
 			}
-			HeavenSpells.sound(level, ground, SoundEvents.FIRE_AMBIENT, 5.0f, 0.3f + 0.05f * k);
+			sound(ground, SoundEvents.FIRE_AMBIENT, 5.0f, 0.3f + 0.05f * k);
 		}
 
 		/** A tick of its slamming shut: every foe within drawn in to its heart (a great beast slowly). */
@@ -1810,8 +1802,8 @@ public final class FireSpells {
 			SpellFx.send(level, SpellFx.Kind.FLASH, ground.add(0, 6, 0), Vec3.ZERO, 22, CHAOS_WHITE, 256);
 			SpellFx.send(level, SpellFx.Kind.FIRE_EXPLOSION, ground.add(0, 4, 0), Vec3.ZERO, (float) FIRST_FLAME_RADIUS, 0, 256);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) FIRST_FLAME_RADIUS * 1.5f, 0, 256);
-			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 6.0f, 0.4f);
-			HeavenSpells.sound(level, ground, SoundEvents.WARDEN_SONIC_BOOM, 5.0f, 0.5f);
+			sound(ground, SoundEvents.GENERIC_EXPLODE, 6.0f, 0.4f);
+			sound(ground, SoundEvents.WARDEN_SONIC_BOOM, 5.0f, 0.5f);
 		}
 
 		@Override
