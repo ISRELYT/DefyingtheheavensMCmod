@@ -125,6 +125,75 @@ public final class FireSpells {
 	public static final float SUN_DAMAGE = 100, SUN_BURST = 1200;
 	public static final int SUN_OPENS = 10, SUN_PULL = 20, SUN_COMES = SUN_OPENS + SUN_PULL, SUN_TICKS = 5 * 20, SUN_COLLAPSE = 14, SUN_AFTER = 16,
 			SUN_BURN_SECONDS = 3, SUN_BURST_BURNS = 8;
+	/**
+	 * Wind-Fire Wheels: how far along the look they run (128 by its realm), how far to either side of it they weave (13), how near each wheel
+	 * it strikes (6) and how hard, how long the struck burn; the trench each burns into the land (5 wide, 4 deep, by its realm); their burst
+	 * where they meet at the end (within 17, and a scorched crater 11 round); how long they take to flare up, their run, and how long after.
+	 */
+	public static final double WHEELS_LENGTH = HeavenSpells.span(Realm.SACRED_VESSEL, 60), WHEELS_WEAVE = HeavenSpells.span(Realm.SACRED_VESSEL, 6),
+			WHEELS_RADIUS = HeavenSpells.span(Realm.SACRED_VESSEL, 3), WHEELS_TRENCH = Devastation.sized(Realm.SACRED_VESSEL, 2.5),
+			WHEELS_TRENCH_DEPTH = Devastation.sized(Realm.SACRED_VESSEL, 2), WHEELS_BLAST = HeavenSpells.span(Realm.SACRED_VESSEL, 8),
+			WHEELS_CRATER = Devastation.sized(Realm.SACRED_VESSEL, 5), WHEELS_CRATER_DEPTH = Devastation.sized(Realm.SACRED_VESSEL, 3);
+	public static final float WHEELS_DAMAGE = 1800, WHEELS_BURST = 1200;
+	public static final int WHEELS_IGNITE = 12, WHEELS_RUN = 40, WHEELS_AFTER = 16, WHEELS_BURN_SECONDS = 10;
+	/**
+	 * Eight Trigrams Furnace: where (up to {@link #FURNACE_RANGE}, 136), how high it falls from (64), whom it draws in (within 25) and how far
+	 * into its belly (within 9 of its heart); its harm as it lands, a second within it, of the jets out of its eight windows (out to 51), and its
+	 * burst; the crater it lands in (11 round), the trenches its jets burn (3 wide, 2 deep) and the glassy pit its burst leaves (19 round, 11
+	 * deep), by its realm; how long it falls, how long it burns, how often it jets, how long its burst takes, and how long after (ticks).
+	 */
+	public static final double FURNACE_RANGE = HeavenSpells.span(Realm.SACRED_VESSEL, 64), FURNACE_HIGH = HeavenSpells.span(Realm.SACRED_VESSEL, 30),
+			FURNACE_RADIUS = HeavenSpells.span(Realm.SACRED_VESSEL, 12), FURNACE_INSIDE = HeavenSpells.span(Realm.SACRED_VESSEL, 4),
+			FURNACE_JETS = HeavenSpells.span(Realm.SACRED_VESSEL, 24), FURNACE_CRATER = Devastation.sized(Realm.SACRED_VESSEL, 5),
+			FURNACE_CRATER_DEPTH = Devastation.sized(Realm.SACRED_VESSEL, 3), FURNACE_JET_WIDTH = Devastation.sized(Realm.SACRED_VESSEL, 1.5),
+			FURNACE_JET_DEPTH = Devastation.sized(Realm.SACRED_VESSEL, 1), FURNACE_PIT = Devastation.sized(Realm.SACRED_VESSEL, 9),
+			FURNACE_PIT_DEPTH = Devastation.sized(Realm.SACRED_VESSEL, 5), FURNACE_SCORCH = Devastation.sized(Realm.SACRED_VESSEL, 16);
+	public static final float FURNACE_SLAM = 1000, FURNACE_BURN = 300, FURNACE_JET = 500, FURNACE_BURST = 1500;
+	public static final int FURNACE_FALL = 24, FURNACE_TICKS = 6 * 20, FURNACE_JET_EVERY = 30, FURNACE_BURSTS = 14, FURNACE_AFTER = 16;
+	/** Samadhi fire's white gold: the furnace's windows burn so. */
+	public static final int SAMADHI_GOLD = 0xFFE8A0;
+	/**
+	 * Undying Ember: where (154 by its realm), how high it hangs over the land (5); its three bursts, each greater than the one before: how far
+	 * round (10, 13, 17), their harm, their craters (6, 8, 11 round and 4, 5, 6 deep, by its realm); how long it flies, how long apart its bursts
+	 * are, how long after each it sinks low, how long each burns what it strikes (seconds), and how long it has after its last (ticks).
+	 */
+	public static final double EMBER_RANGE = HeavenSpells.span(Realm.ENTERING_NIRVANA, 64), EMBER_HOVER = HeavenSpells.span(Realm.ENTERING_NIRVANA, 2);
+	public static final double[] EMBER_BLAST = {HeavenSpells.span(Realm.ENTERING_NIRVANA, 4), HeavenSpells.span(Realm.ENTERING_NIRVANA, 5.6), HeavenSpells.span(Realm.ENTERING_NIRVANA, 7.2)},
+			EMBER_CRATER = {Devastation.sized(Realm.ENTERING_NIRVANA, 2.5), Devastation.sized(Realm.ENTERING_NIRVANA, 3.5), Devastation.sized(Realm.ENTERING_NIRVANA, 4.5)},
+			EMBER_CRATER_DEPTH = {Devastation.sized(Realm.ENTERING_NIRVANA, 1.5), Devastation.sized(Realm.ENTERING_NIRVANA, 2), Devastation.sized(Realm.ENTERING_NIRVANA, 2.5)};
+	public static final float[] EMBER_DAMAGE = {1100, 1500, 2100};
+	public static final int EMBER_FLIGHT = 14, EMBER_EVERY = 25, EMBER_DIMS = 12, EMBER_BURN = 6, EMBER_AFTER = 20;
+	/**
+	 * Pyre of the Heavens: where (154 by its realm), how far round its ring of burning cribs stands (29); what it burns every foe within a
+	 * second, first and then more each second after; its collapse's harm; its crater (29 round and 12 deep, by its realm) and how far round the
+	 * land burns (43); how long it rises, how long it burns, how long it takes to fall, and how long it has after (ticks).
+	 */
+	public static final double PYRE_RANGE = HeavenSpells.span(Realm.ENTERING_NIRVANA, 64), PYRE_RADIUS = HeavenSpells.span(Realm.ENTERING_NIRVANA, 12),
+			PYRE_CRATER = Devastation.sized(Realm.ENTERING_NIRVANA, 12), PYRE_CRATER_DEPTH = Devastation.sized(Realm.ENTERING_NIRVANA, 5),
+			PYRE_SCORCH = Devastation.sized(Realm.ENTERING_NIRVANA, 18);
+	public static final float PYRE_BURN = 150, PYRE_RAMP = 100, PYRE_COLLAPSE = 2500;
+	public static final int PYRE_RISES = 20, PYRE_TICKS = 8 * 20, PYRE_FALLS = 20, PYRE_AFTER = 24;
+	/**
+	 * Samadhi True Fire: where (218 by its realm), how far round its three pillars burn (17) and how far round they draw foes in (34), how far
+	 * round their flare reaches (27); the crater it leaves (17 round, 9 deep, by its realm); its harm each time it burns (to the fire-proof too),
+	 * and its flare's; how long they take to erupt, how long they burn, how often, how long they take to meet, and how long it has after (ticks).
+	 */
+	public static final double TRUE_FIRE_RANGE = HeavenSpells.span(Realm.TRUE_IMMORTAL, 64), TRUE_FIRE_RADIUS = HeavenSpells.span(Realm.TRUE_IMMORTAL, 5),
+			TRUE_FIRE_PULL = HeavenSpells.span(Realm.TRUE_IMMORTAL, 10), TRUE_FIRE_FLARE_RADIUS = HeavenSpells.span(Realm.TRUE_IMMORTAL, 8),
+			TRUE_FIRE_CRATER = Devastation.sized(Realm.TRUE_IMMORTAL, 5), TRUE_FIRE_CRATER_DEPTH = Devastation.sized(Realm.TRUE_IMMORTAL, 2.5);
+	public static final float TRUE_FIRE_BURN = 2500, TRUE_FIRE_FLARE = 20000;
+	public static final int TRUE_FIRE_ERUPTS = 16, TRUE_FIRE_TICKS = 8 * 20, TRUE_FIRE_EVERY = 10, TRUE_FIRE_MEETS = 10, TRUE_FIRE_AFTER = 14;
+	/**
+	 * First Flame Before Heaven: where (218 by its realm), how far round its flower of chaos-fire burns (34: its petals'); the crater its heart
+	 * leaves bursting (27 round, 12 deep, by its realm); its harm each time it burns, and its heart's as it bursts, to all within; how long it
+	 * takes to open, how long it burns, how often, how long it takes to slam shut on its heart, and how long it has after (ticks).
+	 */
+	public static final double FIRST_FLAME_RANGE = HeavenSpells.span(Realm.TRUE_IMMORTAL, 64), FIRST_FLAME_RADIUS = HeavenSpells.span(Realm.TRUE_IMMORTAL, 10),
+			FIRST_FLAME_CRATER = Devastation.sized(Realm.TRUE_IMMORTAL, 8), FIRST_FLAME_CRATER_DEPTH = Devastation.sized(Realm.TRUE_IMMORTAL, 3.5);
+	public static final float FIRST_FLAME_BURN = 3000, FIRST_FLAME_BURST = 45000;
+	public static final int FIRST_FLAME_OPENS = 28, FIRST_FLAME_TICKS = 5 * 20, FIRST_FLAME_EVERY = 10, FIRST_FLAME_IMPLODES = 6, FIRST_FLAME_AFTER = 14;
+	/** Chaos-fire's two lights: the white, and the black (a deep violet, as black flame is drawn). */
+	public static final int CHAOS_WHITE = 0xF2F0FF, CHAOS_BLACK = 0x3E1E5A;
 
 	/** Each caster's yang bomb, while one is set. */
 	private static final Map<UUID, Bomb> BOMBS = new HashMap<>();
@@ -197,6 +266,29 @@ public final class FireSpells {
 			case SUN_THROUGH_THE_VOID -> {
 				LivingEntity aimed = HeavenSpells.aimed(p, SUN_RANGE);
 				HeavenSpells.linger(new VoidSun(p, spell, aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, SUN_RANGE)));
+			}
+			case WIND_FIRE_WHEELS -> HeavenSpells.linger(new Wheels(p, spell));
+			case EIGHT_TRIGRAMS_FURNACE -> {
+				LivingEntity aimed = HeavenSpells.aimed(p, FURNACE_RANGE);
+				HeavenSpells.linger(new Furnace(p, spell, aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, FURNACE_RANGE)));
+			}
+			case UNDYING_EMBER -> {
+				LivingEntity aimed = HeavenSpells.aimed(p, EMBER_RANGE);
+				HeavenSpells.linger(new Ember(p, spell, aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, EMBER_RANGE)));
+			}
+			case PYRE_OF_THE_HEAVENS -> {
+				HeavenSpells.endLingering(p.getUUID(), Pyre.class);
+				LivingEntity aimed = HeavenSpells.aimed(p, PYRE_RANGE);
+				HeavenSpells.linger(new Pyre(p, spell, aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, PYRE_RANGE)));
+			}
+			case SAMADHI_TRUE_FIRE -> {
+				LivingEntity aimed = HeavenSpells.aimed(p, TRUE_FIRE_RANGE);
+				HeavenSpells.linger(new TrueFire(p, spell, aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, TRUE_FIRE_RANGE)));
+			}
+			case FIRST_FLAME_BEFORE_HEAVEN -> {
+				HeavenSpells.endLingering(p.getUUID(), FirstFlame.class);
+				LivingEntity aimed = HeavenSpells.aimed(p, FIRST_FLAME_RANGE);
+				HeavenSpells.linger(new FirstFlame(p, spell, aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, FIRST_FLAME_RANGE)));
 			}
 			default -> {}
 		}
@@ -538,47 +630,56 @@ public final class FireSpells {
 	private static void meteor(LivingEntity p, Spell spell) {
 		LivingEntity aimed = HeavenSpells.aimed(p, METEOR_RANGE);
 		Vec3 at = aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, METEOR_RANGE);
-		fallOn(p, spell, at, SpellProjectile.Shape.METEOR, 1.0f, METEOR_FALL, METEOR_RADIUS, METEOR_DAMAGE, METEOR_CRATER, 0);
+		fallOn(p, spell, at, SpellProjectile.Shape.METEOR, SpellConstruct.Kind.BLAZING_METEOR, 1.0f, METEOR_FALL, METEOR_RADIUS, METEOR_DAMAGE, METEOR_CRATER, 0);
 		HeavenSpells.sound(HeavenSpells.level(p), at, SoundEvents.FIRECHARGE_USE, 2.0f, 0.3f);
 	}
 
 	/**
 	 * Something huge and burning falls from the sky onto {@code at} over {@code ticks} (after {@code delay}), its mark glowing on the
-	 * ground below it: a blast of fire there ({@link #explode}), a scorched crater {@code crater} round.
+	 * ground below it: a blast of fire there ({@link #explode}), a scorched crater {@code crater} round. It flies as {@code body} (a great spell's
+	 * shape, SpellProjectile#body: a sun), striking the land with its "impact", if it has one.
 	 */
-	static void fallOn(LivingEntity p, Spell spell, Vec3 at, SpellProjectile.Shape shape, float scale, int ticks, double radius, float damage,
-					   int crater, int delay) {
+	static void fallOn(LivingEntity p, Spell spell, Vec3 at, SpellProjectile.Shape shape, SpellConstruct.Kind body, float scale, int ticks, double radius,
+					   float damage, int crater, int delay) {
 		ServerLevel level = HeavenSpells.level(p);
 		Vec3 ground = HeavenSpells.groundBelow(level, at.add(0, 2, 0), 4, 32);
 		Vec3 target = ground != null ? ground : at;
 		SpellField mark = SpellField.create(level, SpellField.Kind.METEOR_MARK, target, (float) radius, 1, ticks + delay, p).spawn();
 		Vec3 from = target.add(Vec3.directionFromRotation(0, p.getYRot()).scale(-18)).add(0, 40, 0);
 		Vec3 velocity = target.subtract(from).scale(1.0 / ticks);
-		Runnable drop = () -> SpellProjectile.thrown(level, p, spell, shape, scale, from, velocity, from.distanceTo(target) + 4,
-				new SpellProjectile.Behaviour() {
-					private void land(Vec3 where) {
-						mark.discard();
-						explode(p, spell, level, where, radius, damage, 6, 2.0);
-						SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, where, Vec3.ZERO, (float) radius * 1.5f, 0, 192);
-						scorch(p, level, where, crater);
-					}
+		Runnable drop = () -> {
+			SpellProjectile falling = SpellProjectile.thrown(level, p, spell, shape, scale, from, velocity, from.distanceTo(target) + 4,
+					new SpellProjectile.Behaviour() {
+						private void land(SpellProjectile missile, Vec3 where) {
+							SpellConstruct form = missile.body();
+							if (form != null) {
+								form.place(where.add(0, 1, 0), form.getYRot(), form.getXRot());
+								form.act("impact");
+							}
+							mark.discard();
+							explode(p, spell, level, where, radius, damage, 6, 2.0);
+							SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, where, Vec3.ZERO, (float) radius * 1.5f, 0, 192);
+							scorch(p, level, where, crater);
+						}
 
-					@Override
-					public boolean hitEntity(SpellProjectile missile, LivingEntity hit) {
-						land(missile.position());
-						return false;
-					}
+						@Override
+						public boolean hitEntity(SpellProjectile missile, LivingEntity hit) {
+							land(missile, missile.position());
+							return false;
+						}
 
-					@Override
-					public void hitBlock(SpellProjectile missile, BlockHitResult hit) {
-						land(hit.getLocation());
-					}
+						@Override
+						public void hitBlock(SpellProjectile missile, BlockHitResult hit) {
+							land(missile, hit.getLocation());
+						}
 
-					@Override
-					public void expire(SpellProjectile missile) {
-						land(missile.position());
-					}
-				}).hitSize(scale * 1.5f).data(level.random.nextInt());
+						@Override
+						public void expire(SpellProjectile missile) {
+							land(missile, missile.position());
+						}
+					}).hitSize(scale * 1.5f).data(level.random.nextInt());
+			if (body != null) falling.body(SpellConstruct.create(level, body, from, -falling.getYRot(), -falling.getXRot(), ticks + 20, p).sizedFor(spell).spawn());
+		};
 		if (delay <= 0) drop.run();
 		else HeavenSpells.linger(new Delayed(p, delay, drop));
 	}
@@ -624,11 +725,20 @@ public final class FireSpells {
 
 	// --- Heavenly Being ---
 
+	/**
+	 * Phoenix Descent: a phoenix of vermilion fire (SpellConstruct DESCENT_PHOENIX, the missile's body) gathers beside its caster and stoops on
+	 * their mark, bending toward it; it bursts where it strikes: a blast of fire, a scorched crater.
+	 */
 	private static void phoenix(LivingEntity p, Spell spell) {
-		SpellProjectile.cast(p, spell, SpellProjectile.Shape.PHOENIX, 1.0f, 10, new Vec3(0, 0.6, 1.6), PHOENIX_SPEED, PHOENIX_RANGE,
+		SpellProjectile bird = SpellProjectile.cast(p, spell, SpellProjectile.Shape.PHOENIX, 1.0f, 10, new Vec3(0, 0.6, 1.6), PHOENIX_SPEED, PHOENIX_RANGE,
 				new SpellProjectile.Behaviour() {
+					private void strike(SpellProjectile missile) {
+						if (missile.body() != null) missile.body().act("strike");
+					}
+
 					@Override
 					public boolean hitEntity(SpellProjectile missile, LivingEntity target) {
+						strike(missile);
 						explode(p, spell, HeavenSpells.level(p), missile.position(), PHOENIX_RADIUS, PHOENIX_DAMAGE, 6, 1.8);
 						scorch(p, HeavenSpells.level(p), missile.position(), PHOENIX_CRATER);
 						return false;
@@ -636,6 +746,7 @@ public final class FireSpells {
 
 					@Override
 					public void hitBlock(SpellProjectile missile, BlockHitResult hit) {
+						strike(missile);
 						explode(p, spell, HeavenSpells.level(p), hit.getLocation(), PHOENIX_RADIUS, PHOENIX_DAMAGE, 6, 1.8);
 						scorch(p, HeavenSpells.level(p), hit.getLocation(), PHOENIX_CRATER);
 					}
@@ -646,6 +757,9 @@ public final class FireSpells {
 						HeavenSpells.sound(HeavenSpells.level(p), missile.position(), SoundEvents.BLAZE_SHOOT, 2.0f, 0.5f);
 					}
 				}).homing(null, 3).hitSize(1.5f);
+		// It lives while it forms and flies its reach, at most.
+		int life = 10 + (int) Math.ceil(PHOENIX_RANGE / PHOENIX_SPEED) + 12;
+		bird.body(SpellConstruct.create(HeavenSpells.level(p), SpellConstruct.Kind.DESCENT_PHOENIX, bird.position(), p.getYRot(), p.getXRot(), life, p).sizedFor(spell).spawn());
 		HeavenSpells.sound(HeavenSpells.level(p), p.position(), SoundEvents.PARROT_IMITATE_BLAZE, 2.0f, 0.5f);
 	}
 
@@ -693,27 +807,56 @@ public final class FireSpells {
 		Vec3 centre = aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, SUNS_RANGE);
 		for (int i = 0; i < 9; i++) {
 			Vec3 at = i == 0 ? centre : centre.add(Math.cos(Math.PI * 2 * i / 8) * SUNS_SPREAD, 0, Math.sin(Math.PI * 2 * i / 8) * SUNS_SPREAD);
-			fallOn(p, spell, at, SpellProjectile.Shape.FALLING_SUN, 1.0f, 26, SUNS_RADIUS, SUNS_DAMAGE, SUNS_CRATER, i * 5);
+			fallOn(p, spell, at, SpellProjectile.Shape.FALLING_SUN, SpellConstruct.Kind.FALLING_SUN, 1.0f, 26, SUNS_RADIUS, SUNS_DAMAGE, SUNS_CRATER, i * 5);
 		}
 		HeavenSpells.sound(HeavenSpells.level(p), p.position(), SoundEvents.BEACON_ACTIVATE, 3.0f, 0.4f);
 		HeavenSpells.sound(HeavenSpells.level(p), centre, SoundEvents.BLAZE_SHOOT, 3.0f, 0.3f);
 	}
 
+	/** Ticks into Phoenix Nirvana its phoenix enfolds its caster, and is gone into them (its "enfold" takes 1.1 s). */
+	static final int PHOENIX_ENFOLD = 52, PHOENIX_GONE = PHOENIX_ENFOLD + 22;
+	/** Ticks the phoenix that bursts out of a caster its nirvana saved lasts. */
+	static final int PHOENIX_REBORN = 46;
+
 	/**
 	 * Phoenix Nirvana: for its time, a death of its caster's is undone: they rise again at full health in a burst of flame
-	 * ({@link #NIRVANA_DAMAGE} to all but their allies within {@link #NIRVANA_RADIUS}), harmful effects burnt away. Once.
+	 * ({@link #NIRVANA_DAMAGE} to all but their allies within {@link #NIRVANA_RADIUS}), harmful effects burnt away. Once. As it is cast a phoenix
+	 * of flame (SpellConstruct NIRVANA_PHOENIX) rises out of them before their eyes, spreads its wings and crying enfolds them
+	 * ({@link #PHOENIX_ENFOLD}); as it saves them, another bursts up out of them (NIRVANA_REBIRTH).
 	 */
 	public static final class Nirvana extends HeavenSpells.Timed implements HeavenSpells.DeathListener {
 		private final Spell spell;
 		private boolean spent;
+		/** The phoenix rising out of its caster as it is cast, until it has enfolded them. */
+		private SpellConstruct phoenix;
 
 		Nirvana(LivingEntity caster, Spell spell) {
 			super(caster, NIRVANA_TICKS);
 			this.spell = spell;
+			this.phoenix = SpellConstruct.create(level, SpellConstruct.Kind.NIRVANA_PHOENIX, before(caster), caster.getYRot() + 180, 0, PHOENIX_GONE + 16, caster)
+					.sizedFor(spell).spawn();
+		}
+
+		/** Where the phoenix rises: a little before its caster, facing them (they watch it come, and it enfolds them). */
+		private static Vec3 before(LivingEntity caster) {
+			return caster.position().add(Vec3.directionFromRotation(0, caster.getYRot()).scale(2.5));
 		}
 
 		@Override
 		protected boolean run(long age, long now) {
+			if (phoenix != null) {
+				if (age >= PHOENIX_GONE || !casterHere()) {
+					phoenix.dissolve();
+					phoenix = null;
+				} else {
+					phoenix.place(before(caster), caster.getYRot() + 180, 0);
+					if (age == 16) HeavenSpells.sound(level, caster.position(), SoundEvents.PARROT_IMITATE_BLAZE, 1.6f, 0.6f);
+					if (age == PHOENIX_ENFOLD) {
+						phoenix.act("enfold");
+						HeavenSpells.sound(level, caster.position(), SoundEvents.FIRECHARGE_USE, 1.4f, 0.6f);
+					}
+				}
+			}
 			return !spent && casterHere();
 		}
 
@@ -736,8 +879,13 @@ public final class FireSpells {
 				HeavenSpells.push(caster.position(), e, 2.5);
 			}
 			SpellFx.send(level, SpellFx.Kind.FIRE_EXPLOSION, HeavenSpells.middle(caster), Vec3.ZERO, (float) NIRVANA_RADIUS, 1, 192);
+			// The phoenix bursts up out of them, crying.
+			SpellConstruct reborn = SpellConstruct.create(level, SpellConstruct.Kind.NIRVANA_REBIRTH, caster.position(), caster.getYRot(), 0, PHOENIX_REBORN, caster)
+					.sizedFor(spell).spawn();
+			HeavenSpells.linger(new Delayed(caster, PHOENIX_REBORN - SpellConstruct.FADE, reborn::dissolve));
 			HeavenSpells.sound(level, caster.position(), SoundEvents.TOTEM_USE, 1.5f, 0.6f);
 			HeavenSpells.sound(level, caster.position(), SoundEvents.BLAZE_SHOOT, 2.0f, 0.4f);
+			HeavenSpells.sound(level, caster.position(), SoundEvents.PARROT_IMITATE_BLAZE, 2.0f, 0.5f);
 			HeavenSpells.tell(caster, Component.translatable(ModLang.MSG_PHOENIX_REBORN));
 			return false;
 		}
@@ -745,6 +893,7 @@ public final class FireSpells {
 		@Override
 		public void end() {
 			SpellAuras.remove(caster, SpellAura.PHOENIX_NIRVANA);
+			if (phoenix != null) phoenix.dissolve();
 		}
 	}
 
@@ -1085,6 +1234,589 @@ public final class FireSpells {
 		public void end() {
 			rift.dissolve();
 			if (sun != null) sun.dissolve();
+		}
+	}
+
+	// --- Sacred Vessel ---
+
+	/**
+	 * Wind-Fire Wheels: two great wheels of fire and whirling wind (SpellConstruct WIND_FIRE_WHEEL, its own GeckoLib model) flare up before
+	 * their caster ({@link #WHEELS_IGNITE}) and roll out along the look for {@link #WHEELS_LENGTH} over the land ({@link #WHEELS_RUN}), weaving
+	 * {@link #WHEELS_WEAVE} out to either side and crossing midway: everything a wheel runs over (within {@link #WHEELS_RADIUS}) takes
+	 * {@link #WHEELS_DAMAGE} and burns, and each burns a trench into the land as it rolls. Where they meet again at the end they burst:
+	 * {@link #WHEELS_BURST} to everything within {@link #WHEELS_BLAST}, thrown out, and a scorched crater.
+	 */
+	public static final class Wheels extends HeavenSpells.Timed {
+		private final Spell spell;
+		private final Vec3 origin, along, across;
+		private final SpellConstruct[] wheels = new SpellConstruct[2];
+		private final Vec3[] last = new Vec3[2];
+		@SuppressWarnings("unchecked")
+		private final java.util.Set<LivingEntity>[] struck = new java.util.Set[] {new java.util.HashSet<>(), new java.util.HashSet<>()};
+		private final float wheelHigh;
+
+		Wheels(LivingEntity caster, Spell spell) {
+			super(caster, WHEELS_IGNITE + WHEELS_RUN + WHEELS_AFTER);
+			this.spell = spell;
+			this.along = Vec3.directionFromRotation(0, caster.getYRot());
+			this.across = new Vec3(-along.z, 0, along.x);
+			this.origin = caster.position().add(along.scale(4));
+			// Its middle a wheel's half-height off the land (its model's 2 blocks round, as great as its realm makes it: SpellConstruct#sizedFor).
+			this.wheelHigh = (float) (HeavenSpells.greatness(Realm.SACRED_VESSEL) * 4.0);
+			for (int i = 0; i < 2; i++) {
+				Vec3 at = place(i, 0);
+				wheels[i] = SpellConstruct.create(level, SpellConstruct.Kind.WIND_FIRE_WHEEL, at, caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
+				last[i] = ground(at);
+			}
+			HeavenSpells.sound(level, origin, SoundEvents.BLAZE_SHOOT, 3.0f, 0.4f);
+			HeavenSpells.sound(level, origin, SoundEvents.ELYTRA_FLYING, 2.0f, 1.4f);
+		}
+
+		/** Wheel {@code i}'s place {@code t} of the way along its run: out to its side and back, crossing the other midway, meeting it at the end. */
+		private Vec3 place(int i, double t) {
+			double side = (i == 0 ? 1 : -1) * (2.5 * (1 - t) + WHEELS_WEAVE * Math.sin(2 * Math.PI * t));
+			Vec3 flat = origin.add(along.scale(WHEELS_LENGTH * t)).add(across.scale(side));
+			Vec3 ground = ground(flat);
+			return ground.add(0, wheelHigh, 0);
+		}
+
+		/** The land under {@code at} (or {@code at} where there is none near). */
+		private Vec3 ground(Vec3 at) {
+			Vec3 below = HeavenSpells.groundBelow(level, new Vec3(at.x, origin.y + 24, at.z), 0, 72);
+			return below != null ? below : new Vec3(at.x, origin.y, at.z);
+		}
+
+		@Override
+		protected boolean run(long age, long now) {
+			if (age < WHEELS_IGNITE) return true;
+			long rolling = age - WHEELS_IGNITE;
+			if (rolling > WHEELS_RUN) return true;
+			double t = rolling / (double) WHEELS_RUN;
+			for (int i = 0; i < 2; i++) {
+				Vec3 at = place(i, t), next = place(i, Math.min(1, t + 1.0 / WHEELS_RUN));
+				float[] face = HeavenSpells.facing(next.subtract(at).multiply(1, 0, 1));
+				wheels[i].place(at, rolling >= WHEELS_RUN ? wheels[i].getYRot() : face[0], 0);
+				Vec3 on = at.subtract(0, wheelHigh, 0);
+				Devastation.trench(caster, level, last[i], on, WHEELS_TRENCH, WHEELS_TRENCH_DEPTH);
+				if (rolling % 4 == 0) Devastation.burn(caster, level, on, WHEELS_TRENCH, 0.35);
+				last[i] = on;
+				for (LivingEntity e : HeavenSpells.aroundPoint(level, at, WHEELS_RADIUS + wheelHigh, e -> !struck[0].contains(e) || !struck[1].contains(e))) {
+					if (struck[i].contains(e) || HeavenSpells.spared(caster, e) || e.position().distanceTo(on) > WHEELS_RADIUS + 2 && HeavenSpells.middle(e).distanceTo(at) > WHEELS_RADIUS + 2) continue;
+					struck[i].add(e);
+					e.invulnerableTime = 0;
+					burn(caster, e, null, WHEELS_DAMAGE, WHEELS_BURN_SECONDS, spell);
+					HeavenSpells.push(at, e, 1.6);
+				}
+				if (rolling % 3 == 0) SpellFx.send(level, SpellFx.Kind.FLAME_BURST, on.add(0, 1, 0), Vec3.ZERO, 3, 0);
+			}
+			if (rolling % 10 == 0) HeavenSpells.sound(level, place(0, t), SoundEvents.FIRECHARGE_USE, 3.0f, 0.5f);
+			if (rolling == WHEELS_RUN) burst(place(0, 1).subtract(0, wheelHigh, 0));
+			return true;
+		}
+
+		/** They meet and burst: everything near struck and thrown out, a scorched crater. */
+		private void burst(Vec3 at) {
+			for (SpellConstruct wheel : wheels) wheel.act("burst");
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, at, WHEELS_BLAST + 8, e -> !HeavenSpells.spared(caster, e))) {
+				if (e.position().distanceTo(at) > WHEELS_BLAST) continue;
+				e.invulnerableTime = 0;
+				burn(caster, e, null, WHEELS_BURST, WHEELS_BURN_SECONDS, spell);
+				HeavenSpells.push(at, e, 2.0);
+			}
+			Devastation.crater(caster, level, at, WHEELS_CRATER, WHEELS_CRATER_DEPTH, Devastation.Floor.SCORCHED);
+			SpellFx.send(level, SpellFx.Kind.FIRE_EXPLOSION, at, Vec3.ZERO, (float) WHEELS_BLAST, 0, 192);
+			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, at, Vec3.ZERO, (float) WHEELS_BLAST * 1.6f, 0, 192);
+			HeavenSpells.sound(level, at, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.6f);
+		}
+
+		@Override
+		public void end() {
+			for (SpellConstruct wheel : wheels) if (wheel != null) wheel.dissolve();
+		}
+	}
+
+	/**
+	 * Eight Trigrams Furnace: Laozi's furnace of eight trigrams, bronze on three legs, the eight trigrams round its belly and Samadhi fire in
+	 * it (SpellConstruct TRIGRAM_FURNACE, its own GeckoLib model), falls out of the sky onto where its caster looks ({@link #FURNACE_FALL}):
+	 * {@link #FURNACE_SLAM} to everything under it, and a scorched crater. For {@link #FURNACE_TICKS} it burns: every foe within
+	 * {@link #FURNACE_RADIUS} is drawn into its belly (within {@link #FURNACE_INSIDE} of its heart) and held there, burning for
+	 * {@link #FURNACE_BURN} a second; every {@link #FURNACE_JET_EVERY} ticks jets of Samadhi fire burst out of its eight windows along the land
+	 * to {@link #FURNACE_JETS}, striking whatever is in their way for {@link #FURNACE_JET} and burning trenches. Then it bursts open:
+	 * {@link #FURNACE_BURST} to everything within {@link #FURNACE_RADIUS}, hurled out, and the ground under it melted into a glassy pit.
+	 */
+	public static final class Furnace extends HeavenSpells.Timed {
+		private final Spell spell;
+		private final Vec3 ground, sky;
+		private final SpellConstruct furnace;
+		private final float yaw;
+
+		Furnace(LivingEntity caster, Spell spell, Vec3 point) {
+			super(caster, FURNACE_FALL + FURNACE_TICKS + FURNACE_BURSTS + FURNACE_AFTER);
+			this.spell = spell;
+			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
+			this.ground = below != null ? below : point;
+			this.sky = ground.add(0, FURNACE_HIGH, 0);
+			this.yaw = caster.getYRot();
+			this.furnace = SpellConstruct.create(level, SpellConstruct.Kind.TRIGRAM_FURNACE, sky, yaw, 0, (int) (end - start), caster).sizedFor(spell).spawn();
+			HeavenSpells.sound(level, sky, SoundEvents.BLAZE_AMBIENT, 4.0f, 0.4f);
+			HeavenSpells.sound(level, sky, SoundEvents.BEACON_ACTIVATE, 3.0f, 0.5f);
+		}
+
+		@Override
+		protected boolean run(long age, long now) {
+			if (age <= FURNACE_FALL) {
+				double f = age / (double) FURNACE_FALL;
+				furnace.place(sky.lerp(ground, f * f), yaw, 0);
+				if (age == FURNACE_FALL) land();
+				return true;
+			}
+			long burning = age - FURNACE_FALL;
+			if (burning < FURNACE_TICKS) {
+				hold(burning);
+				if (burning % FURNACE_JET_EVERY == FURNACE_JET_EVERY - 1) jets();
+				return true;
+			}
+			if (burning == FURNACE_TICKS) {
+				furnace.act("burst");
+				HeavenSpells.sound(level, ground, SoundEvents.BLAZE_SHOOT, 4.0f, 0.3f);
+			}
+			if (burning == FURNACE_TICKS + FURNACE_BURSTS) burst();
+			return true;
+		}
+
+		/** It lands: everything under it struck, a scorched crater round its feet. */
+		private void land() {
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, FURNACE_INSIDE * 1.6 + 8, e -> !HeavenSpells.spared(caster, e))) {
+				if (Math.hypot(e.getX() - ground.x, e.getZ() - ground.z) > FURNACE_INSIDE * 1.6 || e.getY() > ground.y + 16 || e.getY() < ground.y - 8) continue;
+				e.invulnerableTime = 0;
+				burn(caster, e, null, FURNACE_SLAM, 6, spell);
+			}
+			Devastation.crater(caster, level, ground, FURNACE_CRATER, FURNACE_CRATER_DEPTH, Devastation.Floor.SCORCHED);
+			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) FURNACE_RADIUS, 0, 192);
+			SpellFx.send(level, SpellFx.Kind.FLAME_BURST, ground.add(0, 2, 0), Vec3.ZERO, 8, 0, 192);
+			HeavenSpells.sound(level, ground, SoundEvents.ANVIL_LAND, 4.0f, 0.3f);
+			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.6f);
+		}
+
+		/** A tick of its burning: foes drawn into its belly and held there, burnt every second. */
+		private void hold(long burning) {
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, FURNACE_RADIUS + 12, e -> !HeavenSpells.spared(caster, e))) {
+				double d = Math.hypot(e.getX() - ground.x, e.getZ() - ground.z);
+				if (d > FURNACE_RADIUS || e.getY() > ground.y + 24 || e.getY() < ground.y - 12) continue;
+				if (d > FURNACE_INSIDE * 0.7 && !HeavenSpells.greatBeast(caster, e)) {
+					Vec3 in = ground.add(0, 1, 0).subtract(e.position()).multiply(1, 0.3, 1).normalize();
+					HeavenSpells.move(e, in.scale(d > FURNACE_INSIDE ? 0.9 : 0.4).add(0, 0.08, 0));
+					HeavenSpells.safeFall(e, 60);
+				}
+				if (burning % 20 == 10 && d <= FURNACE_INSIDE) burn(caster, e, null, FURNACE_BURN, 4, spell);
+			}
+			if (burning % 20 == 10) {
+				SpellFx.send(level, SpellFx.Kind.FLAME_BURST, ground.add(0, FURNACE_INSIDE * 0.8, 0), Vec3.ZERO, 6, 0, 192);
+				HeavenSpells.sound(level, ground, SoundEvents.FIRE_AMBIENT, 4.0f, 0.5f);
+			}
+		}
+
+		/** Its eight windows jet Samadhi fire along the land: whatever is in their way struck, a burning trench under each. */
+		private void jets() {
+			furnace.act("jet");
+			Vec3 from = ground.add(0, 1, 0);
+			for (int k = 0; k < 8; k++) {
+				Vec3 way = Vec3.directionFromRotation(0, yaw + 22.5f + 45 * k);
+				Vec3 to = from.add(way.scale(FURNACE_JETS));
+				for (LivingEntity e : HeavenSpells.aroundPoint(level, from.add(way.scale(FURNACE_JETS / 2)), FURNACE_JETS / 2 + 4, e -> !HeavenSpells.spared(caster, e))) {
+					Vec3 rel = e.position().subtract(from);
+					double t = rel.dot(way);
+					if (t < FURNACE_INSIDE || t > FURNACE_JETS || rel.subtract(way.scale(t)).multiply(1, 0, 1).length() > FURNACE_JET_WIDTH + 1.5
+							|| Math.abs(rel.y) > 10) continue;
+					e.invulnerableTime = 0;
+					burn(caster, e, null, FURNACE_JET, 6, spell);
+					HeavenSpells.push(from, e, 1.2);
+				}
+				Devastation.trench(caster, level, from.add(way.scale(FURNACE_INSIDE)), to, FURNACE_JET_WIDTH, FURNACE_JET_DEPTH);
+				Devastation.burn(caster, level, from.add(way.scale(FURNACE_JETS * 0.7)), FURNACE_JET_WIDTH * 2, 0.4);
+				SpellFx.send(level, SpellFx.Kind.STREAK, from.add(way.scale(FURNACE_INSIDE)).add(0, 1.5, 0), way.scale(FURNACE_JETS - FURNACE_INSIDE), 0, SAMADHI_GOLD, 192);
+				// Its fire seen all along the jet, not only at the window: bursts of flame out along it.
+				for (int i = 1; i <= 4; i++) {
+					double along = FURNACE_INSIDE + (FURNACE_JETS - FURNACE_INSIDE) * i / 4.5;
+					SpellFx.send(level, SpellFx.Kind.FLAME_BURST, from.add(way.scale(along)).add(0, 1, 0), Vec3.ZERO, 3.5f, 0, 192);
+				}
+			}
+			HeavenSpells.sound(level, ground, SoundEvents.BLAZE_SHOOT, 4.0f, 0.5f);
+		}
+
+		/** It bursts open: everything near struck and hurled out, the ground under it melted into a glassy pit, the land round it burning. */
+		private void burst() {
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, FURNACE_RADIUS + 12, e -> !HeavenSpells.spared(caster, e))) {
+				if (Math.hypot(e.getX() - ground.x, e.getZ() - ground.z) > FURNACE_RADIUS || e.getY() > ground.y + 24 || e.getY() < ground.y - 12) continue;
+				e.invulnerableTime = 0;
+				burn(caster, e, null, FURNACE_BURST, 10, spell);
+				HeavenSpells.move(e, e.position().subtract(ground).multiply(1, 0, 1).normalize().scale(2.4).add(0, 1.2, 0));
+				HeavenSpells.safeFall(e, 120);
+			}
+			Devastation.crater(caster, level, ground, FURNACE_PIT, FURNACE_PIT_DEPTH, Devastation.Floor.GLASSY);
+			Devastation.burn(caster, level, ground, FURNACE_SCORCH, 0.14);
+			SpellFx.send(level, SpellFx.Kind.FIRE_EXPLOSION, ground.add(0, 3, 0), Vec3.ZERO, (float) FURNACE_RADIUS, 0, 192);
+			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) FURNACE_RADIUS * 1.8f, 0, 192);
+			SpellFx.send(level, SpellFx.Kind.FLASH, ground.add(0, 6, 0), Vec3.ZERO, 14, SAMADHI_GOLD, 192);
+			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 5.0f, 0.4f);
+			HeavenSpells.sound(level, ground, SoundEvents.DRAGON_FIREBALL_EXPLODE, 4.0f, 0.5f);
+			furnace.dissolve();
+		}
+
+		@Override
+		public void end() {
+			furnace.dissolve();
+		}
+	}
+
+	// --- Entering Nirvana ---
+
+	/**
+	 * Undying Ember: the ember the phoenix leaves when it burns, wrapped in feathers of flame (SpellConstruct UNDYING_EMBER, its own GeckoLib
+	 * model), flies from its caster's hands to where they look ({@link #EMBER_FLIGHT}) and hangs {@link #EMBER_HOVER} over the land there; it
+	 * bursts three times, {@link #EMBER_EVERY} ticks apart, sinking low after each and blazing up again, each burst greater: everything within
+	 * {@link #EMBER_BLAST} takes {@link #EMBER_DAMAGE}, burning, thrown out, and the land is blown into a scorched crater ({@link #EMBER_CRATER}).
+	 */
+	public static final class Ember extends HeavenSpells.Timed {
+		private final Spell spell;
+		private final Vec3 from, ground, rest;
+		private final SpellConstruct ember;
+
+		Ember(LivingEntity caster, Spell spell, Vec3 point) {
+			super(caster, EMBER_FLIGHT + 2 * EMBER_EVERY + EMBER_AFTER);
+			this.spell = spell;
+			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
+			this.ground = below != null ? below : point;
+			this.rest = ground.add(0, EMBER_HOVER, 0);
+			this.from = HeavenSpells.fromHands(caster);
+			this.ember = SpellConstruct.create(level, SpellConstruct.Kind.UNDYING_EMBER, from, caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
+			HeavenSpells.sound(level, from, SoundEvents.BLAZE_SHOOT, 2.0f, 0.7f);
+			HeavenSpells.sound(level, from, SoundEvents.FIRECHARGE_USE, 2.0f, 0.5f);
+		}
+
+		@Override
+		protected boolean run(long age, long now) {
+			if (age <= EMBER_FLIGHT) {
+				double f = age / (double) EMBER_FLIGHT;
+				Vec3 here = from.lerp(rest, f).add(0, Math.sin(Math.PI * f) * Math.min(10, from.distanceTo(rest) * 0.2), 0);
+				float[] face = HeavenSpells.facing(rest.subtract(from).multiply(1, 0, 1));
+				ember.place(here, face[0], 0);
+				if (age == EMBER_FLIGHT) burst(0);
+				return true;
+			}
+			long since = age - EMBER_FLIGHT;
+			int k = (int) (since / EMBER_EVERY);
+			if (since % EMBER_EVERY == 0 && k >= 1 && k <= 2) burst(k);
+			if (since % EMBER_EVERY == EMBER_DIMS && k < 2) {
+				ember.act("dim");
+				HeavenSpells.sound(level, rest, SoundEvents.FIRE_EXTINGUISH, 2.0f, 0.5f);
+			}
+			if (since % 4 == 0 && k < 2) SpellFx.send(level, SpellFx.Kind.FLAME_BURST, rest, Vec3.ZERO, 1.5f, 0);
+			return true;
+		}
+
+		/** Its {@code k}th burst (0, 1, 2), each greater than the last: everything near struck, burning, thrown out; the land cratered. */
+		private void burst(int k) {
+			ember.act("flare");
+			double blast = EMBER_BLAST[k];
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, rest, blast + 4, e -> !HeavenSpells.spared(caster, e))) {
+				if (HeavenSpells.middle(e).distanceTo(rest) > blast + e.getBbWidth()) continue;
+				e.invulnerableTime = 0;
+				burn(caster, e, null, EMBER_DAMAGE[k], EMBER_BURN, spell);
+				HeavenSpells.push(rest, e, 1.2 + 0.4 * k);
+				HeavenSpells.safeFall(e, 80);
+			}
+			Devastation.crater(caster, level, ground, EMBER_CRATER[k], EMBER_CRATER_DEPTH[k], Devastation.Floor.SCORCHED);
+			Devastation.burn(caster, level, ground, blast, 0.15);
+			SpellFx.send(level, SpellFx.Kind.FIRE_EXPLOSION, rest, Vec3.ZERO, (float) blast, 0, 192);
+			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) blast * 1.4f, 0, 192);
+			SpellFx.send(level, SpellFx.Kind.FLASH, rest, Vec3.ZERO, (float) (6 + 3 * k), SAMADHI_GOLD, 192);
+			HeavenSpells.sound(level, rest, SoundEvents.GENERIC_EXPLODE, 3.0f + k, 0.9f - 0.15f * k);
+			HeavenSpells.sound(level, rest, SoundEvents.BLAZE_SHOOT, 3.0f, 0.4f);
+		}
+
+		@Override
+		public void end() {
+			ember.dissolve();
+		}
+	}
+
+	/**
+	 * Pyre of the Heavens: a ring of cribs of great logs stacked crosswise and burning, walls of fire between them (SpellConstruct HEAVEN_PYRE,
+	 * its own GeckoLib model), rises round where its caster looks, {@link #PYRE_RADIUS} round ({@link #PYRE_RISES}), and burns for
+	 * {@link #PYRE_TICKS}: no foe inside gets out through its walls of fire (it is thrown back in, burning), and every second every foe within takes
+	 * {@link #PYRE_BURN}, and {@link #PYRE_RAMP} more each second after, as the pyre roars higher. Then it collapses in on its heart
+	 * ({@link #PYRE_FALLS}): {@link #PYRE_COLLAPSE} to every foe within, and the land blown into a vast scorched crater, burning round it.
+	 */
+	public static final class Pyre extends HeavenSpells.Timed {
+		private final Spell spell;
+		private final Vec3 ground;
+		private final SpellConstruct pyre;
+
+		Pyre(LivingEntity caster, Spell spell, Vec3 point) {
+			super(caster, PYRE_RISES + PYRE_TICKS + PYRE_FALLS + PYRE_AFTER);
+			this.spell = spell;
+			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
+			this.ground = below != null ? below : point;
+			this.pyre = SpellConstruct.create(level, SpellConstruct.Kind.HEAVEN_PYRE, ground, caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
+			HeavenSpells.sound(level, ground, SoundEvents.BLAZE_AMBIENT, 4.0f, 0.4f);
+			HeavenSpells.sound(level, ground, SoundEvents.FIRECHARGE_USE, 4.0f, 0.3f);
+		}
+
+		@Override
+		protected boolean run(long age, long now) {
+			if (age < PYRE_RISES) return true;
+			long burning = age - PYRE_RISES;
+			if (burning == 0) Devastation.burn(caster, level, ground, PYRE_RADIUS, 0.04);
+			if (burning < PYRE_TICKS) {
+				hold();
+				if (burning % 20 == 10) roar((int) (burning / 20));
+				return true;
+			}
+			if (burning == PYRE_TICKS) {
+				pyre.act("collapse");
+				HeavenSpells.sound(level, ground, SoundEvents.WOOD_BREAK, 4.0f, 0.4f);
+			}
+			if (burning == PYRE_TICKS + PYRE_FALLS) collapse();
+			return true;
+		}
+
+		/** A tick of its burning: whoever would pass out through its walls of fire thrown back in, burning. */
+		private void hold() {
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, PYRE_RADIUS * 1.25 + 8, e -> !HeavenSpells.spared(caster, e))) {
+				Vec3 off = e.position().subtract(ground).multiply(1, 0, 1);
+				double d = off.length();
+				if (d < PYRE_RADIUS * 0.9 || d > PYRE_RADIUS * 1.12 || e.getY() > ground.y + 20 || e.getY() < ground.y - 10 || HeavenSpells.greatBeast(caster, e)) continue;
+				HeavenSpells.move(e, off.normalize().scale(-0.8).add(0, 0.25, 0));
+				e.setSecondsOnFire(4);
+				HeavenSpells.safeFall(e, 60);
+			}
+		}
+
+		/** Its {@code k}th second: every foe within burnt, more than the second before; its flames leaping. */
+		private void roar(int k) {
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, PYRE_RADIUS + 8, e -> !HeavenSpells.spared(caster, e))) {
+				if (Math.hypot(e.getX() - ground.x, e.getZ() - ground.z) > PYRE_RADIUS || e.getY() > ground.y + 20 || e.getY() < ground.y - 10) continue;
+				e.invulnerableTime = 0;
+				burn(caster, e, null, PYRE_BURN + PYRE_RAMP * k, 4, spell);
+			}
+			for (int i = 0; i < 4 + k; i++) {
+				double a = level.random.nextDouble() * Math.PI * 2, r = PYRE_RADIUS * (0.2 + 0.75 * level.random.nextDouble());
+				SpellFx.send(level, SpellFx.Kind.FLAME_BURST, ground.add(Math.cos(a) * r, 1, Math.sin(a) * r), Vec3.ZERO, 3 + k * 0.4f, 0, 192);
+			}
+			HeavenSpells.sound(level, ground, SoundEvents.FIRE_AMBIENT, 4.0f, 0.4f + 0.05f * k);
+		}
+
+		/** It collapses on its heart: every foe within struck and thrown out, the land blown into a vast scorched crater. */
+		private void collapse() {
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, PYRE_RADIUS + 10, e -> !HeavenSpells.spared(caster, e))) {
+				if (Math.hypot(e.getX() - ground.x, e.getZ() - ground.z) > PYRE_RADIUS + 2 || e.getY() > ground.y + 24 || e.getY() < ground.y - 12) continue;
+				e.invulnerableTime = 0;
+				burn(caster, e, null, PYRE_COLLAPSE, 10, spell);
+				HeavenSpells.move(e, e.position().subtract(ground).multiply(1, 0, 1).normalize().scale(2.0).add(0, 1.2, 0));
+				HeavenSpells.safeFall(e, 120);
+			}
+			Devastation.crater(caster, level, ground, PYRE_CRATER, PYRE_CRATER_DEPTH, Devastation.Floor.SCORCHED);
+			Devastation.burn(caster, level, ground, PYRE_SCORCH, 0.12);
+			SpellFx.send(level, SpellFx.Kind.FIRE_EXPLOSION, ground.add(0, 3, 0), Vec3.ZERO, (float) PYRE_RADIUS, 0, 192);
+			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) PYRE_RADIUS * 1.6f, 0, 192);
+			SpellFx.send(level, SpellFx.Kind.FLASH, ground.add(0, 6, 0), Vec3.ZERO, 16, SAMADHI_GOLD, 192);
+			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 6.0f, 0.4f);
+			HeavenSpells.sound(level, ground, SoundEvents.DRAGON_FIREBALL_EXPLODE, 5.0f, 0.4f);
+		}
+
+		@Override
+		public void end() {
+			pyre.dissolve();
+		}
+	}
+
+	// --- True Immortal ---
+
+	/**
+	 * Samadhi True Fire: the three fires of Samadhi, the heart's crimson, the spirit's gold and the essence's white, erupt where its caster looks
+	 * in three pillars braided about one another (SpellConstruct SAMADHI_PILLARS, its own GeckoLib model; {@link #TRUE_FIRE_ERUPTS}), scorching
+	 * the land, and burn for {@link #TRUE_FIRE_TICKS}: every foe within {@link #TRUE_FIRE_PULL} is drawn in to them (a great beast slowly), and
+	 * every {@link #TRUE_FIRE_EVERY} ticks every foe within {@link #TRUE_FIRE_RADIUS} takes {@link #TRUE_FIRE_BURN} (true fire: qi, not flame, so
+	 * it burns the fire-proof too). Then the three meet in one white flare ({@link #TRUE_FIRE_MEETS}):
+	 * {@link #TRUE_FIRE_FLARE} to every foe within {@link #TRUE_FIRE_FLARE_RADIUS}, the land burnt into a scorched crater.
+	 */
+	public static final class TrueFire extends HeavenSpells.Timed {
+		private final Spell spell;
+		private final Vec3 ground;
+		private final SpellConstruct pillars;
+
+		TrueFire(LivingEntity caster, Spell spell, Vec3 point) {
+			super(caster, TRUE_FIRE_ERUPTS + TRUE_FIRE_TICKS + TRUE_FIRE_MEETS + TRUE_FIRE_AFTER);
+			this.spell = spell;
+			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
+			this.ground = below != null ? below : point;
+			this.pillars = SpellConstruct.create(level, SpellConstruct.Kind.SAMADHI_PILLARS, ground, caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
+			HeavenSpells.sound(level, ground, SoundEvents.BLAZE_SHOOT, 5.0f, 0.4f);
+			HeavenSpells.sound(level, ground, SoundEvents.FIRECHARGE_USE, 5.0f, 0.5f);
+		}
+
+		@Override
+		protected boolean run(long age, long now) {
+			if (age < TRUE_FIRE_ERUPTS) return true;
+			long burning = age - TRUE_FIRE_ERUPTS;
+			if (burning == 0) {
+				Devastation.burn(caster, level, ground, TRUE_FIRE_RADIUS, 0.2);
+				SpellFx.send(level, SpellFx.Kind.FIRE_EXPLOSION, ground.add(0, 2, 0), Vec3.ZERO, (float) TRUE_FIRE_RADIUS, 0, 192);
+			}
+			if (burning < TRUE_FIRE_TICKS) {
+				draw();
+				if (burning % TRUE_FIRE_EVERY == 0) burn();
+				return true;
+			}
+			if (burning == TRUE_FIRE_TICKS) {
+				pillars.act("converge");
+				HeavenSpells.sound(level, ground, SoundEvents.BEACON_POWER_SELECT, 5.0f, 1.4f);
+			}
+			if (burning == TRUE_FIRE_TICKS + TRUE_FIRE_MEETS) flare();
+			return true;
+		}
+
+		/** A tick of its burning: every foe near drawn in to the pillars. */
+		private void draw() {
+			for (LivingEntity e : WoodSpells.foesWithin(caster, level, ground, TRUE_FIRE_PULL, 10, 30)) {
+				double dx = e.getX() - ground.x, dz = e.getZ() - ground.z, d = Math.max(1.0e-3, Math.hypot(dx, dz));
+				if (d < 2) continue;
+				double pull = HeavenSpells.greatBeast(caster, e) ? 0.1 : 0.32;
+				Vec3 v = e.getDeltaMovement();
+				HeavenSpells.move(e, new Vec3(-dx / d * pull, v.y, -dz / d * pull));
+			}
+		}
+
+		/** Every foe within burnt by the true fire. */
+		private void burn() {
+			for (LivingEntity e : WoodSpells.foesWithin(caster, level, ground, TRUE_FIRE_RADIUS, 10, 40)) {
+				HeavenSpells.strikeAgain(caster, e, TRUE_FIRE_BURN, spell);
+				e.setSecondsOnFire(4);
+				SpellFx.send(level, SpellFx.Kind.FLAME_BURST, HeavenSpells.middle(e), Vec3.ZERO, 1.6f, 0);
+			}
+			for (int i = 0; i < 5; i++) {
+				double a = level.random.nextDouble() * Math.PI * 2, r = TRUE_FIRE_RADIUS * level.random.nextDouble();
+				SpellFx.send(level, SpellFx.Kind.FLAME_BURST, ground.add(Math.cos(a) * r, 1 + level.random.nextDouble() * 20, Math.sin(a) * r), Vec3.ZERO, 3, 0, 192);
+			}
+			HeavenSpells.sound(level, ground, SoundEvents.FIRE_AMBIENT, 5.0f, 0.5f);
+			HeavenSpells.sound(level, ground, SoundEvents.BLAZE_BURN, 3.0f, 0.4f);
+		}
+
+		/** The three meet in one white flare: every foe within struck and thrown out, the land burnt into a scorched crater. */
+		private void flare() {
+			for (LivingEntity e : WoodSpells.foesWithin(caster, level, ground, TRUE_FIRE_FLARE_RADIUS, 12, 50)) {
+				e.invulnerableTime = 0;
+				HeavenSpells.strike(caster, e, TRUE_FIRE_FLARE, spell);
+				e.setSecondsOnFire(10);
+				if (!HeavenSpells.greatBeast(caster, e)) HeavenSpells.push(ground, e, 2.5);
+				HeavenSpells.safeFall(e, 100);
+			}
+			Devastation.crater(caster, level, ground, TRUE_FIRE_CRATER, TRUE_FIRE_CRATER_DEPTH, Devastation.Floor.SCORCHED);
+			Devastation.burn(caster, level, ground, TRUE_FIRE_FLARE_RADIUS * 1.4, 0.12);
+			SpellFx.send(level, SpellFx.Kind.FLASH, ground.add(0, 8, 0), Vec3.ZERO, 18, 0xFFFBEA, 256);
+			SpellFx.send(level, SpellFx.Kind.FIRE_EXPLOSION, ground.add(0, 4, 0), Vec3.ZERO, (float) TRUE_FIRE_FLARE_RADIUS, 0, 256);
+			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) TRUE_FIRE_FLARE_RADIUS * 1.4f, 0, 256);
+			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 6.0f, 0.5f);
+			HeavenSpells.sound(level, ground, SoundEvents.DRAGON_FIREBALL_EXPLODE, 5.0f, 0.6f);
+		}
+
+		@Override
+		public void end() {
+			pillars.dissolve();
+		}
+	}
+
+	/**
+	 * First Flame Before Heaven: the flower of chaos-fire that burned before heaven, its petals of white flame and black by turns (SpellConstruct
+	 * CHAOS_FLOWER, its own GeckoLib model), opens where its caster looks, {@link #FIRST_FLAME_RADIUS} round ({@link #FIRST_FLAME_OPENS}), and
+	 * burns for {@link #FIRST_FLAME_TICKS}: every {@link #FIRST_FLAME_EVERY} ticks every foe within takes {@link #FIRST_FLAME_BURN}. Then its
+	 * petals slam shut on its heart, drawing every foe within in, and its heart bursts ({@link #FIRST_FLAME_IMPLODES}): {@link #FIRST_FLAME_BURST}
+	 * to every foe within, the land blown into a crater of glass.
+	 */
+	public static final class FirstFlame extends HeavenSpells.Timed {
+		private final Spell spell;
+		private final Vec3 ground;
+		private final SpellConstruct flower;
+
+		FirstFlame(LivingEntity caster, Spell spell, Vec3 point) {
+			super(caster, FIRST_FLAME_OPENS + FIRST_FLAME_TICKS + FIRST_FLAME_IMPLODES + FIRST_FLAME_AFTER);
+			this.spell = spell;
+			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
+			this.ground = below != null ? below : point;
+			this.flower = SpellConstruct.create(level, SpellConstruct.Kind.CHAOS_FLOWER, ground.add(0, 0.2, 0), caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
+			HeavenSpells.sound(level, ground, SoundEvents.BLAZE_SHOOT, 5.0f, 0.3f);
+			HeavenSpells.sound(level, ground, SoundEvents.BEACON_ACTIVATE, 5.0f, 0.4f);
+		}
+
+		private List<LivingEntity> within() {
+			return WoodSpells.foesWithin(caster, level, ground, FIRST_FLAME_RADIUS, 10, 30);
+		}
+
+		@Override
+		protected boolean run(long age, long now) {
+			if (age < FIRST_FLAME_OPENS) return true;
+			long burning = age - FIRST_FLAME_OPENS;
+			if (burning == 0) Devastation.burn(caster, level, ground, FIRST_FLAME_RADIUS, 0.08);
+			if (burning < FIRST_FLAME_TICKS) {
+				if (burning % FIRST_FLAME_EVERY == 0) burn((int) (burning / FIRST_FLAME_EVERY));
+				return true;
+			}
+			if (burning == FIRST_FLAME_TICKS) {
+				flower.act("implode");
+				HeavenSpells.sound(level, ground, SoundEvents.WARDEN_SONIC_CHARGE, 5.0f, 0.6f);
+			}
+			long imploding = burning - FIRST_FLAME_TICKS;
+			if (imploding >= 0 && imploding < FIRST_FLAME_IMPLODES) draw();
+			if (imploding == FIRST_FLAME_IMPLODES) burst();
+			return true;
+		}
+
+		/** Its {@code k}th burning: every foe within struck by the chaos-fire, white and black flames leaping over it. */
+		private void burn(int k) {
+			for (LivingEntity e : within()) {
+				HeavenSpells.strikeAgain(caster, e, FIRST_FLAME_BURN, spell);
+				e.setSecondsOnFire(4);
+				SpellFx.send(level, SpellFx.Kind.FLAME_BURST, HeavenSpells.middle(e), Vec3.ZERO, 1.6f, k % 2 == 0 ? CHAOS_WHITE : CHAOS_BLACK);
+			}
+			for (int i = 0; i < 6; i++) {
+				double a = level.random.nextDouble() * Math.PI * 2, r = FIRST_FLAME_RADIUS * (0.2 + 0.8 * level.random.nextDouble());
+				SpellFx.send(level, SpellFx.Kind.FLAME_BURST, ground.add(Math.cos(a) * r, 1 + level.random.nextDouble() * 4, Math.sin(a) * r), Vec3.ZERO, 3, i % 2 == 0 ? CHAOS_WHITE : CHAOS_BLACK, 192);
+			}
+			HeavenSpells.sound(level, ground, SoundEvents.FIRE_AMBIENT, 5.0f, 0.3f + 0.05f * k);
+		}
+
+		/** A tick of its slamming shut: every foe within drawn in to its heart (a great beast slowly). */
+		private void draw() {
+			for (LivingEntity e : within()) {
+				Vec3 to = ground.add(0, 2, 0).subtract(e.position());
+				double pull = HeavenSpells.greatBeast(caster, e) ? 0.15 : Math.min(2.5, to.length() / 5);
+				HeavenSpells.move(e, to.normalize().scale(pull));
+				HeavenSpells.safeFall(e, 80);
+			}
+		}
+
+		/** Its heart bursts: every foe within struck and thrown out, the land blown into a crater of glass. */
+		private void burst() {
+			for (LivingEntity e : within()) {
+				e.invulnerableTime = 0;
+				HeavenSpells.strike(caster, e, FIRST_FLAME_BURST, spell);
+				e.setSecondsOnFire(10);
+				if (!HeavenSpells.greatBeast(caster, e)) HeavenSpells.move(e, e.position().subtract(ground).multiply(1, 0, 1).normalize().scale(2.4).add(0, 1.4, 0));
+				HeavenSpells.safeFall(e, 120);
+			}
+			Devastation.crater(caster, level, ground, FIRST_FLAME_CRATER, FIRST_FLAME_CRATER_DEPTH, Devastation.Floor.GLASSY);
+			Devastation.burn(caster, level, ground, FIRST_FLAME_RADIUS * 1.3, 0.1);
+			SpellFx.send(level, SpellFx.Kind.FLASH, ground.add(0, 6, 0), Vec3.ZERO, 22, CHAOS_WHITE, 256);
+			SpellFx.send(level, SpellFx.Kind.FIRE_EXPLOSION, ground.add(0, 4, 0), Vec3.ZERO, (float) FIRST_FLAME_RADIUS, 0, 256);
+			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) FIRST_FLAME_RADIUS * 1.5f, 0, 256);
+			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 6.0f, 0.4f);
+			HeavenSpells.sound(level, ground, SoundEvents.WARDEN_SONIC_BOOM, 5.0f, 0.5f);
+		}
+
+		@Override
+		public void end() {
+			flower.dissolve();
 		}
 	}
 

@@ -39,6 +39,31 @@ final class TendrilRenderer {
 	/** Where its sheen comes from (it is lit by nothing but its own dim light: a little more on top). */
 	private static final Vec3 LIGHT = new Vec3(0.35, 1, 0.25).normalize();
 
+	/**
+	 * How a tendril of its kind looks: its body's colours from its darkest to its sheen (four stops), the light up it (its threads, their
+	 * brightest, its welling drops), whether it is thorned, how gnarled its round is, how fast its threads wind round it, the light drawn out
+	 * of its catch, whether it is a chain of links (no threads: its light only wells along it), and how it first goes from where it stands (a
+	 * share of its reach, down from a rift above, or up out of the ground). The void tree's root ({@link #ROOT}); Immortal-Binding Golden
+	 * Ropes' rope of braided gold ({@link #ROPE}, Sacred Vessel, 2026-10-24: smooth, unthorned, its two strands' light winding fast round it as
+	 * a braid's); a chain of hell's black iron, ghost fire running along it ({@link #CHAIN}, Chains of Hell, 2026-10-25: up out of the way to
+	 * hell at its caster's feet).
+	 */
+	private record Style(float[][] ramp, float[] light, float[] lightWhite, float[] catchGlow, boolean thorns, float knot, float wind, boolean links, float rise) {}
+
+	private static final Style ROOT = new Style(new float[][] {BLACK, BARK, VIOLET, SHEEN}, LIFE, LIFE_WHITE, VOID, true, 0.16f, 0.75f, false, -0.42f);
+	private static final Style ROPE = new Style(new float[][] {SpellRender.rgb(0x4A2E08), SpellRender.rgb(0xA87414), SpellRender.rgb(0xE8B83A), SpellRender.rgb(0xFFF0B0)},
+			SpellRender.rgb(0xFFD866), SpellRender.rgb(0xFFFBE6), SpellRender.rgb(0xFFC84A), false, 0.04f, 2.4f, false, -0.42f);
+	private static final Style CHAIN = new Style(new float[][] {SpellRender.rgb(0x111217), SpellRender.rgb(0x2A2D36), SpellRender.rgb(0x505664), SpellRender.rgb(0x9098A8)},
+			SpellRender.rgb(0x56EEE2), SpellRender.rgb(0xC4FFF6), SpellRender.rgb(0x18A6A8), false, 0, 0, true, 0.32f);
+
+	private static Style style(SpellConstruct tendril) {
+		return switch (tendril.kind()) {
+			case GOLDEN_ROPE -> ROPE;
+			case HELL_CHAIN -> CHAIN;
+			default -> ROOT;
+		};
+	}
+
 	private TendrilRenderer() {}
 
 	/** A point of its path: where, how thick there, how far along it from its root (blocks). */
@@ -55,6 +80,7 @@ final class TendrilRenderer {
 		float coil = SpellRender.ease(Mth.clamp((time - LASH) / COIL, 0, 1)) * Mth.clamp(going * 2 - 1, 0, 1);
 		if (lash <= 0.01f) return;
 		long seed = root.getId() * 0x9E3779B97F4A7C15L;
+		Style style = style(root);
 		float girth = root.size();
 		float thick = 0.42f * girth, thin = 0.13f * girth, coiled = thin * 0.9f;
 		Vec3 feet = held.getPosition(partialTick).subtract(root.getPosition(partialTick));
@@ -66,12 +92,12 @@ final class TendrilRenderer {
 		Vec3 grip = feet.add(Math.cos(toward) * round, top, Math.sin(toward) * round);
 		Vec3 helixWay = new Vec3(-Math.sin(toward) * round * TURNS * Mth.TWO_PI, bottom - top, Math.cos(toward) * round * TURNS * Mth.TWO_PI).normalize();
 
-		// Its reach: down out of the rift first, then round to come at its catch along its coil's way, writhing as it holds.
+		// Its reach: down out of the rift first (or up out of the ground), then round to come at its catch along its coil's way, writhing as it holds.
 		double reach = grip.length();
 		Vec3 side = new Vec3(-grip.z, 0, grip.x);
 		side = side.lengthSqr() < 1.0e-6 ? new Vec3(1, 0, 0) : side.normalize();
 		float writhe = 1 - 0.6f * coil;
-		Vec3 c1 = new Vec3(grip.x * 0.18, -reach * 0.42, grip.z * 0.18)
+		Vec3 c1 = new Vec3(grip.x * 0.18, reach * style.rise(), grip.z * 0.18)
 				.add(side.scale(Mth.sin(time * 0.13f + hash(seed, 1) * 6) * reach * 0.07 * writhe)).add(0, Mth.sin(time * 0.09f + hash(seed, 2) * 6) * reach * 0.03, 0);
 		Vec3 c2 = grip.subtract(helixWay.scale(reach * 0.3)).add(0, reach * 0.12, 0)
 				.add(side.scale(Mth.sin(time * 0.17f + hash(seed, 3) * 6) * reach * 0.05 * writhe));
@@ -111,8 +137,9 @@ final class TendrilRenderer {
 		try {
 			Matrix4f m = pose.last().pose();
 			Frames frames = frames(path);
-			bark(buffers.getBuffer(Types.BODY), m, seed, path, frames, reachEnds);
-			life(buffers.getBuffer(SpellRender.flatGlow()), m, seed, path, frames, time, coil, held, feet, width, height);
+			if (style.links()) links(buffers.getBuffer(Types.BODY), m, seed, style, path, girth);
+			else bark(buffers.getBuffer(Types.BODY), m, seed, style, path, frames, reachEnds);
+			life(buffers.getBuffer(SpellRender.flatGlow()), m, seed, style, path, frames, time, coil, held, feet, width, height);
 		} finally {
 			SpellBuffers.end();
 		}
@@ -152,10 +179,10 @@ final class TendrilRenderer {
 	}
 
 	/** Its round at point {@code i}, side {@code j}: gnarled, swelling and shrinking a little along it. */
-	private static Vec3 ring(List<Point> path, Frames f, long seed, int i, int j) {
+	private static Vec3 ring(Style style, List<Point> path, Frames f, long seed, int i, int j) {
 		Point p = path.get(i);
 		double angle = Mth.TWO_PI * j / SIDES + p.along() * 0.08;
-		float knot = 1 + 0.16f * (hash(seed, (int) (p.along() / 1.4f) * 31 + j) - 0.5f) + 0.1f * Mth.sin(p.along() * 0.9f + j);
+		float knot = 1 + style.knot() * (hash(seed, (int) (p.along() / 1.4f) * 31 + j) - 0.5f) + style.knot() * 0.6f * Mth.sin(p.along() * 0.9f + j);
 		return p.at().add(f.across()[i].scale(Math.cos(angle) * p.radius() * knot)).add(f.over()[i].scale(Math.sin(angle) * p.radius() * knot));
 	}
 
@@ -164,62 +191,103 @@ final class TendrilRenderer {
 	}
 
 	/** Its wood: the round, ridged and gnarled, lit a little on top; thorns off its reach; its growing end drawn to a point. */
-	private static void bark(VertexConsumer vc, Matrix4f m, long seed, List<Point> path, Frames f, int reachEnds) {
+	private static void bark(VertexConsumer vc, Matrix4f m, long seed, Style style, List<Point> path, Frames f, int reachEnds) {
 		int n = path.size();
 		for (int i = 0; i < n - 1; i++) {
 			for (int j = 0; j < SIDES; j++) {
-				Vec3 a = ring(path, f, seed, i, j), b = ring(path, f, seed, i, j + 1), c = ring(path, f, seed, i + 1, j + 1), d = ring(path, f, seed, i + 1, j);
+				Vec3 a = ring(style, path, f, seed, i, j), b = ring(style, path, f, seed, i, j + 1), c = ring(style, path, f, seed, i + 1, j + 1), d = ring(style, path, f, seed, i + 1, j);
 				Vec3 out = a.add(b).add(c).add(d).scale(0.25).subtract(path.get(i).at().add(path.get(i + 1).at()).scale(0.5));
 				float lit = out.lengthSqr() < 1.0e-8 ? 0.5f : (float) Math.max(0, out.normalize().dot(LIGHT));
 				float ridge = hash(seed, i * 13 + j * 7 + 5);
-				float[] colour = shade(0.16f + 0.3f * ridge + 0.42f * lit);
+				float[] colour = shade(style, 0.16f + 0.3f * ridge + 0.42f * lit);
 				vertex(vc, m, a, colour, 1);
 				vertex(vc, m, b, colour, 1);
 				vertex(vc, m, c, colour, 1);
 				vertex(vc, m, d, colour, 1);
 			}
 			// A thorn now and then off its reach, hooked back toward the rift.
-			if (i < reachEnds - 1 && i > 1 && hash(seed, i * 5 + 77) < 0.28f) {
+			if (style.thorns() && i < reachEnds - 1 && i > 1 && hash(seed, i * 5 + 77) < 0.28f) {
 				Point p = path.get(i);
 				int j = (int) (hash(seed, i * 5 + 78) * SIDES);
-				Vec3 base0 = ring(path, f, seed, i, j), base1 = ring(path, f, seed, i + 1, j);
+				Vec3 base0 = ring(style, path, f, seed, i, j), base1 = ring(style, path, f, seed, i + 1, j);
 				Vec3 outward = base0.subtract(p.at()).normalize();
 				Vec3 tip = base0.add(outward.scale(p.radius() * 1.4 + 0.15)).subtract(f.way()[i].scale(p.radius() * 0.9));
-				float[] colour = shade(0.22f);
+				float[] colour = shade(style, 0.22f);
 				vertex(vc, m, base0, colour, 1);
 				vertex(vc, m, base1, colour, 1);
-				vertex(vc, m, tip, shade(0.5f), 1);
-				vertex(vc, m, tip, shade(0.5f), 1);
+				vertex(vc, m, tip, shade(style, 0.5f), 1);
+				vertex(vc, m, tip, shade(style, 0.5f), 1);
 			}
 		}
 		// Its end drawn to a point (while it lashes out, and its coil's last).
 		int last = n - 1;
 		Vec3 tip = path.get(last).at().add(f.way()[last].scale(path.get(last).radius() * 2.2));
 		for (int j = 0; j < SIDES; j++) {
-			Vec3 a = ring(path, f, seed, last, j), b = ring(path, f, seed, last, j + 1);
-			vertex(vc, m, a, shade(0.3f), 1);
-			vertex(vc, m, b, shade(0.3f), 1);
-			vertex(vc, m, tip, shade(0.55f), 1);
-			vertex(vc, m, tip, shade(0.55f), 1);
+			Vec3 a = ring(style, path, f, seed, last, j), b = ring(style, path, f, seed, last, j + 1);
+			vertex(vc, m, a, shade(style, 0.3f), 1);
+			vertex(vc, m, b, shade(style, 0.3f), 1);
+			vertex(vc, m, tip, shade(style, 0.55f), 1);
+			vertex(vc, m, tip, shade(style, 0.55f), 1);
 		}
 	}
 
-	/** The void tree's wood from its darkest to its sheen, {@code t} of the way. */
-	private static float[] shade(float t) {
+	/** How far apart a chain's links are along it, how long and how wide each is, and how thick its iron, at a girth of 1 (blocks). */
+	private static final float LINK_STEP = 0.3f, LINK_LONG = 0.21f, LINK_WIDE = 0.12f, LINK_IRON = 0.035f;
+
+	/**
+	 * A chain's links along its path: each an oval of iron round it, every other one turned a quarter about the way it runs (as links hang),
+	 * each overlapping the next; lit a little on top.
+	 */
+	private static void links(VertexConsumer vc, Matrix4f m, long seed, Style style, List<Point> path, float girth) {
+		float total = path.get(path.size() - 1).along();
+		float step = LINK_STEP * girth, along = LINK_LONG * girth, wide = LINK_WIDE * girth, iron = LINK_IRON * girth;
+		int segments = 10;
+		int k = 0;
+		for (float at = step * 0.5f; at <= total; at += step, k++) {
+			Vec3 middle = pointAlong(path, at).at();
+			Vec3 way = pointAlong(path, Math.min(total, at + 0.05f)).at().subtract(pointAlong(path, Math.max(0, at - 0.05f)).at());
+			way = way.lengthSqr() < 1.0e-10 ? new Vec3(0, 1, 0) : way.normalize();
+			Vec3 a = way.cross(Math.abs(way.y) > 0.9 ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0)).normalize(), b = way.cross(a);
+			Vec3 across = k % 2 == 0 ? a : b, normal = way.cross(across);
+			float worn = 0.12f * hash(seed, k * 7 + 3);
+			for (int s = 0; s < segments; s++) {
+				double t0 = Mth.TWO_PI * s / segments, t1 = Mth.TWO_PI * (s + 1) / segments;
+				Vec3 p0 = middle.add(way.scale(Math.cos(t0) * along)).add(across.scale(Math.sin(t0) * wide));
+				Vec3 p1 = middle.add(way.scale(Math.cos(t1) * along)).add(across.scale(Math.sin(t1) * wide));
+				// Its iron's round there: out from the link's middle, and across its face; each side lit as it faces the light.
+				Vec3 out0 = p0.subtract(middle).normalize(), out1 = p1.subtract(middle).normalize();
+				for (int q = 0; q < 4; q++) {
+					double f0 = Mth.HALF_PI * q, f1 = Mth.HALF_PI * (q + 1), fm = (f0 + f1) / 2;
+					Vec3 a0 = p0.add(out0.scale(Math.cos(f0) * iron)).add(normal.scale(Math.sin(f0) * iron)), b0 = p0.add(out0.scale(Math.cos(f1) * iron)).add(normal.scale(Math.sin(f1) * iron));
+					Vec3 a1 = p1.add(out1.scale(Math.cos(f0) * iron)).add(normal.scale(Math.sin(f0) * iron)), b1 = p1.add(out1.scale(Math.cos(f1) * iron)).add(normal.scale(Math.sin(f1) * iron));
+					float lit = (float) Math.max(0, out0.scale(Math.cos(fm)).add(normal.scale(Math.sin(fm))).dot(LIGHT));
+					float[] c = shade(style, 0.14f + 0.6f * lit + worn);
+					vertex(vc, m, a0, c, 1);
+					vertex(vc, m, b0, c, 1);
+					vertex(vc, m, b1, c, 1);
+					vertex(vc, m, a1, c, 1);
+				}
+			}
+		}
+	}
+
+	/** Its body from its darkest to its sheen ({@link Style#ramp}: the void tree's wood, the rope's gold), {@code t} of the way. */
+	private static float[] shade(Style style, float t) {
 		t = Mth.clamp(t, 0, 1);
+		float[][] ramp = style.ramp();
 		float[] lo, hi;
 		float f;
 		if (t < 0.4f) {
-			lo = BLACK;
-			hi = BARK;
+			lo = ramp[0];
+			hi = ramp[1];
 			f = t / 0.4f;
 		} else if (t < 0.75f) {
-			lo = BARK;
-			hi = VIOLET;
+			lo = ramp[1];
+			hi = ramp[2];
 			f = (t - 0.4f) / 0.35f;
 		} else {
-			lo = VIOLET;
-			hi = SHEEN;
+			lo = ramp[2];
+			hi = ramp[3];
 			f = (t - 0.75f) / 0.25f;
 		}
 		return new float[] {Mth.lerp(f, lo[0], hi[0]), Mth.lerp(f, lo[1], hi[1]), Mth.lerp(f, lo[2], hi[2])};
@@ -229,14 +297,15 @@ final class TendrilRenderer {
 	 * The life it drinks: two threads winding up it, brighter in swells that run up toward the rift; the life itself welling up it in glowing
 	 * drops; and, once it has wound round its catch, the catch's own light drawn out of it, pulsing.
 	 */
-	private static void life(VertexConsumer vc, Matrix4f m, long seed, List<Point> path, Frames f, float time, float coil, Entity held, Vec3 feet, float width,
+	private static void life(VertexConsumer vc, Matrix4f m, long seed, Style style, List<Point> path, Frames f, float time, float coil, Entity held, Vec3 feet, float width,
 			float height) {
+		float[] LIFE = style.light(), LIFE_WHITE = style.lightWhite(), VOID = style.catchGlow(); // its style's light (the void tree's: its life)
 		int n = path.size();
-		for (int thread = 0; thread < 2; thread++) {
+		for (int thread = 0; thread < (style.links() ? 0 : 2); thread++) {
 			for (int i = 0; i < n - 1; i++) {
 				Point p = path.get(i), q = path.get(i + 1);
-				Vec3 a = surface(p, f, i, thread), b = surface(q, f, i + 1, thread);
-				Vec3 wa = thread(f, i, p, thread), wb = thread(f, i + 1, q, thread);
+				Vec3 a = surface(style, p, f, i, thread), b = surface(style, q, f, i + 1, thread);
+				Vec3 wa = thread(style, f, i, p, thread), wb = thread(style, f, i + 1, q, thread);
 				float swellA = 0.35f + 0.65f * Math.max(0, Mth.sin(p.along() * 0.55f + time * 0.45f + thread * 2)), swellB = 0.35f + 0.65f * Math.max(0, Mth.sin(q.along() * 0.55f + time * 0.45f + thread * 2));
 				float[] colourA = mix(LIFE, LIFE_WHITE, swellA * 0.6f), colourB = mix(LIFE, LIFE_WHITE, swellB * 0.6f);
 				float wideA = 0.05f + p.radius() * 0.12f, wideB = 0.05f + q.radius() * 0.12f;
@@ -272,14 +341,14 @@ final class TendrilRenderer {
 	}
 
 	/** A thread's point on its surface at point {@code i} (two threads winding round it, half a turn apart). */
-	private static Vec3 surface(Point p, Frames f, int i, int thread) {
-		double angle = p.along() * 0.75 + thread * Math.PI;
+	private static Vec3 surface(Style style, Point p, Frames f, int i, int thread) {
+		double angle = p.along() * style.wind() + thread * Math.PI;
 		return p.at().add(f.across()[i].scale(Math.cos(angle) * p.radius() * 1.04)).add(f.over()[i].scale(Math.sin(angle) * p.radius() * 1.04));
 	}
 
 	/** Across a thread there (round its surface), the way its band spreads. */
-	private static Vec3 thread(Frames f, int i, Point p, int thread) {
-		double angle = p.along() * 0.75 + thread * Math.PI;
+	private static Vec3 thread(Style style, Frames f, int i, Point p, int thread) {
+		double angle = p.along() * style.wind() + thread * Math.PI;
 		return f.across()[i].scale(-Math.sin(angle)).add(f.over()[i].scale(Math.cos(angle)));
 	}
 

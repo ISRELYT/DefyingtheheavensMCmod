@@ -479,7 +479,7 @@ public final class MeditationManager {
 			session.stelesNear = stelesWithin(p, GhostMethods.STELE_BONUS_RADIUS);
 		}
 		for (GhostMethod method : session.stelesInReach) {
-			if (s.knows(method) || !GhostMethods.canLearn(c, method)) continue;
+			if (s.knows(method) || !GhostMethods.canLearn(c, method) || !method.taughtInTheWorld()) continue; // one carved before the rule unread
 			double seconds = session.steleSeconds.merge(method, 0.5, Double::sum);
 			if (seconds == 0.5) p.displayClientMessage(Component.translatable(ModLang.MSG_STELE_READING, method.getDisplayName()), true);
 			if (seconds >= GhostMethods.STELE_LEARN_SECONDS) {
@@ -577,7 +577,8 @@ public final class MeditationManager {
 			session.daoStelesNear = daoStelesWithin(p, HeavenMethods.STELE_BONUS_RADIUS);
 		}
 		for (HeavenMethod method : session.daoStelesInReach) {
-			if (s.knows(method) || !c.rootsAllow(method.element())) continue; // roots of other elements can't read it (Physique)
+			// Roots of other elements can't read it (Physique); nor anyone a True Immortal method carved before the worlds stopped teaching them.
+			if (s.knows(method) || !c.rootsAllow(method.element()) || !method.realm().taughtInTheWorld()) continue;
 			double seconds = session.daoSteleSeconds.merge(method, 0.5, Double::sum);
 			if (seconds == 0.5) p.displayClientMessage(Component.translatable(ModLang.MSG_DAO_STELE_READING, method.getDisplayName()), true);
 			if (seconds >= HeavenMethods.STELE_LEARN_SECONDS) {

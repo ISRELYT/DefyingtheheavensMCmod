@@ -38,9 +38,15 @@ public class VoidShatteringSpellsGameTests implements FabricGameTest {
 		return p;
 	}
 
-	/** A hardy husk to be struck (4000 health, fire-proof against burning's own harm), standing at {@code at}. */
+	/**
+	 * A hardy husk's health: more than three times its caster's (HeavenSpells#GREAT_BEYOND), a great beast to it, as every hardy husk was when a
+	 * great beast was any of 300 health or more.
+	 */
+	private static final float HEALTH = 8000;
+
+	/** A hardy husk to be struck ({@link #HEALTH}, fire-proof against burning's own harm), standing at {@code at}. */
 	private static Husk husk(ServerLevel level, Vec3 at, List<LivingEntity> spawned) {
-		Husk husk = HeavenSpellTesting.idle(level, EntityType.HUSK, at, 4000, spawned);
+		Husk husk = HeavenSpellTesting.idle(level, EntityType.HUSK, at, HEALTH, spawned);
 		husk.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 20 * 600, 0, false, false));
 		return husk;
 	}
@@ -146,7 +152,7 @@ public class VoidShatteringSpellsGameTests implements FabricGameTest {
 		});
 		helper.runAfterDelay(WoodSpells.THUNDER_GATHER + WoodSpells.THUNDER_EVERY + 4, () -> {
 			try {
-				helper.assertTrue(under.getHealth() <= 4000 - 2 * WoodSpells.THUNDER_DAMAGE + 1, "Two volleys: what stands under it struck twice (" + under.getHealth() + ")");
+				helper.assertTrue(under.getHealth() <= HEALTH - 2 * WoodSpells.THUNDER_DAMAGE + 1, "Two volleys: what stands under it struck twice (" + under.getHealth() + ")");
 				helper.assertTrue(under.hasEffect(MobEffects.MOVEMENT_SLOWDOWN) && under.getEffect(MobEffects.MOVEMENT_SLOWDOWN).getAmplifier() >= 5, "...and rooted");
 				helper.assertTrue(beyond.getHealth() == beyond.getMaxHealth(), "...not what stands beyond it (" + beyond.getHealth() + ")");
 				helper.succeed();
@@ -184,7 +190,7 @@ public class VoidShatteringSpellsGameTests implements FabricGameTest {
 				helper.assertTrue(grasps.stream().noneMatch(c -> c.target() == beyond), "...none beyond it");
 				helper.assertTrue(seized.getY() > home.y + WoodSpells.WITHER_LIFT * 0.6, "...one it can lift hauled up into the air (" + (seized.getY() - home.y) + " up)");
 				helper.assertTrue(Math.abs(drunk.getY() - home.y) < 1, "...a great beast only held where it stands");
-				helper.assertTrue(drunk.getHealth() <= 4000 - 2 * WoodSpells.WITHER_DRAIN + 1, "What stands under it drained twice (" + drunk.getHealth() + ")");
+				helper.assertTrue(drunk.getHealth() <= HEALTH - 2 * WoodSpells.WITHER_DRAIN + 1, "What stands under it drained twice (" + drunk.getHealth() + ")");
 				helper.assertTrue(drunk.hasEffect(MobEffects.WEAKNESS) && drunk.hasEffect(MobEffects.MOVEMENT_SLOWDOWN), "...weakened and slowed");
 				helper.assertTrue(beyond.getHealth() == beyond.getMaxHealth(), "...not what stands beyond its reach");
 				helper.assertTrue(p.getHealth() > hurt, "What it drinks mends its caster (" + hurt + " -> " + p.getHealth() + ")");
@@ -226,7 +232,7 @@ public class VoidShatteringSpellsGameTests implements FabricGameTest {
 			}
 			helper.runAfterDelay(FireSpells.CROW_DIVE + 2, () -> {
 				try {
-					helper.assertTrue(struck.getHealth() <= 4000 - FireSpells.CROW_DAMAGE + 1 && struck.getRemainingFireTicks() > 0, "It strikes, burning (" + struck.getHealth() + ")");
+					helper.assertTrue(struck.getHealth() <= HEALTH - FireSpells.CROW_DAMAGE + 1 && struck.getRemainingFireTicks() > 0, "It strikes, burning (" + struck.getHealth() + ")");
 					helper.assertTrue(beyond.getHealth() == beyond.getMaxHealth(), "...not what stands beyond its reach");
 					helper.assertTrue(floorLeft(level, floor.centre(), point, 8) < stone, "...and the land is melted into a crater");
 				} catch (RuntimeException e) {
@@ -258,7 +264,7 @@ public class VoidShatteringSpellsGameTests implements FabricGameTest {
 		helper.runAfterDelay(FireSpells.SUN_COMES + 45, () -> {
 			String wrong = constructs(level, hang, 2, SpellConstruct.Kind.VOID_SUN).size() != 1 ? "A sun is dragged out of the rift and hangs clear below it"
 					: !constructs(level, hang, 40, SpellConstruct.Kind.VOID_RIFT).isEmpty() ? "...the rift shrinking away behind it"
-					: under.getHealth() > 4000 - 2 * FireSpells.SUN_DAMAGE + 1 || scorched.getHealth() > 4000 - 2 * FireSpells.SUN_DAMAGE + 1
+					: under.getHealth() > HEALTH - 2 * FireSpells.SUN_DAMAGE + 1 || scorched.getHealth() > HEALTH - 2 * FireSpells.SUN_DAMAGE + 1
 							? "Everything under it burns each second (" + under.getHealth() + ", " + scorched.getHealth() + ")" : null;
 			if (wrong != null) {
 				finish(helper, p, spawned, floor);
@@ -267,8 +273,8 @@ public class VoidShatteringSpellsGameTests implements FabricGameTest {
 			}
 			helper.runAfterDelay(burst - FireSpells.SUN_COMES - 45 + 3, () -> {
 				try {
-					helper.assertTrue(under.getHealth() <= 4000 - 5 * FireSpells.SUN_DAMAGE - FireSpells.SUN_BURST + 1, "...then it bursts on what stands under it (" + under.getHealth() + ")");
-					helper.assertTrue(scorched.getHealth() > 4000 - 6 * FireSpells.SUN_DAMAGE, "...its burst not reaching as far as its burning (" + scorched.getHealth() + ")");
+					helper.assertTrue(under.getHealth() <= HEALTH - 5 * FireSpells.SUN_DAMAGE - FireSpells.SUN_BURST + 1, "...then it bursts on what stands under it (" + under.getHealth() + ")");
+					helper.assertTrue(scorched.getHealth() > HEALTH - 6 * FireSpells.SUN_DAMAGE, "...its burst not reaching as far as its burning (" + scorched.getHealth() + ")");
 					helper.assertTrue(beyond.getHealth() == beyond.getMaxHealth(), "...nor what stands beyond either");
 					helper.assertTrue(floorLeft(level, floor.centre(), point, 8) < stone, "...and the ground under it is melted into a crater");
 				} catch (RuntimeException e) {
@@ -295,7 +301,7 @@ public class VoidShatteringSpellsGameTests implements FabricGameTest {
 			try {
 				List<SpellConstruct> pillar = constructs(level, point, 40, SpellConstruct.Kind.BUZHOU_PILLAR);
 				helper.assertTrue(pillar.size() == 1 && pillar.get(0).getY() < home.y + 1, "The broken pillar has come down out of the sky into the land");
-				helper.assertTrue(crushed.getHealth() <= 4000 - EarthSpells.BUZHOU_DAMAGE + 1, "...crushing what it fell on (" + crushed.getHealth() + ")");
+				helper.assertTrue(crushed.getHealth() <= HEALTH - EarthSpells.BUZHOU_DAMAGE + 1, "...crushing what it fell on (" + crushed.getHealth() + ")");
 				helper.assertTrue(crushed.hasEffect(MobEffects.MOVEMENT_SLOWDOWN) && crushed.getEffect(MobEffects.MOVEMENT_SLOWDOWN).getAmplifier() >= 5, "...and pinning it");
 				helper.assertTrue(beyond.getHealth() == beyond.getMaxHealth(), "...not what stands beyond its reach");
 				helper.assertTrue(floorLeft(level, floor.centre(), point, 10) < stone, "...and smashing the land into a crater");
@@ -335,7 +341,7 @@ public class VoidShatteringSpellsGameTests implements FabricGameTest {
 				// Past its lock (risen at LOCK_RISES, locking LOCK_TICKS): the check above was LOCK_RISES + 8 in.
 				helper.runAfterDelay(EarthSpells.LOCK_TICKS, () -> {
 					try {
-						helper.assertTrue(crushed.getHealth() <= 4000 - 4 * EarthSpells.LOCK_DAMAGE + 1, "...crushed each second it holds (" + crushed.getHealth() + ")");
+						helper.assertTrue(crushed.getHealth() <= HEALTH - 4 * EarthSpells.LOCK_DAMAGE + 1, "...crushed each second it holds (" + crushed.getHealth() + ")");
 						helper.assertTrue(beyond.getHealth() == beyond.getMaxHealth(), "...not what stands beyond it");
 						helper.assertTrue(!EarthSpells.spaceLocked(held), "Its time out, space is free again");
 						helper.assertTrue(landKept(level, floor, home, 20, stone, quiet), "...and the land is left as it was");
@@ -371,7 +377,7 @@ public class VoidShatteringSpellsGameTests implements FabricGameTest {
 			}
 			helper.runAfterDelay(2 * 20, () -> {
 				try {
-					helper.assertTrue(under.getHealth() <= 4000 - 2 * WaterSpells.WEAK_DAMAGE + 1, "What stands under it takes its harm each second (" + under.getHealth() + ")");
+					helper.assertTrue(under.getHealth() <= HEALTH - 2 * WaterSpells.WEAK_DAMAGE + 1, "What stands under it takes its harm each second (" + under.getHealth() + ")");
 					helper.assertTrue(under.hasEffect(MobEffects.MOVEMENT_SLOWDOWN), "...slowed");
 					helper.assertTrue(aloft.getY() < high - 4, "...what was aloft in it gone down (" + (aloft.getY() - high) + ")");
 					helper.assertTrue(!aloft.isOnFire(), "...its fires put out");
@@ -401,14 +407,14 @@ public class VoidShatteringSpellsGameTests implements FabricGameTest {
 		helper.assertTrue(constructs(level, point, 6, SpellConstruct.Kind.ABYSS_RIFT).size() == 1, "...the land opens onto the abyss");
 		helper.runAfterDelay(WaterSpells.KUN_OPENS + 10, () -> {
 			double up = thrown.getY() - home.y;
-			if (constructs(level, point, 80, SpellConstruct.Kind.KUN).size() != 1 || struck.getHealth() > 4000 - WaterSpells.KUN_DAMAGE + 1 || up < 1) {
+			if (constructs(level, point, 80, SpellConstruct.Kind.KUN).size() != 1 || struck.getHealth() > HEALTH - WaterSpells.KUN_DAMAGE + 1 || up < 1) {
 				finish(helper, p, spawned, floor);
 				helper.fail("The Kun breaches out of it, striking what stands there and throwing it high (" + struck.getHealth() + ", thrown " + up + ")");
 				return;
 			}
 			helper.runAfterDelay(WaterSpells.KUN_LEAPS - 6, () -> {
 				try {
-					helper.assertTrue(struck.getHealth() <= 4000 - WaterSpells.KUN_DAMAGE - WaterSpells.KUN_DIVE_DAMAGE + 1, "...and it dives back in, striking again (" + struck.getHealth() + ")");
+					helper.assertTrue(struck.getHealth() <= HEALTH - WaterSpells.KUN_DAMAGE - WaterSpells.KUN_DIVE_DAMAGE + 1, "...and it dives back in, striking again (" + struck.getHealth() + ")");
 					helper.assertTrue(beyond.getHealth() == beyond.getMaxHealth(), "...not what stands beyond its reach");
 					helper.assertTrue(floorLeft(level, floor.centre(), point, 8) < stone, "...crushing the land into a basin");
 				} catch (RuntimeException e) {
@@ -436,16 +442,16 @@ public class VoidShatteringSpellsGameTests implements FabricGameTest {
 		helper.assertTrue(constructs(level, home, 6, SpellConstruct.Kind.RIFT_LINE).size() == 1 && constructs(level, home, 6, SpellConstruct.Kind.SEVERING_LIGHT).size() == 1,
 				"...its sword of light thrusts out, space cut open behind it");
 		helper.runAfterDelay(MetalSpells.SEVERING_THRUST + 2, () -> {
-			if (near.getHealth() > 4000 - MetalSpells.SEVERING_DAMAGE + 1 || far.getHealth() > 4000 - MetalSpells.SEVERING_DAMAGE + 1
-					|| down.getHealth() > 4000 - MetalSpells.SEVERING_DAMAGE + 1) {
+			if (near.getHealth() > HEALTH - MetalSpells.SEVERING_DAMAGE + 1 || far.getHealth() > HEALTH - MetalSpells.SEVERING_DAMAGE + 1
+					|| down.getHealth() > HEALTH - MetalSpells.SEVERING_DAMAGE + 1) {
 				finish(helper, p, spawned, floor);
 				helper.fail("It cuts through everything along its line and down in the chasm it cleaves (" + near.getHealth() + ", " + far.getHealth() + ", " + down.getHealth() + ")");
 				return;
 			}
 			helper.runAfterDelay(20, () -> {
 				try {
-					helper.assertTrue(near.getHealth() <= 4000 - MetalSpells.SEVERING_DAMAGE - MetalSpells.SEVERING_RIFT_DAMAGE + 1, "...and the cut it leaves cuts again what stands in it (" + near.getHealth() + ")");
-					helper.assertTrue(down.getHealth() <= 4000 - MetalSpells.SEVERING_DAMAGE - MetalSpells.SEVERING_RIFT_DAMAGE + 1, "...down in its chasm too (" + down.getHealth() + ")");
+					helper.assertTrue(near.getHealth() <= HEALTH - MetalSpells.SEVERING_DAMAGE - MetalSpells.SEVERING_RIFT_DAMAGE + 1, "...and the cut it leaves cuts again what stands in it (" + near.getHealth() + ")");
+					helper.assertTrue(down.getHealth() <= HEALTH - MetalSpells.SEVERING_DAMAGE - MetalSpells.SEVERING_RIFT_DAMAGE + 1, "...down in its chasm too (" + down.getHealth() + ")");
 					helper.assertTrue(aside.getHealth() == aside.getMaxHealth(), "...not what stands well off its line");
 					helper.assertTrue(floorLeft(level, floor.centre(), home.add(0, 0, 24), 3) < stone && floorLeft(level, floor.centre(), home.add(2.5, 0, 24), 1) < wide,
 							"...the land cleft wide under where it passed");
@@ -476,14 +482,14 @@ public class VoidShatteringSpellsGameTests implements FabricGameTest {
 				"...eight rifts tear open in a ring over the spot, one higher over its heart");
 		int landed = MetalSpells.PRISON_OPENS + MetalSpells.PRISON_FALL, meets = landed + MetalSpells.PRISON_TICKS + MetalSpells.PRISON_MEET;
 		helper.runAfterDelay(landed + 2 * 20 + 14, () -> {
-			if (inside.getHealth() > 4000 - 2 * MetalSpells.PRISON_DAMAGE + 1) {
+			if (inside.getHealth() > HEALTH - 2 * MetalSpells.PRISON_DAMAGE + 1) {
 				finish(helper, p, spawned, floor);
 				helper.fail("What is held inside its ring is struck each second (" + inside.getHealth() + ")");
 				return;
 			}
 			helper.runAfterDelay(meets + 3 - (landed + 2 * 20 + 14), () -> {
 				try {
-					helper.assertTrue(inside.getHealth() <= 4000 - 6 * MetalSpells.PRISON_DAMAGE - MetalSpells.PRISON_MEETING + 1, "...then its last two swords meet in its heart (" + inside.getHealth() + ")");
+					helper.assertTrue(inside.getHealth() <= HEALTH - 6 * MetalSpells.PRISON_DAMAGE - MetalSpells.PRISON_MEETING + 1, "...then its last two swords meet in its heart (" + inside.getHealth() + ")");
 					helper.assertTrue(beyond.getHealth() == beyond.getMaxHealth(), "...not what stands outside its ring");
 					helper.assertTrue(floorLeft(level, floor.centre(), point, 4) < stone, "...a pit where they met");
 				} catch (RuntimeException e) {
@@ -533,14 +539,14 @@ public class VoidShatteringSpellsGameTests implements FabricGameTest {
 				"...the ground tears open onto the Nine Nethers, rings of ghost fire turning down into it");
 		helper.runAfterDelay(GhostSpells.NETHERS_OPENS + 50, () -> {
 			double off = Math.hypot(drawn.getX() - point.x, drawn.getZ() - point.z);
-			if (off >= 9 || held.getHealth() > 4000 - 2 * GhostSpells.NETHERS_DRAIN + 1) {
+			if (off >= 9 || held.getHealth() > HEALTH - 2 * GhostSpells.NETHERS_DRAIN + 1) {
 				finish(helper, p, spawned, floor);
 				helper.fail("A foe near it is dragged toward it (" + off + " off) and drained each second (" + held.getHealth() + ")");
 				return;
 			}
 			helper.runAfterDelay(GhostSpells.NETHERS_TICKS - 50 + GhostSpells.NETHERS_SEALS + 3, () -> {
 				try {
-					helper.assertTrue(held.getHealth() <= 4000 - 6 * GhostSpells.NETHERS_DRAIN - GhostSpells.NETHERS_SEAL + 1, "...then it seals on what stands at its mouth (" + held.getHealth() + ")");
+					helper.assertTrue(held.getHealth() <= HEALTH - 6 * GhostSpells.NETHERS_DRAIN - GhostSpells.NETHERS_SEAL + 1, "...then it seals on what stands at its mouth (" + held.getHealth() + ")");
 					helper.assertTrue(held.hasEffect(MobEffects.WEAKNESS), "...weakening it");
 					helper.assertTrue(beyond.getHealth() == beyond.getMaxHealth(), "...not what stands beyond its reach");
 					helper.assertTrue(landKept(level, floor, point, 12, stone, quiet), "...and the land is left as it was");
@@ -576,7 +582,7 @@ public class VoidShatteringSpellsGameTests implements FabricGameTest {
 				helper.fail("The bridge rises span after span along the look (" + first + ", " + second + ")");
 				return;
 			}
-			if (near.getHealth() > 4000 - GhostSpells.BRIDGE_DAMAGE + 1 || far.getHealth() > 4000 - GhostSpells.BRIDGE_DAMAGE + 1
+			if (near.getHealth() > HEALTH - GhostSpells.BRIDGE_DAMAGE + 1 || far.getHealth() > HEALTH - GhostSpells.BRIDGE_DAMAGE + 1
 					|| near.hasEffect(MobEffects.REGENERATION) || near.hasEffect(MobEffects.DAMAGE_BOOST)) {
 				finish(helper, p, spawned, floor);
 				helper.fail("All it rises by are struck and forget every blessing on them (" + near.getHealth() + ", " + far.getHealth() + ")");
@@ -584,7 +590,7 @@ public class VoidShatteringSpellsGameTests implements FabricGameTest {
 			}
 			helper.runAfterDelay(20 + 12, () -> {
 				try {
-					helper.assertTrue(near.getHealth() <= 4000 - GhostSpells.BRIDGE_DAMAGE - GhostSpells.BRIDGE_TOLL + 1, "...and whoever stays by it pays its toll (" + near.getHealth() + ")");
+					helper.assertTrue(near.getHealth() <= HEALTH - GhostSpells.BRIDGE_DAMAGE - GhostSpells.BRIDGE_TOLL + 1, "...and whoever stays by it pays its toll (" + near.getHealth() + ")");
 					helper.assertTrue(near.hasEffect(MobEffects.MOVEMENT_SLOWDOWN), "...slowed");
 					helper.assertTrue(aside.getHealth() == aside.getMaxHealth(), "...not what stands well off it");
 					helper.assertTrue(landKept(level, floor, home.add(0, 0, 24), 6, stone, quiet), "...and the land is left as it was");
@@ -626,7 +632,7 @@ public class VoidShatteringSpellsGameTests implements FabricGameTest {
 		helper.assertTrue(HeavenSpellTesting.cast(p, Spell.HEAVEN_DEMON_VOID_SHATTER), "The Heaven-Demon Void Shatter is cast, paid for in qi");
 		helper.assertTrue(constructs(level, home, 10, SpellConstruct.Kind.HEAVEN_DEMON_FIST).size() == 1, "...its fist forms over its caster's shoulder");
 		helper.runAfterDelay(HeavenDemonSpells.SHATTER_FLIGHT + 2, () -> {
-			if (struck.getHealth() > 4000 - HeavenDemonSpells.SHATTER_DAMAGE + 1 || constructs(level, point, 8, SpellConstruct.Kind.SHATTERED_SPACE).size() != 1) {
+			if (struck.getHealth() > HEALTH - HeavenDemonSpells.SHATTER_DAMAGE + 1 || constructs(level, point, 8, SpellConstruct.Kind.SHATTERED_SPACE).size() != 1) {
 				thinned.run();
 				finish(helper, p, spawned, floor);
 				helper.fail("It lands where its caster looks, and space shatters there (" + struck.getHealth() + ")");
@@ -634,7 +640,7 @@ public class VoidShatteringSpellsGameTests implements FabricGameTest {
 			}
 			helper.runAfterDelay(40, () -> {
 				try {
-					helper.assertTrue(cut.getHealth() <= 4000 - HeavenDemonSpells.SHATTER_DAMAGE - HeavenDemonSpells.SHATTER_CUTS + 1, "...its shattered space cutting whoever stays in it (" + cut.getHealth() + ")");
+					helper.assertTrue(cut.getHealth() <= HEALTH - HeavenDemonSpells.SHATTER_DAMAGE - HeavenDemonSpells.SHATTER_CUTS + 1, "...its shattered space cutting whoever stays in it (" + cut.getHealth() + ")");
 					helper.assertTrue(beyond.getHealth() == beyond.getMaxHealth(), "...not what stands beyond its reach");
 					// The land shatters with the space over it (since 2026-10-24: it was left as it was).
 					helper.assertTrue(floorLeft(level, floor.centre(), point, 10) < stone, "...and the land under it shattered into a crater");
@@ -673,7 +679,7 @@ public class VoidShatteringSpellsGameTests implements FabricGameTest {
 		helper.assertTrue(Spells.castBy(npc, Spell.BUZHOU_FALLS), "A cultivator casts Buzhou Falls");
 		helper.runAfterDelay(EarthSpells.BUZHOU_OPENS + EarthSpells.BUZHOU_FALL + 4, () -> {
 			try {
-				helper.assertTrue(foe.getHealth() <= 4000 - EarthSpells.BUZHOU_DAMAGE + 1, "Its pillar falls on its foe (" + foe.getHealth() + ")");
+				helper.assertTrue(foe.getHealth() <= HEALTH - EarthSpells.BUZHOU_DAMAGE + 1, "Its pillar falls on its foe (" + foe.getHealth() + ")");
 				helper.assertTrue(Spells.castBy(npc, Spell.GOLDEN_CROW_DESCENDS) || npc.cultivation().getQi() < Spell.GOLDEN_CROW_DESCENDS.qiCost(), "...and the Golden Crow after it");
 				helper.runAfterDelay(FireSpells.CROW_OPENS + FireSpells.CROW_DIVE + 4, () -> {
 					try {

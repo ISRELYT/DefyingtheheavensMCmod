@@ -287,6 +287,12 @@ public final class Formations {
 		return true;
 	}
 
+	/** {@link #yields} only asked: whether a spell of {@code caster}'s could take the barrier's cell at {@code pos}, nothing battered or breached. */
+	public static boolean wouldYield(ServerLevel level, BlockPos pos, LivingEntity caster) {
+		Formation formation = onShell(level, pos, null);
+		return formation == null || strongEnough(caster, formation);
+	}
+
 	/**
 	 * {@code by} assails {@code formation} at {@code at}, with {@code weight} (a blow 1, a shot 0.5, a spell 2; once a second for each being
 	 * and barrier): nothing from one too weak to break it, one it lets through, or a creative player; else its stored qi, its health, takes
@@ -316,21 +322,34 @@ public final class Formations {
 	/**
 	 * Whether a raised barrier stands between {@code a} and {@code b} (it encloses the one and not the other) that {@code crossing}
 	 * couldn't break or be let through ({@link #canBreak}; a cultivator by its own rank and sect): what it casts reaches no further
-	 * than it could go itself (HeavenSpells#walled). Never for a creative player.
+	 * than it could go itself (HeavenSpells#walled). Never for a creative player. Only asked: the barrier is battered by harm that
+	 * actually lands across it ({@link #harmedAcross}).
 	 */
 	public static boolean walls(ServerLevel level, BlockPos a, BlockPos b, LivingEntity crossing) {
 		if (crossing instanceof Player player && player.getAbilities().instabuild) return false;
-		for (Formation formation : java.util.List.copyOf(FormationData.get(level).all())) {
+		for (Formation formation : FormationData.get(level).all()) {
 			if (!formation.isRaised() || formation.encloses(a) == formation.encloses(b)) continue;
 			boolean passes = crossing instanceof Player player ? canBreak(player, formation)
 					: formation.allows(crossing) || CultivatorNpc.rankOf(crossing) >= formation.getRank();
 			if (!passes) return true;
-			// What it casts across a barrier it is strong enough for batters it (a realm above, shatters it): since 2026-10-24.
+		}
+		return false;
+	}
+
+	/**
+	 * {@code crossing}'s spell has done harm from {@code a} to {@code b} across raised barriers it is strong enough for: each is battered as
+	 * a spell's blow ({@link #batter}, weight 2; a realm above it, shattered: since 2026-10-24). Before the sweep of 2026-10-24 asking
+	 * {@link #walls} battered: a heal, a golem picking its foe, a dragon's passive might, even an aim, wore a sect's barrier down and set its
+	 * sect on the player.
+	 */
+	public static void harmedAcross(ServerLevel level, BlockPos a, BlockPos b, LivingEntity crossing) {
+		if (crossing == null || crossing instanceof Player player && player.getAbilities().instabuild) return;
+		for (Formation formation : java.util.List.copyOf(FormationData.get(level).all())) {
+			if (!formation.isRaised() || formation.encloses(a) == formation.encloses(b)) continue;
 			Vec3 heart = Vec3.atCenterOf(formation.center), toward = Vec3.atCenterOf(formation.encloses(b) ? a : b).subtract(heart);
 			if (toward.lengthSqr() < 1.0e-6) toward = new Vec3(1, 0, 0);
 			batter(level, formation, crossing, 2, BlockPos.containing(heart.add(toward.normalize().scale(formation.getRadius()))));
 		}
-		return false;
 	}
 
 	/** Ticks breaking one barrier block takes {@code player}, or -1 if they can't. */
@@ -372,7 +391,6 @@ public final class Formations {
 		batter(level, formation, player, 1, pos); // one strong enough wears it down; a realm above it, shatters it
 	}
 
-	/** A player broke through a barrier block. */
 	/** Players this far from where a barrier is struck see it ripple (about as far as they can see a cultivator). */
 	private static final double RIPPLE_SEEN = 160;
 
@@ -397,6 +415,7 @@ public final class Formations {
 		level.playSound(null, at.x, at.y, at.z, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, 0.9f * strength, pitch * 1.6f);
 	}
 
+	/** A player broke through a barrier block. */
 	public static void onBroken(ServerLevel level, BlockPos pos, ServerPlayer player) {
 		Formation formation = onShell(level, pos, null);
 		if (formation != null) assailed(level, formation, player, pos, true);
@@ -693,6 +712,7 @@ public final class Formations {
 		if (server.getTickCount() % 1200 == 0) {
 			long now = server.overworld().getGameTime();
 			ATTACK_COOLDOWN.values().removeIf(at -> now - at > 200);
+			BATTERED.values().removeIf(at -> now - at > 200); // a key a being and a barrier: grew all the server's life before the sweep of 2026-10-24
 		}
 	}
 
@@ -750,13 +770,13 @@ public final class Formations {
 		syncSoon = true;
 	}
 
-	/** Server stopped: nothing runtime-only may leak into the next world. */
 	/** A shot by {@code shooter} struck the barrier's cell at {@code pos} (ProjectileBarrierMixin): it batters the barrier as a blow does, at half. */
 	public static void shot(ServerLevel level, BlockPos pos, net.minecraft.world.entity.Entity shooter) {
 		Formation formation = onShell(level, pos, null);
 		if (formation != null && shooter instanceof LivingEntity living) batter(level, formation, living, 0.5, pos);
 	}
 
+	/** Server stopped: nothing runtime-only may leak into the next world. */
 	public static void clear() {
 		BATTERED.clear();
 		SWEEPS.clear();

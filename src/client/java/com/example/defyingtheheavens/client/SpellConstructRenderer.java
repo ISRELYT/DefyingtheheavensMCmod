@@ -58,10 +58,14 @@ public final class SpellConstructRenderer extends GeoEntityRenderer<SpellConstru
 	private static void preload() {
 		for (SpellConstruct.Kind kind : SpellConstruct.Kind.values()) {
 			if (!kind.modelled()) continue; // a tear in space: drawn by hand, no texture
-			ResourceLocation texture = texture(kind);
-			Minecraft.getInstance().getTextureManager().getTexture(texture);
-			AutoGlowingTexture.getRenderType(texture); // makes (and so loads) its glow from its _glowmask
+			load(texture(kind));
 		}
+		load(EarthGolemRenderer.TEXTURE); // the golem's is made as theirs are (tools/spell-art)
+	}
+
+	private static void load(ResourceLocation texture) {
+		Minecraft.getInstance().getTextureManager().getTexture(texture);
+		AutoGlowingTexture.getRenderType(texture); // makes (and so loads) its glow from its _glowmask
 	}
 
 	static ResourceLocation texture(SpellConstruct.Kind kind) {
@@ -105,7 +109,7 @@ public final class SpellConstructRenderer extends GeoEntityRenderer<SpellConstru
 	@Override
 	public Color getRenderColor(SpellConstruct construct, float partialTick, int packedLight) {
 		float age = construct.tickCount + partialTick;
-		float alpha = Mth.clamp(Math.min(age, construct.life() - age) / SpellConstruct.FADE, 0.0f, 1.0f);
+		float alpha = Mth.clamp(Math.min(age / construct.kind().fadeIn, (construct.life() - age) / SpellConstruct.FADE), 0.0f, 1.0f);
 		return Color.ofRGBA(1.0f, 1.0f, 1.0f, alpha);
 	}
 

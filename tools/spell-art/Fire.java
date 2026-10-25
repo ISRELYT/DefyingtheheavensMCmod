@@ -856,7 +856,12 @@ public class Fire {
 		return i == 8 || i == 9 || SpellArt.hash(cell * 31 + i, seed, 77) >= 0.56;
 	}
 
-	/** Whether glyph {@code cell}'s strokes come near a swastika: both bars of the cross and three or more of either turning's hooks. */
+	/**
+	 * Whether glyph {@code cell}'s strokes come near a swastika: both bars of the cross and three or more of either turning's hooks; or two
+	 * opposite arms of the cross turning the same way, an arm turning only where it is hooked one way and not both (2026-10-25: a cross with
+	 * its top-left and bottom-right corners boxed in, the hooks of both turnings, still read as one at the heart of King's Decree's seal; a
+	 * bar across an arm's end, as the three of 王, turns neither way).
+	 */
 	static boolean swastika(int cell, int seed) {
 		if (!stroke(cell, seed, 2) || !stroke(cell, seed, 3)) return false;
 		int[][] hooks = {{1, 11, 4, 6}, {0, 7, 5, 10}};
@@ -864,6 +869,24 @@ public class Fire {
 			int n = 0;
 			for (int i : turning) if (stroke(cell, seed, i)) n++;
 			if (n >= 3) return true;
+		}
+		// Each arm's two hooks, top, right, bottom, left: the one turning as the first turning's, and the other.
+		int[][] arms = {{1, 0}, {11, 10}, {4, 5}, {6, 7}};
+		int[] turns = new int[4];
+		for (int k = 0; k < 4; k++) {
+			boolean one = stroke(cell, seed, arms[k][0]), other = stroke(cell, seed, arms[k][1]);
+			turns[k] = one == other ? 0 : one ? 1 : -1;
+		}
+		return turns[0] != 0 && turns[0] == turns[2] || turns[1] != 0 && turns[1] == turns[3];
+	}
+
+	/** Whether ({@code a}, {@code b}) in [0, 1] lies on one of {@code strokes} ({@link #STROKES}), drawn as a glyph's are: a glyph made to order. */
+	static boolean strokes(int[] strokes, double a, double b) {
+		if (a < 0.16 || a > 0.84 || b < 0.16 || b > 0.84) return false;
+		double x = (a - 0.16) / 0.68 * 2, y = (b - 0.16) / 0.68 * 2;
+		for (int i : strokes) {
+			double[] s = STROKES[i];
+			if (segment(x, y, s[0], s[1], s[2], s[3]) < 0.22) return true;
 		}
 		return false;
 	}

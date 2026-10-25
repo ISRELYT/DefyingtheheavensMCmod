@@ -286,6 +286,13 @@ public class SectPiece extends StructurePiece {
 		BlockPos pos = getWorldPos(x, y, z);
 		if (!chunk.isInside(pos)) return;
 		put(level, chunk, x, y, z, Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, facing));
+		// A demon clan's: now and then a phial of its race's blood laid up in it (DemonBlood#hoarded), put in before its loot is named, which
+		// fills in round it when it is opened.
+		if (race.isBeast() && level.getBlockEntity(pos) instanceof RandomizableContainerBlockEntity box) {
+			RandomSource random = rand(x, z, y + 97);
+			ItemStack blood = DemonBlood.hoarded(race, upper, loot, random);
+			if (!blood.isEmpty()) box.setItem(random.nextInt(box.getContainerSize()), blood);
+		}
 		RandomizableContainerBlockEntity.setLootTable(level, rand(x, z, y), pos, loot);
 	}
 

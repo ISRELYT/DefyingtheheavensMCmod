@@ -601,7 +601,10 @@ public final class TalkSystem {
 					SectMembership.titleOf(sect, player).getDisplayName());
 		}
 		if (SectMembership.triedToday(player, sect, npc.level().getGameTime())) return Component.translatable(ModLang.talkLine("join.tried"));
-		TRIAL_SET.computeIfAbsent(player.getUUID(), id -> new java.util.HashMap<>()).put(npc.getUUID(), npc.level().getGameTime() + TRIAL_OFFER_TICKS);
+		java.util.Map<UUID, Long> offers = TRIAL_SET.computeIfAbsent(player.getUUID(), id -> new java.util.HashMap<>());
+		long now = npc.level().getGameTime();
+		offers.values().removeIf(until -> until <= now); // offers lapsed are forgotten (kept all the server's life before the sweep of 2026-10-24)
+		offers.put(npc.getUUID(), now + TRIAL_OFFER_TICKS);
 		return Component.translatable(ModLang.talkLine("join.trial"));
 	}
 
@@ -687,7 +690,7 @@ public final class TalkSystem {
 			case PEOPLE -> aboutPeople(npc, freely);
 			case NEARBY -> aboutNearby(npc);
 			case RUMOURS -> rumours(player, npc);
-			case GUIDANCE -> npc instanceof GhostCultivatorNpc ghost && ghost.method() != null ? teach(player, ghost) : guidance(player, npc);
+			case GUIDANCE -> npc instanceof GhostCultivatorNpc ghost && ghost.method() != null && ghost.method().taughtInTheWorld() ? teach(player, ghost) : guidance(player, npc);
 			case SOUP -> {
 				GhostGate.drinkSoup(player);
 				yield Component.translatable(GhostSystem.isGhost(player) ? ModLang.TALK_SOUP : ModLang.TALK_SOUP_LIVING);
@@ -763,7 +766,8 @@ public final class TalkSystem {
 	 */
 	static Component teachHeaven(ServerPlayer player, CultivatorNpc npc) {
 		HeavenMethod method = npc.heavenMethod();
-		if (method == null) return guidance(player, npc);
+		// A True Immortal's method the worlds don't teach (Realm#taughtInTheWorld): only guidance.
+		if (method == null || !method.realm().taughtInTheWorld()) return guidance(player, npc);
 		Regard.Entry entry = npc.regardEntry(player);
 		long today = Regard.day(npc.level().getGameTime());
 		if (entry.guidanceDay == today) return line("guidance.again", npc);

@@ -1,0 +1,40 @@
+{
+	"format_version": "1.12.0",
+	"minecraft:geometry": [
+		{
+			"description": {
+				"identifier": "geometry.spell_yama_tablet",
+				"texture_width": 256,
+				"texture_height": 128,
+				"visible_bounds_width": 4,
+				"visible_bounds_height": 3,
+				"visible_bounds_offset": [0, 0.58, 0]
+			},
+			"bones": [
+				{
+					"name": "root",
+					"pivot": [0, 0, 0]
+				},
+				{
+					"name": "tablet",
+					"parent": "root",
+					"pivot": [0, 0, 0],
+					"rotation": [-8, 0, 0],
+					"cubes": [
+						{"origin": [-6, -4, -1.2], "size": [12, 24, 2.4], "uv": {"up": {"uv": [206, 0], "uv_size": [36, 7]}, "down": {"uv": [0, 72], "uv_size": [36, 7]}, "east": {"uv": [72, 0], "uv_size": [7, 72]}, "north": {"uv": [0, 0], "uv_size": [36, 72]}, "west": {"uv": [79, 0], "uv_size": [7, 72]}, "south": {"uv": [36, 0], "uv_size": [36, 72]}}},
+						{"origin": [-5, 20, -1.2], "size": [10, 1.8, 2.4], "uv": {"up": {"uv": [36, 72], "uv_size": [30, 7]}, "down": {"uv": [66, 72], "uv_size": [30, 7]}, "east": {"uv": [198, 72], "uv_size": [7, 5]}, "north": {"uv": [138, 72], "uv_size": [30, 5]}, "west": {"uv": [205, 72], "uv_size": [7, 5]}, "south": {"uv": [168, 72], "uv_size": [30, 5]}}},
+						{"origin": [-3.5, 21.7, -1.2], "size": [7, 1.2, 2.4], "uv": {"up": {"uv": [96, 72], "uv_size": [21, 7]}, "down": {"uv": [117, 72], "uv_size": [21, 7]}, "east": {"uv": [0, 79], "uv_size": [7, 4]}, "north": {"uv": [212, 72], "uv_size": [21, 4]}, "west": {"uv": [7, 79], "uv_size": [7, 4]}, "south": {"uv": [233, 72], "uv_size": [21, 4]}}}
+					]
+				},
+				{
+					"name": "cracks",
+					"parent": "root",
+					"pivot": [0, 0, 0],
+					"cubes": [
+						{"origin": [-20, 0.25, -20], "size": [40, 0.1, 40], "pivot": [0, 0.3, 0], "rotation": [0, 0, 0], "uv": {"up": {"uv": [86, 0], "uv_size": [60, 60]}, "down": {"uv": [146, 0], "uv_size": [60, 60]}}}
+					]
+				}
+			]
+		}
+	]
+}

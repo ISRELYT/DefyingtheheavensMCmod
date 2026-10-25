@@ -178,7 +178,50 @@ public enum Spell {
 	TEN_DIRECTION_SWORD_PRISON("ten_direction_sword_prison", QiElement.METAL, Realm.VOID_SHATTERING, 7, 12000, 120 * 20),
 	RIFT_TO_THE_NINE_NETHERS("rift_to_the_nine_nethers", GhostMethod.VOID_RENDING_NETHER_CANON, 3, 280, 60 * 20),
 	BRIDGE_OF_NO_RETURN("bridge_of_no_return", GhostMethod.VOID_RENDING_NETHER_CANON, 7, 400, 90 * 20),
-	HEAVEN_DEMON_VOID_SHATTER("heaven_demon_void_shatter", Realm.VOID_SHATTERING, 11000, 100 * 20);
+	HEAVEN_DEMON_VOID_SHATTER("heaven_demon_void_shatter", Realm.VOID_SHATTERING, 11000, 100 * 20),
+	// Sacred Vessel (2026-10-24): the sacred treasures, each called down and wielded. The five elements' at the third and seventh layers, the
+	// ghost foundation's at its own, and the spell of both paths.
+	HEAVEN_SWALLOWING_GOURD("heaven_swallowing_gourd", QiElement.WOOD, Realm.SACRED_VESSEL, 3, 20000, 70 * 20),
+	SEVEN_TREASURE_BODHI_BRANCH("seven_treasure_bodhi_branch", QiElement.WOOD, Realm.SACRED_VESSEL, 7, 26000, 120 * 20),
+	WIND_FIRE_WHEELS("wind_fire_wheels", QiElement.FIRE, Realm.SACRED_VESSEL, 3, 21000, 70 * 20),
+	EIGHT_TRIGRAMS_FURNACE("eight_trigrams_furnace", QiElement.FIRE, Realm.SACRED_VESSEL, 7, 27000, 120 * 20),
+	XIRANG_SELF_GROWING_SOIL("xirang_self_growing_soil", QiElement.EARTH, Realm.SACRED_VESSEL, 3, 20000, 80 * 20),
+	NINE_CAULDRONS_SUPPRESS_THE_LAND("nine_cauldrons_suppress_the_land", QiElement.EARTH, Realm.SACRED_VESSEL, 7, 27000, 120 * 20),
+	TWENTY_FOUR_SEA_FIXING_PEARLS("twenty_four_sea_fixing_pearls", QiElement.WATER, Realm.SACRED_VESSEL, 3, 21000, 70 * 20),
+	OCEAN_SEALING_VASE("ocean_sealing_vase", QiElement.WATER, Realm.SACRED_VESSEL, 7, 26000, 120 * 20),
+	IMMORTAL_BINDING_ROPES("immortal_binding_ropes", QiElement.METAL, Realm.SACRED_VESSEL, 3, 20000, 80 * 20),
+	GOLDEN_DRAGON_SCISSORS("golden_dragon_scissors", QiElement.METAL, Realm.SACRED_VESSEL, 7, 27000, 120 * 20),
+	MIRROR_OF_RETRIBUTION("mirror_of_retribution", GhostMethod.HELL_FORGED_VESSEL_SUTRA, 3, 320, 60 * 20),
+	SOUL_LOCKING_PAGODA("soul_locking_pagoda", GhostMethod.HELL_FORGED_VESSEL_SUTRA, 7, 460, 90 * 20),
+	HEAVEN_DEMON_BELL("heaven_demon_bell", Realm.SACRED_VESSEL, 24000, 100 * 20),
+	// Entering Nirvana (2026-10-24): death and rebirth.
+	SEED_OF_WITHERING_REBIRTH("seed_of_withering_rebirth", QiElement.WOOD, Realm.ENTERING_NIRVANA, 3, 44000, 70 * 20),
+	WITHERING_AND_FLOURISHING("withering_and_flourishing", QiElement.WOOD, Realm.ENTERING_NIRVANA, 7, 56000, 120 * 20),
+	UNDYING_EMBER("undying_ember", QiElement.FIRE, Realm.ENTERING_NIRVANA, 3, 45000, 70 * 20),
+	PYRE_OF_THE_HEAVENS("pyre_of_the_heavens", QiElement.FIRE, Realm.ENTERING_NIRVANA, 7, 58000, 120 * 20),
+	GRAVESTONE_FALLS("gravestone_falls", QiElement.EARTH, Realm.ENTERING_NIRVANA, 3, 45000, 80 * 20),
+	BURIED_WORLD("buried_world", QiElement.EARTH, Realm.ENTERING_NIRVANA, 7, 58000, 120 * 20),
+	FROZEN_MOON_IN_THE_WELL("frozen_moon_in_the_well", QiElement.WATER, Realm.ENTERING_NIRVANA, 3, 44000, 70 * 20),
+	THE_FROZEN_MOON_FALLS("the_frozen_moon_falls", QiElement.WATER, Realm.ENTERING_NIRVANA, 7, 57000, 120 * 20),
+	SWORD_TOMB_AWAKENS("sword_tomb_awakens", QiElement.METAL, Realm.ENTERING_NIRVANA, 3, 45000, 80 * 20),
+	NINE_REBIRTHS_OF_THE_SWORD("nine_rebirths_of_the_sword", QiElement.METAL, Realm.ENTERING_NIRVANA, 7, 58000, 120 * 20),
+	BLACK_AND_WHITE_IMPERMANENCE("black_and_white_impermanence", GhostMethod.UNDERWORLD_NIRVANA_SCRIPTURE, 3, 360, 60 * 20),
+	BOOK_OF_LIFE_AND_DEATH("book_of_life_and_death", GhostMethod.UNDERWORLD_NIRVANA_SCRIPTURE, 7, 520, 90 * 20),
+	HEAVEN_DEMON_ECLIPSE("heaven_demon_eclipse", Realm.ENTERING_NIRVANA, 52000, 100 * 20),
+	// True Immortal (2026-10-24): the elements as they were at the beginning, before heaven and earth were parted.
+	PRIMAL_WIND_OF_CREATION("primal_wind_of_creation", QiElement.WOOD, Realm.TRUE_IMMORTAL, 3, 380000, 70 * 20),
+	FIRST_SEED_OF_CREATION("first_seed_of_creation", QiElement.WOOD, Realm.TRUE_IMMORTAL, 7, 480000, 120 * 20),
+	SAMADHI_TRUE_FIRE("samadhi_true_fire", QiElement.FIRE, Realm.TRUE_IMMORTAL, 3, 390000, 70 * 20),
+	FIRST_FLAME_BEFORE_HEAVEN("first_flame_before_heaven", QiElement.FIRE, Realm.TRUE_IMMORTAL, 7, 500000, 120 * 20),
+	HAND_OF_HOUTU("hand_of_houtu", QiElement.EARTH, Realm.TRUE_IMMORTAL, 3, 390000, 80 * 20),
+	FALLING_CONTINENT("falling_continent", QiElement.EARTH, Realm.TRUE_IMMORTAL, 7, 500000, 120 * 20),
+	GLACIER_OF_THE_FIRST_AGE("glacier_of_the_first_age", QiElement.WATER, Realm.TRUE_IMMORTAL, 3, 380000, 80 * 20),
+	THE_PRIMORDIAL_SEA("the_primordial_sea", QiElement.WATER, Realm.TRUE_IMMORTAL, 7, 490000, 120 * 20),
+	HEAVEN_SLAYING_SWORD_RISES("heaven_slaying_sword_rises", QiElement.METAL, Realm.TRUE_IMMORTAL, 3, 390000, 80 * 20),
+	PRIMAL_AXE_SPLITS_CHAOS("primal_axe_splits_chaos", QiElement.METAL, Realm.TRUE_IMMORTAL, 7, 500000, 120 * 20),
+	FENGDU_WALLS_RISE("fengdu_walls_rise", GhostMethod.NETHERWORLD_IMMORTAL_CANON, 3, 400, 60 * 20),
+	TEN_THOUSAND_SOULS_ASCEND("ten_thousand_souls_ascend", GhostMethod.NETHERWORLD_IMMORTAL_CANON, 7, 600, 90 * 20),
+	PRIMORDIAL_CHAOS("primordial_chaos", Realm.TRUE_IMMORTAL, 450000, 100 * 20);
 
 	private final String id;
 	private final GhostMethod method;

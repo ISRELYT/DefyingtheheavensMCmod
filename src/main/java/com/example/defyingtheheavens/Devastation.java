@@ -50,11 +50,17 @@ public final class Devastation {
 	private static final int KEEP_MOST = 10, KEEP_EVERY = 20, KEEP_TICKS = 100;
 	private static final TicketType<ChunkPos> KEEP_LOADED = TicketType.create("defying_the_heavens_devastation", Comparator.comparingLong(ChunkPos::toLong), KEEP_TICKS);
 
-	/** What the floor of a wound becomes once it is cut: left as it is, burnt (magma, blackstone, fires), broken (rubble), or a lake in it. */
-	/** A wound's floor: as it was cut, burnt to magma and blackstone, broken rubble, a lake, or melted to obsidian glass (a white flame's). */
-	public enum Floor { NONE, SCORCHED, RUBBLE, LAKE, GLASSY }
+	/**
+	 * A wound's floor: as it was cut, burnt to magma and blackstone, broken rubble, a lake, melted to obsidian glass (a white flame's), or
+	 * frozen to ice and snow (a frozen moon's, 2026-10-24).
+	 */
+	public enum Floor { NONE, SCORCHED, RUBBLE, LAKE, GLASSY, ICE }
 
-	/** A wound being cut: its cells (packed), nearest its heart first, how far through, what follows, and its land kept loaded. */
+	/**
+	 * A wound being cut: its cells (packed), nearest its heart first, how far through, what follows, and its land kept loaded. Or, from
+	 * Sacred Vessel on (2026-10-24), land laid down rather than taken away ({@link #place}: a mound of Xirang, the soil that grows of itself),
+	 * or the water drawn out of it ({@link #drain}: an ocean sealed in a vase).
+	 */
 	private static final class Job {
 		final ServerLevel level;
 		final LivingEntity caster;
@@ -67,9 +73,17 @@ public final class Devastation {
 		final int keep;
 		/** Taken as a burst golden core takes the land: water, lava and what holds things too (HeavenSpells#carvable, {@link #obliterate}). */
 		final boolean utter;
+		/** What each cell is filled with (block state ids, as its cells are ordered), where land is laid down; null where it is cut. */
+		final int[] place;
+		/** Only the water is taken out of its cells (and out of what stands in water), nothing else. */
+		final boolean drain;
 		int next, flung, age;
 
 		Job(ServerLevel level, LivingEntity caster, long[] cells, Vec3 heart, Runnable after, int debris, int keep, boolean utter) {
+			this(level, caster, cells, heart, after, debris, keep, utter, null, false);
+		}
+
+		Job(ServerLevel level, LivingEntity caster, long[] cells, Vec3 heart, Runnable after, int debris, int keep, boolean utter, int[] place, boolean drain) {
 			this.level = level;
 			this.caster = caster;
 			this.cells = cells;
@@ -79,6 +93,8 @@ public final class Devastation {
 			this.keepAt = new ChunkPos(BlockPos.containing(heart));
 			this.keep = keep;
 			this.utter = utter;
+			this.place = place;
+			this.drain = drain;
 		}
 	}
 
@@ -258,8 +274,16 @@ public final class Devastation {
 	 * nearest {@code heart} first, a few pieces flung.
 	 */
 	public static void cut(LivingEntity p, ServerLevel level, List<BlockPos> cells, Vec3 heart) {
+		cut(p, level, cells, heart, DEBRIS);
+	}
+
+	/**
+	 * {@link #cut(LivingEntity, ServerLevel, List, Vec3)}, flinging off at most {@code debris} pieces: for a wound cut a slice a tick (a sweep's,
+	 * 2026-10-24: the Bodhi Branch flung 36 every tick of its stroke, seven hundred pieces of land in the air at once).
+	 */
+	public static void cut(LivingEntity p, ServerLevel level, List<BlockPos> cells, Vec3 heart, int debris) {
 		if (!HeavenSpells.carvesLand(p)) return; // a cultivator's spells leave the land as it was (HeavenSpells#carvesLand)
-		queue(level, p, cells, heart, null);
+		queue(level, p, cells, heart, null, debris);
 	}
 
 	/**
@@ -536,12 +560,38 @@ public final class Devastation {
 		queue(level, p, packed, heart, after, debris, false);
 	}
 
-	/** {@code cells} (packed) sorted nearest {@code heart} first, and cut from the next tick. */
+	/**
+	 * Blocks one caster's wounds may have waiting to be cut at once, all of them together, and everyone's ({@link #allowance}; the user's call,
+	 * 2026-10-25, on the third sweep's finding: a True Immortal recasting its craters could queue hundreds of thousands and keep their land
+	 * loaded for minutes). A wound past it is cut short, what lies nearest its heart kept, or not cut at all; a burst golden core's goes whole.
+	 */
+	static final int MOST_WAITING = 250_000, MOST_WAITING_IN_ALL = 2_000_000;
+
+	/**
+	 * How many of a new wound's {@code cells} {@code p} may have queued: what is left of its own share ({@link #MOST_WAITING}) and of everyone's
+	 * ({@link #MOST_WAITING_IN_ALL}), a burst golden core's ({@code utter}) all of them, and counted against neither.
+	 */
+	private static int allowance(LivingEntity p, int cells, boolean utter) {
+		if (utter) return cells;
+		long mine = 0, all = 0;
+		for (Job job : JOBS) {
+			if (job.utter) continue;
+			long left = job.cells.length - job.next;
+			all += left;
+			if (p != null && job.caster != null && job.caster.getUUID().equals(p.getUUID())) mine += left;
+		}
+		long room = Math.min(p == null ? Long.MAX_VALUE : MOST_WAITING - mine, MOST_WAITING_IN_ALL - all);
+		return (int) Math.max(0, Math.min(cells, room));
+	}
+
+	/** {@code cells} (packed) sorted nearest {@code heart} first, and cut from the next tick, as many as its caster may yet have queued ({@link #allowance}). */
 	private static void queue(ServerLevel level, LivingEntity p, long[] cells, Vec3 heart, Runnable after, int debris, boolean utter) {
 		if (cells.length == 0) {
 			if (after != null) after.run();
 			return;
 		}
+		int allowed = allowance(p, cells.length, utter);
+		if (allowed == 0) return;
 		BlockPos centre = BlockPos.containing(heart);
 		// Sorted by a key of the distance and the place in the list: a sort of plain numbers, not of millions of objects.
 		long[] keys = new long[cells.length];
@@ -550,9 +600,10 @@ public final class Devastation {
 			keys[i] = (dx * dx + dy * dy + dz * dz) << INDEX_BITS | i;
 		}
 		Arrays.sort(keys);
-		long[] sorted = new long[cells.length];
-		for (int i = 0; i < keys.length; i++) sorted[i] = cells[(int) (keys[i] & INDEX_MASK)];
-		double furthest = Math.sqrt(keys[keys.length - 1] >>> INDEX_BITS);
+		// Cut short to what its caster may yet have queued: the nearest its heart kept.
+		long[] sorted = new long[allowed];
+		for (int i = 0; i < allowed; i++) sorted[i] = cells[(int) (keys[i] & INDEX_MASK)];
+		double furthest = Math.sqrt(keys[allowed - 1] >>> INDEX_BITS);
 		int keep = furthest > KEEP_FROM ? Math.min(KEEP_MOST, (int) Math.ceil(furthest / 16) + 1) : 0;
 		JOBS.add(new Job(level, p, sorted, heart, after, debris, keep, utter));
 	}
@@ -591,9 +642,18 @@ public final class Devastation {
 	private static int cut(Job job, int most) {
 		int went = 0;
 		while (job.next < job.cells.length && went < most) {
-			BlockPos pos = BlockPos.of(job.cells[job.next++]);
+			int index = job.next++;
+			BlockPos pos = BlockPos.of(job.cells[index]);
 			went++;
 			if (!job.level.isLoaded(pos)) continue;
+			if (job.place != null) {
+				lay(job, pos, Block.stateById(job.place[index]));
+				continue;
+			}
+			if (job.drain) {
+				dry(job, pos);
+				continue;
+			}
 			BlockState state = job.level.getBlockState(pos);
 			if (state.isAir() || !HeavenSpells.carvable(job.level, pos, job.caster, job.utter)) continue;
 			if (job.utter) {
@@ -632,6 +692,226 @@ public final class Devastation {
 			container.clearContent();
 		}
 		level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+	}
+
+	/**
+	 * A cell of land laid down ({@link #raise}): {@code state} set where only air, water or something that gives way stands (grass, snow, a
+	 * flower), and only where its caster may change the land; a few clods of it seen flying in.
+	 */
+	private static void lay(Job job, BlockPos pos, BlockState state) {
+		BlockState here = job.level.getBlockState(pos);
+		if (!here.isAir() && !here.canBeReplaced() || HeavenSpells.isTemporary(job.level, pos) || !mayChange(job.caster, job.level, pos)) return;
+		job.level.setBlock(pos, state, 3);
+		if (job.flung < job.debris && job.level.random.nextInt(Math.max(8, job.cells.length / (job.debris * 2))) == 0) {
+			job.flung++;
+			Vec3 to = Vec3.atBottomCenterOf(pos);
+			Vec3 from = to.add(job.level.random.nextGaussian() * 2, 3 + job.level.random.nextDouble() * 3, job.level.random.nextGaussian() * 2);
+			SpellBlock.show(job.level, state, from, to.subtract(from), 0, 10, SpellBlock.Motion.FLY, 0);
+		}
+	}
+
+	/** A cell's water drawn out of it ({@link #drain}): a water block (and what grows in water) to air, a waterlogged block unwatered. */
+	private static void dry(Job job, BlockPos pos) {
+		BlockState state = job.level.getBlockState(pos);
+		if (!state.getFluidState().is(net.minecraft.tags.FluidTags.WATER) || !mayChange(job.caster, job.level, pos)) return;
+		if (state.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED)) {
+			job.level.setBlock(pos, state.setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED, false), 2 | 16);
+		} else if (state.canBeReplaced() || state.is(Blocks.BUBBLE_COLUMN) || state.is(Blocks.KELP) || state.is(Blocks.KELP_PLANT) || state.is(Blocks.SEAGRASS)
+				|| state.is(Blocks.TALL_SEAGRASS)) {
+			job.level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2 | 16);
+		}
+	}
+
+	/**
+	 * A trench cut along the land from {@code from} to {@code to} (a wheel's, a jet of fire's, a glacier's), {@code width} across and
+	 * {@code depth} deep all along it, following the land's top (and through whatever stands on it), its edges ragged; nearest {@code from}
+	 * first. Unlike {@link #gouge} it doesn't shallow toward its ends: a stretch of a longer track, cut a tick at a time.
+	 */
+	public static void trench(LivingEntity p, ServerLevel level, Vec3 from, Vec3 to, double width, double depth) {
+		if (!HeavenSpells.carvesLand(p)) return;
+		Vec3 line = to.subtract(from).multiply(1, 0, 1);
+		double length = line.length();
+		Vec3 along = length < 1.0e-3 ? new Vec3(1, 0, 0) : line.scale(1 / length), across = new Vec3(-along.z, 0, along.x);
+		long seed = BlockPos.containing(from).asLong() * 7;
+		java.util.Map<Long, Integer> deepest = new java.util.LinkedHashMap<>();
+		for (double t = 0; t <= length; t += 0.5) {
+			for (double off = -width / 2; off <= width / 2; off += 0.5) {
+				Vec3 at = from.add(along.scale(t)).add(across.scale(off));
+				int x = (int) Math.floor(at.x), z = (int) Math.floor(at.z);
+				double edge = Math.abs(off) / (width / 2 + 0.01);
+				int deep = (int) Math.round(depth * (edge > 0.7 ? 0.5 + 0.5 * noise(seed, x, z) : 1));
+				if (deep > 0) deepest.merge(BlockPos.asLong(x, 0, z), deep, Math::max);
+			}
+		}
+		List<BlockPos> cells = new ArrayList<>();
+		for (Map.Entry<Long, Integer> e : deepest.entrySet()) {
+			BlockPos top = groundTop(level, BlockPos.getX(e.getKey()), BlockPos.getZ(e.getKey()));
+			if (top == null) continue;
+			int surface = level.getHeight(Heightmap.Types.WORLD_SURFACE, top.getX(), top.getZ()) - 1;
+			for (int y = surface; y > top.getY() - e.getValue(); y--) cells.add(new BlockPos(top.getX(), y, top.getZ()));
+		}
+		queue(level, p, cells, from, null, SHEAR_DEBRIS);
+	}
+
+	// --- Land laid down, water drawn out, the land frozen or greened (Sacred Vessel on, 2026-10-24) ---
+
+	/**
+	 * A mound {@code radius} round and {@code height} high at its heart heaved up over the land round {@code at} (Xirang, the soil that grows of
+	 * itself): earth laid on the ground of each column (stone at its heart, earth over it, grass or coarse earth on top), higher toward the heart
+	 * and ragged at its edge, from the bottom up, nearest the heart first; nothing laid within {@code spare} of its caster's column (it is not
+	 * buried by its own spell), nor where its caster may not change the land. A cultivator's spells lay nothing (HeavenSpells#carvesLand).
+	 */
+	public static void raise(LivingEntity p, ServerLevel level, Vec3 at, double radius, double height, double spare) {
+		if (!HeavenSpells.carvesLand(p)) return;
+		BlockPos centre = BlockPos.containing(at);
+		int r = (int) Math.ceil(radius);
+		double sx = p == null ? Double.NaN : p.getX() - centre.getX(), sz = p == null ? Double.NaN : p.getZ() - centre.getZ();
+		LongArrayList cells = new LongArrayList();
+		it.unimi.dsi.fastutil.ints.IntArrayList states = new it.unimi.dsi.fastutil.ints.IntArrayList();
+		long seed = centre.asLong() * 17;
+		int stone = Block.getId(Blocks.STONE.defaultBlockState()), dirt = Block.getId(Blocks.DIRT.defaultBlockState()), rooted = Block.getId(Blocks.ROOTED_DIRT.defaultBlockState()),
+				grass = Block.getId(Blocks.GRASS_BLOCK.defaultBlockState()), coarse = Block.getId(Blocks.COARSE_DIRT.defaultBlockState());
+		for (int dx = -r; dx <= r; dx++) {
+			for (int dz = -r; dz <= r; dz++) {
+				double flat = (dx * dx + dz * dz) / (radius * radius), rag = 1 + 0.2 * (noise(seed, dx, dz) - 0.5);
+				if (flat > rag || p != null && Math.hypot(dx + 0.5 - sx, dz + 0.5 - sz) < spare) continue;
+				BlockPos ground = groundTop(level, centre.getX() + dx, centre.getZ() + dz);
+				if (ground == null) continue;
+				// Its height over the land at the heart's level: a column already high stands out of it, a low one is filled up to it.
+				int top = centre.getY() - 1 + (int) Math.round(height * Math.sqrt(Math.max(0, 1 - flat / rag)) * (0.85 + 0.3 * noise(seed + 5, dx, dz)));
+				for (int y = ground.getY() + 1; y <= top; y++) {
+					cells.add(BlockPos.asLong(ground.getX(), y, ground.getZ()));
+					int below = top - y;
+					states.add(y == top ? (noise(seed + 9, dx, dz) < 0.25 ? coarse : grass) : below < 3 ? (noise(seed + y, dx, dz) < 0.2 ? rooted : dirt) : stone);
+				}
+			}
+		}
+		if (cells.isEmpty()) return;
+		int allowed = allowance(p, cells.size(), false);
+		if (allowed == 0) return;
+		// Bottom up (a cell laid on air would float), nearest the heart first on each level; cut short (its top left off) to what its caster
+		// may yet have queued.
+		long[] packed = cells.toLongArray();
+		int[] ids = states.toIntArray();
+		long[] keys = new long[packed.length];
+		for (int i = 0; i < packed.length; i++) {
+			long dx = BlockPos.getX(packed[i]) - centre.getX(), dz = BlockPos.getZ(packed[i]) - centre.getZ();
+			long dy = BlockPos.getY(packed[i]) - centre.getY() + 512;
+			keys[i] = (dy << 18 | Math.min((1L << 18) - 1, dx * dx + dz * dz)) << INDEX_BITS | i;
+		}
+		Arrays.sort(keys);
+		long[] sorted = new long[allowed];
+		int[] sortedIds = new int[allowed];
+		for (int i = 0; i < allowed; i++) {
+			int from = (int) (keys[i] & INDEX_MASK);
+			sorted[i] = packed[from];
+			sortedIds[i] = ids[from];
+		}
+		int keep = radius > KEEP_FROM ? Math.min(KEEP_MOST, (int) Math.ceil(radius / 16) + 1) : 0;
+		JOBS.add(new Job(level, p, sorted, at, null, DEBRIS, keep, false, sortedIds, false));
+	}
+
+	/**
+	 * The water drawn out of the land within {@code radius} of {@code at}, from {@code up} over its level to {@code down} under it (an ocean
+	 * sealed in a vase): lakes and rivers left dry, nearest the heart first. A cultivator's spells take nothing.
+	 */
+	public static void drain(LivingEntity p, ServerLevel level, Vec3 at, double radius, int up, int down) {
+		if (!HeavenSpells.carvesLand(p)) return;
+		BlockPos centre = BlockPos.containing(at);
+		int r = (int) Math.ceil(radius);
+		LongArrayList cells = new LongArrayList();
+		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+		for (int dx = -r; dx <= r; dx++) {
+			for (int dz = -r; dz <= r; dz++) {
+				if (dx * dx + dz * dz > radius * radius) continue;
+				int x = centre.getX() + dx, z = centre.getZ() + dz;
+				if (!level.hasChunk(x >> 4, z >> 4)) continue;
+				for (int y = centre.getY() - down; y <= centre.getY() + up; y++) {
+					if (level.getBlockState(pos.set(x, y, z)).getFluidState().is(net.minecraft.tags.FluidTags.WATER)) cells.add(pos.asLong());
+				}
+			}
+		}
+		if (cells.isEmpty()) return;
+		int allowed = allowance(p, cells.size(), false);
+		if (allowed == 0) return;
+		long[] packed = cells.toLongArray();
+		long[] keys = new long[packed.length];
+		for (int i = 0; i < packed.length; i++) {
+			long dx = BlockPos.getX(packed[i]) - centre.getX(), dy = BlockPos.getY(packed[i]) - centre.getY(), dz = BlockPos.getZ(packed[i]) - centre.getZ();
+			keys[i] = (dx * dx + dy * dy + dz * dz) << INDEX_BITS | i;
+		}
+		Arrays.sort(keys);
+		long[] sorted = new long[allowed];
+		for (int i = 0; i < allowed; i++) sorted[i] = packed[(int) (keys[i] & INDEX_MASK)];
+		JOBS.add(new Job(level, p, sorted, at, null, 0, radius > KEEP_FROM ? Math.min(KEEP_MOST, (int) Math.ceil(radius / 16) + 1) : 0, false, null, true));
+	}
+
+	/**
+	 * The land within {@code radius} of {@code at} frozen (a frozen moon's light, 2026-10-24): the top of any water to ice (packed ice within
+	 * half of it), the ground under snow, its grass and flowers dead under it. Nothing is taken away; a cultivator's spells change nothing.
+	 */
+	public static void freeze(LivingEntity p, ServerLevel level, Vec3 at, double radius) {
+		if (!HeavenSpells.carvesLand(p)) return;
+		BlockPos centre = BlockPos.containing(at);
+		int r = (int) Math.ceil(radius);
+		for (int dx = -r; dx <= r; dx++) {
+			for (int dz = -r; dz <= r; dz++) {
+				double d = Math.sqrt(dx * dx + dz * dz);
+				if (d > radius) continue;
+				int x = centre.getX() + dx, z = centre.getZ() + dz;
+				if (!level.hasChunk(x >> 4, z >> 4)) continue;
+				BlockPos top = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, new BlockPos(x, 0, z)).below();
+				BlockState state = level.getBlockState(top);
+				if (state.getFluidState().is(net.minecraft.tags.FluidTags.WATER) && state.getFluidState().isSource() && state.is(Blocks.WATER)) {
+					if (mayChange(p, level, top)) level.setBlock(top, (d < radius * 0.5 ? Blocks.PACKED_ICE : Blocks.ICE).defaultBlockState(), 3);
+					continue;
+				}
+				BlockPos ground = groundTop(level, x, z);
+				if (ground == null) continue;
+				BlockPos above = ground.above();
+				BlockState over = level.getBlockState(above);
+				if (!over.isAir() && !over.canBeReplaced() || !mayChange(p, level, above)) continue;
+				if (!over.isAir() && over.getFluidState().isEmpty()) level.setBlock(above, Blocks.AIR.defaultBlockState(), 2 | 16);
+				if (Blocks.SNOW.defaultBlockState().canSurvive(level, above)) {
+					int layers = 1 + (int) Math.round(3 * (1 - d / radius) * (0.6 + 0.4 * noise(centre.asLong(), dx, dz)));
+					level.setBlock(above, Blocks.SNOW.defaultBlockState().setValue(net.minecraft.world.level.block.SnowLayerBlock.LAYERS, Math.min(8, layers)), 3);
+				}
+			}
+		}
+	}
+
+	/**
+	 * The land within {@code radius} of {@code at} greened (life given back to it, 2026-10-24): bare earth to grass, and on {@code share} of the
+	 * grass a plant (tall grass, ferns, flowers); stone at its top mossed near the heart. Nothing is taken away; a cultivator's spells change
+	 * nothing.
+	 */
+	public static void flourish(LivingEntity p, ServerLevel level, Vec3 at, double from, double to, double share) {
+		if (!HeavenSpells.carvesLand(p)) return;
+		BlockPos centre = BlockPos.containing(at);
+		int r = (int) Math.ceil(to);
+		BlockState[] plants = {Blocks.GRASS.defaultBlockState(), Blocks.GRASS.defaultBlockState(), Blocks.FERN.defaultBlockState(), Blocks.POPPY.defaultBlockState(),
+				Blocks.DANDELION.defaultBlockState(), Blocks.CORNFLOWER.defaultBlockState(), Blocks.AZURE_BLUET.defaultBlockState(), Blocks.OXEYE_DAISY.defaultBlockState(),
+				Blocks.LILY_OF_THE_VALLEY.defaultBlockState(), Blocks.ALLIUM.defaultBlockState()};
+		for (int dx = -r; dx <= r; dx++) {
+			for (int dz = -r; dz <= r; dz++) {
+				double d = Math.sqrt(dx * dx + dz * dz);
+				if (d < from || d > to) continue;
+				BlockPos ground = groundTop(level, centre.getX() + dx, centre.getZ() + dz);
+				if (ground == null || !mayChange(p, level, ground)) continue;
+				BlockState was = level.getBlockState(ground);
+				if (was.is(Blocks.DIRT) || was.is(Blocks.COARSE_DIRT) || was.is(Blocks.ROOTED_DIRT) || was.is(Blocks.PODZOL) || was.is(Blocks.MYCELIUM)) {
+					level.setBlock(ground, Blocks.GRASS_BLOCK.defaultBlockState(), 3);
+					was = Blocks.GRASS_BLOCK.defaultBlockState();
+				} else if ((was.is(Blocks.STONE) || was.is(Blocks.COBBLESTONE)) && d < to * 0.5 && noise(centre.asLong(), dx, dz) < 0.5) {
+					level.setBlock(ground, Blocks.MOSS_BLOCK.defaultBlockState(), 3);
+					continue;
+				}
+				if (!was.is(Blocks.GRASS_BLOCK) || level.random.nextDouble() >= share) continue;
+				BlockPos above = ground.above();
+				BlockState plant = plants[level.random.nextInt(plants.length)];
+				if (level.getBlockState(above).isAir() && plant.canSurvive(level, above) && mayChange(p, level, above)) level.setBlock(above, plant, 3);
+			}
+		}
 	}
 
 	/** Server stopping: whatever is underway stops where it is. */
@@ -676,6 +956,11 @@ public final class Devastation {
 				if (roll < 0.55) level.setBlock(below, Blocks.OBSIDIAN.defaultBlockState(), 3);
 				else if (roll < 0.75) level.setBlock(below, Blocks.MAGMA_BLOCK.defaultBlockState(), 3);
 				else if (roll < 0.9) level.setBlock(below, Blocks.BLACK_STAINED_GLASS.defaultBlockState(), 3);
+			} else if (floor == Floor.ICE) {
+				if (roll < 0.4) level.setBlock(below, Blocks.PACKED_ICE.defaultBlockState(), 3);
+				else if (roll < 0.65) level.setBlock(below, Blocks.ICE.defaultBlockState(), 3);
+				else if (roll < 0.85) level.setBlock(below, Blocks.SNOW_BLOCK.defaultBlockState(), 3);
+				else if (roll < 0.93) level.setBlock(below, Blocks.BLUE_ICE.defaultBlockState(), 3);
 			} else {
 				if (roll < 0.3) level.setBlock(below, Blocks.COBBLESTONE.defaultBlockState(), 3);
 				else if (roll < 0.45) level.setBlock(below, Blocks.GRAVEL.defaultBlockState(), 3);

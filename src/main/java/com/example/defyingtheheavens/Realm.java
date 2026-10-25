@@ -78,6 +78,17 @@ public enum Realm {
 	}
 
 	public String getId() { return id; }
+
+	/**
+	 * Whether this realm's methods are to be had in the worlds there are (the lower realms, the Upper Realm, the Netherworld, the stars): a
+	 * heaven method's slip or stele, a ghost method's, a demon race's blood. Entering Nirvana's at the deepest (the user's rule, 2026-10-25:
+	 * "the highest you should be able to get is entering nirvana"): True Immortal's are kept for the Immortal Realm.
+	 */
+	public boolean taughtInTheWorld() { return ordinal() <= ENTERING_NIRVANA.ordinal(); }
+
+	/** This realm, or the deepest realm the worlds teach if it is beyond it ({@link #taughtInTheWorld}). */
+	public Realm atMostTaught() { return taughtInTheWorld() ? this : ENTERING_NIRVANA; }
+
 	public double getCultivationBase() { return cultivationBase; }
 	public double getCultivationPerSecond() { return cultivationPerSecond; }
 	public double getMaxQi() { return maxQi; }

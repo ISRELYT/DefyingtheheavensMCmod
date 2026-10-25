@@ -123,6 +123,73 @@ public final class WaterSpells {
 	public static final int KUN_OPENS = 16, KUN_LEAPS = 60, KUN_AFTER = 14;
 	/** The northern abyss's deep blue: its rift glows so. */
 	public static final int ABYSS_BLUE = 0x3F7CFF;
+	/**
+	 * Twenty-Four Sea-Fixing Pearls: how many, how far round their caster they reach for foes (64 by its realm), how far out they circle
+	 * (7), and how great each is drawn, of its realm's greatness (a pearl two blocks round: twenty-four of them a ring, not one white heap);
+	 * each pearl's harm and how far round where it bursts (4); its little crater (3 round, 2 deep, by its realm); how long they take to unwind
+	 * round their caster, how far apart they fly, and how long each flies (ticks).
+	 */
+	public static final int PEARLS = 24;
+	public static final float PEARL_SIZE = 0.5f;
+	public static final double PEARLS_REACH = HeavenSpells.span(Realm.SACRED_VESSEL, 30), PEARLS_CIRCLE = HeavenSpells.span(Realm.SACRED_VESSEL, 3.4),
+			PEARL_BLAST = HeavenSpells.span(Realm.SACRED_VESSEL, 2), PEARL_CRATER = Devastation.sized(Realm.SACRED_VESSEL, 1.5),
+			PEARL_CRATER_DEPTH = Devastation.sized(Realm.SACRED_VESSEL, 1);
+	public static final float PEARL_DAMAGE = 140;
+	public static final int PEARLS_FORM = 16, PEARL_EVERY = 2, PEARL_FLIGHT = 10;
+	/**
+	 * Ocean-Sealing Vase: where (up to {@link #VASE_RANGE}, 136), how high its mouth hangs (30), how far round it drinks (43: foes, and every
+	 * drop of water in the land, down to 13 under it) and how near its mouth what it draws is held (6); its crush a second, and its slam as it
+	 * comes down sealed (within 21); its crater (17 round, 6 deep, a lake poured back into it, by its realm); how long it takes to come, how long
+	 * it drinks, how long it takes to seal, and how long it falls (ticks).
+	 */
+	public static final double VASE_RANGE = HeavenSpells.span(Realm.SACRED_VESSEL, 64), VASE_HIGH = HeavenSpells.span(Realm.SACRED_VESSEL, 14),
+			VASE_RADIUS = HeavenSpells.span(Realm.SACRED_VESSEL, 20), VASE_MOUTH = HeavenSpells.span(Realm.SACRED_VESSEL, 3),
+			VASE_SLAM_RADIUS = HeavenSpells.span(Realm.SACRED_VESSEL, 10), VASE_CRATER = Devastation.sized(Realm.SACRED_VESSEL, 8),
+			VASE_CRATER_DEPTH = Devastation.sized(Realm.SACRED_VESSEL, 3);
+	public static final int VASE_DRAIN_DOWN = (int) Math.round(Devastation.sized(Realm.SACRED_VESSEL, 6));
+	public static final float VASE_CRUSH = 400, VASE_SLAM = 1500;
+	public static final int VASE_COMES = 20, VASE_TICKS = 5 * 20, VASE_SEALS = 12, VASE_FALL = 10;
+	/**
+	 * Frozen Moon in the Well: where (154 by its realm), how far round the well of its reflection reaches (18), how far round the land freezes
+	 * (24); what it does a second to every foe held frozen in it, and its shattering's harm; how long it rises, how long it holds them, and how
+	 * long it has after it shatters (ticks).
+	 */
+	public static final double WELL_RANGE = HeavenSpells.span(Realm.ENTERING_NIRVANA, 64), WELL_RADIUS = HeavenSpells.span(Realm.ENTERING_NIRVANA, 7.5),
+			WELL_FROST = HeavenSpells.span(Realm.ENTERING_NIRVANA, 10);
+	public static final float WELL_DAMAGE = 400, WELL_SHATTER = 3200;
+	public static final int WELL_RISES = 24, WELL_TICKS = 4 * 20, WELL_AFTER = 22;
+	/** The frozen moon's light: its ice glows so. */
+	public static final int MOON_LIGHT = 0xBEEFFF;
+	/**
+	 * The Frozen Moon Falls: where (154 by its realm), how high it falls from (96); whom it strikes as it lands (within 24) and how hard; how
+	 * far round its frost reaches (38); its crater of ice (29 round, 14 deep, by its realm); how long it falls, how long its frost chills, and how
+	 * long it has after (ticks).
+	 */
+	public static final double FALLS_RANGE = HeavenSpells.span(Realm.ENTERING_NIRVANA, 64), FALLS_HIGH = HeavenSpells.span(Realm.ENTERING_NIRVANA, 40),
+			FALLS_RADIUS = HeavenSpells.span(Realm.ENTERING_NIRVANA, 10), FALLS_FROST = HeavenSpells.span(Realm.ENTERING_NIRVANA, 16),
+			FALLS_CRATER = Devastation.sized(Realm.ENTERING_NIRVANA, 12), FALLS_CRATER_DEPTH = Devastation.sized(Realm.ENTERING_NIRVANA, 6);
+	public static final float FALLS_DAMAGE = 6500;
+	public static final int FALLS_FALL = 30, FALLS_CHILLS = 8 * 20, FALLS_AFTER = 24;
+	/**
+	 * Glacier of the First Age: how far ahead of its caster it rises (14), how far it grinds on (102), half its width (24), how deep its body
+	 * is behind its face (27: its model's); its harm each time it grinds, and as its face calves, to everything within the reach of its falling
+	 * slabs ahead (20); how long it takes to rise, how long it grinds on, how often it strikes, how long it calves, and how long it has after
+	 * (ticks).
+	 */
+	public static final double GLACIER_START = HeavenSpells.span(Realm.TRUE_IMMORTAL, 4), GLACIER_REACH = HeavenSpells.span(Realm.TRUE_IMMORTAL, 30),
+			GLACIER_HALF = HeavenSpells.span(Realm.TRUE_IMMORTAL, 7), GLACIER_DEPTH = HeavenSpells.span(Realm.TRUE_IMMORTAL, 8),
+			GLACIER_CALVE_REACH = HeavenSpells.span(Realm.TRUE_IMMORTAL, 6);
+	public static final float GLACIER_GRIND = 2500, GLACIER_CALVE = 10000;
+	public static final int GLACIER_RISES = 20, GLACIER_TICKS = 5 * 20, GLACIER_EVERY = 5, GLACIER_CALVES = 20, GLACIER_AFTER = 10;
+	/**
+	 * The Primordial Sea: where (218 by its realm), how far round its ring of waves stands (39: its model's); the lake it leaves (27 round, 9
+	 * deep, by its realm); what it drowns every foe within of each time, and its waves' crash; how long it takes to rise, how long it churns, how
+	 * often it drowns, how long its waves take to crash in, and how long it has after (ticks).
+	 */
+	public static final double PRIMAL_SEA_RANGE = HeavenSpells.span(Realm.TRUE_IMMORTAL, 64), PRIMAL_SEA_RADIUS = HeavenSpells.span(Realm.TRUE_IMMORTAL, 11.5),
+			PRIMAL_SEA_LAKE = Devastation.sized(Realm.TRUE_IMMORTAL, 8), PRIMAL_SEA_LAKE_DEPTH = Devastation.sized(Realm.TRUE_IMMORTAL, 2.5);
+	public static final float PRIMAL_SEA_DROWN = 3000, PRIMAL_SEA_CRASH = 45000;
+	public static final int PRIMAL_SEA_RISES = 28, PRIMAL_SEA_TICKS = 5 * 20, PRIMAL_SEA_EVERY = 10, PRIMAL_SEA_CLOSES = 16, PRIMAL_SEA_AFTER = 20;
 
 	private static final UUID RAIN_ID = UUID.fromString("4c1e9a72-0b5f-4e3d-8f26-d91a7b3e5c08");
 
@@ -187,6 +254,28 @@ public final class WaterSpells {
 			case KUN_RISES_FROM_THE_ABYSS -> {
 				LivingEntity aimed = HeavenSpells.aimed(p, KUN_RANGE);
 				HeavenSpells.linger(new Kun(p, spell, aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, KUN_RANGE)));
+			}
+			case TWENTY_FOUR_SEA_FIXING_PEARLS -> {
+				HeavenSpells.endLingering(p.getUUID(), Pearls.class);
+				HeavenSpells.linger(new Pearls(p, spell));
+			}
+			case OCEAN_SEALING_VASE -> {
+				LivingEntity aimed = HeavenSpells.aimed(p, VASE_RANGE);
+				HeavenSpells.linger(new Vase(p, spell, aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, VASE_RANGE)));
+			}
+			case FROZEN_MOON_IN_THE_WELL -> {
+				LivingEntity aimed = HeavenSpells.aimed(p, WELL_RANGE);
+				HeavenSpells.linger(new MoonWell(p, spell, aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, WELL_RANGE)));
+			}
+			case THE_FROZEN_MOON_FALLS -> {
+				LivingEntity aimed = HeavenSpells.aimed(p, FALLS_RANGE);
+				HeavenSpells.linger(new MoonFalls(p, spell, aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, FALLS_RANGE)));
+			}
+			case GLACIER_OF_THE_FIRST_AGE -> HeavenSpells.linger(new Glacier(p, spell));
+			case THE_PRIMORDIAL_SEA -> {
+				HeavenSpells.endLingering(p.getUUID(), PrimalSea.class);
+				LivingEntity aimed = HeavenSpells.aimed(p, PRIMAL_SEA_RANGE);
+				HeavenSpells.linger(new PrimalSea(p, spell, aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, PRIMAL_SEA_RANGE)));
 			}
 			default -> {}
 		}
@@ -759,12 +848,14 @@ public final class WaterSpells {
 
 	/**
 	 * Absolute Zero: a beam of utter cold freezes the being looked at solid: {@link #ZERO_DAMAGE} of water, held still for
-	 * {@link #ZERO_TICKS}; when anyone strikes it, or the cold lets go, it shatters for {@link #ZERO_SHATTER} more.
+	 * {@link #ZERO_TICKS}; when anyone strikes it, or the cold lets go, it shatters for {@link #ZERO_SHATTER} more. It stands frozen in a coffin
+	 * of clear ice (SpellConstruct ICE_COFFIN) grown up round it, which bursts apart as it shatters.
 	 */
 	public static final class Zero extends HeavenSpells.Timed implements HeavenSpells.HarmListener {
 		private final Spell spell;
 		public final LivingEntity target;
 		private final WoodSpells.Bound bound;
+		private final SpellConstruct coffin;
 		private boolean shattered;
 
 		Zero(LivingEntity caster, Spell spell, LivingEntity target) {
@@ -772,8 +863,10 @@ public final class WaterSpells {
 			this.spell = spell;
 			this.target = target;
 			SpellField.create(level, SpellField.Kind.FROST_BEAM, HeavenSpells.fromHands(caster), 0.3f, 1, 14, caster).target(target).spawn();
+			this.coffin = SpellConstruct.create(level, SpellConstruct.Kind.ICE_COFFIN, target.position(), caster.getRandom().nextFloat() * 360, 0, ZERO_TICKS + 12, caster)
+					.size(Math.max(target.getBbHeight() / 2, target.getBbWidth() / 0.75f)).spawn();
 			soak(caster, target, ZERO_DAMAGE, spell, null);
-			SpellAuras.put(target, SpellAura.FROZEN, ZERO_TICKS);
+			// Its coffin is the look of its freezing (not the frozen's ward of ice, SpellAura FROZEN: drawn in it, it was a box in the crystals).
 			target.setTicksFrozen(Math.max(target.getTicksFrozen(), 400));
 			this.bound = new WoodSpells.Bound(caster, target, target.position(), ZERO_TICKS);
 			HeavenSpells.linger(bound);
@@ -783,13 +876,18 @@ public final class WaterSpells {
 
 		@Override
 		protected boolean run(long age, long now) {
-			return !shattered && HeavenSpells.present(target, level);
+			if (shattered || !HeavenSpells.present(target, level)) return false;
+			coffin.place(target.position(), coffin.getYRot(), 0);
+			target.clearFire(); // nothing burns in its ice
+			return true;
 		}
 
 		@Override
 		public float onIncoming(LivingEntity hurt, DamageSource source, float amount) {
-			// A blow on the frozen shatters it (not the spell's own strike as it froze).
-			if (hurt == target && !shattered && level.getGameTime() > start + 2 && !(source instanceof QiDamageSource qi && qi.element() == QiElement.WATER)) {
+			// A blow on the frozen shatters it: someone's (not its own burning as it stood in the sun, which shattered it the moment it froze,
+			// 2026-10-25), and not the spell's own strike as it froze.
+			if (hurt == target && !shattered && level.getGameTime() > start + 2 && source.getEntity() != null
+					&& !(source instanceof QiDamageSource qi && qi.element() == QiElement.WATER)) {
 				shatter();
 			}
 			return amount;
@@ -798,7 +896,7 @@ public final class WaterSpells {
 		private void shatter() {
 			if (shattered) return;
 			shattered = true;
-			SpellAuras.remove(target, SpellAura.FROZEN);
+			coffin.act("shatter");
 			HeavenSpells.stop(bound);
 			if (target.isAlive()) HeavenSpells.strikeAgain(caster, target, ZERO_SHATTER, spell);
 			SpellFx.send(level, SpellFx.Kind.ICE_BURST, HeavenSpells.middle(target), Vec3.ZERO, 2.5f, 0);
@@ -808,6 +906,7 @@ public final class WaterSpells {
 		@Override
 		public void end() {
 			if (!shattered && target.isAlive()) shatter();
+			coffin.dissolve();
 		}
 	}
 
@@ -981,7 +1080,7 @@ public final class WaterSpells {
 					double dist = rel.length();
 					if (dist > RIVERS_RADIUS || e.getY() > ground.y + 16 || e.getY() < ground.y - 6) continue;
 					held.add(e);
-					if (HeavenSpells.greatBeast(e)) continue;
+					if (HeavenSpells.greatBeast(caster, e)) continue;
 					Vec3 in = dist < 1.0e-3 ? Vec3.ZERO : rel.scale(-1 / dist), round = new Vec3(-in.z, 0, in.x);
 					double lift = (ground.y + 1.5 - e.getY()) * 0.15;
 					HeavenSpells.move(e, in.scale(Math.min(dist, 0.55)).add(round.scale(0.45 * Math.min(1, dist / 4))).add(0, lift, 0));
@@ -1001,7 +1100,7 @@ public final class WaterSpells {
 				// It bursts: those it held flung out; the flood it poured in stays, a lake in its basin.
 				vortex.act("burst");
 				for (LivingEntity e : held) {
-					if (!HeavenSpells.present(e, level) || HeavenSpells.greatBeast(e)) continue;
+					if (!HeavenSpells.present(e, level) || HeavenSpells.greatBeast(caster, e)) continue;
 					Vec3 out = e.position().subtract(ground).multiply(1, 0, 1);
 					out = out.lengthSqr() < 1.0e-4 ? new Vec3(1, 0, 0) : out.normalize();
 					HeavenSpells.move(e, out.scale(2.4).add(0, 1.2, 0));
@@ -1080,7 +1179,7 @@ public final class WaterSpells {
 				// Nothing is borne up by it: down they go, and nothing flies in it.
 				if (e instanceof net.minecraft.server.level.ServerPlayer player) QiFlight.weighDown(player, 10);
 				if (e instanceof CultivatorNpc npc && npc.isQiFlying()) npc.setQiFlying(false);
-				if (!HeavenSpells.greatBeast(e)) {
+				if (!HeavenSpells.greatBeast(caster, e)) {
 					Vec3 v = e.getDeltaMovement();
 					HeavenSpells.move(e, new Vec3(v.x * 0.6, Math.min(v.y, -0.45), v.z * 0.6));
 				}
@@ -1176,7 +1275,7 @@ public final class WaterSpells {
 				if (Math.hypot(e.getX() - ground.x, e.getZ() - ground.z) > KUN_RADIUS || e.getY() > ground.y + (breach ? 20 : 40) || e.getY() < ground.y - 12) continue;
 				e.invulnerableTime = 0;
 				soak(caster, e, damage, spell, null);
-				if (HeavenSpells.greatBeast(e)) continue;
+				if (HeavenSpells.greatBeast(caster, e)) continue;
 				Vec3 out = e.position().subtract(ground).multiply(1, 0, 1);
 				out = out.lengthSqr() < 1.0e-4 ? across : out.normalize();
 				HeavenSpells.move(e, breach ? out.scale(0.7).add(0, 2.4, 0) : out.scale(1.8).add(0, 0.6, 0));
@@ -1192,6 +1291,562 @@ public final class WaterSpells {
 		public void end() {
 			abyss.dissolve();
 			if (kun != null) kun.dissolve();
+		}
+	}
+
+	// --- Sacred Vessel ---
+
+	/**
+	 * Twenty-Four Sea-Fixing Pearls: the twenty-four pearls that fix the sea (SpellConstruct SEA_PEARL each, its own GeckoLib model: a pearl
+	 * with the sea turning in it) unwind round their caster ({@link #PEARLS_FORM}), circling {@link #PEARLS_CIRCLE} out, and fly off one after
+	 * another, {@link #PEARL_EVERY} ticks apart, at the foes within {@link #PEARLS_REACH} of them, nearest first, round and round them (at where
+	 * the caster looks, with none): each bursts with the weight of the sea, {@link #PEARL_DAMAGE} to everything within {@link #PEARL_BLAST} and
+	 * a little crater.
+	 */
+	public static final class Pearls extends HeavenSpells.Timed {
+		private final Spell spell;
+		private final SpellConstruct[] pearls = new SpellConstruct[PEARLS];
+		/** Each pearl's flight once loosed: where from, at whom (or where), when. */
+		private final Vec3[] from = new Vec3[PEARLS], to = new Vec3[PEARLS];
+		private final LivingEntity[] at = new LivingEntity[PEARLS];
+		private final long[] loosed = new long[PEARLS];
+		private int next;
+
+		Pearls(LivingEntity caster, Spell spell) {
+			super(caster, PEARLS_FORM + PEARLS * PEARL_EVERY + PEARL_FLIGHT + 6);
+			this.spell = spell;
+			java.util.Arrays.fill(loosed, -1);
+			for (int i = 0; i < PEARLS; i++) {
+				pearls[i] = SpellConstruct.create(level, SpellConstruct.Kind.SEA_PEARL, circle(i, 0), 0, 0, (int) (end - start), caster)
+						.size((float) HeavenSpells.greatness(Realm.SACRED_VESSEL) * PEARL_SIZE).spawn();
+			}
+			HeavenSpells.sound(level, caster.position(), SoundEvents.CONDUIT_ACTIVATE, 2.0f, 1.2f);
+			HeavenSpells.sound(level, caster.position(), SoundEvents.AMETHYST_BLOCK_CHIME, 2.0f, 0.8f);
+		}
+
+		/** Pearl {@code i}'s place in the circle round its caster, {@code age} ticks in (it unwinds outward as it forms, turning). */
+		private Vec3 circle(int i, long age) {
+			double unwound = Math.min(1, age / (double) PEARLS_FORM);
+			double angle = Math.PI * 2 * i / PEARLS + age * 0.09;
+			double r = PEARLS_CIRCLE * (0.3 + 0.7 * unwound);
+			return caster.position().add(Math.cos(angle) * r, caster.getBbHeight() * 0.6 + 0.6 * Math.sin(angle * 3 + age * 0.2), Math.sin(angle) * r);
+		}
+
+		@Override
+		protected boolean run(long age, long now) {
+			if (!casterHere()) return false;
+			if (age >= PEARLS_FORM && (age - PEARLS_FORM) % PEARL_EVERY == 0 && next < PEARLS) loose(next++, age);
+			for (int i = 0; i < PEARLS; i++) {
+				if (loosed[i] < 0) {
+					pearls[i].place(circle(i, age), 0, 0);
+					continue;
+				}
+				long flying = age - loosed[i];
+				if (flying > PEARL_FLIGHT) continue;
+				Vec3 target = at[i] != null && HeavenSpells.present(at[i], level) ? HeavenSpells.middle(at[i]) : to[i];
+				double f = flying / (double) PEARL_FLIGHT;
+				Vec3 here = from[i].lerp(target, f).add(0, Math.sin(Math.PI * f) * Math.min(8, from[i].distanceTo(target) * 0.2), 0);
+				pearls[i].place(here, 0, 0);
+				if (flying == PEARL_FLIGHT) burst(i, target);
+			}
+			return true;
+		}
+
+		/** Pearl {@code i} flies off: at the next foe in turn, nearest first (at where the caster looks, with none). */
+		private void loose(int i, long age) {
+			List<LivingEntity> foes = HeavenSpells.around(caster, PEARLS_REACH, e -> HeavenSpells.mark(caster, e) && !HeavenSpells.spared(caster, e));
+			foes.sort(java.util.Comparator.comparingDouble(e -> e.distanceToSqr(caster)));
+			from[i] = pearls[i].position();
+			if (!foes.isEmpty()) {
+				at[i] = foes.get(i % foes.size());
+				to[i] = HeavenSpells.middle(at[i]);
+			} else {
+				to[i] = HeavenSpells.lookPoint(caster, PEARLS_REACH);
+			}
+			loosed[i] = age;
+			HeavenSpells.sound(level, from[i], SoundEvents.TRIDENT_THROW, 1.5f, 1.4f);
+		}
+
+		/** Pearl {@code i} bursts at {@code where}: everything near it struck by the sea's weight, a little crater, and it is gone. */
+		private void burst(int i, Vec3 where) {
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, where, PEARL_BLAST + 2, e -> !HeavenSpells.spared(caster, e))) {
+				if (HeavenSpells.middle(e).distanceTo(where) > PEARL_BLAST + e.getBbWidth()) continue;
+				e.invulnerableTime = 0;
+				soak(caster, e, PEARL_DAMAGE, spell, pearls[i]);
+				HeavenSpells.push(where, e, 0.6);
+			}
+			Vec3 ground = HeavenSpells.groundBelow(level, where, 1, 3);
+			if (ground != null) Devastation.crater(caster, level, ground, PEARL_CRATER, PEARL_CRATER_DEPTH, Devastation.Floor.NONE);
+			SpellFx.send(level, SpellFx.Kind.SPLASH, where, Vec3.ZERO, (float) PEARL_BLAST, 0, 160);
+			HeavenSpells.sound(level, where, SoundEvents.GENERIC_SPLASH, 2.0f, 0.8f);
+			HeavenSpells.sound(level, where, SoundEvents.AMETHYST_CLUSTER_BREAK, 1.5f, 0.6f);
+			pearls[i].dissolve();
+		}
+
+		@Override
+		public void end() {
+			for (SpellConstruct pearl : pearls) if (pearl != null) pearl.dissolve();
+		}
+	}
+
+	/**
+	 * Ocean-Sealing Vase: a vase of white jade painted with waves, that holds an ocean (SpellConstruct OCEAN_VASE, its own GeckoLib model), comes
+	 * over where its caster looks, its mouth tipped down {@link #VASE_HIGH} over the land ({@link #VASE_COMES}), and drinks for
+	 * {@link #VASE_TICKS}: every drop of water within {@link #VASE_RADIUS} is drawn up out of the land into it (lakes and rivers left dry:
+	 * Devastation#drain), and every foe within it is dragged up into the streams; whatever comes within {@link #VASE_MOUTH} of its mouth is held
+	 * there and crushed for {@link #VASE_CRUSH} a second. Then it seals itself ({@link #VASE_SEALS}) and comes down mouth first
+	 * ({@link #VASE_FALL}): {@link #VASE_SLAM} to everything within {@link #VASE_SLAM_RADIUS}, thrown out, and the ocean it holds poured back
+	 * into a crater with a lake in it.
+	 */
+	public static final class Vase extends HeavenSpells.Timed {
+		private final Spell spell;
+		private final Vec3 ground, mouth;
+		private final SpellConstruct vase;
+		private final java.util.Set<LivingEntity> held = new java.util.LinkedHashSet<>();
+
+		Vase(LivingEntity caster, Spell spell, Vec3 point) {
+			super(caster, VASE_COMES + VASE_TICKS + VASE_SEALS + VASE_FALL + 16);
+			this.spell = spell;
+			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
+			this.ground = below != null ? below : point;
+			this.mouth = ground.add(0, VASE_HIGH, 0);
+			this.vase = SpellConstruct.create(level, SpellConstruct.Kind.OCEAN_VASE, mouth, caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
+			HeavenSpells.sound(level, mouth, SoundEvents.CONDUIT_ACTIVATE, 3.0f, 0.5f);
+			HeavenSpells.sound(level, mouth, SoundEvents.AMETHYST_BLOCK_CHIME, 3.0f, 0.5f);
+		}
+
+		@Override
+		protected boolean run(long age, long now) {
+			if (age < VASE_COMES) return true;
+			long drinking = age - VASE_COMES;
+			if (drinking == 0) {
+				Devastation.drain(caster, level, ground, VASE_RADIUS, 8, VASE_DRAIN_DOWN);
+				HeavenSpells.sound(level, mouth, SoundEvents.BUBBLE_COLUMN_WHIRLPOOL_AMBIENT, 4.0f, 0.4f);
+			}
+			if (drinking < VASE_TICKS) {
+				drink(drinking);
+				return true;
+			}
+			if (drinking == VASE_TICKS) {
+				vase.act("seal");
+				HeavenSpells.sound(level, mouth, SoundEvents.BOTTLE_FILL, 4.0f, 0.4f);
+			}
+			long falling = drinking - VASE_TICKS - VASE_SEALS;
+			if (falling >= 0 && falling <= VASE_FALL) {
+				double f = falling / (double) VASE_FALL;
+				vase.place(mouth.lerp(ground, f * f), vase.getYRot(), 0);
+				hold(mouth.lerp(ground, f * f));
+				if (falling == VASE_FALL) slam();
+			} else if (falling < 0) {
+				hold(mouth);
+			}
+			return true;
+		}
+
+		/** A tick of its drinking: foes dragged up into its streams, the held crushed, the water drawn up. */
+		private void drink(long drinking) {
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, VASE_RADIUS + VASE_HIGH, e -> !held.contains(e) && !HeavenSpells.spared(caster, e))) {
+				if (Math.hypot(e.getX() - ground.x, e.getZ() - ground.z) > VASE_RADIUS || e.getY() > mouth.y + 4 || e.getY() < ground.y - 16) continue;
+				Vec3 to = mouth.subtract(HeavenSpells.middle(e));
+				if (to.length() <= VASE_MOUTH && !HeavenSpells.greatBeast(caster, e)) {
+					held.add(e);
+					SpellFx.send(level, SpellFx.Kind.SPLASH, HeavenSpells.middle(e), Vec3.ZERO, 2, 0);
+					continue;
+				}
+				// Drawn up in a swirl round the vase's streams: in, up and round.
+				Vec3 flat = to.multiply(1, 0, 1);
+				Vec3 round = flat.lengthSqr() < 1.0e-4 ? Vec3.ZERO : new Vec3(-flat.z, 0, flat.x).normalize().scale(0.35);
+				double pull = HeavenSpells.greatBeast(caster, e) ? 0.1 : 0.3 + 0.7 * (1 - Math.min(1, to.length() / (VASE_RADIUS + VASE_HIGH)));
+				HeavenSpells.move(e, to.normalize().scale(pull).add(round));
+				HeavenSpells.safeFall(e, 120);
+				if (HeavenSpells.greatBeast(caster, e) && drinking % 20 == 10) HeavenSpells.strikeAgain(caster, e, VASE_CRUSH, spell);
+			}
+			hold(mouth);
+			if (drinking % 20 == 10) {
+				for (LivingEntity e : held) {
+					if (!HeavenSpells.present(e, level)) continue;
+					HeavenSpells.strikeAgain(caster, e, VASE_CRUSH, spell);
+				}
+				HeavenSpells.sound(level, mouth, SoundEvents.GENERIC_SPLASH, 3.0f, 0.5f);
+			}
+			if (drinking % 3 == 0) {
+				// Streams drawn up out of the land into its mouth.
+				for (int k = 0; k < 3; k++) {
+					double angle = level.random.nextDouble() * Math.PI * 2, out = (0.3 + 0.7 * level.random.nextDouble()) * VASE_RADIUS;
+					Vec3 foot = ground.add(Math.cos(angle) * out, 0.5, Math.sin(angle) * out);
+					SpellFx.send(level, SpellFx.Kind.SPLASH, foot, mouth.subtract(foot), 2.5f, 0, 160);
+				}
+			}
+		}
+
+		/** The held kept in its mouth (just inside it, a little under), drowning. */
+		private void hold(Vec3 at) {
+			for (java.util.Iterator<LivingEntity> it = held.iterator(); it.hasNext(); ) {
+				LivingEntity e = it.next();
+				if (!HeavenSpells.present(e, level)) {
+					it.remove();
+					continue;
+				}
+				HeavenSpells.teleport(e, at.subtract(0, e.getBbHeight() * 0.5 + 0.5, 0));
+				HeavenSpells.safeFall(e, 100);
+				if (breathes(e)) e.setAirSupply(Math.max(-19, e.getAirSupply() - 8));
+			}
+		}
+
+		/** It comes down sealed: everything near struck and thrown out, the ocean poured back into a crater. */
+		private void slam() {
+			vase.act("slam");
+			held.clear();
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, VASE_SLAM_RADIUS + 10, e -> !HeavenSpells.spared(caster, e))) {
+				if (Math.hypot(e.getX() - ground.x, e.getZ() - ground.z) > VASE_SLAM_RADIUS || e.getY() > ground.y + 20 || e.getY() < ground.y - 10) continue;
+				e.invulnerableTime = 0;
+				soak(caster, e, VASE_SLAM, spell, null);
+				HeavenSpells.move(e, e.position().subtract(ground).multiply(1, 0, 1).normalize().scale(1.8).add(0, 1.0, 0));
+				HeavenSpells.safeFall(e, 120);
+			}
+			Devastation.crater(caster, level, ground, VASE_CRATER, VASE_CRATER_DEPTH, Devastation.Floor.LAKE);
+			SpellFx.send(level, SpellFx.Kind.SPLASH, ground, Vec3.ZERO, (float) VASE_SLAM_RADIUS, 0, 192);
+			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) VASE_SLAM_RADIUS * 1.6f, 0, 192);
+			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_SPLASH, 5.0f, 0.3f);
+			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 4.0f, 0.5f);
+		}
+
+		@Override
+		public void end() {
+			held.clear();
+			vase.dissolve();
+		}
+	}
+
+	// --- Entering Nirvana ---
+
+	/**
+	 * Frozen Moon in the Well: a crescent moon of ice rises over where its caster looks, its reflection shining up out of a well of still black
+	 * water under it (SpellConstruct FROZEN_MOON, its own GeckoLib model, {@link #WELL_RISES}); the land round freezes ({@link #WELL_FROST}). For
+	 * {@link #WELL_TICKS} every foe in the well ({@link #WELL_RADIUS}) is held frozen in it, as the moon's reflection is held in the water, and
+	 * takes {@link #WELL_DAMAGE} a second. Then the moon shatters: {@link #WELL_SHATTER} to every foe in the well, and it lets them go.
+	 */
+	public static final class MoonWell extends HeavenSpells.Timed {
+		private final Spell spell;
+		private final Vec3 ground;
+		private final SpellConstruct moon;
+
+		MoonWell(LivingEntity caster, Spell spell, Vec3 point) {
+			super(caster, WELL_RISES + WELL_TICKS + WELL_AFTER);
+			this.spell = spell;
+			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
+			this.ground = below != null ? below : point;
+			this.moon = SpellConstruct.create(level, SpellConstruct.Kind.FROZEN_MOON, ground.add(0, 0.1, 0), caster.getYRot() + 180, 0, (int) (end - start), caster).sizedFor(spell).spawn();
+			HeavenSpells.sound(level, ground, SoundEvents.AMETHYST_BLOCK_CHIME, 4.0f, 0.5f);
+			HeavenSpells.sound(level, ground, SoundEvents.GLASS_PLACE, 3.0f, 0.4f);
+		}
+
+		private boolean within(LivingEntity e) {
+			return Math.hypot(e.getX() - ground.x, e.getZ() - ground.z) <= WELL_RADIUS && e.getY() < ground.y + 12 && e.getY() > ground.y - 6;
+		}
+
+		@Override
+		protected boolean run(long age, long now) {
+			if (age < WELL_RISES) return true;
+			long holding = age - WELL_RISES;
+			if (holding == 0) {
+				Devastation.freeze(caster, level, ground, WELL_FROST);
+				SpellFx.send(level, SpellFx.Kind.ICE_BURST, ground, Vec3.ZERO, (float) WELL_RADIUS, 0, 192);
+			}
+			if (holding < WELL_TICKS) {
+				for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, WELL_RADIUS + 12, e -> !HeavenSpells.spared(caster, e))) {
+					if (!within(e)) continue;
+					HeavenSpells.still(e);
+					e.setTicksFrozen(Math.max(e.getTicksFrozen(), e.getTicksRequiredToFreeze() + 40));
+					e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 20, 5));
+					if (holding % 20 == 10) {
+						HeavenSpells.strikeAgain(caster, e, WELL_DAMAGE, spell);
+						SpellFx.send(level, SpellFx.Kind.ICE_BURST, HeavenSpells.middle(e), Vec3.ZERO, 1.5f, 0);
+					}
+				}
+				if (holding % 20 == 10) HeavenSpells.sound(level, ground, SoundEvents.POWDER_SNOW_STEP, 3.0f, 0.4f);
+				return true;
+			}
+			if (holding == WELL_TICKS) shatter();
+			return true;
+		}
+
+		/** The moon shatters: every foe in the well struck, let go. */
+		private void shatter() {
+			moon.act("shatter");
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, WELL_RADIUS + 12, e -> !HeavenSpells.spared(caster, e))) {
+				if (!within(e)) continue;
+				e.invulnerableTime = 0;
+				soak(caster, e, WELL_SHATTER, spell, moon);
+			}
+			SpellFx.send(level, SpellFx.Kind.ICE_BURST, ground.add(0, WELL_RADIUS, 0), Vec3.ZERO, (float) WELL_RADIUS, 0, 192);
+			SpellFx.send(level, SpellFx.Kind.FLASH, ground.add(0, WELL_RADIUS * 1.2, 0), Vec3.ZERO, 14, MOON_LIGHT, 192);
+			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) WELL_RADIUS * 1.4f, 0, 192);
+			HeavenSpells.sound(level, ground, SoundEvents.GLASS_BREAK, 5.0f, 0.4f);
+			HeavenSpells.sound(level, ground, SoundEvents.AMETHYST_CLUSTER_BREAK, 5.0f, 0.5f);
+		}
+
+		@Override
+		public void end() {
+			moon.dissolve();
+		}
+	}
+
+	/**
+	 * The Frozen Moon Falls: a moon of ice, cratered and cracked with cold light, its frost streaming up behind it (SpellConstruct ICE_MOON, its
+	 * own GeckoLib model), falls out of the sky onto where its caster looks ({@link #FALLS_FALL}): {@link #FALLS_DAMAGE} to everything within
+	 * {@link #FALLS_RADIUS}, thrown out; the land smashed into a crater of ice ({@link #FALLS_CRATER}), frozen round it out to {@link #FALLS_FROST},
+	 * and every foe within that chilled for {@link #FALLS_CHILLS}.
+	 */
+	public static final class MoonFalls extends HeavenSpells.Timed {
+		private final Spell spell;
+		private final Vec3 ground, sky, rest;
+		private final SpellConstruct moon;
+
+		MoonFalls(LivingEntity caster, Spell spell, Vec3 point) {
+			super(caster, FALLS_FALL + FALLS_AFTER);
+			this.spell = spell;
+			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
+			this.ground = below != null ? below : point;
+			this.sky = ground.add(0, FALLS_HIGH, 0);
+			// It comes to rest half sunk into what it smashed (its model's twenty pixels round: as great as its realm makes it).
+			this.rest = ground.add(0, HeavenSpells.greatness(Realm.ENTERING_NIRVANA) * 20 / 16.0 * 4 * 0.3, 0);
+			this.moon = SpellConstruct.create(level, SpellConstruct.Kind.ICE_MOON, sky, caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
+			HeavenSpells.sound(level, sky, SoundEvents.GLASS_PLACE, 4.0f, 0.3f);
+			HeavenSpells.sound(level, sky, SoundEvents.ELYTRA_FLYING, 4.0f, 0.5f);
+		}
+
+		@Override
+		protected boolean run(long age, long now) {
+			if (age <= FALLS_FALL) {
+				double f = age / (double) FALLS_FALL;
+				moon.place(sky.lerp(rest, f * f), moon.getYRot(), 0);
+				if (age % 3 == 0) SpellFx.send(level, SpellFx.Kind.ICE_BURST, sky.lerp(rest, f * f).add(0, 10, 0), Vec3.ZERO, 3, 0, 192);
+				if (age == FALLS_FALL) impact();
+			}
+			return true;
+		}
+
+		/** It lands: everything near struck and thrown out, the land smashed into a crater of ice and frozen round it, all near it chilled. */
+		private void impact() {
+			moon.act("shatter");
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, FALLS_FROST + 12, e -> !HeavenSpells.spared(caster, e))) {
+				double d = Math.hypot(e.getX() - ground.x, e.getZ() - ground.z);
+				if (d > FALLS_FROST || e.getY() > ground.y + 30 || e.getY() < ground.y - 12) continue;
+				if (d <= FALLS_RADIUS) {
+					e.invulnerableTime = 0;
+					soak(caster, e, FALLS_DAMAGE, spell, moon);
+					HeavenSpells.move(e, e.position().subtract(ground).multiply(1, 0, 1).normalize().scale(1.8).add(0, 1.0, 0));
+					HeavenSpells.safeFall(e, 120);
+				}
+				e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, FALLS_CHILLS, 2));
+				e.setTicksFrozen(Math.max(e.getTicksFrozen(), e.getTicksRequiredToFreeze() + FALLS_CHILLS / 2));
+			}
+			Devastation.crater(caster, level, ground, FALLS_CRATER, FALLS_CRATER_DEPTH, Devastation.Floor.ICE);
+			Devastation.freeze(caster, level, ground, FALLS_FROST);
+			SpellFx.send(level, SpellFx.Kind.ICE_BURST, rest, Vec3.ZERO, (float) FALLS_RADIUS, 0, 192);
+			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) FALLS_FROST, 0, 192);
+			SpellFx.send(level, SpellFx.Kind.FLASH, rest, Vec3.ZERO, 18, MOON_LIGHT, 192);
+			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 6.0f, 0.4f);
+			HeavenSpells.sound(level, ground, SoundEvents.GLASS_BREAK, 6.0f, 0.3f);
+		}
+
+		@Override
+		public void end() {
+			moon.dissolve();
+		}
+	}
+
+	// --- True Immortal ---
+
+	/**
+	 * Glacier of the First Age: a wall of ancient ice, ranks of seracs taller toward its back (SpellConstruct PRIMAL_GLACIER, its own GeckoLib
+	 * model), heaves up out of the land {@link #GLACIER_START} ahead of its caster ({@link #GLACIER_RISES}) and grinds forward along their look,
+	 * {@link #GLACIER_REACH} in {@link #GLACIER_TICKS}, {@link #GLACIER_HALF} either side of its middle: every foe before its face is shoved
+	 * along with it (one it overruns thrown out ahead; a great beast only ground past), struck for {@link #GLACIER_GRIND} every
+	 * {@link #GLACIER_EVERY} ticks and chilled, and the land in its wake frozen. At its end the great slabs of its face calve forward
+	 * ({@link #GLACIER_CALVES}): {@link #GLACIER_CALVE} to everything within {@link #GLACIER_CALVE_REACH} before it.
+	 */
+	public static final class Glacier extends HeavenSpells.Timed {
+		private final Spell spell;
+		private final Vec3 forward, side;
+		private final float yaw;
+		private final SpellConstruct glacier;
+		private Vec3 front;
+
+		Glacier(LivingEntity caster, Spell spell) {
+			super(caster, GLACIER_RISES + GLACIER_TICKS + GLACIER_CALVES + GLACIER_AFTER);
+			this.spell = spell;
+			this.yaw = caster.getYRot();
+			this.forward = Vec3.directionFromRotation(0, yaw);
+			this.side = new Vec3(-forward.z, 0, forward.x);
+			Vec3 at = caster.position().add(forward.scale(GLACIER_START)), below = HeavenSpells.groundBelow(level, at.add(0, 6, 0), 8, 24);
+			this.front = below != null ? below : at;
+			this.glacier = SpellConstruct.create(level, SpellConstruct.Kind.PRIMAL_GLACIER, front, yaw, 0, (int) (end - start), caster).sizedFor(spell).spawn();
+			HeavenSpells.sound(level, front, SoundEvents.GLASS_BREAK, 5.0f, 0.3f);
+			HeavenSpells.sound(level, front, SoundEvents.WARDEN_EMERGE, 5.0f, 0.6f);
+		}
+
+		/** How far ahead of its face (back into its body less than nought), to the side of its middle, and over its foot {@code e} is. */
+		private double[] off(LivingEntity e) {
+			Vec3 rel = e.position().subtract(front);
+			return new double[] {rel.x * forward.x + rel.z * forward.z, rel.x * side.x + rel.z * side.z, rel.y};
+		}
+
+		@Override
+		protected boolean run(long age, long now) {
+			if (age < GLACIER_RISES) return true;
+			long grinding = age - GLACIER_RISES;
+			if (grinding < GLACIER_TICKS) {
+				Vec3 next = front.add(forward.scale(GLACIER_REACH / GLACIER_TICKS)), below = HeavenSpells.groundBelow(level, next.add(0, 6, 0), 6, 16);
+				front = below != null ? below : next;
+				glacier.place(front, yaw, 0);
+				grind(grinding % GLACIER_EVERY == 0);
+				if (grinding % 10 == 5) Devastation.freeze(caster, level, front.subtract(forward.scale(GLACIER_DEPTH * 0.6)), GLACIER_HALF);
+				if (grinding % 3 == 0) {
+					Vec3 at = front.add(side.scale((level.random.nextDouble() * 2 - 1) * GLACIER_HALF)).add(0, 1, 0);
+					SpellFx.send(level, SpellFx.Kind.ICE_BURST, at, Vec3.ZERO, 2.5f, 0, 192);
+				}
+				if (grinding % 16 == 0) HeavenSpells.sound(level, front, SoundEvents.GLASS_BREAK, 4.0f, 0.3f + 0.01f * (grinding / 16));
+				return true;
+			}
+			if (grinding == GLACIER_TICKS) {
+				glacier.act("calve");
+				HeavenSpells.sound(level, front, SoundEvents.GLASS_BREAK, 6.0f, 0.4f);
+			}
+			if (grinding == GLACIER_TICKS + GLACIER_CALVES / 2) calve();
+			return true;
+		}
+
+		/** A tick of its grinding on: every foe before its face, or overrun by it, shoved along ahead of it; struck if {@code strike}. */
+		private void grind(boolean strike) {
+			double speed = GLACIER_REACH / GLACIER_TICKS;
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, front, GLACIER_HALF + GLACIER_DEPTH + 6, e -> !HeavenSpells.spared(caster, e))) {
+				double[] o = off(e);
+				if (Math.abs(o[1]) > GLACIER_HALF + e.getBbWidth() / 2 || o[0] < -GLACIER_DEPTH || o[0] > 3 + e.getBbWidth() / 2 || o[2] > 30 || o[2] < -8) continue;
+				if (!HeavenSpells.greatBeast(caster, e)) {
+					if (o[0] < 0) HeavenSpells.teleport(e, front.add(forward.scale(1.5 + e.getBbWidth() / 2)).add(side.scale(o[1])).add(0, Math.max(0, o[2]), 0));
+					HeavenSpells.move(e, forward.scale(speed + 0.3).add(0, 0.05, 0));
+				}
+				e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 20, 2));
+				e.setTicksFrozen(Math.max(e.getTicksFrozen(), e.getTicksRequiredToFreeze() + 20));
+				if (strike) {
+					e.invulnerableTime = 0;
+					soak(caster, e, GLACIER_GRIND, spell, null);
+					SpellFx.send(level, SpellFx.Kind.ICE_BURST, HeavenSpells.middle(e), Vec3.ZERO, 1.5f, 0);
+				}
+			}
+		}
+
+		/** Its face calves: the great slabs fall forward, everything within their reach before it struck, the land frozen where they fall. */
+		private void calve() {
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, front, GLACIER_HALF + GLACIER_CALVE_REACH + 6, e -> !HeavenSpells.spared(caster, e))) {
+				double[] o = off(e);
+				if (Math.abs(o[1]) > GLACIER_HALF + e.getBbWidth() / 2 || o[0] < -4 || o[0] > GLACIER_CALVE_REACH || o[2] > 30 || o[2] < -8) continue;
+				e.invulnerableTime = 0;
+				soak(caster, e, GLACIER_CALVE, spell, null);
+				if (!HeavenSpells.greatBeast(caster, e)) HeavenSpells.move(e, forward.scale(1.4).add(0, -0.4, 0));
+				e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 80, 3));
+			}
+			Vec3 fell = front.add(forward.scale(GLACIER_CALVE_REACH * 0.5));
+			Devastation.freeze(caster, level, fell, GLACIER_HALF);
+			for (int i = -2; i <= 2; i++) SpellFx.send(level, SpellFx.Kind.ICE_BURST, fell.add(side.scale(i * GLACIER_HALF / 2.5)), Vec3.ZERO, 6, 0, 256);
+			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, fell, Vec3.ZERO, (float) GLACIER_HALF * 1.3f, 0, 256);
+			HeavenSpells.sound(level, fell, SoundEvents.GENERIC_EXPLODE, 6.0f, 0.5f);
+			HeavenSpells.sound(level, fell, SoundEvents.GLASS_BREAK, 6.0f, 0.4f);
+		}
+
+		@Override
+		public void end() {
+			glacier.dissolve();
+		}
+	}
+
+	/**
+	 * The Primordial Sea: the waters before heaven and earth well up where its caster looks in a ring of towering waves, {@link #PRIMAL_SEA_RADIUS}
+	 * round, facing in (SpellConstruct PRIMORDIAL_SEA, its own GeckoLib model; {@link #PRIMAL_SEA_RISES}), the sea within them wheeling in a
+	 * whirlpool. For {@link #PRIMAL_SEA_TICKS} every foe within is dragged round in it (a great beast only slowed), held within its waves, and
+	 * every {@link #PRIMAL_SEA_EVERY} ticks drowned for {@link #PRIMAL_SEA_DROWN}. Then its waves crash in over its heart
+	 * ({@link #PRIMAL_SEA_CLOSES}): {@link #PRIMAL_SEA_CRASH} to every foe within, the land under it left a lake.
+	 */
+	public static final class PrimalSea extends HeavenSpells.Timed {
+		private final Spell spell;
+		private final Vec3 ground;
+		private final SpellConstruct sea;
+
+		PrimalSea(LivingEntity caster, Spell spell, Vec3 point) {
+			super(caster, PRIMAL_SEA_RISES + PRIMAL_SEA_TICKS + PRIMAL_SEA_CLOSES + PRIMAL_SEA_AFTER);
+			this.spell = spell;
+			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
+			this.ground = below != null ? below : point;
+			this.sea = SpellConstruct.create(level, SpellConstruct.Kind.PRIMORDIAL_SEA, ground.add(0, 0.1, 0), caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
+			HeavenSpells.sound(level, ground, SoundEvents.AMBIENT_UNDERWATER_ENTER, 5.0f, 0.4f);
+			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_SPLASH, 5.0f, 0.3f);
+		}
+
+		private List<LivingEntity> within() {
+			return WoodSpells.foesWithin(caster, level, ground, PRIMAL_SEA_RADIUS, 10, 36);
+		}
+
+		@Override
+		protected boolean run(long age, long now) {
+			if (age < PRIMAL_SEA_RISES) return true;
+			long churning = age - PRIMAL_SEA_RISES;
+			if (churning < PRIMAL_SEA_TICKS) {
+				churn(churning % PRIMAL_SEA_EVERY == 0);
+				if (churning % 4 == 0) {
+					double a = level.random.nextDouble() * Math.PI * 2, r = PRIMAL_SEA_RADIUS * (0.2 + 0.8 * level.random.nextDouble());
+					SpellFx.send(level, SpellFx.Kind.SPLASH, ground.add(Math.cos(a) * r, 1.5, Math.sin(a) * r), Vec3.ZERO, 3, 0, 192);
+				}
+				if (churning % 20 == 0) HeavenSpells.sound(level, ground, SoundEvents.AMBIENT_UNDERWATER_LOOP_ADDITIONS, 5.0f, 0.5f);
+				return true;
+			}
+			if (churning == PRIMAL_SEA_TICKS) {
+				sea.act("close");
+				HeavenSpells.sound(level, ground, SoundEvents.GENERIC_SPLASH, 6.0f, 0.4f);
+			}
+			if (churning == PRIMAL_SEA_TICKS + PRIMAL_SEA_CLOSES) crash();
+			return true;
+		}
+
+		/** A tick of its churning: every foe within dragged round its whirlpool, turned back from its waves; drowned if {@code drown}. */
+		private void churn(boolean drown) {
+			for (LivingEntity e : within()) {
+				double dx = e.getX() - ground.x, dz = e.getZ() - ground.z, d = Math.max(1.0e-3, Math.hypot(dx, dz));
+				Vec3 in = new Vec3(-dx / d, 0, -dz / d), round = new Vec3(-in.z, 0, in.x), v = e.getDeltaMovement();
+				if (HeavenSpells.greatBeast(caster, e)) e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 20, 3));
+				else {
+					double back = d > PRIMAL_SEA_RADIUS - 3 ? 0.5 : 0.08;
+					HeavenSpells.move(e, round.scale(0.45).add(in.scale(back)).add(0, Math.min(v.y, 0.1), 0));
+				}
+				if (e.isOnFire()) e.clearFire();
+				if (drown) {
+					e.invulnerableTime = 0;
+					soak(caster, e, PRIMAL_SEA_DROWN, spell, null);
+					SpellFx.send(level, SpellFx.Kind.SPLASH, HeavenSpells.middle(e), Vec3.ZERO, 1.5f, 0);
+				}
+			}
+		}
+
+		/** Its waves crash in over its heart: every foe within struck, the land under it left a lake. */
+		private void crash() {
+			for (LivingEntity e : within()) {
+				e.invulnerableTime = 0;
+				soak(caster, e, PRIMAL_SEA_CRASH, spell, null);
+				if (!HeavenSpells.greatBeast(caster, e)) HeavenSpells.move(e, new Vec3(0, -1.2, 0));
+				HeavenSpells.safeFall(e, 100);
+			}
+			Devastation.crater(caster, level, ground, PRIMAL_SEA_LAKE, PRIMAL_SEA_LAKE_DEPTH, Devastation.Floor.LAKE);
+			SpellFx.send(level, SpellFx.Kind.SPLASH, ground.add(0, 4, 0), Vec3.ZERO, (float) PRIMAL_SEA_RADIUS, 0, 256);
+			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) PRIMAL_SEA_RADIUS * 1.4f, 0, 256);
+			SpellFx.send(level, SpellFx.Kind.RIPPLE, ground.add(0, 1, 0), Vec3.ZERO, (float) PRIMAL_SEA_RADIUS, 0, 256);
+			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 6.0f, 0.5f);
+			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_SPLASH, 6.0f, 0.3f);
+		}
+
+		@Override
+		public void end() {
+			sea.dissolve();
 		}
 	}
 

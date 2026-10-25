@@ -132,8 +132,9 @@ public class DemonCoreItem extends Item {
 		PlayerCultivation c = CultivationManager.own(player);
 		int rank = DemonPath.rank(c);
 		if (rank < 0) return;
-		// A half-blood's core too (DemonPath#race), and its race's blood as far as its blood is awake (DemonBlood).
+		// A half-blood's core too (DemonPath#race), and its race's blood as far as its blood is awake (DemonBlood), none beyond what the worlds
+		// hold (Realm#atMostTaught: a True Immortal's is the Immortal Realm's).
 		player.spawnAtLocation(of(rank, DemonPath.element(DemonPath.race(c)), player.getName()));
-		if (c.demon().bloodRealm() >= 0) player.spawnAtLocation(DemonBloodItem.of(DemonPath.race(c), Realm.byIndex(c.demon().bloodRealm())));
+		if (c.demon().bloodRealm() >= 0) player.spawnAtLocation(DemonBloodItem.of(DemonPath.race(c), Realm.byIndex(c.demon().bloodRealm()).atMostTaught()));
 	}
 }

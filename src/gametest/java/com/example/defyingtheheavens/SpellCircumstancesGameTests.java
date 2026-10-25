@@ -26,14 +26,14 @@ import java.util.function.Consumer;
  * cooldown begun) or is refused with nothing paid. Each in a batch of its own on a floor high over its spot (HeavenSpellTesting).
  */
 public class SpellCircumstancesGameTests implements FabricGameTest {
-	/** A master of every element's spells: Void Shattering's Grand Perfection, each element's method of that realm understood whole. */
+	/** A master of every element's spells: True Immortal's Grand Perfection, each element's method of that realm understood whole. */
 	private static ServerPlayer master(GameTestHelper helper, BlockPos at) {
 		ServerPlayer p = HeavenSpellTesting.caster(helper, HeavenMethod.FIRE_FOUR_AXIS, at);
 		PlayerCultivation c = CultivationManager.get(p);
-		c.setState(Realm.VOID_SHATTERING, Stage.GRAND_PERFECTION, 0);
+		c.setState(Realm.TRUE_IMMORTAL, Stage.GRAND_PERFECTION, 0);
 		HeavenState s = c.heaven();
 		for (QiElement element : QiElement.five()) {
-			HeavenMethod method = HeavenMethod.of(element, Realm.VOID_SHATTERING);
+			HeavenMethod method = HeavenMethod.of(element, Realm.TRUE_IMMORTAL);
 			s.setMethod(method, method.layers(), 0);
 		}
 		CultivationManager.refresh(p);

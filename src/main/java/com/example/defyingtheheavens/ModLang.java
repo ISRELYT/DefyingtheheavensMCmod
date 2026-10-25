@@ -382,12 +382,13 @@ public final class ModLang {
 	public static final String HALF_BLOOD_LINE = k("half_blood.line");
 	public static final String DEMON_HELD_BY_BLOOD = k("demon_held_by_blood");
 	public static final String CMD_BLOODLINE_HALF = k("command.bloodline_half");
-	// A sect's guest pass (SectPassItem): "Guest Pass of the Azure Cloud Sect", what it does, how long it is good for, taken back
+	// A sect's guest pass (SectPassItem): "Guest Pass of the Azure Cloud Sect", what it does, how long it is good for, whose it is, taken back
 	public static final String PASS_NAME = k("sect_pass.name");
 	public static final String PASS_BLANK = k("sect_pass.blank");
 	public static final String PASS_USE = k("sect_pass.use");
 	public static final String PASS_LEFT = k("sect_pass.left");
 	public static final String PASS_LAPSED = k("sect_pass.lapsed");
+	public static final String PASS_BOUND = k("sect_pass.bound");
 	public static final String MSG_PASS_REVOKED = k("message.sect_pass.revoked");
 	// The menu's Journal tab (see Journal)
 	public static final String TAB_JOURNAL = k("tab.journal");
@@ -958,6 +959,8 @@ public final class ModLang {
 	public static final String MSG_DAO_STELE_TEACHES = k("message.dao_stele.teaches");
 	public static final String MSG_DAO_STELE_KNOWN = k("message.dao_stele.known");
 	public static final String MSG_DAO_STELE_READING = k("message.dao_stele.reading");
+	/** A stele carved, before the user's rule of 2026-10-25, with a method the worlds don't teach (Realm#taughtInTheWorld): unreadable. */
+	public static final String MSG_STELE_SEALED = k("message.stele.sealed");
 	public static final String ITEM_JADE_SLIP_OF = "item." + DefyingTheHeavens.MOD_ID + ".jade_slip.of";
 	public static final String TOOLTIP_JADE_SLIP = k("tooltip.jade_slip");
 	public static final String TOOLTIP_JADE_SLIP_ELEMENT = k("tooltip.jade_slip.element");

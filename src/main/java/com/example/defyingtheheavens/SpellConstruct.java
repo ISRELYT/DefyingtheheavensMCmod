@@ -92,15 +92,121 @@ public class SpellConstruct extends Entity implements GeoEntity {
 		RIFT_LINE("rift_line", Form.LINE),
 		SHATTERED_SPACE("shattered_space", Form.SHATTER),
 		// The void tree's grasping roots (Void Withering, 2026-10-24: the user's ask, roots that reach out and seize).
-		VOID_TENDRIL("void_tendril", Form.TENDRIL);
+		VOID_TENDRIL("void_tendril", Form.TENDRIL),
+		// Sacred Vessel's (2026-10-24): the sacred treasures, the elements' (their kits), the ghost foundation's (GhostSpells) and both paths'
+		// (HeavenDemonSpells); and the golden ropes, drawn by hand (TendrilRenderer).
+		SWALLOWING_GOURD("swallowing_gourd", "descend", "draw", 4.0f, "spit"),
+		BODHI_BRANCH("bodhi_branch", "appear", "hold", 4.0f, "sweep"),
+		WIND_FIRE_WHEEL("wind_fire_wheel", "ignite", "roll", 4.0f, "burst"),
+		TRIGRAM_FURNACE("trigram_furnace", null, "burn", 4.0f, "jet", "burst"),
+		XIRANG("xirang", null, "pulse", 4.0f, "swell", "settle"),
+		NINE_CAULDRON("nine_cauldron", null, "stand", 4.0f, "land", "rise"),
+		SEA_PEARL("sea_pearl", null, "spin", 4.0f),
+		OCEAN_VASE("ocean_vase", "come", "drink", 4.0f, "seal", "slam"),
+		BINDING_RING("binding_ring", "form", "turn", 4.0f, "cinch"),
+		GOLDEN_ROPE("golden_rope", Form.TENDRIL),
+		DRAGON_SCISSORS("dragon_scissors", "open", "hover", 4.0f, "snap"),
+		KARMA_MIRROR("karma_mirror", "rise", "shine", 4.0f, "flash"),
+		SOUL_PAGODA("soul_pagoda", null, "glow", 4.0f, "land", "seal"),
+		HEAVEN_DEMON_BELL("heaven_demon_bell", null, "hang", 4.0f, "toll"),
+		// Entering Nirvana's (2026-10-24): death and rebirth; the elements' (their kits), the ghost foundation's (GhostSpells) and both paths'
+		// (HeavenDemonSpells).
+		REBIRTH_SEED("rebirth_seed", null, "fly", 4.0f, "root", "bloom", "wither"),
+		SEASON_WHEEL("season_wheel", "grow", "turn", 4.0f, "flip"),
+		UNDYING_EMBER("undying_ember", null, "fly", 4.0f, "flare", "dim"),
+		HEAVEN_PYRE("heaven_pyre", "rise", "burn", 4.0f, "collapse"),
+		GRAVESTONE("gravestone", null, "fall", 4.0f, "land", "sink"),
+		STANDING_STONE("standing_stone", "rise", "stand", 4.0f, "topple"),
+		FROZEN_MOON("frozen_moon", "rise", "shine", 4.0f, "shatter"),
+		ICE_MOON("ice_moon", null, "fall", 4.0f, "shatter"),
+		SWORD_TOMB("sword_tomb", "erupt", "stand", 4.0f, "rise", "rain"),
+		REBIRTH_SWORD("rebirth_sword", "reborn", "flare", 4.0f, "reborn"),
+		WHITE_IMPERMANENCE("white_impermanence", "come", "idle", 4.0f, "strike"),
+		BLACK_IMPERMANENCE("black_impermanence", "come", "idle", 4.0f, "strike"),
+		LIFE_DEATH_BOOK("life_death_book", "open", "write", 4.0f, "strike"),
+		HEAVEN_DEMON_ECLIPSE("heaven_demon_eclipse", "converge", "blaze", 4.0f, "pulse"),
+		// True Immortal's (2026-10-24): the elements as they were before heaven and earth were parted; the elements' (their kits), the ghost
+		// foundation's (GhostSpells) and both paths' (HeavenDemonSpells).
+		PRIMORDIAL_CYCLONE("primordial_cyclone", "form", "spin", 4.0f, "fade"),
+		CREATION_SEED("creation_seed", "grow", "pulse", 4.0f, "bloom"),
+		SAMADHI_PILLARS("samadhi_pillars", "erupt", "burn", 4.0f, "converge"),
+		CHAOS_FLOWER("chaos_flower", "open", "burn", 4.0f, "implode"),
+		HOUTU_HAND("houtu_hand", "rise", "open", 4.0f, "grasp", "slam"),
+		FALLING_CONTINENT("falling_continent", null, "fall", 4.0f, "impact"),
+		PRIMAL_GLACIER("primal_glacier", "rise", "advance", 4.0f, "calve"),
+		PRIMORDIAL_SEA("primordial_sea", "rise", "churn", 4.0f, "close"),
+		HEAVEN_SLAYING_SWORD("heaven_slaying_sword", "rise", "stand", 4.0f, "flare"),
+		PANGU_AXE("pangu_axe", "raise", "hold", 4.0f, "chop"),
+		FENGDU_WALL("fengdu_wall", "rise", "stand", 4.0f, "fall"),
+		SOUL_HELIX("soul_helix", "rise", "spiral", 4.0f, "descend"),
+		CHAOS_SPHERE("chaos_sphere", "swell", "churn", 4.0f, "burst"),
+		// Four Axis's and below, made over as the great spells' are (2026-10-25: the user's "they were done before geckolib and some look not
+		// great"): fire's (FireSpells), carried by the missiles they fly as (SpellProjectile#body)...
+		FALLING_SUN("falling_sun", "kindle", "burn", 4.0f, "impact"),
+		// ...and the phoenix of nirvana, risen out of its caster as it is cast, and again (its other enter) bursting out of them as it saves them.
+		NIRVANA_PHOENIX("nirvana_phoenix", "emerge", "hover", 4.0f, "enfold"),
+		NIRVANA_REBIRTH("nirvana_phoenix", "reborn", "hover", 4.0f),
+		// Wood's (WoodSpells): the vines that bind a being, drawn at that being's size (two blocks tall at size 1).
+		BINDING_VINES("binding_vines", "seize", "squeeze", 1.0f, "crush"),
+		// Earth's (EarthSpells): the talisman that seals the mountain it raises. Water's (WaterSpells): the coffin of ice a frozen being stands in,
+		// drawn at that being's size.
+		MOUNTAIN_TALISMAN("mountain_talisman", "descend", "hold", 4.0f, "break"),
+		ICE_COFFIN("ice_coffin", "freeze", "hold", 1.0f, "shatter"),
+		// Metal's (MetalSpells): the Heaven-Severing Sword's sword of light, there at once (its stroke is over in half a second).
+		SEVERING_SWORD("severing_sword", 1, "stroke", "gone", 4.0f),
+		// Heavenly Being's and Nascent Soul's, made over: fire's stooping phoenix and meteor, earth's falling mountain (missiles' bodies).
+		DESCENT_PHOENIX("descent_phoenix", "form", "fly", 2.0f, "strike"),
+		BLAZING_METEOR("blazing_meteor", null, "fall", 4.0f, "impact"),
+		FALLING_PEAK("falling_peak", null, "fall", 4.0f, "impact"),
+		// ...metal's domain of swords; wood's piercing bamboo, lotus and thorn spears.
+		SWORD_DOMAIN("sword_domain", "unfold", "wheel", 4.0f, "strike"),
+		PIERCING_BAMBOO("piercing_bamboo", "burst", "sway", 4.0f),
+		REBIRTH_LOTUS("rebirth_lotus", "bloom", "glow", 4.0f),
+		THORN_FOREST("thorn_forest", "erupt", "stand", 4.0f),
+		// Core Formation's, made over: metal's ring of swords and each sword it rains; earth's dragon surging through the land.
+		SWORD_RING("sword_ring", "gather", "turn", 2.0f),
+		RAIN_SWORD("rain_sword", null, "fall", 2.0f),
+		EARTH_DRAGON("earth_dragon", "breach", "surge", 4.0f, "dive"),
+		// Both paths' below Dao Integration (HeavenDemonSpells): the palm, the mantle, the seal and its maw (drawn at their beings' sizes), the
+		// claw's rake (there at once: it comes down in a moment), the two made one.
+		HD_PALM("hd_palm", "thrust", "glow", 2.0f, "strike"),
+		HD_MANTLE("hd_mantle", "wrap", "turn", 1.0f),
+		DEVOURING_SEAL("devouring_seal", null, "hold", 1.0f, "bite"),
+		HD_CLAW("hd_claw", 1, "rake", "linger", 4.0f),
+		HD_AS_ONE("hd_as_one", "converge", "spin", 4.0f),
+		// The ghost path's below Dao Integration (Spells; tools/spell-art Underworld, 2026-10-25): the cold fire kindled in the hands, the bolt,
+		// the wraith a dash leaves (there at once), the wail, the Yellow Springs' tide, the marrow ward, the core's burst, the king's decree, the
+		// ways through the dark, Yama's tablet, the way to hell the chains come out of and the chains themselves (drawn by hand, as a tendril),
+		// the wheel of samsara, the six pillars. Those that come in a moment fade in as quickly.
+		GHOST_KINDLE("ghost_kindle", 2, "kindle", "burn", 1.0f),
+		GHOST_BOLT("ghost_bolt", 2, null, "fly", 2.0f, "burst"),
+		SOUL_WRAITH("soul_wraith", 1, "left", "drift", 1.0f),
+		GHOST_WAIL("ghost_wail", 3, "wail", "echo", 4.0f),
+		SPRINGS_TIDE("springs_tide", 3, "surge", "ebb", 4.0f),
+		MARROW_WARD("marrow_ward", "form", "hold", 1.0f, "crumble"),
+		CORE_BURST("core_burst", 2, "burst", "smoulder", 4.0f),
+		KINGS_DECREE("kings_decree", "unroll", "hold", 2.0f),
+		NETHER_POOL("nether_pool", 3, "open", "swirl", 1.0f, "close"),
+		YAMA_TABLET("yama_tablet", 2, "slam", "stand", 2.0f, "sink"),
+		HELL_GATE("hell_gate", "open", "burn", 2.0f),
+		HELL_CHAIN("hell_chain", Form.TENDRIL),
+		SAMSARA_WHEEL("samsara_wheel", "appear", "turn", 2.0f),
+		SIX_PATHS("six_paths", 3, "erupt", "burn", 4.0f, "collapse");
 
 		public final String id, enter, loop;
 		public final float scale;
 		public final String[] moves;
 		public final Form form;
+		/** Ticks it takes to fade in as it forms (SpellConstructRenderer): {@link #FADE}, or fewer for a shape that comes and goes in a moment. */
+		public final int fadeIn;
 
 		Kind(String id, String enter, String loop, float scale, String... moves) {
+			this(id, FADE, enter, loop, scale, moves);
+		}
+
+		Kind(String id, int fadeIn, String enter, String loop, float scale, String... moves) {
 			this.id = id;
+			this.fadeIn = fadeIn;
 			this.enter = enter;
 			this.loop = loop;
 			this.scale = scale;
@@ -111,6 +217,7 @@ public class SpellConstruct extends Entity implements GeoEntity {
 		/** A tear in space, or a tendril: no model, no moves; its size a tear's length in blocks, a tendril's girth. */
 		Kind(String id, Form form) {
 			this.id = id;
+			this.fadeIn = FADE;
 			this.enter = null;
 			this.loop = null;
 			this.scale = 1.0f;
@@ -234,10 +341,35 @@ public class SpellConstruct extends Entity implements GeoEntity {
 		entityData.define(TARGET, 0);
 	}
 
+	/** Where its spell last put it, as a watcher heard it ({@link #lerpTo}), and whether that is still to be taken. */
+	private double lerpX, lerpY, lerpZ;
+	private float lerpYRot, lerpXRot;
+	private boolean lerping;
+
+	/**
+	 * Where its spell has moved it, heard by a watcher: taken at their next tick ({@link #tick}), not at once as an entity's place is by default,
+	 * so it is drawn gliding there over that tick. Taken at once, a construct its spell moves every tick is drawn standing still through a tick
+	 * and leaping the next, as the word falls between the watcher's ticks (a sun falling two blocks a tick, 2026-10-25).
+	 */
+	@Override
+	public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps, boolean teleport) {
+		lerpX = x;
+		lerpY = y;
+		lerpZ = z;
+		lerpYRot = yRot;
+		lerpXRot = xRot;
+		lerping = true;
+	}
+
 	@Override
 	public void tick() {
 		super.tick();
 		if (level().isClientSide) {
+			if (lerping) {
+				lerping = false;
+				setPos(lerpX, lerpY, lerpZ);
+				setRot(lerpYRot, lerpXRot);
+			}
 			if (!kind().modelled()) motes();
 			return;
 		}

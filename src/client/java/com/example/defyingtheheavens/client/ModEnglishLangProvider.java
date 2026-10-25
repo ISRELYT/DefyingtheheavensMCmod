@@ -450,9 +450,13 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 						+ "layer: +20 ghost qi.";
 				case VOID_RENDING_NETHER_CANON -> "Qi Refining to Void Shattering, nine layers each: of each realm's nine, layer 1 Early, 3 Mid, "
 						+ "6 Late, 9 Grand Perfection. Layer 66: Rift to the Nine Nethers. Layer 70: Bridge of No Return. Every layer: +20 ghost qi.";
-				case HELL_FORGED_VESSEL_SUTRA, UNDERWORLD_NIRVANA_SCRIPTURE,
-						NETHERWORLD_IMMORTAL_CANON -> "Qi Refining to " + realmName(method.realm()) + ", nine layers each: of each realm's nine, "
-						+ "layer 1 Early, 3 Mid, 6 Late, 9 Grand Perfection. No spells of its own yet. Every layer: +20 ghost qi.";
+				case HELL_FORGED_VESSEL_SUTRA -> "Qi Refining to Sacred Vessel, nine layers each: of each realm's nine, layer 1 Early, 3 Mid, "
+						+ "6 Late, 9 Grand Perfection. Layer 75: Mirror of Retribution. Layer 79: Soul-Locking Pagoda. Every layer: +20 ghost qi.";
+				case UNDERWORLD_NIRVANA_SCRIPTURE -> "Qi Refining to Entering Nirvana, nine layers each: of each realm's nine, layer 1 Early, 3 "
+						+ "Mid, 6 Late, 9 Grand Perfection. Layer 84: Black and White Impermanence. Layer 88: Book of Life and Death. Every layer: +20 "
+						+ "ghost qi.";
+				case NETHERWORLD_IMMORTAL_CANON -> "Qi Refining to True Immortal, nine layers each: of each realm's nine, layer 1 Early, 3 Mid, "
+						+ "6 Late, 9 Grand Perfection. Layer 93: Fengdu's Walls Rise. Layer 97: Ten Thousand Souls Ascend. Every layer: +20 ghost qi.";
 			});
 		}
 		for (Spell spell : Spell.values()) {
@@ -483,6 +487,15 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case RIFT_TO_THE_NINE_NETHERS -> "Rift to the Nine Nethers";
 				case BRIDGE_OF_NO_RETURN -> "Bridge of No Return";
 				case HEAVEN_DEMON_VOID_SHATTER -> "Heaven-Demon Void Shatter";
+				case MIRROR_OF_RETRIBUTION -> "Mirror of Retribution";
+				case SOUL_LOCKING_PAGODA -> "Soul-Locking Pagoda";
+				case HEAVEN_DEMON_BELL -> "Heaven-Demon Bell";
+				case BLACK_AND_WHITE_IMPERMANENCE -> "Black and White Impermanence";
+				case BOOK_OF_LIFE_AND_DEATH -> "Book of Life and Death";
+				case HEAVEN_DEMON_ECLIPSE -> "Heaven-Demon Eclipse";
+				case FENGDU_WALLS_RISE -> "Fengdu's Walls Rise";
+				case TEN_THOUSAND_SOULS_ASCEND -> "Ten Thousand Souls Ascend";
+				case PRIMORDIAL_CHAOS -> "Primordial Chaos";
 				default -> throw new IllegalStateException(spell.getId()); // a heaven spell: skipped above
 			});
 			t.add(ModLang.spellKey(spell.getId()) + ".description", switch (spell) {
@@ -527,7 +540,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case HEAVEN_DEMON_AVATAR -> "A spell of both paths, heaven and demon. A colossal avatar of gold light and crimson demon qi, 41 "
 						+ "blocks tall, rises behind you for 8 s, and twice its hands come down where you look, up to 82 blocks: heaven's palm, then "
 						+ "the demon's claw. Each strikes everything within 14 blocks for 140 harm and throws it down, slowed; a fifth of all the harm "
-						+ "mends you. The land is left as it was.";
+						+ "mends you. Heaven's palm crushes a crater 18 blocks round and 8 deep into the land, cracks running out of it to 39 blocks; "
+						+ "the demon's claw rakes four gouges 28 blocks long across where it struck.";
 				// Void Shattering's.
 				case RIFT_TO_THE_NINE_NETHERS -> "The ground where you look, up to 118 blocks, tears open onto the Nine Nethers, nine rings of ghost "
 						+ "fire turning down into it, for 6 s: every foe within 22 blocks is dragged toward it and down, and takes 100 ghostly harm a "
@@ -540,7 +554,56 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case HEAVEN_DEMON_VOID_SHATTER -> "A spell of both paths, heaven and demon. A colossal fist, heaven's gauntlet of gold plates round a "
 						+ "demon's crimson claws, forms over your shoulder and punches out to where you look, up to 118 blocks: where it lands, space "
 						+ "itself shatters like glass. Everything within 18 blocks takes 520 harm, through armour, and is thrown out; the shattered "
-						+ "space hangs there for 5 s, cutting whoever stays in it for 60 harm a second. The land is left as it was.";
+						+ "space hangs there for 5 s, cutting whoever stays in it for 60 harm a second. The land under it is smashed into a crater 28 "
+						+ "blocks round and 15 deep, twelve cracks running out of it to 55 blocks.";
+				// Sacred Vessel's.
+				case MIRROR_OF_RETRIBUTION -> "The karma mirror of Yama's court, that shows every soul its sins, rises over you, behind your head, "
+						+ "and turns with your look for 3 s: its light pours out over you along your look, 64 blocks, and every being in it is shown its "
+						+ "sins: it takes 140 ghostly "
+						+ "harm a second, is weakened and slowed, and is shown glowing wherever it hides for 8 s. Then the mirror flashes: 500 ghostly "
+						+ "harm to everything in its light. The dead take half as much again.";
+				case SOUL_LOCKING_PAGODA -> "A pagoda of seven tiers, black iron and bone forged in the lowest hell, its eaves hung with soul "
+						+ "lanterns, falls out of the sky onto where you look, up to 136 blocks: 300 ghostly harm to everything under it. Every foe "
+						+ "within 15 blocks of it is locked in it for 6 s: it can't leave (it is brought back to its walls) and takes 120 ghostly harm "
+						+ "a second, ghost fire pouring from the eaves. Then it seals: 500 ghostly harm to all locked in it, and Weakness II for 10 s. "
+						+ "The dead take half as much again. The land is left as it was.";
+				case HEAVEN_DEMON_BELL -> "A spell of both paths, heaven and demon. A colossal bell, heaven's gold on one side and the demon's "
+						+ "crimson bronze on the other, falls out of the sky over where you look, up to 136 blocks, its rim pressing a crater 19 blocks "
+						+ "round into the land, and tolls three times, a second apart: each toll strikes everything under it, within 19 blocks, for 500 "
+						+ "harm, through armour, and its wave runs out over the land to 38 blocks, striking everything there for 200 and throwing it "
+						+ "back, the land cracking under it out to 40 blocks. A fifth of all the harm mends you. Then it rises away.";
+				// Entering Nirvana's.
+				case BLACK_AND_WHITE_IMPERMANENCE -> "The two soul-catchers of the underworld, the White who smiles and the Black who scowls, rise out of "
+						+ "the mist to either side of the soul you look at, up to 72 blocks, and come for it: the White sweeps its banner down on it, "
+						+ "500 ghostly harm, slowing it; the Black's chain lashes out and binds it, holding it for 3 s at 300 ghostly harm a second; "
+						+ "and then they take their share of it, a tenth of its whole health (no more than 1200). The dead take half as much again.";
+				case BOOK_OF_LIFE_AND_DEATH -> "The Book of Life and Death, in which every soul's span is written, opens over your head, its judge's "
+						+ "brush red with cinnabar, and finds the names of the foes round you, eight at most within 72 blocks, nearest first: each is "
+						+ "marked, shown glowing wherever it is, and for 3 s takes 250 ghostly harm a second. Then the brush strikes their names out: "
+						+ "900 ghostly harm to each, and any left with less than a quarter of its whole health is struck out of life (a great one of "
+						+ "the world, the Ender Dragon, the Wither, the Warden, takes 2000 more instead). The dead take half as much again.";
+				case HEAVEN_DEMON_ECLIPSE -> "A spell of both paths, heaven and demon. Heaven's sun and the demon's moon come together 58 blocks over "
+						+ "where you look, up to 154 blocks, the moon passing before the sun, its corona blazing round them; a beam of darkness pours "
+						+ "down from them and pulses three times, three quarters of a second apart: each strikes everything under it, within 22 "
+						+ "blocks, for 1200, then 600, then 600 harm, through armour, holding it where it stands, and the first burns the land into a "
+						+ "crater of black glass 19 blocks round and 7 deep. A fifth of all the harm mends you.";
+				// True Immortal's.
+				case FENGDU_WALLS_RISE -> "Eight lengths of the walls of Fengdu, the city of the dead, black stone, crenellated, a gate-tower at "
+						+ "the middle of each and soul lanterns at their ends, rise out of the land in a ring 37 blocks round where you look, up to "
+						+ "136 blocks away, facing in: for 5 s no foe within gets out past them, and every half second the city's dead fall on every "
+						+ "foe within, 800 ghostly harm, slowing them. Then the walls topple in on its heart: 4000 ghostly harm to every foe within. "
+						+ "The dead take half as much again.";
+				case TEN_THOUSAND_SOULS_ASCEND -> "A helix of ten thousand souls, two strands of the dead winding up about one another, rises out of "
+						+ "the dark where you look, up to 136 blocks away, and spirals for 5 s: every foe within 34 blocks is drawn in to it, and "
+						+ "those within 14 carried up round it as high as 20 (a great beast only drawn, slowly), its souls tearing at them, 1000 "
+						+ "ghostly harm every half second. Then it goes back down into the dark, dragging them down with it: 5000 ghostly harm to "
+						+ "each. The dead take half as much again.";
+				case PRIMORDIAL_CHAOS -> "A spell of both paths, heaven and demon. A sphere of the chaos before heaven and earth were parted, heaven's "
+						+ "gold and the demon's crimson swirled together, swells out of a point 24 blocks over where you look, up to 218 blocks "
+						+ "away, and churns for 5 s: everything within 54 blocks is drawn in toward it, and every half second everything within 27 "
+						+ "blocks of its heart takes 1000 harm, through armour. Then it bursts: 15000 harm to everything within 34 blocks, through "
+						+ "armour, thrown out, the land under it burnt into a crater of glass 24 blocks round and 10 deep. A fifth of all the harm "
+						+ "mends you.";
 				default -> throw new IllegalStateException(spell.getId()); // a heaven spell: skipped above
 			});
 		}
@@ -870,6 +933,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_DAO_STELE_TEACHES, "This stele holds the %s (%s, to %s). Meditate beside it to learn it.");
 		t.add(ModLang.MSG_DAO_STELE_KNOWN, "This stele holds the %s (%s, to %s), which you know. Meditating beside a stele of its element while you practise it is faster.");
 		t.add(ModLang.MSG_DAO_STELE_READING, "You read the %s carved in the stele...");
+		t.add(ModLang.MSG_STELE_SEALED, "The %s carved here is too deep for this world: its words won't open to you. It is the Immortal Realm's to teach.");
 		// Techniques and their manuals (Technique, TechniqueManualItem), and writing them out
 		t.add(ModLang.techniqueKey(Technique.CLONE.getId()), "Clone");
 		t.add(ModLang.techniqueKey(Technique.CLONE.getId()) + ".description", "Split a clone off your body and walk in it as yourself: your "
@@ -1193,6 +1257,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.PASS_USE, "Carry it and its sect's barrier lets you through, as it does its own");
 		t.add(ModLang.PASS_LEFT, "Good for %s more minutes");
 		t.add(ModLang.PASS_LAPSED, "Lapsed");
+		t.add(ModLang.PASS_BOUND, "Bound to %s: no one else can pass with it");
 		t.add(ModLang.MSG_PASS_REVOKED, "You turned on the sect: its guest pass crumbles in your hand.");
 		t.add(ModLang.officialName("ox_head"), "Ox-Head");
 		t.add(ModLang.officialName("horse_face"), "Horse-Face");

@@ -61,6 +61,11 @@ public class DaoSteleBlock extends HorizontalDirectionalBlock {
 		if (level.isClientSide) return InteractionResult.SUCCESS;
 		if (player instanceof ServerPlayer sp) {
 			HeavenMethod method = state.getValue(METHOD);
+			// One carved before True Immortal's were kept for the Immortal Realm (Realm#taughtInTheWorld) can't be read.
+			if (!method.realm().taughtInTheWorld()) {
+				sp.displayClientMessage(Component.translatable(ModLang.MSG_STELE_SEALED, method.getDisplayName()).withStyle(ChatFormatting.GRAY), true);
+				return InteractionResult.CONSUME;
+			}
 			boolean known = CultivationManager.get(sp).heaven().knows(method);
 			sp.displayClientMessage(Component.translatable(known ? ModLang.MSG_DAO_STELE_KNOWN : ModLang.MSG_DAO_STELE_TEACHES, method.getDisplayName(),
 					method.element().getDisplayName(), method.realm().getDisplayName()).withStyle(ChatFormatting.GOLD), true);

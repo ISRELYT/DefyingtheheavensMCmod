@@ -1384,6 +1384,50 @@ Heavens, a tree, became Spring Thunder of the Azure Emperor, two spells already 
 | Metal | **Void-Severing Sword Light** (66) | A sword of light thrusts out of your hands along your look, 147 blocks in a third of a second, through everything, and cleaves the land under it into a chasm in the shape of the rift it leaves: pointed at both ends, some 13 blocks across and 17 deep at its middle, deepest along its middle, its sides and floor ragged (and a slot through whatever stands on its line). Every being on its line or down in the chasm takes 1,500 metal harm and is hurled on along it. Behind it space stays cut open for 3 s, and whoever stands in the cut, on the line or down in the chasm, takes 400 more a second. |
 | Metal | **Ten-Direction Sword Prison** (70) | Space tears open in ten places round where you look, up to 118 blocks: out of eight rifts in a ring 41 blocks up, great swords plunge into the land 13 blocks round the spot (walls of sword light between them, a crater at each), and for 6 s every foe inside is held in and takes 150 metal harm a second. Then the last two swords, out of a rift high over its heart and one torn in the ground beneath it, meet in its heart: 1,000 metal harm to everything inside, and a pit 7 blocks round where they met. |
 
+**Sacred Vessel** (2026-10-24, the user's ask: the sacred treasures of the old tales, each called down and wielded, at layers 75 and 79)
+
+| Element | Spell (layer) | What it does |
+|---|---|---|
+| Wood | **Heaven-Swallowing Gourd** (75) | A gourd of living jade wood on its vine comes down out of the sky mouth first, to hang 19 blocks over where you look, up to 136 blocks, and its stopper flies off: for 5 s it swallows. The land under it is torn up into it, a bowl 19 blocks round, and every foe within 30 blocks is dragged up toward its mouth: whatever reaches it is swallowed, held inside, weakened and drained for 450 wood harm a second (a great beast is only dragged and drained where it stands). Then it spits them out: 900 wood harm, hurled far. |
+| Wood | **Seven-Treasure Bodhi Branch** (79) | A colossal branch of the bodhi tree, hung with the seven treasures, forms high at your left and sweeps down and across your front, an arc 150 degrees wide out to 85 blocks: everything it sweeps through takes 3,500 wood harm and is swept away along its stroke, and the land under it is scoured away, as much as 6 blocks deep midway out (nothing within 6 blocks of you). Then its treasures burst into their seven lights. |
+| Fire | **Wind-Fire Wheels** (75) | Two great wheels of fire and whirling wind flare up before you and roll out along your look for 128 blocks, over the land, weaving 13 blocks out to either side and crossing midway: everything a wheel runs over, within 6 blocks of it, takes 1,800 fire harm and burns for 10 s, and each burns a trench into the land behind it. Where they meet again at the end they burst: 1,200 fire harm to everything within 17 blocks, thrown out, and a scorched crater 11 blocks round. |
+| Fire | **Eight Trigrams Furnace** (79) | Laozi's furnace of the eight trigrams, bronze on three legs with Samadhi fire in it, falls out of the sky onto where you look, up to 136 blocks: 1,000 fire harm to everything under it, and a scorched crater 11 blocks round. For 6 s it burns: every foe within 26 blocks is drawn into its belly and held there, burning for 300 fire harm a second, and every 1.5 s jets of Samadhi fire burst out of its eight windows along the land for 51 blocks, striking whatever is in their way for 500 and burning trenches. Then it bursts open: 1,500 fire harm to everything within 26 blocks, hurled out, a glassy pit 19 blocks round and the land scorched 34 round. |
+| Earth | **Xirang, the Self-Growing Soil** (75) | A clod of Xirang, the soil that grows of itself, that Gun stole from heaven to dam the flood, flies from your hands to where you look, up to 136 blocks, and swells: the land there heaves up into a mound 17 blocks round and 13 high, stone at its heart and earth and grass over it, burying whatever stands there. Every foe in it is held fast, buried, for 4 s and crushed for 500 earth harm a second; then the mound settles on them, 600 more. The mound stays. |
+| Earth | **Nine Cauldrons Suppress the Land** (79) | The nine bronze cauldrons Yu the Great cast for the nine provinces fall out of the sky one after another, the first on where you look (136 blocks), the rest in a ring 30 blocks round it: each strikes everything within 11 blocks of where it lands for 1,500 earth harm and smashes a crater 9 blocks round (the first 13). Once all nine stand, for 6 s every foe inside the ring is pressed down (it can't fly or leap, slowed to a crawl, weakened) and takes 250 earth harm a second, the land within sinking 6 blocks. Then they rise away. |
+| Water | **Twenty-Four Sea-Fixing Pearls** (75) | The twenty-four pearls that fix the sea unwind round you, circling 7 blocks out, and fly off one after another at the foes within 64 blocks, nearest first, round and round them (at where you look, with none): each bursts with the weight of the sea, 140 water harm to everything within 4 blocks, and leaves a little crater. |
+| Water | **Ocean-Sealing Vase** (79) | A vase of white jade painted with waves, that holds an ocean, comes over where you look, up to 136 blocks, its mouth tipped down 30 blocks over the land, and drinks for 5 s: every drop of water within 42 blocks is drawn up out of the land into it, and every foe within it dragged up into its streams; whatever reaches its mouth is held there and crushed for 400 water harm a second. Then it seals itself and comes down mouth first: 1,500 water harm to everything within 21 blocks, thrown out, and the ocean it held poured back into a crater 17 blocks round, a lake in it. |
+| Metal | **Immortal-Binding Golden Ropes** (75) | A ring of golden rope hung with charms and bells comes to hang 21 blocks over where you look, up to 136 blocks, and its ropes lash out to the foes within 30 blocks of the spot, eight at most, nearest first: each is bound (it can't walk, fly or strike back), hauled up to hang under the ring and held there for 5 s, constricted for 450 metal harm a second. Then the ropes cinch, 900 more, and let go; what they held lands unharmed. A great beast is bound where it stands. |
+| Metal | **Golden Dragon Scissors** (79) | A pair of colossal golden scissors, each blade a dragon of gold 64 blocks long, opens 17 blocks over where you look, up to 136 blocks, lying level across your sight, and snaps shut: everything between its blades as they close takes 3,500 metal harm and is cut down to the ground. The land is cut 5 blocks wide and 15 deep where the blades meet, and scarred along where they lay open. |
+
+**Entering Nirvana** (2026-10-24: death and rebirth, at layers 84 and 88; its two sword spells redesigned the same day at the user's ask)
+
+| Element | Spell (layer) | What it does |
+|---|---|---|
+| Wood | **Seed of Withering Rebirth** (84) | A seed half withered and half alive flies from your hands to the being you look at, up to 154 blocks (to where you look, with none), and roots in it: it is bound where it stands, and for 5 s the seed's vines drink 500 of its health a second, half of it mending you. Then the flower of rebirth blooms out of it: 2,500 wood harm to what it rooted in, 1,200 to every other foe within 12 blocks, and the land 29 blocks round flourishes. |
+| Wood | **Withering and Flourishing** (88) | The wheel of the seasons, spring's green and autumn's dry earth turning about a tree half in blossom and half bare, grows out of the land where you look, up to 154 blocks, 34 blocks round, and turns for 8 s: every foe on it is drained of 450 health a second and slowed, three tenths of all it drains shared out mending you and your own on it; the land to your left flourishes, to your right withers. Then its last turn: 3,000 wood harm to every foe on it, a fifth of it mending you. |
+| Fire | **Undying Ember** (84) | The ember the phoenix leaves when it burns, wrapped in feathers of flame, flies to where you look, up to 154 blocks, and hangs 5 blocks over the land. It bursts three times, a second and a quarter apart, each greater than the last: everything within 10, then 13, then 17 blocks takes 1,100, then 1,500, then 2,100 fire harm, burning for 6 s, thrown out, the land blown into scorched craters 6, 8 and 11 blocks round. |
+| Fire | **Pyre of the Heavens** (88) | A ring of cribs of great logs, stacked crosswise and burning, walls of fire between them, rises 29 blocks round where you look, up to 154 blocks, and burns for 8 s: no foe inside gets out through its walls of fire, and every foe within takes 150 fire harm a second, 100 more each second after. Then it collapses on its heart: 2,500 fire harm to every foe within, a scorched crater 29 blocks round and 12 deep, burning 43 round. |
+| Earth | **Gravestone Falls** (84) | A colossal stele written with the names of the dead, on a stone tortoise, falls onto where you look, up to 154 blocks: 3,000 earth harm to everything within 10 blocks, pinned for 3 s, a crater 12 blocks round cracked out to 34. It stands 2 s, then sinks into the land, dragging every foe within 24 blocks to it and burying whatever is within 14: 1,500 more, and a pit 10 blocks round and 14 deep. |
+| Earth | **Buried World** (88) | A ring of eight standing stones, carved with the spirals and runes of the old world, heaves up 34 blocks round where you look, up to 154 blocks. For 6 s the land within sinks, 4 blocks deeper every second, every foe within dragged down with it and crushed for 500 earth harm a second. Then the stones topple in: 3,500 earth harm to every foe within, the land left a vast pit. |
+| Water | **Frozen Moon in the Well** (84) | A crescent moon of ice rises over where you look, up to 154 blocks, its reflection shining up out of a well of still black water 18 blocks round, and the land 24 blocks round freezes. For 4 s every foe in the well is held frozen in it and takes 400 water harm a second. Then the moon shatters: 3,200 water harm to every foe in the well. |
+| Water | **The Frozen Moon Falls** (88) | A moon of ice, cratered and cracked with cold light, falls out of the sky from 96 blocks onto where you look, up to 154 blocks: 6,500 water harm to everything within 24 blocks, thrown out, a crater of ice 29 blocks round and 14 deep, frozen round it out to 38, every foe within chilled for 8 s. |
+| Metal | **Sword Tomb Awakens** (84) | The grave of fallen swordsmen, a ring of 24 of their swords buried point-down in the earth, bursts up 12 blocks round where you look, up to 154 blocks: everything within the ring takes 1,000 metal harm, thrown up. The swords tear free, rise over the ring, points turned in on its heart, and plunge into it one after another: 160 metal harm each within 6 blocks of where it lands (3,840 from all 24), the last leaving a crater 7 blocks round and 5 deep. |
+| Metal | **Nine Rebirths of the Sword** (88) | A colossal sword wreathed in white flame forms over where you look, up to 154 blocks, its hilt over the spot and its 55-block blade reaching out, and sweeps round it eight times, 210 degrees a sweep, turning the other way each time and reborn in its white flame between them, its point skimming the land, rising off it or falling onto it: everything within 53 blocks it passes over takes 600 metal harm, once a sweep. Reborn a ninth time high over the spot, point-down, it plunges into it: 2,000 metal harm within 24 blocks, a crater of glass 14 blocks round and 7 deep, cracks running out 38. |
+
+**True Immortal** (2026-10-24: the elements as they were before heaven and earth were parted, at layers 93 and 97; the realm's leap of x10 in its harm)
+
+| Element | Spell (layer) | What it does |
+|---|---|---|
+| Wood | **Primal Wind of Creation** (93) | A cyclone of the primal wind, green and gold, the leaves and seeds of creation whirled up in it, forms where you look, up to 218 blocks, and wanders on along your look for 8 s, 56 blocks: every foe within 41 blocks is drawn in to it, and those within 17 whirled up round it as high as 24 and struck for 3,000 wood harm every half second (a great beast only drawn, slowly); the land it passes over flourishes. At its end it flings them out, 12,000 each; a twentieth of all its harm mends you and your own near it. |
+| Wood | **First Seed of Creation** (97) | The seed of creation comes down out of the light where you look, up to 218 blocks, and the dome of life grows over it, great vines arching up out of the land 48 blocks round to meet over it; the land within flourishes. For 6 s it drinks: every half second every foe within is drawn on for 2,500 wood harm and slowed, none can leave, and three tenths of all it draws mends you and your own within. Then the tree of creation bursts up through the dome: 45,000 wood harm to every foe within, thrown up, the same share mending your own. |
+| Fire | **Samadhi True Fire** (93) | The three true fires of Samadhi, the heart's crimson, the spirit's gold and the essence's white, erupt where you look, up to 218 blocks, in three pillars braided about one another, and burn for 8 s: every foe within 34 blocks is drawn in to them, and every half second every foe within 17 takes 2,500 fire harm, true fire that burns the fire-proof too. Then the three meet in one white flare: 20,000 fire harm within 27 blocks, thrown out, a scorched crater 17 blocks round and 9 deep. |
+| Fire | **First Flame Before Heaven** (97) | The flower of chaos-fire that burned before heaven, its petals of white flame and black by turns, opens where you look, up to 218 blocks, 34 blocks round, and burns for 5 s: every half second every foe within takes 3,000 fire harm. Then its petals slam shut on its heart, drawing every foe within in, and its heart bursts: 45,000 fire harm to every foe within, thrown out, a crater of glass 27 blocks round and 12 deep. |
+| Earth | **Hand of Houtu** (93) | The hand of Houtu, mother of the earth, of the land's yellow jade veined with gold, rises open out of the land where you look, up to 218 blocks, and closes: every foe within 17 blocks takes 15,000 earth harm and is caught up in its fist, 15 blocks up (a great beast is only crushed, and held slowed). It holds them a moment, then brings its fist down forward onto the land, carrying them with it: they and everything within 20 blocks of where it lands take 45,000 earth harm, a crater 20 blocks round and 9 deep, cracks running out 61. |
+| Earth | **Falling Continent** (97) | A land torn up whole, meadows, forests, snow-capped mountains and a lake on it, its bedrock hanging jagged under it, falls out of the sky from 136 blocks onto where you look, up to 218 blocks, in 2 s, tumbling, its weight pressing down every foe under it. It strikes: 75,000 earth harm to everything within 41 blocks, thrown out, a crater 31 blocks round and 12 deep, cracks running out 82. |
+| Water | **Glacier of the First Age** (93) | A wall of ancient ice 48 blocks across, ranks of seracs taller toward its back, heaves up 14 blocks ahead of you and grinds forward along your look, 102 blocks in 5 s: every foe before its face is shoved along with it (one it overruns thrown out ahead; a great beast only ground past), struck for 2,500 water harm every quarter second and chilled, the land in its wake frozen. At its end the great slabs of its face calve forward: 10,000 water harm to everything within 20 blocks before it. |
+| Water | **The Primordial Sea** (97) | The waters before heaven and earth well up where you look, up to 218 blocks, in a ring of towering waves 39 blocks round, facing in, the sea within them wheeling in a whirlpool. For 5 s every foe within is dragged round in it (a great beast only slowed), none can leave, and every half second it drowns them for 3,000 water harm. Then its waves crash in over its heart: 45,000 water harm to every foe within, the land under it left a lake 27 blocks round and 9 deep. |
+| Metal | **Heaven-Slaying Sword Rises** (93) | A sword of sword-light that could slay heaven itself, 94 blocks long, its guard of gold swept up like wings and a halo round its point, rises point first out of the land where you look, up to 218 blocks: everything within 10 blocks of its blade takes 40,000 metal harm, thrown high. It stands a moment, then flares: eight cuts run out from its foot across the land, 82 blocks long, 20,000 metal harm to everything within 5 blocks of one (once), the land cut along them 4 wide and 7 deep. |
+| Metal | **Primal Axe Splits Chaos** (97) | Pangu's axe, that split heaven from earth, stands behind you, 85 blocks tall, is raised back over you, and chops down forward along your look: everything within 10 blocks of its line, out to 89 blocks, takes 75,000 metal harm, thrown aside, and the land is split into a chasm along it, 9 blocks wide and 27 deep (from 10 blocks ahead of you), cracks running out 34 where its head lands. |
 **The great spells' living shapes** (the user's ask: "use geckolib for animations and also use unique and well-crafted detailed
 models"). Each of Dao Integration's and Void Shattering's spells comes as a living shape of its own, a GeckoLib entity (`SpellConstruct`,
 its kind one of thirty: Dao Integration's seventeen, the dragon, the spirit tree, the bird, the flame's seed and its pillar, the qilin,
@@ -1412,6 +1456,50 @@ animations are written by code (`tools/spell-art`, run with JDK 22 or later: `ja
 is painted at its own density, so a thin feather or flame takes texture only on its two broad sides. Their icons too
 (`java Icons.java <assets>`).
 
+**Sacred Vessel's, Entering Nirvana's and True Immortal's shapes** (2026-10-24) go the same way: Sacred Vessel's thirteen
+treasures (the swallowing gourd on its vine, the bodhi branch hung with the seven treasures, the wind-fire wheel, Laozi's
+furnace, Xirang's clod, the nine cauldrons, a sea-fixing pearl, the ocean-sealing vase, the binding ring and its golden ropes
+reaching to what they bind, the dragon scissors, the karma mirror, the soul-locking pagoda, the Heaven-Demon Bell);
+Entering Nirvana's fourteen of death and rebirth (the seed of withering rebirth and its flower, the wheel of the seasons, the
+undying ember, the pyre's ring of burning cribs, the gravestone on its tortoise, the standing stones, the frozen moon over its
+well and the moon of ice that falls, the sword grave of twenty-four buried swords, the reborn sword in its white flame, the White
+and the Black Impermanence, the Book of Life and Death, the Heaven-Demon Eclipse); and True Immortal's thirteen of the beginning
+(the cyclone of the primal wind, the seed of creation under its dome of living vines, the three braided pillars of Samadhi
+fire, the flower of chaos-fire, Houtu's hand, the falling continent, the glacier of seracs, the ring of the first sea's waves
+round its whirlpool, the heaven-slaying sword, Pangu's crescent axe, the walls of Fengdu, the helix of ten thousand souls, the
+sphere of chaos). Each was checked in game, its moves frame by frame (`tools/spell-art`: `Vessel`, `Nirvana`, `Immortal`; their
+icons `VesselIcons`, `NirvanaIcons`, `ImmortalIcons`).
+
+**The spells of Four Axis and below, made over** (2026-10-25, the user's ask: "overhaul any spells you think need it (i think all the ones
+4 axis and below should get looked at because they were done before geckolib and some look not great)"). Those drawn by hand out of
+flat pictures and particles are living shapes now, as the great spells' are, their workings as they were (`tools/spell-art`: `Axis`
+for the elements' and both paths', `Underworld` for the ghost path's):
+- **Fire**: Nine Suns Descend's falling suns (fire boiling in cells, five tails of flame behind each, a burst where it lands), the phoenix of
+  Nirvana (rising before you, folding its wings round you as you fall, and you reborn out of it), Phoenix Descent's bird of flame flown at
+  its mark, Blazing Meteor's burning rock.
+- **Wood**: Myriad Vine Binding's vines coiling up round what they bind and crushing, Heaven-Piercing Bamboo, the Lotus of Rebirth opening,
+  the Thorn Spear Forest thrust up out of cracked ground.
+- **Earth**: the earth golem (a GeckoLib model of its own, rising out of the ground and pounding), the Mountain Seal's talisman hung over
+  its peak in chains staked round it, the Falling Mountain's peak, Earth Dragon Surge's dragon swimming through the land at the surge's
+  front, its coils arching up out of the ground behind its head, the ridge of spikes bursting up in its wake.
+- **Water**: Absolute Zero's coffin of ice (shattered by a blow).
+- **Metal**: the Heaven-Severing Sword's stroke, Sword Domain's wheel of swords, Sword Rain's ring of swords and each sword that falls.
+- **Both paths**: the palm thrust out along the twined light, the mantle's two rings, the Devouring Seal's maw biting, the claw's four
+  talons of black horn raked down from over you through the place and drawn back into the sky, their gouges left burning, the vortex and
+  pillar of the two made one.
+- **The ghost path**: the cold fire kindled in your hands, the Ghost Fire Bolt itself flying, the wraith of mist a Soul Dash leaves, the
+  wailing face over you and its cries flying out, the Yellow Springs' tide with hands of the dead reaching out of it, the Marrow Ward's
+  ribcage of bone worn on you, the core's burst, the King's Decree unrolled over you with the Ghost King's seal (王 at its heart) under
+  you, the pools of the Nine Nethers a step goes in and out by, Yama's tablet cast down behind the one judged, the Chains of Hell lashing
+  up out of a way to hell at your feet and winding round every foe (links of black iron, ghost fire running along them, drawn by hand:
+  `TendrilRenderer`), the Wheel of Samsara turning at your back, the six pillars of cold fire; Soul Rend a beam of the Nine Nethers' dark
+  (`SpellField`).
+They are made for the day as well as the night: GeckoLib's glow lays a shape's glowing texels over what is behind it, it adds no light,
+so a pale see-through haze over a bright core reads tan or grey against a day sky; their hazes are kept faint and their fire saturated.
+Each was checked in game. Two of the spells' own faults found doing it are mended: Earth Dragon Surge's spikes hid its dragon (they burst up
+behind its last coil now, `EarthSpells#SURGE_WAKE`), and Nine Nether Step looked at the ground far ahead went nowhere (the body under the
+eye's place sank into the ground and backing off along a level look never left it; it rises out of the ground first now). No glyph
+makes a swastika, nor two opposite arms of a cross turning one way (`Fire#swastika`).
 **Tears in space** (Void Shattering's, the user's ask: "make sure ... the rifts and tears/cracks in space looks cool"). What comes
 through space comes through a tear in it: a `SpellConstruct` with no model, drawn by the client's own hand (`RiftRenderer`, as a
 Heavenly Being's Spatial Tear is, but greater; its size its length in blocks). Its rim is ragged and crackling, white-hot at its very
@@ -1443,9 +1531,10 @@ spells never wound the land. Any caster, player or cultivator, goes through one 
 
 Each spell's description in the Spells tab gives its numbers; the constants at the top of its element's class set them. Harm
 grows by realm: about 5 at Qi Refining, 8-16 at Foundation Building, 16-30 at Core Formation, 30-60 at Nascent Soul, 60-150 at
-Heavenly Being, 150-300 at Four Axis, 450-600 at Dao Integration and 1,500-1,600 a blow at Void Shattering (100-400 a second for
-what lingers); qi costs likewise (8-20 at Qi Refining up to 1,000-2,000 at Four Axis, 2,600-3,800 at Dao Integration and 9,000-12,500
-at Void Shattering).
+Heavenly Being, 150-300 at Four Axis, 450-600 at Dao Integration, 1,500-1,600 a blow at Void Shattering (100-400 a second for
+what lingers), up to 3,500 a blow at Sacred Vessel, some 6,500-7,000 in all at Entering Nirvana and 60,000-75,000 in all at
+True Immortal (its leap of x10); qi costs likewise (8-20 at Qi Refining up to 1,000-2,000 at Four Axis, 2,600-3,800 at Dao Integration, 9,000-12,500
+at Void Shattering, 20,000-27,000 at Sacred Vessel, 44,000-58,000 at Entering Nirvana and 380,000-500,000 at True Immortal).
 
 **Wounds in the land.** From Nascent Soul up the great spells leave the land the way a walking disaster would: meteors, suns,
 phoenixes and falling mountains blow out craters (burnt to magma and blackstone, or broken to rubble), quakes and seals split it
@@ -1474,7 +1563,7 @@ the spells of the realms after Four Axis are greater in every way by the same me
 reach, their areas and their living shapes' size alike (`SpellConstruct#sizedFor`): Dao Integration's reach 82 where Four Axis's
 would reach 64, its dragon 54 blocks long, its bird's wings 53 across, its seal 36 blocks square, its pillar of fire 118 tall;
 Void Shattering's 1.84 times Four Axis's (its reach 118, Buzhou's pillar 59 blocks long and its fissures out to 70, the sword light
-147 long, the crow's glassy crater 13 round); the realms after them will be 2.13, 2.41 and 3.41 times Four Axis's. Only the
+147 long, the crow's glassy crater 13 round); Sacred Vessel's 2.13 times, Entering Nirvana's 2.41 and True Immortal's 3.41 (its reach 218, its continent 67 blocks across, its sword's blade 94 long). Only the
 spells meant to lay the land waste go by it (craters, fissures, basins, channels, bores, cleaves; the sizes above); the small
 carvings of the lower realms (a cleave's slot, a cave) stay as they were. Water and wood were brought down beside metal and earth: Frozen Field reaches 64 blocks (was 100) and holds for 3 s,
 Absolute Zero holds 5 s and shatters for 60, Boundless Sea and Water Prison hold for less, the World Tree drinks 10 a second for
@@ -2460,9 +2549,9 @@ own realm (its last nine layers):
 | **Six Paths Reincarnation Canon** | to Four Axis | 54 | Wheel of Samsara (48), Six Paths Annihilation (52) | Four Axis kings (one palace in twenty); Nine Nether Peaks steles, about three in 1,371 |
 | **Ten Thousand Ghosts Union Scripture** | to Dao Integration | 63 | Procession of Ten Thousand Ghosts (57), Gate of Ten Thousand Ghosts (61) | Nine Nether Peaks steles, about two in 1,377; the few Dao Integration ghosts |
 | **Void-Rending Nether Canon** | to Void Shattering | 72 | Rift to the Nine Nethers (66), Bridge of No Return (70) | Peaks steles, about one in 1,377; the handful of Void Shattering ghosts |
-| **Hell-Forged Vessel Sutra** | to Sacred Vessel | 81 | none yet | Peaks steles, about one in 1,377; the one Sacred Vessel of the dead |
-| **Underworld Nirvana Scripture** | to Entering Nirvana | 90 | none yet | Peaks steles, about one in 1,377 |
-| **Netherworld Immortal Sovereign Canon** | to True Immortal | 99 | none yet | Peaks steles, about one in 1,377 |
+| **Hell-Forged Vessel Sutra** | to Sacred Vessel | 81 | Mirror of Retribution (75), Soul-Locking Pagoda (79) | Peaks steles, about one in 1,377; the one Sacred Vessel of the dead |
+| **Underworld Nirvana Scripture** | to Entering Nirvana | 90 | Black and White Impermanence (84), Book of Life and Death (88) | Peaks steles, about one in 1,377 |
+| **Netherworld Immortal Sovereign Canon** | to True Immortal | 99 | Fengdu's Walls Rise (93), Ten Thousand Souls Ascend (97) | Peaks steles, about one in 1,377 |
 
 **The ghost path goes on to True Immortal** (the user's ask, 2026-10-22), its last five foundations those of the realms after
 Four Axis (Dao Integration's and Void Shattering's spells built, 2026-10-24: `GhostSpells`; the rest still to come), every stage of them longer than the one before as below it (`GhostMethods#required`), and
@@ -2602,7 +2691,9 @@ cultivator who walks both is stronger than one who walks either (`TwoPaths`):
 - **Harmony.** The two paths together add to that body, the more the closer they stand: **+30%** with both at the same
   stage, **+20%** a stage apart, **+10%** two stages apart, nothing further (`TwoPaths#HARMONY`, `#stageGap`; the stages are
   counted across realms, so Four Axis Grand Perfection and Dao Integration Early are one apart), on top of Heaven's Favour.
-  (By realm, within three realms, before the user's call of 2026-10-24: too generous.) The Stats tab names the path the body follows and the harmony; on the Cultivation tab the two paths
+  (By realm, within three realms, before the user's call of 2026-10-24: too generous.) Since 2026-10-24 (the user's ask: with
+  every path at True Immortal Grand Perfection the health all but doubled and the qi didn't) the harmony raises the qi pool and the
+  ghostly qi pool by the same share as the body. The Stats tab names the path the body follows and the harmony; on the Cultivation tab the two paths
   stand **side by side, alike** (neither a side path): each its name (a short rule under the one whose qi is drawn in), realm
   and stage, its bar (each its own cultivation, the stage's written on it; amber at a bottleneck, gold at the last), and what
   meditating here adds a second (the ghost path's by the method practised); the path whose qi isn't drawn in reads
@@ -2688,7 +2779,9 @@ cultivator who walks both is stronger than one who walks either (`TwoPaths`):
 | **Heaven and Demon as One** | Four Axis | 920 | 2 min | heaven and demon made one: everything within 16 blocks is dragged in and takes 25 hearts of harm; a tenth of all of it mends you, and Strength II for 10 s |
 | **Heaven-Demon Avatar** | Dao Integration | 3,200 | 100 s | a colossal avatar of gold light and crimson demon qi, 41 blocks tall, rises behind you for 8 s (a living shape: below), turning to where you look; twice its hands come down out of the sky where you look (82 blocks), heaven's palm then the demon's claw: each strikes everything within 14 blocks for 140 harm, throws it down and slows it; a fifth of all the harm mends you. The palm crushes a crater 18 blocks round and 8 deep into the land with cracks running out 40 blocks; the claw rakes four gouges 28 blocks long and 8 deep through it, and a lesser crater where it struck |
 | **Heaven-Demon Void Shatter** | Void Shattering | 11,000 | 100 s | a colossal fist forms over your shoulder, heaven's gauntlet of gold plates closed round a demon's crimson claws (a living shape), and punches out to where you look (118 blocks): where it lands space shatters like glass (Heaven methods: Tears in space): everything within 18 blocks takes 520 harm and is thrown out, and the shattered space, 37 blocks across, hangs there for 5 s, cutting whoever stays in it for 60 a second. The land under it shatters too (landing within 18 blocks of it): a crater 28 blocks round and 15 deep, twelve cracks running out of it 55 blocks like a pane's |
-
+| **Heaven-Demon Bell** | Sacred Vessel | 24,000 | 100 s | a colossal bell, heaven's gold on one side and the demon's crimson bronze on the other, falls over where you look (136 blocks), its rim pressing a crater 19 blocks round into the land, and tolls three times a second apart: each strikes everything under it, within 19 blocks, for 500 harm through armour, and its wave runs out to 38 blocks, 200 more and thrown back, the land cracking out to 40; a fifth of all the harm mends you |
+| **Heaven-Demon Eclipse** | Entering Nirvana | 52,000 | 100 s | heaven's sun and the demon's moon come together 58 blocks over where you look (154 blocks), the moon before the sun; a beam of darkness pours down and pulses three times, three quarters of a second apart: 1,200, then 600, then 600 harm through armour to everything under it within 22 blocks, held where it stands, the first burning a crater of black glass 19 blocks round and 7 deep; a fifth of all the harm mends you |
+| **Primordial Chaos** | True Immortal | 450,000 | 100 s | a sphere of the chaos before heaven and earth were parted, heaven's gold and the demon's crimson swirled together, swells 24 blocks over where you look (218 blocks) and churns for 5 s: everything within 54 blocks is drawn in toward it, and every half second everything within 27 of its heart takes 1,000 harm through armour; then it bursts, 15,000 harm through armour within 34 blocks, thrown out, a crater of glass 24 blocks round and 10 deep; a fifth of all the harm mends you |
 They took the places of the heaven and ghost paths' five (Yin-Yang Palm, Taiji Shield, Life and Death Seal, Heaven and Hell
 Pillar, Primordial Chaos), keeping their reach and strength, their costs the two pools' added into qi. Their harm is heaven's and
 a demon's qi as one (`ModDamageTypes#HEAVEN_DEMON`): through armour, as the elements' qi, no element's ward reading it; it reaches
@@ -2759,11 +2852,17 @@ editor does. A mortal, alive or dead, can't shape one: its meridians are closed.
 | **Gate of Ten Thousand Ghosts** | Ten Thousand Ghosts Union 61 | 300 | 90 s | a gate of the dead, bone-white mist and ghost fire, rises where you look (82 blocks) facing you and opens for 8 s: every foe within 18 blocks is dragged toward its doorway and takes 30 ghostly harm a second; then it slams shut, 120 ghostly harm to everything within 18 blocks; a quarter of all its harm mends you |
 | **Rift to the Nine Nethers** | Void-Rending Nether Canon 66 | 280 | 60 s | the ground where you look (118 blocks) tears open onto the Nine Nethers, nine rings of ghost fire turning down into it, each narrower and deeper: for 6 s every foe within 22 blocks is dragged toward it and down and takes 100 ghostly harm a second; then it seals, 300 ghostly harm to everything within 8 blocks of it, weakened for 8 s; the dead take half as much again |
 | **Bridge of No Return** | Void-Rending Nether Canon 70 | 400 | 90 s | the Naihe Bridge, that the dead cross over the River of Forgetting, rises out of the mist along your level look, span after span, 118 blocks: every being within 6 blocks of a span as it rises takes 300 ghostly harm and forgets every blessing on it (its good effects gone); then for 5 s whoever stays on or under it is slowed and pays its toll, 50 ghostly harm a second; the dead take half as much again |
-
+| **Mirror of Retribution** | Hell-Forged Vessel Sutra 75 | 320 | 60 s | the karma mirror of Yama's court rises over and behind your head and turns with your look for 3 s: its light pours out along your look, 64 blocks, and every being in it is shown its sins: 140 ghostly harm a second, weakened and slowed, and glowing wherever it hides for 8 s; then the mirror flashes, 500 ghostly harm to everything in its light; the dead take half as much again |
+| **Soul-Locking Pagoda** | Hell-Forged Vessel Sutra 79 | 460 | 90 s | a pagoda of seven tiers, black iron and bone forged in the lowest hell, falls onto where you look (136 blocks): 300 ghostly harm to everything under it, and every foe within 15 blocks is locked in it for 6 s (brought back to its walls), 120 ghostly harm a second; then it seals, 500 ghostly harm to all locked in it and Weakness II for 10 s; the dead take half as much again |
+| **Black and White Impermanence** | Underworld Nirvana Scripture 84 | 360 | 60 s | the two soul-catchers of the underworld rise out of the mist to either side of the soul you look at (72 blocks) and come for it: the White's banner, 500 ghostly harm, slowing it; the Black's chain, holding it 3 s at 300 a second; then their share of it, a tenth of its whole health (no more than 1,200); the dead take half as much again |
+| **Book of Life and Death** | Underworld Nirvana Scripture 88 | 520 | 90 s | the book in which every soul's span is written opens over your head and finds the names of the foes round you, eight at most within 72 blocks: each marked, glowing, 250 ghostly harm a second for 3 s; then the brush strikes their names out, 900 each, and any below a quarter of its whole health is struck out of life (the Ender Dragon, the Wither, the Warden take 2,000 more instead); the dead take half as much again |
+| **Fengdu's Walls Rise** | Netherworld Immortal Sovereign Canon 93 | 400 | 60 s | eight lengths of the walls of Fengdu, the city of the dead, rise in a ring 37 blocks round where you look (136 blocks), facing in: for 5 s no foe within gets out past them, and every half second the city's dead fall on every foe within, 800 ghostly harm, slowing them; then the walls topple in, 4,000 ghostly harm to every foe within; the dead take half as much again |
+| **Ten Thousand Souls Ascend** | Netherworld Immortal Sovereign Canon 97 | 600 | 90 s | a helix of ten thousand souls rises out of the dark where you look (136 blocks) and spirals for 5 s: every foe within 34 blocks is drawn in, those within 14 carried up round it as high as 20 (a great beast only drawn), 1,000 ghostly harm every half second; then it goes back down, dragging them with it, 5,000 to each; the dead take half as much again |
 None of a caster's spells touch the caster, spectators or the caster's own tamed creatures; harm to another player needs
 PvP on. The numbers are the `Spell` enum (layer, cost, cooldown) and `Spells` (`GHOST_FIRE_*`, `BOLT_*`, `DASH_*`, `WAIL_*`,
 `TIDE_*`, `WARD_TICKS`, `BURST_*`, `DECREE_*`, `REND_*`, `STEP_*`, `VERDICT_*`, `CHAINS_*`, `ANNIHILATION_*`); Dao Integration's
-and Void Shattering's, `GhostSpells` (`PROCESSION_*`, `GATE_*`, `NETHERS_*`, `BRIDGE_*`): living shapes of GeckoLib's as the realms'
+to True Immortal's, `GhostSpells` (`PROCESSION_*`, `GATE_*`, `NETHERS_*`, `BRIDGE_*`, `MIRROR_*`, `PAGODA_*`, `IMPERMANENCE_*`, `BOOK_*`,
+`FENGDU_*`, `SOULS_*`): living shapes of GeckoLib's as the realms'
 heaven spells' (the column of the dead, its lantern and soul-banners; the gate of bone under its roof, its doors of black lacquer
 swinging in on a whirl of ghost fire, hands of the dead reaching out; the nine rings of ghost fire turning down into the rift, souls
 drawn down between them and talismans round its rim; the bridge's spans of bone-white stone, lanterns of ghost fire on them, the
@@ -3014,7 +3113,8 @@ bordered carpet to the Sect Master's mat on its dais, between lanterns. The **Me
 where the disciples live and meditate, and the **Treasury** face the way in across lawns from either side, a **pagoda**
 stands beside the main hall (every storey but the top is the sect's library, shelves and candles and lecterns, with the
 library chest on the ground floor, which keeps **one or two Jade Slips** of heaven methods besides its books: Qi
-Refining's most often, Foundation Building's now and then, Core Formation's rarely, `chests/sect_library`; a ladder climbs
+Refining's most often, Foundation Building's now and then, Core Formation's rarely, `chests/sect_library`; in the Upper Realm, Core
+Formation's to Entering Nirvana's, each realm up rarer (since 2026-10-25, see the user's calls on the third sweep's suggestions); a ladder climbs
 to a meditation chamber at the top) with herb gardens (ginseng,
 Spirit Ginseng, fruit trees) by it, and the **elders' houses** (pavilions with two eaves, one per elder) stand apart
 round the grounds, each with an earthen footpath to its door. Out on the lawns rises the **Altar of Heaven**, round
@@ -3684,6 +3784,70 @@ Of what the sweep left for the user to decide, these were closed. The rest stand
 - **A Four Axis Ghost King's seal** stays breakable from Dao Integration, a full realm above it, as every seal is (the user's call).
 
 Tests: `LoopholePicksGameTests`.
+
+## The third bug sweep (2026-10-24, night)
+
+A sweep after the spells of the realms past Four Axis were all in (the user's ask: "go through the entire code fixing any bugs that need
+fixing and giving suggestions"). It put right:
+
+- **A barrier is worn down only by harm that lands across it.** Asking whom a spell spares battered every barrier between caster and
+  being: a heal, a golem choosing its foe, a Black Tortoise warding its own, a dragon's passive might, even an aim wore a sect's barrier
+  down and raised its alarm against the player, though no one was harmed. Now only a spell's blow landing across a barrier its caster
+  is strong enough for batters it (`Formations#harmedAcross`); the question itself is only asked.
+- **Weighing a cut costs nothing.** Boulder Throw and Cave Formation weigh the ground before they take it; the weighing breached a
+  barrier's cells and told the trespass, and the taking did it again (`HeavenSpells#mayCarve`).
+- **A spell's mending goes to its caster's own.** The share of what Withering and Flourishing, Primal Wind and the First Seed of
+  Creation drink went to everyone they spared: a monster walled off behind a barrier took a cut, the dead and spectators thinned it,
+  and a cultivator's went to every passer-by. Now a player's goes to those its spells spare that are alive, present and not walled
+  off, a cultivator's to its own (`HeavenSpells#own`).
+- **The great cultivators tell their own years.** Every cultivator past Four Axis said it had cultivated Four Axis's 1,000 to 3,000
+  years; they now say thousands (Dao Integration), hundreds of thousands, millions, tens of millions, and a True Immortal ages.
+- **Nothing left to grow for good:** a cultivator's golems are no longer remembered after they crumble (a cultivator never logs out to
+  have them forgotten), nor the barriers each being battered, nor a cultivator's lapsed debts to those who spared it, nor an elder's
+  lapsed offers of the trial; and the Nine Cauldrons can't fail on a cauldron that never came.
+
+Tests: `SweepThreeGameTests` (and `BarrierPassGameTests`, which now takes its sect cores down again: the test world is kept between
+runs).
+
+### The user's calls on its suggestions (2026-10-25)
+
+- **Demon blood in the clans' chests** (the user: "demons should be able to loot the blood (although rarely, as rare as getting a heaven
+  method or ghost method at that level from a library) from chests and stuff in the demon clans"). Each chest of a demon clan's den
+  keeps, now and then, one phial of the clan's own race's blood, laid in it as the den is made (its loot fills in round it when it is
+  opened): a hoard's chest 12%, the head's hall's 12%, an elder's 8% (`DemonBlood#hoarded`, `SectPiece#chest`). Its realms are a sect
+  library's slips' in the same world, as often (below): a clan of the lower realms keeps Qi Refining's 60%, Foundation Building's 30%,
+  Core Formation's 10%; one of the Upper Realm Core Formation's 20%, Nascent Soul's 20%, Heavenly Being's 18%, Four Axis's 15%, Dao
+  Integration's 11%, Void Shattering's 7%, Sacred Vessel's 5% and Entering Nirvana's 4%: the Demon Path's way past Sacred Vessel, whose
+  blood nothing else left. A sect of men's chests keep none.
+- **The Upper Realm's sect libraries keep the Upper Realm's slips** (the user, the same day: "you can get EN phials from clans but you
+  can't get EN methods from sects"). A library chest still keeps one or two Jade Slips, its element any of the five alike; in the Upper
+  Realm they are now of the realms its clans' chests keep blood of, as often: Core Formation 20%, Nascent Soul 20%, Heavenly Being 18%,
+  Four Axis 15%, Dao Integration 11%, Void Shattering 7%, Sacred Vessel 5%, Entering Nirvana 4% (before, the lower realms' Qi Refining to
+  Core Formation). The library's chest takes its world's slips when it is first opened (`chests/sect_library`: a pool for the Upper
+  Realm, by a location check, and one for everywhere else), so the unopened libraries of sects already standing take them too. The lower
+  realms' clans keep blood of a library's realms there, Qi Refining to Core Formation (they kept Nascent Soul's 7% of the time, which no
+  library there matched).
+- **A great beast is judged against its caster** (the user: "Judge it relative to the caster"). Too great for a spell to hold, carry,
+  swap or swallow is now a being of more than three times its caster's whole health (`HeavenSpells#greatBeast`, `#GREAT_BEYOND`), or
+  one of the old world's great beasts (the Ender Dragon, the Wither, the Warden, an Elder Guardian: their fights are their own). Before,
+  it was anything of 300 health or more, which made every cultivator from Dao Integration up too great for the very spells meant for them.
+- **One caster's wounds in the land waiting to be cut are held to 250,000 blocks, everyone's to 2,000,000** (left to my judgement): a
+  wound past it is cut short, what lies nearest its heart kept, or not cut at all; a burst golden core's goes whole (`Devastation#allowance`).
+- **A guest pass is made out to its buyer** (the user: "Bind guest passes to the buyer"): sold made out to the one buying it (its
+  tooltip names them), it lets them alone through its sect's barrier (`SectPassItem#boundTo`). One made out to no one (a command's) lets
+  anyone through.
+- **Nothing of True Immortal's is to be had in the worlds** (the user: "Make sure you can't get true immortal slips or methods in lower or
+  upper realms, the highest you should be able to get is entering nirvana"; `Realm#taughtInTheWorld`). No Dao Stele carves a True
+  Immortal heaven method (the Upper Realm's wondrous lands carved one in 296), no Method Stele the ghost path's True Immortal foundation
+  (the Nine Nether Peaks carved one in 777), no cultivator drops, sells or teaches one, and a demon's blood beyond Entering Nirvana's
+  (a cultivator's, a slain demon player's) leaves Entering Nirvana's. A stele carved with one before stays unreadable. They are kept for
+  the Immortal Realm.
+- Left as they are: spell cooldowns off by default (the user: "Leave it off for now"), Book of Life and Death's execute ("fine for now").
+  For when the Immortal Realm is made: Entering Nirvana cultivators gathered about the way into it, waiting for a chance to ascend (the
+  user's plan; no Entering Nirvana or True Immortal cultivator is born in the worlds until then).
+
+Tests: `SuggestionPicksGameTests` (its wounds' test in a batch of its own); the realms' hardy husks in the spell tests are now more than
+three times their caster's health, great beasts to them as every hardy husk was before.
 
 ## Shader packs (Iris)
 

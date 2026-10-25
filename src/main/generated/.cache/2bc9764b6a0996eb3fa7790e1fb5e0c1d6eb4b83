@@ -1,7 +1,7 @@
-// 1.20.1	2026-10-24T18:46:44.6830595	Defying The Heavens/Block Loot Tables
+// 1.20.1	2026-10-25T09:50:39.4452319	Defying The Heavens/Block Loot Tables
 0e94fb10ad651ca942cd0f9dfda513003025edb6 data\defying-the-heavens\loot_tables\blocks\formation_core.json
-0a44e07e072b9c5eac03736d7addf054e6a7140e data\defying-the-heavens\loot_tables\blocks\yin_jade_ore.json
 1faff50a2843b53aa06992afc578cd1685fa9262 data\defying-the-heavens\loot_tables\blocks\blue_spirit_planks.json
+0a44e07e072b9c5eac03736d7addf054e6a7140e data\defying-the-heavens\loot_tables\blocks\yin_jade_ore.json
 86041040437e63b212119a67a16f5daa00c23752 data\defying-the-heavens\loot_tables\blocks\heaven_altar.json
 b52f4d37381c416b561a10f644b3c83680926d56 data\defying-the-heavens\loot_tables\blocks\deepslate_qi_vein.json
 04ebb09f67b2087f45c4242724411251bb29bfa1 data\defying-the-heavens\loot_tables\blocks\jade_stone.json

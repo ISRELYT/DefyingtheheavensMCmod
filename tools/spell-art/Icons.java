@@ -617,7 +617,31 @@ public class Icons {
 			{"weak_water_from_the_void", (java.util.function.Supplier<Canvas>) Icons::weakWater}, {"kun_rises_from_the_abyss", (java.util.function.Supplier<Canvas>) Icons::kunRises},
 			{"void_severing_sword_light", (java.util.function.Supplier<Canvas>) Icons::voidSevering}, {"ten_direction_sword_prison", (java.util.function.Supplier<Canvas>) Icons::swordPrison},
 			{"rift_to_the_nine_nethers", (java.util.function.Supplier<Canvas>) Icons::nineNethers}, {"bridge_of_no_return", (java.util.function.Supplier<Canvas>) Icons::bridgeOfNoReturn},
-			{"heaven_demon_void_shatter", (java.util.function.Supplier<Canvas>) Icons::heavenDemonVoidShatter}};
+			{"heaven_demon_void_shatter", (java.util.function.Supplier<Canvas>) Icons::heavenDemonVoidShatter},
+			// Sacred Vessel's (VesselIcons).
+			{"heaven_swallowing_gourd", (java.util.function.Supplier<Canvas>) VesselIcons::gourd}, {"seven_treasure_bodhi_branch", (java.util.function.Supplier<Canvas>) VesselIcons::bodhiBranch},
+			{"wind_fire_wheels", (java.util.function.Supplier<Canvas>) VesselIcons::windFireWheels}, {"eight_trigrams_furnace", (java.util.function.Supplier<Canvas>) VesselIcons::furnace},
+			{"xirang_self_growing_soil", (java.util.function.Supplier<Canvas>) VesselIcons::xirang}, {"nine_cauldrons_suppress_the_land", (java.util.function.Supplier<Canvas>) VesselIcons::nineCauldrons},
+			{"twenty_four_sea_fixing_pearls", (java.util.function.Supplier<Canvas>) VesselIcons::seaPearls}, {"ocean_sealing_vase", (java.util.function.Supplier<Canvas>) VesselIcons::oceanVase},
+			{"immortal_binding_ropes", (java.util.function.Supplier<Canvas>) VesselIcons::bindingRopes}, {"golden_dragon_scissors", (java.util.function.Supplier<Canvas>) VesselIcons::scissors},
+			{"mirror_of_retribution", (java.util.function.Supplier<Canvas>) VesselIcons::karmaMirror}, {"soul_locking_pagoda", (java.util.function.Supplier<Canvas>) VesselIcons::soulPagoda},
+			{"heaven_demon_bell", (java.util.function.Supplier<Canvas>) VesselIcons::heavenDemonBell},
+			// Entering Nirvana's (NirvanaIcons).
+			{"seed_of_withering_rebirth", (java.util.function.Supplier<Canvas>) NirvanaIcons::seed}, {"withering_and_flourishing", (java.util.function.Supplier<Canvas>) NirvanaIcons::seasons},
+			{"undying_ember", (java.util.function.Supplier<Canvas>) NirvanaIcons::ember}, {"pyre_of_the_heavens", (java.util.function.Supplier<Canvas>) NirvanaIcons::pyre},
+			{"gravestone_falls", (java.util.function.Supplier<Canvas>) NirvanaIcons::gravestone}, {"buried_world", (java.util.function.Supplier<Canvas>) NirvanaIcons::buried},
+			{"frozen_moon_in_the_well", (java.util.function.Supplier<Canvas>) NirvanaIcons::moonWell}, {"the_frozen_moon_falls", (java.util.function.Supplier<Canvas>) NirvanaIcons::moonFalls},
+			{"sword_tomb_awakens", (java.util.function.Supplier<Canvas>) NirvanaIcons::tomb}, {"nine_rebirths_of_the_sword", (java.util.function.Supplier<Canvas>) NirvanaIcons::rebirths},
+			{"black_and_white_impermanence", (java.util.function.Supplier<Canvas>) NirvanaIcons::impermanence}, {"book_of_life_and_death", (java.util.function.Supplier<Canvas>) NirvanaIcons::book},
+			{"heaven_demon_eclipse", (java.util.function.Supplier<Canvas>) NirvanaIcons::eclipse},
+			// True Immortal's (ImmortalIcons).
+			{"primal_wind_of_creation", (java.util.function.Supplier<Canvas>) ImmortalIcons::wind}, {"first_seed_of_creation", (java.util.function.Supplier<Canvas>) ImmortalIcons::seed},
+			{"samadhi_true_fire", (java.util.function.Supplier<Canvas>) ImmortalIcons::samadhi}, {"first_flame_before_heaven", (java.util.function.Supplier<Canvas>) ImmortalIcons::firstFlame},
+			{"hand_of_houtu", (java.util.function.Supplier<Canvas>) ImmortalIcons::houtu}, {"falling_continent", (java.util.function.Supplier<Canvas>) ImmortalIcons::continent},
+			{"glacier_of_the_first_age", (java.util.function.Supplier<Canvas>) ImmortalIcons::glacier}, {"the_primordial_sea", (java.util.function.Supplier<Canvas>) ImmortalIcons::sea},
+			{"heaven_slaying_sword_rises", (java.util.function.Supplier<Canvas>) ImmortalIcons::slayer}, {"primal_axe_splits_chaos", (java.util.function.Supplier<Canvas>) ImmortalIcons::axe},
+			{"fengdu_walls_rise", (java.util.function.Supplier<Canvas>) ImmortalIcons::fengdu}, {"ten_thousand_souls_ascend", (java.util.function.Supplier<Canvas>) ImmortalIcons::souls},
+			{"primordial_chaos", (java.util.function.Supplier<Canvas>) ImmortalIcons::chaos}};
 
 	@SuppressWarnings("unchecked")
 	public static void main(String[] args) throws Exception {

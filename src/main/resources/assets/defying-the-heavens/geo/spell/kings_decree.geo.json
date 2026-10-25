@@ -1,0 +1,66 @@
+{
+	"format_version": "1.12.0",
+	"minecraft:geometry": [
+		{
+			"description": {
+				"identifier": "geometry.spell_kings_decree",
+				"texture_width": 256,
+				"texture_height": 256,
+				"visible_bounds_width": 4,
+				"visible_bounds_height": 4,
+				"visible_bounds_offset": [0, 1.27, 0]
+			},
+			"bones": [
+				{
+					"name": "root",
+					"pivot": [0, 0, 0]
+				},
+				{
+					"name": "scroll",
+					"parent": "root",
+					"pivot": [0, 27, -5]
+				},
+				{
+					"name": "silk",
+					"parent": "scroll",
+					"pivot": [0, 27, -5],
+					"cubes": [
+						{"origin": [-15, 26.95, -13.5], "size": [30, 0.1, 17], "pivot": [0, 27, -5], "rotation": [90, 0, 0], "uv": {"up": {"uv": [0, 82], "uv_size": [90, 51]}, "down": {"uv": [90, 82], "uv_size": [90, 51]}}}
+					]
+				},
+				{
+					"name": "rod_r",
+					"parent": "scroll",
+					"pivot": [-15.6, 27, -5],
+					"cubes": [
+						{"origin": [-16.4, 16.8, -5.8], "size": [1.6, 20.4, 1.6], "uv": {"up": {"uv": [40, 133], "uv_size": [6, 6]}, "down": {"uv": [46, 133], "uv_size": [6, 6]}, "east": {"uv": [0, 0], "uv_size": [6, 82]}, "north": {"uv": [6, 0], "uv_size": [6, 82]}, "west": {"uv": [12, 0], "uv_size": [6, 82]}, "south": {"uv": [18, 0], "uv_size": [6, 82]}}}
+					]
+				},
+				{
+					"name": "rod_l",
+					"parent": "scroll",
+					"pivot": [15.6, 27, -5],
+					"cubes": [
+						{"origin": [14.8, 16.8, -5.8], "size": [1.6, 20.4, 1.6], "uv": {"up": {"uv": [52, 133], "uv_size": [6, 6]}, "down": {"uv": [58, 133], "uv_size": [6, 6]}, "east": {"uv": [24, 0], "uv_size": [6, 82]}, "north": {"uv": [30, 0], "uv_size": [6, 82]}, "west": {"uv": [36, 0], "uv_size": [6, 82]}, "south": {"uv": [42, 0], "uv_size": [6, 82]}}}
+					]
+				},
+				{
+					"name": "glow",
+					"parent": "scroll",
+					"pivot": [0, 27, -4.4],
+					"cubes": [
+						{"origin": [-20, 26.95, -17.9], "size": [40, 0.1, 27], "pivot": [0, 27, -4.4], "rotation": [90, 0, 0], "uv": {"up": {"uv": [180, 82], "uv_size": [40, 27]}, "down": {"uv": [0, 133], "uv_size": [40, 27]}}}
+					]
+				},
+				{
+					"name": "seal",
+					"parent": "root",
+					"pivot": [0, 0, 0],
+					"cubes": [
+						{"origin": [-24, 0.25, -24], "size": [48, 0.1, 48], "pivot": [0, 0.3, 0], "rotation": [0, 0, 0], "uv": {"up": {"uv": [48, 0], "uv_size": [72, 72]}, "down": {"uv": [120, 0], "uv_size": [72, 72]}}}
+					]
+				}
+			]
+		}
+	]
+}

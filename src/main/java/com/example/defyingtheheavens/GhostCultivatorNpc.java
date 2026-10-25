@@ -303,7 +303,8 @@ public class GhostCultivatorNpc extends CultivatorNpc implements Ghostly {
 	protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
 		super.dropCustomDeathLoot(source, looting, recentlyHit);
 		GhostMethod method = method();
-		if (method == null || method.tier() <= 1) return;
+		// Never True Immortal's foundation, the Immortal Realm's (GhostMethod#taughtInTheWorld).
+		if (method == null || method.tier() <= 1 || !method.taughtInTheWorld()) return;
 		if (getRole() == Role.GHOST_KING || random.nextFloat() < FOUNDATION_SLIP_CHANCE) spawnAtLocation(GhostJadeSlipItem.of(method));
 	}
 

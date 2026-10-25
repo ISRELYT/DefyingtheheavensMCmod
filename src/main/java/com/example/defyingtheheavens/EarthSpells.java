@@ -51,6 +51,8 @@ public final class EarthSpells {
 	public static final double CAVE_REACH = 6;
 	public static final int CAVE_TICKS = 60;
 	public static final double SURGE_RANGE = 24, SURGE_PACE = 1.5;
+	/** How far behind the surge's front its ridge of spikes bursts up: behind the earth dragon's last coil, in its wake. */
+	public static final float SURGE_WAKE = 15;
 	public static final float SURGE_DAMAGE = 20;
 	public static final int STANCE_TICKS = 15 * 20;
 	public static final int GOLEM_TICKS = 90 * 20, GOLEMS = 2;
@@ -115,6 +117,73 @@ public final class EarthSpells {
 	public static final double LOCK_RADIUS = HeavenSpells.span(Realm.VOID_SHATTERING, 14);
 	public static final float LOCK_DAMAGE = 200;
 	public static final int LOCK_RISES = 16, LOCK_TICKS = 6 * 20, LOCK_RELEASE = 16;
+	/**
+	 * Xirang, the Self-Growing Soil: where (up to {@link #XIRANG_RANGE}, 136 by its realm), how far round its mound heaves up and buries
+	 * (17) and how high it stands (13, by its realm); its harm a second while it holds them, and as it settles; how long its clod flies, how
+	 * long the mound swells, and how long it holds what it has buried (ticks).
+	 */
+	public static final double XIRANG_RANGE = HeavenSpells.span(Realm.SACRED_VESSEL, 64), XIRANG_RADIUS = HeavenSpells.span(Realm.SACRED_VESSEL, 8),
+			XIRANG_HEIGHT = Devastation.sized(Realm.SACRED_VESSEL, 6);
+	public static final float XIRANG_DAMAGE = 500, XIRANG_SETTLE = 600;
+	public static final int XIRANG_FLIES = 14, XIRANG_SWELLS = 30, XIRANG_HOLDS = 4 * 20;
+	/**
+	 * Nine Cauldrons Suppress the Land: where (up to {@link #CAULDRONS_RANGE}, 136), how far round its ring of eight stands (30) and how high
+	 * they fall from (68); whom each strikes as it lands (within 11) and how hard; its press a second on every foe within the ring; each
+	 * cauldron's crater (9 round, the heart's 13) and how far the land within the ring sinks (6), by its realm; how long each falls, how far
+	 * apart they come, how long they suppress the land, and how long they take to rise away (ticks).
+	 */
+	public static final double CAULDRONS_RANGE = HeavenSpells.span(Realm.SACRED_VESSEL, 64), CAULDRONS_RING = HeavenSpells.span(Realm.SACRED_VESSEL, 14),
+			CAULDRONS_HIGH = HeavenSpells.span(Realm.SACRED_VESSEL, 32), CAULDRON_STRIKE = HeavenSpells.span(Realm.SACRED_VESSEL, 5),
+			CAULDRON_CRATER = Devastation.sized(Realm.SACRED_VESSEL, 4), CAULDRON_HEART_CRATER = Devastation.sized(Realm.SACRED_VESSEL, 6),
+			CAULDRON_CRATER_DEPTH = Devastation.sized(Realm.SACRED_VESSEL, 2.5);
+	public static final int CAULDRONS_SINK = (int) Math.round(Devastation.sized(Realm.SACRED_VESSEL, 3));
+	public static final float CAULDRON_DAMAGE = 1500, CAULDRONS_PRESS = 250;
+	public static final int CAULDRON_FALL = 16, CAULDRON_EVERY = 6, CAULDRONS_TICKS = 6 * 20, CAULDRONS_RISE = 16;
+	/**
+	 * Gravestone Falls: where (154 by its realm), how high it falls from (58); whom it strikes as it lands (within 10) and how hard, and how long
+	 * they are pinned; how far round its sinking drags foes to it (24) and whom it buries as it goes under (within 14), and how hard; its crater
+	 * (12 round, 6 deep), how far its cracks run (34) and the pit it leaves (10 round, 14 deep), by its realm; how long it falls, how long it
+	 * stands, how long it sinks, and how long it has after (ticks).
+	 */
+	public static final double GRAVE_RANGE = HeavenSpells.span(Realm.ENTERING_NIRVANA, 64), GRAVE_HIGH = HeavenSpells.span(Realm.ENTERING_NIRVANA, 24),
+			GRAVE_RADIUS = HeavenSpells.span(Realm.ENTERING_NIRVANA, 4), GRAVE_PULL = HeavenSpells.span(Realm.ENTERING_NIRVANA, 10),
+			GRAVE_BURY = HeavenSpells.span(Realm.ENTERING_NIRVANA, 6), GRAVE_CRATER = Devastation.sized(Realm.ENTERING_NIRVANA, 5),
+			GRAVE_CRATER_DEPTH = Devastation.sized(Realm.ENTERING_NIRVANA, 2.5), GRAVE_CRACKS = Devastation.sized(Realm.ENTERING_NIRVANA, 14),
+			GRAVE_PIT = Devastation.sized(Realm.ENTERING_NIRVANA, 4), GRAVE_PIT_DEPTH = Devastation.sized(Realm.ENTERING_NIRVANA, 6);
+	public static final float GRAVE_DAMAGE = 3000, GRAVE_BURIES = 1500;
+	public static final int GRAVE_FALL = 16, GRAVE_PINS = 3 * 20, GRAVE_STANDS = 40, GRAVE_SINKS = 40, GRAVE_AFTER = 10;
+	/**
+	 * Buried World: where (154 by its realm), how far round its ring of standing stones stands (34); how many stones; how far the land within
+	 * sinks each second it sinks (4, by its realm), and what it crushes every foe within a second; the stones' fall, its harm; how long they
+	 * rise, how long the land sinks, how long the stones take to fall, and how long it has after (ticks).
+	 */
+	public static final double BURIED_RANGE = HeavenSpells.span(Realm.ENTERING_NIRVANA, 64), BURIED_RADIUS = HeavenSpells.span(Realm.ENTERING_NIRVANA, 14);
+	public static final int BURIED_STONES = 8, BURIED_SINK = (int) Math.round(Devastation.sized(Realm.ENTERING_NIRVANA, 1.6));
+	public static final float BURIED_CRUSH = 500, BURIED_TOPPLE = 3500;
+	public static final int BURIED_RISES = 24, BURIED_TICKS = 6 * 20, BURIED_FALLS = 20, BURIED_AFTER = 20;
+	/**
+	 * Hand of Houtu: where it rises (218 by its realm), how far round its hand grasps (17), how high its fist holds what it grasped (15: its
+	 * model's), how far round its fist strikes where it slams down (20); the crater it leaves there (20 round, 9 deep, by its realm) and how far
+	 * its cracks run (61); its harm as it grasps, and as it slams; how long it rises, how long it takes to close, how long it holds, how long its
+	 * fist takes to come down, and how long it has after (ticks).
+	 */
+	public static final double HOUTU_RANGE = HeavenSpells.span(Realm.TRUE_IMMORTAL, 64), HOUTU_GRASP = HeavenSpells.span(Realm.TRUE_IMMORTAL, 5),
+			HOUTU_FIST = HeavenSpells.span(Realm.TRUE_IMMORTAL, 4.3), HOUTU_SLAM_RADIUS = HeavenSpells.span(Realm.TRUE_IMMORTAL, 6),
+			HOUTU_CRATER = Devastation.sized(Realm.TRUE_IMMORTAL, 6), HOUTU_CRATER_DEPTH = Devastation.sized(Realm.TRUE_IMMORTAL, 2.5),
+			HOUTU_CRACKS = Devastation.sized(Realm.TRUE_IMMORTAL, 18);
+	public static final float HOUTU_CRUSH = 15000, HOUTU_SLAM = 45000;
+	public static final int HOUTU_RISES = 20, HOUTU_GRASPS = 10, HOUTU_HOLDS = 30, HOUTU_SLAMS = 7, HOUTU_AFTER = 30;
+	/**
+	 * Falling Continent: where (218 by its realm), how high it falls from (136), how high over the land its heart is as it strikes (10), how far
+	 * round it strikes (41); the crater it smashes (31 round, 12 deep, by its realm) and how far its cracks run (82); its harm; how long it falls,
+	 * and how long it lies there after (ticks).
+	 */
+	public static final double CONTINENT_RANGE = HeavenSpells.span(Realm.TRUE_IMMORTAL, 64), CONTINENT_HIGH = HeavenSpells.span(Realm.TRUE_IMMORTAL, 40),
+			CONTINENT_LANDS = HeavenSpells.span(Realm.TRUE_IMMORTAL, 3), CONTINENT_RADIUS = HeavenSpells.span(Realm.TRUE_IMMORTAL, 12),
+			CONTINENT_CRATER = Devastation.sized(Realm.TRUE_IMMORTAL, 9), CONTINENT_CRATER_DEPTH = Devastation.sized(Realm.TRUE_IMMORTAL, 3.5),
+			CONTINENT_CRACKS = Devastation.sized(Realm.TRUE_IMMORTAL, 24);
+	public static final float CONTINENT_DAMAGE = 75000;
+	public static final int CONTINENT_FALLS = 40, CONTINENT_AFTER = 50;
 
 	/** Each caster's golems, oldest first. */
 	private static final Map<UUID, List<EarthGolem>> GOLEMS_OF = new HashMap<>();
@@ -123,7 +192,7 @@ public final class EarthSpells {
 	static boolean canCast(LivingEntity p, Spell spell) {
 		return switch (spell) {
 			case DIRT_TIDE -> HeavenSpells.groundBelow(HeavenSpells.level(p), p.position(), 0, 3) != null || HeavenSpells.refuse(p);
-			case BOULDER_THROW -> crater(p).size() >= 4 || noEarth(p);
+			case BOULDER_THROW -> crater(p, false).size() >= 4 || noEarth(p);
 			case CAVE_FORMATION -> HeavenSpells.lookedBlock(p, CAVE_REACH) != null || HeavenSpells.refuse(p);
 			default -> true;
 		};
@@ -177,6 +246,32 @@ public final class EarthSpells {
 			case EARTH_VEINS_LOCK_THE_VOID -> {
 				HeavenSpells.endLingering(p.getUUID(), Lock.class);
 				HeavenSpells.linger(new Lock(p, spell));
+			}
+			case XIRANG_SELF_GROWING_SOIL -> {
+				LivingEntity aimed = HeavenSpells.aimed(p, XIRANG_RANGE);
+				HeavenSpells.linger(new Xirang(p, spell, aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, XIRANG_RANGE)));
+			}
+			case NINE_CAULDRONS_SUPPRESS_THE_LAND -> {
+				LivingEntity aimed = HeavenSpells.aimed(p, CAULDRONS_RANGE);
+				HeavenSpells.linger(new Cauldrons(p, spell, aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, CAULDRONS_RANGE)));
+			}
+			case GRAVESTONE_FALLS -> {
+				LivingEntity aimed = HeavenSpells.aimed(p, GRAVE_RANGE);
+				HeavenSpells.linger(new Gravestone(p, spell, aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, GRAVE_RANGE)));
+			}
+			case BURIED_WORLD -> {
+				HeavenSpells.endLingering(p.getUUID(), Buried.class);
+				LivingEntity aimed = HeavenSpells.aimed(p, BURIED_RANGE);
+				HeavenSpells.linger(new Buried(p, spell, aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, BURIED_RANGE)));
+			}
+			case HAND_OF_HOUTU -> {
+				LivingEntity aimed = HeavenSpells.aimed(p, HOUTU_RANGE);
+				HeavenSpells.linger(new Houtu(p, spell, aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, HOUTU_RANGE)));
+			}
+			case FALLING_CONTINENT -> {
+				HeavenSpells.endLingering(p.getUUID(), Continent.class);
+				LivingEntity aimed = HeavenSpells.aimed(p, CONTINENT_RANGE);
+				HeavenSpells.linger(new Continent(p, spell, aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, CONTINENT_RANGE)));
 			}
 			default -> {}
 		}
@@ -322,9 +417,9 @@ public final class EarthSpells {
 
 	/**
 	 * Where Boulder Throw tears its boulder from: a half-round hole {@link #CRATER} round in the ground two blocks ahead, natural or
-	 * built (whatever a spell may carve: HeavenSpells#carvable).
+	 * built (whatever a spell may carve: HeavenSpells#carvable); {@code taking} it (else only weighed: HeavenSpells#mayCarve).
 	 */
-	static List<BlockPos> crater(LivingEntity p) {
+	static List<BlockPos> crater(LivingEntity p, boolean taking) {
 		ServerLevel level = HeavenSpells.level(p);
 		Vec3 ahead = p.position().add(Vec3.directionFromRotation(0, p.getYRot()).scale(CRATER + 1.5));
 		Vec3 ground = HeavenSpells.groundBelow(level, ahead.add(0, 2, 0), 3, 4);
@@ -336,7 +431,7 @@ public final class EarthSpells {
 				for (int dy = -CRATER; dy <= 0; dy++) {
 					if (dx * dx + dy * dy + dz * dz > CRATER * CRATER + 1) continue;
 					BlockPos pos = centre.offset(dx, dy, dz);
-					if (HeavenSpells.carvable(level, pos, p)) hole.add(pos);
+					if (taking ? HeavenSpells.carvable(level, pos, p) : HeavenSpells.mayCarve(level, pos, p)) hole.add(pos);
 				}
 			}
 		}
@@ -345,7 +440,7 @@ public final class EarthSpells {
 
 	private static void boulder(LivingEntity p, Spell spell) {
 		ServerLevel level = HeavenSpells.level(p);
-		List<BlockPos> hole = crater(p);
+		List<BlockPos> hole = crater(p, true);
 		if (hole.size() < 4) return;
 		// The boulder is of what the ground mostly was.
 		Map<Block, Integer> counts = new HashMap<>();
@@ -428,7 +523,8 @@ public final class EarthSpells {
 			for (int d = -1; d <= 1; d++) for (int s = -1; s <= 1; s++) for (int h = 0; h <= 2; h++) carve.add(room.offset(d, h - 1, s));
 		}
 		List<BlockPos> real = new ArrayList<>();
-		for (BlockPos pos : carve) if (!real.contains(pos) && HeavenSpells.carvable(level, pos, p)) real.add(pos);
+		// Weighed only: each is answered for as the carving takes it (Carving).
+		for (BlockPos pos : carve) if (!real.contains(pos) && HeavenSpells.mayCarve(level, pos, p)) real.add(pos);
 		if (real.isEmpty()) {
 			HeavenSpells.refuse(p);
 			return;
@@ -464,15 +560,20 @@ public final class EarthSpells {
 	// --- Core Formation ---
 
 	/**
-	 * Earth Dragon Surge: a ridge of jagged spikes runs along the ground from its caster toward where they look, {@link #SURGE_PACE}
-	 * a tick for up to {@link #SURGE_RANGE}; whatever its front passes over takes {@link #SURGE_DAMAGE} and is thrown up. The spikes
-	 * sink back a few seconds later (SpellField EARTH_SPIKES: drawn along the ground the client sees).
+	 * Earth Dragon Surge: an earth dragon swims through the land from its caster toward where they look, {@link #SURGE_PACE} a tick for
+	 * up to {@link #SURGE_RANGE}; whatever its head passes over takes {@link #SURGE_DAMAGE} and is thrown up. A ridge of jagged spikes
+	 * bursts up in its wake ({@link #SURGE_WAKE} behind), sinking back a few seconds later (SpellField EARTH_SPIKES: drawn along the
+	 * ground the client sees).
 	 */
 	public static final class Surge extends HeavenSpells.Timed {
 		private final Spell spell;
 		private final Vec3 from, way;
 		private final double length;
 		private final SpellField field;
+		/** The earth dragon swimming through the land at its front (SpellConstruct EARTH_DRAGON), until it dives at the ridge's end. */
+		private final SpellConstruct dragon;
+		private final float yaw;
+		private long dived = -1;
 		private final java.util.Set<LivingEntity> struck = new java.util.HashSet<>();
 
 		Surge(LivingEntity caster, Spell spell) {
@@ -482,8 +583,10 @@ public final class EarthSpells {
 			Vec3 look = caster.getViewVector(1.0f).multiply(1, 0, 1);
 			this.way = look.lengthSqr() < 1.0e-4 ? Vec3.directionFromRotation(0, caster.getYRot()) : look.normalize();
 			this.length = SURGE_RANGE;
-			this.field = SpellField.create(level, SpellField.Kind.EARTH_SPIKES, from, (float) SURGE_RANGE, 3, (int) (end - start), caster)
+			this.field = SpellField.create(level, SpellField.Kind.EARTH_SPIKES, from, (float) SURGE_RANGE, SURGE_WAKE, (int) (end - start), caster)
 					.facing(caster.getYRot(), 0).data(Block.getId(groundUnder(caster))).value(0).spawn();
+			this.yaw = (float) Math.toDegrees(Math.atan2(-way.x, way.z));
+			this.dragon = SpellConstruct.create(level, SpellConstruct.Kind.EARTH_DRAGON, from, yaw, 0, (int) (SURGE_RANGE / SURGE_PACE) + 30, caster).sizedFor(spell).spawn();
 			HeavenSpells.sound(level, from, SoundEvents.RAVAGER_ROAR, 1.2f, 0.5f);
 		}
 
@@ -491,6 +594,17 @@ public final class EarthSpells {
 		protected boolean run(long age, long now) {
 			double reach = Math.min(length, age * SURGE_PACE);
 			field.value((float) (reach / length));
+			if (dived < 0) {
+				// The dragon at the ridge's front, on the land there; at its end it dives back into the land.
+				Vec3 front = from.add(way.scale(reach)), ground = HeavenSpells.groundBelow(level, front.add(0, 3, 0), 3, 8);
+				dragon.place(ground != null ? ground : front, yaw, 0);
+				if (reach >= length) {
+					dragon.act("dive");
+					dived = age;
+				}
+			} else if (age == dived + 12) {
+				dragon.dissolve();
+			}
 			if (reach < length) {
 				Vec3 front = from.add(way.scale(reach));
 				for (LivingEntity e : HeavenSpells.aroundPoint(level, front, 2.5, e -> !HeavenSpells.spared(caster, e) && !struck.contains(e))) {
@@ -507,6 +621,7 @@ public final class EarthSpells {
 		@Override
 		public void end() {
 			field.discard();
+			dragon.dissolve();
 		}
 	}
 
@@ -581,7 +696,12 @@ public final class EarthSpells {
 		HeavenSpells.sound(level, from, SoundEvents.ROOTED_DIRT_BREAK, 3.0f, 0.3f);
 		HeavenSpells.linger(new FireSpells.Delayed(p, 10, () -> SpellProjectile.thrown(level, p, spell, SpellProjectile.Shape.MOUNTAIN, 1.0f, from,
 				new Vec3(0, -1.05, 0), 48, new SpellProjectile.Behaviour() {
-					private void land(Vec3 where) {
+					private void land(SpellProjectile missile, Vec3 where) {
+						SpellConstruct peak = missile.body();
+						if (peak != null) {
+							peak.place(where.add(0, 1, 0), peak.getYRot(), 0);
+							peak.act("impact");
+						}
 						mark.discard();
 						slam(p, spell, level, where, MOUNTAIN_RADIUS, MOUNTAIN_DAMAGE, stateId);
 						Devastation.crater(p, level, where, MOUNTAIN_CRATER, MOUNTAIN_CRATER_DEPTH, Devastation.Floor.RUBBLE);
@@ -590,20 +710,22 @@ public final class EarthSpells {
 
 					@Override
 					public boolean hitEntity(SpellProjectile missile, LivingEntity hit) {
-						land(missile.position());
+						land(missile, missile.position());
 						return false;
 					}
 
 					@Override
 					public void hitBlock(SpellProjectile missile, BlockHitResult hit) {
-						land(hit.getLocation());
+						land(missile, hit.getLocation());
 					}
 
 					@Override
 					public void expire(SpellProjectile missile) {
-						land(missile.position());
+						land(missile, missile.position());
 					}
-				}).hitSize(6).data(stateId)));
+				}).hitSize(6).data(stateId)
+				// A mountain torn up out of the land (SpellConstruct FALLING_PEAK) falls as it, upright, drawn 1.4 times its model's size (by its own, it read small).
+				.uprightBody(SpellConstruct.create(level, SpellConstruct.Kind.FALLING_PEAK, from, p.getYRot(), 0, 60, p).size(1.4f).spawn())));
 	}
 
 	/** A great weight of earth lands at {@code at}: all not spared within {@code radius} struck and thrown, a shockwave, a roar. */
@@ -686,9 +808,11 @@ public final class EarthSpells {
 	}
 
 	/**
-	 * Mountain Seal: a mountain of stone erupts over the point looked at ({@link #TOMB_RADIUS} round, {@link #TOMB_HEIGHT} tall):
-	 * everything not spared inside is entombed for {@link #TOMB_TICKS}, held, crushed ({@link #TOMB_DAMAGE} of earth a second). The
-	 * mountain is the spell's (it gives nothing back when dug) and crumbles after {@link #TOMB_LASTS}.
+	 * Mountain Seal: a mountain of stone erupts over the point looked at ({@link #TOMB_RADIUS} round, {@link #TOMB_HEIGHT} tall at its
+	 * shoulders, a summit and four lesser peaks standing over them): everything not spared inside is entombed for {@link #TOMB_TICKS}, held,
+	 * crushed ({@link #TOMB_DAMAGE} of earth a second). The mountain is the spell's (it gives nothing back when dug) and crumbles after
+	 * {@link #TOMB_LASTS}. A talisman of yellow jade (SpellConstruct MOUNTAIN_TALISMAN) comes down over it as it rises, and seals it: its chains
+	 * stake the mountain to the land round its foot until it crumbles.
 	 */
 	public static final class Tomb extends HeavenSpells.Timed {
 		private final Spell spell;
@@ -696,6 +820,7 @@ public final class EarthSpells {
 		private final List<LivingEntity> entombed = new ArrayList<>();
 		private final List<BlockPos> blocks = new ArrayList<>();
 		private final SpellField field;
+		private final SpellConstruct talisman;
 		private final BlockState stone;
 		private boolean risen;
 
@@ -709,13 +834,31 @@ public final class EarthSpells {
 			BlockState under = level.getBlockState(BlockPos.containing(at).below());
 			this.stone = under.is(net.minecraft.tags.BlockTags.BASE_STONE_OVERWORLD) || under.is(net.minecraft.tags.BlockTags.BASE_STONE_NETHER) ? under : Blocks.STONE.defaultBlockState();
 			this.field = SpellField.create(level, SpellField.Kind.MOUNTAIN_SEAL, at, TOMB_RADIUS, TOMB_HEIGHT, 14, caster).data(Block.getId(stone)).spawn();
+			// Unturned: its chains run down between the lesser peaks (height), at the corners.
+			this.talisman = SpellConstruct.create(level, SpellConstruct.Kind.MOUNTAIN_TALISMAN, at, 0, 0, TOMB_LASTS + 12, caster).sizedFor(spell).spawn();
 			HeavenSpells.sound(level, at, SoundEvents.WARDEN_EMERGE, 3.0f, 0.3f);
 			HeavenSpells.sound(level, at, SoundEvents.ROOTED_DIRT_BREAK, 3.0f, 0.3f);
+		}
+
+		/**
+		 * How many blocks tall the mountain stands {@code dx}, {@code dz} from its middle (none past its foot): its shoulders, a summit over them,
+		 * four lesser peaks round it (along the axes: the talisman's chains run down between them), crags.
+		 */
+		private int height(int dx, int dz) {
+			double r = Math.sqrt(dx * dx + dz * dz) / TOMB_RADIUS;
+			if (r > 1) return 0;
+			double h = TOMB_HEIGHT * 0.82 * (1 - r * r) + 3 * Math.exp(-(dx * dx + dz * dz) / 4.5);
+			for (int k = 0; k < 4; k++) {
+				double px = (k == 0 ? 1 : k == 2 ? -1 : 0) * TOMB_RADIUS * 0.55, pz = (k == 1 ? 1 : k == 3 ? -1 : 0) * TOMB_RADIUS * 0.55;
+				h += 4 * Math.exp(-((dx - px) * (dx - px) + (dz - pz) * (dz - pz)) / 2.4) * (1 - r * r * 0.5);
+			}
+			return (int) Math.round(h + level.random.nextDouble() * 1.2);
 		}
 
 		@Override
 		protected boolean run(long age, long now) {
 			if (age == 12 && !risen) rise();
+			if (age == TOMB_LASTS - 14) talisman.act("break");
 			if (risen && age < 12 + TOMB_TICKS) {
 				for (LivingEntity e : entombed) {
 					if (!HeavenSpells.present(e, level)) continue;
@@ -737,9 +880,7 @@ public final class EarthSpells {
 			}
 			for (int dx = -TOMB_RADIUS; dx <= TOMB_RADIUS; dx++) {
 				for (int dz = -TOMB_RADIUS; dz <= TOMB_RADIUS; dz++) {
-					double r = Math.sqrt(dx * dx + dz * dz) / TOMB_RADIUS;
-					if (r > 1) continue;
-					int top = (int) Math.round(TOMB_HEIGHT * (1 - r * r) + level.random.nextDouble() * 1.2);
+					int top = height(dx, dz);
 					for (int dy = 0; dy < top; dy++) {
 						BlockPos pos = centre.offset(dx, dy, dz);
 						if (HeavenSpells.placeTemporary(level, pos, stone, TOMB_LASTS + 40)) blocks.add(pos);
@@ -757,6 +898,7 @@ public final class EarthSpells {
 		@Override
 		public void end() {
 			field.discard();
+			talisman.dissolve();
 			for (BlockPos pos : blocks) {
 				if (!HeavenSpells.isTemporary(level, pos)) continue;
 				HeavenSpells.removeTemporary(level, pos);
@@ -822,7 +964,7 @@ public final class EarthSpells {
 				if (Math.hypot(e.getX() - where.x, e.getZ() - where.z) > reach || e.getY() > where.y + 12 || e.getY() < where.y - 4) continue;
 				trampled.add(e);
 				HeavenSpells.strike(caster, e, QILIN_DAMAGE, spell);
-				if (!HeavenSpells.greatBeast(e)) {
+				if (!HeavenSpells.greatBeast(caster, e)) {
 					HeavenSpells.move(e, new Vec3(way.x * 0.8, 1.7, way.z * 0.8));
 					HeavenSpells.safeFall(e, 80);
 				}
@@ -924,7 +1066,7 @@ public final class EarthSpells {
 					}
 					// A great beast it only slows (HeavenSpells#greatBeast); the rest it pins.
 					e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 10, 6, false, false));
-					if (!HeavenSpells.greatBeast(e)) HeavenSpells.move(e, new Vec3(0, Math.min(e.getDeltaMovement().y, -0.5), 0));
+					if (!HeavenSpells.greatBeast(caster, e)) HeavenSpells.move(e, new Vec3(0, Math.min(e.getDeltaMovement().y, -0.5), 0));
 				}
 				if (age == MOUNTAINS_FALL + MOUNTAINS_HOLD) for (LivingEntity e : pressed) HeavenSpells.safeFall(e, 20);
 			}
@@ -1000,7 +1142,7 @@ public final class EarthSpells {
 						continue;
 					}
 					e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 10, 6, false, false));
-					if (!HeavenSpells.greatBeast(e)) HeavenSpells.move(e, new Vec3(0, Math.min(e.getDeltaMovement().y, -0.5), 0));
+					if (!HeavenSpells.greatBeast(caster, e)) HeavenSpells.move(e, new Vec3(0, Math.min(e.getDeltaMovement().y, -0.5), 0));
 				}
 				if (age == landsAt + BUZHOU_HOLD) for (LivingEntity e : pinned) HeavenSpells.safeFall(e, 20);
 			}
@@ -1109,7 +1251,557 @@ public final class EarthSpells {
 		return false;
 	}
 
-	static void tick(MinecraftServer server) {}
+	// --- Sacred Vessel ---
+
+	/**
+	 * Xirang, the Self-Growing Soil: a clod of the soil that grows of itself, that Gun stole from heaven to dam the flood (SpellConstruct XIRANG,
+	 * its own GeckoLib model: dark living earth, gold root-veins, shoots), flies from its caster's hands to where they look
+	 * ({@link #XIRANG_FLIES}) and swells ({@link #XIRANG_SWELLS}): the land there heaves up into a mound {@link #XIRANG_RADIUS} round and
+	 * {@link #XIRANG_HEIGHT} high (Devastation#raise: stone at its heart, earth and grass over it; nothing laid round its caster), burying
+	 * whatever stands there. Every foe within it is held fast, buried, for {@link #XIRANG_HOLDS} and crushed for {@link #XIRANG_DAMAGE} a second;
+	 * then the mound settles on them, {@link #XIRANG_SETTLE} more. The mound stays.
+	 */
+	public static final class Xirang extends HeavenSpells.Timed {
+		private final Spell spell;
+		private final Vec3 from, ground;
+		private final SpellConstruct clod;
+		private final java.util.Set<LivingEntity> buried = new java.util.HashSet<>();
+
+		Xirang(LivingEntity caster, Spell spell, Vec3 point) {
+			super(caster, XIRANG_FLIES + XIRANG_SWELLS + XIRANG_HOLDS + 12);
+			this.spell = spell;
+			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
+			this.ground = below != null ? below : point;
+			this.from = HeavenSpells.fromHands(caster);
+			this.clod = SpellConstruct.create(level, SpellConstruct.Kind.XIRANG, from, caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
+			HeavenSpells.sound(level, from, SoundEvents.ROOTED_DIRT_PLACE, 2.0f, 0.5f);
+			HeavenSpells.sound(level, from, SoundEvents.SNIFFER_EGG_CRACK, 2.0f, 0.5f);
+		}
+
+		@Override
+		protected boolean run(long age, long now) {
+			if (age <= XIRANG_FLIES) {
+				// An arc to it, high over the land between.
+				double f = age / (double) XIRANG_FLIES;
+				Vec3 at = from.lerp(ground, f).add(0, Math.sin(Math.PI * f) * Math.min(24, from.distanceTo(ground) * 0.25), 0);
+				clod.place(at, clod.getYRot(), 0);
+				if (age == XIRANG_FLIES) swell();
+				return true;
+			}
+			long holding = age - XIRANG_FLIES;
+			// Whoever stands within it as it swells, or comes in, is buried in it.
+			if (holding < XIRANG_SWELLS + XIRANG_HOLDS) {
+				for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, XIRANG_RADIUS + XIRANG_HEIGHT, e -> !buried.contains(e) && !HeavenSpells.spared(caster, e))) {
+					if (Math.hypot(e.getX() - ground.x, e.getZ() - ground.z) > XIRANG_RADIUS || e.getY() > ground.y + XIRANG_HEIGHT + 4 || e.getY() < ground.y - 8) continue;
+					buried.add(e);
+					WoodSpells.bind(caster, e, (int) (XIRANG_SWELLS + XIRANG_HOLDS - holding));
+					SpellFx.send(level, SpellFx.Kind.EARTH_BURST, HeavenSpells.middle(e), Vec3.ZERO, 1.5f, Block.getId(Blocks.DIRT.defaultBlockState()));
+				}
+				if (holding % 20 == 10) {
+					for (LivingEntity e : buried) if (HeavenSpells.present(e, level)) HeavenSpells.strikeAgain(caster, e, XIRANG_DAMAGE, spell);
+					HeavenSpells.sound(level, ground, SoundEvents.ROOTED_DIRT_BREAK, 3.0f, 0.5f);
+				}
+			}
+			if (holding == XIRANG_SWELLS + XIRANG_HOLDS) {
+				clod.act("settle");
+				for (LivingEntity e : buried) {
+					if (!HeavenSpells.present(e, level)) continue;
+					e.invulnerableTime = 0;
+					HeavenSpells.strike(caster, e, XIRANG_SETTLE, spell);
+				}
+				SpellFx.send(level, SpellFx.Kind.DUST, ground.add(0, XIRANG_HEIGHT * 0.6, 0), Vec3.ZERO, (float) XIRANG_RADIUS, 0, 192);
+				HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 3.0f, 0.4f);
+			}
+			return true;
+		}
+
+		/** It lands and swells: the mound heaves up round it, its clod rising on its crown. */
+		private void swell() {
+			clod.act("swell");
+			clod.place(ground.add(0, XIRANG_HEIGHT * 0.5, 0), clod.getYRot(), 0);
+			Devastation.raise(caster, level, ground, XIRANG_RADIUS, XIRANG_HEIGHT, 3);
+			SpellFx.send(level, SpellFx.Kind.EARTH_BURST, ground, Vec3.ZERO, (float) XIRANG_RADIUS, Block.getId(Blocks.DIRT.defaultBlockState()), 192);
+			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) XIRANG_RADIUS * 1.5f, 0, 192);
+			HeavenSpells.sound(level, ground, SoundEvents.WARDEN_EMERGE, 3.0f, 0.7f);
+			HeavenSpells.sound(level, ground, SoundEvents.ROOTED_DIRT_PLACE, 4.0f, 0.4f);
+		}
+
+		@Override
+		public void end() {
+			clod.dissolve();
+		}
+	}
+
+	/**
+	 * Nine Cauldrons Suppress the Land: the nine bronze cauldrons Yu the Great cast for the nine provinces (SpellConstruct NINE_CAULDRON, its own
+	 * GeckoLib model) fall one after another out of the sky, {@link #CAULDRON_EVERY} ticks apart: the first on where its caster looks, the rest
+	 * in a ring {@link #CAULDRONS_RING} round it. Each strikes everything within {@link #CAULDRON_STRIKE} of where it lands for
+	 * {@link #CAULDRON_DAMAGE}, smashing a crater. Once all nine stand, for {@link #CAULDRONS_TICKS} they suppress the land within the ring: every
+	 * foe inside is pressed down (it can't fly or leap, slowed to a crawl, weakened) and takes {@link #CAULDRONS_PRESS} a second, and the land
+	 * within sinks {@link #CAULDRONS_SINK}. Then they rise away.
+	 */
+	public static final class Cauldrons extends HeavenSpells.Timed {
+		private final Spell spell;
+		private final Vec3 ground;
+		private final Vec3[] spots = new Vec3[9];
+		private final SpellConstruct[] cauldrons = new SpellConstruct[9];
+		private final float yaw;
+		private final int landed;
+
+		Cauldrons(LivingEntity caster, Spell spell, Vec3 point) {
+			super(caster, 8 * CAULDRON_EVERY + CAULDRON_FALL + CAULDRONS_TICKS + CAULDRONS_RISE + 8);
+			this.spell = spell;
+			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
+			this.ground = below != null ? below : point;
+			this.yaw = caster.getYRot();
+			this.landed = 8 * CAULDRON_EVERY + CAULDRON_FALL;
+			spots[0] = ground;
+			for (int k = 1; k < 9; k++) {
+				Vec3 out = Vec3.directionFromRotation(0, yaw + 45 * (k - 1)).scale(CAULDRONS_RING);
+				Vec3 at = ground.add(out);
+				Vec3 land = HeavenSpells.groundBelow(level, at.add(0, 16, 0), 0, 48);
+				spots[k] = land != null ? land : at;
+			}
+			HeavenSpells.sound(level, ground.add(0, CAULDRONS_HIGH, 0), SoundEvents.BELL_RESONATE, 4.0f, 0.4f);
+		}
+
+		@Override
+		protected boolean run(long age, long now) {
+			for (int k = 0; k < 9; k++) {
+				long falling = age - k * CAULDRON_EVERY;
+				if (falling < 0 || falling > CAULDRON_FALL) continue;
+				Vec3 sky = spots[k].add(0, CAULDRONS_HIGH, 0);
+				// The first tick it is due (not its tick 0 alone: a cast after this tick's spells have run is first seen a tick in).
+				if (cauldrons[k] == null) {
+					// Each faces out from the heart (the heart's, the way its caster looks), its province's glyph outward.
+					float facing = k == 0 ? yaw + 180 : yaw + 45 * (k - 1);
+					cauldrons[k] = SpellConstruct.create(level, SpellConstruct.Kind.NINE_CAULDRON, sky, facing, 0, (int) (end - start - k * CAULDRON_EVERY), caster).sizedFor(spell).spawn();
+					HeavenSpells.sound(level, sky, SoundEvents.ANVIL_PLACE, 3.0f, 0.5f);
+				}
+				double f = falling / (double) CAULDRON_FALL;
+				cauldrons[k].place(sky.lerp(spots[k], f * f), cauldrons[k].getYRot(), 0);
+				if (falling == CAULDRON_FALL) land(k);
+			}
+			long pressing = age - landed;
+			if (pressing >= 0 && pressing < CAULDRONS_TICKS) press(pressing);
+			if (pressing == CAULDRONS_TICKS) {
+				for (SpellConstruct cauldron : cauldrons) if (cauldron != null) cauldron.act("rise");
+				HeavenSpells.sound(level, ground, SoundEvents.BELL_RESONATE, 4.0f, 0.6f);
+			}
+			if (pressing > CAULDRONS_TICKS) {
+				double f = (pressing - CAULDRONS_TICKS) / (double) CAULDRONS_RISE;
+				for (int k = 0; k < 9; k++) if (cauldrons[k] != null) cauldrons[k].place(spots[k].add(0, CAULDRONS_HIGH * 0.4 * f * f, 0), cauldrons[k].getYRot(), 0);
+			}
+			return true;
+		}
+
+		/** Cauldron {@code k} lands: everything near it struck and thrown down, a crater; the last one down, the land within the ring sinks. */
+		private void land(int k) {
+			cauldrons[k].act("land");
+			Vec3 at = spots[k];
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, at, CAULDRON_STRIKE + 8, e -> !HeavenSpells.spared(caster, e))) {
+				if (Math.hypot(e.getX() - at.x, e.getZ() - at.z) > CAULDRON_STRIKE || e.getY() > at.y + 16 || e.getY() < at.y - 8) continue;
+				e.invulnerableTime = 0;
+				HeavenSpells.strike(caster, e, CAULDRON_DAMAGE, spell);
+				HeavenSpells.push(at, e, 1.4);
+			}
+			Devastation.crater(caster, level, at, k == 0 ? CAULDRON_HEART_CRATER : CAULDRON_CRATER, CAULDRON_CRATER_DEPTH, Devastation.Floor.RUBBLE);
+			SpellFx.send(level, SpellFx.Kind.EARTH_BURST, at, Vec3.ZERO, (float) CAULDRON_STRIKE, Block.getId(groundBelowState(level, at)), 192);
+			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, at, Vec3.ZERO, (float) CAULDRON_STRIKE * 1.6f, 0, 192);
+			HeavenSpells.sound(level, at, SoundEvents.ANVIL_LAND, 4.0f, 0.4f);
+			HeavenSpells.sound(level, at, SoundEvents.BELL_BLOCK, 4.0f, 0.5f);
+			if (k == 8) {
+				Devastation.subside(caster, level, ground, CAULDRONS_RING, CAULDRONS_SINK, 0);
+				SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) CAULDRONS_RING * 1.4f, 0, 192);
+			}
+		}
+
+		/** A tick of their suppression: every foe within the ring pressed down; every second, crushed. */
+		private void press(long pressing) {
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, CAULDRONS_RING + 16, e -> !HeavenSpells.spared(caster, e))) {
+				if (Math.hypot(e.getX() - ground.x, e.getZ() - ground.z) > CAULDRONS_RING || e.getY() > ground.y + 40 || e.getY() < ground.y - 16) continue;
+				if (e instanceof net.minecraft.server.level.ServerPlayer player) QiFlight.weighDown(player, 10);
+				Vec3 v = e.getDeltaMovement();
+				if (v.y > -0.6) HeavenSpells.move(e, new Vec3(v.x * 0.5, Math.min(v.y, 0) - 0.25, v.z * 0.5));
+				HeavenSpells.safeFall(e, 40);
+				if (pressing % 20 == 0) {
+					HeavenSpells.strikeAgain(caster, e, CAULDRONS_PRESS, spell);
+					e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 30, 4));
+					e.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 30, 1));
+				}
+			}
+			if (pressing % 40 == 0) {
+				SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) CAULDRONS_RING, 0, 192);
+				HeavenSpells.sound(level, ground, SoundEvents.BELL_RESONATE, 3.0f, 0.4f);
+			}
+		}
+
+		@Override
+		public void end() {
+			for (SpellConstruct cauldron : cauldrons) if (cauldron != null) cauldron.dissolve();
+		}
+	}
+
+	// --- Entering Nirvana ---
+
+	/**
+	 * Gravestone Falls: a colossal stele written with the names of the dead, borne on a stone tortoise (SpellConstruct GRAVESTONE, its own GeckoLib
+	 * model), falls out of the sky onto where its caster looks ({@link #GRAVE_FALL}): {@link #GRAVE_DAMAGE} to everything within
+	 * {@link #GRAVE_RADIUS}, pinned for {@link #GRAVE_PINS}, the land smashed into a crater and cracked out to {@link #GRAVE_CRACKS}. It stands a
+	 * while ({@link #GRAVE_STANDS}); then it sinks into the land ({@link #GRAVE_SINKS}), dragging every foe within {@link #GRAVE_PULL} to it and
+	 * down after it, and buries whatever is within {@link #GRAVE_BURY} as it goes under: {@link #GRAVE_BURIES} more, and a pit where it went.
+	 */
+	public static final class Gravestone extends HeavenSpells.Timed {
+		private final Spell spell;
+		private final Vec3 ground, sky;
+		private final SpellConstruct stone;
+
+		Gravestone(LivingEntity caster, Spell spell, Vec3 point) {
+			super(caster, GRAVE_FALL + GRAVE_STANDS + GRAVE_SINKS + GRAVE_AFTER);
+			this.spell = spell;
+			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
+			this.ground = below != null ? below : point;
+			this.sky = ground.add(0, GRAVE_HIGH, 0);
+			this.stone = SpellConstruct.create(level, SpellConstruct.Kind.GRAVESTONE, sky, caster.getYRot() + 180, 0, (int) (end - start), caster).sizedFor(spell).spawn();
+			HeavenSpells.sound(level, sky, SoundEvents.BELL_RESONATE, 4.0f, 0.3f);
+		}
+
+		@Override
+		protected boolean run(long age, long now) {
+			if (age <= GRAVE_FALL) {
+				double f = age / (double) GRAVE_FALL;
+				stone.place(sky.lerp(ground, f * f), stone.getYRot(), 0);
+				if (age == GRAVE_FALL) land();
+				return true;
+			}
+			long since = age - GRAVE_FALL;
+			if (since == GRAVE_STANDS) {
+				stone.act("sink");
+				HeavenSpells.sound(level, ground, SoundEvents.GRAVEL_BREAK, 4.0f, 0.4f);
+			}
+			if (since > GRAVE_STANDS && since < GRAVE_STANDS + GRAVE_SINKS) drag();
+			if (since == GRAVE_STANDS + GRAVE_SINKS) bury();
+			return true;
+		}
+
+		/** It lands: everything under it struck and pinned, the land smashed and cracked. */
+		private void land() {
+			stone.act("land");
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, GRAVE_RADIUS + 8, e -> !HeavenSpells.spared(caster, e))) {
+				if (Math.hypot(e.getX() - ground.x, e.getZ() - ground.z) > GRAVE_RADIUS || e.getY() > ground.y + 24 || e.getY() < ground.y - 8) continue;
+				e.invulnerableTime = 0;
+				HeavenSpells.strike(caster, e, GRAVE_DAMAGE, spell);
+				WoodSpells.bind(caster, e, GRAVE_PINS);
+			}
+			Devastation.crater(caster, level, ground, GRAVE_CRATER, GRAVE_CRATER_DEPTH, Devastation.Floor.RUBBLE);
+			Devastation.fissures(caster, level, ground, GRAVE_CRACKS, 8, 4, GRAVE_CRATER * 0.8);
+			SpellFx.send(level, SpellFx.Kind.EARTH_BURST, ground, Vec3.ZERO, (float) GRAVE_RADIUS * 1.5f, Block.getId(groundBelowState(level, ground)), 192);
+			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) GRAVE_CRACKS, 0, 192);
+			HeavenSpells.sound(level, ground, SoundEvents.ANVIL_LAND, 5.0f, 0.3f);
+			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 5.0f, 0.5f);
+		}
+
+		/** A tick of its sinking: every foe near dragged to it and down after it. */
+		private void drag() {
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, GRAVE_PULL + 8, e -> !HeavenSpells.spared(caster, e))) {
+				Vec3 to = ground.subtract(e.position()).multiply(1, 0, 1);
+				double d = to.length();
+				if (d > GRAVE_PULL || e.getY() > ground.y + 16 || e.getY() < ground.y - 16) continue;
+				double pull = HeavenSpells.greatBeast(caster, e) ? 0.12 : 0.45;
+				HeavenSpells.move(e, (d > 1 ? to.normalize().scale(pull) : Vec3.ZERO).add(0, -0.35, 0));
+				HeavenSpells.safeFall(e, 60);
+			}
+			if (level.getGameTime() % 4 == 0) SpellFx.send(level, SpellFx.Kind.DUST, ground, Vec3.ZERO, (float) GRAVE_PULL * 0.6f, 0, 160);
+		}
+
+		/** It goes under: whatever is near buried with it, a pit where it went. */
+		private void bury() {
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, GRAVE_BURY + 8, e -> !HeavenSpells.spared(caster, e))) {
+				if (Math.hypot(e.getX() - ground.x, e.getZ() - ground.z) > GRAVE_BURY || e.getY() > ground.y + 16 || e.getY() < ground.y - 20) continue;
+				e.invulnerableTime = 0;
+				HeavenSpells.strike(caster, e, GRAVE_BURIES, spell);
+			}
+			Devastation.crater(caster, level, ground, GRAVE_PIT, GRAVE_PIT_DEPTH, Devastation.Floor.RUBBLE);
+			SpellFx.send(level, SpellFx.Kind.DUST, ground, Vec3.ZERO, (float) GRAVE_BURY, 0, 192);
+			HeavenSpells.sound(level, ground, SoundEvents.GRAVEL_BREAK, 5.0f, 0.3f);
+			HeavenSpells.sound(level, ground, SoundEvents.WARDEN_DIG, 4.0f, 0.6f);
+		}
+
+		@Override
+		public void end() {
+			stone.dissolve();
+		}
+	}
+
+	/**
+	 * Buried World: a ring of {@link #BURIED_STONES} standing stones, carved with spirals and runes of the old world (SpellConstruct
+	 * STANDING_STONE, its own GeckoLib model), heaves up out of the land {@link #BURIED_RADIUS} round where its caster looks ({@link #BURIED_RISES});
+	 * for {@link #BURIED_TICKS} the land within sinks, {@link #BURIED_SINK} deeper every second, every foe within dragged down with it and crushed
+	 * for {@link #BURIED_CRUSH} a second. Then the stones topple in on it ({@link #BURIED_FALLS}): {@link #BURIED_TOPPLE} to every foe within, and
+	 * the land left a vast pit.
+	 */
+	public static final class Buried extends HeavenSpells.Timed {
+		private final Spell spell;
+		private final Vec3 ground;
+		private final SpellConstruct[] stones = new SpellConstruct[BURIED_STONES];
+		private final Vec3[] spots = new Vec3[BURIED_STONES];
+
+		Buried(LivingEntity caster, Spell spell, Vec3 point) {
+			super(caster, BURIED_RISES + BURIED_TICKS + BURIED_FALLS + BURIED_AFTER);
+			this.spell = spell;
+			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
+			this.ground = below != null ? below : point;
+			for (int k = 0; k < BURIED_STONES; k++) {
+				Vec3 out = Vec3.directionFromRotation(0, caster.getYRot() + 360f * k / BURIED_STONES).scale(BURIED_RADIUS);
+				Vec3 land = HeavenSpells.groundBelow(level, ground.add(out).add(0, 16, 0), 0, 48);
+				spots[k] = land != null ? land : ground.add(out);
+				// Its carved face toward the heart (its model's -z: the way its yaw looks), so it topples in.
+				float[] face = HeavenSpells.facing(ground.subtract(spots[k]).multiply(1, 0, 1));
+				stones[k] = SpellConstruct.create(level, SpellConstruct.Kind.STANDING_STONE, spots[k], face[0], 0, (int) (end - start), caster).sizedFor(spell).spawn();
+			}
+			HeavenSpells.sound(level, ground, SoundEvents.WARDEN_EMERGE, 4.0f, 0.5f);
+			HeavenSpells.sound(level, ground, SoundEvents.ANCIENT_DEBRIS_BREAK, 4.0f, 0.4f);
+		}
+
+		private boolean within(LivingEntity e) {
+			return Math.hypot(e.getX() - ground.x, e.getZ() - ground.z) <= BURIED_RADIUS && e.getY() < ground.y + 20 && e.getY() > ground.y - 40;
+		}
+
+		@Override
+		protected boolean run(long age, long now) {
+			if (age < BURIED_RISES) return true;
+			long sinking = age - BURIED_RISES;
+			if (sinking < BURIED_TICKS) {
+				if (sinking % 20 == 0) {
+					Devastation.subside(caster, level, ground, BURIED_RADIUS * 0.92, BURIED_SINK, 0);
+					SpellFx.send(level, SpellFx.Kind.DUST, ground, Vec3.ZERO, (float) BURIED_RADIUS, 0, 192);
+					HeavenSpells.sound(level, ground, SoundEvents.GRAVEL_BREAK, 4.0f, 0.4f);
+				}
+				for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, BURIED_RADIUS + 20, e -> !HeavenSpells.spared(caster, e))) {
+					if (!within(e)) continue;
+					Vec3 v = e.getDeltaMovement();
+					if (!HeavenSpells.greatBeast(caster, e) && v.y > -0.6) HeavenSpells.move(e, new Vec3(v.x * 0.6, Math.min(v.y, 0) - 0.3, v.z * 0.6));
+					HeavenSpells.safeFall(e, 60);
+					if (sinking % 20 == 10) {
+						HeavenSpells.strikeAgain(caster, e, BURIED_CRUSH, spell);
+						e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 30, 3));
+					}
+				}
+				return true;
+			}
+			if (sinking == BURIED_TICKS) {
+				for (SpellConstruct stone : stones) stone.act("topple");
+				HeavenSpells.sound(level, ground, SoundEvents.ANVIL_LAND, 4.0f, 0.3f);
+			}
+			if (sinking == BURIED_TICKS + BURIED_FALLS) topple();
+			return true;
+		}
+
+		/** The stones fall in on it: every foe within struck. */
+		private void topple() {
+			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, BURIED_RADIUS + 20, e -> !HeavenSpells.spared(caster, e))) {
+				if (!within(e)) continue;
+				e.invulnerableTime = 0;
+				HeavenSpells.strike(caster, e, BURIED_TOPPLE, spell);
+			}
+			for (Vec3 spot : spots) {
+				SpellFx.send(level, SpellFx.Kind.EARTH_BURST, spot.add(ground.subtract(spot).scale(0.25)), Vec3.ZERO, 6, Block.getId(Blocks.STONE.defaultBlockState()), 192);
+			}
+			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) BURIED_RADIUS * 1.3f, 0, 192);
+			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 5.0f, 0.4f);
+		}
+
+		@Override
+		public void end() {
+			for (SpellConstruct stone : stones) if (stone != null) stone.dissolve();
+		}
+	}
+
+	// --- True Immortal ---
+
+	/**
+	 * Hand of Houtu: the hand of the mother of the earth, of the land's yellow jade veined with gold (SpellConstruct HOUTU_HAND, its own GeckoLib
+	 * model), rises open out of the land where its caster looks ({@link #HOUTU_RISES}) and closes ({@link #HOUTU_GRASPS}): every foe within
+	 * {@link #HOUTU_GRASP} takes {@link #HOUTU_CRUSH} and is caught up in its fist (a great beast only crushed, and held slowed where it stands).
+	 * It holds them {@link #HOUTU_HOLDS}, then brings its fist down forward onto the land, carrying them with it ({@link #HOUTU_SLAMS}): everything
+	 * within {@link #HOUTU_SLAM_RADIUS} of where it lands, and all it holds, take {@link #HOUTU_SLAM}, the land smashed into a crater, cracks
+	 * running out of it.
+	 */
+	public static final class Houtu extends HeavenSpells.Timed {
+		private final Spell spell;
+		private final Vec3 ground, forward;
+		private final float yaw;
+		private final SpellConstruct hand;
+		private final List<LivingEntity> held = new ArrayList<>();
+		private boolean grasped;
+
+		Houtu(LivingEntity caster, Spell spell, Vec3 point) {
+			super(caster, HOUTU_RISES + HOUTU_GRASPS + HOUTU_HOLDS + HOUTU_SLAMS + HOUTU_AFTER);
+			this.spell = spell;
+			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
+			this.ground = below != null ? below : point;
+			this.yaw = caster.getYRot();
+			this.forward = Vec3.directionFromRotation(0, yaw);
+			this.hand = SpellConstruct.create(level, SpellConstruct.Kind.HOUTU_HAND, ground, yaw, 0, (int) (end - start), caster).sizedFor(spell).spawn();
+			HeavenSpells.sound(level, ground, SoundEvents.WARDEN_EMERGE, 5.0f, 0.4f);
+			HeavenSpells.sound(level, ground, SoundEvents.ROOTED_DIRT_BREAK, 5.0f, 0.3f);
+			SpellFx.send(level, SpellFx.Kind.EARTH_BURST, ground, Vec3.ZERO, 8, Block.getId(Blocks.DIRT.defaultBlockState()), 192);
+		}
+
+		/** Where its fist is, turned {@code degrees} forward from upright about its wrist's foot. */
+		private Vec3 fist(double degrees) {
+			double a = Math.toRadians(degrees);
+			return ground.add(forward.scale(Math.sin(a) * HOUTU_FIST)).add(0, Math.cos(a) * HOUTU_FIST, 0);
+		}
+
+		@Override
+		protected boolean run(long age, long now) {
+			if (age < HOUTU_RISES) return true;
+			if (!grasped) {
+				grasped = true;
+				grasp();
+			}
+			long slamming = age - HOUTU_RISES - HOUTU_GRASPS - HOUTU_HOLDS;
+			if (slamming == 0) {
+				hand.act("slam");
+				HeavenSpells.sound(level, ground, SoundEvents.WARDEN_ATTACK_IMPACT, 5.0f, 0.4f);
+			}
+			if (slamming <= HOUTU_SLAMS) {
+				// What it holds, in its fist: still as it waits, swept along with it as it comes down.
+				Vec3 at = fist(slamming < 0 ? 0 : 95.0 * slamming / HOUTU_SLAMS);
+				held.removeIf(e -> !HeavenSpells.present(e, level));
+				for (LivingEntity e : held) {
+					// Never into the land: its fist comes down onto it, a little past upright, and what it holds lies on it.
+					HeavenSpells.teleport(e, new Vec3(at.x, Math.max(at.y - e.getBbHeight() / 2, ground.y + 0.2), at.z));
+					HeavenSpells.safeFall(e, 60);
+				}
+			}
+			if (slamming == HOUTU_SLAMS) slam();
+			return true;
+		}
+
+		/** It closes: every foe within crushed, all but a great beast caught up in its fist. */
+		private void grasp() {
+			hand.act("grasp");
+			for (LivingEntity e : WoodSpells.foesWithin(caster, level, ground, HOUTU_GRASP, 8, 30)) {
+				e.invulnerableTime = 0;
+				HeavenSpells.strike(caster, e, HOUTU_CRUSH, spell);
+				if (HeavenSpells.greatBeast(caster, e)) e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, HOUTU_GRASPS + HOUTU_HOLDS + HOUTU_SLAMS, 4));
+				else held.add(e);
+			}
+			SpellFx.send(level, SpellFx.Kind.ROCK_CHIPS, fist(0), Vec3.ZERO, 6, 0, 192);
+			HeavenSpells.sound(level, ground, SoundEvents.STONE_BREAK, 5.0f, 0.3f);
+			HeavenSpells.sound(level, ground, SoundEvents.ANVIL_LAND, 4.0f, 0.3f);
+		}
+
+		/** Its fist comes down on the land: all within reach of it and all it holds struck, the land smashed into a crater, cracked round it. */
+		private void slam() {
+			Vec3 land = fist(90), below = HeavenSpells.groundBelow(level, land.add(0, 8, 0), 0, 24);
+			Vec3 at = below != null ? below : land;
+			java.util.Set<LivingEntity> struck = new java.util.HashSet<>(held);
+			struck.addAll(WoodSpells.foesWithin(caster, level, at, HOUTU_SLAM_RADIUS, 10, 24));
+			for (LivingEntity e : struck) {
+				e.invulnerableTime = 0;
+				HeavenSpells.strike(caster, e, HOUTU_SLAM, spell);
+				HeavenSpells.safeFall(e, 100);
+			}
+			held.clear();
+			Devastation.crater(caster, level, at, HOUTU_CRATER, HOUTU_CRATER_DEPTH, Devastation.Floor.RUBBLE);
+			Devastation.fissures(caster, level, at, HOUTU_CRACKS, 10, 5, HOUTU_CRATER * 0.8);
+			SpellFx.send(level, SpellFx.Kind.EARTH_BURST, at, Vec3.ZERO, 12, Block.getId(Blocks.STONE.defaultBlockState()), 256);
+			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, at, Vec3.ZERO, (float) HOUTU_SLAM_RADIUS * 1.8f, 0, 256);
+			SpellFx.send(level, SpellFx.Kind.DUST, at, Vec3.ZERO, (float) HOUTU_SLAM_RADIUS * 1.5f, 0, 256);
+			HeavenSpells.sound(level, at, SoundEvents.GENERIC_EXPLODE, 6.0f, 0.4f);
+			HeavenSpells.sound(level, at, SoundEvents.WARDEN_SONIC_BOOM, 4.0f, 0.4f);
+		}
+
+		@Override
+		public void end() {
+			hand.dissolve();
+		}
+	}
+
+	/**
+	 * Falling Continent: a land torn up whole, meadows, forests, snow-capped mountains and a lake on it, the bedrock it was torn from hanging
+	 * jagged under it (SpellConstruct FALLING_CONTINENT, its own GeckoLib model), falls out of the sky from {@link #CONTINENT_HIGH} onto where its
+	 * caster looks ({@link #CONTINENT_FALLS}), tumbling, its weight pressing down every foe under it, slowed. It strikes: {@link #CONTINENT_DAMAGE}
+	 * to everything within {@link #CONTINENT_RADIUS}, thrown out, the land smashed into a vast crater, cracks running out of it; it lies there
+	 * crushed into it {@link #CONTINENT_AFTER} and is gone.
+	 */
+	public static final class Continent extends HeavenSpells.Timed {
+		private final Spell spell;
+		private final Vec3 ground;
+		private final float yaw;
+		private final SpellConstruct land;
+		private boolean struck;
+
+		Continent(LivingEntity caster, Spell spell, Vec3 point) {
+			super(caster, CONTINENT_FALLS + CONTINENT_AFTER);
+			this.spell = spell;
+			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
+			this.ground = below != null ? below : point;
+			this.yaw = caster.getYRot();
+			this.land = SpellConstruct.create(level, SpellConstruct.Kind.FALLING_CONTINENT, ground.add(0, CONTINENT_HIGH, 0), yaw, 0, (int) (end - start), caster)
+					.sizedFor(spell).spawn();
+			HeavenSpells.sound(level, ground, SoundEvents.WARDEN_ROAR, 5.0f, 0.3f);
+			HeavenSpells.sound(level, ground.add(0, CONTINENT_HIGH * 0.5, 0), SoundEvents.ELYTRA_FLYING, 5.0f, 0.3f);
+		}
+
+		@Override
+		protected boolean run(long age, long now) {
+			if (age <= CONTINENT_FALLS) {
+				double f = Math.min(1, age / (double) CONTINENT_FALLS);
+				land.place(ground.add(0, CONTINENT_HIGH - (CONTINENT_HIGH - CONTINENT_LANDS) * f * f, 0), yaw + 30 * (float) f, 0);
+				// Its weight on everything under it.
+				for (LivingEntity e : WoodSpells.foesWithin(caster, level, ground, CONTINENT_RADIUS, 10, CONTINENT_HIGH)) {
+					e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 20, 3));
+					Vec3 v = e.getDeltaMovement();
+					if (!HeavenSpells.greatBeast(caster, e) && v.y > -0.4) HeavenSpells.move(e, new Vec3(v.x, Math.min(v.y, 0) - 0.2, v.z));
+				}
+				if (age % 10 == 0) SpellFx.send(level, SpellFx.Kind.DUST, ground, Vec3.ZERO, (float) CONTINENT_RADIUS * (float) f, 0, 192);
+			}
+			if (!struck && age >= CONTINENT_FALLS) {
+				struck = true;
+				strike();
+			}
+			return true;
+		}
+
+		/** It strikes the land: everything under it struck and thrown out, the land smashed into a vast crater, cracked round it. */
+		private void strike() {
+			land.act("impact");
+			for (LivingEntity e : WoodSpells.foesWithin(caster, level, ground, CONTINENT_RADIUS, 12, 40)) {
+				e.invulnerableTime = 0;
+				HeavenSpells.strike(caster, e, CONTINENT_DAMAGE, spell);
+				if (!HeavenSpells.greatBeast(caster, e)) HeavenSpells.push(ground, e, 3.0);
+				HeavenSpells.safeFall(e, 120);
+			}
+			Devastation.crater(caster, level, ground, CONTINENT_CRATER, CONTINENT_CRATER_DEPTH, Devastation.Floor.RUBBLE);
+			Devastation.fissures(caster, level, ground, CONTINENT_CRACKS, 14, 6, CONTINENT_CRATER * 0.85);
+			SpellFx.send(level, SpellFx.Kind.EARTH_BURST, ground, Vec3.ZERO, 16, Block.getId(Blocks.STONE.defaultBlockState()), 256);
+			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) CONTINENT_RADIUS * 2, 0, 256);
+			SpellFx.send(level, SpellFx.Kind.DUST, ground, Vec3.ZERO, (float) CONTINENT_RADIUS * 1.6f, 0, 256);
+			HeavenSpells.sound(level, ground, SoundEvents.GENERIC_EXPLODE, 8.0f, 0.3f);
+			HeavenSpells.sound(level, ground, SoundEvents.WARDEN_SONIC_BOOM, 6.0f, 0.3f);
+			HeavenSpells.sound(level, ground, SoundEvents.ANVIL_LAND, 6.0f, 0.3f);
+		}
+
+		@Override
+		public void end() {
+			land.dissolve();
+		}
+	}
+
+	/**
+	 * Every minute, the golems and titans gone forgotten: a cultivator's are never forget()ted (it dies, it doesn't leave), so before the
+	 * sweep of 2026-10-24 each that ever raised one was kept here, its crumbled golems with it, all the server's life.
+	 */
+	static void tick(MinecraftServer server) {
+		if (server.getTickCount() % 1200 != 0) return;
+		GOLEMS_OF.values().forEach(mine -> mine.removeIf(g -> !g.isAlive() || g.isRemoved()));
+		GOLEMS_OF.values().removeIf(List::isEmpty);
+		TITANS.values().removeIf(titan -> !titan.isAlive() || titan.isRemoved());
+	}
 
 	static void forget(UUID id) {
 		List<EarthGolem> mine = GOLEMS_OF.remove(id);

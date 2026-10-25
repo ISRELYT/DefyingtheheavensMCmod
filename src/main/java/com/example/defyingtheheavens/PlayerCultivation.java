@@ -966,7 +966,9 @@ public class PlayerCultivation {
 		// The pool the higher of the heaven path and the Demon Path gives (DemonPath#poolBase: its share the smaller); a mortal's none.
 		double base = Math.max(mortal ? 0 : CultivationStats.maxQi(getEffectiveRealm(), getEffectiveStage()), DemonPath.poolBase(this));
 		if (base <= 0) return 0;
-		return base * favourFactor() * (1 - pressurePenalty) * physiqueQiFactor()
+		// The paths' harmony fills it as it strengthens the body (TwoPaths#harmony; the user, 2026-10-24: walking all three paths to True
+		// Immortal Grand Perfection near doubled their health, and their qi not at all).
+		return base * favourFactor() * (1 + TwoPaths.harmony(this)) * (1 - pressurePenalty) * physiqueQiFactor()
 				* StatPoints.poolFactor(this) * Clones.strength(this); // a clone's pool half its maker's
 	}
 

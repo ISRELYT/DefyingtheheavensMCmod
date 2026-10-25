@@ -75,7 +75,8 @@ public class SpellProjectileRenderer extends EntityRenderer<SpellProjectile> {
 			case WOOD_STAKE -> stake(missile, pose, buffers, facing, cam, trail, age, formed, yaw, pitch, light);
 			case EARTH_PODAO -> podao(missile, pose, buffers, facing, cam, trail, age, formed, yaw, pitch, light);
 			case WATER_ARROW -> waterArrow(missile, pose, buffers, facing, cam, trail, age, formed, yaw, pitch);
-			case FLYING_SWORD, PLUNGING_SWORD -> sword(missile, pose, buffers, facing, cam, trail, age, formed, yaw, pitch, light, 1.3f);
+			case FLYING_SWORD -> sword(missile, pose, buffers, facing, cam, trail, age, formed, yaw, pitch, light, 1.3f);
+			case PLUNGING_SWORD -> plunging(pose, buffers, cam, trail);
 			case COLOSSAL_SWORD -> colossal(missile, pose, buffers, facing, cam, trail, age, light);
 			case FIRE_SERPENT -> serpent(missile, pose, buffers, facing, cam, trail, age, formed, yaw, pitch);
 			case BOULDER, MOUNTAIN -> boulder(missile, pose, buffers, facing, cam, trail, age, light);
@@ -331,22 +332,15 @@ public class SpellProjectileRenderer extends EntityRenderer<SpellProjectile> {
 				FIRE_MID, 0.9f, 0, fv[1], 1, fv[0], SpellRender.FULL_BRIGHT);
 	}
 
-	/** Blazing Meteor: a black-red rock wrapped in fire, a long tail of flame and smoke behind it. */
+	/**
+	 * Blazing Meteor: the burning rock itself is its body (SpellConstruct BLAZING_METEOR: SpellProjectile#body), so this is only the wake of fire
+	 * and smoke it leaves across the sky behind it.
+	 */
 	private void meteor(SpellProjectile missile, PoseStack pose, MultiBufferSource buffers, Quaternionf facing, Vec3 cam, List<Vec3> trail, float age, int light) {
 		float s = missile.scale();
-		SpellModels.boulder(pose, buffers, SpellRender.sprite(Blocks.MAGMA_BLOCK.defaultBlockState()), 1.2f * s, age * 0.12f, SpellRender.FULL_BRIGHT,
-				missile.data(), new float[]{1.0f, 0.75f, 0.6f});
-		glowBall(buffers, pose, facing, 0, 0, 0, 5.0f * s, FIRE_OUTER, 0.5f);
-		glowBall(buffers, pose, facing, 0, 0, 0, 3.2f * s, FIRE_MID, 0.6f);
-		VertexConsumer flames = buffers.getBuffer(SpellRender.glow(SpellRender.FLAME));
-		for (int i = 0; i < 10; i++) {
-			double a = i * Math.PI * 2 / 10 + age * 0.2;
-			SpellRender.flameTongue(flames, pose, cam, (float) Math.cos(a) * 1.0f * s, -0.4f * s, (float) Math.sin(a) * 1.0f * s, 1.0f * s, 2.0f * s, age + i * 5,
-					FIRE_MID, 0.9f, SpellRender.FLAME_FRAMES);
-		}
-		streak(buffers, pose, trail, cam, SpellRender.FLAME, FIRE_MID, 3.0f * s, 0.9f, 14, -age * 0.1f);
-		streak(buffers, pose, trail, cam, SpellRender.FLAME, FIRE_CORE, 1.4f * s, 0.8f, 8, -age * 0.15f);
-		smoke(buffers, pose, facing, trail, missile.getId(), age, 2.2f * s, 16, 0.55f);
+		streak(buffers, pose, trail, cam, SpellRender.FLAME, FIRE_MID, 4.0f * s, 0.75f, 24, -age * 0.1f);
+		streak(buffers, pose, trail, cam, SpellRender.FLAME, FIRE_CORE, 1.8f * s, 0.6f, 14, -age * 0.15f);
+		smoke(buffers, pose, facing, trail, missile.getId(), age, 3.0f * s, 28, 0.5f);
 	}
 
 	/** Smoke puffs hanging along the trail, growing and thinning as they fall behind. */
@@ -363,75 +357,26 @@ public class SpellProjectileRenderer extends EntityRenderer<SpellProjectile> {
 	}
 
 	/**
-	 * Phoenix Descent: a great bird of fire, wings of burning feathers beating as it flies, a long tail of streaming plumes, its head
-	 * crested with flame.
+	 * Phoenix Descent: the phoenix of fire itself is its body (SpellConstruct DESCENT_PHOENIX: SpellProjectile#body), so this is only the wake of
+	 * fire it leaves behind it as it stoops (none while it gathers beside its caster).
 	 */
 	private void phoenix(SpellProjectile missile, PoseStack pose, MultiBufferSource buffers, Quaternionf facing, Vec3 cam, List<Vec3> trail, float age,
 						 float formed, float yaw, float pitch) {
-		float s = missile.scale() * (0.3f + 0.7f * SpellRender.easeOut(formed));
-		streak(buffers, pose, trail, cam, SpellRender.FLAME, FIRE_MID, 2.6f * s, 0.8f, 10, -age * 0.12f);
-		pose.pushPose();
-		face(pose, yaw, pitch);
-		glowBall(buffers, pose, facing, 0, 0, 0, 5.0f * s, FIRE_OUTER, 0.45f);
-		glowBall(buffers, pose, facing, 0, 0, 0.3f * s, 2.2f * s, FIRE_MID, 0.8f);
-		glowBall(buffers, pose, facing, 0, 0.1f * s, 1.0f * s, 1.0f * s, FIRE_CORE, 0.95f);
-		VertexConsumer feathers = buffers.getBuffer(SpellRender.glow(SpellRender.FEATHER));
-		float beat = Mth.sin(age * 0.55f);
-		for (int side = -1; side <= 1; side += 2) {
-			// Each wing: a fan of feathers from the shoulder, raised and lowered as it beats.
-			for (int f = 0; f < 7; f++) {
-				pose.pushPose();
-				pose.translate(side * 0.3f * s, 0.1f * s, 0.2f * s);
-				pose.mulPose(Axis.ZP.rotationDegrees(side * (10 + beat * 35)));
-				pose.mulPose(Axis.YP.rotationDegrees(side * (90 - f * 12)));
-				pose.mulPose(Axis.XP.rotationDegrees(90));
-				float len = (1.6f + f * 0.25f - Math.abs(f - 3) * 0.1f) * s;
-				featherQuad(feathers, pose, 0.45f * s, len, 0.85f);
-				pose.popPose();
-			}
-		}
-		// Tail plumes streaming back.
-		for (int f = 0; f < 5; f++) {
-			pose.pushPose();
-			pose.translate(0, 0, -0.4f * s);
-			pose.mulPose(Axis.YP.rotationDegrees(180 + (f - 2) * 12 + Mth.sin(age * 0.3f + f) * 6));
-			pose.mulPose(Axis.XP.rotationDegrees(90 + Mth.sin(age * 0.25f + f) * 8));
-			featherQuad(feathers, pose, 0.35f * s, (2.8f + (f % 2) * 0.8f) * s, 0.8f);
-			pose.popPose();
-		}
-		// The crest: three tongues of flame over the head.
-		VertexConsumer flames = buffers.getBuffer(SpellRender.glow(SpellRender.FLAME));
-		float[] fv = SpellRender.frame(age, 0.5f, SpellRender.FLAME_FRAMES);
-		for (int c = -1; c <= 1; c++) {
-			pose.pushPose();
-			pose.translate(c * 0.12f * s, 0.25f * s, 1.0f * s);
-			pose.mulPose(Axis.XP.rotationDegrees(-40));
-			hornQuad(flames, pose, 0.3f * s, (0.7f - Math.abs(c) * 0.2f) * s, fv);
-			pose.popPose();
-		}
-		VertexConsumer spark = buffers.getBuffer(SpellRender.glow(SpellRender.SPARK));
-		SpellRender.billboard(spark, pose, facing, 0, 0.15f * s, 1.3f * s, 0.5f * s, 0, WHITE, 1, 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
-		pose.popPose();
+		if (missile.forming()) return;
+		float s = missile.scale();
+		streak(buffers, pose, trail, cam, SpellRender.FLAME, FIRE_MID, 3.4f * s, 0.75f, 16, -age * 0.12f);
+		streak(buffers, pose, trail, cam, SpellRender.FLAME, FIRE_CORE, 1.4f * s, 0.6f, 9, -age * 0.16f);
 	}
 
-	/** One feather along +y from its quill at the origin, {@code width} wide and {@code length} long, crossed for any angle. */
-	private static void featherQuad(VertexConsumer vc, PoseStack pose, float width, float length, float alpha) {
-		PoseStack.Pose p = pose.last();
-		SpellRender.quad(vc, p, SpellRender.v(-width / 2, 0, 0), SpellRender.v(width / 2, 0, 0), SpellRender.v(width / 2, length, 0), SpellRender.v(-width / 2, length, 0),
-				WHITE, alpha, 0, 1, 1, 0, SpellRender.FULL_BRIGHT);
-	}
-
-	/** One of the Nine Suns falling: a ball of boiling sunfire in its corona, trailing fire. */
+	/**
+	 * One of the Nine Suns falling: the sun itself is its body (SpellConstruct FALLING_SUN, a great spell's shape: SpellProjectile#body), so this
+	 * is only the wake it burns across the sky behind it, and the smoke hanging in it.
+	 */
 	private void fallingSun(SpellProjectile missile, PoseStack pose, MultiBufferSource buffers, Quaternionf facing, Vec3 cam, List<Vec3> trail, float age) {
 		float s = missile.scale();
-		float[] fv = SpellRender.frame(age, 0.25f, SpellRender.SUN_FRAMES);
-		SpellRender.sphere(buffers.getBuffer(SpellRender.clear(SpellRender.SUN)), pose.last(), 1.6f * s, 10, 14, WHITE, 1, 1, (fv[1] - fv[0]), age * 0.004f, fv[0],
-				SpellRender.FULL_BRIGHT, null);
-		glowBall(buffers, pose, facing, 0, 0, 0, 7.0f * s, FIRE_MID, 0.6f);
-		glowBall(buffers, pose, facing, 0, 0, 0, 4.0f * s, FIRE_CORE, 0.6f);
-		VertexConsumer rays = buffers.getBuffer(SpellRender.glow(SpellRender.SPARK));
-		SpellRender.billboard(rays, pose, facing, 0, 0, 0, 9 * s, 9 * s, age * 0.01f, FIRE_CORE, 0.5f, 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
-		streak(buffers, pose, trail, cam, SpellRender.FLAME, FIRE_MID, 3.5f * s, 0.85f, 16, -age * 0.1f);
+		streak(buffers, pose, trail, cam, SpellRender.FLAME, FIRE_MID, 5.0f * s, 0.75f, 30, -age * 0.1f);
+		streak(buffers, pose, trail, cam, SpellRender.FLAME, FIRE_CORE, 2.2f * s, 0.6f, 18, -age * 0.15f);
+		smoke(buffers, pose, facing, trail, missile.getId(), age, 3.5f * s, 30, 0.4f);
 	}
 
 	// --- Wood ---
@@ -552,12 +497,17 @@ public class SpellProjectileRenderer extends EntityRenderer<SpellProjectile> {
 		}
 	}
 
-	/** Boulder Throw and Falling Mountain: a lump of the ground's own rock, tumbling, shedding dust (and for the mountain, stones round it). */
+	/**
+	 * Boulder Throw: a lump of the ground's own rock, tumbling, shedding dust. Falling Mountain: the mountain itself is its body (SpellConstruct
+	 * FALLING_PEAK: SpellProjectile#body), so this is only the dust it sheds behind it as it falls.
+	 */
 	private void boulder(SpellProjectile missile, PoseStack pose, MultiBufferSource buffers, Quaternionf facing, Vec3 cam, List<Vec3> trail, float age, int light) {
-		boolean mountain = missile.shape() == SpellProjectile.Shape.MOUNTAIN;
+		if (missile.shape() == SpellProjectile.Shape.MOUNTAIN) {
+			dustTrail(buffers, pose, facing, trail, missile.getId(), age, 7, 24, 0.6f);
+			return;
+		}
 		var sprite = SpellRender.sprite(missile.data() == 0 ? Block.getId(Blocks.STONE.defaultBlockState()) : missile.data());
-		float radius = mountain ? 4.2f : 0.95f;
-		float spin = age * (mountain ? 0.03f : 0.25f);
+		float radius = 0.95f, spin = age * 0.25f;
 		SpellModels.boulder(pose, buffers, sprite, radius * missile.scale(), spin, light, missile.getId(), null);
 		// The earth's qi that tore it loose: seams of its fire glowing through the rock, turning with it, and a halo about it.
 		pose.pushPose();
@@ -566,17 +516,8 @@ public class SpellProjectileRenderer extends EntityRenderer<SpellProjectile> {
 		SpellRender.sphere(buffers.getBuffer(SpellRender.glow(SpellRender.VEINS)), pose.last(), radius * missile.scale() * 1.05f, 8, 12, EARTH_GLOW, 0.75f, 2, 1, 0, 0,
 				SpellRender.FULL_BRIGHT, null);
 		pose.popPose();
-		glowBall(buffers, pose, facing, 0, 0, 0, radius * missile.scale() * 3.2f, EARTH_GLOW, mountain ? 0.22f : 0.3f);
-		if (mountain) {
-			for (int i = 0; i < 8; i++) {
-				double a = age * 0.05 + i * Math.PI * 2 / 8;
-				pose.pushPose();
-				pose.translate(Math.cos(a) * 6, Math.sin(a * 2 + i) * 1.5, Math.sin(a) * 6);
-				SpellModels.boulder(pose, buffers, sprite, 0.6f + SpellRender.hash(i) * 0.5f, age * 0.2f + i, light, missile.getId() * 7L + i, null);
-				pose.popPose();
-			}
-		}
-		dustTrail(buffers, pose, facing, trail, missile.getId(), age, mountain ? 6 : 1.2f, mountain ? 20 : 4, 0.6f);
+		glowBall(buffers, pose, facing, 0, 0, 0, radius * missile.scale() * 3.2f, EARTH_GLOW, 0.3f);
+		dustTrail(buffers, pose, facing, trail, missile.getId(), age, 1.2f, 4, 0.6f);
 	}
 
 	// --- Water ---
@@ -689,6 +630,15 @@ public class SpellProjectileRenderer extends EntityRenderer<SpellProjectile> {
 	 * Flying Sword (and the plunging swords of Sword Rain, the six of the Advanced technique): a jian of steel and gold, point first,
 	 * a streak of white-gold light behind it; while it forms, shards of metal fly together into it.
 	 */
+	/**
+	 * One of Sword Rain's swords plunging: the sword itself is its body (SpellConstruct RAIN_SWORD: SpellProjectile#body), so this is only the
+	 * sword-light streaming behind it.
+	 */
+	private void plunging(PoseStack pose, MultiBufferSource buffers, Vec3 cam, List<Vec3> trail) {
+		streak(buffers, pose, trail, cam, SpellRender.GLOW, SWORD_LIGHT, 0.9f, 0.75f, 6.0, 0);
+		streak(buffers, pose, trail, cam, SpellRender.GLOW, WHITE, 0.3f, 0.9f, 3.5, 0);
+	}
+
 	private void sword(SpellProjectile missile, PoseStack pose, MultiBufferSource buffers, Quaternionf facing, Vec3 cam, List<Vec3> trail, float age, float formed,
 					   float yaw, float pitch, int light, float length) {
 		float s = missile.scale();

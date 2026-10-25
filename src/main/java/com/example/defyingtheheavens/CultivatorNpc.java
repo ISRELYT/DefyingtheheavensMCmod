@@ -475,10 +475,14 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		return hasCustomName() ? getCustomName().getString() : NpcNames.of(getUUID());
 	}
 
-	/** Years it has cultivated (what it says when asked): from its realm and stage, the same every time, and 0 for a mortal. */
+	/**
+	 * Years it has cultivated (what it says when asked): from its realm and stage, the same every time, and 0 for a mortal. The realms
+	 * past Four Axis by their spans (Lifespan#realmYears; before the sweep of 2026-10-24 they all said Four Axis's 1,000 to 3,000).
+	 */
 	public int yearsCultivated() {
 		if (isMortal()) return 0;
-		int[][] spans = {{3, 20}, {20, 60}, {60, 150}, {150, 400}, {400, 1000}, {1000, 3000}};
+		int[][] spans = {{3, 20}, {20, 60}, {60, 150}, {150, 400}, {400, 1000}, {1000, 3000}, {3000, 30_000}, {30_000, 500_000},
+				{500_000, 5_000_000}, {5_000_000, 50_000_000}, {50_000_000, 500_000_000}};
 		int[] span = spans[Math.min(spans.length - 1, realmOf(getRank()).ordinal())];
 		double within = (stageOf(getRank()).ordinal() + new java.util.Random(getUUID().getLeastSignificantBits()).nextDouble()) / Stage.values().length;
 		return (int) Math.round(span[0] + (span[1] - span[0]) * within);
@@ -1942,14 +1946,17 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		super.dropCustomDeathLoot(source, looting, recentlyHit);
 		if (isDemon() && !isMortal() && !isGhost()) {
 			spawnAtLocation(DemonCoreItem.of(getRank(), DemonPath.element(getBloodline()), getName()));
-			// Now and then its race's blood, of its realm (DemonBlood).
-			if (random.nextFloat() < DemonBlood.NPC_CHANCE) spawnAtLocation(DemonBloodItem.of(getBloodline(), DemonPath.realm(getRank())));
+			// Now and then its race's blood, of its realm (DemonBlood), none beyond what the worlds hold (Realm#atMostTaught).
+			if (random.nextFloat() < DemonBlood.NPC_CHANCE) spawnAtLocation(DemonBloodItem.of(getBloodline(), DemonPath.realm(getRank()).atMostTaught()));
 		}
 		for (ItemStack stack : carriedStones(getRank(), random)) spawnAtLocation(stack);
 		for (ItemStack stack : winnings) spawnAtLocation(stack);
 		winnings.clear();
+		// Its heaven method's slip: never a True Immortal's, the Immortal Realm's (Realm#taughtInTheWorld).
 		HeavenMethod method = heavenMethod();
-		if (method != null && random.nextFloat() < (isSectMember() ? HEAVEN_SLIP_CHANCE_SECT : HEAVEN_SLIP_CHANCE)) spawnAtLocation(JadeSlipItem.of(method));
+		if (method != null && method.realm().taughtInTheWorld() && random.nextFloat() < (isSectMember() ? HEAVEN_SLIP_CHANCE_SECT : HEAVEN_SLIP_CHANCE)) {
+			spawnAtLocation(JadeSlipItem.of(method));
+		}
 	}
 
 	/** A cultivator struck down leaves its heaven method's slip this often; a sect member (who keeps its sect's own closer), this often. */
@@ -2145,6 +2152,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		for (ItemStack stack : winnings) winningList.add(stack.save(new CompoundTag()));
 		npc.put("Winnings", winningList);
 		ListTag sparedList = new ListTag();
+		// Its debts lapsed are forgotten (before the sweep of 2026-10-24 they were kept, and saved, for good).
+		sparedBy.values().removeIf(until -> until <= level().getGameTime());
 		for (Map.Entry<UUID, Long> entry : sparedBy.entrySet()) {
 			CompoundTag s = new CompoundTag();
 			s.putUUID("Player", entry.getKey());

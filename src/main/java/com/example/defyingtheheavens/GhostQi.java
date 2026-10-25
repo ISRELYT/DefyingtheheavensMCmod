@@ -86,7 +86,8 @@ public final class GhostQi {
 	public static double poolMax(PlayerCultivation c) {
 		NetherworldState s = c.netherworld();
 		return poolMax(s.ghost() || s.knowsAnyMethod() || s.pathRank() >= 0, GhostMethods.layersKnown(c), GhostMethods.foundationLayers(c))
-				* StatPoints.poolFactor(c); // Spirit, every path's pool alike
+				* StatPoints.poolFactor(c) // Spirit, every path's pool alike
+				* (1 + TwoPaths.harmony(c)); // and the paths' harmony, as the body and the qi pool have it (2026-10-24)
 	}
 
 	/** Ghostly qi filled a second at {@code density} for {@code c}: x half its Insight, as every path's qi is gathered (StatPoints#gatherFactor). */

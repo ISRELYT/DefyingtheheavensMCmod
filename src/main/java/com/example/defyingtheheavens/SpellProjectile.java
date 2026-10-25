@@ -98,6 +98,9 @@ public class SpellProjectile extends Projectile {
 	private boolean phasing;
 	/** Its own spell's realm and element, for what it strikes (and the ward it meets). */
 	private Spell spell;
+	/** The great spell's shape it flies as ({@link #body}), or null; and whether it is carried upright (a mountain), not turned to its way. */
+	private SpellConstruct body;
+	private boolean bodyUpright;
 
 	public SpellProjectile(EntityType<? extends SpellProjectile> type, Level level) {
 		super(type, level);
@@ -160,6 +163,37 @@ public class SpellProjectile extends Projectile {
 	}
 	public SpellProjectile data(int data) { entityData.set(DATA, data); return this; }
 	public SpellProjectile hitSize(float size) { entityData.set(HIT_SIZE, size); refreshDimensions(); return this; }
+
+	/**
+	 * Flies as {@code body}, a great spell's shape (SpellConstruct, a falling sun): kept where it is drawn and facing the way it flies, and
+	 * dissolved as it goes. Its shape (its renderer's) is then only what trails after it.
+	 */
+	public SpellProjectile body(SpellConstruct body) {
+		this.body = body;
+		carryBody();
+		return this;
+	}
+
+	/** Flies as {@code body} kept upright, turned only as it was made (a falling mountain), wherever it flies. */
+	public SpellProjectile uprightBody(SpellConstruct body) {
+		this.bodyUpright = true;
+		return body(body);
+	}
+
+	/** The shape it flies as, or null. */
+	public SpellConstruct body() { return body; }
+
+	/**
+	 * Its body put where its watchers draw it: a tick on from here, as their copy of it moves on from where it is heard to be at their next tick,
+	 * and the body takes where it is heard to be at theirs (SpellConstruct#lerpTo); facing the way it flies (its own yaw and pitch run the
+	 * other way to a looker's).
+	 */
+	private void carryBody() {
+		if (body == null || body.isRemoved()) return;
+		Vec3 v = getDeltaMovement(), at = position().add(0, getBbHeight() / 2, 0).add(v);
+		if (bodyUpright) body.place(at, body.getYRot(), 0);
+		else body.place(at, -getYRot(), -getXRot());
+	}
 
 	// --- What it is ---
 
@@ -256,7 +290,10 @@ public class SpellProjectile extends Projectile {
 				setYRot(-owner.getYRot());
 				setXRot(-owner.getXRot());
 			}
-			if (!level().isClientSide && (owner == null || !owner.isAlive())) discard();
+			if (!level().isClientSide) {
+				if (owner == null || !owner.isAlive()) discard();
+				else carryBody(); // its shape gathers where it forms
+			}
 			return;
 		}
 		if (!level().isClientSide && !launched) launch();
@@ -288,6 +325,14 @@ public class SpellProjectile extends Projectile {
 		if (gravity > 0) v = v.add(0, -gravity, 0);
 		setDeltaMovement(v);
 		turnToMotion();
+		if (!level().isClientSide) carryBody();
+	}
+
+	/** Its body goes with it, fading (SpellConstruct#dissolve). */
+	@Override
+	public void remove(RemovalReason reason) {
+		if (body != null && !level().isClientSide) body.dissolve();
+		super.remove(reason);
 	}
 
 	/** Bends the flight toward its mark (or, with none, the nearest foe of its caster's near its path), no faster than its turn. */

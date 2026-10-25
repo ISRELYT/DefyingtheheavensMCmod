@@ -34,7 +34,7 @@ public final class SpellRender {
 	public static final ResourceLocation GLOW = tex("glow"), SPARK = tex("spark"), RING = tex("ring"), SMOKE = tex("smoke"), FLAME = tex("flame"),
 			KARMA = tex("karma"), YANG = tex("yang"), WATER = tex("water"), RIPPLE = tex("ripple"), BUBBLE = tex("bubble"), BARK = tex("bark"),
 			LEAF = tex("leaf"), VINE = tex("vine"), BAMBOO = tex("bamboo"), PETAL = tex("petal"), LOTUS_LEAF = tex("lotus_leaf"), MUD = tex("mud"),
-			DUST = tex("dust"), STONE_SHELL = tex("stone_shell"), GOLEM = tex("golem"), GOLEM_GLOW = tex("golem_glow"), STEEL = tex("steel"),
+			DUST = tex("dust"), STONE_SHELL = tex("stone_shell"), STEEL = tex("steel"),
 			GOLD = tex("gold"), SLASH = tex("slash"), WIND = tex("wind"), ICE = tex("ice"), CLOUD = tex("cloud"), RAIN = tex("rain"), MIST = tex("mist"),
 			SUN = tex("sun"), RUNE = tex("rune"), VEINS = tex("veins"), FEATHER = tex("feather"), STAR = tex("star"), LIGHTNING = tex("lightning");
 	/** The Heaven-Severing Sword's blade: u along its arc, v from its white-hot edge in, its whole body showing (SeverTex). */

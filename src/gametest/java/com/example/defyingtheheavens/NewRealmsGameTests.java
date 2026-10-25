@@ -178,12 +178,15 @@ public class NewRealmsGameTests implements FabricGameTest {
 				helper.assertTrue(HeavenPassives.amount(onlyKnowing(method), element, method.layers()) > HeavenPassives.amount(onlyKnowing(HeavenMethod.of(element, realm.previous())), element, method.layers()),
 						method.getId() + ": its deeper layers strengthen the passive further");
 			}
+			// True Immortal's are carved on no stele: the Immortal Realm's to teach (Realm#taughtInTheWorld, the user's rule of 2026-10-25).
+			boolean taught = realm.taughtInTheWorld();
 			GhostMethod foundation = GhostMethod.foundationOf(realm);
-			helper.assertTrue(foundation != null && foundation.isFoundation() && foundation.layers() == MethodLayers.layers(realm) && foundation.peakWeight() > 0
+			helper.assertTrue(foundation != null && foundation.isFoundation() && foundation.layers() == MethodLayers.layers(realm) && foundation.peakWeight() > 0 == taught
 					&& foundation.steleWeight() == 0 && GhostMethod.foundationOf(realm.previous()).next() == foundation,
-					realm.getId() + ": a ghost foundation of its own, carved only on the Peaks");
-			helper.assertTrue(DaoSteleFeature.WEIGHTS[DaoSteleFeature.Lands.UPPER_REALM_RARE.ordinal()][realm.ordinal()] > 0
-					&& DaoSteleFeature.WEIGHTS[DaoSteleFeature.Lands.OVERWORLD.ordinal()][realm.ordinal()] == 0, realm.getId() + ": its steles in the Upper Realm's wondrous lands alone");
+					realm.getId() + ": a ghost foundation of its own, carved only on the Peaks (True Immortal's on none)");
+			helper.assertTrue(DaoSteleFeature.WEIGHTS[DaoSteleFeature.Lands.UPPER_REALM_RARE.ordinal()][realm.ordinal()] > 0 == taught
+					&& DaoSteleFeature.WEIGHTS[DaoSteleFeature.Lands.OVERWORLD.ordinal()][realm.ordinal()] == 0,
+					realm.getId() + ": its steles in the Upper Realm's wondrous lands alone (True Immortal's on none)");
 		}
 		for (int layer = 1; layer <= MethodLayers.layers(Realm.TRUE_IMMORTAL); layer++) {
 			helper.assertTrue(MethodLayers.cost(layer) > 0 && HeavenMethods.layerCost(layer) > 0, "Layer " + layer + " has its cost");

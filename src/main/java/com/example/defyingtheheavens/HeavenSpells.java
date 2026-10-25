@@ -571,12 +571,25 @@ public final class HeavenSpells {
 	 * never what is unbreakable or harder than obsidian, a barrier, a spell's own block, or ground sheltered or not the caster's.
 	 */
 	public static boolean carvable(ServerLevel level, BlockPos pos, LivingEntity p, boolean utter) {
+		return carvable(level, pos, p, utter, true);
+	}
+
+	/**
+	 * {@link #carvable(ServerLevel, BlockPos, LivingEntity)} only asked, for a spell weighing what it would take before it takes it
+	 * (Boulder Throw's hole, a cave's chambers): no trespass answered, no barrier battered or breached. Before the sweep of 2026-10-24
+	 * the weighing did both, and the taking again: a barrier's cell in a cave's way was breached twice.
+	 */
+	public static boolean mayCarve(ServerLevel level, BlockPos pos, LivingEntity p) {
+		return carvable(level, pos, p, false, false);
+	}
+
+	private static boolean carvable(ServerLevel level, BlockPos pos, LivingEntity p, boolean utter, boolean taking) {
 		if (!carvesLand(p) || !level.isInWorldBounds(pos)) return false; // a cultivator's spells take nothing from the land
 		BlockState state = level.getBlockState(pos);
 		if (state.isAir()) return false;
 		// A barrier's cell: taken as the land is by one strong enough to break it, the barrier the worse for it (Formations#yields: since
 		// 2026-10-24, the user's ask; no spell touched a barrier before, however strong).
-		if (state.getBlock() instanceof SectBarrierBlock) return Formations.yields(level, pos, p);
+		if (state.getBlock() instanceof SectBarrierBlock) return taking ? Formations.yields(level, pos, p) : Formations.wouldYield(level, pos, p);
 		boolean fluid = !state.getFluidState().isEmpty() && state.canBeReplaced();
 		if (fluid && !utter) return false;
 		// A fluid's own block is as hard as can be (water and lava 100), though nothing breaks it by hand: it is let go by that.
@@ -587,7 +600,7 @@ public final class HeavenSpells {
 		if (!(p instanceof ServerPlayer player)) return true;
 		// Nor what the caster couldn't dig by hand: in Adventure mode, or under the server's spawn protection.
 		if (!player.mayBuild() || !level.mayInteract(player, pos) || Formations.protectsGroundQuietly(player, pos)) return false;
-		SectManager.spoiled(level, player, pos);
+		if (taking) SectManager.spoiled(level, player, pos);
 		return true;
 	}
 
@@ -651,6 +664,14 @@ public final class HeavenSpells {
 	}
 
 	/**
+	 * {@code p}'s spell lands on {@code target}: a barrier between them that {@code p} is strong enough for is battered by it
+	 * (Formations#harmedAcross). Only where harm lands: asking whom a spell spares batters nothing.
+	 */
+	static void landsAcross(LivingEntity p, LivingEntity target) {
+		if (target != p && target.level() == p.level()) Formations.harmedAcross(level(p), p.blockPosition(), target.blockPosition(), p);
+	}
+
+	/**
 	 * A player's body left sitting or standing (a projected soul's, a clone's or the main body's, an Inner Realm meditator's) is spared
 	 * as its owner would be: the caster's own always, another's where the caster may not harm them (PvP off, a team). Before the sweep
 	 * of 2026-10-23 a spell's fire or water could kill a sitting soul's body with PvP off, or the caster's own main body.
@@ -697,6 +718,17 @@ public final class HeavenSpells {
 		return friendly(p, e) && !(e instanceof CultivatorNpc && mark(p, e));
 	}
 
+	/**
+	 * One of the caster's own, that a share of its spell's mending goes to (WoodSpells#shareMending): a player's, one its spells spare (its
+	 * pets, its sect's fellows, a player it may not harm); a cultivator's, its own ({@link #friendly}); never the dead, a spectator, or one
+	 * behind a barrier from it. Before the sweep of 2026-10-24 the share went to all {@link #spared}: a monster walled off from the caster
+	 * took a cut of it, the dead and spectators thinned it.
+	 */
+	public static boolean own(LivingEntity p, LivingEntity e) {
+		if (e == p || !e.isAlive() || e instanceof Player player && player.isSpectator() || walled(p, e)) return false;
+		return p instanceof ServerPlayer ? spared(p, e) : friendly(p, e);
+	}
+
 	/** A foe of the caster's: a monster, or anything set on it (a mob or a cultivator with it as its target); a cultivator's, whom it fights. */
 	public static boolean foe(LivingEntity p, LivingEntity e) {
 		if (spared(p, e)) return false;
@@ -719,14 +751,19 @@ public final class HeavenSpells {
 	public static final int QUARREL_TICKS = 200;
 
 	/**
-	 * One of the great beasts (the Ender Dragon, the Wither, the Warden, an Elder Guardian, or anything of 300 health or more):
-	 * the spells that would hold, carry, swap or lull a being only slow or harm them.
+	 * Too great for {@code caster}'s spells to hold, carry, swap or lull (they only slow or harm it): one of the old world's great beasts (the
+	 * Ender Dragon, the Wither, the Warden, an Elder Guardian: their fights are their own, whoever casts), or a being of more than
+	 * {@link #GREAT_BEYOND} times its caster's whole health. Judged against the caster (the user's call, 2026-10-25): it was anything of 300
+	 * health or more, which made every cultivator from Dao Integration up, the very foes the great spells are for, too great for all of them.
 	 */
-	public static boolean greatBeast(LivingEntity e) {
+	public static boolean greatBeast(@org.jetbrains.annotations.Nullable LivingEntity caster, LivingEntity e) {
 		return e instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon || e instanceof net.minecraft.world.entity.boss.wither.WitherBoss
 				|| e instanceof net.minecraft.world.entity.monster.warden.Warden || e instanceof net.minecraft.world.entity.monster.ElderGuardian
-				|| e.getMaxHealth() >= 300;
+				|| e.getMaxHealth() > GREAT_BEYOND * Math.max(20, caster == null ? 20 : caster.getMaxHealth());
 	}
+
+	/** How many times a caster's whole health a being must have to be too great for its spells to hold ({@link #greatBeast}): a realm or so above it. */
+	public static final double GREAT_BEYOND = 3;
 
 	/**
 	 * Whether {@code source} is one of the heaven spells' qi harms, or the spells of both paths' heaven-and-demon qi (never reflected or
@@ -955,6 +992,7 @@ public final class HeavenSpells {
 	 */
 	public static float strike(LivingEntity p, LivingEntity target, float amount, QiElement element) {
 		if (walled(p, target)) return 0;
+		landsAcross(p, target);
 		float before = target.getHealth() + target.getAbsorptionAmount();
 		target.hurt(ModDamageTypes.qi(level(p), element, p), amount);
 		return Math.max(0, before - target.getHealth() - target.getAbsorptionAmount());
@@ -966,6 +1004,7 @@ public final class HeavenSpells {
 	 */
 	public static float strike(LivingEntity p, LivingEntity target, float amount, Spell spell, net.minecraft.world.entity.Entity via) {
 		if (walled(p, target)) return 0;
+		landsAcross(p, target);
 		float before = target.getHealth() + target.getAbsorptionAmount();
 		ServerLevel level = (ServerLevel) target.level();
 		target.hurt(ModDamageTypes.qi(level, spell.element(), spell.heavenRealm(), via, p), amount);

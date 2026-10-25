@@ -76,6 +76,11 @@ public class MethodSteleBlock extends HorizontalDirectionalBlock {
 		if (level.isClientSide) return InteractionResult.SUCCESS;
 		if (player instanceof ServerPlayer sp) {
 			GhostMethod method = state.getValue(METHOD);
+			// One carved before True Immortal's were kept for the Immortal Realm (GhostMethod#taughtInTheWorld) can't be read.
+			if (!method.taughtInTheWorld()) {
+				sp.displayClientMessage(Component.translatable(ModLang.MSG_STELE_SEALED, method.getDisplayName()).withStyle(ChatFormatting.GRAY), true);
+				return InteractionResult.CONSUME;
+			}
 			boolean known = CultivationManager.get(sp).netherworld().knows(method);
 			sp.displayClientMessage(Component.translatable(known ? ModLang.MSG_STELE_KNOWN : ModLang.MSG_STELE_TEACHES, method.getDisplayName())
 					.withStyle(ChatFormatting.AQUA), true);

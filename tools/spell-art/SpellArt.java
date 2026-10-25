@@ -953,6 +953,48 @@ public class SpellArt {
 			{"weak_water_fall", (Build) Void::weakWaterFall}, {"kun", (Build) Void::kun},
 			{"severing_light", (Build) Void::severingLight}, {"sword_prison", (Build) Void::swordPrison},
 			{"nine_nethers", (Build) Void::nineNethers}, {"naihe_bridge", (Build) Void::naiheBridge}, {"heaven_demon_fist", (Build) Void::heavenDemonFist},
+			// Sacred Vessel's (Vessel).
+			{"swallowing_gourd", (Build) Vessel::swallowingGourd}, {"bodhi_branch", (Build) Vessel::bodhiBranch},
+			{"wind_fire_wheel", (Build) Vessel::windFireWheel}, {"trigram_furnace", (Build) Vessel::trigramFurnace},
+			{"xirang", (Build) Vessel::xirang}, {"nine_cauldron", (Build) Vessel::nineCauldron},
+			{"sea_pearl", (Build) Vessel::seaPearl}, {"ocean_vase", (Build) Vessel::oceanVase},
+			{"binding_ring", (Build) Vessel::bindingRing}, {"dragon_scissors", (Build) Vessel::dragonScissors},
+			{"karma_mirror", (Build) Vessel::karmaMirror}, {"soul_pagoda", (Build) Vessel::soulPagoda}, {"heaven_demon_bell", (Build) Vessel::heavenDemonBell},
+			// Entering Nirvana's (Nirvana).
+			{"rebirth_seed", (Build) Nirvana::rebirthSeed}, {"season_wheel", (Build) Nirvana::seasonWheel},
+			{"undying_ember", (Build) Nirvana::undyingEmber}, {"heaven_pyre", (Build) Nirvana::heavenPyre},
+			{"gravestone", (Build) Nirvana::gravestone}, {"standing_stone", (Build) Nirvana::standingStone},
+			{"frozen_moon", (Build) Nirvana::frozenMoon}, {"ice_moon", (Build) Nirvana::iceMoon},
+			{"sword_tomb", (Build) Nirvana::swordTomb}, {"rebirth_sword", (Build) Nirvana::rebirthSword},
+			{"white_impermanence", (Build) Nirvana::whiteImpermanence}, {"black_impermanence", (Build) Nirvana::blackImpermanence},
+			{"life_death_book", (Build) Nirvana::lifeDeathBook}, {"heaven_demon_eclipse", (Build) Nirvana::heavenDemonEclipse},
+			// True Immortal's (Immortal).
+			{"primordial_cyclone", (Build) Immortal::primordialCyclone}, {"creation_seed", (Build) Immortal::creationSeed},
+			{"samadhi_pillars", (Build) Immortal::samadhiPillars}, {"chaos_flower", (Build) Immortal::chaosFlower},
+			{"houtu_hand", (Build) Immortal::houtuHand}, {"falling_continent", (Build) Immortal::fallingContinent},
+			{"primal_glacier", (Build) Immortal::primalGlacier}, {"primordial_sea", (Build) Immortal::primordialSea},
+			{"heaven_slaying_sword", (Build) Immortal::heavenSlayingSword}, {"pangu_axe", (Build) Immortal::panguAxe},
+			{"fengdu_wall", (Build) Immortal::fengduWall}, {"soul_helix", (Build) Immortal::soulHelix},
+			{"chaos_sphere", (Build) Immortal::chaosSphere},
+			// Four Axis's, made over as the great spells' are (Axis).
+			{"falling_sun", (Build) Axis::fallingSun}, {"nirvana_phoenix", (Build) Axis::nirvanaPhoenix}, {"binding_vines", (Build) Axis::bindingVines},
+			{"earth_golem", (Build) Axis::earthGolem}, {"mountain_talisman", (Build) Axis::mountainTalisman},
+			{"ice_coffin", (Build) Axis::iceCoffin}, {"severing_sword", (Build) Axis::severingSword},
+			// Heavenly Being's and Nascent Soul's, made over as the great spells' are (Axis).
+			{"descent_phoenix", (Build) Axis::descentPhoenix}, {"blazing_meteor", (Build) Axis::blazingMeteor}, {"falling_peak", (Build) Axis::fallingPeak},
+			{"sword_domain", (Build) Axis::swordDomain}, {"piercing_bamboo", (Build) Axis::piercingBamboo}, {"rebirth_lotus", (Build) Axis::rebirthLotus},
+			{"thorn_forest", (Build) Axis::thornForest},
+			// Core Formation's, made over (Axis).
+			{"sword_ring", (Build) Axis::swordRing}, {"rain_sword", (Build) Axis::rainSword}, {"earth_dragon", (Build) Axis::earthDragon},
+			// Both paths' below Dao Integration (Axis).
+			{"hd_palm", (Build) Axis::hdPalm}, {"hd_mantle", (Build) Axis::hdMantle}, {"devouring_seal", (Build) Axis::devouringSeal}, {"hd_claw", (Build) Axis::hdClaw},
+			{"hd_as_one", (Build) Axis::hdAsOne},
+			// The ghost path's below Dao Integration (Underworld).
+			{"ghost_kindle", (Build) Underworld::ghostKindle}, {"ghost_bolt", (Build) Underworld::ghostBolt}, {"soul_wraith", (Build) Underworld::soulWraith},
+			{"ghost_wail", (Build) Underworld::ghostWail}, {"springs_tide", (Build) Underworld::springsTide}, {"marrow_ward", (Build) Underworld::marrowWard},
+			{"core_burst", (Build) Underworld::coreBurst}, {"kings_decree", (Build) Underworld::kingsDecree}, {"nether_pool", (Build) Underworld::netherPool},
+			{"yama_tablet", (Build) Underworld::yamaTablet}, {"hell_gate", (Build) Underworld::hellGate}, {"samsara_wheel", (Build) Underworld::samsaraWheel},
+			{"six_paths", (Build) Underworld::sixPaths},
 	};
 
 	/**

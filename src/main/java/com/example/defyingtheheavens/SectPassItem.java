@@ -19,11 +19,13 @@ import java.util.UUID;
  * temporary pass or something in the trade menu to let you through the barrier (you must keep it on you to pass though)"): a jade token
  * of the sect's ("PassSect", its name "PassSectName"), good until a time ("PassUntil", game time: {@link #LASTS} from when it was sold).
  * Carried anywhere about one (its inventory, a hand), the sect's barrier lets one through as it does its own (Formation#allows, on both
- * sides). Its people sell it (CultivatorTrades: one a day, to one not resentful); turning on the sect (its alarm raised over one) takes
+ * sides). Its people sell it (CultivatorTrades: one a day, to one not resentful), made out to whoever buys it ("PassHolder", their name
+ * "PassHolderName": {@link #boundTo}), and it lets no one else through (the user's call, 2026-10-25: a pass handed on could bring in one the
+ * sect hates); one made out to no one (a command's, a test's) lets anyone through. Turning on the sect (its alarm raised over one) takes
  * every pass of it one carries ({@link #revoke}).
  */
 public class SectPassItem extends Item {
-	private static final String SECT = "PassSect", NAME = "PassSectName", UNTIL = "PassUntil";
+	private static final String SECT = "PassSect", NAME = "PassSectName", UNTIL = "PassUntil", HOLDER = "PassHolder", HOLDER_NAME = "PassHolderName";
 	/** How long a pass is good for, from its sale: a day. */
 	public static final int LASTS = 24000;
 	/** What one costs (Low spirit stones, before regard). */
@@ -57,16 +59,38 @@ public class SectPassItem extends Item {
 		return tag == null ? 0 : tag.getLong(UNTIL);
 	}
 
+	/** {@code pass} made out to {@code buyer} (a copy): it lets them through alone. */
+	public static ItemStack boundTo(ItemStack pass, Player buyer) {
+		ItemStack bound = pass.copy();
+		CompoundTag tag = bound.getOrCreateTag();
+		tag.putUUID(HOLDER, buyer.getUUID());
+		tag.putString(HOLDER_NAME, buyer.getGameProfile().getName());
+		return bound;
+	}
+
+	/** Whom {@code stack} is made out to, or null (no one: anyone may pass with it). */
+	public static @Nullable UUID holder(ItemStack stack) {
+		CompoundTag tag = stack.getTag();
+		return tag != null && tag.hasUUID(HOLDER) ? tag.getUUID(HOLDER) : null;
+	}
+
 	/** Whether {@code stack} is a pass of {@code sect} still good at {@code now}. */
 	public static boolean opens(ItemStack stack, UUID sect, long now) {
 		return stack.is(ModItems.SECT_PASS) && sect.equals(sect(stack)) && until(stack) > now;
 	}
 
-	/** Whether {@code player} carries a good pass of {@code sect} anywhere about them (Formation#allows). */
+	/** Whether {@code stack} is a pass of {@code sect} still good at {@code now} for {@code player}: made out to them, or to no one. */
+	public static boolean opensFor(ItemStack stack, UUID sect, long now, Player player) {
+		if (!opens(stack, sect, now)) return false;
+		UUID holder = holder(stack);
+		return holder == null || holder.equals(player.getUUID());
+	}
+
+	/** Whether {@code player} carries a good pass of {@code sect} anywhere about them, made out to them (Formation#allows). */
 	public static boolean carries(Player player, UUID sect) {
 		long now = player.level().getGameTime();
-		for (ItemStack stack : player.getInventory().items) if (opens(stack, sect, now)) return true;
-		for (ItemStack stack : player.getInventory().offhand) if (opens(stack, sect, now)) return true;
+		for (ItemStack stack : player.getInventory().items) if (opensFor(stack, sect, now, player)) return true;
+		for (ItemStack stack : player.getInventory().offhand) if (opensFor(stack, sect, now, player)) return true;
 		return false;
 	}
 
@@ -99,6 +123,8 @@ public class SectPassItem extends Item {
 			return;
 		}
 		tooltip.add(Component.translatable(ModLang.PASS_USE).withStyle(ChatFormatting.GRAY));
+		CompoundTag tag = stack.getTag();
+		if (tag != null && tag.contains(HOLDER_NAME)) tooltip.add(Component.translatable(ModLang.PASS_BOUND, tag.getString(HOLDER_NAME)).withStyle(ChatFormatting.GOLD));
 		long left = level == null ? 0 : until(stack) - level.getGameTime();
 		tooltip.add(left > 0 ? Component.translatable(ModLang.PASS_LEFT, (left + 1199) / 1200).withStyle(ChatFormatting.DARK_AQUA)
 				: Component.translatable(ModLang.PASS_LAPSED).withStyle(ChatFormatting.RED));

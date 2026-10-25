@@ -30,7 +30,8 @@ import java.util.Set;
  *   <li><b>Its goods</b> come from its station and path: Outer Disciples (and commoners) sell seeds and young herbs, Inner
  *   Disciples rarer seeds and Qi Gathering Pills, Elders pills and old herbs, the Sect Master the best of both; rogues carry
  *   odd things from far away. The stock is the same all day (it changes with the day), each line selling only so many. One of a
- *   sect's (or a clan's) people sells a guest pass of it first (SectPassItem), one a day, to one it isn't resentful toward.</li>
+ *   sect's (or a clan's) people sells a guest pass of it first (SectPassItem), one a day, to one it isn't resentful toward, made out to
+ *   them alone.</li>
  *   <li><b>Regard</b> opens better offers (one more at Polite, Courteous, Warm and Trusted) and lowers prices, from
  *   x{@code 1.3} when Resentful to x{@code 0.75} when Sworn. Those not yet open are shown all the same, crossed out, the
  *   regard they want written on them ({@link #locked}).</li>
@@ -89,7 +90,9 @@ public final class CultivatorTrades {
 				keys.put(locked, "locked:" + i);
 				continue;
 			}
-			MerchantOffer offer = new MerchantOffer(costs[0], costs[1], g.item().copy(), uses.getOrDefault(key, 0), g.maxUses(), 0, 0);
+			// A guest pass made out to the one it is offered to (SectPassItem#boundTo: it lets no one else through).
+			ItemStack sold = g.item().is(ModItems.SECT_PASS) ? SectPassItem.boundTo(g.item(), player) : g.item().copy();
+			MerchantOffer offer = new MerchantOffer(costs[0], costs[1], sold, uses.getOrDefault(key, 0), g.maxUses(), 0, 0);
 			offers.add(offer);
 			keys.put(offer, key);
 		}
@@ -205,9 +208,9 @@ public final class CultivatorTrades {
 			case WANDERING_GHOST, GHOST_ELDER, GATE_WARDEN, BRIDGE_KEEPER, GHOST_KING, GHOST_RETAINER -> ghostGoods(npc, random, goods);
 		}
 		// Last, the slip of its heaven method (CultivatorNpc#heavenMethod): an elder's (its sect's own) only to one it is Warm to, a
-		// rogue's to the courteous; a disciple keeps its own.
+		// rogue's to the courteous; a disciple keeps its own. Never a True Immortal's (Realm#taughtInTheWorld).
 		HeavenMethod heaven = npc.heavenMethod();
-		if (heaven != null && (npc.getTitle().isElderOrAbove() || npc.getTitle() == NpcTitle.ROGUE)) {
+		if (heaven != null && heaven.realm().taughtInTheWorld() && (npc.getTitle().isElderOrAbove() || npc.getTitle() == NpcTitle.ROGUE)) {
 			goods.add(new Goods(JadeSlipItem.of(heaven), heavenSlipPrice(heaven), 1, npc.getTitle().isElderOrAbove() ? Regard.WARM : Regard.COURTEOUS));
 		}
 		return goods;
@@ -227,7 +230,7 @@ public final class CultivatorTrades {
 			case GHOST_ELDER, GHOST_KING, GHOST_RETAINER -> {
 				GhostMethod method = npc instanceof GhostCultivatorNpc ghost ? ghost.method() : null;
 				// The Breathing Art, the fire, the steps and the Marrow Art to the courteous; a king's own canon only to one it is Warm to.
-				if (method != null) goods.add(new Goods(GhostJadeSlipItem.of(method), slipPrice(method), 1, method.tier() <= 2 ? Regard.COURTEOUS : Regard.WARM));
+				if (method != null && method.taughtInTheWorld()) goods.add(new Goods(GhostJadeSlipItem.of(method), slipPrice(method), 1, method.tier() <= 2 ? Regard.COURTEOUS : Regard.WARM));
 				goods.add(herb(random, 100, 300, Regard.PER_PIP, ModItems.NETHERWORLD_LOTUS));
 				goods.add(pill(ModItems.YIN_GATHERING_PILL, PillGrade.MID, 2, Regard.WARM));
 			}

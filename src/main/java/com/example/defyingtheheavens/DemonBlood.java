@@ -3,9 +3,12 @@ package com.example.defyingtheheavens;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemStack;
 import org.joml.Vector3f;
 
 /**
@@ -25,7 +28,7 @@ import org.joml.Vector3f;
  *   <li>Never a mortal's (its meridians sealed), one of the dead's, nor one's in another's body.</li>
  * </ul>
  * It is left by the race's demons (a clan's cultivator now and then: {@link #NPC_CHANCE}; a demon player slain by another, with its core)
- * and by the wild beasts of its kin ({@link #kin}).
+ * and by the wild beasts of its kin ({@link #kin}); and now and then a clan keeps a phial of it laid up in its den's chests ({@link #hoarded}).
  */
 public final class DemonBlood {
 	/** How much purer a half-blood's blood grows a drink: blood below its other paths' realm, at it, a realm above, blood it already held. */
@@ -130,6 +133,38 @@ public final class DemonBlood {
 		player.sendSystemMessage(Component.translatable(ModLang.MSG_BLOOD_TURNED, race.getDisplayName()).withStyle(ChatFormatting.DARK_RED));
 		player.playNotifySound(SoundEvents.ENDER_DRAGON_GROWL, SoundSource.PLAYERS, 0.6f, 1.2f);
 		Journal.note(player, "turned_by_blood", ModLang.JOURNAL_TURNED, Component.translatable(ModLang.JOURNAL_TURNED_TEXT, race.getDisplayName()));
+	}
+
+	/**
+	 * How often a demon clan's den keeps a phial of its race's blood in one of its chests (a hoard's, its head's hall's, an elder's), and of
+	 * which realm when it does, weights from Qi Refining up (the user's ask, 2026-10-25: "demons should be able to loot the blood (although
+	 * rarely, as rare as getting a heaven method or ghost method at that level from a library) from chests and stuff in the demon clans"; it
+	 * also gives the Demon Path its way past Sacred Vessel, whose blood nothing else leaves). Its realms are those of a sect library's slips
+	 * in the same world, as often (chests/sect_library keeps each world's own; the user, the same day: "you can get EN phials from clans but
+	 * you can't get EN methods from sects"): the lower realms' Qi Refining to Core Formation, the Upper Realm's Core Formation to Entering
+	 * Nirvana (never a True Immortal's: Realm#taughtInTheWorld).
+	 */
+	public static final float HOARD_CHANCE = 0.12f, HALL_CHANCE = 0.12f, ELDER_CHANCE = 0.08f;
+	static final int[] LOWER_REALMS_BLOOD = {60, 30, 10}, UPPER_REALM_BLOOD = {0, 0, 20, 20, 18, 15, 11, 7, 5, 4};
+
+	/**
+	 * A phial of {@code race}'s blood laid up in one of its den's chests (SectPiece#chest; its loot, {@code chest}, fills in round it when
+	 * it is opened), or nothing ({@link #HOARD_CHANCE}): of a realm by the {@code upper} realm's weights or the lower realms'.
+	 */
+	public static ItemStack hoarded(Bloodline race, boolean upper, ResourceLocation chest, RandomSource random) {
+		if (race == null || !race.isBeast()) return ItemStack.EMPTY;
+		float chance = chest.equals(SectPiece.TREASURY_LOOT) ? HOARD_CHANCE : chest.equals(SectPiece.MASTER_HALL_LOOT) ? HALL_CHANCE
+				: chest.equals(SectPiece.ELDER_LOOT) ? ELDER_CHANCE : 0;
+		if (random.nextFloat() >= chance) return ItemStack.EMPTY;
+		int[] weights = upper ? UPPER_REALM_BLOOD : LOWER_REALMS_BLOOD;
+		int total = 0;
+		for (int w : weights) total += w;
+		int roll = random.nextInt(total);
+		for (int i = 0; i < weights.length; i++) {
+			roll -= weights[i];
+			if (roll < 0) return DemonBloodItem.of(race, Realm.byIndex(i));
+		}
+		return ItemStack.EMPTY;
 	}
 
 	/** The race whose blood a wild beast of {@code kind} leaves (its kin), or null: the tiger's, the fox's, the reptiles' the lizard's, the flood dragon's. */

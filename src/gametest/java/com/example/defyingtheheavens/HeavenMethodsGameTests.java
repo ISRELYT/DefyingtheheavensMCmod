@@ -63,12 +63,12 @@ public class HeavenMethodsGameTests implements FabricGameTest {
 					spell.getId() + ": taught by its realm's method and deeper, never shallower");
 			perSlot.merge(spell.element() + " " + spell.heavenRealm(), 1, Integer::sum);
 		}
-		helper.assertTrue(spells == 90, "Ninety element spells (" + spells + ")");
+		helper.assertTrue(spells == 120, "A hundred and twenty element spells (" + spells + ")");
 		for (QiElement element : QiElement.five()) {
 			for (Realm realm : Realm.values()) {
-				// The realms after Void Shattering have their methods but no spells of their own yet (the user's ask, 2026-10-22; Dao
-				// Integration's and Void Shattering's came 2026-10-24).
-				int want = realm.ordinal() > Realm.VOID_SHATTERING.ordinal() ? 0 : realm.ordinal() <= Realm.FOUNDATION_BUILDING.ordinal() ? 3 : 2;
+				// Every realm has its spells (the realms after Four Axis had none of their own at first, 2026-10-22; all of them came
+				// 2026-10-24).
+				int want = realm.ordinal() <= Realm.FOUNDATION_BUILDING.ordinal() ? 3 : 2;
 				helper.assertTrue(perSlot.getOrDefault(element + " " + realm, 0) == want, element + " " + realm + ": " + want + " spells");
 			}
 		}

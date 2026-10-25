@@ -92,6 +92,7 @@ public class SpellFieldRenderer extends EntityRenderer<SpellField> {
 			case EARTHQUAKE -> quake(field, pose, buffers, facing, at, age, life, light);
 			case GREAT_TIDE -> tide(field, pose, buffers, facing, age, life);
 			case SWORD_LIGHT -> swordLight(field, pose, buffers, facing, age, life);
+			case SOUL_REND -> soulRend(field, pose, buffers, age, life);
 			case SEA_OF_FLAMES -> seaOfFlames(field, pose, buffers, facing, cam, age, life);
 			case BAMBOO -> bamboo(field, pose, buffers, age, life, light);
 			case HEAVY_SEAL -> seal(field, pose, buffers, facing, age, life);
@@ -108,7 +109,6 @@ public class SpellFieldRenderer extends EntityRenderer<SpellField> {
 			case WATER_GATHER -> gather(field, pose, buffers, facing, age, life);
 			case SWORD_RING -> swordRing(field, pose, buffers, facing, age, life);
 			case METEOR_MARK -> mark(field, pose, buffers, age, life);
-			case SEVER_SWING -> severSwing(field, pose, buffers, facing, age, life);
 			case BOULDER_FORMING -> {
 				float g = SpellRender.easeOut(age / life);
 				SpellModels.boulder(pose, buffers, SpellRender.sprite(field.data() == 0 ? Block.getId(Blocks.DIRT.defaultBlockState()) : field.data()),
@@ -1354,19 +1354,19 @@ public class SpellFieldRenderer extends EntityRenderer<SpellField> {
 	}
 
 	/**
-	 * Earth Dragon Surge: a ridge of jagged spikes of the ground's own rock bursting up along the ground behind its front as it runs
-	 * out, each leaning the way it goes, then sinking back a few seconds later.
+	 * Earth Dragon Surge: a ridge of jagged spikes of the ground's own rock bursting up along the ground in the earth dragon's wake (its
+	 * height: how far behind the front) as it runs out, each leaning the way it goes, then sinking back a few seconds later.
 	 */
 	private void spikes(SpellField field, PoseStack pose, MultiBufferSource buffers, Vec3 at, float age, float life, int light) {
 		float length = field.radius();
 		float reach = field.value() * length;
-		float pace = 1.5f;
+		float pace = 1.5f, wake = field.height();
 		TextureAtlasSprite sprite = SpellRender.sprite(field.data() == 0 ? Block.getId(Blocks.STONE.defaultBlockState()) : field.data());
 		VertexConsumer rock = buffers.getBuffer(SpellRender.blocks());
 		Vec3 way = Vec3.directionFromRotation(0, field.yaw());
 		Vec3 side = new Vec3(-way.z, 0, way.x);
 		for (int i = 1; i <= (int) reach; i++) {
-			float born = i / pace;
+			float born = (i + wake) / pace;
 			float rise = SpellRender.easeOut((age - born) / 4);
 			float sink = Mth.clamp((life - 10 - age) / 10, 0, 1);
 			float s = rise * sink;
@@ -1421,66 +1421,44 @@ public class SpellFieldRenderer extends EntityRenderer<SpellField> {
 		glowBall(buffers, pose, facing, 0, 0, length, 4 * show, SWORD_LIGHT, 0.7f * show);
 	}
 
-	/**
-	 * The Heaven-Severing Sword's stroke: a sword of light as long as a tower ({@link MetalSpells#SEVER_SWORD}) forms in its caster's
-	 * right hand, held out behind them ({@link MetalSpells#SEVER_FORM} ticks), and is swung level across their front, fast out of the
-	 * wind-up and settling at the end of the stroke ({@link MetalSpells#SEVER_SWING}): the slash leaves it as its blade crosses the
-	 * front. A fan of sword light sweeps after its edge, streaked along the stroke, brightest at its leading edge and its tip. Then
-	 * the sword goes back into light from its point down to the hilt, and the fan closes after it.
-	 */
-	private void severSwing(SpellField field, PoseStack pose, MultiBufferSource buffers, Quaternionf facing, float age, float life) {
-		float length = field.radius();
-		float form = com.example.defyingtheheavens.MetalSpells.SEVER_FORM, stroke = com.example.defyingtheheavens.MetalSpells.SEVER_SWING;
-		float start = (float) Math.toRadians(-125), finish = (float) Math.toRadians(105); // behind on the right, round to the left
-		float grow = SpellRender.easeOut(Mth.clamp(age / form, 0, 1));
-		float t = Mth.clamp((age - form) / stroke, 0, 1);
-		float sweep = 1 - (1 - t) * (1 - t) * (1 - t);
-		float angle = start + (finish - start) * sweep;
-		float after = Math.max(0, age - form - stroke), rest = Math.max(1, life - form - stroke);
-		float dissolve = 1 - SpellRender.ease(after / rest);
-		// The light gathering in the hand as it forms, and flaring as it is swung (drawn unturned: it faces the camera).
-		glowBall(buffers, pose, facing, 0, 0, 0, 3 + 4 * grow, SWORD_LIGHT, (0.35f + 0.4f * (t > 0 && t < 1 ? 1 : 0)) * dissolve);
-		pose.pushPose();
-		pose.mulPose(Axis.YP.rotationDegrees(-field.yaw()));
-		pose.mulPose(Axis.ZP.rotationDegrees(-8)); // the stroke's plane a little tilted: high on the right, low on the left
-		pose.translate(-0.6f, 0, 0.3f); // the hilt in the right hand, just before the caster (their right is -x)
-		// The fan after its edge: back from the blade to where it was a moment ago, closing once the stroke is done.
-		float trail = Math.min(angle - start, (finish - start) * 0.4f) * (t >= 1 ? dissolve * dissolve : 1);
-		if (trail > 0.01f && t > 0) {
-			strokeFan(buffers.getBuffer(SpellRender.glow(SpellRender.SLASH)), pose.last(), length * 0.15f, length * 1.03f, angle - trail, angle, SWORD_LIGHT,
-					0.95f * (t >= 1 ? dissolve : 1));
-			strokeFan(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), pose.last(), length * 0.5f, length * 1.08f, angle - trail * 0.5f, angle,
-					new float[]{1.0f, 0.97f, 0.88f}, 0.35f * (t >= 1 ? dissolve : 1));
-		}
-		// The sword, its flat level and its edge leading the stroke.
-		pose.mulPose(Axis.YP.rotation(angle));
-		SpellModels.jian(pose, buffers, length, SpellRender.FULL_BRIGHT, grow * dissolve, new float[]{1.0f, 0.96f, 0.86f});
-		// Its light along the blade, brighter while it moves.
-		float moving = t > 0 && t < 1 ? 1 : 0.4f, reach = length * grow * dissolve;
-		if (reach > 1) {
-			List<Vec3> blade = List.of(new Vec3(0, 0, 0), new Vec3(0, 0, reach * 0.6f), new Vec3(0, 0, reach));
-			SpellRender.tube(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), pose.last(), blade, new float[]{2.4f, 2.0f, 0.4f}, 8, SWORD_LIGHT,
-					0.35f * moving * dissolve, 0.05f, 0, SpellRender.FULL_BRIGHT, null);
-		}
-		pose.popPose();
-	}
+	/** The dead's colours (tools/spell-art Ghost): the Nine Nethers' dark, ghost fire, the dead's mist. */
+	private static final float[] NETHER_DARK = SpellRender.rgb(0x04070B), GHOST_TEAL = SpellRender.rgb(0x18A6A8), GHOST_CYAN = SpellRender.rgb(0x56EEE2),
+			DEAD_MIST = SpellRender.rgb(0xD2EEF0);
 
 	/**
-	 * The light a stroke leaves: a fan about the pose's origin from {@code inner} to {@code outer}, from angle {@code from} (where the
-	 * blade was) to {@code to} (where it is; 0 straight ahead, toward +x), fading back from its leading edge and in toward the hilt.
-	 * The texture's v runs back from the leading edge, its u out along the blade (its streaks lie along the stroke).
+	 * Soul Rend: a beam of the Nine Nethers' dark out along its caster's look to where it stopped: its core the dark itself (seen through but
+	 * little, so it shows against a day sky as a glow alone would not), ghost fire burning cold round it, two wisps of the dead's mist winding
+	 * round it as it goes, thinning at its root; there at once, fading.
 	 */
-	private static void strokeFan(VertexConsumer vc, PoseStack.Pose pose, float inner, float outer, float from, float to, float[] rgb, float alpha) {
-		int segments = 28;
-		for (int i = 0; i < segments; i++) {
-			float s0 = i / (float) segments, s1 = (i + 1) / (float) segments; // 0 at the leading edge, 1 at the trailing
-			float a0 = to - (to - from) * s0, a1 = to - (to - from) * s1;
-			float f0 = (1 - s0) * (1 - s0), f1 = (1 - s1) * (1 - s1);
-			float ci0 = Mth.sin(a0), co0 = Mth.cos(a0), ci1 = Mth.sin(a1), co1 = Mth.cos(a1);
-			SpellRender.vertex(vc, pose, ci0 * inner, 0, co0 * inner, rgb[0], rgb[1], rgb[2], alpha * f0 * 0.2f, 0, s0, SpellRender.FULL_BRIGHT, 0, 1, 0);
-			SpellRender.vertex(vc, pose, ci0 * outer, 0, co0 * outer, rgb[0], rgb[1], rgb[2], alpha * f0, 1, s0, SpellRender.FULL_BRIGHT, 0, 1, 0);
-			SpellRender.vertex(vc, pose, ci1 * outer, 0, co1 * outer, rgb[0], rgb[1], rgb[2], alpha * f1, 1, s1, SpellRender.FULL_BRIGHT, 0, 1, 0);
-			SpellRender.vertex(vc, pose, ci1 * inner, 0, co1 * inner, rgb[0], rgb[1], rgb[2], alpha * f1 * 0.2f, 0, s1, SpellRender.FULL_BRIGHT, 0, 1, 0);
+	private void soulRend(SpellField field, PoseStack pose, MultiBufferSource buffers, float age, float life) {
+		float length = field.height();
+		if (length < 0.5f) return;
+		float show = SpellRender.fade(age, life, 1, 8);
+		pose.mulPose(Axis.YP.rotationDegrees(-field.yaw()));
+		pose.mulPose(Axis.XP.rotationDegrees(field.pitch()));
+		int n = Math.max(6, (int) (length / 1.5f));
+		List<Vec3> line = new ArrayList<>();
+		float[] core = new float[n + 1], fire = new float[n + 1];
+		for (int i = 0; i <= n; i++) {
+			float d = length * i / n, root = Mth.clamp(d / 2.5f, 0.35f, 1);
+			line.add(new Vec3(0, 0, d));
+			core[i] = 0.13f * show * root * (1 + 0.15f * Mth.sin(age * 2.4f + i * 1.3f));
+			fire[i] = core[i] * 2.8f;
+		}
+		SpellRender.tube(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), pose.last(), line, fire, 8, GHOST_CYAN, 0.6f * show, 0.2f, 0, SpellRender.FULL_BRIGHT, null);
+		SpellRender.tube(buffers.getBuffer(SpellRender.clear(SpellRender.BEAM)), pose.last(), line, core, 8, NETHER_DARK, 0.9f * show, 0.25f, -age * 0.5f,
+				SpellRender.FULL_BRIGHT, null);
+		for (int w = 0; w < 2; w++) {
+			List<Vec3> wisp = new ArrayList<>();
+			int m = n * 3;
+			float[] radii = new float[m + 1];
+			for (int i = 0; i <= m; i++) {
+				float d = length * i / m, angle = d * 1.1f - age * 0.45f + w * Mth.PI, r = 0.42f * show * Mth.clamp(d / 2.5f, 0.2f, 1);
+				wisp.add(new Vec3(Mth.cos(angle) * r, Mth.sin(angle) * r, d));
+				radii[i] = 0.045f * show;
+			}
+			SpellRender.tube(buffers.getBuffer(SpellRender.clear(SpellRender.BEAM)), pose.last(), wisp, radii, 5, DEAD_MIST, 0.7f * show, 0.3f, age * 0.3f, SpellRender.FULL_BRIGHT, null);
+			SpellRender.tube(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), pose.last(), wisp, radii.clone(), 5, GHOST_TEAL, 0.4f * show, 0.2f, 0, SpellRender.FULL_BRIGHT, null);
 		}
 	}
 

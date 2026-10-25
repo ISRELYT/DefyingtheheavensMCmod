@@ -47,12 +47,13 @@ public enum GhostMethod implements StringRepresentable {
 	NINE_NETHER_SOUL_SUTRA("nine_nether_soul_sutra", 0, 20, 0, Realm.NASCENT_SOUL),
 	YAMA_JUDGEMENT("yama_judgement", 0, 8, 0, Realm.HEAVENLY_BEING),
 	SIX_PATHS_CANON("six_paths_canon", 0, 3, 0, Realm.FOUR_AXIS),
-	// The ghost path past Four Axis to True Immortal, as the heaven path (the user's ask, 2026-10-22): on the Peaks alone, hardly ever.
+	// The ghost path past Four Axis to True Immortal, as the heaven path (the user's ask, 2026-10-22): on the Peaks alone, hardly ever;
+	// True Immortal's on no stele at all, kept for the Immortal Realm (Realm#taughtInTheWorld, the user's rule of 2026-10-25).
 	TEN_THOUSAND_GHOSTS_UNION("ten_thousand_ghosts_union", 0, 2, 0, Realm.DAO_INTEGRATION),
 	VOID_RENDING_NETHER_CANON("void_rending_nether_canon", 0, 1, 0, Realm.VOID_SHATTERING),
 	HELL_FORGED_VESSEL_SUTRA("hell_forged_vessel_sutra", 0, 1, 0, Realm.SACRED_VESSEL),
 	UNDERWORLD_NIRVANA_SCRIPTURE("underworld_nirvana_scripture", 0, 1, 0, Realm.ENTERING_NIRVANA),
-	NETHERWORLD_IMMORTAL_CANON("netherworld_immortal_canon", 0, 1, 0, Realm.TRUE_IMMORTAL);
+	NETHERWORLD_IMMORTAL_CANON("netherworld_immortal_canon", 0, 0, 0, Realm.TRUE_IMMORTAL);
 
 	private final String id;
 	private final int steleWeight, peakWeight, knownWeight;
@@ -81,6 +82,9 @@ public enum GhostMethod implements StringRepresentable {
 	public Realm realm() { return realm; }
 
 	public boolean isFoundation() { return realm != null; }
+
+	/** Whether the worlds teach it (Realm#taughtInTheWorld: every one but True Immortal's foundation, the Immortal Realm's). */
+	public boolean taughtInTheWorld() { return realm == null || realm.taughtInTheWorld(); }
 
 	/** A foundation's place in the line: 1 for the Breathing Art up to 11 for True Immortal's; 0 for the others. */
 	public int tier() { return realm == null ? 0 : realm.ordinal() + 1; }

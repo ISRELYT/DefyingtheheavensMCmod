@@ -77,6 +77,13 @@ public final class Spells {
 	/** Six Paths Annihilation: reach and harm. */
 	public static final double ANNIHILATION_RADIUS = 12;
 	public static final float ANNIHILATION_DAMAGE = 40.0f;
+	/**
+	 * How long each spell's shape is seen (SpellConstruct: tools/spell-art Underworld, 2026-10-25), in ticks, its fading out included: the cold
+	 * fire kindled in the hands, the bolt's flight, the wraith a dash leaves, the wail's face, the tide, the ward's bones kept on its caster, the
+	 * core's burst, the decree, the ways through the dark, Yama's tablet, the wheel, the six pillars; Soul Rend's beam (a SpellField).
+	 */
+	static final int KINDLE_SHOWN = 18, BOLT_FLIGHT = 4, WRAITH_SHOWN = 14, WAIL_SHOWN = 28, TIDE_SHOWN = 26, WARD_SHOWN = 50, BURST_SHOWN = 22,
+			DECREE_SHOWN = 44, POOL_SHOWN = 20, VERDICT_SHOWN = 36, SAMSARA_SHOWN = 50, SIX_SHOWN = 36, REND_SHOWN = 12;
 
 	/** Ghost Fire on the hands: blows left, and until when. */
 	private static final Map<UUID, long[]> FIRE = new HashMap<>();
@@ -175,7 +182,8 @@ public final class Spells {
 			case HELL_CHAINS -> chains(p);
 			case SAMSARA_WHEEL -> samsara(p, s);
 			case SIX_PATHS_ANNIHILATION -> annihilation(p);
-			case PROCESSION_OF_TEN_THOUSAND_GHOSTS, GATE_OF_TEN_THOUSAND_GHOSTS, RIFT_TO_THE_NINE_NETHERS, BRIDGE_OF_NO_RETURN -> GhostSpells.cast(p, spell);
+			case PROCESSION_OF_TEN_THOUSAND_GHOSTS, GATE_OF_TEN_THOUSAND_GHOSTS, RIFT_TO_THE_NINE_NETHERS, BRIDGE_OF_NO_RETURN, MIRROR_OF_RETRIBUTION,
+					SOUL_LOCKING_PAGODA, BLACK_AND_WHITE_IMPERMANENCE, BOOK_OF_LIFE_AND_DEATH, FENGDU_WALLS_RISE, TEN_THOUSAND_SOULS_ASCEND -> GhostSpells.cast(p, spell);
 			default -> {
 				if (spell.isDual()) HeavenDemonSpells.cast(p, spell);
 				else HeavenSpells.cast(p, spell);
@@ -227,9 +235,10 @@ public final class Spells {
 		ServerLevel level = HeavenSpells.level(p);
 		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 0.8f, 1.6f);
 		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.0f, 1.2f);
-		// About the hands, a little ahead and below the eyes.
+		// About the hands, a little ahead and below the eyes: the cold fire kindled in them (SpellConstruct GHOST_KINDLE), flaring and dying down.
 		Vec3 hands = p.position().add(p.getViewVector(1.0f).multiply(0.7, 0, 0.7)).add(0, 0.9, 0);
-		level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, hands.x, hands.y, hands.z, 18, 0.3, 0.2, 0.3, 0.02);
+		level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, hands.x, hands.y, hands.z, 8, 0.3, 0.2, 0.3, 0.02);
+		shown(p, SpellConstruct.create(level, SpellConstruct.Kind.GHOST_KINDLE, hands, p.getYRot(), 0, KINDLE_SHOWN, p).spawn());
 		HeavenSpells.tell(p, Component.translatable(ModLang.MSG_GHOST_FIRE_ARMED, GHOST_FIRE_BLOWS));
 	}
 
@@ -291,8 +300,13 @@ public final class Spells {
 		EntityHitResult hit = ProjectileUtil.getEntityHitResult(level, p, from, to, new AABB(from, to).inflate(1.0),
 				e -> e instanceof LivingEntity living && living.isAlive() && e != p && !e.isSpectator() && !HeavenSpells.spared(p, living));
 		Vec3 end = hit != null ? hit.getLocation() : to;
-		// From an arm's length out, so the caster's own view isn't filled with its flames.
-		trail(level, from.add(look.scale(1.5)), end);
+		// From an arm's length out, so the caster's own view isn't filled with its flames: the bolt itself (SpellConstruct GHOST_BOLT) flying
+		// out along its streak, bursting where it ends.
+		Vec3 start = from.add(look.scale(1.5));
+		trail(level, start, end);
+		float[] way = HeavenSpells.facing(end.subtract(start));
+		SpellConstruct body = SpellConstruct.create(level, SpellConstruct.Kind.GHOST_BOLT, start, way[0], way[1], BOLT_FLIGHT + 14, p).spawn();
+		HeavenSpells.linger(new Flight(p, body, start, end, BOLT_FLIGHT, "burst", 4));
 		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.BLAZE_SHOOT, SoundSource.PLAYERS, 0.7f, 0.6f);
 		if (hit != null && hit.getEntity() instanceof LivingEntity target) {
 			// Burning only where it struck home (not a blow turned aside: PvP off, a ward).
@@ -318,8 +332,11 @@ public final class Spells {
 		p.fallDistance = 0;
 		SAFE_FALL.put(p.getUUID(), p.level().getGameTime() + DASH_SAFE_TICKS);
 		ServerLevel level = HeavenSpells.level(p);
-		level.sendParticles(ParticleTypes.SOUL, p.getX(), p.getY() + 1.0, p.getZ(), 14, 0.3, 0.6, 0.3, 0.02);
+		level.sendParticles(ParticleTypes.SOUL, p.getX(), p.getY() + 1.0, p.getZ(), 6, 0.3, 0.6, 0.3, 0.02);
 		level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, p.getX(), p.getY() + 0.5, p.getZ(), 10, 0.3, 0.3, 0.3, 0.05);
+		// A wraith of mist left where it stood (SpellConstruct SOUL_WRAITH), lunging after it and thinning away.
+		float yaw = along.horizontalDistanceSqr() < 1.0e-4 ? p.getYRot() : HeavenSpells.facing(along)[0];
+		shown(p, SpellConstruct.create(level, SpellConstruct.Kind.SOUL_WRAITH, p.position(), yaw, 0, WRAITH_SHOWN, p).spawn());
 		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.PHANTOM_FLAP, SoundSource.PLAYERS, 1.0f, 1.4f);
 	}
 
@@ -334,11 +351,8 @@ public final class Spells {
 		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.GHAST_SCREAM, SoundSource.PLAYERS, 2.0f, 0.45f);
 		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.WARDEN_SONIC_CHARGE, SoundSource.PLAYERS, 1.0f, 1.3f);
 		level.sendParticles(ParticleTypes.SONIC_BOOM, p.getX(), p.getY() + 1.2, p.getZ(), 1, 0, 0, 0, 0);
-		for (int i = 0; i < 48; i++) {
-			double a = Math.PI * 2 * i / 48;
-			level.sendParticles(ParticleTypes.SCULK_SOUL, p.getX() + Math.cos(a) * 1.5, p.getY() + 1.0, p.getZ() + Math.sin(a) * 1.5, 0,
-					Math.cos(a), 0.05, Math.sin(a), 0.25);
-		}
+		// A great face of the dead looming over it, wailing, the cries flying out to the wail's reach (SpellConstruct GHOST_WAIL).
+		shown(p, SpellConstruct.create(level, SpellConstruct.Kind.GHOST_WAIL, p.position(), p.getYRot(), 0, WAIL_SHOWN, p).spawn());
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(WAIL_RADIUS),
 				e -> !spared(p, e) && e.distanceToSqr(p) <= WAIL_RADIUS * WAIL_RADIUS)) {
 			target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, WAIL_TICKS, 1));
@@ -376,10 +390,7 @@ public final class Spells {
 		if (away.lengthSqr() > 1.0e-4) target.knockback(strength, -away.x, -away.z);
 	}
 
-	private static final org.joml.Vector3f SPRINGS_YELLOW = new org.joml.Vector3f(0.86f, 0.72f, 0.28f);
-	private static final org.joml.Vector3f BONE_WHITE = new org.joml.Vector3f(0.93f, 0.9f, 0.8f);
 	private static final org.joml.Vector3f BLOOD_RED = new org.joml.Vector3f(0.55f, 0.04f, 0.06f);
-	private static final org.joml.Vector3f CHAIN_GREY = new org.joml.Vector3f(0.3f, 0.3f, 0.34f);
 
 	/** Yellow Springs Tide: a surge of the springs' yellow water rushes out ahead, driving back and slowing all in it. */
 	private static void tide(LivingEntity p) {
@@ -389,14 +400,11 @@ public final class Spells {
 		look = look.normalize();
 		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.GENERIC_SPLASH, SoundSource.PLAYERS, 1.4f, 0.6f);
 		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.0f, 0.8f);
-		net.minecraft.core.particles.DustParticleOptions water = new net.minecraft.core.particles.DustParticleOptions(SPRINGS_YELLOW, 1.6f);
-		for (double d = 1; d <= TIDE_RANGE; d += 0.5) {
-			for (double a = -0.9; a <= 0.9; a += 0.3) {
-				Vec3 dir = look.yRot((float) a);
-				Vec3 at = p.position().add(dir.scale(d)).add(0, 0.3 + 0.15 * d, 0);
-				level.sendParticles(water, at.x, at.y, at.z, 1, 0.15, 0.25, 0.15, 0);
-				if (((int) (d * 2)) % 3 == 0) level.sendParticles(ParticleTypes.SPLASH, at.x, at.y, at.z, 2, 0.2, 0.1, 0.2, 0.1);
-			}
+		// The springs' water itself surging out, crashing at the tide's reach (SpellConstruct SPRINGS_TIDE); its spray where it breaks.
+		shown(p, SpellConstruct.create(level, SpellConstruct.Kind.SPRINGS_TIDE, p.position(), HeavenSpells.facing(look)[0], 0, TIDE_SHOWN, p).spawn());
+		for (double a = -0.9; a <= 0.9; a += 0.3) {
+			Vec3 at = p.position().add(look.yRot((float) a).scale(TIDE_RANGE * 0.85)).add(0, 0.6, 0);
+			level.sendParticles(ParticleTypes.SPLASH, at.x, at.y, at.z, 6, 0.4, 0.2, 0.4, 0.1);
 		}
 		Vec3 ahead = look;
 		for (LivingEntity target : around(p, TIDE_RANGE, e -> !spared(p, e))) {
@@ -415,11 +423,9 @@ public final class Spells {
 		ServerLevel level = HeavenSpells.level(p);
 		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.BONE_BLOCK_PLACE, SoundSource.PLAYERS, 1.2f, 0.6f);
 		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.ARMOR_EQUIP_NETHERITE, SoundSource.PLAYERS, 1.0f, 0.7f);
-		net.minecraft.core.particles.DustParticleOptions bone = new net.minecraft.core.particles.DustParticleOptions(BONE_WHITE, 1.2f);
-		for (int i = 0; i < 24; i++) {
-			double a = Math.PI * 2 * i / 24;
-			level.sendParticles(bone, p.getX() + Math.cos(a) * 0.8, p.getY() + 0.2 + (i % 6) * 0.3, p.getZ() + Math.sin(a) * 0.8, 1, 0, 0, 0, 0);
-		}
+		// The bones themselves closing round it (SpellConstruct MARROW_WARD), worn a while, then crumbling away.
+		SpellConstruct ward = SpellConstruct.create(level, SpellConstruct.Kind.MARROW_WARD, p.position(), p.yBodyRot, 0, WARD_SHOWN + 20, p).spawn();
+		HeavenSpells.linger(new Worn(p, ward, WARD_SHOWN, "crumble"));
 	}
 
 	/** Ghost Core Burst: the core flares, and everything near takes its cold fire. */
@@ -428,8 +434,10 @@ public final class Spells {
 		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.0f, 1.4f);
 		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.5f, 0.5f);
 		level.sendParticles(ParticleTypes.FLASH, p.getX(), p.getY() + 1, p.getZ(), 1, 0, 0, 0, 0);
-		for (int i = 0; i < 80; i++) {
-			double a = Math.PI * 2 * i / 80, b = (i % 8 - 3.5) * 0.35;
+		// Its core's fire flaring out of its breast and over the ground to the burst's reach (SpellConstruct CORE_BURST); sparks of it flung out.
+		shown(p, SpellConstruct.create(level, SpellConstruct.Kind.CORE_BURST, p.position(), 0, 0, BURST_SHOWN, p).spawn());
+		for (int i = 0; i < 24; i++) {
+			double a = Math.PI * 2 * i / 24, b = (i % 4 - 1.5) * 0.4;
 			level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, p.getX(), p.getY() + 1, p.getZ(), 0, Math.cos(a) * Math.cos(b), Math.sin(b), Math.sin(a) * Math.cos(b), 0.45);
 		}
 		for (LivingEntity target : around(p, BURST_RADIUS, e -> !spared(p, e))) {
@@ -444,7 +452,8 @@ public final class Spells {
 		ServerLevel level = HeavenSpells.level(p);
 		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.RAVAGER_ROAR, SoundSource.PLAYERS, 1.2f, 0.5f);
 		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.BELL_RESONATE, SoundSource.PLAYERS, 1.0f, 0.6f);
-		level.sendParticles(ParticleTypes.ENCHANT, p.getX(), p.getY() + 2.2, p.getZ(), 60, 0.6, 0.3, 0.6, 0.5);
+		// The decree unrolled in the air over it, the king's seal stamped under it (SpellConstruct KINGS_DECREE).
+		shown(p, SpellConstruct.create(level, SpellConstruct.Kind.KINGS_DECREE, p.position(), p.getYRot(), 0, DECREE_SHOWN, p).spawn());
 		for (LivingEntity target : around(p, DECREE_RADIUS, e -> foe(p, e))) {
 			target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, DECREE_TICKS, 1));
 			target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, DECREE_TICKS, 2));
@@ -467,12 +476,10 @@ public final class Spells {
 		Vec3 from = p.getEyePosition();
 		Vec3 to = beamEnd(p, REND_RANGE);
 		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.0f, 1.5f);
-		Vec3 look = p.getViewVector(1.0f);
-		double length = from.distanceTo(to);
-		for (double d = 1.5; d < length; d += 0.5) {
-			Vec3 at = from.add(look.scale(d));
-			level.sendParticles(ParticleTypes.SCULK_SOUL, at.x, at.y, at.z, 1, 0.05, 0.05, 0.05, 0.0);
-			if (((int) (d * 2)) % 4 == 0) level.sendParticles(ParticleTypes.SOUL, at.x, at.y, at.z, 1, 0.1, 0.1, 0.1, 0.01);
+		// The beam itself, from an arm's length out (SpellField SOUL_REND: the dark, its cold fire, wisps winding round it).
+		Vec3 look = p.getViewVector(1.0f), out = from.add(look.scale(1.5));
+		if (out.distanceToSqr(from) < to.distanceToSqr(from)) {
+			SpellField.create(level, SpellField.Kind.SOUL_REND, out, 0.5f, (float) out.distanceTo(to), REND_SHOWN, p).facing(p.getYRot(), p.getXRot()).spawn();
 		}
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, new AABB(from, to).inflate(1.0), e -> !spared(p, e))) {
 			if (target.getBoundingBox().inflate(0.4).clip(from, to).isEmpty()) continue;
@@ -487,8 +494,18 @@ public final class Spells {
 		Vec3 look = p.getViewVector(1.0f);
 		Vec3 eye = beamEnd(p, STEP_RANGE).subtract(look.scale(0.6));
 		Vec3 feet = eye.subtract(0, p.getEyeHeight(), 0);
-		// Back along the way until the body fits, never past where it started.
 		Vec3 start = p.position();
+		// Up out of the ground first: where it looks lies on the ground, the body under the eye's place there sinks into it (and backing off
+		// along a level look rose too little to leave it, all the way back to where it stood: no step at all, found checking its shape in
+		// game, 2026-10-25).
+		for (double up = 0; up <= p.getEyeHeight() + 0.3; up += 0.25) {
+			Vec3 at = feet.add(0, up, 0);
+			if (level.noCollision(p, p.getBoundingBox().move(at.subtract(start)))) {
+				feet = at;
+				break;
+			}
+		}
+		// Else back along the way until the body fits, never past where it started.
 		for (int i = 0; i < 64 && !level.noCollision(p, p.getBoundingBox().move(feet.subtract(start))); i++) {
 			feet = feet.subtract(look.scale(0.5));
 			if (feet.distanceToSqr(start) < 1) {
@@ -496,12 +513,19 @@ public final class Spells {
 				break;
 			}
 		}
-		level.sendParticles(ParticleTypes.REVERSE_PORTAL, start.x, start.y + 1, start.z, 30, 0.3, 0.6, 0.3, 0.05);
 		level.sendParticles(ParticleTypes.SCULK_SOUL, start.x, start.y + 1, start.z, 10, 0.3, 0.6, 0.3, 0.02);
 		p.teleportTo(feet.x, feet.y, feet.z);
 		p.fallDistance = 0;
 		SAFE_FALL.put(p.getUUID(), level.getGameTime() + STEP_SAFE_TICKS);
-		level.sendParticles(ParticleTypes.REVERSE_PORTAL, feet.x, feet.y + 1, feet.z, 30, 0.3, 0.6, 0.3, 0.05);
+		level.sendParticles(ParticleTypes.SCULK_SOUL, feet.x, feet.y + 1, feet.z, 10, 0.3, 0.6, 0.3, 0.02);
+		// The ground opened to the Nine Nethers where it stepped in and where it stepped out (SpellConstruct NETHER_POOL), closing after it.
+		if (feet.distanceToSqr(start) >= 1) {
+			for (Vec3 at : new Vec3[] {start, feet}) {
+				SpellConstruct pool = SpellConstruct.create(level, SpellConstruct.Kind.NETHER_POOL, at, 0, 0, POOL_SHOWN, p).spawn();
+				HeavenSpells.linger(new FireSpells.Delayed(p, POOL_SHOWN - SpellConstruct.FADE - 4, () -> pool.act("close")));
+				shown(p, pool);
+			}
+		}
 		level.playSound(null, start.x, start.y, start.z, SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.8f, 0.5f);
 		level.playSound(null, feet.x, feet.y, feet.z, SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.0f, 0.6f);
 	}
@@ -517,6 +541,15 @@ public final class Spells {
 		if (hit == null || !(hit.getEntity() instanceof LivingEntity target)) return;
 		boolean failing = target.getHealth() < target.getMaxHealth() / 2;
 		target.hurt(ModDamageTypes.ghostly(level, p), failing ? VERDICT_DAMAGE * 2 : VERDICT_DAMAGE);
+		// Yama's tablet of judgement cast down out of the sky and driven into the ground behind it, facing its judge (SpellConstruct
+		// YAMA_TABLET), sinking back into the ground after.
+		Vec3 away = target.position().subtract(p.position()).multiply(1, 0, 1);
+		Vec3 spot = target.position().add(away.lengthSqr() < 1.0e-4 ? Vec3.ZERO : away.normalize().scale(target.getBbWidth() / 2 + 0.9));
+		Vec3 ground = HeavenSpells.groundBelow(level, spot.add(0, 1.5, 0), 3, 8);
+		if (ground != null) spot = ground;
+		SpellConstruct tablet = SpellConstruct.create(level, SpellConstruct.Kind.YAMA_TABLET, spot, HeavenSpells.facing(p.position().subtract(spot))[0], 0, VERDICT_SHOWN, p).spawn();
+		HeavenSpells.linger(new FireSpells.Delayed(p, VERDICT_SHOWN - SpellConstruct.FADE - 4, () -> tablet.act("sink")));
+		shown(p, tablet);
 		net.minecraft.core.particles.DustParticleOptions blood = new net.minecraft.core.particles.DustParticleOptions(BLOOD_RED, 2.0f);
 		for (double y = 6; y > 0; y -= 0.4) {
 			level.sendParticles(blood, target.getX(), target.getY() + y, target.getZ(), 2, 0.15, 0.05, 0.15, 0);
@@ -529,7 +562,10 @@ public final class Spells {
 	private static void chains(LivingEntity p) {
 		ServerLevel level = HeavenSpells.level(p);
 		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.CHAIN_BREAK, SoundSource.PLAYERS, 1.5f, 0.5f);
-		net.minecraft.core.particles.DustParticleOptions chain = new net.minecraft.core.particles.DustParticleOptions(CHAIN_GREY, 1.6f);
+		// A way down to hell torn open at its feet (SpellConstruct HELL_GATE), and out of it a chain lashing to each foe and winding round it
+		// (HELL_CHAIN, drawn by hand: TendrilRenderer), however it is dragged, until it is let go.
+		SpellConstruct gate = SpellConstruct.create(level, SpellConstruct.Kind.HELL_GATE, p.position(), 0, 0, CHAINS_TICKS + 2 * SpellConstruct.FADE, p).spawn();
+		HeavenSpells.linger(new FireSpells.Delayed(p, CHAINS_TICKS + SpellConstruct.FADE, gate::dissolve));
 		for (LivingEntity target : around(p, CHAINS_RADIUS, e -> foe(p, e))) {
 			Vec3 in = p.position().subtract(target.position());
 			double distance = in.length();
@@ -537,12 +573,9 @@ public final class Spells {
 			target.hurtMarked = true;
 			target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, CHAINS_TICKS, 6));
 			target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, CHAINS_TICKS, 1));
-			Vec3 a = p.position().add(0, 1, 0), b = target.position().add(0, target.getBbHeight() / 2, 0);
-			for (double d = 0; d < 1; d += 0.25 / Math.max(1, distance)) {
-				Vec3 at = a.add(b.subtract(a).scale(d));
-				level.sendParticles(chain, at.x, at.y, at.z, 1, 0, 0, 0, 0);
-				if (((int) (d * distance * 4)) % 3 == 0) level.sendParticles(ParticleTypes.SMOKE, at.x, at.y, at.z, 1, 0.02, 0.02, 0.02, 0);
-			}
+			SpellConstruct chain = SpellConstruct.create(level, SpellConstruct.Kind.HELL_CHAIN, p.position().add(0, 0.1, 0), 0, 0, CHAINS_TICKS + SpellConstruct.FADE, p)
+					.target(target).spawn();
+			HeavenSpells.linger(new FireSpells.Delayed(p, CHAINS_TICKS, chain::dissolve));
 			level.playSound(null, target.getX(), target.getY(), target.getZ(), SoundEvents.CHAIN_PLACE, SoundSource.PLAYERS, 1.0f, 0.6f);
 		}
 	}
@@ -558,14 +591,11 @@ public final class Spells {
 		ServerLevel level = HeavenSpells.level(p);
 		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.BEACON_ACTIVATE, SoundSource.PLAYERS, 1.0f, 0.7f);
 		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1.5f, 0.5f);
-		for (int spoke = 0; spoke < 6; spoke++) {
-			double a = Math.PI * 2 * spoke / 6;
-			for (double r = 0.3; r <= 1.8; r += 0.3) {
-				level.sendParticles(ParticleTypes.END_ROD, p.getX() + Math.cos(a) * r, p.getY() + 1.1, p.getZ() + Math.sin(a) * r, 1, 0, 0, 0, 0);
-			}
-		}
-		for (int i = 0; i < 36; i++) {
-			double a = Math.PI * 2 * i / 36;
+		// The wheel of the six paths itself turning at its back (SpellConstruct SAMSARA_WHEEL), as it goes; a few motes of its light.
+		SpellConstruct wheel = SpellConstruct.create(level, SpellConstruct.Kind.SAMSARA_WHEEL, p.position(), p.yBodyRot, 0, SAMSARA_SHOWN, p).spawn();
+		HeavenSpells.linger(new Worn(p, wheel, SAMSARA_SHOWN - SpellConstruct.FADE, null));
+		for (int i = 0; i < 12; i++) {
+			double a = Math.PI * 2 * i / 12;
 			// GLOW, not SOUL: a soul particle comes out a dull brown face in the light.
 			level.sendParticles(ParticleTypes.GLOW, p.getX() + Math.cos(a) * 1.9, p.getY() + 1.1, p.getZ() + Math.sin(a) * 1.9, 1, 0, 0.02, 0, 0.01);
 		}
@@ -576,15 +606,88 @@ public final class Spells {
 		ServerLevel level = HeavenSpells.level(p);
 		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 2.0f, 0.5f);
 		level.playSound(null, p.getX(), p.getY(), p.getZ(), SoundEvents.WARDEN_SONIC_BOOM, SoundSource.PLAYERS, 1.5f, 0.6f);
+		// The six pillars of cold fire bursting up round it on the six paths' figure (SpellConstruct SIX_PATHS), falling in on all between them.
+		SpellConstruct pillars = SpellConstruct.create(level, SpellConstruct.Kind.SIX_PATHS, p.position(), 0, 0, SIX_SHOWN, p).spawn();
+		HeavenSpells.linger(new FireSpells.Delayed(p, SIX_SHOWN - SpellConstruct.FADE - 6, () -> pillars.act("collapse")));
+		shown(p, pillars);
+		SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, p.position().add(0, 0.2, 0), Vec3.ZERO, (float) ANNIHILATION_RADIUS, 0);
 		for (int path = 0; path < 6; path++) {
 			double a = Math.PI * 2 * path / 6;
-			double x = p.getX() + Math.cos(a) * ANNIHILATION_RADIUS * 0.6, z = p.getZ() + Math.sin(a) * ANNIHILATION_RADIUS * 0.6;
-			for (double y = 0; y < 10; y += 0.5) level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, x, p.getY() + y, z, 2, 0.2, 0.1, 0.2, 0.01);
-			level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, x, p.getY() + 1, z, 1, 0, 0, 0, 0);
+			double x = p.getX() + Math.sin(a) * ANNIHILATION_RADIUS * 0.6, z = p.getZ() + Math.cos(a) * ANNIHILATION_RADIUS * 0.6;
+			level.sendParticles(ParticleTypes.EXPLOSION, x, p.getY() + 1, z, 2, 0.4, 0.4, 0.4, 0);
 		}
 		for (LivingEntity target : around(p, ANNIHILATION_RADIUS, e -> !spared(p, e))) {
 			target.hurt(ModDamageTypes.ghostly(level, p), ANNIHILATION_DAMAGE);
 			push(p, target, 2.0);
+		}
+	}
+
+	// --- Their shapes (SpellConstruct) ---
+
+	/** {@code shape} let go in time to have faded out by the end of its life: its spell does nothing more with it. */
+	private static void shown(LivingEntity p, SpellConstruct shape) {
+		HeavenSpells.linger(new FireSpells.Delayed(p, Math.max(1, shape.life() - SpellConstruct.FADE), shape::dissolve));
+	}
+
+	/** A shape flown from {@code from} to {@code to} over {@code ticks}, facing its way; there it plays {@code move}, and goes {@code after} ticks on. */
+	static final class Flight extends HeavenSpells.Timed {
+		private final SpellConstruct body;
+		private final Vec3 from, to;
+		private final int ticks;
+		private final String move;
+
+		Flight(LivingEntity caster, SpellConstruct body, Vec3 from, Vec3 to, int ticks, String move, int after) {
+			super(caster, ticks + after);
+			this.body = body;
+			this.from = from;
+			this.to = to;
+			this.ticks = ticks;
+			this.move = move;
+		}
+
+		@Override
+		protected boolean run(long age, long now) {
+			if (age <= ticks) body.place(from.lerp(to, age / (double) ticks), body.getYRot(), body.getXRot());
+			if (age == ticks && move != null) body.act(move);
+			return true;
+		}
+
+		@Override
+		public void end() {
+			body.dissolve();
+		}
+	}
+
+	/**
+	 * A shape worn by its caster for {@code ticks} (kept on them as they go, turned as their body is); then it plays {@code move} (or none)
+	 * and fades out after it.
+	 */
+	static final class Worn extends HeavenSpells.Timed {
+		private final SpellConstruct shape;
+		private final int ticks;
+		private final String move;
+		private float yaw;
+
+		Worn(LivingEntity caster, SpellConstruct shape, int ticks, String move) {
+			super(caster, ticks + (move == null ? 0 : SpellConstruct.FADE));
+			this.shape = shape;
+			this.ticks = ticks;
+			this.move = move;
+			this.yaw = caster.yBodyRot;
+		}
+
+		@Override
+		protected boolean run(long age, long now) {
+			if (!casterHere()) return false;
+			yaw = net.minecraft.util.Mth.approachDegrees(yaw, caster.yBodyRot, 20);
+			shape.place(caster.position(), yaw, 0);
+			if (age == ticks && move != null) shape.act(move);
+			return true;
+		}
+
+		@Override
+		public void end() {
+			shape.dissolve();
 		}
 	}
 

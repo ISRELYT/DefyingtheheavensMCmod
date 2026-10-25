@@ -22,18 +22,30 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import software.bernie.geckolib.animatable.GeoEntity;
+import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.core.animatable.model.CoreGeoBone;
+import software.bernie.geckolib.core.animatable.model.CoreGeoModel;
+import software.bernie.geckolib.core.animation.AnimatableManager;
+import software.bernie.geckolib.core.animation.AnimationController;
+import software.bernie.geckolib.core.animation.AnimationProcessor;
+import software.bernie.geckolib.core.animation.AnimationState;
+import software.bernie.geckolib.core.animation.RawAnimation;
+import software.bernie.geckolib.core.state.BoneSnapshot;
+import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.UUID;
 
 /**
  * An earth golem raised by Summon Golem (a Nascent Soul's earth spell), or the Earthen Titan three times its size (Four Axis): a
- * hulk of packed earth and stone with molten amber in its cracks, floating a little off the ground. It flies (at
- * {@link #FLY_SHARE} of qi flight's pace), keeps by its caster, and fights for them: whatever strikes them or they strike, or a
- * monster that comes for them. It never harms its caster or their allies, and crumbles back to earth when its time is up or its
- * caster is gone. Never saved.
+ * hulk of packed earth and stone with molten amber in its cracks, floating a little off the ground (its GeckoLib model and animations,
+ * made with the spells' shapes: tools/spell-art, Axis#earthGolem). It flies (at {@link #FLY_SHARE} of qi flight's pace), keeps by its
+ * caster, and fights for them: whatever strikes them or they strike, or a monster that comes for them. It never harms its caster or their
+ * allies, and crumbles back to earth when its time is up or its caster is gone. Never saved.
  */
-public class EarthGolem extends PathfinderMob {
+public class EarthGolem extends PathfinderMob implements GeoEntity {
 	/** Its share of a cultivator's qi flight (vanilla's flying speed, about 0.55 blocks a tick at a sprint): 60%. */
 	public static final double FLY_SHARE = 0.6;
 	public static final double FLY_SPEED = 0.55 * FLY_SHARE;
@@ -45,12 +57,13 @@ public class EarthGolem extends PathfinderMob {
 	private static final int ATTACK_INTERVAL = 20;
 
 	private static final EntityDataAccessor<Float> SCALE = SynchedEntityData.defineId(EarthGolem.class, EntityDataSerializers.FLOAT);
-	/** Ticks since its fist last swung (the client's arm swing), counted on both sides from the server's word. */
-	private static final EntityDataAccessor<Integer> SWING = SynchedEntityData.defineId(EarthGolem.class, EntityDataSerializers.INT);
 	private static final EntityDataAccessor<Integer> LIFE = SynchedEntityData.defineId(EarthGolem.class, EntityDataSerializers.INT);
+	/** Ticks its animations ease into its blow (as a spell's shapes ease into a move: SpellConstruct). */
+	private static final int EASE = 3;
 
 	private UUID owner;
 	private int attackCooldown;
+	private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
 	public EarthGolem(EntityType<? extends EarthGolem> type, Level level) {
 		super(type, level);
@@ -89,7 +102,6 @@ public class EarthGolem extends PathfinderMob {
 	protected void defineSynchedData() {
 		super.defineSynchedData();
 		entityData.define(SCALE, 1.0f);
-		entityData.define(SWING, 100);
 		entityData.define(LIFE, 20 * 90);
 	}
 
@@ -108,9 +120,6 @@ public class EarthGolem extends PathfinderMob {
 	public float size() { return entityData.get(SCALE); }
 
 	public boolean isTitan() { return size() > 1.5f; }
-
-	/** Ticks since its last blow (for the arm's swing). */
-	public int sinceSwing() { return entityData.get(SWING); }
 
 	/** How long it lasts in all. */
 	public int life() { return entityData.get(LIFE); }
@@ -133,7 +142,6 @@ public class EarthGolem extends PathfinderMob {
 	public void tick() {
 		super.tick();
 		if (!level().isClientSide) {
-			entityData.set(SWING, Math.min(100, entityData.get(SWING) + 1));
 			LivingEntity caster = caster();
 			if (caster == null || !caster.isAlive() || caster.level() != level() || tickCount > life()) {
 				crumble();
@@ -203,7 +211,7 @@ public class EarthGolem extends PathfinderMob {
 	@Override
 	public boolean doHurtTarget(Entity target) {
 		if (!(level() instanceof ServerLevel level) || !(target instanceof LivingEntity living)) return false;
-		entityData.set(SWING, 0);
+		triggerAnim("main", "pound");
 		float damage = (float) getAttributeValue(Attributes.ATTACK_DAMAGE);
 		LivingEntity caster = caster();
 		boolean hit = living.hurt(ModDamageTypes.qi(level, QiElement.EARTH, isTitan() ? Realm.FOUR_AXIS : Realm.NASCENT_SOUL, this, caster), damage);
@@ -234,6 +242,43 @@ public class EarthGolem extends PathfinderMob {
 		}
 		return hurt;
 	}
+
+	private static final RawAnimation RISING = RawAnimation.begin().thenPlay("rise").thenLoop("float"), FLOATING = RawAnimation.begin().thenLoop("float"),
+			SPINNING = RawAnimation.begin().thenLoop("float_spin");
+	/** What its watcher's copy asks its animations for: its rise then its float if it is first seen being raised, else (and after any blow) its float. */
+	private RawAnimation going;
+
+	/**
+	 * Its animations (its model's: geo/spell/earth_golem), on one controller as a spell's shapes' are (SpellConstruct): its rise as it is
+	 * raised, then its float, easing {@link #EASE} ticks into a blow ("pound", called as it strikes) and going straight on from it; only its
+	 * float is asked for once a blow has played (GeckoLib reloads what is asked for as a called move ends). Its stones' wheeling on a second
+	 * controller, turning on through every blow.
+	 */
+	@Override
+	public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+		AnimationController<EarthGolem> main = new AnimationController<>(this, "main", 0, state -> {
+			AnimationProcessor.QueuedAnimation playing = state.getController().getCurrentAnimation();
+			if (going == null) going = tickCount < 10 ? RISING : FLOATING;
+			if (playing != null && playing.animation().name().equals("pound")) going = FLOATING;
+			return state.setAndContinue(going);
+		}) {
+			private boolean posed;
+
+			@Override
+			public void process(CoreGeoModel<EarthGolem> model, AnimationState<EarthGolem> state, Map<String, CoreGeoBone> bones, Map<String, BoneSnapshot> snapshots,
+					double seekTime, boolean crashWhenCantFindBone) {
+				if (getAnimationState() != State.TRANSITIONING) transitionLength = posed && triggeredAnimation != null && !hasAnimationFinished() ? EASE : 0;
+				super.process(model, state, bones, snapshots, seekTime, crashWhenCantFindBone);
+				if (getCurrentAnimation() != null) posed = true;
+			}
+		};
+		main.triggerableAnim("pound", RawAnimation.begin().thenPlay("pound"));
+		controllers.add(main);
+		controllers.add(new AnimationController<>(this, "spin", 0, state -> state.setAndContinue(SPINNING)));
+	}
+
+	@Override
+	public AnimatableInstanceCache getAnimatableInstanceCache() { return cache; }
 
 	@Override
 	public boolean causeFallDamage(float distance, float multiplier, DamageSource source) { return false; }

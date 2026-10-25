@@ -138,7 +138,6 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		EntityRendererRegistry.register(ModEntities.EARTH_GOLEM, EarthGolemRenderer::new);
 		EntityRendererRegistry.register(ModEntities.DIRT_TIDE, DirtTideRenderer::new);
 		EntityRendererRegistry.register(ModEntities.SPATIAL_TEAR, SpatialTearRenderer::new);
-		net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry.registerModelLayer(EarthGolemModel.LAYER, EarthGolemModel::definition);
 		net.fabricmc.fabric.api.client.rendering.v1.LivingEntityFeatureRendererRegistrationCallback.EVENT.register((type, renderer, helper, context) -> {
 			if (renderer.getModel() instanceof net.minecraft.client.model.HumanoidModel<?>) registerAuraLayer(renderer, helper, context);
 		});

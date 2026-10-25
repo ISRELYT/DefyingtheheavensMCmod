@@ -42,13 +42,13 @@ public class ElementSpellsGameTests implements FabricGameTest {
 		return p;
 	}
 
-	/** A master of every element's spells, Dao Integration's and Void Shattering's too: that realm's Grand Perfection, each element's method of it understood whole. */
+	/** A master of every element's spells, the last realms' too: True Immortal's Grand Perfection, each element's method of it understood whole. */
 	private static ServerPlayer grandMaster(GameTestHelper helper, BlockPos at) {
 		ServerPlayer p = HeavenSpellTesting.caster(helper, HeavenMethod.FIRE_FOUR_AXIS, at);
 		PlayerCultivation c = CultivationManager.get(p);
-		c.setState(Realm.VOID_SHATTERING, Stage.GRAND_PERFECTION, 0);
+		c.setState(Realm.TRUE_IMMORTAL, Stage.GRAND_PERFECTION, 0);
 		for (QiElement element : QiElement.five()) {
-			HeavenMethod method = HeavenMethod.of(element, Realm.VOID_SHATTERING);
+			HeavenMethod method = HeavenMethod.of(element, Realm.TRUE_IMMORTAL);
 			c.heaven().setMethod(method, method.layers(), 0);
 		}
 		CultivationManager.refresh(p);
@@ -99,7 +99,7 @@ public class ElementSpellsGameTests implements FabricGameTest {
 				CultivationManager.get(p).setQi(CultivationManager.get(p).maxQi());
 				// An ore in the floor for Mineral Purification to draw out (finding none, it takes no hold and pays nothing).
 				if (spell == Spell.MINERAL_PURIFICATION) level.setBlock(floor.centre().offset(5, -1, -3), Blocks.IRON_ORE.defaultBlockState(), 2);
-				helper.assertTrue(spell.isKnown(CultivationManager.get(p)), spell.getId() + " is known to a Void Shattering master of every element");
+				helper.assertTrue(spell.isKnown(CultivationManager.get(p)), spell.getId() + " is known to a True Immortal master of every element");
 				// Look at the mark; for a spell wanting a surface, at the floor before it.
 				HeavenSpellTesting.lookAt(p, HeavenSpells.middle(husk));
 				boolean paid = HeavenSpellTesting.cast(p, spell);
