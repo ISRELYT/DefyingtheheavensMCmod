@@ -330,6 +330,18 @@ public final class Lifespan {
 	}
 
 	/**
+	 * {@code p} is given {@code years} of another's life (Life Force Gain, its mode of years: WoodSpells.LifeMode), its span the longer, as
+	 * years won are (which lets a lifespan tribulation go).
+	 */
+	public static void give(ServerPlayer p, double years) {
+		if (years <= 0 || p.isCreative() || p.isSpectator()) return;
+		PlayerCultivation c = CultivationManager.own(p);
+		c.setExtraYears(c.extraYears() + years);
+		CultivationManager.markDirty(p.server);
+		check(p);
+	}
+
+	/**
 	 * {@code p} ages {@code years}, no further than the span's end (what is won after is won in full); then {@link #check}. A True
 	 * Immortal ({@link #endless}) never does: only {@link #check}, which lets a lifespan tribulation go.
 	 */

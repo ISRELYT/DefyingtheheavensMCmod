@@ -638,7 +638,7 @@ public final class MetalSpells {
 		Vec3 from = HeavenSpells.fromHands(p);
 		Vec3 look = p.getViewVector(1.0f);
 		Vec3 to = p.getEyePosition().add(look.scale(LIGHT_RANGE));
-		SpellField.create(level, SpellField.Kind.SWORD_LIGHT, from, 0.6f, (float) from.distanceTo(to), 14, p).facing(p.getYRot(), p.getXRot()).spawn();
+		SpellField.create(level, SpellField.Kind.SWORD_LIGHT, from, 0.6f, (float) from.distanceTo(to), 14, p).facing(p.getYRot(), p.getXRot()).fleeting().spawn();
 		Vec3 eye = p.getEyePosition();
 		for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, new net.minecraft.world.phys.AABB(eye, to).inflate(2), e -> !HeavenSpells.spared(p, e))) {
 			Vec3 mid = HeavenSpells.middle(e).subtract(eye);

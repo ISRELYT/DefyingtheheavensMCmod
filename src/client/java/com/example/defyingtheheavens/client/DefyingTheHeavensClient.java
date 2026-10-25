@@ -178,6 +178,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			@Override
 			public void onResourceManagerReload(ResourceManager manager) {
 				QiSenseClientHandler.closeMonochrome();
+				ImpermanenceFigures.forget(); // built again from their models
 			}
 		});
 

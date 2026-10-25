@@ -101,39 +101,59 @@ public class SpellAuraLayer<T extends LivingEntity, M extends HumanoidModel<T>> 
 		if (heat > 0.02f) meteorHeat(pose, buffers, parent, age, heat);
 	}
 
-	/** Minecraft's own soul fire (the ghost fire of the Nether's soul sand): its strip of 32 frames. */
-	private static final net.minecraft.resources.ResourceLocation SOUL_FIRE = new net.minecraft.resources.ResourceLocation("minecraft", "textures/block/soul_fire_0.png");
-	private static final int SOUL_FIRE_FRAMES = 32;
-	private static final float[] GHOST_CORE = {0.75f, 1.0f, 0.97f}, GHOST_GLOW = {0.2f, 0.85f, 0.9f}, GHOST_WISP = {0.55f, 1.0f, 0.95f};
+	private static final float[] GHOST_CORE = {0.78f, 1.0f, 1.0f}, GHOST_MID = {0.3f, 0.82f, 1.0f}, GHOST_DEEP = {0.16f, 0.5f, 1.0f};
 
 	/**
-	 * Ghost Fire kindled in the hands (SpellAura GHOST_FIRE, the user's ask, 2026-10-25: "go around my hands and not just two random balls"):
-	 * Minecraft's own soul fire wrapping the hand at the end of {@code arm} and licking up the forearm, a cold glow in the palm within a wider
-	 * teal one, and wisps of it circling the wrist, drifting up off it. {@code firstPerson}: one's own arm, drawn larger before the eye.
+	 * Ghost Fire's gauntlets: a shell of living flame over each forearm and hand (wrist to knuckles, a little off the skin) and a looser one
+	 * over it, as Flame Armour clothes the whole body, its fire scrolling up them (energySwirl); posed as the arm it wraps each frame.
+	 */
+	private static final ModelPart GHOST_RIGHT = gauntlet(-3, 0.55f), GHOST_LEFT = gauntlet(-1, 0.55f);
+	private static final ModelPart GHOST_RIGHT_OUTER = gauntlet(-3, 1.25f), GHOST_LEFT_OUTER = gauntlet(-1, 1.25f);
+
+	/** A forearm's shell for an arm whose box begins {@code x} pixels from its pivot (the right arm's -3, the left's -1), {@code grow} off it. */
+	private static ModelPart gauntlet(float x, float grow) {
+		net.minecraft.client.model.geom.builders.MeshDefinition mesh = new net.minecraft.client.model.geom.builders.MeshDefinition();
+		mesh.getRoot().addOrReplaceChild("arm", net.minecraft.client.model.geom.builders.CubeListBuilder.create().texOffs(0, 0)
+				.addBox(x, 3.5f, -2, 4, 8.5f, 4, new net.minecraft.client.model.geom.builders.CubeDeformation(grow)), net.minecraft.client.model.geom.PartPose.ZERO);
+		// Its texture as big as the box's unwrapped faces, so the fire's strip (FLAME, eight frames tall) is laid over it a frame at a time.
+		return net.minecraft.client.model.geom.builders.LayerDefinition.create(mesh, 16, 100).bakeRoot().getChild("arm");
+	}
+
+	/**
+	 * Ghost Fire kindled in the hands (SpellAura GHOST_FIRE). The user's ask, 2026-10-25, "just make it like the fire body coating skill vfx
+	 * but blue and for the hands": as Flame Armour (its living flame over the body, its tongues licking up off it) but cold blue and on the
+	 * forearms and hands only: two shells of moving flame over the forearm and hand of {@code arm} ({@link #GHOST_RIGHT}), tongues of blue fire
+	 * licking up off the knuckles, the back of the hand and the wrist, a cold glow in the palm, and a few sparks of it rising. {@code firstPerson}:
+	 * one's own arm before the eye (the tongues smaller).
 	 */
 	private static void ghostHands(PoseStack pose, MultiBufferSource buffers, ModelPart arm, int side, float age, float shown, boolean firstPerson) {
-		VertexConsumer fire = buffers.getBuffer(SpellRender.glow(SOUL_FIRE));
-		float scale = firstPerson ? 0.75f : 1;
-		// Flames wrapped round the hand: tongues from four points about it, and a ring of smaller ones about the wrist.
-		for (int k = 0; k < 4; k++) {
-			double a = Math.PI / 2 * k + age * 0.05;
-			Vector3f round = new Vector3f(side * 0.5f + (float) Math.cos(a) * 2.2f, 9.2f, (float) Math.sin(a) * 2.2f);
-			soulTongues(pose, fire, arm, round, 0.42f * scale, 0.62f * scale, age + k * 5, shown, 2);
-		}
-		soulTongues(pose, fire, arm, new Vector3f(side * 0.5f, 6.5f, 0), 0.5f * scale, 0.5f * scale, age + 3, shown, 3);
+		boolean right = side < 0;
+		float[] fv = SpellRender.frame(age, 0.5f, SpellRender.FLAME_FRAMES);
+		ModelPart inner = right ? GHOST_RIGHT : GHOST_LEFT, outer = right ? GHOST_RIGHT_OUTER : GHOST_LEFT_OUTER;
+		inner.copyFrom(arm);
+		outer.copyFrom(arm);
+		inner.render(pose, buffers.getBuffer(RenderType.energySwirl(SpellRender.FLAME, age * 0.012f, fv[0])), SpellRender.FULL_BRIGHT, OverlayTexture.NO_OVERLAY,
+				GHOST_MID[0], GHOST_MID[1], GHOST_MID[2], 0.95f * shown);
+		float[] fo = SpellRender.frame(age + 5, 0.6f, SpellRender.FLAME_FRAMES);
+		outer.render(pose, buffers.getBuffer(RenderType.energySwirl(SpellRender.FLAME, -age * 0.009f, fo[0])), SpellRender.FULL_BRIGHT, OverlayTexture.NO_OVERLAY,
+				GHOST_DEEP[0], GHOST_DEEP[1], GHOST_DEEP[2], 0.55f * shown);
+		float scale = firstPerson ? 0.7f : 1;
+		VertexConsumer flames = buffers.getBuffer(SpellRender.glow(SpellRender.FLAME));
+		blueTongues(pose, flames, arm, new Vector3f(side * 0.5f, 10.2f, 0), 0.5f * scale, 0.8f * scale, age, shown, 4);
+		blueTongues(pose, flames, arm, new Vector3f(side * 2.1f, 8.5f, 0), 0.34f * scale, 0.5f * scale, age + 4, shown, 2);
+		blueTongues(pose, flames, arm, new Vector3f(side * 0.5f, 6.0f, 1.6f), 0.3f * scale, 0.42f * scale, age + 9, shown, 2);
+		blueTongues(pose, flames, arm, new Vector3f(side * 0.5f, 6.0f, -1.6f), 0.3f * scale, 0.42f * scale, age + 13, shown, 2);
 		VertexConsumer glow = buffers.getBuffer(SpellRender.glow(SpellRender.GLOW));
 		Vector3f hand = at(arm, new Vector3f(side * 0.5f, 10, 0));
 		float breathe = 0.85f + 0.15f * Mth.sin(age * 0.3f);
-		crossed(pose, glow, hand, 1.2f * scale * breathe, 1.2f * scale * breathe, 0.3f, GHOST_GLOW, 0.5f * shown, 0, 0, 1, 1);
-		crossed(pose, glow, hand, 0.5f * scale, 0.5f * scale, 0.3f, GHOST_CORE, 0.85f * shown, 0, 0, 1, 1);
-		// Wisps circling the wrist, rising off it as they go round.
-		VertexConsumer wisps = buffers.getBuffer(SpellRender.glow(SpellRender.SPARK));
-		for (int i = 0; i < 5; i++) {
-			float t = (age * 0.045f + i / 5f) % 1;
-			double a = Math.PI * 2 * (t * 1.6 + i / 5.0) * side;
-			float r = (0.32f - 0.12f * t) * scale;
-			Vector3f wisp = new Vector3f(hand.x + (float) Math.cos(a) * r, hand.y - 0.1f - t * 0.75f * scale, hand.z + (float) Math.sin(a) * r);
-			crossed(pose, wisps, wisp, 0.13f * scale, 0.13f * scale, 0.3f, GHOST_WISP, shown * (1 - t) * 0.9f, 0, 0, 1, 1);
+		crossed(pose, glow, hand, 1.15f * scale * breathe, 1.15f * scale * breathe, 0.3f, GHOST_DEEP, 0.5f * shown, 0, 0, 1, 1);
+		crossed(pose, glow, hand, 0.45f * scale, 0.45f * scale, 0.3f, GHOST_CORE, 0.85f * shown, 0, 0, 1, 1);
+		VertexConsumer sparks = buffers.getBuffer(SpellRender.glow(SpellRender.SPARK));
+		for (int i = 0; i < 4; i++) {
+			float t = (age * 0.05f + i / 4f) % 1;
+			long s = i * 37L + (long) (age * 0.05f + i / 4f);
+			Vector3f spark = new Vector3f(hand.x + (SpellRender.hash(s) - 0.5f) * 0.5f * t, hand.y - t * 0.95f * scale, hand.z + (SpellRender.hash(s + 1) - 0.5f) * 0.5f * t);
+			crossed(pose, sparks, spark, 0.11f * scale, 0.11f * scale, 0.3f, GHOST_CORE, shown * (1 - t), 0, 0, 1, 1);
 		}
 	}
 
@@ -160,15 +180,16 @@ public class SpellAuraLayer<T extends LivingEntity, M extends HumanoidModel<T>> 
 		pose.popPose();
 	}
 
-	/** {@link #tongues} of soul fire (its own colours, a frame of its strip each), rising from {@code local} of {@code part}. */
-	private static void soulTongues(PoseStack pose, VertexConsumer vc, ModelPart part, Vector3f local, float width, float height, float age, float shown, int count) {
+	/** {@link #tongues} of Ghost Fire: Flame Armour's flame, cold blue, its heart pale. */
+	private static void blueTongues(PoseStack pose, VertexConsumer vc, ModelPart part, Vector3f local, float width, float height, float age, float shown, int count) {
 		Vector3f at = at(part, local);
 		for (int i = 0; i < count; i++) {
-			float jitterX = (SpellRender.hash(i * 7L + (long) (local.x * 31)) - 0.5f) * width * 0.5f;
-			float jitterZ = (SpellRender.hash(i * 13L + (long) (local.z * 31)) - 0.5f) * width * 0.5f;
-			float tall = height * (0.7f + 0.4f * Mth.sin(age * 0.37f + i * 2.3f)) * shown;
-			float[] fv = SpellRender.frame(age + i * 4, 0.6f, SOUL_FIRE_FRAMES);
-			crossed(pose, vc, new Vector3f(at.x + jitterX, at.y + 0.06f, at.z + jitterZ), width * shown, tall, 0, WHITE, 0.95f * shown, 0, fv[0], 1, fv[1]);
+			float jitterX = (SpellRender.hash(i * 7L + (long) (local.x * 31)) - 0.5f) * width * 0.6f;
+			float jitterZ = (SpellRender.hash(i * 13L + (long) (local.z * 31)) - 0.5f) * width * 0.6f;
+			float tall = height * (0.75f + 0.35f * Mth.sin(age * 0.4f + i * 2.1f)) * shown;
+			float[] fv = SpellRender.frame(age + i * 3, 0.5f, SpellRender.FLAME_FRAMES);
+			crossed(pose, vc, new Vector3f(at.x + jitterX, at.y + 0.08f, at.z + jitterZ), width * shown, tall, 0, i % 2 == 0 ? GHOST_MID : GHOST_CORE, 0.95f * shown,
+					0, fv[0], 1, fv[1]);
 		}
 	}
 

@@ -33,6 +33,16 @@ public final class ClientMethods {
 		return ClientCultivationData.get().netherworld();
 	}
 
+	/** Life Force Drain and Gain's next mode (WoodSpells.LifeMode), asked of the server (the Spells tab's switch). */
+	static void nextLifeMode() {
+		net.minecraft.network.FriendlyByteBuf buf = net.fabricmc.fabric.api.networking.v1.PacketByteBufs.create();
+		buf.writeByte(state().lifeMode().next().ordinal());
+		net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(com.example.defyingtheheavens.ModPackets.LIFE_MODE, buf);
+	}
+
+	/** Whether spells change the land for good in this world (ModGameRules#SPELL_GRIEFING), and whether this player may turn it. */
+	static boolean griefing = true, mayChangeGriefing;
+
 	/** Reads a METHODS packet (on the network thread) into an action for the client thread. */
 	static Runnable read(FriendlyByteBuf buf) {
 		int count = buf.readVarInt();
@@ -63,7 +73,12 @@ public final class ClientMethods {
 		int pathRank = buf.readVarInt();
 		double pathCultivation = buf.readDouble();
 		boolean cultivatingGhost = buf.readBoolean();
+		boolean griefs = buf.readBoolean(), mayGrief = buf.readBoolean();
+		com.example.defyingtheheavens.WoodSpells.LifeMode lifeMode = com.example.defyingtheheavens.WoodSpells.LifeMode.byIndex(buf.readByte());
 		return () -> {
+			state().setLifeMode(lifeMode);
+			griefing = griefs;
+			mayChangeGriefing = mayGrief;
 			HeavenState h = ClientCultivationData.get().heaven();
 			for (HeavenMethod method : HeavenMethod.values()) {
 				double[] entry = heaven.get(method);

@@ -61,7 +61,12 @@ public final class SpellFx {
 		 * element's ordinal + 16 x the spell's realm's), and, for one cast at something, a smaller one upright before them facing the
 		 * way (way: the look; zero for a spell on oneself).
 		 */
-		CAST_SEAL;
+		CAST_SEAL,
+		/**
+		 * The weight of the sea come down on a point (a Sea-Fixing Pearl's burst: the user's ask, 2026-10-25, of the pearls, "looks stupid"): a
+		 * column of sea water slamming down out of the air onto it and bursting out over the land in a ring of spray (a: its round).
+		 */
+		WATER_COLUMN;
 
 		public static Kind byIndex(int index) {
 			return index >= 0 && index < values().length ? values()[index] : FLAME_BURST;

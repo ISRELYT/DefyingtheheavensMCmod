@@ -183,6 +183,10 @@ public final class ModPackets {
 	public static final ResourceLocation SPELL_SOUND = new ResourceLocation(DefyingTheHeavens.MOD_ID, "spell_sound");
 	/** S2C: a spell's voice hushed (SpellSounds#hush): the voice, the handle (0: all its sounds), and how many ticks they fade over. */
 	public static final ResourceLocation SPELL_SOUND_HUSH = new ResourceLocation(DefyingTheHeavens.MOD_ID, "spell_sound_hush");
+	/** C2S: what Life Force Drain and Gain move (WoodSpells.LifeMode, by ordinal), from the Spells tab. */
+	public static final ResourceLocation LIFE_MODE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "life_mode");
+	/** C2S: the Spells tab's switch for whether spells change the land for good (the gamerule spellGriefing): on or off. */
+	public static final ResourceLocation SPELL_GRIEFING = new ResourceLocation(DefyingTheHeavens.MOD_ID, "spell_griefing");
 	/**
 	 * S2C: an open Storage Ring's space (StorageRings#send): the screen's id, the ring's grade, whether this begins the space afresh,
 	 * then its entries (each the item and how many, a flag before each), in as many packets as it takes.
@@ -279,6 +283,14 @@ public final class ModPackets {
 			int stat = buf.readVarInt();
 			int count = buf.readVarInt();
 			server.execute(() -> StatPoints.spend(player, StatPoints.Stat.byIndex(stat), Math.min(count, 1000)));
+		});
+		ServerPlayNetworking.registerGlobalReceiver(LIFE_MODE, (server, player, handler, buf, responseSender) -> {
+			WoodSpells.LifeMode mode = WoodSpells.LifeMode.byIndex(buf.readByte());
+			server.execute(() -> WoodSpells.setLifeMode(player, mode));
+		});
+		ServerPlayNetworking.registerGlobalReceiver(SPELL_GRIEFING, (server, player, handler, buf, responseSender) -> {
+			boolean on = buf.readBoolean();
+			server.execute(() -> ModGameRules.setSpellGriefing(player, on));
 		});
 		ServerPlayNetworking.registerGlobalReceiver(TOGGLE_MEDITATION,
 				(server, player, handler, buf, responseSender) -> server.execute(() -> MeditationManager.toggle(player)));
@@ -697,6 +709,10 @@ public final class ModPackets {
 		buf.writeVarInt(s.pathRank());
 		buf.writeDouble(s.pathCultivation());
 		buf.writeBoolean(s.cultivatingGhost());
+		// The Spells tab's switch for the land (ModGameRules#SPELL_GRIEFING): how it stands, and whether this player may turn it.
+		buf.writeBoolean(HeavenSpells.griefs(player.serverLevel()));
+		buf.writeBoolean(ModGameRules.mayChange(player));
+		buf.writeByte(s.lifeMode().ordinal());
 		ServerPlayNetworking.send(player, METHODS, buf);
 	}
 

@@ -120,7 +120,7 @@ public final class MeteorFlight {
 	 * (State#speed, the mean of its moves, which lags a flier setting off: a True Immortal's comes to a quarter of it as its client
 	 * starts clearing), or diving steeply, burrowing (Bulldozer#burrowing), close by...
 	 */
-	private static final double DOZE_SPEED_SHARE = 0.25;
+	public static final double DOZE_SPEED_SHARE = 0.25;
 	/**
 	 * ...and only for blocks in a cone ahead of where it looks: this far to the side of the line through its middle, its speed (a tick's
 	 * legs go round an L, Bulldozer) and this much more for each block out along it (a look a tick stale, a turn); and no more than

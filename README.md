@@ -3849,6 +3849,68 @@ runs).
 Tests: `SuggestionPicksGameTests` (its wounds' test in a batch of its own); the realms' hardy husks in the spell tests are now more than
 three times their caster's health, great beasts to them as every hardy husk was before.
 
+## The spell overhaul (2026-10-25)
+
+Two passes over the spells, from the user's lists (the first: "polish and quality over quantity ... spells need weight ... reuse the mod's
+ghosts"; the second, after playing it: what still looked wrong, and "look over and polish all the skills again old and new").
+
+### Switches
+
+- **Spell grief** (the gamerule `spellGriefing`, on by default; a **Grief: On/Off** button at the foot of the cultivation menu's Spells tab,
+  that an operator or the world's host may turn, every player told). Off, a player's spells leave the land as it was: no craters, cuts,
+  fissures, lakes or ice for good, their fire only a moment's (it catches nothing and puts itself out), the water they pour draining away.
+  What a spell sets down for a while (walls, trees, ice, cages) comes and goes either way. Meteor Flight keeps its own `meteorFlightSmashes`.
+- **Life Force's mode** (Life Force Drain and Gain; a switch beside them in the Spells tab, kept): what they move between a being and their
+  caster: its **health** (as before), its **qi** (another player's pool, or a being's life burnt into qi; given, the caster's own qi), or its
+  **years** of life (a player's only). A herb or a fruit is drawn on, or given, its years whatever the mode. The stream runs green, blue or gold.
+
+### Masteries
+
+From the 19th layer of a method (Core Formation's last), its element is mastered (`HeavenPassives#masters`): **fire's** own fire (the flames its
+spells set, the land they scorch, the burning they leave) does its caster no harm; **water's** caster walks on water (sneak to go in), takes no
+harm falling onto it, swims as anyone under it, and is borne up onto it as their head nears its face.
+
+### What spells are made of
+
+- **Of the world's own blocks** (`SpellConstruct.Form.BLOCKS`: laid out block by block, the same on every screen, meshed off the render thread
+  as the land is, drawn moving; `BlockMasses`, `EarthMasses`, `SpellMasses`): Falling Continent's land; Falling Mountain's peak; Buzhou's
+  pillar; the Seal of Ten Thousand Mountains; Gravestone Falls' stele and tortoise; the Nine Cauldrons; the Buried World's standing stones;
+  Xirang's clod; the Earth Veins' dome; the Hand of Houtu (its fingers curling joint by joint); Seven-Treasure Bodhi Branch's tree; the
+  falling ice moon and the crescent over the well (each shattering into pieces); Blazing Meteor's rock; the Soul-Locking Pagoda; Fengdu's
+  walls; the Naihe Bridge.
+- **Real blocks set down in the world:** Glacier of the First Age, a wall of ice that stands up slice by slice at its face and slumps away
+  at its back as it creeps on, always on the ground (cast from the air, the ground below), filling hollows and carving through rises.
+- **Drawn by hand** (`Form.DRAWN`: `SpellDrawn`, `SoulVortex`, `ImpermanenceFigures`): the Heaven-Demon Eclipse (sun and moon as discs from any
+  side, its beam poured from the moon's face as wide as its harm reaches and down to the ground), Ten Thousand Souls Ascend (Minecraft's own
+  soul faces up a whirlwind of ghost fire), the two Impermanences (painted figures, `models/figure/*.json`, `tools/spell-tex/figures.py`),
+  the Sea-Fixing Pearls and their columns of sea water, the Ocean-Sealing Vase's streams and whirlpool, the Nine Suns.
+- **The mod's ghosts** (`Form.GHOSTS`: `SpellGhosts`, the spirit and soul shaders): Soul Dash's afterimages and Ghostly Wail's giant (the
+  caster's own ghost), the Procession, the Nine Nethers, and the Heaven-Demon Avatar: a colossal projection of the caster's own body, gold on
+  its side of heaven and crimson on the demon's, whose own arm comes down out of the sky for each strike.
+- **GeckoLib, where a model serves** (creatures, vessels, weapons): the Azure Dragon now flies off along a path worked out alike on both sides
+  (`DragonFlight`), its twenty body segments laid along where its head has been each frame (`DragonPose`), rather than turned about whole.
+  Every modelled shape is drawn once unseen as a world is joined (`SpellConstructRenderer#warm`), so none is first made as its spell comes.
+
+### Feel
+
+- **Sounds** a lingering spell plays are its own voices (`SpellSounds`, `ClientSpellSounds`): they follow what they belong to and fade out as
+  the spell ends, never playing on after it.
+- **Shapes worn on a body** (a tortoise's shell, a mirror, a domain) are drawn where the body is drawn each frame, never a step behind it.
+- **Ground-running spells set off from the ground under their caster** however high they fly (`HeavenSpells#footing`).
+- **Ghost Fire** clothes the forearms and hands in moving blue flame (Flame Armour's fire, cold), in first person too.
+- **A lake's water** is poured into its crater over a while (`Devastation` job rate), not thousands of sources in one tick.
+- **Meteor Flight's bulldozer** clears the way on its flier's screen only once the server, going by what it sees, will take it too, and
+  never again a block the server put back (`MeteorFlightClient#watchTheWay`): set off at full tilt from a jump, the way was cleared, put back
+  on the flier, and cleared again, over and over.
+
+### New
+
+- **Return to the Bough** (wood, Four Axis, 400 qi): the Cultivation Fruit held fly up into the tree looked at and hang there again under its
+  leaves (six at most), each as old as when it was picked: on the bough a fruit ripens on with the years again.
+- **Seed of Withering Rebirth** is shot, plants only on the ground, and seals a being it strikes in a pod of roots and blossom.
+
+Previews (no game needed): `run/previews/animals` (the beasts' gaits), `run/previews/figures` (the two Impermanences turning and striking).
+
 ## Shader packs (Iris)
 
 The mod runs with Iris shader packs (checked with Iris 1.7.6, Sodium 0.5.13 and Complementary Reimagined r5.9.3 at its

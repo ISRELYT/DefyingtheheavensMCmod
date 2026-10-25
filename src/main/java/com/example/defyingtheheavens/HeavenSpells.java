@@ -534,10 +534,18 @@ public final class HeavenSpells {
 	 * whether it was set. What it replaced comes back (a replaceable plant comes back as air, water as water).
 	 */
 	public static boolean placeTemporary(ServerLevel level, BlockPos pos, BlockState state, int ticks) {
+		return placeTemporary(level, pos, state, ticks, 3);
+	}
+
+	/**
+	 * {@link #placeTemporary(ServerLevel, BlockPos, BlockState, int)}, set with {@code flags} (Level#setBlock's): 2 | 16, its neighbours not
+	 * told, for a great mass set down and taken up a slice a tick (a glacier's ice).
+	 */
+	public static boolean placeTemporary(ServerLevel level, BlockPos pos, BlockState state, int ticks, int flags) {
 		BlockState here = level.getBlockState(pos);
 		if (!here.canBeReplaced() || !level.isInWorldBounds(pos) || Formations.shelters(level, pos) || isTemporary(level, pos)) return false;
 		BlockState was = here.getFluidState().isEmpty() ? net.minecraft.world.level.block.Blocks.AIR.defaultBlockState() : here.getFluidState().createLegacyBlock();
-		if (!level.setBlock(pos, state, 3)) return false;
+		if (!level.setBlock(pos, state, flags)) return false;
 		Placed placed = new Placed(level, pos.immutable(), was, state, level.getGameTime() + Math.max(1, ticks));
 		TEMPORARY.computeIfAbsent(level, k -> new HashMap<>()).put(placed.pos(), placed);
 		DUE.add(placed);
@@ -552,11 +560,16 @@ public final class HeavenSpells {
 
 	/** Takes up a spell's block at {@code pos} at once (a wall shattered early). */
 	public static void removeTemporary(ServerLevel level, BlockPos pos) {
+		removeTemporary(level, pos, 3);
+	}
+
+	/** {@link #removeTemporary(ServerLevel, BlockPos)}, what it replaced set back with {@code flags} (any water it held with all of them). */
+	public static void removeTemporary(ServerLevel level, BlockPos pos, int flags) {
 		Map<BlockPos, Placed> here = TEMPORARY.get(level);
 		Placed placed = here == null ? null : here.remove(pos);
 		if (placed == null) return;
 		if (here.isEmpty()) TEMPORARY.remove(level);
-		restore(placed);
+		restore(placed, placed.was().getFluidState().isEmpty() ? flags : 3);
 	}
 
 	/**
@@ -599,12 +612,16 @@ public final class HeavenSpells {
 	}
 
 	private static void restore(Placed placed) {
+		restore(placed, 3);
+	}
+
+	private static void restore(Placed placed, int flags) {
 		ServerLevel level = placed.level();
 		if (!level.isLoaded(placed.pos())) {
 			level.getChunkAt(placed.pos()); // load it: a spell's block is never left behind
 		}
 		// Only what the spell set: if something else has taken the place since (a player's block), it stays.
-		if (level.getBlockState(placed.pos()).is(placed.placed().getBlock())) level.setBlock(placed.pos(), placed.was(), 3);
+		if (level.getBlockState(placed.pos()).is(placed.placed().getBlock())) level.setBlock(placed.pos(), placed.was(), flags);
 	}
 
 	// --- Carving the ground for good ---
@@ -868,6 +885,19 @@ public final class HeavenSpells {
 	}
 
 	/** The top of the first block with a collision shape at or below {@code at}, searching from {@code up} above to {@code down} below; or null. */
+	/**
+	 * The ground under {@code e} (as far down as {@link #FOOTING_DOWN}), or where it is if there is none so near: where a spell that runs out
+	 * along the land, or stands on it, sets off from, however high in the air its caster is (the user's ask, 2026-10-25: spells "track the
+	 * ground badly when cast in the air"; set off from a flier's feet, they ran along the sky, or snapped about to land found a few blocks down).
+	 */
+	public static Vec3 footing(LivingEntity e) {
+		Vec3 below = groundBelow(level(e), e.position().add(0, 0.5, 0), 1, FOOTING_DOWN);
+		return below != null ? below : e.position();
+	}
+
+	/** How far down a spell looks for the ground under its caster ({@link #footing}). */
+	public static final int FOOTING_DOWN = 96;
+
 	public static Vec3 groundBelow(ServerLevel level, Vec3 at, int up, int down) {
 		BlockPos start = BlockPos.containing(at.x, at.y + up, at.z);
 		for (int dy = 0; dy <= up + down; dy++) {

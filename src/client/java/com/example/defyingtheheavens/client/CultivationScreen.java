@@ -170,9 +170,20 @@ public class CultivationScreen extends Screen {
 	/** The Spells tab shows its wheel editor rather than its list (kept on reopening, as the Abilities tab's). */
 	private static boolean arrangingSpells;
 	private Button spellWheelButton;
+	/**
+	 * The Spells tab's switch for whether spells change the land for good (ModGameRules#SPELL_GRIEFING, the gamerule spellGriefing; the
+	 * user's word, 2026-10-25: "I need that grief toggle idk where it is I couldn't find it"), at its foot to the left: shown to all,
+	 * turned only by an operator or the world's host.
+	 */
+	private Button griefButton;
+	private static final int GRIEF_W = 84;
+	/** Which tooltip the switch was last given (0 none yet, 1 the switch's, 2 the locked one's). */
+	private int griefTipFor;
 	/** The Methods tab's Practise buttons and the Spells tab's Ready buttons, as drawn this frame, for {@link #mouseClicked}. */
 	private final List<RowButton<GhostMethod>> practiseButtons = new ArrayList<>();
 	private final List<RowButton<Spell>> readyButtons = new ArrayList<>();
+	/** Life Force Drain's and Gain's mode switches (what they move: health, qi or years; WoodSpells.LifeMode), as drawn this frame. */
+	private final List<RowButton<Spell>> lifeModeButtons = new ArrayList<>();
 	/** The Methods tab's heaven page's Practise buttons, and the two pages' own buttons (true: the heaven page). */
 	private final List<RowButton<HeavenMethod>> heavenPractiseButtons = new ArrayList<>();
 	private final List<RowButton<Boolean>> methodPageButtons = new ArrayList<>();
@@ -285,6 +296,7 @@ public class CultivationScreen extends Screen {
 						b -> ClientPlayNetworking.send(ModPackets.MEDITATION_SPEED, PacketByteBufs.create()))
 				.bounds(left + 12 + 112 + BUTTON_GAP, top + HEIGHT - 32, PACE_W, 20).build());
 		paceShown = 0;
+		griefTipFor = 0;
 
 		wheelButton = addRenderableWidget(Button.builder(Component.empty(), b -> {
 					arranging = !arranging;
@@ -299,6 +311,13 @@ public class CultivationScreen extends Screen {
 					updateButtons();
 				})
 				.bounds(left + (WIDTH - 112) / 2, top + HEIGHT - 32, 112, 20).build());
+
+		griefButton = addRenderableWidget(Button.builder(Component.empty(), b -> {
+					FriendlyByteBuf buf = PacketByteBufs.create();
+					buf.writeBoolean(!ClientMethods.griefing);
+					ClientPlayNetworking.send(ModPackets.SPELL_GRIEFING, buf);
+				})
+				.bounds(left + 12, top + HEIGHT - 32, GRIEF_W, 20).build());
 
 		updateButtons();
 		if (tab == Tab.JOURNAL) ClientJournal.request();
@@ -320,6 +339,14 @@ public class CultivationScreen extends Screen {
 		wheelButton.setMessage(Component.translatable(arranging ? ModLang.BTN_ABILITY_LIST : ModLang.BTN_ARRANGE_WHEEL));
 		spellWheelButton.visible = tab == Tab.SPELLS && ClientMethods.anyKnown();
 		spellWheelButton.setMessage(Component.translatable(arrangingSpells ? ModLang.BTN_SPELL_LIST : ModLang.BTN_ARRANGE_WHEEL));
+		griefButton.visible = tab == Tab.SPELLS;
+		griefButton.active = ClientMethods.mayChangeGriefing;
+		griefButton.setMessage(Component.translatable(ClientMethods.griefing ? ModLang.BTN_GRIEFING_ON : ModLang.BTN_GRIEFING_OFF));
+		boolean mayGrief = ClientMethods.mayChangeGriefing;
+		if (griefTipFor != (mayGrief ? 1 : 2)) {
+			griefTipFor = mayGrief ? 1 : 2;
+			griefButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable(mayGrief ? ModLang.TIP_GRIEFING : ModLang.TIP_GRIEFING_LOCKED)));
+		}
 		meditateButton.setMessage(Component.translatable(
 				ClientCultivationData.isMeditating() ? ModLang.BTN_STOP : ModLang.BTN_MEDITATE));
 		PlayerCultivation c = ClientCultivationData.get();
@@ -384,6 +411,7 @@ public class CultivationScreen extends Screen {
 		palette.clear();
 		practiseButtons.clear();
 		readyButtons.clear();
+		lifeModeButtons.clear();
 		heavenPractiseButtons.clear();
 		methodPageButtons.clear();
 		spellPalette.clear();
@@ -1986,6 +2014,12 @@ public class CultivationScreen extends Screen {
 				if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
 				return true;
 			}
+			for (RowButton<Spell> mode : lifeModeButtons) {
+				if (!mode.contains(mouseX, mouseY)) continue;
+				ClientMethods.nextLifeMode();
+				if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+				return true;
+			}
 			for (RowButton<Spell> ready : readyButtons) {
 				if (!ready.contains(mouseX, mouseY)) continue;
 				// Ready it; the readied one's button clears it.
@@ -2603,8 +2637,11 @@ public class CultivationScreen extends Screen {
 		boolean both = !s.ghost() && TwoPaths.walksHeavenAndDemon(ClientCultivationData.get());
 		// A heaven method's spells once it is known, to the living (the dead cast none of them).
 		PlayerCultivation self = ClientCultivationData.get();
+		// The elements' in the order of their realms, each element's together, each in its place in its realm (a spell added since, at the
+		// enum's end, among its own: Return to the Bough among the Four Axis wood spells); the ghost methods' and both paths' as they stand.
 		List<Spell> shown = Arrays.stream(Spell.values()).filter(spell -> spell.isDual() ? both
-				: spell.isHeaven() ? !s.ghost() && spell.taughtBy(self.heaven()) : s.knows(spell.method())).toList();
+				: spell.isHeaven() ? !s.ghost() && spell.taughtBy(self.heaven()) : s.knows(spell.method()))
+				.sorted(java.util.Comparator.comparingInt(CultivationScreen::spellOrder)).toList();
 		List<List<FormattedCharSequence>> descriptions = new ArrayList<>();
 		int contentHeight = 6;
 		for (int i = 0; i < shown.size(); i++) {
@@ -2634,6 +2671,14 @@ public class CultivationScreen extends Screen {
 				boolean visible = button.y() >= viewTop && button.y() + SWITCH_H <= viewBottom;
 				if (visible) readyButtons.add(button);
 				drawRowButton(g, button, label, visible && button.contains(mouseX, mouseY), readied ? 0x69F0AE : 0xB0B0B0);
+				if (spell == Spell.LIFE_FORCE_DRAIN || spell == Spell.LIFE_FORCE_GAIN) {
+					// What it moves (the user's ask, 2026-10-25: "the wood life force give and take ability modes, qi, hp and years of life").
+					Component mode = Component.translatable(s.lifeMode().key());
+					int mw = font.width(mode) + 10;
+					RowButton<Spell> modeButton = new RowButton<>(spell, rightEdge - w - 4 - mw, y - 3, mw);
+					if (visible) lifeModeButtons.add(modeButton);
+					drawRowButton(g, modeButton, mode, visible && modeButton.contains(mouseX, mouseY), s.lifeMode().colour());
+				}
 			}
 			y += 15;
 			Component cost = spell.isHeaven() || spell.isDual() ? Component.translatable(ModLang.SPELLS_QI_COST, Math.round(spell.qiCost()))
@@ -2660,6 +2705,17 @@ public class CultivationScreen extends Screen {
 		}
 		g.disableScissor();
 		scrollbar(g, viewTop, viewBottom, contentHeight, spellScroll, spellMaxScroll, mouseX, mouseY);
+	}
+
+	/** Where {@code spell} stands in the Spells tab: the ghost methods' first, then both paths', then the elements' by realm, element and place. */
+	private static int spellOrder(Spell spell) {
+		if (!spell.isHeaven()) return (spell.isDual() ? 10000 : 0) + spell.ordinal();
+		// Its element's place in its realm: where that element's first spell of the realm stands among the spells.
+		int realm = spell.layer() / MethodLayers.PER_REALM, first = spell.ordinal();
+		for (Spell other : Spell.values()) {
+			if (other.isHeaven() && other.element() == spell.element() && other.layer() / MethodLayers.PER_REALM == realm) first = Math.min(first, other.ordinal());
+		}
+		return 100000 + realm * 10000 + first * 20 + spell.layer() % MethodLayers.PER_REALM;
 	}
 
 	/** Ticks as seconds, a decimal only where it isn't whole: "2", "1.5". */

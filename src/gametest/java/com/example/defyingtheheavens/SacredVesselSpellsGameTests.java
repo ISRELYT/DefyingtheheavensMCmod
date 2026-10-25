@@ -185,25 +185,23 @@ public class SacredVesselSpellsGameTests implements FabricGameTest {
 		});
 	}
 
-	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE, batch = "vessel_branch", timeoutTicks = 300)
-	public void theBodhiBranchSweepsAcrossTheFront(GameTestHelper helper) {
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE, batch = "vessel_branch", timeoutTicks = 400)
+	public void theBodhiTreeSeizesAndItsTreasuresFall(GameTestHelper helper) {
 		HeavenSpellTesting.Floor floor = HeavenSpellTesting.floor(helper, 44, 14);
 		ServerLevel level = helper.getLevel();
 		List<LivingEntity> spawned = HeavenSpellTesting.spawned();
 		ServerPlayer p = caster(helper, QiElement.WOOD, floor.centre());
 		Vec3 home = p.position();
-		// Facing +z: one ahead, one off to the left (its stroke's start), one behind (out of its arc).
-		Husk ahead = husk(level, home.add(0, 0, 20), spawned), left = husk(level, home.add(12, 0, 8), spawned), behind = husk(level, home.add(0, 0, -15), spawned);
-		HeavenSpellTesting.lookAt(p, home.add(0, p.getEyeHeight(), 30));
-		int stone = floorLeft(level, floor.centre(), home.add(0, 0, 20), 3);
+		// Facing +z: the tree planted 20 ahead; one foe beside where it grows (seized, a treasure on it), one far behind its caster (out of its roots' reach).
+		Vec3 tree = home.add(0, 0, 20);
+		Husk near = husk(level, tree.add(4, 0, 2), spawned), far = husk(level, home.add(0, 0, -WoodSpells.BODHI_RADIUS), spawned);
+		HeavenSpellTesting.lookAt(p, tree);
 		helper.assertTrue(HeavenSpellTesting.cast(p, Spell.SEVEN_TREASURE_BODHI_BRANCH), "Seven-Treasure Bodhi Branch is cast, paid for");
-		helper.assertTrue(constructs(level, home, 8, SpellConstruct.Kind.BODHI_BRANCH).size() == 1, "...its branch forms by its caster");
-		helper.runAfterDelay(WoodSpells.BRANCH_FORMS + WoodSpells.BRANCH_SWEEP + 3, () -> {
+		helper.assertTrue(constructs(level, tree, 8, SpellConstruct.Kind.BODHI_TREE).size() == 1, "...its tree grows where its caster looks");
+		helper.runAfterDelay(WoodSpells.BODHI_GROWS + WoodSpells.BODHI_HOLDS + 7 * WoodSpells.BODHI_EVERY + 8, () -> {
 			try {
-				helper.assertTrue(ahead.getHealth() <= HEALTH - WoodSpells.BRANCH_DAMAGE + 1 && left.getHealth() <= HEALTH - WoodSpells.BRANCH_DAMAGE + 1,
-						"It sweeps through everything across its caster's front (" + ahead.getHealth() + ", " + left.getHealth() + ")");
-				helper.assertTrue(behind.getHealth() == behind.getMaxHealth(), "...not what stands behind them");
-				helper.assertTrue(floorLeft(level, floor.centre(), home.add(0, 0, 20), 3) < stone, "...and scours away the land it passes over");
+				helper.assertTrue(near.getHealth() <= HEALTH - WoodSpells.BODHI_TREASURE + 1, "Its treasures fall on the foes it holds (" + near.getHealth() + ")");
+				helper.assertTrue(far.getHealth() == far.getMaxHealth(), "...not on what stands beyond its roots' reach");
 			} catch (RuntimeException e) {
 				finish(helper, p, spawned, floor);
 				throw e;
@@ -296,7 +294,7 @@ public class SacredVesselSpellsGameTests implements FabricGameTest {
 		Husk buried = husk(level, point.add(4, 0, 0), spawned), beyond = husk(level, point.add(EarthSpells.XIRANG_RADIUS + 5, 0, 0), spawned);
 		HeavenSpellTesting.lookAt(p, point.add(0, 0.5, 0));
 		helper.assertTrue(HeavenSpellTesting.cast(p, Spell.XIRANG_SELF_GROWING_SOIL), "Xirang, the Self-Growing Soil is cast, paid for");
-		helper.assertTrue(constructs(level, home, 6, SpellConstruct.Kind.XIRANG).size() == 1, "...its clod in its caster's hands");
+		helper.assertTrue(constructs(level, home, 6, SpellConstruct.Kind.CLOD_MASS).size() == 1, "...its clod in its caster's hands");
 		helper.runAfterDelay(EarthSpells.XIRANG_FLIES + 25, () -> {
 			int mound = raised(level, floor.centre(), point, 8, (int) Math.ceil(EarthSpells.XIRANG_HEIGHT) + 2);
 			boolean held = HeavenSpells.lingering(p.getUUID(), WoodSpells.Bound.class).stream().anyMatch(b -> b.target == buried);
@@ -345,7 +343,7 @@ public class SacredVesselSpellsGameTests implements FabricGameTest {
 			int landed = 8 * EarthSpells.CAULDRON_EVERY + EarthSpells.CAULDRON_FALL;
 			helper.runAfterDelay(landed + 45 - (EarthSpells.CAULDRON_EVERY + EarthSpells.CAULDRON_FALL + 2), () -> {
 				try {
-					helper.assertTrue(constructs(level, point, EarthSpells.CAULDRONS_RING + 6, SpellConstruct.Kind.NINE_CAULDRON).size() == 9, "All nine stand");
+					helper.assertTrue(constructs(level, point, EarthSpells.CAULDRONS_RING + 6, SpellConstruct.Kind.CAULDRON_MASS).size() == 9, "All nine stand");
 					helper.assertTrue(pressed.getHealth() <= HEALTH - 3 * EarthSpells.CAULDRONS_PRESS + 1, "...pressing every foe inside the ring each second (" + pressed.getHealth() + ")");
 					helper.assertTrue(pressed.hasEffect(MobEffects.MOVEMENT_SLOWDOWN) && pressed.getEffect(MobEffects.MOVEMENT_SLOWDOWN).getAmplifier() >= 4, "...slowed to a crawl");
 					helper.assertTrue(beyond.getHealth() == beyond.getMaxHealth(), "...not what stands outside it");
@@ -373,12 +371,12 @@ public class SacredVesselSpellsGameTests implements FabricGameTest {
 		HeavenSpellTesting.lookAt(p, HeavenSpells.middle(near));
 		int stone = floorLeft(level, floor.centre(), near.position(), 2);
 		helper.assertTrue(HeavenSpellTesting.cast(p, Spell.TWENTY_FOUR_SEA_FIXING_PEARLS), "Twenty-Four Sea-Fixing Pearls is cast, paid for");
-		helper.assertTrue(constructs(level, home, WaterSpells.PEARLS_CIRCLE + 3, SpellConstruct.Kind.SEA_PEARL).size() == WaterSpells.PEARLS, "...its twenty-four pearls unwind round its caster");
+		helper.assertTrue(constructs(level, home, WaterSpells.PEARLS_CIRCLE + 3, SpellConstruct.Kind.PEARL).size() == WaterSpells.PEARLS, "...its twenty-four pearls unwind round its caster");
 		helper.runAfterDelay(WaterSpells.PEARLS_FORM + WaterSpells.PEARLS * WaterSpells.PEARL_EVERY + WaterSpells.PEARL_FLIGHT + 4, () -> {
 			try {
 				helper.assertTrue(near.getHealth() <= HEALTH - 10 * WaterSpells.PEARL_DAMAGE + 1 && far.getHealth() <= HEALTH - 10 * WaterSpells.PEARL_DAMAGE + 1,
 						"They fly off one after another at the foes, round and round them (" + near.getHealth() + ", " + far.getHealth() + ")");
-				helper.assertTrue(constructs(level, home, 60, SpellConstruct.Kind.SEA_PEARL).stream().allMatch(c -> c.life() <= c.tickCount + SpellConstruct.FADE), "...each gone as it bursts");
+				helper.assertTrue(constructs(level, home, 60, SpellConstruct.Kind.PEARL).stream().allMatch(c -> c.life() <= c.tickCount + SpellConstruct.FADE), "...each gone as it bursts");
 				helper.assertTrue(floorLeft(level, floor.centre(), near.position(), 2) < stone || near.getY() < home.y - 0.5, "...leaving little craters");
 			} catch (RuntimeException e) {
 				underNear.run();
@@ -564,7 +562,7 @@ public class SacredVesselSpellsGameTests implements FabricGameTest {
 		int stone = floorLeft(level, floor.centre(), point, 10);
 		boolean quiet = Devastation.pending() == 0;
 		helper.assertTrue(took(p, Spell.SOUL_LOCKING_PAGODA), "The Soul-Locking Pagoda is cast");
-		helper.assertTrue(constructs(level, point.add(0, GhostSpells.PAGODA_HIGH, 0), 4, SpellConstruct.Kind.SOUL_PAGODA).size() == 1, "...its pagoda high over the spot");
+		helper.assertTrue(constructs(level, point.add(0, GhostSpells.PAGODA_HIGH, 0), 4, SpellConstruct.Kind.PAGODA_MASS).size() == 1, "...its pagoda high over the spot");
 		helper.runAfterDelay(GhostSpells.PAGODA_FALL + 15, () -> {
 			// One locked in it tries to leave.
 			stray.teleportTo(point.x - 25, stray.getY(), point.z);

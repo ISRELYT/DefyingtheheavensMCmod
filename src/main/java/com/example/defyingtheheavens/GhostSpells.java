@@ -477,7 +477,7 @@ public final class GhostSpells {
 		Bridge(LivingEntity caster, Spell spell) {
 			super(caster, BRIDGE_SPANS * BRIDGE_EVERY + BRIDGE_TICKS + SpellConstruct.FADE);
 			this.way = Vec3.directionFromRotation(0, caster.getYRot());
-			this.from = caster.position();
+			this.from = HeavenSpells.footing(caster);
 			this.yaw = caster.getYRot();
 			this.high = HeavenSpells.highestNear(HeavenSpells.floorAlong(level, from, way, (int) BRIDGE_LENGTH + 2), (int) Math.ceil(BRIDGE_SPAN / 2));
 			this.spell = spell;
@@ -511,7 +511,9 @@ public final class GhostSpells {
 		/** Span {@code i} rises: every being by it struck, its blessings forgotten. */
 		private void rise(int i) {
 			Vec3 at = middle(i);
-			spans.add(SpellConstruct.create(level, SpellConstruct.Kind.NAIHE_BRIDGE, at, yaw, 0, (int) (end - level.getGameTime()), caster).sizedFor(spell).spawn());
+			// Of the world's own stone (SpellConstruct BRIDGE_MASS: SpellMasses; the user's ask, 2026-10-25, "polish all the skills again").
+			spans.add(SpellConstruct.create(level, SpellConstruct.Kind.BRIDGE_MASS, at, yaw, 0, (int) (end - level.getGameTime()), caster).size((float) BRIDGE_SPAN + 1)
+					.value((float) BRIDGE_WIDTH).tint(level.random.nextInt()).spawn());
 			for (LivingEntity e : HeavenSpells.aroundPoint(level, at, BRIDGE_SPAN / 2 + BRIDGE_WIDTH + 14, e -> !struck.contains(e) && !HeavenSpells.spared(caster, e))) {
 				if (!by(e, at)) continue;
 				struck.add(e);
@@ -609,15 +611,7 @@ public final class GhostSpells {
 				}
 				sound(mirror.position(), SoundEvents.SOUL_ESCAPE, 2.0f, 0.6f);
 			}
-			if (age % 3 == 0) {
-				// Its light along the look: a few rays out to its reach.
-				Vec3 from = mirror.position(), look = caster.getViewVector(1.0f);
-				for (int k = 0; k < 3; k++) {
-					Vec3 ray = look.xRot((float) Math.toRadians((level.random.nextDouble() - 0.5) * MIRROR_CONE * 1.6))
-							.yRot((float) Math.toRadians((level.random.nextDouble() - 0.5) * MIRROR_CONE * 1.6));
-					SpellFx.send(level, SpellFx.Kind.STREAK, from, ray.scale(MIRROR_RANGE * (0.6 + 0.4 * level.random.nextDouble())), 0, NETHER_TEAL, 160);
-				}
-			}
+			// (Its light along the look is drawn from its face by its watchers: SpellConstructRenderer#karmaLight.)
 			if (age == MIRROR_TICKS) {
 				mirror.act("flash");
 				for (LivingEntity e : shown()) {
@@ -656,7 +650,9 @@ public final class GhostSpells {
 			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
 			this.ground = below != null ? below : point;
 			this.sky = ground.add(0, PAGODA_HIGH, 0);
-			this.pagoda = SpellConstruct.create(level, SpellConstruct.Kind.SOUL_PAGODA, sky, caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
+			// Of the world's own blackstone, bone and iron, soul lanterns on its eaves (SpellConstruct PAGODA_MASS: SpellMasses; the user's ask, 2026-10-25).
+			this.pagoda = SpellConstruct.create(level, SpellConstruct.Kind.PAGODA_MASS, sky, caster.getYRot(), 0, (int) (end - start), caster).size((float) PAGODA_RADIUS)
+					.value((float) PAGODA_HEIGHT).tint(level.random.nextInt()).spawn();
 			sound(sky, SoundEvents.BELL_RESONATE, 4.0f, 0.3f);
 			sound(sky, SoundEvents.SOUL_ESCAPE, 3.0f, 0.3f);
 		}
@@ -748,10 +744,10 @@ public final class GhostSpells {
 	// --- Entering Nirvana: the Underworld Nirvana Scripture's ---
 
 	/**
-	 * Black and White Impermanence: the two soul-catchers of the underworld, the White who smiles and the Black who scowls, of the dead's mist and
-	 * ghost fire (SpellConstruct WHITE_IMPERMANENCE, BLACK_IMPERMANENCE, their own GeckoLib models), rise out of the mist to either side of the
-	 * soul its caster looks at ({@link #IMPERMANENCE_COMES}), {@link #IMPERMANENCE_BESIDE} from it, and come for it: the White sweeps its banner
-	 * down on it ({@link #IMPERMANENCE_STRIKE}, slowed); the Black's chain lashes out and binds it ({@link #IMPERMANENCE_HOOK} after), holding it
+	 * Black and White Impermanence: the two soul-catchers of the underworld, the White who smiles, in white mourning robes and a tall hat, its long
+	 * tongue hanging from its mouth, and the Black who scowls, in black (SpellConstruct WHITE_IMPERMANENCE_FIGURE, BLACK_IMPERMANENCE_FIGURE,
+	 * modelled and painted as beings are: ImpermanenceFigures), rise out of the mist to either side of the soul its caster looks at
+	 * ({@link #IMPERMANENCE_COMES}), {@link #IMPERMANENCE_BESIDE} from it, and come for it: the White brings its mourning staff down on it ({@link #IMPERMANENCE_STRIKE}, slowed); the Black's chain lashes out and binds it ({@link #IMPERMANENCE_HOOK} after), holding it
 	 * for {@link #IMPERMANENCE_HOLDS} at {@link #IMPERMANENCE_CHAIN} a second; and then they take their share of it, {@link #IMPERMANENCE_SHARE}
 	 * of its whole health (no more than {@link #IMPERMANENCE_MOST}). The dead take half as much again.
 	 */
@@ -767,11 +763,14 @@ public final class GhostSpells {
 			this.target = target;
 			this.at = point;
 			Vec3[] places = places();
-			// The two themselves, tall in their hats, drawn as the dead are (SpellConstruct WHITE_WUCHANG, BLACK_WUCHANG: SpellGhosts, the White in its
-			// bone-white light and the Black in ink smoke; the user's ask, 2026-10-25, they were models of their own): their size their height in men.
+			// The two themselves, tall in their robes and hats, modelled and painted as beings are (SpellConstruct WHITE_IMPERMANENCE_FIGURE,
+			// BLACK_IMPERMANENCE_FIGURE: ImpermanenceFigures; the user's ask, 2026-10-25, of their glowing ghosts before: "try a diff style"): their
+			// size their height in men.
 			int life = (int) (end - start);
-			this.white = SpellConstruct.create(level, SpellConstruct.Kind.WHITE_WUCHANG, places[0], facing(places[0]), 0, life, caster).size(IMPERMANENCE_SIZE).target(target).spawn();
-			this.black = SpellConstruct.create(level, SpellConstruct.Kind.BLACK_WUCHANG, places[1], facing(places[1]), 0, life, caster).size(IMPERMANENCE_SIZE).target(target).spawn();
+			this.white = SpellConstruct.create(level, SpellConstruct.Kind.WHITE_IMPERMANENCE_FIGURE, places[0], facing(places[0]), 0, life, caster)
+					.size(IMPERMANENCE_SIZE).target(target).spawn();
+			this.black = SpellConstruct.create(level, SpellConstruct.Kind.BLACK_IMPERMANENCE_FIGURE, places[1], facing(places[1]), 0, life, caster)
+					.size(IMPERMANENCE_SIZE).target(target).spawn();
 			sound(at, SoundEvents.SOUL_ESCAPE, 4.0f, 0.3f);
 			sound(at, SoundEvents.BELL_RESONATE, 3.0f, 0.4f);
 			sound(at, SoundEvents.SCULK_SHRIEKER_SHRIEK, 2.5f, 0.45f);
@@ -802,7 +801,7 @@ public final class GhostSpells {
 		private Vec3 blackHand(Vec3 place) {
 			Vec3 toward = at.subtract(place).multiply(1, 0, 1);
 			toward = toward.lengthSqr() < 1.0e-4 ? Vec3.ZERO : toward.normalize();
-			return place.add(0, IMPERMANENCE_SIZE * 1.35, 0).add(toward.scale(IMPERMANENCE_SIZE * 0.6));
+			return place.add(0, IMPERMANENCE_SIZE * 1.75, 0).add(toward.scale(IMPERMANENCE_SIZE * 0.95));
 		}
 
 		@Override
@@ -984,7 +983,9 @@ public final class GhostSpells {
 				Vec3 land = HeavenSpells.groundBelow(level, ground.add(out).add(0, 16, 0), 0, 48), spot = land != null ? land : ground.add(out);
 				// Its face toward the heart (its model's -z: the way its yaw looks), so it falls in on it.
 				float[] face = HeavenSpells.facing(ground.subtract(spot).multiply(1, 0, 1));
-				walls[k] = SpellConstruct.create(level, SpellConstruct.Kind.FENGDU_WALL, spot, face[0], 0, (int) (end - start), caster).sizedFor(Spell.FENGDU_WALLS_RISE).spawn();
+				// Of the world's own black stone, soul fire burning on it (SpellConstruct WALL_MASS: SpellMasses; the user's ask, 2026-10-25).
+				walls[k] = SpellConstruct.create(level, SpellConstruct.Kind.WALL_MASS, spot, face[0], 0, (int) (end - start), caster)
+						.size((float) (2 * inner * Math.tan(Math.PI / FENGDU_WALLS)) + 1).value((float) (FENGDU_RADIUS * 0.34)).tint(level.random.nextInt()).spawn();
 			}
 			sound(ground, SoundEvents.WARDEN_EMERGE, 5.0f, 0.4f);
 			sound(ground, SoundEvents.SOUL_ESCAPE, 5.0f, 0.4f);
@@ -1054,9 +1055,9 @@ public final class GhostSpells {
 	}
 
 	/**
-	 * Ten Thousand Souls Ascend: a helix of ten thousand souls, two strands of the dead winding up about one another, wisps of mist and ghost
-	 * fire and pale faces among them (SpellConstruct SOUL_HELIX, its own GeckoLib model), rises out of the dark where its caster looks
-	 * ({@link #SOULS_RISES}) and spirals for {@link #SOULS_TICKS}: every foe within {@link #SOULS_PULL} is drawn in to it, and those within
+	 * Ten Thousand Souls Ascend: a pit of the dark opens where its caster looks and a whirlwind of ghost fire winds up out of it, the souls of
+	 * the dead pouring up it by the hundred, wailing faces as they come up out of the dark that burn away into wisps of cold blue fire as they
+	 * climb (SpellConstruct SOUL_VORTEX, drawn by hand: SoulVortex); it rises ({@link #SOULS_RISES}) and spirals for {@link #SOULS_TICKS}: every foe within {@link #SOULS_PULL} is drawn in to it, and those within
 	 * {@link #SOULS_RADIUS} carried up round it as high as {@link #SOULS_HIGH} (a great beast only drawn, slowly), its souls tearing at them,
 	 * {@link #SOULS_HARM} of the dead's harm every {@link #SOULS_EVERY} ticks (more to the dead). Then it goes back down into the dark, dragging
 	 * them down with it ({@link #SOULS_DESCENDS}): {@link #SOULS_SLAM} to each.
@@ -1069,9 +1070,9 @@ public final class GhostSpells {
 			super(caster, SOULS_RISES + SOULS_TICKS + SOULS_DESCENDS + SOULS_AFTER);
 			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
 			this.ground = below != null ? below : point;
-			// The helix of the dead itself, drawn as the mod's ghosts are (SpellConstruct SOUL_ASCENT: SpellGhosts; the user's ask, 2026-10-25,
-			// "why are these retarded looking ghosts here"): its round its size, its height its value (it winds on above whom it carries up).
-			this.helix = SpellConstruct.create(level, SpellConstruct.Kind.SOUL_ASCENT, ground, caster.getYRot(), 0, (int) (end - start), caster)
+			// The vortex of souls itself, drawn by hand (SpellConstruct SOUL_VORTEX: SoulVortex; the user's ask, 2026-10-25, of its helix of the
+			// mod's ghosts: "try a diff style"): its round its size, its height its value (it winds on above whom it carries up).
+			this.helix = SpellConstruct.create(level, SpellConstruct.Kind.SOUL_VORTEX, ground, caster.getYRot(), 0, (int) (end - start), caster)
 					.size((float) SOULS_RADIUS).value((float) (SOULS_HIGH * 2.2)).spawn();
 			sound(ground, SoundEvents.SOUL_ESCAPE, 5.0f, 0.3f);
 			sound(ground, SoundEvents.WARDEN_EMERGE, 4.0f, 0.7f);

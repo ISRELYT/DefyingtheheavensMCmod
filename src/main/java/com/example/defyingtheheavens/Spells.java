@@ -506,7 +506,7 @@ public final class Spells {
 		// The beam itself, from an arm's length out (SpellField SOUL_REND: the dark, its cold fire, wisps winding round it).
 		Vec3 look = p.getViewVector(1.0f), out = from.add(look.scale(1.5));
 		if (out.distanceToSqr(from) < to.distanceToSqr(from)) {
-			SpellField.create(level, SpellField.Kind.SOUL_REND, out, 0.5f, (float) out.distanceTo(to), REND_SHOWN, p).facing(p.getYRot(), p.getXRot()).spawn();
+			SpellField.create(level, SpellField.Kind.SOUL_REND, out, 0.5f, (float) out.distanceTo(to), REND_SHOWN, p).facing(p.getYRot(), p.getXRot()).fleeting().spawn();
 		}
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, new AABB(from, to).inflate(1.0), e -> !spared(p, e))) {
 			if (target.getBoundingBox().inflate(0.4).clip(from, to).isEmpty()) continue;

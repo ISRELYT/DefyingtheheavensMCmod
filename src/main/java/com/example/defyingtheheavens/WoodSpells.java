@@ -58,6 +58,57 @@ public final class WoodSpells {
 	 * player's years while it lands on them, the drawer keeping Lifespan#DRAWN_KEPT of them (Lifespan#draw).
 	 */
 	public static final double GAIN_LIFE_YEARS = 10, DRAIN_LIFE_YEARS = 10;
+	/**
+	 * Life Force's qi (its mode {@link LifeMode#QI}): drawn out of another player's pool this much a second, {@link #QI_KEPT} of it the drawer's;
+	 * out of a being that keeps none, its life burnt into qi, {@link #QI_PER_LIFE} for each of its health taken; given, the caster's own qi this
+	 * much a second, to another's pool, or to a being that keeps none as life ({@link #LIFE_PER_QI} of its health for each).
+	 */
+	public static final double DRAIN_QI = 40, QI_KEPT = 0.6, QI_PER_LIFE = 8, GAIN_QI = 40, LIFE_PER_QI = 0.05;
+
+	/**
+	 * What Life Force Drain and Gain move between a being and their caster (the user's ask, 2026-10-25: "Add the wood life force give and take
+	 * ability modes, qi, hp and years of life"), chosen in the Spells tab and kept: its health (as they always did), its qi, or its years of
+	 * life (only a player's: only a player keeps a lifespan). A herb or a fruit is given, or drawn on for, its years whatever the mode.
+	 */
+	public enum LifeMode {
+		HEALTH(ModLang.LIFE_MODE_HEALTH, 0xFF8A80), QI(ModLang.LIFE_MODE_QI, 0x80D8FF), YEARS(ModLang.LIFE_MODE_YEARS, 0xFFE082);
+
+		private final String key;
+		private final int colour;
+
+		LifeMode(String key, int colour) {
+			this.key = key;
+			this.colour = colour;
+		}
+
+		/** Its name's lang key, and its switch's colour (0xRRGGBB). */
+		public String key() { return key; }
+		public int colour() { return colour; }
+
+		public LifeMode next() { return values()[(ordinal() + 1) % values().length]; }
+
+		public static LifeMode byIndex(int index) {
+			return index >= 0 && index < values().length ? values()[index] : HEALTH;
+		}
+
+		public static LifeMode byName(String name) {
+			for (LifeMode mode : values()) if (mode.name().equals(name)) return mode;
+			return HEALTH;
+		}
+	}
+
+	/** The Spells tab's switch (C2S life_mode): what {@code p}'s Life Force moves now, kept, and told. */
+	public static void setLifeMode(ServerPlayer p, LifeMode mode) {
+		CultivationManager.get(p).netherworld().setLifeMode(mode);
+		CultivationManager.markDirty(p.server);
+		Spells.sync(p);
+		HeavenSpells.tell(p, net.minecraft.network.chat.Component.translatable(ModLang.MSG_LIFE_MODE, net.minecraft.network.chat.Component.translatable(mode.key())));
+	}
+
+	/** What {@code caster}'s Life Force moves: their mode, a player's; a cultivator's always health. */
+	static LifeMode lifeMode(LivingEntity caster) {
+		return caster instanceof ServerPlayer p ? CultivationManager.get(p).netherworld().lifeMode() : LifeMode.HEALTH;
+	}
 	public static final double PRISON_RANGE = 20;
 	public static final int PRISON_TICKS = 4 * 20, PRISON_STRIKES = 3;
 	public static final float PRISON_DAMAGE = 1.5f, PRISON_THORNS = 2;
@@ -86,15 +137,15 @@ public final class WoodSpells {
 	public static final int TREE_TICKS = 12 * 20;
 	public static final float TREE_DRAIN = 10;
 	/**
-	 * Azure Dragon: how far off it rises (82), whom it catches (within {@link #DRAGON_RADIUS}, 18) and how hard, its climb (round a coil
-	 * {@link #DRAGON_COIL} across, {@link #DRAGON_TURNS} times, {@link #DRAGON_HEIGHT} up, 56, over {@link #DRAGON_RISE} ticks), its roar (its
-	 * model's roar takes 32 ticks, then it fades), how long it holds what it caught, and the fissures it tears (out to 51 and 8 deep). Its
-	 * reach and size by its realm (HeavenSpells#span), its wounds too (Devastation#sized).
+	 * Azure Dragon: how far off it rises (82), whom it catches (within {@link #DRAGON_RADIUS}, 18) and how hard, how long it carries them
+	 * and how many, and the fissures it tears (out to 51 and 8 deep); its flight is DragonFlight's. Its reach and size by its realm
+	 * (HeavenSpells#span), its wounds too (Devastation#sized).
 	 */
-	public static final double DRAGON_RANGE = HeavenSpells.span(Realm.DAO_INTEGRATION, 64), DRAGON_RADIUS = HeavenSpells.span(Realm.DAO_INTEGRATION, 14),
-			DRAGON_COIL = HeavenSpells.span(Realm.DAO_INTEGRATION, 14), DRAGON_TURNS = 1, DRAGON_HEIGHT = HeavenSpells.span(Realm.DAO_INTEGRATION, 44);
+	public static final double DRAGON_RANGE = HeavenSpells.span(Realm.DAO_INTEGRATION, 64), DRAGON_RADIUS = HeavenSpells.span(Realm.DAO_INTEGRATION, 14);
 	public static final float DRAGON_DAMAGE = 480;
-	public static final int DRAGON_RISE = 50, DRAGON_ROAR = 40, DRAGON_HOLD = 3 * 20, DRAGON_FISSURES = 14;
+	public static final int DRAGON_HOLD = 40, DRAGON_FISSURES = 14, DRAGON_CARRIES = 12;
+	/** Those it catches up are held on its body this far back from its head and on, this much further apart (blocks, for each of its size). */
+	public static final double DRAGON_CARRY_FROM = 5, DRAGON_CARRY_EVERY = 2.2;
 	public static final double DRAGON_REACH = Devastation.sized(Realm.DAO_INTEGRATION, 40), DRAGON_FISSURE_DEPTH = Devastation.sized(Realm.DAO_INTEGRATION, 6);
 	/** Myriad Woods Return to the Dao: the woods' reach round the spirit tree (41, by its realm), how long they hold, what each foe is drained a second. */
 	public static final double WOODS_RADIUS = HeavenSpells.span(Realm.DAO_INTEGRATION, 32);
@@ -222,6 +273,7 @@ public final class WoodSpells {
 				yield target != LifeTarget.TOLD && (target != null || HeavenSpells.refuse(p));
 			}
 			case MYSTERIOUS_BRISTLE_PRISON -> HeavenSpells.aimed(p, PRISON_RANGE) != null || HeavenSpells.refuse(p);
+			case RETURN_TO_THE_BOUGH -> boughTarget(p, true) != null;
 			case VERDANT_GROWTH -> p.onGround() || HeavenSpells.refuse(p);
 			// Nothing to seize where you look: refused, and nothing paid (it was 500 and 1200 qi spent on nothing).
 			case HEAVEN_PIERCING_BAMBOO -> !marksNear(p, BAMBOO_RANGE, BAMBOO_RADIUS, 1).isEmpty() || HeavenSpells.refuse(p);
@@ -243,6 +295,10 @@ public final class WoodSpells {
 			case LIFE_FORCE_DRAIN -> life(p, spell, true);
 			case LIFE_FORCE_GAIN -> life(p, spell, false);
 			case MYSTERIOUS_BRISTLE_PRISON -> prison(p, spell);
+			case RETURN_TO_THE_BOUGH -> {
+				BoughTarget target = boughTarget(p, false);
+				if (target != null) HeavenSpells.linger(new Bough(p, target));
+			}
 			case THOUSAND_LEAF_STORM -> HeavenSpells.linger(new LeafStorm(p, spell));
 			case ANCIENT_BARK_SKIN -> {
 				SpellAuras.put(p, SpellAura.ANCIENT_BARK_SKIN, BARK_TICKS);
@@ -511,6 +567,11 @@ public final class WoodSpells {
 
 	static LifeTarget lifeTarget(LivingEntity p, boolean drain, boolean tell) {
 		LivingEntity being = drain ? HeavenSpells.aimed(p, LIFE_RANGE) : HeavenSpells.aimedAny(p, LIFE_RANGE);
+		if (being != null && lifeMode(p) == LifeMode.YEARS && !(being instanceof ServerPlayer)) {
+			// Years only from (and to) one who keeps a lifespan.
+			if (tell) HeavenSpells.tell(p, net.minecraft.network.chat.Component.translatable(ModLang.MSG_LIFE_NO_YEARS));
+			return LifeTarget.TOLD;
+		}
 		if (being != null) return new LifeTarget(being, null, null);
 		BlockPos plant = plantLookedAt(p);
 		if (plant != null && drain && p.level().getBlockEntity(plant) instanceof CultivationFruitBlockEntity) plant = null;
@@ -542,7 +603,7 @@ public final class WoodSpells {
 		HeavenSpells.endLingering(p.getUUID(), Life.class);
 		LifeTarget target = lifeTarget(p, drain, false);
 		if (target == null || target == LifeTarget.TOLD) return;
-		HeavenSpells.linger(new Life(p, spell, drain, target.being(), target.plant(), target.hand()));
+		HeavenSpells.linger(new Life(p, spell, drain, target.being(), target.plant(), target.hand(), target.being() != null ? lifeMode(p) : LifeMode.YEARS));
 		HeavenSpells.sound(HeavenSpells.level(p), p.position(), drain ? SoundEvents.SCULK_CATALYST_BLOOM : SoundEvents.AMETHYST_BLOCK_RESONATE, 1.0f, 1.2f);
 	}
 
@@ -554,10 +615,16 @@ public final class WoodSpells {
 	 * Giving: the caster's own life runs out ({@link #GAIN_COST} a second, never below {@link #GAIN_FLOOR}) to heal a being; a herb or
 	 * fruit is given the caster's own years ({@link #GAIN_LIFE_YEARS} a second for {@link #GAIN_YEARS} of growth, never the last ten
 	 * of them). It breaks if they stray apart, or the one held leaves the hand; the years it moved are told as it ends.
+	 * <p>
+	 * On a being, it moves what its caster's {@link LifeMode} says: its health (as above; a player's years no longer go with it), its qi
+	 * ({@link #DRAIN_QI} out of another player's pool a second, or a being's life burnt into qi; given, {@link #GAIN_QI} of the caster's own),
+	 * or its years ({@link #DRAIN_LIFE_YEARS} out of another player a second, or {@link #GAIN_LIFE_YEARS} of the caster's own given them).
+	 * The stream runs green for health, blue for qi, gold for years.
 	 */
 	public static final class Life extends HeavenSpells.Timed {
 		private final Spell spell;
 		private final boolean drain;
+		private final LifeMode mode;
 		public final LivingEntity being;
 		public final BlockPos plant;
 		/** The hand holding the fruit or herb drawn on (or given to), or null. */
@@ -567,15 +634,16 @@ public final class WoodSpells {
 		private double yearsMoved;
 		private int growthGiven;
 
-		Life(LivingEntity caster, Spell spell, boolean drain, LivingEntity being, BlockPos plant, net.minecraft.world.InteractionHand hand) {
+		Life(LivingEntity caster, Spell spell, boolean drain, LivingEntity being, BlockPos plant, net.minecraft.world.InteractionHand hand, LifeMode mode) {
 			super(caster, LIFE_TICKS);
 			this.spell = spell;
 			this.drain = drain;
+			this.mode = mode;
 			this.being = being;
 			this.plant = plant;
 			this.hand = hand;
 			Vec3 at = being != null ? HeavenSpells.middle(being) : plant != null ? Vec3.atCenterOf(plant) : heldPoint(caster);
-			this.field = SpellField.create(level, SpellField.Kind.LIFE_STREAM, at, 0.5f, 1, LIFE_TICKS, caster).target(being).data(drain ? 1 : 0).spawn();
+			this.field = SpellField.create(level, SpellField.Kind.LIFE_STREAM, at, 0.5f, 1, LIFE_TICKS, caster).target(being).data((drain ? 1 : 0) | mode.ordinal() << 1).spawn();
 			if (being != null) SpellAuras.put(being, SpellAura.LIFE_FLOW, LIFE_TICKS);
 		}
 
@@ -602,14 +670,12 @@ public final class WoodSpells {
 			if (at.distanceToSqr(caster.position()) > LIFE_LEASH * LIFE_LEASH) return false;
 			field.setPos(at.x, at.y, at.z);
 			if (age % 10 != 9) return true;
-			if (drain) {
+			if (being != null && mode != LifeMode.HEALTH) {
+				if (!flow()) return false;
+			} else if (drain) {
 				if (being != null) {
 					float taken = HeavenSpells.strikeAgain(caster, being, DRAIN_PER_SECOND / 2, spell);
 					HeavenSpells.mend(caster, taken);
-					// Another player's years go with the life it draws (the user's ask, 2026-10-21); a beast's or an NPC's have no lifespan.
-					if (taken > 0 && being instanceof ServerPlayer victim && caster instanceof ServerPlayer drawer) {
-						yearsMoved += Lifespan.draw(drawer, victim, DRAIN_LIFE_YEARS / 2);
-					}
 				} else {
 					int years = plant != null ? plantAge(level, plant) : heldAge(held());
 					if (years <= 1) return false;
@@ -643,6 +709,59 @@ public final class WoodSpells {
 			return true;
 		}
 
+		/** Half a second of qi or years moved between its being and its caster ({@link #mode}). @return whether it flows on */
+		private boolean flow() {
+			PlayerCultivation mine = caster instanceof ServerPlayer p ? CultivationManager.get(p) : null;
+			if (mode == LifeMode.QI) {
+				if (drain) {
+					double gained;
+					if (being instanceof ServerPlayer victim) {
+						PlayerCultivation theirs = CultivationManager.get(victim);
+						double drawn = Math.min(DRAIN_QI / 2, theirs.getQi());
+						if (drawn <= 0) return false;
+						theirs.setQi(theirs.getQi() - drawn);
+						gained = drawn * QI_KEPT;
+					} else {
+						// A being that keeps no qi: its life burnt into the caster's.
+						gained = HeavenSpells.strikeAgain(caster, being, DRAIN_PER_SECOND / 2, spell) * QI_PER_LIFE;
+					}
+					if (mine != null) mine.setQi(Math.min(mine.maxQi(), mine.getQi() + gained));
+				} else {
+					if (mine != null && !((ServerPlayer) caster).isCreative()) {
+						if (mine.getQi() < GAIN_QI / 2) {
+							HeavenSpells.tell(caster, net.minecraft.network.chat.Component.translatable(ModLang.MSG_LIFE_NO_QI));
+							return false;
+						}
+						mine.setQi(mine.getQi() - GAIN_QI / 2);
+					}
+					if (being instanceof ServerPlayer receiver) {
+						PlayerCultivation theirs = CultivationManager.get(receiver);
+						theirs.setQi(Math.min(theirs.maxQi(), theirs.getQi() + GAIN_QI / 2));
+					} else {
+						HeavenSpells.mend(being, (float) (GAIN_QI / 2 * LIFE_PER_QI));
+					}
+				}
+				if (caster instanceof ServerPlayer p) CultivationManager.markDirty(p.server);
+				return true;
+			}
+			// Years: only between players (lifeTarget turned the rest away).
+			if (!(being instanceof ServerPlayer other) || !(caster instanceof ServerPlayer self)) return false;
+			if (drain) {
+				yearsMoved += Lifespan.draw(self, other, DRAIN_LIFE_YEARS / 2);
+				return true;
+			}
+			if (!self.isCreative()) {
+				if (Lifespan.left(CultivationManager.own(self)) - GAIN_LIFE_YEARS / 2 < Lifespan.WARN_YEARS) {
+					HeavenSpells.tell(self, net.minecraft.network.chat.Component.translatable(ModLang.MSG_LIFE_YEARS_TOO_FEW));
+					return false;
+				}
+				Lifespan.age(self, GAIN_LIFE_YEARS / 2);
+			}
+			Lifespan.give(other, GAIN_LIFE_YEARS / 2);
+			yearsMoved += GAIN_LIFE_YEARS / 2;
+			return true;
+		}
+
 		@Override
 		public void end() {
 			field.discard();
@@ -655,8 +774,141 @@ public final class WoodSpells {
 						Math.round(yearsMoved * Lifespan.DRAWN_KEPT)).withStyle(net.minecraft.ChatFormatting.DARK_GREEN));
 				victim.sendSystemMessage(net.minecraft.network.chat.Component.translatable(ModLang.MSG_LIFE_YEARS_LOST, caster.getDisplayName(), years)
 						.withStyle(net.minecraft.ChatFormatting.RED));
+			} else if (!drain && being instanceof ServerPlayer receiver) {
+				HeavenSpells.tell(caster, net.minecraft.network.chat.Component.translatable(ModLang.MSG_LIFE_YEARS_GIFTED, years, receiver.getDisplayName()));
+				receiver.sendSystemMessage(net.minecraft.network.chat.Component.translatable(ModLang.MSG_LIFE_YEARS_RECEIVED, caster.getDisplayName(), years)
+						.withStyle(net.minecraft.ChatFormatting.GREEN));
 			} else if (!drain) {
 				HeavenSpells.tell(caster, net.minecraft.network.chat.Component.translatable(ModLang.MSG_LIFE_YEARS_GIVEN, years, growthGiven));
+			}
+		}
+	}
+
+	// --- Return to the Bough ---
+
+	/**
+	 * Return to the Bough: how far off a tree may be, how far round the leaves looked at it seeks room to hang the fruit, how many it hangs at
+	 * once, and how long they take to fly to it (ticks).
+	 */
+	public static final double BOUGH_REACH = 24, BOUGH_ROUND = 5;
+	public static final int BOUGH_MOST = 6, BOUGH_FLIES = 14;
+
+	/** What Return to the Bough takes hold of: the hand holding the fruit, and the places under the leaves it will hang them, nearest first. */
+	record BoughTarget(net.minecraft.world.InteractionHand hand, List<BlockPos> spots) {}
+
+	/**
+	 * The fruit held and the bough looked at, for Return to the Bough; or null (and the caster told why, if {@code tell}): no Cultivation Fruit
+	 * held, no tree looked at, or no room under its leaves.
+	 */
+	static BoughTarget boughTarget(LivingEntity p, boolean tell) {
+		net.minecraft.world.InteractionHand hand = null;
+		for (net.minecraft.world.InteractionHand h : net.minecraft.world.InteractionHand.values()) {
+			if (p.getItemInHand(h).getItem() instanceof CultivationFruitItem) {
+				hand = h;
+				break;
+			}
+		}
+		if (hand == null) {
+			if (tell) HeavenSpells.tell(p, net.minecraft.network.chat.Component.translatable(ModLang.MSG_BOUGH_NO_FRUIT));
+			return null;
+		}
+		ServerLevel level = HeavenSpells.level(p);
+		BlockHitResult hit = HeavenSpells.lookedBlock(p, BOUGH_REACH);
+		BlockPos at = hit == null ? null : hit.getBlockPos();
+		if (at == null || !level.getBlockState(at).is(net.minecraft.tags.BlockTags.LEAVES) && !level.getBlockState(at).is(net.minecraft.tags.BlockTags.LOGS)) {
+			if (tell) HeavenSpells.tell(p, net.minecraft.network.chat.Component.translatable(ModLang.MSG_BOUGH_NO_TREE));
+			return null;
+		}
+		List<BlockPos> spots = new ArrayList<>();
+		int r = (int) Math.ceil(BOUGH_ROUND);
+		BlockState fruit = ModBlocks.CULTIVATION_FRUIT.defaultBlockState();
+		for (BlockPos pos : BlockPos.betweenClosed(at.offset(-r, -r, -r), at.offset(r, r, r))) {
+			if (pos.distSqr(at) > BOUGH_ROUND * BOUGH_ROUND || !level.isLoaded(pos)) continue;
+			if (!level.getBlockState(pos).isAir() || !fruit.canSurvive(level, pos) || sealedTreasury(level, pos)) continue;
+			if (p instanceof net.minecraft.world.entity.player.Player player && !level.mayInteract(player, pos)) continue;
+			spots.add(pos.immutable());
+		}
+		if (spots.isEmpty()) {
+			if (tell) HeavenSpells.tell(p, net.minecraft.network.chat.Component.translatable(ModLang.MSG_BOUGH_NO_TREE));
+			return null;
+		}
+		spots.sort(java.util.Comparator.comparingDouble(pos -> pos.distSqr(at)));
+		// Spread over the bough, not huddled: each a block or more from the last chosen.
+		List<BlockPos> chosen = new ArrayList<>();
+		for (BlockPos pos : spots) {
+			if (chosen.size() >= BOUGH_MOST) break;
+			boolean near = false;
+			for (BlockPos c : chosen) near |= c.distSqr(pos) < 2.5;
+			if (!near) chosen.add(pos);
+		}
+		return new BoughTarget(hand, chosen);
+	}
+
+	/**
+	 * Return to the Bough (the user's ask, 2026-10-25: "a mid to late realm wood spell that lets u put cultivation fruits back onto trees"): the
+	 * Cultivation Fruit its caster holds (as many as it finds room for, {@link #BOUGH_MOST} at most, of the one stack) fly from their hand on
+	 * streams of green light up into the tree they look at ({@link #BOUGH_FLIES}), within {@link #BOUGH_REACH}, and hang there again under its
+	 * leaves, each as old as it was picked: on the bough a fruit ripens on with the years again (a fruit picked never ages). Nothing hangs in a
+	 * sealed treasury, nor where its caster may not build.
+	 */
+	public static final class Bough extends HeavenSpells.Timed {
+		private final List<BlockPos> spots;
+		private final int years;
+		private final Vec3 from;
+
+		Bough(LivingEntity caster, BoughTarget target) {
+			super(caster, BOUGH_FLIES + 4);
+			net.minecraft.world.item.ItemStack held = caster.getItemInHand(target.hand());
+			int count = Math.min(held.getCount(), target.spots().size());
+			this.years = CultivationFruitItem.age(held);
+			this.spots = new ArrayList<>(target.spots().subList(0, count));
+			if (!(caster instanceof net.minecraft.world.entity.player.Player player && player.isCreative())) held.shrink(count);
+			this.from = HeavenSpells.fromHands(caster);
+			for (BlockPos spot : spots) {
+				Vec3 to = Vec3.atCenterOf(spot);
+				SpellFx.send(level, SpellFx.Kind.LIFE_MOTES, from, to.subtract(from), 1.4f, 0, 96);
+			}
+			sound(from, SoundEvents.AZALEA_LEAVES_PLACE, 1.5f, 1.2f);
+			sound(from, SoundEvents.AMETHYST_BLOCK_RESONATE, 1.2f, 1.4f);
+		}
+
+		@Override
+		protected boolean run(long age, long now) {
+			if (age < BOUGH_FLIES) {
+				// The fruit borne up on their streams of light.
+				if (age % 4 == 1) for (BlockPos spot : spots) {
+					Vec3 to = Vec3.atCenterOf(spot);
+					Vec3 here = from.lerp(to, (age + 1) / (double) BOUGH_FLIES).add(0, Math.sin(Math.PI * (age + 1) / BOUGH_FLIES) * 1.5, 0);
+					level.sendParticles(net.minecraft.core.particles.ParticleTypes.HAPPY_VILLAGER, here.x, here.y, here.z, 2, 0.15, 0.15, 0.15, 0);
+					level.sendParticles(net.minecraft.core.particles.ParticleTypes.CHERRY_LEAVES, here.x, here.y, here.z, 1, 0.2, 0.2, 0.2, 0);
+				}
+				return true;
+			}
+			if (age == BOUGH_FLIES) hang();
+			return true;
+		}
+
+		/** They hang on the bough again, each at its age; any that finds no room is given back. */
+		private void hang() {
+			int hung = 0;
+			BlockState fruit = ModBlocks.CULTIVATION_FRUIT.defaultBlockState();
+			for (BlockPos spot : spots) {
+				if (level.getBlockState(spot).isAir() && fruit.canSurvive(level, spot) && level.setBlock(spot, fruit, 3)
+						&& level.getBlockEntity(spot) instanceof CultivationFruitBlockEntity grown) {
+					grown.setAge(years);
+					hung++;
+					Vec3 at = Vec3.atCenterOf(spot);
+					SpellFx.send(level, SpellFx.Kind.LEAVES, at, Vec3.ZERO, 1.2f, 0, 96);
+					SpellFx.send(level, SpellFx.Kind.FLASH, at, Vec3.ZERO, 1.6f, 0xB8FFB0, 96);
+					sound(at, SoundEvents.AZALEA_LEAVES_PLACE, 1.2f, 0.9f + level.random.nextFloat() * 0.3f);
+				} else {
+					net.minecraft.world.item.ItemStack back = CultivationFruitItem.create(years);
+					if (!(caster instanceof net.minecraft.world.entity.player.Player player) || !player.getInventory().add(back)) caster.spawnAtLocation(back);
+				}
+			}
+			if (hung > 0) {
+				sound(Vec3.atCenterOf(spots.get(0)), SoundEvents.AMETHYST_BLOCK_CHIME, 1.5f, 1.3f);
+				HeavenSpells.tell(caster, net.minecraft.network.chat.Component.translatable(ModLang.MSG_BOUGH_HUNG, hung, years));
 			}
 		}
 	}
@@ -1044,82 +1296,112 @@ public final class WoodSpells {
 	// --- Dao Integration ---
 
 	/**
-	 * Azure Dragon: the Azure Dragon of the east (SpellConstruct AZURE_DRAGON, its own GeckoLib model) bursts out of the ground where its
-	 * caster looks and coils up into the sky. Whatever stands within {@link #DRAGON_RADIUS} of where it rises takes {@link #DRAGON_DAMAGE} and
-	 * is caught in its coils, carried up with it and held there {@link #DRAGON_HOLD} ticks (a great beast only struck); the land it bursts
-	 * from is torn open in {@link #DRAGON_FISSURES} fissures out to {@link #DRAGON_REACH}. At the top of its climb it roars.
+	 * Azure Dragon: the Azure Dragon of the east (SpellConstruct AZURE_DRAGON, its own GeckoLib model) bursts up out of the ground where its
+	 * caster looks and flies off into the sky, away the way they looked (DragonFlight: its body laid along the path its head has flown, a
+	 * serpent's flight; the user's ask, 2026-10-25, "don't make azure dragon like look up and roar, just make it fly off, also make it
+	 * smoother ... looks like its spinning instead of flying": it coiled once round where it rose, turned about whole, and roared at the
+	 * top). Whatever stands within {@link #DRAGON_RADIUS} of where it bursts out takes {@link #DRAGON_DAMAGE} and is caught up on its body,
+	 * carried up and away with it {@link #DRAGON_HOLD} ticks and then flung off (a great beast only struck); the land it bursts from is torn
+	 * open in {@link #DRAGON_FISSURES} fissures out to {@link #DRAGON_REACH}.
 	 */
 	public static final class Dragon extends HeavenSpells.Timed {
 		private final Spell spell;
-		private final Vec3 ground;
+		private final Vec3 ground, start;
+		private final DragonFlight.Path path;
 		private final SpellConstruct dragon;
-		private final java.util.Map<LivingEntity, Vec3> caught = new java.util.HashMap<>();
+		/** Those caught up on its body, and how far back along it from its head each is held (blocks). */
+		private final java.util.Map<LivingEntity, Double> caught = new java.util.LinkedHashMap<>();
+		private Vec3 lastHead;
 
 		Dragon(LivingEntity caster, Spell spell, Vec3 point) {
-			super(caster, DRAGON_RISE + DRAGON_ROAR);
+			super(caster, DragonFlight.TICKS);
 			this.spell = spell;
 			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 32);
 			this.ground = below != null ? below : point;
-			this.dragon = SpellConstruct.create(level, SpellConstruct.Kind.AZURE_DRAGON, coil(0), 0, 0, DRAGON_RISE + DRAGON_ROAR, caster).sizedFor(spell).spawn();
-			face(0);
-			// It bursts up out of the land, whatever stands round it caught and struck.
-			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, DRAGON_RADIUS, e -> !HeavenSpells.spared(caster, e))) {
+			// It flies off away from its caster, the way they looked at where it rises.
+			Vec3 away = ground.subtract(caster.position()).multiply(1, 0, 1);
+			float yaw = away.lengthSqr() < 4 ? caster.getYRot() : HeavenSpells.facing(away)[0];
+			float size = (float) HeavenSpells.greatness(spell.realm());
+			this.path = DragonFlight.of(yaw, size);
+			this.start = ground.add(0, -DragonFlight.UNDER, 0);
+			this.dragon = SpellConstruct.create(level, SpellConstruct.Kind.AZURE_DRAGON, start, yaw, -80, DragonFlight.TICKS, caster).size(size).value(yaw).spawn();
+			this.lastHead = start;
+			// It bursts up out of the land, whatever stands round it struck and caught up on its body, the nearest held nearest its head.
+			List<LivingEntity> near = HeavenSpells.aroundPoint(level, ground, DRAGON_RADIUS, e -> !HeavenSpells.spared(caster, e));
+			near.sort(java.util.Comparator.comparingDouble(e -> e.distanceToSqr(ground)));
+			double behind = DRAGON_CARRY_FROM * size;
+			for (LivingEntity e : near) {
 				HeavenSpells.strike(caster, e, DRAGON_DAMAGE, spell);
-				if (!HeavenSpells.greatBeast(caster, e)) caught.put(e, e.position().subtract(ground).multiply(1, 0, 1));
+				if (!HeavenSpells.greatBeast(caster, e) && caught.size() < DRAGON_CARRIES) {
+					caught.put(e, behind);
+					behind += DRAGON_CARRY_EVERY * size;
+				}
 				SpellFx.send(level, SpellFx.Kind.LEAVES, HeavenSpells.middle(e), Vec3.ZERO, 1.4f, 0);
 			}
 			Devastation.fissures(caster, level, ground, DRAGON_REACH, DRAGON_FISSURES, (int) Math.round(DRAGON_FISSURE_DEPTH), 4);
-			SpellFx.send(level, SpellFx.Kind.EARTH_BURST, ground, Vec3.ZERO, (float) DRAGON_RADIUS * 0.6f,
-					net.minecraft.world.level.block.Block.getId(Blocks.ROOTED_DIRT.defaultBlockState()));
+			int rooted = net.minecraft.world.level.block.Block.getId(Blocks.ROOTED_DIRT.defaultBlockState());
+			SpellFx.send(level, SpellFx.Kind.EARTH_BURST, ground, Vec3.ZERO, (float) DRAGON_RADIUS * 0.6f, rooted, 192);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) DRAGON_RADIUS, 0, 192);
-			sound(ground, SoundEvents.ENDER_DRAGON_GROWL, 3.0f, 1.5f);
-			sound(ground, SoundEvents.ROOTED_DIRT_BREAK, 3.0f, 0.5f);
-		}
-
-		/** Where its head is {@code t} ticks into its climb: once round a coil {@link #DRAGON_COIL} round its rising, up {@link #DRAGON_HEIGHT}. */
-		private Vec3 coil(double t) {
-			double f = Math.min(1, t / DRAGON_RISE), angle = f * Math.PI * 2 * DRAGON_TURNS;
-			return ground.add(Math.cos(angle) * DRAGON_COIL, -6 + (DRAGON_HEIGHT + 6) * (1 - (1 - f) * (1 - f)), Math.sin(angle) * DRAGON_COIL);
-		}
-
-		/** Turns its head along its climb. */
-		private void face(double t) {
-			Vec3 at = coil(t), way = coil(t + 1).subtract(at);
-			if (way.lengthSqr() < 1.0e-6) way = new Vec3(0, 1, 0);
-			float yaw = (float) Math.toDegrees(Math.atan2(-way.x, way.z));
-			float pitch = (float) -Math.toDegrees(Math.asin(Mth.clamp(way.normalize().y, -1, 1)));
-			dragon.place(at, yaw, pitch);
+			SpellFx.send(level, SpellFx.Kind.DUST, ground, Vec3.ZERO, (float) DRAGON_RADIUS * 0.7f, 0, 192);
+			sound(ground, SoundEvents.ENDER_DRAGON_GROWL, 3.5f, 1.45f);
+			sound(ground, SoundEvents.ROOTED_DIRT_BREAK, 4.0f, 0.45f);
+			sound(ground, SoundEvents.GENERIC_EXPLODE, 3.0f, 0.6f);
+			sound(ground, SoundEvents.AZALEA_LEAVES_BREAK, 3.0f, 0.5f);
 		}
 
 		@Override
 		protected boolean run(long age, long now) {
-			if (age <= DRAGON_RISE) face(age);
-			if (age == DRAGON_RISE) {
-				dragon.act("roar");
-				sound(dragon.position(), SoundEvents.ENDER_DRAGON_GROWL, 4.0f, 1.2f);
-				SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, dragon.position(), Vec3.ZERO, 12, 0, 192);
+			Vec3 head = start.add(path.at(age));
+			float[] face = HeavenSpells.facing(path.heading(age));
+			dragon.place(head, face[0], face[1]);
+			// Earth and leaves torn up after it as its body pours up out of the land, and leaves shed in its wake as it goes.
+			if (age < 30 && age % 3 == 0) {
+				SpellFx.send(level, SpellFx.Kind.EARTH_BURST, ground, Vec3.ZERO, 3.0f,
+						net.minecraft.world.level.block.Block.getId(Blocks.ROOTED_DIRT.defaultBlockState()), 192);
 			}
-			// Those in its coils go up with it, round its rising, and hang there till it lets go.
-			if (age <= DRAGON_HOLD && !caught.isEmpty()) {
-				double up = Math.min(dragon.getY() - 4, ground.y + DRAGON_HEIGHT * 0.7);
-				for (java.util.Iterator<java.util.Map.Entry<LivingEntity, Vec3>> it = caught.entrySet().iterator(); it.hasNext(); ) {
-					java.util.Map.Entry<LivingEntity, Vec3> held = it.next();
+			if (age % 4 == 0 && age < DragonFlight.TICKS - 20) SpellFx.send(level, SpellFx.Kind.LEAVES, head, Vec3.ZERO, 2.2f, 0, 256);
+			// The rush of its flight, and the beat of its body through the air, fading as it goes.
+			if (age % 13 == 6) {
+				float off = (float) Math.max(0.3, 1 - age / (double) DragonFlight.TICKS);
+				sound(head, SoundEvents.ENDER_DRAGON_FLAP, 4.0f * off, 0.55f + level.random.nextFloat() * 0.1f);
+			}
+			if (age == 8) sound(head, SoundEvents.ELYTRA_FLYING, 3.0f, 0.6f);
+			if (age == 46) sound(head, SoundEvents.ENDER_DRAGON_GROWL, 4.0f, 1.25f);
+			// Those caught up on it go with it, held on its body, until it lets them fall.
+			if (age < DRAGON_HOLD && !caught.isEmpty()) {
+				Vec3 way = head.subtract(lastHead);
+				for (java.util.Iterator<java.util.Map.Entry<LivingEntity, Double>> it = caught.entrySet().iterator(); it.hasNext(); ) {
+					java.util.Map.Entry<LivingEntity, Double> held = it.next();
 					LivingEntity e = held.getKey();
 					if (!HeavenSpells.present(e, level)) {
 						it.remove();
 						continue;
 					}
-					Vec3 want = ground.add(held.getValue().scale(0.5)).add(0, Math.max(0, up - ground.y), 0);
-					HeavenSpells.move(e, want.subtract(e.position()).scale(0.3));
+					Vec3 on = start.add(path.behind(age, held.getValue())).add(0, 0.6, 0);
+					HeavenSpells.move(e, on.subtract(e.position()).scale(0.55).add(way.scale(0.45)));
 					e.resetFallDistance();
 				}
 			}
-			if (age == DRAGON_HOLD) for (LivingEntity e : caught.keySet()) HeavenSpells.safeFall(e, 60); // let go: what falls is a fall
+			if (age == DRAGON_HOLD) {
+				// Flung off its body as it climbs on away.
+				Vec3 heading = path.heading(age);
+				for (LivingEntity e : caught.keySet()) {
+					if (!HeavenSpells.present(e, level)) continue;
+					Vec3 off = new Vec3(level.random.nextGaussian(), 0, level.random.nextGaussian()).normalize().scale(0.6);
+					HeavenSpells.move(e, heading.scale(0.9).add(off).add(0, 0.3, 0));
+					HeavenSpells.safeFall(e, 240);
+					SpellFx.send(level, SpellFx.Kind.LEAVES, HeavenSpells.middle(e), Vec3.ZERO, 1.8f, 0, 192);
+				}
+				caught.clear();
+			}
+			lastHead = head;
 			return true;
 		}
 
 		@Override
 		public void end() {
+			for (LivingEntity e : caught.keySet()) if (HeavenSpells.present(e, level)) HeavenSpells.safeFall(e, 240);
+			caught.clear();
 			dragon.dissolve();
 		}
 	}
@@ -1181,8 +1463,7 @@ public final class WoodSpells {
 		Woods(LivingEntity caster, Spell spell) {
 			super(caster, WOODS_TICKS);
 			this.spell = spell;
-			Vec3 below = HeavenSpells.groundBelow(level, caster.position().add(0, 1, 0), 2, 16);
-			this.at = below != null ? below : caster.position();
+			this.at = HeavenSpells.footing(caster);
 			this.tree = SpellConstruct.create(level, SpellConstruct.Kind.DAO_TREE, at, caster.getYRot(), 0, WOODS_TICKS, caster).sizedFor(spell).spawn();
 			this.rooting = new Rooting(caster, level, at, 1.5f);
 			sound(at, SoundEvents.AZALEA_LEAVES_PLACE, 3.0f, 0.5f);

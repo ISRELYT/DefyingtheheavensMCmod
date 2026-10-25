@@ -295,7 +295,7 @@ public class TrueImmortalSpellsGameTests implements FabricGameTest {
 		HeavenSpellTesting.lookAt(p, HeavenSpells.middle(heart));
 		int stone = floorLeft(level, floor.centre(), point, 10);
 		helper.assertTrue(HeavenSpellTesting.cast(p, Spell.FALLING_CONTINENT), "Falling Continent is cast, paid for");
-		helper.assertTrue(constructs(level, point.add(0, EarthSpells.CONTINENT_HIGH, 0), 8, SpellConstruct.Kind.FALLING_CONTINENT).size() == 1, "...a continent high over the spot");
+		helper.assertTrue(constructs(level, point.add(0, EarthSpells.CONTINENT_HIGH, 0), 8, SpellConstruct.Kind.CONTINENT_MASS).size() == 1, "...a continent high over the spot");
 		thenCheck(helper, EarthSpells.CONTINENT_FALLS + 3, p, spawned, floor, thinned, () -> {
 			helper.assertTrue(heart.getHealth() <= HEALTH - EarthSpells.CONTINENT_DAMAGE + 1 && edge.getHealth() <= HEALTH - EarthSpells.CONTINENT_DAMAGE + 1,
 					"It falls on everything under it (" + heart.getHealth() + ", " + edge.getHealth() + ")");
@@ -316,7 +316,7 @@ public class TrueImmortalSpellsGameTests implements FabricGameTest {
 				aside = husk(level, home.add(WaterSpells.GLACIER_HALF + 6, 0, 58), spawned);
 		HeavenSpellTesting.lookAt(p, home.add(0, p.getEyeHeight(), 40));
 		helper.assertTrue(HeavenSpellTesting.cast(p, Spell.GLACIER_OF_THE_FIRST_AGE), "Glacier of the First Age is cast, paid for");
-		helper.assertTrue(constructs(level, home.add(0, 0, WaterSpells.GLACIER_START), 6, SpellConstruct.Kind.PRIMAL_GLACIER).size() == 1, "...its wall of ice rising before its caster");
+		helper.assertTrue(!HeavenSpells.lingering(p.getUUID(), WaterSpells.Glacier.class).isEmpty(), "...its wall of ice rising before its caster");
 		thenCheck(helper, WaterSpells.GLACIER_RISES + WaterSpells.GLACIER_TICKS + WaterSpells.GLACIER_CALVES / 2 + 3, p, spawned, floor, () -> {}, () -> {
 			helper.assertTrue(ground.getHealth() <= HEALTH - 4 * WaterSpells.GLACIER_GRIND + 1, "It grinds over what stands in its way (" + ground.getHealth() + ")");
 			helper.assertTrue(calved.getHealth() <= HEALTH - WaterSpells.GLACIER_CALVE + 1, "...and its face calves on what stands before it at its end (" + calved.getHealth() + ")");
@@ -423,7 +423,7 @@ public class TrueImmortalSpellsGameTests implements FabricGameTest {
 		HeavenSpellTesting.lookAt(p, HeavenSpells.middle(heart));
 		helper.assertTrue(Spell.FENGDU_WALLS_RISE.isKnown(CultivationManager.get(p)), "Its ghost path carries the Netherworld Immortal Sovereign Canon to its spell");
 		helper.assertTrue(took(p, Spell.FENGDU_WALLS_RISE), "Fengdu's Walls Rise is cast");
-		helper.assertTrue(constructs(level, point, GhostSpells.FENGDU_RADIUS + 6, SpellConstruct.Kind.FENGDU_WALL).size() == GhostSpells.FENGDU_WALLS, "...its walls rising round the spot");
+		helper.assertTrue(constructs(level, point, GhostSpells.FENGDU_RADIUS + 6, SpellConstruct.Kind.WALL_MASS).size() == GhostSpells.FENGDU_WALLS, "...its walls rising round the spot");
 		helper.runAfterDelay(GhostSpells.FENGDU_RISES + GhostSpells.FENGDU_TICKS + GhostSpells.FENGDU_FALLS + 3, () -> {
 			try {
 				float all = GhostSpells.FENGDU_TICKS / GhostSpells.FENGDU_EVERY * GhostSpells.FENGDU_HARM + GhostSpells.FENGDU_FALL;
@@ -447,7 +447,7 @@ public class TrueImmortalSpellsGameTests implements FabricGameTest {
 		Husk held = husk(level, point, spawned), beyond = husk(level, point.add(-GhostSpells.SOULS_PULL - 6, 0, 0), spawned);
 		HeavenSpellTesting.lookAt(p, HeavenSpells.middle(held));
 		helper.assertTrue(took(p, Spell.TEN_THOUSAND_SOULS_ASCEND), "Ten Thousand Souls Ascend is cast");
-		helper.assertTrue(constructs(level, point, 6, SpellConstruct.Kind.SOUL_HELIX).size() == 1, "...its helix of souls rising where its caster looks");
+		helper.assertTrue(constructs(level, point, 6, SpellConstruct.Kind.SOUL_VORTEX).size() == 1, "...its helix of souls rising where its caster looks");
 		helper.runAfterDelay(GhostSpells.SOULS_RISES + GhostSpells.SOULS_TICKS + 3, () -> {
 			try {
 				float all = GhostSpells.SOULS_TICKS / GhostSpells.SOULS_EVERY * GhostSpells.SOULS_HARM + GhostSpells.SOULS_SLAM;

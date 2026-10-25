@@ -626,7 +626,7 @@ public final class FireSpells {
 	private static void meteor(LivingEntity p, Spell spell) {
 		LivingEntity aimed = HeavenSpells.aimed(p, METEOR_RANGE);
 		Vec3 at = aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, METEOR_RANGE);
-		fallOn(p, spell, at, SpellProjectile.Shape.METEOR, SpellConstruct.Kind.BLAZING_METEOR, 1.0f, METEOR_FALL, METEOR_RADIUS, METEOR_DAMAGE, METEOR_CRATER, 0);
+		fallOn(p, spell, at, SpellProjectile.Shape.METEOR, SpellConstruct.Kind.METEOR_MASS, 1.0f, METEOR_FALL, METEOR_RADIUS, METEOR_DAMAGE, METEOR_CRATER, 0);
 		HeavenSpells.sound(HeavenSpells.level(p), at, SoundEvents.FIRECHARGE_USE, 2.0f, 0.3f);
 	}
 
@@ -674,7 +674,13 @@ public final class FireSpells {
 							land(missile, missile.position());
 						}
 					}).hitSize(scale * 1.5f).data(level.random.nextInt());
-			if (body != null) falling.body(SpellConstruct.create(level, body, from, -falling.getYRot(), -falling.getXRot(), ticks + 20, p).sizedFor(spell).spawn());
+			if (body != null) {
+				SpellConstruct form = SpellConstruct.create(level, body, from, -falling.getYRot(), -falling.getXRot(), ticks + 20, p);
+				// Of the world's own blocks, or drawn by hand: sized by what it strikes (a meteor's rock, a sun), each its own.
+				if (body.modelled()) form.sizedFor(spell);
+				else form.size((float) (radius * 0.4)).tint(level.random.nextInt());
+				falling.body(form.spawn());
+			}
 		};
 		if (delay <= 0) drop.run();
 		else HeavenSpells.linger(new Delayed(p, delay, drop));
@@ -799,7 +805,7 @@ public final class FireSpells {
 		Vec3 centre = aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, SUNS_RANGE);
 		for (int i = 0; i < 9; i++) {
 			Vec3 at = i == 0 ? centre : centre.add(Math.cos(Math.PI * 2 * i / 8) * SUNS_SPREAD, 0, Math.sin(Math.PI * 2 * i / 8) * SUNS_SPREAD);
-			fallOn(p, spell, at, SpellProjectile.Shape.FALLING_SUN, SpellConstruct.Kind.FALLING_SUN, 1.0f, 26, SUNS_RADIUS, SUNS_DAMAGE, SUNS_CRATER, i * 5);
+			fallOn(p, spell, at, SpellProjectile.Shape.FALLING_SUN, SpellConstruct.Kind.SUN, 1.0f, 26, SUNS_RADIUS, SUNS_DAMAGE, SUNS_CRATER, i * 5);
 		}
 		HeavenSpells.sound(HeavenSpells.level(p), p.position(), SoundEvents.BEACON_ACTIVATE, 3.0f, 0.4f);
 		HeavenSpells.sound(HeavenSpells.level(p), centre, SoundEvents.BLAZE_SHOOT, 3.0f, 0.3f);

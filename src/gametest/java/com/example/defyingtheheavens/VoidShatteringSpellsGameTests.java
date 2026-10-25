@@ -299,7 +299,7 @@ public class VoidShatteringSpellsGameTests implements FabricGameTest {
 		helper.assertTrue(HeavenSpellTesting.cast(p, Spell.BUZHOU_FALLS), "Buzhou Falls is cast, paid for");
 		helper.runAfterDelay(EarthSpells.BUZHOU_OPENS + EarthSpells.BUZHOU_FALL + 4, () -> {
 			try {
-				List<SpellConstruct> pillar = constructs(level, point, 40, SpellConstruct.Kind.BUZHOU_PILLAR);
+				List<SpellConstruct> pillar = constructs(level, point, 40, SpellConstruct.Kind.PILLAR_MASS);
 				helper.assertTrue(pillar.size() == 1 && pillar.get(0).getY() < home.y + 1, "The broken pillar has come down out of the sky into the land");
 				helper.assertTrue(crushed.getHealth() <= HEALTH - EarthSpells.BUZHOU_DAMAGE + 1, "...crushing what it fell on (" + crushed.getHealth() + ")");
 				helper.assertTrue(crushed.hasEffect(MobEffects.MOVEMENT_SLOWDOWN) && crushed.getEffect(MobEffects.MOVEMENT_SLOWDOWN).getAmplifier() >= 5, "...and pinning it");
@@ -325,7 +325,7 @@ public class VoidShatteringSpellsGameTests implements FabricGameTest {
 		int stone = floorLeft(level, floor.centre(), home, 20);
 		boolean quiet = Devastation.pending() == 0;
 		helper.assertTrue(HeavenSpellTesting.cast(p, Spell.EARTH_VEINS_LOCK_THE_VOID), "Earth Veins Lock the Void is cast, paid for");
-		helper.assertTrue(constructs(level, home, 4, SpellConstruct.Kind.EARTH_VEIN_LOCK).size() == 1, "...its veins rise in a dome round its caster");
+		helper.assertTrue(constructs(level, home, 4, SpellConstruct.Kind.VEIN_DOME_MASS).size() == 1, "...its veins rise in a dome round its caster");
 		helper.runAfterDelay(EarthSpells.LOCK_RISES + 6, () -> {
 			Vec3 locked = held.position();
 			held.teleportTo(locked.x + 3, locked.y, locked.z);
@@ -535,7 +535,7 @@ public class VoidShatteringSpellsGameTests implements FabricGameTest {
 		boolean quiet = Devastation.pending() == 0;
 		helper.assertTrue(Spell.RIFT_TO_THE_NINE_NETHERS.isKnown(CultivationManager.get(p)), "Its ghost path carries the Void-Rending Nether Canon to its spell");
 		helper.assertTrue(took(p, Spell.RIFT_TO_THE_NINE_NETHERS), "The Rift to the Nine Nethers is cast");
-		helper.assertTrue(constructs(level, point, 6, SpellConstruct.Kind.ABYSS_RIFT).size() == 1 && constructs(level, point, 6, SpellConstruct.Kind.NINE_NETHERS).size() == 1,
+		helper.assertTrue(constructs(level, point, 6, SpellConstruct.Kind.ABYSS_RIFT).size() == 1 && constructs(level, point, 6, SpellConstruct.Kind.NETHER_DESCENT).size() == 1,
 				"...the ground tears open onto the Nine Nethers, rings of ghost fire turning down into it");
 		helper.runAfterDelay(GhostSpells.NETHERS_OPENS + 50, () -> {
 			double off = Math.hypot(drawn.getX() - point.x, drawn.getZ() - point.z);
@@ -575,8 +575,8 @@ public class VoidShatteringSpellsGameTests implements FabricGameTest {
 		helper.runAfterDelay(GhostSpells.BRIDGE_SPANS * GhostSpells.BRIDGE_EVERY + 2, () -> {
 			// Its first two spans, over the floor (its last rises 108 blocks out, where the test world's land may not be loaded: a span there
 			// waits unseen till it is).
-			int first = constructs(level, home.add(0, 0, GhostSpells.BRIDGE_SPAN * 0.5), 3, SpellConstruct.Kind.NAIHE_BRIDGE).size(),
-					second = constructs(level, home.add(0, 0, GhostSpells.BRIDGE_SPAN * 1.5), 3, SpellConstruct.Kind.NAIHE_BRIDGE).size();
+			int first = constructs(level, home.add(0, 0, GhostSpells.BRIDGE_SPAN * 0.5), 3, SpellConstruct.Kind.BRIDGE_MASS).size(),
+					second = constructs(level, home.add(0, 0, GhostSpells.BRIDGE_SPAN * 1.5), 3, SpellConstruct.Kind.BRIDGE_MASS).size();
 			if (first != 1 || second != 1) {
 				finish(helper, p, spawned, floor);
 				helper.fail("The bridge rises span after span along the look (" + first + ", " + second + ")");

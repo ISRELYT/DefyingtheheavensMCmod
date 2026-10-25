@@ -78,6 +78,12 @@ public final class Devastation {
 		/** Only the water is taken out of its cells (and out of what stands in water), nothing else. */
 		final boolean drain;
 		int next, flung, age;
+		/**
+		 * At most this many of its cells a tick, whatever the budget left (0: no more than the budget), and how many this tick so far. A
+		 * lake's water: set all in one tick, thousands of sources at once, it held the game up (Kun Rises from the Northern Abyss: the
+		 * user's report, 2026-10-25, "when I use the big water move for the whale fish thing the game lags out").
+		 */
+		int rate, thisTick;
 
 		Job(ServerLevel level, LivingEntity caster, long[] cells, Vec3 heart, Runnable after, int debris, int keep, boolean utter) {
 			this(level, caster, cells, heart, after, debris, keep, utter, null, false);
@@ -628,19 +634,28 @@ public final class Devastation {
 		if (JOBS.isEmpty()) return;
 		int budget = BUDGET;
 		List<Job> done = new ArrayList<>();
+		for (Job job : JOBS) {
+			job.thisTick = 0;
+			if (job.keep > 0 && job.age++ % KEEP_EVERY == 0) job.level.getChunkSource().addRegionTicket(KEEP_LOADED, job.keepAt, job.keep, job.keepAt);
+		}
 		while (budget > 0 && !JOBS.isEmpty()) {
 			int share = Math.max(1, budget / JOBS.size());
+			boolean went = false;
 			for (Iterator<Job> it = JOBS.iterator(); it.hasNext() && budget > 0; ) {
 				Job job = it.next();
-				if (job.keep > 0 && job.age++ % KEEP_EVERY == 0) {
-					job.level.getChunkSource().addRegionTicket(KEEP_LOADED, job.keepAt, job.keep, job.keepAt);
-				}
-				budget -= cut(job, Math.min(share, budget));
+				int most = Math.min(share, budget);
+				if (job.rate > 0) most = Math.min(most, job.rate - job.thisTick);
+				int cut = most > 0 ? cut(job, most) : 0;
+				job.thisTick += cut;
+				budget -= cut;
+				if (cut > 0) went = true;
 				if (job.next >= job.cells.length) {
 					it.remove();
 					done.add(job);
+					went = true;
 				}
 			}
+			if (!went) break; // every job left has had all it may this tick
 		}
 		for (Job job : done) if (job.after != null) job.after.run();
 	}
@@ -942,13 +957,14 @@ public final class Devastation {
 	 */
 	private static void lay(LivingEntity p, ServerLevel level, Map<Long, Integer> lowest, Floor floor, int surfaceY) {
 		if (floor == Floor.NONE) return;
+		LongArrayList lake = new LongArrayList();
 		for (Map.Entry<Long, Integer> e : lowest.entrySet()) {
 			BlockPos below = new BlockPos(BlockPos.getX(e.getKey()), e.getValue() - 1, BlockPos.getZ(e.getKey()));
 			if (!level.isLoaded(below) || !level.getBlockState(below.above()).isAir()) continue;
 			if (floor == Floor.LAKE) {
 				for (BlockPos water = below.above(); water.getY() <= surfaceY - 2 && water.getY() <= below.getY() + 3; water = water.above()) {
 					if (!level.getBlockState(water).isAir() || !mayChange(p, level, water)) break;
-					level.setBlock(water, Blocks.WATER.defaultBlockState(), 3);
+					lake.add(water.asLong());
 				}
 				continue;
 			}
@@ -974,7 +990,27 @@ public final class Devastation {
 				else if (roll < 0.6) level.setBlock(below, Blocks.COARSE_DIRT.defaultBlockState(), 3);
 			}
 		}
+		if (!lake.isEmpty()) {
+			// The lake's water poured in over a while, bottom up (Job#rate), not all its thousands of sources in one tick.
+			long[] cells = lake.toLongArray();
+			long[] keys = new long[cells.length];
+			for (int i = 0; i < cells.length; i++) keys[i] = (long) (BlockPos.getY(cells[i]) + 2048) << INDEX_BITS | i;
+			Arrays.sort(keys);
+			long[] sorted = new long[cells.length];
+			int[] water = new int[cells.length];
+			int id = Block.getId(Blocks.WATER.defaultBlockState());
+			for (int i = 0; i < cells.length; i++) {
+				sorted[i] = cells[(int) (keys[i] & INDEX_MASK)];
+				water[i] = id;
+			}
+			Job job = new Job(level, p, sorted, Vec3.atCenterOf(BlockPos.of(sorted[0])), null, 0, 0, false, water, false);
+			job.rate = LAKE_RATE;
+			JOBS.add(job);
+		}
 	}
+
+	/** A lake's water is poured into its basin at most this many blocks a tick (Job#rate). */
+	static final int LAKE_RATE = 400;
 
 	/** How long a tame fire burns (a spell's, its griefing off: {@link #ignite}), in ticks: this, and up to as long again. */
 	public static final int TAME_FIRE = 70;

@@ -101,6 +101,16 @@ public class SpellField extends Entity {
 	public SpellField height(float height) { entityData.set(HEIGHT, height); return this; }
 	public SpellField life(int life) { entityData.set(LIFE, life); return this; }
 
+	/**
+	 * Gone as its life runs out, of itself: a field no spell keeps or ends (a flash of sword light, a boulder forming). Left to the
+	 * stray-field net alone, one whose drawing holds at its end once grown (a boulder) stood on in the air five seconds after it was thrown
+	 * (the user's report, 2026-10-25: "fix boulder throw remaining after throw").
+	 */
+	public SpellField fleeting() { fleeting = true; return this; }
+
+	/** Whether it goes of itself at its life's end ({@link #fleeting}). The server's word only: its going is what its watchers see. */
+	private boolean fleeting;
+
 	/** Lets blows strike it (a cage), and tells {@code strikes} of them. */
 	public SpellField strikeable(Strikes strikes) {
 		this.strikes = strikes;
@@ -212,7 +222,7 @@ public class SpellField extends Entity {
 			if (on != null) setPos(anchoring().at(on, new Vec3(entityData.get(ANCHOR_OFFSET)), 1, entityData.get(YAW)));
 		}
 		// Its spell ends it; this is only lest one be left behind (its spell gone with the server or its caster).
-		if (!level().isClientSide && tickCount > life() + 100) discard();
+		if (!level().isClientSide && (tickCount > life() + 100 || fleeting && tickCount >= life())) discard();
 	}
 
 	@Override

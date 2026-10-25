@@ -1,0 +1,46 @@
+{
+  "comment": "The White Impermanence (SpellConstruct WHITE_IMPERMANENCE_FIGURE, drawn by ImpermanenceFigures): a tall figure in white mourning robes and a tall white hat, a long red tongue hanging from its smiling mouth, its mourning staff hung with paper in its right hand. Parts as vanilla's ModelPart takes them: pixels, y down, its feet at 24; each box its origin, size, its texture's corner (box UV) and how far it is grown; painted by tools/spell-tex (SpellTex).",
+  "texture": [128, 64],
+  "parts": [
+    {"name": "body", "parent": "", "pivot": [0, 0, 0], "boxes": [
+      {"from": [-4, 0, -2.5], "size": [8, 11, 5], "uv": [24, 16]},
+      {"from": [-4.5, 9, -3], "size": [9, 2, 6], "uv": [50, 16]}
+    ]},
+    {"name": "skirt", "parent": "body", "pivot": [0, 11, 0], "boxes": [
+      {"from": [-5, 0, -3.5], "size": [10, 13, 7], "uv": [0, 32]},
+      {"from": [-6.5, 11, -4.5], "size": [13, 8, 9], "uv": [34, 32]}
+    ]},
+    {"name": "head", "parent": "body", "pivot": [0, 0, 0], "boxes": [
+      {"from": [-4, -8, -4], "size": [8, 8, 8], "uv": [0, 0]}
+    ]},
+    {"name": "hat", "parent": "head", "pivot": [0, -8, 0], "boxes": [
+      {"from": [-4.5, -2, -4.5], "size": [9, 3, 9], "uv": [32, 0]},
+      {"from": [-4, -9, -4], "size": [8, 7, 8], "uv": [68, 0]},
+      {"from": [-3, -16, -3], "size": [6, 7, 6], "uv": [100, 0]}
+    ]},
+    {"name": "hair", "parent": "head", "pivot": [0, -7.5, 3.6], "boxes": [
+      {"from": [-4, 0, 0], "size": [8, 15, 1], "uv": [0, 16]}
+    ]},
+    {"name": "tongue", "parent": "head", "pivot": [0, -2.2, -4.2], "boxes": [
+      {"from": [-1, 0, -0.5], "size": [2, 11, 1], "uv": [18, 16]}
+    ]},
+    {"name": "right_arm", "parent": "body", "pivot": [-5, 1.5, 0], "boxes": [
+      {"from": [-3, -1.5, -2], "size": [4, 9, 4], "uv": [80, 16]},
+      {"from": [-4, 6, -3], "size": [6, 9, 6], "uv": [96, 16]},
+      {"from": [-2.5, 14, -1.5], "size": [3, 3, 3], "uv": [80, 32]}
+    ]},
+    {"name": "left_arm", "parent": "body", "pivot": [5, 1.5, 0], "boxes": [
+      {"from": [-1, -1.5, -2], "size": [4, 9, 4], "uv": [80, 16], "mirror": true},
+      {"from": [-2, 6, -3], "size": [6, 9, 6], "uv": [96, 16], "mirror": true},
+      {"from": [-0.5, 14, -1.5], "size": [3, 3, 3], "uv": [80, 32], "mirror": true}
+    ]},
+    {"name": "staff", "parent": "right_arm", "pivot": [-1, 15.5, 0], "boxes": [
+      {"from": [-0.5, -23, -0.5], "size": [1, 32, 1], "uv": [120, 16]}
+    ]},
+    {"name": "streamers", "parent": "staff", "pivot": [0, -23, 0], "boxes": [
+      {"from": [-1.5, 0, 0.6], "size": [3, 7, 0], "uv": [92, 32]},
+      {"from": [0.6, 0, -1.5], "size": [0, 7, 3], "uv": [98, 32]},
+      {"from": [-1.5, 0, -0.6], "size": [3, 6, 0], "uv": [104, 32]}
+    ]}
+  ]
+}

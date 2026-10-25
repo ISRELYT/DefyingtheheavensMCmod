@@ -44,9 +44,10 @@ public class SpellConstruct extends Entity implements GeoEntity {
 	 * upright, or turned on their screen by its yaw: 90, a slash lying across the sky; or, pitched 90, lying flat in the sky open below), an
 	 * {@link #ABYSS} lying open in the ground, a {@link #LINE} cut along its facing from where it stands, or space {@link #SHATTER}ed like
 	 * glass round a point; or a {@link #TENDRIL}, a root drawn by hand too (TendrilRenderer), lashing from where it stands to the being it
-	 * holds ({@link #target}) and coiled round it, its size its girth.
+	 * holds ({@link #target}) and coiled round it, its size its girth. Or {@link #DRAWN} by hand whole (SpellDrawn: an eclipse, a vortex of souls,
+	 * the two Impermanences), each its own way (the user's ask, 2026-10-25, of shapes that "look retarded": "try a diff style").
 	 */
-	public enum Form { SHAPE, TEAR, ABYSS, LINE, SHATTER, TENDRIL, GHOSTS, BLOCKS }
+	public enum Form { SHAPE, TEAR, ABYSS, LINE, SHATTER, TENDRIL, GHOSTS, BLOCKS, DRAWN }
 
 	/**
 	 * What it is: its model's id (geo/spell/&lt;id&gt;.geo.json, its texture and animations alike), the move it enters with (or null),
@@ -215,7 +216,56 @@ public class SpellConstruct extends Entity implements GeoEntity {
 		// Seven-Treasure Bodhi Branch's tree (WoodSpells#Branch, the user's ask, 2026-10-25: "redo it completely"): the branch planted grown into a
 		// towering bodhi tree of the world's own wood and leaves, its height its size, the seven treasures hanging from its boughs (how many have
 		// fallen, its value); it sheds its leaves as it goes ({@code shed}).
-		BODHI_TREE("bodhi_tree", Form.BLOCKS, "shed");
+		BODHI_TREE("bodhi_tree", Form.BLOCKS, "shed"),
+		// Drawn by hand whole (Form DRAWN: SpellDrawn). Heaven-Demon Eclipse (HeavenDemonSpells#Eclipse; the user's report, 2026-10-25: "the beam
+		// coming out of the moons as its larger and doesn't line up"): heaven's sun and the demon's moon meeting, its corona, and its beam of darkness
+		// poured down from the moon's face to the ground, its size the beam's round (the reach of its harm), its value how far down it reaches.
+		ECLIPSE("eclipse", Form.DRAWN, "pulse"),
+		// Ten Thousand Souls Ascend (GhostSpells#Souls; "try a diff style"): a vortex of souls, the dead's own faces (the Nether's souls) by the
+		// thousand wound up a whirlwind of ghost fire out of the dark, its size its round at its foot, its value its height.
+		SOUL_VORTEX("soul_vortex", Form.DRAWN, "descend"),
+		// Black and White Impermanence (GhostSpells#Impermanence; "try a diff style"): the White and the Black, tall figures in their robes and
+		// hats, drawn as beings are (models of their own, painted: SpellDrawn), their size their height in men.
+		WHITE_IMPERMANENCE_FIGURE("white_impermanence_figure", Form.DRAWN, "strike", "take"),
+		BLACK_IMPERMANENCE_FIGURE("black_impermanence_figure", Form.DRAWN, "strike", "take"),
+		// The earth's great spells made of the world's own blocks (Form BLOCKS: EarthMasses; the user's ask, 2026-10-25: "rework falling mountain,
+		// to look more like falling continent and do that for most earth skill the GeckoLib stuff still just looks a bit weird"), each its size
+		// in blocks: Falling Mountain's peak (its round at its foot); Buzhou's broken pillar (its length); the Seal of Ten Thousand Mountains (half
+		// its width); Gravestone Falls' stele on its tortoise (its height); a cauldron of the Nine (its height); a standing stone of the Buried
+		// World (its height); Xirang's clod (its round); the dome of the Earth Veins (its round); the Hand of Houtu (its fist's reach from its
+		// wrist's foot).
+		PEAK_MASS("peak_mass", Form.BLOCKS, "impact"),
+		PILLAR_MASS("pillar_mass", Form.BLOCKS, "impact"),
+		SEAL_MASS("seal_mass", Form.BLOCKS, "stamp"),
+		GRAVESTONE_MASS("gravestone_mass", Form.BLOCKS, "land", "sink"),
+		CAULDRON_MASS("cauldron_mass", Form.BLOCKS, "land", "rise"),
+		MENHIR_MASS("menhir_mass", Form.BLOCKS, "topple"),
+		CLOD_MASS("clod_mass", Form.BLOCKS, "swell", "settle"),
+		VEIN_DOME_MASS("vein_dome_mass", Form.BLOCKS, "release"),
+		HAND_MASS("hand_mass", Form.BLOCKS, "grasp", "slam"),
+		// Heaven-Demon Avatar (HeavenDemonSpells#Avatar; the user's ask, 2026-10-25, to redo it): a colossal projection of its caster's own body
+		// in heaven's gold and the demon's crimson, drawn as a spirit is (Form GHOSTS: SpellGhosts), its size its height in men, its target its
+		// caster (whose body it is); and its hand come down out of the sky, its caster's own arm as great, its value 1 heaven's palm, 2 the claw.
+		AVATAR_PROJECTION("avatar_projection", Form.GHOSTS, "strike_palm", "strike_claw"),
+		AVATAR_HAND("avatar_hand", Form.GHOSTS, "press"),
+		// Twenty-Four Sea-Fixing Pearls (WaterSpells#Pearls; the user's ask, 2026-10-25: "looks stupid"): a pearl drawn by hand (SpellDrawn), its
+		// size its round: lustrous, the sea turning in it, its water streaming after it as it flies. Ocean-Sealing Vase's drinking (WaterSpells#Vase;
+		// "needs polish"): the water drawn up out of the land into the vase's mouth in twisting streams over a whirlpool, its size the whirlpool's
+		// round, its value how high the mouth stands over it.
+		PEARL("pearl", Form.DRAWN),
+		VASE_VORTEX("vase_vortex", Form.DRAWN),
+		// More made of the world's own blocks (Form BLOCKS: SpellMasses; the user's ask, 2026-10-25, "polish all the skills again"), each its size
+		// in blocks: the ice moon that falls (its round), the crescent of ice over the well (its round), Blazing Meteor's rock (its round), the
+		// Soul-Locking Pagoda (its round at its foot; its value its height), a length of Fengdu's walls (its length; its value its height), a span
+		// of the Naihe Bridge (its length; its value the half of its width). And a sun drawn by hand, blazing, its fire streaming after it as it
+		// falls (Form DRAWN: Nine Suns Descend's suns), its size its round.
+		MOON_MASS("moon_mass", Form.BLOCKS, "shatter"),
+		CRESCENT_MASS("crescent_mass", Form.BLOCKS, "shatter"),
+		METEOR_MASS("meteor_mass", Form.BLOCKS, "impact"),
+		PAGODA_MASS("pagoda_mass", Form.BLOCKS, "land", "seal"),
+		WALL_MASS("wall_mass", Form.BLOCKS, "fall"),
+		BRIDGE_MASS("bridge_mass", Form.BLOCKS),
+		SUN("sun", Form.DRAWN, "impact");
 
 		public final String id, enter, loop;
 		public final float scale;
@@ -287,6 +337,8 @@ public class SpellConstruct extends Entity implements GeoEntity {
 	private static final EntityDataAccessor<Integer> PHASE = SynchedEntityData.defineId(SpellConstruct.class, EntityDataSerializers.INT);
 	private static final EntityDataAccessor<Integer> PHASE_AT = SynchedEntityData.defineId(SpellConstruct.class, EntityDataSerializers.INT);
 	private static final EntityDataAccessor<Float> VALUE = SynchedEntityData.defineId(SpellConstruct.class, EntityDataSerializers.FLOAT);
+	/** The game time it was made (the server's): a watcher who came late still knows how far through its course it is ({@link #flown}). */
+	private static final EntityDataAccessor<Integer> BORN = SynchedEntityData.defineId(SpellConstruct.class, EntityDataSerializers.INT);
 
 	private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 	/** Whether it is fading away (its spell done with it): it goes when its life is out. */
@@ -307,6 +359,7 @@ public class SpellConstruct extends Entity implements GeoEntity {
 		construct.entityData.set(KIND, (byte) kind.ordinal());
 		construct.entityData.set(LIFE, life);
 		construct.entityData.set(OWNER, owner == null ? 0 : owner.getId());
+		construct.entityData.set(BORN, (int) level.getGameTime());
 		construct.moveTo(at.x, at.y, at.z, yaw, pitch);
 		return construct;
 	}
@@ -459,6 +512,15 @@ public class SpellConstruct extends Entity implements GeoEntity {
 		entityData.define(PHASE, 0);
 		entityData.define(PHASE_AT, 0);
 		entityData.define(VALUE, 0.0f);
+		entityData.define(BORN, 0);
+	}
+
+	/**
+	 * How many ticks it has been since it was made ({@code partial} of this one in), by the world's clock: the same on every watcher's screen
+	 * however late it came into sight (a flight laid out along a path worked out alike on both sides: DragonFlight).
+	 */
+	public double flown(float partial) {
+		return (int) level().getGameTime() - entityData.get(BORN) + partial;
 	}
 
 	/** Where its spell last put it, as a watcher heard it ({@link #lerpTo}), and whether that is still to be taken. */
@@ -510,7 +572,8 @@ public class SpellConstruct extends Entity implements GeoEntity {
 	 */
 	private void motes() {
 		// A tendril's light is its own (TendrilRenderer), and so are the ghosts' (SpellGhosts).
-		if (kind().form == Form.TENDRIL || kind().form == Form.GHOSTS || kind().form == Form.BLOCKS || tickCount < 6 || tickCount > life() - FADE) return;
+		if (kind().form == Form.TENDRIL || kind().form == Form.GHOSTS || kind().form == Form.BLOCKS || kind().form == Form.DRAWN || tickCount < 6
+				|| tickCount > life() - FADE) return;
 		float length = size() * kind().scale;
 		int rgb = tint() != 0 ? tint() : VOID;
 		double r = (rgb >> 16 & 255) / 255.0, g = (rgb >> 8 & 255) / 255.0, b = (rgb & 255) / 255.0;

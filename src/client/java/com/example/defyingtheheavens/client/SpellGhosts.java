@@ -112,6 +112,8 @@ final class SpellGhosts {
 					case NETHER_DESCENT -> descent(c, pose, cam, partial);
 					case SOUL_ASCENT -> ascent(c, pose, cam, partial);
 					case WHITE_WUCHANG, BLACK_WUCHANG -> wuchang(c, pose, cam, partial);
+					case AVATAR_PROJECTION -> avatar(c, pose, cam, partial);
+					case AVATAR_HAND -> avatarHand(c, pose, cam, partial);
 					default -> {}
 				}
 			} catch (RuntimeException e) {
@@ -429,6 +431,272 @@ final class SpellGhosts {
 				model.head.xRot = -0.4f + Mth.sin(x * 0.6f) * 0.15f;
 			}, age + i * 5, 0.8f * (1 - t) * fade, null, null);
 		}
+	}
+
+	// --- Heaven-Demon Avatar ---
+
+	/** Heaven's gold and the demon's crimson (the spirit shader's two sets of colours: its first and its Second). */
+	private static final Spirit HEAVEN_GOLD = new Spirit(new float[] {1.0f, 0.74f, 0.22f}, new float[] {1.0f, 0.93f, 0.62f}, new float[] {1.0f, 0.86f, 0.4f}, false);
+	private static final Spirit DEMON_CRIMSON = new Spirit(new float[] {0.7f, 0.04f, 0.1f}, new float[] {1.0f, 0.3f, 0.22f}, new float[] {1.0f, 0.18f, 0.12f}, false);
+	/** How long its arm takes to rise and to come down as its hand falls (HeavenDemonSpells#AVATAR_FALL), and to go back after (ticks). */
+	private static final float AVATAR_RAISE = 7, AVATAR_SWING = 14, AVATAR_BACK = 34;
+
+	/**
+	 * Heaven-Demon Avatar (AVATAR_PROJECTION; the user's ask, 2026-10-25, of its model: redo it): a colossal projection of its caster's own body
+	 * (their own skin, its size their height in men) risen out of a cloud of gold and crimson behind them, waist up: its right side heaven's,
+	 * gold, its left the demon's, crimson, a seam of fire burning down the middle of it where the two meet; a halo of gold behind its head, a
+	 * horn of crimson fire on its demon side, flames on that shoulder. Its right hand held up before it in heaven's sign; its left low, clawed.
+	 * As its spell sends a hand down ({@code strike_palm}, {@code strike_claw}) it raises that arm high and brings it down at where its caster
+	 * looks, as the hand itself falls there out of the sky (AVATAR_HAND).
+	 */
+	private static void avatar(SpellConstruct c, PoseStack pose, Vec3 cam, float partial) {
+		Entity owner = c.target() != null ? c.target() : c.owner();
+		if (owner == null) return;
+		float age = c.tickCount + partial, fade = fade(c, age);
+		float scale = Math.max(1, c.size());
+		float risen = SpellRender.easeOut(age / 24);
+		Vec3 feet = c.getPosition(partial).add(0, -scale * 0.55 * (1 - risen), 0);
+		float yaw = c.drawnYaw(partial);
+		String move = c.phase();
+		float moving = c.phaseAge(partial);
+		Posing posing = (model, x) -> {
+			for (ModelPart part : new ModelPart[] {model.rightLeg, model.leftLeg, model.rightPants, model.leftPants}) part.visible = false;
+			model.head.xRot = 0.12f + Mth.sin(x * 0.04f) * 0.04f;
+			// Heaven's sign: its right hand up before it; the demon's: its left low and out, its fingers hooked.
+			model.rightArm.xRot = -1.75f + Mth.sin(x * 0.05f) * 0.05f;
+			model.rightArm.yRot = 0.35f;
+			model.leftArm.xRot = -0.55f + Mth.sin(x * 0.06f + 1) * 0.06f;
+			model.leftArm.zRot = -0.45f;
+			if (move != null) {
+				ModelPart arm = "strike_palm".equals(move) ? model.rightArm : model.leftArm;
+				float up = SpellRender.ease(moving / AVATAR_RAISE), down = SpellRender.ease((moving - AVATAR_RAISE) / (AVATAR_SWING - AVATAR_RAISE));
+				float back = SpellRender.ease((moving - AVATAR_SWING - 6) / (AVATAR_BACK - AVATAR_SWING - 6));
+				float raised = -3.0f * up + 2.25f * down;
+				float rest = arm == model.rightArm ? -1.75f : -0.55f;
+				arm.xRot = moving < AVATAR_SWING + 6 ? Mth.lerp(up, rest, raised) : Mth.lerp(back, raised, rest);
+				arm.yRot = 0;
+				arm.zRot = arm == model.rightArm ? 0.1f : -0.1f;
+				model.body.xRot = 0.25f * down * (1 - back);
+			}
+		};
+		personSides(pose, cam, feet, yaw, scale, skinOf(owner), slimOf(owner), posing, age, 0.9f * fade);
+		// Its halo, its horn and its demon side's flames, and the cloud it rises out of.
+		MultiBufferSource.BufferSource source = Minecraft.getInstance().renderBuffers().bufferSource();
+		MultiBufferSource buffers = SpellBuffers.begin(source);
+		try {
+			Quaternionf facing = Minecraft.getInstance().gameRenderer.getMainCamera().rotation();
+			Vec3 head = feet.add(0, scale * 1.62, 0).add(com.example.defyingtheheavens.SpellAnchor.turned(new Vec3(0, 0, -scale * 0.18), yaw));
+			Vec3 left = feet.add(0, scale * 1.38, 0).add(com.example.defyingtheheavens.SpellAnchor.turned(new Vec3(-scale * 0.36, 0, 0), yaw));
+			pose.pushPose();
+			pose.translate(head.x - cam.x, head.y - cam.y, head.z - cam.z);
+			VertexConsumer ring = buffers.getBuffer(SpellRender.glow(SpellRender.RING));
+			SpellRender.billboard(ring, pose, facing, 0, 0, 0, scale * 1.15f, age * 0.01f, HEAVEN_GOLD.edge(), 0.85f * fade, 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+			SpellRender.billboard(ring, pose, facing, 0, 0, 0, scale * 1.4f, -age * 0.008f, HEAVEN_GOLD.core(), 0.45f * fade, 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+			VertexConsumer glow = buffers.getBuffer(SpellRender.glow(SpellRender.GLOW));
+			SpellRender.billboard(glow, pose, facing, 0, 0, 0, scale * 2.2f, 0, HEAVEN_GOLD.pale(), 0.25f * fade, 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+			pose.popPose();
+			VertexConsumer flames = buffers.getBuffer(SpellRender.glow(SpellRender.FLAME));
+			// The horn on its demon side, and the fire leaping from that shoulder.
+			Vec3 horn = feet.add(0, scale * 1.86, 0).add(com.example.defyingtheheavens.SpellAnchor.turned(new Vec3(-scale * 0.16, 0, 0), yaw));
+			pose.pushPose();
+			pose.translate(horn.x - cam.x, horn.y - cam.y, horn.z - cam.z);
+			SpellRender.flameTongue(flames, pose, cam.subtract(horn), 0, 0, 0, scale * 0.16f, scale * 0.42f, age, DEMON_CRIMSON.edge(), 0.95f * fade, SpellRender.FLAME_FRAMES);
+			pose.popPose();
+			pose.pushPose();
+			pose.translate(left.x - cam.x, left.y - cam.y, left.z - cam.z);
+			for (int i = 0; i < 4; i++) {
+				float sx = (hash(c.getId(), i) - 0.5f) * scale * 0.25f, sz = (hash(c.getId(), i + 9) - 0.5f) * scale * 0.25f;
+				SpellRender.flameTongue(flames, pose, cam.subtract(left), sx, 0, sz, scale * 0.22f, scale * (0.35f + 0.15f * Mth.sin(age * 0.3f + i)), age + i * 4,
+						DEMON_CRIMSON.pale(), 0.85f * fade, SpellRender.FLAME_FRAMES);
+			}
+			pose.popPose();
+			// The cloud of the two it rises out of, at its waist.
+			VertexConsumer cloud = buffers.getBuffer(SpellRender.clear(SpellRender.CLOUD));
+			Vec3 waist = feet.add(0, scale * 0.72, 0);
+			pose.pushPose();
+			pose.translate(waist.x - cam.x, waist.y - cam.y, waist.z - cam.z);
+			Vec3 rightWay = com.example.defyingtheheavens.SpellAnchor.turned(new Vec3(1, 0, 0), yaw);
+			for (int i = 0; i < 14; i++) {
+				double a = Math.PI * 2 * i / 14 + age * 0.004;
+				float r = scale * (0.45f + 0.35f * hash(c.getId(), i + 20));
+				// Gold on its side of heaven, crimson on the demon's.
+				float[] rgb = Math.cos(a) * rightWay.x + Math.sin(a) * rightWay.z > 0 ? HEAVEN_GOLD.pale() : DEMON_CRIMSON.pale();
+				SpellRender.billboard(cloud, pose, facing, (float) Math.cos(a) * r, (hash(c.getId(), i + 40) - 0.5f) * scale * 0.2f, (float) Math.sin(a) * r,
+						scale * (0.7f + 0.3f * hash(c.getId(), i + 60)), age * 0.003f + i, rgb, 0.7f * fade * risen, 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+			}
+			pose.popPose();
+		} finally {
+			SpellBuffers.end();
+		}
+		SenseOverlay.layerState();
+	}
+
+	/**
+	 * The Avatar's hand come down out of the sky (AVATAR_HAND, its value 1 heaven's palm, 2 the demon's claw; its size its height in men): its
+	 * caster's own arm, as large as the Avatar's, of gold or of crimson, plunging down hand first onto where it lands, a column of its light
+	 * above it; pressing ({@code press}) it sinks a little into what it struck and fades. The claw's fingers burn as claws of fire.
+	 */
+	private static void avatarHand(SpellConstruct c, PoseStack pose, Vec3 cam, float partial) {
+		Entity owner = c.target() != null ? c.target() : c.owner();
+		if (owner == null) return;
+		boolean palm = c.value() < 1.5f;
+		float age = c.tickCount + partial, fade = fade(c, age);
+		float scale = Math.max(1, c.size());
+		float fall = com.example.defyingtheheavens.HeavenDemonSpells.AVATAR_FALL;
+		float f = Mth.clamp(age / fall, 0, 1);
+		boolean pressing = "press".equals(c.phase());
+		float sink = pressing ? Math.min(1, c.phaseAge(partial) / 6) * scale * 0.08f : 0;
+		// Its hand's tip on the land as it lands: the arm's length (its model's twelve pixels) above that, and higher yet as it falls.
+		double arm = scale * 12 / 16.0 * 0.9375;
+		Vec3 ground = c.getPosition(partial);
+		Vec3 shoulder = ground.add(0, arm + (1 - f * f) * scale * 4 - sink, 0);
+		float yaw = c.drawnYaw(partial);
+		Spirit spirit = palm ? HEAVEN_GOLD : DEMON_CRIMSON;
+		armOf(pose, cam, shoulder, yaw, scale, skinOf(owner), slimOf(owner), palm, age, 0.95f * fade, spirit);
+		MultiBufferSource.BufferSource source = Minecraft.getInstance().renderBuffers().bufferSource();
+		MultiBufferSource buffers = SpellBuffers.begin(source);
+		try {
+			// A column of its light above it, fading as it comes.
+			pose.pushPose();
+			pose.translate(shoulder.x - cam.x, shoulder.y - cam.y, shoulder.z - cam.z);
+			SpellRender.cylinder(buffers.getBuffer(SpellRender.glow(SpellRender.BEAM)), pose.last(), scale * 3, h -> scale * 0.16f * (1 - h * 0.5f), 6, 16, spirit.edge(),
+					0.45f * fade * (1 - f * 0.6f), 1, 2, 0, -age * 0.08f, 0, SpellRender.FULL_BRIGHT, h -> 1 - h);
+			pose.popPose();
+			if (!palm) {
+				// Claws of fire at its fingers' ends.
+				VertexConsumer flames = buffers.getBuffer(SpellRender.glow(SpellRender.FLAME));
+				Vec3 tip = shoulder.subtract(0, arm, 0);
+				pose.pushPose();
+				pose.translate(tip.x - cam.x, tip.y - cam.y, tip.z - cam.z);
+				for (int i = 0; i < 4; i++) {
+					Vec3 off = com.example.defyingtheheavens.SpellAnchor.turned(new Vec3((i - 1.5) * scale * 0.06, 0, scale * 0.05), yaw);
+					SpellRender.flameTongue(flames, pose, cam.subtract(tip), (float) off.x, -scale * 0.3f, (float) off.z, scale * 0.07f, scale * 0.32f, age + i * 3,
+							DEMON_CRIMSON.edge(), fade, SpellRender.FLAME_FRAMES);
+				}
+				pose.popPose();
+			}
+		} finally {
+			SpellBuffers.end();
+		}
+		SenseOverlay.layerState();
+	}
+
+	/** {@link #person}'s drawing in two sets of colours: heaven's gold on its right side, the demon's crimson on its left, a seam of fire between. */
+	@SuppressWarnings({"rawtypes", "unchecked"})
+	private static void personSides(PoseStack pose, Vec3 cam, Vec3 feet, float yaw, float scale, ResourceLocation skin, boolean slim, Posing posing, float age, float alpha) {
+		if (alpha <= 0.01f || spiritShader == null) return;
+		PlayerModel model = SoulRenderer.model(slim);
+		if (model == null) return;
+		rest(model);
+		posing.pose(model, age);
+		layers(model);
+		pose.pushPose();
+		pose.translate(feet.x - cam.x, feet.y - cam.y, feet.z - cam.z);
+		pose.mulPose(Axis.YP.rotationDegrees(180.0f - yaw));
+		pose.scale(scale, scale, scale);
+		spiritColours(HEAVEN_GOLD, DEMON_CRIMSON);
+		ShaderInstance chosen = spiritShader;
+		RenderSystem.setShader(() -> chosen);
+		RenderSystem.setShaderTexture(0, skin);
+		RenderSystem.enableDepthTest();
+		RenderSystem.disableCull();
+		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+				GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+		sides(pose, model, 1, alpha, 1.0f);
+		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
+				GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
+		sides(pose, model, 0, alpha, 1.06f);
+		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+				GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+		pose.popPose();
+	}
+
+	/** The spirit shader's two sets of colours made {@code first} and {@code second}. */
+	private static void spiritColours(Spirit first, Spirit second) {
+		ShaderInstance shader = spiritShader;
+		shader.safeGetUniform("Core").set(first.core()[0], first.core()[1], first.core()[2]);
+		shader.safeGetUniform("Pale").set(first.pale()[0], first.pale()[1], first.pale()[2]);
+		shader.safeGetUniform("Edge").set(first.edge()[0], first.edge()[1], first.edge()[2]);
+		shader.safeGetUniform("Core2").set(second.core()[0], second.core()[1], second.core()[2]);
+		shader.safeGetUniform("Pale2").set(second.pale()[0], second.pale()[1], second.pale()[2]);
+		shader.safeGetUniform("Edge2").set(second.edge()[0], second.edge()[1], second.edge()[2]);
+		shader.safeGetUniform("Smoke").set(0.0f);
+	}
+
+	/**
+	 * One pass of a body in its two sides ({@link #pass}'s, part by part): its right arm and leg wholly the first colours (vertex green 1), its left
+	 * the second (0), its head mostly the first, its body half and half (the seam of fire burning down it).
+	 */
+	private static void sides(PoseStack pose, PlayerModel<?> model, float red, float alpha, float size) {
+		pose.pushPose();
+		pose.translate(0, 0.95f, 0);
+		pose.scale(size, size, size);
+		pose.translate(0, -0.95f, 0);
+		pose.scale(-1.0f, -1.0f, 1.0f);
+		pose.scale(0.9375f, 0.9375f, 0.9375f);
+		pose.translate(0.0f, -1.501f, 0.0f);
+		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
+		buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.NEW_ENTITY);
+		float a = Mth.clamp(alpha, 0, 1);
+		Object[][] parts = {{model.head, 0.72f}, {model.hat, 0.72f}, {model.body, 0.5f}, {model.jacket, 0.5f}, {model.rightArm, 1.0f}, {model.rightSleeve, 1.0f},
+				{model.leftArm, 0.0f}, {model.leftSleeve, 0.0f}, {model.rightLeg, 1.0f}, {model.rightPants, 1.0f}, {model.leftLeg, 0.0f}, {model.leftPants, 0.0f}};
+		for (Object[] p : parts) {
+			ModelPart part = (ModelPart) p[0];
+			if (!part.visible) continue;
+			part.render(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, red, (Float) p[1], 1, a);
+		}
+		BufferUploader.drawWithShader(buffer.end());
+		pose.popPose();
+	}
+
+	/**
+	 * One arm of {@code skin}'s body, alone, hanging straight down from {@code shoulder} (heaven's right, or the demon's left), {@code scale}
+	 * times a man's size, facing {@code yaw}, in {@code spirit}'s colours.
+	 */
+	@SuppressWarnings({"rawtypes", "unchecked"})
+	private static void armOf(PoseStack pose, Vec3 cam, Vec3 shoulder, float yaw, float scale, ResourceLocation skin, boolean slim, boolean right, float age, float alpha,
+			Spirit spirit) {
+		if (alpha <= 0.01f || spiritShader == null) return;
+		PlayerModel model = SoulRenderer.model(slim);
+		if (model == null) return;
+		rest(model);
+		for (ModelPart part : new ModelPart[] {model.head, model.hat, model.body, model.jacket, model.rightLeg, model.leftLeg, model.rightPants, model.leftPants,
+				right ? model.leftArm : model.rightArm, right ? model.leftSleeve : model.rightSleeve}) part.visible = false;
+		ModelPart arm = right ? model.rightArm : model.leftArm;
+		arm.x = 0;
+		arm.y = 0;
+		arm.z = 0;
+		arm.xRot = Mth.sin(age * 0.2f) * 0.03f;
+		layers(model);
+		pose.pushPose();
+		pose.translate(shoulder.x - cam.x, shoulder.y - cam.y, shoulder.z - cam.z);
+		pose.mulPose(Axis.YP.rotationDegrees(180.0f - yaw));
+		pose.scale(scale, scale, scale);
+		spiritColours(spirit, spirit);
+		ShaderInstance chosen = spiritShader;
+		RenderSystem.setShader(() -> chosen);
+		RenderSystem.setShaderTexture(0, skin);
+		RenderSystem.enableDepthTest();
+		RenderSystem.disableCull();
+		for (int halo = 0; halo < 2; halo++) {
+			if (halo == 0) RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+					GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+			else RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ZERO,
+					GlStateManager.DestFactor.ONE);
+			pose.pushPose();
+			float size = halo == 0 ? 1.0f : 1.08f;
+			pose.scale(-size, -size, size);
+			pose.scale(0.9375f, 0.9375f, 0.9375f);
+			BufferBuilder buffer = Tesselator.getInstance().getBuilder();
+			buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.NEW_ENTITY);
+			arm.render(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, halo == 0 ? 1 : 0, 1, 1, Mth.clamp(alpha, 0, 1));
+			(right ? model.rightSleeve : model.leftSleeve).render(pose, buffer, 0xF000F0, OverlayTexture.NO_OVERLAY, halo == 0 ? 1 : 0, 1, 1, Mth.clamp(alpha, 0, 1));
+			BufferUploader.drawWithShader(buffer.end());
+			pose.popPose();
+		}
+		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+				GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+		pose.popPose();
 	}
 
 	// --- Procession of Ten Thousand Ghosts ---

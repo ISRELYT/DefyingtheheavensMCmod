@@ -72,6 +72,7 @@ public final class ClientSpellFx {
 			case CORE_DETONATION -> 60;
 			case RIFT_TEAR -> 30;
 			case CAST_SEAL -> 36;
+			case WATER_COLUMN -> 26;
 		};
 	}
 
@@ -149,6 +150,47 @@ public final class ClientSpellFx {
 	private static Vec3 flung(Vec3 v, float age, float gravity) {
 		double drag = (1 - Math.pow(0.9, age)) / 0.1;
 		return new Vec3(v.x * drag, v.y * drag - 0.5 * gravity * age * age, v.z * drag);
+	}
+
+	/**
+	 * The weight of the sea come down (WATER_COLUMN, {@code size} its round): a column of sea water plunging down onto the point (its first
+	 * quarter), foaming where it strikes; then bursting out in a ring of spray and drops, the column falling away, a ripple running out.
+	 */
+	private static void waterColumn(Moment m, PoseStack pose, MultiBufferSource buffers, Quaternionf facing, Vec3 eye, float age, float t, float size) {
+		float high = size * 4.5f, strike = 0.25f;
+		float[] sea = {0.38f, 0.62f, 0.92f}, foam = {0.92f, 0.97f, 1.0f};
+		float[] fv = SpellRender.frame(age, 0.5f, SpellRender.WATER_FRAMES);
+		VertexConsumer water = buffers.getBuffer(SpellRender.clear(SpellRender.WATER));
+		if (t < strike + 0.25f) {
+			// The column: its foot plunging to the ground, then its body pouring after and thinning away.
+			float fall = Math.min(1, t / strike), after = Math.max(0, (t - strike) / 0.25f);
+			float foot = high * (1 - fall), top = high + size * 2 - after * (high + size * 2);
+			if (top > foot) {
+				pose.pushPose();
+				pose.translate(0, foot, 0);
+				SpellRender.cylinder(water, pose.last(), top - foot, h -> size * (0.5f + 0.15f * h) * (1 - after * 0.6f), 8, 18, sea, 0.85f * (1 - after), 1.5f, 1,
+						0, fv[0] + age * 0.06f, 0.8f, SpellRender.FULL_BRIGHT, null);
+				pose.popPose();
+			}
+		}
+		if (t >= strike) {
+			float out = (t - strike) / (1 - strike);
+			VertexConsumer smoke = buffers.getBuffer(SpellRender.clear(SpellRender.SMOKE));
+			for (int i = 0; i < 10; i++) {
+				Vec3 p = dir(m.seed() + 90 + i, true).multiply(1, 0.3, 1).normalize().scale(size * (0.5 + 1.4 * out));
+				SpellRender.billboard(smoke, pose, facing, (float) p.x, (float) p.y + 0.4f, (float) p.z, size * (0.8f + out), i, foam, 0.75f * (1 - out), 0, 0, 1, 1,
+						SpellRender.FULL_BRIGHT);
+			}
+			VertexConsumer drops = buffers.getBuffer(SpellRender.clear(SpellRender.BUBBLE));
+			for (int i = 0; i < 28; i++) {
+				Vec3 v = dir(m.seed() + i, true).scale(0.22 * Math.sqrt(size)).add(0, 0.25, 0);
+				Vec3 p = flung(v, age - m.life() * strike, 0.05f);
+				if (p.y < -0.5) continue;
+				SpellRender.billboard(drops, pose, facing, (float) p.x, (float) p.y, (float) p.z, 0.2f + 0.06f * size, 0, foam, 1 - out, 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+			}
+			VertexConsumer ring = buffers.getBuffer(SpellRender.clear(SpellRender.RIPPLE));
+			SpellRender.disc(ring, pose.last(), size * (0.6f + 2.2f * SpellRender.easeOut(out)), 0.08f, 0, foam, 0.8f * (1 - out), SpellRender.FULL_BRIGHT);
+		}
 	}
 
 	private static void glow(MultiBufferSource buffers, PoseStack pose, Quaternionf facing, Vec3 at, float size, float[] rgb, float alpha) {
@@ -387,6 +429,7 @@ public final class ClientSpellFx {
 				SpellRender.disc(ring, pose.last(), size * (0.3f + t * 1.6f), 0.03f, 0, WHITE, 0.8f * (1 - t), SpellRender.FULL_BRIGHT);
 			}
 			case CAST_SEAL -> castSeal(m, pose, buffers, facing, age, t);
+			case WATER_COLUMN -> waterColumn(m, pose, buffers, facing, eye, age, t, size);
 			case RIFT_TEAR -> {
 				float open = SpellRender.easeOut(Math.min(1, t * 2));
 				pose.pushPose();

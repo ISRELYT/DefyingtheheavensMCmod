@@ -96,6 +96,7 @@ public final class NetherworldState {
 		for (java.util.Map.Entry<GhostMethod, double[]> entry : old.methods.entrySet()) methods.put(entry.getKey(), entry.getValue().clone());
 		activeMethod = old.activeMethod;
 		readiedSpell = old.readiedSpell;
+		lifeMode = old.lifeMode;
 		System.arraycopy(old.spellWheel, 0, spellWheel, 0, spellWheel.length);
 	}
 
@@ -111,6 +112,8 @@ public final class NetherworldState {
 	private GhostMethod activeMethod;
 	/** The spell the cast key casts (null: none readied). */
 	private Spell readiedSpell;
+	/** What Life Force Drain and Gain move between a being and their caster (WoodSpells.LifeMode): its health, its qi, or its years. */
+	private WoodSpells.LifeMode lifeMode = WoodSpells.LifeMode.HEALTH;
 	/** The spell wheel's slots, clockwise from the top (null: empty). */
 	private final Spell[] spellWheel = new Spell[Spells.WHEEL_SLOTS];
 	/**
@@ -158,6 +161,9 @@ public final class NetherworldState {
 
 	public Spell readiedSpell() { return readiedSpell; }
 	public void setReadiedSpell(Spell spell) { this.readiedSpell = spell; }
+
+	public WoodSpells.LifeMode lifeMode() { return lifeMode; }
+	public void setLifeMode(WoodSpells.LifeMode mode) { this.lifeMode = mode == null ? WoodSpells.LifeMode.HEALTH : mode; }
 
 	public Spell spellSlot(int slot) { return slot >= 0 && slot < spellWheel.length ? spellWheel[slot] : null; }
 
@@ -263,6 +269,7 @@ public final class NetherworldState {
 		}
 		if (activeMethod != null) tag.putString("ActiveMethod", activeMethod.getId());
 		if (readiedSpell != null) tag.putString("ReadiedSpell", readiedSpell.getId());
+		if (lifeMode != WoodSpells.LifeMode.HEALTH) tag.putString("LifeMode", lifeMode.name());
 		boolean anySlot = false;
 		net.minecraft.nbt.ListTag wheel = new net.minecraft.nbt.ListTag();
 		for (Spell spell : spellWheel) {
@@ -320,6 +327,7 @@ public final class NetherworldState {
 		activeMethod = null;
 		setActiveMethod(GhostMethod.byId(tag.getString("ActiveMethod")));
 		readiedSpell = Spell.byId(tag.getString("ReadiedSpell"));
+		lifeMode = WoodSpells.LifeMode.byName(tag.getString("LifeMode"));
 		java.util.Arrays.fill(spellWheel, null);
 		net.minecraft.nbt.ListTag wheel = tag.getList("SpellWheel", net.minecraft.nbt.Tag.TAG_STRING);
 		for (int i = 0; i < Math.min(wheel.size(), spellWheel.length); i++) spellWheel[i] = Spell.byId(wheel.getString(i));

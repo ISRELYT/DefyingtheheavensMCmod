@@ -221,7 +221,10 @@ public enum Spell {
 	PRIMAL_AXE_SPLITS_CHAOS("primal_axe_splits_chaos", QiElement.METAL, Realm.TRUE_IMMORTAL, 7, 500000, 120 * 20),
 	FENGDU_WALLS_RISE("fengdu_walls_rise", GhostMethod.NETHERWORLD_IMMORTAL_CANON, 3, 400, 60 * 20),
 	TEN_THOUSAND_SOULS_ASCEND("ten_thousand_souls_ascend", GhostMethod.NETHERWORLD_IMMORTAL_CANON, 7, 600, 90 * 20),
-	PRIMORDIAL_CHAOS("primordial_chaos", Realm.TRUE_IMMORTAL, 450000, 100 * 20);
+	PRIMORDIAL_CHAOS("primordial_chaos", Realm.TRUE_IMMORTAL, 450000, 100 * 20),
+	// Return to the Bough (WoodSpells#Bough; the user's ask, 2026-10-25: "a mid to late realm wood spell that lets u put cultivation fruits back
+	// onto trees"): Four Axis, between its two spells of war.
+	RETURN_TO_THE_BOUGH("return_to_the_bough", QiElement.WOOD, Realm.FOUR_AXIS, 5, 400, 10 * 20);
 
 	private final String id;
 	private final GhostMethod method;

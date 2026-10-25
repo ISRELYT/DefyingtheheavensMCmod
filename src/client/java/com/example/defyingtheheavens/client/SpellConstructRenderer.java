@@ -44,11 +44,56 @@ public final class SpellConstructRenderer extends GeoEntityRenderer<SpellConstru
 		preloading = true;
 	}
 
-	/** At each client tick's end: the preload, if one is due. */
+	/** At each client tick's end: the preload, if one is due, and the shapes still to be drawn once unseen ({@link #warm}). */
 	public static void tick(Minecraft client) {
-		if (!preloading || client.level == null) return;
-		preloading = false;
-		preload();
+		if (client.level == null || client.player == null) {
+			WARMING.clear();
+			return;
+		}
+		if (preloading) {
+			preloading = false;
+			preload();
+			for (SpellConstruct.Kind kind : SpellConstruct.Kind.values()) if (kind.modelled()) WARMING.add(kind);
+			return;
+		}
+		for (int i = 0; i < WARM_A_TICK && !WARMING.isEmpty(); i++) warm(client, WARMING.poll());
+	}
+
+	/** The shapes not yet drawn once since the world was joined ({@link #warm}), and how many are drawn a tick. */
+	private static final java.util.ArrayDeque<SpellConstruct.Kind> WARMING = new java.util.ArrayDeque<>();
+	private static final int WARM_A_TICK = 2;
+
+	/**
+	 * Draws {@code kind}'s shape once, unseen (into {@link #NOWHERE}), a few a tick after a world is joined: its model, its animations and
+	 * its glow taken through GeckoLib once before its great spell first calls it, so nothing is first made then (the user's ask,
+	 * 2026-10-25: "preload models before the move is used so they don't lag out the game").
+	 */
+	private static void warm(Minecraft client, SpellConstruct.Kind kind) {
+		try {
+			SpellConstruct shape = SpellConstruct.create(client.level, kind, client.player.position(), 0, 0, 200, null);
+			shape.tickCount = 40; // fully formed, as most of its life is drawn
+			net.minecraft.client.renderer.entity.EntityRenderer<? super SpellConstruct> renderer = client.getEntityRenderDispatcher().getRenderer(shape);
+			renderer.render(shape, 0, 0, new PoseStack(), NOWHERE, LightTexture.FULL_BRIGHT);
+		} catch (Exception e) {
+			DefyingTheHeavens.LOGGER.debug("Warming the spell shape {} failed", kind, e);
+		}
+	}
+
+	/** Where a shape drawn unseen goes: nowhere (every vertex let fall). */
+	private static final MultiBufferSource NOWHERE = type -> Nowhere.INSTANCE;
+
+	private enum Nowhere implements com.mojang.blaze3d.vertex.VertexConsumer {
+		INSTANCE;
+
+		@Override public com.mojang.blaze3d.vertex.VertexConsumer vertex(double x, double y, double z) { return this; }
+		@Override public com.mojang.blaze3d.vertex.VertexConsumer color(int r, int g, int b, int a) { return this; }
+		@Override public com.mojang.blaze3d.vertex.VertexConsumer uv(float u, float v) { return this; }
+		@Override public com.mojang.blaze3d.vertex.VertexConsumer overlayCoords(int u, int v) { return this; }
+		@Override public com.mojang.blaze3d.vertex.VertexConsumer uv2(int u, int v) { return this; }
+		@Override public com.mojang.blaze3d.vertex.VertexConsumer normal(float x, float y, float z) { return this; }
+		@Override public void endVertex() {}
+		@Override public void defaultColor(int r, int g, int b, int a) {}
+		@Override public void unsetDefaultColor() {}
 	}
 
 	/**
@@ -84,6 +129,16 @@ public final class SpellConstructRenderer extends GeoEntityRenderer<SpellConstru
 			pose.popPose();
 			return;
 		}
+		if (construct.kind().form == SpellConstruct.Form.DRAWN) {
+			// Drawn by hand whole (SpellDrawn), where it is drawn this very frame.
+			net.minecraft.world.phys.Vec3 shift = construct.anchorShift(partialTick);
+			pose.pushPose();
+			pose.translate(shift.x, shift.y, shift.z);
+			SpellDrawn.render(construct, partialTick, pose, buffers, light, entityRenderDispatcher.cameraOrientation(),
+					entityRenderDispatcher.camera.getPosition().subtract(construct.getPosition(partialTick).add(shift)));
+			pose.popPose();
+			return;
+		}
 		if (construct.kind().form == SpellConstruct.Form.TENDRIL) {
 			TendrilRenderer.render(construct, partialTick, pose, buffers); // a grasping root, drawn by hand
 			return;
@@ -97,7 +152,45 @@ public final class SpellConstructRenderer extends GeoEntityRenderer<SpellConstru
 		pose.pushPose();
 		pose.translate(shift.x, shift.y, shift.z);
 		super.render(construct, yaw, partialTick, pose, buffers, LightTexture.FULL_BRIGHT); // qi's own light
+		if (construct.kind() == SpellConstruct.Kind.KARMA_MIRROR) karmaLight(construct, partialTick, pose, buffers);
 		pose.popPose();
+	}
+
+	/**
+	 * The karma mirror's light (Mirror of Retribution): poured out of its face along its caster's look, as wide at the mirror as its face and
+	 * widening to the spell's cone ({@code GhostSpells#MIRROR_CONE}) out to its reach, its rays streaming out along it, brightest as it flashes.
+	 * (Its light was rays sent from the mirror's middle, thin and lagging behind it: the user's report, 2026-10-25, of beams that "don't line
+	 * up" with what casts them.)
+	 */
+	private void karmaLight(SpellConstruct mirror, float partial, PoseStack pose, MultiBufferSource source) {
+		float age = mirror.tickCount + partial;
+		float shown = Mth.clamp((age - 8) / 10, 0, 1) * Mth.clamp((mirror.life() - age) / SpellConstruct.FADE, 0, 1);
+		if (shown <= 0) return;
+		boolean flash = "flash".equals(mirror.phase());
+		float flare = flash ? Math.max(0, 1 - mirror.phaseAge(partial) / 12) : 0;
+		float scale = mirror.kind().scale * mirror.size() / 16f;
+		float face = 10.5f * scale * 0.92f, reach = (float) com.example.defyingtheheavens.GhostSpells.MIRROR_RANGE;
+		float spread = (float) Math.tan(Math.toRadians(com.example.defyingtheheavens.GhostSpells.MIRROR_CONE));
+		float[] teal = {0.33f, 0.95f, 0.9f}, pale = {0.8f, 1.0f, 0.98f};
+		MultiBufferSource buffers = SpellBuffers.begin(source);
+		try {
+			pose.pushPose();
+			pose.mulPose(Axis.YP.rotationDegrees(180.0f - mirror.drawnYaw(partial)));
+			pose.mulPose(Axis.XP.rotationDegrees(-mirror.drawnPitch(partial)));
+			pose.translate(0, 0, -1.4f * scale);
+			pose.mulPose(Axis.XP.rotationDegrees(-90));
+			PoseStack.Pose p = pose.last();
+			SpellRender.Radius cone = h -> face + h * reach * spread;
+			SpellRender.cylinder(buffers.getBuffer(SpellRender.glow(SpellRender.BEAM)), p, reach, cone, 10, 32, teal, (0.3f + 0.5f * flare) * shown, 4, 3, 0, -age * 0.05f,
+					0, SpellRender.FULL_BRIGHT, h -> (1 - h) * (1 - h));
+			SpellRender.cylinder(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), p, reach * 0.8f, h -> face * 0.8f + h * reach * 0.8f * spread * 0.7f, 8, 24, pale,
+					(0.12f + 0.4f * flare) * shown, 1, 1, 0, 0, 0, SpellRender.FULL_BRIGHT, h -> (1 - h) * (1 - h));
+			// Its face alight.
+			SpellRender.disc(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), p, face * 1.1f, 0.05f, 0, pale, (0.45f + 0.5f * flare) * shown, SpellRender.FULL_BRIGHT);
+			pose.popPose();
+		} finally {
+			SpellBuffers.end();
+		}
 	}
 
 	/**
@@ -146,6 +239,13 @@ public final class SpellConstructRenderer extends GeoEntityRenderer<SpellConstru
 		@Override
 		public ResourceLocation getAnimationResource(SpellConstruct construct) {
 			return DefyingTheHeavens.id("animations/spell/" + construct.kind().id + ".animation.json");
+		}
+
+		/** After its moves: the Azure Dragon's body laid along its flight (DragonPose). */
+		@Override
+		public void setCustomAnimations(SpellConstruct construct, long instanceId, software.bernie.geckolib.core.animation.AnimationState<SpellConstruct> state) {
+			super.setCustomAnimations(construct, instanceId, state);
+			if (construct.kind() == SpellConstruct.Kind.AZURE_DRAGON) DragonPose.pose(getAnimationProcessor(), construct, state.getPartialTick());
 		}
 	}
 }

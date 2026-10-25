@@ -98,6 +98,60 @@ public final class MeteorFlightClient {
 	/** Whether the server's gamerule lets the bulldozer clear the way (its word, MeteorFlight#sync; nothing cleared until it says). */
 	private static boolean smashes;
 
+	/**
+	 * The flier's own moves (blocks a tick), the last {@link #WINDOW} of them: how fast the server sees it go (MeteorFlight's State#speed,
+	 * the mean of the same), which is what the server's bulldozer goes by.
+	 */
+	private static final int WINDOW = 10;
+	private static final double[] MOVES = new double[WINDOW];
+	private static int nextMove;
+	private static Vec3 lastAt;
+	/**
+	 * The way is cleared on this screen only once the server, going by its own sight of the flier, will take it too
+	 * (MeteorFlight#DOZE_SPEED_SHARE, this many times over against its word coming late), and has been told one flies flat out: what
+	 * it refuses comes back. Cleared ahead of a flier just setting off (from mid-jump, set off at once at full tilt: the user's report,
+	 * 2026-10-25, "you will get stuck and the blocks infront of u will break and get replaced repeatedly"), the way ahead was taken on
+	 * this screen, refused by the server (to it the flier had hardly moved), put back on top of the flier, and cleared again the next
+	 * tick, over and over.
+	 */
+	private static final double DOZE_MARGIN = 1.6;
+	/** Blocks cleared here (by place) and the game time they were: watched {@link #REFUSAL_WAIT} ticks for the server's refusal. */
+	private static final Map<Long, Long> CLEARED = new HashMap<>();
+	/**
+	 * Blocks the server put back (it would not take them: a formation's, a sect's grounds, spawn), and until when they are left
+	 * alone: flown into like any wall, never cleared and put back again and again.
+	 */
+	private static final Map<Long, Long> REFUSED = new HashMap<>();
+	private static final int REFUSAL_WAIT = 12, REFUSAL_HOLD = 100;
+
+	/** How fast the server sees the local flier go (blocks a tick): the mean of its last {@link #WINDOW} moves. */
+	private static double seenSpeed() {
+		double sum = 0;
+		for (double m : MOVES) sum += m;
+		return sum / WINDOW;
+	}
+
+	/** Each client tick: the flier's move counted, and the blocks it cleared watched for the server putting them back. */
+	private static void watchTheWay(LocalPlayer player, ClientLevel level) {
+		Vec3 at = player.position();
+		double moved = lastAt == null ? 0 : at.distanceTo(lastAt);
+		if (moved > 64) moved = 0; // a teleport, not a flight
+		lastAt = at;
+		MOVES[nextMove] = moved;
+		nextMove = (nextMove + 1) % WINDOW;
+		long now = level.getGameTime();
+		if (!CLEARED.isEmpty()) {
+			for (Iterator<Map.Entry<Long, Long>> it = CLEARED.entrySet().iterator(); it.hasNext(); ) {
+				Map.Entry<Long, Long> e = it.next();
+				if (now - e.getValue() < REFUSAL_WAIT && now >= e.getValue()) continue;
+				it.remove();
+				BlockPos pos = BlockPos.of(e.getKey());
+				if (!level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()) REFUSED.put(e.getKey(), now + REFUSAL_HOLD);
+			}
+		}
+		if (!REFUSED.isEmpty()) REFUSED.values().removeIf(until -> until <= now || until > now + REFUSAL_HOLD);
+	}
+
 	/** Whether the local player flies by Meteor Flight now (as MeteorFlight#mayStreak on the server). */
 	public static boolean active(LocalPlayer p) {
 		PlayerCultivation c = ClientCultivationData.get();
@@ -137,7 +191,8 @@ public final class MeteorFlightClient {
 		// Diving steeply, into the ground too (burrowing), and at any speed: set off from just over the ground, the ground stopped one
 		// before one was ever fast enough to clear it.
 		boolean burrowing = Bulldozer.burrowing(heading);
-		boolean dozing = sprinting && smashes && (speed >= Bulldozer.FROM_SPEED || burrowing) && !Incorporeal.is(player);
+		boolean taken = told && toldFlat && (burrowing || seenSpeed() >= Bulldozer.FROM_SPEED * MeteorFlight.DOZE_SPEED_SHARE * DOZE_MARGIN);
+		boolean dozing = sprinting && smashes && taken && (speed >= Bulldozer.FROM_SPEED || burrowing) && !Incorporeal.is(player);
 		shownThisTick = 0;
 		Vec3 start = player.position();
 		boolean wasOnGround = player.onGround();
@@ -280,7 +335,9 @@ public final class MeteorFlightClient {
 
 	/** {@code found} cleared on this client (the first with its crumbling, a few more), and added to {@code cleared}. */
 	private static void clear(ClientLevel level, LocalPlayer player, List<BlockPos> found, List<BlockPos> cleared) {
+		long now = level.getGameTime();
 		for (BlockPos pos : found) {
+			if (REFUSED.containsKey(pos.asLong())) continue; // the server put it back: a wall, not cleared again
 			BlockState state = level.getBlockState(pos);
 			if (shownThisTick < Bulldozer.SHOWN_A_TICK && (shownThisTick == 0 || level.random.nextInt(3) == 0)) {
 				shownThisTick++;
@@ -288,6 +345,7 @@ public final class MeteorFlightClient {
 			}
 			level.setBlock(pos, state.getFluidState().createLegacyBlock(), 11); // as vanilla clears a block one mines
 			cleared.add(pos);
+			CLEARED.put(pos.asLong(), now);
 		}
 	}
 
@@ -418,6 +476,7 @@ public final class MeteorFlightClient {
 	/** Each client tick: the word to the server, the heat eased, the trails laid and let fade, and the rings aged. */
 	public static void tick(Minecraft mc) {
 		if (mc.level == null || mc.player == null) return;
+		watchTheWay(mc.player, mc.level);
 		boolean want = steering && active(mc.player), flat = want && flatOut;
 		if (want != told || flat != toldFlat) {
 			told = want;
@@ -792,6 +851,10 @@ public final class MeteorFlightClient {
 		speed = 0;
 		heading = null;
 		steering = flatOut = told = toldFlat = smashes = false;
+		java.util.Arrays.fill(MOVES, 0);
+		lastAt = null;
+		CLEARED.clear();
+		REFUSED.clear();
 	}
 
 	private MeteorFlightClient() {}

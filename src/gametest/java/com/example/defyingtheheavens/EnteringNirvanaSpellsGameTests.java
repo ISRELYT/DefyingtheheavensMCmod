@@ -311,7 +311,7 @@ public class EnteringNirvanaSpellsGameTests implements FabricGameTest {
 		HeavenSpellTesting.lookAt(p, point);
 		int stone = floorLeft(level, floor.centre(), point.add(-8, 0, 6), 4);
 		helper.assertTrue(HeavenSpellTesting.cast(p, Spell.BURIED_WORLD), "Buried World is cast, paid for");
-		helper.assertTrue(constructs(level, point, EarthSpells.BURIED_RADIUS + 6, SpellConstruct.Kind.STANDING_STONE).size() == EarthSpells.BURIED_STONES, "...its ring of standing stones rises");
+		helper.assertTrue(constructs(level, point, EarthSpells.BURIED_RADIUS + 6, SpellConstruct.Kind.MENHIR_MASS).size() == EarthSpells.BURIED_STONES, "...its ring of standing stones rises");
 		helper.runAfterDelay(EarthSpells.BURIED_RISES + 52, () -> {
 			if (sunk.getHealth() > HEALTH - 2 * EarthSpells.BURIED_CRUSH + 1 || floorLeft(level, floor.centre(), point.add(-8, 0, 6), 4) >= stone) {
 				thinned.run();
@@ -383,7 +383,7 @@ public class EnteringNirvanaSpellsGameTests implements FabricGameTest {
 		HeavenSpellTesting.lookAt(p, point);
 		int stone = floorLeft(level, floor.centre(), point, 10);
 		helper.assertTrue(HeavenSpellTesting.cast(p, Spell.THE_FROZEN_MOON_FALLS), "The Frozen Moon Falls is cast, paid for");
-		helper.assertTrue(constructs(level, point.add(0, WaterSpells.FALLS_HIGH, 0), 6, SpellConstruct.Kind.ICE_MOON).size() == 1, "...its moon high over the spot");
+		helper.assertTrue(constructs(level, point.add(0, WaterSpells.FALLS_HIGH, 0), 6, SpellConstruct.Kind.MOON_MASS).size() == 1, "...its moon high over the spot");
 		helper.runAfterDelay(WaterSpells.FALLS_FALL + 3, () -> {
 			try {
 				helper.assertTrue(struck.getHealth() <= HEALTH - WaterSpells.FALLS_DAMAGE + 1, "It falls on what stands under it (" + struck.getHealth() + ")");
@@ -499,8 +499,8 @@ public class EnteringNirvanaSpellsGameTests implements FabricGameTest {
 		HeavenSpellTesting.lookAt(p, HeavenSpells.middle(soul));
 		helper.assertTrue(Spell.BLACK_AND_WHITE_IMPERMANENCE.isKnown(CultivationManager.get(p)), "Its ghost path carries the Underworld Nirvana Scripture to its spell");
 		helper.assertTrue(took(p, Spell.BLACK_AND_WHITE_IMPERMANENCE), "Black and White Impermanence is cast");
-		helper.assertTrue(constructs(level, soul.position(), GhostSpells.IMPERMANENCE_BESIDE + 3, SpellConstruct.Kind.WHITE_IMPERMANENCE).size() == 1
-				&& constructs(level, soul.position(), GhostSpells.IMPERMANENCE_BESIDE + 3, SpellConstruct.Kind.BLACK_IMPERMANENCE).size() == 1, "...the White and the Black rise to either side of it");
+		helper.assertTrue(constructs(level, soul.position(), GhostSpells.IMPERMANENCE_BESIDE + 3, SpellConstruct.Kind.WHITE_IMPERMANENCE_FIGURE).size() == 1
+				&& constructs(level, soul.position(), GhostSpells.IMPERMANENCE_BESIDE + 3, SpellConstruct.Kind.BLACK_IMPERMANENCE_FIGURE).size() == 1, "...the White and the Black rise to either side of it");
 		helper.runAfterDelay(GhostSpells.IMPERMANENCE_COMES + GhostSpells.IMPERMANENCE_HOOK + GhostSpells.IMPERMANENCE_HOLDS + 3, () -> {
 			try {
 				float share = Math.min(GhostSpells.IMPERMANENCE_MOST, HEALTH * GhostSpells.IMPERMANENCE_SHARE);
@@ -571,7 +571,7 @@ public class EnteringNirvanaSpellsGameTests implements FabricGameTest {
 		int stone = floorLeft(level, floor.centre(), point, 8);
 		helper.assertTrue(Spell.HEAVEN_DEMON_ECLIPSE.isKnown(CultivationManager.get(p)), "Both paths at Entering Nirvana: the Eclipse is theirs");
 		helper.assertTrue(HeavenSpellTesting.cast(p, Spell.HEAVEN_DEMON_ECLIPSE), "The Heaven-Demon Eclipse is cast, paid for in qi");
-		helper.assertTrue(constructs(level, point.add(0, HeavenDemonSpells.ECLIPSE_HIGH, 0), 6, SpellConstruct.Kind.HEAVEN_DEMON_ECLIPSE).size() == 1, "...sun and moon high over the spot");
+		helper.assertTrue(constructs(level, point.add(0, HeavenDemonSpells.ECLIPSE_HIGH, 0), 6, SpellConstruct.Kind.ECLIPSE).size() == 1, "...sun and moon high over the spot");
 		helper.runAfterDelay(HeavenDemonSpells.ECLIPSE_MEETS + 2 * HeavenDemonSpells.ECLIPSE_EVERY + 3, () -> {
 			try {
 				float all = HeavenDemonSpells.ECLIPSE_PULSES[0] + HeavenDemonSpells.ECLIPSE_PULSES[1] + HeavenDemonSpells.ECLIPSE_PULSES[2];

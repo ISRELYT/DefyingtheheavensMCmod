@@ -1018,6 +1018,26 @@ public final class ModLang {
 	public static final String BTN_PRACTISE = k("methods.practise");
 	public static final String METHODS_NO_QI = k("methods.no_qi");
 	public static final String BTN_SPELL_LIST = k("spells.list");
+	/** The Spells tab's switch for whether spells change the land for good (ModGameRules#SPELL_GRIEFING), its tooltips, and the word to all. */
+	public static final String BTN_GRIEFING_ON = k("spells.griefing_on");
+	public static final String BTN_GRIEFING_OFF = k("spells.griefing_off");
+	public static final String TIP_GRIEFING = k("spells.griefing_tip");
+	public static final String TIP_GRIEFING_LOCKED = k("spells.griefing_locked");
+	public static final String MSG_GRIEFING_ON = k("spells.griefing_now_on");
+	public static final String MSG_GRIEFING_OFF = k("spells.griefing_now_off");
+	/** Life Force Drain and Gain's modes (WoodSpells.LifeMode): their switch's names in the Spells tab, the word as one is chosen, and refusals. */
+	public static final String LIFE_MODE_HEALTH = k("spells.life_mode_health");
+	public static final String LIFE_MODE_QI = k("spells.life_mode_qi");
+	public static final String LIFE_MODE_YEARS = k("spells.life_mode_years");
+	public static final String MSG_LIFE_MODE = k("spells.life_mode_now");
+	public static final String MSG_LIFE_NO_YEARS = k("spells.life_no_years");
+	public static final String MSG_LIFE_NO_QI = k("spells.life_no_qi");
+	public static final String MSG_LIFE_YEARS_GIFTED = k("spells.life_years_gifted");
+	/** Return to the Bough's word (WoodSpells#Bough): no fruit held, no bough to hang it on, and how many were hung, at what age. */
+	public static final String MSG_BOUGH_NO_FRUIT = k("spells.bough_no_fruit");
+	public static final String MSG_BOUGH_NO_TREE = k("spells.bough_no_tree");
+	public static final String MSG_BOUGH_HUNG = k("spells.bough_hung");
+	public static final String MSG_LIFE_YEARS_RECEIVED = k("spells.life_years_received");
 	// The Spells tab and the spell wheel (held open by its key)
 	public static final String SPELLS_COST = k("spells.cost");
 	public static final String SPELLS_COOLDOWN = k("spells.cooldown");

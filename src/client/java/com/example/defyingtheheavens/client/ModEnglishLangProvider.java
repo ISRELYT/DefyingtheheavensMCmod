@@ -537,11 +537,13 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 						+ "you look, up to 32 blocks: everything within 5 blocks takes 15 hearts of harm, is thrown up and weakened for 5 seconds.";
 				case HEAVEN_AND_DEMON_AS_ONE -> "A spell of both paths, heaven and demon made one. Everything within 16 blocks is dragged in and "
 						+ "takes 25 hearts of harm; a tenth of all of it mends you, and you have Strength II for 10 seconds.";
-				case HEAVEN_DEMON_AVATAR -> "A spell of both paths, heaven and demon. A colossal avatar of gold light and crimson demon qi, 41 "
-						+ "blocks tall, rises behind you for 8 s, and twice its hands come down where you look, up to 82 blocks: heaven's palm, then "
-						+ "the demon's claw. Each strikes everything within 14 blocks for 140 harm and throws it down, slowed; a fifth of all the harm "
-						+ "mends you. Heaven's palm crushes a crater 18 blocks round and 8 deep into the land, cracks running out of it to 39 blocks; "
-						+ "the demon's claw rakes four gouges 28 blocks long across where it struck.";
+				case HEAVEN_DEMON_AVATAR -> "A spell of both paths, heaven and demon. A colossal projection of your own body, 41 blocks tall, rises out of a cloud of gold "
+						+ "and crimson behind you for 8 s: its right side heaven's gold, haloed, its hand held up in heaven's sign; its left the demon's "
+						+ "crimson, horned in fire, clawed; a seam of fire burning down it where the two meet. Twice it raises a hand and that hand comes "
+						+ "down out of the sky where you look, up to 82 blocks: heaven's palm, then the demon's claw. Each strikes everything within 14 "
+						+ "blocks for 140 harm and throws it down, slowed; a fifth of all the harm mends you. Heaven's palm crushes a crater 18 blocks "
+						+ "round and 8 deep into the land, cracks running out of it to 39 blocks; the demon's claw rakes four gouges 28 blocks long across "
+						+ "where it struck.";
 				// Void Shattering's.
 				case RIFT_TO_THE_NINE_NETHERS -> "The ground where you look, up to 118 blocks, tears open onto the Nine Nethers, nine rings of ghost "
 						+ "fire turning down into it, for 6 s: every foe within 22 blocks is dragged toward it and down, and takes 100 ghostly harm a "
@@ -573,31 +575,33 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 						+ "harm, through armour, and its wave runs out over the land to 38 blocks, striking everything there for 200 and throwing it "
 						+ "back, the land cracking under it out to 40 blocks. A fifth of all the harm mends you. Then it rises away.";
 				// Entering Nirvana's.
-				case BLACK_AND_WHITE_IMPERMANENCE -> "The two soul-catchers of the underworld, the White who smiles and the Black who scowls, rise out of "
-						+ "the mist to either side of the soul you look at, up to 72 blocks, and come for it: the White sweeps its banner down on it, "
-						+ "500 ghostly harm, slowing it; the Black's chain lashes out and binds it, holding it for 3 s at 300 ghostly harm a second; "
-						+ "and then they take their share of it, a tenth of its whole health (no more than 1200). The dead take half as much again.";
+				case BLACK_AND_WHITE_IMPERMANENCE -> "The two soul-catchers of the underworld rise out of the mist to either side of the soul you look at, up to 72 blocks, and come "
+						+ "for it: the White, who smiles, in white mourning robes and a tall hat, its long red tongue hanging from its mouth, brings its "
+						+ "mourning staff down on it, 500 ghostly harm, slowing it; the Black, who scowls, in black, red-eyed, thrusts out its hand and its "
+						+ "chain lashes out and binds it, holding it for 3 s at 300 ghostly harm a second; and then both reach in and take their share of "
+						+ "its soul, a tenth of its whole health (no more than 1200). The dead take half as much again.";
 				case BOOK_OF_LIFE_AND_DEATH -> "The Book of Life and Death, in which every soul's span is written, opens over your head, its judge's "
 						+ "brush red with cinnabar, and finds the names of the foes round you, eight at most within 72 blocks, nearest first: each is "
 						+ "marked, shown glowing wherever it is, and for 3 s takes 250 ghostly harm a second. Then the brush strikes their names out: "
 						+ "900 ghostly harm to each, and any left with less than a quarter of its whole health is struck out of life (a great one of "
 						+ "the world, the Ender Dragon, the Wither, the Warden, takes 2000 more instead). The dead take half as much again.";
-				case HEAVEN_DEMON_ECLIPSE -> "A spell of both paths, heaven and demon. Heaven's sun and the demon's moon come together 58 blocks over "
-						+ "where you look, up to 154 blocks, the moon passing before the sun, its corona blazing round them; a beam of darkness pours "
-						+ "down from them and pulses three times, three quarters of a second apart: each strikes everything under it, within 22 "
-						+ "blocks, for 1200, then 600, then 600 harm, through armour, holding it where it stands, and the first burns the land into a "
-						+ "crater of black glass 19 blocks round and 7 deep. A fifth of all the harm mends you.";
+				case HEAVEN_DEMON_ECLIPSE -> "A spell of both paths, heaven and demon. Heaven's sun and the demon's moon come together 58 blocks over where you look, up to "
+						+ "154 blocks, the black moon sliding across the blazing sun until it covers it, its corona flaring out round them; then a beam of "
+						+ "darkness edged with crimson and gold pours straight down from the moon's face to the ground, as wide as its harm reaches, and "
+						+ "pulses three times, three quarters of a second apart: each strikes everything under it, within 22 blocks, for 1200, then 600, "
+						+ "then 600 harm, through armour, holding it where it stands, and the first burns the land into a crater of black glass 19 blocks "
+						+ "round and 7 deep, ash and embers welling up about it. A fifth of all the harm mends you.";
 				// True Immortal's.
 				case FENGDU_WALLS_RISE -> "Eight lengths of the walls of Fengdu, the city of the dead, black stone, crenellated, a gate-tower at "
 						+ "the middle of each and soul lanterns at their ends, rise out of the land in a ring 37 blocks round where you look, up to "
 						+ "136 blocks away, facing in: for 5 s no foe within gets out past them, and every half second the city's dead fall on every "
 						+ "foe within, 800 ghostly harm, slowing them. Then the walls topple in on its heart: 4000 ghostly harm to every foe within. "
 						+ "The dead take half as much again.";
-				case TEN_THOUSAND_SOULS_ASCEND -> "A helix of ten thousand souls, two strands of the dead winding up about one another, rises out of "
-						+ "the dark where you look, up to 136 blocks away, and spirals for 5 s: every foe within 34 blocks is drawn in to it, and "
-						+ "those within 14 carried up round it as high as 20 (a great beast only drawn, slowly), its souls tearing at them, 1000 "
-						+ "ghostly harm every half second. Then it goes back down into the dark, dragging them down with it: 5000 ghostly harm to "
-						+ "each. The dead take half as much again.";
+				case TEN_THOUSAND_SOULS_ASCEND -> "A pit of the dark opens where you look, up to 136 blocks away, and a whirlwind of ghost fire winds up out of it, the souls of "
+						+ "the dead pouring up it by the hundred, wailing faces as they rise out of the dark that burn away into wisps of cold blue fire as "
+						+ "they climb. For 5 s every foe within 34 blocks is drawn in to it, and those within 14 carried up round it as high as 20 (a great "
+						+ "beast only drawn, slowly), the souls tearing at them, 1000 ghostly harm every half second. Then it is dragged back down into the "
+						+ "dark, dragging them down with it: 5000 ghostly harm to each. The dead take half as much again.";
 				case PRIMORDIAL_CHAOS -> "A spell of both paths, heaven and demon. A sphere of the chaos before heaven and earth were parted, heaven's "
 						+ "gold and the demon's crimson swirled together, swells out of a point 24 blocks over where you look, up to 218 blocks "
 						+ "away, and churns for 5 s: everything within 54 blocks is drawn in toward it, and every half second everything within 27 "
@@ -701,6 +705,23 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.METHODS_PERFECTED, "Perfected");
 		t.add(ModLang.METHODS_NO_QI, "There is no ghostly qi here to cultivate with. It flows faintest in the Overworld, thicker in the Nether (thickest in its Soul Sand Valleys), and ten times as dense in the Netherworld.");
 		t.add(ModLang.BTN_SPELL_LIST, "Spell List");
+		t.add(ModLang.LIFE_MODE_HEALTH, "Moves: Health");
+		t.add(ModLang.LIFE_MODE_QI, "Moves: Qi");
+		t.add(ModLang.LIFE_MODE_YEARS, "Moves: Years");
+		t.add(ModLang.MSG_LIFE_MODE, "Life Force Drain and Gain now move %s.");
+		t.add(ModLang.MSG_LIFE_NO_YEARS, "It has no years of life to draw on, nor to be given: only a player keeps a lifespan.");
+		t.add(ModLang.MSG_LIFE_NO_QI, "You have no qi left to give.");
+		t.add(ModLang.MSG_LIFE_YEARS_GIFTED, "%s years of your life given to %s.");
+		t.add(ModLang.MSG_LIFE_YEARS_RECEIVED, "%s gave you %s years of their life.");
+		t.add(ModLang.MSG_BOUGH_NO_FRUIT, "Hold the Cultivation Fruit you would return to the bough.");
+		t.add(ModLang.MSG_BOUGH_NO_TREE, "Look at the leaves of a tree with room beneath them to hang it.");
+		t.add(ModLang.MSG_BOUGH_HUNG, "%s Cultivation Fruit returned to the bough: they ripen on from %s years.");
+		t.add(ModLang.BTN_GRIEFING_ON, "Grief: On");
+		t.add(ModLang.BTN_GRIEFING_OFF, "Grief: Off");
+		t.add(ModLang.TIP_GRIEFING, "Whether spells change the land for good. On: craters, cuts, lakes and floods, ice, and fire that spreads. Off: the land is left as it was; spell fire catches nothing and puts itself out, and the water they pour drains away. (The gamerule spellGriefing.)");
+		t.add(ModLang.TIP_GRIEFING_LOCKED, "Whether spells change the land for good (the gamerule spellGriefing). Only an operator or the world's host may change it.");
+		t.add(ModLang.MSG_GRIEFING_ON, "%s turned spell grief on: spells change the land for good.");
+		t.add(ModLang.MSG_GRIEFING_OFF, "%s turned spell grief off: spells leave the land as it was.");
 		t.add(ModLang.METHODS_GHOST_PATH, "Ghost path: %s");
 		t.add(ModLang.METHODS_GHOST_PATH_NONE, "Ghost path: not yet begun");
 		t.add(ModLang.METHODS_GHOST_PATH_SEALED, "Ghost path: sealed, your meridians not yet opened (a Marrow Cleansing Elixir)");

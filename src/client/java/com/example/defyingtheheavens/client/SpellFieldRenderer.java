@@ -36,7 +36,8 @@ import java.util.List;
 public class SpellFieldRenderer extends EntityRenderer<SpellField> {
 	private static final float[] WHITE = {1, 1, 1};
 	private static final float[] FIRE_CORE = {1.0f, 0.95f, 0.75f}, FIRE_MID = {1.0f, 0.55f, 0.15f}, FIRE_OUTER = {0.95f, 0.22f, 0.06f};
-	private static final float[] WATER_GLOW = {0.35f, 0.75f, 1.0f}, ICE = {0.65f, 0.9f, 1.0f}, LIFE = {0.35f, 1.0f, 0.45f}, GOLD = {1.0f, 0.82f, 0.4f};
+	private static final float[] WATER_GLOW = {0.35f, 0.75f, 1.0f}, ICE = {0.65f, 0.9f, 1.0f}, LIFE = {0.35f, 1.0f, 0.45f}, GOLD = {1.0f, 0.82f, 0.4f},
+			LIFE_QI = {0.45f, 0.8f, 1.0f}, LIFE_YEARS = {1.0f, 0.85f, 0.35f};
 	private static final float[] SWORD_LIGHT = {1.0f, 0.95f, 0.8f}, EARTH = {0.85f, 0.6f, 0.3f};
 
 	public SpellFieldRenderer(EntityRendererProvider.Context context) {
@@ -1001,7 +1002,10 @@ public class SpellFieldRenderer extends EntityRenderer<SpellField> {
 		Entity caster = field.owner();
 		if (caster == null) return;
 		Vec3 hands = caster.getPosition(partial).add(0, caster.getBbHeight() * 0.65, 0).subtract(at);
-		boolean drain = field.data() == 1;
+		boolean drain = (field.data() & 1) == 1;
+		// Its colour by what it moves (WoodSpells.LifeMode): the green of life for health, blue for qi, gold for years.
+		int mode = field.data() >> 1;
+		float[] LIFE = mode == 1 ? LIFE_QI : mode == 2 ? LIFE_YEARS : SpellFieldRenderer.LIFE;
 		Vec3 from = drain ? Vec3.ZERO : hands, to = drain ? hands : Vec3.ZERO;
 		float show = SpellRender.fade(age, life, 6, 10);
 		Vec3 mid = from.add(to).scale(0.5).add(0, from.distanceTo(to) * 0.18 + 0.5, 0);

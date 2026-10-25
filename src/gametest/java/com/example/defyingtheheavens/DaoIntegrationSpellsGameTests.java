@@ -265,7 +265,7 @@ public class DaoIntegrationSpellsGameTests implements FabricGameTest {
 		helper.assertTrue(HeavenSpellTesting.cast(p, Spell.SEAL_OF_TEN_THOUSAND_MOUNTAINS), "The Seal of Ten Thousand Mountains is cast, paid for");
 		helper.runAfterDelay(EarthSpells.MOUNTAINS_FALL + 8, () -> {
 			try {
-				List<SpellConstruct> seal = constructs(level, point, 30, SpellConstruct.Kind.MOUNTAIN_SEAL);
+				List<SpellConstruct> seal = constructs(level, point, 30, SpellConstruct.Kind.SEAL_MASS);
 				helper.assertTrue(seal.size() == 1 && Math.abs(seal.get(0).getY() - home.y) < 1.5, "Its seal has come down on the land");
 				helper.assertTrue(under.getHealth() <= 4000 - EarthSpells.MOUNTAINS_DAMAGE + 1, "What it came down on is crushed (" + under.getHealth() + ")");
 				helper.assertTrue(under.hasEffect(MobEffects.MOVEMENT_SLOWDOWN) && under.getEffect(MobEffects.MOVEMENT_SLOWDOWN).getAmplifier() >= 5, "...and held pressed down");
@@ -511,7 +511,7 @@ public class DaoIntegrationSpellsGameTests implements FabricGameTest {
 		boolean quiet = Devastation.pending() == 0;
 		helper.assertTrue(Spell.PROCESSION_OF_TEN_THOUSAND_GHOSTS.isKnown(CultivationManager.get(p)), "Its ghost path carries the Ten Thousand Ghosts Union to its spell");
 		helper.assertTrue(took(p, Spell.PROCESSION_OF_TEN_THOUSAND_GHOSTS), "The Procession of Ten Thousand Ghosts is cast");
-		helper.assertTrue(constructs(level, home, 10, SpellConstruct.Kind.PROCESSION).size() == 1, "...its column pours out of its caster");
+		helper.assertTrue(constructs(level, home, 10, SpellConstruct.Kind.GHOST_PROCESSION).size() == 1, "...its column pours out of its caster");
 		helper.runAfterDelay(GhostSpells.PROCESSION_TICKS + 4, () -> {
 			try {
 				helper.assertTrue(near.getHealth() <= 4000 - GhostSpells.PROCESSION_DAMAGE + 1 && far.getHealth() <= 4000 - GhostSpells.PROCESSION_DAMAGE + 1,
@@ -581,10 +581,10 @@ public class DaoIntegrationSpellsGameTests implements FabricGameTest {
 		int stone = floorLeft(level, floor.centre(), point, 12);
 		boolean quiet = Devastation.pending() == 0;
 		helper.assertTrue(HeavenSpellTesting.cast(p, Spell.HEAVEN_DEMON_AVATAR), "The Heaven-Demon Avatar is cast, paid for in qi");
-		helper.assertTrue(constructs(level, home, 20, SpellConstruct.Kind.HEAVEN_DEMON_AVATAR).size() == 1, "...and the avatar rises behind its caster");
+		helper.assertTrue(constructs(level, home, 20, SpellConstruct.Kind.AVATAR_PROJECTION).size() == 1, "...and the avatar rises behind its caster");
 		int first = HeavenDemonSpells.AVATAR_STRIKES[0] + HeavenDemonSpells.AVATAR_FALL, second = HeavenDemonSpells.AVATAR_STRIKES[1] + HeavenDemonSpells.AVATAR_FALL;
 		helper.runAfterDelay(first + 2, () -> {
-			if (struck.getHealth() > 4000 - HeavenDemonSpells.AVATAR_DAMAGE + 1 || constructs(level, point, 20, SpellConstruct.Kind.AVATAR_PALM).size() != 1) {
+			if (struck.getHealth() > 4000 - HeavenDemonSpells.AVATAR_DAMAGE + 1 || constructs(level, point, 20, SpellConstruct.Kind.AVATAR_HAND).size() != 1) {
 				thinned.run();
 				finish(helper, p, spawned, floor);
 				helper.fail("Heaven's palm comes down where its caster looks (" + struck.getHealth() + ")");
@@ -594,7 +594,7 @@ public class DaoIntegrationSpellsGameTests implements FabricGameTest {
 			helper.runAfterDelay(HeavenDemonSpells.AVATAR_STRIKES[1] - first - 4, () -> HeavenSpellTesting.lookAt(p, HeavenSpells.middle(struck)));
 			helper.runAfterDelay(second - first, () -> {
 				try {
-					helper.assertTrue(struck.getHealth() <= 4000 - 2 * HeavenDemonSpells.AVATAR_DAMAGE + 1 && constructs(level, point, 20, SpellConstruct.Kind.AVATAR_CLAW).size() == 1,
+					helper.assertTrue(struck.getHealth() <= 4000 - 2 * HeavenDemonSpells.AVATAR_DAMAGE + 1 && constructs(level, point, 20, SpellConstruct.Kind.AVATAR_HAND).size() == 1,
 							"...then the demon's claw (" + struck.getHealth() + ")");
 					helper.assertTrue(struck.hasEffect(MobEffects.MOVEMENT_SLOWDOWN), "...the struck slowed");
 					helper.assertTrue(aside.getHealth() == aside.getMaxHealth(), "...not what stands beyond their reach");

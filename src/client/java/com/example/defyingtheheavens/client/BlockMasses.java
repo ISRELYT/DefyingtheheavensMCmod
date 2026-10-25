@@ -63,7 +63,7 @@ final class BlockMasses {
 	private BlockMasses() {}
 
 	/** One mass: its parts, each a mesh per render type (solid, cutout...); its lake's water, drawn apart. */
-	private static final class Mass {
+	static final class Mass {
 		CompletableFuture<Built> building;
 		Map<Integer, Map<RenderType, VertexBuffer>> parts;
 		List<float[]> water = List.of();
@@ -125,7 +125,7 @@ final class BlockMasses {
 			case CONTINENT_MASS -> continent(c, mass, partial, age, pitch, pose, buffers);
 			case GLACIER_MASS -> glacier(c, mass, partial, age, pose, buffers);
 			case BODHI_TREE -> bodhi(c, mass, partial, age, pose, buffers);
-			default -> {}
+			default -> EarthMasses.draw(c, mass, partial, age, pose, buffers);
 		}
 		pose.popPose();
 	}
@@ -254,7 +254,7 @@ final class BlockMasses {
 	}
 
 	/** Part {@code part}'s meshes drawn at the pose (each in its render type's own state, as the game draws its chunks). */
-	private static void draw(Mass mass, int part, PoseStack pose) {
+	static void draw(Mass mass, int part, PoseStack pose) {
 		Map<RenderType, VertexBuffer> meshes = mass.parts.get(part);
 		if (meshes == null) return;
 		Matrix4f modelView = pose.last().pose();
@@ -308,7 +308,7 @@ final class BlockMasses {
 	// --- Laying out and meshing ---
 
 	/** A mass of blocks laid out: each block by its place (packed), and which part it belongs to (0 its body, 1 its face). */
-	private static final class Layout implements BlockAndTintGetter {
+	static final class Layout implements BlockAndTintGetter {
 		final Long2ObjectOpenHashMap<BlockState> blocks = new Long2ObjectOpenHashMap<>();
 		final Map<Long, Integer> part = new HashMap<>();
 		final List<float[]> water = new ArrayList<>();
@@ -396,7 +396,7 @@ final class BlockMasses {
 			case CONTINENT_MASS -> continentLayout(layout, Math.max(8, size), seed);
 			case GLACIER_MASS -> glacierLayout(layout, Math.max(6, size), Math.max(6, value), seed);
 			case BODHI_TREE -> bodhiLayout(layout, Math.max(10, size), seed);
-			default -> {}
+			default -> EarthMasses.layout(kind, layout, size, value, seed);
 		}
 		return mesh(layout, seed);
 	}
@@ -448,12 +448,12 @@ final class BlockMasses {
 	}
 
 	/** A steady number in [0, 1) for a seed and three whole numbers. */
-	private static float noise(long seed, int a, int b, int c) {
+	static float noise(long seed, int a, int b, int c) {
 		return SpellRender.hash(seed * 0x9E3779B97F4A7C15L + a * 73856093L + b * 19349663L + c * 83492791L);
 	}
 
 	/** Smooth value noise over a grid of {@code cell} blocks: in [0, 1), the same for the same seed and place. */
-	private static float smooth(long seed, float x, float z, float cell) {
+	static float smooth(long seed, float x, float z, float cell) {
 		float gx = x / cell, gz = z / cell;
 		int x0 = Mth.floor(gx), z0 = Mth.floor(gz);
 		float fx = gx - x0, fz = gz - z0;
@@ -560,7 +560,7 @@ final class BlockMasses {
 	}
 
 	/** The stone of the land's depths at a place: earth near its top, stone of every kind below, a seam of ore here and there, deepslate low down. */
-	private static BlockState rock(long seed, int x, int y, int z, int bottom, int top, float tallest) {
+	static BlockState rock(long seed, int x, int y, int z, int bottom, int top, float tallest) {
 		float n = noise(seed, x >> 1, y >> 1, z >> 1), m = smooth(seed + 41, x + y * 0.7f, z - y * 0.5f, 5);
 		if (y > top - 4 && top < tallest * 0.3f) return Blocks.DIRT.defaultBlockState();
 		if (y < bottom + (top - bottom) * 0.3f) return n < 0.15f ? Blocks.COBBLED_DEEPSLATE.defaultBlockState() : Blocks.DEEPSLATE.defaultBlockState();
@@ -576,7 +576,7 @@ final class BlockMasses {
 	}
 
 	/** A tree at {@code (x, y, z)} (its trunk's foot): an oak's round crown, or a spruce's cone. */
-	private static void tree(Layout layout, long seed, int x, int y, int z, boolean spruce) {
+	static void tree(Layout layout, long seed, int x, int y, int z, boolean spruce) {
 		int height = (spruce ? 6 : 4) + (int) (noise(seed, x, 11, z) * 3);
 		BlockState log = (spruce ? Blocks.SPRUCE_LOG : Blocks.OAK_LOG).defaultBlockState();
 		BlockState leaves = (spruce ? Blocks.SPRUCE_LEAVES : Blocks.OAK_LEAVES).defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
@@ -640,7 +640,17 @@ final class BlockMasses {
 	}
 
 	/** Every block within {@code r0} to {@code r1} (from {@code a}'s end to {@code b}'s) of the line from {@code a} to {@code b} made {@code state}. */
-	private static void sweep(Layout layout, double ax, double ay, double az, double bx, double by, double bz, double r0, double r1, BlockState state) {
+	static void sweep(Layout layout, double ax, double ay, double az, double bx, double by, double bz, double r0, double r1, BlockState state) {
+		sweep(layout, ax, ay, az, bx, by, bz, r0, r1, (x, y, z) -> state, 0);
+	}
+
+	/** What a block of a mass is, by its place. */
+	interface Stuff {
+		BlockState at(int x, int y, int z);
+	}
+
+	/** {@link #sweep(Layout, double, double, double, double, double, double, double, double, BlockState)}, of {@code stuff}, in part {@code part}. */
+	static void sweep(Layout layout, double ax, double ay, double az, double bx, double by, double bz, double r0, double r1, Stuff stuff, int part) {
 		double length = Math.sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay) + (bz - az) * (bz - az));
 		int steps = Math.max(1, (int) Math.ceil(length / 0.5));
 		for (int i = 0; i <= steps; i++) {
@@ -650,7 +660,7 @@ final class BlockMasses {
 			for (int dx = -ri; dx <= ri; dx++) for (int dy = -ri; dy <= ri; dy++) for (int dz = -ri; dz <= ri; dz++) {
 				int x = Mth.floor(cx) + dx, y = Mth.floor(cy) + dy, z = Mth.floor(cz) + dz;
 				double ex = x + 0.5 - cx, ey = y + 0.5 - cy, ez = z + 0.5 - cz;
-				if (ex * ex + ey * ey + ez * ez <= r * r) layout.set(x, y, z, state, 0);
+				if (ex * ex + ey * ey + ez * ez <= r * r) layout.set(x, y, z, stuff.at(x, y, z), part);
 			}
 		}
 	}

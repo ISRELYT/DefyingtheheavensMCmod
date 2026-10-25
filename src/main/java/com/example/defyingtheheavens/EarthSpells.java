@@ -67,6 +67,9 @@ public final class EarthSpells {
 	public static final double MOUNTAIN_RANGE = 64, MOUNTAIN_RADIUS = 10, MOUNTAIN_CRATER = Devastation.sized(Realm.HEAVENLY_BEING, 28),
 			MOUNTAIN_CRATER_DEPTH = MOUNTAIN_CRATER * 0.6;
 	public static final float MOUNTAIN_DAMAGE = 140;
+	/** Falling Mountain's peak: how high it falls from, how wide its foot is (blocks), how long it falls and how long it is driven down after (ticks). */
+	public static final double MOUNTAIN_HIGH = 46, MOUNTAIN_PEAK = 11;
+	public static final int MOUNTAIN_FALLS = 34, MOUNTAIN_AFTER = 34;
 	/** The seal presses foes {@link #SEAL_RADIUS} round; the land sinks under it out to {@link #SEAL_SINK_RADIUS} (37, by its realm). */
 	public static final double SEAL_RADIUS = 24, SEAL_SINK_RADIUS = Devastation.sized(Realm.HEAVENLY_BEING, 48);
 	public static final int SEAL_TICKS = 6 * 20, SEAL_SINK = (int) Math.round(Devastation.sized(Realm.HEAVENLY_BEING, 4));
@@ -232,7 +235,10 @@ public final class EarthSpells {
 			}
 			case SUMMON_GOLEM -> golem(p);
 			case EARTHQUAKE -> HeavenSpells.linger(new Quake(p, spell));
-			case FALLING_MOUNTAIN -> mountain(p, spell);
+			case FALLING_MOUNTAIN -> {
+				LivingEntity aimed = HeavenSpells.aimed(p, MOUNTAIN_RANGE);
+				HeavenSpells.linger(new Peak(p, spell, aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, MOUNTAIN_RANGE)));
+			}
 			case HEAVY_EARTH_SEAL -> HeavenSpells.linger(new Seal(p, spell));
 			case EARTHEN_TITAN -> titan(p);
 			case MOUNTAIN_SEAL -> HeavenSpells.linger(new Tomb(p, spell));
@@ -468,7 +474,10 @@ public final class EarthSpells {
 		HeavenSpells.sound(level, centre, SoundEvents.ROOTED_DIRT_BREAK, 1.5f, 0.5f);
 		HeavenSpells.sound(level, centre, SoundEvents.STONE_BREAK, 1.5f, 0.5f);
 		int stateId = Block.getId(most);
+		// The boulder itself hangs at the gathering point while it forms (drawn as a field until it is thrown, and gone as it is).
+		SpellField forming = SpellField.create(level, SpellField.Kind.BOULDER_FORMING, gather, 1.0f, 1.0f, 19, p).data(stateId).fleeting().spawn();
 		HeavenSpells.linger(new FireSpells.Delayed(p, 18, () -> {
+			forming.discard();
 			Vec3 to = HeavenSpells.aimed(p, BOULDER_RANGE) != null ? HeavenSpells.middle(HeavenSpells.aimed(p, BOULDER_RANGE)) : HeavenSpells.lookPoint(p, BOULDER_RANGE);
 			Vec3 v = to.subtract(gather).normalize().scale(BOULDER_SPEED).add(0, 0.12, 0);
 			SpellProjectile.thrown(level, p, spell, SpellProjectile.Shape.BOULDER, 1.0f, gather, v, BOULDER_RANGE, new SpellProjectile.Behaviour() {
@@ -489,8 +498,6 @@ public final class EarthSpells {
 			}).gravity(0.03).hitSize(1.2f).data(stateId);
 			HeavenSpells.sound(level, gather, SoundEvents.PLAYER_ATTACK_SWEEP, 1.2f, 0.4f);
 		}));
-		// The boulder itself hangs at the gathering point while it forms (drawn as a field until it is thrown).
-		SpellField.create(level, SpellField.Kind.BOULDER_FORMING, gather, 1.0f, 1.0f, 19, p).data(stateId).spawn();
 	}
 
 	private static void cave(LivingEntity p) {
@@ -581,7 +588,7 @@ public final class EarthSpells {
 		Surge(LivingEntity caster, Spell spell) {
 			super(caster, (int) (SURGE_RANGE / SURGE_PACE) + 70);
 			this.spell = spell;
-			this.from = caster.position();
+			this.from = HeavenSpells.footing(caster); // along the land, however high its caster is
 			Vec3 look = caster.getViewVector(1.0f).multiply(1, 0, 1);
 			this.way = look.lengthSqr() < 1.0e-4 ? Vec3.directionFromRotation(0, caster.getYRot()) : look.normalize();
 			this.length = SURGE_RANGE;
@@ -598,7 +605,7 @@ public final class EarthSpells {
 			field.value((float) (reach / length));
 			if (dived < 0) {
 				// The dragon at the ridge's front, on the land there; at its end it dives back into the land.
-				Vec3 front = from.add(way.scale(reach)), ground = HeavenSpells.groundBelow(level, front.add(0, 3, 0), 3, 8);
+				Vec3 front = from.add(way.scale(reach)), ground = HeavenSpells.groundBelow(level, front.add(0, 6, 0), 6, 24);
 				dragon.place(ground != null ? ground : front, yaw, 0);
 				if (reach >= length) {
 					dragon.act("dive");
@@ -686,48 +693,95 @@ public final class EarthSpells {
 
 	// --- Heavenly Being ---
 
-	private static void mountain(LivingEntity p, Spell spell) {
-		ServerLevel level = HeavenSpells.level(p);
-		LivingEntity aimed = HeavenSpells.aimed(p, MOUNTAIN_RANGE);
-		Vec3 point = aimed != null ? aimed.position() : HeavenSpells.lookPoint(p, MOUNTAIN_RANGE);
-		Vec3 ground = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 32);
-		Vec3 target = ground != null ? ground : point;
-		SpellField mark = SpellField.create(level, SpellField.Kind.METEOR_MARK, target, (float) MOUNTAIN_RADIUS, 1, 50, p).data(1).spawn();
-		Vec3 from = target.add(0, 42, 0);
-		int stateId = Block.getId(groundUnder(p));
-		HeavenSpells.sound(level, from, SoundEvents.ROOTED_DIRT_BREAK, 3.0f, 0.3f);
-		HeavenSpells.linger(new FireSpells.Delayed(p, 10, () -> SpellProjectile.thrown(level, p, spell, SpellProjectile.Shape.MOUNTAIN, 1.0f, from,
-				new Vec3(0, -1.05, 0), 48, new SpellProjectile.Behaviour() {
-					private void land(SpellProjectile missile, Vec3 where) {
-						SpellConstruct peak = missile.body();
-						if (peak != null) {
-							peak.place(where.add(0, 1, 0), peak.getYRot(), 0);
-							peak.act("impact");
-						}
-						mark.discard();
-						slam(p, spell, level, where, MOUNTAIN_RADIUS, MOUNTAIN_DAMAGE, stateId);
-						Devastation.crater(p, level, where, MOUNTAIN_CRATER, MOUNTAIN_CRATER_DEPTH, Devastation.Floor.RUBBLE);
-						Devastation.fissures(p, level, where, MOUNTAIN_CRATER * 2.2, 10, 5, MOUNTAIN_CRATER);
-					}
+	/**
+	 * Falling Mountain: a mountain torn up out of a range, made of the world's own blocks as Falling Continent's land is (SpellConstruct PEAK_MASS:
+	 * EarthMasses; the user's ask, 2026-10-25: "rework falling mountain, to look more like falling continent"), snow on its top and spruce on its
+	 * slopes, the rock it was torn from hanging jagged under it, comes down out of the sky from {@link #MOUNTAIN_HIGH} onto where its caster looks
+	 * ({@link #MOUNTAIN_FALLS}), slowly and then ever faster, tumbling a little, rock and earth breaking off its rim and raining down ahead of it,
+	 * its shadow on the land and the dust rising to meet it. It strikes: {@link #MOUNTAIN_DAMAGE} to everything within {@link #MOUNTAIN_RADIUS},
+	 * thrown out, the land smashed into a crater with fissures running out of it; it is driven down into what it smashed and is gone.
+	 */
+	public static final class Peak extends HeavenSpells.Timed {
+		private final Spell spell;
+		private final Vec3 ground;
+		private final float yaw;
+		private final SpellConstruct peak;
+		private final SpellField mark;
+		private final int stateId;
+		private boolean struck;
+		/** The wind roaring past it as it falls (a voice of its spell's, hushed as it strikes). */
+		private int wind = -1;
 
-					@Override
-					public boolean hitEntity(SpellProjectile missile, LivingEntity hit) {
-						land(missile, missile.position());
-						return false;
-					}
+		Peak(LivingEntity caster, Spell spell, Vec3 point) {
+			super(caster, MOUNTAIN_FALLS + MOUNTAIN_AFTER);
+			this.spell = spell;
+			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 32);
+			this.ground = below != null ? below : point;
+			this.yaw = caster.getYRot();
+			this.stateId = Block.getId(groundUnder(caster));
+			this.mark = SpellField.create(level, SpellField.Kind.METEOR_MARK, ground, (float) MOUNTAIN_RADIUS, 1, MOUNTAIN_FALLS + 2, caster).data(1).spawn();
+			this.peak = SpellConstruct.create(level, SpellConstruct.Kind.PEAK_MASS, at(0), yaw, 0, (int) (end - start) + SpellConstruct.FADE, caster)
+					.size((float) MOUNTAIN_PEAK).tint(level.random.nextInt()).spawn();
+			sound(ground, SoundEvents.ROOTED_DIRT_BREAK, 4.0f, 0.3f);
+			sound(ground, SoundEvents.LIGHTNING_BOLT_THUNDER, 3.0f, 0.6f);
+			this.wind = loop(peak, SoundEvents.ELYTRA_FLYING, 3.5f, 0.5f);
+		}
 
-					@Override
-					public void hitBlock(SpellProjectile missile, BlockHitResult hit) {
-						land(missile, hit.getLocation());
-					}
+		/** Where its foot is {@code age} ticks into its fall: high over the spot, coming down ever faster. */
+		private Vec3 at(double age) {
+			double f = Math.min(1, age / MOUNTAIN_FALLS);
+			return ground.add(0, MOUNTAIN_HIGH * (1 - Math.pow(f, 2.2)), 0);
+		}
 
-					@Override
-					public void expire(SpellProjectile missile) {
-						land(missile, missile.position());
+		@Override
+		protected boolean run(long age, long now) {
+			if (age <= MOUNTAIN_FALLS) {
+				double f = age / (double) MOUNTAIN_FALLS;
+				Vec3 here = at(age);
+				peak.place(here, yaw + 25 * (float) f, 0);
+				// Rock and earth breaking off its rim, raining down ahead of it.
+				if (age % 3 == 1 && f < 0.9) {
+					double a = level.random.nextDouble() * Math.PI * 2, out = MOUNTAIN_PEAK * (0.5 + 0.45 * level.random.nextDouble());
+					Vec3 from = here.add(Math.cos(a) * out, -MOUNTAIN_PEAK * 0.3 * level.random.nextDouble(), Math.sin(a) * out);
+					double drop = Math.max(4, from.y - ground.y);
+					BlockState rock = (level.random.nextInt(3) == 0 ? Blocks.DIRT : level.random.nextInt(2) == 0 ? Blocks.STONE : Blocks.COBBLESTONE).defaultBlockState();
+					SpellBlock.show(level, rock, from, new Vec3(Math.cos(a) * 2.5, -drop, Math.sin(a) * 2.5), 0, (int) Math.min(30, 8 + drop / 3), SpellBlock.Motion.FLY, 0)
+							.scale(1.0f + level.random.nextFloat());
+				}
+				if (age % 5 == 0) SpellFx.send(level, SpellFx.Kind.DUST, ground, Vec3.ZERO, (float) (MOUNTAIN_RADIUS * (0.4 + f)), stateId, 192);
+				if (age % 10 == 0) sound(here, SoundEvents.GRAVEL_BREAK, 3.0f, 0.4f);
+				// Its weight on everything under it, heavier as it comes.
+				if (f > 0.4) {
+					for (LivingEntity e : WoodSpells.foesWithin(caster, level, ground, MOUNTAIN_RADIUS, 6, MOUNTAIN_HIGH)) {
+						e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 10, 2));
 					}
-				}).hitSize(6).data(stateId)
-				// A mountain torn up out of the land (SpellConstruct FALLING_PEAK) falls as it, upright, drawn 1.4 times its model's size (by its own, it read small).
-				.uprightBody(SpellConstruct.create(level, SpellConstruct.Kind.FALLING_PEAK, from, p.getYRot(), 0, 60, p).size(1.4f).spawn())));
+				}
+			}
+			if (!struck && age >= MOUNTAIN_FALLS) {
+				struck = true;
+				peak.place(ground.add(0, -1, 0), peak.getYRot(), 0);
+				peak.act("impact");
+				mark.discard();
+				if (wind >= 0) hush(wind, 4);
+				slam(caster, spell, level, ground, MOUNTAIN_RADIUS, MOUNTAIN_DAMAGE, stateId);
+				Devastation.crater(caster, level, ground, MOUNTAIN_CRATER, MOUNTAIN_CRATER_DEPTH, Devastation.Floor.RUBBLE);
+				Devastation.fissures(caster, level, ground, MOUNTAIN_CRATER * 2.2, 10, 5, MOUNTAIN_CRATER);
+				SpellFx.send(level, SpellFx.Kind.DUST, ground, Vec3.ZERO, (float) MOUNTAIN_RADIUS * 2, stateId, 256);
+				sound(ground, SoundEvents.WARDEN_SONIC_BOOM, 3.0f, 0.3f);
+				sound(ground, SoundEvents.STONE_BREAK, 5.0f, 0.3f);
+			}
+			if (struck && age % 6 == 0 && age < MOUNTAIN_FALLS + 24) {
+				SpellFx.send(level, SpellFx.Kind.DUST, ground, Vec3.ZERO, (float) MOUNTAIN_RADIUS * 1.6f, stateId, 256);
+				sound(ground, SoundEvents.GRAVEL_BREAK, 4.0f, 0.35f);
+			}
+			return true;
+		}
+
+		@Override
+		public void end() {
+			if (!mark.isRemoved()) mark.discard();
+			peak.dissolve();
+		}
 	}
 
 	/** A great weight of earth lands at {@code at}: all not spared within {@code radius} struck and thrown, a shockwave, a roar. */
@@ -1030,7 +1084,9 @@ public final class EarthSpells {
 			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 32);
 			this.ground = below != null ? below : point;
 			this.yaw = caster.getYRot();
-			this.seal = SpellConstruct.create(level, SpellConstruct.Kind.MOUNTAIN_SEAL, ground.add(0, MOUNTAINS_HIGH, 0), yaw, 0, (int) (end - start), caster).sizedFor(spell).spawn();
+			// Of the world's own blocks (SpellConstruct SEAL_MASS: EarthMasses; the user's ask, 2026-10-25: its model "looks a bit weird").
+			this.seal = SpellConstruct.create(level, SpellConstruct.Kind.SEAL_MASS, ground.add(0, MOUNTAINS_HIGH, 0), yaw, 0, (int) (end - start), caster)
+					.size((float) (MOUNTAINS_RADIUS * 0.55)).tint(level.random.nextInt()).spawn();
 			sound(ground.add(0, MOUNTAINS_HIGH, 0), SoundEvents.BEACON_ACTIVATE, 3.0f, 0.3f);
 			sound(caster.position(), SoundEvents.ANVIL_PLACE, 1.5f, 0.3f);
 		}
@@ -1041,6 +1097,7 @@ public final class EarthSpells {
 				double f = age / (double) MOUNTAINS_FALL;
 				seal.place(ground.add(0, MOUNTAINS_HIGH * (1 - f * f), 0), yaw, 0);
 				if (age % 6 == 0) SpellFx.send(level, SpellFx.Kind.DUST, ground, Vec3.ZERO, (float) MOUNTAINS_RADIUS * (float) f, Block.getId(groundBelowState(level, ground)));
+				if (age % 8 == 4) sound(ground.add(0, MOUNTAINS_HIGH * (1 - f * f), 0), SoundEvents.ANVIL_PLACE, 2.0f, 0.3f + 0.2f * (float) f);
 				return true;
 			}
 			if (age == MOUNTAINS_FALL) {
@@ -1125,13 +1182,22 @@ public final class EarthSpells {
 			if (age < BUZHOU_OPENS) return true;
 			long falling = age - BUZHOU_OPENS;
 			if (falling == 0) {
-				pillar = SpellConstruct.create(level, SpellConstruct.Kind.BUZHOU_PILLAR, foot(0), yaw, 0, BUZHOU_FALL + BUZHOU_STAND, caster).sizedFor(spell).spawn();
+				// Of the world's own blocks (SpellConstruct PILLAR_MASS: EarthMasses; the user's ask, 2026-10-25: its model "looks a bit weird").
+				pillar = SpellConstruct.create(level, SpellConstruct.Kind.PILLAR_MASS, foot(0), yaw, 0, BUZHOU_FALL + BUZHOU_STAND, caster).size((float) BUZHOU_LENGTH)
+						.tint(level.random.nextInt()).spawn();
 				SpellFx.send(level, SpellFx.Kind.FLASH, mouth, Vec3.ZERO, 8, EARTH_AMBER, 192);
 				sound(mouth, SoundEvents.WITHER_BREAK_BLOCK, 4.0f, 0.4f);
 			}
 			if (falling == 12) rift.dissolve(); // through, the sky closes behind it
 			if (falling <= BUZHOU_FALL) {
 				pillar.place(foot(falling), yaw, 0);
+				// Stone breaking off it as it plunges, raining down round where it will land.
+				if (falling % 3 == 1 && falling < BUZHOU_FALL - 2) {
+					double a = level.random.nextDouble() * Math.PI * 2;
+					Vec3 from = foot(falling).add(Math.cos(a) * BUZHOU_LENGTH * 0.1, BUZHOU_LENGTH * (0.3 + 0.6 * level.random.nextDouble()), Math.sin(a) * BUZHOU_LENGTH * 0.1);
+					SpellBlock.show(level, (level.random.nextInt(3) == 0 ? Blocks.STONE_BRICKS : Blocks.SMOOTH_STONE).defaultBlockState(), from,
+							new Vec3(Math.cos(a) * 5, ground.y - from.y, Math.sin(a) * 5), 0, 20, SpellBlock.Motion.FLY, 0).scale(1.2f + level.random.nextFloat());
+				}
 				if (falling % 5 == 0) SpellFx.send(level, SpellFx.Kind.DUST, ground, Vec3.ZERO, (float) (BUZHOU_RADIUS * falling / BUZHOU_FALL), Block.getId(groundBelowState(level, ground)));
 			}
 			if (age == landsAt) land();
@@ -1193,9 +1259,10 @@ public final class EarthSpells {
 		Lock(LivingEntity caster, Spell spell) {
 			super(caster, LOCK_RISES + LOCK_TICKS + 4);
 			this.spell = spell;
-			Vec3 below = HeavenSpells.groundBelow(level, caster.position().add(0, 1, 0), 2, 16);
-			this.at = below != null ? below : caster.position();
-			this.dome = SpellConstruct.create(level, SpellConstruct.Kind.EARTH_VEIN_LOCK, at, caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
+			this.at = HeavenSpells.footing(caster);
+			// Of the world's own rock, run through with gold and fire (SpellConstruct VEIN_DOME_MASS: EarthMasses; the user's ask, 2026-10-25).
+			this.dome = SpellConstruct.create(level, SpellConstruct.Kind.VEIN_DOME_MASS, at, caster.getYRot(), 0, (int) (end - start), caster)
+					.size((float) LOCK_RADIUS).tint(level.random.nextInt()).spawn();
 			SpellFx.send(level, SpellFx.Kind.EARTH_BURST, at, Vec3.ZERO, (float) LOCK_RADIUS * 0.5f, Block.getId(groundBelowState(level, at)), 160);
 			sound(at, SoundEvents.WARDEN_EMERGE, 3.0f, 0.6f);
 			sound(at, SoundEvents.BEACON_ACTIVATE, 3.0f, 0.4f);
@@ -1275,7 +1342,9 @@ public final class EarthSpells {
 			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
 			this.ground = below != null ? below : point;
 			this.from = HeavenSpells.fromHands(caster);
-			this.clod = SpellConstruct.create(level, SpellConstruct.Kind.XIRANG, from, caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
+			// Of the world's own earth (SpellConstruct CLOD_MASS: EarthMasses; the user's ask, 2026-10-25).
+			this.clod = SpellConstruct.create(level, SpellConstruct.Kind.CLOD_MASS, from, caster.getYRot(), 0, (int) (end - start), caster)
+					.size((float) Math.max(2, XIRANG_RADIUS * 0.16)).tint(level.random.nextInt()).spawn();
 			sound(from, SoundEvents.ROOTED_DIRT_PLACE, 2.0f, 0.5f);
 			sound(from, SoundEvents.SNIFFER_EGG_CRACK, 2.0f, 0.5f);
 		}
@@ -1377,7 +1446,9 @@ public final class EarthSpells {
 				if (cauldrons[k] == null) {
 					// Each faces out from the heart (the heart's, the way its caster looks), its province's glyph outward.
 					float facing = k == 0 ? yaw + 180 : yaw + 45 * (k - 1);
-					cauldrons[k] = SpellConstruct.create(level, SpellConstruct.Kind.NINE_CAULDRON, sky, facing, 0, (int) (end - start - k * CAULDRON_EVERY), caster).sizedFor(spell).spawn();
+					// Of the world's own blocks, bronze green with age, each its own (SpellConstruct CAULDRON_MASS: EarthMasses; the user's ask, 2026-10-25).
+					cauldrons[k] = SpellConstruct.create(level, SpellConstruct.Kind.CAULDRON_MASS, sky, facing, 0, (int) (end - start - k * CAULDRON_EVERY), caster)
+							.size((float) (CAULDRON_STRIKE * 0.85)).tint(level.random.nextInt()).spawn();
 					sound(sky, SoundEvents.ANVIL_PLACE, 3.0f, 0.5f);
 				}
 				double f = falling / (double) CAULDRON_FALL;
@@ -1464,7 +1535,9 @@ public final class EarthSpells {
 			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
 			this.ground = below != null ? below : point;
 			this.sky = ground.add(0, GRAVE_HIGH, 0);
-			this.stone = SpellConstruct.create(level, SpellConstruct.Kind.GRAVESTONE, sky, caster.getYRot() + 180, 0, (int) (end - start), caster).sizedFor(spell).spawn();
+			// Of the world's own blocks (SpellConstruct GRAVESTONE_MASS: EarthMasses; the user's ask, 2026-10-25: its model "looks a bit weird").
+			this.stone = SpellConstruct.create(level, SpellConstruct.Kind.GRAVESTONE_MASS, sky, caster.getYRot() + 180, 0, (int) (end - start), caster)
+					.size((float) (GRAVE_RADIUS * 2.4)).tint(level.random.nextInt()).spawn();
 			sound(sky, SoundEvents.BELL_RESONATE, 4.0f, 0.3f);
 		}
 
@@ -1559,7 +1632,9 @@ public final class EarthSpells {
 				spots[k] = land != null ? land : ground.add(out);
 				// Its carved face toward the heart (its model's -z: the way its yaw looks), so it topples in.
 				float[] face = HeavenSpells.facing(ground.subtract(spots[k]).multiply(1, 0, 1));
-				stones[k] = SpellConstruct.create(level, SpellConstruct.Kind.STANDING_STONE, spots[k], face[0], 0, (int) (end - start), caster).sizedFor(spell).spawn();
+				// Of the world's own stone (SpellConstruct MENHIR_MASS: EarthMasses; the user's ask, 2026-10-25), each its own.
+				stones[k] = SpellConstruct.create(level, SpellConstruct.Kind.MENHIR_MASS, spots[k], face[0], 0, (int) (end - start), caster)
+						.size((float) (BURIED_RADIUS * 0.75)).tint(level.random.nextInt()).spawn();
 			}
 			sound(ground, SoundEvents.WARDEN_EMERGE, 4.0f, 0.5f);
 			sound(ground, SoundEvents.ANCIENT_DEBRIS_BREAK, 4.0f, 0.4f);
@@ -1644,7 +1719,10 @@ public final class EarthSpells {
 			this.ground = below != null ? below : point;
 			this.yaw = caster.getYRot();
 			this.forward = Vec3.directionFromRotation(0, yaw);
-			this.hand = SpellConstruct.create(level, SpellConstruct.Kind.HOUTU_HAND, ground, yaw, 0, (int) (end - start), caster).sizedFor(spell).spawn();
+			// Of the world's own stone, yellow jade veined with gold, its fingers curling joint by joint (SpellConstruct HAND_MASS: EarthMasses; the
+			// user's ask, 2026-10-25).
+			this.hand = SpellConstruct.create(level, SpellConstruct.Kind.HAND_MASS, ground, yaw, 0, (int) (end - start), caster).size((float) HOUTU_FIST)
+					.tint(level.random.nextInt()).spawn();
 			sound(ground, SoundEvents.WARDEN_EMERGE, 5.0f, 0.4f);
 			sound(ground, SoundEvents.ROOTED_DIRT_BREAK, 5.0f, 0.3f);
 			SpellFx.send(level, SpellFx.Kind.EARTH_BURST, ground, Vec3.ZERO, 8, Block.getId(Blocks.DIRT.defaultBlockState()), 192);

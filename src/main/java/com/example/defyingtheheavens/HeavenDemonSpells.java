@@ -466,10 +466,12 @@ public final class HeavenDemonSpells {
 	// --- Dao Integration: Heaven-Demon Avatar ---
 
 	/**
-	 * Heaven-Demon Avatar: a colossal avatar of gold light and crimson demon qi (SpellConstruct HEAVEN_DEMON_AVATAR, its own GeckoLib model:
-	 * heaven's side gold, haloed, an open palm; the demon's crimson, horned, clawed) rises out of a cloud of the two behind its caster and
-	 * stands {@link #AVATAR_TICKS}, turning to where its caster looks. Twice ({@link #AVATAR_STRIKES}) it raises a hand and that hand comes
-	 * down out of the sky where its caster looks (up to {@link #AVATAR_RANGE}; AVATAR_PALM, then AVATAR_CLAW): all within
+	 * Heaven-Demon Avatar: a colossal projection of its caster's own body, of gold light and crimson demon qi (SpellConstruct AVATAR_PROJECTION,
+	 * drawn as a spirit is: SpellGhosts; the user's ask, 2026-10-25, to redo its model of its own: its right side heaven's gold, haloed, its
+	 * hand held up in heaven's sign; its left the demon's crimson, horned in fire, clawed), rises out of a cloud of the two behind its caster
+	 * and stands {@link #AVATAR_TICKS}, turning to where its caster looks. Twice ({@link #AVATAR_STRIKES}) it raises a hand and that hand comes
+	 * down out of the sky where its caster looks (up to {@link #AVATAR_RANGE}; AVATAR_HAND: its caster's own arm, as great as the Avatar's, the
+	 * palm's gold, then the claw's crimson): all within
 	 * {@link #AVATAR_RADIUS} are struck for {@link #AVATAR_DAMAGE}, thrown down and slowed, and {@link #AVATAR_MENDS} of all of it mends the
 	 * caster. The palm crushes a crater into the land, the claw rakes gouges through it ({@link #wound}; the user's ask, 2026-10-24: before,
 	 * the land was left as it was). Its caster gone, it goes.
@@ -490,7 +492,8 @@ public final class HeavenDemonSpells {
 			Vec3 behind = caster.position().add(back);
 			Vec3 below = HeavenSpells.groundBelow(level, behind.add(0, 2, 0), 4, 24);
 			Vec3 at = below != null ? below : behind.subtract(0, 6, 0); // aloft: on its own cloud, below its caster
-			this.avatar = SpellConstruct.create(level, SpellConstruct.Kind.HEAVEN_DEMON_AVATAR, at, caster.getYRot(), 0, AVATAR_TICKS, caster).sizedFor(spell).spawn();
+			this.avatar = SpellConstruct.create(level, SpellConstruct.Kind.AVATAR_PROJECTION, at, caster.getYRot(), 0, AVATAR_TICKS, caster)
+					.size((float) (AVATAR_HEIGHT / 1.8)).target(caster).spawn();
 			sound(at, SoundEvents.BEACON_ACTIVATE, 3.0f, 0.5f);
 			sound(at, SoundEvents.ENDER_DRAGON_GROWL, 2.5f, 0.6f);
 			sound(at, SoundEvents.WARDEN_EMERGE, 2.0f, 0.8f);
@@ -528,8 +531,8 @@ public final class HeavenDemonSpells {
 			Vec3 ground = below != null ? below : point;
 			avatar.act(palm ? "strike_palm" : "strike_claw");
 			float yaw = HeavenSpells.facing(ground.subtract(avatar.position()).multiply(1, 0, 1))[0];
-			sent.add(SpellConstruct.create(level, palm ? SpellConstruct.Kind.AVATAR_PALM : SpellConstruct.Kind.AVATAR_CLAW, ground, yaw, 0, AVATAR_FALL + AVATAR_PRESS, caster)
-					.sizedFor(spell).spawn());
+			sent.add(SpellConstruct.create(level, SpellConstruct.Kind.AVATAR_HAND, ground, yaw, 0, AVATAR_FALL + AVATAR_PRESS, caster)
+					.size((float) (AVATAR_HEIGHT / 1.8)).value(palm ? 1 : 2).target(caster).spawn());
 			falling.add(new Hand(ground, palm, age + AVATAR_FALL));
 			sound(avatar.position().add(0, AVATAR_HEIGHT * 0.7, 0), palm ? SoundEvents.BEACON_POWER_SELECT : SoundEvents.RAVAGER_ROAR, 3.0f, 0.5f);
 			sound(ground, SoundEvents.ELYTRA_FLYING, 2.0f, 0.6f);
@@ -537,6 +540,7 @@ public final class HeavenDemonSpells {
 
 		/** A hand come down: all within its reach struck, thrown down and slowed; a share of all it did mends the caster. */
 		private void land(Hand hand) {
+			for (SpellConstruct sentHand : sent) if (sentHand.position().distanceToSqr(hand.ground()) < 1 && sentHand.phase() == null) sentHand.act("press");
 			float dealt = 0;
 			for (LivingEntity e : HeavenSpells.aroundPoint(level, hand.ground(), AVATAR_RADIUS, e -> !HeavenSpells.spared(caster, e))) {
 				dealt += strike(caster, e, AVATAR_DAMAGE);
@@ -752,11 +756,13 @@ public final class HeavenDemonSpells {
 	}
 
 	/**
-	 * Heaven-Demon Eclipse: heaven's sun and the demon's moon (SpellConstruct HEAVEN_DEMON_ECLIPSE, its own GeckoLib model) come together
-	 * {@link #ECLIPSE_HIGH} over where its caster looks ({@link #ECLIPSE_MEETS}), the moon passing before the sun, its corona blazing round them;
-	 * a beam of darkness pours down from them and pulses three times, {@link #ECLIPSE_EVERY} ticks apart: each strikes everything under it,
-	 * within {@link #ECLIPSE_RADIUS}, for {@link #ECLIPSE_PULSES}, through armour, holding it where it stands, and the first burns the land
-	 * into a crater of black glass. {@link #ECLIPSE_MENDS} of all of it mends its caster.
+	 * Heaven-Demon Eclipse: heaven's sun and the demon's moon (SpellConstruct ECLIPSE, drawn by hand: SpellDrawn; the user's report, 2026-10-25,
+	 * of its model: "still looks kinda retarded", "the beam coming out of the moons as its larger and doesn't line up") come together
+	 * {@link #ECLIPSE_HIGH} over where its caster looks ({@link #ECLIPSE_MEETS}), the moon sliding across the sun, its corona blazing round them;
+	 * a beam of darkness pours down from the moon's face to the ground, as wide as its harm reaches, and pulses three times, {@link #ECLIPSE_EVERY}
+	 * ticks apart: each strikes everything under it, within {@link #ECLIPSE_RADIUS}, for {@link #ECLIPSE_PULSES}, through armour, holding it where
+	 * it stands, and the first burns the land into a crater of black glass; ash and embers well up about its foot. {@link #ECLIPSE_MENDS} of all of
+	 * it mends its caster.
 	 */
 	public static final class Eclipse extends HeavenSpells.Timed {
 		private final Spell spell;
@@ -769,21 +775,44 @@ public final class HeavenDemonSpells {
 			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
 			this.ground = below != null ? below : point;
 			this.sky = ground.add(0, ECLIPSE_HIGH, 0);
-			this.eclipse = SpellConstruct.create(level, SpellConstruct.Kind.HEAVEN_DEMON_ECLIPSE, sky, caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
+			this.eclipse = SpellConstruct.create(level, SpellConstruct.Kind.ECLIPSE, sky, caster.getYRot(), 0, (int) (end - start), caster)
+					.size((float) ECLIPSE_RADIUS).value((float) (sky.y - ground.y)).spawn();
 			sound(sky, SoundEvents.BEACON_ACTIVATE, 4.0f, 0.4f);
 			sound(sky, SoundEvents.WITHER_AMBIENT, 3.0f, 0.4f);
+			sound(ground, SoundEvents.AMBIENT_BASALT_DELTAS_MOOD.value(), 4.0f, 0.5f);
 		}
 
 		@Override
 		protected boolean run(long age, long now) {
 			long since = age - ECLIPSE_MEETS;
+			if (since == -4) {
+				// The sun's last light at the moon's rim, and the dark falling.
+				sound(sky, SoundEvents.AMETHYST_BLOCK_CHIME, 4.0f, 0.5f);
+				sound(ground, SoundEvents.WARDEN_SONIC_CHARGE, 4.0f, 0.5f);
+			}
+			if (since == 0) hum = loop(ground, SoundEvents.BEACON_AMBIENT, 4.0f, 0.5f);
 			if (since >= 0 && since % ECLIPSE_EVERY == 0 && since / ECLIPSE_EVERY < ECLIPSE_PULSES.length) pulse((int) (since / ECLIPSE_EVERY));
+			if (since >= 0) {
+				// Ash and embers welling up about its foot, darkness rising off the land under it.
+				for (int i = 0; i < 4; i++) {
+					double a = level.random.nextDouble() * Math.PI * 2, r = ECLIPSE_RADIUS * (0.4 + 0.8 * level.random.nextDouble());
+					double x = ground.x + Math.cos(a) * r, z = ground.z + Math.sin(a) * r;
+					level.sendParticles(net.minecraft.core.particles.ParticleTypes.LARGE_SMOKE, x, ground.y + 0.4, z, 0, -Math.cos(a) * 0.05, 0.12, -Math.sin(a) * 0.05, 1.0);
+					level.sendParticles(new net.minecraft.core.particles.DustParticleOptions(new org.joml.Vector3f(0.85f, 0.08f, 0.12f), 2.4f), x, ground.y + 0.6
+							+ level.random.nextDouble() * 6, z, 1, 0.3, 0.6, 0.3, 0);
+				}
+				if (age % 3 == 0) level.sendParticles(net.minecraft.core.particles.ParticleTypes.ASH, ground.x, ground.y + 4, ground.z, 30, ECLIPSE_RADIUS, 4, ECLIPSE_RADIUS, 0.02);
+			}
+			if (age == end - start - 8 && hum >= 0) hush(hum, 8);
 			return true;
 		}
 
+		/** The beam's deep hum while it pours down (a voice of its spell's: hushed as it goes). */
+		private int hum = -1;
+
 		/** Its {@code k}th pulse: everything under it struck through armour and held; the first burns the land to black glass. */
 		private void pulse(int k) {
-			if (k > 0) eclipse.act("pulse");
+			eclipse.act("pulse");
 			float dealt = 0;
 			for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, ECLIPSE_RADIUS + 12, e -> !HeavenSpells.spared(caster, e))) {
 				if (Math.hypot(e.getX() - ground.x, e.getZ() - ground.z) > ECLIPSE_RADIUS || e.getY() > sky.y || e.getY() < ground.y - 10) continue;
@@ -793,7 +822,6 @@ public final class HeavenDemonSpells {
 			}
 			HeavenSpells.mend(caster, dealt * ECLIPSE_MENDS);
 			if (k == 0) Devastation.crater(caster, level, ground, ECLIPSE_CRATER, ECLIPSE_CRATER_DEPTH, Devastation.Floor.GLASSY);
-			SpellFx.send(level, SpellFx.Kind.STREAK, sky, ground.subtract(sky), 0, CRIMSON, 192);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) ECLIPSE_RADIUS * 1.4f, 0, 192);
 			SpellFx.send(level, SpellFx.Kind.FLASH, ground.add(0, 3, 0), Vec3.ZERO, 10, CRIMSON, 192);
 			SpellFx.send(level, SpellFx.Kind.FLASH, sky, Vec3.ZERO, 14, GOLD, 192);

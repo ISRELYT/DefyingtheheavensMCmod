@@ -6,6 +6,7 @@ import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -36,9 +37,41 @@ public final class ClientSpellSounds {
 		SoundEvent sound = BuiltInRegistries.SOUND_EVENT.get(id);
 		if (sound == null) return;
 		Entity followed = follow == 0 ? null : mc.level.getEntity(follow);
-		Voiced instance = new Voiced(sound, handle, at, followed, volume, pitch, loop);
+		// A little of its own each time it is heard (the user's ask, 2026-10-25: "better, synced, varied sounds"): the same cast twice is
+		// never quite the same sound.
+		float heard = loop ? pitch : pitch * (1 + (mc.level.random.nextFloat() - 0.5f) * 0.08f);
+		Voiced instance = new Voiced(sound, handle, at, followed, volume, heard, loop);
 		VOICES.computeIfAbsent(voice, k -> new ArrayList<>()).add(instance);
 		mc.getSoundManager().play(instance);
+		if (!loop) weigh(voice, handle, sound, at, followed, volume, heard);
+	}
+
+	/**
+	 * A great blow's weight, heard after it (under its voice, hushed with it): a great blast's low thud and the debris raining down after it,
+	 * and the thunder of the greatest rolling away; earth landing hard, stone breaking and gravel settling; a great splash, the sea's rush and
+	 * its water falling back. Each a moment after the blow itself, as what follows a blow comes.
+	 */
+	private static void weigh(long voice, int handle, SoundEvent sound, Vec3 at, Entity followed, float volume, float pitch) {
+		if (volume < 2.5f) return;
+		if (sound == SoundEvents.GENERIC_EXPLODE || sound == SoundEvents.DRAGON_FIREBALL_EXPLODE) {
+			after(voice, handle, SoundEvents.GENERIC_EXPLODE, at, followed, volume * 0.55f, pitch * 0.5f, 3);
+			after(voice, handle, SoundEvents.STONE_FALL, at, followed, volume * 0.45f, 0.55f, 7);
+			after(voice, handle, SoundEvents.GRAVEL_FALL, at, followed, volume * 0.35f, 0.6f, 12);
+			if (volume >= 4) after(voice, handle, SoundEvents.LIGHTNING_BOLT_THUNDER, at, followed, volume * 0.25f, 0.45f, 5);
+		} else if (sound == SoundEvents.ANVIL_LAND) {
+			after(voice, handle, SoundEvents.STONE_BREAK, at, followed, volume * 0.6f, 0.45f, 2);
+			after(voice, handle, SoundEvents.GRAVEL_BREAK, at, followed, volume * 0.45f, 0.5f, 6);
+		} else if (sound == SoundEvents.GENERIC_SPLASH) {
+			after(voice, handle, SoundEvents.PLAYER_SPLASH_HIGH_SPEED, at, followed, volume * 0.5f, 0.6f, 2);
+			after(voice, handle, SoundEvents.WEATHER_RAIN, at, followed, volume * 0.4f, 0.7f, 8);
+		}
+	}
+
+	/** {@code sound} played under {@code voice}, {@code ticks} after now. */
+	private static void after(long voice, int handle, SoundEvent sound, Vec3 at, Entity followed, float volume, float pitch, int ticks) {
+		Voiced layer = new Voiced(sound, handle, at, followed, volume, pitch, false);
+		VOICES.computeIfAbsent(voice, k -> new ArrayList<>()).add(layer);
+		Minecraft.getInstance().getSoundManager().playDelayed(layer, ticks);
 	}
 
 	/** The server's word: a voice hushed ({@code handle} 0: all its sounds), fading out over {@code fade} ticks. */
