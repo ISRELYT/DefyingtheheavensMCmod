@@ -12,6 +12,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Husk;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -194,7 +195,10 @@ public class VoidShatteringSpellsGameTests implements FabricGameTest {
 				helper.assertTrue(drunk.hasEffect(MobEffects.WEAKNESS) && drunk.hasEffect(MobEffects.MOVEMENT_SLOWDOWN), "...weakened and slowed");
 				helper.assertTrue(beyond.getHealth() == beyond.getMaxHealth(), "...not what stands beyond its reach");
 				helper.assertTrue(p.getHealth() > hurt, "What it drinks mends its caster (" + hurt + " -> " + p.getHealth() + ")");
-				helper.assertTrue(level.getBlockState(grass).is(Blocks.COARSE_DIRT), "...and the land under it withers (" + level.getBlockState(grass) + ")");
+				// Withered by a gradient (Devastation#withered): coarse or rooted earth, bare earth or mud near its heart, never grass still.
+				BlockState left = level.getBlockState(grass);
+				helper.assertTrue(left.is(Blocks.COARSE_DIRT) || left.is(Blocks.ROOTED_DIRT) || left.is(Blocks.DIRT) || left.is(Blocks.MUD) || left.is(Blocks.PODZOL),
+						"...and the land under it withers (" + left + ")");
 			} catch (RuntimeException e) {
 				finish(helper, p, spawned, floor);
 				throw e;

@@ -630,10 +630,11 @@ public class Bodies {
 		BeastArt.Bone jaw = m.bone("jaw", "head", 0, 24, -10);
 		cc(jaw, 0, 23.2, -12.4, 2.4, 0.8, 2.8, plain(k.light, 148));
 		sideLids(m, "head", 28, 4, 1, -12, 6, 2, 1, k.base);
-		// The horns: long, ringed, swept back, crackling at their tips.
+		// The horns: long, ringed, swept back and out, crackling at their tips. (A bone's z turn by side outward is side * +, as the ears': at
+		// side * -8 the two leant in and crossed into one spike, the user's report, 2026-10-26.)
 		for (int side : new int[] {1, -1}) {
-			BeastArt.Bone horn = m.bone(side > 0 ? "horn_l" : "horn_r", "head", side * 1.2, 28, -8.5, -30, 0, side * -8);
-			cc(horn, side * 1.2, 28, -8.5, 1, 10, 1, (f, x, y, w, h, d) -> y <= 1 ? glow(k.glowing) : y % 2 == 0 ? k.horn : BeastArt.shade(k.horn, 0.25));
+			BeastArt.Bone horn = m.bone(side > 0 ? "horn_l" : "horn_r", "head", side * 1.5, 28, -8.5, -30, 0, side * 14);
+			cc(horn, side * 1.5, 28, -8.5, 1, 10, 1, (f, x, y, w, h, d) -> y <= 1 ? glow(k.glowing) : y % 2 == 0 ? k.horn : BeastArt.shade(k.horn, 0.25));
 			BeastArt.Bone ear = m.bone(side > 0 ? "ear_l" : "ear_r", "head", side * 2, 27, -7.5, 0, 0, side * 50);
 			cc(ear, side * 2.6, 27, -7.5, 1, 2.5, 1, plain(k.base, 149));
 		}
@@ -1268,13 +1269,14 @@ public class Bodies {
 		for (int side : new int[] {1, -1}) {
 			String name = side > 0 ? "antler_l" : "antler_r";
 			double ax = side * 4.5 * s, ay = line + 7 * s, az = hz - 6 * s;
-			BeastArt.Bone antler = m.bone(name, "head", ax, ay, az, -30, 0, side * -18);
+			// Leaning out (side * +: they leant in, crossed over its brow, before the user's report of 2026-10-26), their tines likewise.
+			BeastArt.Bone antler = m.bone(name, "head", ax, ay, az, -30, 0, side * 18);
 			cc(antler, ax, ay, az, 2.8, 24, 2.8, gold);
-			BeastArt.Bone tine = m.bone(name + "_tine", name, ax, ay + 10, az, 50, 0, side * -10);
+			BeastArt.Bone tine = m.bone(name + "_tine", name, ax, ay + 10, az, 50, 0, side * 10);
 			cc(tine, ax, ay + 10, az, 2.2, 11, 2.2, gold);
-			BeastArt.Bone tine2 = m.bone(name + "_tine2", name, ax, ay + 17, az, -45, 0, side * -20);
+			BeastArt.Bone tine2 = m.bone(name + "_tine2", name, ax, ay + 17, az, -45, 0, side * 20);
 			cc(tine2, ax, ay + 17, az, 2, 8, 2, gold);
-			BeastArt.Bone tine3 = m.bone(name + "_tine3", name, ax, ay + 22, az, 35, 0, side * 15);
+			BeastArt.Bone tine3 = m.bone(name + "_tine3", name, ax, ay + 22, az, 35, 0, side * -15);
 			cc(tine3, ax, ay + 22, az, 1.6, 6, 1.6, gold);
 			BeastArt.Bone whisker = m.bone(side > 0 ? "whisker_l" : "whisker_r", "head", side * 6 * s, line - 2 * s, hz - 28 * s, 15, side * -40, 0);
 			whisker.cube(side > 0 ? 6 * s : -6 * s - 1.2, line - 2 * s - 0.6, hz - 28 * s, 1.2, 1.2, 30, (f, x, y, w, h, d) -> BeastArt.frontness(f, x, y, w, h) < 0.15 ? glow(k.horn) : k.horn);

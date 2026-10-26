@@ -498,16 +498,20 @@ public final class Devastation {
 	}
 
 	/**
-	 * The land {@code radius} round {@code at} set ablaze: grass and earth scorched to coarse dirt, now and then a patch of magma or
-	 * netherrack, and fires on {@code share} of it (on whatever stands highest there: a tree's crown catches too).
+	 * The land {@code radius} round {@code at} set ablaze: the ground scorched by a ragged gradient (black at its heart, burnt earth about it,
+	 * browned at its edge: {@link #charred}), now and then a patch of magma or netherrack near its heart, and fires on {@code share} of it (on
+	 * whatever stands highest there: a tree's crown catches too). With the spells' griefing off, a player's fires are tame (#ignite) and the
+	 * ground only charred for a while ({@link #charFor}), given back as it was.
 	 */
 	public static void burn(LivingEntity p, ServerLevel level, Vec3 at, double radius, double share) {
 		// A cultivator's spells leave the land as it was (HeavenSpells#carvesLand); a player's with the spells' griefing off set only tame
-		// fires (#ignite), the ground left unscorched.
+		// fires (#ignite), the ground charred for a while.
 		boolean scorches = HeavenSpells.carvesLand(p);
 		if (!scorches && !(p instanceof ServerPlayer)) return;
 		HeavenPassives.ownFire(p, level, at, radius + 2); // its caster's own fire (one who has mastered fire walks it unburnt)
+		if (!scorches) charFor(p, level, at, radius);
 		BlockPos centre = BlockPos.containing(at);
+		long seed = centre.asLong() * 31;
 		int r = (int) Math.ceil(radius);
 		for (int dx = -r; dx <= r; dx++) {
 			for (int dz = -r; dz <= r; dz++) {
@@ -515,13 +519,12 @@ public final class Devastation {
 				int x = centre.getX() + dx, z = centre.getZ() + dz;
 				BlockPos ground = scorches ? groundTop(level, x, z) : null;
 				if (ground != null && HeavenSpells.carvable(level, ground, p)) {
-					BlockState was = level.getBlockState(ground);
-					double roll = level.random.nextDouble();
-					if (roll < 0.05) level.setBlock(ground, Blocks.MAGMA_BLOCK.defaultBlockState(), 3);
-					else if (roll < 0.12) level.setBlock(ground, Blocks.NETHERRACK.defaultBlockState(), 3);
-					else if (was.is(Blocks.GRASS_BLOCK) || was.is(Blocks.DIRT) || was.is(Blocks.PODZOL) || was.is(Blocks.MYCELIUM)) {
-						level.setBlock(ground, Blocks.COARSE_DIRT.defaultBlockState(), 3);
-					}
+					double f = along(seed, dx, dz, Math.sqrt(dx * dx + dz * dz) / Math.max(1, radius)), roll = level.random.nextDouble();
+					BlockState now;
+					if (f < 0.35 && roll < 0.06) now = Blocks.MAGMA_BLOCK.defaultBlockState();
+					else if (f < 0.5 && roll < 0.12) now = Blocks.NETHERRACK.defaultBlockState();
+					else now = charred(level.getBlockState(ground), f, level.random.nextDouble(), level.getBlockState(ground.above()).isAir());
+					if (now != null) level.setBlock(ground, now, 3);
 				}
 				if (level.random.nextDouble() < share) {
 					BlockPos top = level.getHeightmapPos(Heightmap.Types.WORLD_SURFACE, new BlockPos(x, 0, z));
@@ -531,13 +534,81 @@ public final class Devastation {
 		}
 	}
 
+	/** How long the land stays charred or withered for a while ({@link #charFor}, {@link #witherFor}), in ticks: this at its edge, twice it at its heart. */
+	public static final int STAIN = 18 * 20;
+
 	/**
-	 * The land between {@code from} and {@code to} round {@code at} withered, its life drunk out of it (Void Withering): grass, moss, podzol and
-	 * mycelium gone to coarse dirt, and what grew on them dead (a dead bush here and there, else gone). Nothing is taken away.
+	 * The land {@code radius} round {@code at} charred for a while, then given back as it was (HeavenSpells#stainTemporary): by the same ragged
+	 * gradient as a lasting burn's ({@link #charred}), its edge given back first and its heart last. Any spell's fire may leave it, whatever the
+	 * griefing (a mark on the land that passes); a cultivator's leaves none.
+	 */
+	public static void charFor(LivingEntity p, ServerLevel level, Vec3 at, double radius) {
+		if (!(p instanceof ServerPlayer) || radius < 0.5) return;
+		BlockPos centre = BlockPos.containing(at);
+		long seed = centre.asLong() * 31 + level.getGameTime();
+		int r = (int) Math.ceil(radius);
+		for (int dx = -r; dx <= r; dx++) {
+			for (int dz = -r; dz <= r; dz++) {
+				double d = Math.sqrt(dx * dx + dz * dz);
+				if (d > radius + 0.5) continue;
+				BlockPos ground = groundTop(level, centre.getX() + dx, centre.getZ() + dz);
+				if (ground == null || Math.abs(ground.getY() - centre.getY()) > Math.max(4, radius * 0.6)) continue;
+				double f = along(seed, dx, dz, d / Math.max(1, radius));
+				BlockState now = charred(level.getBlockState(ground), f, level.random.nextDouble(), level.getBlockState(ground.above()).isAir());
+				if (now != null) HeavenSpells.stainTemporary(level, ground, now, (int) (STAIN * (2 - Math.min(1, f))) + level.random.nextInt(60), p);
+			}
+		}
+	}
+
+	/** {@code f} (0 at a mark's heart, 1 at its edge) made ragged by {@code seed}'s noise, so its rings wander. */
+	private static double along(long seed, int dx, int dz, double f) {
+		return f + (noise(seed, dx >> 1, dz >> 1) - 0.5) * 0.3 + (noise(seed + 7, dx, dz) - 0.5) * 0.12;
+	}
+
+	/**
+	 * What fire leaves of {@code was}, {@code f} out from its heart (0) to its edge (1), by a {@code roll}: at its heart blackstone and basalt
+	 * (only where the air is {@code open} over it: a plant on it would stand on stone), burnt earth about that, browned and dry toward its edge;
+	 * stone blackened at its heart and dulled about it. Null to leave it.
+	 */
+	static BlockState charred(BlockState was, double f, double roll, boolean open) {
+		boolean soil = was.is(Blocks.GRASS_BLOCK) || was.is(Blocks.DIRT) || was.is(Blocks.PODZOL) || was.is(Blocks.MYCELIUM) || was.is(Blocks.COARSE_DIRT)
+				|| was.is(Blocks.ROOTED_DIRT) || was.is(Blocks.MOSS_BLOCK) || was.is(Blocks.DIRT_PATH) || was.is(Blocks.MUD);
+		boolean stone = was.is(Blocks.STONE) || was.is(Blocks.COBBLESTONE) || was.is(Blocks.ANDESITE) || was.is(Blocks.DIORITE) || was.is(Blocks.GRANITE)
+				|| was.is(Blocks.GRAVEL) || was.is(Blocks.TUFF) || was.is(Blocks.MOSSY_COBBLESTONE);
+		boolean sand = was.is(Blocks.SAND) || was.is(Blocks.RED_SAND);
+		if (f > 1.05) return null;
+		if (soil) {
+			if (f < 0.32) return !open || roll < 0.25 ? Blocks.COARSE_DIRT.defaultBlockState() : roll < 0.75 ? Blocks.BLACKSTONE.defaultBlockState() : Blocks.BASALT.defaultBlockState();
+			if (f < 0.6) return open && roll < 0.2 ? Blocks.BLACKSTONE.defaultBlockState() : roll < 0.75 ? Blocks.COARSE_DIRT.defaultBlockState() : Blocks.ROOTED_DIRT.defaultBlockState();
+			if (f < 0.85) return roll < 0.45 ? Blocks.COARSE_DIRT.defaultBlockState() : roll < 0.8 ? Blocks.PODZOL.defaultBlockState() : null;
+			return roll < 0.35 ? Blocks.PODZOL.defaultBlockState() : roll < 0.5 ? Blocks.COARSE_DIRT.defaultBlockState() : null;
+		}
+		if (stone) {
+			if (f < 0.35) return roll < 0.6 ? Blocks.BLACKSTONE.defaultBlockState() : Blocks.BASALT.defaultBlockState();
+			if (f < 0.7) return roll < 0.35 ? Blocks.BLACKSTONE.defaultBlockState() : roll < 0.7 ? Blocks.TUFF.defaultBlockState() : null;
+			return roll < 0.3 ? Blocks.TUFF.defaultBlockState() : null;
+		}
+		if (sand) {
+			if (f < 0.3) return roll < 0.5 ? Blocks.SMOOTH_BASALT.defaultBlockState() : Blocks.BLACKSTONE.defaultBlockState();
+			if (f < 0.65) return roll < 0.5 ? Blocks.SANDSTONE.defaultBlockState() : null;
+			return null;
+		}
+		return null;
+	}
+
+	/**
+	 * The land between {@code from} and {@code to} round {@code at} withered, its life drunk out of it (Void Withering, the seasons' winter): by a
+	 * ragged gradient (the user's ask, 2026-10-26, of land gone wholly to coarse dirt: "it needs a bit of a gradient"), deadest nearest the heart
+	 * (coarse and rooted earth, a little mud), dry toward the edge (podzol and earth, some grass left); and what grew on it dead (a dead bush here and
+	 * there, else gone). Nothing is taken away. With the spells' griefing off, the ground is only withered for a while ({@link #witherFor}).
 	 */
 	public static void wither(LivingEntity p, ServerLevel level, Vec3 at, double from, double to) {
-		if (!HeavenSpells.carvesLand(p)) return; // a cultivator's spells leave the land as it was (HeavenSpells#carvesLand)
+		if (!HeavenSpells.carvesLand(p)) {
+			witherFor(p, level, at, from, to);
+			return;
+		}
 		BlockPos centre = BlockPos.containing(at);
+		long seed = centre.asLong() * 43;
 		int r = (int) Math.ceil(to);
 		for (int dx = -r; dx <= r; dx++) {
 			for (int dz = -r; dz <= r; dz++) {
@@ -545,10 +616,8 @@ public final class Devastation {
 				if (dist < from || dist > to) continue;
 				BlockPos ground = groundTop(level, centre.getX() + dx, centre.getZ() + dz);
 				if (ground == null || !HeavenSpells.carvable(level, ground, p)) continue;
-				BlockState was = level.getBlockState(ground);
-				if (was.is(Blocks.GRASS_BLOCK) || was.is(Blocks.PODZOL) || was.is(Blocks.MYCELIUM) || was.is(Blocks.MOSS_BLOCK) || was.is(Blocks.ROOTED_DIRT)) {
-					level.setBlock(ground, Blocks.COARSE_DIRT.defaultBlockState(), 3);
-				}
+				BlockState now = withered(level.getBlockState(ground), along(seed, dx, dz, dist / Math.max(1, to)), level.random.nextDouble());
+				if (now != null) level.setBlock(ground, now, 3);
 				BlockPos above = ground.above();
 				BlockState plant = level.getBlockState(above);
 				if (!plant.isAir() && !plant.is(BlockTags.LEAVES) && (plant.is(BlockTags.FLOWERS) || plant.is(BlockTags.SAPLINGS) || plant.is(Blocks.GRASS) || plant.is(Blocks.FERN)
@@ -559,6 +628,40 @@ public final class Devastation {
 				}
 			}
 		}
+	}
+
+	/**
+	 * The land between {@code from} and {@code to} round {@code at} withered for a while ({@link #withered}'s gradient), then given back as it was
+	 * (HeavenSpells#stainTemporary): a player's with the spells' griefing off. A cultivator's spells leave it as it was.
+	 */
+	public static void witherFor(LivingEntity p, ServerLevel level, Vec3 at, double from, double to) {
+		if (!(p instanceof ServerPlayer)) return;
+		BlockPos centre = BlockPos.containing(at);
+		long seed = centre.asLong() * 43;
+		int r = (int) Math.ceil(to);
+		for (int dx = -r; dx <= r; dx++) {
+			for (int dz = -r; dz <= r; dz++) {
+				double dist = Math.sqrt(dx * dx + dz * dz);
+				if (dist < from || dist > to) continue;
+				BlockPos ground = groundTop(level, centre.getX() + dx, centre.getZ() + dz);
+				if (ground == null) continue;
+				double f = along(seed, dx, dz, dist / Math.max(1, to));
+				BlockState now = withered(level.getBlockState(ground), f, level.random.nextDouble());
+				if (now != null) HeavenSpells.stainTemporary(level, ground, now, (int) (STAIN * (2 - Math.min(1, f))) + level.random.nextInt(60), p);
+			}
+		}
+	}
+
+	/** What withering leaves of {@code was}, {@code f} out from its heart (0) to its edge (1), by a {@code roll}; null to leave it. */
+	static BlockState withered(BlockState was, double f, double roll) {
+		boolean living = was.is(Blocks.GRASS_BLOCK) || was.is(Blocks.PODZOL) || was.is(Blocks.MYCELIUM) || was.is(Blocks.MOSS_BLOCK) || was.is(Blocks.ROOTED_DIRT)
+				|| was.is(Blocks.DIRT);
+		if (!living || f > 1.05) return null;
+		if (f < 0.35) return roll < 0.55 ? Blocks.COARSE_DIRT.defaultBlockState() : roll < 0.8 ? Blocks.ROOTED_DIRT.defaultBlockState() : roll < 0.92 ? Blocks.DIRT.defaultBlockState()
+				: Blocks.MUD.defaultBlockState();
+		if (f < 0.7) return roll < 0.4 ? Blocks.COARSE_DIRT.defaultBlockState() : roll < 0.7 ? Blocks.PODZOL.defaultBlockState() : roll < 0.9 ? Blocks.DIRT.defaultBlockState()
+				: Blocks.ROOTED_DIRT.defaultBlockState();
+		return roll < 0.3 ? Blocks.PODZOL.defaultBlockState() : roll < 0.45 ? Blocks.COARSE_DIRT.defaultBlockState() : roll < 0.55 ? Blocks.DIRT.defaultBlockState() : null;
 	}
 
 	// --- Underway ---
@@ -900,6 +1003,48 @@ public final class Devastation {
 				}
 			}
 		}
+	}
+
+	/**
+	 * One column of the land frozen under Glacier of the First Age as it passes (the user's ask, 2026-10-26: its freezing "the whole time as it
+	 * progresses", as {@link #freeze} freezes the land at its end): the face of its water to ice (packed toward the glacier's middle, {@code heart}
+	 * 1 there and 0 at its edges), else snow laid over its ground, the deeper toward its middle, what grew there buried. For good from a player's
+	 * spell with the spells' griefing on (where they may change the land); else only for {@code thaw} ticks (HeavenSpells#placeTemporary).
+	 */
+	public static void freezeAt(LivingEntity p, ServerLevel level, int x, int z, double heart, int thaw) {
+		if (!level.hasChunk(x >> 4, z >> 4)) return;
+		boolean lasting = HeavenSpells.carvesLand(p);
+		BlockPos top = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, new BlockPos(x, 0, z)).below();
+		BlockState state = level.getBlockState(top);
+		if (!state.getFluidState().isEmpty()) {
+			// Only still water's face freezes (a block of running water or one under ice is left).
+			if (!state.is(Blocks.WATER) || !state.getFluidState().isSource()) return;
+			BlockState ice = (heart > 0.5 && noise(top.asLong(), x, z) < 0.7 ? Blocks.PACKED_ICE : Blocks.ICE).defaultBlockState();
+			if (!lasting) HeavenSpells.placeTemporary(level, top, ice, thaw);
+			else if (mayChange(p, level, top)) level.setBlock(top, ice, 3);
+			return;
+		}
+		BlockPos ground = groundTop(level, x, z);
+		if (ground == null) return;
+		BlockPos above = ground.above();
+		BlockState over = level.getBlockState(above);
+		if (!over.isAir() && !over.canBeReplaced() || !over.getFluidState().isEmpty()) return;
+		int layers = Math.min(8, 1 + (int) Math.round(3 * Math.max(0, heart) * (0.6 + 0.4 * noise(ground.asLong(), x, z))));
+		BlockState snow = Blocks.SNOW.defaultBlockState().setValue(net.minecraft.world.level.block.SnowLayerBlock.LAYERS, layers);
+		if (!snow.canSurvive(level, above)) return;
+		if (!lasting) {
+			HeavenSpells.placeTemporary(level, above, snow, thaw);
+			return;
+		}
+		if (!mayChange(p, level, above)) return;
+		// What grew there buried under it (a tall plant's top too, never left hanging).
+		if (!over.isAir()) {
+			if (over.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.DOUBLE_BLOCK_HALF)) {
+				level.setBlock(above.above(), Blocks.AIR.defaultBlockState(), 2 | 16);
+			}
+			level.setBlock(above, Blocks.AIR.defaultBlockState(), 2 | 16);
+		}
+		level.setBlock(above, snow, 3);
 	}
 
 	/**

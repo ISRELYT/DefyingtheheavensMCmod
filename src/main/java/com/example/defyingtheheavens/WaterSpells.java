@@ -137,6 +137,8 @@ public final class WaterSpells {
 			PEARL_CRATER_DEPTH = Devastation.sized(Realm.SACRED_VESSEL, 1);
 	public static final float PEARL_DAMAGE = 140;
 	public static final int PEARLS_FORM = 16, PEARL_EVERY = 2, PEARL_FLIGHT = 10;
+	/** How near its caster's aim a foe must be for a pearl to seek it: within about 40 degrees of their look (the cosine). */
+	public static final double PEARLS_AIM = 0.76;
 	/**
 	 * Ocean-Sealing Vase: where (up to {@link #VASE_RANGE}, 136), how high its mouth hangs (30), how far round it drinks (43: foes, and every
 	 * drop of water in the land, down to 13 under it) and how near its mouth what it draws is held (6); its crush a second, and its slam as it
@@ -174,12 +176,11 @@ public final class WaterSpells {
 	/** The ice moon's round (blocks). */
 	public static final double FALLS_MOON = HeavenSpells.span(Realm.ENTERING_NIRVANA, 2.6);
 	/**
-	 * Glacier of the First Age: how far ahead of its caster it rises (14), how far it creeps on (102), half its width (24), how high its seracs
-	 * stand (about 14 over its level), how far back its body runs behind its face (blocks), how deep down into a hollow its ice reaches; its harm
-	 * each time it grinds, and as its face calves, to everything within the reach of its falling slabs ahead (20); how long it takes to rise, how
-	 * long it creeps on, how often it strikes, how long it calves, and how long it has after (ticks); how far ahead of its face it carves the
-	 * land, how many slices of its face topple as it calves and how many pieces are seen falling, how long its sheet of ice lasts after it
-	 * (ticks), and how far down it looks for the ground under one casting it from the air.
+	 * Glacier of the First Age: how far ahead of its caster it rises (14), how far it surges on (102), half its width (24), how high its crystals
+	 * stand (about 14 over the land), how far back behind its front it still shoves what it overran (blocks), how far down or up the land it
+	 * frosts may lie from its level; its harm each time it grinds, and as its crystals shatter, to everything within the reach of its front's
+	 * shards ahead (20); how long it takes to rise, how long it surges on, how often it strikes, how long it shatters, and how long it has after
+	 * (ticks); how long the frost on its way lasts after it (ticks), and how far down it looks for the ground under one casting it from the air.
 	 */
 	public static final double GLACIER_START = HeavenSpells.span(Realm.TRUE_IMMORTAL, 4), GLACIER_REACH = HeavenSpells.span(Realm.TRUE_IMMORTAL, 30),
 			GLACIER_HALF = HeavenSpells.span(Realm.TRUE_IMMORTAL, 7), GLACIER_HIGH = HeavenSpells.span(Realm.TRUE_IMMORTAL, 4),
@@ -187,7 +188,7 @@ public final class WaterSpells {
 	public static final int GLACIER_BODY = 9, GLACIER_FILLS = 12;
 	public static final float GLACIER_GRIND = 2500, GLACIER_CALVE = 10000;
 	public static final int GLACIER_RISES = 20, GLACIER_TICKS = 10 * 20, GLACIER_EVERY = 10, GLACIER_CALVES = 20, GLACIER_AFTER = 16;
-	public static final int GLACIER_CARVE_AHEAD = 3, GLACIER_CALVE_SLICES = 3, GLACIER_CALVE_PIECES = 90, GLACIER_THAWS = 30 * 20, GLACIER_FINDS_GROUND = 96;
+	public static final int GLACIER_THAWS = 30 * 20, GLACIER_FINDS_GROUND = 96;
 	/**
 	 * The Primordial Sea: where (218 by its realm), how far round its ring of waves stands (39: its model's); the lake it leaves (27 round, 9
 	 * deep, by its realm); what it drowns every foe within of each time, and its waves' crash; how long it takes to rise, how long it churns, how
@@ -1362,10 +1363,16 @@ public final class WaterSpells {
 			return true;
 		}
 
-		/** Pearl {@code i} flies off: at the next foe in turn, nearest first (at where the caster looks, with none). */
+		/**
+		 * Pearl {@code i} flies off: at the next foe in turn of those before its caster where they look, the nearest their aim first; at where they
+		 * look, with none. (It took the nearest foes all round them, and the first pearls flew off behind them at what stood there: the user's
+		 * report, 2026-10-26, "the first few water pearls of the move don't go where I'm looking".)
+		 */
 		private void loose(int i, long age) {
-			List<LivingEntity> foes = HeavenSpells.around(caster, PEARLS_REACH, e -> HeavenSpells.mark(caster, e) && !HeavenSpells.spared(caster, e));
-			foes.sort(java.util.Comparator.comparingDouble(e -> e.distanceToSqr(caster)));
+			Vec3 eye = caster.getEyePosition(), look = caster.getViewVector(1.0f);
+			List<LivingEntity> foes = HeavenSpells.around(caster, PEARLS_REACH, e -> HeavenSpells.mark(caster, e) && !HeavenSpells.spared(caster, e)
+					&& HeavenSpells.middle(e).subtract(eye).normalize().dot(look) > PEARLS_AIM && caster.hasLineOfSight(e));
+			foes.sort(java.util.Comparator.comparingDouble(e -> -HeavenSpells.middle(e).subtract(eye).normalize().dot(look)));
 			from[i] = pearls[i].position();
 			if (!foes.isEmpty()) {
 				at[i] = foes.get(i % foes.size());
@@ -1696,33 +1703,28 @@ public final class WaterSpells {
 	// --- True Immortal ---
 
 	/**
-	 * Glacier of the First Age: a wall of the first age's ice {@link #GLACIER_HALF} either side of its middle, built of the world's own ice, block
-	 * by block (the user's asks, 2026-10-25: it "tries to track over land and looks very dumb and should just carve through slowly, and there
-	 * should be like misty ice vfx at the bottom of it"; and then, of the shape of ice drawn gliding over the land that came of that, "looks
-	 * stupid, also make it so if used in air it goes to ground and doesn't glide through air"). It heaves up out of the land {@link #GLACIER_START}
-	 * ahead of its caster, on the ground under them however high they are ({@link #GLACIER_RISES}), and creeps forward along their look,
-	 * {@link #GLACIER_REACH} in {@link #GLACIER_TICKS}: each block it creeps a new slice of ice stands up at its face and its back slumps away,
-	 * so the ice itself is seen to advance. Its top keeps one level, the land's where it rose: down into a hollow its ice reaches to the hollow's
-	 * floor (no deeper than {@link #GLACIER_FILLS}); a rise in its way it carves through, a little ahead of its face (a player's, the spells'
-	 * griefing on: Devastation#cut; else its ice only fills what is open). Its face is a cliff of blue and packed ice, jagged with seracs, its
-	 * back higher, snow on its top; cold mist rolls off its foot and ice crumbles from its face as it grinds. Every foe before its face is shoved
-	 * along with it (one it overruns thrown out ahead; a great beast only ground past), struck for {@link #GLACIER_GRIND} every
-	 * {@link #GLACIER_EVERY} ticks and chilled; its wake is left a sheet of packed ice and snow that thaws a while after. At its end its face
-	 * calves ({@link #GLACIER_CALVES}): its front slabs topple forward and shatter, {@link #GLACIER_CALVE} to everything within
-	 * {@link #GLACIER_CALVE_REACH} before it, and what is left of it slumps away.
+	 * Glacier of the First Age: the first age's ice surging out over the land along its caster's look (the user's ask, 2026-10-26, of the wall of
+	 * the world's own ice that crept along slice by slice before: "try again with the glacier wall ability I do not like it at all rn just try
+	 * again"). It heaves up out of the land {@link #GLACIER_START} ahead of its caster, on the ground under them however high they are
+	 * ({@link #GLACIER_RISES}), then surges on {@link #GLACIER_REACH} in {@link #GLACIER_TICKS}, {@link #GLACIER_HALF} either side of its
+	 * middle: a front of colossal crystals of ice bursting up out of the land as it comes, leaning on ahead, a field of them standing behind it,
+	 * the land frosted under it, cold mist rolling off its front (SpellConstruct GLACIER_SURGE, drawn by hand: SpellDrawn). Every foe before its
+	 * front, or overrun by it, is shoved along ahead of it (a great beast only ground past), struck for {@link #GLACIER_GRIND} every
+	 * {@link #GLACIER_EVERY} ticks and chilled; its way is left frosted, snow over the land and ice over its water, that thaws a while after. At
+	 * its end its crystals shatter ({@link #GLACIER_CALVES}), and the shards of its front crash on ahead: {@link #GLACIER_CALVE} to everything within
+	 * {@link #GLACIER_CALVE_REACH} before it.
 	 */
 	public static final class Glacier extends HeavenSpells.Timed {
 		private final Spell spell;
 		private final Vec3 forward, side, rose;
-		/** Its level: the land's top where it rose (its foot; its top is so far over it). */
+		/** The land's top where it rose (where it looks for the land when that is not loaded). */
 		private final int level0;
-		private final long seed;
-		/** How far on from where it rose its face has come (blocks, a fraction), and the slices stood up and carved so far (whole blocks). */
+		/** What is seen of it: its crystals, mist and frost (drawn by hand: SpellDrawn#glacier). */
+		private final SpellConstruct surge;
+		/** How far on from where it rose its front has come (blocks, a fraction), and the slices of its way frosted so far. */
 		private double front;
-		private int stood, carved, slumped;
-		/** The ice it has set down, by the slice (blocks on from where it rose) each column of it is in. */
-		private final java.util.Map<Integer, List<BlockPos>> slices = new java.util.HashMap<>();
-		/** Where its face is (its middle, at its foot). */
+		private int frosted;
+		/** Where its front is (its middle, at its foot). */
 		private Vec3 face;
 
 		Glacier(LivingEntity caster, Spell spell) {
@@ -1737,8 +1739,9 @@ public final class WaterSpells {
 			if (below == null) below = HeavenSpells.groundBelow(level, at.add(0, 24, 0), 24, GLACIER_FINDS_GROUND);
 			this.rose = below != null ? below : new Vec3(at.x, caster.getY(), at.z);
 			this.level0 = net.minecraft.util.Mth.floor(rose.y + 1.0e-3);
-			this.seed = level.random.nextLong();
 			this.face = rose;
+			this.surge = SpellConstruct.create(level, SpellConstruct.Kind.GLACIER_SURGE, rose, yaw, 0, (int) (end - start) + SpellConstruct.FADE, caster)
+					.size((float) GLACIER_HALF).value((float) GLACIER_REACH).tint(level.random.nextInt()).spawn();
 			sound(rose, SoundEvents.GLASS_BREAK, 5.0f, 0.3f);
 			sound(rose, SoundEvents.WARDEN_EMERGE, 5.0f, 0.6f);
 			sound(rose, SoundEvents.STONE_BREAK, 5.0f, 0.3f);
@@ -1746,155 +1749,76 @@ public final class WaterSpells {
 		}
 
 		/**
-		 * How high its top stands over its level in slice {@code d}, {@code across} from its middle (blocks), {@code rise} of the way up: seracs,
-		 * a few blocks across and along each, standing taller and lower by turns, lower toward its ends.
+		 * Where one stands on the land (or on its water) at {@code x, z}, under its way: it follows the land down off a cliff and over a river as it
+		 * comes (the user's report, 2026-10-26: cast from high ground over water, its mist hung in the air at the height it rose at and its frost
+		 * never reached the water). Where the land isn't loaded, its level where it rose.
 		 */
-		private int height(double across, int d, double rise) {
-			double u = across / GLACIER_HALF;
-			double serac = 0.62 + 0.38 * noise(Math.floor(across / 2.5) * 31 + Math.floor(d / 3.0), 3) + 0.18 * noise(Math.floor(across / 1.2) + 40 + d * 0.7, 7);
-			double h = GLACIER_HIGH * serac * (1 - 0.4 * u * u * u * u);
-			return Math.max(2, (int) Math.round(h * rise));
+		private double surface(double x, double z) {
+			int bx = net.minecraft.util.Mth.floor(x), bz = net.minecraft.util.Mth.floor(z);
+			if (!level.hasChunk(bx >> 4, bz >> 4)) return level0;
+			int top = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, bx, bz);
+			return net.minecraft.util.Mth.clamp(top, level0 - GLACIER_FINDS_GROUND, level0 + GLACIER_HIGH * 3);
 		}
 
-		/** A steady noise, 0 to 1, of {@code x} (its spell's own). */
-		private double noise(double x, int salt) {
-			long h = seed ^ (long) (x * 1000) * 0x9E3779B97F4A7C15L ^ salt * 0xC2B2AE3D27D4EB4FL;
-			h ^= h >>> 31;
-			h *= 0xBF58476D1CE4E5B9L;
-			h ^= h >>> 29;
-			return (h >>> 11) / (double) (1L << 53);
+		/** {@code at} set down on the land under it ({@link #surface}). */
+		private Vec3 onLand(Vec3 at) {
+			return new Vec3(at.x, surface(at.x, at.z), at.z);
 		}
 
-		/** The block columns in slice {@code d} (those whose middles lie between {@code d - 1} and {@code d} on from where it rose), and how far across each is. */
-		private java.util.Map<Long, Double> columns(int d) {
-			java.util.Map<Long, Double> found = new java.util.LinkedHashMap<>();
-			double half = GLACIER_HALF;
-			// Sampled over all that the slice's columns could reach (a column whose middle is in it reaches 0.71 past it), each kept by its middle.
+		/**
+		 * Slice {@code d} of its way (the columns whose middles lie between {@code d - 1} and {@code d} on from where it rose) frozen as it passes, as its
+		 * calving freezes the land at its end (the user's ask, 2026-10-26: "the little freeze patch at the end I want to happen the whole time as it
+		 * progresses"): its water to ice, packed toward its middle, snow over its land, deepest along its middle (Devastation#freezeAt: for good with
+		 * the spells' griefing on, else thawing a while after).
+		 */
+		private void frost(int d) {
+			int lasts = (int) (end - level.getGameTime()) + GLACIER_THAWS;
+			java.util.Set<Long> seen = new java.util.HashSet<>();
 			for (double a = d - 1.8; a <= d + 0.8; a += 0.34) {
-				for (double w = -half - 1.5; w <= half + 1.5; w += 0.34) {
+				for (double w = -GLACIER_HALF - 1.5; w <= GLACIER_HALF + 1.5; w += 0.34) {
 					Vec3 p = rose.add(forward.scale(a)).add(side.scale(w));
 					int x = net.minecraft.util.Mth.floor(p.x), z = net.minecraft.util.Mth.floor(p.z);
-					long key = BlockPos.asLong(x, 0, z);
-					if (found.containsKey(key)) continue;
+					if (!seen.add(BlockPos.asLong(x, 0, z))) continue;
 					Vec3 middle = new Vec3(x + 0.5 - rose.x, 0, z + 0.5 - rose.z);
 					double on = middle.dot(forward), across = middle.dot(side);
-					double edge = half * (0.94 + 0.06 * noise(Math.floor(on), 11));
-					if (on <= d - 1 || on > d || Math.abs(across) > edge) continue;
-					found.put(key, across);
+					if (on <= d - 1 || on > d || Math.abs(across) > GLACIER_HALF * (0.92 + 0.08 * level.random.nextDouble())) continue;
+					Devastation.freezeAt(caster, level, x, z, 1 - Math.abs(across) / GLACIER_HALF, lasts + level.random.nextInt(GLACIER_THAWS / 2));
 				}
 			}
-			return found;
 		}
 
-		/** Where the land's top is in a column (the highest block one could stand on, leaves not counted). */
-		private int groundIn(int x, int z) {
-			return level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
-		}
-
-		/** The land in slice {@code d} carved away from its level up past its top (a rise in its way), ahead of its face. */
-		private void carve(int d) {
-			List<BlockPos> cells = new ArrayList<>();
-			for (java.util.Map.Entry<Long, Double> c : columns(d).entrySet()) {
-				int x = BlockPos.getX(c.getKey()), z = BlockPos.getZ(c.getKey());
-				int top = Math.min(groundIn(x, z), level0 + (int) GLACIER_HIGH * 2);
-				for (int y = level0; y <= top; y++) cells.add(new BlockPos(x, y, z));
-			}
-			if (!cells.isEmpty()) Devastation.cut(caster, level, cells, face, 2);
-		}
-
-		/** Slice {@code d} stood up: its ice set down column by column, from the floor of a hollow (or its level) up to its height; {@code rise} of its height. */
-		private void stand(int d, double rise) {
-			List<BlockPos> set = new ArrayList<>();
-			int lasts = (int) (end - level.getGameTime()) + GLACIER_THAWS;
-			for (java.util.Map.Entry<Long, Double> c : columns(d).entrySet()) {
-				int x = BlockPos.getX(c.getKey()), z = BlockPos.getZ(c.getKey());
-				double across = c.getValue();
-				int floor = Math.max(level0 - GLACIER_FILLS, Math.min(level0, groundIn(x, z) + 1));
-				int top = level0 + height(across, d, rise);
-				for (int y = floor; y < top; y++) {
-					BlockPos pos = new BlockPos(x, y, z);
-					if (HeavenSpells.placeTemporary(level, pos, ice(y, top, across, true), lasts, 2 | 16)) set.add(pos);
-				}
-			}
-			slices.computeIfAbsent(d, k -> new ArrayList<>()).addAll(set);
-		}
-
-		/** Slice {@code d}, left behind by its back: taken away down to a sheet of packed ice and snow on the ground, that thaws a while after. */
-		private void slump(int d) {
-			List<BlockPos> set = slices.remove(d);
-			if (set == null) return;
-			java.util.Map<Long, Integer> lowest = new java.util.HashMap<>();
-			for (BlockPos pos : set) lowest.merge(BlockPos.asLong(pos.getX(), 0, pos.getZ()), pos.getY(), Math::min);
-			for (BlockPos pos : set) {
-				int bottom = lowest.get(BlockPos.asLong(pos.getX(), 0, pos.getZ()));
-				if (pos.getY() == bottom) {
-					HeavenSpells.retime(level, pos, GLACIER_THAWS / 2 + level.random.nextInt(GLACIER_THAWS));
-					continue;
-				}
-				HeavenSpells.removeTemporary(level, pos, 2 | 16);
-			}
-			// The ice of its back crumbling as it slumps.
-			if (!set.isEmpty() && level.random.nextInt(2) == 0) {
-				BlockPos pos = set.get(level.random.nextInt(set.size()));
-				level.levelEvent(2001, pos, net.minecraft.world.level.block.Block.getId(Blocks.PACKED_ICE.defaultBlockState()));
-			}
-		}
-
-		/** The ice at {@code y} of a column whose top is {@code top}, {@code across} from its middle: its face's or (not {@code atFace}) its body's. */
-		private net.minecraft.world.level.block.state.BlockState ice(int y, int top, double across, boolean atFace) {
-			double roll = noise(across * 7 + y * 13.1 + stood * 3.7, 17);
-			if (y == top - 1 && roll < 0.55) return Blocks.SNOW_BLOCK.defaultBlockState();
-			if (atFace) {
-				if (roll < 0.45) return Blocks.BLUE_ICE.defaultBlockState();
-				if (roll < 0.9) return Blocks.PACKED_ICE.defaultBlockState();
-				return Blocks.ICE.defaultBlockState();
-			}
-			return roll < 0.7 ? Blocks.PACKED_ICE.defaultBlockState() : Blocks.BLUE_ICE.defaultBlockState();
-		}
-
-		/** How far ahead of its face (back into its body less than nought), to the side of its middle, and over its level {@code e} is. */
+		/** How far ahead of its front (back into its body less than nought), to the side of its middle, and over the land under it {@code e} is. */
 		private double[] off(LivingEntity e) {
 			Vec3 rel = e.position().subtract(face);
-			return new double[] {rel.x * forward.x + rel.z * forward.z, rel.x * side.x + rel.z * side.z, e.getY() - level0};
+			return new double[] {rel.x * forward.x + rel.z * forward.z, rel.x * side.x + rel.z * side.z, e.getY() - surface(e.getX(), e.getZ())};
 		}
 
 		@Override
 		protected boolean run(long age, long now) {
 			if (age < GLACIER_RISES) {
-				// It heaves up out of the land: its first slices rising, a layer more of their ice each tick.
-				if (age == 0) for (int d = 2 - GLACIER_BODY; d <= GLACIER_CARVE_AHEAD + 1; d++) carve(d);
-				for (int d = 2 - GLACIER_BODY; d <= 1; d++) stand(d, (age + 1) / (double) GLACIER_RISES);
+				// It heaves up out of the land at its start: its first crystals bursting up.
 				if (age % 3 == 0) SpellFx.send(level, SpellFx.Kind.ICE_BURST, rose.add(side.scale((level.random.nextDouble() * 2 - 1) * GLACIER_HALF)), Vec3.ZERO, 4, 0, 256);
 				if (age % 6 == 0) sound(rose, SoundEvents.GLASS_BREAK, 4.0f, 0.35f + 0.1f * level.random.nextFloat());
 				if (age % 7 == 2) sound(rose, SoundEvents.STONE_BREAK, 4.0f, 0.4f);
 				mist((age + 1) / (double) GLACIER_RISES);
 				return true;
 			}
-			if (age == GLACIER_RISES) {
-				stood = 1;
-				carved = GLACIER_CARVE_AHEAD + 1;
-				slumped = 1 - GLACIER_BODY;
-			}
 			long grinding = age - GLACIER_RISES;
 			if (grinding < GLACIER_TICKS) {
 				front = GLACIER_REACH * (grinding + 1) / GLACIER_TICKS;
-				face = rose.add(forward.scale(front));
+				face = onLand(rose.add(forward.scale(front)));
 				grind(grinding % GLACIER_EVERY == 0);
-				// Each block it creeps on: the land a little ahead of it carved, a new slice of ice stood up at its face, the slice its back
-				// leaves behind slumped to a sheet.
-				while (stood < (int) Math.floor(front) + 1) {
-					stood++;
-					while (carved < stood + GLACIER_CARVE_AHEAD) carve(++carved);
-					stand(stood, 1);
-					while (slumped < stood - GLACIER_BODY) slump(++slumped);
-				}
+				while (frosted < (int) Math.floor(front)) frost(++frosted);
 				mist(1);
-				if (grinding % 2 == 0) crumble();
-				// Its grinding: ice groaning and cracking, the land breaking before it.
-				if (grinding % 16 == 0) sound(face, SoundEvents.GLASS_BREAK, 4.0f, 0.3f + 0.04f * level.random.nextFloat());
+				// Its front bursting up out of the land as it comes: ice flung up off it, the land breaking.
+				if (grinding % 3 == 0) {
+					Vec3 at = onLand(face.add(side.scale((level.random.nextDouble() * 2 - 1) * GLACIER_HALF))).add(0, 1, 0);
+					SpellFx.send(level, SpellFx.Kind.ICE_BURST, at, Vec3.ZERO, 3 + level.random.nextFloat() * 3, 0, 256);
+				}
+				if (grinding % 8 == 0) sound(face, SoundEvents.GLASS_BREAK, 4.0f, 0.3f + 0.1f * level.random.nextFloat());
 				if (grinding % 11 == 3) sound(face, SoundEvents.STONE_BREAK, 4.0f, 0.35f + 0.1f * level.random.nextFloat());
 				if (grinding % 9 == 5) sound(face.add(side.scale((level.random.nextDouble() * 2 - 1) * GLACIER_HALF)), SoundEvents.POWDER_SNOW_BREAK, 3.0f, 0.5f);
-				if (grinding % 23 == 7) sound(face, SoundEvents.AMETHYST_BLOCK_BREAK, 4.0f, 0.35f);
+				if (grinding % 6 == 1) sound(face, SoundEvents.AMETHYST_CLUSTER_BREAK, 4.0f, 0.4f + 0.2f * level.random.nextFloat());
 				if (grinding % 37 == 20) sound(face, SoundEvents.WARDEN_HEARTBEAT, 5.0f, 0.5f);
 				return true;
 			}
@@ -1903,41 +1827,25 @@ public final class WaterSpells {
 				sound(face, SoundEvents.WARDEN_SONIC_CHARGE, 4.0f, 0.4f);
 			}
 			if (grinding == GLACIER_TICKS + GLACIER_CALVES / 2) calve();
-			long after = grinding - GLACIER_TICKS - GLACIER_CALVES;
-			// What is left of it slumps away, back first.
-			if (after >= 0 && after % 2 == 0 && slumped < stood) slump(++slumped);
-			if (after >= 0 && after % 2 == 1 && slumped < stood) slump(++slumped);
 			if (grinding > GLACIER_TICKS) mist(0.6);
 			return true;
 		}
 
-		/** Cold mist rolling off its foot along its face, and frost and snow drifting down off it: more as it stands taller ({@code rise}). */
+		/** Cold mist rolling off its front, and frost and snow drifting down off it: more as it stands taller ({@code rise}). */
 		private void mist(double rise) {
 			for (int i = 0; i < 10; i++) {
 				Vec3 at = face.add(side.scale((level.random.nextDouble() * 2 - 1) * GLACIER_HALF)).add(forward.scale(0.6 + level.random.nextDouble() * 1.2));
-				double y = level0 + 0.3 + level.random.nextDouble() * 1.2;
+				double y = surface(at.x, at.z) + 0.3 + level.random.nextDouble() * 1.2;
 				level.sendParticles(ParticleTypes.CLOUD, at.x, y, at.z, 0, forward.x * 0.08, 0.004, forward.z * 0.08, 1.0);
 			}
 			for (int i = 0; i < 4; i++) {
 				Vec3 at = face.add(side.scale((level.random.nextDouble() * 2 - 1) * GLACIER_HALF)).add(forward.scale(0.4));
-				double y = level0 + level.random.nextDouble() * GLACIER_HIGH * rise;
+				double y = surface(at.x, at.z) + level.random.nextDouble() * GLACIER_HIGH * rise;
 				level.sendParticles(ParticleTypes.SNOWFLAKE, at.x, y, at.z, 2, 0.6, 0.6, 0.6, 0.02);
-				level.sendParticles(ParticleTypes.WHITE_ASH, at.x, y, at.z, 3, 1.5, 1.0, 1.5, 0.0);
 			}
 		}
 
-		/** Ice crumbling off its face as it grinds: chips of it falling, and now and then a block's worth breaking away. */
-		private void crumble() {
-			Vec3 at = face.add(side.scale((level.random.nextDouble() * 2 - 1) * GLACIER_HALF)).add(forward.scale(0.7));
-			double y = level0 + 2 + level.random.nextDouble() * (GLACIER_HIGH * 0.8 - 2);
-			level.sendParticles(new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, Blocks.PACKED_ICE.defaultBlockState()), at.x, y, at.z, 14, 0.8, 1.2, 0.8, 0.1);
-			if (level.random.nextInt(4) == 0) {
-				SpellBlock.show(level, Blocks.PACKED_ICE.defaultBlockState(), new Vec3(at.x, y, at.z), forward.scale(1.5 + level.random.nextDouble() * 2).add(0, -y + level0 + 0.5, 0), 0,
-						16 + level.random.nextInt(8), SpellBlock.Motion.FLY, 0).scale(0.6f + level.random.nextFloat() * 0.5f);
-			}
-		}
-
-		/** A tick of its grinding on: every foe before its face, or overrun by it, shoved along ahead of it; struck if {@code strike}. */
+		/** A tick of its surging on: every foe before its front, or overrun by it, shoved along ahead of it; struck if {@code strike}. */
 		private void grind(boolean strike) {
 			double speed = GLACIER_REACH / GLACIER_TICKS;
 			for (LivingEntity e : HeavenSpells.aroundPoint(level, face, GLACIER_HALF + GLACIER_BODY + 6, e -> !HeavenSpells.spared(caster, e))) {
@@ -1958,8 +1866,9 @@ public final class WaterSpells {
 			}
 		}
 
-		/** Its face calves: its front slabs topple forward and shatter, everything within their reach before it struck, the land frozen where they fall. */
+		/** Its crystals shatter: the shards of its front crash on ahead, everything within their reach before it struck, the land frozen where they fall. */
 		private void calve() {
+			surge.act("calve");
 			for (LivingEntity e : HeavenSpells.aroundPoint(level, face, GLACIER_HALF + GLACIER_CALVE_REACH + 6, e -> !HeavenSpells.spared(caster, e))) {
 				double[] o = off(e);
 				if (Math.abs(o[1]) > GLACIER_HALF + e.getBbWidth() / 2 || o[0] < -4 || o[0] > GLACIER_CALVE_REACH || o[2] > GLACIER_HIGH * 1.4 + 4 || o[2] < -GLACIER_FILLS - 2) continue;
@@ -1968,49 +1877,35 @@ public final class WaterSpells {
 				if (!HeavenSpells.greatBeast(caster, e)) HeavenSpells.move(e, forward.scale(1.4).add(0, -0.4, 0));
 				e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 80, 3));
 			}
-			// The front slabs topple: its first slices taken away and seen falling forward in pieces.
-			int shown = 0;
-			for (int d = stood; d > stood - GLACIER_CALVE_SLICES && d > slumped; d--) {
-				List<BlockPos> set = slices.remove(d);
-				if (set == null) continue;
-				for (BlockPos pos : set) {
-					net.minecraft.world.level.block.state.BlockState was = level.getBlockState(pos);
-					HeavenSpells.removeTemporary(level, pos, 2 | 16);
-					if (shown < GLACIER_CALVE_PIECES && level.random.nextInt(3) == 0) {
-						shown++;
-						Vec3 from = Vec3.atBottomCenterOf(pos);
-						double high = pos.getY() - level0;
-						Vec3 toward = forward.scale(2 + high * 0.6 + level.random.nextDouble() * 3).add(0, -high + 0.5, 0);
-						SpellBlock.show(level, was.isAir() ? Blocks.PACKED_ICE.defaultBlockState() : was, from, toward, 0, 18 + level.random.nextInt(10), SpellBlock.Motion.FLY, 0);
-					}
-				}
-			}
 			Vec3 fell = face.add(forward.scale(GLACIER_CALVE_REACH * 0.5));
 			Devastation.freeze(caster, level, fell, GLACIER_HALF);
-			for (int i = -2; i <= 2; i++) SpellFx.send(level, SpellFx.Kind.ICE_BURST, fell.add(side.scale(i * GLACIER_HALF / 2.5)), Vec3.ZERO, 7, 0, 256);
+			fell = onLand(fell);
+			for (int i = -2; i <= 2; i++) SpellFx.send(level, SpellFx.Kind.ICE_BURST, onLand(fell.add(side.scale(i * GLACIER_HALF / 2.5))), Vec3.ZERO, 7, 0, 256);
+			for (int i = -3; i <= 3; i++) {
+				SpellFx.send(level, SpellFx.Kind.ICE_BURST, onLand(face.add(side.scale(i * GLACIER_HALF / 3.5))).add(0, GLACIER_HIGH * 0.4, 0), Vec3.ZERO, 6, 0, 256);
+			}
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, fell, Vec3.ZERO, (float) GLACIER_HALF * 1.6f, 0, 256);
 			SpellFx.send(level, SpellFx.Kind.DUST, fell, Vec3.ZERO, (float) GLACIER_HALF, 0, 256);
 			for (int i = 0; i < 40; i++) {
 				Vec3 at = fell.add(side.scale((level.random.nextDouble() * 2 - 1) * GLACIER_HALF)).add(forward.scale((level.random.nextDouble() - 0.5) * GLACIER_CALVE_REACH));
-				level.sendParticles(ParticleTypes.CLOUD, at.x, level0 + 0.5, at.z, 0, forward.x * 0.2, 0.02, forward.z * 0.2, 1.0);
+				level.sendParticles(ParticleTypes.CLOUD, at.x, surface(at.x, at.z) + 0.5, at.z, 0, forward.x * 0.2, 0.02, forward.z * 0.2, 1.0);
 			}
 			sound(fell, SoundEvents.GENERIC_EXPLODE, 6.0f, 0.5f);
 			sound(fell, SoundEvents.GLASS_BREAK, 6.0f, 0.4f);
+			sound(fell, SoundEvents.AMETHYST_CLUSTER_BREAK, 6.0f, 0.5f);
 			sound(fell, SoundEvents.ANVIL_LAND, 5.0f, 0.4f);
 		}
 
 		@Override
 		public void end() {
-			// Whatever of it still stands is taken away (its sheet on the ground thaws in its own time).
-			for (List<BlockPos> set : slices.values()) for (BlockPos pos : set) HeavenSpells.removeTemporary(level, pos, 2 | 16);
-			slices.clear();
+			surge.dissolve();
 		}
 	}
 
 	/**
 	 * The Primordial Sea: the waters before heaven and earth well up where its caster looks in a ring of towering waves, {@link #PRIMAL_SEA_RADIUS}
-	 * round, facing in (SpellConstruct PRIMORDIAL_SEA, its own GeckoLib model; {@link #PRIMAL_SEA_RISES}), the sea within them wheeling in a
-	 * whirlpool. For {@link #PRIMAL_SEA_TICKS} every foe within is dragged round in it (a great beast only slowed), held within its waves, and
+	 * round, facing in, a storm over them raining down within (SpellConstruct PRIMORDIAL_STORM, drawn by hand: SpellDrawn; {@link #PRIMAL_SEA_RISES}),
+	 * the sea within them wheeling in a whirlpool. For {@link #PRIMAL_SEA_TICKS} every foe within is dragged round in it (a great beast only slowed), held within its waves, and
 	 * every {@link #PRIMAL_SEA_EVERY} ticks drowned for {@link #PRIMAL_SEA_DROWN}. Then its waves crash in over its heart
 	 * ({@link #PRIMAL_SEA_CLOSES}): {@link #PRIMAL_SEA_CRASH} to every foe within, the land under it left a lake.
 	 */
@@ -2024,7 +1919,10 @@ public final class WaterSpells {
 			this.spell = spell;
 			Vec3 below = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 48);
 			this.ground = below != null ? below : point;
-			this.sea = SpellConstruct.create(level, SpellConstruct.Kind.PRIMORDIAL_SEA, ground.add(0, 0.1, 0), caster.getYRot(), 0, (int) (end - start), caster).sizedFor(spell).spawn();
+			// Drawn by hand (SpellDrawn#primordialStorm): its ring of waves, the sea churning within, the storm over it and its rain (the user's ask,
+			// 2026-10-26: "make it more grand and imposing, idk add some rain on the inside"; it was its own model's ring of waves alone).
+			this.sea = SpellConstruct.create(level, SpellConstruct.Kind.PRIMORDIAL_STORM, ground.add(0, 0.1, 0), caster.getYRot(), 0, (int) (end - start), caster)
+					.size((float) PRIMAL_SEA_RADIUS).spawn();
 			sound(ground, SoundEvents.AMBIENT_UNDERWATER_ENTER, 5.0f, 0.4f);
 			sound(ground, SoundEvents.GENERIC_SPLASH, 5.0f, 0.3f);
 		}
@@ -2044,6 +1942,10 @@ public final class WaterSpells {
 					SpellFx.send(level, SpellFx.Kind.SPLASH, ground.add(Math.cos(a) * r, 1.5, Math.sin(a) * r), Vec3.ZERO, 3, 0, 192);
 				}
 				if (churning % 20 == 0) sound(ground, SoundEvents.AMBIENT_UNDERWATER_LOOP_ADDITIONS, 5.0f, 0.5f);
+				// The storm over it: its rain, and its thunder now and again (its lightning is its watchers' own: SpellDrawn).
+				if (churning % 10 == 0) sound(ground.add(0, 6, 0), SoundEvents.WEATHER_RAIN, 4.0f, 0.6f + 0.1f * level.random.nextFloat());
+				if (churning % 23 == 3) sound(ground.add(0, PRIMAL_SEA_RADIUS, 0), SoundEvents.LIGHTNING_BOLT_THUNDER, 4.0f, 0.6f + 0.2f * level.random.nextFloat());
+				if (churning % 30 == 0) sound(ground, SoundEvents.GENERIC_SPLASH, 4.0f, 0.4f);
 				return true;
 			}
 			if (churning == PRIMAL_SEA_TICKS) {

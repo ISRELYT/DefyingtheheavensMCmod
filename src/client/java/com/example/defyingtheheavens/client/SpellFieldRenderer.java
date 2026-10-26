@@ -221,7 +221,7 @@ public class SpellFieldRenderer extends EntityRenderer<SpellField> {
 					new float[]{shade, shade, shade + 0.03f}, 0.92f * show, 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
 		}
 		// The water's seal turning on the cloud's belly, seen from beneath, and its ring.
-		groundSeal(buffers, pose, QiElement.WATER, r * 0.8f, -1.3f, age * 0.006f, 0.45f * show);
+		groundSeal(buffers, pose, QiElement.WATER, r * 0.8f, -1.3f, age * 0.003f, 0.18f * show);
 		SpellRender.disc(buffers.getBuffer(SpellRender.glow(SpellRender.RING)), pose.last(), r * 0.95f, -1.32f, -age * 0.004f, WATER_GLOW, 0.3f * show, SpellRender.FULL_BRIGHT);
 		// Lightning in its belly now and again: the billows lit from within, a fork running across them, flickering.
 		long beat = (long) (age / 41);
@@ -355,43 +355,111 @@ public class SpellFieldRenderer extends EntityRenderer<SpellField> {
 		}
 	}
 
-	/** Tidal Lance: a jet of water from the caster's hands, its surface racing forward, spiralling sheaths round it, foam where it strikes. */
+	/**
+	 * Tidal Lance: a torrent of water driven out of the caster's hands (the user's ask, 2026-10-26: "tidal lance ... needs some love"; it was a
+	 * smooth blue tube with a seal spinning at its root): a whirlpool turning about the hands, the water drawn into it in spirals; out of it the
+	 * lance, its water racing forward, surges swelling along it as they run, strands of it twisting round it, its white heart within; spray flung
+	 * off its length; at its head a spearpoint of water and a crown of it bursting back off what it strikes, foam boiling there.
+	 */
 	private void lance(SpellField field, PoseStack pose, MultiBufferSource buffers, Quaternionf facing, float age) {
 		float length = Math.max(1, field.value());
-		pose.mulPose(Axis.YP.rotationDegrees(-field.yaw()));
-		pose.mulPose(Axis.XP.rotationDegrees(field.pitch()));
-		float[] fv = SpellRender.frame(age, 0.5f, SpellRender.WATER_FRAMES);
+		float yaw = field.yaw(), pitch = field.pitch();
+		pose.mulPose(Axis.YP.rotationDegrees(-yaw));
+		pose.mulPose(Axis.XP.rotationDegrees(pitch));
+		// What faces the eye within this turned space: the turn undone, then the camera's.
+		Quaternionf local = Axis.XP.rotationDegrees(-pitch).mul(Axis.YP.rotationDegrees(yaw)).mul(facing);
+		float[] pale = {0.85f, 0.95f, 1.0f}, deep = {0.4f, 0.65f, 1.0f};
+		// Its body: water racing forward, surges swelling along it as they run.
+		int n = Math.max(12, Math.min(48, (int) (length * 1.6f)));
 		List<Vec3> line = new ArrayList<>();
-		float[] radii = new float[9];
-		for (int i = 0; i < 9; i++) {
-			line.add(new Vec3(0, 0, length * i / 8.0));
-			radii[i] = 0.18f + 0.12f * (i / 8f) + 0.03f * Mth.sin(age * 1.5f + i);
+		float[] radii = new float[n], core = new float[n], sheath = new float[n];
+		for (int i = 0; i < n; i++) {
+			float t = i / (float) (n - 1), z = length * t;
+			float surge = 0.5f + 0.5f * Mth.sin(z * 0.85f - age * 1.25f);
+			float wobble = 0.03f * Mth.sin(age * 1.7f + i * 1.3f);
+			line.add(new Vec3(Mth.sin(age * 0.5f + z * 0.4f) * 0.04f * t, Mth.cos(age * 0.45f + z * 0.37f) * 0.04f * t, z));
+			radii[i] = (0.2f + 0.1f * t + 0.1f * surge + wobble) * Math.min(1, 0.5f + t * 6);
+			core[i] = radii[i] * 0.42f;
+			sheath[i] = radii[i] * 2.4f;
 		}
-		SpellRender.tube(buffers.getBuffer(SpellRender.clear(SpellRender.WATER)), pose.last(), line, radii, 10, WHITE, 0.85f, 0.4f, fv[0] - age * 0.25f,
-				SpellRender.FULL_BRIGHT, null);
-		float[] wide = new float[9];
-		for (int i = 0; i < 9; i++) wide[i] = radii[i] * 2.6f;
-		SpellRender.tube(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), pose.last(), line, wide, 8, WATER_GLOW, 0.3f, 0.2f, 0, SpellRender.FULL_BRIGHT, null);
-		handSeal(buffers, pose, field, QiElement.WATER, 0.85f, 0.1f, age * 0.08f, 0.85f);
-		for (int k = 0; k < 3; k++) {
-			List<Vec3> spiral = new ArrayList<>();
-			float[] r = new float[30];
-			for (int i = 0; i < 30; i++) {
-				double t = i / 29.0;
-				double a = -age * 0.7 + k * Math.PI * 2 / 3 + t * length * 1.2;
-				double rad = 0.32 + 0.1 * t;
-				spiral.add(new Vec3(Math.cos(a) * rad, Math.sin(a) * rad, t * length));
-				r[i] = 0.04f;
+		SpellRender.tube(buffers.getBuffer(SpellRender.clear(SpellRender.WATER)), pose.last(), line, radii, 12, WHITE, 0.82f, 0.32f, -age * 0.4f, SpellRender.FULL_BRIGHT, null);
+		SpellRender.tube(buffers.getBuffer(SpellRender.clear(SpellRender.WATER)), pose.last(), line, radii, 12, deep, 0.35f, 0.21f, -age * 0.27f + 0.5f, SpellRender.FULL_BRIGHT, null);
+		SpellRender.tube(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), pose.last(), line, core, 6, pale, 0.75f, 0.2f, 0, SpellRender.FULL_BRIGHT, null);
+		SpellRender.tube(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), pose.last(), line, sheath, 8, WATER_GLOW, 0.22f, 0.2f, 0, SpellRender.FULL_BRIGHT, null);
+		// Strands of it twisting round it, thickening where the surges swell.
+		for (int k = 0; k < 4; k++) {
+			List<Vec3> strand = new ArrayList<>();
+			int m = Math.max(16, n * 2);
+			float[] r = new float[m];
+			for (int i = 0; i < m; i++) {
+				double t = i / (m - 1.0), z = t * length;
+				float surge = 0.5f + 0.5f * Mth.sin((float) z * 0.85f - age * 1.25f);
+				double a = -age * (0.8 + 0.15 * k) + k * Math.PI / 2 + z * (1.1 + 0.2 * (k % 2));
+				double rad = (0.3 + 0.1 * t + 0.12 * surge) * Math.min(1, 0.4 + t * 6);
+				strand.add(new Vec3(Math.cos(a) * rad, Math.sin(a) * rad, z));
+				r[i] = (0.035f + 0.03f * surge) * (float) Math.min(1, t * 8) * (float) (1 - t * 0.4);
 			}
-			SpellRender.tube(buffers.getBuffer(SpellRender.clear(SpellRender.WATER)), pose.last(), spiral, r, 5, new float[]{0.85f, 0.95f, 1.0f}, 0.7f, 0.5f, fv[0],
+			SpellRender.tube(buffers.getBuffer(SpellRender.clear(SpellRender.WATER)), pose.last(), strand, r, 5, k % 2 == 0 ? pale : WHITE, 0.75f, 0.6f, -age * 0.5f + k,
 					SpellRender.FULL_BRIGHT, null);
 		}
-		VertexConsumer foam = buffers.getBuffer(SpellRender.clear(SpellRender.SMOKE));
-		for (int i = 0; i < 6; i++) {
-			long s = field.getId() * 7L + i + (long) (age / 2);
-			SpellRender.billboard(foam, pose, facing, (h(s) - 0.5f) * 0.9f, (h(s + 1) - 0.5f) * 0.9f, length + (h(s + 2) - 0.5f) * 0.6f, 0.8f + h(s + 3) * 0.6f, h(s + 4) * 6,
-					new float[]{0.85f, 0.95f, 1.0f}, 0.7f, 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+		// The whirlpool about the hands, the water drawn into it in spirals.
+		for (int k = 0; k < 2; k++) {
+			List<Vec3> ring = new ArrayList<>();
+			float[] rr = new float[26];
+			float rad = 0.55f + 0.2f * k;
+			for (int i = 0; i < 26; i++) {
+				double a = Math.PI * 2 * i / 25 * 0.88 + age * (k == 0 ? 0.6 : -0.45);
+				ring.add(new Vec3(Math.cos(a) * rad, Math.sin(a) * rad, 0.15 + k * 0.12 - 0.08 * Math.sin(Math.PI * i / 25)));
+				rr[i] = 0.07f * Mth.sin((float) Math.PI * i / 25) * (1 - 0.3f * k);
+			}
+			SpellRender.tube(buffers.getBuffer(SpellRender.clear(SpellRender.WATER)), pose.last(), ring, rr, 5, pale, 0.8f, 0.5f, -age * 0.3f, SpellRender.FULL_BRIGHT, null);
 		}
+		VertexConsumer drops = buffers.getBuffer(SpellRender.clear(SpellRender.BUBBLE));
+		for (int i = 0; i < 10; i++) {
+			float t = (age * 0.09f + i / 10f) % 1;
+			double a = i * 2.4 + age * 0.4 + t * 3;
+			float rad = 0.95f * (1 - t) + 0.1f;
+			SpellRender.billboard(drops, pose, local, (float) Math.cos(a) * rad, (float) Math.sin(a) * rad, 0.1f + t * 0.3f, 0.12f, 0, WHITE, 0.85f * t, 0, 0, 1, 1,
+					SpellRender.FULL_BRIGHT);
+		}
+		glowBall(buffers, pose, local, 0, 0, 0.2f, 1.6f, WATER_GLOW, 0.4f);
+		// Spray flung off its length, drops flying out and falling away behind.
+		for (int i = 0; i < 26; i++) {
+			long s = field.getId() * 31L + i;
+			float t = (age * (0.05f + 0.03f * h(s)) + h(s + 1)) % 1;
+			float z = h(s + 2) * length;
+			double a = h(s + 3) * Math.PI * 2;
+			float out = 0.35f + t * (0.8f + h(s + 4));
+			SpellRender.billboard(drops, pose, local, (float) Math.cos(a) * out, (float) Math.sin(a) * out - t * t * 0.8f, z - t * 0.8f, 0.1f + 0.06f * h(s + 5), 0, WHITE,
+					0.8f * (1 - t), 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+		}
+		// Its head: a spearpoint of water, and a crown of it bursting back off what it strikes; foam boiling there.
+		pose.pushPose();
+		pose.translate(0, 0, length);
+		List<Vec3> point = List.of(new Vec3(0, 0, -0.9), new Vec3(0, 0, -0.3), new Vec3(0, 0, 0.35));
+		SpellRender.tube(buffers.getBuffer(SpellRender.clear(SpellRender.WATER)), pose.last(), point, new float[] {radii[n - 1], radii[n - 1] * 1.25f, 0}, 10, pale, 0.85f, 0.5f,
+				-age * 0.4f, SpellRender.FULL_BRIGHT, null);
+		for (int k = 0; k < 10; k++) {
+			double a = Math.PI * 2 * k / 10 + age * 0.05;
+			float t = (age * 0.12f + k * 0.37f) % 1;
+			List<Vec3> petal = new ArrayList<>();
+			for (int i = 0; i <= 6; i++) {
+				float f = i / 6f;
+				float out = (0.3f + 1.6f * f) * (0.4f + 0.6f * t), back = -f * 1.1f * t + f * f * 0.4f;
+				petal.add(new Vec3(Math.cos(a) * out, Math.sin(a) * out, back));
+			}
+			SpellRender.tube(buffers.getBuffer(SpellRender.clear(SpellRender.WATER)), pose.last(), petal, new float[] {0.09f, 0.08f, 0.07f, 0.06f, 0.05f, 0.03f, 0.0f}, 4, WHITE,
+					0.75f * (1 - t), 0.6f, 0, SpellRender.FULL_BRIGHT, null);
+		}
+		VertexConsumer foam = buffers.getBuffer(SpellRender.clear(SpellRender.SMOKE));
+		for (int i = 0; i < 8; i++) {
+			long s = field.getId() * 7L + i;
+			float t = (age * 0.08f + h(s)) % 1;
+			SpellRender.billboard(foam, pose, local, (h(s + 1) - 0.5f) * 1.4f * (0.5f + t), (h(s + 2) - 0.5f) * 1.4f * (0.5f + t), -t * 1.2f, 0.7f + t * 1.2f, h(s + 4) * 6 + age * 0.03f,
+					pale, 0.75f * (1 - t), 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+		}
+		glowBall(buffers, pose, local, 0, 0, 0, 2.6f, WATER_GLOW, 0.35f);
+		pose.popPose();
 	}
 
 	/**
@@ -457,7 +525,7 @@ public class SpellFieldRenderer extends EntityRenderer<SpellField> {
 		// Its water seal, opened over the middle of the line.
 		pose.pushPose();
 		pose.translate(0, sky + slope * length / 2 + 0.9f, length / 2);
-		groundSeal(buffers, pose, QiElement.WATER, Math.max(half * 3.2f, length * 0.5f), 0, age * 0.01f, 0.55f * show);
+		groundSeal(buffers, pose, QiElement.WATER, Math.max(half * 3.2f, length * 0.5f), 0, age * 0.004f, 0.22f * show);
 		pose.popPose();
 		// The falls: streams side by side along the line, overlapping into one body of water.
 		for (int k = 0; k < streams; k++) {
@@ -630,12 +698,22 @@ public class SpellFieldRenderer extends EntityRenderer<SpellField> {
 					SpellRender.FULL_BRIGHT, null);
 		}
 		glowBall(buffers, pose, facing, 0, 0, 0, r * 2.5f + 1, WATER_GLOW, 0.3f);
-		// Two seals of water wheeling round it on crossed axes, drawing the water in.
-		for (int k = 0; k < 2; k++) {
+		// Three rings of water wheeling round it on crossed axes, drawing the water in (they were the water's seal, a picture spinning: the user's
+		// report, 2026-10-26, of water spells that are "just spinning fucking pngs").
+		for (int k = 0; k < 3; k++) {
 			pose.pushPose();
-			pose.mulPose(Axis.YP.rotation(age * 0.05f + k * (float) Math.PI / 2));
-			pose.mulPose(Axis.XP.rotationDegrees(90));
-			groundSeal(buffers, pose, QiElement.WATER, r * 1.6f + 1.5f, 0, age * (k == 0 ? 0.06f : -0.06f), 0.55f * g);
+			pose.mulPose(Axis.YP.rotation(age * 0.05f + k * (float) Math.PI * 2 / 3));
+			pose.mulPose(Axis.XP.rotationDegrees(65 + k * 25));
+			List<Vec3> ring = new ArrayList<>();
+			float[] rr = new float[33];
+			float rad = r * 1.4f + 1.2f;
+			for (int i = 0; i < 33; i++) {
+				double a = Math.PI * 2 * i / 32 * 0.9 + age * (k % 2 == 0 ? 0.12 : -0.1);
+				ring.add(new Vec3(Math.cos(a) * rad, Mth.sin((float) a * 3 + age * 0.2f) * 0.15f, Math.sin(a) * rad));
+				rr[i] = (0.1f + r * 0.04f) * Mth.sin((float) Math.PI * i / 32) * g;
+			}
+			SpellRender.tube(buffers.getBuffer(SpellRender.clear(SpellRender.WATER)), pose.last(), ring, rr, 6, new float[] {0.8f, 0.95f, 1.0f}, 0.75f, 0.4f, -age * 0.2f,
+					SpellRender.FULL_BRIGHT, null);
 			pose.popPose();
 		}
 	}
@@ -825,8 +903,11 @@ public class SpellFieldRenderer extends EntityRenderer<SpellField> {
 		float show = SpellRender.fade(age, life, 20, 20);
 		float r = field.radius() * (0.2f + 0.8f * show);
 		float[] fv = SpellRender.frame(age, 0.25f, SpellRender.SUN_FRAMES);
-		SpellRender.sphere(buffers.getBuffer(SpellRender.clear(SpellRender.SUN)), pose.last(), r, 12, 18, WHITE, show, 1, fv[1] - fv[0], age * 0.003f, fv[0],
+		// Solid (SpellRender#core): what is behind it hidden by it, not seen through its face; it grows in and shrinks away with its fade (r).
+		SpellRender.sphere(buffers.getBuffer(SpellRender.core(SpellRender.SUN)), pose.last(), r, 12, 18, WHITE, 1, 1, fv[1] - fv[0], age * 0.003f, fv[0],
 				SpellRender.FULL_BRIGHT, (polar, azimuth) -> 1 + 0.02f * Mth.sin((float) (azimuth * 6 + age * 0.2)));
+		SpellRender.sphere(buffers.getBuffer(SpellRender.clear(SpellRender.SUN)), pose.last(), r * 1.04f, 12, 18, new float[] {1.0f, 0.8f, 0.4f}, 0.45f * show, 1.3f,
+				fv[1] - fv[0], -age * 0.004f, fv[0], SpellRender.FULL_BRIGHT, null);
 		glowBall(buffers, pose, facing, 0, 0, 0, r * 4, FIRE_CORE, 0.8f * show);
 		glowBall(buffers, pose, facing, 0, 0, 0, r * 9, FIRE_MID, 0.45f * show);
 		glowBall(buffers, pose, facing, 0, 0, 0, r * 22, new float[]{1.0f, 0.7f, 0.3f}, 0.18f * show);
@@ -1140,78 +1221,46 @@ public class SpellFieldRenderer extends EntityRenderer<SpellField> {
 	}
 
 	/**
-	 * The World Tree: it grows out of the ground over its first two seconds: a vast trunk of bark, great roots spreading at its foot,
-	 * boughs reaching out and up, a crown of leaves over all; motes of life drifting under it. It withers back at the end.
+	 * The World Tree's light (the tree itself is of the world's own wood and leaves: SpellConstruct WORLD_TREE_MASS, BlockMasses; it was a tube of
+	 * bark with cards of leaves strewn about it, the user's report, 2026-10-26: "the world tree spell just looks bad and needs a redo"): the
+	 * wood's great seal turning on the land at its foot, the green light of life welling up round its trunk, motes of life rising up through its
+	 * crown, leaves drifting down out of it; all fading as it withers.
 	 */
 	private void worldTree(SpellField field, PoseStack pose, MultiBufferSource buffers, Quaternionf facing, float age, float life, int light) {
 		float grow = SpellRender.easeOut(Math.min(1, age / 40));
 		float wither = Mth.clamp((life - age) / 30, 0, 1);
 		float g = grow * wither;
 		if (g <= 0.01f) return;
-		float tall = field.height() * g;
+		float tall = Math.max(16, field.height()), r = field.radius();
 		long seed = field.data();
-		groundSeal(buffers, pose, QiElement.WOOD, field.radius() * 0.7f * g, 0.06f, age * 0.002f, 0.6f * g);
-		SpellRender.disc(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), pose.last(), field.radius() * 1.2f * g, 0.08f, 0, LIFE, 0.3f * g, SpellRender.FULL_BRIGHT);
-		VertexConsumer bark = buffers.getBuffer(SpellRender.solid(SpellRender.BARK));
-		// The trunk, swelling at its foot.
-		List<Vec3> trunk = new ArrayList<>();
-		float[] tr = new float[9];
-		for (int i = 0; i < 9; i++) {
-			float t = i / 8f;
-			trunk.add(new Vec3(Mth.sin(t * 3 + seed % 5) * 0.8f * g, -2 + (tall + 2) * t, Mth.cos(t * 2.4f + seed % 3) * 0.6f * g));
-			tr[i] = (3.2f - 2.0f * t + (t < 0.12f ? (0.12f - t) * 14 : 0)) * g;
-		}
-		SpellRender.tube(bark, pose.last(), trunk, tr, 14, WHITE, 1, 0.15f, 0, light, null);
-		// Roots spreading over the ground.
-		for (int k = 0; k < 8; k++) {
-			double a = Math.PI * 2 * k / 8 + h(seed + k) * 0.5;
-			List<Vec3> root = new ArrayList<>();
-			float[] rr = new float[6];
-			for (int i = 0; i < 6; i++) {
-				float t = i / 5f;
-				double d = (2 + t * 9 * g);
-				root.add(new Vec3(Math.cos(a + t * 0.3) * d, 0.8 - t * 1.4 + Mth.sin(t * 5) * 0.3, Math.sin(a + t * 0.3) * d));
-				rr[i] = (1.2f - 1.0f * t) * g;
-			}
-			SpellRender.tube(bark, pose.last(), root, rr, 8, WHITE, 1, 0.2f, k, light, null);
-		}
-		// Boughs.
-		List<Vec3> crowns = new ArrayList<>();
-		for (int k = 0; k < 9; k++) {
-			double a = Math.PI * 2 * k / 9 + h(seed + k * 3) * 0.6;
-			float from = 0.45f + 0.4f * h(seed + k * 5);
-			Vec3 start = trunk.get(Math.min(8, (int) (from * 8)));
-			List<Vec3> bough = new ArrayList<>();
-			float[] br = new float[6];
-			for (int i = 0; i < 6; i++) {
-				float t = i / 5f;
-				double d = t * (8 + 6 * h(seed + k * 7)) * g;
-				bough.add(start.add(Math.cos(a) * d, t * (4 + 4 * h(seed + k * 11)) * g, Math.sin(a) * d));
-				br[i] = (0.9f - 0.75f * t) * g;
-			}
-			SpellRender.tube(bark, pose.last(), bough, br, 8, WHITE, 1, 0.3f, k, light, null);
-			crowns.add(bough.get(5));
-		}
-		crowns.add(trunk.get(8));
-		// The crown: clusters of leaves at the boughs' ends and over the top.
-		VertexConsumer leaves = buffers.getBuffer(SpellRender.solid(SpellRender.LEAF));
-		for (int c = 0; c < crowns.size(); c++) {
-			Vec3 centre = crowns.get(c);
-			for (int i = 0; i < 26; i++) {
-				long s = seed * 101 + c * 37 + i;
-				double a = h(s) * Math.PI * 2, b = h(s + 1) * Math.PI;
-				double d = (2.5 + h(s + 2) * 3.5) * g;
-				Vec3 at = centre.add(Math.cos(a) * Math.sin(b) * d, Math.cos(b) * d * 0.6 + 1, Math.sin(a) * Math.sin(b) * d);
-				leaf(leaves, pose, at, (float) (h(s + 3) * 6.3), (1.2f + h(s + 4)) * g, light);
-			}
-		}
-		VertexConsumer motes = buffers.getBuffer(SpellRender.glow(SpellRender.SPARK));
-		for (int i = 0; i < 60; i++) {
+		groundSeal(buffers, pose, QiElement.WOOD, r * 0.7f * g, 0.06f, age * 0.002f, 0.55f * g);
+		SpellRender.disc(buffers.getBuffer(SpellRender.glow(SpellRender.RING)), pose.last(), r * 0.78f * g, 0.08f, -age * 0.003f, LIFE, 0.4f * g, SpellRender.FULL_BRIGHT);
+		SpellRender.disc(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), pose.last(), r * 1.15f * g, 0.1f, 0, LIFE, 0.22f * g, SpellRender.FULL_BRIGHT);
+		// Light welling up round its trunk, widening up into its crown.
+		SpellRender.cylinder(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), pose.last(), tall * 0.85f, h -> tall * (0.12f + 0.25f * h), 4, 28, LIFE, 0.08f * g,
+				1, 1, 0, 0, 0, SpellRender.FULL_BRIGHT, h -> (1 - h) * Math.min(1, h * 6));
+		// Motes of life rising up through it, and now and then a star of it.
+		VertexConsumer motes = buffers.getBuffer(SpellRender.glow(SpellRender.SPARK)), stars = buffers.getBuffer(SpellRender.glow(SpellRender.STAR));
+		for (int i = 0; i < 110; i++) {
 			long s = seed * 7 + i;
-			double a = h(s) * Math.PI * 2 + age * 0.01, d = Math.sqrt(h(s + 1)) * field.radius();
-			float y = (age * 0.05f + h(s + 2) * 20) % 20;
-			SpellRender.billboard(motes, pose, facing, (float) (Math.cos(a) * d), y, (float) (Math.sin(a) * d), 0.35f, 0, LIFE, g * (1 - y / 20), 0, 0, 1, 1,
-					SpellRender.FULL_BRIGHT);
+			double a = h(s) * Math.PI * 2 + age * 0.008, d = Math.sqrt(h(s + 1)) * r * 0.65;
+			float y = (age * (0.04f + 0.04f * h(s + 3)) + h(s + 2) * tall) % tall;
+			boolean star = i % 7 == 0;
+			float twinkle = star ? 0.6f + 0.4f * Mth.sin(age * 0.3f + i) : 1;
+			SpellRender.billboard(star ? stars : motes, pose, facing, (float) (Math.cos(a) * d), y, (float) (Math.sin(a) * d), star ? 0.6f : 0.32f, star ? age * 0.04f : 0,
+					LIFE, g * twinkle * Math.min(1, (1 - y / tall) * 3), 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+		}
+		// Leaves drifting down out of its crown, turning and swaying as they fall.
+		VertexConsumer leaves = buffers.getBuffer(SpellRender.solid(SpellRender.LEAF));
+		float crown = tall * 0.75f;
+		for (int i = 0; i < 48; i++) {
+			long s = seed * 13 + i;
+			double a = h(s) * Math.PI * 2, d = 3 + Math.sqrt(h(s + 1)) * tall * 0.45;
+			float fall = (age * (0.05f + 0.04f * h(s + 2)) + h(s + 3) * crown) % crown;
+			float y = crown - fall;
+			float sway = Mth.sin(age * 0.06f + i * 1.3f) * 1.4f;
+			SpellRender.billboard(leaves, pose, facing, (float) (Math.cos(a) * d) + sway, y, (float) (Math.sin(a) * d) + Mth.cos(age * 0.05f + i) * 1.1f, 0.45f,
+					age * 0.08f + i, WHITE, 1, 0, 0, 1, 1, light);
 		}
 	}
 

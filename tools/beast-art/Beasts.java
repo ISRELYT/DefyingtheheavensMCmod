@@ -256,9 +256,10 @@ public class Beasts {
 		jaw.cube(-2.3, -0.7, -9.5, 4.6, 1.2, 5.5, (f, x, y, w, hh, d) -> f == BeastArt.Face.UP ? p.inner : BeastArt.fur(p.belly, x, y, 64));
 		BeastArt.Bone beard = head.bone("beard", "jaw", 0, -0.7, -8);
 		beard.cube(-1, -2.2, -8.6, 2, 1.5, 1, (f, x, y, w, hh, d) -> BeastArt.fur(p.mane, x, y, 65));
-		// Antlers, sweeping back, each with a tine forward.
+		// Antlers, sweeping back and out, each with a tine forward. (A bone's z turn by side outward is side * +, as the ears' elsewhere: at
+		// side * -20 the two leant in and crossed over the head, the user's report, 2026-10-26.)
 		for (int side : new int[] {1, -1}) {
-			BeastArt.Bone antler = head.bone(side > 0 ? "antler_left" : "antler_right", "head", side * 2, 7, 0, -25, 0, side * -20);
+			BeastArt.Bone antler = head.bone(side > 0 ? "antler_left" : "antler_right", "head", side * 2, 7, 0, -25, 0, side * 20);
 			double ax = side > 0 ? 1.5 : -2.5;
 			antler.cube(ax, 7, -0.5, 1, 5, 1, (f, x, y, w, hh, d) -> BeastArt.mix(p.horn, 0xFF000000, y * 0.04));
 			antler.cube(ax, 9.5, -2.5, 1, 1, 2, BeastArt.solid(p.horn));
@@ -316,11 +317,12 @@ public class Beasts {
 		h.cube(0.5, -0.5, -8.9, 1, 1.5, 0.8, BeastArt.solid(gold));
 		for (int side : new int[] {1, -1}) {
 			String s = side > 0 ? "left" : "right";
-			BeastArt.Bone base = head.bone("horn_" + s, "head", side * 4.5, 7.5, -0.5, 0, 0, side * 20);
+			// The horns out from the brow and curving up (side * -: they curled down and in toward the jaw before the user's report of 2026-10-26).
+			BeastArt.Bone base = head.bone("horn_" + s, "head", side * 4.5, 7.5, -0.5, 0, 0, side * -20);
 			base.cube(side > 0 ? 4.5 : -7.5, 6.5, -1.5, 3, 2.5, 2.5, (f, x, y, w, hh, d) -> BeastArt.fur(p.horn, x, y, 84));
-			BeastArt.Bone mid = head.bone("horn_" + s + "_mid", base.name, side * 7.5, 7.5, -0.5, 0, 0, side * 35);
+			BeastArt.Bone mid = head.bone("horn_" + s + "_mid", base.name, side * 7.5, 7.5, -0.5, 0, 0, side * -35);
 			mid.cube(side > 0 ? 7.5 : -10.5, 6.8, -1.2, 3, 2, 2, (f, x, y, w, hh, d) -> BeastArt.mix(p.horn, 0xFF5A4A3A, 0.2));
-			BeastArt.Bone tip = head.bone("horn_" + s + "_tip", mid.name, side * 10.5, 7.5, -0.5, -30, 0, side * 40);
+			BeastArt.Bone tip = head.bone("horn_" + s + "_tip", mid.name, side * 10.5, 7.5, -0.5, -30, 0, side * -40);
 			tip.cube(side > 0 ? 10.5 : -13, 7, -0.8, 2.5, 1.2, 1.2, BeastArt.solid(BeastArt.mix(p.horn, 0xFF2A2018, 0.6)));
 			BeastArt.Bone ear = head.bone("ear_" + s, "head", side * 4.5, 5.5, 0.5, 0, side * -15, side * -30);
 			ear.cube(side > 0 ? 4.5 : -7.5, 4.8, 0, 3, 1.5, 1, (f, x, y, w, hh, d) -> f == BeastArt.Face.FRONT ? p.inner : BeastArt.fur(p.base, x, y, 85));

@@ -125,6 +125,7 @@ final class BlockMasses {
 			case CONTINENT_MASS -> continent(c, mass, partial, age, pitch, pose, buffers);
 			case GLACIER_MASS -> glacier(c, mass, partial, age, pose, buffers);
 			case BODHI_TREE -> bodhi(c, mass, partial, age, pose, buffers);
+			case WORLD_TREE_MASS -> worldTree(c, mass, partial, age, pose);
 			default -> EarthMasses.draw(c, mass, partial, age, pose, buffers);
 		}
 		pose.popPose();
@@ -171,6 +172,32 @@ final class BlockMasses {
 		} finally {
 			SpellBuffers.end();
 		}
+		pose.popPose();
+	}
+
+	/**
+	 * The World Tree: bursting up out of the land as it grows (swelling up from its foot past its full height, and settling back:
+	 * WoodSpells#TREE_GROWS), stirring slowly in a great wind of its own, its crown swaying more than its trunk; withering ({@code wither}), it
+	 * sinks back down into the land, shrinking as it goes.
+	 */
+	private static void worldTree(SpellConstruct c, Mass mass, float partial, float age, PoseStack pose) {
+		float grow = Mth.clamp(age / com.example.defyingtheheavens.WoodSpells.TREE_GROWS, 0, 1);
+		float s = grow < 1 ? 1 + 2.70158f * (float) Math.pow(grow - 1, 3) + 1.70158f * (float) Math.pow(grow - 1, 2) : 1;
+		float sink = 0;
+		if ("wither".equals(c.phase())) {
+			float t = SpellRender.ease(c.phaseAge(partial) / com.example.defyingtheheavens.WoodSpells.TREE_WITHERS);
+			s *= 1 - 0.75f * t;
+			sink = t * c.size() * 0.4f;
+		}
+		if (s <= 0.01f) return;
+		pose.pushPose();
+		pose.translate(0, -sink, 0);
+		// Its heave as it bursts up: the land shuddering under it.
+		if (grow < 1) pose.mulPose(Axis.ZP.rotationDegrees(Mth.sin(age * 1.9f) * 1.2f * (1 - grow)));
+		pose.mulPose(Axis.XP.rotationDegrees(Mth.sin(age * 0.03f) * 0.8f));
+		pose.mulPose(Axis.ZP.rotationDegrees(Mth.sin(age * 0.024f + 1.7f) * 0.8f));
+		pose.scale(s, s, s);
+		draw(mass, 0, pose);
 		pose.popPose();
 	}
 
@@ -396,6 +423,7 @@ final class BlockMasses {
 			case CONTINENT_MASS -> continentLayout(layout, Math.max(8, size), seed);
 			case GLACIER_MASS -> glacierLayout(layout, Math.max(6, size), Math.max(6, value), seed);
 			case BODHI_TREE -> bodhiLayout(layout, Math.max(10, size), seed);
+			case WORLD_TREE_MASS -> worldTreeLayout(layout, Math.max(16, size), seed);
 			default -> EarthMasses.layout(kind, layout, size, value, seed);
 		}
 		return mesh(layout, seed);
@@ -721,7 +749,7 @@ final class BlockMasses {
 				double mx = Mth.lerp(0.6, Math.cos(a) * thin, ex), my = Mth.lerp(0.6, from, ey), mz = Mth.lerp(0.6, Math.sin(a) * thin, ez);
 				double tx = mx + Math.cos(ta) * height * 0.15, ty = my + height * 0.08, tz = mz + Math.sin(ta) * height * 0.15;
 				sweep(layout, mx, my, mz, tx, ty, tz, 0.8, 0.5, log);
-				crown(layout, seed + i * 31 + t, tx, ty + 1.5, tz, height * 0.12);
+				crown(layout, seed + i * 31 + t, tx, ty + 1.5, tz, height * 0.1);
 			}
 			crown(layout, seed + i * 17, ex, ey + 2, ez, height * 0.15);
 			// Hanging roots, under the bough's length.
@@ -737,12 +765,119 @@ final class BlockMasses {
 		crown(layout, seed + 99, 0, top + height * 0.12, 0, height * 0.2);
 	}
 
+	/**
+	 * The World Tree (WORLD_TREE_MASS: {@code height} tall, its foot at 0): a primeval tree, its trunk vast, fluted and twisting, moss on its
+	 * foot; great buttress roots clutching the land all round, running on out over it; its trunk parting high up into three leaders, eight great
+	 * boughs spreading out and up below them, each twigged; a vast crown of leaves, flowering here and there, a crown at every bough's end and over
+	 * every leader; vines of glow berries and hanging roots dropping from its boughs.
+	 */
+	private static void worldTreeLayout(Layout layout, float height, long seed) {
+		BlockState bark = Blocks.DARK_OAK_WOOD.defaultBlockState(), seam = Blocks.SPRUCE_WOOD.defaultBlockState(), log = Blocks.DARK_OAK_LOG.defaultBlockState();
+		BlockState moss = Blocks.MOSS_BLOCK.defaultBlockState();
+		int split = Math.round(height * 0.6f);
+		float base = Math.max(3, height * 0.1f), thin = Math.max(1.6f, height * 0.05f);
+		// Its trunk: fluted (deep seams of paler wood in its grooves), twisting as it rises, moss on its foot's shaded side.
+		Stuff trunkWood = (x, y, z) -> {
+			double a = Math.atan2(z, x);
+			float groove = Mth.sin((float) (a * 7 + y * 0.12f));
+			if (y < height * 0.18f && Math.sin(a + 0.6) > 0.3 && noise(seed, x, y, z) < 0.55f) return moss;
+			return groove > 0.75f ? seam : bark;
+		};
+		// Its trunk's middle at each height from -3 up to its parting, both ends kept (one too short, the tree was never made and nothing showed:
+		// the user's report, 2026-10-26, "when I cast world tree nothing happens").
+		float[] cxs = new float[split + 4], czs = new float[split + 4];
+		for (int y = -3; y <= split; y++) {
+			float f = Mth.clamp(y / (float) split, 0, 1);
+			float r = Mth.lerp((float) Math.pow(f, 0.7), base, thin * 1.4f) + (y < 3 ? (3 - y) * 0.5f : 0);
+			float cx = Mth.sin(f * 2.4f + noise(seed, 1, 1, 1) * 6) * 1.4f * f, cz = Mth.cos(f * 1.9f + noise(seed, 2, 2, 2) * 6) * 1.2f * f;
+			cxs[y + 3] = cx;
+			czs[y + 3] = cz;
+			int ri = Mth.ceil(r * 1.3f);
+			for (int dx = -ri; dx <= ri; dx++) for (int dz = -ri; dz <= ri; dz++) {
+				double ex = dx + 0.5 - (cx - Mth.floor(cx)), ez = dz + 0.5 - (cz - Mth.floor(cz));
+				double angle = Math.atan2(ez, ex);
+				double rr = r * (1 + 0.2 * Math.sin(angle * 7 + f * 4));
+				int x = Mth.floor(cx) + dx, z = Mth.floor(cz) + dz;
+				if (ex * ex + ez * ez <= rr * rr) layout.set(x, y, z, trunkWood.at(x, y, z), 0);
+			}
+		}
+		// Its buttress roots, clutching the land and running on out over it, moss on their backs; hanging roots under their arches.
+		int roots = 9;
+		for (int k = 0; k < roots; k++) {
+			double a = Math.PI * 2 * k / roots + noise(seed, k, 3, 3) * 0.5;
+			double mid = base + 5 + 3 * noise(seed, k, 4, 4), far = mid + 5 + 6 * noise(seed, k, 5, 5);
+			double ax = Math.cos(a) * base * 0.6, az = Math.sin(a) * base * 0.6;
+			double mx = Math.cos(a + 0.12) * mid, mz = Math.sin(a + 0.12) * mid;
+			double fx = Math.cos(a + 0.3 * (noise(seed, k, 6, 6) - 0.5)) * far, fz = Math.sin(a + 0.3 * (noise(seed, k, 6, 6) - 0.5)) * far;
+			sweep(layout, ax, height * 0.12, az, mx, 0.5, mz, base * 0.42, 1.3, bark);
+			sweep(layout, mx, 0.5, mz, fx, -0.8, fz, 1.3, 0.55, bark);
+			// Moss over their backs, here and there.
+			for (int i = 0; i < 6; i++) {
+				double f = 0.2 + 0.13 * i;
+				int x = Mth.floor(Mth.lerp(f, ax, mx)), z = Mth.floor(Mth.lerp(f, az, mz));
+				int top = Mth.floor(Mth.lerp(f, height * 0.12, 0.5)) + 1;
+				while (layout.has(x, top + 1, z)) top++;
+				if (layout.has(x, top, z) && !layout.has(x, top + 1, z) && noise(seed, k, i, 7) < 0.6f) layout.set(x, top + 1, z, Blocks.MOSS_CARPET.defaultBlockState(), 0);
+			}
+		}
+		// Its three leaders, up out of its parting, each crowned.
+		float topX = cxs[split + 3], topZ = czs[split + 3];
+		for (int k = 0; k < 3; k++) {
+			double a = Math.PI * 2 * k / 3 + noise(seed, k, 8, 8);
+			double lx = topX + Math.cos(a) * height * 0.14, ly = height * 0.86 + noise(seed, k, 9, 9) * height * 0.06, lz = topZ + Math.sin(a) * height * 0.14;
+			sweep(layout, topX, split - 1, topZ, lx, ly, lz, thin * 1.3, thin * 0.7, bark);
+			crown(layout, seed + 300 + k, lx, ly + 2, lz, height * 0.19);
+		}
+		crown(layout, seed + 333, topX, height * 0.97, topZ, height * 0.17);
+		// Its eight great boughs, spreading out and up from its upper trunk, each twigged and crowned; glow-berry vines and roots hanging from them.
+		int boughs = 8;
+		for (int i = 0; i < boughs; i++) {
+			double a = i * 2.39996 + noise(seed, i, 10, 10) * 0.4; // the golden angle: never two the same way
+			double from = height * (0.5 + 0.2 * (i / (double) (boughs - 1))) + noise(seed, i, 11, 11) * 2;
+			int fy = Mth.clamp((int) from, -3, split);
+			double sx = cxs[fy + 3], sz = czs[fy + 3];
+			double reach = height * (0.34 + 0.12 * noise(seed, i, 12, 12)), rise = height * (0.12 + 0.1 * noise(seed, i, 13, 13));
+			double ex = sx + Math.cos(a) * reach, ey = from + rise, ez = sz + Math.sin(a) * reach;
+			double kx = sx + Math.cos(a) * reach * 0.55, ky = from + rise * 0.25, kz = sz + Math.sin(a) * reach * 0.55; // its elbow: out first, then up
+			sweep(layout, sx, from, sz, kx, ky, kz, thin * 1.15, thin * 0.85, bark);
+			sweep(layout, kx, ky, kz, ex, ey, ez, thin * 0.85, 0.7, log);
+			for (int t = 0; t < 2; t++) {
+				double ta = a + (t == 0 ? 0.75 : -0.7) + (noise(seed, i, t, 14) - 0.5) * 0.4;
+				double tx = kx + Math.cos(ta) * height * 0.16, ty = ky + height * 0.1, tz = kz + Math.sin(ta) * height * 0.16;
+				sweep(layout, kx, ky, kz, tx, ty, tz, 0.8, 0.5, log);
+				crown(layout, seed + i * 31 + t, tx, ty + 1.5, tz, height * 0.1);
+			}
+			crown(layout, seed + i * 17, ex, ey + 1.5, ez, height * 0.14);
+			// Vines of glow berries and hanging roots, under its length.
+			for (int h = 0; h < 4; h++) {
+				double f = 0.3 + 0.18 * h;
+				double px = h < 2 ? Mth.lerp(f * 1.6, sx, kx) : Mth.lerp((f - 0.36) * 1.6, kx, ex), py = h < 2 ? Mth.lerp(f * 1.6, from, ky) : Mth.lerp((f - 0.36) * 1.6, ky, ey);
+				double pz = h < 2 ? Mth.lerp(f * 1.6, sz, kz) : Mth.lerp((f - 0.36) * 1.6, kz, ez);
+				int x = Mth.floor(px), z = Mth.floor(pz), y = Mth.floor(py) - 1;
+				while (layout.has(x, y, z) && y > -3) y--;
+				int drop = 3 + (int) (noise(seed, i, h, 15) * 7);
+				boolean berries = noise(seed, i, h, 16) < 0.6f;
+				for (int d = 0; d < drop; d++) {
+					if (layout.has(x, y - d, z)) break;
+					BlockState hang;
+					if (!berries) hang = Blocks.HANGING_ROOTS.defaultBlockState();
+					else if (d == drop - 1) hang = Blocks.CAVE_VINES.defaultBlockState().setValue(net.minecraft.world.level.block.CaveVines.BERRIES, true);
+					else hang = Blocks.CAVE_VINES_PLANT.defaultBlockState().setValue(net.minecraft.world.level.block.CaveVines.BERRIES, noise(seed, i, d, 17) < 0.35f);
+					layout.set(x, y - d, z, hang, 0);
+					if (!berries && d >= 2) break; // roots hang a little way, vines far
+				}
+			}
+		}
+	}
+
 	/** The place its land sits under {@code at} on this client (for what is drawn on the ground under it), or null. */
 	static Vec3 groundUnder(Vec3 at, double down) {
 		Minecraft mc = Minecraft.getInstance();
-		if (mc.level == null) return null;
+		// A ClipContext needs a being for its collision rules: with none (null) 1.20.1 throws, and the game crashed drawing Glacier of the First
+		// Age (the user's report, 2026-10-26). The viewer's will do: only the land is asked of it.
+		if (mc.level == null || mc.player == null) return null;
 		var hit = mc.level.clip(new net.minecraft.world.level.ClipContext(at, at.subtract(0, down, 0), net.minecraft.world.level.ClipContext.Block.COLLIDER,
-				net.minecraft.world.level.ClipContext.Fluid.ANY, (net.minecraft.world.entity.Entity) null));
+				net.minecraft.world.level.ClipContext.Fluid.ANY, mc.player));
 		return hit.getType() == net.minecraft.world.phys.HitResult.Type.MISS ? null : hit.getLocation();
 	}
 }

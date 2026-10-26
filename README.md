@@ -4111,13 +4111,14 @@ harm falling onto it, swims as anyone under it, and is borne up onto it as their
   pillar; the Seal of Ten Thousand Mountains; Gravestone Falls' stele and tortoise; the Nine Cauldrons; the Buried World's standing stones;
   Xirang's clod; the Earth Veins' dome; the Hand of Houtu (its fingers curling joint by joint); Seven-Treasure Bodhi Branch's tree; the
   falling ice moon and the crescent over the well (each shattering into pieces); Blazing Meteor's rock; the Soul-Locking Pagoda; Fengdu's
-  walls; the Naihe Bridge.
-- **Real blocks set down in the world:** Glacier of the First Age, a wall of ice that stands up slice by slice at its face and slumps away
-  at its back as it creeps on, always on the ground (cast from the air, the ground below), filling hollows and carving through rises.
+  walls; the Naihe Bridge; the World Tree; the earth Xirang heaves up round those it buries.
+- **Real blocks set down for a while:** the frost Glacier of the First Age leaves on its way (snow over the land, ice over its water), and
+  the land a spell chars or withers with the spells' griefing off (`HeavenSpells#stainTemporary`), each given back as it was after a while.
 - **Drawn by hand** (`Form.DRAWN`: `SpellDrawn`, `SoulVortex`, `ImpermanenceFigures`): the Heaven-Demon Eclipse (sun and moon as discs from any
   side, its beam poured from the moon's face as wide as its harm reaches and down to the ground), Ten Thousand Souls Ascend (Minecraft's own
   soul faces up a whirlwind of ghost fire), the two Impermanences (painted figures, `models/figure/*.json`, `tools/spell-tex/figures.py`),
-  the Sea-Fixing Pearls and their columns of sea water, the Ocean-Sealing Vase's streams and whirlpool, the Nine Suns.
+  the Sea-Fixing Pearls and their columns of sea water, the Ocean-Sealing Vase's streams and whirlpool, the Nine Suns, the sun pulled through
+  the void, Glacier of the First Age's surge of crystals, the Primordial Sea's waves and storm, Xirang's soil growing out over the land.
 - **The mod's ghosts** (`Form.GHOSTS`: `SpellGhosts`, the spirit and soul shaders): Soul Dash's afterimages and Ghostly Wail's giant (the
   caster's own ghost), the Procession, the Nine Nethers, and the Heaven-Demon Avatar: a colossal projection of the caster's own body, gold on
   its side of heaven and crimson on the demon's, whose own arm comes down out of the sky for each strike.
@@ -4142,6 +4143,46 @@ harm falling onto it, swims as anyone under it, and is borne up onto it as their
 - **Return to the Bough** (wood, Four Axis, 400 qi): the Cultivation Fruit held fly up into the tree looked at and hang there again under its
   leaves (six at most), each as old as when it was picked: on the bough a fruit ripens on with the years again.
 - **Seed of Withering Rebirth** is shot, plants only on the ground, and seals a being it strikes in a pod of roots and blossom.
+
+### The third pass (2026-10-26)
+
+From the user's list after playing the second (with screenshots), and "a lot of the horns ... are angled inward":
+
+- **Fixes.** A spell's missile cast at a being closer than it forms (Wood Bullet point-blank, and every missile alike) strikes it: one that
+  formed inside or past a being flew out of it unseen (`SpellProjectile#firstIn`). Boulder Throw works with the spells' griefing off: the
+  boulder is torn up out of ground left whole. The Gate of Ten Thousand Ghosts is closed between its pillars over the doors (the sky showed
+  through either side of its plaque). Falling Mountain's purple mist is gone (the Slowness it lays on all under it, given anew each tick, was
+  shown in swirls), and it falls from 100 blocks over 64 ticks (46 over 34), no faster. Earth Dragon Surge's spikes are closed spires of rock
+  faced at the rock's own scale (they were cones missing a sliver between every two faces, their texture smeared).
+- **Smoothness.** A missile on a watcher's screen goes where the server says a tick behind it, never flying on by itself between (it leapt back
+  and forth every tick), and its trail is laid from where it is drawn: Fire Serpent's body no longer jerks, and its fire flows along it.
+- **No more seeing through suns.** A sun's body is solid light (`SpellRender#core`, drawn first, writing depth): what is behind it or in it is
+  hidden by it, not laid over it (Solar Field, the Nine Suns; the eclipse's sun stays see-through, its moon passing before it).
+- **Remade.** Sun Pulled Through the Void is a sun of the sky as Solar Field's is, vast: boiling, its corona and rays wheeling, prominences
+  looping off it, a shaft of heat poured onto the land under it with the fire's seal burning there, collapsing white-hot. The World Tree is
+  built of the world's own wood and leaves: a fluted trunk, buttress roots running out over the land, eight great boughs and three leaders
+  crowned in leaves, glow-berry vines hanging. Glacier of the First Age surges out as rows of colossal faceted crystals of ice bursting up as
+  its front comes, frosting the land it passes, and shatters at its end. The Primordial Sea's waves curl in, its sea churns round a whirlpool
+  under a storm, lightning striking into it, rain over all of it and heavy all round one who stands within. Xirang shows what it does: its
+  clod sinks into the land, roots of gold and shoots run out from it to its edge, and the earth heaves up round each being it buries.
+- **Polished.** The Sea-Fixing Pearls are true pearls in a skin of sea with currents wheeling round them (two squares of water turned on
+  each before). Flame Armour: a white-hot skin under its flame, its fire flowing up it unbroken, a cape of fire, a crest, flames round the
+  feet, embers; on one's own arm in first person too. Tidal Lance: a whirlpool at the hands, surges running down the torrent, strands
+  twisting round it, spray, a crown of water bursting off what it strikes. Torrential Spring's seals wheeling round its ball are rings of
+  water; the water seals on Rain Call and Heavenly River Torrent are faint. Black and White Impermanence rise turning out of a whirl of the
+  underworld, float and look about, lunge as they strike, haul on the chain, tear the soul away, spirit paper and ghost fire about them.
+- **The land charred and withered by a gradient.** Fire leaves blackstone and basalt at its heart, burnt earth about it, dry and browned at its
+  edge (`Devastation#charred`); withering leaves coarse and rooted earth and a little mud at its heart, podzol and some grass at its edge
+  (`Devastation#withered`). With the spells' griefing off both are only for a while (`Devastation#charFor`, `#witherFor`): the land given back
+  as it was after about 18 s (36 s at the heart). Even small fire spells (Flame Bolt, Fire Serpent, a yang bomb) leave a scorch mark for a while.
+- **After playing it (the same day).** Glacier of the First Age follows the land as it goes, down off a cliff and over a river (its mist, its
+  reach and its crystals all kept to the height it rose at), and freezes the land the whole way as its end did (`Devastation#freezeAt`: water to
+  ice, packed toward its middle, snow over the land, deepest along its middle; for good with the spells' griefing on, else thawing). The
+  Sea-Fixing Pearls seek only foes before their caster, those nearest their aim first (they took the nearest all round, and the first flew
+  off behind them). The Gate of Ten Thousand Ghosts' dark doorway stands within its frame, tucked into its pillars and up into its frieze (set
+  a little behind them, the sky showed through above it). The World Tree, which was never made (its trunk's heights one too few), grows.
+- **Horns.** The Lightning Antelope's horns, the Azure Dragon's antlers and the dragon race's lean out (a bone's z turn outward is `side * +`,
+  as the ears'; they leant in and crossed); Ox-Head's horns curve up.
 
 Previews (no game needed): `run/previews/animals` (the beasts' gaits), `run/previews/figures` (the two Impermanences turning and striking).
 

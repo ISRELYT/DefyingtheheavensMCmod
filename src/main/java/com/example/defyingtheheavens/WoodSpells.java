@@ -135,6 +135,9 @@ public final class WoodSpells {
 	/** The tree's vines reach {@link #TREE_REACH}; the land splits round its roots out to {@link #TREE_FISSURES} (40, by its realm). */
 	public static final double TREE_RANGE = 24, TREE_REACH = 32, TREE_FISSURES = Devastation.sized(Realm.FOUR_AXIS, 40);
 	public static final int TREE_TICKS = 12 * 20;
+	/** The World Tree itself (SpellConstruct WORLD_TREE_MASS): how tall it grows, how long it takes to burst up and to wither back (ticks). */
+	public static final double TREE_HEIGHT = 44;
+	public static final int TREE_GROWS = 40, TREE_WITHERS = 30;
 	public static final float TREE_DRAIN = 10;
 	/**
 	 * Azure Dragon: how far off it rises (82), whom it catches (within {@link #DRAGON_RADIUS}, 18) and how hard, how long it carries them
@@ -1225,6 +1228,8 @@ public final class WoodSpells {
 		private final Spell spell;
 		private final Vec3 trunk;
 		private final SpellField field;
+		/** The tree itself, of the world's own wood and leaves (the user's ask, 2026-10-26: "the world tree spell just looks bad and needs a redo"). */
+		private final SpellConstruct tree;
 		/** Who hangs in its branches, and where each is held. */
 		private final java.util.Map<LivingEntity, Vec3> seized = new java.util.HashMap<>();
 		/** The vine that holds each (SpellField TREE_VINE: from a bough to them). */
@@ -1237,8 +1242,10 @@ public final class WoodSpells {
 			if (point.distanceToSqr(caster.position()) < 36) point = caster.position().add(Vec3.directionFromRotation(0, caster.getYRot()).scale(8));
 			Vec3 ground = HeavenSpells.groundBelow(level, point.add(0, 2, 0), 4, 32);
 			this.trunk = ground != null ? ground : point;
-			this.field = SpellField.create(level, SpellField.Kind.WORLD_TREE, trunk, (float) TREE_REACH, 40, TREE_TICKS, caster)
+			this.field = SpellField.create(level, SpellField.Kind.WORLD_TREE, trunk, (float) TREE_REACH, (float) TREE_HEIGHT, TREE_TICKS, caster)
 					.data(caster.getRandom().nextInt()).spawn();
+			this.tree = SpellConstruct.create(level, SpellConstruct.Kind.WORLD_TREE_MASS, trunk, caster.getYRot(), 0, TREE_TICKS + SpellConstruct.FADE, caster)
+					.size((float) TREE_HEIGHT).tint(level.random.nextInt()).spawn();
 			// Its roots heave the land open as it grows.
 			Devastation.fissures(caster, level, trunk, TREE_FISSURES, 12, 4, 4);
 			sound(trunk, SoundEvents.ROOTED_DIRT_BREAK, 4.0f, 0.3f);
@@ -1247,8 +1254,12 @@ public final class WoodSpells {
 
 		@Override
 		protected boolean run(long age, long now) {
+			if (age == TREE_TICKS - TREE_WITHERS) {
+				tree.act("wither");
+				sound(trunk, SoundEvents.ROOTED_DIRT_BREAK, 4.0f, 0.4f);
+			}
 			// Its vines reach once it has grown (two seconds), and keep reaching for whoever comes.
-			if (age >= 40 && age % 10 == 0) {
+			if (age >= TREE_GROWS && age % 10 == 0) {
 				for (LivingEntity e : HeavenSpells.aroundPoint(level, trunk, TREE_REACH, e -> e != caster && !HeavenSpells.spared(caster, e) && !seized.containsKey(e))) {
 					double a = level.random.nextDouble() * Math.PI * 2;
 					double r = 5 + level.random.nextDouble() * 9;
@@ -1290,6 +1301,7 @@ public final class WoodSpells {
 			for (LivingEntity e : seized.keySet()) HeavenSpells.safeFall(e, 100);
 			for (SpellField vine : vines.values()) vine.discard();
 			field.discard();
+			tree.dissolve();
 		}
 	}
 

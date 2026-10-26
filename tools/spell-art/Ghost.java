@@ -373,9 +373,11 @@ public class Ghost {
 			gate.box(x, 4 + PILLAR_H / 2 - 2, 0, PILLAR_W, PILLAR_H - 4, PILLAR_W, boneStone(41 + (s > 0 ? 1 : 0), true)).density(2.5);
 			gate.box(x, PILLAR_H + 0.4, 0, 5.8, 1.4, 5.8, boneStone(43, false));
 		}
-		// The lintel and the beam under it, the plaque between them.
+		// The lintel and the frieze under it, closed from pillar to pillar down to the doors' tops, the plaque on it. (A beam over the doors
+		// once stood there alone, the sky showing between it and the lintel either side of the plaque: the user's report, 2026-10-26, "fix
+		// the gap in the gate of ten thousand ghosts".)
 		gate.box(0, 33.2, 0, 40, 3.4, 4, boneStone(44, false));
-		gate.box(0, 28.4, 0, 2 * HINGE + 0.4, 1.6, 3, boneStone(45, false));
+		gate.box(0, 29.3, 0.45, 2 * HINGE + 0.4, 4.8, 3.9, boneStone(45, false));
 		gate.box(0, 30.8, -2.1, 11, 4.4, 0.8, plaque()).density(4);
 		// The roof: two slopes of tiles meeting along a ridge, the eaves swept up at the corners, horns of bone at the ridge's ends.
 		SpellArt.Painter roof = tiles(46);
@@ -389,12 +391,14 @@ public class Ghost {
 			SpellArt.limb(gate, SpellArt.v3(s * 20.5, 40, 0), SpellArt.v3(s * 22.4, 43, 0), 1.2, 1.2, boneStone(48, false));
 			SpellArt.limb(gate, SpellArt.v3(s * 22.4, 43, 0), SpellArt.v3(s * 21.2, 44.6, 0), 0.8, 0.8, boneStone(48, false));
 		}
-		// The dark beyond the doorway, and the way into it.
-		gate.box(0, DOOR_H / 2, 2.6, 2 * HINGE, DOOR_H, 0.2, t -> SpellArt.col(VOID)).only(SpellArt.Face.FRONT, SpellArt.Face.BACK).density(0.5);
-		SpellArt.Bone vortex = m.bone("vortex", "gate", 0, DOOR_H / 2, 2);
-		vortex.box(0, DOOR_H / 2, 2.1, 25, 25, 0.1, vortex(4, 1.6, 50)).only(SpellArt.Face.FRONT).density(2);
-		SpellArt.Bone in = m.bone("vortex_in", "gate", 0, DOOR_H / 2, 1.8);
-		in.box(0, DOOR_H / 2, 1.8, 15, 15, 0.1, vortex(3, -2.2, 51)).only(SpellArt.Face.FRONT).density(3);
+		// The dark beyond the doorway, and the way into it: the dark set within the frame's depth, its edges tucked into the pillars and up into the
+		// frieze (it stood a little behind them, and from below the sky showed through the slit between it and the frieze: the user's report,
+		// 2026-10-26, "its because that black wall is a little bit behind the actual gate thing"); the frieze runs back over its top edge.
+		gate.box(0, (DOOR_H + 1) / 2, 2.2, 2 * HINGE + 0.8, DOOR_H + 1, 0.2, t -> SpellArt.col(VOID)).only(SpellArt.Face.FRONT, SpellArt.Face.BACK).density(0.5);
+		SpellArt.Bone vortex = m.bone("vortex", "gate", 0, DOOR_H / 2, 1.95);
+		vortex.box(0, DOOR_H / 2, 1.95, 25, 25, 0.1, vortex(4, 1.6, 50)).only(SpellArt.Face.FRONT).density(2);
+		SpellArt.Bone in = m.bone("vortex_in", "gate", 0, DOOR_H / 2, 1.75);
+		in.box(0, DOOR_H / 2, 1.75, 15, 15, 0.1, vortex(3, -2.2, 51)).only(SpellArt.Face.FRONT).density(3);
 		// The doors, hinged at the pillars, opening inward (their rest: shut).
 		for (int s = -1; s <= 1; s += 2) {
 			SpellArt.Bone door = m.bone(s < 0 ? "door_l" : "door_r", "gate", s * HINGE, 0, 0);

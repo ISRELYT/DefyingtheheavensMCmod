@@ -27,7 +27,9 @@ public final class ClientSpellTrails {
 			if (!(e instanceof SpellProjectile missile) || missile.forming()) continue;
 			seen.add(e.getId());
 			Deque<Vec3> trail = TRAILS.computeIfAbsent(e.getId(), id -> new ArrayDeque<>());
-			Vec3 at = e.position();
+			// Where it is drawn as the next tick begins (its last place, eased from toward its place now): taken from where it is now, the newest
+			// point lay ahead of its drawn head through every tick, and what hung on its trail (a serpent's body) folded back and forth.
+			Vec3 at = new Vec3(e.xo, e.yo, e.zo);
 			if (trail.isEmpty() || trail.peekFirst().distanceToSqr(at) > 1.0e-4) trail.addFirst(at);
 			while (trail.size() > LENGTH) trail.removeLast();
 		}

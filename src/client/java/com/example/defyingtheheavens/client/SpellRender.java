@@ -82,6 +82,16 @@ public final class SpellRender {
 		return Types.glow(texture);
 	}
 
+	/**
+	 * Solid light, lit by nothing: a sun's body. It hides what is behind it and writes the depth, and is drawn first among a spell's (with the solid
+	 * kinds: SpellBuffers), so the flames, glows and rays laid about it show only where they stand clear of it. A sun drawn see-through showed the
+	 * fire behind it and inside it through its face, as if it were too small for its own fire (the user's report, 2026-10-26: "the vfx inside
+	 * this 'sun' is like clipping through it").
+	 */
+	public static RenderType core(ResourceLocation texture) {
+		return Types.core(texture);
+	}
+
 	/** See-through and lit by nothing (always bright): water, ice, mist, clouds, a ward's skin. */
 	public static RenderType clear(ResourceLocation texture) {
 		return RenderType.entityTranslucentEmissive(texture);
@@ -109,7 +119,19 @@ public final class SpellRender {
 
 	/** The render types of our own, made the way vanilla's are (extends RenderType only to reach its parts). */
 	private static final class Types extends RenderType {
-		private static final java.util.Map<ResourceLocation, RenderType> GLOWS = new java.util.HashMap<>();
+		private static final java.util.Map<ResourceLocation, RenderType> GLOWS = new java.util.HashMap<>(), CORES = new java.util.HashMap<>();
+
+		/** {@link SpellRender#core}: SpellBuffers knows it by its name's start, as solid. */
+		static RenderType core(ResourceLocation texture) {
+			return CORES.computeIfAbsent(texture, t -> create("defying_the_heavens_spell_core", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 1536,
+					false, false, CompositeState.builder()
+							.setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_EMISSIVE_SHADER)
+							.setTextureState(new TextureStateShard(t, false, false))
+							.setTransparencyState(NO_TRANSPARENCY)
+							.setCullState(NO_CULL)
+							.setOverlayState(OVERLAY)
+							.createCompositeState(false)));
+		}
 
 		static RenderType glow(ResourceLocation texture) {
 			return GLOWS.computeIfAbsent(texture, t -> create("defying_the_heavens_spell_glow", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 1536,
@@ -423,23 +445,48 @@ public final class SpellRender {
 	}
 
 	/**
-	 * A spike of rock (a cone of {@code sides} faces with a jagged tip) on the pose's origin, {@code height} tall and {@code radius}
-	 * round at its foot, leaning by {@code leanX, leanZ}, faced in {@code sprite} (a block's own texture).
+	 * A spike of rock on the pose's origin, {@code height} tall and {@code radius} round at its foot, leaning by {@code leanX, leanZ}: a spire of
+	 * {@code sides} faces, closed all round, narrowing in three bands to its point, each ring a little jagged and turned, faced in {@code sprite}
+	 * (a block's own texture) at about the block's own scale, so the rock reads as rock and never stretches. (It was a cone of three-sided
+	 * pieces with a sliver missing between every two, a face's whole texture smeared up it: Earth Dragon Surge's "fucked up polygons", the
+	 * user's report, 2026-10-26.)
 	 */
 	public static void spike(VertexConsumer vc, PoseStack.Pose pose, float radius, float height, float leanX, float leanZ, int sides, TextureAtlasSprite sprite,
 							 float[] rgb, float alpha, int light, long seed) {
-		float tipX = leanX * height, tipZ = leanZ * height;
-		for (int s = 0; s < sides; s++) {
-			double t0 = Math.PI * 2 * s / sides + seed % 7 * 0.1, t1 = Math.PI * 2 * (s + 1) / sides + seed % 7 * 0.1;
-			float r0 = radius * (0.85f + 0.3f * hash(seed + s)), r1 = radius * (0.85f + 0.3f * hash(seed + (s + 1) % sides));
-			Vector3f a = v((float) Math.cos(t0) * r0, 0, (float) Math.sin(t0) * r0), b = v((float) Math.cos(t1) * r1, 0, (float) Math.sin(t1) * r1);
-			Vector3f mid = v(tipX * 0.55f + (float) Math.cos((t0 + t1) / 2) * radius * 0.45f, height * 0.55f, tipZ * 0.55f + (float) Math.sin((t0 + t1) / 2) * radius * 0.45f);
-			Vector3f tip = v(tipX, height, tipZ);
-			float shade = 0.75f + 0.25f * (float) Math.cos(t0 - 0.8);
-			float[] c = {rgb[0] * shade, rgb[1] * shade, rgb[2] * shade};
-			quad(vc, pose, a, mid, mid, b, c, alpha, sprite.getU0(), sprite.getV0(), sprite.getU1(), sprite.getV1(), light);
-			quad(vc, pose, mid, tip, tip, mid, c, alpha, sprite.getU0(), sprite.getV0(), sprite.getU(8), sprite.getV(8), light);
-			quad(vc, pose, b, mid, tip, tip, c, alpha, sprite.getU(8), sprite.getV0(), sprite.getU1(), sprite.getV(8), light);
+		if (height <= 0.01f || radius <= 0.01f) return;
+		// The rings up it: their heights and how wide each is, as shares of the foot's; the last the point.
+		float[] at = {0, 0.32f, 0.66f, 1}, wide = {1, 0.68f, 0.34f, 0};
+		Vector3f[][] ring = new Vector3f[at.length][sides];
+		for (int k = 0; k < at.length; k++) {
+			float y = height * at[k];
+			// Leaning more the higher it is (bowed, not tipped over whole).
+			float cx = leanX * y * at[k], cz = leanZ * y * at[k];
+			float twist = (hash(seed * 7 + k) - 0.5f) * 0.5f + (float) (seed % 7) * 0.1f;
+			for (int s = 0; s < sides; s++) {
+				double t = Math.PI * 2 * s / sides + twist;
+				float r = radius * wide[k] * (0.82f + 0.36f * hash(seed * 31 + k * 13 + s));
+				float jy = k == 0 || k == at.length - 1 ? 0 : (hash(seed * 17 + k * 5 + s) - 0.5f) * height * 0.08f;
+				ring[k][s] = v(cx + (float) Math.cos(t) * r, y + jy, cz + (float) Math.sin(t) * r);
+			}
+		}
+		for (int k = 0; k < at.length - 1; k++) {
+			for (int s = 0; s < sides; s++) {
+				int n = (s + 1) % sides;
+				Vector3f a = ring[k][s], b = ring[k + 1][s], c = ring[k + 1][n], d = ring[k][n];
+				// The block's own texture at about its own scale: a face's width and height in blocks, a sixteenth of the sprite a pixel.
+				float across = Math.min(16, Math.max(2, a.distance(d) * 16)), up = Math.min(16, Math.max(2, (b.y - a.y) * 16));
+				float u0 = 16 * hash(seed + k * 7 + s) * (1 - across / 16), v0 = 16 * hash(seed + k * 11 + s + 3) * (1 - up / 16);
+				// Faces toward the light lighter, those away darker, the higher bands a little lighter (weathered).
+				double mid = Math.PI * 2 * (s + 0.5) / sides;
+				float shade = (0.72f + 0.2f * (float) Math.cos(mid - 0.8)) * (0.92f + 0.08f * k);
+				float[] col = {rgb[0] * shade, rgb[1] * shade, rgb[2] * shade};
+				if (k == at.length - 2) {
+					// The point: three-sided (the quad's last two corners the same).
+					quad(vc, pose, a, b, b, d, col, alpha, sprite.getU(u0), sprite.getV(v0 + up), sprite.getU(u0 + across), sprite.getV(v0), light);
+				} else {
+					quad(vc, pose, a, b, c, d, col, alpha, sprite.getU(u0), sprite.getV(v0 + up), sprite.getU(u0 + across), sprite.getV(v0), light);
+				}
+			}
 		}
 	}
 

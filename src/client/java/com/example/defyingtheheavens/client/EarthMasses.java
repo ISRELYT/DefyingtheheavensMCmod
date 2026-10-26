@@ -53,6 +53,7 @@ final class EarthMasses {
 			case CLOD_MASS -> clod(layout, Math.max(1.5f, size), seed);
 			case VEIN_DOME_MASS -> dome(layout, Math.max(8, size), seed);
 			case HAND_MASS -> hand(layout, Math.max(6, size), seed);
+			case BURIAL_MASS -> burial(layout, Math.max(1, size), Math.max(1, value), seed);
 			default -> SpellMasses.layout(kind, layout, size, value, seed);
 		}
 	}
@@ -366,6 +367,28 @@ final class EarthMasses {
 		}
 	}
 
+	/**
+	 * Xirang's burial: the living earth heaved up round a being, {@code radius} round at its foot and {@code height} high (its foot at 0): a rough
+	 * mound of earth, rooted earth and moss, flecked with gold, a little ragged at its top where the being's head stands out of it, grass and
+	 * ferns springing up over it, roots clutching at its foot.
+	 */
+	private static void burial(BlockMasses.Layout layout, float radius, float height, long seed) {
+		int r = Mth.ceil(radius) + 1;
+		for (int x = -r; x <= r; x++) for (int z = -r; z <= r; z++) {
+			float d = Mth.sqrt(x * x + z * z) / (radius + 0.5f);
+			if (d > 1.15f) continue;
+			int top = Mth.floor(height * (1.08f - 0.55f * d * d) * (0.85f + 0.3f * noise(seed, x, 1, z)));
+			for (int y = -1; y <= top; y++) {
+				float n = noise(seed, x, y, z);
+				BlockState stuff = n < 0.06f ? of(Blocks.RAW_GOLD_BLOCK) : n < 0.3f ? of(Blocks.ROOTED_DIRT) : n < 0.45f ? of(Blocks.COARSE_DIRT) : of(Blocks.DIRT);
+				if (y == top) stuff = n < 0.55f ? of(Blocks.GRASS_BLOCK) : n < 0.8f ? of(Blocks.MOSS_BLOCK) : of(Blocks.ROOTED_DIRT);
+				layout.set(x, y, z, stuff, 0);
+			}
+			float plant = noise(seed, x, 7, z);
+			if (plant < 0.3f) layout.set(x, top + 1, z, of(plant < 0.12f ? Blocks.FERN : Blocks.GRASS), 0);
+		}
+	}
+
 	/** The dome of the earth's veins, {@code radius} round (its foot at 0): eight ribs bending in to a keystone, two rings binding them, the trigram under it. */
 	private static void dome(BlockMasses.Layout layout, float radius, long seed) {
 		float high = radius * 0.82f;
@@ -545,13 +568,26 @@ final class EarthMasses {
 				BlockMasses.draw(mass, 0, pose);
 			}
 			case CLOD_MASS -> {
+				// Landed, it swells, throbbing, and sinks down into the land, its soil poured out into it (the land grows of itself from there).
 				float grow = 1;
-				if ("swell".equals(phase)) grow = 1 + 0.7f * SpellRender.easeOut(Mth.clamp(since / (EarthSpells.XIRANG_SWELLS * 0.5f), 0, 1));
-				if ("settle".equals(phase)) grow = 1.7f * (1 - SpellRender.ease(since / 12));
+				if ("swell".equals(phase)) {
+					float t = Mth.clamp(since / EarthSpells.XIRANG_SWELLS, 0, 1);
+					grow = (1 + 0.5f * SpellRender.easeOut(Math.min(1, t * 3))) * (1 + 0.08f * Mth.sin(since * 0.9f)) * (1 - 0.35f * t);
+					pose.translate(0, -size * 1.6f * SpellRender.ease(t), 0);
+				}
+				if ("settle".equals(phase)) grow = 0;
 				if (grow <= 0.02f) break;
 				pose.mulPose(Axis.YP.rotationDegrees(age * 3));
 				pose.mulPose(Axis.XP.rotationDegrees(Mth.sin(age * 0.2f) * 12));
 				pose.scale(grow, grow, grow);
+				BlockMasses.draw(mass, 0, pose);
+			}
+			case BURIAL_MASS -> {
+				// Heaving up out of the land round the being it buries, trembling as it comes; crumbling back down into it as it lets go.
+				float rise = SpellRender.easeOut(Math.min(1, age / 10));
+				float crumble = "crumble".equals(phase) ? SpellRender.ease(since / 12) : 0;
+				pose.translate(0, -(1 - rise + crumble) * (c.value() + 1.5f), 0);
+				if (rise < 1 || crumble > 0) pose.mulPose(Axis.ZP.rotationDegrees(Mth.sin(age * 1.8f) * 2.5f * Math.max(1 - rise, crumble)));
 				BlockMasses.draw(mass, 0, pose);
 			}
 			case VEIN_DOME_MASS -> {

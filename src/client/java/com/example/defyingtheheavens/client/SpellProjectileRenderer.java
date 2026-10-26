@@ -244,8 +244,9 @@ public class SpellProjectileRenderer extends EntityRenderer<SpellProjectile> {
 			glowBall(buffers, pose, facing, 0, 0, 0, 1.2f * g, FIRE_CORE, g);
 			return;
 		}
-		// The body along the path, swaying side to side.
-		List<Vec3> path = back(trail, 5.5, 18);
+		// The body along the path, swaying side to side, its fire flowing back along it unbroken (it leapt a frame of its picture at a time, and
+		// its body jerked as the trail it hangs on leapt: the user's report, 2026-10-26, "make it look less choppy").
+		List<Vec3> path = back(trail, 6.5, 28);
 		if (path.size() >= 2) {
 			List<Vec3> body = new ArrayList<>();
 			float[] radii = new float[path.size()];
@@ -254,36 +255,53 @@ public class SpellProjectileRenderer extends EntityRenderer<SpellProjectile> {
 				Vec3 dir = path.get(Math.min(path.size() - 1, i + 1)).subtract(path.get(Math.max(0, i - 1)));
 				Vec3 side = dir.cross(new Vec3(0, 1, 0));
 				side = side.lengthSqr() < 1.0e-6 ? new Vec3(1, 0, 0) : side.normalize();
-				double sway = Math.sin(age * 0.5 - i * 0.7) * 0.35 * Math.min(1, i / 3.0);
-				double rise = Math.cos(age * 0.35 - i * 0.6) * 0.15 * Math.min(1, i / 3.0);
-				body.add(p.add(side.scale(sway)).add(0, rise, 0));
 				float t = i / (float) (path.size() - 1);
-				radii[i] = s * (i == 0 ? 0.32f : 0.38f * (1 - t) + 0.03f);
+				float grip = Math.min(1, t * 5);
+				double sway = Math.sin(age * 0.45 - t * 9) * 0.38 * grip;
+				double rise = Math.cos(age * 0.33 - t * 7.5) * 0.16 * grip;
+				body.add(p.add(side.scale(sway)).add(0, rise, 0));
+				radii[i] = s * (0.44f * (1 - t) * (1 - t * 0.35f) + 0.035f) * (t < 0.06f ? 0.8f + t * 3 : 1);
 			}
-			float[] fv = SpellRender.frame(age, 0.5f, SpellRender.FLAME_FRAMES);
-			SpellRender.tube(buffers.getBuffer(SpellRender.glow(SpellRender.FLAME)), pose.last(), body, radii, 8, FIRE_MID, 0.95f, 0.08f,
-					fv[0] - age * 0.05f, SpellRender.FULL_BRIGHT, new SpellRender.PointShade() {
-						@Override
-						public float[] colour(int i, int n) {
-							float t = i / (float) n;
-							return new float[]{1.0f, 0.85f - 0.55f * t, 0.45f - 0.38f * t};
-						}
+			SpellRender.PointShade shade = new SpellRender.PointShade() {
+				@Override
+				public float[] colour(int i, int n) {
+					float t = i / (float) n;
+					return new float[] {1.0f, 0.88f - 0.55f * t, 0.5f - 0.42f * t};
+				}
 
-						@Override
-						public float alpha(int i, int n) {
-							return 1 - (i / (float) n) * 0.7f;
-						}
-					});
-			// A hot core along the spine, and flames licking up off its back.
-			float[] coreR = new float[radii.length];
-			for (int i = 0; i < radii.length; i++) coreR[i] = radii[i] * 0.45f;
-			SpellRender.tube(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), pose.last(), body, coreR, 6, FIRE_CORE, 0.8f, 0.1f, 0, SpellRender.FULL_BRIGHT, null);
+				@Override
+				public float alpha(int i, int n) {
+					return 1 - (i / (float) n) * 0.75f;
+				}
+			};
+			float[] outer = new float[radii.length], core = new float[radii.length];
+			for (int i = 0; i < radii.length; i++) {
+				outer[i] = radii[i] * 2.3f;
+				core[i] = radii[i] * 0.42f;
+			}
+			// Its heat about it, its body of flame, the white heart along its spine.
+			SpellRender.tube(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), pose.last(), body, outer, 8, FIRE_OUTER, 0.35f, 0.1f, 0, SpellRender.FULL_BRIGHT, shade);
+			SpellRender.tube(buffers.getBuffer(SpellRender.glow(SpellRender.FLAME)), pose.last(), body, radii, 10, FIRE_MID, 0.95f, 0.16f, -age * 0.07f, SpellRender.FULL_BRIGHT,
+					shade);
+			SpellRender.tube(buffers.getBuffer(SpellRender.glow(SpellRender.FLAME)), pose.last(), body, radii, 10, FIRE_CORE, 0.45f, 0.11f, -age * 0.05f + 0.5f,
+					SpellRender.FULL_BRIGHT, shade);
+			SpellRender.tube(buffers.getBuffer(SpellRender.glow(SpellRender.GLOW)), pose.last(), body, core, 6, FIRE_CORE, 0.85f, 0.1f, 0, SpellRender.FULL_BRIGHT, null);
+			// A crest of flame licking up off its back, and embers shed off it, drifting up behind.
 			VertexConsumer flames = buffers.getBuffer(SpellRender.glow(SpellRender.FLAME));
-			for (int i = 1; i < body.size(); i += 2) {
+			for (int i = 2; i < body.size() - 3; i += 2) {
 				Vec3 p = body.get(i);
 				float t = i / (float) body.size();
-				SpellRender.flameTongue(flames, pose, cam, (float) p.x, (float) p.y + radii[i] * 0.5f, (float) p.z, radii[i] * 2.4f, radii[i] * 3.4f,
-						age + i * 3, FIRE_MID, 0.9f - t * 0.5f, SpellRender.FLAME_FRAMES);
+				SpellRender.flameTongue(flames, pose, cam, (float) p.x, (float) p.y + radii[i] * 0.55f, (float) p.z, radii[i] * 2.2f, radii[i] * (3.4f + Mth.sin(age * 0.5f + i) * 0.6f),
+						age + i * 3, FIRE_MID, 0.85f - t * 0.55f, SpellRender.FLAME_FRAMES);
+			}
+			VertexConsumer spark = buffers.getBuffer(SpellRender.glow(SpellRender.SPARK));
+			for (int i = 0; i < 12; i++) {
+				float t = (age * 0.08f + i / 12f) % 1;
+				int at = Math.min(body.size() - 1, (int) (t * body.size()));
+				long seed2 = missile.getId() * 29L + i;
+				Vec3 p = body.get(at).add((SpellRender.hash(seed2) - 0.5) * 0.6, t * 0.9, (SpellRender.hash(seed2 + 1) - 0.5) * 0.6);
+				SpellRender.billboard(spark, pose, facing, (float) p.x, (float) p.y, (float) p.z, 0.16f * s, 0, i % 3 == 0 ? FIRE_CORE : FIRE_MID, 0.9f * (1 - t), 0, 0, 1, 1,
+						SpellRender.FULL_BRIGHT);
 			}
 		}
 		// The head: long jaws, a brow, horns of flame, eyes of white fire.

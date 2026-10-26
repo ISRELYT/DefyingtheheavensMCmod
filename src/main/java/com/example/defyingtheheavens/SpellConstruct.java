@@ -77,7 +77,9 @@ public class SpellConstruct extends Entity implements GeoEntity {
 		AZURE_THUNDER_CLOUD("azure_thunder_cloud", "gather", "churn", 4.0f, "flash"),
 		VOID_ROOTS("void_roots", "descend", "drink", 4.0f, "withdraw"),
 		GOLDEN_CROW("golden_crow", "emerge", "dive", 4.0f, "strike"),
-		VOID_SUN("void_sun", "emerge", "blaze", 4.0f, "collapse"),
+		// The sun pulled through the void: drawn by hand (Form DRAWN: SpellDrawn) since 2026-10-26, its size its round and its value how far the
+		// land lies below it (the user's ask: "I think solar field looks so much better"; it was a GeckoLib model of shards).
+		VOID_SUN("void_sun", Form.DRAWN, "collapse"),
 		BUZHOU_PILLAR("buzhou_pillar", null, "fall", 4.0f, "impact"),
 		EARTH_VEIN_LOCK("earth_vein_lock", "rise", "hold", 4.0f, "release"),
 		WEAK_WATER_FALL("weak_water_fall", "pour", "fall", 4.0f, "dry"),
@@ -265,7 +267,23 @@ public class SpellConstruct extends Entity implements GeoEntity {
 		PAGODA_MASS("pagoda_mass", Form.BLOCKS, "land", "seal"),
 		WALL_MASS("wall_mass", Form.BLOCKS, "fall"),
 		BRIDGE_MASS("bridge_mass", Form.BLOCKS),
-		SUN("sun", Form.DRAWN, "impact");
+		SUN("sun", Form.DRAWN, "impact"),
+		// The World Tree (WoodSpells#WorldTree; the user's ask, 2026-10-26: "the world tree spell just looks bad and needs a redo"): a primeval tree
+		// of the world's own wood and leaves (Form BLOCKS: BlockMasses), its height its size, withering back into the land at its end.
+		WORLD_TREE_MASS("world_tree_mass", Form.BLOCKS, "wither"),
+		// Glacier of the First Age (WaterSpells#Glacier; "try again with the glacier wall ability I do not like it at all"): its surge of the first
+		// age's ice drawn by hand (Form DRAWN: SpellDrawn), crystals bursting up along its way, its size the half of its width, its value its reach;
+		// at its end its crystals shatter ({@code calve}).
+		GLACIER_SURGE("glacier_surge", Form.DRAWN, "calve"),
+		// The Primordial Sea's storm and waves (WaterSpells#PrimalSea; "make it more grand and imposing, idk add some rain on the inside"): drawn by
+		// hand (Form DRAWN: SpellDrawn), its size its round; its waves crash in over its heart at its end ({@code close}).
+		PRIMORDIAL_STORM("primordial_storm", Form.DRAWN, "close"),
+		// Xirang, the Self-Growing Soil (EarthSpells#Xirang; the user's report, 2026-10-26: "the visuals need to be like idk redone, I'm just confused
+		// by what its doing"): its soil growing out over the land from where its clod sank into it, drawn by hand (Form DRAWN: SpellDrawn), its size
+		// how far round it grows, its value how high the land heaves; and the earth heaving up round a being it buries, of the world's own earth (Form
+		// BLOCKS: EarthMasses), held on that being, its size its round and its value its height; crumbling as it lets go.
+		XIRANG_BLOOM("xirang_bloom", Form.DRAWN, "settle"),
+		BURIAL_MASS("burial_mass", Form.BLOCKS, "crumble");
 
 		public final String id, enter, loop;
 		public final float scale;

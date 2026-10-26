@@ -67,9 +67,13 @@ public final class EarthSpells {
 	public static final double MOUNTAIN_RANGE = 64, MOUNTAIN_RADIUS = 10, MOUNTAIN_CRATER = Devastation.sized(Realm.HEAVENLY_BEING, 28),
 			MOUNTAIN_CRATER_DEPTH = MOUNTAIN_CRATER * 0.6;
 	public static final float MOUNTAIN_DAMAGE = 140;
-	/** Falling Mountain's peak: how high it falls from, how wide its foot is (blocks), how long it falls and how long it is driven down after (ticks). */
-	public static final double MOUNTAIN_HIGH = 46, MOUNTAIN_PEAK = 11;
-	public static final int MOUNTAIN_FALLS = 34, MOUNTAIN_AFTER = 34;
+	/**
+	 * Falling Mountain's peak: how high it falls from, how wide its foot is (blocks), how long it falls and how long it is driven down after (ticks).
+	 * From high in the sky, a speck growing into a mountain (the user's ask, 2026-10-26: "make it fall from higher up ... doesnt mean it has to fall
+	 * faster"): from 46 blocks over 34 ticks it was 100 over 64, coming down no faster than it did.
+	 */
+	public static final double MOUNTAIN_HIGH = 100, MOUNTAIN_PEAK = 11;
+	public static final int MOUNTAIN_FALLS = 64, MOUNTAIN_AFTER = 34;
 	/** The seal presses foes {@link #SEAL_RADIUS} round; the land sinks under it out to {@link #SEAL_SINK_RADIUS} (37, by its realm). */
 	public static final double SEAL_RADIUS = 24, SEAL_SINK_RADIUS = Devastation.sized(Realm.HEAVENLY_BEING, 48);
 	public static final int SEAL_TICKS = 6 * 20, SEAL_SINK = (int) Math.round(Devastation.sized(Realm.HEAVENLY_BEING, 4));
@@ -425,9 +429,12 @@ public final class EarthSpells {
 
 	/**
 	 * Where Boulder Throw tears its boulder from: a half-round hole {@link #CRATER} round in the ground two blocks ahead, natural or
-	 * built (whatever a spell may carve: HeavenSpells#carvable); {@code taking} it (else only weighed: HeavenSpells#mayCarve).
+	 * built (whatever a spell may carve: HeavenSpells#carvable); {@code taking} it (else only weighed: HeavenSpells#mayCarve). With the spells'
+	 * griefing off, the ground it would take, griefing aside (HeavenSpells#couldCarve): the boulder is torn out of it all the same and it is
+	 * left whole.
 	 */
 	static List<BlockPos> crater(LivingEntity p, boolean taking) {
+		boolean lifts = HeavenSpells.carvesLand(p);
 		ServerLevel level = HeavenSpells.level(p);
 		Vec3 ahead = p.position().add(Vec3.directionFromRotation(0, p.getYRot()).scale(CRATER + 1.5));
 		Vec3 ground = HeavenSpells.groundBelow(level, ahead.add(0, 2, 0), 3, 4);
@@ -439,7 +446,7 @@ public final class EarthSpells {
 				for (int dy = -CRATER; dy <= 0; dy++) {
 					if (dx * dx + dy * dy + dz * dz > CRATER * CRATER + 1) continue;
 					BlockPos pos = centre.offset(dx, dy, dz);
-					if (taking ? HeavenSpells.carvable(level, pos, p) : HeavenSpells.mayCarve(level, pos, p)) hole.add(pos);
+					if (!lifts ? HeavenSpells.couldCarve(level, pos, p) : taking ? HeavenSpells.carvable(level, pos, p) : HeavenSpells.mayCarve(level, pos, p)) hole.add(pos);
 				}
 			}
 		}
@@ -448,6 +455,7 @@ public final class EarthSpells {
 
 	private static void boulder(LivingEntity p, Spell spell) {
 		ServerLevel level = HeavenSpells.level(p);
+		boolean lifts = HeavenSpells.carvesLand(p);
 		List<BlockPos> hole = crater(p, true);
 		if (hole.size() < 4) return;
 		// The boulder is of what the ground mostly was.
@@ -466,8 +474,9 @@ public final class EarthSpells {
 				best = n;
 				most = state;
 			}
-			level.removeBlock(pos, false);
-			Vec3 from = Vec3.atBottomCenterOf(pos);
+			// Griefing off, the ground stays and its clods rise up out of it.
+			if (lifts) level.removeBlock(pos, false);
+			Vec3 from = Vec3.atBottomCenterOf(pos).add(0, lifts ? 0 : 0.7, 0);
 			SpellBlock.show(level, state, from, gather.subtract(from).subtract(0, 0.5, 0), (i++ % 6), 12, SpellBlock.Motion.FLY, 0).scale(0.7f);
 		}
 		SpellFx.send(level, SpellFx.Kind.EARTH_BURST, centre, Vec3.ZERO, 1.5f, Block.getId(most));
@@ -750,10 +759,11 @@ public final class EarthSpells {
 				}
 				if (age % 5 == 0) SpellFx.send(level, SpellFx.Kind.DUST, ground, Vec3.ZERO, (float) (MOUNTAIN_RADIUS * (0.4 + f)), stateId, 192);
 				if (age % 10 == 0) sound(here, SoundEvents.GRAVEL_BREAK, 3.0f, 0.4f);
-				// Its weight on everything under it, heavier as it comes.
+				// Its weight on everything under it, heavier as it comes: unseen (its swirls, given anew every tick to all under it, rose round them as
+				// a purple mist: the user's report, 2026-10-26).
 				if (f > 0.4) {
 					for (LivingEntity e : WoodSpells.foesWithin(caster, level, ground, MOUNTAIN_RADIUS, 6, MOUNTAIN_HIGH)) {
-						e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 10, 2));
+						e.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 10, 2, false, false));
 					}
 				}
 			}
@@ -1335,6 +1345,13 @@ public final class EarthSpells {
 		private final Vec3 from, ground;
 		private final SpellConstruct clod;
 		private final java.util.Set<LivingEntity> buried = new java.util.HashSet<>();
+		/**
+		 * What is seen of its soil growing (the user's report, 2026-10-26: "I'm just confused by what its doing"): its roots of gold and its shoots
+		 * running out over the land from where its clod sank in (SpellConstruct XIRANG_BLOOM), and the earth heaved up round each being it buries
+		 * (BURIAL_MASS, held on that being), whatever the spells' griefing.
+		 */
+		private SpellConstruct bloom;
+		private final java.util.Map<LivingEntity, SpellConstruct> mounds = new java.util.HashMap<>();
 
 		Xirang(LivingEntity caster, Spell spell, Vec3 point) {
 			super(caster, XIRANG_FLIES + XIRANG_SWELLS + XIRANG_HOLDS + 12);
@@ -1362,11 +1379,24 @@ public final class EarthSpells {
 			long holding = age - XIRANG_FLIES;
 			// Whoever stands within it as it swells, or comes in, is buried in it.
 			if (holding < XIRANG_SWELLS + XIRANG_HOLDS) {
+				// Its soil spreads out from the heart as it swells: a being is buried once it reaches them.
+				double spread = XIRANG_RADIUS * Math.min(1, (holding + 4) / (double) (XIRANG_SWELLS * 0.6));
 				for (LivingEntity e : HeavenSpells.aroundPoint(level, ground, XIRANG_RADIUS + XIRANG_HEIGHT, e -> !buried.contains(e) && !HeavenSpells.spared(caster, e))) {
-					if (Math.hypot(e.getX() - ground.x, e.getZ() - ground.z) > XIRANG_RADIUS || e.getY() > ground.y + XIRANG_HEIGHT + 4 || e.getY() < ground.y - 8) continue;
+					if (Math.hypot(e.getX() - ground.x, e.getZ() - ground.z) > spread || e.getY() > ground.y + XIRANG_HEIGHT + 4 || e.getY() < ground.y - 8) continue;
 					buried.add(e);
-					WoodSpells.bind(caster, e, (int) (XIRANG_SWELLS + XIRANG_HOLDS - holding));
+					int holds = (int) (XIRANG_SWELLS + XIRANG_HOLDS - holding);
+					WoodSpells.bind(caster, e, holds);
+					mounds.put(e, SpellConstruct.create(level, SpellConstruct.Kind.BURIAL_MASS, e.position(), 0, 0, holds + 16, caster)
+							.size((float) Math.max(1.3, e.getBbWidth() * 0.8 + 0.8)).value(e.getBbHeight() * 0.72f).tint(level.random.nextInt())
+							.anchor(e, SpellAnchor.POSITION, Vec3.ZERO).spawn());
 					SpellFx.send(level, SpellFx.Kind.EARTH_BURST, HeavenSpells.middle(e), Vec3.ZERO, 1.5f, Block.getId(Blocks.DIRT.defaultBlockState()));
+					sound(e.position(), SoundEvents.ROOTED_DIRT_PLACE, 2.0f, 0.5f);
+				}
+				// The land heaving as its soil grows out under it.
+				if (holding < XIRANG_SWELLS && holding % 3 == 0) {
+					double a = level.random.nextDouble() * Math.PI * 2, d = spread * Math.sqrt(level.random.nextDouble());
+					Vec3 at = HeavenSpells.groundBelow(level, ground.add(Math.cos(a) * d, 6, Math.sin(a) * d), 0, 16);
+					if (at != null) SpellFx.send(level, SpellFx.Kind.EARTH_BURST, at, Vec3.ZERO, 1.8f, Block.getId(Blocks.ROOTED_DIRT.defaultBlockState()), 192);
 				}
 				if (holding % 20 == 10) {
 					for (LivingEntity e : buried) if (HeavenSpells.present(e, level)) HeavenSpells.strikeAgain(caster, e, XIRANG_DAMAGE, spell);
@@ -1375,6 +1405,8 @@ public final class EarthSpells {
 			}
 			if (holding == XIRANG_SWELLS + XIRANG_HOLDS) {
 				clod.act("settle");
+				if (bloom != null) bloom.act("settle");
+				for (SpellConstruct mound : mounds.values()) mound.act("crumble");
 				for (LivingEntity e : buried) {
 					if (!HeavenSpells.present(e, level)) continue;
 					e.invulnerableTime = 0;
@@ -1386,10 +1418,12 @@ public final class EarthSpells {
 			return true;
 		}
 
-		/** It lands and swells: the mound heaves up round it, its clod rising on its crown. */
+		/** It lands and swells, sinking into the land: its soil grows out over it from there and the mound heaves up round it. */
 		private void swell() {
 			clod.act("swell");
-			clod.place(ground.add(0, XIRANG_HEIGHT * 0.5, 0), clod.getYRot(), 0);
+			clod.place(ground.add(0, clod.size() * 0.6, 0), clod.getYRot(), 0);
+			bloom = SpellConstruct.create(level, SpellConstruct.Kind.XIRANG_BLOOM, ground.add(0, 0.05, 0), 0, 0, XIRANG_SWELLS + XIRANG_HOLDS + 24, caster)
+					.size((float) XIRANG_RADIUS).value((float) XIRANG_HEIGHT).spawn();
 			Devastation.raise(caster, level, ground, XIRANG_RADIUS, XIRANG_HEIGHT, 3);
 			SpellFx.send(level, SpellFx.Kind.EARTH_BURST, ground, Vec3.ZERO, (float) XIRANG_RADIUS, Block.getId(Blocks.DIRT.defaultBlockState()), 192);
 			SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, ground, Vec3.ZERO, (float) XIRANG_RADIUS * 1.5f, 0, 192);
@@ -1400,6 +1434,8 @@ public final class EarthSpells {
 		@Override
 		public void end() {
 			clod.dissolve();
+			if (bloom != null) bloom.dissolve();
+			for (SpellConstruct mound : mounds.values()) mound.dissolve();
 		}
 	}
 

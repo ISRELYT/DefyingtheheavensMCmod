@@ -121,7 +121,9 @@ public final class FireSpells {
 			SUN_DROP = HeavenSpells.span(Realm.VOID_SHATTERING, 8), SUN_RIFT = HeavenSpells.span(Realm.VOID_SHATTERING, 20),
 			SUN_RADIUS = HeavenSpells.span(Realm.VOID_SHATTERING, 22), SUN_BLAST = HeavenSpells.span(Realm.VOID_SHATTERING, 14),
 			SUN_CRATER = Devastation.sized(Realm.VOID_SHATTERING, 9), SUN_CRATER_DEPTH = Devastation.sized(Realm.VOID_SHATTERING, 5),
-			SUN_SCORCH = Devastation.sized(Realm.VOID_SHATTERING, 18);
+			SUN_SCORCH = Devastation.sized(Realm.VOID_SHATTERING, 18),
+			/** How great the sun itself is round (its body, drawn by hand: SpellDrawn#voidSun). */
+			SUN_BODY = HeavenSpells.span(Realm.VOID_SHATTERING, 5);
 	public static final float SUN_DAMAGE = 100, SUN_BURST = 1200;
 	public static final int SUN_OPENS = 10, SUN_PULL = 20, SUN_COMES = SUN_OPENS + SUN_PULL, SUN_TICKS = 5 * 20, SUN_COLLAPSE = 14, SUN_AFTER = 16,
 			SUN_BURN_SECONDS = 3, SUN_BURST_BURNS = 8;
@@ -309,6 +311,7 @@ public final class FireSpells {
 					public void hitBlock(SpellProjectile missile, BlockHitResult hit) {
 						SpellFx.send(HeavenSpells.level(p), SpellFx.Kind.FLAME_BURST, hit.getLocation(), Vec3.ZERO, 0.8f, 0);
 						HeavenSpells.sound(HeavenSpells.level(p), hit.getLocation(), SoundEvents.FIRECHARGE_USE, 0.6f, 1.3f);
+						Devastation.charFor(p, HeavenSpells.level(p), hit.getLocation(), 1.2); // a scorch mark, gone after a while
 					}
 				});
 		HeavenSpells.sound(HeavenSpells.level(p), p.position(), SoundEvents.BLAZE_SHOOT, 0.8f, 1.3f);
@@ -411,6 +414,7 @@ public final class FireSpells {
 	 */
 	static void explode(LivingEntity p, Spell spell, ServerLevel level, Vec3 at, double radius, float damage, int seconds, double push) {
 		SpellFx.send(level, SpellFx.Kind.FIRE_EXPLOSION, at, Vec3.ZERO, (float) radius, 0, 192);
+		Devastation.charFor(p, level, at, radius * 0.8); // the ground under it charred a while
 		HeavenSpells.sound(level, at, SoundEvents.GENERIC_EXPLODE, (float) Math.min(4, 1 + radius / 4), 0.9f);
 		HeavenSpells.sound(level, at, SoundEvents.BLAZE_SHOOT, 1.5f, 0.5f);
 		for (LivingEntity target : HeavenSpells.aroundPoint(level, at, radius + 1, e -> !HeavenSpells.spared(p, e))) {
@@ -427,6 +431,7 @@ public final class FireSpells {
 					public boolean hitEntity(SpellProjectile missile, LivingEntity target) {
 						burn(p, target, missile, SERPENT_DAMAGE, 4, spell);
 						SpellFx.send(HeavenSpells.level(p), SpellFx.Kind.FLAME_BURST, missile.position(), Vec3.ZERO, 1.6f, 0);
+						Devastation.charFor(p, HeavenSpells.level(p), target.position(), 2.2);
 						return false;
 					}
 
@@ -434,6 +439,7 @@ public final class FireSpells {
 					public void hitBlock(SpellProjectile missile, BlockHitResult hit) {
 						SpellFx.send(HeavenSpells.level(p), SpellFx.Kind.FLAME_BURST, hit.getLocation(), Vec3.ZERO, 1.4f, 0);
 						HeavenSpells.sound(HeavenSpells.level(p), hit.getLocation(), SoundEvents.FIRECHARGE_USE, 0.8f, 0.8f);
+						Devastation.charFor(p, HeavenSpells.level(p), hit.getLocation(), 2.2);
 					}
 
 					@Override
@@ -692,6 +698,8 @@ public final class FireSpells {
 	 */
 	private static void scorch(LivingEntity p, ServerLevel level, Vec3 at, int crater) {
 		if (crater <= 0) return;
+		// No crater with the spells' griefing off: the land charred a while instead.
+		if (!HeavenSpells.carvesLand(p)) Devastation.charFor(p, level, at, crater * 1.6);
 		BlockPos centre = BlockPos.containing(at);
 		Devastation.crater(p, level, at, crater, crater * 0.7, Devastation.Floor.SCORCHED);
 		for (int i = 0; i < crater * 6; i++) {
@@ -1103,7 +1111,9 @@ public final class FireSpells {
 				double f = diving / (double) CROW_DIVE;
 				Vec3 at = mouth.lerp(ground, f * f);
 				crow.place(at, face[0], face[1]);
-				if (diving % 3 == 0) SpellFx.send(level, SpellFx.Kind.FLAME_BURST, at, Vec3.ZERO, 3, 0);
+				// Fire torn off it as it dives, in its wake behind it (bursting at its heart, it showed through its body).
+				if (diving % 3 == 0) SpellFx.send(level, SpellFx.Kind.FLAME_BURST, at.add(mouth.subtract(ground).normalize().scale(4 * HeavenSpells.greatness(spell.realm()))),
+						Vec3.ZERO, 3, 0);
 			}
 			if (diving == CROW_DIVE) strike();
 			return true;
@@ -1136,7 +1146,7 @@ public final class FireSpells {
 	/**
 	 * Sun Pulled Through the Void: space tears open in a slash across the sky {@link #SUN_DROP} over where the sun will hang, {@link #SUN_HIGH}
 	 * over where its caster looks (SpellConstruct VOID_RIFT lying across, the sun's gold); once it is open ({@link #SUN_OPENS}) a sun is dragged
-	 * out of it (VOID_SUN, its own GeckoLib model), swelling as it comes, and down clear of it ({@link #SUN_PULL}), and the rift shrinks away
+	 * out of it (VOID_SUN, drawn by hand: SpellDrawn#voidSun), swelling as it comes, and down clear of it ({@link #SUN_PULL}), and the rift shrinks away
 	 * behind it (the user's ask, 2026-10-24: the two no longer overlap). It hangs there {@link #SUN_TICKS}: every second everything within
 	 * {@link #SUN_RADIUS} of the land beneath it takes {@link #SUN_DAMAGE} and burns, and the land scorches. Then it collapses
 	 * ({@link #SUN_COLLAPSE}) and bursts: {@link #SUN_BURST} to everything within {@link #SUN_BLAST}, thrown out, and the land under it melted
@@ -1171,7 +1181,7 @@ public final class FireSpells {
 			if (sun == null) {
 				// Dragged out of it once it is open, small, swelling as it comes (its model's emerge).
 				sun = SpellConstruct.create(level, SpellConstruct.Kind.VOID_SUN, mouth, yaw, 0, SUN_PULL + SUN_TICKS + SUN_COLLAPSE + SpellConstruct.FADE, caster)
-						.sizedFor(spell).spawn();
+						.size((float) SUN_BODY).value((float) (SUN_HIGH + SUN_DROP)).spawn();
 				SpellFx.send(level, SpellFx.Kind.FLASH, mouth, Vec3.ZERO, 8, SUN_GOLD, 192);
 				sound(mouth, SoundEvents.FIRECHARGE_USE, 4.0f, 0.4f);
 			}
@@ -1181,11 +1191,16 @@ public final class FireSpells {
 				double t = (age - SUN_OPENS) / (double) SUN_PULL, f = 1 - (1 - t) * (1 - t);
 				Vec3 here = mouth.lerp(at, f);
 				sun.place(here, yaw, 0);
-				if (age % 4 == 0) SpellFx.send(level, SpellFx.Kind.FLAME_BURST, here.add(0, SUN_DROP * 0.25, 0), Vec3.ZERO, 4, 0);
+				// The land is the further below it the higher it still is (its shaft of heat reaches down to it).
+				sun.value((float) (here.y - ground.y));
+				// Fire torn off its crown as it is dragged down out of the rift (over its face, not inside it).
+				double r = SUN_BODY * (0.15 + 0.85 * f);
+				if (age % 4 == 0) SpellFx.send(level, SpellFx.Kind.FLAME_BURST, here.add(0, r * 1.15, 0), Vec3.ZERO, 4, 0);
 				return true;
 			}
 			if (burning == 0) {
 				sun.place(at, yaw, 0);
+				sun.value((float) SUN_HIGH);
 				rift.dissolve(); // the sun out, the sky closes behind it
 				sound(mouth, SoundEvents.END_PORTAL_SPAWN, 2.0f, 1.4f);
 			}

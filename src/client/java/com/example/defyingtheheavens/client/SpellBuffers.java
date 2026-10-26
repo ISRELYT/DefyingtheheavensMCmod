@@ -88,7 +88,7 @@ public final class SpellBuffers implements MultiBufferSource {
 		return SOLID.computeIfAbsent(type, t -> {
 			String name = t.toString();
 			return name.startsWith("RenderType[entity_cutout") || name.startsWith("RenderType[entity_solid") || name.startsWith("RenderType[solid")
-					|| name.startsWith("RenderType[cutout");
+					|| name.startsWith("RenderType[cutout") || name.startsWith("RenderType[defying_the_heavens_spell_core"); // SpellRender#core
 		});
 	}
 }

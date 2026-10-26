@@ -552,6 +552,23 @@ public final class HeavenSpells {
 		return true;
 	}
 
+	/**
+	 * Lays {@code state} over the ground block at {@code pos} for {@code ticks}, then gives back what was there: a stain on the land (charred,
+	 * withered) that comes and goes whatever the spells' griefing (the user's ask, 2026-10-26: "a little charred gradient on the ground that goes
+	 * back to the original block after a bit"). Only over what a spell of {@code p}'s could weigh taking (#couldCarve: something solid, nothing
+	 * kept in it, not sheltered nor guarded nor another spell's), set without its neighbours told (a flower on grass charred to earth stays).
+	 * Returns whether it was laid.
+	 */
+	public static boolean stainTemporary(ServerLevel level, BlockPos pos, BlockState state, int ticks, LivingEntity p) {
+		BlockState here = level.getBlockState(pos);
+		if (here.is(state.getBlock()) || here.isAir() || isTemporary(level, pos) || !couldCarve(level, pos, p)) return false;
+		if (!level.setBlock(pos, state, 2 | 16)) return false;
+		Placed placed = new Placed(level, pos.immutable(), here, state, level.getGameTime() + Math.max(1, ticks));
+		TEMPORARY.computeIfAbsent(level, k -> new HashMap<>()).put(placed.pos(), placed);
+		DUE.add(placed);
+		return true;
+	}
+
 	/** Whether a spell's block stands at {@code pos} now. */
 	public static boolean isTemporary(ServerLevel level, BlockPos pos) {
 		Map<BlockPos, Placed> here = TEMPORARY.get(level);
@@ -654,6 +671,14 @@ public final class HeavenSpells {
 	 */
 	public static boolean mayCarve(ServerLevel level, BlockPos pos, LivingEntity p) {
 		return carvable(level, pos, p, false, false);
+	}
+
+	/**
+	 * {@link #mayCarve} with the spells' griefing aside: ground a spell could lift, for one that only seems to take it while griefing is off
+	 * (Boulder Throw's clods torn up out of ground left whole: the user's report, 2026-10-26, "boulder throw cannot be used with grief off").
+	 */
+	public static boolean couldCarve(ServerLevel level, BlockPos pos, LivingEntity p) {
+		return carvable(level, pos, p, false, false, false);
 	}
 
 	/**

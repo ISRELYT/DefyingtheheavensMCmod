@@ -14,6 +14,7 @@ import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -275,11 +276,80 @@ public class SpellProjectile extends Projectile {
 		setDeltaMovement(dir.normalize().scale(speed));
 		turnToMotion();
 		if (behaviour != null) behaviour.launched(this);
+		// A being between its caster and where it formed (closer than a missile forms, a block or so ahead of the eyes): struck at once.
+		if (!level().isClientSide && !isRemoved() && owner instanceof LivingEntity caster) {
+			Entity close = firstIn(caster.getEyePosition(), from);
+			if (close != null) onHitEntity(new EntityHitResult(close));
+		}
+	}
+
+	/**
+	 * The first being it may strike that the way from {@code from} to {@code to} passes through, or that {@code from} already lies in (the user's
+	 * report, 2026-10-26: "if u cast wood bullet ... directly infront of someone it doesn't hit them and goes through and does nothing"). The
+	 * sweep along a projectile's way (ProjectileUtil's) finds only a body the way enters from outside: a missile that formed inside a being
+	 * standing that close, or past it, flew out of it unseen, back through it toward its mark's middle behind it.
+	 */
+	private Entity firstIn(Vec3 from, Vec3 to) {
+		Entity first = null;
+		double nearest = Double.MAX_VALUE;
+		double reach = 0.3 + getBbWidth() / 2;
+		for (Entity e : level().getEntities(this, new AABB(from, to).inflate(1.0 + reach), this::canHitEntity)) {
+			AABB box = e.getBoundingBox().inflate(reach);
+			double d;
+			if (box.contains(from)) d = 0;
+			else {
+				java.util.Optional<Vec3> at = box.clip(from, to);
+				if (at.isEmpty()) continue;
+				d = from.distanceToSqr(at.get());
+			}
+			if (d < nearest) {
+				nearest = d;
+				first = e;
+			}
+		}
+		return first;
+	}
+
+	/** Where the server last put it, as a watcher heard it ({@link #lerpTo}), and whether that is still to be taken. */
+	private double lerpX, lerpY, lerpZ;
+	private float lerpYRot, lerpXRot;
+	private boolean lerping;
+
+	/**
+	 * Where the server has moved it, heard by a watcher: taken at their next tick ({@link #tick}), as a SpellConstruct's is, so it is drawn gliding
+	 * there over that tick. Taken at once (between the watcher's ticks) while their own copy flew on by itself too, it leapt back and forth a
+	 * little every tick: a fire serpent's body, laid along where its head had been, writhed in jerks (the user's report, 2026-10-26: "rework fire
+	 * serpent make it look less choppy").
+	 */
+	@Override
+	public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps, boolean teleport) {
+		lerpX = x;
+		lerpY = y;
+		lerpZ = z;
+		lerpYRot = yRot;
+		lerpXRot = xRot;
+		lerping = true;
 	}
 
 	@Override
 	public void tick() {
 		super.tick();
+		if (level().isClientSide && !forming()) {
+			// A watcher's copy goes where the server says, a tick behind it (#lerpTo), never flying on by itself.
+			if (lerping) {
+				lerping = false;
+				Vec3 was = position();
+				setPos(lerpX, lerpY, lerpZ);
+				Vec3 moved = position().subtract(was);
+				if (moved.lengthSqr() > 1.0e-6) {
+					setDeltaMovement(moved);
+					turnToMotion();
+				} else {
+					setRot(lerpYRot, lerpXRot);
+				}
+			}
+			return;
+		}
 		if (forming()) {
 			Vec3 at = formPosition(1.0f);
 			setPos(at.x, at.y, at.z);
@@ -308,6 +378,9 @@ public class SpellProjectile extends Projectile {
 				}
 			} else {
 				HitResult hit = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
+				// The beings on its way up to the wall it meets, the one it is already inside too (#firstIn).
+				Entity first = firstIn(position(), hit.getType() == HitResult.Type.BLOCK ? hit.getLocation() : position().add(v));
+				if (first != null) hit = new EntityHitResult(first);
 				if (hit.getType() != HitResult.Type.MISS) {
 					onHit(hit);
 					if (isRemoved()) return;
