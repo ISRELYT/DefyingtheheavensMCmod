@@ -81,10 +81,16 @@ public class ImmortalCitiesGameTests implements FabricGameTest {
 		Land land = land(helper);
 		RandomState state = land.state();
 		List<ModNoiseSettings.CitySite> sites = new ArrayList<>();
+		// The cells whose middle lies where cities may stand: short of the Chaos Frontier by a district's reach (phase 3c), none past it.
+		int settled = 0;
+		double keep = ModNoiseSettings.FRONTIER_FROM - ModNoiseSettings.CITY_DISTRICT_OUTER - 60;
 		for (int cx = -6; cx <= 6; cx++) {
 			for (int cz = -6; cz <= 6; cz++) {
+				double mx = cx * ModNoiseSettings.CITY_CELL + ModNoiseSettings.CITY_CELL / 2.0, mz = cz * ModNoiseSettings.CITY_CELL + ModNoiseSettings.CITY_CELL / 2.0;
+				if (Math.hypot(mx - ModNoiseSettings.MAIN_X, mz - ModNoiseSettings.MAIN_Z) <= keep) settled++;
 				ModNoiseSettings.CitySite site = ModNoiseSettings.citySite(state, cx, cz);
 				if (site == null) continue;
+				helper.assertTrue(Math.hypot(site.x() - ModNoiseSettings.MAIN_X, site.z() - ModNoiseSettings.MAIN_Z) <= keep, "No city out toward the Chaos Frontier");
 				helper.assertTrue(site.equals(ModNoiseSettings.citySite(state, cx, cz)), "The same site each time asked");
 				helper.assertTrue(Math.floorDiv(site.x(), ModNoiseSettings.CITY_CELL) == cx && Math.floorDiv(site.z(), ModNoiseSettings.CITY_CELL) == cz,
 						"A site in its own cell");
@@ -99,7 +105,7 @@ public class ImmortalCitiesGameTests implements FabricGameTest {
 				helper.assertTrue(apart > 2 * ModNoiseSettings.CITY_DISTRICT_OUTER, "Two cities' districts never meet (" + (int) apart + " apart)");
 			}
 		}
-		helper.assertTrue(sites.size() >= 169 / 8, "Cities about the realm (" + sites.size() + " of 169 cells)");
+		helper.assertTrue(sites.size() >= settled / 8, "Cities about the realm (" + sites.size() + " of the " + settled + " settled cells)");
 		// A city's ground rolls gently (no pinnacle or mountain in it).
 		ModNoiseSettings.CitySite first = sites.get(0);
 		int lo = Integer.MAX_VALUE, hi = Integer.MIN_VALUE;

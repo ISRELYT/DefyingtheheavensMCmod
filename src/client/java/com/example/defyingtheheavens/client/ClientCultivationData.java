@@ -118,10 +118,13 @@ public final class ClientCultivationData {
 		for (int i = 0; i < PlayerCultivation.WHEEL_SLOTS; i++) DATA.setWheelSlot(i, Ability.byIndex(i));
 		DATA.setLowerRealmBound(false);
 		DATA.setInUpperRealm(false);
+		DATA.setInImmortalRealm(false);
+		DATA.setSmallWorld(false);
 		DATA.setPressure(0, 0);
 		DATA.setSoulState(com.example.defyingtheheavens.SoulProjection.State.NONE);
 		DATA.setTechniques(java.util.Set.of());
 		DATA.setManualSpells(java.util.Set.of());
+		DATA.laws().load(new net.minecraft.nbt.CompoundTag()); // no Laws, no Decay
 		meditating = false;
 		inClone = false;
 	}

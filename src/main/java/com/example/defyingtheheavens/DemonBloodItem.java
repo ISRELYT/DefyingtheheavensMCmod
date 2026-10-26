@@ -60,11 +60,11 @@ public class DemonBloodItem extends Item {
 
 	/**
 	 * Which of its {@link #LOOKS} it wears (the client's "defying-the-heavens:realm" model property): its realm's, Heavenly Being's from there
-	 * up to Entering Nirvana, a True Immortal's its own (the golden phial, tools/beast-art's Bloods).
+	 * up to Entering Nirvana, a True Immortal's its own (the golden phial, tools/beast-art's Bloods), and every immortal realm's past it too.
 	 */
 	public static int look(ItemStack stack) {
 		Realm realm = realm(stack);
-		return realm == Realm.TRUE_IMMORTAL ? LOOKS - 1 : Math.min(HIGH_LOOK, realm.ordinal());
+		return realm.isImmortal() ? LOOKS - 1 : Math.min(HIGH_LOOK, realm.ordinal());
 	}
 
 	/** The hue its blood glows (the client's tint of its second layer): its race's; a dull red where none is known. */

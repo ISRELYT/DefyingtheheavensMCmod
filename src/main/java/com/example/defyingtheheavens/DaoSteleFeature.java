@@ -107,9 +107,10 @@ public class DaoSteleFeature extends Feature<NoneFeatureConfiguration> {
 		int total = 0;
 		for (int w : weights) total += w;
 		int roll = random.nextInt(total);
-		for (Realm realm : Realm.values()) {
-			roll -= weights[realm.ordinal()];
-			if (roll < 0) return realm;
+		// Only as far as the weights go: no stele is of a realm past them (none past True Immortal's).
+		for (int i = 0; i < weights.length; i++) {
+			roll -= weights[i];
+			if (roll < 0) return Realm.byIndex(i);
 		}
 		return Realm.QI_REFINING;
 	}

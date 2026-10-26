@@ -281,21 +281,45 @@ public class EnteringNirvanaSpellsGameTests implements FabricGameTest {
 				helper.fail("It falls on what stands there, pinning it, smashing the land (" + crushed.getHealth() + ", pinned " + pinned + ")");
 				return;
 			}
-			double was = Math.hypot(dragged.getX() - point.x, dragged.getZ() - point.z);
-			helper.runAfterDelay(EarthSpells.GRAVE_STANDS + EarthSpells.GRAVE_SINKS - 4 + 3, () -> {
-				try {
-					double now = Math.hypot(dragged.getX() - point.x, dragged.getZ() - point.z);
-					helper.assertTrue(now < was - 3, "Sinking, it drags those near to it (" + was + " -> " + now + ")");
-					helper.assertTrue(crushed.getHealth() <= HEALTH - EarthSpells.GRAVE_DAMAGE - EarthSpells.GRAVE_BURIES + 1, "...and buries what is by it (" + crushed.getHealth() + ")");
-					helper.assertTrue(beyond.getHealth() == beyond.getMaxHealth(), "...not what stands beyond");
-				} catch (RuntimeException e) {
-					thinned.run();
-					finish(helper, p, spawned, floor);
-					throw e;
-				}
-				finishOnceHealed(helper, p, spawned, floor, thinned);
+			// Just before it sinks, the husk to be dragged set on whole ground: its fissures run by the spot's own hash (where the test stands
+			// decides them), and one crossing the husk's way in caught it in its trench (2026-10-26, once new batches had moved the test).
+			helper.runAfterDelay(EarthSpells.GRAVE_STANDS - 6, () -> {
+				Vec3 start = wholeWayIn(level, floor.centre(), point, EarthSpells.GRAVE_PULL * 0.7);
+				dragged.teleportTo(start.x, start.y, start.z);
+				dragged.setDeltaMovement(Vec3.ZERO);
+				double was = Math.hypot(dragged.getX() - point.x, dragged.getZ() - point.z);
+				helper.runAfterDelay(EarthSpells.GRAVE_SINKS + 5, () -> {
+					try {
+						double now = Math.hypot(dragged.getX() - point.x, dragged.getZ() - point.z);
+						helper.assertTrue(now < was - 3, "Sinking, it drags those near to it (" + was + " -> " + now + ")");
+						helper.assertTrue(crushed.getHealth() <= HEALTH - EarthSpells.GRAVE_DAMAGE - EarthSpells.GRAVE_BURIES + 1, "...and buries what is by it (" + crushed.getHealth() + ")");
+						helper.assertTrue(beyond.getHealth() == beyond.getMaxHealth(), "...not what stands beyond");
+					} catch (RuntimeException e) {
+						thinned.run();
+						finish(helper, p, spawned, floor);
+						throw e;
+					}
+					finishOnceHealed(helper, p, spawned, floor, thinned);
+				});
 			});
 		});
+	}
+
+	/**
+	 * A spot {@code out} from {@code point} on the floor (its top a block under {@code centre}) whose straight way in to the crater's rim no
+	 * fissure crosses (the floor's stone whole there, open air over it): the first of 24 ways round; the first way if none is whole.
+	 */
+	private static Vec3 wholeWayIn(ServerLevel level, BlockPos centre, Vec3 point, double out) {
+		for (int k = 0; k < 24; k++) {
+			double a = Math.PI * 2 * k / 24;
+			boolean whole = true;
+			for (double r = EarthSpells.GRAVE_CRATER + 1; r <= out + 1 && whole; r += 0.5) {
+				BlockPos top = BlockPos.containing(point.x + Math.cos(a) * r, centre.getY() - 1, point.z + Math.sin(a) * r);
+				whole = level.getBlockState(top).is(Blocks.STONE) && level.getBlockState(top.above()).isAir();
+			}
+			if (whole) return new Vec3(point.x + Math.cos(a) * out, centre.getY(), point.z + Math.sin(a) * out);
+		}
+		return new Vec3(point.x + out, centre.getY(), point.z);
 	}
 
 	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE, batch = "nirvana_buried", timeoutTicks = 500)

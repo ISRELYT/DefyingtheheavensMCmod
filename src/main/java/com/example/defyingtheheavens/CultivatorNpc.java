@@ -822,8 +822,6 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		if (title != NpcTitle.OUTER_DISCIPLE) setGateGuard(false);
 		// Promoted past the clothing it wears: it dresses for its new station (the Celestial Court's people too).
 		if (before != title && !level().isClientSide && (title.isSectTitle() || title.isCourt())) upgradeClothing(ClothingStyle.of(getFaction()), clothingTier(title, getRank(), random));
-		// Made one of the Court's King or Venerables (or no longer one): its strength as its station has it (CelestialCourt#might).
-		if (before != title && CelestialCourt.might(before) != CelestialCourt.might(title)) refreshStats();
 	}
 
 	/** A Heavenly Venerable's element (CelestialCourt): the True Immortal method it teaches. Null for anyone else. */
@@ -833,12 +831,10 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	public void setCourtElement(QiElement element) { courtElement = element; }
 
 	/**
-	 * Its realm as it is named: the Celestial Court's King a Daluo Golden Immortal, its Venerables Taiyi Golden Immortals (the realm plan:
-	 * True Immortals of their rank's strength until phase 3, shown as so); anyone else by the realm and stage it shows.
+	 * Its realm as it is named: by the realm and stage it shows (the Celestial Court's King a Profound Sovereign, its Venerables Taiyi
+	 * Golden Immortals, their own realms since phase 3: CelestialCourt#rankOf).
 	 */
 	public Component rankLabel() {
-		if (getTitle() == NpcTitle.HEAVENLY_KING) return Component.translatable(ModLang.RANK_DALUO);
-		if (getTitle() == NpcTitle.HEAVENLY_VENERABLE) return Component.translatable(ModLang.RANK_TAIYI);
 		return PlayerCultivation.rankName(getDisplayedRealm(), getDisplayedStage());
 	}
 
@@ -864,8 +860,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		int rank = fightingRank();
 		Realm realm = isMortal() ? Realm.QI_REFINING : realmOf(rank);
 		Stage stage = isMortal() ? Stage.EARLY : stageOf(rank);
-		// The Celestial Court's King and Venerables stronger than their realm (CelestialCourt#might), but not holding back in a spar.
-		CultivationStats.applyNpc(this, realm, stage, isMortal(), sparHoldBack == NO_HOLD_BACK ? CelestialCourt.might(getTitle()) : 1);
+		CultivationStats.applyNpc(this, realm, stage, isMortal());
 		if (oldMax > 0 && getMaxHealth() != oldMax) setHealth(Math.min(getMaxHealth(), oldHealth * getMaxHealth() / oldMax));
 		updateShownRank();
 	}
@@ -927,7 +922,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			case QI_REFINING -> random.nextBoolean() ? Items.STONE_SWORD : Items.IRON_SWORD;
 			case FOUNDATION_BUILDING, CORE_FORMATION -> Items.IRON_SWORD;
 			case NASCENT_SOUL, HEAVENLY_BEING -> Items.DIAMOND_SWORD;
-			case FOUR_AXIS, DAO_INTEGRATION, VOID_SHATTERING, SACRED_VESSEL, ENTERING_NIRVANA, TRUE_IMMORTAL -> Items.NETHERITE_SWORD;
+			case FOUR_AXIS, DAO_INTEGRATION, VOID_SHATTERING, SACRED_VESSEL, ENTERING_NIRVANA, TRUE_IMMORTAL, EARTH_IMMORTAL, HEAVEN_IMMORTAL,
+					GOLDEN_IMMORTAL, TAIYI_GOLDEN_IMMORTAL, PROFOUND_SOVEREIGN, HEAVENLY_LORD -> Items.NETHERITE_SWORD;
 		};
 	}
 
@@ -2072,7 +2068,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	/**
 	 * The heaven method it cultivates, the one it teaches and sells (picked from who it is, so it never changes): none for a
 	 * commoner or one of the dead. Its element is its sect's (Sect#element), or for one of no sect its own; its realm its own (a
-	 * sect's elders and master always, others four times in ten), else one below it at random.
+	 * sect's elders and master always, others four times in ten), else one below it at random; past True Immortal, whose realms have
+	 * no methods of their own (phase 3: Laws carry them), always the True Immortal one.
 	 */
 	public HeavenMethod heavenMethod() {
 		if (isMortal() || isGhost()) return null;
@@ -2082,9 +2079,10 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		// A demon's blood is its element's (DemonPath#element), as its clan's is.
 		QiElement element = sect != null ? sect.element() : isDemon() ? DemonPath.element(getBloodline())
 				: QiElement.five()[(int) Math.floorMod(getUUID().getLeastSignificantBits() >>> 3, 5L)];
-		int own = Math.min(Realm.values().length - 1, getRank() / Stage.values().length);
+		int own = Math.min(Realm.LAST_TAUGHT.ordinal(), getRank() / Stage.values().length);
+		boolean pastEvery = getRank() / Stage.values().length > own;
 		int hash = getUUID().hashCode() * 17 + 3;
-		int realm = getTitle().isElderOrAbove() || Math.floorMod(hash, 10) < OWN_HEAVEN_METHOD_IN_TEN ? own : Math.floorMod(hash / 10, own + 1);
+		int realm = pastEvery || getTitle().isElderOrAbove() || Math.floorMod(hash, 10) < OWN_HEAVEN_METHOD_IN_TEN ? own : Math.floorMod(hash / 10, own + 1);
 		return HeavenMethod.of(element, Realm.byIndex(realm));
 	}
 
@@ -2125,6 +2123,11 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			case TRUE_IMMORTAL -> {
 				stones.add(new ItemStack(ModItems.IMMORTAL_SPIRIT_STONE, 2 + random.nextInt(5)));
 				stones.add(new ItemStack(ModItems.IMMORTAL_JADE, 2 + random.nextInt(3)));
+			}
+			// The ladder past it (phase 3) the more jade, the higher the realm.
+			case EARTH_IMMORTAL, HEAVEN_IMMORTAL, GOLDEN_IMMORTAL, TAIYI_GOLDEN_IMMORTAL, PROFOUND_SOVEREIGN, HEAVENLY_LORD -> {
+				stones.add(new ItemStack(ModItems.IMMORTAL_SPIRIT_STONE, 3 + random.nextInt(5)));
+				stones.add(new ItemStack(ModItems.IMMORTAL_JADE, 2 * (1 + realmOf(rank).pastTrueImmortal()) + random.nextInt(4)));
 			}
 		}
 		return stones;

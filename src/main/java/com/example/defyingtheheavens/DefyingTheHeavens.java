@@ -37,6 +37,7 @@ public class DefyingTheHeavens implements ModInitializer {
 		GinsengCommand.register();
 		SectCommand.register();
 		NetherworldCommand.register();
+		SmallWorldCommand.register();
 		LOGGER.info("Defying The Heavens initialised.");
 	}
 

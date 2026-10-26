@@ -82,8 +82,9 @@ public class GhostKingGameTests implements FabricGameTest {
 				&& GhostMethods.floor(GhostMethod.SIX_PATHS_CANON, 54) == PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION)
 				&& GhostMethods.floor(GhostMethod.GHOST_FIRE_SCRIPTURE, 9) == -1,
 				"The Breathing Art ends at Qi Refining's Grand Perfection; the last foundation goes from Qi Refining to Four Axis's; the fire carries nothing");
-		// Measured against the deepest foundation there is (True Immortal's since 2026-10-22; the Six Paths Canon's before).
-		GhostMethod deepest = GhostMethod.foundationOf(Realm.values()[Realm.values().length - 1]);
+		// Measured against the deepest foundation there is (True Immortal's since 2026-10-22, the Six Paths Canon's before; none teaches the
+		// ladder past it, phase 3).
+		GhostMethod deepest = GhostMethod.foundationOf(Realm.LAST_TAUGHT);
 		for (GhostMethod method : GhostMethod.values()) {
 			if (!method.isFoundation()) continue;
 			helper.assertTrue(method.layers() == 9 * method.tier(), method.getId() + ": nine layers a realm, Qi Refining to its own");

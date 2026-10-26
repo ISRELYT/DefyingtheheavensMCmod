@@ -46,6 +46,11 @@ public class ModDamageTypeTagProvider extends FabricTagProvider<DamageType> {
 				ModDamageTypes.QI_METAL);
 		// The spells of both paths' heaven-and-demon qi, as the elements' qi.
 		tag(DamageTypeTags.BYPASSES_ARMOR).add(ModDamageTypes.HEAVEN_DEMON);
+		// The Chaos Frontier's storm is raw as spatial pressure is.
+		tag(DamageTypeTags.BYPASSES_ARMOR).add(ModDamageTypes.CHAOS_STORM);
+		tag(DamageTypeTags.BYPASSES_ENCHANTMENTS).add(ModDamageTypes.CHAOS_STORM);
+		tag(DamageTypeTags.BYPASSES_EFFECTS).add(ModDamageTypes.CHAOS_STORM);
+		tag(DamageTypeTags.NO_IMPACT).add(ModDamageTypes.CHAOS_STORM);
 		// The Netherworld's tribulation as the heavens': its yin lightning turned by armour, the yin in it through armour as magic is
 		// (Protection and Resistance still turn some of both); neither knocks one about, as a tribulation's strike doesn't.
 		tag(DamageTypeTags.BYPASSES_ARMOR).add(ModDamageTypes.YIN_TRIBULATION);

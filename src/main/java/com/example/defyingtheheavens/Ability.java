@@ -102,7 +102,26 @@ public enum Ability {
 	 * to begin with: while on, blows and spells half again as hard, for a share of the essence pool a second. The pool fills only in the
 	 * Immortal Realm and leaks away anywhere else.
 	 */
-	IMMORTAL_ESSENCE("immortal_essence", false, c -> TwoPaths.awakens(c, Realm.TRUE_IMMORTAL, false) != null);
+	IMMORTAL_ESSENCE("immortal_essence", false, c -> TwoPaths.awakens(c, Realm.TRUE_IMMORTAL, false) != null),
+	/**
+	 * The Law domains (phase 3b, 2026-10-26), one for each Law from its first level comprehended, for an immortal (LawDomains): the Law's
+	 * own ground unfurled round one, a standing switch, off to begin with, one domain lit at a time, burning immortal essence. Foes in it
+	 * are worked on by its Law, and one's own spells of the Law strike them the harder.
+	 */
+	METAL_DOMAIN("metal_domain", false, c -> LawDomains.unlocked(c, Law.METAL)),
+	WOOD_DOMAIN("wood_domain", false, c -> LawDomains.unlocked(c, Law.WOOD)),
+	WATER_DOMAIN("water_domain", false, c -> LawDomains.unlocked(c, Law.WATER)),
+	FIRE_DOMAIN("fire_domain", false, c -> LawDomains.unlocked(c, Law.FIRE)),
+	EARTH_DOMAIN("earth_domain", false, c -> LawDomains.unlocked(c, Law.EARTH)),
+	SPACE_DOMAIN("space_domain", false, c -> LawDomains.unlocked(c, Law.SPACE)),
+	TIME_DOMAIN("time_domain", false, c -> LawDomains.unlocked(c, Law.TIME)),
+	LIFE_AND_DEATH_DOMAIN("life_and_death_domain", false, c -> LawDomains.unlocked(c, Law.LIFE_AND_DEATH)),
+	/**
+	 * Once a World Seed is refined into one's own small world (phase 3d, 2026-10-26; SmallWorlds), for an immortal: its door opened before
+	 * one wherever one stands, for its owner and its guests to walk through; inside it, the way out where one came in. An act: "on" while
+	 * its door stands open or one is in it.
+	 */
+	SMALL_WORLD("small_world", false, c -> c.hasSmallWorld() && Laws.isImmortal(c));
 
 	private final String id;
 	private final boolean onByDefault;
@@ -185,6 +204,11 @@ public enum Ability {
 			// The harm it adds, how long a full pool lasts, the pool, how long the Immortal Realm takes to fill it, and to leak it elsewhere.
 			case IMMORTAL_ESSENCE -> Component.translatable(key, Math.round((ImmortalEssence.HARM - 1) * 100), ImmortalEssence.BURN_SECONDS,
 					Math.round(ImmortalEssence.max(c)), ImmortalEssence.FILL_SECONDS / 60, ImmortalEssence.MEDITATING, ImmortalEssence.LEAK_SECONDS / 60);
+			// Its reach, how long a full pool lasts, how much harder the Law's spells strike in it, and the Law's own numbers at its level.
+			case METAL_DOMAIN, WOOD_DOMAIN, WATER_DOMAIN, FIRE_DOMAIN, EARTH_DOMAIN, SPACE_DOMAIN, TIME_DOMAIN, LIFE_AND_DEATH_DOMAIN ->
+					LawDomains.description(key, law(), c);
+			// How long its door stands, how far out its land reaches by one's Laws now, and how much further a level of them takes it.
+			case SMALL_WORLD -> Component.translatable(key, SmallWorlds.DOOR_TICKS / 20, SmallWorlds.radius(c.laws().total()), SmallWorlds.PER_LAW_LEVEL);
 			default -> Component.translatable(key);
 		};
 	}
@@ -220,6 +244,27 @@ public enum Ability {
 			case SWORD_FLIGHT -> QI_FLIGHT;
 			default -> null;
 		};
+	}
+
+	/** The Law whose domain this is (LawDomains), or null for any other ability. */
+	public Law law() {
+		return switch (this) {
+			case METAL_DOMAIN -> Law.METAL;
+			case WOOD_DOMAIN -> Law.WOOD;
+			case WATER_DOMAIN -> Law.WATER;
+			case FIRE_DOMAIN -> Law.FIRE;
+			case EARTH_DOMAIN -> Law.EARTH;
+			case SPACE_DOMAIN -> Law.SPACE;
+			case TIME_DOMAIN -> Law.TIME;
+			case LIFE_AND_DEATH_DOMAIN -> Law.LIFE_AND_DEATH;
+			default -> null;
+		};
+	}
+
+	/** The domain of {@code law} (LawDomains). */
+	public static Ability domainOf(Law law) {
+		for (Ability ability : values()) if (ability.law() == law && law != null) return ability;
+		return null;
 	}
 
 	/** The abilities a new cultivator starts with switched off. */

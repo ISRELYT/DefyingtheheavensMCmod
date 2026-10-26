@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/template_fire_floor",
+  "textures": {
+    "fire": "defying-the-heavens:block/first_flame"
+  }
+}

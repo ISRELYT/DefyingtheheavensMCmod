@@ -37,9 +37,11 @@ public class HighRealms extends SavedData {
 	 * the immortals of its cities, sects and Court. None below Entering Nirvana is born there (the user's rule, 2026-10-25: "people less
 	 * than EN shouldnt spawn", NpcSpawner#IMMORTAL_FLOOR; a sect's own disciples perhaps excepted), and its Entering Nirvana have no limit, so
 	 * the census never holds one of them back below it: whoever the True Immortals' room turns away waits at Entering Nirvana's Grand
-	 * Perfection. The places of the realms below are a sect's disciples' alone.
+	 * Perfection. The places of the realms below are a sect's disciples' alone. Past True Immortal (phase 3, 2026-10-26) few: the
+	 * immortal sects' Sect Lords are Earth Immortals (ImmortalSects), a handful higher, the Court's five Venerables Taiyi Golden
+	 * Immortals and its King the one Profound Sovereign (CelestialCourt); no Heavenly Lord walks any world but a player.
 	 */
-	static final int[] IMMORTAL_REALM_QUOTA = {16, 16, 16, Integer.MAX_VALUE, 160};
+	static final int[] IMMORTAL_REALM_QUOTA = {16, 16, 16, Integer.MAX_VALUE, 160, 32, 8, 4, 5, 1, 0};
 	/** One unseen this long (ticks: a hundred days) is given up as gone (its land lost, say), its place free again. */
 	static final long FORGOTTEN = 100L * Lifespan.YEAR_TICKS;
 	/** A place taken by one not yet seen in the world (made, never spawned) is given up after this long (ticks). */

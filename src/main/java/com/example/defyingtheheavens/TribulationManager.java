@@ -147,6 +147,7 @@ public final class TribulationManager {
 	 * and every tribulation after it asks the same, a beacon's whole Resistance on Protection IV, against the body's own might:
 	 *   -> Dao Integration     200 strikes    and every stage of it, Void Shattering's 400, Sacred Vessel's 800, Entering
 	 *      ... True Immortal 3,200            Nirvana's 1,600, True Immortal's 3,200 (Resistance I with Regeneration I dies)
+	 *   -> the ladder past it  3,200 strikes  Earth Immortal to Heavenly Lord (phase 3), each strike the heavier, asking the same
 	 * Golden apples, Resistance/Regeneration potions and totems let a player get through a step below these,
 	 * and each worn Ring of Transcendence halves all strike damage on top of the table.
 	 * The Netherworld's tribulation strikes as this table says for the living (its yin lightning turned by armour as the heavens'
@@ -211,6 +212,45 @@ public final class TribulationManager {
 				case LATE -> new Strikes(3200, 38.75f, 72.0f);
 				case GRAND_PERFECTION -> new Strikes(3200, 42.0f, 78.0f);
 			};
+			// The ladder past True Immortal (phase 3, 2026-10-26): True Immortal's 3,200 strikes still (more would only weigh on the
+			// server), each the heavier as the body doubles, asking the same beacon's whole Resistance on Protection IV (trib-tune-1026.ps1,
+			// which gives True Immortal's rows above again).
+			case EARTH_IMMORTAL -> switch (stage) {
+				case EARLY -> new Strikes(3200, 46.0f, 85.0f);
+				case MID -> new Strikes(3200, 70.0f, 130.0f);
+				case LATE -> new Strikes(3200, 77.0f, 143.0f);
+				case GRAND_PERFECTION -> new Strikes(3200, 84.0f, 156.0f);
+			};
+			case HEAVEN_IMMORTAL -> switch (stage) {
+				case EARLY -> new Strikes(3200, 91.0f, 169.0f);
+				case MID -> new Strikes(3200, 140.0f, 261.0f);
+				case LATE -> new Strikes(3200, 154.0f, 287.0f);
+				case GRAND_PERFECTION -> new Strikes(3200, 168.0f, 313.0f);
+			};
+			case GOLDEN_IMMORTAL -> switch (stage) {
+				case EARLY -> new Strikes(3200, 182.0f, 339.0f);
+				case MID -> new Strikes(3200, 306.0f, 374.0f);
+				case LATE -> new Strikes(3200, 340.0f, 415.0f);
+				case GRAND_PERFECTION -> new Strikes(3200, 374.0f, 458.0f);
+			};
+			case TAIYI_GOLDEN_IMMORTAL -> switch (stage) {
+				case EARLY -> new Strikes(3200, 409.0f, 500.0f);
+				case MID -> new Strikes(3200, 458.0f, 851.0f);
+				case LATE -> new Strikes(3200, 507.0f, 942.0f);
+				case GRAND_PERFECTION -> new Strikes(3200, 557.0f, 1035.0f);
+			};
+			case PROFOUND_SOVEREIGN -> switch (stage) {
+				case EARLY -> new Strikes(3200, 608.0f, 1129.0f);
+				case MID -> new Strikes(3200, 916.0f, 1701.0f);
+				case LATE -> new Strikes(3200, 1015.0f, 1885.0f);
+				case GRAND_PERFECTION -> new Strikes(3200, 1115.0f, 2070.0f);
+			};
+			case HEAVENLY_LORD -> switch (stage) {
+				case EARLY -> new Strikes(3200, 1216.0f, 2259.0f);
+				case MID -> new Strikes(3200, 1832.0f, 3402.0f);
+				case LATE -> new Strikes(3200, 2029.0f, 3769.0f);
+				case GRAND_PERFECTION -> new Strikes(3200, 2230.0f, 4141.0f);
+			};
 		};
 	}
 
@@ -271,9 +311,8 @@ public final class TribulationManager {
 			return;
 		}
 		PlayerCultivation c = CultivationManager.get(player);
-		if (c.isAtBottleneck() && c.isBreakthroughLocked()) {
-			player.displayClientMessage(Component.translatable(ModLang.MSG_REALM_LOCKED,
-					PlayerCultivation.rankName(PlayerCultivation.LOWER_REALM_CAP_REALM, PlayerCultivation.LOWER_REALM_CAP_STAGE)), true);
+		if (c.isAtBottleneck() && c.isBreakthroughLocked()) { // past the lower realms' cap; into True Immortal and past it, the Immortal Realm's alone
+			player.displayClientMessage(c.lockLine(), true);
 			return;
 		}
 		// A new realm waits on a heaven method of it too (HeavenMethods#opensWay): said in chat, so a pill also wanting is said as well.
@@ -339,6 +378,10 @@ public final class TribulationManager {
 			return;
 		}
 		PlayerCultivation c = CultivationManager.get(player);
+		if (GhostMethods.heldByPlace(c)) { // into True Immortal and past it, the Immortal Realm's alone, on the ghost path too
+			player.displayClientMessage(c.lockLine(GhostMethods.ghostRank(c.netherworld()) + 1), true);
+			return;
+		}
 		if (GhostMethods.heldByMethod(c)) {
 			player.sendSystemMessage(GhostMethods.gateLine(c).copy().withStyle(net.minecraft.ChatFormatting.GOLD));
 			return;
@@ -403,8 +446,7 @@ public final class TribulationManager {
 		}
 		PlayerCultivation c = CultivationManager.get(player);
 		if (DemonPath.atBottleneck(c) && DemonPath.locked(c)) {
-			player.displayClientMessage(Component.translatable(ModLang.MSG_REALM_LOCKED,
-					PlayerCultivation.rankName(PlayerCultivation.LOWER_REALM_CAP_REALM, PlayerCultivation.LOWER_REALM_CAP_STAGE)), true);
+			player.displayClientMessage(c.lockLine(DemonPath.rank(c) + 1), true);
 			return;
 		}
 		if (DemonPath.heldByAxis(c)) {
@@ -413,6 +455,10 @@ public final class TribulationManager {
 		}
 		if (DemonPath.heldByBlood(c)) { // the realm ahead shut for want of its race's blood (DemonBlood)
 			player.sendSystemMessage(DemonPath.bloodGateLine(c).copy().withStyle(net.minecraft.ChatFormatting.GOLD));
+			return;
+		}
+		if (DemonPath.heldByLaws(c)) { // the ladder past True Immortal shut for want of the Laws (Laws, phase 3)
+			player.sendSystemMessage(DemonPath.lawGateLine(c).copy().withStyle(net.minecraft.ChatFormatting.GOLD));
 			return;
 		}
 		if (!DemonPath.canBreakthrough(c)) {

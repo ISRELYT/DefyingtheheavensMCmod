@@ -185,11 +185,15 @@ public class CultivationScreen extends Screen {
 	private final List<RowButton<Spell>> readyButtons = new ArrayList<>();
 	/** Life Force Drain's and Gain's mode switches (what they move: health, qi or years; WoodSpells.LifeMode), as drawn this frame. */
 	private final List<RowButton<Spell>> lifeModeButtons = new ArrayList<>();
-	/** The Methods tab's heaven page's Practise buttons, and the two pages' own buttons (true: the heaven page). */
+	/** The Methods tab's heaven page's Practise buttons, and the pages' own buttons (their {@link #methodPage}). */
 	private final List<RowButton<HeavenMethod>> heavenPractiseButtons = new ArrayList<>();
-	private final List<RowButton<Boolean>> methodPageButtons = new ArrayList<>();
-	/** The Methods tab shows the heaven path's methods rather than the ghost path's (kept on reopening). */
-	private static boolean heavenPage;
+	private final List<RowButton<Integer>> methodPageButtons = new ArrayList<>();
+	/** Which page the Methods tab shows (kept on reopening): the ghost path's methods, the heaven path's, or the Laws (phase 3). */
+	private static final int PAGE_GHOST = 0, PAGE_HEAVEN = 1, PAGE_LAWS = 2;
+	private static int methodPage = PAGE_GHOST;
+	/** The Laws page's Focus and +1 buttons, as drawn this frame (the Law they act on). */
+	private final List<RowButton<com.example.defyingtheheavens.Law>> lawFocusButtons = new ArrayList<>();
+	private final List<RowButton<com.example.defyingtheheavens.Law>> lawChooseButtons = new ArrayList<>();
 	/** The spell wheel editor's palette as drawn this frame, the spell being dragged in it, and the slot it came from (-1: the palette). */
 	private final List<SpellCell> spellPalette = new ArrayList<>();
 	private Spell draggedSpell;
@@ -415,6 +419,8 @@ public class CultivationScreen extends Screen {
 		lifeModeButtons.clear();
 		heavenPractiseButtons.clear();
 		methodPageButtons.clear();
+		lawFocusButtons.clear();
+		lawChooseButtons.clear();
 		spellPalette.clear();
 		statPageButtons.clear();
 		statPlusButtons.clear();
@@ -814,11 +820,14 @@ public class CultivationScreen extends Screen {
 					DemonPath.realm(rank + 1).getDisplayName()), 0xFFC107, width);
 			return lines;
 		}
+		if (DemonPath.heldByLaws(c)) { // the ladder past True Immortal shut for want of the Laws (DemonPath#heldByLaws): blood alone climbs no further
+			addStatus(lines, DemonPath.lawGateLine(c), 0xFFC107, width);
+			return lines;
+		}
 		if (DemonPath.isMaxed(c)) {
 			addStatus(lines, Component.translatable(ModLang.DEMON_PINNACLE), 0xFFD700, width);
 		} else if (DemonPath.atBottleneck(c) && DemonPath.locked(c)) {
-			addStatus(lines, Component.translatable(ModLang.MSG_REALM_LOCKED,
-					PlayerCultivation.rankName(PlayerCultivation.LOWER_REALM_CAP_REALM, PlayerCultivation.LOWER_REALM_CAP_STAGE)), 0xFFC107, width);
+			addStatus(lines, c.lockLine(rank + 1), 0xFFC107, width); // the lower realms' cap, or the Immortal Realm wanted
 		} else if (FourAxis.holds(c, rank)) {
 			addAxis(lines, FourAxis.wanted(rank), DemonPath.heldByAxis(c), width);
 		} else if (DemonPath.canBreakthrough(c)) {
@@ -861,6 +870,8 @@ public class CultivationScreen extends Screen {
 		int stages = Stage.values().length;
 		if (GhostMethods.isMaxed(s)) {
 			addStatus(lines, Component.translatable(ModLang.GHOST_PINNACLE), 0xFFD700, width);
+		} else if (GhostMethods.heldByPlace(c)) { // into True Immortal and past it: the Immortal Realm wanted
+			addStatus(lines, c.lockLine(rank + 1), 0xFF6E6E, width);
 		} else if (Stage.byIndex(rank % stages).isLast() && !GhostMethods.opensWay(c, Realm.byIndex(rank / stages + 1))) {
 			addStatus(lines, GhostMethods.gateLine(c), GhostMethods.heldByMethod(c) ? 0xFFC107 : 0xA0A0A0, width);
 		} else if (FourAxis.holds(c, rank)) {
@@ -893,10 +904,12 @@ public class CultivationScreen extends Screen {
 	private List<Line> heavenNext(PlayerCultivation c, int width) {
 		List<Line> status = new ArrayList<>();
 		if (c.isMaxed()) {
-			// True Immortal Grand Perfection (Four Axis's, with its last axis of virtue, before the realms after it: 2026-10-22).
+			// Heavenly Lord Grand Perfection since phase 3 (True Immortal's before; Four Axis's, with its last axis of virtue, before the
+			// realms after it: 2026-10-22).
 			addStatus(status, Component.translatable(ModLang.PINNACLE), 0xFFD700, width);
 		} else if (c.isAtBottleneck() && c.isBreakthroughLocked()) {
-			addStatus(status, Component.translatable(ModLang.BREAKTHROUGH_SEALED), 0xFF6E6E, width);
+			// Into True Immortal and past it, the Immortal Realm wanted; else the lower realms' cap.
+			addStatus(status, c.isImmortalRealmLocked() ? c.lockLine() : Component.translatable(ModLang.BREAKTHROUGH_SEALED), 0xFF6E6E, width);
 		} else if (c.isAtBottleneck() && c.isMissingBreakthroughPill()) {
 			// The realm ahead needs a pill: name it and how to brew it.
 			var pill = PillItem.breakthroughPillFor(c.breakthroughRealm());
@@ -2019,12 +2032,29 @@ public class CultivationScreen extends Screen {
 				if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
 				return true;
 			}
-			for (RowButton<Boolean> page : methodPageButtons) {
+			for (RowButton<Integer> page : methodPageButtons) {
 				if (!page.contains(mouseX, mouseY)) continue;
-				if (heavenPage != page.value()) {
-					heavenPage = page.value();
+				if (methodPage != page.value()) {
+					methodPage = page.value();
 					methodScroll = 0;
 				}
+				if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+				return true;
+			}
+			// The Laws page: a Law put in (or, clicked again, out of) meditation's focus; a level owed for a Decay weathered spent on one.
+			for (RowButton<com.example.defyingtheheavens.Law> focus : lawFocusButtons) {
+				if (!focus.contains(mouseX, mouseY)) continue;
+				FriendlyByteBuf buf = PacketByteBufs.create();
+				buf.writeVarInt(focus.value() == ClientCultivationData.get().laws().focus() ? -1 : focus.value().ordinal());
+				ClientPlayNetworking.send(ModPackets.LAW_FOCUS, buf);
+				if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+				return true;
+			}
+			for (RowButton<com.example.defyingtheheavens.Law> choose : lawChooseButtons) {
+				if (!choose.contains(mouseX, mouseY)) continue;
+				FriendlyByteBuf buf = PacketByteBufs.create();
+				buf.writeVarInt(choose.value().ordinal());
+				ClientPlayNetworking.send(ModPackets.LAW_CHOOSE, buf);
 				if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
 				return true;
 			}
@@ -2203,22 +2233,179 @@ public class CultivationScreen extends Screen {
 	 * one, and what its layers bring. Methods not yet learned show only that they exist. Scrolls like the Abilities tab.
 	 */
 	private void renderMethods(GuiGraphics g, int mouseX, int mouseY) {
-		// The two pages, side by side at the top: the ghost path's methods and the heaven path's.
+		// The pages, side by side at the top: the ghost path's methods and the heaven path's, and an immortal's Laws (phase 3).
+		PlayerCultivation c = ClientCultivationData.get();
+		boolean laws = com.example.defyingtheheavens.Laws.isImmortal(c) || c.laws().total() > 0 || c.laws().choices() > 0;
+		if (methodPage == PAGE_LAWS && !laws) methodPage = PAGE_GHOST;
 		int y = top + CONTENT_Y;
 		int x = left + 14;
-		for (boolean heaven : new boolean[]{false, true}) {
-			Component label = Component.translatable(heaven ? ModLang.METHODS_PAGE_HEAVEN : ModLang.METHODS_PAGE_GHOST);
+		for (int page = PAGE_GHOST; page <= (laws ? PAGE_LAWS : PAGE_HEAVEN); page++) {
+			Component label = Component.translatable(page == PAGE_LAWS ? ModLang.METHODS_PAGE_LAWS : page == PAGE_HEAVEN ? ModLang.METHODS_PAGE_HEAVEN : ModLang.METHODS_PAGE_GHOST);
 			int w = font.width(label) + 12;
-			RowButton<Boolean> button = new RowButton<>(heaven, x, y, w);
+			RowButton<Integer> button = new RowButton<>(page, x, y, w);
 			methodPageButtons.add(button);
-			boolean chosen = heavenPage == heaven;
-			drawRowButton(g, button, label, button.contains(mouseX, mouseY), chosen ? (heaven ? 0xFFD700 : 0x8FEAE4) : 0x9E9E9E);
-			if (chosen) g.fill(button.x() + 2, button.y() + SWITCH_H, button.x() + w - 2, button.y() + SWITCH_H + 1, heaven ? 0xFFFFD700 : 0xFF8FEAE4);
+			boolean chosen = methodPage == page;
+			int color = page == PAGE_LAWS ? LAWS_COLOR : page == PAGE_HEAVEN ? 0xFFD700 : 0x8FEAE4;
+			drawRowButton(g, button, label, button.contains(mouseX, mouseY), chosen ? color : 0x9E9E9E);
+			if (chosen) g.fill(button.x() + 2, button.y() + SWITCH_H, button.x() + w - 2, button.y() + SWITCH_H + 1, 0xFF000000 | color);
 			x += w + 4;
 		}
 		int viewTop = top + CONTENT_Y + METHOD_PAGE_ROW;
-		if (heavenPage) renderHeavenMethods(g, mouseX, mouseY, viewTop);
+		if (methodPage == PAGE_LAWS) renderLaws(g, mouseX, mouseY, viewTop);
+		else if (methodPage == PAGE_HEAVEN) renderHeavenMethods(g, mouseX, mouseY, viewTop);
 		else renderGhostMethods(g, mouseX, mouseY, viewTop);
+	}
+
+	/** The Laws page's own colour: a pale violet, between the heavens' gold and the void's dark. */
+	private static final int LAWS_COLOR = 0xE6C3FF;
+
+	/**
+	 * The Laws page (Laws, phase 3): how many levels of the Laws are held and what the way into the realm ahead wants, the Law in
+	 * meditation's focus (comprehended only in the Immortal Realm), the levels owed for Decays weathered, when the Five Decays come (or
+	 * which of their signs is on one); then each Law: its colour and name, Focus (or "In focus") and +1 while levels are owed, nine pips,
+	 * the insight toward its next level, what its levels give and give now. The greater Laws greyed short of Golden Immortal. Scrolls as
+	 * the other pages do.
+	 */
+	private void renderLaws(GuiGraphics g, int mouseX, int mouseY, int viewTop) {
+		PlayerCultivation c = ClientCultivationData.get();
+		com.example.defyingtheheavens.LawState s = c.laws();
+		int x = left + 14;
+		int rightEdge = left + LIST_RIGHT;
+		int width = rightEdge - x;
+		int viewBottom = top + HEIGHT - 8;
+		boolean immortal = com.example.defyingtheheavens.Laws.isImmortal(c);
+		net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+
+		// The top lines, measured before drawing so the scroll knows the height.
+		List<FormattedCharSequence> topLines = new ArrayList<>();
+		List<Integer> topColors = new ArrayList<>();
+		java.util.function.BiConsumer<Component, Integer> addTop = (line, color) -> {
+			for (FormattedCharSequence part : font.split(line, width)) {
+				topLines.add(part);
+				topColors.add(color);
+			}
+		};
+		addTop.accept(Component.translatable(ModLang.LAWS_TOTAL, s.total()), 0xFFD700);
+		if (!immortal) {
+			addTop.accept(Component.translatable(ModLang.LAWS_SEALED), 0x9E9E9E);
+		} else {
+			int stages = Stage.values().length;
+			int next = TwoPaths.higherRank(c, false) / stages + 1;
+			if (next < Realm.values().length && Realm.byIndex(next).isPastTrueImmortal()) {
+				Realm ahead = Realm.byIndex(next);
+				int needed = com.example.defyingtheheavens.Laws.needed(ahead);
+				boolean open = s.total() >= needed;
+				addTop.accept(Component.translatable(open ? ModLang.LAWS_NEXT_OPEN : ModLang.LAWS_NEXT, ahead.getDisplayName(), needed), open ? 0x69F0AE : 0xF0D78C);
+			}
+			com.example.defyingtheheavens.Law focus = s.focus();
+			boolean here = mc.level != null && com.example.defyingtheheavens.ModDimensions.hasImmortalQi(mc.level.dimension());
+			addTop.accept(focus == null ? Component.translatable(ModLang.LAWS_NO_FOCUS)
+					: Component.translatable(here ? ModLang.LAWS_FOCUS : ModLang.LAWS_FOCUS_AWAY, focus.getDisplayName()), focus == null ? 0x9E9E9E : here ? LAWS_COLOR : 0xB0A0C0);
+			if (s.choices() > 0) addTop.accept(s.choices() == 1 ? Component.translatable(ModLang.LAWS_CHOICE_ONE) : Component.translatable(ModLang.LAWS_CHOICES, s.choices()), 0x69F0AE);
+			int sign = s.decaySign();
+			if (sign >= com.example.defyingtheheavens.FiveDecays.JUDGEMENT) {
+				addTop.accept(Component.translatable(ModLang.LAWS_DECAY_JUDGEMENT), 0xFF8A80);
+			} else if (sign > 0) {
+				addTop.accept(Component.translatable(ModLang.LAWS_DECAY_SIGN, sign), 0xCE93D8);
+			} else if (s.decayDue() > 0 && mc.level != null) {
+				long due = s.decayDue() - mc.level.getGameTime();
+				addTop.accept(due < 24000 ? Component.translatable(ModLang.LAWS_DECAY_SOON)
+						: Component.translatable(ModLang.LAWS_DECAY_IN, (due + 23999) / 24000), 0xB39DDB);
+			}
+		}
+		// Each Law's gains, wrapped, and what they give now.
+		com.example.defyingtheheavens.Law[] laws = com.example.defyingtheheavens.Law.values();
+		List<List<FormattedCharSequence>> gains = new ArrayList<>();
+		int contentHeight = 6 + topLines.size() * 10 + 6;
+		for (com.example.defyingtheheavens.Law law : laws) {
+			List<FormattedCharSequence> lines = new ArrayList<>(font.split(law.getGains(), width));
+			if (s.level(law) > 0) lines.addAll(font.split(lawNow(law, s.level(law)), width));
+			gains.add(lines);
+			contentHeight += 15 + 11 + 9 + 11 + lines.size() * 10 + 12;
+		}
+		methodMaxScroll = Math.max(0, contentHeight - (viewBottom - viewTop));
+		methodScroll = Mth.clamp(methodScroll, 0, methodMaxScroll);
+
+		g.enableScissor(left + 1, viewTop, left + WIDTH - 1, viewBottom);
+		int y = viewTop + 3 - methodScroll;
+		for (int i = 0; i < topLines.size(); i++) {
+			g.drawString(font, topLines.get(i), x, y, topColors.get(i));
+			y += 10;
+		}
+		y += 6;
+		for (int i = 0; i < laws.length; i++) {
+			com.example.defyingtheheavens.Law law = laws[i];
+			int level = s.level(law);
+			boolean shut = law.isGreater() && !com.example.defyingtheheavens.Laws.greaterOpen(c);
+			boolean comprehends = com.example.defyingtheheavens.Laws.mayComprehend(c, law);
+			int color = shut ? 0x707070 : law.color();
+			// Its mark: a small square of its colour in a gold frame.
+			g.fill(x, y - 2, x + 11, y + 9, shut ? 0xFF3A3A4A : BORDER);
+			g.fill(x + 1, y - 1, x + 10, y + 8, 0xFF000000 | color);
+			g.drawString(font, law.getDisplayName(), x + 16, y, shut ? 0x707070 : law == s.focus() ? LAWS_COLOR : 0xE0E0E0);
+			int buttonRight = rightEdge;
+			if (law == s.focus()) {
+				Component focused = Component.translatable(ModLang.LAWS_FOCUSED);
+				right(g, focused, buttonRight, y, 0x69F0AE);
+				buttonRight -= font.width(focused) + 6;
+			} else if (comprehends) {
+				Component label = Component.translatable(ModLang.BTN_LAW_FOCUS);
+				int w = font.width(label) + 10;
+				RowButton<com.example.defyingtheheavens.Law> button = new RowButton<>(law, buttonRight - w, y - 3, w);
+				boolean visible = button.y() >= viewTop && button.y() + SWITCH_H <= viewBottom;
+				if (visible) lawFocusButtons.add(button);
+				drawRowButton(g, button, label, visible && button.contains(mouseX, mouseY), 0xE0E0E0);
+				buttonRight -= w + 4;
+			}
+			if (s.choices() > 0 && comprehends) {
+				Component label = Component.translatable(ModLang.BTN_LAW_CHOOSE);
+				int w = font.width(label) + 10;
+				RowButton<com.example.defyingtheheavens.Law> button = new RowButton<>(law, buttonRight - w, y - 3, w);
+				boolean visible = button.y() >= viewTop && button.y() + SWITCH_H <= viewBottom;
+				if (visible) lawChooseButtons.add(button);
+				drawRowButton(g, button, label, visible && button.contains(mouseX, mouseY), 0x69F0AE);
+			}
+			y += 15;
+			drawPips(g, x, y, level);
+			g.drawString(font, Component.translatable(ModLang.LAWS_LEVEL, level, com.example.defyingtheheavens.Laws.MAX_LEVEL), x + 9 * 9 + 6, y, 0xB0B0B0);
+			y += 11;
+			boolean complete = level >= com.example.defyingtheheavens.Laws.MAX_LEVEL;
+			double fraction = complete ? 1 : Mth.clamp(s.insight(law) / com.example.defyingtheheavens.Laws.insightFor(level + 1), 0, 1);
+			g.fill(x, y, rightEdge, y + 5, 0xFF6E5214);
+			g.fill(x + 1, y + 1, rightEdge - 1, y + 4, 0xFF0C0C14);
+			g.fill(x + 1, y + 1, x + 1 + (int) Math.round((rightEdge - x - 2) * fraction), y + 4, complete ? 0xFFFFD700 : 0xFF000000 | color);
+			y += 9;
+			Component progress = complete ? Component.translatable(ModLang.LAWS_COMPLETE) : shut ? Component.translatable(ModLang.LAWS_GREATER_SHUT)
+					: Component.translatable(ModLang.LAWS_INSIGHT, level + 1, (int) Math.floor(fraction * 100));
+			g.drawString(font, progress, x, y, complete ? 0xFFD700 : shut ? 0x707070 : 0xB0A0C0);
+			y += 11;
+			for (FormattedCharSequence line : gains.get(i)) {
+				g.drawString(font, line, x, y, 0x8A8A8A);
+				y += 10;
+			}
+			if (i < laws.length - 1) {
+				y += 4;
+				g.fill(x, y, rightEdge, y + 1, 0xFF3A3A4A);
+				y += 8;
+			}
+		}
+		g.disableScissor();
+		scrollbar(g, viewTop, viewBottom, contentHeight, methodScroll, methodMaxScroll, mouseX, mouseY);
+	}
+
+	/** What {@code law}'s {@code level} levels give now ("Now: your Fire spells +30% harm, +15% reach."), as Laws reckons it. */
+	private static Component lawNow(com.example.defyingtheheavens.Law law, int level) {
+		long harm = Math.round(level * com.example.defyingtheheavens.Laws.HARM_PER_LEVEL * 100);
+		long reach = Math.round(level * com.example.defyingtheheavens.Laws.REACH_PER_LEVEL * 100);
+		long sooner = Math.round(level * com.example.defyingtheheavens.Laws.COOLDOWN_PER_LEVEL * 100);
+		long life = Math.round(level * com.example.defyingtheheavens.Laws.LIFE_PER_LEVEL * 100);
+		String key = ModLang.lawKey(law.getId()) + ".now";
+		return switch (law) {
+			case SPACE -> Component.translatable(key, harm, reach, sooner);
+			case TIME -> Component.translatable(key, sooner);
+			case LIFE_AND_DEATH -> Component.translatable(key, life, life);
+			default -> Component.translatable(key, harm, reach);
+		};
 	}
 
 	/** The pages' buttons' row above either page's list. */
@@ -2458,6 +2645,7 @@ public class CultivationScreen extends Screen {
 			int unknown = 0;
 			for (Realm realm : Realm.values()) {
 				HeavenMethod method = HeavenMethod.of(element, realm);
+				if (method == null) continue; // the ladder past True Immortal: no method teaches it (Realm#LAST_TAUGHT)
 				if (!h.knows(method)) {
 					unknown++;
 					continue;
@@ -2490,6 +2678,7 @@ public class CultivationScreen extends Screen {
 			int unknown = 0;
 			for (Realm realm : Realm.values()) {
 				HeavenMethod method = HeavenMethod.of(element, realm);
+				if (method == null) continue;
 				if (!h.knows(method)) {
 					unknown++;
 					continue;
@@ -2554,9 +2743,9 @@ public class CultivationScreen extends Screen {
 		scrollbar(g, viewTop, viewBottom, contentHeight, methodScroll, methodMaxScroll, mouseX, mouseY);
 	}
 
-	/** "4 of the 6 Wood methods are unknown...": how many of {@code element}'s are still to be found. */
+	/** "4 of the 6 Wood methods are unknown...": how many of {@code element}'s are still to be found (one a realm, to True Immortal's). */
 	private static Component unknownLine(QiElement element, int unknown) {
-		return Component.translatable(ModLang.METHODS_HEAVEN_UNKNOWN, unknown, Realm.values().length, element.getDisplayName());
+		return Component.translatable(ModLang.METHODS_HEAVEN_UNKNOWN, unknown, Realm.LAST_TAUGHT.ordinal() + 1, element.getDisplayName());
 	}
 
 	/** A passive's amount as the Methods tab shows it: whole where it is whole, else to two places. */

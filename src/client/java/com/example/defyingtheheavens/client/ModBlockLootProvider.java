@@ -31,6 +31,7 @@ public class ModBlockLootProvider extends FabricBlockLootTableProvider {
 		add(ModBlocks.DEEPSLATE_JADE_ORE, createOreDrop(ModBlocks.DEEPSLATE_JADE_ORE, ModItems.JADE));
 		add(ModBlocks.YIN_JADE_ORE, createOreDrop(ModBlocks.YIN_JADE_ORE, ModItems.YIN_JADE));
 		dropSelf(ModBlocks.YIN_JADE_BLOCK);
+		add(ModBlocks.CHAOS_ORIGIN_ORE, createOreDrop(ModBlocks.CHAOS_ORIGIN_ORE, ModItems.CHAOS_ORIGIN_STONE));
 		add(ModBlocks.WHITE_BLOSSOM_LEAVES, createShearsOnlyDrop(ModBlocks.WHITE_BLOSSOM_LEAVES));
 		add(ModBlocks.SPIRIT_PEACH_LEAVES, createShearsOnlyDrop(ModBlocks.SPIRIT_PEACH_LEAVES));
 	}

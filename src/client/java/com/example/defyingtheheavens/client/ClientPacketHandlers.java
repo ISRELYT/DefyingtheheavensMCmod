@@ -129,10 +129,36 @@ public final class ClientPacketHandlers {
 			int bloodRealm = buf.readVarInt(), halfIndex = buf.readVarInt();
 			double purity = buf.readDouble();
 			double essence = buf.readDouble(), essenceMax = buf.readDouble();
+			com.example.defyingtheheavens.Law[] laws = com.example.defyingtheheavens.Law.values();
+			int[] lawLevels = new int[laws.length];
+			double[] lawInsight = new double[laws.length];
+			for (int i = 0; i < laws.length; i++) {
+				lawLevels[i] = buf.readVarInt();
+				lawInsight[i] = buf.readDouble();
+			}
+			com.example.defyingtheheavens.Law lawFocus = com.example.defyingtheheavens.Law.byIndex(buf.readVarInt());
+			int lawChoices = buf.readVarInt(), decaySign = buf.readVarInt();
+			long decayDue = buf.readLong();
+			boolean inImmortalRealm = buf.readBoolean();
+			boolean smallWorld = buf.readBoolean();
 			client.execute(() -> {
+				// Where a breakthrough into True Immortal and past it is made (the Cultivation tab's lock and button).
+				ClientCultivationData.get().setInImmortalRealm(inImmortalRealm);
+				// A small world of their own (SmallWorlds): its door on the Abilities tab.
+				ClientCultivationData.get().setSmallWorld(smallWorld);
 				// A True Immortal's immortal essence (ImmortalEssence), for its bar.
 				ClientCultivationData.get().setEssence(essence);
 				ClientCultivationData.essence(essence, essenceMax);
+				// The Laws and the Five Decays (Laws, FiveDecays): the Methods tab's Laws page, the qi's gathering under the third sign.
+				com.example.defyingtheheavens.LawState lawState = ClientCultivationData.get().laws();
+				for (com.example.defyingtheheavens.Law law : laws) {
+					lawState.setLevel(law, lawLevels[law.ordinal()]);
+					lawState.setInsight(law, lawInsight[law.ordinal()]);
+				}
+				lawState.setFocus(lawFocus);
+				lawState.setChoices(lawChoices);
+				lawState.setDecay(decaySign, 0);
+				lawState.setDecayDue(decayDue);
 				// What of a race's blood it has drunk (DemonBlood): the Cultivation tab's purity and blood gate, a drink's refusal before it's drunk.
 				ClientCultivationData.get().demon().setHalfBlood(halfIndex < 0 ? null : com.example.defyingtheheavens.Bloodline.byIndex(halfIndex));
 				ClientCultivationData.get().demon().setBloodRealm(bloodRealm);
@@ -449,6 +475,13 @@ public final class ClientPacketHandlers {
 				left[i] = buf.readVarInt();
 			}
 			client.execute(() -> ClientSpellAuras.set(entityId, auras, left));
+		});
+		// A player's Law domain unfurled, grown or folded away (ClientLawDomains).
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.LAW_DOMAIN, (client, handler, buf, sender) -> {
+			int entityId = buf.readVarInt();
+			com.example.defyingtheheavens.Law law = com.example.defyingtheheavens.Law.byIndex(buf.readVarInt() - 1);
+			float radius = buf.readFloat();
+			client.execute(() -> ClientLawDomains.set(entityId, law, radius));
 		});
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SPELL_FX, (client, handler, buf, sender) -> {
 			com.example.defyingtheheavens.SpellFx.Kind kind = com.example.defyingtheheavens.SpellFx.Kind.byIndex(buf.readVarInt());

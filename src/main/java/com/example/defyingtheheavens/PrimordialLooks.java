@@ -13,7 +13,7 @@ import org.joml.Vector3f;
  * What hangs in the air about a primordial beast (PrimordialBeast#tick, the client's: particles only, nothing the world keeps): the True
  * Phoenix's fire streaming from its wings and its tail, and the ember it burns down to, an orb of flame; the True Dragon's storm, dark
  * clouds rolling over it and sparks along its coils; the Kun's wake where its back breaks the sea of clouds, and the mist it spouts; the
- * Peng's wingtips trailing cloud.
+ * Peng's wingtips trailing cloud; the Primordial Chaos's chaos churning off it.
  */
 final class PrimordialLooks {
 	private PrimordialLooks() {}
@@ -95,10 +95,33 @@ final class PrimordialLooks {
 					}
 				}
 			}
+			case PRIMORDIAL_CHAOS -> {
+				// The chaos it is made of, churning off it: great grey-violet motes and smoke about its sack (some twenty-five blocks across),
+				// drifting round it, and now and then a spark of the five colours it was banded in.
+				double middle = y + beast.getBbHeight() * 0.55;
+				for (int i = 0; i < 4; i++) {
+					Vec3 at = sphere(random, 16);
+					mote(level, CHAOS, x + at.x, middle + at.y, z + at.z, -at.z * 0.004, 0.01, at.x * 0.004);
+				}
+				if (random.nextInt(2) == 0) {
+					Vec3 at = sphere(random, 14);
+					mote(level, ParticleTypes.LARGE_SMOKE, x + at.x, middle + at.y, z + at.z, 0, 0.03, 0);
+				}
+				if (random.nextInt(4) == 0) {
+					Vec3 at = sphere(random, 13);
+					mote(level, FIVE_COLOURS[random.nextInt(FIVE_COLOURS.length)], x + at.x, middle + at.y, z + at.z, 0, 0.02, 0);
+				}
+			}
 			default -> {
 			}
 		}
 	}
+
+	/** The Primordial Chaos's churn: grey-violet; and the five colours it was banded in, azure, crimson, yellow, white and black. */
+	private static final DustParticleOptions CHAOS = new DustParticleOptions(new Vector3f(0.52f, 0.43f, 0.66f), 4.0f);
+	private static final DustParticleOptions[] FIVE_COLOURS = {new DustParticleOptions(new Vector3f(0.2f, 0.5f, 0.85f), 2.5f),
+			new DustParticleOptions(new Vector3f(0.85f, 0.2f, 0.15f), 2.5f), new DustParticleOptions(new Vector3f(0.9f, 0.72f, 0.2f), 2.5f),
+			new DustParticleOptions(new Vector3f(0.92f, 0.9f, 0.86f), 2.5f), new DustParticleOptions(new Vector3f(0.1f, 0.08f, 0.12f), 2.5f)};
 
 	/**
 	 * A particle drawn however far it is from whoever sees it (one added the plain way is dropped past 32 blocks from the camera, and these

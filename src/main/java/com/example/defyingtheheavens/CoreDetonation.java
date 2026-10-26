@@ -37,13 +37,13 @@ public final class CoreDetonation {
 	/** From the second asking to the blast. */
 	public static final int CHARGE_TICKS = 60;
 	/**
-	 * The blast's reach by realm, Core Formation to True Immortal, and a tenth more for each stage within it (the user's asks,
+	 * The blast's reach by realm, Core Formation to Heavenly Lord, and a tenth more for each stage within it (the user's asks,
 	 * 2026-10-23: the higher the realm, the larger the blast, a Heavenly Being's some 125 blocks and the rest scaled from it). To Four
 	 * Axis, 35 blocks a realm; after it, some 45 for every doubling of the realm's might (Realm): Dao Integration twice Four Axis's
 	 * (+45), Void Shattering four times (+90), Sacred Vessel and Entering Nirvana twice again (+45 each), True Immortal ten times
-	 * (+160).
+	 * (+160), and each realm of the ladder past it twice the last again (+45 each, phase 3).
 	 */
-	private static final double[] RADIUS = {55, 90, 125, 160, 205, 295, 340, 385, 545};
+	private static final double[] RADIUS = {55, 90, 125, 160, 205, 295, 340, 385, 545, 590, 635, 680, 725, 770, 815};
 	/** The harm at the heart: this many times the whole health of a body of the cultivator's own stage. */
 	public static final double HEART_HARM = 1.1;
 	/** Each realm a victim stands below the cultivator, the harm grows by the whole of it again; each realm above, it is this much. */

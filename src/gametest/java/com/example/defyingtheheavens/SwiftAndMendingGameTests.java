@@ -43,6 +43,11 @@ public class SwiftAndMendingGameTests implements FabricGameTest {
 		for (Realm realm : Realm.values()) {
 			for (Stage stage : Stage.values()) {
 				float space = AstralRealm.spaceSpeed(realm, stage);
+				// Past True Immortal (phase 3), its Grand Perfection's.
+				if (realm.isPastTrueImmortal()) {
+					helper.assertTrue(space == AstralRealm.spaceSpeed(Realm.TRUE_IMMORTAL, Stage.GRAND_PERFECTION), "The ladder as swift in space as True Immortal Grand Perfection");
+					continue;
+				}
 				if (realm.ordinal() >= AstralRealm.MIN_REALM.ordinal()) {
 					helper.assertTrue(space > lastSpace, "Space's speed swifter with every stage: " + realm.getId() + " " + stage.getId() + " (" + space + ")");
 				}

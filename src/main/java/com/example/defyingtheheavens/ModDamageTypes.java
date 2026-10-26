@@ -53,6 +53,12 @@ public final class ModDamageTypes {
 	 * Protection and Resistance still turn some of it), no element's ward reading it; the dead it reaches as a living blow does.
 	 */
 	public static final ResourceKey<DamageType> HEAVEN_DEMON = ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("heaven_demon"));
+	/**
+	 * The Chaos Frontier's storm (ChaosFrontier, phase 3c): chaos from before heaven and earth, unmaking whatever stands unsheltered in it.
+	 * Tagged as {@link #SPATIAL_PRESSURE}: armour, enchantments and effects don't turn it, nor any ward (HeavenPassives#untouchedByWards), it
+	 * throws nothing about, and it reaches the dead as the living (GhostSystem#reaches).
+	 */
+	public static final ResourceKey<DamageType> CHAOS_STORM = ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("chaos_storm"));
 
 	private static ResourceKey<DamageType> qiKey(QiElement element) {
 		return ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("qi_" + element.name().toLowerCase(java.util.Locale.ROOT)));
@@ -85,6 +91,12 @@ public final class ModDamageTypes {
 			context.register(key, new DamageType(DefyingTheHeavens.MOD_ID + "." + key.location().getPath(), DamageScaling.NEVER, 0.1f));
 		}
 		context.register(HEAVEN_DEMON, new DamageType(DefyingTheHeavens.MOD_ID + ".heaven_demon", DamageScaling.NEVER, 0.1f));
+		context.register(CHAOS_STORM, new DamageType(DefyingTheHeavens.MOD_ID + ".chaos_storm", DamageScaling.NEVER, 0.0f));
+	}
+
+	/** The Chaos Frontier's storm. */
+	public static DamageSource chaosStorm(Level level) {
+		return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(CHAOS_STORM));
 	}
 
 	/** A spell of both paths' harm (HeavenDemonSpells), cast by {@code attacker} (null for none: a seal whose caster is gone). */

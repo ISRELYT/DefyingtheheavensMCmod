@@ -42,6 +42,10 @@ public class MethodTiersGameTests implements FabricGameTest {
 	public void theFoundationsFollowOneAnotherToFourAxis(GameTestHelper helper) {
 		GhostMethod method = GhostMethod.NETHERWORLD_BREATHING;
 		for (Realm realm : Realm.values()) {
+			if (realm.isPastTrueImmortal()) { // the ladder past it (phase 3): no foundation carries it, the Laws do
+				helper.assertTrue(GhostMethod.foundationOf(realm) == null, "No foundation for " + realm.getId());
+				continue;
+			}
 			helper.assertTrue(method != null && method.realm() == realm && method.tier() == realm.ordinal() + 1 && GhostMethod.foundationOf(realm) == method,
 					"A foundation for " + realm.getId());
 			method = method.next();

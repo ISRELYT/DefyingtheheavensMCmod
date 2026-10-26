@@ -245,8 +245,9 @@ public final class SpatialTrialHandler {
 		}
 		long now = p.level().getGameTime();
 		Long last = LAST_TEAR.get(p.getUUID());
-		if (last != null && now - last < TEAR_COOLDOWN) {
-			p.displayClientMessage(Component.translatable(ModLang.MSG_TEAR_COOLING, (TEAR_COOLDOWN - (now - last) + 19) / 20), true);
+		long wait = Math.round(TEAR_COOLDOWN * Laws.tearWait(c)); // the sooner by the Law of Space (Laws)
+		if (last != null && now - last < wait) {
+			p.displayClientMessage(Component.translatable(ModLang.MSG_TEAR_COOLING, (wait - (now - last) + 19) / 20), true);
 			return;
 		}
 		ResourceKey<Level> dimension = p.level().dimension();
@@ -274,6 +275,11 @@ public final class SpatialTrialHandler {
 		// Space locked round it (Earth Veins Lock the Void): it won't tear.
 		if (EarthSpells.spaceLocked(p)) {
 			p.displayClientMessage(Component.translatable(ModLang.MSG_SPACE_LOCKED), true);
+			return;
+		}
+		// Nor within a foe's domain of Space (LawDomains).
+		if (LawDomains.locksSpace(p)) {
+			p.displayClientMessage(Component.translatable(ModLang.MSG_DOMAIN_SPACE_LOCKED), true);
 			return;
 		}
 		// Paid from the pool of the path that awakened the tear (TwoPaths#awakens): the qi, or the ghost qi. A soul in a body that can't

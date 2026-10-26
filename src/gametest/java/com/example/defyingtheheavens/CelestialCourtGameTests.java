@@ -8,6 +8,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
@@ -22,8 +23,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * The Celestial Court (phase 2, 2026-10-25): its ranks by merit; its King and Venerables stronger than their realm and named Daluo and
- * Taiyi, a Venerable's own element's method; its posts on its pinnacle as the capital's plan lays them (the King on the throne, a Venerable
+ * The Celestial Court (phase 2, 2026-10-25): its ranks by merit; its King a Profound Sovereign and its Venerables Taiyi Golden Immortals
+ * (the ladder's own realms since phase 3), a Venerable's own element's method; its posts on its pinnacle as the capital's plan lays them (the King on the throne, a Venerable
  * of each element in each hall, four Generals at the gate, the Quartermaster on the palace's terrace); a Venerable taking one into the
  * Court; an officer's merit paid in tokens, their rank risen, the Quartermaster's wares opened by it; the bounty on the realm's devilish
  * immortals; the Gate's watch kept on its plaza; the Court's officers kept as saved.
@@ -37,26 +38,42 @@ public class CelestialCourtGameTests implements FabricGameTest {
 		helper.assertTrue(CelestialCourt.Rank.of(0) == officer && CelestialCourt.Rank.of(29) == officer && CelestialCourt.Rank.of(30) == captain
 				&& CelestialCourt.Rank.of(99) == captain && CelestialCourt.Rank.of(100) == general && CelestialCourt.Rank.of(5000) == general, "Officer, Captain at 30, General at 100");
 		helper.assertTrue(officer.next() == captain && captain.next() == general && general.next() == null, "Each rank's next");
+		// Its King the one Profound Sovereign, its Venerables Taiyi Golden Immortals (phase 3: the ladder's own realms), its Generals True
+		// Immortals of Late or Grand Perfection, the rest True Immortals.
+		RandomSource random = RandomSource.create(7);
+		int kingRank = CelestialCourt.rankOf(NpcTitle.HEAVENLY_KING, random), venerableRank = CelestialCourt.rankOf(NpcTitle.HEAVENLY_VENERABLE, random);
+		helper.assertTrue(kingRank == PlayerCultivation.rank(Realm.PROFOUND_SOVEREIGN, Stage.GRAND_PERFECTION)
+				&& venerableRank == PlayerCultivation.rank(Realm.TAIYI_GOLDEN_IMMORTAL, Stage.GRAND_PERFECTION), "The King a Profound Sovereign, a Venerable a Taiyi Golden Immortal");
+		for (int i = 0; i < 20; i++) {
+			int generalRank = CelestialCourt.rankOf(NpcTitle.IMMORTAL_GENERAL, random);
+			helper.assertTrue(generalRank == PlayerCultivation.rank(Realm.TRUE_IMMORTAL, Stage.LATE) || generalRank == TOP, "A General a True Immortal of Late or Grand Perfection");
+		}
+		helper.assertTrue(CelestialCourt.rankOf(NpcTitle.IMMORTAL_OFFICER, random) == PlayerCultivation.rank(Realm.TRUE_IMMORTAL, Stage.EARLY), "An officer a True Immortal");
 		CultivatorNpc plain = helper.spawn(ModEntities.CULTIVATOR, new BlockPos(1, 2, 1)), king = helper.spawn(ModEntities.CULTIVATOR, new BlockPos(2, 2, 1)),
 				venerable = helper.spawn(ModEntities.CULTIVATOR, new BlockPos(3, 2, 1));
-		for (CultivatorNpc npc : List.of(plain, king, venerable)) npc.setRank(TOP, true);
+		plain.setRank(TOP, true);
+		king.setRank(kingRank, true);
+		venerable.setRank(venerableRank, true);
 		king.setTitle(NpcTitle.HEAVENLY_KING);
 		venerable.setCourtElement(QiElement.WOOD);
 		venerable.setTitle(NpcTitle.HEAVENLY_VENERABLE);
-		// Their strength the ladder's past True Immortal, each realm twice the last (the user's rule): Taiyi four realms on, Daluo five.
-		helper.assertTrue(CelestialCourt.pastTrueImmortal(1) == 2 && CelestialCourt.VENERABLE_MIGHT == 16 && CelestialCourt.KING_MIGHT == 32,
-				"Each realm past True Immortal twice the last: a Taiyi sixteen times, a Daluo thirty-two");
-		helper.assertTrue(Math.abs(king.getMaxHealth() / plain.getMaxHealth() - CelestialCourt.KING_MIGHT) < 0.01
-				&& Math.abs(venerable.getMaxHealth() / plain.getMaxHealth() - CelestialCourt.VENERABLE_MIGHT) < 0.01,
-				"The King's body thirty-two times a True Immortal's of Grand Perfection, a Venerable's sixteen (" + king.getMaxHealth() / plain.getMaxHealth() + ")");
+		// Each realm past True Immortal twice the last (the user's rule): a Taiyi sixteen times a True Immortal, a Profound Sovereign thirty-two.
+		helper.assertTrue(Realm.TAIYI_GOLDEN_IMMORTAL.getMaxHealth() == 16 * Realm.TRUE_IMMORTAL.getMaxHealth()
+				&& Realm.PROFOUND_SOVEREIGN.getMaxHealth() == 32 * Realm.TRUE_IMMORTAL.getMaxHealth()
+				&& Realm.PROFOUND_SOVEREIGN.getAttackDamage() == 32 * Realm.TRUE_IMMORTAL.getAttackDamage(), "Each realm past True Immortal twice the last");
+		double health = king.getMaxHealth() / plain.getMaxHealth();
+		helper.assertTrue(Math.abs(king.getMaxHealth() - (CultivationStats.maxHealth(Realm.PROFOUND_SOVEREIGN, Stage.GRAND_PERFECTION) + 20)) < 2
+				&& Math.abs(venerable.getMaxHealth() - (CultivationStats.maxHealth(Realm.TAIYI_GOLDEN_IMMORTAL, Stage.GRAND_PERFECTION) + 20)) < 2,
+				"The King's body a Profound Sovereign's of Grand Perfection, a Venerable's a Taiyi's (" + health + " times a True Immortal's)");
 		double blows = king.getAttributeValue(Attributes.ATTACK_DAMAGE) / plain.getAttributeValue(Attributes.ATTACK_DAMAGE);
-		helper.assertTrue(blows > CelestialCourt.KING_MIGHT - 0.1, "The King's blows too (" + blows + ")");
+		helper.assertTrue(health > 31.9 && blows > 31.9, "The King's body and blows some thirty-two times a True Immortal's (" + health + ", " + blows + ")");
 		helper.assertTrue(HeavenMethod.of(QiElement.WOOD, Realm.TRUE_IMMORTAL).equals(venerable.heavenMethod()), "A Venerable's method its own element's True Immortal one");
-		helper.assertTrue(key(king.rankLabel()).equals(ModLang.RANK_DALUO) && key(venerable.rankLabel()).equals(ModLang.RANK_TAIYI),
-				"The King named a Daluo Golden Immortal, a Venerable a Taiyi");
-		// Stripped of its station, a King is a True Immortal's strength again.
+		helper.assertTrue(king.heavenMethod() != null && king.heavenMethod().realm() == Realm.TRUE_IMMORTAL, "No method teaches past True Immortal: the King's is a True Immortal one");
+		helper.assertTrue(king.getDisplayedRealm() == Realm.PROFOUND_SOVEREIGN && venerable.getDisplayedRealm() == Realm.TAIYI_GOLDEN_IMMORTAL,
+				"Named by their realms (" + king.getDisplayedRealm() + ", " + venerable.getDisplayedRealm() + ")");
+		// Stripped of its station, a King keeps its realm: a Profound Sovereign still.
 		king.setTitle(NpcTitle.ROGUE);
-		helper.assertTrue(Math.abs(king.getMaxHealth() - plain.getMaxHealth()) < 1, "No King, no King's strength");
+		helper.assertTrue(king.getRank() == kingRank && Math.abs(king.getMaxHealth() / plain.getMaxHealth() - health) < 0.01, "No King, still a Profound Sovereign");
 		helper.succeed();
 	}
 

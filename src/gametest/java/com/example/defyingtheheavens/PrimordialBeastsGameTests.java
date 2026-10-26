@@ -55,21 +55,26 @@ public class PrimordialBeastsGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void theirStrength(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
-		CultivatorNpc plain = ModEntities.CULTIVATOR.create(level);
+		CultivatorNpc plain = ModEntities.CULTIVATOR.create(level), golden = ModEntities.CULTIVATOR.create(level);
 		plain.setRank(TOP, true);
+		golden.setRank(BeastKind.CHAOS_RANK, true);
 		for (BeastKind kind : PrimordialBeasts.KINDS) {
 			PrimordialBeast beast = beast(level, kind);
-			double body = beast.getMaxHealth() / plain.getMaxHealth();
-			double blows = beast.getAttributeValue(Attributes.ATTACK_DAMAGE) / plain.getAttributeValue(Attributes.ATTACK_DAMAGE);
+			// The Primordial Chaos (phase 3c) a Golden Immortal of Grand Perfection, the more by the same might.
+			boolean chaos = kind == BeastKind.PRIMORDIAL_CHAOS;
+			CultivatorNpc like = chaos ? golden : plain;
+			double body = beast.getMaxHealth() / like.getMaxHealth();
+			double blows = beast.getAttributeValue(Attributes.ATTACK_DAMAGE) / like.getAttributeValue(Attributes.ATTACK_DAMAGE);
 			helper.assertTrue(Math.abs(body - PrimordialBeast.MIGHT) < 0.01 && Math.abs(blows - PrimordialBeast.MIGHT) < 0.01,
-					kind + ": a little stronger than a True Immortal of Grand Perfection (" + body + ", " + blows + ")");
-			helper.assertTrue(kind.tier == BeastKind.Tier.PRIMORDIAL && beast.getRank() == TOP && beast.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE) >= 0.999,
-					kind + ": a True Immortal of Grand Perfection, moved by nothing");
+					kind + ": a little stronger than its realm's Grand Perfection (" + body + ", " + blows + ")");
+			helper.assertTrue(kind.tier == BeastKind.Tier.PRIMORDIAL && beast.getRank() == (chaos ? BeastKind.CHAOS_RANK : TOP)
+					&& beast.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE) >= 0.999, kind + ": of its realm's Grand Perfection, moved by nothing");
 			helper.assertTrue(beast.isInvulnerableTo(level.damageSources().inWall()) && beast.isInvulnerableTo(level.damageSources().fall())
 					&& !beast.isInvulnerableTo(level.damageSources().generic()) && beast.requiresCustomPersistence(),
 					kind + ": no suffocating in the land it brushes nor falling, but harmed; never gone for want of anyone near");
 		}
-		helper.assertTrue(PrimordialBeast.MIGHT > 1 && PrimordialBeast.MIGHT < CelestialCourt.VENERABLE_MIGHT, "Slightly stronger: not a Venerable's strength");
+		helper.assertTrue(PrimordialBeast.MIGHT > 1 && PrimordialBeast.MIGHT < Realm.EARTH_IMMORTAL.getMaxHealth() / Realm.TRUE_IMMORTAL.getMaxHealth(),
+				"Slightly stronger: not the next realm's strength (an Earth Immortal's, twice a True Immortal's)");
 		helper.succeed();
 	}
 
@@ -178,6 +183,7 @@ public class PrimordialBeastsGameTests implements FabricGameTest {
 		for (int k = 0; k < lairs.length; k++) {
 			BeastKind kind = PrimordialBeasts.KINDS[k];
 			BlockPos lair = lairs[k];
+			if (kind == BeastKind.PRIMORDIAL_CHAOS) continue; // out in the Chaos Frontier (ChaosFrontierGameTests)
 			double d = Math.hypot(lair.getX() - ImmortalGate.HEAVEN_X, lair.getZ() - ImmortalGate.HEAVEN_Z);
 			helper.assertTrue(d >= PrimordialBeasts.LAIR_MIN - 1 && d <= PrimordialBeasts.LAIR_MAX + 1, kind + "'s lair " + Math.round(d) + " from the Gate");
 			helper.assertTrue(PrimordialBeasts.clearOfPeople(state, lair.getX(), lair.getZ()), kind + "'s lair clear of the cities and the sects (" + lair.toShortString() + ")");
@@ -210,8 +216,9 @@ public class PrimordialBeastsGameTests implements FabricGameTest {
 		try {
 			helper.assertTrue(metal != null && wood != null && metal.getBloodline() == Bloodline.TIGER && wood.getBloodline() == Bloodline.DRAGON && metal.isDemon() && wood.isDemon(),
 					"Come to their halls, demons of their races");
-			helper.assertTrue(metal.getTitle() == NpcTitle.HEAVENLY_VENERABLE && metal.getRank() == TOP
-					&& Math.abs(metal.getMaxHealth() / (CultivationStats.maxHealth(Realm.TRUE_IMMORTAL, Stage.GRAND_PERFECTION) + 20) - CelestialCourt.VENERABLE_MIGHT) < 0.02,
+			// A Taiyi Golden Immortal of Grand Perfection (phase 3), its race's or not.
+			helper.assertTrue(metal.getTitle() == NpcTitle.HEAVENLY_VENERABLE && metal.getRank() == PlayerCultivation.rank(Realm.TAIYI_GOLDEN_IMMORTAL, Stage.GRAND_PERFECTION)
+					&& Math.abs(metal.getMaxHealth() - (CultivationStats.maxHealth(Realm.TAIYI_GOLDEN_IMMORTAL, Stage.GRAND_PERFECTION) + 20)) < 2,
 					"A Venerable's rank and strength still (" + metal.getMaxHealth() + ")");
 		} finally {
 			if (metal != null) metal.discard();
@@ -236,6 +243,12 @@ public class PrimordialBeastsGameTests implements FabricGameTest {
 		helper.assertTrue(CultivatorTrades.bloodPrice(Realm.TRUE_IMMORTAL) == 60 * jade
 				&& CultivatorTrades.bloodPrice(Realm.TRUE_IMMORTAL) == CultivatorTrades.heavenSlipPrice(HeavenMethod.of(QiElement.FIRE, Realm.TRUE_IMMORTAL)),
 				"Sixty jade a True Immortal's blood, as its slip");
+		// The ladder's past it (phase 3): ten jade more a realm, a Heavenly Lord's 120, two stacks of jade on the trading screen.
+		helper.assertTrue(CultivatorTrades.bloodPrice(Realm.EARTH_IMMORTAL) == 70 * jade && CultivatorTrades.bloodPrice(Realm.HEAVENLY_LORD) == 120 * jade,
+				"Seventy jade an Earth Immortal's blood, 120 a Heavenly Lord's");
+		ItemStack[] dearest = CultivatorTrades.costsFor(CultivatorTrades.bloodPrice(Realm.HEAVENLY_LORD));
+		helper.assertTrue(dearest[0].is(ModItems.IMMORTAL_JADE) && dearest[0].getCount() == 64 && dearest[1].is(ModItems.IMMORTAL_JADE) && dearest[1].getCount() == 56,
+				"Paid in two stacks of jade (" + dearest[0] + ", " + dearest[1] + ")");
 		CultivatorNpc npc = ModEntities.CULTIVATOR.create(helper.getLevel());
 		int rank = PlayerCultivation.rank(Realm.TRUE_IMMORTAL, Stage.EARLY);
 		npc.becomeRogue(rank, 0, helper.getLevel().getRandom());
@@ -270,7 +283,7 @@ public class PrimordialBeastsGameTests implements FabricGameTest {
 		PrimordialBeasts.Data data = PrimordialBeasts.Data.get(level.getServer());
 		BlockPos[] lairs = lairs(helper);
 		List<Component> lines = PrimordialBeasts.directions(data, lairs, level.getGameTime());
-		helper.assertTrue(lines.size() == 3, "A Venerable's word of each of the three");
+		helper.assertTrue(lines.size() == PrimordialBeasts.KINDS.length && lines.size() == 4, "A Venerable's word of each of the four");
 		for (int k = 0; k < lines.size(); k++) {
 			String id = PrimordialBeasts.KINDS[k].getId(), said = key(lines.get(k));
 			helper.assertTrue(said.equals(ModLang.primordialWhere(id)) || said.equals(ModLang.primordialGone(id)), "Where the " + id + " keeps, or when the next comes (" + said + ")");

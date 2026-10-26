@@ -41,6 +41,10 @@ public class HeavenMethodsGameTests implements FabricGameTest {
 		for (QiElement element : QiElement.five()) {
 			for (Realm realm : Realm.values()) {
 				HeavenMethod method = HeavenMethod.of(element, realm);
+				if (realm.isPastTrueImmortal()) { // the ladder past it (phase 3): no method carries it, the Laws do
+					helper.assertTrue(method == null, "None for " + element + " " + realm);
+					continue;
+				}
 				helper.assertTrue(method != null && method.element() == element && method.realm() == realm, "One for " + element + " " + realm);
 				helper.assertTrue(method.layers() == 9 * (realm.ordinal() + 1) && method.ownLayer(3) == method.layers() - 6,
 						method.getId() + ": nine layers a realm from Qi Refining, its spells in its own");
@@ -70,8 +74,9 @@ public class HeavenMethodsGameTests implements FabricGameTest {
 		for (QiElement element : QiElement.five()) {
 			for (Realm realm : Realm.values()) {
 				// Every realm has its spells (the realms after Four Axis had none of their own at first, 2026-10-22; all of them came
-				// 2026-10-24).
-				int want = (realm.ordinal() <= Realm.FOUNDATION_BUILDING.ordinal() ? 3 : 2) + (element == QiElement.WOOD && realm == Realm.FOUR_AXIS ? 1 : 0);
+				// 2026-10-24); the ladder past True Immortal none (phase 3: the Laws strengthen the spells there are).
+				int want = realm.isPastTrueImmortal() ? 0
+						: (realm.ordinal() <= Realm.FOUNDATION_BUILDING.ordinal() ? 3 : 2) + (element == QiElement.WOOD && realm == Realm.FOUR_AXIS ? 1 : 0);
 				helper.assertTrue(perSlot.getOrDefault(element + " " + realm, 0) == want, element + " " + realm + ": " + want + " spells");
 			}
 		}

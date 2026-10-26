@@ -53,6 +53,18 @@
             "depth": [-0.25, 1.0],
             "offset": 0.0
           }
+        },
+        {
+          "biome": "defying-the-heavens:chaos_frontier",
+          "parameters": {
+            "temperature": [-1.0, 1.0],
+            "humidity": [-1.0, 1.0],
+            "continentalness": [-1.0, 1.0],
+            "erosion": 1.0,
+            "weirdness": 0.0,
+            "depth": [-1.0, 1.0],
+            "offset": 0.0
+          }
         }
       ]
     }

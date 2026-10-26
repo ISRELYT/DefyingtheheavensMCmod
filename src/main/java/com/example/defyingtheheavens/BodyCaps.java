@@ -12,8 +12,11 @@ import net.minecraft.world.entity.ai.attributes.RangedAttribute;
  * resistance keep vanilla's caps: they turn no more of a blow past them.
  */
 public final class BodyCaps {
-	/** The new cap on both: far past what any body reaches. */
-	public static final double MAX = 10_000_000;
+	/**
+	 * The new cap on both: far past what any body reaches (a Heavenly Lord of Grand Perfection's some 4.8 million, phase 3: an Ancient
+	 * Holy Body's, a true dragon's and its stat points on top keep well short of it).
+	 */
+	public static final double MAX = 100_000_000;
 
 	public static void lift() {
 		lift(Attributes.MAX_HEALTH);

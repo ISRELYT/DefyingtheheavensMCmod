@@ -70,7 +70,7 @@ public final class NetherworldCommand {
 						.then(Commands.literal("learn")
 								.then(Commands.argument("id", StringArgumentType.word()).suggests(METHOD_IDS)
 										.executes(ctx -> learn(ctx.getSource().getPlayerOrException(), method(ctx), 0))
-										.then(Commands.argument("layer", IntegerArgumentType.integer(1, MethodLayers.layers(Realm.byIndex(Realm.values().length - 1))))
+										.then(Commands.argument("layer", IntegerArgumentType.integer(1, MethodLayers.layers(Realm.LAST_TAUGHT)))
 												.executes(ctx -> learn(ctx.getSource().getPlayerOrException(), method(ctx),
 														IntegerArgumentType.getInteger(ctx, "layer"))))))
 						.then(Commands.literal("progress")
@@ -115,7 +115,7 @@ public final class NetherworldCommand {
 						.then(Commands.literal("learn")
 								.then(Commands.argument("id", StringArgumentType.word()).suggests(HEAVEN_IDS)
 										.executes(ctx -> learnHeaven(ctx.getSource().getPlayerOrException(), heavenMethod(ctx), 0))
-										.then(Commands.argument("layer", IntegerArgumentType.integer(1, MethodLayers.layers(Realm.byIndex(Realm.values().length - 1))))
+										.then(Commands.argument("layer", IntegerArgumentType.integer(1, MethodLayers.layers(Realm.LAST_TAUGHT)))
 												.executes(ctx -> learnHeaven(ctx.getSource().getPlayerOrException(), heavenMethod(ctx),
 														IntegerArgumentType.getInteger(ctx, "layer"))))))
 						.then(Commands.literal("progress")

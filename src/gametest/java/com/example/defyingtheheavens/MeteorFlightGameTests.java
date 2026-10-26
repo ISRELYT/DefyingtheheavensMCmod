@@ -90,6 +90,11 @@ public class MeteorFlightGameTests implements FabricGameTest {
 			if (realm.ordinal() < Realm.CORE_FORMATION.ordinal()) continue;
 			for (Stage stage : Stage.values()) {
 				double top = MeteorFlight.topSpeed(realm, stage);
+				// Past True Immortal (phase 3), its Grand Perfection's: the land loads no faster for the swifter.
+				if (realm.isPastTrueImmortal()) {
+					helper.assertTrue(top == MeteorFlight.topSpeed(Realm.TRUE_IMMORTAL, Stage.GRAND_PERFECTION), "The ladder as swift as True Immortal Grand Perfection: " + realm.getId());
+					continue;
+				}
 				helper.assertTrue(top > last, "Swifter with every stage: " + realm.getId() + " " + stage.getId() + " (" + top + ")");
 				last = top;
 			}

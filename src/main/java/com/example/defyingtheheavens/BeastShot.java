@@ -23,10 +23,15 @@ import net.minecraft.world.phys.Vec3;
  * What a demon beast throws or spits (DemonBeastGoals#ShootGoal): a fire monkey's burning stone, lobbed, setting what it strikes alight;
  * a flood dragon's jet of water, flying nearly straight, knocking back what it strikes. The primordial beasts' (PrimordialBeast): the
  * Peng's feather blades, flying straight on the wind, and the True Phoenix's burning feathers, falling as rain and setting what they
- * strike alight. None harms the land, nor another beast.
+ * strike alight. The Chaos Frontier's chaos bolts (a Chaos Fiend's, the Primordial Chaos's fan of them), flying straight, a knot of
+ * grey-violet chaos. None harms the land, nor another beast.
  */
 public class BeastShot extends ThrowableItemProjectile {
-	public enum Kind { FIRE_STONE, WATER, FEATHER, FIRE_FEATHER }
+	public enum Kind { FIRE_STONE, WATER, FEATHER, FIRE_FEATHER, CHAOS }
+
+	/** A chaos bolt's look: grey-violet motes about a pale core. */
+	private static final net.minecraft.core.particles.DustParticleOptions CHAOS_MOTE =
+			new net.minecraft.core.particles.DustParticleOptions(new org.joml.Vector3f(0.58f, 0.46f, 0.76f), 1.4f);
 
 	private static final EntityDataAccessor<Byte> DATA_KIND = SynchedEntityData.defineId(BeastShot.class, EntityDataSerializers.BYTE);
 	private static final int LIFETIME = 100;
@@ -66,7 +71,7 @@ public class BeastShot extends ThrowableItemProjectile {
 	protected float getGravity() {
 		return switch (kind()) {
 			case WATER -> 0.005f;
-			case FEATHER -> 0.0f; // borne on the Peng's wind
+			case FEATHER, CHAOS -> 0.0f; // borne on the Peng's wind; chaos weighs nothing
 			case FIRE_FEATHER -> 0.02f; // falling as rain
 			default -> 0.03f;
 		};
@@ -88,6 +93,13 @@ public class BeastShot extends ThrowableItemProjectile {
 				level().addParticle(ParticleTypes.BUBBLE_POP, at.x, at.y, at.z, 0, 0, 0);
 			} else if (kind() == Kind.FEATHER) {
 				level().addParticle(ParticleTypes.CLOUD, at.x, at.y, at.z, 0, 0, 0); // the wind it rides
+			} else if (kind() == Kind.CHAOS) {
+				for (int i = 0; i < 3; i++) {
+					level().addParticle(CHAOS_MOTE, at.x + (random.nextDouble() - 0.5) * 0.5, at.y + (random.nextDouble() - 0.5) * 0.5,
+							at.z + (random.nextDouble() - 0.5) * 0.5, 0, 0, 0);
+				}
+				level().addParticle(ParticleTypes.END_ROD, at.x, at.y, at.z, 0, 0, 0);
+				level().addParticle(ParticleTypes.REVERSE_PORTAL, at.x, at.y, at.z, 0, 0, 0);
 			} else {
 				level().addParticle(ParticleTypes.FLAME, at.x, at.y, at.z, 0, 0.02, 0);
 				level().addParticle(ParticleTypes.SMOKE, at.x, at.y, at.z, 0, 0.02, 0);
@@ -110,7 +122,7 @@ public class BeastShot extends ThrowableItemProjectile {
 		if (!target.hurt(damageSources().thrown(this, owner), damage)) return;
 		if (kind() == Kind.FIRE_STONE || kind() == Kind.FIRE_FEATHER) {
 			target.setSecondsOnFire(3);
-		} else if (kind() == Kind.FEATHER) {
+		} else if (kind() == Kind.FEATHER || kind() == Kind.CHAOS) {
 			Vec3 push = getDeltaMovement().normalize();
 			target.knockback(0.6, -push.x, -push.z);
 			target.hurtMarked = true;
@@ -132,6 +144,10 @@ public class BeastShot extends ThrowableItemProjectile {
 		} else if (kind() == Kind.FEATHER) {
 			level.sendParticles(ParticleTypes.CLOUD, getX(), getY(), getZ(), 6, 0.2, 0.2, 0.2, 0.02);
 			level.playSound(null, blockPosition(), SoundEvents.TRIDENT_HIT, SoundSource.HOSTILE, 0.5f, 1.4f);
+		} else if (kind() == Kind.CHAOS) {
+			level.sendParticles(CHAOS_MOTE, getX(), getY(), getZ(), 14, 0.4, 0.4, 0.4, 0.02);
+			level.sendParticles(ParticleTypes.REVERSE_PORTAL, getX(), getY(), getZ(), 12, 0.3, 0.3, 0.3, 0.1);
+			level.playSound(null, blockPosition(), SoundEvents.AMETHYST_CLUSTER_BREAK, SoundSource.HOSTILE, 0.8f, 0.6f);
 		} else {
 			level.sendParticles(ParticleTypes.LAVA, getX(), getY(), getZ(), 6, 0.2, 0.2, 0.2, 0.05);
 			level.playSound(null, blockPosition(), SoundEvents.FIRECHARGE_USE, SoundSource.HOSTILE, 0.6f, 1.2f);

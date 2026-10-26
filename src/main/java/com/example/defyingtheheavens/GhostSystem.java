@@ -369,11 +369,12 @@ public final class GhostSystem {
 
 	/**
 	 * The rule itself: whether {@code source} is something that reaches the dead at all. The Spatial Gap's pressure does, as it does the
-	 * living's souls (it passed through the dead before the sweep of 2026-10-23: the gap's stormy layers were nothing to them).
+	 * living's souls (it passed through the dead before the sweep of 2026-10-23: the gap's stormy layers were nothing to them); and the
+	 * Chaos Frontier's storm, which unmakes souls as it does bodies.
 	 */
 	public static boolean reaches(DamageSource source) {
 		if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) || source.is(ModDamageTypes.GHOSTLY) || yinTribulation(source)
-				|| source.is(ModDamageTypes.SPATIAL_PRESSURE)) return true;
+				|| source.is(ModDamageTypes.SPATIAL_PRESSURE) || source.is(ModDamageTypes.CHAOS_STORM)) return true;
 		Entity attacker = source.getEntity();
 		// A heart demon is the soul's own, the dead's too (the Inner Realm): it reaches them, and they it (#attack). The void's
 		// beasts hunt whatever crosses space, the dead among them (the user's pick, 2026-10-24: their bites passed through).
@@ -426,7 +427,7 @@ public final class GhostSystem {
 	/** The rule itself: how much of {@code amount} from {@code source} lands on one of the dead. */
 	public static float scaled(DamageSource source, float amount) {
 		if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) || source.is(ModDamageTypes.GHOSTLY) || yinTribulation(source)
-				|| source.is(ModDamageTypes.SPATIAL_PRESSURE)) return amount;
+				|| source.is(ModDamageTypes.SPATIAL_PRESSURE) || source.is(ModDamageTypes.CHAOS_STORM)) return amount;
 		if (peachWood(source)) return amount * PeachWoodSwordItem.ON_THE_DEAD;
 		Entity attacker = source.getEntity();
 		// In full: the dead's own, a heart demon's (it reached the dead but landed as nothing before 2026-10-24, so no ghost turned

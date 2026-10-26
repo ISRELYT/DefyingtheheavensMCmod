@@ -56,9 +56,10 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * One of the Immortal Realm's three primordial beasts (phase 2 of the realm plan, 2026-10-26; the user's change: "the 3 primordial beasts
- * should be slightly stronger than true immortal grand perfection"): a world boss, one of each in the realm at a time (PrimordialBeasts:
- * their lairs, their coming and going), a True Immortal of Grand Perfection {@link #MIGHT} times as strong as its realm. Its own ways in
+ * One of the Immortal Realm's primordial beasts (phase 2 of the realm plan, 2026-10-26; the user's change: "the 3 primordial beasts
+ * should be slightly stronger than true immortal grand perfection"; the fourth, the Primordial Chaos, phase 3c's): a world boss, one of each
+ * in the realm at a time (PrimordialBeasts: their lairs, their coming and going), a True Immortal of Grand Perfection (the Primordial Chaos
+ * a Golden Immortal's) {@link #MIGHT} times as strong as its realm. Its own ways in
  * the air, steered here rather than by paths (no path is made for a body this vast):
  * <ul>
  *   <li><b>The Kun-Peng</b> (water, then metal): the Kun, a fish some fifty blocks long (Void Shattering's Kun, its model the spell's:
@@ -71,6 +72,13 @@ import java.util.UUID;
  *   <li><b>The True Dragon</b> (wood, thunder's element), some eighty blocks long: rides its storm (dark clouds about it on the client,
  *   lightning striking round it, no fire kindled); lightning called down where its foe stood (it roars), the sweep of its tail, its coils,
  *   its dive.</li>
+ *   <li><b>The Primordial Chaos</b> (phase 3c), Hundun's remnant out in the Chaos Frontier: a faceless sack of churning chaos on six legs
+ *   and four wings, banded in the five colours fading to grey, some forty blocks across; a Golden Immortal of Grand Perfection
+ *   (BeastKind#CHAOS_RANK). The Unmaking ({@link #UNMAKING_REACH}: it draws in on itself, told and seen, then bursts, hurling all about it
+ *   and folding away every Law domain whose owner it catches, LawDomains#unmake), Devour (whatever is within {@link #DEVOUR_REACH} pulled
+ *   in and crushed against it), a fan of chaos bolts (BeastShot), and Heaven Immortal fiends called up about it (ChaosFiend). Slain it
+ *   leaves {@link #CHAOS_FRAGMENTS} Dao Fragments of as many Laws, {@link #CHAOS_STONES} Chaos Origin Stones and {@link #CHAOS_JADE}
+ *   Immortal Jade, and the Court pays the more for it (CelestialCourt#SLAY_CHAOS).</li>
  * </ul>
  * Each keeps to its lair ({@link #LEASH}, giving chase {@link #CHASE} further), goes for whoever comes within {@link #NOTICE}, shows its
  * strength to those within {@link #BAR_REACH} on a boss bar, and left alone {@link #CALM_TICKS} is whole again (the Phoenix its rebirth
@@ -103,6 +111,15 @@ public class PrimordialBeast extends DemonBeast {
 	static final double KUN_DEEP = 11, KUN_SHALLOW = 8;
 	/** The Peng's size (the Kun's is its kind's). */
 	static final float PENG_WIDTH = 12.8f, PENG_HEIGHT = 8.0f;
+	/**
+	 * The Primordial Chaos: its Unmaking bursts this far about it after drawing in so long (ticks); its Devour pulls in whatever is this
+	 * near; it calls up fiends while fewer than this many are about it; what it leaves.
+	 */
+	public static final double UNMAKING_REACH = 30, DEVOUR_REACH = 40;
+	static final int UNMAKING_GATHER = 40, SUMMONED_MAX = 4;
+	public static final int CHAOS_FRAGMENTS = 6, CHAOS_STONES = 12, CHAOS_JADE = 12;
+	/** Chaos streaming into the Primordial Chaos, and out of it: grey-violet motes. */
+	private static final DustParticleOptions CHAOS_MOTE = new DustParticleOptions(new Vector3f(0.56f, 0.46f, 0.74f), 3.0f);
 
 	private static final EntityDataAccessor<Byte> DATA_PHASE = SynchedEntityData.defineId(PrimordialBeast.class, EntityDataSerializers.BYTE);
 	/** The Kun's spout: sea-blue mist, seen against the sea of clouds' white. */
@@ -112,8 +129,8 @@ public class PrimordialBeast extends DemonBeast {
 
 	// Its moves, one at a time, each its own rest after.
 	private static final int NONE = 0, SPOUT = 1, RAM = 2, GUST = 3, VOLLEY = 4, DIVE = 5, BREATH = 6, RAIN = 7, SHOCK = 8, LIGHTNING = 9,
-			SWEEP = 10, COIL = 11;
-	private static final int MOVES = 12;
+			SWEEP = 10, COIL = 11, UNMAKING = 12, DEVOUR = 13, BOLTS = 14, SUMMON = 15;
+	private static final int MOVES = 16;
 
 	/** Its lair (its own spot, when it came into the world some other way than to its lair: an egg, a command). */
 	private BlockPos lair;
@@ -217,6 +234,7 @@ public class PrimordialBeast extends DemonBeast {
 		double reach = switch (kind()) {
 			case TRUE_DRAGON -> 76;
 			case TRUE_PHOENIX -> 28;
+			case PRIMORDIAL_CHAOS -> 30;
 			default -> isPeng() ? 34 : 40;
 		};
 		return getBoundingBox().inflate(reach);
@@ -225,8 +243,10 @@ public class PrimordialBeast extends DemonBeast {
 	@Override
 	public boolean isInvulnerableTo(DamageSource source) {
 		if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) return super.isInvulnerableTo(source);
-		// An ember can't be touched; nor does a body this vast suffocate where it brushes the land, fall, or burn in its own storm.
-		if (isEmber() || source.is(DamageTypes.IN_WALL) || source.is(DamageTypes.FALL) || source.is(DamageTypes.LIGHTNING_BOLT)) return true;
+		// An ember can't be touched; nor does a body this vast suffocate where it brushes the land, fall, or burn in its own storm (the
+		// Primordial Chaos's, the Frontier's).
+		if (isEmber() || source.is(DamageTypes.IN_WALL) || source.is(DamageTypes.FALL) || source.is(DamageTypes.LIGHTNING_BOLT)
+				|| source.is(ModDamageTypes.CHAOS_STORM)) return true;
 		return super.isInvulnerableTo(source);
 	}
 
@@ -304,26 +324,29 @@ public class PrimordialBeast extends DemonBeast {
 		super.travel(travel);
 	}
 
-	/** Whether its move under way steers it (a ram, a dive, the Phoenix hovering as it breathes fire, the Dragon holding its prey). */
+	/**
+	 * Whether its move under way steers it (a ram, a dive, the Phoenix hovering as it breathes fire, the Dragon holding its prey, the
+	 * Primordial Chaos drawing in on itself or devouring).
+	 */
 	private boolean steersItself() {
-		return move == RAM || move == DIVE || move == BREATH || move == COIL;
+		return move == RAM || move == DIVE || move == BREATH || move == COIL || move == UNMAKING || move == DEVOUR;
 	}
 
 	/** Its way while it is not moved by its move: round its foe if it has one, else round its lair, each at its own height and pace. */
 	private void cruise(ServerLevel level, LivingEntity target) {
 		Vec3 centre;
 		double radius, height, speed;
-		boolean kun = isKun();
+		boolean kun = isKun(), chaos = kind() == BeastKind.PRIMORDIAL_CHAOS;
 		if (target != null) {
 			centre = target.position();
-			radius = kun ? 10 : isPeng() ? 30 : kind() == BeastKind.TRUE_PHOENIX ? 24 : 33;
-			height = kun ? 0 : isPeng() ? 15 : kind() == BeastKind.TRUE_PHOENIX ? 12 : 15;
-			speed = kun ? 0.44 : isPeng() ? 0.78 : 0.65;
+			radius = kun ? 10 : isPeng() ? 30 : kind() == BeastKind.TRUE_PHOENIX ? 24 : chaos ? 26 : 33;
+			height = kun ? 0 : isPeng() ? 15 : kind() == BeastKind.TRUE_PHOENIX ? 12 : chaos ? 6 : 15;
+			speed = kun ? 0.44 : isPeng() ? 0.78 : chaos ? 0.5 : 0.65;
 		} else {
 			centre = Vec3.atCenterOf(lair);
-			radius = kun ? 54 : isPeng() ? 78 : kind() == BeastKind.TRUE_PHOENIX ? 33 : 84;
+			radius = kun ? 54 : isPeng() ? 78 : kind() == BeastKind.TRUE_PHOENIX ? 33 : chaos ? 48 : 84;
 			height = isPeng() ? ModDimensions.IMMORTAL_CLOUD_Y + 40 - centre.y : 0;
-			speed = kun ? 0.24 : 0.42;
+			speed = kun ? 0.24 : chaos ? 0.3 : 0.42;
 		}
 		circling += speed / radius;
 		Vec3 to = new Vec3(centre.x + Math.cos(circling) * radius, centre.y + height, centre.z + Math.sin(circling) * radius);
@@ -385,8 +408,8 @@ public class PrimordialBeast extends DemonBeast {
 
 	private void endMove() {
 		if (move != NONE) ready[move] = level().getGameTime() + rest(move);
-		if (move == COIL || move == SWEEP) setActing(ACT_COIL, false);
-		if (move == BREATH) setActing(ACT_BREATH, false);
+		if (move == COIL || move == SWEEP || move == UNMAKING) setActing(ACT_COIL, false);
+		if (move == BREATH || move == DEVOUR) setActing(ACT_BREATH, false);
 		move = NONE;
 		held = null;
 		mark = null;
@@ -406,6 +429,10 @@ public class PrimordialBeast extends DemonBeast {
 			case LIGHTNING -> 80;
 			case SWEEP -> 100;
 			case COIL -> 220;
+			case UNMAKING -> 260;
+			case DEVOUR -> 200;
+			case BOLTS -> 70;
+			case SUMMON -> 500;
 			default -> 40;
 		};
 	}
@@ -433,6 +460,11 @@ public class PrimordialBeast extends DemonBeast {
 			if (rested(SWEEP, now) && d < 21) can.add(SWEEP);
 			if (rested(COIL, now) && d < 10) can.add(COIL);
 			if (rested(DIVE, now) && d < 66) can.add(DIVE);
+		} else if (kind() == BeastKind.PRIMORDIAL_CHAOS) {
+			if (rested(UNMAKING, now) && d < UNMAKING_REACH - 6) can.add(UNMAKING);
+			if (rested(DEVOUR, now) && d < DEVOUR_REACH - 8) can.add(DEVOUR);
+			if (rested(BOLTS, now) && d > 6 && d < 60 && seen) can.add(BOLTS);
+			if (rested(SUMMON, now)) can.add(SUMMON);
 		}
 		if (can.isEmpty()) return;
 		begin(can.get(random.nextInt(can.size())));
@@ -442,7 +474,7 @@ public class PrimordialBeast extends DemonBeast {
 	/** The move under way, a tick of it. */
 	private void act(ServerLevel level, LivingEntity target, long now) {
 		moveTicks++;
-		if (target == null && move != SPOUT && move != LIGHTNING) {
+		if (target == null && move != SPOUT && move != LIGHTNING && move != UNMAKING) {
 			endMove();
 			return;
 		}
@@ -458,6 +490,10 @@ public class PrimordialBeast extends DemonBeast {
 			case LIGHTNING -> lightning(level, target);
 			case SWEEP -> sweep(level, target);
 			case COIL -> coil(level, target);
+			case UNMAKING -> unmaking(level);
+			case DEVOUR -> devour(level, target);
+			case BOLTS -> bolts(level, target);
+			case SUMMON -> summon(level, target);
 			default -> endMove();
 		}
 	}
@@ -725,6 +761,132 @@ public class PrimordialBeast extends DemonBeast {
 		if (moveTicks % 12 == 0) held.hurt(damageSources().mobAttack(this), attack() * 0.7f);
 	}
 
+	/**
+	 * The Primordial Chaos's Unmaking: it draws in on itself {@link #UNMAKING_GATHER} ticks (told to those near; chaos streaming into it, a
+	 * ring marking its reach), then bursts: all within {@link #UNMAKING_REACH} harmed and hurled out, every Law domain whose owner it catches
+	 * folded away (LawDomains#unmake).
+	 */
+	private void unmaking(ServerLevel level) {
+		Vec3 middle = position().add(0, getBbHeight() * 0.5, 0);
+		if (moveTicks == 1) {
+			setActing(ACT_COIL, true);
+			sound(SoundEvents.WARDEN_SONIC_CHARGE, 5.0f, 0.4f);
+			tell(level, Component.translatable(ModLang.MSG_CHAOS_UNMAKING).withStyle(ChatFormatting.DARK_PURPLE));
+		}
+		setDeltaMovement(getDeltaMovement().scale(0.6));
+		if (moveTicks < UNMAKING_GATHER) {
+			if (moveTicks % 2 == 0) {
+				double reach = UNMAKING_REACH * (1 - 0.6 * moveTicks / UNMAKING_GATHER);
+				for (int i = 0; i < 10; i++) {
+					Vec3 from = middle.add(unit().scale(reach));
+					fx(level, CHAOS_MOTE, from.x, from.y, from.z, 1, 0, 0, 0, 0);
+				}
+			}
+			if (moveTicks % 8 == 0) {
+				for (int k = 0; k < 64; k++) {
+					double a = Math.PI * 2 * k / 64;
+					fx(level, ParticleTypes.REVERSE_PORTAL, middle.x + Math.cos(a) * UNMAKING_REACH, middle.y, middle.z + Math.sin(a) * UNMAKING_REACH, 1, 0, 0.2, 0, 0.01);
+				}
+			}
+			return;
+		}
+		setActing(ACT_COIL, false);
+		sound(SoundEvents.WARDEN_SONIC_BOOM, 6.0f, 0.5f);
+		sound(SoundEvents.GENERIC_EXPLODE, 5.0f, 0.4f);
+		for (double r = 4; r <= UNMAKING_REACH; r += 4) {
+			for (int k = 0; k < 24; k++) {
+				Vec3 at = middle.add(unit().scale(r));
+				fx(level, CHAOS_MOTE, at.x, at.y, at.z, 1, 0, 0, 0, 0);
+			}
+		}
+		fx(level, ParticleTypes.SONIC_BOOM, middle.x, middle.y, middle.z, 1, 0, 0, 0, 0);
+		fx(level, ParticleTypes.EXPLOSION_EMITTER, middle.x, middle.y, middle.z, 2, 2, 2, 2, 0);
+		for (LivingEntity other : level.getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(UNMAKING_REACH),
+				e -> reaches(e, false) && HeavenSpells.middle(e).distanceToSqr(middle) <= UNMAKING_REACH * UNMAKING_REACH)) {
+			if (!other.hurt(damageSources().mobAttack(this), attack() * 1.5f)) continue;
+			Vec3 away = other.position().subtract(position());
+			away = away.lengthSqr() < 1.0e-6 ? Vec3.ZERO : away.normalize();
+			// Half of it at the least, past any footing: the immortals it is fought by stand all but unmoved by a blow (their realms' footing).
+			double share = Math.max(0.5, pushShare(other));
+			other.setDeltaMovement(away.x * 2.0 * share, 0.6 * share + away.y * share, away.z * 2.0 * share);
+			other.hurtMarked = true;
+		}
+		LawDomains.unmake(level, middle, UNMAKING_REACH);
+		endMove();
+	}
+
+	/**
+	 * The Primordial Chaos's Devour: hanging still, it pulls in whatever is within {@link #DEVOUR_REACH} (chaos streaming in with it), no footing
+	 * holding against it (an immortal's would: tour 3c-1 drew a True Immortal four blocks), and crushes what it has drawn against it; three
+	 * seconds.
+	 */
+	private void devour(ServerLevel level, LivingEntity target) {
+		if (moveTicks == 1) {
+			setActing(ACT_BREATH, true);
+			sound(SoundEvents.WARDEN_ROAR, 5.0f, 0.5f);
+		}
+		setDeltaMovement(getDeltaMovement().scale(0.7));
+		face(target.position().subtract(position()));
+		Vec3 maw = position().add(0, getBbHeight() * 0.5, 0);
+		if (moveTicks % 2 == 0) {
+			for (int i = 0; i < 8; i++) {
+				Vec3 from = maw.add(unit().scale(DEVOUR_REACH * (0.5 + random.nextDouble() * 0.5)));
+				Vec3 in = maw.subtract(from).scale(0.06);
+				fx(level, ParticleTypes.REVERSE_PORTAL, from.x, from.y, from.z, 0, in.x, in.y, in.z, 1.0);
+			}
+		}
+		double crush = getBbWidth() * 0.5 + 3;
+		for (LivingEntity other : level.getEntitiesOfClass(LivingEntity.class, getBoundingBox().inflate(DEVOUR_REACH), e -> reaches(e, false))) {
+			Vec3 in = maw.subtract(HeavenSpells.middle(other));
+			double d = in.length();
+			if (d > DEVOUR_REACH || d < 1.0e-3) continue;
+			// Drawn in to its hide and held there, crushed against it (pulled on into its middle, a player's view was inside it: tour 3c-3).
+			other.setDeltaMovement(d > crush ? other.getDeltaMovement().scale(0.6).add(in.scale(0.3 / d)) : other.getDeltaMovement().scale(0.2));
+			other.hurtMarked = true;
+			if (d < crush + 1 && moveTicks % 10 == 0) other.hurt(damageSources().mobAttack(this), attack() * 0.6f);
+		}
+		if (moveTicks % 20 == 0) sound(SoundEvents.WARDEN_HEARTBEAT, 4.0f, 0.5f);
+		if (moveTicks >= 60) endMove();
+	}
+
+	/** The Primordial Chaos's bolts: a fan of nine chaos bolts loosed at its foe. */
+	private void bolts(ServerLevel level, LivingEntity target) {
+		Vec3 from = position().add(0, getBbHeight() * 0.5, 0);
+		Vec3 to = target.getEyePosition().subtract(from);
+		for (int i = -4; i <= 4; i++) {
+			BeastShot bolt = new BeastShot(level, this, BeastShot.Kind.CHAOS, attack() * 0.5f);
+			bolt.setPos(from.x, from.y, from.z);
+			Vec3 way = to.yRot((float) Math.toRadians(i * 8));
+			bolt.shoot(way.x, way.y, way.z, 1.8f, 1.5f);
+			level.addFreshEntity(bolt);
+		}
+		sound(SoundEvents.ILLUSIONER_CAST_SPELL, 4.0f, 0.5f);
+		endMove();
+	}
+
+	/** The Primordial Chaos calls up fiends: up to three Heaven Immortals out of the chaos about it, set on its foe, while fewer than {@link #SUMMONED_MAX} are near. */
+	private void summon(ServerLevel level, LivingEntity target) {
+		int near = level.getEntitiesOfClass(ChaosFiend.class, getBoundingBox().inflate(48), ChaosFiend::isAlive).size();
+		int[] ranks = ChaosFrontier.fiendRanks(ChaosFrontier.DEEP);
+		for (int i = 0; i < 3 && near + i < SUMMONED_MAX; i++) {
+			double a = random.nextDouble() * Math.PI * 2, r = getBbWidth() * 0.6 + 4;
+			Vec3 at = position().add(Math.cos(a) * r, getBbHeight() * 0.5, Math.sin(a) * r);
+			ChaosFiend fiend = ChaosFrontier.fiend(level, BlockPos.containing(at), ranks[0] + random.nextInt(ranks[1] - ranks[0] + 1));
+			if (fiend == null) continue;
+			fiend.setTarget(target);
+			fx(level, CHAOS_MOTE, at.x, at.y, at.z, 30, 1.0, 1.4, 1.0, 0.05);
+			fx(level, ParticleTypes.LARGE_SMOKE, at.x, at.y, at.z, 20, 0.8, 1.2, 0.8, 0.03);
+		}
+		sound(SoundEvents.EVOKER_PREPARE_SUMMON, 4.0f, 0.5f);
+		endMove();
+	}
+
+	/** A way at random, every way alike likely. */
+	private Vec3 unit() {
+		Vec3 way = new Vec3(random.nextGaussian(), random.nextGaussian(), random.nextGaussian());
+		return way.lengthSqr() < 1.0e-6 ? new Vec3(0, 1, 0) : way.normalize();
+	}
+
 	/** Its jaws (its beak) on whatever of its foe touches it, now and then. */
 	private void bite(LivingEntity target, long now) {
 		if (target == null || now % 20 != 0 || move == RAM || move == DIVE) return;
@@ -868,6 +1030,7 @@ public class PrimordialBeast extends DemonBeast {
 			BossEvent.BossBarColor colour = switch (kind()) {
 				case TRUE_PHOENIX -> BossEvent.BossBarColor.RED;
 				case TRUE_DRAGON -> BossEvent.BossBarColor.YELLOW;
+				case PRIMORDIAL_CHAOS -> BossEvent.BossBarColor.PURPLE;
 				default -> BossEvent.BossBarColor.BLUE;
 			};
 			bar = new ServerBossEvent(getDisplayName(), colour, BossEvent.BossBarOverlay.NOTCHED_10);
@@ -931,10 +1094,19 @@ public class PrimordialBeast extends DemonBeast {
 
 	/**
 	 * Its core (of the element it was when it fell), Immortal Jade, its race's True Immortal blood (the Phoenix's the fox's, the Dragon's
-	 * the dragon's), the Kun-Peng a True Immortal slip of its form's element, and its remains.
+	 * the dragon's), the Kun-Peng a True Immortal slip of its form's element, and its remains. The Primordial Chaos, no beast: Dao
+	 * Fragments of {@link #CHAOS_FRAGMENTS} Laws, Chaos Origin Stones and Immortal Jade.
 	 */
 	@Override
 	protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
+		if (kind() == BeastKind.PRIMORDIAL_CHAOS) {
+			List<Law> laws = new ArrayList<>(List.of(Law.values()));
+			java.util.Collections.shuffle(laws, new java.util.Random(random.nextLong()));
+			for (int i = 0; i < Math.min(CHAOS_FRAGMENTS, laws.size()); i++) spawnAtLocation(DaoFragmentItem.of(laws.get(i)));
+			spawnAtLocation(new ItemStack(ModItems.CHAOS_ORIGIN_STONE, CHAOS_STONES));
+			spawnAtLocation(new ItemStack(ModItems.IMMORTAL_JADE, CHAOS_JADE));
+			return;
+		}
 		QiElement element = element();
 		spawnAtLocation(DemonCoreItem.of(Math.max(0, getRank()), element, kind().getDisplayName()));
 		Bloodline kin = DemonBlood.kin(kind());

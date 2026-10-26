@@ -104,6 +104,9 @@ public final class ModNoiseSettings {
 	public static final ResourceKey<NormalNoise.NoiseParameters> IR_GARDEN = immortalNoise("garden");
 	/** Where in its cell each of the realm's other cities stands (ImmortalCityStructure, {@link #citySite}). */
 	public static final ResourceKey<NormalNoise.NoiseParameters> IR_CITY_SITE = immortalNoise("city_site");
+	/** The Chaos Frontier's broken land ({@link #immortalRealm}): where its shards float, and each one's level. */
+	public static final ResourceKey<NormalNoise.NoiseParameters> IR_SHARD = immortalNoise("shard");
+	public static final ResourceKey<NormalNoise.NoiseParameters> IR_SHARD_TOP = immortalNoise("shard_top");
 
 	private static final int MIN_Y = ModDimensions.UPPER_REALM_MIN_Y;
 	private static final int MAX_Y = MIN_Y + ModDimensions.UPPER_REALM_HEIGHT; // 512
@@ -159,8 +162,9 @@ public final class ModNoiseSettings {
 	private static final int CITY_JITTER = 150, CITY_TRIES = 6;
 	/** A site lies on a massif by its mask at least this far in (at its very rim, its district reaches out over the clouds as a headland). */
 	private static final double CITY_SITE_MASK = 0.0;
-	/** No city this near the capital's island's middle. */
-	private static final double CITY_CAPITAL_KEEP = ModNoiseSettings.MAIN_OUTER + CITY_DISTRICT_OUTER + 120;
+	/** No city this near the capital's island's middle; nor this far out (its district whole short of the Chaos Frontier's broken land). */
+	private static final double CITY_CAPITAL_KEEP = ModNoiseSettings.MAIN_OUTER + CITY_DISTRICT_OUTER + 120,
+			CITY_FRONTIER_KEEP = ModNoiseSettings.FRONTIER_FROM - CITY_DISTRICT_OUTER - 60;
 	/** How far either way a city's ground rolls about its site's level by the terrace noise (and the relief's small hills on that). */
 	public static final double CITY_SITE_SWELL = 10;
 
@@ -191,7 +195,8 @@ public final class ModNoiseSettings {
 			double ox = site.getValue(cx * 13.37 + k * 101.3, 0.0, cz * 13.37), oz = site.getValue(cx * 13.37 + 57.1, 0.0, cz * 13.37 + k * 101.3);
 			int x = cx * CITY_CELL + CITY_CELL / 2 + (int) Math.round(Mth.clamp(ox, -1.0, 1.0) * CITY_JITTER);
 			int z = cz * CITY_CELL + CITY_CELL / 2 + (int) Math.round(Mth.clamp(oz, -1.0, 1.0) * CITY_JITTER);
-			if (Math.hypot(x - MAIN_X, z - MAIN_Z) < CITY_CAPITAL_KEEP || mask(massif, edge, x, z) < CITY_SITE_MASK) continue;
+			double out = Math.hypot(x - MAIN_X, z - MAIN_Z);
+			if (out < CITY_CAPITAL_KEEP || out > CITY_FRONTIER_KEEP || mask(massif, edge, x, z) < CITY_SITE_MASK) continue;
 			double t = terrace.getValue(x, 0.0, z);
 			return new CitySite(x, z, terraceLevel(t) - CITY_SITE_SWELL * Mth.clamp(t, -1.25, 1.25));
 		}
@@ -234,9 +239,12 @@ public final class ModNoiseSettings {
 	/** A sect's core island's top stands about this high over the clouds, a few blocks either way by the terrace noise. */
 	public static final int SECT_LEVEL_Y = ModDimensions.IMMORTAL_CLOUD_Y + 56;
 	private static final double SECT_LEVEL_SWELL = 6;
-	/** No sect this near the capital's island's middle, nor this near a city's site (whose district makes land). */
+	/**
+	 * No sect this near the capital's island's middle, nor this near a city's site (whose district makes land); nor this far out (its
+	 * clearing whole short of the Chaos Frontier).
+	 */
 	private static final double SECT_CAPITAL_KEEP = ModNoiseSettings.MAIN_OUTER + SECT_SEA_REACH + 160,
-			SECT_CITY_KEEP = CITY_DISTRICT_OUTER + SECT_SEA_REACH + 30;
+			SECT_CITY_KEEP = CITY_DISTRICT_OUTER + SECT_SEA_REACH + 30, SECT_FRONTIER_KEEP = ModNoiseSettings.FRONTIER_FROM - SECT_CLEARING_OUTER - 60;
 
 	/** The sects' sites found, a cell at a time, for each world (keyed by its site noise). */
 	private static final Map<NormalNoise, Map<Long, Optional<CitySite>>> SECT_SITES = Collections.synchronizedMap(new WeakHashMap<>());
@@ -262,7 +270,8 @@ public final class ModNoiseSettings {
 			double ox = site.getValue(cx * 7.77 + 500.5 + k * 91.1, 0.0, cz * 7.77 - 300.3), oz = site.getValue(cx * 7.77 - 211.7, 0.0, cz * 7.77 + 401.9 + k * 91.1);
 			int x = cx * SECT_CELL + SECT_CELL / 2 + (int) Math.round(Mth.clamp(ox, -1.0, 1.0) * SECT_JITTER);
 			int z = cz * SECT_CELL + SECT_CELL / 2 + (int) Math.round(Mth.clamp(oz, -1.0, 1.0) * SECT_JITTER);
-			if (Math.hypot(x - MAIN_X, z - MAIN_Z) < SECT_CAPITAL_KEEP || !overSea(massif, edge, x, z)) continue;
+			double out = Math.hypot(x - MAIN_X, z - MAIN_Z);
+			if (out < SECT_CAPITAL_KEEP || out > SECT_FRONTIER_KEEP || !overSea(massif, edge, x, z)) continue;
 			if (nearCity(site, massif, edge, terrace, x, z, SECT_CITY_KEEP)) continue;
 			return new CitySite(x, z, SECT_LEVEL_Y + SECT_LEVEL_SWELL * Mth.clamp(terrace.getValue(x, 0.0, z), -1.0, 1.0));
 		}
@@ -550,6 +559,10 @@ public final class ModNoiseSettings {
 		context.register(IR_UNDER, new NormalNoise.NoiseParameters(-5, 1.0, 0.5));
 		context.register(IR_GARDEN, new NormalNoise.NoiseParameters(-8, 1.0, 1.0, 0.5));
 		context.register(IR_CITY_SITE, new NormalNoise.NoiseParameters(0, 1.0));
+		// The Chaos Frontier: its shards of broken land (shard, some forty blocks across, their rims ragged), each at its own level
+		// (shard_top, some hundred and thirty).
+		context.register(IR_SHARD, new NormalNoise.NoiseParameters(-6, 1.0, 0.6, 0.3));
+		context.register(IR_SHARD_TOP, new NormalNoise.NoiseParameters(-7, 1.0, 0.5));
 	}
 
 	public static void bootstrap(BootstapContext<NoiseGeneratorSettings> context) {
@@ -932,6 +945,60 @@ public final class ModNoiseSettings {
 	 * after) the caverns under it opened as trenches across the capital's streets (tour 4).
 	 */
 	private static final double IR_CAVERN_SHELL = 2.5;
+	/**
+	 * The Chaos Frontier (phase 3c, 2026-10-26: "the realm's edge, where chaos before heaven and earth still churns"): from
+	 * {@link #FRONTIER_FROM} blocks out from the main island's heart the realm's land breaks up, and from {@link #FRONTIER_TO} on it is all the
+	 * Frontier's: shards of grey-violet stone where their noise passes {@link #SHARD_FROM}, some ten to sixty blocks across, floating between
+	 * the sea of clouds and about Y 260, each at its own level about {@link #SHARD_Y} ({@link #SHARD_SPREAD} either way), domed a little on
+	 * top ({@link #SHARD_DOME}) and hanging to a point below ({@link #SHARD_HANG}, none deeper than {@link #SHARD_CAP} gives). Half way
+	 * through (ChaosFrontier#EDGE) its own land, the biome, takes over (the router's "erosion" is its share).
+	 * <p>
+	 * Further out the shards join into one land (the user's word, 2026-10-26: "not floating islands and just a wasteland (it's floating but
+	 * all joined together ... if you dig down you'd find the cloud sea). It should fade in gradually"): from {@link #WASTE_FROM} to
+	 * {@link #WASTE_TO} their field is lifted ({@link #WASTE_LIFT}, by the square of the way through, so they grow slowly at first), their
+	 * levels draw together ({@link #WASTE_SPREAD}) and their depth thins to the wasteland's ({@link #WASTE_CAP}): bigger shards, then rafts of
+	 * them with gaps between, then one land with holes in it, then whole. The wasteland some thirty to fifty blocks thick, its ground rolling
+	 * in low hills ({@link #WASTE_HILLS}) on its long swells, its underside bulging a little ({@link #WASTE_BULGE}) over the sea of clouds.
+	 */
+	public static final double FRONTIER_FROM = 4000, FRONTIER_TO = 4300;
+	// (SHARD_FROM 0.3 left its sky all but empty, a shard here and there: tour 3c-1.)
+	private static final double SHARD_FROM = 0.18, SHARD_DOME = 14, SHARD_HANG = 90, SHARD_CAP = 0.62;
+	private static final int SHARD_Y = 208, SHARD_SPREAD = 42;
+	public static final double WASTE_FROM = 4300, WASTE_TO = 5100;
+	// (The hills and bulges come in over WASTE_RIM of a shard's field at its rim: at the very rim they would stand out of nothing.)
+	private static final double WASTE_LIFT = 1.7, WASTE_CAP = 0.33, WASTE_SPREAD = 10, WASTE_HILLS = 5, WASTE_BULGE = 10, WASTE_RIM = 0.15;
+	/**
+	 * The First Flame's spring (FirstFlame), 4,600 blocks south of the heart: its own island, sure land within {@link #SPRING_INNER} of
+	 * ({@link #SPRING_X}, {@link #SPRING_Z}), gone by {@link #SPRING_OUTER}, level at {@link #SPRING_Y}, its underside hanging some fifty
+	 * blocks; no shard within {@link #SPRING_CLEAR} of it, so its light is seen from afar.
+	 */
+	public static final int SPRING_X = MAIN_X, SPRING_Z = MAIN_Z + 4600, SPRING_Y = 216;
+	public static final double SPRING_INNER = 30, SPRING_OUTER = 42, SPRING_CLEAR = 96;
+
+	/** The Frontier's share of column (x, z): 0 short of {@link #FRONTIER_FROM}, rising evenly to 1 at {@link #FRONTIER_TO} and past it. */
+	public static double frontier(double x, double z) {
+		return 1 - frontierSummit().at(x, z);
+	}
+
+	/** The land short of the Chaos Frontier ({@link #FRONTIER_FROM}, {@link #FRONTIER_TO}): 1 inside, 0 past. */
+	public static Summit frontierSummit() {
+		return new Summit(MAIN_X, MAIN_Z, FRONTIER_FROM, FRONTIER_TO);
+	}
+
+	/** How far the Frontier's shards have joined at column (x, z): 0 short of {@link #WASTE_FROM}, rising evenly to 1, the wasteland, at {@link #WASTE_TO}. */
+	public static double waste(double x, double z) {
+		return 1 - wasteSummit().at(x, z);
+	}
+
+	/** The land short of the Frontier's wasteland ({@link #WASTE_FROM}, {@link #WASTE_TO}): 1 inside, 0 past. */
+	public static Summit wasteSummit() {
+		return new Summit(MAIN_X, MAIN_Z, WASTE_FROM, WASTE_TO);
+	}
+
+	/** The First Flame's island ({@link #SPRING_INNER}, {@link #SPRING_OUTER}). */
+	public static Summit springIsland() {
+		return new Summit(SPRING_X, SPRING_Z, SPRING_INNER, SPRING_OUTER);
+	}
 
 	/** The main island ({@link #MAIN_INNER}, {@link #MAIN_OUTER}). */
 	public static Summit mainIsland() {
@@ -976,7 +1043,8 @@ public final class ModNoiseSettings {
 	 * ({@link #IR_TERRACES}), mountain ranges with sharp ridges inland, their roots hanging into the clouds; jade pinnacles standing alone
 	 * out of the sea between them; and the main island ({@link #MAIN_X}, {@link #MAIN_Z}): level ground for the capital, the Southern
 	 * Heavenly Gate at its south end, the Celestial Court's pinnacle at its north end. Waterfalls spill off the cliffs into the clouds (the
-	 * springs' feature).
+	 * springs' feature). Out past {@link #FRONTIER_FROM} the land breaks up into the Chaos Frontier's floating shards, the First Flame's
+	 * island among them, and past {@link #WASTE_FROM} the shards join into its wasteland.
 	 */
 	private static NoiseGeneratorSettings immortalRealm(HolderGetter<NormalNoise.NoiseParameters> noises) {
 		DensityFunction zero = DensityFunctions.zero();
@@ -1039,7 +1107,35 @@ public final class ModNoiseSettings {
 		DensityFunction pillarTopDensity = add(scale(add(pillarTop, scale(y, -1.0)), 1.0 / 4.0), detail);
 		DensityFunction pillarRootDensity = scale(add(y, DensityFunctions.constant(-(CLOUD_Y - IR_PILLAR_ROOT))), 1.0 / 8.0);
 		DensityFunction pillars = DensityFunctions.min(DensityFunctions.min(scale(pillar, 3.0), pillarTopDensity), pillarRootDensity);
-		DensityFunction land = DensityFunctions.max(massifs, pillars);
+
+		// The Chaos Frontier's broken land: shards floating at their own levels, domed a little and hanging to a point, none about the First
+		// Flame's island (its own, level). The realm's land gives way to them through FRONTIER_FROM..FRONTIER_TO. Through WASTE_FROM..WASTE_TO
+		// they join into the wasteland: their field lifted, their levels drawn together, their depth thinned to its slab, its hills and its
+		// underside's bulges coming in with it.
+		DensityFunction frontier = DensityFunctions.flatCache(add(DensityFunctions.constant(1.0), scale(frontierSummit(), -1.0)));
+		DensityFunction waste = DensityFunctions.flatCache(add(DensityFunctions.constant(1.0), scale(wasteSummit(), -1.0)));
+		DensityFunction spring = DensityFunctions.flatCache(springIsland());
+		DensityFunction springClear = DensityFunctions.flatCache(new Summit(SPRING_X, SPRING_Z, SPRING_OUTER, SPRING_CLEAR));
+		// (The open sky about the spring cleared the harder for the lift there.)
+		DensityFunction shard = DensityFunctions.flatCache(add(add(add(flat(noises, IR_SHARD, 1.0), DensityFunctions.constant(-SHARD_FROM)),
+				scale(waste.square(), WASTE_LIFT)), scale(springClear, -3.0)));
+		DensityFunction shardDepth = DensityFunctions.flatCache(DensityFunctions.min(shard,
+				add(DensityFunctions.constant(SHARD_CAP), scale(waste, WASTE_CAP - SHARD_CAP))));
+		DensityFunction spread = add(DensityFunctions.constant(SHARD_SPREAD), scale(waste, WASTE_SPREAD - SHARD_SPREAD));
+		DensityFunction shardLevel = add(DensityFunctions.constant(SHARD_Y), DensityFunctions.mul(flat(noises, IR_SHARD_TOP, 1.0).clamp(-1.0, 1.0), spread));
+		DensityFunction wasteGround = DensityFunctions.mul(waste, scale(shardDepth, 1.0 / WASTE_RIM).clamp(0.0, 1.0));
+		DensityFunction shardTop = DensityFunctions.flatCache(add(add(shardLevel, scale(shardDepth, SHARD_DOME)),
+				scale(DensityFunctions.mul(wasteGround, flat(noises, IR_RELIEF, 1.0)), WASTE_HILLS)));
+		DensityFunction shardBottom = DensityFunctions.flatCache(add(add(shardLevel, scale(shardDepth, -SHARD_HANG)),
+				scale(DensityFunctions.mul(wasteGround, flat(noises, IR_UNDER, 1.0).clamp(0.0, 1.0)), -WASTE_BULGE)));
+		DensityFunction shards = add(DensityFunctions.min(scale(add(shardTop, scale(y, -1.0)), 1.0 / 3.0), scale(add(y, scale(shardBottom, -1.0)), 1.0 / 3.0)),
+				scale(detail, 3.0));
+		DensityFunction springTop = scale(add(DensityFunctions.constant(SPRING_Y), scale(y, -1.0)), 1.0 / 3.0);
+		DensityFunction springBottom = scale(add(y, add(DensityFunctions.constant(-(SPRING_Y - 8)), scale(spring, 48.0))), 1.0 / 4.0);
+		DensityFunction springLand = DensityFunctions.min(DensityFunctions.min(springTop, springBottom), scale(add(spring, DensityFunctions.constant(-0.05)), 20.0));
+		DensityFunction broken = DensityFunctions.max(shards, springLand);
+		DensityFunction realmLand = DensityFunctions.max(massifs, pillars);
+		DensityFunction land = add(DensityFunctions.mul(realmLand, add(DensityFunctions.constant(1.0), scale(frontier, -1.0))), DensityFunctions.mul(broken, frontier));
 
 		// The tallest peaks rounded off, then caverns sealed deep inside (as the Jade Firmament's).
 		DensityFunction taper = scale(DensityFunctions.yClampedGradient(PEAK_TAPER_Y, IR_MAX_Y, 0.0, 1.0).square(), -PEAK_TAPER);
@@ -1056,7 +1152,7 @@ public final class ModNoiseSettings {
 				flat(noises, IR_GARDEN, 1.0),                              // "temperature": the Immortal Gardens where high
 				zero,                                                      // humidity
 				city,                                                      // "continentalness": the capital's level ground
-				zero,                                                      // erosion
+				frontier,                                                  // "erosion": the Chaos Frontier's share
 				DensityFunctions.yClampedGradient(IR_MIN_Y, IR_MAX_Y, 1.0, -1.0), // "depth": the Celestial Heights above ~Y 320
 				zero,                                                      // weirdness
 				terrain,
@@ -1088,7 +1184,8 @@ public final class ModNoiseSettings {
 	 * The Immortal Realm's ground: the Jade Peaks' grass and moss over dirt, their steps bare stone banded with jade; the Immortal Gardens'
 	 * lawns; the Celestial Heights' white jade (calcite) with grass in its hollows. Under every top, down every column, streaks of jade and
 	 * of white jade, so the sheer walls of the pinnacles (whose faces no top rule reaches) run green and white down into the clouds (tour
-	 * 1: bare grey stone); stone between them.
+	 * 1: bare grey stone); stone between them. The Chaos Frontier's shards tuff and deepslate, veined with amethyst and crying obsidian (the
+	 * veins, as the jade's streaks, down whole columns: their sides run violet).
 	 */
 	private static SurfaceRules.RuleSource immortalSurface() {
 		SurfaceRules.RuleSource grass = block(Blocks.GRASS_BLOCK);
@@ -1118,7 +1215,19 @@ public final class ModNoiseSettings {
 				SurfaceRules.ifTrue(SurfaceRules.UNDER_FLOOR, block(Blocks.CALCITE)),
 				SurfaceRules.ifTrue(SurfaceRules.noiseCondition(Noises.SURFACE, -0.3, 0.3), block(Blocks.CALCITE)),
 				streaks);
+		// (The veins on a thin band of a noise some sixty blocks across, crying obsidian along one side of each amethyst vein: on the calcite
+		// noise's, five hundred across, whole shards fell in the band and stood amethyst, tour 3c-1; a band of crying obsidian of its own
+		// never came in some regions, 3c-4.)
+		SurfaceRules.RuleSource chaos = SurfaceRules.sequence(
+				SurfaceRules.ifTrue(SurfaceRules.noiseCondition(Noises.SURFACE_SECONDARY, -0.02, 0.02), block(Blocks.AMETHYST_BLOCK)),
+				SurfaceRules.ifTrue(SurfaceRules.noiseCondition(Noises.SURFACE_SECONDARY, 0.02, 0.032), block(Blocks.CRYING_OBSIDIAN)),
+				SurfaceRules.ifTrue(SurfaceRules.ON_FLOOR, SurfaceRules.sequence(
+						SurfaceRules.ifTrue(SurfaceRules.noiseCondition(Noises.SURFACE, 0.3), block(Blocks.DEEPSLATE)),
+						block(Blocks.TUFF))),
+				SurfaceRules.ifTrue(SurfaceRules.noiseCondition(Noises.SURFACE, -0.2, 0.15), block(Blocks.TUFF)),
+				block(Blocks.DEEPSLATE));
 		return SurfaceRules.sequence(
+				SurfaceRules.ifTrue(SurfaceRules.isBiome(ModBiomes.CHAOS_FRONTIER), chaos),
 				SurfaceRules.ifTrue(SurfaceRules.isBiome(ModBiomes.CELESTIAL_HEIGHTS), heights),
 				SurfaceRules.ifTrue(SurfaceRules.isBiome(ModBiomes.IMMORTAL_GARDENS, ModBiomes.JADE_CAPITAL), gardens),
 				peaks); // the Jade Peaks, and anything else

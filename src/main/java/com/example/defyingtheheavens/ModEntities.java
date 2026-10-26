@@ -207,17 +207,28 @@ public final class ModEntities {
 					.updateInterval(5)
 					.build("beast_shot"));
 
+	/** A small world's door of starlight (see {@link SmallWorldDoor}, SmallWorlds): never saved, seen from afar. */
+	public static final EntityType<SmallWorldDoor> SMALL_WORLD_DOOR = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("small_world_door"),
+			EntityType.Builder.<SmallWorldDoor>of(SmallWorldDoor::new, MobCategory.MISC)
+					.noSave().noSummon().fireImmune()
+					.sized(SmallWorldDoor.WIDTH, SmallWorldDoor.HEIGHT)
+					.clientTrackingRange(10)
+					.updateInterval(20)
+					.build("small_world_door"));
+
 	/**
 	 * The wild demon beasts (see {@link DemonBeast}), each kind its own type ({@code defying-the-heavens:<kind's id>}), sized as its kind at
 	 * its least rank (DemonBeast#getDimensions grows it with its rank). The primordial beasts are their own (see {@link PrimordialBeast}),
-	 * seen from further off (vast, high in the air) and moved the more smoothly.
+	 * seen from further off (vast, high in the air) and moved the more smoothly; and the Chaos Fiends ({@link ChaosFiend}).
 	 */
 	private static final Map<BeastKind, EntityType<DemonBeast>> BEASTS = new EnumMap<>(BeastKind.class);
 
 	static {
 		for (BeastKind kind : BeastKind.values()) {
+			EntityType.EntityFactory<DemonBeast> make = kind.isPrimordial() ? PrimordialBeast::new : kind == BeastKind.CHAOS_FIEND ? ChaosFiend::new : DemonBeast::new;
 			EntityType<DemonBeast> type = Registry.register(BuiltInRegistries.ENTITY_TYPE, DefyingTheHeavens.id(kind.getId()),
-					EntityType.Builder.<DemonBeast>of(kind.isPrimordial() ? PrimordialBeast::new : DemonBeast::new, MobCategory.MONSTER)
+					EntityType.Builder.<DemonBeast>of(make, MobCategory.MONSTER)
 							.sized(kind.width, kind.height)
 							.clientTrackingRange(kind.isPrimordial() ? 16 : 10)
 							.updateInterval(kind.isPrimordial() ? 2 : 3)

@@ -57,6 +57,11 @@ public final class ModBlockEntities {
 			DefyingTheHeavens.id("seal"),
 			BlockEntityType.Builder.of(SealBlockEntity::new, ModBlocks.SEAL).build(null));
 
+	/** A small world's gate (SmallWorldGateBlock); no data, only drawn by its renderer. */
+	public static final BlockEntityType<SmallWorldGateBlockEntity> SMALL_WORLD_GATE = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
+			DefyingTheHeavens.id("small_world_gate"),
+			BlockEntityType.Builder.of(SmallWorldGateBlockEntity::new, ModBlocks.SMALL_WORLD_GATE).build(null));
+
 	/** Touching this class registers the block entity types. */
 	public static void register() {
 	}

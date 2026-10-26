@@ -50,6 +50,12 @@ public final class ModDimensions {
 	public static final ResourceKey<Level> IMMORTAL_REALM = ResourceKey.create(Registries.DIMENSION, DefyingTheHeavens.id("immortal_realm"));
 	/** The climb through the Immortal Gate (ImmortalGate): generated as nothing, as the breach. */
 	public static final ResourceKey<Level> IMMORTAL_PASSAGE = ResourceKey.create(Registries.DIMENSION, DefyingTheHeavens.id("immortal_passage"));
+	/**
+	 * The small worlds (phase 3d of the realm plan, 2026-10-26; SmallWorlds): each immortal's own floating island under the stars, refined
+	 * from a World Seed, every one in a slot of its own; generated as nothing, the islands laid by SmallWorlds. Its qi the Immortal
+	 * Realm's ({@link #hasImmortalQi}).
+	 */
+	public static final ResourceKey<Level> SMALL_WORLD = ResourceKey.create(Registries.DIMENSION, DefyingTheHeavens.id("small_world"));
 
 	public static final ResourceKey<LevelStem> UPPER_REALM_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("upper_realm"));
 	public static final ResourceKey<LevelStem> SPATIAL_GAP_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("spatial_gap"));
@@ -62,6 +68,7 @@ public final class ModDimensions {
 	public static final ResourceKey<LevelStem> VOID_BREACH_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("void_breach"));
 	public static final ResourceKey<LevelStem> IMMORTAL_REALM_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("immortal_realm"));
 	public static final ResourceKey<LevelStem> IMMORTAL_PASSAGE_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("immortal_passage"));
+	public static final ResourceKey<LevelStem> SMALL_WORLD_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("small_world"));
 
 	public static final ResourceKey<DimensionType> UPPER_REALM_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("upper_realm"));
 	public static final ResourceKey<DimensionType> SPATIAL_GAP_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("spatial_gap"));
@@ -74,6 +81,7 @@ public final class ModDimensions {
 	public static final ResourceKey<DimensionType> VOID_BREACH_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("void_breach"));
 	public static final ResourceKey<DimensionType> IMMORTAL_REALM_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("immortal_realm"));
 	public static final ResourceKey<DimensionType> IMMORTAL_PASSAGE_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("immortal_passage"));
+	public static final ResourceKey<DimensionType> SMALL_WORLD_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("small_world"));
 
 	/** Dimension effects ids; the client registers the custom sky, fog and cloud behaviour under these. */
 	public static final ResourceLocation UPPER_REALM_EFFECTS = DefyingTheHeavens.id("upper_realm");
@@ -87,6 +95,7 @@ public final class ModDimensions {
 	public static final ResourceLocation VOID_BREACH_EFFECTS = DefyingTheHeavens.id("void_breach");
 	public static final ResourceLocation IMMORTAL_REALM_EFFECTS = DefyingTheHeavens.id("immortal_realm");
 	public static final ResourceLocation IMMORTAL_PASSAGE_EFFECTS = DefyingTheHeavens.id("immortal_passage");
+	public static final ResourceLocation SMALL_WORLD_EFFECTS = DefyingTheHeavens.id("small_world");
 	/**
 	 * The Great Void: as tall as the Jade Firmament (its continents float between Y ~60 and ~460, see ModNoiseSettings#greatVoid),
 	 * its day held at noon under a sky that is all stars: the void's light, not a sun's (GreatVoidClient draws it).
@@ -111,6 +120,10 @@ public final class ModDimensions {
 	/** The Gate's passage (ImmortalGate): one climbs it from {@link ImmortalGate#ENTER_Y} to {@link ImmortalGate#EXIT_Y}. */
 	public static final int IMMORTAL_PASSAGE_MIN_Y = 0;
 	public static final int IMMORTAL_PASSAGE_HEIGHT = 384;
+	/** The small worlds: their islands float about Y SmallWorlds#ISLAND_Y; lit as by day under a sky all stars (the client's). */
+	public static final int SMALL_WORLD_MIN_Y = 0;
+	public static final int SMALL_WORLD_HEIGHT = 256;
+	public static final long SMALL_WORLD_TIME = 6000L;
 	/**
 	 * Space is a sliver of a world (see AstralPlanets#SPACE_Y: everything in it hangs far above), with light enough to see whoever
 	 * flies there by.
@@ -207,6 +220,19 @@ public final class ModDimensions {
 
 	public static boolean isInnerRealm(ResourceKey<Level> dimension) {
 		return dimension == INNER_REALM;
+	}
+
+	/** The small worlds' dimension (SmallWorlds): every immortal's island. */
+	public static boolean isSmallWorld(ResourceKey<Level> dimension) {
+		return dimension == SMALL_WORLD;
+	}
+
+	/**
+	 * Where the qi is the Immortal Realm's: the realm itself, and the small worlds refined in it (phase 3d: an immortal's essence fills
+	 * there, and the Laws are comprehended there). The realm's breakthroughs stay its own (RealmSuppressionHandler#applyRealm).
+	 */
+	public static boolean hasImmortalQi(ResourceKey<Level> dimension) {
+		return isImmortalRealm(dimension) || isSmallWorld(dimension);
 	}
 
 	/**
@@ -404,6 +430,23 @@ public final class ModDimensions {
 				BlockTags.INFINIBURN_OVERWORLD,
 				IMMORTAL_PASSAGE_EFFECTS,
 				0.6f,                          // the Gate's light on whoever climbs
+				new DimensionType.MonsterSettings(false, false, ConstantInt.of(0), 0)));
+
+		context.register(SMALL_WORLD_TYPE, new DimensionType(
+				OptionalLong.of(SMALL_WORLD_TIME), // lit as by day, for ever: the light is the world's own, under a sky of stars
+				true,                          // has skylight: what is planted grows
+				false,                         // no ceiling
+				false,                         // not ultrawarm
+				true,                          // natural: compasses work, beds can set spawn
+				1.0,
+				true,                          // beds work: one's own world, one's home
+				false,                         // respawn anchors don't
+				SMALL_WORLD_MIN_Y,
+				SMALL_WORLD_HEIGHT,
+				SMALL_WORLD_HEIGHT,
+				BlockTags.INFINIBURN_OVERWORLD,
+				SMALL_WORLD_EFFECTS,
+				0.15f,                         // starlight in the shade
 				new DimensionType.MonsterSettings(false, false, ConstantInt.of(0), 0)));
 	}
 

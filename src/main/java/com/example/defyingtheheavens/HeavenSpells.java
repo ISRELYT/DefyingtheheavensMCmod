@@ -417,7 +417,7 @@ public final class HeavenSpells {
 	public static float incoming(LivingEntity target, net.minecraft.world.damagesource.DamageSource source, float amount) {
 		// A tribulation's strike is the heavens' own: no ward, bell or earth turns any of it (the user's pick, 2026-10-24: the wards and
 		// a Golden Bell took the sting out of tribulations).
-		if (TribulationManager.isStriking(target)) return amount;
+		if (TribulationManager.isStriking(target) || FiveDecays.isStriking(target)) return amount; // the Five Decays' judgement too
 		// One's own fire, to one who has mastered fire (HeavenPassives#ownFireSpares, Flame-Kin): nothing, and its flames put out on them.
 		if (HeavenPassives.ownFireSpares(target, source)) {
 			target.clearFire();
@@ -501,7 +501,7 @@ public final class HeavenSpells {
 	/** Whether {@code entity}'s death goes ahead: false if a lingering effect holds it off. */
 	public static boolean allowDeath(LivingEntity entity, net.minecraft.world.damagesource.DamageSource source) {
 		// Nor does a rebirth (Phoenix Nirvana) undo a tribulation's killing strike (the user's pick, 2026-10-24): the tribulation is failed.
-		if (LINGERING.isEmpty() || TribulationManager.isStriking(entity)) return true;
+		if (LINGERING.isEmpty() || TribulationManager.isStriking(entity) || FiveDecays.isStriking(entity)) return true;
 		for (Lingering l : new ArrayList<>(LINGERING)) {
 			if (l instanceof DeathListener listener) {
 				try {
@@ -1053,18 +1053,18 @@ public final class HeavenSpells {
 				e -> e.position().distanceToSqr(centre) <= radius * radius && which.test(e));
 	}
 
-	/** Where the look meets a wall within {@code range}, or the end of the range. */
+	/** Where the look meets a wall within {@code range} (the farther by the caster's Laws while it casts: Laws#reach), or the end of the range. */
 	public static Vec3 beamEnd(LivingEntity p, double range) {
 		Vec3 from = p.getEyePosition();
-		Vec3 to = from.add(p.getViewVector(1.0f).scale(range));
+		Vec3 to = from.add(p.getViewVector(1.0f).scale(range * Laws.reach(p)));
 		BlockHitResult hit = p.level().clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p));
 		return hit.getType() == HitResult.Type.MISS ? to : hit.getLocation();
 	}
 
-	/** The block the look meets within {@code range} (its top face's centre if it was struck from above), or null. */
+	/** The block the look meets within {@code range} (the farther by the caster's Laws while it casts; its top face's centre if it was struck from above), or null. */
 	public static BlockHitResult lookedBlock(LivingEntity p, double range) {
 		Vec3 from = p.getEyePosition();
-		Vec3 to = from.add(p.getViewVector(1.0f).scale(range));
+		Vec3 to = from.add(p.getViewVector(1.0f).scale(range * Laws.reach(p)));
 		BlockHitResult hit = p.level().clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p));
 		return hit.getType() == HitResult.Type.MISS ? null : hit;
 	}

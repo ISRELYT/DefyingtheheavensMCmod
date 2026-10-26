@@ -45,9 +45,9 @@ public final class QiHud {
 			} else {
 				OWN.reset();
 			}
-			// A True Immortal's essence, its glint flowing while the Immortal Realm fills it.
+			// A True Immortal's essence, its glint flowing while the Immortal Realm (or a small world) fills it.
 			if (essenceShowing()) {
-				boolean filling = ModDimensions.isImmortalRealm(mc.level.dimension());
+				boolean filling = ModDimensions.hasImmortalQi(mc.level.dimension());
 				ESSENCE.draw(graphics, mc.font, y, barX(mc.font), Component.translatable(ModLang.HUD_ESSENCE_LABEL), ClientCultivationData.essence(),
 						ClientCultivationData.essenceMax(), filling);
 			} else {

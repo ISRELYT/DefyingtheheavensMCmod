@@ -60,6 +60,16 @@ public class ModModelProvider extends FabricModelProvider {
 		blocks.createTrivialCube(ModBlocks.YIN_JADE_ORE);
 		blocks.createTrivialCube(ModBlocks.YIN_JADE_BLOCK);
 		// The Netherworld's herbs have hand-made blockstates and models, as the other herbs do (resources).
+		// The Chaos Frontier's ore; the First Flame on vanilla's fire shape (its tongues crossed and slanted), its item its flame.
+		blocks.createTrivialCube(ModBlocks.CHAOS_ORIGIN_ORE);
+		ModelTemplate fire = new ModelTemplate(Optional.of(new ResourceLocation("minecraft", "block/template_fire_floor")), Optional.empty(), TextureSlot.FIRE);
+		ResourceLocation flame = fire.create(ModBlocks.FIRST_FLAME, TextureMapping.singleSlot(TextureSlot.FIRE, TextureMapping.getBlockTexture(ModBlocks.FIRST_FLAME)),
+				blocks.modelOutput);
+		blocks.blockStateOutput.accept(BlockModelGenerators.createSimpleBlock(ModBlocks.FIRST_FLAME, flame));
+		blocks.createSimpleFlatItemModel(ModBlocks.FIRST_FLAME);
+		// A small world's gate is drawn by its block entity renderer; the model only supplies its particles (obsidian's: vanilla's end
+		// gateway has no block model of its own, tour sw-1).
+		blocks.createNonTemplateModelBlock(ModBlocks.SMALL_WORLD_GATE, Blocks.OBSIDIAN);
 	}
 
 	/**
@@ -168,6 +178,13 @@ public class ModModelProvider extends FabricModelProvider {
 			items.generateFlatItem(vessel, ModelTemplates.FLAT_ITEM);
 		}
 		// Spirit stones have a hand-made oval model (resources: models/item/spirit_stone.json), not a flat sprite.
+		// The Chaos Frontier's: its stones; a Dao Fragment's light a layer of its own, in its Law's colour (DefyingTheHeavensClient).
+		items.generateFlatItem(ModItems.CHAOS_ORIGIN_STONE, ModelTemplates.FLAT_ITEM);
+		ModelTemplates.TWO_LAYERED_ITEM.create(ModelLocationUtils.getModelLocation(ModItems.DAO_FRAGMENT),
+				TextureMapping.layered(TextureMapping.getItemTexture(ModItems.DAO_FRAGMENT), TextureMapping.getItemTexture(ModItems.DAO_FRAGMENT, "_glow")),
+				items.output);
+		// The small worlds' World Seed.
+		items.generateFlatItem(ModItems.WORLD_SEED, ModelTemplates.FLAT_ITEM);
 	}
 
 	/**

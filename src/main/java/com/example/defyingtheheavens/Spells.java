@@ -116,6 +116,10 @@ public final class Spells {
 			HeavenSpells.tell(p, Component.translatable(ModLang.MSG_SPACE_LOCKED));
 			return;
 		}
+		if (steps(spell) && LawDomains.locksSpace(p)) { // or within a foe's domain of Space (LawDomains): no step through the dark either
+			HeavenSpells.tell(p, Component.translatable(ModLang.MSG_DOMAIN_SPACE_LOCKED));
+			return;
+		}
 		long now = p.level().getGameTime();
 		long readyAt = cooldowns(p).getOrDefault(spell, 0L);
 		if (now < readyAt && cooldownsHeld(p)) {
@@ -136,7 +140,8 @@ public final class Spells {
 			s.setGhostQi(s.ghostQi() - spell.cost());
 			if (spell.qiCost() > 0) c.setQi(c.getQi() - spell.qiCost());
 		}
-		cooldowns(p).put(spell, now + spell.cooldownTicks());
+		// The shorter by the Law of Time (Laws), the longer in a foe's domain of Time (LawDomains#stretched).
+		cooldowns(p).put(spell, now + LawDomains.stretched(p, Laws.cooldown(p, spell)));
 		RaceGifts.breakIllusion(p); // a fox unseen is seen as it casts
 		perform(p, spell, s);
 		CultivationManager.markDirty(p.server);
@@ -157,14 +162,33 @@ public final class Spells {
 		if (now < cooldowns(npc).getOrDefault(spell, 0L)) return false;
 		double cost = spell.qiCost() + spell.cost();
 		if (c.getQi() < cost || spell.isHeaven() && !HeavenSpells.canCast(npc, spell)) return false;
+		// Space locked round it (Earth Veins Lock the Void, a player's domain of Space): no step through it, as a player is refused.
+		if (steps(spell) && (spell == Spell.NINE_NETHER_STEP && EarthSpells.spaceLocked(npc) || LawDomains.locksSpace(npc))) return false;
 		c.setQi(c.getQi() - cost);
-		cooldowns(npc).put(spell, now + spell.cooldownTicks());
+		cooldowns(npc).put(spell, now + LawDomains.stretched(npc, spell.cooldownTicks())); // the longer in a player's domain of Time
 		perform(npc, spell, c.netherworld());
 		return true;
 	}
 
-	/** What a cast does once paid for: the hooks that hear of it and its seal, then the spell itself (a heaven one: its element's kit). */
+	/** A step through the dark (Nine Nether Step, Soul Dash): what space locked on its caster refuses (LawDomains#locksSpace). */
+	private static boolean steps(Spell spell) {
+		return spell == Spell.NINE_NETHER_STEP || spell == Spell.SOUL_DASH;
+	}
+
+	/**
+	 * What a cast does once paid for: the hooks that hear of it and its seal, then the spell itself (a heaven one: its element's kit), what
+	 * it aims at reaching the farther by its caster's Laws while it is cast (Laws#reach).
+	 */
 	private static void perform(LivingEntity p, Spell spell, NetherworldState s) {
+		Laws.casting(p, spell);
+		try {
+			performNow(p, spell, s);
+		} finally {
+			Laws.castDone();
+		}
+	}
+
+	private static void performNow(LivingEntity p, Spell spell, NetherworldState s) {
 		HeavenSpells.onCast(p, spell); // what lingers that hears of a cast (a mist's hiding broken)
 		HeavenSpells.castSeal(p, spell); // an element spell's seal, turning under its caster
 		switch (spell) {

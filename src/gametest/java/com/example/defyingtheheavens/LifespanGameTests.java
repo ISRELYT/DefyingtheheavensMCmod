@@ -27,7 +27,9 @@ public class LifespanGameTests implements FabricGameTest {
 		PlayerCultivation c = new PlayerCultivation();
 		helper.assertTrue(c.isMortal() && Lifespan.span(c) == 100 && c.age() == Lifespan.START_AGE, "A mortal: 100 years, from 16");
 		// ...and the realms after Four Axis the user's (2026-10-21): a True Immortal's without end.
-		double[] spans = {100, 300, 700, 1300, 2500, 12500, 112_500, 10_112_500, 110_112_500, 10_110_112_500.0, Double.POSITIVE_INFINITY};
+		double[] spans = {100, 300, 700, 1300, 2500, 12500, 112_500, 10_112_500, 110_112_500, 10_110_112_500.0, Double.POSITIVE_INFINITY,
+				Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY,
+				Double.POSITIVE_INFINITY}; // and the ladder past it (phase 3): without end too
 		for (Realm realm : Realm.values()) {
 			c.setState(realm, Stage.GRAND_PERFECTION, 0);
 			helper.assertTrue(Lifespan.span(c) == spans[realm.ordinal()], realm.getId() + ": " + spans[realm.ordinal()] + " years (" + Lifespan.span(c) + ")");

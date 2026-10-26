@@ -31,7 +31,7 @@ import software.bernie.geckolib.renderer.layer.AutoGlowingGeoLayer;
  * The wild demon beasts' looks (DemonBeast, BeastKind): each kind's own GeckoLib model, texture and glow (tools/beast-art's Bodies), drawn
  * the larger the higher its rank (DemonBeast#scale), moved in code by its build ({@link Model#setCustomAnimations}): legs in their gait,
  * the head turned to what it looks at, a tail swaying (a fox's fanned tails, three or nine), a serpent's body winding, a bird's wings folded or beating, an ape's arms swinging
- * and striking; and its acts (a turtle drawn into its shell, a charge's lowered head, a coil's curled body, fire breathed with open
+ * and striking, a Chaos Fiend's long arms and its smoke and the shards circling it, the Primordial Chaos's four wings and six legs; and its acts (a turtle drawn into its shell, a charge's lowered head, a coil's curled body, fire breathed with open
  * jaws). Its "idle" animation (the file's) breathes and blinks. Two of the primordial beasts are tools/spell-art's instead (the Kun, the
  * spell's own; the True Dragon): seen through, moved by their own "swim", their look and jaws on top ({@link Model#spellMade}). Also the
  * demon cores' look (DemonCoreItem#look, its glow's element).
@@ -250,6 +250,39 @@ public final class BeastModels {
 						turn(LEGS[2], -paddle, 0, 0);
 						turn("whisker_l", Mth.sin(time * 0.07f) * 0.1f, Mth.sin(time * 0.09f) * 0.15f, 0);
 						turn("whisker_r", -Mth.sin(time * 0.07f) * 0.1f, -Mth.sin(time * 0.09f) * 0.15f, 0);
+					}
+				}
+				case WRAITH -> {
+					// A Chaos Fiend: its long arms swaying as it drifts, flung out as it looses a bolt or claws (its strike); its smoke
+					// trailing beneath it in a slow swirl; the shards of stone about it circling.
+					float sway = Mth.sin(time * 0.07f) * 0.12f;
+					turn("arm_l", -0.35f + sway - strike * 1.6f, 0, -0.12f + sway * 0.5f);
+					turn("arm_r", -0.35f - sway - strike * 1.9f, 0, 0.12f + sway * 0.5f);
+					for (int i = 0; ; i++) {
+						CoreGeoBone smoke = getAnimationProcessor().getBone("smoke_" + i);
+						if (smoke == null) break;
+						turn(smoke, Mth.sin(time * 0.09f - i * 0.8f) * 0.16f, 0, Mth.cos(time * 0.07f - i * 0.8f) * 0.16f);
+					}
+					turn("orbit", 0, time * 0.05f, 0);
+				}
+				case CHAOS -> {
+					// The Primordial Chaos: its four wings beating slow, the hind pair after the fore; its six legs paddling the air, each
+					// in its own time; drawn in on itself as it gathers its Unmaking (its coil), its maw torn open as it devours (its breath).
+					float flap = Mth.sin(time * 0.1f) * 0.45f, hind = Mth.sin(time * 0.1f - 1.2f) * 0.4f;
+					turn("wing_l", 0, 0, flap);
+					turn("wing_r", 0, 0, -flap);
+					turn("wing_l2", 0, 0, hind);
+					turn("wing_r2", 0, 0, -hind);
+					for (int i = 0; i < 6; i++) turn("leg_" + i, Mth.sin(time * 0.08f + i * 1.1f) * 0.22f, 0, Mth.cos(time * 0.06f + i * 1.7f) * 0.08f);
+					CoreGeoBone maw = getAnimationProcessor().getBone("maw");
+					if (maw != null) maw.setScaleY(0.25f + 3.5f * breath); // no loop keys it: set whole each frame
+					CoreGeoBone sack = getAnimationProcessor().getBone("body");
+					if (sack != null && coil > 0) {
+						// Its loop keys the body's breath: drawn in on that, this frame's.
+						float in = 1 - 0.14f * coil;
+						sack.setScaleX(sack.getScaleX() * in);
+						sack.setScaleY(sack.getScaleY() * in);
+						sack.setScaleZ(sack.getScaleZ() * in);
 					}
 				}
 				default -> {

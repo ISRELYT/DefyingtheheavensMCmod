@@ -79,7 +79,11 @@
       "com.example.defyingtheheavens.ImmortalMarketsGameTests",
       "com.example.defyingtheheavens.ImmortalSectsGameTests",
       "com.example.defyingtheheavens.CelestialCourtGameTests",
-      "com.example.defyingtheheavens.PrimordialBeastsGameTests"
+      "com.example.defyingtheheavens.PrimordialBeastsGameTests",
+      "com.example.defyingtheheavens.LawsGameTests",
+      "com.example.defyingtheheavens.LawDomainsGameTests",
+      "com.example.defyingtheheavens.ChaosFrontierGameTests",
+      "com.example.defyingtheheavens.SmallWorldGameTests"
     ]
   }
 }

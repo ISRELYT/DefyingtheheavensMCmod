@@ -26,7 +26,9 @@ import java.util.UUID;
  * 2026-10-26: "One of each at a time"). Each has its lair, found from the world's seed ({@link #findLair}) some {@link #LAIR_MIN} to
  * {@link #LAIR_MAX} blocks from the Southern Heavenly Gate, the three a third of the way round from one another: the Kun-Peng over the open
  * sea of clouds, no land near; the True Phoenix over a high peak (a massif's, or a jade pinnacle's: most massifs have their cities); the
- * True Dragon high over a massif or the pinnacles; all clear of the realm's cities and its immortal sects by {@link #SETTLEMENT_KEEP}. A beast comes to its lair when someone comes within {@link #APPEAR}
+ * True Dragon high over a massif or the pinnacles; all clear of the realm's cities and its immortal sects by {@link #SETTLEMENT_KEEP}. And
+ * the fourth (phase 3c), the Primordial Chaos, out over the Chaos Frontier's wasteland ({@link #chaosLair}: {@link #CHAOS_LAIR_OUT} from
+ * the main island's heart, its way round from the seed). A beast comes to its lair when someone comes within {@link #APPEAR}
  * of it; slain, the next comes {@link #RETURN_TICKS} later. One not seen for {@link #LOST_TICKS} while someone stands near its lair is
  * taken as gone from the world (a command, or wandered off where it can't be loaded) and comes again; the one left behind goes when it is
  * found (PrimordialBeast#claims). A Heavenly Venerable tells the way to each ({@link #directions}).
@@ -48,7 +50,10 @@ public final class PrimordialBeasts {
 	/** The Kun's lair this far under the clouds' top (its body's foot: its back just breaking them, PrimordialBeast#KUN_SHALLOW). */
 	static final int KUN_UNDER = 9;
 
-	public static final BeastKind[] KINDS = {BeastKind.KUN_PENG, BeastKind.TRUE_PHOENIX, BeastKind.TRUE_DRAGON};
+	/** The Primordial Chaos's lair this far from the main island's heart (in the Chaos Frontier, some 1,450 blocks past its edge), at this height. */
+	public static final int CHAOS_LAIR_OUT = 5600, CHAOS_LAIR_Y = 236;
+
+	public static final BeastKind[] KINDS = {BeastKind.KUN_PENG, BeastKind.TRUE_PHOENIX, BeastKind.TRUE_DRAGON, BeastKind.PRIMORDIAL_CHAOS};
 
 	public static int index(BeastKind kind) {
 		for (int i = 0; i < KINDS.length; i++) if (KINDS[i] == kind) return i;
@@ -164,6 +169,7 @@ public final class PrimordialBeasts {
 
 	/** {@link #findLair(ServerLevel, BeastKind)} by the realm's own land ({@code state}, {@code generator}, {@code heights}) and its seed. */
 	static BlockPos findLair(RandomState state, ChunkGenerator generator, LevelHeightAccessor level, long seed, BeastKind kind) {
+		if (kind == BeastKind.PRIMORDIAL_CHAOS) return clearOfShards(level, state, generator, chaosLair(seed));
 		double base = new java.util.Random(seed ^ 0x5DEECE66DL).nextDouble() * Math.PI * 2;
 		int k = index(kind);
 		int x = 0, z = 0, tried = 0, clear = 0;
@@ -190,6 +196,26 @@ public final class PrimordialBeasts {
 		DefyingTheHeavens.LOGGER.warn("No lair like its own for the {} ({} tried, {} clear of people): it keeps at {}, {}", kind.getId(), tried, clear, x, z);
 		return kind == BeastKind.KUN_PENG ? new BlockPos(x, ModDimensions.IMMORTAL_CLOUD_Y - KUN_UNDER, z)
 				: new BlockPos(x, Math.max(height(level, state, generator, x, z), ModDimensions.IMMORTAL_CLOUD_Y) + DRAGON_OVER, z);
+	}
+
+	/**
+	 * The Primordial Chaos's: {@link #CHAOS_LAIR_OUT} from the main island's heart, whichever way round the world's seed turns it, high
+	 * over the Chaos Frontier's wasteland ({@link #CHAOS_LAIR_Y}, or over its hills: {@link #clearOfShards}). No city or sect is out there
+	 * to keep clear of.
+	 */
+	static BlockPos chaosLair(long seed) {
+		double angle = new java.util.Random(seed * 31 + 0xC4A05L).nextDouble() * Math.PI * 2;
+		return new BlockPos((int) Math.round(ModNoiseSettings.MAIN_X + Math.cos(angle) * CHAOS_LAIR_OUT), CHAOS_LAIR_Y,
+				(int) Math.round(ModNoiseSettings.MAIN_Z + Math.sin(angle) * CHAOS_LAIR_OUT));
+	}
+
+	/** Its lair is lifted, if need be, to stand this far over the highest of the land within this of it (its body, some eighteen across, free of it). */
+	static final int CHAOS_OVER = 14, CHAOS_CLEAR = 24;
+
+	/** {@code lair} as it is, or lifted to {@link #CHAOS_OVER} over the highest of the land within {@link #CHAOS_CLEAR} of it if that stands so high. */
+	static BlockPos clearOfShards(LevelHeightAccessor level, RandomState state, ChunkGenerator generator, BlockPos lair) {
+		int[] peak = highest(level, state, generator, lair.getX(), lair.getZ(), CHAOS_CLEAR, 8);
+		return peak[1] + CHAOS_OVER > lair.getY() ? new BlockPos(lair.getX(), peak[1] + CHAOS_OVER, lair.getZ()) : lair;
 	}
 
 	/**
@@ -275,7 +301,7 @@ public final class PrimordialBeasts {
 	// --- What the Venerables tell ---
 
 	/**
-	 * What a Heavenly Venerable tells of the three (TalkSystem's topic of them): for each, which way from the Southern Heavenly Gate it
+	 * What a Heavenly Venerable tells of the four (TalkSystem's topic of them): for each, which way from the Southern Heavenly Gate it
 	 * keeps, how far, and its spot; or that it was slain, and in how many days the next comes.
 	 */
 	public static List<Component> directions(ServerLevel level) {

@@ -163,16 +163,22 @@ public final class HeavenMethods {
 		return deepest;
 	}
 
-	/** Whether {@code c}'s heaven methods open the way into {@code realm}: one of it or deeper known. Qi Refining wants none. */
+	/**
+	 * Whether {@code c}'s heaven methods open the way into {@code realm}: one of it or deeper known. Qi Refining wants none; the ladder past
+	 * True Immortal, which no method carries, wants the Laws instead (Laws#opensWay, phase 3).
+	 */
 	public static boolean opensWay(PlayerCultivation c, Realm realm) {
 		if (realm == Realm.QI_REFINING) return true;
+		if (realm.isPastTrueImmortal()) return Laws.opensWay(c, realm);
 		Realm deepest = deepestRealm(c.heaven());
 		return deepest != null && deepest.ordinal() >= realm.ordinal();
 	}
 
-	/** Why {@code c}'s breakthrough waits on a heaven method (PlayerCultivation#isHeldByMethod): one of the realm ahead is wanted. */
+	/** Why {@code c}'s breakthrough waits on a heaven method (PlayerCultivation#isHeldByMethod): one of the realm ahead is wanted (past True Immortal, the Laws). */
 	public static Component gateLine(PlayerCultivation c) {
-		return Component.translatable(ModLang.HEAVEN_GATE_NONE, c.getRealm().isLast() ? c.getRealm().getDisplayName() : c.getRealm().next().getDisplayName());
+		Realm ahead = c.getRealm().next();
+		if (ahead.isPastTrueImmortal()) return Laws.gateLine(c, ahead);
+		return Component.translatable(ModLang.HEAVEN_GATE_NONE, ahead.getDisplayName());
 	}
 
 	// --- The rate ---

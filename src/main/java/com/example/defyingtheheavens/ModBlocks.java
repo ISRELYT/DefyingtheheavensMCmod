@@ -191,6 +191,21 @@ public final class ModBlocks {
 					UniformInt.of(3, 7)));
 	public static final Block YIN_JADE_BLOCK = registerWithItem("yin_jade_block",
 			new Block(BlockBehaviour.Properties.copy(Blocks.EMERALD_BLOCK).mapColor(MapColor.WARPED_STEM)));
+	/**
+	 * The Chaos Frontier's (phase 3c): Chaos Origin Ore, chaos from before heaven and earth set hard in its shards' tuff and deepslate, a dim
+	 * violet light in it; a diamond pickaxe or better mines it, for Chaos Origin Stones (more with Fortune). The First Flame of its spring
+	 * (see FirstFlameBlock, FirstFlame): taken by no one, burning white-gold.
+	 */
+	public static final Block CHAOS_ORIGIN_ORE = registerWithItem("chaos_origin_ore",
+			new DropExperienceBlock(BlockBehaviour.Properties.copy(Blocks.DEEPSLATE_DIAMOND_ORE).mapColor(MapColor.COLOR_PURPLE).strength(6.0f, 9.0f)
+					.lightLevel(state -> 4), UniformInt.of(6, 12)));
+	public static final Block FIRST_FLAME = registerWithItem("first_flame", new FirstFlameBlock(BlockBehaviour.Properties.of().mapColor(MapColor.GOLD)
+			.noCollission().noLootTable().strength(-1.0f, 3600000.0f).lightLevel(state -> 15).sound(SoundType.WOOL)
+			.isValidSpawn((state, level, pos, type) -> false).pushReaction(PushReaction.BLOCK)));
+	/** A small world's gate (phase 3d, see SmallWorldGateBlock, SmallWorlds): its way out, a sheet of starlight; taken by no one, no item. */
+	public static final Block SMALL_WORLD_GATE = register("small_world_gate", new SmallWorldGateBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLACK)
+			.noCollission().noLootTable().strength(-1.0f, 3600000.0f).lightLevel(state -> 11).sound(SoundType.AMETHYST)
+			.isValidSpawn((state, level, pos, type) -> false).pushReaction(PushReaction.BLOCK).noOcclusion()));
 	/** The red spider lily of the Fields of the Other Shore (see SpiderLilyBlock): a plain flower, on soul soil and earth. */
 	public static final Block RED_SPIDER_LILY = registerWithItem("red_spider_lily", new SpiderLilyBlock(
 			BlockBehaviour.Properties.copy(Blocks.POPPY).mapColor(MapColor.COLOR_RED)));

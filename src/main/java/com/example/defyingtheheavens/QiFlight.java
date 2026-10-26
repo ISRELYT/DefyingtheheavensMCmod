@@ -217,11 +217,15 @@ public final class QiFlight {
 	/**
 	 * The speed Qi Flight and the free flight had from Void Shattering on, before they went back to creative flight's at every realm
 	 * (2026-10-23, Meteor Flight's coming): Void Shattering 2.4 to 3 times vanilla's, Sacred Vessel 3.2 to 3.8, Entering Nirvana 4 to
-	 * 4.9, True Immortal 6 to 7.2. Still theirs in the Spatial Gap with Meteor Flight switched on ({@link #speedIn}), and known as this
-	 * class's when saved with a player ({@link #isOurs}).
+	 * 4.9, True Immortal 6 to 7.2, and every realm past it as much as its Grand Perfection (the ladder's swiftness its: Realm). Still theirs
+	 * in the Spatial Gap with Meteor Flight switched on ({@link #speedIn}), and known as this class's when saved with a player ({@link #isOurs}).
 	 */
 	private static float formerSpeed(Realm realm, Stage stage) {
 		int s = stage.ordinal();
+		if (realm.isPastTrueImmortal()) {
+			realm = Realm.TRUE_IMMORTAL;
+			s = Stage.GRAND_PERFECTION.ordinal();
+		}
 		return switch (realm) {
 			case VOID_SHATTERING -> 0.12f + s * 0.01f;
 			case SACRED_VESSEL -> 0.16f + s * 0.01f;

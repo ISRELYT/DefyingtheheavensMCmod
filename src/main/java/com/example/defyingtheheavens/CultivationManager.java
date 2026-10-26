@@ -113,6 +113,11 @@ public final class CultivationManager {
 			RaceGifts.illusion(player);
 			return;
 		}
+		// And one's small world (SmallWorlds): its door opened or closed, or, inside it, the way out.
+		if (ability == Ability.SMALL_WORLD) {
+			SmallWorlds.toggle(player);
+			return;
+		}
 		c.setAbilityEnabled(ability, !c.isAbilityEnabled(ability));
 		markDirty(player.server);
 		sync(player);
@@ -129,6 +134,8 @@ public final class CultivationManager {
 		if (ability == Ability.BURN_LIFESPAN) BurnLifespan.toggled(player);
 		// One's immortal essence lit, or put out (refused on too little of it).
 		if (ability == Ability.IMMORTAL_ESSENCE) ImmortalEssence.toggled(player);
+		// A Law's domain unfurled (any other folded away: PlayerCultivation#setAbilityEnabled), or folded (refused on too little essence).
+		if (ability.law() != null) LawDomains.toggled(player, ability);
 	}
 
 	/**

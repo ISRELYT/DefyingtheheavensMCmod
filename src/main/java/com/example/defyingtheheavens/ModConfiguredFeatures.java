@@ -109,6 +109,8 @@ public final class ModConfiguredFeatures {
 	public static final ResourceKey<ConfiguredFeature<?, ?>> NETHERWORLD_LOTUS = key("netherworld_lotus");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_YIN_JADE = key("netherworld/ore_yin_jade");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_YIN_JADE_NETHER = key("ore_yin_jade_nether");
+	/** The Chaos Frontier's Chaos Origin Ore (phase 3c), in its shards' tuff and deepslate. */
+	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_CHAOS_ORIGIN = key("immortal_realm/ore_chaos_origin");
 
 	private static ResourceKey<ConfiguredFeature<?, ?>> key(String name) {
 		return ResourceKey.create(Registries.CONFIGURED_FEATURE, DefyingTheHeavens.id(name));
@@ -132,6 +134,9 @@ public final class ModConfiguredFeatures {
 		// Spirit stone veins: the common kind in stone and deepslate; the rich kind (deep down, and through the Upper Realm).
 		ore(context, ORE_SPIRIT_STONE, ModBlocks.SPIRIT_STONE_ORE, ModBlocks.DEEPSLATE_SPIRIT_STONE_ORE, 6, 0.0f);
 		ore(context, ORE_RICH_SPIRIT_STONE, ModBlocks.RICH_SPIRIT_STONE_ORE, ModBlocks.RICH_SPIRIT_STONE_ORE, 4, 0.0f);
+		// Chaos Origin Ore: small veins in the Chaos Frontier's tuff and deepslate (both deepslate's kind of stone), half of them hidden.
+		FeatureUtils.register(context, ORE_CHAOS_ORIGIN, Feature.ORE, new OreConfiguration(new TagMatchTest(BlockTags.DEEPSLATE_ORE_REPLACEABLES),
+				ModBlocks.CHAOS_ORIGIN_ORE.defaultBlockState(), 4, 0.5f));
 		FeatureUtils.register(context, ORE_QUARTZ, Feature.ORE, new OreConfiguration(List.of(
 				OreConfiguration.target(new BlockMatchTest(Blocks.BASALT), Blocks.NETHER_QUARTZ_ORE.defaultBlockState()),
 				OreConfiguration.target(new BlockMatchTest(Blocks.BLACKSTONE), Blocks.NETHER_QUARTZ_ORE.defaultBlockState()),

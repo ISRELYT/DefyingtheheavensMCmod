@@ -52,8 +52,15 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry.ITEM.register(
 				(stack, tintIndex) -> tintIndex == 1 ? slipInk(com.example.defyingtheheavens.JadeSlipItem.method(stack)) : -1,
 				com.example.defyingtheheavens.ModItems.JADE_SLIP);
+		// A Dao Fragment's light (layer 1) is its Law's colour.
+		net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry.ITEM.register(
+				(stack, tintIndex) -> tintIndex == 1 ? com.example.defyingtheheavens.DaoFragmentItem.tint(stack) : -1,
+				com.example.defyingtheheavens.ModItems.DAO_FRAGMENT);
 		net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE.putBlock(
 				com.example.defyingtheheavens.ModBlocks.CULTIVATION_FRUIT, net.minecraft.client.renderer.RenderType.cutout());
+		// The First Flame: a fire's crossed planes, the air between its tongues clear.
+		net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE.putBlock(
+				com.example.defyingtheheavens.ModBlocks.FIRST_FLAME, net.minecraft.client.renderer.RenderType.cutout());
 		// Like vanilla leaves: the gaps between blossoms are see-through (in Fast graphics, leaves draw solid anyway).
 		net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE.putBlock(
 				com.example.defyingtheheavens.ModBlocks.WHITE_BLOSSOM_LEAVES, net.minecraft.client.renderer.RenderType.cutoutMipped());
@@ -147,6 +154,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		com.example.defyingtheheavens.HeavenPassives.clientView = (e, element) -> e == net.minecraft.client.Minecraft.getInstance().player
 				&& com.example.defyingtheheavens.HeavenPassives.masters(ClientCultivationData.get(), element);
 		WorldRenderEvents.AFTER_ENTITIES.register(SpellAuraWorld::render);
+		WorldRenderEvents.AFTER_ENTITIES.register(ClientLawDomains::render); // the Laws' domains round their owners
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(ClientSpellFx::render);
 		UpperRealmClient.register();
 		NetherworldClient.register();
@@ -213,6 +221,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			ClientNpcSpeech.clear();
 			NetherworldClient.clear();
 			ClientSpellAuras.clear();
+			ClientLawDomains.clear();
 			ClientSpellFx.clear();
 			ClientSpellTrails.clear();
 			ClientSpellSounds.clear();
@@ -233,6 +242,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			ClientSoul.tick(client);
 			ClientSpellTrails.tick(client);
 			ClientSpellAuras.tick();
+			ClientLawDomains.tick();
 			ClientSpellFx.tick();
 			ClientSpellSounds.tick();
 			BlockMasses.tick(client);

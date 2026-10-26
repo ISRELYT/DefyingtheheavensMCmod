@@ -133,10 +133,14 @@ public final class DemonPath {
 		return rank >= 0 && needsTribulation(rank) && c.demon().cultivation() >= required(rank);
 	}
 
-	/** Held at the lower realms' cap, as the heaven path is (PlayerCultivation#isBreakthroughLocked): the Upper Realm wanted. */
+	/**
+	 * Held at the lower realms' cap, as the heaven path is (PlayerCultivation#isBreakthroughLocked): the Upper Realm wanted; or, into True
+	 * Immortal and past it, outside the Immortal Realm (PlayerCultivation#isImmortalRealmLocked). Why: PlayerCultivation#lockLine.
+	 */
 	public static boolean locked(PlayerCultivation c) {
-		return c.isLowerRealmBound() && !isMaxed(c)
-				&& rank(c) + 1 > PlayerCultivation.rank(PlayerCultivation.LOWER_REALM_CAP_REALM, PlayerCultivation.LOWER_REALM_CAP_STAGE);
+		return !isMaxed(c) && (c.isLowerRealmBound()
+				&& rank(c) + 1 > PlayerCultivation.rank(PlayerCultivation.LOWER_REALM_CAP_REALM, PlayerCultivation.LOWER_REALM_CAP_STAGE)
+				|| rank(c) >= 0 && c.isImmortalRealmLocked(rank(c) + 1));
 	}
 
 	/** At a Four Axis stage's bottleneck with its axis of virtue not complete (FourAxis: the cultivator's, every path's). */
@@ -159,9 +163,23 @@ public final class DemonPath {
 		return Component.translatable(ModLang.DEMON_HELD_BY_BLOOD, realm(rank).getDisplayName(), race(c).getDisplayName(), realm(rank + 1).getDisplayName());
 	}
 
+	/**
+	 * At a realm's Grand Perfection with the realm ahead one of the ladder past True Immortal (phase 3) and too few of the Laws held for
+	 * it (Laws#opensWay): blood alone climbs no further (the merchants sell the ladder's blood too: CultivatorTrades#immortalBlood).
+	 */
+	public static boolean heldByLaws(PlayerCultivation c) {
+		int rank = rank(c);
+		return atBottleneck(c) && stage(rank).isLast() && !isMaxed(c) && !Laws.opensWay(c, realm(rank + 1));
+	}
+
+	/** Why its breakthrough waits on the Laws ({@link #heldByLaws}). */
+	public static Component lawGateLine(PlayerCultivation c) {
+		return Laws.gateLine(c, realm(rank(c) + 1));
+	}
+
 	/** Ready for its tribulation. */
 	public static boolean canBreakthrough(PlayerCultivation c) {
-		return atBottleneck(c) && !isMaxed(c) && !locked(c) && !heldByAxis(c) && !heldByBlood(c);
+		return atBottleneck(c) && !isMaxed(c) && !locked(c) && !heldByAxis(c) && !heldByBlood(c) && !heldByLaws(c);
 	}
 
 	public static Component rankName(int rank) {

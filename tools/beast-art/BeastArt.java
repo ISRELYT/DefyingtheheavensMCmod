@@ -337,15 +337,25 @@ public class BeastArt {
 
 	/**
 	 * {@code java BeastArt.java <assets>} writes the races' and wardens' heads; {@code ... <assets> bodies}, the wild demon beasts and their
-	 * cores; {@code ... <assets> icons}, the ability icons alone (Icons).
+	 * cores; {@code ... <assets> icons}, the ability icons alone (Icons); {@code ... <assets> domains}, the Law domains' icons and the greater
+	 * Laws' seals (Icons#writeDomains); {@code ... <assets> chaos}, the Chaos Frontier's fiend, its Primordial Chaos, its items and blocks
+	 * (Chaos); {@code ... <assets> worlds}, the small worlds' World Seed and Small World icon (Worlds).
 	 */
 	public static void main(String[] args) throws Exception {
-		if (args.length < 1 || args.length > 2 || args.length == 2 && !args[1].equals("bodies") && !args[1].equals("icons") && !args[1].equals("primordials")) {
-			System.err.println("java BeastArt.java <the mod's src/main/resources/assets/defying-the-heavens> [bodies|icons|primordials]");
+		if (args.length < 1 || args.length > 2 || args.length == 2 && !args[1].equals("bodies") && !args[1].equals("icons") && !args[1].equals("primordials")
+				&& !args[1].equals("domains") && !args[1].equals("chaos") && !args[1].equals("worlds")) {
+			System.err.println("java BeastArt.java <the mod's src/main/resources/assets/defying-the-heavens> [bodies|icons|primordials|domains|chaos|worlds]");
 			System.exit(1);
 		}
-		if (args.length == 2 && args[1].equals("icons")) {
+		if (args.length == 2 && args[1].equals("worlds")) {
+			Worlds.writeAll(Path.of(args[0]));
+		} else if (args.length == 2 && args[1].equals("chaos")) {
+			floorBoxes = true; // packed as the wild beasts' bodies are (Bodies)
+			Chaos.writeAll(Path.of(args[0]));
+		} else if (args.length == 2 && args[1].equals("icons")) {
 			Icons.writeAll(Path.of(args[0]));
+		} else if (args.length == 2 && args[1].equals("domains")) {
+			Icons.writeDomains(Path.of(args[0]));
 		} else if (args.length == 2 && args[1].equals("primordials")) {
 			floorBoxes = true; // packed as the wild beasts' bodies are (Bodies)
 			Primordials.writeAll(Path.of(args[0]));

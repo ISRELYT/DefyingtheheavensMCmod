@@ -798,8 +798,8 @@ obsession with Longevity (Name Your Obsession, below) makes the whole span x1.2.
 ## The realms after Four Axis
 
 The user's realms (their order told 2026-10-17, built 2026-10-22): **Dao Integration**, **Void Shattering**, **Sacred Vessel**
-and **Entering Nirvana**, which ends the middle boundary, then **True Immortal**, the first of the major boundary and the last
-realm for now. Each has the four stages; all are the Upper Realm's alone, as Four Axis is (needing ten times the cultivation,
+and **Entering Nirvana**, which ends the middle boundary, then **True Immortal**, the first of the major boundary, and since phase 3
+the ladder past it to **Heavenly Lord** (below, Past True Immortal). Each has the four stages; all are the Upper Realm's alone, as Four Axis is (needing ten times the cultivation,
 broken into only there or wherever else the lower realms' cap doesn't hold), every stage longer than the one before. Saves are
 safe: realms are saved by their place in the line, and these come after Four Axis.
 
@@ -811,6 +811,12 @@ safe: realms are saved by their place in the line, and these come after Four Axi
 | Sacred Vessel | 2,880 | 800 | 130,000 | 3,250 | x2 |
 | Entering Nirvana | 5,760 | 1,600 | 280,000 | 7,000 | x2 |
 | True Immortal | 57,600 | 16,000 | 2,500,000 | 62,500 | **x10** (the user's: an immense leap) |
+| Earth Immortal | 115,200 | 32,000 | 5,000,000 | 125,000 | x2 (phase 3: the ladder, below) |
+| Heaven Immortal | 230,400 | 64,000 | 10,000,000 | 250,000 | x2 |
+| Golden Immortal | 460,800 | 128,000 | 20,000,000 | 500,000 | x2 |
+| Taiyi Golden Immortal | 921,600 | 256,000 | 40,000,000 | 1,000,000 | x2 |
+| Profound Sovereign | 1,843,200 | 512,000 | 80,000,000 | 2,000,000 | x2 |
+| Heavenly Lord | 3,686,400 | 1,024,000 | 160,000,000 | 4,000,000 | x2 (the last) |
 
 Armour, toughness and knockback resistance stay at Four Axis's: vanilla's caps hold them there anyway (80% of a blow turned).
 **Vanilla's caps on max health (1,024) and attack damage (2,048) are lifted** (the user's ask; `BodyCaps`, a mixin accessor on
@@ -820,7 +826,7 @@ virtue, Enlightenment (each axis holds its own stage's breakthrough). The rest o
 Heaven methods), the ghost path to True Immortal (Ghost methods), tribulations of 200 to 3,200 strikes (Tribulations), the years
 (Lifespan: a True Immortal's without end; the talent race's shares, above), their few cultivators (Sects and cultivators), the
 Netherworld's yin borne twice as long each realm, the Inner Realm's sky turning to the void's violet and then to gold, the
-Quasi- names ("Quasi-Dao Integration"; only past True Immortal Grand Perfection "beyond"). Dao Integration has its own spells
+Quasi- names ("Quasi-Dao Integration"; only past the last realm's Grand Perfection, Heavenly Lord's since phase 3, "beyond"). Dao Integration has its own spells
 (2026-10-24: the five elements' guardian beasts and the realm's methods' arts, below, Heaven spells: Dao Integration), and so does
 Void Shattering (2026-10-24: space torn open and what comes through it, Heaven spells: Void Shattering); the realms after it none
 yet, nor new abilities.
@@ -2300,8 +2306,9 @@ full pool lasts 90 seconds. It does not make a spell bigger or longer, only hard
 - Immortal-grade pills, herbs five to ten thousand years old, Cultivation Fruit.
 - A Sacred Vessel of their element, to those they are Warm to.
 - Their element's **True Immortal slip** (60 jade) to the courteous. One merchant in five sells the Netherworld Immortal Canon instead.
-- **A demon race's True Immortal blood** (60 jade, a race a day) to the courteous; the realms past True Immortal's too, once there are
-  any (the user's ask, 2026-10-26).
+- **A demon race's True Immortal blood** (60 jade, a race a day) to the courteous, and each realm's of the ladder past it (70 jade for
+  an Earth Immortal's, ten more a realm, 120 for a Heavenly Lord's, paid in two stacks of jade; the user's ask, 2026-10-26). Past True
+  Immortal the blood alone climbs no realm: the Laws are wanted too.
 - The realm's immortals also teach their True Immortal methods.
 
 **Immortal sects** (`ImmortalSects`, `ImmortalSectPlan`, `ImmortalSectPieces`). Floating **archipelagos of fourteen islands** over the
@@ -2311,22 +2318,22 @@ not above a giant island, every one of the old ground court's buildings on them)
   towers), the arena, and the Sect Lord's main hall, highest of all.
 - **The sides:** two disciples' courts, the altar and the treasury, the library and the alchemy hall, two herb gardens, two elders'
   islands of three houses each.
-- **Twenty members:** a True Immortal Grand Perfection Sect Lord, two True Immortals Late or Grand Perfection, four Early or Mid, and
-  thirteen of Entering Nirvana. Joinable like any sect.
+- **Twenty members:** an **Earth Immortal** Sect Lord (Early to Late; a True Immortal of Grand Perfection before phase 3), two True
+  Immortals Late or Grand Perfection, four Early or Mid, and thirteen of Entering Nirvana. Joinable like any sect.
 - Their libraries keep True Immortal and Entering Nirvana slips. Their elders and Sect Lord sell a race's True Immortal blood to those
   they are Warm to.
 - Those who can fly catch themselves when they step off an island.
 
 **The Celestial Court** (`CelestialCourt`; the user: "Yes, build the Celestial Court as you described").
 - **Its people:**
-  - the **Heavenly King** on the palace's throne, a **Daluo Golden Immortal**;
-  - five **Heavenly Venerables**, one per element in the Court's five halls, **Taiyi Golden Immortals**. The **Metal Venerable is a
+  - the **Heavenly King** on the palace's throne, a **Profound Sovereign** of Grand Perfection;
+  - five **Heavenly Venerables**, one per element in the Court's five halls, **Taiyi Golden Immortals** of Grand Perfection. The **Metal Venerable is a
     tiger demon and the Wood Venerable a dragon demon** (the user's ask: at least two demons among them);
   - four **Immortal Generals** at the Court's gate;
   - the **Quartermaster** on the palace terrace.
-- **Their strength** follows the user's rule for the realms past True Immortal, **each twice the last**: Earth Immortal ×2, Heaven
-  Immortal ×4, Golden Immortal ×8, Taiyi ×16, Daluo ×32, Dao Ancestor ×64 (of a True Immortal's). Until phase 3 the King and the
-  Venerables are True Immortals of Grand Perfection ×32 and ×16 (`CelestialCourt#pastTrueImmortal`).
+- **Their strength** is their realms' own (phase 3: the ladder past True Immortal, **each twice the last**): Earth Immortal ×2, Heaven
+  Immortal ×4, Golden Immortal ×8, Taiyi Golden Immortal ×16, Profound Sovereign ×32, Heavenly Lord ×64 (of a True Immortal's). Before
+  phase 3 they were True Immortals made ×32 and ×16 as strong.
 - **Joining:** ask a Venerable (Entering Nirvana and up). You start as an **Officer**.
 - **Merit** (Court Merit Tokens):
   - one a minute standing watch on the Southern Heavenly Gate's plaza while it is open;
@@ -2364,6 +2371,7 @@ not above a giant island, every one of the old ground court's buildings on them)
   - It leaves **True Immortal dragon blood**.
 - **What they leave** (cores, Immortal Jade, blood or slip) **hangs glowing in the air where they fell**: over the sea of clouds it
   would be lost.
+- **The fourth**, the Primordial Chaos (part 3c), keeps its lair out in the Chaos Frontier (below).
 
 **True Immortal blood.** Demon-race immortals inside the realm drop their True Immortal blood too (`DemonBlood#carried`), and it has
 its own golden phial.
@@ -2373,6 +2381,149 @@ Code: `ImmortalGate`, `ImmortalRealm`, `ImmortalRealmClient`, `ImmortalEssence`,
 `CourtMeritTokenItem`, `PrimordialBeast`, `PrimordialBeasts`, `PrimordialLooks`; tests `ImmortalCitiesGameTests`,
 `ImmortalEssenceGameTests`, `ImmortalMarketsGameTests`, `ImmortalSectsGameTests`, `CelestialCourtGameTests`,
 `PrimordialBeastsGameTests`. Everything was also checked in game.
+
+## Past True Immortal: the Laws and the Five Decays
+
+Phase 3 of the realm plan (2026-10-26; the user's picks: the five elements' Laws and three greater ones, a weathered Decay's Law chosen
+by the player, a failed judgement a stage lost and the life kept). Built in parts: **3a** the ladder, the Laws and the Five Decays;
+**3b** the Law domains (below); **3c** the Chaos Frontier (below); **3d** the small worlds (below).
+
+**The ladder** (`Realm`). Six realms after True Immortal, four stages each: **Earth Immortal**, **Heaven Immortal**, **Golden
+Immortal**, **Taiyi Golden Immortal**, **Profound Sovereign** and **Heavenly Lord**, the last (the user named the last two). Each is
+**twice the last** (body, blows, qi; the table under The realms after Four Axis), wants eight times the cultivation for five times the
+gain (every stage still longer than the one before), and is the Immortal Realm's to cultivate (its needs a thousand times, as True
+Immortal's). Lifespan without end. Walking and flying speeds stay at True Immortal Grand Perfection's (the land loads no faster); the
+core's blast grows 45 blocks a realm. **Breakthroughs into True Immortal and past it are made only in the Immortal Realm** (the user's
+rule, 2026-10-26: Entering Nirvana Grand Perfection into True Immortal Early, and every stage and realm after it, on every path):
+elsewhere the bar waits full and the Breakthrough button says to go up through the Immortal Gate (`PlayerCultivation#isImmortalRealmLocked`;
+the realm's own cultivators are held there by the census already). Tribulations keep True Immortal's 3,200 strikes, each heavier, tuned as before (Protection IV and
+a beacon's Resistance II live, Resistance I with Regeneration dies; `trib-tune-1026.ps1`). No method, foundation or blood carries one
+up it: **the Laws do**. In the worlds: the immortal sects' Sect Lords are Earth Immortals, the Celestial Court's Venerables Taiyi
+Golden Immortals and its King the one Profound Sovereign; a handful more may rise in the Immortal Realm; no Heavenly Lord walks any world.
+The merchants sell each realm's demon blood (above).
+
+**The Laws** (`Law`, `Laws`, `LawState`). **Metal, Wood, Water, Fire, Earth**, and the greater **Space, Time, Life and Death**, nine
+levels each.
+- **The way up:** breaking into each realm of the ladder wants so many levels of the Laws together: **3, 7, 12, 18, 25, 35**, on the
+  heaven path, the ghost path and the Demon Path alike (the Demon Path wants its race's blood besides).
+- **Comprehending:** by True Immortals and those past them. **Meditating in the Immortal Realm** comprehends the Law in focus,
+  whichever qi the meditation draws in, at its pace: level L wants L quarter-hours (the first fifteen minutes, the ninth two and a
+  quarter hours). A foe of Entering Nirvana or above slain by an element's spell gives a **glimpse** of its Law one time in four (a
+  quarter of its next level). Each **Five Decays weathered** gives a level outright, chosen by the player. The greater Laws open to
+  comprehension at **Golden Immortal**.
+- **What they give:** an element's Law its spells **+10% harm and +5% reach** a level (the reach of what they aim at). **Space:**
+  Void Shattering's spells as much harder and farther, Nine Nether Step and Soul Dash 5% farther a level, the Spatial Tear 3% sooner
+  ready. **Time:** every spell's cooldown 3% shorter a level. **Life and Death:** the ghost path's spells 10% harder and all the
+  healing you take 10% greater a level. Players' alone.
+- **The Methods tab's Laws page** (from True Immortal on): the levels held and what the realm ahead wants, the Law in focus, levels
+  owed to choose, when the Five Decays come; each Law with Focus (and +1 when a level is owed), its pips, its insight toward the next
+  level, what it gives and gives now.
+
+**The Five Decays of Heaven and Man** (`FiveDecays`). Every True Immortal and higher player, every **ten in-game days**, warned the day
+before. Five signs a minute apart, each staying till it ends: the **robes stain** (armour to 70%), the **flowers wither** (nothing
+mends you), the **qi falters** (gathering halved, immortal essence draining wherever you are), the **body sweats** (blows and spells to
+70%), the **mind can't rest** (no meditation). A minute later the **judgement**: a storm, thirty seconds, the strikes of the
+tribulation into the stage after yours, past every ward. **Weathered:** a level of the Laws to choose. **Struck down** (by it or
+anything else while it runs): you live on **a stage lower**, at half your health. The Decays wait where the heavens can't see (the
+Netherworld, the Spatial Gap, the Inner Realm), for a soul away from its body or in a clone, for the dead, for creative players and
+through a logout. The realm's own immortals never decay.
+
+**Not done:** the spells don't grow in size past their own realm's (each spell's size is fixed by its realm); the ladder's might shows in
+the harm (each realm twice the last) and in the Laws' reach.
+
+**The Law domains** (`LawDomains`, part 3b, 2026-10-26). A Law comprehended to its first level, an immortal awakens its **domain**: an
+ability for each Law on the Abilities tab and the wheel (Metal Domain ... Life and Death Domain), off to begin with, **one lit at a
+time** (lighting one folds the other away). Lit, the Law's ground unfurls round you, a sphere that goes where you go: **8 blocks and 2
+more a level** of its Law, a tenth again for each realm past True Immortal (some 42 blocks for a Heavenly Lord at level 9). It burns
+**immortal essence**: a full pool in **120 s** (beside what the Immortal Essence switch burns), won't unfurl on less than 5 s of it,
+and folds away when the pool runs dry, at a death or a logout, while your soul is out of your body, and in a passage. Creative play burns
+none. It works on **your foes** alone: monsters, whatever attacks you, and the players and cultivators you are at odds with (blows passed
+between you in the last 10 s); never your pets, your sect's fellows, a player you may not harm, nor anyone behind a barrier you couldn't
+break, so a domain carried through a city falls on none of its merchants. In it **your Law's spells strike them 25% harder** (the
+element's spells; for Space a spell of space, for Life and Death the ghost path's). Each second (harm a share of your blow, as its
+element's qi: twice again each realm, and the Law's +10% a level besides):
+- **Metal:** 15% of your blow; their armour cut 4% a level while in it.
+- **Wood:** roots drain them for 15%, half of it back to you as life; Slowness (I, II from level 4, III from level 8).
+- **Water:** 15% and Slowness; what burns on them goes out, and the fire they deal is 4% a level weaker.
+- **Fire:** true fire, 25%, past any resistance or immunity to fire; they're set alight.
+- **Earth:** 15% and Slowness; fliers dragged down out of the air (no flying in it), spared the fall; a cultivator's flight ended.
+- **Space:** no harm; space locked on them (no Nine Nether Step, Soul Dash or Spatial Tear), nothing it catches leaves it (drawn back
+  from its edge, put back in if thrown out), Slowness.
+- **Time:** no harm; heavy Slowness (II up to V) and slower blows, their spells cooling 10% a level slower.
+- **Life and Death:** no harm; nothing in it heals at all, and 3% a level of the harm you deal them comes back to you as life.
+
+Seen by everyone near: a sphere of the Law's colour, faint and rim-lit (fainter from within), patterned with the Law's own stuff
+drifting round it (blade-light, vines, water, tongues of flame, molten veins, stars, rings, black smoke), its seal turning on the ground
+beneath (the five elements' seals; Space's 空 and Time's 時, new, from the rune; Life and Death's taiji) with a ring running out over it,
+motes of the Law in it. Icons and seals: `java tools/beast-art/BeastArt.java <assets> domains`. The realm's own immortals have no Laws,
+and so no domains.
+
+Code: `Law`, `Laws`, `LawState`, `FiveDecays`, `LawDomains`, client `ClientLawDomains`; tests `LawsGameTests`, `LawDomainsGameTests`.
+
+**The Chaos Frontier** (`ChaosFrontier`, part 3c, 2026-10-26). The Immortal Realm's edge, where chaos from before heaven and earth still
+churns. From **4,000 blocks out from the main island's heart** the realm's land breaks up, and past **4,150** (its edge) it is all the
+Frontier's: **floating shards of grey-violet land**, ten to sixty blocks across, between the sea of clouds and about Y 260, tuff and
+deepslate veined with amethyst and crying obsidian; the sea of clouds below grey-violet and churning, the sky bruised violet, the sun
+lost, the fog close. Further out the shards **join into one wasteland** (from **4,300 blocks out**, whole by about **5,000**): they grow,
+settle toward one level and run together, first into rafts with gaps between, then one land with holes in it, then no holes at all. The
+wasteland rolls in low hills some 30 to 50 blocks thick, floating over the sea of clouds: dig down through it and the clouds are below.
+No city, sect, wandering immortal or other beast of the realm's comes out there. In worlds made before it, land already generated past
+4,000 blocks stays as it was (a seam where the new begins).
+- **Its storm:** a player out in it unsheltered loses **1% of their health a second**, through armour and every ward, and their body
+  doesn't mend of itself (nor spends food on it): spells and pills still heal. Any harm breaks a meditation. **Shelter:** standing within
+  a lit **Law domain**, your own or one whose owner isn't at odds with you, or in the **First Flame's light**. Creative and spectating
+  players are untouched.
+- **Chaos Fiends:** wraiths of its chaos (grey-violet smoke round broken stone, long clawed arms, white-fire eyes, shards circling them).
+  They come out of the air round anyone in it, up to 6 near each, the stronger the deeper: **True Immortal Mid to Grand Perfection**
+  within 1,000 blocks past the edge, **Earth Immortals** to 2,000, **Heaven Immortals** beyond. They fly, circle loosing chaos bolts and
+  dive to claw; they leave alone anyone a realm or more above them, and anyone in the First Flame's light (where they burn away). They
+  leave a **Chaos Origin Stone** 40% of the time and a **Dao Fragment** 5%: no core, blood or hide.
+- **The Primordial Chaos:** Hundun's remnant, the fourth primordial beast, a faceless sack of churning chaos banded in the five colours
+  fading to grey, six legs and four wings, some forty blocks across: a **Golden Immortal of Grand Perfection, ×1.25**. Its lair is
+  **5,600 blocks out**, which way round chosen by the world's seed; it comes when someone nears (a purple bar), returns 5 days after it
+  is slain, and the Heavenly Venerables tell its way. **The Unmaking:** it draws in on itself for two seconds (told, chaos streaming into
+  it, a ring marking its reach), then bursts 30 blocks round, hurling everything out and **folding away every Law domain whose owner it
+  catches**. **Devour:** everything within 40 blocks pulled in for three seconds and crushed against it. A fan of nine chaos bolts. Heaven
+  Immortal fiends called out of the chaos about it. Slain: **6 Dao Fragments** of six Laws, **12 Chaos Origin Stones**, **12 Immortal
+  Jade**, hanging where it fell; the Court pays its officers who fought it **40 merit**.
+- **The First Flame's spring:** one in every world, on its own level island **4,600 blocks south** of the heart, open sky round it. Its
+  basin is laid the first time someone comes near: a ring of quartz round a bed of the **First Flame** (a new block: white-gold, the
+  brightest light, harming none, taken by no one), a gold-topped post at each quarter. Its light, **16 blocks** about the flame, shelters
+  from the storm; fiends burn away in it; **meditating in it comprehends the Law in focus three times as fast**.
+- **Dao Fragment:** a shard of one Law, coloured by it. Use it: **half of that Law's next level of insight**, if you may comprehend it
+  (an immortal; a greater Law only from Golden Immortal). **Chaos Origin Stone:** chaos set hard, what a small world's seed is made of
+  (part 3d). From the fiends, the Primordial Chaos and **Chaos Origin Ore** in its land, about as rare as diamonds (a diamond pickaxe or better;
+  Fortune helps).
+- Art: `java tools/beast-art/BeastArt.java <assets> chaos` (the fiend, the Primordial Chaos, the ore, the stone, the fragment, the
+  flame).
+
+Code: `ChaosFrontier`, `ChaosFiend`, `FirstFlame`, `FirstFlameBlock`, `DaoFragmentItem`, `ChaosOriginStoneItem`, the Frontier's land in
+`ModNoiseSettings#immortalRealm`, the Primordial Chaos in `PrimordialBeast`/`PrimordialBeasts`, client `ImmortalRealmClient`; tests
+`ChaosFrontierGameTests`.
+
+**The small worlds** (`SmallWorlds`, part 3d, 2026-10-26; the user's pick of who comes in: you and whoever you allow). An immortal's own
+world: a floating island under the stars.
+- **The World Seed:** crafted from **5 Chaos Origin Stones and 4 Immortal Jade** (stones in the corners and the middle, jade on the
+  sides). A **True Immortal** (or higher) holds it in use for **10 seconds** to refine it into their own small world; it is used up.
+  One world each; below True Immortal the seed won't take.
+- **The world:** in a dimension of its own, every world in its own slot 4,096 blocks from the next. Grass and earth over stone that
+  hangs into the void, roots here and there beneath; a pool and three cherry trees about its heart; its **gate**, a sheet of starlight
+  in a frame of jade, behind the way in. Always lit as by day, under a sky that is all stars. Nothing is born there, it never rains,
+  and beds work (set your spawn there). Its land reaches **16 blocks out, 2 more for every level of the Laws you hold** (up to 160): new
+  land is laid around its edge as your Laws grow, never over anything that stands there.
+- **Its qi is the Immortal Realm's** (a thousandfold): your immortal essence fills there, and meditating there comprehends your Law in
+  focus. A breakthrough into True Immortal or past it is still the Immortal Realm's alone.
+- **The door** (the **Small World** ability, an act, on the Abilities tab and the wheel): a door of starlight opens before you, almost
+  anywhere (not in a passage, the Inner Realm or a small world, nor with your soul out, nor in a tribulation), for **30 seconds**. Walk
+  through it and you're on your island. Use the ability again inside, or walk through the gate, to come out where you went in. Fallen
+  off the island, or flown far out into the nothing round it, you're set back on it unharmed.
+- **Guests:** `/smallworld guest add <player>`, `/smallworld guest remove <name>`, `/smallworld guests`, `/smallworld` (its reach and
+  guests). Guests on the list may walk through your open door (anyone else is turned away) and leave by the gate; one taken off the
+  list while inside is sent out.
+- Art: `java tools/beast-art/BeastArt.java <assets> worlds` (the seed, the ability's icon).
+
+Code: `SmallWorlds`, `SmallWorldDoor`, `SmallWorldGateBlock`, `WorldSeedItem`, `SmallWorldCommand`, client `SmallWorldClient`,
+`SmallWorldDoorRenderer`, `SmallWorldGateRenderer`; tests `SmallWorldGameTests`.
 
 ## The Astral Realm
 

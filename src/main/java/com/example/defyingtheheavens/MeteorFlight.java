@@ -132,9 +132,13 @@ public final class MeteorFlight {
 
 	// --- The numbers ---
 
-	/** Top speed (blocks a second) of one who wields {@code realm} at {@code stage}: none below Core Formation. */
+	/**
+	 * Top speed (blocks a second) of one who wields {@code realm} at {@code stage}: none below Core Formation; past True Immortal (phase 3),
+	 * its Grand Perfection's (the land loads no faster for the swifter).
+	 */
 	public static double topSpeed(Realm realm, Stage stage) {
-		return TOP_SPEEDS[realm.ordinal()] * (1 + STAGE_STEP * stage.ordinal());
+		if (realm.isPastTrueImmortal()) return topSpeed(Realm.TRUE_IMMORTAL, Stage.GRAND_PERFECTION);
+		return TOP_SPEEDS[Math.min(realm.ordinal(), TOP_SPEEDS.length - 1)] * (1 + STAGE_STEP * stage.ordinal());
 	}
 
 	/**

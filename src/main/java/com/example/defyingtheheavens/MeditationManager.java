@@ -126,6 +126,10 @@ public final class MeditationManager {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_RITUAL_BUSY), true);
 			return;
 		}
+		if (FiveDecays.restless(player)) { // the Five Decays' fifth sign: the mind can find no rest
+			player.displayClientMessage(Component.translatable(ModLang.MSG_DECAY_RESTLESS), true);
+			return;
+		}
 		if (!canMeditate(player)) {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_CANNOT), true);
 			return;
@@ -401,8 +405,7 @@ public final class MeditationManager {
 				p.sendSystemMessage(Component.translatable(ModLang.MSG_NEED_PILL, PillItem.breakthroughPillFor(c.breakthroughRealm()).getDescription(),
 						c.breakthroughRealm().getDisplayName()));
 			} else if (!wasBottleneck && c.isAtBottleneck() && c.isBreakthroughLocked()) {
-				p.sendSystemMessage(Component.translatable(ModLang.MSG_REALM_LOCKED,
-						PlayerCultivation.rankName(PlayerCultivation.LOWER_REALM_CAP_REALM, PlayerCultivation.LOWER_REALM_CAP_STAGE)));
+				p.sendSystemMessage(c.lockLine()); // the lower realms' cap; into True Immortal and past it, the Immortal Realm
 			} else if (!wasAtGate && c.isAtRitualGate()) {
 				p.sendSystemMessage(Component.translatable(ModLang.MSG_RITUAL_GATE));
 			}
@@ -413,6 +416,9 @@ public final class MeditationManager {
 				p.sendSystemMessage(FourAxis.gateLine(c, PlayerCultivation.rank(c.getRealm(), c.getStage())).copy().withStyle(net.minecraft.ChatFormatting.GOLD));
 			}
 		}
+
+		// In the Immortal Realm an immortal's meditation, whichever qi it draws in, comprehends the Law in focus too (Laws, phase 3), at its pace.
+		if (tick % 10 == 0) Laws.meditate(p, c, 0.5 * pace(p));
 
 		if (tick % 20 == 0) {
 			ModPackets.broadcastMeditation(p, true); // heartbeat for late joiners / newly tracking players
@@ -460,8 +466,8 @@ public final class MeditationManager {
 		if (!wasBottleneck && DemonPath.atBottleneck(c)) {
 			p.sendSystemMessage(DemonPath.heldByAxis(c) ? FourAxis.gateLine(c, DemonPath.rank(c)).copy().withStyle(net.minecraft.ChatFormatting.GOLD)
 					: DemonPath.heldByBlood(c) ? DemonPath.bloodGateLine(c).copy().withStyle(net.minecraft.ChatFormatting.GOLD)
-					: DemonPath.locked(c) ? Component.translatable(ModLang.MSG_REALM_LOCKED,
-					PlayerCultivation.rankName(PlayerCultivation.LOWER_REALM_CAP_REALM, PlayerCultivation.LOWER_REALM_CAP_STAGE))
+					: DemonPath.heldByLaws(c) ? DemonPath.lawGateLine(c).copy().withStyle(net.minecraft.ChatFormatting.GOLD)
+					: DemonPath.locked(c) ? c.lockLine(DemonPath.rank(c) + 1)
 					: Component.translatable(ModLang.MSG_DEMON_BOTTLENECK).withStyle(net.minecraft.ChatFormatting.RED));
 		}
 	}
@@ -526,7 +532,8 @@ public final class MeditationManager {
 			NetherworldManager.refresh(p);
 		}
 		if (!wasBottleneck && GhostMethods.atBottleneck(c)) {
-			p.sendSystemMessage(GhostMethods.heldByMethod(c) ? GhostMethods.gateLine(c).copy().withStyle(net.minecraft.ChatFormatting.GOLD)
+			p.sendSystemMessage(GhostMethods.heldByPlace(c) ? c.lockLine(GhostMethods.ghostRank(s) + 1)
+					: GhostMethods.heldByMethod(c) ? GhostMethods.gateLine(c).copy().withStyle(net.minecraft.ChatFormatting.GOLD)
 					: GhostMethods.heldByAxis(c) ? FourAxis.gateLine(c, GhostMethods.ghostRank(s)).copy().withStyle(net.minecraft.ChatFormatting.GOLD)
 					: Component.translatable(ModLang.MSG_GHOST_BOTTLENECK).withStyle(net.minecraft.ChatFormatting.AQUA));
 		}

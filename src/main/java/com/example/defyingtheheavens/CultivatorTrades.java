@@ -283,8 +283,9 @@ public final class CultivatorTrades {
 
 	/**
 	 * A demon race's blood (the user's ask, 2026-10-26: "a way to purchase true immortal demon race blood and above at sects or cities or from
-	 * the capital"): one race's today, a phial of each realm's from True Immortal up (True Immortal's alone until there are realms past it),
-	 * each at its realm's slip's price ({@link #bloodPrice}), to one regarded at {@code regard} or better. Sold nowhere in the worlds below.
+	 * the capital"): one race's today, a phial of each realm's from True Immortal up (the ladder past it too since phase 3, though its blood
+	 * alone climbs no realm: DemonPath wants the Laws besides), each at its price ({@link #bloodPrice}), to one regarded at {@code regard} or
+	 * better. Sold nowhere in the worlds below.
 	 */
 	static List<Goods> immortalBlood(RandomSource random, int regard) {
 		List<Bloodline> races = new ArrayList<>();
@@ -297,8 +298,13 @@ public final class CultivatorTrades {
 		return goods;
 	}
 
-	/** A demon race's blood's price (Low stones): its realm's slip's ({@link #heavenSlipPrice}), a True Immortal's sixty Immortal Jade. */
+	/**
+	 * A demon race's blood's price (Low stones): its realm's slip's ({@link #heavenSlipPrice}), a True Immortal's sixty Immortal Jade; past
+	 * it, which no slip teaches (phase 3), ten jade more a realm, a Heavenly Lord's 120 (within the two stacks of jade a trade can ask:
+	 * {@link #costsFor}).
+	 */
 	public static int bloodPrice(Realm realm) {
+		if (realm.isPastTrueImmortal()) return bloodPrice(Realm.TRUE_IMMORTAL) + 10 * realm.pastTrueImmortal() * JADE;
 		long price = GHOST_SLIP_PRICE;
 		for (int t = 0; t < realm.ordinal(); t++) price = Math.min(Integer.MAX_VALUE, price * 3);
 		return (int) price;
@@ -346,7 +352,8 @@ public final class CultivatorTrades {
 
 	/**
 	 * {@code price} Low stones as the trading screen's two costs: as many of the largest grade that fits, then the rest in the
-	 * grade below (rounded up; nine of those make one more of the larger).
+	 * grade below (rounded up; nine of those make one more of the larger). More than a stack of the largest grade (Immortal Jade:
+	 * the ladder's blood, phase 3), the second cost is more of it (rounded up), two stacks at most.
 	 */
 	static ItemStack[] costsFor(int price) {
 		SpiritStoneItem.Grade[] grades = SpiritStoneItem.Grade.values();
@@ -359,6 +366,10 @@ public final class CultivatorTrades {
 		}
 		int count = price / grades[top].value();
 		int rest = price - count * grades[top].value();
+		if (count > 64 || count == 64 && rest > 0) {
+			int more = Math.min(64, count - 64 + (rest > 0 ? 1 : 0));
+			return new ItemStack[] {new ItemStack(SpiritStoneItem.of(grades[top]), 64), more > 0 ? new ItemStack(SpiritStoneItem.of(grades[top]), more) : ItemStack.EMPTY};
+		}
 		ItemStack second = ItemStack.EMPTY;
 		if (rest > 0 && top > 0) {
 			int below = (rest + grades[top - 1].value() - 1) / grades[top - 1].value();

@@ -82,8 +82,8 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 
 	/** It leaves them alone who stand this many stages (a realm) or more above it. */
 	public static final int FAR_ABOVE = 4;
-	/** How far it notices whoever comes near. */
-	public static final double NOTICE = 14;
+	/** How far it notices whoever comes near; a Chaos Fiend, hunting the open sky, the further (#notice). */
+	public static final double NOTICE = 14, CHAOS_NOTICE = 40;
 	/** Its core's chance of being left whole: by realm (Qi Refining, Foundation Building, Core Formation). */
 	public static final float[] CORE_CHANCE = {1 / 3f, 2 / 3f, 1f};
 	/** An elder keeps within this of the pool it guards ({@link #guard}); and leaves its race's blood this often (its core always). */
@@ -184,7 +184,7 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 
 	/** Its rank set (and its strength and size by it), its health left as it is (a beast loaded again). */
 	private void holdRank(int rank) {
-		rank = Mth.clamp(rank, kind().tier.minRank, kind().tier.maxRank);
+		rank = Mth.clamp(rank, kind().minRank(), kind().maxRank());
 		entityData.set(DATA_RANK, rank);
 		refreshDimensions();
 		if (!level().isClientSide) {
@@ -195,9 +195,9 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 
 	/** A rank for one of its kind born now: the low end of its tier's ranks the likelier; in the Upper Realm, richer in qi, the higher. */
 	public static int rollRank(BeastKind kind, RandomSource random, boolean upper) {
-		int span = kind.tier.maxRank - kind.tier.minRank + 1;
+		int span = kind.maxRank() - kind.minRank() + 1;
 		double roll = Math.pow(random.nextDouble(), upper ? 0.8 : 1.6);
-		return kind.tier.minRank + Math.min(span - 1, (int) (roll * span));
+		return kind.minRank() + Math.min(span - 1, (int) (roll * span));
 	}
 
 	@Override public Realm getCultivationRealm() { return CultivatorNpc.realmOf(Math.max(0, getRank())); }
@@ -205,7 +205,7 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 
 	/** How much larger than its kind's least it is: a twelfth more for each stage above its tier's lowest. */
 	public float scale() {
-		return 1 + (Math.max(kind().tier.minRank, getRank()) - kind().tier.minRank) / 12f;
+		return 1 + (Math.max(kind().minRank(), getRank()) - kind().minRank()) / 12f;
 	}
 
 	@Override
@@ -299,6 +299,11 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 	}
 
 	// --- Who it goes for ---
+
+	/** How far it notices whoever comes near: {@link #NOTICE}, a Chaos Fiend's {@link #CHAOS_NOTICE} (it came out of the air 20 to 48 off). */
+	public double notice() {
+		return kind().isChaos() ? CHAOS_NOTICE : NOTICE;
+	}
 
 	/** Whether it goes for {@code target} unprovoked: a territorial kind, a player or a cultivator in reach, not far above it, not one of its own. */
 	public boolean hunts(LivingEntity target) {
@@ -433,6 +438,9 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 			case KUN_PENG -> new SoundEvent[] {SoundEvents.ELDER_GUARDIAN_AMBIENT, SoundEvents.ELDER_GUARDIAN_HURT, SoundEvents.ELDER_GUARDIAN_DEATH};
 			case TRUE_PHOENIX -> new SoundEvent[] {SoundEvents.ENDER_DRAGON_AMBIENT, SoundEvents.BLAZE_HURT, SoundEvents.BLAZE_DEATH};
 			case TRUE_DRAGON -> new SoundEvent[] {SoundEvents.ENDER_DRAGON_GROWL, SoundEvents.ENDER_DRAGON_HURT, SoundEvents.ENDER_DRAGON_DEATH};
+			// A Chaos Fiend's wail; the Primordial Chaos's deep, faceless throb.
+			case CHAOS_FIEND -> new SoundEvent[] {SoundEvents.VEX_AMBIENT, SoundEvents.VEX_HURT, SoundEvents.VEX_DEATH};
+			case PRIMORDIAL_CHAOS -> new SoundEvent[] {SoundEvents.WARDEN_AMBIENT, SoundEvents.WARDEN_HURT, SoundEvents.WARDEN_DEATH};
 		};
 		return three[which];
 	}
@@ -452,6 +460,8 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 			case KUN_PENG -> 0.5f;
 			case TRUE_PHOENIX -> 1.45f;
 			case TRUE_DRAGON -> 0.6f;
+			case CHAOS_FIEND -> 0.55f;
+			case PRIMORDIAL_CHAOS -> 0.5f;
 			default -> 1.0f;
 		};
 		return super.getVoicePitch() * kindPitch / (float) Math.sqrt(scale());
@@ -470,7 +480,7 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 		float bloodChance = kind().isElder() ? ELDER_BLOOD_CHANCE : CORE_CHANCE[realm];
 		if (kin != null && random.nextFloat() < bloodChance) spawnAtLocation(DemonBloodItem.of(kin, getCultivationRealm()));
 		for (net.minecraft.world.item.Item remains : kind().remains()) {
-			int count = random.nextInt(2 + looting) + (getRank() >= kind().tier.maxRank - 1 ? 1 : 0);
+			int count = random.nextInt(2 + looting) + (getRank() >= kind().maxRank() - 1 ? 1 : 0);
 			if (count > 0) spawnAtLocation(new ItemStack(remains, count));
 		}
 	}

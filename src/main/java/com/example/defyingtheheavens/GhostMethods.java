@@ -86,7 +86,7 @@ public final class GhostMethods {
 
 	/** Layers of the fire or the steps each of the ghost path's realms carries: three in Qi Refining, all nine from Core Formation. */
 	public static final int LAYERS_PER_REALM = 3;
-	/** The very top of the ghost path: True Immortal Grand Perfection, as the heaven path's (the user's ask, 2026-10-22; Four Axis's before). */
+	/** The very top of the ghost path, as the heaven path's (the user's ask, 2026-10-22; Four Axis's before): Heavenly Lord Grand Perfection since phase 3. */
 	public static final int LAST_RANK = PlayerCultivation.LAST_RANK;
 
 	/** Seconds of baseline meditation through layer {@code layer} of {@code method} (1 to its last): what a layer stands for. */
@@ -208,9 +208,13 @@ public final class GhostMethods {
 		return !c.isMortal() && rank >= 0 && needsTribulation(rank) && s.pathCultivation() >= required(rank);
 	}
 
-	/** Whether {@code c}'s foundations open the ghost path's way into {@code realm}: one of it or deeper known. Qi Refining wants none. */
+	/**
+	 * Whether {@code c}'s foundations open the ghost path's way into {@code realm}: one of it or deeper known. Qi Refining wants none;
+	 * the ladder past True Immortal, which no foundation carries, wants the Laws instead (Laws#opensWay, phase 3).
+	 */
 	public static boolean opensWay(PlayerCultivation c, Realm realm) {
 		if (realm == Realm.QI_REFINING) return true;
+		if (realm.isPastTrueImmortal()) return Laws.opensWay(c, realm);
 		for (GhostMethod method : c.netherworld().knownMethods()) {
 			if (method.isFoundation() && method.realm().ordinal() >= realm.ordinal()) return true;
 		}
@@ -225,9 +229,18 @@ public final class GhostMethods {
 				&& !opensWay(c, Realm.byIndex(rank / Stage.values().length + 1));
 	}
 
-	/** Ready for the ghost path's tribulation: at its bottleneck, not at the top, the way ahead open. */
+	/** Ready for the ghost path's tribulation: at its bottleneck, not at the top, the way ahead open, in a place that holds it. */
 	public static boolean canBreakthrough(PlayerCultivation c) {
-		return atBottleneck(c) && !isMaxed(c.netherworld()) && !heldByMethod(c) && !heldByAxis(c);
+		return atBottleneck(c) && !isMaxed(c.netherworld()) && !heldByMethod(c) && !heldByAxis(c) && !heldByPlace(c);
+	}
+
+	/**
+	 * At its bottleneck with the stage ahead True Immortal's or past it, outside the Immortal Realm: only there is that breakthrough made,
+	 * on any path (PlayerCultivation#isImmortalRealmLocked, the user's rule of 2026-10-26). Why: PlayerCultivation#lockLine.
+	 */
+	public static boolean heldByPlace(PlayerCultivation c) {
+		NetherworldState s = c.netherworld();
+		return atBottleneck(c) && !isMaxed(s) && c.isImmortalRealmLocked(ghostRank(s) + 1);
 	}
 
 	/** At a Four Axis stage's bottleneck with its axis of virtue not yet complete (FourAxis: the cultivator's, both paths'). */
@@ -235,10 +248,11 @@ public final class GhostMethods {
 		return atBottleneck(c) && FourAxis.holds(c, ghostRank(c.netherworld()));
 	}
 
-	/** Why the ghost path's breakthrough waits on a foundation ({@link #heldByMethod}): one of the realm ahead is wanted. */
+	/** Why the ghost path's breakthrough waits on a foundation ({@link #heldByMethod}): one of the realm ahead is wanted (past True Immortal, the Laws). */
 	public static Component gateLine(PlayerCultivation c) {
 		int rank = ghostRank(c.netherworld());
 		Realm ahead = Realm.byIndex(Math.min(Realm.values().length - 1, Math.max(0, rank) / Stage.values().length + 1));
+		if (ahead.isPastTrueImmortal()) return Laws.gateLine(c, ahead);
 		return Component.translatable(ModLang.GHOST_GATE_NONE, ahead.getDisplayName());
 	}
 

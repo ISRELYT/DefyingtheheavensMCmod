@@ -34,11 +34,10 @@ import java.util.UUID;
  * The Celestial Court (phase 2 of the realm plan, 2026-10-25: the user's "Yes, build the Celestial Court as you described"), on its
  * pinnacle over the Jade Capital (ImmortalCapital#court).
  * <ul>
- *   <li><b>Its people.</b> The Heavenly King on the palace's throne, a True Immortal of Grand Perfection {@link #KING_MIGHT} times as strong
- *   as his realm, named a Daluo Golden Immortal; the five Heavenly Venerables, one of each element seated in the Court's five halls,
- *   {@link #VENERABLE_MIGHT} times, named Taiyi Golden Immortals (the plan: True Immortals of their rank's strength until phase 3, shown
- *   as so; their strength the ladder's past True Immortal, {@link #pastTrueImmortal}); four Immortal Generals keeping the Court's gate;
- *   its Quartermaster on the palace's first terrace. All of the righteous path.
+ *   <li><b>Its people.</b> The Heavenly King on the palace's throne, a Profound Sovereign of Grand Perfection; the five Heavenly
+ *   Venerables, one of each element seated in the Court's five halls, Taiyi Golden Immortals of Grand Perfection ({@link #rankOf}: the
+ *   realms past True Immortal, phase 3; until then True Immortals made 32 and 16 times as strong); four Immortal Generals keeping the
+ *   Court's gate; its Quartermaster on the palace's first terrace. All of the righteous path.
  *   Peopled the first time a player comes within {@link #NEAR} of the Court with all its posts loaded, all at once; one struck down is
  *   made up {@link #REPLACE_EVERY} later. Each keeps to its post (as the markets' merchants do, CityMarkets), the King and the Venerables
  *   seated at theirs. The Southern Heavenly Gate's four Immortal Officers are the Court's too (ImmortalGate).</li>
@@ -57,15 +56,6 @@ import java.util.UUID;
  * </ul>
  */
 public final class CelestialCourt {
-	/**
-	 * How many times a True Immortal's strength one has who stands {@code realms} realms past it: each realm twice the one before (the
-	 * user's rule for the ladder past True Immortal, 2026-10-26: Earth Immortal 2, Heaven Immortal 4, Golden Immortal 8, Taiyi Golden
-	 * Immortal 16, Daluo Golden Immortal 32, Dao Ancestor 64). The realms up to True Immortal keep their own leaps (Realm).
-	 */
-	public static double pastTrueImmortal(int realms) { return Math.pow(2, realms); }
-
-	/** How many times their realm's strength the King (a Daluo Golden Immortal, five realms on) and the Venerables (Taiyi, four on) have: their bodies and their blows. */
-	public static final double KING_MIGHT = pastTrueImmortal(5), VENERABLE_MIGHT = pastTrueImmortal(4);
 	/** A player this near the Court's middle (sideways) has it peopled. */
 	public static final int NEAR = 120;
 	/** One struck down is made up this long after (ticks: an in-game hour). */
@@ -78,8 +68,8 @@ public final class CelestialCourt {
 	public static final int SLAY_NIRVANA = 2, SLAY_IMMORTAL = 5;
 	/** The five halls' Venerables, in the order the Court's plan lays the halls (ImmortalCapital#court): west, west, east, east, behind. */
 	static final QiElement[] HALL_ELEMENTS = {QiElement.METAL, QiElement.EARTH, QiElement.FIRE, QiElement.WOOD, QiElement.WATER};
-	/** The Court's merit for each of its officers who fought one of the primordial beasts it slain (PrimordialBeast). */
-	public static final int SLAY_PRIMORDIAL = 20;
+	/** The Court's merit for each of its officers who fought one of the primordial beasts it slain (PrimordialBeast); the Primordial Chaos twice it. */
+	public static final int SLAY_PRIMORDIAL = 20, SLAY_CHAOS = 40;
 
 	/**
 	 * The demon race of the Venerable of {@code element}, or null for a man's: the Metal Venerable a tiger's and the Wood Venerable a
@@ -122,11 +112,6 @@ public final class CelestialCourt {
 		public static Rank byIndex(int index) {
 			return index >= 0 && index < values().length ? values()[index] : null;
 		}
-	}
-
-	/** How many times its realm's strength one of {@code title} has: the King and the Venerables more, anyone else its own. */
-	public static double might(NpcTitle title) {
-		return title == NpcTitle.HEAVENLY_KING ? KING_MIGHT : title == NpcTitle.HEAVENLY_VENERABLE ? VENERABLE_MIGHT : 1;
 	}
 
 	/** Whether {@code npc} is one of the Court's people at their post in the Immortal Realm. */
@@ -212,6 +197,10 @@ public final class CelestialCourt {
 				npc.setRace(race, npc.getRandom().nextInt(3));
 				npc.setRank(npc.getRank(), true);
 			}
+			// The King and the Venerables come before the realms past True Immortal were (phase 3) stand in theirs now.
+			int due = rankOf(post.title(), npc.getRandom());
+			boolean throned = post.title() == NpcTitle.HEAVENLY_KING || post.title() == NpcTitle.HEAVENLY_VENERABLE;
+			if (throned && npc.getRank() < due) npc.setRank(due, true);
 			toPost(npc, post);
 		}
 		if (people.size() >= posts.size()) return;
@@ -257,15 +246,25 @@ public final class CelestialCourt {
 		}
 	}
 
+	/**
+	 * The rank one of {@code title} stands at: the King a Profound Sovereign of Grand Perfection and each Venerable a Taiyi Golden
+	 * Immortal of Grand Perfection (the realms past True Immortal, phase 3: before, True Immortals made so many times as strong), a
+	 * General a True Immortal of Late or Grand Perfection, anyone else an Early one.
+	 */
+	static int rankOf(NpcTitle title, RandomSource random) {
+		return switch (title) {
+			case HEAVENLY_KING -> PlayerCultivation.rank(Realm.PROFOUND_SOVEREIGN, Stage.GRAND_PERFECTION);
+			case HEAVENLY_VENERABLE -> PlayerCultivation.rank(Realm.TAIYI_GOLDEN_IMMORTAL, Stage.GRAND_PERFECTION);
+			case IMMORTAL_GENERAL -> PlayerCultivation.rank(Realm.TRUE_IMMORTAL, random.nextBoolean() ? Stage.LATE : Stage.GRAND_PERFECTION);
+			default -> PlayerCultivation.rank(Realm.TRUE_IMMORTAL, Stage.EARLY);
+		};
+	}
+
 	/** One of the Court's people for {@code post}: of its title and strength, of the righteous path, looking the way its post looks. */
 	static CultivatorNpc arrive(ServerLevel level, Post post, RandomSource random) {
 		CultivatorNpc npc = CultivatorNpc.createFor(level);
 		if (npc == null) return null;
-		int rank = switch (post.title()) {
-			case HEAVENLY_KING, HEAVENLY_VENERABLE -> PlayerCultivation.rank(Realm.TRUE_IMMORTAL, Stage.GRAND_PERFECTION);
-			case IMMORTAL_GENERAL -> PlayerCultivation.rank(Realm.TRUE_IMMORTAL, random.nextBoolean() ? Stage.LATE : Stage.GRAND_PERFECTION);
-			default -> PlayerCultivation.rank(Realm.TRUE_IMMORTAL, Stage.EARLY);
-		};
+		int rank = rankOf(post.title(), random);
 		npc.moveTo(post.at().getX() + 0.5, post.at().getY(), post.at().getZ() + 0.5, post.yaw(), 0);
 		npc.becomeRogue(rank, Alignment.RIGHTEOUS_ABOVE + 20 + random.nextInt(30), random);
 		Bloodline race = post.title() == NpcTitle.HEAVENLY_VENERABLE ? venerableRace(post.element()) : null;
@@ -391,21 +390,26 @@ public final class CelestialCourt {
 
 	/**
 	 * One of the realm's primordial beasts slain (PrimordialBeast#isOfTheRealm: not one called up by an egg or a command): {@link #SLAY_PRIMORDIAL}
-	 * merit for each officer of the Court who fought it and is in the world now (its tokens in their pack).
+	 * merit for each officer of the Court who fought it and is in the world now (its tokens in their pack); for the Primordial Chaos, a
+	 * Golden Immortal's might out in the Chaos Frontier, {@link #SLAY_CHAOS}.
 	 */
 	public static void onPrimordialSlain(PrimordialBeast beast, Collection<UUID> fought) {
 		if (!(beast.level() instanceof ServerLevel level) || !beast.isOfTheRealm()) return;
+		int merit = beast.kind() == BeastKind.PRIMORDIAL_CHAOS ? SLAY_CHAOS : SLAY_PRIMORDIAL;
 		for (UUID id : fought) {
 			ServerPlayer player = level.getServer().getPlayerList().getPlayer(id);
 			if (player == null || !isMember(level.getServer(), id)) continue;
-			award(player, SLAY_PRIMORDIAL, ModLang.MSG_COURT_MERIT_PRIMORDIAL, beast.getDisplayName(), SLAY_PRIMORDIAL);
+			award(player, merit, ModLang.MSG_COURT_MERIT_PRIMORDIAL, beast.getDisplayName(), merit);
 		}
 	}
 
-	/** The merit the Court pays for {@code npc} slain: a devilish True Immortal {@link #SLAY_IMMORTAL}, a devilish Entering Nirvana {@link #SLAY_NIRVANA}; else none. */
+	/**
+	 * The merit the Court pays for {@code npc} slain: a devilish immortal (a True Immortal or past it) {@link #SLAY_IMMORTAL}, a devilish
+	 * Entering Nirvana {@link #SLAY_NIRVANA}; else none.
+	 */
 	static int bounty(CultivatorNpc npc) {
 		if (npc.getFaction() != Alignment.Faction.DEVILISH || npc.isMortal() || npc.getRank() < ImmortalSects.FLOOR || isCourtier(npc)) return 0;
-		return CultivatorNpc.realmOf(npc.getRank()) == Realm.TRUE_IMMORTAL ? SLAY_IMMORTAL : SLAY_NIRVANA;
+		return CultivatorNpc.realmOf(npc.getRank()).isImmortal() ? SLAY_IMMORTAL : SLAY_NIRVANA;
 	}
 
 	/** Each server tick: the Court kept peopled, the Gate's watch counted. */

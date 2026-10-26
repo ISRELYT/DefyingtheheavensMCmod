@@ -1,8 +1,10 @@
 package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.BeastKind;
+import com.example.defyingtheheavens.ChaosFrontier;
 import com.example.defyingtheheavens.DefyingTheHeavens;
 import com.example.defyingtheheavens.ModDimensions;
+import com.example.defyingtheheavens.ModNoiseSettings;
 import com.example.defyingtheheavens.PrimordialBeast;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.platform.NativeImage;
@@ -44,7 +46,10 @@ import org.joml.Matrix4f;
  *   fog;</li>
  *   <li>a close white-gold fog within the clouds and under them ({@link #cloudFog});</li>
  *   <li>the True Dragon's storm (PrimordialBeast): near it the sky and the fog darken to the storm's grey ({@link #storm}), easing in as
- *   one nears it and out as one leaves it.</li>
+ *   one nears it and out as one leaves it;</li>
+ *   <li>the Chaos Frontier (phase 3c, ChaosFrontier): out past the realm's edge ({@link #chaos}) the sky bruises violet and the sun is
+ *   lost, the sea of clouds turns grey-violet and churns (each layer sloshing against the next), the fog closes in violet, and motes of the
+ *   storm's chaos stream through the air (none in the First Flame's light).</li>
  * </ul>
  * The Gate's passage: all gold light, motes of it streaming down past the climber.
  */
@@ -75,6 +80,18 @@ public final class ImmortalRealmClient {
 	private static final float[] STORM_ZENITH = {0.20f, 0.22f, 0.28f}, STORM_HORIZON = {0.30f, 0.31f, 0.36f};
 	private static final Vec3 STORM_FOG = new Vec3(0.26, 0.27, 0.32);
 	private static float storm;
+	/**
+	 * The Chaos Frontier's look: none short of ModNoiseSettings#FRONTIER_FROM, whole by its edge (ChaosFrontier#EDGE, where its storm
+	 * begins); its sky's bruised violet, its fog's, closer in; its clouds' grey-violet, each layer sloshing this far (blocks) against the
+	 * next.
+	 */
+	private static final float[] CHAOS_ZENITH = {0.16f, 0.11f, 0.21f}, CHAOS_HORIZON = {0.38f, 0.28f, 0.44f}, CHAOS_LOW = {0.27f, 0.20f, 0.33f};
+	private static final Vec3 CHAOS_FOG = new Vec3(0.30, 0.23, 0.38), CHAOS_CLOUD = new Vec3(0.52, 0.45, 0.62);
+	private static final float[] CHAOS_FOG_RANGE = {0.2f, 0.85f}; // (closer, the shards faded into it before they could be seen: tour 3c-2)
+	private static final double CHURN = 14;
+	private static final net.minecraft.core.particles.DustParticleOptions CHAOS_MOTE =
+			new net.minecraft.core.particles.DustParticleOptions(new org.joml.Vector3f(0.55f, 0.45f, 0.70f), 1.2f);
+	private static float chaos;
 
 	public static void register() {
 		ClientTickEvents.END_CLIENT_TICK.register(ImmortalRealmClient::stormTick);
@@ -90,8 +107,11 @@ public final class ImmortalRealmClient {
 	/** How deep in the True Dragon's storm the camera is, 0 to 1 (eased a little each tick toward how near the nearest True Dragon is). */
 	public static float storm() { return storm; }
 
+	/** How far into the Chaos Frontier's look the camera is, 0 to 1 (eased each tick toward where it stands). */
+	public static float chaos() { return chaos; }
+
 	private static void stormTick(Minecraft mc) {
-		float target = 0;
+		float target = 0, chaosTarget = 0;
 		if (mc.level != null && mc.player != null && ModDimensions.isImmortalRealm(mc.level.dimension())) {
 			double nearest = Double.MAX_VALUE;
 			for (PrimordialBeast beast : mc.level.getEntitiesOfClass(PrimordialBeast.class, mc.player.getBoundingBox().inflate(STORM_REACH),
@@ -99,8 +119,29 @@ public final class ImmortalRealmClient {
 				nearest = Math.min(nearest, beast.distanceTo(mc.player));
 			}
 			target = (float) Mth.clamp((STORM_REACH - nearest) / (STORM_REACH - STORM_FULL), 0, 1);
+			Vec3 at = mc.gameRenderer.getMainCamera().getPosition();
+			chaosTarget = (float) Mth.clamp((ChaosFrontier.out(at.x, at.z) - ModNoiseSettings.FRONTIER_FROM) / (ChaosFrontier.EDGE - ModNoiseSettings.FRONTIER_FROM), 0, 1);
 		}
 		storm = Mth.approach(storm, target, 0.01f);
+		chaos = Mth.approach(chaos, chaosTarget, 0.02f);
+		if (chaos > 0.3f && mc.level != null && mc.player != null && !mc.isPaused()) chaosMotes(mc);
+	}
+
+	/** The Frontier's storm in the air about the camera: motes of chaos streaming past on its wind, none in the First Flame's light. */
+	private static void chaosMotes(Minecraft mc) {
+		Vec3 cam = mc.gameRenderer.getMainCamera().getPosition();
+		if (com.example.defyingtheheavens.FirstFlame.inLight(mc.level.dimension(), cam)) return;
+		net.minecraft.util.RandomSource random = mc.level.getRandom();
+		double windX = Math.cos(mc.level.getGameTime() * 0.002) * 0.35, windZ = Math.sin(mc.level.getGameTime() * 0.002) * 0.35;
+		int count = Math.round(4 * chaos);
+		for (int i = 0; i < count; i++) {
+			double x = cam.x + (random.nextDouble() - 0.5) * 24, y = cam.y + (random.nextDouble() - 0.5) * 14, z = cam.z + (random.nextDouble() - 0.5) * 24;
+			mc.level.addParticle(CHAOS_MOTE, x, y, z, windX, (random.nextDouble() - 0.5) * 0.05, windZ);
+		}
+		if (random.nextInt(3) == 0) {
+			mc.level.addParticle(net.minecraft.core.particles.ParticleTypes.WHITE_ASH, cam.x + (random.nextDouble() - 0.5) * 16, cam.y + (random.nextDouble() - 0.5) * 10,
+					cam.z + (random.nextDouble() - 0.5) * 16, windX, 0, windZ);
+		}
 	}
 
 	private static float[] stormy(float[] clear, float[] dark) {
@@ -108,9 +149,17 @@ public final class ImmortalRealmClient {
 		return new float[] {Mth.lerp(t, clear[0], dark[0]), Mth.lerp(t, clear[1], dark[1]), Mth.lerp(t, clear[2], dark[2])};
 	}
 
-	/** Fog start and end fractions in the Immortal Realm or the Gate's passage, else null. */
+	/** {@code colour} gone toward the Chaos Frontier's {@code bruised}, by how far into it the camera is. */
+	private static float[] chaotic(float[] colour, float[] bruised) {
+		return new float[] {Mth.lerp(chaos, colour[0], bruised[0]), Mth.lerp(chaos, colour[1], bruised[1]), Mth.lerp(chaos, colour[2], bruised[2])};
+	}
+
+	/** Fog start and end fractions in the Immortal Realm (closing in out in the Chaos Frontier) or the Gate's passage, else null. */
 	static float[] fogFor(ResourceKey<Level> dimension) {
-		if (ModDimensions.isImmortalRealm(dimension)) return IMMORTAL_FOG;
+		if (ModDimensions.isImmortalRealm(dimension)) {
+			if (chaos <= 0) return IMMORTAL_FOG;
+			return new float[] {Mth.lerp(chaos, IMMORTAL_FOG[0], CHAOS_FOG_RANGE[0]), Mth.lerp(chaos, IMMORTAL_FOG[1], CHAOS_FOG_RANGE[1])};
+		}
 		if (ModDimensions.isImmortalPassage(dimension)) return PASSAGE_FOG;
 		return null;
 	}
@@ -139,23 +188,26 @@ public final class ImmortalRealmClient {
 			float[] clouds = cloudFog(context.camera());
 			if (clouds != null) {
 				float[] white = clouds == IN_CLOUD_FOG ? new float[] {0.97f, 0.94f, 0.86f} : new float[] {0.78f, 0.74f, 0.66f};
+				white = chaotic(white, clouds == IN_CLOUD_FOG ? new float[] {0.52f, 0.45f, 0.62f} : new float[] {0.34f, 0.28f, 0.42f});
 				SkyDome.drawGradient(poseStack.last().pose(), white, white, white, 48f);
 				return;
 			}
-			// The golden sky, or near the True Dragon its storm's grey (its sun's halo dimmed with it).
-			SkyDome.drawGradient(poseStack.last().pose(), stormy(new float[] {0.80f, 0.78f, 0.66f}, STORM_ZENITH), stormy(new float[] {1.0f, 0.82f, 0.48f}, STORM_HORIZON),
-					stormy(new float[] {0.98f, 0.92f, 0.78f}, STORM_HORIZON), 48f);
+			// The golden sky, or near the True Dragon its storm's grey (its sun's halo dimmed with it); out in the Chaos Frontier bruised
+			// violet, the sun lost.
+			SkyDome.drawGradient(poseStack.last().pose(), chaotic(stormy(new float[] {0.80f, 0.78f, 0.66f}, STORM_ZENITH), CHAOS_ZENITH),
+					chaotic(stormy(new float[] {1.0f, 0.82f, 0.48f}, STORM_HORIZON), CHAOS_HORIZON),
+					chaotic(stormy(new float[] {0.98f, 0.92f, 0.78f}, STORM_HORIZON), CHAOS_LOW), 48f);
 			poseStack.pushPose();
 			// The sun low in the east, some twenty-five degrees over the clouds.
 			poseStack.mulPose(Axis.YP.rotationDegrees(-90.0f));
 			poseStack.mulPose(Axis.XP.rotationDegrees(65.0f));
 			Matrix4f sun = poseStack.last().pose();
-			float clear = 1 - storm * 0.85f;
+			float clear = (1 - storm * 0.85f) * (1 - chaos);
 			SkyDome.drawHalo(sun, 70.0f, 1.0f, 0.86f, 0.55f, 0.55f * clear);
 			SkyDome.drawHalo(sun, 30.0f, 1.0f, 0.95f, 0.8f, 0.6f * clear);
 			RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE,
 					GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-			drawSun(sun, 22.0f);
+			if (chaos < 1) drawSun(sun, 22.0f, 1 - chaos);
 			poseStack.popPose();
 		} catch (Exception e) {
 			DefyingTheHeavens.LOGGER.error("Immortal Realm sky rendering failed", e);
@@ -188,10 +240,10 @@ public final class ImmortalRealmClient {
 		}
 	}
 
-	private static void drawSun(Matrix4f pose, float size) {
+	private static void drawSun(Matrix4f pose, float size, float alpha) {
 		RenderSystem.setShader(GameRenderer::getPositionTexShader);
 		RenderSystem.setShaderTexture(0, SUN);
-		RenderSystem.setShaderColor(1.0f, 0.96f, 0.82f, 1.0f);
+		RenderSystem.setShaderColor(1.0f, 0.96f, 0.82f, alpha);
 		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
 		buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
 		buffer.vertex(pose, -size, 100.0f, -size).uv(0.0f, 0.0f).endVertex();
@@ -256,16 +308,21 @@ public final class ImmortalRealmClient {
 		}
 	}
 
-	/** One layer at {@code y}: a grid of cells about the camera, its texture laid by the world's coordinates and drifting east. */
+	/**
+	 * One layer at {@code y}: a grid of cells about the camera, its texture laid by the world's coordinates and drifting east; out in the
+	 * Chaos Frontier grey-violet, and churning: each layer sloshing round its own way against the next ({@link #CHURN}).
+	 */
 	private static void drawShell(Matrix4f pose, Vec3 cam, int shell, float y, float reach, float time) {
 		RenderSystem.setShaderTexture(0, LAYERS[shell]);
 		float up = shell / (float) (SHELLS - 1);
 		// The lower layers shadowed, the top in the sun: white-gold over warm grey.
 		float shade = 0.74f + 0.26f * up;
-		float r = shade, g = shade * 0.965f, b = shade * 0.88f;
+		float r = Mth.lerp(chaos, shade, (float) CHAOS_CLOUD.x * shade), g = Mth.lerp(chaos, shade * 0.965f, (float) CHAOS_CLOUD.y * shade),
+				b = Mth.lerp(chaos, shade * 0.88f, (float) CHAOS_CLOUD.z * shade);
 		double drift = time * DRIFT * (1 + TOP_DRIFT * up);
+		double churnX = chaos * CHURN * Math.sin(time * 0.006 + shell * 1.7), churnZ = chaos * CHURN * Math.cos(time * 0.0047 + shell * 2.3);
 		// The texture's origin a whole tile from the camera's, so the coordinates stay small however far out one is.
-		double originX = Math.floor((cam.x + drift) / TILE) * TILE - drift, originZ = Math.floor(cam.z / TILE) * TILE;
+		double originX = Math.floor((cam.x + drift) / TILE) * TILE - drift + churnX, originZ = Math.floor(cam.z / TILE) * TILE + churnZ;
 		float dy = (float) (y - cam.y);
 		int cells = Mth.ceil(reach / CELL);
 		double startX = Math.floor(cam.x / CELL) * CELL - cells * CELL, startZ = Math.floor(cam.z / CELL) * CELL - cells * CELL;
@@ -389,9 +446,10 @@ public final class ImmortalRealmClient {
 		@Override
 		public Vec3 getBrightnessDependentFogColor(Vec3 fogColor, float brightness) {
 			float[] fog = clouds ? cloudFog(Minecraft.getInstance().gameRenderer.getMainCamera()) : null;
-			if (fog != null) return fog == IN_CLOUD_FOG ? CLOUD_WHITE : CLOUD_SHADE;
+			if (fog != null) return (fog == IN_CLOUD_FOG ? CLOUD_WHITE : CLOUD_SHADE).lerp(fog == IN_CLOUD_FOG ? CHAOS_CLOUD : CHAOS_FOG, chaos);
 			Vec3 golden = fogColor.lerp(haze, lean);
-			return clouds && storm > 0 ? golden.lerp(STORM_FOG, storm * 0.75) : golden;
+			if (clouds && storm > 0) golden = golden.lerp(STORM_FOG, storm * 0.75);
+			return clouds && chaos > 0 ? golden.lerp(CHAOS_FOG, chaos * 0.9) : golden;
 		}
 
 		@Override

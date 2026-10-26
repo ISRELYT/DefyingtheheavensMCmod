@@ -253,6 +253,14 @@ public final class ModPlacedFeatures {
 	public static final int YIN_JADE_VEINS_PEAKS = 16;
 	public static final int YIN_JADE_VEINS_NETHERWORLD = 4;
 	public static final int YIN_JADE_CHUNKS_NETHER = 4;
+	/**
+	 * Chaos Origin Ore (phase 3c): {@link #CHAOS_ORIGIN_TRIES} tries a chunk through the Chaos Frontier's land (ModBiomes#CHAOS_FRONTIER),
+	 * from the sea of clouds up to the highest of it: about as rare as diamonds, some four ore a chunk in its wasteland (the user's word,
+	 * 2026-10-26: "thin it to diamond levels"; 40 tries made some fifteen a chunk there, tour waste-1), fewer in its shards, most of whose
+	 * tries fall in the open air between them.
+	 */
+	public static final ResourceKey<PlacedFeature> ORE_CHAOS_ORIGIN = key("immortal_realm/ore_chaos_origin");
+	public static final int CHAOS_ORIGIN_TRIES = 11;
 
 	public static final List<Entry> ORDER = List.of(
 			new Entry(GenerationStep.Decoration.LAKES, SPRING_BASIN),
@@ -284,6 +292,7 @@ public final class ModPlacedFeatures {
 			new Entry(GenerationStep.Decoration.UNDERGROUND_ORES, NW_BASALT_BLOBS),
 			new Entry(GenerationStep.Decoration.UNDERGROUND_ORES, NW_ORE_YIN_JADE_PEAKS),
 			new Entry(GenerationStep.Decoration.UNDERGROUND_ORES, NW_ORE_YIN_JADE),
+			new Entry(GenerationStep.Decoration.UNDERGROUND_ORES, ORE_CHAOS_ORIGIN),
 			new Entry(GenerationStep.Decoration.FLUID_SPRINGS, SPRING_WATER),
 			new Entry(GenerationStep.Decoration.FLUID_SPRINGS, SPRING_LAVA),
 			new Entry(GenerationStep.Decoration.FLUID_SPRINGS, NW_SPRING_WATER),
@@ -481,6 +490,7 @@ public final class ModPlacedFeatures {
 		register(context, NW_ORE_YIN_JADE, configured.getOrThrow(ModConfiguredFeatures.ORE_YIN_JADE), ore(YIN_JADE_VEINS_NETHERWORLD, 40, 230));
 		register(context, ORE_YIN_JADE_NETHER, configured.getOrThrow(ModConfiguredFeatures.ORE_YIN_JADE_NETHER),
 				prepend(RarityFilter.onAverageOnceEvery(YIN_JADE_CHUNKS_NETHER), ore(1, 10, 110)));
+		register(context, ORE_CHAOS_ORIGIN, configured.getOrThrow(ModConfiguredFeatures.ORE_CHAOS_ORIGIN), ore(CHAOS_ORIGIN_TRIES, 120, 270));
 	}
 
 	/** On the top of the land, by the heightmap (the Netherworld has one layer of land, not the Upper Realm's tiers). */

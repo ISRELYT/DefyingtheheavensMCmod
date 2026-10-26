@@ -183,10 +183,11 @@ public class TwoPathsGameTests implements FabricGameTest {
 		favoured.setFavour(1);
 		e = TwoPaths.effective(favoured, false);
 		helper.assertTrue(e.rank() == PlayerCultivation.rank(Realm.QI_REFINING, Stage.EARLY) && e.quasi() && near(e.toward(), 0.5), "Favour: Quasi-Mid, half way (" + e + ")");
-		// The very last, with harmony: beyond True Immortal Grand Perfection (Four Axis's before the realms after it, 2026-10-22).
+		// The very last, with harmony: beyond Heavenly Lord Grand Perfection (True Immortal's before the ladder past it, phase 3; Four
+		// Axis's before the realms after it, 2026-10-22).
 		PlayerCultivation top = new PlayerCultivation();
-		top.setState(Realm.TRUE_IMMORTAL, Stage.GRAND_PERFECTION, 0);
-		ghostPath(top, Realm.TRUE_IMMORTAL, Stage.GRAND_PERFECTION);
+		top.setState(Realm.HEAVENLY_LORD, Stage.GRAND_PERFECTION, 0);
+		ghostPath(top, Realm.HEAVENLY_LORD, Stage.GRAND_PERFECTION);
 		e = TwoPaths.effective(top, false);
 		helper.assertTrue(e.quasi() && key(TwoPaths.effectiveName(e), -1).equals(ModLang.EFFECTIVE_BEYOND), "Beyond the very last (" + e + ")");
 		// Harmony and Favour at their most never make a body a realm's: each realm's Grand Perfection x1.3 x1.15 stops short of the next.

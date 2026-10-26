@@ -134,6 +134,8 @@ public final class ModLang {
 	public static final String MSG_SUPPRESSED = k("message.suppression.suppressed");
 	public static final String MSG_RESTORED = k("message.suppression.restored");
 	public static final String MSG_REALM_LOCKED = k("message.suppression.locked");
+	/** A breakthrough into True Immortal or past it, outside the Immortal Realm (PlayerCultivation#lockLine). */
+	public static final String MSG_IMMORTAL_REALM_LOCKED = k("message.immortal_realm.locked");
 	public static final String MSG_PORTAL_BLOCKED = k("message.portal_blocked");
 	public static final String SUPPRESSED = k("suppressed");
 	public static final String SUPPRESSED_TO = k("suppressed_to");
@@ -545,14 +547,13 @@ public final class ModLang {
 	public static final String MSG_ESSENCE_TOO_LITTLE = k("message.immortal_essence.too_little");
 	/**
 	 * The Celestial Court (CelestialCourt, phase 2): merit for a minute's watch at the open Gate and for a devilish immortal slain, a rank
-	 * risen; its ranks ("captain"...) and the realms its King and Venerables are named by; its token's lines; the Sect tab's line of it.
+	 * risen; its ranks ("captain"...); its token's lines; the Sect tab's line of it. (Its King and Venerables are named by their own
+	 * realms since phase 3: Realm#PROFOUND_SOVEREIGN, Realm#TAIYI_GOLDEN_IMMORTAL.)
 	 */
 	public static final String MSG_COURT_MERIT_WATCH = k("message.court.merit_watch");
 	public static final String MSG_COURT_MERIT_SLAIN = k("message.court.merit_slain");
 	public static final String MSG_COURT_RANK_UP = k("message.court.rank_up");
 	public static String courtRank(String id) { return k("court.rank." + id); }
-	public static final String RANK_DALUO = k("court.realm.daluo");
-	public static final String RANK_TAIYI = k("court.realm.taiyi");
 	public static final String TOKEN_EARNED = k("court.token.earned");
 	public static final String TOKEN_SPENT = k("court.token.spent");
 	public static final String SECT_TAB_COURT = k("sect_tab.court");
@@ -1321,6 +1322,102 @@ public final class ModLang {
 	public static final String MSG_BODY_DOMAIN_MET = k("message.clone.body_domain_met");
 	public static final String HUD_CLONE_MAIN = k("hud.clone.main");
 	public static final String HUD_CLONE_IN = k("hud.clone.in");
+	// The Laws (Laws, phase 3): each one's name (and ".gains", ".now"), the ladder's gate, comprehending, the Methods tab's Laws page
+	public static String lawKey(String id) { return k("law." + id); }
+	public static final String LAW_GATE = k("law.gate");
+	public static final String MSG_LAW_LEVEL = k("message.law.level");
+	public static final String MSG_LAW_WAY_OPEN = k("message.law.way_open");
+	public static final String MSG_LAW_GLIMPSE = k("message.law.glimpse");
+	public static final String MSG_LAW_FOCUSED = k("message.law.focused");
+	public static final String MSG_LAW_UNFOCUSED = k("message.law.unfocused");
+	public static final String MSG_LAW_GREATER_SHUT = k("message.law.greater_shut");
+	public static final String MSG_LAW_COMPLETE = k("message.law.complete");
+	public static final String MSG_LAW_NOT_IMMORTAL = k("message.law.not_immortal");
+	public static final String METHODS_PAGE_LAWS = k("methods.page.laws");
+	public static final String LAWS_TITLE = k("laws.title");
+	public static final String LAWS_SEALED = k("laws.sealed");
+	public static final String LAWS_TOTAL = k("laws.total");
+	public static final String LAWS_NEXT = k("laws.next");
+	public static final String LAWS_NEXT_OPEN = k("laws.next_open");
+	public static final String LAWS_FOCUS = k("laws.focus");
+	public static final String LAWS_FOCUS_AWAY = k("laws.focus_away");
+	public static final String LAWS_NO_FOCUS = k("laws.no_focus");
+	public static final String LAWS_CHOICES = k("laws.choices");
+	public static final String LAWS_CHOICE_ONE = k("laws.choice_one");
+	public static final String LAWS_LEVEL = k("laws.level");
+	public static final String LAWS_INSIGHT = k("laws.insight");
+	public static final String LAWS_COMPLETE = k("laws.complete");
+	public static final String LAWS_GREATER_SHUT = k("laws.greater_shut");
+	public static final String LAWS_FOCUSED = k("laws.focused");
+	public static final String BTN_LAW_FOCUS = k("button.law.focus");
+	public static final String BTN_LAW_CHOOSE = k("button.law.choose");
+	// The Five Decays (FiveDecays, phase 3): the warning, the five signs, the judgement, its end; the Laws page's line of it
+	public static final String MSG_DECAY_WARNING = k("message.decay.warning");
+	public static final String[] MSG_DECAY_SIGN = {k("message.decay.sign1"), k("message.decay.sign2"), k("message.decay.sign3"),
+			k("message.decay.sign4"), k("message.decay.sign5")};
+	public static final String MSG_DECAY_JUDGEMENT = k("message.decay.judgement");
+	public static final String MSG_DECAY_JUDGEMENT_BROADCAST = k("message.decay.judgement_broadcast");
+	public static final String MSG_DECAY_STRIKES = k("message.decay.strikes");
+	public static final String MSG_DECAY_WAITS = k("message.decay.waits");
+	public static final String MSG_DECAY_WEATHERED = k("message.decay.weathered");
+	public static final String MSG_DECAY_WEATHERED_BROADCAST = k("message.decay.weathered_broadcast");
+	public static final String MSG_DECAY_FAILED = k("message.decay.failed");
+	public static final String MSG_DECAY_FAILED_BROADCAST = k("message.decay.failed_broadcast");
+	public static final String MSG_DECAY_RESTLESS = k("message.decay.restless");
+	public static final String LAWS_DECAY_IN = k("laws.decay_in");
+	public static final String LAWS_DECAY_SOON = k("laws.decay_soon");
+	public static final String LAWS_DECAY_SIGN = k("laws.decay_sign");
+	public static final String LAWS_DECAY_JUDGEMENT = k("laws.decay_judgement");
+	// The Law domains (LawDomains, phase 3b): unfurled, folded away, the essence spent or too little, where it can't hold, space locked by one
+	public static final String MSG_DOMAIN_ON = k("message.domain.on");
+	public static final String MSG_DOMAIN_OFF = k("message.domain.off");
+	public static final String MSG_DOMAIN_SPENT = k("message.domain.spent");
+	public static final String MSG_DOMAIN_TOO_LITTLE = k("message.domain.too_little");
+	public static final String MSG_DOMAIN_LOST = k("message.domain.lost");
+	public static final String MSG_DOMAIN_SPACE_LOCKED = k("message.domain.space_locked");
+	/** The Primordial Chaos's Unmaking folded a domain away (PrimordialBeast, LawDomains#unmake). */
+	public static final String MSG_DOMAIN_UNMADE = k("message.domain.unmade");
+	// The Chaos Frontier (ChaosFrontier, phase 3c): crossing into it and out, the storm's harm begun and sheltered from; the First Flame's
+	// spring; the Primordial Chaos's Unmaking gathering; its Dao Fragments and Chaos Origin Stones
+	public static final String MSG_CHAOS_ENTER = k("message.chaos.enter");
+	public static final String MSG_CHAOS_LEAVE = k("message.chaos.leave");
+	public static final String MSG_CHAOS_EXPOSED = k("message.chaos.exposed");
+	public static final String MSG_CHAOS_SHELTERED = k("message.chaos.sheltered");
+	public static final String MSG_FIRST_FLAME = k("message.chaos.first_flame");
+	public static final String MSG_CHAOS_UNMAKING = k("message.chaos.unmaking");
+	public static final String MSG_DAO_FRAGMENT = k("message.chaos.dao_fragment");
+	public static final String ITEM_DAO_FRAGMENT_OF = k("item.dao_fragment.of");
+	public static final String TOOLTIP_DAO_FRAGMENT = k("tooltip.dao_fragment");
+	public static final String TOOLTIP_CHAOS_ORIGIN_STONE = k("tooltip.chaos_origin_stone");
+	public static final String DEATH_CHAOS_STORM = "death.attack." + DefyingTheHeavens.MOD_ID + ".chaos_storm";
+	// The small worlds (SmallWorlds, phase 3d): a seed refined (or why not), the door opened and closed (or why not), a world come into
+	// and gone out of, its land grown, those turned away at its door, the guest list (SmallWorldCommand)
+	public static final String MSG_SEED_NOT_IMMORTAL = k("message.small_world.seed_not_immortal");
+	public static final String MSG_SEED_HAVE_ONE = k("message.small_world.seed_have_one");
+	public static final String MSG_SEED_REFINING = k("message.small_world.seed_refining");
+	public static final String MSG_SEED_REFINED = k("message.small_world.seed_refined");
+	public static final String MSG_DOOR_OPEN = k("message.small_world.door_open");
+	public static final String MSG_DOOR_CLOSED = k("message.small_world.door_closed");
+	public static final String MSG_DOOR_NOT_HERE = k("message.small_world.door_not_here");
+	public static final String MSG_DOOR_NOT_IMMORTAL = k("message.small_world.door_not_immortal");
+	public static final String MSG_DOOR_TURNED_AWAY = k("message.small_world.door_turned_away");
+	public static final String MSG_WORLD_OWN = k("message.small_world.own");
+	public static final String MSG_WORLD_GUEST = k("message.small_world.guest");
+	public static final String MSG_WORLD_LEFT = k("message.small_world.left");
+	public static final String MSG_WORLD_GROWN = k("message.small_world.grown");
+	public static final String MSG_WORLD_CAUGHT = k("message.small_world.caught");
+	public static final String MSG_WORLD_SENT_OUT = k("message.small_world.sent_out");
+	public static final String CMD_WORLD_NONE = k("command.small_world.none");
+	public static final String CMD_WORLD_INFO = k("command.small_world.info");
+	public static final String CMD_WORLD_GUESTS = k("command.small_world.guests");
+	public static final String CMD_WORLD_NO_GUESTS = k("command.small_world.no_guests");
+	public static final String CMD_GUEST_ADDED = k("command.small_world.guest_added");
+	public static final String CMD_GUEST_ALREADY = k("command.small_world.guest_already");
+	public static final String CMD_GUEST_SELF = k("command.small_world.guest_self");
+	public static final String CMD_GUEST_REMOVED = k("command.small_world.guest_removed");
+	public static final String CMD_GUEST_UNKNOWN = k("command.small_world.guest_unknown");
+	public static final String MSG_GUEST_INVITED = k("message.small_world.invited");
+	public static final String TOOLTIP_WORLD_SEED = k("tooltip.world_seed");
 
 	private ModLang() {}
 }

@@ -37,13 +37,14 @@ public class BeastGameTests implements FabricGameTest {
 		for (BeastKind kind : BeastKind.values()) {
 			helper.assertTrue(DemonBeast.of(ModEntities.beast(kind)) == kind, "Its type is its own (" + kind.getId() + ")");
 			helper.assertTrue(BeastKind.byId(kind.getId()) == kind && ModItems.beastEgg(kind) != null, "Found by its id, with an egg (" + kind.getId() + ")");
-			// The elders are never born wild (BloodPools raises them), nor the primordial beasts (PrimordialBeasts): no lands.
-			boolean elder = kind.isElder() || kind.isPrimordial();
+			// The elders are never born wild (BloodPools raises them), nor the primordial beasts (PrimordialBeasts), nor the Chaos Fiends
+			// (ChaosFrontier): no lands.
+			boolean elder = kind.isElder() || kind.isPrimordial() || kind.isChaos();
 			helper.assertTrue(biomes.getTag(kind.lands).map(tag -> tag.size() > 0).orElse(false) != elder, (elder ? "No lands" : "It has lands") + " (" + kind.getId() + ")");
 			for (boolean upper : new boolean[] {false, true}) {
 				for (int i = 0; i < 300; i++) {
 					int rank = DemonBeast.rollRank(kind, random, upper);
-					helper.assertTrue(rank >= kind.tier.minRank && rank <= kind.tier.maxRank, "Within its tier's ranks (" + kind.getId() + " " + rank + ")");
+					helper.assertTrue(rank >= kind.minRank() && rank <= kind.maxRank(), "Within its tier's ranks (" + kind.getId() + " " + rank + ")");
 					if (!elder) highest = Math.max(highest, rank);
 				}
 			}
@@ -263,7 +264,7 @@ public class BeastGameTests implements FabricGameTest {
 		java.util.Map<String, Integer> beasts = new java.util.HashMap<>();
 		java.util.Map<String, String> races = new java.util.HashMap<>();
 		for (BeastKind kind : BeastKind.values()) {
-			if (kind.isElder() || kind.isPrimordial()) continue; // never born wild: no lands, nor a tag of them
+			if (kind.isElder() || kind.isPrimordial() || kind.isChaos()) continue; // never born wild: no lands, nor a tag of them
 			for (String biome : terralithIn(helper, "beast/" + kind.getId())) beasts.merge(biome, 1, Integer::sum);
 		}
 		for (Bloodline race : Bloodline.values()) {

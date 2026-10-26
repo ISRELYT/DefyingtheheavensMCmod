@@ -91,11 +91,13 @@ public final class HeavenPassives {
 
 	/**
 	 * Harm no heaven ward or passive lessens: what passes through invulnerability (the void, /kill), and the mod's soul harms
-	 * (spatial pressure, a severed or seized soul, the Soul River's scattering, the Judge's gaze), which stay as tuned.
+	 * (spatial pressure, a severed or seized soul, the Soul River's scattering, the Judge's gaze), which stay as tuned; and the Chaos
+	 * Frontier's storm (only shelter turns it: ChaosFrontier).
 	 */
 	public static boolean untouchedByWards(DamageSource source) {
 		return source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) || source.is(ModDamageTypes.SPATIAL_PRESSURE) || source.is(ModDamageTypes.SOUL_SEVERED)
-				|| source.is(ModDamageTypes.SOUL_SEIZED) || source.is(ModDamageTypes.SOUL_SCATTER) || source.is(ModDamageTypes.JUDGE_GAZE);
+				|| source.is(ModDamageTypes.SOUL_SEIZED) || source.is(ModDamageTypes.SOUL_SCATTER) || source.is(ModDamageTypes.JUDGE_GAZE)
+				|| source.is(ModDamageTypes.CHAOS_STORM);
 	}
 
 	// --- The masteries (the user's ask, 2026-10-25) ---

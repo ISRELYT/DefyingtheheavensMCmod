@@ -43,6 +43,7 @@ public final class UpperRealmClient {
 		BlockRenderLayerMap.INSTANCE.putBlock(ModBlocks.IMMORTAL_GATE_LIGHT, RenderType.translucent()); // the Gate's light, seen through
 		GreatVoidClient.register(); // the realm above the Jade Firmament, and the breach to it
 		ImmortalRealmClient.register(); // the realm above the Great Void, and the Gate's passage to it
+		SmallWorldClient.register(); // the immortals' own small worlds, their doors and gates
 	}
 
 	/** Fog start/end fractions for a dimension, or null to keep vanilla fog. */
@@ -54,6 +55,7 @@ public final class UpperRealmClient {
 		if (ModDimensions.isSoulRiver(dimension)) return SOUL_RIVER_FOG;
 		if (ModDimensions.isAstral(dimension)) return AstralClient.fogFor(dimension);
 		if (ModDimensions.isImmortalRealm(dimension) || ModDimensions.isImmortalPassage(dimension)) return ImmortalRealmClient.fogFor(dimension);
+		if (ModDimensions.isSmallWorld(dimension)) return SmallWorldClient.FOG;
 		return GreatVoidClient.fogFor(dimension);
 	}
 

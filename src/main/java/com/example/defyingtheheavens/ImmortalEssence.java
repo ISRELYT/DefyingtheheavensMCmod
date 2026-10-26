@@ -37,11 +37,16 @@ public final class ImmortalEssence {
 	public static final int LIGHT_SECONDS = 5;
 	private static final DustParticleOptions GOLD = new DustParticleOptions(new Vector3f(1.0f, 0.84f, 0.32f), 1.1f);
 
-	/** {@code c}'s pool when full: {@link #POOL} by its stage once a True Immortal on any path (TwoPaths#higherRank), else none. */
+	/**
+	 * {@code c}'s pool when full: {@link #POOL} by its stage once a True Immortal on any path (TwoPaths#higherRank), twice as much again
+	 * for each realm past True Immortal (the stages' as there); else none.
+	 */
 	public static double max(PlayerCultivation c) {
 		if (c.isMortal()) return 0;
 		int stage = TwoPaths.higherRank(c, false) - PlayerCultivation.rank(Realm.TRUE_IMMORTAL, Stage.EARLY);
-		return stage < 0 ? 0 : POOL[Math.min(stage, POOL.length - 1)];
+		if (stage < 0) return 0;
+		int stages = Stage.values().length;
+		return POOL[stage % stages] * Math.pow(2, stage / stages);
 	}
 
 	/** Whether {@code p}'s essence is lit this moment. */
@@ -73,8 +78,8 @@ public final class ImmortalEssence {
 	}
 
 	/**
-	 * A second of it on {@code p} (package-private for the game tests): the pool filled or leaked where they are, and burnt while lit
-	 * (not a creative player's); out it goes when it runs dry.
+	 * A second of it on {@code p} (package-private for the game tests): the pool filled or leaked where they are, and burnt while lit and
+	 * while a Law's domain is unfurled (LawDomains#BURN_SECONDS; not a creative player's); out they go when it runs dry.
 	 */
 	static void second(ServerPlayer p) {
 		PlayerCultivation c = CultivationManager.get(p);
@@ -84,16 +89,19 @@ public final class ImmortalEssence {
 			if (c.isAbilityEnabled(Ability.IMMORTAL_ESSENCE)) putOut(p, null);
 			return;
 		}
-		boolean lit = isLit(p);
+		boolean lit = isLit(p), domain = LawDomains.lit(c) != null;
 		double before = c.essence();
-		double flow = perSecond(c, ModDimensions.isImmortalRealm(p.level().dimension()), MeditationManager.isMeditating(p.getUUID()));
-		double next = Math.max(0, Math.min(max, before + flow - (lit && !p.isCreative() ? max / BURN_SECONDS : 0)));
+		double flow = perSecond(c, ModDimensions.hasImmortalQi(p.level().dimension()), MeditationManager.isMeditating(p.getUUID())); // a small world's too
+		if (FiveDecays.drains(c)) flow = -max / FiveDecays.ESSENCE_DRAIN_SECONDS; // the qi faltering under the Five Decays: it drains wherever it is
+		double burnt = p.isCreative() ? 0 : (lit ? max / BURN_SECONDS : 0) + (domain ? max / LawDomains.BURN_SECONDS : 0);
+		double next = Math.max(0, Math.min(max, before + flow - burnt));
 		if (next != before) {
 			c.setEssence(next);
 			CultivationManager.markDirty(p.server);
 			CultivationManager.sync(p);
 		}
 		if (lit && next <= 0) putOut(p, ModLang.MSG_ESSENCE_SPENT);
+		if (domain && next <= 0) LawDomains.putOut(p, ModLang.MSG_DOMAIN_SPENT);
 	}
 
 	/** Its switch thrown (CultivationManager#toggleAbility, after the switch): lit (refused on too little), or put out; told, heard. */

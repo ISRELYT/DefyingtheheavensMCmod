@@ -96,8 +96,8 @@ public final class CultivationStats {
 	}
 
 	/**
-	 * {@link #applyNpc(LivingEntity, Realm, Stage, boolean)} with its body and its blows {@code might} times its realm's (the Celestial
-	 * Court's King and Venerables, stronger than their realm: CelestialCourt#might).
+	 * {@link #applyNpc(LivingEntity, Realm, Stage, boolean)} with its body and its blows {@code might} times its realm's (the primordial
+	 * beasts, a little stronger than their realm: BeastKind#might).
 	 */
 	public static void applyNpc(LivingEntity npc, Realm r, Stage s, boolean mortal, double might) {
 		double scale = mortal ? 0 : 1;

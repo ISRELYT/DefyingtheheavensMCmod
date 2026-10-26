@@ -93,7 +93,7 @@ public class GreatVoidGameTests implements FabricGameTest {
 				&& Formations.HOLY_MAX_RADIUS > Formations.MAX_RADIUS, "A barrier as wide as a Holy Land's or a palace's grounds need in the Great Void, a sect's elsewhere");
 		for (Realm realm : Realm.values()) {
 			double need = PlayerCultivation.qiNeed(realm);
-			double want = realm == Realm.TRUE_IMMORTAL ? PlayerCultivation.IMMORTAL_QI_MULTIPLIER
+			double want = realm.isImmortal() ? PlayerCultivation.IMMORTAL_QI_MULTIPLIER // True Immortal and the ladder past it (phase 3)
 					: realm.ordinal() >= Realm.VOID_SHATTERING.ordinal() ? PlayerCultivation.GREAT_VOID_QI_MULTIPLIER
 					: PlayerCultivation.isUpperRealmOnly(realm) ? PlayerCultivation.UPPER_REALM_QI_MULTIPLIER : 1;
 			helper.assertTrue(need == want, "Its needs offset the qi of the place that sustains it: " + realm + " " + need);

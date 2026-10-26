@@ -204,9 +204,10 @@ public final class Lifespan {
 
 	/**
 	 * The years a realm adds to the span, once reached (and all those before it, theirs): the user's, Dao Integration's to Entering
-	 * Nirvana's too (2026-10-21); a True Immortal's are without end ({@link #endless}).
+	 * Nirvana's too (2026-10-21); a True Immortal's are without end ({@link #endless}), and so are those of every realm past it.
 	 */
 	public static double realmYears(Realm realm) {
+		if (realm.isImmortal()) return Double.POSITIVE_INFINITY;
 		return switch (realm) {
 			case FOUNDATION_BUILDING -> 200;
 			case CORE_FORMATION -> 400;
@@ -217,7 +218,6 @@ public final class Lifespan {
 			case VOID_SHATTERING -> 10_000_000;
 			case SACRED_VESSEL -> 100_000_000;
 			case ENTERING_NIRVANA -> 10_000_000_000.0;
-			case TRUE_IMMORTAL -> Double.POSITIVE_INFINITY;
 			default -> 0;
 		};
 	}

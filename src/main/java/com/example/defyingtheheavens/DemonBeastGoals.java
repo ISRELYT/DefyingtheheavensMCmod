@@ -44,6 +44,7 @@ import java.util.EnumSet;
  *   <li>THROW (the monkey): burning stones. WATER_JET (the flood dragon): a jet of water that knocks back.</li>
  *   <li>POUNCE (the tiger): a leap onto its prey. ICE_SLAM (the ape: frost that slows), POUND (the bear: the ground heaves).</li>
  *   <li>BREATH (the ember fox): fire breathed in a cone. COIL (the python): coiled round its prey, holding it and crushing.</li>
+ *   <li>CHAOS (a Chaos Fiend): it circles its prey loosing chaos bolts now and then (BeastShot), and dives to claw it.</li>
  * </ul>
  * An elder (BeastKind#isElder) strikes with its kind's move as the wild do, its reach grown with its size ({@link #grown}: a pounce, a
  * slam, its breath, a dive's circling and gust), and goes back to the pool it guards (DemonBeast#guard) when it has none to fight.
@@ -72,7 +73,7 @@ final class DemonBeastGoals {
 	}
 
 	private static boolean near(DemonBeast beast, LivingEntity target) {
-		double reach = DemonBeast.NOTICE + beast.getBbWidth();
+		double reach = beast.notice() + beast.getBbWidth();
 		return beast.distanceToSqr(target) <= reach * reach;
 	}
 
@@ -83,7 +84,8 @@ final class DemonBeastGoals {
 			case ICE_SLAM, POUND -> new SlamGoal(beast, signature);
 			case BREATH -> new BreathGoal(beast);
 			case COIL -> new CoilGoal(beast);
-			case SWOOP, DIVE -> new SwoopGoal(beast, signature == BeastKind.Signature.DIVE);
+			case SWOOP, DIVE -> new SwoopGoal(beast, signature == BeastKind.Signature.DIVE, null);
+			case CHAOS -> new SwoopGoal(beast, false, BeastShot.Kind.CHAOS);
 			case THROW -> new ShootGoal(beast, BeastShot.Kind.FIRE_STONE, 3, 16, 50);
 			case WATER_JET -> new ShootGoal(beast, BeastShot.Kind.WATER, 3, 20, 45);
 			case SHELL -> new ShellGoal(beast);
@@ -505,15 +507,19 @@ final class DemonBeastGoals {
 	// --- The swoop and the dive ---
 
 	static final class SwoopGoal extends Goal {
+		/** Circling, it looses one of its shots (if it has any: a Chaos Fiend's bolts) this often, while it sees its prey. */
+		static final int SHOT_EVERY = 40;
 		private final DemonBeast beast;
 		private final boolean dive;
+		private final BeastShot.Kind shot;
 		private LivingEntity target;
 		private int ticks, phase; // 0 circling, 1 diving, 2 climbing away
 		private double angle;
 
-		SwoopGoal(DemonBeast beast, boolean dive) {
+		SwoopGoal(DemonBeast beast, boolean dive, BeastShot.Kind shot) {
 			this.beast = beast;
 			this.dive = dive;
+			this.shot = shot;
 			setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
 		}
 
@@ -543,6 +549,9 @@ final class DemonBeastGoals {
 				case 0 -> {
 					angle += 0.06;
 					beast.getMoveControl().setWantedPosition(target.getX() + Math.cos(angle) * round, target.getY() + high, target.getZ() + Math.sin(angle) * round, 1.0);
+					if (shot != null && ticks % SHOT_EVERY == SHOT_EVERY / 2 && beast.getSensing().hasLineOfSight(target) && beast.level() instanceof ServerLevel level) {
+						loose(level);
+					}
 					if (ticks > 40 && beast.level().getGameTime() >= beast.signatureReady && beast.getSensing().hasLineOfSight(target)) {
 						phase = 1;
 						ticks = 0;
@@ -553,6 +562,7 @@ final class DemonBeastGoals {
 					beast.getMoveControl().setWantedPosition(target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(), 2.4);
 					beast.getLookControl().setLookAt(target, 30, 30);
 					if (beast.getBoundingBox().inflate(0.4).intersects(target.getBoundingBox())) {
+						beast.swing(net.minecraft.world.InteractionHand.MAIN_HAND); // talons, a beak, a fiend's claws thrown at it (BeastModels)
 						boolean struck = target.hurt(beast.damageSources().mobAttack(beast), attack(beast) * (dive ? 1.8f : 1.4f));
 						if (struck && dive && beast.level() instanceof ServerLevel level) gust(level); // the gust of a strike that landed
 						phase = 2;
@@ -571,6 +581,19 @@ final class DemonBeastGoals {
 					}
 				}
 			}
+		}
+
+		/** One of its shots loosed at its prey as it circles (a Chaos Fiend's bolt, flying straight). */
+		private void loose(ServerLevel level) {
+			beast.getLookControl().setLookAt(target, 30, 30);
+			beast.swing(net.minecraft.world.InteractionHand.MAIN_HAND); // a fiend's clawed arm flung out (BeastModels)
+			BeastShot bolt = new BeastShot(level, beast, shot, attack(beast) * 0.6f);
+			Vec3 from = beast.getEyePosition();
+			bolt.setPos(from.x, from.y - 0.1, from.z);
+			Vec3 to = target.getEyePosition().subtract(bolt.position());
+			bolt.shoot(to.x, to.y, to.z, 1.4f, 2.0f);
+			level.addFreshEntity(bolt);
+			sound(beast, SoundEvents.ILLUSIONER_CAST_SPELL, 1.0f, 0.6f);
 		}
 
 		/** The roc's wings' gust as it strikes: everything near it reaches ({@link #reaches}) thrown back, as far as it can be ({@link #pushShare}). */

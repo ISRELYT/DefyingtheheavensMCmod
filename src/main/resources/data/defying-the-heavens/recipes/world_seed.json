@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "SJS",
+    "JSJ",
+    "SJS"
+  ],
+  "key": {
+    "S": {"item": "defying-the-heavens:chaos_origin_stone"},
+    "J": {"item": "defying-the-heavens:immortal_jade"}
+  },
+  "result": {"item": "defying-the-heavens:world_seed"}
+}

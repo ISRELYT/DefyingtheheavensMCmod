@@ -53,8 +53,10 @@ public class NewRealmsGameTests implements FabricGameTest {
 
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void theRealmsAfterFourAxisInOrder(GameTestHelper helper) {
-		helper.assertTrue(Realm.values().length == 11 && Realm.FOUR_AXIS.next() == Realm.DAO_INTEGRATION && Realm.TRUE_IMMORTAL.isLast()
-				&& PlayerCultivation.LAST_RANK == PlayerCultivation.rank(Realm.TRUE_IMMORTAL, Stage.GRAND_PERFECTION), "Four Axis, then the five, True Immortal the last");
+		// Then the ladder past True Immortal (phase 3, 2026-10-26: LawsGameTests), Heavenly Lord the last.
+		helper.assertTrue(Realm.values().length == 17 && Realm.FOUR_AXIS.next() == Realm.DAO_INTEGRATION && Realm.TRUE_IMMORTAL.next() == Realm.EARTH_IMMORTAL
+				&& Realm.HEAVENLY_LORD.isLast() && PlayerCultivation.LAST_RANK == PlayerCultivation.rank(Realm.HEAVENLY_LORD, Stage.GRAND_PERFECTION),
+				"Four Axis, then the five to True Immortal, then the ladder to Heavenly Lord, the last");
 		for (int i = 0; i < AFTER.length; i++) {
 			Realm realm = AFTER[i];
 			// Its needs ten times again; the Great Void's realms (Void Shattering on: 2026-10-25) a hundred times, offsetting its qi; True
@@ -87,17 +89,19 @@ public class NewRealmsGameTests implements FabricGameTest {
 		c.setState(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION, 0);
 		helper.assertTrue(!c.isMaxed() && c.breakthroughRealm() == Realm.DAO_INTEGRATION, "Four Axis Grand Perfection is no longer the top");
 		c.setState(Realm.TRUE_IMMORTAL, Stage.GRAND_PERFECTION, 0);
-		helper.assertTrue(c.isMaxed(), "True Immortal Grand Perfection is");
+		helper.assertTrue(!c.isMaxed() && c.breakthroughRealm() == Realm.EARTH_IMMORTAL, "Nor True Immortal's since phase 3");
+		c.setState(Realm.HEAVENLY_LORD, Stage.GRAND_PERFECTION, 0);
+		helper.assertTrue(c.isMaxed(), "Heavenly Lord Grand Perfection is");
 		// Four Axis's last axis of virtue holds its Grand Perfection's breakthrough into Dao Integration, as each holds its stage.
 		helper.assertTrue(FourAxis.wanted(PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION)) == FourAxis.Axis.values()[FourAxis.Axis.values().length - 1]
 				&& FourAxis.wanted(PlayerCultivation.rank(Realm.DAO_INTEGRATION, Stage.EARLY)) == null, "Into Dao Integration through the last axis; none after it");
-		// Past Four Axis Grand Perfection a body is Quasi-Dao Integration, not "beyond" any more; only past True Immortal's is.
+		// Past Four Axis Grand Perfection a body is Quasi-Dao Integration, not "beyond" any more; only past the last realm's is.
 		TwoPaths.Effective past = new TwoPaths.Effective(PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION), true, 0.5);
 		TwoPaths.Effective top = new TwoPaths.Effective(PlayerCultivation.LAST_RANK, true, 0);
 		helper.assertTrue(TwoPaths.effectiveName(past).getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents quasi
 				&& quasi.getKey().equals(ModLang.EFFECTIVE_QUASI_REALM)
 				&& TwoPaths.effectiveName(top).getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents beyond
-				&& beyond.getKey().equals(ModLang.EFFECTIVE_BEYOND), "Quasi-Dao Integration past Four Axis; beyond only past True Immortal");
+				&& beyond.getKey().equals(ModLang.EFFECTIVE_BEYOND), "Quasi-Dao Integration past Four Axis; beyond only past Heavenly Lord");
 		helper.succeed();
 	}
 
@@ -205,11 +209,11 @@ public class NewRealmsGameTests implements FabricGameTest {
 		c.heaven().setMethod(HeavenMethod.WATER_DAO_INTEGRATION, 1, 0);
 		helper.assertTrue(HeavenMethods.opensWay(c, Realm.DAO_INTEGRATION) && !HeavenMethods.opensWay(c, Realm.VOID_SHATTERING)
 				&& HeavenMethods.deepestRealm(c.heaven()) == Realm.DAO_INTEGRATION, "...a Dao Integration method does, and no further");
-		// The ghost path to True Immortal Grand Perfection.
+		// The ghost path to the last realm's Grand Perfection (Heavenly Lord's since phase 3), as the heaven path's.
 		NetherworldState s = c.netherworld();
 		GhostMethods.setPath(s, PlayerCultivation.LAST_RANK);
 		helper.assertTrue(GhostMethods.ghostRank(s) == PlayerCultivation.LAST_RANK && GhostMethods.isMaxed(s)
-				&& GhostMethods.LAST_RANK == PlayerCultivation.LAST_RANK, "The ghost path goes to True Immortal Grand Perfection");
+				&& GhostMethods.LAST_RANK == PlayerCultivation.LAST_RANK, "The ghost path goes to Heavenly Lord Grand Perfection");
 		GhostMethods.setPath(s, PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION));
 		helper.assertTrue(!GhostMethods.isMaxed(s), "...and Four Axis's is no longer its top");
 		for (int rank = 1; rank <= PlayerCultivation.LAST_RANK; rank++) {

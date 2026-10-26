@@ -6,6 +6,162 @@ import java.awt.image.BufferedImage;
  * and Immortal Essence's (a pearl of immortal gold, its light raying out). {@code java BeastArt.java <assets> icons} writes these alone.
  */
 public class Icons {
+	/** How wide a domain's seal is drawn (it lies tens of blocks across under its owner: the wards' 256 would show its pixels underfoot). */
+	private static final int DOMAIN_SEAL = 1024;
+
+	/**
+	 * The Law domains' icons (LawDomains: textures/gui/ability/<law>_domain.png, 32 x 32) and the seals their domains lay on the ground
+	 * (textures/spell/domain_seal_<law>.png, {@link #DOMAIN_SEAL} square): the five elements' own seals and the rune (Life and Death's taiji)
+	 * drawn smooth at that size; Space's and Time's the rune's rings and star, its taiji cleared for the Law's character, drawn sharp there.
+	 * {@code java BeastArt.java <assets> domains} writes these alone.
+	 */
+	static void writeDomains(java.nio.file.Path assets) throws java.io.IOException {
+		String[] ids = {"metal", "wood", "water", "fire", "earth", "space", "time", "life_and_death"};
+		// 金 木 水 火 土 空 時, as escapes (the source may be read in any code page); Life and Death's a taiji.
+		String[] marks = {"金", "木", "水", "火", "土", "空", "時", null};
+		int[] colours = {0xE8C060, 0x3CE65A, 0x3C8CFF, 0xFF4020, 0xD99A2B, 0xB388FF, 0x80DEEA, 0xE0E0E0}; // Law#color
+		for (int i = 0; i < ids.length; i++) BeastArt.write(assets.resolve("textures/gui/ability/" + ids[i] + "_domain.png"), domain(colours[i], marks[i]));
+		java.nio.file.Path spell = assets.resolve("textures/spell");
+		BufferedImage rune = smoothTo(javax.imageio.ImageIO.read(spell.resolve("rune.png").toFile()), DOMAIN_SEAL);
+		for (int i = 0; i < 5; i++) {
+			BufferedImage seal = javax.imageio.ImageIO.read(spell.resolve("seal_" + ids[i] + ".png").toFile());
+			BeastArt.write(spell.resolve("domain_seal_" + ids[i] + ".png"), smoothTo(seal, DOMAIN_SEAL));
+		}
+		BeastArt.write(spell.resolve("domain_seal_space.png"), seal(rune, marks[5]));
+		BeastArt.write(spell.resolve("domain_seal_time.png"), seal(rune, marks[6]));
+		BeastArt.write(spell.resolve("domain_seal_life_and_death.png"), rune);
+	}
+
+	/** {@code img} drawn smooth (bicubic) at {@code size} square: its edges soft, not stepped, where it is drawn large. */
+	private static BufferedImage smoothTo(BufferedImage img, int size) {
+		BufferedImage out = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+		java.awt.Graphics2D g = out.createGraphics();
+		g.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+		g.setRenderingHint(java.awt.RenderingHints.KEY_RENDERING, java.awt.RenderingHints.VALUE_RENDER_QUALITY);
+		g.drawImage(img, 0, 0, size, size, null);
+		g.dispose();
+		return out;
+	}
+
+	/**
+	 * A Law domain's icon: its sphere seen whole, a bubble of the Law's colour, deep in its middle and brightening to a rim of light, a gloss
+	 * on its upper left, in the menus' gold trim; in it the Law's character, pale and edged dark, or (Life and Death) a taiji of bone and
+	 * black.
+	 */
+	static BufferedImage domain(int colour, String mark) {
+		BufferedImage img = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
+		int body = BeastArt.rgb(colour), light = BeastArt.mix(body, BeastArt.rgb(0xFFFFFF), 0.5), deep = BeastArt.mix(body, BeastArt.rgb(0x05050A), 0.62);
+		int gold = BeastArt.rgb(0xD9A22E), goldLight = BeastArt.rgb(0xF5CF55), goldDeep = BeastArt.rgb(0x6E5214);
+		for (int y = 0; y < 32; y++) {
+			for (int x = 0; x < 32; x++) {
+				double dx = x - 15.5, dy = y - 15.5, r = Math.sqrt(dx * dx + dy * dy);
+				int c = 0;
+				if (r < 12.6) {
+					double t = r / 12.6;
+					c = (int) Math.round(150 + 95 * t * t) << 24 | BeastArt.mix(deep, body, t * t * t) & 0xFFFFFF;
+					double gx = dx + 4.5, gy = dy + 5, gloss = Math.max(0, 1 - Math.sqrt(gx * gx + gy * gy) / 4.2);
+					if (gloss > 0) c = BeastArt.mix(c, light, gloss * 0.5);
+				} else if (r < 13.5) {
+					c = BeastArt.mix(body, light, 0.55); // the rim of light
+				} else if (r < 14.3) {
+					c = dy < 0 ? goldLight : gold; // the gold trim, lit from above
+				} else if (r < 15.2) {
+					c = dy < 0 ? gold : goldDeep;
+				} else if (r < 15.8) {
+					c = 0xA0 << 24 | goldDeep & 0xFFFFFF; // its soft outer edge
+				}
+				img.setRGB(x, y, c);
+			}
+		}
+		if (mark != null) {
+			java.awt.Graphics2D g = smooth(img);
+			mark(g, mark, 17.5f, 15.5, 15.8, 0xFFFFF8E8, 0xE0140C08, 2.4f);
+			g.dispose();
+		} else {
+			taiji(img, 15.5, 15.5, 9.2);
+		}
+		return img;
+	}
+
+	/**
+	 * A greater Law's seal (256 x 256, white on clear, tinted as it is drawn): the rune's rings, hexagram and the band within them, its taiji
+	 * cleared away and in its place the Law's character, in a ring of its own as the elements' seals have theirs.
+	 */
+	static BufferedImage seal(BufferedImage rune, String mark) {
+		int w = rune.getWidth(), h = rune.getHeight();
+		BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+		double c = (w - 1) / 2.0, clear = w * 34 / 256.0;
+		for (int y = 0; y < h; y++) {
+			for (int x = 0; x < w; x++) {
+				double dx = x - c, dy = y - c;
+				if (dx * dx + dy * dy >= clear * clear) img.setRGB(x, y, rune.getRGB(x, y));
+			}
+		}
+		java.awt.Graphics2D g = smooth(img);
+		double ring = w * 30.5 / 256.0;
+		g.setColor(new java.awt.Color(0xFFFFFFFF, true));
+		g.setStroke(new java.awt.BasicStroke(w * 2.4f / 256f));
+		g.draw(new java.awt.geom.Ellipse2D.Double(c - ring, c - ring, ring * 2, ring * 2));
+		mark(g, mark, w * 40f / 256f, c + 0.5, c + 0.5, 0xFFFFFFFF, 0, 0);
+		g.dispose();
+		return img;
+	}
+
+	/** {@code img}'s graphics, drawing smooth (shapes and text antialiased). */
+	private static java.awt.Graphics2D smooth(BufferedImage img) {
+		java.awt.Graphics2D g = img.createGraphics();
+		g.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+		g.setRenderingHint(java.awt.RenderingHints.KEY_STROKE_CONTROL, java.awt.RenderingHints.VALUE_STROKE_PURE);
+		g.setRenderingHint(java.awt.RenderingHints.KEY_TEXT_ANTIALIASING, java.awt.RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+		return g;
+	}
+
+	/**
+	 * {@code mark} (a Han character) {@code size} pixels high, its middle at {@code cx, cy}: edged with {@code edge} pixels of {@code dark}
+	 * (0: none), filled {@code fill} (ARGB).
+	 */
+	private static void mark(java.awt.Graphics2D g, String mark, float size, double cx, double cy, int fill, int dark, float edge) {
+		java.awt.font.GlyphVector glyphs = han(size).createGlyphVector(g.getFontRenderContext(), mark);
+		java.awt.geom.Rectangle2D box = glyphs.getVisualBounds();
+		java.awt.Shape outline = glyphs.getOutline((float) (cx - box.getCenterX()), (float) (cy - box.getCenterY()));
+		if (edge > 0) {
+			g.setColor(new java.awt.Color(dark, true));
+			g.setStroke(new java.awt.BasicStroke(edge, java.awt.BasicStroke.CAP_ROUND, java.awt.BasicStroke.JOIN_ROUND));
+			g.draw(outline);
+		}
+		g.setColor(new java.awt.Color(fill, true));
+		g.fill(outline);
+	}
+
+	/** A bold font of the system's with the Han characters in it, {@code size} pixels (Dialog, which falls back to one, if none is named). */
+	private static java.awt.Font han(float size) {
+		for (String name : new String[] {"Microsoft YaHei", "SimHei", "Microsoft JhengHei", "SimSun", "MS Gothic", "Noto Sans CJK SC"}) {
+			java.awt.Font font = new java.awt.Font(name, java.awt.Font.BOLD, 12);
+			if (font.getFamily().equals(name) && font.canDisplay('金') && font.canDisplay('時')) return font.deriveFont(size);
+		}
+		return new java.awt.Font(java.awt.Font.DIALOG, java.awt.Font.BOLD, 12).deriveFont(size);
+	}
+
+	/** A taiji {@code r} round at {@code cx, cy}: bone and black, each with its eye of the other, edged dark. */
+	private static void taiji(BufferedImage img, double cx, double cy, double r) {
+		int bone = BeastArt.rgb(0xF2EEE4), black = BeastArt.rgb(0x15151B), edge = BeastArt.rgb(0x05050A);
+		for (int y = 0; y < img.getHeight(); y++) {
+			for (int x = 0; x < img.getWidth(); x++) {
+				double dx = x - cx, dy = y - cy, d = Math.sqrt(dx * dx + dy * dy);
+				if (d > r + 0.9) continue;
+				if (d > r) {
+					img.setRGB(x, y, edge);
+					continue;
+				}
+				double up = Math.hypot(dx, dy + r / 2), down = Math.hypot(dx, dy - r / 2);
+				boolean white = up < r / 2 || down >= r / 2 && dx < 0;
+				if (up < r / 6) white = false; // bone's eye of black
+				if (down < r / 6) white = true; // black's eye of bone
+				img.setRGB(x, y, white ? bone : black);
+			}
+		}
+	}
+
 	static void writeAll(java.nio.file.Path assets) throws java.io.IOException {
 		BeastArt.write(assets.resolve("textures/gui/ability/tigers_roar.png"), roar());
 		BeastArt.write(assets.resolve("textures/gui/ability/illusion.png"), illusion());

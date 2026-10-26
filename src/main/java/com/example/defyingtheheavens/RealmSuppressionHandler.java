@@ -14,7 +14,8 @@ import net.minecraft.world.level.Level;
  * entering a passage or a high realm (the Upper Realm, the Netherworld) restores the true stage at once. The true stage itself
  * is never changed. Breakthroughs past the cap (into and within Four Axis) are only possible in the Upper Realm itself. From Void
  * Shattering on (either path: PlayerCultivation#FREE_OF_LOWER_REALMS, the user's ask of 2026-10-22) the lower realms hold no one:
- * the whole might there, and their thin qi gathered, though the breakthroughs still wait for the Upper Realm.
+ * the whole might there, and their thin qi gathered, though the breakthroughs still wait for the Upper Realm. A breakthrough into True
+ * Immortal or past it waits for the Immortal Realm itself (PlayerCultivation#isImmortalRealmLocked, the user's rule of 2026-10-26).
  */
 public final class RealmSuppressionHandler {
 	private static final int RECHECK_INTERVAL = 20;
@@ -49,7 +50,8 @@ public final class RealmSuppressionHandler {
 				player.displayClientMessage(Component.translatable(ModLang.MSG_RESTORED,
 						PlayerCultivation.rankName(c.getRealm(), c.getStage())), true);
 			}
-			// A bottleneck that was sealed outside the Upper Realm can be broken now that the player has arrived.
+			// A bottleneck that was sealed outside the Upper Realm (or, into True Immortal and past it, the Immortal Realm) can be broken
+			// now that the player has arrived.
 			if (wasSealed && c.canBreakthrough()) {
 				player.sendSystemMessage(Component.translatable(ModLang.MSG_BOTTLENECK));
 			}
@@ -66,14 +68,18 @@ public final class RealmSuppressionHandler {
 	static void applyRealm(PlayerCultivation c, ResourceKey<Level> where) {
 		c.setLowerRealmBound(ModDimensions.isLowerRealm(where));
 		c.setInUpperRealm(ModDimensions.isUpperRealm(where));
+		c.setInImmortalRealm(ModDimensions.isImmortalRealm(where)); // the only place a breakthrough into True Immortal and past it is made
 		// The Astral Realm's density is the place's own, kept by AstralRealm as one moves; everywhere else, the realm's: the Great Void's
 		// a hundredfold (PlayerCultivation#GREAT_VOID_QI_MULTIPLIER), the Immortal Realm's a thousandfold, the rest the lower realms' own.
 		if (!ModDimensions.isAstral(where)) c.setPlaceQi(realmQi(where));
 	}
 
-	/** How dense the qi of the realm {@code where} is, against the lower realms' (the Astral Realm's places aside). */
+	/**
+	 * How dense the qi of the realm {@code where} is, against the lower realms' (the Astral Realm's places aside): the Immortal Realm's,
+	 * and the small worlds refined in it (SmallWorlds), a thousandfold.
+	 */
 	public static double realmQi(ResourceKey<Level> where) {
-		return ModDimensions.isImmortalRealm(where) ? PlayerCultivation.IMMORTAL_QI_MULTIPLIER
+		return ModDimensions.hasImmortalQi(where) ? PlayerCultivation.IMMORTAL_QI_MULTIPLIER
 				: ModDimensions.isGreatVoid(where) ? PlayerCultivation.GREAT_VOID_QI_MULTIPLIER : 1.0;
 	}
 
@@ -84,6 +90,7 @@ public final class RealmSuppressionHandler {
 			PlayerCultivation c = CultivationManager.get(player);
 			ResourceKey<Level> dimension = InnerRealm.bodyDimension(player);
 			if (c.isLowerRealmBound() != ModDimensions.isLowerRealm(dimension) || c.isInUpperRealm() != ModDimensions.isUpperRealm(dimension)
+					|| c.isInImmortalRealm() != ModDimensions.isImmortalRealm(dimension)
 					|| !ModDimensions.isAstral(dimension) && !ModDimensions.isUpperRealm(dimension) && c.placeFactor() != realmQi(dimension)) {
 				update(player);
 			}

@@ -92,6 +92,18 @@ public final class ModBiomes {
 	/** The main island's level ground, where the capital stands (ImmortalCapital): lawns, nothing grown that would stand in its streets. */
 	public static final ResourceKey<Biome> JADE_CAPITAL = key("jade_capital");
 	public static final ResourceKey<Biome> IMMORTAL_PASSAGE = key("immortal_passage");
+	/**
+	 * The Chaos Frontier (phase 3c, 2026-10-26), the Immortal Realm's edge past some 4,150 blocks out (ModNoiseSettings#FRONTIER_FROM; the
+	 * dimension's biome source picks it by the terrain's "erosion", the Frontier's share): shards of tuff and deepslate veined with amethyst
+	 * and crying obsidian, Chaos Origin Ore in them; nothing grows or lives there of its own (the Chaos Fiends are ChaosFrontier's). Never in
+	 * the realm's tag (ModTags#IS_IMMORTAL_REALM), so none of the Jade Firmament's herbs, ores or settlements come to it.
+	 */
+	public static final ResourceKey<Biome> CHAOS_FRONTIER = key("chaos_frontier");
+	/**
+	 * The small worlds (phase 3d, 2026-10-26; SmallWorlds): an immortal's own island under the stars, its grass and leaves the Immortal
+	 * Realm's lush green, its water jade-clear; no rain, nothing born of it, nothing laid by worldgen (SmallWorlds lays the island).
+	 */
+	public static final ResourceKey<Biome> SMALL_WORLD = key("small_world");
 
 	private static final int WATER = 0x3FC6E4;
 	private static final int WATER_FOG = 0x0A3D52;
@@ -294,6 +306,23 @@ public final class ModBiomes {
 		context.register(IMMORTAL_PASSAGE, biome(false, 0.5f, 0.0f,
 				new BiomeSpecialEffects.Builder().skyColor(0xFFF2C8).fogColor(0xFFE8B0).waterColor(WATER).waterFogColor(WATER_FOG)
 						.ambientParticle(new AmbientParticleSettings(ParticleTypes.END_ROD, 0.01f)),
+				new MobSpawnSettings.Builder().build(),
+				new BiomeGenerationSettings.Builder(placed, carvers).build()));
+		// The Chaos Frontier: its sky and fog bruised violet (the client's, ImmortalRealmClient), motes of chaos drifting; its ore and nothing else.
+		Set<ResourceKey<PlacedFeature>> chaos = Set.of(ModPlacedFeatures.ORE_CHAOS_ORIGIN);
+		BiomeGenerationSettings.Builder chaosFeatures = new BiomeGenerationSettings.Builder(placed, carvers);
+		ModPlacedFeatures.addFeatures(chaosFeatures, chaos);
+		context.register(CHAOS_FRONTIER, biome(false, 0.5f, 0.0f,
+				new BiomeSpecialEffects.Builder().skyColor(0x2E2238).fogColor(0x4A3A5A).waterColor(0x6A5A8A).waterFogColor(0x1A1428)
+						.ambientParticle(new AmbientParticleSettings(ParticleTypes.REVERSE_PORTAL, 0.006f))
+						.ambientMoodSound(AmbientMoodSettings.LEGACY_CAVE_SETTINGS),
+				new MobSpawnSettings.Builder().build(),
+				chaosFeatures.build()));
+		// The small worlds: the Immortal Realm's greens under a starry sky (the client's), motes of starlight drifting; nothing else.
+		context.register(SMALL_WORLD, biome(false, 0.7f, 0.6f,
+				new BiomeSpecialEffects.Builder().skyColor(0x0A0C24).fogColor(0x1A1E44).waterColor(0x4FD8D0).waterFogColor(0x14524E)
+						.grassColorOverride(0x6FCB78).foliageColorOverride(0x4FB86A)
+						.ambientParticle(new AmbientParticleSettings(ParticleTypes.END_ROD, 0.0006f)),
 				new MobSpawnSettings.Builder().build(),
 				new BiomeGenerationSettings.Builder(placed, carvers).build()));
 	}

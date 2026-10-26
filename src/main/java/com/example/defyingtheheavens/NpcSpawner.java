@@ -112,9 +112,11 @@ public final class NpcSpawner {
 
 	/**
 	 * The Immortal Realm's wanderers (phase 2, 2026-10-25): from Entering Nirvana Early (those come up through the Gate) to True Immortal
-	 * Grand Perfection on its own curve, never a mortal.
+	 * Grand Perfection on its own curve, never a mortal; none of the realms past it (phase 3: the few of those are its sects' Sect Lords
+	 * and the Court's, and whoever climbs there).
 	 */
-	public static final int IMMORTAL_FLOOR = PlayerCultivation.rank(Realm.ENTERING_NIRVANA, Stage.EARLY), IMMORTAL_TOP = PlayerCultivation.LAST_RANK;
+	public static final int IMMORTAL_FLOOR = PlayerCultivation.rank(Realm.ENTERING_NIRVANA, Stage.EARLY),
+			IMMORTAL_TOP = PlayerCultivation.rank(Realm.TRUE_IMMORTAL, Stage.GRAND_PERFECTION);
 
 	/** The rank the roll lands on in the Immortal Realm ({@link #IMMORTAL_FLOOR} up), or {@link Integer#MIN_VALUE} for nobody (unless {@code mustFind}). */
 	public static int rollImmortalRank(RandomSource random, boolean mustFind) {
@@ -178,11 +180,12 @@ public final class NpcSpawner {
 
 	/**
 	 * Whether living rogues and mortal wanderers turn up in this dimension: never in a passage, the Inner Realm or the Netherworld,
-	 * nor (for now) in the Astral Realm, whose worlds are wild.
+	 * nor (for now) in the Astral Realm, whose worlds are wild, nor in an immortal's own small world (SmallWorlds: its owner's and its
+	 * guests'; the wild beasts keep out by this too, BeastSpawner).
 	 */
 	public static boolean spawnsLiving(ResourceKey<Level> dimension) {
 		return !ModDimensions.isPassage(dimension) && !ModDimensions.isInnerRealm(dimension) && !ModDimensions.isNetherworld(dimension)
-				&& !ModDimensions.isAstral(dimension);
+				&& !ModDimensions.isAstral(dimension) && !ModDimensions.isSmallWorld(dimension);
 	}
 
 	/**
@@ -203,6 +206,8 @@ public final class NpcSpawner {
 		if (RogueIndex.anyWithin(level, player.getX(), player.getZ(), CROWD_RADIUS, mortal)) return;
 		BlockPos spot = heading == null ? findSpot(level, player, random, mortal) : findSpotAhead(level, player, heading, random, mortal);
 		if (spot == null || dead && GhostGate.protects(level, spot)) return;
+		// None of the Immortal Realm's wanderers out where its land breaks up into the Chaos Frontier.
+		if (immortal && ChaosFrontier.pastSettled(spot.getX(), spot.getZ())) return;
 		CultivatorNpc npc = CultivatorNpc.createFor(level);
 		if (npc == null) return;
 		npc.moveTo(spot.getX() + 0.5, spot.getY(), spot.getZ() + 0.5, random.nextFloat() * 360, 0);

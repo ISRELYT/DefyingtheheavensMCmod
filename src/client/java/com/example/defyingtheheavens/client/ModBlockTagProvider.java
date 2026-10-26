@@ -56,6 +56,16 @@ public class ModBlockTagProvider extends FabricTagProvider.BlockTagProvider {
 		getOrCreateTagBuilder(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.YIN_JADE_ORE).add(ModBlocks.YIN_JADE_BLOCK);
 		// The red spider lily is a flower like any other (bees, flower pots aside).
 		getOrCreateTagBuilder(BlockTags.SMALL_FLOWERS).add(ModBlocks.RED_SPIDER_LILY);
+		// Chaos Origin Ore: a diamond pickaxe or better. The First Flame no dragon, wither or feature puts out.
+		getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.CHAOS_ORIGIN_ORE);
+		getOrCreateTagBuilder(BlockTags.NEEDS_DIAMOND_TOOL).add(ModBlocks.CHAOS_ORIGIN_ORE);
+		getOrCreateTagBuilder(BlockTags.DRAGON_IMMUNE).add(ModBlocks.FIRST_FLAME);
+		getOrCreateTagBuilder(BlockTags.WITHER_IMMUNE).add(ModBlocks.FIRST_FLAME);
+		getOrCreateTagBuilder(BlockTags.FEATURES_CANNOT_REPLACE).add(ModBlocks.FIRST_FLAME);
+		// Nor a small world's gate (the way out of it).
+		getOrCreateTagBuilder(BlockTags.DRAGON_IMMUNE).add(ModBlocks.SMALL_WORLD_GATE);
+		getOrCreateTagBuilder(BlockTags.WITHER_IMMUNE).add(ModBlocks.SMALL_WORLD_GATE);
+		getOrCreateTagBuilder(BlockTags.FEATURES_CANNOT_REPLACE).add(ModBlocks.SMALL_WORLD_GATE);
 
 		// Qi Veins: diamond-hard ore, what formations draw on. The Formation Core takes an iron pickaxe.
 		getOrCreateTagBuilder(ModTags.QI_VEIN_BLOCKS).add(ModBlocks.QI_VEIN).add(ModBlocks.DEEPSLATE_QI_VEIN);

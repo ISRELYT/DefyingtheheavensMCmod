@@ -170,11 +170,16 @@ public final class AstralRealm {
 	 * no one below it can (the user's ask, 2026-10-22: "void shattering beings and onwards should be able to travel through space ...
 	 * super fast"): Void Shattering some four times Four Axis's, Sacred Vessel six, Entering Nirvana nine, True Immortal nineteen and
 	 * more. To the next star (some 16,000 blocks) sprinting: Four Axis about two minutes, Void Shattering half a minute, True Immortal
-	 * five or six seconds. So swift a flier passes through space unchecked for blocks ({@link #passesThrough}).
+	 * five or six seconds; every realm past it as swift as its Grand Perfection (the ladder's swiftness its: Realm). So swift a flier
+	 * passes through space unchecked for blocks ({@link #passesThrough}).
 	 */
 	public static float spaceSpeed(Realm realm, Stage stage) {
 		int s = stage.ordinal();
 		if (realm.ordinal() < MIN_REALM.ordinal()) return 0.08f;
+		if (realm.isPastTrueImmortal()) {
+			realm = Realm.TRUE_IMMORTAL;
+			s = Stage.GRAND_PERFECTION.ordinal();
+		}
 		return switch (realm) {
 			case NASCENT_SOUL -> 0.12f + s * 0.012f;
 			case HEAVENLY_BEING -> 0.20f + s * 0.016f;

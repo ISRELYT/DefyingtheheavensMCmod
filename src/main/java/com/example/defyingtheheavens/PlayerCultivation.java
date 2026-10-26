@@ -53,7 +53,7 @@ public class PlayerCultivation {
 	 */
 	public static final Realm FREE_OF_LOWER_REALMS = Realm.VOID_SHATTERING;
 	private static final int FREE_RANK = rank(FREE_OF_LOWER_REALMS, Stage.EARLY);
-	/** The very top of cultivation, either path's: the last realm's Grand Perfection (True Immortal's, 2026-10-22). */
+	/** The very top of cultivation, every path's: the last realm's Grand Perfection (Heavenly Lord's since phase 3, 2026-10-26; True Immortal's before). */
 	public static final int LAST_RANK = rank(Realm.values()[Realm.values().length - 1], Stage.GRAND_PERFECTION);
 	/**
 	 * The Upper Realm's dense qi: everything meditation gathers there (Ring of Power bonus included) and the qi pool's
@@ -79,7 +79,7 @@ public class PlayerCultivation {
 	 * spent stay as they were (Lifespan#placeSaving).
 	 */
 	public static final double IMMORTAL_QI_MULTIPLIER = 1000.0;
-	/** The realm the Immortal Realm alone sustains at its pace. */
+	/** The first realm the Immortal Realm alone sustains at its pace (and every realm of the ladder past it, phase 3). */
 	public static final Realm IMMORTAL_REALMS_FROM = Realm.TRUE_IMMORTAL;
 	/** Each Cultivation Pill raises pill resistance by this much; the next one works that much less. */
 	public static final double PILL_RESISTANCE_PER_PILL = 0.25;
@@ -124,8 +124,17 @@ public class PlayerCultivation {
 	private final HeavenState heaven = new HeavenState();
 	/** The Demon Path, the demon races' (DemonPath), and the blood the record is of. Saved when begun. */
 	private final DemonState demon = new DemonState();
+	/** An immortal's Laws (Laws, phase 3) and the Five Decays' reckoning with it (FiveDecays). Saved once any of it is. */
+	private final LawState laws = new LawState();
 	/** Synced but not saved: re-evaluated from the player's dimension on every join. */
 	private boolean inUpperRealm;
+	/**
+	 * Synced but not saved, as {@link #inUpperRealm}: whether the body stands in the Immortal Realm, the only place a breakthrough into
+	 * True Immortal or past it may be made ({@link #isImmortalRealmLocked}).
+	 */
+	private boolean inImmortalRealm;
+	/** Synced but not saved (SmallWorlds#onJoin sets it from the world's records): whether they have refined a small world of their own. */
+	private boolean smallWorld;
 	/**
 	 * How dense ordinary qi is where they stand, against the lower realms' (1): space's thin qi, a planet's own (AstralRealm sets it
 	 * as they move; synced, not saved). The Upper Realm's is {@link #UPPER_REALM_QI_MULTIPLIER} regardless.
@@ -900,6 +909,52 @@ public class PlayerCultivation {
 		return true;
 	}
 
+	public boolean isInImmortalRealm() { return inImmortalRealm; }
+
+	/** Whether they have a small world of their own (SmallWorlds): its door is theirs to open (Ability#SMALL_WORLD). */
+	public boolean hasSmallWorld() { return smallWorld; }
+
+	public void setSmallWorld(boolean value) { smallWorld = value; }
+
+	/** @return true if the flag changed */
+	public boolean setInImmortalRealm(boolean value) {
+		if (inImmortalRealm == value) return false;
+		inImmortalRealm = value;
+		return true;
+	}
+
+	/**
+	 * From this rank on, a breakthrough is the Immortal Realm's alone (the user's rule, 2026-10-26: "make it so you can only do
+	 * breakthroughs for true immortal and up in the immortal realm"): into True Immortal Early, and into every stage and realm past it.
+	 */
+	public static final int IMMORTAL_BREAKTHROUGH_RANK = rank(Realm.TRUE_IMMORTAL, Stage.EARLY);
+
+	/** Whether a breakthrough into {@code targetRank} (any path's) is shut here: one of {@link #IMMORTAL_BREAKTHROUGH_RANK} or past it, outside the Immortal Realm. */
+	public boolean isImmortalRealmLocked(int targetRank) {
+		return targetRank >= IMMORTAL_BREAKTHROUGH_RANK && !inImmortalRealm;
+	}
+
+	/** The heaven path's next breakthrough shut here for want of the Immortal Realm ({@link #isImmortalRealmLocked(int)}). */
+	public boolean isImmortalRealmLocked() {
+		return !mortal && !isMaxed() && isImmortalRealmLocked(rank(breakthroughRealm(), breakthroughStage()));
+	}
+
+	/**
+	 * Why a breakthrough into {@code targetRank} can't be made here ({@link #isBreakthroughLocked}, a path's own lock): only the Immortal
+	 * Realm holds one into True Immortal or past it; past the lower realms' cap, only the Jade Firmament and the realms above it.
+	 */
+	public Component lockLine(int targetRank) {
+		if (isImmortalRealmLocked(targetRank)) {
+			return Component.translatable(ModLang.MSG_IMMORTAL_REALM_LOCKED, rankName(Realm.byIndex(targetRank / Stage.values().length), Stage.byIndex(targetRank % Stage.values().length)));
+		}
+		return Component.translatable(ModLang.MSG_REALM_LOCKED, rankName(LOWER_REALM_CAP_REALM, LOWER_REALM_CAP_STAGE));
+	}
+
+	/** {@link #lockLine(int)} for the heaven path's next breakthrough. */
+	public Component lockLine() {
+		return lockLine(rank(breakthroughRealm(), breakthroughStage()));
+	}
+
 	public double getPlaceQi() { return placeQi; }
 
 	/** @return true if it changed */
@@ -918,10 +973,11 @@ public class PlayerCultivation {
 	/**
 	 * Where Realm Suppression holds (the lower realms), no breakthrough may lead past the cap. Anywhere else (the Upper Realm, the
 	 * Astral Realm, the Netherworld's ways...) a Heavenly Being of Grand Perfection may break into Four Axis, and a Four Axis
-	 * cultivator through its stages (the user's call, 2026-10-19: "anywhere there isnt suppression").
+	 * cultivator through its stages (the user's call, 2026-10-19: "anywhere there isnt suppression"). And a breakthrough into True
+	 * Immortal or past it only in the Immortal Realm ({@link #isImmortalRealmLocked()}; why, {@link #lockLine()}).
 	 */
 	public boolean isBreakthroughLocked() {
-		return lowerRealmBound && !isMaxed() && rank(breakthroughRealm(), breakthroughStage()) > CAP_RANK;
+		return !isMaxed() && (lowerRealmBound && rank(breakthroughRealm(), breakthroughStage()) > CAP_RANK || isImmortalRealmLocked());
 	}
 
 	// --- Spatial Gap bookkeeping ---
@@ -942,11 +998,17 @@ public class PlayerCultivation {
 
 	public boolean isAbilityEnabled(Ability ability) { return !disabledAbilities.contains(ability); }
 
-	/** Switches an ability on or off; switching on one of a pair that excludes each other switches the other off. */
+	/**
+	 * Switches an ability on or off; switching on one of a pair that excludes each other switches the other off, and switching on a Law's
+	 * domain any other domain (LawDomains: one at a time).
+	 */
 	public void setAbilityEnabled(Ability ability, boolean enabled) {
 		if (enabled) {
 			disabledAbilities.remove(ability);
 			if (ability.exclusiveWith() != null) disabledAbilities.add(ability.exclusiveWith());
+			if (ability.law() != null) {
+				for (Ability other : Ability.values()) if (other != ability && other.law() != null) disabledAbilities.add(other);
+			}
 		} else {
 			disabledAbilities.add(ability);
 		}
@@ -1031,10 +1093,11 @@ public class PlayerCultivation {
 	public double qiGatherAt(double place) {
 		double base = Math.max(mortal ? 0 : CultivationStats.qiGather(getEffectiveRealm(), getEffectiveStage()), DemonPath.gatherBase(this));
 		if (base <= 0) return 0;
-		return base * place
+		return (base * place
 				* (1 + qiBoost) * (1 + gearQiBonus) * favourFactor() * (1 - pressurePenalty) * physiqueQiFactor()
 				* StatPoints.gatherFactor(this)
-				+ HeavenPassives.amount(this, QiElement.WATER); // Ceaseless Flow, the water methods' passive
+				+ HeavenPassives.amount(this, QiElement.WATER)) // Ceaseless Flow, the water methods' passive
+				* FiveDecays.gatherFactor(this); // the qi faltering under the Five Decays
 	}
 
 	/** Qi above the shrunken pool that pressure holds back; it is back in the pool as soon as the pressure lifts. */
@@ -1261,6 +1324,7 @@ public class PlayerCultivation {
 		heaven.load(old.heaven.save());
 		netherworld.carryOver(old.netherworld);
 		demon.carryOver(old.demon); // and the Demon Path
+		laws.carryOver(old.laws); // and the Laws comprehended (the Decays' reckoning begins anew)
 		techniques.addAll(old.techniques); // and the techniques and spells learned from manuals
 		manualSpells.addAll(old.manualSpells);
 	}
@@ -1380,6 +1444,8 @@ public class PlayerCultivation {
 		if (!methods.isEmpty()) tag.put("HeavenMethods", methods);
 		CompoundTag demonPath = demon.save();
 		if (!demonPath.isEmpty()) tag.put("Demon", demonPath);
+		CompoundTag lawsTag = laws.save();
+		if (!lawsTag.isEmpty()) tag.put("Laws", lawsTag);
 		tag.putInt("PathModel", PATH_MODEL);
 		return tag;
 	}
@@ -1506,6 +1572,7 @@ public class PlayerCultivation {
 		c.netherworld.load(tag.getCompound("Netherworld")); // an empty compound when missing: every default
 		c.heaven.load(tag.getCompound("HeavenMethods"));
 		c.demon.load(tag.getCompound("Demon"));
+		c.laws.load(tag.getCompound("Laws"));
 		// Saves from before: every method known understood as far as the realm, none behind it or past it.
 		if (tag.getInt("PathModel") < PATH_MODEL && !c.mortal) HeavenMethods.alignTo(c.heaven, rank(c.realm, c.stage));
 		return c;
@@ -1524,6 +1591,11 @@ public class PlayerCultivation {
 	/** The Demon Path, and the blood this record is of (see DemonPath). */
 	public DemonState demon() {
 		return demon;
+	}
+
+	/** The Laws this immortal holds, and the Five Decays' reckoning (see Laws, FiveDecays). */
+	public LawState laws() {
+		return laws;
 	}
 
 	/** The rumours this player has been told (see Journal), newest first. Not part of the sync packet: sent on its own. */

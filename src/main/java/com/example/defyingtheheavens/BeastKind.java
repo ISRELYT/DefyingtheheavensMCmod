@@ -12,7 +12,8 @@ import net.minecraft.world.level.biome.Biome;
  * cultivation scale (DemonBeast) from Qi Refining Early up to Core Formation Grand Perfection, each kind in its tier's ranks, in its
  * own lands (biome tags {@code beast/<id>}), with its own body (its model: BeastModels on the client), its way of moving, its
  * signature move (DemonBeastGoals), its temper, its size, and what it leaves besides its core (DemonCoreItem). And the elders of the
- * demon races' kin, Void Shattering to Entering Nirvana, who keep their races' blood in the Great Void (Tier#ELDER, BloodPools).
+ * demon races' kin, Void Shattering to Entering Nirvana, who keep their races' blood in the Great Void (Tier#ELDER, BloodPools); the
+ * Immortal Realm's primordial beasts (Tier#PRIMORDIAL) and its Chaos Frontier's fiends (Tier#CHAOS).
  * <p>
  * Append-only: a kind's id names its entity type ({@code defying-the-heavens:<id>}).
  */
@@ -49,17 +50,28 @@ public enum BeastKind {
 	// Their own ways in the air (PrimordialBeast): the Kun-Peng's size here the Kun's, the Peng's its own (PrimordialBeast#getDimensions).
 	KUN_PENG("kun_peng", Tier.PRIMORDIAL, QiElement.WATER, Body.FISH, Moves.FLYING, Signature.BREACH, true, 16.0f, 9.6f, 0.3, 1.0, 1.0, 0x24506E, 0xE8E8F0),
 	TRUE_PHOENIX("true_phoenix", Tier.PRIMORDIAL, QiElement.FIRE, Body.BIRD, Moves.FLYING, Signature.REBIRTH, true, 9.6f, 8.0f, 0.55, 1.0, 1.0, 0xC8241E, 0xFFC830),
-	TRUE_DRAGON("true_dragon", Tier.PRIMORDIAL, QiElement.WOOD, Body.DRAGON, Moves.FLYING, Signature.STORM, true, 11.2f, 9.6f, 0.5, 1.0, 1.0, 0xD8A830, 0xE8F4FF);
+	TRUE_DRAGON("true_dragon", Tier.PRIMORDIAL, QiElement.WOOD, Body.DRAGON, Moves.FLYING, Signature.STORM, true, 11.2f, 9.6f, 0.5, 1.0, 1.0, 0xD8A830, 0xE8F4FF),
+
+	// The Chaos Frontier's (phase 3c, 2026-10-26): its fiends, wraiths of its chaos, never born of any land (ChaosFrontier brings them, the
+	// stronger the deeper: ChaosFrontier#fiendRanks); and the Primordial Chaos, Hundun's remnant, the fourth primordial beast, its lair out
+	// in the Frontier (PrimordialBeasts), a Golden Immortal of Grand Perfection (#minRank) its realm's might the more (PrimordialBeast#MIGHT).
+	CHAOS_FIEND("chaos_fiend", Tier.CHAOS, QiElement.YIN, Body.WRAITH, Moves.FLYING, Signature.CHAOS, true, 1.0f, 2.4f, 0.32, 0.8, 0.6, 0x4A3E5A, 0xF4F0FF),
+	PRIMORDIAL_CHAOS("primordial_chaos", Tier.PRIMORDIAL, QiElement.YIN, Body.CHAOS, Moves.FLYING, Signature.UNMAKING, true, 18.0f, 16.0f, 0.45, 1.0, 1.0, 0x5A4E6A, 0xD8C04A);
+
+	/** The Primordial Chaos's rank: a Golden Immortal of Grand Perfection, above the other three (#minRank). */
+	public static final int CHAOS_RANK = 55;
 
 	/**
 	 * How common a kind is, and the ranks it comes in (PlayerCultivation#rank: realm and stage as one number): the common beasts of Qi
 	 * Refining, the uncommon from Qi Refining Late to Foundation Building Grand Perfection, the rare from Foundation Building Late up to
 	 * Core Formation Grand Perfection, the strongest of the wild; and the elders, from Void Shattering Early to Entering Nirvana Grand
 	 * Perfection, who are never born wild (no weight, no lands: each rises over its blood pool, BloodPools); and the primordial beasts,
-	 * True Immortals of Grand Perfection all, who come only to their lairs in the Immortal Realm (PrimordialBeasts).
+	 * True Immortals of Grand Perfection (the Primordial Chaos a Golden Immortal's, its own: BeastKind#minRank), who come only to their lairs in
+	 * the Immortal Realm (PrimordialBeasts); and the Chaos Fiends, True Immortal Mid to Heaven Immortal Grand Perfection, who come only in its
+	 * Chaos Frontier (ChaosFrontier).
 	 */
 	public enum Tier {
-		COMMON(0, 3, 60, 20), UNCOMMON(2, 7, 30, 40), RARE(6, 11, 10, 40), ELDER(28, 39, 0, 0), PRIMORDIAL(43, 43, 0, 0);
+		COMMON(0, 3, 60, 20), UNCOMMON(2, 7, 30, 40), RARE(6, 11, 10, 40), ELDER(28, 39, 0, 0), PRIMORDIAL(43, 43, 0, 0), CHAOS(41, 51, 0, 0);
 
 		public final int minRank, maxRank;
 		/** Its weight among a land's beasts in the lower realms, and in the Upper Realm (richer in qi: its beasts the stronger). */
@@ -73,18 +85,23 @@ public enum BeastKind {
 		}
 	}
 
-	/** Its build (the model's plan on the client: BeastModels), and so how it moves and strikes. A fish: the Kun, in the sea of clouds. */
-	public enum Body { QUADRUPED, SERPENT, TURTLE, BIRD, APE, CROCODILE, DRAGON, FISH }
+	/**
+	 * Its build (the model's plan on the client: BeastModels), and so how it moves and strikes. A fish: the Kun, in the sea of clouds. A
+	 * wraith: a Chaos Fiend, smoke and stone with long clawed arms. Chaos: the Primordial Chaos, a faceless sack of it on six legs and four
+	 * wings.
+	 */
+	public enum Body { QUADRUPED, SERPENT, TURTLE, BIRD, APE, CROCODILE, DRAGON, FISH, WRAITH, CHAOS }
 
 	/** Where it goes: on foot, on foot and in the water, in the air, in the water only. */
 	public enum Moves { GROUND, AMPHIBIOUS, FLYING, SWIMMING }
 
 	/**
 	 * Its signature move (DemonBeastGoals); the primordial beasts' their own ways (PrimordialBeast): the Kun breaking from the clouds as the
-	 * Peng, the Phoenix reborn, the Dragon's storm.
+	 * Peng, the Phoenix reborn, the Dragon's storm, the Primordial Chaos's Unmaking. A Chaos Fiend's: it circles loosing chaos bolts, and
+	 * dives to claw.
 	 */
 	public enum Signature { CHARGE, PACK, VENOM, SHELL, SWOOP, THROW, POUNCE, ICE_SLAM, POUND, DRAG, SPARK_CHARGE, BREATH, DIVE, COIL, STUN_CHARGE, WATER_JET,
-		BREACH, REBIRTH, STORM }
+		BREACH, REBIRTH, STORM, CHAOS, UNMAKING }
 
 	private final String id;
 	public final Tier tier;
@@ -132,8 +149,21 @@ public enum BeastKind {
 			case SHADOW_WOLF -> 3 + random.nextInt(3);
 			case FIRE_MONKEY -> 2 + random.nextInt(2);
 			case LIGHTNING_ANTELOPE -> 1 + random.nextInt(3);
+			case CHAOS_FIEND -> 1 + random.nextInt(2);
 			default -> 1;
 		};
+	}
+
+	/**
+	 * The lowest and the highest ranks it comes in: its tier's; the Primordial Chaos's its own, {@link #CHAOS_RANK} (a Golden Immortal of
+	 * Grand Perfection, above the other primordial beasts' True Immortal).
+	 */
+	public int minRank() {
+		return this == PRIMORDIAL_CHAOS ? CHAOS_RANK : tier.minRank;
+	}
+
+	public int maxRank() {
+		return this == PRIMORDIAL_CHAOS ? CHAOS_RANK : tier.maxRank;
 	}
 
 	/** What it leaves besides its core: its hide, meat, bones, feathers, scales. */
@@ -156,6 +186,8 @@ public enum BeastKind {
 			case KUN_PENG -> new Item[] {Items.PRISMARINE_CRYSTALS, Items.FEATHER};
 			case TRUE_PHOENIX -> new Item[] {Items.BLAZE_ROD, Items.FEATHER};
 			case TRUE_DRAGON -> new Item[] {Items.PRISMARINE_SHARD, Items.BONE};
+			// Chaos leaves nothing of a body (its own leavings: ChaosFiend, PrimordialBeast).
+			case CHAOS_FIEND, PRIMORDIAL_CHAOS -> new Item[0];
 		};
 	}
 
@@ -167,6 +199,11 @@ public enum BeastKind {
 	/** Whether it is one of the primordial beasts (Tier#PRIMORDIAL), the Immortal Realm's world bosses. */
 	public boolean isPrimordial() {
 		return tier == Tier.PRIMORDIAL;
+	}
+
+	/** Whether it is one of the Chaos Frontier's fiends (Tier#CHAOS), never born of any land (ChaosFrontier brings them). */
+	public boolean isChaos() {
+		return tier == Tier.CHAOS;
 	}
 
 	/** How many times its realm's strength it has, its body and its blows: a primordial beast's more (PrimordialBeast#MIGHT), the rest their own. */
@@ -188,6 +225,8 @@ public enum BeastKind {
 			case KUN_PENG -> 6.4f;
 			case TRUE_PHOENIX -> 5.5f;
 			case TRUE_DRAGON -> 5.1f;
+			// The Primordial Chaos some forty blocks across its wings, its sack some twenty (tools/beast-art's Chaos).
+			case PRIMORDIAL_CHAOS -> 4.0f;
 			default -> 1.0f;
 		};
 	}

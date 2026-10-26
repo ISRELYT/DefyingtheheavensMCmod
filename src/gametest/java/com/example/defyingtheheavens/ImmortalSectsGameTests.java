@@ -18,7 +18,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The Immortal Realm's immortal sects (phase 2, 2026-10-25): their twenty, none below Entering Nirvana, their Sect Lord and their names;
+ * The Immortal Realm's immortal sects (phase 2, 2026-10-25): their twenty, none below Entering Nirvana, their Sect Lord (an Earth Immortal
+ * since phase 3) and their names;
  * their sites out over the sea of clouds, open sky under them; and their grounds as worldgen lays them out: every building on floating
  * islands (the user's words: "the ground court buildings should still exist just on floating islands"), each well within its island at
  * its top, the islands apart and at their heights, every bridge landing on both its islands, all of it within the chunks worldgen places
@@ -30,7 +31,9 @@ public class ImmortalSectsGameTests implements FabricGameTest {
 		RandomSource random = RandomSource.create(4);
 		for (int n = 0; n < 6; n++) {
 			int[] ranks = ImmortalSects.foundingRanks(random, ImmortalSects.MEMBERS);
-			helper.assertTrue(ranks[0] == PlayerCultivation.rank(Realm.TRUE_IMMORTAL, Stage.GRAND_PERFECTION), "Its Sect Lord of True Immortal Grand Perfection");
+			// Its Sect Lord an Earth Immortal (phase 3), short of that realm's Grand Perfection.
+			helper.assertTrue(ranks[0] >= PlayerCultivation.rank(Realm.EARTH_IMMORTAL, Stage.EARLY) && ranks[0] <= PlayerCultivation.rank(Realm.EARTH_IMMORTAL, Stage.LATE),
+					"Its Sect Lord an Earth Immortal of Early to Late (" + ranks[0] + ")");
 			for (int i = 1; i <= 2; i++) helper.assertTrue(ranks[i] >= PlayerCultivation.rank(Realm.TRUE_IMMORTAL, Stage.LATE), "Its grand elders True Immortals of Late or more");
 			for (int i = 3; i <= 6; i++) {
 				helper.assertTrue(ranks[i] >= PlayerCultivation.rank(Realm.TRUE_IMMORTAL, Stage.EARLY) && ranks[i] <= PlayerCultivation.rank(Realm.TRUE_IMMORTAL, Stage.MID),

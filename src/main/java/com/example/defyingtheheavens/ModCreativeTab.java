@@ -66,14 +66,16 @@ public final class ModCreativeTab {
 			add(ModItems.GINSENG_SEEDS, ModItems.SPIRIT_GINSENG_SEEDS, ModItems.LINGZHI_SPORES, ModItems.PURPLE_LINGZHI_SPORES,
 					ModItems.HUANGJING_SEEDS, ModItems.OCHRE_HUANGJING_SEEDS, ModItems.SPIRIT_LOTUS_SEEDS, ModItems.PEACH_PIT,
 					ModBlocks.SPIRIT_DEW_GRASS);
-			// Spirit stones and jade
+			// Spirit stones and jade; the Chaos Frontier's stones and every Law's fragment
 			for (SpiritStoneItem.Grade grade : SpiritStoneItem.Grade.values()) add(SpiritStoneItem.of(grade));
-			add(ModItems.JADE);
+			add(ModItems.JADE, ModItems.CHAOS_ORIGIN_STONE);
+			for (Law law : Law.values()) add(DaoFragmentItem.of(law));
+			add(ModItems.WORLD_SEED);
 			// The world's blocks
 			add(ModBlocks.JADE_STONE, ModBlocks.JADE_ORE, ModBlocks.DEEPSLATE_JADE_ORE, ModBlocks.SPIRIT_STONE_ORE,
 					ModBlocks.DEEPSLATE_SPIRIT_STONE_ORE, ModBlocks.RICH_SPIRIT_STONE_ORE, ModBlocks.QI_VEIN, ModBlocks.DEEPSLATE_QI_VEIN,
 					ModBlocks.BLUE_SPIRIT_LOG, ModBlocks.BLUE_SPIRIT_WOOD, ModBlocks.BLUE_SPIRIT_PLANKS, ModBlocks.WHITE_BLOSSOM_LEAVES,
-					ModBlocks.SPIRIT_PEACH_LEAVES);
+					ModBlocks.SPIRIT_PEACH_LEAVES, ModBlocks.CHAOS_ORIGIN_ORE, ModBlocks.FIRST_FLAME);
 			// The Netherworld: talismans and the exorcist's sword, its herbs (a year old) and what they're grown from, Yin Jade, its
 			// pills at every grade, the slips
 			add(ModItems.YANG_FIRE_TALISMAN, ModItems.GHOST_QUELLING_TALISMAN, ModItems.PEACH_WOOD_SWORD, ModBlocks.RED_SPIDER_LILY);

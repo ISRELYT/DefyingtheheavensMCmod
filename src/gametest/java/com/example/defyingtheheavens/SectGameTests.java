@@ -25,6 +25,21 @@ import java.util.UUID;
 
 /** Sects, NPC cultivators, formations, alignment and clothing. */
 public class SectGameTests implements FabricGameTest {
+	/**
+	 * Before each run of the shared batch, and of the barrier's own (2026-10-26): no formation left by an earlier run stands over this run's
+	 * ground. The test world keeps them, every one rising again as the server starts, and one whose shell crossed a test's cell now and
+	 * then kept it barred, or barred a sect's own member from it, as the tests' places shifted with the batches.
+	 */
+	@net.minecraft.gametest.framework.BeforeBatch(batch = "defaultBatch")
+	public static void clearOldFormations(ServerLevel level) {
+		for (Formation old : new ArrayList<>(FormationData.get(level).all())) Formations.dissolve(level, old.id);
+	}
+
+	@net.minecraft.gametest.framework.BeforeBatch(batch = "barrier_gaps")
+	public static void clearOldFormationsForTheGaps(ServerLevel level) {
+		clearOldFormations(level);
+	}
+
 	// --- Titles ---
 
 	@GameTest(template = EMPTY_STRUCTURE)
@@ -850,7 +865,10 @@ public class SectGameTests implements FabricGameTest {
 		});
 	}
 
-	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 200)
+	// In a batch of its own (2026-10-26): run beside the other tests' formations, one's shell now and then crossed this one's water cell and
+	// kept it barred after this barrier came down (Formations#clearShell leaves a cell another raised shell holds); its batch's ground
+	// cleared of old formations first (clearOldFormations).
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 200, batch = "barrier_gaps")
 	public void theBarrierClosesEveryGap(GameTestHelper helper) {
 		BlockPos coreRel = new BlockPos(4, 2, 4);
 		helper.setBlock(coreRel.below(), Blocks.STONE);

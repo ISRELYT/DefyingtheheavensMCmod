@@ -75,6 +75,10 @@ public final class CultivationEvents {
 		LifespanTribulation.forget(player.getUUID()); // it waits on the record, as strong as it was
 		BurnLifespan.onDisconnect(player); // a lifespan burning goes out (not lit again by logging in)
 		ImmortalEssence.onDisconnect(player); // so does immortal essence lit
+		LawDomains.onDisconnect(player); // and a Law's domain folds away
+		ChaosFrontier.onDisconnect(player);
+		SmallWorlds.onDisconnect(player); // a small world's door closes
+		FiveDecays.forget(player.getUUID()); // a judgement under way comes again after the return (the record keeps it)
 		Wishes.forget(player.getUUID());
 	}
 
@@ -97,6 +101,11 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(LifespanTribulation::tick); // the heavens collecting a spent life
 		ServerTickEvents.END_SERVER_TICK.register(BurnLifespan::tick); // years set alight for strength
 		ServerTickEvents.END_SERVER_TICK.register(ImmortalEssence::tick); // a True Immortal's essence, filled in the Immortal Realm, leaking elsewhere
+		ServerTickEvents.END_SERVER_TICK.register(LawDomains::tick); // the Laws' domains unfurled, at work on the foes in them
+		ServerTickEvents.END_SERVER_TICK.register(ChaosFrontier::tick); // the Chaos Frontier's storm (sheltered in those domains), its fiends
+		ServerTickEvents.END_SERVER_TICK.register(FirstFlame::tick); // the First Flame's basin laid when someone first comes near
+		ServerTickEvents.END_SERVER_TICK.register(SmallWorlds::tick); // the small worlds' land laid out, their doors, those who fall off them
+		ServerTickEvents.END_SERVER_TICK.register(FiveDecays::tick); // the Five Decays of Heaven and Man, every immortal's tenth day
 		Wishes.register();
 		ServerTickEvents.END_SERVER_TICK.register(Spells::tick);
 		ServerTickEvents.END_SERVER_TICK.register(GhostGate::keepOfficials);
@@ -109,9 +118,12 @@ public final class CultivationEvents {
 		EntityTrackingEvents.START_TRACKING.register((tracked, viewer) -> {
 			if (tracked instanceof ServerPlayer subject) ModPackets.sendGhost(viewer, subject);
 			SpellAuras.startSeeing(viewer, tracked); // the spells' auras on it, to draw (SpellAuras)
+			LawDomains.startSeeing(viewer, tracked); // a Law's domain unfurled round it
 		});
-		net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents.AFTER_PLAYER_CHANGE_WORLD.register((player, origin, destination) ->
-				SpellAuras.resend(player));
+		net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents.AFTER_PLAYER_CHANGE_WORLD.register((player, origin, destination) -> {
+			SpellAuras.resend(player);
+			LawDomains.resend(player);
+		});
 		ServerTickEvents.END_SERVER_TICK.register(SpatialStorms::tick);
 		ServerTickEvents.END_SERVER_TICK.register(VoidFallHandler::tick);
 		ServerTickEvents.END_SERVER_TICK.register(RealmSuppressionHandler::tick);
@@ -174,6 +186,7 @@ public final class CultivationEvents {
 		ServerLifecycleEvents.SERVER_STOPPING.register(Clones::returnAll);
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> TribulationManager.clear());
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> LifespanTribulation.clear()); // their power is on the records already
+		ServerLifecycleEvents.SERVER_STOPPING.register(server -> FiveDecays.clear()); // a judgement under way comes again (the records keep it)
 		// Spars end without a result, stakes back to the players still here, before anyone is saved.
 		ServerLifecycleEvents.SERVER_STOPPING.register(SparSystem::clear);
 		// Before players and chunks are saved, so nobody is saved with the pressure's lowered health.
@@ -212,6 +225,9 @@ public final class CultivationEvents {
 			NirvanaCamp.clear();
 			Wishes.clear();
 			RaceGifts.clear();
+			LawDomains.clear();
+			ChaosFrontier.clear();
+			SmallWorlds.clear();
 		});
 
 		// A formation's shell runs through the ground too: those who couldn't break the barrier can't dig under it either.
@@ -293,6 +309,8 @@ public final class CultivationEvents {
 			Bloodlines.onJoin(player); // everyone's bloodline told; theirs chosen, the first time
 			DemonPath.born(player); // a demon's demon core, from birth (and its blood on its record)
 			CoreDetonation.onJoin(player); // no act's switch left on from a server that stopped mid-way
+			FiveDecays.onJoin(player); // the Decays' time stood still while they were away
+			SmallWorlds.onJoin(player); // their own small world's door, and out of one not theirs to be in
 			RealmSuppressionHandler.update(player);
 			if (fled) player.setHealth(Math.min(player.getHealth(), player.getMaxHealth())); // the lower stage's smaller body
 			Formations.syncSoon(); // the barriers near them, at once
@@ -327,6 +345,7 @@ public final class CultivationEvents {
 			// Born again after a spent life's death (LifespanTribulation): the record made anew, a mortal of 16.
 			if (!alive) LifespanTribulation.onRespawn(newPlayer);
 			DemonPath.born(newPlayer); // a demon born again is born with its demon core again
+			FiveDecays.onRespawn(newPlayer); // a Decay's stained robes on the new body too
 		});
 
 		// A blow a heaven spell's ward has brought to nothing is refused outright: no knockback, no flinch (HeavenSpells#wardedOff).
@@ -381,6 +400,8 @@ public final class CultivationEvents {
 				Boolean lifespan = LifespanTribulation.allowDeath(spent, source);
 				if (lifespan != null) return lifespan;
 			}
+			// Struck down while the Five Decays' judgement runs: a stage lower, alive (FiveDecays, the user's pick).
+			if (entity instanceof ServerPlayer judged && !FiveDecays.allowDeath(judged)) return false;
 			// A tribulation's killing strike on a Heaven-Defying Body: one heart left, and the tribulation failed (TribulationManager).
 			if (entity instanceof ServerPlayer defier && !TribulationManager.allowDeath(defier)) return false;
 			// A ghost doesn't die: it disperses and reforms at the Gate (GhostSystem). No death screen, none of death's bookkeeping.
@@ -408,7 +429,9 @@ public final class CultivationEvents {
 		});
 
 		ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> {
+			Laws.onDeath(entity, source); // a mighty foe slain by an element's spell: a glimpse of its Law, perhaps
 			if (entity instanceof ServerPlayer sp) {
+				FiveDecays.onDeath(sp); // a death nothing held off fails the Decays' judgement all the same
 				// A demon slain by another player leaves its demon core (DemonCoreItem), read from its record before anything changes it.
 				DemonCoreItem.onPlayerDeath(sp, source);
 				// A death under the lifespan tribulation, of anything, ends the life whole (made anew at the respawn): first, so a

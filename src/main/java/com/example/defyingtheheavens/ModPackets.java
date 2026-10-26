@@ -53,6 +53,10 @@ public final class ModPackets {
 	public static final ResourceLocation SPEND_STAT_POINTS = new ResourceLocation(DefyingTheHeavens.MOD_ID, "spend_stat_points");
 	/** C2S: select an ability on the wheel for the Use Selected Ability key: its place (-1: none). */
 	public static final ResourceLocation SELECT_ABILITY = new ResourceLocation(DefyingTheHeavens.MOD_ID, "select_ability");
+	/** C2S: the Law meditation in the Immortal Realm comprehends (Laws#focus): its place (-1: none). */
+	public static final ResourceLocation LAW_FOCUS = new ResourceLocation(DefyingTheHeavens.MOD_ID, "law_focus");
+	/** C2S: a level owed for a weathered Decay spent on a Law (Laws#choose): its place. */
+	public static final ResourceLocation LAW_CHOOSE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "law_choose");
 	/** S2C: full cultivation state for the owning player. */
 	public static final ResourceLocation SYNC = new ResourceLocation(DefyingTheHeavens.MOD_ID, "sync");
 	/** S2C: "player X (entity id) is/isn't riding their sword" (see {@link SwordFlight}), repeated once a second while they ride. */
@@ -174,6 +178,8 @@ public final class ModPackets {
 	public static final ResourceLocation SET_SPELL_SLOT = new ResourceLocation(DefyingTheHeavens.MOD_ID, "set_spell_slot");
 	/** S2C: a being's spell auras (SpellAuras): its entity id, then each aura's ordinal and the ticks it has left (none: all gone). */
 	public static final ResourceLocation SPELL_AURAS = new ResourceLocation(DefyingTheHeavens.MOD_ID, "spell_auras");
+	/** S2C: a player's Law domain (LawDomains): its entity id, the Law's ordinal plus one (0: folded away), and its reach. */
+	public static final ResourceLocation LAW_DOMAIN = new ResourceLocation(DefyingTheHeavens.MOD_ID, "law_domain");
 	/** S2C: a spell's passing moment to draw (SpellFx): its kind, where, a way, and two numbers of its own. */
 	public static final ResourceLocation SPELL_FX = new ResourceLocation(DefyingTheHeavens.MOD_ID, "spell_fx");
 	/**
@@ -283,6 +289,14 @@ public final class ModPackets {
 			int stat = buf.readVarInt();
 			int count = buf.readVarInt();
 			server.execute(() -> StatPoints.spend(player, StatPoints.Stat.byIndex(stat), Math.min(count, 1000)));
+		});
+		ServerPlayNetworking.registerGlobalReceiver(LAW_FOCUS, (server, player, handler, buf, responseSender) -> {
+			Law law = Law.byIndex(buf.readVarInt());
+			server.execute(() -> Laws.focus(player, law));
+		});
+		ServerPlayNetworking.registerGlobalReceiver(LAW_CHOOSE, (server, player, handler, buf, responseSender) -> {
+			Law law = Law.byIndex(buf.readVarInt());
+			server.execute(() -> Laws.choose(player, law));
 		});
 		ServerPlayNetworking.registerGlobalReceiver(LIFE_MODE, (server, player, handler, buf, responseSender) -> {
 			WoodSpells.LifeMode mode = WoodSpells.LifeMode.byIndex(buf.readByte());
@@ -559,6 +573,21 @@ public final class ModPackets {
 		// A True Immortal's immortal essence (ImmortalEssence): what it holds, and its pool (0 short of True Immortal).
 		buf.writeDouble(c.essence());
 		buf.writeDouble(ImmortalEssence.max(c));
+		// The Laws (Laws, the record's): each one's level and insight by its place, the Law in focus (-1 none), the levels owed to choose;
+		// and the Five Decays (FiveDecays): the sign under way and the game time the next is due (0: not reckoned).
+		LawState laws = c.laws();
+		for (Law law : Law.values()) {
+			buf.writeVarInt(laws.level(law));
+			buf.writeDouble(laws.insight(law));
+		}
+		buf.writeVarInt(laws.focus() == null ? -1 : laws.focus().ordinal());
+		buf.writeVarInt(laws.choices());
+		buf.writeVarInt(laws.decaySign());
+		buf.writeLong(laws.decayDue());
+		// Whether they stand in the Immortal Realm: a breakthrough into True Immortal and past it is made only there (PlayerCultivation#isImmortalRealmLocked).
+		buf.writeBoolean(c.isInImmortalRealm());
+		// Whether they have a small world of their own (SmallWorlds): its door, the Abilities tab's.
+		buf.writeBoolean(c.hasSmallWorld());
 		ServerPlayNetworking.send(player, SYNC, buf);
 	}
 
@@ -994,6 +1023,15 @@ public final class ModPackets {
 			}
 		}
 		ServerPlayNetworking.send(to, SPELL_AURAS, buf);
+	}
+
+	/** {@code owner}'s Law domain ({@code law} null: folded away) reaching {@code radius}, to {@code to}. */
+	public static void sendLawDomain(ServerPlayer to, net.minecraft.world.entity.Entity owner, Law law, float radius) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(owner.getId());
+		buf.writeVarInt(law == null ? 0 : law.ordinal() + 1);
+		buf.writeFloat(radius);
+		ServerPlayNetworking.send(to, LAW_DOMAIN, buf);
 	}
 
 	/** A spell's passing moment (SpellFx) for {@code to} to draw. */

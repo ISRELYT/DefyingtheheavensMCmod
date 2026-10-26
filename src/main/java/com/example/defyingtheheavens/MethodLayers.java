@@ -21,9 +21,9 @@ public final class MethodLayers {
 		return PER_REALM * (top.ordinal() + 1);
 	}
 
-	/** The realm layer {@code layer} (1 and up) belongs to. */
+	/** The realm layer {@code layer} (1 and up) belongs to: no method goes past True Immortal (Realm#LAST_TAUGHT), nor its layers. */
 	public static Realm realmOf(int layer) {
-		return Realm.byIndex(Math.min(Realm.values().length - 1, Math.max(0, (layer - 1) / PER_REALM)));
+		return Realm.byIndex(Math.min(Realm.LAST_TAUGHT.ordinal(), Math.max(0, (layer - 1) / PER_REALM)));
 	}
 
 	/** Its place within its realm's nine, 1 to 9. */
@@ -48,11 +48,15 @@ public final class MethodLayers {
 		return MINUTES[within(at) - 1] * REALM_FACTOR[realmOf(at).ordinal()] * 60.0;
 	}
 
-	/** The deepest layer whose rank is at most {@code rank} (its realm's Early stage at least): 0 below Qi Refining Early. */
+	/**
+	 * The deepest layer whose rank is at most {@code rank} (its realm's Early stage at least): 0 below Qi Refining Early; past True
+	 * Immortal, whose realms no method carries (phase 3), True Immortal's last.
+	 */
 	public static int deepestAt(int rank) {
 		if (rank < 0) return 0;
 		int stages = Stage.values().length;
-		int realm = Math.min(Realm.values().length - 1, rank / stages);
+		if (rank / stages > Realm.LAST_TAUGHT.ordinal()) return layers(Realm.LAST_TAUGHT);
+		int realm = rank / stages;
 		int[] lastOfStage = {2, 5, 8, 9}; // Early 1-2, Mid 3-5, Late 6-8, Grand Perfection 9
 		return realm * PER_REALM + lastOfStage[Math.min(3, rank % stages)];
 	}

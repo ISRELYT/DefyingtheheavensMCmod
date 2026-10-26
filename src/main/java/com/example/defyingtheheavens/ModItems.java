@@ -196,6 +196,15 @@ public final class ModItems {
 	/** The Celestial Court's pay for its officers' service, spent with its Quartermaster (CelestialCourt). */
 	public static final Item COURT_MERIT_TOKEN = register("court_merit_token",
 			new CourtMeritTokenItem(new Item.Properties().fireResistant().rarity(Rarity.UNCOMMON)));
+	/**
+	 * The Chaos Frontier's (phase 3c): Chaos Origin Stones (ChaosOriginStoneItem: a small world's seed is made of them) and Dao Fragments
+	 * (DaoFragmentItem: a shard of one Law, taken in for insight into it).
+	 */
+	public static final Item CHAOS_ORIGIN_STONE = register("chaos_origin_stone",
+			new ChaosOriginStoneItem(new Item.Properties().fireResistant().rarity(Rarity.EPIC)));
+	public static final Item DAO_FRAGMENT = register("dao_fragment", new DaoFragmentItem(new Item.Properties().fireResistant().rarity(Rarity.EPIC)));
+	/** A World Seed (phase 3d, WorldSeedItem): Chaos Origin Stones and Immortal Jade made one, refined by an immortal into a small world. */
+	public static final Item WORLD_SEED = register("world_seed", new WorldSeedItem(new Item.Properties().fireResistant().rarity(Rarity.EPIC).stacksTo(16)));
 
 	private static Item register(String id, Item item) {
 		return Registry.register(BuiltInRegistries.ITEM, new ResourceLocation(DefyingTheHeavens.MOD_ID, id), item);
@@ -228,6 +237,8 @@ public final class ModItems {
 			entries.accept(JADE);
 			for (SpiritStoneItem.Grade grade : SpiritStoneItem.Grade.values()) entries.accept(SpiritStoneItem.of(grade));
 			entries.accept(COURT_MERIT_TOKEN);
+			entries.accept(CHAOS_ORIGIN_STONE);
+			for (Law law : Law.values()) entries.accept(DaoFragmentItem.of(law));
 			// A demon core in each of its looks (DemonCoreItem#look), at each realm's first stage.
 			for (int look = 0; look < DemonCoreItem.LOOKS; look++) entries.accept(DemonCoreItem.of(look * Stage.values().length, null, null));
 			// Each race's blood at Qi Refining (the mod's own tab has every realm's).
@@ -239,6 +250,7 @@ public final class ModItems {
 			entries.accept(RING_OF_TRANSCENDENCE);
 			entries.accept(INSCRIPTION_BRUSH);
 			entries.accept(YANG_FIRE_TALISMAN);
+			entries.accept(WORLD_SEED);
 		});
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.COMBAT).register(entries -> {
 			entries.accept(GHOST_QUELLING_TALISMAN);

@@ -217,6 +217,7 @@ public final class Physiques {
 	/** {@code victim} has lost {@code lost} health to a blow from {@code source}: a Blood Demon Body that dealt it heals by its share. */
 	public static void onHurt(LivingEntity victim, DamageSource source, float lost) {
 		if (lost > 0) RaceGifts.onHurt(victim); // a lizard's Shed Skin
+		LawDomains.onHurt(victim, source, lost); // a share back to a Life and Death domain's owner
 		if (lost <= 0 || !(source.getEntity() instanceof ServerPlayer attacker) || attacker == victim || !attacker.isAlive()) return;
 		RaceGifts.breakIllusion(attacker); // a fox's Illusion broken by any harm it does
 		if (CultivationManager.get(attacker).hasPhysique(Physique.BLOOD_DEMON_BODY)) attacker.heal(lost * BLOOD_SHARE);
@@ -225,13 +226,16 @@ public final class Physiques {
 	/**
 	 * What a blow from {@code source} comes to before anything else makes of it: a Primordial Chaos Body's spells (the heaven methods'
 	 * qi, the ghost path's harm, though not one of the dead's own blows: GhostSystem#isBlow) strike {@link #CHAOS_SPELLS} times as hard;
-	 * and any blow or spell of one whose lifespan burns (BurnLifespan#outgoing), or whose immortal essence is lit (ImmortalEssence#outgoing),
-	 * half again as hard.
+	 * any blow or spell of one whose lifespan burns (BurnLifespan#outgoing), or whose immortal essence is lit (ImmortalEssence#outgoing),
+	 * half again as hard; an immortal's spells by its Laws (Laws#outgoing), its every blow the weaker while the Five Decays make it sweat
+	 * (FiveDecays#outgoing).
 	 */
 	public static float outgoing(DamageSource source, float amount) {
 		if (!(source.getEntity() instanceof ServerPlayer caster)) return amount;
 		amount = BurnLifespan.outgoing(caster, amount);
 		amount = ImmortalEssence.outgoing(caster, amount);
+		amount = Laws.outgoing(caster, source, amount);
+		amount = FiveDecays.outgoing(caster, amount);
 		amount = RaceGifts.outgoing(caster, source, amount); // a tiger's blows the harder
 		boolean spell = HeavenSpells.isQi(source) || source.is(ModDamageTypes.GHOSTLY) && !GhostSystem.isBlow();
 		return spell && CultivationManager.get(caster).hasPhysique(Physique.PRIMORDIAL_CHAOS_BODY) ? amount * CHAOS_SPELLS : amount;

@@ -55,6 +55,13 @@ public abstract class SoulLivingEntityMixin {
 		else if (!self.level().isClientSide && amount > 0 && !HeavenSpells.allowHeal(self, amount)) ci.cancel();
 	}
 
+	/** The healing taken as the Laws and the Five Decays make it (Laws#healed: none while the Decays wither the body, more by Life and Death). */
+	@ModifyVariable(method = "heal", at = @At("HEAD"), argsOnly = true)
+	private float dth$healedByTheLaws(float amount) {
+		LivingEntity self = (LivingEntity) (Object) this;
+		return self.level().isClientSide ? amount : com.example.defyingtheheavens.Laws.healed(self, amount);
+	}
+
 	/**
 	 * A heaven spell's ward against effects: the dawn's light, a severed fate (HeavenSpells#allowEffect); and a Jade Poison Body's,
 	 * against poison and wither (Physiques#allowEffect).
@@ -82,8 +89,12 @@ public abstract class SoulLivingEntityMixin {
 		LivingEntity self = (LivingEntity) (Object) this;
 		// The lifespan tribulation's strike lands whole: no ward, aura or passive of the mod's turns it (LifespanTribulation).
 		if (!self.level().isClientSide && com.example.defyingtheheavens.LifespanTribulation.isStriking(self)) return amount;
-		// First what the blow is as dealt: a Primordial Chaos Body's spells harder (Physiques#outgoing).
-		if (!self.level().isClientSide) amount = Physiques.outgoing(source, amount);
+		// First what the blow is as dealt: a Primordial Chaos Body's spells harder (Physiques#outgoing); a Law's spell on a foe in its owner's
+		// domain harder, a foe's fire in a Water domain doused (LawDomains#outgoing).
+		if (!self.level().isClientSide) {
+			amount = Physiques.outgoing(source, amount);
+			amount = com.example.defyingtheheavens.LawDomains.outgoing(self, source, amount);
+		}
 		// A ghost takes only what reaches the dead, the living's blows by how clearly they see it (see GhostSystem).
 		float scaled = self instanceof ServerPlayer ghost && GhostSystem.isGhost(ghost) ? GhostSystem.scaleDamage(ghost, source, amount)
 				: SoulProjection.scaleSoulDamage(self, source, amount);

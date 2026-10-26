@@ -57,7 +57,7 @@ public final class BloodPools {
 		DemonBeast elder = ModEntities.beast(kind).create(level);
 		if (elder == null) return null;
 		int stage = random.nextInt(Stage.values().length);
-		elder.setRank(Mth.clamp(PlayerCultivation.rank(DemonBloodItem.realm(blood), Stage.byIndex(stage)), kind.tier.minRank, kind.tier.maxRank));
+		elder.setRank(Mth.clamp(PlayerCultivation.rank(DemonBloodItem.realm(blood), Stage.byIndex(stage)), kind.minRank(), kind.maxRank()));
 		elder.finalizeSpawn(level, level.getCurrentDifficultyAt(altar), MobSpawnType.EVENT, null, null);
 		// Out of the blood beside the island (clear of it by half its own width: it is huge), the way there's room for it; the dragon
 		// rising into the air over it.

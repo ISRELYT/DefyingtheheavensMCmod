@@ -177,7 +177,7 @@ public final class QiSenseClientHandler {
 		MOTES.removeIf(mote -> !move(mote, level) || mote.x - eye.x > KEEP_RADIUS || eye.x - mote.x > KEEP_RADIUS
 				|| Math.abs(mote.y - eye.y) > KEEP_RADIUS || Math.abs(mote.z - eye.z) > KEEP_RADIUS);
 
-		boolean immortal = ModDimensions.isImmortalRealm(mc.level.dimension());
+		boolean immortal = ModDimensions.hasImmortalQi(mc.level.dimension()); // a small world's qi the Immortal Realm's
 		boolean greatVoid = ModDimensions.isGreatVoid(mc.level.dimension());
 		boolean upperRealm = ModDimensions.isUpperRealm(mc.level.dimension()) || greatVoid || immortal;
 		// As thick as the place's qi (the user's ask, 2026-10-25: the Great Void's a hundred times the lower realms', as its qi).

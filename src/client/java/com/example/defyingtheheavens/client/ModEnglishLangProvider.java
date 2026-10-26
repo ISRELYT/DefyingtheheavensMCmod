@@ -27,6 +27,10 @@ import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricLanguageProvider;
 
 public class ModEnglishLangProvider extends FabricLanguageProvider {
+	/** What every Law domain's description ends with (LawDomains): its cost, one at a time, when it folds away. */
+	private static final String DOMAIN_TAIL = " Burns immortal essence: a full pool lasts %2$s s. One domain at a time; it folds away when the pool runs dry, "
+			+ "and when you die or log out.";
+
 	public ModEnglishLangProvider(FabricDataOutput output) {
 		super(output, "en_us");
 	}
@@ -118,6 +122,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		// The Immortal Realm's (phase 2, 2026-10-25), and the Gate's passage
 		t.add(ModLang.biomeKey("jade_peaks"), "Jade Peaks");
 		t.add(ModLang.biomeKey("immortal_gardens"), "Immortal Gardens");
+		t.add(ModLang.biomeKey("chaos_frontier"), "Chaos Frontier");
 		t.add(ModLang.biomeKey("celestial_heights"), "Celestial Heights");
 		t.add(ModLang.biomeKey("jade_capital"), "Jade Capital");
 		t.add(ModLang.biomeKey("immortal_passage"), "Immortal Gate");
@@ -202,6 +207,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.TOOLTIP_YANG_FIRE_TALISMAN, "Burn it to drive a third of the Netherworld's yin out of your body");
 		t.add(ModLang.DEATH_SPATIAL_PRESSURE, "%1$s was crushed by spatial pressure");
 		t.add(ModLang.DEATH_SPATIAL_PRESSURE + ".player", "%1$s was crushed by spatial pressure while fighting %2$s");
+		t.add(ModLang.DEATH_CHAOS_STORM, "%1$s was unmade by the chaos storm");
+		t.add(ModLang.DEATH_CHAOS_STORM + ".player", "%1$s was unmade by the chaos storm while fighting %2$s");
 		t.add(ModLang.DEATH_SOUL_SEVERED, "%1$s's nascent soul was severed from their body");
 		t.add(ModLang.DEATH_SOUL_SEVERED + ".player", "%1$s's nascent soul was severed from their body by %2$s");
 		t.add(ModLang.DEATH_OLD_AGE, "%1$s's years ran out");
@@ -215,6 +222,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_SUPPRESSED, "The lower realm suppresses you to %s.");
 		t.add(ModLang.MSG_RESTORED, "Suppression lifted: %s.");
 		t.add(ModLang.MSG_REALM_LOCKED, "Past %s, only the Jade Firmament and the realms above it can hold you.");
+		t.add(ModLang.MSG_IMMORTAL_REALM_LOCKED, "Only the Immortal Realm can hold a breakthrough into %s: go up through the Immortal Gate.");
 		t.add(ModLang.MSG_PORTAL_BLOCKED, "The laws of this realm reject the portal.");
 		t.add(ModLang.SUPPRESSED, "Realm Suppression! Stats capped at:");
 		t.add(ModLang.SUPPRESSED_TO, "%s");
@@ -320,6 +328,15 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case TIGERS_ROAR -> "Tiger's Roar";
 				case ILLUSION -> "Illusion";
 				case IMMORTAL_ESSENCE -> "Immortal Essence";
+				case METAL_DOMAIN -> "Metal Domain";
+				case WOOD_DOMAIN -> "Wood Domain";
+				case WATER_DOMAIN -> "Water Domain";
+				case FIRE_DOMAIN -> "Fire Domain";
+				case EARTH_DOMAIN -> "Earth Domain";
+				case SPACE_DOMAIN -> "Space Domain";
+				case TIME_DOMAIN -> "Time Domain";
+				case LIFE_AND_DEATH_DOMAIN -> "Life and Death Domain";
+				case SMALL_WORLD -> "Small World";
 			});
 			t.add(key + ".description", switch (ability) {
 				case QI_SUSTENANCE -> "Qi keeps you fed. Hunger stays full.";
@@ -367,9 +384,40 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 						+ "slowed for %3$s s. Every %4$s s, for %5$s%% of your qi.";
 				case ILLUSION -> "Your fox blood's illusion: unseen for %1$s s, until you strike. Every %2$s s, for %3$s%% of your qi.";
 				case IMMORTAL_ESSENCE -> "Set your immortal essence to work: while it's on, your blows and spells strike %1$s%% harder, and a full "
-						+ "pool lasts %2$s s. Your pool holds %3$s, and fills only in the Immortal Realm: empty to full in %4$s minutes, %5$s times "
+						+ "pool lasts %2$s s. Your pool holds %3$s, and fills only in the Immortal Realm (or your small world): empty to full in %4$s minutes, %5$s times "
 						+ "as fast meditating. Anywhere else it leaks away, a full pool in %6$s minutes: below the Gate an immortal keeps the might "
 						+ "of its realm, but not its essence. It goes out when the pool runs dry, and when you die or log out.";
+				case METAL_DOMAIN -> "Unfurl the domain of your Law of Metal, %1$s blocks round you. Each second every foe in it (monsters, whatever "
+						+ "attacks you, those you're fighting) is cut for %4$s%% of your blow as metal qi, and its armour is cut by %5$s%% while it stays. "
+						+ "Your metal spells strike foes in it %3$s%% harder." + DOMAIN_TAIL;
+				case WOOD_DOMAIN -> "Unfurl the domain of your Law of Wood, %1$s blocks round you. Each second its roots drain every foe in it "
+						+ "(monsters, whatever attacks you, those you're fighting) for %4$s%% of your blow as wood qi, %6$s%% of it back to you as "
+						+ "life, and hold them slowed (Slowness %5$s). Your wood spells strike foes in it %3$s%% harder." + DOMAIN_TAIL;
+				case WATER_DOMAIN -> "Unfurl the domain of your Law of Water, %1$s blocks round you. Each second its waters crush every foe in it "
+						+ "(monsters, whatever attacks you, those you're fighting) for %4$s%% of your blow as water qi and slow them (Slowness %5$s); "
+						+ "what burns on them goes out, and the fire they deal is %6$s%% weaker. Your water spells strike foes in it %3$s%% harder."
+						+ DOMAIN_TAIL;
+				case FIRE_DOMAIN -> "Unfurl the domain of your Law of Fire, %1$s blocks round you. Each second its true fire burns every foe in it "
+						+ "(monsters, whatever attacks you, those you're fighting) for %4$s%% of your blow as fire qi, past any resistance or "
+						+ "immunity to fire, and sets them alight. Your fire spells strike foes in it %3$s%% harder." + DOMAIN_TAIL;
+				case EARTH_DOMAIN -> "Unfurl the domain of your Law of Earth, %1$s blocks round you. Each second its weight crushes every foe in it "
+						+ "(monsters, whatever attacks you, those you're fighting) for %4$s%% of your blow as earth qi and slows them (Slowness %5$s); "
+						+ "fliers are dragged down out of the air and can't fly in it, though spared the fall. Your earth spells strike foes in it "
+						+ "%3$s%% harder." + DOMAIN_TAIL;
+				case SPACE_DOMAIN -> "Unfurl the domain of your Law of Space, %1$s blocks round you. Space is locked on every foe in it (monsters, "
+						+ "whatever attacks you, those you're fighting): none can step or tear through it, nothing it catches can leave it (it is held "
+						+ "to its edge as you go), and all are slowed (Slowness %4$s). Your spells of space strike foes in it %3$s%% harder."
+						+ DOMAIN_TAIL;
+				case TIME_DOMAIN -> "Unfurl the domain of your Law of Time, %1$s blocks round you. Time runs slow for every foe in it (monsters, "
+						+ "whatever attacks you, those you're fighting): they move (Slowness %3$s) and strike more slowly, and their spells cool "
+						+ "%4$s%% more slowly." + DOMAIN_TAIL;
+				case LIFE_AND_DEATH_DOMAIN -> "Unfurl the domain of your Law of Life and Death, %1$s blocks round you. No foe in it (monsters, "
+						+ "whatever attacks you, those you're fighting) can heal at all, and %4$s%% of the harm you deal them comes back to you as "
+						+ "life. Your ghost path spells strike foes in it %3$s%% harder." + DOMAIN_TAIL;
+				case SMALL_WORLD -> "Open the door to your small world before you, for %1$s s: walk through it, and so may those on its guest list "
+						+ "(/smallworld guest add). Its qi is the Immortal Realm's: your essence fills there, and meditating there comprehends your "
+						+ "Law in focus (its breakthroughs are still the Immortal Realm's alone). Inside, use this again, or walk through its gate, to "
+						+ "go out where you came in. Its land reaches %2$s blocks out, %3$s more for every level of the Laws you hold.";
 			});
 		}
 		// Clone while playing the clone (Clones): the way back.
@@ -1295,6 +1343,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case KUN_PENG -> "Kun-Peng";
 				case TRUE_PHOENIX -> "True Phoenix";
 				case TRUE_DRAGON -> "True Dragon";
+				case CHAOS_FIEND -> "Chaos Fiend";
+				case PRIMORDIAL_CHAOS -> "Primordial Chaos";
 			};
 			t.add(ModEntities.beast(kind), name);
 			t.add(ModItems.beastEgg(kind), name + " Spawn Egg");
@@ -1917,8 +1967,129 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_BURN_TOO_FEW, "Too little of your life is left to burn.");
 		t.add(ModLang.MSG_ESSENCE_ON, "Your immortal essence flows: your blows and spells strike %s%% harder, for %s seconds of it.");
 		t.add(ModLang.MSG_ESSENCE_OFF, "Your immortal essence settles.");
-		t.add(ModLang.MSG_ESSENCE_SPENT, "Your immortal essence is spent. Only the Immortal Realm fills it again.");
-		t.add(ModLang.MSG_ESSENCE_TOO_LITTLE, "Too little immortal essence is left in you. Only the Immortal Realm fills it again.");
+		t.add(ModLang.MSG_ESSENCE_SPENT, "Your immortal essence is spent. Only the Immortal Realm (or a small world) fills it again.");
+		t.add(ModLang.MSG_ESSENCE_TOO_LITTLE, "Too little immortal essence is left in you. Only the Immortal Realm (or a small world) fills it again.");
+		t.add(ModLang.MSG_DOMAIN_ON, "You unfurl the domain of your %s, %s blocks round you: %s seconds of your essence.");
+		t.add(ModLang.MSG_DOMAIN_OFF, "The domain of your %s folds away.");
+		t.add(ModLang.MSG_DOMAIN_SPENT, "Your immortal essence is spent: the domain of your %s folds away. Only the Immortal Realm (or a small world) fills it again.");
+		t.add(ModLang.MSG_DOMAIN_TOO_LITTLE, "Too little immortal essence is left in you to unfurl a domain. Only the Immortal Realm (or a small world) fills it again.");
+		t.add(ModLang.MSG_DOMAIN_LOST, "The domain of your %s can't hold here, and folds away.");
+		t.add(ModLang.MSG_DOMAIN_SPACE_LOCKED, "A domain of the Law of Space locks space here: it won't open for you.");
+		t.add(ModLang.MSG_DOMAIN_UNMADE, "The Unmaking tears your domain of %s apart. It folds away.");
+		// The Chaos Frontier (ChaosFrontier, FirstFlame, phase 3c): crossing in and out, its storm, the First Flame's spring, the Primordial
+		// Chaos's Unmaking, its stones and fragments.
+		t.add(ModLang.MSG_CHAOS_ENTER, "You cross into the Chaos Frontier. Here chaos from before heaven and earth still churns: unsheltered, its storm unmakes you, and your body will not mend of itself. A Law's domain shelters you, or the First Flame's light.");
+		t.add(ModLang.MSG_CHAOS_LEAVE, "You leave the Chaos Frontier behind.");
+		t.add(ModLang.MSG_CHAOS_EXPOSED, "The chaos storm tears at you!");
+		t.add(ModLang.MSG_CHAOS_SHELTERED, "Sheltered from the chaos storm.");
+		t.add(ModLang.MSG_FIRST_FLAME, "A white-gold flame burns here, as it burned before heaven and earth were parted: the First Flame. In its light the storm can't reach you, and the Laws come the clearer.");
+		t.add(ModLang.MSG_CHAOS_UNMAKING, "The Primordial Chaos draws in on itself... get clear!");
+		t.add(ModLang.MSG_DAO_FRAGMENT, "The Dao Fragment dissolves into you: insight into the Law of %s.");
+		t.add("item.defying-the-heavens.dao_fragment", "Dao Fragment");
+		t.add(ModLang.ITEM_DAO_FRAGMENT_OF, "Dao Fragment of %s");
+		t.add(ModLang.TOOLTIP_DAO_FRAGMENT, "Use it to take in its Law: %s%% of the next level's insight. Greater Laws only from Golden Immortal.");
+		t.add("item.defying-the-heavens.chaos_origin_stone", "Chaos Origin Stone");
+		t.add(ModLang.TOOLTIP_CHAOS_ORIGIN_STONE, "Chaos from before heaven and earth, set hard. A small world's seed is made of it.");
+		t.add(ModBlocks.CHAOS_ORIGIN_ORE, "Chaos Origin Ore");
+		t.add(ModBlocks.FIRST_FLAME, "First Flame");
+		// The small worlds (SmallWorlds, phase 3d): the seed, its refining, the door, coming in and going out, the land grown, the guest list.
+		t.add("item.defying-the-heavens.world_seed", "World Seed");
+		t.add(ModLang.TOOLTIP_WORLD_SEED, "Chaos Origin Stones and Immortal Jade made one. A True Immortal (or one past it) who holds it in use for %s s refines it into a small world of their own.");
+		t.add(ModBlocks.SMALL_WORLD_GATE, "Small World Gate");
+		t.add("entity.defying-the-heavens.small_world_door", "Small World Door");
+		t.add(ModLang.biomeKey("small_world"), "Small World");
+		t.add(ModLang.MSG_SEED_NOT_IMMORTAL, "Only a True Immortal, or one past it, can refine a world out of the seed.");
+		t.add(ModLang.MSG_SEED_HAVE_ONE, "You have a small world already: one is all an immortal holds.");
+		t.add(ModLang.MSG_SEED_REFINING, "You draw chaos into the seed... hold it %s s.");
+		t.add(ModLang.MSG_SEED_REFINED, "The seed takes root in the void and opens into a world of your own. Its land reaches %s blocks out, and grows with every level of the Laws you hold. Open its door with the Small World ability.");
+		t.add(ModLang.MSG_DOOR_OPEN, "The door to your world stands open for %s s.");
+		t.add(ModLang.MSG_DOOR_CLOSED, "The door to your world closes.");
+		t.add(ModLang.MSG_DOOR_NOT_HERE, "Your world's door won't open here.");
+		t.add(ModLang.MSG_DOOR_NOT_IMMORTAL, "Fallen below True Immortal, you can't open your world's door.");
+		t.add(ModLang.MSG_DOOR_TURNED_AWAY, "The door to %s's world isn't open to you.");
+		t.add(ModLang.MSG_WORLD_OWN, "Your own world. Its qi is the Immortal Realm's: x%s.");
+		t.add(ModLang.MSG_WORLD_GUEST, "%s's world, a guest's welcome. Its gate is the way out.");
+		t.add(ModLang.MSG_WORLD_LEFT, "You step out of the small world.");
+		t.add(ModLang.MSG_WORLD_GROWN, "Your world grows with your Laws: its land reaches %s blocks out.");
+		t.add(ModLang.MSG_WORLD_CAUGHT, "Beyond the island is nothing: the world sets you back on its land.");
+		t.add(ModLang.MSG_WORLD_SENT_OUT, "This world isn't open to you any more: you are sent out of it.");
+		t.add(ModLang.MSG_GUEST_INVITED, "%s has put you on the guest list of their small world: you may walk through its door.");
+		t.add(ModLang.CMD_WORLD_NONE, "You have no small world: refine a World Seed (five Chaos Origin Stones and four Immortal Jade) as a True Immortal.");
+		t.add(ModLang.CMD_WORLD_INFO, "Your small world: its land reaches %s blocks out (%s laid so far), %s guests.");
+		t.add(ModLang.CMD_WORLD_GUESTS, "Your world's guests: %s.");
+		t.add(ModLang.CMD_WORLD_NO_GUESTS, "Your world has no guests yet: /smallworld guest add <player>.");
+		t.add(ModLang.CMD_GUEST_ADDED, "%s is on your world's guest list.");
+		t.add(ModLang.CMD_GUEST_ALREADY, "%s is on your world's guest list already.");
+		t.add(ModLang.CMD_GUEST_SELF, "Your world is your own: no need to be your own guest.");
+		t.add(ModLang.CMD_GUEST_REMOVED, "%s is off your world's guest list.");
+		t.add(ModLang.CMD_GUEST_UNKNOWN, "No guest of your world is named %s.");
+		// The Laws (Laws, phase 3)
+		t.add(ModLang.lawKey("metal"), "Law of Metal");
+		t.add(ModLang.lawKey("wood"), "Law of Wood");
+		t.add(ModLang.lawKey("water"), "Law of Water");
+		t.add(ModLang.lawKey("fire"), "Law of Fire");
+		t.add(ModLang.lawKey("earth"), "Law of Earth");
+		t.add(ModLang.lawKey("space"), "Law of Space");
+		t.add(ModLang.lawKey("time"), "Law of Time");
+		t.add(ModLang.lawKey("life_and_death"), "Law of Life and Death");
+		for (String element : new String[]{"metal", "wood", "water", "fire", "earth"}) {
+			String name = Character.toUpperCase(element.charAt(0)) + element.substring(1);
+			t.add(ModLang.lawKey(element) + ".gains", "Each level: your " + name + " spells strike 10% harder and reach 5% farther.");
+			t.add(ModLang.lawKey(element) + ".now", "Now: your " + name + " spells +%s%% harm, +%s%% reach.");
+		}
+		t.add(ModLang.lawKey("space") + ".gains", "Each level: Void Shattering's spells strike 10% harder and reach 5% farther, as do Nine Nether Step and Soul Dash; the Spatial Tear is ready 3% sooner.");
+		t.add(ModLang.lawKey("space") + ".now", "Now: Void Shattering's spells and the steps +%s%% harm, +%s%% reach; the Spatial Tear %s%% sooner.");
+		t.add(ModLang.lawKey("time") + ".gains", "Each level: every spell's cooldown 3% shorter.");
+		t.add(ModLang.lawKey("time") + ".now", "Now: every spell's cooldown %s%% shorter.");
+		t.add(ModLang.lawKey("life_and_death") + ".gains", "Each level: the ghost path's spells strike 10% harder, and all healing you take is 10% greater.");
+		t.add(ModLang.lawKey("life_and_death") + ".now", "Now: the ghost path's spells +%s%% harm; your healing +%s%%.");
+		t.add(ModLang.LAW_GATE, "Breaking into %s wants %s levels of the Laws comprehended (you hold %s). Meditate on a Law in the Immortal Realm: the Methods tab's Laws page.");
+		t.add(ModLang.MSG_LAW_LEVEL, "You comprehend the %s to its level %s of %s.");
+		t.add(ModLang.MSG_LAW_WAY_OPEN, "The Laws you hold open the way into %s.");
+		t.add(ModLang.MSG_LAW_GLIMPSE, "In the blow that fells it, a glimpse of the %s.");
+		t.add(ModLang.MSG_LAW_FOCUSED, "Your meditation in the Immortal Realm turns to the %s.");
+		t.add(ModLang.MSG_LAW_UNFOCUSED, "No Law in your meditation's focus.");
+		t.add(ModLang.MSG_LAW_GREATER_SHUT, "The %s opens to comprehension only at Golden Immortal.");
+		t.add(ModLang.MSG_LAW_COMPLETE, "You comprehend the %s whole already.");
+		t.add(ModLang.MSG_LAW_NOT_IMMORTAL, "The %s is comprehended only by a True Immortal and those past it.");
+		t.add(ModLang.METHODS_PAGE_LAWS, "Laws");
+		t.add(ModLang.LAWS_TITLE, "The Laws");
+		t.add(ModLang.LAWS_SEALED, "The Laws are comprehended only by a True Immortal and those past it: past True Immortal, no method carries a cultivator on, but the Laws do.");
+		t.add(ModLang.LAWS_TOTAL, "Laws comprehended: %s levels");
+		t.add(ModLang.LAWS_NEXT, "The way into %s wants %s");
+		t.add(ModLang.LAWS_NEXT_OPEN, "The way into %s is open (it wants %s)");
+		t.add(ModLang.LAWS_FOCUS, "Meditating here comprehends the %s");
+		t.add(ModLang.LAWS_FOCUS_AWAY, "The %s in focus: only meditation in the Immortal Realm (or a small world) comprehends it");
+		t.add(ModLang.LAWS_NO_FOCUS, "No Law in focus: choose one below for your meditation in the Immortal Realm (or a small world)");
+		t.add(ModLang.LAWS_CHOICES, "%s levels yours to choose, for the Five Decays weathered: +1 on a Law");
+		t.add(ModLang.LAWS_CHOICE_ONE, "A level yours to choose, for the Five Decays weathered: +1 on a Law");
+		t.add(ModLang.LAWS_LEVEL, "Level %s / %s");
+		t.add(ModLang.LAWS_INSIGHT, "Insight toward level %s: %s%%");
+		t.add(ModLang.LAWS_COMPLETE, "Comprehended whole");
+		t.add(ModLang.LAWS_GREATER_SHUT, "Opens to comprehension at Golden Immortal");
+		t.add(ModLang.LAWS_FOCUSED, "In focus");
+		t.add(ModLang.BTN_LAW_FOCUS, "Focus");
+		t.add(ModLang.BTN_LAW_CHOOSE, "+1");
+		// The Five Decays (FiveDecays, phase 3)
+		t.add(ModLang.MSG_DECAY_WARNING, "A shadow falls on your immortality: the Five Decays of Heaven and Man come for you tomorrow.");
+		t.add(ModLang.MSG_DECAY_SIGN[0], "The first of the Five Decays: your robes stain, and your body's armour wanes.");
+		t.add(ModLang.MSG_DECAY_SIGN[1], "The second: the flowers in your hair wither. Nothing mends you now.");
+		t.add(ModLang.MSG_DECAY_SIGN[2], "The third: your qi falters, gathering at half, and your immortal essence drains away.");
+		t.add(ModLang.MSG_DECAY_SIGN[3], "The fourth: your body sweats, and your blows and spells weaken.");
+		t.add(ModLang.MSG_DECAY_SIGN[4], "The fifth: your mind can find no rest. In a minute the heavens judge you.");
+		t.add(ModLang.MSG_DECAY_JUDGEMENT, "The heavens' judgement falls: %s strikes in thirty seconds, and nothing mends you. Weather it!");
+		t.add(ModLang.MSG_DECAY_JUDGEMENT_BROADCAST, "%s faces the judgement of the Five Decays.");
+		t.add(ModLang.MSG_DECAY_STRIKES, "Judgement of the Five Decays: %s strikes to come");
+		t.add(ModLang.MSG_DECAY_WAITS, "Where the heavens can't see you, the Five Decays wait.");
+		t.add(ModLang.MSG_DECAY_WEATHERED, "You have weathered the Five Decays. A level of the Laws is yours to choose: the Methods tab's Laws page.");
+		t.add(ModLang.MSG_DECAY_WEATHERED_BROADCAST, "%s has weathered the Five Decays of Heaven and Man.");
+		t.add(ModLang.MSG_DECAY_FAILED, "The judgement of the Five Decays strikes you down, and you live on, fallen to %s.");
+		t.add(ModLang.MSG_DECAY_FAILED_BROADCAST, "%s fell to the judgement of the Five Decays.");
+		t.add(ModLang.MSG_DECAY_RESTLESS, "Under the Five Decays your mind can find no rest: you cannot meditate.");
+		t.add(ModLang.LAWS_DECAY_IN, "The Five Decays come for you in %s days");
+		t.add(ModLang.LAWS_DECAY_SOON, "The Five Decays come for you within a day");
+		t.add(ModLang.LAWS_DECAY_SIGN, "The Five Decays are upon you: sign %s of 5");
+		t.add(ModLang.LAWS_DECAY_JUDGEMENT, "The judgement of the Five Decays is upon you");
 		t.add(ModLang.MSG_LIFE_YEARS_DRAWN, "You drew %s years of life out of %s (%s of them are yours).");
 		t.add(ModLang.MSG_LIFE_YEARS_LOST, "%s drew %s years of your life away.");
 		t.add(ModLang.MSG_LIFE_YEARS_GIVEN, "You gave it %s years of your life: %s years of growth.");
@@ -2131,8 +2302,6 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.courtRank("officer"), "Officer");
 		t.add(ModLang.courtRank("captain"), "Captain");
 		t.add(ModLang.courtRank("general"), "General");
-		t.add(ModLang.RANK_DALUO, "Daluo Golden Immortal");
-		t.add(ModLang.RANK_TAIYI, "Taiyi Golden Immortal");
 		t.add(ModLang.MSG_COURT_MERIT_WATCH, "+1 merit: a minute's watch at the Southern Heavenly Gate (%s in all)");
 		t.add(ModLang.MSG_COURT_MERIT_SLAIN, "+%2$s merit: %1$s, a devilish immortal, slain (%3$s in all)");
 		t.add(ModLang.MSG_COURT_RANK_UP, "The Celestial Court raises you: you are one of its %ss now.");
@@ -2146,19 +2315,22 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.primordialComes("kun_peng"), "Far out over the sea of clouds something vast moves beneath them: the Kun has come.");
 		t.add(ModLang.primordialComes("true_phoenix"), "Fire crowns a far peak: the True Phoenix has come to its roost.");
 		t.add(ModLang.primordialComes("true_dragon"), "Thunder rolls across the sky: the True Dragon rides its storm here.");
+		t.add(ModLang.primordialComes("primordial_chaos"), "The chaos thickens and takes a shape with no face: the Primordial Chaos stirs.");
 		t.add(ModLang.MSG_PRIMORDIAL_BREACH, "The Kun breaks from the sea of clouds and spreads its wings: it is the Peng!");
 		t.add(ModLang.MSG_PRIMORDIAL_EMBER, "The True Phoenix burns down to an ember... but its fire is not out.");
 		t.add(ModLang.MSG_PRIMORDIAL_REBORN, "The True Phoenix rises again from its own fire!");
 		t.add(ModLang.MSG_PRIMORDIAL_SLAIN, "The %s has fallen. Another of its kind will come in five days.");
 		t.add(ModLang.MSG_COURT_MERIT_PRIMORDIAL, "+%2$s merit: the %1$s slain (%3$s in all)");
 		t.add("cultivation.defying-the-heavens.talk.topic.beasts", "Where are the primordial beasts?");
-		t.add(ModLang.talkLine("primordial"), "\"Three beasts older than the Court keep this realm, and none of them bows to it.\"");
+		t.add(ModLang.talkLine("primordial"), "\"Four beasts older than the Court keep this realm, and none of them bows to it.\"");
 		t.add(ModLang.primordialWhere("kun_peng"), "The Kun swims the sea of clouds %s of the Southern Heavenly Gate, some %s blocks out (about %s, %s). Wound it deep and it is the Peng.");
 		t.add(ModLang.primordialGone("kun_peng"), "The Kun-Peng was slain; another comes to its waters in %s days.");
 		t.add(ModLang.primordialWhere("true_phoenix"), "The True Phoenix roosts on a peak %s of the Gate, some %s blocks out (about %s, %s). Kill it once and it burns, and rises again.");
 		t.add(ModLang.primordialGone("true_phoenix"), "The True Phoenix was slain; another comes to its peak in %s days.");
 		t.add(ModLang.primordialWhere("true_dragon"), "The True Dragon rides its storm high in the sky %s of the Gate, some %s blocks out (about %s, %s).");
 		t.add(ModLang.primordialGone("true_dragon"), "The True Dragon was slain; another rides its storm in %s days.");
+		t.add(ModLang.primordialWhere("primordial_chaos"), "Out past the realm's edge, in the Chaos Frontier %s of the Gate, some %s blocks out (about %s, %s), what is left of Hundun, the Primordial Chaos, still churns. It unmakes what it catches.");
+		t.add(ModLang.primordialGone("primordial_chaos"), "The Primordial Chaos was scattered; the chaos gathers into it again in %s days.");
 		t.add(ModLang.MSG_PALACE_SEALED, "The Ghost King's seal of %s holds it shut. Only one a realm above the king could break it.");
 		t.add(ModLang.MSG_PALACE_SEAL_BROKEN, "The Ghost King's seal shatters under your hand. The treasury lies open.");
 		t.add(ModLang.BRUSH_TOOLTIP, "Paints seals of qi ink on floors and walls, to join Qi Veins to a Formation Core");
@@ -2321,6 +2493,12 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 			case SACRED_VESSEL -> "Sacred Vessel";
 			case ENTERING_NIRVANA -> "Entering Nirvana";
 			case TRUE_IMMORTAL -> "True Immortal";
+			case EARTH_IMMORTAL -> "Earth Immortal";
+			case HEAVEN_IMMORTAL -> "Heaven Immortal";
+			case GOLDEN_IMMORTAL -> "Golden Immortal";
+			case TAIYI_GOLDEN_IMMORTAL -> "Taiyi Golden Immortal";
+			case PROFOUND_SOVEREIGN -> "Profound Sovereign";
+			case HEAVENLY_LORD -> "Heavenly Lord";
 		};
 	}
 }
