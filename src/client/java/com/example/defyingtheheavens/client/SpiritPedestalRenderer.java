@@ -17,6 +17,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.Vec3;
@@ -26,8 +27,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Draws the fruit on a Spirit Pedestal (the same peach as on the tree, floating, turning slowly and bobbing), its age
- * aura (shared with the tree, {@link CultivationFruitAuraRenderer#drawAura}), and, while someone meditates within reach,
+ * Draws the fruit on a Spirit Pedestal (the same peach as on the tree, floating, turning slowly and bobbing), or the ginseng
+ * sitting on it, or a treasury's pill or ring as itself, floating as the fruit does; a fruit's or ginseng's age aura (shared
+ * with the tree, {@link CultivationFruitAuraRenderer#drawAura}), and, while someone meditates within reach,
  * the fruit's qi: a glowing arc from the fruit into its own orbit round the meditator, and that orbit, with beads of
  * light running along both. The shapes and the particles that go with them are {@link MeditationFormation}'s.
  */
@@ -41,6 +43,8 @@ public class SpiritPedestalRenderer implements BlockEntityRenderer<SpiritPedesta
 	private static final float PEDESTAL_TOP = 20 / 16f;
 	/** Ginseng on a pedestal is drawn at this size. */
 	private static final float HERB_SCALE = 0.7f;
+	/** A pill or ring on show is drawn as a dropped item is (half size), from this height: it floats just clear of the top. */
+	private static final float ITEM_Y = 1.46f;
 
 	private final BlockRenderDispatcher blocks;
 
@@ -55,6 +59,17 @@ public class SpiritPedestalRenderer implements BlockEntityRenderer<SpiritPedesta
 		BlockPos pos = pedestal.getBlockPos();
 		float clock = FruitAura.clock(level.getGameTime(), pos) + partialTick;
 		int lightAbove = LevelRenderer.getLightColor(level, pos.above());
+		if (!pedestal.feeds()) {
+			// A treasury's fine pill or ring (SectPiece#treasure) shows as itself, turning and bobbing as a fruit does, with no
+			// aura and no stream: only fruit and ginseng hold qi to give.
+			poseStack.pushPose();
+			poseStack.translate(0.5, ITEM_Y + 0.04f * Mth.sin(clock * 0.08f), 0.5);
+			poseStack.mulPose(Axis.YP.rotationDegrees(clock * 1.2f));
+			Minecraft.getInstance().getItemRenderer().renderStatic(pedestal.getFruit(), ItemDisplayContext.GROUND, lightAbove,
+					OverlayTexture.NO_OVERLAY, poseStack, buffers, level, (int) pos.asLong());
+			poseStack.popPose();
+			return;
+		}
 		float y;
 		if (pedestal.isHerb()) {
 			// Ginseng sits on the pedestal's top like a little potted plant, at a smaller size.

@@ -246,7 +246,8 @@ row of jade beads and a polished jade disc under the fruit) displays one Cultiva
 down, and right-click again to take it back. Breaking the pedestal gives back both the pedestal and its fruit, in
 creative too. The fruit floats over the
 pedestal, turning slowly, and shows the same age aura it had on the tree. Harvested fruit doesn't age, so a fruit's
-age stays the same on a pedestal.
+age stays the same on a pedestal. A sect treasury's pedestals (and a demon clan's hoard's) also hold the odd fine pill or
+ring, which floats and turns there as itself; only fruit and ginseng have an aura and speed meditation.
 
 Several things speed up meditation. Their shares add together, and the total multiplies the normal rate:
 

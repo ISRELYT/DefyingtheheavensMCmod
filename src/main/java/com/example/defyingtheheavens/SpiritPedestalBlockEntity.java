@@ -11,8 +11,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * Holds the one Cultivation Fruit or ginseng on display (still called "fruit" here and in the save data, so pedestals in
- * existing worlds keep what they hold). Harvested treasures no longer age, so the age is fixed while it sits here.
+ * Holds the one Cultivation Fruit or ginseng on display, or another treasure a sect's treasury set out (see {@link #feeds}),
+ * still called "fruit" here and in the save data, so pedestals in existing worlds keep what they hold. Harvested treasures no longer age, so the age is fixed while it sits here.
  */
 public class SpiritPedestalBlockEntity extends BlockEntity {
     private ItemStack fruit = ItemStack.EMPTY;
@@ -33,12 +33,18 @@ public class SpiritPedestalBlockEntity extends BlockEntity {
     /** Whether ginseng is on display (it sits on the pedestal; a fruit floats above it). */
     public boolean isHerb() { return fruit.getItem() instanceof GinsengItem; }
 
+    /**
+     * Whether a fruit or ginseng is on display, whose qi shows in its aura and feeds those meditating nearby. A treasury's
+     * pedestals also hold the odd fine pill or ring (SectPiece#treasure): those are only shown, as themselves.
+     */
+    public boolean feeds() { return fruit.is(ModItems.CULTIVATION_FRUIT) || isHerb(); }
+
     /** Height of the displayed treasure's centre above the pedestal's block. */
     public float displayHeight() { return isHerb() ? FruitAura.PEDESTAL_HERB_Y : FruitAura.PEDESTAL_FRUIT_Y; }
 
-    /** Age of the fruit or ginseng on display, or 0 when the pedestal is empty. */
+    /** Age of the fruit or ginseng on display, or 0 when the pedestal is empty or shows another treasure (a pill, a ring). */
     public int fruitAge() {
-        if (!hasFruit()) return 0;
+        if (!feeds()) return 0;
         return isHerb() ? GinsengItem.age(fruit) : CultivationFruitItem.age(fruit);
     }
 

@@ -118,14 +118,15 @@ public final class CultivationBoost {
 	}
 
 	/**
-	 * The fruit-bearing pedestals that feed someone meditating at {@code feet}: oldest fruit first, at most
-	 * {@link #MAX_PEDESTALS}. Ties go by position so server and client always pick the same ones.
+	 * The pedestals whose fruit or ginseng feeds someone meditating at {@code feet} (a pill or ring on show feeds no one,
+	 * SpiritPedestalBlockEntity#feeds): oldest fruit first, at most {@link #MAX_PEDESTALS}. Ties go by position so server and
+	 * client always pick the same ones.
 	 */
 	public static List<SpiritPedestalBlockEntity> pedestalsAround(Level level, BlockPos feet) {
 		List<SpiritPedestalBlockEntity> found = new ArrayList<>();
 		for (BlockPos pos : BlockPos.betweenClosed(feet.offset(-PEDESTAL_REACH, -PEDESTAL_REACH_Y, -PEDESTAL_REACH),
 				feet.offset(PEDESTAL_REACH, PEDESTAL_REACH_Y, PEDESTAL_REACH))) {
-			if (level.getBlockEntity(pos) instanceof SpiritPedestalBlockEntity pedestal && pedestal.hasFruit()) {
+			if (level.getBlockEntity(pos) instanceof SpiritPedestalBlockEntity pedestal && pedestal.feeds()) {
 				found.add(pedestal);
 			}
 		}

@@ -105,6 +105,30 @@ public class SpiritPedestalGameTests implements FabricGameTest {
     }
 
     @GameTest(template = EMPTY_STRUCTURE)
+    public void otherTreasuresAreOnlyShown(GameTestHelper helper) {
+        // A treasury sets out the odd fine pill or ring too (SectPiece#treasure): shown as itself, it has no age and feeds no one.
+        SpiritPedestalBlockEntity ring = pedestal(helper, new BlockPos(1, 2, 2));
+        ring.setFruit(new ItemStack(ModItems.RING_OF_POWER));
+        SpiritPedestalBlockEntity pill = pedestal(helper, new BlockPos(3, 2, 2));
+        pill.setFruit(PillItem.create(ModItems.CULTIVATION_PILL, PillGrade.byIndex(3), 2_000));
+        helper.assertTrue(!ring.feeds() && ring.fruitAge() == 0 && !pill.feeds() && pill.fruitAge() == 0,
+                "A ring or a pill on show has no age to give");
+        Player player = helper.makeMockPlayer();
+        BlockPos at = helper.absolutePos(new BlockPos(2, 2, 3));
+        player.setPos(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
+        helper.assertTrue(CultivationBoost.of(player).pedestals().isEmpty(), "Pedestals showing a ring or a pill feed no one meditating nearby");
+        pedestal(helper, new BlockPos(5, 2, 2)).setFruit(CultivationFruitItem.create(100));
+        helper.assertTrue(CultivationBoost.of(player).pedestals().size() == 1, "A fruit beside them still does");
+        use(helper, player, new BlockPos(1, 2, 2));
+        int rings = 0;
+        for (ItemStack stack : player.getInventory().items) {
+            if (stack.is(ModItems.RING_OF_POWER)) rings += stack.getCount();
+        }
+        helper.assertTrue(!ring.hasFruit() && rings == 1, "Taking it gives the ring that was shown");
+        helper.succeed();
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE)
     public void farPedestalsDoNotCount(GameTestHelper helper) {
         BlockPos far = new BlockPos(7, 2, 2);
         pedestal(helper, far).setFruit(CultivationFruitItem.create(10_000));

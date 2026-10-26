@@ -163,9 +163,9 @@ public final class FruitAura {
         emit(level, pos, ginseng.age(), pos.getX() + 0.5, pos.getY() + HERB_CENTER_Y, pos.getZ() + 0.5);
     }
 
-    /** Client ticker for a Spirit Pedestal: the fruit or ginseng on display gives off the same aura as where it grew. */
+    /** Client ticker for a Spirit Pedestal: the fruit or ginseng on display gives off the same aura as where it grew (a pill or ring on show, none). */
     public static void pedestalClientTick(Level level, BlockPos pos, BlockState state, SpiritPedestalBlockEntity pedestal) {
-        if (!pedestal.hasFruit()) return;
+        if (!pedestal.feeds()) return;
         emit(level, pos, pedestal.fruitAge(), pos.getX() + 0.5, pos.getY() + pedestal.displayHeight(), pos.getZ() + 0.5);
     }
 
