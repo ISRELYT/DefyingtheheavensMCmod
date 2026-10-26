@@ -114,7 +114,7 @@ public class FormationCoreBlockEntity extends BlockEntity {
 	public void bindToSect(UUID sect, String name, int radius, int masterRank) {
 		this.sect = sect;
 		this.sectName = name;
-		this.radius = Math.max(Formations.MIN_RADIUS, Math.min(Formations.MAX_RADIUS, radius));
+		this.radius = Math.max(Formations.MIN_RADIUS, Math.min(Formations.maxRadius(level), radius));
 		this.wanted = true;
 		this.owner = null;
 		this.ownerName = "";
@@ -352,7 +352,7 @@ public class FormationCoreBlockEntity extends BlockEntity {
 	/** From the screen: the radius to keep the barrier at, and whether it should be up. */
 	public void configure(ServerPlayer player, int newRadius, boolean newWanted) {
 		if (!(level instanceof ServerLevel server) || !canControl(player)) return;
-		radius = Math.max(Formations.MIN_RADIUS, Math.min(Formations.MAX_RADIUS, newRadius));
+		radius = Math.max(Formations.MIN_RADIUS, Math.min(Formations.maxRadius(level), newRadius));
 		wanted = newWanted;
 		if (sect == null && owner != null && owner.equals(player.getUUID())) rank = Formations.rankOf(player); // as strong as its maker now
 		setChanged();

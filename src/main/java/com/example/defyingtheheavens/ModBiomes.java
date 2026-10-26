@@ -57,6 +57,41 @@ public final class ModBiomes {
 	public static final ResourceKey<Biome> ASTRAL_ASHEN = key("astral_ashen");
 	public static final ResourceKey<Biome> ASTRAL_CRYSTAL = key("astral_crystal");
 	public static final ResourceKey<Biome> ASTRAL_BARREN = key("astral_barren");
+	/**
+	 * The Great Void Realm (2026-10-25; dimension/great_void.json picks them by the terrain's own noises, see
+	 * ModNoiseSettings#greatVoid): the Void Steppes, silvered grass under the stars; the five Dao fields, each where one element's law
+	 * runs strong (its qi thick, so its methods cultivate the faster: QiElement; its spells the stronger and the element it overcomes
+	 * the weaker there: DaoFields); the old battlefields of the war between Heaven and the demons; and the Shore of Nirvana about the
+	 * world's 0, 0, a pale coast onto a sea of open void, where the Entering Nirvana wait for the Immortal Gate.
+	 */
+	public static final ResourceKey<Biome> VOID_STEPPES = key("void_steppes");
+	public static final ResourceKey<Biome> DAO_FIELD_WOOD = key("dao_field_wood");
+	public static final ResourceKey<Biome> DAO_FIELD_FIRE = key("dao_field_fire");
+	public static final ResourceKey<Biome> DAO_FIELD_EARTH = key("dao_field_earth");
+	public static final ResourceKey<Biome> DAO_FIELD_METAL = key("dao_field_metal");
+	public static final ResourceKey<Biome> DAO_FIELD_WATER = key("dao_field_water");
+	public static final ResourceKey<Biome> ANCIENT_BATTLEFIELD = key("ancient_battlefield");
+	public static final ResourceKey<Biome> SHORE_OF_NIRVANA = key("shore_of_nirvana");
+	/** The Void Breach's shattered space (VoidBreach): nothing in it but the shards the client draws. */
+	public static final ResourceKey<Biome> VOID_BREACH = key("void_breach");
+	/**
+	 * A Demon Palace's blood ring (DemonPalacePieces#pool sets the land round it to this): its water red, as the battlefields' runs, and
+	 * nothing else of its own. Never in the Great Void's biome source, so worldgen lays nothing of a land's there: made the battlefields'
+	 * own, the ring's land took their ruins and blood pools, an elder rising in the palace (tour 12).
+	 */
+	public static final ResourceKey<Biome> BLOOD_RING = key("blood_ring");
+	/**
+	 * The Immortal Realm (phase 2, 2026-10-25; dimension/immortal_realm.json picks them by the terrain's own noises, see
+	 * ModNoiseSettings#immortalRealm): the Jade Peaks, pines and bamboo on their terraces, their cliffs banded with jade and running
+	 * with waterfalls; the Immortal Gardens, lawns and peach blossom on the broad levels (the Southern Heavenly Gate's ground among them);
+	 * the Celestial Heights, the white jade of the summits above about Y 320. The Gate's passage: nothing in it but the light.
+	 */
+	public static final ResourceKey<Biome> JADE_PEAKS = key("jade_peaks");
+	public static final ResourceKey<Biome> IMMORTAL_GARDENS = key("immortal_gardens");
+	public static final ResourceKey<Biome> CELESTIAL_HEIGHTS = key("celestial_heights");
+	/** The main island's level ground, where the capital stands (ImmortalCapital): lawns, nothing grown that would stand in its streets. */
+	public static final ResourceKey<Biome> JADE_CAPITAL = key("jade_capital");
+	public static final ResourceKey<Biome> IMMORTAL_PASSAGE = key("immortal_passage");
 
 	private static final int WATER = 0x3FC6E4;
 	private static final int WATER_FOG = 0x0A3D52;
@@ -180,6 +215,147 @@ public final class ModBiomes {
 				new BiomeSpecialEffects.Builder().skyColor(0x000000).fogColor(0x0C0C10).waterColor(WATER).waterFogColor(WATER_FOG)
 						.ambientMoodSound(AmbientMoodSettings.LEGACY_CAVE_SETTINGS),
 				new MobSpawnSettings.Builder().build(), astralFeatures(placed, carvers)));
+
+		// The Great Void. No rain or snow under the stars; farm beasts on the steppes and in the wood. Its herbs, spirit stone, jade, qi
+		// veins and Cultivation Fruit are the Jade Firmament's, and its Dao Steles (everywhere but the shore: DaoSteleFeature carves them
+		// for the Great Void's realms), all added by its tag (ModTags#IS_GREAT_VOID, ModFeatures#register); here each land's own.
+		context.register(VOID_STEPPES, biome(false, 0.6f, 0.3f,
+				greatVoid(0x9DBC9E, 0x80A88C, 0x5A70D0, 0x1A2050).ambientParticle(new AmbientParticleSettings(ParticleTypes.END_ROD, 0.0006f)),
+				spawns(true, false, mobs -> {}),
+				greatVoidFeatures(placed, carvers, ModPlacedFeatures.SPRING_BASIN, ModPlacedFeatures.FOREST_ROCK, ModPlacedFeatures.PEAK_SPRUCES,
+						ModPlacedFeatures.FLOWERS_DEFAULT, ModPlacedFeatures.PATCH_GRASS)));
+		context.register(DAO_FIELD_WOOD, biome(false, 0.8f, 0.8f,
+				greatVoid(0x4FCB6A, 0x3BAA55, 0x3FC6A4, 0x0A3D30).ambientParticle(new AmbientParticleSettings(ParticleTypes.SPORE_BLOSSOM_AIR, 0.0025f)),
+				spawns(true, false, mobs -> mobs.addSpawn(MobCategory.CREATURE, new MobSpawnSettings.SpawnerData(EntityType.RABBIT, 4, 2, 3))),
+				greatVoidFeatures(placed, carvers, ModPlacedFeatures.SPIRIT_FOREST_TREES, ModPlacedFeatures.BAMBOO_GROVE,
+						ModPlacedFeatures.FLOWERS_FOREST, ModPlacedFeatures.PATCH_GRASS, ModPlacedFeatures.PATCH_BERRY_BUSH)));
+		context.register(DAO_FIELD_FIRE, biome(false, 2.0f, 0.0f,
+				greatVoid(0xB0603A, 0xA04A2A, 0x6A5A50, 0x2A1A14).ambientParticle(new AmbientParticleSettings(ParticleTypes.ASH, 0.012f)),
+				spawns(false, false, mobs -> {}),
+				greatVoidFeatures(placed, carvers, ModPlacedFeatures.LAVA_LAKE, ModPlacedFeatures.ORE_QUARTZ)));
+		context.register(DAO_FIELD_EARTH, biome(false, 1.2f, 0.2f,
+				greatVoid(0xC8A050, 0xB08A40, 0x6A7A5A, 0x2A2A18).ambientParticle(new AmbientParticleSettings(ParticleTypes.MYCELIUM, 0.006f)),
+				spawns(false, false, mobs -> {}),
+				greatVoidFeatures(placed, carvers, ModPlacedFeatures.FOREST_ROCK)));
+		context.register(DAO_FIELD_METAL, biome(false, 0.4f, 0.1f,
+				greatVoid(0xB8C0C8, 0xA8B0B8, 0x8AA0C0, 0x283040).ambientParticle(new AmbientParticleSettings(ParticleTypes.ELECTRIC_SPARK, 0.0025f)),
+				spawns(false, false, mobs -> {}),
+				greatVoidFeatures(placed, carvers, ModPlacedFeatures.ORE_EMERALD)));
+		context.register(DAO_FIELD_WATER, biome(false, 0.5f, 0.9f,
+				greatVoid(0x5AB8B0, 0x48A0A0, 0x3F9FE4, 0x0A2E52).ambientParticle(new AmbientParticleSettings(ParticleTypes.GLOW, 0.0015f)),
+				spawns(false, false, mobs -> {}),
+				greatVoidFeatures(placed, carvers, ModPlacedFeatures.SPRING_BASIN, ModPlacedFeatures.PATCH_SUGAR_CANE,
+						ModPlacedFeatures.FLOWERS_DEFAULT, ModPlacedFeatures.PATCH_GRASS)));
+		// Its water runs red: the blood of the old war never dried there (its pools: BloodPoolFeature).
+		context.register(ANCIENT_BATTLEFIELD, biome(false, 0.6f, 0.0f,
+				greatVoid(0x6E6458, 0x5E5448, 0x8A1414, 0x2A0606).ambientParticle(new AmbientParticleSettings(ParticleTypes.WHITE_ASH, 0.02f)),
+				spawns(false, false, mobs -> {}),
+				greatVoidFeatures(placed, carvers, ModPlacedFeatures.FOREST_ROCK)));
+		context.register(SHORE_OF_NIRVANA, biome(false, 0.7f, 0.4f,
+				greatVoid(0xB8D8C8, 0xA0C8B8, 0x7FD0E8, 0x103040).ambientParticle(new AmbientParticleSettings(ParticleTypes.END_ROD, 0.002f)),
+				spawns(false, false, mobs -> {}),
+				greatVoidFeatures(placed, carvers, ModPlacedFeatures.PATCH_GRASS)));
+		// A Demon Palace's blood ring: the steppes' colours but for its water, the battlefields' red; nothing grows or lives there of its own.
+		context.register(BLOOD_RING, biome(false, 0.6f, 0.0f,
+				greatVoid(0x9DBC9E, 0x80A88C, 0x8A1414, 0x2A0606),
+				new MobSpawnSettings.Builder().build(),
+				new BiomeGenerationSettings.Builder(placed, carvers).build()));
+		// The Void Breach: broken space, nothing in it (the shards are the client's).
+		context.register(VOID_BREACH, biome(false, 0.5f, 0.0f,
+				new BiomeSpecialEffects.Builder().skyColor(0x000000).fogColor(0x0A0418).waterColor(WATER).waterFogColor(WATER_FOG)
+						.ambientParticle(new AmbientParticleSettings(ParticleTypes.REVERSE_PORTAL, 0.01f)),
+				new MobSpawnSettings.Builder().build(),
+				new BiomeGenerationSettings.Builder(placed, carvers).build()));
+
+		// The Immortal Realm. No rain or snow above the clouds, no monsters; goats on the peaks, farm beasts in the gardens. Its herbs,
+		// spirit stone, jade, qi veins and Cultivation Fruit are the Jade Firmament's, added by its tag (ModTags#IS_IMMORTAL_REALM,
+		// ModFeatures#register), but no stele stands there (the user's rule, 2026-10-25); here each land's own, and the springs' waterfalls.
+		context.register(JADE_PEAKS, biome(false, 0.7f, 0.6f,
+				immortal(0x6FCB78, 0x4FB86A).ambientParticle(new AmbientParticleSettings(ParticleTypes.END_ROD, 0.0008f)),
+				spawns(false, false, mobs -> mobs.addSpawn(MobCategory.CREATURE, new MobSpawnSettings.SpawnerData(EntityType.GOAT, 5, 1, 3))),
+				immortalFeatures(placed, carvers, ModPlacedFeatures.PEAK_SPRUCES, ModPlacedFeatures.BAMBOO_GROVE, ModPlacedFeatures.FLOWERS_DEFAULT,
+						ModPlacedFeatures.PATCH_GRASS)));
+		// Its petals drift sparely, and no ponds pock its lawns (tour 2: a pond every other chunk, petals thick in the air).
+		context.register(IMMORTAL_GARDENS, biome(false, 0.7f, 0.8f,
+				immortal(0x86D86A, 0x86D86A).ambientParticle(new AmbientParticleSettings(ParticleTypes.CHERRY_LEAVES, 0.0012f)),
+				spawns(true, false, mobs -> {}),
+				immortalFeatures(placed, carvers, ModPlacedFeatures.ORE_CLAY, ModPlacedFeatures.IMMORTAL_BLOSSOMS,
+						ModPlacedFeatures.FLOWERS_CHERRY, ModPlacedFeatures.FLOWERS_FOREST, ModPlacedFeatures.PATCH_GRASS, ModPlacedFeatures.PATCH_SUGAR_CANE)));
+		// The capital's ground: lawns and flowers, no tree, pond or spring to stand in its streets (the capital is laid on it, ImmortalCapital).
+		context.register(JADE_CAPITAL, biome(false, 0.7f, 0.6f,
+				immortal(0x86D86A, 0x7CC860).ambientParticle(new AmbientParticleSettings(ParticleTypes.END_ROD, 0.0006f)),
+				spawns(false, false, mobs -> {}),
+				capitalFeatures(placed, carvers)));
+		context.register(CELESTIAL_HEIGHTS, biome(false, 0.5f, 0.3f,
+				immortal(0x9AD6A0, 0x86C890).ambientParticle(new AmbientParticleSettings(ParticleTypes.END_ROD, 0.0016f)),
+				spawns(false, false, mobs -> {}),
+				immortalFeatures(placed, carvers, ModPlacedFeatures.ORE_EMERALD, ModPlacedFeatures.PATCH_GRASS)));
+		// The Gate's passage: light, nothing in it (the client draws the way).
+		context.register(IMMORTAL_PASSAGE, biome(false, 0.5f, 0.0f,
+				new BiomeSpecialEffects.Builder().skyColor(0xFFF2C8).fogColor(0xFFE8B0).waterColor(WATER).waterFogColor(WATER_FOG)
+						.ambientParticle(new AmbientParticleSettings(ParticleTypes.END_ROD, 0.01f)),
+				new MobSpawnSettings.Builder().build(),
+				new BiomeGenerationSettings.Builder(placed, carvers).build()));
+	}
+
+	/**
+	 * An Immortal Realm land's colours: its grass and foliage, its water jade-clear; the sky is the client's (golden), and the fog the
+	 * sky's gold at the horizon, so the far peaks and the sea of clouds fade into it.
+	 */
+	private static BiomeSpecialEffects.Builder immortal(int grass, int foliage) {
+		return new BiomeSpecialEffects.Builder()
+				.skyColor(0xF0D89A)
+				.fogColor(0xF4DCA4)
+				.waterColor(0x4FD8D0)
+				.waterFogColor(0x14524E)
+				.grassColorOverride(grass)
+				.foliageColorOverride(foliage)
+				.ambientMoodSound(AmbientMoodSettings.LEGACY_CAVE_SETTINGS);
+	}
+
+	/** The capital's ground's features: the common ores deep under it, and its grass; no springs. */
+	private static BiomeGenerationSettings capitalFeatures(HolderGetter<PlacedFeature> placed, HolderGetter<ConfiguredWorldCarver<?>> carvers) {
+		Set<ResourceKey<PlacedFeature>> wanted = new HashSet<>(ModPlacedFeatures.COMMON);
+		wanted.remove(ModPlacedFeatures.SPRING_LAVA);
+		wanted.remove(ModPlacedFeatures.SPRING_WATER);
+		wanted.add(ModPlacedFeatures.PATCH_GRASS);
+		BiomeGenerationSettings.Builder builder = new BiomeGenerationSettings.Builder(placed, carvers);
+		ModPlacedFeatures.addFeatures(builder, wanted);
+		return builder.build();
+	}
+
+	/**
+	 * An Immortal Realm land's features: the Jade Firmament's common ores and its water springs (whose waterfalls spill off the cliffs into
+	 * the clouds), never its lava; and the land's own (the rest come by its tag: ModFeatures).
+	 */
+	@SafeVarargs
+	private static BiomeGenerationSettings immortalFeatures(HolderGetter<PlacedFeature> placed, HolderGetter<ConfiguredWorldCarver<?>> carvers,
+			ResourceKey<PlacedFeature>... specific) {
+		Set<ResourceKey<PlacedFeature>> wanted = new HashSet<>(ModPlacedFeatures.COMMON);
+		wanted.remove(ModPlacedFeatures.SPRING_LAVA);
+		wanted.addAll(Set.of(specific));
+		BiomeGenerationSettings.Builder builder = new BiomeGenerationSettings.Builder(placed, carvers);
+		ModPlacedFeatures.addFeatures(builder, wanted);
+		return builder.build();
+	}
+
+	/** A Great Void land's colours: its grass, its foliage and its water's; the sky is all stars (drawn by the client) and the fog violet. */
+	private static BiomeSpecialEffects.Builder greatVoid(int grass, int foliage, int water, int waterFog) {
+		return new BiomeSpecialEffects.Builder()
+				.skyColor(0x000000)
+				.fogColor(0x1A1030)
+				.waterColor(water)
+				.waterFogColor(waterFog)
+				.grassColorOverride(grass)
+				.foliageColorOverride(foliage)
+				.ambientMoodSound(AmbientMoodSettings.LEGACY_CAVE_SETTINGS);
+	}
+
+	/** A Great Void land's features: the Jade Firmament's common ores and the land's own (the rest come by its tag: ModFeatures). */
+	@SafeVarargs
+	private static BiomeGenerationSettings greatVoidFeatures(HolderGetter<PlacedFeature> placed, HolderGetter<ConfiguredWorldCarver<?>> carvers,
+			ResourceKey<PlacedFeature>... specific) {
+		return features(placed, carvers, specific);
 	}
 
 	/**

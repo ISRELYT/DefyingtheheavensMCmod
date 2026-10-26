@@ -68,10 +68,17 @@ public final class SectManager {
 		sect.alignment = Alignment.clamp(blueprint.getInt("Alignment"));
 		// A demon clan's blueprint names its race (DenStructure): all its people of it.
 		if (blueprint.contains("Race")) sect.race = Bloodline.byId(blueprint.getString("Race"));
-		sect.name = sect.isClan() ? SectNames.clan(random, sect.race) : SectNames.generate(random, Alignment.factionOf(sect.alignment));
+		// The Great Void's sects are its Holy Lands (HolyLands), its clans its Demon Palaces (DemonPalaces): named as such, and of their
+		// own twenty.
+		boolean holy = HolyLands.isHolyLand(level.dimension());
+		// The Immortal Realm's are its immortal sects (ImmortalSects): named as such, and of their own twenty.
+		boolean immortal = ImmortalSects.isImmortalSect(level.dimension());
+		sect.name = sect.isClan() ? holy ? SectNames.palace(random, sect.race) : SectNames.clan(random, sect.race)
+				: immortal ? SectNames.immortal(random, Alignment.factionOf(sect.alignment))
+				: holy ? SectNames.holy(random, Alignment.factionOf(sect.alignment)) : SectNames.generate(random, Alignment.factionOf(sect.alignment));
 		sect.dimension = level.dimension();
 		sect.core = core.getBlockPos();
-		sect.barrierRadius = Math.max(Formations.MIN_RADIUS, Math.min(Formations.MAX_RADIUS, blueprint.getInt("Radius")));
+		sect.barrierRadius = Math.max(Formations.MIN_RADIUS, Math.min(Formations.maxRadius(level), blueprint.getInt("Radius")));
 		sect.capacity = Math.max(1, blueprint.getInt("Capacity"));
 		sect.bounds = box(blueprint.getIntArray("Bounds"), sect.core);
 		sect.treasury = box(blueprint.getIntArray("Treasury"), sect.core);
@@ -81,7 +88,8 @@ public final class SectManager {
 		}
 
 		boolean upper = ModDimensions.isUpperRealm(level.dimension());
-		int[] ranks = foundingRanks(random, sect.capacity, upper);
+		int[] ranks = immortal ? ImmortalSects.foundingRanks(random, sect.capacity) : holy ? HolyLands.foundingRanks(random, sect.capacity)
+				: foundingRanks(random, sect.capacity, upper);
 		// Strongest first after the master, so the first homes (the elders' houses, see SectStructure) go to the elders.
 		java.util.Arrays.sort(ranks, 1, ranks.length);
 		for (int i = 1, j = ranks.length - 1; i < j; i++, j--) {
@@ -133,6 +141,15 @@ public final class SectManager {
 	/** A sect's lowest rank, at which its new disciples come: Qi Refining Early below, Core Formation Early in the Upper Realm. */
 	public static int floorRank(boolean upperRealm) {
 		return upperRealm ? PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY) : 0;
+	}
+
+	/**
+	 * The same for a sect in {@code dimension}: a Holy Land's new disciples come at Heavenly Being Early (HolyLands#FLOOR), an immortal sect's
+	 * at Entering Nirvana Early (ImmortalSects#FLOOR).
+	 */
+	public static int floorRank(net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dimension) {
+		if (ImmortalSects.isImmortalSect(dimension)) return ImmortalSects.FLOOR;
+		return HolyLands.isHolyLand(dimension) ? HolyLands.FLOOR : floorRank(ModDimensions.isUpperRealm(dimension));
 	}
 
 	/** A new member of {@code rank} living at dwelling {@code home} (-1: the master's seat); not yet added to the world. */
@@ -358,7 +375,7 @@ public final class SectManager {
 				changed = true;
 				// No room left: the slot was a player's kill, or is held for a newcomer from below.
 				if (sect.members.size() + sect.reserved.size() >= sect.capacity) continue;
-				CultivatorNpc npc = spawnMember(level, sect, floorRank(ModDimensions.isUpperRealm(sect.dimension)), sect.freeHome(), level.getRandom());
+				CultivatorNpc npc = spawnMember(level, sect, floorRank(sect.dimension), sect.freeHome(), level.getRandom());
 				if (npc == null) continue;
 				BlockPos gate = sect.post(Sect.Post.GATE, 0);
 				if (level.isLoaded(gate)) npc.moveTo(gate.getX() + 0.5, gate.getY() + 0.1, gate.getZ() + 0.5, npc.getYRot(), 0);

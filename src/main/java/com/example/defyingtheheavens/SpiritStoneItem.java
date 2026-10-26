@@ -30,7 +30,9 @@ import java.util.UUID;
  * trade in them (see CultivatorTrades), and five grades each hold nine times the one below: Low, Mid, High, Supreme and
  * Immortal (nine of one grade craft into one of the next, and back). Mined from spirit stone veins (the richer grades mostly
  * in the Upper Realm), kept in sect treasuries, carried by cultivators. They glow, the more the higher the grade (the
- * client's SpiritStoneGlow).
+ * client's SpiritStoneGlow). Above them Immortal Jade (phase 2 of the realm plan, 2026-10-25: the user's "Immortal jade +
+ * cities"), the Immortal Realm's own coin, nine Immortal stones' worth: carried by True Immortals, traded in its cities' markets
+ * (CityMarkets), a carved disc of jade rather than a stone.
  * <ul>
  *   <li><b>Absorbing</b>: hold right-click for {@link #ABSORB_TICKS} to draw a stone's qi into your pool, {@link #QI_PER_VALUE}
  *   for every Low stone's worth it holds; the stone is used up.</li>
@@ -42,13 +44,15 @@ import java.util.UUID;
  * #fillsFortune}; FourAxis), whether or not their pool has room for its qi.
  */
 public class SpiritStoneItem extends Item {
-	/** The five grades, each worth nine of the one below ({@link #value}, in Low stones). */
+	/** The five grades and Immortal Jade over them, each worth nine of the one below ({@link #value}, in Low stones). */
 	public enum Grade {
 		LOW("low", 1, 0xF2EEE6, Rarity.COMMON),
 		MID("mid", 9, 0x7FD8A8, Rarity.UNCOMMON),
 		HIGH("high", 81, 0x7FB8F2, Rarity.RARE),
 		SUPREME("supreme", 729, 0xC9A0F2, Rarity.EPIC),
-		IMMORTAL("immortal", 6561, 0xF2D27F, Rarity.EPIC);
+		IMMORTAL("immortal", 6561, 0xF2D27F, Rarity.EPIC),
+		/** Immortal Jade: the Immortal Realm's coin (phase 2). */
+		IMMORTAL_JADE("immortal_jade", 59049, 0x9CF0C8, Rarity.EPIC);
 
 		private final String id;
 		private final int value;
@@ -67,7 +71,7 @@ public class SpiritStoneItem extends Item {
 		public int value() { return value; }
 		public int color() { return color; }
 		public Rarity rarity() { return rarity; }
-		public Grade next() { return this == IMMORTAL ? null : values()[ordinal() + 1]; }
+		public Grade next() { return ordinal() + 1 < values().length ? values()[ordinal() + 1] : null; }
 	}
 
 	/** Qi drawn from a Low stone (a quarter of a Qi Refining Early pool); each grade holds nine times as much. */
@@ -99,6 +103,7 @@ public class SpiritStoneItem extends Item {
 			case HIGH -> ModItems.HIGH_SPIRIT_STONE;
 			case SUPREME -> ModItems.SUPREME_SPIRIT_STONE;
 			case IMMORTAL -> ModItems.IMMORTAL_SPIRIT_STONE;
+			case IMMORTAL_JADE -> ModItems.IMMORTAL_JADE;
 		};
 	}
 
@@ -274,14 +279,16 @@ public class SpiritStoneItem extends Item {
 		return new Vector3f(((c >> 16) & 0xFF) / 255f, ((c >> 8) & 0xFF) / 255f, (c & 0xFF) / 255f);
 	}
 
+	/** The Supreme and Immortal stones shimmer; Immortal Jade doesn't (tour 10, 2026-10-25: the shimmer's violet turned its jade blue), its halo its own. */
 	@Override
 	public boolean isFoil(ItemStack stack) {
-		return grade.ordinal() >= Grade.SUPREME.ordinal();
+		return grade == Grade.SUPREME || grade == Grade.IMMORTAL;
 	}
 
 	@Override
 	public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
-		if (grade != Grade.LOW) tooltip.add(Component.translatable(ModLang.STONE_WORTH, grade.value()).withStyle(ChatFormatting.GRAY));
+		if (grade == Grade.IMMORTAL_JADE) tooltip.add(Component.translatable(ModLang.STONE_JADE).withStyle(ChatFormatting.GREEN));
+		if (grade != Grade.LOW) tooltip.add(Component.translatable(ModLang.STONE_WORTH, String.format(java.util.Locale.ROOT, "%,d", grade.value())).withStyle(ChatFormatting.GRAY));
 		tooltip.add(Component.translatable(ModLang.STONE_ABSORB, (int) (QI_PER_VALUE * grade.value())).withStyle(ChatFormatting.DARK_AQUA));
 		tooltip.add(Component.translatable(ModLang.STONE_MEDITATE, (int) Math.round(MEDITATION_BOOST * 100)).withStyle(ChatFormatting.DARK_AQUA));
 		double left = qiLeft(stack);

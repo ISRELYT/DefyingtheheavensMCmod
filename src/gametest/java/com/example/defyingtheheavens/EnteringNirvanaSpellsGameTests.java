@@ -501,7 +501,8 @@ public class EnteringNirvanaSpellsGameTests implements FabricGameTest {
 		helper.assertTrue(took(p, Spell.BLACK_AND_WHITE_IMPERMANENCE), "Black and White Impermanence is cast");
 		helper.assertTrue(constructs(level, soul.position(), GhostSpells.IMPERMANENCE_BESIDE + 3, SpellConstruct.Kind.WHITE_IMPERMANENCE_FIGURE).size() == 1
 				&& constructs(level, soul.position(), GhostSpells.IMPERMANENCE_BESIDE + 3, SpellConstruct.Kind.BLACK_IMPERMANENCE_FIGURE).size() == 1, "...the White and the Black rise to either side of it");
-		helper.runAfterDelay(GhostSpells.IMPERMANENCE_COMES + GhostSpells.IMPERMANENCE_HOOK + GhostSpells.IMPERMANENCE_HOLDS + 3, () -> {
+		// Its share is torn away halfway through their take (2026-10-25: the two reach for the soul and draw it out first).
+		helper.runAfterDelay(GhostSpells.IMPERMANENCE_COMES + GhostSpells.IMPERMANENCE_HOOK + GhostSpells.IMPERMANENCE_HOLDS + GhostSpells.IMPERMANENCE_TAKES / 2 + 3, () -> {
 			try {
 				float share = Math.min(GhostSpells.IMPERMANENCE_MOST, HEALTH * GhostSpells.IMPERMANENCE_SHARE);
 				helper.assertTrue(soul.getHealth() <= HEALTH - GhostSpells.IMPERMANENCE_STRIKE - 3 * GhostSpells.IMPERMANENCE_CHAIN - share + 1,

@@ -27,10 +27,10 @@ public final class CultivatorLoot {
 
 	public static ResourceLocation tableFor(CultivatorNpc npc) {
 		return switch (npc.getTitle()) {
-			case SECT_MASTER -> TREASURY;
-			case GRAND_ELDER, ELDER -> ELDER;
+			case SECT_MASTER, HEAVENLY_KING -> TREASURY;
+			case GRAND_ELDER, ELDER, HEAVENLY_VENERABLE, IMMORTAL_GENERAL, COURT_QUARTERMASTER -> ELDER;
 			case INNER_DISCIPLE, OUTER_DISCIPLE, WANDERER -> DWELLING;
-			case ROGUE -> npc.getRank() >= PlayerCultivation.rank(Realm.NASCENT_SOUL, Stage.EARLY) ? ELDER : DWELLING;
+			case ROGUE, RELIC_KEEPER, IMMORTAL_OFFICER, IMMORTAL_MERCHANT -> npc.getRank() >= PlayerCultivation.rank(Realm.NASCENT_SOUL, Stage.EARLY) ? ELDER : DWELLING;
 			case WANDERING_GHOST, GHOST_ELDER, GATE_WARDEN, BRIDGE_KEEPER, GHOST_KING, GHOST_RETAINER -> GHOST;
 		};
 	}

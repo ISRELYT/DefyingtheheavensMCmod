@@ -120,7 +120,8 @@ public final class Lifespan {
 	/**
 	 * The heaven path's dense qi against the realm's own place ({@link #saving}): the qi where {@code c} sits (PlayerCultivation#placeFactor),
 	 * over the Upper Realm's for a realm cultivated nowhere else (Four Axis: its needs are made that much greater already,
-	 * PlayerCultivation#isUpperRealmOnly), else over the mortal world's.
+	 * PlayerCultivation#isUpperRealmOnly), over the Great Void's for its own (Void Shattering on: PlayerCultivation#qiNeed), else over the
+	 * mortal world's. So a realm's years stay as they were wherever it is cultivated at its own pace or slower.
 	 */
 	public static double placeSaving(PlayerCultivation c) {
 		return placeSaving(c, c.getRealm());
@@ -132,7 +133,7 @@ public final class Lifespan {
 	 * its heaven path lower was saved ten times the years in the Upper Realm.
 	 */
 	public static double placeSaving(PlayerCultivation c, Realm realm) {
-		return c.placeFactor() / (PlayerCultivation.isUpperRealmOnly(realm) ? PlayerCultivation.UPPER_REALM_QI_MULTIPLIER : 1.0);
+		return c.placeFactor() / PlayerCultivation.qiNeed(realm);
 	}
 
 	/** The ghost path's ghostly qi at {@code density} against the Netherworld's, its own place ({@link #saving}): more only on the Peaks. */

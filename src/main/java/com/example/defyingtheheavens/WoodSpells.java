@@ -1819,7 +1819,7 @@ public final class WoodSpells {
 				}
 			}
 			if (drawing % 4 == 0) SpellFx.send(level, SpellFx.Kind.LEAVES, ground.add(0, 2, 0), mouth.subtract(ground), 3, 0, 160);
-			if (drawing % 20 == 0) sound(mouth, SoundEvents.ELYTRA_FLYING, 3.0f, 0.5f);
+			if (drawing % 280 == 0) sound(mouth, SoundEvents.ELYTRA_FLYING, 3.0f, 0.5f); // its draw, once (not one a second piled on one another)
 		}
 
 		/** It spits them out: the swallowed struck and hurled far; anything still being dragged flung away too. */
@@ -2016,7 +2016,14 @@ public final class WoodSpells {
 			super(caster, SEED_FLIES + SEED_ROOTS + SEED_HOLDS + SEED_WITHERS);
 			this.spell = spell;
 			this.at = HeavenSpells.fromHands(caster);
-			this.velocity = caster.getViewVector(1.0f).scale(SEED_SPEED);
+			// From the hands to what the look meets (the being looked at, else the land, else its range), lifted for its fall: it lands where
+			// its caster looks. Sent along the look from the hands, it fell short of what they looked at, a block low at sixteen blocks, and
+			// planted at its feet rather than striking it.
+			LivingEntity aimed = HeavenSpells.aimed(caster, SEED_RANGE);
+			Vec3 way = (aimed != null ? HeavenSpells.middle(aimed) : HeavenSpells.lookPoint(caster, SEED_RANGE)).subtract(at);
+			double flight = Math.min(SEED_FLIES, Math.max(1, way.length() / SEED_SPEED));
+			this.velocity = way.length() < 1.0e-3 ? caster.getViewVector(1.0f).scale(SEED_SPEED)
+					: way.scale(1 / flight).add(0, SEED_FALL * flight / 2, 0);
 			float[] face = HeavenSpells.facing(velocity);
 			this.seed = SpellConstruct.create(level, SpellConstruct.Kind.REBIRTH_SEED, at, face[0], 90 + face[1], (int) (end - start) + SpellConstruct.FADE, caster)
 					.sizedFor(spell).spawn();
@@ -2345,7 +2352,7 @@ public final class WoodSpells {
 					double a = level.random.nextDouble() * Math.PI * 2, r = WIND_RADIUS * (0.3 + 0.7 * level.random.nextDouble());
 					SpellFx.send(level, SpellFx.Kind.LEAVES, foot.add(Math.cos(a) * r, 2 + level.random.nextDouble() * WIND_HIGH * 1.5, Math.sin(a) * r), Vec3.ZERO, 2.5f, 0, 192);
 				}
-				if (whirling % 24 == 0) sound(foot, SoundEvents.ELYTRA_FLYING, 4.0f, 0.4f + 0.02f * (whirling / 24));
+				if (whirling % 140 == 0) sound(foot, SoundEvents.ELYTRA_FLYING, 4.0f, 0.4f + 0.05f * (whirling / 140)); // rising, one at a time (not one a second piled on one another)
 			} else if (!flung) {
 				flung = true;
 				fling();

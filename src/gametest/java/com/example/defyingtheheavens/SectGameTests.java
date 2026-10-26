@@ -1213,47 +1213,53 @@ public class SectGameTests implements FabricGameTest {
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
-	public void theGroundsKeepTheLandsOwnFloor(GameTestHelper helper) {
-		// The grounds level the land but keep its floor, column by column: podzol under a fern, two below the grounds, is raised
-		// as podzol; coarse dirt on a knoll under a fallen log is cut down to the grounds as coarse dirt; and only where there was
-		// water is it grass.
+	public void theGroundsFollowTheLand(GameTestHelper helper) {
+		// The grounds lie on the land as it lies, not levelled (the user's ask, 2026-10-25, as Minecraft's villages do): open ground keeps
+		// its own floor and what grows on it (podzol under a fern, low); a way is paved on its own column's top, whatever its height (a
+		// knoll of dirt three up), and over water as a causeway of the same stone.
 		ServerLevel level = helper.getLevel();
 		SectPiece grounds = null;
 		for (var piece : SectStructure.layOut(17, 0, Direction.NORTH, false)) {
 			if (((SectPiece) piece).kind() == SectPiece.Kind.TERRACE) grounds = (SectPiece) piece;
 		}
-		helper.assertTrue(grounds != null, "A sect has grounds");
+		helper.assertTrue(grounds != null && grounds.extra().getBoolean("Follow"), "A sect has grounds that follow the land");
 		int w = grounds.width();
 		byte[] map = grounds.extra().getByteArray("Map");
-		int open = -1;
-		for (int i = 0; i + 2 < map.length && open < 0; i++) {
-			if (i % w + 2 < w && map[i] == SectLayout.GRASS && map[i + 1] == SectLayout.GRASS && map[i + 2] == SectLayout.GRASS) open = i;
+		// Open ground, then two paved columns of a way just beyond it, in one row.
+		int open = -1, way = -1;
+		for (int i = 0; i + 5 < map.length && open < 0; i++) {
+			if (map[i] != SectLayout.GRASS) continue;
+			for (int k = 1; k <= 3; k++) {
+				if ((i + k) % w + 1 < w && (i + k) / w == i / w && map[i + k] == SectLayout.PATH && map[i + k + 1] == SectLayout.PATH) {
+					open = i;
+					way = i + k;
+					break;
+				}
+			}
 		}
-		helper.assertTrue(open >= 0, "Open ground on the grounds");
-		// The grounds moved so three open columns of theirs come down in the test's space.
-		BlockPos ground = helper.absolutePos(new BlockPos(2, 6, 2)), first = grounds.toWorld(open % w, 0, open / w);
+		helper.assertTrue(open >= 0, "Open ground beside a way on the grounds");
+		// The grounds moved so those columns come down in the test's space.
+		BlockPos ground = helper.absolutePos(new BlockPos(1, 6, 2)), first = grounds.toWorld(open % w, 0, open / w);
 		grounds.move(ground.getX() - first.getX(), ground.getY() - first.getY(), ground.getZ() - first.getZ());
-		BlockPos[] columns = new BlockPos[3];
-		for (int i = 0; i < 3; i++) columns[i] = grounds.toWorld(open % w + i, 0, open / w);
+		BlockPos[] columns = {grounds.toWorld(open % w, 0, open / w), grounds.toWorld(way % w, 0, way / w), grounds.toWorld(way % w + 1, 0, way / w)};
 		try {
 			for (int dy = -5; dy <= -3; dy++) level.setBlock(columns[0].above(dy), Blocks.STONE.defaultBlockState(), 2);
 			level.setBlock(columns[0].below(2), Blocks.PODZOL.defaultBlockState(), 2);
 			level.setBlock(columns[0].below(), Blocks.FERN.defaultBlockState(), 2);
 			for (int dy = -5; dy <= 2; dy++) level.setBlock(columns[1].above(dy), Blocks.DIRT.defaultBlockState(), 2);
-			level.setBlock(columns[1].above(3), Blocks.COARSE_DIRT.defaultBlockState(), 2);
-			level.setBlock(columns[1].above(4), Blocks.SPRUCE_LOG.defaultBlockState(), 2);
 			for (int dy = -5; dy <= -4; dy++) level.setBlock(columns[2].above(dy), Blocks.STONE.defaultBlockState(), 2);
 			for (int dy = -3; dy <= -1; dy++) level.setBlock(columns[2].above(dy), Blocks.WATER.defaultBlockState(), 2);
 			var box = net.minecraft.world.level.levelgen.structure.BoundingBox.encapsulatingPositions(
 					List.of(columns[0].below(20), columns[2].above(45))).orElseThrow();
 			grounds.postProcess(level, level.structureManager(), level.getChunkSource().getGenerator(), level.random, box,
 					new net.minecraft.world.level.ChunkPos(ground), ground);
-			helper.assertTrue(level.getBlockState(columns[0]).is(Blocks.PODZOL) && level.getBlockState(columns[0].below()).is(Blocks.DIRT),
-					"Podzol raised to the grounds stays podzol (" + level.getBlockState(columns[0]) + ")");
-			helper.assertTrue(level.getBlockState(columns[1]).is(Blocks.COARSE_DIRT) && level.getBlockState(columns[1].above()).isAir(),
-					"A knoll of coarse dirt cut down to the grounds stays coarse dirt (" + level.getBlockState(columns[1]) + ")");
-			helper.assertTrue(level.getBlockState(columns[2]).is(Blocks.GRASS_BLOCK) && level.getFluidState(columns[2].below()).isEmpty(),
-					"Over water it is grass, on earth filled in (" + level.getBlockState(columns[2]) + ")");
+			helper.assertTrue(level.getBlockState(columns[0].below(2)).is(Blocks.PODZOL) && level.getBlockState(columns[0].below()).is(Blocks.FERN),
+					"Open ground keeps its floor and its fern where they lie (" + level.getBlockState(columns[0].below(2)) + ")");
+			BlockState knoll = level.getBlockState(columns[1].above(2)), causeway = level.getBlockState(columns[2].below());
+			helper.assertTrue(!knoll.is(Blocks.DIRT) && level.getBlockState(columns[1].above(3)).isAir() && level.getBlockState(columns[1].above(1)).is(Blocks.DIRT),
+					"The way is paved on the knoll's own top (" + knoll + ")");
+			helper.assertTrue(causeway.getBlock() == knoll.getBlock() && level.getFluidState(columns[2].below(2)).isSource(),
+					"Over water the way is a causeway of its own stone (" + causeway + ")");
 			helper.succeed();
 		} finally {
 			for (BlockPos column : columns) {

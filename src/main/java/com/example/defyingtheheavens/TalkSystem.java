@@ -86,7 +86,11 @@ public final class TalkSystem {
 		/** Leaving the sect one belongs to (an elder releases you). */
 		LEAVE_SECT("leave_sect"),
 		/** A settler's wish (Wishes), only a Four Axis cultivator can grant; its own choices follow under Wishes#ACTIONS. */
-		WISH("wish");
+		WISH("wish"),
+		/** The Celestial Court (CelestialCourt), asked of a Heavenly Venerable: taken into it, or told where you stand in it. Appended. */
+		COURT("court"),
+		/** The primordial beasts (PrimordialBeasts), asked of a Heavenly Venerable: the way to each, or when the next comes. Appended. */
+		BEASTS("beasts");
 
 		private final String id;
 
@@ -543,10 +547,22 @@ public final class TalkSystem {
 		if (isSenior(player, npc) || teaches(npc)) replies.add(gated(Topic.GUIDANCE, regard >= Regard.WARM, "warm"));
 		if (npc instanceof GhostCultivatorNpc ghost && ghost.getRole() == GhostCultivatorNpc.Role.MENG_PO) replies.add(topic(Topic.SOUP));
 		// A sect's elders teach its element's heaven method, and a rogue its own, to the living they are Warm to (to their own
-		// sect's disciples once Courteous).
+		// sect's disciples once Courteous); a Heavenly Venerable its element's True Immortal method to the Celestial Court's Captains and above.
 		if (teachesHeaven(npc) && !GhostSystem.isGhost(player)) {
-			boolean fellow = SectMembership.areFellows(npc, player);
-			replies.add(gated(Topic.METHOD, regard >= (fellow ? Regard.COURTEOUS : Regard.WARM), fellow ? "courteous" : "warm"));
+			if (npc.getTitle() == NpcTitle.HEAVENLY_VENERABLE) {
+				CelestialCourt.Rank rank = CelestialCourt.rankOf(player.server, player.getUUID());
+				boolean open = rank != null && rank.ordinal() >= CelestialCourt.Rank.CAPTAIN.ordinal();
+				replies.add(new Reply(Topic.METHOD.ordinal(), Component.translatable(ModLang.talkTopic(Topic.METHOD.getId())), open,
+						open ? null : Component.translatable(ModLang.TALK_NEEDS_COURT, CelestialCourt.Rank.CAPTAIN.displayName())));
+			} else {
+				boolean fellow = SectMembership.areFellows(npc, player);
+				replies.add(gated(Topic.METHOD, regard >= (fellow ? Regard.COURTEOUS : Regard.WARM), fellow ? "courteous" : "warm"));
+			}
+		}
+		// The Celestial Court, of one of its Heavenly Venerables: taken into it, or told where you stand in it.
+		if (npc.getTitle() == NpcTitle.HEAVENLY_VENERABLE && CelestialCourt.isCourtier(npc) && !GhostSystem.isGhost(player)) {
+			replies.add(topic(Topic.COURT));
+			replies.add(topic(Topic.BEASTS));
 		}
 		// Joining the sect (or leaving it), and the trial an elder has set (SectMembership).
 		if (npc.isSectMember() && npc.sect() != null && !GhostSystem.isGhost(player) && !npc.isGhost()) {
@@ -631,9 +647,13 @@ public final class TalkSystem {
 		return Component.translatable(ModLang.talkLine("leave.done"));
 	}
 
-	/** A living cultivator who teaches its heaven method: a sect's elders and master, and rogues (CultivatorNpc#heavenMethod). */
+	/**
+	 * A living cultivator who teaches its heaven method: a sect's elders and master, rogues, and the Celestial Court's Heavenly Venerables
+	 * (CultivatorNpc#heavenMethod).
+	 */
 	private static boolean teachesHeaven(CultivatorNpc npc) {
-		return !npc.isGhost() && npc.heavenMethod() != null && (npc.getTitle().isElderOrAbove() || npc.getTitle() == NpcTitle.ROGUE);
+		return !npc.isGhost() && npc.heavenMethod() != null
+				&& (npc.getTitle().isElderOrAbove() || npc.getTitle() == NpcTitle.ROGUE || npc.getTitle() == NpcTitle.HEAVENLY_VENERABLE);
 	}
 
 	/** One of the dead who knows a ghost method it can teach (Foundation Building and above, GhostCultivatorNpc#method). */
@@ -700,6 +720,8 @@ public final class TalkSystem {
 			case TRIAL -> beginTrial(player, npc);
 			case LEAVE_SECT -> leaveSect(player, npc);
 			case WISH -> Wishes.tell(player, npc);
+			case COURT -> CelestialCourt.ask(player, npc);
+			case BEASTS -> primordialBeasts(npc);
 		};
 		if (answer == null) return; // the trial began: the talk is over (SparSystem#start closed it)
 		List<Reply> after = new ArrayList<>(replies(player, npc, standing));
@@ -707,14 +729,30 @@ public final class TalkSystem {
 		ModPackets.sendTalkDialogue(player, npc, npc.regard(player), TalkIntent.ASK, speech(answer), after);
 	}
 
+	/** A Heavenly Venerable on the primordial beasts: where each keeps, from the Southern Heavenly Gate, or when the next comes (PrimordialBeasts). */
+	private static Component primordialBeasts(CultivatorNpc npc) {
+		net.minecraft.network.chat.MutableComponent said = Component.translatable(ModLang.talkLine("primordial"));
+		if (npc.level() instanceof ServerLevel level && ModDimensions.isImmortalRealm(level.dimension())) {
+			for (Component line : PrimordialBeasts.directions(level)) said.append(" ").append(line);
+		}
+		return said;
+	}
+
 	private static Component aboutSelf(CultivatorNpc npc, boolean freely) {
 		Component name = Component.literal(npc.getPersonalName());
 		if (npc.isMortal()) return Component.translatable(ModLang.talkLine("self.commoner"), name);
+		// One of the Celestial Court's: its station there, a Venerable's element, its realm as it is named (CultivatorNpc#rankLabel).
+		if (CelestialCourt.isCourtier(npc)) {
+			Component title = npc.getTitle().getDisplayName();
+			return npc.getTitle() == NpcTitle.HEAVENLY_VENERABLE && npc.courtElement() != null
+					? Component.translatable(ModLang.talkLine("self.court.venerable"), name, npc.courtElement().getDisplayName(), npc.rankLabel())
+					: Component.translatable(ModLang.talkLine("self.court"), name, title, npc.rankLabel());
+		}
 		Component realm = PlayerCultivation.rankName(npc.getDisplayedRealm(), npc.getDisplayedStage());
 		Sect sect = npc.sect();
 		String path = npc.getFaction().getId();
 		Component who = sect != null
-				? Component.translatable(ModLang.talkLine("self.sect", path), name, npc.getTitle().getDisplayName(sect.isClan()), sect.name, realm)
+				? Component.translatable(ModLang.talkLine("self.sect", path), name, npc.getTitle().getDisplayName(sect.isClan(), sect.isHoly(), sect.isImmortal()), sect.name, realm)
 				: Component.translatable(ModLang.talkLine("self.rogue", path), name, realm);
 		MutableComponent answer = Component.empty().append(who).append(" ")
 				.append(Component.translatable(ModLang.talkLine("self.years"), npc.yearsCultivated()));
@@ -766,8 +804,9 @@ public final class TalkSystem {
 	 */
 	static Component teachHeaven(ServerPlayer player, CultivatorNpc npc) {
 		HeavenMethod method = npc.heavenMethod();
-		// A True Immortal's method the worlds don't teach (Realm#taughtInTheWorld): only guidance.
-		if (method == null || !method.realm().taughtInTheWorld()) return guidance(player, npc);
+		// A True Immortal's method the worlds below don't teach (Realm#taughtInTheWorld): only guidance there. The Immortal Realm's immortals
+		// teach theirs (phase 2: "immortals who teach or sell them").
+		if (method == null || !method.realm().taughtInTheWorld() && !ModDimensions.isImmortalRealm(npc.level().dimension())) return guidance(player, npc);
 		Regard.Entry entry = npc.regardEntry(player);
 		long today = Regard.day(npc.level().getGameTime());
 		if (entry.guidanceDay == today) return line("guidance.again", npc);

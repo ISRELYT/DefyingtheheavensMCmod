@@ -20,15 +20,17 @@ import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConf
  * and Nascent Soul's seldom; its rare lands (cherry groves, mushroom isles, ice spikes, eroded badlands, the deep jungles) the
  * deeper ones more often. Heavenly Being methods are carved almost only in the Upper Realm, and Four Axis methods there alone, the
  * most in its own wondrous lands (the Dense Qi Peaks, the Thunder Peaks, the Ancient Sword Graveyard, the Spirit Forest, the
- * Peach Blossom Sanctuary); the realms' after it rarer and rarer, Void Shattering's to Entering Nirvana's in those lands alone. True
- * Immortal's on none (Realm#taughtInTheWorld: the user's rule, 2026-10-25; one carved before it stays unreadable).
+ * Peach Blossom Sanctuary); the realms' after it rarer and rarer, Void Shattering's to Entering Nirvana's in those lands alone. The
+ * Great Void Realm above it (2026-10-25) carves its own realms' most: Dao Integration's above all, Four Axis's and Void Shattering's
+ * often, Sacred Vessel's and Entering Nirvana's now and then. True Immortal's on none (Realm#taughtInTheWorld: the user's rule,
+ * 2026-10-25; one carved before it stays unreadable).
  */
 public class DaoSteleFeature extends Feature<NoneFeatureConfiguration> {
 	/** No other stele within this many blocks across and this many up or down. */
 	private static final int SPACING = 12, SPACING_HEIGHT = 8;
 
 	/** Where a stele stands, for its realm's rarity. */
-	public enum Lands { OVERWORLD, OVERWORLD_RARE, UPPER_REALM, UPPER_REALM_RARE }
+	public enum Lands { OVERWORLD, OVERWORLD_RARE, UPPER_REALM, UPPER_REALM_RARE, GREAT_VOID }
 
 	/**
 	 * Each kind of land's weights for a stele's realm, Qi Refining to True Immortal: past Four Axis's (2026-10-22) carved only in the
@@ -40,6 +42,7 @@ public class DaoSteleFeature extends Feature<NoneFeatureConfiguration> {
 			{300, 250, 150, 40, 3, 0, 0, 0, 0, 0, 0},
 			{0, 40, 150, 100, 40, 10, 2, 0, 0, 0, 0},
 			{0, 0, 100, 100, 60, 25, 6, 2, 1, 1, 0},
+			{0, 0, 0, 0, 20, 60, 100, 60, 25, 10, 0},
 	};
 
 	public DaoSteleFeature() {
@@ -89,6 +92,7 @@ public class DaoSteleFeature extends Feature<NoneFeatureConfiguration> {
 
 	/** What kind of land {@code biome} is, for its steles' realms. */
 	static Lands lands(Holder<Biome> biome) {
+		if (biome.is(ModTags.IS_GREAT_VOID)) return Lands.GREAT_VOID;
 		if (biome.is(ModTags.IS_UPPER_REALM)) {
 			return biome.is(ModBiomes.DENSE_QI_PEAKS) || biome.is(ModBiomes.THUNDER_PEAKS) || biome.is(ModBiomes.ANCIENT_SWORD_GRAVEYARD)
 					|| biome.is(ModBiomes.SPIRIT_FOREST) || biome.is(ModBiomes.PEACH_BLOSSOM_SANCTUARY) ? Lands.UPPER_REALM_RARE : Lands.UPPER_REALM;

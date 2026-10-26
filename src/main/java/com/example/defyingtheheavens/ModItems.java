@@ -112,6 +112,27 @@ public final class ModItems {
 	public static final Item DEMON_BLOOD = register("demon_blood", new DemonBloodItem(new Item.Properties().stacksTo(16)));
 	/** A sect's guest pass: carried, its barrier lets one through until it lapses (see SectPassItem). */
 	public static final Item SECT_PASS = register("sect_pass", new SectPassItem(new Item.Properties().stacksTo(1)));
+	/** The Sacred Vessels, the Great Void's relics, one for each element: held, its spells strike harder (see SacredVesselItem, SacredRelicFeature). */
+	public static final Item JIANMU_BOUGH_VASE = register("jianmu_bough_vase", new SacredVesselItem(QiElement.WOOD, vessel()));
+	public static final Item HEAVEN_FURNACE_CENSER = register("heaven_furnace_censer", new SacredVesselItem(QiElement.FIRE, vessel()));
+	public static final Item NINE_PROVINCES_DING = register("nine_provinces_ding", new SacredVesselItem(QiElement.EARTH, vessel()));
+	public static final Item IMMORTAL_FORGING_BELL = register("immortal_forging_bell", new SacredVesselItem(QiElement.METAL, vessel()));
+	public static final Item SEALED_OCEAN_GOURD = register("sealed_ocean_gourd", new SacredVesselItem(QiElement.WATER, vessel()));
+
+	private static Item.Properties vessel() {
+		return new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.EPIC).fireResistant();
+	}
+
+	/** The Sacred Vessel of {@code element} (one of the five). */
+	public static Item sacredVessel(QiElement element) {
+		return switch (element) {
+			case WOOD -> JIANMU_BOUGH_VASE;
+			case FIRE -> HEAVEN_FURNACE_CENSER;
+			case EARTH -> NINE_PROVINCES_DING;
+			case METAL -> IMMORTAL_FORGING_BELL;
+			default -> SEALED_OCEAN_GOURD;
+		};
+	}
 	/** The wild demon beasts' spawn eggs: "iron_hide_boar_spawn_egg" and so on (see BeastKind). */
 	private static final Map<BeastKind, Item> BEAST_EGGS = new EnumMap<>(BeastKind.class);
 
@@ -170,6 +191,11 @@ public final class ModItems {
 			new SpiritStoneItem(SpiritStoneItem.Grade.SUPREME, new Item.Properties()));
 	public static final Item IMMORTAL_SPIRIT_STONE = register("immortal_spirit_stone",
 			new SpiritStoneItem(SpiritStoneItem.Grade.IMMORTAL, new Item.Properties().fireResistant()));
+	/** Immortal Jade, the Immortal Realm's coin over them all: nine Immortal stones (phase 2). */
+	public static final Item IMMORTAL_JADE = register("immortal_jade", new SpiritStoneItem(SpiritStoneItem.Grade.IMMORTAL_JADE, new Item.Properties().fireResistant()));
+	/** The Celestial Court's pay for its officers' service, spent with its Quartermaster (CelestialCourt). */
+	public static final Item COURT_MERIT_TOKEN = register("court_merit_token",
+			new CourtMeritTokenItem(new Item.Properties().fireResistant().rarity(Rarity.UNCOMMON)));
 
 	private static Item register(String id, Item item) {
 		return Registry.register(BuiltInRegistries.ITEM, new ResourceLocation(DefyingTheHeavens.MOD_ID, id), item);
@@ -201,12 +227,14 @@ public final class ModItems {
 			entries.accept(SPIRIT_DEW);
 			entries.accept(JADE);
 			for (SpiritStoneItem.Grade grade : SpiritStoneItem.Grade.values()) entries.accept(SpiritStoneItem.of(grade));
+			entries.accept(COURT_MERIT_TOKEN);
 			// A demon core in each of its looks (DemonCoreItem#look), at each realm's first stage.
 			for (int look = 0; look < DemonCoreItem.LOOKS; look++) entries.accept(DemonCoreItem.of(look * Stage.values().length, null, null));
 			// Each race's blood at Qi Refining (the mod's own tab has every realm's).
 			for (Bloodline race : Bloodline.values()) if (race.isBeast()) entries.accept(DemonBloodItem.of(race, Realm.QI_REFINING));
 		});
 		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(entries -> {
+			for (QiElement element : QiElement.five()) entries.accept(sacredVessel(element));
 			entries.accept(RING_OF_POWER);
 			entries.accept(RING_OF_TRANSCENDENCE);
 			entries.accept(INSCRIPTION_BRUSH);

@@ -74,6 +74,17 @@ public final class ClientCultivationData {
 	public static double lifeSpan() { return lifeSpan; }
 	public static boolean lifeDead() { return lifeDead; }
 
+	/** The local player's immortal essence (ImmortalEssence) and its pool, as the server reckons them (no pool short of True Immortal). */
+	private static double essence, essenceMax;
+
+	static void essence(double held, double max) {
+		essence = held;
+		essenceMax = max;
+	}
+
+	public static double essence() { return essence; }
+	public static double essenceMax() { return essenceMax; }
+
 	/** The local player plays their clone now (Clones): the record shown is the clone's, its way back on the wheel. */
 	private static boolean inClone;
 
@@ -97,6 +108,8 @@ public final class ClientCultivationData {
 		DATA.setPillResistance(0);
 		DATA.setMedicinalQi(0);
 		DATA.setQi(0);
+		DATA.setEssence(0);
+		essence(0, 0);
 		DATA.setAlignment(0);
 		DATA.setGearQiBonus(0);
 		int offByDefault = 0;

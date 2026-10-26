@@ -179,6 +179,9 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	private double suppressUpkeep;
 	private boolean landing;
 	private int lastSteered;
+	/** Where it last stood on solid ground (saved, as its flight isn't), and how much longer it flies back there having fallen from a height ({@link #catchItself}). */
+	private Vec3 footing;
+	private int recovering;
 	/** Its own regard for each player it has dealt with (see {@link Regard}); its sect's standing is added on top. */
 	private final Map<UUID, Regard.Entry> regard = new HashMap<>();
 	/** When each player last struck it (not saved): a fight costs regard once, not per blow. */
@@ -291,8 +294,11 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	/** One of the Netherworld's dead (GhostCultivatorNpc). */
 	public boolean isGhost() { return false; }
 
-	/** Keeps a post of its own (the Ghost Gate's keepers): it doesn't stroll off, nor fall into talk with passers-by. */
-	public boolean keepsPost() { return false; }
+	/**
+	 * Keeps a post of its own (the Ghost Gate's keepers; an Immortal Realm merchant its stall, CityMarkets): it doesn't stroll off, nor fall
+	 * into talk with passers-by.
+	 */
+	public boolean keepsPost() { return (getTitle() == NpcTitle.IMMORTAL_MERCHANT || getTitle().isCourt()) && settledAt != null; }
 
 	/**
 	 * A new cultivator for {@code level}: in the Netherworld one of its dead (a ghost cultivator, GhostCultivatorNpc), anywhere
@@ -431,6 +437,20 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		if (!level().isClientSide && isVacant() && tickCount % 20 == 0 && !Possession.holds(getUUID())) setVacant(false);
 	}
 
+	/**
+	 * Seated at a post of the Court's (CelestialCourt: the King on his throne, a Venerable in its hall), it sits square to it: its body
+	 * as it faces (set there), only its head turning to whoever comes near or glancing about. Its body following its head, as a mob's
+	 * does, once turned the Heavenly King round to the screen behind his throne (tour 13).
+	 */
+	@Override
+	protected float tickHeadTurn(float yRot, float animStep) {
+		if (isMeditating() && getTitle().isCourt()) {
+			yBodyRot = getYRot();
+			return animStep;
+		}
+		return super.tickHeadTurn(yRot, animStep);
+	}
+
 	public boolean isMeditating() { return flag(FLAG_MEDITATING); }
 	public void setMeditating(boolean meditating) { setFlag(FLAG_MEDITATING, meditating); }
 	/** In the air by its own power: on qi alone, or riding its sword ({@link #isSwordFlying}). */
@@ -467,7 +487,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	}
 
 	public Component describe() {
-		return Component.translatable(ModLang.NPC_TITLE_BRACKETS, getTitle().getDisplayName(isDemon()));
+		return Component.translatable(ModLang.NPC_TITLE_BRACKETS, getTitle().getDisplayName(isDemon(), HolyLands.isHolyLand(level().dimension()),
+				ImmortalSects.isImmortalSect(level().dimension())));
 	}
 
 	/** Its personal name ("Mo Lian"), the same everywhere it is named (see {@link NpcNames}); a name tag's name if it has one. */
@@ -799,8 +820,26 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		// Only Outer Disciples keep the gates (Sect#guardPost): one raised above them (its seniors fallen, say, while it was in
 		// the thick of a fight and choosing no duty) is a gate guard no longer, and its name shows its new title.
 		if (title != NpcTitle.OUTER_DISCIPLE) setGateGuard(false);
-		// Promoted past the clothing it wears: it dresses for its new station.
-		if (before != title && !level().isClientSide && title.isSectTitle()) upgradeClothing(ClothingStyle.of(getFaction()), clothingTier(title, getRank(), random));
+		// Promoted past the clothing it wears: it dresses for its new station (the Celestial Court's people too).
+		if (before != title && !level().isClientSide && (title.isSectTitle() || title.isCourt())) upgradeClothing(ClothingStyle.of(getFaction()), clothingTier(title, getRank(), random));
+		// Made one of the Court's King or Venerables (or no longer one): its strength as its station has it (CelestialCourt#might).
+		if (before != title && CelestialCourt.might(before) != CelestialCourt.might(title)) refreshStats();
+	}
+
+	/** A Heavenly Venerable's element (CelestialCourt): the True Immortal method it teaches. Null for anyone else. */
+	private QiElement courtElement;
+
+	public QiElement courtElement() { return courtElement; }
+	public void setCourtElement(QiElement element) { courtElement = element; }
+
+	/**
+	 * Its realm as it is named: the Celestial Court's King a Daluo Golden Immortal, its Venerables Taiyi Golden Immortals (the realm plan:
+	 * True Immortals of their rank's strength until phase 3, shown as so); anyone else by the realm and stage it shows.
+	 */
+	public Component rankLabel() {
+		if (getTitle() == NpcTitle.HEAVENLY_KING) return Component.translatable(ModLang.RANK_DALUO);
+		if (getTitle() == NpcTitle.HEAVENLY_VENERABLE) return Component.translatable(ModLang.RANK_TAIYI);
+		return PlayerCultivation.rankName(getDisplayedRealm(), getDisplayedStage());
 	}
 
 	public void joinSect(Sect sect, int homeIndex) {
@@ -825,7 +864,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		int rank = fightingRank();
 		Realm realm = isMortal() ? Realm.QI_REFINING : realmOf(rank);
 		Stage stage = isMortal() ? Stage.EARLY : stageOf(rank);
-		CultivationStats.applyNpc(this, realm, stage, isMortal());
+		// The Celestial Court's King and Venerables stronger than their realm (CelestialCourt#might), but not holding back in a spar.
+		CultivationStats.applyNpc(this, realm, stage, isMortal(), sparHoldBack == NO_HOLD_BACK ? CelestialCourt.might(getTitle()) : 1);
 		if (oldMax > 0 && getMaxHealth() != oldMax) setHealth(Math.min(getMaxHealth(), oldHealth * getMaxHealth() / oldMax));
 		updateShownRank();
 	}
@@ -860,7 +900,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		}
 	}
 
-	/** Sect members dress by title, rogues by realm; the Upper Realm's are a grade finer. */
+	/** Sect members dress by title, rogues by realm; the Upper Realm's are a grade finer, the Great Void's and the Immortal Realm's two. */
 	public ClothingTier clothingTier(NpcTitle title, int rank, RandomSource random) {
 		int grade = switch (title) {
 			case SECT_MASTER -> 3;
@@ -868,10 +908,15 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			case ELDER -> 1 + random.nextInt(2);
 			case INNER_DISCIPLE -> random.nextInt(2);
 			case OUTER_DISCIPLE -> 0;
-			case ROGUE, WANDERER, WANDERING_GHOST, GHOST_ELDER, GATE_WARDEN, BRIDGE_KEEPER, GHOST_KING, GHOST_RETAINER ->
+			case ROGUE, WANDERER, WANDERING_GHOST, GHOST_ELDER, GATE_WARDEN, BRIDGE_KEEPER, GHOST_KING, GHOST_RETAINER, RELIC_KEEPER, IMMORTAL_OFFICER,
+					IMMORTAL_MERCHANT ->
 					rank < 0 ? 0 : Math.min(4, rank / Stage.values().length - 1 + random.nextInt(2));
+			case HEAVENLY_KING, HEAVENLY_VENERABLE -> 4;
+			case IMMORTAL_GENERAL -> 3;
+			case COURT_QUARTERMASTER -> 2;
 		};
 		if (ModDimensions.isUpperRealm(level().dimension())) grade++;
+		else if (ModDimensions.isGreatVoid(level().dimension()) || ModDimensions.isImmortalRealm(level().dimension())) grade += 2;
 		return ClothingTier.byIndex(Math.max(0, grade));
 	}
 
@@ -892,7 +937,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		SpawnGroupData result = super.finalizeSpawn(level, difficulty, type, data, tag);
 		if (sectId == null && (tag == null || !tag.contains("Npc"))) {
 			RandomSource random = level.getRandom();
-			int rank = NpcSpawner.rollRank(random, ModDimensions.isUpperRealm(level.getLevel().dimension()), true);
+			int rank = NpcSpawner.rollRank(random, level.getLevel().dimension(), true);
 			becomeRogue(rank, Alignment.randomRogue(random), random);
 		}
 		return result;
@@ -953,6 +998,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			if (!(talkPartner() instanceof ServerPlayer partner) || !TalkSystem.kneelsTo(partner, this)) setKneeling(false);
 		}
 		if (lifecycle == Lifecycle.SECLUDED && isConcealed()) repulse(level);
+		catchItself(level);
 		tickFlight(level);
 		NpcTravel.maybeDispatch(this, level);
 	}
@@ -1017,8 +1063,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	 */
 	private void cultivate(double seconds, double multiplier) {
 		for (int guard = 0; guard < 32 && seconds > 1.0e-9 && !isMortal() && !cultivation.isMaxed(); guard++) {
-			double perSecond = cultivation.cultivationPerSecond() * NPC_RATE * multiplier
-					* (cultivation.isInUpperRealm() ? PlayerCultivation.UPPER_REALM_QI_MULTIPLIER : 1.0);
+			double perSecond = cultivation.cultivationPerSecond() * NPC_RATE * multiplier * placeQi();
 			if (perSecond <= 0) return;
 			double need = Math.max(0, cultivation.cultivationRequired() - cultivation.getCultivation());
 			if (need > perSecond * seconds) {
@@ -1030,6 +1075,14 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			if (getRank() == before) return;
 			seconds -= need / perSecond;
 		}
+	}
+
+	/** How dense the qi where it stands is, against the lower realms': the Immortal Realm's, the Great Void's, the Upper Realm's, else theirs. */
+	private double placeQi() {
+		if (ModDimensions.isImmortalRealm(level().dimension()) || ModDimensions.isGreatVoid(level().dimension())) {
+			return RealmSuppressionHandler.realmQi(level().dimension());
+		}
+		return cultivation.isInUpperRealm() ? PlayerCultivation.UPPER_REALM_QI_MULTIPLIER : 1.0;
 	}
 
 	/** Cultivation a second this NPC gathers meditating with nothing to help it: a tenth of a player's (used by the tests). */
@@ -1717,6 +1770,54 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		if (isQiFlying()) landing = true;
 	}
 
+	/** How far it falls with nothing near under it before it takes to the air, and for how long at most it then flies back to where it stood. */
+	private static final int CATCH_DROP = 6, CATCH_TICKS = 200;
+
+	/**
+	 * A cultivator that can fly doesn't fall to its death: knocked or stepped off a height with no ground near under it (a floating island's
+	 * rim or a bridge over the Immortal Realm's sea of clouds, ImmortalSectPlan), or loaded in the air (its flight isn't saved), it takes to
+	 * the air and flies back to where it last stood (else to its home): up beside the rim it fell from (out from under anything over it),
+	 * across above, then down there; over open sky it keeps at it till it is down. With neither to go back to, it holds where it is
+	 * (tickFlight). In a fight its fight steers it instead.
+	 */
+	private void catchItself(ServerLevel level) {
+		if (onGround() && !isQiFlying()) {
+			// (Only where it truly stands: set down in the air, it counts as on the ground, on the block it last stood on, until it next
+			// moves; tour 12.)
+			if (!level.getBlockState(BlockPos.containing(getX(), getY() - 0.1, getZ())).isAir()) footing = position();
+			recovering = 0;
+			return;
+		}
+		if (recovering > 0) {
+			Vec3 back = footing != null ? footing : home != null ? Vec3.atBottomCenterOf(home) : null;
+			if (!isQiFlying() || back == null || isInCombat()) {
+				recovering = 0;
+				return;
+			}
+			// Still over open sky when its time is up (held back, or far to go): it keeps at it.
+			if (--recovering == 0 && Formations.surface(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, getBlockX(), getBlockZ()) <= level.getMinBuildHeight() + 1) {
+				recovering = CATCH_TICKS;
+			}
+			Vec3 across = new Vec3(back.x - getX(), 0, back.z - getZ());
+			if (across.lengthSqr() < 2.25 && getY() >= back.y - 1) {
+				land();
+			} else if (getY() < back.y + 1.5) {
+				// Up first, straight up beside the rim it fell from (tour 12: flown straight back, one stuck under its island's overhang);
+				// held under something, out from under it, away from where it stood.
+				Vec3 out = across.lengthSqr() < 1.0e-4 ? new Vec3(1, 0, 0) : across.normalize().scale(-4);
+				flyToward(verticalCollision ? position().add(out).add(0, 2, 0) : new Vec3(getX(), back.y + 3, getZ()), 0.6);
+			} else {
+				flyToward(new Vec3(back.x, back.y + 3, back.z), 0.6);
+			}
+			return;
+		}
+		if (isQiFlying() || fallDistance < CATCH_DROP || !canFlySustainably()) return;
+		int ground = Formations.surface(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, getBlockX(), getBlockZ());
+		if (getY() - ground < 16) return; // only a short way down to the ground: it lands as anyone would
+		setQiFlying(true);
+		recovering = CATCH_TICKS;
+	}
+
 	/**
 	 * While flying: lands when asked to or when nothing is steering it any more; drops out of the sky with no qi left. Package-private
 	 * for the game tests.
@@ -1930,6 +2031,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 				killer.displayClientMessage(Component.translatable(shift > 0 ? ModLang.MSG_ALIGNMENT_UP : ModLang.MSG_ALIGNMENT_DOWN,
 						Math.abs(shift), Alignment.describe(c.getAlignment())), true);
 			}
+			CelestialCourt.onSlain(this, killer); // one of the Immortal Realm's devilish immortals slain: merit for an officer of the Court
 		}
 		lowerConcealment(server);
 		setSuppressing(false);
@@ -1946,8 +2048,11 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		super.dropCustomDeathLoot(source, looting, recentlyHit);
 		if (isDemon() && !isMortal() && !isGhost()) {
 			spawnAtLocation(DemonCoreItem.of(getRank(), DemonPath.element(getBloodline()), getName()));
-			// Now and then its race's blood, of its realm (DemonBlood), none beyond what the worlds hold (Realm#atMostTaught).
-			if (random.nextFloat() < DemonBlood.NPC_CHANCE) spawnAtLocation(DemonBloodItem.of(getBloodline(), DemonPath.realm(getRank()).atMostTaught()));
+			// Now and then its race's blood, of its realm (DemonBlood), none beyond what the worlds hold (Realm#atMostTaught): in the
+			// Immortal Realm a True Immortal's too (DemonBlood#carried).
+			if (random.nextFloat() < DemonBlood.NPC_CHANCE) {
+				spawnAtLocation(DemonBloodItem.of(getBloodline(), DemonBlood.carried(DemonPath.realm(getRank()), ModDimensions.isImmortalRealm(level().dimension()))));
+			}
 		}
 		for (ItemStack stack : carriedStones(getRank(), random)) spawnAtLocation(stack);
 		for (ItemStack stack : winnings) spawnAtLocation(stack);
@@ -1971,6 +2076,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	 */
 	public HeavenMethod heavenMethod() {
 		if (isMortal() || isGhost()) return null;
+		// A Heavenly Venerable's is its own element's True Immortal method (CelestialCourt).
+		if (getTitle() == NpcTitle.HEAVENLY_VENERABLE && courtElement != null) return HeavenMethod.of(courtElement, Realm.TRUE_IMMORTAL);
 		Sect sect = isSectMember() ? sect() : null;
 		// A demon's blood is its element's (DemonPath#element), as its clan's is.
 		QiElement element = sect != null ? sect.element() : isDemon() ? DemonPath.element(getBloodline())
@@ -2013,7 +2120,12 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 				stones.add(new ItemStack(ModItems.SUPREME_SPIRIT_STONE, 3 + random.nextInt(6)));
 				stones.add(new ItemStack(ModItems.IMMORTAL_SPIRIT_STONE, 1 + random.nextInt(realmOf(rank) == Realm.SACRED_VESSEL ? 3 : 1)));
 			}
-			case ENTERING_NIRVANA, TRUE_IMMORTAL -> stones.add(new ItemStack(ModItems.IMMORTAL_SPIRIT_STONE, 2 + random.nextInt(4)));
+			case ENTERING_NIRVANA -> stones.add(new ItemStack(ModItems.IMMORTAL_SPIRIT_STONE, 2 + random.nextInt(4)));
+			// A True Immortal carries the Immortal Realm's own coin besides (phase 2): Immortal Jade (second, so a gift of the first is the stones).
+			case TRUE_IMMORTAL -> {
+				stones.add(new ItemStack(ModItems.IMMORTAL_SPIRIT_STONE, 2 + random.nextInt(5)));
+				stones.add(new ItemStack(ModItems.IMMORTAL_JADE, 2 + random.nextInt(3)));
+			}
 		}
 		return stones;
 	}
@@ -2083,7 +2195,10 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	 * mustn't make room for another.
 	 */
 	public boolean isWanderingRogue() {
-		return lifecycle == Lifecycle.ROGUE && sectId == null && !isMortal();
+		// The Shore's campers keep to their camp, the Relic Keepers to their altars, the Southern Heavenly Gate's guards to their posts, the
+		// Immortal Realm's merchants to their stalls, the Celestial Court's people to theirs.
+		return lifecycle == Lifecycle.ROGUE && sectId == null && !isMortal() && !NirvanaCamp.isCamper(this) && !SacredRelics.isKeeper(this)
+				&& !ImmortalGate.isGuard(this) && !CityMarkets.isMerchant(this) && !CelestialCourt.isCourtier(this);
 	}
 
 	/** A mortal wanderer out about the land (of no sect; named by a player or not). */
@@ -2167,6 +2282,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		}
 		if (settledAt != null) npc.put("SettledAt", NbtUtils.writeBlockPos(settledAt));
 		if (wish != null) npc.put("Wish", wish.copy());
+		if (footing != null) npc.put("Footing", NbtUtils.writeBlockPos(BlockPos.containing(footing)));
+		if (courtElement != null) npc.putString("CourtElement", courtElement.name());
 		tag.put("Npc", npc);
 	}
 
@@ -2242,7 +2359,16 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			CompoundTag s = sparedList.getCompound(i);
 			if (s.hasUUID("Player")) sparedBy.put(s.getUUID("Player"), s.getLong("Until"));
 		}
-		setNoGravity(false); // flight isn't saved: it comes back to earth
+		setNoGravity(false); // flight isn't saved: it comes back to earth (or, over open sky, flies back to where it last stood)
+		footing = npc.contains("Footing") ? Vec3.atBottomCenterOf(NbtUtils.readBlockPos(npc.getCompound("Footing"))) : null;
+		courtElement = null;
+		if (npc.contains("CourtElement")) {
+			try {
+				courtElement = QiElement.valueOf(npc.getString("CourtElement"));
+			} catch (IllegalArgumentException ignored) {
+				// an element no longer known: it teaches as any other
+			}
+		}
 		if (npc.getBoolean("Vacant")) {
 			// Still set aside (its body taken when it was saved): so it stays while a soul holds it, and wakes once none does.
 			vacantWas = npc.getByte("VacantWas");

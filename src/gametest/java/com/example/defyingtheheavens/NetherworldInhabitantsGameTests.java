@@ -307,17 +307,23 @@ public class NetherworldInhabitantsGameTests implements FabricGameTest {
 		HungryGhost burning = helper.spawn(ModEntities.HUNGRY_GHOST, new BlockPos(12, 2, 12));
 		wailed.setNoAi(true);
 		burning.setNoAi(true);
+		float whole;
 		try {
 			s.setMethod(GhostMethod.NETHERWORLD_BREATHING, 5, 0);
 			s.setGhostQi(100);
 			player.teleportTo(wailed.getX() + 2, wailed.getY(), wailed.getZ());
-			float before = wailed.getHealth();
+			whole = wailed.getHealth();
 			Spells.cast(player, Spell.GHOSTLY_WAIL);
-			helper.assertTrue(Math.abs(before - wailed.getHealth() - Spells.WAIL_DEAD_DAMAGE) < 0.01,
-					"The wail harms a Hungry Ghost as it harms a ghost (took " + (before - wailed.getHealth()) + ")");
-		} finally {
+		} catch (RuntimeException e) {
 			Spells.forget(player.getUUID());
+			throw e;
 		}
+		// Its cry breaks out once its ghost has risen over its caster.
+		helper.runAfterDelay(Spells.WAIL_RISES + 2, () -> {
+			Spells.forget(player.getUUID());
+			helper.assertTrue(Math.abs(whole - wailed.getHealth() - Spells.WAIL_DEAD_DAMAGE) < 0.01,
+					"The wail harms a Hungry Ghost as it harms a ghost (took " + (whole - wailed.getHealth()) + ")");
+		});
 		burning.addEffect(new net.minecraft.world.effect.MobEffectInstance(ModEffects.GHOST_FIRE, 40));
 		float before = burning.getHealth();
 		helper.runAfterDelay(25, () -> {

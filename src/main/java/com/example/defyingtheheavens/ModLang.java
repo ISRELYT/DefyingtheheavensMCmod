@@ -352,6 +352,8 @@ public final class ModLang {
 	public static final String STONE_QI_LEFT = k("stone.qi_left");
 	/** A settlement's share of its fortune (SpiritStoneItem#fortune): whom it was shared with, and what it fills. */
 	public static final String STONE_FORTUNE = k("stone.fortune");
+	/** Immortal Jade's line (SpiritStoneItem.Grade#IMMORTAL_JADE). */
+	public static final String STONE_JADE = k("stone.jade");
 	// Demon cores (DemonCoreItem): "Foundation Building Demon Core", its rank, element, whence, and what it is for
 	public static final String CORE_NAME = k("demon_core.name");
 	public static final String CORE_RANK = k("demon_core.rank");
@@ -390,6 +392,9 @@ public final class ModLang {
 	public static final String PASS_LAPSED = k("sect_pass.lapsed");
 	public static final String PASS_BOUND = k("sect_pass.bound");
 	public static final String MSG_PASS_REVOKED = k("message.sect_pass.revoked");
+	// A Sacred Vessel (SacredVesselItem): what it does in hand, and what it is
+	public static final String SACRED_VESSEL_USE = k("sacred_vessel.use");
+	public static final String SACRED_VESSEL_LORE = k("sacred_vessel.lore");
 	// The menu's Journal tab (see Journal)
 	public static final String TAB_JOURNAL = k("tab.journal");
 	public static final String JOURNAL_EMPTY = k("journal.empty");
@@ -533,6 +538,43 @@ public final class ModLang {
 	public static final String MSG_BURN_OFF = k("message.burn_lifespan.off");
 	public static final String MSG_BURN_OUT = k("message.burn_lifespan.out");
 	public static final String MSG_BURN_TOO_FEW = k("message.burn_lifespan.too_few");
+	/** Immortal essence (ImmortalEssence, phase 2): lit, settled, spent, too little left to light. */
+	public static final String MSG_ESSENCE_ON = k("message.immortal_essence.on");
+	public static final String MSG_ESSENCE_OFF = k("message.immortal_essence.off");
+	public static final String MSG_ESSENCE_SPENT = k("message.immortal_essence.spent");
+	public static final String MSG_ESSENCE_TOO_LITTLE = k("message.immortal_essence.too_little");
+	/**
+	 * The Celestial Court (CelestialCourt, phase 2): merit for a minute's watch at the open Gate and for a devilish immortal slain, a rank
+	 * risen; its ranks ("captain"...) and the realms its King and Venerables are named by; its token's lines; the Sect tab's line of it.
+	 */
+	public static final String MSG_COURT_MERIT_WATCH = k("message.court.merit_watch");
+	public static final String MSG_COURT_MERIT_SLAIN = k("message.court.merit_slain");
+	public static final String MSG_COURT_RANK_UP = k("message.court.rank_up");
+	public static String courtRank(String id) { return k("court.rank." + id); }
+	public static final String RANK_DALUO = k("court.realm.daluo");
+	public static final String RANK_TAIYI = k("court.realm.taiyi");
+	public static final String TOKEN_EARNED = k("court.token.earned");
+	public static final String TOKEN_SPENT = k("court.token.spent");
+	public static final String SECT_TAB_COURT = k("sect_tab.court");
+	public static final String SECT_TAB_COURT_NEXT = k("sect_tab.court_next");
+	/** A Court line on the trading screen not yet open to you (CelestialCourt#offers): the rank it wants, and yours (or none). */
+	public static final String TRADE_LOCKED_RANK = k("talk.trade_locked_rank");
+	public static final String TRADE_NOT_OF_COURT = k("talk.trade_not_of_court");
+	/** A talk topic gated by Court rank (a Venerable's method: TalkSystem): the rank it wants. */
+	public static final String TALK_NEEDS_COURT = k("talk.needs_court");
+	/**
+	 * The primordial beasts (PrimordialBeast, PrimordialBeasts, phase 2): each come to its lair ("kun_peng"...), the Kun broken from the
+	 * clouds as the Peng, the Phoenix burnt to an ember and reborn, one slain; the Court's merit for one; where a Venerable says each keeps,
+	 * or that it was slain and when the next comes.
+	 */
+	public static String primordialComes(String id) { return k("message.primordial.comes." + id); }
+	public static final String MSG_PRIMORDIAL_BREACH = k("message.primordial.breach");
+	public static final String MSG_PRIMORDIAL_EMBER = k("message.primordial.ember");
+	public static final String MSG_PRIMORDIAL_REBORN = k("message.primordial.reborn");
+	public static final String MSG_PRIMORDIAL_SLAIN = k("message.primordial.slain");
+	public static final String MSG_COURT_MERIT_PRIMORDIAL = k("message.court.merit_primordial");
+	public static String primordialWhere(String id) { return k("talk.line.primordial." + id); }
+	public static String primordialGone(String id) { return k("talk.line.primordial." + id + ".gone"); }
 	/** Life Force's years (WoodSpells): drawn out of another (told to both), given to a herb, refused with too few years left. */
 	public static final String MSG_LIFE_YEARS_DRAWN = k("message.spell.life_years_drawn");
 	public static final String MSG_LIFE_YEARS_LOST = k("message.spell.life_years_lost");
@@ -731,6 +773,8 @@ public final class ModLang {
 	public static final String HUD_SOUL_TETHER_ENDLESS = k("hud.soul.tether_endless");
 	public static final String HUD_SOUL_INSIDE = k("hud.soul.inside");
 	public static final String HUD_SOUL_OWN_QI_LABEL = k("hud.soul.own_qi_label");
+	/** A True Immortal's immortal essence bar (ImmortalEssence). */
+	public static final String HUD_ESSENCE_LABEL = k("hud.essence_label");
 	public static final String HUD_SOUL_OWN_GHOST_QI_LABEL = k("hud.soul.own_ghost_qi_label");
 	public static final String HUD_SOUL_GATHERING = k("hud.soul.gathering");
 	public static final String HUD_SOUL_RECALLING = k("hud.soul.recalling");
@@ -956,6 +1000,33 @@ public final class ModLang {
 	public static final String MSG_TEAR_NO_GHOST_QI = k("message.spatial_tear.no_ghost_qi");
 	public static final String MSG_TEAR_OUT = k("message.spatial_tear.out");
 	public static final String MSG_TEAR_OUT_UPPER = k("message.spatial_tear.out_upper");
+	/** The Void Breach and the Great Void (VoidBreach, 2026-10-25). */
+	public static final String MSG_BREACH_OPEN = k("message.void_breach.open");
+	public static final String MSG_BREACH_TURNED_BACK = k("message.void_breach.turned_back");
+	public static final String MSG_BREACH_ENTER = k("message.void_breach.enter");
+	public static final String MSG_BREACH_CLIMB = k("message.void_breach.climb");
+	public static final String MSG_ARRIVE_GREAT_VOID = k("message.void_breach.arrive");
+	public static final String MSG_TEAR_DOWN = k("message.great_void.tear_down");
+	public static final String MSG_FALL_TO_FIRMAMENT = k("message.great_void.fall");
+	/** The Immortal Realm (phase 2, 2026-10-25): its space won't tear, its clouds bear the fallen back up (ImmortalRealm). */
+	public static final String MSG_TEAR_IMMORTAL = k("message.immortal_realm.no_tear");
+	public static final String MSG_CLOUDS_BEAR_UP = k("message.immortal_realm.borne_up");
+	/** The Immortal Gate (ImmortalGate): its coming, its opening and shutting, the way up and down, those it turns back. */
+	public static final String MSG_GATE_STIRS = k("message.immortal_gate.stirs");
+	public static final String MSG_GATE_OPENS = k("message.immortal_gate.opens");
+	public static final String MSG_GATE_CLOSES = k("message.immortal_gate.closes");
+	public static final String MSG_GATE_TURNED_BACK = k("message.immortal_gate.turned_back");
+	public static final String MSG_GATE_ENTER = k("message.immortal_gate.enter");
+	public static final String MSG_GATE_CLIMB = k("message.immortal_gate.climb");
+	public static final String MSG_ARRIVE_IMMORTAL = k("message.immortal_gate.arrive");
+	public static final String MSG_GATE_DOWN = k("message.immortal_gate.down");
+	public static final String MSG_GATE_SHUT_DAYS = k("message.immortal_gate.shut_days");
+	public static final String MSG_GATE_SHUT_HOURS = k("message.immortal_gate.shut_hours");
+	/** A void current takes one, and sets them down (VoidCurrents). */
+	public static final String MSG_CURRENT_SWEPT = k("message.void_current.swept");
+	public static final String MSG_CURRENT_LANDED = k("message.void_current.landed");
+	/** A blood pool's elder rises (BloodPools). */
+	public static final String MSG_ELDER_RISES = k("message.blood_pool.elder_rises");
 	public static final String MSG_DAO_STELE_TEACHES = k("message.dao_stele.teaches");
 	public static final String MSG_DAO_STELE_KNOWN = k("message.dao_stele.known");
 	public static final String MSG_DAO_STELE_READING = k("message.dao_stele.reading");
@@ -1171,6 +1242,16 @@ public final class ModLang {
 	public static final String DIMENSION_END = k("dimension.end");
 	public static final String DIMENSION_UPPER_REALM = k("dimension.upper_realm");
 	public static final String DIMENSION_NETHERWORLD = k("dimension.netherworld");
+	public static final String DIMENSION_GREAT_VOID = k("dimension.great_void");
+	public static final String DIMENSION_VOID_BREACH = k("dimension.void_breach");
+	public static final String DIMENSION_IMMORTAL_REALM = k("dimension.immortal_realm");
+	public static final String DIMENSION_IMMORTAL_PASSAGE = k("dimension.immortal_passage");
+	/** The Cultivation tab's and the Stats tab's lines for the Great Void's qi (as UPPER_REALM_LINE, STATS_QI_GATHER_UPPER). */
+	public static final String GREAT_VOID_LINE = k("great_void_line");
+	public static final String STATS_QI_GATHER_GREAT_VOID = k("stats.qi_gather_great_void");
+	/** The same for the Immortal Realm's immortal qi. */
+	public static final String IMMORTAL_REALM_LINE = k("immortal_realm_line");
+	public static final String STATS_QI_GATHER_IMMORTAL = k("stats.qi_gather_immortal");
 	public static final String MSG_SOUP = k("message.soup");
 	public static final String MSG_SOUP_AGAIN = k("message.soup.again");
 	public static final String MSG_SOUP_LIVING = k("message.soup.living");

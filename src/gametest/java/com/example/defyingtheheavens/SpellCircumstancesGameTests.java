@@ -76,10 +76,12 @@ public class SpellCircumstancesGameTests implements FabricGameTest {
 			CultivationManager.get(p).setQi(CultivationManager.get(p).maxQi());
 			Spells.setCooldown(p, spell, 0);
 			before.accept(spell);
+			// Return to the Bough wants a fruit in hand and a tree looked at (HeavenSpellTesting#bough).
+			BlockPos bough = spell == Spell.RETURN_TO_THE_BOUGH ? HeavenSpellTesting.bough(p, home) : null;
 			try {
-				HeavenSpellTesting.lookAt(p, HeavenSpells.middle(husk));
+				if (bough == null) HeavenSpellTesting.lookAt(p, HeavenSpells.middle(husk));
 				Spells.cast(p, spell);
-				if (!tookHold(p, spell)) {
+				if (!tookHold(p, spell) && bough == null) {
 					HeavenSpellTesting.lookAt(p, home.add(0, -1, 3));
 					Spells.cast(p, spell);
 				}
@@ -90,6 +92,7 @@ public class SpellCircumstancesGameTests implements FabricGameTest {
 				DefyingTheHeavens.LOGGER.error("[spell circumstances] {} threw", spell.getId(), e);
 				threw.add(spell.getId() + " (" + e + ")");
 			} finally {
+				if (bough != null) HeavenSpellTesting.unBough(p, bough);
 				HeavenSpells.forget(p.getUUID());
 				Spells.forget(p.getUUID());
 				SpellAuras.forget(p);
@@ -127,10 +130,11 @@ public class SpellCircumstancesGameTests implements FabricGameTest {
 		CultivationManager.get(p).setQi(CultivationManager.get(p).maxQi());
 		Spells.setCooldown(p, spell, 0);
 		before.accept(spell);
+		BlockPos bough = spell == Spell.RETURN_TO_THE_BOUGH ? HeavenSpellTesting.bough(p, home) : null;
 		try {
-			HeavenSpellTesting.lookAt(p, HeavenSpells.middle(husk));
+			if (bough == null) HeavenSpellTesting.lookAt(p, HeavenSpells.middle(husk));
 			Spells.cast(p, spell);
-			if (!tookHold(p, spell)) {
+			if (!tookHold(p, spell) && bough == null) {
 				HeavenSpellTesting.lookAt(p, home.add(0, -1, 3));
 				Spells.cast(p, spell);
 			}
@@ -139,6 +143,7 @@ public class SpellCircumstancesGameTests implements FabricGameTest {
 			DefyingTheHeavens.LOGGER.error("[spell circumstances] {} threw", spell.getId(), e);
 			threw.add(spell.getId() + " (" + e + ")");
 		}
+		if (bough != null) HeavenSpellTesting.unBough(p, bough);
 		helper.runAfterDelay(wait, () -> {
 			helper.assertTrue(CultivationManager.get(p).getQi() >= 0, spell.getId() + " left the caster's qi below nothing");
 			helper.assertTrue(p.isAlive() || p.getHealth() >= 0, spell.getId() + " left its caster in a broken state");

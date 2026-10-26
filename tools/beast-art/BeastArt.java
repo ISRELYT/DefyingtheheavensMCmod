@@ -23,7 +23,8 @@ import java.util.Map;
  * Blockbench (File, Open, a .geo.json as a GeckoLib model) to be tuned there.
  * <p>
  * Run: {@code java BeastArt.java <the mod's src/main/resources/assets/defying-the-heavens>}; with {@code bodies} after it, the wild demon
- * beasts' whole bodies and the demon cores instead (Bodies, Cores).
+ * beasts' whole bodies and the demon cores instead (Bodies, Cores); with {@code primordials}, the Immortal Realm's primordial beasts alone
+ * (Primordials).
  */
 public class BeastArt {
 	// --- Colours ---
@@ -334,13 +335,21 @@ public class BeastArt {
 		ImageIO.write(img, "png", file.toFile());
 	}
 
-	/** {@code java BeastArt.java <assets>} writes the races' and wardens' heads; {@code ... <assets> bodies}, the wild demon beasts and their cores. */
+	/**
+	 * {@code java BeastArt.java <assets>} writes the races' and wardens' heads; {@code ... <assets> bodies}, the wild demon beasts and their
+	 * cores; {@code ... <assets> icons}, the ability icons alone (Icons).
+	 */
 	public static void main(String[] args) throws Exception {
-		if (args.length < 1 || args.length > 2 || args.length == 2 && !args[1].equals("bodies")) {
-			System.err.println("java BeastArt.java <the mod's src/main/resources/assets/defying-the-heavens> [bodies]");
+		if (args.length < 1 || args.length > 2 || args.length == 2 && !args[1].equals("bodies") && !args[1].equals("icons") && !args[1].equals("primordials")) {
+			System.err.println("java BeastArt.java <the mod's src/main/resources/assets/defying-the-heavens> [bodies|icons|primordials]");
 			System.exit(1);
 		}
-		if (args.length == 2) {
+		if (args.length == 2 && args[1].equals("icons")) {
+			Icons.writeAll(Path.of(args[0]));
+		} else if (args.length == 2 && args[1].equals("primordials")) {
+			floorBoxes = true; // packed as the wild beasts' bodies are (Bodies)
+			Primordials.writeAll(Path.of(args[0]));
+		} else if (args.length == 2) {
 			floorBoxes = true;
 			Bodies.writeAll(Path.of(args[0]));
 		} else {

@@ -73,6 +73,22 @@ import java.util.UUID;
 public final class Formations {
 	public static final int MIN_RADIUS = 4;
 	public static final int MAX_RADIUS = 64;
+	/**
+	 * In the Great Void a formation reaches further (2026-10-25): a Holy Land's barrier closes round grounds far wider than any sect's
+	 * (HolyLandPlan), and a player's core there may reach as far ({@link #maxRadius}).
+	 */
+	public static final int HOLY_MAX_RADIUS = 136;
+	/** In the Immortal Realm further still (phase 2): an immortal sect's barrier closes round all its floating islands (ImmortalSectPlan). */
+	public static final int IMMORTAL_MAX_RADIUS = 176;
+
+	/**
+	 * The widest a formation may be in {@code level}'s world: {@link #IMMORTAL_MAX_RADIUS} in the Immortal Realm, {@link #HOLY_MAX_RADIUS} in
+	 * the Great Void, else {@link #MAX_RADIUS}.
+	 */
+	public static int maxRadius(net.minecraft.world.level.Level level) {
+		if (level != null && ModDimensions.isImmortalRealm(level.dimension())) return IMMORTAL_MAX_RADIUS;
+		return level != null && ModDimensions.isGreatVoid(level.dimension()) ? HOLY_MAX_RADIUS : MAX_RADIUS;
+	}
 	/** Ground within this of the shell is as hard to dig through as the barrier itself. */
 	public static final double GROUND_BAND = 1.5;
 	/** Barrier cells handled per tick: a formation being raised, one being kept up, and all of them together. */
@@ -192,8 +208,9 @@ public final class Formations {
 	}
 
 	/**
-	 * Puts {@code entity} down on the ground just outside {@code formation}, on its own side of it. @return false if that
-	 * ground isn't loaded (it is tried again on the next sweep). Package-private for the game tests.
+	 * Puts {@code entity} down on the ground just outside {@code formation}, on its own side of it; with nothing under that spot but open sky
+	 * (a sect over the Immortal Realm's sea of clouds, the Upper Realm's abyss), in the air there at the height it stood rather than on the
+	 * world's floor. @return false if that ground isn't loaded (it is tried again on the next sweep). Package-private for the game tests.
 	 */
 	static boolean expel(ServerLevel level, Formation formation, LivingEntity entity) {
 		Vec3 centre = Vec3.atCenterOf(formation.center);
@@ -203,6 +220,7 @@ public final class Formations {
 		int x = Mth.floor(centre.x + out.x * distance), z = Mth.floor(centre.z + out.z * distance);
 		if (!level.isLoaded(new BlockPos(x, entity.getBlockY(), z))) return false;
 		int y = surface(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+		if (y <= level.getMinBuildHeight() + 1) y = entity.getBlockY();
 		if (entity instanceof Mob mob) {
 			mob.getNavigation().stop();
 			mob.setTarget(null);
@@ -461,7 +479,7 @@ public final class Formations {
 
 	/** A new radius: the old shell comes down and the new one goes up (if raised). */
 	public static void resize(ServerLevel level, Formation formation, int radius) {
-		radius = Math.max(MIN_RADIUS, Math.min(MAX_RADIUS, radius));
+		radius = Math.max(MIN_RADIUS, Math.min(maxRadius(level), radius));
 		if (radius == formation.getRadius()) return;
 		int old = formation.getRadius();
 		formation.setRadius(radius); // first, so the old shell's cells are no longer on it

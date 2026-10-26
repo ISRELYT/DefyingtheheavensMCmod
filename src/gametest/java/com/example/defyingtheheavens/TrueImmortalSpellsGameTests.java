@@ -317,8 +317,10 @@ public class TrueImmortalSpellsGameTests implements FabricGameTest {
 		HeavenSpellTesting.lookAt(p, home.add(0, p.getEyeHeight(), 40));
 		helper.assertTrue(HeavenSpellTesting.cast(p, Spell.GLACIER_OF_THE_FIRST_AGE), "Glacier of the First Age is cast, paid for");
 		helper.assertTrue(!HeavenSpells.lingering(p.getUUID(), WaterSpells.Glacier.class).isEmpty(), "...its wall of ice rising before its caster");
+		// Struck every so often while its face passes over it: from 3 blocks before it to its back, its body's depth behind.
+		int grinds = (int) ((WaterSpells.GLACIER_BODY + 4) / (WaterSpells.GLACIER_REACH / WaterSpells.GLACIER_TICKS) / WaterSpells.GLACIER_EVERY);
 		thenCheck(helper, WaterSpells.GLACIER_RISES + WaterSpells.GLACIER_TICKS + WaterSpells.GLACIER_CALVES / 2 + 3, p, spawned, floor, () -> {}, () -> {
-			helper.assertTrue(ground.getHealth() <= HEALTH - 4 * WaterSpells.GLACIER_GRIND + 1, "It grinds over what stands in its way (" + ground.getHealth() + ")");
+			helper.assertTrue(grinds >= 2 && ground.getHealth() <= HEALTH - grinds * WaterSpells.GLACIER_GRIND + 1, "It grinds over what stands in its way (" + ground.getHealth() + ")");
 			helper.assertTrue(calved.getHealth() <= HEALTH - WaterSpells.GLACIER_CALVE + 1, "...and its face calves on what stands before it at its end (" + calved.getHealth() + ")");
 			helper.assertTrue(aside.getHealth() == aside.getMaxHealth(), "...not what stands aside of its path");
 			int frost = count(level, floor.centre(), home.add(0, 0, 40), 12, 2, s -> s.is(Blocks.SNOW) || s.is(Blocks.ICE) || s.is(Blocks.PACKED_ICE) || s.is(Blocks.BLUE_ICE));

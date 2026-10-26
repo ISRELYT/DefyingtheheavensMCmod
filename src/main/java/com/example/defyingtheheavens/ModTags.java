@@ -24,6 +24,16 @@ public final class ModTags {
 	public static final TagKey<Biome> IS_UPPER_REALM = TagKey.create(Registries.BIOME, DefyingTheHeavens.id("is_upper_realm"));
 	/** The Netherworld's biomes (see GhostQi, the realm's own features). */
 	public static final TagKey<Biome> IS_NETHERWORLD = TagKey.create(Registries.BIOME, DefyingTheHeavens.id("is_netherworld"));
+	/**
+	 * The Great Void Realm's lands (2026-10-25; not the Void Breach's): where the Jade Firmament's herbs, ores and fruit grow too
+	 * (ModFeatures), and its Dao Steles carve its own realms' methods (DaoSteleFeature).
+	 */
+	public static final TagKey<Biome> IS_GREAT_VOID = TagKey.create(Registries.BIOME, DefyingTheHeavens.id("is_great_void"));
+	/**
+	 * The Immortal Realm's lands (phase 2, 2026-10-25; not the Gate's passage): where the Jade Firmament's herbs, ores and fruit grow too
+	 * (ModFeatures), but never a stele (the user's rule: "do not add steles to the immortal realm").
+	 */
+	public static final TagKey<Biome> IS_IMMORTAL_REALM = TagKey.create(Registries.BIOME, DefyingTheHeavens.id("is_immortal_realm"));
 
 	private ModTags() {}
 }

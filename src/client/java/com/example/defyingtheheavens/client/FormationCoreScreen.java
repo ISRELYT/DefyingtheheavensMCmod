@@ -162,7 +162,7 @@ public class FormationCoreScreen extends Screen {
 	}
 
 	private void setRadius(int value) {
-		int clamped = Math.max(Formations.MIN_RADIUS, Math.min(Formations.MAX_RADIUS, value));
+		int clamped = Math.max(Formations.MIN_RADIUS, Math.min(Formations.maxRadius(net.minecraft.client.Minecraft.getInstance().level), value));
 		if (clamped == radius) return;
 		radius = clamped;
 		send();

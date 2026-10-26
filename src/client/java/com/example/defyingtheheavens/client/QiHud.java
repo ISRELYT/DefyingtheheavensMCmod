@@ -1,5 +1,6 @@
 package com.example.defyingtheheavens.client;
 
+import com.example.defyingtheheavens.ModDimensions;
 import com.example.defyingtheheavens.ModLang;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.Util;
@@ -14,7 +15,8 @@ import java.util.Locale;
  * The thin bars of the top-left stack, under the portrait and its health and qi bars (VitalsHud: the qi pool's own bar is there
  * since 2026-10-22, the user's ask): each a label, then a thin lacquer bar trimmed in antique gold, with a scroll roller on the left
  * and a tapered tip on the right, notched at 25/50/75%, and the pool against its maximum beside it, a glint flowing along it while
- * it fills. Here, in a person's body (Possession), the soul's own pool, in violet; under it the ghostly qi pool, where there is one,
+ * it fills. Here, in a person's body (Possession), the soul's own pool, in violet, and a True Immortal's immortal essence
+ * (ImmortalEssence), in pale gold; under them the ghostly qi pool, where there is one,
  * and the rest of the Netherworld's (see NetherworldHud), all drawn by the same {@link Pool}.
  */
 public final class QiHud {
@@ -25,6 +27,9 @@ public final class QiHud {
 	/** A soul's own pool while it is in a person's body (Possession): the soul's violet, lit from above. */
 	private static final int[] OWN_ROWS = {0xFFE4CCFF, 0xFFB57BFF, 0xFF9457E0, 0xFF64339E};
 	private static final Pool OWN = new Pool(OWN_ROWS, 0xFFF2E6FF, 0xE4D0FF);
+	/** A True Immortal's immortal essence (ImmortalEssence): pale immortal gold, lit from above, brighter than the frame's. */
+	private static final int[] ESSENCE_ROWS = {0xFFFFF6CC, 0xFFFFDE73, 0xFFF0B43A, 0xFFB57A14};
+	private static final Pool ESSENCE = new Pool(ESSENCE_ROWS, 0xFFFFFBEA, 0xFFE9A8);
 
 	public static void register() {
 		HudRenderCallback.EVENT.register((graphics, tickDelta) -> {
@@ -32,11 +37,21 @@ public final class QiHud {
 			if (mc.level == null || mc.player == null || mc.options.hideGui || mc.options.renderDebug || mc.player.isSpectator()) return;
 			// In a person's body the qi bar above is the body's (its spells and abilities draw on it); the soul's own pool, which its
 			// upkeep and its own tear come out of, under it.
+			int y = top();
 			if (ownShowing()) {
-				OWN.draw(graphics, mc.font, top(), barX(mc.font), Component.translatable(ownLabel()), ClientSoul.ownQi(), ClientSoul.ownMax(),
+				OWN.draw(graphics, mc.font, y, barX(mc.font), Component.translatable(ownLabel()), ClientSoul.ownQi(), ClientSoul.ownMax(),
 						ClientSoul.ownRising());
+				y += ROW;
 			} else {
 				OWN.reset();
+			}
+			// A True Immortal's essence, its glint flowing while the Immortal Realm fills it.
+			if (essenceShowing()) {
+				boolean filling = ModDimensions.isImmortalRealm(mc.level.dimension());
+				ESSENCE.draw(graphics, mc.font, y, barX(mc.font), Component.translatable(ModLang.HUD_ESSENCE_LABEL), ClientCultivationData.essence(),
+						ClientCultivationData.essenceMax(), filling);
+			} else {
+				ESSENCE.reset();
 			}
 		});
 	}
@@ -51,9 +66,14 @@ public final class QiHud {
 		return ClientSoul.isInside() && ClientSoul.ownMax() > 0;
 	}
 
-	/** The thin bars it draws at the top of the stack: the soul's own pool while in a person's body. */
+	/** True when the immortal essence's bar shows: a True Immortal's (ImmortalEssence). */
+	static boolean essenceShowing() {
+		return ClientCultivationData.essenceMax() > 0;
+	}
+
+	/** The thin bars it draws at the top of the stack: the soul's own pool while in a person's body, and a True Immortal's essence. */
 	static int rows() {
-		return ownShowing() ? 1 : 0;
+		return (ownShowing() ? 1 : 0) + (essenceShowing() ? 1 : 0);
 	}
 
 	/** Under the portrait's block, the rows of the whole stack of thin bars (this one's and the Netherworld's), for what goes under them. */
@@ -71,6 +91,7 @@ public final class QiHud {
 	 */
 	static int barX(Font font) {
 		int widest = ownShowing() ? font.width(Component.translatable(ownLabel())) : 0;
+		if (essenceShowing()) widest = Math.max(widest, font.width(Component.translatable(ModLang.HUD_ESSENCE_LABEL)));
 		widest = Math.max(widest, NetherworldHud.widestLabel(font));
 		return X + widest + Pool.LABEL_GAP + 2;
 	}
@@ -141,7 +162,9 @@ public final class QiHud {
 			g.drawString(font, label, X, y + 1, TEXT);
 			bar(g, barX, y, (int) Math.round(INNER * shownRatio), filling, now);
 			g.drawString(font, amount, barX + TEXT_OFFSET, y + 1, TEXT);
-			return barX + TEXT_OFFSET + font.width(amount);
+			int end = barX + TEXT_OFFSET + font.width(amount);
+			HudCorner.drew(y, y + ROLLER_H, end);
+			return end;
 		}
 
 		/** Forgets the eased fill, so the bar starts from the true value the next time it shows. */

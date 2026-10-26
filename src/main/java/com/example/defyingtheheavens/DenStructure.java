@@ -36,7 +36,8 @@ import java.util.Optional;
  *   <li>Lizard, in the swamps and the dry lands: domes of mud under arching mangrove roots, a basking pool in the head's, a low
  *       burrow and a sunk hoard, a root arch for a gate, pools with reeds about the grounds.</li>
  *   <li>Fox, in the birch and cherry woods and the snow: grassy hillocks with round doors, the head's little shrine on the
- *       greatest of them, a tunnel of red torii up the way from the gate.</li>
+ *       greatest of them, a red torii for its gate (its tunnel of torii up the way taken out: the user's call, 2026-10-25, "there
+ *       shouldnt be a tunnel, just one gate at the start").</li>
  *   <li>Dragon, in the highlands: one great hollow crag at the back holding all of it (the head's floor, the hoard, the elders'
  *       ledges, the disciples' mats), rock spires and a pool before it.</li>
  * </ul>
@@ -45,6 +46,9 @@ import java.util.Optional;
  * apart), kept clear of villages and of wherever a sect may stand ({@link #nearSectSite}). The Upper Realm's sects stand one to a cell
  * that tiles the whole realm (SectStructure#ISLAND_SEARCH), so there a den takes a cell of their own instead ({@link #clanCell}: 45 in
  * a hundred of them), where no sect is looked for.
+ * <p>
+ * In the Great Void a clan is a Demon Palace (DemonPalaces, structure demon_palace), laid out by DemonPalacePlan on grounds as wide as a
+ * Holy Land's, at the sites the Holy Lands' structure set offers both.
  */
 public class DenStructure extends SectStructure {
 	/**
@@ -75,6 +79,23 @@ public class DenStructure extends SectStructure {
 		Direction facing = Direction.Plane.HORIZONTAL.getRandomDirection(random);
 		ChunkPos chunk = context.chunkPos();
 		int x = chunk.getMiddleBlockX(), z = chunk.getMiddleBlockZ();
+		// A Demon Palace of the Great Void (DemonPalaces, DemonPalacePlan): of the race of its land, its grounds a Holy Land's, so they stand
+		// at their cell's middle or a few blocks off it where a continent holds them well inside its rim.
+		if (isGreatVoid(context, new BlockPos(x, 64, z))) {
+			Bloodline race = DemonPalaces.raceOf(context.biomeSource().getNoiseBiome(QuartPos.fromBlock(x), QuartPos.fromBlock(64), QuartPos.fromBlock(z),
+					context.randomState().sampler()), random);
+			for (int[] off : HOLY_SPOTS) {
+				Frame frame = new Frame(facing, x + off[0], z + off[1], DemonPalacePlan.W, DemonPalacePlan.D);
+				int platformY = DemonPalacePlan.groundLevel(context, frame);
+				if (platformY != NO_SITE) {
+					CityPlanner.Ground ground = ground(context);
+					int floor = context.heightAccessor().getMinBuildHeight();
+					return Optional.of(new GenerationStub(new BlockPos(frame.cx(), platformY, frame.cz()),
+							builder -> DemonPalacePlan.plan(builder, random, frame, platformY, race, ground, floor)));
+				}
+			}
+			return Optional.empty();
+		}
 		boolean upper = isUpperRealm(context, new BlockPos(x, 64, z));
 		if (upper ? !clanCell(context.seed(), chunk) : nearSectSite(context, chunk)) return Optional.empty();
 		Bloodline race = raceOf(context, x, z, upper, random);
@@ -82,19 +103,22 @@ public class DenStructure extends SectStructure {
 		if (!upper) {
 			Frame frame = new Frame(facing, x, z, rolled.w, rolled.d);
 			int platformY = groundLevel(context, rolled, frame, false);
-			return platformY == NO_SITE ? Optional.empty() : Optional.of(stub(random, rolled, frame, platformY, false, race));
+			return platformY == NO_SITE ? Optional.empty() : Optional.of(stub(context, random, rolled, frame, platformY, false, race));
 		}
 		for (Size size = rolled; size != null; size = size.smaller()) {
 			for (Frame frame : islandSpots(context, size, facing, x, z)) {
 				int platformY = groundLevel(context, size, frame, true);
-				if (platformY != NO_SITE) return Optional.of(stub(random, size, frame, platformY, true, race));
+				if (platformY != NO_SITE) return Optional.of(stub(context, random, size, frame, platformY, true, race));
 			}
 		}
 		return Optional.empty();
 	}
 
-	private static GenerationStub stub(WorldgenRandom random, Size size, Frame frame, int platformY, boolean upper, Bloodline race) {
-		return new GenerationStub(new BlockPos(frame.cx(), platformY, frame.cz()), builder -> plan(builder, random, size, frame, platformY, upper, race));
+	private static GenerationStub stub(GenerationContext context, WorldgenRandom random, Size size, Frame frame, int platformY, boolean upper, Bloodline race) {
+		CityPlanner.Ground ground = ground(context);
+		int floor = context.heightAccessor().getMinBuildHeight();
+		return new GenerationStub(new BlockPos(frame.cx(), platformY, frame.cz()),
+				builder -> plan(builder, random, size, frame, platformY, upper, race, ground, floor));
 	}
 
 	/** The races' lands: {@code #defying-the-heavens:clan/<race>}. */
@@ -161,11 +185,11 @@ public class DenStructure extends SectStructure {
 		return layOut(seed, size, facing, upper, race, 0, 64, 0);
 	}
 
-	/** As {@link #layOut(long, int, Direction, boolean, Bloodline)}, its plaza at (x, z) on ground at {@code y} (its posts too). */
+	/** As {@link #layOut(long, int, Direction, boolean, Bloodline)}, its plaza at (x, z) on level ground at {@code y} (its posts too). */
 	public static List<StructurePiece> layOut(long seed, int size, Direction facing, boolean upper, Bloodline race, int x, int y, int z) {
 		Size s = Size.values()[size];
 		StructurePiecesBuilder builder = new StructurePiecesBuilder();
-		plan(builder, new WorldgenRandom(new LegacyRandomSource(seed)), s, new Frame(facing, x, z, s.w, s.d), y, upper, race);
+		plan(builder, new WorldgenRandom(new LegacyRandomSource(seed)), s, new Frame(facing, x, z, s.w, s.d), y, upper, race, CityPlanner.flat(y), y - 64);
 		return builder.build().pieces();
 	}
 
@@ -187,13 +211,16 @@ public class DenStructure extends SectStructure {
 	 * the plaza, the sparring ring out on the grounds, the gates, and the race's own things (DenPieces); then the grounds, then the
 	 * plaza with the blueprint (posts, alignment, race, capacity) the core founds the clan from.
 	 */
-	private static void plan(StructurePiecesBuilder builder, WorldgenRandom random, Size size, Frame frame, int y, boolean upper, Bloodline race) {
+	private static void plan(StructurePiecesBuilder builder, WorldgenRandom random, Size size, Frame frame, int y, boolean upper, Bloodline race,
+			CityPlanner.Ground ground, int floor) {
 		long seed = random.nextLong();
 		int alignment = Alignment.randomSect(random); // a clan's path, as a sect's (the user's pick: no feud of the righteous with demons)
 		int w = size.w, d = size.d, cu = size.a, cv = size.b, r = SectPiece.PLAZA_RADIUS;
 		Direction back = frame.facing();
 		int capacity = size.minMembers + random.nextInt(size.maxMembers - size.minMembers + 1);
 		SectLayout layout = new SectLayout(size.a, size.b, size.reach, seed);
+		// Each den on its own ground, the land shaped round it (the structure is beard_thin), the grounds laid on the land as it lies.
+		CityPlanner fit = new CityPlanner(frame, layout, ground, seed, Alignment.Faction.NEUTRAL, null);
 		int gateDistance = size.reach + GATE_BEYOND;
 		List<SectPiece> pieces = new ArrayList<>();
 		boolean dragon = race == Bloodline.DRAGON;
@@ -204,8 +231,6 @@ public class DenStructure extends SectStructure {
 		layout.road(cu, cv, cu, backV0 + 1, 1);
 		layout.road(0, cv, w - 1, cv, 1);
 		layout.plaza(r);
-		// A fox clan's tunnel of torii stands either side of the way up: nothing else there.
-		if (race == Bloodline.FOX) layout.keepClear(cu - 3, cv - gateDistance + 4, cu + 3, cv - r - 3);
 
 		// The head's den at the back: the crag for a dragon clan (all of it under one), else its own den.
 		int[] head = DenPieces.headSize(race);
@@ -216,7 +241,8 @@ public class DenStructure extends SectStructure {
 		int elders = titles.get(NpcTitle.GRAND_ELDER) + titles.get(NpcTitle.ELDER);
 		headData.putInt("Elders", elders);
 		headData.putInt("Members", size.maxMembers);
-		SectPiece headPiece = piece(dragon ? SectPiece.Kind.DEN_CRAG : SectPiece.Kind.DEN_HALL, headLot, frame, y, head[2], seed + 30, upper, race, headData);
+		SectPiece headPiece = piece(dragon ? SectPiece.Kind.DEN_CRAG : SectPiece.Kind.DEN_HALL, headLot, frame, fit.level(headLot), head[2], seed + 30, upper, race,
+				headData);
 		pieces.add(headPiece);
 
 		// The hoard and the disciples' burrow before the plaza, either side of the way (a dragon's are in its crag).
@@ -231,8 +257,8 @@ public class DenStructure extends SectStructure {
 				layout.apron(lot, 1, 1);
 				layout.footpath(lot.doorstep()[0], lot.doorstep()[1]);
 			}
-			hoard = piece(SectPiece.Kind.DEN_HOARD, hoardLot, frame, y, hoardSize[2], seed + 20, upper, race, null);
-			burrow = piece(SectPiece.Kind.DEN_BURROW, burrowLot, frame, y, burrowSize[2], seed + 21, upper, race, null);
+			hoard = piece(SectPiece.Kind.DEN_HOARD, hoardLot, frame, fit.level(hoardLot), hoardSize[2], seed + 20, upper, race, null);
+			burrow = piece(SectPiece.Kind.DEN_BURROW, burrowLot, frame, fit.level(burrowLot), burrowSize[2], seed + 21, upper, race, null);
 			pieces.add(hoard);
 			pieces.add(burrow);
 		}
@@ -240,28 +266,23 @@ public class DenStructure extends SectStructure {
 		// The gates: across the trail up the middle and either side way, outside the barrier, where the gate guards stand.
 		SectLayout.Lot gateLot = new SectLayout.Lot(cu - 9, cv - gateDistance - 1, cu + 9, cv - gateDistance + 1, SectLayout.Side.BACK);
 		layout.keepClear(gateLot.u0(), gateLot.v0() - 1, gateLot.u1(), gateLot.v1() + 1);
-		SectPiece gate = piece(SectPiece.Kind.DEN_GATE, gateLot, frame, y, 14, seed + 1, upper, race, null);
+		SectPiece gate = piece(SectPiece.Kind.DEN_GATE, gateLot, frame, fit.level(gateLot), 14, seed + 1, upper, race, null);
 		pieces.add(gate);
 		List<SectPiece> gates = new ArrayList<>(List.of(gate));
 		for (int k = -1; k <= 1; k += 2) {
 			int u = cu + k * gateDistance;
 			SectLayout.Lot lot = new SectLayout.Lot(u - 1, cv - 5, u + 1, cv + 5, k < 0 ? SectLayout.Side.LEFT : SectLayout.Side.RIGHT);
 			layout.keepClear(lot.u0() - 1, lot.v0(), lot.u1() + 1, lot.v1());
-			SectPiece side = piece(SectPiece.Kind.DEN_GATE, lot, frame, y, 12, seed + 2 + k, upper, race, null);
+			SectPiece side = piece(SectPiece.Kind.DEN_GATE, lot, frame, fit.level(lot), 12, seed + 2 + k, upper, race, null);
 			pieces.add(side);
 			gates.add(side);
-		}
-		// A fox clan's tunnel of torii up the way from its gate to the plaza.
-		if (race == Bloodline.FOX) {
-			SectLayout.Lot row = new SectLayout.Lot(cu - 3, cv - gateDistance + 4, cu + 3, cv - r - 3, SectLayout.Side.BACK);
-			pieces.add(piece(SectPiece.Kind.DEN_FEATURE, row, frame, y, 8, seed + 5, upper, race, feature("torii_row")));
 		}
 
 		// The sparring ring, out on the grounds.
 		SectLayout.Lot ringLot = layout.place(random, DenPieces.RING, DenPieces.RING, size.reach / 2 + 2, 3);
 		SectPiece ring = null;
 		if (ringLot != null) {
-			ring = piece(SectPiece.Kind.DEN_RING, ringLot, frame, y, 8, seed + 70, upper, race, null);
+			ring = piece(SectPiece.Kind.DEN_RING, ringLot, frame, fit.level(ringLot), 8, seed + 70, upper, race, null);
 			pieces.add(ring);
 		}
 
@@ -272,7 +293,7 @@ public class DenStructure extends SectStructure {
 			for (int i = 0; i < elders; i++) {
 				SectLayout.Lot lot = layout.place(random, elderSize[0], elderSize[1], size.reach / 2 - 4 + random.nextInt(14), 5 + random.nextInt(3));
 				if (lot == null) break;
-				dens.add(piece(SectPiece.Kind.DEN_ELDER, lot, frame, y, elderSize[2], seed + 100 + i, upper, race, null));
+				dens.add(piece(SectPiece.Kind.DEN_ELDER, lot, frame, fit.level(lot), elderSize[2], seed + 100 + i, upper, race, null));
 			}
 			pieces.addAll(dens);
 		}
@@ -289,18 +310,18 @@ public class DenStructure extends SectStructure {
 			for (int i = 0; i < count; i++) {
 				int s = race == Bloodline.LIZARD ? 7 + random.nextInt(3) : 5 + random.nextInt(3);
 				SectLayout.Lot lot = layout.place(random, s, s, size.reach / 2 + random.nextInt(size.reach / 2), 2);
-				if (lot != null) pieces.add(piece(SectPiece.Kind.DEN_FEATURE, lot, frame, y, race == Bloodline.DRAGON ? 22 : 8, seed + 200 + i, upper, race, feature(what)));
+				if (lot != null) pieces.add(piece(SectPiece.Kind.DEN_FEATURE, lot, frame, fit.level(lot), race == Bloodline.DRAGON ? 22 : 8, seed + 200 + i, upper, race,
+						feature(what)));
 			}
 		}
 		if (dragon) {
 			SectLayout.Lot pool = layout.place(random, 9, 7, r + 8, 1);
-			if (pool != null) pieces.add(piece(SectPiece.Kind.DEN_FEATURE, pool, frame, y, 6, seed + 250, upper, race, feature("pool")));
+			if (pool != null) pieces.add(piece(SectPiece.Kind.DEN_FEATURE, pool, frame, fit.level(pool), 6, seed + 250, upper, race, feature("pool")));
 		}
 
-		// Lights along the trails (a fox clan's tunnel of torii lights its own way), and the land's trees and undergrowth thick between.
-		int lights = race == Bloodline.FOX ? 4 : 8;
+		// Lights along the trails, and the land's trees and undergrowth thick between.
+		int lights = 8;
 		for (int v = cv - gateDistance + 4; v < cv - r; v += lights) {
-			if (race == Bloodline.FOX) break;
 			layout.lantern(cu - 3, v);
 			layout.lantern(cu + 3, v);
 		}
@@ -310,17 +331,18 @@ public class DenStructure extends SectStructure {
 		}
 		layout.plant(random, size.trees * 3 / 2, size.bamboo * 2);
 
-		// The grounds go first, under everything.
+		// The grounds go first, under everything: laid on the land as it lies, their box at the world's floor (SectPiece#followGround).
 		CompoundTag groundsData = new CompoundTag();
 		groundsData.putInt("A", size.a);
 		groundsData.putInt("B", size.b);
 		groundsData.putByteArray("Map", layout.map);
-		SectPiece terrace = new SectPiece(SectPiece.Kind.TERRACE, frame.box(0, 0, w - 1, d - 1, y, 24), back, seed, Alignment.Faction.NEUTRAL, upper,
+		groundsData.putBoolean("Follow", true);
+		SectPiece terrace = new SectPiece(SectPiece.Kind.TERRACE, frame.box(0, 0, w - 1, d - 1, floor, 2), back, seed, Alignment.Faction.NEUTRAL, upper,
 				groundsData, race);
 		pieces.add(0, terrace);
 
-		// The plaza last, so its blueprint can name every post of the grounds.
-		BoundingBox plazaBox = frame.box(cu - r, cv - r, cu + r, cv + r, y, 8);
+		// The plaza last, so its blueprint can name every post of the grounds: on its own ground, evened under it.
+		BoundingBox plazaBox = frame.box(cu - r, cv - r, cu + r, cv + r, fit.level(new SectLayout.Lot(cu - r, cv - r, cu + r, cv + r, SectLayout.Side.BACK)), 8);
 		CompoundTag plazaData = new CompoundTag();
 		SectPiece plaza = new SectPiece(SectPiece.Kind.PLAZA, plazaBox, back, seed + 50, Alignment.Faction.NEUTRAL, upper, plazaData, race);
 		BlockPos core = plaza.toWorld(r, 2, r);
@@ -347,10 +369,10 @@ public class DenStructure extends SectStructure {
 		// Where the inner disciples stroll: along the trails, round the plaza.
 		List<BlockPos> courtyard = posts.get(Sect.Post.COURTYARD);
 		int along = (r + size.reach) / 2;
-		courtyard.add(terrace.toWorld(cu, 1, cv - along));
-		courtyard.add(terrace.toWorld(cu, 1, cv - size.reach + 4));
-		courtyard.add(terrace.toWorld(cu - along, 1, cv));
-		courtyard.add(terrace.toWorld(cu + along, 1, cv));
+		courtyard.add(fit.onGround(cu, cv - along));
+		courtyard.add(fit.onGround(cu, cv - size.reach + 4));
+		courtyard.add(fit.onGround(cu - along, cv));
+		courtyard.add(fit.onGround(cu + along, cv));
 		for (int k = 0; k < 4; k++) {
 			double angle = Math.PI / 2 * k;
 			courtyard.add(plaza.toWorld(r + (int) Math.round(Math.cos(angle) * 10.5), 1, r + (int) Math.round(Math.sin(angle) * 10.5)));
@@ -361,16 +383,16 @@ public class DenStructure extends SectStructure {
 			for (int[] post : DenPieces.ringPosts(ring)) posts.get(Sect.Post.TRAINING).add(ring.toWorld(post[0], post[1], post[2]));
 		}
 		List<BlockPos> ways = posts.get(Sect.Post.WAY);
-		for (int v = cv - gateDistance + 2; v <= backV0; v += 10) if (Math.abs(v - cv) > r) ways.add(terrace.toWorld(cu, 1, v));
-		for (int u = cu - gateDistance + 2; u <= cu + gateDistance - 2; u += 10) if (Math.abs(u - cu) > r) ways.add(terrace.toWorld(u, 1, cv));
+		for (int v = cv - gateDistance + 2; v <= backV0; v += 10) if (Math.abs(v - cv) > r) ways.add(fit.onGround(cu, v));
+		for (int u = cu - gateDistance + 2; u <= cu + gateDistance - 2; u += 10) if (Math.abs(u - cu) > r) ways.add(fit.onGround(u, cv));
 		List<BlockPos> guards = posts.get(Sect.Post.GATE_GUARD);
 		int out = gateDistance + 2;
-		guards.add(terrace.toWorld(cu - 2, 1, cv - out));
-		guards.add(terrace.toWorld(cu + 2, 1, cv - out));
-		guards.add(terrace.toWorld(cu - out, 1, cv - 2));
-		guards.add(terrace.toWorld(cu + out, 1, cv - 2));
-		guards.add(terrace.toWorld(cu - out, 1, cv + 2));
-		guards.add(terrace.toWorld(cu + out, 1, cv + 2));
+		guards.add(fit.onGround(cu - 2, cv - out));
+		guards.add(fit.onGround(cu + 2, cv - out));
+		guards.add(fit.onGround(cu - out, cv - 2));
+		guards.add(fit.onGround(cu + out, cv - 2));
+		guards.add(fit.onGround(cu - out, cv + 2));
+		guards.add(fit.onGround(cu + out, cv + 2));
 
 		// The barrier: from the core out round every den (not the grounds' own things: the gates stand outside it).
 		int radius = 0;
@@ -390,8 +412,7 @@ public class DenStructure extends SectStructure {
 		blueprint.putString("Race", race.getId());
 		blueprint.putInt("Capacity", Math.min(capacity, posts.get(Sect.Post.DWELLING).size() + 1));
 		blueprint.putInt("Radius", radius);
-		BoundingBox bounds = terrace.getBoundingBox();
-		blueprint.putIntArray("Bounds", new int[] {bounds.minX(), bounds.minY() - 16, bounds.minZ(), bounds.maxX(), bounds.maxY() + 48, bounds.maxZ()});
+		blueprint.putIntArray("Bounds", SectStructure.bounds(terrace, pieces, plaza, 48));
 		BoundingBox treasury = DenPieces.hoardBox(vault);
 		blueprint.putIntArray("Treasury", new int[] {treasury.minX(), treasury.minY(), treasury.minZ(), treasury.maxX(), treasury.maxY(), treasury.maxZ()});
 		CompoundTag postTag = new CompoundTag();

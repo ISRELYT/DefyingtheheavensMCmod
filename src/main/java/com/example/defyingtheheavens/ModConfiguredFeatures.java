@@ -99,6 +99,12 @@ public final class ModConfiguredFeatures {
 	public static final ResourceKey<ConfiguredFeature<?, ?>> NW_SPRINGS_POOL = key("netherworld/springs_pool");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> NW_METHOD_STELE = key("netherworld/method_stele");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> DAO_STELE = key("dao_stele");
+	/** The Great Void's (2026-10-25): a Sacred Vessel's altar, a battlefield's ruin, and a blood pool. */
+	public static final ResourceKey<ConfiguredFeature<?, ?>> SACRED_RELIC = key("great_void/sacred_relic");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> BATTLEFIELD_RUIN = key("great_void/battlefield_ruin");
+	public static final ResourceKey<ConfiguredFeature<?, ?>> BLOOD_POOL = key("great_void/blood_pool");
+	/** The Immortal Realm's Jade Capital and Celestial Court (phase 2, ImmortalCapital). */
+	public static final ResourceKey<ConfiguredFeature<?, ?>> IMMORTAL_CAPITAL = key("immortal_realm/capital");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> OTHER_SHORE_FLOWER = key("other_shore_flower");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> NETHERWORLD_LOTUS = key("netherworld_lotus");
 	public static final ResourceKey<ConfiguredFeature<?, ?>> ORE_YIN_JADE = key("netherworld/ore_yin_jade");
@@ -220,6 +226,10 @@ public final class ModConfiguredFeatures {
 		FeatureUtils.register(context, NW_DEAD_TREE, ModFeatures.DEAD_TREE);
 		FeatureUtils.register(context, NW_METHOD_STELE, ModFeatures.METHOD_STELE);
 		FeatureUtils.register(context, DAO_STELE, ModFeatures.DAO_STELE);
+		FeatureUtils.register(context, SACRED_RELIC, ModFeatures.SACRED_RELIC);
+		FeatureUtils.register(context, BATTLEFIELD_RUIN, ModFeatures.BATTLEFIELD_RUIN);
+		FeatureUtils.register(context, BLOOD_POOL, ModFeatures.BLOOD_POOL);
+		FeatureUtils.register(context, IMMORTAL_CAPITAL, ModFeatures.IMMORTAL_CAPITAL);
 		FeatureUtils.register(context, NW_SPIDER_LILIES, Feature.FLOWER, new RandomPatchConfiguration(64, 7, 2,
 				PlacementUtils.onlyWhenEmpty(Feature.SIMPLE_BLOCK, new SimpleBlockConfiguration(BlockStateProvider.simple(ModBlocks.RED_SPIDER_LILY)))));
 		FeatureUtils.register(context, NW_CRIMSON_ROOTS, Feature.RANDOM_PATCH, FeatureUtils.simplePatchConfiguration(Feature.SIMPLE_BLOCK,

@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "immortal_spirit_stone",
+  "ingredients": [
+    {
+      "item": "defying-the-heavens:immortal_jade"
+    }
+  ],
+  "result": {
+    "item": "defying-the-heavens:immortal_spirit_stone",
+    "count": 9
+  }
+}

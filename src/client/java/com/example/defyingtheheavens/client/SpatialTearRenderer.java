@@ -13,13 +13,15 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 /**
  * A Heavenly Being's tear in space (SpatialTearEntity): the Spatial Rift's jagged tear (SpatialRiftRenderer), a little taller,
  * opening as a slit that widens and closing the same way, its rim lit by where it leads (violet into the gap; out of it, green
- * for the mortal world, gold for the Upper Realm) over a pale halo, and within its black the void's own motes turning slowly.
- * It turns to face the camera, so it reads as a tear from every side.
+ * for the mortal world, gold for the Upper Realm; a Void Breach starlit and {@link #BREACH_SCALE} times the size, a way down out of
+ * the Great Void jade) over a pale halo, and within its black the void's own motes turning slowly.
+ * It turns to face the camera, so it reads as a tear from every side (a void current lying along its flow, turned about it).
  */
 public class SpatialTearRenderer extends EntityRenderer<SpatialTearEntity> {
 	/** The rift's outline (SpatialRiftRenderer), going round the tear: x across, y up from its foot. */
@@ -31,6 +33,13 @@ public class SpatialTearRenderer extends EntityRenderer<SpatialTearEntity> {
 	/** Its size: the rift's outline a quarter taller, and as wide as a doorway one walks through (WIDTH more across). */
 	private static final float SCALE = 1.25f, WIDTH = 2.1f, CENTER_Y = 1.0f * SCALE + 0.25f;
 	private static final float[] GAP_RIM = {0.80f, 0.62f, 1.0f}, OVERWORLD_RIM = {0.55f, 1.0f, 0.55f}, UPPER_RIM = {1.0f, 0.82f, 0.35f};
+	/** A Void Breach's rim, starlight on the void's violet; a way down out of the Great Void's, jade (the Jade Firmament's). */
+	private static final float[] BREACH_RIM = {0.88f, 0.80f, 1.0f}, JADE_RIM = {0.45f, 1.0f, 0.75f};
+	/** A Void Breach is torn this much larger than a tear: a way between realms that several may ride (VoidBreach#MOUTH_HEIGHT). */
+	private static final float BREACH_SCALE = 2.2f;
+	/** A void current's rim, pale starlight; it lies on its side, drawn this much longer along its flow and this much narrower across. */
+	private static final float[] CURRENT_RIM = {0.62f, 0.95f, 1.0f};
+	private static final float CURRENT_LENGTH = 2.4f, CURRENT_WIDTH = 0.8f;
 	private static final float[] HALO = {0.55f, 0.85f, 1.0f};
 	private static final float CORE_WIDTH = 0.06f, GLOW_WIDTH = 0.34f;
 	private static final ResourceLocation NONE = new ResourceLocation("textures/misc/white.png");
@@ -48,10 +57,29 @@ public class SpatialTearRenderer extends EntityRenderer<SpatialTearEntity> {
 			case GAP -> GAP_RIM;
 			case OVERWORLD -> OVERWORLD_RIM;
 			case UPPER_REALM -> UPPER_RIM;
+			case VOID_BREACH -> BREACH_RIM;
+			case JADE_FIRMAMENT -> JADE_RIM;
+			case VOID_CURRENT -> CURRENT_RIM;
 		};
 		Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
 		poseStack.pushPose();
-		poseStack.mulPose(Axis.YP.rotationDegrees(-camera.getYRot()));
+		if (tear.leads() == SpatialTearEntity.Leads.VOID_CURRENT) {
+			// A current lies on its side about its heart along its flow, long and narrow, turned about its flow to face the camera: a
+			// streak of light across the void the way it bears one (VoidCurrents). Laid down first, then drawn out along its flow (drawn
+			// out first, then laid down, it stood up tall: tour 8).
+			float turn = -tear.getYRot() - 90;
+			Vec3 eye = camera.getPosition().subtract(tear.getPosition(partialTick).add(0, CENTER_Y, 0));
+			double across = eye.x * Math.sin(Math.toRadians(turn)) + eye.z * Math.cos(Math.toRadians(turn));
+			poseStack.translate(0, CENTER_Y, 0);
+			poseStack.mulPose(Axis.YP.rotationDegrees(turn));
+			poseStack.mulPose(Axis.XP.rotation((float) Math.atan2(-eye.y, across)));
+			poseStack.scale(CURRENT_LENGTH, CURRENT_WIDTH, 1);
+			poseStack.mulPose(Axis.ZP.rotationDegrees(90));
+			poseStack.translate(0, -CENTER_Y, 0);
+		} else {
+			poseStack.mulPose(Axis.YP.rotationDegrees(-camera.getYRot()));
+			if (tear.leads() == SpatialTearEntity.Leads.VOID_BREACH) poseStack.scale(BREACH_SCALE, BREACH_SCALE, BREACH_SCALE);
+		}
 		Matrix4f pose = poseStack.last().pose();
 
 		// The slit widens as it opens (and narrows as it closes), and stands to its full height a little sooner.

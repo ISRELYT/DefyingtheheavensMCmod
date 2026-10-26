@@ -315,7 +315,12 @@ public class SpellConstruct extends Entity implements GeoEntity {
 	/** Ticks its animations ease from one into the next. */
 	private static final int EASE = 3;
 
-	private static final EntityDataAccessor<Byte> KIND = SynchedEntityData.defineId(SpellConstruct.class, EntityDataSerializers.BYTE);
+	/**
+	 * Its kind, by its place among them: an int (it was a byte, and past the 128th kind, the 2026-10-25 spell overhaul's, a byte went
+	 * negative and every later kind was read as the first, the Azure Dragon, on the server and every screen alike: "every spell uses the
+	 * azure dragon model").
+	 */
+	private static final EntityDataAccessor<Integer> KIND = SynchedEntityData.defineId(SpellConstruct.class, EntityDataSerializers.INT);
 	/** Drawn this much larger (or smaller) than its kind's own size. */
 	private static final EntityDataAccessor<Float> SIZE = SynchedEntityData.defineId(SpellConstruct.class, EntityDataSerializers.FLOAT);
 	/** How long it lasts in all, in ticks (it fades in over its first ticks and out over its last: SpellConstructRenderer). */
@@ -356,7 +361,7 @@ public class SpellConstruct extends Entity implements GeoEntity {
 	 */
 	public static SpellConstruct create(Level level, Kind kind, Vec3 at, float yaw, float pitch, int life, Entity owner) {
 		SpellConstruct construct = new SpellConstruct(ModEntities.SPELL_CONSTRUCT, level);
-		construct.entityData.set(KIND, (byte) kind.ordinal());
+		construct.entityData.set(KIND, kind.ordinal());
 		construct.entityData.set(LIFE, life);
 		construct.entityData.set(OWNER, owner == null ? 0 : owner.getId());
 		construct.entityData.set(BORN, (int) level.getGameTime());
@@ -494,13 +499,19 @@ public class SpellConstruct extends Entity implements GeoEntity {
 	 */
 	public void dissolve() {
 		if (isRemoved()) return;
+		// Where the world no longer moves what is in it (flown on out past it, as the Azure Dragon does into the sky), it would never fade nor go
+		// (only its own tick takes it away), hanging there for good: taken away at once (found checking toast's push in game, 2026-10-26).
+		if (level() instanceof net.minecraft.server.level.ServerLevel server && !server.isPositionEntityTicking(blockPosition())) {
+			discard();
+			return;
+		}
 		dissolving = true;
 		entityData.set(LIFE, Math.min(life(), tickCount + FADE));
 	}
 
 	@Override
 	protected void defineSynchedData() {
-		entityData.define(KIND, (byte) 0);
+		entityData.define(KIND, 0);
 		entityData.define(SIZE, 1.0f);
 		entityData.define(LIFE, 20);
 		entityData.define(OWNER, 0);

@@ -19,7 +19,19 @@ import net.minecraft.world.level.Level;
  */
 public enum HighRealm {
 	UPPER_REALM(ModDimensions.UPPER_REALM, Level.OVERWORLD, ModDimensions.UPPER_REALM_MIN_Y, true),
-	NETHERWORLD(ModDimensions.NETHERWORLD, Level.NETHER, ModDimensions.NETHERWORLD_MIN_Y, false);
+	NETHERWORLD(ModDimensions.NETHERWORLD, Level.NETHER, ModDimensions.NETHERWORLD_MIN_Y, false),
+	/**
+	 * The Great Void Realm, above the Jade Firmament (2026-10-25): no lower realm under it, but the Upper Realm; reached by a Void
+	 * Breach torn in that one's sky (VoidBreach), not a rift at 0, 0, and left by falling off a continent into the Jade Firmament's sky
+	 * (VoidFallHandler). Breakthroughs go on there as in the Upper Realm.
+	 */
+	GREAT_VOID(ModDimensions.GREAT_VOID, ModDimensions.UPPER_REALM, ModDimensions.GREAT_VOID_MIN_Y, true),
+	/**
+	 * The Immortal Realm, above the Great Void (phase 2, 2026-10-25): reached through the Immortal Gate over the Great Void's void sea
+	 * when it opens (ImmortalGate), left by falling off its peaks into the Great Void's sky (ImmortalRealm#fallOut) or by a Spatial Tear.
+	 * The one place True Immortal is cultivated at its pace, and its methods taught.
+	 */
+	IMMORTAL_REALM(ModDimensions.IMMORTAL_REALM, ModDimensions.GREAT_VOID, ModDimensions.IMMORTAL_REALM_MIN_Y, true);
 
 	private final ResourceKey<Level> dimension;
 	private final ResourceKey<Level> below;
@@ -53,7 +65,7 @@ public enum HighRealm {
 		return null;
 	}
 
-	/** The high realm above this lower realm, or null (the End has none). */
+	/** The high realm above this realm, or null (the End has none): the Great Void above the Upper Realm. */
 	public static HighRealm above(ResourceKey<Level> lower) {
 		for (HighRealm realm : values()) {
 			if (realm.below == lower) return realm;

@@ -8,7 +8,8 @@ import java.util.ArrayList;
 
 /**
  * Falling out of the bottom of a high realm: out of the Upper Realm into the Spatial Gap to begin descension; into the
- * Netherworld's abyss, onto the Soul River and down to the Nether.
+ * Netherworld's abyss, onto the Soul River and down to the Nether; off the Great Void's continents, into the Jade Firmament's sky. Off
+ * the Immortal Realm's peaks through its clouds, no way down at all: the clouds bear one back up (the Gate is its only way down).
  */
 public final class VoidFallHandler {
 	/** The Upper Realm's floor; vanilla void damage only starts 64 blocks lower, so this always triggers first. */
@@ -29,6 +30,33 @@ public final class VoidFallHandler {
 						else SoulRiver.beginDescent(player, false);
 					} catch (Exception e) {
 						DefyingTheHeavens.LOGGER.error("Abyss fall routing failed for {}", player.getScoreboardName(), e);
+					}
+				}
+			}
+		}
+		// Off a peak of the Immortal Realm, down through its clouds: borne back up onto its nearest land (ImmortalRealm#bearUp; the Gate is
+		// the only way down), a projected soul excepted.
+		ServerLevel immortal = server.getLevel(ModDimensions.IMMORTAL_REALM);
+		if (immortal != null) {
+			for (ServerPlayer player : new ArrayList<>(immortal.players())) {
+				if (player.isAlive() && !player.isSpectator() && player.getY() < ImmortalRealm.FALL_Y && !SoulProjection.isAwayFromBody(player.getUUID())) {
+					try {
+						ImmortalRealm.bearUp(player);
+					} catch (Exception e) {
+						DefyingTheHeavens.LOGGER.error("Immortal Realm fall routing failed for {}", player.getScoreboardName(), e);
+					}
+				}
+			}
+		}
+		// Off a continent of the Great Void: down into the Jade Firmament's sky (VoidBreach#fallOut), a projected soul excepted.
+		ServerLevel greatVoid = server.getLevel(ModDimensions.GREAT_VOID);
+		if (greatVoid != null) {
+			for (ServerPlayer player : new ArrayList<>(greatVoid.players())) {
+				if (player.isAlive() && !player.isSpectator() && player.getY() < VoidBreach.FALL_Y && !SoulProjection.isAwayFromBody(player.getUUID())) {
+					try {
+						VoidBreach.fallOut(player);
+					} catch (Exception e) {
+						DefyingTheHeavens.LOGGER.error("Great Void fall routing failed for {}", player.getScoreboardName(), e);
 					}
 				}
 			}

@@ -3,6 +3,7 @@ package com.example.defyingtheheavens.client;
 import com.example.defyingtheheavens.Ability;
 import com.example.defyingtheheavens.AlchemyRecipes;
 import com.example.defyingtheheavens.Alignment;
+import com.example.defyingtheheavens.CelestialCourt;
 import com.example.defyingtheheavens.ModItems;
 import com.example.defyingtheheavens.PillItem;
 import com.example.defyingtheheavens.CultivationBoost;
@@ -520,6 +521,10 @@ public class CultivationScreen extends Screen {
 		}
 		if (c.isInUpperRealm()) {
 			details.add(new Detail(Component.translatable(ModLang.UPPER_REALM_LINE, (int) PlayerCultivation.UPPER_REALM_QI_MULTIPLIER), 0x7FDBFF));
+		} else if (c.getPlaceQi() == PlayerCultivation.GREAT_VOID_QI_MULTIPLIER) {
+			details.add(new Detail(Component.translatable(ModLang.GREAT_VOID_LINE, (int) PlayerCultivation.GREAT_VOID_QI_MULTIPLIER), 0xC8A8FF));
+		} else if (c.getPlaceQi() == PlayerCultivation.IMMORTAL_QI_MULTIPLIER) {
+			details.add(new Detail(Component.translatable(ModLang.IMMORTAL_REALM_LINE, (int) PlayerCultivation.IMMORTAL_QI_MULTIPLIER), 0xF5D47A));
 		} else if (Math.abs(c.getPlaceQi() - 1) > 1e-6) {
 			// The Astral Realm's places: space's thin qi, a planet's own.
 			details.add(new Detail(Component.translatable(ModLang.ASTRAL_QI_LINE, String.format(Locale.ROOT, "%.2f", c.getPlaceQi())),
@@ -1327,6 +1332,10 @@ public class CultivationScreen extends Screen {
 		if (c.isInUpperRealm()) {
 			g.drawString(font, Component.translatable(ModLang.STATS_QI_GATHER_UPPER, (int) PlayerCultivation.UPPER_REALM_QI_MULTIPLIER),
 					x, y, QI_UPPER_COLOR);
+		} else if (c.getPlaceQi() == PlayerCultivation.GREAT_VOID_QI_MULTIPLIER) {
+			g.drawString(font, Component.translatable(ModLang.STATS_QI_GATHER_GREAT_VOID, (int) PlayerCultivation.GREAT_VOID_QI_MULTIPLIER), x, y, 0xC8A8FF);
+		} else if (c.getPlaceQi() == PlayerCultivation.IMMORTAL_QI_MULTIPLIER) {
+			g.drawString(font, Component.translatable(ModLang.STATS_QI_GATHER_IMMORTAL, (int) PlayerCultivation.IMMORTAL_QI_MULTIPLIER), x, y, 0xF5D47A);
 		} else if (Math.abs(c.getPlaceQi() - 1) > 1e-6) {
 			g.drawString(font, Component.translatable(ModLang.STATS_QI_GATHER_PLACE, String.format(Locale.ROOT, "%.2f", c.getPlaceQi())), x, y,
 					c.getPlaceQi() > 1 ? QI_UPPER_COLOR : 0xB0B0C8);
@@ -1515,7 +1524,11 @@ public class CultivationScreen extends Screen {
 				g.drawCenteredString(font, line, cx, y, 0xE0E0E0);
 				y += 11;
 			}
-			if (info.barredDays() > 0) g.drawCenteredString(font, Component.translatable(ModLang.SECT_TAB_BARRED, info.barredDays()), cx, y + 2, 0xFF6E6E);
+			if (info.barredDays() > 0) {
+				g.drawCenteredString(font, Component.translatable(ModLang.SECT_TAB_BARRED, info.barredDays()), cx, y + 2, 0xFF6E6E);
+				y += 11;
+			}
+			if (info.court() != null) g.drawCenteredString(font, courtLine(info), cx, y + 10, NpcTitle.IMMORTAL_OFFICER.getColor());
 			return;
 		}
 		g.drawCenteredString(font, fit(WIDTH - 20, Component.literal(info.sectName()), Component.literal(info.sectName())), cx, y, 0xFFD700);
@@ -1523,7 +1536,7 @@ public class CultivationScreen extends Screen {
 		g.drawCenteredString(font, Alignment.describe(info.alignment()), cx, y, 0xB0B0B0);
 		y += 15;
 		NpcTitle title = info.title();
-		g.drawString(font, Component.translatable(ModLang.SECT_TAB_TITLE, title.getDisplayName(info.clan())), x, y, title.getColor());
+		g.drawString(font, Component.translatable(ModLang.SECT_TAB_TITLE, title.getDisplayName(info.clan(), info.holy(), info.immortal())), x, y, title.getColor());
 		y += 11;
 		g.drawString(font, Component.translatable(ModLang.SECT_TAB_STANDING, Component.translatable(ModLang.talkRegardLevel(Regard.levelId(info.standing()))),
 				(info.standing() >= 0 ? "+" : "") + info.standing()), x, y, 0xE0E0E0);
@@ -1557,6 +1570,11 @@ public class CultivationScreen extends Screen {
 			g.drawString(font, Component.translatable(ModLang.SECT_TAB_DAYS, Math.max(1, info.ticksMember() / HeavenRitual.DAY + 1)), x, y, 0x9E9E9E);
 			y += 13;
 		}
+		if (info.court() != null) {
+			Component court = courtLine(info);
+			g.drawString(font, fit(WIDTH - 28, court, court), x, y - 2, NpcTitle.IMMORTAL_OFFICER.getColor());
+			y += 11;
+		}
 		g.fill(x, y, left + LIST_RIGHT, y + 1, 0xFF3A3A4A);
 		y += 3;
 
@@ -1573,7 +1591,7 @@ public class CultivationScreen extends Screen {
 		for (ClientSect.Member member : info.members()) {
 			if (ry > viewTop - rowHeight && ry < viewBottom) {
 				MutableComponent row = member.title() == null ? Component.literal("")
-						: Component.translatable(ModLang.NPC_TITLE_BRACKETS, member.title().getDisplayName(info.clan())).append(" ");
+						: Component.translatable(ModLang.NPC_TITLE_BRACKETS, member.title().getDisplayName(info.clan(), info.holy(), info.immortal())).append(" ");
 				row.append(member.player() ? Component.translatable(ModLang.SECT_TAB_PLAYER, member.name()) : Component.literal(member.name()));
 				int colour = member.title() == null ? 0x8A8A8A : member.title().getColor();
 				Component realm = member.rank() < 0 ? Component.translatable(ModLang.SECT_TAB_OFFLINE)
@@ -1599,6 +1617,14 @@ public class CultivationScreen extends Screen {
 		}
 		g.disableScissor();
 		scrollbar(g, viewTop, viewBottom, contentHeight, sectScroll, sectMaxScroll, mouseX, mouseY);
+	}
+
+	/** The Sect tab's line of the Celestial Court: their rank in it and their merit, and the merit the next rank wants. */
+	private static Component courtLine(ClientSect.Info info) {
+		MutableComponent line = Component.translatable(ModLang.SECT_TAB_COURT, info.court().displayName(), info.merit());
+		CelestialCourt.Rank next = info.court().next();
+		if (next != null) line.append(Component.translatable(ModLang.SECT_TAB_COURT_NEXT, next.displayName(), next.merit()));
+		return line;
 	}
 
 	/** Whether the Sect tab's button for {@code id} has been clicked once and is asking "Sure?" still. */

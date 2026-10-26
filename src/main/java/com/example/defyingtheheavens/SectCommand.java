@@ -69,6 +69,25 @@ public final class SectCommand {
 							.executes(ctx -> secluded(ctx.getSource(), 10))
 							.then(Commands.argument("count", IntegerArgumentType.integer(1, 100))
 									.executes(ctx -> secluded(ctx.getSource(), IntegerArgumentType.getInteger(ctx, "count")))))
+					// The Immortal Gate (ImmortalGate): opened or shut out of turn, or how it stands.
+					.then(Commands.literal("gate")
+							.then(Commands.literal("open").executes(ctx -> {
+								ImmortalGate.openNow(ctx.getSource().getServer());
+								ctx.getSource().sendSuccess(() -> Component.literal("The Immortal Gate opens for " + ImmortalGate.OPEN_TICKS / 20 + " s."), true);
+								return 1;
+							}))
+							.then(Commands.literal("close").executes(ctx -> {
+								ImmortalGate.shutNow(ctx.getSource().getServer());
+								ctx.getSource().sendSuccess(() -> Component.literal("The Immortal Gate shuts till its next opening."), true);
+								return 1;
+							}))
+							.then(Commands.literal("status").executes(ctx -> {
+								MinecraftServer server = ctx.getSource().getServer();
+								long until = ImmortalGate.untilOpen(server.overworld().getGameTime());
+								ctx.getSource().sendSuccess(() -> Component.literal(ImmortalGate.isOpen(server) ? "The Immortal Gate stands open."
+										: "The Immortal Gate is shut; it opens in " + until / 20 + " s (" + String.format(java.util.Locale.ROOT, "%.2f", until / 24000.0) + " days)."), false);
+								return 1;
+							})))
 					.then(Commands.literal("spawn")
 							.then(Commands.argument("realm", IntegerArgumentType.integer(0, Realm.values().length))
 									.then(Commands.argument("stage", IntegerArgumentType.integer(1, Stage.values().length))
@@ -215,7 +234,7 @@ public final class SectCommand {
 		List<Sect.Member> members = new ArrayList<>(sect.members.values());
 		members.sort(Sect.SENIORITY);
 		for (Sect.Member member : members) {
-			MutableComponent line = Component.literal("  ").append(Component.translatable(ModLang.NPC_TITLE_BRACKETS, member.title.getDisplayName(sect.isClan()))
+			MutableComponent line = Component.literal("  ").append(Component.translatable(ModLang.NPC_TITLE_BRACKETS, member.title.getDisplayName(sect.isClan(), sect.isHoly(), sect.isImmortal()))
 					.withStyle(style -> style.withColor(member.title.getColor())));
 			line.append(" ").append(PlayerCultivation.rankName(CultivatorNpc.realmOf(member.rank), CultivatorNpc.stageOf(member.rank)));
 			lines.add(line);

@@ -343,6 +343,41 @@ public class SpellArt {
 		return bone.box(cx, cy, cz, w, 0.1, d, p).rot(rx, ry, rz);
 	}
 
+	/** Which plane a silhouette lies in for {@link #extrude}: how it is sliced, which way it is spanned, which way it is thick. */
+	enum Plane {
+		/** Upright, broad faces to the sides (an axe's blade): sliced up y, spanned along z, thick along x. */
+		YZ,
+		/** Upright, broad faces forward and back (a standing sword's blade): sliced up y, spanned along x, thick along z. */
+		XY,
+		/** Lying level (a sword lying flat): sliced along z, spanned along x, thick along y. */
+		XZ
+	}
+
+	/**
+	 * A solid cut to a silhouette (the user, 2026-10-25, of shapes drawn as an outline painted on a flat box, clear round it: "isn't filled
+	 * in properly (they're 2D basically)"; such a box has faces only where it is, not round its outline, so seen edge-on or aslant it is two
+	 * painted sheets with nothing between): a stack of boxes {@code thick} through about {@code mid} (x, y or z, as {@code plane} has it),
+	 * one to each {@code step} from {@code from} to {@code to}, each spanning what {@code span} gives for its middle (the silhouette's least
+	 * and greatest across there; null where there is none of it), so its outline has faces all round it. Painted by {@code p} as one piece:
+	 * it should read where a texel lies (Texel#qx..qz), not how far across its own box.
+	 */
+	static List<Cube> extrude(Bone bone, Plane plane, double mid, double from, double to, double step, double thick,
+			java.util.function.DoubleFunction<double[]> span, Painter p) {
+		List<Cube> made = new ArrayList<>();
+		for (double a = from; a < to - 1.0e-9; a += step) {
+			double h = Math.min(step, to - a);
+			double[] s = span.apply(a + h / 2);
+			if (s == null || s[1] - s[0] < 0.25) continue;
+			double w = s[1] - s[0];
+			made.add(switch (plane) {
+				case YZ -> bone.cube(mid - thick / 2, a, s[0], thick, h, w, p);
+				case XY -> bone.cube(s[0], a, mid - thick / 2, w, h, thick, p);
+				case XZ -> bone.cube(s[0], mid - thick / 2, a, w, thick, h, p);
+			});
+		}
+		return made;
+	}
+
 	// --- Models ---
 
 	static final class Cube {
@@ -948,18 +983,23 @@ public class SpellArt {
 
 	/** Builds, packs, paints and writes one spell under {@code assets}. */
 	static void write(Path assets, Model m) throws IOException {
+		write(assets, m, "spell");
+	}
+
+	/** Builds, packs, paints and writes one model under {@code assets}, in its {@code folder} of each kind ("spell"; a primordial beast's "demon_beast"). */
+	static void write(Path assets, Model m, String folder) throws IOException {
 		m.settle();
 		for (Anim a : m.anims) for (String bone : a.bones.keySet()) if (m.get(bone) == null) throw new IllegalStateException(m.id + "'s " + a.name + " moves no bone " + bone);
 		splitSpins(m);
 		carryTheLoop(m);
 		pack(m);
 		BufferedImage[] painted = split(paint(m));
-		write(assets.resolve("textures/entity/spell/" + m.id + ".png"), painted[0]);
-		Path mask = assets.resolve("textures/entity/spell/" + m.id + "_glowmask.png");
+		write(assets.resolve("textures/entity/" + folder + "/" + m.id + ".png"), painted[0]);
+		Path mask = assets.resolve("textures/entity/" + folder + "/" + m.id + "_glowmask.png");
 		if (painted[1] != null) write(mask, painted[1]);
 		else Files.deleteIfExists(mask);
-		write(assets.resolve("geo/spell/" + m.id + ".geo.json"), geo(m));
-		write(assets.resolve("animations/spell/" + m.id + ".animation.json"), animations(m.anims));
+		write(assets.resolve("geo/" + folder + "/" + m.id + ".geo.json"), geo(m));
+		write(assets.resolve("animations/" + folder + "/" + m.id + ".animation.json"), animations(m.anims));
 		double[][] e = m.extent();
 		int cubes = m.cubes().size();
 		System.out.printf(Locale.ROOT, "%-18s %3d bones %4d cubes, texture %4d x %-4d  %.0f x %.0f x %.0f px = %.1f x %.1f x %.1f blocks at x%s%n", m.id, m.bones.size(), cubes, m.texW, m.texH,
@@ -1039,23 +1079,33 @@ public class SpellArt {
 			{"black_tortoise", (Build) Water::blackTortoiseBeast}, {"white_tiger", (Build) Metal::whiteTigerBeast},
 	};
 
+	/**
+	 * The Immortal Realm's primordial beasts made here (2026-10-26, the user: "overhaul the dragon model"), written as a beast's are
+	 * (geo/demon_beast, animations/demon_beast, textures/entity/demon_beast) by {@code --primordial}. The Kun-Peng's Kun is the spell's own
+	 * ({@code kun}, Void), drawn from the spell's files.
+	 */
+	static final Object[][] PRIMORDIAL = {
+			{"true_dragon", (Build) TrueDragon::trueDragon},
+	};
+
 	public static void main(String[] args) throws Exception {
 		if (args.length < 1) {
 			System.err.println("java SpellArt.java <the mod's src/main/resources/assets/defying-the-heavens> [ids...]");
 			System.err.println("java SpellArt.java --stored <dir, e.g. tools/spell-art/stored> [ids...]   (the stored true beasts)");
+			System.err.println("java SpellArt.java --primordial <the mod's assets> [ids...]   (the primordial beasts made here)");
 			System.exit(1);
 		}
-		boolean stored = args[0].equals("--stored");
-		int first = stored ? 1 : 0;
+		boolean stored = args[0].equals("--stored"), primordial = args[0].equals("--primordial");
+		int first = stored || primordial ? 1 : 0;
 		Path assets = Path.of(args[first]);
 		Set<String> only = new LinkedHashSet<>();
 		for (int i = first + 1; i < args.length; i++) only.add(args[i]);
-		for (Object[] spell : stored ? STORED : SPELLS) {
+		for (Object[] spell : stored ? STORED : primordial ? PRIMORDIAL : SPELLS) {
 			String id = (String) spell[0];
 			if (!only.isEmpty() && !only.contains(id)) continue;
 			Model m = new Model(id);
 			((Build) spell[1]).build(m);
-			write(assets, m);
+			write(assets, m, primordial ? "demon_beast" : "spell");
 		}
 	}
 }

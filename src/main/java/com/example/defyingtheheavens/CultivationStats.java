@@ -92,9 +92,17 @@ public final class CultivationStats {
 	 * its movement (it is both the push and the scale), so its share is the square root of a player's, to move as much faster.
 	 */
 	public static void applyNpc(LivingEntity npc, Realm r, Stage s, boolean mortal) {
+		applyNpc(npc, r, s, mortal, 1);
+	}
+
+	/**
+	 * {@link #applyNpc(LivingEntity, Realm, Stage, boolean)} with its body and its blows {@code might} times its realm's (the Celestial
+	 * Court's King and Venerables, stronger than their realm: CelestialCourt#might).
+	 */
+	public static void applyNpc(LivingEntity npc, Realm r, Stage s, boolean mortal, double might) {
 		double scale = mortal ? 0 : 1;
-		set(npc, Attributes.MAX_HEALTH, HEALTH_ID, "Cultivation max health", maxHealth(r, s) * scale);
-		set(npc, Attributes.ATTACK_DAMAGE, DAMAGE_ID, "Cultivation attack damage", attackDamage(r, s) * scale);
+		set(npc, Attributes.MAX_HEALTH, HEALTH_ID, "Cultivation max health", (maxHealth(r, s) + 20) * might * scale - 20 * scale);
+		set(npc, Attributes.ATTACK_DAMAGE, DAMAGE_ID, "Cultivation attack damage", attackDamage(r, s) * might * scale);
 		set(npc, Attributes.MOVEMENT_SPEED, SPEED_ID, "Cultivation speed", (Math.sqrt(1 + moveSpeed(r, s)) - 1) * scale);
 		set(npc, Attributes.ARMOR, ARMOR_ID, "Cultivation armor", armor(r, s) * scale);
 		set(npc, Attributes.ARMOR_TOUGHNESS, TOUGHNESS_ID, "Cultivation toughness", toughness(r, s) * scale);

@@ -47,6 +47,44 @@ public final class SectNames {
 		return a + " " + b + " " + k;
 	}
 
+	/** A Holy Land's two words, by its path, before "Holy Land" (HolyLands): "Primordial Sun Holy Land", "Nine Nether Holy Land", "Hidden Moon Holy Land". */
+	private static final String[][] HOLY_FIRST = {
+			{"Primordial", "Myriad", "Supreme", "Boundless", "Radiant", "Eternal", "Heavenly", "Azure", "Golden", "Starlit", "Pure", "Profound"},
+			{"Nine", "Blood", "Abyssal", "Black", "Crimson", "Withered", "Bone", "Scarlet", "Endless", "Ashen"},
+			{"Great", "Ancient", "Hidden", "Silent", "Distant", "Moonlit", "Misty", "Wandering", "Floating", "Silver"}};
+	private static final String[][] HOLY_SECOND = {
+			{"Sun", "Dao", "Star", "Lotus", "Origin", "Sword", "Light", "Heaven", "Jade Pool", "Phoenix", "Crane", "Cloud"},
+			{"Nether", "Sea", "Moon", "Soul", "Flame", "Abyss", "Shroud", "Skull", "Night", "Serpent"},
+			{"Void", "Mist", "Moon", "Stream", "Mountain", "Bell", "Cloud", "Sky", "Valley", "Lake"}};
+
+	/** A Holy Land's name (HolyLands): two words of its path's, then "Holy Land". */
+	public static String holy(RandomSource random, Alignment.Faction faction) {
+		int f = faction == Alignment.Faction.RIGHTEOUS ? 0 : faction == Alignment.Faction.DEVILISH ? 1 : 2;
+		String a = HOLY_FIRST[f][random.nextInt(HOLY_FIRST[f].length)];
+		String b = HOLY_SECOND[f][random.nextInt(HOLY_SECOND[f].length)];
+		// Never two words of one stem ("Moonlit Moon").
+		for (int i = 0; i < 6 && a.regionMatches(true, 0, b, 0, Math.min(4, Math.min(a.length(), b.length()))); i++) {
+			b = HOLY_SECOND[f][random.nextInt(HOLY_SECOND[f].length)];
+		}
+		return a + " " + b + " Holy Land";
+	}
+
+	/** An immortal sect's words, by its path, before its kind (ImmortalSects): "Nine Heavens Immortal Sect", "Blood Sea Immortal Palace". */
+	private static final String[][] IMMORTAL_WORDS = {
+			{"Nine Heavens", "Jade Void", "Myriad Swords", "Celestial Crane", "Golden Lotus", "Eternal Spring", "Azure Cloud", "Primordial Light",
+					"Heaven Piercing", "Purple Mist", "Supreme Pure", "Radiant Sun"},
+			{"Blood Sea", "Nine Nether", "Soul Devouring", "Crimson Moon", "Abyssal Flame", "Black Lotus", "Bone Throne", "Withering Star",
+					"Heaven Defying", "Shadow Abyss"},
+			{"Floating Peaks", "Misty Cloud", "Hidden Dao", "Silver Moon", "Distant Star", "Wandering Wind", "Quiet Lake", "Ancient Pine",
+					"Cloud Sea", "Still Water"}};
+	private static final String[] IMMORTAL_KINDS = {"Immortal Sect", "Immortal Sect", "Immortal Sect", "Immortal Palace", "Immortal Mountain"};
+
+	/** An immortal sect's name (ImmortalSects): its path's words, then "Immortal Sect" (now and then "Immortal Palace" or "Immortal Mountain"). */
+	public static String immortal(RandomSource random, Alignment.Faction faction) {
+		int f = faction == Alignment.Faction.RIGHTEOUS ? 0 : faction == Alignment.Faction.DEVILISH ? 1 : 2;
+		return IMMORTAL_WORDS[f][random.nextInt(IMMORTAL_WORDS[f].length)] + " " + IMMORTAL_KINDS[random.nextInt(IMMORTAL_KINDS.length)];
+	}
+
 	/** A demon clan's two words, by its race, before "<Race> Clan": "Iron Fang Tiger Clan", "Jade Scale Lizard Clan", "Nine Tails Fox Clan". */
 	private static final String[][] CLAN_FIRST = {
 			{"Iron", "Golden", "White", "Black", "Thunder", "Mountain", "Bloodstripe", "Savage", "Roaring", "Ember"},
@@ -71,6 +109,20 @@ public final class SectNames {
 		// (The race's word from its id: a server has no mod language to read a display name in. Sects' names are English too.)
 		String word = Character.toUpperCase(race.getId().charAt(0)) + race.getId().substring(1);
 		return a + " " + b + " " + word + " Clan";
+	}
+
+	/** A Demon Palace's word, by its race, before "<Race> Demon Palace": "Roaring Tiger Demon Palace", "Moonlit Fox Demon Palace". */
+	private static final String[][] PALACE_FIRST = {
+			{"White", "Roaring", "Iron", "Golden", "Thunder", "Ten Thousand Fang", "Blood Moon", "Silver", "Heaven Devouring", "Black"},
+			{"Mountain Bearing", "Ancient", "Jade", "Earth Shaking", "Black Scale", "Stone Heart", "Myriad Scale", "Sunken", "Deep", "Old"},
+			{"Nine Tailed", "Moonlit", "Crimson", "Foxfire", "Heavenly", "Silver", "Thousand Mirage", "Red Lotus", "Snow", "Dream"},
+			{"Azure", "Celestial", "Golden", "Storm", "Heaven Soaring", "Pearl", "Cloud Coiling", "Thunder", "Ancient", "Myriad"}};
+
+	/** A Demon Palace's name (DemonPalaces): a word of its race's, then the race and "Demon Palace" (the user's name for them). */
+	public static String palace(RandomSource random, Bloodline race) {
+		int r = Math.max(0, Math.min(PALACE_FIRST.length - 1, race.ordinal() - 1)); // HUMAN is first; the demon races after it
+		String word = Character.toUpperCase(race.getId().charAt(0)) + race.getId().substring(1);
+		return PALACE_FIRST[r][random.nextInt(PALACE_FIRST[r].length)] + " " + word + " Demon Palace";
 	}
 
 	private SectNames() {}

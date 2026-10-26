@@ -45,11 +45,55 @@ public final class SpatialArrivals {
 	private static final int TICKET_TICKS = 30 * 20;
 	private static final TicketType<ChunkPos> TICKET = TicketType.create("dth_gap_arrival", Comparator.comparingLong(ChunkPos::toLong), TICKET_TICKS);
 
-	/** The column to come out at in {@code level} from (x, z): in the Upper Realm, the nearest island's ({@link #islandColumn}); else (x, z). */
+	/**
+	 * The Great Void's continents are sought this far round (and at this step: they are far larger than the Jade Firmament's islands,
+	 * and the void between them as wide), on their own mask (ModNoiseSettings#continentMask).
+	 */
+	public static final int CONTINENT_REACH = 480, CONTINENT_STEP = 16;
+
+	/**
+	 * The column to come out at in {@code level} from (x, z): in the Upper Realm, the nearest island's ({@link #islandColumn}); in the
+	 * Great Void, the nearest continent's ({@link #continentColumn}), outside any sect's barrier ({@link #clearOfSects}); else (x, z).
+	 */
 	public static BlockPos target(ServerLevel level, int x, int z) {
-		if (!ModDimensions.isUpperRealm(level.dimension())) return new BlockPos(x, 0, z);
-		BlockPos island = islandColumn(level.getChunkSource().getGenerator(), level.getChunkSource().randomState(), level, x, z);
-		return island != null ? island : new BlockPos(x, 0, z);
+		boolean greatVoid = ModDimensions.isGreatVoid(level.dimension()), immortal = ModDimensions.isImmortalRealm(level.dimension());
+		if (!ModDimensions.isUpperRealm(level.dimension()) && !greatVoid && !immortal) return new BlockPos(x, 0, z);
+		ChunkGenerator generator = level.getChunkSource().getGenerator();
+		RandomState noise = level.getChunkSource().randomState();
+		BlockPos land = immortal ? massifColumn(generator, noise, level, x, z)
+				: greatVoid ? continentColumn(generator, noise, level, x, z) : islandColumn(generator, noise, level, x, z);
+		if (land != null && (greatVoid || immortal)) land = clearOfSects(level, land);
+		return land != null ? land : new BlockPos(x, 0, z);
+	}
+
+	/** How far past a sect's barrier one arriving near it comes down ({@link #clearOfSects}). */
+	private static final int CLEAR_OF_SECTS = 12;
+
+	/**
+	 * {@code column} moved out past the barrier of any sect it lies within, straight out from the sect's core to {@link #CLEAR_OF_SECTS}
+	 * beyond its edge; else as it was. One arriving in the Great Void (through a breach, borne by a current) comes down outside a Holy Land's
+	 * formation, not on its dome nor within it (a void current set a player down on a Holy Land's barrier: tour 7, 2026-10-25). Only there:
+	 * the Great Void's continents have room round their sects, the Jade Firmament's islands may not.
+	 */
+	public static BlockPos clearOfSects(ServerLevel level, BlockPos column) {
+		for (int pass = 0; pass < 2; pass++) {
+			boolean moved = false;
+			for (Sect sect : SectData.get(level.getServer()).all()) {
+				if (sect.extinct || sect.dimension != level.dimension()) continue;
+				double dx = column.getX() - sect.core.getX(), dz = column.getZ() - sect.core.getZ(), d = Math.sqrt(dx * dx + dz * dz);
+				double reach = sect.barrierRadius + CLEAR_OF_SECTS;
+				if (d >= reach) continue;
+				if (d < 1) {
+					dx = 1;
+					dz = 0;
+					d = 1;
+				}
+				column = new BlockPos(sect.core.getX() + (int) Math.round(dx / d * reach), column.getY(), sect.core.getZ() + (int) Math.round(dz / d * reach));
+				moved = true;
+			}
+			if (!moved) break;
+		}
+		return column;
 	}
 
 	/**
@@ -57,12 +101,34 @@ public final class SpatialArrivals {
 	 * the generator's heights; or null. Nothing is generated or loaded: a few milliseconds of noise, and a generator column or two.
 	 */
 	public static BlockPos islandColumn(ChunkGenerator generator, RandomState noise, LevelHeightAccessor heights, int x, int z) {
+		return landColumn(generator, noise, heights, x, z, ISLAND_REACH, MASK_STEP, (state, px, pz) -> ModNoiseSettings.islandMask(state, px, pz));
+	}
+
+	/** The same in the Great Void: the column nearest (x, z) well inside a continent, within {@link #CONTINENT_REACH}; or null. */
+	public static BlockPos continentColumn(ChunkGenerator generator, RandomState noise, LevelHeightAccessor heights, int x, int z) {
+		return landColumn(generator, noise, heights, x, z, CONTINENT_REACH, CONTINENT_STEP, ModNoiseSettings::continentMask);
+	}
+
+	/** The Immortal Realm's massifs are sought this far round (and at this step), on their own mask (ModNoiseSettings#massifMask). */
+	public static final int MASSIF_REACH = 320, MASSIF_STEP = 12;
+
+	/** The same in the Immortal Realm: the column nearest (x, z) well inside a massif, within {@link #MASSIF_REACH}; or null. */
+	public static BlockPos massifColumn(ChunkGenerator generator, RandomState noise, LevelHeightAccessor heights, int x, int z) {
+		return landColumn(generator, noise, heights, x, z, MASSIF_REACH, MASSIF_STEP, ModNoiseSettings::massifMask);
+	}
+
+	/** A realm's land mask at a column: positive over land, 0 at its rim. */
+	private interface Mask {
+		double at(RandomState state, int x, int z);
+	}
+
+	private static BlockPos landColumn(ChunkGenerator generator, RandomState noise, LevelHeightAccessor heights, int x, int z, int reach, int step, Mask mask) {
 		List<int[]> inside = new ArrayList<>();
-		int reach2 = ISLAND_REACH * ISLAND_REACH;
-		for (int dx = -ISLAND_REACH; dx <= ISLAND_REACH; dx += MASK_STEP) {
-			for (int dz = -ISLAND_REACH; dz <= ISLAND_REACH; dz += MASK_STEP) {
+		int reach2 = reach * reach;
+		for (int dx = -reach; dx <= reach; dx += step) {
+			for (int dz = -reach; dz <= reach; dz += step) {
 				int d2 = dx * dx + dz * dz;
-				if (d2 > reach2 || ModNoiseSettings.islandMask(noise, x + dx, z + dz) <= INSIDE) continue;
+				if (d2 > reach2 || mask.at(noise, x + dx, z + dz) <= INSIDE) continue;
 				inside.add(new int[] {x + dx, z + dz, d2});
 			}
 		}
@@ -103,6 +169,8 @@ public final class SpatialArrivals {
 				if (top <= level.getMinBuildHeight() + 1 || top >= level.getMaxBuildHeight() - 2) continue;
 				BlockPos ground = new BlockPos(cx, top - 1, cz);
 				BlockState state = level.getBlockState(ground);
+				// Not a sect's barrier: its dome tops the column, the ground lies under it.
+				if (state.is(ModBlocks.SECT_BARRIER)) continue;
 				if (state.getFluidState().isEmpty() && state.isFaceSturdy(level, ground, Direction.UP)) return ground.above();
 			}
 		}

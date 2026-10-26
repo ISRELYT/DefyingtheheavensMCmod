@@ -32,7 +32,8 @@ import java.util.UUID;
  * wanderer down to {@link #PEAK_CHANCE} for a Heavenly Being at Grand Perfection, falling evenly (by the same factor) with
  * every stage; the rest of the time the attempt finds no one. The lower realms never see anyone above Heavenly Being Grand
  * Perfection. The Upper Realm's curve runs over its own range instead, from Qi Refining Early to Four Axis Grand Perfection;
- * the Netherworld's too, where those who turn up are its dead, ghost cultivators (GhostCultivatorNpc), never the living.
+ * the Netherworld's too, where those who turn up are its dead, ghost cultivators (GhostCultivatorNpc), never the living; and
+ * the Great Void's over its own, from Heavenly Being Early to Void Shattering Grand Perfection ({@link #rollGreatVoidRank}).
  */
 public final class NpcSpawner {
 	public static final double MORTAL_CHANCE = 0.10;
@@ -95,6 +96,50 @@ public final class NpcSpawner {
 		return upperRealm ? top + 1 : top + 2;
 	}
 
+	/**
+	 * The Great Void's rogues (2026-10-25) run over their own curve, from Heavenly Being Early (a Holy Land's youngest, wandered off)
+	 * to Void Shattering Grand Perfection, never a mortal; at its peak this share are of Sacred Vessel instead, while the realm has room
+	 * (HighRealms).
+	 */
+	public static final int GREAT_VOID_FLOOR = PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.EARLY),
+			GREAT_VOID_TOP = PlayerCultivation.rank(Realm.VOID_SHATTERING, Stage.GRAND_PERFECTION);
+	public static final double SACRED_VESSEL_SHARE = 0.25;
+
+	/** The rank the roll lands on in the Great Void ({@link #GREAT_VOID_FLOOR} up), or {@link Integer#MIN_VALUE} for nobody (unless {@code mustFind}). */
+	public static int rollGreatVoidRank(RandomSource random, boolean mustFind) {
+		return rollBetween(random, GREAT_VOID_FLOOR, GREAT_VOID_TOP, mustFind);
+	}
+
+	/**
+	 * The Immortal Realm's wanderers (phase 2, 2026-10-25): from Entering Nirvana Early (those come up through the Gate) to True Immortal
+	 * Grand Perfection on its own curve, never a mortal.
+	 */
+	public static final int IMMORTAL_FLOOR = PlayerCultivation.rank(Realm.ENTERING_NIRVANA, Stage.EARLY), IMMORTAL_TOP = PlayerCultivation.LAST_RANK;
+
+	/** The rank the roll lands on in the Immortal Realm ({@link #IMMORTAL_FLOOR} up), or {@link Integer#MIN_VALUE} for nobody (unless {@code mustFind}). */
+	public static int rollImmortalRank(RandomSource random, boolean mustFind) {
+		return rollBetween(random, IMMORTAL_FLOOR, IMMORTAL_TOP, mustFind);
+	}
+
+	private static int rollBetween(RandomSource random, int floor, int top, boolean mustFind) {
+		int steps = top - floor + 1;
+		for (int tries = 0; tries < 64; tries++) {
+			double roll = random.nextDouble();
+			for (int step = 0; step < steps; step++) {
+				roll -= chance(step, steps);
+				if (roll < 0) return floor + step;
+			}
+			if (!mustFind) return Integer.MIN_VALUE;
+		}
+		return floor;
+	}
+
+	/** The rank the roll lands on where {@code level} is: the Immortal Realm's curve, the Great Void's, the Upper Realm's or the lower realms'. */
+	public static int rollRank(RandomSource random, ResourceKey<Level> dimension, boolean mustFind) {
+		if (ModDimensions.isImmortalRealm(dimension)) return rollImmortalRank(random, mustFind);
+		return ModDimensions.isGreatVoid(dimension) ? rollGreatVoidRank(random, mustFind) : rollRank(random, ModDimensions.isUpperRealm(dimension), mustFind);
+	}
+
 	/** The rank the roll lands on, or {@link Integer#MIN_VALUE} for nobody (unless {@code mustFind}, which rolls again). */
 	public static int rollRank(RandomSource random, boolean upperRealm, boolean mustFind) {
 		int steps = steps(upperRealm);
@@ -150,8 +195,9 @@ public final class NpcSpawner {
 		if (!spawnsLiving(level.dimension()) && !dead) return;
 		RandomSource random = level.getRandom();
 		if (CultivatorNpc.countWanderers(level) >= LEVEL_CAP) return;
+		boolean greatVoid = ModDimensions.isGreatVoid(level.dimension()), immortal = ModDimensions.isImmortalRealm(level.dimension());
 		boolean upper = dead || ModDimensions.isUpperRealm(level.dimension());
-		int rank = rollRank(random, upper, false);
+		int rank = immortal ? rollImmortalRank(random, false) : greatVoid ? rollGreatVoidRank(random, false) : rollRank(random, upper, false);
 		if (rank == Integer.MIN_VALUE) return;
 		boolean mortal = rank < 0;
 		if (RogueIndex.anyWithin(level, player.getX(), player.getZ(), CROWD_RADIUS, mortal)) return;
@@ -168,10 +214,14 @@ public final class NpcSpawner {
 			if (upper && rank == PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION) && random.nextDouble() < DAO_INTEGRATION_SHARE) {
 				rank = PlayerCultivation.rank(Realm.DAO_INTEGRATION, Stage.EARLY) + random.nextInt(Stage.values().length);
 			}
+			// And the Great Void's now and then one of Sacred Vessel.
+			if (greatVoid && rank == GREAT_VOID_TOP && random.nextDouble() < SACRED_VESSEL_SHARE) {
+				rank = PlayerCultivation.rank(Realm.SACRED_VESSEL, Stage.EARLY) + random.nextInt(Stage.values().length);
+			}
 			npc.becomeRogue(rank, Alignment.randomRogue(random), random);
-			// Now and then a demon (the user's design, 2026-10-23): of the race whose land this is; in the Upper Realm, of any.
+			// Now and then a demon (the user's design, 2026-10-23): of the race whose land this is; in the upper realms, of any.
 			if (!mortal && random.nextInt(DEMON_IN) == 0) {
-				Bloodline race = upper ? DenStructure.upperRace(random) : DenStructure.raceOfLand(level.getBiome(spot));
+				Bloodline race = upper || greatVoid || immortal ? DenStructure.upperRace(random) : DenStructure.raceOfLand(level.getBiome(spot));
 				if (race != null) npc.setRace(race, random.nextInt(3));
 			}
 		}

@@ -72,6 +72,19 @@ public enum QiElement {
 	private static final float[] SWORDS = {0.3f, 0, 0, 2, 8, 0};
 	private static final float[] CHAOS = {1, 1, 1, 1, 1, 0};
 	private static final float[] PLAINS = {3, 1, 1, 3, 1, 0};
+	/**
+	 * The Great Void (2026-10-25): the steppes' qi of all five near alike; a Dao field's almost all its element's (two thirds of the
+	 * qi there, against a seventh to a third anywhere else: the field's methods cultivate the faster, HeavenMethods#elementFactor); the
+	 * old battlefields' metal and fire, of the weapons and the war; the Shore of Nirvana's water and wood, calm.
+	 */
+	private static final float[] VOID_STEPPES = {2, 1.5f, 1, 2, 1.5f, 0};
+	private static final float[] DAO_WOOD = {14, 0.5f, 0.2f, 0.5f, 0.2f, 0};
+	private static final float[] DAO_WATER = {0.5f, 14, 0.2f, 0.2f, 0.5f, 0};
+	private static final float[] DAO_FIRE = {0.5f, 0.2f, 14, 0.5f, 0.2f, 0};
+	private static final float[] DAO_EARTH = {0.2f, 0.2f, 0.5f, 14, 0.5f, 0};
+	private static final float[] DAO_METAL = {0.2f, 0.5f, 0.2f, 0.5f, 14, 0};
+	private static final float[] BATTLEFIELD = {0.3f, 0.3f, 3, 2, 5, 0};
+	private static final float[] NIRVANA_SHORE = {3, 4, 1, 1, 1, 0};
 
 	/**
 	 * A random element for qi gathering in {@code biome}; {@code underground} (no sky above, in a realm that has one) leans to
@@ -158,7 +171,8 @@ public enum QiElement {
 		if (biome.is(Biomes.SOUL_SAND_VALLEY)) return SOUL_SAND_VALLEY;
 		if (biome.is(BiomeTags.IS_NETHER)) return NETHER;
 		if (biome.is(BiomeTags.IS_END)) return END;
-		if (biome.is(ModBiomes.SPATIAL_GAP)) return CHAOS;
+		if (biome.is(ModBiomes.SPATIAL_GAP) || biome.is(ModBiomes.VOID_BREACH)) return CHAOS;
+		if (biome.is(ModTags.IS_GREAT_VOID)) return greatVoid(biome, underground);
 		if (biome.is(Biomes.LUSH_CAVES)) return LUSH_CAVES;
 		if (underground || biome.is(Biomes.DRIPSTONE_CAVES) || biome.is(Biomes.DEEP_DARK)) return UNDERGROUND;
 		if (biome.is(ModBiomes.THUNDER_PEAKS)) return THUNDER;
@@ -174,5 +188,28 @@ public enum QiElement {
 				|| biome.is(Biomes.GROVE)) return SNOW;
 		if (biome.is(BiomeTags.IS_MOUNTAIN) || biome.is(BiomeTags.IS_HILL) || biome.is(ModBiomes.DENSE_QI_PEAKS)) return PEAKS;
 		return PLAINS;
+	}
+
+	/** A Great Void land's weights: its Dao field's element even underground (the field's law runs through the rock), the rest as above. */
+	private static float[] greatVoid(Holder<Biome> biome, boolean underground) {
+		if (biome.is(ModBiomes.DAO_FIELD_WOOD)) return DAO_WOOD;
+		if (biome.is(ModBiomes.DAO_FIELD_WATER)) return DAO_WATER;
+		if (biome.is(ModBiomes.DAO_FIELD_FIRE)) return DAO_FIRE;
+		if (biome.is(ModBiomes.DAO_FIELD_EARTH)) return DAO_EARTH;
+		if (biome.is(ModBiomes.DAO_FIELD_METAL)) return DAO_METAL;
+		if (underground) return UNDERGROUND;
+		if (biome.is(ModBiomes.ANCIENT_BATTLEFIELD)) return BATTLEFIELD;
+		if (biome.is(ModBiomes.SHORE_OF_NIRVANA)) return NIRVANA_SHORE;
+		return VOID_STEPPES;
+	}
+
+	/** The element whose law runs strong in {@code biome}: a Great Void Dao field's (DaoFields), or null. */
+	public static QiElement daoField(Holder<Biome> biome) {
+		if (biome.is(ModBiomes.DAO_FIELD_WOOD)) return WOOD;
+		if (biome.is(ModBiomes.DAO_FIELD_WATER)) return WATER;
+		if (biome.is(ModBiomes.DAO_FIELD_FIRE)) return FIRE;
+		if (biome.is(ModBiomes.DAO_FIELD_EARTH)) return EARTH;
+		if (biome.is(ModBiomes.DAO_FIELD_METAL)) return METAL;
+		return null;
 	}
 }

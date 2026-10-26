@@ -76,6 +76,7 @@ public final class NetherworldHud {
 				int end = CORRUPTION.draw(graphics, mc.font, y, barX, Component.translatable(ModLang.HUD_YIN_CORRUPTION_LABEL), corruption,
 						amount, false);
 				arrow(graphics, end + 3, y + 2);
+				HudCorner.drew(y, y + 10, end + 8); // the arrow past its amount
 			} else {
 				CORRUPTION.reset();
 			}
@@ -99,9 +100,10 @@ public final class NetherworldHud {
 		boolean on = ClientCultivationData.get().isAbilityEnabled(ability);
 		AbilityWheel.drawIcon(g, ability, QiHud.X, y, 10, on);
 		Component line = Component.translatable(ModLang.HUD_SELECTED_ABILITY, ability.getDisplayName());
+		Component state = Component.translatable(on ? ModLang.ABILITY_ON : ModLang.ABILITY_OFF);
 		g.drawString(font, line, QiHud.X + 13, y + 1, on ? 0xFFD700 : 0x9E9E9E);
-		g.drawString(font, Component.translatable(on ? ModLang.ABILITY_ON : ModLang.ABILITY_OFF), QiHud.X + 13 + font.width(line) + 6, y + 1,
-				on ? 0x69F0AE : 0x707070);
+		g.drawString(font, state, QiHud.X + 13 + font.width(line) + 6, y + 1, on ? 0x69F0AE : 0x707070);
+		HudCorner.drew(y, y + 10, QiHud.X + 13 + font.width(line) + 6 + font.width(state));
 	}
 
 	/** The spell the cast key casts, if one is readied and can be cast. */
@@ -117,8 +119,13 @@ public final class NetherworldHud {
 		SpellWheelScreen.drawIcon(g, spell, QiHud.X, y, 10, cooldown <= 0);
 		Component line = Component.translatable(ModLang.HUD_READIED_SPELL, spell.getDisplayName());
 		g.drawString(font, line, QiHud.X + 13, y + 1, cooldown > 0 ? 0x9E9E9E : 0x8FEAE4);
-		if (cooldown > 0) g.drawString(font, Component.translatable(ModLang.SPELLS_COOLING, (cooldown + 19) / 20),
-				QiHud.X + 13 + font.width(line) + 6, y + 1, 0x707070);
+		int right = QiHud.X + 13 + font.width(line);
+		if (cooldown > 0) {
+			Component cooling = Component.translatable(ModLang.SPELLS_COOLING, (cooldown + 19) / 20);
+			g.drawString(font, cooling, right + 6, y + 1, 0x707070);
+			right += 6 + font.width(cooling);
+		}
+		HudCorner.drew(y, y + 10, right);
 	}
 
 	/** The labels of the bars showing, for the stack's label column (QiHud#barX). */

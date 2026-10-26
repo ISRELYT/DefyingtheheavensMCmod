@@ -63,6 +63,10 @@ import java.util.UUID;
  * only fight back. Each strikes with its kind's signature move (DemonBeastGoals). Slain, it leaves its hide and meat and, the more
  * surely the higher its rank, its demon core (DemonCoreItem: a third of the time at Qi Refining, two in three at Foundation Building,
  * always at Core Formation). A monster: no beast spawns in peace, and a sect's barrier keeps them off its grounds (Formations).
+ * <p>
+ * An elder (BeastKind#isElder, Void Shattering to Entering Nirvana) is never born wild: it rises over its race's blood pool in the Great
+ * Void (BloodPools) and keeps to it ({@link #guard}: it ranges no further than {@link #GUARD_ROAM} from it but to give chase, and goes
+ * back to it), never wandering off; slain, it leaves its core and, one time in {@link #ELDER_BLOOD_CHANCE}, its race's blood of its realm.
  */
 public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 	private static final EntityDataAccessor<Integer> DATA_RANK = SynchedEntityData.defineId(DemonBeast.class, EntityDataSerializers.INT);
@@ -74,6 +78,7 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 	private static final UUID KIND_HEALTH = UUID.fromString("5b2c7e1a-3d4f-4a8b-9c6e-1f2a3b4c5d6e");
 	private static final UUID KIND_ARMOUR = UUID.fromString("6c3d8f2b-4e5a-4b9c-8d7f-2a3b4c5d6e7f");
 	private static final UUID NIGHT_HUNT = UUID.fromString("7d4e9a3c-5f6b-4cad-9e8a-3b4c5d6e7f8a");
+	private static final UUID KIND_FOOTING = UUID.fromString("8e5fab4d-6a7c-4dbe-8f9b-4c5d6e7f8a9b");
 
 	/** It leaves them alone who stand this many stages (a realm) or more above it. */
 	public static final int FAR_ABOVE = 4;
@@ -81,11 +86,19 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 	public static final double NOTICE = 14;
 	/** Its core's chance of being left whole: by realm (Qi Refining, Foundation Building, Core Formation). */
 	public static final float[] CORE_CHANCE = {1 / 3f, 2 / 3f, 1f};
+	/** An elder keeps within this of the pool it guards ({@link #guard}); and leaves its race's blood this often (its core always). */
+	public static final int GUARD_ROAM = 18;
+	public static final float ELDER_BLOOD_CHANCE = 0.5f;
 
 	private final BeastKind kind;
 	private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 	/** Game time until which its signature move is spent (DemonBeastGoals). */
 	long signatureReady;
+	/** The pool an elder guards (null: none, a wild beast's). */
+	private BlockPos guards;
+	/** How fully it is in each act (by its flag's bit), last tick and now: eased in and out over {@link #ACT_EASE} ticks, the client's, for its look. */
+	private final float[] acted = new float[4], actedBefore = new float[4];
+	private static final int ACT_EASE = 4;
 
 	public DemonBeast(EntityType<? extends Monster> type, Level level) {
 		super(type, level);
@@ -100,6 +113,8 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 			}
 		}
 		if (kind().moves == BeastKind.Moves.AMPHIBIOUS || kind().moves == BeastKind.Moves.SWIMMING) setPathfindingMalus(BlockPathTypes.WATER, 0.0f);
+		// An elder, huge, strides over the land's rises as a man over a step.
+		if (kind().isElder()) setMaxUpStep(1.5f * kind().modelScale());
 		xpReward = 5;
 	}
 
@@ -204,11 +219,16 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 		if (DATA_RANK.equals(key)) refreshDimensions();
 	}
 
-	/** Its strength: a cultivator's of its rank (health, blows, armour, toughness, footing), by its kind's health and armour; its speed its kind's. */
+	/**
+	 * Its strength: a cultivator's of its rank (health, blows, armour, toughness, footing), its body and blows by its kind's might (a
+	 * primordial beast's the more: BeastKind#might), by its kind's health and armour; its speed its kind's. A primordial beast, vast, is
+	 * moved by nothing.
+	 */
 	private void applyStats() {
-		CultivationStats.applyNpc(this, getCultivationRealm(), getCultivationStage(), false);
+		CultivationStats.applyNpc(this, getCultivationRealm(), getCultivationStage(), false, kind().might());
 		modifier(Attributes.MAX_HEALTH, KIND_HEALTH, "Beast kind health", kind().healthScale - 1);
 		modifier(Attributes.ARMOR, KIND_ARMOUR, "Beast kind armour", kind().armourScale - 1);
+		modifier(Attributes.KNOCKBACK_RESISTANCE, KIND_FOOTING, "Beast kind footing", kind().isPrimordial() ? 0.25 : 0);
 		AttributeInstance speed = getAttribute(Attributes.MOVEMENT_SPEED);
 		if (speed != null) speed.setBaseValue(kind().speed);
 		AttributeInstance flying = getAttribute(Attributes.FLYING_SPEED);
@@ -235,6 +255,24 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 		return kind().territorial && !farAbove(player);
 	}
 
+	// --- An elder's pool ---
+
+	/** An elder set to guard the pool at {@code pool}: kept to it ({@link #GUARD_ROAM}), kept in the world while none is near. */
+	public void guard(BlockPos pool) {
+		this.guards = pool.immutable();
+		restrictTo(guards, GUARD_ROAM);
+		setPersistenceRequired();
+	}
+
+	/** The pool it guards, or null. */
+	public BlockPos guards() { return guards; }
+
+	/** An elder never leaves the world for want of anyone near (it would leave its pool unguarded), nor a primordial beast its lair. */
+	@Override
+	public boolean requiresCustomPersistence() {
+		return kind().isElder() || kind().isPrimordial() || super.requiresCustomPersistence();
+	}
+
 	// --- What it is doing ---
 
 	public boolean acting(int act) { return (entityData.get(DATA_ACT) & act) != 0; }
@@ -242,6 +280,15 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 	void setActing(int act, boolean on) {
 		byte flags = entityData.get(DATA_ACT);
 		entityData.set(DATA_ACT, (byte) (on ? flags | act : flags & ~act));
+	}
+
+	/**
+	 * How fully it is in {@code act} (0 to 1), eased in and out over {@link #ACT_EASE} ticks: its look (BeastModels) goes into an act
+	 * and out of it, a jaw not thrown open in a frame (the elders' bones, 2026-10-25). The client's.
+	 */
+	public float acted(int act, float partial) {
+		int i = Integer.numberOfTrailingZeros(act);
+		return Mth.lerp(partial, actedBefore[i], acted[i]);
 	}
 
 	/** Whatever it was doing ends (taken by a soul: SoulProjection#possess): its goals under way stopped, and with them its acts. */
@@ -279,10 +326,24 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 	@Override
 	public void aiStep() {
 		super.aiStep();
+		if (level().isClientSide) {
+			for (int i = 0; i < acted.length; i++) {
+				actedBefore[i] = acted[i];
+				acted[i] = Mth.approach(acted[i], acting(1 << i) ? 1 : 0, 1f / ACT_EASE);
+			}
+		}
 		// One that came into the world with no rank (made by a command or another mod without its spawning, finalizeSpawn) is given one
 		// now, and its strength with it: it stood at base strength, as no rank at all, before the sweep of 2026-10-23.
 		if (!level().isClientSide && getRank() < 0 && level() instanceof ServerLevel server) {
 			setRank(rollRank(kind(), random, ModDimensions.isUpperRealm(server.dimension())));
+		}
+		// An elder, too great for most paths, goes straight at what it hunts when it can find no way there (it stood still, a target in
+		// plain sight, a block or two over the land's lie).
+		if (!level().isClientSide && kind().isElder() && kind().moves != BeastKind.Moves.FLYING && tickCount % 10 == 0) {
+			LivingEntity target = getTarget();
+			if (target != null && target.isAlive() && getNavigation().isDone() && distanceToSqr(target) > getBbWidth() * getBbWidth()) {
+				getMoveControl().setWantedPosition(target.getX(), target.getY(), target.getZ(), 1.2);
+			}
 		}
 		if (level().isClientSide || tickCount % 40 != 0) return;
 		AttributeInstance speed = getAttribute(Attributes.MOVEMENT_SPEED);
@@ -363,8 +424,15 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 			case BLOODFANG_TIGER, HORNED_THUNDER_RHINO -> new SoundEvent[] {SoundEvents.RAVAGER_AMBIENT, SoundEvents.RAVAGER_HURT, SoundEvents.RAVAGER_DEATH};
 			case FROST_APE, EARTHQUAKE_BEAR -> new SoundEvent[] {SoundEvents.POLAR_BEAR_AMBIENT, SoundEvents.POLAR_BEAR_HURT, SoundEvents.POLAR_BEAR_DEATH};
 			case LIGHTNING_ANTELOPE -> new SoundEvent[] {SoundEvents.GOAT_AMBIENT, SoundEvents.GOAT_HURT, SoundEvents.GOAT_DEATH};
-			case EMBER_FOX -> new SoundEvent[] {SoundEvents.FOX_AMBIENT, SoundEvents.FOX_HURT, SoundEvents.FOX_DEATH};
+			case EMBER_FOX, NINE_TAILED_FOX -> new SoundEvent[] {SoundEvents.FOX_AMBIENT, SoundEvents.FOX_HURT, SoundEvents.FOX_DEATH};
 			case FLOOD_DRAGON -> new SoundEvent[] {SoundEvents.GUARDIAN_AMBIENT, SoundEvents.GUARDIAN_HURT, SoundEvents.GUARDIAN_DEATH};
+			case ELDER_WHITE_TIGER -> new SoundEvent[] {SoundEvents.RAVAGER_AMBIENT, SoundEvents.RAVAGER_HURT, SoundEvents.RAVAGER_DEATH};
+			case MOUNTAIN_LIZARD_KING -> new SoundEvent[] {SoundEvents.SNIFFER_IDLE, SoundEvents.SNIFFER_HURT, SoundEvents.SNIFFER_DEATH};
+			case AZURE_DRAGON -> new SoundEvent[] {SoundEvents.ENDER_DRAGON_AMBIENT, SoundEvents.ENDER_DRAGON_HURT, SoundEvents.ENDER_DRAGON_DEATH};
+			// The Kun's deep song (the Peng's cry its own: PrimordialBeast), the Phoenix's scream, the True Dragon's roar.
+			case KUN_PENG -> new SoundEvent[] {SoundEvents.ELDER_GUARDIAN_AMBIENT, SoundEvents.ELDER_GUARDIAN_HURT, SoundEvents.ELDER_GUARDIAN_DEATH};
+			case TRUE_PHOENIX -> new SoundEvent[] {SoundEvents.ENDER_DRAGON_AMBIENT, SoundEvents.BLAZE_HURT, SoundEvents.BLAZE_DEATH};
+			case TRUE_DRAGON -> new SoundEvent[] {SoundEvents.ENDER_DRAGON_GROWL, SoundEvents.ENDER_DRAGON_HURT, SoundEvents.ENDER_DRAGON_DEATH};
 		};
 		return three[which];
 	}
@@ -378,6 +446,12 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 			case JADE_VIPER -> 1.2f;
 			case JADE_SCALED_PYTHON, IRON_JAW_CROCODILE, GOLDEN_WINGED_ROC -> 0.6f;
 			case FROST_APE -> 0.8f;
+			case ELDER_WHITE_TIGER, AZURE_DRAGON -> 0.85f;
+			case NINE_TAILED_FOX -> 0.9f;
+			case MOUNTAIN_LIZARD_KING -> 0.7f;
+			case KUN_PENG -> 0.5f;
+			case TRUE_PHOENIX -> 1.45f;
+			case TRUE_DRAGON -> 0.6f;
 			default -> 1.0f;
 		};
 		return super.getVoicePitch() * kindPitch / (float) Math.sqrt(scale());
@@ -390,9 +464,11 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 		super.dropCustomDeathLoot(source, looting, recentlyHit);
 		int realm = Math.min(CORE_CHANCE.length - 1, getCultivationRealm().ordinal());
 		if (random.nextFloat() < CORE_CHANCE[realm]) spawnAtLocation(DemonCoreItem.of(Math.max(0, getRank()), kind().element, kind().getDisplayName()));
-		// A beast of a demon race's kin leaves that race's blood, of its realm, as often as its core (DemonBlood#kin).
+		// A beast of a demon race's kin leaves that race's blood, of its realm, as often as its core (DemonBlood#kin); an elder, half the
+		// time (the blood it guarded is the prize).
 		Bloodline kin = DemonBlood.kin(kind());
-		if (kin != null && random.nextFloat() < CORE_CHANCE[realm]) spawnAtLocation(DemonBloodItem.of(kin, getCultivationRealm()));
+		float bloodChance = kind().isElder() ? ELDER_BLOOD_CHANCE : CORE_CHANCE[realm];
+		if (kin != null && random.nextFloat() < bloodChance) spawnAtLocation(DemonBloodItem.of(kin, getCultivationRealm()));
 		for (net.minecraft.world.item.Item remains : kind().remains()) {
 			int count = random.nextInt(2 + looting) + (getRank() >= kind().tier.maxRank - 1 ? 1 : 0);
 			if (count > 0) spawnAtLocation(new ItemStack(remains, count));
@@ -405,11 +481,13 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 	public void addAdditionalSaveData(CompoundTag tag) {
 		super.addAdditionalSaveData(tag);
 		tag.putInt("Rank", getRank());
+		if (guards != null) tag.putLong("Guards", guards.asLong());
 	}
 
 	@Override
 	public void readAdditionalSaveData(CompoundTag tag) {
 		super.readAdditionalSaveData(tag);
+		if (tag.contains("Guards")) guard(BlockPos.of(tag.getLong("Guards")));
 		if (tag.contains("Rank") && tag.getInt("Rank") >= 0) {
 			float health = getHealth();
 			holdRank(tag.getInt("Rank"));

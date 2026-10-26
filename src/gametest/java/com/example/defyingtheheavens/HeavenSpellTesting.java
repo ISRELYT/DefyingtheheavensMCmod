@@ -116,6 +116,28 @@ final class HeavenSpellTesting {
 		player.setYHeadRot(yaw);
 	}
 
+	/**
+	 * What Return to the Bough wants to take hold (a Cultivation Fruit held, a tree looked at): a fruit in {@code player}'s hand and a bough of
+	 * leaves over the floor a few blocks before {@code home}, {@code player} looking at it. Returns the bough, for {@link #unBough}.
+	 */
+	static BlockPos bough(ServerPlayer player, Vec3 home) {
+		BlockPos leaves = BlockPos.containing(home.add(0, 3, 3));
+		ServerLevel level = (ServerLevel) player.level();
+		level.setBlock(leaves, Blocks.OAK_LEAVES.defaultBlockState().setValue(net.minecraft.world.level.block.LeavesBlock.PERSISTENT, true), 2);
+		player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, CultivationFruitItem.create(10));
+		lookAt(player, Vec3.atCenterOf(leaves));
+		return leaves;
+	}
+
+	/** The bough {@link #bough} set, and whatever was hung round it, taken away again; the caster's hands emptied. */
+	static void unBough(ServerPlayer player, BlockPos leaves) {
+		ServerLevel level = (ServerLevel) player.level();
+		for (BlockPos pos : BlockPos.betweenClosed(leaves.offset(-6, -6, -6), leaves.offset(6, 6, 6))) {
+			if (pos.equals(leaves) || level.getBlockState(pos).is(ModBlocks.CULTIVATION_FRUIT)) level.setBlock(pos, Blocks.AIR.defaultBlockState(), 2);
+		}
+		player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, net.minecraft.world.item.ItemStack.EMPTY);
+	}
+
 	/** Casts {@code spell}: true if it was paid for (it took hold). */
 	static boolean cast(ServerPlayer player, Spell spell) {
 		PlayerCultivation c = CultivationManager.get(player);

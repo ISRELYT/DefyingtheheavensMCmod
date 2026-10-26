@@ -497,6 +497,8 @@ public final class SectMembership {
 			buf.writeVarLong(disciple == null ? 0 : Math.max(0, player.level().getGameTime() - disciple.joined));
 			buf.writeBoolean(seat.inBody());
 			buf.writeBoolean(sect.isClan()); // a demon clan's master its Clan Head (NpcTitle#getDisplayName(boolean))
+			buf.writeBoolean(sect.isHoly()); // a Holy Land's its Patriarch (NpcTitle#getDisplayName(boolean, boolean))
+			buf.writeBoolean(sect.isImmortal()); // an immortal sect's its Sect Lord (NpcTitle#getDisplayName(boolean, boolean, boolean))
 			java.util.List<Sect.Member> members = new java.util.ArrayList<>(sect.members.values());
 			members.sort(Sect.SENIORITY);
 			buf.writeVarInt(members.size() + sect.disciples.size());
@@ -539,6 +541,7 @@ public final class SectMembership {
 				buf.writeVarInt(left <= 0 ? 0 : (int) Math.max(1, (left + HeavenRitual.DAY - 1) / HeavenRitual.DAY));
 			}
 		}
+		CelestialCourt.writeInfo(player, buf); // and their rank in the Celestial Court, if they are of it
 		ServerPlayNetworking.send(player, ModPackets.SECT_INFO, buf);
 	}
 

@@ -51,7 +51,8 @@ public final class SkyLayer {
 	 */
 	static boolean ownsTheSky(ResourceKey<Level> dimension) {
 		return dimension == ModDimensions.ASTRAL_VOID || ModDimensions.isNetherworld(dimension) || ModDimensions.isSoulRiver(dimension)
-				|| ModDimensions.isInnerRealm(dimension);
+				|| ModDimensions.isInnerRealm(dimension) || ModDimensions.isGreatVoid(dimension) || ModDimensions.isVoidBreach(dimension)
+				|| ModDimensions.isImmortalRealm(dimension) || ModDimensions.isImmortalPassage(dimension);
 	}
 
 	/** WorldRenderEvents.END: under a shader pack, in such a realm, the frame's sky drawn whole and the world's depth kept. */

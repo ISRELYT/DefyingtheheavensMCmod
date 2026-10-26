@@ -735,18 +735,21 @@ public class Metal {
 
 	static final double BLADE = 122, BLADE_WIDE = 12;
 
+	/** The colossal sword's blade's half-width at {@code y} up it from its point: drawn to its point over its lowest 24 pixels. */
+	static double bigHalf(double y) {
+		return BLADE_WIDE / 2 * Math.pow(Math.max(0, Math.min(1, y / 24)), 0.75);
+	}
+
 	/**
-	 * The colossal sword's blade (standing, its point at the foot, its broad faces looking forward and back): steel, its edges blazing with
-	 * sword-light, a ridge of silver down its middle; down its upper part an inscription of glyphs in gold; its point drawn to a tip (the
-	 * cube's corners clear).
+	 * The colossal sword's blade (standing, its point at the foot, its broad faces looking forward and back, solid to its outline:
+	 * {@link #bigHalf}): steel, its edges blazing with sword-light (the faces at its outline, its sides and its point's steps, all edge), a
+	 * ridge of silver down its middle; down its upper part an inscription of glyphs in gold.
 	 */
 	static SpellArt.Painter bigBlade(int seed) {
 		return t -> {
-			double y = t.qy(), u = t.across() - 0.5, half = 0.5 * Math.pow(Math.min(1, y / 24), 0.75);
-			// Its edges, seen from the side: sword-light, clear where the point has drawn in from the cube's sides.
-			if (t.side()) return y > 24 ? SpellArt.glow(SpellArt.mix(GLEAM, WHITE, 0.6), 0.97) : SpellArt.CLEAR;
-			if (Math.abs(u) > half) return SpellArt.CLEAR;
-			double edge = (half - Math.abs(u)) * BLADE_WIDE;
+			double y = t.qy(), u = t.qx() / BLADE_WIDE, half = bigHalf(y) / BLADE_WIDE;
+			if (t.side() || t.flat()) return SpellArt.glow(SpellArt.mix(GLEAM, WHITE, 0.6), 0.97);
+			double edge = Math.max(0, half - Math.abs(u)) * BLADE_WIDE;
 			if (edge < 1) return SpellArt.glow(SpellArt.mix(GLEAM, WHITE, 0.5 + 0.5 * (1 - edge)), 0.97);
 			double up = y / BLADE;
 			if (up > 0.56 && up < 0.94 && Math.abs(u) < 0.22) {
@@ -770,9 +773,12 @@ public class Metal {
 		m.scale = 4;
 		m.bone("root", null, 0, 0, 0);
 		SpellArt.Bone sword = m.bone("sword", "root", 0, 0, 0);
-		sword.box(0, BLADE / 2, 0, BLADE_WIDE, BLADE, 1.8, bigBlade(11)).only(SpellArt.Face.FRONT, SpellArt.Face.BACK, SpellArt.Face.SIDE_A, SpellArt.Face.SIDE_B).density(3);
-		sword.box(0, 14 + (BLADE - 14) / 2, 0, 2.2, BLADE - 14, 2.8, t -> t.flat() ? SpellArt.col(SILVER) : SpellArt.col(SpellArt.mix(SILVER, GLEAM, 0.35 + 0.2 * t.up())))
-				.skip(SpellArt.Face.SIDE_A, SpellArt.Face.SIDE_B);
+		// Its blade, solid to its outline: its point drawn in slice by slice, the rest of it whole (a box painted to its point and clear round
+		// it was a sheet seen edge-on: the user, 2026-10-25, "2D basically"); thick, its ridge of silver standing out down its middle.
+		SpellArt.Painter steel = bigBlade(11);
+		for (SpellArt.Cube slice : SpellArt.extrude(sword, SpellArt.Plane.XY, 0, 0, 24, 1, 3, y -> new double[] {-bigHalf(y), bigHalf(y)}, steel)) slice.density(3);
+		sword.box(0, 24 + (BLADE - 24) / 2, 0, BLADE_WIDE, BLADE - 24, 3, steel).only(SpellArt.Face.FRONT, SpellArt.Face.BACK, SpellArt.Face.SIDE_A, SpellArt.Face.SIDE_B).density(3);
+		sword.box(0, 14 + (BLADE - 14) / 2, 0, 2.2, BLADE - 14, 4.2, t -> t.flat() ? SpellArt.col(SILVER) : SpellArt.col(SpellArt.mix(SILVER, GLEAM, 0.35 + 0.2 * t.up())));
 		// The guard: a bar of gold, its ends sweeping up, a jewel of sword-light at its heart.
 		SpellArt.Painter gilt = gold(21);
 		sword.box(0, BLADE + 3, 0, 26, 5, 6.4, gilt);

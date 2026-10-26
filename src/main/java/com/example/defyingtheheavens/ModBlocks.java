@@ -23,6 +23,23 @@ public final class ModBlocks {
 	public static final Block CULTIVATION_FRUIT = register("cultivation_fruit", new CultivationFruitBlock(
 			BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_ORANGE).noCollission().noOcclusion()
 					.instabreak().sound(SoundType.CROP).pushReaction(PushReaction.DESTROY)));
+	/**
+	 * The light in the Immortal Gate's opening and the Southern Heavenly Gate's while the Gate stands open (ImmortalGate, phase 2 of
+	 * the realm plan, 2026-10-25). Unbreakable, walk-through, no item, as bright as light gets.
+	 */
+	public static final Block IMMORTAL_GATE_LIGHT = register("immortal_gate_light", new ImmortalGateLightBlock(BlockBehaviour.Properties.of()
+			.mapColor(MapColor.GOLD)
+			.noCollission()
+			.noOcclusion()
+			.strength(-1.0f, 3600000.0f)
+			.noLootTable()
+			.lightLevel(state -> 15)
+			.pushReaction(PushReaction.BLOCK)
+			.isValidSpawn((state, level, pos, type) -> false)
+			.isRedstoneConductor((state, level, pos) -> false)
+			.isSuffocating((state, level, pos) -> false)
+			.isViewBlocking((state, level, pos) -> false)
+			.sound(SoundType.AMETHYST)));
 	/** The tear at Overworld X=0, Z=0. Unbreakable, walk-through, no item. */
 	public static final Block SPATIAL_RIFT = register("spatial_rift", new SpatialRiftBlock(BlockBehaviour.Properties.of()
 			.mapColor(MapColor.COLOR_BLACK)

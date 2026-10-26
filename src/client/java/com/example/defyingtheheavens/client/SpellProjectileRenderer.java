@@ -731,8 +731,8 @@ public class SpellProjectileRenderer extends EntityRenderer<SpellProjectile> {
 	}
 
 	/**
-	 * How far below the Heaven-Severing slash's drawn middle its blade lies: the missile flies a block over the ground it set out from
-	 * and is drawn from half its 4-block height up, the blade's middle MetalSpells#SEVER_LIFT over that ground.
+	 * How far below the Heaven-Severing slash's drawn middle its blade lies: the missile flies a block less MetalSpells#SEVER_LIFT under
+	 * its blade's middle (setting out from its caster's chest, the way they look) and is drawn from half its 4-block height up.
 	 */
 	private static final float SEVER_DROP = 3 - MetalSpells.SEVER_LIFT;
 

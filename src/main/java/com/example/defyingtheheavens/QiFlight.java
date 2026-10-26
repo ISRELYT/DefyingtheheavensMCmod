@@ -146,9 +146,12 @@ public final class QiFlight {
 			else land(p);
 			return 0;
 		}
-		// The Soul River's current carries everyone living on it; the Spatial Gap carries nobody: whoever can fly flies it as anywhere
-		// (SpatialTrialHandler: its old trials, which carried those below Heavenly Being, are gone).
-		boolean carried = ModDimensions.isSoulRiver(p.level().dimension()); // not isPassage: that is the gap too
+		// The Soul River's current carries everyone living on it, a Void Breach's everyone climbing it (VoidBreach), the Immortal Gate's
+		// everyone passing up through it (ImmortalGate); the Spatial Gap
+		// carries nobody: whoever can fly flies it as anywhere (SpatialTrialHandler: its old trials, which carried those below Heavenly
+		// Being, are gone).
+		boolean carried = ModDimensions.isSoulRiver(p.level().dimension()) || ModDimensions.isVoidBreach(p.level().dimension())
+				|| ModDimensions.isImmortalPassage(p.level().dimension()); // not isPassage: that is the gap too
 		// One of the living in a Ghost King's form flies as the dead do, whatever its realms, for nothing (the Soul River carries it as
 		// it carries everyone living, and a talisman binds it as it binds them).
 		if (TwoPaths.inGhostForm(c) && !carried) {

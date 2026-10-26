@@ -1,5 +1,6 @@
 package com.example.defyingtheheavens.client;
 
+import com.example.defyingtheheavens.CelestialCourt;
 import com.example.defyingtheheavens.ModPackets;
 import com.example.defyingtheheavens.NpcTitle;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -28,11 +29,14 @@ public final class ClientSect {
 
 	/**
 	 * A disciple's own sect (the first fields), or the sect of the body their soul is in ({@code inBody}: it may be left from here), or,
-	 * for one of no sect, the nearest one ({@code nearest...}; empty name: none). {@code clan}: a demon clan's, its master its Clan Head.
+	 * for one of no sect, the nearest one ({@code nearest...}; empty name: none). {@code clan}: a demon clan's, its master its Clan Head;
+	 * {@code holy}: a Holy Land's (the Great Void's sects), its master its Patriarch; {@code immortal}: an immortal sect's (the Immortal
+	 * Realm's), its master its Sect Lord. Whatever their sect, their rank in the Celestial Court ({@code court}: null if they aren't of it)
+	 * and the merit they have earned there.
 	 */
 	public record Info(boolean member, String sectName, int alignment, NpcTitle title, int standing, boolean onGrounds, int distance,
 					   String direction, boolean barrierUp, int treasuryTries, boolean elder, long ticksMember, boolean inBody, List<Member> members,
-					   int nearestDistance, int barredDays, boolean clan) {}
+					   int nearestDistance, int barredDays, boolean clan, boolean holy, boolean immortal, CelestialCourt.Rank court, int merit) {}
 
 	static void set(String sectName, int titleIndex) {
 		name = sectName == null ? "" : sectName;
@@ -55,6 +59,8 @@ public final class ClientSect {
 			long ticks = buf.readVarLong();
 			boolean inBody = buf.readBoolean();
 			boolean clan = buf.readBoolean();
+			boolean holy = buf.readBoolean();
+			boolean immortal = buf.readBoolean();
 			int count = buf.readVarInt();
 			List<Member> members = new ArrayList<>(count);
 			for (int i = 0; i < count; i++) {
@@ -66,15 +72,25 @@ public final class ClientSect {
 				boolean banishable = buf.readBoolean();
 				members.add(new Member(memberName, t < 0 ? null : NpcTitle.byIndex(t), rank, player, id, banishable));
 			}
-			return new Info(true, sectName, alignment, mine, standing, onGrounds, distance, direction, barrierUp, tries, elder, ticks, inBody, members, 0, 0, clan);
+			CelestialCourt.Rank court = CelestialCourt.Rank.byIndex(buf.readVarInt() - 1);
+			int merit = buf.readVarInt();
+			return new Info(true, sectName, alignment, mine, standing, onGrounds, distance, direction, barrierUp, tries, elder, ticks, inBody, members, 0, 0, clan, holy,
+					immortal, court, merit);
 		}
-		if (!buf.readBoolean()) return new Info(false, "", 0, null, 0, false, -1, "", false, 0, false, 0, false, List.of(), -1, 0, false);
+		if (!buf.readBoolean()) {
+			CelestialCourt.Rank court = CelestialCourt.Rank.byIndex(buf.readVarInt() - 1);
+			int merit = buf.readVarInt();
+			return new Info(false, "", 0, null, 0, false, -1, "", false, 0, false, 0, false, List.of(), -1, 0, false, false, false, court, merit);
+		}
 		String near = buf.readUtf();
 		int alignment = buf.readInt();
 		int distance = buf.readVarInt();
 		String direction = buf.readUtf();
 		int barred = buf.readVarInt();
-		return new Info(false, near, alignment, null, 0, false, distance, direction, false, 0, false, 0, false, List.of(), distance, barred, false);
+		CelestialCourt.Rank court = CelestialCourt.Rank.byIndex(buf.readVarInt() - 1);
+		int merit = buf.readVarInt();
+		return new Info(false, near, alignment, null, 0, false, distance, direction, false, 0, false, 0, false, List.of(), distance, barred, false, false, false,
+				court, merit);
 	}
 
 	/** The Sect tab's Leave button (in a member's body): the body leaves its sect. */

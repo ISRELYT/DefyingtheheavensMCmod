@@ -836,7 +836,9 @@ glint flowing along it while it fills (not in a Qi Flight that costs more than g
 armour up there (the user's word): those stay at the bottom, vanilla's. The health shows when vanilla's hearts do (not in creative
 or spectator), the qi once your meridians open; under them the thin bars go on (a soul's own pool in another's body, the ghostly
 qi, yin corruption, the readied spell and ability: `QiHud`, `NetherworldHud`), and under those the pressure mark and a projected
-soul's readout.
+soul's readout. Vanilla's boss bars keep clear of it (the user, 2026-10-26: "the qi bar covers the boss health bar"): where the centred
+bars would run under it (a large GUI scale), they are drawn beside it on their own row, or under it on a screen too narrow for that
+(`client/HudCorner`, `client/mixin/BossHealthOverlayMixin`).
 
 **Swift** (the user's ask, 2026-10-22: "void shattering beings and onwards should be able to travel through space or just in
 general super fast"). From Void Shattering on, Qi Flight and the free flight were made far faster, the more with every stage
@@ -1450,6 +1452,7 @@ saved. The five spirit beasts are made of their elements (the user's ask: "made 
 looking like actual animals"): the dragon of living wood, the bird of flame, the qilin of rock and molten gold, the tortoise of black
 water under its dome of light, the tiger of steel and sword-light; the true beasts they first were are kept for later in
 `tools/spell-art/stored` (`java SpellArt.java --stored <dir>` writes them again; their files go back into the assets as they are). The
+Immortal Realm's True Dragon is made here too (`java SpellArt.java --primordial <assets>` writes it among the demon beasts'). The
 models, their textures and
 animations are written by code (`tools/spell-art`, run with JDK 22 or later: `java SpellArt.java <assets> [ids]`, and
 `java Preview.java <assets> <out dir> <id>` to draw what it wrote), as the demon beasts' are (`tools/beast-art`); a model's every face
@@ -2139,6 +2142,237 @@ once seated, a little off the ground, bobbing; NPC cultivators of those realms t
 
 Code: `SpatialTrialHandler` (the routes, `tear`, `homeRealm`, travel, the hold), `SpatialArrivals` (island by numbers, land asked for ahead), `SpatialStorms`, `QiFlight`, client `GapSinkMixin`; `MeditationManager#floats`, client
 `ClientMeditationTracker#hover`; tests `CoreAndGapGameTests` (the game-test server has no gap, so travel itself was checked in game).
+
+## The Great Void Realm
+
+Above the **Jade Firmament** (the players' name since 2026-10-25 for the Upper Realm, after its jade sky; the code still says
+`upper_realm`) lies the **Great Void Realm** (太虚界, `great_void`). It is floating continents, far larger than the Jade
+Firmament's islands, under a black-violet void full of stars and drifting shards of broken space. This is phase 1 of the realm
+plan of 2026-10-25. The Immortal Realm (below) is phase 2.
+
+**Getting there: the Void Breach.**
+- **Torn open.** From **Void Shattering** on (either path), a Spatial Tear torn high in the Jade Firmament's sky (Y 448 and up)
+  opens a **Void Breach** instead of a way onto the gap. It costs half the qi pool. The opener holds it open while they stay
+  within 24 blocks. Let go, it lingers 10 seconds for those who follow, and stays open a minute at most.
+- **Who passes.** Void Shattering and above. **Dao Integration** only through a breach held open by someone stronger. Below that,
+  no one: the void's pressure turns them back.
+- **The climb.** Shattered space (`void_breach`), where no flight holds. The breach's current carries you up for 30 seconds while
+  you steer. The void presses all the while (armour is no help). Shards of broken space fall where light first marks them (60
+  harm). **Vestiges of the Void** come out of the dark for the climbers, each as mighty as the one it hunts.
+- **Out and back.** At the top you come out on the land nearest where the breach was torn. To go back down, fall off a
+  continent's edge, or tear a Spatial Tear in the Great Void. Either way you land harmlessly in the Jade Firmament's sky over its
+  nearest island.
+
+**Qi ×100.** Meditation and the qi pool's refill are a hundred times the lower realms' there. The realms the Great Void alone
+sustains need that many times their base cultivation: **Void Shattering** on (`PlayerCultivation#GREAT_VOID_QI_MULTIPLIER`,
+`qiNeed`; the user's pick, "like the Upper Realm rule").
+- Those realms take as long in the Great Void as they used to, and ten times longer in the Jade Firmament.
+- **Dao Integration** stays at ×10, so one carried up races ahead.
+- The years spent stay as they were (`Lifespan#placeSaving`).
+- From Void Shattering on, nothing below suppresses you (the user's rule, kept).
+
+**The lands.**
+- **The void steppes.**
+- **Five Dao fields**, each where one element's law runs strong. Its element is easier to gather. Spells of its element strike
+  **×1.25**, and spells of the element it overcomes **×0.75** (`HeavenSpells#daoField`).
+- **Ancient Battlefields** of the old war between Heaven and the demons. Their water runs red, and they are strewn with what the
+  war left: a giant's sword driven into the ground, heaps of bones, a broken wall with its banner, a half-sunk war chest
+  (`BattlefieldRuinFeature`).
+- **The Shore of Nirvana** at the void sea's edge.
+
+**Void currents** (`VoidCurrents`). Drifting rifts of streaming starlight that come out of the void near whoever is about, at
+most two near anyone. Each is drawn lying along its flow, drifts slowly the way it flows, and closes after 90 seconds. Touch one
+and it sweeps you off along its flow. You are blinded by its light while it bears you, for 1.5 to 5 seconds while the land ahead
+loads. You come out 500 to 1,400 blocks on, onto the nearest continent there and never onto a Holy Land's barrier, and land
+harmlessly.
+
+**Holy Lands** (`HolyLands`, `HolyLandPlan`, `HolyLandPieces`). The sect tier above the sects, and the only sects in the Great
+Void.
+- **Rare:** about one in 2,000 × 2,000 blocks.
+- **Grounds:** 201 × 261, laid along one great axis from the Mountain Gate to the Patriarch's Palace. The palace has triple eaves
+  on three terraces. A lotus moat and its bridge, twin nine-storey pagodas, bell and drum towers, gilded guardian lions and walled
+  elders' courts complete it, all in white jade and gold.
+- **Barrier:** up to 136 (`Formations#HOLY_MAX_RADIUS`).
+- **People:** a **Sacred Vessel Patriarch**, two Void Shattering Grand Elders, four Dao Integration Elders, and disciples of
+  Heavenly Being to Four Axis.
+- **Joining:** as any sect is.
+
+**Demon Palaces** (`DemonPalaces`, `DemonPalacePlan`, `DemonPalacePieces`, `PalaceSculpt`; the user's yes, 2026-10-25). The demon
+clans' counterpart of the Holy Lands: neither a Holy Land re-skinned nor a bigger den.
+- **One race each, by its land:** the metal Dao field the White Tiger's, the fire field the Nine-Tailed Fox's, the earth field the
+  lizard king's, the wood and water fields the Azure Dragon's. On the steppes, any race (a dragon's most often).
+- **Rarity:** they share the Holy Lands' sites (structure set `holy_lands`, now tried every 20 × 20 chunks: one or the other at
+  each, never on top of each other). Each comes to about one in 1,700 × 1,700 blocks (surveyed on the test seed: 20 palace sites
+  and 17 Holy Land sites in 256).
+- **Grounds:** 181 × 261, in dark stone in the race's colours (`SectPalette#palace`):
+  - tiger: black stone and white, white ridges, iron bars, pale soul fire;
+  - fox: dark nether brick and white plaster, vermilion pillars, red roofs, foxfire;
+  - lizard: deepslate, green copper roofs with copper eaves, jade;
+  - dragon: deepslate, azure prismarine roofs with gilt eaves, gold.
+- **Laid along one way, front to back:**
+  - **The great torii**, then two lesser ones. (A gate of the beast's head, its jaws open over the way, was tried and the user
+    didn't like it.)
+  - **The Way of Beasts:** two pairs of statues of the race's beast on plinths, facing across the road.
+  - **The blood ring** round the Formation plaza at the palace's heart: the race's blood lit red from under its floor, four bridges
+    over it, and eight great fangs of bone leaning in over it from its outer rim. Its land is the **Blood Ring** biome
+    (`ModBiomes#BLOOD_RING`), set on the ring by its piece, whose water runs red. Water takes its colour from its land, and on the
+    steppes the blood showed violet. The biome has nothing of its own and isn't in the Great Void's biome source, so worldgen lays
+    nothing there. As an Ancient Battlefield, the ring took the battlefields' ruins.
+  - **The Sovereign's hall** on a dais of three steps: a carpet up to the **Demon Sovereign's** throne under a screen of gold. Its
+    front pillars stand every four blocks from the doors out to its corners, alike on either side (the user: "symmetrical
+    pillars").
+  - **The colossus** behind the hall, some fifty high, its head over the hall's roof: a crouching White Tiger, a nine-tailed fox
+    sitting up with its tails fanned like a halo, a mountain-bearing lizard king lying long, or an azure dragon coiled (no legs:
+    the user's notes).
+  - Down the sides: six elders' houses, four disciples' halls, the vault and a sparring ground.
+- **The great beasts** are hollow shells two blocks thick, their eyes and their race's fire alight. Nothing of them floats free
+  (tested), and nothing in them is worth quarrying (no gold, no lapis).
+- **People:** a Holy Land's twenty, all of the race: a **Sacred Vessel Demon Sovereign**, two of Void Shattering, four of Dao
+  Integration, and disciples of Heavenly Being to Four Axis. Named `<word> <Race> Demon Palace`.
+- **Joining:** as any clan is, by demons of its race.
+- **Hoards:** its chests now and then keep a phial of its race's blood, Heavenly Being to Entering Nirvana, as often as its
+  library's realms (`DemonBlood#GREAT_VOID_BLOOD`).
+
+**The Shore of Nirvana's camp** (`NirvanaCamp`). Some twenty of **Entering Nirvana** wait on the shore for the Immortal Gate
+(phase 2). They are hermits and old monsters, tradeable and rarely hostile: only the short-tempered of the devilish path go for a
+player of the other path who comes within 6 blocks. One in five is of a demon race, and on the camp's ground nobody goes for a
+demon at all (the user's rule). New ones come in from the south while there are fewer than twenty.
+
+**Sacred Vessels** (`SacredVesselItem`, `SacredRelicFeature`, `SacredRelics`). One for each element:
+- the Jianmu Bough Vase, the Heaven Furnace Censer, the Nine Provinces Ding, the Immortal-Forging Bell and the Sealed Ocean Gourd;
+- each lies on a relic altar in the Great Void, guarded: a **Void Shattering Relic Keeper** rises when anyone comes within 24
+  blocks;
+- held in either hand, a vessel makes its element's spells strike ×1.25, on top of what a Dao field gives.
+
+**Blood pools and the elder beasts** (`BloodPoolFeature`, `BloodPools`, `BeastKind` tier ELDER). On the Ancient Battlefields,
+pools of blood each hold a phial of a demon race's blood of **Void Shattering to Entering Nirvana** on an altar.
+- When anyone comes within 28 blocks, the race's **elder** rises out of the pool, of the blood's realm. It keeps to its pool and
+  goes for whoever comes near, unless they stand a realm or more above it.
+- The four elders (GeckoLib, `tools/beast-art`), never wild:
+  - the **Elder White Tiger** (metal, pounces);
+  - the **Nine-Tailed Fox** (fire, breathes fire);
+  - the **Mountain-Bearing Lizard King** (earth, pounds);
+  - the **Azure Dragon** (wood, flies and dives).
+- Slain, an elder leaves its core, and half the time its race's blood of its realm.
+
+Code: `VoidBreach`, `GreatVoidClient`, `VoidCurrents`, `SpatialArrivals`, `HolyLands`, `HolyLandPlan`, `HolyLandPieces`,
+`DemonPalaces`, `DemonPalacePlan`, `DemonPalacePieces`, `PalaceSculpt`, `NirvanaCamp`, `SacredRelics`, `SacredRelicFeature`,
+`BattlefieldRuinFeature`, `BloodPoolFeature`, `BloodPools`; tests `DemonPalaceGameTests` (the Holy Lands, currents, pools and
+elders were checked in game).
+
+## The Immortal Realm
+
+Above the Great Void lies the **Immortal Realm** (`immortal_realm`): an endless sea of clouds with jade peaks rising out of it under a
+golden sky, at a standing noon. Phase 2 of the realm plan (2026-10-25 and 26). **Nobody below Entering Nirvana gets in or is born
+there** (the user's rule); one who falls below it inside stays.
+
+**Getting there: the Immortal Gate** (`ImmortalGate`).
+- It hangs in the Great Void's sky over the void sea, north of the Shore of Nirvana's camp. It **opens every five in-game days for
+  three minutes**, told to everyone a minute before.
+- Crossing it is a 30-second climb through its passage (`immortal_passage`) under its pressure: **True Immortals** cross unharmed,
+  **Entering Nirvana Grand Perfection** survives with care (armour, pills), earlier Entering Nirvana is crushed, and anyone below is
+  turned back.
+- When it opens, a third of the camp (eight at most) rush it and are gone; new ones come in over the following days. Its four guards
+  never go for a demon-race Entering Nirvana.
+- You come out at the **Southern Heavenly Gate** on the main island. The **only way down** is back through it while the Gate stands
+  open: no Spatial Tear opens in the realm, and falling below the clouds bears you back up onto the nearest land.
+
+**The land** (noise `immortal_peaks`, biomes jade peaks, immortal gardens, celestial heights and the jade capital).
+- The **sea of clouds** at Y 150 is drawn by the client (no blocks). The massifs rise out of it with terraces and ranges, and lone
+  jade pinnacles stand alone out of it.
+- **Qi ×1000**, and True Immortal needs a thousand times its base cultivation (the Great Void's pattern).
+- **No steles** (the user's rule).
+
+**Immortal essence** (`ImmortalEssence`, an ability). A True Immortal's gold bar: 100, 150, 220 or 320 by stage. It fills only inside
+the realm (in 10 minutes, four times faster meditating) and leaks away elsewhere (in 20). Lit, blows and spells strike **×1.5**, and a
+full pool lasts 90 seconds. It does not make a spell bigger or longer, only harder-hitting.
+
+**Immortal Jade.** Worth 9 Immortal Spirit Stones (59,049 Low), nine of those to one and back. True Immortals carry two to four.
+
+**The main island.**
+- The Southern Heavenly Gate at its south end (0, 0).
+- The **Jade Capital** north of it, the biggest city, laid on its land as the land lies (`ImmortalCapital`, Beardifier).
+- The **Celestial Court** on its pinnacle at the capital's north end (0, −440, Y 330), up twin stairs on gold-banded arcades.
+- **Other immortal cities** elsewhere (`ImmortalCityStructure`), one site per 640-block cell where the land holds one, their ground
+  rolled gently.
+
+**Markets** (`CityMarkets`, `CultivatorTrades#immortalGoods`). Six merchants at the capital and four in every city, at their stalls.
+- Immortal-grade pills, herbs five to ten thousand years old, Cultivation Fruit.
+- A Sacred Vessel of their element, to those they are Warm to.
+- Their element's **True Immortal slip** (60 jade) to the courteous. One merchant in five sells the Netherworld Immortal Canon instead.
+- **A demon race's True Immortal blood** (60 jade, a race a day) to the courteous; the realms past True Immortal's too, once there are
+  any (the user's ask, 2026-10-26).
+- The realm's immortals also teach their True Immortal methods.
+
+**Immortal sects** (`ImmortalSects`, `ImmortalSectPlan`, `ImmortalSectPieces`). Floating **archipelagos of fourteen islands** over the
+open sea of clouds, joined by thirteen white-jade bridges (the user's rules: small floating islands joined by paths, over the sea and
+not above a giant island, every one of the old ground court's buildings on them). Reached only by flight.
+- **The spine:** the gate island (the Mountain Gate, the Spirit Way, four lions), the core island (a plaza, the bell and drum
+  towers), the arena, and the Sect Lord's main hall, highest of all.
+- **The sides:** two disciples' courts, the altar and the treasury, the library and the alchemy hall, two herb gardens, two elders'
+  islands of three houses each.
+- **Twenty members:** a True Immortal Grand Perfection Sect Lord, two True Immortals Late or Grand Perfection, four Early or Mid, and
+  thirteen of Entering Nirvana. Joinable like any sect.
+- Their libraries keep True Immortal and Entering Nirvana slips. Their elders and Sect Lord sell a race's True Immortal blood to those
+  they are Warm to.
+- Those who can fly catch themselves when they step off an island.
+
+**The Celestial Court** (`CelestialCourt`; the user: "Yes, build the Celestial Court as you described").
+- **Its people:**
+  - the **Heavenly King** on the palace's throne, a **Daluo Golden Immortal**;
+  - five **Heavenly Venerables**, one per element in the Court's five halls, **Taiyi Golden Immortals**. The **Metal Venerable is a
+    tiger demon and the Wood Venerable a dragon demon** (the user's ask: at least two demons among them);
+  - four **Immortal Generals** at the Court's gate;
+  - the **Quartermaster** on the palace terrace.
+- **Their strength** follows the user's rule for the realms past True Immortal, **each twice the last**: Earth Immortal ×2, Heaven
+  Immortal ×4, Golden Immortal ×8, Taiyi ×16, Daluo ×32, Dao Ancestor ×64 (of a True Immortal's). Until phase 3 the King and the
+  Venerables are True Immortals of Grand Perfection ×32 and ×16 (`CelestialCourt#pastTrueImmortal`).
+- **Joining:** ask a Venerable (Entering Nirvana and up). You start as an **Officer**.
+- **Merit** (Court Merit Tokens):
+  - one a minute standing watch on the Southern Heavenly Gate's plaza while it is open;
+  - two for a devilish Entering Nirvana slain in the realm, five for a devilish True Immortal;
+  - twenty to each officer who fought a primordial beast that was slain.
+- **Ranks:** Officer, **Captain** at 30, **General** at 100, shown in the Sect tab.
+- **The Quartermaster** trades: a token for 3 Immortal Jade, any element's True Immortal slip for 20, more for Captains and Generals.
+  Lines not yet open show the rank they want.
+- **A Venerable teaches its element's True Immortal method to Captains and up**, and tells the way to the primordial beasts.
+
+**The primordial beasts** (`PrimordialBeast`, `PrimordialBeasts`; GeckoLib: the Peng and the Phoenix from `tools/beast-art`'s
+`Primordials`, the True Dragon from `tools/spell-art`'s `TrueDragon`, the Kun the spell's own). World bosses, **one of each at a time**.
+- **Strength:** True Immortals of Grand Perfection, a little stronger (×1.25: the user's word).
+- **Boss bar:** shown within 112 blocks.
+- **Lairs:** each keeps to its lair, 1,000 to 2,000 blocks from the Gate, the three a third of the way round from each other, all
+  clear of the cities and the sects. It comes when anyone is within 160 blocks. Slain, the next comes five days later.
+- **Left alone** two minutes, it is whole again.
+- **The Kun-Peng:** the **Kun**, the same Kun that Kun Rises from the Northern Abyss summons (black water, glowing wave scrolls),
+  some fifty blocks long, swims the sea of clouds over the open sea, its back and sail breaking them. It throws spouts of cloud up
+  under whoever is over it and rams up out of the clouds.
+  - Brought to half its strength, it breaks out as the **Peng**, a white-and-azure bird whose wings span some sixty blocks: blasts
+    of wind, volleys of feather blades, dives.
+  - Left alone, it goes back into the clouds as the Kun.
+  - It leaves a True Immortal slip of its form's element (water as the Kun, metal as the Peng).
+- **The True Phoenix:** crimson and gold, its wings some forty blocks across, five streamers of the five colours. It roosts high
+  over a peak and fights with fire breathed in a cone, a rain of burning feathers, and the shock of its wings.
+  - Slain the first time, it burns down to an **ember** for ten seconds (untouchable) and **rises again whole**. The second time it
+    dies.
+  - It leaves **True Immortal fox blood**.
+- **The True Dragon:** some eighty blocks long, a serpent's body of gold scales with a thread of lightning down each flank, a crest
+  of storm-light along its spine, a silver-white mane and beard, ivory antlers, storm-white eyes, five-clawed feet.
+  - It **rides its storm**: the sky and the fog darken as you near it, and lightning strikes about it without kindling anything.
+  - Its moves: lightning called down where its foe stood (it roars, and sparks warn of it first), the sweep of its tail, its coils,
+    its dive.
+  - It leaves **True Immortal dragon blood**.
+- **What they leave** (cores, Immortal Jade, blood or slip) **hangs glowing in the air where they fell**: over the sea of clouds it
+  would be lost.
+
+**True Immortal blood.** Demon-race immortals inside the realm drop their True Immortal blood too (`DemonBlood#carried`), and it has
+its own golden phial.
+
+Code: `ImmortalGate`, `ImmortalRealm`, `ImmortalRealmClient`, `ImmortalEssence`, `ImmortalCapital`, `CityPlanner`, `CityPieces`,
+`ImmortalCityStructure`, `CityMarkets`, `ImmortalSects`, `ImmortalSectPlan`, `ImmortalSectPieces`, `CelestialCourt`,
+`CourtMeritTokenItem`, `PrimordialBeast`, `PrimordialBeasts`, `PrimordialLooks`; tests `ImmortalCitiesGameTests`,
+`ImmortalEssenceGameTests`, `ImmortalMarketsGameTests`, `ImmortalSectsGameTests`, `CelestialCourtGameTests`,
+`PrimordialBeastsGameTests`. Everything was also checked in game.
 
 ## The Astral Realm
 

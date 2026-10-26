@@ -21,6 +21,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.PostChain;
 import net.minecraft.client.renderer.PostPass;
+import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -30,13 +31,13 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -44,9 +45,9 @@ import java.util.UUID;
 /**
  * The client half of {@link com.example.defyingtheheavens.QiSense}. While the ability is on, the world loses its colour (a
  * desaturating post effect, faded in and out) and qi drifts through it as small glowing motes in the colours of the five
- * elements, mixed by the land they gather in ({@link QiElement#pick}): sparse in the lower realms, ten times as thick in the
- * Upper Realm, like its qi. Around any meditating cultivator, motes are drawn in from all sides, faster the stronger their
- * gathering.
+ * elements, mixed by the land they gather in ({@link QiElement#pick}), as thick as the place's qi ({@link #airQi}): sparse in the
+ * lower realms, ten times as thick in the Upper Realm, a hundred times in the Great Void, thin in space. Around any meditating
+ * cultivator, motes are drawn in from all sides, faster the stronger their gathering.
  * <p>
  * The motes are not vanilla particles: those are drawn into the world, which the post effect then greys. They live here
  * and are drawn on {@link SenseOverlay}, laid over the frame after the post effect, so they keep their colour.
@@ -59,14 +60,15 @@ public final class QiSenseClientHandler {
 	private static final float MONO_SATURATION = 0.0f;
 	private static final float MONO_BRIGHTNESS = 0.85f;
 
-	/** Ambient motes born per tick in the lower realms (and the Spatial Gap), around the viewer. */
+	/** Ambient motes born per tick around the viewer where qi is as thick as the lower realms' (and the Spatial Gap's), times {@link #airQi}. */
 	private static final float AMBIENT_PER_TICK = 0.5f;
-	/** The Upper Realm's qi is this much denser, as is its gathering ({@link PlayerCultivation#UPPER_REALM_QI_MULTIPLIER}). */
-	private static final float UPPER_REALM_DENSITY = (float) PlayerCultivation.UPPER_REALM_QI_MULTIPLIER;
+	/** The Netherworld is as thick with its ghostly qi as the Upper Realm is with qi ({@link PlayerCultivation#UPPER_REALM_QI_MULTIPLIER}). */
+	private static final double NETHERWORLD_AIR = PlayerCultivation.UPPER_REALM_QI_MULTIPLIER;
 	private static final double SPAWN_RADIUS = 20;
 	/** Motes left this far behind (the viewer flew off) are dropped. */
 	private static final double KEEP_RADIUS = 30;
-	private static final int MAX_MOTES = 2000;
+	/** Room for the Great Void's hundredfold air (some 4,500 motes about the viewer) and meditators drawing it in. */
+	private static final int MAX_MOTES = 6000;
 	/** Outside the Upper Realm (lower realms and the Spatial Gap), a meditator draws in this share of the motes. */
 	private static final float LOWER_REALM_INFLOW = 0.5f;
 	/** Meditators further than this from the viewer aren't drawn absorbing. */
@@ -170,19 +172,16 @@ public final class QiSenseClientHandler {
 		long now = Util.getMillis();
 		ABSORBING.values().removeIf(a -> now - a.seenAt() > ABSORPTION_EXPIRY_MS);
 
-		for (Iterator<Mote> it = MOTES.iterator(); it.hasNext(); ) {
-			Mote mote = it.next();
-			if (!move(mote, mc.level) || mote.x - eye.x > KEEP_RADIUS || eye.x - mote.x > KEEP_RADIUS
-					|| Math.abs(mote.y - eye.y) > KEEP_RADIUS || Math.abs(mote.z - eye.z) > KEEP_RADIUS) {
-				it.remove();
-			}
-		}
+		ClientLevel level = mc.level;
+		// In one pass (the Great Void's air holds thousands: removing them one by one would shift the list each time).
+		MOTES.removeIf(mote -> !move(mote, level) || mote.x - eye.x > KEEP_RADIUS || eye.x - mote.x > KEEP_RADIUS
+				|| Math.abs(mote.y - eye.y) > KEEP_RADIUS || Math.abs(mote.z - eye.z) > KEEP_RADIUS);
 
-		boolean upperRealm = ModDimensions.isUpperRealm(mc.level.dimension());
-		// The Netherworld is as thick with its ghostly qi (nearly all yin, see QiElement) as the Upper Realm is with qi.
-		boolean dense = upperRealm || ModDimensions.isNetherworld(mc.level.dimension());
-		float rate = AMBIENT_PER_TICK * (dense ? UPPER_REALM_DENSITY : 1);
-		ambientCarry += rate;
+		boolean immortal = ModDimensions.isImmortalRealm(mc.level.dimension());
+		boolean greatVoid = ModDimensions.isGreatVoid(mc.level.dimension());
+		boolean upperRealm = ModDimensions.isUpperRealm(mc.level.dimension()) || greatVoid || immortal;
+		// As thick as the place's qi (the user's ask, 2026-10-25: the Great Void's a hundred times the lower realms', as its qi).
+		ambientCarry += AMBIENT_PER_TICK * (float) airQi(mc.level);
 		while (ambientCarry >= 1 && MOTES.size() < MAX_MOTES) {
 			ambientCarry--;
 			spawnAmbient(mc.level, eye);
@@ -213,7 +212,8 @@ public final class QiSenseClientHandler {
 			seen.add(npc.getId());
 			Realm realm = npc.getDisplayedRealm();
 			double gathering = realm.getCultivationPerSecond() * npc.getDisplayedStage().getPowerMultiplier() * CultivatorNpc.NPC_RATE
-					* (upperRealm ? PlayerCultivation.UPPER_REALM_QI_MULTIPLIER : 1.0);
+					* (immortal ? PlayerCultivation.IMMORTAL_QI_MULTIPLIER : greatVoid ? PlayerCultivation.GREAT_VOID_QI_MULTIPLIER
+							: upperRealm ? PlayerCultivation.UPPER_REALM_QI_MULTIPLIER : 1.0);
 			float carry = NPC_INFLOW_CARRY.getOrDefault(npc.getId(), 0f) + inflow(gathering) * (upperRealm ? 1 : LOWER_REALM_INFLOW);
 			while (carry >= 1 && MOTES.size() < MAX_MOTES) {
 				carry--;
@@ -341,6 +341,16 @@ public final class QiSenseClientHandler {
 		MOTES.add(mote);
 	}
 
+	/**
+	 * How thick qi is in the air about the viewer, against the lower realms' (1): in the Netherworld its ghostly qi (nearly all yin,
+	 * see QiElement), {@link #NETHERWORLD_AIR}; anywhere else the viewer's own measure of where they stand
+	 * ({@link PlayerCultivation#placeFactor}: the Upper Realm's ten, the Great Void's hundred, space's quarter, a planet's own).
+	 */
+	private static double airQi(ClientLevel level) {
+		if (ModDimensions.isNetherworld(level.dimension())) return NETHERWORLD_AIR;
+		return ClientCultivationData.get().placeFactor();
+	}
+
 	/** No open sky above and below sea level, in a realm that has a sky: caves lean to earth and metal. */
 	private static boolean isUnderground(ClientLevel level, BlockPos pos) {
 		return level.dimensionType().hasSkyLight() && !level.dimensionType().hasCeiling() && pos.getY() < level.getSeaLevel()
@@ -363,6 +373,7 @@ public final class QiSenseClientHandler {
 		Vector3f up = camera.getUpVector();
 		float partial = context.tickDelta();
 		Matrix4f matrix = context.matrixStack().last().pose();
+		Frustum frustum = context.frustum();
 		float[] cos = new float[GLOW_SEGMENTS + 1];
 		float[] sin = new float[GLOW_SEGMENTS + 1];
 		for (int i = 0; i <= GLOW_SEGMENTS; i++) {
@@ -376,12 +387,13 @@ public final class QiSenseClientHandler {
 		for (Mote mote : MOTES) {
 			float alpha = envelope(mote, partial);
 			if (alpha <= 0.01f) continue;
-			float px = (float) (Mth.lerp(partial, mote.prevX, mote.x) - cam.x);
-			float py = (float) (Mth.lerp(partial, mote.prevY, mote.y) - cam.y);
-			float pz = (float) (Mth.lerp(partial, mote.prevZ, mote.z) - cam.z);
+			double x = Mth.lerp(partial, mote.prevX, mote.x), y = Mth.lerp(partial, mote.prevY, mote.y), z = Mth.lerp(partial, mote.prevZ, mote.z);
+			float size = halo ? mote.size * HALO_SCALE : mote.size;
+			// Only those in view (most of the thousands about the viewer in the Great Void are behind or beside them).
+			if (frustum != null && !frustum.isVisible(new AABB(x - size, y - size, z - size, x + size, y + size, z + size))) continue;
+			float px = (float) (x - cam.x), py = (float) (y - cam.y), pz = (float) (z - cam.z);
 			int color = halo ? mote.element.getGlowColor() : mote.element.getCoreColor();
 			float r = (color >> 16 & 0xFF) / 255f, g = (color >> 8 & 0xFF) / 255f, b = (color & 0xFF) / 255f;
-			float size = halo ? mote.size * HALO_SCALE : mote.size;
 			// The core is solid to two thirds of its radius, then softens; the halo fades from the middle out.
 			float middle = halo ? alpha * HALO_ALPHA : alpha;
 			float rim = halo ? 0 : alpha * 0.85f;

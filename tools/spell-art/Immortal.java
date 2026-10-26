@@ -738,15 +738,22 @@ public class Immortal {
 
 	static final double SLAYER_LENGTH = 110;
 
-	/** The heaven-slaying sword's blade (standing point up, its broad faces forward and back): sword-light white and gold, a fuller of glyphs. */
+	/** The heaven-slaying sword's blade's half-width at {@code y} up it: {@link #SLAYER_WIDE}'s half up its length, drawn in to its point over its last 22 pixels. */
+	static double slayerHalf(double y) {
+		return SLAYER_WIDE / 2 * Math.min(1, (SLAYER_LENGTH - y) / 22 + 0.02);
+	}
+
+	static final double SLAYER_WIDE = 14;
+
+	/**
+	 * The heaven-slaying sword's blade (standing point up, its broad faces forward and back, solid to its outline: {@link #slayerHalf}):
+	 * sword-light white and gold, a fuller of glyphs; its edges white, the faces at its outline (its sides, its point's steps) all edge.
+	 */
 	static SpellArt.Painter slayerBlade(int seed) {
 		return t -> {
-			double y = t.qy(), u = t.across() - 0.5, half = 0.5 * Math.min(1, (SLAYER_LENGTH - y) / 22 + 0.02);
-			// Its edges white, but none where its point narrows inside its box (else the box's outline shows round the point).
-			if (t.side()) return half < 0.5 ? SpellArt.CLEAR : SpellArt.glow(0xFFFFFF, 0.97);
-			if (Math.abs(u) > half) return SpellArt.CLEAR;
-			if (t.flat()) return SpellArt.glow(0xFFFFFF, 0.97);
-			double edge = half - Math.abs(u);
+			double y = t.qy(), u = t.qx() / SLAYER_WIDE, half = slayerHalf(y) / SLAYER_WIDE;
+			if (t.side() || t.flat()) return SpellArt.glow(0xFFFFFF, 0.97);
+			double edge = Math.max(0, half - Math.abs(u));
 			if (edge < 0.1) return SpellArt.glow(SpellArt.mix(0xFFFFFF, Metal.GLEAM, edge * 10), 0.98);
 			if (Math.abs(u) < 0.1 && y > 10 && y < SLAYER_LENGTH - 26) {
 				double cell = y / 10;
@@ -792,10 +799,16 @@ public class Immortal {
 		m.scale = 4;
 		m.bone("root", null, 0, 0, 0);
 		SpellArt.Bone blade = m.bone("blade", "root", 0, 0, 0);
-		for (int i = 0; i < 6; i++) {
-			double y0 = 2 + i * 18, y1 = Math.min(SLAYER_LENGTH, y0 + 18);
-			blade.box(0, (y0 + y1) / 2, 0, 14, y1 - y0, 2.2, slayerBlade(3501)).density(1);
+		// Its blade, solid to its outline: up its length in pieces, then its point drawn in slice by slice (a box painted to its point and clear
+		// round it was a sheet seen edge-on: the user, 2026-10-25, "2D basically"); thick, a ridge of sword-light down its middle.
+		SpellArt.Painter light = slayerBlade(3501);
+		double taper = SLAYER_LENGTH - 22;
+		for (int i = 0; i < 5; i++) {
+			double y0 = 2 + i * 18, y1 = Math.min(taper, y0 + 18);
+			if (y1 > y0) blade.box(0, (y0 + y1) / 2, 0, SLAYER_WIDE, y1 - y0, 3.4, light).density(1);
 		}
+		for (SpellArt.Cube slice : SpellArt.extrude(blade, SpellArt.Plane.XY, 0, taper, SLAYER_LENGTH, 1, 3.4, y -> new double[] {-slayerHalf(y), slayerHalf(y)}, light)) slice.density(1);
+		blade.box(0, (2 + SLAYER_LENGTH - 8) / 2, 0, 3, SLAYER_LENGTH - 10, 4.8, light).density(1); // the ridge, its fuller of glyphs on it
 		SpellArt.Painter gold = Metal.gold(3503);
 		blade.box(0, 0, 0, 30, 3, 4, gold);
 		for (int s = -1; s <= 1; s += 2) {
@@ -837,18 +850,25 @@ public class Immortal {
 	}
 
 	/**
-	 * The axe's blade (on a thin box standing in the y-z plane, its broad faces its sides, {@code yc} its middle's height): a great crescent, its
-	 * edge an arc bulging forward (-z) and white with light, its cheeks narrowing back to the haft, its bronze swirled with chaos; none of it
-	 * outside the crescent.
+	 * The axe's crescent across (along z) at {@code y} over its middle: from its edge, an arc bulging forward (-z), back to where its cheeks
+	 * narrow to the haft (the higher or lower, the shorter); null above and below it.
+	 */
+	static double[] axeSpan(double y) {
+		double ay = Math.abs(y), edgeZ = 16 - Math.sqrt(Math.max(0, 50 * 50 - y * y)), back = 5 - ay * 0.25;
+		if (ay > 5) back = Math.min(back, -32 * Math.pow((ay - 5) / 15, 1.25));
+		return back - edgeZ >= 0.5 ? new double[] {edgeZ, back} : null;
+	}
+
+	/**
+	 * The axe's blade (its crescent, {@link #axeSpan}, extruded row by row, its broad faces its sides, {@code yc} its middle's height): its
+	 * edge white with light (on the edge's own faces too, the crescent solid), its rims dark bronze, its cheeks' bronze swirled with chaos.
 	 */
 	static SpellArt.Painter axeBlade(double yc, int seed) {
 		return t -> {
 			double y = t.qy() - yc, z = t.qz();
-			double edgeZ = 16 - Math.sqrt(Math.max(0, 50 * 50 - y * y)), reach = SpellArt.clamp01(-z / 32), hw = 5 + 15 * Math.pow(reach, 0.8);
-			if (z < edgeZ || Math.abs(y) > hw || z > 5 - Math.abs(y) * 0.25) return SpellArt.CLEAR;
+			double edgeZ = 16 - Math.sqrt(Math.max(0, 50 * 50 - y * y)), toEdge = z - edgeZ;
+			if (toEdge < 2.8) return SpellArt.glow(SpellArt.mix(0xFFFFFF, Metal.GLEAM, Math.max(0, toEdge) / 2.8), 0.97);
 			if (!t.side()) return SpellArt.col(0x3A3028);
-			double toEdge = z - edgeZ;
-			if (toEdge < 2.8) return SpellArt.glow(SpellArt.mix(0xFFFFFF, Metal.GLEAM, toEdge / 2.8), 0.97);
 			if (toEdge < 3.6) return SpellArt.col(Metal.GOLD_DARK);
 			double swirl = Math.sin(Math.atan2(y, z + 12) * 3 + Math.hypot(y, z + 12) * 0.35 + seed);
 			if (swirl > 0.88) return SpellArt.glow(SpellArt.mix(Metal.GOLD, 0xFFE89A, (swirl - 0.88) * 6), 0.92);
@@ -880,8 +900,9 @@ public class Immortal {
 		SpellArt.Bone axe = m.bone("axe", "root", 0, 0, 0);
 		SpellArt.limb(axe, SpellArt.v3(0, 0, 0), SpellArt.v3(0, HAFT, 0), 5, 5, axeHaft(3601)).density(1.2);
 		double edge = -30, yc = HAFT - 20;
-		// The crescent blade, both its faces; the socket that holds it on the haft; a spike behind.
-		axe.box(0, yc, -15, 3.6, 42, 41, axeBlade(yc, 3603)).density(1);
+		// The crescent blade, solid: extruded row by row to its outline (it was a box painted to it and clear round it, two sheets with nothing
+		// between, flat to see: the user, 2026-10-25); the socket that holds it on the haft; a spike behind.
+		for (SpellArt.Cube row : SpellArt.extrude(axe, SpellArt.Plane.YZ, 0, yc - 21, yc + 21, 1, 3.6, y -> axeSpan(y - yc), axeBlade(yc, 3603))) row.density(1);
 		axe.box(0, yc, 0.5, 7.5, 16, 8, axeHead(-99, 3605)).density(1);
 		SpellArt.limb(axe, SpellArt.v3(0, yc, 4), SpellArt.v3(0, yc + 1, 13), 4, 3, axeHead(-99, 3606));
 		SpellArt.Bone chaos = m.bone("chaos", "axe", 0, HAFT - 18, 0);

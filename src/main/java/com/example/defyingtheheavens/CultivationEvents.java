@@ -57,6 +57,9 @@ public final class CultivationEvents {
 		MeditationManager.forget(player.getUUID());
 		TribulationManager.forget(player.getUUID());
 		SpatialTrialHandler.forget(player.getUUID());
+		VoidBreach.forget(player.getUUID());
+		ImmortalGate.forget(player.getUUID());
+		VoidCurrents.forget(player.getUUID());
 		SectMembership.forget(player.getUUID());
 		AstralRealm.forget(player.getUUID());
 		SoulRiver.forget(player.getUUID());
@@ -71,6 +74,7 @@ public final class CultivationEvents {
 		Lifespan.forget(player.getUUID());
 		LifespanTribulation.forget(player.getUUID()); // it waits on the record, as strong as it was
 		BurnLifespan.onDisconnect(player); // a lifespan burning goes out (not lit again by logging in)
+		ImmortalEssence.onDisconnect(player); // so does immortal essence lit
 		Wishes.forget(player.getUUID());
 	}
 
@@ -80,15 +84,25 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(CultivationStats::tickHunger);
 		ServerTickEvents.END_SERVER_TICK.register(QiManager::tick);
 		ServerTickEvents.END_SERVER_TICK.register(SpatialTrialHandler::tick);
+		ServerTickEvents.END_SERVER_TICK.register(VoidBreach::tick);
+		ServerTickEvents.END_SERVER_TICK.register(ImmortalGate::tick); // the Immortal Gate's opening, the way up and down
+		ServerTickEvents.END_SERVER_TICK.register(CityMarkets::keep); // the Immortal Realm's markets, their merchants at their stalls
+		ServerTickEvents.END_SERVER_TICK.register(CelestialCourt::tick); // the Celestial Court's people at their posts, the Gate's watch counted
+		ServerTickEvents.END_SERVER_TICK.register(PrimordialBeasts::tick); // the primordial beasts come to their lairs
+		ServerTickEvents.END_SERVER_TICK.register(VoidCurrents::tick); // the Great Void's drifting currents
 		ServerTickEvents.END_SERVER_TICK.register(SoulRiver::tick);
 		ServerTickEvents.END_SERVER_TICK.register(NetherworldManager::tick);
 		ServerTickEvents.END_SERVER_TICK.register(GhostSystem::tick);
 		ServerTickEvents.END_SERVER_TICK.register(Lifespan::tick);
 		ServerTickEvents.END_SERVER_TICK.register(LifespanTribulation::tick); // the heavens collecting a spent life
 		ServerTickEvents.END_SERVER_TICK.register(BurnLifespan::tick); // years set alight for strength
+		ServerTickEvents.END_SERVER_TICK.register(ImmortalEssence::tick); // a True Immortal's essence, filled in the Immortal Realm, leaking elsewhere
 		Wishes.register();
 		ServerTickEvents.END_SERVER_TICK.register(Spells::tick);
 		ServerTickEvents.END_SERVER_TICK.register(GhostGate::keepOfficials);
+		ServerTickEvents.END_SERVER_TICK.register(NirvanaCamp::keep); // those waiting on the Shore of Nirvana
+		ServerTickEvents.END_SERVER_TICK.register(SacredRelics::tick); // the Sacred Vessels' altars' keepers
+		ServerTickEvents.END_SERVER_TICK.register(BloodPools::tick); // the blood pools' elders
 		// Whoever starts seeing a player is told whether it is a ghost and how it is drawn (TwoPaths#look: one of the living may wear
 		// a Ghost King's form), before they could draw it otherwise; every player, so a client that last saw it in another form
 		// (and lost sight of it while it changed) isn't left drawing that one.
@@ -147,6 +161,11 @@ public final class CultivationEvents {
 		ServerLifecycleEvents.SERVER_STARTED.register(SpatialRiftBlock::ensureOverworldRift);
 		// The Ghost Gate at the Netherworld's 0, 0 (built the first time; its fixtures put back every time).
 		ServerLifecycleEvents.SERVER_STARTED.register(GhostGate::ensure);
+		// The camp on the Great Void's Shore of Nirvana (built the first time).
+		ServerLifecycleEvents.SERVER_STARTED.register(NirvanaCamp::ensure);
+		// The Immortal Gate over the void sea and the Southern Heavenly Gate (built the first time; their light as the Gate stands).
+		ServerLifecycleEvents.SERVER_STARTED.register(ImmortalGate::ensure);
+		ServerLifecycleEvents.SERVER_STOPPING.register(ImmortalGate::settleAll); // those flying to or from it are the camp's again
 		// The Gate of the Yellow Springs at the Nether's 0, 0, up the Soul River (placed the first time, back if removed).
 		ServerLifecycleEvents.SERVER_STARTED.register(NetherRift::ensure);
 		// First: every soul goes home, no penalty, while its player is still in the world to be saved there.
@@ -187,6 +206,10 @@ public final class CultivationEvents {
 			SectMembership.clear();
 			TalkSystem.clearTrials();
 			SpatialTrialHandler.clear();
+			VoidBreach.clear();
+			ImmortalGate.clear();
+			VoidCurrents.clear();
+			NirvanaCamp.clear();
 			Wishes.clear();
 			RaceGifts.clear();
 		});
@@ -393,6 +416,8 @@ public final class CultivationEvents {
 				boolean spent = LifespanTribulation.onDeath(sp);
 				TribulationManager.onDeath(sp); // dying mid-tribulation fails the breakthrough
 				SpatialTrialHandler.onDeath(sp); // dying in the Spatial Gap ends the trial
+				VoidBreach.onDeath(sp); // and in a Void Breach, the climb
+				ImmortalGate.onDeath(sp); // and in the Immortal Gate's passage, the climb
 				SoulRiver.onDeath(sp); // and on the Soul River, the journey
 				// Bound for the Netherworld (the gamerule on): the respawn will be the Ghost Gate's. Not a spent life's (LifespanTribulation):
 				// it is born again at its own spawn point, a living mortal (the user's ask, 2026-10-20).

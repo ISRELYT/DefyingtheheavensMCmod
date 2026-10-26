@@ -1023,14 +1023,22 @@ public class Nirvana {
 	/** White flame's heat, coolest to hottest: a cold blue at its edges, white at its heart. */
 	static final int[] WHITE_FLAME = {0x4A5A8A, 0x8CA4E8, 0xD4E2FF, 0xFFF6E8, 0xFFFFFF};
 
-	/** The reborn sword's blade (lying flat, its point toward -z): bright steel, its edges white flame, a fuller down its middle written in pale gold. */
+	/** The reborn sword's blade's half-width at {@code z} along it (its point at {@code tipZ}): its full half, drawn in to its point over its last 18 pixels. */
+	static double rebornHalf(double z, double tipZ) {
+		return REBORN_WIDE / 2 * Math.min(1, SpellArt.clamp01((z - tipZ) / 18) * 1.2 + 0.02);
+	}
+
+	static final double REBORN_WIDE = 9.5;
+
+	/**
+	 * The reborn sword's blade (lying flat, its point toward -z, solid to its outline: {@link #rebornHalf}): bright steel, its edges white flame
+	 * (the faces at its outline, its sides and its point's steps, white), a fuller down its middle written in pale gold.
+	 */
 	static SpellArt.Painter rebornBlade(double tipZ, int seed) {
 		return t -> {
-			double u = t.across() - 0.5, z = t.qz(), toTip = SpellArt.clamp01((z - tipZ) / 18), half = 0.5 * Math.min(1, toTip * 1.2 + 0.02);
-			// Its edges and ends white, but none where its point narrows inside its box (else the box's outline shows round the point).
-			if (!t.flat()) return (t.side() ? half < 0.5 : Math.abs(u) > half) ? SpellArt.CLEAR : SpellArt.glow(0xFFFFFF, 0.97);
-			if (Math.abs(u) > half) return SpellArt.CLEAR;
-			double edge = half - Math.abs(u);
+			double u = t.qx() / REBORN_WIDE, z = t.qz(), half = rebornHalf(z, tipZ) / REBORN_WIDE;
+			if (!t.flat()) return SpellArt.glow(0xFFFFFF, 0.97);
+			double edge = Math.max(0, half - Math.abs(u));
 			if (edge < 0.12) return SpellArt.glow(SpellArt.ramp(SpellArt.clamp01(1 - edge / 0.12), WHITE_FLAME), 0.97);
 			if (Math.abs(u) < 0.09) {
 				double cell = -z / 9;
@@ -1054,11 +1062,16 @@ public class Nirvana {
 		m.scale = 4;
 		m.bone("root", null, 0, 0, 0);
 		SpellArt.Bone blade = m.bone("blade", "root", 0, 0, 0);
-		double tip = -REBORN_LENGTH;
-		for (int i = 0; i < 6; i++) {
-			double z0 = -2 - i * 15, z1 = Math.max(tip, z0 - 15);
-			blade.box(0, 0, (z0 + z1) / 2, 9.5, 1.4, z0 - z1, rebornBlade(tip, 2301)).density(1.5);
+		double tip = -REBORN_LENGTH, taper = tip + 18;
+		// Its blade, solid to its outline: out along its length in pieces, then its point drawn in slice by slice (a box painted to its point
+		// and clear round it was a sheet seen edge-on: the user, 2026-10-25, "2D basically"); thick, a ridge down its middle.
+		SpellArt.Painter steel = rebornBlade(tip, 2301);
+		for (int i = 0; i < 5; i++) {
+			double z0 = -2 - i * 15, z1 = Math.max(taper, z0 - 15);
+			if (z0 > z1) blade.box(0, 0, (z0 + z1) / 2, REBORN_WIDE, 2.4, z0 - z1, steel).density(1.5);
 		}
+		for (SpellArt.Cube slice : SpellArt.extrude(blade, SpellArt.Plane.XZ, 0, tip, taper, 1, 2.4, z -> new double[] {-rebornHalf(z, tip), rebornHalf(z, tip)}, steel)) slice.density(1.5);
+		blade.box(0, 0, (-2 + tip + 6) / 2, 2.4, 3.4, -2 - (tip + 6), steel).density(1.5); // the ridge, its fuller written on it
 		SpellArt.Bone flames = m.bone("flames", "blade", 0, 0, 0);
 		for (int i = 0; i < 9; i++) {
 			double z = -8 - i * 9.5, w = 4.8 * Math.min(1, (z - tip) / 18);

@@ -859,7 +859,7 @@ public final class EarthSpells {
 		TITANS.put(p.getUUID(), titan);
 		SpellFx.send(HeavenSpells.level(p), SpellFx.Kind.EARTH_BURST, titan.position().add(0, 1, 0), Vec3.ZERO, 5.0f, Block.getId(groundUnder(p)), 192);
 		SpellFx.send(HeavenSpells.level(p), SpellFx.Kind.SHOCKWAVE, titan.position(), Vec3.ZERO, 12, 0, 192);
-		HeavenSpells.sound(HeavenSpells.level(p), titan.position(), SoundEvents.WARDEN_EMERGE, 3.0f, 0.4f);
+		HeavenSpells.sound(HeavenSpells.level(p), titan, SoundEvents.WARDEN_EMERGE, 3.0f, 0.4f);
 		HeavenSpells.sound(HeavenSpells.level(p), titan.position(), SoundEvents.IRON_GOLEM_REPAIR, 3.0f, 0.3f);
 	}
 

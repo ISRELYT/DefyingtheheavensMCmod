@@ -6,12 +6,14 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.TicketType;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Zombie;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
@@ -211,65 +213,85 @@ public class MethodTiersGameTests implements FabricGameTest {
 		player.setXRot(0);
 	}
 
-	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 60)
+	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 200)
 	public void theDeeperFoundationsSpellsStrike(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
-		for (int dx = -3; dx <= 3; dx++) {
-			for (int dz = -2; dz <= 12; dz++) level.setBlockAndUpdate(SPELL_GROUND.offset(dx, -1, dz), Blocks.STONE.defaultBlockState());
-		}
+		// Its ground held loaded while it runs (out of the grid nothing else holds it: its chunk, and its zombies with it, would be let go before
+		// the chains bind them), and the spells cast once what stands there can be found, what an earlier run left there cleared away.
+		ChunkPos held = new ChunkPos(SPELL_GROUND.offset(0, 0, 3));
+		level.getChunkSource().addRegionTicket(TicketType.PORTAL, held, 3, SPELL_GROUND);
 		ServerPlayer player = cultivator(helper, Realm.FOUR_AXIS, Stage.EARLY);
 		NetherworldState s = CultivationManager.get(player).netherworld();
 		List<Zombie> zombies = new ArrayList<>();
-		try {
-			for (GhostMethod m : GhostMethod.values()) if (m.isFoundation()) s.setMethod(m, m.layers(), 0);
-			s.setGhostQi(10_000);
-			for (Spell spell : Spell.values()) {
-				if (spell.method() != null && spell.method().isFoundation()) helper.assertTrue(spell.isKnown(CultivationManager.get(player)), spell.getId() + " is known with its foundation perfected");
-			}
-			standAt(player, 0, 0, 0); // facing south, +z
-			// Soul Rend: through both zombies in its line.
-			Zombie near = zombie(level, 0, 3), far = zombie(level, 0, 6);
-			zombies.add(near);
-			zombies.add(far);
-			float full = near.getHealth();
-			Spells.cast(player, Spell.SOUL_REND);
-			helper.assertTrue(near.getHealth() < full && far.getHealth() < full, "Soul Rend strikes every being in its line");
-			// Marrow Ward; the Wheel of Samsara.
-			Spells.cast(player, Spell.MARROW_WARD);
-			helper.assertTrue(player.hasEffect(MobEffects.DAMAGE_RESISTANCE) && player.hasEffect(MobEffects.ABSORPTION), "Marrow Ward: bones like iron");
-			player.setHealth(player.getMaxHealth() / 3);
-			player.addEffect(new MobEffectInstance(MobEffects.POISON, 200, 0));
-			Spells.cast(player, Spell.SAMSARA_WHEEL);
-			helper.assertTrue(player.getHealth() >= player.getMaxHealth() - 0.01f && !player.hasEffect(MobEffects.POISON), "The Wheel of Samsara makes one whole");
-			// Chains of Hell hold a monster; King's Decree cows it.
-			Spells.cast(player, Spell.HELL_CHAINS);
-			helper.assertTrue(near.hasEffect(MobEffects.MOVEMENT_SLOWDOWN) && near.getEffect(MobEffects.MOVEMENT_SLOWDOWN).getAmplifier() >= 6, "Chained fast");
-			Spells.cast(player, Spell.KINGS_DECREE);
-			helper.assertTrue(far.hasEffect(MobEffects.WEAKNESS) && far.hasEffect(MobEffects.GLOWING), "Cowed and shown by the King's Decree");
-			// Yama's Verdict: twice over on one below half its health.
-			float before = near.getHealth();
-			Spells.cast(player, Spell.YAMA_VERDICT);
-			helper.assertTrue(!near.isAlive() || near.getHealth() < before, "Judged");
-			// Nine Nether Step: a step through the dark, south down the ground.
-			Spells.cast(player, Spell.NINE_NETHER_STEP);
-			helper.assertTrue(player.getZ() > SPELL_GROUND.getZ() + 3, "Nine Nether Step carries it where it looks (" + player.position() + ")");
-			// Six Paths Annihilation: all within its ring unmade.
-			standAt(player, 0, 0, 0);
-			Zombie ring = zombie(level, 2, 1);
-			zombies.add(ring);
-			Spells.cast(player, Spell.SIX_PATHS_ANNIHILATION);
-			helper.assertTrue(!ring.isAlive(), "Unmade by the Six Paths");
-			// Ghost Core Burst and Yellow Springs Tide on a fresh one.
-			Zombie burnt = zombie(level, 0, 2);
-			zombies.add(burnt);
-			Spells.cast(player, Spell.GHOST_CORE_BURST);
-			helper.assertTrue(burnt.getHealth() < burnt.getMaxHealth() && burnt.hasEffect(ModEffects.GHOST_FIRE), "Ghost Core Burst burns what is near");
-			Spells.cast(player, Spell.YELLOW_SPRINGS_TIDE);
-			helper.assertTrue(!burnt.isAlive() || burnt.hasEffect(MobEffects.MOVEMENT_SLOWDOWN), "The tide slows what it reaches");
-		} finally {
+		Runnable cleanUp = () -> {
 			Spells.forget(player.getUUID());
 			for (Zombie zombie : zombies) zombie.discard();
-		}
-		helper.succeed();
+			level.getChunkSource().removeRegionTicket(TicketType.PORTAL, held, 3, SPELL_GROUND);
+		};
+		helper.startSequence().thenWaitUntil(() -> helper.assertTrue(level.areEntitiesLoaded(held.toLong()) && level.isPositionEntityTicking(SPELL_GROUND.offset(0, 0, 3)),
+				"Its ground not yet loaded")).thenExecute(() -> {
+			try {
+				for (Zombie left : level.getEntitiesOfClass(Zombie.class, new AABB(SPELL_GROUND).inflate(40))) left.discard();
+				for (int dx = -3; dx <= 3; dx++) {
+					for (int dz = -2; dz <= 12; dz++) level.setBlockAndUpdate(SPELL_GROUND.offset(dx, -1, dz), Blocks.STONE.defaultBlockState());
+				}
+				for (GhostMethod m : GhostMethod.values()) if (m.isFoundation()) s.setMethod(m, m.layers(), 0);
+				s.setGhostQi(10_000);
+				for (Spell spell : Spell.values()) {
+					if (spell.method() != null && spell.method().isFoundation()) helper.assertTrue(spell.isKnown(CultivationManager.get(player)), spell.getId() + " is known with its foundation perfected");
+				}
+				standAt(player, 0, 0, 0); // facing south, +z
+				// Soul Rend: through both zombies in its line.
+				Zombie near = zombie(level, 0, 3), far = zombie(level, 0, 6);
+				zombies.add(near);
+				zombies.add(far);
+				float full = near.getHealth();
+				Spells.cast(player, Spell.SOUL_REND);
+				helper.assertTrue(near.getHealth() < full && far.getHealth() < full, "Soul Rend strikes every being in its line");
+				// Marrow Ward; the Wheel of Samsara.
+				Spells.cast(player, Spell.MARROW_WARD);
+				helper.assertTrue(player.hasEffect(MobEffects.DAMAGE_RESISTANCE) && player.hasEffect(MobEffects.ABSORPTION), "Marrow Ward: bones like iron");
+				player.setHealth(player.getMaxHealth() / 3);
+				player.addEffect(new MobEffectInstance(MobEffects.POISON, 200, 0));
+				Spells.cast(player, Spell.SAMSARA_WHEEL);
+				helper.assertTrue(player.getHealth() >= player.getMaxHealth() - 0.01f && !player.hasEffect(MobEffects.POISON), "The Wheel of Samsara makes one whole");
+				// Chains of Hell hold a monster (once they have lashed out to it, a moment after the casting); King's Decree cows it.
+				Spells.cast(player, Spell.HELL_CHAINS);
+			} catch (RuntimeException e) {
+				cleanUp.run();
+				throw e;
+			}
+		}).thenExecuteAfter(Spells.CHAINS_LASH + 2, () -> {
+			try {
+				Zombie near = zombies.get(0), far = zombies.get(1);
+				helper.assertTrue(near.hasEffect(MobEffects.MOVEMENT_SLOWDOWN) && near.getEffect(MobEffects.MOVEMENT_SLOWDOWN).getAmplifier() >= 6, "Chained fast ("
+						+ near.getEffect(MobEffects.MOVEMENT_SLOWDOWN) + ", " + (near.isAlive() ? "alive" : "gone") + ")");
+				Spells.cast(player, Spell.KINGS_DECREE);
+				helper.assertTrue(far.hasEffect(MobEffects.WEAKNESS) && far.hasEffect(MobEffects.GLOWING), "Cowed and shown by the King's Decree");
+				// Yama's Verdict: twice over on one below half its health.
+				float before = near.getHealth();
+				Spells.cast(player, Spell.YAMA_VERDICT);
+				helper.assertTrue(!near.isAlive() || near.getHealth() < before, "Judged");
+				// Nine Nether Step: a step through the dark, south down the ground.
+				standAt(player, 0, 0, 0);
+				Spells.cast(player, Spell.NINE_NETHER_STEP);
+				helper.assertTrue(player.getZ() > SPELL_GROUND.getZ() + 3, "Nine Nether Step carries it where it looks (" + player.position() + ")");
+				// Six Paths Annihilation: all within its ring unmade.
+				standAt(player, 0, 0, 0);
+				Zombie ring = zombie(level, 2, 1);
+				zombies.add(ring);
+				Spells.cast(player, Spell.SIX_PATHS_ANNIHILATION);
+				helper.assertTrue(!ring.isAlive(), "Unmade by the Six Paths");
+				// Ghost Core Burst and Yellow Springs Tide on a fresh one.
+				Zombie burnt = zombie(level, 0, 2);
+				zombies.add(burnt);
+				Spells.cast(player, Spell.GHOST_CORE_BURST);
+				helper.assertTrue(burnt.getHealth() < burnt.getMaxHealth() && burnt.hasEffect(ModEffects.GHOST_FIRE), "Ghost Core Burst burns what is near");
+				Spells.cast(player, Spell.YELLOW_SPRINGS_TIDE);
+				helper.assertTrue(!burnt.isAlive() || burnt.hasEffect(MobEffects.MOVEMENT_SLOWDOWN), "The tide slows what it reaches");
+			} finally {
+				cleanUp.run();
+			}
+		}).thenSucceed();
 	}
 }

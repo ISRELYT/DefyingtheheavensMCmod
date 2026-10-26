@@ -48,27 +48,30 @@ public class HeavenMethodsGameTests implements FabricGameTest {
 			}
 		}
 		// The elements' spells: three of each element in Qi Refining and in Foundation Building (layers 2, 5, 8 of the realm), two in each
-		// realm deeper (3 and 7), costing qi alone, each taught by every method of its element reaching its realm.
+		// realm deeper (3 and 7), costing qi alone, each taught by every method of its element reaching its realm; and between Four Axis
+		// wood's two, at its 5th, Return to the Bough (the user's ask, 2026-10-25: "a mid to late realm wood spell that lets u put
+		// cultivation fruits back onto trees").
 		int spells = 0;
 		java.util.Map<String, Integer> perSlot = new java.util.HashMap<>();
 		for (Spell spell : Spell.values()) {
 			if (!spell.isHeaven()) continue;
 			spells++;
 			int within = MethodLayers.within(spell.layer());
-			boolean early = spell.heavenRealm().ordinal() <= Realm.FOUNDATION_BUILDING.ordinal();
-			helper.assertTrue(MethodLayers.realmOf(spell.layer()) == spell.heavenRealm() && (early ? within == 2 || within == 5 || within == 8 : within == 3 || within == 7)
+			boolean early = spell.heavenRealm().ordinal() <= Realm.FOUNDATION_BUILDING.ordinal(), between = spell == Spell.RETURN_TO_THE_BOUGH;
+			helper.assertTrue(MethodLayers.realmOf(spell.layer()) == spell.heavenRealm()
+					&& (early ? within == 2 || within == 5 || within == 8 : within == 3 || within == 7 || between && within == 5)
 					&& spell.cost() == 0 && spell.qiCost() > 0, spell.getId() + " comes at its place in its own realm, on qi");
 			helper.assertTrue(spell.taughtBy(HeavenMethod.of(spell.element(), spell.heavenRealm())) && spell.taughtBy(HeavenMethod.of(spell.element(), Realm.TRUE_IMMORTAL))
 					&& (spell.heavenRealm() == Realm.QI_REFINING || !spell.taughtBy(HeavenMethod.of(spell.element(), spell.heavenRealm().previous()))),
 					spell.getId() + ": taught by its realm's method and deeper, never shallower");
 			perSlot.merge(spell.element() + " " + spell.heavenRealm(), 1, Integer::sum);
 		}
-		helper.assertTrue(spells == 120, "A hundred and twenty element spells (" + spells + ")");
+		helper.assertTrue(spells == 121, "A hundred and twenty element spells and Return to the Bough (" + spells + ")");
 		for (QiElement element : QiElement.five()) {
 			for (Realm realm : Realm.values()) {
 				// Every realm has its spells (the realms after Four Axis had none of their own at first, 2026-10-22; all of them came
 				// 2026-10-24).
-				int want = realm.ordinal() <= Realm.FOUNDATION_BUILDING.ordinal() ? 3 : 2;
+				int want = (realm.ordinal() <= Realm.FOUNDATION_BUILDING.ordinal() ? 3 : 2) + (element == QiElement.WOOD && realm == Realm.FOUR_AXIS ? 1 : 0);
 				helper.assertTrue(perSlot.getOrDefault(element + " " + realm, 0) == want, element + " " + realm + ": " + want + " spells");
 			}
 		}

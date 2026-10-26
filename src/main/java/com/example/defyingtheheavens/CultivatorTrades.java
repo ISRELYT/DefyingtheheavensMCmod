@@ -69,6 +69,8 @@ public final class CultivatorTrades {
 	 * it would buy from the player's inventory.
 	 */
 	public static MerchantOffers offersFor(CultivatorNpc npc, ServerPlayer player, Map<String, Integer> uses, Map<MerchantOffer, String> keys) {
+		// The Celestial Court's Quartermaster sells for merit, by the Court's ranks (CelestialCourt#offers).
+		if (npc.getTitle() == NpcTitle.COURT_QUARTERMASTER) return CelestialCourt.offers(npc, player, uses, keys);
 		MerchantOffers offers = new MerchantOffers();
 		keys.clear();
 		int regard = npc.regard(player);
@@ -206,6 +208,11 @@ public final class CultivatorTrades {
 				goods.add(herb(random, 400, 900, Regard.WARM, ModItems.SPIRIT_GINSENG, ModItems.PURPLE_LINGZHI, ModItems.OCHRE_HUANGJING));
 			}
 			case WANDERING_GHOST, GHOST_ELDER, GATE_WARDEN, BRIDGE_KEEPER, GHOST_KING, GHOST_RETAINER -> ghostGoods(npc, random, goods);
+			case IMMORTAL_MERCHANT -> immortalGoods(npc, random, goods);
+		}
+		// In the Immortal Realm a sect's elders and its Sect Lord sell a demon race's True Immortal blood too, to one they are Warm to.
+		if (ModDimensions.isImmortalRealm(npc.level().dimension()) && (npc.getTitle().isElderOrAbove() && npc.isSectMember())) {
+			goods.addAll(immortalBlood(random, Regard.WARM));
 		}
 		// Last, the slip of its heaven method (CultivatorNpc#heavenMethod): an elder's (its sect's own) only to one it is Warm to, a
 		// rogue's to the courteous; a disciple keeps its own. Never a True Immortal's (Realm#taughtInTheWorld).
@@ -242,6 +249,59 @@ public final class CultivatorTrades {
 			case BRIDGE_KEEPER -> goods.add(herb(random, 200, 500, 0, ModItems.NETHERWORLD_LOTUS));
 			default -> goods.add(new Goods(new ItemStack(ModItems.OTHER_SHORE_FLOWER_SEEDS), 12, 2, Regard.PER_PIP));
 		}
+	}
+
+	/** Immortal Jade's worth in Low stones, the markets' unit. */
+	private static final int JADE = SpiritStoneItem.Grade.IMMORTAL_JADE.value();
+	/** An Immortal stone's. */
+	private static final int IMMORTAL_STONE = SpiritStoneItem.Grade.IMMORTAL.value();
+
+	/**
+	 * What an Immortal Realm merchant sells at its stall in a city's market (CityMarkets; phase 2 of the realm plan: "markets sell pills,
+	 * treasures and True Immortal slips for jade"), priced for immortals: Immortal-grade pills, herbs ten thousand years old and
+	 * Cultivation Fruit; a Sacred Vessel of its own element to one it is Warm to; and the slip of its element's True Immortal heaven
+	 * method (its own method's element, CultivatorNpc#heavenMethod) to the courteous, sold nowhere in the worlds below (Realm#taughtInTheWorld), at
+	 * {@link #heavenSlipPrice}; one merchant in five instead the ghost path's last foundation, the Netherworld Immortal Canon.
+	 */
+	private static void immortalGoods(CultivatorNpc npc, RandomSource random, List<Goods> goods) {
+		goods.add(new Goods(PillItem.create(ModItems.CULTIVATION_PILL, PillGrade.IMMORTAL, 100), 2 * IMMORTAL_STONE, 2, 0));
+		goods.add(new Goods(PillItem.create(ModItems.QI_GATHERING_PILL, PillGrade.IMMORTAL, 100), IMMORTAL_STONE, 3, 0));
+		ItemStack herb = GinsengItem.create(pick(random, ModItems.SPIRIT_GINSENG, ModItems.PURPLE_LINGZHI, ModItems.SPIRIT_LOTUS), Mth.nextInt(random, 5000, 10000));
+		goods.add(new Goods(herb, 3 * IMMORTAL_STONE, 2, 0));
+		goods.add(new Goods(new ItemStack(ModItems.CULTIVATION_FRUIT), JADE, 1, Regard.PER_PIP));
+		HeavenMethod own = npc.heavenMethod();
+		QiElement element = own != null ? own.element() : QiElement.five()[(int) Math.floorMod(npc.getUUID().getLeastSignificantBits() >>> 3, 5L)];
+		goods.add(new Goods(new ItemStack(ModItems.sacredVessel(element)), 30 * JADE, 1, Regard.WARM));
+		if (Math.floorMod(npc.getUUID().getMostSignificantBits(), 5L) == 0) {
+			goods.add(new Goods(GhostJadeSlipItem.of(GhostMethod.NETHERWORLD_IMMORTAL_CANON), slipPrice(GhostMethod.NETHERWORLD_IMMORTAL_CANON), 1, Regard.COURTEOUS));
+		} else {
+			HeavenMethod method = HeavenMethod.of(element, Realm.TRUE_IMMORTAL);
+			goods.add(new Goods(JadeSlipItem.of(method), heavenSlipPrice(method), 1, Regard.COURTEOUS));
+		}
+		goods.addAll(immortalBlood(random, Regard.COURTEOUS));
+	}
+
+	/**
+	 * A demon race's blood (the user's ask, 2026-10-26: "a way to purchase true immortal demon race blood and above at sects or cities or from
+	 * the capital"): one race's today, a phial of each realm's from True Immortal up (True Immortal's alone until there are realms past it),
+	 * each at its realm's slip's price ({@link #bloodPrice}), to one regarded at {@code regard} or better. Sold nowhere in the worlds below.
+	 */
+	static List<Goods> immortalBlood(RandomSource random, int regard) {
+		List<Bloodline> races = new ArrayList<>();
+		for (Bloodline race : Bloodline.values()) if (race.isBeast()) races.add(race);
+		Bloodline race = races.get(random.nextInt(races.size()));
+		List<Goods> goods = new ArrayList<>();
+		for (Realm realm : Realm.values()) {
+			if (realm.ordinal() >= Realm.TRUE_IMMORTAL.ordinal()) goods.add(new Goods(DemonBloodItem.of(race, realm), bloodPrice(realm), 1, regard));
+		}
+		return goods;
+	}
+
+	/** A demon race's blood's price (Low stones): its realm's slip's ({@link #heavenSlipPrice}), a True Immortal's sixty Immortal Jade. */
+	public static int bloodPrice(Realm realm) {
+		long price = GHOST_SLIP_PRICE;
+		for (int t = 0; t < realm.ordinal(); t++) price = Math.min(Integer.MAX_VALUE, price * 3);
+		return (int) price;
 	}
 
 	/** A Ghost Jade Slip's price (Low stones): a whole method's first layer, and the way to the rest. */

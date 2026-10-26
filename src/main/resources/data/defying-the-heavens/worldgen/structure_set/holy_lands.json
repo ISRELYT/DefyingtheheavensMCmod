@@ -1,0 +1,12 @@
+{
+  "structures": [
+    {"structure": "defying-the-heavens:holy_land", "weight": 1},
+    {"structure": "defying-the-heavens:demon_palace", "weight": 1}
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 1736452109,
+    "spacing": 20,
+    "separation": 10
+  }
+}

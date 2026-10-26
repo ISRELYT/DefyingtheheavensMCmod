@@ -1,0 +1,108 @@
+{
+  "type": "defying-the-heavens:great_void",
+  "generator": {
+    "type": "minecraft:noise",
+    "settings": "defying-the-heavens:great_void_continents",
+    "biome_source": {
+      "type": "minecraft:multi_noise",
+      "biomes": [
+        {
+          "biome": "defying-the-heavens:shore_of_nirvana",
+          "parameters": {
+            "temperature": [-1.0, 1.0],
+            "humidity": [-1.0, 1.0],
+            "continentalness": [0.5, 1.0],
+            "erosion": 0.0,
+            "weirdness": [-1.0, 1.0],
+            "depth": 0.0,
+            "offset": 0.0
+          }
+        },
+        {
+          "biome": "defying-the-heavens:ancient_battlefield",
+          "parameters": {
+            "temperature": [-1.0, 1.0],
+            "humidity": [-1.0, 1.0],
+            "continentalness": [-1.0, 0.5],
+            "erosion": 0.0,
+            "weirdness": [0.55, 1.0],
+            "depth": 0.0,
+            "offset": 0.0
+          }
+        },
+        {
+          "biome": "defying-the-heavens:dao_field_wood",
+          "parameters": {
+            "temperature": [-1.0, -0.3],
+            "humidity": [0.4, 1.0],
+            "continentalness": [-1.0, 0.5],
+            "erosion": 0.0,
+            "weirdness": [-1.0, 0.55],
+            "depth": 0.0,
+            "offset": 0.0
+          }
+        },
+        {
+          "biome": "defying-the-heavens:dao_field_fire",
+          "parameters": {
+            "temperature": [-0.3, -0.09],
+            "humidity": [0.4, 1.0],
+            "continentalness": [-1.0, 0.5],
+            "erosion": 0.0,
+            "weirdness": [-1.0, 0.55],
+            "depth": 0.0,
+            "offset": 0.0
+          }
+        },
+        {
+          "biome": "defying-the-heavens:dao_field_earth",
+          "parameters": {
+            "temperature": [-0.09, 0.09],
+            "humidity": [0.4, 1.0],
+            "continentalness": [-1.0, 0.5],
+            "erosion": 0.0,
+            "weirdness": [-1.0, 0.55],
+            "depth": 0.0,
+            "offset": 0.0
+          }
+        },
+        {
+          "biome": "defying-the-heavens:dao_field_metal",
+          "parameters": {
+            "temperature": [0.09, 0.3],
+            "humidity": [0.4, 1.0],
+            "continentalness": [-1.0, 0.5],
+            "erosion": 0.0,
+            "weirdness": [-1.0, 0.55],
+            "depth": 0.0,
+            "offset": 0.0
+          }
+        },
+        {
+          "biome": "defying-the-heavens:dao_field_water",
+          "parameters": {
+            "temperature": [0.3, 1.0],
+            "humidity": [0.4, 1.0],
+            "continentalness": [-1.0, 0.5],
+            "erosion": 0.0,
+            "weirdness": [-1.0, 0.55],
+            "depth": 0.0,
+            "offset": 0.0
+          }
+        },
+        {
+          "biome": "defying-the-heavens:void_steppes",
+          "parameters": {
+            "temperature": [-1.0, 1.0],
+            "humidity": [-1.0, 0.4],
+            "continentalness": [-1.0, 0.5],
+            "erosion": 0.0,
+            "weirdness": [-1.0, 0.55],
+            "depth": 0.0,
+            "offset": 0.0
+          }
+        }
+      ]
+    }
+  }
+}

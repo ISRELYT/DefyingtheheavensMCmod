@@ -771,6 +771,10 @@ public final class GhostGate {
 			case "minecraft:the_nether" -> Component.translatable(ModLang.DIMENSION_NETHER);
 			case "minecraft:the_end" -> Component.translatable(ModLang.DIMENSION_END);
 			default -> dimension.endsWith("upper_realm") ? Component.translatable(ModLang.DIMENSION_UPPER_REALM)
+					: dimension.endsWith("great_void") ? Component.translatable(ModLang.DIMENSION_GREAT_VOID)
+					: dimension.endsWith("void_breach") ? Component.translatable(ModLang.DIMENSION_VOID_BREACH)
+					: dimension.endsWith("immortal_realm") ? Component.translatable(ModLang.DIMENSION_IMMORTAL_REALM)
+					: dimension.endsWith("immortal_passage") ? Component.translatable(ModLang.DIMENSION_IMMORTAL_PASSAGE)
 					: dimension.endsWith("netherworld") ? Component.translatable(ModLang.DIMENSION_NETHERWORLD)
 					: dimension.endsWith("astral_void") ? Component.translatable(ModLang.DIMENSION_ASTRAL_VOID)
 					: dimension.endsWith("astral_surfaces") ? Component.translatable(ModLang.DIMENSION_ASTRAL_SURFACES) : Component.literal(dimension);

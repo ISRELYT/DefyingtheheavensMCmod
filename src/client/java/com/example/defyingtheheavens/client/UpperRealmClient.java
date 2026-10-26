@@ -40,6 +40,9 @@ public final class UpperRealmClient {
 
 		BlockEntityRenderers.register(ModBlockEntities.SPATIAL_RIFT, context -> new SpatialRiftRenderer());
 		BlockRenderLayerMap.INSTANCE.putBlock(ModBlocks.WHITE_BLOSSOM_LEAVES, RenderType.cutoutMipped());
+		BlockRenderLayerMap.INSTANCE.putBlock(ModBlocks.IMMORTAL_GATE_LIGHT, RenderType.translucent()); // the Gate's light, seen through
+		GreatVoidClient.register(); // the realm above the Jade Firmament, and the breach to it
+		ImmortalRealmClient.register(); // the realm above the Great Void, and the Gate's passage to it
 	}
 
 	/** Fog start/end fractions for a dimension, or null to keep vanilla fog. */
@@ -50,7 +53,8 @@ public final class UpperRealmClient {
 		if (ModDimensions.isNetherworld(dimension)) return NETHERWORLD_FOG;
 		if (ModDimensions.isSoulRiver(dimension)) return SOUL_RIVER_FOG;
 		if (ModDimensions.isAstral(dimension)) return AstralClient.fogFor(dimension);
-		return null;
+		if (ModDimensions.isImmortalRealm(dimension) || ModDimensions.isImmortalPassage(dimension)) return ImmortalRealmClient.fogFor(dimension);
+		return GreatVoidClient.fogFor(dimension);
 	}
 
 	/** Clouds drifting in the gap between the middle (Y 256) and high (Y 390) island tiers; fog tinted toward warm gold. */

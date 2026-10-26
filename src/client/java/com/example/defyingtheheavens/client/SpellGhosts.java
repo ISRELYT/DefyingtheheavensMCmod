@@ -1,6 +1,7 @@
 package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.DefyingTheHeavens;
+import com.example.defyingtheheavens.GhostSpells;
 import com.example.defyingtheheavens.SpellConstruct;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -52,8 +53,9 @@ import java.util.UUID;
  *       heads of the dead flung out on it;</li>
  *   <li>{@link SpellConstruct.Kind#GHOST_PROCESSION}: the dead pouring out along the look, men and women, villagers, beasts and the night's
  *       things, in a river of mist;</li>
- *   <li>{@link SpellConstruct.Kind#NETHER_DESCENT}: nine rings of ghost fire turning down into the Nine Nethers and the dead dragged in,
- *       spiralling down out of sight;</li>
+ *   <li>{@link SpellConstruct.Kind#NETHER_DESCENT}: a maelstrom of souls dragged in and down into the Nine Nethers, nine rings of ghost fire
+ *       turning down into it, and the dead crawling up out of it toward the living and dragged back down;</li>
+ *   <li>{@link SpellConstruct.Kind#SOUL_VORTEX} (its vortex drawn by hand: SoulVortex): the dead borne up it among its souls;</li>
  *   <li>{@link SpellConstruct.Kind#SOUL_ASCENT}: two strands of the dead winding up about one another round a column of mist, then plunging;</li>
  *   <li>{@link SpellConstruct.Kind#WHITE_WUCHANG}, {@link SpellConstruct.Kind#BLACK_WUCHANG}: the White and the Black Impermanence, tall in
  *       their hats, the White's tongue hanging and its staff of paper streamers, the Black's chain; and the soul they come for drawn out of its
@@ -78,9 +80,14 @@ final class SpellGhosts {
 		Minecraft mc = Minecraft.getInstance();
 		if (mc.level == null) return false;
 		for (Entity entity : mc.level.entitiesForRendering()) {
-			if (entity instanceof SpellConstruct construct && construct.kind().form == SpellConstruct.Form.GHOSTS) return true;
+			if (entity instanceof SpellConstruct construct && hasDead(construct.kind())) return true;
 		}
 		return false;
+	}
+
+	/** Whether a shape of {@code kind} has dead drawn here: the ghosts' own, and the vortex of souls' (its vortex drawn by hand: SoulVortex). */
+	private static boolean hasDead(SpellConstruct.Kind kind) {
+		return kind.form == SpellConstruct.Form.GHOSTS || kind == SpellConstruct.Kind.SOUL_VORTEX;
 	}
 
 	/** The colours of a spirit not of the dead's cyan (the spirit shader: SpellGhosts' own), and whether it is of smoke. */
@@ -102,7 +109,7 @@ final class SpellGhosts {
 		Vec3 cam = context.camera().getPosition();
 		PoseStack pose = context.matrixStack();
 		for (Entity entity : mc.level.entitiesForRendering()) {
-			if (!(entity instanceof SpellConstruct c) || c.kind().form != SpellConstruct.Form.GHOSTS || c.isRemoved()) continue;
+			if (!(entity instanceof SpellConstruct c) || !hasDead(c.kind()) || c.isRemoved()) continue;
 			if (c.distanceToSqr(cam) > RANGE * RANGE) continue;
 			try {
 				switch (c.kind()) {
@@ -110,6 +117,7 @@ final class SpellGhosts {
 					case WAIL_SPECTRE -> spectre(c, pose, cam, partial);
 					case GHOST_PROCESSION -> procession(c, pose, cam, partial);
 					case NETHER_DESCENT -> descent(c, pose, cam, partial);
+					case SOUL_VORTEX -> vortex(c, pose, cam, partial);
 					case SOUL_ASCENT -> ascent(c, pose, cam, partial);
 					case WHITE_WUCHANG, BLACK_WUCHANG -> wuchang(c, pose, cam, partial);
 					case AVATAR_PROJECTION -> avatar(c, pose, cam, partial);
@@ -317,6 +325,56 @@ final class SpellGhosts {
 		model.rightLeg.xRot = 0.5f * kick;
 		model.leftLeg.xRot = -0.5f * kick;
 		model.head.xRot = -0.6f;
+	};
+
+	/** Borne upward: arms raised over it, reaching for the sky, legs trailing below. */
+	private static final Posing RISING = (model, age) -> {
+		float sway = Mth.sin(age * 0.16f);
+		model.rightArm.xRot = -2.85f + sway * 0.18f;
+		model.leftArm.xRot = -2.85f - sway * 0.18f;
+		model.rightArm.zRot = 0.3f;
+		model.leftArm.zRot = -0.3f;
+		model.rightLeg.xRot = 0.25f + sway * 0.1f;
+		model.leftLeg.xRot = 0.1f - sway * 0.1f;
+		model.head.xRot = -0.55f;
+	};
+
+	/** Hauling itself up out of the dark: both arms reaching up and over before it, clawing at the land, its legs scrabbling. */
+	private static final Posing CLAMBER = (model, age) -> {
+		float claw = Mth.sin(age * 0.5f);
+		model.rightArm.xRot = -2.6f + claw * 0.3f;
+		model.leftArm.xRot = -2.6f - claw * 0.3f;
+		model.rightArm.zRot = 0.15f;
+		model.leftArm.zRot = -0.15f;
+		model.rightLeg.xRot = 0.3f * claw;
+		model.leftLeg.xRot = -0.3f * claw;
+		model.head.xRot = -0.7f;
+	};
+
+	/** Crawling on its belly: an arm thrown out ahead and the other pulling under it, by turns, its legs dragging, its head raised. */
+	private static final Posing CRAWL = (model, age) -> {
+		float stroke = Mth.sin(age * 0.28f);
+		model.rightArm.xRot = -2.25f + stroke * 0.65f;
+		model.leftArm.xRot = -2.25f - stroke * 0.65f;
+		model.rightArm.zRot = 0.2f;
+		model.leftArm.zRot = -0.2f;
+		model.rightLeg.xRot = 0.12f + 0.12f * stroke;
+		model.leftLeg.xRot = 0.12f - 0.12f * stroke;
+		model.rightLeg.zRot = 0.06f;
+		model.leftLeg.zRot = -0.06f;
+		model.head.xRot = -1.05f;
+	};
+
+	/** Dragged back feet first: both arms flung out ahead of it, clawing at the land it is torn from. */
+	private static final Posing DRAGGED = (model, age) -> {
+		float claw = Mth.sin(age * 0.6f) * 0.2f;
+		model.rightArm.xRot = -2.95f + claw;
+		model.leftArm.xRot = -2.95f - claw;
+		model.rightArm.zRot = 0.35f;
+		model.leftArm.zRot = -0.35f;
+		model.rightLeg.xRot = 0.05f;
+		model.leftLeg.xRot = 0.05f;
+		model.head.xRot = -1.2f;
 	};
 
 	// --- Soul Dash: its caster's own ghost along its way ---
@@ -778,53 +836,115 @@ final class SpellGhosts {
 	/** Minecraft's own soul fire (the Nether's ghost fire): its strip of 32 frames. */
 	private static final ResourceLocation SOUL_FIRE = new ResourceLocation("minecraft", "textures/block/soul_fire_0.png");
 	private static final int SOUL_FIRE_FRAMES = 32;
-	/** How many of the dead are dragged down at once, and how long each takes from the rim to the depths (ticks). */
-	private static final int FALLEN = 30;
-	private static final float FALL_TIME = 46;
+	/** How many of the dead crawl up out of it at once, and how long one's course takes: hauled up over its rim, crawling out, dragged back (ticks). */
+	private static final int CRAWLERS = 12;
+	private static final float CRAWL_TIME = 120;
+	/** How many souls its maelstrom drags down at once, and how long one takes from as far as it drags to its heart (ticks). */
+	private static final int SINKING = 240;
+	private static final float SINK_TIME = 64;
+	private static final float[] NETHER_TEAL = {0.3f, 0.95f, 1.0f}, NETHER_PALE = {0.75f, 1.0f, 1.0f};
 
 	/**
-	 * Rift to the Nine Nethers (NETHER_DESCENT, at the rift's heart: its size the rift's round, its value how far round it drags): nine rings
-	 * of ghost fire turning down into the abyss, each narrower and deeper, turning against the next; and the dead dragged in from round about,
-	 * spiralling in and down, clawing at the air, shrinking as they go down out of sight (with a beast or a villager among them). Sealing
-	 * ({@code seal}), the rings close in on its heart and the last of the dead go down.
+	 * Rift to the Nine Nethers (NETHER_DESCENT, at the rift's heart: its size the rift's round, its value how far round it drags), drawn as Ten
+	 * Thousand Souls Ascend is, turned the other way (the user's ask, relayed 2026-10-25: "more like Ten Thousand Souls Ascend", not "just a
+	 * bunch of ghosts spinning around", "maybe the ghosts crawl out"): a maelstrom of the dead's souls wheeling in over the land from as far as
+	 * it drags and down into it, wisps of cold fire that turn to wailing faces as they near its mouth (the soul particle's frames, its flame first:
+	 * SoulVortex's turned about), streams of blue fire winding in among them; a wall of ghost fire turning about its mouth, and the nine rings
+	 * of ghost fire turning down into it, each narrower and deeper; and the dead hauling themselves up out of it over its rim, crawling out on
+	 * their bellies toward the living, and dragged back down into it. Sealing ({@code seal}), the rings close in on its heart, its souls are
+	 * sucked down, and every one of the dead still out is torn back down into it.
 	 */
 	private static void descent(SpellConstruct c, PoseStack pose, Vec3 cam, float partial) {
 		float age = c.tickCount + partial, fade = fade(c, age);
 		Vec3 heart = c.getPosition(partial);
-		float rift = Math.max(2, c.size()), pull = Math.max(rift, c.value());
+		float rift = Math.max(2, c.size()), pull = Math.max(rift, c.value()), mouth = rift * 0.5f;
 		float open = SpellRender.ease(age / 16);
 		boolean sealing = "seal".equals(c.phase());
 		float sealed = sealing ? SpellRender.ease(c.phaseAge(partial) / 12) : 0;
+		// Where each of the dead had got to when it began to seal (none begins its course after).
+		float stopped = sealing ? age - c.phaseAge(partial) : age;
 		long seed = c.getId();
-		// The dead, spiralling in and down.
-		for (int k = 0; k < FALLEN; k++) {
-			float s = ((age / FALL_TIME) + k / (float) FALLEN) % 1;
-			// None begin their fall once it is sealing: each goes on down, the rest unseen.
-			float began = age - s * FALL_TIME;
-			if (sealing && began > c.tickCount - c.phaseAge(partial)) continue;
-			float u = hash(seed, k * 5), v = hash(seed, k * 5 + 1);
-			double turn = Math.PI * 2 * hash(seed, k * 5 + 2) + s * Math.PI * 3.2 * (k % 2 == 0 ? 1 : -1);
-			double radius = pull * (0.55 + 0.45 * u) * Math.pow(1 - s, 1.4);
-			double height = (1 - s) * (1.2 + 2.8 * v) - Math.max(0, s - 0.62) * 9;
-			Vec3 middle = heart.add(Math.cos(turn) * radius, height + 0.9, Math.sin(turn) * radius);
-			float scale = (1.0f - 0.6f * s) * (1.0f + 0.35f * v);
-			float alpha = 0.9f * fade * open * Mth.clamp(s / 0.08f, 0, 1) * Mth.clamp((1 - s) / 0.12f, 0, 1);
-			float faceYaw = (float) Math.toDegrees(Math.atan2(Math.sin(turn), Math.cos(turn))) - 90;
-			if (hash(seed, k * 5 + 3) < 0.78f) {
-				person(pose, cam, middle.subtract(0, 0.9 * scale, 0), faceYaw, 25 + 45 * s, 20 * Mth.sin(age * 0.2f + k), scale, defaultSkin(seed * 37 + k),
-						defaultSlim(seed * 37 + k), FALLING, age + k * 11, alpha, null, null);
-			} else {
-				beast(pose, cam, middle, faceYaw, age * 6 + k * 40, alpha, age + k * 11, KINDS[(int) (u * 997) % KINDS.length], scale);
+		for (int k = 0; k < CRAWLERS; k++) {
+			float first = 10 + hash(seed, k * 7) * CRAWL_TIME;
+			if (stopped < first) continue;
+			int n = (int) ((stopped - first) / CRAWL_TIME);
+			float s = (stopped - first) / CRAWL_TIME - n;
+			long course = seed * 31 + k * 977L + n;
+			double around = Math.PI * 2 * hash(course, 1);
+			float out = mouth + (pull - mouth) * (0.35f + 0.45f * hash(course, 2)), scale = 1.0f + 0.3f * hash(course, 3);
+			float[] at = crawling(s, mouth, out);
+			float d = at[0], sunk = at[1], lean = at[2];
+			Posing posing = at[3] < 1 ? CLAMBER : at[3] < 2 ? CRAWL : DRAGGED;
+			if (sealing) {
+				d += (mouth * 0.7f - d) * sealed;
+				sunk += (2.8f - sunk) * sealed;
+				posing = DRAGGED;
 			}
+			// Lying on the land (its middle, that it leans about, a hand over it), or sunk so far below, facing out from it toward the living.
+			Vec3 feet = heart.add(Math.cos(around) * d, -(0.58f + sunk) * scale, Math.sin(around) * d);
+			float faceYaw = (float) Math.toDegrees(Math.atan2(-Math.cos(around), Math.sin(around)));
+			float alpha = 0.9f * fade * open * Mth.clamp((2.7f - sunk) / 0.6f, 0, 1);
+			person(pose, cam, feet, faceYaw, lean, 6 * Mth.sin(age * 0.3f + k), scale, defaultSkin(course), defaultSlim(course), posing, age + k * 11, alpha, null, null);
 		}
-		// The nine rings of ghost fire, turning down into it.
 		MultiBufferSource.BufferSource source = Minecraft.getInstance().renderBuffers().bufferSource();
 		MultiBufferSource buffers = SpellBuffers.begin(source);
+		Quaternionf facing = Minecraft.getInstance().gameRenderer.getMainCamera().rotation();
 		try {
-			VertexConsumer fire = buffers.getBuffer(SpellRender.glow(SOUL_FIRE));
 			Vec3 eye = cam.subtract(heart);
 			pose.pushPose();
 			pose.translate(heart.x - cam.x, heart.y - cam.y, heart.z - cam.z);
+			// The maelstrom: its souls wheeling in low over the land and sinking into its mouth, flames far out, faces as they go down.
+			ResourceLocation[] souls = SoulVortex.SOULS;
+			VertexConsumer[] frames = new VertexConsumer[souls.length];
+			float reach = pull * 1.05f;
+			for (int i = 0; i < SINKING; i++) {
+				float speed = 0.8f + 0.4f * hash(seed, 3000 + i);
+				float f = (age * speed / SINK_TIME + hash(seed, 3500 + i)) % 1;
+				f += (1 - f) * sealed;
+				float r = reach * (float) Math.pow(1 - f, 1.1);
+				double a = hash(seed, 4000 + i) * Math.PI * 2 - age * (0.04f + 0.03f * hash(seed, 4500 + i)) - f * Math.PI * 2.6;
+				float y = r > mouth ? 0.25f + 1.5f * hash(seed, 5000 + i) * (r - mouth) / Math.max(1, reach - mouth) : 0.25f - (1 - r / mouth) * 3.0f;
+				if (y < -0.6f) continue;
+				// Wisps of cold fire over the land (the flames of the soul's frames, blended, not added, so they are seen by day); the wailing faces
+				// only at its brink as they go down, in the dead's teal (soul sand's own brown, over the land, was so much dirt: checked in game,
+				// 2026-10-26).
+				float brink = mouth * 1.15f;
+				int frame = r > brink ? Mth.clamp(7 + (int) ((r - brink) / Math.max(1, reach - brink) * 4), 7, souls.length - 1)
+						: Mth.clamp((int) ((r - mouth * 0.72f) / (mouth * 0.43f) * 5), 0, 4);
+				if (frames[frame] == null) frames[frame] = buffers.getBuffer(SpellRender.clear(souls[frame]));
+				float size = (1.2f + 0.9f * (1 - r / reach)) * (0.8f + 0.4f * hash(seed, 5500 + i));
+				float alpha = Math.min(1, f * 12) * fade * open;
+				SpellRender.billboard(frames[frame], pose, facing, (float) Math.cos(a) * r, y, (float) Math.sin(a) * r, size, 0, frame < 5 ? NETHER_TEAL : NETHER_PALE, alpha,
+						0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+			}
+			// Streams of blue fire winding in among them.
+			VertexConsumer glow = buffers.getBuffer(SpellRender.glow(SpellRender.GLOW));
+			for (int s = 0; s < 6; s++) {
+				for (int k = 0; k < 16; k++) {
+					float f = (age * 0.018f + k / 16f + s * 0.13f) % 1;
+					f += (1 - f) * sealed;
+					float r = reach * (1 - f);
+					double a = s * Math.PI / 3 - f * Math.PI * 3 - age * 0.05;
+					float y = r > mouth ? 0.35f : 0.35f - (1 - r / mouth) * 2.5f;
+					SpellRender.billboard(glow, pose, facing, (float) Math.cos(a) * r, y, (float) Math.sin(a) * r, 1.0f + (1 - f) * 1.2f, 0, NETHER_TEAL, 0.45f * f * fade * open,
+							0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+				}
+			}
+			// A wall of ghost fire turning about its mouth, narrowing down into it, two walls of it turning against each other.
+			VertexConsumer fire = buffers.getBuffer(SpellRender.glow(SOUL_FIRE));
+			float wall = (2.2f + rift * 0.08f) * open * (1 - sealed);
+			if (wall > 0.3f) {
+				for (int layer = 0; layer < 2; layer++) {
+					float bottom = mouth * (0.55f + 0.1f * layer), top = mouth * (1.0f + 0.08f * layer);
+					pose.pushPose();
+					pose.mulPose(Axis.YP.rotation(-age * (0.05f + 0.02f * layer) * (layer == 0 ? 1 : -1)));
+					int frame = Math.floorMod((int) (age * 0.5f) + layer * 9, SOUL_FIRE_FRAMES);
+					SpellRender.cylinder(fire, pose.last(), wall, h -> bottom + (top - bottom) * h, 6, 40, layer == 0 ? NETHER_TEAL : NETHER_PALE, (0.45f - 0.12f * layer) * fade,
+							6 + layer, 1f / SOUL_FIRE_FRAMES, 0, frame / (float) SOUL_FIRE_FRAMES, -1.4f - layer * 0.5f, SpellRender.FULL_BRIGHT, h -> Math.min(1, h * 5) * (1 - h));
+					pose.popPose();
+				}
+			}
+			// The nine rings of ghost fire, turning down into it.
 			for (int j = 0; j < 9; j++) {
 				float r = rift * 0.5f * (1 - j * 0.1f) * open * (1 - sealed);
 				if (r < 0.2f) continue;
@@ -844,7 +964,71 @@ final class SpellGhosts {
 		}
 	}
 
-	// --- Ten Thousand Souls Ascend ---
+	/**
+	 * Where one of the dead crawling out of the Nine Nethers is, {@code s} of the way through its course: hauling itself up out of the dark over
+	 * its rim ({@code mouth} from its heart), crawling out on its belly as far as {@code out}, then dragged back down into it. Returns how far from
+	 * its heart it is, how far (in its own heights' halves) it is sunk below lying on the land, its lean, and its pose (0 clambering, 1 crawling,
+	 * 2 dragged).
+	 */
+	private static float[] crawling(float s, float mouth, float out) {
+		if (s < 0.22f) {
+			float p = SpellRender.ease(s / 0.22f);
+			return new float[] {mouth * (0.9f + 0.1f * p), (1 - p) * 2.6f, 12 + 68 * p, 0};
+		}
+		if (s < 0.74f) return new float[] {mouth + (out - mouth) * (s - 0.22f) / 0.52f, 0, 80, 1};
+		float back = (s - 0.74f) / 0.26f;
+		back *= back;
+		float under = Math.max(0, back - 0.75f) / 0.25f;
+		return new float[] {out + (mouth * 0.75f - out) * Math.min(1, back * 1.3f), under * 2.8f, 80 - 25 * under, 2};
+	}
+
+	// --- Ten Thousand Souls Ascend: its dead ---
+
+	/** How many of the dead climb its vortex at once, and how long one takes from its pit to where it burns away (ticks). */
+	private static final int VORTEX_DEAD = 22;
+	private static final float VORTEX_CLIMB = 96;
+
+	/**
+	 * Ten Thousand Souls Ascend's dead (SOUL_VORTEX: its vortex of souls drawn by hand, SoulVortex; its round its size, its height its value; the
+	 * user's ask, relayed 2026-10-25: it "just needs some actual ghosts in it"): the dead themselves borne up on its wind, the mod's own ghosts,
+	 * each climbing up out of its pit with its arms thrown up and wheeling round with the souls just outside its walls of ghost fire as it rises
+	 * (within them, the dead's cyan was lost in theirs: checked in game, 2026-10-26), burning away into the cold fire high up as they do (a
+	 * villager, a beast or one of the night's things among them). Going back down ({@code descend}), they are dragged down into the pit with the
+	 * rest of it.
+	 */
+	private static void vortex(SpellConstruct c, PoseStack pose, Vec3 cam, float partial) {
+		float age = c.tickCount + partial, fade = fade(c, age);
+		Vec3 base = c.getPosition(partial);
+		float radius = Math.max(2, c.size()), high = Math.max(8, c.value());
+		// Risen, and sunk, as the vortex itself is.
+		float rise = SpellRender.easeOut(age / GhostSpells.SOULS_RISES);
+		boolean down = "descend".equals(c.phase());
+		float sinking = down ? SpellRender.ease(c.phaseAge(partial) / GhostSpells.SOULS_DESCENDS) : 0;
+		float tall = high * rise * (1 - sinking);
+		if (tall < 1) return;
+		long seed = c.getId();
+		for (int k = 0; k < VORTEX_DEAD; k++) {
+			float speed = 0.85f + 0.3f * hash(seed, k * 6);
+			float climbed = (age * speed / VORTEX_CLIMB + hash(seed, k * 6 + 1)) % 1;
+			if (down) climbed = Math.max(0, climbed - sinking * 1.2f);
+			// Wheeling round with the souls as they climb, just outside its outermost wall (SoulVortex's: widening as the root of how high it is).
+			double a = hash(seed, k * 6 + 2) * Math.PI * 2 + age * 0.08f + climbed * Math.PI * 3;
+			float up = climbed * 0.8f;
+			float r = radius * (0.59f + 0.76f * (float) Math.sqrt(up)) * (1.1f + 0.15f * hash(seed, k * 6 + 3));
+			float alpha = 0.9f * fade * Mth.clamp(climbed / 0.08f, 0, 1) * Mth.clamp((0.85f - climbed) / 0.2f, 0, 1);
+			if (alpha <= 0.01f) continue;
+			Vec3 middle = base.add(Math.cos(a) * r, up * tall + 1, Math.sin(a) * r);
+			float faceYaw = (float) Math.toDegrees(a), scale = 2.4f + 1.0f * hash(seed, k * 6 + 4);
+			if (hash(seed, k * 6 + 5) < 0.8f) {
+				person(pose, cam, middle.subtract(0, 0.9 * scale, 0), faceYaw, 20, 10 * Mth.sin(age * 0.15f + k), scale, defaultSkin(seed * 71 + k), defaultSlim(seed * 71 + k),
+						RISING, age + k * 13, alpha, null, null);
+			} else {
+				beast(pose, cam, middle, faceYaw, 25 * Mth.sin(age * 0.1f + k), alpha, age + k * 13, KINDS[(int) (hash(seed, k * 6 + 3) * 997) % KINDS.length], scale * 0.8f);
+			}
+		}
+	}
+
+	// --- Ten Thousand Souls Ascend, as it was (SOUL_ASCENT) ---
 
 	/** How many of the dead wind up each strand, and how many wheel loose round it; how long one takes from the ground to its top (ticks). */
 	private static final int STRAND = 26, LOOSE = 16;

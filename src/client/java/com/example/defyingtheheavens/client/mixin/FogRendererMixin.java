@@ -1,5 +1,6 @@
 package com.example.defyingtheheavens.client.mixin;
 
+import com.example.defyingtheheavens.client.ImmortalRealmClient;
 import com.example.defyingtheheavens.client.UpperRealmClient;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Camera;
@@ -23,6 +24,13 @@ public abstract class FogRendererMixin {
 		Entity entity = camera.getEntity();
 		if (entity == null || entity.level() == null) return;
 		if (entity instanceof LivingEntity living && (living.hasEffect(MobEffects.BLINDNESS) || living.hasEffect(MobEffects.DARKNESS))) return;
+		// Within the Immortal Realm's sea of clouds, or under it: a close white fog (blocks, not shares of the render distance).
+		float[] clouds = ImmortalRealmClient.cloudFog(camera);
+		if (clouds != null) {
+			RenderSystem.setShaderFogStart(clouds[0]);
+			RenderSystem.setShaderFogEnd(clouds[1]);
+			return;
+		}
 		float[] fog = UpperRealmClient.fogFor(entity.level().dimension());
 		if (fog == null) return;
 		RenderSystem.setShaderFogStart(farPlaneDistance * fog[0]);

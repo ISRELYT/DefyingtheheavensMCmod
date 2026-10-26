@@ -127,6 +127,8 @@ public final class CultivationManager {
 		if (ability == Ability.FORM_SHIFT) TwoPaths.shifted(player);
 		// One's lifespan set alight, or put out (refused with too few years left).
 		if (ability == Ability.BURN_LIFESPAN) BurnLifespan.toggled(player);
+		// One's immortal essence lit, or put out (refused on too little of it).
+		if (ability == Ability.IMMORTAL_ESSENCE) ImmortalEssence.toggled(player);
 	}
 
 	/**

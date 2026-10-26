@@ -225,11 +225,13 @@ public final class Physiques {
 	/**
 	 * What a blow from {@code source} comes to before anything else makes of it: a Primordial Chaos Body's spells (the heaven methods'
 	 * qi, the ghost path's harm, though not one of the dead's own blows: GhostSystem#isBlow) strike {@link #CHAOS_SPELLS} times as hard;
-	 * and any blow or spell of one whose lifespan burns (BurnLifespan#outgoing), half again as hard.
+	 * and any blow or spell of one whose lifespan burns (BurnLifespan#outgoing), or whose immortal essence is lit (ImmortalEssence#outgoing),
+	 * half again as hard.
 	 */
 	public static float outgoing(DamageSource source, float amount) {
 		if (!(source.getEntity() instanceof ServerPlayer caster)) return amount;
 		amount = BurnLifespan.outgoing(caster, amount);
+		amount = ImmortalEssence.outgoing(caster, amount);
 		amount = RaceGifts.outgoing(caster, source, amount); // a tiger's blows the harder
 		boolean spell = HeavenSpells.isQi(source) || source.is(ModDamageTypes.GHOSTLY) && !GhostSystem.isBlow();
 		return spell && CultivationManager.get(caster).hasPhysique(Physique.PRIMORDIAL_CHAOS_BODY) ? amount * CHAOS_SPELLS : amount;

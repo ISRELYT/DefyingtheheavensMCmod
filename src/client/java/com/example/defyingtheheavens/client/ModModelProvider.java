@@ -162,6 +162,11 @@ public class ModModelProvider extends FabricModelProvider {
 		pill(items, ModItems.LONGEVITY_PILL);
 		items.generateFlatItem(ModItems.REBIRTH_PILL, ModelTemplates.FLAT_ITEM); // no grade: no halo
 		items.generateFlatItem(ModItems.JADE, ModelTemplates.FLAT_ITEM);
+		// The Great Void's Sacred Vessels (SacredVesselItem).
+		for (net.minecraft.world.item.Item vessel : new net.minecraft.world.item.Item[] {ModItems.JIANMU_BOUGH_VASE, ModItems.HEAVEN_FURNACE_CENSER,
+				ModItems.NINE_PROVINCES_DING, ModItems.IMMORTAL_FORGING_BELL, ModItems.SEALED_OCEAN_GOURD}) {
+			items.generateFlatItem(vessel, ModelTemplates.FLAT_ITEM);
+		}
 		// Spirit stones have a hand-made oval model (resources: models/item/spirit_stone.json), not a flat sprite.
 	}
 

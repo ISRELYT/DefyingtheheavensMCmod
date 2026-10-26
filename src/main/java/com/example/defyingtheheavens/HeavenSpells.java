@@ -884,7 +884,6 @@ public final class HeavenSpells {
 		e.hurtMarked = true;
 	}
 
-	/** The top of the first block with a collision shape at or below {@code at}, searching from {@code up} above to {@code down} below; or null. */
 	/**
 	 * The ground under {@code e} (as far down as {@link #FOOTING_DOWN}), or where it is if there is none so near: where a spell that runs out
 	 * along the land, or stands on it, sets off from, however high in the air its caster is (the user's ask, 2026-10-25: spells "track the
@@ -898,6 +897,7 @@ public final class HeavenSpells {
 	/** How far down a spell looks for the ground under its caster ({@link #footing}). */
 	public static final int FOOTING_DOWN = 96;
 
+	/** The top of the first block with a collision shape at or below {@code at}, searching from {@code up} above to {@code down} below; or null. */
 	public static Vec3 groundBelow(ServerLevel level, Vec3 at, int up, int down) {
 		BlockPos start = BlockPos.containing(at.x, at.y + up, at.z);
 		for (int dy = 0; dy <= up + down; dy++) {
@@ -979,6 +979,16 @@ public final class HeavenSpells {
 	/** Plays {@code sound} at {@code at} for everyone near. */
 	public static void sound(ServerLevel level, Vec3 at, net.minecraft.sounds.SoundEvent sound, float volume, float pitch) {
 		level.playSound(null, at.x, at.y, at.z, sound, net.minecraft.sounds.SoundSource.PLAYERS, volume, pitch);
+	}
+
+	/**
+	 * Plays {@code sound} from {@code shape} (a spell's construct, field, missile or summoned body) for everyone near: it goes with it, and
+	 * stops when it is gone, when its spell is done. For a long sound (the wind's, fifteen seconds; a rift's opening, a titan's waking, five to
+	 * seven, and twice that played low): played at a place, it ran its whole length on after the spell had ended (the user, 2026-10-25: "A
+	 * lot of the spells have wind effects or sound effects playing after the spell is done").
+	 */
+	public static void sound(ServerLevel level, Entity shape, net.minecraft.sounds.SoundEvent sound, float volume, float pitch) {
+		level.playSound(null, shape, sound, net.minecraft.sounds.SoundSource.PLAYERS, volume, pitch);
 	}
 
 	/** {@code count} of {@code particle} at {@code at}, strewn {@code spread} each way, at {@code speed}. */
@@ -1093,9 +1103,28 @@ public final class HeavenSpells {
 		if (walled(p, target)) return 0;
 		landsAcross(p, target);
 		float before = target.getHealth() + target.getAbsorptionAmount();
-		target.hurt(ModDamageTypes.qi(level(p), element, p), amount);
+		target.hurt(ModDamageTypes.qi(level(p), element, p), amount * law(p, element));
 		return Math.max(0, before - target.getHealth() - target.getAbsorptionAmount());
 	}
+
+	/** What the laws give a spell of {@code element} cast by {@code caster}: the Dao field it stands in ({@link #daoField}), a Sacred Vessel in its hands (SacredVesselItem). */
+	public static float law(LivingEntity caster, QiElement element) {
+		return daoField(caster, element) * SacredVesselItem.strength(caster, element);
+	}
+
+	/**
+	 * In a Great Void Dao field (2026-10-25: one element's law runs strong there, QiElement#daoField), what a spell of {@code element}
+	 * cast by {@code caster} standing in it is worth: of the field's own element {@link #DAO_FIELD_OWN}, of the element the field's
+	 * overcomes ("casting against it is weaker") {@link #DAO_FIELD_AGAINST}; else, and anywhere else, 1.
+	 */
+	public static float daoField(LivingEntity caster, QiElement element) {
+		if (element == null || !ModDimensions.isGreatVoid(caster.level().dimension())) return 1f;
+		QiElement field = QiElement.daoField(caster.level().getBiome(caster.blockPosition()));
+		if (field == null) return 1f;
+		return field == element ? DAO_FIELD_OWN : field.overcomes(element) ? DAO_FIELD_AGAINST : 1f;
+	}
+
+	public static final float DAO_FIELD_OWN = 1.25f, DAO_FIELD_AGAINST = 0.75f;
 
 	/**
 	 * Strikes {@code target} for {@code amount} of {@code spell}'s element's qi harm (of its realm, for the wards: SpellAuras) by
@@ -1106,7 +1135,7 @@ public final class HeavenSpells {
 		landsAcross(p, target);
 		float before = target.getHealth() + target.getAbsorptionAmount();
 		ServerLevel level = (ServerLevel) target.level();
-		target.hurt(ModDamageTypes.qi(level, spell.element(), spell.heavenRealm(), via, p), amount);
+		target.hurt(ModDamageTypes.qi(level, spell.element(), spell.heavenRealm(), via, p), amount * law(p, spell.element()));
 		return Math.max(0, before - target.getHealth() - target.getAbsorptionAmount());
 	}
 

@@ -153,6 +153,12 @@ public final class Sect {
 	/** A demon clan: its people of one demon race ({@link #race}). */
 	public boolean isClan() { return race.isBeast(); }
 
+	/** One of the Great Void's Holy Lands (HolyLands): its master its Patriarch. */
+	public boolean isHoly() { return dimension != null && HolyLands.isHolyLand(dimension); }
+
+	/** One of the Immortal Realm's immortal sects (ImmortalSects): its master its Sect Lord. */
+	public boolean isImmortal() { return dimension != null && ImmortalSects.isImmortalSect(dimension); }
+
 	public Sect(UUID id) {
 		this.id = id;
 		for (Post post : Post.values()) posts.put(post, new ArrayList<>());

@@ -6,14 +6,17 @@ import java.nio.file.Path;
 
 /**
  * A demon race's blood in its phial (DemonBloodItem, 2026-10-24), one look for each realm's worth (Qi Refining, Foundation Building, Core
- * Formation, Nascent Soul, Heavenly Being and above): textures/item/demon_blood_<look>.png, the phial (glass, stopper, its fittings), and
- * _blood.png, the blood in it, pale, which the game tints its race's hue (its second layer); the item models choosing among them by the
- * "defying-the-heavens:realm" property. The higher the realm, the finer the phial: a corked vial; a cord tied at its neck; a gold cap and
- * band; a faceted crystal one, its blood glowing out of it in rays; a jade-and-gold one in a ring of its light. On its own (one file):
- * {@code java Bloods.java <assets>}.
+ * Formation, Nascent Soul, Heavenly Being to Entering Nirvana, True Immortal): textures/item/demon_blood_<look>.png, the phial (glass,
+ * stopper, its fittings), and _blood.png, the blood in it, pale, which the game tints its race's hue (its second layer); the item models
+ * choosing among them by the "defying-the-heavens:realm" property. The higher the realm, the finer the phial: a corked vial; a cord tied at
+ * its neck; a gold cap and band; a faceted crystal one, its blood glowing out of it in rays; a jade-and-gold one in a ring of its light; a
+ * True Immortal's (2026-10-26) of gold glass in gold, a bead of light on its stopper, its light in eight rays and a full ring. On its own
+ * (one file): {@code java Bloods.java <assets>}.
  */
 public class Bloods {
-	static final int LOOKS = 5;
+	static final int LOOKS = 6;
+	/** The True Immortal's look. */
+	static final int IMMORTAL = 5;
 
 	static int argb(int a, int rgb) {
 		return a << 24 | rgb & 0xFFFFFF;
@@ -39,7 +42,7 @@ public class Bloods {
 		// The bulb (rounder and wider with the realm), its neck, the lip and the stopper; a dark outline round it all.
 		double cx = 7.5, cy = 10.2, rx = 4.2 + look * 0.22, ry = 4.4;
 		double level = 7.8 - look * 0.4; // the blood's surface: fuller the higher
-		int outline = 0x161A22, rimGlass = 0x9DBED2, pale = 0xCFE6F2, shine = 0xFFFFFF;
+		int outline = 0x161A22, rimGlass = look == IMMORTAL ? 0xE8C878 : 0x9DBED2, pale = look == IMMORTAL ? 0xFFF0C8 : 0xCFE6F2, shine = 0xFFFFFF;
 		int cork = 0x9A6638, corkDark = 0x5A3418, gold = 0xF0C040, goldDark = 0xA07018, cord = 0xC8202A, jade = 0x3FB078, jadeDark = 0x1E6A46;
 		for (int y = 0; y < 16; y++) {
 			for (int x = 0; x < 16; x++) {
@@ -58,6 +61,7 @@ public class Bloods {
 				if (in && stopper) {
 					// Cork at the first two, a gold cap from Core Formation, jade capped with gold at the last.
 					int c = look >= 4 ? (y == 1 ? gold : x == 6 ? jadeDark : jade) : look >= 2 ? (y == 1 || x == 6 ? goldDark : gold) : (x == 6 || y == 3 ? corkDark : cork);
+					if (look == IMMORTAL) c = y == 1 && (x == 7 || x == 8) ? 0xFFF8E0 : x == 6 ? goldDark : gold; // gold, a bead of light on it
 					if (look >= 2 && x == 8 && y == 2) c = shine;
 					glass.setRGB(x, y, 0xFF000000 | c);
 					continue;
@@ -78,6 +82,7 @@ public class Bloods {
 						int c = x < cx && y < cy ? pale : rimGlass;
 						if (look >= 3 && ((int) Math.floor((angle + Math.PI) / (2 * Math.PI) * (6 + look * 2))) % 2 == 0) c = mix(c, shine, 0.5);
 						if (look >= 4 && y > cy + ry * 0.5) c = (x + y) % 2 == 0 ? gold : goldDark;
+						if (look == IMMORTAL && y <= cy + ry * 0.5) c = x < cx && y < cy ? 0xFFF4D0 : (x + y) % 3 == 0 ? gold : rimGlass;
 						glass.setRGB(x, y, 0xFF000000 | c);
 						continue;
 					}
@@ -95,8 +100,9 @@ public class Bloods {
 					// Beyond the glass: its blood's light in rays (Nascent Soul), and a ring of it about the whole (Heavenly Being and above).
 					double ddx = x - cx, ddy = y - cy, dist = Math.hypot(ddx / rx, ddy / ry), angle = Math.atan2(ddy, ddx);
 					double glow = 0;
-					if (Math.abs(Math.sin(angle * 3 + 0.4)) < 0.25 && dist < 1.6 && y > 5) glow = 0.95 * (1 - (dist - 1) / 0.6);
-					if (look >= 4 && Math.abs(dist - 1.32) < 0.14 && y > 5) glow = Math.max(glow, 0.75);
+					int rays = look == IMMORTAL ? 4 : 3;
+					if (Math.abs(Math.sin(angle * rays + 0.4)) < 0.25 && dist < 1.6 && y > 5) glow = 0.95 * (1 - (dist - 1) / 0.6);
+					if (look >= 4 && Math.abs(dist - 1.32) < 0.14 && y > 5) glow = Math.max(glow, look == IMMORTAL ? 1.0 : 0.75);
 					if (glow > 0) blood.setRGB(x, y, argb((int) Math.round(255 * Math.min(1, glow)), 0xFFFFFF));
 				}
 			}
@@ -130,6 +136,6 @@ public class Bloods {
 			Path models = assets.resolve("models/item");
 			Files.writeString(models.resolve((look == 0 ? "demon_blood" : "demon_blood_" + look) + ".json"), model(look), StandardCharsets.UTF_8);
 		}
-		System.out.println("wrote " + LOOKS + " phials");
+		System.out.println("wrote " + LOOKS + " phials"); // the first five as they were (a True Immortal's look only adds a sixth)
 	}
 }

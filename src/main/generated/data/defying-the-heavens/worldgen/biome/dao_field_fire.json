@@ -1,0 +1,69 @@
+{
+  "carvers": {},
+  "downfall": 0.0,
+  "effects": {
+    "fog_color": 1708080,
+    "foliage_color": 10504746,
+    "grass_color": 11558970,
+    "mood_sound": {
+      "block_search_extent": 8,
+      "offset": 2.0,
+      "sound": "minecraft:ambient.cave",
+      "tick_delay": 6000
+    },
+    "particle": {
+      "options": {
+        "type": "minecraft:ash"
+      },
+      "probability": 0.012
+    },
+    "sky_color": 0,
+    "water_color": 6969936,
+    "water_fog_color": 2759188
+  },
+  "features": [
+    [],
+    [
+      "defying-the-heavens:lava_lake"
+    ],
+    [],
+    [],
+    [],
+    [],
+    [
+      "defying-the-heavens:ore_dirt",
+      "defying-the-heavens:ore_gravel",
+      "defying-the-heavens:ore_granite",
+      "defying-the-heavens:ore_diorite",
+      "defying-the-heavens:ore_andesite",
+      "defying-the-heavens:ore_sand",
+      "defying-the-heavens:ore_coal",
+      "defying-the-heavens:ore_iron",
+      "defying-the-heavens:ore_copper",
+      "defying-the-heavens:ore_gold",
+      "defying-the-heavens:ore_redstone",
+      "defying-the-heavens:ore_lapis",
+      "defying-the-heavens:ore_diamond",
+      "defying-the-heavens:ore_diamond_buried",
+      "defying-the-heavens:ore_quartz"
+    ],
+    [],
+    [
+      "defying-the-heavens:spring_water",
+      "defying-the-heavens:spring_lava"
+    ]
+  ],
+  "has_precipitation": false,
+  "spawn_costs": {},
+  "spawners": {
+    "ambient": [],
+    "axolotls": [],
+    "creature": [],
+    "misc": [],
+    "monster": [],
+    "underground_water_creature": [],
+    "water_ambient": [],
+    "water_creature": []
+  },
+  "temperature": 2.0
+}

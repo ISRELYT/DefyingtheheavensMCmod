@@ -1,0 +1,37 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": {"type": "minecraft:uniform", "min": 2, "max": 4},
+      "entries": [
+        {"type": "minecraft:item", "name": "defying-the-heavens:high_spirit_stone", "weight": 10, "functions": [{"function": "minecraft:set_count", "count": {"type": "minecraft:uniform", "min": 2, "max": 6}}]},
+        {"type": "minecraft:item", "name": "defying-the-heavens:supreme_spirit_stone", "weight": 3, "functions": [{"function": "minecraft:set_count", "count": {"type": "minecraft:uniform", "min": 1, "max": 2}}]},
+        {"type": "minecraft:item", "name": "minecraft:gold_ingot", "weight": 6, "functions": [{"function": "minecraft:set_count", "count": {"type": "minecraft:uniform", "min": 3, "max": 8}}]},
+        {"type": "minecraft:item", "name": "minecraft:experience_bottle", "weight": 5, "functions": [{"function": "minecraft:set_count", "count": {"type": "minecraft:uniform", "min": 3, "max": 6}}]},
+        {"type": "minecraft:item", "name": "defying-the-heavens:cultivation_pill", "weight": 4, "functions": [{"function": "minecraft:set_nbt", "tag": "{PillGrade:3,PillAge:500}"}]},
+        {"type": "minecraft:item", "name": "defying-the-heavens:longevity_pill", "weight": 2, "functions": [{"function": "minecraft:set_nbt", "tag": "{PillGrade:2,PillAge:300}"}]}
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {"type": "minecraft:item", "name": "defying-the-heavens:jade_slip", "weight": 3, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"jianmu_sacred_vessel_sutra\"}"}]},
+        {"type": "minecraft:item", "name": "defying-the-heavens:jade_slip", "weight": 3, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"sealed_ocean_vessel_sutra\"}"}]},
+        {"type": "minecraft:item", "name": "defying-the-heavens:jade_slip", "weight": 3, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"heaven_furnace_vessel_sutra\"}"}]},
+        {"type": "minecraft:item", "name": "defying-the-heavens:jade_slip", "weight": 3, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"nine_cauldrons_vessel_sutra\"}"}]},
+        {"type": "minecraft:item", "name": "defying-the-heavens:jade_slip", "weight": 3, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"immortal_forging_vessel_sutra\"}"}]},
+        {"type": "minecraft:item", "name": "defying-the-heavens:jade_slip", "weight": 2, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"void_rooted_divine_tree_canon\"}"}]},
+        {"type": "minecraft:item", "name": "defying-the-heavens:jade_slip", "weight": 2, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"abyssal_void_tide_canon\"}"}]},
+        {"type": "minecraft:item", "name": "defying-the-heavens:jade_slip", "weight": 2, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"void_burning_fire_lotus_canon\"}"}]},
+        {"type": "minecraft:item", "name": "defying-the-heavens:jade_slip", "weight": 2, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"world_breaking_ground_canon\"}"}]},
+        {"type": "minecraft:item", "name": "defying-the-heavens:jade_slip", "weight": 2, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"void_splitting_sword_canon\"}"}]},
+        {"type": "minecraft:item", "name": "defying-the-heavens:jade_slip", "weight": 1, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"withering_flourishing_nirvana_classic\"}"}]},
+        {"type": "minecraft:item", "name": "defying-the-heavens:jade_slip", "weight": 1, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"frozen_moon_nirvana_classic\"}"}]},
+        {"type": "minecraft:item", "name": "defying-the-heavens:jade_slip", "weight": 1, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"undying_ember_nirvana_classic\"}"}]},
+        {"type": "minecraft:item", "name": "defying-the-heavens:jade_slip", "weight": 1, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"buried_world_nirvana_classic\"}"}]},
+        {"type": "minecraft:item", "name": "defying-the-heavens:jade_slip", "weight": 1, "functions": [{"function": "minecraft:set_nbt", "tag": "{HeavenMethod:\"sword_heart_nirvana_classic\"}"}]},
+        {"type": "minecraft:empty", "weight": 20}
+      ]
+    }
+  ]
+}

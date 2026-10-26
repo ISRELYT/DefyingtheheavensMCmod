@@ -78,8 +78,9 @@ public final class MetalSpells {
 	/**
 	 * Heaven-Severing Sword: a level crescent of {@link #SEVER_RADIUS} round {@link #SEVER_SPAN} radians (its tips about 110 blocks
 	 * apart, trailing 0.59 of the radius behind its bow), {@link #SEVER_THICK} blocks thick at its middle and a quarter of that at its
-	 * tips, its middle {@link #SEVER_LIFT} over the ground it set out from; it flies {@link #SEVER_RANGE} at {@link #SEVER_SPEED} a
-	 * tick and cuts only what its blade passes through. The client draws it to the same numbers (SpellProjectileRenderer).
+	 * tips, its middle {@link #SEVER_LIFT} over the missile that bears it less a block (it sets out from the caster's chest); it flies
+	 * {@link #SEVER_RANGE} at {@link #SEVER_SPEED} a tick the way they look, up or down with it, and cuts only what its blade passes
+	 * through. The client draws it to the same numbers (SpellProjectileRenderer).
 	 */
 	public static final double SEVER_RANGE = 120, SEVER_SPEED = 6;
 	/**
@@ -702,22 +703,24 @@ public final class MetalSpells {
 	/**
 	 * Heaven-Severing Sword: a sword of light as long as a tower forms in the caster's hand and is swung level across their front
 	 * ({@link SeverStroke}); as its blade crosses the front a crescent of sword light about 110 blocks across leaves it, flying out
-	 * level from the caster's chest the way they face, {@link #SEVER_SPEED} a tick for {@link #SEVER_RANGE} blocks. Nothing stops it, and it cuts only what
-	 * its blade passes through: a slit {@link #SEVER_THICK} blocks tall at its middle, thinning toward its tips, through hills,
-	 * mountains, trees and whatever is built in its way (the tops stand on above the cut), the land's far end of it cut in its
-	 * crescent's curve. Every being its blade passes through takes {@link #SEVER_DAMAGE} and is hurled ahead of it.
+	 * from the caster's chest the way they look, up or down with it as well (the user's ask, 2026-10-25: "make it so it flys towards
+	 * your crosshairs rather than always exactly horizontal"; it ran level from the ground under them, so it went out at ground level
+	 * cast in flight), the crescent level all the way, {@link #SEVER_SPEED} a tick for {@link #SEVER_RANGE} blocks. Nothing stops it,
+	 * and it cuts only what its blade passes through: a slit {@link #SEVER_THICK} blocks tall at its middle, thinning toward its tips,
+	 * through hills, mountains, trees and whatever is built in its way (the tops stand on above the cut), the land's far end of it cut
+	 * in its crescent's curve. Every being its blade passes through takes {@link #SEVER_DAMAGE} and is hurled ahead of it.
 	 */
 	private static void sever(LivingEntity p, Spell spell) {
 		ServerLevel level = HeavenSpells.level(p);
-		Vec3 look = p.getViewVector(1.0f);
+		Vec3 look = p.getViewVector(1.0f).normalize();
 		Vec3 flat = look.multiply(1, 0, 1).lengthSqr() < 1.0e-4 ? Vec3.directionFromRotation(0, p.getYRot()) : look.multiply(1, 0, 1).normalize();
 		Vec3 side = new Vec3(-flat.z, 0, flat.x);
-		// It runs level, its middle at a caster's chest over the ground they stand over (in the air, the ground below them, if near).
-		Vec3 ground = HeavenSpells.groundBelow(level, p.position().add(0, 1, 0), 2, 24);
-		int base = (int) Math.floor((ground != null ? ground : p.position()).y);
-		double bladeY = base + SEVER_LIFT;
+		// It sets out from the caster's chest (its blade's middle there: the missile a little under it, SEVER_LIFT less a block), the way
+		// they look; looking straight up or down, the way they face, level.
+		Vec3 way = look.multiply(1, 0, 1).lengthSqr() < 1.0e-4 ? flat : look;
+		double lift = SEVER_LIFT - 1;
 		double half = SEVER_RADIUS * Math.sin(SEVER_SPAN / 2);
-		Vec3 from = new Vec3(p.getX(), base + 1, p.getZ()).add(flat.scale(2.5));
+		Vec3 from = p.position().add(0, p.getBbHeight() * 0.65 - lift, 0).add(way.scale(2.5));
 		for (int d = 0; d <= SEVER_RANGE + 16; d += 32) loadSeverWay(level, from.add(flat.scale(d)));
 		// The stroke: the sword forms in the hand and is swung; the slash leaves it as it crosses the front.
 		float yaw = (float) Math.toDegrees(Math.atan2(-flat.x, flat.z));
@@ -725,7 +728,7 @@ public final class MetalSpells {
 				.sizedFor(spell).spawn();
 		HeavenSpells.sound(level, p.position(), SoundEvents.BEACON_ACTIVATE, 3.0f, 0.4f);
 		HeavenSpells.sound(level, p.position(), SoundEvents.TRIDENT_RETURN, 3.0f, 0.5f);
-		HeavenSpells.linger(new SeverStroke(p, sword, () -> release(p, spell, level, flat, side, from, base, bladeY, half)));
+		HeavenSpells.linger(new SeverStroke(p, sword, () -> release(p, spell, level, way, flat, side, from, lift, half)));
 	}
 
 	/**
@@ -759,12 +762,18 @@ public final class MetalSpells {
 		}
 	}
 
-	/** The severing slash let go: it flies out from {@code from} along {@code flat}, cutting its way (see {@link #sever}). */
-	private static void release(LivingEntity p, Spell spell, ServerLevel level, Vec3 flat, Vec3 side, Vec3 from, int base, double bladeY, double half) {
-		java.util.Set<Long> columns = new java.util.HashSet<>();
+	/**
+	 * The severing slash let go: it flies out from {@code from} along {@code way} (the caster's look), its crescent level and turned to
+	 * {@code flat} (the way they face) all the way, its blade's middle {@code lift} over the missile, cutting its way (see {@link #sever}).
+	 */
+	private static void release(LivingEntity p, Spell spell, ServerLevel level, Vec3 way, Vec3 flat, Vec3 side, Vec3 from, double lift, double half) {
+		java.util.Set<Long> cuts = new java.util.HashSet<>();
 		java.util.Set<LivingEntity> struck = new java.util.HashSet<>();
 		long[] ticketed = {Long.MIN_VALUE};
-		SpellProjectile.thrown(level, p, spell, SpellProjectile.Shape.HEAVEN_SLASH, 1.0f, from, flat.scale(SEVER_SPEED), SEVER_RANGE, new SpellProjectile.Behaviour() {
+		// How far it goes over the land a tick (all of its speed, aimed level; little, aimed steeply up or down), and how far it climbs
+		// (falling, less than nothing) a tick.
+		double onward = Math.sqrt(way.x * way.x + way.z * way.z) * SEVER_SPEED, climb = way.y * SEVER_SPEED;
+		SpellProjectile.thrown(level, p, spell, SpellProjectile.Shape.HEAVEN_SLASH, 1.0f, from, way.scale(SEVER_SPEED), SEVER_RANGE, new SpellProjectile.Behaviour() {
 			@Override
 			public boolean hitEntity(SpellProjectile missile, LivingEntity target) {
 				return true; // its blade cuts what it passes (flying), and goes on
@@ -782,48 +791,63 @@ public final class MetalSpells {
 					ticketed[0] = ahead.toLong();
 					loadSeverWay(level, at.add(flat.scale(32)));
 				}
-				// How far out its bow is now and was a tick ago, along its way from where it set out (its caster stands just behind).
-				double bowNow = at.subtract(from).dot(flat), bowBefore = bowNow - SEVER_SPEED;
+				// How far out its bow is now and was a tick ago over the land, along its way from where it set out (its caster stands just
+				// behind); and its blade's middle now and a tick ago (the crescent level, all of its blade at one height at once).
+				double bowNow = at.subtract(from).dot(flat), bowBefore = bowNow - onward;
+				double bladeNow = at.y + lift, bladeBefore = bladeNow - climb;
 				// What its blade passed through this tick: at each step out to the side, the blade lags its bow by the crescent's curve,
 				// and is as thick there as the crescent is. Sampled every half block, along and across: a block's step, on a slant (its
-				// way not along the grid), stepped over whole columns and left them standing in the cut.
+				// way not along the grid), stepped over whole columns and left them standing in the cut. Each sample cut as high as the
+				// blade stood while it crossed it (climbing or falling, as it was aimed): aimed steeply, gone little over the land, a
+				// column is cut all the way the blade fell (or rose) through it at once, so it leaves no shelf of stone between ticks.
 				List<int[]> cut = new ArrayList<>();
 				for (double w = -Math.floor(half); w <= Math.floor(half); w += 0.5) {
 					double lag = severLag(w), thick = severThickness(w);
 					double fFrom = Math.max(0, bowBefore - lag), fTo = bowNow - lag;
 					if (fTo < 0 || thick <= 0) continue;
-					// The land cut half as tall as the blade (SEVER_CUT_SHARE: the user's ask, 2026-10-24), from the blade's lower edge up: the
-					// ground under it still scoured, the slit in a hill half as high; what it strikes, its whole height.
-					int yLo = (int) Math.floor(bladeY - thick / 2), yHi = (int) Math.floor(bladeY - thick / 2 + thick * SEVER_CUT_SHARE);
-					for (double f = Math.ceil(fFrom * 2) / 2; f <= fTo; f += 0.5) {
+					double first = Math.ceil(fFrom * 2) / 2;
+					boolean whole = first > fTo; // it went less than half a block over the land: the whole tick at the blade's place now
+					if (whole) first = fTo;
+					for (double f = first; f <= fTo + 1.0e-9; f += 0.5) {
+						double t0 = whole || onward < 1.0e-6 ? 0 : Mth.clamp((f - (bowBefore - lag)) / onward, 0, 1);
+						double t1 = whole || onward < 1.0e-6 ? 1 : Mth.clamp((f + 0.5 - (bowBefore - lag)) / onward, 0, 1);
+						double y0 = bladeBefore + climb * t0, y1 = bladeBefore + climb * t1;
+						// The land cut half as tall as the blade (SEVER_CUT_SHARE: the user's ask, 2026-10-24), from the blade's lower edge up:
+						// the ground under it still scoured, the slit in a hill half as high; what it strikes, its whole height.
+						int yLo = (int) Math.floor(Math.min(y0, y1) - thick / 2), yHi = (int) Math.floor(Math.max(y0, y1) - thick / 2 + thick * SEVER_CUT_SHARE);
 						BlockPos column = BlockPos.containing(from.add(flat.scale(f)).add(side.scale(w)));
-						if (columns.add(BlockPos.asLong(column.getX(), 0, column.getZ()))) cut.add(new int[]{column.getX(), column.getZ(), yLo, yHi});
+						if (cuts.add(BlockPos.asLong(column.getX(), yLo, column.getZ()))) cut.add(new int[]{column.getX(), column.getZ(), yLo, yHi});
 					}
 				}
 				Devastation.shear(p, level, cut, at);
-				// Every being its blade passes through this tick.
-				AABB band = new AABB(at.subtract(flat.scale(SEVER_SPEED + SEVER_RADIUS)), at).inflate(half + 1, 0, half + 1)
-						.setMinY(bladeY - SEVER_THICK / 2 - 2).setMaxY(bladeY + SEVER_THICK / 2 + 1);
+				// Every being its blade passes through this tick (as high as it stood this tick, climbing or falling).
+				double low = Math.min(bladeBefore, bladeNow), high = Math.max(bladeBefore, bladeNow);
+				AABB band = new AABB(at.subtract(flat.scale(onward + SEVER_RADIUS)), at).inflate(half + 1, 0, half + 1)
+						.setMinY(low - SEVER_THICK / 2 - 2).setMaxY(high + SEVER_THICK / 2 + 1);
 				for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, band, e -> !HeavenSpells.spared(p, e))) {
 					Vec3 off = e.position().subtract(from);
 					double across = off.dot(side), thick = severThickness(across);
 					double blade = bowNow - severLag(across);
 					double feet = e.getY(), head = e.getY() + e.getBbHeight();
-					if (thick <= 0 || off.dot(flat) > blade + 1 || off.dot(flat) < Math.max(-1, blade - SEVER_SPEED - 2)) continue;
-					if (head < bladeY - thick / 2 || feet > bladeY + thick / 2 || !struck.add(e)) continue;
+					if (thick <= 0 || off.dot(flat) > blade + 1 || off.dot(flat) < Math.max(-1, blade - onward - 2)) continue;
+					if (head < low - thick / 2 || feet > high + thick / 2 || !struck.add(e)) continue;
 					HeavenSpells.strike(p, e, SEVER_DAMAGE, spell, missile);
-					HeavenSpells.move(e, flat.scale(1.8).add(0, 0.7, 0));
-					SpellFx.send(level, SpellFx.Kind.METAL_SPARKS, HeavenSpells.middle(e), flat, 2.0f, 0);
+					HeavenSpells.move(e, flat.scale(1.8).add(0, Math.max(-0.6, 0.7 + way.y * 1.2), 0));
+					SpellFx.send(level, SpellFx.Kind.METAL_SPARKS, HeavenSpells.middle(e), way, 2.0f, 0);
 				}
 				if (missile.tickCount % 2 == 0) {
 					HeavenSpells.sound(level, at, SoundEvents.PLAYER_ATTACK_SWEEP, 3.0f, 0.4f);
-					SpellFx.send(level, SpellFx.Kind.EARTH_BURST, new Vec3(at.x, base + 0.5, at.z), Vec3.ZERO, 3, Block.getId(Blocks.STONE.defaultBlockState()), 160);
+					// Stone thrown up where its blade bites the land (none high in the air).
+					BlockPos under = BlockPos.containing(at.x, bladeNow - SEVER_THICK / 2 - 0.5, at.z);
+					if (!level.getBlockState(under).isAir() || !level.getBlockState(under.below()).isAir()) {
+						SpellFx.send(level, SpellFx.Kind.EARTH_BURST, new Vec3(at.x, under.getY() + 1.5, at.z), Vec3.ZERO, 3, Block.getId(Blocks.STONE.defaultBlockState()), 160);
+					}
 				}
 				if (missile.tickCount % 6 == 0) HeavenSpells.sound(level, at, SoundEvents.GENERIC_EXPLODE, 3.0f, 0.4f);
 			}
 		}).phasing().pierce(100000).hitSize(4.0f).data(Math.round((float) Math.toDegrees(Math.atan2(-flat.x, flat.z))));
-		Vec3 at = from.subtract(flat.scale(2.5));
-		SpellFx.send(level, SpellFx.Kind.FLASH, at.add(flat.scale(3)).add(0, 1, 0), Vec3.ZERO, 8, 0xFFF4D0, 256);
+		Vec3 at = from.subtract(way.scale(2.5));
+		SpellFx.send(level, SpellFx.Kind.FLASH, at.add(way.scale(3)).add(0, 1, 0), Vec3.ZERO, 8, 0xFFF4D0, 256);
 		SpellFx.send(level, SpellFx.Kind.SHOCKWAVE, at, Vec3.ZERO, 14, 0, 256);
 		HeavenSpells.sound(level, at, SoundEvents.TRIDENT_THUNDER, 4.0f, 0.5f);
 		HeavenSpells.sound(level, at, SoundEvents.PLAYER_ATTACK_SWEEP, 4.0f, 0.3f);
@@ -877,7 +901,7 @@ public final class MetalSpells {
 				}
 				if (age % 10 == 0) HeavenSpells.strikeAgain(caster, e, ARRAY_DAMAGE / 2, spell);
 			}
-			if (age % 20 == 0) sound(at, SoundEvents.BEACON_AMBIENT, 3.0f, 1.6f);
+			if (age % 60 == 20) sound(at, SoundEvents.BEACON_AMBIENT, 3.0f, 1.6f); // its hum, one at a time (not three on one another)
 			return true;
 		}
 
@@ -1319,7 +1343,7 @@ public final class MetalSpells {
 					SpellFx.send(level, SpellFx.Kind.METAL_SPARKS, HeavenSpells.middle(e), Vec3.ZERO, 1.0f, 0);
 				}
 			}
-			if (holding % 20 == 0) sound(ground, SoundEvents.BEACON_AMBIENT, 3.0f, 1.4f);
+			if (holding % 60 == 0) sound(ground, SoundEvents.BEACON_AMBIENT, 3.0f, 1.4f); // its hum, one at a time (not three on one another)
 			return true;
 		}
 

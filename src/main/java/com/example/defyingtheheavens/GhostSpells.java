@@ -358,8 +358,9 @@ public final class GhostSpells {
 
 	/**
 	 * Rift to the Nine Nethers: the ground where its caster looks (on the being looked at, up to {@link #NETHERS_RANGE}) tears open onto the
-	 * Nine Nethers (SpellConstruct ABYSS_RIFT, ghost fire's teal), nine rings of ghost fire turning down into it, each narrower and deeper (NINE_NETHERS,
-	 * its own GeckoLib model). For {@link #NETHERS_TICKS} every foe within {@link #NETHERS_RADIUS} (HeavenSpells#mark) is dragged toward it and
+	 * Nine Nethers (SpellConstruct ABYSS_RIFT, ghost fire's teal): a maelstrom of the dead's souls dragged in over the land and down into it,
+	 * nine rings of ghost fire turning down into it, and the dead crawling up out of it toward the living and dragged back down (NETHER_DESCENT,
+	 * drawn as the dead are: SpellGhosts). For {@link #NETHERS_TICKS} every foe within {@link #NETHERS_RADIUS} (HeavenSpells#mark) is dragged toward it and
 	 * down (a great beast only slowed), and once a second takes {@link #NETHERS_DRAIN}; then it seals ({@link #NETHERS_SEALS}): {@link #NETHERS_SEAL}
 	 * to everything within {@link #NETHERS_MOUTH} of it, weakened. The dead take {@link #NETHERS_DEAD_FACTOR} times as much. The land is left as it was.
 	 */
@@ -375,8 +376,8 @@ public final class GhostSpells {
 			int life = (int) (end - start);
 			this.rift = SpellConstruct.create(level, SpellConstruct.Kind.ABYSS_RIFT, ground.add(0, 0.06, 0), caster.getYRot(), 0, life, caster).size((float) NETHERS_RIFT)
 					.tint(NETHER_TEAL).spawn();
-			// Its nine rings of ghost fire and the dead dragged down into it, drawn as the mod's ghosts are (SpellConstruct NETHER_DESCENT:
-			// SpellGhosts; the user's ask, 2026-10-25): the rift's round its size, how far round it drags its value.
+			// Its maelstrom of souls, its nine rings of ghost fire and the dead crawling out of it, drawn as the mod's ghosts are (SpellConstruct
+			// NETHER_DESCENT: SpellGhosts; the user's asks, 2026-10-25): the rift's round its size, how far round it drags its value.
 			this.rings = SpellConstruct.create(level, SpellConstruct.Kind.NETHER_DESCENT, ground, caster.getYRot(), 0, life, caster).size((float) NETHERS_RIFT)
 					.value((float) NETHERS_RADIUS).spawn();
 			sound(ground, SoundEvents.END_PORTAL_SPAWN, 3.0f, 0.4f);
@@ -1057,7 +1058,7 @@ public final class GhostSpells {
 	/**
 	 * Ten Thousand Souls Ascend: a pit of the dark opens where its caster looks and a whirlwind of ghost fire winds up out of it, the souls of
 	 * the dead pouring up it by the hundred, wailing faces as they come up out of the dark that burn away into wisps of cold blue fire as they
-	 * climb (SpellConstruct SOUL_VORTEX, drawn by hand: SoulVortex); it rises ({@link #SOULS_RISES}) and spirals for {@link #SOULS_TICKS}: every foe within {@link #SOULS_PULL} is drawn in to it, and those within
+	 * climb, and the dead themselves borne up it among them (SpellConstruct SOUL_VORTEX, drawn by hand: SoulVortex, its dead SpellGhosts); it rises ({@link #SOULS_RISES}) and spirals for {@link #SOULS_TICKS}: every foe within {@link #SOULS_PULL} is drawn in to it, and those within
 	 * {@link #SOULS_RADIUS} carried up round it as high as {@link #SOULS_HIGH} (a great beast only drawn, slowly), its souls tearing at them,
 	 * {@link #SOULS_HARM} of the dead's harm every {@link #SOULS_EVERY} ticks (more to the dead). Then it goes back down into the dark, dragging
 	 * them down with it ({@link #SOULS_DESCENDS}): {@link #SOULS_SLAM} to each.

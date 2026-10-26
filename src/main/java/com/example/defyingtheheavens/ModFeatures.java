@@ -63,6 +63,18 @@ public final class ModFeatures {
 	/** A Dao Stele on its plinth, teaching a heaven method (see DaoSteleFeature). */
 	public static final Feature<NoneFeatureConfiguration> DAO_STELE = Registry.register(BuiltInRegistries.FEATURE,
 			DefyingTheHeavens.id("dao_stele"), new DaoSteleFeature());
+	/** A Sacred Vessel's ruined altar in the Great Void, its vessel still on it (see SacredRelicFeature). */
+	public static final Feature<NoneFeatureConfiguration> SACRED_RELIC = Registry.register(BuiltInRegistries.FEATURE,
+			DefyingTheHeavens.id("sacred_relic"), new SacredRelicFeature());
+	/** What an ancient war left on the Great Void's battlefields: giant swords, bones, broken walls, war chests (see BattlefieldRuinFeature). */
+	public static final Feature<NoneFeatureConfiguration> BATTLEFIELD_RUIN = Registry.register(BuiltInRegistries.FEATURE,
+			DefyingTheHeavens.id("battlefield_ruin"), new BattlefieldRuinFeature());
+	/** A blood pool on the Great Void's battlefields, a demon race's phial on its altar, its elder rising to keep it (see BloodPoolFeature). */
+	public static final Feature<NoneFeatureConfiguration> BLOOD_POOL = Registry.register(BuiltInRegistries.FEATURE,
+			DefyingTheHeavens.id("blood_pool"), new BloodPoolFeature());
+	/** The Immortal Realm's Jade Capital and Celestial Court on its main island, laid chunk by chunk (see ImmortalCapital). */
+	public static final Feature<NoneFeatureConfiguration> IMMORTAL_CAPITAL = Registry.register(BuiltInRegistries.FEATURE,
+			DefyingTheHeavens.id("immortal_capital"), new ImmortalCapital.CapitalFeature());
 
 	/**
 	 * Touching this class registers the feature types. Also appends wild Cultivation Fruit to the end of vegetal
@@ -72,24 +84,41 @@ public final class ModFeatures {
 	 * biomes are the mod's too, and grow none of the Upper Realm's herbs, ores or fruit.
 	 */
 	public static void register() {
+		// The Great Void's lands (2026-10-25) grow all the Upper Realm's own (its herbs, ores, fruit) as richly, and stand its Dao Steles
+		// (all but the Shore of Nirvana).
+		Predicate<BiomeSelectionContext> steleLands = BiomeSelectors.tag(ModTags.IS_UPPER_REALM).or(BiomeSelectors.tag(ModTags.IS_GREAT_VOID));
+		// The Immortal Realm's peaks (phase 2) grow them all too, but stand no steles (the user's rule, 2026-10-25: "do not add steles to
+		// the immortal realm"): the steles below keep to steleLands.
+		Predicate<BiomeSelectionContext> upperRealm = steleLands.or(BiomeSelectors.tag(ModTags.IS_IMMORTAL_REALM));
 		BiomeModifications.addFeature(BiomeSelectors.foundInOverworld(),
 				GenerationStep.Decoration.VEGETAL_DECORATION, ModPlacedFeatures.CULTIVATION_FRUIT);
-		BiomeModifications.addFeature(BiomeSelectors.tag(ModTags.IS_UPPER_REALM),
-				GenerationStep.Decoration.VEGETAL_DECORATION, ModPlacedFeatures.CULTIVATION_FRUIT_UPPER_REALM);
+		BiomeModifications.addFeature(upperRealm, GenerationStep.Decoration.VEGETAL_DECORATION, ModPlacedFeatures.CULTIVATION_FRUIT_UPPER_REALM);
 		// Dao Steles, teaching the heaven methods: across the Overworld and, more often, the Upper Realm (not its Spatial Gap).
 		BiomeModifications.addFeature(BiomeSelectors.foundInOverworld(), GenerationStep.Decoration.SURFACE_STRUCTURES, ModPlacedFeatures.DAO_STELE);
-		BiomeModifications.addFeature(BiomeSelectors.tag(ModTags.IS_UPPER_REALM).and(context -> !context.getBiomeKey().equals(ModBiomes.SPATIAL_GAP)),
-				GenerationStep.Decoration.SURFACE_STRUCTURES, ModPlacedFeatures.DAO_STELE_UPPER_REALM);
+		BiomeModifications.addFeature(steleLands.and(context -> !context.getBiomeKey().equals(ModBiomes.SPATIAL_GAP)
+				&& !context.getBiomeKey().equals(ModBiomes.SHORE_OF_NIRVANA)), GenerationStep.Decoration.SURFACE_STRUCTURES, ModPlacedFeatures.DAO_STELE_UPPER_REALM);
+		// The Great Void's Sacred Vessels on their altars (its steppes and Dao fields), and its battlefields' ruins and blood pools.
+		BiomeModifications.addFeature(BiomeSelectors.includeByKey(ModBiomes.VOID_STEPPES, ModBiomes.DAO_FIELD_WOOD, ModBiomes.DAO_FIELD_FIRE,
+				ModBiomes.DAO_FIELD_EARTH, ModBiomes.DAO_FIELD_METAL, ModBiomes.DAO_FIELD_WATER), GenerationStep.Decoration.SURFACE_STRUCTURES,
+				ModPlacedFeatures.SACRED_RELIC);
+		BiomeModifications.addFeature(BiomeSelectors.includeByKey(ModBiomes.ANCIENT_BATTLEFIELD), GenerationStep.Decoration.SURFACE_STRUCTURES,
+				ModPlacedFeatures.BATTLEFIELD_RUIN);
+		BiomeModifications.addFeature(BiomeSelectors.includeByKey(ModBiomes.ANCIENT_BATTLEFIELD), GenerationStep.Decoration.SURFACE_STRUCTURES,
+				ModPlacedFeatures.BLOOD_POOL);
+		// The Immortal Realm's capital and its Court: asked in every chunk of the realm, laid in those of the main island.
+		BiomeModifications.addFeature(BiomeSelectors.tag(ModTags.IS_IMMORTAL_REALM), GenerationStep.Decoration.SURFACE_STRUCTURES,
+				ModPlacedFeatures.IMMORTAL_CAPITAL);
 
 		// Ginseng grows in the shade of Overworld woods (forests, taiga, jungle) and, more often, all over the Upper Realm.
 		// Spirit Ginseng is far rarer in both.
 		Predicate<BiomeSelectionContext> woods = BiomeSelectors.foundInOverworld().and(BiomeSelectors.tag(BiomeTags.IS_FOREST)
 				.or(BiomeSelectors.tag(BiomeTags.IS_TAIGA)).or(BiomeSelectors.tag(BiomeTags.IS_JUNGLE)));
-		Predicate<BiomeSelectionContext> upperRealm = BiomeSelectors.tag(ModTags.IS_UPPER_REALM);
 		// Blue Spirit Trees (a spruce of Blue Spirit Log) in every taiga and anywhere in the Upper Realm. Added before the
 		// herbs, so they can still take root in its shade.
 		Predicate<BiomeSelectionContext> taiga = BiomeSelectors.foundInOverworld().and(BiomeSelectors.tag(BiomeTags.IS_TAIGA));
-		herb(taiga, upperRealm, ModPlacedFeatures.BLUE_SPIRIT_TREE, ModPlacedFeatures.BLUE_SPIRIT_TREE_UPPER_REALM);
+		// Not on the Immortal Realm's capital's ground: no tree grows in its streets (ImmortalCapital).
+		herb(taiga, upperRealm.and(context -> !context.getBiomeKey().equals(ModBiomes.JADE_CAPITAL)), ModPlacedFeatures.BLUE_SPIRIT_TREE,
+				ModPlacedFeatures.BLUE_SPIRIT_TREE_UPPER_REALM);
 
 		BiomeModifications.addFeature(woods, GenerationStep.Decoration.VEGETAL_DECORATION, ModPlacedFeatures.GINSENG);
 		BiomeModifications.addFeature(upperRealm, GenerationStep.Decoration.VEGETAL_DECORATION, ModPlacedFeatures.GINSENG_UPPER_REALM);

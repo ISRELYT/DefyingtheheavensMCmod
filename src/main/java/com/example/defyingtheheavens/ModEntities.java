@@ -209,16 +209,18 @@ public final class ModEntities {
 
 	/**
 	 * The wild demon beasts (see {@link DemonBeast}), each kind its own type ({@code defying-the-heavens:<kind's id>}), sized as its kind at
-	 * its least rank (DemonBeast#getDimensions grows it with its rank).
+	 * its least rank (DemonBeast#getDimensions grows it with its rank). The primordial beasts are their own (see {@link PrimordialBeast}),
+	 * seen from further off (vast, high in the air) and moved the more smoothly.
 	 */
 	private static final Map<BeastKind, EntityType<DemonBeast>> BEASTS = new EnumMap<>(BeastKind.class);
 
 	static {
 		for (BeastKind kind : BeastKind.values()) {
 			EntityType<DemonBeast> type = Registry.register(BuiltInRegistries.ENTITY_TYPE, DefyingTheHeavens.id(kind.getId()),
-					EntityType.Builder.<DemonBeast>of(DemonBeast::new, MobCategory.MONSTER)
+					EntityType.Builder.<DemonBeast>of(kind.isPrimordial() ? PrimordialBeast::new : DemonBeast::new, MobCategory.MONSTER)
 							.sized(kind.width, kind.height)
-							.clientTrackingRange(10)
+							.clientTrackingRange(kind.isPrimordial() ? 16 : 10)
+							.updateInterval(kind.isPrimordial() ? 2 : 3)
 							.build(kind.getId()));
 			DemonBeast.bind(type, kind);
 			BEASTS.put(kind, type);

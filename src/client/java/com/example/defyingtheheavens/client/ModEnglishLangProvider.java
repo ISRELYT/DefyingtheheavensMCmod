@@ -87,6 +87,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 
 		// Blocks
 		t.add(ModBlocks.SPATIAL_RIFT, "Spatial Rift");
+		t.add(ModBlocks.IMMORTAL_GATE_LIGHT, "Light of the Immortal Gate");
 		t.add(ModBlocks.JADE_STONE, "Jade Stone");
 		t.add(ModBlocks.JADE_ORE, "Jade Ore");
 		t.add(ModBlocks.DEEPSLATE_JADE_ORE, "Deepslate Jade Ore");
@@ -96,13 +97,30 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModBlocks.BLUE_SPIRIT_WOOD, "Blue Spirit Wood");
 		t.add(ModBlocks.BLUE_SPIRIT_PLANKS, "Blue Spirit Planks");
 
-		// Upper Realm biomes and the Spatial Gap
+		// The Jade Firmament's (the Upper Realm's) biomes and the Spatial Gap
 		t.add(ModLang.biomeKey("dense_qi_peaks"), "Dense Qi Peaks");
 		t.add(ModLang.biomeKey("spirit_forest"), "Spirit Forest");
 		t.add(ModLang.biomeKey("peach_blossom_sanctuary"), "Peach Blossom Sanctuary");
 		t.add(ModLang.biomeKey("thunder_peaks"), "Thunder Peaks");
 		t.add(ModLang.biomeKey("ancient_sword_graveyard"), "Ancient Sword Graveyard");
 		t.add(ModLang.biomeKey("spatial_gap"), "Spatial Gap");
+		// The Great Void Realm's lands, and the Void Breach
+		t.add(ModLang.biomeKey("void_steppes"), "Void Steppes");
+		t.add(ModLang.biomeKey("dao_field_wood"), "Dao Field of Wood");
+		t.add(ModLang.biomeKey("dao_field_fire"), "Dao Field of Fire");
+		t.add(ModLang.biomeKey("dao_field_earth"), "Dao Field of Earth");
+		t.add(ModLang.biomeKey("dao_field_metal"), "Dao Field of Metal");
+		t.add(ModLang.biomeKey("dao_field_water"), "Dao Field of Water");
+		t.add(ModLang.biomeKey("ancient_battlefield"), "Ancient Battlefield");
+		t.add(ModLang.biomeKey("shore_of_nirvana"), "Shore of Nirvana");
+		t.add(ModLang.biomeKey("void_breach"), "Void Breach");
+		t.add(ModLang.biomeKey("blood_ring"), "Blood Ring");
+		// The Immortal Realm's (phase 2, 2026-10-25), and the Gate's passage
+		t.add(ModLang.biomeKey("jade_peaks"), "Jade Peaks");
+		t.add(ModLang.biomeKey("immortal_gardens"), "Immortal Gardens");
+		t.add(ModLang.biomeKey("celestial_heights"), "Celestial Heights");
+		t.add(ModLang.biomeKey("jade_capital"), "Jade Capital");
+		t.add(ModLang.biomeKey("immortal_passage"), "Immortal Gate");
 		// The Netherworld's biomes, and the Soul River
 		t.add(ModLang.biomeKey("yellow_springs"), "Yellow Springs");
 		t.add(ModLang.biomeKey("fields_of_the_other_shore"), "Fields of the Other Shore");
@@ -193,14 +211,14 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.DEATH_SOUL_SEIZED + ".player", "%1$s's body was seized by %2$s's nascent soul");
 
 		// Spatial Gap, Realm Suppression and portals
-		t.add(ModLang.MSG_ARRIVE_UPPER, "The Upper Realm. Its dense qi makes cultivation %sx faster.");
+		t.add(ModLang.MSG_ARRIVE_UPPER, "The Jade Firmament. Its dense qi makes cultivation %sx faster.");
 		t.add(ModLang.MSG_SUPPRESSED, "The lower realm suppresses you to %s.");
 		t.add(ModLang.MSG_RESTORED, "Suppression lifted: %s.");
-		t.add(ModLang.MSG_REALM_LOCKED, "Past %s, only the Upper Realm can hold you.");
+		t.add(ModLang.MSG_REALM_LOCKED, "Past %s, only the Jade Firmament and the realms above it can hold you.");
 		t.add(ModLang.MSG_PORTAL_BLOCKED, "The laws of this realm reject the portal.");
 		t.add(ModLang.SUPPRESSED, "Realm Suppression! Stats capped at:");
 		t.add(ModLang.SUPPRESSED_TO, "%s");
-		t.add(ModLang.BREAKTHROUGH_SEALED, "Only the Upper Realm can hold this breakthrough.");
+		t.add(ModLang.BREAKTHROUGH_SEALED, "Only the Jade Firmament and the realms above it can hold this breakthrough.");
 
 		// The creative tab
 		t.add(ModLang.CREATIVE_TAB, "Defying The Heavens");
@@ -234,7 +252,9 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.METHOD_LINE_SHORT, "Layer %s of %s: +%s/s");
 		t.add(ModLang.METHOD_LINE_NONE, "No heaven method: +%s/s");
 		t.add(ModLang.SETTLING_LINE, "Layer %s settling: %s%%");
-		t.add(ModLang.UPPER_REALM_LINE, "Upper Realm: qi x%s");
+		t.add(ModLang.UPPER_REALM_LINE, "Jade Firmament: qi x%s");
+		t.add(ModLang.GREAT_VOID_LINE, "Great Void: qi x%s");
+		t.add(ModLang.IMMORTAL_REALM_LINE, "Immortal Realm: immortal qi x%s");
 		t.add(ModLang.HUD_QI, "%s / %s");
 		t.add(ModLang.BOTTLENECK, "Bottleneck reached! Break through to advance.");
 		t.add(ModLang.BOTTLENECK_NEXT, "Next: %s");
@@ -259,7 +279,9 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.STAT_NAME_KNOCKBACK, "Knockback Res.");
 		t.add(ModLang.STAT_NAME_MAX_QI, "Max Qi");
 		t.add(ModLang.STAT_NAME_QI_GATHER, "Qi Gather");
-		t.add(ModLang.STATS_QI_GATHER_UPPER, "Qi gather x%s in the Upper Realm");
+		t.add(ModLang.STATS_QI_GATHER_UPPER, "Qi gather x%s in the Jade Firmament");
+		t.add(ModLang.STATS_QI_GATHER_GREAT_VOID, "Qi gather x%s in the Great Void");
+		t.add(ModLang.STATS_QI_GATHER_IMMORTAL, "Qi gather x%s in the Immortal Realm");
 		t.add(ModLang.ABILITIES_TITLE, "Abilities");
 		t.add(ModLang.ABILITIES_EMPTY, "No abilities awakened yet.");
 		t.add(ModLang.ABILITIES_HINT, "Abilities you awaken will appear here.");
@@ -297,6 +319,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case METEOR_FLIGHT -> "Meteor Flight";
 				case TIGERS_ROAR -> "Tiger's Roar";
 				case ILLUSION -> "Illusion";
+				case IMMORTAL_ESSENCE -> "Immortal Essence";
 			});
 			t.add(key + ".description", switch (ability) {
 				case QI_SUSTENANCE -> "Qi keeps you fed. Hunger stays full.";
@@ -321,8 +344,10 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case SPATIAL_TEAR -> "Tear space open before you: a rift that stands 20 s, that you and anyone with you can walk through, into the Spatial Gap "
 						+ "or out of it again into the realm you came from. There you fly freely, "
 						+ "each block crossing %s in the world, under spatial pressure (worse in its stormy layers: rise through the upper ones to cross "
-						+ "into the Upper Realm, or sink slowly through the lower ones to fall into the mortal world). "
-						+ "Costs %s%% of your qi to tear in, %s%% to tear out.";
+						+ "into the Jade Firmament, or sink slowly through the lower ones to fall into the mortal world). "
+						+ "Costs %s%% of your qi to tear in, %s%% to tear out. From Void Shattering on, torn high in the Jade Firmament's sky "
+						+ "(Y 448 and up) it opens a Void Breach into the Great Void Realm instead, for half your qi, held open while you stay "
+						+ "by it; torn in the Great Void, a way down onto the Jade Firmament.";
 				case BURN_LIFESPAN -> "Set your own years alight for strength: while it burns, your blows and spells strike %2$s%% harder and you move "
 						+ "%3$s%% faster, for %1$s%% of your whole lifespan a second (the same share at every realm). It goes out by itself before "
 						+ "it would leave you fewer than %4$s years, and when you die or log out.";
@@ -341,6 +366,10 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case TIGERS_ROAR -> "Your tiger blood's roar: everything within %1$s blocks standing %2$s stages or more below you is weakened and "
 						+ "slowed for %3$s s. Every %4$s s, for %5$s%% of your qi.";
 				case ILLUSION -> "Your fox blood's illusion: unseen for %1$s s, until you strike. Every %2$s s, for %3$s%% of your qi.";
+				case IMMORTAL_ESSENCE -> "Set your immortal essence to work: while it's on, your blows and spells strike %1$s%% harder, and a full "
+						+ "pool lasts %2$s s. Your pool holds %3$s, and fills only in the Immortal Realm: empty to full in %4$s minutes, %5$s times "
+						+ "as fast meditating. Anywhere else it leaks away, a full pool in %6$s minutes: below the Gate an immortal keeps the might "
+						+ "of its realm, but not its essence. It goes out when the pool runs dry, and when you die or log out.";
 			});
 		}
 		// Clone while playing the clone (Clones): the way back.
@@ -376,8 +405,10 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.abilityKey(Ability.SPATIAL_TEAR.getId()) + ".description.ghost", "Tear space open before you: a rift that stands 20 s, that "
 				+ "you and anyone with you can walk through, into the Spatial Gap or out of it again into the realm you came from. There you fly "
 				+ "freely, each block crossing %s in the world, under spatial pressure (worse in its stormy layers: rise through the upper ones to "
-				+ "cross into the Upper Realm, or sink slowly through the lower ones to fall into the mortal world). Costs %s%% of your ghost qi "
-				+ "to tear in, %s%% to tear out.");
+				+ "cross into the Jade Firmament, or sink slowly through the lower ones to fall into the mortal world). Costs %s%% of your ghost qi "
+				+ "to tear in, %s%% to tear out. From Void Shattering on, torn high in the Jade Firmament's sky (Y 448 and up) it opens a Void "
+				+ "Breach into the Great Void Realm instead, for half your ghost qi, held open while you stay by it; torn in the Great Void, a way "
+				+ "down onto the Jade Firmament.");
 		t.add(ModLang.METHODS_TITLE, "Cultivation Methods");
 		t.add(ModLang.METHODS_EMPTY, "No cultivation methods learned yet.");
 		t.add(ModLang.METHODS_HINT, "Methods you learn will appear here.");
@@ -939,18 +970,39 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.DEATH_CORE_DETONATION + ".player", "%1$s detonated their golden core against %2$s");
 		// The Spatial Tear and travel through the gap
 		t.add(ModLang.MSG_GAP_TRAVEL, "The Spatial Gap: each block here is %s in the world. Tear space again to step out.");
-		t.add(ModLang.MSG_GAP_TRAVEL_NO_TEAR, "The Spatial Gap: each block here is %s in the world. Fly up through it into the Upper Realm, or sink through its floor back to the Overworld.");
+		t.add(ModLang.MSG_GAP_TRAVEL_NO_TEAR, "The Spatial Gap: each block here is %s in the world. Fly up through it into the Jade Firmament, or sink through its floor back to the Overworld.");
 		t.add(ModLang.MSG_GAP_TRAVEL_SHALLOWS, "The shallows - the world beneath: %s, %s - %s blocks to the crossing");
 		t.add(ModLang.MSG_GAP_TRAVEL_UPPER, "The upper layers - the world beneath: %s, %s - %s blocks to the crossing");
 		t.add(ModLang.MSG_GAP_TRAVEL_LOWER, "The lower layers - the world beneath: %s, %s - %s blocks to the floor");
 		t.add(ModLang.MSG_GAP_SETTLING, "Space settles about your way out...");
 		t.add(ModLang.MSG_TEAR_COOLING, "Space hasn't settled from your last tear (%s s).");
 		t.add(ModLang.MSG_TEAR_OPEN, "Space tears open before you. Step through it, and any with you, before it closes.");
-		t.add(ModLang.MSG_TEAR_NOT_HERE, "Space here won't tear: only the mortal world and the Upper Realm open onto the gap.");
+		t.add(ModLang.MSG_TEAR_NOT_HERE, "Space here won't tear: only the mortal world, the Jade Firmament and the Great Void open onto another realm.");
 		t.add(ModLang.MSG_TEAR_NO_QI, "Tearing space open takes %s qi.");
 		t.add(ModLang.MSG_TEAR_NO_GHOST_QI, "Tearing space open takes %s ghost qi.");
 		t.add(ModLang.MSG_TEAR_OUT, "You tear your way out of the gap at %s, %s.");
-		t.add(ModLang.MSG_TEAR_OUT_UPPER, "You tear your way out into the Upper Realm at %s, %s.");
+		t.add(ModLang.MSG_TEAR_OUT_UPPER, "You tear your way out into the Jade Firmament at %s, %s.");
+		t.add(ModLang.MSG_BREACH_OPEN, "You tear the void open: a breach into the Great Void. Stay by it to hold it open for those who follow.");
+		t.add(ModLang.MSG_BREACH_TURNED_BACK, "The void's pressure turns you back: only Dao Integration and above may ride a breach.");
+		t.add(ModLang.MSG_BREACH_ENTER, "Shattered space. The breach's current carries you up for %s seconds; the void presses on all sides, and its shards strike where the light gathers.");
+		t.add(ModLang.MSG_BREACH_CLIMB, "Void Breach: %s blocks to the Great Void");
+		t.add(ModLang.MSG_ARRIVE_GREAT_VOID, "The Great Void Realm. Its qi runs %s times the mortal world's: here Void Shattering and above cultivate at their own pace.");
+		t.add(ModLang.MSG_TEAR_DOWN, "You tear space open onto the Jade Firmament below.");
+		t.add(ModLang.MSG_FALL_TO_FIRMAMENT, "You fall out of the Great Void into the Jade Firmament's sky.");
+		t.add(ModLang.MSG_TEAR_IMMORTAL, "Immortal space holds: it will not tear. The Immortal Gate is the only way down.");
+		t.add(ModLang.MSG_CLOUDS_BEAR_UP, "The sea of clouds bears you back up. The only way down is the Immortal Gate.");		t.add(ModLang.MSG_GATE_STIRS, "The sky over the Great Void's void sea stirs: the Immortal Gate opens in a minute.");
+		t.add(ModLang.MSG_GATE_OPENS, "The Immortal Gate opens over the Shore of Nirvana! For %s minutes the way to the Immortal Realm stands open, and the way down from it.");
+		t.add(ModLang.MSG_GATE_CLOSES, "The Immortal Gate closes. It opens again in %s days.");
+		t.add(ModLang.MSG_GATE_TURNED_BACK, "The Gate's pressure turns you back: only Entering Nirvana and above may pass.");
+		t.add(ModLang.MSG_GATE_ENTER, "You pass into the Immortal Gate. Its light bears you up for %s seconds; its pressure is on you all the way.");
+		t.add(ModLang.MSG_GATE_CLIMB, "The Immortal Gate: %s blocks to the Southern Heavenly Gate");
+		t.add(ModLang.MSG_ARRIVE_IMMORTAL, "You come through the Southern Heavenly Gate into the Immortal Realm. Immortal qi here: x%s.");
+		t.add(ModLang.MSG_GATE_DOWN, "You pass back down through the Immortal Gate onto the Shore of Nirvana.");
+		t.add(ModLang.MSG_GATE_SHUT_DAYS, "The Gate is shut. It opens again in %s days.");
+		t.add(ModLang.MSG_GATE_SHUT_HOURS, "The Gate is shut. It opens again in %s hours.");
+		t.add(ModLang.MSG_CURRENT_SWEPT, "A current of the void takes you, and its light fills your eyes...");
+		t.add(ModLang.MSG_CURRENT_LANDED, "The current sets you down on land far from where it found you.");
+		t.add(ModLang.MSG_ELDER_RISES, "The blood in the pool stirs: the %s rises out of it to keep what lies there!");
 		t.add(ModLang.MSG_DAO_STELE_TEACHES, "This stele holds the %s (%s, to %s). Meditate beside it to learn it.");
 		t.add(ModLang.MSG_DAO_STELE_KNOWN, "This stele holds the %s (%s, to %s), which you know. Meditating beside a stele of its element while you practise it is faster.");
 		t.add(ModLang.MSG_DAO_STELE_READING, "You read the %s carved in the stele...");
@@ -1016,7 +1068,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.METHODS_HEAVEN_SHARE, "%s qi here: %s%% of all (x%s)");
 		t.add(ModLang.METHODS_HEAVEN_REACH, "Your heaven methods open the way as far as %s.");
 		t.add(ModLang.METHODS_HEAVEN_UNKNOWN, "%s of the %s %s methods unknown. Their Dao Steles stand where their qi runs thick; the deepest are "
-				+ "seldom carved outside the Upper Realm.");
+				+ "seldom carved below the Jade Firmament, the deepest of all in the Great Void.");
 		t.add(ModLang.METHODS_HEAVEN_PASSIVE, "%s: %s");
 		t.add(ModLang.TALK_TEACH_HEAVEN, "Then listen. This is the %s, as my teachers gave it to me... Sit with it where %s qi runs thick.");
 		t.add(ModLang.TALK_TEACH_HEAVEN_PROGRESS, "Your %s, then. Here, where you falter... (%s minutes' progress)");
@@ -1236,6 +1288,13 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case JADE_SCALED_PYTHON -> "Jade-Scaled Python";
 				case HORNED_THUNDER_RHINO -> "Horned Thunder Rhino";
 				case FLOOD_DRAGON -> "Flood Dragon";
+				case ELDER_WHITE_TIGER -> "Elder White Tiger";
+				case NINE_TAILED_FOX -> "Nine-Tailed Fox";
+				case MOUNTAIN_LIZARD_KING -> "Mountain-Bearing Lizard King";
+				case AZURE_DRAGON -> "Azure Dragon";
+				case KUN_PENG -> "Kun-Peng";
+				case TRUE_PHOENIX -> "True Phoenix";
+				case TRUE_DRAGON -> "True Dragon";
 			};
 			t.add(ModEntities.beast(kind), name);
 			t.add(ModItems.beastEgg(kind), name + " Spawn Egg");
@@ -1280,6 +1339,13 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.PASS_LAPSED, "Lapsed");
 		t.add(ModLang.PASS_BOUND, "Bound to %s: no one else can pass with it");
 		t.add(ModLang.MSG_PASS_REVOKED, "You turned on the sect: its guest pass crumbles in your hand.");
+		t.add(ModItems.JIANMU_BOUGH_VASE, "Jianmu Bough Vase");
+		t.add(ModItems.HEAVEN_FURNACE_CENSER, "Heaven Furnace Censer");
+		t.add(ModItems.NINE_PROVINCES_DING, "Nine Provinces Ding");
+		t.add(ModItems.IMMORTAL_FORGING_BELL, "Immortal-Forging Bell");
+		t.add(ModItems.SEALED_OCEAN_GOURD, "Sealed Ocean Gourd");
+		t.add(ModLang.SACRED_VESSEL_USE, "A Sacred Vessel of %s: held in either hand, your spells of it strike %s%% harder");
+		t.add(ModLang.SACRED_VESSEL_LORE, "A relic of the ancients, found still on its altar in the Great Void");
 		t.add(ModLang.officialName("ox_head"), "Ox-Head");
 		t.add(ModLang.officialName("horse_face"), "Horse-Face");
 		t.add(ModLang.officialName("meng_po"), "Meng Po");
@@ -1300,7 +1366,11 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.DIMENSION_OVERWORLD, "the Overworld");
 		t.add(ModLang.DIMENSION_NETHER, "the Nether");
 		t.add(ModLang.DIMENSION_END, "the End");
-		t.add(ModLang.DIMENSION_UPPER_REALM, "the Upper Realm");
+		t.add(ModLang.DIMENSION_UPPER_REALM, "the Jade Firmament");
+		t.add(ModLang.DIMENSION_GREAT_VOID, "the Great Void Realm");
+		t.add(ModLang.DIMENSION_VOID_BREACH, "a Void Breach");
+		t.add(ModLang.DIMENSION_IMMORTAL_REALM, "the Immortal Realm");
+		t.add(ModLang.DIMENSION_IMMORTAL_PASSAGE, "the Immortal Gate");
 		t.add(ModLang.DIMENSION_NETHERWORLD, "the Netherworld");
 		// The Astral Realm
 		t.add(ModLang.DIMENSION_ASTRAL_VOID, "the Astral Realm");
@@ -1397,9 +1467,19 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case BRIDGE_KEEPER -> "Keeper of the Naihe Bridge";
 				case GHOST_KING -> "Ghost King";
 				case GHOST_RETAINER -> "Ghost Retainer";
+				case RELIC_KEEPER -> "Relic Keeper";
+				case IMMORTAL_OFFICER -> "Immortal Officer";
+				case IMMORTAL_MERCHANT -> "Immortal Merchant";
+				case HEAVENLY_KING -> "Heavenly King";
+				case HEAVENLY_VENERABLE -> "Heavenly Venerable";
+				case IMMORTAL_GENERAL -> "Immortal General";
+				case COURT_QUARTERMASTER -> "Court Quartermaster";
 			});
 		}
 		t.add(ModLang.titleKey("clan_head"), "Clan Head"); // a demon clan's master (NpcTitle#getDisplayName(boolean))
+		t.add(ModLang.titleKey("patriarch"), "Patriarch"); // a Holy Land's master (NpcTitle#getDisplayName(boolean, boolean))
+		t.add(ModLang.titleKey("demon_sovereign"), "Demon Sovereign"); // a Demon Palace's master (the same)
+		t.add(ModLang.titleKey("sect_lord"), "Sect Lord"); // an immortal sect's master (NpcTitle#getDisplayName(boolean, boolean, boolean))
 		t.add(ModLang.NPC_TITLE_BRACKETS, "[%s]");
 		t.add(ModLang.NPC_GATE_GUARD, "Gate Guard");
 		t.add(ModLang.NPC_OF_SECT, "%s of the %s");
@@ -1646,6 +1726,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add("item.defying-the-heavens.high_spirit_stone", "High-grade Spirit Stone");
 		t.add("item.defying-the-heavens.supreme_spirit_stone", "Supreme-grade Spirit Stone");
 		t.add("item.defying-the-heavens.immortal_spirit_stone", "Immortal-grade Spirit Stone");
+		t.add("item.defying-the-heavens.immortal_jade", "Immortal Jade");
+		t.add(ModLang.STONE_JADE, "The Immortal Realm's coin: nine Immortal-grade Spirit Stones");
 		t.add("block.defying-the-heavens.spirit_stone_ore", "Spirit Stone Vein");
 		t.add("block.defying-the-heavens.deepslate_spirit_stone_ore", "Deepslate Spirit Stone Vein");
 		t.add("block.defying-the-heavens.rich_spirit_stone_ore", "Rich Spirit Stone Vein");
@@ -1833,6 +1915,10 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_BURN_OFF, "Your lifespan stops burning.");
 		t.add(ModLang.MSG_BURN_OUT, "Too little of your life is left to burn: the flame goes out.");
 		t.add(ModLang.MSG_BURN_TOO_FEW, "Too little of your life is left to burn.");
+		t.add(ModLang.MSG_ESSENCE_ON, "Your immortal essence flows: your blows and spells strike %s%% harder, for %s seconds of it.");
+		t.add(ModLang.MSG_ESSENCE_OFF, "Your immortal essence settles.");
+		t.add(ModLang.MSG_ESSENCE_SPENT, "Your immortal essence is spent. Only the Immortal Realm fills it again.");
+		t.add(ModLang.MSG_ESSENCE_TOO_LITTLE, "Too little immortal essence is left in you. Only the Immortal Realm fills it again.");
 		t.add(ModLang.MSG_LIFE_YEARS_DRAWN, "You drew %s years of life out of %s (%s of them are yours).");
 		t.add(ModLang.MSG_LIFE_YEARS_LOST, "%s drew %s years of your life away.");
 		t.add(ModLang.MSG_LIFE_YEARS_GIVEN, "You gave it %s years of your life: %s years of growth.");
@@ -2027,6 +2113,52 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.talkLine("join.failed"), "Not yet. Train, and come back tomorrow.");
 		t.add(ModLang.talkLine("leave.disciple"), "Only an elder can release you from the sect.");
 		t.add(ModLang.talkLine("leave.done"), "So be it. You are no longer one of us. Go well.");
+		// The Celestial Court (CelestialCourt): a Heavenly Venerable's topic and answers, its people's own words of themselves, its merit.
+		t.add("cultivation.defying-the-heavens.talk.topic.court", "I would serve the Celestial Court.");
+		t.add(ModLang.talkLine("court.join"), "%s writes your name into the Court's rolls. \"From today you are an Officer of the Celestial Court. "
+				+ "Keep watch on the Southern Heavenly Gate's plaza while the Gate stands open, and hunt down the devilish immortals of this realm. "
+				+ "The Court pays its officers in merit; its Quartermaster, on the palace terrace, takes it.\"");
+		t.add(ModLang.talkLine("court.member"), "\"You hold the rank of %s in the Celestial Court, with %s merit to your name. Earn %s more "
+				+ "and you will be made a %s.\"");
+		t.add(ModLang.talkLine("court.member.top"), "\"You hold the rank of %s in the Celestial Court, with %s merit to your name. The Court "
+				+ "has no higher rank to give you.\"");
+		t.add(ModLang.talkLine("court.too_weak"), "\"The Court takes no one who could not climb the Gate.\"");
+		t.add(ModLang.talkLine("self.court"), "I am %1$s, %2$s of the Celestial Court: a %3$s.");
+		t.add(ModLang.talkLine("self.court.venerable"), "I am %1$s, the Heavenly Venerable of %2$s of the Celestial Court: a %3$s.");
+		t.add(ModLang.TALK_NEEDS_COURT, "(needs the rank of Court %s)");
+		t.add(ModLang.TRADE_LOCKED_RANK, "Locked: for a Court %s or higher (you: %s)");
+		t.add(ModLang.TRADE_NOT_OF_COURT, "not of the Court");
+		t.add(ModLang.courtRank("officer"), "Officer");
+		t.add(ModLang.courtRank("captain"), "Captain");
+		t.add(ModLang.courtRank("general"), "General");
+		t.add(ModLang.RANK_DALUO, "Daluo Golden Immortal");
+		t.add(ModLang.RANK_TAIYI, "Taiyi Golden Immortal");
+		t.add(ModLang.MSG_COURT_MERIT_WATCH, "+1 merit: a minute's watch at the Southern Heavenly Gate (%s in all)");
+		t.add(ModLang.MSG_COURT_MERIT_SLAIN, "+%2$s merit: %1$s, a devilish immortal, slain (%3$s in all)");
+		t.add(ModLang.MSG_COURT_RANK_UP, "The Celestial Court raises you: you are one of its %ss now.");
+		t.add("item.defying-the-heavens.court_merit_token", "Court Merit Token");
+		t.add(ModLang.TOKEN_EARNED, "The Celestial Court's pay for its officers: a minute's watch at the open Southern Heavenly Gate, a devilish immortal slain, a primordial beast fought");
+		t.add(ModLang.TOKEN_SPENT, "Spent with the Court's Quartermaster");
+		t.add(ModLang.SECT_TAB_COURT, "Celestial Court: %s, %s merit");
+		t.add(ModLang.SECT_TAB_COURT_NEXT, " (%s at %s)");
+		// The primordial beasts (PrimordialBeast, PrimordialBeasts): their coming, the Kun become the Peng, the Phoenix's rebirth, one slain, the
+		// Court's merit for one, and what a Heavenly Venerable says of them.
+		t.add(ModLang.primordialComes("kun_peng"), "Far out over the sea of clouds something vast moves beneath them: the Kun has come.");
+		t.add(ModLang.primordialComes("true_phoenix"), "Fire crowns a far peak: the True Phoenix has come to its roost.");
+		t.add(ModLang.primordialComes("true_dragon"), "Thunder rolls across the sky: the True Dragon rides its storm here.");
+		t.add(ModLang.MSG_PRIMORDIAL_BREACH, "The Kun breaks from the sea of clouds and spreads its wings: it is the Peng!");
+		t.add(ModLang.MSG_PRIMORDIAL_EMBER, "The True Phoenix burns down to an ember... but its fire is not out.");
+		t.add(ModLang.MSG_PRIMORDIAL_REBORN, "The True Phoenix rises again from its own fire!");
+		t.add(ModLang.MSG_PRIMORDIAL_SLAIN, "The %s has fallen. Another of its kind will come in five days.");
+		t.add(ModLang.MSG_COURT_MERIT_PRIMORDIAL, "+%2$s merit: the %1$s slain (%3$s in all)");
+		t.add("cultivation.defying-the-heavens.talk.topic.beasts", "Where are the primordial beasts?");
+		t.add(ModLang.talkLine("primordial"), "\"Three beasts older than the Court keep this realm, and none of them bows to it.\"");
+		t.add(ModLang.primordialWhere("kun_peng"), "The Kun swims the sea of clouds %s of the Southern Heavenly Gate, some %s blocks out (about %s, %s). Wound it deep and it is the Peng.");
+		t.add(ModLang.primordialGone("kun_peng"), "The Kun-Peng was slain; another comes to its waters in %s days.");
+		t.add(ModLang.primordialWhere("true_phoenix"), "The True Phoenix roosts on a peak %s of the Gate, some %s blocks out (about %s, %s). Kill it once and it burns, and rises again.");
+		t.add(ModLang.primordialGone("true_phoenix"), "The True Phoenix was slain; another comes to its peak in %s days.");
+		t.add(ModLang.primordialWhere("true_dragon"), "The True Dragon rides its storm high in the sky %s of the Gate, some %s blocks out (about %s, %s).");
+		t.add(ModLang.primordialGone("true_dragon"), "The True Dragon was slain; another rides its storm in %s days.");
 		t.add(ModLang.MSG_PALACE_SEALED, "The Ghost King's seal of %s holds it shut. Only one a realm above the king could break it.");
 		t.add(ModLang.MSG_PALACE_SEAL_BROKEN, "The Ghost King's seal shatters under your hand. The treasury lies open.");
 		t.add(ModLang.BRUSH_TOOLTIP, "Paints seals of qi ink on floors and walls, to join Qi Veins to a Formation Core");
@@ -2103,6 +2235,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.HUD_SOUL_POSSESSING, "In %s (sneak to let go)");
 		t.add(ModLang.HUD_SOUL_INSIDE, "In %s's body (Soul Projection leaves it)");
 		t.add(ModLang.HUD_SOUL_OWN_QI_LABEL, "Own Qi");
+		t.add(ModLang.HUD_ESSENCE_LABEL, "Essence");
 		t.add(ModLang.HUD_SOUL_OWN_GHOST_QI_LABEL, "Own Ghost Qi");
 		t.add(ModLang.HUD_SOUL_TETHER_AWAY, "Tether across the realms");
 		t.add(ModLang.HUD_SOUL_TETHER_ENDLESS, "Body %s blocks off (the tether has no end)");

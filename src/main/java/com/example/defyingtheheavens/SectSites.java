@@ -38,7 +38,8 @@ import java.util.concurrent.CompletableFuture;
  * <p>
  * Where: in the Overworld, within {@link #SPAWN_REACH} of the world spawn and {@link #PLAYER_REACH} of every player there; in
  * the Upper Realm, within {@link #RIFT_REACH} of the rift (where cultivators from below arrive and look for a sect to join)
- * and {@link #PLAYER_REACH} of every player there. One site at a time, nearest first, taking each place in turn; the
+ * and {@link #PLAYER_REACH} of every player there; in the Great Void, its Holy Lands (HolyLands), within {@link #PLAYER_REACH}
+ * of every player there. One site at a time, nearest first, taking each place in turn; the
  * generator is asked off the server thread. Each site is decided once (a sect founded, or none there) and remembered.
  * Nothing happens in a world made without structures. Saved with the Overworld.
  */
@@ -234,7 +235,10 @@ public class SectSites extends SavedData {
 	/** How far a sect's heart may stand from its start chunk's middle (SectStructure#ISLAND_SEARCH, either way). */
 	private static final int SITE_DRIFT = 70;
 
-	/** The places looked round, players first: each player's surroundings, then the world spawn, then the Upper Realm's rift. */
+	/**
+	 * The places looked round, players first: each player's surroundings (in the Great Void, its Holy Lands' sites), then the world
+	 * spawn, then the Upper Realm's rift.
+	 */
 	private static List<Place> places(MinecraftServer server) {
 		List<Place> places = new ArrayList<>();
 		ServerLevel overworld = server.overworld();
@@ -242,7 +246,7 @@ public class SectSites extends SavedData {
 		for (net.minecraft.server.level.ServerPlayer player : server.getPlayerList().getPlayers()) {
 			if (player.isSpectator()) continue;
 			ServerLevel level = player.serverLevel();
-			if (level != overworld && level != upper) continue;
+			if (level != overworld && level != upper && !ModDimensions.isGreatVoid(level.dimension())) continue;
 			for (boolean clan : new boolean[] {false, true}) add(places, place(level, player.blockPosition(), PLAYER_REACH, clan));
 		}
 		for (boolean clan : new boolean[] {false, true}) {
@@ -256,10 +260,15 @@ public class SectSites extends SavedData {
 		if (place != null) places.add(place);
 	}
 
-	/** Round {@code anchor} in {@code level}, the sites of its sects (or, {@code clan}, its demon clans): null in a dimension without them. */
+	/**
+	 * Round {@code anchor} in {@code level}, the sites of its sects (or, {@code clan}, its demon clans): null in a dimension without them.
+	 * The Great Void's sects are its Holy Lands, its clans its Demon Palaces (at the same sites: one or the other at each). (The Immortal
+	 * Realm's immortal sects stand only at their cells' sites, tried every other chunk: each founds itself when its core first ticks.)
+	 */
 	private static Place place(ServerLevel level, BlockPos anchor, int reach, boolean clan) {
 		ResourceKey<Structure> key = level.dimension() == Level.OVERWORLD ? (clan ? ModStructures.DEMON_CLAN : ModStructures.SECT)
-				: ModDimensions.isUpperRealm(level.dimension()) ? (clan ? ModStructures.DEMON_CLAN_UPPER_REALM : ModStructures.SECT_UPPER_REALM) : null;
+				: ModDimensions.isUpperRealm(level.dimension()) ? (clan ? ModStructures.DEMON_CLAN_UPPER_REALM : ModStructures.SECT_UPPER_REALM)
+				: ModDimensions.isGreatVoid(level.dimension()) ? (clan ? ModStructures.DEMON_PALACE : ModStructures.HOLY_LAND) : null;
 		if (key == null) return null;
 		Holder<Structure> structure = level.registryAccess().registryOrThrow(Registries.STRUCTURE).getHolder(key).orElse(null);
 		if (structure == null) return null;

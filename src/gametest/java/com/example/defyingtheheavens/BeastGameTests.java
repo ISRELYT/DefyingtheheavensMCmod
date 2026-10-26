@@ -37,18 +37,23 @@ public class BeastGameTests implements FabricGameTest {
 		for (BeastKind kind : BeastKind.values()) {
 			helper.assertTrue(DemonBeast.of(ModEntities.beast(kind)) == kind, "Its type is its own (" + kind.getId() + ")");
 			helper.assertTrue(BeastKind.byId(kind.getId()) == kind && ModItems.beastEgg(kind) != null, "Found by its id, with an egg (" + kind.getId() + ")");
-			helper.assertTrue(biomes.getTag(kind.lands).map(tag -> tag.size() > 0).orElse(false), "It has lands (" + kind.getId() + ")");
+			// The elders are never born wild (BloodPools raises them), nor the primordial beasts (PrimordialBeasts): no lands.
+			boolean elder = kind.isElder() || kind.isPrimordial();
+			helper.assertTrue(biomes.getTag(kind.lands).map(tag -> tag.size() > 0).orElse(false) != elder, (elder ? "No lands" : "It has lands") + " (" + kind.getId() + ")");
 			for (boolean upper : new boolean[] {false, true}) {
 				for (int i = 0; i < 300; i++) {
 					int rank = DemonBeast.rollRank(kind, random, upper);
 					helper.assertTrue(rank >= kind.tier.minRank && rank <= kind.tier.maxRank, "Within its tier's ranks (" + kind.getId() + " " + rank + ")");
-					highest = Math.max(highest, rank);
+					if (!elder) highest = Math.max(highest, rank);
 				}
 			}
 		}
-		helper.assertTrue(highest == CF_GP, "The strongest stand at Core Formation Grand Perfection, none higher (" + highest + ")");
+		helper.assertTrue(highest == CF_GP, "The strongest of the wild stand at Core Formation Grand Perfection, none higher (" + highest + ")");
 		helper.assertTrue(BeastKind.Tier.COMMON.maxRank < PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.EARLY)
 				&& BeastKind.Tier.RARE.maxRank == CF_GP, "The common are of Qi Refining; the rare reach the top of Core Formation");
+		helper.assertTrue(BeastKind.Tier.ELDER.minRank == PlayerCultivation.rank(Realm.VOID_SHATTERING, Stage.EARLY)
+				&& BeastKind.Tier.ELDER.maxRank == PlayerCultivation.rank(Realm.ENTERING_NIRVANA, Stage.GRAND_PERFECTION)
+				&& BeastKind.Tier.ELDER.weight == 0 && BeastKind.Tier.ELDER.upperWeight == 0, "The elders: Void Shattering to Entering Nirvana, never born wild");
 		helper.succeed();
 	}
 
@@ -258,6 +263,7 @@ public class BeastGameTests implements FabricGameTest {
 		java.util.Map<String, Integer> beasts = new java.util.HashMap<>();
 		java.util.Map<String, String> races = new java.util.HashMap<>();
 		for (BeastKind kind : BeastKind.values()) {
+			if (kind.isElder() || kind.isPrimordial()) continue; // never born wild: no lands, nor a tag of them
 			for (String biome : terralithIn(helper, "beast/" + kind.getId())) beasts.merge(biome, 1, Integer::sum);
 		}
 		for (Bloodline race : Bloodline.values()) {

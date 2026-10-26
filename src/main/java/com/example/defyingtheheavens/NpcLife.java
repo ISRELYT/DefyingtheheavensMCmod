@@ -1297,6 +1297,8 @@ public final class NpcLife {
 		if (npc.isGateGuard()) return NpcLines.line(regard >= Regard.COURTEOUS ? "gate.welcome" : "gate.halt", npc, name);
 		// The dead marvel at the living's warmth (and warn them off), now and then.
 		if (npc.isGhost() && !GhostSystem.isGhost(player) && random.nextInt(3) == 0) return NpcLines.line("pass.living", npc);
+		// Those waiting on the Shore of Nirvana speak of the Gate, as often as not.
+		if (NirvanaCamp.isCamper(npc) && random.nextBoolean()) return NpcLines.line("shore.wait", npc);
 		ItemStack held = player.getMainHandItem();
 		if (held.getItem() instanceof SpiritStoneItem stone && stone.grade().ordinal() >= SpiritStoneItem.Grade.SUPREME.ordinal()) {
 			return NpcLines.line("pass.stone", npc, held.getHoverName());

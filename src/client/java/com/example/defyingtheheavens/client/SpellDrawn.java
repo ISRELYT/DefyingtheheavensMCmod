@@ -73,9 +73,7 @@ final class SpellDrawn {
 		VertexConsumer glow = buffers.getBuffer(SpellRender.glow(SpellRender.GLOW));
 		SpellRender.billboard(glow, pose, camera, 0, 0, 0, sunR * 7 * (1 - 0.45f * met), 0, SUN_GOLD, 0.55f * shown * (1 - 0.5f * met), 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
 		SpellRender.billboard(glow, pose, camera, 0, 0, 0, sunR * 3.2f, 0, SUN_WHITE, 0.8f * shown * (1 - 0.6f * met), 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
-		float[] fv = SpellRender.frame(age, 0.25f, SpellRender.SUN_FRAMES);
-		VertexConsumer sun = buffers.getBuffer(SpellRender.glow(SpellRender.SUN));
-		SpellRender.billboard(sun, pose, camera, 0, 0, 0, sunR * 2.1f, age * 0.01f, SUN_WHITE, shown, 0, fv[0], 1, fv[1], SpellRender.FULL_BRIGHT);
+		face(buffers, pose, sunR * 1.05f, age, 0.25f, shown);
 		// Heaven's flames round the sun's rim (and, once they meet, round the moon's).
 		VertexConsumer flames = buffers.getBuffer(SpellRender.glow(SpellRender.FLAME));
 		rimFlames(flames, pose, camera, right, toward, Vec3.ZERO, sunR * 1.02f, sunR * 0.55f, 14, age, GOLD, shown * (1 - 0.3f * met), 0);
@@ -109,6 +107,17 @@ final class SpellDrawn {
 		rimFlames(flames, pose, camera, right, toward, new Vec3(moonAt.x, moonAt.y, moonAt.z), moonR * 1.0f, moonR * (0.4f + 0.25f * met + 0.2f * flare), 18, age + 7,
 				CRIMSON, shown * (0.5f + 0.5f * met), 1);
 		SpellRender.billboard(glow, pose, camera, moonAt.x, moonAt.y, moonAt.z, moonR * 2.9f, 0, CRIMSON, 0.35f * shown * (0.4f + 0.6f * met), 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+	}
+
+	/**
+	 * A sun's blazing face, {@code radius} round, its surface boiling ({@code rate} of its frames a tick): a ball of it, as Solar Field's sun is
+	 * (SpellFieldRenderer), round from every side and blended rather than added, so it is seen by day (laid flat on a square facing whoever
+	 * looks, its texture, square itself, drew a square, found checking toast's push in game, 2026-10-26).
+	 */
+	private static void face(MultiBufferSource buffers, PoseStack pose, float radius, float age, float rate, float shown) {
+		float[] fv = SpellRender.frame(age, rate, SpellRender.SUN_FRAMES);
+		SpellRender.sphere(buffers.getBuffer(SpellRender.clear(SpellRender.SUN)), pose.last(), radius, 12, 18, SUN_WHITE, shown, 1, fv[1] - fv[0], age * 0.004f, fv[0],
+				SpellRender.FULL_BRIGHT, (polar, azimuth) -> 1 + 0.02f * Mth.sin((float) (azimuth * 6 + age * 0.2)));
 	}
 
 	/** Tongues of flame standing out round a disc's rim in the sky ({@code radius} out from {@code at}), {@code length} long, {@code count} of them. */
@@ -193,9 +202,7 @@ final class SpellDrawn {
 		VertexConsumer glow = buffers.getBuffer(SpellRender.glow(SpellRender.GLOW));
 		SpellRender.billboard(glow, pose, camera, 0, 0, 0, r * (6 + 6 * flare), 0, SUN_GOLD, 0.55f * shown, 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
 		SpellRender.billboard(glow, pose, camera, 0, 0, 0, r * 3.2f, 0, SUN_WHITE, 0.85f * shown, 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
-		float[] fv = SpellRender.frame(age, 0.3f, SpellRender.SUN_FRAMES);
-		SpellRender.billboard(buffers.getBuffer(SpellRender.glow(SpellRender.SUN)), pose, camera, 0, 0, 0, r * 2.1f, age * 0.02f, SUN_WHITE, shown, 0, fv[0], 1, fv[1],
-				SpellRender.FULL_BRIGHT);
+		face(buffers, pose, r * 1.05f, age, 0.3f, shown);
 		VertexConsumer flames = buffers.getBuffer(SpellRender.glow(SpellRender.FLAME));
 		rimFlames(flames, pose, camera, right, toward, Vec3.ZERO, r, r * 0.7f, 12, age, GOLD, shown, 0);
 		// Its fire streaming out behind it, back the way it came.
@@ -292,8 +299,7 @@ final class SpellDrawn {
 		VertexConsumer water = buffers.getBuffer(SpellRender.clear(SpellRender.WATER));
 		// The whirlpool, turning ever faster in toward its heart.
 		for (int k = 0; k < 3; k++) {
-			SpellRender.disc(water, pose.last(), radius * (0.85f - 0.25f * k) * shown, 0.12f + 0.02f * k, age * (0.04f + 0.05f * k), SEA, 0.7f * shown,
-					SpellRender.FULL_BRIGHT);
+			round(water, pose.last(), radius * (0.85f - 0.25f * k) * shown, 0.12f + 0.02f * k, age * (0.04f + 0.05f * k), SEA, 0.7f * shown, fv);
 		}
 		VertexConsumer ripple = buffers.getBuffer(SpellRender.clear(SpellRender.RIPPLE));
 		for (int k = 0; k < 3; k++) {
@@ -330,9 +336,33 @@ final class SpellDrawn {
 		// The swirl in the mouth.
 		pose.pushPose();
 		pose.translate(0, high, 0);
-		SpellRender.disc(water, pose.last(), radius * 0.2f, 0, age * 0.25f, SEA, 0.85f * shown, SpellRender.FULL_BRIGHT);
+		round(water, pose.last(), radius * 0.2f, 0, age * 0.25f, SEA, 0.85f * shown, fv);
 		SpellRender.disc(buffers.getBuffer(SpellRender.glow(SpellRender.RING)), pose.last(), radius * 0.26f, 0.05f, -age * 0.2f, FOAM, 0.6f * shown, SpellRender.FULL_BRIGHT);
 		pose.popPose();
+	}
+
+	/**
+	 * A round disc of {@code radius} lying on the pose's ground, frame {@code fv} of a square texture across it, turned {@code spin} radians, cut
+	 * round and fading a little toward its rim (SpellRender#disc lays the whole texture on a square: the Vase's whirlpool was a square sheet of
+	 * water, found checking toast's push in game, 2026-10-26).
+	 */
+	private static void round(VertexConsumer vc, PoseStack.Pose pose, float radius, float y, float spin, float[] rgb, float alpha, float[] fv) {
+		int segments = 36;
+		float cos = Mth.cos(spin), sin = Mth.sin(spin), middle = Mth.lerp(0.5f, fv[0], fv[1]);
+		for (int i = 0; i < segments; i++) {
+			double a0 = Math.PI * 2 * i / segments, a1 = Math.PI * 2 * (i + 1) / segments;
+			float x0 = (float) Math.cos(a0) * radius, z0 = (float) Math.sin(a0) * radius, x1 = (float) Math.cos(a1) * radius, z1 = (float) Math.sin(a1) * radius;
+			SpellRender.vertex(vc, pose, 0, y, 0, rgb[0], rgb[1], rgb[2], alpha, 0.5f, middle, SpellRender.FULL_BRIGHT, 0, 1, 0);
+			rim(vc, pose, x1, y, z1, radius, cos, sin, rgb, alpha * 0.55f, fv);
+			rim(vc, pose, x1, y, z1, radius, cos, sin, rgb, alpha * 0.55f, fv);
+			rim(vc, pose, x0, y, z0, radius, cos, sin, rgb, alpha * 0.55f, fv);
+		}
+	}
+
+	/** One of {@link #round}'s rim corners, the texture under it turned with the disc. */
+	private static void rim(VertexConsumer vc, PoseStack.Pose pose, float x, float y, float z, float radius, float cos, float sin, float[] rgb, float alpha, float[] fv) {
+		float u = 0.5f + (x * cos - z * sin) / (2 * radius), v = 0.5f + (x * sin + z * cos) / (2 * radius);
+		SpellRender.vertex(vc, pose, x, y, z, rgb[0], rgb[1], rgb[2], alpha, u, Mth.lerp(v, fv[0], fv[1]), SpellRender.FULL_BRIGHT, 0, 1, 0);
 	}
 
 	private SpellDrawn() {}

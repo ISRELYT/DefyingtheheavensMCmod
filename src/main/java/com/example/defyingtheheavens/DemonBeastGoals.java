@@ -16,6 +16,7 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.GoalSelector;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.world.entity.ai.goal.MoveTowardsRestrictionGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.RandomSwimmingGoal;
@@ -44,6 +45,8 @@ import java.util.EnumSet;
  *   <li>POUNCE (the tiger): a leap onto its prey. ICE_SLAM (the ape: frost that slows), POUND (the bear: the ground heaves).</li>
  *   <li>BREATH (the ember fox): fire breathed in a cone. COIL (the python): coiled round its prey, holding it and crushing.</li>
  * </ul>
+ * An elder (BeastKind#isElder) strikes with its kind's move as the wild do, its reach grown with its size ({@link #grown}: a pounce, a
+ * slam, its breath, a dive's circling and gust), and goes back to the pool it guards (DemonBeast#guard) when it has none to fight.
  */
 final class DemonBeastGoals {
 	private DemonBeastGoals() {}
@@ -54,6 +57,7 @@ final class DemonBeastGoals {
 		Goal signature = signature(beast, kind.signature);
 		if (signature != null) goals.addGoal(1, signature);
 		if (kind.moves != BeastKind.Moves.FLYING) goals.addGoal(2, new MeleeAttackGoal(beast, 1.2, false));
+		if (kind.isElder()) goals.addGoal(4, new MoveTowardsRestrictionGoal(beast, 1.0));
 		switch (kind.moves) {
 			case FLYING -> goals.addGoal(5, new WaterAvoidingRandomFlyingGoal(beast, 1.0));
 			case SWIMMING -> goals.addGoal(5, new RandomSwimmingGoal(beast, 1.0, 10));
@@ -147,6 +151,11 @@ final class DemonBeastGoals {
 	private static float attack(DemonBeast beast) {
 		var attack = beast.getAttribute(Attributes.ATTACK_DAMAGE);
 		return attack == null ? 3 : (float) attack.getValue();
+	}
+
+	/** How much further an elder's moves reach than its wild kin's: by its size (DemonBeast#scale, BeastKind#modelScale); a wild beast's, as they were. */
+	static double grown(DemonBeast beast) {
+		return beast.kind().isElder() ? beast.scale() * beast.kind().modelScale() : 1;
 	}
 
 	private static boolean ready(DemonBeast beast, int chance) {
@@ -260,7 +269,7 @@ final class DemonBeastGoals {
 		public boolean canUse() {
 			if (!beast.onGround() || !ready(beast, 6)) return false;
 			// From a few strides off, or springing on prey already at its jaws (a still target was never pounced on, 2026-10-23).
-			target = inReach(beast, 1.0, 9);
+			target = inReach(beast, 1.0, 9 * grown(beast));
 			return target != null;
 		}
 
@@ -274,7 +283,7 @@ final class DemonBeastGoals {
 			ticks = 0;
 			Vec3 to = target.position().subtract(beast.position());
 			double flat = Math.sqrt(to.x * to.x + to.z * to.z);
-			double reach = Math.min(1.4, 0.35 + flat * 0.13);
+			double reach = Math.min(1.4 * grown(beast), 0.35 + flat * 0.13);
 			// Prey right under it (or over it) springs it the way it faces: across nothing it divided by nothing, and its motion was no
 			// number at all, before the sweep of 2026-10-23.
 			Vec3 way = flat < 1.0e-3 ? Vec3.directionFromRotation(0, beast.getYRot()) : new Vec3(to.x / flat, 0, to.z / flat);
@@ -318,7 +327,7 @@ final class DemonBeastGoals {
 		@Override
 		public boolean canUse() {
 			if (!ready(beast, 5)) return false;
-			target = inReach(beast, 0, 2.5);
+			target = inReach(beast, 0, 2.5 * grown(beast));
 			return target != null;
 		}
 
@@ -339,7 +348,7 @@ final class DemonBeastGoals {
 			ticks++;
 			if (target != null) beast.getLookControl().setLookAt(target, 30, 30);
 			if (ticks != 12 || !(beast.level() instanceof ServerLevel level)) return;
-			double radius = (frost ? 3.5 : 4.5) * beast.scale();
+			double radius = (frost ? 3.5 : 4.5) * (beast.kind().isElder() ? grown(beast) : beast.scale());
 			for (LivingEntity other : level.getEntitiesOfClass(LivingEntity.class, beast.getBoundingBox().inflate(radius),
 					e -> e.distanceToSqr(beast) <= radius * radius && reaches(beast, e))) {
 				if (!other.hurt(beast.damageSources().mobAttack(beast), attack(beast) * 1.3f)) continue;
@@ -386,7 +395,7 @@ final class DemonBeastGoals {
 		@Override
 		public boolean canUse() {
 			if (!ready(beast, 6)) return false;
-			target = inReach(beast, 0, 6);
+			target = inReach(beast, 0, 6 * grown(beast));
 			return target != null;
 		}
 
@@ -410,16 +419,17 @@ final class DemonBeastGoals {
 			if (!(beast.level() instanceof ServerLevel level)) return;
 			Vec3 mouth = beast.getEyePosition();
 			Vec3 look = target.getEyePosition().subtract(mouth).normalize();
+			double grown = grown(beast), length = 7 * grown;
 			if (ticks % 2 == 0) {
-				for (int i = 1; i <= 6; i++) {
+				for (int i = 1; i <= (int) (6 * grown); i++) {
 					Vec3 at = mouth.add(look.scale(i));
 					level.sendParticles(ParticleTypes.FLAME, at.x, at.y, at.z, 2, i * 0.08, i * 0.08, i * 0.08, 0.01);
 				}
 			}
 			if (ticks % 6 != 0) return;
-			for (LivingEntity other : level.getEntitiesOfClass(LivingEntity.class, beast.getBoundingBox().inflate(7), e -> reaches(beast, e))) {
+			for (LivingEntity other : level.getEntitiesOfClass(LivingEntity.class, beast.getBoundingBox().inflate(length), e -> reaches(beast, e))) {
 				Vec3 to = other.getEyePosition().subtract(mouth);
-				if (to.length() > 7 || to.normalize().dot(look) < 0.8) continue;
+				if (to.length() > length || to.normalize().dot(look) < 0.8) continue;
 				if (other.hurt(beast.damageSources().mobAttack(beast), attack(beast) * 0.6f)) other.setSecondsOnFire(3);
 			}
 		}
@@ -528,7 +538,7 @@ final class DemonBeastGoals {
 		@Override
 		public void tick() {
 			ticks++;
-			double high = dive ? 10 : 7, round = dive ? 10 : 7;
+			double high = (dive ? 10 : 7) * grown(beast), round = (dive ? 10 : 7) * grown(beast);
 			switch (phase) {
 				case 0 -> {
 					angle += 0.06;
@@ -565,7 +575,7 @@ final class DemonBeastGoals {
 
 		/** The roc's wings' gust as it strikes: everything near it reaches ({@link #reaches}) thrown back, as far as it can be ({@link #pushShare}). */
 		private void gust(ServerLevel level) {
-			for (LivingEntity other : level.getEntitiesOfClass(LivingEntity.class, beast.getBoundingBox().inflate(4), e -> reaches(beast, e))) {
+			for (LivingEntity other : level.getEntitiesOfClass(LivingEntity.class, beast.getBoundingBox().inflate(4 * grown(beast)), e -> reaches(beast, e))) {
 				Vec3 away = other.position().subtract(beast.position());
 				away = away.lengthSqr() < 1.0e-6 ? Vec3.ZERO : away.normalize();
 				double share = pushShare(other);

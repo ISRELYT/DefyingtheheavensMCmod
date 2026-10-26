@@ -250,8 +250,18 @@ public final class SpatialTrialHandler {
 			return;
 		}
 		ResourceKey<Level> dimension = p.level().dimension();
+		// Immortal space holds: no tear opens in the Immortal Realm, nor in the Gate's passage; the Gate is the only way down (the user's
+		// rule, 2026-10-25).
+		if (ModDimensions.isImmortalRealm(dimension) || ModDimensions.isImmortalPassage(dimension)) {
+			p.displayClientMessage(Component.translatable(ModLang.MSG_TEAR_IMMORTAL), true);
+			return;
+		}
 		boolean out = ModDimensions.isSpatialGap(dimension);
-		if (!out && (dimension != Level.OVERWORLD && dimension != ModDimensions.UPPER_REALM || p.server.getLevel(ModDimensions.SPATIAL_GAP) == null)) {
+		// From Void Shattering on, torn high in the Jade Firmament's sky: a Void Breach up into the Great Void; torn in the Great Void, a
+		// way down onto the Jade Firmament (VoidBreach, 2026-10-25).
+		boolean breach = VoidBreach.tearsBreach(p, c), down = ModDimensions.isGreatVoid(dimension);
+		if (!out && !breach && !down
+				&& (dimension != Level.OVERWORLD && dimension != ModDimensions.UPPER_REALM || p.server.getLevel(ModDimensions.SPATIAL_GAP) == null)) {
 			p.displayClientMessage(Component.translatable(ModLang.MSG_TEAR_NOT_HERE), true);
 			return;
 		}
@@ -271,7 +281,7 @@ public final class SpatialTrialHandler {
 		PlayerCultivation payer = Ability.SPATIAL_TEAR.awakenedBy(c) == null && Possession.inhabits(p.getUUID()) ? CultivationManager.own(p) : c;
 		TwoPaths.Path path = Ability.SPATIAL_TEAR.awakenedBy(payer);
 		if (path == null) path = TwoPaths.Path.HEAVEN;
-		double cost = TwoPaths.poolMax(payer, path) * (out ? TEAR_OUT_QI : TEAR_IN_QI);
+		double cost = TwoPaths.poolMax(payer, path) * (breach ? VoidBreach.BREACH_QI : out || down ? TEAR_OUT_QI : TEAR_IN_QI);
 		if (!p.getAbilities().instabuild && !TwoPaths.spend(payer, path, cost)) {
 			p.displayClientMessage(Component.translatable(path == TwoPaths.Path.GHOST ? ModLang.MSG_TEAR_NO_GHOST_QI : ModLang.MSG_TEAR_NO_QI,
 					Math.round(cost)), true);
@@ -279,8 +289,14 @@ public final class SpatialTrialHandler {
 		}
 		LAST_TEAR.put(p.getUUID(), now);
 		riftFx(p);
-		openTear(p, out);
-		p.displayClientMessage(Component.translatable(ModLang.MSG_TEAR_OPEN), true);
+		if (breach) {
+			VoidBreach.open(p);
+		} else if (down) {
+			VoidBreach.openDown(p);
+		} else {
+			openTear(p, out);
+			p.displayClientMessage(Component.translatable(ModLang.MSG_TEAR_OPEN), true);
+		}
 		CultivationManager.sync(p);
 	}
 

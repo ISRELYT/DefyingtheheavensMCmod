@@ -128,7 +128,11 @@ public final class ClientPacketHandlers {
 			com.example.defyingtheheavens.Bloodline blood = com.example.defyingtheheavens.Bloodline.byIndex(buf.readVarInt());
 			int bloodRealm = buf.readVarInt(), halfIndex = buf.readVarInt();
 			double purity = buf.readDouble();
+			double essence = buf.readDouble(), essenceMax = buf.readDouble();
 			client.execute(() -> {
+				// A True Immortal's immortal essence (ImmortalEssence), for its bar.
+				ClientCultivationData.get().setEssence(essence);
+				ClientCultivationData.essence(essence, essenceMax);
 				// What of a race's blood it has drunk (DemonBlood): the Cultivation tab's purity and blood gate, a drink's refusal before it's drunk.
 				ClientCultivationData.get().demon().setHalfBlood(halfIndex < 0 ? null : com.example.defyingtheheavens.Bloodline.byIndex(halfIndex));
 				ClientCultivationData.get().demon().setBloodRealm(bloodRealm);

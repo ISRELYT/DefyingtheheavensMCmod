@@ -96,7 +96,13 @@ public enum Ability {
 	 */
 	TIGERS_ROAR("tigers_roar", false, c -> RaceGifts.hasAct(c, Bloodline.TIGER)),
 	/** A fox spirit's, from Core Formation on any path (RaceGifts#illusion): a while unseen, till it strikes. An act, for qi, with a cooldown. */
-	ILLUSION("illusion", false, c -> RaceGifts.hasAct(c, Bloodline.FOX));
+	ILLUSION("illusion", false, c -> RaceGifts.hasAct(c, Bloodline.FOX)),
+	/**
+	 * From True Immortal on any path (phase 2, 2026-10-25): one's immortal essence set to work (ImmortalEssence), a standing switch, off
+	 * to begin with: while on, blows and spells half again as hard, for a share of the essence pool a second. The pool fills only in the
+	 * Immortal Realm and leaks away anywhere else.
+	 */
+	IMMORTAL_ESSENCE("immortal_essence", false, c -> TwoPaths.awakens(c, Realm.TRUE_IMMORTAL, false) != null);
 
 	private final String id;
 	private final boolean onByDefault;
@@ -176,6 +182,9 @@ public enum Ability {
 			case TIGERS_ROAR -> Component.translatable(key, RaceGifts.ROAR_RADIUS, RaceGifts.ROAR_STAGES_BELOW, RaceGifts.ROAR_TICKS / 20,
 					RaceGifts.ROAR_COOLDOWN / 20, Math.round(RaceGifts.ROAR_QI * 100));
 			case ILLUSION -> Component.translatable(key, RaceGifts.ILLUSION_TICKS / 20, RaceGifts.ILLUSION_COOLDOWN / 20, Math.round(RaceGifts.ILLUSION_QI * 100));
+			// The harm it adds, how long a full pool lasts, the pool, how long the Immortal Realm takes to fill it, and to leak it elsewhere.
+			case IMMORTAL_ESSENCE -> Component.translatable(key, Math.round((ImmortalEssence.HARM - 1) * 100), ImmortalEssence.BURN_SECONDS,
+					Math.round(ImmortalEssence.max(c)), ImmortalEssence.FILL_SECONDS / 60, ImmortalEssence.MEDITATING, ImmortalEssence.LEAK_SECONDS / 60);
 			default -> Component.translatable(key);
 		};
 	}

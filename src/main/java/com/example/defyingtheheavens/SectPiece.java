@@ -50,14 +50,36 @@ public class SectPiece extends StructurePiece {
 	 * TERRACE is the grounds; TOWER (the old walled sects' corner towers) is kept only so their saved pieces still load. The DEN_ kinds
 	 * are a demon clan's (DenStructure, drawn by DenPieces): its head's den, an elder's, the disciples' burrow, the hoard (its
 	 * treasury), a gate, the sparring ring, the dragons' crag (all of a dragon clan's under one), and the rest that stands about the
-	 * grounds (boulders, pools, spires, a row of torii).
+	 * grounds (boulders, pools, spires; a fox clan's row of torii, kept for its clans made before 2026-10-25, none since). The HOLY_ kinds
+	 * are a Holy Land's own (HolyLandPlan, drawn by HolyLandPieces):
+	 * its Mountain Gate, the Patriarch's Palace on its three terraces, the lotus moat and its bridge, a bell or drum tower, the alchemy
+	 * hall, an elder's walled court, a guardian beast on its plinth. The PALACE_ kinds are a Demon Palace's (DemonPalacePlan, drawn by
+	 * DemonPalacePieces): its great torii, the Sovereign's hall on its dais, the colossus behind it, the blood ring round its core, a
+	 * statue of the Way of Beasts. The PEAK_ kinds are an immortal sect's (ImmortalSectPlan, drawn by ImmortalSectPieces): a floating island
+	 * and a bridge between two.
 	 */
 	public enum Kind {
 		TERRACE, GATE, TOWER, PLAZA, MEDITATION_HALL, TREASURY, MAIN_HALL, PAGODA, GARDEN, DWELLING, ELDER_HOUSE, TORII, ALTAR, TRAINING,
-		DEN_HALL, DEN_ELDER, DEN_BURROW, DEN_HOARD, DEN_GATE, DEN_RING, DEN_CRAG, DEN_FEATURE;
+		DEN_HALL, DEN_ELDER, DEN_BURROW, DEN_HOARD, DEN_GATE, DEN_RING, DEN_CRAG, DEN_FEATURE,
+		HOLY_GATE, HOLY_PALACE, HOLY_MOAT, HOLY_TOWER, HOLY_ALCHEMY, HOLY_COURT, HOLY_STATUE,
+		PALACE_GATE, PALACE_HALL, PALACE_COLOSSUS, PALACE_POOL, PALACE_STATUE,
+		CITY_WALL, CITY_GATE, CITY_TOWER, CITY_SHOP, CITY_STALL, COURT_STAIR, CITY_GROUNDS,
+		PEAK_ISLAND, PEAK_BRIDGE;
 
 		/** One of a demon clan's (DenPieces). */
 		public boolean isDen() { return name().startsWith("DEN_"); }
+
+		/** One of a Holy Land's own (HolyLandPieces). */
+		public boolean isHoly() { return name().startsWith("HOLY_"); }
+
+		/** One of a Demon Palace's own (DemonPalacePieces). */
+		public boolean isPalace() { return name().startsWith("PALACE_"); }
+
+		/** One of an immortal city's own (CityPieces): its walls, gates, towers, shops and stalls, the Celestial Court's stair, its grounds. */
+		public boolean isCity() { return name().startsWith("CITY_") || name().startsWith("COURT_"); }
+
+		/** One of an immortal sect's own (ImmortalSectPieces): a floating island, a bridge between two. */
+		public boolean isPeak() { return name().startsWith("PEAK_"); }
 	}
 
 	public static final ResourceLocation TREASURY_LOOT = DefyingTheHeavens.id("chests/sect_treasury");
@@ -142,7 +164,7 @@ public class SectPiece extends StructurePiece {
 	}
 
 	/** The point of this piece's frame {x, z} at world column (x, z): the inverse of getWorldX and getWorldZ. */
-	private int[] toLocal(int x, int z) {
+	int[] toLocal(int x, int z) {
 		Direction o = getOrientation();
 		if (o == null) return new int[] {x - boundingBox.minX(), z - boundingBox.minZ()};
 		return switch (o) {
@@ -153,8 +175,26 @@ public class SectPiece extends StructurePiece {
 		};
 	}
 
-	/** For the grounds: whether world column {@code pos} lies on them or within {@code margin} of them (SectStructure#onGrounds). */
+	/**
+	 * The part of this piece's frame whose columns lie in {@code chunk}: {x0, z0, x1, z1}, within its width and depth (empty, x0 > x1,
+	 * if none do). A great statue draws only that much on each chunk it crosses (DemonPalacePieces).
+	 */
+	int[] localBounds(BoundingBox chunk) {
+		int[] a = toLocal(chunk.minX(), chunk.minZ()), b = toLocal(chunk.maxX(), chunk.maxZ());
+		return new int[] {Math.max(0, Math.min(a[0], b[0])), Math.max(0, Math.min(a[1], b[1])), Math.min(width() - 1, Math.max(a[0], b[0])),
+				Math.min(depth() - 1, Math.max(a[1], b[1]))};
+	}
+
+	/**
+	 * For the grounds, or an immortal sect's floating island (its grounds are its islands): whether world column {@code pos} lies on them or
+	 * within {@code margin} of them (SectStructure#onGrounds).
+	 */
 	public boolean onGrounds(BlockPos pos, int margin) {
+		if (kind == Kind.PEAK_ISLAND) {
+			if (pos.getX() < boundingBox.minX() - margin || pos.getX() > boundingBox.maxX() + margin || pos.getZ() < boundingBox.minZ() - margin
+					|| pos.getZ() > boundingBox.maxZ() + margin) return false;
+			return ImmortalSectPieces.onIsland(this, pos.getX(), pos.getZ(), 1 + (double) margin / Math.min(extra.getInt("RU"), extra.getInt("RV")));
+		}
 		if (kind != Kind.TERRACE || !extra.contains("A")) return false;
 		if (pos.getX() < boundingBox.minX() - margin || pos.getX() > boundingBox.maxX() + margin || pos.getZ() < boundingBox.minZ() - margin
 				|| pos.getZ() > boundingBox.maxZ() + margin) return false;
@@ -166,9 +206,29 @@ public class SectPiece extends StructurePiece {
 	@Override
 	public void postProcess(WorldGenLevel level, StructureManager structures, ChunkGenerator generator, RandomSource random, BoundingBox chunk,
 			ChunkPos chunkPos, BlockPos pivot) {
-		SectPalette p = race.isBeast() ? SectPalette.ofRace(race, upper) : SectPalette.of(faction, upper);
+		// The Great Void's sects are its Holy Lands (HolyLands), built in white jade and gold; its clans its Demon Palaces (DemonPalaces),
+		// in dark stone in their race's colours. The Immortal Realm's cities build in white jade and gold too (ImmortalCapital).
+		boolean holy = HolyLands.isHolyLand(level.getLevel().dimension()) || ModDimensions.isImmortalRealm(level.getLevel().dimension());
+		SectPalette p = race.isBeast() ? holy ? SectPalette.palace(race) : SectPalette.ofRace(race, upper)
+				: holy ? SectPalette.holy(faction) : SectPalette.of(faction, upper);
+		if (kind.isCity()) {
+			CityPieces.draw(this, level, chunk, p);
+			return;
+		}
+		if (kind.isPeak()) {
+			ImmortalSectPieces.draw(this, level, chunk, p);
+			return;
+		}
 		if (kind.isDen()) {
 			DenPieces.draw(this, level, chunk, p);
+			return;
+		}
+		if (kind.isHoly()) {
+			HolyLandPieces.draw(this, level, chunk, p);
+			return;
+		}
+		if (kind.isPalace()) {
+			DemonPalacePieces.draw(this, level, chunk, p);
 			return;
 		}
 		switch (kind) {
@@ -290,7 +350,7 @@ public class SectPiece extends StructurePiece {
 		// fills in round it when it is opened.
 		if (race.isBeast() && level.getBlockEntity(pos) instanceof RandomizableContainerBlockEntity box) {
 			RandomSource random = rand(x, z, y + 97);
-			ItemStack blood = DemonBlood.hoarded(race, upper, loot, random);
+			ItemStack blood = DemonBlood.hoarded(race, upper, HolyLands.isHolyLand(level.getLevel().dimension()), loot, random);
 			if (!blood.isEmpty()) box.setItem(random.nextInt(box.getContainerSize()), blood);
 		}
 		RandomizableContainerBlockEntity.setLootTable(level, rand(x, z, y), pos, loot);
@@ -320,7 +380,7 @@ public class SectPiece extends StructurePiece {
 
 	// --- Roofs ---
 
-	private void roof(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x0, int z0, int x1, int z1, int y, int courses, boolean ridge) {
+	void roof(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x0, int z0, int x1, int z1, int y, int courses, boolean ridge) {
 		roof(level, chunk, p, x0, z0, x1, z1, y, courses, ridge, false);
 	}
 
@@ -330,7 +390,7 @@ public class SectPiece extends StructurePiece {
 	 * of the trim colour, and with {@code trimEave} (the grander halls) the whole eave is edged in it. {@code courses} limits
 	 * how many courses are laid (for a lower eave under an upper storey); a finished roof is closed along its ridge.
 	 */
-	private void roof(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x0, int z0, int x1, int z1, int y, int courses, boolean ridge,
+	void roof(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x0, int z0, int x1, int z1, int y, int courses, boolean ridge,
 			boolean trimEave) {
 		for (int k = 0; k < courses; k++) {
 			int ax0 = x0 + k, ax1 = x1 - k, az0 = z0 + k, az1 = z1 - k, ay = y + k;
@@ -371,7 +431,7 @@ public class SectPiece extends StructurePiece {
 	 * course or two higher, and a slit of sky showed between them all the way round (the roof seemed to float). This builds the
 	 * walls up to meet it: plaster, pillars at the corners.
 	 */
-	private void closeEaves(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x0, int z0, int x1, int z1, int wallTop,
+	void closeEaves(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x0, int z0, int x1, int z1, int wallTop,
 			int rx0, int rz0, int rx1, int rz1, int roofY, int courses) {
 		for (int x = x0; x <= x1; x++) {
 			for (int z = z0; z <= z1; z++) {
@@ -387,7 +447,7 @@ public class SectPiece extends StructurePiece {
 	}
 
 	/** Courses a hipped roof over this rectangle needs to reach its ridge. */
-	private static int ridgeCourses(int x0, int z0, int x1, int z1) {
+	static int ridgeCourses(int x0, int z0, int x1, int z1) {
 		return (Math.min(x1 - x0, z1 - z0)) / 2 + 1;
 	}
 
@@ -398,7 +458,7 @@ public class SectPiece extends StructurePiece {
 	 * fence-post lattice; a {@code solid} building, the treasury, has small barred windows), the doorway ({@code door} wide,
 	 * {@code doorHeight} high) in the middle of the front, and a timber beam with bronze brackets above the pillars all round.
 	 */
-	private void walls(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x0, int z0, int x1, int z1, int y0, int y1, int bay, int door,
+	void walls(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x0, int z0, int x1, int z1, int y0, int y1, int bay, int door,
 			int doorHeight, boolean solid) {
 		int cx = (x0 + x1) / 2;
 		int[] across = pillarSpots(x1 - x0, bay, true), along = pillarSpots(z1 - z0, bay, false);
@@ -460,7 +520,7 @@ public class SectPiece extends StructurePiece {
 	}
 
 	/** A raised stone base with steps down at the front middle, {@code height} above the paving. */
-	private void plinth(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x0, int z0, int x1, int z1, int height, int stepsWidth) {
+	void plinth(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x0, int z0, int x1, int z1, int height, int stepsWidth) {
 		if (height <= 0) return;
 		for (int x = x0; x <= x1; x++) {
 			for (int z = z0; z <= z1; z++) {
@@ -477,7 +537,7 @@ public class SectPiece extends StructurePiece {
 	}
 
 	/** Clears the inside of a building and lays its floor at {@code floorY}. */
-	private void interior(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x0, int z0, int x1, int z1, int floorY, int topY) {
+	void interior(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x0, int z0, int x1, int z1, int floorY, int topY) {
 		fill(level, chunk, x0, floorY, z0, x1, floorY, z1, p.floor);
 		air(level, chunk, x0, floorY + 1, z0, x1, topY, z1);
 	}
@@ -501,7 +561,13 @@ public class SectPiece extends StructurePiece {
 		int w = width(), d = depth();
 		byte[] map = extra.getByteArray("Map");
 		if (map.length != w * d) return; // a walled sect from before the grounds were laid out like this: no plan to draw
+		if (extra.getBoolean("Follow")) {
+			followGround(level, chunk, p, map, w, d);
+			return;
+		}
 		BlockState earth = Blocks.DIRT.defaultBlockState(), stone = p.foundation.defaultBlockState();
+		// How high over the grounds the land is cut away: a Holy Land's far wider grounds cross higher knolls (HolyLandPlan).
+		int clear = extra.contains("Clear") ? extra.getInt("Clear") : 22;
 		// The ground first, column by column.
 		for (int x = 0; x < w; x++) {
 			for (int z = 0; z < d; z++) {
@@ -511,7 +577,7 @@ public class SectPiece extends StructurePiece {
 				BlockState floor = landFloor(level, chunk, x, z);
 				boolean paved = code == SectLayout.PATH || code == SectLayout.PATH_EDGE || code == SectLayout.PLAZA;
 				foundation(level, chunk, x, 0, z, paved ? stone : earth);
-				air(level, chunk, x, 1, z, x, 22, z);
+				air(level, chunk, x, 1, z, x, clear, z);
 				switch (code) {
 					case SectLayout.PATH -> put(level, chunk, x, 0, z, p.path);
 					case SectLayout.PATH_EDGE, SectLayout.PLAZA -> put(level, chunk, x, 0, z, p.foundation);
@@ -541,6 +607,64 @@ public class SectPiece extends StructurePiece {
 					}
 				}
 			}
+		}
+	}
+
+	/**
+	 * The grounds laid on the land as it lies ("Follow": the user's ask, 2026-10-25, as Minecraft's and Terralith's villages are, not
+	 * levelled; each building stands on its own ground, the land shaped round it by vanilla's Beardifier, the structures being beard_thin):
+	 * the paved ways and their edging, the footpaths, stone lanterns, trees and bamboo (a den's undergrowth) on each column's own top; the
+	 * grass between left as the land has it, and nothing stood in water but the ways (a causeway of the way's own stone). The piece is its
+	 * structure's first, so each column's top is still the ground's, and its box lies at the world's floor (CityPlanner), so the land is
+	 * shaped round the buildings only, never levelled under all of the grounds.
+	 */
+	private void followGround(WorldGenLevel level, BoundingBox chunk, SectPalette p, byte[] map, int w, int d) {
+		for (int x = 0; x < w; x++) {
+			for (int z = 0; z < d; z++) {
+				byte code = map[x + z * w];
+				if (code == SectLayout.OUT || code == SectLayout.GRASS) continue;
+				BlockPos column = getWorldPos(x, 0, z);
+				// (A tree just beyond the chunk draws its crown's share in it, as on levelled grounds.)
+				if (!CityPieces.draws(chunk, code, column.getX(), column.getZ())) continue;
+				int top = CityPieces.groundTop(level, column.getX(), column.getZ());
+				if (top <= level.getMinBuildHeight() + 2) continue;
+				BlockPos at = new BlockPos(column.getX(), top, column.getZ());
+				boolean wet = !level.getBlockState(at).getFluidState().isEmpty();
+				switch (code) {
+					case SectLayout.PATH -> lay(level, at, p.path.defaultBlockState());
+					case SectLayout.PATH_EDGE, SectLayout.PLAZA -> lay(level, at, p.foundation.defaultBlockState());
+					case SectLayout.FOOTPATH -> {
+						int roll = rand(x, z, 3).nextInt(10);
+						lay(level, at, wet ? p.paving.defaultBlockState() : roll < 7 ? Blocks.DIRT_PATH.defaultBlockState()
+								: roll < 9 ? Blocks.COARSE_DIRT.defaultBlockState() : p.paving.defaultBlockState());
+					}
+					default -> {
+						if (wet) continue;
+						// What stands on the ground, by a piece of one column set on it (drawn as on levelled grounds, below).
+						SectPiece spot = new SectPiece(Kind.TERRACE, new BoundingBox(at.getX(), top, at.getZ(), at.getX(), top + 1, at.getZ()),
+								Direction.NORTH, seed ^ (x * 341873128712L + z * 132897987541L), faction, upper, null, race);
+						switch (code) {
+							case SectLayout.LANTERN -> spot.stoneLantern(level, chunk, p, 0, 1, 0);
+							case SectLayout.TREE -> spot.tree(level, chunk, p, 0, 0, rand(x, z, 7));
+							case SectLayout.BAMBOO -> {
+								if (race.isBeast()) DenPieces.brush(spot, level, chunk, p, 0, 0, rand(x, z, 9));
+								else spot.bamboo(level, chunk, 0, 0, rand(x, z, 9));
+							}
+							default -> { }
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/** A way's block laid over the land's top at {@code at}, what grows over it taken away. */
+	private static void lay(WorldGenLevel level, BlockPos at, BlockState state) {
+		level.setBlock(at, state, Block.UPDATE_CLIENTS);
+		for (int dy = 1; dy <= 3; dy++) {
+			BlockPos up = at.above(dy);
+			BlockState here = level.getBlockState(up);
+			if (!here.isAir() && here.canBeReplaced()) level.setBlock(up, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
 		}
 	}
 
@@ -1036,18 +1160,18 @@ public class SectPiece extends StructurePiece {
 	}
 
 	/** A brazier: a lit campfire, of soul fire where the sect burns it. */
-	private static BlockState brazier(SectPalette p) {
+	static BlockState brazier(SectPalette p) {
 		return (p.soulFire ? Blocks.SOUL_CAMPFIRE : Blocks.CAMPFIRE).defaultBlockState();
 	}
 
 	/** A lantern hung on a chain from {@code from} down to {@code y}. */
-	private void chainedLantern(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x, int from, int y, int z) {
+	void chainedLantern(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x, int from, int y, int z) {
 		fill(level, chunk, x, y + 1, z, x, from, z, Blocks.CHAIN.defaultBlockState());
 		lanternHanging(level, chunk, p, x, y, z);
 	}
 
 	/** A great brazier three blocks across on a stone base, (x, z) its middle: a fire in a bowl of the trim, smoke rising. */
-	private void bigBrazier(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x, int y, int z) {
+	void bigBrazier(WorldGenLevel level, BoundingBox chunk, SectPalette p, int x, int y, int z) {
 		for (int dx = -1; dx <= 1; dx++) {
 			for (int dz = -1; dz <= 1; dz++) {
 				put(level, chunk, x + dx, y, z + dz, p.foundation);
@@ -1442,6 +1566,12 @@ public class SectPiece extends StructurePiece {
 			fill(level, chunk, x, 1, 0, x, 3, 0, p.baseWall);
 			put(level, chunk, x, 4, 0, p.banner);
 		}
+	}
+
+	/** Where a meditation hall's master sits, {x, y, z}: on the aisle's carpet before its altar, facing the door (CelestialCourt's Venerables). */
+	public int[] hallSeat() {
+		Frame f = frame(2, 2);
+		return new int[] {f.cx(), 2, f.z1 - 3};
 	}
 
 	/** The dwelling's mat, {x, y, z}: its owner's home. */

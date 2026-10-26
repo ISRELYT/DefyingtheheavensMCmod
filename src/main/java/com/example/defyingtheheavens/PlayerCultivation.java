@@ -61,6 +61,26 @@ public class PlayerCultivation {
 	 * {@link #cultivationRequired()}).
 	 */
 	public static final double UPPER_REALM_QI_MULTIPLIER = 10.0;
+	/**
+	 * The Great Void Realm's denser qi (2026-10-25), as the Upper Realm's is: everything meditation gathers there and the qi pool's
+	 * refill are multiplied by this ({@link #placeFactor}: RealmSuppressionHandler sets it as the place's own), and the realms only it
+	 * sustains at their pace ({@link #GREAT_VOID_REALMS_FROM} and above) need that many times their base (the user's pick: "like the Upper
+	 * Realm rule"), so those realms take as long there as before and ten times longer below it, and a Dao Integration carried up races
+	 * ahead. The years spent stay as they were (Lifespan#placeSaving reckons the place against the realm's own need, {@link #qiNeed}).
+	 */
+	public static final double GREAT_VOID_QI_MULTIPLIER = 100.0;
+	/** The first realm the Great Void alone sustains at its pace: the breach is torn from it on (VoidBreach). */
+	public static final Realm GREAT_VOID_REALMS_FROM = Realm.VOID_SHATTERING;
+	/**
+	 * The Immortal Realm's qi, immortal qi (phase 2, 2026-10-25), as the Great Void's is to its: a thousand times the lower realms'
+	 * ({@link #placeFactor}: RealmSuppressionHandler sets it as the place's own), and the realm only it sustains at its pace
+	 * ({@link #IMMORTAL_REALMS_FROM}) needs that many times its base (the Great Void's rule a step up), so True Immortal takes as long
+	 * there as it did in the Great Void and ten times longer anywhere below; an Entering Nirvana carried up races ahead. The years
+	 * spent stay as they were (Lifespan#placeSaving).
+	 */
+	public static final double IMMORTAL_QI_MULTIPLIER = 1000.0;
+	/** The realm the Immortal Realm alone sustains at its pace. */
+	public static final Realm IMMORTAL_REALMS_FROM = Realm.TRUE_IMMORTAL;
 	/** Each Cultivation Pill raises pill resistance by this much; the next one works that much less. */
 	public static final double PILL_RESISTANCE_PER_PILL = 0.25;
 	/** Pill resistance never passes this, so a pill always does something. */
@@ -86,6 +106,8 @@ public class PlayerCultivation {
 	 * (never while under pressure: see {@link #heldQi()}).
 	 */
 	private double qi;
+	/** A True Immortal's immortal essence (ImmortalEssence), beside its qi: filled only in the Immortal Realm. */
+	private double essence;
 	private boolean lowerRealmBound;
 	/** Abilities switched off on the Abilities tab (or never switched on, for those that start off); everything else is on. */
 	private final EnumSet<Ability> disabledAbilities = Ability.offByDefault();
@@ -791,6 +813,22 @@ public class PlayerCultivation {
 	/** Realms that start beyond the cap (Four Axis and above): only the Upper Realm can sustain cultivating them. */
 	public static boolean isUpperRealmOnly(Realm realm) { return rank(realm, Stage.EARLY) > CAP_RANK; }
 
+	/** Realms beyond what the Jade Firmament sustains at their pace ({@link #GREAT_VOID_REALMS_FROM} and above: the breach's). */
+	public static boolean isGreatVoidRealm(Realm realm) { return realm.ordinal() >= GREAT_VOID_REALMS_FROM.ordinal(); }
+
+	/** The realm the Immortal Realm alone sustains at its pace ({@link #IMMORTAL_REALMS_FROM} and above). */
+	public static boolean isImmortalRealmRealm(Realm realm) { return realm.ordinal() >= IMMORTAL_REALMS_FROM.ordinal(); }
+
+	/**
+	 * How many times its base {@code realm}'s cultivation needs, offsetting the dense qi of the place that sustains it: the Immortal
+	 * Realm's {@link #IMMORTAL_QI_MULTIPLIER} for True Immortal, the Great Void's {@link #GREAT_VOID_QI_MULTIPLIER} for Void Shattering
+	 * to Entering Nirvana, the Upper Realm's {@link #UPPER_REALM_QI_MULTIPLIER} for Four Axis and Dao Integration, else 1.
+	 */
+	public static double qiNeed(Realm realm) {
+		return isImmortalRealmRealm(realm) ? IMMORTAL_QI_MULTIPLIER : isGreatVoidRealm(realm) ? GREAT_VOID_QI_MULTIPLIER
+				: isUpperRealmOnly(realm) ? UPPER_REALM_QI_MULTIPLIER : 1.0;
+	}
+
 	/** True cultivation exceeds what the current (lower) realm can sustain. */
 	public boolean isSuppressed() { return heldBelow() && rank(realm, stage) > CAP_RANK; }
 
@@ -871,7 +909,10 @@ public class PlayerCultivation {
 		return true;
 	}
 
-	/** How many times the lower realms' qi this place gives: the Upper Realm's {@link #UPPER_REALM_QI_MULTIPLIER}, else the place's own density. */
+	/**
+	 * How many times the lower realms' qi this place gives: the Upper Realm's {@link #UPPER_REALM_QI_MULTIPLIER}, else the place's own
+	 * density (the Great Void's {@link #GREAT_VOID_QI_MULTIPLIER}, a planet's, space's).
+	 */
 	public double placeFactor() { return inUpperRealm ? UPPER_REALM_QI_MULTIPLIER : placeQi; }
 
 	/**
@@ -957,6 +998,11 @@ public class PlayerCultivation {
 	public double getQi() { return Math.min(qi, maxQi()); }
 
 	public void setQi(double qi) { this.qi = Math.max(0, qi); }
+
+	/** The immortal essence held (ImmortalEssence), never more than its pool; none short of True Immortal. */
+	public double essence() { return Math.min(essence, ImmortalEssence.max(this)); }
+
+	public void setEssence(double essence) { this.essence = Math.max(0, essence); }
 
 	/**
 	 * Most qi the pool holds. Follows the effective stage, so a suppressed cultivator holds less, and pressure shrinks it. A
@@ -1060,7 +1106,8 @@ public class PlayerCultivation {
 
 	/**
 	 * Cultivation needed to fill the current stage. Upper-realm-only realms need {@link #UPPER_REALM_QI_MULTIPLIER} times
-	 * the realm's base, offsetting the dense qi they can only be cultivated in.
+	 * the realm's base, offsetting the dense qi they can only be cultivated in; the Great Void's realms
+	 * {@link #GREAT_VOID_QI_MULTIPLIER} times ({@link #qiNeed}).
 	 */
 	public double cultivationRequired() {
 		return required(realm, stage);
@@ -1068,8 +1115,7 @@ public class PlayerCultivation {
 
 	/** {@link #cultivationRequired()} for any realm and stage (the heaven methods' layers share it out: HeavenMethods#layerCost). */
 	public static double required(Realm realm, Stage stage) {
-		double required = realm.getCultivationBase() * stage.getCultivationMultiplier();
-		return isUpperRealmOnly(realm) ? required * UPPER_REALM_QI_MULTIPLIER : required;
+		return realm.getCultivationBase() * stage.getCultivationMultiplier() * qiNeed(realm);
 	}
 
 	public double cultivationPerSecond() { return realm.getCultivationPerSecond() * stage.getPowerMultiplier(); }
@@ -1271,6 +1317,7 @@ public class PlayerCultivation {
 		tag.putInt("Stage", stage.ordinal());
 		tag.putDouble("Cultivation", cultivation);
 		tag.putDouble("Qi", qi);
+		if (essence > 0) tag.putDouble("ImmortalEssence", essence);
 		tag.putInt("EffectiveRealm", getEffectiveRealm().ordinal());
 		tag.putInt("EffectiveStage", getEffectiveStage().ordinal());
 		tag.putBoolean("LowerRealmBound", lowerRealmBound);
@@ -1349,6 +1396,7 @@ public class PlayerCultivation {
 		boolean legacy = !tag.contains("Cultivation");
 		c.setState(Realm.byIndex(tag.getInt("Realm")), Stage.byIndex(tag.getInt("Stage")), tag.getDouble(legacy ? "Qi" : "Cultivation"));
 		c.setQi(legacy ? 0 : tag.getDouble("Qi"));
+		c.setEssence(tag.getDouble("ImmortalEssence"));
 		// Saves from before the mortal path were already cultivating, so a missing flag means "not mortal".
 		c.mortal = tag.contains("Mortal") && tag.getBoolean("Mortal");
 		// The body first: shattered meridians temper on past a mortal's Peak (saves from before physiques roll one on joining).

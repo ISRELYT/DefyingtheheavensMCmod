@@ -28,7 +28,8 @@ import org.joml.Vector3f;
  *   <li>Never a mortal's (its meridians sealed), one of the dead's, nor one's in another's body.</li>
  * </ul>
  * It is left by the race's demons (a clan's cultivator now and then: {@link #NPC_CHANCE}; a demon player slain by another, with its core)
- * and by the wild beasts of its kin ({@link #kin}); and now and then a clan keeps a phial of it laid up in its den's chests ({@link #hoarded}).
+ * and by the wild beasts of its kin ({@link #kin}); now and then a clan keeps a phial of it laid up in its den's chests ({@link #hoarded});
+ * and in the Great Void a phial of Void Shattering to Entering Nirvana blood lies over a blood pool, its race's elder keeping it (BloodPools).
  */
 public final class DemonBlood {
 	/** How much purer a half-blood's blood grows a drink: blood below its other paths' realm, at it, a realm above, blood it already held. */
@@ -146,17 +147,24 @@ public final class DemonBlood {
 	 */
 	public static final float HOARD_CHANCE = 0.12f, HALL_CHANCE = 0.12f, ELDER_CHANCE = 0.08f;
 	static final int[] LOWER_REALMS_BLOOD = {60, 30, 10}, UPPER_REALM_BLOOD = {0, 0, 20, 20, 18, 15, 11, 7, 5, 4};
+	/** A Demon Palace's (the Great Void's clans): its library's realms, Heavenly Being to Entering Nirvana, as often (chests/sect_library). */
+	static final int[] GREAT_VOID_BLOOD = {0, 0, 0, 0, 60, 80, 100, 90, 60, 40};
 
 	/**
 	 * A phial of {@code race}'s blood laid up in one of its den's chests (SectPiece#chest; its loot, {@code chest}, fills in round it when
 	 * it is opened), or nothing ({@link #HOARD_CHANCE}): of a realm by the {@code upper} realm's weights or the lower realms'.
 	 */
 	public static ItemStack hoarded(Bloodline race, boolean upper, ResourceLocation chest, RandomSource random) {
+		return hoarded(race, upper, false, chest, random);
+	}
+
+	/** As {@link #hoarded(Bloodline, boolean, ResourceLocation, RandomSource)}, a Demon Palace's ({@code greatVoid}) by the Great Void's weights. */
+	public static ItemStack hoarded(Bloodline race, boolean upper, boolean greatVoid, ResourceLocation chest, RandomSource random) {
 		if (race == null || !race.isBeast()) return ItemStack.EMPTY;
 		float chance = chest.equals(SectPiece.TREASURY_LOOT) ? HOARD_CHANCE : chest.equals(SectPiece.MASTER_HALL_LOOT) ? HALL_CHANCE
 				: chest.equals(SectPiece.ELDER_LOOT) ? ELDER_CHANCE : 0;
 		if (random.nextFloat() >= chance) return ItemStack.EMPTY;
-		int[] weights = upper ? UPPER_REALM_BLOOD : LOWER_REALMS_BLOOD;
+		int[] weights = greatVoid ? GREAT_VOID_BLOOD : upper ? UPPER_REALM_BLOOD : LOWER_REALMS_BLOOD;
 		int total = 0;
 		for (int w : weights) total += w;
 		int roll = random.nextInt(total);
@@ -167,14 +175,37 @@ public final class DemonBlood {
 		return ItemStack.EMPTY;
 	}
 
-	/** The race whose blood a wild beast of {@code kind} leaves (its kin), or null: the tiger's, the fox's, the reptiles' the lizard's, the flood dragon's. */
+	/**
+	 * The race whose blood a beast of {@code kind} leaves (its kin), or null: the tiger's, the fox's, the reptiles' the lizard's, the
+	 * flood dragon's; and each race's elder ({@link #elder}) its own race's; of the primordial beasts the True Phoenix the fox's and the True
+	 * Dragon the dragon's (the realm plan: "the Dragon's for dragons, the Phoenix's for foxes"), the Kun-Peng none (no race is its kin).
+	 */
 	public static Bloodline kin(BeastKind kind) {
 		return switch (kind) {
-			case BLOODFANG_TIGER -> Bloodline.TIGER;
-			case EMBER_FOX -> Bloodline.FOX;
-			case JADE_VIPER, JADE_SCALED_PYTHON, IRON_JAW_CROCODILE -> Bloodline.LIZARD;
-			case FLOOD_DRAGON -> Bloodline.DRAGON;
+			case BLOODFANG_TIGER, ELDER_WHITE_TIGER -> Bloodline.TIGER;
+			case EMBER_FOX, NINE_TAILED_FOX, TRUE_PHOENIX -> Bloodline.FOX;
+			case JADE_VIPER, JADE_SCALED_PYTHON, IRON_JAW_CROCODILE, MOUNTAIN_LIZARD_KING -> Bloodline.LIZARD;
+			case FLOOD_DRAGON, AZURE_DRAGON, TRUE_DRAGON -> Bloodline.DRAGON;
 			default -> null;
+		};
+	}
+
+	/**
+	 * The realm of the blood a demon of {@code realm} carries: none beyond what the worlds hold (Realm#atMostTaught), but in the Immortal
+	 * Realm ({@code immortalRealm}) its own, a True Immortal's too (the realm plan: "Demon immortals inside also carry TI blood").
+	 */
+	public static Realm carried(Realm realm, boolean immortalRealm) {
+		return immortalRealm ? realm : realm.atMostTaught();
+	}
+
+	/** The elder of {@code race}'s kin, who keeps its blood in the Great Void's pools (BloodPools); null for a man. */
+	public static BeastKind elder(Bloodline race) {
+		return switch (race) {
+			case TIGER -> BeastKind.ELDER_WHITE_TIGER;
+			case FOX -> BeastKind.NINE_TAILED_FOX;
+			case LIZARD -> BeastKind.MOUNTAIN_LIZARD_KING;
+			case DRAGON -> BeastKind.AZURE_DRAGON;
+			case HUMAN -> null;
 		};
 	}
 

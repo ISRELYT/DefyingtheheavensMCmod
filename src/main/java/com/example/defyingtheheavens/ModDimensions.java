@@ -33,6 +33,23 @@ public final class ModDimensions {
 	 */
 	public static final ResourceKey<Level> ASTRAL_VOID = ResourceKey.create(Registries.DIMENSION, DefyingTheHeavens.id("astral_void"));
 	public static final ResourceKey<Level> ASTRAL_SURFACES = ResourceKey.create(Registries.DIMENSION, DefyingTheHeavens.id("astral_surfaces"));
+	/**
+	 * The Great Void Realm (the user's name, 2026-10-25), above the Jade Firmament (the Upper Realm): floating continents under a
+	 * starlit void, its qi a hundred times the lower realms' (PlayerCultivation#GREAT_VOID_QI_MULTIPLIER), home of Dao Integration to
+	 * Entering Nirvana; reached from Void Shattering on by a Void Breach torn high in the Jade Firmament's sky (VoidBreach).
+	 */
+	public static final ResourceKey<Level> GREAT_VOID = ResourceKey.create(Registries.DIMENSION, DefyingTheHeavens.id("great_void"));
+	/** The climb through shattered space between the Jade Firmament's sky and the Great Void (VoidBreach): generated as nothing, as the gap. */
+	public static final ResourceKey<Level> VOID_BREACH = ResourceKey.create(Registries.DIMENSION, DefyingTheHeavens.id("void_breach"));
+	/**
+	 * The Immortal Realm (phase 2 of the realm plan, 2026-10-25): an endless sea of clouds with jade peaks rising out of it, waterfalls
+	 * pouring into the clouds, under a golden sky; its qi a thousand times the lower realms' (PlayerCultivation#IMMORTAL_QI_MULTIPLIER),
+	 * the True Immortals' home and the one place their methods are taught; reached through the Immortal Gate over the Great Void's void
+	 * sea (ImmortalGate), its other side the Southern Heavenly Gate at the realm's 0, 0.
+	 */
+	public static final ResourceKey<Level> IMMORTAL_REALM = ResourceKey.create(Registries.DIMENSION, DefyingTheHeavens.id("immortal_realm"));
+	/** The climb through the Immortal Gate (ImmortalGate): generated as nothing, as the breach. */
+	public static final ResourceKey<Level> IMMORTAL_PASSAGE = ResourceKey.create(Registries.DIMENSION, DefyingTheHeavens.id("immortal_passage"));
 
 	public static final ResourceKey<LevelStem> UPPER_REALM_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("upper_realm"));
 	public static final ResourceKey<LevelStem> SPATIAL_GAP_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("spatial_gap"));
@@ -41,6 +58,10 @@ public final class ModDimensions {
 	public static final ResourceKey<LevelStem> SOUL_RIVER_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("soul_river"));
 	public static final ResourceKey<LevelStem> ASTRAL_VOID_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("astral_void"));
 	public static final ResourceKey<LevelStem> ASTRAL_SURFACES_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("astral_surfaces"));
+	public static final ResourceKey<LevelStem> GREAT_VOID_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("great_void"));
+	public static final ResourceKey<LevelStem> VOID_BREACH_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("void_breach"));
+	public static final ResourceKey<LevelStem> IMMORTAL_REALM_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("immortal_realm"));
+	public static final ResourceKey<LevelStem> IMMORTAL_PASSAGE_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("immortal_passage"));
 
 	public static final ResourceKey<DimensionType> UPPER_REALM_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("upper_realm"));
 	public static final ResourceKey<DimensionType> SPATIAL_GAP_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("spatial_gap"));
@@ -49,6 +70,10 @@ public final class ModDimensions {
 	public static final ResourceKey<DimensionType> SOUL_RIVER_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("soul_river"));
 	public static final ResourceKey<DimensionType> ASTRAL_VOID_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("astral_void"));
 	public static final ResourceKey<DimensionType> ASTRAL_SURFACES_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("astral_surfaces"));
+	public static final ResourceKey<DimensionType> GREAT_VOID_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("great_void"));
+	public static final ResourceKey<DimensionType> VOID_BREACH_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("void_breach"));
+	public static final ResourceKey<DimensionType> IMMORTAL_REALM_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("immortal_realm"));
+	public static final ResourceKey<DimensionType> IMMORTAL_PASSAGE_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("immortal_passage"));
 
 	/** Dimension effects ids; the client registers the custom sky, fog and cloud behaviour under these. */
 	public static final ResourceLocation UPPER_REALM_EFFECTS = DefyingTheHeavens.id("upper_realm");
@@ -58,6 +83,34 @@ public final class ModDimensions {
 	public static final ResourceLocation SOUL_RIVER_EFFECTS = DefyingTheHeavens.id("soul_river");
 	public static final ResourceLocation ASTRAL_VOID_EFFECTS = DefyingTheHeavens.id("astral_void");
 	public static final ResourceLocation ASTRAL_SURFACES_EFFECTS = DefyingTheHeavens.id("astral_surfaces");
+	public static final ResourceLocation GREAT_VOID_EFFECTS = DefyingTheHeavens.id("great_void");
+	public static final ResourceLocation VOID_BREACH_EFFECTS = DefyingTheHeavens.id("void_breach");
+	public static final ResourceLocation IMMORTAL_REALM_EFFECTS = DefyingTheHeavens.id("immortal_realm");
+	public static final ResourceLocation IMMORTAL_PASSAGE_EFFECTS = DefyingTheHeavens.id("immortal_passage");
+	/**
+	 * The Great Void: as tall as the Jade Firmament (its continents float between Y ~60 and ~460, see ModNoiseSettings#greatVoid),
+	 * its day held at noon under a sky that is all stars: the void's light, not a sun's (GreatVoidClient draws it).
+	 */
+	public static final int GREAT_VOID_MIN_Y = -64;
+	public static final int GREAT_VOID_HEIGHT = 576; // -64 .. 511
+	public static final int GREAT_VOID_LOGICAL_HEIGHT = 512;
+	public static final long GREAT_VOID_TIME = 6000L;
+	/** The breach's shattered space (VoidBreach): one climbs it from {@link VoidBreach#ENTER_Y} to {@link VoidBreach#EXIT_Y}. */
+	public static final int VOID_BREACH_MIN_Y = 0;
+	public static final int VOID_BREACH_HEIGHT = 384;
+	/**
+	 * The Immortal Realm: its peaks rise out of the sea of clouds, whose top lies at {@link #IMMORTAL_CLOUD_Y} (the client draws it,
+	 * ImmortalRealmClient; nothing of it is a block), their roots hanging far below in the clouds; its day held at noon under a golden
+	 * sky (the client's too).
+	 */
+	public static final int IMMORTAL_REALM_MIN_Y = 0;
+	public static final int IMMORTAL_REALM_HEIGHT = 512; // 0 .. 511
+	public static final int IMMORTAL_REALM_LOGICAL_HEIGHT = 512;
+	public static final long IMMORTAL_REALM_TIME = 6000L;
+	public static final int IMMORTAL_CLOUD_Y = 150;
+	/** The Gate's passage (ImmortalGate): one climbs it from {@link ImmortalGate#ENTER_Y} to {@link ImmortalGate#EXIT_Y}. */
+	public static final int IMMORTAL_PASSAGE_MIN_Y = 0;
+	public static final int IMMORTAL_PASSAGE_HEIGHT = 384;
 	/**
 	 * Space is a sliver of a world (see AstralPlanets#SPACE_Y: everything in it hangs far above), with light enough to see whoever
 	 * flies there by.
@@ -107,6 +160,26 @@ public final class ModDimensions {
 		return dimension == UPPER_REALM;
 	}
 
+	/** The Great Void Realm, above the Jade Firmament. */
+	public static boolean isGreatVoid(ResourceKey<Level> dimension) {
+		return dimension == GREAT_VOID;
+	}
+
+	/** The breach's shattered space, between the Jade Firmament's sky and the Great Void (VoidBreach). */
+	public static boolean isVoidBreach(ResourceKey<Level> dimension) {
+		return dimension == VOID_BREACH;
+	}
+
+	/** The Immortal Realm, above the Great Void (through the Immortal Gate). */
+	public static boolean isImmortalRealm(ResourceKey<Level> dimension) {
+		return dimension == IMMORTAL_REALM;
+	}
+
+	/** The Gate's passage, between the Great Void's void sea and the Southern Heavenly Gate (ImmortalGate). */
+	public static boolean isImmortalPassage(ResourceKey<Level> dimension) {
+		return dimension == IMMORTAL_PASSAGE;
+	}
+
 	public static boolean isNetherworld(ResourceKey<Level> dimension) {
 		return dimension == NETHERWORLD;
 	}
@@ -124,9 +197,12 @@ public final class ModDimensions {
 		return dimension == SOUL_RIVER;
 	}
 
-	/** A passage between a lower and a high realm, gone through on the way up or down: the Spatial Gap or the Soul River. */
+	/**
+	 * A passage between two realms, gone through on the way up or down: the Spatial Gap or the Soul River (a lower realm and a high
+	 * realm), the Void Breach (the Jade Firmament and the Great Void), the Gate's passage (the Great Void and the Immortal Realm).
+	 */
 	public static boolean isPassage(ResourceKey<Level> dimension) {
-		return isSpatialGap(dimension) || isSoulRiver(dimension);
+		return isSpatialGap(dimension) || isSoulRiver(dimension) || isVoidBreach(dimension) || isImmortalPassage(dimension);
 	}
 
 	public static boolean isInnerRealm(ResourceKey<Level> dimension) {
@@ -261,6 +337,74 @@ public final class ModDimensions {
 				ASTRAL_SURFACES_EFFECTS,
 				0.0f,
 				new DimensionType.MonsterSettings(false, true, UniformInt.of(0, 7), 0)));
+
+		context.register(GREAT_VOID_TYPE, new DimensionType(
+				OptionalLong.of(GREAT_VOID_TIME), // the void's light never sets: the land lit as by day under a sky of stars
+				true,                          // has skylight
+				false,                         // no ceiling
+				false,                         // not ultrawarm
+				true,                          // natural: compasses work, beds can set spawn
+				1.0,                           // 1:1 with the Jade Firmament below: a breach comes out over where it was torn
+				true,                          // beds work
+				false,                         // respawn anchors don't
+				GREAT_VOID_MIN_Y,
+				GREAT_VOID_HEIGHT,
+				GREAT_VOID_LOGICAL_HEIGHT,
+				BlockTags.INFINIBURN_OVERWORLD,
+				GREAT_VOID_EFFECTS,
+				0.1f,                          // a little light in the shade: starlight
+				new DimensionType.MonsterSettings(false, false, UniformInt.of(0, 7), 0)));
+
+		context.register(VOID_BREACH_TYPE, new DimensionType(
+				OptionalLong.of(18000L),       // no day in broken space
+				false,
+				false,
+				false,
+				false,
+				1.0,
+				false,
+				false,
+				VOID_BREACH_MIN_Y,
+				VOID_BREACH_HEIGHT,
+				VOID_BREACH_HEIGHT,
+				BlockTags.INFINIBURN_OVERWORLD,
+				VOID_BREACH_EFFECTS,
+				0.3f,                          // the shards' glow lights whoever climbs
+				new DimensionType.MonsterSettings(false, false, ConstantInt.of(0), 0)));
+
+		context.register(IMMORTAL_REALM_TYPE, new DimensionType(
+				OptionalLong.of(IMMORTAL_REALM_TIME), // the golden light never sets
+				true,                          // has skylight
+				false,                         // no ceiling
+				false,                         // not ultrawarm
+				true,                          // natural: compasses work, beds can set spawn
+				1.0,                           // 1:1 with the Great Void below
+				true,                          // beds work
+				false,                         // respawn anchors don't
+				IMMORTAL_REALM_MIN_Y,
+				IMMORTAL_REALM_HEIGHT,
+				IMMORTAL_REALM_LOGICAL_HEIGHT,
+				BlockTags.INFINIBURN_OVERWORLD,
+				IMMORTAL_REALM_EFFECTS,
+				0.2f,                          // the golden light reaches into the shade
+				new DimensionType.MonsterSettings(false, false, UniformInt.of(0, 7), 0)));
+
+		context.register(IMMORTAL_PASSAGE_TYPE, new DimensionType(
+				OptionalLong.of(6000L),        // all light in the Gate's passage
+				false,
+				false,
+				false,
+				false,
+				1.0,
+				false,
+				false,
+				IMMORTAL_PASSAGE_MIN_Y,
+				IMMORTAL_PASSAGE_HEIGHT,
+				IMMORTAL_PASSAGE_HEIGHT,
+				BlockTags.INFINIBURN_OVERWORLD,
+				IMMORTAL_PASSAGE_EFFECTS,
+				0.6f,                          // the Gate's light on whoever climbs
+				new DimensionType.MonsterSettings(false, false, ConstantInt.of(0), 0)));
 	}
 
 	private ModDimensions() {}

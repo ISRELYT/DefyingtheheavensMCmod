@@ -94,6 +94,12 @@ public final class NpcLines {
 	}
 
 	static {
+		// --- Waiting on the Shore of Nirvana for the Immortal Gate (NirvanaCamp), to a player passing by ---
+		lines("shore.wait.righteous", "The Immortal Gate shows itself in its own time. We wait.", "A thousand years of cultivation, and still I wait upon this shore.",
+				"When the Gate opens, only the swift pass. Rest while you can.", "Look north, over the void sea. That is where it opens.");
+		lines("shore.wait.neutral", "Waiting.", "The Gate opens when it opens.", "Mind the sea. Nothing comes back from it.", "Another one come to wait?");
+		lines("shore.wait.devilish", "Another hopeful? The Gate takes few.", "Keep clear of my place on this shore.", "When it opens, I'll be first. Remember that.",
+				"Stand any closer and you can wait for the next life instead.");
 		// --- A player passing by (%s: the player's name, or what they carry) ---
 		lines("pass.liked.righteous", "Fellow Daoist %s! Well met again.", "Ah, %s. May your cultivation flourish.", "%s! You honour us with a visit.");
 		lines("pass.liked.neutral", "Ah, %s. Road treating you well?", "Back again, %s?", "%s. Good to see you.");

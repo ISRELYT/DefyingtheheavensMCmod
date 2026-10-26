@@ -66,8 +66,15 @@ public final class RealmSuppressionHandler {
 	static void applyRealm(PlayerCultivation c, ResourceKey<Level> where) {
 		c.setLowerRealmBound(ModDimensions.isLowerRealm(where));
 		c.setInUpperRealm(ModDimensions.isUpperRealm(where));
-		// The Astral Realm's density is the place's own, kept by AstralRealm as one moves; everywhere else, the realm's.
-		if (!ModDimensions.isAstral(where)) c.setPlaceQi(1.0);
+		// The Astral Realm's density is the place's own, kept by AstralRealm as one moves; everywhere else, the realm's: the Great Void's
+		// a hundredfold (PlayerCultivation#GREAT_VOID_QI_MULTIPLIER), the Immortal Realm's a thousandfold, the rest the lower realms' own.
+		if (!ModDimensions.isAstral(where)) c.setPlaceQi(realmQi(where));
+	}
+
+	/** How dense the qi of the realm {@code where} is, against the lower realms' (the Astral Realm's places aside). */
+	public static double realmQi(ResourceKey<Level> where) {
+		return ModDimensions.isImmortalRealm(where) ? PlayerCultivation.IMMORTAL_QI_MULTIPLIER
+				: ModDimensions.isGreatVoid(where) ? PlayerCultivation.GREAT_VOID_QI_MULTIPLIER : 1.0;
 	}
 
 	/** Safety net for dimension changes that don't fire the world-change event (e.g. some command teleports). */
@@ -76,7 +83,8 @@ public final class RealmSuppressionHandler {
 		for (ServerPlayer player : server.getPlayerList().getPlayers()) {
 			PlayerCultivation c = CultivationManager.get(player);
 			ResourceKey<Level> dimension = InnerRealm.bodyDimension(player);
-			if (c.isLowerRealmBound() != ModDimensions.isLowerRealm(dimension) || c.isInUpperRealm() != ModDimensions.isUpperRealm(dimension)) {
+			if (c.isLowerRealmBound() != ModDimensions.isLowerRealm(dimension) || c.isInUpperRealm() != ModDimensions.isUpperRealm(dimension)
+					|| !ModDimensions.isAstral(dimension) && !ModDimensions.isUpperRealm(dimension) && c.placeFactor() != realmQi(dimension)) {
 				update(player);
 			}
 		}

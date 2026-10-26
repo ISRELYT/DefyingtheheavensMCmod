@@ -222,6 +222,7 @@ public class NetherworldMethodsGameTests implements FabricGameTest {
 	public void theDashCarriesAndTheWailDrivesBack(GameTestHelper helper) {
 		ServerPlayer player = cultivator(helper, Realm.NASCENT_SOUL);
 		NetherworldState s = CultivationManager.get(player).netherworld();
+		Zombie zombie;
 		try {
 			s.setMethod(GhostMethod.WANDERING_SOUL_STEPS, 2, 0);
 			s.setMethod(GhostMethod.NETHERWORLD_BREATHING, 5, 0);
@@ -231,14 +232,22 @@ public class NetherworldMethodsGameTests implements FabricGameTest {
 			Spells.cast(player, Spell.SOUL_DASH);
 			helper.assertTrue(player.getDeltaMovement().horizontalDistance() > 1.0 && Spells.fallIsSafe(player), "The dash throws them forward, safe from the fall");
 			BlockPos near = new BlockPos(3, 2, 3);
-			Zombie zombie = helper.spawn(EntityType.ZOMBIE, near);
+			zombie = helper.spawn(EntityType.ZOMBIE, near);
 			player.teleportTo(zombie.getX() + 2, zombie.getY(), zombie.getZ());
 			Spells.cast(player, Spell.GHOSTLY_WAIL);
-			helper.assertTrue(zombie.hasEffect(MobEffects.MOVEMENT_SLOWDOWN) && zombie.hasEffect(MobEffects.WEAKNESS), "The wail slows and weakens what's near");
-		} finally {
+		} catch (RuntimeException e) {
 			cleanUp(player);
+			throw e;
 		}
-		helper.succeed();
+		// Its cry breaks out once its ghost has risen over its caster.
+		helper.runAfterDelay(Spells.WAIL_RISES + 2, () -> {
+			try {
+				helper.assertTrue(zombie.hasEffect(MobEffects.MOVEMENT_SLOWDOWN) && zombie.hasEffect(MobEffects.WEAKNESS), "The wail slows and weakens what's near");
+			} finally {
+				cleanUp(player);
+			}
+			helper.succeed();
+		});
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)

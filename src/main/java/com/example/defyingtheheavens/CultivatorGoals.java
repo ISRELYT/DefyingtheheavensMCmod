@@ -967,9 +967,13 @@ public final class CultivatorGoals {
 			}
 			if (npc.getRandom().nextInt(60) != 0) return;
 			// A settler (Settlements) keeps to its home ground: strayed too far, it walks back toward it. Its home is on the Astral
-			// Realm's worlds: carried off anywhere else (a soul took its body there), it has none to walk to.
-			net.minecraft.core.BlockPos home = npc.level().dimension() == ModDimensions.ASTRAL_SURFACES ? npc.settledAt() : null;
-			if (home != null && npc.blockPosition().distSqr(home) > SETTLER_ROAM * SETTLER_ROAM) {
+			// Realm's worlds: carried off anywhere else (a soul took its body there), it has none to walk to. One waiting on the Shore
+			// of Nirvana (NirvanaCamp) keeps to the camp the same way, a little further; a Relic Keeper to its altar, nearer (SacredRelics);
+			// an Immortal Officer to its post at the Southern Heavenly Gate (ImmortalGate).
+			boolean camper = NirvanaCamp.isCamper(npc), keeper = SacredRelics.isKeeper(npc), guard = ImmortalGate.isGuard(npc);
+			net.minecraft.core.BlockPos home = npc.level().dimension() == ModDimensions.ASTRAL_SURFACES || camper || keeper || guard ? npc.settledAt() : null;
+			int roam = keeper ? SacredRelics.ROAM : guard ? ImmortalGate.GUARD_ROAM : camper ? NirvanaCamp.ROAM : SETTLER_ROAM;
+			if (home != null && npc.blockPosition().distSqr(home) > roam * roam) {
 				Vec3 back = LandRandomPos.getPosTowards(npc, 10, 6, Vec3.atBottomCenterOf(home));
 				if (back != null) npc.getNavigation().moveTo(back.x, back.y, back.z, 0.8);
 				return;
@@ -1227,9 +1231,14 @@ public final class CultivatorGoals {
 
 		private boolean wants(LivingEntity target) {
 			if (npc.isConcealed() || npc.shouldFlee()) return false;
+			// A Relic Keeper goes for whoever comes near its altar, whatever their path (SacredRelics).
+			if (SacredRelics.isKeeper(npc)) return SacredRelics.guards(npc, target);
 			// A settler (Settlements) is of the lower realms' common folk: it seeks no fight, only defends itself (RetaliateGoal), and
-			// leaves what preys on its people to the one who took it on (Wishes).
-			if (npc.settledAt() != null) return false;
+			// leaves what preys on its people to the one who took it on (Wishes). Those waiting on the Shore of Nirvana neither, but for
+			// the short-tempered of the devilish path, at an enemy of theirs come close (NirvanaCamp#loses).
+			if (npc.settledAt() != null && !(NirvanaCamp.isCamper(npc) && NirvanaCamp.loses(npc, target))) return false;
+			// On the camp's ground nobody goes for one of the demon races waiting there (NirvanaCamp#shelters).
+			if (NirvanaCamp.shelters(target)) return false;
 			// What preys on them (a Merit wish's threat) is out for the one who took it on, and nobody else: not the settlers.
 			if (Wishes.isThreat(npc)) return target instanceof Player player && player.getUUID().equals(Wishes.takerOf(npc)) && npc.isEnemy(target);
 			CultivatorNpc.Lifecycle life = npc.getLifecycle();

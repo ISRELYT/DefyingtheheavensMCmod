@@ -22,13 +22,15 @@ import java.util.List;
 /**
  * A demon race's blood in a phial (the user's ask, 2026-10-24: "blood lines should be a physical item like slips"): its race ("BloodRace")
  * and the realm it was of ("BloodRealm"), drunk as a potion is (DemonBlood: what it does, and when it won't take: refused before it's
- * drunk, on both sides). It looks its realm as a demon core does ({@link #look}: five looks, Qi Refining to Heavenly Being and beyond), its
- * blood glowing its race's hue ({@link #tint}).
+ * drunk, on both sides). It looks its realm as a demon core does ({@link #look}: six looks, Qi Refining to Heavenly Being and beyond, and a
+ * True Immortal's its own), its blood glowing its race's hue ({@link #tint}).
  */
 public class DemonBloodItem extends Item {
 	private static final String RACE = "BloodRace", REALM = "BloodRealm";
-	/** Its looks, by realm: Qi Refining, Foundation Building, Core Formation, Nascent Soul, Heavenly Being and above. */
-	public static final int LOOKS = 5;
+	/** Its looks, by realm: Qi Refining, Foundation Building, Core Formation, Nascent Soul, Heavenly Being to Entering Nirvana, True Immortal. */
+	public static final int LOOKS = 6;
+	/** Heavenly Being's look, worn up to Entering Nirvana; a True Immortal's blood wears the last. */
+	private static final int HIGH_LOOK = 4;
 
 	public DemonBloodItem(Properties properties) {
 		super(properties);
@@ -56,9 +58,13 @@ public class DemonBloodItem extends Item {
 		return Realm.byIndex(tag == null ? 0 : Math.max(0, Math.min(Realm.values().length - 1, tag.getInt(REALM))));
 	}
 
-	/** Which of its {@link #LOOKS} it wears (the client's "defying-the-heavens:realm" model property): its realm's, Heavenly Being's from there up. */
+	/**
+	 * Which of its {@link #LOOKS} it wears (the client's "defying-the-heavens:realm" model property): its realm's, Heavenly Being's from there
+	 * up to Entering Nirvana, a True Immortal's its own (the golden phial, tools/beast-art's Bloods).
+	 */
 	public static int look(ItemStack stack) {
-		return Math.min(LOOKS - 1, realm(stack).ordinal());
+		Realm realm = realm(stack);
+		return realm == Realm.TRUE_IMMORTAL ? LOOKS - 1 : Math.min(HIGH_LOOK, realm.ordinal());
 	}
 
 	/** The hue its blood glows (the client's tint of its second layer): its race's; a dull red where none is known. */

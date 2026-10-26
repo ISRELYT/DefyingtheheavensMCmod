@@ -68,7 +68,8 @@ public class ClanGameTests implements FabricGameTest {
 						helper.assertTrue(halls == 1 && hoards == 1 && burrows == 1 && elders >= 2, "A head's den, a hoard, a burrow and elders' dens (" + what
 								+ ": " + halls + " " + hoards + " " + burrows + " " + elders + ")");
 					}
-					helper.assertTrue(race != Bloodline.FOX || rows == 1, "A fox clan's tunnel of torii up its way (" + what + ")");
+					// No clan has a tunnel of torii up its way now, a fox clan's neither: one gate at its start (the user's call, 2026-10-25).
+					helper.assertTrue(rows == 0, "No tunnel of torii up the way, only its gate (" + what + ")");
 					CompoundTag posts = blueprint.getCompound("Posts");
 					int homes = posts.getLongArray("DWELLING").length;
 					helper.assertTrue(homes >= SectStructure.maxMembers(size) - 1, "A home for every member but the head (" + homes + ", " + what + ")");

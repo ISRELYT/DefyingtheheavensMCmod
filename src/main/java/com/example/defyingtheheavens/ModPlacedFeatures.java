@@ -76,6 +76,8 @@ public final class ModPlacedFeatures {
 	public static final ResourceKey<PlacedFeature> SPIRIT_FOREST_TREES = key("spirit_forest_trees");
 	public static final ResourceKey<PlacedFeature> BAMBOO_GROVE = key("bamboo_grove");
 	public static final ResourceKey<PlacedFeature> PEACH_BLOSSOM_TREES = key("peach_blossom_trees");
+	/** The Immortal Gardens' blossom, far sparer: their lawns open between the trees (tour 1: three a chunk closed them into one canopy). */
+	public static final ResourceKey<PlacedFeature> IMMORTAL_BLOSSOMS = key("immortal_realm/blossoms");
 	public static final ResourceKey<PlacedFeature> PEAK_SPRUCES = key("peak_spruces");
 	public static final ResourceKey<PlacedFeature> FLOWERS_CHERRY = key("flowers_cherry");
 	public static final ResourceKey<PlacedFeature> FLOWERS_FOREST = key("flowers_forest");
@@ -207,6 +209,21 @@ public final class ModPlacedFeatures {
 	public static final ResourceKey<PlacedFeature> DAO_STELE = key("dao_stele");
 	public static final ResourceKey<PlacedFeature> DAO_STELE_UPPER_REALM = key("dao_stele_upper_realm");
 	public static final int DAO_STELE_CHUNKS = 60, DAO_STELE_CHUNKS_UPPER_REALM = 32;
+	/**
+	 * The Great Void's (2026-10-25): a Sacred Vessel's altar tried in one chunk in {@link #SACRED_RELIC_CHUNKS} of its steppes and Dao
+	 * fields (only on level land, so some one in a thousand by a thousand blocks), a battlefield's ruin in one in
+	 * {@link #BATTLEFIELD_RUIN_CHUNKS} of its Ancient Battlefields, a blood pool in one in {@link #BLOOD_POOL_CHUNKS} of them (only on
+	 * level land too). Not in {@link #ORDER}: ModFeatures#register appends them.
+	 */
+	public static final ResourceKey<PlacedFeature> SACRED_RELIC = key("great_void/sacred_relic");
+	public static final ResourceKey<PlacedFeature> BATTLEFIELD_RUIN = key("great_void/battlefield_ruin");
+	public static final ResourceKey<PlacedFeature> BLOOD_POOL = key("great_void/blood_pool");
+	public static final int SACRED_RELIC_CHUNKS = 900, BATTLEFIELD_RUIN_CHUNKS = 3, BLOOD_POOL_CHUNKS = 120;
+	/**
+	 * The Immortal Realm's Jade Capital and Celestial Court (phase 2, ImmortalCapital): asked once in every chunk of the realm, each chunk of
+	 * the main island laying its share. Not in {@link #ORDER}: ModFeatures#register appends it.
+	 */
+	public static final ResourceKey<PlacedFeature> IMMORTAL_CAPITAL = key("immortal_realm/capital");
 	public static final int NW_SPRINGS = 24;
 	public static final int NW_LAKES_SPRINGS = 1;
 	/** A small patch of soul fire (10 tries) in one Bone Wastes chunk in this many. */
@@ -273,6 +290,7 @@ public final class ModPlacedFeatures {
 			new Entry(GenerationStep.Decoration.VEGETAL_DECORATION, SPIRIT_FOREST_TREES),
 			new Entry(GenerationStep.Decoration.VEGETAL_DECORATION, BAMBOO_GROVE),
 			new Entry(GenerationStep.Decoration.VEGETAL_DECORATION, PEACH_BLOSSOM_TREES),
+			new Entry(GenerationStep.Decoration.VEGETAL_DECORATION, IMMORTAL_BLOSSOMS),
 			new Entry(GenerationStep.Decoration.VEGETAL_DECORATION, PEAK_SPRUCES),
 			new Entry(GenerationStep.Decoration.VEGETAL_DECORATION, FLOWERS_CHERRY),
 			new Entry(GenerationStep.Decoration.VEGETAL_DECORATION, FLOWERS_FOREST),
@@ -354,6 +372,7 @@ public final class ModPlacedFeatures {
 		register(context, BAMBOO_GROVE, configured.getOrThrow(VegetationFeatures.BAMBOO_SOME_PODZOL), surface(NoiseBasedCountPlacement.of(60, 80.0, 0.3), null));
 		// Cherry canopies are wide; more than a couple per chunk merges them into one solid pink layer.
 		register(context, PEACH_BLOSSOM_TREES, configured.getOrThrow(ModConfiguredFeatures.PEACH_BLOSSOM_TREES), surface(CountPlacement.of(3), null));
+		register(context, IMMORTAL_BLOSSOMS, configured.getOrThrow(ModConfiguredFeatures.PEACH_BLOSSOM_TREES), surface(RarityFilter.onAverageOnceEvery(2), null));
 		register(context, PEAK_SPRUCES, configured.getOrThrow(TreeFeatures.SPRUCE), surface(CountPlacement.of(2), Blocks.SPRUCE_SAPLING));
 		register(context, FLOWERS_CHERRY, configured.getOrThrow(VegetationFeatures.FLOWER_CHERRY), surface(CountPlacement.of(4), null));
 		register(context, FLOWERS_FOREST, configured.getOrThrow(VegetationFeatures.FLOWER_FLOWER_FOREST), surface(CountPlacement.of(3), null));
@@ -437,6 +456,17 @@ public final class ModPlacedFeatures {
 		register(context, DAO_STELE_UPPER_REALM, configured.getOrThrow(ModConfiguredFeatures.DAO_STELE), List.of(
 				RarityFilter.onAverageOnceEvery(DAO_STELE_CHUNKS_UPPER_REALM), InSquarePlacement.spread(),
 				HeightmapPlacement.onHeightmap(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES), BiomeFilter.biome()));
+		register(context, SACRED_RELIC, configured.getOrThrow(ModConfiguredFeatures.SACRED_RELIC), List.of(
+				RarityFilter.onAverageOnceEvery(SACRED_RELIC_CHUNKS), InSquarePlacement.spread(),
+				HeightmapPlacement.onHeightmap(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES), BiomeFilter.biome()));
+		register(context, BATTLEFIELD_RUIN, configured.getOrThrow(ModConfiguredFeatures.BATTLEFIELD_RUIN), List.of(
+				RarityFilter.onAverageOnceEvery(BATTLEFIELD_RUIN_CHUNKS), InSquarePlacement.spread(),
+				HeightmapPlacement.onHeightmap(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES), BiomeFilter.biome()));
+		register(context, BLOOD_POOL, configured.getOrThrow(ModConfiguredFeatures.BLOOD_POOL), List.of(
+				RarityFilter.onAverageOnceEvery(BLOOD_POOL_CHUNKS), InSquarePlacement.spread(),
+				HeightmapPlacement.onHeightmap(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES), BiomeFilter.biome()));
+		// Once in every chunk, at the chunk's corner: the capital draws what of it crosses the chunk.
+		register(context, IMMORTAL_CAPITAL, configured.getOrThrow(ModConfiguredFeatures.IMMORTAL_CAPITAL), List.of());
 		register(context, NW_DEAD_TREE_RARE, configured.getOrThrow(ModConfiguredFeatures.NW_DEAD_TREE), palaceSafe(onSurface(RarityFilter.onAverageOnceEvery(10))));
 		register(context, NW_SPIDER_LILIES, configured.getOrThrow(ModConfiguredFeatures.NW_SPIDER_LILIES), onSurface(CountPlacement.of(4)));
 		register(context, NW_SPIDER_LILIES_SPARSE, configured.getOrThrow(ModConfiguredFeatures.NW_SPIDER_LILIES), onSurface(RarityFilter.onAverageOnceEvery(3)));

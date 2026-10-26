@@ -19,7 +19,8 @@ import net.minecraft.world.level.block.state.properties.SlabType;
  * </ul>
  * The trim (the roofs' ridges, eaves and upturned corners, the gates' lintels) is bronze for the righteous, prismarine for the
  * neutral and red nether brick for the devilish.
- * In the Upper Realm the accents turn to jade and the trees bloom white.
+ * In the Upper Realm the accents turn to jade and the trees bloom white. The Great Void's Holy Lands ({@link #holy}) build on that in
+ * white jade and gold: quartz foundations and footings, gold for the accents and (the righteous) the ridges.
  * <p>
  * Nothing here may be a block springs can open in (vanilla's spring_water and spring_lava take stone, granite, diorite,
  * andesite, deepslate, tuff, calcite and dirt): springs are placed after structures, and would pour water or lava out of
@@ -38,6 +39,11 @@ public final class SectPalette {
 	public final Bloodline race;
 
 	private SectPalette(Alignment.Faction faction, boolean upper) {
+		this(faction, upper, false);
+	}
+
+	/** {@code holy}: a Holy Land's (with {@code upper}: an Upper Realm palette in white jade and gold, see the class's note). */
+	private SectPalette(Alignment.Faction faction, boolean upper, boolean holy) {
 		this.faction = faction;
 		this.upper = upper;
 		this.race = Bloodline.HUMAN;
@@ -57,7 +63,7 @@ public final class SectPalette {
 				roofTrim = Blocks.RED_NETHER_BRICKS;
 				trimStairs = (StairBlock) Blocks.RED_NETHER_BRICK_STAIRS;
 				trimSlab = (SlabBlock) Blocks.RED_NETHER_BRICK_SLAB;
-				accent = upper ? ModBlocks.JADE_STONE : Blocks.GILDED_BLACKSTONE;
+				accent = holy ? Blocks.GOLD_BLOCK : upper ? ModBlocks.JADE_STONE : Blocks.GILDED_BLACKSTONE;
 				window = Blocks.CRIMSON_FENCE;
 				carpet = Blocks.RED_CARPET;
 				carpetAlt = Blocks.BLACK_CARPET;
@@ -73,10 +79,10 @@ public final class SectPalette {
 				soulFire = true;
 			}
 			case NEUTRAL -> {
-				foundation = Blocks.STONE_BRICKS;
+				foundation = holy ? Blocks.QUARTZ_BRICKS : Blocks.STONE_BRICKS;
 				paving = Blocks.POLISHED_DIORITE;
 				path = Blocks.SMOOTH_STONE;
-				wallBase = Blocks.STONE_BRICKS;
+				wallBase = holy ? Blocks.QUARTZ_BRICKS : Blocks.STONE_BRICKS;
 				wall = Blocks.SMOOTH_QUARTZ;
 				pillar = ModBlocks.BLUE_SPIRIT_LOG;
 				beam = Blocks.STRIPPED_SPRUCE_LOG;
@@ -87,13 +93,13 @@ public final class SectPalette {
 				roofTrim = Blocks.PRISMARINE_BRICKS;
 				trimStairs = (StairBlock) Blocks.PRISMARINE_BRICK_STAIRS;
 				trimSlab = (SlabBlock) Blocks.PRISMARINE_BRICK_SLAB;
-				accent = upper ? ModBlocks.JADE_STONE : Blocks.PRISMARINE_BRICKS;
+				accent = holy ? Blocks.GOLD_BLOCK : upper ? ModBlocks.JADE_STONE : Blocks.PRISMARINE_BRICKS;
 				window = Blocks.SPRUCE_FENCE;
 				carpet = Blocks.BLUE_CARPET;
 				carpetAlt = Blocks.LIGHT_BLUE_CARPET;
-				baseStairs = (StairBlock) Blocks.STONE_BRICK_STAIRS;
-				baseSlab = (SlabBlock) Blocks.STONE_BRICK_SLAB;
-				baseWall = Blocks.STONE_BRICK_WALL;
+				baseStairs = (StairBlock) (holy ? Blocks.QUARTZ_STAIRS : Blocks.STONE_BRICK_STAIRS);
+				baseSlab = (SlabBlock) (holy ? Blocks.QUARTZ_SLAB : Blocks.STONE_BRICK_SLAB);
+				baseWall = holy ? Blocks.DIORITE_WALL : Blocks.STONE_BRICK_WALL;
 				lantern = Blocks.LANTERN;
 				candle = Blocks.LIGHT_BLUE_CANDLE;
 				banner = Blocks.BLUE_BANNER;
@@ -103,10 +109,10 @@ public final class SectPalette {
 				soulFire = false;
 			}
 			default -> {
-				foundation = Blocks.STONE_BRICKS;
+				foundation = holy ? Blocks.QUARTZ_BRICKS : Blocks.STONE_BRICKS;
 				paving = Blocks.POLISHED_ANDESITE;
 				path = Blocks.SMOOTH_STONE;
-				wallBase = Blocks.STONE_BRICKS;
+				wallBase = holy ? Blocks.QUARTZ_BRICKS : Blocks.STONE_BRICKS;
 				wall = Blocks.SMOOTH_QUARTZ;
 				pillar = Blocks.STRIPPED_MANGROVE_LOG;
 				beam = Blocks.STRIPPED_DARK_OAK_LOG;
@@ -114,16 +120,16 @@ public final class SectPalette {
 				roof = Blocks.DEEPSLATE_TILES;
 				roofStairs = (StairBlock) Blocks.DEEPSLATE_TILE_STAIRS;
 				roofSlab = (SlabBlock) Blocks.DEEPSLATE_TILE_SLAB;
-				roofTrim = Blocks.WAXED_CUT_COPPER;
+				roofTrim = holy ? Blocks.GOLD_BLOCK : Blocks.WAXED_CUT_COPPER;
 				trimStairs = (StairBlock) Blocks.WAXED_CUT_COPPER_STAIRS;
 				trimSlab = (SlabBlock) Blocks.WAXED_CUT_COPPER_SLAB;
-				accent = upper ? ModBlocks.JADE_STONE : Blocks.WAXED_CUT_COPPER;
+				accent = holy ? Blocks.GOLD_BLOCK : upper ? ModBlocks.JADE_STONE : Blocks.WAXED_CUT_COPPER;
 				window = Blocks.DARK_OAK_FENCE;
 				carpet = Blocks.RED_CARPET;
 				carpetAlt = Blocks.WHITE_CARPET;
-				baseStairs = (StairBlock) Blocks.STONE_BRICK_STAIRS;
-				baseSlab = (SlabBlock) Blocks.STONE_BRICK_SLAB;
-				baseWall = Blocks.STONE_BRICK_WALL;
+				baseStairs = (StairBlock) (holy ? Blocks.QUARTZ_STAIRS : Blocks.STONE_BRICK_STAIRS);
+				baseSlab = (SlabBlock) (holy ? Blocks.QUARTZ_SLAB : Blocks.STONE_BRICK_SLAB);
+				baseWall = holy ? Blocks.DIORITE_WALL : Blocks.STONE_BRICK_WALL;
 				lantern = Blocks.LANTERN;
 				candle = Blocks.WHITE_CANDLE;
 				banner = Blocks.RED_BANNER;
@@ -274,6 +280,157 @@ public final class SectPalette {
 		}
 	}
 
+	/**
+	 * A Demon Palace's (the Great Void's dens, DemonPalacePlan; the user's yes, 2026-10-25): dark stone in its race's colours, for its
+	 * halls, its grounds and the blood ring round its core (its great beasts are DemonPalacePieces' own):
+	 * <ul>
+	 *   <li>Tiger: black stone and white, white ridges, iron bars at the windows, pale soul fire.</li>
+	 *   <li>Fox: dark nether brick and white plaster, vermilion pillars, red roofs under dark eaves, foxfire (soul fire).</li>
+	 *   <li>Lizard: deepslate, green copper roofs with copper eaves, jade, lanterns.</li>
+	 *   <li>Dragon: deepslate, roofs of azure prismarine with gilt eaves, gold, lanterns.</li>
+	 * </ul>
+	 * Nothing springs open in (see the class's note).
+	 */
+	private SectPalette(Bloodline race) {
+		this.faction = Alignment.Faction.NEUTRAL;
+		this.upper = true;
+		this.race = race;
+		switch (race) {
+			case FOX -> {
+				foundation = Blocks.NETHER_BRICKS;
+				paving = Blocks.POLISHED_BLACKSTONE;
+				path = Blocks.RED_NETHER_BRICKS;
+				wallBase = Blocks.NETHER_BRICKS;
+				wall = Blocks.SMOOTH_QUARTZ;
+				pillar = Blocks.STRIPPED_MANGROVE_LOG; // vermilion
+				beam = Blocks.STRIPPED_DARK_OAK_LOG;
+				floor = Blocks.DARK_OAK_PLANKS;
+				roof = Blocks.RED_NETHER_BRICKS;
+				roofStairs = (StairBlock) Blocks.RED_NETHER_BRICK_STAIRS;
+				roofSlab = (SlabBlock) Blocks.RED_NETHER_BRICK_SLAB;
+				roofTrim = Blocks.NETHER_BRICKS;
+				trimStairs = (StairBlock) Blocks.NETHER_BRICK_STAIRS;
+				trimSlab = (SlabBlock) Blocks.NETHER_BRICK_SLAB;
+				accent = Blocks.GOLD_BLOCK;
+				window = Blocks.CRIMSON_FENCE;
+				carpet = Blocks.RED_CARPET;
+				carpetAlt = Blocks.WHITE_CARPET;
+				baseStairs = (StairBlock) Blocks.NETHER_BRICK_STAIRS;
+				baseSlab = (SlabBlock) Blocks.NETHER_BRICK_SLAB;
+				baseWall = Blocks.NETHER_BRICK_WALL;
+				lantern = Blocks.SOUL_LANTERN; // foxfire
+				candle = Blocks.RED_CANDLE;
+				banner = Blocks.RED_BANNER;
+				wallBanner = Blocks.RED_WALL_BANNER;
+				leaves = Blocks.CHERRY_LEAVES;
+				trunk = Blocks.CHERRY_LOG;
+				soulFire = true;
+			}
+			case LIZARD -> {
+				foundation = Blocks.DEEPSLATE_TILES;
+				paving = Blocks.POLISHED_DEEPSLATE;
+				path = Blocks.MUD_BRICKS;
+				wallBase = Blocks.DEEPSLATE_TILES;
+				wall = Blocks.DEEPSLATE_BRICKS;
+				pillar = Blocks.DARK_OAK_LOG;
+				beam = Blocks.STRIPPED_MANGROVE_LOG;
+				floor = Blocks.POLISHED_DEEPSLATE;
+				roof = Blocks.WAXED_OXIDIZED_CUT_COPPER;
+				roofStairs = (StairBlock) Blocks.WAXED_OXIDIZED_CUT_COPPER_STAIRS;
+				roofSlab = (SlabBlock) Blocks.WAXED_OXIDIZED_CUT_COPPER_SLAB;
+				roofTrim = Blocks.WAXED_CUT_COPPER;
+				trimStairs = (StairBlock) Blocks.WAXED_CUT_COPPER_STAIRS;
+				trimSlab = (SlabBlock) Blocks.WAXED_CUT_COPPER_SLAB;
+				accent = ModBlocks.JADE_STONE;
+				window = Blocks.MANGROVE_FENCE;
+				carpet = Blocks.GREEN_CARPET;
+				carpetAlt = Blocks.ORANGE_CARPET;
+				baseStairs = (StairBlock) Blocks.DEEPSLATE_TILE_STAIRS;
+				baseSlab = (SlabBlock) Blocks.DEEPSLATE_TILE_SLAB;
+				baseWall = Blocks.DEEPSLATE_TILE_WALL;
+				lantern = Blocks.LANTERN;
+				candle = Blocks.ORANGE_CANDLE;
+				banner = Blocks.GREEN_BANNER;
+				wallBanner = Blocks.GREEN_WALL_BANNER;
+				leaves = Blocks.MANGROVE_LEAVES;
+				trunk = Blocks.MANGROVE_LOG;
+				soulFire = false;
+			}
+			case DRAGON -> {
+				foundation = Blocks.DEEPSLATE_TILES;
+				paving = Blocks.POLISHED_DEEPSLATE;
+				path = Blocks.PRISMARINE_BRICKS;
+				wallBase = Blocks.DEEPSLATE_TILES;
+				wall = Blocks.DEEPSLATE_BRICKS;
+				pillar = Blocks.POLISHED_BASALT;
+				beam = Blocks.STRIPPED_DARK_OAK_LOG;
+				floor = Blocks.POLISHED_DEEPSLATE;
+				roof = Blocks.PRISMARINE_BRICKS;
+				roofStairs = (StairBlock) Blocks.PRISMARINE_BRICK_STAIRS;
+				roofSlab = (SlabBlock) Blocks.PRISMARINE_BRICK_SLAB;
+				roofTrim = Blocks.GOLD_BLOCK;
+				trimStairs = (StairBlock) Blocks.WAXED_CUT_COPPER_STAIRS;
+				trimSlab = (SlabBlock) Blocks.WAXED_CUT_COPPER_SLAB;
+				accent = Blocks.GOLD_BLOCK;
+				window = Blocks.DARK_OAK_FENCE;
+				carpet = Blocks.CYAN_CARPET;
+				carpetAlt = Blocks.YELLOW_CARPET;
+				baseStairs = (StairBlock) Blocks.DEEPSLATE_TILE_STAIRS;
+				baseSlab = (SlabBlock) Blocks.DEEPSLATE_TILE_SLAB;
+				baseWall = Blocks.DEEPSLATE_TILE_WALL;
+				lantern = Blocks.LANTERN;
+				candle = Blocks.CYAN_CANDLE;
+				banner = Blocks.CYAN_BANNER;
+				wallBanner = Blocks.CYAN_WALL_BANNER;
+				leaves = Blocks.SPRUCE_LEAVES;
+				trunk = Blocks.SPRUCE_LOG;
+				soulFire = false;
+			}
+			default -> { // TIGER (and a man's, who has no palace)
+				foundation = Blocks.POLISHED_BLACKSTONE_BRICKS;
+				paving = Blocks.POLISHED_BLACKSTONE;
+				path = Blocks.SMOOTH_QUARTZ;
+				wallBase = Blocks.POLISHED_BLACKSTONE_BRICKS;
+				wall = Blocks.SMOOTH_QUARTZ;
+				pillar = Blocks.POLISHED_BASALT;
+				beam = Blocks.STRIPPED_DARK_OAK_LOG;
+				floor = Blocks.POLISHED_BLACKSTONE;
+				roof = Blocks.POLISHED_BLACKSTONE_BRICKS;
+				roofStairs = (StairBlock) Blocks.POLISHED_BLACKSTONE_BRICK_STAIRS;
+				roofSlab = (SlabBlock) Blocks.POLISHED_BLACKSTONE_BRICK_SLAB;
+				roofTrim = Blocks.QUARTZ_BLOCK;
+				trimStairs = (StairBlock) Blocks.QUARTZ_STAIRS;
+				trimSlab = (SlabBlock) Blocks.QUARTZ_SLAB;
+				accent = Blocks.GOLD_BLOCK;
+				window = Blocks.IRON_BARS;
+				carpet = Blocks.WHITE_CARPET;
+				carpetAlt = Blocks.BLACK_CARPET;
+				baseStairs = (StairBlock) Blocks.POLISHED_BLACKSTONE_BRICK_STAIRS;
+				baseSlab = (SlabBlock) Blocks.POLISHED_BLACKSTONE_BRICK_SLAB;
+				baseWall = Blocks.POLISHED_BLACKSTONE_BRICK_WALL;
+				lantern = Blocks.SOUL_LANTERN;
+				candle = Blocks.WHITE_CANDLE;
+				banner = Blocks.WHITE_BANNER;
+				wallBanner = Blocks.WHITE_WALL_BANNER;
+				leaves = Blocks.BIRCH_LEAVES;
+				trunk = Blocks.BIRCH_LOG;
+				soulFire = true;
+			}
+		}
+	}
+
+	private static final SectPalette[] PALACE_CACHE = new SectPalette[Bloodline.values().length];
+
+	/** A Demon Palace's palette, by its race (see the palace constructor), cached. */
+	public static SectPalette palace(Bloodline race) {
+		SectPalette palette = PALACE_CACHE[race.ordinal()];
+		if (palette == null) {
+			palette = new SectPalette(race);
+			PALACE_CACHE[race.ordinal()] = palette;
+		}
+		return palette;
+	}
+
 	private static final SectPalette[][] RACE_CACHE = new SectPalette[Bloodline.values().length][2];
 
 	/** A demon clan's den's palette (see the race constructor), cached. */
@@ -293,6 +450,18 @@ public final class SectPalette {
 		if (palette == null) {
 			palette = new SectPalette(faction, upper);
 			CACHE[faction.ordinal()][upper ? 1 : 0] = palette;
+		}
+		return palette;
+	}
+
+	private static final SectPalette[] HOLY_CACHE = new SectPalette[Alignment.Faction.values().length];
+
+	/** A Holy Land's palette, by its path (the Great Void's sects, HolyLands: white jade and gold), cached. */
+	public static SectPalette holy(Alignment.Faction faction) {
+		SectPalette palette = HOLY_CACHE[faction.ordinal()];
+		if (palette == null) {
+			palette = new SectPalette(faction, true, true);
+			HOLY_CACHE[faction.ordinal()] = palette;
 		}
 		return palette;
 	}

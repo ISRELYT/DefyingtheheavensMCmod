@@ -3,6 +3,7 @@ package com.example.defyingtheheavens.client;
 import com.example.defyingtheheavens.Alignment;
 import com.example.defyingtheheavens.CultivatorNpc;
 import com.example.defyingtheheavens.DefyingTheHeavens;
+import com.example.defyingtheheavens.HolyLands;
 import com.example.defyingtheheavens.ModLang;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -154,7 +155,9 @@ public class CultivatorNpcRenderer extends HumanoidMobRenderer<CultivatorNpc, Pl
 
 		// The title, in its colour (a gate guard's post rather than its rank).
 		Component title = Component.translatable(ModLang.NPC_TITLE_BRACKETS,
-				npc.isGateGuard() ? Component.translatable(ModLang.NPC_GATE_GUARD) : npc.getTitle().getDisplayName(npc.isDemon()));
+				npc.isGateGuard() ? Component.translatable(ModLang.NPC_GATE_GUARD)
+						: npc.getTitle().getDisplayName(npc.isDemon(), HolyLands.isHolyLand(npc.level().dimension()),
+								com.example.defyingtheheavens.ImmortalSects.isImmortalSect(npc.level().dimension())));
 		int titleColor = 0xFF000000 | npc.getTitle().getColor();
 		float tx = -font.width(title) / 2f;
 		font.drawInBatch(title, tx, -24, 0x20FFFFFF, false, matrix, buffers, Font.DisplayMode.SEE_THROUGH, background, light);

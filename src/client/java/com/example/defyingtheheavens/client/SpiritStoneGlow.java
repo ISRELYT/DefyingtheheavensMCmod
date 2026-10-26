@@ -21,18 +21,20 @@ import org.joml.Vector3f;
  * is the fruit aura's additive glow ({@link FruitAuraRenderType}).
  */
 public final class SpiritStoneGlow {
-	/** Halo radius per grade (Low to Immortal), in model pixels. In a slot the largest just fills its 16 pixels. */
-	private static final float[] RADIUS = {4.2f, 4.5f, 4.8f, 5.1f, 5.33f};
+	/** Halo radius per grade (Low to Immortal, then Immortal Jade), in model pixels. In a slot the largest just fills its 16 pixels. */
+	private static final float[] RADIUS = {4.2f, 4.5f, 4.8f, 5.1f, 5.33f, 7.0f};
 	/** Halo brightness at its centre, per grade. */
-	private static final float[] BRIGHTNESS = {0.16f, 0.26f, 0.36f, 0.46f, 0.58f};
+	private static final float[] BRIGHTNESS = {0.16f, 0.26f, 0.36f, 0.46f, 0.58f, 0.5f};
 	/** The light a stone gives itself, per grade (block light, 0-15): it is never drawn darker than this. */
-	private static final int[] SELF_LIGHT = {4, 7, 10, 13, 15};
+	private static final int[] SELF_LIGHT = {4, 7, 10, 13, 15, 15};
 	/** One slow breath of the glow, per grade, in ticks (0: steady). */
-	private static final int[] BREATH_TICKS = {0, 0, 0, 90, 60};
+	private static final int[] BREATH_TICKS = {0, 0, 0, 90, 60, 80};
 	/** The breaths' clock wraps at this many milliseconds, a whole number of every breath, so it stays small enough for a float. */
 	private static final long CLOCK_WRAP_MS = 360_000L;
 	/** The stone's centre in its model, in blocks: it lies flat, about 4 pixels tall. */
 	private static final float CENTRE_X = 0.5f, CENTRE_Y = 2.0f / 16, CENTRE_Z = 0.5f;
+	/** Immortal Jade's: a disc standing in the middle of its model, as a flat item's sprite does. */
+	private static final float JADE_CENTRE_Y = 0.5f;
 	private static final int SEGMENTS = 20;
 
 	/** {@code light} to draw {@code stack} with: a spirit stone's block light raised to its grade's own. */
@@ -81,7 +83,8 @@ public final class SpiritStoneGlow {
 		}
 		// Facing the viewer: keep where the stone's centre lands and how much its model is scaled, and drop the turn.
 		Matrix4f pose = poseStack.last().pose();
-		Vector3f centre = pose.transformPosition(CENTRE_X, CENTRE_Y, CENTRE_Z, new Vector3f());
+		boolean jade = stone.grade() == SpiritStoneItem.Grade.IMMORTAL_JADE;
+		Vector3f centre = pose.transformPosition(CENTRE_X, jade ? JADE_CENTRE_Y : CENTRE_Y, CENTRE_Z, new Vector3f());
 		float radius = RADIUS[grade] / 16 * spread * pose.getScale(new Vector3f()).x();
 		Matrix4f facing = new Matrix4f().translation(centre);
 		int colour = stone.grade().color();

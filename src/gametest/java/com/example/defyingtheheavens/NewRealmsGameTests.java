@@ -57,9 +57,14 @@ public class NewRealmsGameTests implements FabricGameTest {
 				&& PlayerCultivation.LAST_RANK == PlayerCultivation.rank(Realm.TRUE_IMMORTAL, Stage.GRAND_PERFECTION), "Four Axis, then the five, True Immortal the last");
 		for (int i = 0; i < AFTER.length; i++) {
 			Realm realm = AFTER[i];
+			// Its needs ten times again; the Great Void's realms (Void Shattering on: 2026-10-25) a hundred times, offsetting its qi; True
+			// Immortal, the Immortal Realm's, a thousand (phase 2).
+			double need = PlayerCultivation.isImmortalRealmRealm(realm) ? PlayerCultivation.IMMORTAL_QI_MULTIPLIER
+					: PlayerCultivation.isGreatVoidRealm(realm) ? PlayerCultivation.GREAT_VOID_QI_MULTIPLIER : PlayerCultivation.UPPER_REALM_QI_MULTIPLIER;
 			helper.assertTrue(realm.ordinal() == Realm.FOUR_AXIS.ordinal() + 1 + i && PlayerCultivation.isUpperRealmOnly(realm)
-					&& PlayerCultivation.required(realm, Stage.EARLY) == realm.getCultivationBase() * Stage.EARLY.getCultivationMultiplier() * PlayerCultivation.UPPER_REALM_QI_MULTIPLIER,
-					realm.getId() + ": in its place, the Upper Realm's alone, its needs ten times again");
+					&& PlayerCultivation.isGreatVoidRealm(realm) == (realm.ordinal() >= Realm.VOID_SHATTERING.ordinal())
+					&& PlayerCultivation.required(realm, Stage.EARLY) == realm.getCultivationBase() * Stage.EARLY.getCultivationMultiplier() * need,
+					realm.getId() + ": in its place, the Upper Realm's alone, its needs ten times again (the Great Void's a hundred)");
 			Realm before = realm.previous();
 			helper.assertTrue(realm.getMaxHealth() > before.getMaxHealth() && realm.getAttackDamage() > before.getAttackDamage() && realm.getMaxQi() > before.getMaxQi()
 					&& realm.getQiGather() > before.getQiGather() && realm.getCultivationBase() > before.getCultivationBase()
@@ -245,8 +250,10 @@ public class NewRealmsGameTests implements FabricGameTest {
 				helper.assertTrue(npc.getRank() <= vesselRank && (npc.getRank() == vesselRank || npc.getRank() % Stage.values().length == Stage.GRAND_PERFECTION.ordinal()),
 						"The rest wait at the Grand Perfection below: " + npc.getRank());
 			}
-			helper.assertTrue(HighRealms.holding(level, Realm.SACRED_VESSEL) == Math.min(1, vessels + 3)
-					&& HighRealms.holding(level, Realm.VOID_SHATTERING) <= Math.max(shattering, 5), "The census holds their places");
+			// (The world may hold more than its room already, of runs before: cultivators of the tests left standing when it last shut down.)
+			helper.assertTrue(HighRealms.holding(level, Realm.SACRED_VESSEL) == Math.max(vessels, 1)
+					&& HighRealms.holding(level, Realm.VOID_SHATTERING) <= Math.max(shattering, 5), "The census holds their places (Sacred Vessel " + vessels + " before, "
+					+ HighRealms.holding(level, Realm.SACRED_VESSEL) + " now; Void Shattering " + shattering + " before, " + HighRealms.holding(level, Realm.VOID_SHATTERING) + " now)");
 			// Entering Nirvana's live elsewhere: none rises to it here.
 			CultivatorNpc nirvana = CultivatorNpc.createFor(level);
 			nirvana.moveTo(helper.absolutePos(new BlockPos(5, 2, 1)).getCenter());

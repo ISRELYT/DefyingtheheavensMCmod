@@ -45,7 +45,8 @@ import java.util.Deque;
  *   <li><b>Its hunt.</b> It goes for the nearest flier in open space within {@link #HUNT_RANGE}, leading its prey, biting when in
  *   reach, now and then lunging; it gives up on one who reaches a planet's air. Unseen by anyone for long, it slips away.</li>
  * </ul>
- * Where they spawn, and how strong, is VestigeSpawner's.
+ * Where they spawn, and how strong, is VestigeSpawner's. They hunt the Void Breach's climbers too (VoidBreach, 2026-10-25): there of a
+ * Heavenly Being's size but its prey's own might ({@link #setMight}), no swifter than the climb ({@link #BREACH_SPEED}).
  */
 public class VoidVestige extends Monster {
 	public static final int MIN_RANK = PlayerCultivation.rank(Realm.NASCENT_SOUL, Stage.EARLY);
@@ -56,8 +57,15 @@ public class VoidVestige extends Monster {
 	public static final double HUNT_RANGE = 160, AIR_MARGIN = 50;
 	/** Between bites (ticks). */
 	private static final int BITE_COOLDOWN = 30;
+	/**
+	 * In a Void Breach's shattered space (VoidBreach, 2026-10-25) it hunts those who climb it: no faster than this (blocks a tick, the
+	 * climb rising at half a block), and kept this far inside the breach's floor and ceiling.
+	 */
+	static final double BREACH_SPEED = 1.1, BREACH_MARGIN = 20;
 
 	private static final EntityDataAccessor<Integer> RANK = SynchedEntityData.defineId(VoidVestige.class, EntityDataSerializers.INT);
+	/** The rank its strength is of, when that isn't its size's ({@link #setMight}: a breach's); -1, its size's own. */
+	private static final EntityDataAccessor<Integer> MIGHT = SynchedEntityData.defineId(VoidVestige.class, EntityDataSerializers.INT);
 
 	private ServerPlayer prey;
 	private Vec3 lastPreyPos;
@@ -91,6 +99,7 @@ public class VoidVestige extends Monster {
 	protected void defineSynchedData() {
 		super.defineSynchedData();
 		entityData.define(RANK, MIN_RANK);
+		entityData.define(MIGHT, -1);
 	}
 
 	public int getRank() { return entityData.get(RANK); }
@@ -99,17 +108,37 @@ public class VoidVestige extends Monster {
 
 	public Stage stage() { return CultivatorNpc.stageOf(getRank()); }
 
-	/** Sets its strength (and size) to cultivation rank {@code rank} (clamped to Nascent Soul Early..Heavenly Being Grand Perfection). */
-	public void setRank(int rank) {
-		rank = Mth.clamp(rank, MIN_RANK, MAX_RANK);
-		entityData.set(RANK, rank);
-		Realm realm = CultivatorNpc.realmOf(rank);
-		Stage stage = CultivatorNpc.stageOf(rank);
+	/** The rank its strength is of: its {@link #setMight might}'s, else its size's own. */
+	public int mightRank() {
+		int might = entityData.get(MIGHT);
+		return might >= 0 ? might : getRank();
+	}
+
+	/**
+	 * Its strength (health, bite, hide) that of rank {@code rank}, any rank, its size unchanged: one of a Void Breach's, of the might of
+	 * whoever it comes for (a Heavenly Being's size there, a Dao Integration's or Void Shattering's bite). Call after {@link #setRank}.
+	 */
+	public void setMight(int rank) {
+		rank = Mth.clamp(rank, MIN_RANK, PlayerCultivation.LAST_RANK);
+		entityData.set(MIGHT, rank);
+		strengthOf(CultivatorNpc.realmOf(rank), CultivatorNpc.stageOf(rank));
+	}
+
+	/** Health and bite as a cultivator of {@code realm}'s {@code stage}, half again as tough, and its hide. */
+	private void strengthOf(Realm realm, Stage stage) {
 		getAttribute(Attributes.MAX_HEALTH).setBaseValue((20 + CultivationStats.maxHealth(realm, stage)) * 1.5);
 		getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(1 + CultivationStats.attackDamage(realm, stage));
 		getAttribute(Attributes.ARMOR).setBaseValue(CultivationStats.armor(realm, stage));
 		getAttribute(Attributes.ARMOR_TOUGHNESS).setBaseValue(CultivationStats.toughness(realm, stage));
 		setHealth(getMaxHealth());
+	}
+
+	/** Sets its strength (and size) to cultivation rank {@code rank} (clamped to Nascent Soul Early..Heavenly Being Grand Perfection). */
+	public void setRank(int rank) {
+		rank = Mth.clamp(rank, MIN_RANK, MAX_RANK);
+		entityData.set(RANK, rank);
+		entityData.set(MIGHT, -1);
+		strengthOf(CultivatorNpc.realmOf(rank), CultivatorNpc.stageOf(rank));
 		refreshDimensions();
 	}
 
@@ -142,19 +171,22 @@ public class VoidVestige extends Monster {
 
 	@Override
 	public Component getName() {
-		return Component.translatable(ModLang.VESTIGE_NAME, PlayerCultivation.rankName(realm(), stage()));
+		int might = mightRank();
+		return Component.translatable(ModLang.VESTIGE_NAME, PlayerCultivation.rankName(CultivatorNpc.realmOf(might), CultivatorNpc.stageOf(might)));
 	}
 
 	// --- Its hunt ---
 
 	@Override
 	protected void customServerAiStep() {
-		if (!(level() instanceof ServerLevel server) || !ModDimensions.isSpace(level().dimension())) {
+		// Space's, or a Void Breach's (VoidBreach): there are no planets in broken space, only its floor and ceiling.
+		boolean breach = ModDimensions.isVoidBreach(level().dimension());
+		if (!(level() instanceof ServerLevel server) || !ModDimensions.isSpace(level().dimension()) && !breach) {
 			discard();
 			return;
 		}
-		AstralPlanets planets = AstralPlanets.get();
-		if (planets == null) return;
+		AstralPlanets planets = breach ? null : AstralPlanets.get();
+		if (planets == null && !breach) return;
 		if (biteCooldown > 0) biteCooldown--;
 		if (lungeTicks > 0) lungeTicks--;
 
@@ -162,7 +194,7 @@ public class VoidVestige extends Monster {
 		if (prey != null && !huntable(prey)) prey = null;
 		if (prey == null || tickCount % 10 == 0) choosePrey(server, planets);
 		Vec3 pos = position().add(0, getBbHeight() / 2, 0);
-		double max = maxSpeed();
+		double max = breach ? Math.min(maxSpeed(), BREACH_SPEED * (lungeTicks > 0 ? 1.5 : 1)) : maxSpeed();
 		Vec3 desired;
 		if (prey != null) {
 			Vec3 preyAt = prey.position().add(0, prey.getBbHeight() / 2, 0);
@@ -185,15 +217,17 @@ public class VoidVestige extends Monster {
 		}
 
 		// Never into a planet's air: it turns away from it, the harder the deeper it has come.
-		AstralPlanets.Planet near = planets.atmosphereAt(pos, AIR_MARGIN);
+		AstralPlanets.Planet near = planets == null ? null : planets.atmosphereAt(pos, AIR_MARGIN);
 		if (near != null) {
 			Vec3 out = pos.subtract(near.pos()).normalize();
 			double depth = (near.atmosphere() + AIR_MARGIN - pos.distanceTo(near.pos())) / AIR_MARGIN;
 			desired = desired.add(out.scale(max * Mth.clamp(depth * 2.5, 0, 3)));
 		}
-		// Nor out past space's floor or ceiling.
-		if (pos.y < AstralPlanets.SPACE_FLOOR + 60) desired = desired.add(0, max, 0);
-		if (pos.y > AstralPlanets.SPACE_CEILING - 60) desired = desired.add(0, -max, 0);
+		// Nor out past space's floor or ceiling (or the breach's).
+		double floor = breach ? ModDimensions.VOID_BREACH_MIN_Y + BREACH_MARGIN : AstralPlanets.SPACE_FLOOR + 60;
+		double ceiling = breach ? ModDimensions.VOID_BREACH_MIN_Y + ModDimensions.VOID_BREACH_HEIGHT - BREACH_MARGIN : AstralPlanets.SPACE_CEILING - 60;
+		if (pos.y < floor) desired = desired.add(0, max, 0);
+		if (pos.y > ceiling) desired = desired.add(0, -max, 0);
 
 		// Turning as a great body turns: the larger, the slower to change its course.
 		Vec3 velocity = getDeltaMovement();
@@ -226,7 +260,7 @@ public class VoidVestige extends Monster {
 		double bestDistance = HUNT_RANGE * HUNT_RANGE;
 		for (ServerPlayer player : server.players()) {
 			if (!huntable(player)) continue;
-			if (planets.atmosphereAt(player.position(), AIR_MARGIN * 0.5) != null) continue;
+			if (planets != null && planets.atmosphereAt(player.position(), AIR_MARGIN * 0.5) != null) continue;
 			double d = player.distanceToSqr(this);
 			// It keeps to the prey it has, unless another is much nearer.
 			if (player == prey) d *= 0.6;
@@ -357,7 +391,7 @@ public class VoidVestige extends Monster {
 	@Override
 	protected void dropCustomDeathLoot(DamageSource source, int looting, boolean hitByPlayer) {
 		super.dropCustomDeathLoot(source, looting, hitByPlayer);
-		int over = getRank() - MIN_RANK;
+		int over = mightRank() - MIN_RANK;
 		Item stone = over >= 6 ? ModItems.HIGH_SPIRIT_STONE : over >= 3 ? ModItems.MID_SPIRIT_STONE : ModItems.LOW_SPIRIT_STONE;
 		int count = 2 + random.nextInt(3) + over % 3 * 2;
 		ItemEntity drop = spawnAtLocation(new ItemStack(stone, count));
@@ -366,13 +400,14 @@ public class VoidVestige extends Monster {
 
 	@Override
 	public int getExperienceReward() {
-		return 20 + (getRank() - MIN_RANK) * 15;
+		return 20 + (mightRank() - MIN_RANK) * 15;
 	}
 
 	@Override
 	public void addAdditionalSaveData(CompoundTag tag) {
 		super.addAdditionalSaveData(tag);
 		tag.putInt("Rank", getRank());
+		if (entityData.get(MIGHT) >= 0) tag.putInt("Might", entityData.get(MIGHT));
 	}
 
 	@Override
@@ -381,6 +416,7 @@ public class VoidVestige extends Monster {
 		if (tag.contains("Rank")) {
 			float health = getHealth();
 			setRank(tag.getInt("Rank"));
+			if (tag.contains("Might")) setMight(tag.getInt("Might"));
 			if (tag.contains("Health")) setHealth(health);
 		}
 	}

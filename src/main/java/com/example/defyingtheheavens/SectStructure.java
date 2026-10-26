@@ -59,22 +59,25 @@ import java.util.Optional;
  * enough to hold them: there a sect looks up to 48 blocks round its site for one, and takes a smaller size if the island
  * is too small for the one rolled). Members are not spawned here: the core carries the sect's blueprint (its posts,
  * alignment and capacity) and founds the sect when it first ticks (SectManager#found).
+ * <p>
+ * In the Great Void every sect is a Holy Land (HolyLands), laid out by HolyLandPlan on grounds far wider than any sect's, at its
+ * cell's middle or a few blocks off it wherever a continent holds them well inside its rim.
  */
 public class SectStructure extends Structure {
 	/**
-	 * How uneven the ground under the grounds may be (highest sample less lowest). The grounds are cleared 22 blocks above the
-	 * level of the plaza and filled up to 12 below, so this is about what they can level without leaving a hill through the
-	 * halls.
-	 * Surveyed 2026-10-10 over 441 candidate sites: in the Overworld about 1 in 8 attempts finds a site at 20, against 1 in
-	 * 17 at the old 12; the Upper Realm's islands are rugged and only a few are wide enough, so it takes up to 24 there.
+	 * How uneven the ground under the grounds may be (highest sample less lowest). Surveyed 2026-10-10 over 441 candidate sites: in the
+	 * Overworld about 1 in 8 attempts found a site at 20, against 1 in 17 at the old 12; the Upper Realm's islands are rugged and only a
+	 * few are wide enough, so it took up to 24 there. Since 2026-10-25 the grounds are no longer levelled (each building stands on its own
+	 * ground, the ways on the land as it lies: the user's ask, as Minecraft's and Terralith's structures do), so rolling land takes a sect
+	 * too; steeper than this and its halls would stand on stilts or in cuttings.
 	 */
-	private static final int MAX_RELIEF = 20;
-	private static final int MAX_RELIEF_UPPER = 24;
+	private static final int MAX_RELIEF = 32;
+	private static final int MAX_RELIEF_UPPER = 36;
 	/**
-	 * How far the land just beyond the gates and at the far corners may rise above the grounds: the grounds are cut level out
-	 * to there, so higher land would stand as a cliff across the way out of a gate.
+	 * How far the land just beyond the gates and at the far corners may rise above the grounds' middle (a sect in a bowl of hills,
+	 * its ways climbing out of it).
 	 */
-	private static final int MAX_EDGE_RISE = 8;
+	private static final int MAX_EDGE_RISE = 24;
 	/** How many of the 13 ground samples may be water (a pond or a stream across the grounds is filled in). */
 	private static final int MAX_WET = 3;
 
@@ -150,10 +153,39 @@ public class SectStructure extends Structure {
 		Direction facing = Direction.Plane.HORIZONTAL.getRandomDirection(random);
 		ChunkPos chunk = context.chunkPos();
 		int x = chunk.getMiddleBlockX(), z = chunk.getMiddleBlockZ();
+		// An immortal sect of the Immortal Realm (ImmortalSects, ImmortalSectPlan): all of it on islands floating over the sea of clouds; only
+		// at its cell's site (ModNoiseSettings#sectSite: out over the open sea, clear of the main island and the cities, no pinnacle in its
+		// clearing), from the even chunk the site lies in (its structure set tries every other chunk), laid about that chunk's middle so that
+		// every piece lies within the eight chunks of it that worldgen places pieces in. Its start is its core's plaza (where SectSites wakes it).
+		if (isImmortalRealm(context, new BlockPos(x, 64, z))) {
+			int cx = Math.floorDiv(x, ModNoiseSettings.SECT_CELL), cz = Math.floorDiv(z, ModNoiseSettings.SECT_CELL);
+			ModNoiseSettings.CitySite site = ModNoiseSettings.sectSite(context.randomState(), cx, cz);
+			if (site == null || (site.x() >> 4 & ~1) != chunk.x || (site.z() >> 4 & ~1) != chunk.z) return Optional.empty();
+			Frame frame = new Frame(facing, x, z, ImmortalSectPlan.W, ImmortalSectPlan.D);
+			int coreY = ImmortalSectPlan.skyLevel(context, frame, site);
+			if (coreY == NO_SITE) return Optional.empty();
+			BlockPos core = frame.world(ImmortalSectPlan.PU, ImmortalSectPlan.PV);
+			return Optional.of(new GenerationStub(new BlockPos(core.getX(), coreY, core.getZ()), builder -> ImmortalSectPlan.plan(builder, random, frame, coreY)));
+		}
+		// A Holy Land of the Great Void (HolyLands, HolyLandPlan): its grounds far wider than any sect's, so they stand at their cell's middle
+		// or a few blocks off it (every piece must lie within the eight chunks of its start that worldgen places pieces in).
+		if (isGreatVoid(context, new BlockPos(x, 64, z))) {
+			for (int[] off : HOLY_SPOTS) {
+				Frame frame = new Frame(facing, x + off[0], z + off[1], HolyLandPlan.W, HolyLandPlan.D);
+				int platformY = HolyLandPlan.groundLevel(context, frame);
+				if (platformY != NO_SITE) {
+					CityPlanner.Ground ground = ground(context);
+					int floor = context.heightAccessor().getMinBuildHeight();
+					return Optional.of(new GenerationStub(new BlockPos(frame.cx(), platformY, frame.cz()),
+							builder -> HolyLandPlan.plan(builder, random, frame, platformY, ground, floor)));
+				}
+			}
+			return Optional.empty();
+		}
 		if (!isUpperRealm(context, new BlockPos(x, 64, z))) {
 			Frame frame = new Frame(facing, x, z, rolled.w, rolled.d);
 			int platformY = groundLevel(context, rolled, frame, false);
-			return platformY == NO_SITE ? Optional.empty() : Optional.of(stub(random, rolled, frame, platformY, false));
+			return platformY == NO_SITE ? Optional.empty() : Optional.of(stub(context, random, rolled, frame, platformY, false));
 		}
 		// The Upper Realm is mostly open sky, and few islands are wide enough: the sect stands wherever near the middle of its
 		// cell an island will hold it (see ISLAND_SEARCH), and ground too small for the size rolled takes a smaller sect. A
@@ -162,15 +194,23 @@ public class SectStructure extends Structure {
 		for (Size size = rolled; size != null; size = size.smaller()) {
 			for (Frame frame : islandSpots(context, size, facing, x, z)) {
 				int platformY = groundLevel(context, size, frame, true);
-				if (platformY != NO_SITE) return Optional.of(stub(random, size, frame, platformY, true));
+				if (platformY != NO_SITE) return Optional.of(stub(context, random, size, frame, platformY, true));
 			}
 		}
 		return Optional.empty();
 	}
 
+	/**
+	 * Where a Holy Land's grounds are tried round its cell's middle, in turn (the grounds reach 130 of the 135 blocks a piece may); a Demon
+	 * Palace's too (DenStructure).
+	 */
+	static final int[][] HOLY_SPOTS = {{0, 0}, {4, 0}, {-4, 0}, {0, 4}, {0, -4}};
+
 	/** The sect's start: at its plaza (where its core will stand), which SectSites wakes to found it. */
-	private static GenerationStub stub(WorldgenRandom random, Size size, Frame frame, int platformY, boolean upper) {
-		return new GenerationStub(new BlockPos(frame.cx(), platformY, frame.cz()), builder -> plan(builder, random, size, frame, platformY, upper));
+	private static GenerationStub stub(GenerationContext context, WorldgenRandom random, Size size, Frame frame, int platformY, boolean upper) {
+		CityPlanner.Ground ground = ground(context);
+		int floor = context.heightAccessor().getMinBuildHeight();
+		return new GenerationStub(new BlockPos(frame.cx(), platformY, frame.cz()), builder -> plan(builder, random, size, frame, platformY, upper, ground, floor));
 	}
 
 	static final int NO_SITE = Integer.MIN_VALUE;
@@ -382,6 +422,20 @@ public class SectStructure extends Structure {
 		return biome.is(ModTags.IS_UPPER_REALM);
 	}
 
+	/** A Great Void biome (tagged {@link ModTags#IS_GREAT_VOID}): the sect is a Holy Land (HolyLands), on a continent. */
+	static boolean isGreatVoid(GenerationContext context, BlockPos pos) {
+		Holder<Biome> biome = context.biomeSource().getNoiseBiome(QuartPos.fromBlock(pos.getX()), QuartPos.fromBlock(pos.getY()),
+				QuartPos.fromBlock(pos.getZ()), context.randomState().sampler());
+		return biome.is(ModTags.IS_GREAT_VOID);
+	}
+
+	/** Whether a sect at {@code pos} is laid out the Immortal Realm's way (an immortal sect: ImmortalSectPlan). */
+	static boolean isImmortalRealm(GenerationContext context, BlockPos pos) {
+		Holder<Biome> biome = context.biomeSource().getNoiseBiome(QuartPos.fromBlock(pos.getX()), QuartPos.fromBlock(pos.getY()),
+				QuartPos.fromBlock(pos.getZ()), context.randomState().sampler());
+		return biome.is(ModTags.IS_IMMORTAL_REALM);
+	}
+
 	/**
 	 * The compound's frame: u from left to right across its front, v from the gate inward, as in SectPiece, laid in the world
 	 * by {@code facing} (the way it extends from its gate).
@@ -420,7 +474,27 @@ public class SectStructure extends Structure {
 		}
 	}
 
-	private static SectPiece piece(SectPiece.Kind kind, SectLayout.Lot lot, Frame frame, int y, int height, long seed, Alignment.Faction faction,
+	/**
+	 * A sect's bounds for its blueprint ("Bounds"): its grounds' across, from 16 under its lowest building to {@code above} over its highest
+	 * (its grounds' own box lies at the world's floor: SectPiece#followGround).
+	 */
+	static int[] bounds(SectPiece grounds, List<SectPiece> pieces, SectPiece plaza, int above) {
+		int low = plaza.getBoundingBox().minY(), high = plaza.getBoundingBox().maxY();
+		for (SectPiece piece : pieces) {
+			if (piece == grounds) continue;
+			low = Math.min(low, piece.getBoundingBox().minY());
+			high = Math.max(high, piece.getBoundingBox().maxY());
+		}
+		BoundingBox box = grounds.getBoundingBox();
+		return new int[] {box.minX(), low - 16, box.minZ(), box.maxX(), high + above, box.maxZ()};
+	}
+
+	/** The land as the generator makes it, for each building to stand on its own ground (CityPlanner). */
+	static CityPlanner.Ground ground(GenerationContext context) {
+		return CityPlanner.ground(context.chunkGenerator(), context.heightAccessor(), context.randomState());
+	}
+
+	static SectPiece piece(SectPiece.Kind kind, SectLayout.Lot lot, Frame frame, int y, int height, long seed, Alignment.Faction faction,
 			boolean upper, CompoundTag extra) {
 		return new SectPiece(kind, frame.box(lot.u0(), lot.v0(), lot.u1(), lot.v1(), y, height), frame.toWorld(lot.side()), seed, faction, upper, extra);
 	}
@@ -444,9 +518,28 @@ public class SectStructure extends Structure {
 
 	/** Lays out a sect of size {@code size} (0 small, 1 medium, 2 large) at the origin as worldgen would, for the game tests. */
 	public static List<StructurePiece> layOut(long seed, int size, Direction facing, boolean upper) {
-		Size s = Size.values()[size];
+		return layOut(seed, size, facing, upper, false);
+	}
+
+	/** {@link #layOut}, or ({@code holy}) a Holy Land's (HolyLandPlan; {@code size} and {@code upper} then go unused). */
+	public static List<StructurePiece> layOut(long seed, int size, Direction facing, boolean upper, boolean holy) {
 		StructurePiecesBuilder builder = new StructurePiecesBuilder();
-		plan(builder, new WorldgenRandom(new LegacyRandomSource(seed)), s, new Frame(facing, 0, 0, s.w, s.d), 64, upper);
+		WorldgenRandom random = new WorldgenRandom(new LegacyRandomSource(seed));
+		// Laid out on level ground at Y 64 (no land to read), the grounds' box at Y 0.
+		if (holy) {
+			HolyLandPlan.plan(builder, random, new Frame(facing, 0, 0, HolyLandPlan.W, HolyLandPlan.D), 64, CityPlanner.flat(64), 0);
+		} else {
+			Size s = Size.values()[size];
+			plan(builder, random, s, new Frame(facing, 0, 0, s.w, s.d), 64, upper, CityPlanner.flat(64), 0);
+		}
+		return builder.build().pieces();
+	}
+
+	/** An immortal sect laid out at the origin as worldgen would (ImmortalSectPlan), its core island's top at Y 64, for the game tests. */
+	public static List<StructurePiece> layOutImmortal(long seed, Direction facing) {
+		StructurePiecesBuilder builder = new StructurePiecesBuilder();
+		WorldgenRandom random = new WorldgenRandom(new LegacyRandomSource(seed));
+		ImmortalSectPlan.plan(builder, random, new Frame(facing, 0, 0, ImmortalSectPlan.W, ImmortalSectPlan.D), 64);
 		return builder.build().pieces();
 	}
 
@@ -455,7 +548,13 @@ public class SectStructure extends Structure {
 		return Size.values()[size].maxMembers;
 	}
 
-	private static void plan(StructurePiecesBuilder builder, WorldgenRandom random, Size size, Frame frame, int y, boolean upper) {
+	/**
+	 * Lays a sect out in {@code frame}, each building on its own ground ({@code ground}: CityPlanner#level, the land shaped round it as the
+	 * structure is beard_thin; the user's ask, 2026-10-25, that structures sit on the land as Minecraft's and Terralith's do, not on levelled
+	 * grounds), its grounds laid on the land as it lies (their box at {@code floor}, the world's floor).
+	 */
+	private static void plan(StructurePiecesBuilder builder, WorldgenRandom random, Size size, Frame frame, int y, boolean upper,
+			CityPlanner.Ground ground, int floor) {
 		long seed = random.nextLong();
 		int alignment = Alignment.randomSect(random);
 		Alignment.Faction faction = Alignment.factionOf(alignment);
@@ -463,6 +562,7 @@ public class SectStructure extends Structure {
 		Direction back = frame.facing();
 		int capacity = size.minMembers + random.nextInt(size.maxMembers - size.minMembers + 1);
 		SectLayout layout = new SectLayout(size.a, size.b, size.reach, seed);
+		CityPlanner fit = new CityPlanner(frame, layout, ground, seed, faction, null);
 		int gateDistance = size.reach + GATE_BEYOND;
 		List<SectPiece> pieces = new ArrayList<>();
 
@@ -478,7 +578,7 @@ public class SectStructure extends Structure {
 		SectLayout.Lot mainLot = new SectLayout.Lot(cu - size.mainW / 2, mainV0, cu - size.mainW / 2 + size.mainW - 1, mainV0 + MAIN_DEPTH - 1,
 				SectLayout.Side.BACK);
 		layout.claim(mainLot, 2);
-		SectPiece main = piece(SectPiece.Kind.MAIN_HALL, mainLot, frame, y, 34, seed + 30, faction, upper, null);
+		SectPiece main = piece(SectPiece.Kind.MAIN_HALL, mainLot, frame, fit.level(mainLot), 34, seed + 30, faction, upper, null);
 		pieces.add(main);
 		int beside = size.mainW / 2 + 3 + SET_BACK;
 		SectLayout.Lot pagodaLot = besideHall(cu, side, beside, size.pagoda, mainV0 + 1, size.pagoda, SectLayout.Side.BACK);
@@ -487,7 +587,7 @@ public class SectStructure extends Structure {
 		layout.footpath(pagodaLot.doorstep()[0], pagodaLot.doorstep()[1]);
 		CompoundTag pagodaData = new CompoundTag();
 		pagodaData.putInt("Tiers", size.tiers);
-		SectPiece pagoda = piece(SectPiece.Kind.PAGODA, pagodaLot, frame, y, 6 * size.tiers + 14, seed + 31, faction, upper, pagodaData);
+		SectPiece pagoda = piece(SectPiece.Kind.PAGODA, pagodaLot, frame, fit.level(pagodaLot), 6 * size.tiers + 14, seed + 31, faction, upper, pagodaData);
 		pieces.add(pagoda);
 		List<SectPiece> gardens = new ArrayList<>();
 		for (int depth = size.gardenD; depth >= 9; depth--) {
@@ -495,7 +595,7 @@ public class SectStructure extends Structure {
 			if (!layout.within(lot, GARDEN_LIMIT)) continue;
 			layout.claim(lot, 2);
 			layout.footpath(lot.doorstep()[0], lot.doorstep()[1]);
-			gardens.add(piece(SectPiece.Kind.GARDEN, lot, frame, y, 10, seed + 40, faction, upper, null));
+			gardens.add(piece(SectPiece.Kind.GARDEN, lot, frame, fit.level(lot), 10, seed + 40, faction, upper, null));
 			break;
 		}
 		// Behind the pagoda the second garden opens toward the main hall, its plots running outward.
@@ -505,7 +605,7 @@ public class SectStructure extends Structure {
 			if (!layout.within(lot, GARDEN_LIMIT)) continue;
 			layout.claim(lot, 2);
 			layout.footpath(lot.doorstep()[0], lot.doorstep()[1]);
-			gardens.add(piece(SectPiece.Kind.GARDEN, lot, frame, y, 10, seed + 41, faction, upper, null));
+			gardens.add(piece(SectPiece.Kind.GARDEN, lot, frame, fit.level(lot), 10, seed + 41, faction, upper, null));
 			break;
 		}
 		pieces.addAll(gardens);
@@ -520,8 +620,8 @@ public class SectStructure extends Structure {
 			layout.apron(lot, 1, 1);
 			layout.footpath(lot.doorstep()[0], lot.doorstep()[1]);
 		}
-		SectPiece treasury = piece(SectPiece.Kind.TREASURY, treasuryLot, frame, y, 18, seed + 20, faction, upper, null);
-		SectPiece meditation = piece(SectPiece.Kind.MEDITATION_HALL, meditationLot, frame, y, 18, seed + 21, faction, upper, null);
+		SectPiece treasury = piece(SectPiece.Kind.TREASURY, treasuryLot, frame, fit.level(treasuryLot), 18, seed + 20, faction, upper, null);
+		SectPiece meditation = piece(SectPiece.Kind.MEDITATION_HALL, meditationLot, frame, fit.level(meditationLot), 18, seed + 21, faction, upper, null);
 		pieces.add(treasury);
 		pieces.add(meditation);
 
@@ -529,14 +629,14 @@ public class SectStructure extends Structure {
 		// buildings, inside gateDistance), where the gate guards stand and visitors are met.
 		SectLayout.Lot gateLot = new SectLayout.Lot(cu - 9, cv - gateDistance - 1, cu + 9, cv - gateDistance + 1, SectLayout.Side.BACK);
 		layout.keepClear(gateLot.u0(), gateLot.v0() - 1, gateLot.u1(), gateLot.v1() + 1);
-		SectPiece gate = piece(SectPiece.Kind.GATE, gateLot, frame, y, 14, seed + 1, faction, upper, null);
+		SectPiece gate = piece(SectPiece.Kind.GATE, gateLot, frame, fit.level(gateLot), 14, seed + 1, faction, upper, null);
 		pieces.add(gate);
 		List<SectPiece> gates = new ArrayList<>(List.of(gate));
 		for (int k = -1; k <= 1; k += 2) {
 			int u = cu + k * gateDistance;
 			SectLayout.Lot lot = new SectLayout.Lot(u - 1, cv - 5, u + 1, cv + 5, k < 0 ? SectLayout.Side.LEFT : SectLayout.Side.RIGHT);
 			layout.keepClear(lot.u0() - 1, lot.v0(), lot.u1() + 1, lot.v1());
-			SectPiece torii = piece(SectPiece.Kind.TORII, lot, frame, y, 10, seed + 2 + k, faction, upper, null);
+			SectPiece torii = piece(SectPiece.Kind.TORII, lot, frame, fit.level(lot), 10, seed + 2 + k, faction, upper, null);
 			pieces.add(torii);
 			gates.add(torii);
 		}
@@ -552,7 +652,7 @@ public class SectStructure extends Structure {
 		if (altarLot != null) {
 			CompoundTag altarData = new CompoundTag();
 			altarData.putInt("Tiers", tiers);
-			altar = piece(SectPiece.Kind.ALTAR, altarLot, frame, y, 2 * tiers + 7, seed + 60, faction, upper, altarData);
+			altar = piece(SectPiece.Kind.ALTAR, altarLot, frame, fit.level(altarLot), 2 * tiers + 7, seed + 60, faction, upper, altarData);
 			pieces.add(altar);
 		}
 
@@ -560,7 +660,7 @@ public class SectStructure extends Structure {
 		SectLayout.Lot trainingLot = layout.place(random, SectPiece.TRAINING_W, SectPiece.TRAINING_D, size.reach / 2 + 2, 3);
 		SectPiece training = null;
 		if (trainingLot != null) {
-			training = piece(SectPiece.Kind.TRAINING, trainingLot, frame, y, 9, seed + 70, faction, upper, null);
+			training = piece(SectPiece.Kind.TRAINING, trainingLot, frame, fit.level(trainingLot), 9, seed + 70, faction, upper, null);
 			pieces.add(training);
 		}
 		// The elders' houses, nearest the plaza (the disciples live in the meditation hall); then lanterns along the ways and
@@ -570,7 +670,7 @@ public class SectStructure extends Structure {
 		List<SectLayout.Lot> lots = layout.houses(random, elders, elders);
 		List<SectPiece> dwellings = new ArrayList<>();
 		for (int i = 0; i < lots.size(); i++) {
-			dwellings.add(piece(SectPiece.Kind.ELDER_HOUSE, lots.get(i), frame, y, 18, seed + 100 + i, faction, upper, null));
+			dwellings.add(piece(SectPiece.Kind.ELDER_HOUSE, lots.get(i), frame, fit.level(lots.get(i)), 18, seed + 100 + i, faction, upper, null));
 		}
 		pieces.addAll(dwellings);
 		for (int v = cv - gateDistance + 4; v < cv - r; v += 5) {
@@ -585,16 +685,17 @@ public class SectStructure extends Structure {
 		}
 		layout.plant(random, size.trees, size.bamboo);
 
-		// The grounds go first, under everything.
+		// The grounds go first, under everything: laid on the land as it lies, their box at the world's floor (SectPiece#followGround).
 		CompoundTag groundsData = new CompoundTag();
 		groundsData.putInt("A", size.a);
 		groundsData.putInt("B", size.b);
 		groundsData.putByteArray("Map", layout.map);
-		SectPiece terrace = new SectPiece(SectPiece.Kind.TERRACE, frame.box(0, 0, w - 1, d - 1, y, 24), back, seed, faction, upper, groundsData);
+		groundsData.putBoolean("Follow", true);
+		SectPiece terrace = new SectPiece(SectPiece.Kind.TERRACE, frame.box(0, 0, w - 1, d - 1, floor, 2), back, seed, faction, upper, groundsData);
 		pieces.add(0, terrace);
 
-		// The plaza last, so its blueprint can name every post of the grounds.
-		BoundingBox plazaBox = frame.box(cu - r, cv - r, cu + r, cv + r, y, 8);
+		// The plaza last, so its blueprint can name every post of the grounds: on its own ground, evened under it.
+		BoundingBox plazaBox = frame.box(cu - r, cv - r, cu + r, cv + r, fit.level(new SectLayout.Lot(cu - r, cv - r, cu + r, cv + r, SectLayout.Side.BACK)), 8);
 		CompoundTag plazaData = new CompoundTag();
 		SectPiece plaza = new SectPiece(SectPiece.Kind.PLAZA, plazaBox, back, seed + 50, faction, upper, plazaData);
 		BlockPos core = plaza.toWorld(r, 2, r);
@@ -617,10 +718,10 @@ public class SectStructure extends Structure {
 		// Where the inner disciples stroll: along the ways inside the barrier, round the plaza, by the gardens, the pagoda's top.
 		List<BlockPos> courtyard = posts.get(Sect.Post.COURTYARD);
 		int along = (r + size.reach) / 2;
-		courtyard.add(terrace.toWorld(cu, 1, cv - along));
-		courtyard.add(terrace.toWorld(cu, 1, cv - size.reach + 4));
-		courtyard.add(terrace.toWorld(cu - along, 1, cv));
-		courtyard.add(terrace.toWorld(cu + along, 1, cv));
+		courtyard.add(fit.onGround(cu, cv - along));
+		courtyard.add(fit.onGround(cu, cv - size.reach + 4));
+		courtyard.add(fit.onGround(cu - along, cv));
+		courtyard.add(fit.onGround(cu + along, cv));
 		for (int k = 0; k < 4; k++) {
 			double angle = Math.PI / 2 * k;
 			courtyard.add(plaza.toWorld(r + (int) Math.round(Math.cos(angle) * 10.5), 1, r + (int) Math.round(Math.sin(angle) * 10.5)));
@@ -638,18 +739,18 @@ public class SectStructure extends Structure {
 		}
 		// Points along the paved ways every ten blocks, out to the gates, for walkers that can't go straight (Sect#waypoints).
 		List<BlockPos> ways = posts.get(Sect.Post.WAY);
-		for (int v = cv - gateDistance + 2; v <= mainV0; v += 10) if (Math.abs(v - cv) > r) ways.add(terrace.toWorld(cu, 1, v));
-		for (int u = cu - gateDistance + 2; u <= cu + gateDistance - 2; u += 10) if (Math.abs(u - cu) > r) ways.add(terrace.toWorld(u, 1, cv));
+		for (int v = cv - gateDistance + 2; v <= mainV0; v += 10) if (Math.abs(v - cv) > r) ways.add(fit.onGround(cu, v));
+		for (int u = cu - gateDistance + 2; u <= cu + gateDistance - 2; u += 10) if (Math.abs(u - cu) > r) ways.add(fit.onGround(u, cv));
 		// The gate guards, on the way just outside each gate: two at the gate, then one at each torii, then a second at each
 		// (Sect#guardPost hands them to the outer disciples in this order).
 		List<BlockPos> guards = posts.get(Sect.Post.GATE_GUARD);
 		int out = gateDistance + 2;
-		guards.add(terrace.toWorld(cu - 2, 1, cv - out));
-		guards.add(terrace.toWorld(cu + 2, 1, cv - out));
-		guards.add(terrace.toWorld(cu - out, 1, cv - 2));
-		guards.add(terrace.toWorld(cu + out, 1, cv - 2));
-		guards.add(terrace.toWorld(cu - out, 1, cv + 2));
-		guards.add(terrace.toWorld(cu + out, 1, cv + 2));
+		guards.add(fit.onGround(cu - 2, cv - out));
+		guards.add(fit.onGround(cu + 2, cv - out));
+		guards.add(fit.onGround(cu - out, cv - 2));
+		guards.add(fit.onGround(cu + out, cv - 2));
+		guards.add(fit.onGround(cu - out, cv + 2));
+		guards.add(fit.onGround(cu + out, cv + 2));
 
 		// The barrier: from the core out round every building, and a little more; the gates stay outside it.
 		int radius = 0;
@@ -668,8 +769,7 @@ public class SectStructure extends Structure {
 		blueprint.putInt("Alignment", alignment);
 		blueprint.putInt("Capacity", Math.min(capacity, posts.get(Sect.Post.DWELLING).size() + 1));
 		blueprint.putInt("Radius", radius);
-		BoundingBox bounds = terrace.getBoundingBox();
-		blueprint.putIntArray("Bounds", new int[] {bounds.minX(), bounds.minY() - 16, bounds.minZ(), bounds.maxX(), bounds.maxY() + 48, bounds.maxZ()});
+		blueprint.putIntArray("Bounds", bounds(terrace, pieces, plaza, 48));
 		BoundingBox vault = treasury.getBoundingBox().inflatedBy(1);
 		blueprint.putIntArray("Treasury", new int[] {vault.minX(), vault.minY(), vault.minZ(), vault.maxX(), vault.maxY(), vault.maxZ()});
 		CompoundTag postTag = new CompoundTag();

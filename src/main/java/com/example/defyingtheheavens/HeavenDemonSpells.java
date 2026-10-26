@@ -511,6 +511,9 @@ public final class HeavenDemonSpells {
 				it.remove();
 				land(hand);
 			}
+			// A hand gone once it has pressed down (its life its fall and its press): left, it stood on unseen till the Avatar went, the
+			// palm still there when the claw came down.
+			for (SpellConstruct hand : sent) if (hand.tickCount >= hand.life()) hand.dissolve();
 			return true;
 		}
 
@@ -535,7 +538,7 @@ public final class HeavenDemonSpells {
 					.size((float) (AVATAR_HEIGHT / 1.8)).value(palm ? 1 : 2).target(caster).spawn());
 			falling.add(new Hand(ground, palm, age + AVATAR_FALL));
 			sound(avatar.position().add(0, AVATAR_HEIGHT * 0.7, 0), palm ? SoundEvents.BEACON_POWER_SELECT : SoundEvents.RAVAGER_ROAR, 3.0f, 0.5f);
-			sound(ground, SoundEvents.ELYTRA_FLYING, 2.0f, 0.6f);
+			sound(ground, SoundEvents.PHANTOM_SWOOP, 2.5f, 0.5f); // its rush down (not the wind's long gale)
 		}
 
 		/** A hand come down: all within its reach struck, thrown down and slowed; a share of all it did mends the caster. */
@@ -610,7 +613,7 @@ public final class HeavenDemonSpells {
 			this.fist = SpellConstruct.create(level, SpellConstruct.Kind.HEAVEN_DEMON_FIST, from, face[0], face[1], SHATTER_FLIGHT + 16, caster).sizedFor(spell).spawn();
 			sound(from, SoundEvents.BEACON_POWER_SELECT, 3.0f, 0.5f);
 			sound(from, SoundEvents.RAVAGER_ROAR, 2.5f, 0.6f);
-			sound(from, SoundEvents.ELYTRA_FLYING, 2.0f, 0.8f);
+			sound(from, SoundEvents.PHANTOM_SWOOP, 2.5f, 0.6f); // its rush (not the wind's long gale)
 		}
 
 		@Override

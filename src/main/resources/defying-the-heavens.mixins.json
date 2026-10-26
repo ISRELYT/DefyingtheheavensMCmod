@@ -16,6 +16,7 @@
     "LightningBoltMixin",
     "NaturalSpawnerMixin",
     "NetherPortalBlockMixin",
+    "NoiseBasedChunkGeneratorMixin",
     "OreFeatureMixin",
     "PatrolSpawnerMixin",
     "PlayerAdvancementsMixin",

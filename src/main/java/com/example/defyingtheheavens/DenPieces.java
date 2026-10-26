@@ -725,6 +725,8 @@ final class DenPieces {
 				raise(piece, level, chunk, spire, false);
 			}
 			case "pool" -> pool(piece, level, chunk, w, d);
+			// A fox clan's tunnel of torii up its way: no clan lays one now (the user's call, 2026-10-25, "just one gate at the start"),
+			// kept so a clan laid out before then is drawn whole as its chunks are made.
 			case "torii_row" -> {
 				for (int z = 1; z < d - 1; z += 3) {
 					for (int x : new int[] {0, w - 1}) {

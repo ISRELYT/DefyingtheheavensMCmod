@@ -100,14 +100,16 @@ public class ElementSpellsGameTests implements FabricGameTest {
 				// An ore in the floor for Mineral Purification to draw out (finding none, it takes no hold and pays nothing).
 				if (spell == Spell.MINERAL_PURIFICATION) level.setBlock(floor.centre().offset(5, -1, -3), Blocks.IRON_ORE.defaultBlockState(), 2);
 				helper.assertTrue(spell.isKnown(CultivationManager.get(p)), spell.getId() + " is known to a True Immortal master of every element");
-				// Look at the mark; for a spell wanting a surface, at the floor before it.
-				HeavenSpellTesting.lookAt(p, HeavenSpells.middle(husk));
+				// Look at the mark; for a spell wanting a surface, at the floor before it; Return to the Bough, at a bough, a fruit in hand.
+				BlockPos bough = spell == Spell.RETURN_TO_THE_BOUGH ? HeavenSpellTesting.bough(p, home) : null;
+				if (bough == null) HeavenSpellTesting.lookAt(p, HeavenSpells.middle(husk));
 				boolean paid = HeavenSpellTesting.cast(p, spell);
-				if (!paid) {
+				if (!paid && bough == null) {
 					HeavenSpellTesting.lookAt(p, home.add(0, 0, 3));
 					paid = HeavenSpellTesting.cast(p, spell);
 				}
 				if (!paid) refused.add(spell.getId());
+				if (bough != null) HeavenSpellTesting.unBough(p, bough);
 				// Whatever it set going ends at once (lingering effects, golems, a tide), its pictures swept away.
 				HeavenSpells.forget(p.getUUID());
 				Spells.forget(p.getUUID());
@@ -123,6 +125,43 @@ public class ElementSpellsGameTests implements FabricGameTest {
 			HeavenSpellTesting.cleanUp(p, spawned, floor);
 			throw e;
 		}
+	}
+
+	/**
+	 * Every great spell's shape is the kind it was made as, read back as its watchers read it (SpellConstruct's synced kind): past the
+	 * 128th kind a byte had gone negative and every later one was read as the Azure Dragon (2026-10-26, "every spell uses the azure dragon
+	 * model").
+	 */
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+	public void everyShapeIsItsOwnKind(GameTestHelper helper) {
+		ServerLevel level = helper.getLevel();
+		Vec3 at = Vec3.atCenterOf(helper.absolutePos(new BlockPos(1, 2, 1)));
+		for (SpellConstruct.Kind kind : SpellConstruct.Kind.values()) {
+			SpellConstruct shape = SpellConstruct.create(level, kind, at, 0, 0, 20, null);
+			helper.assertTrue(shape.kind() == kind, kind + " is read back as " + shape.kind());
+		}
+		helper.succeed();
+	}
+
+	/**
+	 * A great spell's shape let go out past where the world moves what is in it (as the Azure Dragon flies off into the sky) is taken away at
+	 * once, never left hanging there for good (only its own tick ever took it away; 2026-10-26); one let go where the world moves is left to fade.
+	 */
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+	public void aShapeLetGoOutOfTheWorldsReachGoes(GameTestHelper helper) {
+		ServerLevel level = helper.getLevel();
+		SpellConstruct near = SpellConstruct.create(level, SpellConstruct.Kind.AZURE_DRAGON, Vec3.atCenterOf(helper.absolutePos(new BlockPos(1, 2, 1))), 0, 0, 200, null).spawn();
+		SpellConstruct far = SpellConstruct.create(level, SpellConstruct.Kind.AZURE_DRAGON, new Vec3(3_000_000.5, 200, 3_000_000.5), 0, 0, 200, null).spawn();
+		far.dissolve();
+		near.dissolve();
+		try {
+			helper.assertTrue(far.isRemoved(), "Let go out past where the world moves things, it is taken away at once");
+			helper.assertTrue(!near.isRemoved(), "...let go where it moves them, it is left to fade");
+		} finally {
+			far.discard();
+			near.discard();
+		}
+		helper.succeed();
 	}
 
 	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)

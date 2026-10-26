@@ -556,6 +556,9 @@ public final class ModPackets {
 		buf.writeVarInt(c.demon().bloodRealm());
 		buf.writeVarInt(c.demon().halfBlood() == null ? -1 : c.demon().halfBlood().ordinal());
 		buf.writeDouble(c.demon().purity());
+		// A True Immortal's immortal essence (ImmortalEssence): what it holds, and its pool (0 short of True Immortal).
+		buf.writeDouble(c.essence());
+		buf.writeDouble(ImmortalEssence.max(c));
 		ServerPlayNetworking.send(player, SYNC, buf);
 	}
 

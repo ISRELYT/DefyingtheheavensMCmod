@@ -110,6 +110,11 @@ public final class SectLayout {
 		return inBounds(u, v) && map[u + v * w] != OUT;
 	}
 
+	/** Whether (u, v) is open ground: on the grounds, and nothing planned on it yet (no way, building, lantern, tree or gate). */
+	public boolean isOpen(int u, int v) {
+		return inside(u, v) && use[u + v * w] == OPEN;
+	}
+
 	// --- Ways ---
 
 	/** Lays a way (or its edging) on (u, v), even a little past the edge of the grounds (the gate's approach). */

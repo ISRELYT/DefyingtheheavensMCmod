@@ -17,11 +17,15 @@ import org.joml.Quaternionf;
  * ghost fire round its mouth; out of it a whirlwind of ghost fire winds up, widening as it rises; and up it the souls pour by the hundred,
  * round and round, each a wailing face of the dead as it comes up out of the dark that burns away into a wisp of cold blue fire as it climbs
  * (the soul particle's own frames, from its face to its flame), streams of blue fire twisting up among them. As it goes back down into the
- * dark ({@code descend}) the whole of it is dragged down into the pit, the souls pouring back down, and the pit closes.
+ * dark ({@code descend}) the whole of it is dragged down into the pit, the souls pouring back down, and the pit closes. The dead themselves
+ * climbing it among the souls are drawn with the rest of the dead (SpellGhosts#vortex).
  */
 final class SoulVortex {
-	/** The soul particle's frames, its face first and its flame last (vanilla's), and the soul fire's strip (32 frames, top to bottom). */
-	private static final ResourceLocation[] SOULS = new ResourceLocation[11];
+	/**
+	 * The soul particle's frames, its face first and its flame last (vanilla's; the Nine Nethers' maelstrom's too: SpellGhosts), and the soul
+	 * fire's strip (32 frames, top to bottom).
+	 */
+	static final ResourceLocation[] SOULS = new ResourceLocation[11];
 	private static final ResourceLocation SOUL_FIRE = new ResourceLocation("minecraft", "textures/block/soul_fire_0.png");
 	private static final int SOUL_FIRE_FRAMES = 32;
 

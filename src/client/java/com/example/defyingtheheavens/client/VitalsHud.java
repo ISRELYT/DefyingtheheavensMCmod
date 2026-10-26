@@ -115,6 +115,7 @@ public final class VitalsHud {
 		lastFrame = time;
 
 		portrait(g, font, player);
+		HudCorner.drew(NAME_Y, TOP + PORTRAIT, BARS_X + w + TIP[TIP.length / 2]); // its name, the portrait and the bars to their tips
 		int y = TOP;
 		if (showHealth) {
 			double ratio = now / max;

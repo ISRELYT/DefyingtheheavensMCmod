@@ -26,6 +26,20 @@ public class HighRealms extends SavedData {
 	private static final String NAME = DefyingTheHeavens.MOD_ID + "_high_realms";
 	/** The most of each realm, Dao Integration to True Immortal, that one world holds. */
 	static final int[] QUOTA = {24, 5, 1, 0, 0};
+	/**
+	 * The Great Void Realm's own (2026-10-25), the home of those realms: its Holy Lands' Dao Integration elders, Void Shattering grand
+	 * elders and Sacred Vessel patriarchs (HolyLands: four, two and one a Holy Land) with its rogues, and the Entering Nirvana who camp
+	 * on the Shore of Nirvana waiting for the Immortal Gate (some twenty, the user's number: NirvanaCamp). Still no True Immortal.
+	 */
+	static final int[] GREAT_VOID_QUOTA = {96, 32, 12, 24, 0};
+	/**
+	 * The Immortal Realm's (phase 2, 2026-10-25), the True Immortals' home: those who came up through the Gate, of Entering Nirvana, and
+	 * the immortals of its cities, sects and Court. None below Entering Nirvana is born there (the user's rule, 2026-10-25: "people less
+	 * than EN shouldnt spawn", NpcSpawner#IMMORTAL_FLOOR; a sect's own disciples perhaps excepted), and its Entering Nirvana have no limit, so
+	 * the census never holds one of them back below it: whoever the True Immortals' room turns away waits at Entering Nirvana's Grand
+	 * Perfection. The places of the realms below are a sect's disciples' alone.
+	 */
+	static final int[] IMMORTAL_REALM_QUOTA = {16, 16, 16, Integer.MAX_VALUE, 160};
 	/** One unseen this long (ticks: a hundred days) is given up as gone (its land lost, say), its place free again. */
 	static final long FORGOTTEN = 100L * Lifespan.YEAR_TICKS;
 	/** A place taken by one not yet seen in the world (made, never spawned) is given up after this long (ticks). */
@@ -42,8 +56,18 @@ public class HighRealms extends SavedData {
 
 	/** How many of {@code realm} one world holds at most: no limit before Dao Integration. */
 	public static int quota(Realm realm) {
+		return quota(realm, QUOTA);
+	}
+
+	/** The same in {@code world} (a dimension's id): the Great Void's own, the Immortal Realm's, else the one rule for every world. */
+	public static int quota(Realm realm, String world) {
+		return quota(realm, world.equals(ModDimensions.GREAT_VOID.location().toString()) ? GREAT_VOID_QUOTA
+				: world.equals(ModDimensions.IMMORTAL_REALM.location().toString()) ? IMMORTAL_REALM_QUOTA : QUOTA);
+	}
+
+	private static int quota(Realm realm, int[] quotas) {
 		int index = realm.ordinal() - Realm.DAO_INTEGRATION.ordinal();
-		return index < 0 ? Integer.MAX_VALUE : QUOTA[Math.min(index, QUOTA.length - 1)];
+		return index < 0 ? Integer.MAX_VALUE : quotas[Math.min(index, quotas.length - 1)];
 	}
 
 	/**
@@ -59,7 +83,7 @@ public class HighRealms extends SavedData {
 		String world = world(level);
 		while (top >= first) {
 			Realm realm = Realm.byIndex(top / Stage.values().length);
-			if (census.count(world, realm, self) < quota(realm)) return top;
+			if (census.count(world, realm, self) < quota(realm, world)) return top;
 			top = PlayerCultivation.rank(realm, Stage.EARLY) - 1; // the realm below's Grand Perfection
 		}
 		return top;

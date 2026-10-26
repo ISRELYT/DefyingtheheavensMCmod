@@ -1034,7 +1034,7 @@ public final class WaterSpells {
 			float want = striking != null ? HeavenSpells.facing(striking.position().subtract(caster.position()))[0] : caster.getYRot();
 			yaw = net.minecraft.util.Mth.approachDegrees(yaw, want, 14);
 			tortoise.place(caster.position(), yaw, 0);
-			if (age % 40 == 0) sound(caster.position(), SoundEvents.CONDUIT_AMBIENT, 1.5f, 0.6f);
+			if (age % 80 == 0) sound(tortoise, SoundEvents.CONDUIT_AMBIENT, 1.5f, 0.6f); // its hum, going with it, one at a time (not piled up)
 			return true;
 		}
 
@@ -1649,7 +1649,7 @@ public final class WaterSpells {
 			this.moon = SpellConstruct.create(level, SpellConstruct.Kind.MOON_MASS, sky, caster.getYRot(), 0, (int) (end - start), caster).size((float) FALLS_MOON)
 					.tint(level.random.nextInt()).spawn();
 			sound(sky, SoundEvents.GLASS_PLACE, 4.0f, 0.3f);
-			sound(sky, SoundEvents.ELYTRA_FLYING, 4.0f, 0.5f);
+			sound(sky, SoundEvents.AMETHYST_BLOCK_RESONATE, 4.0f, 0.5f); // its cold hum (not the wind: the user's rule, 2026-10-25)
 		}
 
 		@Override
