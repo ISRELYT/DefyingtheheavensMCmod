@@ -283,6 +283,14 @@ public final class ClientPacketHandlers {
 			client.execute(() -> InnerRealmFade.begin(ticks));
 		});
 
+		// What the body's surroundings give a soul meditating in the Inner Realm (MeditationManager#sendBodyPlace).
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.INNER_PLACE, (client, handler, buf, sender) -> {
+			double boost = buf.readDouble();
+			double[] shares = new double[buf.readVarInt()];
+			for (int i = 0; i < shares.length; i++) shares[i] = buf.readDouble();
+			client.execute(() -> ClientInnerPlace.set(boost, shares));
+		});
+
 		// The player's sect and title (SectMembership#sendStatus), for the Stats tab.
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.SECT_STATUS, (client, handler, buf, sender) -> {
 			String name = buf.readUtf();

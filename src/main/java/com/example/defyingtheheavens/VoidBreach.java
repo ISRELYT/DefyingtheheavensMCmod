@@ -326,7 +326,19 @@ public final class VoidBreach {
 		}
 	}
 
-	/** Now and then a Vestige of the Void out of the dark above, for {@code p}: of a Heavenly Being's size, {@code p}'s own might. */
+	/**
+	 * The might a breach's Vestige comes at for {@code p}: its own as it stands now (its higher path's true rank), no less than Dao
+	 * Integration's; VoidVestige caps it at Sacred Vessel's Grand Perfection (VoidVestige#MAX_MIGHT) and matches it again to whoever it
+	 * hunts (VoidVestige#matchMight).
+	 */
+	static int mightFor(ServerPlayer p) {
+		return Math.max(RIDE_RANK, TwoPaths.higherRank(CultivationManager.get(p), false));
+	}
+
+	/**
+	 * Now and then a Vestige of the Void out of the dark above, for {@code p}: of a Heavenly Being's size, {@code p}'s own might, but no
+	 * mightier than Sacred Vessel's Grand Perfection (VoidVestige#MAX_MIGHT, since 2026-10-27).
+	 */
 	private static void vestiges(ServerLevel climb, ServerPlayer p, Climb c) {
 		if (climb.getDifficulty() == Difficulty.PEACEFUL || p.isCreative() || c.ticks % VESTIGE_EVERY != 0) return;
 		RandomSource r = p.getRandom();
@@ -335,7 +347,7 @@ public final class VoidBreach {
 		VoidVestige vestige = ModEntities.VOID_VESTIGE.create(climb);
 		if (vestige == null) return;
 		vestige.setRank(VESTIGE_SIZE);
-		vestige.setMight(Math.max(RIDE_RANK, TwoPaths.higherRank(CultivationManager.get(p), false)));
+		vestige.setMight(mightFor(p));
 		double a = r.nextDouble() * Math.PI * 2;
 		double y = Math.min(p.getY() + 50 + r.nextDouble() * 20, ModDimensions.VOID_BREACH_MIN_Y + ModDimensions.VOID_BREACH_HEIGHT - VoidVestige.BREACH_MARGIN - 5);
 		vestige.moveTo(p.getX() + Math.cos(a) * 40, y, p.getZ() + Math.sin(a) * 40, r.nextFloat() * 360, 0);

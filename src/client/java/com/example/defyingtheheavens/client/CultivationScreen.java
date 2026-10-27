@@ -529,7 +529,7 @@ public class CultivationScreen extends Screen {
 		}
 
 		HeavenMethod method = HeavenMethods.practised(c.heaven());
-		double boost = player == null ? 1.0 : CultivationBoost.of(player).multiplier();
+		double boost = meditationBoost(player);
 		// On both paths (TwoPaths) the two stand side by side, each in full and alike: name, realm and stage, bar, the method
 		// practised and its pace, what stands next on it (the user's ask, 2026-10-18: both are ways to the heights, neither a side
 		// path). On the heaven path alone, its realm and stage over the whole width.
@@ -2697,7 +2697,7 @@ public class CultivationScreen extends Screen {
 				// What meditating here gathers (as the Cultivation tab reckons it) by the method's element, against what is left of the
 				// next layer's settling.
 				Player player = minecraft == null ? null : minecraft.player;
-				double boost = player == null ? 1.0 : CultivationBoost.of(player).multiplier();
+				double boost = meditationBoost(player);
 				double perSecond = c.meditationCultivationPerSecond(RingOfPowerItem.cultivationBonus(player)) * boost
 						* HeavenMethods.methodFactor(c, share, false) * c.meditationSpeed(); // at the pace it is set to
 				if (perSecond > 0) {
@@ -2830,8 +2830,18 @@ public class CultivationScreen extends Screen {
 		return Math.abs(amount - Math.rint(amount)) < 1.0e-6 ? String.valueOf((long) Math.rint(amount)) : String.format(Locale.ROOT, "%.2f", amount);
 	}
 
-	/** What share of the qi where the player stands is {@code element} (QiElement#share), as the server reckons it. */
+	/**
+	 * Meditation's boost as the server reckons it: the surroundings' where the player stands (CultivationBoost), or, the soul in the
+	 * Inner Realm, the body's (told by the server: ClientInnerPlace) with the Inner Realm's own x1.25.
+	 */
+	private static double meditationBoost(Player player) {
+		if (player == null) return 1.0;
+		return ClientInnerPlace.active() ? ClientInnerPlace.boost() : CultivationBoost.of(player).multiplier();
+	}
+
+	/** What share of the qi where the player stands is {@code element} (QiElement#share), as the server reckons it (in the Inner Realm, the body's). */
 	private static double shareHere(QiElement element) {
+		if (ClientInnerPlace.active()) return ClientInnerPlace.share(element);
 		net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
 		if (mc.level == null || mc.player == null) return 0;
 		net.minecraft.core.BlockPos pos = mc.player.blockPosition();

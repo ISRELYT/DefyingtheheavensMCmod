@@ -274,6 +274,24 @@ public class SpiritStoneItem extends Item {
 		return 1.0 - stack.getTag().getInt(DRAWN_TAG) / (double) secondsPerStone(stone.grade);
 	}
 
+	// A stone a meditation draws on shows what is left of its qi as a bar under it, in its grade's colour (the user's report of
+	// 2026-10-27: meditating with one seemed to spend nothing; only its tooltip told the qi going).
+
+	@Override
+	public boolean isBarVisible(ItemStack stack) {
+		return qiLeft(stack) < 1.0;
+	}
+
+	@Override
+	public int getBarWidth(ItemStack stack) {
+		return (int) Math.round(13 * Math.max(0, qiLeft(stack)));
+	}
+
+	@Override
+	public int getBarColor(ItemStack stack) {
+		return grade.color();
+	}
+
 	private static Vector3f colour(Grade grade) {
 		int c = grade.color();
 		return new Vector3f(((c >> 16) & 0xFF) / 255f, ((c >> 8) & 0xFF) / 255f, (c & 0xFF) / 255f);

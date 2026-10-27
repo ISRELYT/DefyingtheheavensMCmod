@@ -251,6 +251,19 @@ public final class MeditationManager {
 	}
 
 	/**
+	 * A soul in the Inner Realm told what its body's surroundings give it (ModPackets#INNER_PLACE): the Cultivation tab reckons its
+	 * rate, its years and its method's element from the player's own surroundings, the island's there, and showed the mats, pedestals,
+	 * height and calm about the body gone (the user's report of 2026-10-27: they counted all along; the tab now shows them, with the
+	 * Inner Realm's own x1.25).
+	 */
+	private static void sendBodyPlace(ServerPlayer p, Session session) {
+		QiElement[] elements = QiElement.values();
+		double[] shares = new double[elements.length];
+		for (int i = 0; i < elements.length; i++) shares[i] = HeavenMethods.shareAt(p, elements[i]);
+		ModPackets.sendInnerPlace(p, session.boost.multiplier(), shares);
+	}
+
+	/**
 	 * The meditation's boost as it saves years (Lifespan#saving): its surroundings' (CultivationBoost), and the Inner Realm's as well,
 	 * turned inward (the user's retune of 2026-10-27: an Immortal talent becomes a True Immortal with a method, four pedestals and the
 	 * Inner Realm, and not without it; before, it only sped the gain).
@@ -339,7 +352,10 @@ public final class MeditationManager {
 			session.z = p.getZ();
 			ModPackets.broadcastMeditation(p, true);
 		}
-		if (session.ticks % BOOST_REFRESH_TICKS == 0) session.boost = CultivationBoost.of(p);
+		if (session.ticks % BOOST_REFRESH_TICKS == 0) {
+			session.boost = CultivationBoost.of(p);
+			if (InnerRealm.isInside(p)) sendBodyPlace(p, session);
+		}
 		if (session.ticks >= BOOST_ANNOUNCE_DELAY) announceBoost(p, session);
 		if (c.isMortal()) { // shattered meridians: no qi to circulate, blood instead, tempering the body (BodyRefining)
 			if (tick % 10 == 0) {

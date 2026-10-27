@@ -51,6 +51,11 @@ import java.util.Deque;
 public class VoidVestige extends Monster {
 	public static final int MIN_RANK = PlayerCultivation.rank(Realm.NASCENT_SOUL, Stage.EARLY);
 	public static final int MAX_RANK = PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.GRAND_PERFECTION);
+	/**
+	 * The mightiest a Vestige comes ({@link #setMight}): Sacred Vessel's Grand Perfection (the user's ask of 2026-10-27: a breach's came
+	 * at its climber's own might, True Immortal's for one past it, and even an Entering Nirvana could hardly climb to the Great Void).
+	 */
+	public static final int MAX_MIGHT = PlayerCultivation.rank(Realm.SACRED_VESSEL, Stage.GRAND_PERFECTION);
 	/** Its length at Nascent Soul Early, in blocks; each stage more multiplies it by {@link #GROWTH}. */
 	public static final double BASE_LENGTH = 14, GROWTH = 1.32;
 	/** It hunts prey this near, and keeps this far out of any planet's air. */
@@ -116,10 +121,11 @@ public class VoidVestige extends Monster {
 
 	/**
 	 * Its strength (health, bite, hide) that of rank {@code rank}, any rank, its size unchanged: one of a Void Breach's, of the might of
-	 * whoever it comes for (a Heavenly Being's size there, a Dao Integration's or Void Shattering's bite). Call after {@link #setRank}.
+	 * whoever it comes for (a Heavenly Being's size there, a Dao Integration's or Void Shattering's bite), never past {@link #MAX_MIGHT}
+	 * (one saved mightier comes back so). Call after {@link #setRank}.
 	 */
 	public void setMight(int rank) {
-		rank = Mth.clamp(rank, MIN_RANK, PlayerCultivation.LAST_RANK);
+		rank = Mth.clamp(rank, MIN_RANK, MAX_MIGHT);
 		entityData.set(MIGHT, rank);
 		strengthOf(CultivatorNpc.realmOf(rank), CultivatorNpc.stageOf(rank));
 	}
@@ -272,6 +278,20 @@ public class VoidVestige extends Monster {
 		if (best != prey) lastPreyPos = null;
 		prey = best;
 		setTarget(best);
+		if (best != null && entityData.get(MIGHT) >= 0 && ModDimensions.isVoidBreach(level().dimension())) matchMight(best);
+	}
+
+	/**
+	 * A breach's Vestige (of a might: {@link #setMight}) of the might of the climber it hunts now (VoidBreach#mightFor), its wounds kept
+	 * as a share of its health: one left from a mightier climb (the user's of 2026-10-27, fallen back from True Immortal and hunted by
+	 * the Vestiges of their peak), or come upon a weaker climber, matches them.
+	 */
+	void matchMight(ServerPlayer climber) {
+		int wanted = Mth.clamp(VoidBreach.mightFor(climber), MIN_RANK, MAX_MIGHT);
+		if (wanted == mightRank()) return;
+		float share = getHealth() / Math.max(1.0f, getMaxHealth());
+		setMight(wanted);
+		setHealth(getMaxHealth() * share);
 	}
 
 	/**

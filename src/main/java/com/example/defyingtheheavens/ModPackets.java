@@ -31,6 +31,12 @@ public final class ModPackets {
 	public static final ResourceLocation SURGE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "surge");
 	/** S2C: the soul is about to turn inward: fade the screen to black (see InnerRealm#FADE_TICKS). */
 	public static final ResourceLocation INNER_FADE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "inner_fade");
+	/**
+	 * S2C: a soul meditating in the Inner Realm, what its body's surroundings give it as the server reckons them (the boost of mats,
+	 * pedestals, height and calm round the body, and each element's share of the qi there), for the Cultivation tab, which otherwise
+	 * reckons them from the island about the soul (MeditationManager#sendBodyPlace; the user's report of 2026-10-27).
+	 */
+	public static final ResourceLocation INNER_PLACE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "inner_place");
 	/** S2C: the player's sect and their title in it, for the Stats tab (SectMembership#sendStatus). */
 	public static final ResourceLocation SECT_STATUS = new ResourceLocation(DefyingTheHeavens.MOD_ID, "sect_status");
 	/** C2S: the Sect tab opening asks for its page; S2C SECT_INFO is it (SectMembership#sendInfo). */
@@ -819,6 +825,15 @@ public final class ModPackets {
 		FriendlyByteBuf buf = PacketByteBufs.create();
 		buf.writeVarInt(InnerRealm.FADE_TICKS);
 		ServerPlayNetworking.send(player, INNER_FADE, buf);
+	}
+
+	/** {@link #INNER_PLACE}: the boost about {@code player}'s body and each element's share of the qi there (by QiElement's order). */
+	public static void sendInnerPlace(ServerPlayer player, double boost, double[] shares) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeDouble(boost);
+		buf.writeVarInt(shares.length);
+		for (double share : shares) buf.writeDouble(share);
+		ServerPlayNetworking.send(player, INNER_PLACE, buf);
 	}
 
 	public static void sendFormations(ServerPlayer to, List<Formation> formations) {

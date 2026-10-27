@@ -196,6 +196,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> client.execute(() -> {
 			ClientTribulationData.clear();
 			ClientCultivationData.clear();
+			ClientInnerPlace.clear();
 			ClientClone.clear();
 			ClientSect.clear();
 			QuickAbilities.clear();

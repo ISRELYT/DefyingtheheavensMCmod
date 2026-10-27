@@ -1692,7 +1692,10 @@ After **10 seconds of meditation** the screen fades to black and your soul turns
 island in a void, while your body stays sitting where you were (other players see it, in your skin). Meditation inside is
 **x1.25** as fruitful and its years cost x1.25 fewer (the retune of 2026-10-27: it was x1.5, and saved no years), and it still
 gets the mats, pedestals, height and biome bonuses from around your body; suppression and the Upper Realm's x10 also follow the
-body. The ghost path's and the Demon Path's meditation are x1.25 inside too, on the qi where the body sits.
+body. The ghost path's and the Demon Path's meditation are x1.25 inside too, on the qi where the body sits. The Cultivation
+tab shows it so: while you're inside, the server tells it the boost and the elements' qi about your body (`ModPackets#INNER_PLACE`,
+client `ClientInnerPlace`; till 2026-10-27 the tab reckoned them from the island and showed the mats and pedestals gone, though
+they counted all along).
 
 **The dead turn inward too** (the user's call, 2026-10-19), from anywhere, the Netherworld included (the living still can't
 there): their ghostly form sits on where they meditated, in the dead's light (a Ghost King's crowned, seen as the dead are),
@@ -2294,7 +2297,11 @@ plan of 2026-10-25. The Immortal Realm (below) is phase 2.
   no one: the void's pressure turns them back.
 - **The climb.** Shattered space (`void_breach`), where no flight holds. The breach's current carries you up for 30 seconds while
   you steer. The void presses all the while (armour is no help). Shards of broken space fall where light first marks them (60
-  harm). **Vestiges of the Void** come out of the dark for the climbers, each as mighty as the one it hunts.
+  harm). **Vestiges of the Void** come out of the dark for the climbers, each as mighty as the one it hunts but **never past
+  Sacred Vessel's Grand Perfection** (`VoidVestige#MAX_MIGHT`, the user's ask of 2026-10-27: one past True Immortal met True
+  Immortal Vestiges, and even an Entering Nirvana could hardly climb; old ones saved mightier come back capped). One matches the
+  might of the climber it hunts as they stand now, its wounds kept (`VoidVestige#matchMight`): one left from a mightier climb, or
+  come upon a weaker climber, is theirs (a climber fallen back from True Immortal was hunted by the Vestiges of their peak).
 - **Out and back.** At the top you come out on the land nearest where the breach was torn. To go back down, fall off a
   continent's edge, or tear a Spatial Tear in the Great Void. Either way you land harmlessly in the Jade Firmament's sky over its
   nearest island.
@@ -4251,7 +4258,9 @@ and slowly breathe (`SpiritStoneGlow`).
   worth (225 for a Mid, and so on); the stone is used up. A stone part spent by meditation gives only the qi left in it
   (it gave all of it before the bug sweep of 2026-10-23), and the next of its stack starts whole.
 - **Meditate** with one in either hand to cultivate 50% faster while its qi lasts: 30 seconds for every Low stone's
-  worth, then it is spent (how much is left shows on it).
+  worth (a Mid 4.5 minutes, a High 40, a Supreme 6 hours), then it is spent and the next of the stack begins. A bar under the
+  stone, in its grade's colour, shows what is left of its qi (since 2026-10-27; before, only its tooltip did). In creative a
+  stack is never used up, as with any item.
 - **Where they come from**: Spirit Stone Veins (Low stones) through Overworld stone, the deepslate kind with the odd Mid;
   Rich Spirit Stone Veins (Mid, a chance of High, rarely Supreme, very rarely Immortal) at the bottom of the Overworld
   and all through the Upper Realm (iron pickaxe for the common veins, diamond for the rich); sect chests (most in the
