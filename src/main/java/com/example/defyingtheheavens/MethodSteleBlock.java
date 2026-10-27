@@ -17,6 +17,7 @@ import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -61,6 +62,11 @@ public class MethodSteleBlock extends HorizontalDirectionalBlock {
 		if (state.getValue(PART) == Part.UPPER) return eastWest ? TOP_EAST_WEST : TOP_NORTH_SOUTH;
 		return eastWest ? EAST_WEST : NORTH_SOUTH;
 	}
+
+	/** No way through (not a whole block, vanilla took it for open ground: a walker would push against it, as at a Formation Core). */
+	@Override
+	@SuppressWarnings("deprecation")
+	public boolean isPathfindable(BlockState state, BlockGetter level, BlockPos pos, PathComputationType type) { return false; }
 
 	/** Stands a whole stele of {@code method} with its foot at {@code foot}, its face toward {@code facing}. */
 	public static void place(LevelAccessor level, BlockPos foot, GhostMethod method, Direction facing) {

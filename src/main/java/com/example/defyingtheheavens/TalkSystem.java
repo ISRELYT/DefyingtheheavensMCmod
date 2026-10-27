@@ -162,9 +162,11 @@ public final class TalkSystem {
 
 	/**
 	 * It kneels to {@code player}: four realms or more beneath them (NpcAddress#KNEEL_GAP: the user's pick, 2026-10-27, "Kneel from 4
-	 * realms"), or two beneath them with their realm pressed down on it.
+	 * realms"), or two beneath them with their realm pressed down on it; never while they have let it up (Release, for its five minutes:
+	 * RealmSuppressSystem#spares).
 	 */
 	public static boolean kneelsTo(ServerPlayer player, CultivatorNpc npc) {
+		if (RealmSuppressSystem.spares(player, npc)) return false;
 		return NpcAddress.gap(player, npc) >= NpcAddress.KNEEL_GAP || standing(player, npc) == Standing.FAR_BELOW && RealmSuppressSystem.presses(player, npc);
 	}
 

@@ -19,6 +19,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -45,6 +46,16 @@ public class FormationCoreBlock extends BaseEntityBlock {
 	@Override public BlockEntity newBlockEntity(BlockPos pos, BlockState state) { return new FormationCoreBlockEntity(pos, state); }
 	@Override public RenderShape getRenderShape(BlockState state) { return RenderShape.MODEL; }
 	@Override public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) { return SHAPE; }
+
+	/**
+	 * No way through: not a whole block, it was taken for open ground (vanilla's default), and its altar stands too high to step onto, so
+	 * a walker whose path led across it pushed against it for good (a Holy Land's Inner Disciple beside its core, tour dragon1).
+	 */
+	@Override
+	@SuppressWarnings("deprecation")
+	public boolean isPathfindable(BlockState state, BlockGetter level, BlockPos pos, PathComputationType type) {
+		return false;
+	}
 
 	@Override
 	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {

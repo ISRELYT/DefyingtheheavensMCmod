@@ -691,7 +691,10 @@ public final class Codex {
 		page("ghostly_qi", ModItems.YIN_JADE, "springs/root", "Ghostly Qi", """
 				The second kind of qi. It belongs to places, not to you: ghost methods are cultivated on it, and your ghostly qi pool fills \
 				from it. Under Qi Sense it appears as cyan yin motes.
-				It is thick in the Netherworld, thickest on the Nine Nether Peaks, and faint in soul sand valleys.""");
+				It is thickest on the Great Void's Ancient Battlefields, thick in the Netherworld (thicker on the Nine Nether Peaks), thin \
+				in soul sand valleys and faint in the Overworld.
+				Your ghostly qi pool grows with your ghost path's realm, as your qi pool grows with the heaven path's, and the ghost methods \
+				you know add to it. The higher your ghost path, the faster it refills, but the place still matters most.""");
 		page("ghost_path", ModItems.GHOST_JADE_SLIP, "springs/root", "The Ghost Path", """
 				The path of the ghost methods, walked by both the dead and the living, with its own cultivation bar and its own \
 				tribulations. It begins with a ghost method, learned from a Ghost Jade Slip, a Method Stele, or a ghost cultivator willing \

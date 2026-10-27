@@ -26,6 +26,48 @@ import java.util.List;
  */
 public class GreatVoidGameTests implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
+	public void aHolyLandsWaysGoRoundItsGreatHall(GameTestHelper helper) {
+		// The user, 2026-10-27: its Patriarch ran in circles before the Hall of the Great Dao, led into it by the ways down the axis.
+		net.minecraft.core.BlockPos core = helper.absolutePos(new net.minecraft.core.BlockPos(1, 2, 1));
+		Sect sect = new Sect(java.util.UUID.randomUUID());
+		sect.dimension = ModDimensions.GREAT_VOID;
+		sect.core = core;
+		sect.posts(Sect.Post.MASTER_SEAT).add(core.offset(0, 6, HolyLandPlan.PALACE_V + 30)); // the palace straight behind, as laid out
+		net.minecraft.core.BlockPos inHall = core.offset(0, 0, HolyLandPlan.HALL_V + 14), beforeHall = core.offset(0, 0, HolyLandPlan.HALL_V - 3);
+		sect.posts(Sect.Post.WAY).add(inHall);
+		sect.posts(Sect.Post.WAY).add(beforeHall);
+		List<net.minecraft.core.BlockPos> ways = HolyLandPlan.ways(sect, helper.getLevel());
+		helper.assertTrue(!ways.contains(inHall) && ways.contains(beforeHall), "No way point inside the hall; the way before it kept");
+		int flanks = 0;
+		for (net.minecraft.core.BlockPos way : ways) {
+			int dx = way.getX() - core.getX(), dz = way.getZ() - core.getZ();
+			if (Math.abs(dx) != HolyLandPlan.FLANK_U) continue;
+			flanks++;
+			helper.assertTrue(dz >= HolyLandPlan.HALL_V && dz < HolyLandPlan.PALACE_V, "Down the lawns beside the hall, between its way and the palace's");
+		}
+		boolean loaded = helper.getLevel().hasChunkAt(core.offset(HolyLandPlan.FLANK_U, 0, 60)) && helper.getLevel().hasChunkAt(core.offset(-HolyLandPlan.FLANK_U, 0, 30));
+		helper.assertTrue(!loaded || flanks >= 2, "Way points down both sides of it (" + flanks + ")");
+		sect.race = Bloodline.TIGER;
+		helper.assertTrue(HolyLandPlan.ways(sect, helper.getLevel()).contains(inHall), "A Demon Palace's ways are its own");
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void aGreatSectsBarrierIsCarriedByItsPeople(GameTestHelper helper) {
+		// The user, 2026-10-27: Holy Lands lagged. Their barrier (radius up to 136) asked some 232 qi a second of the plaza's eight veins' 64, ran
+		// its battery dry in seconds, fell all at once and rose again, over and over.
+		int holy = Formations.HOLY_MAX_RADIUS;
+		double upkeep = FormationCoreBlockEntity.upkeep(holy);
+		helper.assertTrue(FormationCoreBlockEntity.supply(FormationCoreBlockEntity.SECT_VEINS, true, holy) >= upkeep + FormationCoreBlockEntity.SECT_SURPLUS - 1.0e-9,
+				"A Holy Land's people carry its barrier, with some to spare for mending (" + upkeep + " a second)");
+		helper.assertTrue(FormationCoreBlockEntity.supply(0, true, holy) < upkeep, "...its veins mined, it runs short as before");
+		helper.assertTrue(FormationCoreBlockEntity.supply(FormationCoreBlockEntity.SECT_VEINS, true, 40) == FormationCoreBlockEntity.SECT_VEINS * QiVeinBlock.QI_PER_SECOND,
+				"A lesser sect's barrier is its veins' alone, as ever");
+		helper.assertTrue(FormationCoreBlockEntity.supply(2, false, holy) == 2 * QiVeinBlock.QI_PER_SECOND, "A cultivator's own core, its veins' alone");
+		helper.succeed();
+	}
+
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void aHolyLandsTwenty(GameTestHelper helper) {
 		RandomSource random = RandomSource.create(17);
 		for (int trial = 0; trial < 20; trial++) {

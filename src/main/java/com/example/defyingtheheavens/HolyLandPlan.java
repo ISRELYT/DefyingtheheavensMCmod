@@ -56,6 +56,148 @@ final class HolyLandPlan {
 	static final int CLEAR = 30, MAX_RELIEF = 36;
 	/** How many of the samples under the buildings may be water. */
 	private static final int MAX_WET = 4;
+	/** How far behind the plaza's middle the Hall of the Great Dao and the Patriarch's Palace begin. */
+	static final int HALL_V = 26, PALACE_V = 68;
+	/**
+	 * The lawns down either side of the Hall of the Great Dao (between it and the scripture tower and alchemy hall), so many across from the
+	 * axis, and how deep behind the plaza's middle the way points walked along them stand ({@link #flankWays}).
+	 */
+	static final int FLANK_U = 28;
+	private static final int[] FLANK_V = {30, 40, 50, 60};
+	/** The Hall of the Great Dao's footprint: so many either side of the axis, and so deep from {@link #HALL_V}. */
+	private static final int HALL_HALF_WIDTH = 25, HALL_DEPTH = 37;
+
+	/**
+	 * The sect's way points (Sect#waypoints) as a walker goes by them (CultivatorGoals#byTheWays): for a Holy Land, without the ones
+	 * inside the Hall of the Great Dao, and with way points down the lawns either side of it, joining the way before it to the way before
+	 * the Patriarch's Palace (the user, 2026-10-27: the Patriarch ran round in circles before the hall). The ways laid out with the grounds
+	 * joined the two only along the axis, through the hall, and the hall has no back door: a walker led along them pressed against its
+	 * back wall. Worked out from where the sect's core and the Patriarch's seat lie, the flanks' ground as the land lies there now (only
+	 * where it is loaded), so Holy Lands founded before this have them too. Any other sect's as they are (a Demon Palace's ways go round
+	 * its hall already).
+	 */
+	static List<BlockPos> ways(Sect sect, net.minecraft.world.level.Level level) {
+		List<BlockPos> ways = sect.waypoints();
+		if (!sect.isHoly() || sect.race != Bloodline.HUMAN || sect.posts(Sect.Post.MASTER_SEAT).isEmpty()) return ways;
+		BlockPos seat = sect.post(Sect.Post.MASTER_SEAT, 0);
+		int dx = seat.getX() - sect.core.getX(), dz = seat.getZ() - sect.core.getZ();
+		boolean alongX = Math.abs(dx) > Math.abs(dz);
+		int back = alongX ? Integer.signum(dx) : Integer.signum(dz);
+		ways.removeIf(way -> {
+			int rx = way.getX() - sect.core.getX(), rz = way.getZ() - sect.core.getZ();
+			int u = Math.abs(alongX ? rz : rx), v = back * (alongX ? rx : rz);
+			return u <= HALL_HALF_WIDTH && v >= HALL_V && v < HALL_V + HALL_DEPTH;
+		});
+		for (int side = -1; side <= 1; side += 2) {
+			for (int v : FLANK_V) {
+				int x = sect.core.getX() + (alongX ? back * v : side * FLANK_U);
+				int z = sect.core.getZ() + (alongX ? side * FLANK_U : back * v);
+				if (!Formations.ready(level, x, z)) continue;
+				ways.add(new BlockPos(x, Formations.surface(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z));
+			}
+		}
+		// Over the moat's bridge (its banks and its crown): the ways laid out skip the moat, so the front court, the disciples' four halls
+		// and their mats, lay cut off from the plaza (the tour of 2026-10-27: no inner disciple reached its mat). And up the palace to the
+		// Patriarch's seat: before its stairs, its terraces, inside its door along the carpet (its hall's floor three under the seat).
+		for (int v : new int[] {MOAT_V, MOAT_V + MOAT_DEPTH / 2, MOAT_V + MOAT_DEPTH - 1, PALACE_V + 2, PALACE_V + 12, PALACE_V + 18, PALACE_V + 26, PALACE_V + 34}) {
+			int x = sect.core.getX() + (alongX ? back * v : 0), z = sect.core.getZ() + (alongX ? 0 : back * v);
+			if (!Formations.ready(level, x, z)) continue;
+			int y = v > PALACE_V + HALL_FRONT ? seat.getY() - 3 : Formations.surface(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+			ways.add(new BlockPos(x, y, z));
+		}
+		return ways;
+	}
+
+	/** The moat's first row behind the plaza's middle (before it: it lies toward the gate) and its depth; the palace hall's door, behind the palace's start. */
+	private static final int MOAT_V = -46, MOAT_DEPTH = 11, HALL_FRONT = 22;
+
+	/**
+	 * The palace's first flight of stairs met by the lawn (the user, 2026-10-27: the Patriarch never got to its seat): the palace stands on its
+	 * own ground, which can lie a block or two above the lawn before it, and its stairs begin a block over the palace's floor, so their first
+	 * step stood two or three over the lawn, too high to walk up. Where it does, the step that is missing below it is laid (the stair's own
+	 * block, on a footing of the stone beneath it), and a second if one is not enough; done again it finds them laid. Only where the land is
+	 * there whole. Nothing for any other sect.
+	 */
+	static void mendPalaceSteps(net.minecraft.server.level.ServerLevel level, Sect sect) {
+		if (!sect.isHoly() || sect.race != Bloodline.HUMAN || sect.posts(Sect.Post.MASTER_SEAT).isEmpty()) return;
+		BlockPos seat = sect.post(Sect.Post.MASTER_SEAT, 0);
+		int dx = seat.getX() - sect.core.getX(), dz = seat.getZ() - sect.core.getZ();
+		boolean alongX = Math.abs(dx) > Math.abs(dz);
+		int back = alongX ? Integer.signum(dx) : Integer.signum(dz);
+		for (int u = -5; u <= 5; u++) {
+			BlockPos[] column = new BlockPos[3];
+			for (int k = 0; k < 3; k++) {
+				int v = PALACE_V + 3 - k; // the lowest step, then the two rows before it
+				column[k] = new BlockPos(sect.core.getX() + (alongX ? back * v : u), 0, sect.core.getZ() + (alongX ? u : back * v));
+				if (!Formations.ready(level, column[k].getX(), column[k].getZ())) return;
+			}
+			int step = top(level, column[0], seat.getY(), sect.core.getY() - 24);
+			if (step != Integer.MIN_VALUE) mendFlight(level, column, step, sect.core.getY() - 24);
+		}
+		mendHallSteps(level, sect, alongX, back);
+	}
+
+	/** The front court's meditation halls: their doors' middles down the way (before the core), and their front walls' line either side of it. */
+	private static final int[] HALL_DOORS_V = {-100, -66};
+	private static final int HALL_WALL_U = 22;
+
+	/**
+	 * The front court's meditation halls' steps met by the lawn as well (tour survey1: the land lay a block or two under every hall's paving,
+	 * its one step a block and a half or more over the lawn, and no Inner Disciple got in to its mat; land generated since is drawn up to
+	 * the paving, SectBeard): as the palace's, the steps missing laid, up to four before each of the five across its door.
+	 */
+	private static void mendHallSteps(net.minecraft.server.level.ServerLevel level, Sect sect, boolean alongX, int back) {
+		for (int side = -1; side <= 1; side += 2) {
+			for (int door : HALL_DOORS_V) {
+				for (int v = door - 2; v <= door + 2; v++) {
+					BlockPos[] column = new BlockPos[5];
+					for (int k = 0; k < 5; k++) {
+						int u = side * (HALL_WALL_U - 1 - k); // its step, then the four rows before it, toward the way
+						column[k] = new BlockPos(sect.core.getX() + (alongX ? back * v : u), 0, sect.core.getZ() + (alongX ? u : back * v));
+						if (!Formations.ready(level, column[k].getX(), column[k].getZ())) return;
+					}
+					int step = lowestStair(level, column[0], sect.core.getY() - 24, sect.core.getY() + 24);
+					if (step != Integer.MIN_VALUE) mendFlight(level, column, step, sect.core.getY() - 24);
+				}
+			}
+		}
+	}
+
+	/**
+	 * From the step at {@code step} in {@code column[0]}, a step laid in each row after it (the stair's own block, on a footing of the stone
+	 * beneath it) while the ground there lies two or more under the last: so the flight comes down to the lawn. Done again it finds them laid.
+	 */
+	private static void mendFlight(net.minecraft.server.level.ServerLevel level, BlockPos[] column, int step, int floor) {
+		net.minecraft.world.level.block.state.BlockState stair = level.getBlockState(column[0].atY(step));
+		net.minecraft.world.level.block.state.BlockState footing = level.getBlockState(column[0].atY(step - 1));
+		if (footing.isAir()) footing = net.minecraft.world.level.block.Blocks.STONE_BRICKS.defaultBlockState();
+		int high = step;
+		for (int k = 1; k < column.length; k++) {
+			int ground = top(level, column[k], high, floor);
+			if (ground == Integer.MIN_VALUE || high - ground < 2) break; // walkable from here
+			int y = high - 1;
+			level.setBlock(column[k].atY(y), stair, net.minecraft.world.level.block.Block.UPDATE_ALL);
+			for (int f = y - 1; f > ground; f--) level.setBlock(column[k].atY(f), footing, net.minecraft.world.level.block.Block.UPDATE_ALL);
+			high = y;
+		}
+	}
+
+	/** The lowest stair in the column from {@code from} up to {@code to}, or MIN_VALUE. */
+	private static int lowestStair(net.minecraft.world.level.Level level, BlockPos column, int from, int to) {
+		for (int y = from; y <= to; y++) {
+			if (level.getBlockState(column.atY(y)).getBlock() instanceof net.minecraft.world.level.block.StairBlock) return y;
+		}
+		return Integer.MIN_VALUE;
+	}
+
+	/** The highest block below {@code from} down to {@code to} at the column that isn't air or something walked through, or MIN_VALUE. */
+	private static int top(net.minecraft.world.level.Level level, BlockPos column, int from, int to) {
+		for (int y = from; y >= to; y--) {
+			net.minecraft.world.level.block.state.BlockState state = level.getBlockState(column.atY(y));
+			if (!state.isAir() && !state.canBeReplaced()) return y;
+		}
+		return Integer.MIN_VALUE;
+	}
 	/** Below this continent mask (ModNoiseSettings#continentMask, 0 at a rim) a sample point is too near a continent's cliff. */
 	private static final double CONTINENT_MIN = 0.05;
 
@@ -144,7 +286,7 @@ final class HolyLandPlan {
 
 		// The ways: the Spirit Way, seven wide, from the gate to the palace's stairs; a way across the plaza to the pagodas' doors, one
 		// before the Hall of the Great Dao out to the elders' courts, one before the palace; the paved plaza round the core.
-		int gateV = 4, hallV0 = cv + 26, hallDepth = 37, palaceV0 = cv + 68, palaceDepth = 57;
+		int gateV = 4, hallV0 = cv + HALL_V, hallDepth = HALL_DEPTH, palaceV0 = cv + PALACE_V, palaceDepth = 57;
 		layout.road(cu, 0, cu, palaceV0 + 2, 3);
 		layout.road(cu - 33, cv, cu + 33, cv, 2);
 		layout.road(cu - 76, hallV0 - 3, cu + 76, hallV0 - 3, 2);
@@ -338,6 +480,10 @@ final class HolyLandPlan {
 		CompoundTag plazaData = new CompoundTag();
 		SectPiece plaza = new SectPiece(SectPiece.Kind.PLAZA, plazaBox, back, seed + 50, faction, true, plazaData);
 		BlockPos core = plaza.toWorld(r, 2, r);
+		// The great round plaza about the dais (26 across: the dais's piece paves only its own 12) laid level with its paving, not on the land
+		// as it lies: following the land it stepped down in rings, and sank eight deep in a hollow before the great hall (tour survey3).
+		groundsData.putInt("PlazaY", plazaBox.minY());
+		groundsData.putLong("PlazaAt", core.asLong());
 
 		Map<Sect.Post, List<BlockPos>> posts = new EnumMap<>(Sect.Post.class);
 		for (Sect.Post post : Sect.Post.values()) posts.put(post, new ArrayList<>());
@@ -363,8 +509,9 @@ final class HolyLandPlan {
 		List<BlockPos> courtyard = posts.get(Sect.Post.COURTYARD);
 		for (int v : new int[] {cv - 80, cv - 56, cv - 30, hallV0 - 3, palaceV0 - 3}) courtyard.add(fit.onGround(cu, v));
 		for (int k = 0; k < 8; k++) {
+			// On the lawn round the plaza, past its edge (set at the plaza's floor, they hung over the lawn: tour dragon1).
 			double angle = Math.PI / 4 * k;
-			courtyard.add(plaza.toWorld(r + (int) Math.round(Math.cos(angle) * 19), 1, r + (int) Math.round(Math.sin(angle) * 19)));
+			courtyard.add(fit.onGround(cu + (int) Math.round(Math.cos(angle) * 19), cv + (int) Math.round(Math.sin(angle) * 19)));
 		}
 		for (SectPiece garden : gardens) courtyard.add(garden.toWorld(garden.width() / 2, 1, 1));
 		for (SectPiece pagoda : pagodas) {

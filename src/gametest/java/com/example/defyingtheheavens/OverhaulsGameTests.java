@@ -98,6 +98,10 @@ public class OverhaulsGameTests implements FabricGameTest {
 			// Passing close, it kneels to one four realms above it, and not to one three.
 			ServerPlayer revered = cultivator(helper, made, "revered", Realm.HEAVENLY_BEING, Stage.EARLY);
 			helper.assertTrue(TalkSystem.kneelsBefore(refiner, null) == revered, "It kneels before one four realms above it as they pass");
+			// Let up (Release pressure), it stands before them for the five minutes, four realms or no (the user, 2026-10-27).
+			RealmSuppressSystem.spare(revered, refiner);
+			helper.assertTrue(!TalkSystem.kneelsTo(revered, refiner) && TalkSystem.kneelsBefore(refiner, null) == null,
+					"Released, it gets up and stays up");
 			leave(made);
 			made.clear();
 			ServerPlayer esteemed = cultivator(helper, made, "esteemed", Realm.NASCENT_SOUL, Stage.EARLY);

@@ -289,7 +289,8 @@ public final class ModAdvancements {
 				milestone(Milestones.SPELL_GHOST));
 		add("springs/both_paths", "springs/ghost_path", ModItems.YIN_GATHERING_PILL, FrameType.GOAL, "Two Paths, One Body",
 				"Walk the heaven path and the ghost path both, among the living", milestone(Milestones.BOTH_PATHS));
-		add("springs/ghost_king", "springs/ghost_path", Items.GOLDEN_HELMET, FrameType.CHALLENGE, "King of the Dead", "Become a Ghost King",
+		add("springs/ghost_king", "springs/ghost_path", Items.GOLDEN_HELMET, FrameType.CHALLENGE, "King of the Dead",
+				"Be among the dead with a ghost path of Core Formation or higher: a Ghost King",
 				milestone(Milestones.GHOST_KING));
 		add("springs/meng_po", "springs/ghost", Items.SUSPICIOUS_STEW, FrameType.TASK, "Meng Po's Soup", "Drink, and forget", milestone(Milestones.SOUP));
 		add("springs/reborn", "springs/ghost", ModItems.REBIRTH_PILL, FrameType.GOAL, "The Wheel Turns", "Be born again", milestone(Milestones.REBORN));

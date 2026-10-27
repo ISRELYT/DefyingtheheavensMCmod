@@ -718,10 +718,12 @@ public class CultivationScreen extends Screen {
 		int cx = x + w / 2;
 		if (c.isMaxed()) {
 			barText(g, cx, y + 1, w, Component.translatable(ModLang.CULTIVATION_MAX, num(c.getCultivation())),
-					Component.translatable(ModLang.CULTIVATION_MAX_SHORT, num(c.getCultivation())));
+					Component.translatable(ModLang.CULTIVATION_MAX_SHORT, num(c.getCultivation())),
+					Component.translatable(ModLang.CULTIVATION_MAX_SHORT, big(c.getCultivation())));
 		} else {
 			barText(g, cx, y + 1, w, Component.translatable(ModLang.CULTIVATION, num(c.getCultivation()), num(required)),
-					Component.translatable(ModLang.CULTIVATION_SHORT, num(c.getCultivation()), num(required)));
+					Component.translatable(ModLang.CULTIVATION_SHORT, num(c.getCultivation()), num(required)),
+					Component.translatable(ModLang.CULTIVATION_SHORT, big(c.getCultivation()), big(required)));
 		}
 		return y + 14;
 	}
@@ -797,10 +799,12 @@ public class CultivationScreen extends Screen {
 		drawBar(g, x, y, w, GhostMethods.stageProgress(s), 0xFF4DB6AC, maxed ? 0xFFFFD700 : GhostMethods.atBottleneck(c) ? 0xFFFFC107 : 0);
 		if (maxed) {
 			barText(g, cx, y + 1, w, Component.translatable(ModLang.CULTIVATION_MAX, num(s.pathCultivation())),
-					Component.translatable(ModLang.CULTIVATION_MAX_SHORT, num(s.pathCultivation())));
+					Component.translatable(ModLang.CULTIVATION_MAX_SHORT, num(s.pathCultivation())),
+					Component.translatable(ModLang.CULTIVATION_MAX_SHORT, big(s.pathCultivation())));
 		} else {
 			barText(g, cx, y + 1, w, Component.translatable(ModLang.CULTIVATION, num(s.pathCultivation()), num(required)),
-					Component.translatable(ModLang.CULTIVATION_SHORT, num(s.pathCultivation()), num(required)));
+					Component.translatable(ModLang.CULTIVATION_SHORT, num(s.pathCultivation()), num(required)),
+					Component.translatable(ModLang.CULTIVATION_SHORT, big(s.pathCultivation()), big(required)));
 		}
 		y += 14;
 		// What meditating here adds a second on ghostly qi (thickest on the Great Void's battlefields, then the Netherworld's, thinner in
@@ -848,10 +852,12 @@ public class CultivationScreen extends Screen {
 		boolean maxed = DemonPath.isMaxed(c);
 		drawBar(g, x, y, w, DemonPath.stageProgress(c), 0xFFC8423A, maxed ? 0xFFFFD700 : DemonPath.atBottleneck(c) ? 0xFFFFC107 : 0);
 		if (maxed) {
-			barText(g, cx, y + 1, w, Component.translatable(ModLang.CULTIVATION_MAX, num(done)), Component.translatable(ModLang.CULTIVATION_MAX_SHORT, num(done)));
+			barText(g, cx, y + 1, w, Component.translatable(ModLang.CULTIVATION_MAX, num(done)), Component.translatable(ModLang.CULTIVATION_MAX_SHORT, num(done)),
+					Component.translatable(ModLang.CULTIVATION_MAX_SHORT, big(done)));
 		} else {
 			barText(g, cx, y + 1, w, Component.translatable(ModLang.CULTIVATION, num(done), num(required)),
-					Component.translatable(ModLang.CULTIVATION_SHORT, num(done), num(required)));
+					Component.translatable(ModLang.CULTIVATION_SHORT, num(done), num(required)),
+					Component.translatable(ModLang.CULTIVATION_SHORT, big(done), big(required)));
 		}
 		y += 14;
 		Component pace;
@@ -1138,9 +1144,15 @@ public class CultivationScreen extends Screen {
 	 */
 	private void barText(GuiGraphics g, int cx, int y, int width, Component... texts) {
 		Component text = fit(width - 2, texts);
-		int tx = cx - font.width(text) / 2;
-		for (int[] d : OUTLINE) g.drawString(font, text, tx + d[0], y + d[1], 0x000000, false);
-		g.drawString(font, text, tx, y, 0xFFFFFF, false);
+		// Even the shortest too wide (the user, 2026-10-27, its seventeen figures running off the column): drawn smaller to fit.
+		float scale = Math.min(1f, (width - 2) / (float) Math.max(1, font.width(text)));
+		g.pose().pushPose();
+		g.pose().translate(cx, y + 4, 0);
+		g.pose().scale(scale, scale, 1f);
+		int tx = -font.width(text) / 2;
+		for (int[] d : OUTLINE) g.drawString(font, text, tx + d[0], -4 + d[1], 0x000000, false);
+		g.drawString(font, text, tx, -4, 0xFFFFFF, false);
+		g.pose().popPose();
 	}
 
 	private static final int[][] OUTLINE = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
@@ -3176,6 +3188,18 @@ public class CultivationScreen extends Screen {
 
 	private static String num(double v) {
 		return String.format(Locale.ROOT, "%,.0f", v);
+	}
+
+	/**
+	 * A bar's number when its whole figures won't fit the bar (a Heavenly Lord's cultivation runs to seventeen): in short from a million,
+	 * "3.25M", "56.29Q" (to quadrillions), else whole.
+	 */
+	private static String big(double v) {
+		double a = Math.abs(v);
+		if (a < 1_000_000) return num(v);
+		String[] units = {"M", "B", "T", "Q"};
+		int u = Math.min(units.length - 1, (int) (Math.log10(a) / 3) - 2);
+		return String.format(Locale.ROOT, "%.2f%s", v / Math.pow(1000, u + 2), units[u]);
 	}
 
 	/** A tab in the strip at the top of the panel, drawn in the panel's own colours. */

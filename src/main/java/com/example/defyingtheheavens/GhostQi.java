@@ -22,9 +22,10 @@ import net.minecraft.world.level.biome.Biomes;
  *   <tr><td>The Overworld</td><td>{@link #OVERWORLD} (x0.25)</td></tr>
  *   <tr><td>Everywhere else</td><td>0</td></tr>
  * </table>
- * The ghostly qi pool fills at density x {@link #FILL_PER_DENSITY} a second: 20 a second on the battlefields, 2 in the Netherworld (2.4 on its peaks),
- * 0.2 in a Soul Sand Valley, 0.1 in the rest of the Nether, 0.05 in the Overworld, nothing elsewhere. Spirit stones and Spirit Dew
- * don't fill it.
+ * The ghostly qi pool fills at density x {@link #FILL_PER_DENSITY} a second at Qi Refining Early: 20 a second on the battlefields, 2 in the
+ * Netherworld (2.4 on its peaks), 0.2 in a Soul Sand Valley, 0.1 in the rest of the Nether, 0.05 in the Overworld, nothing elsewhere; the
+ * ghost path's realm multiplies it as it grows the pool (since 2026-10-27: {@link #realmPool}, {@link #realmFill}). Spirit stones and Spirit
+ * Dew don't fill it.
  */
 public final class GhostQi {
 	/**
@@ -89,18 +90,54 @@ public final class GhostQi {
 	/**
 	 * This cultivator's pool size. Every ghost, everyone who knows a ghost method, and everyone whose ghost path has begun (one born
 	 * again who began it among the dead, with no method) has one; a mortal's layers add nothing to it, its methods dormant
-	 * (GhostMethods#refusal).
+	 * (GhostMethods#refusal). On top of the methods' layers, the ghost path's realm and stage give the pool the heaven path's qi pool
+	 * gets at that rank ({@link #realmPool}).
 	 */
 	public static double poolMax(PlayerCultivation c) {
 		NetherworldState s = c.netherworld();
-		return poolMax(s.ghost() || s.knowsAnyMethod() || s.pathRank() >= 0, GhostMethods.layersKnown(c), GhostMethods.foundationLayers(c))
+		boolean has = s.ghost() || s.knowsAnyMethod() || s.pathRank() >= 0;
+		if (!has) return 0;
+		return (poolMax(true, GhostMethods.layersKnown(c), GhostMethods.foundationLayers(c)) + realmPool(c))
 				* StatPoints.poolFactor(c) // Spirit, every path's pool alike
 				* (1 + TwoPaths.harmony(c)); // and the paths' harmony, as the body and the qi pool have it (2026-10-24)
 	}
 
-	/** Ghostly qi filled a second at {@code density} for {@code c}: x half its Insight, as every path's qi is gathered (StatPoints#gatherFactor). */
+	/**
+	 * The pool the ghost path's realm gives, as the heaven path's realm gives the qi pool (CultivationStats#maxQi, the same table: 100 at Qi
+	 * Refining Early up to 160 million at Heavenly Lord; the user's ask, 2026-10-27: "ghost qi pool should increase with realm in ghost path
+	 * similarly to how it does with the others"). As Realm Suppression and pressure leave the path (TwoPaths#ghostRank wielded); none
+	 * before the path begins, nor for a mortal's dormant one.
+	 */
+	public static double realmPool(PlayerCultivation c) {
+		int rank = TwoPaths.ghostRank(c, true);
+		return rank < 0 ? 0 : CultivationStats.maxQi(realm(rank), stage(rank));
+	}
+
+	/**
+	 * How much faster the ghost path's realm fills the pool than Qi Refining Early: the heaven path's qi gathering at that rank over Qi
+	 * Refining Early's (CultivationStats#qiGather), so a pool grown with the realm refills with it (2,500,000 at True Immortal Early fills
+	 * 62,500 times as fast), the place still the measure of how fast. 1 before the path begins.
+	 */
+	public static double realmFill(PlayerCultivation c) {
+		int rank = TwoPaths.ghostRank(c, true);
+		if (rank < 0) return 1;
+		return CultivationStats.qiGather(realm(rank), stage(rank)) / CultivationStats.qiGather(Realm.QI_REFINING, Stage.EARLY);
+	}
+
+	private static Realm realm(int rank) {
+		return Realm.byIndex(Math.min(Realm.values().length - 1, rank / Stage.values().length));
+	}
+
+	private static Stage stage(int rank) {
+		return Stage.byIndex(rank % Stage.values().length);
+	}
+
+	/**
+	 * Ghostly qi filled a second at {@code density} for {@code c}: x half its Insight, as every path's qi is gathered (StatPoints#gatherFactor),
+	 * and x its ghost path's realm ({@link #realmFill}).
+	 */
 	public static double fillPerSecond(PlayerCultivation c, double density) {
-		return fillPerSecond(density) * StatPoints.gatherFactor(c);
+		return fillPerSecond(density) * StatPoints.gatherFactor(c) * realmFill(c);
 	}
 
 	/** Ghostly qi filled a second at {@code density}. */

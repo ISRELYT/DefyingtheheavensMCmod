@@ -632,7 +632,8 @@ public class SectPiece extends StructurePiece {
 				boolean wet = !level.getBlockState(at).getFluidState().isEmpty();
 				switch (code) {
 					case SectLayout.PATH -> lay(level, at, p.path.defaultBlockState());
-					case SectLayout.PATH_EDGE, SectLayout.PLAZA -> lay(level, at, p.foundation.defaultBlockState());
+					case SectLayout.PATH_EDGE -> lay(level, at, p.foundation.defaultBlockState());
+					case SectLayout.PLAZA -> lay(level, plazaLevel(level, at, p), p.foundation.defaultBlockState());
 					case SectLayout.FOOTPATH -> {
 						int roll = rand(x, z, 3).nextInt(10);
 						lay(level, at, wet ? p.paving.defaultBlockState() : roll < 7 ? Blocks.DIRT_PATH.defaultBlockState()
@@ -656,6 +657,35 @@ public class SectPiece extends StructurePiece {
 				}
 			}
 		}
+	}
+
+	/** A Holy Land's great plaza: level with its dais's paving this far from the core, then easing down (or up) a block a step to its rim. */
+	private static final int PLAZA_LEVEL = 20;
+	/** Nor raised nor cut more than this: past it (a cliff, a crag) the plaza follows the land. */
+	private static final int PLAZA_MOST = 12;
+
+	/**
+	 * Where a cell of a Holy Land's great round plaza is paved ({@code at}: the land's top there): level with the dais's paving out to
+	 * {@link #PLAZA_LEVEL} from the core, then within a block a step of it to the rim; the land under filled with the plaza's stone, or cut
+	 * away above (HolyLandPlan: following the land it stepped down in rings, and sank eight deep in a hollow before the great hall). The
+	 * dais's own cells (its piece paves them) and any other grounds' plaza where it lies: at the land's top.
+	 */
+	private BlockPos plazaLevel(WorldGenLevel level, BlockPos at, SectPalette p) {
+		if (!extra.contains("PlazaY")) return at;
+		BlockPos core = BlockPos.of(extra.getLong("PlazaAt"));
+		double from = Math.sqrt(Math.pow(at.getX() - core.getX(), 2) + Math.pow(at.getZ() - core.getZ(), 2));
+		if (from <= PLAZA_RADIUS + 0.5) return at;
+		int paving = extra.getInt("PlazaY"), give = (int) Math.max(0, Math.ceil(from - PLAZA_LEVEL));
+		int y = Math.max(paving - give, Math.min(paving + give, at.getY()));
+		if (y == at.getY() || Math.abs(y - at.getY()) > PLAZA_MOST) return at;
+		BlockState stone = p.foundation.defaultBlockState();
+		BlockPos.MutableBlockPos cell = new BlockPos.MutableBlockPos(at.getX(), 0, at.getZ());
+		if (y > at.getY()) {
+			for (int f = at.getY() + 1; f < y; f++) level.setBlock(cell.setY(f), stone, Block.UPDATE_CLIENTS);
+		} else {
+			for (int c = y + 1; c <= at.getY(); c++) level.setBlock(cell.setY(c), Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+		}
+		return new BlockPos(at.getX(), y, at.getZ());
 	}
 
 	/** A way's block laid over the land's top at {@code at}, what grows over it taken away. */

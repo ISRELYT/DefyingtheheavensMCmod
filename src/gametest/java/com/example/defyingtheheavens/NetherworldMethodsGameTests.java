@@ -156,8 +156,9 @@ public class NetherworldMethodsGameTests implements FabricGameTest {
 			// Ghost Flight is retired (2026-10-18): the dead fly freely without it (TwoPaths#fliesFreely; BothPathsGameTests).
 			helper.assertTrue(!Ability.GHOST_FLIGHT.isUnlocked(c) && TwoPaths.fliesFreely(c), "...and the dead fly freely, no Ghost Flight needed");
 			s.setGhost(false);
-			helper.assertTrue(Math.abs(GhostQi.poolMax(c) - (GhostQi.BASE_POOL + 14 * GhostQi.POOL_PER_LAYER + 6 * GhostQi.BREATHING_POOL_PER_LAYER)) < 1.0e-9,
-					"The pool grows with every layer, and the Breathing Art's twice over");
+			helper.assertTrue(Math.abs(GhostQi.poolMax(c) - (GhostQi.BASE_POOL + 14 * GhostQi.POOL_PER_LAYER + 6 * GhostQi.BREATHING_POOL_PER_LAYER
+							+ GhostQi.realmPool(c))) < 1.0e-9,
+					"The pool grows with every layer, and the Breathing Art's twice over (on top of what its realm gives)");
 			c.setAbilityEnabled(Ability.GHOST_EYE, true);
 			c.setAbilityEnabled(Ability.YIN_WIND_STEPS, true);
 			helper.assertTrue(Math.abs(GhostMethods.upkeep(c) - (GhostMethods.GHOST_EYE_COST + GhostMethods.YIN_WIND_COST)) < 1.0e-9,

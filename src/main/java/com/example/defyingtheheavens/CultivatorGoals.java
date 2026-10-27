@@ -12,6 +12,7 @@ import net.minecraft.world.entity.ai.util.DefaultRandomPos;
 import net.minecraft.world.entity.ai.util.LandRandomPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.pathfinder.Path;
@@ -49,6 +50,8 @@ public final class CultivatorGoals {
 	private static final double STEP = 24;
 	/** A target this near is searched for whole by the far search (CultivatorNavigation#farPath); a farther one, the step. */
 	private static final double FAR_TARGET = 64;
+	/** Ground a step's way this far above both the walker and its goal, near the goal, is a building's roof (walkToward). */
+	private static final int ROOF = 5;
 
 	/**
 	 * Walks toward {@code target}: straight there when it is near, else a step at a time (paths are only planned so far). Each
@@ -75,7 +78,16 @@ public final class CultivatorGoals {
 			step = BlockPos.containing(target);
 		} else {
 			double sx = npc.getX() + to.x / distance * STEP, sz = npc.getZ() + to.z / distance * STEP;
-			step = BlockPos.containing(sx, Formations.surface(npc.level(), Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mth.floor(sx), Mth.floor(sz)), sz);
+			// Its ground looked up only where the land is there whole (Formations#ready): else on the way from its height to the goal's,
+			// nothing loaded for it. Nor on a roof, near the goal: a step on a building's top (well over both the walker and the goal) is
+			// set on that way too, so the path is looked for in at its door (a Holy Land's disciples planned for their meditation halls'
+			// roofs and stood before them for good: tour dragon2).
+			int sy = Mth.floor(Mth.lerp(STEP / distance, npc.getY(), target.y));
+			if (Formations.ready(npc.level(), Mth.floor(sx), Mth.floor(sz))) {
+				int ground = Formations.surface(npc.level(), Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mth.floor(sx), Mth.floor(sz));
+				if (distance > FAR_TARGET || ground <= Math.max(npc.getY(), target.y) + ROOF) sy = ground;
+			}
+			step = BlockPos.containing(sx, sy, sz);
 		}
 		Path path = npc.getNavigation().createPath(step, 1);
 		if (path == null || !path.canReach()) {
@@ -105,7 +117,7 @@ public final class CultivatorGoals {
 	private static Path byTheWays(CultivatorNpc npc, Vec3 target) {
 		Sect sect = npc.sect();
 		if (sect == null) return null;
-		List<BlockPos> ways = sect.waypoints();
+		List<BlockPos> ways = HolyLandPlan.ways(sect, npc.level()); // a Holy Land's go round its great hall
 		if (ways.isEmpty()) return null;
 		double[] toTarget = alongTheWays(ways, target);
 		List<Integer> candidates = new ArrayList<>();
@@ -166,9 +178,17 @@ public final class CultivatorGoals {
 		return cost;
 	}
 
-	/** Seats it on the mat (or patch of ground) at {@code pos}: in the middle, facing as it was, meditating. */
+	/**
+	 * Seats it on the mat (or patch of ground) at {@code pos}: in the middle, facing as it was, meditating. A post over open air (as some
+	 * of a Holy Land's are set, a block over the mat) is taken down to the mat or the ground under it, two blocks at the most.
+	 */
 	static void sit(CultivatorNpc npc, BlockPos pos) {
 		npc.getNavigation().stop();
+		for (int i = 0; i < 2 && npc.level().getBlockState(pos).isAir(); i++) {
+			BlockState below = npc.level().getBlockState(pos.below());
+			if (!(below.getBlock() instanceof MeditationMatBlock) && !below.getCollisionShape(npc.level(), pos.below()).isEmpty()) break;
+			pos = pos.below();
+		}
 		double y = pos.getY() + (npc.level().getBlockState(pos).getBlock() instanceof MeditationMatBlock ? 2.0 / 16 : 0);
 		if (npc.position().distanceToSqr(pos.getX() + 0.5, y, pos.getZ() + 0.5) > 0.0025) {
 			npc.moveTo(pos.getX() + 0.5, y, pos.getZ() + 0.5, npc.getYRot(), 0);
@@ -497,7 +517,7 @@ public final class CultivatorGoals {
 
 		/** Nothing below {@code pos} but open sky (its land loaded): the Upper Realm's abyss. */
 		private static boolean openSky(ServerLevel level, BlockPos pos) {
-			return level.hasChunkAt(pos) && Formations.surface(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, pos.getX(), pos.getZ())
+			return Formations.ready(level, pos.getX(), pos.getZ()) && Formations.surface(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, pos.getX(), pos.getZ())
 					<= level.getMinBuildHeight() + 1;
 		}
 
@@ -689,7 +709,15 @@ public final class CultivatorGoals {
 		private Boolean watchNight;
 		/** It came on watch at the change: it says so once at the gate. */
 		private boolean announce;
+		/** How long it stays at its goal once there (counted down there). */
 		private int busy;
+		/**
+		 * How long it has been on its way to its goal: past {@link #STUCK_TICKS} it is stuck and picks another. (Its stay counted it before,
+		 * and a seat's stay, 1,200 ticks and more, was past it at the first step: every seat but one already reached was dropped at once and
+		 * chosen afresh the next tick, a path planned each time, and an Inner Disciple, given another mat each time, never sat: tour dragon1.)
+		 */
+		private int walking;
+		private static final int STUCK_TICKS = 900;
 		private int patrolLeft;
 		private int repath;
 
@@ -726,14 +754,22 @@ public final class CultivatorGoals {
 			if (guarding && !npc.isGateGuard()) goal = null;
 			if (goal == null) choose(sect);
 			if (goal == null) return;
-			double distanceSqr = npc.position().distanceToSqr(Vec3.atBottomCenterOf(goal));
-			if (distanceSqr > (seat ? 1.0 : 4.0)) {
+			Vec3 spot = Vec3.atBottomCenterOf(goal);
+			double distanceSqr = npc.position().distanceToSqr(spot);
+			// A seat is reached standing beside it (paths are planned to within a block of their end: a Holy Land's disciples stood a block
+			// from their mats for good, tour survey2; sit puts it on), its height within a block and a half (an elder's home mat in a Holy
+			// Land is set a block over where it can stand: tour dragon2; sit finds the mat); a spot to stand at (a stroll's, a patrol's, a
+			// gate's) standing there on whatever ground is there: a Holy Land's round its plaza were set at the plaza's floor, over the lawn
+			// three blocks below (tour dragon1).
+			double flatSqr = npc.position().subtract(spot).horizontalDistanceSqr(), rise = Math.abs(npc.getY() - spot.y);
+			boolean there = seat ? flatSqr <= 2.25 && rise <= 1.5 : flatSqr <= 4.0 && rise < 4;
+			if (!there) {
 				npc.setMeditating(false);
 				if (--repath <= 0 || npc.getNavigation().isDone()) {
 					repath = 40;
 					walkToward(npc, Vec3.atBottomCenterOf(goal), distanceSqr > STEP * STEP ? 1.0 : 0.9);
 				}
-				if (++busy > 900) goal = null; // stuck: pick another
+				if (++walking > STUCK_TICKS) goal = null; // stuck: pick another
 				return;
 			}
 			if (seat) {
@@ -763,6 +799,7 @@ public final class CultivatorGoals {
 			Sect.Member member = sect.members.get(npc.getUUID());
 			if (member == null) return;
 			busy = 0;
+			walking = 0;
 			repath = 0;
 			// The gates have a day watch and, where there are outer disciples enough, a night watch (Sect#guardPost).
 			boolean night = NpcLife.isNight(npc.level());
@@ -775,6 +812,8 @@ public final class CultivatorGoals {
 			}
 			watchNight = night;
 			npc.setGateGuard(guarding);
+			// A Holy Land's palace stairs, where the lawn before them lies too low to step up (HolyLandPlan#mendPalaceSteps).
+			if (member.title == NpcTitle.SECT_MASTER && npc.level() instanceof ServerLevel server) HolyLandPlan.mendPalaceSteps(server, sect);
 			switch (member.title) {
 				case SECT_MASTER, GRAND_ELDER, ELDER -> {
 					goal = sect.dutyPost(member);
@@ -853,7 +892,7 @@ public final class CultivatorGoals {
 			double radius = sect.barrierRadius + 6 + npc.getRandom().nextInt(21);
 			int x = sect.core.getX() + (int) Math.round(Math.cos(angle) * radius);
 			int z = sect.core.getZ() + (int) Math.round(Math.sin(angle) * radius);
-			if (!npc.level().hasChunkAt(new BlockPos(x, 0, z))) return null;
+			if (!Formations.ready(npc.level(), x, z)) return null; // whole, or the patrol would hold the server to generate it
 			int y = Formations.surface(npc.level(), Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
 			return new BlockPos(x, y, z);
 		}

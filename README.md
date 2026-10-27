@@ -2434,6 +2434,9 @@ not above a giant island, every one of the old ground court's buildings on them)
 - **Lairs:** each keeps to its lair, 1,000 to 2,000 blocks from the Gate, the three a third of the way round from each other, all
   clear of the cities and the sects. It comes when anyone is within 160 blocks. Slain, the next comes five days later.
 - **Left alone** two minutes, it is whole again.
+- **Speed:** they fly 1.5 times as fast as they first did, their rams and dives with them, and turn up to 8 degrees a tick
+  (`PrimordialBeast#SWIFT`, `#TURN`; the user, 2026-10-27: "all the primordial beasts are a little slow"): about 0.6 blocks a tick
+  round their lairs and 1 round a foe.
 - **The Kun-Peng:** the **Kun**, the same Kun that Kun Rises from the Northern Abyss summons (black water, glowing wave scrolls),
   some fifty blocks long, swims the sea of clouds over the open sea, its back and sail breaking them. It throws spouts of cloud up
   under whoever is over it and rams up out of the clouds.
@@ -2448,6 +2451,11 @@ not above a giant island, every one of the old ground court's buildings on them)
   - It leaves **True Immortal fox blood**.
 - **The True Dragon:** some eighty blocks long, a serpent's body of gold scales with a thread of lightning down each flank, a crest
   of storm-light along its spine, a silver-white mane and beard, ivory antlers, storm-white eyes, five-clawed feet.
+  - **Its head is alive** (`BeastModels.Model#gaze`; the user, 2026-10-27: "its head never moves"): it looks slowly about as it flies,
+    leads into its turns, rises as it climbs and dips as it dives, turns hard to its foe, and rolls a little. Its neck carries part
+    of each turn, so it bends rather than kinking at the head, and the body behind flies on as before. What is turned on top of the
+    animation is taken off again before GeckoLib reads the bones each frame: GeckoLib eases into a move from a snapshot of the bones,
+    and a turn left in it was counted twice (the head jerked some seventy degrees each time the Dragon roared).
   - It **rides its storm**: the sky and the fog darken as you near it, and lightning strikes about it without kindling anything.
   - Its moves: lightning called down where its foe stood (it roars, and sparks warn of it first), the sweep of its tail, its coils,
     its dive.
@@ -2875,11 +2883,19 @@ Netherworld, and as thick as the Great Void's own qi over its Ancient Battlefiel
 On a battlefield the Cultivation tab says it is **teeming**, and a ghost-path seclusion there costs a tenth of the Netherworld's years
 (`Lifespan#ghostPlaceSaving`, as the Peaks save a little). Yin corruption stays the Netherworld's alone.
 
-The pool fills at density x 0.2 a second (`FILL_PER_DENSITY`); spirit stones and Spirit Dew don't fill it. Everyone who
-has one sees it as a cyan **Ghost Qi** bar: every ghost, and every living cultivator who knows a ghost method. It holds
-30 (`BASE_POOL`), plus 10 for every layer known (`POOL_PER_LAYER`: your deepest foundation's, and the fire's and the
-steps'; `GhostMethods#layersKnown`), plus 20 more for every layer of your deepest foundation (`BREATHING_POOL_PER_LAYER`).
-Ghost abilities and spells are paid from it, never from your qi.
+The pool fills at density x 0.2 a second at Qi Refining Early (`FILL_PER_DENSITY`, the table's numbers); spirit stones and
+Spirit Dew don't fill it. Everyone who has one sees it as a cyan **Ghost Qi** bar: every ghost, and every living cultivator who
+knows a ghost method. It holds 30 (`BASE_POOL`), plus 10 for every layer known (`POOL_PER_LAYER`: your deepest foundation's, and
+the fire's and the steps'; `GhostMethods#layersKnown`), plus 20 more for every layer of your deepest foundation
+(`BREATHING_POOL_PER_LAYER`). Ghost abilities and spells are paid from it, never from your qi.
+
+**It grows with the ghost path's realm** (the user's ask, 2026-10-27: "ghost qi pool should increase with realm in ghost path similarly
+to how it does with the others"; before, a Heavenly Lord's ghost path with no methods held 30 and filled at 0.05 a second in the
+Overworld). On top of the methods' share the pool gets what the heaven path's qi pool gets at the same realm and stage
+(`GhostQi#realmPool`, `CultivationStats#maxQi`: 100 at Qi Refining Early, 2,500,000 at True Immortal Early, 160 million at
+Heavenly Lord), and it fills as many times faster as that realm gathers qi over Qi Refining Early (`GhostQi#realmFill`,
+`CultivationStats#qiGather`: x62,500 at True Immortal Early), the place still its measure (the Overworld worst, the battlefields
+best). As Realm Suppression and pressure leave the path; nothing from a mortal's dormant one.
 
 Code: `GhostQi` (density, fill, pool size), `QiElement.YIN`, client `QiSenseClientHandler`, `NetherworldHud`.
 
@@ -4465,6 +4481,80 @@ The user's batch after the fourth bug sweep:
 - **The camp rushes the Gate**, and **the Gate's light** is golden (The Immortal Realm).
 - **Titles** from Void Shattering on (The realms after Four Axis), and **what cultivators call you**, kneeling from four realms beneath
   you, with many more lines in passing and in talk (Sects and cultivators: Everyday life, Talking to cultivators).
+
+### The evening's fixes (2026-10-27)
+
+From the user's play at Heavenly Lord:
+
+- **The ghostly qi pool grows with the ghost path's realm**, and fills as much faster (Ghostly qi, under The Netherworld).
+- **King of the Dead** says what it asks: to be among the dead with a ghost path of Core Formation or higher (a living cultivator's ghost
+  path gives the Ghost King's form, not the crown).
+- **The Cultivation tab's bars** shorten their numbers past a million when the whole figures won't fit ("174.14T / 56.29Q"), and draw
+  the text smaller if even that won't (`CultivationScreen#big`, `#barText`): a Heavenly Lord's seventeen figures ran off the column.
+- **Release pressure** lets a cultivator stand for its five minutes even four realms or more beneath you (`TalkSystem#kneelsTo`,
+  `RealmSuppressSystem#spares`): the Patriarch went straight back down on one knee.
+- **A Holy Land's walkers go round the Hall of the Great Dao** (`HolyLandPlan#ways`): its ways joined the front of the grounds to the
+  Patriarch's Palace only down the axis, through the hall, which has no back door, so the Patriarch (on its way to its seat in the
+  palace) ran round in circles before it. Walkers now go by way points down the lawns either side of the hall, and none inside it;
+  worked out from the core and the seat, so the Holy Lands already founded have them too. More way points lead over the moat's
+  bridge and up the palace's terraces to its door and in to the seat. The palace's first stair stood two blocks above the lawn, too
+  high to step; a Patriarch now sets one more step beneath it, once, when it goes to its seat (`HolyLandPlan#mendPalaceSteps`).
+  Checked in game: at the Holy Land founded earlier and at a fresh one, the Patriarch sits on its seat.
+- **Sect members sit at their posts again** (the user: "none of the NPCs are cultivating"; `CultivatorGoals.SectDutyGoal`). The
+  duty's stuck check counted its walk in the same clock as its stay at the post, and a seat's stay (1,200 ticks for an elder, 2,400
+  and more for a disciple's mat) was already past the 900-tick limit at the first step. So every seat not already reached was dropped
+  at once and chosen again the next tick, with a path planned each time (much of a great sect's server time). An Inner Disciple,
+  given a different mat each time, zigzagged and never sat; only short strolls survived. The walk now has its own count.
+  - A spot to stand at (a stroll's, a patrol's) is reached standing there on whatever ground is there: a Holy Land's spots round its
+    plaza were set at the plaza's floor, three blocks over the lawn, and are now set on the lawn. A seat is reached standing at it
+    within a block and a half of its height, and a post over open air is taken down to the mat (or the ground) under it: some of a
+    Holy Land's elders' mats are set a block too high.
+  - A walker's step toward a goal near it (within 64 blocks) no longer lands on a building's roof: the ground there well above both
+    the walker and the goal is a roof, and the step is set on the way between their heights instead, so the path is looked for in at
+    the door. A Holy Land's disciples planned for their meditation halls' roofs and stood before them for good.
+  - **The land meets every sect and city building's paving** (`SectBeard`, through `NoiseBasedChunkGeneratorMixin`). Their structures
+    shape the land round each building (`beard_thin`), and vanilla's Beardifier draws the land up to a piece's floor only for a
+    village's pieces; every other piece's land it left a block under its floor. A building's floor is its paving, so the land lay a
+    block under every door. A meditation hall's one step stood a block and a half over the lawn (two and a half at one), and the
+    palace's first stair two: no walker could climb in. Land generated now is drawn up to the paving, as the Immortal Realm's capital
+    already had it. In a Holy Land founded before, the Patriarch lays the missing steps before the four meditation halls' doors as it
+    does the palace's (`HolyLandPlan#mendPalaceSteps`).
+    The same drop let the side courts' pools spill: in a Holy Land generated before, some 400 blocks of water flood its courts and stand
+    on the footpaths beside them; one generated now keeps its water in its pools.
+  - **No lake is dug on a sect's grounds** (water or lava; `SectClearingMixin`, as trees and springs already were not): dug before the
+    sect is built, a Void Steppes or Dao Field of Water basin, or the Dao Field of Fire's lava, stood through the grounds with the ways
+    laid over it as causeways.
+  - A seat is reached from a block away (paths are planned to within a block of their end): a Holy Land's disciples, in their halls at
+    last, stood beside their mats for good. Checked in game: at a Holy Land founded before and at two fresh ones, all six Inner
+    Disciples sit on their mats, the elders on theirs and the Patriarch on its seat.
+  - **A Holy Land's great round plaza lies level** with its dais (`SectPiece#plazaLevel`): 26 across round the dais's own 12, it was laid
+    on the land as it lies, stepping down in rings, and at one sank eight deep in a hollow before the great hall. Now it is level with
+    the dais's paving out to 20 from the core, then eases a block a step to its rim, filled with its stone under it or cut down to it
+    (no more than 12: past a cliff it follows the land).
+  - **The sects' trees stand three clear of the ways** (`SectLayout#plant`, two before): as far as a crown spreads, so none hangs over a
+    way (a mangrove's bough hung low over a Holy Land's Spirit Way).
+  - The Formation Core, the Heaven Altar, the Spirit Pedestal and the steles are no longer taken for open ground by walkers' paths
+    (not whole blocks, vanilla let paths cross them): an Inner Disciple whose path led across its sect's core pushed against it for
+    good.
+- **Long tooltips wrap** (`TooltipWrap`): the mod's items' lines wider than 220 GUI pixels break onto lines of their own, keeping
+  their colours (the Court Merit Token's ran off the screen).
+- **Lag at the great sects** (the user: "entering holy lands and stuff causes massive lag spikes"; found by sampling the server's and the
+  client's threads in game, slow ticks of 1 to 2.6 seconds):
+  - A Holy Land's, a Demon Palace's or an immortal sect's barrier (a radius up to 136 or 176) asks some 232 (or 388) qi a second, and
+    its plaza's eight veins give 64: it ran its battery dry in seconds, fell all at once (some 230,000 blocks cleared in one tick, every
+    client near taking them in too) and rose again, over and over. Now a sect's people make up what its barrier asks beyond its eight
+    veins, with 32 a second over to mend it (`FormationCoreBlockEntity#supply`, `SECT_SURPLUS`); a lesser sect's barrier is its veins'
+    alone as before, and a great sect's veins mined, it runs short as before.
+  - Barriers (and walkers' looks at the ground ahead, a patrol's round, a seclusion site, a Holy Land's way points) touch only land
+    loaded whole (`Formations#ready`): `Level#hasChunkAt` says yes as soon as land is meant to load, and reading a block there held the
+    whole server until it was generated.
+  - A barrier rises at 1,024 cells a tick (was 2,048), a Holy Land's in some eleven seconds. A cell that held something (leaves, a
+    plant, water) costs 8 of those (`Formations#HEAVY_CELL`): its neighbours hear of it and what was there drops.
+  - A barrier cell set in open air (or cleared back to it) no longer asks its neighbours to change their shape: looking at a
+    neighbour across the edge of a chunk still loading held the server until that chunk was done. A cell is also set only when the
+    land on every side of it is loaded whole. Checked in game: at the Holy Land founded earlier, none of the server's slow ticks were
+    the barrier's.
+  - What is left at 32 chunks of view and simulation distance is mostly Minecraft's own: saving and generating chunks.
 
 ## Shader packs (Iris)
 

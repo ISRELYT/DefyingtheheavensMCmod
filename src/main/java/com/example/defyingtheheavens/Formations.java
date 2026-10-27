@@ -91,10 +91,18 @@ public final class Formations {
 	}
 	/** Ground within this of the shell is as hard to dig through as the barrier itself. */
 	public static final double GROUND_BAND = 1.5;
-	/** Barrier cells handled per tick: a formation being raised, one being kept up, and all of them together. */
-	private static final int RAISE_BUDGET = 2048;
+	/**
+	 * Barrier cells handled per tick: a formation being raised, one being kept up, and all of them together. A Holy Land's shell (some
+	 * 230,000 cells) rises over some eleven seconds (halved from 2,048 on 2026-10-27: each cell set is a block the clients take in too).
+	 */
+	private static final int RAISE_BUDGET = 1024;
 	private static final int REPAIR_BUDGET = 256;
 	private static final int TOTAL_BUDGET = 6144;
+	/**
+	 * What a cell that held something (leaves, a plant, water) costs of those, against an open one's 1: its neighbours hear of it, its
+	 * light is worked out again, what was there drops (a fresh Holy Land's shell through its trees still held the server, tour holy4).
+	 */
+	private static final int HEAVY_CELL = 8;
 	/** Ticks a barrier takes to break for a cultivator exactly as strong as its formation; halved for each stage beyond. */
 	public static final int BREAK_TICKS_AT_EQUAL = 100;
 	private static final int SYNC_INTERVAL = 40;
@@ -239,6 +247,24 @@ public final class Formations {
 	 * The height of the ground at {@code x, z} by the {@code type} heightmap, looking through any barrier there: barrier blocks
 	 * block motion, so vanilla's heightmaps take a dome for the ground, but nothing should land or be set down on top of one.
 	 */
+	/**
+	 * Whether the chunk holding {@code x, z} is loaded whole, its blocks there to read or set without the server stopping to load or
+	 * generate it. Level#hasChunkAt says yes as soon as a chunk is meant to be loaded; reading or setting a block of one still on its way
+	 * holds the whole server until it is generated (the user, 2026-10-27: Holy Lands' barriers, raised over land still arriving, froze it
+	 * for seconds).
+	 */
+	public static boolean ready(Level level, int x, int z) {
+		if (level instanceof ServerLevel server) {
+			return server.getChunkSource().getChunkNow(SectionPos.blockToSectionCoord(x), SectionPos.blockToSectionCoord(z)) != null;
+		}
+		return level.hasChunk(SectionPos.blockToSectionCoord(x), SectionPos.blockToSectionCoord(z));
+	}
+
+	/** {@link #ready} for the column and the four beside it (a block set there tells, or looks at, its neighbours). */
+	private static boolean readyAround(Level level, int x, int z) {
+		return ready(level, x, z) && ready(level, x - 1, z) && ready(level, x + 1, z) && ready(level, x, z - 1) && ready(level, x, z + 1);
+	}
+
 	public static int surface(Level level, Heightmap.Types type, int x, int z) {
 		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos(x, level.getHeight(type, x, z) - 1, z);
 		while (pos.getY() > level.getMinBuildHeight() && level.getBlockState(pos).getBlock() instanceof SectBarrierBlock) {
@@ -604,7 +630,8 @@ public final class Formations {
 	/** A barrier cell comes down: back to air, or to the water or lava it stood in (which then flows on as it did). */
 	private static void clearCell(ServerLevel level, BlockPos pos, BlockState barrier) {
 		BlockState residue = SectBarrierBlock.residue(barrier);
-		level.setBlock(pos, residue, residue.isAir() ? Block.UPDATE_CLIENTS : Block.UPDATE_ALL);
+		// Back to air: no neighbour's shape to change (looking at them waited on land not yet loaded beside a chunk just loaded).
+		level.setBlock(pos, residue, residue.isAir() ? Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE : Block.UPDATE_ALL);
 	}
 
 	/** Clears this formation's barrier blocks on the shell of {@code radius}, remembering the chunks that aren't loaded. */
@@ -616,7 +643,7 @@ public final class Formations {
 		for (int packed : Formation.shell(radius)) {
 			pos.set(c.getX() + Formation.dx(packed), c.getY() + Formation.dy(packed), c.getZ() + Formation.dz(packed));
 			if (level.isOutsideBuildHeight(pos)) continue;
-			if (!level.isLoaded(pos)) {
+			if (!readyAround(level, pos.getX(), pos.getZ())) {
 				unloaded.add(ChunkPos.asLong(SectionPos.blockToSectionCoord(pos.getX()), SectionPos.blockToSectionCoord(pos.getZ())));
 				continue;
 			}
@@ -646,7 +673,8 @@ public final class Formations {
 			}
 			int packed = shell[formation.cursor++];
 			pos.set(c.getX() + Formation.dx(packed), c.getY() + Formation.dy(packed), c.getZ() + Formation.dz(packed));
-			if (level.isOutsideBuildHeight(pos) || !level.isLoaded(pos)) continue;
+			// Land still arriving (or the land beside it, whose blocks a cell's setting looks at): filled on a later round.
+			if (level.isOutsideBuildHeight(pos) || !readyAround(level, pos.getX(), pos.getZ())) continue;
 			BlockState state = level.getBlockState(pos);
 			BlockState fill = fillFor(level, pos, state, formation);
 			if (fill == null) continue;
@@ -659,11 +687,14 @@ public final class Formations {
 				if (core == null || !core.payRepair()) continue;
 			}
 			if (state.isAir()) {
-				level.setBlock(pos, fill, Block.UPDATE_CLIENTS); // most of the shell: open air, nothing around to tell
+				// Most of the shell: open air, nothing around to tell, nor any neighbour's shape to change (looking at each one, it
+				// waited on any not yet loaded).
+				level.setBlock(pos, fill, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
 			} else {
 				if (!(state.getBlock() instanceof LiquidBlock) && !state.canBeReplaced()) displace(level, pos, state);
 				// Neighbours hear of it: the other half of a door or a tall flower goes, and water around settles.
 				level.setBlock(pos, fill, Block.UPDATE_ALL);
+				i += HEAVY_CELL - 1;
 			}
 		}
 		return steps;

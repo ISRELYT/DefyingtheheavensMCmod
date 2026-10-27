@@ -332,6 +332,13 @@ public class PrimordialBeast extends DemonBeast {
 		return move == RAM || move == DIVE || move == BREATH || move == COIL || move == UNMAKING || move == DEVOUR;
 	}
 
+	/**
+	 * How much swifter than first made they go, their rushes with them (the user, 2026-10-27: "all the primordial beasts are a little
+	 * slow"); and the most they turn a tick (degrees).
+	 */
+	static final double SWIFT = 1.5;
+	static final float TURN = 8.0f;
+
 	/** Its way while it is not moved by its move: round its foe if it has one, else round its lair, each at its own height and pace. */
 	private void cruise(ServerLevel level, LivingEntity target) {
 		Vec3 centre;
@@ -341,12 +348,12 @@ public class PrimordialBeast extends DemonBeast {
 			centre = target.position();
 			radius = kun ? 10 : isPeng() ? 30 : kind() == BeastKind.TRUE_PHOENIX ? 24 : chaos ? 26 : 33;
 			height = kun ? 0 : isPeng() ? 15 : kind() == BeastKind.TRUE_PHOENIX ? 12 : chaos ? 6 : 15;
-			speed = kun ? 0.44 : isPeng() ? 0.78 : chaos ? 0.5 : 0.65;
+			speed = (kun ? 0.44 : isPeng() ? 0.78 : chaos ? 0.5 : 0.65) * SWIFT;
 		} else {
 			centre = Vec3.atCenterOf(lair);
 			radius = kun ? 54 : isPeng() ? 78 : kind() == BeastKind.TRUE_PHOENIX ? 33 : chaos ? 48 : 84;
 			height = isPeng() ? ModDimensions.IMMORTAL_CLOUD_Y + 40 - centre.y : 0;
-			speed = kun ? 0.24 : chaos ? 0.3 : 0.42;
+			speed = (kun ? 0.24 : chaos ? 0.3 : 0.42) * SWIFT;
 		}
 		circling += speed / radius;
 		Vec3 to = new Vec3(centre.x + Math.cos(circling) * radius, centre.y + height, centre.z + Math.sin(circling) * radius);
@@ -373,23 +380,23 @@ public class PrimordialBeast extends DemonBeast {
 		double distance = want.length();
 		want = distance < 1.0e-3 ? Vec3.ZERO : want.scale(Math.min(speed, distance * 0.25) / distance);
 		if (horizontalCollision && !isKun()) want = want.add(0, speed, 0);
-		setDeltaMovement(getDeltaMovement().lerp(want, 0.12));
+		setDeltaMovement(getDeltaMovement().lerp(want, 0.16));
 		face(getDeltaMovement());
 	}
 
-	/** Its body turned toward {@code way} (a few degrees a tick). */
+	/** Its body turned toward {@code way} (up to {@link #TURN} degrees a tick). */
 	private void face(Vec3 way) {
 		if (way.horizontalDistanceSqr() < 1.0e-4) return;
 		float yaw = (float) (Mth.atan2(way.z, way.x) * Mth.RAD_TO_DEG) - 90.0f;
-		setYRot(Mth.approachDegrees(getYRot(), yaw, 6.0f));
+		setYRot(Mth.approachDegrees(getYRot(), yaw, TURN));
 		yBodyRot = getYRot();
 	}
 
-	/** Toward {@code target} at {@code speed} straight (a ram, a dive), facing it. */
+	/** Toward {@code target} at {@code speed} straight (a ram, a dive; {@link #SWIFT} the swifter), facing it. */
 	private void rush(Vec3 to, double speed) {
 		Vec3 want = to.subtract(position());
 		double distance = want.length();
-		want = distance < 1.0e-3 ? Vec3.ZERO : want.scale(speed / distance);
+		want = distance < 1.0e-3 ? Vec3.ZERO : want.scale(speed * SWIFT / distance);
 		setDeltaMovement(getDeltaMovement().lerp(want, 0.3));
 		face(getDeltaMovement());
 	}
@@ -1134,8 +1141,32 @@ public class PrimordialBeast extends DemonBeast {
 	@Override
 	public void tick() {
 		super.tick();
-		if (level().isClientSide) PrimordialLooks.tick(this);
+		if (level().isClientSide) {
+			PrimordialLooks.tick(this);
+			lead();
+		}
 	}
+
+	/**
+	 * How far it is turning, and climbing or diving, eased (-1..1: turning its fastest right, climbing at 45 degrees or steeper; the
+	 * client's): the True Dragon's head leads into its turns and rises and dips with its flight (BeastModels; the user, 2026-10-27: "its
+	 * head never moves"). This tick's and the last, for the frames between.
+	 */
+	private float turning, turningO, climbing, climbingO;
+
+	private void lead() {
+		turningO = turning;
+		climbingO = climbing;
+		float turn = Mth.clamp(Mth.wrapDegrees(getYRot() - yRotO) / TURN, -1, 1);
+		double flat = Math.sqrt((getX() - xo) * (getX() - xo) + (getZ() - zo) * (getZ() - zo));
+		float climb = (float) Mth.clamp(Mth.atan2(getY() - yo, Math.max(flat, 0.05)) / (Math.PI / 4), -1, 1);
+		turning += (turn - turning) * 0.15f;
+		climbing += (climb - climbing) * 0.1f;
+	}
+
+	public float turning(float partial) { return Mth.lerp(partial, turningO, turning); }
+
+	public float climbing(float partial) { return Mth.lerp(partial, climbingO, climbing); }
 
 	/** Its one animation controller's name (the Dragon's roar is triggered on it). */
 	static final String CONTROLLER = "body";
@@ -1148,13 +1179,14 @@ public class PrimordialBeast extends DemonBeast {
 	}
 
 	/**
-	 * Its animation: the Kun's and the Dragon's own "swim", slow for bodies this vast (the Dragon's "roar" on top as it calls the lightning
-	 * down); the Peng's and the Phoenix's "idle" (tools/beast-art's: breathing, blinking; the rest moved in code).
+	 * Its animation: the Kun's and the Dragon's own "swim", slow for bodies this vast though quickened as they were (SWIFT; the Dragon's
+	 * "roar" on top as it calls the lightning down); the Peng's and the Phoenix's "idle" (tools/beast-art's: breathing, blinking; the rest
+	 * moved in code).
 	 */
 	@Override
 	public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
 		AnimationController<PrimordialBeast> body = new AnimationController<>(this, CONTROLLER, 5, state -> state.setAndContinue(swims() ? SWIM : IDLE));
-		body.setAnimationSpeedHandler(beast -> !beast.swims() ? 1.0 : beast.kind() == BeastKind.TRUE_DRAGON ? 0.75 : 0.6);
+		body.setAnimationSpeedHandler(beast -> !beast.swims() ? 1.0 : beast.kind() == BeastKind.TRUE_DRAGON ? 1.0 : 0.8);
 		if (kind() == BeastKind.TRUE_DRAGON) body.triggerableAnim("roar", ROAR);
 		controllers.add(body);
 	}

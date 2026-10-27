@@ -7,6 +7,7 @@ import net.minecraft.world.level.levelgen.feature.AbstractHugeMushroomFeature;
 import net.minecraft.world.level.levelgen.feature.BambooFeature;
 import net.minecraft.world.level.levelgen.feature.BlockBlobFeature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
+import net.minecraft.world.level.levelgen.feature.LakeFeature;
 import net.minecraft.world.level.levelgen.feature.SpringFeature;
 import net.minecraft.world.level.levelgen.feature.TreeFeature;
 import net.minecraft.world.level.levelgen.feature.VinesFeature;
@@ -22,15 +23,21 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * (SectPiece). Only worldgen is stopped: a sapling grown there later grows, and vines spread as they will. An immortal city's grounds are
  * kept so too (ImmortalCityStructure), and an immortal sect's floating islands (SectPiece#onGrounds: tour 12, the jade peaks' bamboo stood
  * up out of them, the podzol round it browning their lawns, and springs ran out of their undersides in threads down into the clouds).
+ * Nor is a lake dug there, of water or of lava (dug before the sect is built, it stood as water through the grounds, the ways laid over it
+ * as causeways: the Void Steppes' and the Dao Field of Water's basins, the Dao Field of Fire's lava; the user, 2026-10-27, "stray water").
  */
-@Mixin({TreeFeature.class, AbstractHugeMushroomFeature.class, BambooFeature.class, BlockBlobFeature.class, VinesFeature.class, SpringFeature.class})
+@Mixin({TreeFeature.class, AbstractHugeMushroomFeature.class, BambooFeature.class, BlockBlobFeature.class, VinesFeature.class, SpringFeature.class,
+		LakeFeature.class})
 public abstract class SectClearingMixin {
 	/** How far beyond the grounds nothing is grown: a tree's crown reaches about this far from its trunk. */
 	private static final int MARGIN = 4;
+	/** A lake's: it is dug up to eight blocks from where it is placed. */
+	private static final int LAKE_MARGIN = MARGIN + 8;
 
 	@Inject(method = "place", at = @At("HEAD"), cancellable = true)
 	private void dth$notOnSectGrounds(FeaturePlaceContext<?> context, CallbackInfoReturnable<Boolean> cir) {
-		if (context.level() instanceof WorldGenRegion && (SectStructure.onGrounds(context.level(), context.origin(), MARGIN)
-				|| ImmortalCityStructure.onGrounds(context.level(), context.origin(), MARGIN))) cir.setReturnValue(false);
+		int margin = (Object) this instanceof LakeFeature ? LAKE_MARGIN : MARGIN;
+		if (context.level() instanceof WorldGenRegion && (SectStructure.onGrounds(context.level(), context.origin(), margin)
+				|| ImmortalCityStructure.onGrounds(context.level(), context.origin(), margin))) cir.setReturnValue(false);
 	}
 }

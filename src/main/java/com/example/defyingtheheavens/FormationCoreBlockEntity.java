@@ -76,7 +76,28 @@ public class FormationCoreBlockEntity extends BlockEntity {
 		return 0.5 + radius * radius / 80.0;
 	}
 
-	public double supply() { return veins * QiVeinBlock.QI_PER_SECOND; }
+	/**
+	 * The qi a second flowing in: the veins', and for a sect's core its own people's making up what its barrier's upkeep asks beyond what its
+	 * plaza's veins ({@link #SECT_VEINS}) give, with {@link #SECT_SURPLUS} to spare for mending it. A sect's barrier is no wider than those
+	 * carry, but a Holy Land's, a Demon Palace's or an immortal sect's (a radius up to 136) asks some 232 a second of their 64: it drained
+	 * its battery in seconds, fell all at once (some 230,000 blocks taken down in a tick) and rose again over and over while anyone was near
+	 * (the user, 2026-10-27, "massive lag spikes"). The veins mined, it is short as before.
+	 */
+	public double supply() {
+		return supply(veins, sect != null, radius);
+	}
+
+	/** {@link #supply()} of a core with {@code veins} linked, a sect's or not, keeping a barrier of {@code radius}. */
+	public static double supply(int veins, boolean sect, int radius) {
+		double veinsGive = veins * QiVeinBlock.QI_PER_SECOND;
+		if (!sect) return veinsGive;
+		return veinsGive + Math.max(0, upkeep(radius) + SECT_SURPLUS - SECT_VEINS * QiVeinBlock.QI_PER_SECOND);
+	}
+
+	/** The veins a sect's plaza lays round its core (SectPiece's array: one at each of its eight spokes' ends). */
+	public static final int SECT_VEINS = 8;
+	/** What a sect's people leave over a second, beyond its barrier's upkeep, to mend it (about what a lesser sect's veins leave). */
+	public static final double SECT_SURPLUS = 32;
 	public int getRadius() { return radius; }
 	public boolean isWanted() { return wanted; }
 	public double getBattery() { return battery; }

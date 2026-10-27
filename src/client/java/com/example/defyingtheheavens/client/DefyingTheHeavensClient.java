@@ -88,6 +88,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		}, com.example.defyingtheheavens.ModBlocks.ALCHEMY_CAULDRON);
 		ModKeybinds.register();
 		BaublePanel.register();
+		TooltipWrap.register(); // the mod's long tooltip lines kept on the screen
 		ClientPacketHandlers.register();
 		VitalsHud.register(); // the portrait, health and qi in the top-left corner (vanilla's hearts held to ten: GuiHeartsMixin)
 		QiHud.register();

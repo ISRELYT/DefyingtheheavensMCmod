@@ -414,7 +414,9 @@ public final class SectLayout {
 		}
 		for (int[] spot : spots) {
 			int u = spot[0], v = spot[1];
-			if (trees > 0 && noneNear(u, v, 3, BUILDING) && noneNear(u, v, 1, WAY) && noClearingNear(u, v, 3) && noTreeNear(u, v, 5)) {
+			// A tree three clear of the ways, as far as its crown spreads (two clear, its bough hung low over a Holy Land's Spirit Way where
+			// the lawn lay above it: tour survey3).
+			if (trees > 0 && noneNear(u, v, 3, BUILDING) && noneNear(u, v, 3, WAY) && noClearingNear(u, v, 3) && noTreeNear(u, v, 5)) {
 				map[u + v * w] = TREE;
 				use[u + v * w] = CLEAR;
 				trees--;

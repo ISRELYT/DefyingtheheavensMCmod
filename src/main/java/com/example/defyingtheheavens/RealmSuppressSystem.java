@@ -121,6 +121,14 @@ public final class RealmSuppressSystem {
 		RELEASED.remove(player.getUUID());
 	}
 
+	/**
+	 * {@code player} has let {@code target} up (Release pressure) and the five minutes aren't out: it stands before them then, the four
+	 * realms' kneel too (TalkSystem#kneelsTo; the user, 2026-10-27: released, the Patriarch went straight back down).
+	 */
+	public static boolean spares(ServerPlayer player, Entity target) {
+		return released(player, target);
+	}
+
 	private static boolean released(ServerPlayer suppressor, Entity target) {
 		Map<UUID, Long> spared = RELEASED.get(suppressor.getUUID());
 		if (spared == null) return false;

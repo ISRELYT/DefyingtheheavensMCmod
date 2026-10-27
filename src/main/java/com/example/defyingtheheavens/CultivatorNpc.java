@@ -1867,7 +1867,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		for (int attempt = 0; attempt < 48; attempt++) {
 			int x = origin.getX() + random.nextInt(65) - 32;
 			int z = origin.getZ() + random.nextInt(65) - 32;
-			if (!level.hasChunkAt(new BlockPos(x, origin.getY(), z))) continue;
+			if (!Formations.ready(level, x, z)) continue;
 			int surface = Formations.surface(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
 			for (int y = Math.min(surface, origin.getY() + 24); y > Math.max(level.getMinBuildHeight() + 1, origin.getY() - 24); y--) {
 				BlockPos feet = new BlockPos(x, y, z);

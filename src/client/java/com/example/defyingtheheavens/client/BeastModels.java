@@ -27,13 +27,17 @@ import software.bernie.geckolib.model.data.EntityModelData;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 import software.bernie.geckolib.renderer.layer.AutoGlowingGeoLayer;
 
+import java.util.IdentityHashMap;
+import java.util.Map;
+
 /**
  * The wild demon beasts' looks (DemonBeast, BeastKind): each kind's own GeckoLib model, texture and glow (tools/beast-art's Bodies), drawn
  * the larger the higher its rank (DemonBeast#scale), moved in code by its build ({@link Model#setCustomAnimations}): legs in their gait,
  * the head turned to what it looks at, a tail swaying (a fox's fanned tails, three or nine), a serpent's body winding, a bird's wings folded or beating, an ape's arms swinging
  * and striking, a Chaos Fiend's long arms and its smoke and the shards circling it, the Primordial Chaos's four wings and six legs; and its acts (a turtle drawn into its shell, a charge's lowered head, a coil's curled body, fire breathed with open
  * jaws). Its "idle" animation (the file's) breathes and blinks. Two of the primordial beasts are tools/spell-art's instead (the Kun, the
- * spell's own; the True Dragon): seen through, moved by their own "swim", their look and jaws on top ({@link Model#spellMade}). Also the
+ * spell's own; the True Dragon): seen through, moved by their own "swim", their look and jaws on top ({@link Model#spellMade}; the Dragon's
+ * head and neck alive on top of it, Model#gaze). Also the
  * demon cores' look (DemonCoreItem#look, its glow's element).
  */
 public final class BeastModels {
@@ -151,13 +155,36 @@ public final class BeastModels {
 		@Override public ResourceLocation getTextureResource(DemonBeast beast) { return peng(beast) ? pengTexture : texture; }
 		@Override public ResourceLocation getAnimationResource(DemonBeast beast) { return peng(beast) ? pengAnimations : animations; }
 
+		/** What {@link #nudge} turned each bone by last frame (radians about x, y, z), and whether this frame's were set. */
+		private final Map<CoreGeoBone, float[]> nudged = new IdentityHashMap<>();
+		private boolean customised;
+
+		/**
+		 * Last frame's nudges taken off first. GeckoLib eases a bone into a move (the Dragon's roar) or back to its loop from a snapshot
+		 * of the bone as it stands, and a nudge left in it was counted twice: the True Dragon's head jerked some seventy degrees in a frame
+		 * each time it roared (tour dragon1). When GeckoLib draws the same frame again and sets nothing, they go back on as they were.
+		 */
+		@Override
+		public void handleAnimations(DemonBeast beast, long instanceId, AnimationState<DemonBeast> state) {
+			Map<CoreGeoBone, float[]> last = nudged.isEmpty() ? Map.of() : new IdentityHashMap<>(nudged);
+			for (Map.Entry<CoreGeoBone, float[]> e : last.entrySet()) turnBy(e.getKey(), -e.getValue()[0], -e.getValue()[1], -e.getValue()[2]);
+			nudged.clear();
+			customised = false;
+			super.handleAnimations(beast, instanceId, state);
+			if (customised) return;
+			for (Map.Entry<CoreGeoBone, float[]> e : last.entrySet()) turnBy(e.getKey(), e.getValue()[0], e.getValue()[1], e.getValue()[2]);
+			nudged.putAll(last);
+		}
+
 		@Override
 		public void setCustomAnimations(DemonBeast beast, long instanceId, AnimationState<DemonBeast> state) {
+			customised = true;
 			float partial = state.getPartialTick();
 			float time = beast.tickCount + partial;
 			float stride = state.getLimbSwing(), walk = Math.min(1, state.getLimbSwingAmount());
 			EntityModelData look = state.getData(DataTickets.ENTITY_MODEL_DATA);
-			float yaw = look == null ? 0 : Mth.clamp(look.netHeadYaw(), -50, 50) * Mth.DEG_TO_RAD;
+			// Wrapped: the head's and the body's turns can be a whole turn apart (a beast circling for long), read as the wrong side.
+			float yaw = look == null ? 0 : Mth.clamp(Mth.wrapDegrees(look.netHeadYaw()), -50, 50) * Mth.DEG_TO_RAD;
 			float pitch = look == null ? 0 : Mth.clamp(look.headPitch(), -40, 40) * Mth.DEG_TO_RAD;
 			float strike = Mth.sin(beast.getAttackAnim(partial) * Mth.PI);
 			boolean shell = beast.acting(DemonBeast.ACT_SHELL);
@@ -171,7 +198,8 @@ public final class BeastModels {
 				// added to where the loop has them this frame (the loop keys every one of these bones, so nothing builds up frame on frame).
 				// The Kun's head is the front of its body: turned but a little.
 				boolean kun = kind == BeastKind.KUN_PENG;
-				nudge("head", (pitch - charge * 0.45f) * (kun ? 0.1f : 0.3f), yaw * (kun ? 0.15f : 0.4f), 0);
+				if (kun) nudge("head", (pitch - charge * 0.45f) * 0.1f, yaw * 0.15f, 0);
+				else gaze((PrimordialBeast) beast, time, partial, yaw, pitch - charge * 0.45f);
 				nudge("jaw", -open, 0, 0);
 				for (int i = 0; !kun; i++) {
 					CoreGeoBone seg = getAnimationProcessor().getBone("seg_" + i);
@@ -209,8 +237,8 @@ public final class BeastModels {
 					// Aloft its wings beat; on the ground, or burnt to an ember, they fold.
 					boolean aloft = !beast.onGround() && !beast.isInWater() && !(beast instanceof PrimordialBeast primordial && primordial.isEmber());
 					if (aloft) {
-						// The vast birds (the Peng, the Phoenix) beat slow and deep.
-						float beat = kind.isPrimordial() ? 0.12f : kind.width > 1.5f ? 0.32f : 0.55f;
+						// The vast birds (the Peng, the Phoenix) beat slow and deep (a little quicker since they fly the swifter: PrimordialBeast#SWIFT).
+						float beat = kind.isPrimordial() ? 0.15f : kind.width > 1.5f ? 0.32f : 0.55f;
 						float flap = Mth.sin(time * beat) * 0.65f;
 						turn("wing_l", 0, 0, flap);
 						turn("wing_r", 0, 0, -flap);
@@ -314,6 +342,31 @@ public final class BeastModels {
 			}
 		}
 
+		/**
+		 * How much of the True Dragon's head's turn each of its neck's pieces carries, from the head back: the first turned most toward
+		 * it, the next three back again, so its neck bends (the head and the first piece share a pivot: the head turned alone kinks there)
+		 * and the body behind goes on straight as it was.
+		 */
+		private static final float[] NECK = {0.55f, -0.25f, -0.2f, -0.1f};
+		/** The most the Dragon's head turns from its body, side to side and up and down (radians). */
+		private static final float GAZE_YAW = 0.8f, GAZE_PITCH = 0.5f;
+
+		/**
+		 * The True Dragon's head (the user, 2026-10-27: "the dragon isnt that stiff which is nice but its head never moves"; its swim turns
+		 * it a few degrees): looking about as it flies, slowly, on two swells; leading into its turns; raised as it climbs and lowered as it
+		 * dives; turned hard to its foe when it has one ({@code yaw}, {@code pitch}: what it looks at); a slow roll. The neck carries a share
+		 * of it ({@link #NECK}).
+		 */
+		private void gaze(PrimordialBeast dragon, float time, float partial, float yaw, float pitch) {
+			float looking = Math.min(1, Math.abs(yaw) / 0.35f + Math.abs(pitch) / 0.35f), about = 1 - 0.6f * looking;
+			float side = yaw * 0.75f + dragon.turning(partial) * 0.3f + (Mth.sin(time * 0.045f) * 0.15f + Mth.sin(time * 0.11f + 1.3f) * 0.05f) * about;
+			float up = pitch * 0.6f - dragon.climbing(partial) * 0.3f + Mth.sin(time * 0.06f + 0.7f) * 0.07f * about;
+			side = Mth.clamp(side, -GAZE_YAW, GAZE_YAW);
+			up = Mth.clamp(up, -GAZE_PITCH, GAZE_PITCH);
+			nudge("head", up, side, Mth.sin(time * 0.05f + 2.1f) * 0.06f);
+			for (int i = 0; i < NECK.length; i++) nudge("seg_" + i, up * NECK[i], side * NECK[i], 0);
+		}
+
 		private void turn(String name, float x, float y, float z) {
 			CoreGeoBone bone = getAnimationProcessor().getBone(name);
 			if (bone != null) turn(bone, x, y, z);
@@ -332,10 +385,19 @@ public final class BeastModels {
 		}
 
 		/**
-		 * {@code bone} turned this much (radians) further than its animation has it this frame: only for a bone its loop keys (GeckoLib sets a
-		 * keyed bone afresh each frame; one no animation keys keeps what was set last frame, and would turn on and on).
+		 * {@code bone} turned this much (radians) further than its animation has it this frame: kept ({@link #nudged}) to be taken off before
+		 * the next (GeckoLib sets a keyed bone afresh each frame, but one no animation keys keeps what was set last frame, and its snapshots
+		 * take whatever stands).
 		 */
-		private static void nudge(CoreGeoBone bone, float x, float y, float z) {
+		private void nudge(CoreGeoBone bone, float x, float y, float z) {
+			turnBy(bone, x, y, z);
+			float[] sum = nudged.computeIfAbsent(bone, b -> new float[3]);
+			sum[0] += x;
+			sum[1] += y;
+			sum[2] += z;
+		}
+
+		private static void turnBy(CoreGeoBone bone, float x, float y, float z) {
 			bone.setRotX(bone.getRotX() + x);
 			bone.setRotY(bone.getRotY() + y);
 			bone.setRotZ(bone.getRotZ() + z);
