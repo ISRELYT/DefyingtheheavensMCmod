@@ -520,7 +520,7 @@ public final class MeditationManager {
 		boolean wasBottleneck = GhostMethods.atBottleneck(c);
 		int stages = GhostMethods.addCultivation(s, gained);
 		// What it won costs years, as the heaven path's does (Lifespan#seclude: the talent race): its boost, its method's stele, the
-		// Peaks' denser yin and a stone in hand saving them.
+		// denser yin of the Peaks and the Great Void's battlefields, and a stone in hand saving them.
 		Lifespan.seclude(p, before, was, GhostMethods.ghostRank(s), s.pathCultivation(), GhostMethods::required,
 				Lifespan.saving(session.boost.multiplier(), active != null && session.stelesNear.contains(active) ? GhostMethods.STELE_BONUS : 1.0,
 						Lifespan.ghostPlaceSaving(s.density()), SpiritStoneItem.meditationMultiplier(p)), gained <= 0 ? 0 : 1 - bonus / gained);

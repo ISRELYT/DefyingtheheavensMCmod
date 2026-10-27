@@ -40,9 +40,9 @@ public final class UpperRealmClient {
 
 		BlockEntityRenderers.register(ModBlockEntities.SPATIAL_RIFT, context -> new SpatialRiftRenderer());
 		BlockRenderLayerMap.INSTANCE.putBlock(ModBlocks.WHITE_BLOSSOM_LEAVES, RenderType.cutoutMipped());
-		BlockRenderLayerMap.INSTANCE.putBlock(ModBlocks.IMMORTAL_GATE_LIGHT, RenderType.translucent()); // the Gate's light, seen through
 		GreatVoidClient.register(); // the realm above the Jade Firmament, and the breach to it
 		ImmortalRealmClient.register(); // the realm above the Great Void, and the Gate's passage to it
+		GatePortalRenderer.register(); // the light in both Gates' openings, drawn whole (its blocks draw nothing)
 		SmallWorldClient.register(); // the immortals' own small worlds, their doors and gates
 	}
 

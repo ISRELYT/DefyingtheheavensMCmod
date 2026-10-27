@@ -1,6 +1,9 @@
 package com.example.defyingtheheavens;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.server.MinecraftServer;
@@ -141,9 +144,12 @@ public final class HeavenSpells {
 				if (here == null || here.get(placed.pos()) != placed) continue; // taken up early, or set again since
 				here.remove(placed.pos());
 				if (here.isEmpty()) TEMPORARY.remove(placed.level());
+				Land.of(placed.level()).drop(placed.pos());
 				restore(placed);
 			}
 		}
+		// What the levels hold of the spells' blocks written out every LAND_SAVE_EVERY while it changes, not only at the world's autosave.
+		if (server.getTickCount() % LAND_SAVE_EVERY == 0) Land.flush(server);
 		SpellAuras.tick(server);
 		Devastation.tick(server);
 		WoodSpells.tick(server);
@@ -176,6 +182,7 @@ public final class HeavenSpells {
 		for (Lingering l : all) endQuietly(l);
 		LINGERING.clear(); // whatever an ending set lingering ends with the server too
 		for (Map<BlockPos, Placed> here : TEMPORARY.values()) for (Placed placed : here.values()) restore(placed);
+		for (ServerLevel level : TEMPORARY.keySet()) Land.of(level).forgetAll(); // all taken up: none left for the next start to put back
 		TEMPORARY.clear();
 		DUE.clear();
 		Devastation.clear();
@@ -549,6 +556,7 @@ public final class HeavenSpells {
 		Placed placed = new Placed(level, pos.immutable(), was, state, level.getGameTime() + Math.max(1, ticks));
 		TEMPORARY.computeIfAbsent(level, k -> new HashMap<>()).put(placed.pos(), placed);
 		DUE.add(placed);
+		Land.of(level).keep(placed);
 		return true;
 	}
 
@@ -566,6 +574,7 @@ public final class HeavenSpells {
 		Placed placed = new Placed(level, pos.immutable(), here, state, level.getGameTime() + Math.max(1, ticks));
 		TEMPORARY.computeIfAbsent(level, k -> new HashMap<>()).put(placed.pos(), placed);
 		DUE.add(placed);
+		Land.of(level).keep(placed);
 		return true;
 	}
 
@@ -586,6 +595,7 @@ public final class HeavenSpells {
 		Placed placed = here == null ? null : here.remove(pos);
 		if (placed == null) return;
 		if (here.isEmpty()) TEMPORARY.remove(level);
+		Land.of(level).drop(placed.pos());
 		restore(placed, placed.was().getFluidState().isEmpty() ? flags : 3);
 	}
 
@@ -626,6 +636,122 @@ public final class HeavenSpells {
 		int count = 0;
 		for (Map<BlockPos, Placed> here : TEMPORARY.values()) count += here.size();
 		return count;
+	}
+
+	// --- Kept with the world, against a crash ---
+
+	/** The levels' records of the spells' blocks are written out this often (ticks) while they change, not only at the world's autosave. */
+	static final int LAND_SAVE_EVERY = 200;
+
+	/**
+	 * What of the spells' blocks stands in one level, kept with its own data (the user's ask, 2026-10-27: "fix the spell land across crash"):
+	 * each block as it is set, struck off as it is taken up, written out every {@link #LAND_SAVE_EVERY} while it changes. A server stopping
+	 * takes them all up and leaves none ({@link #clear}); one that crashed or was killed left those it held standing, and they are taken up as
+	 * the server next starts ({@link #restoreLeftLand}): the charred and frozen ground, the walls, ice and tame fire, the water poured.
+	 */
+	static final class Land extends SavedData {
+		private static final String NAME = DefyingTheHeavens.MOD_ID + "_spell_land";
+		/** Each block by its place: what stood there before ("Was"), what the spell set ("Set"). */
+		private final Map<Long, CompoundTag> held = new HashMap<>();
+
+		static Land of(ServerLevel level) {
+			return level.getDataStorage().computeIfAbsent(Land::load, Land::new, NAME);
+		}
+
+		void keep(Placed placed) {
+			CompoundTag one = new CompoundTag();
+			one.put("Was", NbtUtils.writeBlockState(placed.was()));
+			one.put("Set", NbtUtils.writeBlockState(placed.placed()));
+			held.put(placed.pos().asLong(), one);
+			setDirty();
+		}
+
+		void drop(BlockPos pos) {
+			if (held.remove(pos.asLong()) != null) setDirty();
+		}
+
+		void forgetAll() {
+			if (held.isEmpty()) return;
+			held.clear();
+			setDirty();
+		}
+
+		/** Whether a spell's block at {@code pos} is in the record (tests). */
+		boolean holds(BlockPos pos) {
+			return held.containsKey(pos.asLong());
+		}
+
+		/** Each level's record written out now if it changed (its own file only, not the rest of the level's data). */
+		static void flush(MinecraftServer server) {
+			for (ServerLevel level : server.getAllLevels()) {
+				Land land = level.getDataStorage().get(Land::load, NAME);
+				if (land == null || !land.isDirty()) continue;
+				java.nio.file.Path dir = net.minecraft.world.level.dimension.DimensionType.getStorageFolder(level.dimension(),
+						server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT)).resolve("data");
+				try {
+					java.nio.file.Files.createDirectories(dir);
+					land.save(dir.resolve(NAME + ".dat").toFile());
+				} catch (java.io.IOException e) {
+					DefyingTheHeavens.LOGGER.error("Couldn't write the spells' blocks of {}", level.dimension().location(), e);
+				}
+			}
+		}
+
+		@Override
+		public CompoundTag save(CompoundTag tag) {
+			net.minecraft.nbt.ListTag list = new net.minecraft.nbt.ListTag();
+			for (Map.Entry<Long, CompoundTag> entry : held.entrySet()) {
+				CompoundTag one = entry.getValue().copy();
+				one.putLong("Pos", entry.getKey());
+				list.add(one);
+			}
+			tag.put("Blocks", list);
+			return tag;
+		}
+
+		static Land load(CompoundTag tag) {
+			Land land = new Land();
+			for (net.minecraft.nbt.Tag entry : tag.getList("Blocks", net.minecraft.nbt.Tag.TAG_COMPOUND)) {
+				CompoundTag one = ((CompoundTag) entry).copy();
+				long pos = one.getLong("Pos");
+				one.remove("Pos");
+				land.held.put(pos, one);
+			}
+			return land;
+		}
+	}
+
+	/**
+	 * The server started (and the game tests): any of the spells' blocks a crash left standing taken up, what stood there given back (only
+	 * where the spell's own block still stands: a player's since, it stays), those the server holds now left to their own time.
+	 * @return how many were taken up
+	 */
+	public static int restoreLeftLand(MinecraftServer server) {
+		int taken = 0;
+		for (ServerLevel level : server.getAllLevels()) {
+			Land land = level.getDataStorage().get(Land::load, Land.NAME);
+			if (land == null || land.held.isEmpty()) continue;
+			Map<BlockPos, Placed> here = TEMPORARY.get(level);
+			for (Iterator<Map.Entry<Long, CompoundTag>> it = land.held.entrySet().iterator(); it.hasNext(); ) {
+				Map.Entry<Long, CompoundTag> entry = it.next();
+				BlockPos pos = BlockPos.of(entry.getKey());
+				if (here != null && here.containsKey(pos)) continue; // one of today's, taken up in its own time
+				it.remove();
+				land.setDirty();
+				BlockState was = NbtUtils.readBlockState(level.holderLookup(net.minecraft.core.registries.Registries.BLOCK), entry.getValue().getCompound("Was"));
+				BlockState set = NbtUtils.readBlockState(level.holderLookup(net.minecraft.core.registries.Registries.BLOCK), entry.getValue().getCompound("Set"));
+				restore(new Placed(level, pos, was, set, 0));
+				taken++;
+			}
+		}
+		if (taken > 0) DefyingTheHeavens.LOGGER.info("Took up {} of the spells' blocks the server had left standing when it last went down", taken);
+		return taken;
+	}
+
+	/** A crash's forgetting of the spell's block at {@code pos}, as the game tests make one: the server's hold on it lost, the block standing. */
+	static void forgetForTests(ServerLevel level, BlockPos pos) {
+		Map<BlockPos, Placed> here = TEMPORARY.get(level);
+		if (here != null && here.remove(pos) != null && here.isEmpty()) TEMPORARY.remove(level);
 	}
 
 	private static void restore(Placed placed) {

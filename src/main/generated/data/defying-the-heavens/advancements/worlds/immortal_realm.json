@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:worlds/shore_of_nirvana",
+  "criteria": {
+    "immortal_realm": {
+      "conditions": {
+        "to": "defying-the-heavens:immortal_realm"
+      },
+      "trigger": "minecraft:changed_dimension"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.worlds.immortal_realm.description"
+    },
+    "frame": "challenge",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:beacon"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.worlds.immortal_realm.title"
+    }
+  },
+  "requirements": [
+    [
+      "immortal_realm"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

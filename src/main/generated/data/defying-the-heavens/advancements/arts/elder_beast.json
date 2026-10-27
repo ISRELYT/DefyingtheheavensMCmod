@@ -1,0 +1,85 @@
+{
+  "parent": "defying-the-heavens:arts/demon_core",
+  "criteria": {
+    "azure_dragon": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "defying-the-heavens:azure_dragon"
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "elder_white_tiger": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "defying-the-heavens:elder_white_tiger"
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "mountain_lizard_king": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "defying-the-heavens:mountain_lizard_king"
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    },
+    "nine_tailed_fox": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "defying-the-heavens:nine_tailed_fox"
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.arts.elder_beast.description"
+    },
+    "frame": "goal",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:demon_blood"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.arts.elder_beast.title"
+    }
+  },
+  "requirements": [
+    [
+      "elder_white_tiger",
+      "nine_tailed_fox",
+      "mountain_lizard_king",
+      "azure_dragon"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:cultivation/entering_nirvana",
+  "criteria": {
+    "realm_true_immortal": {
+      "conditions": {
+        "milestone": "realm/true_immortal"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.cultivation.true_immortal.description"
+    },
+    "frame": "challenge",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:immortal_jade"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.cultivation.true_immortal.title"
+    }
+  },
+  "requirements": [
+    [
+      "realm_true_immortal"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

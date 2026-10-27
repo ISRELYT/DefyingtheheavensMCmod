@@ -620,6 +620,7 @@ public final class GhostSystem {
 		leaveBelongings(p);
 		REVIVING.add(p.getUUID());
 		p.connection.player = p.server.getPlayerList().respawn(p, true);
+		Milestones.award(p.connection.player, Milestones.REBORN); // the player born again (its new self: respawn makes one)
 	}
 
 	/**

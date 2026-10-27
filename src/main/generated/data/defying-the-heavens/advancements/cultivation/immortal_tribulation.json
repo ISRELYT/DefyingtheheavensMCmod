@@ -1,0 +1,33 @@
+{
+  "parent": "defying-the-heavens:cultivation/tribulation",
+  "criteria": {
+    "tribulation_immortal": {
+      "conditions": {
+        "milestone": "tribulation/immortal"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.cultivation.immortal_tribulation.description"
+    },
+    "frame": "challenge",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:trident",
+      "nbt": "{Damage:0}"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.cultivation.immortal_tribulation.title"
+    }
+  },
+  "requirements": [
+    [
+      "tribulation_immortal"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

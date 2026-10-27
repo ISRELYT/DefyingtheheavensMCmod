@@ -1,0 +1,40 @@
+{
+  "parent": "defying-the-heavens:arts/demon_core",
+  "criteria": {
+    "chaos_fiend": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "defying-the-heavens:chaos_fiend"
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.arts.chaos_fiend.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:echo_shard"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.arts.chaos_fiend.title"
+    }
+  },
+  "requirements": [
+    [
+      "chaos_fiend"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

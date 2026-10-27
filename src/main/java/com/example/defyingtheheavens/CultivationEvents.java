@@ -78,6 +78,7 @@ public final class CultivationEvents {
 		LawDomains.onDisconnect(player); // and a Law's domain folds away
 		ChaosFrontier.onDisconnect(player);
 		SmallWorlds.onDisconnect(player); // a small world's door closes
+		PlayerTitles.onDisconnect(player); // their plate gone from everyone's view
 		FiveDecays.forget(player.getUUID()); // a judgement under way comes again after the return (the record keeps it)
 		Wishes.forget(player.getUUID());
 	}
@@ -151,6 +152,8 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(HeavenRitual::tick);
 		ServerTickEvents.END_SERVER_TICK.register(Physiques::tick);
 		ServerTickEvents.END_SERVER_TICK.register(Bloodlines::tick); // a fox spirit's tails shown as its realm grows them
+		ServerTickEvents.END_SERVER_TICK.register(PlayerTitles::tick); // the plates over players' heads, their titles and sect titles, as they change
+		ServerTickEvents.END_SERVER_TICK.register(Milestones::tick); // the advancements' standing milestones (a realm, a sect's title...) granted
 		ServerTickEvents.END_SERVER_TICK.register(RaceGifts::tick); // a tiger's sight, a lizard's in the water, a dragon's might
 		ServerTickEvents.END_SERVER_TICK.register(CoreDetonation::tick);
 		ServerTickEvents.END_SERVER_TICK.register(StorageRings::flush);
@@ -171,6 +174,8 @@ public final class CultivationEvents {
 		ServerEntityEvents.ENTITY_UNLOAD.register((entity, level) -> CultivatorNpc.onUnload(entity));
 
 		ServerLifecycleEvents.SERVER_STARTED.register(SpatialRiftBlock::ensureOverworldRift);
+		// The spells' blocks a crash left standing taken up, what stood there given back (HeavenSpells#restoreLeftLand).
+		ServerLifecycleEvents.SERVER_STARTED.register(HeavenSpells::restoreLeftLand);
 		// The Ghost Gate at the Netherworld's 0, 0 (built the first time; its fixtures put back every time).
 		ServerLifecycleEvents.SERVER_STARTED.register(GhostGate::ensure);
 		// The camp on the Great Void's Shore of Nirvana (built the first time).
@@ -228,6 +233,7 @@ public final class CultivationEvents {
 			LawDomains.clear();
 			ChaosFrontier.clear();
 			SmallWorlds.clear();
+			PlayerTitles.clear();
 		});
 
 		// A formation's shell runs through the ground too: those who couldn't break the barrier can't dig under it either.
@@ -311,6 +317,7 @@ public final class CultivationEvents {
 			CoreDetonation.onJoin(player); // no act's switch left on from a server that stopped mid-way
 			FiveDecays.onJoin(player); // the Decays' time stood still while they were away
 			SmallWorlds.onJoin(player); // their own small world's door, and out of one not theirs to be in
+			PlayerTitles.onJoin(player); // every player's plate told (their title, their sect's title over them)
 			RealmSuppressionHandler.update(player);
 			if (fled) player.setHealth(Math.min(player.getHealth(), player.getMaxHealth())); // the lower stage's smaller body
 			Formations.syncSoon(); // the barriers near them, at once

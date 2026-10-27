@@ -409,6 +409,7 @@ public final class SparSystem {
 			give(player, spar.playerStake);
 			return;
 		}
+		if (outcome == Outcome.WON) Milestones.award(player, Milestones.SPAR_WON);
 		int delta = switch (outcome) {
 			case WON -> spar.terms.full && spar.stronger ? Regard.SPAR_WIN_FULL : spar.senior ? Regard.SPAR_WIN_SENIOR : Regard.SPAR_WIN;
 			case LOST -> spar.junior ? Regard.SPAR_LOSS_BADLY : Regard.SPAR_LOSS;

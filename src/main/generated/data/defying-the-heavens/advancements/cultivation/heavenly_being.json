@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:cultivation/nascent_soul",
+  "criteria": {
+    "realm_heavenly_being": {
+      "conditions": {
+        "milestone": "realm/heavenly_being"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.cultivation.heavenly_being.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:spirit_dew"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.cultivation.heavenly_being.title"
+    }
+  },
+  "requirements": [
+    [
+      "realm_heavenly_being"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

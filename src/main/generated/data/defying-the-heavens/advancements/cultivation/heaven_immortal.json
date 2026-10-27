@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:cultivation/earth_immortal",
+  "criteria": {
+    "realm_heaven_immortal": {
+      "conditions": {
+        "milestone": "realm/heaven_immortal"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.cultivation.heaven_immortal.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:purple_lingzhi"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.cultivation.heaven_immortal.title"
+    }
+  },
+  "requirements": [
+    [
+      "realm_heaven_immortal"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

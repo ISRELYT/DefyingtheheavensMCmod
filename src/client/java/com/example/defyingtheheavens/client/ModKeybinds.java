@@ -23,6 +23,8 @@ public final class ModKeybinds {
 	public static KeyMapping QUICK_ABILITY;
 	/** One for each wheel slot, unbound until the player binds them: each switches its slot's ability ({@link QuickAbilities}). */
 	public static final KeyMapping[] ABILITY_SLOTS = new KeyMapping[PlayerCultivation.WHEEL_SLOTS];
+	/** Opens the Dao Codex, the mod's guide ({@link CodexScreen}). */
+	public static KeyMapping CODEX;
 
 	public static void register() {
 		OPEN_MENU = KeyBindingHelper.registerKeyBinding(new KeyMapping(
@@ -45,6 +47,8 @@ public final class ModKeybinds {
 			ABILITY_SLOTS[slot] = KeyBindingHelper.registerKeyBinding(new KeyMapping(
 					ModLang.KEY_ABILITY_SLOT_PREFIX + (slot + 1), InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), ModLang.KEY_CATEGORY));
 		}
+		CODEX = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+				ModLang.KEY_CODEX, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_J, ModLang.KEY_CATEGORY));
 	}
 
 	private static final java.util.List<KeyMapping> ALL = new java.util.ArrayList<>();
@@ -54,6 +58,7 @@ public final class ModKeybinds {
 		if (ALL.isEmpty() && OPEN_MENU != null) {
 			ALL.addAll(java.util.List.of(OPEN_MENU, MEDITATE, CIRCULATE, ABILITY_WHEEL, SPELL_WHEEL, CAST_SPELL, STORAGE_RING, QUICK_ABILITY));
 			ALL.addAll(java.util.Arrays.asList(ABILITY_SLOTS));
+			ALL.add(CODEX);
 		}
 		return ALL;
 	}

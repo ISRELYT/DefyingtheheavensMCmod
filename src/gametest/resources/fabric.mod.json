@@ -4,6 +4,9 @@
   "version": "1.0.0",
   "name": "Cultivation Tests",
   "environment": "*",
+  "mixins": [
+    "defying-the-heavens-tests.mixins.json"
+  ],
   "entrypoints": {
     "fabric-gametest": [
       "com.example.defyingtheheavens.PhysiqueGameTests",
@@ -83,7 +86,11 @@
       "com.example.defyingtheheavens.LawsGameTests",
       "com.example.defyingtheheavens.LawDomainsGameTests",
       "com.example.defyingtheheavens.ChaosFrontierGameTests",
-      "com.example.defyingtheheavens.SmallWorldGameTests"
+      "com.example.defyingtheheavens.SmallWorldGameTests",
+      "com.example.defyingtheheavens.SweepFourGameTests",
+      "com.example.defyingtheheavens.OverhaulsGameTests",
+      "com.example.defyingtheheavens.AdvancementsGameTests",
+      "com.example.defyingtheheavens.CodexGameTests"
     ]
   }
 }

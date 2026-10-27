@@ -1,0 +1,42 @@
+{
+  "parent": "defying-the-heavens:worlds/great_void",
+  "criteria": {
+    "shore": {
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "location": {
+                "biome": "defying-the-heavens:shore_of_nirvana"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:location"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.worlds.shore_of_nirvana.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:campfire"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.worlds.shore_of_nirvana.title"
+    }
+  },
+  "requirements": [
+    [
+      "shore"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

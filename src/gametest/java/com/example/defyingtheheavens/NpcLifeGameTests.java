@@ -195,17 +195,18 @@ public class NpcLifeGameTests implements FabricGameTest {
 		try {
 			ServerPlayer strong = cultivator(helper, made, "strong", Realm.NASCENT_SOUL, Stage.EARLY);
 			CultivatorNpc junior = npc(helper, new BlockPos(3, 2, 2), Realm.QI_REFINING, 0);
-			helper.assertTrue(key(NpcLines.line("pass.awe", junior)) != null, "There are lines of awe");
-			helper.assertTrue(key(NpcLife.remarkOn(junior, strong, false)).startsWith(ModLang.npcSay("pass.awe.")), "Two realms beneath you, it is in awe");
+			helper.assertTrue(key(NpcLines.line("pass.esteemed", junior, "", "")) != null, "There are lines of deep respect");
+			// Three realms beneath you (NpcAddress.Rung.ESTEEMED), it bows low; since 2026-10-27 in place of the old lines of awe.
+			helper.assertTrue(key(NpcLife.remarkOn(junior, strong, false)).startsWith(ModLang.npcSay("pass.esteemed.")), "Three realms beneath you, it bows low");
 			junior.changeRegard(strong, Regard.WARM);
-			helper.assertTrue(key(NpcLife.remarkOn(junior, strong, false)).startsWith(ModLang.npcSay("pass.liked.")), "One who likes you greets you");
+			helper.assertTrue(key(NpcLife.remarkOn(junior, strong, false)).startsWith(ModLang.npcSay("pass.liked_senior.")), "One who likes you greets you");
 			junior.changeRegard(strong, -Regard.WARM - 40);
-			helper.assertTrue(key(NpcLife.remarkOn(junior, strong, false)).startsWith(ModLang.npcSay("pass.disliked.")), "One who doesn't, says so");
+			helper.assertTrue(key(NpcLife.remarkOn(junior, strong, false)).startsWith(ModLang.npcSay("pass.disliked_senior.")), "One who doesn't, says so");
 			CultivatorNpc guard = npc(helper, new BlockPos(1, 2, 3), Realm.QI_REFINING, 0);
 			guard.setGateGuard(true);
-			helper.assertTrue(key(NpcLife.remarkOn(guard, strong, false)).startsWith(ModLang.npcSay("gate.halt.")), "A gate guard halts a stranger");
+			helper.assertTrue(key(NpcLife.remarkOn(guard, strong, false)).startsWith(ModLang.npcSay("gate.halt_senior.")), "A gate guard halts a stranger");
 			guard.changeRegard(strong, Regard.COURTEOUS);
-			helper.assertTrue(key(NpcLife.remarkOn(guard, strong, false)).startsWith(ModLang.npcSay("gate.welcome.")), "...and welcomes a friend");
+			helper.assertTrue(key(NpcLife.remarkOn(guard, strong, false)).startsWith(ModLang.npcSay("gate.welcome_senior.")), "...and welcomes a friend");
 			strong.getInventory().setItem(strong.getInventory().selected, new net.minecraft.world.item.ItemStack(ModItems.IMMORTAL_SPIRIT_STONE));
 			CultivatorNpc greedy = npc(helper, new BlockPos(4, 2, 4), Realm.NASCENT_SOUL, -120);
 			helper.assertTrue(key(NpcLife.remarkOn(greedy, strong, false)).startsWith(ModLang.npcSay("pass.stone.devilish.")), "An Immortal stone in hand gets noticed");

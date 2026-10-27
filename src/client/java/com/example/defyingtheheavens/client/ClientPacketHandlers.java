@@ -141,7 +141,10 @@ public final class ClientPacketHandlers {
 			long decayDue = buf.readLong();
 			boolean inImmortalRealm = buf.readBoolean();
 			boolean smallWorld = buf.readBoolean();
+			String epithet = buf.readUtf(com.example.defyingtheheavens.PlayerTitles.MAX_LENGTH * 4);
 			client.execute(() -> {
+				// The title they have taken (PlayerTitles): the Cultivation tab's field.
+				ClientCultivationData.get().setEpithet(epithet);
 				// Where a breakthrough into True Immortal and past it is made (the Cultivation tab's lock and button).
 				ClientCultivationData.get().setInImmortalRealm(inImmortalRealm);
 				// A small world of their own (SmallWorlds): its door on the Abilities tab.
@@ -187,6 +190,20 @@ public final class ClientPacketHandlers {
 						disabledAbilities, pressureStages, pressurePenalty, mortal, mortalStage, tempering, preparedRealm, preparedBonus, qiBoost,
 						pillResistance, medicinalQi, alignment, gearQiBonus, wheel, soulState, heavensLeave, favour);
 			});
+		});
+
+		// Players' plates over their heads: their titles and their sects' titles for them (PlayerTitles).
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.PLAYER_PLATES, (client, handler, buf, sender) -> {
+			int count = buf.readVarInt();
+			java.util.Map<java.util.UUID, ClientPlates.Plate> plates = new java.util.HashMap<>();
+			for (int i = 0; i < count; i++) {
+				java.util.UUID id = buf.readUUID();
+				String title = buf.readUtf(com.example.defyingtheheavens.PlayerTitles.MAX_LENGTH * 4);
+				int sectTitle = buf.readVarInt();
+				boolean clan = buf.readBoolean(), holy = buf.readBoolean(), immortal = buf.readBoolean();
+				plates.put(id, new ClientPlates.Plate(title, sectTitle, clan, holy, immortal));
+			}
+			client.execute(() -> ClientPlates.put(plates));
 		});
 
 		// The Astral Realm's seed: the same stars and planets as the server's (AstralPlanets).

@@ -1,0 +1,42 @@
+{
+  "parent": "defying-the-heavens:springs/root",
+  "criteria": {
+    "peaks": {
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "location": {
+                "biome": "defying-the-heavens:nine_nether_peaks"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:location"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.springs.nine_nether_peaks.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:basalt"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.springs.nine_nether_peaks.title"
+    }
+  },
+  "requirements": [
+    [
+      "peaks"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

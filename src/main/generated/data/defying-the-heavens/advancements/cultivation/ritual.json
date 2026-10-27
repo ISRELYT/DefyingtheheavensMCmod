@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:cultivation/root",
+  "criteria": {
+    "ritual_granted": {
+      "conditions": {
+        "milestone": "ritual/granted"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.cultivation.ritual.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:candle"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.cultivation.ritual.title"
+    }
+  },
+  "requirements": [
+    [
+      "ritual_granted"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

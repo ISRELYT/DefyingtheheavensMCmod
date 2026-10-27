@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:sects/elder",
+  "criteria": {
+    "sect_master": {
+      "conditions": {
+        "milestone": "sect/master"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.sects.master.description"
+    },
+    "frame": "challenge",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:bell"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.sects.master.title"
+    }
+  },
+  "requirements": [
+    [
+      "sect_master"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

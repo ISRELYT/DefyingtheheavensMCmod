@@ -211,6 +211,9 @@ public final class ModPackets {
 	public static final ResourceLocation BLOODLINE_ASK = new ResourceLocation(DefyingTheHeavens.MOD_ID, "bloodline_ask");
 	public static final ResourceLocation BLOODLINE_CHOOSE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "bloodline_choose");
 	public static final ResourceLocation BLOODLINES = new ResourceLocation(DefyingTheHeavens.MOD_ID, "bloodlines");
+	/** C2S: the title one takes (PlayerTitles, from Void Shattering on); S2C: players' plates over their heads, their titles and sect titles. */
+	public static final ResourceLocation SET_TITLE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "set_title");
+	public static final ResourceLocation PLAYER_PLATES = new ResourceLocation(DefyingTheHeavens.MOD_ID, "player_plates");
 	/** Players further than this from a core can't work its screen. */
 	private static final double CORE_REACH = 8;
 
@@ -319,6 +322,10 @@ public final class ModPackets {
 			Bloodline bloodline = Bloodline.byIndex(buf.readVarInt());
 			int variant = buf.readVarInt();
 			server.execute(() -> Bloodlines.choose(player, bloodline, variant));
+		});
+		ServerPlayNetworking.registerGlobalReceiver(SET_TITLE, (server, player, handler, buf, responseSender) -> {
+			String title = buf.readUtf(PlayerTitles.MAX_LENGTH * 4);
+			server.execute(() -> PlayerTitles.set(player, title));
 		});
 		ServerPlayNetworking.registerGlobalReceiver(CIRCULATION, (server, player, handler, buf, responseSender) -> {
 			int outcome = buf.readVarInt();
@@ -588,6 +595,8 @@ public final class ModPackets {
 		buf.writeBoolean(c.isInImmortalRealm());
 		// Whether they have a small world of their own (SmallWorlds): its door, the Abilities tab's.
 		buf.writeBoolean(c.hasSmallWorld());
+		// The title they have taken (PlayerTitles), their own record's: the Cultivation tab's field.
+		buf.writeUtf(own.epithet(), PlayerTitles.MAX_LENGTH * 4);
 		ServerPlayNetworking.send(player, SYNC, buf);
 	}
 

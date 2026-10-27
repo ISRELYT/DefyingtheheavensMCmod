@@ -1,0 +1,42 @@
+{
+  "parent": "defying-the-heavens:worlds/great_void",
+  "criteria": {
+    "holy_land": {
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "location": {
+                "structure": "defying-the-heavens:holy_land"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:location"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.worlds.holy_land.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:quartz_pillar"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.worlds.holy_land.title"
+    }
+  },
+  "requirements": [
+    [
+      "holy_land"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

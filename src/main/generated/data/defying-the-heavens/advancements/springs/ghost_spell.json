@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:springs/ghost_path",
+  "criteria": {
+    "spell_ghost": {
+      "conditions": {
+        "milestone": "spell/ghost"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.springs.ghost_spell.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:soul_torch"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.springs.ghost_spell.title"
+    }
+  },
+  "requirements": [
+    [
+      "spell_ghost"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

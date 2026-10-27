@@ -24,7 +24,8 @@ import net.minecraft.world.phys.Vec3;
 /**
  * Detonating the golden core (CoreDetonation): its harm by distance and realm, asked twice before it breaks, and the cultivator's
  * death with the core lost. The Spatial Tear (SpatialTrialHandler#tear): only from Heavenly Being, only where the gap opens, out
- * only back home; the gap's stormy layers above and below (the gap itself isn't on the test server: its rules are checked by number).
+ * only back home, stepped into and the gap reached (the tests' server has the mod's dimensions since 2026-10-27); the gap's stormy layers
+ * above and below, checked by number.
  */
 public class CoreAndGapGameTests implements FabricGameTest {
 	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
@@ -143,17 +144,20 @@ public class CoreAndGapGameTests implements FabricGameTest {
 		helper.assertTrue(Ability.SPATIAL_TEAR.isUnlocked(c), "A Heavenly Being can");
 		double before = c.getQi();
 		SpatialTrialHandler.tear(p);
-		if (helper.getLevel().getServer().getLevel(ModDimensions.SPATIAL_GAP) == null) {
-			// The test server has only vanilla's dimensions: no gap to open onto, so nothing is spent and nothing happens.
-			helper.assertTrue(c.getQi() == before && !SpatialTrialHandler.isInTrial(p.getUUID()), "No gap: space won't tear, no qi spent");
-		} else {
-			helper.assertTrue(SpatialTrialHandler.isTravelling(p.getUUID()) && p.level().dimension() == ModDimensions.SPATIAL_GAP
-					&& Math.abs(c.getQi() - before * (1 - SpatialTrialHandler.TEAR_IN_QI)) < 1, "Torn in, for a quarter of the pool");
+		helper.assertTrue(SpatialTrialHandler.GAP_SCALE == 20, "A block in the gap is twenty in the world");
+		// The tests' server has the mod's dimensions (the user's rule, 2026-10-27): a tear opens before them for a quarter of the pool, and
+		// stepped into, it takes them into the gap.
+		helper.assertTrue(helper.getLevel().getServer().getLevel(ModDimensions.SPATIAL_GAP) != null, "The tests' server has the gap");
+		helper.assertTrue(Math.abs(c.getQi() - before * (1 - SpatialTrialHandler.TEAR_IN_QI)) < 1, "Torn, for a quarter of the pool");
+		SpatialTearEntity tear = helper.getLevel().getEntitiesOfClass(SpatialTearEntity.class, p.getBoundingBox().inflate(4)).stream().findFirst().orElse(null);
+		helper.assertTrue(tear != null, "A tear stands open before them");
+		p.teleportTo(helper.getLevel(), tear.getX(), tear.getY(), tear.getZ(), p.getYRot(), 0);
+		helper.succeedWhen(() -> {
+			helper.assertTrue(SpatialTrialHandler.isTravelling(p.getUUID()) && p.level().dimension() == ModDimensions.SPATIAL_GAP, "Stepped into it: in the gap");
 			SpatialTrialHandler.forget(p.getUUID());
 			c.setPendingTrial(SpatialTrialHandler.Route.NONE);
-		}
-		helper.assertTrue(SpatialTrialHandler.GAP_SCALE == 20, "A block in the gap is twenty in the world");
-		helper.succeed();
+			if (p.server.getPlayerList().getPlayer(p.getUUID()) == p) p.server.getPlayerList().remove(p);
+		});
 	}
 
 	/**
@@ -222,7 +226,7 @@ public class CoreAndGapGameTests implements FabricGameTest {
 
 	/**
 	 * The Upper Realm's islands found by numbers (SpatialArrivals#islandColumn), against the realm's own generator built from its
-	 * noise settings (the test server has no Upper Realm): islands are found, each well inside one by its mask with ground under it
+	 * noise settings (written when the test server had no Upper Realm; still quicker than generating it): islands are found, each well inside one by its mask with ground under it
 	 * by the generator, in milliseconds, and nothing generated to find them.
 	 */
 	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 200)

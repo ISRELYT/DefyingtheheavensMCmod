@@ -1,0 +1,42 @@
+{
+  "parent": "defying-the-heavens:worlds/great_void",
+  "criteria": {
+    "demon_palace": {
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "location": {
+                "structure": "defying-the-heavens:demon_palace"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:location"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.worlds.demon_palace.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:red_nether_bricks"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.worlds.demon_palace.title"
+    }
+  },
+  "requirements": [
+    [
+      "demon_palace"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

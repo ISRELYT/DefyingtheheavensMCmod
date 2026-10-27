@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:cultivation/sacred_vessel",
+  "criteria": {
+    "realm_entering_nirvana": {
+      "conditions": {
+        "milestone": "realm/entering_nirvana"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.cultivation.entering_nirvana.description"
+    },
+    "frame": "goal",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:totem_of_undying"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.cultivation.entering_nirvana.title"
+    }
+  },
+  "requirements": [
+    [
+      "realm_entering_nirvana"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:sects/root",
+  "criteria": {
+    "talk_gift": {
+      "conditions": {
+        "milestone": "talk/gift"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.sects.gift.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:ginseng"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.sects.gift.title"
+    }
+  },
+  "requirements": [
+    [
+      "talk_gift"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

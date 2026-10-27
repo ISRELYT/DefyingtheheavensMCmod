@@ -28,6 +28,11 @@ import java.util.UUID;
  * while ({@link #LIFE}). One who touches a current is swept off along it: blinded by the light of it while it bears them (until their
  * landing's land is loaded, {@link #CARRY_MIN_TICKS} at least and {@link #CARRY_MAX_TICKS} at most), they come out {@link #CARRY_MIN} to {@link #CARRY_MAX} blocks on along its
  * flow, onto the nearest continent there (SpatialArrivals#continentColumn), their landing harmless.
+ * <p>
+ * None comes near a sect's grounds, a Holy Land's or a Demon Palace's ({@link #nearSect}; the user, 2026-10-27: "they seem to spawn
+ * or move into holy land areas / demon palaces. Which they shouldn't"): one is born only where neither it nor the way it will drift
+ * over its life comes within {@link #CLEAR_OF_SECTS} of a sect's barrier, and one that drifts up against one all the same (a sect
+ * raised since) shuts there.
  */
 public final class VoidCurrents {
 	/** A try round each player in the Great Void this often (ticks), this likely, while fewer than {@link #NEAR} stand within {@link #NEAR_REACH}. */
@@ -49,6 +54,10 @@ public final class VoidCurrents {
 	static final int CARRY_MIN = 500, CARRY_MAX = 1400, CARRY_MIN_TICKS = 30, CARRY_MAX_TICKS = 100;
 	/** Its heart's height over its foot (where SpatialTearRenderer draws it, lying about it). */
 	public static final double HEART = 1.5;
+	/** No current comes within this of a sect's barrier (its streak's length and more). */
+	static final double CLEAR_OF_SECTS = 16;
+	/** A new one's way over its life is looked along at steps of this many blocks. */
+	private static final double PATH_STEP = 8;
 
 	/** One being borne by a current: where they come out, and since when (game time). */
 	private record Borne(BlockPos to, long since) {}
@@ -60,9 +69,16 @@ public final class VoidCurrents {
 		if (level == null) return;
 		long now = level.getGameTime();
 		List<? extends SpatialTearEntity> currents = level.getEntities(ModEntities.SPATIAL_TEAR, tear -> tear.leads() == SpatialTearEntity.Leads.VOID_CURRENT);
+		List<Sect> sects = sectsIn(level);
 		for (SpatialTearEntity current : currents) {
 			Vec3 flow = Vec3.directionFromRotation(0, current.getYRot());
-			current.setPos(current.getX() + flow.x * DRIFT, current.getY(), current.getZ() + flow.z * DRIFT);
+			double x = current.getX() + flow.x * DRIFT, z = current.getZ() + flow.z * DRIFT;
+			// Up against a sect's grounds (a Holy Land's, a Demon Palace's), it goes no further: it shuts there.
+			if (nearSect(sects, x, z)) {
+				current.closeSoon();
+				continue;
+			}
+			current.setPos(x, current.getY(), z);
 			if (current.openness(0) < 0.5f) continue;
 			for (ServerPlayer p : level.getEntitiesOfClass(ServerPlayer.class, current.getBoundingBox().inflate(REACH_ALONG + 2))) {
 				if (!p.isSpectator() && touches(current, flow, p)) sweep(level, p, flow, now);
@@ -86,8 +102,9 @@ public final class VoidCurrents {
 		return Math.abs(along) <= REACH_ALONG && across <= REACH_ACROSS && Math.abs(d.y) <= REACH_UP;
 	}
 
-	/** A current coming out of the void near {@code p}, flowing any way, in open air. */
+	/** A current coming out of the void near {@code p}, flowing any way, in open air, where neither it nor its way comes near a sect. */
 	static SpatialTearEntity spawnNear(ServerLevel level, ServerPlayer p, RandomSource random) {
+		List<Sect> sects = sectsIn(level);
 		for (int tries = 0; tries < 6; tries++) {
 			double angle = random.nextDouble() * Math.PI * 2, out = MIN_OUT + random.nextDouble() * (MAX_OUT - MIN_OUT);
 			Vec3 at = new Vec3(p.getX() + Math.cos(angle) * out, p.getY() - 6 + random.nextDouble() * 22, p.getZ() + Math.sin(angle) * out);
@@ -96,9 +113,41 @@ public final class VoidCurrents {
 			boolean open = true;
 			for (BlockPos near : BlockPos.betweenClosed(spot.offset(-3, -1, -3), spot.offset(3, 3, 3))) open &= level.getBlockState(near).isAir();
 			if (!open) continue;
-			return spawn(level, at, random.nextFloat() * 360f);
+			float yaw = random.nextFloat() * 360f;
+			if (pathNearSect(sects, at, yaw)) continue;
+			return spawn(level, at, yaw);
 		}
 		return null;
+	}
+
+	/** The Great Void's sects standing now (the Holy Lands, the Demon Palaces): what no current comes near. */
+	static List<Sect> sectsIn(ServerLevel level) {
+		List<Sect> sects = new java.util.ArrayList<>();
+		for (Sect sect : SectData.get(level.getServer()).all()) {
+			if (!sect.extinct && sect.dimension == level.dimension()) sects.add(sect);
+		}
+		return sects;
+	}
+
+	/** Whether (x, z) lies within {@link #CLEAR_OF_SECTS} of one of {@code sects}' barriers (or within one). */
+	static boolean nearSect(List<Sect> sects, double x, double z) {
+		for (Sect sect : sects) {
+			double dx = x - sect.core.getX() - 0.5, dz = z - sect.core.getZ() - 0.5, reach = sect.barrierRadius + CLEAR_OF_SECTS;
+			if (dx * dx + dz * dz < reach * reach) return true;
+		}
+		return false;
+	}
+
+	/** Whether a current born at {@code at} flowing toward {@code yaw} would come near a sect, there or on its way over its life. */
+	static boolean pathNearSect(List<Sect> sects, Vec3 at, float yaw) {
+		if (sects.isEmpty()) return false;
+		Vec3 flow = Vec3.directionFromRotation(0, yaw);
+		double way = LIFE * DRIFT + REACH_ALONG;
+		for (double along = 0; along <= way + PATH_STEP; along += PATH_STEP) {
+			double reach = Math.min(along, way);
+			if (nearSect(sects, at.x + flow.x * reach, at.z + flow.z * reach)) return true;
+		}
+		return false;
 	}
 
 	/** A current at {@code at}, flowing toward {@code yaw}. */

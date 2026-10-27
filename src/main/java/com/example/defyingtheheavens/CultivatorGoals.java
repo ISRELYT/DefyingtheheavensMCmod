@@ -1063,6 +1063,46 @@ public final class CultivatorGoals {
 	}
 
 	/**
+	 * On one knee before one four realms or more above it as they pass (TalkSystem#kneelsBefore; the user's pick, 2026-10-27): it stays where
+	 * it is, facing them, until they have gone on; a fight or a reason to run gets it up again.
+	 */
+	public static class KneelGoal extends Goal {
+		private final CultivatorNpc npc;
+
+		public KneelGoal(CultivatorNpc npc) {
+			this.npc = npc;
+			setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+		}
+
+		@Override
+		public boolean canUse() {
+			return npc.isKneeling() && npc.kneelingBefore() != null && npc.getTarget() == null && !npc.shouldFlee();
+		}
+
+		@Override
+		public boolean canContinueToUse() {
+			return canUse();
+		}
+
+		@Override
+		public void start() {
+			npc.getNavigation().stop();
+		}
+
+		@Override
+		public boolean requiresUpdateEveryTick() {
+			return true;
+		}
+
+		@Override
+		public void tick() {
+			npc.getNavigation().stop();
+			Player before = npc.kneelingBefore();
+			if (before != null) npc.getLookControl().setLookAt(before, 30.0f, 30.0f);
+		}
+	}
+
+	/**
 	 * Everyday life (see {@link NpcLife}): whatever NpcLife has it doing, sleep, the morning lecture, a talk, practice, mourning.
 	 * It goes to where that is, then does it there, while its duty waits. Anything more pressing (a fight, a reason to run, a
 	 * player's talk or trade) comes first, and it takes the activity up again after: back to bed, back to its seat.
@@ -1237,6 +1277,8 @@ public final class CultivatorGoals {
 			// leaves what preys on its people to the one who took it on (Wishes). Those waiting on the Shore of Nirvana neither, but for
 			// the short-tempered of the devilish path, at an enemy of theirs come close (NirvanaCamp#loses).
 			if (npc.settledAt() != null && !(NirvanaCamp.isCamper(npc) && NirvanaCamp.loses(npc, target))) return false;
+			// Nor one of the camp flying for the Immortal Gate, or back from it (its home let go while it flies: ImmortalGate#isRushing).
+			if (ImmortalGate.isRushing(npc)) return false;
 			// On the camp's ground nobody goes for one of the demon races waiting there (NirvanaCamp#shelters).
 			if (NirvanaCamp.shelters(target)) return false;
 			// What preys on them (a Merit wish's threat) is out for the one who took it on, and nobody else: not the settlers.

@@ -1,0 +1,102 @@
+{
+  "criteria": {
+    "astral_surfaces": {
+      "conditions": {
+        "to": "defying-the-heavens:astral_surfaces"
+      },
+      "trigger": "minecraft:changed_dimension"
+    },
+    "astral_void": {
+      "conditions": {
+        "to": "defying-the-heavens:astral_void"
+      },
+      "trigger": "minecraft:changed_dimension"
+    },
+    "great_void": {
+      "conditions": {
+        "to": "defying-the-heavens:great_void"
+      },
+      "trigger": "minecraft:changed_dimension"
+    },
+    "immortal_passage": {
+      "conditions": {
+        "to": "defying-the-heavens:immortal_passage"
+      },
+      "trigger": "minecraft:changed_dimension"
+    },
+    "immortal_realm": {
+      "conditions": {
+        "to": "defying-the-heavens:immortal_realm"
+      },
+      "trigger": "minecraft:changed_dimension"
+    },
+    "netherworld": {
+      "conditions": {
+        "to": "defying-the-heavens:netherworld"
+      },
+      "trigger": "minecraft:changed_dimension"
+    },
+    "small_world": {
+      "conditions": {
+        "to": "defying-the-heavens:small_world"
+      },
+      "trigger": "minecraft:changed_dimension"
+    },
+    "soul_river": {
+      "conditions": {
+        "to": "defying-the-heavens:soul_river"
+      },
+      "trigger": "minecraft:changed_dimension"
+    },
+    "spatial_gap": {
+      "conditions": {
+        "to": "defying-the-heavens:spatial_gap"
+      },
+      "trigger": "minecraft:changed_dimension"
+    },
+    "upper_realm": {
+      "conditions": {
+        "to": "defying-the-heavens:upper_realm"
+      },
+      "trigger": "minecraft:changed_dimension"
+    },
+    "void_breach": {
+      "conditions": {
+        "to": "defying-the-heavens:void_breach"
+      },
+      "trigger": "minecraft:changed_dimension"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "background": "minecraft:textures/block/obsidian.png",
+    "description": {
+      "translate": "advancements.defying-the-heavens.worlds.root.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:recovery_compass"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.worlds.root.title"
+    }
+  },
+  "requirements": [
+    [
+      "spatial_gap",
+      "upper_realm",
+      "astral_void",
+      "astral_surfaces",
+      "great_void",
+      "void_breach",
+      "immortal_passage",
+      "immortal_realm",
+      "netherworld",
+      "soul_river",
+      "small_world"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

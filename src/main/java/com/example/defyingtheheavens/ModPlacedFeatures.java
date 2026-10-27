@@ -218,7 +218,7 @@ public final class ModPlacedFeatures {
 	public static final ResourceKey<PlacedFeature> SACRED_RELIC = key("great_void/sacred_relic");
 	public static final ResourceKey<PlacedFeature> BATTLEFIELD_RUIN = key("great_void/battlefield_ruin");
 	public static final ResourceKey<PlacedFeature> BLOOD_POOL = key("great_void/blood_pool");
-	public static final int SACRED_RELIC_CHUNKS = 900, BATTLEFIELD_RUIN_CHUNKS = 3, BLOOD_POOL_CHUNKS = 120;
+	public static final int SACRED_RELIC_CHUNKS = 900, BATTLEFIELD_RUIN_CHUNKS = 2, BLOOD_POOL_CHUNKS = 120; // the ruins one in two since the craters (2026-10-27)
 	/**
 	 * The Immortal Realm's Jade Capital and Celestial Court (phase 2, ImmortalCapital): asked once in every chunk of the realm, each chunk of
 	 * the main island laying its share. Not in {@link #ORDER}: ModFeatures#register appends it.

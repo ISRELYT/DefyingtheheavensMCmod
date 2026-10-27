@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:springs/ghost",
+  "criteria": {
+    "ghost_soup": {
+      "conditions": {
+        "milestone": "ghost/soup"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.springs.meng_po.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:suspicious_stew"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.springs.meng_po.title"
+    }
+  },
+  "requirements": [
+    [
+      "ghost_soup"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

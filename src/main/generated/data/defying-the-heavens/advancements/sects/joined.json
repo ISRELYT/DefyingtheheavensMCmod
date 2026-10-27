@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:sects/root",
+  "criteria": {
+    "sect_joined": {
+      "conditions": {
+        "milestone": "sect/joined"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.sects.joined.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:sect_pass"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.sects.joined.title"
+    }
+  },
+  "requirements": [
+    [
+      "sect_joined"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

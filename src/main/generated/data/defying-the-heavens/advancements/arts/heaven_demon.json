@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:arts/first_spell",
+  "criteria": {
+    "spell_heaven_demon": {
+      "conditions": {
+        "milestone": "spell/heaven_demon"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.arts.heaven_demon.description"
+    },
+    "frame": "goal",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:dragon_breath"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.arts.heaven_demon.title"
+    }
+  },
+  "requirements": [
+    [
+      "spell_heaven_demon"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

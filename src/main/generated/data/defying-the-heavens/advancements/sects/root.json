@@ -1,0 +1,32 @@
+{
+  "criteria": {
+    "talk_first": {
+      "conditions": {
+        "milestone": "talk/first"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "background": "defying-the-heavens:textures/block/formation_core_lacquer.png",
+    "description": {
+      "translate": "advancements.defying-the-heavens.sects.root.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:writable_book"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.sects.root.title"
+    }
+  },
+  "requirements": [
+    [
+      "talk_first"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

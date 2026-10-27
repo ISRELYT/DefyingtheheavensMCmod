@@ -136,7 +136,10 @@ public final class Lifespan {
 		return c.placeFactor() / PlayerCultivation.qiNeed(realm);
 	}
 
-	/** The ghost path's ghostly qi at {@code density} against the Netherworld's, its own place ({@link #saving}): more only on the Peaks. */
+	/**
+	 * The ghost path's ghostly qi at {@code density} against the Netherworld's, its own place ({@link #saving}): more only on the Peaks, and
+	 * ten times on the Great Void's battlefields (GhostQi#ANCIENT_BATTLEFIELD).
+	 */
 	public static double ghostPlaceSaving(double density) {
 		return density / GhostQi.NETHERWORLD;
 	}

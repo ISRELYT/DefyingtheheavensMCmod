@@ -1,0 +1,53 @@
+{
+  "criteria": {
+    "ghost_died": {
+      "conditions": {
+        "milestone": "ghost/died"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    },
+    "ghost_path": {
+      "conditions": {
+        "milestone": "ghost/path"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    },
+    "netherworld": {
+      "conditions": {
+        "to": "defying-the-heavens:netherworld"
+      },
+      "trigger": "minecraft:changed_dimension"
+    },
+    "soul_river": {
+      "conditions": {
+        "to": "defying-the-heavens:soul_river"
+      },
+      "trigger": "minecraft:changed_dimension"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "background": "defying-the-heavens:textures/block/yin_jade_block.png",
+    "description": {
+      "translate": "advancements.defying-the-heavens.springs.root.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:other_shore_flower"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.springs.root.title"
+    }
+  },
+  "requirements": [
+    [
+      "netherworld",
+      "soul_river",
+      "ghost_died",
+      "ghost_path"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

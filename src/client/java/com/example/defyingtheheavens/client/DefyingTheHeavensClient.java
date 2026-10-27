@@ -226,6 +226,9 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			ClientSpellTrails.clear();
 			ClientSpellSounds.clear();
 			BlockMasses.clear();
+			GatePortalRenderer.clear();
+			ClientPlates.clear();
+			CodexState.clear(); // the next world's entries are its own (read marks kept on disk)
 		}));
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -251,6 +254,10 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 					client.setScreen(new CultivationScreen());
 				}
 			}
+			while (ModKeybinds.CODEX.consumeClick()) {
+				if (client.player != null && client.screen == null) client.setScreen(new CodexScreen(null));
+			}
+			CodexState.tick(client); // entries unlocked by the advancements as they come, told by a toast
 			while (ModKeybinds.ABILITY_WHEEL.consumeClick()) {
 				if (client.player != null && client.screen == null) {
 					// Nothing to switch before the first ability awakens: a word above the hotbar instead of an empty wheel.

@@ -44,10 +44,12 @@ import java.util.UUID;
  *   on neighbouring mats whisper; elders talk quietly at their posts; rogues who meet on the road pass a few words.
  *   Disciples practise sword forms alone, or spar in pairs on the plaza, and others stop to watch. When a member falls, those
  *   near cry out, and for half a day after they go to stand where it happened.</li>
- *   <li><b>Speech</b> (NpcSpeech; the lines are in NpcLines): a remark to a player passing close (by name if they like you,
- *   coldly if not, in awe of a far stronger one, with a bow; a gate guard welcomes or halts you; anyone eyes the treasure in
- *   your hand), on the rain and thunder, at dawn and dusk, shouts when the sect is attacked, cheers for a breakthrough, and
- *   now and then a sleeper's mumble.</li>
+ *   <li><b>Speech</b> (NpcSpeech; the lines are in NpcLines): a remark to a player passing close (calling them as NpcAddress
+ *   has it: by their title, else by how far above or below it they stand; warmly if they are liked, coldly if not; with a bow
+ *   to a senior, a deep one two realms beneath them, kneeling from four; a gate guard welcomes or halts you; one who needn't
+ *   bow low speaks of the treasure in your hand, your wounds, your flight, your beast's head), on the rain and thunder, a
+ *   tribulation nearby, at dawn and dusk, shouts when the sect is attacked, cheers for a breakthrough, and now and then a
+ *   sleeper's mumble.</li>
  * </ul>
  * What each is doing is its {@link Activity}, carried out by CultivatorGoals.LifeGoal; anything more pressing (a fight, a
  * reason to run, a player's talk) interrupts it, and it picks it up again after. None of it is saved: it is worked out again
@@ -64,6 +66,8 @@ public final class NpcLife {
 	public static final double SNEAK_REMARK_RANGE = 2.5;
 	/** A cultivator remarks on the same player at most this often (ticks). */
 	public static final long REMARK_EVERY = 3600;
+	/** How far off a player's tribulation is cried out at by those who see it. */
+	public static final double TRIBULATION_SEEN = 40;
 	/** A junior bows to the same senior at most this often. */
 	public static final long BOW_EVERY = 6000;
 	/** How long the fallen are mourned where they fell. */
@@ -222,6 +226,7 @@ public final class NpcLife {
 				}
 			}
 			weather(level, npcs);
+			tribulations(level, npcs, now);
 			for (Map.Entry<UUID, List<CultivatorNpc>> entry : bySect.entrySet()) {
 				Sect sect = SectManager.get(server, entry.getKey());
 				if (sect != null && !sect.extinct) live(level, sect, entry.getValue(), phase, now);
@@ -279,8 +284,13 @@ public final class NpcLife {
 	 * or trade, begging or kneeling, a spar with a player, another's soul inside it; and on its sect's grounds, if it has one.
 	 */
 	public static boolean free(CultivatorNpc npc) {
+		return free(npc, false);
+	}
+
+	/** As {@link #free(CultivatorNpc)}; but if {@code kneeling}, kneeling to one passing by needn't stop it (it may still speak to them). */
+	private static boolean free(CultivatorNpc npc, boolean kneeling) {
 		if (!npc.isAlive() || npc.isRemoved() || npc.getTarget() != null || npc.isInCombat() || npc.shouldFlee() || npc.talkPartner() != null
-				|| npc.isBegging() || npc.isKneeling() || npc.getTradingPlayer() != null || SparSystem.isSparring(npc)
+				|| npc.isBegging() || npc.isKneeling() && !kneeling || npc.getTradingPlayer() != null || SparSystem.isSparring(npc)
 				|| SoulProjection.isPossessed(npc) || npc.isQiFlying() || npc.isConcealed()) return false;
 		if (npc.getLifecycle() == CultivatorNpc.Lifecycle.ROGUE) return true;
 		if (npc.getLifecycle() != CultivatorNpc.Lifecycle.SECT) return false;
@@ -1253,25 +1263,31 @@ public final class NpcLife {
 			if (level.random.nextInt(90) == 0 && NpcSpeech.mayRemark(npc) && NpcSpeech.heard(npc)) NpcSpeech.say(npc, NpcLines.line("sleep", level.random));
 			return;
 		}
-		if (npc.isMeditating() || !free(npc) || !NpcSpeech.mayRemark(npc)) return;
+		// One kneeling to a player passing (TalkSystem#kneelsBefore) still speaks to them, and to no one else.
+		boolean kneeling = npc.isKneeling();
+		if (npc.isMeditating() || !free(npc, kneeling) || !NpcSpeech.mayRemark(npc)) return;
 		Activity a = npc.activity();
 		if (a != null && (a.kind == Kind.CHAT || a.kind == Kind.SPAR || a.kind == Kind.LECTURE || a.kind == Kind.LISTEN || a.kind == Kind.MOURN || a.kind == Kind.RITUAL)) return;
 		// Patrolling in the rain gets grumbled about.
-		if (level.isRaining() && npc.getTitle() == NpcTitle.OUTER_DISCIPLE && !npc.isGateGuard() && a == null && level.random.nextInt(120) == 0
+		if (!kneeling && level.isRaining() && npc.getTitle() == NpcTitle.OUTER_DISCIPLE && !npc.isGateGuard() && a == null && level.random.nextInt(120) == 0
 				&& !roofed(level, npc.blockPosition()) && NpcSpeech.heard(npc)) {
 			NpcSpeech.say(npc, NpcLines.line("rain.patrol", npc));
 			return;
 		}
 		ServerPlayer player = null;
-		double best = REMARK_RANGE * REMARK_RANGE;
-		for (ServerPlayer p : level.players()) {
-			// Not one it can't sense (a soul, the dead, a Ghost King's form: CultivatorNpc#senses).
-			if (p.isSpectator() || !p.isAlive() || p.isInvisible() || !npc.senses(p)) continue;
-			double d = p.distanceToSqr(npc);
-			double range = p.isShiftKeyDown() ? SNEAK_REMARK_RANGE : REMARK_RANGE;
-			if (d <= range * range && d <= best) {
-				best = d;
-				player = p;
+		if (kneeling) {
+			if (npc.kneelingBefore() instanceof ServerPlayer p && p.isAlive() && p.distanceToSqr(npc) <= REMARK_RANGE * REMARK_RANGE) player = p;
+		} else {
+			double best = REMARK_RANGE * REMARK_RANGE;
+			for (ServerPlayer p : level.players()) {
+				// Not one it can't sense (a soul, the dead, a Ghost King's form: CultivatorNpc#senses).
+				if (p.isSpectator() || !p.isAlive() || p.isInvisible() || !npc.senses(p)) continue;
+				double d = p.distanceToSqr(npc);
+				double range = p.isShiftKeyDown() ? SNEAK_REMARK_RANGE : REMARK_RANGE;
+				if (d <= range * range && d <= best) {
+					best = d;
+					player = p;
+				}
 			}
 		}
 		if (player == null || npc.isHostileTo(player) || now - npc.remarkedAt(player.getUUID()) < REMARK_EVERY || !npc.hasLineOfSight(player)) return;
@@ -1280,7 +1296,8 @@ public final class NpcLife {
 		boolean outsider = sect != null && sect.inTerritory(player.blockPosition()) && !npc.isAlly(player);
 		if (outsider) {
 			SectDay day = SECTS.computeIfAbsent(sect.id, id -> new SectDay());
-			day.visitor = player.getGameProfile().getName();
+			// Talked of after by their title, if they have taken one (chat.visitor).
+			day.visitor = NpcAddress.name(player);
 			day.visitorAt = now;
 		}
 		Component line = remarkOn(npc, player, outsider);
@@ -1289,32 +1306,95 @@ public final class NpcLife {
 		NpcSpeech.say(npc, line);
 	}
 
-	/** What {@code npc} says to {@code player} passing by, or null for nothing. Package-private for the game tests. */
+	/**
+	 * What {@code npc} says to {@code player} passing by, or null for nothing. It calls them as NpcAddress has it (by their title, from
+	 * Void Shattering on; else by the rung they stand on before it, from a junior's to an Ancestor's), and the higher above it they stand
+	 * the lower it bows: one realm, a bow; two or three, a deep one; four or more, it kneels (TalkSystem#kneelsBefore). Only one it
+	 * needn't bow low to ({@link #mayRemarkOn}) hears what it makes of them: the treasure in their hand, their wounds, their flight.
+	 * Package-private for the game tests.
+	 */
 	static Component remarkOn(CultivatorNpc npc, ServerPlayer player, boolean outsider) {
 		RandomSource random = npc.getRandom();
-		String name = player.getGameProfile().getName();
+		NpcAddress.Rung rung = NpcAddress.rung(player, npc);
+		Component address = NpcAddress.address(player, npc);
+		String name = NpcAddress.name(player);
 		int regard = npc.regard(player);
-		if (npc.isGateGuard()) return NpcLines.line(regard >= Regard.COURTEOUS ? "gate.welcome" : "gate.halt", npc, name);
+		if (npc.isGateGuard()) {
+			if (rung.above()) return NpcLines.line(regard >= Regard.COURTEOUS ? "gate.welcome_senior" : "gate.halt_senior", npc, address, name);
+			return NpcLines.line(regard >= Regard.COURTEOUS ? "gate.welcome" : "gate.halt", npc, name);
+		}
 		// The dead marvel at the living's warmth (and warn them off), now and then.
 		if (npc.isGhost() && !GhostSystem.isGhost(player) && random.nextInt(3) == 0) return NpcLines.line("pass.living", npc);
 		// Those waiting on the Shore of Nirvana speak of the Gate, as often as not.
 		if (NirvanaCamp.isCamper(npc) && random.nextBoolean()) return NpcLines.line("shore.wait", npc);
+		boolean bold = mayRemarkOn(rung, npc);
 		ItemStack held = player.getMainHandItem();
-		if (held.getItem() instanceof SpiritStoneItem stone && stone.grade().ordinal() >= SpiritStoneItem.Grade.SUPREME.ordinal()) {
+		if (bold && held.getItem() instanceof SpiritStoneItem stone && stone.grade().ordinal() >= SpiritStoneItem.Grade.SUPREME.ordinal()) {
 			return NpcLines.line("pass.stone", npc, held.getHoverName());
 		}
-		if (held.getItem() instanceof CultivationFruitItem) return NpcLines.line("pass.fruit", npc, held.getHoverName());
-		if (regard <= -30) return NpcLines.line("pass.disliked", npc);
-		if (regard >= Regard.WARM) return NpcLines.line("pass.liked", npc, name);
-		TalkSystem.Standing standing = TalkSystem.standing(player, npc);
-		if (standing == TalkSystem.Standing.FAR_BELOW) {
-			ModPackets.sendGesture(npc, Gesture.BOW);
-			return NpcLines.line("pass.awe", npc);
+		if (bold && held.getItem() instanceof CultivationFruitItem) return NpcLines.line("pass.fruit", npc, held.getHoverName());
+		if (regard <= -30) return bold ? NpcLines.line("pass.disliked", npc, name) : NpcLines.line("pass.disliked_senior", npc, address, name);
+		if (regard >= Regard.WARM) return rung.above() ? NpcLines.line("pass.liked_senior", npc, address, name) : NpcLines.line("pass.liked", npc, name);
+		// Something about them it would speak of, two times in three.
+		String seen = bold ? seen(npc, player, outsider) : null;
+		if (seen != null && NpcLines.has(seen, npc) && random.nextInt(3) != 0) return NpcLines.line(seen, npc, address, name);
+		switch (rung) {
+			case REVERED, ANCESTOR -> {
+				return NpcLines.line("pass." + rung.id(), npc, address, name);
+			}
+			case SENIOR, ESTEEMED -> {
+				if (NpcAddress.ofItsSect(player, npc) && random.nextBoolean()) return NpcLines.line("pass.fellow", npc, address, name);
+				ModPackets.sendGesture(npc, Gesture.BOW);
+				return NpcLines.line("pass." + rung.id(), npc, address, name);
+			}
+			case FAR_ABOVE -> {
+				return NpcLines.line(random.nextBoolean() ? "pass.far_above" : "pass.junior", npc, address, name);
+			}
+			case MORTAL -> {
+				return NpcLines.line("pass.mortal", npc, address, name);
+			}
+			default -> { }
 		}
-		if (standing == TalkSystem.Standing.FAR_ABOVE) return NpcLines.line("pass.junior", npc);
-		if (standing == TalkSystem.Standing.MORTAL) return NpcLines.line("pass.mortal", npc);
+		if (NpcAddress.ofItsSect(player, npc) && random.nextBoolean()) return NpcLines.line("pass.fellow", npc, address, name);
 		if (outsider && random.nextBoolean()) return NpcLines.line("pass.outsider", npc);
-		return random.nextInt(3) == 0 ? NpcLines.line("pass.peer", npc) : null;
+		if (random.nextInt(3) != 0) return null;
+		return NpcLines.line(rung == NpcAddress.Rung.ABOVE ? "pass.above" : "pass.peer", npc, address, name);
+	}
+
+	/**
+	 * Whether {@code npc} would speak its mind of what it sees on one standing on {@code rung} before it: not to one it must bow low to, or
+	 * kneel to (a mortal's words are humble anyway, but it kneels too).
+	 */
+	private static boolean mayRemarkOn(NpcAddress.Rung rung, CultivatorNpc npc) {
+		return rung.ordinal() <= NpcAddress.Rung.SENIOR.ordinal() || rung == NpcAddress.Rung.MORTAL || npc.isMortal() && rung == NpcAddress.Rung.ESTEEMED;
+	}
+
+	/** Something about {@code player} that {@code npc} would speak of rather than only greet them, as the situation of its line; or null. */
+	private static String seen(CultivatorNpc npc, ServerPlayer player, boolean outsider) {
+		PlayerCultivation c = CultivationManager.get(player);
+		if (player.getHealth() < player.getMaxHealth() * 0.35f) return "pass.hurt";
+		if (FiveDecays.sign(c) > 0) return "pass.decays";
+		if (LawDomains.lit(c) != null) return "pass.domain";
+		if (player.getAbilities().flying && !player.isCreative() || SwordFlight.isRiding(player) || player.isFallFlying()) return "pass.flying";
+		if (MeditationManager.isMeditating(player.getUUID())) return "pass.meditating";
+		if (DemonPath.isDemon(c)) return npc.isDemon() ? "pass.kin" : "pass.demon";
+		if (outsider && npc.level().isNight()) return "pass.night";
+		return null;
+	}
+
+	/** Now and then, one of those near a player facing their tribulation cries out at it (once in {@link #REMARK_EVERY}, as remarks). */
+	private static void tribulations(ServerLevel level, List<CultivatorNpc> npcs, long now) {
+		for (ServerPlayer p : level.players()) {
+			if (!TribulationManager.isActive(p.getUUID())) continue;
+			for (CultivatorNpc npc : npcs) {
+				if (npc.distanceToSqr(p) > TRIBULATION_SEEN * TRIBULATION_SEEN || npc.hasPose(Pose.SLEEPING) || npc.isMeditating() || !free(npc)
+						|| now - npc.remarkedAt(p.getUUID()) < REMARK_EVERY || level.random.nextInt(6) != 0) continue;
+				if (!NpcSpeech.mayRemark(npc) || !NpcSpeech.heard(npc)) continue;
+				npc.remark(p.getUUID(), now);
+				npc.getLookControl().setLookAt(p, 30, 30);
+				NpcSpeech.say(npc, NpcLines.line("tribulation.watch", npc));
+			}
+		}
 	}
 
 	/** When the rain or the thunder starts, some of those out in it say so. */

@@ -21,8 +21,8 @@ import java.util.List;
 /**
  * The Netherworld's inhabitants and content (phase 5): ghost cultivators and the Gate's keepers, Hungry Ghosts, the Peach Wood
  * Sword, the dead's talk and teaching, Meng Po's soup, the herbs, pills and Yin Jade, stele rumours, and NPC ascension from
- * the Nether. The test server has no Netherworld, so what needs its land (spawning there, the Terrace, the keepers' return) is
- * checked in game.
+ * the Nether. What needs the Netherworld's land (spawning there, the Terrace, the keepers' return) is checked in game (written when
+ * the test server had no Netherworld).
  */
 public class NetherworldInhabitantsGameTests implements FabricGameTest {
 	private static ServerPlayer cultivator(GameTestHelper helper, Realm realm) {

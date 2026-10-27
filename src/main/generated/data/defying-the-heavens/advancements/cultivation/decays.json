@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:cultivation/true_immortal",
+  "criteria": {
+    "decays_weathered": {
+      "conditions": {
+        "milestone": "decays/weathered"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.cultivation.decays.description"
+    },
+    "frame": "challenge",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:wither_rose"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.cultivation.decays.title"
+    }
+  },
+  "requirements": [
+    [
+      "decays_weathered"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

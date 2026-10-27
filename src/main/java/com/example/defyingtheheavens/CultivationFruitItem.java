@@ -67,6 +67,7 @@ public class CultivationFruitItem extends Item {
             double effectiveness = 1 - c.getPillResistance();
             // (A Jade Poison Body refines it at once, and pays its years for that: Physiques#refinedAtOnce.)
             double taken = Physiques.refinedAtOnce(player, c, () -> c.takeMedicine(amount));
+            if (age(stack) >= 1000) Milestones.award(player, Milestones.THOUSAND_YEAR_FRUIT);
             CultivationManager.refresh(player);
             player.displayClientMessage(Component.translatable(ModLang.MSG_PILL_CULTIVATION, Math.round(taken),
                     Math.round(effectiveness * 100)), true);

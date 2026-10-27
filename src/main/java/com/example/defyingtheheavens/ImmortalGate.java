@@ -10,6 +10,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.TicketType;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
@@ -34,6 +36,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -79,7 +82,7 @@ public final class ImmortalGate {
 	/** The Southern Heavenly Gate's middle, on the Immortal Realm's Gate ground (its threshold the ground's own level). */
 	public static final int HEAVEN_X = 0, HEAVEN_Z = 0;
 	/** A gate's opening: this many blocks either side of its middle, this tall over its threshold; its pillars this thick. */
-	static final int HALF = 10, HEIGHT = 28, PILLAR = 4;
+	public static final int HALF = 10, HEIGHT = 28, PILLAR = 4; // public: its light drawn by the client (GatePortalRenderer)
 	/** Into the Gate's passage at this height, out at this one; the climb's length (seconds) at Levitation {@link #LIFT_AMPLIFIER}. */
 	public static final int ENTER_Y = 40, EXIT_Y = 340, CLIMB_SECONDS = 30;
 	static final int LIFT_AMPLIFIER = 9;
@@ -110,6 +113,15 @@ public final class ImmortalGate {
 
 	public static boolean isClimbing(UUID id) {
 		return CLIMBS.containsKey(id);
+	}
+
+	/**
+	 * Whether {@code npc} is one of the camp flying for the open Gate, or back from the shut one: no camper while it flies (its home let
+	 * go), it starts no fight (CultivatorGoals.HostilityGoal) and lets none turn it aside ({@link #rushers}). The tour of 2026-10-27
+	 * found the righteous and devilish rushing it fighting the camp's other path as they rose, and most of them flown off out of the land.
+	 */
+	public static boolean isRushing(CultivatorNpc npc) {
+		return RUSHING.contains(npc.getUUID()) || RETURNING.contains(npc.getUUID());
 	}
 
 	// --- When ---
@@ -444,41 +456,80 @@ public final class ImmortalGate {
 			npc.setQiFlying(true);
 			if (!npc.isQiFlying()) continue; // it can't take to the air now: it waits for the next time
 			npc.setSettledAt(null);
+			npc.setTarget(null);
 			RUSHING.add(npc.getUUID());
 		}
 		if (going > 0) DefyingTheHeavens.LOGGER.info("{} of those waiting on the Shore of Nirvana rush the Immortal Gate", going);
 	}
 
-	/** Each tick: the rushing fly on into the Gate's light and are gone; those it shut on fly back to the camp and settle there again. */
+	/** The rushing fly in at the Gate's opening from this far before it, on the camp's side (past its platform's eight and its cloud's rim). */
+	static final int APPROACH = 12;
+	/** While any fly between the camp and the Gate, the land between is kept ticking: a region ticket this wide over its middle, renewed. */
+	private static final TicketType<ChunkPos> RUSH_TICKET = TicketType.create(DefyingTheHeavens.MOD_ID + ":gate_rush", Comparator.comparingLong(ChunkPos::toLong), 100);
+	private static final int RUSH_TICKET_RADIUS = 9;
+	/** The rushing past the point before the opening (flying straight in now), and the returning come out over the camp (coming down now). */
+	private static final Set<UUID> IN_LINE = new HashSet<>(), OVER_CAMP = new HashSet<>();
+
+	/**
+	 * Each tick: the rushing fly on into the Gate's light and are gone; those it shut on fly back to the camp and settle there again. Each
+	 * goes by the way up and level across, never straight from the camp at the opening: that line ran them into the underside of the Gate's
+	 * cloud and platform, and out past the land the server kept ticking about one waiting at the camp, where they hung in the air (the user,
+	 * 2026-10-27: "I don't think the EN cultivators at the camp enter the gate"). Up first to the opening's height, then across to
+	 * {@link #APPROACH} before it, then in; back the same way reversed.
+	 */
 	private static void rushers(ServerLevel greatVoid, Data data, boolean open) {
-		if (RUSHING.isEmpty() && RETURNING.isEmpty()) return;
+		if (RUSHING.isEmpty() && RETURNING.isEmpty()) {
+			IN_LINE.clear();
+			OVER_CAMP.clear();
+			return;
+		}
+		BlockPos camp = NirvanaCamp.middle(greatVoid);
 		Vec3 mouth = new Vec3(SKY_X + 0.5, data.skyY + HEIGHT / 2.0, SKY_Z + 0.5);
+		int side = camp.getZ() >= SKY_Z ? 1 : -1;
+		Vec3 before = new Vec3(mouth.x, mouth.y, mouth.z + side * APPROACH);
+		if (greatVoid.getGameTime() % 20 == 0) {
+			ChunkPos middle = new ChunkPos(BlockPos.containing((mouth.x + camp.getX()) / 2, mouth.y, (mouth.z + camp.getZ()) / 2));
+			greatVoid.getChunkSource().addRegionTicket(RUSH_TICKET, middle, RUSH_TICKET_RADIUS, middle);
+		}
 		for (UUID id : new ArrayList<>(RUSHING)) {
 			if (!(greatVoid.getEntity(id) instanceof CultivatorNpc npc) || !npc.isAlive()) {
 				RUSHING.remove(id);
+				IN_LINE.remove(id);
 				continue;
 			}
 			if (!npc.isQiFlying()) npc.setQiFlying(true);
-			npc.flyToward(mouth, RUSH_SPEED);
+			if (npc.getTarget() != null) npc.setTarget(null); // nothing turns it aside
+			if (npc.position().distanceToSqr(before) < 3 * 3) IN_LINE.add(id);
+			Vec3 to = IN_LINE.contains(id) ? mouth : npc.getY() < mouth.y - 3 ? new Vec3(npc.getX(), mouth.y, npc.getZ()) : before;
+			npc.flyToward(to, RUSH_SPEED);
 			if (open && npc.position().distanceToSqr(mouth) < 6 * 6) {
 				greatVoid.sendParticles(ParticleTypes.END_ROD, npc.getX(), npc.getY() + 1, npc.getZ(), 30, 0.5, 1.0, 0.5, 0.15);
 				greatVoid.playSound(null, npc.getX(), npc.getY(), npc.getZ(), SoundEvents.PORTAL_TRAVEL, SoundSource.NEUTRAL, 0.5f, 1.6f);
 				RUSHING.remove(id);
+				IN_LINE.remove(id);
 				npc.discard(); // through (or crushed on the way: none comes back to tell)
 			}
 		}
-		BlockPos camp = NirvanaCamp.middle(greatVoid);
 		Vec3 home = Vec3.atBottomCenterOf(camp).add(0, 2, 0);
+		Vec3 over = new Vec3(home.x, Math.max(home.y, mouth.y), home.z);
 		for (UUID id : new ArrayList<>(RETURNING)) {
 			if (!(greatVoid.getEntity(id) instanceof CultivatorNpc npc) || !npc.isAlive()) {
 				RETURNING.remove(id);
+				OVER_CAMP.remove(id);
 				continue;
 			}
-			npc.flyToward(home, RUSH_SPEED);
+			if (!npc.isQiFlying()) npc.setQiFlying(true);
+			if (npc.getTarget() != null) npc.setTarget(null);
+			if (npc.position().distanceToSqr(over) < 4 * 4) OVER_CAMP.add(id);
+			// Out from the opening to before it, across to over the camp, then down.
+			boolean nearGate = npc.position().distanceToSqr(mouth) < (APPROACH - 2) * (APPROACH - 2);
+			Vec3 to = OVER_CAMP.contains(id) ? home : nearGate ? before : over;
+			npc.flyToward(to, RUSH_SPEED);
 			if (npc.position().distanceToSqr(home) < 4 * 4) {
 				npc.setSettledAt(camp);
 				npc.setQiFlying(false);
 				RETURNING.remove(id);
+				OVER_CAMP.remove(id);
 			}
 		}
 	}
@@ -838,6 +889,8 @@ public final class ImmortalGate {
 		CLIMBS.clear();
 		RUSHING.clear();
 		RETURNING.clear();
+		IN_LINE.clear();
+		OVER_CAMP.clear();
 		TOLD.clear();
 	}
 

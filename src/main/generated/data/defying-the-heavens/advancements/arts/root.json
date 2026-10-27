@@ -1,0 +1,56 @@
+{
+  "criteria": {
+    "has": {
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "defying-the-heavens:low_spirit_stone",
+              "defying-the-heavens:mid_spirit_stone",
+              "defying-the-heavens:high_spirit_stone",
+              "defying-the-heavens:supreme_spirit_stone",
+              "defying-the-heavens:immortal_spirit_stone"
+            ]
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "method_heaven": {
+      "conditions": {
+        "milestone": "method/heaven"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    },
+    "spell_any": {
+      "conditions": {
+        "milestone": "spell/any"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "background": "defying-the-heavens:textures/block/blue_spirit_planks.png",
+    "description": {
+      "translate": "advancements.defying-the-heavens.arts.root.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:low_spirit_stone"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.arts.root.title"
+    }
+  },
+  "requirements": [
+    [
+      "has",
+      "method_heaven",
+      "spell_any"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

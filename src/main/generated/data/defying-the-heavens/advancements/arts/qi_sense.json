@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:arts/root",
+  "criteria": {
+    "ability_qi_sense": {
+      "conditions": {
+        "milestone": "ability/qi_sense"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.arts.qi_sense.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:spyglass"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.arts.qi_sense.title"
+    }
+  },
+  "requirements": [
+    [
+      "ability_qi_sense"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

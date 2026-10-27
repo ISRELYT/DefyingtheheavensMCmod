@@ -244,6 +244,7 @@ public final class CoreDetonation {
 		Stage stage = Stage.byIndex(core % stages);
 		double radius = radius(realm, stage);
 		Vec3 heart = p.position().add(0, 1.0, 0);
+		Milestones.award(p, Milestones.CORE_DETONATION); // before the death it brings
 
 		SpellFx.send(level, SpellFx.Kind.CORE_DETONATION, heart, Vec3.ZERO, (float) radius, 0, radius * 8);
 		level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, heart.x, heart.y, heart.z, 3, radius * 0.2, radius * 0.1, radius * 0.2, 0);

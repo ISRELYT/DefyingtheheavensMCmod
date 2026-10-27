@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:springs/root",
+  "criteria": {
+    "soul_river": {
+      "conditions": {
+        "to": "defying-the-heavens:soul_river"
+      },
+      "trigger": "minecraft:changed_dimension"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.springs.soul_river.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:netherworld_lotus"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.springs.soul_river.title"
+    }
+  },
+  "requirements": [
+    [
+      "soul_river"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

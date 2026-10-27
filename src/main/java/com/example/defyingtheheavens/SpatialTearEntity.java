@@ -68,6 +68,12 @@ public class SpatialTearEntity extends Entity {
 		if (until > life()) entityData.set(LIFE_TICKS, until);
 	}
 
+	/** Shut early: it closes over the next {@link #CLOSE_TICKS} and is gone (a current come up against a sect's grounds: VoidCurrents). */
+	public void closeSoon() {
+		int until = tickCount + CLOSE_TICKS;
+		if (until < life()) entityData.set(LIFE_TICKS, until);
+	}
+
 	/** How open it is, 0 (shut) to 1: opening, standing, closing. */
 	public float openness(float partialTick) {
 		float age = tickCount + partialTick;

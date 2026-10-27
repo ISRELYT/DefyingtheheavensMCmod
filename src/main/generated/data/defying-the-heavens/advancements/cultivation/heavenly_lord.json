@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:cultivation/profound_sovereign",
+  "criteria": {
+    "realm_heavenly_lord": {
+      "conditions": {
+        "milestone": "realm/heavenly_lord"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.cultivation.heavenly_lord.description"
+    },
+    "frame": "challenge",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:nether_star"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.cultivation.heavenly_lord.title"
+    }
+  },
+  "requirements": [
+    [
+      "realm_heavenly_lord"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -1,0 +1,39 @@
+{
+  "parent": "defying-the-heavens:worlds/jade_firmament",
+  "criteria": {
+    "astral_surfaces": {
+      "conditions": {
+        "to": "defying-the-heavens:astral_surfaces"
+      },
+      "trigger": "minecraft:changed_dimension"
+    },
+    "astral_void": {
+      "conditions": {
+        "to": "defying-the-heavens:astral_void"
+      },
+      "trigger": "minecraft:changed_dimension"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.worlds.astral.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:amethyst_cluster"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.worlds.astral.title"
+    }
+  },
+  "requirements": [
+    [
+      "astral_void",
+      "astral_surfaces"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

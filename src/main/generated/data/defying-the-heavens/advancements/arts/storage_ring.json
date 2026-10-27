@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:arts/root",
+  "criteria": {
+    "treasure_storage_ring": {
+      "conditions": {
+        "milestone": "treasure/storage_ring"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.arts.storage_ring.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:storage_ring"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.arts.storage_ring.title"
+    }
+  },
+  "requirements": [
+    [
+      "treasure_storage_ring"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

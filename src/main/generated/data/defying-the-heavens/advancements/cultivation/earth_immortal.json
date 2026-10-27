@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:cultivation/true_immortal",
+  "criteria": {
+    "realm_earth_immortal": {
+      "conditions": {
+        "milestone": "realm/earth_immortal"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.cultivation.earth_immortal.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:ochre_huangjing"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.cultivation.earth_immortal.title"
+    }
+  },
+  "requirements": [
+    [
+      "realm_earth_immortal"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

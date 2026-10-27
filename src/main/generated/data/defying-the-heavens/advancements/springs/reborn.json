@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:springs/ghost",
+  "criteria": {
+    "ghost_reborn": {
+      "conditions": {
+        "milestone": "ghost/reborn"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.springs.reborn.description"
+    },
+    "frame": "goal",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:rebirth_pill"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.springs.reborn.title"
+    }
+  },
+  "requirements": [
+    [
+      "ghost_reborn"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

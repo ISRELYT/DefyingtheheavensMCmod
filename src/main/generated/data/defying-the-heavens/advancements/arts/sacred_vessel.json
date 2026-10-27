@@ -1,0 +1,42 @@
+{
+  "parent": "defying-the-heavens:arts/immortal_stone",
+  "criteria": {
+    "has": {
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "defying-the-heavens:jianmu_bough_vase",
+              "defying-the-heavens:heaven_furnace_censer",
+              "defying-the-heavens:nine_provinces_ding",
+              "defying-the-heavens:immortal_forging_bell",
+              "defying-the-heavens:sealed_ocean_gourd"
+            ]
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.arts.sacred_vessel.description"
+    },
+    "frame": "goal",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:jianmu_bough_vase"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.arts.sacred_vessel.title"
+    }
+  },
+  "requirements": [
+    [
+      "has"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

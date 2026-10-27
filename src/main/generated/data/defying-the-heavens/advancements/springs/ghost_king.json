@@ -1,0 +1,33 @@
+{
+  "parent": "defying-the-heavens:springs/ghost_path",
+  "criteria": {
+    "ghost_king": {
+      "conditions": {
+        "milestone": "ghost/king"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.springs.ghost_king.description"
+    },
+    "frame": "challenge",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:golden_helmet",
+      "nbt": "{Damage:0}"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.springs.ghost_king.title"
+    }
+  },
+  "requirements": [
+    [
+      "ghost_king"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

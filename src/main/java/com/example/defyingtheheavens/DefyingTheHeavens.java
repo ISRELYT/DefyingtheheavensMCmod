@@ -29,6 +29,7 @@ public class DefyingTheHeavens implements ModInitializer {
 		ModStructures.register();
 		NoGhostPalaceFilter.register();
 		ClothingRecipes.register();
+		Milestones.register(); // the advancements' trigger
 		ModPackets.registerServerReceivers();
 		CultivationEvents.register();
 		AstralRealm.register();

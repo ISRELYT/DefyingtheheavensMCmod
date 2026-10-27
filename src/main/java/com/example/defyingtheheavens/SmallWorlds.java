@@ -26,6 +26,7 @@ import net.minecraft.world.level.levelgen.synth.SimplexNoise;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -427,7 +428,9 @@ public final class SmallWorlds {
 				if (w != null && w.laid > 0 && w.target() > w.laid && !JOBS.containsKey(w.owner)) JOBS.put(w.owner, new Job(w, w.laid, w.target(), true));
 			}
 		}
-		for (ServerPlayer p : sw.players()) {
+		// A copy: one sent out leaves the level's own list as they go (the bug sweep of 2026-10-27: going through that list itself, the
+		// server's tick broke off with a ConcurrentModificationException the moment anyone was sent out).
+		for (ServerPlayer p : new ArrayList<>(sw.players())) {
 			// (Not one watching their body held by another's soul (Possession), nor a soul out of its body (SoulProjection): their places
 			// are their bodies'.)
 			if (!p.isAlive() || CARRYING.contains(p.getUUID()) || Possession.isHeld(p.getUUID()) || SoulProjection.isAwayFromBody(p.getUUID())) continue;

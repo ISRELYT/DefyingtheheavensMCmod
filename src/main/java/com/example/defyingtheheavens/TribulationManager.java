@@ -690,6 +690,7 @@ public final class TribulationManager {
 		level.sendParticles(ParticleTypes.END_ROD, p.getX(), p.getY() + 1.0, p.getZ(), 80, 0.6, 1.0, 0.6, 0.15);
 		level.sendParticles(ParticleTypes.TOTEM_OF_UNDYING, p.getX(), p.getY() + 1.0, p.getZ(), 40, 0.5, 0.8, 0.5, 0.4);
 		p.sendSystemMessage(Component.translatable(ModLang.MSG_BREAKTHROUGH, t.targetName()));
+		Milestones.onTribulation(p, t.targetRealm);
 	}
 
 	/** The Netherworld's tribulation survived: the ghost path on to the stage it was struck for. */
@@ -715,6 +716,7 @@ public final class TribulationManager {
 		level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, p.getX(), p.getY() + 1.0, p.getZ(), 80, 0.6, 1.0, 0.6, 0.1);
 		level.sendParticles(ParticleTypes.GLOW, p.getX(), p.getY() + 1.0, p.getZ(), 40, 0.5, 0.8, 0.5, 0.2);
 		p.sendSystemMessage(Component.translatable(ModLang.MSG_GHOST_BREAKTHROUGH, t.targetName()).withStyle(net.minecraft.ChatFormatting.AQUA));
+		Milestones.onTribulation(p, t.targetRealm);
 	}
 
 	/** The Demon Path's tribulation survived: on to the stage it was struck for. */
@@ -744,6 +746,7 @@ public final class TribulationManager {
 		level.sendParticles(ParticleTypes.FLAME, p.getX(), p.getY() + 1.0, p.getZ(), 80, 0.6, 1.0, 0.6, 0.12);
 		level.sendParticles(ParticleTypes.CRIMSON_SPORE, p.getX(), p.getY() + 1.0, p.getZ(), 60, 0.6, 1.0, 0.6, 0.2);
 		p.sendSystemMessage(Component.translatable(ModLang.MSG_DEMON_BREAKTHROUGH, t.targetName()).withStyle(net.minecraft.ChatFormatting.RED));
+		Milestones.onTribulation(p, t.targetRealm);
 	}
 
 	/** Called from the AFTER_DEATH event (totems of undying prevent that event, so they save the player). */

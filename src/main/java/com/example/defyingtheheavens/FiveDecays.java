@@ -333,6 +333,7 @@ public final class FiveDecays {
 		long now = p.level().getGameTime();
 		end(p, s, now);
 		p.displayClientMessage(Component.empty(), true); // the strikes' count off the hotbar
+		Milestones.award(p, Milestones.DECAYS);
 		s.setChoices(s.choices() + 1);
 		CultivationManager.refresh(p);
 		p.setHealth(p.getMaxHealth());

@@ -136,6 +136,12 @@ public class CultivationScreen extends Screen {
 
 	private int left;
 	private int top;
+	/**
+	 * The Cultivation tab's field for the title one takes (PlayerTitles, from Void Shattering on: the user's ask, 2026-10-27), over its
+	 * columns, Enter to set it; and the title it was last filled with from the server.
+	 */
+	private net.minecraft.client.gui.components.EditBox titleBox;
+	private String titleShown = "";
 	private Button meditateButton;
 	private Button breakthroughButton;
 	/** The Cultivation tab's switch between the two qi (TwoPaths#switchPath): which path a meditation cultivates. */
@@ -285,6 +291,8 @@ public class CultivationScreen extends Screen {
 			addRenderableWidget(new TabButton(tabX, top + TAB_Y, w, TAB_HEIGHT, tabs[i]));
 			tabX += w + TAB_GAP;
 		}
+		// The Dao Codex's book, just outside the panel's top right corner (CodexScreen comes back here).
+		addRenderableWidget(new CodexScreen.Book(left + WIDTH + 4, top + 2, this));
 
 		meditateButton = addRenderableWidget(Button.builder(Component.empty(),
 						b -> ClientPlayNetworking.send(ModPackets.TOGGLE_MEDITATION, PacketByteBufs.create()))
@@ -324,6 +332,17 @@ public class CultivationScreen extends Screen {
 				})
 				.bounds(left + 12, top + HEIGHT - 32, GRIEF_W, 20).build());
 
+		int labelW = font.width(Component.translatable(ModLang.TITLE_LABEL)) + 8;
+		titleBox = addRenderableWidget(new net.minecraft.client.gui.components.EditBox(font, left + 16 + labelW, top + CONTENT_Y + 1,
+				WIDTH - 32 - labelW, 10, Component.translatable(ModLang.TITLE_LABEL)));
+		titleBox.setBordered(false); // framed in the panel's own gold (renderCultivation)
+		titleBox.setMaxLength(com.example.defyingtheheavens.PlayerTitles.MAX_LENGTH);
+		titleShown = ClientCultivationData.get().epithet();
+		titleBox.setValue(titleShown);
+		titleBox.setTextColor(ClientPlates.TITLE_COLOR);
+		titleBox.setHint(Component.translatable(ModLang.TITLE_HINT).withStyle(net.minecraft.ChatFormatting.DARK_GRAY));
+		titleBox.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable(ModLang.TITLE_TIP)));
+
 		updateButtons();
 		if (tab == Tab.JOURNAL) ClientJournal.request();
 		if (tab == Tab.SECT) ClientSect.request();
@@ -332,6 +351,19 @@ public class CultivationScreen extends Screen {
 	@Override
 	public void tick() {
 		updateButtons();
+		// The title as the server last told it, while one isn't typing in its field.
+		String told = ClientCultivationData.get().epithet();
+		if (titleBox != null && !titleBox.isFocused() && !told.equals(titleShown)) {
+			titleShown = told;
+			titleBox.setValue(told);
+		}
+	}
+
+	/** The title typed into the Cultivation tab's field, sent to be taken (C2S set_title; emptied, cleared). */
+	private void sendTitle(String title) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeUtf(title, com.example.defyingtheheavens.PlayerTitles.MAX_LENGTH * 4);
+		ClientPlayNetworking.send(ModPackets.SET_TITLE, buf);
 	}
 
 	/** Meditate and Breakthrough belong to the Cultivation tab; Arrange Wheel to the Abilities tab, once one is awakened. */
@@ -355,6 +387,11 @@ public class CultivationScreen extends Screen {
 		meditateButton.setMessage(Component.translatable(
 				ClientCultivationData.isMeditating() ? ModLang.BTN_STOP : ModLang.BTN_MEDITATE));
 		PlayerCultivation c = ClientCultivationData.get();
+		// The title's field, from Void Shattering on, on the Cultivation tab (PlayerTitles).
+		if (titleBox != null) {
+			titleBox.visible = progressTab && com.example.defyingtheheavens.PlayerTitles.mayTake(c);
+			if (!titleBox.visible && titleBox.isFocused()) titleBox.setFocused(false);
+		}
 		// The path whose qi is drawn in breaks through: the heaven path's tribulation, the Netherworld's (the ghost path's), or the
 		// heavens' harder one (the Demon Path's).
 		TwoPaths.Path drawn = TwoPaths.drawnIn(c);
@@ -395,8 +432,25 @@ public class CultivationScreen extends Screen {
 
 	@Override
 	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		// Typing a title: Enter takes it; every other key but Escape is the field's (the menu's own key types a letter there).
+		if (titleBox != null && titleBox.visible && titleBox.isFocused()) {
+			if (keyCode == org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER || keyCode == org.lwjgl.glfw.GLFW.GLFW_KEY_KP_ENTER) {
+				sendTitle(titleBox.getValue());
+				titleBox.setFocused(false);
+				setFocused(null);
+				return true;
+			}
+			if (keyCode != org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE) {
+				titleBox.keyPressed(keyCode, scanCode, modifiers);
+				return true;
+			}
+		}
 		if (ModKeybinds.OPEN_MENU.matches(keyCode, scanCode)) {
 			onClose();
+			return true;
+		}
+		if (ModKeybinds.CODEX.matches(keyCode, scanCode) && minecraft != null) {
+			minecraft.setScreen(new CodexScreen(this));
 			return true;
 		}
 		return super.keyPressed(keyCode, scanCode, modifiers);
@@ -463,6 +517,15 @@ public class CultivationScreen extends Screen {
 		if (c.isMortal()) {
 			renderMortal(g, cx, y);
 			return;
+		}
+
+		// From Void Shattering on, the title one has taken over the columns: its label, and its field framed in the panel's gold.
+		if (titleBox != null && titleBox.visible) {
+			g.drawString(font, Component.translatable(ModLang.TITLE_LABEL), x + 2, y + 2, 0xD4AF37, false);
+			int fx = titleBox.getX() - 3, fy = titleBox.getY() - 2, fw = titleBox.getWidth() + 5, fh = titleBox.getHeight() + 3;
+			g.fill(fx - 1, fy - 1, fx + fw + 1, fy + fh + 1, titleBox.isFocused() ? 0xFFE6C35C : BORDER);
+			g.fill(fx, fy, fx + fw, fy + fh, 0xFF1A1410);
+			y += 15;
 		}
 
 		HeavenMethod method = HeavenMethods.practised(c.heaven());
@@ -740,8 +803,8 @@ public class CultivationScreen extends Screen {
 					Component.translatable(ModLang.CULTIVATION_SHORT, num(s.pathCultivation()), num(required)));
 		}
 		y += 14;
-		// What meditating here adds a second on ghostly qi (the Netherworld's, thinner in the Nether, thinnest in the Overworld, none
-		// elsewhere), by the method practised's name; nothing while the heavens' qi is drawn in instead.
+		// What meditating here adds a second on ghostly qi (thickest on the Great Void's battlefields, then the Netherworld's, thinner in
+		// the Nether, thinnest in the Overworld, none elsewhere), by the method practised's name; nothing while the heavens' qi is drawn in instead.
 		GhostMethod active = s.activeMethod();
 		Component pace;
 		int paceColor = 0x9E9E9E;
@@ -1181,7 +1244,8 @@ public class CultivationScreen extends Screen {
 	}
 
 	/**
-	 * The ghostly qi where the player stands (only where there is any: the Overworld, the Nether and the Netherworld), and their yin corruption
+	 * The ghostly qi where the player stands (only where there is any: the Overworld, the Nether, the Netherworld and the Great Void's
+	 * battlefields), and their yin corruption
 	 * while they carry any, with whether it is ebbing or held still.
 	 */
 	private List<Detail> netherworldDetails() {
@@ -1190,6 +1254,7 @@ public class CultivationScreen extends Screen {
 		if (density > 0) {
 			String word = GhostQi.word(density);
 			Component amount = Component.translatable(switch (word) {
+				case "teeming" -> ModLang.GHOST_QI_TEEMING;
 				case "dense" -> density > GhostQi.NETHERWORLD ? ModLang.GHOST_QI_PEAKS : ModLang.GHOST_QI_DENSE;
 				case "thin" -> ModLang.GHOST_QI_THIN;
 				default -> ModLang.GHOST_QI_FAINT;

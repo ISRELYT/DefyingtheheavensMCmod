@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:cultivation/root",
+  "criteria": {
+    "realm_foundation_building": {
+      "conditions": {
+        "milestone": "realm/foundation_building"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.cultivation.foundation_building.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:foundation_pill"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.cultivation.foundation_building.title"
+    }
+  },
+  "requirements": [
+    [
+      "realm_foundation_building"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

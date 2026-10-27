@@ -14,6 +14,7 @@ import net.minecraft.world.level.biome.Biomes;
  * <p>
  * Density, a Soul Sand Valley being 1:
  * <table>
+ *   <tr><td>The Great Void's ancient battlefields</td><td>{@link #ANCIENT_BATTLEFIELD} (x100)</td></tr>
  *   <tr><td>The Netherworld</td><td>{@link #NETHERWORLD} (x10)</td></tr>
  *   <tr><td>The Nine Nether Peaks</td><td>{@link #NETHERWORLD} x {@link #PEAKS_FACTOR} (x12)</td></tr>
  *   <tr><td>A Soul Sand Valley</td><td>{@link #SOUL_SAND_VALLEY} (x1)</td></tr>
@@ -21,11 +22,17 @@ import net.minecraft.world.level.biome.Biomes;
  *   <tr><td>The Overworld</td><td>{@link #OVERWORLD} (x0.25)</td></tr>
  *   <tr><td>Everywhere else</td><td>0</td></tr>
  * </table>
- * The ghostly qi pool fills at density x {@link #FILL_PER_DENSITY} a second: 2 a second in the Netherworld (2.4 on its peaks),
+ * The ghostly qi pool fills at density x {@link #FILL_PER_DENSITY} a second: 20 a second on the battlefields, 2 in the Netherworld (2.4 on its peaks),
  * 0.2 in a Soul Sand Valley, 0.1 in the rest of the Nether, 0.05 in the Overworld, nothing elsewhere. Spirit stones and Spirit Dew
  * don't fill it.
  */
 public final class GhostQi {
+	/**
+	 * The Great Void's ancient battlefields (ModBiomes#ANCIENT_BATTLEFIELD), where the armies of Heaven and the demons fell: ten times the
+	 * Netherworld's (the user's ask, 2026-10-27: "make it so that ghostly qi is 100X in ancient battlefields in the great void. Then
+	 * ghostly cultivators have a place to go for high density not just the netherworld"). The rest of the Great Void has none.
+	 */
+	public static final double ANCIENT_BATTLEFIELD = 100.0;
 	public static final double NETHERWORLD = 10.0;
 	public static final double PEAKS_FACTOR = 1.2;
 	public static final double SOUL_SAND_VALLEY = 1.0;
@@ -56,6 +63,7 @@ public final class GhostQi {
 			return biome != null && biome.is(Biomes.SOUL_SAND_VALLEY) ? SOUL_SAND_VALLEY : NETHER;
 		}
 		if (dimension == Level.OVERWORLD) return OVERWORLD;
+		if (ModDimensions.isGreatVoid(dimension)) return biome != null && biome.is(ModBiomes.ANCIENT_BATTLEFIELD) ? ANCIENT_BATTLEFIELD : 0.0;
 		return 0.0;
 	}
 
@@ -63,7 +71,7 @@ public final class GhostQi {
 	public static double densityAt(ServerLevel level, BlockPos pos) {
 		ResourceKey<Level> dimension = level.dimension();
 		if (dimension == Level.OVERWORLD) return OVERWORLD; // the same everywhere in it: no biome to look up
-		if (!ModDimensions.isNetherworld(dimension) && dimension != Level.NETHER) return 0.0;
+		if (!ModDimensions.isNetherworld(dimension) && dimension != Level.NETHER && !ModDimensions.isGreatVoid(dimension)) return 0.0;
 		return density(dimension, level.getBiome(pos));
 	}
 
@@ -100,8 +108,12 @@ public final class GhostQi {
 		return density * FILL_PER_DENSITY;
 	}
 
-	/** The density's word on the cultivation menu: dense (the Netherworld), thin (a Soul Sand Valley), faint (the Overworld, the Nether), none. */
+	/**
+	 * The density's word on the cultivation menu: teeming (the Great Void's battlefields), dense (the Netherworld), thin (a Soul Sand Valley),
+	 * faint (the Overworld, the Nether), none.
+	 */
 	public static String word(double density) {
+		if (density >= ANCIENT_BATTLEFIELD) return "teeming";
 		if (density >= NETHERWORLD) return "dense";
 		if (density >= SOUL_SAND_VALLEY) return "thin";
 		if (density > 0) return "faint";

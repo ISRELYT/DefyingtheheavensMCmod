@@ -1,0 +1,42 @@
+{
+  "parent": "defying-the-heavens:worlds/great_void",
+  "criteria": {
+    "battlefield": {
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "location": {
+                "biome": "defying-the-heavens:ancient_battlefield"
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:location"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.worlds.battlefield.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:skeleton_skull"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.worlds.battlefield.title"
+    }
+  },
+  "requirements": [
+    [
+      "battlefield"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

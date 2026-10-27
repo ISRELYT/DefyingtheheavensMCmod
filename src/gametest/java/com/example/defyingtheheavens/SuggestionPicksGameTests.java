@@ -159,8 +159,8 @@ public class SuggestionPicksGameTests implements FabricGameTest {
 
 	/**
 	 * A sect library's slips are its world's, of the realms a clan's chests there keep blood of, as often (the user, 2026-10-25: "you can
-	 * get EN phials from clans but you can't get EN methods from sects"). The game-test server has no Upper Realm: there the table's Upper
-	 * Realm pool is read from the table itself (in game it is rolled there, as here in the Overworld).
+	 * get EN phials from clans but you can't get EN methods from sects"). Written when the game-test server had no Upper Realm: the table's
+	 * Upper Realm pool is read from the table itself (in game it is rolled there, as here in the Overworld).
 	 */
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void aSectsLibraryKeepsItsWorldsSlipsAsAClansHoardItsBlood(GameTestHelper helper) {

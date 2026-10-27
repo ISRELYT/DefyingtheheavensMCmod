@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:arts/root",
+  "criteria": {
+    "treasure_fruit_1000": {
+      "conditions": {
+        "milestone": "treasure/fruit_1000"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.arts.thousand_year_fruit.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:cultivation_fruit"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.arts.thousand_year_fruit.title"
+    }
+  },
+  "requirements": [
+    [
+      "treasure_fruit_1000"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

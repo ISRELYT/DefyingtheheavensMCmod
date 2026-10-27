@@ -1,0 +1,40 @@
+{
+  "parent": "defying-the-heavens:arts/primordial_beast",
+  "criteria": {
+    "primordial_chaos": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "defying-the-heavens:primordial_chaos"
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.arts.primordial_chaos.description"
+    },
+    "frame": "challenge",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:dragon_egg"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.arts.primordial_chaos.title"
+    }
+  },
+  "requirements": [
+    [
+      "primordial_chaos"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

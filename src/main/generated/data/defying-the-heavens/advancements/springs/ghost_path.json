@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:springs/root",
+  "criteria": {
+    "ghost_path": {
+      "conditions": {
+        "milestone": "ghost/path"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.springs.ghost_path.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:ghost_jade_slip"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.springs.ghost_path.title"
+    }
+  },
+  "requirements": [
+    [
+      "ghost_path"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

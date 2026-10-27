@@ -417,6 +417,15 @@ public class PlayerCultivation {
 	public FourAxis.Axis obsession() { return obsession; }
 	public void setObsession(FourAxis.Axis obsession) { this.obsession = obsession; }
 
+	/**
+	 * The title one has taken (PlayerTitles; the user's ask, 2026-10-27: "from void shattering onwards ... name themselves or give themselves
+	 * a title"), "" for none. Kept below Void Shattering, only not shown or used there.
+	 */
+	private String epithet = "";
+
+	public String epithet() { return epithet; }
+	public void setEpithet(String epithet) { this.epithet = epithet == null ? "" : epithet; }
+
 	/** At a Four Axis stage's bottleneck with its axis of virtue not yet complete: the breakthrough waits on it (FourAxis). */
 	public boolean isHeldByAxis() {
 		return isAtBottleneck() && FourAxis.holds(this, rank(realm, stage));
@@ -1429,6 +1438,7 @@ public class PlayerCultivation {
 			break;
 		}
 		if (obsession != null) tag.putString("Obsession", obsession.getId());
+		if (!epithet.isEmpty()) tag.putString("Epithet", epithet);
 		if (extraYears > 0) tag.putDouble("ExtraYears", extraYears);
 		if (fortuneOwed > 0) {
 			tag.putDouble("FortuneOwed", fortuneOwed);
@@ -1559,6 +1569,7 @@ public class PlayerCultivation {
 		c.longevityPills = Math.max(0, tag.getInt("LongevityPills"));
 		c.setMeditationSpeed(tag.contains("MeditationSpeed") ? tag.getInt("MeditationSpeed") : 1);
 		c.obsession = FourAxis.Axis.byId(tag.getString("Obsession"));
+		c.epithet = PlayerTitles.clean(tag.getString("Epithet"));
 		if (tag.contains("AxisProgress", Tag.TAG_INT_ARRAY)) {
 			int[] progress = tag.getIntArray("AxisProgress");
 			for (int i = 0; i < progress.length && i < c.axisProgress.length; i++) c.axisProgress[i] = Math.max(0, progress[i]);

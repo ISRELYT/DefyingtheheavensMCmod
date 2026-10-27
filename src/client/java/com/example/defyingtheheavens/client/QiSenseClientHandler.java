@@ -2,6 +2,7 @@ package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.CultivatorNpc;
 import com.example.defyingtheheavens.DefyingTheHeavens;
+import com.example.defyingtheheavens.GhostQi;
 import com.example.defyingtheheavens.Realm;
 import com.example.defyingtheheavens.ModDimensions;
 import com.example.defyingtheheavens.PlayerCultivation;
@@ -46,8 +47,9 @@ import java.util.UUID;
  * The client half of {@link com.example.defyingtheheavens.QiSense}. While the ability is on, the world loses its colour (a
  * desaturating post effect, faded in and out) and qi drifts through it as small glowing motes in the colours of the five
  * elements, mixed by the land they gather in ({@link QiElement#pick}), as thick as the place's qi ({@link #airQi}): sparse in the
- * lower realms, ten times as thick in the Upper Realm, a hundred times in the Great Void, thin in space. Around any meditating
- * cultivator, motes are drawn in from all sides, faster the stronger their gathering.
+ * lower realms, ten times as thick in the Upper Realm, a hundred times in the Great Void, a thousand in the Immortal Realm, thin in
+ * space; and over the Great Void's battlefields the cyan yin of their ghostly qi besides, as thick as it ({@link #yinAir}). Around
+ * any meditating cultivator, motes are drawn in from all sides, faster the stronger their gathering.
  * <p>
  * The motes are not vanilla particles: those are drawn into the world, which the post effect then greys. They live here
  * and are drawn on {@link SenseOverlay}, laid over the frame after the post effect, so they keep their colour.
@@ -67,8 +69,23 @@ public final class QiSenseClientHandler {
 	private static final double SPAWN_RADIUS = 20;
 	/** Motes left this far behind (the viewer flew off) are dropped. */
 	private static final double KEEP_RADIUS = 30;
-	/** Room for the Great Void's hundredfold air (some 4,500 motes about the viewer) and meditators drawing it in. */
-	private static final int MAX_MOTES = 6000;
+	/**
+	 * Room for the Immortal Realm's thousandfold air (some 45,000 motes about the viewer, the Great Void's hundredfold some 4,500: the
+	 * user's ask, 2026-10-27, "make sure that qi motes are scaled accordingly in the immortal realm") and meditators drawing it in.
+	 */
+	private static final int MAX_MOTES = 50_000;
+	/** How long an ambient mote lives on average (ticks): with the rate, how many the air holds. */
+	private static final int AMBIENT_LIFE = 90;
+	/**
+	 * Where the air holds more than this many (more than the Great Void's), those further than {@link #LOD_NEAR} from the eye are drawn
+	 * as a soft dot of their colour {@link #FAR_DOT} times their size, with no halo of their own: the thousands of the Immortal Realm's
+	 * air cost no more to draw than the Great Void's did. Nearer, and anywhere thinner, each is drawn whole.
+	 */
+	private static final int LOD_FROM = 6000;
+	private static final double LOD_NEAR = 9;
+	private static final float FAR_DOT = 1.8f;
+	/** Far motes further off the line of sight than this (its cosine, squared) are out of view: skipped before any other test. */
+	private static final float FAR_CONE = 0.067f;
 	/** Outside the Upper Realm (lower realms and the Spatial Gap), a meditator draws in this share of the motes. */
 	private static final float LOWER_REALM_INFLOW = 0.5f;
 	/** Meditators further than this from the viewer aren't drawn absorbing. */
@@ -131,6 +148,10 @@ public final class QiSenseClientHandler {
 	private static final RandomSource RANDOM = RandomSource.create();
 	private static ClientLevel lastLevel;
 	private static float ambientCarry;
+	/** The share of the motes born about the viewer that are yin of the Great Void's battlefields ({@link #yinAir}), this tick. */
+	private static float yinShare;
+	/** Whether the air about the viewer holds so many that the far ones are drawn as dots ({@link #LOD_FROM}). */
+	private static boolean crowded;
 	private static final Map<UUID, Float> INFLOW_CARRY = new HashMap<>();
 	private static final Map<Integer, Float> NPC_INFLOW_CARRY = new HashMap<>();
 
@@ -180,8 +201,12 @@ public final class QiSenseClientHandler {
 		boolean immortal = ModDimensions.hasImmortalQi(mc.level.dimension()); // a small world's qi the Immortal Realm's
 		boolean greatVoid = ModDimensions.isGreatVoid(mc.level.dimension());
 		boolean upperRealm = ModDimensions.isUpperRealm(mc.level.dimension()) || greatVoid || immortal;
-		// As thick as the place's qi (the user's ask, 2026-10-25: the Great Void's a hundred times the lower realms', as its qi).
-		ambientCarry += AMBIENT_PER_TICK * (float) airQi(mc.level);
+		// As thick as the place's qi (the user's ask, 2026-10-25: the Great Void's a hundred times the lower realms', as its qi; the
+		// Immortal Realm's a thousand), and on the Great Void's battlefields their ghostly qi's yin over it, as thick (2026-10-27).
+		double air = airQi(mc.level), yin = yinAir(mc.level, eye);
+		yinShare = air + yin <= 0 ? 0 : (float) (yin / (air + yin));
+		crowded = AMBIENT_PER_TICK * (air + yin) * AMBIENT_LIFE > LOD_FROM;
+		ambientCarry += AMBIENT_PER_TICK * (float) (air + yin);
 		while (ambientCarry >= 1 && MOTES.size() < MAX_MOTES) {
 			ambientCarry--;
 			spawnAmbient(mc.level, eye);
@@ -307,8 +332,17 @@ public final class QiSenseClientHandler {
 		double z = eye.z + r * Math.sin(pitch) * Math.sin(yaw);
 		BlockPos pos = BlockPos.containing(x, y, z);
 		if (!level.isLoaded(pos) || !level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()) return; // not inside stone
-		QiElement element = QiElement.pick(level.getBiome(pos), isUnderground(level, pos), RANDOM);
-		MOTES.add(new Mote(element, x, y, z, 0.06f + RANDOM.nextFloat() * 0.05f, 60 + RANDOM.nextInt(60), null, RANDOM));
+		QiElement element = pickAt(level, pos);
+		MOTES.add(new Mote(element, x, y, z, 0.06f + RANDOM.nextFloat() * 0.05f, AMBIENT_LIFE - 30 + RANDOM.nextInt(60), null, RANDOM));
+	}
+
+	/**
+	 * The element of a mote born at {@code pos}: by its land's mix (QiElement#pick); where the Great Void's battlefields' ghostly qi flows,
+	 * yin by its share of the air about the viewer ({@link #yinShare}).
+	 */
+	private static QiElement pickAt(ClientLevel level, BlockPos pos) {
+		if (yinShare > 0 && RANDOM.nextFloat() < yinShare && GhostQi.density(level.dimension(), level.getBiome(pos)) > 0) return QiElement.YIN;
+		return QiElement.pick(level.getBiome(pos), isUnderground(level, pos), RANDOM);
 	}
 
 	private static void spawnInflow(ClientLevel level, Entity meditator) {
@@ -320,7 +354,7 @@ public final class QiSenseClientHandler {
 		double z = meditator.getZ() + r * Math.sin(pitch) * Math.sin(yaw);
 		BlockPos pos = BlockPos.containing(x, y, z);
 		if (!level.isLoaded(pos)) return;
-		QiElement element = QiElement.pick(level.getBiome(pos), isUnderground(level, pos), RANDOM);
+		QiElement element = pickAt(level, pos);
 		boolean player = meditator instanceof Player;
 		Mote mote = new Mote(element, x, y, z, 0.05f + RANDOM.nextFloat() * 0.03f, 140, player ? meditator.getUUID() : null, RANDOM);
 		if (!player) mote.drawnToEntity = meditator.getId();
@@ -351,6 +385,17 @@ public final class QiSenseClientHandler {
 		return ClientCultivationData.get().placeFactor();
 	}
 
+	/**
+	 * How thick yin is in the air about the viewer over what their land's mix holds of it: the Great Void's battlefields' ghostly qi
+	 * (GhostQi#ANCIENT_BATTLEFIELD, a hundred) as thick as its density, on the Netherworld's measure (its ten as thick as
+	 * {@link #NETHERWORLD_AIR}): as many cyan motes as the Great Void's own qi has motes of the five. None anywhere else (the
+	 * Netherworld's and a Soul Sand Valley's yin is in their land's mix, QiElement; the living world shows none).
+	 */
+	private static double yinAir(ClientLevel level, Vec3 eye) {
+		if (!ModDimensions.isGreatVoid(level.dimension())) return 0;
+		return GhostQi.density(level.dimension(), level.getBiome(BlockPos.containing(eye))) * NETHERWORLD_AIR / GhostQi.NETHERWORLD;
+	}
+
 	/** No open sky above and below sea level, in a realm that has a sky: caves lean to earth and metal. */
 	private static boolean isUnderground(ClientLevel level, BlockPos pos) {
 		return level.dimensionType().hasSkyLight() && !level.dimensionType().hasCeiling() && pos.getY() < level.getSeaLevel()
@@ -371,6 +416,7 @@ public final class QiSenseClientHandler {
 		Vec3 cam = camera.getPosition();
 		Vector3f left = camera.getLeftVector();
 		Vector3f up = camera.getUpVector();
+		Vector3f look = camera.getLookVector();
 		float partial = context.tickDelta();
 		Matrix4f matrix = context.matrixStack().last().pose();
 		Frustum frustum = context.frustum();
@@ -388,21 +434,32 @@ public final class QiSenseClientHandler {
 			float alpha = envelope(mote, partial);
 			if (alpha <= 0.01f) continue;
 			double x = Mth.lerp(partial, mote.prevX, mote.x), y = Mth.lerp(partial, mote.prevY, mote.y), z = Mth.lerp(partial, mote.prevZ, mote.z);
-			float size = halo ? mote.size * HALO_SCALE : mote.size;
-			// Only those in view (most of the thousands about the viewer in the Great Void are behind or beside them).
-			if (frustum != null && !frustum.isVisible(new AABB(x - size, y - size, z - size, x + size, y + size, z + size))) continue;
 			float px = (float) (x - cam.x), py = (float) (y - cam.y), pz = (float) (z - cam.z);
+			// In crowded air (LOD_FROM) a far one is a soft dot with no halo of its own, looked for by the line of sight alone.
+			float distanceSq = px * px + py * py + pz * pz;
+			boolean far = crowded && distanceSq > LOD_NEAR * LOD_NEAR;
+			float size;
+			if (far) {
+				float ahead = px * look.x() + py * look.y() + pz * look.z();
+				if (halo || ahead <= 0 || ahead * ahead < distanceSq * FAR_CONE) continue;
+				size = mote.size * FAR_DOT;
+			} else {
+				size = halo ? mote.size * HALO_SCALE : mote.size;
+				// Only those in view (most of the thousands about the viewer in the Great Void are behind or beside them).
+				if (frustum != null && !frustum.isVisible(new AABB(x - size, y - size, z - size, x + size, y + size, z + size))) continue;
+			}
 			int color = halo ? mote.element.getGlowColor() : mote.element.getCoreColor();
 			float r = (color >> 16 & 0xFF) / 255f, g = (color >> 8 & 0xFF) / 255f, b = (color & 0xFF) / 255f;
-			// The core is solid to two thirds of its radius, then softens; the halo fades from the middle out.
+			// The core is solid to two thirds of its radius, then softens; the halo fades from the middle out, and so does a far dot.
 			float middle = halo ? alpha * HALO_ALPHA : alpha;
-			float rim = halo ? 0 : alpha * 0.85f;
-			for (int i = 0; i < GLOW_SEGMENTS; i++) {
+			float rim = halo || far ? 0 : alpha * 0.85f;
+			int step = far ? 2 : 1; // a far dot has four corners
+			for (int i = 0; i < GLOW_SEGMENTS; i += step) {
 				buffer.vertex(matrix, px, py, pz).color(r, g, b, middle).endVertex();
 				buffer.vertex(matrix, px + (left.x() * cos[i] + up.x() * sin[i]) * size, py + (left.y() * cos[i] + up.y() * sin[i]) * size,
 						pz + (left.z() * cos[i] + up.z() * sin[i]) * size).color(r, g, b, rim).endVertex();
-				buffer.vertex(matrix, px + (left.x() * cos[i + 1] + up.x() * sin[i + 1]) * size, py + (left.y() * cos[i + 1] + up.y() * sin[i + 1]) * size,
-						pz + (left.z() * cos[i + 1] + up.z() * sin[i + 1]) * size).color(r, g, b, rim).endVertex();
+				buffer.vertex(matrix, px + (left.x() * cos[i + step] + up.x() * sin[i + step]) * size, py + (left.y() * cos[i + step] + up.y() * sin[i + step]) * size,
+						pz + (left.z() * cos[i + step] + up.z() * sin[i + step]) * size).color(r, g, b, rim).endVertex();
 			}
 		}
 		BufferUploader.drawWithShader(buffer.end());

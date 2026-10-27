@@ -96,17 +96,17 @@ public final class ModDamageTypes {
 
 	/** The Chaos Frontier's storm. */
 	public static DamageSource chaosStorm(Level level) {
-		return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(CHAOS_STORM));
+		return new ModDamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(CHAOS_STORM));
 	}
 
 	/** A spell of both paths' harm (HeavenDemonSpells), cast by {@code attacker} (null for none: a seal whose caster is gone). */
 	public static DamageSource heavenDemon(Level level, net.minecraft.world.entity.Entity attacker) {
-		return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(HEAVEN_DEMON), attacker);
+		return new ModDamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(HEAVEN_DEMON), attacker);
 	}
 
 	/** {@code element}'s qi, cast by {@code attacker} (null for none: a zone left burning, say). */
 	public static DamageSource qi(Level level, QiElement element, net.minecraft.world.entity.Entity attacker) {
-		return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(qiType(element)), attacker);
+		return new ModDamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(qiType(element)), attacker);
 	}
 
 	/**
@@ -120,54 +120,54 @@ public final class ModDamageTypes {
 	}
 
 	public static DamageSource spatialPressure(Level level) {
-		return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(SPATIAL_PRESSURE));
+		return new ModDamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(SPATIAL_PRESSURE));
 	}
 
 	/** The dead's harm, by {@code attacker} (null for none: ghost fire left burning, say). */
 	public static DamageSource ghostly(Level level, net.minecraft.world.entity.Entity attacker) {
-		return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(GHOSTLY), attacker);
+		return new ModDamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(GHOSTLY), attacker);
 	}
 
 	/** The dead's harm through a thing ({@code direct}: a thrown Ghost-Quelling Talisman) by its {@code owner}. */
 	public static DamageSource ghostly(Level level, net.minecraft.world.entity.Entity direct, net.minecraft.world.entity.Entity owner) {
-		return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(GHOSTLY), direct, owner);
+		return new ModDamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(GHOSTLY), direct, owner);
 	}
 
 	public static DamageSource judgeGaze(Level level) {
-		return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(JUDGE_GAZE));
+		return new ModDamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(JUDGE_GAZE));
 	}
 
 	public static DamageSource soulScatter(Level level) {
-		return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(SOUL_SCATTER));
+		return new ModDamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(SOUL_SCATTER));
 	}
 
 	/** The Netherworld's tribulation's bolt (armour turns it). */
 	public static DamageSource yinLightning(Level level) {
-		return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(YIN_LIGHTNING));
+		return new ModDamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(YIN_LIGHTNING));
 	}
 
 	/** The yin in the Netherworld's tribulation that goes through armour. */
 	public static DamageSource yinTribulation(Level level) {
-		return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(YIN_TRIBULATION));
+		return new ModDamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(YIN_TRIBULATION));
 	}
 
 	/** One's own golden core, detonated. */
 	public static DamageSource coreDetonation(Level level) {
-		return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(CORE_DETONATION));
+		return new ModDamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(CORE_DETONATION));
 	}
 
 	/** A lifespan run out. */
 	public static DamageSource oldAge(Level level) {
-		return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(OLD_AGE));
+		return new ModDamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(OLD_AGE));
 	}
 
 	public static DamageSource soulSevered(Level level) {
-		return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(SOUL_SEVERED));
+		return new ModDamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(SOUL_SEVERED));
 	}
 
 	/** Seized by {@code soul}'s nascent soul. */
 	public static DamageSource soulSeized(Level level, net.minecraft.world.entity.Entity soul) {
-		return new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(SOUL_SEIZED), soul);
+		return new ModDamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(SOUL_SEIZED), soul);
 	}
 
 	private ModDamageTypes() {}

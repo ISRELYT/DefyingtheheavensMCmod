@@ -268,6 +268,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		goalSelector.addGoal(2, new CultivatorGoals.CombatGoal(this));
 		goalSelector.addGoal(2, new CultivatorSpells.SpellGoal(this)); // its spells, alongside the fight (the user's ask, 2026-10-24)
 		goalSelector.addGoal(2, new CultivatorGoals.TalkGoal(this));
+		goalSelector.addGoal(2, new CultivatorGoals.KneelGoal(this)); // before one far above it, passing by (the user's pick, 2026-10-27)
 		goalSelector.addGoal(3, new CultivatorGoals.JourneyGoal(this));
 		goalSelector.addGoal(3, new CultivatorGoals.SeclusionGoal(this));
 		goalSelector.addGoal(3, new CultivatorGoals.ShelterGoal(this)); // a settler, home while a threat is out (Settlements)
@@ -465,6 +466,10 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	public void setGateGuard(boolean guard) { setFlag(FLAG_GATE_GUARD, guard); }
 	public boolean isKneeling() { return flag(FLAG_KNEELING); }
 	public void setKneeling(boolean kneeling) { setFlag(FLAG_KNEELING, kneeling); }
+	/** The player it kneels before as they pass, four realms or more above it (TalkSystem#kneelsBefore; not saved), or null. */
+	private UUID kneelingTo;
+
+	public Player kneelingBefore() { return kneelingTo == null ? null : level().getPlayerByUUID(kneelingTo); }
 
 	/** The realm it can wield where it stands (the lower realms cap it); what suppression and domains weigh. */
 	@Override public Realm getCultivationRealm() { return realmOf(sustainedRank()); }
@@ -554,6 +559,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		if (delta == 0) return;
 		Regard.Entry entry = regardEntry(player);
 		entry.value = Regard.clamp(entry.value + delta);
+		if (entry.value >= Regard.SWORN && player instanceof net.minecraft.server.level.ServerPlayer sp) Milestones.award(sp, Milestones.SWORN);
 	}
 
 	/** Starts (or keeps up) a talk with {@code player}: it stops where it is and turns to them. */
@@ -989,9 +995,16 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		if (begTicks > 0) {
 			getNavigation().stop();
 			if (--begTicks == 0) stopBegging(); // no answer: it gets up and runs (or fights) again
-		} else if (isKneeling() && tickCount % 10 == 0) {
-			// Kneeling under someone's pressure (TalkSystem): only while they still press it and are still talking with it.
-			if (!(talkPartner() instanceof ServerPlayer partner) || !TalkSystem.kneelsTo(partner, this)) setKneeling(false);
+		} else if (tickCount % 10 == 0) {
+			// On one knee (TalkSystem#kneelsTo): before one it talks with who stands four realms or more above it, or presses their realm down on
+			// it; before one so far above it passing close by (TalkSystem#kneelsBefore, the user's pick of 2026-10-27); up again once they've gone.
+			ServerPlayer partner = talkPartner() instanceof ServerPlayer p && TalkSystem.kneelsTo(p, this) ? p : null;
+			ServerPlayer passing = partner != null ? null
+					: TalkSystem.kneelsBefore(this, kneelingTo != null && level.getPlayerByUUID(kneelingTo) instanceof ServerPlayer before ? before : null);
+			if (passing != null && !passing.getUUID().equals(kneelingTo)) Milestones.award(passing, Milestones.KNEEL);
+			kneelingTo = passing == null ? null : passing.getUUID();
+			boolean kneel = partner != null || passing != null;
+			if (kneel != isKneeling()) setKneeling(kneel);
 		}
 		if (lifecycle == Lifecycle.SECLUDED && isConcealed()) repulse(level);
 		catchItself(level);

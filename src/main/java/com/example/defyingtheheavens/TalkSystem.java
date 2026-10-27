@@ -160,9 +160,36 @@ public final class TalkSystem {
 	public static final int GHOST_INTENTS = TalkIntent.GREET.bit() | TalkIntent.ASK.bit() | TalkIntent.TRADE.bit() | TalkIntent.GIFT.bit()
 			| TalkIntent.SPAR.bit() | TalkIntent.PROVOKE.bit() | TalkIntent.LEAVE.bit();
 
-	/** It kneels to {@code player}: two realms beneath them, with their realm pressed down on it. */
+	/**
+	 * It kneels to {@code player}: four realms or more beneath them (NpcAddress#KNEEL_GAP: the user's pick, 2026-10-27, "Kneel from 4
+	 * realms"), or two beneath them with their realm pressed down on it.
+	 */
 	public static boolean kneelsTo(ServerPlayer player, CultivatorNpc npc) {
-		return standing(player, npc) == Standing.FAR_BELOW && RealmSuppressSystem.presses(player, npc);
+		return NpcAddress.gap(player, npc) >= NpcAddress.KNEEL_GAP || standing(player, npc) == Standing.FAR_BELOW && RealmSuppressSystem.presses(player, npc);
+	}
+
+	/** How close one it kneels to must come for it to kneel as they pass, and how far they may go again before it rises. */
+	public static final double KNEEL_REACH = 5, RISE_REACH = 8;
+
+	/**
+	 * The player {@code npc} kneels before as they pass (the nearest one it {@link #kneelsTo} within {@link #KNEEL_REACH}, or still within
+	 * {@link #RISE_REACH} of the one it knelt to, in its sight), or null: never while it fights, runs, sits in meditation, flies, begs, or is
+	 * turned on them.
+	 */
+	public static ServerPlayer kneelsBefore(CultivatorNpc npc, ServerPlayer kneltTo) {
+		if (npc.getTarget() != null || npc.shouldFlee() || npc.isMeditating() || npc.isQiFlying() || npc.isBegging() || npc.isVacant()) return null;
+		if (kneltTo != null && kneltTo.isAlive() && kneltTo.level() == npc.level() && kneltTo.distanceToSqr(npc) <= RISE_REACH * RISE_REACH
+				&& !npc.isHostileTo(kneltTo) && kneelsTo(kneltTo, npc)) return kneltTo;
+		ServerPlayer best = null;
+		double nearest = KNEEL_REACH * KNEEL_REACH;
+		for (ServerPlayer p : ((net.minecraft.server.level.ServerLevel) npc.level()).players()) {
+			if (p.isSpectator() || !p.isAlive() || !npc.senses(p)) continue;
+			double d = p.distanceToSqr(npc);
+			if (d > nearest || npc.isHostileTo(p) || !kneelsTo(p, npc) || !npc.hasLineOfSight(p)) continue;
+			nearest = d;
+			best = p;
+		}
+		return best;
 	}
 
 	// --- Opening a talk ---
@@ -233,8 +260,12 @@ public final class TalkSystem {
 			if (!onDuty) npc.changeRegard(player, Regard.DISTURBED);
 		}
 		npc.beginTalk(player);
-		if (kneelsTo(player, npc)) npc.setKneeling(true);
+		if (kneelsTo(player, npc)) {
+			npc.setKneeling(true);
+			Milestones.award(player, Milestones.KNEEL);
+		}
 		ModPackets.sendTalkOpen(player, npc, npc.regard(player), intents(player, npc, standing));
+		Milestones.award(player, Milestones.TALK);
 	}
 
 	/**
@@ -318,7 +349,7 @@ public final class TalkSystem {
 		npc.beginTalk(player);
 		switch (intent) {
 			case GREET -> greet(player, npc, standing);
-			case ASK -> ModPackets.sendTalkDialogue(player, npc, npc.regard(player), intent, speech(line("ask", npc, standing)),
+			case ASK -> ModPackets.sendTalkDialogue(player, npc, npc.regard(player), intent, speech(lineFor("ask", npc, player, standing)),
 					replies(player, npc, standing));
 			case SPAR -> ModPackets.sendTalkDialogue(player, npc, npc.regard(player), intent, speech(line("spar.terms", npc)), sparTerms(player, npc));
 			case TRADE -> {
@@ -349,7 +380,11 @@ public final class TalkSystem {
 		boolean junior = standing == Standing.BELOW || standing == Standing.FAR_BELOW;
 		ModPackets.sendGesture(player, senior ? Gesture.BOW : Gesture.CUP_FIST);
 		ModPackets.sendGesture(npc, junior ? Gesture.BOW : Gesture.CUP_FIST);
-		say(player, npc, line("greet", npc, standing), delta);
+		// A friend's greeting is a friend's, as warm as it is reverent; else by where they stand.
+		Component words = npc.regard(player) >= Regard.WARM && NpcLines.has("talk.greet.liked." + NpcAddress.rung(player, npc).id(), npc)
+				? NpcLines.line("talk.greet.liked." + NpcAddress.rung(player, npc).id(), npc, NpcAddress.address(player, npc), NpcAddress.name(player))
+				: lineFor("greet", npc, player, standing);
+		say(player, npc, words, delta);
 		// A sworn friend presses something on you now and then.
 		if (npc.regard(player) >= Regard.SWORN && today - entry.giftBackDay >= GIFT_BACK_DAYS && npc.getRandom().nextFloat() < GIFT_BACK_CHANCE) {
 			entry.giftBackDay = today;
@@ -437,6 +472,7 @@ public final class TalkSystem {
 		entry.recordGift(item, today);
 		if (!player.getAbilities().instabuild) stack.shrink(1);
 		npc.changeRegard(player, delta);
+		Milestones.award(player, Milestones.GIFT);
 		say(player, npc, line(delta <= 3 ? "gift.small" : delta <= 10 ? "gift.good" : "gift.great", npc), delta);
 	}
 
@@ -1018,6 +1054,17 @@ public final class TalkSystem {
 	static Component line(String kind, CultivatorNpc npc, Standing standing) {
 		if (npc.isMortal()) return Component.translatable(ModLang.talkLine(kind + ".commoner" + (standing == Standing.PEER ? ".mortal" : "")));
 		return Component.translatable(ModLang.talkLine(kind, npc.getFaction().getId(), standing.getId()));
+	}
+
+	/**
+	 * {@code kind}'s line for {@code player} (a greeting, an answer to their asking): one of its variants (NpcLines) by the rung they stand on
+	 * before {@code npc} (NpcAddress, from a junior's to an Ancestor's) in its voice, calling them as it does ({@code %1$s}) and naming them
+	 * ({@code %2$s}: their title, from Void Shattering on, or their name); the old one by standing where no such line is written.
+	 */
+	static Component lineFor(String kind, CultivatorNpc npc, ServerPlayer player, Standing standing) {
+		String situation = "talk." + kind + "." + NpcAddress.rung(player, npc).id();
+		if (NpcLines.has(situation, npc)) return NpcLines.line(situation, npc, NpcAddress.address(player, npc), NpcAddress.name(player));
+		return line(kind, npc, standing);
 	}
 
 	/** A line by path alone (gifts, insults, spars, mercy); a mortal speaks for itself. */

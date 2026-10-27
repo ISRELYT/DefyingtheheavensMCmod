@@ -86,7 +86,7 @@ public class GreatVoidGameTests implements FabricGameTest {
 
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void itsBarriersAndItsNeeds(GameTestHelper helper) {
-		// (The game-test server has no Great Void of its own to ask: the dimension's own check, and the Overworld's barrier a sect's.)
+		// (Written when the game-test server had no Great Void to ask: the dimension's own check, and the Overworld's barrier a sect's.)
 		ServerLevel overworld = helper.getLevel().getServer().getLevel(Level.OVERWORLD);
 		helper.assertTrue(ModDimensions.isGreatVoid(ModDimensions.GREAT_VOID) && !ModDimensions.isGreatVoid(Level.OVERWORLD)
 				&& Formations.maxRadius(overworld) == Formations.MAX_RADIUS && Formations.HOLY_MAX_RADIUS >= DemonPalacePlan.REACH + 2

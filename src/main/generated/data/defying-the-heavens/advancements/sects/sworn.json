@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:sects/gift",
+  "criteria": {
+    "talk_sworn": {
+      "conditions": {
+        "milestone": "talk/sworn"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.sects.sworn.description"
+    },
+    "frame": "goal",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:peach_pit"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.sects.sworn.title"
+    }
+  },
+  "requirements": [
+    [
+      "talk_sworn"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

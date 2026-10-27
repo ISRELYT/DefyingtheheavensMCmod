@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:sects/kneel",
+  "criteria": {
+    "title_taken": {
+      "conditions": {
+        "milestone": "title/taken"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.sects.title.description"
+    },
+    "frame": "goal",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:name_tag"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.sects.title.title"
+    }
+  },
+  "requirements": [
+    [
+      "title_taken"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -25,8 +25,8 @@ import java.util.UUID;
  * small worlds' realm (the Immortal Realm's qi, not its breakthroughs; nobody born there; each world in its slot; its reach by its owner's
  * Laws); the Small World ability (last of the abilities, an immortal's with a world); who may come in (its owner, its guests); its records
  * kept and read back; its land (a coast always further out for a larger land, grass over earth over stone hanging beneath, its new edge laid
- * as it grows and nothing standing on it touched) and its gate. The test server has no small worlds' dimension: the door's own way in is
- * the in-game tour's to check. Each test with players in a batch of its own.
+ * as it grows and nothing standing on it touched) and its gate; its door opened and closed, gone into and out of, a stranger in it sent out
+ * by its tick (the tests' server has the mod's dimensions since 2026-10-27). Each test with players in a batch of its own.
  */
 public class SmallWorldGameTests implements FabricGameTest {
 	/** A survival player in earnest, of {@code realm} Early, at the test's corner. */
@@ -145,8 +145,12 @@ public class SmallWorldGameTests implements FabricGameTest {
 					&& key(SmallWorlds.addGuest(owner, owner)).equals(ModLang.CMD_GUEST_SELF), "Not twice, nor its owner");
 			helper.assertTrue(key(SmallWorlds.removeGuest(owner, "TEST-WORLD-B")).equals(ModLang.CMD_GUEST_REMOVED) && !SmallWorlds.mayEnter(w, guest)
 					&& key(SmallWorlds.removeGuest(owner, "nobody")).equals(ModLang.CMD_GUEST_UNKNOWN), "Taken off it again (its name in any case)");
-			// Its door: not where there are no small worlds (the test server has none).
-			helper.assertTrue(key(SmallWorlds.whyNotOpen(owner)).equals(ModLang.MSG_DOOR_NOT_HERE), "No door where there are no small worlds");
+			// Its door (the tests' server has the small worlds since 2026-10-27): opened before its owner by its switch, and closed by it.
+			helper.assertTrue(SmallWorlds.whyNotOpen(owner) == null, "Its door may open here");
+			SmallWorlds.toggle(owner);
+			helper.assertTrue(SmallWorlds.isOpen(owner.getUUID()) && CultivationManager.get(owner).isAbilityEnabled(Ability.SMALL_WORLD), "Opened, its switch on");
+			SmallWorlds.toggle(owner);
+			helper.assertTrue(!SmallWorlds.isOpen(owner.getUUID()) && !CultivationManager.get(owner).isAbilityEnabled(Ability.SMALL_WORLD), "...and closed again");
 			// Another's world, in a slot of its own.
 			helper.assertTrue(SmallWorlds.refine(stranger) && data.of(stranger.getUUID()).slot != w.slot, "Another immortal's world in a slot of its own");
 			helper.succeed();
@@ -155,6 +159,37 @@ public class SmallWorldGameTests implements FabricGameTest {
 			data.forget(stranger.getUUID());
 			leave(owner);
 			leave(guest);
+			leave(stranger);
+		}
+	}
+
+	// --- In and out (the tests' server has the small worlds since 2026-10-27) ---
+
+	@GameTest(template = EMPTY_STRUCTURE, batch = "small_worlds_enter", timeoutTicks = 400)
+	public void inAndOutAndStraysSentOut(GameTestHelper helper) {
+		ServerPlayer owner = player(helper, Realm.TRUE_IMMORTAL, "test-world-d"), stranger = player(helper, Realm.TRUE_IMMORTAL, "test-world-e");
+		SmallWorlds.Data data = SmallWorlds.Data.get(helper.getLevel().getServer());
+		ServerLevel sw = helper.getLevel().getServer().getLevel(ModDimensions.SMALL_WORLD);
+		try {
+			helper.assertTrue(sw != null, "The tests' server has the small worlds");
+			helper.assertTrue(SmallWorlds.refine(owner), "Refined");
+			SmallWorlds.World w = data.of(owner.getUUID());
+			net.minecraft.world.phys.Vec3 from = owner.position();
+			helper.assertTrue(SmallWorlds.enter(owner, w) && owner.level() == sw && SmallWorlds.worldAt(owner) == w, "In it, at its heart");
+			helper.assertTrue(w.laid() >= SmallWorlds.BASE_RADIUS && sw.getBlockState(w.centre()).is(Blocks.GRASS_BLOCK), "Its heart laid as it was first come into");
+			helper.assertTrue(sw.getBlockState(w.centre().offset(0, 1, -6)).is(ModBlocks.SMALL_WORLD_GATE), "Its gate behind the way in");
+			// A stranger in it (on no guest list) sent out by its tick, the server going on: going through the level's own list of players
+			// as it sent one out broke the server's tick off with a ConcurrentModificationException (bug sweep 4).
+			stranger.teleportTo(sw, w.centre().getX() + 2.5, SmallWorlds.ISLAND_Y + 1, w.centre().getZ() + 0.5, 0, 0);
+			SmallWorlds.tick(helper.getLevel().getServer());
+			helper.assertTrue(!ModDimensions.isSmallWorld(stranger.level().dimension()), "A stranger sent out by its tick");
+			helper.assertTrue(owner.level() == sw, "...its owner left in it");
+			SmallWorlds.leave(owner);
+			helper.assertTrue(owner.level() == helper.getLevel() && owner.position().distanceTo(from) < 1, "Out where they came in from");
+			helper.succeed();
+		} finally {
+			data.forget(owner.getUUID());
+			leave(owner);
 			leave(stranger);
 		}
 	}

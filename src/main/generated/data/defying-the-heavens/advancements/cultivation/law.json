@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:cultivation/true_immortal",
+  "criteria": {
+    "law_first": {
+      "conditions": {
+        "milestone": "law/first"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.cultivation.law.description"
+    },
+    "frame": "goal",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:written_book"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.cultivation.law.title"
+    }
+  },
+  "requirements": [
+    [
+      "law_first"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

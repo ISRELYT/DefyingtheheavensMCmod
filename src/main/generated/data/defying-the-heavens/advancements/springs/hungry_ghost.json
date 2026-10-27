@@ -1,0 +1,41 @@
+{
+  "parent": "defying-the-heavens:springs/root",
+  "criteria": {
+    "hungry_ghost": {
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "defying-the-heavens:hungry_ghost"
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:player_killed_entity"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.springs.hungry_ghost.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:peach_wood_sword",
+      "nbt": "{Damage:0}"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.springs.hungry_ghost.title"
+    }
+  },
+  "requirements": [
+    [
+      "hungry_ghost"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

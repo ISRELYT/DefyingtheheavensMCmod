@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:worlds/jade_firmament",
+  "criteria": {
+    "great_void": {
+      "conditions": {
+        "to": "defying-the-heavens:great_void"
+      },
+      "trigger": "minecraft:changed_dimension"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.worlds.great_void.description"
+    },
+    "frame": "goal",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:crying_obsidian"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.worlds.great_void.title"
+    }
+  },
+  "requirements": [
+    [
+      "great_void"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

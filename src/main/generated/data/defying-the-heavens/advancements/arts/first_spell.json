@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:arts/root",
+  "criteria": {
+    "spell_any": {
+      "conditions": {
+        "milestone": "spell/any"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.arts.first_spell.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:blaze_powder"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.arts.first_spell.title"
+    }
+  },
+  "requirements": [
+    [
+      "spell_any"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

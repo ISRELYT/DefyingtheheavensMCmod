@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:worlds/root",
+  "criteria": {
+    "spatial_gap": {
+      "conditions": {
+        "to": "defying-the-heavens:spatial_gap"
+      },
+      "trigger": "minecraft:changed_dimension"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.worlds.spatial_gap.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:obsidian"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.worlds.spatial_gap.title"
+    }
+  },
+  "requirements": [
+    [
+      "spatial_gap"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

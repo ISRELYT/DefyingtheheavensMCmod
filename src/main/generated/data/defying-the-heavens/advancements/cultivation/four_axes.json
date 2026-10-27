@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:cultivation/four_axis",
+  "criteria": {
+    "four_axes": {
+      "conditions": {
+        "milestone": "four_axes"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.cultivation.four_axes.description"
+    },
+    "frame": "goal",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:compass"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.cultivation.four_axes.title"
+    }
+  },
+  "requirements": [
+    [
+      "four_axes"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

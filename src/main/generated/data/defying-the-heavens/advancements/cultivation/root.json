@@ -1,0 +1,32 @@
+{
+  "criteria": {
+    "realm_qi_refining": {
+      "conditions": {
+        "milestone": "realm/qi_refining"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "background": "defying-the-heavens:textures/block/jade_stone.png",
+    "description": {
+      "translate": "advancements.defying-the-heavens.cultivation.root.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:cultivation_pill"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.cultivation.root.title"
+    }
+  },
+  "requirements": [
+    [
+      "realm_qi_refining"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

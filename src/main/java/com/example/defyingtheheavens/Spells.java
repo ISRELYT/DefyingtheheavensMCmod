@@ -144,6 +144,7 @@ public final class Spells {
 		cooldowns(p).put(spell, now + LawDomains.stretched(p, Laws.cooldown(p, spell)));
 		RaceGifts.breakIllusion(p); // a fox unseen is seen as it casts
 		perform(p, spell, s);
+		Milestones.onSpell(p, spell);
 		CultivationManager.markDirty(p.server);
 		NetherworldManager.refresh(p);
 		if (spell.qiCost() > 0 && !free) CultivationManager.sync(p); // the qi pool's share

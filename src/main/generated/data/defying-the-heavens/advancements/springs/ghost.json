@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:springs/root",
+  "criteria": {
+    "ghost_died": {
+      "conditions": {
+        "milestone": "ghost/died"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.springs.ghost.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:yin_jade"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.springs.ghost.title"
+    }
+  },
+  "requirements": [
+    [
+      "ghost_died"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

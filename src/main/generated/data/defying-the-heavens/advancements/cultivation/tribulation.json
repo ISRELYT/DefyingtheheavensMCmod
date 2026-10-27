@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:cultivation/root",
+  "criteria": {
+    "tribulation_survived": {
+      "conditions": {
+        "milestone": "tribulation/survived"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.cultivation.tribulation.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:lightning_rod"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.cultivation.tribulation.title"
+    }
+  },
+  "requirements": [
+    [
+      "tribulation_survived"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

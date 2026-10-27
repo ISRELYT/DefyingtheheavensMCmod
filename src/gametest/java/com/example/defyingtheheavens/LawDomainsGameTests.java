@@ -376,7 +376,8 @@ public class LawDomainsGameTests implements FabricGameTest {
 
 	/**
 	 * Space locked on a foe: its Nine Nether Step refused (nothing paid, nowhere gone), then taken once the domain folds away. (The Spatial
-	 * Tear's refusal is checked in game: the test server has no gap to tear into, so a tear is refused there before the lock is asked.)
+	 * Tear's refusal is checked in game: written when the test server had no gap to tear into, and a tear was refused there before the lock
+	 * was asked.)
 	 */
 	@GameTest(template = EMPTY_STRUCTURE, batch = "law_domains_5", timeoutTicks = 60)
 	public void spaceLockedRefusesTheStep(GameTestHelper helper) {

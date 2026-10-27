@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:cultivation/dao_integration",
+  "criteria": {
+    "realm_void_shattering": {
+      "conditions": {
+        "milestone": "realm/void_shattering"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.cultivation.void_shattering.description"
+    },
+    "frame": "goal",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:ender_eye"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.cultivation.void_shattering.title"
+    }
+  },
+  "requirements": [
+    [
+      "realm_void_shattering"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

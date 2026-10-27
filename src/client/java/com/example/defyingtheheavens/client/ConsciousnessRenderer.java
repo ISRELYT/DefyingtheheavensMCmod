@@ -320,8 +320,9 @@ public final class ConsciousnessRenderer {
 		for (Sensed sensed : SENSED.values()) {
 			Entity entity = mc.level.getEntity(sensed.entityId());
 			if (entity == null || !OUTLINES.containsKey(entity.getId())) continue;
-			// Above an NPC's nameplate (three lines) rather than over it.
-			double above = entity instanceof CultivatorEntity ? 1.35 : 0.5;
+			// Above an NPC's nameplate (three lines) rather than over it; a player's, above the title and sect title over their name
+			// (ClientPlates: it hid a sect's title, 2026-10-27).
+			double above = entity instanceof CultivatorEntity ? 1.35 : 0.5 + ClientPlates.lineCount(entity.getUUID()) * ClientPlates.LINE;
 			Vec3 head = entity.getPosition(viewPartial).add(0, entity.getBbHeight() + above, 0).subtract(viewCamera);
 			Vector4f clip = new Vector4f((float) head.x, (float) head.y, (float) head.z, 1).mul(VIEW_PROJECTION);
 			if (clip.w <= 0.05f) continue; // behind the camera

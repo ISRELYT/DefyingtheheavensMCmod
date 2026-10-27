@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:arts/root",
+  "criteria": {
+    "technique_core_detonation": {
+      "conditions": {
+        "milestone": "technique/core_detonation"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.arts.core_detonation.description"
+    },
+    "frame": "goal",
+    "hidden": true,
+    "icon": {
+      "item": "minecraft:tnt"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.arts.core_detonation.title"
+    }
+  },
+  "requirements": [
+    [
+      "technique_core_detonation"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

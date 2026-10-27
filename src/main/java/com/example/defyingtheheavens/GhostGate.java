@@ -801,6 +801,7 @@ public final class GhostGate {
 			return;
 		}
 		s.setMemoryCleansed(true);
+		Milestones.award(p, Milestones.SOUP);
 		CultivationManager.markDirty(p.server);
 		p.serverLevel().playSound(null, p.blockPosition(), net.minecraft.sounds.SoundEvents.GENERIC_DRINK, net.minecraft.sounds.SoundSource.PLAYERS, 1.0f, 0.8f);
 		p.displayClientMessage(Component.translatable(ModLang.MSG_SOUP).withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE), true);

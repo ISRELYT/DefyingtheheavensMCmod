@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:arts/qi_sense",
+  "criteria": {
+    "soul_projection": {
+      "conditions": {
+        "milestone": "soul/projection"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.arts.soul_projection.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:soul_lantern"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.arts.soul_projection.title"
+    }
+  },
+  "requirements": [
+    [
+      "soul_projection"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

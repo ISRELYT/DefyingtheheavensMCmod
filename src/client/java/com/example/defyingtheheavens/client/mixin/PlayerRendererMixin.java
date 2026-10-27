@@ -37,6 +37,14 @@ public abstract class PlayerRendererMixin {
 		if (com.example.defyingtheheavens.client.ClientBodies.drawPlate(player, pose, buffers, light)) ci.cancel();
 	}
 
+	/** Over a player's name, their plate (ClientPlates): the title they have taken, and their sect's title for them, each on its own line. */
+	@Inject(method = "renderNameTag(Lnet/minecraft/client/player/AbstractClientPlayer;Lnet/minecraft/network/chat/Component;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
+			at = @At("TAIL"))
+	private void dth$titles(AbstractClientPlayer player, net.minecraft.network.chat.Component name, PoseStack pose, MultiBufferSource buffers, int light,
+							CallbackInfo ci) {
+		com.example.defyingtheheavens.client.ClientPlates.drawAbove(player, pose, buffers, light);
+	}
+
 	/** The spells' auras on your own arm in first person (SpellAuraLayer#firstPersonArm): Flame Fist's fire, a ward's skin. */
 	@Inject(method = "renderHand", at = @At("TAIL"))
 	private void dth$spellAurasOnHand(PoseStack pose, MultiBufferSource buffers, int light, AbstractClientPlayer player, ModelPart arm,

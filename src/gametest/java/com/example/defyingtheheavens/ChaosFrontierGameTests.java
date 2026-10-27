@@ -47,8 +47,8 @@ import java.util.UUID;
  * one's health a second through armour and
  * wards, no mending of itself, shelter in a domain not a foe's); its fiends (their ranks by depth, a realm above them left alone, their
  * spoils); the Primordial Chaos (a Golden Immortal's might, its lair, its Unmaking folding domains, its spoils, the Court's pay); the Dao
- * Fragments; the First Flame's basin and its light. The test server has no Immortal Realm: its land as its generator makes it
- * (ImmortalCitiesGameTests#land), its rules by their own parts. Each test with a player in a batch of its own.
+ * Fragments; the First Flame's basin and its light. The Immortal Realm's land as its generator makes it (ImmortalCitiesGameTests#land:
+ * written when the test server had no Immortal Realm), its rules by their own parts. Each test with a player in a batch of its own.
  */
 public class ChaosFrontierGameTests implements FabricGameTest {
 	private static final int TI_EARLY = PlayerCultivation.rank(Realm.TRUE_IMMORTAL, Stage.EARLY);

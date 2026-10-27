@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:worlds/spatial_gap",
+  "criteria": {
+    "upper_realm": {
+      "conditions": {
+        "to": "defying-the-heavens:upper_realm"
+      },
+      "trigger": "minecraft:changed_dimension"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.worlds.jade_firmament.description"
+    },
+    "frame": "goal",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:emerald"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.worlds.jade_firmament.title"
+    }
+  },
+  "requirements": [
+    [
+      "upper_realm"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

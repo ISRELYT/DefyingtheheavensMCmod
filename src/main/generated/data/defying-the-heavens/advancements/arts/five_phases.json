@@ -1,0 +1,68 @@
+{
+  "parent": "defying-the-heavens:arts/first_spell",
+  "criteria": {
+    "spell_earth": {
+      "conditions": {
+        "milestone": "spell/earth"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    },
+    "spell_fire": {
+      "conditions": {
+        "milestone": "spell/fire"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    },
+    "spell_metal": {
+      "conditions": {
+        "milestone": "spell/metal"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    },
+    "spell_water": {
+      "conditions": {
+        "milestone": "spell/water"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    },
+    "spell_wood": {
+      "conditions": {
+        "milestone": "spell/wood"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.arts.five_phases.description"
+    },
+    "frame": "goal",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:heaven_furnace_censer"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.arts.five_phases.title"
+    }
+  },
+  "requirements": [
+    [
+      "spell_wood"
+    ],
+    [
+      "spell_water"
+    ],
+    [
+      "spell_fire"
+    ],
+    [
+      "spell_earth"
+    ],
+    [
+      "spell_metal"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -14,8 +14,8 @@ import net.minecraft.world.item.Items;
 
 /**
  * The dead (phase 3, see GhostSystem): what a ghost is saved as, what can touch one, dispersing instead of dying, the yin
- * taking the living where they stand, and what a ghost leaves behind when it is born again. The test server has no
- * Netherworld, so the Gate's respawn and the Wheel's turning are checked in game instead.
+ * taking the living where they stand, and what a ghost leaves behind when it is born again. The Gate's respawn and the Wheel's
+ * turning are checked in game instead (written when the test server had no Netherworld).
  */
 public class NetherworldDeadGameTests implements FabricGameTest {
 	private static ServerPlayer cultivator(GameTestHelper helper, Realm realm) {

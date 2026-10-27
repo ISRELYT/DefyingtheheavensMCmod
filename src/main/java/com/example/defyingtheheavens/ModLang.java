@@ -279,6 +279,8 @@ public final class ModLang {
 	public static final String NPC_GREET_SECLUDED = k("npc.greet.secluded");
 	/** Something a cultivator says of its own accord (NpcLines: {@code key} is the line's key and variant number). */
 	public static String npcSay(String key) { return k("npc.say." + key); }
+	/** A form of address a cultivator calls a player by (NpcAddress): "senior", "far_above.devilish"... */
+	public static String address(String id) { return k("address." + id); }
 
 	// Talking to cultivators (TalkSystem): the wheel, the dialogue box, and what cultivators say.
 	/** A line a cultivator speaks in a {@code kind} ("greet", "ask", "gift.small"...), by their path and standing. */
@@ -869,6 +871,7 @@ public final class ModLang {
 	public static final String YIN_EBBING = k("netherworld.yin_ebbing");
 	public static final String YIN_HELD = k("netherworld.yin_held");
 	public static final String GHOST_QI_HERE = k("netherworld.ghost_qi_here");
+	public static final String GHOST_QI_TEEMING = k("netherworld.ghost_qi.teeming");
 	public static final String GHOST_QI_DENSE = k("netherworld.ghost_qi.dense");
 	public static final String GHOST_QI_PEAKS = k("netherworld.ghost_qi.peaks");
 	public static final String GHOST_QI_THIN = k("netherworld.ghost_qi.thin");
@@ -970,6 +973,21 @@ public final class ModLang {
 	public static final String MSG_STORAGE_COST = k("message.storage_ring.cost");
 	public static final String MSG_STORAGE_REFINED = k("message.storage_ring.refined");
 	public static final String KEY_STORAGE_RING = "key." + DefyingTheHeavens.MOD_ID + ".storage_ring";
+	// The Dao Codex, the mod's guide (Codex; client CodexScreen, CodexState, CodexToast)
+	public static final String KEY_CODEX = "key." + DefyingTheHeavens.MOD_ID + ".codex";
+	public static final String CODEX_TITLE = k("codex.title");
+	public static final String CODEX_BUTTON = k("codex.button");
+	public static final String CODEX_LOCKED = k("codex.locked");
+	public static final String CODEX_COUNT = k("codex.count");
+	public static final String CODEX_TOAST_NEW = k("codex.toast.new");
+	public static final String CODEX_TOAST_MANY = k("codex.toast.many");
+
+	/** The hint a locked entry of the Codex gives (Codex.Hint). */
+	public static String codexHint(String id) { return k("codex.hint." + id); }
+	/** A Codex chapter's title, and a page's title and text (Codex). */
+	public static String codexChapter(String id) { return k("codex.chapter." + id); }
+	public static String codexEntryTitle(String id) { return k("codex.entry." + id + ".title"); }
+	public static String codexEntryText(String id) { return k("codex.entry." + id + ".text"); }
 	// Switching abilities by key, without the wheel (client QuickAbilities)
 	public static final String KEY_QUICK_ABILITY = "key." + DefyingTheHeavens.MOD_ID + ".quick_ability";
 	/** Followed by the slot's number, 1 to 8: "key.defying-the-heavens.ability_slot_3". */
@@ -1418,6 +1436,15 @@ public final class ModLang {
 	public static final String CMD_GUEST_UNKNOWN = k("command.small_world.guest_unknown");
 	public static final String MSG_GUEST_INVITED = k("message.small_world.invited");
 	public static final String TOOLTIP_WORLD_SEED = k("tooltip.world_seed");
+
+	// The titles players take (PlayerTitles, 2026-10-27): the Cultivation tab's field, and what one is told.
+	public static final String TITLE_LABEL = k("title_field.label");
+	public static final String TITLE_HINT = k("title_field.hint");
+	public static final String TITLE_TIP = k("title_field.tip");
+	public static final String MSG_TITLE_SET = k("message.title.set");
+	public static final String MSG_TITLE_ANNOUNCED = k("message.title.announced");
+	public static final String MSG_TITLE_CLEARED = k("message.title.cleared");
+	public static final String MSG_TITLE_LOCKED = k("message.title.locked");
 
 	private ModLang() {}
 }

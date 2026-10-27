@@ -23,6 +23,7 @@ public class DefyingTheHeavensDataGenerator implements DataGeneratorEntrypoint {
 		pack.addProvider(ModBlockTagProvider::new);
 		pack.addProvider(ModDamageTypeTagProvider::new);
 		pack.addProvider(ModBlockLootProvider::new);
+		pack.addProvider(ModAdvancementProvider::new); // the mod's advancements (ModAdvancements)
 	}
 
 	/** The Upper Realm's worldgen, built with vanilla's codecs and written out by ModWorldgenProvider. */

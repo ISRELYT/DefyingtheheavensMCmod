@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:arts/root",
+  "criteria": {
+    "flight_qi": {
+      "conditions": {
+        "milestone": "flight/qi"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.arts.qi_flight.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:feather"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.arts.qi_flight.title"
+    }
+  },
+  "requirements": [
+    [
+      "flight_qi"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

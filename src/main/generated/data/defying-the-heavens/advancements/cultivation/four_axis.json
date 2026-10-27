@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:cultivation/heavenly_being",
+  "criteria": {
+    "realm_four_axis": {
+      "conditions": {
+        "milestone": "realm/four_axis"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.cultivation.four_axis.description"
+    },
+    "frame": "goal",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:jade"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.cultivation.four_axis.title"
+    }
+  },
+  "requirements": [
+    [
+      "realm_four_axis"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

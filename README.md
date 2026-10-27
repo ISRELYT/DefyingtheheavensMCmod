@@ -41,6 +41,58 @@ item added later that the list doesn't name still shows, at the end. The items s
 other creatures (tribulation clouds, heart demons, the bodies left behind by the Inner Realm and Soul Projection) only
 arise from what makes them, so they have no eggs.
 
+## Advancements
+
+The mod's own advancements (the user's ask, 2026-10-27: "advancements like normal Minecraft but for the mod"), 82 of them in five
+tabs of the advancements screen (L), each with its toast and told in chat as vanilla's are (`announceAdvancements`); none gives a
+reward (the user's pick).
+
+| Tab | What it follows |
+| --- | --- |
+| **Defying the Heavens** | The realms, Qi Refining to Heavenly Lord (the highest of your paths: heaven, ghost or Demon Path); a tribulation survived, and one into True Immortal or past it; a High-grade physique; the Ritual granted; the four axes of virtue; a Law; the Five Decays weathered |
+| **Arts and Treasures** | The first spell, the five elements' spells, a spell of both paths; Qi Sense, Qi Flight, Sword Flight, Meteor Flight; the Inner Realm, Soul Projection, Possession, a Clone, a core detonated (secret); spirit stones and an Immortal one, a Storage Ring refined, a thousand-year Cultivation Fruit eaten, a Sacred Vessel, a Dao Fragment, an Origin Stone; a demon core, a Chaos Fiend, an elder beast, a primordial beast, the Primordial Chaos |
+| **Worlds Beyond** | The Spatial Gap, the Jade Firmament, the Astral Realm, the Great Void, its Ancient Battlefields, a Holy Land, a Demon Palace, the Shore of Nirvana, the Immortal Realm, the Chaos Frontier, a small world of your own |
+| **The Yellow Springs** | Death as a ghost, the Soul River, the Nine Nether Peaks, a Hungry Ghost slain, the ghost path, a ghost spell, both paths among the living, a Ghost King's crown, Meng Po's soup, rebirth |
+| **Sects and Cultivators** | A talk, an accepted gift, a sworn friend, a spar won, a sect joined, Elder, Sect Master, a beast's bloodline, a cultivator kneeling to you, a title taken, the Celestial Court |
+
+Where a thing happens the mod fires its milestone (`Milestones`, through its own trigger `defying-the-heavens:milestone`); worlds,
+treasures and beasts use vanilla's triggers. What is a standing state (a realm, a sect's title, a Ghost King's crown, a title, a
+small world) is looked at every two seconds, so a world from before the advancements catches up as its players join (the user's
+pick); one-off events (a spar, a spell) count from now on. Code: `Milestones`, `MilestoneTrigger`, `client/ModAdvancements` (the
+tree and its English) and `client/ModAdvancementProvider` (datagen); tests `AdvancementsGameTests`.
+
+## The Dao Codex
+
+The mod's guide in game (the user's ask, 2026-10-27: "a little encyclopaedia or mod guide that players always have access to in game
+... Preferably, it doesn't spoil too much (maybe info unlocks as you go?)"). The user's picks: the **J** key ("Open the Dao Codex",
+rebindable) and a button on the cultivation menu; a sealed page shown as **???** with a vague hint; a **toast** and a **gold dot** for
+what is new; a **player's guide**, what things are and how to do them, with few exact numbers.
+
+- **103 pages in 11 chapters**: First Steps, The Way of Cultivation, The Realms, Methods and Spells, Abilities, Treasures and Alchemy,
+  Sects and Cultivators, Beasts and Bloodlines, Worlds Beyond, The Yellow Springs, Laws and Immortality. About a fifth are open from
+  the first day (First Steps whole: the Codex itself, the mortal body, the elixir, the cauldron, meditation, the menu, the keys, one's
+  physique; and the plain things of the world: lifespan, spirit stones, fruit, herbs, clothing, jade, cultivators, talking, alignment,
+  sects and their barriers, demon beasts, bloodlines).
+- **The rest open with the advancements** (Advancements, above), any one of a page's: each realm's page as one reaches it (the page
+  before tells the way to it), the worlds' pages at the realm that can reach them or on arriving, the dead's pages on death, the Laws
+  at True Immortal. A page sealed shows ??? and its hint ("Cultivate further, and this page will open to you", "Only the dead know of
+  this", ...); a chapter all sealed shows ??? and a darkened icon.
+- **The screen** (400 x 230, in the talk wheel's lacquer and gold): the chapters' icons down the left, the chosen chapter's pages
+  listed beside them, the page on the right with its icon and title; its text wrapped to fit, points of a list with a gold point, the
+  keys named as they are bound now (in gold, so a rebound key reads right). The mouse wheel scrolls the list or the page (and steps
+  through the chapters over their column); up and down choose the page, left and right the chapter, Page Up and Down scroll; J or Esc
+  closes it, back to the cultivation menu if it came from there. The header counts the pages open ("34 of 103 pages"). It opens on the
+  newest page not yet read (a new player: the welcome), else where it was left. It doesn't pause the game.
+- **New pages**: a toast, "New in the Codex", naming the page (or counting them) with the key; a gold dot on each page not yet read,
+  on its chapter, and on the cultivation menu's **book** (outside the panel's top right; J opens the Codex from the menu too). A world
+  from before the Codex opens what its player has already done the first time they come in, in one toast.
+- **Kept on this computer**, per world (the singleplayer world's folder or the server's address): which pages were told of and which
+  read, in `config/defying-the-heavens-codex.json`.
+
+Code: `Codex` (the chapters, pages, hints and their English, on the common side so a test can hold the pages to the loaded
+advancements), client `CodexScreen` (and its `Book`), `CodexState` (what is open and read; `mixin/ClientAdvancementsAccessor` reads
+the client's advancement progress), `CodexToast`; tests `CodexGameTests`.
+
 ## Recipe book
 
 Every crafting recipe the mod adds has its own tab in the recipe book, last among the crafting table's tabs (and the
@@ -289,6 +341,12 @@ by its realm, stage and boosts): in the Upper Realm some 2 a tick at Qi Refining
 past that the more for every realm (the user's ask, 2026-10-22, when the realms after Four Axis all drew in Four Axis's 6): Dao
 Integration 7 to 8, Void Shattering 9, Sacred Vessel 11, Entering Nirvana 12, True Immortal 14, at most 16 with boosts. The lower
 realms' thin qi gives half as many; an NPC cultivator draws in as a player gathering a tenth as fast.
+
+The air's own motes are as thick as its qi (`QiSenseClientHandler#airQi`): some 45 about you in the lower realms, 450 in the Upper
+Realm, 4,500 in the Great Void and **45,000 in the Immortal Realm** (its thousandfold air; the user's ask, 2026-10-27, when it showed
+barely more than the Great Void's under the old cap of 6,000). Where the air is that crowded, the motes further than 9 blocks off are
+drawn as small soft dots without their halo, so it costs no more to draw than the Great Void did. On the Great Void's Ancient
+Battlefields their ghostly qi's **cyan yin** drifts besides, as thick as it (`#yinAir`): about half the motes there are yin.
 
 ## The mortal path and alchemy
 
@@ -863,6 +921,14 @@ cultivator no longer: its whole health, strength, qi pool, abilities and flight 
 `#isSuppressed`, `#sustained`, `#wielded`; an NPC cultivator the same, `CultivatorNpc#sustainedRank`). It meditates there too, at the
 lower realms' thin qi, up to its stage's full bar; the breakthrough itself still waits for the Upper Realm (`#isBreakthroughLocked`).
 Four Axis and Dao Integration are held to Heavenly Being Grand Perfection there as before.
+
+**Titles** (`PlayerTitles`, `ClientPlates`; the user's ask, 2026-10-27). From Void Shattering on (either path) you may name yourself:
+type a title into the field under your realm on the Cultivation tab and press Enter, up to 50 characters (colour codes and control
+characters are dropped, runs of spaces made one); empty it and press Enter to clear it. It stands over your name in gold, in brackets,
+with your sect's title above it in the sect titles' own way, so both show at once, and cultivators call you by it (see Talking to
+cultivators). Taking one is told to everyone on the server in chat, as an advancement is: "Name has taken the title [title]", the
+title in gold with the realm you took it at over it (a few tries within thirty seconds are told to you alone). Below Void Shattering
+it is kept but neither shown nor used.
 
 **Mending** (the user's ask, 2026-10-22: the great bodies healed at vanilla's two a second, hours to mend). Natural regeneration
 goes by the realm's body (`CultivationStats#mendFactor`, `mixin/FoodDataMixin`): every heal vanilla gives a fed body is multiplied
@@ -2182,16 +2248,25 @@ sustains need that many times their base cultivation: **Void Shattering** on (`P
 - **The void steppes.**
 - **Five Dao fields**, each where one element's law runs strong. Its element is easier to gather. Spells of its element strike
   **×1.25**, and spells of the element it overcomes **×0.75** (`HeavenSpells#daoField`).
-- **Ancient Battlefields** of the old war between Heaven and the demons. Their water runs red, and they are strewn with what the
-  war left: a giant's sword driven into the ground, heaps of bones, a broken wall with its banner, a half-sunk war chest
-  (`BattlefieldRuinFeature`).
+- **Ancient Battlefields** of the old war between Heaven and the demons. Their water runs red, and their **ghostly qi is x100**, ten
+  times the Netherworld's (see Ghostly qi, under The Netherworld): the ghost path's place of dense qi outside the realm of the dead.
+  The land is torn by the war (one remnant in every two chunks, `BattlefieldRuinFeature`; remade 2026-10-27 without the old giant swords):
+  - **craters**, 5 to 25 blocks across, their rims thrown up and their floors burnt to blackstone and basalt; some glassed to
+    obsidian at the heart, some with magma still smouldering, some holding a pool of dark water; the largest cracked out round
+    their rims; now and then two or three small ones together where a volley fell;
+  - **fissures** torn through the ground, their lips scorched, magma glowing in some;
+  - **toppled spires**: a great pillar of rock blasted off at its base, the rest lying broken across the land;
+  - **fields of rubble**: boulders, gravel and blackened bricks;
+  - heaps of **bones**, a **broken wall** with its banner or a gate's **arch** fallen between its pillars, and a half-sunk
+    **war chest** with its old weapons and slips.
 - **The Shore of Nirvana** at the void sea's edge.
 
 **Void currents** (`VoidCurrents`). Drifting rifts of streaming starlight that come out of the void near whoever is about, at
 most two near anyone. Each is drawn lying along its flow, drifts slowly the way it flows, and closes after 90 seconds. Touch one
 and it sweeps you off along its flow. You are blinded by its light while it bears you, for 1.5 to 5 seconds while the land ahead
 loads. You come out 500 to 1,400 blocks on, onto the nearest continent there and never onto a Holy Land's barrier, and land
-harmlessly.
+harmlessly. No current comes within 16 blocks of a Holy Land's or a Demon Palace's barrier: one is born only where its whole drift
+keeps clear of them, and one that comes up against one all the same shuts there (the user, 2026-10-27).
 
 **Holy Lands** (`HolyLands`, `HolyLandPlan`, `HolyLandPieces`). The sect tier above the sects, and the only sects in the Great
 Void.
@@ -2279,15 +2354,22 @@ there** (the user's rule); one who falls below it inside stays.
 - Crossing it is a 30-second climb through its passage (`immortal_passage`) under its pressure: **True Immortals** cross unharmed,
   **Entering Nirvana Grand Perfection** survives with care (armour, pills), earlier Entering Nirvana is crushed, and anyone below is
   turned back.
-- When it opens, a third of the camp (eight at most) rush it and are gone; new ones come in over the following days. Its four guards
-  never go for a demon-race Entering Nirvana.
+- When it opens, a third of the camp (eight at most) rush it and are gone; new ones come in over the following days. They rise to the
+  opening's height first and fly level into it, and the land between the camp and the Gate is kept running while any fly (they used to
+  fly straight at it, into the underside of its cloud, and hang there out of the land the server ran: the user, 2026-10-27). Those it
+  shuts on fly back the same way. Its four guards never go for a demon-race Entering Nirvana.
+- **Its light** (`GatePortalRenderer`, 2026-10-27), the Immortal Realm's gold, fills both gates' openings while it stands open: clouds of
+  light drifting in layers that shift against each other as you move, glints, a breathing heart and slow ripples out from it, the light
+  spilling onto the threshold and the pillars' faces, golden motes. It blooms out from its middle as it opens and folds back into it as
+  it shuts.
 - You come out at the **Southern Heavenly Gate** on the main island. The **only way down** is back through it while the Gate stands
   open: no Spatial Tear opens in the realm, and falling below the clouds bears you back up onto the nearest land.
 
 **The land** (noise `immortal_peaks`, biomes jade peaks, immortal gardens, celestial heights and the jade capital).
 - The **sea of clouds** at Y 150 is drawn by the client (no blocks). The massifs rise out of it with terraces and ranges, and lone
   jade pinnacles stand alone out of it.
-- **Qi ×1000**, and True Immortal needs a thousand times its base cultivation (the Great Void's pattern).
+- **Qi ×1000**, and True Immortal needs a thousand times its base cultivation (the Great Void's pattern). Under Qi Sense its air
+  holds ten times the Great Void's motes (some 45,000 about you).
 - **No steles** (the user's rule).
 
 **Immortal essence** (`ImmortalEssence`, an ability). A True Immortal's gold bar: 100, 150, 220 or 320 by stage. It fills only inside
@@ -2778,16 +2860,20 @@ the "Netherworld" compound of a player's cultivation, only when it differs from 
 
 The second kind of qi. Ordinary qi is the cultivator's own; ghostly qi belongs to places, and is what the ghost methods
 are cultivated on and the **Ghost Qi** pool fills from. Under Qi Sense it is a sixth element, yin, its motes thick in the
-Netherworld.
+Netherworld, and as thick as the Great Void's own qi over its Ancient Battlefields (about half the motes there).
 
 | Where | Density (a Soul Sand Valley = 1) | The pool fills, a second | The ghost path goes |
 |---|---|---|---|
+| The Great Void's **Ancient Battlefields**, where the armies of Heaven and the demons fell (the user's ask, 2026-10-27: a place denser than the Netherworld) | 100 (`GhostQi.ANCIENT_BATTLEFIELD`) | 20 | x100 |
 | The Netherworld | 10 (`GhostQi.NETHERWORLD`) | 2 | x10 |
 | The Nine Nether Peaks | 12 (x `PEAKS_FACTOR`) | 2.4 | x12 |
 | A Soul Sand Valley | 1 (`SOUL_SAND_VALLEY`) | 0.2 | x1 (the baseline) |
 | The rest of the Nether | 0.5 (`NETHER`) | 0.1 | x0.5 |
 | The Overworld, anywhere in it (the thinnest, the user's call 2026-10-19) | 0.25 (`OVERWORLD`) | 0.05 | x0.25 |
-| Everywhere else (the Upper Realm, the Spatial Gap, the End, the Astral Realm) | 0 | nothing | not at all |
+| Everywhere else (the Upper Realm, the Spatial Gap, the End, the Astral Realm, the rest of the Great Void) | 0 | nothing | not at all |
+
+On a battlefield the Cultivation tab says it is **teeming**, and a ghost-path seclusion there costs a tenth of the Netherworld's years
+(`Lifespan#ghostPlaceSaving`, as the Peaks save a little). Yin corruption stays the Netherworld's alone.
 
 The pool fills at density x 0.2 a second (`FILL_PER_DENSITY`); spirit stones and Spirit Dew don't fill it. Everyone who
 has one sees it as a cyan **Ghost Qi** bar: every ghost, and every living cultivator who knows a ghost method. It holds
@@ -3898,16 +3984,20 @@ in each path's voice, is in `NpcLines`).
 | Night (13,000-24,000) | Disciples sleep on their mats (from Core Formation they meditate through the night instead). With outer disciples enough for two watches the gates have a night watch, who sleep in through the next morning; the watch hands over with a word |
 
 - **Talk** is about real things: their cultivation, their duties, the Sect Master and elders by name, the last visitor to
-  the grounds (by name), and the rumours going round (`Rumours`: herbs, caves, killings). Rogues who meet on the road pass
-  a few words too.
+  the grounds (by name, or by their title), and the rumours going round (`Rumours`: herbs, caves, killings). Rogues who meet
+  on the road pass a few words too.
 - **Juniors bow** to a passing Elder or the Sect Master, who may nod back.
-- **Passing a cultivator** (within 6 blocks, 2.5 sneaking; once every few minutes each): one who likes you greets you
-  by name, one who doesn't says so, one two realms beneath you bows in awe, one two realms above is dismissive, a mortal is
-  warned; a gate guard welcomes a friend and halts a stranger; and anyone eyes a Supreme or Immortal spirit stone, or a
-  Cultivation Fruit, in your hand.
+- **Passing a cultivator** (within 6 blocks, 2.5 sneaking; once every few minutes each), it calls you as it would in talk
+  (**What they call you**, under Talking to cultivators). One realm beneath you it bows; two or three, a deep bow; from
+  four it **kneels** as you pass (within 5 blocks, rising once you are 8 away), its forehead to the ground from six. One who
+  likes you greets you warmly, one who doesn't says so (stiffly, to a senior), one above you has a word for a junior, a
+  mortal is warned, one of your own sect welcomes you home; a gate guard welcomes a friend and halts a stranger (with
+  deference, a senior). One who needn't bow low to you speaks its mind of what it sees: a Supreme or Immortal spirit stone
+  or a Cultivation Fruit in your hand, your wounds, your flight, your meditating in the open, a demon's head (its kin's, to
+  a demon), the Five Decays on you, your Law domain lit, you wandering its grounds after dark.
 - They remark on the rain and the thunder, dusk and dawn; grumble patrolling in the rain (nobody practises or strolls in
   it); mumble in their sleep; shout when the sect is attacked, its barrier struck or its treasury robbed; cheer a
-  breakthrough (theirs, or a fellow's).
+  breakthrough (theirs, or a fellow's); cry out at a player's tribulation within 40 blocks.
 - **When a member falls**, those near cry out its name, and for half a day after its fellows go and stand where it fell.
 - **The Ritual to the Heavens.** A member whose cultivation fills at Qi Refining Mid goes, by day, to the sect's Altar of
   Heaven (one at a time; a sect from before the altar existed kneels by its Formation Core), kneels fifteen seconds on an
@@ -3952,6 +4042,26 @@ window closes with a line over the hotbar saying why (`TalkSystem`, `TalkWheelSc
 | The same realm | "Fellow Daoist", and they offer tea | All six |
 | 1 realm below | They answer freely: how far along their stage they are, their elders' realms | All six |
 | 2+ realms below | As below; pressed down by your Realm Suppress, they kneel | All six, and Demand and Release while you press them |
+
+- **What they call you** (`NpcAddress`; the user's ask, 2026-10-27: a Qi Refiner shouldn't call a Four Axis or a Sacred Vessel
+  just "Senior"). By how many realms you stand above them, as each shows itself (below Void Shattering the lower realms hold
+  everyone to Heavenly Being, them and you alike, so there Ancestor is for Void Shattering and on):
+
+| You stand | They call you | And |
+| --- | --- | --- |
+| 2+ realms below them | little friend, junior, ant, little soul (righteous, neutral, devilish, the dead) | |
+| 1 realm below | young friend, junior, brat, young soul | |
+| The same realm | Fellow Daoist | |
+| 1 realm above | Senior | bow |
+| 2 or 3 above | Esteemed Senior | bow deeply |
+| 4 or 5 above | Revered Senior | kneel to you (`NpcAddress#KNEEL_GAP`), in talk and as you pass |
+| 6 or more above | Ancestor; **Lord Immortal** from True Immortal on | kneel |
+
+  A mortal calls any cultivator "Immortal" and their name (Lord Immortal from True Immortal on), another mortal "friend". A
+  title you have taken (from Void Shattering on) is what they call you in place of all of those, bare ("young" it, or
+  "little" it, from one above you); an Elder, Grand Elder or Sect Master of their own sect over them is called by that title.
+  Nobody is called a Venerable or a Patriarch: those are ranks the Court and the sects' NPCs hold. Their greetings and
+  answers in talk are written for every rung in every voice (`NpcLines` `talk.greet.*`, `talk.ask.*`, and a friend's own).
 
 - **Greeting.** You bow to a senior and cup your fist to an equal or a junior; they answer in kind (`GesturePose`).
 - **Regard** (-100 to 100, five pips: Polite from 20, Courteous 40, Warm 60, Trusted 80, Sworn friend 90) is what they
@@ -4337,6 +4447,24 @@ From the user's list after playing the second (with screenshots), and "a lot of 
   as the ears'; they leant in and crossed); Ox-Head's horns curve up.
 
 Previews (no game needed): `run/previews/animals` (the beasts' gaits), `run/previews/figures` (the two Impermanences turning and striking).
+
+## The overhauls (2026-10-27)
+
+The user's batch after the fourth bug sweep:
+
+- **Game tests in the mod's own worlds.** The test server is given the mod's dimensions as a played world has them (the Great Void,
+  the Immortal Realm, the Netherworld, the Spatial Gap and the rest: `test/mixin/GameTestServerMixin`, gametest source set only), so
+  tests can go there; `OverhaulsGameTests` does (a battlefield found in the Great Void, a tear into the gap, a small world entered).
+- **The spells' land kept across a crash** (`HeavenSpells.Land`). Every block a spell sets for a while (walls, ice, tame fire, the water
+  poured, the charred and frozen ground) is kept in its level's own record as it is set and struck off as it is taken up, written out
+  every 10 seconds while it changes. A server stopping takes them all up as before; one that crashed or was killed left them standing,
+  and they are taken up as it next starts (only where the spell's own block still stands).
+- **The Great Void's battlefields** have craters and ruin in place of the giant swords, and **ghostly qi x100** with its cyan yin
+  motes under Qi Sense (The Great Void Realm; Under Qi Sense).
+- **The Immortal Realm's qi motes** are ten times the Great Void's, as its qi is (Under Qi Sense).
+- **The camp rushes the Gate**, and **the Gate's light** is golden (The Immortal Realm).
+- **Titles** from Void Shattering on (The realms after Four Axis), and **what cultivators call you**, kneeling from four realms beneath
+  you, with many more lines in passing and in talk (Sects and cultivators: Everyday life, Talking to cultivators).
 
 ## Shader packs (Iris)
 

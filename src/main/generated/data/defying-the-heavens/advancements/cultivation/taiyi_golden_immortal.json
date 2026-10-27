@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:cultivation/golden_immortal",
+  "criteria": {
+    "realm_taiyi_golden_immortal": {
+      "conditions": {
+        "milestone": "realm/taiyi_golden_immortal"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.cultivation.taiyi_golden_immortal.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:enchanted_golden_apple"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.cultivation.taiyi_golden_immortal.title"
+    }
+  },
+  "requirements": [
+    [
+      "realm_taiyi_golden_immortal"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

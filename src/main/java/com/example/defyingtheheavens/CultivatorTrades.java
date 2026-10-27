@@ -185,7 +185,7 @@ public final class CultivatorTrades {
 				goods.add(herb(random, 800, 1500, 0, ModItems.SPIRIT_GINSENG, ModItems.PURPLE_LINGZHI, ModItems.SPIRIT_LOTUS));
 				goods.add(new Goods(ClothingItem.create(ModItems.clothing(ClothingTier.EARTH, pickPiece(random)), style), 150, 1, Regard.PER_PIP));
 				goods.add(pill(ModItems.FOUNDATION_PILL, PillGrade.HIGH, 1, Regard.COURTEOUS));
-				goods.add(new Goods(new ItemStack(ModItems.CULTIVATION_FRUIT), 30, 1, Regard.WARM));
+				goods.add(fruit(random, 400, 900, Regard.WARM));
 				goods.add(new Goods(new ItemStack(ModItems.RING_OF_POWER), 400, 1, Regard.TRUSTED));
 			}
 			case ROGUE, WANDERER -> {
@@ -268,7 +268,8 @@ public final class CultivatorTrades {
 		goods.add(new Goods(PillItem.create(ModItems.QI_GATHERING_PILL, PillGrade.IMMORTAL, 100), IMMORTAL_STONE, 3, 0));
 		ItemStack herb = GinsengItem.create(pick(random, ModItems.SPIRIT_GINSENG, ModItems.PURPLE_LINGZHI, ModItems.SPIRIT_LOTUS), Mth.nextInt(random, 5000, 10000));
 		goods.add(new Goods(herb, 3 * IMMORTAL_STONE, 2, 0));
-		goods.add(new Goods(new ItemStack(ModItems.CULTIVATION_FRUIT), JADE, 1, Regard.PER_PIP));
+		// Its fruit as old as its herbs (the bug sweep of 2026-10-27: an ageless stack, a fruit of one year, sold at an Immortal Jade).
+		goods.add(new Goods(CultivationFruitItem.create(Mth.nextInt(random, 5000, 10000)), JADE, 1, Regard.PER_PIP));
 		HeavenMethod own = npc.heavenMethod();
 		QiElement element = own != null ? own.element() : QiElement.five()[(int) Math.floorMod(npc.getUUID().getLeastSignificantBits() >>> 3, 5L)];
 		goods.add(new Goods(new ItemStack(ModItems.sacredVessel(element)), 30 * JADE, 1, Regard.WARM));
@@ -334,6 +335,15 @@ public final class CultivatorTrades {
 	private static Goods herb(RandomSource random, int minYears, int maxYears, int regard, Item... kinds) {
 		ItemStack herb = GinsengItem.create(pick(random, kinds), Mth.nextInt(random, minYears, maxYears));
 		return new Goods(herb, (int) Math.ceil(TalkSystem.worth(herb) * MARKUP), 2, regard);
+	}
+
+	/**
+	 * A Cultivation Fruit {@code minYears} to {@code maxYears} old, priced by its worth as a herb is (the bug sweep of 2026-10-27: the Sect
+	 * Master's was an ageless stack, a fruit of one year, at the price of one some six hundred years old).
+	 */
+	private static Goods fruit(RandomSource random, int minYears, int maxYears, int regard) {
+		ItemStack fruit = CultivationFruitItem.create(Mth.nextInt(random, minYears, maxYears));
+		return new Goods(fruit, (int) Math.ceil(TalkSystem.worth(fruit) * MARKUP), 1, regard);
 	}
 
 	private static Goods pill(Item kind, PillGrade grade, int maxUses, int regard) {

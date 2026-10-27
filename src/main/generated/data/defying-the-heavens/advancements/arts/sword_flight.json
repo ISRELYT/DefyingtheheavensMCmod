@@ -1,0 +1,33 @@
+{
+  "parent": "defying-the-heavens:arts/qi_flight",
+  "criteria": {
+    "flight_sword": {
+      "conditions": {
+        "milestone": "flight/sword"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.arts.sword_flight.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:iron_sword",
+      "nbt": "{Damage:0}"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.arts.sword_flight.title"
+    }
+  },
+  "requirements": [
+    [
+      "flight_sword"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

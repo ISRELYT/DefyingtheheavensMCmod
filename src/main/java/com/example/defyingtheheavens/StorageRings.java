@@ -368,6 +368,7 @@ public final class StorageRings extends SavedData {
 			for (ItemStack cost : next.cost()) take(player.getInventory(), cost.getItem(), cost.getCount());
 		}
 		StorageRingItem.setGrade(ring, next);
+		Milestones.award(player, Milestones.STORAGE_RING);
 		player.displayClientMessage(Component.translatable(ModLang.MSG_STORAGE_REFINED, next.getDisplayName()).withStyle(ChatFormatting.GOLD), true);
 		player.level().playSound(null, player.blockPosition(), SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.PLAYERS, 1.0f, 0.8f);
 		player.level().playSound(null, player.blockPosition(), SoundEvents.END_PORTAL_FRAME_FILL, SoundSource.PLAYERS, 0.7f, 1.2f);

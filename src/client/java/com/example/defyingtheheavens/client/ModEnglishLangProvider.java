@@ -5,6 +5,7 @@ import com.example.defyingtheheavens.Alignment;
 import com.example.defyingtheheavens.AstralPlanets;
 import com.example.defyingtheheavens.ClothingStyle;
 import com.example.defyingtheheavens.ClothingTier;
+import com.example.defyingtheheavens.Codex;
 import com.example.defyingtheheavens.GhostMethod;
 import com.example.defyingtheheavens.Spell;
 import com.example.defyingtheheavens.ModBlocks;
@@ -88,9 +89,21 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModEntities.SOUL_BODY, "Body");
 		t.add(ModEntities.SOUL_VESSEL, "Seized Body");
 		t.add(ModBlocks.SOUL_CRYSTAL, "Soul Crystal");
+		// The rest, named (the bug sweep of 2026-10-27: a death message falls back on the harm's own name when its caster is gone, and
+		// these showed as raw keys there and wherever else an entity is named).
+		t.add(ModEntities.TRIBULATION_CLOUD, "Tribulation Cloud");
+		t.add(ModEntities.SPELL_PROJECTILE, "Spell");
+		t.add(ModEntities.SPELL_FIELD, "Spell Field");
+		t.add(ModEntities.SPELL_CONSTRUCT, "Spell Construct");
+		t.add(ModEntities.SPELL_BLOCK, "Spell Block");
+		t.add(ModEntities.EARTH_GOLEM, "Earth Golem");
+		t.add(ModEntities.DIRT_TIDE, "Dirt Tide");
+		t.add(ModEntities.SPATIAL_TEAR, "Spatial Tear");
 
 		// Blocks
 		t.add(ModBlocks.SPATIAL_RIFT, "Spatial Rift");
+		t.add(ModBlocks.YELLOW_SPRINGS_RIFT, "Yellow Springs Rift");
+		t.add(ModBlocks.WHEEL_OF_REINCARNATION, "Wheel of Reincarnation");
 		t.add(ModBlocks.IMMORTAL_GATE_LIGHT, "Light of the Immortal Gate");
 		t.add(ModBlocks.JADE_STONE, "Jade Stone");
 		t.add(ModBlocks.JADE_ORE, "Jade Ore");
@@ -126,6 +139,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.biomeKey("celestial_heights"), "Celestial Heights");
 		t.add(ModLang.biomeKey("jade_capital"), "Jade Capital");
 		t.add(ModLang.biomeKey("immortal_passage"), "Immortal Gate");
+		t.add(ModLang.biomeKey("inner_realm"), "Inner Realm");
 		// The Netherworld's biomes, and the Soul River
 		t.add(ModLang.biomeKey("yellow_springs"), "Yellow Springs");
 		t.add(ModLang.biomeKey("fields_of_the_other_shore"), "Fields of the Other Shore");
@@ -196,6 +210,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.YIN_EBBING, "Yin corruption: %s%% (ebbing)");
 		t.add(ModLang.YIN_HELD, "Yin corruption: %s%% (held still, %s s)");
 		t.add(ModLang.GHOST_QI_HERE, "Ghostly qi here: %s");
+		t.add(ModLang.GHOST_QI_TEEMING, "teeming x%s (an ancient battlefield's dead)");
 		t.add(ModLang.GHOST_QI_DENSE, "dense x%s");
 		t.add(ModLang.GHOST_QI_PEAKS, "dense x%s (Nine Nether Peaks)");
 		t.add(ModLang.GHOST_QI_THIN, "thin x%s");
@@ -1001,6 +1016,16 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_STORAGE_COST, "Refining it takes %s %s.");
 		t.add(ModLang.MSG_STORAGE_REFINED, "The space within unfolds: %s grade!");
 		t.add(ModLang.KEY_STORAGE_RING, "Open Storage Ring");
+		// The Dao Codex (Codex, CodexScreen, CodexState, CodexToast)
+		t.add(ModLang.KEY_CODEX, "Open the Dao Codex");
+		t.add(ModLang.CODEX_TITLE, "The Dao Codex");
+		t.add(ModLang.CODEX_BUTTON, "The Dao Codex (%s)");
+		t.add(ModLang.CODEX_LOCKED, "???");
+		t.add(ModLang.CODEX_COUNT, "%s of %s pages");
+		t.add(ModLang.CODEX_TOAST_NEW, "New in the Codex");
+		t.add(ModLang.CODEX_TOAST_MANY, "%s new pages");
+		for (Codex.Hint hint : Codex.Hint.values()) t.add(ModLang.codexHint(hint.id()), hint.english());
+		Codex.english().forEach((key, text) -> t.add(key, text));
 		t.add(ModLang.KEY_QUICK_ABILITY, "Use Selected Ability");
 		for (int slot = 1; slot <= PlayerCultivation.WHEEL_SLOTS; slot++) t.add(ModLang.KEY_ABILITY_SLOT_PREFIX + slot, "Ability Wheel Slot " + slot);
 		t.add(ModLang.MSG_QUICK_ABILITY_STATE, "%s: %s");
@@ -1359,6 +1384,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.CORE_USE, "A demon's whole cultivation, condensed: prized for crafting and artifact forging");
 		t.add(ModItems.DEMON_BLOOD, "Demon Blood");
 		t.add("gamerule.spellCooldowns", "Spells wait out their cooldowns");
+		t.add("gamerule.spellGriefing", "Spells change the land for good");
 		t.add(ModLang.BLOOD_NAME, "%s %s Blood");
 		t.add(ModLang.BLOOD_UNKNOWN, "Blood of no race known");
 		t.add(ModLang.BLOOD_USE, "Drink it: a %1$s awakens its blood to %2$s, and its Demon Path may break through into that realm; a human forms a demon core of it, a half-blood of the %1$s");
@@ -2023,6 +2049,39 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.CMD_GUEST_SELF, "Your world is your own: no need to be your own guest.");
 		t.add(ModLang.CMD_GUEST_REMOVED, "%s is off your world's guest list.");
 		t.add(ModLang.CMD_GUEST_UNKNOWN, "No guest of your world is named %s.");
+		// The titles players take (PlayerTitles, 2026-10-27)
+		t.add(ModLang.TITLE_LABEL, "Title");
+		t.add(ModLang.TITLE_HINT, "Name yourself (Enter to set)");
+		t.add(ModLang.TITLE_TIP, "From Void Shattering on you may take a title: up to 50 characters. Type it and press Enter; empty the field and press Enter to clear it. It stands over your name, above your sect's title, and cultivators call you by it.");
+		t.add(ModLang.MSG_TITLE_SET, "You now go by the title %s.");
+		t.add(ModLang.MSG_TITLE_ANNOUNCED, "%s has taken the title %s");
+		t.add(ModLang.MSG_TITLE_CLEARED, "You go by no title now.");
+		t.add(ModLang.MSG_TITLE_LOCKED, "Only from Void Shattering on may you take a title.");
+		// What cultivators call a player (NpcAddress, 2026-10-27): by how far above them the player stands, or below
+		t.add(ModLang.address("ancestor"), "Ancestor");
+		t.add(ModLang.address("lord_immortal"), "Lord Immortal");
+		t.add(ModLang.address("revered"), "Revered Senior");
+		t.add(ModLang.address("esteemed"), "Esteemed Senior");
+		t.add(ModLang.address("senior"), "Senior");
+		t.add(ModLang.address("peer"), "Fellow Daoist");
+		t.add(ModLang.address("friend"), "friend");
+		t.add(ModLang.address("immortal"), "Immortal %s");
+		t.add(ModLang.address("above.righteous"), "young friend");
+		t.add(ModLang.address("above.neutral"), "junior");
+		t.add(ModLang.address("above.devilish"), "brat");
+		t.add(ModLang.address("above.ghost"), "young soul");
+		t.add(ModLang.address("far_above.righteous"), "little friend");
+		t.add(ModLang.address("far_above.neutral"), "junior");
+		t.add(ModLang.address("far_above.devilish"), "ant");
+		t.add(ModLang.address("far_above.ghost"), "little soul");
+		t.add(ModLang.address("mortal.righteous"), "young one");
+		t.add(ModLang.address("mortal.neutral"), "mortal");
+		t.add(ModLang.address("mortal.devilish"), "mortal worm");
+		t.add(ModLang.address("mortal.ghost"), "warm one");
+		t.add(ModLang.address("titled_junior.righteous"), "young %s");
+		t.add(ModLang.address("titled_junior.neutral"), "%s");
+		t.add(ModLang.address("titled_junior.devilish"), "little %s");
+		t.add(ModLang.address("titled_junior.ghost"), "young %s");
 		// The Laws (Laws, phase 3)
 		t.add(ModLang.lawKey("metal"), "Law of Metal");
 		t.add(ModLang.lawKey("wood"), "Law of Wood");
@@ -2471,6 +2530,9 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 
 		// What cultivators say of their own accord (NpcLife, NpcSpeech): every line and its variants, kept in NpcLines.
 		NpcLines.english().forEach((key, text) -> t.add(key, text));
+
+		// The mod's advancements (ModAdvancements): each one's title and description.
+		ModAdvancements.english().forEach((key, text) -> t.add(key, text));
 	}
 
 	/** A physique's name and description (Physique). */

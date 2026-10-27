@@ -177,6 +177,7 @@ public final class HeavenRitual {
 		ServerLevel level = player.serverLevel();
 		PlayerCultivation c = CultivationManager.get(player);
 		if (granted) {
+			Milestones.award(player, Milestones.RITUAL);
 			c.setHeavensLeave(true);
 			if (r.offering.favour > c.getFavour()) c.setFavour(r.offering.favour);
 			boolean advanced = c.addCultivation(0); // a full Qi Refining Mid steps straight into Late
