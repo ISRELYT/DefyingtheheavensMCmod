@@ -31,7 +31,8 @@ import java.util.List;
  * that grows from near-black into something celestial as they advance (drawn by the client's InnerRealmSkyRenderer). The
  * body stays sitting where they meditated ({@link InnerBodyEntity}). The soul can walk the island freely (qi surges there are
  * played on foot, see QiSurges); stopping meditation, or anything touching the body, brings it back. Meditation inside is
- * {@link #CULTIVATION_BONUS} times as fruitful. The island is Soul Crystal, see-through so the leylines show beneath it.
+ * {@link #CULTIVATION_BONUS} times as fruitful, and its years that many times the fewer (Lifespan#saving; both the user's retune of
+ * 2026-10-27: x1.5 before, and no years saved). The island is Soul Crystal, see-through so the leylines show beneath it.
  * <p>
  * Where the soul came from is kept in {@link PlayerCultivation} (saved), so logging out, the server stopping, or a crash
  * always end with the player back at their body. Every player's island lies in a slot of its own ({@link Islands}).
@@ -51,7 +52,7 @@ public final class InnerRealm {
 	private static final int WALL_HEIGHT = 3;
 	/** Ticks before a broken piece of the island or its floor is whole again. */
 	private static final int MEND_TICKS = 40;
-	public static final double CULTIVATION_BONUS = 1.5;
+	public static final double CULTIVATION_BONUS = 1.25;
 	public static final int ISLAND_Y = 128;
 	/** Each player's island has its own spot, this far apart. */
 	public static final int SLOT_SPACING = 4096;

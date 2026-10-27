@@ -19,7 +19,7 @@ import java.util.Set;
  * (+0.20 means 20% faster), and the shares add up:
  * <ul>
  * <li>sitting on a Meditation Mat (+10%) or a Red Silk Meditation Mat (+20%);</li>
- * <li>Spirit Pedestals bearing Cultivation Fruit nearby: older fruit gives more, 2% to 50% (see {@link #pedestalBonus}); only the
+ * <li>Spirit Pedestals bearing Cultivation Fruit nearby: older fruit gives more, 1% to 25% (see {@link #pedestalBonus}); only the
  * {@link #MAX_PEDESTALS} strongest count;</li>
  * <li>height, under open sky: from y {@link #HEIGHT_START}, rising to +15% at y {@link #HEIGHT_FULL};</li>
  * <li>tranquillity: a cherry grove, the Peach Blossom Sanctuary or snow-capped peaks (+10%);</li>
@@ -37,11 +37,11 @@ public final class CultivationBoost {
 	public static final int PEDESTAL_REACH_Y = 2;
 	public static final int MAX_PEDESTALS = 4;
 	/**
-	 * A pedestal's share: a 1-year fruit gives 2% and a 10,000-year fruit 50%, rising evenly with each tenfold in age
-	 * (10 years 14%, 100 years 26%, 1,000 years 38%).
+	 * A pedestal's share: a 1-year fruit gives 1% and a 10,000-year fruit 25%, rising evenly with each tenfold in age
+	 * (10 years 7%, 100 years 13%, 1,000 years 19%). Halved in the user's retune of 2026-10-27 (it was 2% to 50%).
 	 */
-	public static final double PEDESTAL_BASE = 0.02;
-	public static final double PEDESTAL_PER_TENFOLD = 0.12;
+	public static final double PEDESTAL_BASE = 0.01;
+	public static final double PEDESTAL_PER_TENFOLD = 0.06;
 
 	public static final int HEIGHT_START = 120;
 	public static final int HEIGHT_FULL = 250;

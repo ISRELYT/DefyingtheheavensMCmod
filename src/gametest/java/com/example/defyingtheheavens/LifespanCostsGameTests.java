@@ -123,20 +123,21 @@ public class LifespanCostsGameTests implements FabricGameTest {
 	 */
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void meditationCostsYearsByTalentAndBoost(GameTestHelper helper) {
-		helper.assertTrue(Math.abs(Lifespan.realmSeclusion(Realm.QI_REFINING) - 50.4) < 1e-9 && Math.abs(Lifespan.realmSeclusion(Realm.CORE_FORMATION) - 640) < 1e-9
-				&& Math.abs(Lifespan.realmSeclusion(Realm.FOUR_AXIS) - 48000) < 1e-9, "Qi Refining 50.4 years, Core Formation 640, Four Axis 48,000");
+		// (The shares retuned by the user's asks of 2026-10-27: PaceRetuneGameTests.)
+		helper.assertTrue(Math.abs(Lifespan.realmSeclusion(Realm.QI_REFINING) - 75.6) < 1e-9 && Math.abs(Lifespan.realmSeclusion(Realm.CORE_FORMATION) - 12000) < 1e-9
+				&& Math.abs(Lifespan.realmSeclusion(Realm.FOUR_AXIS) - 300000) < 1e-9, "Qi Refining 75.6 years, Core Formation 12,000, Four Axis 300,000");
 		double all = 0;
 		for (Stage stage : Stage.values()) all += Lifespan.stageSeclusion(Realm.CORE_FORMATION, stage);
-		helper.assertTrue(Math.abs(all - 640) < 1e-6 && Lifespan.stageSeclusion(Realm.CORE_FORMATION, Stage.GRAND_PERFECTION)
+		helper.assertTrue(Math.abs(all - 12000) < 1e-6 && Lifespan.stageSeclusion(Realm.CORE_FORMATION, Stage.GRAND_PERFECTION)
 				> Lifespan.stageSeclusion(Realm.CORE_FORMATION, Stage.EARLY), "Shared over its stages, the longer the dearer");
 		PlayerCultivation low = new PlayerCultivation(), immortal = new PlayerCultivation();
 		low.setPhysique(Physique.FIVE_ELEMENT_ROOTS);
 		immortal.setPhysique(Physique.FALLEN_TRUE_IMMORTAL);
 		double early = Lifespan.stageSeclusion(Realm.CORE_FORMATION, Stage.EARLY);
 		helper.assertTrue(Math.abs(Lifespan.seclusionYears(low, Realm.CORE_FORMATION, Stage.EARLY, 1, 1) - early) < 1e-9
-				&& Math.abs(Lifespan.seclusionYears(immortal, Realm.CORE_FORMATION, Stage.EARLY, 1, 1) - early / 16) < 1e-9
+				&& Math.abs(Lifespan.seclusionYears(immortal, Realm.CORE_FORMATION, Stage.EARLY, 1, 1) - early / 64) < 1e-9
 				&& Math.abs(Lifespan.seclusionYears(low, Realm.CORE_FORMATION, Stage.EARLY, 0.5, 2) - early / 4) < 1e-9,
-				"A Low grade pays it whole, an Immortal one a 16th; half the stage with x2 saving, a quarter");
+				"A Low grade pays it whole, an Immortal one a 64th (a 16th till the talent ladder of 2026-10-27); half the stage with x2 saving, a quarter");
 		// What saves years (the user's call, 2026-10-22): boost, method, dense qi, a stone, each only ever helping.
 		helper.assertTrue(Math.abs(Lifespan.saving(2, 1.5, 3, 1.5) - 13.5) < 1e-9 && Lifespan.saving(1, 0.75, 0.25, 1) == 1,
 				"Boost x2, a method x1.5, qi x3, a stone x1.5: x13.5; no method and thin qi cost nothing more");
@@ -164,14 +165,16 @@ public class LifespanCostsGameTests implements FabricGameTest {
 			IntToDoubleFunction required = rank -> PlayerCultivation.required(Realm.byIndex(rank / 4), Stage.byIndex(rank % 4));
 			int cfEarly = PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY);
 			double need = required.applyAsDouble(cfEarly);
-			Lifespan.seclude(p, cfEarly, 0, cfEarly, need / 2, required, 1, 1);
-			helper.assertTrue(Math.abs(c.age() - (100 + early / 2)) < 1e-6, "Half of Core Formation Early meditated: half its years paid (" + c.age() + ")");
-			Lifespan.seclude(p, cfEarly, need / 2, cfEarly + 1, 0, required, 1, 1);
-			helper.assertTrue(Math.abs(c.age() - (100 + early)) < 1e-6, "...and the rest of it, up to the next stage");
-			Lifespan.seclude(p, cfEarly + 1, 10, cfEarly + 1, 10, required, 1, 1);
-			helper.assertTrue(Math.abs(c.age() - (100 + early)) < 1e-6, "Nothing won (a bottleneck waited at): nothing paid");
-			Lifespan.seclude(p, cfEarly + 1, 0, cfEarly + 1, required.applyAsDouble(cfEarly + 1), required, 1, 0.5);
-			helper.assertTrue(Math.abs(c.age() - (100 + early + Lifespan.stageSeclusion(Realm.CORE_FORMATION, Stage.MID) / 2)) < 1e-6,
+			// (At x20 saving: since the retune of 2026-10-27, Core Formation Early at x1 costs more than the span holds.)
+			double s = 20, paid = early / s;
+			Lifespan.seclude(p, cfEarly, 0, cfEarly, need / 2, required, s, 1);
+			helper.assertTrue(Math.abs(c.age() - (100 + paid / 2)) < 1e-6, "Half of Core Formation Early meditated: half its years paid (" + c.age() + ")");
+			Lifespan.seclude(p, cfEarly, need / 2, cfEarly + 1, 0, required, s, 1);
+			helper.assertTrue(Math.abs(c.age() - (100 + paid)) < 1e-6, "...and the rest of it, up to the next stage");
+			Lifespan.seclude(p, cfEarly + 1, 10, cfEarly + 1, 10, required, s, 1);
+			helper.assertTrue(Math.abs(c.age() - (100 + paid)) < 1e-6, "Nothing won (a bottleneck waited at): nothing paid");
+			Lifespan.seclude(p, cfEarly + 1, 0, cfEarly + 1, required.applyAsDouble(cfEarly + 1), required, s, 0.5);
+			helper.assertTrue(Math.abs(c.age() - (100 + paid + Lifespan.stageSeclusion(Realm.CORE_FORMATION, Stage.MID) / s / 2)) < 1e-6,
 					"A share of a gain that was a reward's seconds: unpaid");
 		} finally {
 			leave(p);

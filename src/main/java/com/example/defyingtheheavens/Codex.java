@@ -393,7 +393,7 @@ public final class Codex {
 				Realm Suppress (off until you switch it on) weighs down everything weaker than you inside your domain, at a cost in qi.""");
 		page("inner_realm", Items.ENDER_PEARL, QR, "The Inner Realm", """
 				Meditate for a while and your soul turns inward: you open your eyes on an island of your own in a void, while your body \
-				stays sitting where you left it. Meditation there is 1.5 times as effective.
+				stays sitting where you left it. Meditation there is a quarter faster, and costs a fifth fewer years.
 				Walk the island as you like, and press {meditate} to return to your body. If anything hits your body, you are pulled back \
 				at once.
 				You can switch it off on the Abilities tab if you'd rather stay where you sit.""");

@@ -360,7 +360,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case QI_SENSE -> "See the plane of Qi: the five elements drifting through a grey world. No qi cost.";
 				case CONSCIOUSNESS_DOMAIN -> "Sense all life within %s blocks, even through walls. Cultivators show their realm. No qi cost.";
 				case REALM_SUPPRESS -> "Your realm crushes weaker beings within %s blocks, harder the weaker they are. Costs qi per target.";
-				case INNER_REALM -> "After 10 s of meditation your soul turns inward (+50% cultivation). Walk freely; stop meditating to return. Harm to your body pulls you back.";
+				case INNER_REALM -> "After 10 s of meditation your soul turns inward (+25% cultivation, and its years cost a fifth less). Walk freely; stop meditating to return. Harm to your body pulls you back.";
 				case SWORD_FLIGHT -> "Hold a sword and double-tap jump to ride it, at a cost of %s qi/s. Cheaper than Qi Flight but slower (75%% of its speed, at every realm); the sword takes no wear. Switching it on switches Qi Flight off.";
 				case SOUL_PROJECTION -> "Send your nascent soul out of your body (5 s to leave, 5 s to return) while your body sits on. It flies through walls on %s hearts (they mend only while it rests in a body, never while it's out), within %s blocks of your body, for %s-%s qi/s (more the farther it goes). Right-click a being a realm or more below you to possess it. If its tether is cut or your body slain, you die and fall to Core Formation.";
 				case GHOST_EYE -> "See the dead and the Method Steles through walls within 32 blocks. Costs %s ghost qi/s.";
@@ -1446,7 +1446,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.JOURNAL_HALF_BLOOD, "A Half-Blood");
 		t.add(ModLang.JOURNAL_HALF_BLOOD_TEXT, "You drank the %s's blood and a demon core formed in you. You are still human to look at, and to every sect and clan, but you walk the Demon Path now, and your blood gives you its race's gifts at half their strength and its inheritance's spells, %s. The more you drink, the purer it grows: at the whole, or drinking blood far above your other paths, you will become one of them, with no way back.");
 		t.add(ModLang.JOURNAL_TURNED, "Turned by Blood");
-		t.add(ModLang.JOURNAL_TURNED_TEXT, "The blood you drank has made you a %s, wholly: your body and your look, its gifts at their full strength, a demon's long life. Your Demon Path is as it was. There is no going back.");
+		t.add(ModLang.JOURNAL_TURNED_TEXT, "The blood you drank has made you a %s, wholly: your body and your look, its gifts at their full strength. Your Demon Path is as it was. There is no going back.");
 		t.add(ModLang.HALF_BLOOD_LINE, "%s half-blood · blood purity %s%%");
 		t.add(ModLang.DEMON_HELD_BY_BLOOD, "Your blood holds your Demon Path at %s: drink %s blood of %s or higher to break through.");
 		t.add(ModLang.CMD_BLOODLINE_HALF, "%s is human, a %s half-blood (blood purity %s%%, awake to %s)");

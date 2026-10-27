@@ -71,12 +71,19 @@ public final class Lifespan {
 	 * <p>
 	 * Set by the whole road to True Immortal, where a lifespan has no end ({@link #endless}: its own cultivation costs no years), by
 	 * the user's years for the realms after Four Axis (Dao Integration 100,000, Void Shattering 10 million, Sacred Vessel 100 million,
-	 * Entering Nirvana 10 billion), whose shares are 8, 12, 16 and 20.5: an Immortal grade becomes a True Immortal at ease (with a
-	 * usual saving of x1.5), a Supreme one with good planning (about x5), a High one only with everything done right (about x10, the
-	 * most there is), and nobody lower; a Low grade with nothing saving years doesn't get past Core Formation (the user's asks,
-	 * 2026-10-21/22; scratchpad talent-ladder.ps1 of session 59448793).
+	 * Entering Nirvana 10 billion). Retuned by the user's asks of 2026-10-27 with the grades' talents (Physique.Grade#talent: x1, x5,
+	 * x24, x40, x64; scratchpad tune3.ps1 of session 59448793), each boost saving years as it did:
+	 * <ul>
+	 *   <li>on a red mat in the Inner Realm alone (x1.5), a High grade reaches Void Shattering, a Supreme one Sacred Vessel and an
+	 *   Immortal one True Immortal (the user's ladder), each further with more; a Mid one Core Formation, Sacred Vessel with everything
+	 *   (brought nearer the Low grade the same evening: it was to reach Heavenly Being so, at x13);</li>
+	 *   <li>a Low grade, with everything the lower realms give (a method where its element runs thick and its stele, a red mat, clothes,
+	 *   height, calm, four 10,000-year pedestals, a stone, the Inner Realm: x10.3; and the best Longevity Pills' 400 years), runs out of
+	 *   years inside Core Formation's Grand Perfection, demons too (DemonPath: no longer longer-lived); higher than that only by denser
+	 *   qi above (placeSaving).</li>
+	 * </ul>
 	 */
-	private static final double[] SECLUSION_SHARE = {0.6, 0.9, 1.6, 2.3, 3.3, 4.8, 8, 12, 16, 20.5, 0};
+	private static final double[] SECLUSION_SHARE = {0.9, 3, 30, 18, 26, 30, 33, 48, 75, 88, 0};
 
 	/** The years a whole realm's cultivation costs one of no talent and no boost: its share of the years it gives (none for an endless one's). */
 	public static double realmSeclusion(Realm realm) {
@@ -236,8 +243,8 @@ public final class Lifespan {
 
 	/**
 	 * {@code c}'s span in years: the body's, every realm its higher path has reached, and the years won besides; all of it x1.2 for
-	 * an obsession with Longevity (Obsession#lifespanFactor), x1.5 for a demon (DemonPath#LIFESPAN: the beasts are long-lived). Infinite
-	 * for a True Immortal ({@link #endless}).
+	 * an obsession with Longevity (Obsession#lifespanFactor). Infinite for a True Immortal ({@link #endless}). (A demon's was x1.5 till
+	 * the user's retune of 2026-10-27: "remove the 1.5X lifespan bonus for demons", so the talent race holds for every race alike.)
 	 */
 	public static double span(PlayerCultivation c) {
 		double years = BASE_YEARS + c.extraYears();
@@ -246,7 +253,7 @@ public final class Lifespan {
 			Realm top = Realm.byIndex(rank / Stage.values().length);
 			for (Realm realm : Realm.values()) if (realm.ordinal() <= top.ordinal()) years += realmYears(realm);
 		}
-		return years * Obsession.lifespanFactor(c) * (DemonPath.isDemon(c) ? DemonPath.LIFESPAN : 1.0);
+		return years * Obsession.lifespanFactor(c);
 	}
 
 	/** The rank whose realms' years {@code c}'s span counts: the higher path's, or a body refined past a mortal's Peak's; -1 a mortal's. */

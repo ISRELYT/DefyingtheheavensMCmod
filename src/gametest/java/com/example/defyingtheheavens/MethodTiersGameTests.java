@@ -74,10 +74,11 @@ public class MethodTiersGameTests implements FabricGameTest {
 		helper.assertTrue(GhostMethods.stageProgress(s) == 0 && GhostMethods.addCultivation(s, 1000) == 0, "No foundation: no ghost path, nothing on its bar");
 		s.setPath(0, 0);
 		helper.assertTrue(GhostMethods.stageProgress(s) == 0, "Just begun: Early, none of it behind");
-		// Early: its time weight of the path's base, at Qi Refining's pace (1,047, about 25 minutes in a Soul Sand Valley).
+		// Early: its time weight of the path's base, at Qi Refining's pace, x PlayerCultivation#STAGE_LENGTH (since the retune of
+		// 2026-10-27, halved the same night: 2,198, about 52 minutes in a Soul Sand Valley).
 		double early = GhostMethods.required(0);
-		helper.assertTrue(early == Math.round(GhostMethods.STAGE_SECONDS * Stage.EARLY.timeWeight() * GhostMethods.realmFactor(Realm.QI_REFINING)),
-				"Qi Refining Early: " + early);
+		helper.assertTrue(early == Math.round(GhostMethods.STAGE_SECONDS * Stage.EARLY.timeWeight() * GhostMethods.realmFactor(Realm.QI_REFINING)
+				* PlayerCultivation.STAGE_LENGTH), "Qi Refining Early: " + early);
 		GhostMethods.addCultivation(s, 449);
 		helper.assertTrue(Math.abs(GhostMethods.stageProgress(s) - 449 / early) < 1e-9, "449 s in (" + GhostMethods.stageProgress(s) + ")");
 		GhostMethods.addCultivation(s, 299);

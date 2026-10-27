@@ -91,8 +91,8 @@ public enum Physique {
 	 * and this body, the only one a new life doesn't roll anew (Lifespan#wipe, PlayerCultivation#carryOver), but has a Low grade's
 	 * talent and pace for all its grade ({@link
 	 * #talent}, {@link #speed}): the user's ask of 2026-10-22, "you can reach it if you work hard and you dont lose stuff". A Low talent
-	 * keeping everything reaches True Immortal in some 4 to 60 lives, by how much saves its years (scratchpad eternal-rebirth.ps1 of
-	 * session 59448793). The rarest of all, with the Myriad Form Body.
+	 * keeping everything reaches True Immortal over many lives (some thirty with everything saving its years, since the talent ladder
+	 * of 2026-10-27). The rarest of all, with the Myriad Form Body.
 	 */
 	ETERNAL_REINCARNATION_BODY("eternal_reincarnation_body", Grade.IMMORTAL, 0.1),
 	/** Born with two more physiques of Mid to Supreme grade, never a pair that clashes, and all three's gifts ({@link #rollForms}). */
@@ -100,13 +100,16 @@ public enum Physique {
 
 	/**
 	 * How rare a physique is, its colour, its talent and its speed. Its talent is what the years a meditation costs are divided by
-	 * (Lifespan#seclusionYears; the user's vision, 2026-10-21: talent decides how far one gets), Low x1 to Immortal x16 (rebalanced
-	 * 2026-10-22 as dense qi, methods and spirit stones came to save years too); its speed, a small edge to the pace of either path's
-	 * cultivation (the user's pick, 2026-10-22: the gifted cultivate a little faster too), Low x1 to Immortal x1.5.
+	 * (Lifespan#seclusionYears; the user's vision, 2026-10-21: talent decides how far one gets): Low x1, Mid x5, High x24, Supreme x40,
+	 * Immortal x64 (the user's ladder of 2026-10-27: on a red mat in the Inner Realm alone a High one reaches Void Shattering, a Supreme
+	 * one Sacred Vessel, an Immortal one True Immortal, while a Low one with everything stops in Core Formation's Grand Perfection; the
+	 * Mid grade x13 at first, brought down to x5 the same evening, "lower the gap between low and mid (its okay if it cant reach true
+	 * immortal)": with everything it reaches Sacred Vessel; Lifespan#SECLUSION_SHARE; it was x1, x1.5, x2.1, x4.5, x16); its speed, a small edge to the pace of
+	 * either path's cultivation (the user's pick, 2026-10-22: the gifted cultivate a little faster too), Low x1 to Immortal x1.5.
 	 */
 	public enum Grade {
-		LOW("low", ChatFormatting.GRAY, 1.0, 1.0), MID("mid", ChatFormatting.GREEN, 1.5, 1.1), HIGH("high", ChatFormatting.AQUA, 2.1, 1.2),
-		SUPREME("supreme", ChatFormatting.LIGHT_PURPLE, 4.5, 1.35), IMMORTAL("immortal", ChatFormatting.GOLD, 16.0, 1.5);
+		LOW("low", ChatFormatting.GRAY, 1.0, 1.0), MID("mid", ChatFormatting.GREEN, 5.0, 1.1), HIGH("high", ChatFormatting.AQUA, 24.0, 1.2),
+		SUPREME("supreme", ChatFormatting.LIGHT_PURPLE, 40.0, 1.35), IMMORTAL("immortal", ChatFormatting.GOLD, 64.0, 1.5);
 
 		private final String id;
 		private final ChatFormatting colour;

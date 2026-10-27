@@ -1187,8 +1187,18 @@ public class PlayerCultivation {
 
 	/** {@link #cultivationRequired()} for any realm and stage (the heaven methods' layers share it out: HeavenMethods#layerCost). */
 	public static double required(Realm realm, Stage stage) {
-		return realm.getCultivationBase() * stage.getCultivationMultiplier() * qiNeed(realm);
+		return realm.getCultivationBase() * stage.getCultivationMultiplier() * qiNeed(realm) * STAGE_LENGTH;
 	}
+
+	/**
+	 * Every stage's cultivation, on every path (this one, the Demon Path's, the ghost path's: GhostMethods#required), this many times
+	 * the realms' own bases: the user's retune of 2026-10-27 ("cultivation is too fast with all the bonuses"; their pick, both slower
+	 * stages and weaker boosts), x4.2 at first, so an Immortal talent with a method, good clothes, four 10,000-year pedestals and the
+	 * Inner Realm took some ten hours from Qi Refining to True Immortal; halved the same night ("lets half the time in total it takes to
+	 * reach each realm"): five. The years are paid by the stage's share won, so halving it leaves them as they were. The cultivators
+	 * of the world (CultivatorNpc) keep their own pace, made up for in theirs.
+	 */
+	public static final double STAGE_LENGTH = 2.1;
 
 	public double cultivationPerSecond() { return realm.getCultivationPerSecond() * stage.getPowerMultiplier(); }
 

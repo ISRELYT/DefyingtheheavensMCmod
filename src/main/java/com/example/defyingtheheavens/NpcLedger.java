@@ -133,7 +133,7 @@ public class NpcLedger extends SavedData {
 		double seconds = 0;
 		for (int r = Math.max(0, rank); r < target; r++) {
 			scratch.setState(CultivatorNpc.realmOf(r), CultivatorNpc.stageOf(r), 0);
-			double rate = scratch.cultivationPerSecond() * CultivatorNpc.NPC_RATE * CultivatorNpc.CATCH_UP_SHARE;
+			double rate = scratch.cultivationPerSecond() * CultivatorNpc.NPC_RATE * PlayerCultivation.STAGE_LENGTH * CultivatorNpc.CATCH_UP_SHARE;
 			double need = scratch.cultivationRequired() - (r == rank ? progress : 0);
 			seconds += Math.max(0, need) / rate;
 			if (r == PlayerCultivation.RITUAL_RANK && !leave) {

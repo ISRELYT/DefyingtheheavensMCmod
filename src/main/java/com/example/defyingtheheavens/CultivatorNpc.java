@@ -1072,7 +1072,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	 */
 	private void cultivate(double seconds, double multiplier) {
 		for (int guard = 0; guard < 32 && seconds > 1.0e-9 && !isMortal() && !cultivation.isMaxed(); guard++) {
-			double perSecond = cultivation.cultivationPerSecond() * NPC_RATE * multiplier * placeQi();
+			// (x PlayerCultivation#STAGE_LENGTH: its stages as long as a player's since 2026-10-27, its pace as it was.)
+			double perSecond = cultivation.cultivationPerSecond() * NPC_RATE * PlayerCultivation.STAGE_LENGTH * multiplier * placeQi();
 			if (perSecond <= 0) return;
 			double need = Math.max(0, cultivation.cultivationRequired() - cultivation.getCultivation());
 			if (need > perSecond * seconds) {
@@ -1096,7 +1097,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 
 	/** Cultivation a second this NPC gathers meditating with nothing to help it: a tenth of a player's (used by the tests). */
 	double meditationRate() {
-		return cultivation.cultivationPerSecond() * NPC_RATE;
+		return cultivation.cultivationPerSecond() * NPC_RATE * PlayerCultivation.STAGE_LENGTH;
 	}
 
 	// --- The Ritual to the Heavens (see NpcLife) ---

@@ -242,7 +242,7 @@ public class SectGameTests implements FabricGameTest {
 	public void npcsSkipTribulationsButKeepTheLowerRealmCap(GameTestHelper helper) {
 		CultivatorNpc npc = helper.spawn(ModEntities.CULTIVATOR, new BlockPos(2, 2, 2));
 		npc.setRank(PlayerCultivation.rank(Realm.QI_REFINING, Stage.GRAND_PERFECTION));
-		npc.advance(1_000);
+		npc.advance(PlayerCultivation.required(Realm.QI_REFINING, Stage.GRAND_PERFECTION) + 1);
 		helper.assertTrue(npc.getRank() >= PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.EARLY), "A bottleneck gives way without a tribulation or pill");
 		npc.advance(1.0e12);
 		helper.assertTrue(npc.getRank() == PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.GRAND_PERFECTION), "The lower realms hold it at HB Grand Perfection");
@@ -250,7 +250,9 @@ public class SectGameTests implements FabricGameTest {
 		fresh.setRank(PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY));
 		PlayerCultivation player = new PlayerCultivation();
 		player.setState(Realm.CORE_FORMATION, Stage.EARLY, 0);
-		helper.assertTrue(Math.abs(fresh.meditationRate() * 10 - player.cultivationPerSecond()) < 1.0e-9, "NPCs cultivate ten times slower than players");
+		// (Their rate x PlayerCultivation#STAGE_LENGTH since 2026-10-27: their stages as long as before, a player's that many times as long.)
+		helper.assertTrue(Math.abs(fresh.meditationRate() * 10 - player.cultivationPerSecond() * PlayerCultivation.STAGE_LENGTH) < 1.0e-9,
+				"NPCs cultivate ten times slower than players did before the stages grew longer");
 		helper.succeed();
 	}
 

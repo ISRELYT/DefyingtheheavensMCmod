@@ -306,11 +306,12 @@ Several things speed up meditation. Their shares add together, and the total mul
 | Source | Boost |
 | --- | --- |
 | Sitting on a Meditation Mat / Red Silk Meditation Mat | +10% / +20% |
-| Each fruit on a pedestal within 4 blocks (2 up or down); only the 4 oldest count | 1 year +2%, 10 years +14%, 100 years +26%, 1,000 years +38%, 10,000 years +50% (+12% for every tenfold age) |
+| Each fruit on a pedestal within 4 blocks (2 up or down); only the 4 oldest count | 1 year +1%, 10 years +7%, 100 years +13%, 1,000 years +19%, 10,000 years +25% (+6% for every tenfold age; halved in the retune of 2026-10-27) |
 | Height, under open sky: from y 120 up to y 250 | up to +15% |
 | Tranquil places: cherry grove, Peach Blossom Sanctuary, snowy slopes, frozen and jagged peaks | +10% |
 
-The best setup today, a red mat and four 10,000-year fruit on a snowy peak, gathers about 3.45 times as fast. When you
+The best setup today, a red mat and four 10,000-year fruit high on a snowy peak, gathers about 2.45 times as fast (Immortal
+clothing adds +48% more, and the Inner Realm x1.25 on top). When you
 sit down, and whenever the boost changes, the action bar shows the total and where it comes from. The rate in the
 cultivation menu includes the boost and turns jade when it is boosted. A fruit's tooltip says what it would add on a
 pedestal.
@@ -493,7 +494,8 @@ slips teach demons if they are studying heaven path."
   realm from Foundation Building, heaven's gold light and a demon's crimson qi as one (since 2026-10-24; see The two paths).
 - **Its body:** where the Demon Path stands above the heaven path the body takes its strength from it, 1.2 times; the paths'
   harmony from the two highest. Its qi pool is shared: the larger of the heaven path's and 0.85 of the Demon Path's realm's. A
-  demon lives **half again as long**. The realm's abilities (Qi Flight and the rest) come from whichever path reaches the realm.
+  demon lives as long as a man (half again as long till the retune of 2026-10-27, when the user had it removed so the talent race
+  holds for every race). The realm's abilities (Qi Flight and the rest) come from whichever path reaches the realm.
 - **The races' gifts**, whatever path they walk (`RaceGifts`; a half-blood's at half strength: blows ×1.075, venom, roar and
   Illusion half as long and the roar milder, Shed Skin to 37.5%, Charm 5, a dragon's health ×1.1 and its might 4 blocks; sight in
   the dark and breath under water whole, but no swift swimming nor a dragon's early flight):
@@ -620,7 +622,8 @@ Every player is born with a **physique**, rolled the first time they join, told 
 Stats tab names it (and its roots), with its grade's colour. An op can change it: `/physique get|set <id>|reroll [player]`.
 The rarer the grade, the rarer the roll. Out of every 100 births (evened out 2026-10-20, the user's ask): **Low 56, Mid 24,
 High 12, Supreme 5, Immortal 3**. The grade is the body's **talent** (2026-10-21/22): what the years meditation costs are divided
-by, Low x1, Mid x1.5, High x2.1, Supreme x4.5, Immortal x16 (Lifespan: the talent race), and a small edge to its pace on both
+by, Low x1, Mid x5, High x24, Supreme x40, Immortal x64 (the talent ladder of 2026-10-27; it was x1, x1.5, x2.1, x4.5, x16;
+Lifespan: the talent race), and a small edge to its pace on both
 paths on top of the body's own, Low x1, Mid x1.1, High x1.2, Supreme x1.35, Immortal x1.5 (`Physique.Grade#talent`, `#speed`;
 `Physique#talent`, `#speed`: the Eternal Reincarnation Body, for all its Immortal grade, has a Low one's).
 
@@ -773,7 +776,8 @@ refining. A realm's whole cultivation costs a **share of the years the realm giv
 each takes, and paid as it is won; it is **divided by your talent** (your physique's grade: shown on the Stats tab) and by **what
 saves years** where you sit, all four multiplied together (the user's calls, 2026-10-21/22; each only ever helps, so going without
 one never costs extra):
-- **the meditation's boost**: mats, pedestals, height, tranquillity, garments (the percentage told as you sit down), up to about x3.65;
+- **the meditation's boost**: mats, pedestals, height, tranquillity, garments (the percentage told as you sit down), up to about x2.93;
+- **the Inner Realm**: x1.25 while your soul is turned inward (since the retune of 2026-10-27; before, it only sped the gain);
 - **a method** practised: what it makes of the gain, by its element's share of the qi there (x1 at an even fifth, up to x1.5 where it
   runs thick) and x1.25 beside its Dao Stele, so up to x1.875 (on the ghost path, its stele's x1.25);
 - **a spirit stone** burning in hand: x1.5;
@@ -789,32 +793,55 @@ so the gifted get there a little sooner too; but the years decide how far.
 
 | Realm | Its years | Share | Years at x1 |
 |---|---|---|---|
-| Qi Refining | 84 (a body's own, from 16) | 0.6 | 50 |
-| Foundation Building | 200 | 0.9 | 180 |
-| Core Formation | 400 | 1.6 | 640 |
-| Nascent Soul | 600 | 2.3 | 1,380 |
-| Heavenly Being | 1,200 | 3.3 | 3,960 |
-| Four Axis | 10,000 | 4.8 | 48,000 |
-| Dao Integration | 100,000 | 8 | 800,000 |
-| Void Shattering | 10 million | 12 | 120 million |
-| Sacred Vessel | 100 million | 16 | 1.6 billion |
-| Entering Nirvana (the middle boundary's end) | 10 billion | 20.5 | 205 billion |
+| Qi Refining | 84 (a body's own, from 16) | 0.9 | 76 |
+| Foundation Building | 200 | 3 | 600 |
+| Core Formation | 400 | 30 | 12,000 |
+| Nascent Soul | 600 | 18 | 10,800 |
+| Heavenly Being | 1,200 | 26 | 31,200 |
+| Four Axis | 10,000 | 30 | 300,000 |
+| Dao Integration | 100,000 | 33 | 3.3 million |
+| Void Shattering | 10 million | 48 | 480 million |
+| Sacred Vessel | 100 million | 75 | 7.5 billion |
+| Entering Nirvana (the middle boundary's end) | 10 billion | 88 | 880 billion |
 | True Immortal | without end | none: its cultivation costs no years | |
 
-Where each gets to (the years left over from a realm carry into the next; a percentage is how far into that realm):
+Where each gets to, in each realm's own world (the years left over from a realm carry into the next; a percentage is how far into
+that realm). "Gear" is a red mat, Immortal clothing, height and a calm place; "pedestals" four 10,000-year fruit; "everything" all
+of that with the Inner Realm, a spirit stone and the method's stele:
 
-| Saving | Low x1 | Mid x1.5 | High x2.1 | Supreme x4.5 | Immortal x16 |
-|---|---|---|---|---|---|
-| None | Core Formation (71%) | Nascent Soul (76%) | Heavenly Being (75%) | Dao Integration (56%) | Entering Nirvana (78%) |
-| Usual (x1.5: a mat, a method or a stone) | Nascent Soul (76%) | Heavenly Being (84%) | Four Axis (69%) | Dao Integration (88%) | **True Immortal** (17% to spare) |
-| Good planning (x5: mats and pedestals, a fitting method, a stone) | Dao Integration (64%) | Dao Integration (99%) | Void Shattering (88%) | **True Immortal** (10%) | True Immortal (290%) |
-| Everything right (x10.3, the most there is) | Void Shattering (86%) | Sacred Vessel (99%) | **True Immortal** (6%) | True Immortal (126%) | True Immortal (704%) |
+| Talent | Nothing | Red mat + Inner (x1.5) | A method (x1.5) | Method + red mat + Inner (x2.25) | Method + gear + 4 pedestals + Inner (x5.5) | Everything (x10.3) |
+|---|---|---|---|---|---|---|
+| Low x1 | FB Mid (35%) | FB Late (58%) | FB Late (58%) | FB GP (94%) | CF Mid (26%) | CF Late (53%) |
+| Mid x5 | CF Mid (23%) | CF Mid (37%) | CF Mid (37%) | CF Late (58%) | FA GP (96%) | SV Late (69%) |
+| High x24 | FA GP (82%) | **VS GP (75%)** | VS GP (75%) | SV GP (73%) | True Immortal | True Immortal |
+| Supreme x40 | VS GP (84%) | **SV GP (82%)** | SV GP (82%) | True Immortal | True Immortal | True Immortal |
+| Immortal x64 | SV GP (88%) | **True Immortal** | True Immortal | True Immortal | True Immortal | True Immortal |
 
-So (the user's asks): an Immortal grade becomes a True Immortal at ease, a Supreme one only with good planning, a High one only by
-doing everything right, and nobody lower; a Low grade with nothing saving years doesn't get past Core Formation. Longevity Pills,
-Life Force's years and the grateful's push a little further. (The realms after Four Axis were planned at these years and shares
-before they were built, 2026-10-22: the race was balanced to the whole road.) Code: `Lifespan#seclude`, `#seclusionYears`, `#saving`, `#placeSaving`,
-`#realmSeclusion`, `SECLUSION_SHARE`, `Physique.Grade#talent`, `#speed`; the scratchpad's `talent-ladder.ps1` made the table.
+So (the user's ladder of 2026-10-27, the grades' talents and `SECLUSION_SHARE` retuned with scratchpad `tune3.ps1`; every boost
+saving years as before): on a red mat in the Inner Realm alone, **a High grade reaches Void Shattering, a Supreme one Sacred Vessel
+and an Immortal one True Immortal**, and further with more. A Mid grade (x5: x13 at first, brought nearer the Low grade the same
+evening, "its okay if it cant reach true immortal") reaches Core Formation so, Four Axis with good gear and pedestals, Sacred Vessel
+with everything. A Low grade with everything the lower realms give, the best Longevity Pills' 400 years too, runs out of years
+inside Core Formation's Grand Perfection (87% of the realm); demons alike, now that they live no longer than men. Only denser qi than a realm's
+own world lifts a talent past its line: a Heavenly Being in the Jade Firmament (x10), or anyone carried up into a denser realm, or a
+guest in a small world (x1,000, left uncapped by the user's choice). Code: `Lifespan#seclude`, `#seclusionYears`, `#saving`,
+`#placeSaving`, `#realmSeclusion`, `SECLUSION_SHARE`, `Physique.Grade#talent`, `#speed`.
+
+**How long it takes** (the same retune). Every stage's cultivation is `PlayerCultivation#STAGE_LENGTH` (2.1: 4.2 at first, halved
+the same night, "lets half the time in total it takes to reach each realm"; the years stay as they were) times its realm's base,
+on the heaven path, the Demon Path and the ghost path (the world's cultivators keep their own pace). Qi Refining Early to True
+Immortal, meditating at x1 in each realm's own world:
+
+| Talent | Nothing | Red mat + Inner | A method | Method + red mat + Inner | Method + gear + 4 pedestals + Inner | Everything |
+|---|---|---|---|---|---|---|
+| Low | 3.7 days | 2.5 days | 44.9 h | 29.9 h | 7.7 h | 4.1 h |
+| Mid | 3.4 days | 2.3 days | 40.8 h | 27.2 h | 7.0 h | 3.7 h |
+| High | 3.1 days | 2.1 days | 37.4 h | 24.9 h | 6.4 h | 3.4 h |
+| Supreme | 2.8 days | 44.3 h | 33.2 h | 22.1 h | 5.7 h | 3.0 h |
+| Immortal | 2.5 days | 39.9 h | 29.9 h | 19.9 h | **5.1 h** | 2.7 h |
+
+(The time the road would take, whether or not the years last for it: talent doesn't speed it beyond the grade's small edge. Surges
+played well, up to x2, and the pace x2 or x3 make it shorter still, the pace at its price in years.)
 
 **What years are spent on besides** (the user's asks, 2026-10-21, so that even a long life has to be watched):
 - **Flying through space**: every 100 blocks flown there costs a year, **the same at every realm**, so the stars are a risk to
@@ -1663,9 +1690,9 @@ entities `SpellProjectile`, `SpellField`, `SpellBlock`, `EarthGolem`, `DirtTide`
 
 After **10 seconds of meditation** the screen fades to black and your soul turns inward: you open your eyes on your own
 island in a void, while your body stays sitting where you were (other players see it, in your skin). Meditation inside is
-**x1.5** as fruitful, and still gets the mats, pedestals, height and biome bonuses from around your body; suppression and
-the Upper Realm's x10 also follow the body. The ghost path's meditation is x1.5 inside too, on the ghostly qi where the body
-sits.
+**x1.25** as fruitful and its years cost x1.25 fewer (the retune of 2026-10-27: it was x1.5, and saved no years), and it still
+gets the mats, pedestals, height and biome bonuses from around your body; suppression and the Upper Realm's x10 also follow the
+body. The ghost path's and the Demon Path's meditation are x1.25 inside too, on the qi where the body sits.
 
 **The dead turn inward too** (the user's call, 2026-10-19), from anywhere, the Netherworld included (the living still can't
 there): their ghostly form sits on where they meditated, in the dead's light (a Ghost King's crowned, seen as the dead are),

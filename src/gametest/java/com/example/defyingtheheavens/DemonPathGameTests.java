@@ -140,7 +140,8 @@ public class DemonPathGameTests implements FabricGameTest {
 			helper.assertTrue(Math.abs(DemonPath.poolBase(t) - demonPool) < 1.0e-6 && t.maxQi() < h.maxQi() && t.maxQi() > 0,
 					"Its qi pool its realm's, the smaller share (" + Math.round(t.maxQi()) + " against a human's " + Math.round(h.maxQi()) + ")");
 			double ratio = Lifespan.span(t) / Lifespan.span(h);
-			helper.assertTrue(Math.abs(ratio - DemonPath.LIFESPAN) < 1.0e-6, "A demon of the same realm lives half again as long (" + ratio + ")");
+			// (Half again as long till the user's retune of 2026-10-27: "remove the 1.5X lifespan bonus for demons".)
+			helper.assertTrue(Math.abs(ratio - 1) < 1.0e-6, "A demon of the same realm lives as long as a man (" + ratio + ")");
 			helper.assertTrue(TwoPaths.awakens(t, Realm.CORE_FORMATION, false) == TwoPaths.Path.DEMON && Ability.QI_FLIGHT.isUnlocked(t)
 					&& Ability.TIGERS_ROAR.isUnlocked(t) && !Ability.ILLUSION.isUnlocked(t),
 					"Core Formation on the Demon Path awakens the realm's abilities, Qi Flight too, and the tiger's roar (not the fox's illusion)");

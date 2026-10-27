@@ -90,16 +90,17 @@ public class SpiritPedestalGameTests implements FabricGameTest {
         helper.assertTrue(boost.mat() == ModBlocks.RED_MEDITATION_MAT && boost.matBonus() == CultivationBoost.RED_MAT, "Sitting on the red mat counts");
         helper.assertTrue(boost.pedestals().size() == CultivationBoost.MAX_PEDESTALS, "Only the strongest four pedestals count");
         helper.assertTrue(boost.pedestals().get(0).fruitAge() == 10_000, "Oldest fruit first");
-        double expected = 0.14 + 0.26 + 0.38 + 0.50; // 10, 100, 1,000 and 10,000 years; the 1-year fruit is left out
+        double expected = 0.07 + 0.13 + 0.19 + 0.25; // 10, 100, 1,000 and 10,000 years; the 1-year fruit is left out (halved 2026-10-27)
         helper.assertTrue(Math.abs(boost.pedestalBonus() - expected) < 1.0e-9, "Pedestal shares grow with the fruit's age");
         helper.assertTrue(boost.multiplier() >= 1.0 + CultivationBoost.RED_MAT + expected - 1.0e-9, "Shares add up into the multiplier");
         helper.succeed();
     }
 
     @GameTest(template = EMPTY_STRUCTURE)
-    public void pedestalShareRunsFromTwoToFiftyPercent(GameTestHelper helper) {
-        helper.assertTrue(Math.abs(CultivationBoost.pedestalBonus(1) - 0.02) < 1.0e-9, "A 1-year fruit gives 2%");
-        helper.assertTrue(Math.abs(CultivationBoost.pedestalBonus(10_000) - 0.50) < 1.0e-9, "A 10,000-year fruit gives 50%");
+    public void pedestalShareRunsFromOneToTwentyFivePercent(GameTestHelper helper) {
+        // (2% to 50% till the user's retune of 2026-10-27.)
+        helper.assertTrue(Math.abs(CultivationBoost.pedestalBonus(1) - 0.01) < 1.0e-9, "A 1-year fruit gives 1%");
+        helper.assertTrue(Math.abs(CultivationBoost.pedestalBonus(10_000) - 0.25) < 1.0e-9, "A 10,000-year fruit gives 25%");
         helper.assertTrue(CultivationBoost.pedestalBonus(0) == 0, "An empty pedestal gives nothing");
         helper.succeed();
     }

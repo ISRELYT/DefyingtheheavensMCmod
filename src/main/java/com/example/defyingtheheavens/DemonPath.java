@@ -29,8 +29,6 @@ public final class DemonPath {
 	public static final double BODY = 1.2;
 	/** The qi pool and its gathering the Demon Path gives, of the heaven path's at the same rank (PlayerCultivation#maxQi). */
 	public static final double QI_SHARE = 0.85;
-	/** A demon's lifespan, of a human's (Lifespan#span): the beasts are long-lived. */
-	public static final double LIFESPAN = 1.5;
 	/** The Demon Path's tribulations strike this much the harder: the heavens hate demons. */
 	public static final float TRIBULATION_HARM = 1.25f;
 	/** A true dragon cultivates the slowest. */

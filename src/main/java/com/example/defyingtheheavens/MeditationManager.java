@@ -251,6 +251,15 @@ public final class MeditationManager {
 	}
 
 	/**
+	 * The meditation's boost as it saves years (Lifespan#saving): its surroundings' (CultivationBoost), and the Inner Realm's as well,
+	 * turned inward (the user's retune of 2026-10-27: an Immortal talent becomes a True Immortal with a method, four pedestals and the
+	 * Inner Realm, and not without it; before, it only sped the gain).
+	 */
+	private static double yearsBoost(ServerPlayer p, Session session) {
+		return session.boost.multiplier() * (InnerRealm.isInside(p) ? InnerRealm.CULTIVATION_BONUS : 1.0);
+	}
+
+	/**
 	 * The pace a meditation is set to (the Cultivation tab: x1 its own to x3; Lifespan#pacePrice: what it wins the dearer in years), by
 	 * which every gain of it comes the faster: both paths' cultivation, the methods' settling on it, pill and fruit qi refined, a
 	 * body tempered. Not a reward of so many seconds of it (addBonusSeconds): that is the meditation's own pace's.
@@ -388,7 +397,7 @@ public final class MeditationManager {
 			// What it won costs years (Lifespan#seclude: the talent race), but for a reward's seconds of meditation.
 			Lifespan.seclude(p, rankBefore, before, PlayerCultivation.rank(c.getRealm(), c.getStage()), c.getCultivation(),
 					rank -> PlayerCultivation.required(Realm.byIndex(rank / Stage.values().length), Stage.byIndex(rank % Stage.values().length)),
-					Lifespan.saving(session.boost.multiplier(), session.methodSaving, Lifespan.placeSaving(c), SpiritStoneItem.meditationMultiplier(p)),
+					Lifespan.saving(yearsBoost(p, session), session.methodSaving, Lifespan.placeSaving(c), SpiritStoneItem.meditationMultiplier(p)),
 					won <= 0 ? 0 : 1 - bonus * factor / won);
 			CultivationManager.refresh(p); // re-applies stats (cheap), marks dirty, syncs
 
@@ -453,7 +462,7 @@ public final class MeditationManager {
 		boolean wasBottleneck = DemonPath.atBottleneck(c);
 		int stages = DemonPath.addCultivation(c, gained);
 		Lifespan.seclude(p, before, was, DemonPath.rank(c), c.demon().cultivation(), DemonPath::required,
-				Lifespan.saving(session.boost.multiplier(), 1, Lifespan.placeSaving(c, DemonPath.realm(before)), SpiritStoneItem.meditationMultiplier(p)),
+				Lifespan.saving(yearsBoost(p, session), 1, Lifespan.placeSaving(c, DemonPath.realm(before)), SpiritStoneItem.meditationMultiplier(p)),
 				gained <= 0 ? 0 : 1 - bonus / gained);
 		if (stages > 0) {
 			p.serverLevel().playSound(null, p.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.8f, 0.9f);
@@ -522,7 +531,7 @@ public final class MeditationManager {
 		// What it won costs years, as the heaven path's does (Lifespan#seclude: the talent race): its boost, its method's stele, the
 		// denser yin of the Peaks and the Great Void's battlefields, and a stone in hand saving them.
 		Lifespan.seclude(p, before, was, GhostMethods.ghostRank(s), s.pathCultivation(), GhostMethods::required,
-				Lifespan.saving(session.boost.multiplier(), active != null && session.stelesNear.contains(active) ? GhostMethods.STELE_BONUS : 1.0,
+				Lifespan.saving(yearsBoost(p, session), active != null && session.stelesNear.contains(active) ? GhostMethods.STELE_BONUS : 1.0,
 						Lifespan.ghostPlaceSaving(s.density()), SpiritStoneItem.meditationMultiplier(p)), gained <= 0 ? 0 : 1 - bonus / gained);
 		boolean settled = GhostMethods.meditate(p, gained, session.stelesNear);
 		if (stages > 0) {

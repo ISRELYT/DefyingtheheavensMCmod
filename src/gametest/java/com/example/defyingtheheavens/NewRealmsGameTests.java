@@ -65,7 +65,8 @@ public class NewRealmsGameTests implements FabricGameTest {
 					: PlayerCultivation.isGreatVoidRealm(realm) ? PlayerCultivation.GREAT_VOID_QI_MULTIPLIER : PlayerCultivation.UPPER_REALM_QI_MULTIPLIER;
 			helper.assertTrue(realm.ordinal() == Realm.FOUR_AXIS.ordinal() + 1 + i && PlayerCultivation.isUpperRealmOnly(realm)
 					&& PlayerCultivation.isGreatVoidRealm(realm) == (realm.ordinal() >= Realm.VOID_SHATTERING.ordinal())
-					&& PlayerCultivation.required(realm, Stage.EARLY) == realm.getCultivationBase() * Stage.EARLY.getCultivationMultiplier() * need,
+					&& PlayerCultivation.required(realm, Stage.EARLY) == realm.getCultivationBase() * Stage.EARLY.getCultivationMultiplier() * need
+							* PlayerCultivation.STAGE_LENGTH,
 					realm.getId() + ": in its place, the Upper Realm's alone, its needs ten times again (the Great Void's a hundred)");
 			Realm before = realm.previous();
 			helper.assertTrue(realm.getMaxHealth() > before.getMaxHealth() && realm.getAttackDamage() > before.getAttackDamage() && realm.getMaxQi() > before.getMaxQi()
@@ -130,9 +131,10 @@ public class NewRealmsGameTests implements FabricGameTest {
 		helper.assertTrue(Lifespan.realmYears(Realm.DAO_INTEGRATION) == 100_000 && Lifespan.realmYears(Realm.VOID_SHATTERING) == 10_000_000
 				&& Lifespan.realmYears(Realm.SACRED_VESSEL) == 100_000_000 && Lifespan.realmYears(Realm.ENTERING_NIRVANA) == 10_000_000_000.0
 				&& Double.isInfinite(Lifespan.realmYears(Realm.TRUE_IMMORTAL)), "The user's years: Dao Integration 100,000 to Entering Nirvana 10 billion, True Immortal without end");
-		helper.assertTrue(Lifespan.realmSeclusion(Realm.DAO_INTEGRATION) == 800_000 && Lifespan.realmSeclusion(Realm.VOID_SHATTERING) == 120_000_000
-				&& Lifespan.realmSeclusion(Realm.SACRED_VESSEL) == 1_600_000_000.0 && Lifespan.realmSeclusion(Realm.ENTERING_NIRVANA) == 205_000_000_000.0
-				&& Lifespan.realmSeclusion(Realm.TRUE_IMMORTAL) == 0, "Their shares of the years: 8, 12, 16, 20.5; a True Immortal's cultivation costs none");
+		// (8, 12, 16 and 20.5 till the user's retune of 2026-10-27.)
+		helper.assertTrue(Lifespan.realmSeclusion(Realm.DAO_INTEGRATION) == 3_300_000 && Lifespan.realmSeclusion(Realm.VOID_SHATTERING) == 480_000_000
+				&& Lifespan.realmSeclusion(Realm.SACRED_VESSEL) == 7_500_000_000.0 && Lifespan.realmSeclusion(Realm.ENTERING_NIRVANA) == 880_000_000_000.0
+				&& Lifespan.realmSeclusion(Realm.TRUE_IMMORTAL) == 0, "Their shares of the years: 33, 48, 75, 88; a True Immortal's cultivation costs none");
 		ServerPlayer immortal = survivor(helper, Realm.TRUE_IMMORTAL), drawer = survivor(helper, Realm.NASCENT_SOUL);
 		try {
 			PlayerCultivation c = CultivationManager.own(immortal);

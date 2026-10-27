@@ -142,7 +142,7 @@ public class GinsengGameTests implements FabricGameTest {
         player.setItemInHand(InteractionHand.MAIN_HAND, GinsengItem.create(ModItems.SPIRIT_GINSENG, 1_000));
         use(helper, player, at);
         helper.assertTrue(pedestal.hasFruit() && pedestal.isHerb() && pedestal.fruitAge() == 1_000, "A pedestal holds ginseng with its age");
-        helper.assertTrue(Math.abs(CultivationBoost.pedestalBonus(pedestal.fruitAge()) - 0.38) < 1.0e-9,
+        helper.assertTrue(Math.abs(CultivationBoost.pedestalBonus(pedestal.fruitAge()) - 0.19) < 1.0e-9,
                 "Ginseng on a pedestal counts like a fruit of the same age");
         use(helper, player, at);
         helper.assertTrue(!pedestal.hasFruit() && player.getMainHandItem().is(ModItems.SPIRIT_GINSENG), "And gives it back");

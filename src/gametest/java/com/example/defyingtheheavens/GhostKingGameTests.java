@@ -107,8 +107,10 @@ public class GhostKingGameTests implements FabricGameTest {
 			last = time;
 			if (rank <= axis) all += time;
 		}
-		helper.assertTrue(rising && all > 50 * 3600 && all < 56 * 3600,
-				"Every stage longer than the one before; the way to Four Axis Grand Perfection about 53 h in a Soul Sand Valley (" + Math.round(all / 3600) + " h)");
+		// (About 53 h till the user's retune of 2026-10-27 made every stage PlayerCultivation#STAGE_LENGTH times as long.)
+		double was = all / PlayerCultivation.STAGE_LENGTH;
+		helper.assertTrue(rising && was > 50 * 3600 && was < 56 * 3600,
+				"Every stage longer than the one before; the way to Four Axis Grand Perfection about 112 h in a Soul Sand Valley (" + Math.round(all / 3600) + " h)");
 		ServerPlayer ghost = cultivator(helper, Realm.QI_REFINING, Stage.EARLY);
 		PlayerCultivation c = CultivationManager.get(ghost);
 		NetherworldState s = c.netherworld();

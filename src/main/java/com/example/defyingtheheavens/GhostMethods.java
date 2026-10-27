@@ -119,7 +119,8 @@ public final class GhostMethods {
 		int stages = Stage.values().length;
 		Realm realm = Realm.byIndex(Math.min(Realm.values().length - 1, rank / stages));
 		Stage stage = Stage.byIndex(rank % stages);
-		return Math.round(STAGE_SECONDS * Math.pow(REALM_TIME_STEP, realm.ordinal()) * stage.timeWeight() * realmFactor(realm));
+		// (x PlayerCultivation#STAGE_LENGTH since 2026-10-27, as the heaven path's.)
+		return Math.round(STAGE_SECONDS * Math.pow(REALM_TIME_STEP, realm.ordinal()) * stage.timeWeight() * realmFactor(realm) * PlayerCultivation.STAGE_LENGTH);
 	}
 
 	/** The ghost path (a rank, see PlayerCultivation#rank) layer {@code layer} of the foundation {@code method} stands for; -1 for none. */

@@ -92,7 +92,8 @@
       "com.example.defyingtheheavens.AdvancementsGameTests",
       "com.example.defyingtheheavens.CodexGameTests",
       "com.example.defyingtheheavens.StandingGroundGameTests",
-      "com.example.defyingtheheavens.SleeveGameTests"
+      "com.example.defyingtheheavens.SleeveGameTests",
+      "com.example.defyingtheheavens.PaceRetuneGameTests"
     ]
   }
 }
