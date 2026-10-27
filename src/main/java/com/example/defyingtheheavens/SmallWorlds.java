@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -55,6 +56,12 @@ import java.util.UUID;
  *   <li><b>Its guests</b> (SmallWorldCommand): put on its list and taken off it by its owner; one taken off it while inside is sent out,
  *   and one in a world not theirs to be in (taken off while away) is sent out as they come back.</li>
  *   <li>Fallen off its island, or flown {@link #ROAM} past its edge into the nothing round it: set on it again, unharmed.</li>
+ *   <li><b>Carried up the ways</b> (the user's ask of 2026-10-27: "anyone with a small world can ascend with people in it (and get the same
+ *   effects as they would with the technique)"): a world goes with its owner. Its owner on one of the ways between the worlds
+ *   (ModDimensions#isPassage), its door shuts behind them, and those in it ({@link #inside}) are borne up with them as those in a sleeve
+ *   are, every spatial pressure on the owner doubled for each (Sleeves#pressureFactor; at the Immortal Gate, ImmortalGate#carriedShare).
+ *   The owner come out into a world, the way out of everyone in theirs then is beside them there ({@link #cameOut}), whatever their realm.
+ *   The owner slain on the way, those in it stay safe in it, and their way out where it was.</li>
  * </ul>
  */
 public final class SmallWorlds {
@@ -428,12 +435,26 @@ public final class SmallWorlds {
 				if (w != null && w.laid > 0 && w.target() > w.laid && !JOBS.containsKey(w.owner)) JOBS.put(w.owner, new Job(w, w.laid, w.target(), true));
 			}
 		}
+		// The owners on the ways: their worlds go with them, and those in them come out beside them where they come out.
+		for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+			World own = data.of(p.getUUID());
+			if (own == null) continue;
+			if (!p.isAlive()) {
+				OWNER_AT.remove(p.getUUID()); // slain: risen again, wherever, those in it are left as they were
+				continue;
+			}
+			ResourceKey<Level> now = p.level().dimension(), was = OWNER_AT.put(p.getUUID(), now);
+			if (was == null || was == now) continue;
+			if (ModDimensions.isPassage(now)) startedUp(p);
+			else if (ModDimensions.isPassage(was)) cameOut(p, sw, own);
+		}
 		// A copy: one sent out leaves the level's own list as they go (the bug sweep of 2026-10-27: going through that list itself, the
 		// server's tick broke off with a ConcurrentModificationException the moment anyone was sent out).
 		for (ServerPlayer p : new ArrayList<>(sw.players())) {
 			// (Not one watching their body held by another's soul (Possession), nor a soul out of its body (SoulProjection): their places
-			// are their bodies'.)
-			if (!p.isAlive() || CARRYING.contains(p.getUUID()) || Possession.isHeld(p.getUUID()) || SoulProjection.isAwayFromBody(p.getUUID())) continue;
+			// are their bodies'; nor one in a sleeve (Sleeves), whose place is its bearer's.)
+			if (!p.isAlive() || CARRYING.contains(p.getUUID()) || Possession.isHeld(p.getUUID()) || SoulProjection.isAwayFromBody(p.getUUID())
+					|| Sleeves.isCarried(p.getUUID())) continue;
 			World w = worldAt(p);
 			boolean looking = p.isSpectator() && p.hasPermissions(2); // an operator's look about
 			if (!looking && !mayEnter(w, p)) {
@@ -464,7 +485,7 @@ public final class SmallWorlds {
 		}
 		World here = worldAt(p);
 		c.setAbilityEnabled(Ability.SMALL_WORLD, own != null && here == own);
-		if (ModDimensions.isSmallWorld(p.level().dimension()) && !mayEnter(here, p)) sendOut(p);
+		if (ModDimensions.isSmallWorld(p.level().dimension()) && !mayEnter(here, p) && !Sleeves.isCarried(p.getUUID())) sendOut(p);
 	}
 
 	/** Leaving: their door closes. */
@@ -472,6 +493,59 @@ public final class SmallWorlds {
 		close(p.server, p.getUUID(), false);
 		CARRYING.remove(p.getUUID());
 		TURNED_AWAY.remove(p.getUUID());
+		OWNER_AT.remove(p.getUUID());
+	}
+
+	// --- Carried up the ways ---
+
+	/** Each owner's world at the last tick: on a way since, their world goes with them; come out of one since, those in it come out there. */
+	private static final Map<UUID, ResourceKey<Level>> OWNER_AT = new HashMap<>();
+
+	/**
+	 * How many {@code owner} bears in its world now (Sleeves#borne): each player in it, in the game and not looking on as a spectator, and
+	 * each one in their own sleeves too.
+	 */
+	public static int inside(ServerPlayer owner) {
+		ServerLevel sw = owner.server.getLevel(ModDimensions.SMALL_WORLD);
+		if (sw == null || sw.players().isEmpty()) return 0;
+		World own = Data.get(owner.server).of(owner.getUUID());
+		if (own == null) return 0;
+		int n = 0;
+		for (ServerPlayer p : inside(sw, own)) n += 1 + Sleeves.carrying(p.getUUID());
+		return n;
+	}
+
+	/** The players in {@code w} now, besides its owner (not those looking on as spectators, nor any held in a sleeve or a body). */
+	private static List<ServerPlayer> inside(ServerLevel sw, World w) {
+		List<ServerPlayer> in = new ArrayList<>();
+		for (ServerPlayer p : sw.players()) {
+			if (p.isAlive() && !p.isSpectator() && !p.getUUID().equals(w.owner) && slotAt(p.getX(), p.getZ()) == w.slot) in.add(p);
+		}
+		return in;
+	}
+
+	/** {@code owner} come onto a way with their world: its door shut behind them (nobody follows it in), and told what they bear. */
+	private static void startedUp(ServerPlayer owner) {
+		close(owner.server, owner.getUUID(), false);
+		int n = inside(owner);
+		if (n > 0) {
+			owner.sendSystemMessage(Component.translatable(ModLang.MSG_WORLD_BORNE, n, Math.round(Sleeves.pressureFactor(owner)))
+					.withStyle(ChatFormatting.LIGHT_PURPLE));
+		}
+	}
+
+	/** {@code owner} come out of a way into a world: the way out of everyone in theirs now beside them there, each told; they told how many. */
+	static void cameOut(ServerPlayer owner, ServerLevel sw, World own) {
+		List<ServerPlayer> in = inside(sw, own);
+		if (in.isEmpty()) return;
+		Data data = Data.get(owner.server);
+		int i = 0;
+		for (ServerPlayer p : in) {
+			Sleeves.Place at = Sleeves.beside(owner, i++); // a step beside them, not in them
+			data.keepReturn(p.getUUID(), at.level(), at.at(), owner.getYRot(), owner.getXRot());
+			p.sendSystemMessage(Component.translatable(ModLang.MSG_WORLD_CARRIED_UP, owner.getDisplayName()).withStyle(ChatFormatting.LIGHT_PURPLE));
+		}
+		owner.sendSystemMessage(Component.translatable(ModLang.MSG_WORLD_BROUGHT, in.size()).withStyle(ChatFormatting.LIGHT_PURPLE));
 	}
 
 	/** The server stopped: nothing of this world's kept (the doors went with it; the land's laying goes on next time). */
@@ -481,6 +555,7 @@ public final class SmallWorlds {
 		SHAPES.clear();
 		CARRYING.clear();
 		TURNED_AWAY.clear();
+		OWNER_AT.clear();
 	}
 
 	// --- Its land ---
@@ -737,15 +812,25 @@ public final class SmallWorlds {
 
 		/** Where {@code p} stands now, kept as where they came in from. */
 		void keepReturn(ServerPlayer p) {
+			keepReturn(p.getUUID(), p.level().dimension(), p.position(), p.getYRot(), p.getXRot());
+		}
+
+		/** {@code at} in {@code level} (beside their world's owner, come out of a way: {@link #cameOut}), kept as {@code player}'s way out. */
+		void keepReturn(UUID player, ResourceKey<Level> level, Vec3 at, float yRot, float xRot) {
 			CompoundTag back = new CompoundTag();
-			back.putString("Dimension", p.level().dimension().location().toString());
-			back.putDouble("X", p.getX());
-			back.putDouble("Y", p.getY());
-			back.putDouble("Z", p.getZ());
-			back.putFloat("YRot", p.getYRot());
-			back.putFloat("XRot", p.getXRot());
-			returns.put(p.getUUID(), back);
+			back.putString("Dimension", level.location().toString());
+			back.putDouble("X", at.x);
+			back.putDouble("Y", at.y);
+			back.putDouble("Z", at.z);
+			back.putFloat("YRot", yRot);
+			back.putFloat("XRot", xRot);
+			returns.put(player, back);
 			setDirty();
+		}
+
+		/** Where {@code player} would come out (the game tests), or null. */
+		CompoundTag peekReturn(UUID player) {
+			return returns.get(player);
 		}
 
 		/** Where {@code player} came in from, forgotten as it is told, or null. */

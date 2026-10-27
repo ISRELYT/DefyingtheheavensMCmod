@@ -377,7 +377,7 @@ public final class Codex {
 				masters' halls, and more rarely in their libraries.
 				Read a manual at its realm and the technique is yours for good. The manual isn't used up, so you can pass it on; if you're \
 				below its realm, it tells you which realm you need.
-				The first technique is Clone (see Abilities).""");
+				The techniques so far are Clone and Universe in a Sleeve (see Abilities).""");
 
 		// ======================================================= Abilities =======================================================
 		chapter("abilities", Items.FEATHER, Hint.CULTIVATE, "Abilities");
@@ -440,6 +440,17 @@ public final class Codex {
 				Tear space open: a rift appears in front of you and stays open for a while, and anyone can walk through it. Its rim shows \
 				where it leads: violet into the Spatial Gap, green out to the Overworld, gold out to the Jade Firmament.
 				Each tear costs part of your qi.""");
+		page("sleeve", Items.ENDER_EYE, HB, "Universe in a Sleeve", """
+				A technique for Heavenly Beings and above, learned from its manual. Look at another player close by and use it to offer \
+				them a place in your sleeve. Up to four can be inside at once. Anyone who accepts vanishes into it: safe, untouchable, and \
+				seeing what you see.
+				They go wherever you go, up through the Spatial Gap, the Void Breach and the Immortal Gate, whatever their realm, and step \
+				out beside you when you arrive. You pay for it: the spatial pressure on you doubles for each person you carry. Even a True \
+				Immortal, who feels nothing at the Immortal Gate on its own, takes a quarter of its body over the climb, doubled the same \
+				way.
+				Sneak and use it to let everyone out, anywhere but partway through a climb. If you die on the way, they're thrown out \
+				where you fell.
+				Anyone inside your small world travels with you the same way, at the same cost.""");
 
 		// ================================================= Treasures and Alchemy =================================================
 		chapter("treasures", ModItems.LOW_SPIRIT_STONE, Hint.FIND, "Treasures and Alchemy");
@@ -519,7 +530,10 @@ public final class Codex {
 				The warmer their regard, the better their prices, and the more they will sell you and teach you.""");
 		page("alignment", Items.SHIELD, null, "Alignment", """
 				Alignment runs from Devilish through Neutral to Righteous. Neutral cultivators keep the peace unless provoked, while \
-				righteous and devilish ones attack each other on sight. Sects treat you according to your alignment.
+				righteous and devilish ones attack each other on sight, except in the Immortal Realm. Sects treat you according to your \
+				alignment.
+				Cultivators below Entering Nirvana run from someone of the other path a realm or more above them. From Entering Nirvana \
+				up, they stand their ground.
 				Killing a cultivator who didn't provoke you makes your alignment more devilish; killing devilish cultivators makes it more \
 				righteous.""");
 		page("sparring", Items.WOODEN_SWORD, "sects/root", "Sparring", """
@@ -638,7 +652,8 @@ public final class Codex {
 				Elder beasts guard pools of blood there.""");
 		page("shore", Items.CAMPFIRE, EN + "|worlds/shore_of_nirvana", "The Shore of Nirvana", """
 				At the edge of the Great Void's sea, a camp of Entering Nirvana hermits and old monsters waits for the Immortal Gate. They \
-				trade, and are rarely hostile.""");
+				trade, and are rarely hostile.
+				Attack one of them and the whole camp fights you.""");
 		page("gate", Items.END_PORTAL_FRAME, EN + "|worlds/shore_of_nirvana", "The Immortal Gate", """
 				The Gate hangs in the Great Void's sky beyond the Shore of Nirvana. It opens every few days for a few minutes, and everyone \
 				is told a minute before.
@@ -648,7 +663,9 @@ public final class Codex {
 				An endless sea of clouds with jade peaks rising out of it, under a golden sky, with a thousand times the lower realms' qi. \
 				Nobody below Entering Nirvana can enter.
 				Its cities and markets, its island sects and the Celestial Court are here. The only way back down is through the Gate while \
-				it is open. Far out, the land breaks up into chaos.""");
+				it is open. Far out, the land breaks up into chaos.
+				The immortals here think the quarrel between the righteous and the devilish is beneath them. Nobody attacks you on sight \
+				or runs from you because of your path, and they'll talk and trade with you whatever it is. Attack one and it fights back.""");
 		page("chaos_frontier", ModItems.CHAOS_ORIGIN_STONE, "worlds/chaos_frontier", "The Chaos Frontier", """
 				The Immortal Realm's edge, where chaos from before heaven and earth still churns: floating shards that, farther out, merge \
 				into one wasteland.
@@ -659,7 +676,11 @@ public final class Codex {
 		page("small_worlds", ModItems.WORLD_SEED, TI + "|worlds/small_world", Hint.IMMORTAL, "Small Worlds", """
 				An immortal's own world: a floating island under the stars. Craft a World Seed from five Chaos Origin Stones and four \
 				Immortal Jade, then, as a True Immortal, hold it in use to refine it.
-				After that, you can open its door wherever you stand, for yourself and the guests you allow.""");
+				After that, you can open its door wherever you stand, for yourself and the guests you allow.
+				Your world travels with you. Anyone inside it when you go through the Spatial Gap, the Void Breach or the Immortal Gate \
+				comes through with you, whatever their realm, and its gate then leads out beside you. As with Universe in a Sleeve, the \
+				spatial pressure on you doubles for each of them. If you die on the way, they stay safe inside, and its gate still leads \
+				back to where they came in.""");
 
 		// ================================================== The Yellow Springs ==================================================
 		chapter("springs", ModItems.OTHER_SHORE_FLOWER, Hint.DEAD, "The Yellow Springs");

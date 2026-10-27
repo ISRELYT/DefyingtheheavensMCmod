@@ -1337,6 +1337,34 @@ public final class ModLang {
 	public static final String MSG_CLONE_CANNOT = k("message.clone.cannot");
 	public static final String MSG_CLONE_REFORMING = k("message.clone.reforming");
 	public static final String MSG_CLONE_DOMAIN_MET = k("message.clone.domain_met");
+	// Universe in a Sleeve (Sleeves, SleeveCommand)
+	public static final String MSG_SLEEVE_HOW = k("message.sleeve.how");
+	public static final String MSG_SLEEVE_EMPTY = k("message.sleeve.empty");
+	public static final String MSG_SLEEVE_OFFER = k("message.sleeve.offer");
+	public static final String MSG_SLEEVE_OFFERED = k("message.sleeve.offered");
+	public static final String SLEEVE_ACCEPT = k("message.sleeve.accept");
+	public static final String SLEEVE_REFUSE = k("message.sleeve.refuse");
+	public static final String SLEEVE_LEAVE = k("message.sleeve.leave");
+	public static final String MSG_SLEEVE_NO_OFFER = k("message.sleeve.no_offer");
+	public static final String MSG_SLEEVE_REFUSED = k("message.sleeve.refused");
+	public static final String MSG_SLEEVE_YOU_REFUSED = k("message.sleeve.you_refused");
+	public static final String MSG_SLEEVE_NOT_ON_THE_WAY = k("message.sleeve.not_on_the_way");
+	public static final String MSG_SLEEVE_FULL = k("message.sleeve.full");
+	public static final String MSG_SLEEVE_CANT_TAKE = k("message.sleeve.cant_take");
+	public static final String MSG_SLEEVE_TAKEN = k("message.sleeve.taken");
+	public static final String MSG_SLEEVE_INSIDE = k("message.sleeve.inside");
+	public static final String MSG_SLEEVE_COST = k("message.sleeve.cost");
+	public static final String MSG_SLEEVE_MID_CLIMB = k("message.sleeve.mid_climb");
+	public static final String MSG_SLEEVE_LET_OUT = k("message.sleeve.let_out");
+	public static final String MSG_SLEEVE_OUT = k("message.sleeve.out");
+	public static final String MSG_SLEEVE_ARRIVED = k("message.sleeve.arrived");
+	public static final String MSG_SLEEVE_CAST_OUT = k("message.sleeve.cast_out");
+	public static final String MSG_SLEEVE_BEARER_GONE = k("message.sleeve.bearer_gone");
+	public static final String MSG_SLEEVE_OUT_AWAY = k("message.sleeve.out_away");
+	public static final String MSG_SLEEVE_NOT_IN = k("message.sleeve.not_in");
+	public static final String MSG_SLEEVE_CANT_LEAVE = k("message.sleeve.cant_leave");
+	public static final String MSG_SLEEVE_STEPPED_OUT = k("message.sleeve.stepped_out");
+	public static final String MSG_SLEEVE_YOU_STEPPED_OUT = k("message.sleeve.you_stepped_out");
 	public static final String MSG_BODY_DOMAIN_MET = k("message.clone.body_domain_met");
 	public static final String HUD_CLONE_MAIN = k("hud.clone.main");
 	public static final String HUD_CLONE_IN = k("hud.clone.in");
@@ -1425,6 +1453,10 @@ public final class ModLang {
 	public static final String MSG_WORLD_GROWN = k("message.small_world.grown");
 	public static final String MSG_WORLD_CAUGHT = k("message.small_world.caught");
 	public static final String MSG_WORLD_SENT_OUT = k("message.small_world.sent_out");
+	// A world carried up the ways with its owner, those in it with it (SmallWorlds#startedUp, #cameOut)
+	public static final String MSG_WORLD_BORNE = k("message.small_world.borne");
+	public static final String MSG_WORLD_CARRIED_UP = k("message.small_world.carried_up");
+	public static final String MSG_WORLD_BROUGHT = k("message.small_world.brought");
 	public static final String CMD_WORLD_NONE = k("command.small_world.none");
 	public static final String CMD_WORLD_INFO = k("command.small_world.info");
 	public static final String CMD_WORLD_GUESTS = k("command.small_world.guests");

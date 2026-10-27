@@ -83,12 +83,15 @@ public abstract class ServerGamePacketListenerImplMixin {
 		com.example.defyingtheheavens.CultivationEvents.leaving(player);
 	}
 
-	/** One whose body is held by another's soul (Possession) is a spectator only to watch it: no teleporting off to anyone else. */
+	/**
+	 * One whose body is held by another's soul (Possession) is a spectator only to watch it: no teleporting off to anyone else. Nor is one
+	 * in another's sleeve (Sleeves).
+	 */
 	@org.spongepowered.asm.mixin.injection.Inject(method = "handleTeleportToEntityPacket", cancellable = true, at = @At(value = "INVOKE",
 			target = "Lnet/minecraft/network/protocol/PacketUtils;ensureRunningOnSameThread(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/server/level/ServerLevel;)V",
 			shift = At.Shift.AFTER))
 	private void dth$heldStayWithTheirBody(net.minecraft.network.protocol.game.ServerboundTeleportToEntityPacket packet,
 										   org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
-		if (com.example.defyingtheheavens.Possession.isHeld(player.getUUID())) ci.cancel();
+		if (com.example.defyingtheheavens.Possession.isHeld(player.getUUID()) || com.example.defyingtheheavens.Sleeves.isCarried(player.getUUID())) ci.cancel();
 	}
 }

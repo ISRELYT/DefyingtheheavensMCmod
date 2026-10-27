@@ -363,7 +363,7 @@ public final class ImmortalGate {
 			p.addEffect(new MobEffectInstance(MobEffects.LEVITATION, 60, LIFT_AMPLIFIER, false, false, false));
 		}
 		if (++c.ticks % 20 == 0) {
-			float harm = (float) (p.getMaxHealth() * pressureShare(TwoPaths.higherRank(CultivationManager.get(p), false)) * (1 - armourShare(p)));
+			float harm = (float) (p.getMaxHealth() * carriedShare(p) * (1 - armourShare(p)));
 			if (harm > 0) p.hurt(ModDamageTypes.spatialPressure(passage), harm);
 			if (!p.isAlive()) return;
 			p.displayClientMessage(Component.translatable(ModLang.MSG_GATE_CLIMB, Math.max(0, EXIT_Y - Mth.floor(p.getY()))), true);
@@ -394,6 +394,19 @@ public final class ImmortalGate {
 	}
 
 	public static final double GRAND_PERFECTION_BODIES = 2.2;
+
+	/**
+	 * The Gate's pressure on {@code p} a second, a share of its body ({@link #pressureShare}), twice as heavy for each one carried in its
+	 * sleeve or its small world (Sleeves#borne); and a True Immortal, on whom it is nothing alone, takes Sleeves#GATE_BASE_BODIES over the
+	 * climb while it carries anyone, doubled likewise (the user's pick).
+	 */
+	public static double carriedShare(ServerPlayer p) {
+		double share = pressureShare(TwoPaths.higherRank(CultivationManager.get(p), false));
+		int carried = Sleeves.borne(p);
+		if (carried == 0) return share;
+		if (share == 0) share = Sleeves.GATE_BASE_BODIES / CLIMB_SECONDS;
+		return share * Sleeves.pressureFactor(p);
+	}
 
 	/** How much of the Gate's pressure {@code p}'s worn armour turns: its pieces' defence and half their toughness, by {@link #ARMOUR_POINT_SHARE}. */
 	public static double armourShare(ServerPlayer p) {

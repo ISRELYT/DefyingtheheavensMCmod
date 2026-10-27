@@ -39,6 +39,7 @@ public class DefyingTheHeavens implements ModInitializer {
 		SectCommand.register();
 		NetherworldCommand.register();
 		SmallWorldCommand.register();
+		SleeveCommand.register();
 		LOGGER.info("Defying The Heavens initialised.");
 	}
 

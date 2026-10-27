@@ -118,6 +118,11 @@ public final class CultivationManager {
 			SmallWorlds.toggle(player);
 			return;
 		}
+		// And one's sleeve (Sleeves): a place in it offered to the one looked at, or (sneaking) everyone in it let out.
+		if (ability == Ability.SLEEVE) {
+			Sleeves.act(player);
+			return;
+		}
 		c.setAbilityEnabled(ability, !c.isAbilityEnabled(ability));
 		markDirty(player.server);
 		sync(player);

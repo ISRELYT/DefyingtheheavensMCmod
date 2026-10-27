@@ -280,7 +280,8 @@ public final class Lifespan {
 		for (ServerPlayer p : new ArrayList<>(server.getPlayerList().getPlayers())) {
 			if (!p.isAlive()) continue;
 			if (!p.isSpectator()) weaken(p);
-			if (p.isCreative() || p.isSpectator() && !Possession.isHeld(p.getUUID())) continue;
+			// (One held by another's soul, or carried in a sleeve, is a spectator only to watch: their years go on.)
+			if (p.isCreative() || p.isSpectator() && !Possession.isHeld(p.getUUID()) && !Sleeves.isCarried(p.getUUID())) continue;
 			age(p, step);
 		}
 	}

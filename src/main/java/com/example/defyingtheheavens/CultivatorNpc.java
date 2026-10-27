@@ -1429,10 +1429,17 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	/**
 	 * The Sect Master and its elders defend their sect against anyone, however far above them: no stronger domain sends them
 	 * running, only a beating, and not even that for the master (see {@link #shouldFlee}). Disciples and rogues have no such duty.
-	 * A Merit wish's threat (Wishes) came for the one who took it on, and doesn't run from them either.
+	 * A Merit wish's threat (Wishes) came for the one who took it on, and doesn't run from them either. Nor does one of Entering Nirvana or
+	 * above, an immortal or all but one (the user, 2026-10-27: they "shouldnt run from people with opposing alignment or higher strength
+	 * than them"): they stand and fight; only a beating sends them back.
 	 */
 	public boolean holdsGround() {
-		return lifecycle == Lifecycle.SECT && getTitle().isElderOrAbove() || Wishes.isThreat(this);
+		return lifecycle == Lifecycle.SECT && getTitle().isElderOrAbove() || Wishes.isThreat(this) || standsAsImmortal();
+	}
+
+	/** Of Entering Nirvana or above: it runs from no one for their path or their strength ({@link #holdsGround}). */
+	public boolean standsAsImmortal() {
+		return !isMortal() && realmOf(getRank()).ordinal() >= Realm.ENTERING_NIRVANA.ordinal();
 	}
 
 	/**
@@ -1495,7 +1502,10 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		return !isMortal() && sustainedRank() >= PlayerCultivation.rank(Realm.NASCENT_SOUL, Stage.EARLY);
 	}
 
-	/** The righteous and the devilish are enemies wherever they meet; the neutral are nobody's. */
+	/**
+	 * The righteous and the devilish are enemies wherever they meet, but in the Immortal Realm ({@link #abovePathQuarrels}); the neutral are
+	 * nobody's.
+	 */
 	public boolean isEnemy(LivingEntity other) {
 		if (other == this || !other.isAlive() || isAlly(other) || !senses(other)) return false;
 		if (other instanceof Player player) {
@@ -1504,14 +1514,23 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			if (Wishes.isThreat(this) && player.getUUID().equals(Wishes.takerOf(this))) return true;
 			if (owesLife(player)) return false; // they spared its life: not today
 			if (SparSystem.areSparring(this, player)) return false; // a spar is a contest, not a feud
-			if (getFaction().isEnemyOf(Alignment.factionOf(alignmentOf(player)))) return true;
+			if (!abovePathQuarrels() && getFaction().isEnemyOf(Alignment.factionOf(alignmentOf(player)))) return true;
 			// A man on a demon clan's grounds (the user's pick, 2026-10-23: wary, so attacked there, let be outside unless provoked).
 			if (!level().isClientSide && isDemon() && trespassingMan(player)) return true;
 			// Loathing turns it on a player too, if it thinks it can win.
 			return !level().isClientSide && regard(player) <= Regard.HOSTILE && rankOf(this) >= rankOf(player);
 		}
-		if (other instanceof CultivatorNpc npc) return !npc.isConcealed() && !npc.isVacant() && getFaction().isEnemyOf(npc.getFaction());
+		if (other instanceof CultivatorNpc npc) return !abovePathQuarrels() && !npc.isConcealed() && !npc.isVacant() && getFaction().isEnemyOf(npc.getFaction());
 		return false;
+	}
+
+	/**
+	 * In the Immortal Realm the immortals hold the quarrel of the righteous and the devilish beneath them (the user, 2026-10-27): nobody
+	 * there goes for another on sight for their path, nor runs from one of the other path. A grudge of its own (its loathing) is its
+	 * own still, and struck, it fights back (RetaliateGoal).
+	 */
+	public boolean abovePathQuarrels() {
+		return ModDimensions.isImmortalRealm(level().dimension());
 	}
 
 	/** Someone it is (or should be) fighting, or who is fighting it. */
@@ -1997,6 +2016,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			// is answered by the sect as anyone would be.
 			if (attacker instanceof ServerPlayer player && sectId != null) SectMembership.onFellowStruck(this, player);
 			if (attacker != null && sectId != null && !isAlly(attacker)) SectManager.onMemberAttacked(server, this, attacker);
+			// One waiting on the Shore of Nirvana struck: the whole camp answers (NirvanaCamp#rally).
+			if (attacker != null && NirvanaCamp.isCamper(this)) NirvanaCamp.rally(server, this, attacker);
 			if (attacker instanceof ServerPlayer player && !player.isCreative()) {
 				// Striking it costs its regard, once a fight (blows in quick succession count as one).
 				long now = server.getGameTime();

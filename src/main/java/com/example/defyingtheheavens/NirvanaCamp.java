@@ -119,6 +119,22 @@ public final class NirvanaCamp {
 		return dx * dx + dz * dz <= SANCTUARY * SANCTUARY;
 	}
 
+	/**
+	 * Strike one waiting here and the camp turns on you (the user, 2026-10-27: "if you attack one of the EN campers they all should
+	 * retaliate"): every camper about the camp takes the striker for its foe, as it would had it been struck itself (RetaliateGoal), and goes
+	 * for it now if it fights no one else. Not those flying for the Gate (it lets none turn them aside: ImmortalGate#isRushing), nor at one
+	 * of the camp (a quarrel of the two's), nor at one in creative or watching.
+	 */
+	public static void rally(ServerLevel level, CultivatorNpc struck, net.minecraft.world.entity.LivingEntity attacker) {
+		if (attacker == struck || attacker instanceof CultivatorNpc npc && isCamper(npc)) return;
+		if (attacker instanceof net.minecraft.world.entity.player.Player player && (player.isCreative() || player.isSpectator())) return;
+		for (CultivatorNpc camper : campers(level, middle(level))) {
+			if (camper == struck || ImmortalGate.isRushing(camper) || camper.isAlly(attacker)) continue;
+			camper.setLastHurtByMob(attacker);
+			if (camper.getTarget() == null) camper.setTarget(attacker);
+		}
+	}
+
 	/** Every two seconds: the camp peopled the first time its land runs, then a newcomer now and then while there is room. */
 	public static void keep(MinecraftServer server) {
 		if (server.getTickCount() % 40 != 13) return;

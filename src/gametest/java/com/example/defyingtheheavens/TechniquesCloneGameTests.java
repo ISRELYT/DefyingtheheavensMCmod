@@ -234,22 +234,28 @@ public class TechniquesCloneGameTests implements FabricGameTest {
 		LootTable hall = server.getLootData().getLootTable(SectPiece.MASTER_HALL_LOOT);
 		LootTable library = server.getLootData().getLootTable(SectPiece.LIBRARY_LOOT);
 		Vec3 at = helper.absoluteVec(new Vec3(1, 2, 1));
-		int inHall = 0, inLibrary = 0, other = 0;
+		// (Universe in a Sleeve's manual beside Clone's since 2026-10-27, as often.)
+		int inHall = 0, inLibrary = 0, sleeves = 0, other = 0;
 		for (int i = 0; i < 1000; i++) {
 			for (ItemStack stack : hall.getRandomItems(new LootParams.Builder(helper.getLevel()).withParameter(LootContextParams.ORIGIN, at).create(LootContextParamSets.CHEST))) {
 				if (!stack.is(ModItems.TECHNIQUE_MANUAL)) continue;
-				if (TechniqueManualItem.technique(stack) == Technique.CLONE) inHall++;
+				Technique technique = TechniqueManualItem.technique(stack);
+				if (technique == Technique.CLONE) inHall++;
+				else if (technique == Technique.SLEEVE) sleeves++;
 				else other++;
 			}
 			for (ItemStack stack : library.getRandomItems(new LootParams.Builder(helper.getLevel()).withParameter(LootContextParams.ORIGIN, at).create(LootContextParamSets.CHEST))) {
 				if (!stack.is(ModItems.TECHNIQUE_MANUAL)) continue;
-				if (TechniqueManualItem.technique(stack) == Technique.CLONE) inLibrary++;
+				Technique technique = TechniqueManualItem.technique(stack);
+				if (technique == Technique.CLONE) inLibrary++;
+				else if (technique == Technique.SLEEVE) sleeves++;
 				else other++;
 			}
 		}
 		helper.assertTrue(other == 0, "Every manual found holds a technique (" + other + " didn't)");
 		helper.assertTrue(inHall >= 40 && inHall <= 130, "A master's hall chest keeps one now and then (" + inHall + " in 1000)");
 		helper.assertTrue(inLibrary >= 20 && inLibrary <= 90, "A library chest, rarer (" + inLibrary + " in 1000)");
+		helper.assertTrue(sleeves >= 60 && sleeves <= 200, "Universe in a Sleeve's as often as Clone's (" + sleeves + " in both, 2000 chests)");
 		helper.succeed();
 	}
 

@@ -2053,11 +2053,12 @@ comes after the pack's own passes), and a ghost's own first-person hand as flat 
 ## Techniques and their manuals
 
 **Techniques** (the user's ask, 2026-10-23; `Technique`) are ways of the cultivator learned from a **Technique Manual**, not
-awakened by a realm as the realm's abilities are. The first is **Clone** (Nascent Soul, below); more will come.
+awakened by a realm as the realm's abilities are. So far: **Clone** (Nascent Soul) and **Universe in a Sleeve** (Heavenly
+Being), both below.
 
-- **Finding them.** The sects keep them: each chest in a Sect Master's main hall holds one now and then (one roll in
-  about twelve; `loot_tables/chests/sect_master_hall.json`, an elder's riches besides), and a library pagoda's chest more
-  rarely (one in twenty; `sect_library.json`). Later structures will keep them too.
+- **Finding them.** The sects keep them: each chest in a Sect Master's main hall holds one now and then (Clone's and Universe
+  in a Sleeve's each one roll in about thirteen; `loot_tables/chests/sect_master_hall.json`, an elder's riches besides), and a
+  library pagoda's chest more rarely (each one in twenty-one; `sect_library.json`). Later structures will keep them too.
 - **Reading one** (use it): you learn what it holds if you stand at its realm, on either path as you wield it, and the
   manual isn't used up (pass it on). Below its realm you're told which realm it wants. A technique once learned is yours
   for good (saved with your cultivation, kept through death and rebirth), but **used only at its realm**: fall below it and
@@ -2127,6 +2128,41 @@ Code: `Clones` (the rules), `CloneBodyEntity` (the body not played: the clone st
 clone's record answers for its player while they play it (`CultivationManager#get`, `Clones#record`), its strength in
 `CultivationStats#apply` and `PlayerCultivation#maxQi`, its qi in `QiManager` (`Clones#feed`); client `CloneBodyRenderer`,
 `ClientClone` (packet `clone_state`), `SoulHud`. Tests in `TechniquesCloneGameTests`.
+
+### Universe in a Sleeve
+
+From **Heavenly Being** (the first realm that tears its own way into the Spatial Gap), with its manual read, the living can carry
+other players in their sleeve up through the ways between the realms, **whatever their realm** (`Sleeves`; the ability
+**Universe in a Sleeve**, an act, on the wheel; its switch shows On while the sleeve holds anyone). The user's ask of 2026-10-26,
+and their picks of 2026-10-27.
+
+- **Taking someone in:** look at another player within **6 blocks** and use the ability. They're offered a place in the chat,
+  with **[Accept]** and **[Refuse]** (`/sleeve accept|refuse <name>`), for 30 seconds. Accepted, they vanish into your sleeve:
+  a spectator held to your eyes (they see what you see and nothing else), untouchable, still ageing. At most **4** at once. Not
+  on the way between realms, and not one away from their body, held or holding one, in a clone, in a tribulation or in the Inner
+  Realm (a tribulation of theirs is abandoned as they go in).
+- **Carried:** they go wherever you go, through the **Spatial Gap**, the **Void Breach** and the **Immortal Gate** (the ways'
+  floors and the Immortal Realm's are yours to meet, not theirs), and **the moment you come out into a world they step out
+  beside you**, set down gently. Going into a small world they stay in your sleeve until you come out of it.
+- **The cost:** every spatial pressure on you is **doubled for each person you carry** (one x2, two x4, three x8, four x16; the
+  user's rule). A True Immortal, untouched at the Immortal Gate on its own, takes **a quarter of its body** over the 30-second
+  climb while it carries anyone, doubled the same way (`ImmortalGate#carriedShare`; the user's pick).
+- **Letting them out:** sneak and use the ability to let everyone out beside you (in the gap, out into it), anywhere but partway
+  through the Breach's or the Gate's climb. Anyone carried may step out (`/sleeve leave`, or the [Step out] button) while you're
+  out in a world.
+- **You slain:** they're **cast out where you fell** (the user's pick): in the gap, into its pressure; partway through the
+  Breach's climb, back at its foot; partway through the Gate's, back on the Shore of Nirvana; anywhere else, where you lay.
+- **Leaving the game:** you log out and they're set down beside you (or, on a way, where you took them in). They log out and
+  they're still in the sleeve when they come back; let out meanwhile, they come out where they were let out. A crash is put
+  right from the record (kept with the world).
+- **A small world does the same** (the user's ask of 2026-10-27): anyone inside your small world comes through the ways with
+  you, at the same cost (see the small worlds).
+- Art: `java tools/beast-art/BeastArt.java <assets> techniques` (the ability's icon: a silk sleeve with a sky of stars in its
+  mouth).
+
+Code: `Sleeves` (the rules and the record), `SleeveCommand`; `Technique#SLEEVE`, `Ability#SLEEVE`; the pressure in
+`SpatialTrialHandler`, `VoidBreach` and `ImmortalGate#carriedShare`; the held view in `SoulServerPlayerMixin#setCamera` and
+`ServerGamePacketListenerImplMixin`. Tests in `SleeveGameTests`.
 
 ## Golden Core Detonation
 
@@ -2611,6 +2647,12 @@ world: a floating island under the stars.
 - **Guests:** `/smallworld guest add <player>`, `/smallworld guest remove <name>`, `/smallworld guests`, `/smallworld` (its reach and
   guests). Guests on the list may walk through your open door (anyone else is turned away) and leave by the gate; one taken off the
   list while inside is sent out.
+- **Carried up the ways** (the user's ask of 2026-10-27: anyone with a small world can ascend with the people in it, at the same
+  cost as Universe in a Sleeve). Your world goes with you. Take the Spatial Gap, the Void Breach or the Immortal Gate and its door
+  shuts behind you, and everyone inside (and anyone in their sleeves) comes through with you, whatever their realm. **Every spatial
+  pressure on you doubles for each of them**, counted with any in your own sleeve, and a True Immortal takes the Gate's quarter body
+  the same way. When you come out into a world, the world's gate leads out **beside you there**. If you die on the way, they stay
+  safe inside, and the gate still leads back to where they came in. Stepping out partway, a guest comes out where they came in.
 - Art: `java tools/beast-art/BeastArt.java <assets> worlds` (the seed, the ability's icon).
 
 Code: `SmallWorlds`, `SmallWorldDoor`, `SmallWorldGateBlock`, `WorldSeedItem`, `SmallWorldCommand`, client `SmallWorldClient`,
@@ -4536,6 +4578,16 @@ From the user's play at Heavenly Lord:
   - The Formation Core, the Heaven Altar, the Spirit Pedestal and the steles are no longer taken for open ground by walkers' paths
     (not whole blocks, vanilla let paths cross them): an Inner Disciple whose path led across its sect's core pushed against it for
     good.
+- **Strike one of the Shore of Nirvana's camp and the whole camp answers** (`NirvanaCamp#rally`; the user: "if you attack one of the
+  EN campers they all should retaliate"): every camper about the camp takes the striker for its foe, as if struck itself, and goes for
+  them if it fights no one else. Not those flying for the Gate, and a quarrel between two of the camp stays theirs.
+- **From Entering Nirvana up, cultivators stand their ground** (`CultivatorNpc#holdsGround`, `#standsAsImmortal`; the user: they
+  "shouldnt run from people with opposing alignment or higher strength than them"): no stronger domain of the other path sends them
+  running, as it does those below. Badly hurt, with their foe on them, they still back away.
+- **The Immortal Realm is above the quarrel of the two paths** (`CultivatorNpc#abovePathQuarrels`; the user: "make everyone in the
+  immortal realm not attack on sight actually, they treat those righteous vs devilish quarrels as beneath them"): there, the righteous
+  and the devilish are not each other's enemies. Nobody goes for you on sight for your path, nobody runs from you for it, and they talk
+  and trade with you whatever it is (`TalkSystem#isPathEnemy`). A grudge of its own still counts, and struck, it fights back.
 - **Long tooltips wrap** (`TooltipWrap`): the mod's items' lines wider than 220 GUI pixels break onto lines of their own, keeping
   their colours (the Court Merit Token's ran off the screen).
 - **Lag at the great sects** (the user: "entering holy lands and stuff causes massive lag spikes"; found by sampling the server's and the

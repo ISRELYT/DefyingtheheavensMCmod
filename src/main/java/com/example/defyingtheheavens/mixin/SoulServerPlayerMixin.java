@@ -29,10 +29,13 @@ public abstract class SoulServerPlayerMixin {
 
 	/**
 	 * One whose body is held by another's soul (Possession) watches through it and nothing else: sneaking off it, clicking another
-	 * to watch, a command, all leave the view where it is until the body is given back.
+	 * to watch, a command, all leave the view where it is until the body is given back. One in another's sleeve (Sleeves) likewise sees
+	 * through its bearer's eyes until let out.
 	 */
 	@Inject(method = "setCamera", at = @At("HEAD"), cancellable = true)
 	private void dth$heldWatchTheirBody(net.minecraft.world.entity.Entity camera, org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
-		if (!com.example.defyingtheheavens.Possession.mayView((ServerPlayer) (Object) this, camera == null ? (ServerPlayer) (Object) this : camera)) ci.cancel();
+		ServerPlayer self = (ServerPlayer) (Object) this;
+		net.minecraft.world.entity.Entity to = camera == null ? self : camera;
+		if (!com.example.defyingtheheavens.Possession.mayView(self, to) || !com.example.defyingtheheavens.Sleeves.mayView(self, to)) ci.cancel();
 	}
 }

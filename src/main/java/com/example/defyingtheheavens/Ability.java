@@ -121,7 +121,13 @@ public enum Ability {
 	 * one wherever one stands, for its owner and its guests to walk through; inside it, the way out where one came in. An act: "on" while
 	 * its door stands open or one is in it.
 	 */
-	SMALL_WORLD("small_world", false, c -> c.hasSmallWorld() && Laws.isImmortal(c));
+	SMALL_WORLD("small_world", false, c -> c.hasSmallWorld() && Laws.isImmortal(c)),
+	/**
+	 * A technique, not the realm's (Technique#SLEEVE, Universe in a Sleeve, from its manual; the user's ask, 2026-10-26), wielded from
+	 * Heavenly Being by the living: offer the player one looks at a place in one's sleeve, to carry them wherever one goes, up through the
+	 * passages between the realms whatever their realm; sneaking, let them out (Sleeves). An act: "on" while the sleeve holds anyone.
+	 */
+	SLEEVE("sleeve", false, c -> !c.netherworld().ghost() && c.knowsTechnique(Technique.SLEEVE) && Technique.SLEEVE.wieldable(c));
 
 	private final String id;
 	private final boolean onByDefault;
@@ -209,6 +215,8 @@ public enum Ability {
 					LawDomains.description(key, law(), c);
 			// How long its door stands, how far out its land reaches by one's Laws now, and how much further a level of them takes it.
 			case SMALL_WORLD -> Component.translatable(key, SmallWorlds.DOOR_TICKS / 20, SmallWorlds.radius(c.laws().total()), SmallWorlds.PER_LAW_LEVEL);
+			// Its reach, how many it holds, and a True Immortal's share of its body at the Immortal Gate (in hundredths of a body).
+			case SLEEVE -> Component.translatable(key, Math.round(Sleeves.REACH), Sleeves.MOST, Math.round(Sleeves.GATE_BASE_BODIES * 100));
 			default -> Component.translatable(key);
 		};
 	}

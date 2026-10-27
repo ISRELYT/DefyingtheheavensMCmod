@@ -352,6 +352,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case TIME_DOMAIN -> "Time Domain";
 				case LIFE_AND_DEATH_DOMAIN -> "Life and Death Domain";
 				case SMALL_WORLD -> "Small World";
+				case SLEEVE -> "Universe in a Sleeve";
 			});
 			t.add(key + ".description", switch (ability) {
 				case QI_SUSTENANCE -> "Qi keeps you fed. Hunger stays full.";
@@ -432,7 +433,17 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case SMALL_WORLD -> "Open the door to your small world before you, for %1$s s: walk through it, and so may those on its guest list "
 						+ "(/smallworld guest add). Its qi is the Immortal Realm's: your essence fills there, and meditating there comprehends your "
 						+ "Law in focus (its breakthroughs are still the Immortal Realm's alone). Inside, use this again, or walk through its gate, to "
-						+ "go out where you came in. Its land reaches %2$s blocks out, %3$s more for every level of the Laws you hold.";
+						+ "go out where you came in. Its land reaches %2$s blocks out, %3$s more for every level of the Laws you hold. Your world "
+						+ "goes with you: anyone inside it when you take the Spatial Gap, the Void Breach or the Immortal Gate comes through with you, "
+						+ "whatever their realm, and its gate then leads out beside you. As with Universe in a Sleeve, the spatial pressure on you "
+						+ "doubles for each of them.";
+				case SLEEVE -> "A technique (from its manual). Look at another player within %1$s blocks and use this to offer them a place in "
+						+ "your sleeve (up to %2$s at once). If they accept, they vanish into it: safe, untouchable, seeing what you see. They go "
+						+ "wherever you go, up through the Spatial Gap, the Void Breach and the Immortal Gate, whatever their realm, and come out "
+						+ "beside you when you arrive in a world. You pay for it: the spatial pressure on you doubles for each person you carry "
+						+ "(a True Immortal, which feels none at the Immortal Gate, takes %3$s%% of its body over the climb there, doubled the "
+						+ "same way). Sneak and use it to let them out beside you (not partway through a climb). If you die, they're cast out "
+						+ "where you fell.";
 			});
 		}
 		// Clone while playing the clone (Clones): the way back.
@@ -1084,6 +1095,9 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.techniqueKey(Technique.CLONE.getId()), "Clone");
 		t.add(ModLang.techniqueKey(Technique.CLONE.getId()) + ".description", "Split a clone off your body and walk in it as yourself: your "
 				+ "realm, abilities and spells, half your strength.");
+		t.add(ModLang.techniqueKey(Technique.SLEEVE.getId()), "Universe in a Sleeve");
+		t.add(ModLang.techniqueKey(Technique.SLEEVE.getId()) + ".description", "Carry others in your sleeve, whatever their realm, up through "
+				+ "the Spatial Gap, the Void Breach and the Immortal Gate. The spatial pressure on you doubles for each one.");
 		t.add(ModItems.TECHNIQUE_MANUAL, "Technique Manual");
 		t.add(ModLang.ITEM_TECHNIQUE_MANUAL_OF, "Technique Manual: %s");
 		t.add(ModLang.ITEM_SPELL_MANUAL_OF, "Spell Manual: %s");
@@ -1119,6 +1133,35 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_CLONE_CANNOT, "A clone can't do that: your body can.");
 		t.add(ModLang.MSG_CLONE_REFORMING, "Your last clone was lost: another can be split off in %s.");
 		t.add(ModLang.MSG_CLONE_DOMAIN_MET, "Your clone's consciousness touches another's: %s (%s)");
+		// Universe in a Sleeve (Sleeves, SleeveCommand)
+		t.add(ModLang.MSG_SLEEVE_HOW, "Look at someone within %1$s blocks and use this to offer them a place in your sleeve. You carry %2$s of %3$s. "
+				+ "Sneak and use it to let them out.");
+		t.add(ModLang.MSG_SLEEVE_EMPTY, "Your sleeve is empty.");
+		t.add(ModLang.MSG_SLEEVE_OFFER, "You offer %s a place in your sleeve.");
+		t.add(ModLang.MSG_SLEEVE_OFFERED, "%s offers to carry you in their sleeve.");
+		t.add(ModLang.SLEEVE_ACCEPT, "[Accept]");
+		t.add(ModLang.SLEEVE_REFUSE, "[Refuse]");
+		t.add(ModLang.SLEEVE_LEAVE, "[Step out]");
+		t.add(ModLang.MSG_SLEEVE_NO_OFFER, "Nobody is offering you a place in their sleeve now.");
+		t.add(ModLang.MSG_SLEEVE_REFUSED, "%s won't go into your sleeve.");
+		t.add(ModLang.MSG_SLEEVE_YOU_REFUSED, "You turn down %s's offer.");
+		t.add(ModLang.MSG_SLEEVE_NOT_ON_THE_WAY, "Not here: you can only take someone in out in a world, not on the way between realms.");
+		t.add(ModLang.MSG_SLEEVE_FULL, "Your sleeve holds no more than %2$s.");
+		t.add(ModLang.MSG_SLEEVE_CANT_TAKE, "%1$s can't be taken into your sleeve now.");
+		t.add(ModLang.MSG_SLEEVE_TAKEN, "%s is in your sleeve (%s of %s).");
+		t.add(ModLang.MSG_SLEEVE_INSIDE, "You are in %s's sleeve. You'll come out beside them when they arrive.");
+		t.add(ModLang.MSG_SLEEVE_COST, "You carry %s in your sleeve. With everyone you bring, the spatial pressure on you is %s times what it would be.");
+		t.add(ModLang.MSG_SLEEVE_MID_CLIMB, "Not partway through the climb: wait until you're through.");
+		t.add(ModLang.MSG_SLEEVE_LET_OUT, "You let them out of your sleeve.");
+		t.add(ModLang.MSG_SLEEVE_OUT, "%s lets you out of their sleeve.");
+		t.add(ModLang.MSG_SLEEVE_ARRIVED, "You come out of %s's sleeve beside them.");
+		t.add(ModLang.MSG_SLEEVE_CAST_OUT, "%s has fallen: you are cast out of their sleeve!");
+		t.add(ModLang.MSG_SLEEVE_BEARER_GONE, "%s is gone: you are set down where they took you in.");
+		t.add(ModLang.MSG_SLEEVE_OUT_AWAY, "While you were away, %s let you out of their sleeve.");
+		t.add(ModLang.MSG_SLEEVE_NOT_IN, "You aren't in anyone's sleeve.");
+		t.add(ModLang.MSG_SLEEVE_CANT_LEAVE, "You can't step out on the way between realms: wait until they arrive.");
+		t.add(ModLang.MSG_SLEEVE_STEPPED_OUT, "%s steps out of your sleeve.");
+		t.add(ModLang.MSG_SLEEVE_YOU_STEPPED_OUT, "You step out of %s's sleeve.");
 		t.add(ModLang.MSG_BODY_DOMAIN_MET, "Your main body's consciousness touches another's: %s (%s)");
 		t.add(ModLang.HUD_CLONE_IN, "In your clone");
 		t.add(ModLang.HUD_CLONE_MAIN, "Body %s / %s");
@@ -2039,6 +2082,9 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_WORLD_GROWN, "Your world grows with your Laws: its land reaches %s blocks out.");
 		t.add(ModLang.MSG_WORLD_CAUGHT, "Beyond the island is nothing: the world sets you back on its land.");
 		t.add(ModLang.MSG_WORLD_SENT_OUT, "This world isn't open to you any more: you are sent out of it.");
+		t.add(ModLang.MSG_WORLD_BORNE, "Your small world comes with you, and the %s inside it. With everyone you bring, the spatial pressure on you is %s times what it would be.");
+		t.add(ModLang.MSG_WORLD_CARRIED_UP, "%s has carried this world through to the other side: its gate now leads out beside them there.");
+		t.add(ModLang.MSG_WORLD_BROUGHT, "You brought %s through in your small world: its gate now leads out here.");
 		t.add(ModLang.MSG_GUEST_INVITED, "%s has put you on the guest list of their small world: you may walk through its door.");
 		t.add(ModLang.CMD_WORLD_NONE, "You have no small world: refine a World Seed (five Chaos Origin Stones and four Immortal Jade) as a True Immortal.");
 		t.add(ModLang.CMD_WORLD_INFO, "Your small world: its land reaches %s blocks out (%s laid so far), %s guests.");

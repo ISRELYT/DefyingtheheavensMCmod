@@ -189,6 +189,19 @@ public final class SpatialTrialHandler {
 		CultivationManager.sync(player);
 	}
 
+	/**
+	 * {@code player} cast out into the gap at {@code at} (out of a sleeve whose bearer fell, or let them out, there: Sleeves), in it as any
+	 * who came in: from the Upper Realm ({@code fromUpper}) or the Overworld, its pressure on them now.
+	 */
+	static void castIn(ServerPlayer player, Vec3 at, boolean fromUpper) {
+		if (!canEnter(player)) return;
+		PlayerCultivation c = CultivationManager.get(player);
+		c.setGapFromUpper(fromUpper);
+		enterGap(player, Route.TRAVEL, at.x, at.y, at.z);
+		player.fallDistance = 0;
+		CultivationManager.sync(player);
+	}
+
 	private static boolean canEnter(ServerPlayer player) {
 		if (player == null || !player.isAlive() || player.isSpectator() || player.getServer() == null) return false;
 		// A soul is bound to its body's realm, unless a person's body it is in carries it (Possession).
@@ -576,7 +589,8 @@ public final class SpatialTrialHandler {
 		}
 		if (++t.ticks % 20 == 0) {
 			loadAhead(server, p);
-			p.hurt(ModDamageTypes.spatialPressure(gap), pressureAt(p.getY()));
+			// Twice as heavy for each one carried in one's sleeve (Sleeves).
+			p.hurt(ModDamageTypes.spatialPressure(gap), pressureAt(p.getY()) * Sleeves.pressureFactor(p));
 			if (!p.isAlive()) return;
 			long x = Math.round(p.getX() * GAP_SCALE), z = Math.round(p.getZ() * GAP_SCALE);
 			if (inLowerLayers(p.getY())) {

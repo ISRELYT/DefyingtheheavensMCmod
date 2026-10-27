@@ -90,7 +90,9 @@
       "com.example.defyingtheheavens.SweepFourGameTests",
       "com.example.defyingtheheavens.OverhaulsGameTests",
       "com.example.defyingtheheavens.AdvancementsGameTests",
-      "com.example.defyingtheheavens.CodexGameTests"
+      "com.example.defyingtheheavens.CodexGameTests",
+      "com.example.defyingtheheavens.StandingGroundGameTests",
+      "com.example.defyingtheheavens.SleeveGameTests"
     ]
   }
 }

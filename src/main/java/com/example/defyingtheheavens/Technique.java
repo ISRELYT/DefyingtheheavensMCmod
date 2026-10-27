@@ -11,7 +11,13 @@ import net.minecraft.network.chat.Component;
  */
 public enum Technique {
 	/** A second body split off one's own (Clones): one's realm, half one's strength, played as oneself while the main body sits on (Ability#CLONE). */
-	CLONE("clone", Realm.NASCENT_SOUL);
+	CLONE("clone", Realm.NASCENT_SOUL),
+	/**
+	 * Universe in a Sleeve (Sleeves; the user's ask of 2026-10-26): others carried in one's sleeve wherever one goes, up through the Spatial
+	 * Gap, the Void Breach and the Immortal Gate whatever their realm, for twice the spatial pressure for each (Ability#SLEEVE). From
+	 * Heavenly Being, the first realm that tears its own way into the gap (the user's pick).
+	 */
+	SLEEVE("universe_in_a_sleeve", Realm.HEAVENLY_BEING);
 
 	private final String id;
 	private final Realm realm;

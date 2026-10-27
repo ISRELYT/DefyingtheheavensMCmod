@@ -119,9 +119,12 @@ public final class TalkSystem {
 		return gap == -1 ? Standing.BELOW : Standing.FAR_BELOW;
 	}
 
-	/** The righteous and the devilish: they don't talk, only fight (or, far beneath you, beg). */
+	/**
+	 * The righteous and the devilish: they don't talk, only fight (or, far beneath you, beg). Not in the Immortal Realm, where that quarrel
+	 * is beneath them (CultivatorNpc#abovePathQuarrels): they talk and trade with either path as with anyone.
+	 */
 	public static boolean isPathEnemy(ServerPlayer player, CultivatorNpc npc) {
-		return npc.getFaction().isEnemyOf(Alignment.factionOf(CultivatorNpc.alignmentOf(player)));
+		return !npc.abovePathQuarrels() && npc.getFaction().isEnemyOf(Alignment.factionOf(CultivatorNpc.alignmentOf(player)));
 	}
 
 	/**

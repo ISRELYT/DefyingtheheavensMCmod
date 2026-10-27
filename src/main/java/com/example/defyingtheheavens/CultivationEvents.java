@@ -44,6 +44,8 @@ public final class CultivationEvents {
 		Clones.onDisconnect(player);
 		// One whose body is held doesn't take it with them: it plays on under the soul, and they watch again as they come back (Possession).
 		Possession.onDisconnect(player);
+		// A bearer sets down those in its sleeve where each was taken in; one in a sleeve stays in it (Sleeves).
+		Sleeves.onDisconnect(player);
 		// A soul out of its body goes home (or, fleeing a fight, is severed) while the player can still be moved and saved; one in
 		// a person's body gives it back first.
 		SoulProjection.onDisconnect(player);
@@ -91,6 +93,7 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(SpatialTrialHandler::tick);
 		ServerTickEvents.END_SERVER_TICK.register(VoidBreach::tick);
 		ServerTickEvents.END_SERVER_TICK.register(ImmortalGate::tick); // the Immortal Gate's opening, the way up and down
+		ServerTickEvents.END_SERVER_TICK.register(Sleeves::tick); // those carried in a sleeve, wherever their bearer goes
 		ServerTickEvents.END_SERVER_TICK.register(CityMarkets::keep); // the Immortal Realm's markets, their merchants at their stalls
 		ServerTickEvents.END_SERVER_TICK.register(CelestialCourt::tick); // the Celestial Court's people at their posts, the Gate's watch counted
 		ServerTickEvents.END_SERVER_TICK.register(PrimordialBeasts::tick); // the primordial beasts come to their lairs
@@ -189,6 +192,8 @@ public final class CultivationEvents {
 		ServerLifecycleEvents.SERVER_STOPPING.register(SoulProjection::returnAll);
 		// And everyone in their clone back in their main body (the clones stand on), before anyone is saved.
 		ServerLifecycleEvents.SERVER_STOPPING.register(Clones::returnAll);
+		// And everyone carried in a sleeve set down (Sleeves#releaseAll).
+		ServerLifecycleEvents.SERVER_STOPPING.register(Sleeves::releaseAll);
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> TribulationManager.clear());
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> LifespanTribulation.clear()); // their power is on the records already
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> FiveDecays.clear()); // a judgement under way comes again (the records keep it)
@@ -228,6 +233,7 @@ public final class CultivationEvents {
 			ImmortalGate.clear();
 			VoidCurrents.clear();
 			NirvanaCamp.clear();
+			Sleeves.clear();
 			Wishes.clear();
 			RaceGifts.clear();
 			LawDomains.clear();
@@ -317,6 +323,7 @@ public final class CultivationEvents {
 			CoreDetonation.onJoin(player); // no act's switch left on from a server that stopped mid-way
 			FiveDecays.onJoin(player); // the Decays' time stood still while they were away
 			SmallWorlds.onJoin(player); // their own small world's door, and out of one not theirs to be in
+			Sleeves.onJoin(player); // back in a sleeve, or let out of one while away: set right a tick on
 			PlayerTitles.onJoin(player); // every player's plate told (their title, their sect's title over them)
 			RealmSuppressionHandler.update(player);
 			if (fled) player.setHealth(Math.min(player.getHealth(), player.getMaxHealth())); // the lower stage's smaller body
@@ -353,6 +360,7 @@ public final class CultivationEvents {
 			if (!alive) LifespanTribulation.onRespawn(newPlayer);
 			DemonPath.born(newPlayer); // a demon born again is born with its demon core again
 			FiveDecays.onRespawn(newPlayer); // a Decay's stained robes on the new body too
+			Sleeves.onRespawn(newPlayer); // one who died in a sleeve (a command reaches them) plays as before
 		});
 
 		// A blow a heaven spell's ward has brought to nothing is refused outright: no knockback, no flinch (HeavenSpells#wardedOff).
@@ -445,6 +453,7 @@ public final class CultivationEvents {
 				// breakthrough's tribulation under way goes with it unremarked.
 				boolean spent = LifespanTribulation.onDeath(sp);
 				TribulationManager.onDeath(sp); // dying mid-tribulation fails the breakthrough
+				Sleeves.onDeath(sp); // those in a sleeve cast out where its bearer fell: before the gap's or a climb's own reckoning
 				SpatialTrialHandler.onDeath(sp); // dying in the Spatial Gap ends the trial
 				VoidBreach.onDeath(sp); // and in a Void Breach, the climb
 				ImmortalGate.onDeath(sp); // and in the Immortal Gate's passage, the climb
@@ -472,7 +481,7 @@ public final class CultivationEvents {
 		UseBlockCallback.EVENT.register((player, world, hand, hit) -> {
 			if (SoulProjection.isSoul(player)) return InteractionResult.FAIL;
 			// One whose body is held only watches it (a spectator could otherwise look into a chest it looks at).
-			if (player instanceof ServerPlayer held && Possession.isHeld(held.getUUID())) return InteractionResult.FAIL;
+			if (player instanceof ServerPlayer held && (Possession.isHeld(held.getUUID()) || Sleeves.isCarried(held.getUUID()))) return InteractionResult.FAIL;
 			if (!Incorporeal.isRuledGhost(player)) return InteractionResult.PASS;
 			if (hand != InteractionHand.MAIN_HAND) return InteractionResult.FAIL;
 			BlockState state = world.getBlockState(hit.getBlockPos());
