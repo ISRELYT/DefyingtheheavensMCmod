@@ -988,6 +988,26 @@ public final class ModLang {
 	public static String codexChapter(String id) { return k("codex.chapter." + id); }
 	public static String codexEntryTitle(String id) { return k("codex.entry." + id + ".title"); }
 	public static String codexEntryText(String id) { return k("codex.entry." + id + ".text"); }
+	/** A world on the Codex's map, and its way in (CodexMap; client CodexDiagrams). */
+	public static String codexWorld(String id) { return k("codex.world." + id); }
+	public static String codexWorldWay(String id) { return k("codex.world." + id + ".way"); }
+	// The words of the Codex's diagrams (client CodexDiagrams): a world's qi and the realm to reach before going, where one is
+	public static final String CODEX_QI = k("codex.qi");
+	public static final String CODEX_QI_BODY = k("codex.qi_body");
+	public static final String CODEX_GHOST_QI = k("codex.ghost_qi");
+	public static final String CODEX_GHOST_QI_IN_PLACES = k("codex.ghost_qi_in_places");
+	public static final String CODEX_TIMES = k("codex.times");
+	public static final String CODEX_RANGE = k("codex.range");
+	public static final String CODEX_RECOMMENDED = k("codex.recommended");
+	public static final String CODEX_ANY_REALM = k("codex.any_realm");
+	public static final String CODEX_REALM_STAGE = k("codex.realm_stage");
+	public static final String CODEX_HERE = k("codex.here");
+	public static final String CODEX_ANYWHERE = k("codex.anywhere");
+	public static final String CODEX_LOWER_REALMS = k("codex.lower_realms");
+	public static final String CODEX_YOUR_REALM = k("codex.your_realm");
+	public static final String CODEX_CULTIVATED_IN = k("codex.cultivated_in");
+	public static final String CODEX_OVERCOMES = k("codex.overcomes");
+	public static final String CODEX_OVERCOME_BY = k("codex.overcome_by");
 	// Switching abilities by key, without the wheel (client QuickAbilities)
 	public static final String KEY_QUICK_ABILITY = "key." + DefyingTheHeavens.MOD_ID + ".quick_ability";
 	/** Followed by the slot's number, 1 to 8: "key.defying-the-heavens.ability_slot_3". */

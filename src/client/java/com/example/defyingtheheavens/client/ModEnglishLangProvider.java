@@ -6,6 +6,7 @@ import com.example.defyingtheheavens.AstralPlanets;
 import com.example.defyingtheheavens.ClothingStyle;
 import com.example.defyingtheheavens.ClothingTier;
 import com.example.defyingtheheavens.Codex;
+import com.example.defyingtheheavens.CodexMap;
 import com.example.defyingtheheavens.GhostMethod;
 import com.example.defyingtheheavens.Spell;
 import com.example.defyingtheheavens.ModBlocks;
@@ -1037,6 +1038,26 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.CODEX_TOAST_MANY, "%s new pages");
 		for (Codex.Hint hint : Codex.Hint.values()) t.add(ModLang.codexHint(hint.id()), hint.english());
 		Codex.english().forEach((key, text) -> t.add(key, text));
+		for (CodexMap.World world : CodexMap.World.values()) {
+			t.add(world.nameKey(), world.english());
+			t.add(world.wayKey(), world.wayEnglish());
+		}
+		t.add(ModLang.CODEX_QI, "Qi: %s");
+		t.add(ModLang.CODEX_QI_BODY, "Qi: as where your body sits, %s");
+		t.add(ModLang.CODEX_GHOST_QI, "Ghostly qi: %s");
+		t.add(ModLang.CODEX_GHOST_QI_IN_PLACES, "Ghostly qi: %s on its Ancient Battlefields, none elsewhere");
+		t.add(ModLang.CODEX_TIMES, "×%s");
+		t.add(ModLang.CODEX_RANGE, "%s to %s");
+		t.add(ModLang.CODEX_RECOMMENDED, "Recommended realm: %s");
+		t.add(ModLang.CODEX_ANY_REALM, "any");
+		t.add(ModLang.CODEX_REALM_STAGE, "%s, %s");
+		t.add(ModLang.CODEX_HERE, "You are here");
+		t.add(ModLang.CODEX_ANYWHERE, "From anywhere");
+		t.add(ModLang.CODEX_LOWER_REALMS, "The lower realms");
+		t.add(ModLang.CODEX_YOUR_REALM, "Your realm");
+		t.add(ModLang.CODEX_CULTIVATED_IN, "Cultivated in: %s");
+		t.add(ModLang.CODEX_OVERCOMES, "Overcomes %s");
+		t.add(ModLang.CODEX_OVERCOME_BY, "Overcome by %s");
 		t.add(ModLang.KEY_QUICK_ABILITY, "Use Selected Ability");
 		for (int slot = 1; slot <= PlayerCultivation.WHEEL_SLOTS; slot++) t.add(ModLang.KEY_ABILITY_SLOT_PREFIX + slot, "Ability Wheel Slot " + slot);
 		t.add(ModLang.MSG_QUICK_ABILITY_STATE, "%s: %s");

@@ -1,7 +1,9 @@
 package com.example.defyingtheheavens.client;
 
+import com.example.defyingtheheavens.AlchemyRecipes;
 import com.example.defyingtheheavens.Codex;
 import com.example.defyingtheheavens.ModLang;
+import net.minecraft.Util;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
@@ -11,19 +13,27 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.ItemLike;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 
 /**
@@ -32,6 +42,10 @@ import java.util.regex.Matcher;
  * with every page sealed a darkened icon and ???; a page open and not yet read wears a gold dot, and so does its chapter (CodexState).
  * Opened by its key (J) wherever one is in the world, or by the book beside the cultivation menu ({@link Book}), which it goes back to;
  * it opens on the newest page not yet read, else where it was left.
+ * <p>
+ * A page's pictures (the user's pick, 2026-10-28) stand between its words: rows of items in gold-rimmed slots, the recipes read from the
+ * game itself (the cauldron's, AlchemyRecipes; a crafting recipe, the client's recipe manager), and diagrams (CodexDiagrams). Pointed at,
+ * an item shows its tooltip, and a diagram what it says of the part pointed at.
  */
 public class CodexScreen extends Screen {
 	private static final int WIDTH = 400; // the smallest usual GUI is 427 wide
@@ -55,9 +69,15 @@ public class CodexScreen extends Screen {
 	private static final int LINE_H = 10;
 	private static final int PARAGRAPH_GAP = 4;
 	private static final int BULLET_INDENT = 8;
+	/** A picture's item slot, a "+" or an arrow's room, and the gap between them and between their rows. */
+	private static final int SLOT = 18;
+	private static final int GLYPH_W = 9;
+	private static final int CELL_GAP = 2;
 	/** The thin scroll rollers at a column's right, and pixels a mouse-wheel notch moves. */
 	private static final int ROLLER_W = 4;
 	private static final int SCROLL_STEP = 12;
+	/** How wide the page's words and pictures run, short of its roller. */
+	private static final int TEXT_W = PAGE_W - ROLLER_W - 6;
 	/** A dot's gold, and the shade laid over a sealed chapter's icon. */
 	private static final int DOT = 0xFFF2C94C;
 	private static final int DOT_RIM = 0xFF8A6A1E;
@@ -75,12 +95,29 @@ public class CodexScreen extends Screen {
 	private int listMax;
 	private int pageScroll;
 	private int pageMax;
-	/** The page shown, laid out for its width (and which page, open or sealed, it was laid out for). */
+	/** The page shown, laid out for its width (and which page, open or sealed, it was laid out for): its words and its pictures. */
 	private List<Line> lines = List.of();
+	private List<Picture> pictures = List.of();
 	private int linesHeight;
 	private String laidOut;
+	/** What the mouse points at on the page, for its tooltip: an item of a picture, or a part of a diagram. */
+	private ItemStack hoverStack;
+	private List<FormattedCharSequence> hoverTip;
 
 	private record Line(FormattedCharSequence text, int x, int y, boolean bullet) {}
+
+	/** A picture between the words (Codex: "@items", "@brew", "@craft", "@diagram"): its cells in rows, or a diagram (CodexDiagrams). */
+	private record Picture(int y, int height, List<Cell> cells, String diagram) {}
+
+	/**
+	 * A cell of a picture, where it sits in it: an item (several in turn where a recipe takes any of them, as any wool), or a glyph
+	 * between them ('+', or '>' for the arrow).
+	 */
+	private record Cell(int x, int y, List<ItemStack> stacks, char glyph) {
+		int width() {
+			return glyph == 0 ? SLOT : GLYPH_W;
+		}
+	}
 
 	public CodexScreen(Screen parent) {
 		super(Component.translatable(ModLang.CODEX_TITLE));
@@ -137,9 +174,11 @@ public class CodexScreen extends Screen {
 
 		List<Component> tip = renderChapters(g, mouseX, mouseY);
 		renderList(g, mouseX, mouseY);
-		renderPage(g);
+		renderPage(g, mouseX, mouseY);
 		super.render(g, mouseX, mouseY, partialTick);
 		if (tip != null) g.renderComponentTooltip(font, tip, mouseX, mouseY);
+		else if (hoverStack != null) g.renderTooltip(font, hoverStack, mouseX, mouseY);
+		else if (hoverTip != null) g.renderTooltip(font, hoverTip, mouseX, mouseY);
 	}
 
 	/** The chapters' column; returns the tooltip of the one pointed at, if any. */
@@ -215,7 +254,7 @@ public class CodexScreen extends Screen {
 		roller(g, x + LIST_W - ROLLER_W, viewTop, viewBottom, content, listScroll, listMax);
 	}
 
-	private void renderPage(GuiGraphics g) {
+	private void renderPage(GuiGraphics g, int mouseX, int mouseY) {
 		Codex.Entry entry = entry();
 		boolean open = entry != null && CodexState.isOpen(entry);
 		int x = left + PAGE_X;
@@ -232,6 +271,11 @@ public class CodexScreen extends Screen {
 		int viewBottom = top + BODY_BOTTOM;
 		pageMax = Math.max(0, linesHeight - (viewBottom - viewTop));
 		pageScroll = Mth.clamp(pageScroll, 0, pageMax);
+		hoverStack = null;
+		hoverTip = null;
+		// Only what shows can be pointed at: the mouse outside the page's view points at nothing on it.
+		boolean inView = in(mouseX, mouseY, x, viewTop, PAGE_W - ROLLER_W - 2, viewBottom - viewTop);
+		int mx = inView ? mouseX : Integer.MIN_VALUE / 2, my = inView ? mouseY : Integer.MIN_VALUE / 2;
 		g.enableScissor(x, viewTop, x + PAGE_W - ROLLER_W - 2, viewBottom);
 		for (Line line : lines) {
 			int ly = viewTop + line.y() - pageScroll;
@@ -239,24 +283,70 @@ public class CodexScreen extends Screen {
 			if (line.bullet()) g.fill(x + 2, ly + 3, x + 4, ly + 5, TalkUi.GOLD);
 			g.drawString(font, line.text(), x + line.x(), ly, TalkUi.CREAM, false);
 		}
+		for (Picture picture : pictures) {
+			int py = viewTop + picture.y() - pageScroll;
+			if (py + picture.height() <= viewTop || py >= viewBottom) continue;
+			if (picture.diagram() != null) {
+				List<FormattedCharSequence> tip = CodexDiagrams.draw(g, font, picture.diagram(), x, py, TEXT_W, mx, my);
+				if (tip != null) hoverTip = tip;
+				continue;
+			}
+			for (Cell cell : picture.cells()) {
+				int cx = x + cell.x(), cy = py + cell.y();
+				if (cell.glyph() != 0) {
+					glyph(g, cell.glyph(), cx, cy);
+					continue;
+				}
+				ItemStack stack = cell.stacks().get((int) (Util.getMillis() / 1000 % cell.stacks().size()));
+				boolean hover = in(mx, my, cx, cy, SLOT, SLOT);
+				g.fill(cx, cy, cx + SLOT, cy + SLOT, hover ? TalkUi.GOLD : TalkUi.GOLD_DIM);
+				g.fill(cx + 1, cy + 1, cx + SLOT - 1, cy + SLOT - 1, hover ? TalkUi.PANEL_LIT : TalkUi.INNER);
+				g.renderItem(stack, cx + 1, cy + 1);
+				g.renderItemDecorations(font, stack, cx + 1, cy + 1);
+				if (hover) hoverStack = stack;
+			}
+		}
 		g.disableScissor();
 		roller(g, x + PAGE_W - ROLLER_W, viewTop, viewBottom, linesHeight, pageScroll, pageMax);
 	}
 
-	/** The page's text wrapped to its width: paragraphs, points of a list (indented, a gold point before), headings in gold. */
+	/** A glyph between a picture's items: a gold "+", or a gold arrow pointing to what they make. */
+	private void glyph(GuiGraphics g, char glyph, int x, int y) {
+		if (glyph == '+') {
+			g.drawString(font, "+", x + (GLYPH_W - font.width("+")) / 2, y + 5, TalkUi.GOLD_TEXT, false);
+			return;
+		}
+		g.fill(x + 1, y + 8, x + 6, y + 10, TalkUi.GOLD);
+		g.fill(x + 5, y + 6, x + 6, y + 12, TalkUi.GOLD);
+		g.fill(x + 6, y + 7, x + 7, y + 11, TalkUi.GOLD);
+		g.fill(x + 7, y + 8, x + 8, y + 10, TalkUi.GOLD);
+	}
+
+	/**
+	 * The page's text wrapped to its width: paragraphs, points of a list (indented, a gold point before), headings in gold; and its
+	 * pictures between them, where their lines stand.
+	 */
 	private void layOut(Codex.Entry entry, boolean open) {
 		String key = entry == null ? "" : entry.id() + (open ? "" : "?");
 		if (key.equals(laidOut)) return;
 		laidOut = key;
 		List<Line> out = new ArrayList<>();
+		List<Picture> drawn = new ArrayList<>();
 		int y = 0;
 		if (entry != null) {
 			Language language = Language.getInstance();
 			String text = open ? language.getOrDefault(entry.textKey()) : language.getOrDefault(ModLang.codexHint(entry.hint().id()));
-			int width = PAGE_W - ROLLER_W - 6;
 			for (String paragraph : text.split("\n")) {
 				if (paragraph.isBlank()) {
 					y += PARAGRAPH_GAP;
+					continue;
+				}
+				if (Codex.pictureKind(paragraph) != null) {
+					Picture picture = open ? picture(paragraph, y) : null;
+					if (picture != null) {
+						drawn.add(picture);
+						y += picture.height() + PARAGRAPH_GAP + 1;
+					}
 					continue;
 				}
 				boolean bullet = paragraph.startsWith("- ");
@@ -264,7 +354,7 @@ public class CodexScreen extends Screen {
 				String body = bullet || heading ? paragraph.substring(2) : paragraph;
 				int indent = bullet ? BULLET_INDENT : 0;
 				int color = heading ? TalkUi.GOLD_TEXT : open ? TalkUi.CREAM : TalkUi.MUTED;
-				List<FormattedCharSequence> wrapped = font.split(styled(body, color), width - indent);
+				List<FormattedCharSequence> wrapped = font.split(styled(body, color), TEXT_W - indent);
 				for (int i = 0; i < wrapped.size(); i++) {
 					out.add(new Line(wrapped.get(i), indent, y, bullet && i == 0));
 					y += LINE_H;
@@ -273,7 +363,115 @@ public class CodexScreen extends Screen {
 			}
 		}
 		lines = out;
+		pictures = drawn;
 		linesHeight = y;
+	}
+
+	/**
+	 * A picture's line laid out at {@code y}: a diagram, or its cells in rows as wide as the words, each row centred; null if it has
+	 * nothing to show (a recipe this game doesn't know).
+	 */
+	private Picture picture(String line, int y) {
+		String kind = Codex.pictureKind(line);
+		List<String> parts = Codex.pictureParts(line);
+		if (kind.equals("diagram")) {
+			return parts.size() == 1 && Codex.DIAGRAMS.contains(parts.get(0)) ? new Picture(y, CodexDiagrams.height(parts.get(0)), List.of(), parts.get(0)) : null;
+		}
+		List<Cell> flow = switch (kind) {
+			case "items" -> named(parts);
+			case "brew" -> parts.size() == 1 ? brewed(Codex.pictureItem(parts.get(0))) : List.of();
+			case "craft" -> parts.size() == 1 ? crafted(Codex.pictureId(parts.get(0))) : List.of();
+			default -> List.of();
+		};
+		if (flow.isEmpty()) return null;
+		// Into rows, a new one wherever the next cell wouldn't fit; then each row centred.
+		List<List<Cell>> rows = new ArrayList<>();
+		List<Cell> row = new ArrayList<>();
+		int rowWidth = 0;
+		for (Cell cell : flow) {
+			int needs = (row.isEmpty() ? 0 : CELL_GAP) + cell.width();
+			if (!row.isEmpty() && rowWidth + needs > TEXT_W) {
+				rows.add(row);
+				row = new ArrayList<>();
+				rowWidth = 0;
+				needs = cell.width();
+			}
+			row.add(cell);
+			rowWidth += needs;
+		}
+		rows.add(row);
+		List<Cell> cells = new ArrayList<>();
+		for (int r = 0; r < rows.size(); r++) {
+			List<Cell> those = rows.get(r);
+			int width = -CELL_GAP;
+			for (Cell cell : those) width += cell.width() + CELL_GAP;
+			int cx = (TEXT_W - width) / 2;
+			for (Cell cell : those) {
+				cells.add(new Cell(cx, r * (SLOT + CELL_GAP), cell.stacks(), cell.glyph()));
+				cx += cell.width() + CELL_GAP;
+			}
+		}
+		return new Picture(y, rows.size() * (SLOT + CELL_GAP) - CELL_GAP, cells, null);
+	}
+
+	/** "@items": each item named, how many after "*", with its "+" and arrows. */
+	private static List<Cell> named(List<String> parts) {
+		List<Cell> flow = new ArrayList<>();
+		for (String part : parts) {
+			if (part.equals("+") || part.equals(">")) flow.add(new Cell(0, 0, List.of(), part.charAt(0)));
+			else {
+				Item item = Codex.pictureItem(part);
+				if (item != null) flow.add(item(List.of(new ItemStack(item, Math.max(1, Codex.pictureCount(part))))));
+			}
+		}
+		return flow;
+	}
+
+	/** "@brew": the cauldron's recipe for {@code output}, its ingredients with "+" between, an arrow, and the pill. */
+	private static List<Cell> brewed(Item output) {
+		AlchemyRecipes.Recipe recipe = output == null ? null : AlchemyRecipes.forOutput(output);
+		if (recipe == null) return List.of();
+		List<Cell> flow = new ArrayList<>();
+		for (Map.Entry<Item, Integer> ingredient : recipe.ingredients().entrySet()) {
+			if (!flow.isEmpty()) flow.add(new Cell(0, 0, List.of(), '+'));
+			flow.add(item(List.of(new ItemStack(ingredient.getKey(), ingredient.getValue()))));
+		}
+		flow.add(new Cell(0, 0, List.of(), '>'));
+		flow.add(item(List.of(new ItemStack(recipe.output()))));
+		return flow;
+	}
+
+	/** "@craft": a crafting recipe as this game has it, alike ingredients counted together in the order they come, an arrow, the result. */
+	private static List<Cell> crafted(ResourceLocation id) {
+		Minecraft mc = Minecraft.getInstance();
+		Recipe<?> recipe = id == null || mc.level == null ? null : mc.level.getRecipeManager().byKey(id).orElse(null);
+		if (recipe == null) return List.of();
+		Map<String, List<ItemStack>> kinds = new LinkedHashMap<>();
+		Map<String, Integer> counts = new HashMap<>();
+		for (Ingredient ingredient : recipe.getIngredients()) {
+			ItemStack[] options = ingredient.getItems();
+			if (options.length == 0) continue;
+			StringBuilder key = new StringBuilder();
+			for (ItemStack option : options) key.append(BuiltInRegistries.ITEM.getKey(option.getItem())).append(',');
+			kinds.putIfAbsent(key.toString(), List.of(options));
+			counts.merge(key.toString(), 1, Integer::sum);
+		}
+		ItemStack result = recipe.getResultItem(mc.level.registryAccess());
+		if (kinds.isEmpty() || result.isEmpty()) return List.of();
+		List<Cell> flow = new ArrayList<>();
+		for (Map.Entry<String, List<ItemStack>> kind : kinds.entrySet()) {
+			if (!flow.isEmpty()) flow.add(new Cell(0, 0, List.of(), '+'));
+			List<ItemStack> stacks = new ArrayList<>();
+			for (ItemStack option : kind.getValue()) stacks.add(option.copyWithCount(counts.get(kind.getKey())));
+			flow.add(item(stacks));
+		}
+		flow.add(new Cell(0, 0, List.of(), '>'));
+		flow.add(item(List.of(result.copy())));
+		return flow;
+	}
+
+	private static Cell item(List<ItemStack> stacks) {
+		return new Cell(0, 0, stacks, (char) 0);
 	}
 
 	/** A line of a page's text, its {key}s written as the keys they are bound to now, in gold. */

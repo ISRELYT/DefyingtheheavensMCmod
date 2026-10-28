@@ -68,7 +68,7 @@ The mod's guide in game (the user's ask, 2026-10-27: "a little encyclopaedia or 
 rebindable) and a button on the cultivation menu; a sealed page shown as **???** with a vague hint; a **toast** and a **gold dot** for
 what is new; a **player's guide**, what things are and how to do them, with few exact numbers.
 
-- **103 pages in 11 chapters**: First Steps, The Way of Cultivation, The Realms, Methods and Spells, Abilities, Treasures and Alchemy,
+- **104 pages in 11 chapters**: First Steps, The Way of Cultivation, The Realms, Methods and Spells, Abilities, Treasures and Alchemy,
   Sects and Cultivators, Beasts and Bloodlines, Worlds Beyond, The Yellow Springs, Laws and Immortality. About a fifth are open from
   the first day (First Steps whole: the Codex itself, the mortal body, the elixir, the cauldron, meditation, the menu, the keys, one's
   physique; and the plain things of the world: lifespan, spirit stones, fruit, herbs, clothing, jade, cultivators, talking, alignment,
@@ -87,11 +87,34 @@ what is new; a **player's guide**, what things are and how to do them, with few 
   on its chapter, and on the cultivation menu's **book** (outside the panel's top right; J opens the Codex from the menu too). A world
   from before the Codex opens what its player has already done the first time they come in, in one toast.
 - **Kept on this computer**, per world (the singleplayer world's folder or the server's address): which pages were told of and which
-  read, in `config/defying-the-heavens-codex.json`.
+  read, and the map's worlds seen, in `config/defying-the-heavens-codex.json`.
+- **Pictures** (2026-10-28, the user's pick: diagrams and rows of items): a page line beginning `@` draws one between the words. `@items`
+  a row of items in gold-rimmed slots (counts, `+` and arrows between); `@brew pill` the cauldron's recipe for it and `@craft id` a
+  crafting recipe, both read from the game itself so they never go stale (the pills, the elixir, the cauldron, the altar, the Storage
+  Ring, the World Seed, the stones' nine-to-one...); `@diagram` one of three drawn in lacquer and gold. Pointed at, an item shows its
+  tooltip.
+  - **Map of the Worlds** (the user's ask: "a diagram displaying all the realms ... branches between them showing which ones you can get
+    to from what one", ??? until you have been there, then "its name and the qi amount and a recommended realm"): a new page, open
+    from the first day, first in Worlds Beyond. Twelve worlds (the Overworld, Nether, End, Spatial Gap, Jade Firmament, Astral Realm,
+    Great Void, Immortal Realm, Chaos Frontier, Netherworld, and the Inner Realm and small worlds framed apart as reached from
+    anywhere) joined by their ways. A world is known by its advancements (so old saves know where they have been) or by having stood in
+    it; pointed at, a known world tells its qi against the lower realms' and its ghostly qi against a soul sand valley's (read from the
+    game's numbers), the realm to reach before going, and the way in; an unknown one ??? and its way in alone (the user's follow-up:
+    the way always shows, or a world is hard to find). A gold ring marks the world one is in.
+    Recommended realms: the realm each way opens at (Astral Nascent Soul, Spatial Gap and Jade Firmament Heavenly Being, Great Void Void
+    Shattering, Immortal Realm Entering Nirvana Grand Perfection, Chaos Frontier and small worlds True Immortal, the Netherworld Nascent
+    Soul for the living, the Inner Realm Qi Refining); the Nether's Qi Refining and the End's Foundation Building are judgement calls
+    (no realm gates them), open to change.
+  - **The ladder of the realms** (on Realms and Stages): all seventeen realms, each named once its page is open, one's own in gold,
+    bracketed by where its qi is rich enough to cultivate it (the lower realms, the Jade Firmament, the Great Void, the Immortal Realm).
+  - **The cycle of the five** (on The Five Elements, with a new paragraph on wards): fire, metal, wood, earth and water round a circle,
+    each arrow in the colour of the element that overcomes, as `QiElement#overcomes` has it.
 
 Code: `Codex` (the chapters, pages, hints and their English, on the common side so a test can hold the pages to the loaded
-advancements), client `CodexScreen` (and its `Book`), `CodexState` (what is open and read; `mixin/ClientAdvancementsAccessor` reads
-the client's advancement progress), `CodexToast`; tests `CodexGameTests`.
+advancements; the picture lines), `CodexMap` (the map's worlds, ways, visits, qi and recommended realms), client `CodexScreen` (and its
+`Book`; lays out and draws the pictures), `CodexDiagrams` (the three diagrams), `CodexState` (what is open and read, the worlds visited;
+`mixin/ClientAdvancementsAccessor` reads the client's advancement progress), `CodexToast`; tests `CodexGameTests` (every picture real,
+the map true).
 
 ## Recipe book
 

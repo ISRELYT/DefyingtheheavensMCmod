@@ -1,6 +1,7 @@
 package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.Codex;
+import com.example.defyingtheheavens.CodexMap;
 import com.example.defyingtheheavens.DefyingTheHeavens;
 import com.example.defyingtheheavens.client.mixin.ClientAdvancementsAccessor;
 import com.google.gson.Gson;
@@ -12,9 +13,11 @@ import com.google.gson.JsonParser;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementProgress;
+import net.minecraft.advancements.CriterionProgress;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.server.IntegratedServer;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.storage.LevelResource;
 
 import java.io.IOException;
@@ -23,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -35,8 +39,11 @@ import java.util.TreeSet;
  * client knows them (the server sends a player's progress: ClientAdvancementsAccessor), so a world from before the Codex opens what its
  * player has already done the first time they come in with it, told by one toast.
  * <p>
+ * The worlds of its map (CodexMap) the player has been to, for the map to name them (the user's ask, 2026-10-28): by their advancements
+ * (so a save from before the map knows them), or seen here, the world the player stands in noted at every look.
+ * <p>
  * Kept for each world on this computer, in config/defying-the-heavens-codex.json, keyed by the singleplayer world's folder or the
- * server's address: the pages already told of (each is toasted once) and the pages read.
+ * server's address: the pages already told of (each is toasted once), the pages read, and the map's worlds seen.
  */
 public final class CodexState {
 	/**
@@ -57,6 +64,9 @@ public final class CodexState {
 	private static final Set<String> told = new HashSet<>();
 	private static final Set<String> read = new HashSet<>();
 	private static final List<String> latest = new ArrayList<>();
+	/** The map's worlds visited (by their advancements or seen), and those seen stood in on this computer. */
+	private static final Set<String> visited = new HashSet<>();
+	private static final Set<String> seen = new HashSet<>();
 
 	/** Each client tick: a look now and then at what the advancements open. */
 	public static void tick(Minecraft mc) {
@@ -79,6 +89,8 @@ public final class CodexState {
 		told.clear();
 		read.clear();
 		latest.clear();
+		visited.clear();
+		seen.clear();
 	}
 
 	/** A look for the Codex opened before the first one (no toast: the pages show their dots there). */
@@ -89,8 +101,10 @@ public final class CodexState {
 	private static void look(Minecraft mc, boolean toast) {
 		if (mc.getConnection() == null || world == null) return;
 		Set<String> done = new HashSet<>();
+		Map<ResourceLocation, AdvancementProgress> byId = new HashMap<>();
 		Map<Advancement, AdvancementProgress> progress = ((ClientAdvancementsAccessor) mc.getConnection().getAdvancements()).dth$progress();
 		for (Map.Entry<Advancement, AdvancementProgress> e : progress.entrySet()) {
+			byId.put(e.getKey().getId(), e.getValue());
 			if (e.getValue().isDone() && e.getKey().getId().getNamespace().equals(DefyingTheHeavens.MOD_ID)) done.add(e.getKey().getId().getPath());
 		}
 		looked = true;
@@ -101,11 +115,38 @@ public final class CodexState {
 			open.add(entry.id());
 			if (told.add(entry.id())) news.add(entry);
 		}
-		if (news.isEmpty()) return;
+		// The map's worlds: the one stood in now noted, then each visited by its advancements or seen.
+		CodexMap.World here = mc.level == null || mc.player == null ? null : CodexMap.World.at(mc.level, mc.player.getX(), mc.player.getZ());
+		boolean newlySeen = here != null && seen.add(here.id());
+		visited.clear();
+		for (CodexMap.World world : CodexMap.World.values()) {
+			if (world.always() || seen.contains(world.id()) || anyDone(world.visits(), byId)) visited.add(world.id());
+		}
+		if (news.isEmpty()) {
+			if (newlySeen) save();
+			return;
+		}
 		latest.clear();
 		for (Codex.Entry entry : news) latest.add(entry.id());
 		save();
 		if (toast) CodexToast.show(mc.getToasts(), news);
+	}
+
+	/** Any one of a world's advancements done ("path#criterion": that criterion of it). */
+	private static boolean anyDone(List<String> visits, Map<ResourceLocation, AdvancementProgress> byId) {
+		for (String visit : visits) {
+			AdvancementProgress progress = byId.get(CodexMap.advancementOf(visit));
+			if (progress == null) continue;
+			String criterion = CodexMap.criterionOf(visit);
+			CriterionProgress part = criterion == null ? null : progress.getCriterion(criterion);
+			if (criterion == null ? progress.isDone() : part != null && part.isDone()) return true;
+		}
+		return false;
+	}
+
+	/** Whether the player has been to a world of the Codex's map (the Overworld always). */
+	public static boolean visited(CodexMap.World world) {
+		return world.always() || visited.contains(world.id());
 	}
 
 	public static boolean isOpen(Codex.Entry entry) {
@@ -185,9 +226,11 @@ public final class CodexState {
 		told.clear();
 		read.clear();
 		latest.clear();
+		seen.clear();
 		if (!(worlds().get(world) instanceof JsonObject mine)) return;
 		strings(mine.get("told"), told);
 		strings(mine.get("read"), read);
+		strings(mine.get("seen"), seen);
 	}
 
 	private static void save() {
@@ -196,6 +239,7 @@ public final class CodexState {
 		JsonObject mine = new JsonObject();
 		mine.add("told", array(told));
 		mine.add("read", array(read));
+		mine.add("seen", array(seen));
 		worlds.add(world, mine);
 		JsonObject root = new JsonObject();
 		root.add("worlds", worlds);

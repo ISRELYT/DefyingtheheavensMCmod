@@ -1,4 +1,4 @@
-// 1.20.1	2026-10-27T21:08:21.6773668	Defying The Heavens/Advancements
+// 1.20.1	2026-10-28T11:42:44.4680378	Defying The Heavens/Advancements
 3fdb8f7545ef667ba2ce8f08c5d48d078e413f2c data\defying-the-heavens\advancements\springs\nine_nether_peaks.json
 f613a81c809415ede8effca4c42eeb41e6f89221 data\defying-the-heavens\advancements\arts\first_spell.json
 4559a313a088426df7545437e7cc04d7f56c3c77 data\defying-the-heavens\advancements\worlds\shore_of_nirvana.json
@@ -40,8 +40,8 @@ c8f5d4e8574277dff99454f49dfa56e62001ca6f data\defying-the-heavens\advancements\w
 e27f0f5f1b7021c6cdc37ff119f620fa922c0552 data\defying-the-heavens\advancements\springs\both_paths.json
 c9d6efb031d6180d9b63db064bdd58a3dbeeef52 data\defying-the-heavens\advancements\cultivation\golden_immortal.json
 d9491e1facf2ece377930c7ad3c7324518b9a8ae data\defying-the-heavens\advancements\sects\court.json
-06a5e32309520e7946106388b45a5055ca50d1b7 data\defying-the-heavens\advancements\springs\soul_river.json
 425082330df347651b945dcb8d68a6b9584ebb31 data\defying-the-heavens\advancements\sects\gift.json
+06a5e32309520e7946106388b45a5055ca50d1b7 data\defying-the-heavens\advancements\springs\soul_river.json
 c8e3b5fa1d58194666b76c7b08c0647f2bf58a24 data\defying-the-heavens\advancements\arts\primordial_chaos.json
 a635bbc8b3f9852cd3c613226bf01c70fd61d15a data\defying-the-heavens\advancements\arts\qi_sense.json
 b22d3381864cc52dedef96a82adf5268b7894d9b data\defying-the-heavens\advancements\cultivation\taiyi_golden_immortal.json
@@ -76,8 +76,8 @@ efa594b4936ed42711a397c10582cd84cc5b28fc data\defying-the-heavens\advancements\s
 4d33d6d6957051f94855b53d6c3b37cdd202f033 data\defying-the-heavens\advancements\springs\ghost.json
 b16802ffa08b8b21745631342a10b6bf0e65d677 data\defying-the-heavens\advancements\sects\title.json
 a7f08645e50ab05a70891b3ae0f6e5267d173f5e data\defying-the-heavens\advancements\cultivation\ritual.json
-f3d417fc69b9b7f4c63c660c8363d6159c5e73c0 data\defying-the-heavens\advancements\cultivation\true_immortal.json
 3167ad0a0a15543fd06e116624bfa1874c639e98 data\defying-the-heavens\advancements\cultivation\entering_nirvana.json
-4a628e9be0e83a7cf8c4638a68ffddbf983e1d81 data\defying-the-heavens\advancements\sects\sworn.json
+f3d417fc69b9b7f4c63c660c8363d6159c5e73c0 data\defying-the-heavens\advancements\cultivation\true_immortal.json
 0a9c3844e7cf367930c0244b9ea0ab9216f08c39 data\defying-the-heavens\advancements\worlds\chaos_frontier.json
+4a628e9be0e83a7cf8c4638a68ffddbf983e1d81 data\defying-the-heavens\advancements\sects\sworn.json
 7a736455f4fa88a19777d43b0e832b7974a8dd53 data\defying-the-heavens\advancements\arts\soul_projection.json

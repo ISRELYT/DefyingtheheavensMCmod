@@ -1,5 +1,8 @@
 package com.example.defyingtheheavens;
 
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ItemLike;
 
@@ -25,7 +28,15 @@ import java.util.regex.Pattern;
  * (ModEnglishLangProvider), so a game test can hold its advancements to those the server loads (CodexGameTests).
  * <p>
  * A page's text: paragraphs one to a line; a line beginning "- " is a point of a list, one beginning "# " a small heading; {@code {name}}
- * is a key (one of {@link #KEYS}), shown as the key it is bound to now.
+ * is a key (one of {@link #KEYS}), shown as the key it is bound to now. A line beginning "@" is a picture (the user's pick, 2026-10-28:
+ * diagrams and rows of items), one of {@link #PICTURES}:
+ * <ul>
+ *   <li>"@items jade minecraft:bone_meal*2 + ... > ...": a row of items (the mod's own by their name alone, "*n" for how many), with
+ *   "+" and an arrow (">") drawn between where they stand;</li>
+ *   <li>"@brew foundation_pill": the cauldron's recipe for it, as AlchemyRecipes has it;</li>
+ *   <li>"@craft storage_ring": a crafting recipe, by its id, as the game has it;</li>
+ *   <li>"@diagram worlds": one of {@link #DIAGRAMS}, drawn by the client (CodexDiagrams).</li>
+ * </ul>
  */
 public final class Codex {
 	/** What a sealed page says of what opens it: vague on purpose (the user's pick). */
@@ -123,6 +134,80 @@ public final class Codex {
 		return unknown;
 	}
 
+	// --- Pictures ---
+
+	/** The pictures a page may hold ("@items ..."), and the diagrams (client CodexDiagrams: the map of the worlds and the rest). */
+	public static final Set<String> PICTURES = Set.of("items", "brew", "craft", "diagram");
+	public static final Set<String> DIAGRAMS = Set.of("worlds", "realms", "elements");
+
+	/** The picture a line of a page is ("items", for "@items jade"), or null if it is words. */
+	public static String pictureKind(String line) {
+		if (!line.startsWith("@")) return null;
+		int space = line.indexOf(' ');
+		return space < 0 ? line.substring(1) : line.substring(1, space);
+	}
+
+	/** What a picture's line names after its kind, one word each. */
+	public static List<String> pictureParts(String line) {
+		int space = line.indexOf(' ');
+		return space < 0 ? List.of() : List.of(line.substring(space + 1).strip().split("\\s+"));
+	}
+
+	/** A name a picture gives ("jade", "minecraft:bone_meal"), as an id: the mod's own unless it names another; null if it can't be one. */
+	public static ResourceLocation pictureId(String name) {
+		return ResourceLocation.tryParse(name.contains(":") ? name : DefyingTheHeavens.MOD_ID + ":" + name);
+	}
+
+	/** The item a picture's word names ("jade*4": four Jade), or null if there is no such item. */
+	public static Item pictureItem(String word) {
+		int star = word.indexOf('*');
+		ResourceLocation id = pictureId(star < 0 ? word : word.substring(0, star));
+		return id != null && BuiltInRegistries.ITEM.containsKey(id) ? BuiltInRegistries.ITEM.get(id) : null;
+	}
+
+	/** How many of its item a picture's word shows: 1, or the number after "*" (0 if that isn't one). */
+	public static int pictureCount(String word) {
+		int star = word.indexOf('*');
+		if (star < 0) return 1;
+		try {
+			return Integer.parseInt(word.substring(star + 1));
+		} catch (NumberFormatException e) {
+			return 0;
+		}
+	}
+
+	/** What is wrong with a page's pictures (nothing, if they are written right); a craft's recipe is the server's to know (CodexGameTests). */
+	public static List<String> pictureProblems(String text) {
+		List<String> problems = new ArrayList<>();
+		for (String line : text.split("\n")) {
+			String kind = pictureKind(line);
+			if (kind == null) continue;
+			List<String> parts = pictureParts(line);
+			switch (kind) {
+				case "diagram" -> {
+					if (parts.size() != 1 || !DIAGRAMS.contains(parts.get(0))) problems.add("no such diagram: " + line);
+				}
+				case "craft" -> {
+					if (parts.size() != 1 || pictureId(parts.get(0)) == null) problems.add("one recipe id: " + line);
+				}
+				case "brew" -> {
+					Item item = parts.size() == 1 ? pictureItem(parts.get(0)) : null;
+					if (item == null || AlchemyRecipes.forOutput(item) == null) problems.add("nothing brews it: " + line);
+				}
+				case "items" -> {
+					if (parts.isEmpty()) problems.add("no items: " + line);
+					for (String part : parts) {
+						if (part.equals("+") || part.equals(">")) continue;
+						int count = pictureCount(part);
+						if (pictureItem(part) == null || count < 1 || count > 64) problems.add("no such item: " + part);
+					}
+				}
+				default -> problems.add("no such picture: " + line);
+			}
+		}
+		return problems;
+	}
+
 	// --- How the pages are written ---
 
 	private static List<Entry> writing;
@@ -173,12 +258,15 @@ public final class Codex {
 				At Mortal Peak, drink a Marrow Cleansing Elixir. It opens your meridians, and you begin cultivating at Qi Refining Early, \
 				the first realm. The elixir only works at Mortal Peak.
 				Brew it in an Alchemy Cauldron from Ginseng, a Honey Bottle and two Bone Meal.
+				@brew marrow_cleansing_elixir
 				Ginseng grows wild on the ground: right-click a plant to dig it up.""");
 		page("cauldron", ModBlocks.ALCHEMY_CAULDRON, null, "The Alchemy Cauldron", """
 				Pills are brewed, not crafted. Make an Alchemy Cauldron from a cauldron, two copper ingots and a gold ingot (the mod's \
 				crafting recipes have their own tab in the recipe book).
+				@craft alchemy_cauldron
 				- Fill it with a water bucket.
 				- Light a fire under it: fire, soul fire, a lit campfire, lava or a magma block.
+				@items minecraft:flint_and_steel minecraft:campfire minecraft:soul_campfire minecraft:lava_bucket minecraft:magma_block
 				- Right-click the cauldron with each ingredient, one at a time. An ingredient that fits no recipe is refused, so nothing is \
 				wasted.
 				Once the ingredients make a recipe, the water turns jade and brewing begins; when it finishes, the pill pops out. Right-click \
@@ -226,6 +314,9 @@ public final class Codex {
 		page("stages", Items.EXPERIENCE_BOTTLE, QR, "Realms and Stages", """
 				Cultivation climbs through realms, and each realm has four stages: Early, Mid, Late and Grand Perfection. Meditation fills \
 				the cultivation bar on the Cultivation tab.
+				@diagram realms
+				The ladder names each realm once you reach it, and shows where its qi is rich enough to cultivate it. Your own realm is \
+				marked in gold.
 				Below Nascent Soul, a full bar moves you up to the next stage automatically. Grand Perfection is a realm's peak: there the \
 				bar stays full until you break through into the next realm. From Nascent Soul on, every new stage needs a breakthrough too.
 				Each realm makes your body far stronger than the last, and many bring new abilities.
@@ -248,6 +339,7 @@ public final class Codex {
 				At Qi Refining Mid your bar fills up and stops: to go further, you need the heavens' permission to cultivate.
 				- Craft a Heaven Altar (smooth stone, jade, a Low-grade spirit stone and copper), place it under the open sky, and build \
 				around it: a grander altar earns more favour.
+				@craft heaven_altar
 				- Right-click it and place your offerings in its ring. The dial shows your chance of success; richer offerings raise it.
 				- Sneak and right-click it with an empty hand to begin, then kneel still until the heavens answer.
 				If they stay silent, your offering is still used up, and you can try again from the next dawn.""");
@@ -290,12 +382,14 @@ public final class Codex {
 				- At Qi Refining Mid, perform the Ritual to the Heavens.
 				- You already have your consciousness domain, Realm Suppress, Burn Lifespan and the Inner Realm (see Abilities).
 				To break through at Grand Perfection, you need a Foundation Building method, a Foundation Pill (brewed from Ginseng, \
-				Lingzhi, Spirit Ginseng and Jade), and to survive a weak tribulation.""");
+				Lingzhi, Spirit Ginseng and Jade), and to survive a weak tribulation.
+				@brew foundation_pill""");
 		page("foundation_building", ModItems.FOUNDATION_PILL, FB, "Foundation Building", """
 				Your foundation is laid. Your qi now sustains you, so you no longer get hungry. Hold a sword and you can ride it through the \
 				air (Sword Flight), and you can now refine a Storage Ring.
 				To break through, you need a Core Formation method, a Core Pill (Spirit Ginseng, Spirit Lotus, a Cultivation Fruit and Blaze \
-				Powder), and to survive a tribulation that calls for armour.""");
+				Powder), and to survive a tribulation that calls for armour.
+				@brew core_pill""");
 		page("core_formation", ModItems.CORE_PILL, CF, "Core Formation", """
 				Your qi condenses into a golden core. You can fly on your qi (Qi Flight, with Meteor Flight as its fast mode), see the qi of \
 				the world (Qi Sense), and you float while you meditate. Your core is also a last resort (Core Detonation).
@@ -361,7 +455,13 @@ public final class Codex {
 		page("elements", Items.BLAZE_POWDER, QR, "The Five Elements", """
 				Wood, water, fire, earth and metal. Every heaven method belongs to one element: it draws in that element's qi, and its \
 				spells are of that element too.
-				Your physique's spiritual roots decide which elements you can learn: a method whose element your roots reject won't take.""");
+				Your physique's spiritual roots decide which elements you can learn: a method whose element your roots reject won't take.
+				# The cycle of the five
+				Each element overcomes one other: fire melts metal, metal fells wood, wood breaks earth, earth dams water and water quenches \
+				fire.
+				@diagram elements
+				Shielding spells ward you with their element. A ward holds best against the element it overcomes (a water ward stops \
+				fire), while the element that overcomes it strikes harder through it. Point at an element to see which it overcomes.""");
 		page("spells", Items.FIRE_CHARGE, "arts/root", "Spells", """
 				Your methods teach spells as their layers settle in; you'll find them on the Spells tab.
 				Ready a spell there, or hold {spells} to open the spell wheel and pick one, then press {cast} to cast it. Spells cost qi, \
@@ -458,6 +558,8 @@ public final class Codex {
 				Spirit stones are heaven and earth's qi condensed into stone: the cultivators' money, and a store of qi. There are five \
 				grades (Low, Mid, High, Supreme and Immortal), each worth nine of the grade below. Nine stones craft into one of the next \
 				grade, and one breaks back down into nine.
+				@items low_spirit_stone > mid_spirit_stone > high_spirit_stone > supreme_spirit_stone > immortal_spirit_stone
+				@craft mid_spirit_stone_from_low
 				- Hold right-click to absorb a stone's qi into your pool.
 				- Meditate with one in your hand to cultivate faster while its qi lasts.
 				They are mined from spirit stone veins in the Overworld's stone (the richer veins lie deepest), and cultivators carry them.""");
@@ -470,27 +572,38 @@ public final class Codex {
 				Spirit herbs grow wild and age like fruit does: Ginseng and the rarer Spirit Ginseng, Lingzhi in dark forests, Huangjing, \
 				the Spirit Lotus on still water, and Spirit Dew Grass, which gathers beads of dew. Right-click a herb to dig it up. It keeps \
 				its age, and the older the herbs, the better the pills brewed from them.
+				@items ginseng spirit_ginseng lingzhi purple_lingzhi huangjing ochre_huangjing spirit_lotus spirit_dew
 				A fully grown plant gives seeds when you dig it up. Purple Lingzhi and Ochre Huangjing are rare kinds that count as twice \
 				their age.""");
 		page("pills", ModItems.QI_GATHERING_PILL, QR, Hint.CULTIVATE, "Pills", """
 				Brewed in the Alchemy Cauldron:
 				- Qi Gathering Pill: you gather more qi for a while.
+				@brew qi_gathering_pill
 				- Cultivation Pill: gives cultivation, refined as you meditate.
+				@brew cultivation_pill
 				- Foundation Pill and Core Pill: needed to break into Foundation Building and Core Formation.
+				@brew foundation_pill
+				@brew core_pill
 				- Longevity Pill: adds years of life; each one adds fewer than the last.
+				@brew longevity_pill
 				A pill comes out at Low, Mid, High, Supreme or Immortal grade: the older its herbs, the higher the grade and the stronger \
 				the pill.""");
 		page("mats", ModBlocks.SPIRIT_PEDESTAL, QR, Hint.CULTIVATE, "Mats and Pedestals", """
 				A Meditation Mat, or the finer Red Silk Meditation Mat, speeds up your meditation: right-click it to sit down and meditate.
+				@craft meditation_mat
 				A Spirit Pedestal holds one Cultivation Fruit or herb, floating above it. Place pedestals close around where you meditate \
-				and their qi feeds you: the older what they hold, the more it helps. Only the oldest few count.""");
+				and their qi feeds you: the older what they hold, the more it helps. Only the oldest few count.
+				@craft spirit_pedestal""");
 		page("clothing", Items.LEATHER_CHESTPLATE, null, "Cultivator Clothing", """
 				Robes, guan, trousers and boots worn instead of armour, in five grades: Mortal, Spirit, Earth, Heaven and Immortal. Each \
 				grade protects as well as the matching tier of armour, and also speeds up your qi gathering and meditation.
+				@items mortal_cultivator_robe > spirit_cultivator_robe > earth_cultivator_robe > heaven_cultivator_robe > immortal_cultivator_robe
 				Mortal clothing is crafted from wool and string, and each piece can be upgraded one grade at a time in the crafting grid, \
-				keeping its enchantments. Cultivators wear it too, and sometimes drop it.""");
+				keeping its enchantments. Cultivators wear it too, and sometimes drop it.
+				@craft mortal_cultivator_robe""");
 		page("storage_ring", ModItems.STORAGE_RING, FB, Hint.CULTIVATE, "Storage Rings", """
 				A Storage Ring folds a pocket of space into a ring. Craft one from four gold ingots, four jade and an ender pearl.
+				@craft storage_ring
 				Right-click to open it, sneak and right-click to wear it, and press {ring} to open the one you're wearing. Whatever it \
 				holds stays inside, wherever the ring goes.
 				Refine it (the button at the top right of its screen) to raise its grade and its capacity. Each grade needs spirit stones, a \
@@ -502,11 +615,13 @@ public final class Codex {
 		page("sacred_vessels", ModItems.JIANMU_BOUGH_VASE, "arts/sacred_vessel|worlds/great_void", Hint.VENTURE, "Sacred Vessels", """
 				Five treasures from the old tales, one for each element: the Jianmu Bough Vase, the Heaven Furnace Censer, the Nine \
 				Provinces Ding, the Immortal-Forging Bell and the Sealed Ocean Gourd.
+				@items jianmu_bough_vase heaven_furnace_censer nine_provinces_ding immortal_forging_bell sealed_ocean_gourd
 				Each lies on a relic altar in the Great Void, and a guardian rises to protect it from anyone who comes near. Held in your \
 				hand, a vessel makes spells of its element hit harder.""");
 		page("chaos_treasures", ModItems.DAO_FRAGMENT, "arts/dao_fragment|arts/origin_stone|worlds/chaos_frontier", Hint.IMMORTAL,
 				"Chaos Treasures", """
 				Two treasures come from the Chaos Frontier:
+				@items dao_fragment chaos_origin_stone
 				- A Dao Fragment is a shard of one Law. An immortal can use it to gain half a level of insight into that Law.
 				- A Chaos Origin Stone is hardened chaos, the material of a small world's seed. Chaos Fiends drop them, and Chaos Origin Ore \
 				in the Frontier's land holds them.""");
@@ -549,7 +664,8 @@ public final class Codex {
 				A Formation Core raises a barrier around itself that only its sect (or its owner) can pass, and no monsters spawn inside it. \
 				A cultivator at least as strong as the formation can slowly break through. Break the core, or let it run out of qi, and the \
 				whole barrier falls.
-				Craft a Formation Core of your own to raise a barrier for yourself and the people you trust.""");
+				Craft a Formation Core of your own to raise a barrier for yourself and the people you trust.
+				@craft formation_core""");
 		page("joining", ModItems.SECT_PASS, "sects/root", "Joining a Sect", """
 				Ask any sect member to join. A disciple will send you to an elder, who judges you: most set an entrance trial, a spar that \
 				you must either win or last to the end. A gifted physique, or an elder whose regard for you is Warm, may let you in without \
@@ -617,6 +733,13 @@ public final class Codex {
 
 		// ===================================================== Worlds Beyond =====================================================
 		chapter("worlds", Items.ENDER_EYE, Hint.VENTURE, "Worlds Beyond");
+		page("map", Items.MAP, null, "Map of the Worlds", """
+				@diagram worlds
+				Every world, and which worlds lead to which. Point at a world to see the way in. A world you haven't been to yet shows \
+				??? for everything else; once you have been there, it also shows its name, its qi and the realm you should reach before \
+				you go.
+				Qi is counted against the lower realms' qi, and ghostly qi against a soul sand valley's. A gold ring marks the world \
+				you're in.""");
 		page("spatial_gap", Items.OBSIDIAN, HB + "|worlds/spatial_gap", "The Spatial Gap", """
 				Between the Overworld and the Jade Firmament lies the Spatial Gap, a sea of torn space. A rift at the very centre of the \
 				Overworld leads into it, and so does a Spatial Tear.
@@ -676,6 +799,7 @@ public final class Codex {
 		page("small_worlds", ModItems.WORLD_SEED, TI + "|worlds/small_world", Hint.IMMORTAL, "Small Worlds", """
 				An immortal's own world: a floating island under the stars. Craft a World Seed from five Chaos Origin Stones and four \
 				Immortal Jade, then, as a True Immortal, hold it in use to refine it.
+				@craft world_seed
 				After that, you can open its door wherever you stand, for yourself and the guests you allow.
 				Your world travels with you. Anyone inside it when you go through the Spatial Gap, the Void Breach or the Immortal Gate \
 				comes through with you, whatever their realm, and its gate then leads out beside you. As with Universe in a Sleeve, the \
@@ -732,11 +856,13 @@ public final class Codex {
 				The living get the heaven path's full strength and part of the ghost path's; for the dead, it is the other way round.""");
 		page("exorcist", ModItems.PEACH_WOOD_SWORD, "springs/root", "The Exorcist's Tools", """
 				Tools against the dead:
+				@items peach_wood_sword inscription_brush ghost_quelling_talisman yang_fire_talisman yang_preservation_pill yin_gathering_pill
 				- A Peach Wood Sword hits the dead with full force, and twice as hard.
 				- An Inscription Brush paints talismans. The Ghost-Quelling Talisman, thrown, strikes the dead and binds them; the Yang Fire \
 				Talisman, burned, drives the Netherworld's yin out of your body.
 				- The Yang Preservation Pill stops yin corruption from rising; the Yin Gathering Pill, brewed from an Other-Shore Flower and \
 				a Netherworld Lotus, speeds up the ghost path.
+				@brew yin_gathering_pill
 				Yin Jade, mined in the Netherworld, goes into the Ghost-Quelling Talisman, and the dead value it highly.""");
 
 		// ================================================= Laws and Immortality =================================================
