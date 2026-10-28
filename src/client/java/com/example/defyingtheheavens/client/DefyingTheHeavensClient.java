@@ -28,10 +28,10 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		// The Heaven Altar's offering screen.
 		net.minecraft.client.gui.screens.MenuScreens.register(com.example.defyingtheheavens.HeavenAltarMenu.TYPE, HeavenAltarScreen::new);
 		net.minecraft.client.gui.screens.MenuScreens.register(com.example.defyingtheheavens.VesselMenu.TYPE, VesselScreen::new);
-		net.minecraft.client.gui.screens.MenuScreens.register(com.example.defyingtheheavens.StorageRingMenu.TYPE, StorageRingScreen::new);
-		// A Storage Ring looks its grade: "defying-the-heavens:grade" 0 to 4 picks the model (models/item/storage_ring_*).
+		net.minecraft.client.gui.screens.MenuScreens.register(com.example.defyingtheheavens.StorageFormationMenu.TYPE, StorageFormationScreen::new);
+		// An old Storage Ring (only ever seen for the moment before it unfolds into a formation) still looks its grade: models/item/storage_ring_*.
 		net.minecraft.client.renderer.item.ItemProperties.register(com.example.defyingtheheavens.ModItems.STORAGE_RING, DefyingTheHeavens.id("grade"),
-				(stack, level, entity, seed) -> com.example.defyingtheheavens.StorageRingItem.grade(stack).ordinal() / 4.0f);
+				(stack, level, entity, seed) -> com.example.defyingtheheavens.StorageRingItem.gradeIndex(stack) / 4.0f);
 		// A pill shows its grade: from Mid up "defying-the-heavens:grade" picks its "_glow" model, whose halo (layer 1) takes the
 		// grade's colour (PillGrade); a Low-Grade pill has none.
 		net.minecraft.world.item.Item[] pills = {com.example.defyingtheheavens.ModItems.MARROW_CLEANSING_ELIXIR,
@@ -56,6 +56,12 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry.ITEM.register(
 				(stack, tintIndex) -> tintIndex == 1 ? com.example.defyingtheheavens.DaoFragmentItem.tint(stack) : -1,
 				com.example.defyingtheheavens.ModItems.DAO_FRAGMENT);
+		// An element banner's cloth (layer 1) is its element's colour.
+		for (com.example.defyingtheheavens.ArtifactGrade grade : com.example.defyingtheheavens.ArtifactGrade.values()) {
+			net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry.ITEM.register(
+					(stack, tintIndex) -> tintIndex == 1 ? com.example.defyingtheheavens.ElementBannerItem.colour(stack) : -1,
+					com.example.defyingtheheavens.ModItems.artifact(com.example.defyingtheheavens.ArtifactKind.BANNER, grade));
+		}
 		net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap.INSTANCE.putBlock(
 				com.example.defyingtheheavens.ModBlocks.CULTIVATION_FRUIT, net.minecraft.client.renderer.RenderType.cutout());
 		// The First Flame: a fire's crossed planes, the air between its tongues clear.
@@ -147,6 +153,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		EntityRendererRegistry.register(ModEntities.EARTH_GOLEM, EarthGolemRenderer::new);
 		EntityRendererRegistry.register(ModEntities.DIRT_TIDE, DirtTideRenderer::new);
 		EntityRendererRegistry.register(ModEntities.SPATIAL_TEAR, SpatialTearRenderer::new);
+		LegendsClient.register(); // the legendary weapons: the spear's bolt, the sword spirits, the swords in their stones
 		net.fabricmc.fabric.api.client.rendering.v1.LivingEntityFeatureRendererRegistrationCallback.EVENT.register((type, renderer, helper, context) -> {
 			if (renderer.getModel() instanceof net.minecraft.client.model.HumanoidModel<?>) registerAuraLayer(renderer, helper, context);
 		});
@@ -204,7 +211,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			ClientSpatialStorms.clear();
 			MeditationFormation.clear();
 			ClientMeditationTracker.clear();
-			ClientStorageRing.clear();
+			ClientStorageSpace.clear();
 			QiSenseClientHandler.clear();
 			QiSenseTreasures.clear();
 			ConsciousnessRenderer.clear();
@@ -277,9 +284,6 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 					if (ClientMethods.anyKnown()) client.setScreen(new SpellWheelScreen());
 					else client.gui.setOverlayMessage(Component.translatable(ModLang.SPELLS_EMPTY), false);
 				}
-			}
-			while (ModKeybinds.STORAGE_RING.consumeClick()) {
-				if (client.player != null && client.screen == null) ClientPlayNetworking.send(ModPackets.STORAGE_RING_OPEN, PacketByteBufs.create());
 			}
 			while (ModKeybinds.CAST_SPELL.consumeClick()) {
 				if (client.player != null && client.screen == null && ClientMethods.anyKnown()) ClientMethods.cast(null);

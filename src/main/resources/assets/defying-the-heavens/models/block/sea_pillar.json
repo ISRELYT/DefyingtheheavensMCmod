@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "defying-the-heavens:block/sea_pillar_top",
+    "side": "defying-the-heavens:block/sea_pillar"
+  }
+}

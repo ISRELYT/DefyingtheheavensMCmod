@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.advancements.Advancement;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
@@ -167,6 +168,31 @@ public class CodexGameTests implements FabricGameTest {
 			if (!lang.has(key)) problems.add(key);
 		}
 		helper.assertTrue(problems.isEmpty(), "The map tells the truth: " + problems);
+		helper.succeed();
+	}
+
+	/**
+	 * The Bestiary (2026-10-28): a page for every beast, elder, primordial and fiend, the Hungry Ghost, the Heart Demon and the Vestige;
+	 * each page's creature a real one, opened by sight alone (no advancement), its picture first.
+	 */
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void theBestiaryHasEveryCreature(GameTestHelper helper) {
+		List<String> problems = new ArrayList<>();
+		Set<String> sights = Codex.sights();
+		for (BeastKind kind : BeastKind.values()) {
+			if (!sights.contains(NS + ":" + kind.getId())) problems.add("no page for " + kind.getId());
+		}
+		for (String other : List.of("hungry_ghost", "heart_demon", "void_vestige")) {
+			if (!sights.contains(NS + ":" + other)) problems.add("no page for " + other);
+		}
+		for (Codex.Entry entry : Codex.entries()) {
+			if (entry.sight() == null) continue;
+			if (!BuiltInRegistries.ENTITY_TYPE.containsKey(new ResourceLocation(entry.sight()))) problems.add(entry.id() + ": no creature " + entry.sight());
+			if (entry.open() || !entry.unlocks().isEmpty()) problems.add(entry.id() + " opens otherwise than by sight");
+			if (!entry.text().startsWith("@beast ")) problems.add(entry.id() + " doesn't begin with its picture");
+			if (!entry.chapter().equals("bestiary")) problems.add(entry.id() + " outside the Bestiary");
+		}
+		helper.assertTrue(problems.isEmpty(), "The Bestiary is whole: " + problems);
 		helper.succeed();
 	}
 

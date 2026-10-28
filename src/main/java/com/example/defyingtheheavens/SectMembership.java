@@ -519,6 +519,10 @@ public final class SectMembership {
 				buf.writeUUID(d.id);
 				buf.writeBoolean(mayBanish(seat, d.id, discipleTitle(player.server, sect, d.id)));
 			}
+			// Their Contribution there (the mission board: SectMissions), all they have earned, and the missions they hold.
+			buf.writeVarInt(disciple == null ? 0 : disciple.contribution);
+			buf.writeVarInt(disciple == null ? 0 : disciple.earned);
+			buf.writeVarInt(disciple == null ? 0 : disciple.taken.size());
 		} else {
 			Sect near = null;
 			double best = (double) TOLD_OF * TOLD_OF;

@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "defying-the-heavens:item/earth_element_banner",
+    "layer1": "defying-the-heavens:item/element_banner_cloth"
+  }
+}

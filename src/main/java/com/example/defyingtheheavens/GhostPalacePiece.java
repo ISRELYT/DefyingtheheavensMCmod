@@ -5,6 +5,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
@@ -396,10 +397,13 @@ public class GhostPalacePiece extends StructurePiece {
 		chest(level, chunk, random, -13, VAULT_V0 + 3, Direction.WEST);
 	}
 
-	/** One of the treasury's chests at (u, v) on its floor, opening toward {@code local}, filled with the dead's wealth. */
+	/**
+	 * One of the treasury's stores at (u, v) on its floor, filled with the dead's wealth: a storage formation since 2026-10-28 (the user's
+	 * ask: StorageFormations#treasury), of no one's, its king's seal over it (PalaceTreasury).
+	 */
 	private void chest(WorldGenLevel level, BoundingBox chunk, RandomSource random, int u, int v, Direction local) {
-		BlockState state = Blocks.CHEST.defaultBlockState().setValue(net.minecraft.world.level.block.ChestBlock.FACING, dir(local));
-		createChest(level, chunk, random, at(u, y, v), PalaceTreasury.LOOT, state);
+		BlockPos pos = at(u, y, v);
+		if (chunk.isInside(pos)) StorageFormations.treasury(level, pos, PalaceTreasury.LOOT, random.nextLong(), ItemStack.EMPTY);
 	}
 
 	/** One course of a hipped roof: tile stairs round u0..u1, v0..v1 at {@code height}, each rising inward, tiles laid within. */

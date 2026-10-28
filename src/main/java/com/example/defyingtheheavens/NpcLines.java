@@ -213,6 +213,19 @@ public final class NpcLines {
 		lines("pass.fellow.devilish", "Back again, %1$s? The sect missed you. I didn't.", "Don't make trouble for the sect, %1$s.", "Home, %1$s? Bring anything back for me?");
 		lines("pass.fellow.ghost", "You've come back to us, %1$s.", "Home, %1$s. Such as it is.", "The halls are quiet without you, %1$s.");
 		lines("pass.fellow.commoner", "Welcome home, %1$s!", "Good to see you home safe, %1$s!");
+		// One of its own sect's disciples passing, of the sect's missions (SectMissions#remark): their deed of the day (%3$s: "slew the
+		// Bloodfang Tiger"), the gate watch they have taken and not begun, the day's postings they haven't looked at.
+		lines("pass.mission.done.righteous", "%1$s! They say you %3$s. The whole sect is proud of you.", "Word is you %3$s, %1$s. Well done.",
+				"%1$s, you %3$s? The elders spoke of it this morning.");
+		lines("pass.mission.done.neutral", "Heard you %3$s, %1$s.", "You %3$s? Not bad, %1$s.", "%1$s. The one who %3$s.");
+		lines("pass.mission.done.devilish", "So you %3$s, %1$s. Don't let it go to your head.", "You %3$s? Lucky, %1$s. Very lucky.",
+				"%1$s %3$s... and lived. Interesting.");
+		lines("pass.mission.watch.righteous", "%1$s, the gate watch is yours today. The gate guards are waiting.", "Is the gate watch not yours, %1$s?");
+		lines("pass.mission.watch.neutral", "The gate watch is yours, %1$s. Don't be late.", "%1$s. The gate. Your watch.");
+		lines("pass.mission.watch.devilish", "The gate watch is yours, %1$s. Try not to run.", "Off to the gate, %1$s. I'd hate for you to miss the fun.");
+		lines("pass.mission.new.righteous", "%1$s, the elders have posted new missions on the board.", "New missions on the board today, %1$s. Have you looked?");
+		lines("pass.mission.new.neutral", "New postings on the board, %1$s.", "The board's got fresh work, %1$s.");
+		lines("pass.mission.new.devilish", "Fresh missions on the board, %1$s. Some of them might even kill you.", "The board's new today, %1$s. Go on, earn your keep.");
 
 		// --- What it sees on one passing (NpcLife#remarkOn), from one who needn't bow low to say it; %1$s and %2$s as above ---
 		// Flying past (Qi Flight, a flying sword, wings).
@@ -391,6 +404,13 @@ public final class NpcLines {
 		talk("chat.gossip.devilish", "Listen, %1$s. %2$s", "Then we get there first.");
 		talk("chat.gossip.devilish", "A little bird told me: %2$s", "And did you eat the bird?");
 		talk("chat.gossip.commoner", "Did you hear? %2$s", "Immortal business. Best stay away.");
+		// The sect's missions (SectMissions#chatSubject): %2$s a deed one of its disciples did today, or a mission one has taken on.
+		talk("chat.mission.righteous", "Have you heard, %1$s? %2$s.", "Then let us not fall behind. The board rewards the diligent.");
+		talk("chat.mission.righteous", "%2$s, they say.", "May Heaven guard them out there.");
+		talk("chat.mission.neutral", "%2$s.", "Good. Less work for us.");
+		talk("chat.mission.neutral", "Heard %2$s.", "Contribution doesn't earn itself, %1$s.");
+		talk("chat.mission.devilish", "%2$s.", "Showing off for the elders. How tiresome.");
+		talk("chat.mission.devilish", "Did you hear, %1$s? %2$s.", "Then they'll be the first to die out there. Pity.");
 		talk("chat.life.righteous", "The plum trees will flower soon.", "I look forward to it. A calm heart sees beauty everywhere.");
 		talk("chat.life.righteous", "%1$s, the kitchen made steamed buns today.", "Then I know where I'm going after meditation.");
 		talk("chat.life.neutral", "Kitchen's out of rice again.", "Of course it is.");

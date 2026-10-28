@@ -1,0 +1,6 @@
+{
+  "parent": "defying-the-heavens:block/storage_formation",
+  "textures": {
+    "seal": "defying-the-heavens:block/storage_seal_supreme"
+  }
+}

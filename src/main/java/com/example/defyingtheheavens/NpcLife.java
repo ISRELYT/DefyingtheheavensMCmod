@@ -951,10 +951,14 @@ public final class NpcLife {
 			if (day != null && day.visitor != null && now - day.visitorAt < DAY_LENGTH) topics.add("chat.visitor");
 			Component rumour = random.nextInt(2) == 0 ? rumour(a) : null;
 			if (rumour != null) topics.add("chat.gossip");
+			// The sect's missions (SectMissions): a deed one of its disciples did today, or a mission one has taken on.
+			Component mission = SectMissions.chatSubject(sect, now, random);
+			if (mission != null) topics.add("chat.mission");
 			topic = topics.get(random.nextInt(topics.size()));
 			if (topic.equals("chat.elder")) subject = elder;
 			else if (topic.equals("chat.visitor")) subject = day.visitor;
 			else if (topic.equals("chat.gossip")) subject = rumour;
+			else if (topic.equals("chat.mission")) subject = mission;
 		}
 		List<String> keys = NpcLines.script(topic, voice, random);
 		if (keys == null) return null;
@@ -1338,6 +1342,12 @@ public final class NpcLife {
 		// Something about them it would speak of, two times in three.
 		String seen = bold ? seen(npc, player, outsider) : null;
 		if (seen != null && NpcLines.has(seen, npc) && random.nextInt(3) != 0) return NpcLines.line(seen, npc, address, name);
+		// One of its own sect's disciples: now and then, the sect's missions (SectMissions: their deed of the day, the gate watch they have
+		// taken, the day's postings they haven't looked at).
+		if (NpcAddress.ofItsSect(player, npc) && random.nextInt(3) == 0) {
+			Component mission = SectMissions.remark(npc, player, address, name);
+			if (mission != null) return mission;
+		}
 		switch (rung) {
 			case REVERED, ANCESTOR -> {
 				return NpcLines.line("pass." + rung.id(), npc, address, name);

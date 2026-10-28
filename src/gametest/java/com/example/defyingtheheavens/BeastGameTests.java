@@ -38,8 +38,8 @@ public class BeastGameTests implements FabricGameTest {
 			helper.assertTrue(DemonBeast.of(ModEntities.beast(kind)) == kind, "Its type is its own (" + kind.getId() + ")");
 			helper.assertTrue(BeastKind.byId(kind.getId()) == kind && ModItems.beastEgg(kind) != null, "Found by its id, with an egg (" + kind.getId() + ")");
 			// The elders are never born wild (BloodPools raises them), nor the primordial beasts (PrimordialBeasts), nor the Chaos Fiends
-			// (ChaosFrontier): no lands.
-			boolean elder = kind.isElder() || kind.isPrimordial() || kind.isChaos();
+			// (ChaosFrontier), nor a legend's guardian (Legends): no lands.
+			boolean elder = kind.isElder() || kind.isPrimordial() || kind.isChaos() || kind.isGuardian();
 			helper.assertTrue(biomes.getTag(kind.lands).map(tag -> tag.size() > 0).orElse(false) != elder, (elder ? "No lands" : "It has lands") + " (" + kind.getId() + ")");
 			for (boolean upper : new boolean[] {false, true}) {
 				for (int i = 0; i < 300; i++) {
@@ -264,7 +264,7 @@ public class BeastGameTests implements FabricGameTest {
 		java.util.Map<String, Integer> beasts = new java.util.HashMap<>();
 		java.util.Map<String, String> races = new java.util.HashMap<>();
 		for (BeastKind kind : BeastKind.values()) {
-			if (kind.isElder() || kind.isPrimordial() || kind.isChaos()) continue; // never born wild: no lands, nor a tag of them
+			if (kind.isElder() || kind.isPrimordial() || kind.isChaos() || kind.isGuardian()) continue; // never born wild: no lands, nor a tag of them
 			for (String biome : terralithIn(helper, "beast/" + kind.getId())) beasts.merge(biome, 1, Integer::sum);
 		}
 		for (Bloodline race : Bloodline.values()) {

@@ -28,6 +28,7 @@ import com.example.defyingtheheavens.BodyRefining;
 import com.example.defyingtheheavens.Physique;
 import com.example.defyingtheheavens.Physiques;
 import com.example.defyingtheheavens.FourAxis;
+import com.example.defyingtheheavens.CraftMastery;
 import com.example.defyingtheheavens.PlayerCultivation;
 import com.example.defyingtheheavens.Realm;
 import com.example.defyingtheheavens.RealmSuppressSystem;
@@ -40,6 +41,7 @@ import com.example.defyingtheheavens.HeavenRitual;
 import com.example.defyingtheheavens.NpcTitle;
 import com.example.defyingtheheavens.Regard;
 import com.example.defyingtheheavens.SectMembership;
+import com.example.defyingtheheavens.SectMissions;
 import com.example.defyingtheheavens.ModPackets;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
@@ -207,9 +209,12 @@ public class CultivationScreen extends Screen {
 	/** How far the spell wheel editor's palette is scrolled, and how far it can go (0 when every spell fits). */
 	private int spellPaletteScroll;
 	private int spellPaletteMaxScroll;
-	/** The Stats tab shows its Stat Points page rather than its stats (kept on reopening); its page buttons and + buttons this frame. */
-	private static boolean pointsPage;
-	private final List<RowButton<Boolean>> statPageButtons = new ArrayList<>();
+	/**
+	 * The Stats tab's page shown (kept on reopening): 0 its stats, 1 its Stat Points, 2 the crafts' mastery (CraftMastery); its page
+	 * buttons and + buttons this frame.
+	 */
+	private static int statPage;
+	private final List<RowButton<Integer>> statPageButtons = new ArrayList<>();
 	private final List<RowButton<StatPoints.Stat>> statPlusButtons = new ArrayList<>();
 	/** The Sect tab's member list's scrolling. */
 	private int sectScroll;
@@ -488,7 +493,8 @@ public class CultivationScreen extends Screen {
 					renderMortalStats(g);
 				} else {
 					renderStatPages(g, mouseX, mouseY);
-					if (pointsPage) renderStatPoints(g, mouseX, mouseY);
+					if (statPage == 1) renderStatPoints(g, mouseX, mouseY);
+					else if (statPage == 2) renderCrafts(g);
 					else renderStats(g, player);
 				}
 			}
@@ -1446,18 +1452,22 @@ public class CultivationScreen extends Screen {
 		};
 	}
 
-	/** The Stats tab's two pages, as buttons over it: Stats, and Stat Points (gold, with the count, while there are points to spend). */
+	/**
+	 * The Stats tab's three pages, as buttons over it: Stats, Stat Points (gold, with the count, while there are points to spend), and
+	 * Crafts.
+	 */
 	private void renderStatPages(GuiGraphics g, int mouseX, int mouseY) {
 		int unspent = StatPoints.unspent(ClientCultivationData.get());
 		int x = left + 14;
 		int y = top + CONTENT_Y;
-		for (boolean points : new boolean[]{false, true}) {
-			Component label = Component.translatable(points ? ModLang.BTN_STAT_POINTS : ModLang.BTN_STAT_LIST);
+		for (int page = 0; page < 3; page++) {
+			boolean points = page == 1;
+			Component label = Component.translatable(page == 1 ? ModLang.BTN_STAT_POINTS : page == 2 ? ModLang.BTN_STAT_CRAFTS : ModLang.BTN_STAT_LIST);
 			if (points && unspent > 0) label = label.copy().append(" (" + unspent + ")");
 			int w = font.width(label) + 12;
-			RowButton<Boolean> button = new RowButton<>(points, x, y, w);
+			RowButton<Integer> button = new RowButton<>(page, x, y, w);
 			statPageButtons.add(button);
-			boolean chosen = pointsPage == points;
+			boolean chosen = statPage == page;
 			int colour = points && unspent > 0 ? 0xFFD700 : chosen ? 0xFFFFFF : 0x9E9E9E;
 			drawRowButton(g, button, label, button.contains(mouseX, mouseY), colour);
 			if (chosen) g.fill(button.x() + 2, button.y() + SWITCH_H, button.x() + w - 2, button.y() + SWITCH_H + 1, 0xFFFFD700);
@@ -1508,6 +1518,54 @@ public class CultivationScreen extends Screen {
 			y += 11;
 		}
 		g.drawCenteredString(font, Component.translatable(ModLang.STAT_POINTS_HINT), left + WIDTH / 2, top + HEIGHT - 12, 0x7A7A7A);
+	}
+
+	/**
+	 * The Crafts page (CraftMastery, 2026-10-28): each craft with its rank, a gold bar of the practice toward the next rank, and what the
+	 * rank does: in alchemy the chance of a better grade, how often the hardest brews fail, and a second pill's chance.
+	 */
+	private void renderCrafts(GuiGraphics g) {
+		PlayerCultivation c = ClientCultivationData.get();
+		int x = left + 14, right = left + WIDTH - 14;
+		int y = top + CONTENT_Y + METHOD_PAGE_ROW + 6;
+		for (CraftMastery.Craft craft : CraftMastery.Craft.values()) {
+			int practice = c.getMastery(craft);
+			CraftMastery.Rank rank = CraftMastery.Rank.of(practice);
+			CraftMastery.Rank next = rank.next();
+			g.drawString(font, Component.translatable(ModLang.CRAFTS_TITLE, craft.getDisplayName(), rank.getDisplayName()), x, y, 0xFFFFFF);
+			y += 11;
+			// The bar: the practice past this rank's start, against the way to the next (full at Saint).
+			double share = next == null ? 1 : (practice - rank.from) / (double) (next.from - rank.from);
+			g.fill(x, y, right, y + 5, 0xFF2A1F14);
+			g.fill(x, y, x + (int) Math.round((right - x) * Math.max(0, Math.min(1, share))), y + 5, 0xFFD4A63A);
+			y += 8;
+			Component progress = next == null ? Component.translatable(ModLang.CRAFTS_PRACTICE_TOP, practice)
+					: Component.translatable(ModLang.CRAFTS_PRACTICE, practice, next.from, next.getDisplayName());
+			g.drawString(font, progress, x, y, 0xA8A8A8);
+			y += 11;
+			List<Component> lines = new ArrayList<>();
+			switch (craft) {
+				case ALCHEMY -> {
+					lines.add(Component.translatable(ModLang.CRAFTS_ALCHEMY_GRADE, Math.round(CraftMastery.betterGrade(rank) * 100)));
+					double fails = CraftMastery.failChance(rank, 3);
+					lines.add(fails > 0 ? Component.translatable(ModLang.CRAFTS_ALCHEMY_FAIL, Math.round(fails * 100))
+							: Component.translatable(ModLang.CRAFTS_ALCHEMY_NEVER_FAILS));
+					if (CraftMastery.secondPill(rank) > 0) {
+						lines.add(Component.translatable(ModLang.CRAFTS_ALCHEMY_SECOND, Math.round(CraftMastery.secondPill(rank) * 100)));
+					}
+				}
+				case FORGING -> lines.add(Component.translatable(ModLang.CRAFTS_FORGING));
+				case FORMATIONS -> lines.add(Component.translatable(ModLang.CRAFTS_FORMATIONS));
+			}
+			for (Component line : lines) {
+				for (FormattedCharSequence part : font.split(line, right - x)) {
+					g.drawString(font, part, x + 4, y, 0x8FA8C8);
+					y += 10;
+				}
+			}
+			y += 6;
+		}
+		g.drawCenteredString(font, Component.translatable(ModLang.CRAFTS_HINT), left + WIDTH / 2, top + HEIGHT - 12, 0x7A7A7A);
 	}
 
 	/**
@@ -1658,6 +1716,10 @@ public class CultivationScreen extends Screen {
 			y += SWITCH_H + 2;
 		} else {
 			g.drawString(font, Component.translatable(ModLang.SECT_TAB_DAYS, Math.max(1, info.ticksMember() / HeavenRitual.DAY + 1)), x, y, 0x9E9E9E);
+			y += 11;
+			// Their Contribution there (its mission board: SectMissions), all they have earned of it, and the missions they hold.
+			Component contribution = Component.translatable(ModLang.SECT_TAB_CONTRIBUTION, info.contribution(), info.earned(), info.missions(), SectMissions.HELD);
+			g.drawString(font, fit(WIDTH - 28, contribution, contribution), x, y, 0xF2C94C);
 			y += 13;
 		}
 		if (info.court() != null) {
@@ -2093,9 +2155,9 @@ public class CultivationScreen extends Screen {
 				if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
 				return true;
 			}
-			for (RowButton<Boolean> page : statPageButtons) {
+			for (RowButton<Integer> page : statPageButtons) {
 				if (!page.contains(mouseX, mouseY)) continue;
-				pointsPage = page.value();
+				statPage = page.value();
 				if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
 				return true;
 			}

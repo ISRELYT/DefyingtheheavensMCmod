@@ -20,6 +20,8 @@ public abstract class SoulServerPlayerMixin {
 	@Inject(method = "broadcastToPlayer", at = @At("HEAD"), cancellable = true)
 	private void dth$onlyToThoseWhoPerceive(ServerPlayer viewer, CallbackInfoReturnable<Boolean> cir) {
 		if (!SoulProjection.broadcastsTo((ServerPlayer) (Object) this, viewer)) cir.setReturnValue(false);
+		// Nor one inside a concealment, to anyone it hides from (Concealments: re-tracked as either's standing among the veils changes).
+		else if (com.example.defyingtheheavens.Concealments.hidesPlayer((ServerPlayer) (Object) this, viewer)) cir.setReturnValue(false);
 	}
 
 	@Inject(method = "drop(Z)Z", at = @At("HEAD"), cancellable = true)

@@ -436,8 +436,8 @@ public final class CelestialCourt {
 
 	/**
 	 * What the Court's Quartermaster has for tokens today: three Immortal Jade for a token, and each element's True Immortal method's slip,
-	 * to every officer; to Captains, Immortal-grade Cultivation Pills and a Sacred Vessel (the day's element); to Generals, the ghost path's
-	 * last foundation (the Netherworld Immortal Canon) and a Ring of Transcendence.
+	 * to every officer; to Captains, Immortal-grade Cultivation Pills, a Sacred Vessel (the day's element) and an Immortal artifact (the
+	 * day's kind); to Generals, the ghost path's last foundation (the Netherworld Immortal Canon) and a Ring of Transcendence.
 	 */
 	static List<Ware> wares(long day) {
 		List<Ware> wares = new ArrayList<>();
@@ -446,6 +446,9 @@ public final class CelestialCourt {
 		wares.add(new Ware(PillItem.create(ModItems.CULTIVATION_PILL, PillGrade.IMMORTAL, 100), 3, 2, Rank.CAPTAIN));
 		QiElement todays = QiElement.five()[(int) Math.floorMod(day, 5L)];
 		wares.add(new Ware(new ItemStack(ModItems.sacredVessel(todays)), 15, 1, Rank.CAPTAIN));
+		// The day's Immortal artifact (the Artifact Forge's), its kind by the day, a banner of the day's element.
+		ArtifactKind kind = ArtifactKind.values()[(int) Math.floorMod(day, (long) ArtifactKind.values().length)];
+		wares.add(new Ware(Artifacts.create(kind, ArtifactGrade.IMMORTAL, Artifacts.Quality.NORMAL, kind == ArtifactKind.BANNER ? todays : null), 6, 1, Rank.CAPTAIN));
 		wares.add(new Ware(GhostJadeSlipItem.of(GhostMethod.NETHERWORLD_IMMORTAL_CANON), 30, 1, Rank.GENERAL));
 		wares.add(new Ware(new ItemStack(ModItems.RING_OF_TRANSCENDENCE), 25, 1, Rank.GENERAL));
 		return wares;

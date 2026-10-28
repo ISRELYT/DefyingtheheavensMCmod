@@ -340,12 +340,35 @@ public class BeastArt {
 	 * cores; {@code ... <assets> icons}, the ability icons alone (Icons); {@code ... <assets> domains}, the Law domains' icons and the greater
 	 * Laws' seals (Icons#writeDomains); {@code ... <assets> chaos}, the Chaos Frontier's fiend, its Primordial Chaos, its items and blocks
 	 * (Chaos); {@code ... <assets> worlds}, the small worlds' World Seed and Small World icon (Worlds); {@code ... <assets> techniques}, the
-	 * techniques' icons (Techniques: Universe in a Sleeve).
+	 * techniques' icons (Techniques: Universe in a Sleeve); {@code ... <assets> artifacts [sheet.png]}, the Artifact Forge's artifacts and
+	 * faces (ArtifactArt), and a sheet of them to look over; {@code ... <assets> legends [sheet.png]}, Ganjiang's and Moye's models and their
+	 * living textures (LegendArt); {@code ... <assets> missions}, the sect mission board's faces, its slips and letters (MissionArt).
 	 */
 	public static void main(String[] args) throws Exception {
+		if (args.length >= 2 && args[1].equals("legends") && args.length <= 3) {
+			LegendArt.writeAll(Path.of(args[0]));
+			if (args.length == 3) LegendArt.writeSheet(Path.of(args[2]));
+			System.out.println("written");
+			return;
+		}
+		if (args.length == 2 && args[1].equals("missions")) {
+			MissionArt.writeAll(Path.of(args[0]));
+			System.out.println("written");
+			return;
+		}
+		if (args.length >= 2 && args[1].equals("artifacts") && args.length <= 3) {
+			ArtifactArt.writeAll(Path.of(args[0]));
+			if (args.length == 3) {
+				ArtifactArt.writeSheet(Path.of(args[0]), Path.of(args[2]));
+				String sheet = args[2];
+				ElementalArt.writeSheet(Path.of(sheet.substring(0, sheet.length() - 4) + "-elemental.png"));
+			}
+			System.out.println("written");
+			return;
+		}
 		if (args.length < 1 || args.length > 2 || args.length == 2 && !args[1].equals("bodies") && !args[1].equals("icons") && !args[1].equals("primordials")
 				&& !args[1].equals("domains") && !args[1].equals("chaos") && !args[1].equals("worlds") && !args[1].equals("techniques")) {
-			System.err.println("java BeastArt.java <the mod's src/main/resources/assets/defying-the-heavens> [bodies|icons|primordials|domains|chaos|worlds|techniques]");
+			System.err.println("java BeastArt.java <the mod's src/main/resources/assets/defying-the-heavens> [bodies|icons|primordials|domains|chaos|worlds|techniques|artifacts [sheet.png]]");
 			System.exit(1);
 		}
 		if (args.length == 2 && args[1].equals("techniques")) {

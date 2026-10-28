@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:sects/joined",
+  "criteria": {
+    "mission_done": {
+      "conditions": {
+        "milestone": "mission/done"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.sects.mission.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:mission_slip"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.sects.mission.title"
+    }
+  },
+  "requirements": [
+    [
+      "mission_done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

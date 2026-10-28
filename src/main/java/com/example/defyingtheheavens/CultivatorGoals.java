@@ -982,7 +982,9 @@ public final class CultivatorGoals {
 
 		@Override
 		public boolean canUse() {
-			return npc.getLifecycle() == CultivatorNpc.Lifecycle.ROGUE && npc.getTarget() == null && !npc.shouldFlee() && !npc.keepsPost();
+			// Not mad Lei Zhen: he never strolls or sits, but flies his way (LeiZhen#steer).
+			return npc.getLifecycle() == CultivatorNpc.Lifecycle.ROGUE && npc.getTarget() == null && !npc.shouldFlee() && !npc.keepsPost()
+					&& !LeiZhen.is(npc);
 		}
 
 		@Override
@@ -1310,6 +1312,10 @@ public final class CultivatorGoals {
 
 		private boolean wants(LivingEntity target) {
 			if (npc.isConcealed() || npc.shouldFlee()) return false;
+			// Mad Lei Zhen goes for anyone at all (LeiZhen: from further off, his whole consciousness, there).
+			if (LeiZhen.is(npc)) return LeiZhen.goesFor(npc, target);
+			// A legend's guard (Chiyou's shade, Ao Guang) goes for its prey alone, and whoever strikes it (LegendGuards).
+			if (LegendGuards.is(npc)) return LegendGuards.goesFor(npc, target);
 			// A Relic Keeper goes for whoever comes near its altar, whatever their path (SacredRelics).
 			if (SacredRelics.isKeeper(npc)) return SacredRelics.guards(npc, target);
 			// A settler (Settlements) is of the lower realms' common folk: it seeks no fight, only defends itself (RetaliateGoal), and
@@ -1320,8 +1326,10 @@ public final class CultivatorGoals {
 			if (ImmortalGate.isRushing(npc)) return false;
 			// On the camp's ground nobody goes for one of the demon races waiting there (NirvanaCamp#shelters).
 			if (NirvanaCamp.shelters(target)) return false;
-			// What preys on them (a Merit wish's threat) is out for the one who took it on, and nobody else: not the settlers.
+			// What preys on them (a Merit wish's threat) is out for the one who took it on, and nobody else: not the settlers. So is a sect
+			// mission's quarry (SectMissions).
 			if (Wishes.isThreat(npc)) return target instanceof Player player && player.getUUID().equals(Wishes.takerOf(npc)) && npc.isEnemy(target);
+			if (SectMissions.isFoe(npc)) return target instanceof Player player && player.getUUID().equals(SectMissions.takerOf(npc)) && npc.isEnemy(target);
 			CultivatorNpc.Lifecycle life = npc.getLifecycle();
 			if (life != CultivatorNpc.Lifecycle.SECT && life != CultivatorNpc.Lifecycle.ROGUE) return false;
 			if (npc.getTitle().isElderOrAbove()) return false;

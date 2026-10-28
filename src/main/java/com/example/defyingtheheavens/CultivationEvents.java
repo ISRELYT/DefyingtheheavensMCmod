@@ -159,7 +159,9 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(Milestones::tick); // the advancements' standing milestones (a realm, a sect's title...) granted
 		ServerTickEvents.END_SERVER_TICK.register(RaceGifts::tick); // a tiger's sight, a lizard's in the water, a dragon's might
 		ServerTickEvents.END_SERVER_TICK.register(CoreDetonation::tick);
-		ServerTickEvents.END_SERVER_TICK.register(StorageRings::flush);
+		ServerTickEvents.END_SERVER_TICK.register(StorageSpaces::flush);
+		ServerTickEvents.END_SERVER_TICK.register(StorageFormations::convertRings); // an old Storage Ring carried unfolds into its formation
+		Concealments.register(); // a Formation Core's concealment: who sees what within it, its land ledger's ticks
 		Physiques.register();
 		InnerRealm.registerEvents();
 		GhostGate.registerProtection();
@@ -173,7 +175,7 @@ public final class CultivationEvents {
 		// A region's hermit is seated the first time its chunk loads.
 		ServerChunkEvents.CHUNK_LOAD.register(HermitSites::onChunkLoad);
 		ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> CultivatorNpc.onLoad(entity));
-		ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> StorageRingItem.onItemLoad(entity));
+		ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> StorageFormationItem.onItemLoad(entity));
 		ServerEntityEvents.ENTITY_UNLOAD.register((entity, level) -> CultivatorNpc.onUnload(entity));
 
 		ServerLifecycleEvents.SERVER_STARTED.register(SpatialRiftBlock::ensureOverworldRift);
@@ -235,6 +237,7 @@ public final class CultivationEvents {
 			NirvanaCamp.clear();
 			Sleeves.clear();
 			Wishes.clear();
+			Legends.clear();
 			RaceGifts.clear();
 			LawDomains.clear();
 			ChaosFrontier.clear();
@@ -273,8 +276,10 @@ public final class CultivationEvents {
 			if (world.isClientSide || !(world instanceof ServerLevel level) || !(player instanceof ServerPlayer sp)) return InteractionResult.PASS;
 			BlockPos pos = hit.getBlockPos();
 			BlockState state = level.getBlockState(pos);
+			// A treasury's storage formation is no one's but its keepers' (one a player set down is theirs, under its own seal).
 			boolean valuable = level.getBlockEntity(pos) instanceof Container || state.getBlock() instanceof SpiritPedestalBlock
-					|| state.getBlock() instanceof GinsengBlock || state.getBlock() instanceof CultivationFruitBlock;
+					|| state.getBlock() instanceof GinsengBlock || state.getBlock() instanceof CultivationFruitBlock
+					|| level.getBlockEntity(pos) instanceof StorageFormationBlockEntity formation && formation.getOwner() == null;
 			if (!valuable) return InteractionResult.PASS;
 			// A ghost palace's treasury: theft, and shut while its king's seal holds (PalaceTreasury).
 			if (PalaceTreasury.isTreasury(level, pos)) {
@@ -361,6 +366,7 @@ public final class CultivationEvents {
 			DemonPath.born(newPlayer); // a demon born again is born with its demon core again
 			FiveDecays.onRespawn(newPlayer); // a Decay's stained robes on the new body too
 			Sleeves.onRespawn(newPlayer); // one who died in a sleeve (a command reaches them) plays as before
+			Legends.giveBack(newPlayer); // the Sea-Fixing Needle kept behind their ear
 		});
 
 		// A blow a heaven spell's ward has brought to nothing is refused outright: no knockback, no flinch (HeavenSpells#wardedOff).
@@ -486,10 +492,10 @@ public final class CultivationEvents {
 			if (hand != InteractionHand.MAIN_HAND) return InteractionResult.FAIL;
 			BlockState state = world.getBlockState(hit.getBlockPos());
 			if (state.is(ModTags.GHOST_USABLE)) return InteractionResult.PASS;
-			// A ghost palace's treasury is the dead's own (PalaceTreasury): the client asks for any chest in the Netherworld, the
-			// server decides.
-			boolean treasury = state.getBlock() instanceof net.minecraft.world.level.block.ChestBlock && (world instanceof ServerLevel level
-					? PalaceTreasury.isTreasury(level, hit.getBlockPos()) : ModDimensions.isNetherworld(world.dimension()));
+			// A ghost palace's treasury is the dead's own (PalaceTreasury): the client asks for any chest or storage formation in the
+			// Netherworld, the server decides.
+			boolean treasury = (state.getBlock() instanceof net.minecraft.world.level.block.ChestBlock || state.getBlock() instanceof StorageFormationBlock)
+					&& (world instanceof ServerLevel level ? PalaceTreasury.isTreasury(level, hit.getBlockPos()) : ModDimensions.isNetherworld(world.dimension()));
 			return treasury ? InteractionResult.PASS : InteractionResult.FAIL;
 		});
 		// Nothing of the living world in the hand of a soul or a ghost; but a ghost may drink a Marrow Cleansing Elixir, its meridians

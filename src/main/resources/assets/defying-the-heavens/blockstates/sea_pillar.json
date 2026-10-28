@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "banded=false": {"model": "defying-the-heavens:block/sea_pillar"},
+    "banded=true": {"model": "defying-the-heavens:block/sea_pillar_band"}
+  }
+}

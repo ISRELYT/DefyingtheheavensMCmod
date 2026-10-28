@@ -144,15 +144,15 @@ public class CelestialCourtGameTests implements FabricGameTest {
 		helper.assertTrue(key(CelestialCourt.ask(player, venerable)).equals(ModLang.talkLine("court.member")), "Asked again, it tells them their rank");
 		helper.assertTrue(CelestialCourt.rankOf(player.server, player.getUUID()) == CelestialCourt.Rank.OFFICER, "An Officer to begin with");
 		MerchantOffers asOfficer = CelestialCourt.offers(quartermaster, player, uses, keys);
-		helper.assertTrue(open(asOfficer) == 6 && asOfficer.size() == 10, "Jade and the five True Immortal methods to an Officer (" + open(asOfficer) + " open)");
+		helper.assertTrue(open(asOfficer) == 6 && asOfficer.size() == 11, "Jade and the five True Immortal methods to an Officer (" + open(asOfficer) + " open)");
 		helper.assertTrue(asOfficer.get(1).getCostA().is(ModItems.COURT_MERIT_TOKEN) && asOfficer.get(1).getCostA().getCount() == 20, "A method's slip for twenty tokens");
 		// Merit paid in tokens, the rank risen with it.
 		CelestialCourt.award(player, 30, ModLang.MSG_COURT_MERIT_WATCH);
 		helper.assertTrue(CelestialCourt.rankOf(player.server, player.getUUID()) == CelestialCourt.Rank.CAPTAIN && CelestialCourt.meritOf(player.server, player.getUUID()) == 30
 				&& player.getInventory().countItem(ModItems.COURT_MERIT_TOKEN) == 30, "Thirty merit, thirty tokens: a Captain");
-		helper.assertTrue(open(CelestialCourt.offers(quartermaster, player, uses, keys)) == 8, "A Captain's wares too");
+		helper.assertTrue(open(CelestialCourt.offers(quartermaster, player, uses, keys)) == 9, "A Captain's wares too (the day's Immortal artifact among them)");
 		CelestialCourt.award(player, 70, ModLang.MSG_COURT_MERIT_WATCH);
-		helper.assertTrue(CelestialCourt.rankOf(player.server, player.getUUID()) == CelestialCourt.Rank.GENERAL && open(CelestialCourt.offers(quartermaster, player, uses, keys)) == 10,
+		helper.assertTrue(CelestialCourt.rankOf(player.server, player.getUUID()) == CelestialCourt.Rank.GENERAL && open(CelestialCourt.offers(quartermaster, player, uses, keys)) == 11,
 				"A hundred: a General, every ware open");
 		// The bounty on the realm's devilish immortals: a True Immortal more, none on the righteous, none below Entering Nirvana.
 		CultivatorNpc nirvana = devil(helper, PlayerCultivation.rank(Realm.ENTERING_NIRVANA, Stage.EARLY), -90, 3),

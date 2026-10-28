@@ -46,9 +46,15 @@ public final class PalaceTreasury {
 		return null;
 	}
 
-	/** Whether {@code pos} is one of a palace's treasury chests (a palace keeps no other chest). */
+	/**
+	 * Whether {@code pos} is one of a palace's treasury chests (a palace keeps no other chest), or since 2026-10-28 one of its storage
+	 * formations (StorageFormations: the treasuries raised since keep their wealth in those; one a player set down is theirs, under its
+	 * own seal).
+	 */
 	public static boolean isTreasury(ServerLevel level, BlockPos pos) {
-		return level.getBlockEntity(pos) instanceof ChestBlockEntity && palaceOf(level, pos) != null;
+		return (level.getBlockEntity(pos) instanceof ChestBlockEntity
+				|| level.getBlockEntity(pos) instanceof StorageFormationBlockEntity formation && formation.getOwner() == null)
+				&& palaceOf(level, pos) != null;
 	}
 
 	/** The king keeping {@code throne}'s treasury: alive and loaded; null if slain, its throne empty, or away. */

@@ -17,7 +17,10 @@ import net.minecraft.advancements.CriterionProgress;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.server.IntegratedServer;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.storage.LevelResource;
 
 import java.io.IOException;
@@ -40,7 +43,8 @@ import java.util.TreeSet;
  * player has already done the first time they come in with it, told by one toast.
  * <p>
  * The worlds of its map (CodexMap) the player has been to, for the map to name them (the user's ask, 2026-10-28): by their advancements
- * (so a save from before the map knows them), or seen here, the world the player stands in noted at every look.
+ * (so a save from before the map knows them), or seen here, the world the player stands in noted at every look. And the creatures its
+ * Bestiary's pages are of that the player has come upon ({@link #sight}), each page opening (and toasted) once its creature is.
  * <p>
  * Kept for each world on this computer, in config/defying-the-heavens-codex.json, keyed by the singleplayer world's folder or the
  * server's address: the pages already told of (each is toasted once), the pages read, and the map's worlds seen.
@@ -67,6 +71,13 @@ public final class CodexState {
 	/** The map's worlds visited (by their advancements or seen), and those seen stood in on this computer. */
 	private static final Set<String> visited = new HashSet<>();
 	private static final Set<String> seen = new HashSet<>();
+	/**
+	 * The Bestiary's creatures come upon (entity type ids, kept on disk): one counts once it is in the player's sight within
+	 * {@link #SIGHT_RANGE} blocks (the vast ones farther, by their size).
+	 */
+	private static final Set<String> sighted = new HashSet<>();
+	private static final Set<String> SIGHTS = Codex.sights();
+	private static final double SIGHT_RANGE = 32;
 
 	/** Each client tick: a look now and then at what the advancements open. */
 	public static void tick(Minecraft mc) {
@@ -91,6 +102,7 @@ public final class CodexState {
 		latest.clear();
 		visited.clear();
 		seen.clear();
+		sighted.clear();
 	}
 
 	/** A look for the Codex opened before the first one (no toast: the pages show their dots there). */
@@ -108,10 +120,12 @@ public final class CodexState {
 			if (e.getValue().isDone() && e.getKey().getId().getNamespace().equals(DefyingTheHeavens.MOD_ID)) done.add(e.getKey().getId().getPath());
 		}
 		looked = true;
+		boolean newlySighted = sight(mc);
 		open.clear();
 		List<Codex.Entry> news = new ArrayList<>();
 		for (Codex.Entry entry : Codex.entries()) {
-			if (!entry.open() && Collections.disjoint(entry.unlocks(), done)) continue;
+			boolean opens = entry.sight() != null ? sighted.contains(entry.sight()) : entry.open() || !Collections.disjoint(entry.unlocks(), done);
+			if (!opens) continue;
 			open.add(entry.id());
 			if (told.add(entry.id())) news.add(entry);
 		}
@@ -123,13 +137,31 @@ public final class CodexState {
 			if (world.always() || seen.contains(world.id()) || anyDone(world.visits(), byId)) visited.add(world.id());
 		}
 		if (news.isEmpty()) {
-			if (newlySeen) save();
+			if (newlySeen || newlySighted) save();
 			return;
 		}
 		latest.clear();
 		for (Codex.Entry entry : news) latest.add(entry.id());
 		save();
 		if (toast) CodexToast.show(mc.getToasts(), news);
+	}
+
+	/**
+	 * Notes every Bestiary creature in the player's sight, near enough to make out: within {@link #SIGHT_RANGE} blocks (the vast ones
+	 * farther, by their size), not hidden from them, with nothing in between. Only those not yet noted are looked at. Whether any was new.
+	 */
+	private static boolean sight(Minecraft mc) {
+		if (mc.level == null || mc.player == null) return false;
+		boolean added = false;
+		for (Entity entity : mc.level.entitiesForRendering()) {
+			if (!(entity instanceof LivingEntity) || entity == mc.player) continue;
+			String id = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
+			if (!SIGHTS.contains(id) || sighted.contains(id)) continue;
+			double reach = SIGHT_RANGE + entity.getBbWidth() * 2;
+			if (entity.distanceToSqr(mc.player) > reach * reach || entity.isInvisibleTo(mc.player) || !mc.player.hasLineOfSight(entity)) continue;
+			added |= sighted.add(id);
+		}
+		return added;
 	}
 
 	/** Any one of a world's advancements done ("path#criterion": that criterion of it). */
@@ -227,10 +259,12 @@ public final class CodexState {
 		read.clear();
 		latest.clear();
 		seen.clear();
+		sighted.clear();
 		if (!(worlds().get(world) instanceof JsonObject mine)) return;
 		strings(mine.get("told"), told);
 		strings(mine.get("read"), read);
 		strings(mine.get("seen"), seen);
+		strings(mine.get("sighted"), sighted);
 	}
 
 	private static void save() {
@@ -240,6 +274,7 @@ public final class CodexState {
 		mine.add("told", array(told));
 		mine.add("read", array(read));
 		mine.add("seen", array(seen));
+		mine.add("sighted", array(sighted));
 		worlds.add(world, mine);
 		JsonObject root = new JsonObject();
 		root.add("worlds", worlds);

@@ -1,25 +1,58 @@
 package com.example.defyingtheheavens.client;
 
+import com.example.defyingtheheavens.BeastKind;
+import com.example.defyingtheheavens.Bloodline;
 import com.example.defyingtheheavens.Codex;
 import com.example.defyingtheheavens.CodexMap;
+import com.example.defyingtheheavens.CultivatorNpc;
+import com.example.defyingtheheavens.DaoFragmentItem;
+import com.example.defyingtheheavens.DemonBeast;
+import com.example.defyingtheheavens.DemonBlood;
+import com.example.defyingtheheavens.DemonBloodItem;
+import com.example.defyingtheheavens.DemonCoreItem;
+import com.example.defyingtheheavens.HeartDemonEntity;
+import com.example.defyingtheheavens.HeavenMethod;
+import com.example.defyingtheheavens.JadeSlipItem;
+import com.example.defyingtheheavens.Law;
+import com.example.defyingtheheavens.ModItems;
 import com.example.defyingtheheavens.ModLang;
 import com.example.defyingtheheavens.PlayerCultivation;
 import com.example.defyingtheheavens.QiElement;
 import com.example.defyingtheheavens.Realm;
+import com.example.defyingtheheavens.VoidVestige;
+import com.mojang.blaze3d.platform.Lighting;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.math.Axis;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.model.PlayerModel;
+import net.minecraft.client.model.geom.ModelLayers;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ItemLike;
+import net.minecraft.world.level.Level;
+import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * The Dao Codex's diagrams (Codex, "@diagram name"; the user's pick, 2026-10-28), drawn in its lacquer and gold (TalkUi) into a page's
@@ -66,12 +99,237 @@ final class CodexDiagrams {
 
 	/** Draws {@code name} with its top left at (x, y), {@code width} wide; the tooltip of what (mouseX, mouseY) points at, or null. */
 	static List<FormattedCharSequence> draw(GuiGraphics g, Font font, String name, int x, int y, int width, int mouseX, int mouseY) {
+		if (name.startsWith(BEAST)) {
+			beast(g, font, name.substring(BEAST.length()), x, y, width);
+			return null;
+		}
 		return switch (name) {
 			case "worlds" -> worlds(g, font, x, y, width, mouseX, mouseY);
 			case "realms" -> realms(g, font, x, y, width, mouseX, mouseY);
 			case "elements" -> elements(g, font, x, y, width, mouseX, mouseY);
 			default -> null;
 		};
+	}
+
+	// --- A Bestiary page's creature ---
+
+	/** A creature's picture is the diagram "beast:" and its entity type's id; its frame. */
+	static final String BEAST = "beast:";
+	private static final int FRAME = 64;
+	private static final int FRAME_INSIDE = 0xFF2A2018;
+	/** The likenesses drawn, made once for the world they were made in (never added to it); the Hungry Ghost's body, made once. */
+	private static final Map<String, LivingEntity> LIKENESSES = new HashMap<>();
+	private static Level likenessesOf;
+	private static PlayerModel<LivingEntity> ghostBody;
+
+	/** How far down a creature's picture "Drops:" stands (the user's word, 2026-10-28): under the frame, or under what it is, whichever is lower. */
+	private static int dropsAt(Font font, String id, int width) {
+		int facts = 3;
+		for (Component fact : facts(id)) facts += font.split(fact, width - FRAME - 8).size() * 9 + 2;
+		return Math.max(FRAME, facts) + 4;
+	}
+
+	/** A creature's picture's height, its cells of what it drops (CodexScreen) laid out from there. */
+	static int beastHeight(Font font, String id, int width) {
+		return dropsAt(font, id, width) + 12;
+	}
+
+	/**
+	 * The creature turning slowly in its frame (clipped to it), what it is beside the frame (its realm, its element, how it goes about,
+	 * its temper), and "Drops:" under it, the cells of what it drops laid out below by CodexScreen ({@link #drops}).
+	 */
+	private static void beast(GuiGraphics g, Font font, String id, int x, int y, int width) {
+		g.fill(x, y, x + FRAME, y + FRAME, TalkUi.GOLD_DIM);
+		g.fill(x + 1, y + 1, x + FRAME - 1, y + FRAME - 1, FRAME_INSIDE);
+		float angle = (Util.getMillis() % 18000L) / 50.0f;
+		Quaternionf pose = new Quaternionf().rotateZ((float) Math.PI).rotateX((float) Math.toRadians(-12)).rotateY((float) Math.toRadians(angle));
+		g.enableScissor(x + 1, y + 1, x + FRAME - 1, y + FRAME - 1);
+		if (id.endsWith(":hungry_ghost")) {
+			// Drawn by the ghost shader in the world, by no renderer of its own: here its body in its own skin, faded.
+			float scale = (FRAME - 14) / 2.0f;
+			renderGhost(g, x + FRAME / 2f, y + FRAME / 2f + 0.9f * scale, scale, pose);
+		} else {
+			LivingEntity likeness = likeness(id);
+			if (likeness != null) {
+				// Fitted to the frame by how large it is drawn: its body, most models longer than it, the vast ones far larger.
+				double extent = Math.max(likeness.getBbWidth(), likeness.getBbHeight()) * drawnBeyondBody(likeness);
+				float scale = (float) ((FRAME - 14) / Math.max(0.5, extent));
+				renderLikeness(g, x + FRAME / 2f, y + FRAME / 2f + (float) (likeness.getBbHeight() * scale / 2), scale, pose, likeness);
+			}
+		}
+		g.disableScissor();
+		// What it is, beside the frame.
+		int fy = y + 3;
+		for (Component fact : facts(id)) {
+			for (FormattedCharSequence line : font.split(fact, width - FRAME - 8)) {
+				g.drawString(font, line, x + FRAME + 6, fy, TalkUi.CREAM, false);
+				fy += 9;
+			}
+			fy += 2;
+		}
+		Component drops = Component.translatable(drops(id).isEmpty() ? ModLang.CODEX_BEAST_DROPS_NOTHING : ModLang.CODEX_BEAST_DROPS);
+		g.drawString(font, drops, x, y + dropsAt(font, id, width), TalkUi.MUTED, false);
+	}
+
+	/**
+	 * How much larger than its body a creature is drawn: most models longer than their bodies are wide, an elder's a little, the primordial
+	 * beasts and the Vestige far beyond their hitboxes.
+	 */
+	private static double drawnBeyondBody(LivingEntity likeness) {
+		if (likeness instanceof VoidVestige) return 7.0;
+		if (!(likeness instanceof DemonBeast beast)) return 1;
+		return switch (beast.kind()) {
+			case KUN_PENG -> 2.2;
+			case TRUE_PHOENIX -> 3.5;
+			case TRUE_DRAGON -> 4.5;
+			case PRIMORDIAL_CHAOS -> 2.0;
+			case CHAOS_FIEND -> 1.2;
+			default -> beast.kind().isElder() ? 1.5 : 1.6;
+		};
+	}
+
+	/** A Hungry Ghost's body: a man's, in the Hungry Ghost's skin, faded as the dead are to the living. */
+	private static void renderGhost(GuiGraphics g, float x, float y, float scale, Quaternionf pose) {
+		Minecraft mc = Minecraft.getInstance();
+		if (ghostBody == null) ghostBody = new PlayerModel<>(mc.getEntityModels().bakeLayer(ModelLayers.PLAYER), false);
+		g.pose().pushPose();
+		g.pose().translate(x, y, 50.0);
+		g.pose().mulPoseMatrix(new Matrix4f().scaling(scale, scale, -scale));
+		g.pose().mulPose(pose);
+		g.pose().mulPose(Axis.YP.rotationDegrees(180));
+		g.pose().scale(-1, -1, 1);
+		g.pose().translate(0, -1.501, 0);
+		Lighting.setupForEntityInInventory();
+		ghostBody.renderToBuffer(g.pose(), g.bufferSource().getBuffer(RenderType.entityTranslucent(GhostlyRenderers.HUNGRY_GHOST_SKIN)), 0xF000F0,
+				OverlayTexture.NO_OVERLAY, 1.0f, 1.0f, 1.0f, 0.75f);
+		g.flush();
+		g.pose().popPose();
+		Lighting.setupFor3DItems();
+	}
+
+	/** Its likeness, made once (a beast at its kind's least, a heart demon in the reader's own skin), or null if it can't be made here. */
+	private static LivingEntity likeness(String id) {
+		Minecraft mc = Minecraft.getInstance();
+		if (mc.level == null) return null;
+		if (likenessesOf != mc.level) {
+			LIKENESSES.clear();
+			likenessesOf = mc.level;
+		}
+		LivingEntity made = LIKENESSES.get(id);
+		if (made != null) return made;
+		ResourceLocation key = ResourceLocation.tryParse(id);
+		EntityType<?> type = key == null ? null : BuiltInRegistries.ENTITY_TYPE.getOptional(key).orElse(null);
+		if (type == null || !(type.create(mc.level) instanceof LivingEntity living)) return null;
+		if (living instanceof DemonBeast beast) beast.setRank(beast.kind().minRank());
+		if (living instanceof HeartDemonEntity demon && mc.player != null) demon.setOwnerId(mc.player.getUUID());
+		living.setYRot(0);
+		living.setYBodyRot(0);
+		living.setYHeadRot(0);
+		living.yRotO = 0;
+		living.yBodyRotO = 0;
+		living.yHeadRotO = 0;
+		LIKENESSES.put(id, living);
+		return living;
+	}
+
+	/** Drawn as the inventory draws its player, at a scale of its own (fractions too: the vast ones are small here). */
+	private static void renderLikeness(GuiGraphics g, float x, float y, float scale, Quaternionf pose, LivingEntity likeness) {
+		g.pose().pushPose();
+		g.pose().translate(x, y, 50.0);
+		g.pose().mulPoseMatrix(new Matrix4f().scaling(scale, scale, -scale));
+		g.pose().mulPose(pose);
+		Lighting.setupForEntityInInventory();
+		EntityRenderDispatcher dispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
+		dispatcher.setRenderShadow(false);
+		RenderSystem.runAsFancy(() -> dispatcher.render(likeness, 0, 0, 0, 0, 1.0f, g.pose(), g.bufferSource(), 0xF000F0));
+		g.flush();
+		dispatcher.setRenderShadow(true);
+		g.pose().popPose();
+		Lighting.setupFor3DItems();
+	}
+
+	/** What a creature is: its realm (from least to greatest), its element, how it goes about, and whether it seeks a fight. */
+	private static List<Component> facts(String id) {
+		List<Component> facts = new ArrayList<>();
+		String path = id.substring(id.indexOf(':') + 1);
+		BeastKind kind = BeastKind.byId(path);
+		if (kind != null) {
+			facts.add(Component.translatable(ModLang.CODEX_BEAST_REALM, ranks(kind.minRank(), kind.maxRank())));
+			facts.add(Component.translatable(ModLang.CODEX_BEAST_ELEMENT, kind.element.getDisplayName().copy()
+					.withStyle(s -> s.withColor(kind.element.getCoreColor()))));
+			facts.add(Component.translatable(ModLang.codexBeastMoves(kind.moves.name().toLowerCase(Locale.ROOT))));
+			facts.add(Component.translatable(kind.territorial ? ModLang.CODEX_BEAST_HUNTS : ModLang.CODEX_BEAST_FIGHTS_BACK));
+			return facts;
+		}
+		switch (path) {
+			case "void_vestige" -> {
+				facts.add(Component.translatable(ModLang.CODEX_BEAST_REALM, ranks(VoidVestige.MIN_RANK, VoidVestige.MAX_RANK)));
+				facts.add(Component.translatable(ModLang.codexBeastMoves("flying")));
+				facts.add(Component.translatable(ModLang.CODEX_BEAST_HUNTS));
+			}
+			case "heart_demon" -> {
+				facts.add(Component.translatable(ModLang.CODEX_BEAST_REALM, Component.translatable(ModLang.CODEX_BEAST_YOUR_REALM)));
+				facts.add(Component.translatable(ModLang.CODEX_BEAST_HUNTS));
+			}
+			case "hungry_ghost" -> {
+				facts.add(Component.translatable(ModLang.CODEX_BEAST_REALM, Realm.QI_REFINING.getDisplayName()));
+				facts.add(Component.translatable(ModLang.CODEX_BEAST_ELEMENT, QiElement.YIN.getDisplayName().copy()
+						.withStyle(s -> s.withColor(QiElement.YIN.getCoreColor()))));
+				facts.add(Component.translatable(ModLang.CODEX_BEAST_HUNTS));
+			}
+			default -> {}
+		}
+		return facts;
+	}
+
+	/**
+	 * "Foundation Building Late to Core Formation Grand Perfection"; within one realm "Qi Refining, Early to Grand Perfection"; one realm and
+	 * stage alone where both ends are one.
+	 */
+	private static Component ranks(int low, int high) {
+		if (low == high) return stageName(low);
+		Realm from = CultivatorNpc.realmOf(low), to = CultivatorNpc.realmOf(high);
+		if (from == to) {
+			return Component.translatable(ModLang.CODEX_BEAST_WITHIN, from.getDisplayName(), CultivatorNpc.stageOf(low).getDisplayName(),
+					CultivatorNpc.stageOf(high).getDisplayName());
+		}
+		return Component.translatable(ModLang.CODEX_RANGE, stageName(low), stageName(high));
+	}
+
+	private static Component stageName(int rank) {
+		return Component.translatable(ModLang.CODEX_BEAST_STAGE, CultivatorNpc.realmOf(rank).getDisplayName(), CultivatorNpc.stageOf(rank).getDisplayName());
+	}
+
+	/**
+	 * What a creature drops when slain, a cell to each (several in turn where it drops one of many: a Dao Fragment of any Law): a beast its
+	 * core and its kin's blood, both of its least realm, and its remains; a primordial beast its core, its kin's True Immortal blood and
+	 * Immortal Jade (the Kun-Peng a jade slip too); chaos what chaos sets hard; a Vestige spirit stones; the rest nothing.
+	 */
+	static List<List<ItemStack>> drops(String id) {
+		List<List<ItemStack>> drops = new ArrayList<>();
+		String path = id.substring(id.indexOf(':') + 1);
+		BeastKind kind = BeastKind.byId(path);
+		List<ItemStack> fragments = new ArrayList<>();
+		for (Law law : Law.values()) fragments.add(DaoFragmentItem.of(law));
+		if (kind == BeastKind.PRIMORDIAL_CHAOS) {
+			drops.add(fragments);
+			drops.add(List.of(new ItemStack(ModItems.CHAOS_ORIGIN_STONE)));
+			drops.add(List.of(new ItemStack(ModItems.IMMORTAL_JADE)));
+		} else if (kind == BeastKind.CHAOS_FIEND) {
+			drops.add(List.of(new ItemStack(ModItems.CHAOS_ORIGIN_STONE)));
+			drops.add(fragments);
+		} else if (kind != null) {
+			drops.add(List.of(DemonCoreItem.of(kind.minRank(), kind.element, kind.getDisplayName())));
+			Bloodline kin = DemonBlood.kin(kind);
+			Realm realm = kind.isPrimordial() ? Realm.TRUE_IMMORTAL : CultivatorNpc.realmOf(kind.minRank());
+			if (kin != null) drops.add(List.of(DemonBloodItem.of(kin, realm)));
+			if (kind.isPrimordial()) drops.add(List.of(new ItemStack(ModItems.IMMORTAL_JADE)));
+			if (kind == BeastKind.KUN_PENG) drops.add(List.of(JadeSlipItem.of(HeavenMethod.of(kind.element, Realm.TRUE_IMMORTAL))));
+			for (Item remains : kind.remains()) drops.add(List.of(new ItemStack(remains)));
+		} else if (path.equals("void_vestige")) {
+			drops.add(List.of(new ItemStack(ModItems.LOW_SPIRIT_STONE), new ItemStack(ModItems.MID_SPIRIT_STONE), new ItemStack(ModItems.HIGH_SPIRIT_STONE)));
+		}
+		return drops;
 	}
 
 	// --- The map of the worlds ---

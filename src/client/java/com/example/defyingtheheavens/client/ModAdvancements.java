@@ -2,9 +2,11 @@ package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.BeastKind;
 import com.example.defyingtheheavens.DefyingTheHeavens;
+import com.example.defyingtheheavens.Legend;
 import com.example.defyingtheheavens.MilestoneTrigger;
 import com.example.defyingtheheavens.Milestones;
 import com.example.defyingtheheavens.ModBiomes;
+import com.example.defyingtheheavens.ModBlocks;
 import com.example.defyingtheheavens.ModDimensions;
 import com.example.defyingtheheavens.ModEntities;
 import com.example.defyingtheheavens.ModItems;
@@ -222,8 +224,9 @@ public final class ModAdvancements {
 		add("arts/clone", "arts/root", ModItems.TECHNIQUE_MANUAL, FrameType.GOAL, "Two Bodies, One Dao", "Make a Clone of yourself", milestone(Milestones.CLONE));
 		secret("arts/core_detonation", "arts/root", Items.TNT, FrameType.GOAL, "A Core Shattered", "Detonate your own golden core",
 				milestone(Milestones.CORE_DETONATION));
-		add("arts/storage_ring", "arts/root", ModItems.STORAGE_RING, FrameType.TASK, "A World in a Ring", "Refine a Storage Ring",
-				milestone(Milestones.STORAGE_RING));
+		// Its id kept from the Storage Rings' days, so who earned it keeps it (the storage formations took the rings' place, 2026-10-28).
+		add("arts/storage_ring", "arts/root", ModItems.storageFormation(com.example.defyingtheheavens.StorageFormations.Tier.MID), FrameType.TASK,
+				"A Sealed World", "Refine a storage formation", milestone(Milestones.STORAGE_RING));
 		add("arts/thousand_year_fruit", "arts/root", ModItems.CULTIVATION_FRUIT, FrameType.TASK, "A Thousand Years Ripened",
 				"Eat a Cultivation Fruit a thousand years old or more", milestone(Milestones.THOUSAND_YEAR_FRUIT));
 		add("arts/sacred_vessel", "arts/immortal_stone", ModItems.JIANMU_BOUGH_VASE, FrameType.GOAL, "A Sacred Vessel", "Hold one of the five Sacred Vessels",
@@ -242,6 +245,34 @@ public final class ModAdvancements {
 				"Slay one of the Immortal Realm's primordial beasts", slain(BeastKind.KUN_PENG, BeastKind.TRUE_PHOENIX, BeastKind.TRUE_DRAGON));
 		addAny("arts/primordial_chaos", "arts/primordial_beast", Items.DRAGON_EGG, FrameType.CHALLENGE, "Hundun's Remnant", "Slay the Primordial Chaos",
 				slain(BeastKind.PRIMORDIAL_CHAOS));
+		// The legendary weapons (Legends): heard of from the world's cultivators (or found in hand), and bonded with.
+		Map<String, CriterionTriggerInstance> legends = new LinkedHashMap<>();
+		for (Legend legend : Legend.values()) legends.putAll(milestone(Milestones.legendHeard(legend)));
+		addAny("arts/legends", "arts/root", ModItems.legend(Legend.GANJIANG), FrameType.TASK, "Legends of the World",
+				"Hear of one of the legendary weapons", legends);
+		Map<String, CriterionTriggerInstance> pair = new LinkedHashMap<>();
+		pair.putAll(milestone(Milestones.legendHeard(Legend.GANJIANG)));
+		pair.putAll(milestone(Milestones.legendHeard(Legend.MOYE)));
+		addAny("arts/legend_ganjiang_moye", "arts/legends", ModItems.legend(Legend.MOYE), FrameType.TASK, "Yang and Yin",
+				"Hear of the paired swords Ganjiang and Moye", pair);
+		add("arts/legend_tribulation_spear", "arts/legends", ModItems.legend(Legend.TRIBULATION_SPEAR), FrameType.GOAL, "The Tribulation Breaker",
+				"Hear of mad Lei Zhen and Heaven's Tribulation Spear", milestone(Milestones.legendHeard(Legend.TRIBULATION_SPEAR)));
+		add("arts/legend_xuanyuan", "arts/legends", ModItems.legend(Legend.XUANYUAN), FrameType.TASK, "The Yellow Emperor's Sword",
+				"Hear of the Xuanyuan Sword, the bane of evil", milestone(Milestones.legendHeard(Legend.XUANYUAN)));
+		add("arts/legend_sun_bow", "arts/legends", ModItems.legend(Legend.SUN_BOW), FrameType.TASK, "Nine Suns Fell",
+				"Hear of the Sun-Shooting Bow and the dead sun it lies in", milestone(Milestones.legendHeard(Legend.SUN_BOW)));
+		add("arts/legend_sea_needle", "arts/legends", ModItems.legend(Legend.SEA_NEEDLE), FrameType.GOAL, "As You Will",
+				"Hear of the Sea-Fixing Needle standing over the sea of clouds", milestone(Milestones.legendHeard(Legend.SEA_NEEDLE)));
+		add("arts/legend_pangu_axe", "arts/legends", ModItems.legend(Legend.PANGU_AXE), FrameType.GOAL, "Heaven Above, Earth Below",
+				"Hear of Pangu's Axe in the heart of the Primordial Chaos", milestone(Milestones.legendHeard(Legend.PANGU_AXE)));
+		Map<String, CriterionTriggerInstance> symbols = new LinkedHashMap<>();
+		for (Legend legend : Legend.values()) if (legend.venerable() != null) symbols.putAll(milestone(Milestones.legendHeard(legend)));
+		addAny("arts/legend_venerables", "arts/legends", ModItems.legend(Legend.AZURE_GLAIVE), FrameType.TASK, "The Four Symbols",
+				"Hear of the Heavenly Venerables' five weapons", symbols);
+		add("arts/legend_dao_duel", "arts/legend_venerables", ModItems.legend(Legend.YELLOW_DRAGON_SEAL), FrameType.CHALLENGE, "A Dao Duel Won",
+				"Beat a Heavenly Venerable in a Dao Duel and take its weapon", milestone(Milestones.DUEL_WON));
+		add("arts/legend_bonded", "arts/legends", Items.NETHER_STAR, FrameType.CHALLENGE, "One in All the Worlds", "Bond with a legendary weapon",
+				milestone(Milestones.LEGEND_BONDED));
 
 		// ==================================================== Worlds Beyond ====================================================
 		root("worlds/root", Items.RECOVERY_COMPASS, "minecraft:textures/block/obsidian.png", "Worlds Beyond", "Leave the mortal world for a world beyond it",
@@ -303,6 +334,11 @@ public final class ModAdvancements {
 		add("sects/joined", "sects/root", ModItems.SECT_PASS, FrameType.TASK, "Disciple of the Sect", "Join a sect", milestone(Milestones.SECT_JOINED));
 		add("sects/elder", "sects/joined", Items.LECTERN, FrameType.GOAL, "Elder", "Become an Elder of your sect", milestone(Milestones.SECT_ELDER));
 		add("sects/master", "sects/elder", Items.BELL, FrameType.CHALLENGE, "Sect Master", "Lead your sect as its master", milestone(Milestones.SECT_MASTER));
+		add("sects/mission", "sects/joined", ModItems.MISSION_SLIP, FrameType.TASK, "Duty to the Sect", "See a sect mission through", milestone(Milestones.MISSION_DONE));
+		add("sects/every_mission", "sects/mission", ModItems.SEALED_LETTER, FrameType.GOAL, "Of Every Service", "See a sect mission of every kind through",
+				milestone(Milestones.MISSION_EVERY_KIND));
+		add("sects/pillar", "sects/mission", ModBlocks.MISSION_BOARD, FrameType.CHALLENGE, "Pillar of the Sect", "Earn 1,000 Contribution in one sect",
+				milestone(Milestones.MISSION_PILLAR));
 		add("sects/bloodline", "sects/root", ModItems.DEMON_BLOOD, FrameType.TASK, "Blood of Beasts", "Carry a beast's bloodline",
 				milestone(Milestones.BEAST_BLOOD));
 		add("sects/kneel", "sects/root", Items.GOLD_INGOT, FrameType.GOAL, "Revered", "Have a cultivator kneel before you", milestone(Milestones.KNEEL));

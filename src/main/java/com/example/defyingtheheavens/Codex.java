@@ -34,9 +34,11 @@ import java.util.regex.Pattern;
  *   <li>"@items jade minecraft:bone_meal*2 + ... > ...": a row of items (the mod's own by their name alone, "*n" for how many), with
  *   "+" and an arrow (">") drawn between where they stand;</li>
  *   <li>"@brew foundation_pill": the cauldron's recipe for it, as AlchemyRecipes has it;</li>
- *   <li>"@craft storage_ring": a crafting recipe, by its id, as the game has it;</li>
- *   <li>"@diagram worlds": one of {@link #DIAGRAMS}, drawn by the client (CodexDiagrams).</li>
+ *   <li>"@craft low_storage_formation": a crafting recipe, by its id, as the game has it;</li>
+ *   <li>"@diagram worlds": one of {@link #DIAGRAMS}, drawn by the client (CodexDiagrams);</li>
+ *   <li>"@beast iron_hide_boar": a Bestiary page's creature, turning in its frame, with what it is and what it drops.</li>
  * </ul>
+ * The Bestiary's pages (the user's pick, 2026-10-28) open when their creature is first seen up close (CodexState), not by advancements.
  */
 public final class Codex {
 	/** What a sealed page says of what opens it: vague on purpose (the user's pick). */
@@ -50,7 +52,8 @@ public final class Codex {
 		DEAD("dead", "Only the dead know of this."),
 		BLOOD("blood", "Only those with a beast's bloodline know of this."),
 		HUNT("hunt", "Hunt the great beasts to open this page."),
-		IMMORTAL("immortal", "Only immortals know of this.");
+		IMMORTAL("immortal", "Only immortals know of this."),
+		SIGHT("sight", "Come upon this creature to record it.");
 
 		private final String id;
 		private final String english;
@@ -72,10 +75,13 @@ public final class Codex {
 		}
 	}
 
-	/** A page: what opens it (advancement ids under the mod's namespace, any one of them; empty: open from the first day). */
-	public record Entry(String id, String chapter, ItemLike icon, List<String> unlocks, Hint hint, String title, String text) {
+	/**
+	 * A page: what opens it (advancement ids under the mod's namespace, any one of them; empty: open from the first day), or for the
+	 * Bestiary's, the creature that opens it once seen ({@code sight}, an entity type's id: CodexState notes what its player has come upon).
+	 */
+	public record Entry(String id, String chapter, ItemLike icon, List<String> unlocks, Hint hint, String title, String text, String sight) {
 		public boolean open() {
-			return unlocks.isEmpty();
+			return unlocks.isEmpty() && sight == null;
 		}
 
 		public String titleKey() {
@@ -88,7 +94,7 @@ public final class Codex {
 	}
 
 	/** The keys a page may name ({@code {menu}}): the mod's own and a few of vanilla's, each shown as it is bound now. */
-	public static final Set<String> KEYS = Set.of("menu", "meditate", "circulate", "abilities", "quick", "spells", "cast", "ring", "codex",
+	public static final Set<String> KEYS = Set.of("menu", "meditate", "circulate", "abilities", "quick", "spells", "cast", "codex",
 			"jump", "sneak", "sprint", "forward", "use");
 	public static final Pattern KEY = Pattern.compile("\\{([a-z]+)}");
 
@@ -108,6 +114,13 @@ public final class Codex {
 	public static Entry entry(String id) {
 		for (Entry entry : ENTRIES) if (entry.id().equals(id)) return entry;
 		return null;
+	}
+
+	/** Every creature the Bestiary has a page for (Entry#sight: entity type ids). */
+	public static Set<String> sights() {
+		Set<String> sights = new HashSet<>();
+		for (Entry entry : ENTRIES) if (entry.sight() != null) sights.add(entry.sight());
+		return sights;
 	}
 
 	public static Chapter chapterOf(Entry entry) {
@@ -136,8 +149,11 @@ public final class Codex {
 
 	// --- Pictures ---
 
-	/** The pictures a page may hold ("@items ..."), and the diagrams (client CodexDiagrams: the map of the worlds and the rest). */
-	public static final Set<String> PICTURES = Set.of("items", "brew", "craft", "diagram");
+	/**
+	 * The pictures a page may hold ("@items ..."), and the diagrams (client CodexDiagrams: the map of the worlds and the rest). "@beast id"
+	 * is a Bestiary page's creature (the mod's entity type): its likeness turning, what it is, and what it drops.
+	 */
+	public static final Set<String> PICTURES = Set.of("items", "brew", "craft", "diagram", "beast");
 	public static final Set<String> DIAGRAMS = Set.of("worlds", "realms", "elements");
 
 	/** The picture a line of a page is ("items", for "@items jade"), or null if it is words. */
@@ -190,6 +206,10 @@ public final class Codex {
 				case "craft" -> {
 					if (parts.size() != 1 || pictureId(parts.get(0)) == null) problems.add("one recipe id: " + line);
 				}
+				case "beast" -> {
+					ResourceLocation id = parts.size() == 1 ? pictureId(parts.get(0)) : null;
+					if (id == null || !BuiltInRegistries.ENTITY_TYPE.containsKey(id)) problems.add("no such creature: " + line);
+				}
 				case "brew" -> {
 					Item item = parts.size() == 1 ? pictureItem(parts.get(0)) : null;
 					if (item == null || AlchemyRecipes.forOutput(item) == null) problems.add("nothing brews it: " + line);
@@ -227,8 +247,17 @@ public final class Codex {
 	}
 
 	private static void page(String id, ItemLike icon, String unlocks, Hint hint, String title, String text) {
-		for (Entry entry : ENTRIES) if (entry.id().equals(id)) throw new IllegalStateException("Two Codex pages are " + id);
-		Entry entry = new Entry(id, writingId, icon, unlocks == null ? List.of() : List.of(unlocks.split("\\|")), hint, title, text.strip());
+		add(new Entry(id, writingId, icon, unlocks == null ? List.of() : List.of(unlocks.split("\\|")), hint, title, text.strip(), null));
+	}
+
+	/** A Bestiary page: opened once its creature ({@code entity}, the mod's own) is seen, its picture first ("@beast"), then its words. */
+	private static void creature(String entity, ItemLike icon, String title, String text) {
+		add(new Entry("beast_" + entity, writingId, icon, List.of(), Hint.SIGHT, title, "@beast " + entity + "\n" + text.strip(),
+				DefyingTheHeavens.MOD_ID + ":" + entity));
+	}
+
+	private static void add(Entry entry) {
+		for (Entry other : ENTRIES) if (other.id().equals(entry.id())) throw new IllegalStateException("Two Codex pages are " + entry.id());
 		writing.add(entry);
 		ENTRIES.add(entry);
 	}
@@ -299,7 +328,6 @@ public final class Codex {
 				- {quick}: use your selected ability
 				- {spells} (hold): the spell wheel
 				- {cast}: cast your readied spell
-				- {ring}: open your Storage Ring
 				- {codex}: the Dao Codex""");
 		page("physique", ModItems.SPIRIT_GINSENG, null, "Your Physique", """
 				Every cultivator is born with a physique. Yours was rolled when you first joined, announced in chat, and is shown on the \
@@ -386,7 +414,7 @@ public final class Codex {
 				@brew foundation_pill""");
 		page("foundation_building", ModItems.FOUNDATION_PILL, FB, "Foundation Building", """
 				Your foundation is laid. Your qi now sustains you, so you no longer get hungry. Hold a sword and you can ride it through the \
-				air (Sword Flight), and you can now refine a Storage Ring.
+				air (Sword Flight).
 				To break through, you need a Core Formation method, a Core Pill (Spirit Ginseng, Spirit Lotus, a Cultivation Fruit and Blaze \
 				Powder), and to survive a tribulation that calls for armour.
 				@brew core_pill""");
@@ -587,7 +615,101 @@ public final class Codex {
 				- Longevity Pill: adds years of life; each one adds fewer than the last.
 				@brew longevity_pill
 				A pill comes out at Low, Mid, High, Supreme or Immortal grade: the older its herbs, the higher the grade and the stronger \
-				the pill.""");
+				the pill. A practised alchemist does better still (see Craft Mastery).""");
+		page("mastery", Items.ENCHANTED_BOOK, null, "Craft Mastery", """
+				Alchemy, forging and formations are crafts, and each grows with practice through five ranks: Apprentice, Adept, Master, \
+				Grandmaster and Saint. The Stats tab's Crafts page shows how far you have come in each.
+				- Alchemy: every brew teaches you, and harder pills teach more. A pill harder than your rank can fail, ruining its herbs, \
+				though you still learn half as much from it. The Marrow Cleansing Elixir never fails.
+				- Each rank past Apprentice gives a chance of a pill one grade better than its herbs would give, never better than \
+				herbs that age could give at all. Grandmasters and Saints sometimes draw two pills from one brew.
+				- Forging: every artifact forged teaches you, and higher grades teach more. A grade harder than your rank can fail, and \
+				each rank brings a chance of finer work (see Forging Artifacts).
+				- Formations grow by crafting and refining them, and by keeping a Formation Core's barrier or concealment up.
+				Your mastery is your own: it stays with you through death and rebirth.""");
+		page("forge", ModBlocks.ARTIFACT_FORGE, null, "The Artifact Forge", """
+				Artifacts are forged, not crafted. Make an Artifact Forge from five copper ingots, a blast furnace, two iron ingots and a \
+				Low-Grade spirit stone.
+				@craft artifact_forge
+				- Light a fire under it, as under the Alchemy Cauldron. Lava, soul fire or a magma block burns hotter: the forge works 1.5 \
+				times as fast over them.
+				@items minecraft:campfire minecraft:soul_campfire minecraft:lava_bucket minecraft:magma_block
+				- Right-click the forge with each material, one at a time. A material that fits nothing it could forge is refused, so \
+				nothing is wasted.
+				- Once everything for an artifact is in, right-click with an empty hand to begin. (Some artifacts start the same way, so \
+				the forge waits for you.)
+				- Stay within 5 blocks while it works: it draws qi from you every second, more for higher grades. If you walk away or run \
+				out of qi, it stops until you are back.
+				Right-click with an empty hand to see what is inside or how far along it is. Sneak and right-click to take the materials \
+				back out; a working in progress stops, and the qi it used is lost.""");
+		page("forging", ModItems.artifact(ArtifactKind.FLYING_SWORD, ArtifactGrade.SPIRIT), null, "Forging Artifacts", """
+				Every artifact is forged at one of five grades: Mortal, Spirit, Earth, Heaven or Immortal. A grade takes its own metal, two \
+				spirit stones of its own grade and, from Spirit up, a demon core:
+				- Mortal: iron ingots and Low-Grade stones.
+				- Spirit: gold ingots, Mid-Grade stones and a demon core of Qi Refining or above.
+				- Earth: diamonds, High-Grade stones and a Core Formation core or better.
+				- Heaven: netherite ingots, Supreme stones and a Nascent Soul core or better.
+				- Immortal: Immortal Jade, Immortal stones and a Dao Integration core or better.
+				Each kind of artifact is made the same way at every grade. At Mortal grade:
+				@items minecraft:iron_ingot*2 + minecraft:stick + low_spirit_stone*2 > mortal_flying_sword
+				@items minecraft:iron_ingot*3 + minecraft:leather + low_spirit_stone*2 > mortal_saber
+				@items minecraft:iron_ingot + minecraft:stick*2 + low_spirit_stone*2 > mortal_spear
+				@items minecraft:iron_ingot*2 + minecraft:stick*2 + low_spirit_stone*2 > mortal_glaive
+				@items minecraft:white_wool*2 + minecraft:stick + low_spirit_stone*2 > mortal_element_banner
+				@items minecraft:pumpkin + minecraft:glass_bottle + low_spirit_stone*2 > mortal_qi_gourd
+				@items jade*2 + minecraft:string + low_spirit_stone*2 > mortal_protective_jade
+				- A banner takes its element from its demon core. A Mortal banner has no core, so it takes a token instead: blaze powder \
+				(fire), a prismarine shard (water), a sapling (wood), clay (earth) or an iron nugget (metal).
+				- From Earth grade up, a gourd and a jade also take one of the grade's metal.
+				- Higher grades take longer and draw more qi.
+				Your forging rank (see Craft Mastery) decides how it turns out. A grade harder than your rank can fail: the materials burn \
+				away, though a demon core comes back. Each rank past Apprentice adds 10 percent to the chance of Fine work, and each rank \
+				from Master on adds 5 percent to the chance of Perfect work. A Fine artifact is 10 percent stronger in everything, a \
+				Perfect one 25 percent.""");
+		page("artifacts", ModItems.artifact(ArtifactKind.GOURD, ArtifactGrade.EARTH), null, "Artifacts", """
+				What each artifact does. The higher its grade, the stronger it is.
+				@items mortal_flying_sword > spirit_flying_sword > earth_flying_sword > heaven_flying_sword > immortal_flying_sword
+				- Flying sword: made to be ridden. Sword Flight on it costs less qi: 10 percent less at Mortal grade, up to 50 percent \
+				at Immortal.
+				- Saber: heavy and slow, the hardest-hitting blade.
+				- Spear: each blow also strikes up to 1 to 3 foes standing behind your target.
+				- Glaive: each blow also strikes everyone close around you.
+				- From Spirit grade up, every blade also makes all your blows stronger: 5 percent more at Spirit, up to 25 percent at \
+				Immortal (a saber a little more).
+				- Element banner: held in either hand, your spells of its element hit harder: 5 percent at Mortal, up to 20 percent at \
+				Immortal. It doesn't add to a Sacred Vessel's power: the stronger of the two counts.
+				- Qi gourd: stores spare qi for later. Sneak and right-click to pour your qi in, right-click to drink it back. Higher \
+				grades hold far more.
+				- Protective jade: worn in a ring slot (right-click it to put it on). Part of the harm you take (10 percent at Mortal, up to 30 percent at Immortal) \
+				comes out of your qi instead of your health. It never softens a heavenly tribulation.
+				Heaven and Immortal artifacts don't burn, and Immortal blades never wear out. Sect elders, sect masters, wandering rogues \
+				and the Immortal Realm's merchants sell artifacts, and sect treasuries keep some.""");
+		page("elemental_weapons", ModItems.artifact(ArtifactKind.FLAME_BLADE, ArtifactGrade.SPIRIT), null, "Weapons of the Elements", """
+				Some weapons are not made of metal but of an element itself, given a weapon's shape by a demon core of that element. They \
+				are forged at the Artifact Forge like any other artifact, from Spirit grade up.
+				@items spirit_flame_blade spirit_tide_spear spirit_vine_whip spirit_mountain_hammer spirit_golden_light_sword
+				Each takes its element's own matter, two spirit stones of its grade and a demon core of its own element: Qi Refining or \
+				above for Spirit grade, Core Formation for Earth, Nascent Soul for Heaven and Dao Integration for Immortal.
+				@items minecraft:blaze_rod*2 + minecraft:magma_cream + mid_spirit_stone*2 + demon_core > spirit_flame_blade
+				@items minecraft:prismarine_crystals*3 + mid_spirit_stone*2 + demon_core > spirit_tide_spear
+				@items minecraft:vine*2 + blue_spirit_log + mid_spirit_stone*2 + demon_core > spirit_vine_whip
+				@items minecraft:obsidian*2 + jade_stone + mid_spirit_stone*2 + demon_core > spirit_mountain_hammer
+				@items minecraft:gold_ingot*2 + minecraft:glowstone_dust + mid_spirit_stone*2 + demon_core > spirit_golden_light_sword
+				Every blow adds part of your strike as its element's qi, which passes armour, and does what its element does:
+				- Flame Blade: sets what it strikes burning.
+				- Tide Spear: slows what it strikes and puts out its fire.
+				- Vine Whip: roots what it strikes in place for a moment. The same foe can't be rooted again straight away.
+				- Mountain Hammer: the heaviest and slowest. It staggers what it strikes, throwing it back and dazing it.
+				- Golden Light Sword: the largest share of qi of any, cutting straight through armour.
+				Right-click with one in your main hand to use its art. An art costs 8 percent of your qi, and it takes a few seconds before \
+				you can use it again:
+				- Flame Arc: a sweep of fire in front of you.
+				- Surging Tide: ride a wave forward, striking and slowing everything in the way.
+				- Binding Lash: lash a foe at a distance and root it.
+				- Mountain Quake: slam the ground and stagger everything around you.
+				- Golden Crescent: a crescent of golden qi that cuts through everything in a line.
+				They are mended with their own element's matter (a blaze rod, prismarine crystals, a vine, obsidian, a gold ingot), and \
+				the Flame Blade never burns.""");
 		page("mats", ModBlocks.SPIRIT_PEDESTAL, QR, Hint.CULTIVATE, "Mats and Pedestals", """
 				A Meditation Mat, or the finer Red Silk Meditation Mat, speeds up your meditation: right-click it to sit down and meditate.
 				@craft meditation_mat
@@ -601,16 +723,25 @@ public final class Codex {
 				Mortal clothing is crafted from wool and string, and each piece can be upgraded one grade at a time in the crafting grid, \
 				keeping its enchantments. Cultivators wear it too, and sometimes drop it.
 				@craft mortal_cultivator_robe""");
-		page("storage_ring", ModItems.STORAGE_RING, FB, Hint.CULTIVATE, "Storage Rings", """
-				A Storage Ring folds a pocket of space into a ring. Craft one from four gold ingots, four jade and an ender pearl.
-				@craft storage_ring
-				Right-click to open it, sneak and right-click to wear it, and press {ring} to open the one you're wearing. Whatever it \
-				holds stays inside, wherever the ring goes.
-				Refine it (the button at the top right of its screen) to raise its grade and its capacity. Each grade needs spirit stones, a \
-				few rarer items and a higher realm, starting at Foundation Building; the highest grade has no limit.""");
+		page("storage_formations", ModBlocks.storageFormation(StorageFormations.Tier.LOW), FB, Hint.CULTIVATE, "Storage Formations", """
+				A storage formation folds a space into a sealed block. Craft a Low-Grade one from a chest, four Low-Grade spirit stones and \
+				four jade, and place it. Only you, and those you trust, can open it.
+				@craft low_storage_formation
+				Refine it (the Refine button beside its search line) to raise its grade: each grade holds more, and its seal is \
+				stronger. The Immortal grade holds without end.
+				@items low_storage_formation > mid_storage_formation > high_storage_formation > supreme_storage_formation > immortal_storage_formation
+				- Its seal: no pickaxe, blast or spell breaks it. A stranger as strong as its seal (Foundation Building for Low, up to \
+				True Immortal for Immortal) can force it open by staying beside it for a while, and you are warned when they start. A \
+				broken seal stays open until you open the formation again.
+				- Refining needs the next grade's spirit stones and more, a realm as high as the new seal, and from Supreme on, some \
+				mastery of formations.
+				- Sneak and right-click it with an empty hand to pack it up: everything inside stays in the item.
+				- Use its Trust button to name the players who may open it as you do.
+				Sect treasuries keep their riches in storage formations too. An old Storage Ring you carry unfolds into a storage \
+				formation of its size, with everything it held.""");
 		page("jade", ModBlocks.JADE_ORE, null, "Jade and Spirit Wood", """
 				Jade Ore is found in mountains, about as rare as diamonds; mine it with an iron pickaxe. Jade goes into the Foundation Pill, \
-				spirit pedestals, Storage Rings and more.
+				spirit pedestals, storage formations and more.
 				Blue Spirit Trees, spruces with blue qi flowing up their trunks, grow among the spruces of the taiga.""");
 		page("sacred_vessels", ModItems.JIANMU_BOUGH_VASE, "arts/sacred_vessel|worlds/great_void", Hint.VENTURE, "Sacred Vessels", """
 				Five treasures from the old tales, one for each element: the Jianmu Bough Vase, the Heaven Furnace Censer, the Nine \
@@ -625,6 +756,105 @@ public final class Codex {
 				- A Dao Fragment is a shard of one Law. An immortal can use it to gain half a level of insight into that Law.
 				- A Chaos Origin Stone is hardened chaos, the material of a small world's seed. Chaos Fiends drop them, and Chaos Origin Ore \
 				in the Frontier's land holds them.""");
+
+		// ======================================================= Legends =======================================================
+		chapter("legends", ModItems.legend(Legend.GANJIANG), Hint.SEEK, "Legends");
+		page("legends", ModItems.legend(Legend.MOYE), "arts/legends", "Legendary Weapons", """
+				Some weapons were never made at any forge you know. The legends say each was made once, long ago, and there is only one of \
+				each in all the worlds. The world's cultivators talk of them: ask them for rumours.
+				@items ganjiang moye tribulation_spear xuanyuan_sword sun_shooting_bow sea_fixing_needle
+				@items pangu_axe azure_dragon_glaive white_tiger_saber vermilion_bird_fan black_tortoise_mace yellow_dragon_seal
+				- One of a kind: there is only ever one true one. A copy, from a command or the creative menu, is a hollow echo with no \
+				power at all.
+				- Too heavy for the weak: below the lowest realm that can wield it, it slips from your hand.
+				- Bonding: its powers answer only its owner. Meditate with it in your main hand for two minutes to bond with it. Whoever \
+				takes it after you, from your body or anywhere else, must bond with it anew.
+				- Awakening: it grows with you. Its powers wake in three stages, at its lowest realm, two realms above that and four \
+				realms above that, and each stage hits harder than the last.
+				- It comes back: one that falls out of the world or is left lying until it vanishes returns to its resting place a day \
+				later, its trial or its keeper with it.""");
+		page("ganjiang_moye", ModItems.legend(Legend.GANJIANG), "arts/legend_ganjiang_moye", "Ganjiang and Moye", """
+				The paired swords, yang and yin, wielded from Core Formation.
+				@items ganjiang moye
+				- Ganjiang sleeps in a sword tomb on a mountain of the Overworld. Come near it and the tomb's old blades rise against you, \
+				in two waves. Beat them both, then right-click the stone to draw the sword.
+				- Moye lies in a yin pool among the Other Shore's flowers in the Netherworld. Come near and a woman's ghost rises from the \
+				pool with the sword in her hand. Beat her and she drops it.
+				- Ganjiang's blows add fire qi and set your foes burning. Moye's add yin, which passes armour, and chill them, and her \
+				blows reach the dead in full.
+				- Hold one in each hand, both bonded to you, and every blow strikes twice: yang fire and yin cold.
+				- Right-click: Twin Dragons. A spirit of each sword you hold flies out and fights for you for a while. It costs 8 \
+				percent of your qi.""");
+		page("tribulation_spear", ModItems.legend(Legend.TRIBULATION_SPEAR), "arts/legend_tribulation_spear", Hint.IMMORTAL,
+				"Heaven's Tribulation Spear", """
+				A bolt of heavenly tribulation that never fell, wielded from True Immortal. Lei Zhen the Tribulation Breaker tamed it long \
+				ago, and it drove him mad.
+				@items tribulation_spear
+				- Lei Zhen roams the Immortal Realm under his own storm. He is a Golden Immortal, and he attacks anyone who comes into his \
+				consciousness. Slay him and he drops the spear.
+				- To tame it, meditate with it in your main hand for two minutes, then survive the three bolts it calls down on you.
+				- Each blow's lightning leaps on into the foes around its target.
+				- Right-click: Heaven's Brand. A tribulation bolt strikes the foe you look at, for 10 percent of your qi. A player it \
+				strikes is branded: every heavenly tribulation they face from then on brings more bolts, for good, up to twice as many.
+				- Hold it in your hand through your own heavenly tribulation and it drinks every third bolt. None of those reach you, and \
+				each one it drinks makes it a little stronger, for good.""");
+		page("xuanyuan_sword", ModItems.legend(Legend.XUANYUAN), "arts/legend_xuanyuan", "The Xuanyuan Sword", """
+				The Yellow Emperor's holy sword, the bane of evil, wielded from Nascent Soul by the righteous alone.
+				@items xuanyuan_sword
+				- It rests in a stone on a jade shrine at the highest peak near the heart of the Jade Firmament. Only a righteous \
+				cultivator can draw it.
+				- Drawing it wakes the shade of Chiyou, the war god the Yellow Emperor slew. The ox-headed shade hunts whoever drew the \
+				sword. Strike it down, or get far enough away, and it is gone.
+				- It will not stay with the devilish. If one of them holds it, it flies back to its stone. Its powers answer its owner \
+				only while they are righteous.
+				- Its blows add golden qi, twice as much against the devilish, demons and the dead, and they reach the dead in full.
+				- Right-click: Yellow Emperor's Judgement. The sword falls from the sky, vast, where you look, twice as hard on the evil. \
+				It costs 10 percent of your qi.""");
+		page("sun_shooting_bow", ModItems.legend(Legend.SUN_BOW), "arts/legend_sun_bow", Hint.VENTURE, "The Sun-Shooting Bow", """
+				The bow that shot down the suns, wielded from Heavenly Being.
+				@items sun_shooting_bow
+				- A dead sun fell on the barren or ashen world of the Astral Realm nearest the Overworld, on its east-facing side. The \
+				bow lies in the cinder at the heart of its crater.
+				- The Golden Crow keeps the crater, and rises when you come near. While it lives, the bow cannot be drawn.
+				- It needs no arrows. Draw it and let go, and it looses an arrow of sun qi that burns what it strikes.
+				- Sneak and let go at full draw: Falling Sun. A sun falls where you aim and bursts into sunfire. It costs 10 percent of \
+				your qi.""");
+		page("sea_fixing_needle", ModItems.legend(Legend.SEA_NEEDLE), "arts/legend_sea_needle", Hint.IMMORTAL, "The Sea-Fixing Needle", """
+				The gold-banded iron pillar that once held the East Sea still, wielded from Entering Nirvana.
+				@items sea_fixing_needle
+				- It stands as a pillar over the Immortal Realm's open sea of clouds. Lay your hand on it at Entering Nirvana or above \
+				and it shrinks into your hand.
+				- Pulling it shakes the sea: everyone near is thrown back, and Ao Guang, Dragon King of the East Sea, rises to take it \
+				back. He is a True Immortal.
+				- You keep it behind your ear: it is never dropped when you die.
+				- Its blows add earth qi and throw your foe back.
+				- Right-click: As You Will. It stretches out where you look, striking everyone along it. Sneak and right-click: it grows \
+				to a mountain and comes down where you look. Each costs 10 percent of your qi.""");
+		page("pangu_axe", ModItems.legend(Legend.PANGU_AXE), "arts/legend_pangu_axe", Hint.IMMORTAL, "Pangu's Axe", """
+				The axe that split heaven from earth, wielded from Earth Immortal, the realm past True Immortal.
+				@items pangu_axe
+				- It lies in the heart of the Primordial Chaos, out in the Immortal Realm's Chaos Frontier. Slay the Chaos and the axe \
+				falls out of it. Lost, it is in the heart of the next Chaos.
+				- Its blows add metal qi, and they pass every ward: no aura, Golden Bell, ward or protective jade turns them.
+				- No barrier holds against it. Its wielder can break any barrier, and every blow on one shatters it.
+				- Foes' Law domains have no hold on its wielder, and a blow on a domain's owner folds their domain.
+				- Right-click: Split Heaven and Earth. A cleave runs along the land where you look and a tear in space opens down its \
+				length. Everyone near it is struck and thrown aside, and every barrier and Law domain on it breaks. A player's also \
+				splits the land. It costs 10 percent of your qi.""");
+		page("venerables_weapons", ModItems.legend(Legend.AZURE_GLAIVE), "arts/legend_venerables", Hint.IMMORTAL, "The Venerables' Weapons", """
+				The Four Symbols and the Yellow Dragon: the Celestial Court's five Heavenly Venerables each hold the strongest weapon of their \
+				element, wielded from True Immortal.
+				@items azure_dragon_glaive white_tiger_saber vermilion_bird_fan black_tortoise_mace yellow_dragon_seal
+				- Azure Dragon Glaive (wood): its roots slow. Art: Azure Dragon.
+				- White Tiger Saber (metal): the keenest edge. Art: White Tiger's Pounce.
+				- Vermilion Bird Fan (fire): sets foes burning. Art: Vermilion Bird's Descent.
+				- Black Tortoise Mace (water): chills and throws. Art: Black Tortoise Bastion.
+				- Yellow Dragon Seal (earth): staggers, and brings fliers down. Art: Seal of Ten Thousand Mountains.
+				- Each art is its symbol's own spell, cast through the weapon at your own realm, for 10 percent of your qi.
+				- Dao Duel: a General of the Court can challenge a Venerable for its weapon. Talk to it, choose Spar, then the Dao Duel, \
+				holding 32 Court Merit Tokens as your stake. It holds back to your realm. Win, and it hands you its weapon and keeps \
+				its post; lose, and it keeps the tokens. One Dao Duel a day with each Venerable.
+				- A Venerable's weapon that is lost returns to its Venerable's hand.""");
 
 		// ================================================= Sects and Cultivators =================================================
 		chapter("sects", ModItems.SECT_PASS, Hint.SEEK, "Sects and Cultivators");
@@ -666,6 +896,19 @@ public final class Codex {
 				whole barrier falls.
 				Craft a Formation Core of your own to raise a barrier for yourself and the people you trust.
 				@craft formation_core""");
+		page("concealment", ModBlocks.FORMATION_CORE, null, "Concealment", """
+				A Formation Core you own can also raise a concealment: its second tab. Inside its sphere, everyone else sees the land as it \
+				was before any player changed it. Your buildings, your digging, the barrier itself, and the players inside are all hidden, \
+				along with their sounds and particles.
+				- You, the players you trust, and anyone stronger than you see through it. Walking inside reveals nothing.
+				- It hides, but it doesn't block: outsiders walk straight through what they can't see, and over the ground they see. They \
+				can't mine or use the hidden blocks. Raise the barrier as well to keep them out: with both up, your home is unseen and \
+				no one can enter.
+				- It has its own radius and switch, and costs three quarters of a barrier's upkeep, from the same Qi Veins and store. Both \
+				can run at once if your veins carry them. When the qi runs short, the concealment falls before the barrier does.
+				- Mastery of formations lowers both upkeeps, and keeping them up teaches it.
+				The world remembers what stood in every spot players have changed, so a concealment raised long after you built still \
+				hides everything.""");
 		page("joining", ModItems.SECT_PASS, "sects/root", "Joining a Sect", """
 				Ask any sect member to join. A disciple will send you to an elder, who judges you: most set an entrance trial, a spar that \
 				you must either win or last to the end. A gifted physique, or an elder whose regard for you is Warm, may let you in without \
@@ -676,6 +919,18 @@ public final class Codex {
 				Your title in a sect depends on your strength compared with its members: Outer Disciple, Inner Disciple, Elder or Grand \
 				Elder. It changes as you, or they, break through. Elders may open the treasury.
 				The Sect tab shows your sect, your title, the sect's regard for you, and its members.""");
+		page("missions", ModBlocks.MISSION_BOARD, "sects/joined", Hint.SECT, "The Mission Board", """
+				Every sect keeps a mission board on its plaza, by its Formation Core. Each day it posts five missions for each of its \
+				disciples, fitted to their realm: Easy, Fitting or Hard. You may hold three at once.
+				@items mission_board mission_slip sealed_letter
+				- Hunt a beast that troubles the sect's lands, or purge a cultivator who preys on its people. Hold the mission's slip to be \
+				shown the way: the quarry comes out, glowing, when you draw near, and fights only you.
+				- Gather what the sect's stores want, or brew pills and forge artifacts for it, and hand them in at the board.
+				- Carry a sealed letter to another sect, and hand it to any of its people.
+				- Keep watch at the gate for three minutes while waves come at it.
+				A mission seen through pays Contribution and raises the sect's regard for you; one left to lapse lowers it. Spend \
+				Contribution at the board's exchange on pills, herbs, manuals, artifacts and more. The better wares are kept for Inner \
+				Disciples and Elders. If you leave the sect, your Contribution stays with it.""");
 		page("address", Items.GOLD_INGOT, "sects/root", "Forms of Address", """
 				Cultivators address you according to your realm and theirs: those below you are polite or humble, and those above you talk \
 				down to you. If you stand four or more realms above a cultivator, they kneel before you.
@@ -730,6 +985,102 @@ public final class Codex {
 				The Immortal Realm's world bosses, one of each at a time: the Kun-Peng, the True Phoenix and the True Dragon, each stronger \
 				than a True Immortal at its peak. A fourth, the Primordial Chaos, lurks far out in the Chaos Frontier.
 				The Heavenly Venerables know where to find them, and the Court rewards those who fight them.""");
+
+		// ======================================================= Bestiary =======================================================
+		// The user's pick, 2026-10-28: a page for every creature, sealed until it is seen up close (CodexState), its picture first.
+		chapter("bestiary", Items.SPYGLASS, Hint.SIGHT, "Bestiary");
+		creature("iron_hide_boar", ModItems.beastEgg(BeastKind.IRON_HIDE_BOAR), "Iron-Hide Boar", """
+				A boar whose hide is as hard as iron plate. When anything comes near, it lowers its head and charges in a straight line, \
+				throwing back whatever it hits. It roams forests, taiga, plains and meadows.""");
+		creature("shadow_wolf", ModItems.beastEgg(BeastKind.SHADOW_WOLF), "Shadow Wolf", """
+				Dark wolves that hunt in packs of three to five and fight as one: hurt one and the whole pack turns on you. At night \
+				they hunt harder still. They run through taiga, dark forests and snowy lands.""");
+		creature("jade_viper", ModItems.beastEgg(BeastKind.JADE_VIPER), "Jade Viper", """
+				A green viper whose bite poisons, and the stronger the viper, the worse its venom. It hides in jungles, swamps and \
+				flower forests. Kin to the lizard race, it sometimes drops a phial of Lizard Blood.""");
+		creature("rock_shell_turtle", ModItems.beastEgg(BeastKind.ROCK_SHELL_TURTLE), "Rock-Shell Turtle", """
+				A peaceful turtle with a shell of stone. It only fights back, and when hurt it draws into its shell, where little can \
+				reach it. It lives on beaches, on riverbanks and in swamps.""");
+		creature("wind_hawk", ModItems.beastEgg(BeastKind.WIND_HAWK), "Wind Hawk", """
+				A hawk that circles high above mountains, hills and badlands, dives on its prey and climbs away again before you can \
+				strike back.""");
+		creature("fire_monkey", ModItems.beastEgg(BeastKind.FIRE_MONKEY), "Fire Monkey", """
+				Monkeys that come in troops of two or three and hurl burning stones from a distance. They live in jungles, savannas, \
+				badlands and deserts.""");
+		creature("bloodfang_tiger", ModItems.beastEgg(BeastKind.BLOODFANG_TIGER), "Bloodfang Tiger", """
+				A red-striped tiger that leaps onto its prey from a distance. It hunts in jungles, savannas and dark forests. Kin to \
+				the tiger race, it sometimes drops a phial of Tiger Blood.""");
+		creature("frost_ape", ModItems.beastEgg(BeastKind.FROST_APE), "Frost Ape", """
+				A great white ape of the snowfields. It slams the ground with a burst of frost that slows everything around it. It \
+				lives on snowy plains, slopes and peaks.""");
+		creature("earthquake_bear", ModItems.beastEgg(BeastKind.EARTHQUAKE_BEAR), "Earthquake Bear", """
+				A huge bear whose pounding makes the ground heave around it. It is found in taiga, on windswept hills and on stony \
+				peaks.""");
+		creature("iron_jaw_crocodile", ModItems.beastEgg(BeastKind.IRON_JAW_CROCODILE), "Iron-Jaw Crocodile", """
+				Its bite holds on, and in the water it drags you under. It lurks in swamps, rivers and jungle waters. Kin to the \
+				lizard race, it sometimes drops a phial of Lizard Blood.""");
+		creature("lightning_antelope", ModItems.beastEgg(BeastKind.LIGHTNING_ANTELOPE), "Lightning Antelope", """
+				A swift antelope that grazes in small herds on savannas, plains and meadows. It only fights back, charging with a \
+				spark that slows whatever it hits.""");
+		creature("ember_fox", ModItems.beastEgg(BeastKind.EMBER_FOX), "Ember Fox", """
+				A fiery fox that breathes flame in a cone before it. It lives in deserts, badlands and savannas. Kin to the fox race, \
+				it sometimes drops a phial of Fox Blood.""");
+		creature("golden_winged_roc", ModItems.beastEgg(BeastKind.GOLDEN_WINGED_ROC), "Golden-Winged Roc", """
+				A great golden bird of the high peaks. It circles, then dives, and the gust from its wings throws back everything \
+				near it.""");
+		creature("jade_scaled_python", ModItems.beastEgg(BeastKind.JADE_SCALED_PYTHON), "Jade-Scaled Python", """
+				A vast serpent that coils around its prey, holding and crushing it. It hides in jungles and swamps. Kin to the lizard \
+				race, it sometimes drops a phial of Lizard Blood.""");
+		creature("horned_thunder_rhino", ModItems.beastEgg(BeastKind.HORNED_THUNDER_RHINO), "Horned Thunder Rhino", """
+				A grey rhino whose charge stuns whatever it hits. It roams savannas, badlands and plains.""");
+		creature("flood_dragon", ModItems.beastEgg(BeastKind.FLOOD_DRAGON), "Flood Dragon", """
+				A dragon of the seas and rivers that never leaves the water. It strikes from afar with jets of water that knock you \
+				back. Kin to the dragon race, it sometimes drops a phial of Dragon Blood.""");
+		creature("elder_white_tiger", ModItems.beastEgg(BeastKind.ELDER_WHITE_TIGER), "Elder White Tiger", """
+				The tiger race's elder. It rises from a pool of Tiger Blood on the Great Void's Ancient Battlefields to guard it, and \
+				its pounce reaches far. It leaves alone anyone a realm or more above it.""");
+		creature("nine_tailed_fox", ModItems.beastEgg(BeastKind.NINE_TAILED_FOX), "Nine-Tailed Fox", """
+				The fox race's elder, guarding a pool of Fox Blood on the Great Void's Ancient Battlefields. Its fire breath reaches far. \
+				It leaves alone anyone a realm or more above it.""");
+		creature("mountain_lizard_king", ModItems.beastEgg(BeastKind.MOUNTAIN_LIZARD_KING), "Mountain-Bearing Lizard King", """
+				The lizard race's elder, guarding a pool of Lizard Blood on the Great Void's Ancient Battlefields. When it pounds the \
+				ground, the land heaves far around it. It leaves alone anyone a realm or more above it.""");
+		creature("azure_dragon", ModItems.beastEgg(BeastKind.AZURE_DRAGON), "Azure Dragon", """
+				The dragon race's elder, guarding a pool of Dragon Blood on the Great Void's Ancient Battlefields. It flies, circles \
+				and dives with a great gust. It leaves alone anyone a realm or more above it.""");
+		creature("kun_peng", ModItems.beastEgg(BeastKind.KUN_PENG), "Kun-Peng", """
+				A fish as vast as an island, swimming in the Immortal Realm's sea of clouds. Bring it to half its strength and it \
+				breaks from the clouds as the Peng, a bird whose wings cover the sky. It drops a True Immortal jade slip of its \
+				element.""");
+		creature("true_phoenix", ModItems.beastEgg(BeastKind.TRUE_PHOENIX), "True Phoenix", """
+				A bird of fire that circles the Immortal Realm. Strike it down once and it falls as an ember and is reborn from its \
+				ashes: you must slay it twice. It drops True Immortal Fox Blood.""");
+		creature("true_dragon", ModItems.beastEgg(BeastKind.TRUE_DRAGON), "True Dragon", """
+				The longest of the primordial beasts. It brings a storm with it and calls lightning down on its foes. It drops True \
+				Immortal Dragon Blood.""");
+		creature("primordial_chaos", ModItems.beastEgg(BeastKind.PRIMORDIAL_CHAOS), "Primordial Chaos", """
+				What remains of Hundun, faceless chaos on six legs and four wings, in its lair far out in the Chaos Frontier. It is a \
+				Golden Immortal, stronger than the other primordial beasts, and its Unmaking undoes what it touches. It drops Dao \
+				Fragments, Chaos Origin Stones and Immortal Jade.""");
+		creature("chaos_fiend", ModItems.beastEgg(BeastKind.CHAOS_FIEND), "Chaos Fiend", """
+				Wraiths of smoke and stone that rise out of the Chaos Frontier's air, stronger the deeper you go. They circle their \
+				prey loosing bolts of chaos, then dive to claw. They leave alone anyone a realm or more above them, and they burn away \
+				in the First Flame's light.""");
+		creature("golden_crow", ModItems.beastEgg(BeastKind.GOLDEN_CROW), "Golden Crow", """
+				The sun's own crow, black and gold, with three legs. One keeps the crater of a dead sun on a barren world of the \
+				Astral Realm, where the Sun-Shooting Bow lies in the cinder. It rises when someone comes near, and it is a Heavenly \
+				Being at Grand Perfection. While it lives, the bow cannot be drawn.""");
+		creature("hungry_ghost", Items.SOUL_LANTERN, "Hungry Ghost", """
+				The dead who starved in life and hunger still, gaunt and cyan. They gather in packs of two to four, most often in the \
+				Netherworld's Bone Wastes. Their blows strike the dead hard, and drive the Netherworld's yin into the living. A ghost \
+				who disperses one takes some of its ghostly qi.""");
+		creature("heart_demon", Items.ECHO_SHARD, "Heart Demon", """
+				Your own shadow, risen in your Inner Realm during a qi surge from Nascent Soul on. It fights only you, matched to \
+				your own strength. Slay it for a great surge of cultivation; if it wins, your soul is thrown back to your body.""");
+		creature("void_vestige", Items.PHANTOM_MEMBRANE, "Vestige of the Void", """
+				A black thing of the deep void, shaped like a dragonfish, larger with every stage of its strength. It hunts whoever \
+				flies through open space, and the climbers of the Void Breach, but it turns away from a planet's air. It drops \
+				spirit stones.""");
 
 		// ===================================================== Worlds Beyond =====================================================
 		chapter("worlds", Items.ENDER_EYE, Hint.VENTURE, "Worlds Beyond");

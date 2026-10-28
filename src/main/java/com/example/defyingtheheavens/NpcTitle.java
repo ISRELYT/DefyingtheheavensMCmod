@@ -37,7 +37,10 @@ public enum NpcTitle {
 	HEAVENLY_KING("heavenly_king", 0xFFE57F, false),
 	HEAVENLY_VENERABLE("heavenly_venerable", 0xFFC46B, false),
 	IMMORTAL_GENERAL("immortal_general", 0xFF8A65, false),
-	COURT_QUARTERMASTER("court_quartermaster", 0xA5D6A7, false);
+	COURT_QUARTERMASTER("court_quartermaster", 0xA5D6A7, false),
+	// Those the legends call up against whoever takes them (LegendGuards, phase 3b): Chiyou's shade, Ao Guang. Appended.
+	FALLEN_WAR_GOD("fallen_war_god", 0xD84A3A, false),
+	DRAGON_KING("dragon_king", 0x5EC8F0, false);
 
 	private final String id;
 	private final int color;

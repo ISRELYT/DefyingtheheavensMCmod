@@ -80,6 +80,34 @@ public final class ModBlocks {
 			.lightLevel(state -> state.getValue(MethodSteleBlock.PART) == MethodSteleBlock.Part.MIDDLE ? 6 : 0)
 			.pushReaction(PushReaction.BLOCK)
 			.sound(SoundType.POLISHED_DEEPSLATE)));
+	/** A legend's stone, a legendary sword resting in it (see LegendStoneBlock, Legends). Unbreakable, no item. */
+	public static final Block LEGEND_STONE = register("legend_stone", new LegendStoneBlock(BlockBehaviour.Properties.of()
+			.mapColor(MapColor.STONE)
+			.strength(-1.0f, 3600000.0f)
+			.noLootTable()
+			.noOcclusion()
+			.pushReaction(PushReaction.BLOCK)
+			.sound(SoundType.STONE)));
+	/** An old blade standing in the ground of Ganjiang's sword tomb (see BuriedBladeBlock, LegendSites). No item, nothing dropped. */
+	public static final Block BURIED_BLADE = register("buried_blade", new BuriedBladeBlock(BlockBehaviour.Properties.of()
+			.mapColor(MapColor.METAL)
+			.strength(1.5f, 6.0f)
+			.noLootTable()
+			.noOcclusion()
+			.noCollission()
+			.pushReaction(PushReaction.DESTROY)
+			.sound(SoundType.CHAIN)));
+	/**
+	 * The Sea-Fixing Needle standing as a pillar over the Immortal Realm's sea of clouds (see SeaPillarBlock, Legends): black iron, its bands
+	 * of gold glowing a little. Unbreakable, no item.
+	 */
+	public static final Block SEA_PILLAR = register("sea_pillar", new SeaPillarBlock(BlockBehaviour.Properties.of()
+			.mapColor(MapColor.COLOR_BLACK)
+			.strength(-1.0f, 3600000.0f)
+			.noLootTable()
+			.lightLevel(state -> state.getValue(SeaPillarBlock.BANDED) ? 7 : 0)
+			.pushReaction(PushReaction.BLOCK)
+			.sound(SoundType.NETHERITE_BLOCK)));
 	/** A Dao Stele, three blocks tall, teaching a heaven method (see DaoSteleBlock). Unbreakable, no item; its element's emblem glows. */
 	public static final Block DAO_STELE = register("dao_stele", new DaoSteleBlock(BlockBehaviour.Properties.of()
 			.mapColor(MapColor.QUARTZ)
@@ -235,6 +263,18 @@ public final class ModBlocks {
 	/** Where pills are brewed: water, a fire beneath, then the ingredients (see AlchemyCauldronBlock). */
 	public static final Block ALCHEMY_CAULDRON = registerWithItem("alchemy_cauldron",
 			new AlchemyCauldronBlock(BlockBehaviour.Properties.copy(Blocks.CAULDRON).mapColor(MapColor.TERRACOTTA_ORANGE)));
+	/** Where artifacts are forged: a fire beneath, the materials, the forger's qi (see ArtifactForgeBlock). */
+	public static final Block ARTIFACT_FORGE = registerWithItem("artifact_forge", new ArtifactForgeBlock(BlockBehaviour.Properties.of()
+			.mapColor(MapColor.TERRACOTTA_ORANGE).requiresCorrectToolForDrops().strength(3.5f).sound(SoundType.METAL).noOcclusion()
+			.lightLevel(state -> state.getValue(ArtifactForgeBlock.WORKING) ? 11 : 0)));
+
+	/**
+	 * A sect's mission board (MissionBoardBlock, SectMissions): set up by the sect on its plaza, never crafted (its item is the creative menu's);
+	 * nothing breaks it, and it drops nothing.
+	 */
+	public static final Block MISSION_BOARD = registerWithItem("mission_board", new MissionBoardBlock(BlockBehaviour.Properties.of()
+			.mapColor(MapColor.WOOD).strength(-1.0f, 3_600_000.0f).noLootTable().noOcclusion().sound(SoundType.WOOD).pushReaction(PushReaction.BLOCK)
+			.isValidSpawn((state, level, pos, type) -> false)));
 
 	/** Stone threaded with condensed qi, as rare as diamond: a formation's power (see QiVeinBlock). Needs a diamond pickaxe. */
 	public static final Block QI_VEIN = registerWithItem("qi_vein", new QiVeinBlock(BlockBehaviour.Properties.copy(Blocks.DIAMOND_ORE)
@@ -254,6 +294,24 @@ public final class ModBlocks {
 	/** Qi ink painted with the Inscription Brush (see SealBlock): only Qi Sense sees it. No item; the brush places it. */
 	public static final Block SEAL = register("seal", new SealBlock(BlockBehaviour.Properties.of().mapColor(MapColor.NONE)
 			.noCollission().instabreak().noLootTable().replaceable().pushReaction(PushReaction.DESTROY).sound(SoundType.WOOL)));
+
+	/**
+	 * The storage formations, one block to a tier (StorageFormations): nothing breaks them (no pickaxe, blast or spell; their owners pack
+	 * them up), and they drop nothing of themselves. Their items are StorageFormationItem (ModItems).
+	 */
+	private static final java.util.Map<StorageFormations.Tier, Block> STORAGE_FORMATIONS = new java.util.EnumMap<>(StorageFormations.Tier.class);
+
+	static {
+		for (StorageFormations.Tier tier : StorageFormations.Tier.values()) {
+			STORAGE_FORMATIONS.put(tier, register(tier.getId() + "_storage_formation", new StorageFormationBlock(tier, BlockBehaviour.Properties.of()
+					.mapColor(MapColor.COLOR_CYAN).strength(-1.0f, 3_600_000.0f).noLootTable().sound(SoundType.AMETHYST).lightLevel(state -> 5)
+					.pushReaction(PushReaction.BLOCK))));
+		}
+	}
+
+	public static Block storageFormation(StorageFormations.Tier tier) {
+		return STORAGE_FORMATIONS.get(tier);
+	}
 
 	private static BlockBehaviour.Properties ginsengProperties(MapColor colour) {
 		return BlockBehaviour.Properties.of().mapColor(colour).noCollission().noOcclusion().instabreak()

@@ -75,6 +75,21 @@ public abstract class ServerGamePacketListenerImplMixin {
 	}
 
 	/**
+	 * Everything sent to the player passes here: where a concealment hides something from them (Concealments#shownPacket), a block change
+	 * goes out as what they are shown, and what would give a hidden thing away is kept back. A rewritten packet comes back through here and
+	 * passes as it is.
+	 */
+	@org.spongepowered.asm.mixin.injection.Inject(method = "send(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketSendListener;)V",
+			at = @At("HEAD"), cancellable = true)
+	private void dth$shownThroughVeils(net.minecraft.network.protocol.Packet<?> packet, net.minecraft.network.PacketSendListener listener,
+			org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+		net.minecraft.network.protocol.Packet<?> shown = com.example.defyingtheheavens.Concealments.shownPacket(player, packet);
+		if (shown == packet) return;
+		ci.cancel();
+		if (shown != null) ((ServerGamePacketListenerImpl) (Object) this).send(shown, listener);
+	}
+
+	/**
 	 * A player leaving: the mod's work on it (CultivationEvents#leaving) here, on the server thread, before vanilla saves and removes
 	 * them. Fabric's DISCONNECT may come first on the network thread (the connection closed), and vanilla's save would race it.
 	 */

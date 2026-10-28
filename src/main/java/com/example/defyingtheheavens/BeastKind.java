@@ -56,7 +56,11 @@ public enum BeastKind {
 	// stronger the deeper: ChaosFrontier#fiendRanks); and the Primordial Chaos, Hundun's remnant, the fourth primordial beast, its lair out
 	// in the Frontier (PrimordialBeasts), a Golden Immortal of Grand Perfection (#minRank) its realm's might the more (PrimordialBeast#MIGHT).
 	CHAOS_FIEND("chaos_fiend", Tier.CHAOS, QiElement.YIN, Body.WRAITH, Moves.FLYING, Signature.CHAOS, true, 1.0f, 2.4f, 0.32, 0.8, 0.6, 0x4A3E5A, 0xF4F0FF),
-	PRIMORDIAL_CHAOS("primordial_chaos", Tier.PRIMORDIAL, QiElement.YIN, Body.CHAOS, Moves.FLYING, Signature.UNMAKING, true, 18.0f, 16.0f, 0.45, 1.0, 1.0, 0x5A4E6A, 0xD8C04A);
+	PRIMORDIAL_CHAOS("primordial_chaos", Tier.PRIMORDIAL, QiElement.YIN, Body.CHAOS, Moves.FLYING, Signature.UNMAKING, true, 18.0f, 16.0f, 0.45, 1.0, 1.0, 0x5A4E6A, 0xD8C04A),
+
+	// The legends' guardians (phase 3b of the Artifact Forge, 2026-10-28): the Golden Crow, the sun's own three-legged crow, keeping a dead sun's
+	// cinder and the Sun-Shooting Bow in it on a barren world of the Astral Realm (Legends), never born wild.
+	GOLDEN_CROW("golden_crow", Tier.GUARDIAN, QiElement.FIRE, Body.BIRD, Moves.FLYING, Signature.DIVE, true, 2.0f, 1.6f, 0.36, 1.6, 1.2, 0x1E1A16, 0xFFD040);
 
 	/** The Primordial Chaos's rank: a Golden Immortal of Grand Perfection, above the other three (#minRank). */
 	public static final int CHAOS_RANK = 55;
@@ -71,7 +75,9 @@ public enum BeastKind {
 	 * Chaos Frontier (ChaosFrontier).
 	 */
 	public enum Tier {
-		COMMON(0, 3, 60, 20), UNCOMMON(2, 7, 30, 40), RARE(6, 11, 10, 40), ELDER(28, 39, 0, 0), PRIMORDIAL(43, 43, 0, 0), CHAOS(41, 51, 0, 0);
+		COMMON(0, 3, 60, 20), UNCOMMON(2, 7, 30, 40), RARE(6, 11, 10, 40), ELDER(28, 39, 0, 0), PRIMORDIAL(43, 43, 0, 0), CHAOS(41, 51, 0, 0),
+		/** A legend's guardian (the Golden Crow): Heavenly Being Grand Perfection, its bow's own realm at its peak; never born wild. */
+		GUARDIAN(19, 19, 0, 0);
 
 		public final int minRank, maxRank;
 		/** Its weight among a land's beasts in the lower realms, and in the Upper Realm (richer in qi: its beasts the stronger). */
@@ -188,7 +194,13 @@ public enum BeastKind {
 			case TRUE_DRAGON -> new Item[] {Items.PRISMARINE_SHARD, Items.BONE};
 			// Chaos leaves nothing of a body (its own leavings: ChaosFiend, PrimordialBeast).
 			case CHAOS_FIEND, PRIMORDIAL_CHAOS -> new Item[0];
+			case GOLDEN_CROW -> new Item[] {Items.FEATHER, Items.BLAZE_POWDER};
 		};
+	}
+
+	/** Whether it is a legend's guardian (Tier#GUARDIAN: the Golden Crow), never born wild, keeping its legend's resting place (Legends). */
+	public boolean isGuardian() {
+		return tier == Tier.GUARDIAN;
 	}
 
 	/** Whether it is one of the elders (Tier#ELDER), who keep the blood pools. */
@@ -227,6 +239,8 @@ public enum BeastKind {
 			case TRUE_DRAGON -> 5.1f;
 			// The Primordial Chaos some forty blocks across its wings, its sack some twenty (tools/beast-art's Chaos).
 			case PRIMORDIAL_CHAOS -> 4.0f;
+			// The Golden Crow, a great bird of the sun, its wings some twelve blocks across.
+			case GOLDEN_CROW -> 1.6f;
 			default -> 1.0f;
 		};
 	}

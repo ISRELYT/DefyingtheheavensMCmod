@@ -217,6 +217,25 @@ public final class ModEntities {
 					.updateInterval(20)
 					.build("small_world_door"));
 
+	/** A sword spirit (see {@link SwordSpirit}): a tomb's old blade risen, or a legend's called by its art. Never saved. */
+	public static final EntityType<SwordSpirit> SWORD_SPIRIT = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("sword_spirit"),
+			EntityType.Builder.<SwordSpirit>of(SwordSpirit::new, MobCategory.MISC)
+					.noSave().noSummon().fireImmune()
+					.sized(0.6f, 0.6f)
+					.clientTrackingRange(8)
+					.build("sword_spirit"));
+
+	/** A legend made vast for a moment by its art (see {@link Colossus}): seen from far, never saved. */
+	public static final EntityType<Colossus> COLOSSUS = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("colossus"),
+			EntityType.Builder.<Colossus>of(Colossus::new, MobCategory.MISC)
+					.noSave().noSummon().fireImmune()
+					.sized(1.0f, 1.0f)
+					.clientTrackingRange(16)
+					.updateInterval(Integer.MAX_VALUE)
+					.build("colossus"));
+
 	/**
 	 * The wild demon beasts (see {@link DemonBeast}), each kind its own type ({@code defying-the-heavens:<kind's id>}), sized as its kind at
 	 * its least rank (DemonBeast#getDimensions grows it with its rank). The primordial beasts are their own (see {@link PrimordialBeast}),
@@ -257,6 +276,7 @@ public final class ModEntities {
 		FabricDefaultAttributeRegistry.register(CLONE_BODY, CloneBodyEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(SOUL_VESSEL, SoulVesselEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(EARTH_GOLEM, EarthGolem.createAttributes());
+		FabricDefaultAttributeRegistry.register(SWORD_SPIRIT, SwordSpirit.createAttributes());
 	}
 
 	private ModEntities() {}

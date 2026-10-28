@@ -19,4 +19,11 @@ public abstract class ChunkMapMixin {
 	private void dth$theSwiftLoadNoSpace(ServerPlayer player, CallbackInfoReturnable<Boolean> cir) {
 		if (!cir.getReturnValueZ() && AstralRealm.zooming(player)) cir.setReturnValue(true);
 	}
+
+	/** A chunk just sent to a player: what a concealment hides in it from them put right at once after it (Concealments#chunkSent). */
+	@Inject(method = "playerLoadedChunk", at = @At("TAIL"))
+	private void dth$veiledChunk(ServerPlayer player, org.apache.commons.lang3.mutable.MutableObject<?> packet,
+			net.minecraft.world.level.chunk.LevelChunk chunk, org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+		com.example.defyingtheheavens.Concealments.chunkSent(player, chunk);
+	}
 }

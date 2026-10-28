@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "SJS",
+    "JCJ",
+    "SJS"
+  ],
+  "key": {
+    "S": {"item": "defying-the-heavens:low_spirit_stone"},
+    "J": {"item": "defying-the-heavens:jade"},
+    "C": {"item": "minecraft:chest"}
+  },
+  "result": {"item": "defying-the-heavens:low_storage_formation"}
+}

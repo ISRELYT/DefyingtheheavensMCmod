@@ -90,7 +90,9 @@ public final class TalkSystem {
 		/** The Celestial Court (CelestialCourt), asked of a Heavenly Venerable: taken into it, or told where you stand in it. Appended. */
 		COURT("court"),
 		/** The primordial beasts (PrimordialBeasts), asked of a Heavenly Venerable: the way to each, or when the next comes. Appended. */
-		BEASTS("beasts");
+		BEASTS("beasts"),
+		/** A sect mission's sealed letter (SectMissions), handed to any of the people of the sect it is for. Appended. */
+		DELIVER("deliver");
 
 		private final String id;
 
@@ -152,6 +154,8 @@ public final class TalkSystem {
 		int mask = intents(standing);
 		boolean spar = !npc.isMortal() && (standing != Standing.ABOVE || npc.regard(player) >= Regard.COURTEOUS);
 		if (!spar) mask &= ~TalkIntent.SPAR.bit();
+		// A Heavenly Venerable takes up a Court General's challenge to a Dao Duel for its weapon, however far above them it stands.
+		if (Legends.duelFor(player, npc) != null) mask |= TalkIntent.SPAR.bit();
 		if (kneelsTo(player, npc)) mask |= TalkIntent.DEMAND.bit() | TalkIntent.RELEASE.bit();
 		// The dead press nobody: they greet, ask, trade and give (with the spirit stones, Yin Jade and slips they carry:
 		// Incorporeal#mayCarry), spar, provoke or leave, as their standing allows, as the living do.
@@ -438,7 +442,8 @@ public final class TalkSystem {
 		if (stack.is(ModItems.GHOST_QUELLING_TALISMAN)) return 5;
 		if (stack.is(ModItems.GHOST_JADE_SLIP)) return CultivatorTrades.slipPrice(GhostJadeSlipItem.method(stack)) / 1.5;
 		if (stack.is(ModItems.JADE_SLIP)) return CultivatorTrades.heavenSlipPrice(JadeSlipItem.method(stack)) / 1.5;
-		return 0;
+		// The Artifact Forge's artifacts, by grade and work.
+		return Artifacts.worth(stack);
 	}
 
 	/**
@@ -616,6 +621,8 @@ public final class TalkSystem {
 		// A settler's wish (Wishes): said to anyone, granted by a Four Axis cultivator at that wish's axis (the dead by their ghost path).
 		TalkSystem.Reply wish = Wishes.reply(player, npc, Topic.WISH.ordinal());
 		if (wish != null) replies.add(wish);
+		// A sealed letter carried for its sect (a sect mission: SectMissions), handed to any of its people.
+		if (SectMissions.letterFor(player, npc) != null) replies.add(topic(Topic.DELIVER));
 		return replies;
 	}
 
@@ -763,6 +770,7 @@ public final class TalkSystem {
 			case WISH -> Wishes.tell(player, npc);
 			case COURT -> CelestialCourt.ask(player, npc);
 			case BEASTS -> primordialBeasts(npc);
+			case DELIVER -> SectMissions.deliver(player, npc);
 		};
 		if (answer == null) return; // the trial began: the talk is over (SparSystem#start closed it)
 		List<Reply> after = new ArrayList<>(replies(player, npc, standing));
@@ -883,6 +891,8 @@ public final class TalkSystem {
 		if (master == null) about = Component.translatable(ModLang.talkLine("sect.no_master"), sect.name, count, path);
 		else if (master.id.equals(npc.getUUID())) about = Component.translatable(ModLang.talkLine("sect.self_master"), sect.name, count, path);
 		else about = Component.translatable(ModLang.talkLine("sect"), sect.name, count, path, NpcNames.of(master.id), rankName(master.rank));
+		// Its mission board (SectMissions), set up on its plaza.
+		if (sect.board != null) about = Component.empty().append(about).append(" ").append(Component.translatable(ModLang.talkLine("sect.board")));
 		// And the enemies of its path nearest to it.
 		Sect enemy = nearestSect(npc, other -> Alignment.factionOf(sect.alignment).isEnemyOf(Alignment.factionOf(other.alignment)));
 		if (enemy == null) return about;
@@ -959,7 +969,10 @@ public final class TalkSystem {
 	/** One or two things it has heard of and not yet told this player (Rumours), each noted in the player's journal. */
 	private static Component rumours(ServerPlayer player, CultivatorNpc npc) {
 		Regard.Entry entry = npc.regardEntry(player);
-		List<Rumours.Rumour> untold = Rumours.untold(npc, entry.toldRumours, 2);
+		// A legend's tale heard already, from anyone, isn't told again (a new tale of it is: Rumours#noteLegend names each apart).
+		java.util.Set<String> heard = new java.util.HashSet<>(entry.toldRumours);
+		for (Journal.Entry note : CultivationManager.get(player).journal()) if (note.id().startsWith("legend:")) heard.add(note.id());
+		List<Rumours.Rumour> untold = Rumours.untold(npc, heard, 2);
 		if (untold.isEmpty()) return line("rumour.none", npc);
 		MutableComponent said = Component.empty();
 		for (int i = 0; i < untold.size(); i++) {
@@ -967,6 +980,8 @@ public final class TalkSystem {
 			Component told = Rumours.tell(rumour, npc);
 			entry.toldRumours.add(rumour.id);
 			Journal.add(player, rumour.id, npc, told);
+			Legend legend = rumour.kind == Rumours.Kind.LEGEND ? Legend.byId(rumour.subject) : null;
+			if (legend != null) Milestones.award(player, Milestones.legendHeard(legend)); // its Codex page opens
 			if (i > 0) said.append(" ");
 			said.append(told);
 		}
@@ -1000,6 +1015,12 @@ public final class TalkSystem {
 	 */
 	private static List<Reply> sparTerms(ServerPlayer player, CultivatorNpc npc) {
 		List<Reply> terms = new ArrayList<>();
+		// A Heavenly Venerable a Court General may challenge: a Dao Duel for its weapon, staked in Court Merit Tokens (SparSystem#DUEL_TOKENS).
+		if (Legends.duelFor(player, npc) != null) {
+			boolean tokens = SparSystem.duelStakeInHand(player);
+			terms.add(term(SparSystem.Terms.DUEL, tokens, tokens ? null : Component.translatable(ModLang.SPAR_DUEL_STAKE, SparSystem.DUEL_TOKENS)));
+			return terms;
+		}
 		boolean stake = !SparSystem.stakeInHand(player).isEmpty();
 		boolean stronger = npc.sustainedRank() > CultivatorNpc.rankOf(player);
 		terms.add(term(SparSystem.Terms.FRIENDLY, true, null));

@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:arts/legends",
+  "criteria": {
+    "legend_heard_tribulation_spear": {
+      "conditions": {
+        "milestone": "legend/heard_tribulation_spear"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.arts.legend_tribulation_spear.description"
+    },
+    "frame": "goal",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:tribulation_spear"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.arts.legend_tribulation_spear.title"
+    }
+  },
+  "requirements": [
+    [
+      "legend_heard_tribulation_spear"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

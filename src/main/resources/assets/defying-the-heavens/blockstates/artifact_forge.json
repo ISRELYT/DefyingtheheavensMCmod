@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "facing=north,working=false": {"model": "defying-the-heavens:block/artifact_forge"},
+    "facing=east,working=false": {"model": "defying-the-heavens:block/artifact_forge", "y": 90},
+    "facing=south,working=false": {"model": "defying-the-heavens:block/artifact_forge", "y": 180},
+    "facing=west,working=false": {"model": "defying-the-heavens:block/artifact_forge", "y": 270},
+    "facing=north,working=true": {"model": "defying-the-heavens:block/artifact_forge_lit"},
+    "facing=east,working=true": {"model": "defying-the-heavens:block/artifact_forge_lit", "y": 90},
+    "facing=south,working=true": {"model": "defying-the-heavens:block/artifact_forge_lit", "y": 180},
+    "facing=west,working=true": {"model": "defying-the-heavens:block/artifact_forge_lit", "y": 270}
+  }
+}

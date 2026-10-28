@@ -84,9 +84,13 @@ public final class LawDomains {
 
 	/** A domain unfurled this tick: whose, its Law and that Law's level, its middle and its reach. */
 	public record Domain(ServerPlayer owner, Law law, int level, Vec3 centre, double radius) {
-		/** Whether {@code e} is within it (its body's middle) and a foe of its owner's ({@link #foeOf}). */
+		/**
+		 * Whether {@code e} is within it (its body's middle) and a foe of its owner's ({@link #foeOf}); never one who wields Pangu's Axe
+		 * (LegendaryWeaponItem#cleaves), whom no Law domain holds.
+		 */
 		public boolean holds(LivingEntity e) {
-			return e != owner && e.level() == owner.level() && HeavenSpells.middle(e).distanceToSqr(centre) <= radius * radius && foeOf(owner, e);
+			return e != owner && e.level() == owner.level() && HeavenSpells.middle(e).distanceToSqr(centre) <= radius * radius && foeOf(owner, e)
+					&& !LegendaryWeaponItem.cleaves(e);
 		}
 	}
 

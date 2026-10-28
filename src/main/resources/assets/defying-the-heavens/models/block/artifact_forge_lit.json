@@ -1,0 +1,6 @@
+{
+  "parent": "defying-the-heavens:block/artifact_forge",
+  "textures": {
+    "front": "defying-the-heavens:block/artifact_forge_front_lit"
+  }
+}

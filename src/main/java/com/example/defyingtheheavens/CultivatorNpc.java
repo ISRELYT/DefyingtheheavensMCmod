@@ -436,6 +436,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		super.tick();
 		// Set aside with no soul holding its body (a crash, a reload): it wakes where it is.
 		if (!level().isClientSide && isVacant() && tickCount % 20 == 0 && !Possession.holds(getUUID())) setVacant(false);
+		// Made to keep a legend that the record no longer names its keeper (Legends#stray): it goes, and what it held with it.
+		if (!level().isClientSide && tickCount % 10 == 1 && (Legends.stray(this) || LegendGuards.stray(this))) discard();
 	}
 
 	/**
@@ -912,9 +914,10 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			case ROGUE, WANDERER, WANDERING_GHOST, GHOST_ELDER, GATE_WARDEN, BRIDGE_KEEPER, GHOST_KING, GHOST_RETAINER, RELIC_KEEPER, IMMORTAL_OFFICER,
 					IMMORTAL_MERCHANT ->
 					rank < 0 ? 0 : Math.min(4, rank / Stage.values().length - 1 + random.nextInt(2));
-			case HEAVENLY_KING, HEAVENLY_VENERABLE -> 4;
+			case HEAVENLY_KING, HEAVENLY_VENERABLE, DRAGON_KING -> 4;
 			case IMMORTAL_GENERAL -> 3;
 			case COURT_QUARTERMASTER -> 2;
+			case FALLEN_WAR_GOD -> 0; // a shade: no cloth (GhostCultivatorNpc#equip)
 		};
 		if (ModDimensions.isUpperRealm(level().dimension())) grade++;
 		else if (ModDimensions.isGreatVoid(level().dimension()) || ModDimensions.isImmortalRealm(level().dimension())) grade += 2;
@@ -1435,7 +1438,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	 * than them"): they stand and fight; only a beating sends them back.
 	 */
 	public boolean holdsGround() {
-		return lifecycle == Lifecycle.SECT && getTitle().isElderOrAbove() || Wishes.isThreat(this) || standsAsImmortal();
+		return lifecycle == Lifecycle.SECT && getTitle().isElderOrAbove() || Wishes.isThreat(this) || SectMissions.isFoe(this) || standsAsImmortal()
+				|| LegendGuards.is(this);
 	}
 
 	/** Of Entering Nirvana or above: it runs from no one for their path or their strength ({@link #holdsGround}). */
@@ -1511,8 +1515,9 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		if (other == this || !other.isAlive() || isAlly(other) || !senses(other)) return false;
 		if (other instanceof Player player) {
 			if (player.isCreative() || player.isSpectator()) return false;
-			// A Merit wish's threat (Wishes) is out for the one who took it on, whatever their path.
+			// A Merit wish's threat (Wishes), or a sect mission's quarry (SectMissions), is out for the one who took it on, whatever their path.
 			if (Wishes.isThreat(this) && player.getUUID().equals(Wishes.takerOf(this))) return true;
+			if (SectMissions.isFoe(this) && player.getUUID().equals(SectMissions.takerOf(this))) return true;
 			if (owesLife(player)) return false; // they spared its life: not today
 			if (SparSystem.areSparring(this, player)) return false; // a spar is a contest, not a feud
 			if (!abovePathQuarrels() && getFaction().isEnemyOf(Alignment.factionOf(alignmentOf(player)))) return true;
@@ -1599,7 +1604,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	 * Merit wish's threat (Wishes): it fights to the end, never begging for its life (TalkSystem#wouldBeg).
 	 */
 	public boolean makesLastStand() {
-		return lifecycle == Lifecycle.SECT && getTitle() == NpcTitle.SECT_MASTER || Wishes.isThreat(this);
+		return lifecycle == Lifecycle.SECT && getTitle() == NpcTitle.SECT_MASTER || Wishes.isThreat(this) || SectMissions.isFoe(this) || LegendGuards.is(this);
 	}
 
 	/** Below {@link #FLEE_HEALTH} of its health. */
@@ -1692,8 +1697,9 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	 * and goes to join; with none to be had, it seeks seclusion there, to cultivate toward Four Axis.
 	 */
 	public void decideRogueCourse() {
-		// What preys on a settlement (a Merit wish's threat, Wishes) has one course: the one who took it on. No seclusion, no ascent.
-		if (lifecycle != Lifecycle.ROGUE || isMortal() || Wishes.isThreat(this)) return;
+		// What preys on a settlement (a Merit wish's threat, Wishes) or a sect's people (a mission's quarry, SectMissions) has one course: the
+		// one who took it on. No seclusion, no ascent.
+		if (lifecycle != Lifecycle.ROGUE || isMortal() || Wishes.isThreat(this) || SectMissions.isFoe(this)) return;
 		if (ModDimensions.isUpperRealm(level().dimension())) {
 			if (ascended && level() instanceof ServerLevel level) seekSectOrSeclusion(level);
 			return;
@@ -2036,6 +2042,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		if (!(level() instanceof ServerLevel server)) return;
 		ServerPlayer killer = killerOf(source);
 		HighRealms.gone(server.getServer(), getUUID()); // a place among the few after Four Axis free again
+		Legends.onHolderDeath(this); // a legend it kept lies where it fell (dropped whole: Legends#hold)
 		NpcLife.end(this);
 		NpcLife.onDeath(server, this); // its fellows cry out, and mourn it where it fell
 		if (sectId != null) SectManager.onMemberDeath(server, this, killer != null);
@@ -2209,11 +2216,17 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		super.remove(reason);
 	}
 
-	/** A blow it lands carries what its spells lend its hands (Flame Fist's fire: SpellAuras#onMelee), as a player's does. */
+	/**
+	 * A blow it lands carries what its spells lend its hands (Flame Fist's fire: SpellAuras#onMelee), as a player's does, and a legend's
+	 * powers in the hand of one keeping it (LegendaryWeaponItem#npcStrike).
+	 */
 	@Override
 	public boolean doHurtTarget(net.minecraft.world.entity.Entity target) {
 		boolean hit = super.doHurtTarget(target);
-		if (hit && target instanceof LivingEntity living && !level().isClientSide) SpellAuras.onMelee(this, living);
+		if (hit && target instanceof LivingEntity living && !level().isClientSide) {
+			SpellAuras.onMelee(this, living);
+			LegendaryWeaponItem.npcStrike(this, living);
+		}
 		return hit;
 	}
 
@@ -2234,9 +2247,10 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	 */
 	public boolean isWanderingRogue() {
 		// The Shore's campers keep to their camp, the Relic Keepers to their altars, the Southern Heavenly Gate's guards to their posts, the
-		// Immortal Realm's merchants to their stalls, the Celestial Court's people to theirs.
+		// Immortal Realm's merchants to their stalls, the Celestial Court's people to theirs; a legend's keepers go their own ways (Legends).
 		return lifecycle == Lifecycle.ROGUE && sectId == null && !isMortal() && !NirvanaCamp.isCamper(this) && !SacredRelics.isKeeper(this)
-				&& !ImmortalGate.isGuard(this) && !CityMarkets.isMerchant(this) && !CelestialCourt.isCourtier(this);
+				&& !ImmortalGate.isGuard(this) && !CityMarkets.isMerchant(this) && !CelestialCourt.isCourtier(this)
+				&& !getTags().contains(Legends.HOLDER_TAG);
 	}
 
 	/** A mortal wanderer out about the land (of no sect; named by a player or not). */

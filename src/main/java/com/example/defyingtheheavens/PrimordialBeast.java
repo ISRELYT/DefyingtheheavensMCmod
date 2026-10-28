@@ -1102,7 +1102,7 @@ public class PrimordialBeast extends DemonBeast {
 	/**
 	 * Its core (of the element it was when it fell), Immortal Jade, its race's True Immortal blood (the Phoenix's the fox's, the Dragon's
 	 * the dragon's), the Kun-Peng a True Immortal slip of its form's element, and its remains. The Primordial Chaos, no beast: Dao
-	 * Fragments of {@link #CHAOS_FRAGMENTS} Laws, Chaos Origin Stones and Immortal Jade.
+	 * Fragments of {@link #CHAOS_FRAGMENTS} Laws, Chaos Origin Stones and Immortal Jade; and Pangu's Axe from its heart, while it is there.
 	 */
 	@Override
 	protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
@@ -1112,6 +1112,14 @@ public class PrimordialBeast extends DemonBeast {
 			for (int i = 0; i < Math.min(CHAOS_FRAGMENTS, laws.size()); i++) spawnAtLocation(DaoFragmentItem.of(laws.get(i)));
 			spawnAtLocation(new ItemStack(ModItems.CHAOS_ORIGIN_STONE, CHAOS_STONES));
 			spawnAtLocation(new ItemStack(ModItems.IMMORTAL_JADE, CHAOS_JADE));
+			// Pangu's Axe, at home in its heart, falls out of it (Legends#fromTheChaos).
+			if (level() instanceof ServerLevel level) {
+				ItemStack axe = Legends.fromTheChaos(level.getServer());
+				if (!axe.isEmpty()) {
+					spawnAtLocation(axe);
+					tell(level, Component.translatable(ModLang.LEGEND_AXE_FALLS, Legend.PANGU_AXE.getDisplayName()).withStyle(ChatFormatting.GOLD));
+				}
+			}
 			return;
 		}
 		QiElement element = element();

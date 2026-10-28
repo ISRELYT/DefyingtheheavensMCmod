@@ -17,13 +17,32 @@ import java.util.List;
 
 /**
  * A blast doesn't break into a sect's treasury while its elders keep it (SectManager#treasurySealed): the seal that holds its
- * chests shut holds its walls and chests against fire and blast too, so nothing can be blown open and spilled.
+ * chests shut holds its walls and chests against fire and blast too, so nothing can be blown open and spilled. A player's blast is
+ * their doing for the land ledger (LandLedger).
  */
 @Mixin(Explosion.class)
 public abstract class ExplosionMixin {
 	@Shadow @Final private Level level;
 
 	@Shadow public abstract List<BlockPos> getToBlow();
+
+	@Shadow public abstract net.minecraft.world.entity.LivingEntity getIndirectSourceEntity();
+
+	/** Whether this blast is a player's doing (their TNT, their bed, their crystal): what it takes goes in the land ledger (LandLedger). */
+	@org.spongepowered.asm.mixin.Unique
+	private boolean dth$players;
+
+	@Inject(method = "finalizeExplosion", at = @At("HEAD"))
+	private void dth$playersBlastBegins(boolean particles, CallbackInfo ci) {
+		dth$players = !level.isClientSide && getIndirectSourceEntity() instanceof net.minecraft.world.entity.player.Player;
+		if (dth$players) com.example.defyingtheheavens.LandLedger.begin();
+	}
+
+	@Inject(method = "finalizeExplosion", at = @At("RETURN"))
+	private void dth$playersBlastEnds(boolean particles, CallbackInfo ci) {
+		if (dth$players) com.example.defyingtheheavens.LandLedger.end();
+		dth$players = false;
+	}
 
 	@Inject(method = "explode", at = @At("TAIL"))
 	private void dth$spareSealedTreasuries(CallbackInfo ci) {

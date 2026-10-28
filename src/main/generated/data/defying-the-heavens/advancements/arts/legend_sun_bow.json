@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:arts/legends",
+  "criteria": {
+    "legend_heard_sun_shooting_bow": {
+      "conditions": {
+        "milestone": "legend/heard_sun_shooting_bow"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.arts.legend_sun_bow.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:sun_shooting_bow"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.arts.legend_sun_bow.title"
+    }
+  },
+  "requirements": [
+    [
+      "legend_heard_sun_shooting_bow"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

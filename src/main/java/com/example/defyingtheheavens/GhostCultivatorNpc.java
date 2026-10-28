@@ -62,9 +62,12 @@ public class GhostCultivatorNpc extends CultivatorNpc implements Ghostly {
 	public static final String[] DEATHS = {"tribulation", "deviation", "sect_war", "devilish_palm", "old_age", "poison", "betrayal",
 			"beast", "duel", "breakthrough", "starvation", "plague", "drowning", "assassin", "ascension"};
 
-	/** Which of the Gate's keepers it is, if any; or a Ghost King, or a retainer of a king's court (appended: synced by ordinal). */
+	/**
+	 * Which of the Gate's keepers it is, if any; or a Ghost King, or a retainer of a king's court; or Chiyou's shade, risen against whoever
+	 * draws the Xuanyuan Sword (Legends; appended: synced by ordinal).
+	 */
 	public enum Role {
-		NONE("none"), OX_HEAD("ox_head"), HORSE_FACE("horse_face"), MENG_PO("meng_po"), GHOST_KING("ghost_king"), COURTIER("courtier");
+		NONE("none"), OX_HEAD("ox_head"), HORSE_FACE("horse_face"), MENG_PO("meng_po"), GHOST_KING("ghost_king"), COURTIER("courtier"), CHIYOU("chiyou");
 
 		private final String id;
 
@@ -86,7 +89,7 @@ public class GhostCultivatorNpc extends CultivatorNpc implements Ghostly {
 		/** The beast's head the keeper wears in place of a man's (see BeastHead), or null. */
 		public BeastHead beastHead() {
 			return switch (this) {
-				case OX_HEAD -> BeastHead.OX;
+				case OX_HEAD, CHIYOU -> BeastHead.OX; // the war god's bull's head
 				case HORSE_FACE -> BeastHead.HORSE;
 				default -> null;
 			};
@@ -138,7 +141,10 @@ public class GhostCultivatorNpc extends CultivatorNpc implements Ghostly {
 		return index >= 0 && index < Role.values().length ? Role.values()[index] : Role.NONE;
 	}
 
-	private void setRole(Role role) { entityData.set(DATA_ROLE, (byte) role.ordinal()); }
+	void setRole(Role role) { entityData.set(DATA_ROLE, (byte) role.ordinal()); }
+
+	/** Chiyou's shade stands twice a man's height. */
+	public static final float CHIYOU_SCALE = 2.0f;
 
 	/** The Gate's keepers (Ox-Head, Horse-Face, Meng Po) stand this many times a man's height, and as broad. */
 	public static final float KEEPER_SCALE = 3.0f;
@@ -152,7 +158,7 @@ public class GhostCultivatorNpc extends CultivatorNpc implements Ghostly {
 	@Override
 	public float getScale() {
 		Role role = getRole();
-		return role.isGateKeeper() ? KEEPER_SCALE : role == Role.GHOST_KING ? KING_SCALE : super.getScale();
+		return role.isGateKeeper() ? KEEPER_SCALE : role == Role.GHOST_KING ? KING_SCALE : role == Role.CHIYOU ? CHIYOU_SCALE : super.getScale();
 	}
 
 	/** A keeper's stride takes a block's step (or a little more) as a man takes a slab's; a king's, a block's. */
@@ -266,6 +272,17 @@ public class GhostCultivatorNpc extends CultivatorNpc implements Ghostly {
 
 	/** Where it keeps its post (one of the Gate's keepers), or null. */
 	public BlockPos keeperPost() { return post; }
+
+	/**
+	 * Makes it Chiyou's shade, risen against whoever draws the Xuanyuan Sword (Legends#draw): the ox-headed war god the Yellow Emperor slew,
+	 * twice a man's height, of {@code rank}, on the devilish path, the Fallen War God.
+	 */
+	public void becomeChiyou(int rank, RandomSource random) {
+		becomeRogue(rank, Alignment.MIN, random);
+		setRole(Role.CHIYOU);
+		setTitle(NpcTitle.FALLEN_WAR_GOD);
+		setCustomName(Component.translatable(ModLang.CHIYOU_NAME));
+	}
 
 	/** Its post moved (GhostGate#keepOfficials, as Meng Po's pavilion became her hall): it keeps the new one. */
 	public void moveKeeperPost(BlockPos post) { this.post = post; }
@@ -419,6 +436,8 @@ public class GhostCultivatorNpc extends CultivatorNpc implements Ghostly {
 	@Override
 	public boolean hurt(DamageSource source, float amount) {
 		if (level().isClientSide) return super.hurt(source, amount);
+		// Chiyou's shade is made flesh by its hatred (Legends#draw): the living's blows land on it, and in full.
+		if (getRole() == Role.CHIYOU) return super.hurt(source, amount);
 		if (!GhostSystem.reaches(source)) return false;
 		if (source.getEntity() != null && source.getEntity() != this && isAlly(source.getEntity())) return false; // no blow of its court's lands on it
 		boolean hurt = super.hurt(source, GhostSystem.scaled(source, amount));

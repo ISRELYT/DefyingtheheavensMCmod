@@ -1,0 +1,60 @@
+{
+  "parent": "defying-the-heavens:arts/legends",
+  "criteria": {
+    "legend_heard_azure_dragon_glaive": {
+      "conditions": {
+        "milestone": "legend/heard_azure_dragon_glaive"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    },
+    "legend_heard_black_tortoise_mace": {
+      "conditions": {
+        "milestone": "legend/heard_black_tortoise_mace"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    },
+    "legend_heard_vermilion_bird_fan": {
+      "conditions": {
+        "milestone": "legend/heard_vermilion_bird_fan"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    },
+    "legend_heard_white_tiger_saber": {
+      "conditions": {
+        "milestone": "legend/heard_white_tiger_saber"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    },
+    "legend_heard_yellow_dragon_seal": {
+      "conditions": {
+        "milestone": "legend/heard_yellow_dragon_seal"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.arts.legend_venerables.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:azure_dragon_glaive"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.arts.legend_venerables.title"
+    }
+  },
+  "requirements": [
+    [
+      "legend_heard_azure_dragon_glaive",
+      "legend_heard_white_tiger_saber",
+      "legend_heard_vermilion_bird_fan",
+      "legend_heard_black_tortoise_mace",
+      "legend_heard_yellow_dragon_seal"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

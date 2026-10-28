@@ -1,5 +1,7 @@
 package com.example.defyingtheheavens.client;
 
+import com.example.defyingtheheavens.ArtifactGrade;
+import com.example.defyingtheheavens.ArtifactKind;
 import com.example.defyingtheheavens.DaoSteleBlock;
 import com.example.defyingtheheavens.DefyingTheHeavens;
 import com.example.defyingtheheavens.GhostMethod;
@@ -185,6 +187,23 @@ public class ModModelProvider extends FabricModelProvider {
 				items.output);
 		// The small worlds' World Seed.
 		items.generateFlatItem(ModItems.WORLD_SEED, ModelTemplates.FLAT_ITEM);
+		// The Artifact Forge's artifacts: the blades held as swords are; an element banner's cloth a layer of its own, the same for every
+		// grade, in its element's colour (DefyingTheHeavensClient). The forge's own models are hand-made (resources: models/block).
+		// The weapons made of their element are held as the blades are; their sprites move (an animated strip, textures/item/*.png.mcmeta).
+		for (ArtifactGrade grade : ArtifactGrade.values()) {
+			for (ArtifactKind kind : ArtifactKind.values()) {
+				if (!kind.has(grade)) continue;
+				Item item = ModItems.artifact(kind, grade);
+				switch (kind) {
+					case FLYING_SWORD, SABER, SPEAR, GLAIVE, FLAME_BLADE, TIDE_SPEAR, VINE_WHIP, MOUNTAIN_HAMMER, GOLDEN_SWORD ->
+							items.generateFlatItem(item, ModelTemplates.FLAT_HANDHELD_ITEM);
+					case BANNER -> ModelTemplates.TWO_LAYERED_ITEM.create(ModelLocationUtils.getModelLocation(item),
+							TextureMapping.layered(TextureMapping.getItemTexture(item), DefyingTheHeavens.id("item/element_banner_cloth")),
+							items.output);
+					default -> items.generateFlatItem(item, ModelTemplates.FLAT_ITEM);
+				}
+			}
+		}
 	}
 
 	/**

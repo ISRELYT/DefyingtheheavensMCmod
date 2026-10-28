@@ -90,6 +90,18 @@ public final class Sect {
 		public String name;
 		public long joined;
 		public int treasuryTries;
+		/** What the sect owes them for its missions (SectMissions), to spend at its board's exchange (SectExchange); and all they ever earned of it. */
+		public int contribution, earned;
+		/** The game day their postings on the board went up, the postings, the missions they have taken, and the next mission's number. */
+		public long postedDay = -1;
+		public final List<SectMissions.Mission> postings = new ArrayList<>();
+		public final List<SectMissions.Mission> taken = new ArrayList<>();
+		public int nextMission = 1;
+		/** The kinds of mission they have seen through (a bit for each SectMissions.Kind). */
+		public int kindsDone;
+		/** The game day of their last exchange at the board, and how many of each ware they had that day (SectExchange). */
+		public long boughtDay = -1;
+		public final Map<String, Integer> bought = new HashMap<>();
 
 		public Disciple(UUID id, String name, long joined) {
 			this.id = id;
@@ -140,6 +152,12 @@ public final class Sect {
 	 */
 	public int offerings = -1;
 	public long offeringsDay = -1;
+	/**
+	 * Its mission board (SectMissions#layBoards), set on its plaza by its Formation Core; null until laid. Found gone, the game day it was
+	 * missed: it is set up again the day after.
+	 */
+	public BlockPos board;
+	public long boardGoneDay = -1;
 
 	/**
 	 * The element the sect cultivates (QiElement, one of the five): its heaven methods are that element's, its elders teach them
@@ -424,6 +442,7 @@ public final class Sect {
 			d.putString("Name", disciple.name);
 			d.putLong("Joined", disciple.joined);
 			d.putInt("TreasuryTries", disciple.treasuryTries);
+			SectMissions.save(disciple, d);
 			discipleList.add(d);
 		}
 		tag.put("Disciples", discipleList);
@@ -435,6 +454,8 @@ public final class Sect {
 			barredList.add(b);
 		}
 		tag.put("Barred", barredList);
+		if (board != null) tag.putLong("Board", board.asLong());
+		tag.putLong("BoardGoneDay", boardGoneDay);
 		return tag;
 	}
 
@@ -500,6 +521,7 @@ public final class Sect {
 			if (!d.hasUUID("Player")) continue;
 			Disciple disciple = new Disciple(d.getUUID("Player"), d.getString("Name"), d.getLong("Joined"));
 			disciple.treasuryTries = d.getInt("TreasuryTries");
+			SectMissions.load(disciple, d);
 			sect.disciples.put(disciple.id, disciple);
 		}
 		ListTag barredList = tag.getList("Barred", Tag.TAG_COMPOUND);
@@ -507,6 +529,8 @@ public final class Sect {
 			CompoundTag b = barredList.getCompound(i);
 			if (b.hasUUID("Player")) sect.barredUntil.put(b.getUUID("Player"), b.getLong("Until"));
 		}
+		if (tag.contains("Board")) sect.board = BlockPos.of(tag.getLong("Board"));
+		sect.boardGoneDay = tag.contains("BoardGoneDay") ? tag.getLong("BoardGoneDay") : -1;
 		return sect;
 	}
 

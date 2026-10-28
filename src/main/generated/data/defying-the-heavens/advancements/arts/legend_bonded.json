@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:arts/legends",
+  "criteria": {
+    "legend_bonded": {
+      "conditions": {
+        "milestone": "legend/bonded"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.arts.legend_bonded.description"
+    },
+    "frame": "challenge",
+    "hidden": false,
+    "icon": {
+      "item": "minecraft:nether_star"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.arts.legend_bonded.title"
+    }
+  },
+  "requirements": [
+    [
+      "legend_bonded"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

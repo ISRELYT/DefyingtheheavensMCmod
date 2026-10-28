@@ -32,11 +32,13 @@ public final class ClientSect {
 	 * for one of no sect, the nearest one ({@code nearest...}; empty name: none). {@code clan}: a demon clan's, its master its Clan Head;
 	 * {@code holy}: a Holy Land's (the Great Void's sects), its master its Patriarch; {@code immortal}: an immortal sect's (the Immortal
 	 * Realm's), its master its Sect Lord. Whatever their sect, their rank in the Celestial Court ({@code court}: null if they aren't of it)
-	 * and the merit they have earned there.
+	 * and the merit they have earned there. A disciple's Contribution in their sect (its mission board: SectMissions), all they have earned of
+	 * it, and the missions they hold ({@code missions}).
 	 */
 	public record Info(boolean member, String sectName, int alignment, NpcTitle title, int standing, boolean onGrounds, int distance,
 					   String direction, boolean barrierUp, int treasuryTries, boolean elder, long ticksMember, boolean inBody, List<Member> members,
-					   int nearestDistance, int barredDays, boolean clan, boolean holy, boolean immortal, CelestialCourt.Rank court, int merit) {}
+					   int nearestDistance, int barredDays, boolean clan, boolean holy, boolean immortal, CelestialCourt.Rank court, int merit,
+					   int contribution, int earned, int missions) {}
 
 	static void set(String sectName, int titleIndex) {
 		name = sectName == null ? "" : sectName;
@@ -72,15 +74,16 @@ public final class ClientSect {
 				boolean banishable = buf.readBoolean();
 				members.add(new Member(memberName, t < 0 ? null : NpcTitle.byIndex(t), rank, player, id, banishable));
 			}
+			int contribution = buf.readVarInt(), earned = buf.readVarInt(), missions = buf.readVarInt();
 			CelestialCourt.Rank court = CelestialCourt.Rank.byIndex(buf.readVarInt() - 1);
 			int merit = buf.readVarInt();
 			return new Info(true, sectName, alignment, mine, standing, onGrounds, distance, direction, barrierUp, tries, elder, ticks, inBody, members, 0, 0, clan, holy,
-					immortal, court, merit);
+					immortal, court, merit, contribution, earned, missions);
 		}
 		if (!buf.readBoolean()) {
 			CelestialCourt.Rank court = CelestialCourt.Rank.byIndex(buf.readVarInt() - 1);
 			int merit = buf.readVarInt();
-			return new Info(false, "", 0, null, 0, false, -1, "", false, 0, false, 0, false, List.of(), -1, 0, false, false, false, court, merit);
+			return new Info(false, "", 0, null, 0, false, -1, "", false, 0, false, 0, false, List.of(), -1, 0, false, false, false, court, merit, 0, 0, 0);
 		}
 		String near = buf.readUtf();
 		int alignment = buf.readInt();
@@ -90,7 +93,7 @@ public final class ClientSect {
 		CelestialCourt.Rank court = CelestialCourt.Rank.byIndex(buf.readVarInt() - 1);
 		int merit = buf.readVarInt();
 		return new Info(false, near, alignment, null, 0, false, distance, direction, false, 0, false, 0, false, List.of(), distance, barred, false, false, false,
-				court, merit);
+				court, merit, 0, 0, 0);
 	}
 
 	/** The Sect tab's Leave button (in a member's body): the body leaves its sect. */

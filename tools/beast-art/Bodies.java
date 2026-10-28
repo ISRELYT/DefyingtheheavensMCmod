@@ -676,6 +676,21 @@ public class Bodies {
 
 	static void goldenWingedRoc(BeastArt.Model m) { bird(m, ROC, 2.6, 180, true); }
 
+	/**
+	 * The Golden Crow (phase 3b of the Artifact Forge): the sun's own crow, keeping a dead sun's cinder and the Sun-Shooting Bow in it. Black
+	 * plumage burning gold at its wings' edges, a crest of sunfire, eyes of flame, a golden beak; and the sun crow's three legs, the third
+	 * between the other two and a little behind.
+	 */
+	static final Coat CROW = new Coat(c(0x1E1A16), c(0x0A0806), c(0xF0C040), c(0x3A2A12), c(0xFF7A10), c(0xFFD040), c(0xE8A020));
+
+	static void goldenCrow(BeastArt.Model m) {
+		double s = 2.4, legH = 3 * s;
+		bird(m, CROW, s, 240, true);
+		BeastArt.Bone leg = m.bone("leg_m", null, 0, legH, 1.4 * s);
+		cc(leg, 0, 0, 1.4 * s, 1 * s, legH + 0.5, 1 * s, BeastArt.solid(CROW.horn()));
+		cc(leg, 0, 0, 0.6 * s, 1.6 * s, 0.6 * s, 2.2 * s, BeastArt.solid(c(0x2A2218))); // its talons
+	}
+
 	static final Coat PYTHON = new Coat(c(0x2E7A4A), c(0x184A2A), c(0x7AC890), c(0xE0C04A), c(0xFFD040), c(0xFFD040), WHITE);
 
 	static void jadeScaledPython(BeastArt.Model m) {
@@ -1345,6 +1360,7 @@ public class Bodies {
 			{"horned_thunder_rhino", (Build) Bodies::hornedThunderRhino}, {"flood_dragon", (Build) Bodies::floodDragon},
 			{"elder_white_tiger", (Build) Bodies::elderWhiteTiger}, {"nine_tailed_fox", (Build) Bodies::nineTailedFox},
 			{"mountain_lizard_king", (Build) Bodies::mountainLizardKing}, {"azure_dragon", (Build) Bodies::azureDragon},
+			{"golden_crow", (Build) Bodies::goldenCrow},
 	};
 
 	/** Every beast, under {@code assets} (the mod's assets folder): the smallest texture each one's boxes fit. */

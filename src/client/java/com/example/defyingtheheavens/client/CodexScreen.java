@@ -56,7 +56,8 @@ public class CodexScreen extends Screen {
 	/** The chapters' column: a cell for each, its icon in it. */
 	private static final int CHAPTER_X = 7;
 	private static final int CHAPTER_W = 22;
-	private static final int CHAPTER_H = 18;
+	/** Twelve chapters since the Bestiary (2026-10-28): 16 high, so they fit the column. */
+	private static final int CHAPTER_H = 16;
 	/** The pages' list, under its chapter's name. */
 	private static final int LIST_X = 35;
 	private static final int LIST_W = 132;
@@ -289,7 +290,6 @@ public class CodexScreen extends Screen {
 			if (picture.diagram() != null) {
 				List<FormattedCharSequence> tip = CodexDiagrams.draw(g, font, picture.diagram(), x, py, TEXT_W, mx, my);
 				if (tip != null) hoverTip = tip;
-				continue;
 			}
 			for (Cell cell : picture.cells()) {
 				int cx = x + cell.x(), cy = py + cell.y();
@@ -377,6 +377,18 @@ public class CodexScreen extends Screen {
 		if (kind.equals("diagram")) {
 			return parts.size() == 1 && Codex.DIAGRAMS.contains(parts.get(0)) ? new Picture(y, CodexDiagrams.height(parts.get(0)), List.of(), parts.get(0)) : null;
 		}
+		if (kind.equals("beast")) {
+			// The creature in its frame, and what it leaves in a row under it.
+			ResourceLocation id = parts.size() == 1 ? Codex.pictureId(parts.get(0)) : null;
+			if (id == null) return null;
+			String diagram = CodexDiagrams.BEAST + id;
+			int height = CodexDiagrams.beastHeight(font, id.toString(), TEXT_W);
+			List<Cell> drops = new ArrayList<>();
+			for (List<ItemStack> stacks : CodexDiagrams.drops(id.toString())) drops.add(item(stacks));
+			if (drops.isEmpty()) return new Picture(y, height - 4, List.of(), diagram);
+			Picture row = rows(drops, y, height);
+			return new Picture(y, row.height(), row.cells(), diagram);
+		}
 		List<Cell> flow = switch (kind) {
 			case "items" -> named(parts);
 			case "brew" -> parts.size() == 1 ? brewed(Codex.pictureItem(parts.get(0))) : List.of();
@@ -384,34 +396,39 @@ public class CodexScreen extends Screen {
 			default -> List.of();
 		};
 		if (flow.isEmpty()) return null;
-		// Into rows, a new one wherever the next cell wouldn't fit; then each row centred.
-		List<List<Cell>> rows = new ArrayList<>();
-		List<Cell> row = new ArrayList<>();
-		int rowWidth = 0;
+		return rows(flow, y, 0);
+	}
+
+	/** {@code flow}'s cells in rows as wide as the words, each row centred, the first {@code top} below the picture's top. */
+	private static Picture rows(List<Cell> flow, int y, int top) {
+		// Into lines, a new one wherever the next cell wouldn't fit; then each line centred.
+		List<List<Cell>> lines = new ArrayList<>();
+		List<Cell> line = new ArrayList<>();
+		int lineWidth = 0;
 		for (Cell cell : flow) {
-			int needs = (row.isEmpty() ? 0 : CELL_GAP) + cell.width();
-			if (!row.isEmpty() && rowWidth + needs > TEXT_W) {
-				rows.add(row);
-				row = new ArrayList<>();
-				rowWidth = 0;
+			int needs = (line.isEmpty() ? 0 : CELL_GAP) + cell.width();
+			if (!line.isEmpty() && lineWidth + needs > TEXT_W) {
+				lines.add(line);
+				line = new ArrayList<>();
+				lineWidth = 0;
 				needs = cell.width();
 			}
-			row.add(cell);
-			rowWidth += needs;
+			line.add(cell);
+			lineWidth += needs;
 		}
-		rows.add(row);
+		lines.add(line);
 		List<Cell> cells = new ArrayList<>();
-		for (int r = 0; r < rows.size(); r++) {
-			List<Cell> those = rows.get(r);
+		for (int r = 0; r < lines.size(); r++) {
+			List<Cell> those = lines.get(r);
 			int width = -CELL_GAP;
 			for (Cell cell : those) width += cell.width() + CELL_GAP;
 			int cx = (TEXT_W - width) / 2;
 			for (Cell cell : those) {
-				cells.add(new Cell(cx, r * (SLOT + CELL_GAP), cell.stacks(), cell.glyph()));
+				cells.add(new Cell(cx, top + r * (SLOT + CELL_GAP), cell.stacks(), cell.glyph()));
 				cx += cell.width() + CELL_GAP;
 			}
 		}
-		return new Picture(y, rows.size() * (SLOT + CELL_GAP) - CELL_GAP, cells, null);
+		return new Picture(y, top + lines.size() * (SLOT + CELL_GAP) - CELL_GAP, cells, null);
 	}
 
 	/** "@items": each item named, how many after "*", with its "+" and arrows. */
@@ -499,7 +516,6 @@ public class CodexScreen extends Screen {
 			case "quick" -> ModKeybinds.QUICK_ABILITY;
 			case "spells" -> ModKeybinds.SPELL_WHEEL;
 			case "cast" -> ModKeybinds.CAST_SPELL;
-			case "ring" -> ModKeybinds.STORAGE_RING;
 			case "codex" -> ModKeybinds.CODEX;
 			case "jump" -> options.keyJump;
 			case "sneak" -> options.keyShift;
@@ -511,8 +527,11 @@ public class CodexScreen extends Screen {
 		return key == null ? name : key.getTranslatedKeyMessage().getString();
 	}
 
-	/** A thin roller at a column's right, only while there is more than fits: a lacquer trough between gold caps, and a gold thumb. */
-	private static void roller(GuiGraphics g, int x, int viewTop, int viewBottom, int content, int scroll, int max) {
+	/**
+	 * A thin roller at a column's right, only while there is more than fits: a lacquer trough between gold caps, and a gold thumb. The mission
+	 * board's screen (MissionBoardScreen) rolls its columns with it too.
+	 */
+	static void roller(GuiGraphics g, int x, int viewTop, int viewBottom, int content, int scroll, int max) {
 		if (max <= 0) return;
 		int laneTop = viewTop + 2;
 		int laneBottom = viewBottom - 2;

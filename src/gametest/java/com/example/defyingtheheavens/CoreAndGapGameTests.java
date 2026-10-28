@@ -125,9 +125,9 @@ public class CoreAndGapGameTests implements FabricGameTest {
 		blast.add(pos);
 		HeavenSpells.spareTemporaryFromBlast(level, blast);
 		helper.assertTrue(blast.isEmpty() && level.getBlockState(pos).isAir(), "A blast takes it up rather than blowing it into loot");
-		ItemStack ring = StorageRingItem.of(StorageRings.Grade.MORTAL);
-		helper.assertTrue(!ring.getItem().canBeHurtBy(level.damageSources().cactus()) && !ring.getItem().canBeHurtBy(level.damageSources().inFire()),
-				"A dropped Storage Ring is proof against cactus and fire");
+		ItemStack formation = StorageFormationItem.of(StorageFormations.Tier.LOW);
+		helper.assertTrue(!formation.getItem().canBeHurtBy(level.damageSources().cactus()) && !formation.getItem().canBeHurtBy(level.damageSources().inFire()),
+				"A dropped storage formation (once a Storage Ring) is proof against cactus and fire");
 		helper.succeed();
 	}
 

@@ -17,8 +17,6 @@ public final class ModKeybinds {
 	public static KeyMapping SPELL_WHEEL;
 	/** Casts the spell readied on the spell wheel. */
 	public static KeyMapping CAST_SPELL;
-	/** Opens the Storage Ring worn (or else the first one carried): StorageRingScreen. */
-	public static KeyMapping STORAGE_RING;
 	/** Switches the ability in the ability wheel's top slot on or off, without opening the wheel ({@link QuickAbilities}). */
 	public static KeyMapping QUICK_ABILITY;
 	/** One for each wheel slot, unbound until the player binds them: each switches its slot's ability ({@link QuickAbilities}). */
@@ -39,8 +37,6 @@ public final class ModKeybinds {
 				ModLang.KEY_SPELL_WHEEL, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_V, ModLang.KEY_CATEGORY));
 		CAST_SPELL = KeyBindingHelper.registerKeyBinding(new KeyMapping(
 				ModLang.KEY_CAST_SPELL, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_C, ModLang.KEY_CATEGORY));
-		STORAGE_RING = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-				ModLang.KEY_STORAGE_RING, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_B, ModLang.KEY_CATEGORY));
 		QUICK_ABILITY = KeyBindingHelper.registerKeyBinding(new KeyMapping(
 				ModLang.KEY_QUICK_ABILITY, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_X, ModLang.KEY_CATEGORY));
 		for (int slot = 0; slot < ABILITY_SLOTS.length; slot++) {
@@ -56,7 +52,7 @@ public final class ModKeybinds {
 	/** Every binding of the mod's, once registered (KeyMappingMixin gives them presses on keys they share with others). */
 	public static java.util.List<KeyMapping> all() {
 		if (ALL.isEmpty() && OPEN_MENU != null) {
-			ALL.addAll(java.util.List.of(OPEN_MENU, MEDITATE, CIRCULATE, ABILITY_WHEEL, SPELL_WHEEL, CAST_SPELL, STORAGE_RING, QUICK_ABILITY));
+			ALL.addAll(java.util.List.of(OPEN_MENU, MEDITATE, CIRCULATE, ABILITY_WHEEL, SPELL_WHEEL, CAST_SPELL, QUICK_ABILITY));
 			ALL.addAll(java.util.Arrays.asList(ABILITY_SLOTS));
 			ALL.add(CODEX);
 		}

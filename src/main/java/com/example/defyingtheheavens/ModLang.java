@@ -340,6 +340,12 @@ public final class ModLang {
 	public static final String SPAR_STAKES = k("spar.stakes");
 	public static final String SPAR_COUNT = k("spar.count");
 	public static final String SPAR_BEGIN = k("spar.begin");
+	/** A Dao Duel (SparSystem.Terms#DUEL): not on offer, too weak for its weapon, no stake held (a refusal, and its note), begun. */
+	public static final String SPAR_NO_DUEL = k("spar.no_duel");
+	public static final String SPAR_DUEL_TOO_WEAK = k("spar.duel_too_weak");
+	public static final String SPAR_DUEL_NO_STAKE = k("spar.duel_no_stake");
+	public static final String SPAR_DUEL_STAKE = k("spar.duel_stake");
+	public static final String SPAR_DUEL_BEGINS = k("spar.duel_begins");
 	/** A sect's people lead the way to their sparring ground first (SparSystem#LEAD_TICKS): setting off, on the way, waiting there. */
 	public static final String SPAR_FOLLOW = k("spar.follow");
 	public static final String SPAR_LEADING = k("spar.leading");
@@ -430,6 +436,19 @@ public final class ModLang {
 	public static final String CORE_OWNER = k("core.owner");
 	public static final String CORE_SHORTFALL = k("core.shortfall");
 	public static final String CORE_HINT = k("core.hint");
+	// Its concealment (Concealments), the core's second function
+	public static final String CORE_TAB_BARRIER = k("core.tab.barrier");
+	public static final String CORE_TAB_VEIL = k("core.tab.veil");
+	public static final String CORE_VEIL_RADIUS = k("core.veil.radius");
+	public static final String CORE_VEIL_ON = k("core.veil.on");
+	public static final String CORE_VEIL_OFF = k("core.veil.off");
+	public static final String CORE_VEIL_UPKEEP = k("core.veil.upkeep");
+	public static final String CORE_UPKEEP_BOTH = k("core.upkeep_both");
+	public static final String CORE_VEIL_STRENGTH = k("core.veil.strength");
+	public static final String CORE_VEIL_STRENGTH_MORTAL = k("core.veil.strength_mortal");
+	public static final String CORE_VEIL_RAISED = k("core.veil.raised");
+	public static final String CORE_VEIL_LOWERED = k("core.veil.lowered");
+	public static final String CORE_MASTERY = k("core.mastery");
 	public static final String MSG_CORE_SECT = k("message.core.sect");
 	public static final String MSG_CORE_NOT_YOURS = k("message.core.not_yours");
 	public static final String MSG_BARRIER_TOO_STRONG = k("message.barrier.too_strong");
@@ -472,6 +491,8 @@ public final class ModLang {
 	public static final String SECT_TAB_TREASURY_LAST = k("sect_tab.treasury_last");
 	public static final String SECT_TAB_MEMBERS = k("sect_tab.members");
 	public static final String SECT_TAB_DAYS = k("sect_tab.days");
+	/** A disciple's Contribution in their sect (its mission board: SectMissions), all they have earned, the missions they hold of how many. */
+	public static final String SECT_TAB_CONTRIBUTION = k("sect_tab.contribution");
 	public static final String SECT_TAB_LEAVE = k("sect_tab.leave");
 	public static final String SECT_TAB_PLAYER = k("sect_tab.player");
 	public static final String SECT_TAB_OFFLINE = k("sect_tab.offline");
@@ -950,29 +971,247 @@ public final class ModLang {
 	public static final String MSG_REINCARNATED = k("message.physique.reincarnated");
 	/** A pill brewed by an Innate Alchemy Body (PillItem#ALCHEMY_BODY_TAG). */
 	public static final String PILL_ALCHEMY_BODY = k("tooltip.pill.alchemy_body");
-	// The Storage Ring (StorageRingItem, StorageRings) and its screen
-	public static String storageGradeKey(String id) { return "storage_grade." + DefyingTheHeavens.MOD_ID + "." + id; }
-	/** "Storage Ring (Spirit grade)"; the last grade's own name. */
-	public static final String STORAGE_RING_NAME = "item." + DefyingTheHeavens.MOD_ID + ".storage_ring.graded";
-	public static final String STORAGE_RING_BOUNDLESS = "item." + DefyingTheHeavens.MOD_ID + ".storage_ring.boundless";
-	public static final String STORAGE_TOOLTIP_STACKS = k("tooltip.storage_ring.stacks");
-	public static final String STORAGE_TOOLTIP_BOUNDLESS = k("tooltip.storage_ring.boundless");
-	public static final String STORAGE_TOOLTIP_USE = k("tooltip.storage_ring.use");
-	public static final String STORAGE_USED = k("storage_ring.used");
-	public static final String STORAGE_USED_BOUNDLESS = k("storage_ring.used_boundless");
-	public static final String STORAGE_SEARCH = k("storage_ring.search");
-	public static final String STORAGE_EMPTY = k("storage_ring.empty");
-	public static final String STORAGE_REFINE = k("storage_ring.refine");
-	public static final String STORAGE_REFINE_TO = k("storage_ring.refine_to");
-	public static final String STORAGE_REFINE_REALM = k("storage_ring.refine_realm");
-	public static final String STORAGE_REFINE_LAST = k("storage_ring.refine_last");
-	public static final String STORAGE_COUNT = k("storage_ring.count");
-	public static final String MSG_STORAGE_NO_RING = k("message.storage_ring.none");
-	public static final String MSG_STORAGE_LAST_GRADE = k("message.storage_ring.last_grade");
-	public static final String MSG_STORAGE_REALM = k("message.storage_ring.realm");
-	public static final String MSG_STORAGE_COST = k("message.storage_ring.cost");
-	public static final String MSG_STORAGE_REFINED = k("message.storage_ring.refined");
-	public static final String KEY_STORAGE_RING = "key." + DefyingTheHeavens.MOD_ID + ".storage_ring";
+	// The storage formations (StorageFormations, StorageFormationItem) and their screen; an old Storage Ring's word
+	public static String storageTier(String id) { return "storage_tier." + DefyingTheHeavens.MOD_ID + "." + id; }
+	public static final String STORAGE_RING_OLD = k("tooltip.storage_ring.old");
+	public static final String STORAGE_TOOLTIP_STACKS = k("tooltip.storage.stacks");
+	public static final String STORAGE_TOOLTIP_BOUNDLESS = k("tooltip.storage.boundless");
+	public static final String STORAGE_TOOLTIP_SEAL = k("tooltip.storage.seal");
+	public static final String STORAGE_TOOLTIP_HOLDS = k("tooltip.storage.holds");
+	public static final String STORAGE_TOOLTIP_USE = k("tooltip.storage.use");
+	public static final String STORAGE_USED = k("storage.used");
+	public static final String STORAGE_USED_BOUNDLESS = k("storage.used_boundless");
+	public static final String STORAGE_TITLE = k("storage.title");
+	public static final String STORAGE_SEARCH = k("storage.search");
+	public static final String STORAGE_EMPTY = k("storage.empty");
+	public static final String STORAGE_NO_MATCH = k("storage.no_match");
+	public static final String STORAGE_REFINE = k("storage.refine");
+	public static final String STORAGE_REFINE_TO = k("storage.refine_to");
+	public static final String STORAGE_REFINE_STACKS = k("storage.refine_stacks");
+	public static final String STORAGE_REFINE_ENDLESS = k("storage.refine_endless");
+	public static final String STORAGE_REFINE_REALM = k("storage.refine_realm");
+	public static final String STORAGE_REFINE_MASTERY = k("storage.refine_mastery");
+	public static final String STORAGE_REFINE_LAST = k("storage.refine_last");
+	public static final String STORAGE_COUNT = k("storage.count");
+	public static final String STORAGE_TRUST = k("storage.trust");
+	public static final String STORAGE_TRUST_TIP = k("storage.trust_tip");
+	public static final String STORAGE_TRUST_NAME = k("storage.trust_name");
+	public static final String STORAGE_TRUST_ADD = k("storage.trust_add");
+	public static final String STORAGE_TRUST_NONE = k("storage.trust_none");
+	public static final String MSG_STORAGE_LAST_TIER = k("message.storage.last_tier");
+	public static final String MSG_STORAGE_REALM = k("message.storage.realm");
+	public static final String MSG_STORAGE_MASTERY = k("message.storage.mastery");
+	public static final String MSG_STORAGE_COST = k("message.storage.cost");
+	public static final String MSG_STORAGE_REFINED = k("message.storage.refined");
+	public static final String MSG_STORAGE_NOT_YOURS = k("message.storage.not_yours");
+	public static final String MSG_STORAGE_SEALED = k("message.storage.sealed");
+	public static final String MSG_STORAGE_MENDED = k("message.storage.mended");
+	public static final String MSG_STORAGE_FORCE_BEGIN = k("message.storage.force_begin");
+	public static final String MSG_STORAGE_FORCING = k("message.storage.forcing");
+	public static final String MSG_STORAGE_FORCED_BY_ANOTHER = k("message.storage.forced_by_another");
+	public static final String MSG_STORAGE_FORCE_ABANDONED = k("message.storage.force_abandoned");
+	public static final String MSG_STORAGE_FORCE_DONE = k("message.storage.force_done");
+	public static final String MSG_STORAGE_OWNER_FORCED = k("message.storage.owner_forced");
+	public static final String MSG_STORAGE_OWNER_BROKEN = k("message.storage.owner_broken");
+	public static final String MSG_STORAGE_PLACE = k("message.storage.place");
+	public static final String MSG_STORAGE_RING_UNFOLDED = k("message.storage.ring_unfolded");
+	// The Artifact Forge and its artifacts (ArtifactForgeBlockEntity, ArtifactRecipes, Artifacts and the artifact items)
+	public static String artifactGrade(String id) { return "artifact_grade." + DefyingTheHeavens.MOD_ID + "." + id; }
+	public static String artifactQuality(String id) { return "artifact_quality." + DefyingTheHeavens.MOD_ID + "." + id; }
+	public static final String ARTIFACT_QUALITY_NAME = k("artifact.quality_name");
+	public static final String ARTIFACT_GRADE_LINE = k("tooltip.artifact.grade");
+	public static final String ARTIFACT_QUALITY_LINE = k("tooltip.artifact.quality");
+	public static final String FLYING_SWORD_PERK = k("tooltip.artifact.flying_sword");
+	public static final String SABER_PERK = k("tooltip.artifact.saber");
+	public static final String SPEAR_PERK = k("tooltip.artifact.spear");
+	public static final String GLAIVE_PERK = k("tooltip.artifact.glaive");
+	public static final String BANNER_NAMED = k("artifact.banner_named");
+	public static final String BANNER_PERK = k("tooltip.artifact.banner");
+	public static final String BANNER_NO_ELEMENT = k("tooltip.artifact.banner_no_element");
+	public static final String GOURD_HOLDS = k("tooltip.artifact.gourd_holds");
+	public static final String GOURD_USE = k("tooltip.artifact.gourd_use");
+	public static final String GOURD_EMPTY = k("message.gourd.empty");
+	public static final String GOURD_POOL_FULL = k("message.gourd.pool_full");
+	public static final String GOURD_FULL = k("message.gourd.full");
+	public static final String GOURD_NO_QI = k("message.gourd.no_qi");
+	public static final String GOURD_POURED = k("message.gourd.poured");
+	public static final String GOURD_DRUNK = k("message.gourd.drunk");
+	public static final String JADE_PERK = k("tooltip.artifact.jade");
+	public static final String FORGE_TOOLTIP = k("tooltip.artifact_forge");
+	public static final String FORGE_ADDED = k("message.forge.added");
+	public static final String FORGE_REJECTED = k("message.forge.rejected");
+	public static final String FORGE_FULL = k("message.forge.full");
+	public static final String FORGE_READY = k("message.forge.ready");
+	public static final String FORGE_EMPTY = k("message.forge.empty");
+	public static final String FORGE_CONTENTS = k("message.forge.contents");
+	public static final String FORGE_NEEDS_HEAT = k("message.forge.needs_heat");
+	public static final String FORGE_BEGUN = k("message.forge.begun");
+	public static final String FORGE_WORKING = k("message.forge.working");
+	public static final String FORGE_STALLED = k("message.forge.stalled");
+	public static final String FORGE_FAILED = k("message.forge.failed");
+	public static final String FORGE_DONE = k("message.forge.done");
+	public static final String FORGE_EMPTIED = k("message.forge.emptied");
+	public static final String FORGE_NEEDS_CORE = k("forge.needs_core");
+	public static final String FORGE_NEEDS_TOKEN = k("forge.needs_token");
+	public static final String FORGE_NEEDS_ELEMENT_CORE = k("forge.needs_element_core");
+	// The weapons made of their element (ElementalWeaponItem)
+	public static final String ELEMENTAL_SHARE = k("tooltip.artifact.elemental_share");
+	public static final String FLAME_BLADE_PERK = k("tooltip.artifact.flame_blade");
+	public static final String TIDE_SPEAR_PERK = k("tooltip.artifact.tide_spear");
+	public static final String VINE_WHIP_PERK = k("tooltip.artifact.vine_whip");
+	public static final String MOUNTAIN_HAMMER_PERK = k("tooltip.artifact.mountain_hammer");
+	public static final String GOLDEN_SWORD_PERK = k("tooltip.artifact.golden_light_sword");
+	public static final String ART_FLAME_ARC = k("tooltip.artifact.art.flame_arc");
+	public static final String ART_SURGING_TIDE = k("tooltip.artifact.art.surging_tide");
+	public static final String ART_BINDING_LASH = k("tooltip.artifact.art.binding_lash");
+	public static final String ART_MOUNTAIN_QUAKE = k("tooltip.artifact.art.mountain_quake");
+	public static final String ART_GOLDEN_CRESCENT = k("tooltip.artifact.art.golden_crescent");
+	public static final String ART_COST = k("tooltip.artifact.art.cost");
+	public static final String ART_NO_QI = k("message.artifact.art_no_qi");
+	// The legendary weapons (Legend, LegendaryWeaponItem, Legends, LeiZhen): a legend's name is its item's own
+	public static String legendName(String id) { return "item." + DefyingTheHeavens.MOD_ID + "." + id; }
+	public static String legendLore(String id) { return k("tooltip.legend.lore." + id); }
+	public static String leiZhenRave(int line) { return k("message.lei_zhen.rave." + line); }
+	public static final String LEGEND_HOLLOW_LINE = k("tooltip.legend.hollow");
+	public static final String LEGEND_WIELDED_FROM = k("tooltip.legend.wielded_from");
+	public static final String LEGEND_UNBONDED = k("tooltip.legend.unbonded");
+	public static final String LEGEND_BONDED_TO = k("tooltip.legend.bonded_to");
+	public static final String LEGEND_STAGE = k("tooltip.legend.stage");
+	public static final String LEGEND_GANJIANG_POWER = k("tooltip.legend.ganjiang");
+	public static final String LEGEND_MOYE_POWER = k("tooltip.legend.moye");
+	public static final String LEGEND_PAIR_POWER = k("tooltip.legend.pair");
+	public static final String LEGEND_DRAGONS = k("tooltip.legend.twin_dragons");
+	public static final String LEGEND_SPEAR_POWER = k("tooltip.legend.spear");
+	public static final String LEGEND_SPEAR_DRINKS = k("tooltip.legend.spear_drinks");
+	public static final String LEGEND_SPEAR_DRUNK = k("tooltip.legend.spear_drunk");
+	public static final String LEGEND_BRAND = k("tooltip.legend.heavens_brand");
+	public static final String LEGEND_HOW_TO_BOND = k("tooltip.legend.how_to_bond");
+	public static final String LEGEND_HOW_TO_TAME = k("tooltip.legend.how_to_tame");
+	public static final String LEGEND_TOO_HEAVY = k("message.legend.too_heavy");
+	public static final String LEGEND_AWAKENS = k("message.legend.awakens");
+	public static final String LEGEND_BONDING = k("message.legend.bonding");
+	public static final String LEGEND_BONDED = k("message.legend.bonded");
+	public static final String LEGEND_HOLLOW = k("message.legend.hollow");
+	public static final String LEGEND_NOT_BONDED = k("message.legend.not_bonded");
+	public static final String LEGEND_TAMING = k("message.legend.taming");
+	public static final String LEGEND_BRAND_NONE = k("message.legend.brand_none");
+	public static final String LEGEND_BRANDED = k("message.legend.branded");
+	public static final String LEGEND_BRANDED_YOU = k("message.legend.branded_you");
+	public static final String LEGEND_DRINKS_BOLT = k("message.legend.drinks_bolt");
+	public static final String LEGEND_STONE_EMPTY = k("message.legend.stone_empty");
+	public static final String LEGEND_TOMB_GUARDED = k("message.legend.tomb_guarded");
+	public static final String LEGEND_TOMB_WAKES = k("message.legend.tomb_wakes");
+	public static final String LEGEND_TOMB_SECOND = k("message.legend.tomb_second");
+	public static final String LEGEND_TOMB_QUIET = k("message.legend.tomb_quiet");
+	public static final String LEGEND_MOYE_RISES = k("message.legend.moye_rises");
+	public static final String LEGEND_MOYE_GUARDED = k("message.legend.moye_guarded");
+	public static final String LEGEND_DRAWN = k("message.legend.drawn");
+	public static final String MSG_TRIB_BRANDED = k("message.tribulation.branded");
+	// Phase 3b's legends: the Xuanyuan Sword and Chiyou's shade, the Sun-Shooting Bow and the Golden Crow, the Sea-Fixing Needle and Ao Guang
+	public static final String LEGEND_XUANYUAN_POWER = k("tooltip.legend.xuanyuan");
+	public static final String LEGEND_XUANYUAN_RIGHTEOUS = k("tooltip.legend.xuanyuan_righteous");
+	public static final String LEGEND_JUDGEMENT = k("tooltip.legend.judgement");
+	public static final String LEGEND_BOW_POWER = k("tooltip.legend.sun_bow");
+	public static final String LEGEND_FALLING_SUN = k("tooltip.legend.falling_sun");
+	public static final String LEGEND_NEEDLE_POWER = k("tooltip.legend.sea_needle");
+	public static final String LEGEND_NEEDLE_KEPT = k("tooltip.legend.sea_needle_kept");
+	public static final String LEGEND_AS_YOU_WILL = k("tooltip.legend.as_you_will");
+	public static final String LEGEND_XUANYUAN_REFUSES = k("message.legend.xuanyuan_refuses");
+	public static final String LEGEND_XUANYUAN_UNWORTHY = k("message.legend.xuanyuan_unworthy");
+	public static final String LEGEND_XUANYUAN_LEAVES = k("message.legend.xuanyuan_leaves");
+	public static final String LEGEND_CHIYOU_RISES = k("message.legend.chiyou_rises");
+	public static final String CHIYOU_NAME = k("npc.chiyou");
+	public static final String CHIYOU_GONE = k("message.legend.chiyou_gone");
+	public static final String LEGEND_CROW_RISES = k("message.legend.crow_rises");
+	public static final String LEGEND_CROW_GUARDED = k("message.legend.crow_guarded");
+	public static final String LEGEND_CROW_FALLS = k("message.legend.crow_falls");
+	public static final String LEGEND_PILLAR_STILL = k("message.legend.pillar_still");
+	public static final String LEGEND_PILLAR_UNMOVED = k("message.legend.pillar_unmoved");
+	public static final String LEGEND_NEEDLE_PULLED = k("message.legend.needle_pulled");
+	public static final String LEGEND_AO_GUANG_RISES = k("message.legend.ao_guang_rises");
+	public static final String AO_GUANG_GONE = k("message.legend.ao_guang_gone");
+	public static final String LEGEND_NEEDLE_KEPT_MSG = k("message.legend.needle_kept");
+	public static final String LEGEND_SUN_GATHERING = k("message.legend.sun_gathering");
+	// Phase 3c's: Pangu's Axe, the Venerables' five weapons, the Dao Duel
+	public static final String LEGEND_AXE_POWER = k("tooltip.legend.pangu_axe");
+	public static final String LEGEND_AXE_CLEAVES = k("tooltip.legend.pangu_axe_cleaves");
+	public static final String LEGEND_SPLIT = k("tooltip.legend.split_heaven_and_earth");
+	public static String legendSymbolPower(String id) { return k("tooltip.legend.symbol." + id); }
+	public static final String LEGEND_SYMBOL_ART = k("tooltip.legend.symbol_art");
+	public static final String LEGEND_AXE_FALLS = k("message.legend.axe_falls");
+	public static final String LEGEND_DUEL_HANDED = k("message.legend.duel_handed");
+	// The sect mission board (SectMissions, SectExchange, MissionSlipItem; client MissionBoardScreen)
+	public static final String MISSION_BOARD = k("mission.board");
+	public static final String MISSION_BOARD_OF = k("mission.board_of");
+	public static final String MISSION_NO_SECT = k("mission.no_sect");
+	public static final String MISSION_IN_BODY = k("mission.in_body");
+	public static final String MISSION_NOT_DISCIPLE = k("mission.not_disciple");
+	public static final String MISSION_TAB_MISSIONS = k("mission.tab.missions");
+	public static final String MISSION_TAB_EXCHANGE = k("mission.tab.exchange");
+	public static final String MISSION_CONTRIBUTION = k("mission.contribution");
+	public static final String MISSION_EARNED = k("mission.earned");
+	public static final String MISSION_HELD = k("mission.held");
+	public static final String MISSION_POSTED = k("mission.posted");
+	public static final String MISSION_NOTHING = k("mission.nothing");
+	public static final String MISSION_TAKEN_TAG = k("mission.taken_tag");
+	public static final String MISSION_TAKE = k("mission.take");
+	public static final String MISSION_ABANDON = k("mission.abandon");
+	public static final String MISSION_HAND_IN = k("mission.hand_in");
+	public static final String MISSION_NEW_SLIP = k("mission.new_slip");
+	public static final String MISSION_GRADE_FOR = k("mission.grade_for");
+	public static final String MISSION_PAYS = k("mission.pays");
+	public static final String MISSION_LASTS = k("mission.lasts");
+	public static final String MISSION_LEFT = k("mission.left");
+	public static final String MISSION_SLAIN = k("mission.slain");
+	public static final String MISSION_WATCHED = k("mission.watched");
+	public static final String MISSION_HAVE = k("mission.have");
+	public static final String MISSION_YEARS = k("mission.years");
+	public static final String MISSION_CORE_REALM = k("mission.core_realm");
+	public static final String MISSION_TIME_DAYS = k("mission.time.days");
+	public static final String MISSION_TIME_HOURS = k("mission.time.hours");
+	public static final String MISSION_TIME_SOON = k("mission.time.soon");
+	/** How the sect speaks of a disciple's mission (SectMissions#chatSubject): a deed done ("Tester slew..."), a mission taken on. */
+	public static final String MISSION_SAID_DONE = k("mission.said.done");
+	public static final String MISSION_SAID_TAKEN = k("mission.said.taken");
+	/** A mission's kind ("Hunt"), grade ("Hard"), heading ("Hunt: %s"), lines, the deed it makes and its undertaking, by id. */
+	public static String missionKind(String id) { return k("mission.kind." + id); }
+	public static String missionGrade(String id) { return k("mission.grade." + id); }
+	public static String missionTitle(String id) { return k("mission.title." + id); }
+	public static String missionText(String id) { return k("mission.text." + id); }
+	public static String missionDeed(String id) { return k("mission.deed." + id); }
+	public static String missionUndertaking(String id) { return k("mission.undertaking." + id); }
+	/** A pill's grade alone ("Mid"), as a brew asks for it. */
+	public static String missionPillGrade(String id) { return k("mission.pill_grade." + id); }
+	public static final String MSG_MISSION_TAKEN = k("message.mission.taken");
+	public static final String MSG_MISSION_HELD_FULL = k("message.mission.held_full");
+	public static final String MSG_MISSION_ABANDONED = k("message.mission.abandoned");
+	public static final String MSG_MISSION_DONE = k("message.mission.done");
+	public static final String MSG_MISSION_LAPSED = k("message.mission.lapsed");
+	public static final String MSG_MISSION_BRING = k("message.mission.bring");
+	public static final String MSG_MISSION_QUARRY = k("message.mission.quarry");
+	public static final String MSG_MISSION_NEW_SLIP = k("message.mission.new_slip");
+	public static final String MSG_MISSION_HAS_SLIP = k("message.mission.has_slip");
+	public static final String MSG_WATCH_BEGINS = k("message.mission.watch_begins");
+	public static final String MSG_WATCH_WAVE = k("message.mission.watch_wave");
+	public static final String MSG_WATCH_LEFT = k("message.mission.watch_left");
+	public static final String MSG_WATCH_AWAY = k("message.mission.watch_away");
+	public static final String MSG_WATCH_FAILED = k("message.mission.watch_failed");
+	public static final String MSG_SLIP_CRUMBLES = k("message.mission.slip_crumbles");
+	public static final String MSG_SLIP_POINT = k("message.mission.slip_point");
+	public static final String MSG_SLIP_HERE = k("message.mission.slip_here");
+	public static final String MSG_SLIP_ELSEWHERE = k("message.mission.slip_elsewhere");
+	public static final String MSG_SLIP_HAND_IN = k("message.mission.slip_hand_in");
+	public static final String MISSION_SLIP_OF = k("tooltip.mission_slip.of");
+	public static final String MISSION_SLIP_HINT = k("tooltip.mission_slip.hint");
+	public static final String SEALED_LETTER_HINT = k("tooltip.sealed_letter.hint");
+	public static final String EXCHANGE_PRICE = k("mission.exchange.price");
+	public static final String EXCHANGE_LEFT = k("mission.exchange.left");
+	public static final String EXCHANGE_LOCKED = k("mission.exchange.locked");
+	public static final String EXCHANGE_BUY = k("mission.exchange.buy");
+	public static final String MSG_EXCHANGE_BOUGHT = k("message.exchange.bought");
+	public static final String MSG_EXCHANGE_POOR = k("message.exchange.poor");
+	public static final String MSG_EXCHANGE_SOLD_OUT = k("message.exchange.sold_out");
+	public static final String MSG_EXCHANGE_LOCKED = k("message.exchange.locked");
 	// The Dao Codex, the mod's guide (Codex; client CodexScreen, CodexState, CodexToast)
 	public static final String KEY_CODEX = "key." + DefyingTheHeavens.MOD_ID + ".codex";
 	public static final String CODEX_TITLE = k("codex.title");
@@ -988,6 +1227,22 @@ public final class ModLang {
 	public static String codexChapter(String id) { return k("codex.chapter." + id); }
 	public static String codexEntryTitle(String id) { return k("codex.entry." + id + ".title"); }
 	public static String codexEntryText(String id) { return k("codex.entry." + id + ".text"); }
+	// The crafts' mastery (CraftMastery): their names and ranks, the word of a rank reached, a brew failed, the Stats tab's Crafts page
+	public static String craftName(String id) { return k("craft." + id); }
+	public static String craftRank(String id) { return k("craft.rank." + id); }
+	public static final String MSG_CRAFT_RANK = k("message.craft_rank");
+	public static final String CAULDRON_FAILED = k("cauldron.failed");
+	public static final String BTN_STAT_CRAFTS = k("button.stat_crafts");
+	public static final String CRAFTS_TITLE = k("crafts.title");
+	public static final String CRAFTS_PRACTICE = k("crafts.practice");
+	public static final String CRAFTS_PRACTICE_TOP = k("crafts.practice_top");
+	public static final String CRAFTS_ALCHEMY_GRADE = k("crafts.alchemy.grade");
+	public static final String CRAFTS_ALCHEMY_FAIL = k("crafts.alchemy.fail");
+	public static final String CRAFTS_ALCHEMY_NEVER_FAILS = k("crafts.alchemy.never_fails");
+	public static final String CRAFTS_ALCHEMY_SECOND = k("crafts.alchemy.second");
+	public static final String CRAFTS_FORGING = k("crafts.forging");
+	public static final String CRAFTS_FORMATIONS = k("crafts.formations");
+	public static final String CRAFTS_HINT = k("crafts.hint");
 	/** A world on the Codex's map, and its way in (CodexMap; client CodexDiagrams). */
 	public static String codexWorld(String id) { return k("codex.world." + id); }
 	public static String codexWorldWay(String id) { return k("codex.world." + id + ".way"); }
@@ -1008,6 +1263,18 @@ public final class ModLang {
 	public static final String CODEX_CULTIVATED_IN = k("codex.cultivated_in");
 	public static final String CODEX_OVERCOMES = k("codex.overcomes");
 	public static final String CODEX_OVERCOME_BY = k("codex.overcome_by");
+	// A Bestiary page's picture (client CodexDiagrams): what the creature is, and what it drops
+	public static final String CODEX_BEAST_REALM = k("codex.beast.realm");
+	public static final String CODEX_BEAST_STAGE = k("codex.beast.stage");
+	public static final String CODEX_BEAST_WITHIN = k("codex.beast.within");
+	public static final String CODEX_BEAST_YOUR_REALM = k("codex.beast.your_realm");
+	public static final String CODEX_BEAST_ELEMENT = k("codex.beast.element");
+	public static final String CODEX_BEAST_HUNTS = k("codex.beast.hunts");
+	public static final String CODEX_BEAST_FIGHTS_BACK = k("codex.beast.fights_back");
+	public static final String CODEX_BEAST_DROPS = k("codex.beast.drops");
+	public static final String CODEX_BEAST_DROPS_NOTHING = k("codex.beast.drops_nothing");
+	/** How a creature goes about: "ground", "amphibious", "flying", "swimming" (BeastKind.Moves). */
+	public static String codexBeastMoves(String moves) { return k("codex.beast.moves." + moves); }
 	// Switching abilities by key, without the wheel (client QuickAbilities)
 	public static final String KEY_QUICK_ABILITY = "key." + DefyingTheHeavens.MOD_ID + ".quick_ability";
 	/** Followed by the slot's number, 1 to 8: "key.defying-the-heavens.ability_slot_3". */

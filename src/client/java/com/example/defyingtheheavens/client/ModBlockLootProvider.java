@@ -19,6 +19,7 @@ public class ModBlockLootProvider extends FabricBlockLootTableProvider {
 		dropSelf(ModBlocks.BLUE_SPIRIT_WOOD);
 		dropSelf(ModBlocks.BLUE_SPIRIT_PLANKS);
 		dropSelf(ModBlocks.ALCHEMY_CAULDRON);
+		dropSelf(ModBlocks.ARTIFACT_FORGE);
 		dropSelf(ModBlocks.HEAVEN_ALTAR);
 		// A Qi Vein comes out whole (to be set into a formation's array), with no Fortune bonus; the core drops itself.
 		dropSelf(ModBlocks.QI_VEIN);

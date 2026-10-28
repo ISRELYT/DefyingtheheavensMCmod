@@ -176,6 +176,7 @@ public final class CultivatorTrades {
 				goods.add(herb(random, 200, 500, 0, ModItems.SPIRIT_GINSENG, ModItems.PURPLE_LINGZHI, ModItems.OCHRE_HUANGJING));
 				goods.add(new Goods(new ItemStack(ModBlocks.RED_MEDITATION_MAT), 9, 2, Regard.PER_PIP));
 				goods.add(pill(ModItems.CORE_PILL, PillGrade.LOW, 1, Regard.COURTEOUS));
+				goods.add(artifact(random, ArtifactGrade.SPIRIT, npc, Regard.COURTEOUS));
 				goods.add(new Goods(ClothingItem.create(ModItems.clothing(ClothingTier.SPIRIT, pickPiece(random)), style), 40, 1, Regard.WARM));
 				goods.add(herb(random, 600, 1000, Regard.TRUSTED, ModItems.SPIRIT_GINSENG, ModItems.PURPLE_LINGZHI, ModItems.SPIRIT_LOTUS));
 			}
@@ -186,6 +187,7 @@ public final class CultivatorTrades {
 				goods.add(new Goods(ClothingItem.create(ModItems.clothing(ClothingTier.EARTH, pickPiece(random)), style), 150, 1, Regard.PER_PIP));
 				goods.add(pill(ModItems.FOUNDATION_PILL, PillGrade.HIGH, 1, Regard.COURTEOUS));
 				goods.add(fruit(random, 400, 900, Regard.WARM));
+				goods.add(artifact(random, ArtifactGrade.EARTH, npc, Regard.WARM));
 				goods.add(new Goods(new ItemStack(ModItems.RING_OF_POWER), 400, 1, Regard.TRUSTED));
 			}
 			case ROGUE, WANDERER -> {
@@ -200,7 +202,8 @@ public final class CultivatorTrades {
 						new Goods(new ItemStack(Items.AMETHYST_SHARD, 4), 3, 4, 0),
 						new Goods(new ItemStack(Items.BLAZE_ROD), 6, 2, 0),
 						new Goods(new ItemStack(Items.GHAST_TEAR), 15, 1, 0),
-						new Goods(new ItemStack(Items.ECHO_SHARD), 20, 1, 0)));
+						new Goods(new ItemStack(Items.ECHO_SHARD), 20, 1, 0),
+						artifact(random, ArtifactGrade.MORTAL, npc, 0)));
 				for (int i = 0; i < 3; i++) goods.add(odd.remove(random.nextInt(odd.size())));
 				goods.add(herb(random, 100, 400, 0, ModItems.GINSENG, ModItems.LINGZHI, ModItems.HUANGJING, ModItems.SPIRIT_GINSENG));
 				goods.add(odd.remove(random.nextInt(odd.size())).withRegard(Regard.PER_PIP));
@@ -272,7 +275,9 @@ public final class CultivatorTrades {
 		goods.add(new Goods(CultivationFruitItem.create(Mth.nextInt(random, 5000, 10000)), JADE, 1, Regard.PER_PIP));
 		HeavenMethod own = npc.heavenMethod();
 		QiElement element = own != null ? own.element() : QiElement.five()[(int) Math.floorMod(npc.getUUID().getLeastSignificantBits() >>> 3, 5L)];
+		goods.add(artifact(random, ArtifactGrade.HEAVEN, npc, 0));
 		goods.add(new Goods(new ItemStack(ModItems.sacredVessel(element)), 30 * JADE, 1, Regard.WARM));
+		goods.add(artifact(random, ArtifactGrade.IMMORTAL, npc, Regard.WARM));
 		if (Math.floorMod(npc.getUUID().getMostSignificantBits(), 5L) == 0) {
 			goods.add(new Goods(GhostJadeSlipItem.of(GhostMethod.NETHERWORLD_IMMORTAL_CANON), slipPrice(GhostMethod.NETHERWORLD_IMMORTAL_CANON), 1, Regard.COURTEOUS));
 		} else {
@@ -349,6 +354,16 @@ public final class CultivatorTrades {
 	private static Goods pill(Item kind, PillGrade grade, int maxUses, int regard) {
 		ItemStack pill = PillItem.create(kind, grade, 100);
 		return new Goods(pill, (int) Math.ceil(TalkSystem.worth(pill) * MARKUP), maxUses, regard);
+	}
+
+	/**
+	 * An artifact of {@code grade} from the Artifact Forge, of any kind (a banner of {@code npc}'s own element, and from Spirit grade up the
+	 * weapon made of it), at its price.
+	 */
+	private static Goods artifact(RandomSource random, ArtifactGrade grade, CultivatorNpc npc, int regard) {
+		HeavenMethod own = npc.heavenMethod();
+		ItemStack artifact = Artifacts.any(random, grade, own != null ? own.element() : QiElement.five()[random.nextInt(5)]);
+		return new Goods(artifact, Artifacts.priceOf(artifact), 1, regard);
 	}
 
 	@SafeVarargs

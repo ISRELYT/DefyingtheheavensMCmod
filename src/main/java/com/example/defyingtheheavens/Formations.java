@@ -282,9 +282,9 @@ public final class Formations {
 		return TwoPaths.weighedRank(CultivationManager.forPlayer(player));
 	}
 
-	/** Strong enough to force a way through (or simply let through). */
+	/** Strong enough to force a way through (or simply let through); no barrier holds against Pangu's Axe (LegendaryWeaponItem#cleaves). */
 	public static boolean canBreak(Player player, Formation formation) {
-		return formation.allows(player) || rankOf(player) >= formation.getRank();
+		return formation.allows(player) || rankOf(player) >= formation.getRank() || LegendaryWeaponItem.cleaves(player);
 	}
 
 	// --- The strong against a barrier (the user's ask, 2026-10-24) ---
@@ -347,13 +347,15 @@ public final class Formations {
 	public static void batter(ServerLevel level, Formation formation, LivingEntity by, double weight, BlockPos at) {
 		if (by == null || !formation.isRaised() || formation.allows(by) || by instanceof Player player && (player.isCreative() || player.isSpectator())) return;
 		int gap = CultivatorNpc.rankOf(by) - formation.getRank();
-		if (gap < 0) return;
+		// Pangu's Axe shatters any barrier at a blow, however far above its wielder it stands (LegendaryWeaponItem#cleaves).
+		boolean cleaves = LegendaryWeaponItem.cleaves(by);
+		if (gap < 0 && !cleaves) return;
 		long now = level.getGameTime();
 		String key = by.getUUID() + "/" + formation.id;
 		Long last = BATTERED.get(key);
 		if (last != null && now - last < 20) return;
 		BATTERED.put(key, now);
-		boolean shatters = gap >= SHATTER_ABOVE;
+		boolean shatters = gap >= SHATTER_ABOVE || cleaves;
 		if (formation.kind == Formation.Kind.CORE && level.getBlockEntity(formation.center) instanceof FormationCoreBlockEntity core) {
 			core.batter(shatters ? Double.MAX_VALUE : BATTER_COST * weight * Math.pow(2, gap / 2.0));
 		} else if (shatters) {
@@ -399,6 +401,7 @@ public final class Formations {
 	/** Ticks breaking one barrier block takes {@code player}, or -1 if they can't. */
 	public static int breakTicks(Player player, Formation formation) {
 		if (!canBreak(player, formation)) return -1;
+		if (LegendaryWeaponItem.cleaves(player)) return 4; // Pangu's Axe cuts through it as through air
 		int gap = Math.max(0, rankOf(player) - formation.getRank());
 		return Math.max(4, BREAK_TICKS_AT_EQUAL >> Math.min(gap, 5));
 	}

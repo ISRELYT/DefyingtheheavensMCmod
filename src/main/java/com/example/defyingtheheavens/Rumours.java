@@ -45,8 +45,11 @@ public final class Rumours extends SavedData {
 	public static final double LOCAL_REACH = 400;
 	public static final double FAR_REACH = 2500;
 
-	/** STELE: a Method Stele in the Netherworld, told of only by its dead. Saved by name: new kinds go at the end. */
-	public enum Kind { HERB, FRUIT, PEACH_TREE, CAVE, CORE, KILLING, STELE }
+	/**
+	 * STELE: a Method Stele in the Netherworld, told of only by its dead. LEGEND: a legendary weapon (Legends), told of everywhere. Saved by
+	 * name: new kinds go at the end.
+	 */
+	public enum Kind { HERB, FRUIT, PEACH_TREE, CAVE, CORE, KILLING, STELE, LEGEND }
 
 	/** One thing worth telling of. */
 	public static final class Rumour {
@@ -81,7 +84,7 @@ public final class Rumours extends SavedData {
 			return switch (kind) {
 				case HERB, FRUIT, PEACH_TREE -> age(now) >= OLD_FROM;
 				case KILLING -> now - since < KILLING_REMEMBERED;
-				case CAVE, CORE, STELE -> true;
+				case CAVE, CORE, STELE, LEGEND -> true;
 			};
 		}
 
@@ -194,6 +197,24 @@ public final class Rumours extends SavedData {
 		PENDING.add(new Rumour("stele:" + dimension.location() + ":" + middle.asLong(), Kind.STELE, dimension, middle.immutable(), method.getId(), 0, 0, ""));
 	}
 
+	/** A legend's tales (#noteLegend): of it at home (resting, or kept by its keeper), in someone's hands, and lost. */
+	private static final String[] LEGEND_TALES = {"home", "abroad", "lost"};
+
+	/**
+	 * What is told of {@code legend} now (Legends#noteRumour): where it rests or is kept ({@code site} in {@code dimension}), whose hands it is
+	 * in ({@code holder}, a player's name; none: nobody knows), or that it is lost. One tale a legend at a time, under its tale's own name, so
+	 * a changed tale is told again.
+	 */
+	public static void noteLegend(Legend legend, ResourceKey<Level> dimension, BlockPos site, Legends.State state, String holder, long now) {
+		for (String tale : LEGEND_TALES) PENDING.add(new Forget("legend:" + legend.getId() + ":" + tale));
+		String tale = switch (state) {
+			case RESTING, HELD -> "home";
+			case ABROAD -> "abroad";
+			case LOST -> "lost";
+		};
+		PENDING.add(new Rumour("legend:" + legend.getId() + ":" + tale, Kind.LEGEND, dimension, site.immutable(), legend.getId(), 0, now, holder));
+	}
+
 	/** A player has killed a cultivator. */
 	public static void noteKilling(CultivatorNpc victim, ServerPlayer killer) {
 		PENDING.add(new Rumour("kill:" + victim.getUUID(), Kind.KILLING, victim.level().dimension(), victim.blockPosition(),
@@ -227,7 +248,8 @@ public final class Rumours extends SavedData {
 
 	/**
 	 * Up to {@code count} things {@code npc} could tell of that it hasn't told already ({@code told}), taking turns: the oldest
-	 * herb, fruit or tree it knows of, then the nearest of the rest (a cave, a fallen core, a killing), and so on.
+	 * herb, fruit or tree it knows of, then of the rest a legend if any is untold, else the nearest (a cave, a fallen core, a killing), and
+	 * so on.
 	 */
 	public static List<Rumour> untold(CultivatorNpc npc, Set<String> told, int count) {
 		if (!(npc.level() instanceof ServerLevel level)) return List.of();
@@ -237,9 +259,10 @@ public final class Rumours extends SavedData {
 		List<Rumour> growing = new ArrayList<>();
 		List<Rumour> other = new ArrayList<>();
 		for (Rumour rumour : data.rumours.values()) {
-			if (rumour.dimension != level.dimension() || told.contains(rumour.id) || !rumour.current(now)) continue;
+			boolean legend = rumour.kind == Kind.LEGEND; // the legends are talked of in every world, however far off
+			if (!legend && rumour.dimension != level.dimension() || told.contains(rumour.id) || !rumour.current(now)) continue;
 			if (rumour.kind == Kind.STELE && !npc.isGhost()) continue; // only the dead tell of the steles
-			if (rumour.pos.distSqr(npc.blockPosition()) > reach * reach) continue;
+			if (!legend && rumour.pos.distSqr(npc.blockPosition()) > reach * reach) continue;
 			if (gone(level, rumour)) {
 				PENDING.add(new Forget(rumour.id));
 				continue;
@@ -247,7 +270,8 @@ public final class Rumours extends SavedData {
 			(rumour.kind == Kind.HERB || rumour.kind == Kind.FRUIT || rumour.kind == Kind.PEACH_TREE ? growing : other).add(rumour);
 		}
 		growing.sort(Comparator.comparingInt((Rumour r) -> -r.age(now)));
-		other.sort(Comparator.comparingDouble(r -> r.pos.distSqr(npc.blockPosition())));
+		// The legends first, while there are any untold (each tale is told a player once: TalkSystem#rumours), then the nearest.
+		other.sort(Comparator.comparing((Rumour r) -> r.kind != Kind.LEGEND).thenComparingDouble(r -> r.pos.distSqr(npc.blockPosition())));
 		List<Rumour> picked = new ArrayList<>();
 		for (int i = 0; picked.size() < count && (i < growing.size() || i < other.size()); i++) {
 			if (i < growing.size()) picked.add(growing.get(i));
@@ -298,7 +322,30 @@ public final class Rumours extends SavedData {
 				Component name = method == null ? Component.literal(rumour.subject) : method.getDisplayName();
 				yield Component.translatable(ModLang.rumour("stele"), name, direction, country, rough);
 			}
+			case LEGEND -> legendTale(rumour, teller, direction, country, rough);
 		};
+	}
+
+	/**
+	 * What a teller says of a legend: that it is lost; in whose hands it is (or that nobody knows); else where it rests or is kept, which way
+	 * and how far when that is in the teller's own world, and only the world it lies in when it isn't.
+	 */
+	private static Component legendTale(Rumour rumour, CultivatorNpc teller, Component direction, Component country, int rough) {
+		Legend legend = Legend.byId(rumour.subject);
+		if (legend == null) return Component.literal(rumour.subject);
+		String tale = rumour.id.substring(rumour.id.lastIndexOf(':') + 1);
+		if (tale.equals("lost")) return Component.translatable(ModLang.rumour("legend.lost"), legend.getDisplayName());
+		if (tale.equals("abroad")) {
+			return rumour.detail.isEmpty() ? Component.translatable(ModLang.rumour("legend.loose"), legend.getDisplayName())
+					: Component.translatable(ModLang.rumour("legend.held"), legend.getDisplayName(), rumour.detail);
+		}
+		// One resting on a world of the Astral Realm (the Sun-Shooting Bow): that world named, as no compass reaches across them.
+		AstralPlanets planets = AstralPlanets.get();
+		AstralPlanets.Planet world = rumour.dimension == ModDimensions.ASTRAL_SURFACES && planets != null
+				? planets.planetAt(rumour.pos.getX(), rumour.pos.getZ()) : null;
+		if (world != null) return Component.translatable(ModLang.rumour("legend." + legend.getId() + ".world"), world.name());
+		return rumour.dimension == teller.level().dimension() ? Component.translatable(ModLang.rumour("legend." + legend.getId() + ".here"), direction, country, rough)
+				: Component.translatable(ModLang.rumour("legend." + legend.getId() + ".far"));
 	}
 
 	/** Eight points of the compass for a teller of Core Formation and above, four for the weaker. */

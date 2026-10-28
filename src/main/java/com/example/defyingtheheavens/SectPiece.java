@@ -342,16 +342,25 @@ public class SectPiece extends StructurePiece {
 		put(level, chunk, x, y, z, p.candle.defaultBlockState().setValue(CandleBlock.CANDLES, Math.max(1, Math.min(4, count))).setValue(CandleBlock.LIT, true));
 	}
 
+	/**
+	 * A chest of {@code loot} at (x, y, z); a treasury's riches in a storage formation instead (the user's ask, 2026-10-28:
+	 * StorageFormations#treasury), of the place's tier and no one's, the sect's own rules over it as over the chests before.
+	 */
 	void chest(WorldGenLevel level, BoundingBox chunk, int x, int y, int z, Direction facing, ResourceLocation loot) {
 		BlockPos pos = getWorldPos(x, y, z);
 		if (!chunk.isInside(pos)) return;
-		put(level, chunk, x, y, z, Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, facing));
 		// A demon clan's: now and then a phial of its race's blood laid up in it (DemonBlood#hoarded), put in before its loot is named, which
 		// fills in round it when it is opened.
-		if (race.isBeast() && level.getBlockEntity(pos) instanceof RandomizableContainerBlockEntity box) {
-			RandomSource random = rand(x, z, y + 97);
-			ItemStack blood = DemonBlood.hoarded(race, upper, HolyLands.isHolyLand(level.getLevel().dimension()), loot, random);
-			if (!blood.isEmpty()) box.setItem(random.nextInt(box.getContainerSize()), blood);
+		ItemStack blood = ItemStack.EMPTY;
+		RandomSource random = rand(x, z, y + 97);
+		if (race.isBeast()) blood = DemonBlood.hoarded(race, upper, HolyLands.isHolyLand(level.getLevel().dimension()), loot, random);
+		if (TREASURY_LOOT.equals(loot)) {
+			StorageFormations.treasury(level, pos, loot, rand(x, z, y).nextLong(), blood);
+			return;
+		}
+		put(level, chunk, x, y, z, Blocks.CHEST.defaultBlockState().setValue(ChestBlock.FACING, facing));
+		if (!blood.isEmpty() && level.getBlockEntity(pos) instanceof RandomizableContainerBlockEntity box) {
+			box.setItem(random.nextInt(box.getContainerSize()), blood);
 		}
 		RandomizableContainerBlockEntity.setLootTable(level, rand(x, z, y), pos, loot);
 	}

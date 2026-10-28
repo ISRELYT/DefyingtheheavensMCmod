@@ -75,6 +75,9 @@ public class HeartDemonEntity extends Monster {
 
 	public UUID getOwnerId() { return entityData.get(OWNER).orElse(null); }
 
+	/** Whose shadow it is: set only by {@link #summon}, and on the client for the Codex's picture of one (the reader's own). */
+	public void setOwnerId(UUID owner) { entityData.set(OWNER, Optional.ofNullable(owner)); }
+
 	@Override
 	protected void registerGoals() {
 		goalSelector.addGoal(0, new FloatGoal(this));

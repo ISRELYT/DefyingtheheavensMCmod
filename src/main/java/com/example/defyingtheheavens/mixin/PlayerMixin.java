@@ -1,6 +1,7 @@
 package com.example.defyingtheheavens.mixin;
 
 import com.example.defyingtheheavens.AstralRealm;
+import com.example.defyingtheheavens.Legends;
 import com.example.defyingtheheavens.RingContainer;
 import com.example.defyingtheheavens.RingHolder;
 import com.example.defyingtheheavens.Tempering;
@@ -20,12 +21,14 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * Gives every player a ring container, saves it with the player and drops it on death like the rest of the inventory.
- * Also keeps Qi Flight from cushioning falls, and lets the swift fly through space unchecked for blocks.
+ * Also keeps Qi Flight from cushioning falls, lets the swift fly through space unchecked for blocks, and keeps a blow's damage hearts
+ * to a handful.
  */
 @Mixin(Player.class)
 public abstract class PlayerMixin implements RingHolder {
@@ -55,6 +58,13 @@ public abstract class PlayerMixin implements RingHolder {
 		if ((Object) this instanceof ServerPlayer player && stack.isEdible()) Tempering.onEat(player, stack);
 	}
 
+	/** The Sea-Fixing Needle is kept behind its owner's ear: never dropped at their death (Legends#keepBehindTheEar). */
+	@Inject(method = "dropEquipment", at = @At("HEAD"))
+	private void dth$keepTheNeedle(CallbackInfo ci) {
+		Player self = (Player) (Object) this;
+		if (!self.level().isClientSide && !self.level().getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY)) Legends.keepBehindTheEar(self);
+	}
+
 	@Inject(method = "dropEquipment", at = @At("TAIL"))
 	private void dth$dropRings(CallbackInfo ci) {
 		Player self = (Player) (Object) this;
@@ -77,6 +87,17 @@ public abstract class PlayerMixin implements RingHolder {
 	@Redirect(method = "causeFallDamage", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/player/Abilities;mayfly:Z", opcode = Opcodes.GETFIELD))
 	private boolean dth$qiFlightTakesFallDamage(Abilities abilities) {
 		return abilities.mayfly && abilities.invulnerable;
+	}
+
+	/**
+	 * Vanilla sends one dark heart for every 2 health a player's blow takes away. Against the mod's deep health pools (an elder, a heart
+	 * demon, a high realm's blow) one hit sent thousands, and every client that saw them hitched (the user, 2026-10-28). Ten at most now,
+	 * as many as a strong vanilla blow shows.
+	 */
+	@ModifyArg(method = "attack", at = @At(value = "INVOKE",
+			target = "Lnet/minecraft/server/level/ServerLevel;sendParticles(Lnet/minecraft/core/particles/ParticleOptions;DDDIDDDD)I"), index = 4)
+	private int dth$fewerDamageHearts(int count) {
+		return Math.min(count, 10);
 	}
 
 	/**

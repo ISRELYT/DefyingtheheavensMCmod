@@ -9,6 +9,7 @@ import com.example.defyingtheheavens.Realm;
 import com.example.defyingtheheavens.Stage;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -26,15 +27,17 @@ import java.util.Locale;
 import java.util.UUID;
 
 /**
- * A Formation Core's screen (its owner's only): the barrier's radius, its switch, and the qi that carries it. The battery is
- * drawn like the Qi bar (lacquer track, gold trim and quarter notches, azure qi); below it what the connected veins bring in
- * against what the barrier costs at the chosen radius, how strong a cultivator must be to break through, and the core's state.
- * A second page lists the cultivators the owner trusts to pass the barrier as they do: type a name to add one, press the
- * cross beside a name to strike it off. The screen asks the server for a fresh state twice a second while open.
+ * A Formation Core's screen (its owner's only): its two functions on two tabs, the barrier and the concealment (since 2026-10-28,
+ * Concealments), each with its radius and its switch, and the qi that carries them. The battery is drawn like the Qi bar (lacquer track,
+ * gold trim and quarter notches, azure qi); below it what the connected veins bring in against what the chosen function costs at its
+ * radius (and both together, when both are wanted), how strong a cultivator must be to break through the barrier or to see through the
+ * concealment, and the function's state. A second page lists the cultivators the owner trusts to pass the barrier and see through the
+ * concealment as they do: type a name to add one, press the cross beside a name to strike it off. The screen asks the server for a fresh
+ * state twice a second while open.
  */
 public class FormationCoreScreen extends Screen {
 	private static final int WIDTH = 232;
-	private static final int HEIGHT = 212;
+	private static final int HEIGHT = 232;
 	private static final int BORDER = 0xFFB8860B;
 	private static final int BORDER_DARK = 0xFF6E5214;
 	private static final int PANEL = 0xF0101018;
@@ -46,17 +49,21 @@ public class FormationCoreScreen extends Screen {
 
 	private static final int ROWS = 8;
 	private static final int ROW_HEIGHT = 13;
+	/** Where the function's radius row and the battery stand (below the tabs). */
+	private static final int RADIUS_Y = 58, BATTERY_Y = 88, LINES_Y = 114;
 
 	/** A trusted cultivator, with the name they had when trusted. */
 	public record Trusted(UUID id, String name) {}
 
 	/** What the server last told us about the core. */
 	public record State(BlockPos pos, int radius, boolean wanted, boolean raised, double battery, double max, double supply, int veins,
-			int rank, int cooldown, String owner, List<Trusted> trusted) {}
+			int rank, int cooldown, String owner, List<Trusted> trusted, int veilRadius, boolean veilWanted, boolean veilRaised, double share) {}
 
 	private State state;
-	private int radius;
-	private boolean wanted;
+	private int radius, veilRadius;
+	private boolean wanted, veilWanted;
+	/** On the concealment's tab (kept between openings), else the barrier's. */
+	private static boolean veilTab;
 	private int left, top;
 	private Button toggle;
 	private int refresh;
@@ -70,6 +77,8 @@ public class FormationCoreScreen extends Screen {
 		this.state = state;
 		this.radius = state.radius();
 		this.wanted = state.wanted();
+		this.veilRadius = state.veilRadius();
+		this.veilWanted = state.veilWanted();
 	}
 
 	/** The FORMATION_CORE packet: opens the screen, or refreshes it if it is open on that core. */
@@ -94,20 +103,40 @@ public class FormationCoreScreen extends Screen {
 		}
 		nameBox = null;
 		toggle = null;
-		int y = top + 44;
-		addRenderableWidget(Button.builder(Component.literal("-8"), b -> setRadius(radius - 8)).bounds(left + 12, y, 26, 18).build());
-		addRenderableWidget(Button.builder(Component.literal("-1"), b -> setRadius(radius - 1)).bounds(left + 40, y, 22, 18).build());
-		addRenderableWidget(Button.builder(Component.literal("+1"), b -> setRadius(radius + 1)).bounds(left + WIDTH - 62, y, 22, 18).build());
-		addRenderableWidget(Button.builder(Component.literal("+8"), b -> setRadius(radius + 8)).bounds(left + WIDTH - 38, y, 26, 18).build());
+		// The two functions' tabs, the one shown marked.
+		int tabW = (WIDTH - 24) / 2;
+		addRenderableWidget(Button.builder(tabLabel(ModLang.CORE_TAB_BARRIER, !veilTab), b -> showTab(false)).bounds(left + 10, top + 37, tabW, 16).build());
+		addRenderableWidget(Button.builder(tabLabel(ModLang.CORE_TAB_VEIL, veilTab), b -> showTab(true)).bounds(left + 14 + tabW, top + 37, tabW, 16).build());
+		int y = top + RADIUS_Y;
+		addRenderableWidget(Button.builder(Component.literal("-8"), b -> setRadius(shownRadius() - 8)).bounds(left + 12, y, 26, 18).build());
+		addRenderableWidget(Button.builder(Component.literal("-1"), b -> setRadius(shownRadius() - 1)).bounds(left + 40, y, 22, 18).build());
+		addRenderableWidget(Button.builder(Component.literal("+1"), b -> setRadius(shownRadius() + 1)).bounds(left + WIDTH - 62, y, 22, 18).build());
+		addRenderableWidget(Button.builder(Component.literal("+8"), b -> setRadius(shownRadius() + 8)).bounds(left + WIDTH - 38, y, 26, 18).build());
 		toggle = addRenderableWidget(Button.builder(Component.empty(), b -> {
-			wanted = !wanted;
+			if (veilTab) veilWanted = !veilWanted;
+			else wanted = !wanted;
 			send();
-		}).bounds(left + 10, top + HEIGHT - 28, 104, 20).build());
+		}).bounds(left + 10, top + HEIGHT - 28, 124, 20).build());
 		addRenderableWidget(Button.builder(Component.translatable(ModLang.CORE_TRUSTED_BUTTON), b -> {
 			trustedPage = true;
 			rebuildWidgets();
-		}).bounds(left + WIDTH - 114, top + HEIGHT - 28, 104, 20).build());
+		}).bounds(left + WIDTH - 94, top + HEIGHT - 28, 84, 20).build());
 		updateToggle();
+	}
+
+	private static Component tabLabel(String key, boolean shown) {
+		Component name = Component.translatable(key);
+		return shown ? Component.literal("» ").append(name).append(" «").withStyle(ChatFormatting.GOLD) : name;
+	}
+
+	private void showTab(boolean veil) {
+		if (veilTab == veil) return;
+		veilTab = veil;
+		rebuildWidgets();
+	}
+
+	private int shownRadius() {
+		return veilTab ? veilRadius : radius;
 	}
 
 	/** The trusted page: a name box with its button, a cross beside each name in two columns, and the way back. */
@@ -161,10 +190,12 @@ public class FormationCoreScreen extends Screen {
 		return super.keyPressed(key, scanCode, modifiers);
 	}
 
+	/** The shown function's radius. */
 	private void setRadius(int value) {
 		int clamped = Math.max(Formations.MIN_RADIUS, Math.min(Formations.maxRadius(net.minecraft.client.Minecraft.getInstance().level), value));
-		if (clamped == radius) return;
-		radius = clamped;
+		if (clamped == shownRadius()) return;
+		if (veilTab) veilRadius = clamped;
+		else radius = clamped;
 		send();
 	}
 
@@ -173,12 +204,16 @@ public class FormationCoreScreen extends Screen {
 		buf.writeBlockPos(state.pos());
 		buf.writeVarInt(radius);
 		buf.writeBoolean(wanted);
+		buf.writeVarInt(veilRadius);
+		buf.writeBoolean(veilWanted);
 		ClientPlayNetworking.send(ModPackets.FORMATION_CORE_CONFIGURE, buf);
 		updateToggle();
 	}
 
 	private void updateToggle() {
-		if (toggle != null) toggle.setMessage(Component.translatable(wanted ? ModLang.CORE_SWITCH_OFF : ModLang.CORE_SWITCH_ON));
+		if (toggle == null) return;
+		boolean on = veilTab ? veilWanted : wanted;
+		toggle.setMessage(Component.translatable(veilTab ? on ? ModLang.CORE_VEIL_OFF : ModLang.CORE_VEIL_ON : on ? ModLang.CORE_SWITCH_OFF : ModLang.CORE_SWITCH_ON));
 	}
 
 	@Override
@@ -216,11 +251,11 @@ public class FormationCoreScreen extends Screen {
 		}
 		g.fill(left + 10, top + 32, left + WIDTH - 10, top + 33, BORDER_DARK);
 
-		// Radius between its buttons.
-		g.drawCenteredString(font, Component.translatable(ModLang.CORE_RADIUS, radius), cx, top + 49, PALE);
+		// The shown function's radius between its buttons.
+		g.drawCenteredString(font, Component.translatable(veilTab ? ModLang.CORE_VEIL_RADIUS : ModLang.CORE_RADIUS, shownRadius()), cx, top + RADIUS_Y + 5, PALE);
 
 		// The battery.
-		int barX = left + 16, barY = top + 72, barW = WIDTH - 32, barH = 6;
+		int barX = left + 16, barY = top + BATTERY_Y, barW = WIDTH - 32, barH = 6;
 		double fill = state.max() <= 0 ? 0 : Math.min(1, state.battery() / state.max());
 		g.fill(barX - 2, barY - 2, barX + barW + 2, barY + barH + 2, BORDER);
 		g.fill(barX - 1, barY - 1, barX + barW + 1, barY + barH + 1, BORDER_DARK);
@@ -234,36 +269,54 @@ public class FormationCoreScreen extends Screen {
 		}
 		g.drawCenteredString(font, Component.translatable(ModLang.CORE_BATTERY, (int) state.battery(), (int) state.max()), cx, barY + 11, PALE);
 
-		// Supply against upkeep at the chosen radius.
-		double upkeep = FormationCoreBlockEntity.upkeep(radius);
-		int y = top + 100;
+		// Supply against upkeep: the shown function's at its radius, and both together when both are wanted.
+		double share = state.share();
+		double barrierCost = FormationCoreBlockEntity.upkeep(radius) * share, veilCost = FormationCoreBlockEntity.veilUpkeep(veilRadius) * share;
+		double shownCost = veilTab ? veilCost : barrierCost;
+		double total = (wanted ? barrierCost : 0) + (veilWanted ? veilCost : 0);
+		double needed = Math.max(shownCost, total);
+		int y = top + LINES_Y;
 		g.drawString(font, Component.translatable(ModLang.CORE_VEINS, state.veins(), fmt(state.supply())), left + 14, y, 0x7FE0A0);
 		y += 11;
-		g.drawString(font, Component.translatable(ModLang.CORE_UPKEEP, fmt(upkeep)), left + 14, y, state.supply() >= upkeep ? 0xB0B0B0 : 0xFF8A65);
+		g.drawString(font, Component.translatable(veilTab ? ModLang.CORE_VEIL_UPKEEP : ModLang.CORE_UPKEEP, fmt(shownCost)), left + 14, y,
+				state.supply() >= shownCost ? 0xB0B0B0 : 0xFF8A65);
 		y += 11;
-		if (state.supply() < upkeep) {
-			double seconds = (upkeep - state.supply()) <= 0 ? 0 : state.battery() / (upkeep - state.supply());
+		if (wanted && veilWanted) {
+			g.drawString(font, Component.translatable(ModLang.CORE_UPKEEP_BOTH, fmt(total)), left + 14, y, state.supply() >= total ? 0xB0B0B0 : 0xFF8A65);
+			y += 11;
+		}
+		if (share < 1) {
+			g.drawString(font, Component.translatable(ModLang.CORE_MASTERY, Math.round((1 - share) * 100)), left + 14, y, 0x8FBC8F);
+			y += 11;
+		}
+		if (state.supply() < needed) {
+			double seconds = state.battery() / (needed - state.supply());
 			g.drawString(font, Component.translatable(ModLang.CORE_SHORTFALL, (int) seconds), left + 14, y, 0xFF8A65);
 			y += 11;
 		}
-		Component strength = state.rank() < 0 ? Component.translatable(ModLang.CORE_STRENGTH_MORTAL)
-				: Component.translatable(ModLang.CORE_STRENGTH, PlayerCultivation.rankName(Realm.byIndex(state.rank() / Stage.values().length),
-						Stage.byIndex(state.rank() % Stage.values().length)));
+		Component rankName = state.rank() < 0 ? null : PlayerCultivation.rankName(Realm.byIndex(state.rank() / Stage.values().length),
+				Stage.byIndex(state.rank() % Stage.values().length));
+		Component strength = veilTab
+				? rankName == null ? Component.translatable(ModLang.CORE_VEIL_STRENGTH_MORTAL) : Component.translatable(ModLang.CORE_VEIL_STRENGTH, rankName)
+				: rankName == null ? Component.translatable(ModLang.CORE_STRENGTH_MORTAL) : Component.translatable(ModLang.CORE_STRENGTH, rankName);
 		for (FormattedCharSequence line : font.split(strength, WIDTH - 28)) {
 			g.drawString(font, line, left + 14, y, 0xB39DDB);
 			y += 10;
 		}
 		y += 3;
-		Component status = state.cooldown() > 0 ? Component.translatable(ModLang.CORE_SHATTERED, state.cooldown())
-				: Component.translatable(state.raised() ? ModLang.CORE_RAISED : ModLang.CORE_LOWERED);
+		boolean up = veilTab ? state.veilRaised() : state.raised();
+		Component status = veilTab ? Component.translatable(up ? ModLang.CORE_VEIL_RAISED : ModLang.CORE_VEIL_LOWERED)
+				: state.cooldown() > 0 ? Component.translatable(ModLang.CORE_SHATTERED, state.cooldown())
+				: Component.translatable(up ? ModLang.CORE_RAISED : ModLang.CORE_LOWERED);
 		// Wrapped to the panel, as the lines above it are (the shattered barrier's countdown ran out past both its sides: 2026-10-24).
 		for (FormattedCharSequence line : font.split(status, WIDTH - 24)) {
-			g.drawCenteredString(font, line, cx, y, state.raised() ? 0x69F0AE : 0xFFC107);
+			g.drawCenteredString(font, line, cx, y, up ? 0x69F0AE : 0xFFC107);
 			y += 10;
 		}
 		if (state.veins() == 0) {
 			int hy = y + 2;
 			for (FormattedCharSequence line : font.split(Component.translatable(ModLang.CORE_HINT), WIDTH - 24)) {
+				if (hy > top + HEIGHT - 40) break; // never under the buttons
 				g.drawCenteredString(font, line, cx, hy, 0x8A8A9A);
 				hy += 10;
 			}

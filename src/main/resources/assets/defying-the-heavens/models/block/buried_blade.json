@@ -1,0 +1,43 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "minecraft:block/iron_block",
+    "blade": "minecraft:block/iron_block",
+    "guard": "minecraft:block/oxidized_copper",
+    "grip": "minecraft:block/dark_oak_log"
+  },
+  "elements": [
+    {"from": [7.5, 0, 7.75], "to": [8.5, 10, 8.25],
+      "faces": {
+        "north": {"uv": [7.5, 6, 8.5, 16], "texture": "#blade"},
+        "south": {"uv": [7.5, 6, 8.5, 16], "texture": "#blade"},
+        "east": {"uv": [7.75, 6, 8.25, 16], "texture": "#blade"},
+        "west": {"uv": [7.75, 6, 8.25, 16], "texture": "#blade"}
+      }},
+    {"from": [5.5, 10, 7.25], "to": [10.5, 11, 8.75],
+      "faces": {
+        "north": {"uv": [5.5, 5, 10.5, 6], "texture": "#guard"},
+        "south": {"uv": [5.5, 5, 10.5, 6], "texture": "#guard"},
+        "east": {"uv": [7.25, 5, 8.75, 6], "texture": "#guard"},
+        "west": {"uv": [7.25, 5, 8.75, 6], "texture": "#guard"},
+        "up": {"uv": [5.5, 7.25, 10.5, 8.75], "texture": "#guard"},
+        "down": {"uv": [5.5, 7.25, 10.5, 8.75], "texture": "#guard"}
+      }},
+    {"from": [7.6, 11, 7.6], "to": [8.4, 14.5, 8.4],
+      "faces": {
+        "north": {"uv": [7.6, 1.5, 8.4, 5], "texture": "#grip"},
+        "south": {"uv": [7.6, 1.5, 8.4, 5], "texture": "#grip"},
+        "east": {"uv": [7.6, 1.5, 8.4, 5], "texture": "#grip"},
+        "west": {"uv": [7.6, 1.5, 8.4, 5], "texture": "#grip"}
+      }},
+    {"from": [7.3, 14.5, 7.3], "to": [8.7, 15.3, 8.7],
+      "faces": {
+        "north": {"uv": [7.3, 0.7, 8.7, 1.5], "texture": "#guard"},
+        "south": {"uv": [7.3, 0.7, 8.7, 1.5], "texture": "#guard"},
+        "east": {"uv": [7.3, 0.7, 8.7, 1.5], "texture": "#guard"},
+        "west": {"uv": [7.3, 0.7, 8.7, 1.5], "texture": "#guard"},
+        "up": {"uv": [7.3, 7.3, 8.7, 8.7], "texture": "#guard"}
+      }}
+  ]
+}

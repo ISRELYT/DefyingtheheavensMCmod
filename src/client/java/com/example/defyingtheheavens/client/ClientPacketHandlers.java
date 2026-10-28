@@ -142,9 +142,15 @@ public final class ClientPacketHandlers {
 			boolean inImmortalRealm = buf.readBoolean();
 			boolean smallWorld = buf.readBoolean();
 			String epithet = buf.readUtf(com.example.defyingtheheavens.PlayerTitles.MAX_LENGTH * 4);
+			int[] mastery = new int[com.example.defyingtheheavens.CraftMastery.Craft.values().length];
+			for (int i = 0; i < mastery.length; i++) mastery[i] = buf.readVarInt();
 			client.execute(() -> {
 				// The title they have taken (PlayerTitles): the Cultivation tab's field.
 				ClientCultivationData.get().setEpithet(epithet);
+				// The crafts' mastery (CraftMastery): the Stats tab's Crafts page.
+				for (com.example.defyingtheheavens.CraftMastery.Craft craft : com.example.defyingtheheavens.CraftMastery.Craft.values()) {
+					ClientCultivationData.get().setMastery(craft, mastery[craft.ordinal()]);
+				}
 				// Where a breakthrough into True Immortal and past it is made (the Cultivation tab's lock and button).
 				ClientCultivationData.get().setInImmortalRealm(inImmortalRealm);
 				// A small world of their own (SmallWorlds): its door on the Abilities tab.
@@ -302,6 +308,11 @@ public final class ClientPacketHandlers {
 			ClientSect.Info info = ClientSect.read(buf);
 			client.execute(() -> ClientSect.setInfo(info));
 		});
+		// A sect's mission board's page (SectMissions#send): onto the board's screen, opening it.
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.MISSION_BOARD, (client, handler, buf, sender) -> {
+			MissionBoardScreen.Page page = MissionBoardScreen.read(buf);
+			client.execute(() -> MissionBoardScreen.show(page));
+		});
 		// In one's clone or not, and how the main body fares (Clones), for the HUD.
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.CLONE_STATE, (client, handler, buf, sender) -> {
 			boolean in = buf.readBoolean();
@@ -354,8 +365,11 @@ public final class ClientPacketHandlers {
 			int trustedCount = buf.readVarInt();
 			List<FormationCoreScreen.Trusted> trusted = new ArrayList<>(trustedCount);
 			for (int t = 0; t < trustedCount; t++) trusted.add(new FormationCoreScreen.Trusted(buf.readUUID(), buf.readUtf()));
+			int veilRadius = buf.readVarInt();
+			boolean veilWanted = buf.readBoolean(), veilRaised = buf.readBoolean();
+			double share = buf.readDouble();
 			FormationCoreScreen.State state = new FormationCoreScreen.State(pos, radius, wanted, raised, battery, max, supply, veins, rank,
-					cooldown, owner, trusted);
+					cooldown, owner, trusted, veilRadius, veilWanted, veilRaised, share);
 			client.execute(() -> FormationCoreScreen.receive(state));
 		});
 
@@ -473,14 +487,18 @@ public final class ClientPacketHandlers {
 			client.execute(() -> SwordFlightClient.set(entityId, riding));
 		});
 
-		// An open Storage Ring's space, in one packet or several (ClientStorageRing).
-		ClientPlayNetworking.registerGlobalReceiver(ModPackets.STORAGE_RING, (client, handler, buf, sender) -> {
+		// An open storage formation's space, in one packet or several (ClientStorageSpace).
+		ClientPlayNetworking.registerGlobalReceiver(ModPackets.STORAGE_SPACE, (client, handler, buf, sender) -> {
 			int containerId = buf.readVarInt();
-			int grade = buf.readVarInt();
+			int tier = buf.readVarInt();
+			boolean owns = buf.readBoolean();
+			int trustedCount = buf.readVarInt();
+			java.util.List<ClientStorageSpace.Trusted> trusted = new java.util.ArrayList<>(trustedCount);
+			for (int i = 0; i < trustedCount; i++) trusted.add(new ClientStorageSpace.Trusted(buf.readUUID(), buf.readUtf(32)));
 			boolean fresh = buf.readBoolean();
-			java.util.List<ClientStorageRing.Entry> entries = new java.util.ArrayList<>();
-			while (buf.readBoolean()) entries.add(new ClientStorageRing.Entry(buf.readItem(), buf.readVarLong()));
-			client.execute(() -> ClientStorageRing.receive(containerId, grade, fresh, entries));
+			java.util.List<ClientStorageSpace.Entry> entries = new java.util.ArrayList<>();
+			while (buf.readBoolean()) entries.add(new ClientStorageSpace.Entry(buf.readItem(), buf.readVarLong()));
+			client.execute(() -> ClientStorageSpace.receive(containerId, tier, owns, trusted, fresh, entries));
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(ModPackets.MEDITATION_STATE, (client, handler, buf, sender) -> {

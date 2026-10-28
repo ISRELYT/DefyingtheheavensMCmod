@@ -24,8 +24,17 @@ public final class AlchemyRecipes {
 	/** Most ingredients the cauldron holds at once. */
 	public static final int MAX_INGREDIENTS = 6;
 
-	/** One recipe: what it brews, its ingredients (item to count, in display order) and how long it takes over the fire. */
-	public record Recipe(Item output, Map<Item, Integer> ingredients, int brewTicks) {
+	/**
+	 * One recipe: what it brews, its ingredients (item to count, in display order), how long it takes over the fire, and how hard it is
+	 * ({@code difficulty}, 0 to 3: the rank of alchemy at which it no longer fails, CraftMastery#failChance; the practice it teaches,
+	 * {@link #practice}).
+	 */
+	public record Recipe(Item output, Map<Item, Integer> ingredients, int brewTicks, int difficulty) {
+		/** The practice in alchemy one brew of it teaches (half, if it fails): the harder, the more. */
+		public int practice() {
+			return (difficulty + 1) * 2;
+		}
+
 		public boolean matches(Map<Item, Integer> counts) {
 			return counts.equals(ingredients);
 		}
@@ -45,32 +54,32 @@ public final class AlchemyRecipes {
 	public static List<Recipe> all() {
 		if (recipes == null) {
 			recipes = List.of(
-					// The first step on the path: drunk by a mortal to open the meridians.
-					recipe(ModItems.MARROW_CLEANSING_ELIXIR, 20, ModItems.GINSENG, 1, Items.HONEY_BOTTLE, 1, Items.BONE_MEAL, 2),
-					recipe(ModItems.QI_GATHERING_PILL, 20, ModItems.GINSENG, 1, ModItems.SPIRIT_DEW, 1, Items.GLOWSTONE_DUST, 1),
-					recipe(ModItems.CULTIVATION_PILL, 30, ModItems.GINSENG, 1, ModItems.HUANGJING, 1, Items.GLISTERING_MELON_SLICE, 1),
+					// The first step on the path: drunk by a mortal to open the meridians. Never fails: no first step is lost to it.
+					recipe(ModItems.MARROW_CLEANSING_ELIXIR, 20, 0, ModItems.GINSENG, 1, Items.HONEY_BOTTLE, 1, Items.BONE_MEAL, 2),
+					recipe(ModItems.QI_GATHERING_PILL, 20, 1, ModItems.GINSENG, 1, ModItems.SPIRIT_DEW, 1, Items.GLOWSTONE_DUST, 1),
+					recipe(ModItems.CULTIVATION_PILL, 30, 1, ModItems.GINSENG, 1, ModItems.HUANGJING, 1, Items.GLISTERING_MELON_SLICE, 1),
 					// Breakthrough pills: Qi Refining -> Foundation Building, Foundation Building -> Core Formation.
-					recipe(ModItems.FOUNDATION_PILL, 45, ModItems.GINSENG, 1, ModItems.LINGZHI, 1, ModItems.SPIRIT_GINSENG, 1,
+					recipe(ModItems.FOUNDATION_PILL, 45, 2, ModItems.GINSENG, 1, ModItems.LINGZHI, 1, ModItems.SPIRIT_GINSENG, 1,
 							ModItems.JADE, 1),
-					recipe(ModItems.CORE_PILL, 60, ModItems.SPIRIT_GINSENG, 1, ModItems.SPIRIT_LOTUS, 1, ModItems.CULTIVATION_FRUIT, 1,
+					recipe(ModItems.CORE_PILL, 60, 3, ModItems.SPIRIT_GINSENG, 1, ModItems.SPIRIT_LOTUS, 1, ModItems.CULTIVATION_FRUIT, 1,
 							Items.BLAZE_POWDER, 1),
 					// The Netherworld's: yang warmth to hold its yin still in the living, and yin to feed the ghost methods.
-					recipe(ModItems.YANG_PRESERVATION_PILL, 30, ModItems.GINSENG, 1, Items.BLAZE_POWDER, 1, Items.GLOWSTONE_DUST, 1,
+					recipe(ModItems.YANG_PRESERVATION_PILL, 30, 1, ModItems.GINSENG, 1, Items.BLAZE_POWDER, 1, Items.GLOWSTONE_DUST, 1,
 							Items.HONEY_BOTTLE, 1),
-					recipe(ModItems.YIN_GATHERING_PILL, 30, ModItems.OTHER_SHORE_FLOWER, 1, ModItems.NETHERWORLD_LOTUS, 1, Items.GHAST_TEAR, 1),
+					recipe(ModItems.YIN_GATHERING_PILL, 30, 2, ModItems.OTHER_SHORE_FLOWER, 1, ModItems.NETHERWORLD_LOTUS, 1, Items.GHAST_TEAR, 1),
 					// Years of life: the lingzhi, the herb of immortality, with huangjing and a golden apple.
-					recipe(ModItems.LONGEVITY_PILL, 40, ModItems.LINGZHI, 2, ModItems.HUANGJING, 1, Items.GOLDEN_APPLE, 1));
+					recipe(ModItems.LONGEVITY_PILL, 40, 3, ModItems.LINGZHI, 2, ModItems.HUANGJING, 1, Items.GOLDEN_APPLE, 1));
 		}
 		return recipes;
 	}
 
-	/** {@code seconds} over the fire; then pairs of (item, count). */
-	private static Recipe recipe(Item output, int seconds, Object... itemsAndCounts) {
+	/** {@code seconds} over the fire, its {@code difficulty} (Recipe); then pairs of (item, count). */
+	private static Recipe recipe(Item output, int seconds, int difficulty, Object... itemsAndCounts) {
 		Map<Item, Integer> ingredients = new LinkedHashMap<>();
 		for (int i = 0; i < itemsAndCounts.length; i += 2) {
 			ingredients.put((Item) itemsAndCounts[i], (Integer) itemsAndCounts[i + 1]);
 		}
-		return new Recipe(output, ingredients, seconds * 20);
+		return new Recipe(output, ingredients, seconds * 20, difficulty);
 	}
 
 	/** The ordinary herb a rarer variant stands in for (Purple Lingzhi for Lingzhi...), or null. */

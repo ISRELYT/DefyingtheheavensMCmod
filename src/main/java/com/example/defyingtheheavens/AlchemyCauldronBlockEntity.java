@@ -35,7 +35,8 @@ import java.util.List;
  * The Alchemy Cauldron's contents and brew. Ingredients are kept one item per entry (so each keeps its own age), at most
  * {@link AlchemyRecipes#MAX_INGREDIENTS}. When they make a recipe, the brew runs for the recipe's time while the cauldron is
  * heated (it simply pauses while the fire is out), then the pill pops out with a grade rolled from the ingredients' average
- * age, and the water is used up.
+ * age, and the water is used up. How it turns out is the brewer's alchemy too (CraftMastery, 2026-10-28): a brew too hard for their
+ * rank can fail, a practised hand raises the grade, and every brew teaches them.
  * <p>
  * Right-click: water bucket fills it; an ingredient goes in if it still fits a recipe; an empty hand shows what's inside (or
  * the brew's progress); sneaking with an empty hand tips the ingredients back out; an empty bucket takes the water back while
@@ -49,6 +50,9 @@ public class AlchemyCauldronBlockEntity extends BlockEntity {
 	private int brewTotal;
 	/** Whoever put in the last ingredient, starting the brew, was born with an Innate Alchemy Body (Physique): the pill works twice as strongly. */
 	private boolean alchemyBody;
+	/** Who started the brew (they learn from it: CraftMastery), and their rank in alchemy then (how it turns out). */
+	private java.util.UUID brewer;
+	private CraftMastery.Rank brewerRank = CraftMastery.Rank.APPRENTICE;
 
 	public AlchemyCauldronBlockEntity(BlockPos pos, BlockState state) {
 		super(ModBlockEntities.ALCHEMY_CAULDRON, pos, state);
@@ -119,6 +123,9 @@ public class AlchemyCauldronBlockEntity extends BlockEntity {
 			brewTicks = 0;
 			brewTotal = recipe.brewTicks();
 			alchemyBody = CultivationManager.forPlayer(player).hasPhysique(Physique.INNATE_ALCHEMY_BODY);
+			brewer = player.getUUID();
+			PlayerCultivation own = player instanceof ServerPlayer sp ? CultivationManager.own(sp) : CultivationManager.forPlayer(player);
+			brewerRank = CraftMastery.rank(own, CraftMastery.Craft.ALCHEMY);
 			setState(state.setValue(AlchemyCauldronBlock.BREWING, true));
 			level.playSound(null, worldPosition, SoundEvents.BREWING_STAND_BREW, SoundSource.BLOCKS, 0.8f, 0.8f);
 			tell(player, AlchemyCauldronBlock.isHeated(level, worldPosition)
@@ -170,21 +177,46 @@ public class AlchemyCauldronBlockEntity extends BlockEntity {
 		if (cauldron.brewTicks >= cauldron.brewTotal) cauldron.finish((ServerLevel) level, state);
 	}
 
+	/**
+	 * The brew done: by the brewer's rank in alchemy (CraftMastery) it may fail (the herbs ruined, half the lesson still learned); else the
+	 * pill pops out, its grade rolled from the herbs' age and a master's hand perhaps raising it a grade, a Grandmaster's or a Saint's now and
+	 * then a second pill with it.
+	 */
 	private void finish(ServerLevel level, BlockState state) {
 		int age = AlchemyRecipes.averageAge(contents);
-		PillGrade grade = PillGrade.roll(age, level.random);
-		ItemStack pill = PillItem.create(brewing, grade, age);
-		if (alchemyBody) pill.getOrCreateTag().putBoolean(PillItem.ALCHEMY_BODY_TAG, true);
+		AlchemyRecipes.Recipe recipe = AlchemyRecipes.forOutput(brewing);
+		CraftMastery.Rank rank = brewerRank;
+		ServerPlayer brewerNow = brewer == null ? null : level.getServer().getPlayerList().getPlayer(brewer);
+		boolean failed = recipe != null && level.random.nextDouble() < CraftMastery.failChance(rank, recipe.difficulty());
+		Item brewed = brewing;
+		boolean body = alchemyBody;
 		alchemyBody = false;
 		brewing = null;
+		brewer = null;
 		brewTicks = brewTotal = 0;
 		contents.clear();
 		setState(state.setValue(AlchemyCauldronBlock.FILLED, false).setValue(AlchemyCauldronBlock.BREWING, false));
 
 		double x = worldPosition.getX() + 0.5, y = worldPosition.getY() + 1.0, z = worldPosition.getZ() + 0.5;
-		ItemEntity item = new ItemEntity(level, x, y, z, pill, 0, 0.25, 0);
-		item.setDefaultPickUpDelay();
-		level.addFreshEntity(item);
+		if (failed) {
+			level.sendParticles(ParticleTypes.LARGE_SMOKE, x, y, z, 24, 0.3, 0.3, 0.3, 0.02);
+			level.playSound(null, worldPosition, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 1.0f, 0.8f);
+			Component lost = Component.translatable(ModLang.CAULDRON_FAILED, brewed.getDescription());
+			for (ServerPlayer player : level.getEntitiesOfClass(ServerPlayer.class, new AABB(worldPosition).inflate(16))) player.displayClientMessage(lost, true);
+			if (brewerNow != null) CraftMastery.practise(brewerNow, CraftMastery.Craft.ALCHEMY, recipe.practice() / 2);
+			return;
+		}
+		PillGrade grade = PillGrade.roll(age, level.random);
+		if (level.random.nextDouble() < CraftMastery.betterGrade(rank)) grade = PillGrade.better(grade, age);
+		ItemStack pill = PillItem.create(brewed, grade, age);
+		if (body) pill.getOrCreateTag().putBoolean(PillItem.ALCHEMY_BODY_TAG, true);
+		boolean second = level.random.nextDouble() < CraftMastery.secondPill(rank);
+		for (int i = 0; i < (second ? 2 : 1); i++) {
+			ItemEntity item = new ItemEntity(level, x, y, z, pill.copy(), (i - 0.5) * 0.1 * i, 0.25, 0);
+			item.setDefaultPickUpDelay();
+			level.addFreshEntity(item);
+		}
+		if (brewerNow != null && recipe != null) CraftMastery.practise(brewerNow, CraftMastery.Craft.ALCHEMY, recipe.practice());
 		level.sendParticles(ParticleTypes.CLOUD, x, y - 0.1, z, 12, 0.25, 0.1, 0.25, 0.02);
 		level.sendParticles(ParticleTypes.END_ROD, x, y, z, 20 + grade.ordinal() * 15, 0.3, 0.4, 0.3, 0.05 + grade.ordinal() * 0.03);
 		level.playSound(null, worldPosition, SoundEvents.BREWING_STAND_BREW, SoundSource.BLOCKS, 1.0f, 1.2f);
@@ -205,6 +237,7 @@ public class AlchemyCauldronBlockEntity extends BlockEntity {
 		}
 		contents.clear();
 		brewing = null;
+		brewer = null;
 		brewTicks = brewTotal = 0;
 		setChanged();
 	}
@@ -222,6 +255,8 @@ public class AlchemyCauldronBlockEntity extends BlockEntity {
 			tag.putInt("BrewTicks", brewTicks);
 			tag.putInt("BrewTotal", brewTotal);
 			if (alchemyBody) tag.putBoolean("AlchemyBody", true);
+			if (brewer != null) tag.putUUID("Brewer", brewer);
+			tag.putInt("BrewerRank", brewerRank.ordinal());
 		}
 	}
 
@@ -243,5 +278,8 @@ public class AlchemyCauldronBlockEntity extends BlockEntity {
 			brewTotal = tag.getInt("BrewTotal");
 		}
 		alchemyBody = brewing != null && tag.getBoolean("AlchemyBody");
+		brewer = brewing != null && tag.hasUUID("Brewer") ? tag.getUUID("Brewer") : null;
+		int rank = tag.getInt("BrewerRank"); // a brew from before the crafts: an apprentice's
+		brewerRank = CraftMastery.Rank.values()[Math.max(0, Math.min(CraftMastery.Rank.values().length - 1, rank))];
 	}
 }

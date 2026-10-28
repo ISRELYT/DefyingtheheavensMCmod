@@ -481,6 +481,23 @@ public class PlayerCultivation {
 		statPointOrder.clear();
 	}
 
+	/** The practice gathered in each craft (CraftMastery), by the craft's place: kept for life, carried over a reincarnation. */
+	private final int[] mastery = new int[CraftMastery.Craft.values().length];
+
+	public int getMastery(CraftMastery.Craft craft) { return mastery[craft.ordinal()]; }
+
+	public void setMastery(CraftMastery.Craft craft, int practice) { mastery[craft.ordinal()] = Math.max(0, practice); }
+
+	/**
+	 * Heaven's brand on them (the Tribulation Spear's art, LegendaryWeaponItem#heavensBrand): how many percent more bolts each of their
+	 * heavenly tribulations brings, for good (TribulationManager#branded; LegendaryWeaponItem#BRAND_MOST at most). Carried over a reincarnation.
+	 */
+	private int tribulationBrand;
+
+	public int getTribulationBrand() { return tribulationBrand; }
+
+	public void setTribulationBrand(int percent) { tribulationBrand = Math.max(0, Math.min(LegendaryWeaponItem.BRAND_MOST, percent)); }
+
 	/** The ability selected on the ability wheel, which the Use Selected Ability key switches (null: none yet). */
 	private Ability selectedAbility;
 
@@ -1346,6 +1363,8 @@ public class PlayerCultivation {
 		laws.carryOver(old.laws); // and the Laws comprehended (the Decays' reckoning begins anew)
 		techniques.addAll(old.techniques); // and the techniques and spells learned from manuals
 		manualSpells.addAll(old.manualSpells);
+		System.arraycopy(old.mastery, 0, mastery, 0, mastery.length); // and the crafts' mastery
+		tribulationBrand = old.tribulationBrand; // and heaven's brand, which no new body sheds
 	}
 
 	/**
@@ -1425,6 +1444,8 @@ public class PlayerCultivation {
 			tag.putIntArray("StatPoints", statPoints.clone());
 			tag.putIntArray("StatPointOrder", statPointOrder());
 		}
+		if (java.util.Arrays.stream(mastery).anyMatch(practice -> practice > 0)) tag.putIntArray("Mastery", mastery.clone());
+		if (tribulationBrand > 0) tag.putInt("TribulationBrand", tribulationBrand);
 		if (selectedAbility != null) tag.putString("SelectedAbility", selectedAbility.getId());
 		tag.putBoolean("HeavensLeave", heavensLeave);
 		tag.putInt("Favour", favour);
@@ -1516,6 +1537,9 @@ public class PlayerCultivation {
 		} else { // from before the order was kept (or not matching it): in stat order
 			for (int i = 0; i < points.length && i < c.statPoints.length; i++) c.setStatPoints(StatPoints.Stat.byIndex(i), points[i]);
 		}
+		int[] mastery = tag.getIntArray("Mastery"); // none practised (or a save from before the crafts): all zero
+		for (int i = 0; i < mastery.length && i < c.mastery.length; i++) c.mastery[i] = Math.max(0, mastery[i]);
+		c.setTribulationBrand(tag.getInt("TribulationBrand")); // never branded (or a save from before the spear): none
 		c.selectedAbility = Ability.byId(tag.getString("SelectedAbility")); // none yet: null
 		c.setMortalState(MortalStage.byIndex(tag.getInt("MortalStage")), tag.getDouble("Tempering"));
 		int prepared = tag.contains("PreparedRealm") ? tag.getInt("PreparedRealm") : -1;

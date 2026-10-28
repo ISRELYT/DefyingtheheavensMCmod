@@ -37,6 +37,11 @@ import java.util.UUID;
  * <p>
  * Cores a sect's founders set at the heart of their grounds start with a {@link #blueprint} of the sect (see SectStructure);
  * on their first tick they found the sect and raise its barrier, and from then on answer only to that sect.
+ * <p>
+ * Since 2026-10-28 (the user's ask: "the formation core now acts as a core for all types of formations except the storage one") the
+ * barrier is one of its functions; the other is concealment (Concealments), with its own radius and switch, its upkeep ({@link #veilUpkeep})
+ * from the same veins and battery. Short of qi, the concealment goes first. Its owner's mastery of formations (CraftMastery) takes 5% off
+ * both upkeeps a rank past Apprentice, and keeping them up teaches it.
  */
 public class FormationCoreBlockEntity extends BlockEntity {
 	public static final double BATTERY = 2000;
@@ -66,6 +71,15 @@ public class FormationCoreBlockEntity extends BlockEntity {
 	private final Map<UUID, String> trusted = new LinkedHashMap<>();
 	/** The sect this core served before it fell (its last member dead), for the first to claim it. Empty otherwise. */
 	private String formerSect = "";
+	/** Its concealment (Concealments: its veil's id the formation's): the radius to keep it at, and whether it should be up. */
+	private int veilRadius = DEFAULT_RADIUS;
+	private boolean veilWanted;
+	/** Its owner's rank in formations (CraftMastery#Rank ordinal) when they last set it: each past Apprentice takes 5% off the upkeeps. */
+	private int masteryRank;
+	/** Ticks its functions have stood since its owner last learned from them. */
+	private int practiceTicks;
+	/** A function standing this long teaches its owner a point of practice in formations (ten minutes). */
+	private static final int PRACTICE_TICKS = 12_000;
 
 	public FormationCoreBlockEntity(BlockPos pos, BlockState state) {
 		super(ModBlockEntities.FORMATION_CORE, pos, state);
@@ -74,6 +88,25 @@ public class FormationCoreBlockEntity extends BlockEntity {
 	/** Qi per second a barrier of this radius costs to keep up: 1.3 at radius 8, 13 at 32, 52 at 64. */
 	public static double upkeep(int radius) {
 		return 0.5 + radius * radius / 80.0;
+	}
+
+	/** Qi per second a concealment of this radius costs: three quarters of a barrier's (1 at radius 8, 10 at 32, 39 at 64). */
+	public static double veilUpkeep(int radius) {
+		return upkeep(radius) * 0.75;
+	}
+
+	/** What its owner's mastery of formations leaves of each upkeep: 5% off for every rank past Apprentice (a Saint's, 80%). */
+	public double upkeepShare() {
+		return 1 - 0.05 * masteryRank;
+	}
+
+	public int getVeilRadius() { return veilRadius; }
+	public boolean isVeilWanted() { return veilWanted; }
+
+	public boolean isVeilRaised() {
+		if (!(level instanceof ServerLevel server) || formationId == null) return false;
+		Concealments.Veil veil = Concealments.get(server, formationId);
+		return veil != null && veil.isRaised();
 	}
 
 	/**
@@ -142,11 +175,14 @@ public class FormationCoreBlockEntity extends BlockEntity {
 		this.rank = masterRank;
 		this.battery = BATTERY;
 		trusted.clear();
+		this.veilWanted = false; // a sect's core keeps no concealment
 		setChanged();
 		if (level instanceof ServerLevel server) {
 			Formation formation = formation(server);
 			Formations.resize(server, formation, this.radius);
 			Formations.update(server, formation, rank, null, sect);
+			Concealments.Veil veil = Concealments.get(server, formationId);
+			if (veil != null && veil.isRaised()) Concealments.set(server, veil, false, veil.radius());
 		}
 	}
 
@@ -184,6 +220,14 @@ public class FormationCoreBlockEntity extends BlockEntity {
 		return formation;
 	}
 
+	/** Its concealment's veil (made, lowered, the first time it is wanted), answering to its owner and those they trust. */
+	private Concealments.Veil veil(ServerLevel level) {
+		formation(level);
+		Concealments.Veil veil = Concealments.veil(level, formationId, worldPosition, veilRadius);
+		Concealments.update(level, veil, rank, owner, trusted.keySet());
+		return veil;
+	}
+
 	// --- Ticking ---
 
 	public static void serverTick(Level level, BlockPos pos, BlockState state, FormationCoreBlockEntity core) {
@@ -199,30 +243,65 @@ public class FormationCoreBlockEntity extends BlockEntity {
 		if (time % 20 == 0) core.economy(server);
 	}
 
-	/** Once a second: the veins fill the battery, the barrier draws its upkeep, and it rises or falls accordingly. */
+	/**
+	 * Once a second: the veins fill the battery, the barrier and the concealment draw their upkeep, and each rises or falls accordingly;
+	 * short of qi, the concealment goes first, the barrier only if it still can't be carried.
+	 */
 	private void economy(ServerLevel level) {
 		if (sect != null) {
 			Sect served = SectManager.get(level.getServer(), sect);
 			if (served == null || served.extinct) releaseFromSect(level);
 		}
 		Formation formation = formation(level);
-		double upkeep = formation.isRaised() ? upkeep(formation.getRadius()) : 0;
+		Concealments.Veil veil = veilWanted && sect == null ? veil(level) : formationId == null ? null : Concealments.get(level, formationId);
+		double share = upkeepShare();
+		double upkeep = formation.isRaised() ? upkeep(formation.getRadius()) * share : 0;
+		double veilCost = veil != null && veil.isRaised() ? veilUpkeep(veil.radius()) * share : 0;
 		double before = battery;
-		battery = Math.max(0, Math.min(BATTERY, battery + supply() - upkeep));
+		battery = Math.max(0, Math.min(BATTERY, battery + supply() - upkeep - veilCost));
 		if (battery != before) setChanged();
+		if (veil != null) {
+			if (veil.isRaised() && (!veilWanted || sect != null)) {
+				Concealments.set(level, veil, false, veil.radius());
+				veilCost = 0;
+				level.playSound(null, worldPosition, SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.BLOCKS, 1.0f, 0.6f);
+			} else if (veil.isRaised() && battery <= 0 && supply() < upkeep + veilCost) {
+				Concealments.set(level, veil, false, veil.radius());
+				veilCost = 0;
+				level.playSound(null, worldPosition, SoundEvents.AMETHYST_BLOCK_BREAK, SoundSource.BLOCKS, 1.0f, 0.6f);
+			} else if (!veil.isRaised() && veilWanted && sect == null
+					&& (supply() >= upkeep + veilUpkeep(veilRadius) * share || battery >= BATTERY * RAISE_FRACTION)) {
+				Concealments.set(level, veil, true, veilRadius);
+				level.playSound(null, worldPosition, SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.BLOCKS, 1.0f, 1.4f);
+			} else if (veil.isRaised() && veil.radius() != veilRadius) {
+				Concealments.set(level, veil, true, veilRadius);
+			}
+		}
 		if (formation.isRaised() && !wanted) {
 			Formations.lower(level, formation);
 			level.playSound(null, worldPosition, SoundEvents.BEACON_DEACTIVATE, SoundSource.BLOCKS, 1.0f, 1.0f);
 			SectManager.onBarrierChanged(level, sect, false, false);
-		} else if (formation.isRaised() && battery <= 0 && supply() < upkeep) {
+		} else if (formation.isRaised() && battery <= 0 && supply() < upkeep + veilCost) {
 			collapse(level, false);
 		} else if (!formation.isRaised() && wanted && level.getGameTime() >= shatteredUntil
-				&& (supply() >= upkeep(radius) || battery >= BATTERY * RAISE_FRACTION)) {
+				&& (supply() >= upkeep(radius) * share + veilCost || battery >= BATTERY * RAISE_FRACTION)) {
 			if (formation.getRadius() != radius) Formations.resize(level, formation, radius);
 			Formations.raise(level, formation);
 			level.playSound(null, worldPosition, SoundEvents.BEACON_ACTIVATE, SoundSource.BLOCKS, 1.0f, 1.2f);
 			SectManager.onBarrierChanged(level, sect, true, false);
 		}
+		practise(level, formation.isRaised(), veil != null && veil.isRaised());
+	}
+
+	/** Every ten minutes a function of a player's core stands, its owner (if about) learns a point of formations for each (CraftMastery). */
+	private void practise(ServerLevel level, boolean barrier, boolean veiled) {
+		if (owner == null || sect != null || !barrier && !veiled) return;
+		practiceTicks += 20;
+		if (practiceTicks < PRACTICE_TICKS) return;
+		practiceTicks = 0;
+		setChanged();
+		ServerPlayer player = level.getServer().getPlayerList().getPlayer(owner);
+		if (player != null) CraftMastery.practise(player, CraftMastery.Craft.FORMATIONS, (barrier ? 1 : 0) + (veiled ? 1 : 0));
 	}
 
 	/** The barrier comes down: out of qi, or {@code shattered} by a breach the battery couldn't mend. */
@@ -353,11 +432,20 @@ public class FormationCoreBlockEntity extends BlockEntity {
 		by.displayClientMessage(Component.translatable(ModLang.MSG_TRUST_ADDED, profile.getName()), true);
 	}
 
-	/** Trusts {@code player} (the tests, and {@link #trustByName}). */
+	/** Trusts {@code player} (the tests, and {@link #trustByName}): they pass its barrier and see through its concealment. */
 	public void trust(UUID player, String name) {
 		trusted.put(player, name);
 		setChanged();
-		if (level instanceof ServerLevel server) Formations.setTrusted(server, formation(server), trusted.keySet());
+		if (level instanceof ServerLevel server) {
+			Formations.setTrusted(server, formation(server), trusted.keySet());
+			answering(server);
+		}
+	}
+
+	/** Its concealment's veil, if it has one, told again whom it answers to (its owner's rank, its owner, those they trust). */
+	private void answering(ServerLevel level) {
+		Concealments.Veil veil = formationId == null ? null : Concealments.get(level, formationId);
+		if (veil != null) Concealments.update(level, veil, rank, owner, trusted.keySet());
 	}
 
 	/** From the screen: no longer trusts {@code player}. */
@@ -367,24 +455,39 @@ public class FormationCoreBlockEntity extends BlockEntity {
 		if (name == null) return;
 		setChanged();
 		Formations.setTrusted(server, formation(server), trusted.keySet());
+		answering(server);
 		by.displayClientMessage(Component.translatable(ModLang.MSG_TRUST_REMOVED, name), true);
 	}
 
-	/** From the screen: the radius to keep the barrier at, and whether it should be up. */
+	/** From the screen: the radius to keep the barrier at, and whether it should be up (its concealment left as it is). */
 	public void configure(ServerPlayer player, int newRadius, boolean newWanted) {
+		configure(player, newRadius, newWanted, veilRadius, veilWanted);
+	}
+
+	/** From the screen: each function's radius, and whether it should be up. */
+	public void configure(ServerPlayer player, int newRadius, boolean newWanted, int newVeilRadius, boolean newVeilWanted) {
 		if (!(level instanceof ServerLevel server) || !canControl(player)) return;
 		radius = Math.max(Formations.MIN_RADIUS, Math.min(Formations.maxRadius(level), newRadius));
 		wanted = newWanted;
-		if (sect == null && owner != null && owner.equals(player.getUUID())) rank = Formations.rankOf(player); // as strong as its maker now
+		veilRadius = Math.max(Formations.MIN_RADIUS, Math.min(Formations.maxRadius(level), newVeilRadius));
+		veilWanted = newVeilWanted && sect == null;
+		if (sect == null && owner != null && owner.equals(player.getUUID())) {
+			rank = Formations.rankOf(player); // as strong as its maker now
+			masteryRank = CraftMastery.rank(CultivationManager.own(player), CraftMastery.Craft.FORMATIONS).ordinal(); // and as skilled
+		}
 		setChanged();
 		Formation formation = formation(server);
 		if (formation.isRaised() && formation.getRadius() != radius) Formations.resize(server, formation, radius);
+		answering(server);
 		economy(server); // switch on or off at once rather than within the second
 	}
 
-	/** The core's block was broken or replaced: its barrier comes down for good. */
+	/** The core's block was broken or replaced: its barrier and its concealment come down for good. */
 	public void onRemovedFromWorld(ServerLevel level) {
-		if (formationId != null) Formations.dissolve(level, formationId);
+		if (formationId != null) {
+			Formations.dissolve(level, formationId);
+			Concealments.dissolve(level, formationId);
+		}
 		SectManager.onCoreDestroyed(level, sect);
 	}
 
@@ -414,6 +517,10 @@ public class FormationCoreBlockEntity extends BlockEntity {
 		}
 		tag.put("Trusted", list);
 		tag.putString("FormerSect", formerSect);
+		tag.putInt("VeilRadius", veilRadius);
+		tag.putBoolean("VeilWanted", veilWanted);
+		tag.putInt("Mastery", masteryRank);
+		tag.putInt("PracticeTicks", practiceTicks);
 	}
 
 	@Override
@@ -437,6 +544,10 @@ public class FormationCoreBlockEntity extends BlockEntity {
 			if (player.hasUUID("Id")) trusted.put(player.getUUID("Id"), player.getString("Name"));
 		}
 		formerSect = tag.getString("FormerSect");
+		veilRadius = tag.contains("VeilRadius") ? tag.getInt("VeilRadius") : DEFAULT_RADIUS;
+		veilWanted = tag.getBoolean("VeilWanted");
+		masteryRank = tag.getInt("Mastery");
+		practiceTicks = tag.getInt("PracticeTicks");
 	}
 
 	/** For the screen's status lines. */

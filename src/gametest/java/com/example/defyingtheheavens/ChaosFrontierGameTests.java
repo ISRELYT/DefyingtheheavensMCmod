@@ -406,9 +406,11 @@ public class ChaosFrontierGameTests implements FabricGameTest {
 			// Its spoils: six Dao Fragments of six Laws, twelve Chaos Origin Stones, twelve Immortal Jade, hanging where it fell.
 			BlockPos at = helper.absolutePos(new BlockPos(2, 3, 2));
 			chaos.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0, 0);
+			// Pangu's Axe falls out of its heart too, while it is there (Legends#fromTheChaos, phase 3c).
+			boolean axeHome = Legends.get(server).entry(Legend.PANGU_AXE).state() == Legends.State.RESTING;
 			chaos.dropCustomDeathLoot(level.damageSources().generic(), 0, true);
 			Set<Law> laws = EnumSet.noneOf(Law.class);
-			int fragments = 0, stones = 0, jade = 0, other = 0;
+			int fragments = 0, stones = 0, jade = 0, axes = 0, other = 0;
 			for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, new AABB(at).inflate(3))) {
 				ItemStack stack = item.getItem();
 				if (stack.is(ModItems.DAO_FRAGMENT)) {
@@ -416,12 +418,13 @@ public class ChaosFrontierGameTests implements FabricGameTest {
 					laws.add(DaoFragmentItem.law(stack));
 				} else if (stack.is(ModItems.CHAOS_ORIGIN_STONE)) stones += stack.getCount();
 				else if (stack.is(ModItems.IMMORTAL_JADE)) jade += stack.getCount();
+				else if (stack.is(ModItems.legend(Legend.PANGU_AXE)) && Legends.isTrue(server, stack)) axes++;
 				else other++;
 				item.discard();
 			}
 			helper.assertTrue(fragments == PrimordialBeast.CHAOS_FRAGMENTS && laws.size() == PrimordialBeast.CHAOS_FRAGMENTS && stones == PrimordialBeast.CHAOS_STONES
-					&& jade == PrimordialBeast.CHAOS_JADE && other == 0, "Six fragments of six Laws, twelve stones, twelve jade (" + fragments + ", " + laws.size()
-					+ ", " + stones + ", " + jade + ", " + other + ")");
+					&& jade == PrimordialBeast.CHAOS_JADE && other == 0 && axes == (axeHome ? 1 : 0), "Six fragments of six Laws, twelve stones, twelve jade, the axe if it was home ("
+					+ fragments + ", " + laws.size() + ", " + stones + ", " + jade + ", " + axes + ", " + other + ")");
 			// The Court pays twice a primordial beast's for it.
 			CelestialCourt.join(p);
 			int before = CelestialCourt.meritOf(server, p.getUUID());

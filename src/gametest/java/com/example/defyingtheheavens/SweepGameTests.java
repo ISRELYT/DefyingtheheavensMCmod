@@ -94,19 +94,24 @@ public class SweepGameTests implements FabricGameTest {
 		}
 	}
 
+	/** No space folded in another (since 2026-10-28 the storage formations' spaces: a packed formation, an old ring, nor a box holding one). */
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void aRingHoldsNoRingInABox(GameTestHelper helper) {
 		ItemStack ring = new ItemStack(ModItems.STORAGE_RING);
+		ItemStack packed = StorageFormationItem.of(StorageFormations.Tier.LOW);
+		StorageFormationItem.setSpace(packed, java.util.UUID.randomUUID());
 		ItemStack box = new ItemStack(Items.SHULKER_BOX);
 		CompoundTag held = new CompoundTag();
 		ListTag items = new ListTag();
-		CompoundTag one = ring.save(new CompoundTag());
+		CompoundTag one = packed.save(new CompoundTag());
 		one.putByte("Slot", (byte) 0);
 		items.add(one);
 		held.put("Items", items);
 		box.getOrCreateTag().put("BlockEntityTag", held);
-		helper.assertTrue(!StorageRings.mayHold(ring) && !StorageRings.mayHold(box), "Neither a ring nor a box with a ring in it goes into a ring");
-		helper.assertTrue(StorageRings.mayHold(new ItemStack(Items.SHULKER_BOX)) && StorageRings.mayHold(new ItemStack(Items.DIAMOND, 3)), "...anything else does");
+		helper.assertTrue(!StorageSpaces.mayHold(ring) && !StorageSpaces.mayHold(packed) && !StorageSpaces.mayHold(box),
+				"Neither an old ring, a packed formation, nor a box with one in it goes into a space");
+		helper.assertTrue(StorageSpaces.mayHold(new ItemStack(Items.SHULKER_BOX)) && StorageSpaces.mayHold(new ItemStack(Items.DIAMOND, 3))
+				&& StorageSpaces.mayHold(StorageFormationItem.of(StorageFormations.Tier.MID)), "...anything else does (an empty formation too)");
 		helper.succeed();
 	}
 

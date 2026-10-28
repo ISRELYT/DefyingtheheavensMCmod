@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:arts/legend_venerables",
+  "criteria": {
+    "legend_duel_won": {
+      "conditions": {
+        "milestone": "legend/duel_won"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.arts.legend_dao_duel.description"
+    },
+    "frame": "challenge",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:yellow_dragon_seal"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.arts.legend_dao_duel.title"
+    }
+  },
+  "requirements": [
+    [
+      "legend_duel_won"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

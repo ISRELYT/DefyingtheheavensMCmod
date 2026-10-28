@@ -2,7 +2,10 @@ package com.example.defyingtheheavens.client;
 
 import com.example.defyingtheheavens.BeastKind;
 import com.example.defyingtheheavens.ChaosFrontier;
+import com.example.defyingtheheavens.CultivatorNpc;
 import com.example.defyingtheheavens.DefyingTheHeavens;
+import com.example.defyingtheheavens.Legend;
+import com.example.defyingtheheavens.LegendaryWeaponItem;
 import com.example.defyingtheheavens.ModDimensions;
 import com.example.defyingtheheavens.ModNoiseSettings;
 import com.example.defyingtheheavens.PrimordialBeast;
@@ -45,8 +48,8 @@ import org.joml.Matrix4f;
  *   swell higher, so the top billows; drifting slowly east, the higher layers the faster; fading into the horizon's gold with the
  *   fog;</li>
  *   <li>a close white-gold fog within the clouds and under them ({@link #cloudFog});</li>
- *   <li>the True Dragon's storm (PrimordialBeast): near it the sky and the fog darken to the storm's grey ({@link #storm}), easing in as
- *   one nears it and out as one leaves it;</li>
+ *   <li>the True Dragon's storm (PrimordialBeast), and Lei Zhen's (LeiZhen: known by the Tribulation Spear in his hand): near either the sky
+ *   and the fog darken to the storm's grey ({@link #storm}), easing in as one nears it and out as one leaves it;</li>
  *   <li>the Chaos Frontier (phase 3c, ChaosFrontier): out past the realm's edge ({@link #chaos}) the sky bruises violet and the sun is
  *   lost, the sea of clouds turns grey-violet and churns (each layer sloshing against the next), the fog closes in violet, and motes of the
  *   storm's chaos stream through the air (none in the First Flame's light).</li>
@@ -117,6 +120,11 @@ public final class ImmortalRealmClient {
 			for (PrimordialBeast beast : mc.level.getEntitiesOfClass(PrimordialBeast.class, mc.player.getBoundingBox().inflate(STORM_REACH),
 					b -> b.kind() == BeastKind.TRUE_DRAGON && b.isAlive())) {
 				nearest = Math.min(nearest, beast.distanceTo(mc.player));
+			}
+			// Mad Lei Zhen walks under a storm of his own (the user's word, 2026-10-28: "like the true dragon"): the spear in his hand tells him.
+			for (CultivatorNpc lei : mc.level.getEntitiesOfClass(CultivatorNpc.class, mc.player.getBoundingBox().inflate(STORM_REACH),
+					n -> n.isAlive() && n.getMainHandItem().getItem() instanceof LegendaryWeaponItem spear && spear.legend() == Legend.TRIBULATION_SPEAR)) {
+				nearest = Math.min(nearest, lei.distanceTo(mc.player));
 			}
 			target = (float) Mth.clamp((STORM_REACH - nearest) / (STORM_REACH - STORM_FULL), 0, 1);
 			Vec3 at = mc.gameRenderer.getMainCamera().getPosition();

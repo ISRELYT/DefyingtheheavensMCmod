@@ -31,7 +31,7 @@ uses it yet.
 Everything the mod adds has its own creative tab, **Defying The Heavens** (`ModCreativeTab`, shown with a Cultivation
 Fruit; with vanilla's tabs full it sits on the second page, behind the arrows at the top). In order: what cultivation is
 done with (meditation mats, Spirit Pedestal, Heaven Altar, Alchemy Cauldron, Formation Core, Inscription Brush, the
-rings), what is taken (a one-year Cultivation Fruit, every pill at every grade from Low to Immortal, Spirit Dew), the
+rings, the storage formations, the Artifact Forge and every artifact at every grade, a banner of each element), what is taken (a one-year Cultivation Fruit, every pill at every grade from Low to Immortal, Spirit Dew), the
 herbs (a year old) and their seeds, spores and pit, spirit stones of every grade and jade, the world's blocks (jade
 stone, ores, qi veins, Blue Spirit Wood, leaves), the clothing (every path's colours, grade and piece), the
 Netherworld's things (Yang Fire Talisman, Ghost-Quelling Talisman, Peach Wood Sword, Red Spider Lily, the Other-Shore Flower and Netherworld Lotus
@@ -50,7 +50,7 @@ reward (the user's pick).
 | Tab | What it follows |
 | --- | --- |
 | **Defying the Heavens** | The realms, Qi Refining to Heavenly Lord (the highest of your paths: heaven, ghost or Demon Path); a tribulation survived, and one into True Immortal or past it; a High-grade physique; the Ritual granted; the four axes of virtue; a Law; the Five Decays weathered |
-| **Arts and Treasures** | The first spell, the five elements' spells, a spell of both paths; Qi Sense, Qi Flight, Sword Flight, Meteor Flight; the Inner Realm, Soul Projection, Possession, a Clone, a core detonated (secret); spirit stones and an Immortal one, a Storage Ring refined, a thousand-year Cultivation Fruit eaten, a Sacred Vessel, a Dao Fragment, an Origin Stone; a demon core, a Chaos Fiend, an elder beast, a primordial beast, the Primordial Chaos |
+| **Arts and Treasures** | The first spell, the five elements' spells, a spell of both paths; Qi Sense, Qi Flight, Sword Flight, Meteor Flight; the Inner Realm, Soul Projection, Possession, a Clone, a core detonated (secret); spirit stones and an Immortal one, a storage formation refined, a thousand-year Cultivation Fruit eaten, a Sacred Vessel, a Dao Fragment, an Origin Stone; a demon core, a Chaos Fiend, an elder beast, a primordial beast, the Primordial Chaos |
 | **Worlds Beyond** | The Spatial Gap, the Jade Firmament, the Astral Realm, the Great Void, its Ancient Battlefields, a Holy Land, a Demon Palace, the Shore of Nirvana, the Immortal Realm, the Chaos Frontier, a small world of your own |
 | **The Yellow Springs** | Death as a ghost, the Soul River, the Nine Nether Peaks, a Hungry Ghost slain, the ghost path, a ghost spell, both paths among the living, a Ghost King's crown, Meng Po's soup, rebirth |
 | **Sects and Cultivators** | A talk, an accepted gift, a sworn friend, a spar won, a sect joined, Elder, Sect Master, a beast's bloodline, a cultivator kneeling to you, a title taken, the Celestial Court |
@@ -68,8 +68,8 @@ The mod's guide in game (the user's ask, 2026-10-27: "a little encyclopaedia or 
 rebindable) and a button on the cultivation menu; a sealed page shown as **???** with a vague hint; a **toast** and a **gold dot** for
 what is new; a **player's guide**, what things are and how to do them, with few exact numbers.
 
-- **104 pages in 11 chapters**: First Steps, The Way of Cultivation, The Realms, Methods and Spells, Abilities, Treasures and Alchemy,
-  Sects and Cultivators, Beasts and Bloodlines, Worlds Beyond, The Yellow Springs, Laws and Immortality. About a fifth are open from
+- **133 pages in 12 chapters**: First Steps, The Way of Cultivation, The Realms, Methods and Spells, Abilities, Treasures and Alchemy,
+  Sects and Cultivators, Beasts and Bloodlines, Bestiary, Worlds Beyond, The Yellow Springs, Laws and Immortality. About a fifth are open from
   the first day (First Steps whole: the Codex itself, the mortal body, the elixir, the cauldron, meditation, the menu, the keys, one's
   physique; and the plain things of the world: lifespan, spirit stones, fruit, herbs, clothing, jade, cultivators, talking, alignment,
   sects and their barriers, demon beasts, bloodlines).
@@ -109,6 +109,15 @@ what is new; a **player's guide**, what things are and how to do them, with few 
     bracketed by where its qi is rich enough to cultivate it (the lower realms, the Jade Firmament, the Great Void, the Immortal Realm).
   - **The cycle of the five** (on The Five Elements, with a new paragraph on wards): fire, metal, wood, earth and water round a circle,
     each arrow in the colour of the element that overcomes, as `QiElement#overcomes` has it.
+- **The Bestiary** (2026-10-28, the user's pick): a chapter of 28 pages, one for every creature (the 16 wild beasts, the 4 elders, the
+  Kun-Peng, True Phoenix, True Dragon and Primordial Chaos, the Chaos Fiend, the Hungry Ghost, the Heart Demon and the Vestige of the
+  Void). A page stays ??? ("Come upon this creature to record it") until its creature has been seen up close (in sight within 32 blocks,
+  the vast ones farther; noted by the client, kept with the Codex's marks), then opens with a toast like any page. Each begins with
+  `@beast id`: the creature itself turning slowly in a frame (the Hungry Ghost, which only the ghost shader draws in the world, as a faded
+  body in its skin; the Heart Demon in the reader's own), beside it its realm range, element, how it goes about and its temper (all read
+  from `BeastKind`), and under it "Drops:" with what it drops (its core and its kin's blood at its least realm, its remains; the
+  primordial beasts' and chaos's own spoils), each with its tooltip; then a few lines on where it lives and how it fights. The chapters'
+  column is 16 high now so twelve fit.
 
 Code: `Codex` (the chapters, pages, hints and their English, on the common side so a test can hold the pages to the loaded
 advancements; the picture lines), `CodexMap` (the map's worlds, ways, visits, qi and recommended realms), client `CodexScreen` (and its
@@ -213,30 +222,42 @@ close it. Shift-clicking a ring puts it on even while the panel is closed. The p
 open. In the creative inventory tab the ring slots show right of the armor, as before. Code: `client/BaublePanel.java`,
 `client/mixin/InventoryScreenMixin.java`, `RingSlot.java`.
 
-## Storage Rings
+## Storage Formations
 
-A **Storage Ring** folds a space into a ring: crafted from four gold ingots, four jade and an ender pearl (gold at the corners,
-jade at the sides, the pearl in the middle). Right-click to open it; sneak-right-click to wear it in a ring slot, and the
-**Storage Ring key (B)** opens the one worn (or else the first one carried). Its screen, in lacquer and gold: what it holds
-as a grid (one well a kind, how many beneath it, shortened to k/M/B), a search line, how full it is, and the pack below.
-Click a kind to take a stack (right-click: half; shift-click: straight into the pack); click with something carried to put
-it in (right-click: one); shift-click the pack to put a stack in. Rings can't go inside rings, nor anything carrying one (a
-shulker box, a bundle: the bug sweep of 2026-10-23), and the open ring can't be moved. Refining wants the realm on any path.
-A ring lying on the ground never despawns and is proof against fire, cactus and blasts (the void still takes it).
+The Storage Rings are gone (the user's ask, 2026-10-28): a **storage formation** folds a space into a sealed block instead.
+Craft a Low-Grade one from a chest, four Low Spirit Stones and four jade (stones at the corners, jade at the sides, the chest
+in the middle) and place it: it is yours, and only you and the players you trust open it. Its screen, in lacquer and gold:
+what it holds as a grid (one well a kind, how many beneath it, shortened to k/M/B), a search line with the owner's Trust and
+Refine buttons beside it, how full it is, and the pack below. Click a kind to take a stack (right-click: half; shift-click: straight
+into the pack); click with something carried to put it in (right-click: one); shift-click the pack to put a stack in. A
+packed formation can't go inside a space, nor anything carrying one (a shulker box, a bundle: the bug sweep of 2026-10-23).
 
-What it holds lives with the world, keyed by the ring: the ring goes where it goes (a fallen cultivator's ring is the
-victor's), and a ring lost is a space lost. **Refine** (top right of its screen) raises its grade:
+**Its seal**: no pickaxe, blast, spell or hopper breaks it or draws from it. A stranger below the seal's realm is turned
+away; one of its realm (on any path) forces it by staying within 6 blocks for its time, its owner warned when they begin and
+when it breaks. A broken seal stays open to anyone until its owner opens the formation again, which mends it (a stranger
+looking in then is shut out). Sneak + right-click with an empty hand: its owner packs it up, the item keeping all it held
+(on the ground it never despawns and is proof against fire and blasts). **Refine** (beside its search line) raises its
+grade in place, its space, owner and trust kept:
 
-| Grade | Holds | Refining into it takes | Realm |
-|---|---|---|---|
-| Mortal | 27 stacks | crafted | - |
-| Spirit | 54 stacks | 16 Low Spirit Stones, 4 ender pearls | Foundation Building |
-| Earth | 108 stacks | 16 Mid Spirit Stones, 8 jade | Core Formation |
-| Heaven | 216 stacks | 16 High Spirit Stones, 2 shulker shells | Nascent Soul |
-| Boundless (Qiankun Ring) | **without end**: any number of any number of kinds | 8 Supreme Spirit Stones, 1 Immortal Spirit Stone, a nether star | Heavenly Being |
+| Grade | Holds | Seal (and the realm to refine into it) | Forcing takes | Refining into it takes | Formations mastery |
+|---|---|---|---|---|---|
+| Low | 27 stacks | Foundation Building | 10 s | crafted | - |
+| Mid | 54 stacks | Core Formation | 20 s | 16 Mid Spirit Stones, 8 jade | - |
+| High | 81 stacks | Heavenly Being | 40 s | 16 High Spirit Stones, 4 shulker shells | - |
+| Supreme | 108 stacks | Void Shattering | 80 s | 16 Supreme Spirit Stones, a nether star | Adept |
+| Immortal | **without end**: any number of any number of kinds | True Immortal | 160 s | 8 Immortal Spirit Stones, 4 Immortal Jade | Master |
 
-Code: `StorageRingItem`, `StorageRings` (the spaces, saved data, clicks, refining), `StorageRingMenu`; client
-`StorageRingScreen`, `ClientStorageRing`; tests `StorageRingGameTests`.
+Crafting one and refining teach Formations mastery (CraftMastery). The world's treasuries (the sects', the clans' hoards,
+the ghost palaces') keep their riches in formations of no owner, rolled the first time one is opened, their keepers' rules
+over them as over the chests before (the elders' seal, the king's): Mid in the mortal world, High in the Upper Realm and
+the Netherworld, Supreme in the Great Void, Immortal in the Immortal Realm and small worlds. A player's own formation set
+down in a treasury is under its own seal, not the keepers'. An old Storage Ring a player carries (pack, ring slot, ender
+chest) unfolds into the formation of its size with its very space: Mortal to Low, Spirit to Mid, Earth to Supreme, Heaven
+and Boundless to Immortal (one worn goes to the pack).
+
+Code: `StorageFormations` (tiers, opening, forcing, refining, treasuries, the old rings), `StorageSpaces` (the spaces, saved
+data), `StorageFormationBlock`, `StorageFormationBlockEntity`, `StorageFormationItem`, `StorageFormationMenu`; client
+`StorageFormationScreen`, `ClientStorageSpace`; tests `StorageFormationGameTests`.
 
 ## Meditation mats
 
@@ -427,11 +448,212 @@ The **Rebirth Pill** is no brew: it's found in the Upper Realm (Lifespan, below)
   their age, so they push the grade up.
 - Recipes are in `AlchemyRecipes.java`; the cauldron is `AlchemyCauldronBlock(Entity).java`; the Qi Gathering effect is
   `ModEffects.java`. Pill tooltips list their ingredients, and the cultivation menu names the pill a breakthrough needs.
+- **Craft mastery** (2026-10-28, the user's pick: "the more you do it the better results you get"; `CraftMastery.java`).
+  Alchemy, Forging and Formations each grow by practice through five ranks: Apprentice (0), Adept (20), Master (80),
+  Grandmaster (250), Saint (600). Each recipe has a difficulty 0 to 3 (the elixir 0; Qi Gathering, Cultivation and Yang
+  Preservation 1; Foundation and Yin Gathering 2; Core and Longevity 3) and teaches (difficulty + 1) x 2 practice a brew.
+  A brew harder than the brewer's rank fails 12% of the time per rank short (the herbs ruined in smoke, half the practice
+  still learned; the elixir never fails, so a first step is never lost). Each rank past Apprentice gives a 10% chance of a
+  pill one grade better (`PillGrade#better`: never past the best grade herbs of that age can give at all), and a
+  Grandmaster (10%) or a Saint (25%) sometimes draws a second pill. The cauldron keeps who started the brew and their rank
+  then. Mastery is the player's own (a soul in another's body learns for itself), saved, synced, and carried over a
+  reincarnation. The Stats tab has a third page, **Crafts**: each craft's rank, a gold bar toward the next, and what the rank
+  does. A Codex page, Craft Mastery (Treasures and Alchemy, open from the start). Tests `CraftMasteryGameTests`.
 
 ```
 /cultivation mortal                                   back to Mortal Low
 /cultivation addtempering <amount>                    temper a mortal's body (500+ reaches Peak from Low)
 /give @s defying-the-heavens:core_pill{PillGrade:4,PillAge:10000}   an Immortal-grade pill (grades 0-4)
+```
+
+## The Artifact Forge
+
+Artifacts are forged (2026-10-28, the user's picks: "like the cauldron"; mastery "fail less, finer work"; no refining of
+grades, forge new ones). The **Artifact Forge** (shaped: five copper ingots round a blast furnace, two iron ingots and a
+Low-Grade spirit stone beneath) is a bronze furnace on four feet. Put a fire under it, as under the cauldron (lava, soul
+fire or a magma block: 1.5 times as fast), right-click the materials in one at a time (anything that fits no working with
+what's already in is refused, nine at most), then right-click with an **empty hand** to begin: some workings start the
+same way (a flying sword's two metal and a stick are a glaive's but for a second stick), so none begins by itself. The one
+who began it is its forger: they must stay within 5 blocks and it draws its grade's qi from them every second, or it
+stands still (told why every few seconds). Empty hand: what's in, or how far along; sneak + empty hand: the materials
+back (a working stops, its qi spent); breaking the forge drops them too.
+
+| Grade | Metal | Stones (2) | Demon core | Time | Qi/s | Difficulty |
+|---|---|---|---|---|---|---|
+| Mortal | iron ingot | Low | none | 20 s | 1 | 0 |
+| Spirit | gold ingot | Mid | Qi Refining+ | 30 s | 3 | 1 |
+| Earth | diamond | High | Core Formation+ | 45 s | 8 | 2 |
+| Heaven | netherite ingot | Supreme | Nascent Soul+ | 60 s | 25 | 3 |
+| Immortal | Immortal Jade | Immortal | Dao Integration+ | 90 s | 200 | 4 |
+
+| Kind | Make-up (besides the stones and core) | What it does |
+|---|---|---|
+| Flying sword (jian) | 2 metal, stick | blow 6-10, 1.6 swings/s; Sword Flight on it costs 10/20/30/40/50% less qi |
+| Saber (dao) | 3 metal, leather | blow 7-12, 1.2/s; the most might (below) |
+| Spear (qiang) | 1 metal, 2 sticks | blow 6-10, 1.3/s; pierces 1/1/2/2/3 foes behind the target for 50-75% of the blow |
+| Glaive (guandao) | 2 metal, 2 sticks | blow 7-12, 1.0/s; sweeps everyone within 2.5-3.5 blocks for 40-65% of the blow |
+| Element banner | 2 white wool, stick | held in either hand, its element's spells +5/8/12/16/20% (not added to a Sacred Vessel's: the greater holds) |
+| Qi gourd | pumpkin, glass bottle (+1 metal from Earth) | holds 100/300/1,500/8,000/60,000 qi: sneak + use pours your qi in, use drinks it back |
+| Protective jade | 2 jade, string (+1 metal from Earth) | in a ring slot, 10/15/20/25/30% of harm paid from qi instead (a whole health bar's worth costs half the pool); never a tribulation's, the Decays' or anything that bypasses invulnerability; two worn don't stack |
+
+- **Might.** From Spirit grade up a blade adds a share of the wielder's whole attack (MULTIPLY_TOTAL): 5/10/15/25%, a
+  saber 7/14/21/32%, so a blade stays worth holding as the realms' own strength grows. Every blade is a sword to ride
+  (Sword Flight) and sweeps as vanilla swords do. Uses: 400/900/1,800/3,000/unbreakable, repaired with the grade's metal.
+- **The banner's element** is its demon core's; a Mortal banner takes a token instead: blaze powder (fire), a prismarine
+  shard (water), any sapling (wood), clay (earth), an iron nugget (metal). Its cloth is tinted the element's colour.
+- **Mastery** (`CraftMastery`, Forging): a grade harder than the forger's rank fails 12% per rank short (the materials
+  burnt, a demon core given back, half the practice still learned); each rank past Apprentice a 10% chance of **Fine**
+  work, each rank from Master 5% of **Perfect** (rolled first). Fine raises all its powers 10%, Perfect 25% (NBT
+  `ArtifactQuality`; a blade's blow by its work through Fabric's stack-aware `getAttributeModifiers`, so its tooltip
+  reads as a sword's). A working teaches (difficulty + 1) x 2 practice.
+- Heaven and Immortal artifacts are fireproof; Immortal and Perfect ones shimmer.
+- **Where else.** Sect elders sell a Spirit one (Courteous), sect masters an Earth one (Warm), rogues now and then a
+  Mortal one, the Immortal Realm's merchants a Heaven one and an Immortal one (Warm), the Court's Quartermaster the day's
+  Immortal artifact to Captains (6 tokens). Sect treasuries hold Spirit and Earth ones, Heaven ones beyond the Overworld,
+  Immortal ones in the Immortal Realm. Cultivators buy them back at two thirds of the price (`Artifacts#worth`).
+- Code: `ArtifactForgeBlock(Entity)`, `ArtifactRecipes`, `ArtifactGrade`, `ArtifactKind`, `Artifacts`, `ArtifactWeaponItem`,
+  `ElementBannerItem`, `QiGourdItem`, `ProtectiveJadeItem`; art `tools/beast-art/ArtifactArt.java`. Codex pages The
+  Artifact Forge, Forging Artifacts and Artifacts (Treasures and Alchemy). Tests `ArtifactGameTests`.
+
+### Weapons of the elements (phase 2)
+
+Five weapons made of an element itself (2026-10-28, the user's ask "some made of their element"; `ElementalWeaponItem`),
+forged at the Artifact Forge from **Spirit grade up** only: the element takes a weapon's shape through a demon core of that
+element (the core's element must match; its realm Qi Refining / Core Formation / Nascent Soul / Dao Integration and up, as
+the grade's). The grade's two spirit stones go in too, and the element's own matter:
+
+| Weapon | Matter | Blow (Spirit..Immortal), swings/s | On each blow | Right-click art (reach by grade) |
+|---|---|---|---|---|
+| Flame Blade (fire) | 2 blaze rods, magma cream | 8/9/10/12, 1.6 | +20-40% of the strike as fire qi; burning 4/6/8/10 s | Flame Arc: a 110° sweep of fire, 4/5/6/8 blocks, sets burning |
+| Tide Spear (water) | 3 prismarine crystals | 7/8/9/11, 1.3 | +15-30% as water qi; Slowness II 2-5 s (III at Immortal), puts out fire | Surging Tide: ride a wave 5/6/8/10 blocks forward (to the first wall), striking and slowing all in the way, no fall harm |
+| Vine Whip (wood) | 2 vines, Blue Spirit Log | 6/7/8/10, 1.8 | +15-30% as wood qi; rooted 0.75-1.5 s (`WoodSpells#bind`), not again until 2 s after | Binding Lash: lash the first foe on a 8/10/12/14 block line and root it twice as long |
+| Mountain Hammer (earth) | 2 obsidian, Jade Stone | 10/12/14/17, 0.8 | +15-30% as earth qi; staggered: knockback 0.8-1.5, Slowness III + Weakness 1-2.5 s | Mountain Quake: everyone within 3/4/5/6 blocks struck and staggered |
+| Golden Light Sword (metal) | 2 gold ingots, glowstone dust | 8/9/11/13, 1.5 | +35/45/55/70% as metal qi: the cutting edge | Golden Crescent: a line of golden qi 10/13/16/20 blocks (to the first wall), cutting through all on it |
+
+- The qi share is of the wielder's whole strike (`attackOf`: their attack attribute) and passes armour (`ModDamageTypes#qi`,
+  the element spells' harm; the blow's moment of grace set aside for it). The element's effect comes once a full swing at
+  most (`ArtifactWeaponItem#mayReach`, as the spear's pierce). Might (MULTIPLY_TOTAL) 6-28% (whip 5-24%, hammer 8-36%).
+- **Arts** (main hand only): each costs 8% of the wielder's whole pool (`ART_COST`) and has a cooldown shown on the item
+  (Flame 2.5 s, Tide 3 s, Lash 2 s, Quake 4 s, Crescent 2.5 s); each strikes for 60-160% of the strike as the element's qi.
+- While held, the element drifts off it (server particles every 6 ticks). Mended with its element's matter; the Flame Blade
+  is fireproof at every grade. Sold at half again the grade's price (`Artifacts#price(kind, grade)`): an NPC's random
+  artifact may be the weapon of its own method's element; sect treasuries hold Spirit ones, the upper worlds' Heaven ones.
+- Art: animated 8-frame strips with `.png.mcmeta` (`tools/beast-art/ElementalArt.java`, written with the artifacts).
+  Codex page Weapons of the Elements. Tests `ElementalWeaponGameTests`.
+
+```
+/give @s defying-the-heavens:artifact_forge
+/give @s defying-the-heavens:heaven_element_banner{ArtifactElement:"FIRE",ArtifactQuality:2b}   a Perfect Heaven fire banner
+/give @s defying-the-heavens:immortal_golden_light_sword
+```
+
+### Legendary weapons (phase 3a)
+
+Weapons never forged, one of each in the whole world (2026-10-28, the user's ask "some famous weapons ... unique immortal weapons
+that some named cultivators have like tamed tribulation lightning", and their picks: one per world, dropped at death and re-bonded).
+`Legend`, `Legends` (the record), `LegendaryWeaponItem`, `LeiZhen`, `SwordSpirit`, `LegendSites`; 3b below, the rest of the design in 3c.
+
+- **One true stack**: `Legends` (SavedData) keeps each legend's serial; the stack made last carries it (`LegendSerial`). Any other
+  (an older one, the creative menu's, a copy) is a **hollow echo**: no power, and shown so once a player carries it. One lost for
+  good (out of the world, a dropped stack left to vanish) **reforms at home a day later**, its trial or keeper with it.
+- **Too heavy** below its lowest realm: it slips from the hand. **Bonding**: two minutes' meditation with it in the main hand
+  (`BOND_TICKS`); only its owner's hands wake its powers; whoever takes it after must bond anew. **Awakening** by the owner's realm:
+  stage 1 at its lowest realm and one on, 2 from two realms on, 3 from four on: blow +2 a stage, might 40/55/70% (0 unwoken 20%).
+- **Ganjiang** (yang, from Core Formation): a sword tomb on an Overworld mountain 1,000-2,200 blocks from spawn, laid when someone
+  first comes within 96 (old paving, broken pillars, buried bronze-hilted blades: `BuriedBladeBlock`). Within 12 of its stone the old
+  blades rise: two waves of sword spirits (3, then 4); beat both, then right-click the stone (`LegendStoneBlock`) to draw it.
+  Leave, and the trial waits to be won again. Blows add 30/40/55% of the strike as fire qi and burn 3/4/6 s.
+- **Moye** (yin, from Core Formation): a yin pool among the Other Shore's flowers in the Netherworld, 400-800 from its heart. Near
+  it, her ghost rises (Core Formation Grand Perfection, a relic keeper) with the sword; slain, she drops it. Blows add yin (the
+  dead's harm, passing armour) and chill; her blows reach the dead in full (`GhostSystem#reaches`, `#scaled`).
+- **The pair**: one in each hand, both bonded, every blow strikes twice (fire and cold). **Twin Dragons** (right-click, 8% of the
+  pool, 15 s): a spirit of each sword held flies out and fights the owner's foes for 6/9/12 s (`SwordSpirit#called`).
+- **Heaven's Tribulation Spear** (from True Immortal), a bolt of heavenly tribulation itself (the user's word: drawn by the client's
+  `TribulationSpearRenderer`, a jagged spear-shaped bolt of the tribulation's blue struck anew every two ticks, forks crackling off
+  it). Carried by **Lei Zhen**, mad (the user's asks): Golden Immortal Grand Perfection (the fourteenth realm), he **roams the
+  Immortal Realm's wilds under his own storm** (as the True Dragon's: the sky and fog grey near him, harmless lightning striking about
+  him, the oftener while he fights), 800-2,600 blocks from the Southern Heavenly
+  Gate and clear of its cities and sects, about three blocks a second whether anyone is near or not; in the world only while
+  someone is within 192, he **goes for anyone in his consciousness** (160 blocks), players and cultivators alike (not one in
+  creative), raving, and calls the spear's bolt down on whoever he fights. Slain, he drops it. A new owner tames it: two
+  minutes' meditation, then three bolts it calls down to survive. Each blow's lightning leaps to 1/2/3 foes about the target.
+  - **Heaven's Brand** (right-click, 10% of the pool, 6 s; reach 24/32/40): a tribulation bolt on the foe looked at; a **player** it
+    strikes is branded, **10/15/20% more bolts in every heavenly tribulation** they face, for good (one at the least, `TribulationManager#branded`;
+    100% at most; heaven's and the Demon Path's tribulations, not the Netherworld's). Lei Zhen's bolt never brands (the user's word).
+  - **Held out in its owner's own tribulation** (either hand, bonded) it **drinks every third bolt**: none of those reach them, and
+    each makes it the stronger for good (+1% might per 500 bolts, kept in the record so a reformed spear keeps it; the tooltip
+    shows the count).
+- **Rumours**: every cultivator talks of the legends, in every world (far ones by the world they lie in, near ones by direction
+  and distance); a tale is told a player once, and untold legends come first. Codex chapter Legends (three pages, opened by the
+  advancements Legends of the World, Yang and Yin, The Tribulation Breaker; One in All the Worlds for bonding).
+- Art: Ganjiang's and Moye's 3D models and 16-frame living textures (fire rising, cold sinking along the blade:
+  `tools/beast-art/LegendArt.java`, `java BeastArt.java <assets> legends [sheet.png]`). Tests `LegendGameTests`.
+
+### Legendary weapons (phase 3b)
+
+Three more legends, each with its own guardian (`LegendGuards`: a guard hunts its one prey, and whoever strikes it, until one of them
+falls or the prey gets 128 blocks away; the hunts aren't saved). Their arts cost 10% of the pool; the vast ones are drawn by `Colossus`
+(an item made vast for a moment, its harm landing at its moment: `ColossusRenderer`).
+
+- **Xuanyuan Sword** (from Nascent Soul): a jade shrine (white quartz terrace inlaid with jade, eight pillars, a dais of gold) on the
+  **Jade Firmament's highest peak within 640 blocks of its heart**. Only the **righteous** can draw it, and drawing it raises
+  **Chiyou's shade** (Nascent Soul Grand Perfection, ox-headed, twice a man's height, the Fallen War God), which hunts the drawer; it is
+  made flesh by its hatred, so the living's blows land on it in full. It **won't stay with the devilish** (it flies home to its stone)
+  and answers only while its owner is righteous. Blows add 30/40/55% of the strike as golden (metal) qi, **twice that on the evil**
+  (the devilish, the Demon Path and demon races, demon beasts, heart demons, the dead), and reach the dead in full.
+  **Yellow Emperor's Judgement** (8 s; reach 24/32/40): the sword falls vast out of the sky where you look (10/13/16 times a held one),
+  1.5/2.0/2.6 times the strike in golden qi within 4/5/6 blocks, twice on the evil, everyone thrown back.
+- **Sun-Shooting Bow** (from Heavenly Being): a dead sun fell on the **barren or ashen world nearest the Overworld**, on its east-facing
+  side (its land's middle): a crater of basalt and blackstone, magma and fires, a gilded cinder in its middle. Near it (24) the
+  **Golden Crow** rises (a new beast, `BeastKind#GOLDEN_CROW`, three-legged, black and gold, Heavenly Being Grand Perfection, never born
+  wild: `Tier#GUARDIAN`); slay it to draw the bow; leave (40) and it returns to the cinder. Rumours name the world. It **needs no
+  arrows**: let go, an arrow of sun qi (a burning spectral arrow, full draw 0.9/1.1/1.4 of the strike, plus 30/40/55% as fire qi).
+  **Falling Sun** (sneak and let go at full draw, its own 8 s wait: arrows still fly meanwhile; reach 32/40/48): a sun falls and
+  bursts, 1.4/1.8/2.4 times the strike as fire within 4/5/6, burning.
+- **Sea-Fixing Needle** (from Entering Nirvana): a black iron pillar banded with gold (`SeaPillarBlock`, unbreakable) standing 40
+  blocks out of the **Immortal Realm's open sea of clouds**, 600-1,400 from the Southern Heavenly Gate, clear of people and 400 from the
+  Kun's sea. A hand on it at Entering Nirvana or above **pulls it free**: the pillar shrinks into the hand, the sea surges (everyone
+  within 24 thrown back, the clouds churning), and **Ao Guang, Dragon King of the East Sea** (a dragon-race True Immortal Early, aloft)
+  rises to take it back. **Kept behind the ear**: never dropped at its holder's death (`Legends#keepBehindTheEar`, from
+  `Player#dropEquipment` and a ghost's rebirth), given back as they live again. Blows add earth qi and throw. **As You Will**:
+  right-click, it stretches 24/32/48 blocks where you look (6 s); sneak, it grows to a mountain (18/24/32 times a held one) and comes
+  down where you look (10 s; 1.6/2.1/2.8 times the strike within 5/6/8).
+- Codex pages The Xuanyuan Sword, The Sun-Shooting Bow, The Sea-Fixing Needle (advancements The Yellow Emperor's Sword, Nine Suns
+  Fell, As You Will), and the Golden Crow's Bestiary page. Art: the Xuanyuan Sword (a golden jian, light flowing up its blade), the
+  Needle (black iron, gold bands, old characters glowing down it), the bow (red lacquer and gold, a sun on its grip, its string and
+  arrow of sunfire; at rest and three pulls), the pillar's blocks (`LegendArt`), and the Golden Crow's body (`Bodies#goldenCrow`).
+- A legend's model now stands on its point in its stone and in the vast arts (+135 about z: a model's "fixed" view mirrors it first;
+  at -135 the swords lay flat across their stones from 3a on).
+
+### Legendary weapons (phase 3c)
+
+- **Pangu's Axe** (from Earth Immortal, the realm past True Immortal): in the heart of the **Primordial Chaos**; slain, the Chaos drops
+  it (floating, glowing) while it is there (`Legends#fromTheChaos`); lost, it is in the next Chaos. Blows add 30/40/55% of the strike as
+  metal qi and **pass every ward** (auras, Golden Bell, wards, protective jade: `HeavenSpells#incoming`); **no barrier holds against
+  it** (its wielder can break any, at the fastest, and every blow on one shatters it: `Formations#canBreak`, `#batter`); **foes' Law
+  domains have no hold on its wielder**, and a blow on a domain's owner folds it. **Split Heaven and Earth** (10% qi, 12 s; 32/48/64
+  blocks): a cleave along the land where you look, a tear in space down its length; everyone within 2.5 of it struck 2.0/2.6/3.4 times
+  the strike and thrown aside; barriers it crosses shatter, Law domains on it fold; a player's (spell griefing on) splits the land.
+- **The Venerables' five weapons** (from True Immortal), the Four Symbols and the Yellow Dragon: the **Azure Dragon Glaive** (wood),
+  **White Tiger Saber** (metal), **Vermilion Bird Fan** (fire), **Black Tortoise Mace** (water), **Yellow Dragon Seal** (earth). Each
+  in its Venerable's hand at the Celestial Court (`Legends#venerables`), fought with, its art cast now and then. Blows add the element's
+  qi (metal's 1.3 times) and its touch: roots slow, burning, chill and throw, stagger and fliers brought down. Arts (10% qi, 20 s): the
+  symbol's own Dao Integration spell cast through it at its wielder's realm (Azure Dragon, White Tiger's Pounce, Vermilion Bird's
+  Descent, Black Tortoise Bastion, Seal of Ten Thousand Mountains).
+- **Dao Duel** (`SparSystem.Terms#DUEL`): a **General of the Court** talking to a Venerable with its weapon in hand may choose Spar, then
+  the Dao Duel, however far above them it stands, holding **32 Court Merit Tokens** as the stake; it holds back to their realm. Won, it
+  hands the weapon over and keeps its post (`Legends#handOver`; tokens back); lost, it keeps the tokens. One a day with each. A lost
+  weapon reforms in its Venerable's hand.
+- Codex pages Pangu's Axe and The Venerables' Weapons (advancements Heaven Above, Earth Below; The Four Symbols; A Dao Duel Won).
+  Art: six 3D models with living textures (`tools/beast-art/LegendArt3c.java`: a flat shape built a row at a time, each row its own
+  slice of the shape's picture).
+
+```
+/legend list                          where each is, who has it, its serial (and the spear's bolts drunk)
+/legend give <ganjiang|moye|tribulation_spear>   a new true stack (every other one an echo from then on)
+/legend reform <legend>               made anew at home now
+/legend goto <legend>                 to its resting place (or near Lei Zhen)
+/legend brand <player> <percent>      set heaven's brand on a player (0 lifts it)
 ```
 
 ## Bloodlines: the demon races
@@ -3860,6 +4082,46 @@ hold it loaded for good, freezing the cultivators in it.
   edges, with soft light drifting over it, and tints everything strongly purple while you stand inside it; a
   Concealment Barrier looks the same in green).
 
+### Concealment: the core's second function
+
+Since 2026-10-28 (the user's ask: "the formation core now acts as a core for all types of formations except the storage one")
+a Formation Core's screen has two tabs, **Barrier** and **Concealment**, each with its own radius (4 to the barrier's
+greatest) and switch, both paid from the same veins and battery. A concealment costs three quarters of a barrier's upkeep
+(`0.75 × (0.5 + radius² / 80)` qi per second); short of qi, it falls first, and the barrier only if the veins still can't
+carry it. Its owner's mastery of formations (CraftMastery) takes 5% off both upkeeps for each rank past Apprentice, and every
+ten minutes a function stands, its owner (if about) gains a point of practice for each. Sect cores keep no concealment.
+
+Inside a raised concealment's sphere, anyone who can't see through it is shown **the land as it was before players changed
+it**: houses, walls, digging, farms, the core and its seals, the barrier's cells (as the air or water they stand in), and
+**the players inside** (with their sounds, particles and the cracks of the blocks they break) are all hidden. Its owner, the
+players they trust, an operator in creative or spectator, and **anyone stronger than its owner** (the user's pick) see it as it
+is. Walking in reveals nothing. **It hides; it doesn't block** (the user, 2026-10-28: "concealment barriers should no longer
+provide an invisible wall that blocks people", it takes both "to be unseen and not able to enter"): the server reckons the
+movement of those it hides from by what they are shown (`mixin/BlockStateBaseVeilMixin`, `Concealments#illusoryShape`), so they
+walk through hidden work and over the ground they see over a hidden pit, are not smothered inside a hidden wall
+(`mixin/EntityVeilMixin`), and feel nothing hidden (fire, thorns, a pressure plate); they can't mine or use the hidden blocks.
+Only the barrier, raised as well, keeps them out: its cells keep their own rule though hidden. Both can stand at once if the
+veins carry both.
+
+How (`Concealments`): the world keeps a **land ledger** (`LandLedger`): for every block a player's hands (break, place, use an
+item on a block or in the air: `mixin/ServerPlayerGameModeLedgerMixin`), a player's blast (`mixin/ExplosionMixin`) or a
+player's spell (`HeavenSpells#carvable`) changes, the state that stood there first; a block set back to it is struck off. What the
+world itself then changes at or beside such a block is noted too (the user's catch: the grass under a hut's walls died to dirt
+and showed its outline): grass dying under a wall, a planted tree growing, poured water running on, fire spreading, a felled
+tree's leaves falling. The weather's snow and ice count only lying on players' work (snow on a hidden roof), or a bare strip
+round hidden walls would show them. It is written only where players have worked (one counter's and one field's check on every
+other block change, `mixin/LevelChunkLedgerMixin`) and kept on each chunk, saved in the chunk's own file entry
+(`mixin/ChunkAccessLedgerMixin`, `mixin/ChunkSerializerMixin`), so only loaded chunks hold theirs and a concealment raised long
+after a base was built still hides it all. When a chunk goes to a player a
+veil hides it from, its changed blocks and barrier cells are put right at once after it (`mixin/ChunkMapMixin`); every block
+change, a hidden block's own data (a sign's words) and the light changes of such a chunk are rewritten or kept back as they
+go out to each player (`mixin/ServerGamePacketListenerImplMixin`, `Concealments#shownPacket`); sounds and block events
+(`mixin/PlayerListVeilMixin`), particles and breaking cracks (`mixin/ServerLevelVeilMixin`) reach only those it doesn't hide
+from; the players inside are never tracked for them (`mixin/SoulServerPlayerMixin`). Once a second those near a veil are
+weighed again, shown again if their seeing changed, and re-tracked when their standing among the veils changes. Where no
+concealment stands, every check stops at an empty array. Veils are kept per world (`Concealments.Data`, as barriers are).
+Tests: `ConcealmentGameTests`.
+
 ### Sect members
 
 A sect is founded with 10-20 members the first time its core ticks (`SectManager.found`), and it needn't wait for a
@@ -4083,6 +4345,64 @@ Players can join a sect and become one of its disciples (`SectMembership`).
   `SectManager#treasuryAt`): one set under a chest emptied it with no hand laid on it.
 - **Leaving.** Ask an elder to "leave the sect". It takes you back after **3 days**.
 - Commands (op): `/sect join <player>` joins the nearest sect, `/sect leave <player>`; `/sect info` lists its disciples too.
+
+### The sect mission board
+
+Every sect keeps a **mission board** on its plaza (`SectMissions`; the user's "A sect mission board is a great idea", 2026-10-28:
+the missions are the players' alone, and the sect's people only talk of them in passing; the rest is the plan they approved).
+- **The board** (`MissionBoardBlock`): two red-lacquered posts, the board between them under a little tiled roof, its missions
+  pinned up on slips. A sect sets it up itself (`SectMissions#layBoards`), old sects too, the first time a player comes within
+  128 blocks of its Formation Core: 4-9 blocks out from the core toward its gate, on firm ground with room above it, two blocks
+  clear of every post, its face to the gate. Nothing breaks it; one found gone is set up again the next day. Its item is the
+  creative menu's alone. Its art is `tools/beast-art/MissionArt.java` (`java BeastArt.java <assets> missions`), its model
+  `models/block/mission_board.json`.
+- **Its page** (`MissionBoardScreen`, S2C `mission_board`, C2S `mission_act`), in the Codex's lacquer and gold: the sect's name, your
+  title and Contribution (all you have earned, pointed at), and two halves. **Missions**: those you hold, then the day's postings,
+  the one chosen in full beside them with what may be done with it (Take it; Hand in, A new slip, Abandon). **Exchange**: its
+  wares, the one chosen beside them with its own description. What came of what you did shows at its foot. Not a disciple of it,
+  the page only tells you so (and to ask to join).
+- **Postings** are each disciple's own: five a game day, fitted to your realm (as cultivators weigh it): one **Easy** (a stage
+  below you), two **Fitting**, one **Hard** (a stage or two above) and one more of either. Hold **three** at once. Six kinds,
+  each the next round that can be had there:
+
+| Kind | What | Pay (before realm and grade) | Stands |
+| --- | --- | --- | --- |
+| Hunt | A beast troubling the sect's lands, 100-400 blocks out: a wild demon beast of the mission's rank (Qi Refining to Core Formation; a pack of three Shadow Wolves), or for a sect of the Immortal Realm a Chaos fiend in the Frontier, as deep past its edge as its strength. No beast that strong (or Peaceful): the next kind | 20 | 2 days |
+| Purge | A cultivator of the path that preys on the sect (the devilish on a righteous or neutral sect's people, a righteous zealot on a devilish sect's), named on its posting, of the mission's rank, 100-400 blocks out | 24 | 2 days |
+| Gather | What the stores want, by realm: herbs of at least so many years (10 at Qi Refining up to 1,000 past Entering Nirvana), demon cores of a realm, jade, metal; the Immortal Realm's own past True Immortal. Easy asks three quarters as many, Hard half again | 12 | 3 days |
+| Craft | Pills to brew (by realm, of a least grade: Low to Supreme, a grade less if Easy, more if Hard) or an artifact to forge (its grade by realm; a Hard one the weapon made of the sect's element) | 16 | 3 days |
+| Deliver | A sealed letter to another sect of its world 300-3,000 blocks off, not of the other path (a clan's to a clan), handed to any of its people (talk: Ask, "I carry a sealed letter for your sect"); its sect thinks the better of the courier (+2) | 10, and more every 100 blocks | 2 days, a day more every 1,000 blocks |
+| Guard | The gate watch: 3 minutes within 12 blocks of the gate, two waves (Easy) or three coming at it from 20 blocks out past it (1, 2 or 3 foes each by grade, a stage below the mission: wild beasts, or cultivators of the path that preys on it). Begun and left for 20 seconds, it is lost (-1 regard) | 20 | 1 day |
+
+- **The pay** is Contribution: the kind's, half as much again for each realm, times 0.75 / 1 / 1.5 by grade; and the sect's regard
+  (+1, +2 for a Hard one), so missions open the elders' Courteous and Warm talk too.
+- **In the field.** Taking a mission gives a **Mission Slip** (a delivery's is the **Sealed Letter** itself: `MissionSlipItem`):
+  its tooltip names it; held (either hand), it shows the way over the hotbar (to the quarry once it is out, the gate, the
+  letter's sect; the watch's time left); its mission over, it crumbles. A lost slip: "A new slip" at the board. A hunt's or a
+  purge's quarry comes out of the land, glowing, when its taker draws within 48 blocks of its ground (the land there running),
+  and goes for its taker alone (`DemonBeast#hunts`, `CultivatorNpc#isEnemy`, the targeting goal); a cultivator never runs or
+  begs. It is theirs when it falls by their hand (its spoils too: `ThreatLootMixin`); slain by another, no spoils, and it comes
+  out again a minute later. A quarry come back with its land after its mission is over slips away.
+- **Lapses.** A taken mission stands its days; past them it lapses (the sect thinks a little less of you: -1). Abandoning costs
+  nothing, but its posting is gone for the day.
+- **Contribution** is a number on your record in the sect, never an item (nothing to drop, steal or trade). The Sect tab shows
+  it, what you have earned all told, and the missions you hold. **Leave the sect and it stays behind**, with your missions.
+- **The exchange** (`SectExchange`): wares of the sect's world (the lower realms', the Jade Firmament's, the Great Void's, the
+  Immortal Realm's: a grade up each time, prices x1, x2, x4, x6), each kept for a title and above, so many a day:
+  - Outer Disciples: Qi Gathering (8) and Cultivation Pills (12), Ginseng (6) and Spirit Ginseng (10), Yang Fire Talismans (6), and
+    a few spirit stones at a poor rate (4 Low for 10; 2 Mid, 2 High or an Immortal Jade higher up).
+  - Inner Disciples: a Foundation Pill (40), a Core Pill (80), the day's two manuals of the sect's element's spells up to your
+    realm (30, and 30 more for each realm of the spell's), the day's artifact (60), a storage formation (50).
+  - Elders: the weapon made of the sect's element (150), the day's method of another element at your realm (120; never past what
+    the worlds teach outside the Immortal Realm), the techniques' manuals you stand at the realm of (Clone 300, Universe in a
+    Sleeve 500), a Longevity Pill (200).
+- **The sect's talk** (`NpcLife`, `NpcLines`): a fellow disciple passing you speaks now and then of your deed of the day ("They
+  say you slew the Bloodfang Tiger"), of the gate watch you have taken and not begun, or of the day's postings you haven't looked
+  at; two of its people talk over a deed one of its disciples did today, or a mission one has taken on. Asked about the sect,
+  its people mention the board.
+- **Advancements**: Duty to the Sect (a mission seen through), Of Every Service (one of every kind), Pillar of the Sect (1,000
+  Contribution earned in one sect). Codex: "The Mission Board" (Sects and Cultivators).
+- Game tests: `SectMissionGameTests`.
 
 ### Everyday life
 

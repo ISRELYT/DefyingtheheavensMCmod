@@ -82,6 +82,10 @@ public final class TribulationManager {
 		int sinceBolt = MIN_BOLT_INTERVAL;
 		/** A Heavenly Thunder Body's share of the strikes drunk in (Physique): {@link #THUNDER_SHARE} of the new stage's cultivation at most. */
 		double absorbed;
+		/** The strikes heaven's brand on its cultivator adds ({@link #branded}), counted in {@link #strikes}. */
+		final int branded;
+		/** Its strikes come while the Tribulation Spear was held out (LegendaryWeaponItem#drinks): it drinks every third. */
+		int toSpear;
 		TribulationCloud cloud;
 
 		void removeCloud() {
@@ -89,12 +93,17 @@ public final class TribulationManager {
 			cloud = null;
 		}
 
-		/** {@code hated}: a Primordial Chaos Body's, struck {@link #CHAOS_STRIKES} times as often. */
-		Trial(Realm targetRealm, Stage targetStage, boolean ghost, boolean hated) {
+		/**
+		 * {@code hated}: a Primordial Chaos Body's, struck {@link #CHAOS_STRIKES} times as often; {@code brand}: heaven's brand on its
+		 * cultivator (PlayerCultivation#getTribulationBrand: the Netherworld's tribulation, none), its percent more strikes on top.
+		 */
+		Trial(Realm targetRealm, Stage targetStage, boolean ghost, boolean hated, int brand) {
 			this.targetRealm = targetRealm;
 			this.targetStage = targetStage;
 			this.ghost = ghost;
-			this.strikes = strikes(targetRealm, targetStage, hated);
+			Strikes base = strikes(targetRealm, targetStage, hated);
+			this.branded = branded(base.count(), brand);
+			this.strikes = branded == 0 ? base : new Strikes(base.count() + branded, base.bolt(), base.magic());
 			this.strikesLeft = strikes.count();
 			// A Primordial Chaos Body's extra strikes come in the same time, the faster (no tribulation outlasts MAX_TICKS: the user's ask,
 			// 2026-10-22; they used to take the longer).
@@ -261,6 +270,14 @@ public final class TribulationManager {
 	}
 
 	/**
+	 * The strikes heaven's brand of {@code percent} (the Tribulation Spear's art, LegendaryWeaponItem#heavensBrand) adds to a heavenly
+	 * tribulation of {@code count}: that share more, rounded up, one at the least.
+	 */
+	public static int branded(int count, int percent) {
+		return count <= 0 || percent <= 0 ? 0 : Math.max(1, (int) Math.ceil(count * percent / 100.0));
+	}
+
+	/**
 	 * Ticks from the first strike of a tribulation of {@code count} to its last, all of them evenly spread over it (the user's asks:
 	 * 2026-10-20, so the greater tribulations don't take an age; 2026-10-22, none longer than {@link #MAX_TICKS}): {@link
 	 * #STRIKE_INTERVAL} apart while they fit so, else fitted into what the gathering and the breakthrough's last second leave of it,
@@ -340,7 +357,7 @@ public final class TribulationManager {
 		}
 
 		MeditationManager.stop(player, false); // no-op if not meditating
-		Trial trial = new Trial(c.breakthroughRealm(), c.breakthroughStage(), false, c.hasPhysique(Physique.PRIMORDIAL_CHAOS_BODY));
+		Trial trial = new Trial(c.breakthroughRealm(), c.breakthroughStage(), false, c.hasPhysique(Physique.PRIMORDIAL_CHAOS_BODY), c.getTribulationBrand());
 		ACTIVE.put(player.getUUID(), trial);
 		// Written to disk now, not at the next autosave, so not even closing the game this instant gets out of the trial.
 		c.setInTribulation(true);
@@ -353,6 +370,14 @@ public final class TribulationManager {
 		player.sendSystemMessage(trial.strikesLeft == 1
 				? Component.translatable(ModLang.MSG_TRIB_START_SINGLE, trial.targetName())
 				: Component.translatable(ModLang.MSG_TRIB_START, trial.targetName(), trial.strikesLeft));
+		tellBrand(player, trial);
+	}
+
+	/** The strikes heaven's brand on {@code player} adds to {@code trial}, said as it begins (none: nothing said). */
+	private static void tellBrand(ServerPlayer player, Trial trial) {
+		if (trial.branded > 0) {
+			player.sendSystemMessage(Component.translatable(ModLang.MSG_TRIB_BRANDED, trial.branded).withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE));
+		}
 	}
 
 	/**
@@ -402,7 +427,7 @@ public final class TribulationManager {
 		MeditationManager.stop(player, false);
 		int target = GhostMethods.ghostRank(c.netherworld()) + 1;
 		int stages = Stage.values().length;
-		Trial trial = new Trial(Realm.byIndex(target / stages), Stage.byIndex(target % stages), true, c.hasPhysique(Physique.PRIMORDIAL_CHAOS_BODY));
+		Trial trial = new Trial(Realm.byIndex(target / stages), Stage.byIndex(target % stages), true, c.hasPhysique(Physique.PRIMORDIAL_CHAOS_BODY), 0);
 		ACTIVE.put(player.getUUID(), trial);
 		c.netherworld().setInGhostTribulation(true); // saved at once, as the heaven path's mark is: leaving fails it
 		CultivationManager.markDirty(player.server);
@@ -473,7 +498,7 @@ public final class TribulationManager {
 		}
 		MeditationManager.stop(player, false);
 		int target = DemonPath.rank(c) + 1;
-		Trial trial = new Trial(DemonPath.realm(target), DemonPath.stage(target), false, c.hasPhysique(Physique.PRIMORDIAL_CHAOS_BODY));
+		Trial trial = new Trial(DemonPath.realm(target), DemonPath.stage(target), false, c.hasPhysique(Physique.PRIMORDIAL_CHAOS_BODY), c.getTribulationBrand());
 		trial.demon = true;
 		ACTIVE.put(player.getUUID(), trial);
 		c.demon().setInTribulation(true); // saved at once, as the heaven path's mark is: leaving fails it
@@ -487,6 +512,7 @@ public final class TribulationManager {
 		player.sendSystemMessage((trial.strikesLeft == 1
 				? Component.translatable(ModLang.MSG_DEMON_TRIB_START_SINGLE, trial.targetName())
 				: Component.translatable(ModLang.MSG_DEMON_TRIB_START, trial.targetName(), trial.strikesLeft)).withStyle(net.minecraft.ChatFormatting.RED));
+		tellBrand(player, trial);
 	}
 
 	public static void tick(MinecraftServer server) {
@@ -568,6 +594,13 @@ public final class TribulationManager {
 				level.addFreshEntity(bolt);
 			}
 			if (t.cloud != null) t.cloud.flash();
+		}
+
+		// Heaven's Tribulation Spear held out by its owner drinks every third of the heavens' bolts (LegendaryWeaponItem#drinks): none of
+		// it reaches them, and the spear is the stronger for each, for good (the user's ask, 2026-10-28). The Netherworld's yin it leaves be.
+		if (!t.ghost && LegendaryWeaponItem.drinks(p) && ++t.toSpear % 3 == 0) {
+			LegendaryWeaponItem.drink(p, drawn);
+			return;
 		}
 
 		// A Heavenly Thunder Body drinks the heavens' bolt in: no harm, the qi pool filled, and a share of the new stage's cultivation

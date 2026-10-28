@@ -35,6 +35,9 @@ import java.util.UUID;
  *   something of like worth from its own things (CultivatorLoot). The winner takes both.</li>
  *   <li><b>Don't hold back</b>: it fights with its full realm. Winning is worth {@link Regard#SPAR_WIN_FULL}; losing costs no
  *   more than any loss.</li>
+ *   <li><b>Dao Duel</b> ({@link Terms#DUEL}): a General of the Celestial Court may challenge a Heavenly Venerable with its weapon in hand,
+ *   however far above them it stands, staking {@link #DUEL_TOKENS} Court Merit Tokens; it holds back to their realm and fights with its
+ *   weapon. Won, it hands the weapon over and keeps its post (Legends#handOver); lost, it keeps the tokens.</li>
  *   <li>Regard: a win {@link Regard#SPAR_WIN} ({@link Regard#SPAR_WIN_SENIOR} over a higher realm); a loss
  *   {@link Regard#SPAR_LOSS}, but {@link Regard#SPAR_LOSS_BADLY} if they were a realm or more below you or you walked off.
  *   Losing to a senior who is Warm to you can grant their Insight (once a day from each teacher).</li>
@@ -61,12 +64,20 @@ public final class SparSystem {
 	 */
 	public static final int LEAD_TICKS = 90 * 20, LEAD_STUCK_TICKS = 60 * 20;
 	public static final double ARRIVED = 3;
+	/** What a Dao Duel ({@link Terms#DUEL}) is staked in: this many Court Merit Tokens, held in hand. */
+	public static final int DUEL_TOKENS = 32;
 
 	/** What the player asked for: a wager, and whether the cultivator holds back. */
 	public enum Terms {
 		FRIENDLY(false, false), WAGER(true, false), FULL(false, true), WAGER_FULL(true, true),
 		/** A sect's entrance trial (SectMembership): a friendly bout with the elder, held back to the player's realm; set by the elder only. */
-		TRIAL(false, false);
+		TRIAL(false, false),
+		/**
+		 * A Dao Duel (phase 3c of the Artifact Forge, the user's pick): a General of the Celestial Court challenges a Heavenly Venerable for
+		 * its weapon (Legends#duelFor), staking {@link #DUEL_TOKENS} Court Merit Tokens; it holds back to their realm. Won, it hands its
+		 * weapon over and keeps its post (Legends#handOver). Appended: synced by ordinal.
+		 */
+		DUEL(true, false);
 
 		public final boolean wager;
 		public final boolean full;
@@ -100,6 +111,8 @@ public final class SparSystem {
 		final boolean stronger;
 		/** The cultivator's sect (null for none): the player's stray blows on its fellows are pulled ({@link #allowDamage}). */
 		final UUID sect;
+		/** A Dao Duel's: the Venerable's weapon staked on it (handed over if it loses), or null. */
+		Legend duel;
 		float playerLine;
 		float npcLine;
 		int countdown = COUNTDOWN_TICKS;
@@ -223,6 +236,15 @@ public final class SparSystem {
 		if (player.getHealth() < player.getMaxHealth() * READY_SHARE || npc.getHealth() < npc.getMaxHealth() * READY_SHARE) {
 			return ModLang.SPAR_HURT;
 		}
+		// A Dao Duel: a General of the Court against a Venerable with its weapon, staked in Court Merit Tokens, once a day with each.
+		if (terms == Terms.DUEL) {
+			Legend legend = Legends.duelFor(player, npc);
+			if (legend == null) return ModLang.SPAR_NO_DUEL;
+			if (!LegendaryWeaponItem.mayWield(player, legend)) return ModLang.SPAR_DUEL_TOO_WEAK;
+			if (!duelStakeInHand(player)) return ModLang.SPAR_DUEL_NO_STAKE;
+			if (npc.regardEntry(player).wagerDay == Regard.day(npc.level().getGameTime())) return ModLang.SPAR_WAGERED;
+			return null;
+		}
 		// One a realm or more beneath you can't win your stake (it never holds back, only the stronger does), so it won't put up
 		// its own: friendly bouts only (a strong cultivator wagered against the weak for a thing a day from every one of them).
 		if (terms.wager && beneath(player, npc)) return ModLang.SPAR_BENEATH;
@@ -230,6 +252,12 @@ public final class SparSystem {
 		// One wager a day with each: no farming its things one bout after another.
 		if (terms.wager && npc.regardEntry(player).wagerDay == Regard.day(npc.level().getGameTime())) return ModLang.SPAR_WAGERED;
 		return null;
+	}
+
+	/** Whether {@code player} holds a Dao Duel's stake: {@link #DUEL_TOKENS} Court Merit Tokens in hand. */
+	public static boolean duelStakeInHand(ServerPlayer player) {
+		ItemStack held = player.getMainHandItem();
+		return held.is(ModItems.COURT_MERIT_TOKEN) && held.getCount() >= DUEL_TOKENS;
 	}
 
 	/** {@code npc} is a realm or more beneath {@code player} (as it shows itself): it spars with them friendly only. */
@@ -242,7 +270,12 @@ public final class SparSystem {
 	public static void start(ServerPlayer player, CultivatorNpc npc, Terms terms) {
 		List<ItemStack> playerStake = new ArrayList<>();
 		List<ItemStack> npcStake = new ArrayList<>();
-		if (terms.wager) {
+		// A Dao Duel's stake: the player's tokens; the Venerable's, its weapon, which it fights with and hands over only if it loses.
+		Legend duel = terms == Terms.DUEL ? Legends.duelFor(player, npc) : null;
+		if (duel != null) {
+			playerStake.add(player.getMainHandItem().split(DUEL_TOKENS));
+			npc.regardEntry(player).wagerDay = Regard.day(npc.level().getGameTime());
+		} else if (terms.wager) {
 			ItemStack stake = stakeInHand(player);
 			player.getMainHandItem().shrink(1);
 			playerStake.add(stake);
@@ -250,6 +283,7 @@ public final class SparSystem {
 			npc.regardEntry(player).wagerDay = Regard.day(npc.level().getGameTime());
 		}
 		Spar spar = new Spar(player, npc, terms, playerStake, npcStake);
+		spar.duel = duel;
 		AFTER.remove(spar.npc);
 		// A stronger cultivator holds back to the player's realm, unless told not to.
 		int yours = CultivatorNpc.rankOf(player);
@@ -270,6 +304,7 @@ public final class SparSystem {
 		Component stakes = npcStake.isEmpty() ? Component.empty() : Component.translatable(ModLang.SPAR_STAKES, describe(playerStake), describe(npcStake));
 		TalkSystem.breakOff(player, npc, spots != null ? ModLang.SPAR_FOLLOW : ModLang.SPAR_BEGIN);
 		if (!npcStake.isEmpty()) player.sendSystemMessage(stakes);
+		if (duel != null) player.sendSystemMessage(Component.translatable(ModLang.SPAR_DUEL_BEGINS, DUEL_TOKENS, duel.getDisplayName()));
 		npc.level().playSound(null, npc.blockPosition(), SoundEvents.ANVIL_PLACE, SoundSource.NEUTRAL, 0.4f, 1.6f);
 	}
 
@@ -426,6 +461,7 @@ public final class SparSystem {
 			case WON -> {
 				give(player, spar.playerStake);
 				give(player, spar.npcStake);
+				if (spar.duel != null) Legends.handOver(npc, player, spar.duel); // a Dao Duel won: its weapon theirs, its post kept
 			}
 			case LOST, FORFEIT -> npc.keepWinnings(spar.playerStake);
 			case DRAW, VOID, CALLED_OFF -> give(player, spar.playerStake);

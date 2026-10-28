@@ -305,8 +305,12 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 		return kind().isChaos() ? CHAOS_NOTICE : NOTICE;
 	}
 
-	/** Whether it goes for {@code target} unprovoked: a territorial kind, a player or a cultivator in reach, not far above it, not one of its own. */
+	/**
+	 * Whether it goes for {@code target} unprovoked: a territorial kind, a player or a cultivator in reach, not far above it, not one of its own.
+	 * A sect mission's quarry (SectMissions) goes for the one who took the mission on, and no one else.
+	 */
 	public boolean hunts(LivingEntity target) {
+		if (SectMissions.isFoe(this)) return target instanceof Player player && player.isAlive() && player.getUUID().equals(SectMissions.takerOf(this));
 		if (!kind().territorial || target instanceof DemonBeast || !target.isAlive()) return false;
 		if (target instanceof Player player && (player.isCreative() || player.isSpectator())) return false;
 		if (!(target instanceof Player) && !(target instanceof CultivatorNpc)) return false;
@@ -441,6 +445,8 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 			// A Chaos Fiend's wail; the Primordial Chaos's deep, faceless throb.
 			case CHAOS_FIEND -> new SoundEvent[] {SoundEvents.VEX_AMBIENT, SoundEvents.VEX_HURT, SoundEvents.VEX_DEATH};
 			case PRIMORDIAL_CHAOS -> new SoundEvent[] {SoundEvents.WARDEN_AMBIENT, SoundEvents.WARDEN_HURT, SoundEvents.WARDEN_DEATH};
+			// The Golden Crow's harsh caw, a sun's roar in it.
+			case GOLDEN_CROW -> new SoundEvent[] {SoundEvents.PARROT_IMITATE_BLAZE, SoundEvents.BLAZE_HURT, SoundEvents.PHANTOM_DEATH};
 		};
 		return three[which];
 	}
@@ -462,6 +468,7 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 			case TRUE_DRAGON -> 0.6f;
 			case CHAOS_FIEND -> 0.55f;
 			case PRIMORDIAL_CHAOS -> 0.5f;
+			case GOLDEN_CROW -> 0.75f;
 			default -> 1.0f;
 		};
 		return super.getVoicePitch() * kindPitch / (float) Math.sqrt(scale());

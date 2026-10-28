@@ -17,7 +17,7 @@ public class DefyingTheHeavens implements ModInitializer {
 		ModBlockEntities.register();
 		HeavenAltarMenu.register();
 		VesselMenu.register();
-		StorageRingMenu.register();
+		StorageFormationMenu.register();
 		ModEntities.register();
 		ModParticles.register();
 		ModItems.register();
@@ -40,6 +40,9 @@ public class DefyingTheHeavens implements ModInitializer {
 		NetherworldCommand.register();
 		SmallWorldCommand.register();
 		SleeveCommand.register();
+		Legends.register(); // the legendary weapons' record, their keepers and trials
+		LegendCommand.register();
+		SectMissions.register(); // the sect mission board: its postings, quarry, the gate watch, the boards set up
 		LOGGER.info("Defying The Heavens initialised.");
 	}
 

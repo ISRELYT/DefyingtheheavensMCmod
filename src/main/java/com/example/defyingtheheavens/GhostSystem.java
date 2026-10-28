@@ -377,8 +377,10 @@ public final class GhostSystem {
 				|| source.is(ModDamageTypes.SPATIAL_PRESSURE) || source.is(ModDamageTypes.CHAOS_STORM)) return true;
 		Entity attacker = source.getEntity();
 		// A heart demon is the soul's own, the dead's too (the Inner Realm): it reaches them, and they it (#attack). The void's
-		// beasts hunt whatever crosses space, the dead among them (the user's pick, 2026-10-24: their bites passed through).
-		if (isDead(attacker) || attacker instanceof HeartDemonEntity || attacker instanceof VoidVestige || peachWood(source)) return true;
+		// beasts hunt whatever crosses space, the dead among them (the user's pick, 2026-10-24: their bites passed through). Moye, the
+		// yin sword, cuts the dead as the living (LegendaryWeaponItem#reachesTheDead).
+		if (isDead(attacker) || attacker instanceof HeartDemonEntity || attacker instanceof VoidVestige || peachWood(source)
+				|| LegendaryWeaponItem.reachesTheDead(source)) return true;
 		return attacker != null && source.getDirectEntity() == attacker && SoulProjection.harmFactor(attacker) > 0;
 	}
 
@@ -429,6 +431,7 @@ public final class GhostSystem {
 		if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) || source.is(ModDamageTypes.GHOSTLY) || yinTribulation(source)
 				|| source.is(ModDamageTypes.SPATIAL_PRESSURE) || source.is(ModDamageTypes.CHAOS_STORM)) return amount;
 		if (peachWood(source)) return amount * PeachWoodSwordItem.ON_THE_DEAD;
+		if (LegendaryWeaponItem.reachesTheDead(source)) return amount; // Moye's blows: in full
 		Entity attacker = source.getEntity();
 		// In full: the dead's own, a heart demon's (it reached the dead but landed as nothing before 2026-10-24, so no ghost turned
 		// inward could lose to its own), the void's beasts'.
@@ -643,6 +646,7 @@ public final class GhostSystem {
 		for (int i = 0; i < inventory.getContainerSize(); i++) {
 			if (net.minecraft.world.item.enchantment.EnchantmentHelper.hasVanishingCurse(inventory.getItem(i))) inventory.removeItemNoUpdate(i);
 		}
+		Legends.keepBehindTheEar(p); // the Sea-Fixing Needle stays behind its owner's ear (given back as they live again)
 		inventory.dropAll();
 		for (int i = 0; i < rings.getContainerSize(); i++) {
 			net.minecraft.world.item.ItemStack ring = rings.removeItemNoUpdate(i);

@@ -1,0 +1,39 @@
+{
+  "parent": "defying-the-heavens:arts/legends",
+  "criteria": {
+    "legend_heard_ganjiang": {
+      "conditions": {
+        "milestone": "legend/heard_ganjiang"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    },
+    "legend_heard_moye": {
+      "conditions": {
+        "milestone": "legend/heard_moye"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.arts.legend_ganjiang_moye.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:moye"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.arts.legend_ganjiang_moye.title"
+    }
+  },
+  "requirements": [
+    [
+      "legend_heard_ganjiang",
+      "legend_heard_moye"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -81,6 +81,17 @@ public enum PillGrade {
 		return LOW;
 	}
 
+	/**
+	 * The grade above {@code grade} (a master's hand, CraftMastery#betterGrade), if herbs averaging {@code years} can come out that well at
+	 * all; else {@code grade}: no mastery makes fresh roots an Immortal pill.
+	 */
+	public static PillGrade better(PillGrade grade, int years) {
+		int[] odds = odds(years);
+		int best = 0;
+		for (int i = 0; i < odds.length; i++) if (odds[i] > 0) best = i;
+		return grade.ordinal() < best ? values()[grade.ordinal() + 1] : grade;
+	}
+
 	public static PillGrade byIndex(int index) {
 		return index >= 0 && index < values().length ? values()[index] : LOW;
 	}

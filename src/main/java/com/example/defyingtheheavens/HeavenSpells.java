@@ -425,6 +425,8 @@ public final class HeavenSpells {
 		// A tribulation's strike is the heavens' own: no ward, bell or earth turns any of it (the user's pick, 2026-10-24: the wards and
 		// a Golden Bell took the sting out of tribulations).
 		if (TribulationManager.isStriking(target) || FiveDecays.isStriking(target)) return amount; // the Five Decays' judgement too
+		// Pangu's Axe cuts through every ward (LegendaryWeaponItem#cutsThroughWards): no aura, bell, ward or jade turns its blow.
+		if (LegendaryWeaponItem.cutsThroughWards(source)) return HeavenPassives.incoming(target, source, amount);
 		// One's own fire, to one who has mastered fire (HeavenPassives#ownFireSpares, Flame-Kin): nothing, and its flames put out on them.
 		if (HeavenPassives.ownFireSpares(target, source)) {
 			target.clearFire();
@@ -452,7 +454,8 @@ public final class HeavenSpells {
 				}
 			}
 		}
-		return HeavenPassives.incoming(target, source, amount);
+		// Last, a protective jade worn pays its share in qi (ProtectiveJadeItem; a tribulation's strike never came this far).
+		return ProtectiveJadeItem.incoming(target, source, HeavenPassives.incoming(target, source, amount));
 	}
 
 	/** Whether a ward brought the blow {@code entity} is taking to nothing (ALLOW_DAMAGE refuses it then); asked once a blow. */
@@ -837,7 +840,10 @@ public final class HeavenSpells {
 		if (!(p instanceof ServerPlayer player)) return true;
 		// Nor what the caster couldn't dig by hand: in Adventure mode, or under the server's spawn protection.
 		if (!player.mayBuild() || !level.mayInteract(player, pos) || Formations.protectsGroundQuietly(player, pos)) return false;
-		if (taking) SectManager.spoiled(level, player, pos);
+		if (taking) {
+			SectManager.spoiled(level, player, pos);
+			LandLedger.noteSpell(level, pos); // what stood here before a player's spell took it, for concealment (LandLedger)
+		}
 		return true;
 	}
 
@@ -1258,9 +1264,12 @@ public final class HeavenSpells {
 		return Math.max(0, before - target.getHealth() - target.getAbsorptionAmount());
 	}
 
-	/** What the laws give a spell of {@code element} cast by {@code caster}: the Dao field it stands in ({@link #daoField}), a Sacred Vessel in its hands (SacredVesselItem). */
+	/**
+	 * What the laws give a spell of {@code element} cast by {@code caster}: the Dao field it stands in ({@link #daoField}), a Sacred Vessel in
+	 * its hands (SacredVesselItem) or an element banner (ElementBannerItem, 2026-10-28): not both, the greater holds.
+	 */
 	public static float law(LivingEntity caster, QiElement element) {
-		return daoField(caster, element) * SacredVesselItem.strength(caster, element);
+		return daoField(caster, element) * Math.max(SacredVesselItem.strength(caster, element), ElementBannerItem.strength(caster, element));
 	}
 
 	/**

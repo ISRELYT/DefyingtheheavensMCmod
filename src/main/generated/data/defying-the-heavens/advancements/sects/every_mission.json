@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:sects/mission",
+  "criteria": {
+    "mission_every_kind": {
+      "conditions": {
+        "milestone": "mission/every_kind"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.sects.every_mission.description"
+    },
+    "frame": "goal",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:sealed_letter"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.sects.every_mission.title"
+    }
+  },
+  "requirements": [
+    [
+      "mission_every_kind"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

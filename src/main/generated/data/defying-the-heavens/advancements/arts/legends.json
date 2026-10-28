@@ -1,0 +1,109 @@
+{
+  "parent": "defying-the-heavens:arts/root",
+  "criteria": {
+    "legend_heard_azure_dragon_glaive": {
+      "conditions": {
+        "milestone": "legend/heard_azure_dragon_glaive"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    },
+    "legend_heard_black_tortoise_mace": {
+      "conditions": {
+        "milestone": "legend/heard_black_tortoise_mace"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    },
+    "legend_heard_ganjiang": {
+      "conditions": {
+        "milestone": "legend/heard_ganjiang"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    },
+    "legend_heard_moye": {
+      "conditions": {
+        "milestone": "legend/heard_moye"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    },
+    "legend_heard_pangu_axe": {
+      "conditions": {
+        "milestone": "legend/heard_pangu_axe"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    },
+    "legend_heard_sea_fixing_needle": {
+      "conditions": {
+        "milestone": "legend/heard_sea_fixing_needle"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    },
+    "legend_heard_sun_shooting_bow": {
+      "conditions": {
+        "milestone": "legend/heard_sun_shooting_bow"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    },
+    "legend_heard_tribulation_spear": {
+      "conditions": {
+        "milestone": "legend/heard_tribulation_spear"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    },
+    "legend_heard_vermilion_bird_fan": {
+      "conditions": {
+        "milestone": "legend/heard_vermilion_bird_fan"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    },
+    "legend_heard_white_tiger_saber": {
+      "conditions": {
+        "milestone": "legend/heard_white_tiger_saber"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    },
+    "legend_heard_xuanyuan_sword": {
+      "conditions": {
+        "milestone": "legend/heard_xuanyuan_sword"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    },
+    "legend_heard_yellow_dragon_seal": {
+      "conditions": {
+        "milestone": "legend/heard_yellow_dragon_seal"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.arts.legends.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:ganjiang"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.arts.legends.title"
+    }
+  },
+  "requirements": [
+    [
+      "legend_heard_ganjiang",
+      "legend_heard_moye",
+      "legend_heard_tribulation_spear",
+      "legend_heard_xuanyuan_sword",
+      "legend_heard_sun_shooting_bow",
+      "legend_heard_sea_fixing_needle",
+      "legend_heard_pangu_axe",
+      "legend_heard_azure_dragon_glaive",
+      "legend_heard_white_tiger_saber",
+      "legend_heard_vermilion_bird_fan",
+      "legend_heard_black_tortoise_mace",
+      "legend_heard_yellow_dragon_seal"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

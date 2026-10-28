@@ -47,6 +47,12 @@ public final class ModPackets {
 	 * body, or 1 and a member's id to cast them out.
 	 */
 	public static final ResourceLocation SECT_ACT = new ResourceLocation(DefyingTheHeavens.MOD_ID, "sect_act");
+	/**
+	 * S2C: a sect's mission board's page (SectMissions#send), opened or after anything done at it; C2S MISSION_ACT: an act at it (SectMissions:
+	 * TAKE, ABANDON, HAND_IN, SLIP, BUY) and the mission's id (or the ware's place in the exchange's list).
+	 */
+	public static final ResourceLocation MISSION_BOARD = new ResourceLocation(DefyingTheHeavens.MOD_ID, "mission_board");
+	public static final ResourceLocation MISSION_ACT = new ResourceLocation(DefyingTheHeavens.MOD_ID, "mission_act");
 	/** S2C: whether the player is in their clone now, and how their main body fares where it sits (Clones), for the HUD. */
 	public static final ResourceLocation CLONE_STATE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "clone_state");
 	/**
@@ -200,14 +206,15 @@ public final class ModPackets {
 	/** C2S: the Spells tab's switch for whether spells change the land for good (the gamerule spellGriefing): on or off. */
 	public static final ResourceLocation SPELL_GRIEFING = new ResourceLocation(DefyingTheHeavens.MOD_ID, "spell_griefing");
 	/**
-	 * S2C: an open Storage Ring's space (StorageRings#send): the screen's id, the ring's grade, whether this begins the space afresh,
-	 * then its entries (each the item and how many, a flag before each), in as many packets as it takes.
+	 * S2C: an open storage formation's space (StorageFormations#sendOpen): the screen's id, the formation's tier, whether the viewer owns
+	 * it, whom it trusts, whether this begins the space afresh, then its entries (each the item and how many, a flag before each), in as
+	 * many packets as it takes.
 	 */
-	public static final ResourceLocation STORAGE_RING = new ResourceLocation(DefyingTheHeavens.MOD_ID, "storage_ring");
-	/** C2S: a click on the open ring's space (StorageRings#act): what to do, and the kind of thing clicked (empty: none). */
-	public static final ResourceLocation STORAGE_RING_ACTION = new ResourceLocation(DefyingTheHeavens.MOD_ID, "storage_ring_action");
-	/** C2S: the Storage Ring key: open the ring worn (or else the first one on the player). */
-	public static final ResourceLocation STORAGE_RING_OPEN = new ResourceLocation(DefyingTheHeavens.MOD_ID, "storage_ring_open");
+	public static final ResourceLocation STORAGE_SPACE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "storage_space");
+	/** C2S: a click on the open formation's space, or its Refine (StorageFormations#act): what to do, and the kind of thing clicked (empty: none). */
+	public static final ResourceLocation STORAGE_ACTION = new ResourceLocation(DefyingTheHeavens.MOD_ID, "storage_action");
+	/** C2S: the open formation's owner trusts one more (true, then their name) or strikes one off (false, then their id). */
+	public static final ResourceLocation STORAGE_TRUST = new ResourceLocation(DefyingTheHeavens.MOD_ID, "storage_trust");
 	/** S2C: the Astral Realm's seed (AstralRealm#sendSeed), from which the client works out the stars and planets. */
 	public static final ResourceLocation ASTRAL_SEED = new ResourceLocation(DefyingTheHeavens.MOD_ID, "astral_seed");
 	/** S2C: "Name Your Obsession" (Obsession), before the tribulation into Heavenly Being; C2S: the one named (and whose path's tribulation). */
@@ -237,10 +244,12 @@ public final class ModPackets {
 			BlockPos pos = buf.readBlockPos();
 			int radius = buf.readVarInt();
 			boolean on = buf.readBoolean();
+			int veilRadius = buf.readVarInt();
+			boolean veilOn = buf.readBoolean();
 			server.execute(() -> {
 				if (player.distanceToSqr(Vec3.atCenterOf(pos)) <= CORE_REACH * CORE_REACH && player.level().isLoaded(pos)
 						&& player.level().getBlockEntity(pos) instanceof FormationCoreBlockEntity core) {
-					core.configure(player, radius, on);
+					core.configure(player, radius, on, veilRadius, veilOn);
 					sendFormationCore(player, core);
 				}
 			});
@@ -293,6 +302,11 @@ public final class ModPackets {
 				if (act == 0 && SectMembership.leaveAsBody(player)) SectMembership.sendInfo(player);
 				else if (act == 1) SectMembership.banish(player, target);
 			});
+		});
+		ServerPlayNetworking.registerGlobalReceiver(MISSION_ACT, (server, player, handler, buf, responseSender) -> {
+			int act = buf.readVarInt();
+			int id = buf.readVarInt();
+			server.execute(() -> SectMissions.act(player, act, id));
 		});
 		ServerPlayNetworking.registerGlobalReceiver(SPEND_STAT_POINTS, (server, player, handler, buf, responseSender) -> {
 			int stat = buf.readVarInt();
@@ -393,39 +407,57 @@ public final class ModPackets {
 			}
 			server.execute(() -> MeteorFlight.bulldoze(player, sequence, cleared));
 		});
-		ServerPlayNetworking.registerGlobalReceiver(STORAGE_RING_ACTION, (server, player, handler, buf, responseSender) -> {
+		ServerPlayNetworking.registerGlobalReceiver(STORAGE_ACTION, (server, player, handler, buf, responseSender) -> {
 			int action = buf.readVarInt();
 			ItemStack like = buf.readItem();
-			server.execute(() -> StorageRings.act(player, action, like));
+			server.execute(() -> StorageFormations.act(player, action, like));
 		});
-		ServerPlayNetworking.registerGlobalReceiver(STORAGE_RING_OPEN,
-				(server, player, handler, buf, responseSender) -> server.execute(() -> StorageRings.openFirst(player)));
+		ServerPlayNetworking.registerGlobalReceiver(STORAGE_TRUST, (server, player, handler, buf, responseSender) -> {
+			boolean add = buf.readBoolean();
+			String name = add ? buf.readUtf(16) : null;
+			java.util.UUID id = add ? null : buf.readUUID();
+			server.execute(() -> {
+				StorageFormationBlockEntity formation = StorageFormations.openFormation(player);
+				if (formation == null) return;
+				if (add) formation.trustByName(player, name);
+				else formation.distrust(player, id);
+				StorageSpaces.send(player);
+			});
+		});
 	}
 
 	/**
-	 * An open ring's space to {@code player} ({@link #STORAGE_RING}): the grade, then the entries, a new packet whenever one passes
-	 * {@code maxBytes}.
+	 * An open formation's space to {@code player} ({@link #STORAGE_SPACE}): its tier, whether they own it and whom it trusts, then the
+	 * entries, a new packet whenever one passes {@code maxBytes}.
 	 */
-	public static void sendStorageRing(ServerPlayer player, int containerId, StorageRings.Grade grade, java.util.List<StorageRings.Entry> entries, int maxBytes) {
-		FriendlyByteBuf buf = storageRingHeader(containerId, grade, true);
-		for (StorageRings.Entry entry : entries) {
+	public static void sendStorageSpace(ServerPlayer player, int containerId, StorageFormations.Tier tier, boolean owns,
+			java.util.Map<java.util.UUID, String> trusted, java.util.List<StorageSpaces.Entry> entries, int maxBytes) {
+		FriendlyByteBuf buf = storageSpaceHeader(containerId, tier, owns, trusted, true);
+		for (StorageSpaces.Entry entry : entries) {
 			buf.writeBoolean(true);
 			buf.writeItem(entry.kind());
 			buf.writeVarLong(entry.count());
 			if (buf.writerIndex() > maxBytes) {
 				buf.writeBoolean(false);
-				ServerPlayNetworking.send(player, STORAGE_RING, buf);
-				buf = storageRingHeader(containerId, grade, false);
+				ServerPlayNetworking.send(player, STORAGE_SPACE, buf);
+				buf = storageSpaceHeader(containerId, tier, owns, trusted, false);
 			}
 		}
 		buf.writeBoolean(false);
-		ServerPlayNetworking.send(player, STORAGE_RING, buf);
+		ServerPlayNetworking.send(player, STORAGE_SPACE, buf);
 	}
 
-	private static FriendlyByteBuf storageRingHeader(int containerId, StorageRings.Grade grade, boolean fresh) {
+	private static FriendlyByteBuf storageSpaceHeader(int containerId, StorageFormations.Tier tier, boolean owns, java.util.Map<java.util.UUID, String> trusted,
+			boolean fresh) {
 		FriendlyByteBuf buf = PacketByteBufs.create();
 		buf.writeVarInt(containerId);
-		buf.writeVarInt(grade.ordinal());
+		buf.writeVarInt(tier.ordinal());
+		buf.writeBoolean(owns);
+		buf.writeVarInt(owns ? trusted.size() : 0);
+		if (owns) trusted.forEach((id, name) -> {
+			buf.writeUUID(id);
+			buf.writeUtf(name, 32);
+		});
 		buf.writeBoolean(fresh);
 		return buf;
 	}
@@ -603,6 +635,8 @@ public final class ModPackets {
 		buf.writeBoolean(c.hasSmallWorld());
 		// The title they have taken (PlayerTitles), their own record's: the Cultivation tab's field.
 		buf.writeUtf(own.epithet(), PlayerTitles.MAX_LENGTH * 4);
+		// The practice gathered in each craft (CraftMastery), their own, by the craft's place: the Stats tab's Crafts page.
+		for (CraftMastery.Craft craft : CraftMastery.Craft.values()) buf.writeVarInt(own.getMastery(craft));
 		ServerPlayNetworking.send(player, SYNC, buf);
 	}
 
@@ -837,6 +871,16 @@ public final class ModPackets {
 	}
 
 	public static void sendFormations(ServerPlayer to, List<Formation> formations) {
+		// A barrier its core's own concealment hides from them isn't told of (Qi Sense would show its membrane: Concealments).
+		Concealments.Veil[] veils = Concealments.raised(to.level());
+		if (veils.length > 0) {
+			List<Formation> shown = new ArrayList<>(formations.size());
+			for (Formation formation : formations) {
+				Concealments.Veil veil = Concealments.get(to.serverLevel(), formation.id);
+				if (veil == null || !veil.isRaised() || Concealments.seesThrough(veil, to)) shown.add(formation);
+			}
+			formations = shown;
+		}
 		FriendlyByteBuf buf = PacketByteBufs.create();
 		buf.writeVarInt(formations.size());
 		for (Formation formation : formations) {
@@ -893,6 +937,11 @@ public final class ModPackets {
 			buf.writeUUID(player.getKey());
 			buf.writeUtf(player.getValue());
 		}
+		// Its concealment (Concealments), and what its owner's mastery leaves of the upkeeps.
+		buf.writeVarInt(core.getVeilRadius());
+		buf.writeBoolean(core.isVeilWanted());
+		buf.writeBoolean(core.isVeilRaised());
+		buf.writeDouble(core.upkeepShare());
 		ServerPlayNetworking.send(to, FORMATION_CORE, buf);
 	}
 

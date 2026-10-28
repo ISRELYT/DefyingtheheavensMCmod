@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": {"model": "defying-the-heavens:block/mission_board"},
+    "facing=east": {"model": "defying-the-heavens:block/mission_board", "y": 90},
+    "facing=south": {"model": "defying-the-heavens:block/mission_board", "y": 180},
+    "facing=west": {"model": "defying-the-heavens:block/mission_board", "y": 270}
+  }
+}

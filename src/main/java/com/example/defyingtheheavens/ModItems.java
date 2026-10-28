@@ -23,8 +23,70 @@ public final class ModItems {
 			new RingOfPowerItem(new Item.Properties().rarity(Rarity.EPIC)));
 	public static final Item RING_OF_TRANSCENDENCE = register("ring_of_transcendence",
 			new RingOfTranscendenceItem(new Item.Properties().rarity(Rarity.EPIC)));
-	/** A space folded into a ring, refined grade by grade until it holds without end (see StorageRingItem, StorageRings). */
+	/** An old Storage Ring, from before the storage formations took their place: one carried unfolds into its formation (StorageRingItem). */
 	public static final Item STORAGE_RING = register("storage_ring", new StorageRingItem(new Item.Properties().rarity(Rarity.UNCOMMON).fireResistant()));
+
+	/** The storage formations as items, a tier each (StorageFormationItem, StorageFormations). */
+	private static final Map<StorageFormations.Tier, Item> STORAGE_FORMATIONS = new EnumMap<>(StorageFormations.Tier.class);
+
+	static {
+		for (StorageFormations.Tier tier : StorageFormations.Tier.values()) {
+			Rarity rarity = switch (tier) {
+				case LOW -> Rarity.COMMON;
+				case MID -> Rarity.UNCOMMON;
+				case HIGH, SUPREME -> Rarity.RARE;
+				case IMMORTAL -> Rarity.EPIC;
+			};
+			STORAGE_FORMATIONS.put(tier, register(tier.getId() + "_storage_formation", new StorageFormationItem(ModBlocks.storageFormation(tier), tier,
+					new Item.Properties().rarity(rarity).fireResistant().stacksTo(16))));
+		}
+	}
+
+	public static Item storageFormation(StorageFormations.Tier tier) {
+		return STORAGE_FORMATIONS.get(tier);
+	}
+
+	/**
+	 * The Artifact Forge's artifacts, every kind at every grade it is forged at ("spirit_flying_sword", "heaven_flame_blade"; Artifacts,
+	 * ArtifactRecipes): the weapons made of their element from Spirit grade up (ArtifactKind#has).
+	 */
+	private static final Map<ArtifactKind, Map<ArtifactGrade, Item>> ARTIFACTS = new EnumMap<>(ArtifactKind.class);
+
+	static {
+		for (ArtifactKind kind : ArtifactKind.values()) {
+			Map<ArtifactGrade, Item> grades = new EnumMap<>(ArtifactGrade.class);
+			for (ArtifactGrade grade : ArtifactGrade.values()) {
+				if (!kind.has(grade)) continue;
+				Item.Properties properties = new Item.Properties();
+				if (grade.fireproof() || kind == ArtifactKind.FLAME_BLADE) properties.fireResistant(); // flame doesn't burn
+				Item item = switch (kind) {
+					case FLYING_SWORD, SABER, SPEAR, GLAIVE -> new ArtifactWeaponItem(kind, grade, properties);
+					case BANNER -> new ElementBannerItem(grade, properties.stacksTo(1));
+					case GOURD -> new QiGourdItem(grade, properties.stacksTo(1));
+					case JADE -> new ProtectiveJadeItem(grade, properties);
+					case FLAME_BLADE, TIDE_SPEAR, VINE_WHIP, MOUNTAIN_HAMMER, GOLDEN_SWORD -> new ElementalWeaponItem(kind, grade, properties);
+				};
+				grades.put(grade, register(kind.itemId(grade), item));
+			}
+			ARTIFACTS.put(kind, grades);
+		}
+	}
+
+	/** The artifact of {@code kind} at {@code grade}; null where it isn't forged at that grade (an elemental weapon at Mortal). */
+	public static Item artifact(ArtifactKind kind, ArtifactGrade grade) {
+		return ARTIFACTS.get(kind).get(grade);
+	}
+
+	/** The legendary weapons (Legend, LegendaryWeaponItem; phase 3 of the Artifact Forge), never forged: one of each in the world (Legends). */
+	private static final Map<Legend, Item> LEGENDS = new EnumMap<>(Legend.class);
+
+	static {
+		for (Legend legend : Legend.values()) LEGENDS.put(legend, register(legend.getId(), new LegendaryWeaponItem(legend, new Item.Properties())));
+	}
+
+	public static Item legend(Legend legend) {
+		return LEGENDS.get(legend);
+	}
 
 	/** Harvested ginseng roots: ingredients for alchemy, keeping their age (see GinsengItem). */
 	public static final Item GINSENG = register("ginseng", new GinsengItem(new Item.Properties()));
@@ -196,6 +258,10 @@ public final class ModItems {
 	/** The Celestial Court's pay for its officers' service, spent with its Quartermaster (CelestialCourt). */
 	public static final Item COURT_MERIT_TOKEN = register("court_merit_token",
 			new CourtMeritTokenItem(new Item.Properties().fireResistant().rarity(Rarity.UNCOMMON)));
+	/** A sect mission taken (SectMissions): held, it shows the way; its mission over, it crumbles (MissionSlipItem). */
+	public static final Item MISSION_SLIP = register("mission_slip", new MissionSlipItem(new Item.Properties().stacksTo(1)));
+	/** A delivery's letter, sealed (SectMissions, MissionSlipItem): handed to any of the people of the sect it is for. */
+	public static final Item SEALED_LETTER = register("sealed_letter", new MissionSlipItem(new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON)));
 	/**
 	 * The Chaos Frontier's (phase 3c): Chaos Origin Stones (ChaosOriginStoneItem: a small world's seed is made of them) and Dao Fragments
 	 * (DaoFragmentItem: a shard of one Law, taken in for insight into it).

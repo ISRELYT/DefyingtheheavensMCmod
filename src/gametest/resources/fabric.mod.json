@@ -10,7 +10,6 @@
   "entrypoints": {
     "fabric-gametest": [
       "com.example.defyingtheheavens.PhysiqueGameTests",
-      "com.example.defyingtheheavens.StorageRingGameTests",
       "com.example.defyingtheheavens.CoreAndGapGameTests",
       "com.example.defyingtheheavens.CultivationFruitGameTests",
       "com.example.defyingtheheavens.TribulationCloudGameTests",
@@ -95,7 +94,14 @@
       "com.example.defyingtheheavens.SleeveGameTests",
       "com.example.defyingtheheavens.PaceRetuneGameTests",
       "com.example.defyingtheheavens.InnerAndStonesGameTests",
-      "com.example.defyingtheheavens.VestigeCapGameTests"
+      "com.example.defyingtheheavens.VestigeCapGameTests",
+      "com.example.defyingtheheavens.CraftMasteryGameTests",
+      "com.example.defyingtheheavens.StorageFormationGameTests",
+      "com.example.defyingtheheavens.ConcealmentGameTests",
+      "com.example.defyingtheheavens.ArtifactGameTests",
+      "com.example.defyingtheheavens.ElementalWeaponGameTests",
+      "com.example.defyingtheheavens.LegendGameTests",
+      "com.example.defyingtheheavens.SectMissionGameTests"
     ]
   }
 }

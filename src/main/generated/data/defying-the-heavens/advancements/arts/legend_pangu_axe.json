@@ -1,0 +1,32 @@
+{
+  "parent": "defying-the-heavens:arts/legends",
+  "criteria": {
+    "legend_heard_pangu_axe": {
+      "conditions": {
+        "milestone": "legend/heard_pangu_axe"
+      },
+      "trigger": "defying-the-heavens:milestone"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.defying-the-heavens.arts.legend_pangu_axe.description"
+    },
+    "frame": "goal",
+    "hidden": false,
+    "icon": {
+      "item": "defying-the-heavens:pangu_axe"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.defying-the-heavens.arts.legend_pangu_axe.title"
+    }
+  },
+  "requirements": [
+    [
+      "legend_heard_pangu_axe"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

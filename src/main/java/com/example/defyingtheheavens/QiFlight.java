@@ -185,9 +185,10 @@ public final class QiFlight {
 			return 0;
 		}
 
-		// On a planet's land (AstralRealm) flight costs nothing: nobody is stranded on a world of thin qi.
+		// On a planet's land (AstralRealm) flight costs nothing: nobody is stranded on a world of thin qi. A flying sword forged to be ridden
+		// costs its rider less (ArtifactWeaponItem#flightShare).
 		double cost = ModDimensions.isPlanetSurface(p.level().dimension()) ? 0
-				: onSword ? c.swordFlightCostPerSecond() : c.qiFlightCostPerSecond();
+				: onSword ? c.swordFlightCostPerSecond() * ArtifactWeaponItem.flightShare(p.getMainHandItem()) : c.qiFlightCostPerSecond();
 		// Affordable as long as this tick's gathering and what's left cover it (always, where flight is sustained).
 		if (c.getQi() + (c.qiGatherPerSecond() - cost) / 20.0 >= 0) {
 			SwordFlight.update(p, onSword);

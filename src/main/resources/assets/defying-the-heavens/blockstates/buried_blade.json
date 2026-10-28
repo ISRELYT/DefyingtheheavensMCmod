@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "facing=north,tilted=false": {"model": "defying-the-heavens:block/buried_blade"},
+    "facing=east,tilted=false": {"model": "defying-the-heavens:block/buried_blade", "y": 90},
+    "facing=south,tilted=false": {"model": "defying-the-heavens:block/buried_blade", "y": 180},
+    "facing=west,tilted=false": {"model": "defying-the-heavens:block/buried_blade", "y": 270},
+    "facing=north,tilted=true": {"model": "defying-the-heavens:block/buried_blade_tilted"},
+    "facing=east,tilted=true": {"model": "defying-the-heavens:block/buried_blade_tilted", "y": 90},
+    "facing=south,tilted=true": {"model": "defying-the-heavens:block/buried_blade_tilted", "y": 180},
+    "facing=west,tilted=true": {"model": "defying-the-heavens:block/buried_blade_tilted", "y": 270}
+  }
+}

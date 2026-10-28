@@ -28,7 +28,7 @@ final class GhostlyRenderers {
 	 */
 	static ResourceLocation skin(GhostCultivatorNpc ghost) {
 		return switch (ghost.getRole()) {
-			case OX_HEAD -> OX_HEAD;
+			case OX_HEAD, CHIYOU -> OX_HEAD; // Chiyou's shade, the bull-headed war god, in the warden's own armour of hide
 			case HORSE_FACE -> HORSE_FACE;
 			case MENG_PO -> MENG_PO;
 			case NONE, GHOST_KING, COURTIER -> CultivatorNpcRenderer.skinFor(ghost);
