@@ -7,6 +7,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -74,6 +75,13 @@ public class StorageFormationBlockEntity extends BlockEntity {
 		UUID carried = StorageFormationItem.spaceOf(stack);
 		if (carried != null) space = carried;
 		setChanged();
+	}
+
+	/** Whether it holds nothing: its space empty (or never made), and nothing the world laid up in it still to roll in. */
+	public boolean holdsNothing(MinecraftServer server) {
+		if (lootTable != null || !laidUp.isEmpty()) return false;
+		StorageSpaces.Space held = StorageSpaces.forServer(server).existing(space);
+		return held == null || held.isEmpty();
 	}
 
 	/** Whether {@code player} opens it as its own: its owner, or one they trust. */

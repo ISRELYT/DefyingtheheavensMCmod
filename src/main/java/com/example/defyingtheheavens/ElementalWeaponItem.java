@@ -419,7 +419,8 @@ public class ElementalWeaponItem extends ArtifactWeaponItem {
 	@Override
 	public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
 		super.inventoryTick(stack, level, entity, slot, selected);
-		if (!selected || !(level instanceof ServerLevel server) || !(entity instanceof LivingEntity holder) || server.getGameTime() % 6 != 0) return;
+		// The main hand by the stack itself (vanilla ticks the offhand as "selected" too while the hotbar's first slot is chosen).
+		if (!(level instanceof ServerLevel server) || !(entity instanceof LivingEntity holder) || holder.getMainHandItem() != stack || server.getGameTime() % 6 != 0) return;
 		Vec3 look = flat(holder.getLookAngle(), holder);
 		Vec3 right = new Vec3(-look.z, 0, look.x);
 		Vec3 at = holder.position().add(0, holder.getBbHeight() * 0.5, 0).add(look.scale(0.45)).add(right.scale(0.4));

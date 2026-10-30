@@ -17,7 +17,8 @@ import java.util.UUID;
 /**
  * The folded spaces the storage formations hold (StorageFormations; the Storage Rings', which held them before, 2026-10-28: the user's ask
  * to remove the rings, their spaces kept under the same ids so a ring becomes a formation with all it held), kept by the world, not
- * the formation: a formation carries only its space's id, so packed up as an item it keeps everything without carrying it.
+ * the formation: a formation carries only its space's id (as an item, only an old ring unfolded or one packed up before formations stayed
+ * put, 2026-10-30).
  * <p>
  * A space holds its things as entries of one kind each, any number of them; how much fits is its formation's tier's (so many stacks'
  * worth, each kind taking whole stacks as in a chest, or without end).

@@ -31,8 +31,8 @@ import java.util.UUID;
  * last two, some mastery of formations: CraftMastery). Its owner and the players they trust open it freely. Anyone else needs the seal's
  * realm, and then must force it ({@link #force}): stay by it while the seal gives way, longer the higher the tier, its owner warned when
  * it begins and when it breaks; a broken seal stays open until its owner opens it again, which mends it. Below the seal's realm it can't
- * be opened, and nothing breaks it: no pickaxe, blast, spell or hopper. Its owner packs it up (sneaking, an empty hand) and the item
- * keeps its space.
+ * be opened, and nothing breaks it: no pickaxe, blast, spell or hopper. It stays where it is set down (no portable store: the user,
+ * 2026-10-30, so players make bases); its owner takes it up only empty (sneaking, an empty hand: StorageFormationBlock).
  * <p>
  * The treasuries the world raises (sects', clans' hoards, the ghost palaces') hold their riches in formations of no owner: their sect's or
  * king's own rules keep them (CultivationEvents, PalaceTreasury). An old Storage Ring, carried, unfolds into the formation of its size with
@@ -158,7 +158,7 @@ public final class StorageFormations {
 		StorageSpaces.send(player);
 	}
 
-	/** The formation the screen {@code player} has open is of, or null (it was packed up, or the screen is another's). */
+	/** The formation the screen {@code player} has open is of, or null (it was taken up, or the screen is another's). */
 	static StorageFormationBlockEntity openFormation(ServerPlayer player) {
 		if (!(player.containerMenu instanceof StorageFormationMenu menu) || menu.pos() == null) return null;
 		return player.level().getBlockEntity(menu.pos()) instanceof StorageFormationBlockEntity formation ? formation : null;

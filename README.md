@@ -235,8 +235,11 @@ packed formation can't go inside a space, nor anything carrying one (a shulker b
 **Its seal**: no pickaxe, blast, spell or hopper breaks it or draws from it. A stranger below the seal's realm is turned
 away; one of its realm (on any path) forces it by staying within 6 blocks for its time, its owner warned when they begin and
 when it breaks. A broken seal stays open to anyone until its owner opens the formation again, which mends it (a stranger
-looking in then is shut out). Sneak + right-click with an empty hand: its owner packs it up, the item keeping all it held
-(on the ground it never despawns and is proof against fire and blasts). **Refine** (beside its search line) raises its
+looking in then is shut out). It stays where it is set down, never a store to carry about (the user, 2026-10-30: "i dont
+want them to be a portable form of storage otherwise players never make bases"): sneak + right-click with an empty hand, its
+owner takes it up only once it holds nothing, a plain formation of its grade. One packed up with its things before then, or
+an old ring unfolded, still sets down with all it held (on the ground it never despawns and is proof against fire and
+blasts). **Refine** (beside its search line) raises its
 grade in place, its space, owner and trust kept:
 
 | Grade | Holds | Seal (and the realm to refine into it) | Forcing takes | Refining into it takes | Formations mastery |

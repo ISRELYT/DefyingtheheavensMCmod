@@ -324,10 +324,11 @@ public class LegendaryWeaponItem extends SwordItem {
 			int drunk = Legends.get(server.getServer()).entry(legend).drunk();
 			if (drunk != drunk(stack)) stack.getOrCreateTag().putInt(DRUNK, drunk);
 		}
-		boolean inHand = selected || player.getOffhandItem() == stack;
+		// Which hand by the stack itself: vanilla ticks the offhand as "selected" too while the hotbar's first slot is chosen.
+		boolean main = player.getMainHandItem() == stack, inHand = main || player.getOffhandItem() == stack;
 		// Too heavy for one below its lowest realm: it slips from their hand.
 		if (inHand && !mayWield(player, legend)) {
-			slip(player, stack, selected);
+			slip(player, stack, main);
 			if (now % 40 == 0) {
 				player.displayClientMessage(Component.translatable(ModLang.LEGEND_TOO_HEAVY, legend.getDisplayName(), legend.lowest().getDisplayName()), true);
 			}
@@ -347,7 +348,7 @@ public class LegendaryWeaponItem extends SwordItem {
 			}
 		}
 		// Bonding: meditating with it in the main hand.
-		if (selected && !bondedTo(stack, player) && MeditationManager.isMeditating(player.getUUID()) && !Legends.taming(player)) {
+		if (main && !bondedTo(stack, player) && MeditationManager.isMeditating(player.getUUID()) && !Legends.taming(player)) {
 			// The Xuanyuan Sword answers only the righteous.
 			if (legend == Legend.XUANYUAN && !righteous(player)) {
 				if (now % 40 == 0) player.displayClientMessage(Component.translatable(ModLang.LEGEND_XUANYUAN_REFUSES, legend.getDisplayName()), true);
@@ -364,6 +365,11 @@ public class LegendaryWeaponItem extends SwordItem {
 				else bond(stack, player);
 			}
 		}
+	}
+
+	/** A server stopping: the bow's wait forgotten (game times mean nothing in the next world opened). */
+	static void clear() {
+		SUN_READY.clear();
 	}
 
 	/** {@code stack} slipping from {@code player}'s hand into their pack, or to the ground if it is full. */

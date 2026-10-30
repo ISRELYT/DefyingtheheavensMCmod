@@ -26,7 +26,8 @@ import java.util.List;
 
 /**
  * A storage formation of one tier (StorageFormations): right-click opens it to its owner and those they trust, and sets a stranger of its
- * seal's realm to forcing it; sneaking with an empty hand its owner packs it up, its space kept in the item (StorageFormationItem).
+ * seal's realm to forcing it; sneaking with an empty hand its owner takes it up, but only empty: it stays where it is set down, nothing
+ * carried off in it (the user, 2026-10-30: "i dont want them to be a portable form of storage otherwise players never make bases").
  * Unbreakable (StorageFormations: no pickaxe, blast or spell).
  */
 public class StorageFormationBlock extends BaseEntityBlock {
@@ -67,24 +68,30 @@ public class StorageFormationBlock extends BaseEntityBlock {
 		if (!(player instanceof ServerPlayer sp) || !(level.getBlockEntity(pos) instanceof StorageFormationBlockEntity formation)) return InteractionResult.PASS;
 		if (hand != InteractionHand.MAIN_HAND) return InteractionResult.PASS;
 		if (sp.isShiftKeyDown() && sp.getMainHandItem().isEmpty()) {
-			packUp(sp, formation);
+			takeUp(sp, formation);
 			return InteractionResult.CONSUME;
 		}
 		StorageFormations.use(sp, formation);
 		return InteractionResult.CONSUME;
 	}
 
-	/** Its owner packs it up: the block gone, the item (its space within) in their hand. A treasury's, no one's to take. */
-	private static void packUp(ServerPlayer player, StorageFormationBlockEntity formation) {
+	/**
+	 * Its owner takes it up, if it holds nothing: the block gone, a plain formation of its tier in their hand (its emptied space let go). A
+	 * treasury's, no one's to take.
+	 */
+	private static void takeUp(ServerPlayer player, StorageFormationBlockEntity formation) {
 		boolean own = player.getUUID().equals(formation.getOwner()) || player.isCreative();
 		if (!own || formation.getOwner() == null && !player.isCreative()) {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_STORAGE_NOT_YOURS).withStyle(ChatFormatting.RED), true);
 			return;
 		}
+		if (!formation.holdsNothing(player.server)) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_STORAGE_NOT_EMPTY).withStyle(ChatFormatting.RED), true);
+			return;
+		}
 		Level level = player.level();
 		BlockPos pos = formation.getBlockPos();
 		ItemStack item = StorageFormationItem.of(formation.tier());
-		if (formation.spaceId() != null) StorageFormationItem.setSpace(item, formation.spaceId());
 		level.removeBlock(pos, false);
 		player.setItemInHand(InteractionHand.MAIN_HAND, item);
 		level.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_BREAK, SoundSource.BLOCKS, 1.0f, 1.2f);

@@ -996,10 +996,11 @@ public final class Legends extends SavedData {
 		}
 	}
 
-	/** A server stopping: nobody is bonding or being tamed any more, and Lei Zhen's storm is gone with the world. */
+	/** A server stopping: nobody is bonding or being tamed any more, no bow gathering its sun, and Lei Zhen's storm is gone with the world. */
 	public static void clear() {
 		BONDING.clear();
 		TAMING.clear();
+		LegendaryWeaponItem.clear();
 		LeiZhen.clear();
 		LegendGuards.clear();
 	}

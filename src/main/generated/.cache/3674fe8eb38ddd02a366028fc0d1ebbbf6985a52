@@ -1,4 +1,4 @@
-// 1.20.1	2026-10-28T20:51:59.167886	Defying The Heavens/Model Definitions
+// 1.20.1	2026-10-30T18:56:18.6073324	Defying The Heavens/Model Definitions
 2b3bc3890c11b0cf8e111ed310feca8d383f29fa assets\defying-the-heavens\models\item\spirit_flame_blade.json
 2a37dff13a81a9b17eb809fba4b736f445728126 assets\defying-the-heavens\models\item\jade_ore.json
 2138dc0ce113e8174d6ff2af48c66ed13c7f1416 assets\defying-the-heavens\models\item\mortal_saber.json
@@ -153,8 +153,8 @@ d4d15be2eff29a8fb0020cba0fc501bcdf2df5ae assets\defying-the-heavens\models\block
 4e1661421de29baf90226ca0e23448da9f584584 assets\defying-the-heavens\models\item\earth_glaive.json
 a01acdd980b4457dccc2d6879ada12fd7cc69850 assets\defying-the-heavens\blockstates\spirit_stone_ore.json
 a5b6d377c39209c7f72ab1c30d0510dc81c5f5f0 assets\defying-the-heavens\models\item\qi_vein.json
-abc13b14ac3fb2f375e71b7d5aa6987c17fd0cca assets\defying-the-heavens\models\item\mortal_protective_jade.json
 c928dfd3ce99be3289a7c1f7a7edd490f0ee2bd5 assets\defying-the-heavens\models\item\earth_flying_sword.json
+abc13b14ac3fb2f375e71b7d5aa6987c17fd0cca assets\defying-the-heavens\models\item\mortal_protective_jade.json
 2cb8ce5aa6cb126d376ec3f33ef40ef6b63845be assets\defying-the-heavens\models\item\spirit_tide_spear.json
 6fe42dcdc37ff330e1714f67fb696f44860f56ca assets\defying-the-heavens\models\item\earth_mountain_hammer.json
 c492d0766f27e947f5cd4f9776451e5c8414123c assets\defying-the-heavens\models\item\earth_protective_jade.json

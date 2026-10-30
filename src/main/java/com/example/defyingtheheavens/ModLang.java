@@ -1004,6 +1004,7 @@ public final class ModLang {
 	public static final String MSG_STORAGE_COST = k("message.storage.cost");
 	public static final String MSG_STORAGE_REFINED = k("message.storage.refined");
 	public static final String MSG_STORAGE_NOT_YOURS = k("message.storage.not_yours");
+	public static final String MSG_STORAGE_NOT_EMPTY = k("message.storage.not_empty");
 	public static final String MSG_STORAGE_SEALED = k("message.storage.sealed");
 	public static final String MSG_STORAGE_MENDED = k("message.storage.mended");
 	public static final String MSG_STORAGE_FORCE_BEGIN = k("message.storage.force_begin");

@@ -3,6 +3,7 @@ package com.example.defyingtheheavens;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -36,14 +37,16 @@ public class StorageRingItem extends Item {
 		return stack.hasTag() ? Math.max(0, Math.min(4, stack.getTag().getInt(GRADE_TAG))) : 0;
 	}
 
-	/** In a player's pack: unfolds into its formation at once (the ring slots and the ender chest each second: StorageFormations). */
+	/** In a player's pack or offhand: unfolds into its formation at once (the ring slots and the ender chest each second: StorageFormations). */
 	@Override
 	public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
 		if (level.isClientSide || !(entity instanceof Player player)) return;
-		if (player.getInventory().getItem(slot) == stack) {
-			player.getInventory().setItem(slot, StorageFormations.unfold(stack));
-			player.sendSystemMessage(Component.translatable(ModLang.MSG_STORAGE_RING_UNFOLDED).withStyle(ChatFormatting.GOLD));
-		}
+		Inventory inventory = player.getInventory();
+		// The offhand is ticked as slot 0 of its own (Inventory#getItem(0) is the hotbar's first).
+		if (inventory.getItem(slot) == stack) inventory.setItem(slot, StorageFormations.unfold(stack));
+		else if (inventory.offhand.get(0) == stack) inventory.offhand.set(0, StorageFormations.unfold(stack));
+		else return;
+		player.sendSystemMessage(Component.translatable(ModLang.MSG_STORAGE_RING_UNFOLDED).withStyle(ChatFormatting.GOLD));
 	}
 
 	@Override

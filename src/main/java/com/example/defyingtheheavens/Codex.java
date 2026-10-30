@@ -735,7 +735,8 @@ public final class Codex {
 				broken seal stays open until you open the formation again.
 				- Refining needs the next grade's spirit stones and more, a realm as high as the new seal, and from Supreme on, some \
 				mastery of formations.
-				- Sneak and right-click it with an empty hand to pack it up: everything inside stays in the item.
+				- It stays where you set it down: nothing is carried off inside one. Once it is empty, sneak and right-click it with an \
+				empty hand to take it up and set it down elsewhere.
 				- Use its Trust button to name the players who may open it as you do.
 				Sect treasuries keep their riches in storage formations too. An old Storage Ring you carry unfolds into a storage \
 				formation of its size, with everything it held.""");

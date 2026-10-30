@@ -101,7 +101,8 @@
       "com.example.defyingtheheavens.ArtifactGameTests",
       "com.example.defyingtheheavens.ElementalWeaponGameTests",
       "com.example.defyingtheheavens.LegendGameTests",
-      "com.example.defyingtheheavens.SectMissionGameTests"
+      "com.example.defyingtheheavens.SectMissionGameTests",
+      "com.example.defyingtheheavens.SweepFiveGameTests"
     ]
   }
 }

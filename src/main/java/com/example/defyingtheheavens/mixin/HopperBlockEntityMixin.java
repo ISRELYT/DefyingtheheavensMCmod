@@ -1,10 +1,12 @@
 package com.example.defyingtheheavens.mixin;
 
+import com.example.defyingtheheavens.LegendaryWeaponItem;
 import com.example.defyingtheheavens.SectManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.Hopper;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
@@ -26,5 +28,16 @@ public abstract class HopperBlockEntityMixin {
 		if (cir.getReturnValue() == null || !(level instanceof ServerLevel server)) return;
 		BlockPos above = BlockPos.containing(hopper.getLevelX(), hopper.getLevelY() + 1.0, hopper.getLevelZ());
 		if (SectManager.treasuryAt(server, above)) cir.setReturnValue(new SimpleContainer(0));
+	}
+
+	/**
+	 * A hopper (or a hopper minecart) taking up a legend lying loose: it takes a copy and throws the lying stack away whole, which Legends
+	 * would count the legend's loss (to reform at home a day on, the hopper's one a hollow echo then). The lying stack emptied first, as a
+	 * player's picking it up leaves it.
+	 */
+	@Inject(method = "addItem(Lnet/minecraft/world/Container;Lnet/minecraft/world/entity/item/ItemEntity;)Z",
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/item/ItemEntity;discard()V"))
+	private static void dth$legendTakenUpNotLost(Container container, ItemEntity item, CallbackInfoReturnable<Boolean> cir) {
+		if (item.getItem().getItem() instanceof LegendaryWeaponItem) item.getItem().setCount(0);
 	}
 }

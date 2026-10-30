@@ -16,7 +16,7 @@ import net.minecraft.world.phys.Vec3;
 /**
  * A storage formation's screen: its space above (not slots: a grid of what it holds, any number of each, drawn by the client from what
  * StorageFormations sends and clicked through it, StorageFormations#act), the player's pack below as real slots. It closes when the
- * formation is gone (packed up, refined into the next tier: its screen opened again on that) or left behind.
+ * formation is gone (taken up, refined into the next tier: its screen opened again on that) or left behind.
  */
 public class StorageFormationMenu extends AbstractContainerMenu {
 	public static final MenuType<StorageFormationMenu> TYPE = Registry.register(BuiltInRegistries.MENU, DefyingTheHeavens.id("storage_formation"),

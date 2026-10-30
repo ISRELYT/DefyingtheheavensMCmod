@@ -14,9 +14,10 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * A storage formation as an item (StorageFormations): crafted (Low) or packed up by its owner, when it carries the id of the space it
- * holds ({@link #SPACE_TAG}), so set down again it holds all it held. Lying on the ground it is proof against fire and blasts and never
- * despawns, as the rings were: a space must not vanish with a five-minute timer.
+ * A storage formation as an item (StorageFormations): crafted (Low), or taken up again by its owner, empty (StorageFormationBlock). One
+ * packed up before formations stayed put (2026-10-30), or an old Storage Ring unfolded, carries the id of the space it holds
+ * ({@link #SPACE_TAG}), so set down it holds all it held. Lying on the ground it is proof against fire and blasts and never despawns, as
+ * the rings were: a space must not vanish with a five-minute timer.
  */
 public class StorageFormationItem extends BlockItem {
 	/** The space a packed formation holds (StorageSpaces). */
@@ -36,7 +37,7 @@ public class StorageFormationItem extends BlockItem {
 		return new ItemStack(tier.block().asItem());
 	}
 
-	/** The space {@code stack} holds (a formation packed up), or null. */
+	/** The space {@code stack} holds (one packed up before 2026-10-30, or an old ring unfolded), or null. */
 	public static UUID spaceOf(ItemStack stack) {
 		if (!(stack.getItem() instanceof StorageFormationItem) || !stack.hasTag() || !stack.getTag().hasUUID(SPACE_TAG)) return null;
 		return stack.getTag().getUUID(SPACE_TAG);

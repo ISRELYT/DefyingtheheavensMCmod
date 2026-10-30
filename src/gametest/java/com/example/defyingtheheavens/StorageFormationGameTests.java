@@ -23,7 +23,8 @@ import java.util.UUID;
 /**
  * The storage formations (StorageFormations, 2026-10-28, in the Storage Rings' place): a tier's room in whole stacks and the Immortal's
  * without end; set down by a player it is theirs; a stranger below its seal is turned away, one of the seal's realm forces it; its owner
- * mends it, refines it (realm, mastery, cost) and packs it up with all it holds; an old ring unfolds into its formation with its space;
+ * mends it, refines it (realm, mastery, cost) and takes it up only empty (one packed before still sets down with all it held); an old
+ * ring unfolds into its formation with its space;
  * a treasury's formation holds its riches; nothing breaks one.
  */
 public class StorageFormationGameTests implements FabricGameTest {
@@ -59,7 +60,7 @@ public class StorageFormationGameTests implements FabricGameTest {
 		return formation;
 	}
 
-	/** {@code player} right-clicks the formation's block with an empty hand, sneaking (packing it up) or not. */
+	/** {@code player} right-clicks the formation's block with an empty hand, sneaking (taking it up) or not. */
 	private static void click(GameTestHelper helper, ServerPlayer player, boolean sneaking) {
 		ServerLevel level = helper.getLevel();
 		BlockPos pos = helper.absolutePos(AT);
@@ -157,28 +158,45 @@ public class StorageFormationGameTests implements FabricGameTest {
 	}
 
 	@GameTest(template = EMPTY_STRUCTURE)
-	public void packedUpItKeepsWhatItHolds(GameTestHelper helper) {
+	public void takenUpOnlyEmptyNeverCarryingAnything(GameTestHelper helper) {
 		ServerLevel level = helper.getLevel();
-		ServerPlayer owner = survivor(helper, "test-pack-owner", Realm.CORE_FORMATION);
-		ServerPlayer stranger = survivor(helper, "test-pack-stranger", Realm.TRUE_IMMORTAL);
+		ServerPlayer owner = survivor(helper, "test-take-owner", Realm.CORE_FORMATION);
+		ServerPlayer stranger = survivor(helper, "test-take-stranger", Realm.TRUE_IMMORTAL);
 		try {
 			StorageFormationBlockEntity formation = place(helper, StorageFormations.Tier.MID, owner, ItemStack.EMPTY);
 			formation.ensureSpace(level);
-			UUID space = formation.spaceId();
-			StorageSpaces.forServer(level.getServer()).space(space).insert(new ItemStack(Items.EMERALD, 33), StorageFormations.Tier.MID.stacks());
+			StorageSpaces.Space space = StorageSpaces.forServer(level.getServer()).space(formation.spaceId());
+			space.insert(new ItemStack(Items.EMERALD, 33), StorageFormations.Tier.MID.stacks());
 
 			BlockPos pos = helper.absolutePos(AT);
 			click(helper, stranger, true);
-			helper.assertTrue(level.getBlockState(pos).getBlock() instanceof StorageFormationBlock, "No one else packs it up, however strong");
+			helper.assertTrue(level.getBlockState(pos).getBlock() instanceof StorageFormationBlock, "No one else takes it up, however strong");
 			click(helper, owner, true);
-			ItemStack packed = owner.getMainHandItem();
-			helper.assertTrue(level.getBlockState(pos).isAir() && packed.getItem() instanceof StorageFormationItem item && item.tier() == StorageFormations.Tier.MID
-					&& space.equals(StorageFormationItem.spaceOf(packed)), "Its owner packs it up: the item, its tier and its space");
-			helper.assertTrue(!StorageSpaces.mayHold(packed), "A packed formation goes into no space");
+			helper.assertTrue(level.getBlockState(pos).getBlock() instanceof StorageFormationBlock && owner.getMainHandItem().isEmpty(),
+					"Holding anything, it stays where it is: not even its owner carries it off");
+			space.extract(new ItemStack(Items.EMERALD), 33);
+			click(helper, owner, true);
+			ItemStack taken = owner.getMainHandItem();
+			helper.assertTrue(level.getBlockState(pos).isAir() && taken.getItem() instanceof StorageFormationItem item && item.tier() == StorageFormations.Tier.MID
+					&& StorageFormationItem.spaceOf(taken) == null, "Empty, its owner takes it up: a plain formation of its tier");
 
+			// Treasures the world laid up in one (a treasury's, never opened) are something held too.
+			StorageFormationBlockEntity treasury = place(helper, StorageFormations.Tier.MID, owner, ItemStack.EMPTY);
+			treasury.layUp(new net.minecraft.resources.ResourceLocation("minecraft", "chests/simple_dungeon"), 1L);
+			helper.assertFalse(treasury.holdsNothing(level.getServer()), "Treasures laid up in it, it isn't empty");
+			level.removeBlock(pos, false);
+
+			// One packed up with its things before formations stayed put still sets down with all it held.
+			UUID old = UUID.randomUUID();
+			StorageSpaces.forServer(level.getServer()).space(old).insert(new ItemStack(Items.DIAMOND, 5), StorageFormations.Tier.MID.stacks());
+			ItemStack packed = StorageFormationItem.of(StorageFormations.Tier.MID);
+			StorageFormationItem.setSpace(packed, old);
+			helper.assertTrue(!StorageSpaces.mayHold(packed), "A packed formation goes into no space");
 			StorageFormationBlockEntity again = place(helper, StorageFormations.Tier.MID, owner, packed);
-			helper.assertTrue(space.equals(again.spaceId())
-					&& StorageSpaces.forServer(level.getServer()).space(again.spaceId()).count(new ItemStack(Items.EMERALD)) == 33, "Set down again, all it held is there");
+			helper.assertTrue(old.equals(again.spaceId())
+					&& StorageSpaces.forServer(level.getServer()).space(again.spaceId()).count(new ItemStack(Items.DIAMOND)) == 5, "Set down, all it held is there");
+			click(helper, owner, true);
+			helper.assertTrue(level.getBlockState(pos).getBlock() instanceof StorageFormationBlock, "...and there it stays while it holds them");
 			helper.succeed();
 		} finally {
 			leave(owner, stranger);

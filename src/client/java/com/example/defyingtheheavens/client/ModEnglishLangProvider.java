@@ -1031,7 +1031,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.STORAGE_TOOLTIP_BOUNDLESS, "A space without end: holds anything, any number of it");
 		t.add(ModLang.STORAGE_TOOLTIP_SEAL, "Sealed: only a cultivator of %s can force it");
 		t.add(ModLang.STORAGE_TOOLTIP_HOLDS, "Packed up: everything it held is still inside");
-		t.add(ModLang.STORAGE_TOOLTIP_USE, "Place it to use it. Sneak + right-click with an empty hand to pack it up");
+		t.add(ModLang.STORAGE_TOOLTIP_USE, "Place it to use it. It stays where it is set: only an empty one can be taken up (sneak + right-click with an empty hand)");
 		t.add(ModLang.STORAGE_USED, "%s / %s stacks");
 		t.add(ModLang.STORAGE_USED_BOUNDLESS, "%s kinds, no end");
 		t.add(ModLang.STORAGE_TITLE, "%s Storage Formation");
@@ -1057,6 +1057,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_STORAGE_COST, "Refining it takes %s %s.");
 		t.add(ModLang.MSG_STORAGE_REFINED, "The space within unfolds: %s grade!");
 		t.add(ModLang.MSG_STORAGE_NOT_YOURS, "This storage formation isn't yours.");
+		t.add(ModLang.MSG_STORAGE_NOT_EMPTY, "Empty it first: a storage formation can only be taken up when it holds nothing.");
 		t.add(ModLang.MSG_STORAGE_SEALED, "A seal of %s holds it shut.");
 		t.add(ModLang.MSG_STORAGE_MENDED, "You mend the broken seal.");
 		t.add(ModLang.MSG_STORAGE_FORCE_BEGIN, "You set to forcing the seal: stay by it for %s seconds.");
