@@ -77,21 +77,29 @@ what is new; a **player's guide**, what things are and how to do them, with few 
   before tells the way to it), the worlds' pages at the realm that can reach them or on arriving, the dead's pages on death, the Laws
   at True Immortal. A page sealed shows ??? and its hint ("Cultivate further, and this page will open to you", "Only the dead know of
   this", ...); a chapter all sealed shows ??? and a darkened icon.
-- **The screen** (400 x 230, in the talk wheel's lacquer and gold): the chapters' icons down the left, the chosen chapter's pages
-  listed beside them, the page on the right with its icon and title; its text wrapped to fit, points of a list with a gold point, the
-  keys named as they are bound now (in gold, so a rebound key reads right). The mouse wheel scrolls the list or the page (and steps
-  through the chapters over their column); up and down choose the page, left and right the chapter, Page Up and Down scroll; J or Esc
-  closes it, back to the cultivation menu if it came from there. The header counts the pages open ("34 of 103 pages"). It opens on the
-  newest page not yet read (a new player: the welcome), else where it was left. It doesn't pause the game.
+- **The screen** (since 2026-10-30 as its mockup in the cultivation menu's Hall look draws it, in the mockup's own pixels: see "Drawn
+  as the mockups are" below; `client/CodexScreen`): the whole screen in ink with far mountains along its foot. Down a column at the
+  left, the Codex's name and how many of its pages are open ("34 of 103 pages") over a rule, then the chapters by name, the chapter
+  open in jade with a gold diamond, a chapter with a page unread a gold square (a long name a little smaller before it is cut
+  short). Beside them the chosen chapter's pages under its name, the page open in jade with a gold diamond, one unread a gold square,
+  one sealed ???; under them, while they all fit, what opens a page still sealed ("A page still closed: Hunt the great beasts to open
+  this page.": the one pointed at, else the one shown, else the first). Then the page in a framed panel, its icon and title over a
+  rule, its text wrapped to fit, points of a list with a gold diamond, the keys named as they are bound now (in gold, so a rebound
+  key reads right), its pictures centred under the rule, a thin gold scrollbar when it runs long. On a screen wider than 16:9 the
+  list and the page are kept together in the middle. The mouse wheel scrolls the list or the page (and steps through the chapters
+  over their column); up and down choose the page, left and right the chapter, Page Up and Down scroll; J or Esc closes it, back to
+  the cultivation menu if it came from there. It opens on the newest page not yet read (a new player: the welcome), else where it
+  was left. It doesn't pause the game.
 - **New pages**: a toast, "New in the Codex", naming the page (or counting them) with the key; a gold dot on each page not yet read,
-  on its chapter, and on the cultivation menu's **book** (outside the panel's top right; J opens the Codex from the menu too). A world
-  from before the Codex opens what its player has already done the first time they come in, in one toast.
+  on its chapter, and on the cultivation menu's **Codex** at the foot of its column of tabs (the **book** outside the panel's top right
+  where the menu is too narrow for the column; J opens the Codex from the menu too). A world from before the Codex opens what its
+  player has already done the first time they come in, in one toast.
 - **Kept on this computer**, per world (the singleplayer world's folder or the server's address): which pages were told of and which
   read, and the map's worlds seen, in `config/defying-the-heavens-codex.json`.
 - **Pictures** (2026-10-28, the user's pick: diagrams and rows of items): a page line beginning `@` draws one between the words. `@items`
   a row of items in gold-rimmed slots (counts, `+` and arrows between); `@brew pill` the cauldron's recipe for it and `@craft id` a
   crafting recipe, both read from the game itself so they never go stale (the pills, the elixir, the cauldron, the altar, the Storage
-  Ring, the World Seed, the stones' nine-to-one...); `@diagram` one of three drawn in lacquer and gold. Pointed at, an item shows its
+  Ring, the World Seed, the stones' nine-to-one...); `@diagram` one of three drawn in ink and gold. Pointed at, an item shows its
   tooltip.
   - **Map of the Worlds** (the user's ask: "a diagram displaying all the realms ... branches between them showing which ones you can get
     to from what one", ??? until you have been there, then "its name and the qi amount and a recommended realm"): a new page, open
@@ -682,7 +690,7 @@ time one joins. A character from a world before bloodlines gets it once too, kee
     one at Qi Refining, nine at Sacred Vessel (the higher of its paths).
   - **Dragon:** antlers, whiskers, a mane and a beard, with a long scaled tail ridged along its back and tufted at its end.
 - **Where the look shows:** everyone sees it, including on one's body sitting while the soul is out, a clone, a meditator's
-  body, a heart demon, a soul vessel's likeness, and one's soul or ghost (drawn in its light). The top-left portrait shows it.
+  body, a heart demon, a soul vessel's likeness, and one's soul or ghost (drawn in its light).
   A player in another's body wears the body's blood; in an NPC's, the NPC's look. **Whatever coats a body coats the whole form**
   (the user's rule, 2026-10-23, for every race to come): the wards' skins, Flame Armour, Meteor Flight's heat, a possessed body's
   violet veil, a heart demon's shadow, the light of souls and the dead all take in the beast's head and tail.
@@ -1165,20 +1173,59 @@ Quasi- names ("Quasi-Dao Integration"; only past the last realm's Grand Perfecti
 Void Shattering (2026-10-24: space torn open and what comes through it, Heaven spells: Void Shattering); the realms after it none
 yet, nor new abilities.
 
-**The top-left corner** (the user's asks, 2026-10-22, to pictures of theirs, in the mod's own style): with bodies of thousands of
-hearts, vanilla's hearts at the bottom are held to **one row of ten** (`client/mixin/GuiHeartsMixin`: each heart a tenth of the
-whole once past twenty; the armour row sits over it as for a body of twenty), and the top-left corner is a **portrait** of you in a
-lacquer frame trimmed in antique gold, your name small above it, with **two thick bars** beside it (`client/VitalsHud`): your
-**health** and your **qi**, each in the Qi bar's gold frame with its scroll roller and tapered tip, what it holds against its
-maximum written across it ("1,407/1,407"). The health crimson, lit from above, notched at the quarters, a blow's pale trail
-draining after the fill, absorption a band of gold along its top (its amount after the health, in gold); the qi the mod's blue, a
-glint flowing along it while it fills (not in a Qi Flight that costs more than gathering brings in). Nothing of hunger, air or
-armour up there (the user's word): those stay at the bottom, vanilla's. The health shows when vanilla's hearts do (not in creative
-or spectator), the qi once your meridians open; under them the thin bars go on (a soul's own pool in another's body, the ghostly
-qi, yin corruption, the readied spell and ability: `QiHud`, `NetherworldHud`), and under those the pressure mark and a projected
-soul's readout. Vanilla's boss bars keep clear of it (the user, 2026-10-26: "the qi bar covers the boss health bar"): where the centred
-bars would run under it (a large GUI scale), they are drawn beside it on their own row, or under it on a screen too narrow for that
-(`client/HudCorner`, `client/mixin/BossHealthOverlayMixin`).
+**The top-left corner** (the user's asks, 2026-10-22, to pictures of theirs, in the mod's own style; redone 2026-10-30 in the
+cultivation menu's Hall look, the user's pick: "the hall panel but remove the black boxes behind the UI and shrink it slightly",
+drawn as its mockup is, in the mockup's own pixels and Pixelify Sans: see "Drawn as the mockups are" below):
+with bodies of thousands of hearts, vanilla's hearts at the bottom are held to **one row of ten** (`client/mixin/GuiHeartsMixin`:
+each heart a tenth of the whole once past twenty; the armour row sits over it as for a body of twenty). Nothing in the corner has a
+panel behind it: a gold diamond, your name and the higher of your paths' realms, then **two flat bars** (`client/VitalsHud`, drawn
+by `client/HallArt`): your **health** and your **qi**, each in a thin dark-gold frame on a see-through track, what it holds written
+across it in white outlined in black ("Health 1,407 / 1,407", or "1.40M / 5.80M": past ten thousand a number keeps three figures
+and a letter, so the bars never grow with a realm). The health crimson, lit along its top, a blow's pale trail
+draining after the fill, absorption a band of gold along its top; the qi the mod's blue, a glint flowing along it while it fills
+(not in a Qi Flight that costs more than gathering brings in). Nothing of hunger, air or armour up there (the user's word): those
+stay at the bottom, vanilla's. The health shows when vanilla's hearts do (not in creative or spectator), the qi once your meridians
+open; under them thin bars of the same look go on (a soul's own pool in another's body, immortal essence while it holds any or the
+land can fill it, the ghostly qi, yin corruption: `QiHud`, `NetherworldHud`), then the pressure line, and a projected soul's
+readout hung from them on a dashed cord (its tether as a bar, red while it strains, and the body's health: `SoulHud`). The **readied
+spell** and the **selected ability** sit in two slots right of the hotbar, past the offhand slot and the attack indicator
+(`client/HotbarSlots`): each its icon, its word over it, its key in its corner; a cooling spell dim with its seconds
+across it, an ability that is on framed in jade with a green diamond. Vanilla's boss bars keep clear of the corner (the user,
+2026-10-26: "the qi bar covers the boss health bar"): where the centred bars would run under it (a large GUI scale), they are drawn
+beside it on their own row, or under it on a screen too narrow for that (`client/HudCorner`, `client/mixin/BossHealthOverlayMixin`).
+
+**The cultivation menu's Hall** (2026-10-30, the user's pick of the redesigns: the full-screen menu, drawn as its mockup is;
+`client/CultivationScreen`): the menu takes the whole screen in ink, far mountains along its foot, its tabs down a column at the left
+under your name and the higher of your paths' realms (the tab open in jade with a gold diamond), the Dao Codex at the column's foot.
+The **Cultivation tab** is rebuilt for it: the **Ladder of Realms** beside it (a rung a realm, Qi Refining at its foot, a diamond on
+the rung of each path walked: gold the heaven path, cyan the ghost path, red the Demon Path, closer together where all three share
+a rung), then a panel with your title's field, your realm large and under it its stage (or what the body comes to), and a card for
+each path you walk, the heaven path, the ghost path, then the Demon Path: its name, realm and stage, "Drawn in" on the one whose qi
+a meditation draws, its bar in the path's colour (the heaven path gold, the ghost path teal, the Demon Path crimson; full at the very
+last) with the stage's cultivation written in it and what meditating adds a second, its pool under it (the qi, the ghostly qi; the
+Demon Path draws on the qi); then the details two to a row (method, effects, what meditating here adds) and the status (a held realm
+in a crimson box, the virtue bars). What won't fit scrolls under a scrollbar, the buttons (Meditate, the pace, Path, Breakthrough)
+staying at the panel's foot. The other tabs keep their contents in the new frame (a heading with a gold diamond, the page open of a
+row of pages in jade, On switches framed in jade).
+
+**Every other screen in the Hall's look** (the user's ask, 2026-10-30: "go through the other menus and make them consistent with the
+others too"): the talk wheel and the dialogue, the ability and spell wheels, Choose Your Bloodline, Name Your Obsession, inscribing a
+manual, the Formation Core, the mission board, the storage formation, the Heaven Altar, a seized body's pack and the Codex's toast:
+ink panels in a thin dark-gold frame, headings with a gold diamond and a rule, the row or tab chosen in jade, cream words and gold for
+what matters, and the Hall's buttons in place of vanilla's stone ones (`client/HallHud`, `client/HallButton`, `client/TalkUi`).
+
+**Drawn as the mockups are** (the user's asks, 2026-10-30: "it doesnt look like what it looks like in the art artefact thing" and "i
+want the UI and HUD to look EXACTLY the same as the artefact at all GUI scales"; their picks: Pixelify Sans, and the same size on the
+screen always): the mockups are a 1280 x 720 frame, and that frame is fitted to the window whatever the GUI scale (`client/HallArt`:
+window pixels to one of the mockup's), so their numbers are drawn as they stand. The HUD is drawn in those pixels; every screen of
+the mod's is laid out in a frame of 427 x 240 at 16:9 (three of the mockup's pixels to one of the frame's, wider or taller on another
+shape of window; `client/HallFrame` and its mixins: the screen's size, the mouse, the scissor), so the HUD, the cultivation menu, the
+Codex and every other screen look the same at every GUI scale and grow with the window (vanilla's hotbar, hearts and inventory still
+follow the GUI scale). Words are in **Pixelify Sans** (copyright 2021 The Pixelify Sans Project Authors,
+github.com/eifetx/Pixelify-Sans, from Google Fonts, under the SIL Open Font Licence 1.1: `assets/defying-the-heavens/font/
+pixelify_sans.ttf`, the licence beside it as `pixelify_sans_ofl.txt`), each drawn from a font made at the size it comes to on
+the screen (`client/HallFonts`: one from 6 to 112 pixels, vanilla's own font standing in for the few marks Pixelify lacks), so they
+stay crisp; placed as a browser places them (a CSS font size on a CSS line) and outlined two pixels each way where the mockups' are.
 
 **Swift** (the user's ask, 2026-10-22: "void shattering beings and onwards should be able to travel through space or just in
 general super fast"). From Void Shattering on, Qi Flight and the free flight were made far faster, the more with every stage
@@ -2007,8 +2054,9 @@ is gold with a green lamp when its ability is on, grey and dimmed when it's off;
 spell wheel rings its readied spell.
 
 **The selected ability** is switched by **X** ("Use Selected Ability", rebindable) without opening the wheel, the way C
-casts the readied spell: Qi Flight on and off, the Spatial Tear opened, and so on. It's shown under the qi bar ("Ability:
-Qi Sense On"), and each switch by key says "Qi Sense: On" above the hotbar once the server has done it. It's saved with
+casts the readied spell: Qi Flight on and off, the Spatial Tear opened, and so on. It's shown in a slot right of the hotbar
+(its icon, "Ability" over it, its key in its corner; the frame jade and a green diamond in its corner while it's on: The
+top-left corner, below), and each switch by key says "Qi Sense: On" above the hotbar once the server has done it. It's saved with
 your cultivation; with none selected, X says how to select one. For a key of its own for any slot, bind the eight **Ability
 Wheel Slot** keys in Controls (unbound at first). X and C are also vanilla's creative hotbar activators: Minecraft gives
 each key to one binding only, so the mod's bindings are given presses on a key they share as well (`KeyMappingMixin`).
@@ -3154,7 +3202,7 @@ features are in `ModBiomes#netherworldFeatures` and `ModPlacedFeatures` (the `NW
 ### Yin corruption
 
 A living body in the Netherworld fills with its yin. The **Yin Corruption** bar (under the qi bar, top left) climbs from
-0 to 100%, its percentage beside it with an arrow (up while rising, down while ebbing, a dash while a pill holds it).
+0 to 100%, its percentage written across it with an arrow (up while rising, down while ebbing, "=" while a pill holds it).
 Past a quarter a cold cyan-black frost creeps in from the edges of the screen, thicker as it climbs; there are warnings
 at 50, 75 and 90%. **At 100% your body gives way: you become a ghost where you stand, keeping everything you carry** for
 now; none of it goes back with you when the Wheel returns you to life (see The dead, below). Outside the Netherworld it ebbs, from full to nothing in **5 minutes**; on the Soul River it holds
@@ -3637,8 +3685,8 @@ so the saved switches after it keep their places.)
 
 **Spells** are cast at will, and live on a **spell wheel** of their own, never the ability wheel. **Hold V** (rebindable:
 "Spell Wheel (hold)") and an eight-slot wheel opens: **click** a slot to ready its spell, **right-click** to cast it at
-once. **C** ("Cast Readied Spell") casts the readied one; its name, and the seconds left while it cools, sit under the
-bars top left. Each costs ghostly qi (the spells of both paths, above, cost qi instead) and has a cooldown; none can be cast on the
+once. **C** ("Cast Readied Spell") casts the readied one; its icon, and the seconds left while it cools, sit in a slot right
+of the hotbar, C in its corner. Each costs ghostly qi (the spells of both paths, above, cost qi instead) and has a cooldown; none can be cast on the
 Soul River or while dispersed. A
 spell you learn goes into the first empty slot. The cultivation menu's **Spells** tab lists every spell (cost, cooldown,
 the layer it needs, whether it's ready), and its **Arrange Wheel** button lays the wheel out as the ability wheel's

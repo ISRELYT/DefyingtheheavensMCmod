@@ -21,7 +21,7 @@ import java.util.List;
  * under it, the replies on the right, numbered. Above it, their portrait and name plate, and the talk wheel folded into a
  * row of tabs, so you can turn to a gift or an insult without leaving. Esc goes back to the wheel.
  */
-public class DialogueScreen extends Screen {
+public class DialogueScreen extends Screen implements HallFrame.Framed {
 	private static final int BOX_H = 80;
 	private static final int ROW_H = 11;
 	private static final int TAB_W = 52;
@@ -121,11 +121,10 @@ public class DialogueScreen extends Screen {
 
 	@Override
 	public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-		g.fill(0, 0, width, height, 0x50080604);
+		g.fill(0, 0, width, height, 0x500C0F13);
 		// Portrait and name plate.
 		int frameX = boxX0, frameY = boxY0 - 52, frame = 44;
-		g.fill(frameX, frameY, frameX + frame, frameY + frame, TalkUi.GOLD);
-		g.fill(frameX + 2, frameY + 2, frameX + frame - 2, frameY + frame - 2, 0xFF120D0B);
+		HallHud.panel(g, frameX, frameY, frameX + frame, frameY + frame, HallHud.FRAME_LIT, TalkUi.INNER);
 		Entity entity = session.entity();
 		if (entity instanceof LivingEntity living) {
 			g.enableScissor(frameX + 2, frameY + 2, frameX + frame - 2, frameY + frame - 2);
@@ -141,17 +140,15 @@ public class DialogueScreen extends Screen {
 			TalkIntent intent = session.intents.get(i);
 			boolean current = intent == dialogue.intent();
 			int x = tabX(i), y = boxY0 - TAB_H + (current ? 0 : 2), w = tabW();
-			int border = current || i == hoveredTab ? TalkUi.GOLD : intent == TalkIntent.PROVOKE ? TalkUi.RED_DIM : TalkUi.GOLD_DIM;
-			g.fill(x, y, x + w, boxY0 + (current ? 3 : 0), border);
-			g.fill(x + 2, y + 2, x + w - 2, boxY0 + (current ? 3 : 0), current ? TalkUi.PANEL_LIT : TalkUi.PANEL);
-			int color = current ? TalkUi.CREAM_BRIGHT : i == hoveredTab ? TalkUi.CREAM : TalkUi.MUTED;
+			// The one being talked of in jade, as the Hall's open tab.
+			int border = current || i == hoveredTab ? HallHud.FRAME_LIT : intent == TalkIntent.PROVOKE ? TalkUi.RED_DIM : HallHud.FRAME;
+			HallHud.panel(g, x, y, x + w, boxY0 - 1, border, current ? HallHud.ROW_OPEN : i == hoveredTab ? TalkUi.PANEL_LIT : TalkUi.PANEL);
+			int color = current ? TalkUi.GOLD_TEXT : i == hoveredTab ? TalkUi.CREAM : TalkUi.MUTED;
 			g.drawCenteredString(font, Component.translatable(ModLang.talkIntent(intent.getId())), x + w / 2, y + 4, color);
 		}
 
 		// The box.
 		TalkUi.panel(g, boxX0, boxY0, boxX1, boxY1, TalkUi.GOLD);
-		int current = dialogue.intent() == null ? -1 : session.intents.indexOf(dialogue.intent());
-		if (current >= 0) g.fill(tabX(current) + 2, boxY0, tabX(current) + tabW() - 2, boxY0 + 3, TalkUi.PANEL_LIT);
 		int textX = boxX0 + 10, textW = repliesX - textX - 14;
 		int y = boxY0 + 9;
 		for (FormattedCharSequence line : font.split(dialogue.line(), textW)) {
@@ -160,7 +157,7 @@ public class DialogueScreen extends Screen {
 			y += 10;
 		}
 		TalkUi.regard(g, font, session.regard, textX, boxY1 - 15);
-		g.fill(repliesX - 8, boxY0 + 8, repliesX - 7, boxY1 - 8, TalkUi.INNER);
+		g.fill(repliesX - 8, boxY0 + 8, repliesX - 7, boxY1 - 8, HallHud.RULE);
 
 		// The replies.
 		// Each reply wrapped to the column: a long one, or one with a note, takes two lines rather than running off the box.
@@ -173,7 +170,7 @@ public class DialogueScreen extends Screen {
 			if (row.bottom() > boxY1 - 4) break;
 			boolean back = i == replies.size();
 			boolean enabled = back || replies.get(i).enabled();
-			if (i == hoveredRow && enabled) g.fill(repliesX - 4, row.y() - 2, boxX1 - 6, row.bottom() - 2, TalkUi.INNER);
+			if (i == hoveredRow && enabled) g.fill(repliesX - 4, row.y() - 2, boxX1 - 6, row.bottom() - 2, HallHud.ROW_LIT);
 			if (!back) g.drawString(font, (i + 1) + "  ", repliesX, row.y(), TalkUi.MUTED, false);
 			int ly = row.y();
 			for (FormattedCharSequence line : row.lines()) {

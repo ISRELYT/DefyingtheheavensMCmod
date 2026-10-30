@@ -20,12 +20,12 @@ import org.lwjgl.glfw.GLFW;
 import java.util.List;
 
 /**
- * "Choose Your Bloodline" (Bloodlines), the first time one joins, in the mod's lacquer and gold (TalkUi): the five races down the
- * right, the one picked told of under them and shown on oneself at the left, turning to follow the mouse (ClientBloodlines#preview:
+ * "Choose Your Bloodline" (Bloodlines), the first time one joins, in the Hall's ink and gold (TalkUi, HallHud): the five races down the
+ * right, the one picked in jade, told of under them and shown on oneself at the left, turning to follow the mouse (ClientBloodlines#preview:
  * the race's whole look, or one's own skin for a human), with its colourings to step through. Begin (or Enter) chooses it, for good.
  * It can't be put aside: until one is chosen it comes up again each time one joins.
  */
-public class BloodlineScreen extends Screen {
+public class BloodlineScreen extends Screen implements HallFrame.Framed {
 	private static final int W = 340, H = 230;
 	/** The figure's box at the left, and the races' rows at the right. */
 	private static final int FIGURE_W = 110, ROW_H = 16, ROWS_Y = 49;
@@ -50,9 +50,9 @@ public class BloodlineScreen extends Screen {
 		left = (width - W) / 2;
 		top = (height - H) / 2;
 		int right = left + FIGURE_W + 14, wide = W - FIGURE_W - 28;
-		previous = addRenderableWidget(Button.builder(Component.literal("<"), b -> step(-1)).bounds(right, top + H - 60, 20, 20).build());
-		next = addRenderableWidget(Button.builder(Component.literal(">"), b -> step(1)).bounds(right + wide - 20, top + H - 60, 20, 20).build());
-		begin = addRenderableWidget(Button.builder(Component.translatable(ModLang.BLOODLINE_CONFIRM), b -> confirm())
+		previous = addRenderableWidget(HallButton.of(Component.literal("<"), b -> step(-1)).bounds(right, top + H - 60, 20, 20).build());
+		next = addRenderableWidget(HallButton.of(Component.literal(">"), b -> step(1)).bounds(right + wide - 20, top + H - 60, 20, 20).build());
+		begin = addRenderableWidget(HallButton.of(Component.translatable(ModLang.BLOODLINE_CONFIRM), b -> confirm())
 				.bounds(right, top + H - 26, wide, 20).build());
 		show();
 	}
@@ -150,14 +150,7 @@ public class BloodlineScreen extends Screen {
 		renderBackground(g);
 		int x = left, y = top;
 		TalkUi.panel(g, x, y, x + W, y + H, TalkUi.GOLD);
-		// The title, a gold rule under it with a scroll roller's knob at each end (as the Heaven Altar's).
-		g.drawString(font, title, x + (W - font.width(title)) / 2, y + 7, TalkUi.GOLD_TEXT, false);
-		g.fill(x + 14, y + 19, x + W - 14, y + 20, TalkUi.GOLD);
-		g.fill(x + 14, y + 20, x + W - 14, y + 21, TalkUi.GOLD_DIM);
-		for (int kx : new int[] {x + 10, x + W - 14}) {
-			g.fill(kx, y + 17, kx + 4, y + 23, TalkUi.GOLD);
-			g.fill(kx + 1, y + 18, kx + 3, y + 22, TalkUi.GOLD_DIM);
-		}
+		HallHud.heading(g, font, title, x + 10, y + 7, W - 20);
 		List<FormattedCharSequence> intro = font.split(Component.translatable(ModLang.BLOODLINE_INTRO), W - 28);
 		int iy = y + 26;
 		for (FormattedCharSequence line : intro) {
@@ -167,24 +160,25 @@ public class BloodlineScreen extends Screen {
 
 		// Oneself, wearing the race picked, turning to the mouse.
 		int fx = x + 12, fy = y + ROWS_Y - 4, fh = H - ROWS_Y - 10;
-		TalkUi.panel(g, fx, fy, fx + FIGURE_W, fy + fh, TalkUi.GOLD_DIM);
+		HallHud.panel(g, fx, fy, fx + FIGURE_W, fy + fh, HallHud.FRAME, TalkUi.INNER);
 		if (minecraft != null && minecraft.player != null) {
 			InventoryScreen.renderEntityInInventoryFollowsMouse(g, fx + FIGURE_W / 2, fy + fh - 14, 52, fx + FIGURE_W / 2 - mouseX,
 					fy + fh / 2 - mouseY, minecraft.player);
 		}
 
-		// The races, the one picked framed in gold.
+		// The races, the one picked in jade with a gold diamond, as the Hall's open rows.
 		int rx = x + FIGURE_W + 14, wide = W - FIGURE_W - 28;
 		int hovered = rowAt(mouseX, mouseY);
 		for (int i = 0; i < CHOICES.length; i++) {
 			Bloodline b = CHOICES[i];
 			int ry = rowY(i);
 			boolean picked = b == chosen;
-			TalkUi.panel(g, rx, ry, rx + wide, ry + ROW_H - 2, picked ? TalkUi.GOLD : TalkUi.GOLD_DIM);
-			if (picked || i == hovered) g.fill(rx + 3, ry + 3, rx + wide - 3, ry + ROW_H - 5, TalkUi.PANEL_LIT);
+			HallHud.panel(g, rx, ry, rx + wide, ry + ROW_H - 2, picked ? HallHud.GOLD : i == hovered ? HallHud.FRAME_LIT : HallHud.FRAME,
+					picked ? HallHud.ROW_OPEN : i == hovered ? HallHud.ROW_LIT : HallHud.CARD);
 			String number = (i + 1) + ".";
-			g.drawString(font, number, rx + 6, ry + 3, TalkUi.MUTED, false);
-			g.drawString(font, b.getDisplayName(), rx + 6 + font.width(number) + 4, ry + 3, picked ? TalkUi.CREAM_BRIGHT : 0xFF000000 | b.getColour(), false);
+			if (picked) HallHud.diamond(g, rx + 5, ry + 4, 5, HallHud.GOLD);
+			else g.drawString(font, number, rx + 6, ry + 3, TalkUi.MUTED, false);
+			g.drawString(font, b.getDisplayName(), rx + 6 + font.width(number) + 4, ry + 3, picked ? TalkUi.GOLD_TEXT : 0xFF000000 | b.getColour(), false);
 			Component kind = Component.translatable(b.isBeast() ? ModLang.BLOODLINE_CORE : ModLang.BLOODLINE_OWN_SKIN);
 			g.drawString(font, kind, rx + wide - 6 - font.width(kind), ry + 3, TalkUi.MUTED, false);
 		}

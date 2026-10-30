@@ -96,8 +96,9 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		BaublePanel.register();
 		TooltipWrap.register(); // the mod's long tooltip lines kept on the screen
 		ClientPacketHandlers.register();
-		VitalsHud.register(); // the portrait, health and qi in the top-left corner (vanilla's hearts held to ten: GuiHeartsMixin)
+		VitalsHud.register(); // the name, realm, health and qi in the top-left corner (vanilla's hearts held to ten: GuiHeartsMixin)
 		QiHud.register();
+		HotbarSlots.register(); // the readied spell and the selected ability beside the hotbar
 		QiSurgeHud.register();
 		TribulationHud.register();
 		TribulationAtmosphere.register();

@@ -15,18 +15,18 @@ import net.minecraft.world.inventory.Slot;
 import java.util.List;
 
 /**
- * The Heaven Altar's screen, in the mod's lacquer and gold (TalkUi, AbilityWheel): the nine offering slots in a gold ring
+ * The Heaven Altar's screen, in the Hall's ink and gold (TalkUi, HallHud, AbilityWheel): the nine offering slots in a gold ring
  * round a dial that shows the chance (a gold arc filling round it as it rises), and beside it what makes the chance: the
  * offering's tier and worth (and what the next tier needs), the altar's grandeur and its points by part, the height bonus,
  * the reward a ritual would bring, and where the player stands with the heavens. The offering is weighed as items are laid
  * down; the rest was judged by the server when the screen opened (HeavenAltarMenu#judge).
  */
-public class HeavenAltarScreen extends AbstractContainerScreen<HeavenAltarMenu> {
+public class HeavenAltarScreen extends AbstractContainerScreen<HeavenAltarMenu> implements HallFrame.Framed {
 	private static final int W = 300, H = 224;
 	/** The panel of figures beside the ring. */
 	private static final int PANEL_X0 = 121, PANEL_X1 = 292, PANEL_Y0 = 23, PANEL_Y1 = 128;
 	private static final int JADE = 0x7FE0A0;
-	private static final int SLOT_BG = 0xFF120D0B;
+	private static final int SLOT_BG = 0xFF0B0E12;
 	private static final String[] NUMERALS = {"", "I", "II", "III"};
 
 	public HeavenAltarScreen(HeavenAltarMenu menu, Inventory inventory, Component title) {
@@ -59,21 +59,13 @@ public class HeavenAltarScreen extends AbstractContainerScreen<HeavenAltarMenu> 
 	protected void renderBg(GuiGraphics g, float partialTick, int mouseX, int mouseY) {
 		int x = leftPos, y = topPos;
 		TalkUi.panel(g, x, y, x + W, y + H, TalkUi.GOLD);
-		// A gold rule under the title, a scroll roller's knob at each end.
-		g.fill(x + 14, y + 19, x + W - 14, y + 20, TalkUi.GOLD);
-		g.fill(x + 14, y + 20, x + W - 14, y + 21, TalkUi.GOLD_DIM);
-		for (int kx : new int[] {x + 10, x + W - 14}) {
-			g.fill(kx, y + 17, kx + 4, y + 23, TalkUi.GOLD);
-			g.fill(kx + 1, y + 18, kx + 3, y + 22, TalkUi.GOLD_DIM);
-		}
 		ring(g, x + HeavenAltarMenu.RING_X, y + HeavenAltarMenu.RING_Y);
-		TalkUi.panel(g, x + PANEL_X0, y + PANEL_Y0, x + PANEL_X1, y + PANEL_Y1, TalkUi.GOLD_DIM);
-		// The slots: lacquer wells in a gold-dim frame (the offering ring's in brighter gold).
+		HallHud.panel(g, x + PANEL_X0, y + PANEL_Y0, x + PANEL_X1, y + PANEL_Y1, HallHud.FRAME, HallHud.CARD);
+		// The slots: ink wells in a dark-gold frame (the offering ring's in brighter gold).
 		for (int i = 0; i < menu.slots.size(); i++) {
 			Slot slot = menu.slots.get(i);
 			boolean offering = i < HeavenAltarBlockEntity.SLOTS;
-			g.fill(x + slot.x - 1, y + slot.y - 1, x + slot.x + 17, y + slot.y + 17, offering ? TalkUi.GOLD : TalkUi.GOLD_DIM);
-			g.fill(x + slot.x, y + slot.y, x + slot.x + 16, y + slot.y + 16, SLOT_BG);
+			HallHud.panel(g, x + slot.x - 1, y + slot.y - 1, x + slot.x + 17, y + slot.y + 17, offering ? HallHud.FRAME_LIT : HallHud.FRAME, SLOT_BG);
 		}
 		// A gold rule between the backpack and the hotbar.
 		int iy = y + HeavenAltarMenu.INVENTORY_Y + 3 * 18 + 1;
@@ -83,8 +75,7 @@ public class HeavenAltarScreen extends AbstractContainerScreen<HeavenAltarMenu> 
 	/** The offering ring: a gold band, faint spokes to each slot, the dial at its heart with the chance's arc round it. */
 	private void ring(GuiGraphics g, int cx, int cy) {
 		int r = HeavenAltarMenu.RING_RADIUS;
-		AbilityWheel.ring(g, cx, cy, r + 12, r + 10, TalkUi.GOLD);
-		AbilityWheel.ring(g, cx, cy, r + 10, r + 9, TalkUi.GOLD_DIM);
+		AbilityWheel.ring(g, cx, cy, r + 11, r + 10, HallHud.FRAME_LIT);
 		AbilityWheel.ring(g, cx, cy, r + 1, r - 1, TalkUi.GOLD_DIM);
 		// The dial: lacquer, a gold rim, and the chance as a gold arc from the top, clockwise.
 		int dial = 22;
@@ -106,7 +97,7 @@ public class HeavenAltarScreen extends AbstractContainerScreen<HeavenAltarMenu> 
 
 	@Override
 	protected void renderLabels(GuiGraphics g, int mouseX, int mouseY) {
-		g.drawString(font, title, (W - font.width(title)) / 2, 7, TalkUi.GOLD_TEXT, false);
+		HallHud.heading(g, font, title, 10, 7, W - 20);
 		dial(g, HeavenAltarMenu.RING_X, HeavenAltarMenu.RING_Y);
 		figures(g);
 		// Where the player stands with the heavens, under the ring and the figures.

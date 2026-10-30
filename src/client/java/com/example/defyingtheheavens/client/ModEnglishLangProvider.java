@@ -1376,6 +1376,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.CODEX_BUTTON, "The Dao Codex (%s)");
 		t.add(ModLang.CODEX_LOCKED, "???");
 		t.add(ModLang.CODEX_COUNT, "%s of %s pages");
+		t.add(ModLang.CODEX_SEALED_NOTE, "A page still closed: %s");
 		t.add(ModLang.CODEX_TOAST_NEW, "New in the Codex");
 		t.add(ModLang.CODEX_TOAST_MANY, "%s new pages");
 		for (Codex.Hint hint : Codex.Hint.values()) t.add(ModLang.codexHint(hint.id()), hint.english());
@@ -2959,15 +2960,34 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.ABILITY_SOUL_WOUNDED, "Your soul is wounded: %s of %s hearts. It mends while it rests in a body (yours, or one it possesses).");
 		t.add(ModLang.HUD_SOUL_GATHERING, "Leaving your body... %s s");
 		t.add(ModLang.HUD_SOUL_RECALLING, "Returning to your body... %s s");
-		t.add(ModLang.HUD_SOUL_TETHER, "Tether %s / %s");
+		t.add(ModLang.HUD_SOUL_TETHER, "Tether: %s / %s blocks");
 		t.add(ModLang.HUD_SOUL_BODY, "Body %s / %s");
 		t.add(ModLang.HUD_SOUL_POSSESSING, "In %s (sneak to let go)");
 		t.add(ModLang.HUD_SOUL_INSIDE, "In %s's body (Soul Projection leaves it)");
 		t.add(ModLang.HUD_SOUL_OWN_QI_LABEL, "Own Qi");
 		t.add(ModLang.HUD_ESSENCE_LABEL, "Essence");
 		t.add(ModLang.HUD_SOUL_OWN_GHOST_QI_LABEL, "Own Ghost Qi");
-		t.add(ModLang.HUD_SOUL_TETHER_AWAY, "Tether across the realms");
-		t.add(ModLang.HUD_SOUL_TETHER_ENDLESS, "Body %s blocks off (the tether has no end)");
+		t.add(ModLang.HUD_SOUL_TETHER_AWAY, "Tether: across the realms");
+		t.add(ModLang.HUD_SOUL_TETHER_ENDLESS, "Tether: %s blocks, no end");
+		t.add(ModLang.HUD_BAR_HEALTH, "Health");
+		t.add(ModLang.HUD_BAR_QI, "Qi");
+		t.add(ModLang.HUD_BAR_SOUL, "Soul");
+		t.add(ModLang.HUD_SOUL_HEADER, "%s's soul");
+		t.add(ModLang.HUD_SOUL_OUT, "Soul out");
+		t.add(ModLang.HUD_SOUL_BODY_HEADER, "Body");
+		t.add(ModLang.HUD_PRESSED_TO, "Pressed to %s: -%s%%");
+		t.add(ModLang.HUD_SLOT_SPELL, "Spell");
+		t.add(ModLang.HUD_SLOT_ABILITY, "Ability");
+		t.add(ModLang.HALL_LADDER, "Ladder of Realms");
+		t.add(ModLang.HALL_DRAWN_IN, "Drawn in");
+		t.add(ModLang.HALL_REALM_STAGE, "%s, %s");
+		t.add(ModLang.HALL_CODEX, "Codex");
+		t.add(ModLang.HALL_PATH_TIP, "Meditation draws in this path's qi. Press for the next path.");
+		t.add(ModLang.HALL_CULT, "Cultivation: %s / %s (%s%%)");
+		t.add(ModLang.HALL_CULT_MAX, "Cultivation: Maximum");
+		t.add(ModLang.HALL_PER_SECOND, "+%s a second");
+		t.add(ModLang.HALL_RESTING, "Resting");
+		t.add(ModLang.HALL_STOP, "Stop");
 
 		// The Ritual to the Heavens (HeavenRitual, HeavenAltar)
 		t.add(ModBlocks.HEAVEN_ALTAR, "Heaven Altar");

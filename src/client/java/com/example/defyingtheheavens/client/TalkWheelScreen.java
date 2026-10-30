@@ -17,7 +17,7 @@ import java.util.List;
  * opens the dialogue box. The cultivator's name plate sits at the top, and a strip at the foot says what the choice under
  * the pointer will do. The world keeps running behind it; walking away or a fight closes it.
  */
-public class TalkWheelScreen extends Screen {
+public class TalkWheelScreen extends Screen implements HallFrame.Framed {
 	private static final int TILE_W = 72;
 	private static final int TILE_H = 26;
 	private static final int RADIUS = 60;
@@ -60,7 +60,7 @@ public class TalkWheelScreen extends Screen {
 
 	@Override
 	public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-		g.fill(0, 0, width, height, 0x70080604);
+		g.fill(0, 0, width, height, 0x700C0F13);
 		int cx = width / 2, cy = height / 2;
 		// The name plate, centred at the top.
 		int plateW = Math.max(font.width(session.name), TalkUi.chipsWidth(font, session));
@@ -73,9 +73,8 @@ public class TalkWheelScreen extends Screen {
 			TalkIntent intent = session.intents.get(i);
 			int x = tileX(i), y = tileY(i);
 			boolean lit = i == hovered;
-			int border = lit ? TalkUi.GOLD : intent == TalkIntent.PROVOKE ? TalkUi.RED_DIM : TalkUi.GOLD_DIM;
-			g.fill(x, y, x + TILE_W, y + TILE_H, border);
-			g.fill(x + 2, y + 2, x + TILE_W - 2, y + TILE_H - 2, lit ? TalkUi.PANEL_LIT : TalkUi.PANEL);
+			int border = lit ? HallHud.FRAME_LIT : intent == TalkIntent.PROVOKE ? TalkUi.RED_DIM : HallHud.FRAME;
+			HallHud.panel(g, x, y, x + TILE_W, y + TILE_H, border, lit ? TalkUi.PANEL_LIT : TalkUi.PANEL);
 			Component label = Component.translatable(ModLang.talkIntent(intent.getId()));
 			int color = lit ? TalkUi.CREAM_BRIGHT : intent == TalkIntent.PROVOKE ? 0xE8A89A : TalkUi.CREAM;
 			g.drawCenteredString(font, label, x + TILE_W / 2, y + 9, color);

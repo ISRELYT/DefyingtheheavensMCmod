@@ -9,13 +9,13 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 
 /**
- * A seized player's body opened by the soul in it (VesselMenu), in the mod's lacquer and gold (TalkUi): its name, its gear along
- * the top (the armour at the left, the off hand and the hand it fights with at the right), a gold rule, its pack below. No
- * inventory of the soul's own: a soul carries nothing.
+ * A seized player's body opened by the soul in it (VesselMenu), in the Hall's ink and gold (TalkUi, HallHud): its name, its gear along
+ * the top (the armour at the left, the off hand and the hand it fights with at the right), a rule, its pack below. No inventory of the
+ * soul's own: a soul carries nothing.
  */
-public class VesselScreen extends AbstractContainerScreen<VesselMenu> {
+public class VesselScreen extends AbstractContainerScreen<VesselMenu> implements HallFrame.Framed {
 	private static final int W = 178, H = VesselMenu.PACK_Y + (SoulVesselEntity.PACK / 9) * 18 + 7;
-	private static final int SLOT_BG = 0xFF120D0B;
+	private static final int SLOT_BG = 0xFF0B0E12;
 
 	public VesselScreen(VesselMenu menu, Inventory inventory, Component title) {
 		super(menu, inventory, title);
@@ -34,19 +34,11 @@ public class VesselScreen extends AbstractContainerScreen<VesselMenu> {
 	protected void renderBg(GuiGraphics g, float partialTick, int mouseX, int mouseY) {
 		int x = leftPos, y = topPos;
 		TalkUi.panel(g, x, y, x + W, y + H, TalkUi.GOLD);
-		// A gold rule under the name, a scroll roller's knob at each end.
-		g.fill(x + 14, y + 19, x + W - 14, y + 20, TalkUi.GOLD);
-		g.fill(x + 14, y + 20, x + W - 14, y + 21, TalkUi.GOLD_DIM);
-		for (int kx : new int[] {x + 10, x + W - 14}) {
-			g.fill(kx, y + 17, kx + 4, y + 23, TalkUi.GOLD);
-			g.fill(kx + 1, y + 18, kx + 3, y + 22, TalkUi.GOLD_DIM);
-		}
-		// The slots: lacquer wells in a gold-dim frame, the gear's in brighter gold.
+		// The slots: ink wells in a dark-gold frame, the gear's in brighter gold.
 		for (int i = 0; i < menu.slots.size(); i++) {
 			Slot slot = menu.slots.get(i);
 			boolean gear = i >= SoulVesselEntity.PACK;
-			g.fill(x + slot.x - 1, y + slot.y - 1, x + slot.x + 17, y + slot.y + 17, gear ? TalkUi.GOLD : TalkUi.GOLD_DIM);
-			g.fill(x + slot.x, y + slot.y, x + slot.x + 16, y + slot.y + 16, SLOT_BG);
+			HallHud.panel(g, x + slot.x - 1, y + slot.y - 1, x + slot.x + 17, y + slot.y + 17, gear ? HallHud.FRAME_LIT : HallHud.FRAME, SLOT_BG);
 		}
 		// A gold rule between the gear and the pack.
 		int ry = y + (VesselMenu.GEAR_Y + 16 + VesselMenu.PACK_Y) / 2;
@@ -55,6 +47,6 @@ public class VesselScreen extends AbstractContainerScreen<VesselMenu> {
 
 	@Override
 	protected void renderLabels(GuiGraphics g, int mouseX, int mouseY) {
-		g.drawString(font, title, (W - font.width(title)) / 2, 7, TalkUi.GOLD_TEXT, false);
+		HallHud.heading(g, font, title, 10, 7, W - 20);
 	}
 }

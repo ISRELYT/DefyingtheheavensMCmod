@@ -17,7 +17,7 @@ import java.util.UUID;
 
 /**
  * Vanilla's boss bars kept clear of the top-left stack (the user, 2026-10-26: "the qi bar covers the boss health bar"): at a large GUI
- * scale the centred bars run under the portrait's qi bar, which is drawn over them. Moved whole, bars and names, as HudCorner#bossShift
+ * scale the centred bars run under the stack's qi bar, which is drawn over them. Moved whole, bars and names, as HudCorner#bossShift
  * says: right, beside the stack, or down, under it where the screen is too narrow.
  */
 @Mixin(BossHealthOverlay.class)

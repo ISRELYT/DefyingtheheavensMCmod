@@ -9,7 +9,6 @@ import com.example.defyingtheheavens.Realm;
 import com.example.defyingtheheavens.Stage;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -27,25 +26,22 @@ import java.util.Locale;
 import java.util.UUID;
 
 /**
- * A Formation Core's screen (its owner's only): its two functions on two tabs, the barrier and the concealment (since 2026-10-28,
- * Concealments), each with its radius and its switch, and the qi that carries them. The battery is drawn like the Qi bar (lacquer track,
- * gold trim and quarter notches, azure qi); below it what the connected veins bring in against what the chosen function costs at its
+ * A Formation Core's screen (its owner's only), in the Hall's ink and gold (HallHud, HallButton; 2026-10-30): its two functions on two
+ * tabs, the barrier and the concealment (since 2026-10-28, Concealments), the one shown in jade, each with its radius and its switch, and
+ * the qi that carries them. The battery is drawn like the HUD's qi bar (a thin frame, the mod's blue, what it holds written across it);
+ * below it what the connected veins bring in against what the chosen function costs at its
  * radius (and both together, when both are wanted), how strong a cultivator must be to break through the barrier or to see through the
  * concealment, and the function's state. A second page lists the cultivators the owner trusts to pass the barrier and see through the
  * concealment as they do: type a name to add one, press the cross beside a name to strike it off. The screen asks the server for a fresh
  * state twice a second while open.
  */
-public class FormationCoreScreen extends Screen {
+public class FormationCoreScreen extends Screen implements HallFrame.Framed {
 	private static final int WIDTH = 232;
 	private static final int HEIGHT = 232;
-	private static final int BORDER = 0xFFB8860B;
-	private static final int BORDER_DARK = 0xFF6E5214;
-	private static final int PANEL = 0xF0101018;
-	private static final int TRACK = 0xFF1B1E2A;
-	private static final int QI = 0xFF4FA8E8;
-	private static final int QI_LIGHT = 0xFF8FD0FF;
-	private static final int GOLD_TEXT = 0xE8C77A;
-	private static final int PALE = 0xC8D6E8;
+	private static final int GOLD_TEXT = 0xFFD54F;
+	private static final int PALE = 0xE6D3A3;
+	private static final int MUTED = 0xB9B2A0;
+	private static final int FADED = 0x8C8676;
 
 	private static final int ROWS = 8;
 	private static final int ROW_HEIGHT = 13;
@@ -103,30 +99,27 @@ public class FormationCoreScreen extends Screen {
 		}
 		nameBox = null;
 		toggle = null;
-		// The two functions' tabs, the one shown marked.
+		// The two functions' tabs, the one shown in jade.
 		int tabW = (WIDTH - 24) / 2;
-		addRenderableWidget(Button.builder(tabLabel(ModLang.CORE_TAB_BARRIER, !veilTab), b -> showTab(false)).bounds(left + 10, top + 37, tabW, 16).build());
-		addRenderableWidget(Button.builder(tabLabel(ModLang.CORE_TAB_VEIL, veilTab), b -> showTab(true)).bounds(left + 14 + tabW, top + 37, tabW, 16).build());
+		addRenderableWidget(HallButton.of(Component.translatable(ModLang.CORE_TAB_BARRIER), b -> showTab(false)).open(() -> !veilTab)
+				.bounds(left + 10, top + 37, tabW, 16).build());
+		addRenderableWidget(HallButton.of(Component.translatable(ModLang.CORE_TAB_VEIL), b -> showTab(true)).open(() -> veilTab)
+				.bounds(left + 14 + tabW, top + 37, tabW, 16).build());
 		int y = top + RADIUS_Y;
-		addRenderableWidget(Button.builder(Component.literal("-8"), b -> setRadius(shownRadius() - 8)).bounds(left + 12, y, 26, 18).build());
-		addRenderableWidget(Button.builder(Component.literal("-1"), b -> setRadius(shownRadius() - 1)).bounds(left + 40, y, 22, 18).build());
-		addRenderableWidget(Button.builder(Component.literal("+1"), b -> setRadius(shownRadius() + 1)).bounds(left + WIDTH - 62, y, 22, 18).build());
-		addRenderableWidget(Button.builder(Component.literal("+8"), b -> setRadius(shownRadius() + 8)).bounds(left + WIDTH - 38, y, 26, 18).build());
-		toggle = addRenderableWidget(Button.builder(Component.empty(), b -> {
+		addRenderableWidget(HallButton.of(Component.literal("-8"), b -> setRadius(shownRadius() - 8)).bounds(left + 12, y, 26, 18).build());
+		addRenderableWidget(HallButton.of(Component.literal("-1"), b -> setRadius(shownRadius() - 1)).bounds(left + 40, y, 22, 18).build());
+		addRenderableWidget(HallButton.of(Component.literal("+1"), b -> setRadius(shownRadius() + 1)).bounds(left + WIDTH - 62, y, 22, 18).build());
+		addRenderableWidget(HallButton.of(Component.literal("+8"), b -> setRadius(shownRadius() + 8)).bounds(left + WIDTH - 38, y, 26, 18).build());
+		toggle = addRenderableWidget(HallButton.of(Component.empty(), b -> {
 			if (veilTab) veilWanted = !veilWanted;
 			else wanted = !wanted;
 			send();
 		}).bounds(left + 10, top + HEIGHT - 28, 124, 20).build());
-		addRenderableWidget(Button.builder(Component.translatable(ModLang.CORE_TRUSTED_BUTTON), b -> {
+		addRenderableWidget(HallButton.of(Component.translatable(ModLang.CORE_TRUSTED_BUTTON), b -> {
 			trustedPage = true;
 			rebuildWidgets();
 		}).bounds(left + WIDTH - 94, top + HEIGHT - 28, 84, 20).build());
 		updateToggle();
-	}
-
-	private static Component tabLabel(String key, boolean shown) {
-		Component name = Component.translatable(key);
-		return shown ? Component.literal("» ").append(name).append(" «").withStyle(ChatFormatting.GOLD) : name;
 	}
 
 	private void showTab(boolean veil) {
@@ -141,23 +134,25 @@ public class FormationCoreScreen extends Screen {
 
 	/** The trusted page: a name box with its button, a cross beside each name in two columns, and the way back. */
 	private void initTrustedPage() {
-		nameBox = addRenderableWidget(new EditBox(font, left + 12, top + 46, WIDTH - 82, 18, Component.translatable(ModLang.CORE_TRUSTED_TITLE)));
+		// The box without vanilla's frame: it stands in an ink well of the Hall's (renderTrustedPage).
+		nameBox = addRenderableWidget(new EditBox(font, left + 17, top + 51, WIDTH - 92, 10, Component.translatable(ModLang.CORE_TRUSTED_TITLE)));
+		nameBox.setBordered(false);
 		nameBox.setMaxLength(16);
 		nameBox.setValue(draft);
 		nameBox.setResponder(text -> draft = text);
 		setInitialFocus(nameBox);
-		addRenderableWidget(Button.builder(Component.translatable(ModLang.CORE_TRUST_ADD), b -> addTrusted()).bounds(left + WIDTH - 64, top + 45, 52, 20).build());
+		addRenderableWidget(HallButton.of(Component.translatable(ModLang.CORE_TRUST_ADD), b -> addTrusted()).bounds(left + WIDTH - 64, top + 45, 52, 20).build());
 		List<Trusted> trusted = state.trusted();
 		int columnWidth = (WIDTH - 24) / 2;
 		for (int i = 0; i < trusted.size() && i < ROWS * 2; i++) {
 			Trusted player = trusted.get(i);
 			int x = left + 12 + (i / ROWS) * columnWidth + columnWidth - 16;
 			int y = top + 84 + (i % ROWS) * ROW_HEIGHT;
-			Button cross = Button.builder(Component.literal("x"), b -> sendTrust(false, null, player.id())).bounds(x, y - 1, 12, 12).build();
+			Button cross = HallButton.of(Component.literal("x"), b -> sendTrust(false, null, player.id())).bounds(x, y - 1, 12, 12).build();
 			cross.setTooltip(Tooltip.create(Component.translatable(ModLang.CORE_TRUST_REMOVE, player.name())));
 			addRenderableWidget(cross);
 		}
-		addRenderableWidget(Button.builder(Component.translatable(ModLang.CORE_BACK), b -> {
+		addRenderableWidget(HallButton.of(Component.translatable(ModLang.CORE_BACK), b -> {
 			trustedPage = false;
 			rebuildWidgets();
 		}).bounds(left + WIDTH / 2 - 52, top + HEIGHT - 28, 104, 20).build());
@@ -236,38 +231,26 @@ public class FormationCoreScreen extends Screen {
 	@Override
 	public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
 		renderBackground(g);
-		g.fill(left - 2, top - 2, left + WIDTH + 2, top + HEIGHT + 2, BORDER);
-		g.fill(left - 1, top - 1, left + WIDTH + 1, top + HEIGHT + 1, BORDER_DARK);
-		g.fill(left, top, left + WIDTH, top + HEIGHT, PANEL);
+		HallHud.panel(g, left - 1, top - 1, left + WIDTH + 1, top + HEIGHT + 1, HallHud.FRAME, HallHud.PANEL);
 		int cx = left + WIDTH / 2;
 		if (trustedPage) {
 			renderTrustedPage(g, cx);
 			super.render(g, mouseX, mouseY, partialTick);
 			return;
 		}
-		g.drawCenteredString(font, title, cx, top + 8, GOLD_TEXT);
+		HallHud.heading(g, font, title, left + 10, top + 8, WIDTH - 20);
 		if (!state.owner().isEmpty()) {
-			g.drawCenteredString(font, Component.translatable(ModLang.CORE_OWNER, state.owner()), cx, top + 20, 0x9E9E9E);
+			g.drawString(font, Component.translatable(ModLang.CORE_OWNER, state.owner()), left + 10, top + 24, MUTED, false);
 		}
-		g.fill(left + 10, top + 32, left + WIDTH - 10, top + 33, BORDER_DARK);
 
 		// The shown function's radius between its buttons.
 		g.drawCenteredString(font, Component.translatable(veilTab ? ModLang.CORE_VEIL_RADIUS : ModLang.CORE_RADIUS, shownRadius()), cx, top + RADIUS_Y + 5, PALE);
 
-		// The battery.
-		int barX = left + 16, barY = top + BATTERY_Y, barW = WIDTH - 32, barH = 6;
+		// The battery, as the HUD's qi bar: what it holds written across it.
+		int barX = left + 16, barY = top + BATTERY_Y, barW = WIDTH - 32;
 		double fill = state.max() <= 0 ? 0 : Math.min(1, state.battery() / state.max());
-		g.fill(barX - 2, barY - 2, barX + barW + 2, barY + barH + 2, BORDER);
-		g.fill(barX - 1, barY - 1, barX + barW + 1, barY + barH + 1, BORDER_DARK);
-		g.fill(barX, barY, barX + barW, barY + barH, TRACK);
-		int filled = (int) Math.round(barW * fill);
-		g.fill(barX, barY, barX + filled, barY + barH, QI);
-		g.fill(barX, barY, barX + filled, barY + 2, QI_LIGHT);
-		for (int i = 1; i < 4; i++) {
-			int x = barX + barW * i / 4;
-			g.fill(x, barY - 2, x + 1, barY + barH + 2, i == 2 ? BORDER : BORDER_DARK);
-		}
-		g.drawCenteredString(font, Component.translatable(ModLang.CORE_BATTERY, (int) state.battery(), (int) state.max()), cx, barY + 11, PALE);
+		HallHud.bar(g, font, barX, barY, barW, 11, fill, HallHud.QI, HallHud.QI_LIGHT,
+				Component.translatable(ModLang.CORE_BATTERY, (int) state.battery(), (int) state.max()).getString());
 
 		// Supply against upkeep: the shown function's at its radius, and both together when both are wanted.
 		double share = state.share();
@@ -276,23 +259,19 @@ public class FormationCoreScreen extends Screen {
 		double total = (wanted ? barrierCost : 0) + (veilWanted ? veilCost : 0);
 		double needed = Math.max(shownCost, total);
 		int y = top + LINES_Y;
-		g.drawString(font, Component.translatable(ModLang.CORE_VEINS, state.veins(), fmt(state.supply())), left + 14, y, 0x7FE0A0);
-		y += 11;
-		g.drawString(font, Component.translatable(veilTab ? ModLang.CORE_VEIL_UPKEEP : ModLang.CORE_UPKEEP, fmt(shownCost)), left + 14, y,
-				state.supply() >= shownCost ? 0xB0B0B0 : 0xFF8A65);
-		y += 11;
+		y = lines(g, Component.translatable(ModLang.CORE_VEINS, state.veins(), fmt(state.supply())), y, 0x7FE0A0);
+		y = lines(g, Component.translatable(veilTab ? ModLang.CORE_VEIL_UPKEEP : ModLang.CORE_UPKEEP, fmt(shownCost)), y,
+				state.supply() >= shownCost ? MUTED : 0xFF8A65);
 		if (wanted && veilWanted) {
-			g.drawString(font, Component.translatable(ModLang.CORE_UPKEEP_BOTH, fmt(total)), left + 14, y, state.supply() >= total ? 0xB0B0B0 : 0xFF8A65);
-			y += 11;
+			y = lines(g, Component.translatable(ModLang.CORE_UPKEEP_BOTH, fmt(total)), y, state.supply() >= total ? MUTED : 0xFF8A65);
 		}
 		if (share < 1) {
-			g.drawString(font, Component.translatable(ModLang.CORE_MASTERY, Math.round((1 - share) * 100)), left + 14, y, 0x8FBC8F);
-			y += 11;
+			y = lines(g, Component.translatable(ModLang.CORE_MASTERY, Math.round((1 - share) * 100)), y, 0x8FBC8F);
 		}
 		if (state.supply() < needed) {
 			double seconds = state.battery() / (needed - state.supply());
-			g.drawString(font, Component.translatable(ModLang.CORE_SHORTFALL, (int) seconds), left + 14, y, 0xFF8A65);
-			y += 11;
+			// Wrapped to the panel ("the store runs dry in 152 s" ran past its side: 2026-10-30).
+			y = lines(g, Component.translatable(ModLang.CORE_SHORTFALL, (int) seconds), y, 0xFF8A65);
 		}
 		Component rankName = state.rank() < 0 ? null : PlayerCultivation.rankName(Realm.byIndex(state.rank() / Stage.values().length),
 				Stage.byIndex(state.rank() % Stage.values().length));
@@ -317,7 +296,7 @@ public class FormationCoreScreen extends Screen {
 			int hy = y + 2;
 			for (FormattedCharSequence line : font.split(Component.translatable(ModLang.CORE_HINT), WIDTH - 24)) {
 				if (hy > top + HEIGHT - 40) break; // never under the buttons
-				g.drawCenteredString(font, line, cx, hy, 0x8A8A9A);
+				g.drawCenteredString(font, line, cx, hy, FADED);
 				hy += 10;
 			}
 		}
@@ -325,14 +304,16 @@ public class FormationCoreScreen extends Screen {
 	}
 
 	private void renderTrustedPage(GuiGraphics g, int cx) {
-		g.drawCenteredString(font, Component.translatable(ModLang.CORE_TRUSTED_TITLE), cx, top + 8, GOLD_TEXT);
-		g.drawCenteredString(font, Component.translatable(ModLang.CORE_TRUSTED_HINT), cx, top + 20, 0x9E9E9E);
-		g.fill(left + 10, top + 32, left + WIDTH - 10, top + 33, BORDER_DARK);
+		HallHud.heading(g, font, Component.translatable(ModLang.CORE_TRUSTED_TITLE), left + 10, top + 8, WIDTH - 20);
+		g.drawString(font, Component.translatable(ModLang.CORE_TRUSTED_HINT), left + 10, top + 24, MUTED, false);
+		// The name box's well (the box itself has no frame of its own).
+		HallHud.panel(g, left + 12, top + 46, left + WIDTH - 70, top + 64, nameBox != null && nameBox.isFocused() ? HallHud.FRAME_LIT : HallHud.FRAME,
+				0xFF0B0E12);
 		List<Trusted> trusted = state.trusted();
 		g.drawString(font, Component.translatable(ModLang.CORE_TRUSTED_COUNT, trusted.size(), FormationCoreBlockEntity.MAX_TRUSTED),
-				left + 12, top + 70, 0x8A8A9A);
+				left + 12, top + 70, FADED);
 		if (trusted.isEmpty()) {
-			g.drawCenteredString(font, Component.translatable(ModLang.CORE_TRUSTED_NONE), cx, top + 100, 0x8A8A9A);
+			g.drawCenteredString(font, Component.translatable(ModLang.CORE_TRUSTED_NONE), cx, top + 100, FADED);
 			return;
 		}
 		int columnWidth = (WIDTH - 24) / 2;
@@ -341,6 +322,15 @@ public class FormationCoreScreen extends Screen {
 			int y = top + 84 + (i % ROWS) * ROW_HEIGHT;
 			g.drawString(font, font.plainSubstrByWidth(trusted.get(i).name(), columnWidth - 22), x, y + 1, PALE);
 		}
+	}
+
+	/** {@code text} wrapped to the panel from its left margin at {@code y}; returns where the next line goes. */
+	private int lines(GuiGraphics g, Component text, int y, int color) {
+		for (FormattedCharSequence line : font.split(text, WIDTH - 28)) {
+			g.drawString(font, line, left + 14, y, color);
+			y += 10;
+		}
+		return y + 1;
 	}
 
 	private static String fmt(double value) {

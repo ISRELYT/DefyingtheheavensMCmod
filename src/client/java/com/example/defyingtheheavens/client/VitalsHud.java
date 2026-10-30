@@ -1,55 +1,39 @@
 package com.example.defyingtheheavens.client;
 
+import com.example.defyingtheheavens.ModLang;
 import com.example.defyingtheheavens.PlayerCultivation;
+import com.example.defyingtheheavens.Realm;
+import com.example.defyingtheheavens.SoulProjection;
+import com.example.defyingtheheavens.Stage;
 import com.example.defyingtheheavens.TwoPaths;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 
-import java.util.Locale;
-
 /**
- * The top-left corner (the user's asks, 2026-10-22, after the realms after Four Axis gave a body thousands of hearts, to a picture of
- * theirs in the mod's own style): a portrait of the player in a lacquer frame trimmed in antique gold, their name small above it, and
- * beside it two thick bars, the **health** and the **qi**, each in the Qi bar's gold frame with its scroll roller and tapered tip,
- * what it holds against its maximum written across it ("1,407/1,407"). The health crimson, lit from above, a pale trail draining
- * after a blow, absorption a band of gold along its top (its amount after the health); the qi the mod's blue, a glint flowing
- * along it while it fills. Under them the stack of thinner bars goes on (QiHud: a soul's own pool; NetherworldHud). Nothing of
- * hunger, air or armour up here (the user's word: those stay at the bottom, vanilla's, its hearts held to a row of ten:
+ * The top-left corner as the mockups' "G" draws it (the user's pick, 2026-10-30, "EXACTLY the same as the artefact at all GUI scales":
+ * drawn in the artifact's pixels, HallArt, whatever the GUI scale): a line with a gold diamond, the player's name, and at its right the
+ * realm they stand at (the higher of their paths), then two flat bars 334 across, the **health** and the **qi**, each saying what it
+ * holds against its maximum in short numbers ("Health 5.80M / 6.23M"), so the corner never grows with a realm's might and leaves
+ * vanilla's boss bars in the middle. The health crimson, a pale trail draining after a blow, absorption a band of gold along its top;
+ * the qi the mod's blue, a glint flowing along it while it fills. A soul out of its body (Soul Projection) shows its own: the line in
+ * violet ("Tester's soul", "Soul out"), "Soul" on its bar. Under them the stack of thinner bars goes on (QiHud, NetherworldHud).
+ * Nothing of hunger, air or armour up here (the user's word: those stay at the bottom, vanilla's, its hearts held to a row of ten:
  * mixin/GuiHeartsMixin). The health shows when vanilla's hearts do (not in creative or spectator); the qi once the meridians open.
  */
 public final class VitalsHud {
-	static final int X = 4;
-	/** The name's line (half-size text), and the portrait and bars under it. */
-	private static final int NAME_Y = 2, TOP = 8;
-	/** A bar's height, frame included; the gap between the two; the room under the block before the stack goes on. */
-	static final int BAR_H = 12, BAR_GAP = 3, GAP = 3;
-	/** The portrait, frame included: as tall as the two bars. */
-	private static final int PORTRAIT = 2 * BAR_H + BAR_GAP;
-	/** The bars start this far right of the portrait, and are never narrower than this (frame included). */
-	private static final int BARS_X = X + PORTRAIT + 4, MIN_W = 100;
-
-	private static final int GOLD = 0xFFB8860B;
-	private static final int GOLD_DARK = 0xFF6E5214;
-	private static final int NOTCH = 0x608C6A1E;
-	private static final int LACQUER = 0xD0101420;
-	private static final int TEXT = 0xFFFFFF;
-	private static final int NAME = 0xE6D3A3;
-	private static final int TEXT_ABSORPTION = 0xFFE08A;
-	/** Widths of a tip's rows, top to bottom, from the frame's top row to its bottom row. */
-	private static final int[] TIP = {1, 2, 3, 4, 5, 6, 6, 5, 4, 3, 2, 1};
-	/** The health's crimson and the qi's blue, lit from above, row by row (a bar's ten inner rows). */
-	private static final int[] HEALTH_ROWS = {0xFFFF8A80, 0xFFEA5E5E, 0xFFD94848, 0xFFCC3A3A, 0xFFC03131, 0xFFB42A2A, 0xFFA72323, 0xFF991E1E,
-			0xFF891919, 0xFF701313};
-	private static final int[] QI_ROWS = {0xFF9ADCFF, 0xFF74C8F7, 0xFF58B7EE, 0xFF4AAEEA, 0xFF3FA0DE, 0xFF3593D3, 0xFF2D88CC, 0xFF2779B8,
-			0xFF2169A3, 0xFF1C5C93};
+	/** The stack's left edge and width, in the artifact's pixels. */
+	static final int X = 12, W = 334;
+	/** The line over the bars (its top), the first bar's top, a bar's height, border and band, and the gap under each. */
+	private static final int HEAD_TOP = 10, TOP = 36, BAR_H = 30, BORDER = 3, BAND = 5, GAP = 4;
 	/** The trail a blow leaves, draining after the health; the band of absorption; the leading edge of gathering qi. */
 	private static final int TRAIL = 0xFFF2B5A8, ABSORPTION = 0xFFFFD54F, QI_EDGE = 0xFFCFF0FF;
+	/** The line's words: a name, the realm; a soul's name, its "Soul out" and its diamond. */
+	private static final int NAME = 0xE6D3A3, REALM = 0xFFD54F, SOUL_NAME = 0xD9B8FF, SOUL_MARK = 0xB57BFF;
 	/** How quickly a fill chases its value, and the trail the health, per second; one glint along the qi this often (ms). */
 	private static final double EASE = 14, TRAIL_EASE = 2.5;
 	private static final long GLINT_PERIOD = 2400;
@@ -79,9 +63,11 @@ public final class VitalsHud {
 				&& mc.getCameraEntity() instanceof Player;
 	}
 
-	/** Where the stack under it goes on (QiHud#top): under the block while it shows, else the corner. */
-	static int bottom() {
-		return healthShowing() || qiShowing() ? TOP + PORTRAIT + GAP : 4;
+	/** Where the stack under it goes on (QiHud#top), in the artifact's pixels: under the bars while they show, else the line's top. */
+	static float bottom() {
+		boolean showHealth = healthShowing(), showQi = qiShowing();
+		if (!showHealth && !showQi) return HEAD_TOP;
+		return TOP + (showHealth && showQi ? 2 : 1) * (BAR_H + GAP);
 	}
 
 	/** What one heart of vanilla's ten stands for in {@code player}'s health (GuiHeartsMixin): a tenth of a body past twenty, else 2. */
@@ -90,34 +76,50 @@ public final class VitalsHud {
 		return max > 20 ? 20 / max : 1;
 	}
 
+	/** Whether the player's soul is out of its own body (Soul Projection): the line and the health bar are the soul's. */
+	static boolean soulOut() {
+		SoulProjection.State state = ClientSoul.state();
+		return state == SoulProjection.State.PROJECTED || state == SoulProjection.State.RECALLING || state == SoulProjection.State.INHABITING;
+	}
+
 	private static void render(GuiGraphics g) {
 		boolean showHealth = healthShowing(), showQi = qiShowing();
 		if (!showHealth) health = trail = -1;
 		if (!showQi) qi = -1;
 		if (!showHealth && !showQi) return;
+		HallArt.beginHud(g);
+		try {
+			draw(g, showHealth, showQi);
+		} finally {
+			HallArt.end(g);
+		}
+	}
+
+	private static void draw(GuiGraphics g, boolean showHealth, boolean showQi) {
 		Minecraft mc = Minecraft.getInstance();
 		Player player = (Player) mc.getCameraEntity();
 		PlayerCultivation c = ClientCultivationData.get();
-		Font font = mc.font;
-
-		float max = Math.max(1, player.getMaxHealth());
-		float now = Mth.clamp(player.getHealth(), 0, max);
-		float absorption = player.getAbsorptionAmount();
-		String healthText = whole(Math.ceil(now)) + "/" + whole(Math.ceil(max)); // both up, so a whole body never reads over its max
-		String extra = absorption > 0 ? " +" + whole(Math.ceil(absorption)) : "";
-		String qiText = whole(c.getQi()) + "/" + whole(c.maxQi());
-		int w = MIN_W;
-		if (showHealth) w = Math.max(w, font.width(healthText) + font.width(extra) + 16);
-		if (showQi) w = Math.max(w, font.width(qiText) + 16);
-
 		long time = Util.getMillis();
 		double seconds = lastFrame == 0 ? 0 : Math.min(0.25, (time - lastFrame) / 1000.0);
 		lastFrame = time;
+		boolean soul = soulOut();
 
-		portrait(g, font, player);
-		HudCorner.drew(NAME_Y, TOP + PORTRAIT, BARS_X + w + TIP[TIP.length / 2]); // its name, the portrait and the bars to their tips
-		int y = TOP;
+		// The line over the bars: a diamond, the name, and at the right the realm stood at (or that the soul is out).
+		HallArt.diamond(g, 17, 17, 10, 0xFF000000 | (soul ? SOUL_MARK : REALM));
+		String right = soul ? Component.translatable(ModLang.HUD_SOUL_OUT).getString() : realmName(c);
+		float rightW = right.isEmpty() ? 0 : HallArt.width(right, 16);
+		String name = soul ? Component.translatable(ModLang.HUD_SOUL_HEADER, player.getName()).getString() : player.getName().getString();
+		name = HallArt.fit(name, X + W - 34 - (rightW > 0 ? rightW + 10 : 0), 19);
+		HallArt.text(g, name, 34, HEAD_TOP, 19, 22, soul ? SOUL_NAME : NAME, true);
+		if (!right.isEmpty()) HallArt.textRight(g, right, X + W, HEAD_TOP + 2, 16, 22, soul ? SOUL_MARK : REALM, true);
+		HallArt.corner(HEAD_TOP, HEAD_TOP + 22, right.isEmpty() ? 34 + HallArt.width(name, 19) + 2 : X + W + 2);
+
+		float y = TOP;
+		float inner = W - 2 * BORDER, ix = X + BORDER;
 		if (showHealth) {
+			float max = Math.max(1, player.getMaxHealth());
+			float now = Mth.clamp(player.getHealth(), 0, max);
+			float absorption = player.getAbsorptionAmount();
 			double ratio = now / max;
 			if (health < 0) {
 				health = trail = ratio;
@@ -125,22 +127,24 @@ public final class VitalsHud {
 				health += (ratio - health) * Math.min(1.0, seconds * EASE);
 				trail = trail < health ? health : trail + (health - trail) * Math.min(1.0, seconds * TRAIL_EASE);
 			}
-			frame(g, y, w);
-			int inner = w - 2;
-			int fill = (int) Math.round(inner * Math.min(1, health));
-			int trailTo = (int) Math.round(inner * Math.min(1, trail));
-			if (trailTo > fill) g.fill(BARS_X + 1 + fill, y + 1, BARS_X + 1 + trailTo, y + BAR_H - 1, TRAIL);
-			fillRows(g, y, fill, HEALTH_ROWS);
-			if (absorption > 0) {
-				int band = (int) Math.round(inner * Math.min(1, absorption / max));
-				g.fill(BARS_X + 1, y + 1, BARS_X + 1 + Math.max(1, band), y + 3, ABSORPTION);
+			float iy = y + BORDER, bottom = y + BAR_H - BORDER;
+			HallArt.box(g, X, y, W, BAR_H, BORDER, HallArt.FRAME, HallArt.TRACK);
+			float fill = HallArt.filled(inner, health), trailTo = HallArt.filled(inner, trail);
+			if (trailTo > fill) HallArt.rect(g, ix + fill, iy, ix + trailTo, bottom, TRAIL);
+			if (fill > 0) {
+				HallArt.rect(g, ix, iy, ix + fill, bottom, soul ? HallHud.SOUL : HallHud.HEALTH);
+				HallArt.rect(g, ix, iy, ix + fill, iy + BAND, soul ? HallHud.SOUL_LIGHT : HallHud.HEALTH_LIGHT);
 			}
-			notches(g, y, w);
-			int textW = font.width(healthText) + font.width(extra);
-			int textX = BARS_X + (w - textW) / 2;
-			g.drawString(font, healthText, textX, y + 2, TEXT, true);
-			if (!extra.isEmpty()) g.drawString(font, extra, textX + font.width(healthText), y + 2, TEXT_ABSORPTION, true);
-			y += BAR_H + BAR_GAP;
+			if (absorption > 0) HallArt.rect(g, ix, iy, ix + Math.max(3, HallArt.filled(inner, absorption / max)), iy + BAND, ABSORPTION);
+			// Both up, so a whole body never reads over its max; what absorption adds after it, in gold.
+			String text = Component.translatable(soul ? ModLang.HUD_BAR_SOUL : ModLang.HUD_BAR_HEALTH).getString() + " "
+					+ HallHud.compact(Math.ceil(now)) + " / " + HallHud.compact(Math.ceil(max));
+			String extra = absorption > 0 ? " +" + HallHud.compact(Math.ceil(absorption)) : "";
+			float textW = HallArt.width(text, 17), from = X + W / 2f - (textW + HallArt.width(extra, 17)) / 2;
+			HallArt.text(g, text, from, iy + 2, 17, 20, HallArt.WHITE, true);
+			if (!extra.isEmpty()) HallArt.text(g, extra, from + textW, iy + 2, 17, 20, ABSORPTION & 0xFFFFFF, true);
+			HallArt.corner(y, y + BAR_H, X + W);
+			y += BAR_H + GAP;
 		}
 		if (showQi) {
 			double ratio = c.maxQi() <= 0 ? 0 : Math.min(1.0, c.getQi() / c.maxQi());
@@ -149,86 +153,37 @@ public final class VitalsHud {
 			// ghostly form's flight costs nothing: TwoPaths#fliesFreely).
 			boolean draining = player.getAbilities().flying && !player.isCreative() && c.getEffectiveRealm().canFlyOnQi()
 					&& !c.isQiFlightSustained() && !TwoPaths.fliesFreely(c);
-			frame(g, y, w);
-			int inner = w - 2;
-			int fill = (int) Math.round(inner * Math.min(1, qi));
-			fillRows(g, y, fill, QI_ROWS);
-			if (fill > 0 && c.getQi() < c.maxQi() && !draining) {
-				// The leading edge of the gathering qi, and a glint flowing toward it.
-				int left = BARS_X + 1;
-				if (fill < inner) g.fill(left + fill - 1, y + 1, left + fill, y + BAR_H - 1, QI_EDGE);
-				int center = left - 3 + (int) ((fill + 6) * (time % GLINT_PERIOD) / (double) GLINT_PERIOD);
-				glint(g, y, center - 3, center + 4, 0x28FFFFFF, left, left + fill);
-				glint(g, y, center - 1, center + 2, 0x50FFFFFF, left, left + fill);
+			float iy = y + BORDER, bottom = y + BAR_H - BORDER;
+			HallArt.box(g, X, y, W, BAR_H, BORDER, HallArt.FRAME, HallArt.TRACK);
+			float fill = HallArt.filled(inner, qi);
+			if (fill > 0) {
+				HallArt.rect(g, ix, iy, ix + fill, bottom, HallHud.QI);
+				HallArt.rect(g, ix, iy, ix + fill, iy + BAND, HallHud.QI_LIGHT);
+				if (c.getQi() < c.maxQi() && !draining) {
+					// The leading edge of the gathering qi, and a glint flowing toward it.
+					if (fill < inner) HallArt.rect(g, ix + fill - 3, iy, ix + fill, bottom, QI_EDGE);
+					float centre = ix - 9 + (fill + 18) * (time % GLINT_PERIOD) / (float) GLINT_PERIOD;
+					glint(g, iy, bottom, centre - 10, centre + 11, 0x28FFFFFF, ix, ix + fill);
+					glint(g, iy, bottom, centre - 4, centre + 5, 0x40FFFFFF, ix, ix + fill);
+				}
 			}
-			notches(g, y, w);
-			g.drawString(font, qiText, BARS_X + (w - font.width(qiText)) / 2, y + 2, TEXT, true);
+			String text = Component.translatable(ModLang.HUD_BAR_QI).getString() + " " + HallHud.compact(c.getQi()) + " / " + HallHud.compact(c.maxQi());
+			HallArt.textCentred(g, text, X + W / 2f, iy + 2, 17, 20, HallArt.WHITE, true);
+			HallArt.corner(y, y + BAR_H, X + W);
 		}
 	}
 
-	/** The player in a lacquer frame trimmed in gold, turned a little toward the bars, the name small above it. */
-	private static void portrait(GuiGraphics g, Font font, Player player) {
-		int x0 = X, y0 = TOP, x1 = X + PORTRAIT, y1 = TOP + PORTRAIT;
-		g.fill(x0, y0, x1, y1, GOLD);
-		g.fill(x0 + 1, y1 - 1, x1, y1, GOLD_DARK);
-		g.fill(x1 - 1, y0 + 1, x1, y1, GOLD_DARK);
-		g.fill(x0 + 1, y0 + 1, x1 - 1, y1 - 1, LACQUER);
-		// The frame's corners notched in dark gold, as the mod's panels are.
-		g.fill(x0, y0, x0 + 2, y0 + 1, GOLD_DARK);
-		g.fill(x0, y0, x0 + 1, y0 + 2, GOLD_DARK);
-		g.enableScissor(x0 + 1, y0 + 1, x1 - 1, y1 - 1);
-		// The whole body, feet a little over the frame's floor, looking a little toward the bars.
-		InventoryScreen.renderEntityInInventoryFollowsMouse(g, (x0 + x1) / 2, y1 - 2, 12, -18, -6, player);
-		g.disableScissor();
-		g.pose().pushPose();
-		g.pose().translate(X, NAME_Y, 0);
-		g.pose().scale(0.5f, 0.5f, 1);
-		g.drawString(font, player.getName(), 0, 0, NAME, true);
-		g.pose().popPose();
+	/** The realm {@code c} stands at, by the higher of its paths ("" for a mortal). */
+	private static String realmName(PlayerCultivation c) {
+		if (c.isMortal()) return "";
+		int rank = TwoPaths.higherRank(c, false);
+		return rank < 0 ? "" : Realm.byIndex(rank / Stage.values().length).getDisplayName().getString();
 	}
 
-	/** A bar's gold frame (lit top and sides, shaded bottom), its lacquer, its roller and its tip, with its top at {@code y}, {@code w} wide. */
-	private static void frame(GuiGraphics g, int y, int w) {
-		int bottom = y + BAR_H - 1;
-		g.fill(BARS_X, y, BARS_X + w, y + 1, GOLD);
-		g.fill(BARS_X, bottom, BARS_X + w, bottom + 1, GOLD_DARK);
-		g.fill(BARS_X, y + 1, BARS_X + 1, bottom, GOLD);
-		g.fill(BARS_X + w - 1, y + 1, BARS_X + w, bottom, GOLD);
-		g.fill(BARS_X + 1, y + 1, BARS_X + w - 1, bottom, LACQUER);
-		// The Qi bar's scroll roller (QiHud.Pool), as tall as this bar.
-		int rx = BARS_X - 1;
-		g.fill(rx, y + 1, rx + 1, y + BAR_H - 1, GOLD);
-		g.fill(rx + 1, y + 1, rx + 2, y + BAR_H - 1, GOLD_DARK);
-		g.fill(rx - 1, y, rx + 3, y + 1, GOLD_DARK);
-		g.fill(rx - 1, y + BAR_H - 1, rx + 3, y + BAR_H, GOLD_DARK);
-		for (int row = 0; row < TIP.length; row++) {
-			g.fill(BARS_X + w, y + row, BARS_X + w + TIP[row], y + row + 1, row < TIP.length / 2 ? GOLD : GOLD_DARK);
-		}
-	}
-
-	private static void fillRows(GuiGraphics g, int y, int fill, int[] rows) {
-		if (fill <= 0) return;
-		for (int row = 0; row < rows.length; row++) g.fill(BARS_X + 1, y + 1 + row, BARS_X + 1 + fill, y + 2 + row, rows[row]);
-	}
-
-	/** Notches at the quarters, faint, under what the bar says. */
-	private static void notches(GuiGraphics g, int y, int w) {
-		int inner = w - 2;
-		for (int quarter = 1; quarter <= 3; quarter++) {
-			int x = BARS_X + 1 + inner * quarter / 4;
-			g.fill(x, y + 1, x + 1, y + BAR_H - 1, NOTCH);
-		}
-	}
-
-	/** Lightens the fill's rows between x1 and x2, clipped to the filled part [clipLeft, clipRight). */
-	private static void glint(GuiGraphics g, int y, int x1, int x2, int color, int clipLeft, int clipRight) {
-		int from = Math.max(x1, clipLeft), to = Math.min(x2, clipRight);
-		if (to > from) g.fill(from, y + 1, to, y + BAR_H - 1, color);
-	}
-
-	/** Rounded down, so a bar never reads full before it is (the epsilon absorbs stage-multiplier float noise). */
-	private static String whole(double v) {
-		return String.format(Locale.ROOT, "%,d", (long) Math.floor(Math.max(0, v) + 1e-6));
+	/** Lightens the fill between x1 and x2, clipped to the filled part [clipLeft, clipRight). */
+	private static void glint(GuiGraphics g, float top, float bottom, float x1, float x2, int color, float clipLeft, float clipRight) {
+		float from = Math.max(x1, clipLeft), to = Math.min(x2, clipRight);
+		if (to > from) HallArt.rect(g, from, top, to, bottom, color);
 	}
 
 	private VitalsHud() {}

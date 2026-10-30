@@ -30,7 +30,7 @@ import java.util.List;
  * ({@link #walk}). The mouse points at the wheel, so the view can't turn until it closes. It only opens once the player
  * has awakened an ability ({@link #canOpen}).
  */
-public class AbilityWheelScreen extends Screen {
+public class AbilityWheelScreen extends Screen implements HallFrame.Framed {
 	/** How far the slots sit from the centre, their radius, and their icons' size (the 32x32 art pixel for pixel). */
 	private static final int RING = 70;
 	private static final int SLOT_RADIUS = 18;
@@ -158,7 +158,7 @@ public class AbilityWheelScreen extends Screen {
 		int hovered = slotToward(mouseX, mouseY);
 
 		AbilityWheel.drawBackdrop(g, cx, cy, RING + SLOT_RADIUS + 8);
-		AbilityWheel.disc(g, cx, cy, RING - SLOT_RADIUS - 4, 0xC0101018); // nearly solid behind the text in the middle
+		AbilityWheel.disc(g, cx, cy, RING - SLOT_RADIUS - 4, 0xE00C0F13); // nearly solid behind the text in the middle
 		Ability selected = QuickAbilities.selected(c);
 		for (int i = 0; i < PlayerCultivation.WHEEL_SLOTS; i++) {
 			Ability ability = AbilityWheel.shown(c, i);
@@ -182,17 +182,17 @@ public class AbilityWheelScreen extends Screen {
 			List<FormattedCharSequence> name = font.split(pointed.getDisplayName(), textWidth);
 			int y = cy - (name.size() * 10 + 10) / 2;
 			for (FormattedCharSequence line : name) {
-				g.drawCenteredString(font, line, cx, y, on ? 0xFFD700 : 0x9E9E9E);
+				g.drawCenteredString(font, line, cx, y, on ? AbilityWheel.TEXT_GOLD : AbilityWheel.TEXT_MUTED);
 				y += 10;
 			}
-			g.drawCenteredString(font, Component.translatable(on ? ModLang.ABILITY_ON : ModLang.ABILITY_OFF), cx, y + 1, on ? 0x69F0AE : 0x9E9E9E);
+			g.drawCenteredString(font, Component.translatable(on ? ModLang.ABILITY_ON : ModLang.ABILITY_OFF), cx, y + 1, on ? 0x69F0AE : AbilityWheel.TEXT_MUTED);
 			if (pointed == selected) g.drawCenteredString(font, Component.translatable(ModLang.WHEEL_SELECTED), cx, y + 12, 0x8FEAE4);
 		} else if (hovered >= 0) {
-			g.drawCenteredString(font, Component.translatable(ModLang.WHEEL_EMPTY_SLOT), cx, cy - 4, 0x707070);
+			g.drawCenteredString(font, Component.translatable(ModLang.WHEEL_EMPTY_SLOT), cx, cy - 4, AbilityWheel.TEXT_EMPTY);
 		} else {
 			boolean any = AbilityWheel.anyShown(c);
 			centred(g, Component.translatable(ModLang.WHEEL_TITLE), any ? Component.translatable(ModLang.WHEEL_HINT,
-					ModKeybinds.QUICK_ABILITY.getTranslatedKeyMessage().copy().withStyle(style -> style.withColor(0xFFD700)))
+					ModKeybinds.QUICK_ABILITY.getTranslatedKeyMessage().copy().withStyle(style -> style.withColor(AbilityWheel.TEXT_GOLD)))
 					: Component.translatable(ModLang.WHEEL_EMPTY), cx, cy, textWidth);
 		}
 	}
@@ -201,10 +201,10 @@ public class AbilityWheelScreen extends Screen {
 	private void centred(GuiGraphics g, Component title, Component text, int cx, int cy, int width) {
 		List<FormattedCharSequence> lines = font.split(text, width);
 		int y = cy - (12 + lines.size() * 10) / 2;
-		g.drawCenteredString(font, title, cx, y, 0xFFD700);
+		g.drawCenteredString(font, title, cx, y, AbilityWheel.TEXT_GOLD);
 		y += 12;
 		for (FormattedCharSequence line : lines) {
-			g.drawCenteredString(font, line, cx, y, 0x9E9E9E);
+			g.drawCenteredString(font, line, cx, y, AbilityWheel.TEXT_MUTED);
 			y += 10;
 		}
 	}

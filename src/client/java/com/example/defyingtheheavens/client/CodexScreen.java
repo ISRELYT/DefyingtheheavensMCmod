@@ -37,66 +37,56 @@ import java.util.Map;
 import java.util.regex.Matcher;
 
 /**
- * The Dao Codex (Codex; the user's ask, 2026-10-27): the chapters down its left side as icons, the chosen chapter's pages listed beside
- * them, and the page itself on the right, in the talk wheel's lacquer and gold (TalkUi). A sealed page shows ??? and its hint, a chapter
- * with every page sealed a darkened icon and ???; a page open and not yet read wears a gold dot, and so does its chapter (CodexState).
- * Opened by its key (J) wherever one is in the world, or by the book beside the cultivation menu ({@link Book}), which it goes back to;
+ * The Dao Codex (Codex; the user's ask, 2026-10-27), as its mockup in the cultivation menu's Hall draws it (the user's ask, 2026-10-30:
+ * "EXACTLY the same as the artefact at all GUI scales"; drawn in the artifact's pixels, HallArt, in the Hall's frame, HallFrame): the
+ * whole screen in ink with far hills along its foot; down a column at its left the Codex's name, how much of it is open, and its chapters
+ * by name, the one open in jade with a gold diamond; beside them the chosen chapter's pages; and the page itself in a framed panel on the
+ * right, its icon and title over a rule, its words in Pixelify Sans. A sealed page shows ??? and its hint, a chapter with every page sealed
+ * ???; a page open and not yet read wears a gold square, and so does its chapter (CodexState). Opened by its key (J) wherever one is in
+ * the world, or from the cultivation menu (the Hall's column of tabs, or the {@link Book} beside the narrow menu), which it goes back to;
  * it opens on the newest page not yet read, else where it was left.
  * <p>
  * A page's pictures (the user's pick, 2026-10-28) stand between its words: rows of items in gold-rimmed slots, the recipes read from the
- * game itself (the cauldron's, AlchemyRecipes; a crafting recipe, the client's recipe manager), and diagrams (CodexDiagrams). Pointed at,
- * an item shows its tooltip, and a diagram what it says of the part pointed at.
+ * game itself (the cauldron's, AlchemyRecipes; a crafting recipe, the client's recipe manager), and diagrams (CodexDiagrams, drawn in the
+ * frame's pixels). Pointed at, an item shows its tooltip, and a diagram what it says of the part pointed at.
  */
-public class CodexScreen extends Screen {
-	private static final int WIDTH = 400; // the smallest usual GUI is 427 wide
-	private static final int HEIGHT = 230; // and 240 high, as the cultivation menu is fitted
-	private static final int HEADER = 20;
-	private static final int BODY_TOP = 24;
-	private static final int BODY_BOTTOM = HEIGHT - 8;
-	/** The chapters' column: a cell for each, its icon in it. */
-	private static final int CHAPTER_X = 7;
-	private static final int CHAPTER_W = 22;
-	/** Twelve chapters since the Bestiary (2026-10-28): 16 high, so they fit the column. */
-	private static final int CHAPTER_H = 16;
-	/** The pages' list, under its chapter's name. */
-	private static final int LIST_X = 35;
-	private static final int LIST_W = 132;
-	private static final int LIST_TOP = BODY_TOP + 17;
-	private static final int ROW_H = 12;
-	/** The page: its icon and title, then its text. */
-	private static final int PAGE_X = 173;
-	private static final int PAGE_W = WIDTH - PAGE_X - 8;
-	private static final int TEXT_TOP = BODY_TOP + 23;
-	private static final int LINE_H = 10;
-	private static final int PARAGRAPH_GAP = 4;
-	private static final int BULLET_INDENT = 8;
-	/** A picture's item slot, a "+" or an arrow's room, and the gap between them and between their rows. */
-	private static final int SLOT = 18;
-	private static final int GLYPH_W = 9;
-	private static final int CELL_GAP = 2;
-	/** The thin scroll rollers at a column's right, and pixels a mouse-wheel notch moves. */
-	private static final int ROLLER_W = 4;
-	private static final int SCROLL_STEP = 12;
-	/** How wide the page's words and pictures run, short of its roller. */
-	private static final int TEXT_W = PAGE_W - ROLLER_W - 6;
-	/** A dot's gold, and the shade laid over a sealed chapter's icon. */
+public class CodexScreen extends Screen implements HallFrame.Framed {
+	/** The mockup's places, in the artifact's pixels: the column of chapters (its rows from 106, 44 apart, 40 tall). */
+	private static final int NAV = 264, CHAPTERS_TOP = 106, CHAPTER_ROW = 44, CHAPTER_H = 40;
+	/** The list of pages (from 280, 320 across; its rows from 70, 40 apart, 36 tall) and the page's panel (from 616, 644 across). */
+	private static final int LIST_X = 280, LIST_W = 320, LIST_TOP = 70, ROW = 40, ROW_H = 36, LIST_VIEW_TOP = 66;
+	private static final int PAGE_X = 616, PAGE_Y = 20, PAGE_W = 644;
+	/** The page's words: 24 in from its panel, 580 across (a point's 20 in), at 19 on lines of 25, 9 between paragraphs, from 106 down. */
+	private static final int TEXT_IN = 24, TEXT_W = 580, TEXT_TOP = 106, BODY = 19, LINE = 25, PARAGRAPH = 9, INDENT = 20;
+	/** The rule under the title, 596 across, the middle a picture's rows stand on; a picture 10 below the words before it and 16 above the next. */
+	private static final int RULE_W = 596, PICTURE_ABOVE = 1, PICTURE_BELOW = 16;
+	/** A picture's item slot (66 with a border of 3, its item 48), a "+" or an arrow's room, and the gap between them and their rows. */
+	private static final int SLOT = 66, GLYPH_W = 27, CELL_GAP = 6;
+	/** How far a notch of the mouse wheel scrolls, in the artifact's pixels. */
+	private static final int SCROLL_STEP = 36;
+	/** The mockup's colours: the panels' frame and ink, the jade row, a row pointed at, a slot's well. */
+	private static final int FRAME = 0xFF6E5214, INK = 0xFF11161C, JADE = 0xFF1E3A32, LIT = 0xFF19202A, WELL = 0xFF0B0E12;
+	/** Its words: a page's, gold, a chapter's name and a page's, what is muted, what is still sealed; a point's diamond; the scrollbar. */
+	private static final int WORDS = 0xE6D3A3, GOLD_WORDS = 0xFFD54F, CHAPTER = 0xB9B2A0, NAME = 0xC9C2B0, MUTED = 0x8C7A55, SEALED = 0x6C665A;
+	private static final int POINT = 0xFFB8860B, THUMB = 0xFF8C6A1E;
+	/** A dot's gold, kept for the Book (beside the narrow menu) and the Hall's Codex tab (CultivationScreen). */
 	private static final int DOT = 0xFFF2C94C;
 	private static final int DOT_RIM = 0xFF8A6A1E;
-	private static final int SEALED_SHADE = 0xC0140F0C;
 
 	/** Where the Codex was left, kept while the game runs. */
 	private static String chapterShown = "start";
 	private static String entryShown = "codex";
 
 	private final Screen parent;
-	private int left;
-	private int top;
+	/** How far right of the mockup's places the list and the page stand in a frame wider than its 1280; the chapters' rows' step. */
+	private float ox;
+	private float chapterRow = CHAPTER_ROW;
 	private boolean placed;
 	private int listScroll;
 	private int listMax;
 	private int pageScroll;
 	private int pageMax;
-	/** The page shown, laid out for its width (and which page, open or sealed, it was laid out for): its words and its pictures. */
+	/** The page shown, laid out (in the artifact's pixels; and which page, open or sealed, at which size): its words and its pictures. */
 	private List<Line> lines = List.of();
 	private List<Picture> pictures = List.of();
 	private int linesHeight;
@@ -127,9 +117,11 @@ public class CodexScreen extends Screen {
 
 	@Override
 	protected void init() {
-		left = (width - WIDTH) / 2;
-		top = (height - HEIGHT) / 2;
 		if (minecraft != null) CodexState.lookNow(minecraft);
+		// The mockup's 1280 x 720 in the frame (three of its pixels to one of the frame's): the list and the page kept together in the
+		// middle of a wider one, the chapters' rows closer where a frame is too short for them all.
+		ox = Math.max(0, (width * 3f - HallArt.W) / 2);
+		chapterRow = Math.min(CHAPTER_ROW, (height * 3f - CHAPTERS_TOP - 6) / Math.max(1, Codex.chapters().size()));
 		laidOut = null;
 		if (!placed) {
 			placed = true;
@@ -153,181 +145,222 @@ public class CodexScreen extends Screen {
 
 	@Override
 	public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-		renderBackground(g);
-		TalkUi.panel(g, left, top, left + WIDTH, top + HEIGHT, TalkUi.GOLD);
-
-		// The title between two gold rules, and how much of the Codex is open.
-		int cx = left + WIDTH / 2;
-		int tw = font.width(title);
-		g.drawString(font, title, cx - tw / 2, top + 8, TalkUi.GOLD_TEXT, true);
-		for (int side : new int[] {-1, 1}) {
-			int from = side < 0 ? cx - tw / 2 - 40 : cx + tw / 2 + 8;
-			g.fill(from, top + 12, from + 32, top + 13, TalkUi.GOLD_DIM);
-			int nub = side < 0 ? from + 32 : from - 1;
-			g.fill(nub - 1, top + 11, nub + 2, top + 14, TalkUi.GOLD);
+		float mx = mouseX * 3f, my = mouseY * 3f; // the mouse in the artifact's pixels
+		hoverStack = null;
+		hoverTip = null;
+		List<Component> tip;
+		HallArt.beginFramed(g);
+		try {
+			float w = width * 3f, h = height * 3f;
+			HallArt.rect(g, 0, 0, w, h, 0xFF0C0F13);
+			HallArt.ridge(g, CultivationScreen.FAR_HILLS, w / HallArt.W, h - 220, h, 0xFF11161C);
+			HallArt.ridge(g, CultivationScreen.NEAR_HILLS, w / HallArt.W, h - 220, h, 0xFF0E1318);
+			tip = renderChapters(g, mx, my);
+			renderList(g, mx, my);
+			renderPage(g, mx, my, mouseX, mouseY);
+		} finally {
+			HallArt.end(g);
 		}
-		Component count = Component.translatable(ModLang.CODEX_COUNT, CodexState.openCount(), Codex.entries().size());
-		g.drawString(font, count, left + WIDTH - 10 - font.width(count), top + 8, TalkUi.MUTED, false);
-		g.fill(left + 6, top + HEADER, left + WIDTH - 6, top + HEADER + 1, TalkUi.GOLD_DIM);
-		// The rules between the columns.
-		g.fill(left + LIST_X - 4, top + BODY_TOP, left + LIST_X - 3, top + BODY_BOTTOM, TalkUi.GOLD_DIM);
-		g.fill(left + PAGE_X - 4, top + BODY_TOP, left + PAGE_X - 3, top + BODY_BOTTOM, TalkUi.GOLD_DIM);
-
-		List<Component> tip = renderChapters(g, mouseX, mouseY);
-		renderList(g, mouseX, mouseY);
-		renderPage(g, mouseX, mouseY);
 		super.render(g, mouseX, mouseY, partialTick);
 		if (tip != null) g.renderComponentTooltip(font, tip, mouseX, mouseY);
 		else if (hoverStack != null) g.renderTooltip(font, hoverStack, mouseX, mouseY);
 		else if (hoverTip != null) g.renderTooltip(font, hoverTip, mouseX, mouseY);
 	}
 
-	/** The chapters' column; returns the tooltip of the one pointed at, if any. */
-	private List<Component> renderChapters(GuiGraphics g, int mouseX, int mouseY) {
+	/**
+	 * The column down the left: the Codex's name and how much of it is open over a rule, then each chapter by name, the one open in jade
+	 * with a gold diamond, one sealed ???, one with a page unread the gold square. Returns the tooltip of what is pointed at, if anything.
+	 */
+	private List<Component> renderChapters(GuiGraphics g, float mx, float my) {
+		float h = height * 3f;
+		HallArt.rect(g, 0, 0, NAV - 3, h, INK);
+		HallArt.rect(g, NAV - 3, 0, NAV, h, FRAME);
+		HallArt.text(g, title.getString(), 30, 26, 26, 26, GOLD_WORDS, false);
+		HallArt.text(g, Component.translatable(ModLang.CODEX_COUNT, CodexState.openCount(), Codex.entries().size()).getString(), 30, 60, 17, 22, MUTED, false);
+		HallArt.rect(g, 24, 94, 240, 97, FRAME);
 		List<Component> tip = null;
 		List<Codex.Chapter> chapters = Codex.chapters();
 		for (int i = 0; i < chapters.size(); i++) {
 			Codex.Chapter chapter = chapters.get(i);
-			int x = left + CHAPTER_X;
-			int y = top + BODY_TOP + i * CHAPTER_H;
-			boolean selected = chapter.id().equals(chapterShown);
-			boolean hover = in(mouseX, mouseY, x, y, CHAPTER_W, CHAPTER_H - 1);
-			boolean sealed = !CodexState.anyOpen(chapter);
-			if (selected) {
-				g.fill(x, y, x + CHAPTER_W, y + CHAPTER_H - 1, TalkUi.GOLD);
-				g.fill(x + 1, y + 1, x + CHAPTER_W - 1, y + CHAPTER_H - 2, TalkUi.PANEL_LIT);
-			} else if (hover) {
-				g.fill(x, y, x + CHAPTER_W, y + CHAPTER_H - 1, TalkUi.PANEL_LIT);
-			}
-			g.renderItem(iconOf(chapter.icon()), x + 3, y);
-			g.pose().pushPose();
-			g.pose().translate(0, 0, 200); // over the icon
-			if (sealed) g.fill(x + 3, y, x + 19, y + 16, SEALED_SHADE);
-			if (CodexState.anyUnread(chapter)) dot(g, x + CHAPTER_W - 5, y + 1);
-			g.pose().popPose();
+			float top = CHAPTERS_TOP + i * chapterRow;
+			boolean selected = chapter.id().equals(chapterShown), hover = in(mx, my, 0, top, NAV - 3, CHAPTER_H);
+			boolean sealed = !CodexState.anyOpen(chapter), unread = CodexState.anyUnread(chapter);
+			if (selected) HallArt.rect(g, 0, top, NAV - 3, top + CHAPTER_H, JADE);
+			else if (hover) HallArt.rect(g, 0, top, NAV - 3, top + CHAPTER_H, LIT);
+			if (selected) HallArt.diamond(g, 22, top + 14, 12, 0xFF000000 | GOLD_WORDS);
+			// A long name a little smaller (down to 15) before it is cut short, clear of the gold square.
+			String name = sealed ? Component.translatable(ModLang.CODEX_LOCKED).getString() : Component.translatable(chapter.titleKey()).getString();
+			float room = (unread ? 232 : 250) - 48, size = HallArt.fitSize(name, room, 20, 15);
+			HallArt.text(g, HallArt.fit(name, room, size), 48, top + 9, size, 22, sealed ? SEALED : selected ? GOLD_WORDS : hover ? WORDS : CHAPTER, false);
+			if (unread) HallArt.rect(g, 236, top + 15, 245, top + 24, 0xFF000000 | GOLD_WORDS);
 			if (hover) {
 				tip = sealed
 						? List.of(Component.translatable(ModLang.CODEX_LOCKED), Component.translatable(ModLang.codexHint(chapter.hint().id())).withStyle(s -> s.withColor(TalkUi.MUTED)))
-						: List.of(Component.translatable(chapter.titleKey()).withStyle(s -> s.withColor(TalkUi.GOLD_TEXT)),
+						: List.of(Component.translatable(chapter.titleKey()).withStyle(s -> s.withColor(GOLD_WORDS)),
 								Component.translatable(ModLang.CODEX_COUNT, opened(chapter), chapter.entries().size()).withStyle(s -> s.withColor(TalkUi.MUTED)));
 			}
 		}
 		return tip;
 	}
 
-	private void renderList(GuiGraphics g, int mouseX, int mouseY) {
+	/**
+	 * The chapter's pages beside the column: its name over a rule, then its pages, the one open in jade with a gold diamond; under them,
+	 * while they all fit, what opens a page still sealed (the one pointed at, else the one shown, else the first).
+	 */
+	private void renderList(GuiGraphics g, float mx, float my) {
 		Codex.Chapter chapter = chapter();
 		boolean sealed = !CodexState.anyOpen(chapter);
-		int x = left + LIST_X;
-		int y = top + BODY_TOP;
-		Component name = Component.translatable(sealed ? ModLang.CODEX_LOCKED : chapter.titleKey());
-		g.drawString(font, trimmed(name, LIST_W - 4), x + 2, y + 3, TalkUi.GOLD_TEXT, true);
-		g.fill(x, y + 14, x + LIST_W, y + 15, TalkUi.GOLD_DIM);
+		float x = LIST_X + ox, bottom = listBottom();
+		String name = Component.translatable(sealed ? ModLang.CODEX_LOCKED : chapter.titleKey()).getString();
+		HallArt.text(g, HallArt.fit(name, 300, 20), x + 8, 26, 20, 22, MUTED, false);
+		HallArt.rect(g, x + 8, 56, x + 312, 59, FRAME);
 
-		int viewTop = top + LIST_TOP;
-		int viewBottom = top + BODY_BOTTOM;
 		List<Codex.Entry> entries = chapter.entries();
-		int content = entries.size() * ROW_H;
-		listMax = Math.max(0, content - (viewBottom - viewTop));
+		int content = entries.size() * ROW;
+		listMax = Math.max(0, Math.round(content - (bottom - LIST_TOP)));
 		listScroll = Mth.clamp(listScroll, 0, listMax);
-		int rowW = LIST_W - ROLLER_W - 3;
-		boolean inView = mouseY >= viewTop && mouseY < viewBottom;
-		g.enableScissor(x, viewTop, x + rowW, viewBottom);
+		float rowW = listRowW();
+		boolean inView = my >= LIST_VIEW_TOP && my < bottom;
+		Codex.Entry firstSealed = null, hoverSealed = null;
+		scissor(g, x, LIST_VIEW_TOP, x + LIST_W, bottom);
 		for (int i = 0; i < entries.size(); i++) {
 			Codex.Entry entry = entries.get(i);
-			int ry = viewTop + i * ROW_H - listScroll;
-			if (ry + ROW_H <= viewTop || ry >= viewBottom) continue;
-			boolean selected = entry.id().equals(entryShown);
-			boolean hover = inView && in(mouseX, mouseY, x, ry, rowW, ROW_H);
-			if (selected) {
-				g.fill(x, ry, x + rowW, ry + ROW_H, TalkUi.PANEL_LIT);
-				g.fill(x, ry, x + 1, ry + ROW_H, TalkUi.GOLD);
-			} else if (hover) {
-				g.fill(x, ry, x + rowW, ry + ROW_H, 0x80302418);
-			}
+			float top = LIST_TOP + i * ROW - listScroll;
+			boolean selected = entry.id().equals(entryShown), hover = inView && in(mx, my, x, top, rowW, ROW_H);
 			boolean open = CodexState.isOpen(entry);
-			if (CodexState.isUnread(entry)) dot(g, x + 3, ry + 4);
-			Component title = Component.translatable(open ? entry.titleKey() : ModLang.CODEX_LOCKED);
-			int color = !open ? TalkUi.DISABLED : selected || hover ? TalkUi.CREAM_BRIGHT : TalkUi.CREAM;
-			g.drawString(font, trimmed(title, rowW - 11), x + 9, ry + 2, color, false);
+			if (!open && firstSealed == null) firstSealed = entry;
+			if (!open && hover) hoverSealed = entry;
+			if (top + ROW_H <= LIST_VIEW_TOP || top >= bottom) continue;
+			if (selected) HallArt.rect(g, x, top, x + rowW, top + ROW_H, JADE);
+			else if (hover) HallArt.rect(g, x, top, x + rowW, top + ROW_H, LIT);
+			if (selected) HallArt.diamond(g, x + 6, top + 14, 8, 0xFF000000 | GOLD_WORDS);
+			else if (CodexState.isUnread(entry)) HallArt.rect(g, x + 6, top + 14, x + 14, top + 22, 0xFF000000 | GOLD_WORDS);
+			String title = Component.translatable(open ? entry.titleKey() : ModLang.CODEX_LOCKED).getString();
+			float size = HallArt.fitSize(title, rowW - 32, 19, 16);
+			HallArt.text(g, HallArt.fit(title, rowW - 32, size), x + 24, top + 7, size, 22, !open ? SEALED : selected ? GOLD_WORDS : hover ? WORDS : NAME, false);
 		}
 		g.disableScissor();
-		roller(g, x + LIST_W - ROLLER_W, viewTop, viewBottom, content, listScroll, listMax);
+		if (listMax > 0) {
+			scrollbar(g, x + LIST_W - 6, LIST_VIEW_TOP, bottom, content, listScroll, listMax);
+			return;
+		}
+		Codex.Entry shown = entry();
+		Codex.Entry note = hoverSealed != null ? hoverSealed : shown != null && !CodexState.isOpen(shown) ? shown : firstSealed;
+		if (note == null) return;
+		Component words = Component.translatable(ModLang.CODEX_SEALED_NOTE, Component.translatable(ModLang.codexHint(note.hint().id())));
+		float y = LIST_TOP + content - (ROW - ROW_H) + 10;
+		for (FormattedCharSequence line : HallArt.wrap(words, 16, 300)) {
+			if (y + 20 > bottom) break;
+			HallArt.line(g, line, x + 8, y, 16, 20, SEALED);
+			y += 20;
+		}
 	}
 
-	private void renderPage(GuiGraphics g, int mouseX, int mouseY) {
+	/** The foot of the pages' list, and how wide its rows are: the whole column, short of the scrollbar while there is one. */
+	private float listBottom() {
+		return height * 3f - 8;
+	}
+
+	private float listRowW() {
+		return LIST_W - (listMax > 0 ? 12 : 0);
+	}
+
+	/**
+	 * The page in its panel: its icon and its title in 30 over a rule; then its words in 19 and its pictures, rolled by the wheel under a
+	 * thin gold scrollbar; a sealed page ??? and its hint. Diagrams are drawn in the frame's pixels (CodexDiagrams), the mouse given there.
+	 */
+	private void renderPage(GuiGraphics g, float mx, float my, int frameMouseX, int frameMouseY) {
+		float px = PAGE_X + ox, h = height * 3f, textX = px + TEXT_IN;
+		HallArt.box(g, px, PAGE_Y, PAGE_W, h - 2 * PAGE_Y, 3, FRAME, INK);
 		Codex.Entry entry = entry();
 		boolean open = entry != null && CodexState.isOpen(entry);
-		int x = left + PAGE_X;
-		int y = top + BODY_TOP;
 		if (entry != null) {
-			if (open) g.renderItem(iconOf(entry.icon()), x, y);
-			Component name = Component.translatable(open ? entry.titleKey() : ModLang.CODEX_LOCKED);
-			g.drawString(font, trimmed(name, PAGE_W - 22), x + 20, y + 4, open ? TalkUi.GOLD_TEXT : TalkUi.DISABLED, true);
+			float tx = textX;
+			if (open) {
+				HallArt.item(g, iconOf(entry.icon()), textX, 38, 42, false);
+				tx = px + 78;
+			}
+			String name = Component.translatable(open ? entry.titleKey() : ModLang.CODEX_LOCKED).getString();
+			HallArt.text(g, HallArt.fit(name, px + PAGE_W - TEXT_IN - tx, 30), tx, 44, 30, 30, open ? GOLD_WORDS : SEALED, false);
 		}
-		g.fill(x, y + 19, x + PAGE_W, y + 20, TalkUi.GOLD_DIM);
+		HallArt.rect(g, textX, 92, px + PAGE_W - TEXT_IN, 95, FRAME);
 
 		layOut(entry, open);
-		int viewTop = top + TEXT_TOP;
-		int viewBottom = top + BODY_BOTTOM;
-		pageMax = Math.max(0, linesHeight - (viewBottom - viewTop));
+		float top = TEXT_TOP, bottom = h - 34;
+		pageMax = Math.max(0, Math.round(linesHeight - (bottom - top)));
 		pageScroll = Mth.clamp(pageScroll, 0, pageMax);
-		hoverStack = null;
-		hoverTip = null;
 		// Only what shows can be pointed at: the mouse outside the page's view points at nothing on it.
-		boolean inView = in(mouseX, mouseY, x, viewTop, PAGE_W - ROLLER_W - 2, viewBottom - viewTop);
-		int mx = inView ? mouseX : Integer.MIN_VALUE / 2, my = inView ? mouseY : Integer.MIN_VALUE / 2;
-		g.enableScissor(x, viewTop, x + PAGE_W - ROLLER_W - 2, viewBottom);
+		boolean inView = in(mx, my, px + 3, top, PAGE_W - 30, bottom - top);
+		float pmx = inView ? mx : Float.MIN_VALUE / 2, pmy = inView ? my : Float.MIN_VALUE / 2;
+		scissor(g, px + 3, top, px + PAGE_W - 22, bottom);
 		for (Line line : lines) {
-			int ly = viewTop + line.y() - pageScroll;
-			if (ly + LINE_H <= viewTop || ly >= viewBottom) continue;
-			if (line.bullet()) g.fill(x + 2, ly + 3, x + 4, ly + 5, TalkUi.GOLD);
-			g.drawString(font, line.text(), x + line.x(), ly, TalkUi.CREAM, false);
+			float ly = top + line.y() - pageScroll;
+			if (ly + LINE <= top || ly >= bottom) continue;
+			if (line.bullet()) HallArt.diamond(g, textX, ly + 9, 8, POINT);
+			HallArt.line(g, line.text(), textX + line.x(), ly, BODY, LINE, WORDS);
 		}
 		for (Picture picture : pictures) {
-			int py = viewTop + picture.y() - pageScroll;
-			if (py + picture.height() <= viewTop || py >= viewBottom) continue;
+			float py = top + picture.y() - pageScroll;
+			if (py + picture.height() <= top || py >= bottom) continue;
 			if (picture.diagram() != null) {
-				List<FormattedCharSequence> tip = CodexDiagrams.draw(g, font, picture.diagram(), x, py, TEXT_W, mx, my);
-				if (tip != null) hoverTip = tip;
+				// Diagrams draw in the frame's pixels (CodexDiagrams), as they always have.
+				HallArt.end(g);
+				try {
+					List<FormattedCharSequence> tip = CodexDiagrams.draw(g, font, picture.diagram(), Math.round(textX / 3), Math.round(py / 3), TEXT_W / 3,
+							inView ? frameMouseX : Integer.MIN_VALUE / 2, inView ? frameMouseY : Integer.MIN_VALUE / 2);
+					if (tip != null) hoverTip = tip;
+				} finally {
+					HallArt.beginFramed(g);
+				}
 			}
 			for (Cell cell : picture.cells()) {
-				int cx = x + cell.x(), cy = py + cell.y();
+				float cx = textX + cell.x(), cy = py + cell.y();
 				if (cell.glyph() != 0) {
 					glyph(g, cell.glyph(), cx, cy);
 					continue;
 				}
 				ItemStack stack = cell.stacks().get((int) (Util.getMillis() / 1000 % cell.stacks().size()));
-				boolean hover = in(mx, my, cx, cy, SLOT, SLOT);
-				g.fill(cx, cy, cx + SLOT, cy + SLOT, hover ? TalkUi.GOLD : TalkUi.GOLD_DIM);
-				g.fill(cx + 1, cy + 1, cx + SLOT - 1, cy + SLOT - 1, hover ? TalkUi.PANEL_LIT : TalkUi.INNER);
-				g.renderItem(stack, cx + 1, cy + 1);
-				g.renderItemDecorations(font, stack, cx + 1, cy + 1);
+				boolean hover = in(pmx, pmy, cx, cy, SLOT, SLOT);
+				HallArt.box(g, cx, cy, SLOT, SLOT, 3, hover ? 0xFF000000 | GOLD_WORDS : FRAME, hover ? LIT : WELL);
+				HallArt.item(g, stack, cx + 9, cy + 9, 48, true);
 				if (hover) hoverStack = stack;
 			}
 		}
 		g.disableScissor();
-		roller(g, x + PAGE_W - ROLLER_W, viewTop, viewBottom, linesHeight, pageScroll, pageMax);
+		if (pageMax > 0) scrollbar(g, px + PAGE_W - 24, top, bottom, linesHeight, pageScroll, pageMax);
+	}
+
+	/** A scissor round (x0, y0) to (x1, y1), given in the artifact's pixels (the frame's three to one: HallFrame scales it on). */
+	private static void scissor(GuiGraphics g, float x0, float y0, float x1, float y1) {
+		g.enableScissor(Math.round(x0 / 3), Math.round(y0 / 3), Math.round(x1 / 3), Math.round(y1 / 3));
+	}
+
+	/** The mockup's scrollbar: a dark trough 6 across, a gold thumb. */
+	private static void scrollbar(GuiGraphics g, float x, float top, float bottom, int content, int scroll, int max) {
+		float lane = bottom - top, thumb = Math.max(36, lane * lane / Math.max(1, content)), y = top + (lane - thumb) * scroll / Math.max(1, max);
+		HallArt.rect(g, x, top, x + 6, bottom, WELL);
+		HallArt.rect(g, x, y, x + 6, y + thumb, THUMB);
 	}
 
 	/** A glyph between a picture's items: a gold "+", or a gold arrow pointing to what they make. */
-	private void glyph(GuiGraphics g, char glyph, int x, int y) {
+	private void glyph(GuiGraphics g, char glyph, float x, float y) {
 		if (glyph == '+') {
-			g.drawString(font, "+", x + (GLYPH_W - font.width("+")) / 2, y + 5, TalkUi.GOLD_TEXT, false);
+			HallArt.textCentred(g, "+", x + GLYPH_W / 2f, y + 21, 24, 24, GOLD_WORDS, false);
 			return;
 		}
-		g.fill(x + 1, y + 8, x + 6, y + 10, TalkUi.GOLD);
-		g.fill(x + 5, y + 6, x + 6, y + 12, TalkUi.GOLD);
-		g.fill(x + 6, y + 7, x + 7, y + 11, TalkUi.GOLD);
-		g.fill(x + 7, y + 8, x + 8, y + 10, TalkUi.GOLD);
+		int gold = 0xFF000000 | GOLD_WORDS;
+		HallArt.rect(g, x + 3, y + 30, x + 18, y + 36, gold);
+		HallArt.rect(g, x + 15, y + 24, x + 18, y + 42, gold);
+		HallArt.rect(g, x + 18, y + 27, x + 21, y + 39, gold);
+		HallArt.rect(g, x + 21, y + 30, x + 24, y + 36, gold);
 	}
 
 	/**
-	 * The page's text wrapped to its width: paragraphs, points of a list (indented, a gold point before), headings in gold; and its
-	 * pictures between them, where their lines stand.
+	 * The page's text wrapped to its width (in the artifact's pixels, at 19): paragraphs, points of a list (indented, a gold diamond
+	 * before), headings in gold; and its pictures between them, where their lines stand.
 	 */
 	private void layOut(Codex.Entry entry, boolean open) {
-		String key = entry == null ? "" : entry.id() + (open ? "" : "?");
+		String key = (entry == null ? "" : entry.id() + (open ? "" : "?")) + "@" + Math.round(HallArt.unit() * 1000);
 		if (key.equals(laidOut)) return;
 		laidOut = key;
 		List<Line> out = new ArrayList<>();
@@ -338,28 +371,28 @@ public class CodexScreen extends Screen {
 			String text = open ? language.getOrDefault(entry.textKey()) : language.getOrDefault(ModLang.codexHint(entry.hint().id()));
 			for (String paragraph : text.split("\n")) {
 				if (paragraph.isBlank()) {
-					y += PARAGRAPH_GAP;
+					y += PARAGRAPH;
 					continue;
 				}
 				if (Codex.pictureKind(paragraph) != null) {
-					Picture picture = open ? picture(paragraph, y) : null;
+					Picture picture = open ? picture(paragraph, y + PICTURE_ABOVE) : null;
 					if (picture != null) {
 						drawn.add(picture);
-						y += picture.height() + PARAGRAPH_GAP + 1;
+						y += PICTURE_ABOVE + picture.height() + PICTURE_BELOW;
 					}
 					continue;
 				}
 				boolean bullet = paragraph.startsWith("- ");
 				boolean heading = paragraph.startsWith("# ");
 				String body = bullet || heading ? paragraph.substring(2) : paragraph;
-				int indent = bullet ? BULLET_INDENT : 0;
-				int color = heading ? TalkUi.GOLD_TEXT : open ? TalkUi.CREAM : TalkUi.MUTED;
-				List<FormattedCharSequence> wrapped = font.split(styled(body, color), TEXT_W - indent);
+				int indent = bullet ? INDENT : 0;
+				int color = heading ? GOLD_WORDS : open ? WORDS : NAME;
+				List<FormattedCharSequence> wrapped = HallArt.wrap(styled(body, color), BODY, TEXT_W - indent);
 				for (int i = 0; i < wrapped.size(); i++) {
 					out.add(new Line(wrapped.get(i), indent, y, bullet && i == 0));
-					y += LINE_H;
+					y += LINE;
 				}
-				y += bullet ? 2 : PARAGRAPH_GAP;
+				y += PARAGRAPH;
 			}
 		}
 		lines = out;
@@ -369,23 +402,23 @@ public class CodexScreen extends Screen {
 
 	/**
 	 * A picture's line laid out at {@code y}: a diagram, or its cells in rows as wide as the words, each row centred; null if it has
-	 * nothing to show (a recipe this game doesn't know).
+	 * nothing to show (a recipe this game doesn't know). A diagram's height is the frame's three to one.
 	 */
 	private Picture picture(String line, int y) {
 		String kind = Codex.pictureKind(line);
 		List<String> parts = Codex.pictureParts(line);
 		if (kind.equals("diagram")) {
-			return parts.size() == 1 && Codex.DIAGRAMS.contains(parts.get(0)) ? new Picture(y, CodexDiagrams.height(parts.get(0)), List.of(), parts.get(0)) : null;
+			return parts.size() == 1 && Codex.DIAGRAMS.contains(parts.get(0)) ? new Picture(y, 3 * CodexDiagrams.height(parts.get(0)), List.of(), parts.get(0)) : null;
 		}
 		if (kind.equals("beast")) {
 			// The creature in its frame, and what it leaves in a row under it.
 			ResourceLocation id = parts.size() == 1 ? Codex.pictureId(parts.get(0)) : null;
 			if (id == null) return null;
 			String diagram = CodexDiagrams.BEAST + id;
-			int height = CodexDiagrams.beastHeight(font, id.toString(), TEXT_W);
+			int height = 3 * CodexDiagrams.beastHeight(font, id.toString(), TEXT_W / 3);
 			List<Cell> drops = new ArrayList<>();
 			for (List<ItemStack> stacks : CodexDiagrams.drops(id.toString())) drops.add(item(stacks));
-			if (drops.isEmpty()) return new Picture(y, height - 4, List.of(), diagram);
+			if (drops.isEmpty()) return new Picture(y, height - 12, List.of(), diagram);
 			Picture row = rows(drops, y, height);
 			return new Picture(y, row.height(), row.cells(), diagram);
 		}
@@ -422,7 +455,7 @@ public class CodexScreen extends Screen {
 			List<Cell> those = lines.get(r);
 			int width = -CELL_GAP;
 			for (Cell cell : those) width += cell.width() + CELL_GAP;
-			int cx = (TEXT_W - width) / 2;
+			int cx = (RULE_W - width) / 2;
 			for (Cell cell : those) {
 				cells.add(new Cell(cx, top + r * (SLOT + CELL_GAP), cell.stacks(), cell.glyph()));
 				cx += cell.width() + CELL_GAP;
@@ -498,7 +531,7 @@ public class CodexScreen extends Screen {
 		int at = 0;
 		while (matcher.find()) {
 			if (matcher.start() > at) out.append(Component.literal(text.substring(at, matcher.start())).withStyle(s -> s.withColor(color)));
-			out.append(Component.literal(keyName(matcher.group(1))).withStyle(s -> s.withColor(TalkUi.GOLD_TEXT)));
+			out.append(Component.literal(keyName(matcher.group(1))).withStyle(s -> s.withColor(GOLD_WORDS)));
 			at = matcher.end();
 		}
 		if (at < text.length()) out.append(Component.literal(text.substring(at)).withStyle(s -> s.withColor(color)));
@@ -529,7 +562,7 @@ public class CodexScreen extends Screen {
 
 	/**
 	 * A thin roller at a column's right, only while there is more than fits: a lacquer trough between gold caps, and a gold thumb. The mission
-	 * board's screen (MissionBoardScreen) rolls its columns with it too.
+	 * board's screen (MissionBoardScreen) rolls its columns with it.
 	 */
 	static void roller(GuiGraphics g, int x, int viewTop, int viewBottom, int content, int scroll, int max) {
 		if (max <= 0) return;
@@ -538,26 +571,21 @@ public class CodexScreen extends Screen {
 		int lane = laneBottom - laneTop;
 		int thumb = Mth.clamp(lane * (viewBottom - viewTop) / Math.max(1, content), 10, lane);
 		int thumbY = laneTop + (lane - thumb) * scroll / max;
-		g.fill(x, laneTop, x + ROLLER_W, laneBottom, 0xFF6E5214);
-		g.fill(x + 1, laneTop, x + ROLLER_W - 1, laneBottom, 0xFF0C0C14);
+		g.fill(x, laneTop, x + 4, laneBottom, 0xFF6E5214);
+		g.fill(x + 1, laneTop, x + 3, laneBottom, 0xFF0C0C14);
 		for (int capY : new int[] {viewTop, laneBottom}) {
-			g.fill(x - 1, capY, x + ROLLER_W + 1, capY + 1, TalkUi.GOLD);
-			g.fill(x - 1, capY + 1, x + ROLLER_W + 1, capY + 2, 0xFF6E5214);
+			g.fill(x - 1, capY, x + 5, capY + 1, TalkUi.GOLD);
+			g.fill(x - 1, capY + 1, x + 5, capY + 2, 0xFF6E5214);
 		}
-		g.fill(x, thumbY, x + ROLLER_W, thumbY + thumb, 0xFFB8860B);
-		g.fill(x, thumbY, x + ROLLER_W, thumbY + 1, 0xFFF0C850);
-		g.fill(x + ROLLER_W - 1, thumbY + 1, x + ROLLER_W, thumbY + thumb, 0xFF6E5214);
+		g.fill(x, thumbY, x + 4, thumbY + thumb, 0xFFB8860B);
+		g.fill(x, thumbY, x + 4, thumbY + 1, 0xFFF0C850);
+		g.fill(x + 3, thumbY + 1, x + 4, thumbY + thumb, 0xFF6E5214);
 	}
 
-	/** The gold dot of something not yet read: three pixels, rimmed. */
-	private static void dot(GuiGraphics g, int x, int y) {
+	/** The gold dot of something not yet read: three pixels, rimmed (the Book beside the narrow menu wears it). */
+	static void dot(GuiGraphics g, int x, int y) {
 		g.fill(x - 1, y - 1, x + 4, y + 4, DOT_RIM);
 		g.fill(x, y, x + 3, y + 3, DOT);
-	}
-
-	private Component trimmed(Component text, int width) {
-		if (font.width(text) <= width) return text;
-		return Component.literal(font.plainSubstrByWidth(text.getString(), width - font.width("...")) + "...").withStyle(text.getStyle());
 	}
 
 	/** An icon to draw (the book, should a block have no item). */
@@ -566,7 +594,7 @@ public class CodexScreen extends Screen {
 		return stack.isEmpty() ? new ItemStack(Items.BOOK) : stack;
 	}
 
-	private static boolean in(double mouseX, double mouseY, int x, int y, int w, int h) {
+	private static boolean in(double mouseX, double mouseY, double x, double y, double w, double h) {
 		return mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + h;
 	}
 
@@ -598,8 +626,8 @@ public class CodexScreen extends Screen {
 		if (other) listScroll = 0;
 		if (reveal || other) {
 			int row = chapter().entries().indexOf(entry);
-			int view = BODY_BOTTOM - LIST_TOP;
-			if (row >= 0) listScroll = Mth.clamp(row * ROW_H - view / 2, 0, Math.max(0, chapter().entries().size() * ROW_H - view));
+			float view = listBottom() - LIST_TOP;
+			if (row >= 0) listScroll = Mth.clamp(Math.round(row * ROW - view / 2), 0, Math.max(0, Math.round(chapter().entries().size() * ROW - view)));
 		}
 		CodexState.markRead(entry);
 	}
@@ -627,10 +655,11 @@ public class CodexScreen extends Screen {
 
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+		double mx = mouseX * 3, my = mouseY * 3; // the artifact's pixels
 		if (button == 0) {
 			List<Codex.Chapter> chapters = Codex.chapters();
 			for (int i = 0; i < chapters.size(); i++) {
-				if (in(mouseX, mouseY, left + CHAPTER_X, top + BODY_TOP + i * CHAPTER_H, CHAPTER_W, CHAPTER_H - 1)) {
+				if (in(mx, my, 0, CHAPTERS_TOP + i * chapterRow, NAV - 3, CHAPTER_H)) {
 					if (!chapters.get(i).id().equals(chapterShown)) {
 						selectChapter(chapters.get(i));
 						turn();
@@ -638,11 +667,11 @@ public class CodexScreen extends Screen {
 					return true;
 				}
 			}
-			int viewTop = top + LIST_TOP;
-			if (in(mouseX, mouseY, left + LIST_X, viewTop, LIST_W - ROLLER_W - 3, top + BODY_BOTTOM - viewTop)) {
-				int row = (int) Math.floor((mouseY - viewTop + listScroll) / ROW_H);
+			float x = LIST_X + ox;
+			if (in(mx, my, x, LIST_VIEW_TOP, listRowW(), listBottom() - LIST_VIEW_TOP)) {
+				int row = (int) Math.floor((my - LIST_TOP + listScroll) / ROW);
 				List<Codex.Entry> entries = chapter().entries();
-				if (row >= 0 && row < entries.size()) {
+				if (row >= 0 && row < entries.size() && my - (LIST_TOP + row * ROW - listScroll) < ROW_H) {
 					if (!entries.get(row).id().equals(entryShown)) {
 						select(entries.get(row), false);
 						turn();
@@ -656,13 +685,14 @@ public class CodexScreen extends Screen {
 
 	@Override
 	public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+		double mx = mouseX * 3;
 		int step = (int) Math.round(-delta * SCROLL_STEP);
-		if (mouseX >= left + LIST_X && mouseX < left + PAGE_X - 4) {
-			listScroll = Mth.clamp(listScroll + step, 0, listMax);
-		} else if (mouseX >= left + PAGE_X - 4 && mouseX < left + WIDTH) {
-			pageScroll = Mth.clamp(pageScroll + step, 0, pageMax);
-		} else if (mouseX >= left && mouseX < left + LIST_X - 4) {
+		if (mx < NAV) {
 			step(Codex.chapters(), delta < 0 ? 1 : -1);
+		} else if (mx < PAGE_X + ox) {
+			listScroll = Mth.clamp(listScroll + step, 0, listMax);
+		} else {
+			pageScroll = Mth.clamp(pageScroll + step, 0, pageMax);
 		}
 		return true;
 	}
@@ -699,7 +729,7 @@ public class CodexScreen extends Screen {
 				return true;
 			}
 			case GLFW.GLFW_KEY_PAGE_UP, GLFW.GLFW_KEY_PAGE_DOWN -> {
-				int page = BODY_BOTTOM - TEXT_TOP - LINE_H;
+				int page = Math.round(height * 3f - 34 - TEXT_TOP - LINE);
 				pageScroll = Mth.clamp(pageScroll + (keyCode == GLFW.GLFW_KEY_PAGE_UP ? -page : page), 0, pageMax);
 				return true;
 			}
@@ -710,8 +740,8 @@ public class CodexScreen extends Screen {
 	}
 
 	/**
-	 * The book beside the cultivation menu (CultivationScreen) that opens the Codex, going back to the menu when it closes: lacquer in a
-	 * gold rim, wearing the gold dot while anything open is unread.
+	 * The book beside the narrow cultivation menu (CultivationScreen) that opens the Codex, going back to the menu when it closes: lacquer
+	 * in a gold rim, wearing the gold dot while anything open is unread.
 	 */
 	public static final class Book extends AbstractButton {
 		public static final int SIZE = 20;

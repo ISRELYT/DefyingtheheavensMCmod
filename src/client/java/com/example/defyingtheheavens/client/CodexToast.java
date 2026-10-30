@@ -13,8 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * "New in the Codex": the toast for pages of the Dao Codex as they open (CodexState), in its lacquer and gold, with the key that opens
- * it. One page is named; several at once are counted. Pages opening while it shows join it, and it shows on afresh.
+ * "New in the Codex": the toast for pages of the Dao Codex as they open (CodexState), in the Hall's ink and gold as the Codex is, with
+ * the key that opens it. One page is named; several at once are counted. Pages opening while it shows join it, and it shows on afresh.
  */
 final class CodexToast implements Toast {
 	private static final long SHOWN_MS = 5000L;
@@ -45,9 +45,7 @@ final class CodexToast implements Toast {
 		Font font = toasts.getMinecraft().font;
 		int w = width();
 		int h = height();
-		g.fill(0, 0, w, h, TalkUi.GOLD);
-		g.fill(1, 1, w - 1, h - 1, TalkUi.INNER);
-		g.fill(2, 2, w - 2, h - 2, TalkUi.PANEL);
+		HallHud.panel(g, 0, 0, w, h, HallHud.FRAME_LIT, HallHud.NAV_INK);
 
 		boolean one = entries.size() == 1;
 		g.renderFakeItem(CodexScreen.iconOf(one ? entries.get(0).icon() : Items.BOOK), 8, 8);

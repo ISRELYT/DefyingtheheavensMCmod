@@ -1,4 +1,4 @@
-// 1.20.1	2026-10-30T18:56:18.6058126	Defying The Heavens/Advancements
+// 1.20.1	2026-10-30T21:56:20.1041025	Defying The Heavens/Advancements
 3fdb8f7545ef667ba2ce8f08c5d48d078e413f2c data\defying-the-heavens\advancements\springs\nine_nether_peaks.json
 f613a81c809415ede8effca4c42eeb41e6f89221 data\defying-the-heavens\advancements\arts\first_spell.json
 4559a313a088426df7545437e7cc04d7f56c3c77 data\defying-the-heavens\advancements\worlds\shore_of_nirvana.json
@@ -21,8 +21,8 @@ f549ff5026b197968874139bae2a99d68eef330c data\defying-the-heavens\advancements\s
 a7f5a2ec03188aa9a3616551c6493b6858f74986 data\defying-the-heavens\advancements\worlds\small_world.json
 13b4faea29c266fc8466847e19019d884dd842e5 data\defying-the-heavens\advancements\cultivation\decays.json
 0e804df1b87536d11280403cacf3419efef08314 data\defying-the-heavens\advancements\cultivation\foundation_building.json
-7be2da60ed3880e776e7366c550c88d0f63745ac data\defying-the-heavens\advancements\springs\ghost_king.json
 c4e89f9cc19eb211278246fb8049c667a3f94ca6 data\defying-the-heavens\advancements\arts\inner_realm.json
+7be2da60ed3880e776e7366c550c88d0f63745ac data\defying-the-heavens\advancements\springs\ghost_king.json
 bfa5a15602816f345376be57ff2745445a292fbb data\defying-the-heavens\advancements\cultivation\law.json
 78fb7a65df04bcf9bf86c9e90344c845453a3f3b data\defying-the-heavens\advancements\cultivation\four_axis.json
 bee6187e8e117d4897e0ff08d7c68dfdbabe7a60 data\defying-the-heavens\advancements\worlds\holy_land.json
@@ -58,8 +58,8 @@ ec1b0f0d397bfcea3b60d2d225b1dac46dfb7c59 data\defying-the-heavens\advancements\a
 ed49d8aa6cb9f66e35be71a714df3b32a567d140 data\defying-the-heavens\advancements\cultivation\heavenly_lord.json
 0aaf4c85c9f7baa3b09ec4e06e7ec3631ac5fc82 data\defying-the-heavens\advancements\worlds\spatial_gap.json
 967fff6baa4da14ce25e5ec9e32c2890e48cd2b8 data\defying-the-heavens\advancements\arts\dao_fragment.json
-81e6b7bf38fc3e867534650ba01b42b8ec0d4889 data\defying-the-heavens\advancements\arts\legend_sea_needle.json
 563d3fee79de2f793f19fdf62039f76ba5750f34 data\defying-the-heavens\advancements\worlds\jade_firmament.json
+81e6b7bf38fc3e867534650ba01b42b8ec0d4889 data\defying-the-heavens\advancements\arts\legend_sea_needle.json
 ec59406d8cd618f02ecc15c95b32b58f42212637 data\defying-the-heavens\advancements\arts\legend_venerables.json
 27d984d6afd9c0a114f58e5bc8d50fd3c394f41d data\defying-the-heavens\advancements\cultivation\tribulation.json
 93668584c074359c19e14c3af9736ab91e043275 data\defying-the-heavens\advancements\springs\meng_po.json

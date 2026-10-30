@@ -41,9 +41,9 @@ import static com.example.defyingtheheavens.StorageFormationMenu.ROWS;
  * Its owner has two buttons beside the search line: Refine, raising it a tier (its cost, realm and mastery on the tooltip), and Trust, which
  * turns the grid's place into the list of those it opens to (a name box to add one, a cross beside each to strike them off).
  */
-public class StorageFormationScreen extends AbstractContainerScreen<StorageFormationMenu> {
+public class StorageFormationScreen extends AbstractContainerScreen<StorageFormationMenu> implements HallFrame.Framed {
 	private static final int W = StorageFormationMenu.WIDTH, H = StorageFormationMenu.HEIGHT;
-	private static final int SLOT_BG = 0xFF120D0B;
+	private static final int SLOT_BG = 0xFF0B0E12;
 	private static final int JADE = 0x7FE0A0;
 	/** The scroll bar, beside the grid. */
 	private static final int BAR_X = GRID_X + COLUMNS * 18 + 4, BAR_W = 6;
@@ -195,13 +195,6 @@ public class StorageFormationScreen extends AbstractContainerScreen<StorageForma
 	protected void renderBg(GuiGraphics g, float partialTick, int mouseX, int mouseY) {
 		int x = leftPos, y = topPos;
 		TalkUi.panel(g, x, y, x + W, y + H, TalkUi.GOLD);
-		// A gold rule under the title, a scroll roller's knob at each end.
-		g.fill(x + 14, y + 19, x + W - 14, y + 20, TalkUi.GOLD);
-		g.fill(x + 14, y + 20, x + W - 14, y + 21, TalkUi.GOLD_DIM);
-		for (int kx : new int[] {x + 10, x + W - 14}) {
-			g.fill(kx, y + 17, kx + 4, y + 23, TalkUi.GOLD);
-			g.fill(kx + 1, y + 18, kx + 3, y + 22, TalkUi.GOLD_DIM);
-		}
 		if (!trustPage) {
 			// The search line's well.
 			g.fill(x + GRID_X, y + SEARCH_Y, x + GRID_X + SEARCH_W, y + SEARCH_Y + 12, TalkUi.GOLD_DIM);
@@ -237,15 +230,15 @@ public class StorageFormationScreen extends AbstractContainerScreen<StorageForma
 
 	private void button(GuiGraphics g, int bx, Component label, boolean live, boolean hover, boolean on) {
 		int x = leftPos + bx, y = topPos + BUTTON_Y;
-		g.fill(x, y, x + BUTTON_W, y + BUTTON_H, live ? TalkUi.GOLD : TalkUi.GOLD_DIM);
-		g.fill(x + 1, y + 1, x + BUTTON_W - 1, y + BUTTON_H - 1, hover && live || on ? TalkUi.PANEL_LIT : 0xF2120D0B);
+		// The Hall's buttons; the page open (the trust page's) in jade.
+		HallHud.panel(g, x, y, x + BUTTON_W, y + BUTTON_H, !live ? HallHud.FRAME_OFF : hover || on ? HallHud.FRAME_LIT : HallHud.FRAME,
+				on ? HallHud.ROW_OPEN : hover && live ? HallHud.ROW_LIT : HallHud.CARD);
 		g.drawString(font, label, x + (BUTTON_W - font.width(label)) / 2, y + 2, live ? TalkUi.GOLD_TEXT : TalkUi.DISABLED, false);
 	}
 
 	private void grid(GuiGraphics g, int mouseX, int mouseY) {
 		int x0 = leftPos + GRID_X, y0 = topPos + GRID_Y;
-		g.fill(x0 - 2, y0 - 2, x0 + COLUMNS * 18 + 2, y0 + ROWS * 18 + 2, TalkUi.GOLD);
-		g.fill(x0 - 1, y0 - 1, x0 + COLUMNS * 18 + 1, y0 + ROWS * 18 + 1, TalkUi.INNER);
+		HallHud.panel(g, x0 - 2, y0 - 2, x0 + COLUMNS * 18 + 2, y0 + ROWS * 18 + 2, HallHud.FRAME_LIT, TalkUi.INNER);
 		List<ClientStorageSpace.Entry> list = shown();
 		for (int row = 0; row < ROWS; row++) {
 			for (int col = 0; col < COLUMNS; col++) {
@@ -271,16 +264,10 @@ public class StorageFormationScreen extends AbstractContainerScreen<StorageForma
 	/** The trust page: the name box with its Add, then the names, a cross before each. */
 	private void trusted(GuiGraphics g, int mouseX, int mouseY) {
 		int x0 = leftPos + GRID_X, y0 = topPos + GRID_Y;
-		g.fill(x0 - 2, y0 - 2, x0 + COLUMNS * 18 + 2, y0 + ROWS * 18 + 2, TalkUi.GOLD);
-		g.fill(x0 - 1, y0 - 1, x0 + COLUMNS * 18 + 1, y0 + ROWS * 18 + 1, TalkUi.INNER);
-		g.fill(x0, y0, x0 + COLUMNS * 18 - 44, y0 + 13, TalkUi.GOLD_DIM);
-		g.fill(x0 + 1, y0 + 1, x0 + COLUMNS * 18 - 45, y0 + 12, SLOT_BG);
+		HallHud.panel(g, x0 - 2, y0 - 2, x0 + COLUMNS * 18 + 2, y0 + ROWS * 18 + 2, HallHud.FRAME_LIT, TalkUi.INNER);
+		HallHud.panel(g, x0, y0, x0 + COLUMNS * 18 - 44, y0 + 13, HallHud.FRAME, SLOT_BG);
 		int ax = x0 + COLUMNS * 18 - 40, ay = y0 + 1;
-		boolean hover = onAdd(mouseX, mouseY);
-		g.fill(ax, ay, ax + 40, ay + 12, TalkUi.GOLD);
-		g.fill(ax + 1, ay + 1, ax + 39, ay + 11, hover ? TalkUi.PANEL_LIT : 0xF2120D0B);
-		Component add = Component.translatable(ModLang.STORAGE_TRUST_ADD);
-		g.drawString(font, add, ax + (40 - font.width(add)) / 2, ay + 2, TalkUi.GOLD_TEXT, false);
+		HallHud.button(g, font, ax, ay, 40, 12, Component.translatable(ModLang.STORAGE_TRUST_ADD), true, onAdd(mouseX, mouseY));
 		List<ClientStorageSpace.Trusted> trusted = ClientStorageSpace.trusted();
 		if (trusted.isEmpty()) {
 			Component none = Component.translatable(ModLang.STORAGE_TRUST_NONE);
@@ -365,8 +352,7 @@ public class StorageFormationScreen extends AbstractContainerScreen<StorageForma
 
 	@Override
 	protected void renderLabels(GuiGraphics g, int mouseX, int mouseY) {
-		Component title = fitted(this.title, W - 24);
-		g.drawString(font, title, 12, 7, TalkUi.GOLD_TEXT, false);
+		HallHud.heading(g, font, fitted(this.title, W - 33), 10, 7, W - 20);
 		if (trustPage) return;
 		StorageFormations.Tier tier = ClientStorageSpace.tier();
 		boolean full = !tier.boundless() && ClientStorageSpace.stacksUsed(menu.containerId) >= tier.stacks();

@@ -7,40 +7,39 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 
 /**
- * The look shared by the talk wheel and the dialogue box: dark lacquer panels in a gold frame, a name plate of the
- * cultivator's name in their title's colour over chips for title, sect and realm, and five pips of regard.
+ * The look shared by the talk wheel and the dialogue box, and by most of the mod's other screens (the bloodline, the obsession, the
+ * mission board, the containers): since 2026-10-30 the cultivation menu's Hall (HallHud; the user's ask: "go through the other menus and
+ * make them consistent"), ink panels in a thin dark-gold frame, cream words, gold for what matters; a name plate of the cultivator's name
+ * in their title's colour over chips for title, sect and realm, and five pips of regard.
  */
 final class TalkUi {
-	static final int PANEL = 0xF217110E;
-	static final int PANEL_LIT = 0xF22A1F14;
+	static final int PANEL = HallHud.PANEL;
+	static final int PANEL_LIT = 0xF019202A;
 	static final int GOLD = 0xFFD4A63A;
-	static final int GOLD_DIM = 0xFF5A4630;
-	static final int INNER = 0xFF3A2A1C;
+	static final int GOLD_DIM = HallHud.FRAME;
+	static final int INNER = 0xFF0B0E12;
 	static final int RED_DIM = 0xFF6A3A34;
-	static final int CREAM = 0xF3EAD8;
+	static final int CREAM = 0xE6D3A3;
 	static final int CREAM_BRIGHT = 0xFFF4C9;
-	static final int MUTED = 0xB8A98F;
-	static final int DISABLED = 0x8A7D6A;
+	static final int MUTED = 0xB9B2A0;
+	static final int DISABLED = 0x7A7466;
 	static final int WARNING = 0xC46A5A;
-	static final int GOLD_TEXT = 0xF2C94C;
+	static final int GOLD_TEXT = 0xFFD54F;
 	static final int SECT_TEXT = 0xB9D0E8;
 	static final int SECT_BORDER = 0xFF7F9FBF;
 	static final int PIP_ON = 0xFFF2C94C;
-	static final int PIP_OFF = 0xFF4A3A2A;
+	static final int PIP_OFF = 0xFF2A3038;
 	static final int PIP_BAD = 0xFFC4473A;
 
-	/** A framed panel: gold outside, a dark line inside it, lacquer within. */
+	/** A framed panel: ink within a thin frame, the usual gold one in the Hall's dark gold (another colour, a frame of that colour). */
 	static void panel(GuiGraphics g, int x0, int y0, int x1, int y1, int border) {
-		g.fill(x0, y0, x1, y1, border);
-		g.fill(x0 + 2, y0 + 2, x1 - 2, y1 - 2, INNER);
-		g.fill(x0 + 3, y0 + 3, x1 - 3, y1 - 3, PANEL);
+		HallHud.panel(g, x0, y0, x1, y1, border == GOLD ? HallHud.FRAME : border, PANEL);
 	}
 
 	/** A small framed chip of text; returns its width. */
 	static int chip(GuiGraphics g, Font font, Component text, int x, int y, int border, int color) {
 		int w = font.width(text) + 8;
-		g.fill(x, y, x + w, y + 12, border);
-		g.fill(x + 1, y + 1, x + w - 1, y + 11, 0xF2120D0B);
+		HallHud.panel(g, x, y, x + w, y + 12, border, INNER);
 		g.drawString(font, text, x + 4, y + 2, color, false);
 		return w;
 	}

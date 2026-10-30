@@ -1,0 +1,15 @@
+{
+  "providers": [
+    {
+      "type": "ttf",
+      "file": "defying-the-heavens:pixelify_sans.ttf",
+      "size": 9.6,
+      "oversample": 8.375,
+      "shift": [0, 1]
+    },
+    {
+      "type": "reference",
+      "id": "minecraft:default"
+    }
+  ]
+}

@@ -28,7 +28,7 @@ import java.util.List;
  * its wares, each with its price and what is left of it today (those their title doesn't open, dimmed); the one chosen beside them, with its
  * own description. What is done is sent (C2S mission_act), and the page comes back with what came of it at its foot.
  */
-public class MissionBoardScreen extends Screen {
+public class MissionBoardScreen extends Screen implements HallFrame.Framed {
 	private static final int W = 400, H = 230, HEADER = 20, TABS_Y = 25, BODY_TOP = 42, BODY_BOTTOM = H - 22, LIST_X = 8, LIST_W = 170,
 			PANE_X = 186, PANE_W = W - PANE_X - 8, ROW_H = 20, LABEL_H = 12, LINE_H = 10, BUTTON_H = 14, ROLLER_W = 4, SCROLL_STEP = 12;
 	private static final int EASY = 0x8FD88F, HARD = 0xE0806A;
@@ -274,16 +274,9 @@ public class MissionBoardScreen extends Screen {
 	public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
 		renderBackground(g);
 		TalkUi.panel(g, left, top, left + W, top + H, TalkUi.GOLD);
-		// The heading between two gold rules.
-		int cx = left + W / 2, tw = font.width(title);
-		g.drawString(font, title, cx - tw / 2, top + 8, TalkUi.GOLD_TEXT, true);
-		for (int side : new int[] {-1, 1}) {
-			int from = side < 0 ? cx - tw / 2 - 30 : cx + tw / 2 + 8;
-			g.fill(from, top + 12, from + 22, top + 13, TalkUi.GOLD_DIM);
-			int nub = side < 0 ? from + 22 : from - 1;
-			g.fill(nub - 1, top + 11, nub + 2, top + 14, TalkUi.GOLD);
-		}
-		g.fill(left + 6, top + HEADER, left + W - 6, top + HEADER + 1, TalkUi.GOLD_DIM);
+		// The heading (the Hall's: a gold diamond, the words, the rule under them).
+		int cx = left + W / 2;
+		HallHud.heading(g, font, title, left + 8, top + 8, W - 16);
 		if (!page.disciple()) {
 			List<FormattedCharSequence> note = font.split(page.note(), W - 60);
 			int y = top + H / 2 - note.size() * LINE_H / 2;
@@ -307,8 +300,9 @@ public class MissionBoardScreen extends Screen {
 			Component label = Component.translatable(tab == 0 ? ModLang.MISSION_TAB_MISSIONS : ModLang.MISSION_TAB_EXCHANGE);
 			int x = tabX(tab), y = top + TABS_Y;
 			boolean hover = in(mouseX, mouseY, x, y, tabW(tab), 13);
-			g.fill(x, y, x + tabW(tab), y + 13, on ? TalkUi.GOLD : hover ? TalkUi.GOLD_DIM : 0xFF3A2A1C);
-			g.fill(x + 1, y + 1, x + tabW(tab) - 1, y + 12, on ? TalkUi.PANEL_LIT : 0xF2120D0B);
+			// The tab open in jade, as the Hall's.
+			HallHud.panel(g, x, y, x + tabW(tab), y + 13, on ? HallHud.FRAME_LIT : hover ? HallHud.FRAME_LIT : HallHud.FRAME,
+					on ? HallHud.ROW_OPEN : hover ? HallHud.ROW_LIT : HallHud.CARD);
 			g.drawString(font, label, x + 6, y + 3, on ? TalkUi.GOLD_TEXT : TalkUi.CREAM, false);
 		}
 		g.fill(left + PANE_X - 5, top + BODY_TOP, left + PANE_X - 4, top + BODY_BOTTOM, TalkUi.GOLD_DIM);
@@ -347,11 +341,12 @@ public class MissionBoardScreen extends Screen {
 				continue;
 			}
 			boolean chosen = row.mission() != null ? row.mission().id() == chosenMission : row.ware() != null && row.ware().index() == chosenWare;
+			// The chosen row in jade with a gold edge, as the Codex's icons; a row pointed at, lit.
 			if (chosen) {
-				g.fill(x, y, x + rowW, y + row.height() - 1, TalkUi.PANEL_LIT);
-				g.fill(x, y, x + 1, y + row.height() - 1, TalkUi.GOLD);
+				g.fill(x, y, x + rowW, y + row.height() - 1, HallHud.ROW_OPEN);
+				g.fill(x, y, x + 1, y + row.height() - 1, HallHud.GOLD);
 			} else if (hover) {
-				g.fill(x, y, x + rowW, y + row.height() - 1, 0x80302418);
+				g.fill(x, y, x + rowW, y + row.height() - 1, HallHud.ROW_LIT);
 			}
 			if (row.mission() != null) {
 				Posting m = row.mission();
@@ -427,9 +422,7 @@ public class MissionBoardScreen extends Screen {
 		CodexScreen.roller(g, x + PANE_W - ROLLER_W, viewTop, viewBottom, content, paneScroll, paneMax);
 		for (Button b : buttons()) {
 			boolean hover = b.enabled() && in(mouseX, mouseY, b.x(), b.y(), b.w(), BUTTON_H);
-			g.fill(b.x(), b.y(), b.x() + b.w(), b.y() + BUTTON_H, b.enabled() ? (hover ? TalkUi.GOLD_TEXT | 0xFF000000 : TalkUi.GOLD) : TalkUi.GOLD_DIM);
-			g.fill(b.x() + 1, b.y() + 1, b.x() + b.w() - 1, b.y() + BUTTON_H - 1, hover ? TalkUi.PANEL_LIT : 0xF2120D0B);
-			g.drawString(font, b.label(), b.x() + 6, b.y() + 3, b.enabled() ? (hover ? TalkUi.CREAM_BRIGHT : TalkUi.CREAM) : TalkUi.DISABLED, false);
+			HallHud.button(g, font, b.x(), b.y(), b.w(), BUTTON_H, b.label(), b.enabled(), hover);
 		}
 		return in(mouseX, mouseY, x, y, 16, 16) && exchange ? icon : null;
 	}

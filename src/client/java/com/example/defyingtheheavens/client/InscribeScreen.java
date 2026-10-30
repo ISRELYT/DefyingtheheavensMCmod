@@ -17,11 +17,11 @@ import net.minecraft.util.Mth;
 import java.util.List;
 
 /**
- * Writing out a manual (TechniqueManualItem#inscribe: the Inscription Brush in one hand, a Blank Manual in the other), in the mod's
- * lacquer and gold (TalkUi): what one may write, techniques first then spells, one row each; a click writes it (C2S inscribe) and
+ * Writing out a manual (TechniqueManualItem#inscribe: the Inscription Brush in one hand, a Blank Manual in the other), in the Hall's
+ * ink and gold (TalkUi, HallHud): what one may write, techniques first then spells, one row each; a click writes it (C2S inscribe) and
  * closes. The list scrolls with the mouse wheel.
  */
-public class InscribeScreen extends Screen {
+public class InscribeScreen extends Screen implements HallFrame.Framed {
 	private static final int W = 260, H = 210, ROW_H = 14, LIST_Y = 40;
 
 	/** Kind (0 a technique, 1 a spell) and ordinal, as the server listed them (S2C inscribe_options). */
@@ -91,21 +91,19 @@ public class InscribeScreen extends Screen {
 		renderBackground(g);
 		int x = left, y = top;
 		TalkUi.panel(g, x, y, x + W, y + H, TalkUi.GOLD);
-		g.drawString(font, title, x + (W - font.width(title)) / 2, y + 7, TalkUi.GOLD_TEXT, false);
-		g.fill(x + 14, y + 19, x + W - 14, y + 20, TalkUi.GOLD);
-		g.fill(x + 14, y + 20, x + W - 14, y + 21, TalkUi.GOLD_DIM);
+		HallHud.heading(g, font, title, x + 10, y + 7, W - 20);
 		Component hint = Component.translatable(ModLang.INSCRIBE_HINT);
 		g.drawString(font, hint, x + (W - font.width(hint)) / 2, y + 26, TalkUi.MUTED, false);
 		int hovered = rowAt(mouseX, mouseY);
 		for (int row = 0; row < visibleRows() && row + scroll < options.size(); row++) {
 			int index = row + scroll;
 			int ry = y + LIST_Y + row * ROW_H;
-			if (index == hovered) g.fill(x + 10, ry, x + W - 10, ry + ROW_H - 1, TalkUi.PANEL_LIT);
+			HallHud.row(g, x + 10, ry, W - 20, ROW_H - 1, false, index == hovered);
 			Component label = label(options.get(index));
 			String text = label.getString();
 			int room = W - 30;
 			if (font.width(text) > room) text = font.plainSubstrByWidth(text, room - font.width("...")) + "...";
-			g.drawString(font, text, x + 14, ry + 3, index == hovered ? TalkUi.CREAM_BRIGHT : TalkUi.CREAM, false);
+			g.drawString(font, text, x + 14, ry + 3, index == hovered ? HallHud.GOLD : TalkUi.CREAM, false);
 		}
 		if (maxScroll() > 0) {
 			int track = visibleRows() * ROW_H, knob = Math.max(10, track * visibleRows() / options.size());

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * What the top-left stack drew (VitalsHud's portrait and its bars, the thin bars under them: QiHud, NetherworldHud), row by row, so that
+ * What the top-left stack drew (VitalsHud's header and its bars, the thin bars under them: QiHud, NetherworldHud), row by row, so that
  * vanilla's boss bars keep clear of it (the user, 2026-10-26: "the qi bar covers the boss health bar"; mixin/BossHealthOverlayMixin):
  * beside it on their own row, as vanilla has them but moved right, or under it where the screen is too narrow for that. The boss bars
  * are drawn before the stack each frame, so they keep clear of what the frame before drew.

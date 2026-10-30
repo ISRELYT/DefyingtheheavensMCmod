@@ -24,7 +24,7 @@ import java.util.List;
  * Spells go on the wheel as they are learned; the Spells tab rearranges them. The player keeps moving while it's open, as with
  * the ability wheel; it opens once a spell can be cast ({@link ClientMethods#anyKnown}).
  */
-public class SpellWheelScreen extends Screen {
+public class SpellWheelScreen extends Screen implements HallFrame.Framed {
 	private static final int RING = 70;
 	private static final int SLOT_RADIUS = 18;
 	private static final int ICON = 32;
@@ -100,7 +100,7 @@ public class SpellWheelScreen extends Screen {
 		Spell readied = ClientMethods.state().readiedSpell();
 
 		AbilityWheel.drawBackdrop(g, cx, cy, RING + SLOT_RADIUS + 8);
-		AbilityWheel.disc(g, cx, cy, RING - SLOT_RADIUS - 4, 0xC0101018);
+		AbilityWheel.disc(g, cx, cy, RING - SLOT_RADIUS - 4, 0xE00C0F13);
 		for (int i = 0; i < Spells.WHEEL_SLOTS; i++) {
 			drawSlot(g, AbilityWheel.slotX(cx, i, RING), AbilityWheel.slotY(cy, i, RING), ClientMethods.shown(i), readied, i == hovered);
 		}
@@ -116,7 +116,7 @@ public class SpellWheelScreen extends Screen {
 			List<FormattedCharSequence> name = font.split(pointed.getDisplayName(), textWidth);
 			int y = cy - (name.size() * 10 + (usesQi ? 10 : 0) + (usesGhostQi ? 10 : 0) + 10) / 2;
 			for (FormattedCharSequence line : name) {
-				g.drawCenteredString(font, line, cx, y, cooldown > 0 ? 0x9E9E9E : 0xFFD700);
+				g.drawCenteredString(font, line, cx, y, cooldown > 0 ? AbilityWheel.TEXT_MUTED : AbilityWheel.TEXT_GOLD);
 				y += 10;
 			}
 			if (usesQi) {
@@ -131,14 +131,14 @@ public class SpellWheelScreen extends Screen {
 			}
 			Component state = cooldown > 0 ? Component.translatable(ModLang.SPELLS_COOLING, (cooldown + 19) / 20)
 					: Component.translatable(pointed == readied ? ModLang.SPELLS_READIED : ModLang.SPELLS_READY);
-			g.drawCenteredString(font, state, cx, y + 2, cooldown > 0 ? 0x9E9E9E : pointed == readied ? 0x69F0AE : 0xB0B0B0);
+			g.drawCenteredString(font, state, cx, y + 2, cooldown > 0 ? AbilityWheel.TEXT_MUTED : pointed == readied ? 0x69F0AE : AbilityWheel.TEXT_MUTED);
 		} else if (hovered >= 0) {
-			g.drawCenteredString(font, Component.translatable(ModLang.WHEEL_EMPTY_SLOT), cx, cy - 4, 0x707070);
+			g.drawCenteredString(font, Component.translatable(ModLang.WHEEL_EMPTY_SLOT), cx, cy - 4, AbilityWheel.TEXT_EMPTY);
 		} else {
 			boolean any = false;
 			for (int i = 0; i < Spells.WHEEL_SLOTS; i++) any |= ClientMethods.shown(i) != null;
 			Component hint = any ? Component.translatable(ModLang.SPELL_WHEEL_HINT,
-					ModKeybinds.CAST_SPELL.getTranslatedKeyMessage().copy().withStyle(style -> style.withColor(0xFFD700)))
+					ModKeybinds.CAST_SPELL.getTranslatedKeyMessage().copy().withStyle(style -> style.withColor(AbilityWheel.TEXT_GOLD)))
 					: Component.translatable(ModLang.SPELL_WHEEL_EMPTY);
 			centred(g, Component.translatable(ModLang.SPELL_WHEEL_TITLE), hint, cx, cy, textWidth);
 		}
@@ -155,7 +155,7 @@ public class SpellWheelScreen extends Screen {
 	 */
 	private void drawSlot(GuiGraphics g, int x, int y, Spell spell, Spell readied, boolean hovered) {
 		if (spell != null && spell == readied) AbilityWheel.ring(g, x, y, SLOT_RADIUS + 4, SLOT_RADIUS + 1, READIED_HALO);
-		if (hovered) AbilityWheel.ring(g, x, y, SLOT_RADIUS + 3, SLOT_RADIUS + 1, 0x80FFD700);
+		if (hovered) AbilityWheel.ring(g, x, y, SLOT_RADIUS + 3, SLOT_RADIUS + 1, 0x80FFD54F);
 		AbilityWheel.disc(g, x, y, SLOT_RADIUS + 1, spell == null ? AbilityWheel.SLOT_EMPTY_RIM : spell == readied ? AbilityWheel.GOLD_BRIGHT
 				: AbilityWheel.GOLD);
 		AbilityWheel.disc(g, x, y, SLOT_RADIUS, hovered ? AbilityWheel.SLOT_HOVER : AbilityWheel.SLOT);
@@ -180,10 +180,10 @@ public class SpellWheelScreen extends Screen {
 	private void centred(GuiGraphics g, Component title, Component text, int cx, int cy, int width) {
 		List<FormattedCharSequence> lines = font.split(text, width);
 		int y = cy - (12 + lines.size() * 10) / 2;
-		g.drawCenteredString(font, title, cx, y, 0xFFD700);
+		g.drawCenteredString(font, title, cx, y, AbilityWheel.TEXT_GOLD);
 		y += 12;
 		for (FormattedCharSequence line : lines) {
-			g.drawCenteredString(font, line, cx, y, 0x9E9E9E);
+			g.drawCenteredString(font, line, cx, y, AbilityWheel.TEXT_MUTED);
 			y += 10;
 		}
 	}

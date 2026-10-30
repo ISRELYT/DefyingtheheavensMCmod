@@ -38,7 +38,6 @@ public final class SuppressionClient {
 	private static final double DRAW_RANGE = 48;
 	private static final float MARKER_SIZE = 0.2f;
 	private static final float[] MARKER_RGB = {0.55f, 0.05f, 0.07f};
-	private static final int HUD_X = 4;
 
 	/** An entity under pressure; {@code heavy} when the suppressor is a whole realm above. */
 	public record Pressed(int entityId, float penalty, boolean heavy) {}
@@ -149,24 +148,35 @@ public final class SuppressionClient {
 		}
 	}
 
-	/** Under the Qi bar while the local player is pressed: a small dark-red chevron and how much the pressure takes. */
+	/**
+	 * Under the stack of bars (the ghostly qi's too when there is one) while the local player is pressed, as the mockups' "G" draws it (in
+	 * the artifact's pixels, HallArt): a crimson diamond and how much the pressure takes.
+	 */
 	public static void renderHud(GuiGraphics graphics) {
 		Minecraft mc = Minecraft.getInstance();
 		PlayerCultivation c = ClientCultivationData.get();
 		if (mc.player == null || mc.options.hideGui || mc.options.renderDebug || mc.player.isSpectator() || !c.isUnderPressure()) return;
-		int x = HUD_X;
-		int y = QiHud.stackBottom() + 1; // under the stack of bars, the ghostly qi's too when there is one
-		// Two stacked chevrons, 7 pixels wide, in crimson over a dark edge.
-		for (int stack = 0; stack < 2; stack++) {
-			int top = y + stack * 3;
-			for (int row = 0; row < 4; row++) {
-				int color = stack == 0 ? 0xFFB02020 : 0xFF7A1414;
-				graphics.fill(x + row, top + row, x + row + 1, top + row + 1, color);
-				graphics.fill(x + 6 - row, top + row, x + 7 - row, top + row + 1, color);
-			}
+		HallArt.beginHud(graphics);
+		try {
+			float y = QiHud.stackBottom() + 2;
+			HallArt.diamond(graphics, 17, y + 7, 10, HallHud.PRESSURE);
+			// "Pressed to Heavenly Lord Mid: -30%" (the realm the pressure holds one to), or only what it takes where it holds no stage.
+			long percent = Math.round(c.getPressurePenalty() * 100);
+			String text = c.getPressureStages() > 0
+					? Component.translatable(ModLang.HUD_PRESSED_TO, c.getEffectiveRealm().getDisplayName().getString() + " "
+							+ c.getEffectiveStage().getDisplayName().getString(), percent).getString()
+					: Component.translatable(ModLang.HUD_PRESSURE, percent).getString();
+			HallArt.text(graphics, text, 34, y, 16, 22, HallHud.PRESSURE_TEXT & 0xFFFFFF, true);
+			HallArt.corner(y, y + 22, 34 + HallArt.width(text, 16) + 2);
+		} finally {
+			HallArt.end(graphics);
 		}
-		Component text = Component.translatable(ModLang.HUD_PRESSURE, Math.round(c.getPressurePenalty() * 100));
-		graphics.drawString(mc.font, text, x + 10, y, 0xE07070);
+	}
+
+	/** The room the pressure line takes under the stack (SoulHud goes on below it), in the artifact's pixels: its line while pressed. */
+	static float lineHeight() {
+		Minecraft mc = Minecraft.getInstance();
+		return mc.player != null && !mc.player.isSpectator() && ClientCultivationData.get().isUnderPressure() ? 26 : 0;
 	}
 
 	public static void clear() {

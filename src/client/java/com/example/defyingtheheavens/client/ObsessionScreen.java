@@ -19,12 +19,12 @@ import org.lwjgl.glfw.GLFW;
 import java.util.List;
 
 /**
- * "Name Your Obsession" (Obsession), before the tribulation into Heavenly Being, in the mod's lacquer and gold (TalkUi, the Heaven
- * Altar's screen): the four obsessions, each with what it gives and its axis filling twice as fast. Click one (or press its number)
+ * "Name Your Obsession" (Obsession), before the tribulation into Heavenly Being, in the Hall's ink and gold (TalkUi, HallHud): the four
+ * obsessions, each with what it gives and its axis filling twice as fast, the one chosen in jade. Click one (or press its number)
  * to choose it, then Face the Tribulation (or Enter): the server keeps it and the tribulation begins. It is named once and for good,
  * hence the two steps. Closed without naming, nothing happens: the Breakthrough button brings it up again.
  */
-public class ObsessionScreen extends Screen {
+public class ObsessionScreen extends Screen implements HallFrame.Framed {
 	private static final int W = 332, H = 236;
 	/** The four choices, two by two (wide enough for the longest English line on one row: 136 pixels inside). */
 	private static final int CARD_W = 150, CARD_H = 52, CARD_GAP = 8, CARDS_Y = 64;
@@ -45,7 +45,7 @@ public class ObsessionScreen extends Screen {
 	protected void init() {
 		left = (width - W) / 2;
 		top = (height - H) / 2;
-		face = addRenderableWidget(Button.builder(Component.translatable(ModLang.OBSESSION_CONFIRM), b -> confirm())
+		face = addRenderableWidget(HallButton.of(Component.translatable(ModLang.OBSESSION_CONFIRM), b -> confirm())
 				.bounds(left + (W - 150) / 2, top + H - 30, 150, 20).build());
 		face.active = chosen != null;
 	}
@@ -112,14 +112,7 @@ public class ObsessionScreen extends Screen {
 		renderBackground(g);
 		int x = left, y = top;
 		TalkUi.panel(g, x, y, x + W, y + H, TalkUi.GOLD);
-		// The title, a gold rule under it with a scroll roller's knob at each end (as the Heaven Altar's).
-		g.drawString(font, title, x + (W - font.width(title)) / 2, y + 7, TalkUi.GOLD_TEXT, false);
-		g.fill(x + 14, y + 19, x + W - 14, y + 20, TalkUi.GOLD);
-		g.fill(x + 14, y + 20, x + W - 14, y + 21, TalkUi.GOLD_DIM);
-		for (int kx : new int[] {x + 10, x + W - 14}) {
-			g.fill(kx, y + 17, kx + 4, y + 23, TalkUi.GOLD);
-			g.fill(kx + 1, y + 18, kx + 3, y + 22, TalkUi.GOLD_DIM);
-		}
+		HallHud.heading(g, font, title, x + 10, y + 7, W - 20);
 		// What it is, under the title.
 		List<FormattedCharSequence> intro = font.split(Component.translatable(ModLang.OBSESSION_INTRO), W - 28);
 		int ly = y + 27;
@@ -136,16 +129,17 @@ public class ObsessionScreen extends Screen {
 		super.render(g, mouseX, mouseY, partialTick);
 	}
 
-	/** One obsession: its number and name, what it gives, its axis at Four Axis; gold-framed when chosen, lit when the mouse is on it. */
+	/** One obsession: its number and name, what it gives, its axis at Four Axis; in jade with a gold diamond when chosen, lit when pointed at. */
 	private void card(GuiGraphics g, int i, boolean hovered) {
 		FourAxis.Axis axis = CHOICES[i];
 		int x = cardX(i), y = cardY(i);
 		boolean picked = axis == chosen;
-		TalkUi.panel(g, x, y, x + CARD_W, y + CARD_H, picked ? TalkUi.GOLD : TalkUi.GOLD_DIM);
-		if (hovered || picked) g.fill(x + 3, y + 3, x + CARD_W - 3, y + CARD_H - 3, TalkUi.PANEL_LIT);
+		HallHud.panel(g, x, y, x + CARD_W, y + CARD_H, picked ? HallHud.GOLD : hovered ? HallHud.FRAME_LIT : HallHud.FRAME,
+				picked ? HallHud.ROW_OPEN : hovered ? HallHud.ROW_LIT : HallHud.CARD);
 		String number = (i + 1) + ".";
-		g.drawString(font, number, x + 7, y + 6, TalkUi.MUTED, false);
-		g.drawString(font, Obsession.displayName(axis), x + 7 + font.width(number) + 4, y + 6, picked ? TalkUi.CREAM_BRIGHT : TalkUi.GOLD_TEXT, false);
+		if (picked) HallHud.diamond(g, x + 6, y + 7, 5, HallHud.GOLD);
+		else g.drawString(font, number, x + 7, y + 6, TalkUi.MUTED, false);
+		g.drawString(font, Obsession.displayName(axis), x + 7 + font.width(number) + 4, y + 6, TalkUi.GOLD_TEXT, false);
 		int ly = y + 19;
 		for (FormattedCharSequence line : font.split(Obsession.boon(axis), CARD_W - 14)) {
 			g.drawString(font, line, x + 7, ly, TalkUi.CREAM, false);

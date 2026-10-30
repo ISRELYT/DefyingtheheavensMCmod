@@ -799,6 +799,31 @@ public final class ModLang {
 	public static final String HUD_SOUL_OWN_QI_LABEL = k("hud.soul.own_qi_label");
 	/** A True Immortal's immortal essence bar (ImmortalEssence). */
 	public static final String HUD_ESSENCE_LABEL = k("hud.essence_label");
+	/** The Hall's HUD (client/HallHud, 2026-10-30): the words on its health and qi bars, the line over them with a soul out, the slots by the hotbar. */
+	public static final String HUD_BAR_HEALTH = k("hud.bar.health");
+	public static final String HUD_BAR_QI = k("hud.bar.qi");
+	public static final String HUD_BAR_SOUL = k("hud.bar.soul");
+	public static final String HUD_SOUL_HEADER = k("hud.soul.header");
+	public static final String HUD_SOUL_OUT = k("hud.soul.out");
+	/** The soul's readout: the word over its body's bar; the pressure line with the realm one is pressed to (the mockups' words). */
+	public static final String HUD_SOUL_BODY_HEADER = k("hud.soul.body_header");
+	public static final String HUD_PRESSED_TO = k("hud.pressed_to");
+	public static final String HUD_SLOT_SPELL = k("hud.slot.spell");
+	public static final String HUD_SLOT_ABILITY = k("hud.slot.ability");
+	/** The Hall (client/CultivationScreen, 2026-10-30): the ladder's name, a path card's "Drawn in" and its realm and stage, the Codex in the column. */
+	public static final String HALL_LADDER = k("hall.ladder");
+	public static final String HALL_DRAWN_IN = k("hall.drawn_in");
+	public static final String HALL_REALM_STAGE = k("hall.realm_stage");
+	public static final String HALL_CODEX = k("hall.codex");
+	/** The Hall's Path button: what pressing it does. */
+	public static final String HALL_PATH_TIP = k("hall.path.tip");
+	/** A path card's bar, as the menu's mockup writes it: the stage's cultivation and how far along, or the top; and what meditating adds. */
+	public static final String HALL_CULT = k("hall.cult");
+	public static final String HALL_CULT_MAX = k("hall.cult_max");
+	public static final String HALL_PER_SECOND = k("hall.per_second");
+	public static final String HALL_RESTING = k("hall.resting");
+	/** The Hall's Meditate button while meditating ("Stop Meditating" left the row no room). */
+	public static final String HALL_STOP = k("hall.stop");
 	public static final String HUD_SOUL_OWN_GHOST_QI_LABEL = k("hud.soul.own_ghost_qi_label");
 	public static final String HUD_SOUL_GATHERING = k("hud.soul.gathering");
 	public static final String HUD_SOUL_RECALLING = k("hud.soul.recalling");
@@ -1219,6 +1244,7 @@ public final class ModLang {
 	public static final String CODEX_BUTTON = k("codex.button");
 	public static final String CODEX_LOCKED = k("codex.locked");
 	public static final String CODEX_COUNT = k("codex.count");
+	public static final String CODEX_SEALED_NOTE = k("codex.sealed_note");
 	public static final String CODEX_TOAST_NEW = k("codex.toast.new");
 	public static final String CODEX_TOAST_MANY = k("codex.toast.many");
 

@@ -5,59 +5,54 @@ import com.example.defyingtheheavens.ModLang;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 
-import java.util.Locale;
-
 /**
- * The thin bars of the top-left stack, under the portrait and its health and qi bars (VitalsHud: the qi pool's own bar is there
- * since 2026-10-22, the user's ask): each a label, then a thin lacquer bar trimmed in antique gold, with a scroll roller on the left
- * and a tapered tip on the right, notched at 25/50/75%, and the pool against its maximum beside it, a glint flowing along it while
- * it fills. Here, in a person's body (Possession), the soul's own pool, in violet, and a True Immortal's immortal essence
- * (ImmortalEssence), in pale gold; under them the ghostly qi pool, where there is one,
- * and the rest of the Netherworld's (see NetherworldHud), all drawn by the same {@link Pool}.
+ * The thin bars of the top-left stack, under the health and qi (VitalsHud), as the mockups' "G" draws them (in the artifact's pixels,
+ * HallArt): each 334 by 22 in a thin dark-gold frame, its label and what it holds written across it ("Ghost Qi 23.9M / 270.4M"), a
+ * glint flowing along it while it fills. Here, in a person's body (Possession), the soul's own pool, in violet, and a True Immortal's
+ * immortal essence (ImmortalEssence), in pale gold, while it holds any or the land fills it (an empty one out in the lower worlds says
+ * nothing); under them the ghostly qi pool, where there is one, and the rest of the Netherworld's (see NetherworldHud), all drawn by the
+ * same {@link Pool}.
  */
 public final class QiHud {
-	static final int X = 4;
-	/** From one bar's top to the next one's. */
-	static final int ROW = 12;
+	/** From one thin bar's top to the next one's, in the artifact's pixels. */
+	static final int ROW = 26;
 
-	/** A soul's own pool while it is in a person's body (Possession): the soul's violet, lit from above. */
-	private static final int[] OWN_ROWS = {0xFFE4CCFF, 0xFFB57BFF, 0xFF9457E0, 0xFF64339E};
-	private static final Pool OWN = new Pool(OWN_ROWS, 0xFFF2E6FF, 0xE4D0FF);
-	/** A True Immortal's immortal essence (ImmortalEssence): pale immortal gold, lit from above, brighter than the frame's. */
-	private static final int[] ESSENCE_ROWS = {0xFFFFF6CC, 0xFFFFDE73, 0xFFF0B43A, 0xFFB57A14};
-	private static final Pool ESSENCE = new Pool(ESSENCE_ROWS, 0xFFFFFBEA, 0xFFE9A8);
+	private static final Pool OWN = new Pool(HallHud.SOUL, HallHud.SOUL_LIGHT);
+	private static final Pool ESSENCE = new Pool(HallHud.ESSENCE, HallHud.ESSENCE_LIGHT);
 
 	public static void register() {
 		HudRenderCallback.EVENT.register((graphics, tickDelta) -> {
 			Minecraft mc = Minecraft.getInstance();
 			if (mc.level == null || mc.player == null || mc.options.hideGui || mc.options.renderDebug || mc.player.isSpectator()) return;
-			// In a person's body the qi bar above is the body's (its spells and abilities draw on it); the soul's own pool, which its
-			// upkeep and its own tear come out of, under it.
-			int y = top();
-			if (ownShowing()) {
-				OWN.draw(graphics, mc.font, y, barX(mc.font), Component.translatable(ownLabel()), ClientSoul.ownQi(), ClientSoul.ownMax(),
-						ClientSoul.ownRising());
-				y += ROW;
-			} else {
-				OWN.reset();
-			}
-			// A True Immortal's essence, its glint flowing while the Immortal Realm (or a small world) fills it.
-			if (essenceShowing()) {
-				boolean filling = ModDimensions.hasImmortalQi(mc.level.dimension());
-				ESSENCE.draw(graphics, mc.font, y, barX(mc.font), Component.translatable(ModLang.HUD_ESSENCE_LABEL), ClientCultivationData.essence(),
-						ClientCultivationData.essenceMax(), filling);
-			} else {
-				ESSENCE.reset();
+			HallArt.beginHud(graphics);
+			try {
+				// In a person's body the qi bar above is the body's (its spells and abilities draw on it); the soul's own pool, which its
+				// upkeep and its own tear come out of, under it.
+				float y = top();
+				if (ownShowing()) {
+					OWN.draw(graphics, y, Component.translatable(ownLabel()), ClientSoul.ownQi(), ClientSoul.ownMax(), ClientSoul.ownRising());
+					y += ROW;
+				} else {
+					OWN.reset();
+				}
+				// A True Immortal's essence, its glint flowing while the Immortal Realm (or a small world) fills it.
+				if (essenceShowing()) {
+					ESSENCE.draw(graphics, y, Component.translatable(ModLang.HUD_ESSENCE_LABEL), ClientCultivationData.essence(),
+							ClientCultivationData.essenceMax(), essenceFilling());
+				} else {
+					ESSENCE.reset();
+				}
+			} finally {
+				HallArt.end(graphics);
 			}
 		});
 	}
 
-	/** Where the stack of thin bars starts: under the portrait and its bars (VitalsHud), else the corner. */
-	static int top() {
+	/** Where the stack of thin bars starts, in the artifact's pixels: under the health and qi (VitalsHud), else the corner. */
+	static float top() {
 		return VitalsHud.bottom();
 	}
 
@@ -66,9 +61,17 @@ public final class QiHud {
 		return ClientSoul.isInside() && ClientSoul.ownMax() > 0;
 	}
 
-	/** True when the immortal essence's bar shows: a True Immortal's (ImmortalEssence). */
+	/**
+	 * True when the immortal essence's bar shows: a True Immortal's (ImmortalEssence), while it holds any or the land fills it; empty out
+	 * in the lower worlds it would only be a bar of nothing.
+	 */
 	static boolean essenceShowing() {
-		return ClientCultivationData.essenceMax() > 0;
+		return ClientCultivationData.essenceMax() > 0 && (ClientCultivationData.essence() >= 1 || essenceFilling());
+	}
+
+	private static boolean essenceFilling() {
+		Minecraft mc = Minecraft.getInstance();
+		return mc.level != null && ModDimensions.hasImmortalQi(mc.level.dimension());
 	}
 
 	/** The thin bars it draws at the top of the stack: the soul's own pool while in a person's body, and a True Immortal's essence. */
@@ -76,8 +79,8 @@ public final class QiHud {
 		return (ownShowing() ? 1 : 0) + (essenceShowing() ? 1 : 0);
 	}
 
-	/** Under the portrait's block, the rows of the whole stack of thin bars (this one's and the Netherworld's), for what goes under them. */
-	static int stackBottom() {
+	/** Under the health and qi, where the whole stack of thin bars ends (this one's and the Netherworld's), in the artifact's pixels. */
+	static float stackBottom() {
 		return top() + (rows() + NetherworldHud.rows()) * ROW;
 	}
 
@@ -86,70 +89,37 @@ public final class QiHud {
 	}
 
 	/**
-	 * Where the thin bars start: past the widest label of the bars showing (this one's and the Netherworld's under it, see
-	 * NetherworldHud), so they stand in one neat column whatever their labels say.
-	 */
-	static int barX(Font font) {
-		int widest = ownShowing() ? font.width(Component.translatable(ownLabel())) : 0;
-		if (essenceShowing()) widest = Math.max(widest, font.width(Component.translatable(ModLang.HUD_ESSENCE_LABEL)));
-		widest = Math.max(widest, NetherworldHud.widestLabel(font));
-		return X + widest + Pool.LABEL_GAP + 2;
-	}
-
-	/**
-	 * One pool's bar: its label, then the lacquer bar in its gold frame, and the amount against the maximum beside it. Each pool
-	 * keeps its own eased fill, so the server's steps become a smooth slide.
+	 * One thin bar (the mockups' pools): 334 by 22, a border of 2, its label and what it holds written across it. Each keeps its own eased
+	 * fill, so the server's steps become a smooth slide. Drawn in the artifact's pixels (HallArt#beginHud).
 	 */
 	static final class Pool {
-		/** Height of the roller; the bar sits centred on it. */
-		private static final int ROLLER_H = 10;
-		/** Clear pixels between the label (shadow included) and the roller's knob, which reaches two pixels left of the bar. */
-		static final int LABEL_GAP = 2;
-		/** Frame included; the fill itself is {@link #INNER} wide (divisible by 4, so the quarter notches land on whole pixels). */
-		private static final int BAR_W = 74;
-		private static final int INNER = BAR_W - 2;
-		/** Widths of the tip's rows, top to bottom, from the frame's top row to its bottom row. */
-		private static final int[] TIP = {1, 2, 3, 3, 2, 1};
-		/** From the bar's left edge to the amount: the bar, its tip and a gap. */
-		private static final int TEXT_OFFSET = BAR_W + 3 + 4;
-
-		private static final int GOLD = 0xFFB8860B;
-		private static final int GOLD_DARK = 0xFF6E5214;
-		private static final int NOTCH = 0xFF8C6A1E;
-		private static final int LACQUER = 0xD0101420;
-		private static final int TEXT = 0xE6D3A3;
+		static final int H = 22, BORDER = 2;
 		/** One glint crosses the filled part this often while the pool is filling, in milliseconds. */
 		private static final long GLINT_PERIOD = 2400;
 		/**
-		 * How quickly the fill chases the synced value, per second. The server syncs a filling pool 5 times a second, so this
-		 * turns those steps into a smooth slide.
+		 * How quickly the fill chases the synced value, per second. The server syncs a filling pool 5 times a second, so this turns
+		 * those steps into a smooth slide.
 		 */
 		private static final double EASE = 12;
 
-		private final int[] rows;
-		private final int edge;
-		private final int amountColor;
+		private final int fill;
+		private final int light;
 		private double shownRatio = -1;
 		private long lastFrame;
 
-		Pool(int[] rows, int edge, int amountColor) {
-			this.rows = rows;
-			this.edge = edge;
-			this.amountColor = amountColor;
+		Pool(int fill, int light) {
+			this.fill = fill;
+			this.light = light;
 		}
 
-		/**
-		 * Draws the bar with its top at {@code y}, starting at {@code barX} (see {@link #barX}), and the amount against the
-		 * maximum beside it; {@code mayGlint} false holds the glint back even while the pool is below full.
-		 */
-		void draw(GuiGraphics g, Font font, int y, int barX, Component label, double value, double max, boolean mayGlint) {
-			Component amount = Component.translatable(ModLang.HUD_QI,
-					Component.literal(whole(value)).withStyle(style -> style.withColor(amountColor)), whole(max));
-			draw(g, font, y, barX, label, max <= 0 ? 0 : Math.min(1.0, value / max), amount, value < max && mayGlint);
+		/** Draws the bar with its top at {@code y}, "Label value / max" across it; {@code mayGlint} false holds the glint back. */
+		void draw(GuiGraphics g, float y, Component label, double value, double max, boolean mayGlint) {
+			String text = label.getString() + " " + HallHud.compact(value) + " / " + HallHud.compact(max);
+			draw(g, y, max <= 0 ? 0 : Math.min(1.0, value / max), text, value < max && mayGlint);
 		}
 
-		/** Draws the bar filled to {@code ratio}, with {@code amount} (whatever it says) beside it. Returns where the amount ends. */
-		int draw(GuiGraphics g, Font font, int y, int barX, Component label, double ratio, Component amount, boolean filling) {
+		/** Draws the bar filled to {@code ratio}, with {@code text} (whatever it says) across it. */
+		void draw(GuiGraphics g, float y, double ratio, String text, boolean filling) {
 			long now = Util.getMillis();
 			if (shownRatio < 0) {
 				shownRatio = ratio;
@@ -159,12 +129,16 @@ public final class QiHud {
 			}
 			lastFrame = now;
 
-			g.drawString(font, label, X, y + 1, TEXT);
-			bar(g, barX, y, (int) Math.round(INNER * shownRatio), filling, now);
-			g.drawString(font, amount, barX + TEXT_OFFSET, y + 1, TEXT);
-			int end = barX + TEXT_OFFSET + font.width(amount);
-			HudCorner.drew(y, y + ROLLER_H, end);
-			return end;
+			float x = VitalsHud.X, w = VitalsHud.W, left = x + BORDER, top = y + BORDER, bottom = y + H - BORDER;
+			HallArt.bar(g, x, y, w, H, BORDER, shownRatio, fill, light, 0);
+			float f = HallArt.filled(w - 2 * BORDER, shownRatio);
+			if (f > 0 && filling) {
+				float centre = left - 9 + (f + 18) * (now % GLINT_PERIOD) / (float) GLINT_PERIOD;
+				glint(g, top, bottom, centre - 7, centre + 8, 0x28FFFFFF, left, left + f);
+				glint(g, top, bottom, centre - 3, centre + 4, 0x40FFFFFF, left, left + f);
+			}
+			HallArt.textCentred(g, text, x + w / 2, top, 15, 18, HallArt.WHITE, true);
+			HallArt.corner(y, y + H, x + w);
 		}
 
 		/** Forgets the eased fill, so the bar starts from the true value the next time it shows. */
@@ -172,66 +146,10 @@ public final class QiHud {
 			shownRatio = -1;
 		}
 
-		private void bar(GuiGraphics g, int barX, int y, int fill, boolean filling, long now) {
-			int trackY = y + 3; // the fill runs in rows trackY .. trackY + 3, framed by a gold row above and below
-			int left = barX + 1;
-			int top = trackY - 1;
-			int bottom = trackY + rows.length; // the frame's bottom row
-
-			// Gold frame: lit top and sides, shaded bottom.
-			g.fill(barX, top, barX + BAR_W, top + 1, GOLD);
-			g.fill(barX, bottom, barX + BAR_W, bottom + 1, GOLD_DARK);
-			g.fill(barX, trackY, left, bottom, GOLD);
-			g.fill(barX + BAR_W - 1, trackY, barX + BAR_W, bottom, GOLD);
-			g.fill(left, trackY, left + INNER, bottom, LACQUER);
-
-			roller(g, barX - 1, y);
-
-			// Tapered tip past the right end, lit above the middle and shaded below like the frame.
-			for (int row = 0; row < TIP.length; row++) {
-				int ty = top + row;
-				g.fill(barX + BAR_W, ty, barX + BAR_W + TIP[row], ty + 1, row < TIP.length / 2 ? GOLD : GOLD_DARK);
-			}
-
-			if (fill > 0) {
-				for (int row = 0; row < rows.length; row++) {
-					g.fill(left, trackY + row, left + fill, trackY + row + 1, rows[row]);
-				}
-				if (filling) {
-					// The leading edge of the gathering qi, and a glint flowing toward it.
-					if (fill < INNER) g.fill(left + fill - 1, trackY, left + fill, bottom, edge);
-					int center = left - 3 + (int) ((fill + 6) * (now % GLINT_PERIOD) / (double) GLINT_PERIOD);
-					glint(g, trackY, center - 2, center + 3, 0x28FFFFFF, left, left + fill);
-					glint(g, trackY, center - 1, center + 2, 0x50FFFFFF, left, left + fill);
-				}
-			}
-
-			// Notches at the quarters, the half in brighter gold.
-			for (int quarter = 1; quarter <= 3; quarter++) {
-				int x = left + INNER * quarter / 4;
-				g.fill(x, trackY, x + 1, bottom, quarter == 2 ? GOLD : NOTCH);
-			}
+		private static void glint(GuiGraphics g, float top, float bottom, float x1, float x2, int color, float clipLeft, float clipRight) {
+			float from = Math.max(x1, clipLeft), to = Math.min(x2, clipRight);
+			if (to > from) HallArt.rect(g, from, top, to, bottom, color);
 		}
-
-		/** A scroll roller two pixels wide at {@code x}, with a knob a pixel wider on each side at both ends. */
-		private static void roller(GuiGraphics g, int x, int y) {
-			g.fill(x, y + 1, x + 1, y + ROLLER_H - 1, GOLD);
-			g.fill(x + 1, y + 1, x + 2, y + ROLLER_H - 1, GOLD_DARK);
-			g.fill(x - 1, y, x + 3, y + 1, GOLD_DARK);
-			g.fill(x - 1, y + ROLLER_H - 1, x + 3, y + ROLLER_H, GOLD_DARK);
-		}
-
-		/** Lightens the fill's rows between x1 and x2, clipped to the filled part [clipLeft, clipRight). */
-		private void glint(GuiGraphics g, int trackY, int x1, int x2, int color, int clipLeft, int clipRight) {
-			int from = Math.max(x1, clipLeft);
-			int to = Math.min(x2, clipRight);
-			if (to > from) g.fill(from, trackY, to, trackY + rows.length, color);
-		}
-	}
-
-	/** Rounded down, so the bar never reads full before it is (the epsilon absorbs stage-multiplier float noise). */
-	private static String whole(double v) {
-		return String.format(Locale.ROOT, "%,d", (long) Math.floor(v + 1e-6));
 	}
 
 	private QiHud() {}

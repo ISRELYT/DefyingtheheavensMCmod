@@ -12,18 +12,20 @@ import java.util.Map;
 
 /**
  * What the ability wheel ({@link AbilityWheelScreen}) and its editor on the Abilities tab share: each ability's icon, where
- * the slots sit, and the round shapes they are drawn with, in the menu's lacquer and gold.
+ * the slots sit, and the round shapes they are drawn with, in the Hall's ink and gold (HallHud; 2026-10-30).
  */
 final class AbilityWheel {
 	static final int GOLD = 0xFFB8860B;
 	static final int GOLD_DARK = 0xFF6E5214;
-	static final int GOLD_BRIGHT = 0xFFFFD700;
-	static final int LACQUER = 0xE0101018;
-	static final int SLOT = 0xFF1A1A26;
-	static final int SLOT_HOVER = 0xFF2C2C44;
-	static final int SLOT_EMPTY_RIM = 0xFF3A3A4A;
-	static final int SLOT_OFF_RIM = 0xFF6A6A78;
+	static final int GOLD_BRIGHT = 0xFFFFD54F;
+	static final int LACQUER = 0xE811161C;
+	static final int SLOT = 0xFF0D1116;
+	static final int SLOT_HOVER = 0xFF19202A;
+	static final int SLOT_EMPTY_RIM = 0xFF3A3326;
+	static final int SLOT_OFF_RIM = 0xFF5A5650;
 	static final int ON = 0xFF69F0AE;
+	/** The words in the middle of a wheel: a name, what is muted, what is empty. */
+	static final int TEXT_GOLD = 0xFFD54F, TEXT_MUTED = 0xB9B2A0, TEXT_EMPTY = 0x6C665A;
 
 	private static final Map<Ability, ResourceLocation> ICONS = new EnumMap<>(Ability.class);
 
@@ -114,7 +116,7 @@ final class AbilityWheel {
 	 * empty slot; the hovered slot is lit and haloed. A small green lamp under an ability that is on.
 	 */
 	static void drawSlot(GuiGraphics g, int x, int y, int radius, Ability ability, boolean on, boolean hovered, int iconSize) {
-		if (hovered) ring(g, x, y, radius + 3, radius + 1, 0x80FFD700);
+		if (hovered) ring(g, x, y, radius + 3, radius + 1, 0x80FFD54F);
 		disc(g, x, y, radius + 1, ability == null ? SLOT_EMPTY_RIM : on ? GOLD : SLOT_OFF_RIM);
 		disc(g, x, y, radius, hovered ? SLOT_HOVER : SLOT);
 		if (ability == null) return;
@@ -125,11 +127,10 @@ final class AbilityWheel {
 		}
 	}
 
-	/** The wheel's lacquer disc with a gold rim, its shaded inner line like the Qi bar's trim. */
+	/** The wheel's ink disc in a thin gold rim, as the Hall's frames. */
 	static void drawBackdrop(GuiGraphics g, int cx, int cy, int radius) {
 		disc(g, cx, cy, radius, LACQUER);
-		ring(g, cx, cy, radius + 2, radius, GOLD);
-		ring(g, cx, cy, radius, radius - 1, GOLD_DARK);
+		ring(g, cx, cy, radius + 1, radius, GOLD);
 	}
 
 	private AbilityWheel() {}

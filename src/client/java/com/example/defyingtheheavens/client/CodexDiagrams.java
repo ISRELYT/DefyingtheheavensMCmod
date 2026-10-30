@@ -55,8 +55,8 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * The Dao Codex's diagrams (Codex, "@diagram name"; the user's pick, 2026-10-28), drawn in its lacquer and gold (TalkUi) into a page's
- * width, each giving back the tooltip of what the mouse points at:
+ * The Dao Codex's diagrams (Codex, "@diagram name"; the user's pick, 2026-10-28), drawn in the Hall's ink and gold (HallHud, since
+ * 2026-10-30) into a page's width, each giving back the tooltip of what the mouse points at:
  * <ul>
  *   <li>"worlds": the map of the worlds (CodexMap; the user's ask, 2026-10-28). Every world as a plate, the ways between them as lines;
  *   a world not yet visited (CodexState#visited) shows ??? and, pointed at, only its way in (the user's follow-up the same day: the way
@@ -83,8 +83,8 @@ final class CodexDiagrams {
 	private static final int CYCLE_HEIGHT = 106;
 
 	private static final int HERE_RING = 0xFFF2C94C;
-	private static final int PLATE = 0xFF1E1610;
-	private static final int PLATE_SEALED = 0xFF120E0B;
+	private static final int PLATE = 0xFF0D1116;
+	private static final int PLATE_SEALED = 0xFF0A0C10;
 	private static final int WAY = TalkUi.GOLD_DIM;
 	private static final int WAY_KNOWN = 0xFF8A6A2E;
 
@@ -116,7 +116,7 @@ final class CodexDiagrams {
 	/** A creature's picture is the diagram "beast:" and its entity type's id; its frame. */
 	static final String BEAST = "beast:";
 	private static final int FRAME = 64;
-	private static final int FRAME_INSIDE = 0xFF2A2018;
+	private static final int FRAME_INSIDE = 0xFF0B0E12;
 	/** The likenesses drawn, made once for the world they were made in (never added to it); the Hungry Ghost's body, made once. */
 	private static final Map<String, LivingEntity> LIKENESSES = new HashMap<>();
 	private static Level likenessesOf;
@@ -139,7 +139,7 @@ final class CodexDiagrams {
 	 * its temper), and "Drops:" under it, the cells of what it drops laid out below by CodexScreen ({@link #drops}).
 	 */
 	private static void beast(GuiGraphics g, Font font, String id, int x, int y, int width) {
-		g.fill(x, y, x + FRAME, y + FRAME, TalkUi.GOLD_DIM);
+		g.fill(x, y, x + FRAME, y + FRAME, HallHud.FRAME);
 		g.fill(x + 1, y + 1, x + FRAME - 1, y + FRAME - 1, FRAME_INSIDE);
 		float angle = (Util.getMillis() % 18000L) / 50.0f;
 		Quaternionf pose = new Quaternionf().rotateZ((float) Math.PI).rotateX((float) Math.toRadians(-12)).rotateY((float) Math.toRadians(angle));
@@ -397,7 +397,7 @@ final class CodexDiagrams {
 			boolean hover = mouseX >= x0 && mouseX < x0 + PLATE_W && mouseY >= y0 && mouseY < y0 + PLATE_H;
 			if (world == here) g.fill(x0 - 2, y0 - 2, x0 + PLATE_W + 2, y0 + PLATE_H + 2, HERE_RING);
 			g.fill(x0, y0, x0 + PLATE_W, y0 + PLATE_H, world == here ? TalkUi.INNER : known ? TalkUi.GOLD : TalkUi.GOLD_DIM);
-			g.fill(x0 + 1, y0 + 1, x0 + PLATE_W - 1, y0 + PLATE_H - 1, hover ? TalkUi.PANEL_LIT : known ? PLATE : PLATE_SEALED);
+			g.fill(x0 + 1, y0 + 1, x0 + PLATE_W - 1, y0 + PLATE_H - 1, hover ? HallHud.ROW_LIT : known ? PLATE : PLATE_SEALED);
 			Component name = Component.translatable(known ? world.nameKey() : ModLang.CODEX_LOCKED);
 			name = trimmed(font, name, PLATE_W - 4);
 			g.drawString(font, name, cx - font.width(name) / 2, y0 + 3, known ? TalkUi.CREAM : TalkUi.DISABLED, false);
@@ -568,7 +568,7 @@ final class CodexDiagrams {
 			int x0 = centre[i][0] - NODE / 2, y0 = centre[i][1] - NODE / 2;
 			boolean hover = mouseX >= x0 && mouseX < x0 + NODE && mouseY >= y0 && mouseY < y0 + NODE;
 			g.fill(x0, y0, x0 + NODE, y0 + NODE, 0xFF000000 | (hover ? element.getCoreColor() : element.getGlowColor()));
-			g.fill(x0 + 1, y0 + 1, x0 + NODE - 1, y0 + NODE - 1, hover ? TalkUi.PANEL_LIT : PLATE);
+			g.fill(x0 + 1, y0 + 1, x0 + NODE - 1, y0 + NODE - 1, hover ? HallHud.ROW_LIT : PLATE);
 			g.renderItem(new ItemStack(icon(element)), x0 + 2, y0 + 2);
 			// Its name outward of the circle: beside the top one and the sides, under the two below.
 			Component name = element.getDisplayName();
