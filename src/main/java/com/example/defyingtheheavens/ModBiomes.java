@@ -104,6 +104,54 @@ public final class ModBiomes {
 	 * Realm's lush green, its water jade-clear; no rain, nothing born of it, nothing laid by worldgen (SmallWorlds lays the island).
 	 */
 	public static final ResourceKey<Biome> SMALL_WORLD = key("small_world");
+	/**
+	 * The Verdant Herb Valley (SecretRealm#VERDANT_HERB_VALLEY, the first of the secret realms, 2026-10-31): terraced herb gardens round a lake
+	 * under a pale morning sky, its grass and leaves a deep spring green, its water jade-clear, motes of its dense qi drifting in the mist; no
+	 * rain, nothing born of it, nothing laid by worldgen (its land is SecretRealmGenerator's, the rest SecretRealms').
+	 */
+	public static final ResourceKey<Biome> HERB_VALLEY = key("herb_valley");
+	/**
+	 * The Sunken Sword Tomb (SecretRealm#SUNKEN_SWORD_TOMB, the second phase, 2026-10-31): a grey gorge under an overcast steel sky, its few
+	 * grasses dry and grey-green, its pools dark, flecks of old dust drifting; nothing born of it, nothing laid by worldgen.
+	 */
+	public static final ResourceKey<Biome> SWORD_TOMB = key("sword_tomb");
+	/**
+	 * The Ancient Battlefield (SecretRealm#ANCIENT_BATTLEFIELD, the second phase): a red plain under a rust-red haze, its grass long dead and
+	 * brown, its water murky with old blood, ash drifting on the air; nothing born of it, nothing laid by worldgen. (Not "ancient_battlefield":
+	 * that is the Great Void's, ANCIENT_BATTLEFIELD.)
+	 */
+	public static final ResourceKey<Biome> OLD_WAR_FIELD = key("old_war_field");
+	/**
+	 * The Primeval Beast Graveyard (SecretRealm#PRIMEVAL_BEAST_GRAVEYARD, the third phase, 2026-10-31): a steaming jungle basin under a hazy
+	 * green-gold sky, its grass and leaves deep and lush, its water murky green, spores drifting; nothing born of it, nothing laid by
+	 * worldgen (its beasts are the realm's own, its trees laid by its works).
+	 */
+	public static final ResourceKey<Biome> BEAST_GRAVEYARD = key("beast_graveyard");
+	/**
+	 * The Cave Abode of a Heavenly Being (SecretRealm#CAVE_ABODE, the third phase): a lone mountain in a basin of pines round a still lake,
+	 * under a clear high sky, its mist thin and bright, motes of its master's qi drifting; nothing born of it, nothing laid by worldgen.
+	 */
+	public static final ResourceKey<Biome> CAVE_ABODE = key("cave_abode");
+	/**
+	 * The Yellow Springs Hollow (SecretRealm#YELLOW_SPRINGS_HOLLOW, the third phase): a drowned city of the dead under a dark, yellowed sky,
+	 * its waters the Yellow Springs' own murky gold, soul motes drifting; nothing born of it, nothing laid by worldgen.
+	 */
+	public static final ResourceKey<Biome> SPRINGS_HOLLOW = key("springs_hollow");
+	/**
+	 * The Jade Lake Mirage (SecretRealm#JADE_LAKE_MIRAGE, the fourth phase): a still lake of pale jade under a pale sky, white isles and
+	 * willows, a faint shimmer in the air; nothing born of it, nothing laid by worldgen.
+	 */
+	public static final ResourceKey<Biome> MIRAGE_LAKE = key("mirage_lake");
+	/**
+	 * The Ruins of a Fallen Holy Land (SecretRealm#FALLEN_HOLY_LAND, the fourth phase): its shards in a starless violet void, pale grass on
+	 * them gone silver, motes of the void drifting.
+	 */
+	public static final ResourceKey<Biome> FALLEN_HOLY_LAND = key("fallen_holy_land");
+	/**
+	 * The Tomb of a Fallen Immortal (SecretRealm#FALLEN_IMMORTAL_TOMB, the fourth phase): a golden sky over a sea of golden cloud, the grass
+	 * of the immortal's court gone pale with the decay that took him.
+	 */
+	public static final ResourceKey<Biome> IMMORTAL_TOMB = key("immortal_tomb");
 
 	private static final int WATER = 0x3FC6E4;
 	private static final int WATER_FOG = 0x0A3D52;
@@ -323,6 +371,64 @@ public final class ModBiomes {
 				new BiomeSpecialEffects.Builder().skyColor(0x0A0C24).fogColor(0x1A1E44).waterColor(0x4FD8D0).waterFogColor(0x14524E)
 						.grassColorOverride(0x6FCB78).foliageColorOverride(0x4FB86A)
 						.ambientParticle(new AmbientParticleSettings(ParticleTypes.END_ROD, 0.0006f)),
+				new MobSpawnSettings.Builder().build(),
+				new BiomeGenerationSettings.Builder(placed, carvers).build()));
+
+		context.register(HERB_VALLEY, biome(false, 0.75f, 0.8f,
+				new BiomeSpecialEffects.Builder().skyColor(0xA4CCE2).fogColor(0xDCE8E2).waterColor(0x4ED2C2).waterFogColor(0x1A5A52)
+						.grassColorOverride(0x5FB65A).foliageColorOverride(0x4AA84E)
+						.ambientParticle(new AmbientParticleSettings(ParticleTypes.END_ROD, 0.0004f)),
+				new MobSpawnSettings.Builder().build(),
+				new BiomeGenerationSettings.Builder(placed, carvers).build()));
+		context.register(SWORD_TOMB, biome(false, 0.6f, 0.3f,
+				new BiomeSpecialEffects.Builder().skyColor(0x8E9AA8).fogColor(0xB4BCC4).waterColor(0x3E6A78).waterFogColor(0x16303A)
+						.grassColorOverride(0x7E8C6C).foliageColorOverride(0x6C7C5C)
+						.ambientParticle(new AmbientParticleSettings(ParticleTypes.WHITE_ASH, 0.004f))
+						.ambientMoodSound(AmbientMoodSettings.LEGACY_CAVE_SETTINGS),
+				new MobSpawnSettings.Builder().build(),
+				new BiomeGenerationSettings.Builder(placed, carvers).build()));
+		context.register(OLD_WAR_FIELD, biome(false, 0.9f, 0.1f,
+				new BiomeSpecialEffects.Builder().skyColor(0xA0705E).fogColor(0xA87A68).waterColor(0x7A4A3A).waterFogColor(0x3A1A14)
+						.grassColorOverride(0x8C7A4C).foliageColorOverride(0x7A683E)
+						.ambientParticle(new AmbientParticleSettings(ParticleTypes.ASH, 0.008f))
+						.ambientMoodSound(AmbientMoodSettings.LEGACY_CAVE_SETTINGS),
+				new MobSpawnSettings.Builder().build(),
+				new BiomeGenerationSettings.Builder(placed, carvers).build()));
+		context.register(BEAST_GRAVEYARD, biome(false, 0.95f, 0.9f,
+				new BiomeSpecialEffects.Builder().skyColor(0x9AB89A).fogColor(0xB4C8A0).waterColor(0x4A7A52).waterFogColor(0x1A3A22)
+						.grassColorOverride(0x3E9A32).foliageColorOverride(0x2E8A2A)
+						.ambientParticle(new AmbientParticleSettings(ParticleTypes.SPORE_BLOSSOM_AIR, 0.006f)),
+				new MobSpawnSettings.Builder().build(),
+				new BiomeGenerationSettings.Builder(placed, carvers).build()));
+		context.register(CAVE_ABODE, biome(false, 0.6f, 0.5f,
+				new BiomeSpecialEffects.Builder().skyColor(0x9CC4EC).fogColor(0xD8E6F0).waterColor(0x4ABCD8).waterFogColor(0x14485A)
+						.grassColorOverride(0x6AB060).foliageColorOverride(0x4E9A56)
+						.ambientParticle(new AmbientParticleSettings(ParticleTypes.END_ROD, 0.0003f)),
+				new MobSpawnSettings.Builder().build(),
+				new BiomeGenerationSettings.Builder(placed, carvers).build()));
+		context.register(SPRINGS_HOLLOW, biome(false, 0.5f, 0.0f,
+				new BiomeSpecialEffects.Builder().skyColor(0x2A2618).fogColor(0x3E3820).waterColor(0x9A8030).waterFogColor(0x2A2208)
+						.grassColorOverride(0x6A6A3A).foliageColorOverride(0x5A5A32)
+						.ambientParticle(new AmbientParticleSettings(ParticleTypes.SOUL, 0.004f))
+						.ambientMoodSound(AmbientMoodSettings.LEGACY_CAVE_SETTINGS),
+				new MobSpawnSettings.Builder().build(),
+				new BiomeGenerationSettings.Builder(placed, carvers).build()));
+		context.register(MIRAGE_LAKE, biome(false, 0.7f, 0.8f,
+				new BiomeSpecialEffects.Builder().skyColor(0xC8E8DC).fogColor(0xDCF0E8).waterColor(0x9ED8C4).waterFogColor(0x4A8C7A)
+						.grassColorOverride(0x8CCB98).foliageColorOverride(0x7ABC8A)
+						.ambientParticle(new AmbientParticleSettings(ParticleTypes.END_ROD, 0.0004f)),
+				new MobSpawnSettings.Builder().build(),
+				new BiomeGenerationSettings.Builder(placed, carvers).build()));
+		context.register(FALLEN_HOLY_LAND, biome(false, 0.6f, 0.3f,
+				new BiomeSpecialEffects.Builder().skyColor(0x2A2040).fogColor(0x4A3E66).waterColor(0x6A7ACC).waterFogColor(0x1E2244)
+						.grassColorOverride(0xA8B8A0).foliageColorOverride(0x98A890)
+						.ambientParticle(new AmbientParticleSettings(ParticleTypes.REVERSE_PORTAL, 0.003f)),
+				new MobSpawnSettings.Builder().build(),
+				new BiomeGenerationSettings.Builder(placed, carvers).build()));
+		context.register(IMMORTAL_TOMB, biome(false, 0.8f, 0.2f,
+				new BiomeSpecialEffects.Builder().skyColor(0xF0D89A).fogColor(0xF4E2B8).waterColor(0x4FD8D0).waterFogColor(0x14524E)
+						.grassColorOverride(0xB8B488).foliageColorOverride(0xA8A078)
+						.ambientParticle(new AmbientParticleSettings(ParticleTypes.WHITE_ASH, 0.003f)),
 				new MobSpawnSettings.Builder().build(),
 				new BiomeGenerationSettings.Builder(placed, carvers).build()));
 	}

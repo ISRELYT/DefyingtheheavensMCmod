@@ -270,6 +270,11 @@ public final class SpatialTrialHandler {
 			p.displayClientMessage(Component.translatable(ModLang.MSG_TEAR_IMMORTAL), true);
 			return;
 		}
+		// A secret realm's space is sealed: one leaves it by a Departure Jade, or as it closes (SecretRealms).
+		if (ModDimensions.isSecretRealm(dimension)) {
+			p.displayClientMessage(Component.translatable(ModLang.MSG_SECRET_SEALED_SPACE), true);
+			return;
+		}
 		boolean out = ModDimensions.isSpatialGap(dimension);
 		// From Void Shattering on, torn high in the Jade Firmament's sky: a Void Breach up into the Great Void; torn in the Great Void, a
 		// way down onto the Jade Firmament (VoidBreach, 2026-10-25).

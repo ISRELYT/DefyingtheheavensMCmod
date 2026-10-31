@@ -19,6 +19,8 @@ public class ModBlockLootProvider extends FabricBlockLootTableProvider {
 		dropSelf(ModBlocks.BLUE_SPIRIT_WOOD);
 		dropSelf(ModBlocks.BLUE_SPIRIT_PLANKS);
 		dropSelf(ModBlocks.ALCHEMY_CAULDRON);
+		dropSelf(ModBlocks.PILL_SAGE_CAULDRON); // the Verdant Herb Valley's inheritance: taken up, it comes out whole
+		dropSelf(ModBlocks.BURIED_SWORD); // the Sunken Sword Tomb's old swords: pulled out whole (what one kept is drawn, not dug)
 		dropSelf(ModBlocks.ARTIFACT_FORGE);
 		dropSelf(ModBlocks.HEAVEN_ALTAR);
 		// A Qi Vein comes out whole (to be set into a formation's array), with no Fortune bonus; the core drops itself.

@@ -72,6 +72,8 @@ public class ModModelProvider extends FabricModelProvider {
 		// A small world's gate is drawn by its block entity renderer; the model only supplies its particles (obsidian's: vanilla's end
 		// gateway has no block model of its own, tour sw-1).
 		blocks.createNonTemplateModelBlock(ModBlocks.SMALL_WORLD_GATE, Blocks.OBSIDIAN);
+		// A body is drawn by its renderer (CorpseRenderer) at every stage; the model only supplies the bone dust it breaks into.
+		blocks.createNonTemplateModelBlock(ModBlocks.CORPSE, Blocks.BONE_BLOCK);
 	}
 
 	/**
@@ -155,6 +157,22 @@ public class ModModelProvider extends FabricModelProvider {
 		ModelTemplates.TWO_LAYERED_ITEM.create(ModelLocationUtils.getModelLocation(ModItems.JADE_SLIP),
 				TextureMapping.layered(TextureMapping.getItemTexture(ModItems.JADE_SLIP), TextureMapping.getItemTexture(ModItems.JADE_SLIP, "_ink")),
 				items.output);
+		items.generateFlatItem(ModItems.CULTIVATORS_BLOOD, ModelTemplates.FLAT_ITEM);
+		// The secret realms' (SecretRealms): the Departure Jade, Ancient Essence, the Spring of the Ancients, the Pill Sage's Notes and a page.
+		items.generateFlatItem(ModItems.DEPARTURE_JADE, ModelTemplates.FLAT_ITEM);
+		items.generateFlatItem(ModItems.ANCIENT_ESSENCE, ModelTemplates.FLAT_ITEM);
+		items.generateFlatItem(ModItems.SPRING_OF_THE_ANCIENTS, ModelTemplates.FLAT_ITEM);
+		items.generateFlatItem(ModItems.PILL_SAGE_NOTES, ModelTemplates.FLAT_ITEM);
+		items.generateFlatItem(ModItems.PILL_SAGE_PAGE, ModelTemplates.FLAT_ITEM);
+		// The second phase's: the Sleeping Sword (held as a blade), the War General's Banner, an old sword of the Tomb's floor (its own picture).
+		items.generateFlatItem(ModItems.SLEEPING_SWORD, ModelTemplates.FLAT_HANDHELD_ITEM);
+		items.generateFlatItem(ModItems.WAR_GENERALS_BANNER, ModelTemplates.FLAT_HANDHELD_ITEM);
+		items.generateFlatItem(ModBlocks.BURIED_SWORD.asItem(), ModelTemplates.FLAT_ITEM);
+		// The third phase's: the Primeval Blood Essence, the Marrow-Washing Fruit.
+		items.generateFlatItem(ModItems.PRIMEVAL_BLOOD_ESSENCE, ModelTemplates.FLAT_ITEM);
+		items.generateFlatItem(ModItems.MARROW_WASHING_FRUIT, ModelTemplates.FLAT_ITEM);
+		// The fourth phase's: the Jade Lake Mirror.
+		items.generateFlatItem(ModItems.JADE_LAKE_MIRROR, ModelTemplates.FLAT_ITEM);
 		items.generateFlatItem(ModItems.RING_OF_POWER, ModelTemplates.FLAT_ITEM);
 		items.generateFlatItem(ModItems.RING_OF_TRANSCENDENCE, ModelTemplates.FLAT_ITEM);
 		items.generateFlatItem(ModItems.INSCRIPTION_BRUSH, ModelTemplates.FLAT_HANDHELD_ITEM);

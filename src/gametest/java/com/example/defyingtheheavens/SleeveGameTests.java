@@ -87,8 +87,10 @@ public class SleeveGameTests implements FabricGameTest {
 	public void theTechniqueAndItsRecords(GameTestHelper helper) {
 		helper.assertTrue(Technique.SLEEVE.realm() == Realm.HEAVENLY_BEING && Technique.byId("universe_in_a_sleeve") == Technique.SLEEVE
 				&& Technique.SLEEVE.ordinal() == Technique.CLONE.ordinal() + 1, "Universe in a Sleeve, after Clone (saved by id), from Heavenly Being");
-		helper.assertTrue(Ability.SLEEVE.ordinal() == Ability.values().length - 1 && Ability.values().length <= 32 && !Ability.SLEEVE.isGhostly(),
-				"Its ability the last of them all (the switches are a mask over the ordinals)");
+		// (The switches are synced as a mask over the ordinals, a long's 64 since 2026-10-31: each new ability goes at the end, the secret
+		// realms' war arts after this one.)
+		helper.assertTrue(Ability.SLEEVE.ordinal() == Ability.SMALL_WORLD.ordinal() + 1 && Ability.values().length <= 64 && !Ability.SLEEVE.isGhostly(),
+				"Its ability after the Small World's, each new one at the end (the switches are a mask over the ordinals)");
 		helper.assertTrue(Sleeves.REACH == 6 && Sleeves.MOST == 4 && Sleeves.GATE_BASE_BODIES == 0.25, "Six blocks, four at most, a quarter body (the user's pick)");
 		int ti = PlayerCultivation.rank(Realm.TRUE_IMMORTAL, Stage.EARLY), en = PlayerCultivation.rank(Realm.ENTERING_NIRVANA, Stage.GRAND_PERFECTION);
 		helper.assertTrue(ImmortalGate.pressureShare(ti) == 0 && ImmortalGate.pressureShare(en) > 0, "The Gate presses on an Entering Nirvana, not a True Immortal");

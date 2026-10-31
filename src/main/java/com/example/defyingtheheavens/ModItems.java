@@ -172,6 +172,26 @@ public final class ModItems {
 	public static final Item DEMON_CORE = register("demon_core", new DemonCoreItem(new Item.Properties().stacksTo(16)));
 	/** A demon race's blood in a phial, of a realm: drunk, it awakens a demon's blood or makes a human a half-blood (see DemonBloodItem, DemonBlood). */
 	public static final Item DEMON_BLOOD = register("demon_blood", new DemonBloodItem(new Item.Properties().stacksTo(16)));
+	/** Blood bled from a fresh cultivator's body, of the dead's realm (see CultivatorsBloodItem, Corpses). */
+	public static final Item CULTIVATORS_BLOOD = register("cultivators_blood", new CultivatorsBloodItem(new Item.Properties().stacksTo(16)));
+	/** The secret realms' (SecretRealms): the way out before one closes, a master's essence, the ancients' spring, the Pill Sage's notes. */
+	public static final Item DEPARTURE_JADE = register("departure_jade", new DepartureJadeItem(new Item.Properties().stacksTo(16).rarity(Rarity.UNCOMMON)));
+	public static final Item ANCIENT_ESSENCE = register("ancient_essence", new AncientEssenceItem(new Item.Properties().stacksTo(16).rarity(Rarity.EPIC)));
+	public static final Item SPRING_OF_THE_ANCIENTS = register("spring_of_the_ancients", new SpringOfTheAncientsItem(new Item.Properties().stacksTo(16).rarity(Rarity.RARE)));
+	public static final Item PILL_SAGE_NOTES = register("pill_sage_notes", new PillSageNotesItem(true, new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
+	public static final Item PILL_SAGE_PAGE = register("pill_sage_page", new PillSageNotesItem(false, new Item.Properties().stacksTo(16).rarity(Rarity.RARE)));
+	/** The Great Inheritances of the second phase: the Sunken Sword Tomb's Sleeping Sword, the Ancient Battlefield's War General's Banner. */
+	public static final Item SLEEPING_SWORD = register("sleeping_sword", new SleepingSwordItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC).fireResistant()));
+	public static final Item WAR_GENERALS_BANNER = register("war_generals_banner",
+			new WarGeneralsBannerItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC).fireResistant()));
+	/** The third phase's: the Primeval Beast Graveyard's Primeval Blood Essence. */
+	public static final Item PRIMEVAL_BLOOD_ESSENCE = register("primeval_blood_essence",
+			new PrimevalBloodEssenceItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC).fireResistant()));
+	/** The Cave Abode's Marrow-Washing Fruit (its physique a grade higher, once). */
+	public static final Item MARROW_WASHING_FRUIT = register("marrow_washing_fruit", new MarrowWashingFruitItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
+	/** The fourth phase's: the Jade Lake Mirage's Jade Lake Mirror (raised, the next blows that strike its bearer turned back on their striker). */
+	public static final Item JADE_LAKE_MIRROR = register("jade_lake_mirror",
+			new JadeLakeMirrorItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC).fireResistant()));
 	/** A sect's guest pass: carried, its barrier lets one through until it lapses (see SectPassItem). */
 	public static final Item SECT_PASS = register("sect_pass", new SectPassItem(new Item.Properties().stacksTo(1)));
 	/** The Sacred Vessels, the Great Void's relics, one for each element: held, its spells strike harder (see SacredVesselItem, SacredRelicFeature). */

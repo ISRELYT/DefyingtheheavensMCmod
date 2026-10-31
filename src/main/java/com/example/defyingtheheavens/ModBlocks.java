@@ -294,6 +294,68 @@ public final class ModBlocks {
 	/** Qi ink painted with the Inscription Brush (see SealBlock): only Qi Sense sees it. No item; the brush places it. */
 	public static final Block SEAL = register("seal", new SealBlock(BlockBehaviour.Properties.of().mapColor(MapColor.NONE)
 			.noCollission().instabreak().noLootTable().replaceable().pushReaction(PushReaction.DESTROY).sound(SoundType.WOOL)));
+	/**
+	 * Where one of the dead lies (CorpseBlock, Corpses): broken by hand as soon as dirt, it spills what it holds and drops nothing of itself.
+	 * No item; a death lays it.
+	 */
+	public static final Block CORPSE = register("corpse", new CorpseBlock(BlockBehaviour.Properties.of().mapColor(MapColor.TERRACOTTA_WHITE)
+			.strength(0.6f).noOcclusion().noLootTable().pushReaction(PushReaction.BLOCK).isValidSpawn((state, level, pos, type) -> false)));
+
+	/** A secret realm's gate (SecretRealmGateBlock, SecretRealms): its Seal's opening, carved stone, cracked with light, or a sheet of light. */
+	public static final Block SECRET_REALM_GATE = register("secret_realm_gate", new SecretRealmGateBlock(BlockBehaviour.Properties.of()
+			.mapColor(MapColor.DEEPSLATE).strength(-1.0f, 3_600_000.0f).noLootTable().sound(SoundType.DEEPSLATE).noOcclusion()
+			.lightLevel(SecretRealmGateBlock::light).pushReaction(PushReaction.BLOCK).isValidSpawn((state, level, pos, type) -> false)));
+	/** A Seal's keystone (SecretRealmSealBlock): its realm's seal carved in it, a pillar of light rising from it while the realm stirs or stands open. */
+	public static final Block SECRET_REALM_SEAL = register("secret_realm_seal", new SecretRealmSealBlock(BlockBehaviour.Properties.of()
+			.mapColor(MapColor.DEEPSLATE).strength(-1.0f, 3_600_000.0f).noLootTable().sound(SoundType.DEEPSLATE).lightLevel(state -> 6)
+			.pushReaction(PushReaction.BLOCK)));
+	/** A killing formation's eye in a secret realm (KillingFormationBlock): broken by a pickaxe or a blow, it drops nothing; no item. */
+	public static final Block KILLING_FORMATION = register("killing_formation", new KillingFormationBlock(BlockBehaviour.Properties.of()
+			.mapColor(MapColor.STONE).strength(2.0f, 6.0f).noLootTable().sound(SoundType.STONE).lightLevel(state -> 2)
+			.pushReaction(PushReaction.BLOCK)));
+	/** One of the Cave Abode's five element pillars (ElementPillarBlock, its first trial): lit in the elements' order; nothing breaks it. */
+	public static final Block ELEMENT_PILLAR = register("element_pillar", new ElementPillarBlock(BlockBehaviour.Properties.of()
+			.mapColor(MapColor.QUARTZ).strength(-1.0f, 3_600_000.0f).noLootTable().sound(SoundType.STONE)
+			.lightLevel(state -> state.getValue(ElementPillarBlock.LIT) ? 13 : 3).pushReaction(PushReaction.BLOCK)));
+	/** A trial's barrier of golden light (TrialBarrierBlock): solid to those who haven't passed its trial; nothing breaks it. */
+	public static final Block TRIAL_BARRIER = register("trial_barrier", new TrialBarrierBlock(BlockBehaviour.Properties.of()
+			.mapColor(MapColor.GOLD).strength(-1.0f, 3_600_000.0f).noLootTable().noOcclusion().sound(SoundType.AMETHYST)
+			.lightLevel(state -> 10).pushReaction(PushReaction.BLOCK).isValidSpawn((state, level, pos, type) -> false)
+			.isViewBlocking((state, level, pos) -> false).isSuffocating((state, level, pos) -> false)));
+	/**
+	 * The Pill Sage's Cauldron, half of the Verdant Herb Valley's Great Inheritance (HerbValleyWorks): an Alchemy Cauldron with its own fire,
+	 * its pills a grade better than the herbs roll and its brews half as likely to fail, and quicker (AlchemyCauldronBlockEntity).
+	 */
+	public static final Block PILL_SAGE_CAULDRON = registerWithItem("pill_sage_cauldron",
+			new AlchemyCauldronBlock(BlockBehaviour.Properties.copy(Blocks.CAULDRON).mapColor(MapColor.GOLD).lightLevel(state -> 4)));
+	/** A sword driven into the ground (BuriedSwordBlock): the Sunken Sword Tomb's floor is strewn with them; walked through, drops itself. */
+	public static final Block BURIED_SWORD = registerWithItem("buried_sword", new BuriedSwordBlock(BlockBehaviour.Properties.of()
+			.mapColor(MapColor.METAL).strength(1.5f, 6.0f).noOcclusion().noCollission().sound(SoundType.CHAIN).pushReaction(PushReaction.DESTROY)
+			.isValidSpawn((state, level, pos, type) -> false)));
+	/** The Jade Lake Mirage's mirages (MirageBlock): a span of its jade bridges, a spirit lotus, a vault, each the look of it and nothing of it; no items. */
+	public static final Block MIRAGE_JADE = register("mirage_jade", new MirageBlock(MirageBlock.Kind.BRIDGE, BlockBehaviour.Properties.of()
+			.mapColor(MapColor.COLOR_LIGHT_GREEN).strength(-1.0f, 3_600_000.0f).noLootTable().noCollission().sound(SoundType.AMETHYST)
+			.pushReaction(PushReaction.BLOCK).isValidSpawn((state, level, pos, type) -> false)));
+	public static final Block MIRAGE_LOTUS = register("mirage_lotus", new MirageBlock(MirageBlock.Kind.LOTUS, BlockBehaviour.Properties.of()
+			.mapColor(MapColor.PLANT).instabreak().noLootTable().noCollission().noOcclusion().sound(SoundType.LILY_PAD)
+			.pushReaction(PushReaction.DESTROY).isValidSpawn((state, level, pos, type) -> false)));
+	public static final Block MIRAGE_CASKET = register("mirage_casket", new MirageBlock(MirageBlock.Kind.CASKET, BlockBehaviour.Properties.of()
+			.mapColor(MapColor.STONE).instabreak().noLootTable().noCollission().sound(SoundType.AMETHYST)
+			.pushReaction(PushReaction.BLOCK).isValidSpawn((state, level, pos, type) -> false)));
+	/** The Jade Lake Mirage's great mirror (JadeMirrorBlock, its trial): touched, a reflection steps out; a door to those who bested theirs. */
+	public static final Block JADE_MIRROR = register("jade_mirror", new JadeMirrorBlock(BlockBehaviour.Properties.of()
+			.mapColor(MapColor.COLOR_LIGHT_BLUE).strength(-1.0f, 3_600_000.0f).noLootTable().noOcclusion().sound(SoundType.GLASS)
+			.lightLevel(state -> 7).pushReaction(PushReaction.BLOCK).isValidSpawn((state, level, pos, type) -> false)
+			.isViewBlocking((state, level, pos) -> false).isSuffocating((state, level, pos) -> false)));
+	/** One of the Ruins of a Fallen Holy Land's formation eyes (FormationEyeBlock, its trial): broken by hand once its guard is down; no item. */
+	public static final Block FORMATION_EYE = register("formation_eye", new FormationEyeBlock(BlockBehaviour.Properties.of()
+			.mapColor(MapColor.QUARTZ).strength(6.0f, 3_600_000.0f).noLootTable().sound(SoundType.AMETHYST).lightLevel(state -> 12)
+			.pushReaction(PushReaction.BLOCK)));
+	/** A Law's seal on a door of the Tomb of a Fallen Immortal's halls (LawSealBlock): solid but to those who hold its Law; nothing breaks it. */
+	public static final Block LAW_SEAL = register("law_seal", new LawSealBlock(BlockBehaviour.Properties.of()
+			.mapColor(MapColor.GOLD).strength(-1.0f, 3_600_000.0f).noLootTable().noOcclusion().sound(SoundType.AMETHYST)
+			.lightLevel(state -> 9).pushReaction(PushReaction.BLOCK).isValidSpawn((state, level, pos, type) -> false)
+			.isViewBlocking((state, level, pos) -> false).isSuffocating((state, level, pos) -> false)));
 
 	/**
 	 * The storage formations, one block to a tier (StorageFormations): nothing breaks them (no pickaxe, blast or spell; their owners pack

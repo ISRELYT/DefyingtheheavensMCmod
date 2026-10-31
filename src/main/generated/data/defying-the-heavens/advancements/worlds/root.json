@@ -36,6 +36,12 @@
       },
       "trigger": "minecraft:changed_dimension"
     },
+    "secret_realm": {
+      "conditions": {
+        "to": "defying-the-heavens:secret_realm"
+      },
+      "trigger": "minecraft:changed_dimension"
+    },
     "small_world": {
       "conditions": {
         "to": "defying-the-heavens:small_world"
@@ -95,7 +101,8 @@
       "immortal_realm",
       "netherworld",
       "soul_river",
-      "small_world"
+      "small_world",
+      "secret_realm"
     ]
   ],
   "sends_telemetry_event": true

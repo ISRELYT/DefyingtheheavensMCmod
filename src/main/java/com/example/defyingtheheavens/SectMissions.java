@@ -310,12 +310,46 @@ public final class SectMissions {
 	/** {@code d}'s postings on {@code sect}'s board: put up afresh each game day (the missions they have taken stay theirs). */
 	static void refresh(ServerPlayer player, Sect sect, Sect.Disciple d) {
 		long today = Regard.day(player.level().getGameTime());
-		if (d.postedDay == today) return;
-		d.postedDay = today;
-		d.postings.clear();
 		ServerLevel level = player.server.getLevel(sect.dimension);
-		if (level != null) d.postings.addAll(post(level, sect, d, rankOf(player), player.getRandom()));
-		SectManager.dirty(player.server);
+		if (d.postedDay != today) {
+			d.postedDay = today;
+			d.postings.clear();
+			if (level != null) d.postings.addAll(post(level, sect, d, rankOf(player), player.getRandom()));
+			SectManager.dirty(player.server);
+		}
+		// A secret realm near the sect stirring or standing open: its posting goes up too, the moment it stirs (not the day after).
+		boolean realmPosted = d.postings.stream().anyMatch(SectMissions::forSecretRealm) || d.taken.stream().anyMatch(SectMissions::forSecretRealm);
+		Mission realm = realmPosted || level == null ? null : secretRealmPosting(level, sect, d, rankOf(player));
+		if (realm != null) {
+			d.postings.add(realm);
+			SectManager.dirty(player.server);
+		}
+	}
+
+	/**
+	 * While a secret realm near the sect stirs or stands open (SecretRealms), a posting for what grows in it: two Spirit Ginseng of three hundred
+	 * years or more (its upper terraces, its garden), twice a Hard gathering's pay; only to one the realm lets in. Null if none stirs near.
+	 */
+	static @Nullable Mission secretRealmPosting(ServerLevel level, Sect sect, Sect.Disciple d, int rank) {
+		for (SecretRealm realm : SecretRealm.values()) {
+			SecretRealms.Record r = SecretRealms.Data.get(level.getServer()).of(realm);
+			if (!r.stirred && r.openedAt < 0 || r.seal == null || realm.home() != sect.dimension || !realm.mayEnter(rank)) continue;
+			if (r.seal.distSqr(sect.core) > (double) SecretRealmRivals.SECT_REACH * SecretRealmRivals.SECT_REACH) continue;
+			Mission m = new Mission(d.nextMission++, Kind.GATHER, Grade.HARD, Math.max(rank, realm.lowest()));
+			m.what = BuiltInRegistries.ITEM.getKey(ModItems.SPIRIT_GINSENG).toString();
+			m.count = 2;
+			m.quality = 300;
+			m.dimension = ModDimensions.SECRET_REALM; // its mark: the secret realm's posting
+			m.reward = reward(Kind.GATHER, Grade.HARD, m.rank, 0) * 2;
+			m.standing = 2;
+			return m;
+		}
+		return null;
+	}
+
+	/** Whether {@code m} is a secret realm's posting ({@link #secretRealmPosting}). */
+	static boolean forSecretRealm(Mission m) {
+		return m.kind == Kind.GATHER && m.dimension == ModDimensions.SECRET_REALM;
 	}
 
 	/**

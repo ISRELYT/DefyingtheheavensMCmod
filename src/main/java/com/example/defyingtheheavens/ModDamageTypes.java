@@ -59,6 +59,8 @@ public final class ModDamageTypes {
 	 * throws nothing about, and it reaches the dead as the living (GhostSystem#reaches).
 	 */
 	public static final ResourceKey<DamageType> CHAOS_STORM = ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("chaos_storm"));
+	/** The Sunken Sword Tomb's lingering sword intent, and its Sword Path's pressure (SwordTombWorks): the cuts of swords long fallen. */
+	public static final ResourceKey<DamageType> SWORD_INTENT = ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("sword_intent"));
 
 	private static ResourceKey<DamageType> qiKey(QiElement element) {
 		return ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("qi_" + element.name().toLowerCase(java.util.Locale.ROOT)));
@@ -92,6 +94,17 @@ public final class ModDamageTypes {
 		}
 		context.register(HEAVEN_DEMON, new DamageType(DefyingTheHeavens.MOD_ID + ".heaven_demon", DamageScaling.NEVER, 0.1f));
 		context.register(CHAOS_STORM, new DamageType(DefyingTheHeavens.MOD_ID + ".chaos_storm", DamageScaling.NEVER, 0.0f));
+		context.register(SWORD_INTENT, new DamageType(DefyingTheHeavens.MOD_ID + ".sword_intent", DamageScaling.NEVER, 0.1f));
+	}
+
+	/** The Sunken Sword Tomb's lingering sword intent (no one's hand). */
+	public static DamageSource swordIntent(Level level) {
+		return new ModDamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(SWORD_INTENT));
+	}
+
+	/** Lingering sword intent left by {@code attacker}'s blow (WarArts: Sword Intent's second cut; null for none). */
+	public static DamageSource swordIntent(Level level, net.minecraft.world.entity.Entity attacker) {
+		return new ModDamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(SWORD_INTENT), attacker);
 	}
 
 	/** The Chaos Frontier's storm. */

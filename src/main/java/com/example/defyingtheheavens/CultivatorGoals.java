@@ -925,7 +925,8 @@ public final class CultivatorGoals {
 			BlockPos well = npc.settledAt();
 			if (well == null || npc.level().dimension() != ModDimensions.ASTRAL_SURFACES || npc.isVacant()) return false;
 			long now = npc.level().getGameTime();
-			if (npc.tickCount % 40 == 0) {
+			// Asked only every other tick (a goal's choosing is), so a window two ticks wide: tickCount's fortieth might never fall on it.
+			if ((now + npc.getId()) % 40 < 2) {
 				long until = Wishes.threatUntil(npc);
 				if (until > now) Settlements.raiseAlarm(npc, until);
 			}
@@ -1330,6 +1331,8 @@ public final class CultivatorGoals {
 			// mission's quarry (SectMissions).
 			if (Wishes.isThreat(npc)) return target instanceof Player player && player.getUUID().equals(Wishes.takerOf(npc)) && npc.isEnemy(target);
 			if (SectMissions.isFoe(npc)) return target instanceof Player player && player.getUUID().equals(SectMissions.takerOf(npc)) && npc.isEnemy(target);
+			// In a secret realm, one of the devilish path come for it goes for anyone weakened near it, whatever their path (SecretRealmRivals).
+			if (SecretRealmRivals.greedy(npc, target)) return true;
 			CultivatorNpc.Lifecycle life = npc.getLifecycle();
 			if (life != CultivatorNpc.Lifecycle.SECT && life != CultivatorNpc.Lifecycle.ROGUE) return false;
 			if (npc.getTitle().isElderOrAbove()) return false;

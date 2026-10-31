@@ -278,7 +278,16 @@ public final class ModAdvancements {
 		root("worlds/root", Items.RECOVERY_COMPASS, "minecraft:textures/block/obsidian.png", "Worlds Beyond", "Leave the mortal world for a world beyond it",
 				entered(ModDimensions.SPATIAL_GAP, ModDimensions.UPPER_REALM, ModDimensions.ASTRAL_VOID, ModDimensions.ASTRAL_SURFACES, ModDimensions.GREAT_VOID,
 						ModDimensions.VOID_BREACH, ModDimensions.IMMORTAL_PASSAGE, ModDimensions.IMMORTAL_REALM, ModDimensions.NETHERWORLD, ModDimensions.SOUL_RIVER,
-						ModDimensions.SMALL_WORLD));
+						ModDimensions.SMALL_WORLD, ModDimensions.SECRET_REALM));
+		// The secret realms (SecretRealms): gone into, come out of with something, their inheritance taken, one's own body found in one.
+		add("worlds/secret_realm", "worlds/root", ModItems.DEPARTURE_JADE, FrameType.TASK, "A World Sealed Away", "Pass a Seal into a secret realm",
+				milestone(Milestones.SECRET_ENTERED));
+		add("worlds/secret_out_alive", "worlds/secret_realm", ModItems.ANCIENT_ESSENCE, FrameType.GOAL, "Out Alive", "Come out of a secret realm alive, carrying more than you took in",
+				milestone(Milestones.SECRET_OUT_ALIVE));
+		add("worlds/secret_own_body", "worlds/secret_realm", Items.BONE, FrameType.GOAL, "What Was Mine", "Find your own body in a secret realm and break it open",
+				milestone(Milestones.SECRET_OWN_BODY));
+		add("worlds/secret_inheritor", "worlds/secret_realm", ModBlocks.PILL_SAGE_CAULDRON, FrameType.CHALLENGE, "The Inheritor",
+				"Pass a secret realm's trials and take its Great Inheritance", milestone(Milestones.SECRET_INHERITOR));
 		add("worlds/spatial_gap", "worlds/root", Items.OBSIDIAN, FrameType.TASK, "Tearing Space", "Enter the Spatial Gap", entered(ModDimensions.SPATIAL_GAP));
 		add("worlds/jade_firmament", "worlds/spatial_gap", Items.EMERALD, FrameType.GOAL, "The Jade Firmament", "Reach the Upper Realm",
 				entered(ModDimensions.UPPER_REALM));

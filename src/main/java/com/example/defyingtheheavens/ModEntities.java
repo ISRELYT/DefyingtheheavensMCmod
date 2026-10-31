@@ -226,6 +226,148 @@ public final class ModEntities {
 					.clientTrackingRange(8)
 					.build("sword_spirit"));
 
+	/** A Vine Keeper of the Verdant Herb Valley (see {@link RealmGuardian}): lying by its herb bed till it wakes. */
+	public static final EntityType<RealmGuardian> VINE_KEEPER = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("vine_keeper"),
+			EntityType.Builder.<RealmGuardian>of(RealmGuardian::new, MobCategory.MONSTER)
+					.sized(1.1f, 2.3f)
+					.clientTrackingRange(10)
+					.build("vine_keeper"));
+
+	/** A Bronze Puppet of a secret realm's ruins, or the Gatekeeper before the Pill Sage's hall (see {@link RealmGuardian}). */
+	public static final EntityType<RealmGuardian> BRONZE_PUPPET = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("bronze_puppet"),
+			EntityType.Builder.<RealmGuardian>of(RealmGuardian::new, MobCategory.MONSTER)
+					.fireImmune()
+					.sized(1.0f, 2.4f)
+					.clientTrackingRange(10)
+					.build("bronze_puppet"));
+
+	/** A Sword Wraith of the Sunken Sword Tomb, or the Sleeping Sword's spirit (see {@link RealmGuardian}): a fallen sword's spirit. */
+	public static final EntityType<RealmGuardian> SWORD_WRAITH = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("sword_wraith"),
+			EntityType.Builder.<RealmGuardian>of(RealmGuardian::new, MobCategory.MONSTER)
+					.fireImmune()
+					.sized(0.7f, 2.0f)
+					.clientTrackingRange(10)
+					.build("sword_wraith"));
+
+	/** A Bone Soldier of the Ancient Battlefield (see {@link RealmGuardian}): an old soldier risen in the armour it died in. */
+	public static final EntityType<RealmGuardian> BONE_SOLDIER = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("bone_soldier"),
+			EntityType.Builder.<RealmGuardian>of(RealmGuardian::new, MobCategory.MONSTER)
+					.sized(0.7f, 2.1f)
+					.clientTrackingRange(10)
+					.build("bone_soldier"));
+
+	/** A Battle Spirit come up the General's hill (see {@link RealmGuardian}): a soldier of the old war in light. */
+	public static final EntityType<RealmGuardian> BATTLE_SPIRIT = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("battle_spirit"),
+			EntityType.Builder.<RealmGuardian>of(RealmGuardian::new, MobCategory.MONSTER)
+					.fireImmune()
+					.sized(0.7f, 2.1f)
+					.clientTrackingRange(10)
+					.build("battle_spirit"));
+
+	/** The General's Spirit, the last to come up his hill (see {@link RealmGuardian}). */
+	public static final EntityType<RealmGuardian> GENERAL_SPIRIT = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("general_spirit"),
+			EntityType.Builder.<RealmGuardian>of(RealmGuardian::new, MobCategory.MONSTER)
+					.fireImmune()
+					.sized(0.95f, 2.8f)
+					.clientTrackingRange(10)
+					.build("general_spirit"));
+
+	/** The Dragon's Echo of the Primeval Beast Graveyard (see {@link RealmGuardian}): the dead dragon risen as a shade, its trial's guardian. */
+	public static final EntityType<RealmGuardian> DRAGON_ECHO = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("dragon_echo"),
+			EntityType.Builder.<RealmGuardian>of(RealmGuardian::new, MobCategory.MONSTER)
+					.fireImmune()
+					.sized(1.6f, 1.8f)
+					.clientTrackingRange(10)
+					.build("dragon_echo"));
+
+	/** The master's own puppet of the Cave Abode (see {@link RealmGuardian}): white jade and gold, its last trial's guardian. */
+	public static final EntityType<RealmGuardian> MASTER_PUPPET = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("master_puppet"),
+			EntityType.Builder.<RealmGuardian>of(RealmGuardian::new, MobCategory.MONSTER)
+					.fireImmune()
+					.sized(1.1f, 2.7f)
+					.clientTrackingRange(10)
+					.build("master_puppet"));
+
+	/** A Drowned Shade of the Yellow Springs Hollow (see {@link RealmGuardian}): a soldier of the drowned city's garrison, risen in the springs' light. */
+	public static final EntityType<RealmGuardian> DROWNED_SHADE = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("drowned_shade"),
+			EntityType.Builder.<RealmGuardian>of(RealmGuardian::new, MobCategory.MONSTER)
+					.fireImmune()
+					.sized(0.7f, 2.1f)
+					.clientTrackingRange(10)
+					.build("drowned_shade"));
+
+	/** The Ferryman of the Yellow Springs Hollow (see {@link RealmGuardian}): at his landing, its trial's judge. */
+	public static final EntityType<RealmGuardian> FERRYMAN = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("ferryman"),
+			EntityType.Builder.<RealmGuardian>of(RealmGuardian::new, MobCategory.MONSTER)
+					.fireImmune()
+					.sized(0.9f, 2.2f)
+					.clientTrackingRange(10)
+					.build("ferryman"));
+
+	/** A Mirror Shade of the Jade Lake Mirage (see {@link RealmGuardian}): a soldier of the lake's old sect, risen in the mirror's glassy light. */
+	public static final EntityType<RealmGuardian> MIRROR_SHADE = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("mirror_shade"),
+			EntityType.Builder.<RealmGuardian>of(RealmGuardian::new, MobCategory.MONSTER)
+					.fireImmune()
+					.sized(0.7f, 2.1f)
+					.clientTrackingRange(10)
+					.build("mirror_shade"));
+
+	/** A reflection out of the Jade Lake Mirage's mirror (see {@link MirrorReflection}): a copy of its owner, never saved. */
+	public static final EntityType<MirrorReflection> MIRROR_REFLECTION = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("mirror_reflection"),
+			EntityType.Builder.<MirrorReflection>of(MirrorReflection::new, MobCategory.MISC)
+					.fireImmune()
+					.sized(0.6f, 1.8f)
+					.clientTrackingRange(10)
+					.build("mirror_reflection"));
+
+	/** A remnant guard of the Ruins of a Fallen Holy Land (see {@link RealmGuardian}): its disciples' last watch, in white and gold. */
+	public static final EntityType<RealmGuardian> HOLY_REMNANT = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("holy_remnant"),
+			EntityType.Builder.<RealmGuardian>of(RealmGuardian::new, MobCategory.MONSTER)
+					.fireImmune()
+					.sized(0.7f, 2.1f)
+					.clientTrackingRange(10)
+					.build("holy_remnant"));
+
+	/** A decayed celestial guard of the Tomb of a Fallen Immortal (see {@link RealmGuardian}): its gold gone to rot with its lord. */
+	public static final EntityType<RealmGuardian> DECAYED_GUARD = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("decayed_guard"),
+			EntityType.Builder.<RealmGuardian>of(RealmGuardian::new, MobCategory.MONSTER)
+					.fireImmune()
+					.sized(0.7f, 2.1f)
+					.clientTrackingRange(10)
+					.build("decayed_guard"));
+
+	/** The Tomb of a Fallen Immortal's lord's decayed spirit (see {@link RealmGuardian}): before his sanctum, its trial's. */
+	public static final EntityType<RealmGuardian> DECAYED_IMMORTAL = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("decayed_immortal"),
+			EntityType.Builder.<RealmGuardian>of(RealmGuardian::new, MobCategory.MONSTER)
+					.fireImmune()
+					.sized(0.9f, 2.9f)
+					.clientTrackingRange(10)
+					.build("decayed_immortal"));
+
+	/** A soldier of the old army the War General's Banner calls up (see {@link ArmySpirit}): its bearer's for a while, never saved. */
+	public static final EntityType<ArmySpirit> ARMY_SPIRIT = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+			DefyingTheHeavens.id("army_spirit"),
+			EntityType.Builder.<ArmySpirit>of(ArmySpirit::new, MobCategory.MISC)
+					.noSave().noSummon().fireImmune()
+					.sized(0.7f, 2.1f)
+					.clientTrackingRange(10)
+					.build("army_spirit"));
+
 	/** A legend made vast for a moment by its art (see {@link Colossus}): seen from far, never saved. */
 	public static final EntityType<Colossus> COLOSSUS = Registry.register(BuiltInRegistries.ENTITY_TYPE,
 			DefyingTheHeavens.id("colossus"),
@@ -277,6 +419,22 @@ public final class ModEntities {
 		FabricDefaultAttributeRegistry.register(SOUL_VESSEL, SoulVesselEntity.createAttributes());
 		FabricDefaultAttributeRegistry.register(EARTH_GOLEM, EarthGolem.createAttributes());
 		FabricDefaultAttributeRegistry.register(SWORD_SPIRIT, SwordSpirit.createAttributes());
+		FabricDefaultAttributeRegistry.register(VINE_KEEPER, RealmGuardian.createAttributes());
+		FabricDefaultAttributeRegistry.register(BRONZE_PUPPET, RealmGuardian.createAttributes());
+		FabricDefaultAttributeRegistry.register(SWORD_WRAITH, RealmGuardian.createAttributes());
+		FabricDefaultAttributeRegistry.register(BONE_SOLDIER, RealmGuardian.createAttributes());
+		FabricDefaultAttributeRegistry.register(BATTLE_SPIRIT, RealmGuardian.createAttributes());
+		FabricDefaultAttributeRegistry.register(GENERAL_SPIRIT, RealmGuardian.createAttributes());
+		FabricDefaultAttributeRegistry.register(ARMY_SPIRIT, ArmySpirit.createAttributes());
+		FabricDefaultAttributeRegistry.register(DRAGON_ECHO, RealmGuardian.createAttributes());
+		FabricDefaultAttributeRegistry.register(MASTER_PUPPET, RealmGuardian.createAttributes());
+		FabricDefaultAttributeRegistry.register(DROWNED_SHADE, RealmGuardian.createAttributes());
+		FabricDefaultAttributeRegistry.register(FERRYMAN, RealmGuardian.createAttributes());
+		FabricDefaultAttributeRegistry.register(MIRROR_SHADE, RealmGuardian.createAttributes());
+		FabricDefaultAttributeRegistry.register(MIRROR_REFLECTION, CultivatorNpc.createAttributes());
+		FabricDefaultAttributeRegistry.register(HOLY_REMNANT, RealmGuardian.createAttributes());
+		FabricDefaultAttributeRegistry.register(DECAYED_GUARD, RealmGuardian.createAttributes());
+		FabricDefaultAttributeRegistry.register(DECAYED_IMMORTAL, RealmGuardian.createAttributes());
 	}
 
 	private ModEntities() {}

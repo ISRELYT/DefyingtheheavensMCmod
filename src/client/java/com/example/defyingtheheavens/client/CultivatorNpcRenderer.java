@@ -51,7 +51,12 @@ public class CultivatorNpcRenderer extends HumanoidMobRenderer<CultivatorNpc, Pl
 	}
 
 	public CultivatorNpcRenderer(EntityRendererProvider.Context context) {
-		super(context, new PlayerModel<>(context.bakeLayer(ModelLayers.PLAYER), false), 0.5f);
+		this(context, new PlayerModel<>(context.bakeLayer(ModelLayers.PLAYER), false));
+	}
+
+	/** Drawn with {@code model} (a reflection's, glassy: MirrorReflectionRenderer). */
+	protected CultivatorNpcRenderer(EntityRendererProvider.Context context, PlayerModel<CultivatorNpc> model) {
+		super(context, model, 0.5f);
 		addLayer(new HumanoidArmorLayer<>(this, new HumanoidModel<>(context.bakeLayer(ModelLayers.PLAYER_INNER_ARMOR)),
 				new HumanoidModel<>(context.bakeLayer(ModelLayers.PLAYER_OUTER_ARMOR)), context.getModelManager()));
 	}

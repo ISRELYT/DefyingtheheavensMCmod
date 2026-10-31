@@ -134,6 +134,8 @@ public class GinsengBlock extends BaseEntityBlock {
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean moved) {
         if (!state.is(newState.getBlock())) Rumours.forgetAt(level, pos, Rumours.Kind.HERB);
+        // Taken from a secret realm's bed: its keeper wakes (HerbValleyWorks; not as the realm renews its beds).
+        if (!state.is(newState.getBlock()) && level instanceof ServerLevel server && !RealmLedger.isQuiet()) HerbValleyWorks.herbTaken(server, pos);
         super.onRemove(state, level, pos, newState, moved);
     }
 

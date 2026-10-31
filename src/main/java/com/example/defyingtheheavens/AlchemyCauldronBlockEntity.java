@@ -58,6 +58,11 @@ public class AlchemyCauldronBlockEntity extends BlockEntity {
 		super(ModBlockEntities.ALCHEMY_CAULDRON, pos, state);
 	}
 
+	/** The Pill Sage's Cauldron (a secret realm's inheritance): its own fire, quicker, half the failures, a grade better. */
+	public boolean isSages() {
+		return getBlockState().is(ModBlocks.PILL_SAGE_CAULDRON);
+	}
+
 	// --- Interaction (server) ---
 
 	public InteractionResult interact(BlockState state, Player player, InteractionHand hand) {
@@ -121,7 +126,7 @@ public class AlchemyCauldronBlockEntity extends BlockEntity {
 		if (recipe != null) {
 			brewing = recipe.output();
 			brewTicks = 0;
-			brewTotal = recipe.brewTicks();
+			brewTotal = isSages() ? recipe.brewTicks() * 3 / 4 : recipe.brewTicks(); // the Pill Sage's own works the quicker
 			alchemyBody = CultivationManager.forPlayer(player).hasPhysique(Physique.INNATE_ALCHEMY_BODY);
 			brewer = player.getUUID();
 			PlayerCultivation own = player instanceof ServerPlayer sp ? CultivationManager.own(sp) : CultivationManager.forPlayer(player);
@@ -187,7 +192,8 @@ public class AlchemyCauldronBlockEntity extends BlockEntity {
 		AlchemyRecipes.Recipe recipe = AlchemyRecipes.forOutput(brewing);
 		CraftMastery.Rank rank = brewerRank;
 		ServerPlayer brewerNow = brewer == null ? null : level.getServer().getPlayerList().getPlayer(brewer);
-		boolean failed = recipe != null && level.random.nextDouble() < CraftMastery.failChance(rank, recipe.difficulty());
+		boolean sages = isSages();
+		boolean failed = recipe != null && level.random.nextDouble() < CraftMastery.failChance(rank, recipe.difficulty()) * (sages ? 0.5 : 1);
 		Item brewed = brewing;
 		boolean body = alchemyBody;
 		alchemyBody = false;
@@ -207,6 +213,7 @@ public class AlchemyCauldronBlockEntity extends BlockEntity {
 			return;
 		}
 		PillGrade grade = PillGrade.roll(age, level.random);
+		if (sages) grade = PillGrade.better(grade, age); // the Pill Sage's: a grade above what the herbs rolled, where they allow it
 		if (level.random.nextDouble() < CraftMastery.betterGrade(rank)) grade = PillGrade.better(grade, age);
 		ItemStack pill = PillItem.create(brewed, grade, age);
 		if (body) pill.getOrCreateTag().putBoolean(PillItem.ALCHEMY_BODY_TAG, true);
@@ -217,6 +224,8 @@ public class AlchemyCauldronBlockEntity extends BlockEntity {
 			level.addFreshEntity(item);
 		}
 		if (brewerNow != null && recipe != null) CraftMastery.practise(brewerNow, CraftMastery.Craft.ALCHEMY, recipe.practice());
+		// The Pill Sage's trial in his hall (a secret realm's, HerbValleyWorks#brewed): this brew may be what it asks for.
+		if (brewerNow != null) HerbValleyWorks.brewed(level, worldPosition, brewerNow, brewed, grade);
 		level.sendParticles(ParticleTypes.CLOUD, x, y - 0.1, z, 12, 0.25, 0.1, 0.25, 0.02);
 		level.sendParticles(ParticleTypes.END_ROD, x, y, z, 20 + grade.ordinal() * 15, 0.3, 0.4, 0.3, 0.05 + grade.ordinal() * 0.03);
 		level.playSound(null, worldPosition, SoundEvents.BREWING_STAND_BREW, SoundSource.BLOCKS, 1.0f, 1.2f);

@@ -102,7 +102,13 @@
       "com.example.defyingtheheavens.ElementalWeaponGameTests",
       "com.example.defyingtheheavens.LegendGameTests",
       "com.example.defyingtheheavens.SectMissionGameTests",
-      "com.example.defyingtheheavens.SweepFiveGameTests"
+      "com.example.defyingtheheavens.SweepFiveGameTests",
+      "com.example.defyingtheheavens.GhostRefillPossessionGameTests",
+      "com.example.defyingtheheavens.CorpseGameTests",
+      "com.example.defyingtheheavens.SecretRealmGameTests",
+      "com.example.defyingtheheavens.SecretRealmPhaseTwoGameTests",
+      "com.example.defyingtheheavens.SecretRealmPhaseThreeGameTests",
+      "com.example.defyingtheheavens.SecretRealmPhaseFourGameTests"
     ]
   }
 }

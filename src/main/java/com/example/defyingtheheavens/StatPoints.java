@@ -77,11 +77,12 @@ public final class StatPoints {
 
 	/**
 	 * Points {@code c} has earned (from the higher path's true rank, alive or dead: not the body's, which goes by its path's share,
-	 * TwoPaths#pathShare; a mortal on no path, none); a Hundred Refinements Body one more for every breakthrough (Physique).
+	 * TwoPaths#pathShare; a mortal on no path, none); a Hundred Refinements Body one more for every breakthrough (Physique); and one for each
+	 * Ancient Essence taken (a secret realm's: AncientEssenceItem), kept whatever the cultivation does.
 	 */
 	public static int earned(PlayerCultivation c) {
 		int rank = TwoPaths.higherRank(c, false);
-		return earned(rank) + (c.hasPhysique(Physique.HUNDRED_REFINEMENTS_BODY) ? Math.max(0, rank) : 0);
+		return earned(rank) + (c.hasPhysique(Physique.HUNDRED_REFINEMENTS_BODY) ? Math.max(0, rank) : 0) + c.essencePoints();
 	}
 
 	/** Points {@code c} has left to spend. */

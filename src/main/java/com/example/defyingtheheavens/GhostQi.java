@@ -15,6 +15,7 @@ import net.minecraft.world.level.biome.Biomes;
  * Density, a Soul Sand Valley being 1:
  * <table>
  *   <tr><td>The Great Void's ancient battlefields</td><td>{@link #ANCIENT_BATTLEFIELD} (x100)</td></tr>
+ *   <tr><td>The secret realm of the Ancient Battlefield</td><td>{@link #SECRET_BATTLEFIELD} (x30)</td></tr>
  *   <tr><td>The Netherworld</td><td>{@link #NETHERWORLD} (x10)</td></tr>
  *   <tr><td>The Nine Nether Peaks</td><td>{@link #NETHERWORLD} x {@link #PEAKS_FACTOR} (x12)</td></tr>
  *   <tr><td>A Soul Sand Valley</td><td>{@link #SOUL_SAND_VALLEY} (x1)</td></tr>
@@ -22,10 +23,11 @@ import net.minecraft.world.level.biome.Biomes;
  *   <tr><td>The Overworld</td><td>{@link #OVERWORLD} (x0.25)</td></tr>
  *   <tr><td>Everywhere else</td><td>0</td></tr>
  * </table>
- * The ghostly qi pool fills at density x {@link #FILL_PER_DENSITY} a second at Qi Refining Early: 20 a second on the battlefields, 2 in the
+ * The ghostly qi pool fills on its own as the qi pool does, {@link #OWN_FILL} a second at Qi Refining Early wherever one is (since
+ * 2026-10-31), and the place's ghostly qi adds density x {@link #FILL_PER_DENSITY} to that: 20 a second more on the battlefields, 2 in the
  * Netherworld (2.4 on its peaks), 0.2 in a Soul Sand Valley, 0.1 in the rest of the Nether, 0.05 in the Overworld, nothing elsewhere; the
- * ghost path's realm multiplies it as it grows the pool (since 2026-10-27: {@link #realmPool}, {@link #realmFill}). Spirit stones and Spirit
- * Dew don't fill it.
+ * ghost path's realm multiplies both as it grows the pool (since 2026-10-27: {@link #realmPool}, {@link #realmFill}), so from Four Axis on an
+ * empty pool fills in about 40 s anywhere, 13 s in the Netherworld, 2 s on a battlefield. Spirit stones and Spirit Dew don't fill it.
  */
 public final class GhostQi {
 	/**
@@ -34,6 +36,11 @@ public final class GhostQi {
 	 * ghostly cultivators have a place to go for high density not just the netherworld"). The rest of the Great Void has none.
 	 */
 	public static final double ANCIENT_BATTLEFIELD = 100.0;
+	/**
+	 * The secret realm of the Ancient Battlefield (SecretRealm#ANCIENT_BATTLEFIELD, 2026-10-31): the dead of an old war lie thick there, three
+	 * times the Netherworld's (the design's "yin thick enough for the ghost path"). Any other secret realm: its world's, times its qi.
+	 */
+	public static final double SECRET_BATTLEFIELD = 30.0;
 	public static final double NETHERWORLD = 10.0;
 	public static final double PEAKS_FACTOR = 1.2;
 	public static final double SOUL_SAND_VALLEY = 1.0;
@@ -44,8 +51,14 @@ public final class GhostQi {
 	 * the thinnest anywhere there is any (2026-10-19, the user's: the Overworld the worst place for the ghost path).
 	 */
 	public static final double OVERWORLD = 0.25;
-	/** The pool fills at the density times this, a second. */
+	/** The place's ghostly qi fills the pool at the density times this, a second. */
 	public static final double FILL_PER_DENSITY = 0.2;
+	/**
+	 * What the pool fills a second on its own at Qi Refining Early, wherever one is: the qi pool's own gathering at that rank
+	 * (CultivationStats#qiGather), as the qi pool refills (the user's pick, 2026-10-31, "On its own, like qi": "ghostly qi doesnt regen
+	 * anywhere really once you reach high enough levels of it", where it had filled only from the place, never in the worlds without yin).
+	 */
+	public static final double OWN_FILL = CultivationStats.qiGather(Realm.QI_REFINING, Stage.EARLY);
 	/**
 	 * The pool's size: {@link #BASE_POOL} for anyone who has one (every ghost, and everyone who knows a ghost method), and
 	 * {@link #POOL_PER_LAYER} more for every layer known across all methods (each foundation's layers add their own on top).
@@ -68,10 +81,24 @@ public final class GhostQi {
 		return 0.0;
 	}
 
-	/** The density at a position in a level. */
+	/**
+	 * The density at a position in a level: the place's, and the yin the bodies of the dead lying round it give off (Corpses#yinAt, since
+	 * 2026-10-31), never past the Netherworld's where the place's own is thinner.
+	 */
 	public static double densityAt(ServerLevel level, BlockPos pos) {
+		double place = placeDensity(level, pos), yin = Corpses.yinAt(level, pos);
+		return yin <= 0 ? place : Math.max(place, Math.min(NETHERWORLD, place + yin));
+	}
+
+	/** The place's own density at a position in a level. */
+	private static double placeDensity(ServerLevel level, BlockPos pos) {
 		ResourceKey<Level> dimension = level.dimension();
 		if (dimension == Level.OVERWORLD) return OVERWORLD; // the same everywhere in it: no biome to look up
+		if (ModDimensions.isSecretRealm(dimension)) {
+			SecretRealm realm = SecretRealms.realmAt(level, pos.getX(), pos.getZ());
+			if (realm == null) return 0.0;
+			return realm == SecretRealm.ANCIENT_BATTLEFIELD ? SECRET_BATTLEFIELD : density(realm.home(), null) * SecretRealms.QI;
+		}
 		if (!ModDimensions.isNetherworld(dimension) && dimension != Level.NETHER && !ModDimensions.isGreatVoid(dimension)) return 0.0;
 		return density(dimension, level.getBiome(pos));
 	}
@@ -116,7 +143,7 @@ public final class GhostQi {
 	/**
 	 * How much faster the ghost path's realm fills the pool than Qi Refining Early: the heaven path's qi gathering at that rank over Qi
 	 * Refining Early's (CultivationStats#qiGather), so a pool grown with the realm refills with it (2,500,000 at True Immortal Early fills
-	 * 62,500 times as fast), the place still the measure of how fast. 1 before the path begins.
+	 * 62,500 times as fast), its own filling and the place's alike. 1 before the path begins.
 	 */
 	public static double realmFill(PlayerCultivation c) {
 		int rank = TwoPaths.ghostRank(c, true);
@@ -133,14 +160,14 @@ public final class GhostQi {
 	}
 
 	/**
-	 * Ghostly qi filled a second at {@code density} for {@code c}: x half its Insight, as every path's qi is gathered (StatPoints#gatherFactor),
-	 * and x its ghost path's realm ({@link #realmFill}).
+	 * Ghostly qi filled a second at {@code density} for {@code c}: the pool's own {@link #OWN_FILL} and the place's, x half its Insight, as
+	 * every path's qi is gathered (StatPoints#gatherFactor), and x its ghost path's realm ({@link #realmFill}).
 	 */
 	public static double fillPerSecond(PlayerCultivation c, double density) {
-		return fillPerSecond(density) * StatPoints.gatherFactor(c) * realmFill(c);
+		return (OWN_FILL + fillPerSecond(density)) * StatPoints.gatherFactor(c) * realmFill(c);
 	}
 
-	/** Ghostly qi filled a second at {@code density}. */
+	/** Ghostly qi the place itself fills a second at {@code density} (on top of the pool's own, {@link #OWN_FILL}). */
 	public static double fillPerSecond(double density) {
 		return density * FILL_PER_DENSITY;
 	}

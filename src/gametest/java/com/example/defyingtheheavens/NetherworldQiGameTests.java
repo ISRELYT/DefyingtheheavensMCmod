@@ -59,14 +59,16 @@ public class NetherworldQiGameTests implements FabricGameTest {
 		helper.assertTrue(GhostQi.realmPool(c) == 0 && near(GhostQi.realmFill(c), 1), "No ghost path yet: nothing from a realm");
 		c.netherworld().setPath(PlayerCultivation.rank(Realm.QI_REFINING, Stage.EARLY), 0);
 		helper.assertTrue(near(GhostQi.realmPool(c), CultivationStats.maxQi(Realm.QI_REFINING, Stage.EARLY)) && near(GhostQi.realmFill(c), 1)
-				&& near(GhostQi.fillPerSecond(c, GhostQi.NETHERWORLD), 2), "Qi Refining Early: its realm's 100, and the Netherworld fills it at 2/s as ever");
+				&& near(GhostQi.fillPerSecond(c, 0), 1) && near(GhostQi.fillPerSecond(c, GhostQi.NETHERWORLD), 3),
+				"Qi Refining Early: its realm's 100, filling 1/s on its own anywhere and the Netherworld's 2/s more");
 		c.netherworld().setPath(PlayerCultivation.rank(Realm.TRUE_IMMORTAL, Stage.EARLY), 0);
 		double pool = CultivationStats.maxQi(Realm.TRUE_IMMORTAL, Stage.EARLY);
 		double fill = CultivationStats.qiGather(Realm.TRUE_IMMORTAL, Stage.EARLY) / CultivationStats.qiGather(Realm.QI_REFINING, Stage.EARLY);
 		helper.assertTrue(near(GhostQi.realmPool(c), pool) && GhostQi.poolMax(c) >= pool, "A True Immortal's ghost path: the heaven path's pool of its rank (" + pool + ")");
-		helper.assertTrue(near(GhostQi.realmFill(c), fill) && near(GhostQi.fillPerSecond(c, GhostQi.NETHERWORLD), 2 * fill)
+		helper.assertTrue(near(GhostQi.realmFill(c), fill) && near(GhostQi.fillPerSecond(c, 0), fill)
+				&& near(GhostQi.fillPerSecond(c, GhostQi.NETHERWORLD), 3 * fill)
 				&& GhostQi.fillPerSecond(c, GhostQi.OVERWORLD) < GhostQi.fillPerSecond(c, GhostQi.NETHERWORLD),
-				"...filled as much faster as its realm gathers, the place still the measure (" + fill + "x)");
+				"...filled as much faster as its realm gathers, its own and the place's alike (" + fill + "x)");
 		c.setMortal(true);
 		helper.assertTrue(GhostQi.realmPool(c) == 0, "A mortal's dormant path gives nothing");
 		helper.succeed();

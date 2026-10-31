@@ -55,5 +55,7 @@ public class ModDamageTypeTagProvider extends FabricTagProvider<DamageType> {
 		// (Protection and Resistance still turn some of both); neither knocks one about, as a tribulation's strike doesn't.
 		tag(DamageTypeTags.BYPASSES_ARMOR).add(ModDamageTypes.YIN_TRIBULATION);
 		tag(DamageTypeTags.NO_IMPACT).add(ModDamageTypes.YIN_LIGHTNING, ModDamageTypes.YIN_TRIBULATION);
+		// Sword intent (the Sunken Sword Tomb's, and the war art's second cut): turned by armour as a blade is, but a cut of intent shoves no one.
+		tag(DamageTypeTags.NO_IMPACT).add(ModDamageTypes.SWORD_INTENT);
 	}
 }

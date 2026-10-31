@@ -66,6 +66,16 @@ public final class Artifacts {
 		return stack;
 	}
 
+	/** {@code stack} (an artifact) of {@code quality}'s work (the Sleeping Sword: Perfect, a master's own). */
+	public static ItemStack withQuality(ItemStack stack, Quality quality) {
+		if (quality == Quality.NORMAL) {
+			if (stack.getTag() != null) stack.getTag().remove(QUALITY);
+		} else {
+			stack.getOrCreateTag().putByte(QUALITY, (byte) quality.ordinal());
+		}
+		return stack;
+	}
+
 	/** The name shown: its own ("Spirit Flying Sword"), a Fine or Perfect piece's work before it, in its grade's colour. */
 	public static Component name(Component base, ItemStack stack, ArtifactGrade grade) {
 		Quality quality = quality(stack);

@@ -84,9 +84,6 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 	private static final int HEIGHT = 230; // fits the smallest usual GUI height (240)
 	private static final int TAB_Y = 6;
 	private static final int TAB_HEIGHT = 19;
-	private static final int TAB_GAP = 2;
-	/** Least space between a tab's label and its edges; tabs are as wide as their labels plus a share of what's left. */
-	private static final int TAB_PADDING = 5;
 	private static final int CONTENT_Y = 34;
 	private static final int SWITCH_W = 30;
 	private static final int SWITCH_H = 14;
@@ -141,23 +138,21 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 	/**
 	 * The Hall (the user's picks, 2026-10-30, "the fullscreen version ... of the cultivation menu"): the whole screen in ink, the tabs
 	 * down a column on the left under the cultivator's name and realm, and the Cultivation tab a panel of its own beside the Ladder of
-	 * Realms; the other tabs' panels beside the column. On a screen too narrow for the column and a panel side by side, the panel with its
-	 * strip of tabs as before.
+	 * Realms; the other tabs' panels beside the column. Since 2026-10-31 the only layout (the frame always has room for it, HallFrame).
+	 * The Cultivation tab's panel in the frame's pixels: its left, top, width and height.
 	 */
-	private boolean hall;
-	/** The Cultivation tab's panel (the old panel without the Hall): its left, top, width and height; and the ladder's left (-1: none). */
-	private int cultX, cultY, cultW, cultH, ladderX = -1;
+	private int cultX, cultY, cultW, cultH;
 	/** How far the Cultivation tab's cards and lines are scrolled in the Hall, and how far they can go (0: they all fit): the artifact's pixels. */
 	private int cultScroll, cultMaxScroll;
 	/** The Hall's column of tabs, the mockup's 264 of the artifact's pixels (88 of the frame's: HallFrame). */
-	private static final int NAV_W = 88, HALL_MARGIN = 6;
+	private static final int NAV_W = 88;
 	/**
 	 * The menu's mockup in the artifact's pixels (HallArt): its column's rows (from 124, 54 apart), the Cultivation tab's panel (580, 20,
 	 * 680 across); and how far right of the mockup's places the ladder and the panel stand in a frame wider than its 1280.
 	 */
 	private static final int A_ROW_TOP = 124, A_ROW = 54, A_PANEL_X = 580, A_PANEL_Y = 20, A_PANEL_W = 680;
 	private float ox;
-	private static final int NAV_INK = HallHud.NAV_INK, HALL_PANEL = HallHud.PANEL, HALL_FRAME = HallHud.FRAME, CARD = 0xFF0D1116;
+	private static final int NAV_INK = HallHud.NAV_INK, HALL_FRAME = HallHud.FRAME, CARD = 0xFF0D1116;
 	/**
 	 * The Cultivation tab's field for the title one takes (PlayerTitles, from Void Shattering on: the user's ask, 2026-10-27), over its
 	 * columns, Enter to set it; and the title it was last filled with from the server.
@@ -297,50 +292,21 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 
 	@Override
 	protected void init() {
-		hall = width >= NAV_W + WIDTH + 2 * HALL_MARGIN;
-		left = hall ? NAV_W + (width - NAV_W - WIDTH) / 2 : (width - WIDTH) / 2;
+		// The frame is never narrower than 427 of its pixels (HallFrame), so the Hall always has room: the other tabs' panel beside the
+		// column; the menu's mockup in the artifact's pixels (three to one of the frame's), its ladder and the Cultivation tab's panel kept
+		// together in the middle of a frame wider than its 1280.
+		left = NAV_W + (width - NAV_W - WIDTH) / 2;
 		top = (height - HEIGHT) / 2;
-		if (hall) {
-			// The menu's mockup, in the artifact's pixels (three to one of the frame's: HallFrame): its 1280 x 720, the ladder and the
-			// Cultivation tab's panel kept together in the middle of a wider frame.
-			ox = Math.max(0, (width * 3f - HallArt.W) / 2);
-			ladderX = 0;
-			cultX = Math.round((A_PANEL_X + ox) / 3);
-			cultY = A_PANEL_Y / 3;
-			cultW = A_PANEL_W / 3;
-			cultH = Math.round((height * 3f - 2 * A_PANEL_Y) / 3);
-		} else {
-			ladderX = -1;
-			cultX = left;
-			cultY = top;
-			cultW = WIDTH;
-			cultH = HEIGHT;
-		}
+		ox = Math.max(0, (width * 3f - HallArt.W) / 2);
+		cultX = Math.round((A_PANEL_X + ox) / 3);
+		cultY = A_PANEL_Y / 3;
+		cultW = A_PANEL_W / 3;
+		cultH = Math.round((height * 3f - 2 * A_PANEL_Y) / 3);
 
+		// The tabs down the column, one under another as the mockup has them, the Dao Codex at their foot (CodexScreen comes back here).
 		Tab[] tabs = Tab.values();
-		if (hall) {
-			// Down the column, one under another as the mockup has them, the Dao Codex at their foot (CodexScreen comes back here).
-			for (int i = 0; i < tabs.length; i++) addRenderableWidget(new TabButton(0, navTop(i), 87, 16, tabs[i]));
-			addRenderableWidget(new CodexLink(0, navTop(tabs.length), 87, 16));
-		} else {
-			// Five labels of very different lengths don't fit equal widths, so each tab gets its label's width plus an even share
-			// of the strip that's left.
-			int[] widths = new int[tabs.length];
-			int spare = WIDTH - 12 - TAB_GAP * (tabs.length - 1);
-			for (int i = 0; i < tabs.length; i++) {
-				widths[i] = font.width(Component.translatable(tabs[i].key)) + TAB_PADDING;
-				spare -= widths[i];
-			}
-			int tabX = left + 6;
-			for (int i = 0; i < tabs.length; i++) {
-				// floorDiv/floorMod so a long translation (negative spare) still shares out exactly.
-				int w = widths[i] + Math.floorDiv(spare, tabs.length) + (i < Math.floorMod(spare, tabs.length) ? 1 : 0);
-				addRenderableWidget(new TabButton(tabX, top + TAB_Y, w, TAB_HEIGHT, tabs[i]));
-				tabX += w + TAB_GAP;
-			}
-			// The Dao Codex's book, just outside the panel's top right corner (CodexScreen comes back here).
-			addRenderableWidget(new CodexScreen.Book(left + WIDTH + 4, top + 2, this));
-		}
+		for (int i = 0; i < tabs.length; i++) addRenderableWidget(new TabButton(0, navTop(i), 87, 16, tabs[i]));
+		addRenderableWidget(new CodexLink(0, navTop(tabs.length), 87, 16));
 
 		meditateButton = addRenderableWidget(HallButton.of(Component.empty(),
 						b -> ClientPlayNetworking.send(ModPackets.TOGGLE_MEDITATION, PacketByteBufs.create()))
@@ -352,7 +318,7 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 
 		pathButton = addRenderableWidget(HallButton.of(Component.empty(), b -> ClientMethods.switchPath())
 				.bounds(cultX + (cultW - 112) / 2, cultY + cultH - 32, 112, 20).build());
-		if (hall) pathButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable(ModLang.HALL_PATH_TIP)));
+		pathButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable(ModLang.HALL_PATH_TIP)));
 
 		paceButton = addRenderableWidget(HallButton.of(Component.empty(),
 						b -> ClientPlayNetworking.send(ModPackets.MEDITATION_SPEED, PacketByteBufs.create()))
@@ -382,7 +348,7 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 				.bounds(left + 12, top + HEIGHT - 32, GRIEF_W, 20).build());
 
 		int labelW = font.width(Component.translatable(ModLang.TITLE_LABEL)) + 8;
-		titleBox = addRenderableWidget(new net.minecraft.client.gui.components.EditBox(font, cultX + 16 + labelW, cultY + (hall ? 10 : CONTENT_Y + 1),
+		titleBox = addRenderableWidget(new net.minecraft.client.gui.components.EditBox(font, cultX + 16 + labelW, cultY + 10,
 				cultW - 32 - labelW, 10, Component.translatable(ModLang.TITLE_LABEL)));
 		titleBox.setBordered(false); // framed in the panel's own gold (renderCultivation)
 		titleBox.setMaxLength(com.example.defyingtheheavens.PlayerTitles.MAX_LENGTH);
@@ -391,17 +357,15 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		titleBox.setTextColor(ClientPlates.TITLE_COLOR);
 		titleBox.setHint(Component.translatable(ModLang.TITLE_HINT).withStyle(net.minecraft.ChatFormatting.DARK_GRAY));
 		titleBox.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable(ModLang.TITLE_TIP)));
-		if (hall) {
-			// The mockup's row of buttons under the panel, and its title field (its words in the field's ink, past its border and margin).
-			float y = height * 3f - 108, x = A_PANEL_X + 24 + ox;
-			((HallButton) meditateButton).art(x, y, 196, 50, 22).primary(() -> !ClientCultivationData.isMeditating());
-			((HallButton) paceButton).art(x + 208, y, 60, 50, 22);
-			((HallButton) pathButton).art(x + 280, y, 176, 50, 21);
-			((HallButton) breakthroughButton).art(x + 468, y, 164, 50, 20).primary(() -> breakthroughButton.active);
-			titleBox.setX(Math.round((A_PANEL_X + 92 + 13 + ox) / 3));
-			titleBox.setY(Math.round(57 / 3f) - 5);
-			titleBox.setWidth(Math.round((564 - 26) / 3f));
-		}
+		// The mockup's row of buttons under the panel, and its title field (its words in the field's ink, past its border and margin).
+		float buttonsY = height * 3f - 108, buttonsX = A_PANEL_X + 24 + ox;
+		((HallButton) meditateButton).art(buttonsX, buttonsY, 196, 50, 22).primary(() -> !ClientCultivationData.isMeditating());
+		((HallButton) paceButton).art(buttonsX + 208, buttonsY, 60, 50, 22);
+		((HallButton) pathButton).art(buttonsX + 280, buttonsY, 176, 50, 21);
+		((HallButton) breakthroughButton).art(buttonsX + 468, buttonsY, 164, 50, 20).primary(() -> breakthroughButton.active);
+		titleBox.setX(Math.round((A_PANEL_X + 92 + 13 + ox) / 3));
+		titleBox.setY(Math.round(57 / 3f) - 5);
+		titleBox.setWidth(Math.round((564 - 26) / 3f));
 
 		updateButtons();
 		if (tab == Tab.JOURNAL) ClientJournal.request();
@@ -450,7 +414,7 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 			griefButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable(mayGrief ? ModLang.TIP_GRIEFING : ModLang.TIP_GRIEFING_LOCKED)));
 		}
 		meditateButton.setMessage(Component.translatable(
-				ClientCultivationData.isMeditating() ? hall ? ModLang.HALL_STOP : ModLang.BTN_STOP : ModLang.BTN_MEDITATE));
+				ClientCultivationData.isMeditating() ? ModLang.HALL_STOP : ModLang.BTN_MEDITATE));
 		PlayerCultivation c = ClientCultivationData.get();
 		// The title's field, from Void Shattering on, on the Cultivation tab (PlayerTitles).
 		if (titleBox != null) {
@@ -473,27 +437,13 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		}
 		// The switch, for the living on both paths (the dead draw in only ghostly qi), between the two: then three share the row.
 		pathButton.visible = progressTab && TwoPaths.drawable(c).size() >= 2 && !c.netherworld().ghost();
-		if (hall) {
-			// The mockup's row (its places fixed in init: HallButton#art): "Path: Heaven" as it has it.
-			pathButton.setMessage(Component.translatable(drawn == TwoPaths.Path.GHOST ? ModLang.BTN_PATH_GHOST
-					: drawn == TwoPaths.Path.DEMON ? ModLang.BTN_PATH_DEMON : ModLang.BTN_PATH_HEAVEN));
-			return;
-		}
+		// The mockup's row (its places fixed in init: HallButton#art): "Path: Heaven" as it has it.
 		pathButton.setMessage(Component.translatable(drawn == TwoPaths.Path.GHOST ? ModLang.BTN_PATH_GHOST
 				: drawn == TwoPaths.Path.DEMON ? ModLang.BTN_PATH_DEMON : ModLang.BTN_PATH_HEAVEN));
-		int room = cultW - 24 - (pace ? PACE_W + BUTTON_GAP : 0);
-		int w = pathButton.visible ? (room - 2 * BUTTON_GAP) / 3 : Math.min(112, (room - BUTTON_GAP) / 2);
-		meditateButton.setWidth(w);
-		paceButton.setX(cultX + 12 + w + BUTTON_GAP);
-		breakthroughButton.setWidth(w);
-		breakthroughButton.setX(cultX + cultW - 12 - w);
-		pathButton.setWidth(w);
-		pathButton.setX(pace ? cultX + 12 + w + BUTTON_GAP + PACE_W + BUTTON_GAP : cultX + (cultW - w) / 2);
 	}
 
-	/** Between the Cultivation tab's three buttons, when the switch stands between Meditate and Breakthrough. */
+	/** The pace button's width before its place in the mockup's row is set (HallButton#art), and the gap before it. */
 	private static final int BUTTON_GAP = 5;
-	/** The pace button's width (it says only "x2"). */
 	private static final int PACE_W = 30;
 
 	@Override
@@ -530,28 +480,20 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 	@Override
 	public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
 		renderBackground(g);
-		if (hall) renderHallFrame(g);
+		renderHallFrame(g);
 
-		// The Cultivation tab in the Hall is a panel of its own (renderCultivationHall); every other tab, the panel.
-		if (!hall || tab != Tab.CULTIVATION) {
-			if (hall) {
-				// The Hall's panel in the artifact's pixels, as the Cultivation tab's; where the strip of tabs was, the tab's name as a
-				// heading, as the mockup heads a path's card.
-				HallArt.beginFramed(g);
-				try {
-					float px = left * 3f, py = top * 3f, rule = (top + TAB_Y + TAB_HEIGHT - 1) * 3f;
-					HallArt.box(g, px - 3, py - 3, WIDTH * 3f + 6, HEIGHT * 3f + 6, 3, HALL_FRAME, 0xFF11161C);
-					HallArt.diamond(g, px + 21, py + 28, 12, 0xFFFFD54F);
-					HallArt.text(g, Component.translatable(tab.key).getString(), px + 45, py + 22, 26, 26, 0xFFD54F, false);
-					HallArt.rect(g, px + 21, rule, px + WIDTH * 3f - 21, rule + 3, HALL_FRAME);
-				} finally {
-					HallArt.end(g);
-				}
-			} else {
-				g.fill(left - 2, top - 2, left + WIDTH + 2, top + HEIGHT + 2, BORDER);
-				g.fill(left, top, left + WIDTH, top + HEIGHT, PANEL);
-				// The line under the tab strip; the selected tab is drawn over it so it opens into the panel.
-				g.fill(left, top + TAB_Y + TAB_HEIGHT - 1, left + WIDTH, top + TAB_Y + TAB_HEIGHT, BORDER);
+		// The Cultivation tab is a panel of its own (renderCultivationHall); every other tab, the Hall's panel in the artifact's pixels,
+		// headed by the tab's name as the mockup heads a path's card.
+		if (tab != Tab.CULTIVATION) {
+			HallArt.beginFramed(g);
+			try {
+				float px = left * 3f, py = top * 3f, rule = (top + TAB_Y + TAB_HEIGHT - 1) * 3f;
+				HallArt.box(g, px - 3, py - 3, WIDTH * 3f + 6, HEIGHT * 3f + 6, 3, HALL_FRAME, 0xFF11161C);
+				HallArt.diamond(g, px + 21, py + 28, 12, 0xFFFFD54F);
+				HallArt.text(g, Component.translatable(tab.key).getString(), px + 45, py + 22, 26, 26, 0xFFD54F, false);
+				HallArt.rect(g, px + 21, rule, px + WIDTH * 3f - 21, rule + 3, HALL_FRAME);
+			} finally {
+				HallArt.end(g);
 			}
 		}
 
@@ -571,10 +513,7 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		sectButtons.clear();
 		bar = null;
 		switch (tab) {
-			case CULTIVATION -> {
-				if (hall) renderCultivationHall(g, player, mouseX, mouseY);
-				else renderCultivation(g, player);
-			}
+			case CULTIVATION -> renderCultivationHall(g, player, mouseX, mouseY);
 			case STATS -> {
 				// A mortal on neither path has only a tempered body; a mortal's ghost on the ghost path, that path's strength.
 				if (ClientCultivationData.get().isMortal() && !TwoPaths.body(ClientCultivationData.get(), false).ghostPath()) {
@@ -599,110 +538,7 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		if (draggedSpell != null) SpellWheelScreen.drawIcon(g, draggedSpell, mouseX - 8, mouseY - 8, 16, true);
 	}
 
-	// --- Cultivation: realm, stage, cultivation progress and what comes next ---
-
-	private void renderCultivation(GuiGraphics g, Player player) {
-		PlayerCultivation c = ClientCultivationData.get();
-		int cx = left + WIDTH / 2;
-		int x = left + 14;
-		int y = top + CONTENT_Y;
-		int barW = WIDTH - 28;
-
-		if (c.isMortal()) {
-			renderMortal(g, cx, y);
-			return;
-		}
-
-		// From Void Shattering on, the title one has taken over the columns: its label, and its field framed in the panel's gold.
-		if (titleBox != null && titleBox.visible) {
-			g.drawString(font, Component.translatable(ModLang.TITLE_LABEL), x + 2, y + 2, 0xD4AF37, false);
-			int fx = titleBox.getX() - 3, fy = titleBox.getY() - 2, fw = titleBox.getWidth() + 5, fh = titleBox.getHeight() + 3;
-			g.fill(fx - 1, fy - 1, fx + fw + 1, fy + fh + 1, titleBox.isFocused() ? 0xFFE6C35C : BORDER);
-			g.fill(fx, fy, fx + fw, fy + fh, 0xFF1A1410);
-			y += 15;
-		}
-
-		HeavenMethod method = HeavenMethods.practised(c.heaven());
-		double boost = meditationBoost(player);
-		// On both paths (TwoPaths) the two stand side by side, each in full and alike: name, realm and stage, bar, the method
-		// practised and its pace, what stands next on it (the user's ask, 2026-10-18: both are ways to the heights, neither a side
-		// path). On the heaven path alone, its realm and stage over the whole width.
-		// A demon's Demon Path stands among them too, between the heaven path and the ghost path (DemonPath): three columns on all three.
-		List<TwoPaths.Path> columns = columns(c);
-		boolean both = columns.size() >= 2;
-		if (both) {
-			int n = columns.size();
-			int colW = (barW - (n - 1) * COLUMN_GAP) / n;
-			int end = y;
-			for (int i = 0; i < n; i++) {
-				int cx0 = x + i * (colW + COLUMN_GAP);
-				int columnEnd = switch (columns.get(i)) {
-					case HEAVEN -> heavenColumn(g, player, c, method, boost, cx0, y, colW);
-					case DEMON -> demonColumn(g, c, cx0, y, colW);
-					case GHOST -> ghostColumn(g, c, cx0, y, colW);
-				};
-				end = Math.max(end, columnEnd);
-			}
-			for (int i = 1; i < n; i++) {
-				int line = x + i * (colW + COLUMN_GAP) - COLUMN_GAP / 2;
-				g.fill(line, y + 2, line + 1, end - 2, 0x50B8860B); // a faint bronze line between each two
-			}
-			y = end + 2;
-		} else {
-			g.drawCenteredString(font, Component.translatable(ModLang.REALM, c.getRealm().getDisplayName()), cx, y, 0x7FDBFF);
-			y += 12;
-			g.drawCenteredString(font, Component.translatable(ModLang.STAGE, c.getStage().getDisplayName()), cx, y, 0xB39DDB);
-			y += 16;
-			y = heavenBar(g, c, method, x, y, barW);
-			y = heavenMethodLine(g, player, c, method, boost, cx, y, barW);
-		}
-		// Effective cultivation (TwoPaths#effective): what the body comes to on one path, when the harmony or Heaven's Favour carry it
-		// past its own rank; in gold, the name on a line of its own if a long one needs it.
-		if (TwoPaths.strongerThanRank(c)) {
-			for (FormattedCharSequence part : effectiveLines(c, barW)) {
-				g.drawCenteredString(font, part, cx, y, 0xFFD54F);
-				y += 10;
-			}
-			y += 1;
-		}
-
-		List<List<Line>> rows = detailRows(cultivationDetails(c, player, method, boost), barW);
-		List<Line> status = cultivationStatus(c, barW);
-
-		// All of it fits above the meditation line: the lines drawn closer when there is much to say (never closer than the font's
-		// own height), and in the rare case even that won't do, over the meditation line (the Meditate button says it too). An axis's
-		// bar takes a row of its own height.
-		int statusY = top + HEIGHT - 46;
-		int lines = rows.size() + status.size();
-		int bars = (int) status.stream().filter(line -> line.meter() != null).count();
-		int lineH = 11, gap = 6;
-		for (int[] spacing : SPACINGS) {
-			lineH = spacing[0];
-			gap = spacing[1];
-			if (fits(y + bars * (AXIS_ROW - lineH), lines, lineH, gap, statusY)) break;
-		}
-		boolean roomForStatus = fits(y + bars * (AXIS_ROW - lineH), lines, lineH, gap, statusY);
-		for (List<Line> row : rows) {
-			drawDetailRow(g, row, cx, y);
-			y += lineH;
-		}
-		y += gap;
-		for (Line line : status) {
-			if (line.meter() != null) {
-				virtueBar(g, c, line.meter(), line.color(), x, y + 3, barW);
-				y += AXIS_ROW;
-			} else {
-				g.drawCenteredString(font, line.text(), cx, y, line.color());
-				y += lineH;
-			}
-		}
-
-		if (roomForStatus) {
-			boolean meditating = ClientCultivationData.isMeditating();
-			g.drawCenteredString(font, Component.translatable(meditating ? ModLang.STATUS_MEDITATING : ModLang.STATUS_IDLE),
-					cx, statusY, meditating ? 0x69F0AE : 0x9E9E9E);
-		}
-	}
+	// --- Cultivation: realm, stage, cultivation progress and what comes next (the Hall's panel: renderCultivationHall) ---
 
 	/** The paths the Cultivation tab shows, in their order: the heaven path, a demon's Demon Path, the ghost path once begun. */
 	private static List<TwoPaths.Path> columns(PlayerCultivation c) {
@@ -1116,54 +952,11 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		return y + h;
 	}
 
-	/**
-	 * What meditating on ghostly qi adds a second here (thickest on the Great Void's battlefields, then the Netherworld's, thinner in the
-	 * Nether, thinnest in the Overworld, none elsewhere), by the method practised's name; or that the path rests while another's qi is
-	 * drawn in, or that there is no ghostly qi here.
-	 */
-	private Detail ghostPace(PlayerCultivation c, int w) {
-		NetherworldState s = c.netherworld();
-		if (!TwoPaths.cultivatesGhost(c)) return new Detail(Component.translatable(ModLang.COLUMN_RESTING), 0x9E9E9E);
-		double density = ClientNetherworldData.density();
-		if (density <= 0) return new Detail(Component.translatable(ModLang.GHOST_COLUMN_NO_QI), 0x9E9E9E);
-		GhostMethod active = s.activeMethod();
-		String rate = one(GhostMethods.ratePerSecond(c, density) * c.meditationSpeed()); // at the pace a meditation is set to
-		// No foundation known (one of the dead, or one born again who began the path so): said, as the heaven column says it.
-		Component pace = GhostMethods.deepestFoundation(s) == null ? fit(w, Component.translatable(ModLang.GHOST_COLUMN_PACE_NONE, rate),
-				Component.translatable(ModLang.GHOST_COLUMN_PACE_SHORT, rate))
-				: active == null ? Component.translatable(ModLang.GHOST_COLUMN_PACE_SHORT, rate)
-				: fit(w, Component.translatable(ModLang.GHOST_COLUMN_PACE, active.getDisplayName(), rate), Component.translatable(ModLang.GHOST_COLUMN_PACE_SHORT, rate));
-		return new Detail(pace, 0x8FEAE4);
-	}
-
-	/** What meditating on the Demon Path gathers a second by the race's blood; or that it rests while another path's qi is drawn in. */
-	private Detail demonPace(PlayerCultivation c, int w) {
-		if (!TwoPaths.cultivatesDemon(c)) return new Detail(Component.translatable(ModLang.COLUMN_RESTING), 0x9E9E9E);
-		String rate = one(DemonPath.perSecond(c, 0) * c.meditationSpeed());
-		return new Detail(fit(w, Component.translatable(ModLang.DEMON_COLUMN_PACE, DemonPath.race(c).getDisplayName(), rate),
-				Component.translatable(ModLang.DEMON_COLUMN_PACE_SHORT, rate)), 0xF08070);
-	}
-
 	/** The realm {@code c} stands at by the higher of its paths ("" for a mortal). */
 	private static String standingName(PlayerCultivation c) {
 		if (c.isMortal()) return "";
 		int rank = TwoPaths.higherRank(c, false);
 		return rank < 0 ? "" : Realm.byIndex(rank / Stage.values().length).getDisplayName().getString();
-	}
-
-	/** {@code text} from ({@code x}, {@code y}), drawn smaller if it is wider than {@code w}. */
-	private void fitString(GuiGraphics g, Component text, int x, int y, int w, int color) {
-		int width = font.width(text);
-		if (width <= w) {
-			g.drawString(font, text, x, y, color, false);
-			return;
-		}
-		float scale = (float) w / width;
-		g.pose().pushPose();
-		g.pose().translate(x, y + 4 * (1 - scale), 0);
-		g.pose().scale(scale, scale, 1);
-		g.drawString(font, text, 0, 0, color, false);
-		g.pose().popPose();
 	}
 
 	/** {@code text} at half size from ({@code x}, {@code y}), or ending at {@code x} if {@code right}. */
@@ -1174,9 +967,6 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		g.drawString(font, text, 0, 0, color, false);
 		g.pose().popPose();
 	}
-
-	/** Room between the two paths' columns on the Cultivation tab (a faint line down the middle of it). */
-	private static final int COLUMN_GAP = 10;
 
 	/**
 	 * The years meditation would cost from here to the realm's Grand Perfection on the path drawn in (Lifespan#seclusionYears: by
@@ -1207,151 +997,6 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		double left = Math.max(0, ClientCultivationData.lifeSpan() - ClientCultivationData.lifeUsed());
 		return new Detail(Component.translatable(ModLang.SECLUSION_LINE, String.format(Locale.ROOT, "%,d", Math.round(years)),
 				String.format(Locale.ROOT, "%,d", (long) Math.floor(left))), years > left ? 0xFF6E6E : 0xC8B88A);
-	}
-
-	/**
-	 * The heaven path's cultivation bar, {@code w} wide: in the colour of the heaven method practised's element
-	 * (HeavenMethods#practised; the old cyan with none), the stage's cultivation written on it (shorter where that won't fit),
-	 * unrefined pill and fruit qi a pale stretch beyond the fill. Framed in amber while the realm is held (at a tribulation's
-	 * bottleneck, at the ritual's gate, a breakthrough waiting on a method); in gold at the very last. @return the y under it
-	 */
-	private int heavenBar(GuiGraphics g, PlayerCultivation c, HeavenMethod method, int x, int y, int w) {
-		double required = c.cultivationRequired();
-		double ratio = required <= 0 ? 0 : Math.min(1.0, c.getCultivation() / required);
-		drawBar(g, x, y, w, ratio, method == null ? 0xFF4DD0E1 : elementFill(method.element()), c.isMaxed() ? 0xFFFFD700 : c.isStalled() ? 0xFFFFC107 : 0);
-		if (c.getMedicinalQi() > 0 && required > 0 && !c.isStalled()) {
-			double pending = Math.min(1.0, (c.getCultivation() + c.getMedicinalQi()) / required);
-			g.fill(x + (int) (w * ratio), y + 3, x + (int) (w * pending), y + 7, 0x90B2EBF2);
-		}
-		int cx = x + w / 2;
-		if (c.isMaxed()) {
-			barText(g, cx, y + 1, w, Component.translatable(ModLang.CULTIVATION_MAX, num(c.getCultivation())),
-					Component.translatable(ModLang.CULTIVATION_MAX_SHORT, num(c.getCultivation())),
-					Component.translatable(ModLang.CULTIVATION_MAX_SHORT, big(c.getCultivation())));
-		} else {
-			barText(g, cx, y + 1, w, Component.translatable(ModLang.CULTIVATION, num(c.getCultivation()), num(required)),
-					Component.translatable(ModLang.CULTIVATION_SHORT, num(c.getCultivation()), num(required)),
-					Component.translatable(ModLang.CULTIVATION_SHORT, big(c.getCultivation()), big(required)));
-		}
-		return y + 14;
-	}
-
-	/**
-	 * Under the heaven path's bar, the method practised and its layer understood, and what meditating here adds a second: what it
-	 * gathers, surroundings included (mats, fruit on pedestals, height, tranquillity, the Upper Realm's dense qi), by the method's
-	 * element's share of the qi here (HeavenMethods#cultivationFactor), or at a cultivator's pace with none, at the pace a meditation
-	 * is set to (x1 to x3: the pace button); jade when boosted.
-	 * @return the y under it
-	 */
-	private int heavenMethodLine(GuiGraphics g, Player player, PlayerCultivation c, HeavenMethod method, double boost, int cx, int y, int w) {
-		double rate = c.meditationCultivationPerSecond(RingOfPowerItem.cultivationBonus(player)) * boost // 0 while suppressed
-				* HeavenMethods.cultivationFactor(c, method, method == null ? 0 : shareHere(method.element()), false) * c.meditationSpeed();
-		Component line;
-		if (method == null) {
-			line = fit(w, Component.translatable(ModLang.METHOD_LINE_NONE, one(rate)), Component.literal("+" + one(rate) + "/s"));
-		} else {
-			int layer = c.heaven().layer(method);
-			line = c.isMaxed() ? fit(w, Component.translatable(ModLang.METHOD_BAR, method.getDisplayName(), layer, method.layers()),
-					Component.translatable(ModLang.METHOD_BAR_SHORT, method.getDisplayName(), layer, method.layers()),
-					Component.translatable(ModLang.METHOD_BAR_LAYERS, layer, method.layers()))
-					: fit(w, Component.translatable(ModLang.METHOD_LINE, method.getDisplayName(), layer, method.layers(), one(rate)),
-					Component.translatable(ModLang.METHOD_LINE_NAME, method.getDisplayName(), one(rate)),
-					Component.translatable(ModLang.METHOD_LINE_SHORT, layer, method.layers(), one(rate)));
-		}
-		centered(g, line, cx, y, w, boost > 1.0 && rate > 0 ? 0x7FE0A0 : 0xB8B8B8);
-		return y + 11;
-	}
-
-	/**
-	 * The heaven path's column (both paths walked): its name, realm and stage, its bar, and the heaven method practised and its
-	 * pace. (What stands next on it goes under the details, across the tab: {@link #heavenNext}.) @return the y under it
-	 */
-	private int heavenColumn(GuiGraphics g, Player player, PlayerCultivation c, HeavenMethod method, double boost, int x, int y, int w) {
-		int cx = x + w / 2;
-		g.drawCenteredString(font, Component.translatable(ModLang.METHODS_PAGE_HEAVEN), cx, y, 0xFFD700);
-		boolean drawing = TwoPaths.drawnIn(c) == TwoPaths.Path.HEAVEN;
-		if (drawing) drawnInMark(g, cx, y, Component.translatable(ModLang.METHODS_PAGE_HEAVEN), 0xFFFFD700);
-		y += 11;
-		centered(g, c.getRealm().getDisplayName(), cx, y, w, 0x7FDBFF);
-		y += 10;
-		centered(g, c.getStage().getDisplayName(), cx, y, w, 0xB39DDB);
-		y += 12;
-		y = heavenBar(g, c, method, x, y, w);
-		if (!drawing) { // another path's qi drawn in: the heaven path rests
-			centered(g, Component.translatable(ModLang.COLUMN_RESTING), cx, y, w, 0x9E9E9E);
-			return y + 11;
-		}
-		return heavenMethodLine(g, player, c, method, boost, cx, y, w);
-	}
-
-	/**
-	 * The ghost path's column (both paths walked), the heaven path's mirror (GhostMethods: its own bar since 2026-10-19): its name,
-	 * realm and stage, its bar (the stage's cultivation written on it; amber at its bottleneck, the Netherworld's tribulation's or a
-	 * foundation wanted, gold at the very last), and what meditating here adds a second on ghostly qi (or why nothing: the heavens'
-	 * qi drawn in, or no ghostly qi here). (What stands next on it goes under the details: {@link #ghostNext}.) @return the y under it
-	 */
-	private int ghostColumn(GuiGraphics g, PlayerCultivation c, int x, int y, int w) {
-		int cx = x + w / 2;
-		NetherworldState s = c.netherworld();
-		int rank = Math.max(0, TwoPaths.ghostRank(c, false)), stages = Stage.values().length;
-		boolean drawing = TwoPaths.cultivatesGhost(c);
-		g.drawCenteredString(font, Component.translatable(ModLang.METHODS_PAGE_GHOST), cx, y, 0x8FEAE4);
-		if (drawing) drawnInMark(g, cx, y, Component.translatable(ModLang.METHODS_PAGE_GHOST), 0xFF8FEAE4);
-		y += 11;
-		centered(g, Realm.byIndex(rank / stages).getDisplayName(), cx, y, w, 0x7FDBFF);
-		y += 10;
-		centered(g, Stage.byIndex(rank % stages).getDisplayName(), cx, y, w, 0xB39DDB);
-		y += 12;
-		double required = GhostMethods.required(rank);
-		boolean maxed = GhostMethods.isMaxed(s);
-		drawBar(g, x, y, w, GhostMethods.stageProgress(s), 0xFF4DB6AC, maxed ? 0xFFFFD700 : GhostMethods.atBottleneck(c) ? 0xFFFFC107 : 0);
-		if (maxed) {
-			barText(g, cx, y + 1, w, Component.translatable(ModLang.CULTIVATION_MAX, num(s.pathCultivation())),
-					Component.translatable(ModLang.CULTIVATION_MAX_SHORT, num(s.pathCultivation())),
-					Component.translatable(ModLang.CULTIVATION_MAX_SHORT, big(s.pathCultivation())));
-		} else {
-			barText(g, cx, y + 1, w, Component.translatable(ModLang.CULTIVATION, num(s.pathCultivation()), num(required)),
-					Component.translatable(ModLang.CULTIVATION_SHORT, num(s.pathCultivation()), num(required)),
-					Component.translatable(ModLang.CULTIVATION_SHORT, big(s.pathCultivation()), big(required)));
-		}
-		y += 14;
-		Detail pace = ghostPace(c, w);
-		centered(g, pace.text(), cx, y, w, pace.color());
-		return y + 11;
-	}
-
-	/**
-	 * The Demon Path's column (DemonPath), the others' mirror: its name in blood red, realm and stage, its bar (amber at its bottleneck,
-	 * gold at the very last), and what meditating gathers a second by the race's blood (or that it rests, another path drawn in).
-	 * @return the y under it
-	 */
-	private int demonColumn(GuiGraphics g, PlayerCultivation c, int x, int y, int w) {
-		int cx = x + w / 2;
-		int rank = Math.max(0, DemonPath.rank(c));
-		boolean drawing = TwoPaths.cultivatesDemon(c);
-		Component name = Component.translatable(ModLang.METHODS_PAGE_DEMON);
-		g.drawCenteredString(font, name, cx, y, 0xE8584A);
-		if (drawing) drawnInMark(g, cx, y, name, 0xFFE8584A);
-		y += 11;
-		centered(g, DemonPath.realm(rank).getDisplayName(), cx, y, w, 0x7FDBFF);
-		y += 10;
-		centered(g, DemonPath.stage(rank).getDisplayName(), cx, y, w, 0xB39DDB);
-		y += 12;
-		double required = DemonPath.required(rank), done = c.demon().cultivation();
-		boolean maxed = DemonPath.isMaxed(c);
-		drawBar(g, x, y, w, DemonPath.stageProgress(c), 0xFFC8423A, maxed ? 0xFFFFD700 : DemonPath.atBottleneck(c) ? 0xFFFFC107 : 0);
-		if (maxed) {
-			barText(g, cx, y + 1, w, Component.translatable(ModLang.CULTIVATION_MAX, num(done)), Component.translatable(ModLang.CULTIVATION_MAX_SHORT, num(done)),
-					Component.translatable(ModLang.CULTIVATION_MAX_SHORT, big(done)));
-		} else {
-			barText(g, cx, y + 1, w, Component.translatable(ModLang.CULTIVATION, num(done), num(required)),
-					Component.translatable(ModLang.CULTIVATION_SHORT, num(done), num(required)),
-					Component.translatable(ModLang.CULTIVATION_SHORT, big(done), big(required)));
-		}
-		y += 14;
-		Detail pace = demonPace(c, w);
-		centered(g, pace.text(), cx, y, w, pace.color());
-		return y + 11;
 	}
 
 	/** What stands next on the Demon Path, wrapped to {@code width}: its pinnacle, the lower realms' cap, an axis of virtue, or its tribulation. */
@@ -1386,26 +1031,6 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		return lines;
 	}
 
-	/** {@code text} centred on {@code cx}, drawn smaller if it is wider than {@code w} (a realm's name in a third of the tab). */
-	private void centered(GuiGraphics g, Component text, int cx, int y, int w, int color) {
-		int width = font.width(text);
-		if (width <= w) {
-			g.drawCenteredString(font, text, cx, y, color);
-			return;
-		}
-		float scale = (float) w / width;
-		g.pose().pushPose();
-		g.pose().translate(cx, y + 4 * (1 - scale), 0);
-		g.pose().scale(scale, scale, 1);
-		g.drawCenteredString(font, text, 0, 0, color);
-		g.pose().popPose();
-	}
-
-	/** A short rule under a column's name: the path whose qi a meditation draws in now (TwoPaths#cultivatesGhost). */
-	private void drawnInMark(GuiGraphics g, int cx, int y, Component name, int color) {
-		int half = font.width(name) / 2;
-		g.fill(cx - half, y + 9, cx + half, y + 10, color);
-	}
 
 	/**
 	 * What stands next on the ghost path, wrapped to {@code width}: its pinnacle; a foundation the breakthrough waits on (said ahead
@@ -1492,11 +1117,6 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		return status;
 	}
 
-	/** The Cultivation tab's line spacings, each with the room above its status lines, roomiest first. */
-	private static final int[][] SPACINGS = {{11, 6}, {10, 4}, {9, 3}};
-	/** Room between two details sharing a row, a bronze dot in the middle of it. */
-	private static final int DETAIL_GAP = 13;
-
 	/** One of the Cultivation tab's details: a short line in its colour. */
 	private record Detail(Component text, int color) {}
 
@@ -1509,11 +1129,6 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		Line(FormattedCharSequence text, int color) {
 			this(text, color, null, null);
 		}
-	}
-
-	/** Whether {@code lines} lines from {@code y}, {@code lineH} apart with {@code gap} before the status, end clear of the meditation line. */
-	private boolean fits(int y, int lines, int lineH, int gap, int statusY) {
-		return y + gap + (lines - 1) * lineH + font.lineHeight <= statusY - 1;
 	}
 
 	/** {@code text} wrapped to {@code width}, each piece a status line in {@code color}. */
@@ -1534,24 +1149,9 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		}
 	}
 
-	/** An axis of virtue's bar takes a row this tall among the status lines (the bar, its frame, room round it). */
-	private static final int AXIS_ROW = 17;
-
 	/** The axes' bars' fills: Longevity jade, Fortune gold, Merit vermilion, Enlightenment pearl. */
 	private static final Map<FourAxis.Axis, Integer> AXIS_FILLS = new EnumMap<>(Map.of(FourAxis.Axis.LONGEVITY, 0xFF43A865,
 			FourAxis.Axis.FORTUNE, 0xFFD9A62A, FourAxis.Axis.MERIT, 0xFFCC4535, FourAxis.Axis.ENLIGHTENMENT, 0xFFA889EE));
-
-	/**
-	 * {@code axis}'s bar, {@code w} wide at {@code x, y}, as the cultivation bar is drawn: filled to how far it stands of what
-	 * completes it, in the axis's colour, framed in {@code frame} as well (0: none), the two written on it in its measure ("230 / 500
-	 * years").
-	 */
-	private void virtueBar(GuiGraphics g, PlayerCultivation c, FourAxis.Axis axis, int frame, int x, int y, int w) {
-		int progress = FourAxis.progress(c, axis), need = FourAxis.need(c, axis);
-		drawBar(g, x, y, w, progress / (double) need, AXIS_FILLS.get(axis), frame);
-		barText(g, x + w / 2, y + 1, w, Component.translatable(ModLang.AXIS_BAR, axis.getDisplayName(), progress, need, axis.unit()),
-				Component.translatable(ModLang.AXIS_BAR_SHORT, progress, need, axis.unit()));
-	}
 
 	/**
 	 * {@code axis}'s bar in the Hall (in the artifact's pixels), as the mockup draws a card's pool bar: 612 by 26, filled in the axis's
@@ -1564,90 +1164,6 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		HallArt.textCentred(g, Component.translatable(ModLang.AXIS_BAR, axis.getDisplayName(), progress, need, axis.unit()).getString(),
 				x + 306, y + 3, 18, 20, HallArt.WHITE, true);
 	}
-
-	/** The details laid into rows of {@code width}, in order, as many to a row as fit; one too wide for any row is wrapped. */
-	private List<List<Line>> detailRows(List<Detail> details, int width) {
-		List<List<Line>> rows = new ArrayList<>();
-		List<Line> row = new ArrayList<>();
-		int rowW = 0;
-		for (Detail detail : details) {
-			int w = font.width(detail.text());
-			if (w > width) {
-				if (!row.isEmpty()) rows.add(row);
-				row = new ArrayList<>();
-				rowW = 0;
-				for (FormattedCharSequence piece : font.split(detail.text(), width)) rows.add(List.of(new Line(piece, detail.color())));
-				continue;
-			}
-			if (!row.isEmpty() && rowW + DETAIL_GAP + w > width) {
-				rows.add(row);
-				row = new ArrayList<>();
-				rowW = 0;
-			}
-			rowW += (row.isEmpty() ? 0 : DETAIL_GAP) + w;
-			row.add(new Line(detail.text().getVisualOrderText(), detail.color()));
-		}
-		if (!row.isEmpty()) rows.add(row);
-		return rows;
-	}
-
-	/** A row of details, centred, a small bronze dot between each two. */
-	private void drawDetailRow(GuiGraphics g, List<Line> row, int cx, int y) {
-		int total = -DETAIL_GAP;
-		for (Line line : row) total += font.width(line.text()) + DETAIL_GAP;
-		int dx = cx - total / 2;
-		for (int i = 0; i < row.size(); i++) {
-			Line line = row.get(i);
-			if (i > 0) {
-				int dot = dx - (DETAIL_GAP + 2) / 2;
-				g.fill(dot, y + 3, dot + 2, y + 5, BORDER);
-			}
-			g.drawString(font, line.text(), dx, y, line.color());
-			dx += font.width(line.text()) + DETAIL_GAP;
-		}
-	}
-
-	/**
-	 * A progress bar {@code w} wide, filled {@code ratio} of the way in {@code color}, framed in black, or, held or at the last, in
-	 * {@code frame} as well (0: none), a ring around the black.
-	 */
-	private static void drawBar(GuiGraphics g, int x, int y, int w, double ratio, int color, int frame) {
-		if (frame != 0) g.fill(x - 2, y - 2, x + w + 2, y + 12, frame);
-		g.fill(x - 1, y - 1, x + w + 1, y + 11, 0xFF000000);
-		g.fill(x, y, x + w, y + 10, 0xFF2A2A3A);
-		g.fill(x, y, x + (int) (w * Math.max(0, Math.min(1, ratio))), y + 10, color);
-	}
-
-	/** The heaven bar's fill, by its method's element: wood green, water blue, fire red, earth ochre, metal silver. */
-	private static int elementFill(QiElement element) {
-		return switch (element) {
-			case WOOD -> 0xFF3CBF55;
-			case WATER -> 0xFF3C8CFF;
-			case FIRE -> 0xFFE8452C;
-			case EARTH -> 0xFFC08A35;
-			case METAL -> 0xFFB8BDC8;
-			default -> 0xFF4DD0E1;
-		};
-	}
-
-	/**
-	 * Text written on a bar {@code width} wide, centred on {@code cx}: the first of {@code texts} that fits (the last if none does),
-	 * white, outlined in black, so it reads on the bar's fill and its dark alike.
-	 */
-	private void barText(GuiGraphics g, int cx, int y, int width, Component... texts) {
-		Component text = fit(width - 2, texts);
-		// Even the shortest too wide (the user, 2026-10-27, its seventeen figures running off the column): drawn smaller to fit.
-		float scale = Math.min(1f, (width - 2) / (float) Math.max(1, font.width(text)));
-		g.pose().pushPose();
-		g.pose().translate(cx, y + 4, 0);
-		g.pose().scale(scale, scale, 1f);
-		int tx = -font.width(text) / 2;
-		for (int[] d : OUTLINE) g.drawString(font, text, tx + d[0], -4 + d[1], 0x000000, false);
-		g.drawString(font, text, tx, -4, 0xFFFFFF, false);
-		g.pose().popPose();
-	}
-
-	private static final int[][] OUTLINE = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
 
 	/**
 	 * The effective cultivation line (TwoPaths#effectiveLabel) as it fits {@code width}: one line; else "Effective cultivation:" and
@@ -1853,8 +1369,8 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 			Physique physique = c.getPhysique();
 			// With its talent (Physique#talent: its grade's, an Eternal Reincarnation Body's a Low one's): what the years meditation costs
 			// are divided by (Lifespan#seclude).
-			double talent = physique.talent();
-			Component bare = Component.translatable(ModLang.STATS_PHYSIQUE, physique.getDisplayName(), physique.grade().getDisplayName(),
+			double talent = c.physiqueTalent();
+			Component bare = Component.translatable(ModLang.STATS_PHYSIQUE, physique.getDisplayName(), c.physiqueGrade().getDisplayName(),
 					talent == Math.floor(talent) ? String.valueOf((long) talent) : String.valueOf(talent));
 			Component roots = c.getRootElements().isEmpty() ? null : Component.translatable(ModLang.STATS_ROOTS, Physiques.rootsLine(c.getRootElements()));
 			Component line = bare;
@@ -2541,7 +2057,7 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 
 	@Override
 	public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-		if (tab == Tab.CULTIVATION && hall && cultMaxScroll > 0) {
+		if (tab == Tab.CULTIVATION && cultMaxScroll > 0) {
 			// Its scroll is in the artifact's pixels, three to one of the frame's.
 			cultScroll = Mth.clamp(cultScroll - (int) Math.round(delta * SCROLL_STEP * 3), 0, cultMaxScroll);
 			return true;
@@ -3774,7 +3290,7 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		return String.format(Locale.ROOT, "%.2f%s", v / Math.pow(1000, u + 2), units[u]);
 	}
 
-	/** A tab in the strip at the top of the panel, drawn in the panel's own colours. */
+	/** A tab in the Hall's column of tabs ({@link #navRow}). */
 	private final class TabButton extends AbstractButton {
 		private final Tab target;
 
@@ -3795,17 +3311,7 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		@Override
 		protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
 			boolean selected = tab == target;
-			int x = getX();
-			int y = getY();
-			if (hall) {
-				navRow(g, target.ordinal(), getMessage(), selected, isHoveredOrFocused(), false);
-				return;
-			}
-			g.fill(x, y, x + width, y + height, BORDER);
-			// The selected tab has no bottom edge, so it reads as part of the panel below it.
-			g.fill(x + 1, y + 1, x + width - 1, y + height - (selected ? 0 : 1), selected ? PANEL : isHoveredOrFocused() ? TAB_HOVER : TAB_IDLE);
-			int color = selected ? 0xFFD700 : isHoveredOrFocused() ? 0xE0E0E0 : 0x9E9E9E;
-			g.drawCenteredString(font, getMessage(), x + width / 2, y + (height - 8) / 2, color);
+			navRow(g, target.ordinal(), getMessage(), selected, isHoveredOrFocused(), false);
 		}
 
 		@Override

@@ -454,6 +454,8 @@ public final class HeavenSpells {
 				}
 			}
 		}
+		// Blood Battle's guard among many foes (WarArts, the Ancient Battlefield's war art).
+		amount = WarArts.guard(target, source, amount);
 		// Last, a protective jade worn pays its share in qi (ProtectiveJadeItem; a tribulation's strike never came this far).
 		return ProtectiveJadeItem.incoming(target, source, HeavenPassives.incoming(target, source, amount));
 	}
@@ -855,6 +857,7 @@ public final class HeavenSpells {
 	 */
 	public static boolean guarded(ServerLevel level, BlockPos pos, LivingEntity p) {
 		if (GhostGate.protects(level, pos) && !(p instanceof Player player && player.isCreative())) return true;
+		if (RealmWorks.holdsAt(level, pos) != null) return true; // a secret realm's walls that hold: the Cave Abode's maze, the Ruins' hall, the Tomb's
 		return SectManager.sealedTreasuryAt(level, pos) != null || PalaceTreasury.isTreasury(level, pos) && PalaceTreasury.sealed(level, pos);
 	}
 

@@ -1390,6 +1390,9 @@ public final class WoodSpells {
 						continue;
 					}
 					Vec3 on = start.add(path.behind(age, held.getValue())).add(0, 0.6, 0);
+					// Never drawn down into the land it burst from (where thin ground or a cave roof would pin them under it): held over the
+					// place it rose from until the part of its body they're held on comes up out of it.
+					if (on.y < ground.y + 0.6) on = new Vec3(on.x, ground.y + 0.6, on.z);
 					HeavenSpells.move(e, on.subtract(e.position()).scale(0.55).add(way.scale(0.45)));
 					e.resetFallDistance();
 				}

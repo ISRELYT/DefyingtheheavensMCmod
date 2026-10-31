@@ -78,7 +78,8 @@ import java.util.function.Predicate;
  *   Qi Sense on can also strike its tether, and cut it.</li>
  *   <li><b>Losing the soul</b>: a cut tether, a slain body, a destroyed soul, or logging out within {@link #COMBAT_MEMORY_TICKS}
  *   of harm to either kills the cultivator and costs the nascent soul itself ({@link PlayerCultivation#loseNascentSoul}).</li>
- *   <li><b>Possession</b> ({@link #tryPossess}): a being at least {@link #POSSESS_REALM_GAP} realms below the soul (beasts and
+ *   <li><b>Possession</b> ({@link #tryPossess}): a being at least {@link #POSSESS_REALM_GAP} realms below the highest of the cultivator's
+ *   paths (beasts and
  *   monsters count as mortals) is taken over until the soul lets go, its qi runs out, it is recalled or pulled out by its tether,
  *   or the body dies (the soul is thrown out unharmed, and can then be harmed). A beast or monster is ridden from inside and
  *   steered at its own body's strength and pace (a flier flies where the soul looks, {@link #flightWish}; sneak lets go). A
@@ -908,9 +909,10 @@ public final class SoulProjection {
 	// --- Possession ---
 
 	/**
-	 * The soul (right-clicking) enters {@code target}: within reach, at least {@link #POSSESS_REALM_GAP} realms below it, with
-	 * {@link #POSSESS_QI_FRACTION} of its pool to pay. Not a boss, a Warden, anyone's pet but its own, a named creature, a mount, the
-	 * dead, or another soul. A player or a living NPC cultivator is truly possessed ({@link #inhabit}); anything else is ridden.
+	 * The soul (right-clicking) enters {@code target}: within reach, at least {@link #POSSESS_REALM_GAP} realms below the highest of the
+	 * cultivator's paths, with {@link #POSSESS_QI_FRACTION} of its pool to pay. Not a boss, a Warden, anyone's pet but its own, a named
+	 * creature, a mount, the dead, or another soul. A player or a living NPC cultivator is truly possessed ({@link #inhabit}); anything else
+	 * is ridden.
 	 */
 	public static InteractionResult tryPossess(ServerPlayer player, Entity target) {
 		Session s = SESSIONS.get(player.getUUID());
@@ -919,9 +921,11 @@ public final class SoulProjection {
 			return InteractionResult.FAIL;
 		}
 		PlayerCultivation c = CultivationManager.own(player);
-		// The soul's own path (PlayerCultivation#soulPath): its realm weighs the being, its pool pays.
+		// The highest of the cultivator's paths weighs the being, as the being is weighed by its own highest (#realmOf; the user's ask,
+		// 2026-10-30: a ghost path at Heavenly Lord couldn't take an Entering Nirvana body while the heaven path, the soul's, stood
+		// lower). The soul's own path (PlayerCultivation#soulPath) pays.
 		TwoPaths.Path path = c.soulPath();
-		int own = Math.max(0, TwoPaths.rank(c, path, true)) / Stage.values().length;
+		int own = Math.max(0, TwoPaths.higherRank(c, true)) / Stage.values().length;
 		String refusal = refusal(player, living, own);
 		if (refusal != null) {
 			player.displayClientMessage(Component.translatable(refusal), true);

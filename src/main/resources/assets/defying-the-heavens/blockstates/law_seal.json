@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "law=0": { "model": "defying-the-heavens:block/law_seal" },
+    "law=1": { "model": "defying-the-heavens:block/law_seal" },
+    "law=2": { "model": "defying-the-heavens:block/law_seal" },
+    "law=3": { "model": "defying-the-heavens:block/law_seal" },
+    "law=4": { "model": "defying-the-heavens:block/law_seal" },
+    "law=5": { "model": "defying-the-heavens:block/law_seal" },
+    "law=6": { "model": "defying-the-heavens:block/law_seal" },
+    "law=7": { "model": "defying-the-heavens:block/law_seal" }
+  }
+}

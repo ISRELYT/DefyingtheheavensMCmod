@@ -93,6 +93,11 @@ public final class ClientSpellFx {
 		}
 	}
 
+	/** The view shaken at least this hard now (a secret realm's quake: SecretRealmClient), dying away as any shaking does. */
+	public static void shakeAtLeast(float amount) {
+		shaking = Math.max(shaking, amount);
+	}
+
 	/** GameRenderer#bobHurt's end: the view shaken. */
 	public static void shake(PoseStack pose, float partial) {
 		if (shaking <= 0) return;

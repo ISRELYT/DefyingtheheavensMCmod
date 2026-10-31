@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "": [
+      { "model": "defying-the-heavens:block/spirit_lotus" },
+      { "model": "defying-the-heavens:block/spirit_lotus", "y": 90 },
+      { "model": "defying-the-heavens:block/spirit_lotus", "y": 180 },
+      { "model": "defying-the-heavens:block/spirit_lotus", "y": 270 }
+    ]
+  }
+}

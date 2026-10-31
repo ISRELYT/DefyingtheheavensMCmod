@@ -202,6 +202,11 @@ public final class Sleeves {
 			bearer.displayClientMessage(Component.translatable(ModLang.MSG_CLONE_CANNOT), true);
 			return;
 		}
+		// A secret realm's space is sealed: no sleeve opens in it (SecretRealms).
+		if (ModDimensions.isSecretRealm(bearer.level().dimension())) {
+			bearer.displayClientMessage(Component.translatable(ModLang.MSG_SECRET_SEALED_SPACE), true);
+			return;
+		}
 		if (bearer.isShiftKeyDown()) {
 			if (carrying(bearer.getUUID()) == 0) {
 				bearer.displayClientMessage(Component.translatable(ModLang.MSG_SLEEVE_EMPTY), true);

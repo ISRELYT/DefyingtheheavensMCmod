@@ -63,6 +63,7 @@ public class AlchemyCauldronBlock extends BaseEntityBlock {
 
 	/** Something hot enough to brew over sits right below. */
 	public static boolean isHeated(Level level, BlockPos pos) {
+		if (level.getBlockState(pos).is(ModBlocks.PILL_SAGE_CAULDRON)) return true; // the Pill Sage's burns with a fire of its own
 		BlockState below = level.getBlockState(pos.below());
 		return below.is(Blocks.FIRE) || below.is(Blocks.SOUL_FIRE) || below.is(Blocks.LAVA) || below.is(Blocks.MAGMA_BLOCK)
 				|| CampfireBlock.isLitCampfire(below);

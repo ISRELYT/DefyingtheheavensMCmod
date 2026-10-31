@@ -45,7 +45,7 @@ public final class ModBlockEntities {
 	/** The Alchemy Cauldron's ingredients and brew. */
 	public static final BlockEntityType<AlchemyCauldronBlockEntity> ALCHEMY_CAULDRON = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
 			DefyingTheHeavens.id("alchemy_cauldron"),
-			BlockEntityType.Builder.of(AlchemyCauldronBlockEntity::new, ModBlocks.ALCHEMY_CAULDRON).build(null));
+			BlockEntityType.Builder.of(AlchemyCauldronBlockEntity::new, ModBlocks.ALCHEMY_CAULDRON, ModBlocks.PILL_SAGE_CAULDRON).build(null));
 
 	/** The Artifact Forge's materials and working (see ArtifactForgeBlockEntity). */
 	public static final BlockEntityType<ArtifactForgeBlockEntity> ARTIFACT_FORGE = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
@@ -77,6 +77,21 @@ public final class ModBlockEntities {
 	public static final BlockEntityType<LegendStoneBlockEntity> LEGEND_STONE = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
 			DefyingTheHeavens.id("legend_stone"),
 			BlockEntityType.Builder.of(LegendStoneBlockEntity::new, ModBlocks.LEGEND_STONE).build(null));
+
+	/** A body of the dead: whose, its look and rank, its rot's clock and what it holds (see CorpseBlockEntity). */
+	public static final BlockEntityType<CorpseBlockEntity> CORPSE = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
+			DefyingTheHeavens.id("corpse"),
+			BlockEntityType.Builder.of(CorpseBlockEntity::new, ModBlocks.CORPSE).build(null));
+
+	/** A Seal's keystone: the secret realm it holds shut (see SecretRealmSealBlockEntity), its light the client's. */
+	public static final BlockEntityType<SecretRealmSealBlockEntity> SECRET_REALM_SEAL = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
+			DefyingTheHeavens.id("secret_realm_seal"),
+			BlockEntityType.Builder.of(SecretRealmSealBlockEntity::new, ModBlocks.SECRET_REALM_SEAL).build(null));
+
+	/** A secret realm's killing formation at work (see KillingFormationBlockEntity). */
+	public static final BlockEntityType<KillingFormationBlockEntity> KILLING_FORMATION = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
+			DefyingTheHeavens.id("killing_formation"),
+			BlockEntityType.Builder.of(KillingFormationBlockEntity::new, ModBlocks.KILLING_FORMATION).build(null));
 
 	/** Touching this class registers the block entity types. */
 	public static void register() {

@@ -9,6 +9,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -270,6 +271,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		goalSelector.addGoal(2, new CultivatorGoals.TalkGoal(this));
 		goalSelector.addGoal(2, new CultivatorGoals.KneelGoal(this)); // before one far above it, passing by (the user's pick, 2026-10-27)
 		goalSelector.addGoal(3, new CultivatorGoals.JourneyGoal(this));
+		goalSelector.addGoal(3, new SecretRealmRivals.VisitGoal(this)); // come for a secret realm: its herbs, its vaults, its heart (SecretRealmRivals)
 		goalSelector.addGoal(3, new CultivatorGoals.SeclusionGoal(this));
 		goalSelector.addGoal(3, new CultivatorGoals.ShelterGoal(this)); // a settler, home while a threat is out (Settlements)
 		goalSelector.addGoal(4, new CultivatorGoals.ReturnToTerritoryGoal(this));
@@ -411,6 +413,13 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		if (!stack.isEmpty()) winnings.add(stack);
 	}
 
+	/** What it carries with its winnings (a copy: one come out of a secret realm keeps it, SecretRealmRivals). */
+	public List<ItemStack> winnings() {
+		List<ItemStack> copy = new ArrayList<>();
+		for (ItemStack stack : winnings) copy.add(stack.copy());
+		return copy;
+	}
+
 	/** Set aside, it is nothing to pick out, push or bump into. */
 	@Override
 	public boolean isPickable() {
@@ -482,8 +491,9 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 
 	public int sustainedRank() {
 		if (isMortal()) return MORTAL;
-		// Held by a lower realm as a player is, but never from Void Shattering on (PlayerCultivation#FREE_OF_LOWER_REALMS).
-		boolean held = ModDimensions.isLowerRealm(level().dimension()) && !PlayerCultivation.beyondLowerRealms(getRank());
+		// Held by a lower realm as a player is, but never from Void Shattering on (PlayerCultivation#FREE_OF_LOWER_REALMS); in a secret
+		// realm, by its world's (SecretRealms#lawOf).
+		boolean held = ModDimensions.isLowerRealm(SecretRealms.lawOf(level(), blockPosition())) && !PlayerCultivation.beyondLowerRealms(getRank());
 		int cap = PlayerCultivation.rank(PlayerCultivation.LOWER_REALM_CAP_REALM, PlayerCultivation.LOWER_REALM_CAP_STAGE);
 		return held ? Math.min(getRank(), cap) : getRank();
 	}
@@ -974,9 +984,16 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	protected void customServerAiStep() {
 		super.customServerAiStep();
 		ServerLevel level = (ServerLevel) level();
-		boolean lower = ModDimensions.isLowerRealm(level.dimension());
+		// In a secret realm its world's law holds (SecretRealms#lawOf): a lower realm's holds it there as at home.
+		ResourceKey<Level> law = SecretRealms.lawOf(level, blockPosition());
+		boolean lower = ModDimensions.isLowerRealm(law);
 		cultivation.setLowerRealmBound(lower);
-		cultivation.setInUpperRealm(ModDimensions.isUpperRealm(level.dimension()));
+		cultivation.setInUpperRealm(ModDimensions.isUpperRealm(law));
+		// One come for a secret realm whose opening has passed it by (left waiting at a Seal, or in a realm since shut): gone.
+		if (tickCount % 100 == 37 && !visitRealm.isEmpty() && SecretRealmRivals.stale(level, this)) {
+			discard();
+			return;
+		}
 		if (!caughtUp) {
 			caughtUp = true;
 			catchUp(level);
@@ -1047,9 +1064,9 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		if (lifecycle == Lifecycle.SECT && ModDimensions.isLowerRealm(level.dimension()) && getRank() >= PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.EARLY)) {
 			beginDeparture(level);
 		}
-		if (lifecycle == Lifecycle.ROGUE) decideRogueCourse();
+		if (lifecycle == Lifecycle.ROGUE && livesItsLife()) decideRogueCourse();
 		// A rogue at Qi Refining Mid's gate asks the heavens on its own, at some roadside altar, now and then (NpcLife).
-		if (lifecycle == Lifecycle.ROGUE && awaitsHeavensLeave() && random.nextInt(600) == 0) NpcLife.ritualOffscreen(level, this);
+		if (lifecycle == Lifecycle.ROGUE && livesItsLife() && awaitsHeavensLeave() && random.nextInt(600) == 0) NpcLife.ritualOffscreen(level, this);
 		if (lifecycle == Lifecycle.SECLUDED && getRank() >= PlayerCultivation.rank(Realm.HEAVENLY_BEING, Stage.GRAND_PERFECTION)
 				&& ModDimensions.isLowerRealm(level.dimension())) {
 			endSeclusion(level);
@@ -1124,9 +1141,10 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	 * below). The one is Qi Refining Mid: there it waits on the heavens' leave, as a player does. Package-private for the game tests.
 	 */
 	void advance(double amount) {
-		boolean lower = ModDimensions.isLowerRealm(level().dimension());
+		ResourceKey<Level> law = SecretRealms.lawOf(level(), blockPosition());
+		boolean lower = ModDimensions.isLowerRealm(law);
 		cultivation.setLowerRealmBound(lower);
-		cultivation.setInUpperRealm(ModDimensions.isUpperRealm(level().dimension()));
+		cultivation.setInUpperRealm(ModDimensions.isUpperRealm(law));
 		advanceUnchecked(amount);
 	}
 
@@ -1472,11 +1490,13 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	 * (Possession: it is the body it knows).
 	 */
 	public boolean isAlly(Entity other) {
-		if (sectId == null) return false;
-		if (other instanceof CultivatorNpc npc) return sectId.equals(npc.sectId);
+		// One sent to a secret realm by a sect stands with that sect's own there (SecretRealmRivals), as a member does.
+		UUID own = sectId != null ? sectId : visitingFor;
+		if (own == null) return false;
+		if (other instanceof CultivatorNpc npc) return own.equals(npc.sectId) || own.equals(npc.visitingFor);
 		if (!(other instanceof ServerPlayer player)) return false;
-		if (Possession.inhabits(player.getUUID())) return sectId.equals(Possession.sectOfBody(player.getUUID()));
-		return SectMembership.isDisciple(player.server, sectId, player.getUUID());
+		if (Possession.inhabits(player.getUUID())) return own.equals(Possession.sectOfBody(player.getUUID()));
+		return SectMembership.isDisciple(player.server, own, player.getUUID());
 	}
 
 	@Override
@@ -2008,7 +2028,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	public boolean hurt(DamageSource source, float amount) {
 		if (isVacant() && !source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) return false; // set aside: its body is elsewhere
 		boolean hurt = super.hurt(source, amount);
-		if (hurt && !level().isClientSide && level() instanceof ServerLevel server) {
+		// (A reflection, never truly alive: no regard, grudge or alarm comes of a blow at it.)
+		if (hurt && livesItsLife() && !level().isClientSide && level() instanceof ServerLevel server) {
 			setMeditating(false);
 			LivingEntity attacker = source.getEntity() instanceof LivingEntity living ? living : null;
 			// Struck while begging by the one it begged: no mercy, then; it runs or fights again.
@@ -2040,9 +2061,11 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	public void die(DamageSource source) {
 		super.die(source);
 		if (!(level() instanceof ServerLevel server)) return;
+		if (!livesItsLife()) return; // a reflection (MirrorReflection): no life ended, no killing told of, nobody to mourn it
 		ServerPlayer killer = killerOf(source);
 		HighRealms.gone(server.getServer(), getUUID()); // a place among the few after Four Axis free again
 		Legends.onHolderDeath(this); // a legend it kept lies where it fell (dropped whole: Legends#hold)
+		if (!visitRealm.isEmpty()) SecretRealmRivals.visitorDied(server, this); // one come for a secret realm: gone from its roll
 		NpcLife.end(this);
 		NpcLife.onDeath(server, this); // its fellows cry out, and mourn it where it fell
 		if (sectId != null) SectManager.onMemberDeath(server, this, killer != null);
@@ -2336,6 +2359,11 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		if (wish != null) npc.put("Wish", wish.copy());
 		if (footing != null) npc.put("Footing", NbtUtils.writeBlockPos(BlockPos.containing(footing)));
 		if (courtElement != null) npc.putString("CourtElement", courtElement.name());
+		if (!visitRealm.isEmpty()) {
+			npc.putString("VisitRealm", visitRealm);
+			npc.putInt("VisitOpening", visitOpening);
+			if (visitingFor != null) npc.putUUID("VisitingFor", visitingFor);
+		}
 		tag.put("Npc", npc);
 	}
 
@@ -2350,6 +2378,27 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	public void setSettledAt(BlockPos at) { settledAt = at == null ? null : at.immutable(); }
 	public CompoundTag wish() { return wish; }
 	public void setWish(CompoundTag tag) { wish = tag; }
+
+	// --- One come for a secret realm (SecretRealmRivals) ---
+
+	/**
+	 * The secret realm it came for ("" none), the opening it belongs to (SecretRealms.Record#openings: the coming one while it waits at the
+	 * Seal), and the sect that sent it (null: a rogue's own venture). Sent, it is no member of that sect (its rolls stay as they are), but its
+	 * sect's own are its allies, and they its (isAlly).
+	 */
+	private String visitRealm = "";
+	private int visitOpening;
+	private UUID visitingFor;
+
+	public String visitRealm() { return visitRealm; }
+	public int visitOpening() { return visitOpening; }
+	public UUID visitingFor() { return visitingFor; }
+
+	public void setVisit(String realm, int opening, UUID sect) {
+		visitRealm = realm == null ? "" : realm;
+		visitOpening = opening;
+		visitingFor = sect;
+	}
 
 	@Override
 	public void readAdditionalSaveData(CompoundTag tag) {
@@ -2390,6 +2439,9 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		seclusionAttempts = npc.getInt("SeclusionAttempts");
 		settledAt = npc.contains("SettledAt") ? NbtUtils.readBlockPos(npc.getCompound("SettledAt")) : null;
 		wish = npc.contains("Wish") ? npc.getCompound("Wish").copy() : null;
+		visitRealm = npc.getString("VisitRealm");
+		visitOpening = npc.getInt("VisitOpening");
+		visitingFor = npc.hasUUID("VisitingFor") ? npc.getUUID("VisitingFor") : null;
 		aggressed.clear();
 		ListTag list = npc.getList("Aggressed", Tag.TAG_INT_ARRAY);
 		for (Tag entry : list) aggressed.add(NbtUtils.loadUUID(entry));
@@ -2437,9 +2489,18 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	/** Every NPC cultivator loaded on the server (kept by ServerEntityEvents in CultivationEvents). */
 	private static final Set<CultivatorNpc> LOADED = new HashSet<>();
 
+	/**
+	 * Whether it lives a life of its own: a rogue's course, the world's ledgers of who lives where (RogueIndex, NpcLedger). Not one called
+	 * up for a moment and gone after (a Jade Lake Mirage's reflection: MirrorReflection).
+	 */
+	public boolean livesItsLife() {
+		return true;
+	}
+
 	public static void onLoad(Entity entity) {
 		if (!(entity instanceof CultivatorNpc npc)) return;
 		LOADED.add(npc);
+		if (!npc.livesItsLife()) return;
 		// Seen from the moment it is first in the world, ticking yet or not: one put down in land that unloads before it ever
 		// ticks (a hermit at the edge of what's loaded) still catches up on the time away, as NpcLedger reckons it will.
 		if (npc.lastSeen < 0) npc.lastSeen = npc.level().getGameTime();
@@ -2456,6 +2517,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	public static void onUnload(Entity entity) {
 		if (!(entity instanceof CultivatorNpc npc)) return;
 		LOADED.remove(npc);
+		if (!npc.livesItsLife()) return;
 		RogueIndex.onUnload(npc);
 		NpcLedger.onUnload(npc);
 		// Its land unloading (not its death or discarding), a member's place is kept: it stays there till it is next loaded.

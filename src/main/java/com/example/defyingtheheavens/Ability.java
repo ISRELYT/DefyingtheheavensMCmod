@@ -127,7 +127,19 @@ public enum Ability {
 	 * Heavenly Being by the living: offer the player one looks at a place in one's sleeve, to carry them wherever one goes, up through the
 	 * passages between the realms whatever their realm; sneaking, let them out (Sleeves). An act: "on" while the sleeve holds anyone.
 	 */
-	SLEEVE("sleeve", false, c -> !c.netherworld().ghost() && c.knowsTechnique(Technique.SLEEVE) && Technique.SLEEVE.wieldable(c));
+	SLEEVE("sleeve", false, c -> !c.netherworld().ghost() && c.knowsTechnique(Technique.SLEEVE) && Technique.SLEEVE.wieldable(c)),
+	/**
+	 * A technique (Technique#SWORD_INTENT, the Sunken Sword Tomb's Great Inheritance, 2026-10-31), wielded from Core Formation: a standing
+	 * switch, off to begin with, for qi a second (WarArts): every blow one lands with a blade is followed by a second cut of lingering intent,
+	 * and the tomb's own intent doesn't cut one.
+	 */
+	SWORD_INTENT("sword_intent", false, c -> c.knowsTechnique(Technique.SWORD_INTENT) && Technique.SWORD_INTENT.wieldable(c)),
+	/**
+	 * A technique (Technique#BLOOD_BATTLE, the Ancient Battlefield's Great Inheritance, 2026-10-31), wielded from Nascent Soul: a standing
+	 * switch, off to begin with, for qi a second (WarArts): every blow one lands heals one a share of it, and the more foes about one, the less
+	 * their blows harm.
+	 */
+	BLOOD_BATTLE("blood_battle", false, c -> c.knowsTechnique(Technique.BLOOD_BATTLE) && Technique.BLOOD_BATTLE.wieldable(c));
 
 	private final String id;
 	private final boolean onByDefault;
@@ -217,6 +229,11 @@ public enum Ability {
 			case SMALL_WORLD -> Component.translatable(key, SmallWorlds.DOOR_TICKS / 20, SmallWorlds.radius(c.laws().total()), SmallWorlds.PER_LAW_LEVEL);
 			// Its reach, how many it holds, and a True Immortal's share of its body at the Immortal Gate (in hundredths of a body).
 			case SLEEVE -> Component.translatable(key, Math.round(Sleeves.REACH), Sleeves.MOST, Math.round(Sleeves.GATE_BASE_BODIES * 100));
+			// The second cut's share of the blow, and what it costs a second.
+			case SWORD_INTENT -> Component.translatable(key, Math.round(WarArts.INTENT_SHARE * 100), Math.round(WarArts.cost(c)));
+			// The share of each blow healed, the harm spared for each foe about one past the first and at most, its reach, and its cost.
+			case BLOOD_BATTLE -> Component.translatable(key, Math.round(WarArts.BLOOD_HEAL * 100), Math.round(WarArts.BLOOD_GUARD * 100),
+					Math.round(WarArts.BLOOD_GUARD_MOST * 100), WarArts.BLOOD_REACH, Math.round(WarArts.cost(c)));
 			default -> Component.translatable(key);
 		};
 	}

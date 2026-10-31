@@ -46,10 +46,14 @@ public final class Rumours extends SavedData {
 	public static final double FAR_REACH = 2500;
 
 	/**
-	 * STELE: a Method Stele in the Netherworld, told of only by its dead. LEGEND: a legendary weapon (Legends), told of everywhere. Saved by
-	 * name: new kinds go at the end.
+	 * STELE: a Method Stele in the Netherworld, told of only by its dead. LEGEND: a legendary weapon (Legends), told of everywhere. REALM: a secret
+	 * realm's tales (SecretRealms: its stirring, those who fell in it, who took its inheritance), told of throughout its world. Saved by name:
+	 * new kinds go at the end.
 	 */
-	public enum Kind { HERB, FRUIT, PEACH_TREE, CAVE, CORE, KILLING, STELE, LEGEND }
+	public enum Kind { HERB, FRUIT, PEACH_TREE, CAVE, CORE, KILLING, STELE, LEGEND, REALM }
+
+	/** A secret realm's stirring is talked of this long (ticks: two days), those who fell in it three. */
+	public static final long STIRRING_REMEMBERED = 2 * 24_000L, FALLEN_REMEMBERED = 3 * 24_000L;
 
 	/** One thing worth telling of. */
 	public static final class Rumour {
@@ -85,6 +89,7 @@ public final class Rumours extends SavedData {
 				case HERB, FRUIT, PEACH_TREE -> age(now) >= OLD_FROM;
 				case KILLING -> now - since < KILLING_REMEMBERED;
 				case CAVE, CORE, STELE, LEGEND -> true;
+				case REALM -> id.endsWith(":stirs") ? now - since < STIRRING_REMEMBERED : !id.contains(":fallen:") || now - since < FALLEN_REMEMBERED;
 			};
 		}
 
@@ -215,6 +220,22 @@ public final class Rumours extends SavedData {
 		PENDING.add(new Rumour("legend:" + legend.getId() + ":" + tale, Kind.LEGEND, dimension, site.immutable(), legend.getId(), 0, now, holder));
 	}
 
+	/** {@code realm} stirs, its Seal at {@code seal} in {@code dimension}: told of in its world while it stirs and a while after. */
+	public static void noteRealmStirring(SecretRealm realm, ResourceKey<Level> dimension, BlockPos seal, long now) {
+		if (seal == null) return;
+		PENDING.add(new Rumour("realm:" + realm.getId() + ":stirs", Kind.REALM, dimension, seal.immutable(), realm.getId(), 0, now, ""));
+	}
+
+	/** {@code name} fell in {@code realm}: what they carried lies there (told of a few days). */
+	public static void noteRealmFallen(SecretRealm realm, String name, long now) {
+		PENDING.add(new Rumour("realm:" + realm.getId() + ":fallen:" + name, Kind.REALM, realm.home(), realm.centre(), realm.getId(), 0, now, name));
+	}
+
+	/** {@code name} took {@code realm}'s Great Inheritance: told of for good. */
+	public static void noteRealmInheritor(SecretRealm realm, String name, long now) {
+		PENDING.add(new Rumour("realm:" + realm.getId() + ":heir", Kind.REALM, realm.home(), realm.centre(), realm.getId(), 0, now, name));
+	}
+
 	/** A player has killed a cultivator. */
 	public static void noteKilling(CultivatorNpc victim, ServerPlayer killer) {
 		PENDING.add(new Rumour("kill:" + victim.getUUID(), Kind.KILLING, victim.level().dimension(), victim.blockPosition(),
@@ -262,7 +283,8 @@ public final class Rumours extends SavedData {
 			boolean legend = rumour.kind == Kind.LEGEND; // the legends are talked of in every world, however far off
 			if (!legend && rumour.dimension != level.dimension() || told.contains(rumour.id) || !rumour.current(now)) continue;
 			if (rumour.kind == Kind.STELE && !npc.isGhost()) continue; // only the dead tell of the steles
-			if (!legend && rumour.pos.distSqr(npc.blockPosition()) > reach * reach) continue;
+			// A secret realm's tales go round its whole world.
+			if (!legend && rumour.kind != Kind.REALM && rumour.pos.distSqr(npc.blockPosition()) > reach * reach) continue;
 			if (gone(level, rumour)) {
 				PENDING.add(new Forget(rumour.id));
 				continue;
@@ -323,6 +345,13 @@ public final class Rumours extends SavedData {
 				yield Component.translatable(ModLang.rumour("stele"), name, direction, country, rough);
 			}
 			case LEGEND -> legendTale(rumour, teller, direction, country, rough);
+			case REALM -> {
+				SecretRealm secret = SecretRealm.byId(rumour.subject);
+				Component name = secret == null ? Component.literal(rumour.subject) : secret.displayName();
+				if (rumour.id.endsWith(":stirs")) yield Component.translatable(ModLang.rumour("realm.stirs"), name, direction, country, rough);
+				if (rumour.id.endsWith(":heir")) yield Component.translatable(ModLang.rumour("realm.heir"), rumour.detail, name);
+				yield Component.translatable(ModLang.rumour("realm.fallen"), rumour.detail, name);
+			}
 		};
 	}
 

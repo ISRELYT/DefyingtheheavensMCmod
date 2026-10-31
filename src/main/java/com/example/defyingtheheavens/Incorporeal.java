@@ -23,9 +23,17 @@ public final class Incorporeal {
 		return SoulProjection.isSoul(player) || isRuledGhost(player);
 	}
 
-	/** A ghost the dead's rules of touch hold: not a creative or spectating one, nor a Ghost King, whose hands are its own. */
+	/**
+	 * A ghost the dead's rules of touch hold: not a creative or spectating one, nor a Ghost King, whose hands are its own, nor one in the
+	 * Yellow Springs Hollow (a secret realm of the dead: there the dead lay hands on things as the living do).
+	 */
 	public static boolean isRuledGhost(Player player) {
-		return isGhost(player) && !GhostSystem.isKing(player);
+		return isGhost(player) && !GhostSystem.isKing(player) && !inHollow(player);
+	}
+
+	/** Whether {@code player} stands in the Yellow Springs Hollow (SecretRealm#YELLOW_SPRINGS_HOLLOW). Both sides. */
+	public static boolean inHollow(Player player) {
+		return ModDimensions.isSecretRealm(player.level().dimension()) && SecretRealm.at(player.getX(), player.getZ()) == SecretRealm.YELLOW_SPRINGS_HOLLOW;
 	}
 
 	/** One of the dead in earnest, a Ghost King or not: not a creative or spectating ghost, who keeps the look and no rule. */

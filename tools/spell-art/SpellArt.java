@@ -535,6 +535,11 @@ public class SpellArt {
 		double tpp = 2;
 		/** The render scale suggested for it in game. */
 		double scale = 4;
+		/**
+		 * A creature's (Realms: a guardian), not a spell's shape: several loops of its own the game picks between (asleep, standing, walking), so
+		 * none is carried into the rest nor its spins split off ({@link #carryTheLoop}, {@link #splitSpins}): what a loop doesn't key eases to rest.
+		 */
+		boolean creature;
 		int texW, texH;
 
 		Model(String id) { this.id = id; }
@@ -990,8 +995,10 @@ public class SpellArt {
 	static void write(Path assets, Model m, String folder) throws IOException {
 		m.settle();
 		for (Anim a : m.anims) for (String bone : a.bones.keySet()) if (m.get(bone) == null) throw new IllegalStateException(m.id + "'s " + a.name + " moves no bone " + bone);
-		splitSpins(m);
-		carryTheLoop(m);
+		if (!m.creature) {
+			splitSpins(m);
+			carryTheLoop(m);
+		}
 		pack(m);
 		BufferedImage[] painted = split(paint(m));
 		write(assets.resolve("textures/entity/" + folder + "/" + m.id + ".png"), painted[0]);
@@ -1088,24 +1095,38 @@ public class SpellArt {
 			{"true_dragon", (Build) TrueDragon::trueDragon},
 	};
 
+	/**
+	 * The secret realms' guardians (2026-10-31, Realms), written into geo/realm, animations/realm and textures/entity/realm by {@code --realm}.
+	 */
+	static final Object[][] REALM = {
+			{"vine_keeper", (Build) Realms::vineKeeper}, {"bronze_puppet", (Build) Realms::bronzePuppet},
+			{"sword_wraith", (Build) Realms::swordWraith}, {"bone_soldier", (Build) Realms::boneSoldier},
+			{"battle_spirit", (Build) Realms::battleSpirit}, {"general_spirit", (Build) Realms::generalSpirit},
+			{"army_spirit", (Build) Realms::armySpirit}, {"dragon_echo", (Build) Realms::dragonEcho},
+			{"master_puppet", (Build) Realms::masterPuppet}, {"ferryman", (Build) Realms::ferryman}, {"drowned_shade", (Build) Realms::drownedShade},
+			{"mirror_shade", (Build) Realms::mirrorShade}, {"holy_remnant", (Build) Realms::holyRemnant},
+			{"decayed_guard", (Build) Realms::decayedGuard}, {"decayed_immortal", (Build) Realms::decayedImmortal},
+	};
+
 	public static void main(String[] args) throws Exception {
 		if (args.length < 1) {
 			System.err.println("java SpellArt.java <the mod's src/main/resources/assets/defying-the-heavens> [ids...]");
 			System.err.println("java SpellArt.java --stored <dir, e.g. tools/spell-art/stored> [ids...]   (the stored true beasts)");
 			System.err.println("java SpellArt.java --primordial <the mod's assets> [ids...]   (the primordial beasts made here)");
+			System.err.println("java SpellArt.java --realm <the mod's assets> [ids...]   (the secret realms' guardians)");
 			System.exit(1);
 		}
-		boolean stored = args[0].equals("--stored"), primordial = args[0].equals("--primordial");
-		int first = stored || primordial ? 1 : 0;
+		boolean stored = args[0].equals("--stored"), primordial = args[0].equals("--primordial"), realm = args[0].equals("--realm");
+		int first = stored || primordial || realm ? 1 : 0;
 		Path assets = Path.of(args[first]);
 		Set<String> only = new LinkedHashSet<>();
 		for (int i = first + 1; i < args.length; i++) only.add(args[i]);
-		for (Object[] spell : stored ? STORED : primordial ? PRIMORDIAL : SPELLS) {
+		for (Object[] spell : stored ? STORED : primordial ? PRIMORDIAL : realm ? REALM : SPELLS) {
 			String id = (String) spell[0];
 			if (!only.isEmpty() && !only.contains(id)) continue;
 			Model m = new Model(id);
 			((Build) spell[1]).build(m);
-			write(assets, m, primordial ? "demon_beast" : "spell");
+			write(assets, m, primordial ? "demon_beast" : realm ? "realm" : "spell");
 		}
 	}
 }

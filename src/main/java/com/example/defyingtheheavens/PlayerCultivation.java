@@ -213,6 +213,8 @@ public class PlayerCultivation {
 
 	/** The body they were born with (see Physique): null until rolled, on their first join. Saved and synced. */
 	private Physique physique;
+	/** Its marrow washed by the Marrow-Washing Fruit (the Cave Abode's, once a life): its physique a grade higher ({@link #physiqueGrade}). */
+	private boolean marrowWashed;
 	/** A Myriad Form Body's two forms (Physique#rollForms): bodies it was born with besides, all their gifts its own. Saved and synced. */
 	private final EnumSet<Physique> forms = EnumSet.noneOf(Physique.class);
 	/** Three or True Element Roots (or a form of them): the elements whose heaven methods they may take up. Saved and synced. */
@@ -309,16 +311,38 @@ public class PlayerCultivation {
 	/** Born with {@code body}: their physique, or one of a Myriad Form Body's forms. Ask this, not {@link #physique()} ==. */
 	public boolean hasPhysique(Physique body) { return physique() == body || forms.contains(body); }
 
+	public boolean isMarrowWashed() { return marrowWashed; }
+
+	public void setMarrowWashed(boolean washed) { marrowWashed = washed; }
+
+	/** Its physique's grade as it stands: its own, a grade higher once its marrow is washed (never past Immortal). */
+	public Physique.Grade physiqueGrade() {
+		Physique.Grade grade = physique().grade();
+		return marrowWashed ? Physique.Grade.values()[Math.min(Physique.Grade.values().length - 1, grade.ordinal() + 1)] : grade;
+	}
+
+	/** Its talent (Lifespan#talent): its physique's (Physique#talent), a grade higher's once its marrow is washed. */
+	public double physiqueTalent() {
+		Physique.Grade base = physique() == Physique.ETERNAL_REINCARNATION_BODY ? Physique.Grade.LOW : physique().grade();
+		return marrowWashed ? Physique.Grade.values()[Math.min(Physique.Grade.values().length - 1, base.ordinal() + 1)].talent() : physique().talent();
+	}
+
+	/** Its small edge to either path's pace (Physique#speed), a grade higher's once its marrow is washed. */
+	public double physiqueSpeed() {
+		Physique.Grade base = physique() == Physique.ETERNAL_REINCARNATION_BODY ? Physique.Grade.LOW : physique().grade();
+		return marrowWashed ? Physique.Grade.values()[Math.min(Physique.Grade.values().length - 1, base.ordinal() + 1)].speed() : physique().speed();
+	}
+
 	/** What the heaven path's cultivation is multiplied by for the body they were born with (Physique#cultivationFactor, its forms' too). */
 	public double physiqueCultivationFactor() {
-		double factor = physique().cultivationFactor() * physique().speed(); // its grade's small edge (Physique#speed)
+		double factor = physique().cultivationFactor() * physiqueSpeed(); // its grade's small edge (Physique#speed)
 		for (Physique form : forms) factor *= form.cultivationFactor();
 		return factor;
 	}
 
 	/** What the ghost path's cultivation is multiplied by for the body they were born with (Physique#ghostFactor, its forms' too). */
 	public double physiqueGhostFactor() {
-		double factor = physique().ghostFactor() * physique().speed(); // its grade's small edge (Physique#speed)
+		double factor = physique().ghostFactor() * physiqueSpeed(); // its grade's small edge (Physique#speed)
 		for (Physique form : forms) factor *= form.ghostFactor();
 		return factor;
 	}
@@ -480,6 +504,16 @@ public class PlayerCultivation {
 		java.util.Arrays.fill(statPoints, 0);
 		statPointOrder.clear();
 	}
+
+	/** Stat points given by Ancient Essence (a secret realm's: AncientEssenceItem), over those the realms earn (StatPoints#earned). */
+	private int essencePoints;
+
+	public int essencePoints() { return essencePoints; }
+
+	public void addEssencePoint() { essencePoints++; }
+
+	/** As the server told it (the client's copy, ModPackets#sendSync). */
+	public void setEssencePoints(int points) { essencePoints = Math.max(0, points); }
 
 	/** The practice gathered in each craft (CraftMastery), by the craft's place: kept for life, carried over a reincarnation. */
 	private final int[] mastery = new int[CraftMastery.Craft.values().length];
@@ -703,16 +737,21 @@ public class PlayerCultivation {
 
 	/**
 	 * The path the nascent soul is born of (TwoPaths#awakens): the heaven path once it stands at Nascent Soul, else the ghost path.
-	 * The soul's strength is that path's, it draws on that path's pool, and losing it is that path's fall (SoulProjection).
+	 * The soul draws on that path's pool, and losing it is that path's fall (SoulProjection); how far it reaches and what it weighs go
+	 * by the highest of the paths ({@link #soulRank}).
 	 */
 	public TwoPaths.Path soulPath() {
 		TwoPaths.Path path = TwoPaths.awakens(this, Realm.NASCENT_SOUL, true);
 		return path == null ? TwoPaths.Path.HEAVEN : path;
 	}
 
-	/** The rank Soul Projection reckons from: the soul's path's, as wielded, and never below Nascent Soul Early. */
+	/**
+	 * The rank Soul Projection reckons from: the highest of the paths', as wielded (TwoPaths#higherRank; the user's ask, 2026-10-30,
+	 * possession and then the rest of the soul "to include the other paths as well": it was the soul's own path's), and never below
+	 * Nascent Soul Early.
+	 */
 	private int soulRank() {
-		return Math.max(rank(Realm.NASCENT_SOUL, Stage.EARLY), TwoPaths.rank(this, soulPath(), true));
+		return Math.max(rank(Realm.NASCENT_SOUL, Stage.EARLY), TwoPaths.higherRank(this, true));
 	}
 
 	/**
@@ -731,8 +770,9 @@ public class PlayerCultivation {
 	}
 
 	/**
-	 * From Void Shattering on (the soul's path, as wielded) the tether has no end (the user's ask, 2026-10-23): the soul goes as far as
-	 * it will, at what it costs beside its body ({@link #soulCostPerSecond}, its reach always nothing).
+	 * From Void Shattering on (the highest of the paths, as wielded: {@link #soulRank}) the tether has no end (the user's ask,
+	 * 2026-10-23): the soul goes as far as it will, at what it costs beside its body ({@link #soulCostPerSecond}, its reach always
+	 * nothing).
 	 */
 	public boolean soulTetherEndless() {
 		return soulRank() >= rank(Realm.VOID_SHATTERING, Stage.EARLY);
@@ -1043,17 +1083,20 @@ public class PlayerCultivation {
 	/** Awakened by the realm and switched on: the ability takes effect. */
 	public boolean isAbilityActive(Ability ability) { return ability.isUnlocked(this) && isAbilityEnabled(ability); }
 
-	/** Switched-off abilities as a bit mask over their ordinals, for the sync packet. */
-	public int getDisabledAbilityMask() {
-		int mask = 0;
-		for (Ability ability : disabledAbilities) mask |= 1 << ability.ordinal();
+	/**
+	 * Switched-off abilities as a bit mask over their ordinals, for the sync packet: a long, so 64 at most (an int's 32 were outgrown by the
+	 * secret realms' war arts, 2026-10-31: the 33rd's bit came round onto the first's).
+	 */
+	public long getDisabledAbilityMask() {
+		long mask = 0;
+		for (Ability ability : disabledAbilities) mask |= 1L << ability.ordinal();
 		return mask;
 	}
 
-	public void setDisabledAbilityMask(int mask) {
+	public void setDisabledAbilityMask(long mask) {
 		disabledAbilities.clear();
 		for (Ability ability : Ability.values()) {
-			if ((mask & (1 << ability.ordinal())) != 0) disabledAbilities.add(ability);
+			if ((mask & (1L << ability.ordinal())) != 0) disabledAbilities.add(ability);
 		}
 	}
 
@@ -1337,6 +1380,7 @@ public class PlayerCultivation {
 		mortalStage = old.mortalStage;
 		tempering = old.tempering;
 		bodyRefining = old.bodyRefining;
+		essencePoints = old.essencePoints;
 		realm = old.realm;
 		stage = old.stage;
 		cultivation = old.cultivation;
@@ -1365,6 +1409,7 @@ public class PlayerCultivation {
 		manualSpells.addAll(old.manualSpells);
 		System.arraycopy(old.mastery, 0, mastery, 0, mastery.length); // and the crafts' mastery
 		tribulationBrand = old.tribulationBrand; // and heaven's brand, which no new body sheds
+		marrowWashed = old.marrowWashed; // and its washed marrow, with the body it keeps
 	}
 
 	/**
@@ -1429,6 +1474,7 @@ public class PlayerCultivation {
 		tag.putBoolean("InTribulation", inTribulation);
 		tag.putInt("Alignment", alignment);
 		if (physique != null) tag.putString("Physique", physique.getId());
+		if (marrowWashed) tag.putBoolean("MarrowWashed", true);
 		if (!forms.isEmpty()) {
 			ListTag bodies = new ListTag();
 			for (Physique form : forms) bodies.add(StringTag.valueOf(form.getId()));
@@ -1440,6 +1486,7 @@ public class PlayerCultivation {
 			tag.put("RootElements", roots);
 		}
 		if (bodyRefining > 0) tag.putInt("BodyRefining", bodyRefining);
+		if (essencePoints > 0) tag.putInt("EssencePoints", essencePoints);
 		if (statPointsSpent() > 0) {
 			tag.putIntArray("StatPoints", statPoints.clone());
 			tag.putIntArray("StatPointOrder", statPointOrder());
@@ -1508,6 +1555,7 @@ public class PlayerCultivation {
 		c.mortal = tag.contains("Mortal") && tag.getBoolean("Mortal");
 		// The body first: shattered meridians temper on past a mortal's Peak (saves from before physiques roll one on joining).
 		c.physique = tag.contains("Physique") ? Physique.byId(tag.getString("Physique")) : null;
+		c.marrowWashed = tag.getBoolean("MarrowWashed");
 		ListTag bodies = tag.getList("PhysiqueForms", Tag.TAG_STRING);
 		for (int i = 0; i < bodies.size(); i++) {
 			Physique form = Physique.byId(bodies.getString(i));
@@ -1522,6 +1570,7 @@ public class PlayerCultivation {
 			}
 		}
 		c.setBodyRefining(tag.getInt("BodyRefining"));
+		c.essencePoints = Math.max(0, tag.getInt("EssencePoints"));
 		int[] points = tag.getIntArray("StatPoints"); // none spent (or a save from before them): all zero
 		int[] order = tag.getIntArray("StatPointOrder");
 		int[] counted = new int[c.statPoints.length];

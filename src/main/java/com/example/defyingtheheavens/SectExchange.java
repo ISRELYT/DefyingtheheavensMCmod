@@ -69,6 +69,8 @@ public final class SectExchange {
 		// Inner Disciples and up
 		wares.add(new Ware("foundation_pill", PillItem.create(ModItems.FOUNDATION_PILL, pills, years), 40 * p, 1, NpcTitle.INNER_DISCIPLE));
 		wares.add(new Ware("core_pill", PillItem.create(ModItems.CORE_PILL, pills, years), 80 * p, 1, NpcTitle.INNER_DISCIPLE));
+		// The way out of a secret realm before it closes (SecretRealms).
+		wares.add(new Ware("departure_jade", new ItemStack(ModItems.DEPARTURE_JADE), 30 * p, 1, NpcTitle.INNER_DISCIPLE));
 		List<Spell> spells = new ArrayList<>();
 		for (Spell spell : Spell.values()) {
 			if (spell.isHeaven() && spell.element() == element && spell.heavenRealm().ordinal() <= realm.ordinal()) spells.add(spell);

@@ -182,7 +182,9 @@ public final class SmallWorlds {
 		if (Data.get(p.server).of(p.getUUID()) == null) return Component.translatable(ModLang.CMD_WORLD_NONE);
 		if (!Laws.isImmortal(c)) return Component.translatable(ModLang.MSG_DOOR_NOT_IMMORTAL);
 		ResourceKey<Level> dimension = p.level().dimension();
-		boolean place = ModDimensions.isPassage(dimension) || ModDimensions.isInnerRealm(dimension) || ModDimensions.isSmallWorld(dimension);
+		// (Nor in a secret realm: its space is sealed, SecretRealms.)
+		boolean place = ModDimensions.isPassage(dimension) || ModDimensions.isInnerRealm(dimension) || ModDimensions.isSmallWorld(dimension)
+				|| ModDimensions.isSecretRealm(dimension);
 		boolean busy = !p.isAlive() || p.isSpectator() || Incorporeal.isGhost(p) || SoulProjection.isActive(p.getUUID()) || Clones.inClone(p)
 				|| TribulationManager.isActive(p.getUUID()) || CoreDetonation.isCharging(p.getUUID()) || p.server.getLevel(ModDimensions.SMALL_WORLD) == null;
 		return place || busy ? Component.translatable(ModLang.MSG_DOOR_NOT_HERE) : null;

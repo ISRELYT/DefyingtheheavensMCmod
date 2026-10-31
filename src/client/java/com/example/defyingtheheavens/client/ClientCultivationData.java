@@ -15,7 +15,7 @@ public final class ClientCultivationData {
 	public static boolean isMeditating() { return meditating; }
 
 	public static void update(int realm, int stage, double cultivation, double qi, boolean meditating, boolean lowerRealmBound,
-							  boolean inUpperRealm, int disabledAbilities, int pressureStages, double pressurePenalty,
+							  boolean inUpperRealm, long disabledAbilities, int pressureStages, double pressurePenalty,
 							  boolean mortal, int mortalStage, double tempering, int preparedRealm, double preparedBonus, double qiBoost,
 							  double pillResistance, double medicinalQi, int alignment, double gearQiBonus, int[] wheel, int soulState,
 								  boolean heavensLeave, int favour) {

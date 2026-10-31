@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "facing=north,broken=false,tilted=false": { "model": "defying-the-heavens:block/buried_sword" },
+    "facing=east,broken=false,tilted=false": { "model": "defying-the-heavens:block/buried_sword", "y": 90 },
+    "facing=south,broken=false,tilted=false": { "model": "defying-the-heavens:block/buried_sword", "y": 180 },
+    "facing=west,broken=false,tilted=false": { "model": "defying-the-heavens:block/buried_sword", "y": 270 },
+    "facing=north,broken=true,tilted=false": { "model": "defying-the-heavens:block/buried_sword_broken" },
+    "facing=east,broken=true,tilted=false": { "model": "defying-the-heavens:block/buried_sword_broken", "y": 90 },
+    "facing=south,broken=true,tilted=false": { "model": "defying-the-heavens:block/buried_sword_broken", "y": 180 },
+    "facing=west,broken=true,tilted=false": { "model": "defying-the-heavens:block/buried_sword_broken", "y": 270 },
+    "facing=north,broken=false,tilted=true": { "model": "defying-the-heavens:block/buried_sword_tilted" },
+    "facing=east,broken=false,tilted=true": { "model": "defying-the-heavens:block/buried_sword_tilted", "y": 90 },
+    "facing=south,broken=false,tilted=true": { "model": "defying-the-heavens:block/buried_sword_tilted", "y": 180 },
+    "facing=west,broken=false,tilted=true": { "model": "defying-the-heavens:block/buried_sword_tilted", "y": 270 },
+    "facing=north,broken=true,tilted=true": { "model": "defying-the-heavens:block/buried_sword_broken_tilted" },
+    "facing=east,broken=true,tilted=true": { "model": "defying-the-heavens:block/buried_sword_broken_tilted", "y": 90 },
+    "facing=south,broken=true,tilted=true": { "model": "defying-the-heavens:block/buried_sword_broken_tilted", "y": 180 },
+    "facing=west,broken=true,tilted=true": { "model": "defying-the-heavens:block/buried_sword_broken_tilted", "y": 270 }
+  }
+}

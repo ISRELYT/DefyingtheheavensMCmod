@@ -14,6 +14,7 @@ import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.fabricmc.fabric.api.networking.v1.EntityTrackingEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -80,6 +81,7 @@ public final class CultivationEvents {
 		LawDomains.onDisconnect(player); // and a Law's domain folds away
 		ChaosFrontier.onDisconnect(player);
 		SmallWorlds.onDisconnect(player); // a small world's door closes
+		SecretRealms.onDisconnect(player); // (back in a secret realm, they come out beside its Seal: SecretRealms#onJoin)
 		PlayerTitles.onDisconnect(player); // their plate gone from everyone's view
 		FiveDecays.forget(player.getUUID()); // a judgement under way comes again after the return (the record keeps it)
 		Wishes.forget(player.getUUID());
@@ -109,6 +111,7 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(ChaosFrontier::tick); // the Chaos Frontier's storm (sheltered in those domains), its fiends
 		ServerTickEvents.END_SERVER_TICK.register(FirstFlame::tick); // the First Flame's basin laid when someone first comes near
 		ServerTickEvents.END_SERVER_TICK.register(SmallWorlds::tick); // the small worlds' land laid out, their doors, those who fall off them
+		ServerTickEvents.END_SERVER_TICK.register(SecretRealms::tick); // the secret realms' cycles, their lands readied, the law inside them
 		ServerTickEvents.END_SERVER_TICK.register(FiveDecays::tick); // the Five Decays of Heaven and Man, every immortal's tenth day
 		Wishes.register();
 		ServerTickEvents.END_SERVER_TICK.register(Spells::tick);
@@ -187,6 +190,8 @@ public final class CultivationEvents {
 		ServerLifecycleEvents.SERVER_STARTED.register(NirvanaCamp::ensure);
 		// The Immortal Gate over the void sea and the Southern Heavenly Gate (built the first time; their light as the Gate stands).
 		ServerLifecycleEvents.SERVER_STARTED.register(ImmortalGate::ensure);
+		// The secret realms' Seals (built the first time); an opening the last server stopped in the middle of ends.
+		ServerLifecycleEvents.SERVER_STARTED.register(SecretRealms::onServerStarted);
 		ServerLifecycleEvents.SERVER_STOPPING.register(ImmortalGate::settleAll); // those flying to or from it are the camp's again
 		// The Gate of the Yellow Springs at the Nether's 0, 0, up the Soul River (placed the first time, back if removed).
 		ServerLifecycleEvents.SERVER_STARTED.register(NetherRift::ensure);
@@ -211,6 +216,7 @@ public final class CultivationEvents {
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> HeavenSpells.clear());
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> SpatialStorms.clear());
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+			Corpses.clear();
 			Formations.clear();
 			CultivatorNpc.clearLoaded();
 			SoulProjection.clear();
@@ -242,6 +248,8 @@ public final class CultivationEvents {
 			LawDomains.clear();
 			ChaosFrontier.clear();
 			SmallWorlds.clear();
+			SecretRealms.clear();
+			WarArts.clear();
 			PlayerTitles.clear();
 		});
 
@@ -251,6 +259,13 @@ public final class CultivationEvents {
 			if (!(world instanceof ServerLevel level) || !(player instanceof ServerPlayer sp)) return true;
 			if (Incorporeal.is(sp)) return false; // the dead and wandering souls break nothing
 			if (!(state.getBlock() instanceof SectBarrierBlock) && Formations.protectsGround(sp, pos)) return false;
+			// A secret realm's walls that hold (RealmWorks#holds): the Cave Abode's maze, its way walked, never dug round; the Ruins'
+			// ancestral hall while its formation stands; the Tomb's halls and sanctum.
+			String holds = sp.isCreative() ? null : RealmWorks.holdsAt(level, pos);
+			if (holds != null) {
+				sp.displayClientMessage(Component.translatable(holds).withStyle(ChatFormatting.GRAY), true);
+				return false;
+			}
 			// A spell's block (a wall, a tree, a field's ice) is taken up, dropping nothing: spells are no quarry.
 			if (HeavenSpells.breakTemporary(level, pos)) return false;
 			// One's own sect's grounds (SectMembership): no trespass; its treasury the elders' alone.
@@ -328,6 +343,7 @@ public final class CultivationEvents {
 			CoreDetonation.onJoin(player); // no act's switch left on from a server that stopped mid-way
 			FiveDecays.onJoin(player); // the Decays' time stood still while they were away
 			SmallWorlds.onJoin(player); // their own small world's door, and out of one not theirs to be in
+			SecretRealms.onJoin(player); // logged out in a secret realm (or the server stopped): beside its Seal
 			Sleeves.onJoin(player); // back in a sleeve, or let out of one while away: set right a tick on
 			PlayerTitles.onJoin(player); // every player's plate told (their title, their sect's title over them)
 			RealmSuppressionHandler.update(player);
@@ -464,6 +480,7 @@ public final class CultivationEvents {
 				VoidBreach.onDeath(sp); // and in a Void Breach, the climb
 				ImmortalGate.onDeath(sp); // and in the Immortal Gate's passage, the climb
 				SoulRiver.onDeath(sp); // and on the Soul River, the journey
+				SecretRealms.onDeath(sp); // and in a secret realm: out of it (the body stays sealed in), and the tales tell of it
 				// Bound for the Netherworld (the gamerule on): the respawn will be the Ghost Gate's. Not a spent life's (LifespanTribulation):
 				// it is born again at its own spawn point, a living mortal (the user's ask, 2026-10-20).
 				if (!spent && !source.is(ModDamageTypes.OLD_AGE)) GhostSystem.onDeath(sp);

@@ -41,7 +41,9 @@ public final class CodexMap {
 		INNER_REALM("inner_realm", ModDimensions.INNER_REALM, "arts/inner_realm", Realm.QI_REFINING, null, "Inner Realm",
 				"Meditate for a while, anywhere but the Netherworld."),
 		SMALL_WORLD("small_world", ModDimensions.SMALL_WORLD, "worlds/small_world|worlds/root#small_world", Realm.TRUE_IMMORTAL, null,
-				"Small Worlds", "A True Immortal refines a World Seed into one, and opens its door wherever they stand. Guests come in at their word.");
+				"Small Worlds", "A True Immortal refines a World Seed into one, and opens its door wherever they stand. Guests come in at their word."),
+		SECRET_REALMS("secret_realms", ModDimensions.SECRET_REALM, "worlds/secret_realm|worlds/root#secret_realm", Realm.QI_REFINING, Stage.LATE,
+				"Secret Realms", "Through a Seal's gate while its realm stands open. Every few years one stirs, and a pillar of light rises from its Seal.");
 
 		private final String id;
 		/** Its dimension (null: the Astral Realm's two, the Chaos Frontier's part of the Immortal Realm's; see {@link #at}). */
@@ -103,6 +105,7 @@ public final class CodexMap {
 				case ASTRAL -> AstralRealm.SPACE_QI;
 				case INNER_REALM -> InnerRealm.CULTIVATION_BONUS;
 				case CHAOS_FRONTIER -> RealmSuppressionHandler.realmQi(ModDimensions.IMMORTAL_REALM);
+				case SECRET_REALMS -> SecretRealms.QI; // the lower realms' Seals' realms: three times their world's
 				default -> RealmSuppressionHandler.realmQi(dimension);
 			};
 		}
@@ -174,6 +177,7 @@ public final class CodexMap {
 			new Way(World.OVERWORLD, World.THE_END),
 			new Way(World.OVERWORLD, World.SPATIAL_GAP),
 			new Way(World.OVERWORLD, World.ASTRAL),
+			new Way(World.OVERWORLD, World.SECRET_REALMS),
 			new Way(World.NETHER, World.NETHERWORLD),
 			new Way(World.SPATIAL_GAP, World.JADE_FIRMAMENT),
 			new Way(World.JADE_FIRMAMENT, World.ASTRAL),

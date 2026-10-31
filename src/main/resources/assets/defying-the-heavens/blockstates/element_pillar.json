@@ -1,0 +1,14 @@
+{
+  "variants": {
+    "element=wood,lit=false": { "model": "defying-the-heavens:block/element_pillar_wood" },
+    "element=wood,lit=true": { "model": "defying-the-heavens:block/element_pillar_wood_lit" },
+    "element=fire,lit=false": { "model": "defying-the-heavens:block/element_pillar_fire" },
+    "element=fire,lit=true": { "model": "defying-the-heavens:block/element_pillar_fire_lit" },
+    "element=earth,lit=false": { "model": "defying-the-heavens:block/element_pillar_earth" },
+    "element=earth,lit=true": { "model": "defying-the-heavens:block/element_pillar_earth_lit" },
+    "element=metal,lit=false": { "model": "defying-the-heavens:block/element_pillar_metal" },
+    "element=metal,lit=true": { "model": "defying-the-heavens:block/element_pillar_metal_lit" },
+    "element=water,lit=false": { "model": "defying-the-heavens:block/element_pillar_water" },
+    "element=water,lit=true": { "model": "defying-the-heavens:block/element_pillar_water_lit" }
+  }
+}

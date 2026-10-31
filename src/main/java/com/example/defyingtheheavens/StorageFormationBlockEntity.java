@@ -130,6 +130,31 @@ public class StorageFormationBlockEntity extends BlockEntity {
 		setChanged();
 	}
 
+	/** Whose a secret realm's vaults are (HerbValleyWorks): the ancients', no one alive; their seal forced as anyone's is. */
+	public static final UUID ANCIENTS = UUID.fromString("a17c1e57-5ea1-4d0e-b5e7-000000a7c1e5");
+
+	/**
+	 * Sealed anew for the ancients (a secret realm's vault, renewed each time its realm stirs): whatever is left in it taken away, {@code treasures}
+	 * laid in it, its seal whole again.
+	 */
+	public void sealForAncients(ServerLevel level, List<ItemStack> treasures) {
+		owner = ANCIENTS;
+		ownerName = "";
+		trusted.clear();
+		broken = false;
+		forcer = null;
+		forceTicks = 0;
+		lootTable = null;
+		laidUp.clear();
+		ensureSpace(level);
+		StorageSpaces spaces = StorageSpaces.forServer(level.getServer());
+		StorageSpaces.Space held = spaces.space(space);
+		held.entries().clear();
+		for (ItemStack stack : treasures) held.insert(stack.copy(), 0);
+		spaces.setDirty();
+		setChanged();
+	}
+
 	// --- Trust ---
 
 	/** From the screen: trust the player called {@code name} (online now, or seen on this server before). */

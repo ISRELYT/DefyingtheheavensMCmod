@@ -384,9 +384,9 @@ public final class GhostSystem {
 		return attacker != null && source.getDirectEntity() == attacker && SoulProjection.harmFactor(attacker) > 0;
 	}
 
-	/** One of the dead: a player's ghost, or a ghostly mob or NPC ({@link Ghostly}). */
+	/** One of the dead: a player's ghost, a ghostly mob or NPC ({@link Ghostly}), or a guardian of a secret realm of the dead (RealmGuardian#ofTheDead). */
 	public static boolean isDead(Entity entity) {
-		return entity instanceof Ghostly || entity instanceof Player player && isGhost(player);
+		return entity instanceof Ghostly || entity instanceof Player player && isGhost(player) || entity instanceof RealmGuardian guardian && guardian.ofTheDead();
 	}
 
 	/**

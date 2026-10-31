@@ -99,9 +99,12 @@ public final class Lifespan {
 		return realmSeclusion(realm) * stage.timeWeight() / all;
 	}
 
-	/** {@code c}'s talent: its physique's (Physique#talent: its grade's, but an Eternal Reincarnation Body's a Low one's), a Low grade's with none yet. */
+	/**
+	 * {@code c}'s talent: its physique's (Physique#talent: its grade's, but an Eternal Reincarnation Body's a Low one's; a grade higher's once
+	 * its marrow is washed, PlayerCultivation#physiqueTalent), a Low grade's with none yet.
+	 */
 	public static double talent(PlayerCultivation c) {
-		return c.getPhysique() == null ? Physique.Grade.LOW.talent() : c.getPhysique().talent();
+		return c.getPhysique() == null ? Physique.Grade.LOW.talent() : c.physiqueTalent();
 	}
 
 	/**

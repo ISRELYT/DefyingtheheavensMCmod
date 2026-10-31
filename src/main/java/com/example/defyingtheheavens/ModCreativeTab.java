@@ -83,6 +83,16 @@ public final class ModCreativeTab {
 			add(ModItems.JADE, ModItems.CHAOS_ORIGIN_STONE);
 			for (Law law : Law.values()) add(DaoFragmentItem.of(law));
 			add(ModItems.WORLD_SEED);
+			// The secret realms' (SecretRealms): the way out, a master's essence, the ancients' spring, the Pill Sage's inheritance
+			add(ModItems.DEPARTURE_JADE, ModItems.ANCIENT_ESSENCE, ModItems.SPRING_OF_THE_ANCIENTS, ModItems.PILL_SAGE_NOTES, ModItems.PILL_SAGE_PAGE,
+					ModBlocks.PILL_SAGE_CAULDRON);
+			// The second phase's: the Sleeping Sword (as its stone gives it up), the War General's Banner, an old sword of the Tomb's floor
+			add(SleepingSwordItem.create());
+			add(ModItems.WAR_GENERALS_BANNER, ModBlocks.BURIED_SWORD);
+			// The third phase's: the Graveyard's essence, the Cave Abode's fruit
+			add(ModItems.PRIMEVAL_BLOOD_ESSENCE, ModItems.MARROW_WASHING_FRUIT);
+			// The fourth phase's: the Jade Lake Mirage's Mirror
+			add(ModItems.JADE_LAKE_MIRROR);
 			// The world's blocks
 			add(ModBlocks.JADE_STONE, ModBlocks.JADE_ORE, ModBlocks.DEEPSLATE_JADE_ORE, ModBlocks.SPIRIT_STONE_ORE,
 					ModBlocks.DEEPSLATE_SPIRIT_STONE_ORE, ModBlocks.RICH_SPIRIT_STONE_ORE, ModBlocks.QI_VEIN, ModBlocks.DEEPSLATE_QI_VEIN,

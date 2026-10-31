@@ -1,0 +1,54 @@
+{
+  "parent": "block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "sword": "defying-the-heavens:block/buried_sword",
+    "particle": "defying-the-heavens:block/buried_sword"
+  },
+  "elements": [
+    {
+      "from": [6.75, 0, 7.6], "to": [9.25, 17, 8.4],
+      "rotation": { "origin": [8, 0, 8], "axis": "x", "angle": 22.5 },
+      "faces": {
+        "north": { "uv": [0, 0, 2, 11], "texture": "#sword" },
+        "south": { "uv": [0, 0, 2, 11], "texture": "#sword" },
+        "east": { "uv": [2, 0, 2.5, 11], "texture": "#sword" },
+        "west": { "uv": [2, 0, 2.5, 11], "texture": "#sword" },
+        "up": { "uv": [0, 0, 2, 0.5], "texture": "#sword" }
+      }
+    },
+    {
+      "from": [5, 17, 7.4], "to": [11, 18.5, 8.6],
+      "rotation": { "origin": [8, 0, 8], "axis": "x", "angle": 22.5 },
+      "faces": {
+        "north": { "uv": [4, 0, 9, 1], "texture": "#sword" },
+        "south": { "uv": [4, 0, 9, 1], "texture": "#sword" },
+        "east": { "uv": [4, 1, 5, 2], "texture": "#sword" },
+        "west": { "uv": [4, 1, 5, 2], "texture": "#sword" },
+        "up": { "uv": [4, 1, 9, 2], "texture": "#sword" },
+        "down": { "uv": [4, 1, 9, 2], "texture": "#sword" }
+      }
+    },
+    {
+      "from": [7.4, 18.5, 7.4], "to": [8.6, 22.5, 8.6],
+      "rotation": { "origin": [8, 0, 8], "axis": "x", "angle": 22.5 },
+      "faces": {
+        "north": { "uv": [10, 0, 11, 3], "texture": "#sword" },
+        "south": { "uv": [10, 0, 11, 3], "texture": "#sword" },
+        "east": { "uv": [10, 0, 11, 3], "texture": "#sword" },
+        "west": { "uv": [10, 0, 11, 3], "texture": "#sword" }
+      }
+    },
+    {
+      "from": [7.1, 22.5, 7.1], "to": [8.9, 24, 8.9],
+      "rotation": { "origin": [8, 0, 8], "axis": "x", "angle": 22.5 },
+      "faces": {
+        "north": { "uv": [12, 0, 13.5, 1], "texture": "#sword" },
+        "south": { "uv": [12, 0, 13.5, 1], "texture": "#sword" },
+        "east": { "uv": [12, 0, 13.5, 1], "texture": "#sword" },
+        "west": { "uv": [12, 0, 13.5, 1], "texture": "#sword" },
+        "up": { "uv": [12, 1, 13.5, 2.5], "texture": "#sword" }
+      }
+    }
+  ]
+}

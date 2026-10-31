@@ -51,6 +51,12 @@ public final class Milestones {
 	public static final String DUEL_WON = "legend/duel_won";
 	/** A sect mission seen through; a pillar of one's sect (SectMissions#PILLAR earned all told in it); one of every kind seen through (SectMissions#complete). */
 	public static final String MISSION_DONE = "mission/done", MISSION_PILLAR = "mission/pillar", MISSION_EVERY_KIND = "mission/every_kind";
+	/**
+	 * A secret realm gone into; come out of it alive with more than one took in; its Great Inheritance taken; one's own body found again in one
+	 * and broken open (SecretRealms, HerbValleyWorks, CorpseBlock).
+	 */
+	public static final String SECRET_ENTERED = "secret/entered", SECRET_OUT_ALIVE = "secret/out_alive", SECRET_INHERITOR = "secret/inheritor",
+			SECRET_OWN_BODY = "secret/own_body";
 
 	/** {@code legend} heard of (its rumour told: TalkSystem), or found (in hand: Legends#seen). */
 	public static String legendHeard(Legend legend) {

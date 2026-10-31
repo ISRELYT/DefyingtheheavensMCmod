@@ -56,6 +56,12 @@ public final class ModDimensions {
 	 * Realm's ({@link #hasImmortalQi}).
 	 */
 	public static final ResourceKey<Level> SMALL_WORLD = ResourceKey.create(Registries.DIMENSION, DefyingTheHeavens.id("small_world"));
+	/**
+	 * The secret realms (SecretRealms, 2026-10-31): the sealed worlds the ancients left, every one in a slot of its own (SecretRealm#centre),
+	 * its land SecretRealmGenerator's (each realm's own, seeded by the world), its buildings laid by SecretRealms the first time it stirs. A
+	 * realm keeps the law of the world its Seal stands in (SecretRealms#lawOf), its qi three times that world's.
+	 */
+	public static final ResourceKey<Level> SECRET_REALM = ResourceKey.create(Registries.DIMENSION, DefyingTheHeavens.id("secret_realm"));
 
 	public static final ResourceKey<LevelStem> UPPER_REALM_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("upper_realm"));
 	public static final ResourceKey<LevelStem> SPATIAL_GAP_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("spatial_gap"));
@@ -69,6 +75,7 @@ public final class ModDimensions {
 	public static final ResourceKey<LevelStem> IMMORTAL_REALM_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("immortal_realm"));
 	public static final ResourceKey<LevelStem> IMMORTAL_PASSAGE_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("immortal_passage"));
 	public static final ResourceKey<LevelStem> SMALL_WORLD_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("small_world"));
+	public static final ResourceKey<LevelStem> SECRET_REALM_STEM = ResourceKey.create(Registries.LEVEL_STEM, DefyingTheHeavens.id("secret_realm"));
 
 	public static final ResourceKey<DimensionType> UPPER_REALM_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("upper_realm"));
 	public static final ResourceKey<DimensionType> SPATIAL_GAP_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("spatial_gap"));
@@ -82,6 +89,7 @@ public final class ModDimensions {
 	public static final ResourceKey<DimensionType> IMMORTAL_REALM_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("immortal_realm"));
 	public static final ResourceKey<DimensionType> IMMORTAL_PASSAGE_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("immortal_passage"));
 	public static final ResourceKey<DimensionType> SMALL_WORLD_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("small_world"));
+	public static final ResourceKey<DimensionType> SECRET_REALM_TYPE = ResourceKey.create(Registries.DIMENSION_TYPE, DefyingTheHeavens.id("secret_realm"));
 
 	/** Dimension effects ids; the client registers the custom sky, fog and cloud behaviour under these. */
 	public static final ResourceLocation UPPER_REALM_EFFECTS = DefyingTheHeavens.id("upper_realm");
@@ -96,6 +104,7 @@ public final class ModDimensions {
 	public static final ResourceLocation IMMORTAL_REALM_EFFECTS = DefyingTheHeavens.id("immortal_realm");
 	public static final ResourceLocation IMMORTAL_PASSAGE_EFFECTS = DefyingTheHeavens.id("immortal_passage");
 	public static final ResourceLocation SMALL_WORLD_EFFECTS = DefyingTheHeavens.id("small_world");
+	public static final ResourceLocation SECRET_REALM_EFFECTS = DefyingTheHeavens.id("secret_realm");
 	/**
 	 * The Great Void: as tall as the Jade Firmament (its continents float between Y ~60 and ~460, see ModNoiseSettings#greatVoid),
 	 * its day held at noon under a sky that is all stars: the void's light, not a sun's (GreatVoidClient draws it).
@@ -124,6 +133,13 @@ public final class ModDimensions {
 	public static final int SMALL_WORLD_MIN_Y = 0;
 	public static final int SMALL_WORLD_HEIGHT = 256;
 	public static final long SMALL_WORLD_TIME = 6000L;
+	/**
+	 * The secret realms: their lands between about Y 60 and 200 (SecretRealmGenerator), held in a morning's light that never moves (a sealed
+	 * world's day stands still), mist in its valleys (the client's, SecretRealmClient).
+	 */
+	public static final int SECRET_REALM_MIN_Y = 0;
+	public static final int SECRET_REALM_HEIGHT = 256;
+	public static final long SECRET_REALM_TIME = 2500L;
 	/**
 	 * Space is a sliver of a world (see AstralPlanets#SPACE_Y: everything in it hangs far above), with light enough to see whoever
 	 * flies there by.
@@ -225,6 +241,11 @@ public final class ModDimensions {
 	/** The small worlds' dimension (SmallWorlds): every immortal's island. */
 	public static boolean isSmallWorld(ResourceKey<Level> dimension) {
 		return dimension == SMALL_WORLD;
+	}
+
+	/** The secret realms' dimension (SecretRealms): every sealed realm's land. */
+	public static boolean isSecretRealm(ResourceKey<Level> dimension) {
+		return dimension == SECRET_REALM;
 	}
 
 	/**
@@ -447,6 +468,23 @@ public final class ModDimensions {
 				BlockTags.INFINIBURN_OVERWORLD,
 				SMALL_WORLD_EFFECTS,
 				0.15f,                         // starlight in the shade
+				new DimensionType.MonsterSettings(false, false, ConstantInt.of(0), 0)));
+
+		context.register(SECRET_REALM_TYPE, new DimensionType(
+				OptionalLong.of(SECRET_REALM_TIME), // a sealed world's morning, standing still
+				true,                          // has skylight: its herbs grow
+				false,                         // no ceiling
+				false,                         // not ultrawarm
+				false,                         // not natural: compasses spin in a world cut off
+				1.0,
+				false,                         // no bed is slept in there (it bursts, as in the Nether)
+				false,                         // nor a respawn anchor
+				SECRET_REALM_MIN_Y,
+				SECRET_REALM_HEIGHT,
+				SECRET_REALM_HEIGHT,
+				BlockTags.INFINIBURN_OVERWORLD,
+				SECRET_REALM_EFFECTS,
+				0.12f,                         // the mist's light in the shade
 				new DimensionType.MonsterSettings(false, false, ConstantInt.of(0), 0)));
 	}
 

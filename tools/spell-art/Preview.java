@@ -624,7 +624,7 @@ public class Preview {
 		Path assets = Path.of(args[0]), out = Path.of(args[1]);
 		String id = args[2];
 		List<String> views = new ArrayList<>(List.of("front", "side", "top", "back"));
-		String animName = null, atName = null, tag = null, animView = "front", gifName = null;
+		String animName = null, atName = null, tag = null, animView = "front", gifName = null, folder = "spell";
 		double gifSeconds = 0, gifFps = 20;
 		List<Double> times = new ArrayList<>();
 		double atTime = 0, renderScale = 4;
@@ -647,6 +647,7 @@ public class Preview {
 			else if (a.startsWith("tag=")) tag = a.substring(4);
 			else if (a.startsWith("animview=")) animView = a.substring(9);
 			else if (a.startsWith("focus=")) focus = List.of(a.substring(6).split(","));
+			else if (a.startsWith("folder=")) folder = a.substring(7); // "realm" for the secret realms' guardians
 			else if (a.startsWith("gif=")) {
 				String[] p = a.substring(4).split(":");
 				gifName = p[0];
@@ -654,11 +655,11 @@ public class Preview {
 				if (p.length > 2) gifFps = Double.parseDouble(p[2]);
 			}
 		}
-		List<GBone> tops = load(assets.resolve("geo/spell/" + id + ".geo.json"));
-		Map<String, Anim> anims = loadAnims(assets.resolve("animations/spell/" + id + ".animation.json"));
-		BufferedImage bt = ImageIO.read(assets.resolve("textures/entity/spell/" + id + ".png").toFile());
+		List<GBone> tops = load(assets.resolve("geo/" + folder + "/" + id + ".geo.json"));
+		Map<String, Anim> anims = loadAnims(assets.resolve("animations/" + folder + "/" + id + ".animation.json"));
+		BufferedImage bt = ImageIO.read(assets.resolve("textures/entity/" + folder + "/" + id + ".png").toFile());
 		base = bt.getRGB(0, 0, texW, texH, null, 0, texW);
-		Path maskFile = assets.resolve("textures/entity/spell/" + id + "_glowmask.png");
+		Path maskFile = assets.resolve("textures/entity/" + folder + "/" + id + "_glowmask.png");
 		glowTex = null;
 		if (Files.exists(maskFile)) {
 			BufferedImage mt = ImageIO.read(maskFile.toFile());

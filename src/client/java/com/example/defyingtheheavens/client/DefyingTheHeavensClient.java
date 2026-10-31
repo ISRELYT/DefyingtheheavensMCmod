@@ -91,7 +91,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 			if (tintIndex != 0) return -1;
 			if (state.getValue(com.example.defyingtheheavens.AlchemyCauldronBlock.BREWING)) return 0x4FD6A0;
 			return world != null && pos != null ? net.minecraft.client.renderer.BiomeColors.getAverageWaterColor(world, pos) : 0x3F76E4;
-		}, com.example.defyingtheheavens.ModBlocks.ALCHEMY_CAULDRON);
+		}, com.example.defyingtheheavens.ModBlocks.ALCHEMY_CAULDRON, com.example.defyingtheheavens.ModBlocks.PILL_SAGE_CAULDRON);
 		ModKeybinds.register();
 		BaublePanel.register();
 		TooltipWrap.register(); // the mod's long tooltip lines kept on the screen
@@ -122,6 +122,8 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		// Sects and NPC cultivators: the NPCs and their nameplates, clothing, formations and their seals.
 		EntityRendererRegistry.register(ModEntities.CULTIVATOR, CultivatorNpcRenderer::new);
 		net.minecraft.client.renderer.blockentity.BlockEntityRenderers.register(com.example.defyingtheheavens.ModBlockEntities.SEAL, SealRenderer::new);
+		// The bodies of the dead (Corpses): each in its likeness, rotting to bones.
+		net.minecraft.client.renderer.blockentity.BlockEntityRenderers.register(com.example.defyingtheheavens.ModBlockEntities.CORPSE, CorpseRenderer::new);
 		net.minecraft.client.renderer.blockentity.BlockEntityRenderers.register(com.example.defyingtheheavens.ModBlockEntities.FORMATION_CORE,
 				FormationCoreRenderer::new);
 		FormationCoreRenderer.register();
@@ -166,6 +168,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		WorldRenderEvents.AFTER_ENTITIES.register(ClientLawDomains::render); // the Laws' domains round their owners
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(ClientSpellFx::render);
 		UpperRealmClient.register();
+		SecretRealmClient.register(); // the secret realms: their mist, their Seals' light, their guardians, their row on the HUD
 		NetherworldClient.register();
 		AstralClient.register(); // space's sky, the planets' skies
 		InnerRealmFade.register(); // last, so the fade covers the rest of the HUD

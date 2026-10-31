@@ -90,10 +90,9 @@ what is new; a **player's guide**, what things are and how to do them, with few 
   over their column); up and down choose the page, left and right the chapter, Page Up and Down scroll; J or Esc closes it, back to
   the cultivation menu if it came from there. It opens on the newest page not yet read (a new player: the welcome), else where it
   was left. It doesn't pause the game.
-- **New pages**: a toast, "New in the Codex", naming the page (or counting them) with the key; a gold dot on each page not yet read,
-  on its chapter, and on the cultivation menu's **Codex** at the foot of its column of tabs (the **book** outside the panel's top right
-  where the menu is too narrow for the column; J opens the Codex from the menu too). A world from before the Codex opens what its
-  player has already done the first time they come in, in one toast.
+- **New pages**: a toast, "New in the Codex", naming the page (or counting them) with the key; a gold square on each page not yet
+  read, on its chapter, and on the cultivation menu's **Codex** at the foot of its column of tabs (J opens the Codex from the menu
+  too). A world from before the Codex opens what its player has already done the first time they come in, in one toast.
 - **Kept on this computer**, per world (the singleplayer world's folder or the server's address): which pages were told of and which
   read, and the map's worlds seen, in `config/defying-the-heavens-codex.json`.
 - **Pictures** (2026-10-28, the user's pick: diagrams and rows of items): a page line beginning `@` draws one between the words. `@items`
@@ -1213,6 +1212,8 @@ others too"): the talk wheel and the dialogue, the ability and spell wheels, Cho
 manual, the Formation Core, the mission board, the storage formation, the Heaven Altar, a seized body's pack and the Codex's toast:
 ink panels in a thin dark-gold frame, headings with a gold diamond and a rule, the row or tab chosen in jade, cream words and gold for
 what matters, and the Hall's buttons in place of vanilla's stone ones (`client/HallHud`, `client/HallButton`, `client/TalkUi`).
+Since 2026-10-31 their words lie flat as the mockups' do, without Minecraft's drop shadow under them (`client/mixin/
+HallFrameGraphicsMixin`; tooltips and item counts keep theirs), and their diamonds are squares turned on their points.
 
 **Drawn as the mockups are** (the user's asks, 2026-10-30: "it doesnt look like what it looks like in the art artefact thing" and "i
 want the UI and HUD to look EXACTLY the same as the artefact at all GUI scales"; their picks: Pixelify Sans, and the same size on the
@@ -1226,6 +1227,11 @@ github.com/eifetx/Pixelify-Sans, from Google Fonts, under the SIL Open Font Lice
 pixelify_sans.ttf`, the licence beside it as `pixelify_sans_ofl.txt`), each drawn from a font made at the size it comes to on
 the screen (`client/HallFonts`: one from 6 to 112 pixels, vanilla's own font standing in for the few marks Pixelify lacks), so they
 stay crisp; placed as a browser places them (a CSS font size on a CSS line) and outlined two pixels each way where the mockups' are.
+The mod's copy is a **modified version** (2026-10-31, the user: "The 2's and 5's look a little weird"; Pixelify's own 2 curls up at
+its foot like a backwards S, and its 5 closes over its top like an S): its 2 has a flat foot and its 5 a square top, drawn on the
+font's own grid in its own corners, and its capital Z (which had looked like the old 2) is a Z, its diagonal in steps as the font's
+own lowercase z draws it; everything else as it was; and it is a static font of its default weight (its variation tables
+left out, as Minecraft reads only the default outlines). It stays under the same licence.
 
 **Swift** (the user's ask, 2026-10-22: "void shattering beings and onwards should be able to travel through space or just in
 general super fast"). From Void Shattering on, Qi Flight and the free flight were made far faster, the more with every stage
@@ -2242,7 +2248,10 @@ the day the soul forms, and the ability goes into the first empty slot of your w
 - **The tether**, a thread of bright blue light from your body's chest to the soul, lets it go **32 / 48 / 64 / 96** blocks
   through Nascent Soul's stages, 128-176 through Heavenly Being, 192-256 through Four Axis; it stretches against you as you
   near its end. **From Void Shattering it has no end** (the user's ask, 2026-10-23; `PlayerCultivation#soulTetherEndless`):
-  the soul goes as far as it will, at what it costs beside the body, and nothing pulls it back.
+  the soul goes as far as it will, at what it costs beside the body, and nothing pulls it back. Its reach goes by the highest of
+  your paths (since 2026-10-31, as possession does; it was the soul's own path's), and so does how much faster a body it is in
+  cultivates, and whether it opens a mortal body's meridians (`Possession#guidance`); its hearts stay the ghost path's (the user's
+  call, 2026-10-19) and its qi the soul's own path's.
 - **Qi**: the same at every realm (the user's ask, 2026-10-23: it was the realm's own gathering, the same share of the pool
   at every realm, which ran a True Immortal's soul as dry as a Nascent Soul's): half a Nascent Soul Early's gathering a second
   at the body (`SoulProjection.SOUL_QI_BASE`), rising to twice it at the tether's end, and that much again while possessing.
@@ -2293,7 +2302,9 @@ tribulation. Logging out at peace, the server stopping, or a crash simply bring 
 
 **Possession.** Right-click a being at least **one realm below** your own (a Nascent Soul takes Core Formation and
 below, mortals and beasts; a Heavenly Being, Nascent Soul and below; Four Axis, Heavenly Being and below; monsters and
-animals count as mortals) to take it over, until you let go, your qi runs out, you call the soul home, or it walks too
+animals count as mortals; your own is the highest of your paths, the heaven path, the ghost path or the Demon Path, since
+2026-10-31: the user's ask, a Heavenly Lord ghost path couldn't take an Entering Nirvana body while the heaven path stood lower,
+as a player being taken is weighed by the highest of theirs; the soul's own path still pays) to take it over, until you let go, your qi runs out, you call the soul home, or it walks too
 far along the tether. If the body dies, the soul is thrown out unharmed (and exposed again). How you hold
 it depends on what it is:
 
@@ -3242,7 +3253,7 @@ The second kind of qi. Ordinary qi is the cultivator's own; ghostly qi belongs t
 are cultivated on and the **Ghost Qi** pool fills from. Under Qi Sense it is a sixth element, yin, its motes thick in the
 Netherworld, and as thick as the Great Void's own qi over its Ancient Battlefields (about half the motes there).
 
-| Where | Density (a Soul Sand Valley = 1) | The pool fills, a second | The ghost path goes |
+| Where | Density (a Soul Sand Valley = 1) | The place adds to the pool's filling, a second | The ghost path goes |
 |---|---|---|---|
 | The Great Void's **Ancient Battlefields**, where the armies of Heaven and the demons fell (the user's ask, 2026-10-27: a place denser than the Netherworld) | 100 (`GhostQi.ANCIENT_BATTLEFIELD`) | 20 | x100 |
 | The Netherworld | 10 (`GhostQi.NETHERWORLD`) | 2 | x10 |
@@ -3250,13 +3261,16 @@ Netherworld, and as thick as the Great Void's own qi over its Ancient Battlefiel
 | A Soul Sand Valley | 1 (`SOUL_SAND_VALLEY`) | 0.2 | x1 (the baseline) |
 | The rest of the Nether | 0.5 (`NETHER`) | 0.1 | x0.5 |
 | The Overworld, anywhere in it (the thinnest, the user's call 2026-10-19) | 0.25 (`OVERWORLD`) | 0.05 | x0.25 |
-| Everywhere else (the Upper Realm, the Spatial Gap, the End, the Astral Realm, the rest of the Great Void) | 0 | nothing | not at all |
+| Everywhere else (the Upper Realm, the Spatial Gap, the End, the Astral Realm, the rest of the Great Void) | 0 | nothing more | not at all |
 
 On a battlefield the Cultivation tab says it is **teeming**, and a ghost-path seclusion there costs a tenth of the Netherworld's years
 (`Lifespan#ghostPlaceSaving`, as the Peaks save a little). Yin corruption stays the Netherworld's alone.
 
-The pool fills at density x 0.2 a second at Qi Refining Early (`FILL_PER_DENSITY`, the table's numbers); spirit stones and
-Spirit Dew don't fill it. Everyone who has one sees it as a cyan **Ghost Qi** bar: every ghost, and every living cultivator who
+The pool fills **on its own** as the qi pool does, 1 a second at Qi Refining Early wherever you are (`OWN_FILL`, Qi Refining
+Early's qi gathering; since 2026-10-31, the user's pick "On its own, like qi": it had filled only from the place, never in the
+worlds without yin), and the place adds density x 0.2 a second (`FILL_PER_DENSITY`, the table's numbers); the ghost path's realm
+multiplies both (`realmFill`), so from Four Axis on an empty pool fills in about 40 seconds anywhere (as the qi pool does), 38 in
+the Overworld, 13 in the Netherworld and 2 on a battlefield. Spirit stones and Spirit Dew don't fill it. Everyone who has one sees it as a cyan **Ghost Qi** bar: every ghost, and every living cultivator who
 knows a ghost method. It holds 30 (`BASE_POOL`), plus 10 for every layer known (`POOL_PER_LAYER`: your deepest foundation's, and
 the fire's and the steps'; `GhostMethods#layersKnown`), plus 20 more for every layer of your deepest foundation
 (`BREATHING_POOL_PER_LAYER`). Ghost abilities and spells are paid from it, never from your qi.
@@ -3271,11 +3285,38 @@ best). As Realm Suppression and pressure leave the path; nothing from a mortal's
 
 Code: `GhostQi` (density, fill, pool size), `QiElement.YIN`, client `QiSenseClientHandler`, `NetherworldHud`.
 
+### The bodies of the dead
+
+(The user's idea, 2026-10-26; built 2026-10-31 with the user's changes: "bodies rot to bones over a few minutes, bones don't
+disappear unless mined, and loot stays in the body rather than spilling out like normal. If a body is mined the loot should spill
+out".) While the gamerule **`leaveCorpses`** is on (the default), a player who dies, or a cultivator, leaves its **body** where it
+fell (`Corpses`, `CorpseBlock`, `CorpseBlockEntity`): a low block on the ground (on the first ground under one slain in the air,
+just above a wall one fell into; none in the void or a lava lake), drawn on its back the way it faced, in its own skin (a player's
+from their profile, a cultivator's own, a demon's its race's with its beast's head and tail: client `CorpseRenderer`).
+
+- **What it carried stays in it.** Everything its death would have scattered (a player's whole pack, rings and armour; a cultivator's
+  gear and loot; a demon's core) is caught as it falls (`Corpses#drops`, mixins `CorpseLivingMixin`, `CorpsePlayerMixin`,
+  `CorpseLevelMixin`) and laid in the body. **Break the body** (by hand, as dirt) and it spills all it holds. Experience drops as
+  ever; with keepInventory a player's body holds nothing. With nowhere to lie, what it carried drops as vanilla's does.
+- **It rots.** Fresh for 2 minutes, rotting (greyed, flies about it) until 5, then **bones**: a skeleton in the same pose, which stays
+  until someone breaks it (and gives 3 bones besides what it held). A dead player's things wait in their bones while they walk among
+  the dead.
+- **Whose it was**: shown over it when you look at it, and said when you right-click it.
+- **Its blood**: a fresh cultivator's body (not a mortal's) bled once with a glass bottle gives **Cultivator's Blood** of its realm
+  (`CultivatorsBloodItem`; its uses are the devilish arts', still to come), and darkens the bleeder's path by 5 (Alignment).
+- **Its yin**: every body gives off ghostly qi (`Corpses#yinAt`, added by `GhostQi#densityAt`, never past the Netherworld's 10): a
+  mortal's 0.5, Qi Refining's 1, half a Soul Sand Valley's more each realm (Heavenly Lord's 9.5), bones half; within 8 blocks, a
+  block more for each realm. Several stack. Under Qi Sense, yin rises off it.
+- **Kept few**: a cultivator leaves no body where 6 already lie within 16 blocks (a battle's dead don't pile up into lag); a player
+  always does. The Netherworld's dead, a soul and a clone leave none.
+
+The game tests leave no bodies (the kept test world would fill with them) except `CorpseGameTests`, which takes up its own.
+
 ### The dead
 
 While the gamerule **`netherworldAfterDeath`** is on (the default), a player who dies wakes at the Ghost Gate as a
-**ghost** instead of at their bed. The death itself is vanilla's (its message, its drops, keepInventory if set); only
-the respawn is the Gate's. A living visitor overtaken by yin becomes a ghost where they stand instead, and keeps all
+**ghost** instead of at their bed. The death itself is vanilla's (its message, keepInventory if set), its drops laid in the
+body left where they fell (The bodies of the dead, above); only the respawn is the Gate's. A living visitor overtaken by yin becomes a ghost where they stand instead, and keeps all
 they carry, as a ghost. With the gamerule off, death is vanilla's and there are no ghosts.
 
 A ghost:
@@ -5037,6 +5078,357 @@ From the user's play at Heavenly Lord:
     land on every side of it is loaded whole. Checked in game: at the Holy Land founded earlier, none of the server's slow ticks were
     the barrier's.
   - What is left at 32 chunks of view and simulation distance is mostly Minecraft's own: saving and generating chunks.
+
+### Ghostly qi and possession (2026-10-31)
+
+The user's asks after the Hall look:
+
+- **Ghostly qi refills on its own** (the user: "ghostly qi doesnt regen anywhere really once you reach high enough levels of it";
+  their pick, "On its own, like qi"): the pool fills by itself everywhere at the qi pool's pace, the place's ghostly qi adding to it
+  as before (Ghostly qi, under The Netherworld). It had filled only from the place: some 13 minutes from empty in the Overworld and
+  never in the Jade Firmament, the rest of the Great Void, the Immortal Realm or the Chaos Frontier.
+- **Possession weighs the highest of your paths** (the user: "change the possession conditions to include the other paths as well"):
+  a ghost path at Heavenly Lord takes an Entering Nirvana body though the heaven path, the soul's, stands lower (Soul Projection:
+  Possession). `GhostRefillPossessionGameTests`. Then the rest of the soul: the tether's reach (and its having no end from Void
+  Shattering) and what a soul brings a body it is in go by the highest path too (Soul Projection).
+- **The bodies of the dead** (The Netherworld: The bodies of the dead): what a death drops lies in its body until the body is broken;
+  it rots to bones in five minutes, and the bones stay. `CorpseGameTests`.
+- **The UI's polish**: the font's 2, 5 and Z redrawn (Drawn as the mockups are), the old narrow cultivation menu gone (the Hall's
+  frame always has room for the Hall), and the words in the mod's screens flat, without Minecraft's drop shadow.
+- **The secret realms**, their first phase: the whole frame and the Verdant Herb Valley (The secret realms, below).
+  `SecretRealmGameTests`.
+- **The secret realms' second phase**: the Sunken Sword Tomb and the Ancient Battlefield, their guardians, events, trials and
+  inheritances (the Sleeping Sword and Sword Intent; the War General's Banner and Blood Battle), each realm its own biome and mist,
+  the Seals kept 400 blocks apart, and those who come for a realm going at its own trials. `SecretRealmPhaseTwoGameTests`.
+- **The secret realms' third phase**: the Primeval Beast Graveyard, the Cave Abode of a Heavenly Being and the Yellow Springs Hollow
+  (the first realm of the dead, its Seal in the Netherworld), their guardians, events, trials and inheritances (the Primeval Blood
+  Essence; the master's method and the Marrow-Washing Fruit; the Six Paths Reincarnation Canon), and the devilish lying in wait at a
+  Seal for whoever comes out laden. `SecretRealmPhaseThreeGameTests`.
+- **The secret realms' fourth phase**: the Jade Lake Mirage (its Seal in the Jade Firmament), the Ruins of a Fallen Holy Land (in the
+  Great Void) and the Tomb of a Fallen Immortal (in the Immortal Realm), the last two floating over the void, their guardians, events,
+  trials and inheritances (the Jade Lake Mirror; the holy land's ancestral sword; the immortal's glaive and Dao Fragments): false
+  bridges and mirages, a reflection of oneself, void currents, a formation's four eyes, a hall sealed for each Law, the spreading
+  decays. Seals stand on land in the floating worlds; over a floating realm's void the sky's hold counts from its land's level.
+  `SecretRealmPhaseFourGameTests`.
+- **The Azure Dragon holds whatever it catches over the place it rose from** until the part of its body they're held on comes up out
+  of the land (`WoodSpells.Dragon`): it had drawn them down toward its body while that was still underground, and thin ground or a
+  cave's roof pinned them under it. Found by `DaoIntegrationSpellsGameTests` once the new tests moved it to other ground.
+- **Every settler raises its alarm again after a restart** (the Astral Realm's settlements): the check is asked every other tick (as
+  a creature's goals are chosen) and waited on every fortieth of its own ticks, which for one settler in two never fell on it
+  (`CultivatorGoals.ShelterGoal`). The same slip, found in the tour of the secret realms, would have kept one guardian in two from
+  going back to its post or noticing anyone, and one visitor in two from setting out for anything.
+
+## The secret realms
+
+(Designed 2026-10-31 and approved by the user with two changes: "no upper limit for who can enter, just a lower limit so people too
+weak can't enter"; "flight should be allowed for anyone vastly powerful compared to the secret realm's recommended level". The rest
+as designed. Phase 1: the frame and the Verdant Herb Valley; phase 2: the Sunken Sword Tomb and the Ancient Battlefield; phase 3: the
+Primeval Beast Graveyard, the Cave Abode of a Heavenly Being, the Yellow Springs Hollow and the ambushes at the Seals; phase 4: the
+Jade Lake Mirage, the Ruins of a Fallen Holy Land and the Tomb of a Fallen Immortal.)
+
+Sealed worlds the ancients left (`SecretRealm`, `SecretRealms`), each under a **Seal** in its own world: a floor of old paving on the
+land's own level, eight pillars round it, and in its middle a gate of dark stone whose keystone is carved with the realm's seal
+(`SecretRealmSealBlock`). The Overworld's lie 600 to 2,500 blocks from its spawn, on dry, level land, clear of the sects and at
+least 400 blocks from one another; the Netherworld's (the Yellow Springs Hollow's) 160 to 640 blocks from the Ghost Gate; in the
+floating worlds (the Jade Firmament, the Great Void, the Immortal Realm) on an island's or a continent's land, never over the void;
+each is built the first time the server starts. Each realm has its own biome over its land (its
+sky, grass and drifting motes: `SecretRealmBiomeSource`) and its own mist. Right-click its keystone or its gate: when the realm next opens, whom it admits and is meant
+for, and who took its Great Inheritance.
+
+- **The cycle**, by the world's clock. Every few years (in-game days: the valley every three) a realm opens. Half a day before (ten
+  minutes) it **stirs**: a pillar of light rises from its Seal (a beacon's beam, seen from afar), and everyone in its world strong
+  enough to enter is told which way it lies and roughly how far, never where. Its land is made ready meanwhile, a little each tick.
+  Then its **gate fills with light** for the first quarter of its time; walk into it to go in. Inside, a row on the HUD counts down.
+  Two minutes before the end it **quakes**: the view shakes, thunder rolls, dust falls, the land splits here and there (never under
+  anyone). At the end everyone still inside is **cast out beside its Seal** with what they carry.
+- **Who may enter**: its **lowest realm** and above, by one's highest path's true realm; **no upper limit**. Only the living (but a
+  realm of the dead, the Yellow Springs Hollow, lets the dead in too), in their own bodies (not a projected soul, a possessed body or a
+  clone), bearing no one in a sleeve or a small world, and not in a tribulation. Too weak, the gate pushes one back and says why.
+- **The law inside.** The law of the world its Seal stands in still holds (`SecretRealms#lawOf`: Realm Suppression in the lower
+  realms' realms, for players and cultivators alike), its **qi three times** that world's. The sky presses down: one flies no higher
+  than **6 blocks over the ground** unless one stands **two whole realms above the realm it is meant for** (the valley: Nascent Soul
+  and up), who fly freely. Space is sealed: no Spatial Tear, no small world's door, no sleeve. One leaves early only by holding up a
+  **Departure Jade** for five seconds (a blow breaks its light). Strayed past its edge, or fallen off its land, one is set back on its
+  nearest arrival terrace. Logging out inside, one comes back beside its Seal; a server stopped while a realm stood open ends that
+  opening. The gamerule **`secretRealms`** stops them all.
+- **The dead stay inside.** A body (The bodies of the dead) lies where it fell with all it carried until someone finds it; nothing the
+  realm mends takes it up. Finding your own and breaking it open is an advancement.
+- **Mended each time it stirs** (`RealmLedger`): whatever anyone or anything changed in it (a visitor's hands, blasts, spells, the
+  quake's cracks) is set back as the realm laid it, chunk by chunk, before it opens again.
+
+### The Verdant Herb Valley
+
+From **Qi Refining Late**, meant for **Foundation Building**; every three years, a quarter of an hour inside. A misty valley ringed by
+peaks (`HerbValley`, laid by its own generator, `SecretRealmGenerator`, from the world's seed: every world's its own), its works
+`HerbValleyWorks`:
+
+- **Its land**: an island at its heart in a still lake; meadows round the lake, where the ruins of an alchemists' sect stand; terraced
+  herb gardens climbing its sides behind walls of old stone; grey peaks round its rim, stone pillars crowned with pines standing out of
+  them; eight paths of stone steps down from the **arrival terraces** at the rim's foot (one comes in on the least crowded), and three
+  brooks falling from terrace to terrace into the lake.
+- **Its herbs**: 24 beds on the terraces, Ginseng, Lingzhi and Huangjing of 100 to 1,000 years and more, the rare kinds higher up;
+  the Medicine Garden's Spirit Ginseng, Purple Lingzhi and Ochre Huangjing; Spirit Lotus on the lake. A herb left unpicked ages a
+  **century for every year** the valley sleeps; one picked grows again by the next opening.
+- **Its guardians** (`RealmGuardian`), made of its matter: a **Vine Keeper** of old wood and living vines beside each bed, waking
+  when a herb is taken from it; **Bronze Puppets** of green-rusted bronze in the ruins, waking when anyone comes close or their vault is
+  forced; the **Elder Keeper** by the heart's bloom. Of Foundation Building's stages; raised as visitors first come near in an opening,
+  and a guardian slain stays slain until the next.
+- **Its vaults**: sealed storage formations of the ancients' in five of the ruins (the Pill Hall's Mid, the rest Low), forced as any
+  stranger's are (Storage formations) by one of their seal's realm; their puppets wake. Pills of old herbs, spirit stones, Spirit- and
+  Earth-grade artifacts, technique manuals, jade, and now and then a Departure Jade, **Ancient Essence** (one more stat point, for
+  good) or the **Spring of the Ancients** (meditation gathers half as much again for a day).
+- **Its killing formations** (`KillingFormationBlock`): qi blades at the Stele Court, fire in the Furnace Court, a weight before the
+  bridge that grounds fliers, a fog on the terraces that blinds and turns one about. Their harm is a share of one's own body. Faint to
+  the eye; plain under Qi Sense, a ring on the land. Break the formation's eye to undo it (it is set again before the next opening).
+- **The remains of earlier visitors**: a few bodies, long bones, with what they carried, about the ruins and terraces.
+- **Its event**: some time into each opening the **heart blooms**: a ten-thousand-year Spirit Ginseng flowers on the island for a
+  minute, told to everyone inside, and the Elder Keeper wakes; untaken, it withers.
+- **The Pill Sage's trials** on the island: defeat the **Gatekeeper** before his hall, a puppet that fights its challenger alone, at
+  the challenger's own strength; it kneels, and the hall's barrier lets them in. Then brew a **Foundation Pill of Mid-Grade or better**
+  in the master's cauldron (his fire under it, its water kept full; a jade on his altar for the recipe). The first in the world to pass
+  both takes the **Great Inheritance**: the **Pill Sage's Cauldron** (its own fire, brews a quarter quicker, half the failures, pills a
+  grade better where the herbs allow) and **his Notes** (a whole rank of alchemy). After that, the first to pass each opening takes a
+  lesser legacy: a **page of his Notes** (a fifth of a rank) and the Spring of the Ancients.
+
+### The Sunken Sword Tomb
+
+From **Foundation Building Late**, meant for **Core Formation**; every four years, twenty minutes inside. A gorge sunk deep into grey
+stone (`SwordTomb`, `SwordTombLand`), its works `SwordTombWorks`:
+
+- **Its land**: a high plateau of grey stone laid in level strata of andesite and tuff; four branch canyons cut down from the **arrival
+  ledges** at their heads (old paving, lanterns, a sword set in a stone) by stairs to the gorge's floor, which rings a spire of the same
+  rock at the heart. The floor is strewn with the swords of a sect that fell there (`BuriedSwordBlock`: whole ones standing a block and
+  a half, broken ones, leaning ones), and the ruins of that sect stand on it between the canyons: its Sword Hall, Forge, Hall of Graves
+  and Quarters, each with a vault (the Hall's Mid, the rest Low).
+- **Its old swords**: each opening 18 of the floor's swords glint again. Right-click one to draw it: what it kept is yours (a forged
+  blade, Spirit grade or now and then Earth; a manual of a sword spell; spirit stones), the sword left broken, and the wraiths about it
+  wake.
+- **Its guardians**: **Sword Wraiths** (a fallen sword's spirit, hovering over its blade) about the floor and in the ruins, a larger
+  one at the Sword Path's foot.
+- **Lingering sword intent**: sixteen patches of it on the floor, glinting faintly (plain under Qi Sense). Walk or sneak through and
+  it leaves you be; **run, fly or fight** in it and it cuts you (a twentieth of your body, twice as much if you stand well below Core
+  Formation, a quarter as much far above it). One whose Sword Intent is lit is spared.
+- **Its event**: some time into each opening the **swords wake** for a minute: blades rise from the gorge and fall like rain about
+  everyone inside, a glint marking where each lands a moment before (an eighth of your body where one lands).
+- **Its trials**: walk the **Sword Path** up the spire's face from its foot to the summit, on foot (its intent bears down harder the
+  higher you climb, slows you, cuts now and then and drags fliers down onto its steps; step off it and you begin again). Then the
+  **sword's spirit** meets you before the shrine, alone and at your own strength. Bested, the **Sleeping Sword** answers your hand:
+  right-click it in its stone. The first in the world takes the **Great Inheritance**: the **Sleeping Sword** (a master's jian of
+  Perfect work whose grade follows its bearer's realm: Spirit, Earth from Nascent Soul, Heaven from Four Axis, Immortal from Void
+  Shattering; ridden, it saves its grade's share of a sword flight's qi) and the manual of **Sword Intent** (Core Formation: a switch
+  on the Abilities tab; every blow you land with a sword is followed by a second cut of lingering intent half as strong, for a little
+  qi a second). After that, a lesser legacy each opening: a Fine Earth-grade jian or a sword spell's manual, and spirit stones.
+
+### The Ancient Battlefield
+
+From **Core Formation Late**, meant for **Nascent Soul**; every five years, twenty minutes inside. The red plain an old war was fought
+over (`Battlefield`, `BattlefieldLand`), its works `BattlefieldWorks`:
+
+- **Its land**: coarse earth, terracotta and blood-dark red earth in broad patches, soul soil where the dead lie thickest, three rings of
+  trenches with earthworks round the **General's hill** at its heart, craters, bones half buried and broken blades driven in; an **arrival camp** at the end of each way in (trampled earth, a banner, a cold brazier);
+  war banners and broken palisades all over it; a **general's tent** (a ridge of red cloth, its door toward the hill between two
+  banners) on each diagonal between the first trenches, its war chest a sealed vault (the first Mid, the rest Low). A killing
+  formation's fog lies across the main way before the hill. Its yin is thick: its ghostly qi is three times the Netherworld's.
+- **The fallen**: 24 old soldiers' bones about the plain each opening, each with what it died with (an old blade or spear, a piece of
+  armour, spirit stones, now and then a manual of war); a fresh death's body is left as it lies.
+- **Its guardians**: **Bone Soldiers** kneeling where they fell about the trenches, the tents and the hill's foot, rising for whoever
+  comes close.
+- **Its event**: some time into each opening the **dead rise** for a minute and a half: old soldiers claw up out of the earth about
+  everyone inside (sixteen at most at once).
+- **Its trial**: hold the **General's hill**. Step into the ring of banners on its top and the war drum sounds; **five waves** of
+  **Battle Spirits** (soldiers of the old war in light) come up the hill at you, two more each time and stronger, the last led by the
+  **General's Spirit**. Out of the ring for three seconds, or fallen, and you have lost it. Held, the **General's tomb** in the hill's
+  far side lets you through its barrier: at his bier, the first in the world takes the **Great Inheritance**: the **War General's
+  Banner** (held in either hand, your side within 16 blocks strikes harder and is harder to harm: you, your sect's fellows and players,
+  and those it calls; raised, it calls **four soldiers of the old army** to fight beside you for 40 seconds, for a fifth of your qi,
+  then rests five minutes, kept on the banner) and the manual of **Blood Battle** (Nascent Soul: every blow you land heals you a tenth
+  of it, and with more than one foe set on you each one past the first takes a tenth off their blows' harm, at most half; a little qi a
+  second). After that, a lesser legacy each opening: a Fine Earth-grade spear or a manual of war, and spirit stones.
+
+### The Primeval Beast Graveyard
+
+From **Core Formation Late**, meant for **Nascent Soul**; every six years, twenty minutes inside. A jungle basin walled by cliffs
+(`BeastGraveyard`, `BeastGraveyardLand`), its works `BeastGraveyardWorks`:
+
+- **Its land**: jungle floor in broad patches of grass, podzol, moss and rooted earth, thick with ferns and tall grass; still green
+  ponds in its hollows; cliffs of stone in level strata stepping up to a jungle rim. Across its heart the **bones of a primeval
+  dragon** in a great curve: its skull open-jawed and hollow (walk in by its jaws), fangs hanging from its snout, horns sweeping back;
+  its spine of vertebrae and spikes, ribs arching over the jungle floor, its legs' claws gripping the earth, its tail thinning away.
+  Jungle trees great and small off the bones, a hunters' camp at each arrival, two beast tamers' lodges fallen in, each with a vault.
+- **Its herbs**: twelve in the dragon's shadow, Spirit Ginseng, Purple Lingzhi, Ochre Huangjing and the commoner kinds, a century
+  older for every year it slept.
+- **Its beasts**: wild demon beasts of eight kinds gather on its floor and grow past their kind on the dragon's bones (a beast of the
+  Graveyard holds the rank it was raised at, beyond its kind's own top), of Nascent Soul's ranks, each kept to its own ground; three
+  great ones at Nascent Soul Late about its ribs. They belong to one opening: gone when it closes, or as they load after.
+- **Its event**: some time into each opening the **bones roar** for a minute: every beast in it goes wild, swifter and stronger, and
+  rushes the nearest visitor.
+- **Its trial**: before the skull the **Dragon's Echo** (the dead dragon risen as a shade, made of its own green light) rises for
+  whoever challenges it, at their own strength. Bested, it sinks back into its bones and its blood essence gathers in the skull's
+  hollow: step in to take it. The first in the world takes the **Primeval Blood Essence**: a demon's blood wakes a realm further (to
+  Entering Nirvana at most); a half-blood's own race's blood grows purer, as by blood a realm above its other paths; a human wakes a
+  dragon's blood in them and becomes a Dragon half-blood, warned first and drunk only sneaking. After that, a lesser legacy each
+  opening: Nascent Soul's dragon blood, a great beast's core and spirit stones.
+
+### The Cave Abode of a Heavenly Being
+
+From **Nascent Soul Late**, meant for **Heavenly Being**; every seven years, twenty-five minutes inside. A lone mountain in a basin of
+pines round a still lake (`CaveAbode`, `CaveAbodeLand`), its works `CaveAbodeWorks`:
+
+- **Its land**: the peak rising steep out of a meadow basin, grey stone in level strata, moss on its lower slopes, snow on its crown;
+  the lake on the main way before its foot, a paved causeway across it; grey crags round the rim; pines in the basin; a terrace at each
+  arrival.
+- **The abode**, hollowed out of the mountain in a frame of its own: its gate at the mountain's foot set into the slope (a porch of
+  white jade pillars under dark tiles); a tunnel to a long hall of white jade pillars, a **library** on one side (shelves of books,
+  lecterns, a High vault of manuals and jade slips) and a hall of **spirit springs** on the other (a pool lit from beneath that mends
+  whoever bathes in it, a Mid vault of the Spring of the Ancients, old pills and now and then an Earth-grade artifact); the **lecture
+  hall** with its red pillars and the master's dais; at the heart the **garden court** under a shaft of sky cut down through the peak
+  (its pond of spirit lotuses, four beds of rare herbs a thousand years old and more, a Vine Keeper among them); off the garden the
+  hall of the five elements, the maze, and behind a trial's barrier the master's chamber. **Bronze Puppets** guard the gate, the
+  causeway's far end, the halls and the maze.
+- **Its event**: some time into each opening **the master's lecture**, two minutes: the master's voice from his seat on the dais.
+  Whoever is in the lecture hall has **The Master's Lecture** on them: meditation gathers **five times** as much. One who sat through
+  half a minute of it in meditation keeps an **Insight** after.
+- **Its trials**: in the hall of the five elements, light its **five pillars** (`ElementPillarBlock`, right-click) in the order each
+  element gives rise to the next, wood, fire, earth, metal, water and round, beginning where one will; they stand in the world's own
+  order round their ring. One out of turn strikes its toucher back (an eighth of the body) and all five go dark. All five lit, all who
+  lit them pass. Then walk the **maze** (seven cells a side, the world's own, its way to the heart long) to its heart; its walls,
+  floor and roof hold against every hand and spell (`CaveAbodeWorks#holds`). Then the **Master's Puppet** (white jade and gold) before
+  the chamber meets you at your own strength. Bested, the chamber's barrier lets you through: at the master's altar, the first in the
+  world takes the **Great Inheritance**: **his own method** (the Four Axis heaven method of the world's own element) and the
+  **Marrow-Washing Fruit** (once in a life, one's physique a grade higher: its talent and its pace that grade's, its gifts and roots
+  as they were; an Eternal Reincarnation Body keeps it). After that, a lesser legacy each opening: his Heavenly Being method, spirit
+  stones and a Spring of the Ancients.
+
+### The Yellow Springs Hollow
+
+From **Nascent Soul Late**, meant for **Heavenly Being**; every five years, twenty minutes inside. A **realm of the dead**: its Seal
+stands in the Netherworld, and it lets the dead in as well as the living; inside, the dead lay hands on things as the living do, its
+guardians see and strike them and are struck by them. A drowned city (`SpringsHollow`, `SpringsHollowLand`), its works
+`SpringsHollowWorks`:
+
+- **Its land**: murky golden water over the city's sunken streets (mud, gravel and soul sand, broken walls and pillars of black stone
+  rising from them, some breaking the water); its islands of soul soil standing out of it, dead bushes and red spider lilies on them,
+  joined by **bridges** of black stone lit by soul lanterns; the ruins of its houses on them (two with Mid vaults: Yin Jade, spirit
+  stones, the dead's pills, now and then a ghost method's slip); dark cliffs round it all. At the heart, ringed by the deep water of
+  **the Yellow Springs** themselves, the tomb's island: whoever swims the springs is dragged down and withered.
+- **Its flowers**: Other Shore Flowers on its islands, older for every year it slept.
+- **Its guardians**: **Drowned Shades** (soldiers of the city's garrison risen in the springs' light) before its houses, on its
+  bridges and before the tomb; **the Ferryman** at his landing.
+- **Its event**: some time into each opening **the lantern night**, two minutes: lanterns of the dead rise from the water, every Other
+  Shore Flower blooms **three centuries** older, six more shades rise on the islands' shores, and the Ferryman carries everyone who
+  asks.
+- **Its trial**: **the Ferryman's judgement** at the end of his jetty (right-click him). The righteous he takes for nothing, the
+  neutral for his toll (three Yin Jade, or two Mid spirit stones), the devilish must best him, at their own strength. Judged,
+  right-click him again: his boat poles you across in the yellow mist to the tomb's island (ring the bell on the far jetty to be taken
+  back). The tomb's door lets the judged by: at the **Ghost King's coffin** the first in the world takes the **Great Inheritance**: his
+  own foundation method, the **Six Paths Reincarnation Canon**, and sixteen Yin Jade. After that, a lesser legacy each opening:
+  **Yama's Judgement Scripture** and spirit stones.
+
+### The Jade Lake Mirage
+
+From **Four Axis Late**, meant for **Dao Integration**; every eight years, twenty-five minutes inside; its Seal in the **Jade
+Firmament**. A still lake of pale jade (`MirageLake`, `MirageLakeLand`), its works `MirageLakeWorks`:
+
+- **Its land**: clear water over a bed of clay and sand, lily pads in the shallows; white isles of calcite and diorite standing out of
+  it, grass and white flowers on them; a pale shore and white hills round it all. **Bridges of jade** join the isles to one another and
+  to the heart isle (the shortest tree of them), white rails along them; **about a third are false**: their middle span a mirage of
+  jade (`MirageBlock`) that stops no foot, so one walks onto it and falls into the lake (never the landing's bridge to the heart).
+  Willows hang over the water and blossom trees stand on the isles and the hills.
+- **Its mirages**: spirit lotuses by the isles (older for every year it slept), and mirage lotuses among them; two High vaults on the
+  isles (spirit stones, now and then an Earth-grade artifact or a Departure Jade), and two **mirage caskets** in their look. Which is
+  which is rolled each opening. A mirage dissolves into mist at a touch; under Qi Sense it shimmers, plain for what it is. A rival that
+  goes for one gets nothing but mist.
+- **Its guardians**: **Mirror Shades** (soldiers of the lake's sect in glassy silver light) on the isles, on the real bridges and before
+  the pavilion.
+- **Its event**: some time into each opening **the mirror wakes**, a minute: each visitor's reflection rises from the water beside
+  them, at **half their strength**, and fights them.
+- **Its trial**: the **Mirror Pavilion** on the heart isle, its great mirror (`JadeMirrorBlock`) across its middle in a frame of gold.
+  Touch it and **your reflection** steps out (`MirrorReflection`): your rank, your own heaven method and so your spells, your armour and
+  your weapon (never a legend's), drawn in your own skin, glassy. Only your blows touch it; it never flees or begs. Best it and the mirror
+  is a **door** to you: walk through it to the hall behind (whose walls hold). At its altar the first in the world takes the **Great
+  Inheritance**: the **Jade Lake Mirror** (`JadeLakeMirrorItem`: raised, the next three blows or spells that strike you are turned back,
+  whole, on whoever struck them, for ten seconds; then it rests a minute) and three Supreme spirit stones. After that, a lesser legacy
+  each opening: a Heaven-grade artifact and spirit stones.
+
+### The Ruins of a Fallen Holy Land
+
+From **Sacred Vessel Late**, meant for **Entering Nirvana**; every ten years, half an hour inside; its Seal in the **Great Void**. The
+shards of a holy land broken in some war of the ancients, **floating in the void** (`FallenHolyLand`, `FallenHolyLandLand`), its works
+`FallenHolyLandWorks`:
+
+- **Its land**: the greatest shard at the heart, four eye shards about it, a shard at each arrival and the broken land's own between,
+  each level grass and old white paving on top, its underside a jagged cone of rock torn from the land below, crying obsidian and
+  amethyst in its veins. Between them nothing: one who falls is caught and set back at an arrival. Over the void the sky's hold counts
+  from the shards' level (`SecretRealm#holdFloor`), so one held low still crosses between them.
+- **The void currents**: two between each pair of shards joined (there and back): step into one and it **carries you** to its far end.
+- **Its guardians**: **the holy land's remnants** (in armour of white jade laced with gold) on the shards, before the ancestral hall,
+  and one by each formation eye. Two broken halls keep High vaults (Supreme spirit stones, now and then an immortal one or a
+  Heaven-grade artifact).
+- **Its event**: some time into each opening **the void tide**, a minute: the currents surge, and whoever stands near a shard's edge is
+  flung off it.
+- **Its trial**: **the ancestral formation**. The ancestral hall on the heart shard stands under it, its walls holding against every hand
+  and spell, its door barred. Its **four eyes** (`FormationEyeBlock`) stand on the eye shards, each kept by a guard: while a guard stands
+  near its eye nothing touches the eye; the guard down, a hand breaks it. **All four broken, the formation falls** for the rest of the
+  opening and the hall stands open to everyone (the realm sets them whole before it next opens). At its ancestral altar the first in
+  the world takes the **Great Inheritance**: the **Ancestral Sword of the Fallen Holy Land**, a flying sword of **Heaven grade and
+  Perfect quality**, and four Supreme spirit stones. After that, a lesser legacy each opening.
+
+### The Tomb of a Fallen Immortal
+
+From **Entering Nirvana Late**, meant for **True Immortal**; every twelve years, half an hour inside; its Seal in the **Immortal
+Realm**. A fallen immortal's palace on a **floating base** over a sea of golden cloud (`ImmortalTomb`, `ImmortalTombLand`), its works
+`ImmortalTombWorks`:
+
+- **Its land**: a broad rounded square of white stone, its top pale grass gone yellow with decay, dead bushes in its bare patches, its
+  underside a great dome of rock hung over the void; islets broken from it float about it.
+- **The palace**: in the middle **the court**, paved and cracked, a withered tree at its heart; round it **eight halls, one for each Law**
+  (`ImmortalTombWorks#lawOf`), each door sealed by its Law (`LawSealBlock`: solid but to one who holds that Law, tinted its colour), its
+  Law's stele within and a vault of **that Law's Dao Fragments** and immortal spirit stones; beyond the court, up its steps, **the
+  sanctum**; behind the court, his gate. Its walls hold: it is gone into by its doors.
+- **Its guardians**: **decayed celestial guards** (gold gone dull and green with old bronze) before the halls, about the court and on
+  the sanctum's steps; **the immortal's decayed spirit** before the sanctum's door.
+- **Its event**: some time into each opening **the Five Decays spread**, a minute: everyone's blows and armour weaken as the decays'
+  signs weaken an immortal (`ModEffects.DECAYING`).
+- **Its trial**: the sanctum's door lets by one who **holds three Laws** (it feels them as one comes to it), or one who **bests his
+  decayed spirit**, at their own strength. At his coffin the first in the world takes the **Great Inheritance**: his **glaive**, of
+  **Immortal grade and Perfect quality**, and **Dao Fragments of three Laws**. After that, a lesser legacy each opening: a Dao Fragment
+  and immortal spirit stones.
+
+### Those who come for it
+
+`SecretRealmRivals`. As a realm stirs its roll is made: the sects of its world nearest its Seal (three at most, within 3,000 blocks)
+send two to four disciples each, of its ranks (its lowest to a realm past what it is meant for), and rogues of either path fill it out,
+16 at most. While it stirs they camp round its Seal, seen whenever someone is near; as it opens they go in. Inside they are raised as
+the first player comes in, as far in as they would have got by then (`RealmWorks#rivalStart`). They take what lies about (the
+Valley's herbs, the Tomb's old swords, the fallen's things on the Battlefield: the guardians near wake), force the vaults their realm
+can, and later go at the realm's own trials, a step at a time (`RealmWorks#rivalTrial`): the Gatekeeper and the cauldron; the Sword
+Path walked on foot, the sword's spirit and the Sleeping Sword; the General's hill held against its waves (they may hold it as a player
+does) and his tomb; the dragon's echo and the skull's hollow; the Cave Abode's pillars lit in their order, its maze walked cell by cell,
+its puppet and the master's altar; the Ferryman's judgement, his boat and the Ghost King's coffin; their own reflections in the
+Mirage's mirror (bested or not, by their strength) and its altar; the formation's eyes (their guards first), the ancestral hall; the
+fallen immortal's spirit and his coffin. So they may take the inheritance.
+The righteous and the devilish fight as anywhere; one of the devilish goes for anyone near it **badly hurt**; a sect's disciples stand
+with that sect's own, players among them, and the realm's sky holds them low as everyone. Unseen (no player went in), the opening goes
+on in its tales: a few of them die there, now and then one takes a legacy. Cast out, they linger at the Seal and go their way once
+nobody watches; one who took the Great Inheritance stays in the world as a rogue, carrying it.
+
+**Lying in wait.** As a realm quakes, the strongest two of the devilish still inside (not an heir) slip out early with what they took,
+to wait at its Seal (raised there in the shadows round its floor when anyone is near). Whoever is cast out carrying more than they took
+in is their prey: they come for them, and wait two minutes after the realm shuts before going their way.
+
+### Ties
+
+- **Rumours** tell of a realm stirring (which way, how far), of those who fell in it, and of who took its inheritance.
+- **The mission board**: while a realm near the sect stirs or stands open, a posting for two Spirit Ginseng of 300 years or more
+  (twice a Hard gathering's pay); the exchange sells Departure Jade to Inner Disciples and up.
+- **The Codex**: a chapter of its own (Secret Realms, the Verdant Herb Valley, the Sunken Sword Tomb, the Ancient Battlefield, the
+  Primeval Beast Graveyard, the Cave Abode, the Yellow Springs Hollow, the Jade Lake Mirage, the Ruins of a Fallen Holy Land, the Tomb
+  of a Fallen Immortal; Sword Intent and Blood Battle under Abilities, Marrow Washing
+  under Treasures and Alchemy, the Primeval Blood Essence under Beasts and Bloodlines); the Map of the Worlds marks them beside the
+  Overworld. **Advancements** (Worlds Beyond): into one, out alive with more than one took in, one's own body found again, the
+  inheritance taken.
+- **`/secretrealm info [realm]`**; an operator's **`stir`**, **`open`**, **`close`**, **`go`** (into it, as through its gate) and
+  **`seal`** (to its Seal).
 
 ## Shader packs (Iris)
 

@@ -176,9 +176,12 @@ public final class Possession {
 		return 1 + Math.max(0, gap) / (double) Stage.values().length;
 	}
 
-	/** Where a soul stands, for what it brings a body (#guidance, #OPENS_MERIDIANS): its own path's true rank (PlayerCultivation#soulPath). */
+	/**
+	 * Where a soul stands, for what it brings a body (#guidance, #OPENS_MERIDIANS): the highest of its paths' true ranks
+	 * (TwoPaths#higherRank, since 2026-10-31; its own path's, PlayerCultivation#soulPath, before), as possession weighs it.
+	 */
 	private static int soulRank(PlayerCultivation soul) {
-		return Math.max(0, TwoPaths.rank(soul, soul.soulPath(), false));
+		return Math.max(0, TwoPaths.higherRank(soul, false));
 	}
 
 	/** Who {@code player} is to the world's people: the one whose body they are in, or themselves (for regard, sects and the like). */

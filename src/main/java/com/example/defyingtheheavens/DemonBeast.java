@@ -72,6 +72,8 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 	private static final EntityDataAccessor<Integer> DATA_RANK = SynchedEntityData.defineId(DemonBeast.class, EntityDataSerializers.INT);
 	/** Flags of what it is doing, for its look: in its shell, charging, coiled round its prey, breathing fire. */
 	private static final EntityDataAccessor<Byte> DATA_ACT = SynchedEntityData.defineId(DemonBeast.class, EntityDataSerializers.BYTE);
+	/** Grown past its kind ({@link #setBoundlessRank}): the client sizes it by this too. */
+	private static final EntityDataAccessor<Boolean> DATA_BOUNDLESS = SynchedEntityData.defineId(DemonBeast.class, EntityDataSerializers.BOOLEAN);
 	public static final int ACT_SHELL = 1, ACT_CHARGE = 2, ACT_COIL = 4, ACT_BREATH = 8;
 
 	private static final Map<EntityType<?>, BeastKind> KINDS = new HashMap<>();
@@ -165,6 +167,7 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 		super.defineSynchedData();
 		entityData.define(DATA_RANK, -1);
 		entityData.define(DATA_ACT, (byte) 0);
+		entityData.define(DATA_BOUNDLESS, false);
 	}
 
 	@Override
@@ -182,9 +185,21 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 		if (!level().isClientSide) setHealth(getMaxHealth());
 	}
 
+	/**
+	 * Its rank set past its tier's highest (it grows the larger with it): a beast of the Primeval Beast Graveyard, grown past its kind on the
+	 * primeval dragon's bones (BeastGraveyardWorks).
+	 */
+	public void setBoundlessRank(int rank) {
+		entityData.set(DATA_BOUNDLESS, true);
+		setRank(rank);
+	}
+
+	/** Whether it has grown past its kind ({@link #setBoundlessRank}). */
+	public boolean boundless() { return entityData.get(DATA_BOUNDLESS); }
+
 	/** Its rank set (and its strength and size by it), its health left as it is (a beast loaded again). */
 	private void holdRank(int rank) {
-		rank = Mth.clamp(rank, kind().minRank(), kind().maxRank());
+		rank = boundless() ? Math.max(kind().minRank(), rank) : Mth.clamp(rank, kind().minRank(), kind().maxRank());
 		entityData.set(DATA_RANK, rank);
 		refreshDimensions();
 		if (!level().isClientSide) {
@@ -203,9 +218,13 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 	@Override public Realm getCultivationRealm() { return CultivatorNpc.realmOf(Math.max(0, getRank())); }
 	@Override public Stage getCultivationStage() { return CultivatorNpc.stageOf(Math.max(0, getRank())); }
 
-	/** How much larger than its kind's least it is: a twelfth more for each stage above its tier's lowest. */
+	/**
+	 * How much larger than its kind's least it is: a twelfth more for each stage above its tier's lowest (one grown past its kind no more than
+	 * two thirds larger again, however far: {@link #setBoundlessRank}).
+	 */
 	public float scale() {
-		return 1 + (Math.max(kind().minRank(), getRank()) - kind().minRank()) / 12f;
+		int above = Math.max(kind().minRank(), getRank()) - kind().minRank();
+		return 1 + (boundless() ? Math.min(above, 8) : above) / 12f;
 	}
 
 	@Override
@@ -216,7 +235,7 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 	@Override
 	public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
 		super.onSyncedDataUpdated(key);
-		if (DATA_RANK.equals(key)) refreshDimensions();
+		if (DATA_RANK.equals(key) || DATA_BOUNDLESS.equals(key)) refreshDimensions();
 	}
 
 	/**
@@ -499,11 +518,13 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 		super.addAdditionalSaveData(tag);
 		tag.putInt("Rank", getRank());
 		if (guards != null) tag.putLong("Guards", guards.asLong());
+		if (boundless()) tag.putBoolean("Boundless", true);
 	}
 
 	@Override
 	public void readAdditionalSaveData(CompoundTag tag) {
 		super.readAdditionalSaveData(tag);
+		entityData.set(DATA_BOUNDLESS, tag.getBoolean("Boundless"));
 		if (tag.contains("Guards")) guard(BlockPos.of(tag.getLong("Guards")));
 		if (tag.contains("Rank") && tag.getInt("Rank") >= 0) {
 			float health = getHealth();

@@ -46,6 +46,20 @@ public final class ModGameRules {
 				for (net.minecraft.server.level.ServerPlayer p : server.getPlayerList().getPlayers()) Spells.sync(p);
 			}));
 
+	/**
+	 * The dead leave their bodies (Corpses): a player, or a cultivator, lies where they fell with what they carried, rotting to bones. Off,
+	 * no body is left and what they carried drops as vanilla's does.
+	 */
+	public static final GameRules.Key<GameRules.BooleanValue> LEAVE_CORPSES =
+			GameRuleRegistry.register("leaveCorpses", GameRules.Category.DROPS, GameRuleFactory.createBooleanRule(true));
+
+	/**
+	 * The secret realms stir and open (SecretRealms): each in its turn, by the world's clock. Off, none stirs (one open now closes, those in it
+	 * cast out beside its Seal) and its Seal stays shut.
+	 */
+	public static final GameRules.Key<GameRules.BooleanValue> SECRET_REALMS =
+			GameRuleRegistry.register("secretRealms", GameRules.Category.UPDATES, GameRuleFactory.createBooleanRule(true));
+
 	/** Whether {@code p} may turn the mod's gamerules from its menus: an operator, or the host of the world they play in. */
 	public static boolean mayChange(net.minecraft.server.level.ServerPlayer p) {
 		return p.hasPermissions(2) || p.server.isSingleplayerOwner(p.getGameProfile());

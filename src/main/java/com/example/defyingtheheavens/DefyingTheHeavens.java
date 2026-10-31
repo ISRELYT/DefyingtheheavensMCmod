@@ -24,6 +24,7 @@ public class DefyingTheHeavens implements ModInitializer {
 		ModCreativeTab.register();
 		ModNoiseSettings.registerTypes();
 		AstralRealm.registerWorldgen(); // the planets' generator and biome source
+		SecretRealms.register(); // the secret realms' generator
 		ModGameRules.register();
 		ModFeatures.register();
 		ModStructures.register();
@@ -40,6 +41,8 @@ public class DefyingTheHeavens implements ModInitializer {
 		NetherworldCommand.register();
 		SmallWorldCommand.register();
 		SleeveCommand.register();
+		SecretRealmCommand.register();
+		WarArts.register(); // the secret realms' war arts: Sword Intent's second cuts, Blood Battle's share
 		Legends.register(); // the legendary weapons' record, their keepers and trials
 		LegendCommand.register();
 		SectMissions.register(); // the sect mission board: its postings, quarry, the gate watch, the boards set up

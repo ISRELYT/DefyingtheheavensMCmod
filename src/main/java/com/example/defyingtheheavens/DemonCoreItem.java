@@ -122,7 +122,7 @@ public class DemonCoreItem extends Item {
 	/**
 	 * A player has died (CultivationEvents' AFTER_DEATH, before anything else there): a demon (their own record's blood, whatever body
 	 * their soul was in) slain by another player leaves their demon core, of their Demon Path's rank, where they fell. Their cultivation
-	 * stays as it was: the core is only the victor's spoils (the user's pick). Slain by another player is the killing blow's, or the kill's
+	 * stays as it was: the core is only the victor's spoils (the user's pick), in the body they leave (Corpses). Slain by another player is the killing blow's, or the kill's
 	 * credit (struck by them, then finished by a fall or the lava: no core for it before the sweep of 2026-10-23); never a machine's
 	 * player (another mod's FakePlayer).
 	 */
@@ -134,7 +134,8 @@ public class DemonCoreItem extends Item {
 		if (rank < 0) return;
 		// A half-blood's core too (DemonPath#race), and its race's blood as far as its blood is awake (DemonBlood), none beyond what the worlds
 		// hold (Realm#atMostTaught: a True Immortal's is the Immortal Realm's).
-		player.spawnAtLocation(of(rank, DemonPath.element(DemonPath.race(c)), player.getName()));
-		if (c.demon().bloodRealm() >= 0) player.spawnAtLocation(DemonBloodItem.of(DemonPath.race(c), Realm.byIndex(c.demon().bloodRealm()).atMostTaught()));
+		// Into the body they left, with all else they carried (Corpses#leave), or where they fell.
+		Corpses.leave(player, of(rank, DemonPath.element(DemonPath.race(c)), player.getName()));
+		if (c.demon().bloodRealm() >= 0) Corpses.leave(player, DemonBloodItem.of(DemonPath.race(c), Realm.byIndex(c.demon().bloodRealm()).atMostTaught()));
 	}
 }

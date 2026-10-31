@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "array=blades": {
+      "model": "defying-the-heavens:block/killing_formation"
+    },
+    "array=fire": {
+      "model": "defying-the-heavens:block/killing_formation"
+    },
+    "array=gravity": {
+      "model": "defying-the-heavens:block/killing_formation"
+    },
+    "array=fog": {
+      "model": "defying-the-heavens:block/killing_formation"
+    }
+  }
+}

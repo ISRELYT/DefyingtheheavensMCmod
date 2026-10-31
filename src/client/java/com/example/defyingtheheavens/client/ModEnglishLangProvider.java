@@ -361,6 +361,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case LIFE_AND_DEATH_DOMAIN -> "Life and Death Domain";
 				case SMALL_WORLD -> "Small World";
 				case SLEEVE -> "Universe in a Sleeve";
+				case SWORD_INTENT -> "Sword Intent";
+				case BLOOD_BATTLE -> "Blood Battle";
 			});
 			t.add(key + ".description", switch (ability) {
 				case QI_SUSTENANCE -> "Qi keeps you fed. Hunger stays full.";
@@ -452,6 +454,12 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 						+ "(a True Immortal, which feels none at the Immortal Gate, takes %3$s%% of its body over the climb there, doubled the "
 						+ "same way). Sneak and use it to let them out beside you (not partway through a climb). If you die, they're cast out "
 						+ "where you fell.";
+				case SWORD_INTENT -> "A technique (from its manual), the Sunken Sword Tomb's. Switched on, your intent rides your blade: every blow "
+						+ "you land with a sword is followed a moment later by a second cut of lingering intent, %1$s%% of the blow. The tomb's own "
+						+ "lingering intent no longer cuts you. Costs %2$s qi/s while on; it goes out when your qi runs short.";
+				case BLOOD_BATTLE -> "A technique (from its manual), the Ancient Battlefield's. Switched on, battle feeds you: every blow you land "
+						+ "heals you %1$s%% of it, and with more than one foe set on you within %4$s blocks their blows harm you %2$s%% less for each "
+						+ "one past the first (at most %3$s%% less). Costs %5$s qi/s while on; it goes out when your qi runs short.";
 			});
 		}
 		// Clone while playing the clone (Clones): the way back.
@@ -1830,8 +1838,23 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.CORE_FROM, "Taken from: %s");
 		t.add(ModLang.CORE_USE, "A demon's whole cultivation, condensed: prized for crafting and artifact forging");
 		t.add(ModItems.DEMON_BLOOD, "Demon Blood");
+		// The bodies of the dead (Corpses) and their blood
+		t.add(ModBlocks.CORPSE, "Body");
+		t.add(ModItems.CULTIVATORS_BLOOD, "Cultivator's Blood");
+		t.add(ModLang.CULTIVATORS_BLOOD_NAME, "%s Cultivator's Blood");
+		t.add(ModLang.CULTIVATORS_BLOOD_OF, "Drawn from the body of %s");
+		t.add(ModLang.CULTIVATORS_BLOOD_USE, "A cultivator's blood, for the devilish arts");
+		t.add(ModLang.MSG_CORPSE_WHO, "The body of %s, %s");
+		t.add(ModLang.MSG_CORPSE_WHO_MORTAL, "The body of %s, a mortal");
+		t.add(ModLang.MSG_CORPSE_BLED, "You draw the blood of %s's body, and your path darkens.");
+		t.add(ModLang.MSG_CORPSE_BLED_ALREADY, "Its blood has already been drawn.");
+		t.add(ModLang.MSG_CORPSE_BLOOD_SPOILT, "Its blood has gone bad: only a fresh body can be bled.");
+		t.add(ModLang.MSG_CORPSE_MORTAL_BLOOD, "A mortal's blood holds no qi.");
+		t.add(ModLang.GAMERULE_LEAVE_CORPSES, "The dead leave their bodies");
+		t.add(ModLang.GAMERULE_LEAVE_CORPSES + ".description", "Players and cultivators lie where they fall with everything they carried, rotting to bones. Off, what they carried drops as usual.");
 		t.add("gamerule.spellCooldowns", "Spells wait out their cooldowns");
 		t.add("gamerule.spellGriefing", "Spells change the land for good");
+		secretRealms(t);
 		t.add(ModLang.BLOOD_NAME, "%s %s Blood");
 		t.add(ModLang.BLOOD_UNKNOWN, "Blood of no race known");
 		t.add(ModLang.BLOOD_USE, "Drink it: a %1$s awakens its blood to %2$s, and its Demon Path may break through into that realm; a human forms a demon core of it, a half-blood of the %1$s");
@@ -3051,6 +3074,310 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 
 		// The mod's advancements (ModAdvancements): each one's title and description.
 		ModAdvancements.english().forEach((key, text) -> t.add(key, text));
+	}
+
+	/** The secret realms (SecretRealms, HerbValleyWorks, SecretRealmRivals, 2026-10-31): their blocks, items, guardians, words and tales. */
+	private static void secretRealms(TranslationBuilder t) {
+		t.add(ModLang.secretRealm("verdant_herb_valley"), "Verdant Herb Valley");
+		t.add("biome.defying-the-heavens.herb_valley", "Verdant Herb Valley");
+		t.add("gamerule.secretRealms", "Secret realms stir and open");
+		t.add("gamerule.secretRealms.description", "Each secret realm opens in its turn by the world's clock. Off, none stirs, one open now closes, and its Seal stays shut.");
+		t.add(ModBlocks.SECRET_REALM_GATE, "Secret Realm Gate");
+		t.add(ModBlocks.SECRET_REALM_SEAL, "Seal Keystone");
+		t.add(ModBlocks.KILLING_FORMATION, "Killing Formation Eye");
+		t.add(ModBlocks.TRIAL_BARRIER, "Trial Barrier");
+		t.add(ModBlocks.PILL_SAGE_CAULDRON, "Pill Sage's Cauldron");
+		t.add(ModItems.DEPARTURE_JADE, "Departure Jade");
+		t.add(ModItems.ANCIENT_ESSENCE, "Ancient Essence");
+		t.add(ModItems.SPRING_OF_THE_ANCIENTS, "Spring of the Ancients");
+		t.add(ModItems.PILL_SAGE_NOTES, "The Pill Sage's Notes");
+		t.add(ModItems.PILL_SAGE_PAGE, "A Page of the Pill Sage's Notes");
+		t.add(ModEntities.VINE_KEEPER, "Vine Keeper");
+		t.add(ModEntities.BRONZE_PUPPET, "Bronze Puppet");
+		t.add(com.example.defyingtheheavens.ModEffects.ANCIENT_SPRING, "Spring of the Ancients");
+		t.add(ModLang.TOOLTIP_DEPARTURE_JADE, "Inside a secret realm, hold it up for %s seconds to be carried out beside its Seal. A blow breaks its light.");
+		t.add(ModLang.TOOLTIP_ANCIENT_ESSENCE, "A vanished master's refined essence: one more stat point, for good");
+		t.add(ModLang.TOOLTIP_ANCIENT_SPRING, "Drunk, meditation gathers %s more cultivation for a day");
+		t.add(ModLang.TOOLTIP_SAGE_NOTES, "Read it: a whole rank of alchemy at once");
+		t.add(ModLang.TOOLTIP_SAGE_PAGE, "Read it: a fifth of the way to your next rank of alchemy");
+		t.add(ModLang.MSG_JADE_OUTSIDE, "The jade stirs only inside a secret realm.");
+		t.add(ModLang.MSG_JADE_GATHERS, "The jade's light gathers... hold it %s seconds.");
+		t.add(ModLang.MSG_JADE_BROKEN, "The blow breaks the jade's light.");
+		t.add(ModLang.MSG_ESSENCE_TAKEN, "The ancient essence settles into you: one more stat point (%s to spend).");
+		t.add(ModLang.MSG_SPRING_DRUNK, "The ancients' spring runs clear through your meridians.");
+		t.add(ModLang.MSG_SAGE_NOTES_NOTHING, "There is nothing in these pages you do not already know.");
+		t.add(ModLang.MSG_SAGE_NOTES_READ, "You read the Pill Sage's notes from cover to cover, and the cauldron's ways open before you.");
+		t.add(ModLang.MSG_SAGE_PAGE_READ, "You study the Pill Sage's page closely.");
+		t.add(ModLang.MSG_SECRET_STIRS, "The %1$s stirs. Its Seal lies %2$s, some %3$s blocks away. It opens in %4$s minutes.");
+		t.add(ModLang.MSG_SECRET_OPENS, "The %s has opened. Its gate stands open for %s minutes.");
+		t.add(ModLang.MSG_SECRET_GATE_SEALED, "The gate of the %s has sealed behind those within.");
+		t.add(ModLang.MSG_SECRET_QUAKES, "The %s quakes. It closes in %s minutes.");
+		t.add(ModLang.MSG_SECRET_CAST_OUT, "The %s casts you out.");
+		t.add(ModLang.MSG_SECRET_DEPARTED, "The Departure Jade's light carries you out of the %s.");
+		t.add(ModLang.MSG_SECRET_BACK_AT_SEAL, "You come to beside the Seal of the %s.");
+		t.add(ModLang.MSG_SECRET_ENTERED, "You enter the %1$s. Its qi is %2$s times as dense. %3$s minutes remain.");
+		t.add(ModLang.MSG_SECRET_LIVING_ONLY, "The %s admits only the living.");
+		t.add(ModLang.MSG_SECRET_OWN_BODY, "Only one in their own body may pass the Seal.");
+		t.add(ModLang.MSG_SECRET_BEARING, "The Seal will not let you pass bearing others.");
+		t.add(ModLang.MSG_SECRET_BUSY, "Not in the middle of a tribulation.");
+		t.add(ModLang.MSG_SECRET_TOO_WEAK, "The %s turns you back. It admits only %s and above.");
+		t.add(ModLang.MSG_SECRET_CAUGHT, "The edge of the %s turns you back.");
+		t.add(ModLang.MSG_SECRET_PRESSED, "The sky of the %s presses you down.");
+		t.add(ModLang.MSG_SECRET_SEALED_SPACE, "Space is sealed in a secret realm.");
+		t.add(ModLang.MSG_SECRET_INFO, "The %1$s: it admits %2$s and above, and is meant for %3$s.");
+		t.add(ModLang.MSG_SECRET_INFO_GATE, "Its gate stands open for %s more.");
+		t.add(ModLang.MSG_SECRET_INFO_SEALED, "It stands open behind a sealed gate, %s more.");
+		t.add(ModLang.MSG_SECRET_INFO_STIRRING, "It stirs, and opens in %s.");
+		t.add(ModLang.MSG_SECRET_INFO_SLEEPING, "It sleeps, and stirs again in about %s.");
+		t.add(ModLang.MSG_SECRET_INFO_HEIR, "Its Great Inheritance was taken by %s.");
+		t.add(ModLang.MSG_SECRET_INFO_HEIR_WAITS, "Its Great Inheritance still waits for an heir.");
+		t.add(ModLang.MSG_SECRET_YEARS, "%s years");
+		t.add(ModLang.MSG_SECRET_YEAR, "a year");
+		t.add(ModLang.MSG_SECRET_HOURS, "%s hours");
+		t.add(ModLang.SECRET_SOMEONE, "Someone");
+		t.add(ModLang.MSG_GATEKEEPER_WAKES, "The Gatekeeper wakes and meets you as an equal, at %s.");
+		t.add(ModLang.MSG_GATEKEEPER_BUSY, "The Gatekeeper is fighting another challenger.");
+		t.add(ModLang.MSG_GATEKEEPER_PASSED, "The Gatekeeper kneels. The hall's barrier will let you through.");
+		t.add(ModLang.MSG_SAGE_TRIALS, "Two trials stand before the Pill Sage's hall: defeat its Gatekeeper, then brew a Foundation Pill of Mid-Grade or better in the master's cauldron. %s");
+		t.add(ModLang.MSG_SAGE_GREAT, "His Great Inheritance still waits.");
+		t.add(ModLang.MSG_SAGE_LESSER, "His Great Inheritance is taken; a lesser legacy waits for the first to pass this time.");
+		t.add(ModLang.MSG_SAGE_FALLS_SHORT, "The master's cauldron is not satisfied: a Foundation Pill of Mid-Grade or better.");
+		t.add(ModLang.MSG_SAGE_INHERITED, "%s has taken the Pill Sage's Great Inheritance in the %s!");
+		t.add(ModLang.MSG_SAGE_LEGACY, "The Pill Sage's hall grants you a lesser legacy. His Great Inheritance went to %s.");
+		t.add(ModLang.MSG_SAGE_SILENT, "The hall is silent: its legacy for this opening has been taken.");
+		t.add(ModLang.MSG_BLOOM_BEGINS, "The valley's heart blooms! A ten-thousand-year Spirit Ginseng flowers on the island, for %s minute.");
+		t.add(ModLang.MSG_BLOOM_TAKEN, "%s took the heart's bloom.");
+		t.add(ModLang.MSG_BLOOM_WITHERS, "The heart's bloom withers, untaken.");
+		t.add(ModLang.CMD_SECRET_STIRRED, "The %s stirs.");
+		t.add(ModLang.CMD_SECRET_OPENED, "The %s opens.");
+		t.add(ModLang.CMD_SECRET_CLOSED, "The %s closes.");
+		t.add(ModLang.CMD_SECRET_UNKNOWN, "No secret realm is called %s.");
+		t.add(ModLang.CMD_SECRET_OPEN, "Open, %s left; %s players inside.");
+		t.add(ModLang.CMD_SECRET_STIRRING, "Stirring: it opens in %s.");
+		t.add(ModLang.CMD_SECRET_SLEEPING, "Sleeping: it stirs again in about %s.");
+		t.add(ModLang.CMD_SECRET_SEAL_AT, "Its Seal: %s %s %s (opened %s times).");
+		t.add(ModLang.HUD_SECRET_INSIDE, "%s · %s left");
+		t.add(ModLang.HUD_SECRET_QUAKING, "%s is closing · %s");
+		t.add(ModLang.HUD_SECRET_STIRRING, "%s stirs · opens in %s");
+		t.add(ModLang.HUD_SECRET_GATE, "%s · its gate open %s");
+		t.add(ModLang.rumour("realm.stirs"), "They say the %1$s stirs. Its Seal lies %2$s of here, in the %3$s, some %4$s blocks off.");
+		t.add(ModLang.rumour("realm.heir"), "They say %s took the Great Inheritance of the %s.");
+		t.add(ModLang.rumour("realm.fallen"), "They say %s fell in the %s. Whatever they carried lies there still.");
+
+		// The second phase (2026-10-31): the Sunken Sword Tomb (SwordTombWorks) and the Ancient Battlefield (BattlefieldWorks).
+		t.add(ModLang.secretRealm("sunken_sword_tomb"), "Sunken Sword Tomb");
+		t.add(ModLang.secretRealm("ancient_battlefield"), "Ancient Battlefield");
+		t.add("biome.defying-the-heavens.sword_tomb", "Sunken Sword Tomb");
+		t.add("biome.defying-the-heavens.old_war_field", "Ancient Battlefield");
+		t.add(ModBlocks.BURIED_SWORD, "Buried Sword");
+		t.add(ModItems.SLEEPING_SWORD, "Sleeping Sword");
+		t.add(ModItems.WAR_GENERALS_BANNER, "War General's Banner");
+		t.add(ModEntities.SWORD_WRAITH, "Sword Wraith");
+		t.add(ModEntities.BONE_SOLDIER, "Bone Soldier");
+		t.add(ModEntities.BATTLE_SPIRIT, "Battle Spirit");
+		t.add(ModEntities.GENERAL_SPIRIT, "General's Spirit");
+		t.add(ModEntities.ARMY_SPIRIT, "Soldier of the Old Army");
+		t.add(ModLang.techniqueKey(Technique.SWORD_INTENT.getId()), "Sword Intent");
+		t.add(ModLang.techniqueKey(Technique.SWORD_INTENT.getId()) + ".description", "Let your intent ride your blade: each blow you land with a sword "
+				+ "is followed by a second cut of lingering intent.");
+		t.add(ModLang.techniqueKey(Technique.BLOOD_BATTLE.getId()), "Blood Battle");
+		t.add(ModLang.techniqueKey(Technique.BLOOD_BATTLE.getId()) + ".description", "Let battle feed you: each blow you land heals you, and the more "
+				+ "foes set on you, the less their blows harm you.");
+		String death = "death.attack." + com.example.defyingtheheavens.DefyingTheHeavens.MOD_ID + ".sword_intent";
+		t.add(death, "%1$s was cut down by lingering sword intent");
+		t.add(death + ".player", "%1$s was cut down by %2$s's sword intent");
+		t.add(ModLang.TOOLTIP_SLEEPING_SWORD, "A master's sword, asleep in stone for ten thousand years.");
+		t.add(ModLang.TOOLTIP_SLEEPING_SWORD_GROWS, "It wakes as its bearer grows: %s grade now");
+		t.add(ModLang.TOOLTIP_WAR_BANNER, "Held, it strengthens your side within %1$s blocks: they strike harder and are harder to harm. Raised, it calls "
+				+ "%2$s soldiers of the old army to fight beside you for %3$s seconds, for a fifth of your qi; then it rests %4$s minutes.");
+		t.add(ModLang.MSG_TOMB_TRIALS, "Two trials stand before the Sleeping Sword: walk the Sword Path to its summit, all the way from its foot, "
+				+ "then defeat the sword's spirit before the shrine. %s");
+		t.add(ModLang.MSG_TOMB_GREAT, "Its Great Inheritance still waits.");
+		t.add(ModLang.MSG_TOMB_LESSER, "Its Great Inheritance is taken; a lesser legacy waits for the first to pass this time.");
+		t.add(ModLang.MSG_TOMB_PATH_BEGUN, "You set foot on the Sword Path. Its intent bears down harder the higher you climb.");
+		t.add(ModLang.MSG_TOMB_PATH_LEFT, "You stepped off the Sword Path. Walk it again from its foot.");
+		t.add(ModLang.MSG_TOMB_PATH_WALKED, "You have walked the Sword Path. The sword's spirit will meet you before the shrine.");
+		t.add(ModLang.MSG_TOMB_PATH_DRAGGED, "The path's intent drags you down onto its steps.");
+		t.add(ModLang.MSG_TOMB_INTENT_CUT, "Lingering sword intent cuts you. Walk carefully here.");
+		t.add(ModLang.MSG_TOMB_SWORDS_WAKE, "The buried swords wake! Blades rise from the gorge and fall like rain, for %s minute.");
+		t.add(ModLang.MSG_TOMB_SWORDS_SLEEP, "The swords settle back into the earth.");
+		t.add(ModLang.MSG_TOMB_DUEL_UNWALKED, "The sword's spirit does not stir for one who has not walked the Sword Path.");
+		t.add(ModLang.MSG_TOMB_SPIRIT_WAKES, "The sword's spirit rises and meets you as an equal, at %s.");
+		t.add(ModLang.MSG_TOMB_SPIRIT_BOWS, "The sword's spirit lowers its blade. The Sleeping Sword will answer your hand.");
+		t.add(ModLang.MSG_TOMB_STONE_HOLDS, "The stone holds the sword fast. It answers only one who has passed both trials.");
+		t.add(ModLang.MSG_TOMB_INHERITED, "%s has drawn the Sleeping Sword in the %s!");
+		t.add(ModLang.MSG_TOMB_LEGACY, "The shrine grants you a lesser legacy. The Sleeping Sword went to %s.");
+		t.add(ModLang.MSG_TOMB_SILENT, "The shrine is silent: its legacy for this opening has been taken.");
+		t.add(ModLang.MSG_RELIC_DRAWN, "You draw the old sword from the earth; what it kept is yours.");
+		t.add(ModLang.MSG_FIELD_TRIALS, "The General's hill: step into its ring of banners and hold it against %1$s waves of the old army, the "
+				+ "General's Spirit last. Then his tomb beneath the hill will open to you. %2$s");
+		t.add(ModLang.MSG_FIELD_GREAT, "His Great Inheritance still waits.");
+		t.add(ModLang.MSG_FIELD_LESSER, "His Great Inheritance is taken; a lesser legacy waits for the first to hold the hill this time.");
+		t.add(ModLang.MSG_HILL_DRUM, "The war drum sounds on the General's hill: %s has stepped into the ring!");
+		t.add(ModLang.MSG_HILL_WAVE, "Wave %s of %s comes up the hill.");
+		t.add(ModLang.MSG_HILL_GENERAL, "Wave %s of %s: the General's Spirit leads the last charge himself!");
+		t.add(ModLang.MSG_HILL_HELD, "You have held the General's hill. His tomb beneath it will let you in.");
+		t.add(ModLang.MSG_HILL_LOST, "You have lost the hill. The old army falls back to wait for another.");
+		t.add(ModLang.MSG_HILL_BUSY, "%s holds the hill now. Wait for the ring to clear.");
+		t.add(ModLang.MSG_DEAD_RISE, "The dead of the battlefield rise! Old soldiers claw out of the earth.");
+		t.add(ModLang.MSG_DEAD_REST, "The dead lie still again.");
+		t.add(ModLang.MSG_FIELD_INHERITED, "%s has taken up the War General's Banner in the %s!");
+		t.add(ModLang.MSG_FIELD_LEGACY, "The General's tomb grants you a lesser legacy. His banner went to %s.");
+		t.add(ModLang.MSG_FIELD_SILENT, "The tomb is silent: its legacy for this opening has been taken.");
+		t.add(ModLang.MSG_BANNER_CALLED, "The old army answers your banner, for %s seconds.");
+		t.add(ModLang.MSG_BANNER_RESTING, "The banner rests. It can call again in %s.");
+		t.add(ModLang.MSG_BANNER_NO_QI, "You have too little qi to raise the banner: it takes a fifth of your qi.");
+		t.add(ModLang.MSG_ART_FADES, "Your qi runs short: %s goes out.");
+
+		// The third phase (2026-10-31): the Primeval Beast Graveyard, the Cave Abode of a Heavenly Being, the Yellow Springs Hollow; the ambushes.
+		t.add(ModLang.secretRealm("primeval_beast_graveyard"), "Primeval Beast Graveyard");
+		t.add(ModLang.secretRealm("cave_abode"), "Cave Abode of a Heavenly Being");
+		t.add(ModLang.secretRealm("yellow_springs_hollow"), "Yellow Springs Hollow");
+		t.add("biome.defying-the-heavens.beast_graveyard", "Primeval Beast Graveyard");
+		t.add("biome.defying-the-heavens.cave_abode", "Cave Abode of a Heavenly Being");
+		t.add("biome.defying-the-heavens.springs_hollow", "Yellow Springs Hollow");
+		t.add(ModBlocks.ELEMENT_PILLAR, "Element Pillar");
+		t.add(ModItems.PRIMEVAL_BLOOD_ESSENCE, "Primeval Blood Essence");
+		t.add(ModItems.MARROW_WASHING_FRUIT, "Marrow-Washing Fruit");
+		t.add(ModEntities.DRAGON_ECHO, "Dragon's Echo");
+		t.add(ModEntities.MASTER_PUPPET, "Master's Puppet");
+		t.add(ModEntities.DROWNED_SHADE, "Drowned Shade");
+		t.add(ModEntities.FERRYMAN, "The Ferryman");
+		t.add(com.example.defyingtheheavens.ModEffects.MASTERS_LECTURE, "The Master's Lecture");
+		t.add(ModLang.MSG_GRAVE_TRIALS, "Before the primeval dragon's skull its echo waits: face it, and it meets you as an equal. Best it, and its blood "
+				+ "essence gathers in the hollow of the skull. %s");
+		t.add(ModLang.MSG_GRAVE_GREAT, "Its Great Inheritance still waits.");
+		t.add(ModLang.MSG_GRAVE_LESSER, "Its Great Inheritance is taken; a lesser legacy waits for the first to best the echo this time.");
+		t.add(ModLang.MSG_GRAVE_ROAR, "The dragon's bones roar! Every beast in the graveyard goes wild, for a minute.");
+		t.add(ModLang.MSG_GRAVE_ROAR_ENDS, "The bones fall silent. The beasts calm.");
+		t.add(ModLang.MSG_GRAVE_ECHO_WAKES, "The dragon's echo rises from its bones and meets you as an equal, at %s.");
+		t.add(ModLang.MSG_GRAVE_ECHO_BOWS, "The dragon's echo sinks back into its bones. Its blood essence gathers in the hollow of the skull.");
+		t.add(ModLang.MSG_GRAVE_INHERITED, "%s has taken the Primeval Blood Essence in the %s!");
+		t.add(ModLang.MSG_GRAVE_LEGACY, "The dragon's skull grants you a lesser legacy. Its blood essence went to %s.");
+		t.add(ModLang.MSG_GRAVE_SILENT, "The skull is silent: its legacy for this opening has been taken.");
+		t.add(ModLang.MSG_ESSENCE_NOTHING, "Your blood is already as awake as the primeval essence can make it.");
+		t.add(ModLang.MSG_ESSENCE_WARN, "The primeval dragon's blood would wake a dragon's in you, for good. Sneak and drink to accept.");
+		t.add(ModLang.MSG_ESSENCE_AWAKENS, "The primeval blood roars through you: your bloodline wakes to %s.");
+		t.add(ModLang.TOOLTIP_PRIMEVAL_ESSENCE, "The blood of the dragon every beast's blood came from. A demon's blood wakes a realm further; a half-blood's grows purer.");
+		t.add(ModLang.TOOLTIP_PRIMEVAL_ESSENCE_WARN, "Drunk by a human, it wakes a dragon's blood in them, for good.");
+		t.add(ModLang.MSG_MARROW_ALREADY, "Your marrow has been washed already.");
+		t.add(ModLang.MSG_MARROW_HIGHEST, "Your physique is of the highest grade: there is nothing left to wash.");
+		t.add(ModLang.MSG_MARROW_WASHED, "The fruit washes your marrow clean: your %s is of the %s grade now.");
+		t.add(ModLang.JOURNAL_MARROW_WASHED, "Marrow Washed");
+		t.add(ModLang.JOURNAL_MARROW_WASHED_TEXT, "I ate the Marrow-Washing Fruit. My %s rose to the %s grade.");
+		t.add(ModLang.TOOLTIP_MARROW_FRUIT, "Eaten, it washes the marrow: your physique a grade higher, once in a life.");
+		t.add(ModLang.MSG_ABODE_TRIALS, "Three trials guard the master's chamber. In the hall of the five elements, light the pillars in the order each "
+				+ "element gives rise to the next, beginning where you will: out of turn, they strike back. Then walk the maze to its heart. Then best the "
+				+ "master's puppet before his door. %s");
+		t.add(ModLang.MSG_ABODE_GREAT, "His Great Inheritance still waits.");
+		t.add(ModLang.MSG_ABODE_LESSER, "His Great Inheritance is taken; a lesser legacy waits for the first to pass this time.");
+		t.add(ModLang.MSG_ABODE_PILLAR_LIT, "The %s pillar answers you.");
+		t.add(ModLang.MSG_ABODE_PILLARS_WRONG, "Out of turn! The pillars' formation strikes you back, and all five go dark.");
+		t.add(ModLang.MSG_ABODE_ELEMENTS_DONE, "The five pillars burn as one: the maze's heart will answer you.");
+		t.add(ModLang.MSG_ABODE_MAZE_CLOSED, "The maze's heart is dark: first light the five pillars in their order.");
+		t.add(ModLang.MSG_ABODE_MAZE_DONE, "You reach the maze's heart. The master's puppet will meet you before his door.");
+		t.add(ModLang.MSG_ABODE_MAZE_HOLDS, "The maze's formation holds: its walls will not yield.");
+		t.add(ModLang.MSG_ABODE_PUPPET_UNREADY, "The master's puppet does not stir for one who has not walked the maze to its heart.");
+		t.add(ModLang.MSG_ABODE_PUPPET_WAKES, "The master's puppet wakes and meets you as an equal, at %s.");
+		t.add(ModLang.MSG_ABODE_PUPPET_BOWS, "The master's puppet steps aside. His chamber's barrier will let you through.");
+		t.add(ModLang.MSG_ABODE_LECTURE, "A bell sounds deep in the mountain: the master's voice fills the lecture hall, for %s minutes. Meditate there to "
+				+ "gather five times as much.");
+		t.add(ModLang.MSG_ABODE_LECTURE_HEARD, "The master's words stay with you: Insight.");
+		t.add(ModLang.MSG_ABODE_LECTURE_ENDS, "The master's voice falls silent.");
+		t.add(ModLang.MSG_ABODE_INHERITED, "%s has taken the master's Great Inheritance in the %s!");
+		t.add(ModLang.MSG_ABODE_LEGACY, "The master's altar grants you a lesser legacy. His Great Inheritance went to %s.");
+		t.add(ModLang.MSG_ABODE_SILENT, "The altar is silent: its legacy for this opening has been taken.");
+		t.add(ModLang.MSG_HOLLOW_TRIALS, "The Ferryman waits at his landing to judge who would cross the Yellow Springs: the righteous he takes for nothing, "
+				+ "the neutral for his toll (%1$s Yin Jade, or %2$s Mid spirit stones), the devilish must best him. Across, the Ghost King's tomb lets in "
+				+ "those he has judged. %3$s");
+		t.add(ModLang.MSG_HOLLOW_GREAT, "The Ghost King's Great Inheritance still waits.");
+		t.add(ModLang.MSG_HOLLOW_LESSER, "The Ghost King's Great Inheritance is taken; a lesser legacy waits for the first to reach his coffin this time.");
+		t.add(ModLang.MSG_HOLLOW_PULL, "The Yellow Springs drag at you!");
+		t.add(ModLang.MSG_HOLLOW_NIGHT, "Lanterns rise from the Yellow Springs: the lantern night has come, for %s minutes. The Other Shore Flowers bloom, "
+				+ "the drowned rise, and tonight the Ferryman carries all who ask.");
+		t.add(ModLang.MSG_HOLLOW_NIGHT_ENDS, "The lanterns sink back into the springs.");
+		t.add(ModLang.MSG_HOLLOW_INHERITED, "%s has taken the Ghost King's Great Inheritance in the %s!");
+		t.add(ModLang.MSG_HOLLOW_LEGACY, "The Ghost King's coffin grants you a lesser legacy. His Great Inheritance went to %s.");
+		t.add(ModLang.MSG_HOLLOW_SILENT, "The coffin is silent: its legacy for this opening has been taken.");
+		t.add(ModLang.MSG_FERRY_CROSSING, "The Ferryman poles his boat out into the yellow mist...");
+		t.add(ModLang.MSG_FERRY_LANDED, "The boat grounds on the far shore.");
+		t.add(ModLang.MSG_FERRY_NIGHT, "On the lantern night the Ferryman asks nothing of anyone.");
+		t.add(ModLang.MSG_FERRY_JUDGED, "The Ferryman has judged you already. Touch him to cross.");
+		t.add(ModLang.MSG_FERRY_TOLL_SHORT, "The Ferryman's toll is %s Yin Jade or %s Mid spirit stones. You have neither.");
+		t.add(ModLang.MSG_FERRY_LIGHT, "The Ferryman weighs your deeds and finds them light: he asks nothing of you.");
+		t.add(ModLang.MSG_FERRY_TOLL_PAID, "The Ferryman takes his toll: %s %s.");
+		t.add(ModLang.MSG_FERRY_WAKES, "The Ferryman weighs your deeds and finds them heavy. He lowers his pole to meet you as an equal, at %s.");
+		t.add(ModLang.MSG_FERRY_BOWS, "The Ferryman nods: you may cross. Touch him to be ferried over.");
+		t.add(ModLang.MSG_AMBUSH, "%s was lying in wait at the Seal of the %s, and comes for what you carry out!");
+
+		// The fourth phase (2026-10-31): the Jade Lake Mirage, the Ruins of a Fallen Holy Land, the Tomb of a Fallen Immortal.
+		t.add(ModLang.secretRealm("jade_lake_mirage"), "Jade Lake Mirage");
+		t.add(ModLang.secretRealm("fallen_holy_land"), "Ruins of a Fallen Holy Land");
+		t.add(ModLang.secretRealm("fallen_immortal_tomb"), "Tomb of a Fallen Immortal");
+		t.add("biome.defying-the-heavens.mirage_lake", "Jade Lake Mirage");
+		t.add("biome.defying-the-heavens.fallen_holy_land", "Ruins of a Fallen Holy Land");
+		t.add("biome.defying-the-heavens.immortal_tomb", "Tomb of a Fallen Immortal");
+		t.add(ModBlocks.MIRAGE_JADE, "Jade Stone");
+		t.add(ModBlocks.MIRAGE_LOTUS, "Spirit Lotus");
+		t.add(ModBlocks.MIRAGE_CASKET, "High Storage Formation");
+		t.add(ModBlocks.JADE_MIRROR, "Jade Mirror");
+		t.add(ModBlocks.FORMATION_EYE, "Formation Eye");
+		t.add(ModBlocks.LAW_SEAL, "Law Seal");
+		t.add(ModItems.JADE_LAKE_MIRROR, "Jade Lake Mirror");
+		t.add(ModEntities.MIRROR_SHADE, "Mirror Shade");
+		t.add(ModEntities.MIRROR_REFLECTION, "Reflection");
+		t.add(ModEntities.HOLY_REMNANT, "Holy Land Remnant");
+		t.add(ModEntities.DECAYED_GUARD, "Decayed Celestial Guard");
+		t.add(ModEntities.DECAYED_IMMORTAL, "The Fallen Immortal's Spirit");
+		t.add(com.example.defyingtheheavens.ModEffects.MIRROR_RAISED, "Mirror Raised");
+		t.add(com.example.defyingtheheavens.ModEffects.DECAYING, "Decaying");
+		t.add(ModLang.MSG_MIRAGE_DISSOLVES, "It was a mirage: it goes into mist at your touch.");
+		t.add(ModLang.MSG_MIRAGE_TRIALS, "In the Mirror Pavilion the lake's great mirror waits: touch it, and your reflection steps out of it, as strong as you, "
+				+ "with your own arts. Best it, and the mirror is a door to you; the altar is behind it. %s");
+		t.add(ModLang.MSG_MIRAGE_GREAT, "Its Great Inheritance still waits.");
+		t.add(ModLang.MSG_MIRAGE_LESSER, "Its Great Inheritance is taken; a lesser legacy waits for the first to pass the mirror this time.");
+		t.add(ModLang.MSG_MIRAGE_REFLECTION, "The mirror's surface ripples, and you step out of it to meet yourself.");
+		t.add(ModLang.MSG_MIRAGE_MIRROR_PASSED, "Your reflection shatters. The mirror lets you through.");
+		t.add(ModLang.MSG_MIRAGE_MIRROR_OPEN, "The mirror shows the hall behind it: walk through.");
+		t.add(ModLang.MSG_MIRAGE_WAKES, "The lake grows still as glass: the mirror wakes, and from the water each of you meets their own reflection!");
+		t.add(ModLang.MSG_MIRAGE_WAKE_ENDS, "The lake ripples again. The reflections fade.");
+		t.add(ModLang.MSG_MIRAGE_HALL_HOLDS, "The hall behind the mirror will not be broken into: go through the mirror.");
+		t.add(ModLang.MSG_MIRAGE_INHERITED, "%s has taken the Jade Lake Mirror in the %s!");
+		t.add(ModLang.MSG_MIRAGE_LEGACY, "The altar behind the mirror grants you a lesser legacy. Its Great Inheritance went to %s.");
+		t.add(ModLang.MSG_MIRAGE_SILENT, "The altar is silent: its legacy for this opening has been taken.");
+		t.add(ModLang.MSG_MIRROR_RAISED, "You raise the Jade Lake Mirror.");
+		t.add(ModLang.MSG_MIRROR_RESTS, "The Jade Lake Mirror dims: it must rest.");
+		t.add(ModLang.TOOLTIP_JADE_LAKE_MIRROR, "Raised, it turns the next %s blows or spells that strike you back on whoever struck them, for %s seconds. "
+				+ "Then it rests %s seconds.");
+		t.add(ModLang.NAME_REFLECTION, "Reflection of %s");
+		t.add(ModLang.MSG_HOLY_TRIALS, "The ancestral hall stands under its formation. Four eyes on the shards about it hold the formation up, each kept by a "
+				+ "guard: bring the guard down, then break the eye. When all four are broken the formation falls, and the hall is open to all. %s");
+		t.add(ModLang.MSG_HOLY_GREAT, "Its Great Inheritance still waits.");
+		t.add(ModLang.MSG_HOLY_LESSER, "Its Great Inheritance is taken; a lesser legacy waits for the first to reach the altar this time.");
+		t.add(ModLang.MSG_HOLY_EYE_GUARDED, "Its guard still stands: the eye will not break.");
+		t.add(ModLang.MSG_HOLY_EYE_BROKEN, "A formation eye shatters! (%s of %s)");
+		t.add(ModLang.MSG_HOLY_FORMATION_FALLS, "The ancestral formation shatters! The way into the ancestral hall is open.");
+		t.add(ModLang.MSG_HOLY_TIDE, "The void tide rises! The currents surge, and the void tears at anyone near a shard's edge.");
+		t.add(ModLang.MSG_HOLY_TIDE_ENDS, "The void tide ebbs.");
+		t.add(ModLang.MSG_HOLY_HALL_HOLDS, "The ancestral formation holds: break its four eyes first.");
+		t.add(ModLang.MSG_HOLY_INHERITED, "%s has taken the holy land's ancestral sword in the %s!");
+		t.add(ModLang.MSG_HOLY_LEGACY, "The ancestral altar grants you a lesser legacy. Its Great Inheritance went to %s.");
+		t.add(ModLang.MSG_HOLY_SILENT, "The altar is silent: its legacy for this opening has been taken.");
+		t.add(ModLang.ITEM_ANCESTRAL_SWORD, "Ancestral Sword of the Fallen Holy Land");
+		t.add(ModLang.MSG_IMMORTAL_TOMB_TRIALS, "Round the court eight halls stand, each sealed by a Law: its seal lets through one who holds that Law. The "
+				+ "sanctum beyond opens to one who holds %1$s Laws, or to one who bests the immortal's decayed spirit before its door. %2$s");
+		t.add(ModLang.MSG_IMMORTAL_TOMB_GREAT, "His Great Inheritance still waits.");
+		t.add(ModLang.MSG_IMMORTAL_TOMB_LESSER, "His Great Inheritance is taken; a lesser legacy waits for the first to reach his coffin this time.");
+		t.add(ModLang.MSG_IMMORTAL_TOMB_DECAY, "The Five Decays that took him spread through the palace: your blows and your armour weaken, for a minute.");
+		t.add(ModLang.MSG_IMMORTAL_TOMB_DECAY_ENDS, "The decay settles back into the stone.");
+		t.add(ModLang.MSG_IMMORTAL_TOMB_LAWS_KNOWN, "The sanctum's seal feels the Laws you hold, and opens to you.");
+		t.add(ModLang.MSG_IMMORTAL_TOMB_HOLDS, "The immortal's palace will not be broken into: go in by its doors.");
+		t.add(ModLang.MSG_IMMORTAL_TOMB_SPIRIT_WAKES, "The fallen immortal's spirit rises, rotted with his decay, and meets you as an equal, at %s.");
+		t.add(ModLang.MSG_IMMORTAL_TOMB_SPIRIT_BOWS, "The immortal's spirit sinks back into his decay. His sanctum's door will let you through.");
+		t.add(ModLang.MSG_IMMORTAL_TOMB_INHERITED, "%s has taken the fallen immortal's Great Inheritance in the %s!");
+		t.add(ModLang.MSG_IMMORTAL_TOMB_LEGACY, "The immortal's coffin grants you a lesser legacy. His Great Inheritance went to %s.");
+		t.add(ModLang.MSG_IMMORTAL_TOMB_SILENT, "The coffin is silent: its legacy for this opening has been taken.");
+		t.add(ModLang.ITEM_FALLEN_IMMORTAL_GLAIVE, "Glaive of the Fallen Immortal");
 	}
 
 	/** A physique's name and description (Physique). */

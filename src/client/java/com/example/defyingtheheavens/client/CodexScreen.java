@@ -8,9 +8,6 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.AbstractButton;
-import net.minecraft.client.gui.components.Tooltip;
-import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -43,7 +40,7 @@ import java.util.regex.Matcher;
  * by name, the one open in jade with a gold diamond; beside them the chosen chapter's pages; and the page itself in a framed panel on the
  * right, its icon and title over a rule, its words in Pixelify Sans. A sealed page shows ??? and its hint, a chapter with every page sealed
  * ???; a page open and not yet read wears a gold square, and so does its chapter (CodexState). Opened by its key (J) wherever one is in
- * the world, or from the cultivation menu (the Hall's column of tabs, or the {@link Book} beside the narrow menu), which it goes back to;
+ * the world, or from the cultivation menu (the foot of the Hall's column of tabs), which it goes back to;
  * it opens on the newest page not yet read, else where it was left.
  * <p>
  * A page's pictures (the user's pick, 2026-10-28) stand between its words: rows of items in gold-rimmed slots, the recipes read from the
@@ -69,9 +66,6 @@ public class CodexScreen extends Screen implements HallFrame.Framed {
 	/** Its words: a page's, gold, a chapter's name and a page's, what is muted, what is still sealed; a point's diamond; the scrollbar. */
 	private static final int WORDS = 0xE6D3A3, GOLD_WORDS = 0xFFD54F, CHAPTER = 0xB9B2A0, NAME = 0xC9C2B0, MUTED = 0x8C7A55, SEALED = 0x6C665A;
 	private static final int POINT = 0xFFB8860B, THUMB = 0xFF8C6A1E;
-	/** A dot's gold, kept for the Book (beside the narrow menu) and the Hall's Codex tab (CultivationScreen). */
-	private static final int DOT = 0xFFF2C94C;
-	private static final int DOT_RIM = 0xFF8A6A1E;
 
 	/** Where the Codex was left, kept while the game runs. */
 	private static String chapterShown = "start";
@@ -582,12 +576,6 @@ public class CodexScreen extends Screen implements HallFrame.Framed {
 		g.fill(x + 3, thumbY + 1, x + 4, thumbY + thumb, 0xFF6E5214);
 	}
 
-	/** The gold dot of something not yet read: three pixels, rimmed (the Book beside the narrow menu wears it). */
-	static void dot(GuiGraphics g, int x, int y) {
-		g.fill(x - 1, y - 1, x + 4, y + 4, DOT_RIM);
-		g.fill(x, y, x + 3, y + 3, DOT);
-	}
-
 	/** An icon to draw (the book, should a block have no item). */
 	static ItemStack iconOf(ItemLike like) {
 		ItemStack stack = new ItemStack(like);
@@ -736,48 +724,6 @@ public class CodexScreen extends Screen implements HallFrame.Framed {
 			default -> {
 				return super.keyPressed(keyCode, scanCode, modifiers);
 			}
-		}
-	}
-
-	/**
-	 * The book beside the narrow cultivation menu (CultivationScreen) that opens the Codex, going back to the menu when it closes: lacquer
-	 * in a gold rim, wearing the gold dot while anything open is unread.
-	 */
-	public static final class Book extends AbstractButton {
-		public static final int SIZE = 20;
-		private final Screen from;
-
-		public Book(int x, int y, Screen from) {
-			super(x, y, SIZE, SIZE, Component.translatable(ModLang.CODEX_TITLE));
-			this.from = from;
-			setTooltip(Tooltip.create(Component.translatable(ModLang.CODEX_BUTTON, ModKeybinds.CODEX.getTranslatedKeyMessage())));
-		}
-
-		@Override
-		public void onPress() {
-			Minecraft.getInstance().setScreen(new CodexScreen(from));
-		}
-
-		@Override
-		protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-			int x = getX();
-			int y = getY();
-			boolean lit = isHoveredOrFocused();
-			g.fill(x, y, x + width, y + height, lit ? 0xFFE6C35C : TalkUi.GOLD);
-			g.fill(x + 1, y + 1, x + width - 1, y + height - 1, TalkUi.INNER);
-			g.fill(x + 2, y + 2, x + width - 2, y + height - 2, lit ? TalkUi.PANEL_LIT : TalkUi.PANEL);
-			g.renderItem(new ItemStack(Items.BOOK), x + 2, y + 2);
-			if (CodexState.anyUnread()) {
-				g.pose().pushPose();
-				g.pose().translate(0, 0, 200);
-				dot(g, x + width - 6, y + 3);
-				g.pose().popPose();
-			}
-		}
-
-		@Override
-		protected void updateWidgetNarration(NarrationElementOutput output) {
-			defaultButtonNarrationText(output);
 		}
 	}
 }

@@ -90,10 +90,11 @@ public class SmallWorldGameTests implements FabricGameTest {
 				"Each world in a slot of its own, 4,096 apart");
 		helper.assertTrue(SmallWorlds.radius(0) == 16 && SmallWorlds.radius(3) == 22 && SmallWorlds.radius(35) == 86 && SmallWorlds.radius(72) == 160
 				&& SmallWorlds.radius(500) == 160, "Its land 16 blocks out, two more for every level of the Laws, up to 160");
-		// The ability: the last (the switches are synced as a mask over the ordinals), an immortal's with a world.
-		// (Universe in a Sleeve's after it since 2026-10-27: the switches are kept by ordinal, so each new one goes at the end.)
-		helper.assertTrue(Ability.SMALL_WORLD.ordinal() == Ability.SLEEVE.ordinal() - 1 && Ability.values().length <= 32 && !Ability.SMALL_WORLD.isGhostly(),
-				"The Small World ability, last of them all");
+		// The ability: an immortal's with a world, at the end of them as it came (the switches are synced as a mask over the ordinals).
+		// (Universe in a Sleeve's after it since 2026-10-27, the secret realms' war arts since 2026-10-31: each new one goes at the end, a
+		// long's 64 at most.)
+		helper.assertTrue(Ability.SMALL_WORLD.ordinal() == Ability.SLEEVE.ordinal() - 1 && Ability.values().length <= 64 && !Ability.SMALL_WORLD.isGhostly(),
+				"The Small World ability, followed only by those that came after it");
 		ServerPlayer mock = helper.makeMockServerPlayerInLevel();
 		PlayerCultivation c = CultivationManager.get(mock);
 		try {

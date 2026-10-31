@@ -227,6 +227,8 @@ public final class ModPackets {
 	/** C2S: the title one takes (PlayerTitles, from Void Shattering on); S2C: players' plates over their heads, their titles and sect titles. */
 	public static final ResourceLocation SET_TITLE = new ResourceLocation(DefyingTheHeavens.MOD_ID, "set_title");
 	public static final ResourceLocation PLAYER_PLATES = new ResourceLocation(DefyingTheHeavens.MOD_ID, "player_plates");
+	/** S2C: a secret realm's HUD row (SecretRealms): which realm (-1 none), what it shows, how long, whether its trial's barrier lets them by. */
+	public static final ResourceLocation SECRET_REALM = new ResourceLocation(DefyingTheHeavens.MOD_ID, "secret_realm");
 	/** Players further than this from a core can't work its screen. */
 	private static final double CORE_REACH = 8;
 
@@ -548,7 +550,7 @@ public final class ModPackets {
 		buf.writeBoolean(meditating);
 		buf.writeBoolean(c.isLowerRealmBound());
 		buf.writeBoolean(c.isInUpperRealm());
-		buf.writeVarInt(c.getDisabledAbilityMask());
+		buf.writeVarLong(c.getDisabledAbilityMask());
 		buf.writeVarInt(c.getPressureStages());
 		buf.writeDouble(c.getPressurePenalty());
 		buf.writeBoolean(c.isMortal());
@@ -579,8 +581,11 @@ public final class ModPackets {
 		long forms = 0;
 		for (Physique form : c.getForms()) forms |= 1L << form.ordinal();
 		buf.writeVarLong(forms);
+		buf.writeBoolean(c.isMarrowWashed());
 		// The points put into each stat (StatPoints), by the stat's place.
 		for (StatPoints.Stat stat : StatPoints.Stat.values()) buf.writeVarInt(c.getStatPoints(stat));
+		// And those Ancient Essence gave (the secret realms'), counted in what they have to spend.
+		buf.writeVarInt(c.essencePoints());
 		// The ability selected on the wheel, by its place (+1; 0 for none).
 		buf.writeVarInt(c.getSelectedAbility() == null ? 0 : c.getSelectedAbility().ordinal() + 1);
 		// How dense qi is where they stand (the Astral Realm's places: AstralRealm).
@@ -671,6 +676,20 @@ public final class ModPackets {
 		buf.writeDouble(left);
 		buf.writeDouble(home);
 		ServerPlayNetworking.send(player, SPACE_YEARS, buf);
+	}
+
+	/**
+	 * S2C secret_realm: {@code player}'s row for a secret realm (SecretRealms#HUD_INSIDE...: inside, the time left; near its Seal, till it opens
+	 * or while its gate stands open), or {@code realm} -1 to take it away; and whether they have passed its trial's barrier (TrialBarrierBlock).
+	 */
+	public static void sendSecretRealm(ServerPlayer player, int realm, int kind, int ticks) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarInt(realm + 1);
+		buf.writeVarInt(kind);
+		buf.writeVarInt(Math.max(0, ticks));
+		SecretRealm in = realm >= 0 && realm < SecretRealm.values().length ? SecretRealm.values()[realm] : null;
+		buf.writeBoolean(in != null && RealmWorks.barrierLets(SecretRealms.Data.get(player.server).of(in), player.getUUID()));
+		ServerPlayNetworking.send(player, SECRET_REALM, buf);
 	}
 
 	/** S2C obsession_ask: "Name Your Obsession" comes up, before the tribulation (the ghost path's, if {@code ghost}). */

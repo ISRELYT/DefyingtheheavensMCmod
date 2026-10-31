@@ -282,12 +282,15 @@ public final class MeditationManager {
 	}
 
 	/**
-	 * A spirit stone in hand (SpiritStoneItem), a teacher's Insight (TalkSystem guidance), one's own sect's grounds
-	 * (SectMembership#groundsMultiplier) and, for a soul meditating in another's body, how far it stands above that body
-	 * (Possession#guidance), each speeding the gain.
+	 * A spirit stone in hand (SpiritStoneItem), a teacher's Insight (TalkSystem guidance), the Spring of the Ancients drunk (a secret realm's,
+	 * ModEffects#ANCIENT_SPRING), the master's lecture heard in the Cave Abode (ModEffects#MASTERS_LECTURE), one's own sect's grounds
+	 * (SectMembership#groundsMultiplier) and, for a soul meditating in another's body, how far it stands above that body (Possession#guidance),
+	 * each speeding the gain.
 	 */
 	private static double heldAndTaught(ServerPlayer p) {
 		return SpiritStoneItem.meditationMultiplier(p) * (p.hasEffect(ModEffects.INSIGHT) ? 1.0 + ModEffects.INSIGHT_BONUS : 1.0)
+				* (p.hasEffect(ModEffects.ANCIENT_SPRING) ? 1.0 + ModEffects.SPRING_BONUS : 1.0)
+				* (p.hasEffect(ModEffects.MASTERS_LECTURE) ? 1.0 + ModEffects.LECTURE_BONUS : 1.0)
 				* SectMembership.groundsMultiplier(p) * Possession.guidance(p);
 	}
 

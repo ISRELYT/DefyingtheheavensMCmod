@@ -352,6 +352,7 @@ final class CodexDiagrams {
 			case NETHERWORLD -> new int[] {0, ROW * 6};
 			case INNER_REALM -> new int[] {1, FRAME_TOP + 15};
 			case SMALL_WORLD -> new int[] {1, FRAME_TOP + 33};
+			case SECRET_REALMS -> new int[] {1, ROW * 3 + 6}; // beside the Overworld, its Seals' way, under the Astral Realm
 		};
 	}
 

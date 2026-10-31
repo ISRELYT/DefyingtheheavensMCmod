@@ -76,7 +76,7 @@ public final class ClientPacketHandlers {
 			boolean meditating = buf.readBoolean();
 			boolean lowerRealmBound = buf.readBoolean();
 			boolean inUpperRealm = buf.readBoolean();
-			int disabledAbilities = buf.readVarInt();
+			long disabledAbilities = buf.readVarLong();
 			int pressureStages = buf.readVarInt();
 			double pressurePenalty = buf.readDouble();
 			boolean mortal = buf.readBoolean();
@@ -98,8 +98,10 @@ public final class ClientPacketHandlers {
 			int roots = buf.readVarInt();
 			int bodyRefining = buf.readVarInt();
 			long forms = buf.readVarLong();
+			boolean washed = buf.readBoolean();
 			int[] statPoints = new int[com.example.defyingtheheavens.StatPoints.Stat.values().length];
 			for (int i = 0; i < statPoints.length; i++) statPoints[i] = buf.readVarInt();
+			int essencePoints = buf.readVarInt();
 			com.example.defyingtheheavens.Ability selected = com.example.defyingtheheavens.Ability.byIndex(buf.readVarInt() - 1);
 			double placeQi = buf.readDouble();
 			float soulWounds = buf.readFloat();
@@ -187,9 +189,11 @@ public final class ClientPacketHandlers {
 				ClientCultivationData.lifespan(lifeUsed, lifeSpan, lifeDead);
 				ClientCultivationData.get().setLongevityPills(longevityPills);
 				ClientCultivationData.physique(physique, roots, bodyRefining, forms); // first: a shattered body tempers past Peak
+				ClientCultivationData.get().setMarrowWashed(washed);
 				for (com.example.defyingtheheavens.StatPoints.Stat stat : com.example.defyingtheheavens.StatPoints.Stat.values()) {
 					ClientCultivationData.get().setStatPoints(stat, statPoints[stat.ordinal()]);
 				}
+				ClientCultivationData.get().setEssencePoints(essencePoints);
 				ClientCultivationData.get().setSelectedAbility(selected);
 				ClientCultivationData.get().setPlaceQi(placeQi);
 				ClientCultivationData.update(realm, stage, cultivation, qi, meditating, lowerRealmBound, inUpperRealm,

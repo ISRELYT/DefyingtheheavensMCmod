@@ -56,6 +56,7 @@ public final class UpperRealmClient {
 		if (ModDimensions.isAstral(dimension)) return AstralClient.fogFor(dimension);
 		if (ModDimensions.isImmortalRealm(dimension) || ModDimensions.isImmortalPassage(dimension)) return ImmortalRealmClient.fogFor(dimension);
 		if (ModDimensions.isSmallWorld(dimension)) return SmallWorldClient.FOG;
+		if (ModDimensions.isSecretRealm(dimension)) return SecretRealmClient.fog();
 		return GreatVoidClient.fogFor(dimension);
 	}
 

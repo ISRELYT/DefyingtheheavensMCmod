@@ -17,7 +17,11 @@ public class ModBlockTagProvider extends FabricTagProvider.BlockTagProvider {
 	@Override
 	protected void addTags(HolderLookup.Provider registries) {
 		getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.JADE_STONE).add(ModBlocks.SPIRIT_PEDESTAL).add(ModBlocks.HEAVEN_ALTAR)
-				.add(ModBlocks.ALCHEMY_CAULDRON).add(ModBlocks.ARTIFACT_FORGE).add(ModBlocks.JADE_ORE).add(ModBlocks.DEEPSLATE_JADE_ORE);
+				.add(ModBlocks.ALCHEMY_CAULDRON).add(ModBlocks.PILL_SAGE_CAULDRON).add(ModBlocks.ARTIFACT_FORGE).add(ModBlocks.JADE_ORE).add(ModBlocks.DEEPSLATE_JADE_ORE);
+		// A secret realm's killing formation's eye: broken with a pickaxe (or anything at all, more slowly).
+		getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.KILLING_FORMATION);
+		// The Sunken Sword Tomb's old swords: iron, pulled out with a pickaxe.
+		getOrCreateTagBuilder(BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.BURIED_SWORD);
 		getOrCreateTagBuilder(BlockTags.NEEDS_IRON_TOOL).add(ModBlocks.JADE_ORE).add(ModBlocks.DEEPSLATE_JADE_ORE);
 		// Spirit stone veins: an iron pickaxe; the Upper Realm's rich veins a diamond one. (Their drops are hand-written loot
 		// tables in resources, not generated: they roll several grades.)
@@ -66,6 +70,10 @@ public class ModBlockTagProvider extends FabricTagProvider.BlockTagProvider {
 		getOrCreateTagBuilder(BlockTags.DRAGON_IMMUNE).add(ModBlocks.SMALL_WORLD_GATE);
 		getOrCreateTagBuilder(BlockTags.WITHER_IMMUNE).add(ModBlocks.SMALL_WORLD_GATE);
 		getOrCreateTagBuilder(BlockTags.FEATURES_CANNOT_REPLACE).add(ModBlocks.SMALL_WORLD_GATE);
+		// Nor a secret realm's Seal (its gate and keystone), nor a trial's barrier.
+		getOrCreateTagBuilder(BlockTags.DRAGON_IMMUNE).add(ModBlocks.SECRET_REALM_GATE).add(ModBlocks.SECRET_REALM_SEAL).add(ModBlocks.TRIAL_BARRIER);
+		getOrCreateTagBuilder(BlockTags.WITHER_IMMUNE).add(ModBlocks.SECRET_REALM_GATE).add(ModBlocks.SECRET_REALM_SEAL).add(ModBlocks.TRIAL_BARRIER);
+		getOrCreateTagBuilder(BlockTags.FEATURES_CANNOT_REPLACE).add(ModBlocks.SECRET_REALM_GATE).add(ModBlocks.SECRET_REALM_SEAL).add(ModBlocks.TRIAL_BARRIER);
 
 		// Qi Veins: diamond-hard ore, what formations draw on. The Formation Core takes an iron pickaxe.
 		getOrCreateTagBuilder(ModTags.QI_VEIN_BLOCKS).add(ModBlocks.QI_VEIN).add(ModBlocks.DEEPSLATE_QI_VEIN);

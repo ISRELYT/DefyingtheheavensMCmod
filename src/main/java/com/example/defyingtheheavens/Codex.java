@@ -271,10 +271,11 @@ public final class Codex {
 		// ===================================================== First Steps =====================================================
 		chapter("start", ModBlocks.MEDITATION_MAT, Hint.CULTIVATE, "First Steps");
 		page("codex", Items.BOOK, null, "The Dao Codex", """
-				This is your guide to cultivation. Press {codex} to open it at any time, or click the book beside the cultivation menu.
+				This is your guide to cultivation. Press {codex} to open it at any time, or click Codex at the foot of the cultivation menu's \
+				tabs.
 				The Codex grows with you. Most pages are sealed at first and show only ???, with a hint of how to open them. Reach a new \
 				realm, learn a new art or set foot in a new world, and the pages about it open. A toast tells you when that happens, and a \
-				gold dot marks every page you haven't read yet.
+				gold square marks every page you haven't read yet.
 				Choose a chapter on the left, then a page from its list.""");
 		page("mortal", Items.IRON_PICKAXE, null, "A Mortal Body", """
 				Everyone begins as a mortal, with no qi, no cultivation and no abilities. Meditation does nothing yet.
@@ -336,6 +337,17 @@ public final class Codex {
 				years meditation costs you. Many physiques also have special gifts, and every physique has spiritual roots, which decide \
 				which elements' methods you can learn.
 				The higher the grade, the rarer it is.""");
+		page("bodies", Items.SKELETON_SKULL, null, "The Bodies of the Dead", """
+				When a player or a cultivator dies, their body stays where they fell, and everything they carried stays with it instead of \
+				scattering. Break the body to take it back: it spills everything it holds.
+				A body is fresh for two minutes, then rots, and after five minutes only bones are left. Bones lie there until someone breaks \
+				them, so what you carried waits for you, even while your soul is among the dead.
+				- Right-click a body to see whose it was.
+				- Right-click a fresh cultivator's body with a glass bottle to draw its blood, once: Cultivator's Blood of their realm. \
+				Drawing it darkens your path.
+				- The dead give off ghostly qi around them, more for a higher realm and less once they are bones, so a ghost cultivator can \
+				cultivate beside them.
+				Experience still drops as it always has.""");
 
 		// ================================================ The Way of Cultivation ================================================
 		chapter("way", ModItems.CULTIVATION_PILL, Hint.CULTIVATE, "The Way of Cultivation");
@@ -489,7 +501,9 @@ public final class Codex {
 				fire.
 				@diagram elements
 				Shielding spells ward you with their element. A ward holds best against the element it overcomes (a water ward stops \
-				fire), while the element that overcomes it strikes harder through it. Point at an element to see which it overcomes.""");
+				fire), while the element that overcomes it strikes harder through it. Point at an element to see which it overcomes.
+				Each also gives rise to another, in a cycle of its own: wood feeds fire, fire leaves earth in its ash, earth bears metal, \
+				metal gathers water, and water feeds wood.""");
 		page("spells", Items.FIRE_CHARGE, "arts/root", "Spells", """
 				Your methods teach spells as their layers settle in; you'll find them on the Spells tab.
 				Ready a spell there, or hold {spells} to open the spell wheel and pick one, then press {cast} to cast it. Spells cost qi, \
@@ -505,7 +519,8 @@ public final class Codex {
 				masters' halls, and more rarely in their libraries.
 				Read a manual at its realm and the technique is yours for good. The manual isn't used up, so you can pass it on; if you're \
 				below its realm, it tells you which realm you need.
-				The techniques so far are Clone and Universe in a Sleeve (see Abilities).""");
+				The techniques so far are Clone and Universe in a Sleeve, and the secret realms' Sword Intent and Blood Battle (see \
+				Abilities).""");
 
 		// ======================================================= Abilities =======================================================
 		chapter("abilities", Items.FEATHER, Hint.CULTIVATE, "Abilities");
@@ -557,8 +572,8 @@ public final class Codex {
 				Your soul flies freely on a tether to your body, unseen except by those who can perceive souls. Switch the ability again to \
 				call it home.""");
 		page("possession", Items.ARMOR_STAND, NS, "Possession", """
-				A projected soul can take over a body at least one realm below yours: right-click it. In a cultivator's body you play as \
-				yourself, with everything it carries, and others see its face and name.
+				A projected soul can take over a body at least one realm below the highest of your paths: right-click it. In a \
+				cultivator's body you play as yourself, with everything it carries, and others see its face and name.
 				Let go, or call your soul home, to leave the body. If the body dies, your soul is thrown out unharmed.""");
 		page("clone", ModItems.BLANK_MANUAL, NS, "Clone", """
 				A technique for Nascent Soul and above, learned from its manual. Use it to split off a second body at the cost of half your \
@@ -579,6 +594,18 @@ public final class Codex {
 				Sneak and use it to let everyone out, anywhere but partway through a climb. If you die on the way, they're thrown out \
 				where you fell.
 				Anyone inside your small world travels with you the same way, at the same cost.""");
+		page("sword_intent", ModItems.SLEEPING_SWORD, CF, "Sword Intent", """
+				A technique for Core Formation and above, the Sunken Sword Tomb's Great Inheritance. Switch it on and your intent rides \
+				your blade: every blow you land with a sword is followed a moment later by a second cut of lingering intent, half as \
+				strong as the blow.
+				It costs a little qi every second while it's on, and goes out when you run short. The tomb's own lingering intent never \
+				cuts one whose Sword Intent is lit.""");
+		page("blood_battle", ModItems.WAR_GENERALS_BANNER, NS, "Blood Battle", """
+				A technique for Nascent Soul and above, the Ancient Battlefield's Great Inheritance. Switch it on and battle feeds you: \
+				every blow you land heals you a tenth of it.
+				With more than one foe set on you close by, each one past the first takes a tenth off the harm their blows do you, up to \
+				half.
+				It costs a little qi every second while it's on, and goes out when you run short.""");
 
 		// ================================================= Treasures and Alchemy =================================================
 		chapter("treasures", ModItems.LOW_SPIRIT_STONE, Hint.FIND, "Treasures and Alchemy");
@@ -596,6 +623,12 @@ public final class Codex {
 				its aura and the more qi it holds. Right-click it to pick it. A picked fruit keeps its age but grows no older.
 				Eating it gives cultivation, refined as you meditate. Now and then one leaves a Peach Pit, which grows into a Spirit Peach \
 				Tree of your own.""");
+		page("marrow_washing", ModItems.MARROW_WASHING_FRUIT, "worlds/secret_realm", "Marrow Washing", """
+				The Marrow-Washing Fruit, half of the Cave Abode of a Heavenly Being's Great Inheritance, grew once in its master's garden. \
+				Eat it and it washes your marrow: your physique rises a grade, Low to Mid, Mid to High and so on, and your talent and pace \
+				with it. Its gifts and its spiritual roots stay as they were.
+				It works once in a life, and does nothing for a physique of the Immortal grade, a mortal, one of the dead, or a soul in \
+				another's body.""");
 		page("herbs", ModItems.GINSENG, null, "Spirit Herbs", """
 				Spirit herbs grow wild and age like fruit does: Ginseng and the rarer Spirit Ginseng, Lingzhi in dark forests, Huangjing, \
 				the Spirit Lotus on still water, and Spirit Dew Grass, which gathers beads of dew. Right-click a herb to dig it up. It keeps \
@@ -973,6 +1006,14 @@ public final class Codex {
 				- A human who drinks it forms a demon core and becomes a half-blood: human in looks, with half the race's gifts. Each drink \
 				makes the blood purer. A drink that would turn you completely into that race is refused with a warning, unless you drink it \
 				while sneaking. There is no way back.""");
+		page("primeval_blood_essence", ModItems.PRIMEVAL_BLOOD_ESSENCE, "worlds/secret_realm", "Primeval Blood Essence", """
+				The blood of the primeval dragon whose bones lie in the Primeval Beast Graveyard, the blood every beast's blood came from: \
+				that realm's Great Inheritance.
+				- A demon who drinks it wakes its blood a realm further, as far as Entering Nirvana.
+				- A half-blood's own race's blood grows purer, as if it had drunk that race's blood a realm above its other paths.
+				- A human who drinks it wakes a dragon's blood in them and becomes a Dragon half-blood. You are warned first, and must \
+				drink it sneaking: there is no way back.
+				The dead and mortals can't drink it.""");
 		page("clans", Items.RED_NETHER_BRICKS, "sects/bloodline|sects/root", Hint.SEEK, "Demon Clans", """
 				A demon clan is a sect of a single demon race, led by its Clan Head. It works like a sect: it has a barrier, a treasury and \
 				titles by strength. Its members are demons of that race, cultivating the Demon Path.
@@ -1158,6 +1199,180 @@ public final class Codex {
 				spatial pressure on you doubles for each of them. If you die on the way, they stay safe inside, and its gate still leads \
 				back to where they came in.""");
 
+		// ================================================== The Secret Realms ===================================================
+		chapter("secret_realms", ModItems.DEPARTURE_JADE, Hint.VENTURE, "Secret Realms");
+		page("secret_realms", ModItems.DEPARTURE_JADE, QR + "|worlds/secret_realm", "Secret Realms", """
+				Sealed worlds the ancients left behind, each under a Seal in the world: a ring of old pillars round a stone gate. Every few \
+				years one stirs. A pillar of light rises from its Seal, and everyone strong enough to enter is told which way it lies and \
+				roughly how far, but never exactly where.
+				- Half a day later its gate fills with light and stays open for the first quarter of its time. Walk into it to go in.
+				- Each realm has a lowest realm it lets in. There is no upper limit: anyone at or above it may enter, by their strongest \
+				path. Only the living may enter (but the Yellow Springs Hollow, a realm of the dead), in their own bodies, carrying no one \
+				in a sleeve or a world.
+				- Inside, its qi is three times as dense as its world's, and that world's law still holds you.
+				- The sky presses down. You can fly no higher than a few blocks above the ground, unless you stand two whole realms above \
+				the realm it is meant for. Over the void between a floating realm's lands, the sky's hold counts from the land's level.
+				- Space is sealed: no Spatial Tear, no small world's door, no sleeve. You leave early only by holding up a Departure Jade, \
+				which a blow interrupts.
+				- Two minutes before it closes, the land quakes. When it closes, everyone still inside is thrown out beside its Seal with \
+				what they carry.
+				- Whoever dies inside stays inside: their body, and everything they carried, lies there until someone finds it.
+				Sects send their disciples, and rogues and devilish cultivators come too. They take what they find, force vaults and race \
+				you through the realm's trials. Your own sect's disciples stand with you; the devilish go for anyone badly hurt.
+				As a realm quakes, the strongest of the devilish inside may slip out early to lie in wait at its Seal. Whoever comes out \
+				carrying more than they took in is their prey.""");
+		page("verdant_herb_valley", ModItems.SPIRIT_GINSENG, "worlds/secret_realm", "The Verdant Herb Valley", """
+				A misty valley of terraced herb gardens round a lake, from Qi Refining Late, meant for Foundation Building. It opens every \
+				three years (three in-game days) for a quarter of an hour.
+				- The terraces: beds of old herbs, a Vine Keeper lying beside each. Take a herb from a bed and its keeper wakes.
+				- The ruins about the lake: the old alchemists' Pill Hall, Library, Furnace Court, Quarters, Stele Court and Medicine \
+				Garden. Bronze Puppets guard them, and killing formations hide among them, plain under Qi Sense; break a formation's eye \
+				to stop it. Their vaults are sealed formations: force one if you have its seal's realm, and the puppets near it wake.
+				- Herbs nobody picks age a century for every year the valley sleeps.
+				- Once each opening, the valley's heart blooms: a ten-thousand-year Spirit Ginseng flowers on the island for a minute, and \
+				its Elder Keeper wakes.
+				- The island: the Pill Sage's hall and his two trials. Defeat the Gatekeeper before its door; it fights you as an equal, \
+				at your own strength. Then brew a Foundation Pill of Mid-Grade or better in his cauldron inside.
+				@brew foundation_pill
+				The first to pass both in this world takes his Great Inheritance: the Pill Sage's Cauldron, with its own fire, quicker \
+				brews, fewer failures and pills a grade better, and his Notes, a whole rank of alchemy. After that, the first to pass each \
+				opening takes a lesser legacy.
+				Look for Departure Jade, Ancient Essence (one more stat point) and the Spring of the Ancients (faster cultivation for a \
+				day) in its vaults.""");
+		page("sunken_sword_tomb", ModItems.SLEEPING_SWORD, "worlds/secret_realm", "The Sunken Sword Tomb", """
+				A gorge sunk deep into grey stone, from Foundation Building Late, meant for Core Formation. It opens every four years \
+				(four in-game days) for twenty minutes.
+				- You arrive on ledges at the heads of four branch canyons; stairs lead down them to the gorge's floor, strewn with the \
+				swords of a sect that fell here. Its ruins stand about the floor, each with a vault, and Sword Wraiths keep them.
+				- Lingering sword intent hangs in patches on the floor, glinting faintly, plainly under Qi Sense. Walk or sneak through it \
+				and it leaves you be; run, fly or fight in it and it cuts you.
+				- Some of the old swords in the floor still glint. Right-click one to draw it and take what it kept: a blade, a sword \
+				spell's manual or spirit stones. The wraiths about it wake.
+				- Some time into each opening the swords wake: for a minute, blades rise from the gorge and fall like rain about everyone \
+				inside. A glint marks where each will land.
+				- The spire at its heart: the Sword Path winds up its face to the Sleeping Sword's shrine on the summit. Walk it on foot \
+				from its foot to the top. Its intent bears down harder the higher you climb, drags fliers down onto its steps and cuts \
+				now and then; step off it and you must begin again.
+				- Then the sword's spirit meets you before the shrine as an equal, at your own strength. Defeat it, then right-click the \
+				sword in the shrine's stone.
+				@items sleeping_sword
+				The first in this world to pass both takes its Great Inheritance: the Sleeping Sword, a master's jian that wakes as its \
+				bearer grows (Spirit grade, then Earth from Nascent Soul, Heaven from Four Axis and Immortal from Void Shattering), and \
+				the manual of Sword Intent. After that, the first to pass each opening takes a lesser legacy.""");
+		page("ancient_battlefield_realm", ModItems.WAR_GENERALS_BANNER, "worlds/secret_realm", "The Ancient Battlefield", """
+				A red plain an old war was fought over, from Core Formation Late, meant for Nascent Soul. It opens every five years for \
+				twenty minutes.
+				- Trenches and earthworks ring the General's hill at its heart. War banners stand all over the plain, and the bones of \
+				its dead lie everywhere, each with what it died with. Its yin is thick: its ghostly qi is three times the Netherworld's.
+				- Bone Soldiers kneel where they fell, and rise for whoever comes close. A general's tent stands on each diagonal \
+				between the trenches, its war chest sealed as a vault.
+				- Some time into each opening the dead rise: for a minute and a half, old soldiers claw up out of the earth around \
+				everyone inside.
+				- The trial: hold the General's hill. Step into the ring of banners on its top and the war drum sounds; five waves of \
+				Battle Spirits come up the hill at you, the last led by the General's Spirit. Leave the ring for more than a moment, or \
+				fall, and you have lost it.
+				- Held, the General's tomb in the hill's far side lets you through its barrier: go to his bier.
+				@items war_generals_banner
+				The first in this world to hold it takes his Great Inheritance: the War General's Banner and the manual of Blood Battle. \
+				Held in either hand, the banner strengthens your side within sixteen blocks: you, your sect's fellows and those it calls \
+				strike harder and are harder to harm. Raised, it calls four soldiers of the old army to fight beside you for forty \
+				seconds, for a fifth of your qi, then rests five minutes. After that, the first to hold the hill each opening takes a \
+				lesser legacy.""");
+		page("primeval_beast_graveyard", ModItems.PRIMEVAL_BLOOD_ESSENCE, "worlds/secret_realm", "The Primeval Beast Graveyard", """
+				A jungle basin walled by cliffs, from Core Formation Late, meant for Nascent Soul. It opens every six years for twenty \
+				minutes.
+				- The bones of a primeval dragon lie in a great curve across its heart: its skull open-jawed, its ribs arching over the \
+				jungle floor, its tail tapering away.
+				- Wild demon beasts gather here and grow past their kind on its bones, as strong as the realm it is meant for, each \
+				keeping to its own ground. Three great ones keep about its ribs.
+				- Old herbs grow in the dragon's shadow, older for every year it slept. Two beast tamers' lodges lie fallen in across the \
+				basin, each with a vault.
+				- Some time into each opening the bones roar: for a minute every beast in it goes wild, swifter and stronger, and rushes \
+				the nearest visitor.
+				- The trial: before the skull, the dragon's echo rises for whoever faces it, as an equal, at their own strength. Best it, \
+				then step into the hollow of the skull, where its blood essence gathers.
+				@items primeval_blood_essence
+				The first in this world to do so takes the Primeval Blood Essence. After that, the first to best the echo each opening \
+				takes a lesser legacy: dragon blood, a great beast's core and spirit stones.""");
+		page("cave_abode", ModItems.MARROW_WASHING_FRUIT, "worlds/secret_realm", "The Cave Abode of a Heavenly Being", """
+				A lone mountain in a basin of pines round a still lake, from Nascent Soul Late, meant for Heavenly Being. It opens every \
+				seven years for twenty-five minutes.
+				- Its abode is hollowed out of the mountain: the gate at its foot across the lake's causeway, a long hall with a library on \
+				one side and a hall of spirit springs on the other, then the lecture hall. At its heart a garden lies open to the sky down \
+				a shaft cut through the peak. Bronze Puppets guard its halls.
+				- Bathe in the spirit springs and they mend you. The library's vault keeps manuals and jade slips; the springs', the \
+				Spring of the Ancients.
+				- Some time into each opening the master's voice lectures in the lecture hall for two minutes: meditate there and you \
+				gather five times as much. Sit through enough of it and an Insight stays with you after.
+				- The trials lie off the garden. First the hall of the five elements: light its five pillars in the order each element \
+				gives rise to the next (see The Five Elements), beginning where you will. Touch one out of turn and they strike you back, \
+				and all five go dark.
+				- Then walk the maze to its heart. Its walls hold against every hand and spell.
+				- Then the master's puppet before his chamber meets you as an equal, at your own strength. Best it, and his chamber's \
+				barrier lets you through: go to his altar.
+				@items marrow_washing_fruit
+				The first in this world to pass takes his Great Inheritance: his own method, to Four Axis, and the Marrow-Washing Fruit. \
+				After that, the first to pass each opening takes a lesser legacy.""");
+		page("yellow_springs_hollow", ModItems.OTHER_SHORE_FLOWER, "worlds/secret_realm", "The Yellow Springs Hollow", """
+				A drowned city of the dead in the Netherworld, from Nascent Soul Late, meant for Heavenly Being. It opens every five years \
+				for twenty minutes, and it lets in the dead as well as the living. Inside it the dead lay hands on things as the living do.
+				- Its islands stand out of murky golden water over the city's sunken streets, joined by bridges of black stone. Drowned \
+				Shades keep them, and two of its houses keep vaults.
+				- Other Shore Flowers grow on its islands, older for every year it slept.
+				- At its heart the Ghost King's tomb stands on an island, ringed by the Yellow Springs themselves: deep water that drags \
+				down and withers whoever swims it.
+				- Some time into each opening comes the lantern night: for two minutes lanterns of the dead rise from the water, every \
+				Other Shore Flower blooms three centuries older, the drowned rise, and the Ferryman carries everyone who asks.
+				- The trial: the Ferryman's judgement at his landing. The righteous he takes across for nothing; the neutral for his toll, \
+				three Yin Jade or two Mid spirit stones; the devilish must best him, as an equal, at their own strength. Right-click him \
+				to be judged, and again to cross. Ring the bell on the far jetty to be taken back.
+				- The tomb's door lets in those he has judged: go to the Ghost King's coffin.
+				The first in this world to reach it takes his Great Inheritance: his own foundation method, the Six Paths Reincarnation \
+				Canon, with Yin Jade from his tomb. After that, the first each opening takes a lesser legacy.""");
+		page("jade_lake_mirage", ModItems.JADE_LAKE_MIRROR, "worlds/secret_realm", "The Jade Lake Mirage", """
+				A still lake of pale jade under the Jade Firmament, from Four Axis Late, meant for Dao Integration. It opens every eight \
+				years for twenty-five minutes.
+				- White isles stand in the lake, joined by bridges of jade. Not every bridge is real: about a third have a span that is \
+				only a mirage, and whoever walks onto it falls through into the lake. Mirror Shades keep the isles and the bridges.
+				- Spirit lotuses grow by the isles, and mirage lotuses among them; two vaults stand on the isles, and two mirage caskets \
+				in their likeness. A mirage dissolves into mist at a touch. Under Qi Sense a mirage shimmers, plain for what it is.
+				- Some time into each opening the mirror wakes: for a minute, each visitor's reflection rises from the lake beside them, \
+				at half their strength.
+				- The trial: the Mirror Pavilion on the isle at its heart. Touch its great mirror and your reflection steps out of it, as \
+				strong as you, in your armour, casting your own arts. Only your blows touch it. Best it, and the mirror is a door to you: \
+				walk through it to the altar behind.
+				@items jade_lake_mirror
+				The first in this world to reach the altar takes the Jade Lake Mirror: raised, it turns the next three blows or spells \
+				that strike you back on whoever struck them, then rests a minute. After that, the first each opening takes a lesser \
+				legacy.""");
+		page("fallen_holy_land", Items.CHISELED_QUARTZ_BLOCK, "worlds/secret_realm", "The Ruins of a Fallen Holy Land", """
+				The shards of a holy land broken in some war of the ancients, floating in the Great Void, from Sacred Vessel Late, meant \
+				for Entering Nirvana. It opens every ten years for half an hour.
+				- Its shards hang over nothing: fall from one and you are caught and set back where you came in. Void currents run \
+				between them, two to each pair, there and back. Step into one and it carries you to its far end.
+				- The holy land's remnant guards keep the shards, and two of its broken halls keep vaults.
+				- Some time into each opening comes the void tide: for a minute the currents surge, and the void tears anyone near a \
+				shard's edge off it.
+				- The trial: the ancestral hall on the greatest shard stands under a formation, its walls unbreakable and its door \
+				barred. Four formation eyes on the shards about it hold it up, each kept by a guard. Bring the guard down, then break its \
+				eye by hand. When all four are broken the formation falls, and the hall stands open to everyone for the rest of the \
+				opening.
+				The first in this world to reach its ancestral altar takes the holy land's ancestral sword, a flying sword of Heaven grade \
+				and Perfect quality. After that, the first each opening takes a lesser legacy.""");
+		page("fallen_immortal_tomb", ModItems.DAO_FRAGMENT, "worlds/secret_realm", "The Tomb of a Fallen Immortal", """
+				A fallen immortal's palace on a floating base over a sea of golden cloud in the Immortal Realm, from Entering Nirvana \
+				Late, meant for True Immortal. It opens every twelve years for half an hour.
+				- Round its court stand eight halls, one for each Law, each door sealed by its Law: the seal lets through only one who \
+				holds that Law. Inside each, a vault of that Law's Dao Fragments and immortal spirit stones.
+				- Decayed celestial guards keep the court and the halls. The palace's walls can't be broken: go in by its doors.
+				- Some time into each opening the Five Decays that took him spread through it: for a minute everyone's blows and armour \
+				weaken.
+				- The trial: his sanctum beyond the court, up its steps. Its door opens to one who holds three Laws, or to one who bests \
+				his decayed spirit before it, as an equal, at their own strength.
+				@items dao_fragment
+				The first in this world to reach his coffin takes his Great Inheritance: his glaive, of Immortal grade and Perfect \
+				quality, and Dao Fragments of three Laws. After that, the first each opening takes a lesser legacy.""");
+
 		// ================================================== The Yellow Springs ==================================================
 		chapter("springs", ModItems.OTHER_SHORE_FLOWER, Hint.DEAD, "The Yellow Springs");
 		page("death", Items.SKELETON_SKULL, "springs/root", "Death", """
@@ -1191,7 +1406,9 @@ public final class Codex {
 				It is thickest on the Great Void's Ancient Battlefields, thick in the Netherworld (thicker on the Nine Nether Peaks), thin \
 				in soul sand valleys and faint in the Overworld.
 				Your ghostly qi pool grows with your ghost path's realm, as your qi pool grows with the heaven path's, and the ghost methods \
-				you know add to it. The higher your ghost path, the faster it refills, but the place still matters most.""");
+				you know add to it. It refills on its own wherever you are, as your qi pool does, the faster the higher your ghost path, and \
+				faster still where ghostly qi is thick: three times as fast in the Netherworld, about twenty times on the Ancient \
+				Battlefields.""");
 		page("ghost_path", ModItems.GHOST_JADE_SLIP, "springs/root", "The Ghost Path", """
 				The path of the ghost methods, walked by both the dead and the living, with its own cultivation bar and its own \
 				tribulations. It begins with a ghost method, learned from a Ghost Jade Slip, a Method Stele, or a ghost cultivator willing \

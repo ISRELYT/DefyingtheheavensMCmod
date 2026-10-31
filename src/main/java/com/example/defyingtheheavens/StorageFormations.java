@@ -324,6 +324,8 @@ public final class StorageFormations {
 		player.level().playSound(null, formation.getBlockPos(), SoundEvents.CHAIN_PLACE, SoundSource.BLOCKS, 1.0f, 0.6f);
 		warnOwner(player.server, formation, Component.translatable(ModLang.MSG_STORAGE_OWNER_FORCED, player.getDisplayName(), place(formation))
 				.withStyle(ChatFormatting.RED));
+		// A secret realm's vault: its guardians wake (RealmWorks).
+		if (player.level() instanceof net.minecraft.server.level.ServerLevel level) RealmWorks.vaultForced(level, formation.getBlockPos(), player);
 	}
 
 	/** Tells the formation's owner, if they are about, of what befalls it. */

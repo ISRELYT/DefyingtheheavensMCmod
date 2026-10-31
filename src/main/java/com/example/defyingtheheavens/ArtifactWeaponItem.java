@@ -95,6 +95,22 @@ public class ArtifactWeaponItem extends SwordItem {
 
 	public ArtifactKind kind() { return kind; }
 	public ArtifactGrade grade() { return grade; }
+
+	/** The grade {@code stack} is at: its item's, but a Sleeping Sword's grows with its bearer (SleepingSwordItem). */
+	public ArtifactGrade grade(ItemStack stack) { return grade; }
+
+	/** The blow, swing and might of a blade of {@code kind} at {@code grade}, all times {@code power} (SleepingSwordItem's, by its grade now). */
+	static Multimap<Attribute, AttributeModifier> modifiersFor(ArtifactKind kind, ArtifactGrade grade, double power) {
+		double blow = BLOW[kind.ordinal()][grade.ordinal()], speed = SPEED[kind.ordinal()], might = MIGHT[kind.ordinal()][grade.ordinal()];
+		ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
+		builder.put(Attributes.ATTACK_DAMAGE, new AttributeModifier(BASE_ATTACK_DAMAGE_UUID, "Weapon modifier", blow * power - 1, AttributeModifier.Operation.ADDITION));
+		builder.put(Attributes.ATTACK_SPEED, new AttributeModifier(BASE_ATTACK_SPEED_UUID, "Weapon modifier", speed - 4, AttributeModifier.Operation.ADDITION));
+		if (might * power > 0) builder.put(Attributes.ATTACK_DAMAGE, new AttributeModifier(MIGHT_ID, "Artifact might", might * power, AttributeModifier.Operation.MULTIPLY_TOTAL));
+		return builder.build();
+	}
+
+	/** The share of Sword Flight's qi a flying sword of {@code grade} saves its rider. */
+	static double flightSaving(ArtifactGrade grade) { return FLIGHT_SAVING[grade.ordinal()]; }
 	/** Swings a second. */
 	public double speed() { return speed; }
 
@@ -137,7 +153,7 @@ public class ArtifactWeaponItem extends SwordItem {
 	/** What Sword Flight costs its rider on {@code held}: a flying sword's saving off (its work's worth in it); any other blade, all of it. */
 	public static double flightShare(ItemStack held) {
 		if (!(held.getItem() instanceof ArtifactWeaponItem weapon) || weapon.kind != ArtifactKind.FLYING_SWORD) return 1;
-		return Math.max(0, 1 - FLIGHT_SAVING[weapon.grade.ordinal()] * Artifacts.power(held));
+		return Math.max(0, 1 - FLIGHT_SAVING[weapon.grade(held).ordinal()] * Artifacts.power(held));
 	}
 
 	@Override

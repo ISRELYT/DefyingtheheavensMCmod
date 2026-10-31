@@ -33,8 +33,10 @@ public final class RealmSuppressionHandler {
 			boolean wasSealed = c.isAtBottleneck() && c.isBreakthroughLocked();
 			float oldMax = player.getMaxHealth();
 			float oldHealth = player.getHealth();
-			// A soul in the Inner Realm is held to whatever holds its body.
-			applyRealm(c, InnerRealm.bodyDimension(player));
+			// A soul in the Inner Realm is held to whatever holds its body; one in a secret realm, by the law of the world its Seal stands in,
+			// its qi three times that world's (SecretRealms).
+			applyRealm(c, lawOf(player));
+			if (SecretRealms.realmOf(player) != null) c.setPlaceQi(SecretRealms.qiAt(player.level(), player.blockPosition()));
 			CultivationManager.refresh(player); // stats from the effective stage + save + sync, also on every dimension change
 
 			// Keep the same fraction of vitality when the cap toggles, so a restored cultivator enters the
@@ -83,15 +85,26 @@ public final class RealmSuppressionHandler {
 				: ModDimensions.isGreatVoid(where) ? PlayerCultivation.GREAT_VOID_QI_MULTIPLIER : 1.0;
 	}
 
+	/**
+	 * The world whose law holds where {@code player}'s body is: the body's own, but in a secret realm the world its Seal stands in
+	 * (SecretRealms#lawOf: a lower realm's holds one there as at home).
+	 */
+	static ResourceKey<Level> lawOf(ServerPlayer player) {
+		ResourceKey<Level> body = InnerRealm.bodyDimension(player);
+		if (body == player.level().dimension()) return SecretRealms.lawOf(player.level(), player.blockPosition());
+		return ModDimensions.isSecretRealm(body) ? SecretRealm.VERDANT_HERB_VALLEY.home() : body;
+	}
+
 	/** Safety net for dimension changes that don't fire the world-change event (e.g. some command teleports). */
 	public static void tick(MinecraftServer server) {
 		if (server == null || server.getTickCount() % RECHECK_INTERVAL != 0) return;
 		for (ServerPlayer player : server.getPlayerList().getPlayers()) {
 			PlayerCultivation c = CultivationManager.get(player);
-			ResourceKey<Level> dimension = InnerRealm.bodyDimension(player);
+			ResourceKey<Level> dimension = lawOf(player);
+			double qi = SecretRealms.realmOf(player) != null ? SecretRealms.qiAt(player.level(), player.blockPosition()) : realmQi(dimension);
 			if (c.isLowerRealmBound() != ModDimensions.isLowerRealm(dimension) || c.isInUpperRealm() != ModDimensions.isUpperRealm(dimension)
 					|| c.isInImmortalRealm() != ModDimensions.isImmortalRealm(dimension)
-					|| !ModDimensions.isAstral(dimension) && !ModDimensions.isUpperRealm(dimension) && c.placeFactor() != realmQi(dimension)) {
+					|| !ModDimensions.isAstral(dimension) && !ModDimensions.isUpperRealm(dimension) && c.placeFactor() != qi) {
 				update(player);
 			}
 		}

@@ -17,7 +17,17 @@ public enum Technique {
 	 * Gap, the Void Breach and the Immortal Gate whatever their realm, for twice the spatial pressure for each (Ability#SLEEVE). From
 	 * Heavenly Being, the first realm that tears its own way into the gap (the user's pick).
 	 */
-	SLEEVE("universe_in_a_sleeve", Realm.HEAVENLY_BEING);
+	SLEEVE("universe_in_a_sleeve", Realm.HEAVENLY_BEING),
+	/**
+	 * Sword Intent (the Sunken Sword Tomb's Great Inheritance, 2026-10-31; WarArts): a blade's blow followed by a second cut of lingering
+	 * intent, the tomb's own sparing one (Ability#SWORD_INTENT). From Core Formation, the realm the tomb is meant for.
+	 */
+	SWORD_INTENT("sword_intent", Realm.CORE_FORMATION),
+	/**
+	 * Blood Battle (the Ancient Battlefield's Great Inheritance, 2026-10-31; WarArts): the war art of one who fought alone against an army,
+	 * each blow healing and the crowd's blows lessened (Ability#BLOOD_BATTLE). From Nascent Soul, the realm the battlefield is meant for.
+	 */
+	BLOOD_BATTLE("blood_battle", Realm.NASCENT_SOUL);
 
 	private final String id;
 	private final Realm realm;

@@ -123,9 +123,12 @@ public final class FiveDecays {
 		return sign(c) >= 3;
 	}
 
-	/** The body sweats (the fourth sign on): a blow or spell of {@code attacker}'s (Physiques#outgoing). */
+	/**
+	 * The body sweats (the fourth sign on), or the decays that took the Tomb of a Fallen Immortal's lord spread over it (ModEffects#DECAYING):
+	 * a blow or spell of {@code attacker}'s (Physiques#outgoing).
+	 */
 	public static float outgoing(ServerPlayer attacker, float amount) {
-		return sign(CultivationManager.get(attacker)) >= 4 ? amount * HARM_KEPT : amount;
+		return sign(CultivationManager.get(attacker)) >= 4 || attacker.hasEffect(ModEffects.DECAYING) ? amount * HARM_KEPT : amount;
 	}
 
 	/** The mind can't rest (the fifth sign on, the judgement too): {@code p} can't meditate (MeditationManager). */

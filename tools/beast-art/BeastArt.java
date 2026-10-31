@@ -356,6 +356,11 @@ public class BeastArt {
 			System.out.println("written");
 			return;
 		}
+		if (args.length == 2 && args[1].equals("realms")) {
+			RealmArt.writeAll(Path.of(args[0]));
+			System.out.println("written");
+			return;
+		}
 		if (args.length >= 2 && args[1].equals("artifacts") && args.length <= 3) {
 			ArtifactArt.writeAll(Path.of(args[0]));
 			if (args.length == 3) {
