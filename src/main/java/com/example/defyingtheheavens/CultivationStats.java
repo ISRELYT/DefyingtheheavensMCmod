@@ -100,13 +100,22 @@ public final class CultivationStats {
 	 * beasts, a little stronger than their realm: BeastKind#might).
 	 */
 	public static void applyNpc(LivingEntity npc, Realm r, Stage s, boolean mortal, double might) {
+		applyNpc(npc, r, s, mortal, might, false);
+	}
+
+	/**
+	 * {@link #applyNpc(LivingEntity, Realm, Stage, boolean, double)}, its {@code might} its whole body's if {@code wholeBody}: its armour,
+	 * toughness, footing and speed too, as a player's on the Body Path is (TwoPaths#body's share: a body cultivator, CultivatorNpc#isBodyCultivator).
+	 */
+	public static void applyNpc(LivingEntity npc, Realm r, Stage s, boolean mortal, double might, boolean wholeBody) {
 		double scale = mortal ? 0 : 1;
+		double rest = wholeBody ? might : 1;
 		set(npc, Attributes.MAX_HEALTH, HEALTH_ID, "Cultivation max health", (maxHealth(r, s) + 20) * might * scale - 20 * scale);
 		set(npc, Attributes.ATTACK_DAMAGE, DAMAGE_ID, "Cultivation attack damage", attackDamage(r, s) * might * scale);
-		set(npc, Attributes.MOVEMENT_SPEED, SPEED_ID, "Cultivation speed", (Math.sqrt(1 + moveSpeed(r, s)) - 1) * scale);
-		set(npc, Attributes.ARMOR, ARMOR_ID, "Cultivation armor", armor(r, s) * scale);
-		set(npc, Attributes.ARMOR_TOUGHNESS, TOUGHNESS_ID, "Cultivation toughness", toughness(r, s) * scale);
-		set(npc, Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID, "Cultivation knockback resistance", knockbackResistance(r, s) * scale);
+		set(npc, Attributes.MOVEMENT_SPEED, SPEED_ID, "Cultivation speed", (Math.sqrt(1 + moveSpeed(r, s) * rest) - 1) * scale);
+		set(npc, Attributes.ARMOR, ARMOR_ID, "Cultivation armor", armor(r, s) * rest * scale);
+		set(npc, Attributes.ARMOR_TOUGHNESS, TOUGHNESS_ID, "Cultivation toughness", toughness(r, s) * rest * scale);
+		set(npc, Attributes.KNOCKBACK_RESISTANCE, KNOCKBACK_ID, "Cultivation knockback resistance", Math.min(1.0, knockbackResistance(r, s) * rest) * scale);
 	}
 
 	/**

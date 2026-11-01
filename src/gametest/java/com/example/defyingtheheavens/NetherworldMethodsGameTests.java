@@ -54,8 +54,8 @@ public class NetherworldMethodsGameTests implements FabricGameTest {
 	public void eachCultivatorGoesAtTheirOwnPace(GameTestHelper helper) {
 		PlayerCultivation c = new PlayerCultivation();
 		NetherworldState s = c.netherworld();
-		helper.assertTrue(Math.abs(GhostMethods.ratePerSecond(c, GhostQi.SOUL_SAND_VALLEY) - 0.7 * GhostMethods.NO_METHOD_FACTOR) < 1.0e-9,
-				"No ghost path yet: as its Qi Refining, -30%, and no foundation known: three quarters of that");
+		helper.assertTrue(Math.abs(GhostMethods.ratePerSecond(c, GhostQi.SOUL_SAND_VALLEY) - 0.7) < 1.0e-9 && !GhostMethods.canGain(c),
+				"No ghost path yet: its flow as its Qi Refining's, -30%, and with no foundation the bar gains none of it");
 		s.setMethod(GhostMethod.NINE_NETHER_SOUL_SUTRA, 1, 0);
 		GhostMethods.setPath(s, PlayerCultivation.rank(Realm.NASCENT_SOUL, Stage.EARLY)); // the ghost path at Nascent Soul
 		helper.assertTrue(Math.abs(GhostMethods.ratePerSecond(c, GhostQi.SOUL_SAND_VALLEY) - 1.0) < 1.0e-9,

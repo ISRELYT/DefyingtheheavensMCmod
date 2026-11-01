@@ -1,0 +1,40 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "minecraft:block/mossy_cobblestone",
+    "base": "minecraft:block/mossy_cobblestone",
+    "altar": "minecraft:block/stone_bricks",
+    "idol": "minecraft:block/red_terracotta",
+    "horn": "minecraft:block/bone_block_side",
+    "eye": "minecraft:block/gold_block",
+    "offering": "minecraft:block/bone_block_top"
+  },
+  "elements": [
+    {"name": "platform", "from": [1, 0, 1], "to": [15, 3, 15],
+      "faces": {"down": {"texture": "#base", "cullface": "down"}, "up": {"texture": "#base"}, "north": {"texture": "#base"},
+        "south": {"texture": "#base"}, "west": {"texture": "#base"}, "east": {"texture": "#base"}}},
+    {"name": "altar", "from": [3, 3, 3], "to": [13, 6, 13],
+      "faces": {"up": {"texture": "#altar"}, "north": {"texture": "#altar"}, "south": {"texture": "#altar"}, "west": {"texture": "#altar"},
+        "east": {"texture": "#altar"}}},
+    {"name": "haunches", "from": [5, 6, 7], "to": [11, 10, 12],
+      "faces": {"up": {"texture": "#idol"}, "north": {"texture": "#idol"}, "south": {"texture": "#idol"}, "west": {"texture": "#idol"},
+        "east": {"texture": "#idol"}}},
+    {"name": "forelegs", "from": [5.5, 6, 5], "to": [10.5, 9, 7],
+      "faces": {"up": {"texture": "#idol"}, "north": {"texture": "#idol"}, "south": {"texture": "#idol"}, "west": {"texture": "#idol"},
+        "east": {"texture": "#idol"}}},
+    {"name": "head", "from": [6, 9.5, 4], "to": [10, 13, 7.5],
+      "faces": {"down": {"texture": "#idol"}, "up": {"texture": "#idol"}, "north": {"texture": "#idol"}, "south": {"texture": "#idol"},
+        "west": {"texture": "#idol"}, "east": {"texture": "#idol"}}},
+    {"name": "eye", "from": [6.75, 11.5, 3.9], "to": [7.75, 12.25, 4], "faces": {"north": {"texture": "#eye"}}},
+    {"name": "eye", "from": [8.25, 11.5, 3.9], "to": [9.25, 12.25, 4], "faces": {"north": {"texture": "#eye"}}},
+    {"name": "horn", "from": [6, 13, 5], "to": [7, 15, 6],
+      "faces": {"up": {"texture": "#horn"}, "north": {"texture": "#horn"}, "south": {"texture": "#horn"}, "west": {"texture": "#horn"},
+        "east": {"texture": "#horn"}}},
+    {"name": "horn", "from": [9, 13, 5], "to": [10, 15, 6],
+      "faces": {"up": {"texture": "#horn"}, "north": {"texture": "#horn"}, "south": {"texture": "#horn"}, "west": {"texture": "#horn"},
+        "east": {"texture": "#horn"}}},
+    {"name": "offering", "from": [11, 6, 3.5], "to": [12.5, 7, 5],
+      "faces": {"up": {"texture": "#offering"}, "north": {"texture": "#offering"}, "south": {"texture": "#offering"}, "west": {"texture": "#offering"},
+        "east": {"texture": "#offering"}}}
+  ]
+}

@@ -57,7 +57,7 @@ public final class VitalsHud {
 	}
 
 	/** Whether anything of it is drawn: a player in the world, the HUD up, no debug screen, not a spectator. */
-	private static boolean visible() {
+	static boolean visible() {
 		Minecraft mc = Minecraft.getInstance();
 		return mc.level != null && mc.player != null && !mc.options.hideGui && !mc.options.renderDebug && !mc.player.isSpectator()
 				&& mc.getCameraEntity() instanceof Player;
@@ -173,10 +173,13 @@ public final class VitalsHud {
 		}
 	}
 
-	/** The realm {@code c} stands at, by the higher of its paths ("" for a mortal). */
+	/**
+	 * The realm {@code c} stands at, by the higher of its paths: the Body Path's own name where it stands higher than any qi path (a mortal's
+	 * too: BodyPath#realmName), "" for a mortal off it.
+	 */
 	private static String realmName(PlayerCultivation c) {
-		if (c.isMortal()) return "";
-		int rank = TwoPaths.higherRank(c, false);
+		int rank = c.isMortal() ? -1 : TwoPaths.higherRank(c, false), body = com.example.defyingtheheavens.BodyPath.rank(c);
+		if (body > rank) return com.example.defyingtheheavens.BodyPath.realmName(com.example.defyingtheheavens.BodyPath.realm(body)).getString();
 		return rank < 0 ? "" : Realm.byIndex(rank / Stage.values().length).getDisplayName().getString();
 	}
 

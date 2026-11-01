@@ -129,6 +129,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	private static final EntityDataAccessor<Byte> DATA_RACE = SynchedEntityData.defineId(CultivatorNpc.class, EntityDataSerializers.BYTE);
 	/** Set aside while a nascent soul uses its body ({@link #isVacant}). */
 	private static final EntityDataAccessor<Boolean> DATA_VACANT = SynchedEntityData.defineId(CultivatorNpc.class, EntityDataSerializers.BOOLEAN);
+	/** A body cultivator ({@link #isBodyCultivator}): synced, so its realm is named as the Body Path names it. */
+	private static final EntityDataAccessor<Boolean> DATA_BODY = SynchedEntityData.defineId(CultivatorNpc.class, EntityDataSerializers.BOOLEAN);
 
 	private static final int FLAG_MEDITATING = 1;
 	private static final int FLAG_FLYING = 2;
@@ -259,6 +261,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		entityData.define(DATA_SKIN, (byte) 0);
 		entityData.define(DATA_RACE, (byte) 0);
 		entityData.define(DATA_VACANT, false);
+		entityData.define(DATA_BODY, false);
 	}
 
 	@Override
@@ -268,8 +271,11 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		goalSelector.addGoal(1, new CultivatorGoals.FleeGoal(this));
 		goalSelector.addGoal(2, new CultivatorGoals.CombatGoal(this));
 		goalSelector.addGoal(2, new CultivatorSpells.SpellGoal(this)); // its spells, alongside the fight (the user's ask, 2026-10-24)
+		goalSelector.addGoal(2, new BodyCultivators.TechniqueGoal(this)); // a body cultivator's techniques, alongside the fight (2026-11-01)
 		goalSelector.addGoal(2, new CultivatorGoals.TalkGoal(this));
 		goalSelector.addGoal(2, new CultivatorGoals.KneelGoal(this)); // before one far above it, passing by (the user's pick, 2026-10-27)
+		goalSelector.addGoal(2, new JudgementHallService.EscortedGoal(this)); // a wandering soul led to the Wheel (Judgement Hall Service)
+		goalSelector.addGoal(2, new CorpseYin.DrainGoal(this)); // a devilish cultivator draining a fresh body's yin after a fight (CorpseYin)
 		goalSelector.addGoal(3, new CultivatorGoals.JourneyGoal(this));
 		goalSelector.addGoal(3, new SecretRealmRivals.VisitGoal(this)); // come for a secret realm: its herbs, its vaults, its heart (SecretRealmRivals)
 		goalSelector.addGoal(3, new CultivatorGoals.SeclusionGoal(this));
@@ -329,6 +335,27 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	public boolean isDemon() { return getBloodline().isBeast(); }
 
 	/**
+	 * A body cultivator (the user's "Go, with body sects", 2026-11-01): its rank is the Body Path's, named as that path names its realms
+	 * ({@link #rankLabel}: "Steel Sinew - Mid"), its body {@link BodyPath#BODY} times its realm's (more health, harder blows), and it has no
+	 * qi to wield: no spell, no flight, no Realm Suppress, no consciousness domain, no heaven method, no Ritual to the Heavens on its way
+	 * (the heaven path's gate). It fights with the body's own techniques instead (BodyCultivators#TechniqueGoal). One of the living men
+	 * alone: never one of the dead, a demon (the Demon Path is theirs) or a mortal.
+	 */
+	public boolean isBodyCultivator() { return entityData.get(DATA_BODY); }
+
+	public void setBodyCultivator(boolean body) {
+		if (body && (isGhost() || isDemon() || isMortal()) || body == isBodyCultivator()) return;
+		entityData.set(DATA_BODY, body);
+		if (body) {
+			cultivation.setHeavensLeave(true);
+			setQiFlying(false);
+			setSuppressing(false);
+			if (getRank() > BodyCultivators.LAST_RANK) setRank(BodyCultivators.LAST_RANK, true);
+		}
+		refreshStats();
+	}
+
+	/**
 	 * Makes it of {@code race} in {@code variant} (0 to 2). A demon cultivates the Demon Path (its rank is that path's; the same realms
 	 * and stages): born with its demon core, so never a mortal, and with no Ritual to the Heavens on its way (that is the heaven path's
 	 * gate); its record carries its blood (DemonPath#bloodline: the race's gifts in a body a player's soul possesses, its years).
@@ -338,6 +365,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		entityData.set(DATA_RACE, (byte) (race.ordinal() << 2 | Mth.clamp(variant, 0, 2)));
 		cultivation.demon().setBloodline(race);
 		if (!race.isBeast()) return;
+		if (isBodyCultivator()) setBodyCultivator(false); // a demon's is the Demon Path
 		cultivation.setHeavensLeave(true);
 		if (isMortal()) setRank(0);
 	}
@@ -498,9 +526,9 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		return held ? Math.min(getRank(), cap) : getRank();
 	}
 
-	/** Consciousness domain radius, from what it shows. */
+	/** Consciousness domain radius, from what it shows (a body cultivator's none: no qi, as a player on the Body Path alone has none). */
 	public double domainRadius() {
-		return isMortal() ? 0 : ConsciousnessDomainHandler.radius(getDisplayedRealm(), getDisplayedStage());
+		return isMortal() || isBodyCultivator() ? 0 : ConsciousnessDomainHandler.radius(getDisplayedRealm(), getDisplayedStage());
 	}
 
 	public Component describe() {
@@ -546,6 +574,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		if (player instanceof ServerPlayer sp) value += Physiques.regardShift(CultivationManager.get(sp), getFaction()) + RaceGifts.regardShift(CultivationManager.get(sp));
 		// A demon minds one's blood: wary of men, warm to its own (Regard#bloodShift).
 		if (player instanceof ServerPlayer sp) value += Regard.bloodShift(getBloodline(), DemonPath.bloodline(CultivationManager.get(sp)));
+		// A body cultivator is warm to one who tempers the body as it does (Regard#BODY_KIN).
+		if (isBodyCultivator() && player instanceof ServerPlayer sp && BodyPath.rank(CultivationManager.get(sp)) >= 0) value += Regard.BODY_KIN;
 		UUID who = Possession.identity(player);
 		Regard.Entry entry = regard.get(who);
 		if (entry != null) value += entry.current(Regard.day(level().getGameTime()));
@@ -850,9 +880,10 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 
 	/**
 	 * Its realm as it is named: by the realm and stage it shows (the Celestial Court's King a Profound Sovereign, its Venerables Taiyi
-	 * Golden Immortals, their own realms since phase 3: CelestialCourt#rankOf).
+	 * Golden Immortals, their own realms since phase 3: CelestialCourt#rankOf); a body cultivator's as the Body Path names it.
 	 */
 	public Component rankLabel() {
+		if (isBodyCultivator()) return BodyPath.rankName(PlayerCultivation.rank(getDisplayedRealm(), getDisplayedStage()));
 		return PlayerCultivation.rankName(getDisplayedRealm(), getDisplayedStage());
 	}
 
@@ -878,7 +909,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		int rank = fightingRank();
 		Realm realm = isMortal() ? Realm.QI_REFINING : realmOf(rank);
 		Stage stage = isMortal() ? Stage.EARLY : stageOf(rank);
-		CultivationStats.applyNpc(this, realm, stage, isMortal());
+		// A body cultivator's body is the Body Path's: mightier than its realm's in everything (BodyPath#BODY), as a player's on it is.
+		CultivationStats.applyNpc(this, realm, stage, isMortal(), isBodyCultivator() ? BodyPath.BODY : 1, isBodyCultivator());
 		if (oldMax > 0 && getMaxHealth() != oldMax) setHealth(Math.min(getMaxHealth(), oldHealth * getMaxHealth() / oldMax));
 		updateShownRank();
 	}
@@ -954,6 +986,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			RandomSource random = level.getRandom();
 			int rank = NpcSpawner.rollRank(random, level.getLevel().dimension(), true);
 			becomeRogue(rank, Alignment.randomRogue(random), random);
+			if (NpcSpawner.rollsBody(this, random)) setBodyCultivator(true); // now and then one who tempers the body (NpcSpawner#BODY_IN)
 		}
 		return result;
 	}
@@ -1042,7 +1075,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		// Natural recovery out of combat: quicker once qi sustains the body, the whole of a great one mended in half a minute
 		// (CultivationStats#mendPerSecond: the high realms' bodies took hours at two a second).
 		if (!isInCombat() && getHealth() < getMaxHealth()) heal(isMortal() || getRank() < 4 ? 0.5f : CultivationStats.mendPerSecond(getMaxHealth()));
-		setFlag(FLAG_DOMAIN, !isMortal() && (!isSectMember() || isInCombat()) && !isConcealed());
+		setFlag(FLAG_DOMAIN, !isMortal() && !isBodyCultivator() && (!isSectMember() || isInCombat()) && !isConcealed());
 		if (isDomainOpen()) senseDomains(level);
 		if (sectId != null) {
 			Sect sect = SectManager.get(level.getServer(), sectId);
@@ -1157,6 +1190,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 				? PlayerCultivation.rank(PlayerCultivation.LOWER_REALM_CAP_REALM, PlayerCultivation.LOWER_REALM_CAP_STAGE)
 				: level() instanceof ServerLevel server ? HighRealms.allowed(server, getUUID(), PlayerCultivation.LAST_RANK)
 				: PlayerCultivation.rank(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION);
+		if (isBodyCultivator()) cap = Math.min(cap, BodyCultivators.LAST_RANK); // no body cultivator of the world's climbs past the Indestructible Body
 		for (int guard = 0; guard < 32; guard++) {
 			cultivation.setState(realm, stage, 0);
 			double required = cultivation.cultivationRequired();
@@ -1252,9 +1286,9 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		cultivation.gatherQi(1 / 20.0, spend);
 	}
 
-	/** Flight it can keep up, on qi or on its sword (from Foundation Building, with a sword in hand). */
+	/** Flight it can keep up, on qi or on its sword (from Foundation Building, with a sword in hand); none for a body cultivator, who has no qi. */
 	public boolean canFlySustainably() {
-		return canQiFlySustainably() || canSwordFlySustainably();
+		return !isBodyCultivator() && (canQiFlySustainably() || canSwordFlySustainably());
 	}
 
 	private boolean canQiFlySustainably() {
@@ -1362,7 +1396,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 
 	/** Holding down a weaker foe is worth it only while the qi lasts: a third of the pool in hand to start. */
 	public boolean canSuppressSustainably() {
-		return !isMortal() && cultivation.getQi() >= cultivation.maxQi() * 0.3;
+		return !isMortal() && !isBodyCultivator() && cultivation.getQi() >= cultivation.maxQi() * 0.3; // a body cultivator has no qi to press with
 	}
 
 	@Override
@@ -1481,6 +1515,19 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			return other.isMortal() || other.isConcealed() ? MORTAL : PlayerCultivation.rank(other.getCultivationRealm(), other.getCultivationStage());
 		}
 		return MORTAL;
+	}
+
+	/**
+	 * Where {@code other} stands to it ({@link #rankOf}), save that a body cultivator knows a body tempered on the Body Path for what it is:
+	 * one with no qi stands where its body does (TwoPaths#weighedRank), where any other cultivator sees a mortal (a spar's holding back, who
+	 * is the stronger, who should beg: SparSystem, TalkSystem).
+	 */
+	public int weighs(LivingEntity other) {
+		if (isBodyCultivator() && other instanceof ServerPlayer player) {
+			PlayerCultivation c = CultivationManager.get(player);
+			if (BodyPath.rank(c) >= 0) return TwoPaths.weighedRank(c);
+		}
+		return rankOf(other);
 	}
 
 	// --- Allies and enemies ---
@@ -2118,11 +2165,15 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		for (ItemStack stack : carriedStones(getRank(), random)) spawnAtLocation(stack);
 		for (ItemStack stack : winnings) spawnAtLocation(stack);
 		winnings.clear();
-		// Its heaven method's slip: never a True Immortal's, the Immortal Realm's (Realm#taughtInTheWorld).
+		// Its heaven method's slip: never a True Immortal's, the Immortal Realm's (Realm#taughtInTheWorld). A body cultivator's manual of
+		// the body's way it walks, as often.
 		HeavenMethod method = heavenMethod();
-		if (method != null && method.realm().taughtInTheWorld() && random.nextFloat() < (isSectMember() ? HEAVEN_SLIP_CHANCE_SECT : HEAVEN_SLIP_CHANCE)) {
+		float slipChance = isSectMember() ? HEAVEN_SLIP_CHANCE_SECT : HEAVEN_SLIP_CHANCE;
+		if (method != null && method.realm().taughtInTheWorld() && random.nextFloat() < slipChance) {
 			spawnAtLocation(JadeSlipItem.of(method));
 		}
+		ItemStack manual = bodyManual();
+		if (!manual.isEmpty() && random.nextFloat() < slipChance) spawnAtLocation(manual);
 	}
 
 	/** A cultivator struck down leaves its heaven method's slip this often; a sect member (who keeps its sect's own closer), this often. */
@@ -2137,7 +2188,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	 * no methods of their own (phase 3: Laws carry them), always the True Immortal one.
 	 */
 	public HeavenMethod heavenMethod() {
-		if (isMortal() || isGhost()) return null;
+		if (isMortal() || isGhost() || isBodyCultivator()) return null; // a body cultivator's ways are the body's (bodyManual)
 		// A Heavenly Venerable's is its own element's True Immortal method (CelestialCourt).
 		if (getTitle() == NpcTitle.HEAVENLY_VENERABLE && courtElement != null) return HeavenMethod.of(courtElement, Realm.TRUE_IMMORTAL);
 		Sect sect = isSectMember() ? sect() : null;
@@ -2149,6 +2200,27 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		int hash = getUUID().hashCode() * 17 + 3;
 		int realm = pastEvery || getTitle().isElderOrAbove() || Math.floorMod(hash, 10) < OWN_HEAVEN_METHOD_IN_TEN ? own : Math.floorMod(hash / 10, own + 1);
 		return HeavenMethod.of(element, Realm.byIndex(realm));
+	}
+
+	/**
+	 * A body cultivator's manual (MethodManualItem) of the body's way it walks, the one it drops and sells (picked from who it is, so it never
+	 * changes): one of the Body Path's ways its path keeps (MethodManualItem#kinds: the bath, the weights and the spars the righteous', all four
+	 * the neutral's, beasts' blood and the weights the devilish'), whose volumes reach its realm if any do, its volume its realm's (the way's
+	 * last, past it). Empty for anyone else.
+	 */
+	public ItemStack bodyManual() {
+		if (!isBodyCultivator() || isMortal()) return ItemStack.EMPTY;
+		Realm realm = BodyPath.realm(getRank());
+		List<CultivationMethod> ways = new ArrayList<>(), reaching = new ArrayList<>();
+		for (CultivationMethod way : MethodManualItem.kinds(getFaction(), Bloodline.HUMAN)) {
+			if (way.path() != TwoPaths.Path.BODY) continue;
+			ways.add(way);
+			if (way.first().ordinal() <= realm.ordinal()) reaching.add(way);
+		}
+		List<CultivationMethod> from = reaching.isEmpty() ? ways : reaching;
+		if (from.isEmpty()) return ItemStack.EMPTY;
+		CultivationMethod way = from.get(Math.floorMod(getUUID().hashCode() * 31 + 7, from.size()));
+		return MethodManualItem.of(way, realm);
 	}
 
 	/** The spirit stones a cultivator of {@code rank} carries ({@link #MORTAL}: a commoner). */
@@ -2296,6 +2368,8 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 	@Override
 	protected InteractionResult mobInteract(Player player, InteractionHand hand) {
 		if (!level().isClientSide && hand == InteractionHand.MAIN_HAND && player instanceof ServerPlayer serverPlayer) {
+			// Sneaking, one who serves the Judgement Hall leads a wandering soul to the Wheel, or lets it go (JudgementHallService).
+			if (serverPlayer.isShiftKeyDown() && JudgementHallService.lead(serverPlayer, this)) return InteractionResult.SUCCESS;
 			TalkSystem.open(serverPlayer, this);
 		}
 		return InteractionResult.sidedSuccess(level().isClientSide);
@@ -2316,6 +2390,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 			npc.putString("Race", getBloodline().getId());
 			npc.putInt("RaceVariant", getRaceVariant());
 		}
+		if (isBodyCultivator()) npc.putBoolean("Body", true);
 		npc.putString("Lifecycle", lifecycle.name());
 		if (sectId != null) npc.putUUID("Sect", sectId);
 		npc.putInt("Home", homeIndex);
@@ -2420,6 +2495,7 @@ public class CultivatorNpc extends PathfinderMob implements CultivatorEntity, Me
 		entityData.set(DATA_TITLE, (byte) NpcTitle.byIndex(npc.getInt("Title")).ordinal());
 		entityData.set(DATA_SKIN, (byte) Mth.clamp(npc.getInt("Skin"), 0, SKINS - 1));
 		if (npc.contains("Race")) setRace(Bloodline.byId(npc.getString("Race")), npc.getInt("RaceVariant"));
+		entityData.set(DATA_BODY, npc.getBoolean("Body") && rank >= 0 && !isDemon() && !isGhost());
 		try {
 			lifecycle = Lifecycle.valueOf(npc.getString("Lifecycle"));
 		} catch (IllegalArgumentException e) {

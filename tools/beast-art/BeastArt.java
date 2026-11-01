@@ -342,9 +342,15 @@ public class BeastArt {
 	 * (Chaos); {@code ... <assets> worlds}, the small worlds' World Seed and Small World icon (Worlds); {@code ... <assets> techniques}, the
 	 * techniques' icons (Techniques: Universe in a Sleeve); {@code ... <assets> artifacts [sheet.png]}, the Artifact Forge's artifacts and
 	 * faces (ArtifactArt), and a sheet of them to look over; {@code ... <assets> legends [sheet.png]}, Ganjiang's and Moye's models and their
-	 * living textures (LegendArt); {@code ... <assets> missions}, the sect mission board's faces, its slips and letters (MissionArt).
+	 * living textures (LegendArt); {@code ... <assets> missions}, the sect mission board's faces, its slips and letters (MissionArt);
+	 * {@code ... <assets> body}, the Body Path's techniques' icons (BodyArts).
 	 */
 	public static void main(String[] args) throws Exception {
+		if (args.length == 2 && args[1].equals("body")) {
+			BodyArts.writeAll(Path.of(args[0]));
+			System.out.println("written");
+			return;
+		}
 		if (args.length >= 2 && args[1].equals("legends") && args.length <= 3) {
 			LegendArt.writeAll(Path.of(args[0]));
 			if (args.length == 3) LegendArt.writeSheet(Path.of(args[2]));

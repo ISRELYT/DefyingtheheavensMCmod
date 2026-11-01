@@ -61,6 +61,11 @@ public final class ModDamageTypes {
 	public static final ResourceKey<DamageType> CHAOS_STORM = ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("chaos_storm"));
 	/** The Sunken Sword Tomb's lingering sword intent, and its Sword Path's pressure (SwordTombWorks): the cuts of swords long fallen. */
 	public static final ResourceKey<DamageType> SWORD_INTENT = ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("sword_intent"));
+	/**
+	 * The Body Path's techniques that strike round one (BodyTechniques: Mountain Stomp, a Ground-Splitting Leap's landing): the body's own
+	 * strength, not a blow of the hand (no blade's or blood's touch follows it), nor qi.
+	 */
+	public static final ResourceKey<DamageType> BODY_ART = ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("body_art"));
 
 	private static ResourceKey<DamageType> qiKey(QiElement element) {
 		return ResourceKey.create(Registries.DAMAGE_TYPE, DefyingTheHeavens.id("qi_" + element.name().toLowerCase(java.util.Locale.ROOT)));
@@ -95,6 +100,12 @@ public final class ModDamageTypes {
 		context.register(HEAVEN_DEMON, new DamageType(DefyingTheHeavens.MOD_ID + ".heaven_demon", DamageScaling.NEVER, 0.1f));
 		context.register(CHAOS_STORM, new DamageType(DefyingTheHeavens.MOD_ID + ".chaos_storm", DamageScaling.NEVER, 0.0f));
 		context.register(SWORD_INTENT, new DamageType(DefyingTheHeavens.MOD_ID + ".sword_intent", DamageScaling.NEVER, 0.1f));
+		context.register(BODY_ART, new DamageType(DefyingTheHeavens.MOD_ID + ".body_art", DamageScaling.NEVER, 0.1f));
+	}
+
+	/** A body technique of {@code attacker}'s (BodyTechniques). */
+	public static DamageSource bodyArt(Level level, net.minecraft.world.entity.Entity attacker) {
+		return new ModDamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(BODY_ART), attacker);
 	}
 
 	/** The Sunken Sword Tomb's lingering sword intent (no one's hand). */

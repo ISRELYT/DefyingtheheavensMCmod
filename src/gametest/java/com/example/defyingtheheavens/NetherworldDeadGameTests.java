@@ -75,8 +75,10 @@ public class NetherworldDeadGameTests implements FabricGameTest {
 			helper.assertTrue(share > 0 && GhostSystem.reaches(sources.playerAttack(seer))
 					&& Math.abs(GhostSystem.scaled(sources.playerAttack(seer), 10) - 10 * share) < 1.0e-4,
 					"A Heavenly Being's blow lands, by how clearly they see it");
-			helper.assertTrue(!YinCorruption.affects(ghost) && GhostQi.poolMax(CultivationManager.get(ghost)) == GhostQi.BASE_POOL,
-					"No yin to fill a ghost; a ghostly qi pool of its own");
+			// Taught Netherworld Breathing as it died (GhostMethods#teachTheDead, 2026-10-31): its pool has the Art's layers in it too.
+			helper.assertTrue(!YinCorruption.affects(ghost) && GhostQi.poolMax(CultivationManager.get(ghost)) > GhostQi.BASE_POOL
+					&& CultivationManager.get(ghost).netherworld().knows(GhostMethod.NETHERWORLD_BREATHING),
+					"No yin to fill a ghost; a ghostly qi pool of its own, the Breathing Art taught as it died");
 			helper.assertTrue(!Incorporeal.is(ghost) && GhostSystem.allowDamage(ghost, sources.fall()),
 					"A creative ghost keeps the look, not the rules (vanilla's own then apply)");
 		} finally {

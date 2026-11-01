@@ -119,7 +119,7 @@ public class SectMissionGameTests implements FabricGameTest {
 		try {
 			SectMembership.join(p, sect);
 			Sect.Disciple d = sect.disciples.get(p.getUUID());
-			int rank = SectMissions.rankOf(p);
+			int rank = SectMissions.rankOf(p, sect);
 			SectMissions.refresh(p, sect, d);
 			helper.assertTrue(d.postings.size() == SectMissions.POSTINGS, "The day's postings: " + SectMissions.POSTINGS + " (" + d.postings.size() + ")");
 			helper.assertTrue(d.postings.stream().allMatch(m -> m.rank >= rank - 1 && m.rank <= rank + 2),
@@ -289,7 +289,7 @@ public class SectMissionGameTests implements FabricGameTest {
 			SectMembership.join(p, home);
 			Sect.Disciple d = home.disciples.get(p.getUUID());
 			d.postedDay = Regard.day(level.getGameTime());
-			SectMissions.Mission m = SectMissions.make(level, home, d, SectMissions.Kind.DELIVER, SectMissions.Grade.FITTING, SectMissions.rankOf(p), level.getRandom());
+			SectMissions.Mission m = SectMissions.make(level, home, d, SectMissions.Kind.DELIVER, SectMissions.Grade.FITTING, SectMissions.rankOf(p, home), level.getRandom());
 			helper.assertTrue(m != null && m.target != null, "A letter to write");
 			// Whatever sect it found (others in the world may be in reach), write it to the far one.
 			m.target = other.id;

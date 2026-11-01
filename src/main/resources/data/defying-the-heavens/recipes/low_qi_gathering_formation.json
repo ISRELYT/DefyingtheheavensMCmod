@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "JAJ",
+    "LLL",
+    "CCC"
+  ],
+  "key": {
+    "J": {"item": "defying-the-heavens:jade"},
+    "A": {"item": "minecraft:amethyst_shard"},
+    "L": {"item": "defying-the-heavens:low_spirit_stone"},
+    "C": {"item": "minecraft:copper_ingot"}
+  },
+  "result": {"item": "defying-the-heavens:low_qi_gathering_formation"}
+}

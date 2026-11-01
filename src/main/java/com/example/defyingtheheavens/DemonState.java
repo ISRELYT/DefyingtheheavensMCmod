@@ -24,6 +24,14 @@ public final class DemonState {
 	private Bloodline halfBlood;
 	/** How pure a half-blood's blood has grown, 0 to 1. */
 	private double purity;
+	/**
+	 * The taint foreign cores have left in its blood (Core Devouring, the methods overhaul's phase 2), 0 to {@link DemonPath#TAINT_MAX}:
+	 * every Demon Path gain x (1 - taint) until Bloodline Purification's meditation cleanses it (DemonPath#cleanse).
+	 */
+	private double taint;
+	/** Its territory (Territorial Dominion: Territories), marked with its blood: the dimension's id and the centre, or "" for none. */
+	private String territoryDimension = "";
+	private net.minecraft.core.BlockPos territory = net.minecraft.core.BlockPos.ZERO;
 
 	public int rank() { return rank; }
 	public double cultivation() { return cultivation; }
@@ -54,6 +62,20 @@ public final class DemonState {
 	public double purity() { return purity; }
 	public void setPurity(double purity) { this.purity = Math.max(0, Math.min(1, purity)); }
 
+	public double taint() { return taint; }
+	public void setTaint(double taint) { this.taint = Math.max(0, Math.min(DemonPath.TAINT_MAX, taint)); }
+
+	/** Whether it holds a territory (Territories). */
+	public boolean hasTerritory() { return !territoryDimension.isEmpty(); }
+	public String territoryDimension() { return territoryDimension; }
+	public net.minecraft.core.BlockPos territory() { return territory; }
+
+	/** Its territory marked in {@code dimension} round {@code centre}; {@code dimension} "" (or null) for none. */
+	public void setTerritory(String dimension, net.minecraft.core.BlockPos centre) {
+		territoryDimension = dimension == null ? "" : dimension;
+		territory = territoryDimension.isEmpty() || centre == null ? net.minecraft.core.BlockPos.ZERO : centre.immutable();
+	}
+
 	/** Born again with {@code old}'s cultivation (an Eternal Reincarnation Body: PlayerCultivation#carryOver): the path as it was. */
 	void carryOver(DemonState old) {
 		rank = old.rank;
@@ -63,6 +85,7 @@ public final class DemonState {
 		bloodRealm = old.bloodRealm;
 		halfBlood = old.halfBlood;
 		purity = old.purity;
+		taint = old.taint;
 	}
 
 	public CompoundTag save() {
@@ -76,6 +99,11 @@ public final class DemonState {
 		tag.putInt("BloodRealm", bloodRealm);
 		if (halfBlood != null) tag.putString("HalfBlood", halfBlood.getId());
 		if (purity > 0) tag.putDouble("Purity", purity);
+		if (taint > 0) tag.putDouble("Taint", taint);
+		if (hasTerritory()) {
+			tag.putString("TerritoryDimension", territoryDimension);
+			tag.putLong("Territory", territory.asLong());
+		}
 		return tag;
 	}
 
@@ -91,5 +119,7 @@ public final class DemonState {
 		Bloodline half = Bloodline.byId(tag.getString("HalfBlood"));
 		halfBlood = half != null && half.isBeast() ? half : null;
 		purity = tag.getDouble("Purity");
+		setTaint(tag.getDouble("Taint"));
+		setTerritory(tag.getString("TerritoryDimension"), net.minecraft.core.BlockPos.of(tag.getLong("Territory")));
 	}
 }

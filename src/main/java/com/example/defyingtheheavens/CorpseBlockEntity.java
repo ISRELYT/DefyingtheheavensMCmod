@@ -40,6 +40,10 @@ public class CorpseBlockEntity extends BlockEntity {
 	private float yaw;
 	private long diedAt;
 	private boolean bled;
+	/** Its yin drawn out by one practising Corpse Yin Refining (CorpseYin): once a body. */
+	private boolean yinDrawn;
+	/** The sect the dead belonged to (a cultivator's: Sect#name), "" for none: its people turn on whoever drains it (CorpseYin). */
+	private String sect = "";
 	/** Laid as one who died long ago ({@link #ancient}: a secret realm's own, its works may lay it anew), not a fresh death. */
 	private boolean old;
 	private final List<ItemStack> held = new ArrayList<>();
@@ -68,6 +72,7 @@ public class CorpseBlockEntity extends BlockEntity {
 			name = npc.hasCustomName() ? npc.getCustomName().getString() : npc.getPersonalName();
 			skin = npc.getSkin();
 			rank = npc.isMortal() ? -1 : npc.getRank();
+			sect = npc.isSectMember() && npc.sect() != null ? npc.sect().name : "";
 			bloodline = npc.getBloodline();
 			raceVariant = npc.getRaceVariant();
 			tails = Bloodline.tails(npc.getDisplayedRealm());
@@ -119,6 +124,16 @@ public class CorpseBlockEntity extends BlockEntity {
 		setChanged();
 	}
 
+	void markYinDrawn() {
+		yinDrawn = true;
+		setChanged();
+	}
+
+	public boolean yinDrawn() { return yinDrawn; }
+
+	/** The sect the dead belonged to (Sect#name), "" for none. */
+	public String sect() { return sect; }
+
 	/** Dead {@code ticks} longer (the game tests: its rot without the minutes' wait). */
 	void backdate(long ticks) {
 		diedAt -= ticks;
@@ -161,6 +176,8 @@ public class CorpseBlockEntity extends BlockEntity {
 		saveLook(tag);
 		tag.putLong("DiedAt", diedAt);
 		tag.putBoolean("Bled", bled);
+		if (yinDrawn) tag.putBoolean("YinDrawn", true);
+		if (!sect.isEmpty()) tag.putString("Sect", sect);
 		if (old) tag.putBoolean("Ancient", true);
 		ListTag items = new ListTag();
 		for (ItemStack stack : held) items.add(stack.save(new CompoundTag()));
@@ -192,6 +209,8 @@ public class CorpseBlockEntity extends BlockEntity {
 		yaw = tag.getFloat("Yaw");
 		if (tag.contains("DiedAt")) diedAt = tag.getLong("DiedAt");
 		if (tag.contains("Bled")) bled = tag.getBoolean("Bled");
+		yinDrawn = tag.getBoolean("YinDrawn");
+		sect = tag.getString("Sect");
 		old = tag.getBoolean("Ancient");
 		if (tag.contains("Held", Tag.TAG_LIST)) {
 			held.clear();

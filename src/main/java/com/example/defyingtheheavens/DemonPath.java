@@ -17,9 +17,11 @@ import net.minecraft.sounds.SoundSource;
  *   <li><b>A human</b> forms a demon core by drinking a race's blood (DemonBlood, the user's ask, 2026-10-24): a half-blood
  *       ({@link #isHalfBlood}), its look its own, its race's gifts at half strength; too much blood, or blood far above its other
  *       paths, and it is that race's wholly. Until then the path is closed to it.</li>
- *   <li><b>No method, pill or ritual</b> carries it: its blood does. The race's blood, drunk, opens its realms as a method does the
- *       heaven path's ({@link #heldByBlood}); the bloodline's inheritance teaches the race's own element's spells as the path climbs
- *       ({@link #inherits}): the Tiger's Metal, the Lizard's Earth, the Fox's Fire, the Dragon's Wood.</li>
+ *   <li><b>No scripture, pill or ritual</b> carries it: its blood does. Its method is <b>Bloodline Purification</b> (the user's rules,
+ *       2026-10-31), whose volumes are the blood itself: the race's blood, drunk, opens its realms, and unlike the heaven path's no
+ *       breakthrough is made without it ({@link #heldByBlood}); every realm reached gathers ({@link #canGain}) but Four Axis, whose axes
+ *       are every path's method (FourAxis#fillBars). The bloodline's inheritance teaches the race's own element's spells as the path
+ *       climbs ({@link #inherits}): the Tiger's Metal, the Lizard's Earth, the Fox's Fire, the Dragon's Wood.</li>
  *   <li>It is cultivated as the heaven path is, at its own realm's pace, by its race's ({@link #racePace}: the Dragon slowest).</li>
  *   <li>Its body is the mightier ({@link #BODY}); it shares the qi pool, its own share of it smaller ({@link #QI_SHARE}).</li>
  * </ul>
@@ -153,6 +155,38 @@ public final class DemonPath {
 	public static boolean heldByBlood(PlayerCultivation c) {
 		int rank = rank(c);
 		return atBottleneck(c) && stage(rank).isLast() && !isMaxed(c) && c.demon().bloodRealm() < realm(rank).ordinal() + 1;
+	}
+
+	/**
+	 * Whether {@code c}'s Demon Path has Bloodline Purification's volume for {@code realm}: its blood is the volume, so every realm reached
+	 * has one, and every realm its blood is awakened to (DemonState#bloodRealm); Four Axis none (its axes are the method there).
+	 */
+	public static boolean hasVolume(PlayerCultivation c, Realm realm) {
+		int rank = rank(c);
+		if (rank < 0 || realm == null || realm == Realm.FOUR_AXIS) return false;
+		return realm.ordinal() <= realm(rank).ordinal() || c.demon().bloodRealm() >= realm.ordinal();
+	}
+
+	/**
+	 * Whether {@code c}'s Demon Path can gather where it stands: begun, the method it practises holding its volume (CultivationMethods#holdsVolume:
+	 * the blood, for every demon method known), not at Four Axis.
+	 */
+	public static boolean canGain(PlayerCultivation c) {
+		return rank(c) >= 0 && CultivationMethods.holdsVolume(c, TwoPaths.Path.DEMON);
+	}
+
+	/** The most taint foreign cores can leave in the blood (Core Devouring: DemonState#taint). */
+	public static final double TAINT_MAX = 0.6;
+	/** Each foreign core eaten taints the blood this much more. */
+	public static final double TAINT_PER_CORE = 0.04;
+	/** Bloodline Purification's meditation cleanses this much taint for each whole stage's cultivation it gathers. */
+	public static final double CLEANSE_PER_STAGE = 0.5;
+
+	/** Bloodline Purification's meditation gathered {@code gained} at {@code rank}: the blood's taint cleansed by its share ({@link #CLEANSE_PER_STAGE}). */
+	static void cleanse(PlayerCultivation c, int rank, double gained) {
+		double taint = c.demon().taint();
+		if (taint <= 0 || gained <= 0) return;
+		c.demon().setTaint(taint - CLEANSE_PER_STAGE * gained / Math.max(1.0, required(rank)));
 	}
 
 	/** Why its breakthrough waits on blood ({@link #heldByBlood}): its race's of the realm ahead, or higher. */

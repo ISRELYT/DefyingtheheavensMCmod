@@ -1,0 +1,11 @@
+{
+  "parent": "defying-the-heavens:block/gathering_formation",
+  "textures": {
+    "array": "defying-the-heavens:block/qi_gathering_array_low",
+    "band": "defying-the-heavens:block/formation_core_jade",
+    "base": "defying-the-heavens:block/formation_core_bronze",
+    "cap": "defying-the-heavens:block/formation_core_gold",
+    "orb": "defying-the-heavens:block/qi_gathering_orb",
+    "pillar": "defying-the-heavens:block/formation_core_pillar"
+  }
+}

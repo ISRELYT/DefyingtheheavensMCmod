@@ -303,7 +303,8 @@ public final class Codex {
 				with an empty hand to see what's inside, or sneak and right-click to take the ingredients back out. Each pill's tooltip lists \
 				its ingredients.""");
 		page("meditation", ModBlocks.MEDITATION_MAT, null, "Meditation", """
-				Once you can cultivate, meditation is how you grow. Press {meditate} (or the Meditate button on the Cultivation tab) and keep \
+				Once you can cultivate, meditation is how you grow, but only with a method: without one it gathers nothing (see Methods and \
+				Arts; any cultivator will teach you the basics). Press {meditate} (or the Meditate button on the Cultivation tab) and keep \
 				still. Press it again, or move, to stop.
 				Meditation draws the world's qi into your cultivation. Some places are much richer in qi than others, and meditation mats, \
 				spirit pedestals, a spirit stone held in your hand and cultivator clothing all speed it up.
@@ -316,8 +317,8 @@ public final class Codex {
 				- Cultivation: your realm and stage, the cultivation bar, and the Meditate and Breakthrough buttons.
 				- Stats: what your realm gives your body, and your stat points.
 				- Abilities: the abilities you have awakened, each with its own switch.
-				- Methods: the methods you know, and the one you practise.
-				- Spells: the spells your methods have taught you.
+				- Methods: each path's method and the one you practise, your scriptures and foundations.
+				- Arts: the arts your scriptures and foundations have taught you.
 				- Sect: your sect, once you belong to one.
 				- Journal: what you have heard from cultivators, and the events of your own story.""");
 		page("keys", Items.TRIPWIRE_HOOK, null, "Keys", """
@@ -327,15 +328,15 @@ public final class Codex {
 				- {circulate}: circulate qi (for the qi surge games)
 				- {abilities} (hold): the ability wheel
 				- {quick}: use your selected ability
-				- {spells} (hold): the spell wheel
-				- {cast}: cast your readied spell
+				- {spells} (hold): the art wheel
+				- {cast}: cast your readied art
 				- {codex}: the Dao Codex""");
 		page("physique", ModItems.SPIRIT_GINSENG, null, "Your Physique", """
 				Every cultivator is born with a physique. Yours was rolled when you first joined, announced in chat, and is shown on the \
 				Stats tab.
 				Its grade (Low, Mid, High, Supreme or Immortal) is your talent: the higher it is, the faster you cultivate and the fewer \
 				years meditation costs you. Many physiques also have special gifts, and every physique has spiritual roots, which decide \
-				which elements' methods you can learn.
+				which elements' scriptures you can learn.
 				The higher the grade, the rarer it is.""");
 		page("bodies", Items.SKELETON_SKULL, null, "The Bodies of the Dead", """
 				When a player or a cultivator dies, their body stays where they fell, and everything they carried stays with it instead of \
@@ -347,6 +348,7 @@ public final class Codex {
 				Drawing it darkens your path.
 				- The dead give off ghostly qi around them, more for a higher realm and less once they are bones, so a ghost cultivator can \
 				cultivate beside them.
+				- One practising Corpse Yin Refining draws a body's yin into the ghost path, with an empty hand (see Methods and Arts).
 				Experience still drops as it always has.""");
 
 		// ================================================ The Way of Cultivation ================================================
@@ -360,19 +362,22 @@ public final class Codex {
 				Below Nascent Soul, a full bar moves you up to the next stage automatically. Grand Perfection is a realm's peak: there the \
 				bar stays full until you break through into the next realm. From Nascent Soul on, every new stage needs a breakthrough too.
 				Each realm makes your body far stronger than the last, and many bring new abilities.
-				Your qi is shown at the top left of the screen. Abilities, flight and spells use it up, and it refills as you gather qi.""");
+				Your qi is shown at the top left of the screen. Abilities, flight and arts use it up, and it refills as you gather qi.""");
 		page("unrefined", ModItems.CULTIVATION_FRUIT, QR, "Unrefined Qi", """
 				Cultivation Pills and Cultivation Fruit give cultivation, but not all at once. Their qi waits beside your cultivation bar, \
 				unrefined, and meditating turns it into cultivation.
 				Each pill or fruit you take makes the next one weaker for a while. This medicinal toxicity fades over time; the cultivation \
 				menu and the tooltips show how much you have.
-				While your bar is full at a realm's peak, nothing is refined, but nothing is lost either.""");
+				While your bar is full at a realm's peak, or while your method has no volume of your realm, nothing is refined, but nothing \
+				is lost either.""");
 		page("breakthroughs", ModItems.FOUNDATION_PILL, QR, "Breakthroughs", """
 				At a realm's Grand Perfection, once the bar is full, press Breakthrough on the Cultivation tab. Breaking into a new realm \
 				needs:
-				- a heaven method of that realm or a higher one (see Methods and Spells);
 				- for Foundation Building, a Foundation Pill eaten at the peak; for Core Formation, a Core Pill;
 				- surviving a heavenly tribulation.
+				No method is needed to break through, but without your method's volume of the new realm you gather nothing there until \
+				you find one (see Methods and Arts), so look for it before you go. The Demon Path is the exception: it can't break \
+				through at all without its race's blood of the realm ahead.
 				The Cultivation tab tells you what is still missing. Realms after Core Formation need no pill, but some have other \
 				requirements of their own.""");
 		page("ritual", ModBlocks.HEAVEN_ALTAR, QR, "Ritual to the Heavens", """
@@ -382,7 +387,8 @@ public final class Codex {
 				@craft heaven_altar
 				- Right-click it and place your offerings in its ring. The dial shows your chance of success; richer offerings raise it.
 				- Sneak and right-click it with an empty hand to begin, then kneel still until the heavens answer.
-				If they stay silent, your offering is still used up, and you can try again from the next dawn.""");
+				If they stay silent, your offering is still used up, and you can try again from the next dawn. Granting it, the heavens also \
+				teach you the first volume of their rites (see Heaven-Petitioning Rites).""");
 		page("tribulations", Items.LIGHTNING_ROD, QR, "Tribulations", """
 				Breaking into a new realm calls down a heavenly tribulation: a storm gathers over you and strikes you with lightning again \
 				and again. From Nascent Soul on, every new stage brings one too.
@@ -400,6 +406,101 @@ public final class Codex {
 				across six stats: Strength, Constitution, Agility, Endurance, Spirit and Insight.
 				Stat points belong to you, not to one path: every path you walk shares them. If you fall back, the points you spent last are \
 				taken back first.""");
+		page("body_path", Items.ANVIL, null, "The Body Path", """
+				A fourth path beside the heaven, ghost and Demon paths: the body tempered on its own, needing no qi at all.
+				- Anyone whose mortal body has reached Peak can begin it, mortal or cultivator: press Begin Body on the Cultivation tab. \
+				Shattered Meridians begin it by themselves at Peak.
+				- Its realms stand beside the qi realms, four stages each: Copper Skin (beside Qi Refining), Iron Flesh, Steel Sinew, Jade \
+				Bone, Silver Marrow, Golden Blood (beside Four Axis), Diamond Heart, the Star-Forged Body, the Heaven-Bone Body, the Undying \
+				Body, and the Indestructible Body (beside True Immortal); then up the ladder, the Earth-Bearing Body (beside Earth \
+				Immortal), the Sky-Pillar Body, the Imperishable Gold Body, the Primordial Saint Body, the Chaos-Tempered Body, and the \
+				Body of Heaven and Earth (beside Heavenly Lord).
+				- With it drawn in (the Cultivation tab's Path button), meditation circulates your blood instead of any qi, and your deeds \
+				temper it, meditating or not: charged blows, harm you take, foes you slay (more the stronger they are), stone and ore you \
+				mine, ground you sprint. A hard fight tempers it faster than sitting still. That is Body Tempering, its own method; it has \
+				others too (see Body Methods).
+				- Its gates are the other paths': the heavens' lightning at every Grand Perfection and at every stage from Jade Bone on, the \
+				lower realms' cap, and the axes of virtue at Golden Blood.
+				- Its way up the worlds: Cloud-Treading Steps (Silver Marrow) carry the body up the Spatial Gap into the Upper Realm. A \
+				Diamond Heart rides a Void Breach up into the Great Void, a Star-Forged Body tears one itself with Comet Charge, and an \
+				Undying Body passes the Immortal Gate, the climb's pressure weighed by its body.
+				- Past the Indestructible Body, as on every path: each breakthrough is made only in the Immortal Realm and wants a total of \
+				levels of the Laws (see The Laws). An Indestructible Body is an immortal to them: it comprehends the Laws by meditating in \
+				the Immortal Realm and from Dao Fragments (the greater Laws from the Imperishable Gold Body), the Law of Time readies its \
+				techniques sooner, and Life and Death mends it more. The Five Decays come for it too, and a judgement that strikes it down \
+				costs a stage of the body. It has no immortal essence, so no Law domain.
+				Where it is your mightiest path, it gives your body: half again as strong as its rank in health, armour and blows. It gives \
+				no qi and none of the qi realms' abilities, but techniques of its own as it climbs (see Body Techniques), and its realms add \
+				their years to your life as any path's do.
+				Others weigh you by your body, a mortal's too: a cultivator's Realm Suppress presses you only if they stand above your \
+				body's realm. Those who read realms by qi alone (how people address you, a sect's titles) still see no cultivator in you, \
+				though a body cultivator knows a body for what it is (see Body Cultivators).""");
+		page("body_techniques", Items.IRON_INGOT, null, "Body Techniques", """
+				The Body Path's own techniques, one awakened as your body reaches each realm. Put them on your ability wheel (the Abilities \
+				tab) like any ability; a mortal on the Body Path wields them too.
+				They spend vigor, your body's own pool (the bronze bar under your health): 100 at Copper Skin and 10 more for each realm \
+				after it, 200 at the Indestructible Body and 260 at the Body of Heaven and Earth. Eating fills it, a steak about a quarter of it; rest refills a hundredth of it a \
+				second once you've neither struck nor been struck for 5 seconds and aren't sprinting, three times as fast meditating. Every \
+				technique leaves you a little hungrier too.
+				- Copper Skin, Iron Skin: for 8 seconds blows harm you far less (more the higher your body) and nothing knocks you back.
+				- Iron Flesh, Mountain Stomp: every foe around you is struck with your own strength, flung back and slowed.
+				- Steel Sinew, Ground-Splitting Leap: a great leap where you look, safe from the fall, with a shockwave where you land.
+				- Jade Bone, Thousand-Pound Fist: your next blow of the hand strikes three times as hard or more and hurls its foe away.
+				- Silver Marrow, Blood Frenzy: switched on, you strike harder and move faster while it burns your vigor.
+				- Silver Marrow, Cloud-Treading Steps: switched on, you stride on the air as on clouds (double-tap jump), two thirds as \
+				fast as Qi Flight, for 2 vigor a second aloft. Vigor doesn't refill in the air (eating still fills it), and the clouds give \
+				way when it runs dry.
+				- Golden Blood, Golden Body: for a few seconds every blow is turned aside. A tribulation's lightning still strikes.
+				- Diamond Heart, Diamond Will: for 10 seconds nothing harmful takes hold of you, nothing knocks you back, and no one's \
+				Realm Suppress weighs on you.
+				- Star-Forged Body, Comet Charge: you hurl yourself a dozen blocks along the ground, striking every foe you pass through. \
+				High in the Jade Firmament's sky it tears a Void Breach open before you instead.
+				- Heaven-Bone Body, Rebounding Bones: for a while half of every blow you take strikes back at whoever dealt it.
+				- Undying Body, Flesh Reborn: almost a third of your health back at once, fire and harm gone, and half more over 10 seconds.
+				- Indestructible Body, Heaven-Shattering Fist: one colossal blow strikes every foe in a wide cone before you and hurls it \
+				away.
+				- Earth-Bearing Body, Earthshaker: the earth heaves out round you in three rings, fifteen blocks out; every foe they pass \
+				under is struck and tossed into the air.
+				- Sky-Pillar Body, Sky-Pillar Strike: you spring up into the sky and come slamming down where you look, up to 24 blocks \
+				off, striking all round where you land.
+				- Imperishable Gold Body, Imperishable Gold: for 8 seconds no blow and no harmful effect touches you; as it ends, all it \
+				turned aside bursts out on those near you.
+				- Primordial Saint Body, Primordial Roar: every foe within 16 blocks loses its wards and stands stunned for 3 seconds.
+				- Chaos-Tempered Body, Myriad Fists: ten blows in two seconds before you, the last hurling its foes far.
+				- Body of Heaven and Earth, Dharma Body of Heaven and Earth: for 20 seconds your own body stands behind you, thirty \
+				blocks of gold; its fist comes down out of the sky where yours lands, and it stamps its foot when you stomp.
+				Each grows with your body's realm: wider, harder, longer. The Abilities tab shows its numbers at yours.""");
+		page("body_methods", Items.CAULDRON, null, "Body Methods", """
+				Body Tempering is the Body Path's own method, but not its only one. Four more are learned from Method Manuals (see Method \
+				Manuals), and like every method, the one you practise is the only one that tempers: meditation and the deeds of Body \
+				Tempering count only under Body Tempering. Each needs the Body Path drawn in, and costs a twelfth of the years, your talent \
+				counting by its square root.
+				- Medicinal Bath (Copper Skin to Silver Marrow): steep a water cauldron by right-clicking it with spirit herbs, each a minute \
+				of soaking at its own strength (the strongest soaked first), then stand in it. It tempers at twice your meditation's pace, \
+				more for herbs older than your realm.
+				- Beast Blood Bathing (Copper Skin to Jade Bone): a demon beast that dies spills a pool of its blood for a minute. Stand in \
+				it to temper at three times your meditation's pace, more for a beast above your realm, less below.
+				- Weighted Training (Copper Skin to Jade Bone): wear heavy armour and move. Every block you walk, run, swim or climb \
+				tempers, more the heavier the armour; without armour, nothing. In water only swimming counts: a current carries you for \
+				nothing.
+				- Hundred Battles (Iron Flesh to Silver Marrow): spar with cultivators. Every blow traded tempers, more against a stronger \
+				partner, and winning is worth a minute more.
+				Switching methods costs the stages of your realm, never the realm, as on every path.""");
+		page("body_cultivators", Items.IRON_BARS, null, "Body Cultivators", """
+				Not every cultivator you meet walks a qi path. About one wandering cultivator in five, in the lower realms and the Upper \
+				Realm, tempers the body instead; and now and then a whole new sect does, a body sect, with a name like the Iron Bone Hall \
+				or the Vajra Fist Gate.
+				- Their realms are the Body Path's (Steel Sinew, Jade Bone and the rest), and their bodies are half again as strong as a \
+				qi cultivator's of the same rank: more health and armour, harder blows.
+				- They have no qi: no spells, no flight, no Realm Suppress, no consciousness domain. A foe up in the air is out of their reach.
+				- In a fight they use the body's techniques of their realm: Iron Skin or Golden Body under blows, Diamond Will when harried \
+				or pressed, a leap or a Comet Charge to close in, Mountain Stomp when crowded, the Thousand-Pound Fist up close, Blood \
+				Frenzy in a long fight, Flesh Reborn when low, and at the Indestructible Body the Heaven-Shattering Fist.
+				- They are warmer to anyone on the Body Path, and call them by their body's realm where other cultivators see a mortal. \
+				They spar as any cultivator does (good for Hundred Battles), sell the manual of the body method they follow, and now and \
+				then drop it when struck down.
+				- A body sect's library and master's hall keep body method manuals instead of heaven slips, its exchange sells them \
+				instead of spell manuals, and it takes only disciples who walk the Body Path, mortal or not.""");
 		page("obsession", Items.HEART_OF_THE_SEA, NS, "Name Your Obsession", """
 				Before the tribulation from Nascent Soul into Heavenly Being, the heavens ask what your heart cannot let go of: Longevity, \
 				Fortune, Merit or Enlightenment.
@@ -412,31 +513,35 @@ public final class Codex {
 				- Mid, the Axis of Fortune: bring people the goods they lack, and share in their fortune.
 				- Late, the Axis of Merit: slay whatever preys on the people.
 				- Grand Perfection, the Axis of Enlightenment: help lesser cultivators break through their bottlenecks.
-				These wishes come from the settlers on the Astral Realm's worlds: ask a settler about their wish.""");
+				These wishes come from the settlers on the Astral Realm's worlds: ask a settler about their wish.
+				The axes are everyone's method at Four Axis, on every path: no method has a volume of this realm, and meditation fills \
+				nothing here. Each stage's bar shows how far its axis is filled, and once the axis is complete, its tribulation waits.""");
 
 		// ====================================================== The Realms ======================================================
 		chapter("realms", ModItems.FOUNDATION_PILL, Hint.CULTIVATE, "The Realms");
 		page("qi_refining", ModItems.QI_GATHERING_PILL, QR, "Qi Refining", """
 				The first realm: your meridians are open, and qi flows through them.
-				- Meditate, and learn a heaven method (see Methods and Spells).
+				- Learn a heaven scripture, then meditate: without one you gather nothing. Any cultivator will teach you the basics (see \
+				Methods and Arts).
 				- At Qi Refining Mid, perform the Ritual to the Heavens.
 				- You already have your consciousness domain, Realm Suppress, Burn Lifespan and the Inner Realm (see Abilities).
-				To break through at Grand Perfection, you need a Foundation Building method, a Foundation Pill (brewed from Ginseng, \
-				Lingzhi, Spirit Ginseng and Jade), and to survive a weak tribulation.
+				To break through at Grand Perfection, you need a Foundation Pill (brewed from Ginseng, Lingzhi, Spirit Ginseng and Jade), \
+				and to survive a weak tribulation. Find a Foundation Building scripture as well, or you will gather nothing there.
 				@brew foundation_pill""");
 		page("foundation_building", ModItems.FOUNDATION_PILL, FB, "Foundation Building", """
 				Your foundation is laid. Your qi now sustains you, so you no longer get hungry. Hold a sword and you can ride it through the \
 				air (Sword Flight).
-				To break through, you need a Core Formation method, a Core Pill (Spirit Ginseng, Spirit Lotus, a Cultivation Fruit and Blaze \
-				Powder), and to survive a tribulation that calls for armour.
+				To break through, you need a Core Pill (Spirit Ginseng, Spirit Lotus, a Cultivation Fruit and Blaze Powder), and to survive \
+				a tribulation that calls for armour; and a Core Formation scripture, to gather anything there.
 				@brew core_pill""");
 		page("core_formation", ModItems.CORE_PILL, CF, "Core Formation", """
 				Your qi condenses into a golden core. You can fly on your qi (Qi Flight, with Meteor Flight as its fast mode), see the qi of \
 				the world (Qi Sense), and you float while you meditate. Your core is also a last resort (Core Detonation).
-				To break through, you need a Nascent Soul method and to survive a harder tribulation. From here on, no pill is needed.""");
+				To break through, you need to survive a harder tribulation (and a Nascent Soul scripture, to gather anything there). From \
+				here on, no pill is needed.""");
 		page("nascent_soul", ModItems.SPIRIT_LOTUS, NS, "Nascent Soul", """
 				A soul is born inside your core. It can leave your body (Soul Projection) and take over another body (Possession), and from \
-				this realm you can learn techniques (see Methods and Spells). Fly high enough and you can rise beyond the sky itself.
+				this realm you can learn techniques (see Methods and Arts). Fly high enough and you can rise beyond the sky itself.
 				From Nascent Soul on, every stage needs a breakthrough with its own tribulation. Before you leave this realm, the heavens \
 				will ask you to name your obsession.""");
 		page("heavenly_being", ModItems.SPIRIT_DEW, HB, "Heavenly Being", """
@@ -446,10 +551,10 @@ public final class Codex {
 		page("four_axis", ModItems.JADE, FA, "Four Axis", """
 				You stand upon the four axes of heaven and earth. Each stage of this realm has an axis of virtue to complete (see The Four \
 				Axes, in The Way of Cultivation), filled by granting the wishes of the lower realms' people.
-				Cultivation needs far more qi than ever before, so cultivate in the Jade Firmament, where qi is rich. In the lower realms \
-				your strength is capped at Heavenly Being's.""");
+				No method has a volume of this realm: your axes are your method here, and they alone fill your stages, on every path. In the \
+				lower realms your strength is capped at Heavenly Being's.""");
 		page("dao_integration", ModItems.JADE_SLIP, DI, "Dao Integration", """
-				You become one with the Dao, and your might doubles again. Its methods are rare: only a few steles in the Jade Firmament's \
+				You become one with the Dao, and your might doubles again. Its scriptures are rare: only a few steles in the Jade Firmament's \
 				wondrous lands, and the few cultivators of this realm, can teach them.
 				In the lower realms your strength is still capped at Heavenly Being's.""");
 		page("void_shattering", Items.ENDER_EYE, VS, "Void Shattering", """
@@ -460,7 +565,7 @@ public final class Codex {
 		page("sacred_vessel", ModItems.NINE_PROVINCES_DING, SV, "Sacred Vessel", """
 				You temper yourself into a vessel for the heavens' power. The Patriarchs of the Holy Lands and the Sovereigns of the Demon \
 				Palaces are of this realm, and few others in the world.
-				Its methods are among the rarest of all: look for them in the Great Void and in the Jade Firmament's most wondrous lands.""");
+				Its scriptures are among the rarest of all: look for them in the Great Void and in the Jade Firmament's most wondrous lands.""");
 		page("entering_nirvana", Items.TOTEM_OF_UNDYING, EN, "Entering Nirvana", """
 				Burn, and be reborn from the ashes. Cultivators of this realm gather on the Shore of Nirvana in the Great Void, waiting for \
 				the Immortal Gate to open.
@@ -475,45 +580,295 @@ public final class Codex {
 				Each realm is twice as mighty as the one before, and each needs more total levels of the Laws. No Heavenly Lord walks any \
 				world.""");
 
-		// =================================================== Methods and Spells ===================================================
-		chapter("methods", ModItems.JADE_SLIP, Hint.STUDY, "Methods and Spells");
-		page("heaven_methods", ModItems.JADE_SLIP, QR, "Heaven Methods", """
-				Heaven methods are the arts of cultivation: one for each element in every realm. A method:
-				- speeds up your cultivation (without one, you cultivate at three quarters of the speed);
-				- gives a passive bonus of its element, which grows as you do;
-				- teaches spells as its layers settle in;
-				- opens the way into new realms: a breakthrough needs a method of the realm ahead, or a higher one.
-				You only understand a method up to your current cultivation. When you reach a new stage, its next layers settle in as you \
-				meditate. Choose which method you practise on the Methods tab.""");
-		page("learning", ModBlocks.DAO_STELE, QR, "Learning a Method", """
-				- Jade Slips: right-click one to read it. It teaches its method at once and isn't used up. Cultivators carry them, sect \
+		// ==================================================== Methods and Arts ====================================================
+		chapter("methods", ModItems.JADE_SLIP, Hint.STUDY, "Methods and Arts");
+		page("cultivation_methods", ModItems.JADE_SLIP, QR, "Methods: How You Cultivate", """
+				A method is how you cultivate, and without one you can't cultivate at all: your meditation gathers nothing.
+				A method comes in volumes, one for each realm. Without the volume of the realm you stand in, you gather nothing there. You \
+				can still break through into a realm whose volume you lack (all but the Demon Path), but you will gather nothing in it until \
+				you find one.
+				Each path has its own method:
+				- The heaven path's is Qi Circulation. Every heaven scripture carries its volumes, from Qi Refining up to its own realm.
+				- The ghost path's is Netherworld Breathing. Every ghost foundation carries its volumes in the same way.
+				- The Demon Path's is Bloodline Purification. Your blood is its volume: every realm you reach has one, and the race's blood \
+				of the realm ahead is also the only way through its breakthrough.
+				- The Body Path's is Body Tempering. The body is its own volume, every realm of it (see The Body Path).
+				At Four Axis no method has a volume: the four axes are everyone's method there (see The Four Axes).
+				Your first method is guaranteed: any living cultivator will teach a beginner the basics (talk to them), the dead are taught \
+				Netherworld Breathing as they die, and a demon's blood is its own.
+				Each path has other methods too, learned from Method Manuals, and many of them gather in their own way rather than by \
+				meditation. You practise one method a path at a time, chosen on the Methods tab (see Switching Methods).""");
+		page("switching_methods", ModItems.METHOD_MANUAL, QR, "Switching Methods", """
+				The Methods tab lists every method you know under its path (the Demon Path has a page of its own), and marks the one you \
+				practise.
+				- Press Practise beside another to switch to it. A switch re-lays the path's foundation: the path falls back to its realm's \
+				Early, and its cultivation in this realm is lost. Your realm is never lost. You are asked to confirm first.
+				- At Four Axis, and before a path has begun, switching costs nothing: the four axes are your method there, and the method \
+				you choose waits for the realm beyond.
+				- Carrying on with the same method into the next realm costs nothing: you only need its next volume.
+				If the method you practise has no volume of your realm, or doesn't gather by meditation, meditation gathers nothing on that \
+				path, and you are told why.""");
+		page("method_manuals", ModItems.METHOD_MANUAL, QR, "Method Manuals", """
+				The methods beyond each path's own are learned from Method Manuals. Right-click one to read it: it teaches the method's \
+				volumes from its first realm up to the realm it is written to, and isn't used up.
+				- Sect libraries and masters' halls keep them: righteous and neutral sects the heaven path's ways (the rites, Turtle \
+				Breath, Five Elements Cycling, Spirit Beast Bond, Spirit Herb Refining, Clone Seclusion, the realms' own ways; Incense and \
+				Faith the righteous, Ancestral Incense the neutral) and the Judgement Hall's errand, devilish sects the ghost path's darker \
+				ways (Borrowed Life among them) and Turtle Breath, demon clans the Demon Path's. The Body Path's ways too (see Body \
+				Methods): the Medicinal Bath, Weighted Training and Hundred Battles in righteous sects, all four in neutral ones, Beast Blood \
+				Bathing and Weighted Training in devilish ones. The higher a sect, the higher its manuals. The dead can read them too, and a \
+				mortal on the Body Path can read the body's.
+				- The ways of Entering Nirvana and True Immortal no sect keeps: their manuals lie in the ancients' vaults, in the Fallen \
+				Holy Land and the Fallen Immortal's Tomb.
+				- A Demon Path manual teaches its whole method at once, since your blood is its volume. You need a demon core to take one \
+				up.
+				- The dead can't learn the heaven path's.
+				Two methods are never written down: Thunder Tempering is born with the Heavenly Thunder Body, and the heavens themselves \
+				teach the first volume of their rites when they grant your Ritual to the Heavens.""");
+		page("method_talent", Items.EXPERIENCE_BOTTLE, QR, "Methods and Talent", """
+				Every gain costs years of your life (see Lifespan), and your talent divides those years: a genius pays a sliver of what a \
+				common talent pays. How much of your talent counts depends on the method:
+				- In full: the orthodox methods, Turtle Breath and Immortal Essence Refining, the road of the gifted.
+				- By its square root: most of the methods that gather in their own way, and the places' meditations.
+				- Not at all: the rites, the shrines' worship, and the ways of a single deed (Haunting, the Soul River Feast, Heart Demon \
+				Tempering, Nirvana Rebirth, Rift Haunting, Bloodline Nirvana).
+				Each method also costs its own share of the years. The unorthodox ways cost far fewer than the orthodox, each at a price of \
+				its own (offerings, lightning, enemies, blood and cores, a place you must go to), and on them a low talent can climb a \
+				realm or two past where Qi Circulation would leave it. But for anyone with real talent and every aid, Qi Circulation still \
+				goes furthest.""");
+		page("heaven_rites", ModBlocks.HEAVEN_ALTAR, QR, "Heaven-Petitioning Rites", """
+				A heaven path method that gathers nothing by meditation. Instead you petition the heavens at a Heaven Altar, as you made \
+				the Ritual to the Heavens: offerings in its ring, then sneak and right-click it with an empty hand, and kneel still.
+				- Only at dawn, on a night of the full moon, or in a thunderstorm.
+				- One rite an altar a day, whatever the answer.
+				- The offering it wants grows nine times with each realm: a Proper offering at Qi Refining is a poor one at Foundation \
+				Building.
+				- The heavens hear the virtuous more often, and the devilish less.
+				Granted, a rite is a quarter of your stage. Refused, the heavens rebuke you with lightning. Its first volume is taught when \
+				the heavens grant your Ritual to the Heavens; the rest, up to Heavenly Being, are in Method Manuals. Talent counts for \
+				nothing on it, and its years are a sixteenth.""");
+		page("turtle_breath", Items.SCUTE, FB, "Turtle Breath", """
+				A heaven path method of deep seclusion, from Foundation Building to Sacred Vessel. It gathers only in your Inner Realm, or \
+				shut away where no light of the sky reaches you, with walls and a roof within six blocks of you on every side.
+				It gathers at half Qi Circulation's pace, but costs only a third of the years, and that third is all it saves: mats, \
+				pedestals, clothes, a stone in hand and the Inner Realm save it nothing more (though they still speed it), only denser qi \
+				does. A gathering formation doesn't help it.
+				For the talented without every aid it stretches their years far; a low talent with every aid does as well on Qi \
+				Circulation.""");
+		page("thunder_tempering", Items.LIGHTNING_ROD, CF, "Thunder Tempering", """
+				The Heavenly Thunder Body's own method, from Core Formation to True Immortal: known from birth, learned by no one else, \
+				and practised only if you choose it on the Methods tab.
+				Meditating under the open sky, you call the heavens' lightning down on yourself: a strike every thirty seconds, every ten \
+				in a thunderstorm. Each strike is real, taking about a seventh of your health, and one that finds you too weak kills you. \
+				Each wins what a minute of meditation would, half again in a storm; meditation gathers nothing else on it.
+				Talent counts by its square root, and its years are a twelfth.""");
+		page("corpse_yin", Items.SKELETON_SKULL, "springs/ghost_path", Hint.DEAD, "Corpse Yin Refining", """
+				A ghost path method, from Qi Refining to Heavenly Being, that gathers nothing by meditation: you draw the yin out of the \
+				bodies of the dead instead. Right-click a body with an empty hand; each body gives up its yin once.
+				- The mightier the dead against your ghost path, the more: twice as much for each realm above yours, half for each below, \
+				at most half a stage.
+				- A fresh body gives the most, a rotting one less, bones least, and a mortal's next to nothing.
+				Its price: every draw darkens your path and fills a living body with yin, and if the dead belonged to a sect, its people \
+				who see you turn on you. Talent counts by its square root.
+				Devilish cultivators drain the dead too: when a fight is over, they go to the fresh bodies near them and draw the yin out \
+				where all can see, and a drained body has none left for you.""");
+		page("demon_methods", ModItems.DEMON_CORE, "sects/bloodline", Hint.BLOOD, "The Blood's Other Ways", """
+				Beside Bloodline Purification, the Demon Path has methods of its own, each learned whole from its Method Manual (Beast \
+				Deity Worship is in Shrines and Incense, the later realms' in The Ancestors' Ways). These three:
+				- Kin Blood Hoarding (Qi Refining to Sacred Vessel): drink your own race's blood, even blood yours already holds. A phial is \
+				a fifth of your stage, twice as much for each realm the blood stands above your path, at most three quarters.
+				- Core Devouring (Foundation Building to Entering Nirvana): eat demon cores. Each is a share of your stage by its realm \
+				against yours. A core of another element than your race's taints your blood: every gain on the path is that much smaller \
+				until Bloodline Purification's meditation cleanses it.
+				- Territorial Dominion (Qi Refining to Core Formation): mark a territory where you stand with a phial of your own race's \
+				blood (Mark Territory, on the Methods tab's Demon Path page) and meditate within it, at half again Bloodline \
+				Purification's pace for a third of its years. Outside it you gather nothing. While you meditate there, a wild beast of \
+				your realm comes to challenge you every few minutes: die in your territory, or leave it while a challenger lives, and it \
+				is lost.
+				The first two gather nothing by meditation. Talent counts by its square root on all three.""");
+		page("five_elements_cycling", Items.BLAZE_POWDER, QR, "Five Elements Cycling", """
+				A heaven path method, from Qi Refining to Entering Nirvana, that gathers nothing by meditation. You take the five elements \
+				into yourself instead, one offering at a time, in the order each gives rise to the next: wood feeds fire, fire leaves earth, \
+				earth bears metal, metal gathers water, and water nourishes wood again.
+				@items minecraft:oak_sapling > minecraft:blaze_powder > minecraft:clay_ball > minecraft:iron_ingot > minecraft:water_bucket
+				Sneak and use an offering into the air (not at a block) to take it in. Begin with any element you like.
+				- Wood: saplings, logs, sticks and herbs. Fire: blaze powder and rods, coal, charcoal, fire charges and magma cream. Earth: \
+				clay, bricks and dirt. Metal: iron, gold and copper ingots and nuggets. Water: a water bucket, prismarine and snowballs. A \
+				demon core of one of the five elements is an offering of its element too.
+				- When the fifth closes the cycle, each offering is worth a tenth of your stage at your own realm, twice as much for each \
+				realm it stands above yours (at most two), half for each below. Mortal things stand at Qi Refining, a herb at Foundation \
+				Building and higher with its age, a demon core at its own realm. While you practise it, an offering's tooltip says where \
+				it stands.
+				- Then the elements circulate in you for two minutes before another cycle can begin.
+				- An element out of its order is a qi deviation: the cycle is lost, your qi is shaken, and a twentieth of your stage goes \
+				with it. The same element twice is only refused.
+				Talent counts by its square root, and its years are a twelfth.""");
+		page("shrines", ModBlocks.SHRINE, QR, "Shrines and Incense", """
+				Three methods gather by a shrine to yourself instead of by meditation, each with its own look:
+				- Incense and Faith (heaven path, Foundation Building to True Immortal): a jade statue.
+				- Ancestral Incense (ghost path, Qi Refining to True Immortal): an ancestral tablet.
+				- Beast Deity Worship (Demon Path, Core Formation to True Immortal): a beast idol, prayed to by mortals only.
+				@craft shrine
+				Set one down where people gather (a village, a sect, a city). Every half minute those about it pray: a villager a little, a \
+				cultivator far more. Others may burn incense there. Their faith flows to you every minute while you practise the method, \
+				more for stronger worshippers.
+				@craft incense
+				Once a day your worshippers ask something of you; right-click the shrine with it to answer, and their devotion rises. Leave \
+				it unanswered and it falls. Right-click your shrine to see its faith and what they ask. A shrine broken by another's hand, \
+				or blown apart, wounds you.""");
+		page("spirit_beast_bond", Items.LEAD, CF, "Spirit Beast Bond", """
+				A heaven path method, from Core Formation to True Immortal. Subdue a wild demon beast (bring it down to a quarter of its \
+				health, one of no higher rank than yours, never an elder) and right-click it with an empty hand to bind it. One at a time.
+				Bound, it follows you, fights whoever hurts you or whom you strike, and never turns on you. You grow as it grows:
+				- Feed it demon cores (right-click it holding one): each is a share of your stage by its realm, and a core of its rank or \
+				above raises it a stage, toward yours.
+				- Each cultivator or beast it slays is a share of your stage too.
+				If it dies, the realm's progress it carried goes with it: you fall back to your realm's Early.""");
+		page("court_of_the_dead", Items.GOLDEN_HELMET, "springs/ghost_path", Hint.DEAD, "Court of the Dead", """
+				A Ghost King's method, from Core Formation to True Immortal. Stand at the throne of a ghost palace whose king has been slain, \
+				and after a few seconds the palace is yours: its retainers become your subjects and turn on you no more.
+				While you hold court within your palace, each subject brings you tribute every minute, the stronger the more.
+				Born again, or no longer a Ghost King, you give the throne up.""");
+		page("soul_river_feast", ModItems.NETHERWORLD_LOTUS, "springs/ghost_path", Hint.DEAD, "Soul River Feast", """
+				A ghost path method, from Foundation Building to Sacred Vessel. Travelling the Soul River, you see the souls it carries \
+				drift past; press {circulate} to seize the nearest and feed on it.
+				The river carries the common dead, mostly far below you. A soul above you fights back: it tears at you, breaks free half the \
+				time, and in the struggle the river may take a memory, a layer of one of your foundations.""");
+		page("haunting", Items.SOUL_LANTERN, "springs/ghost_path", Hint.DEAD, "Haunting", """
+				A method of the dead, from Qi Refining to Nascent Soul. Practising it, you may go down the Soul River as a Ghost King may, \
+				and come out among the living where you died. You still touch nothing.
+				By night the villagers about you take fright, and their fear feeds you; by day the light drives you back to the Ghost Gate.
+				A village haunted too often sends for an exorcist, whose rite burns you while you stay near, and in the end its people flee \
+				for good.""");
+		page("realm_ways", ModItems.NINE_PROVINCES_DING, NS, "Ways of One Realm", """
+				Some heaven path methods have a single volume: each is the way of its own realm, for those whose talent would not carry \
+				them so far on Qi Circulation.
+				- Heart Demon Tempering (Nascent Soul): meditate until you turn inward, and your heart demon comes for you again and \
+				again, every twenty to thirty seconds. Each one slain is a tenth of your stage; each defeat costs a tenth, besides \
+				throwing you back to your body.
+				- Dao Field Attunement (Dao Integration): meditation in the Great Void's Dao field of your stage (wood for Early, fire for \
+				Mid, earth for Late, metal or water for Grand Perfection), twice as fast there and nothing anywhere else.
+				- Rift Walking (Void Shattering): each Void Breach you climb through into the Great Void is a tenth of your stage, each \
+				bolt of a Spatial Gap storm you live through a twentieth.
+				- Vessel Nurturing (Sacred Vessel): use a Sacred Vessel while sneaking to pour half your qi pool into it, and draw back a \
+				tenth of your stage. It rests half a minute after, and one time in twenty the relic cracks and is gone.
+				- Nirvana Rebirth (Entering Nirvana): struck down on the Shore of Nirvana, three times in four you rise again from your \
+				ashes, whole, with half a stage won. The fourth time you die. The void beyond the shore, and a tribulation's lightning, \
+				are no deaths you rise from.
+				- Immortal Essence Refining (True Immortal): meditation in the Immortal Realm that burns a sixtieth of your essence pool \
+				a second for twice the gain; with no essence left, nothing.
+				None of them is kept past its realm: carry on with another method in the next.""");
+		page("dead_later_ways", Items.SOUL_CAMPFIRE, "springs/ghost_path", Hint.DEAD, "The Dead's Later Ways", """
+				The ghost path's methods of its higher realms:
+				- Yellow Springs Immersion (Nascent Soul to Heavenly Being): soak in the waters of the Yellow Springs, the Netherworld's \
+				golden riverlands. Each second in them is a share of your stage, a little less in each realm past Nascent Soul. Their \
+				waters are Meng Po's own: each minute you soak, one time in ten, a layer of one of your foundations is forgotten.
+				- Judgement Hall Service (Heavenly Being to Dao Integration): right-click a wandering ghost while sneaking and it follows \
+				you (two at once at most; again, and you let it go). Bring it within eight blocks of the Wheel of Reincarnation at the \
+				Ghost Gate and it passes on, a share of your stage. Left far behind, it wanders off.
+				- Rift Haunting (Void Shattering): near a rift in space (a spatial rift, the Yellow Springs' rift, a Spatial Tear), the \
+				souls lost between the worlds slip out to you every twenty seconds or so. Press {circulate} to seize the nearest, as on \
+				the Soul River.
+				- Soul Furnace Refining (Entering Nirvana): meditation in your own ghost fire. Each second burns hotter, its gain and its \
+				harm growing together, up to a fifth of your health a second. Stand up to end it; run out of health and the furnace \
+				breaks, the stage's cultivation burnt away, and you scatter (the living die).
+				- Ten Thousand Ghosts Union (True Immortal): a devilish way. Every ghost you slay by your own hand is taken in: a Hungry \
+				Ghost a little, one of the dead's cultivators more. Each one darkens your path.""");
+		page("ancestors_ways", Items.BONE_BLOCK, "sects/bloodline", Hint.BLOOD, "The Ancestors' Ways", """
+				The Demon Path's methods of its higher realms, each learned whole from its Method Manual:
+				- Ancestral Communion (Nascent Soul to Heavenly Being): meditation among the primeval dragon's bones in the Primeval \
+				Beast Graveyard (four bone blocks within eight of you), three times as fast as Bloodline Purification, and nothing \
+				anywhere else. The graveyard stands open only twenty minutes in six years.
+				- Bloodline Nirvana (Entering Nirvana): drink your own race's blood of Entering Nirvana or above, even blood you already \
+				hold. Seven times in ten your blood burns down and is reborn: any taint burnt out of it, and half a stage won. Otherwise \
+				it burns and doesn't rise: the stage's cultivation is lost, and much of your health with it.
+				- Primordial Return (True Immortal): meditation within 48 blocks of a living primordial beast, your blood's first \
+				ancestor, twice as fast as Bloodline Purification, and nothing anywhere else.""");
+		page("spirit_herb_refining", ModItems.GINSENG, QR, "Spirit Herb Refining", """
+				A heaven path method, from Qi Refining to Dao Integration, that gathers nothing by meditation. You eat spirit herbs for \
+				their essence instead.
+				@items ginseng spirit_ginseng lingzhi purple_lingzhi huangjing ochre_huangjing spirit_lotus
+				Right-click any herb (the Netherworld's too) and hold it, as you would eat, and its essence is refined into your stage.
+				- A herb of your own realm is a tenth of your stage, twice as much for each realm it stands above yours (at most two), \
+				half for each below.
+				- A herb's realm is its age's: Foundation Building under a hundred years, Core Formation from a hundred, Nascent Soul \
+				from five hundred, Heavenly Being from a thousand, Dao Integration from five thousand. The rarer kinds (Spirit Ginseng, \
+				Purple Lingzhi, Ochre Huangjing, the lotuses, the Other Shore Flower) stand a realm higher.
+				- After each herb, all your herbs rest thirty seconds while its essence settles.
+				While you practise it, a herb's tooltip says the realm it stands at. Talent counts by its square root, and its years are a \
+				twelfth.""");
+		page("clone_seclusion", Items.ARMOR_STAND, NS, "Clone Seclusion", """
+				A heaven path method, from Nascent Soul to Entering Nirvana, for those who know the Clone technique. Your own meditation \
+				gathers nothing: your clone meditates for you.
+				- Split off your clone and leave it standing, or go back to your main body and leave it where it stood. While you are in \
+				the world, it sits in seclusion and gathers at half your realm's own pace (no mats, no Inner Realm, no other aid), and the \
+				land about it stays loaded.
+				- It holds at most a whole stage. Draw it back in (sneak and use Clone beside it), and what it gathered is yours.
+				- Every five minutes a wild beast of your realm comes for it, and you are told. Go into your clone to fight with its \
+				strength, or hurry back: if it is slain, everything it gathered is lost with it.
+				Talent counts by its square root, and its years are a quarter.""");
+		page("borrowed_life", Items.WITHER_ROSE, "springs/ghost_path", Hint.DEAD, "Borrowed Life", """
+				A ghost path method, from Nascent Soul to Void Shattering, that gathers nothing by meditation. Your soul feeds on the \
+				living from inside them.
+				- Project your soul (Soul Projection) and possess a living cultivator: one of the world's, or a player where blows \
+				between players are allowed.
+				- Every five seconds you draw off some of its life: a little over a hundredth of your stage, twice as much for each realm \
+				the host stands above your ghost path, half for each below. The host loses as much of its own stage.
+				- What you draw settles in you when you leave the body, however you leave it.
+				- The host's soul fights back. You hold it a minute, half as long for each realm it stands above your ghost path and \
+				twice as long for each below (twenty seconds to three minutes). Then it throws you out, reeling, and a cultivator \
+				remembers what you did.
+				Talent counts by its square root, and its years are a twelfth.""");
+		page("gathering_formations", ModBlocks.gatheringFormation(GatheringFormations.Kind.QI, GatheringFormations.Tier.HIGH), QR, "Gathering Formations", """
+				A gathering formation thickens the qi around it while it burns spirit stones: a Qi-Gathering Formation the heavens' qi, a \
+				Yin-Gathering Formation the ghostly qi. Three tiers:
+				- Low: one and a quarter times as thick, within 8 blocks. A Low spirit stone keeps it lit ten minutes.
+				- Mid: one and a half times, within 12 blocks. A Mid spirit stone keeps it lit nine minutes.
+				- High: twice as thick, within 16 blocks. A High spirit stone keeps it lit nine minutes.
+				@craft low_qi_gathering_formation
+				Right-click it with spirit stones to feed it one (sneak to feed it the whole stack), or with anything else to see how long \
+				it will burn. Mid and High formations are made from the tier below.
+				Only Qi Circulation and Netherworld Breathing gather by it, that much faster; the years their gains cost stay the same. \
+				Formations don't add up: the best one reaching you counts, and in your Inner Realm, the one by your body.""");
+		page("heaven_methods", ModItems.JADE_SLIP, QR, "Heaven Scriptures", """
+				Heaven scriptures come one for each element in every realm. A scripture:
+				- carries Qi Circulation's volumes, from Qi Refining up to its own realm;
+				- is a volume of its element's Art, which gives a passive bonus of its element that grows as you do;
+				- teaches its element's arts as its layers settle in.
+				Qi Circulation follows the scripture you practise (choose it on the Methods tab): the more of its element's qi where you \
+				sit, the faster you gather.
+				You only understand a scripture up to your current cultivation. When you reach a new stage, its next layers settle in as you \
+				meditate, even where you gather nothing.""");
+		page("learning", ModBlocks.DAO_STELE, QR, "Learning Scriptures", """
+				- The basics: any living cultivator will teach someone who knows no heaven scripture a Qi Refining one, free.
+				- Jade Slips: right-click one to read it. It teaches its scripture at once and isn't used up. Cultivators carry them, sect \
 				libraries keep them, and elders and rogues sell them to people they like.
-				- Dao Steles: carved stones in the wilds, rarer the higher their method. Meditate beside one for a while to learn its \
-				method.
-				- Teachers: a sect's elders and master, and rogues, may teach you their method once their regard for you is Warm.
-				Methods of different elements add together; for methods of the same element, only the highest counts.""");
+				- Dao Steles: carved stones in the wilds, rarer the higher their scripture. Meditate beside one for a while to learn it.
+				- Teachers: a sect's elders and master, and rogues, may teach you their scripture once their regard for you is Warm.
+				Scriptures of different elements add their passives together; for scriptures of the same element, only the highest counts.""");
 		page("elements", Items.BLAZE_POWDER, QR, "The Five Elements", """
-				Wood, water, fire, earth and metal. Every heaven method belongs to one element: it draws in that element's qi, and its \
-				spells are of that element too.
-				Your physique's spiritual roots decide which elements you can learn: a method whose element your roots reject won't take.
+				Wood, water, fire, earth and metal. Every heaven scripture belongs to one element: it draws in that element's qi, and its \
+				arts are of that element too.
+				Your physique's spiritual roots decide which elements you can learn: a scripture whose element your roots reject won't take.
 				# The cycle of the five
 				Each element overcomes one other: fire melts metal, metal fells wood, wood breaks earth, earth dams water and water quenches \
 				fire.
 				@diagram elements
-				Shielding spells ward you with their element. A ward holds best against the element it overcomes (a water ward stops \
+				Shielding arts ward you with their element. A ward holds best against the element it overcomes (a water ward stops \
 				fire), while the element that overcomes it strikes harder through it. Point at an element to see which it overcomes.
 				Each also gives rise to another, in a cycle of its own: wood feeds fire, fire leaves earth in its ash, earth bears metal, \
 				metal gathers water, and water feeds wood.""");
-		page("spells", Items.FIRE_CHARGE, "arts/root", "Spells", """
-				Your methods teach spells as their layers settle in; you'll find them on the Spells tab.
-				Ready a spell there, or hold {spells} to open the spell wheel and pick one, then press {cast} to cast it. Spells cost qi, \
-				and each has a cooldown before it can be cast again. Arrange the spell wheel on the Spells tab.
-				The higher your realm, the farther and wider your spells reach. Whether spells permanently change the land is a world \
-				setting, which an operator can switch at the bottom of the Spells tab.""");
-		page("spells_both", Items.DRAGON_BREATH, "arts/heaven_demon|sects/bloodline", Hint.BLOOD, "Spells of Both Paths", """
-				From Foundation Building on, each realm has one spell that belongs to both the heaven path and the Demon Path. You can use \
+		page("spells", Items.FIRE_CHARGE, "arts/root", "Arts", """
+				Your scriptures and foundations teach arts as their layers settle in, and a demon's blood teaches its own; you'll find them \
+				on the Arts tab.
+				Ready an art there, or hold {spells} to open the art wheel and pick one, then press {cast} to cast it. Arts cost qi, and \
+				each has a cooldown before it can be cast again. Arrange the art wheel on the Arts tab.
+				The higher your realm, the farther and wider your arts reach. Whether arts permanently change the land is a world setting, \
+				which an operator can switch at the bottom of the Arts tab.""");
+		page("spells_both", Items.DRAGON_BREATH, "arts/heaven_demon|sects/bloodline", Hint.BLOOD, "Arts of Both Paths", """
+				From Foundation Building on, each realm has one art that belongs to both the heaven path and the Demon Path. You can use \
 				it once both of those paths have reached its realm.
-				Only the living can cast these spells, and they use your qi.""");
+				Only the living can cast these arts, and they use your qi.""");
 		page("techniques", ModItems.TECHNIQUE_MANUAL, NS, Hint.CULTIVATE, "Techniques", """
 				Techniques are arts learned from a Technique Manual, rather than gained with a realm. Sects keep these manuals in their \
 				masters' halls, and more rarely in their libraries.
@@ -541,7 +896,7 @@ public final class Codex {
 				at once.
 				You can switch it off on the Abilities tab if you'd rather stay where you sit.""");
 		page("burn_lifespan", Items.TORCH, QR, "Burn Lifespan", """
-				Set your own years alight for strength. While they burn, your blows and spells hit 1.5 times as hard and you move faster, \
+				Set your own years alight for strength. While they burn, your blows and arts hit 1.5 times as hard and you move faster, \
 				but your lifespan burns away quickly.
 				It switches itself off before it would leave you with too few years.""");
 		page("sword_flight", Items.IRON_SWORD, FB, "Sword Flight", """
@@ -709,7 +1064,7 @@ public final class Codex {
 				- Glaive: each blow also strikes everyone close around you.
 				- From Spirit grade up, every blade also makes all your blows stronger: 5 percent more at Spirit, up to 25 percent at \
 				Immortal (a saber a little more).
-				- Element banner: held in either hand, your spells of its element hit harder: 5 percent at Mortal, up to 20 percent at \
+				- Element banner: held in either hand, your arts of its element hit harder: 5 percent at Mortal, up to 20 percent at \
 				Immortal. It doesn't add to a Sacred Vessel's power: the stronger of the two counts.
 				- Qi gourd: stores spare qi for later. Sneak and right-click to pour your qi in, right-click to drink it back. Higher \
 				grades hold far more.
@@ -763,7 +1118,7 @@ public final class Codex {
 				Refine it (the Refine button beside its search line) to raise its grade: each grade holds more, and its seal is \
 				stronger. The Immortal grade holds without end.
 				@items low_storage_formation > mid_storage_formation > high_storage_formation > supreme_storage_formation > immortal_storage_formation
-				- Its seal: no pickaxe, blast or spell breaks it. A stranger as strong as its seal (Foundation Building for Low, up to \
+				- Its seal: no pickaxe, blast or art breaks it. A stranger as strong as its seal (Foundation Building for Low, up to \
 				True Immortal for Immortal) can force it open by staying beside it for a while, and you are warned when they start. A \
 				broken seal stays open until you open the formation again.
 				- Refining needs the next grade's spirit stones and more, a realm as high as the new seal, and from Supreme on, some \
@@ -782,7 +1137,7 @@ public final class Codex {
 				Provinces Ding, the Immortal-Forging Bell and the Sealed Ocean Gourd.
 				@items jianmu_bough_vase heaven_furnace_censer nine_provinces_ding immortal_forging_bell sealed_ocean_gourd
 				Each lies on a relic altar in the Great Void, and a guardian rises to protect it from anyone who comes near. Held in your \
-				hand, a vessel makes spells of its element hit harder.""");
+				hand, a vessel makes arts of its element hit harder.""");
 		page("chaos_treasures", ModItems.DAO_FRAGMENT, "arts/dao_fragment|arts/origin_stone|worlds/chaos_frontier", Hint.IMMORTAL,
 				"Chaos Treasures", """
 				Two treasures come from the Chaos Frontier:
@@ -884,7 +1239,7 @@ public final class Codex {
 				- Vermilion Bird Fan (fire): sets foes burning. Art: Vermilion Bird's Descent.
 				- Black Tortoise Mace (water): chills and throws. Art: Black Tortoise Bastion.
 				- Yellow Dragon Seal (earth): staggers, and brings fliers down. Art: Seal of Ten Thousand Mountains.
-				- Each art is its symbol's own spell, cast through the weapon at your own realm, for 10 percent of your qi.
+				- Each weapon's art is its symbol's own, cast through the weapon at your own realm, for 10 percent of your qi.
 				- Dao Duel: a General of the Court can challenge a Venerable for its weapon. Talk to it, choose Spar, then the Dao Duel, \
 				holding 32 Court Merit Tokens as your stake. It holds back to your realm. Win, and it hands you its weapon and keeps \
 				its post; lose, and it keeps the tokens. One Dao Duel a day with each Venerable.
@@ -987,7 +1342,8 @@ public final class Codex {
 				Each kind lives in its own lands and has its own way of fighting.""");
 		page("demon_cores", ModItems.DEMON_CORE, "arts/demon_core", Hint.FIND, "Demon Cores", """
 				A slain demon beast may drop its demon core; the higher its rank, the more likely. A core records the beast's realm, stage \
-				and element, and its look shows its realm.
+				and element, and its look shows its realm. One whose Demon Path practises Core Devouring can eat it (see The Blood's Other \
+				Ways, in Methods and Arts).
 				Beasts related to a demon race may also drop a phial of that race's blood.""");
 		page("bloodlines", ModItems.DEMON_BLOOD, null, "Bloodlines", """
 				When you first join, you choose your bloodline, once and for good: Human, or one of the demon races (Tiger, Lizard, Fox or \
@@ -998,7 +1354,8 @@ public final class Codex {
 				A third path beside the heaven path and the ghost path, with the same realms and stages and its own cultivation bar. You can \
 				walk it alongside the heaven path.
 				At a realm's Grand Perfection, the Demon Path can only break through once you have drunk your race's blood of the next \
-				realm, just as the heaven path needs a method.""");
+				realm: unlike the heaven and ghost paths, it never breaks through without it. Your blood is your method's volume, too \
+				(Bloodline Purification: see Methods and Arts).""");
 		page("demon_blood", ModItems.DEMON_BLOOD, "sects/bloodline", "Demon Blood", """
 				Tiger, Lizard, Fox and Dragon Blood, each of a certain realm, drunk like a potion. Demons of that race drop it, and so do \
 				wild beasts related to it.
@@ -1142,7 +1499,7 @@ public final class Codex {
 				sky.""");
 		page("jade_firmament", Items.EMERALD, HB + "|worlds/jade_firmament", "The Jade Firmament", """
 				The Upper Realm: islands of jade-veined land under a jade sky, far richer in qi than the lower realms. Its sects are \
-				stronger, its herbs and spirit stones richer, and its steles teach higher methods.
+				stronger, its herbs and spirit stones richer, and its steles teach higher scriptures.
 				Four Axis and Dao Integration are cultivated here.""");
 		page("astral", Items.AMETHYST_CLUSTER, NS + "|worlds/astral", "The Astral Realm", """
 				Beyond the Overworld's sky lies space. The Overworld is one planet among thousands, circling hundreds of stars, and every \
@@ -1247,7 +1604,7 @@ public final class Codex {
 				- Lingering sword intent hangs in patches on the floor, glinting faintly, plainly under Qi Sense. Walk or sneak through it \
 				and it leaves you be; run, fly or fight in it and it cuts you.
 				- Some of the old swords in the floor still glint. Right-click one to draw it and take what it kept: a blade, a sword \
-				spell's manual or spirit stones. The wraiths about it wake.
+				art's manual or spirit stones. The wraiths about it wake.
 				- Some time into each opening the swords wake: for a minute, blades rise from the gorge and fall like rain about everyone \
 				inside. A glint marks where each will land.
 				- The spire at its heart: the Sword Path winds up its face to the Sleeping Sword's shrine on the summit. Walk it on foot \
@@ -1307,11 +1664,11 @@ public final class Codex {
 				- The trials lie off the garden. First the hall of the five elements: light its five pillars in the order each element \
 				gives rise to the next (see The Five Elements), beginning where you will. Touch one out of turn and they strike you back, \
 				and all five go dark.
-				- Then walk the maze to its heart. Its walls hold against every hand and spell.
+				- Then walk the maze to its heart. Its walls hold against every hand and art.
 				- Then the master's puppet before his chamber meets you as an equal, at your own strength. Best it, and his chamber's \
 				barrier lets you through: go to his altar.
 				@items marrow_washing_fruit
-				The first in this world to pass takes his Great Inheritance: his own method, to Four Axis, and the Marrow-Washing Fruit. \
+				The first in this world to pass takes his Great Inheritance: his own scripture, to Four Axis, and the Marrow-Washing Fruit. \
 				After that, the first to pass each opening takes a lesser legacy.""");
 		page("yellow_springs_hollow", ModItems.OTHER_SHORE_FLOWER, "worlds/secret_realm", "The Yellow Springs Hollow", """
 				A drowned city of the dead in the Netherworld, from Nascent Soul Late, meant for Heavenly Being. It opens every five years \
@@ -1327,7 +1684,7 @@ public final class Codex {
 				three Yin Jade or two Mid spirit stones; the devilish must best him, as an equal, at their own strength. Right-click him \
 				to be judged, and again to cross. Ring the bell on the far jetty to be taken back.
 				- The tomb's door lets in those he has judged: go to the Ghost King's coffin.
-				The first in this world to reach it takes his Great Inheritance: his own foundation method, the Six Paths Reincarnation \
+				The first in this world to reach it takes his Great Inheritance: his own foundation, the Six Paths Reincarnation \
 				Canon, with Yin Jade from his tomb. After that, the first each opening takes a lesser legacy.""");
 		page("jade_lake_mirage", ModItems.JADE_LAKE_MIRROR, "worlds/secret_realm", "The Jade Lake Mirage", """
 				A still lake of pale jade under the Jade Firmament, from Four Axis Late, meant for Dao Integration. It opens every eight \
@@ -1342,7 +1699,7 @@ public final class Codex {
 				strong as you, in your armour, casting your own arts. Only your blows touch it. Best it, and the mirror is a door to you: \
 				walk through it to the altar behind.
 				@items jade_lake_mirror
-				The first in this world to reach the altar takes the Jade Lake Mirror: raised, it turns the next three blows or spells \
+				The first in this world to reach the altar takes the Jade Lake Mirror: raised, it turns the next three blows or arts \
 				that strike you back on whoever struck them, then rests a minute. After that, the first each opening takes a lesser \
 				legacy.""");
 		page("fallen_holy_land", Items.CHISELED_QUARTZ_BLOCK, "worlds/secret_realm", "The Ruins of a Fallen Holy Land", """
@@ -1401,19 +1758,21 @@ public final class Codex {
 				the edges of the screen as it rises, with warnings along the way.
 				When it is full, your body gives way and you become a ghost where you stand. Outside the Netherworld it slowly drains away.""");
 		page("ghostly_qi", ModItems.YIN_JADE, "springs/root", "Ghostly Qi", """
-				The second kind of qi. It belongs to places, not to you: ghost methods are cultivated on it, and your ghostly qi pool fills \
+				The second kind of qi. It belongs to places, not to you: the ghost path is cultivated on it, and your ghostly qi pool fills \
 				from it. Under Qi Sense it appears as cyan yin motes.
 				It is thickest on the Great Void's Ancient Battlefields, thick in the Netherworld (thicker on the Nine Nether Peaks), thin \
 				in soul sand valleys and faint in the Overworld.
-				Your ghostly qi pool grows with your ghost path's realm, as your qi pool grows with the heaven path's, and the ghost methods \
-				you know add to it. It refills on its own wherever you are, as your qi pool does, the faster the higher your ghost path, and \
+				Your ghostly qi pool grows with your ghost path's realm, as your qi pool grows with the heaven path's, and the ghost foundations \
+				and arts you know add to it. It refills on its own wherever you are, as your qi pool does, the faster the higher your ghost path, and \
 				faster still where ghostly qi is thick: three times as fast in the Netherworld, about twenty times on the Ancient \
 				Battlefields.""");
 		page("ghost_path", ModItems.GHOST_JADE_SLIP, "springs/root", "The Ghost Path", """
-				The path of the ghost methods, walked by both the dead and the living, with its own cultivation bar and its own \
-				tribulations. It begins with a ghost method, learned from a Ghost Jade Slip, a Method Stele, or a ghost cultivator willing \
-				to teach it.
-				The first method, the Netherworld Breathing Art, is carved on the stele on the Ghost Gate's plaza.
+				The path of ghostly qi, walked by both the dead and the living, with its own cultivation bar and its own tribulations. \
+				It begins with a ghost foundation, learned from a Ghost Jade Slip, a Method Stele, or a ghost cultivator willing to teach \
+				it.
+				Its method is Netherworld Breathing: each foundation carries its volumes up to its own realm, and teaches its own arts. \
+				The first, the Netherworld Breathing Art, is carved on the stele on the Ghost Gate's plaza, and the dead are taught it as \
+				they die.
 				The living choose which qi they draw in with the Path button on the Cultivation tab.""");
 		page("ghost_kings", Items.GOLDEN_HELMET, "springs/ghost_path", "Ghost Kings", """
 				A dead cultivator whose ghost path has reached Core Formation becomes a Ghost King: crowned, mighty, and a lord of the \
@@ -1440,23 +1799,24 @@ public final class Codex {
 				Metal, Wood, Water, Fire and Earth, and the greater Laws of Space, Time, and Life and Death, each with nine levels. Past \
 				True Immortal, every realm needs a certain total of Law levels.
 				- Meditate in the Immortal Realm to comprehend the Law you are focusing on.
-				- Slay strong foes with an element's spells for glimpses of that element's Law.
+				- Slay strong foes with an element's arts for glimpses of that element's Law.
 				- Survive the Five Decays to gain a level of your choice.
 				Each Law strengthens its own arts. The greater Laws open at Golden Immortal. You'll find them on the Methods tab's Laws \
-				page.""");
+				page. A body of the Indestructible Body or past it comprehends them too (see The Body Path).""");
 		page("law_domains", Items.END_CRYSTAL, "cultivation/law", "Law Domains", """
 				Once you comprehend a Law's first level, you awaken its domain: the Law's own ground spread out around you. Only one domain \
-				can be lit at a time, and it burns immortal essence. Foes inside it suffer the Law's effects, and your spells of that Law \
+				can be lit at a time, and it burns immortal essence. Foes inside it suffer the Law's effects, and your arts of that Law \
 				hit them harder.""");
 		page("decays", Items.WITHER_ROSE, TI, "The Five Decays", """
 				Every ten days the heavens judge an immortal, with a warning the day before. Five signs come a minute apart: your robes \
 				stain (your armour weakens), your flowers wither (nothing heals you), your qi falters (qi gathering is halved), your body \
-				sweats (your blows and spells weaken) and your mind can't rest (no meditation). Then comes the judgement: a storm of \
+				sweats (your blows and arts weaken) and your mind can't rest (no meditation). Then comes the judgement: a storm of \
 				lightning.
-				Survive it and choose a level of the Laws. If it strikes you down, you live on, but one stage lower.""");
+				Survive it and choose a level of the Laws. If it strikes you down, you live on, but one stage lower. An immortal body is \
+				judged by its body, and it is the body that falls a stage.""");
 		page("essence", Items.GOLD_BLOCK, TI, "Immortal Essence", """
 				A True Immortal's golden essence pool. It only fills in the Immortal Realm and drains away anywhere else. Switch on the \
-				Immortal Essence ability and your blows and spells hit harder while it lasts. Law domains use it up too.""");
+				Immortal Essence ability and your blows and arts hit harder while it lasts. Law domains use it up too.""");
 	}
 
 	private Codex() {}

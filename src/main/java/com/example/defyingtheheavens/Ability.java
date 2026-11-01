@@ -9,8 +9,8 @@ import java.util.function.Predicate;
  * Abilities a cultivator awakens as they advance, listed on the cultivation menu's Abilities tab where each can be switched
  * on or off. Most start switched on; those that aren't {@code onByDefault} start off until the player turns them on.
  * {@link PlayerCultivation} remembers every switch.
- * Add new abilities at the end: the switched-off set is synced as a bit mask over the ordinals. Spells (Spell) are not
- * abilities: they are cast, not switched, and have their own wheel.
+ * Add new abilities at the end: the switched-off set is synced as a bit mask over the ordinals (a long: 64 at most). Spells
+ * (Spell) are not abilities: they are cast, not switched, and have their own wheel.
  */
 public enum Ability {
 	/**
@@ -121,7 +121,7 @@ public enum Ability {
 	 * one wherever one stands, for its owner and its guests to walk through; inside it, the way out where one came in. An act: "on" while
 	 * its door stands open or one is in it.
 	 */
-	SMALL_WORLD("small_world", false, c -> c.hasSmallWorld() && Laws.isImmortal(c)),
+	SMALL_WORLD("small_world", false, c -> c.hasSmallWorld() && Laws.isQiImmortal(c)),
 	/**
 	 * A technique, not the realm's (Technique#SLEEVE, Universe in a Sleeve, from its manual; the user's ask, 2026-10-26), wielded from
 	 * Heavenly Being by the living: offer the player one looks at a place in one's sleeve, to carry them wherever one goes, up through the
@@ -139,7 +139,53 @@ public enum Ability {
 	 * switch, off to begin with, for qi a second (WarArts): every blow one lands heals one a share of it, and the more foes about one, the less
 	 * their blows harm.
 	 */
-	BLOOD_BATTLE("blood_battle", false, c -> c.knowsTechnique(Technique.BLOOD_BATTLE) && Technique.BLOOD_BATTLE.wieldable(c));
+	BLOOD_BATTLE("blood_battle", false, c -> c.knowsTechnique(Technique.BLOOD_BATTLE) && Technique.BLOOD_BATTLE.wieldable(c)),
+	/**
+	 * The Body Path's techniques (BodyTechniques, phase 2, 2026-11-01), each awakened as the body reaches its realm on the Body Path, the
+	 * living's alone, a mortal's too ({@link #isUnlocked}); each spends vigor, the body's own pool, not qi. Iron Skin (Copper Skin): an act,
+	 * "on" while it holds.
+	 */
+	IRON_SKIN("iron_skin", false, c -> BodyTechniques.has(c, Realm.QI_REFINING)),
+	/** Mountain Stomp (Iron Flesh): an act. */
+	MOUNTAIN_STOMP("mountain_stomp", false, c -> BodyTechniques.has(c, Realm.FOUNDATION_BUILDING)),
+	/** Ground-Splitting Leap (Steel Sinew): an act, "on" while one is in the air on it. */
+	GROUND_SPLITTING_LEAP("ground_splitting_leap", false, c -> BodyTechniques.has(c, Realm.CORE_FORMATION)),
+	/** Thousand-Pound Fist (Jade Bone): an act, "on" while the fist waits primed. */
+	THOUSAND_POUND_FIST("thousand_pound_fist", false, c -> BodyTechniques.has(c, Realm.NASCENT_SOUL)),
+	/** Blood Frenzy (Silver Marrow): a standing switch, off to begin with, for vigor a second. */
+	BLOOD_FRENZY("blood_frenzy", false, c -> BodyTechniques.has(c, Realm.HEAVENLY_BEING)),
+	/** Golden Body (Golden Blood): an act, "on" while it holds. */
+	GOLDEN_BODY("golden_body", false, c -> BodyTechniques.has(c, Realm.FOUR_AXIS)),
+	/** The Body Path's upper techniques (the user's "Go", 2026-11-01). Diamond Will (Diamond Heart): an act, "on" while it holds. */
+	DIAMOND_WILL("diamond_will", false, c -> BodyTechniques.has(c, Realm.DAO_INTEGRATION)),
+	/** Comet Charge (the Star-Forged Body): an act, "on" while one charges. */
+	COMET_CHARGE("comet_charge", false, c -> BodyTechniques.has(c, Realm.VOID_SHATTERING)),
+	/** Rebounding Bones (the Heaven-Bone Body): an act, "on" while it holds. */
+	REBOUNDING_BONES("rebounding_bones", false, c -> BodyTechniques.has(c, Realm.SACRED_VESSEL)),
+	/** Flesh Reborn (the Undying Body): an act, "on" while the flesh grows back. */
+	FLESH_REBORN("flesh_reborn", false, c -> BodyTechniques.has(c, Realm.ENTERING_NIRVANA)),
+	/** Heaven-Shattering Fist (the Indestructible Body): an act. */
+	HEAVEN_SHATTERING_FIST("heaven_shattering_fist", false, c -> BodyTechniques.has(c, Realm.TRUE_IMMORTAL)),
+	/**
+	 * Cloud-Treading Steps (Silver Marrow; the body's way up, the user's "Go, all three parts", 2026-11-01): a standing switch, off to begin
+	 * with: the body strides on the air while it is on, for vigor a second in the air (QiFlight, BodyTechniques#treads).
+	 */
+	CLOUD_TREADING("cloud_treading", false, c -> BodyTechniques.has(c, Realm.HEAVENLY_BEING)),
+	/**
+	 * The Body Path's techniques of the ladder past the Indestructible Body (the user's "Go, all three parts", 2026-11-01), one for each of its
+	 * realms. Earthshaker (the Earth-Bearing Body): an act, "on" while its rings run out.
+	 */
+	EARTHSHAKER("earthshaker", false, c -> BodyTechniques.has(c, Realm.EARTH_IMMORTAL)),
+	/** Sky-Pillar Strike (the Sky-Pillar Body): an act, "on" while one is up on it. */
+	SKY_PILLAR_STRIKE("sky_pillar_strike", false, c -> BodyTechniques.has(c, Realm.HEAVEN_IMMORTAL)),
+	/** Imperishable Gold (the Imperishable Gold Body): an act, "on" while it holds. */
+	IMPERISHABLE_GOLD("imperishable_gold", false, c -> BodyTechniques.has(c, Realm.GOLDEN_IMMORTAL)),
+	/** Primordial Roar (the Primordial Saint Body): an act. */
+	PRIMORDIAL_ROAR("primordial_roar", false, c -> BodyTechniques.has(c, Realm.TAIYI_GOLDEN_IMMORTAL)),
+	/** Myriad Fists (the Chaos-Tempered Body): an act, "on" while its flurry runs. */
+	MYRIAD_FISTS("myriad_fists", false, c -> BodyTechniques.has(c, Realm.PROFOUND_SOVEREIGN)),
+	/** Dharma Body of Heaven and Earth (the Body of Heaven and Earth): an act, "on" while the body towers. */
+	DHARMA_BODY("dharma_body", false, c -> BodyTechniques.has(c, Realm.HEAVENLY_LORD));
 
 	private final String id;
 	private final boolean onByDefault;
@@ -173,6 +219,8 @@ public enum Ability {
 		if (this == SOUL_PROJECTION && Possession.isBorrowed(c) || this == SPATIAL_TEAR && Possession.soulTears(c)) return true;
 		// A clone (Clones) keeps the way back to its main body, whatever its own realm.
 		if (this == CLONE && Clones.isCloneRecord(c)) return true;
+		// The Body Path's techniques are the flesh's, not the meridians': a mortal tempered on it wields them too (BodyTechniques).
+		if (BodyTechniques.isTechnique(this)) return unlocked.test(c);
 		return !c.isMortal() && unlocked.test(c);
 	}
 
@@ -234,6 +282,50 @@ public enum Ability {
 			// The share of each blow healed, the harm spared for each foe about one past the first and at most, its reach, and its cost.
 			case BLOOD_BATTLE -> Component.translatable(key, Math.round(WarArts.BLOOD_HEAL * 100), Math.round(WarArts.BLOOD_GUARD * 100),
 					Math.round(WarArts.BLOOD_GUARD_MOST * 100), WarArts.BLOOD_REACH, Math.round(WarArts.cost(c)));
+			// The Body Path's techniques (BodyTechniques): their numbers at the body's realm, their vigor, and how long till they may be used again.
+			case IRON_SKIN -> Component.translatable(key, BodyTechniques.seconds(BodyTechniques.IRON_SKIN_TICKS), Math.round(BodyTechniques.ironSkinCut(c) * 100),
+					BodyTechniques.number(BodyTechniques.IRON_SKIN_COST), BodyTechniques.seconds(BodyTechniques.IRON_SKIN_COOLDOWN));
+			case MOUNTAIN_STOMP -> Component.translatable(key, BodyTechniques.number(BodyTechniques.stompRadius(c)), Math.round(BodyTechniques.STOMP_SHARE * 100),
+					BodyTechniques.seconds(BodyTechniques.STOMP_SLOW_TICKS), BodyTechniques.number(BodyTechniques.STOMP_COST),
+					BodyTechniques.seconds(BodyTechniques.STOMP_COOLDOWN));
+			case GROUND_SPLITTING_LEAP -> Component.translatable(key, BodyTechniques.number(BodyTechniques.landingRadius(c)),
+					Math.round(BodyTechniques.LANDING_SHARE * 100), BodyTechniques.number(BodyTechniques.LEAP_COST), BodyTechniques.seconds(BodyTechniques.LEAP_COOLDOWN));
+			case THOUSAND_POUND_FIST -> Component.translatable(key, BodyTechniques.seconds(BodyTechniques.FIST_TICKS), BodyTechniques.number(BodyTechniques.fistFactor(c)),
+					BodyTechniques.number(BodyTechniques.FIST_COST), BodyTechniques.seconds(BodyTechniques.FIST_COOLDOWN));
+			case BLOOD_FRENZY -> Component.translatable(key, Math.round(BodyTechniques.frenzyHarm(c) * 100), Math.round(BodyTechniques.FRENZY_SPEED * 100),
+					BodyTechniques.number(BodyTechniques.FRENZY_PER_SECOND));
+			case GOLDEN_BODY -> Component.translatable(key, BodyTechniques.seconds(BodyTechniques.goldenTicks(c)), BodyTechniques.number(BodyTechniques.GOLDEN_COST),
+					BodyTechniques.seconds(BodyTechniques.GOLDEN_COOLDOWN));
+			case DIAMOND_WILL -> Component.translatable(key, BodyTechniques.seconds(BodyTechniques.diamondTicks(c)), BodyTechniques.number(BodyTechniques.DIAMOND_COST),
+					BodyTechniques.seconds(BodyTechniques.DIAMOND_COOLDOWN));
+			case COMET_CHARGE -> Component.translatable(key, BodyTechniques.cometBlocks(c), Math.round(BodyTechniques.COMET_SHARE * 100),
+					BodyTechniques.number(BodyTechniques.COMET_COST), BodyTechniques.seconds(BodyTechniques.COMET_COOLDOWN));
+			case REBOUNDING_BONES -> Component.translatable(key, BodyTechniques.seconds(BodyTechniques.reboundTicks(c)), Math.round(BodyTechniques.reboundShare(c) * 100),
+					BodyTechniques.REBOUND_REACH, BodyTechniques.number(BodyTechniques.REBOUND_COST), BodyTechniques.seconds(BodyTechniques.REBOUND_COOLDOWN));
+			case FLESH_REBORN -> Component.translatable(key, Math.round(BodyTechniques.rebornNow(c) * 100), Math.round(BodyTechniques.REBORN_OVER * 100),
+					BodyTechniques.seconds(BodyTechniques.REBORN_TICKS), BodyTechniques.number(BodyTechniques.REBORN_COST),
+					BodyTechniques.seconds(BodyTechniques.REBORN_COOLDOWN));
+			case HEAVEN_SHATTERING_FIST -> Component.translatable(key, BodyTechniques.number(BodyTechniques.SHATTER_REACH),
+					Math.round(BodyTechniques.SHATTER_SHARE * 100), BodyTechniques.number(BodyTechniques.SHATTER_COST),
+					BodyTechniques.seconds(BodyTechniques.SHATTER_COOLDOWN));
+			// Its vigor a second in the air, and its pace against Qi Flight's.
+			case CLOUD_TREADING -> Component.translatable(key, BodyTechniques.number(BodyTechniques.TREAD_PER_SECOND),
+					Math.round(BodyTechniques.TREAD_SPEED / SwordFlight.QI_FLIGHT_SPEED * 100));
+			case EARTHSHAKER -> Component.translatable(key, BodyTechniques.EARTHSHAKER_RINGS, BodyTechniques.number(BodyTechniques.earthshakerReach(c)),
+					Math.round(BodyTechniques.EARTHSHAKER_SHARE * 100), BodyTechniques.number(BodyTechniques.EARTHSHAKER_COST),
+					BodyTechniques.seconds(BodyTechniques.EARTHSHAKER_COOLDOWN));
+			case SKY_PILLAR_STRIKE -> Component.translatable(key, BodyTechniques.number(BodyTechniques.PILLAR_REACH), BodyTechniques.number(BodyTechniques.pillarRadius(c)),
+					Math.round(BodyTechniques.PILLAR_SHARE * 100), BodyTechniques.number(BodyTechniques.PILLAR_COST), BodyTechniques.seconds(BodyTechniques.PILLAR_COOLDOWN));
+			case IMPERISHABLE_GOLD -> Component.translatable(key, BodyTechniques.seconds(BodyTechniques.imperishableTicks(c)),
+					BodyTechniques.number(BodyTechniques.GOLD_BURST_RADIUS), BodyTechniques.number(BodyTechniques.GOLD_BURST_MOST),
+					BodyTechniques.number(BodyTechniques.GOLD_COST), BodyTechniques.seconds(BodyTechniques.GOLD_COOLDOWN));
+			case PRIMORDIAL_ROAR -> Component.translatable(key, BodyTechniques.number(BodyTechniques.roarReach(c)), BodyTechniques.seconds(BodyTechniques.ROAR_STUN_TICKS),
+					BodyTechniques.number(BodyTechniques.ROAR_COST), BodyTechniques.seconds(BodyTechniques.ROAR_COOLDOWN));
+			case MYRIAD_FISTS -> Component.translatable(key, BodyTechniques.MYRIAD_BLOWS, BodyTechniques.seconds(BodyTechniques.MYRIAD_BLOWS * BodyTechniques.MYRIAD_EVERY),
+					Math.round(BodyTechniques.myriadShare(c) * 100), BodyTechniques.number(BodyTechniques.MYRIAD_COST), BodyTechniques.seconds(BodyTechniques.MYRIAD_COOLDOWN));
+			case DHARMA_BODY -> Component.translatable(key, BodyTechniques.seconds(BodyTechniques.DHARMA_TICKS), BodyTechniques.number(BodyTechniques.DHARMA_HEIGHT),
+					Math.round(BodyTechniques.DHARMA_FIST_SHARE * 100), Math.round(BodyTechniques.DHARMA_STOMP_SHARE * 100),
+					BodyTechniques.number(BodyTechniques.DHARMA_COST), BodyTechniques.seconds(BodyTechniques.DHARMA_COOLDOWN));
 			default -> Component.translatable(key);
 		};
 	}

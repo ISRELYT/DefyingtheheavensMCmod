@@ -121,9 +121,20 @@ public final class VoidBreach {
 		return ModDimensions.isUpperRealm(p.level().dimension()) && p.getY() >= TEAR_Y && TwoPaths.higherRank(c, false) >= TEAR_RANK;
 	}
 
-	/** Whether {@code walker} may ride a breach: Dao Integration and above (every breach is held by someone stronger), or one in creative. */
+	/**
+	 * Whether {@code p}'s Comet Charge tears a breach (BodyTechniques: the body's way into the Great Void, 2026-11-01): a body of the Star-Forged
+	 * Body or past it (one of the living), high in the Jade Firmament's sky as a Spatial Tear must be; it shatters space where it would charge.
+	 */
+	public static boolean bodyTears(ServerPlayer p, PlayerCultivation c) {
+		return ModDimensions.isUpperRealm(p.level().dimension()) && p.getY() >= TEAR_Y && !c.netherworld().ghost() && BodyPath.rank(c) >= TEAR_RANK;
+	}
+
+	/**
+	 * Whether {@code walker} may ride a breach: Dao Integration and above (every breach is held by someone stronger), a body of Diamond Heart
+	 * or past it as well (TwoPaths#travelRank), or one in creative.
+	 */
 	public static boolean mayPass(ServerPlayer walker) {
-		return walker.isCreative() || TwoPaths.higherRank(CultivationManager.get(walker), false) >= RIDE_RANK;
+		return walker.isCreative() || TwoPaths.travelRank(CultivationManager.get(walker)) >= RIDE_RANK;
 	}
 
 	/** {@code p} tears the void open before them: a breach up into the Great Void (paid for by SpatialTrialHandler#tear). */
@@ -332,7 +343,7 @@ public final class VoidBreach {
 	 * hunts (VoidVestige#matchMight).
 	 */
 	static int mightFor(ServerPlayer p) {
-		return Math.max(RIDE_RANK, TwoPaths.higherRank(CultivationManager.get(p), false));
+		return Math.max(RIDE_RANK, TwoPaths.travelRank(CultivationManager.get(p)));
 	}
 
 	/**
@@ -377,6 +388,7 @@ public final class VoidBreach {
 		greatVoid.sendParticles(ParticleTypes.REVERSE_PORTAL, p.getX(), p.getY() + 1, p.getZ(), 60, 0.8, 1.2, 0.8, 0.3);
 		p.playNotifySound(SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1.0f, 1.0f);
 		p.sendSystemMessage(Component.translatable(ModLang.MSG_ARRIVE_GREAT_VOID, (int) PlayerCultivation.GREAT_VOID_QI_MULTIPLIER).withStyle(ChatFormatting.GOLD));
+		RiftWalking.climbed(p); // a breach climbed through: Rift Walking's gain
 	}
 
 	/** Dry ground at or near {@code column} in the Great Void (its chunk loaded here if it must be), or a platform there (VoidCurrents too). */

@@ -291,9 +291,9 @@ public final class ImmortalGate {
 		return p.isAlive() && !p.isSpectator() && !SoulProjection.isAwayFromBody(p.getUUID()) && !Incorporeal.isRuledGhost(p);
 	}
 
-	/** Whether {@code walker} may pass the Gate: Entering Nirvana and above (either path's), or one in creative. */
+	/** Whether {@code walker} may pass the Gate: Entering Nirvana and above (any path's, an Undying Body's too: TwoPaths#travelRank), or one in creative. */
 	public static boolean mayPass(ServerPlayer walker) {
-		return walker.isCreative() || TwoPaths.higherRank(CultivationManager.get(walker), false) >= PASS_RANK;
+		return walker.isCreative() || TwoPaths.travelRank(CultivationManager.get(walker)) >= PASS_RANK;
 	}
 
 	/** The Gate's pressure turns {@code walker} back out of its light, away from it along z. */
@@ -401,7 +401,8 @@ public final class ImmortalGate {
 	 * climb while it carries anyone, doubled likewise (the user's pick).
 	 */
 	public static double carriedShare(ServerPlayer p) {
-		double share = pressureShare(TwoPaths.higherRank(CultivationManager.get(p), false));
+		// A body on the Body Path weighed by its body as the higher path is by its realm (TwoPaths#travelRank, 2026-11-01).
+		double share = pressureShare(TwoPaths.travelRank(CultivationManager.get(p)));
 		int carried = Sleeves.borne(p);
 		if (carried == 0) return share;
 		if (share == 0) share = Sleeves.GATE_BASE_BODIES / CLIMB_SECONDS;

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "JDJ",
+    "HFH",
+    "III"
+  ],
+  "key": {
+    "J": {"item": "defying-the-heavens:yin_jade_block"},
+    "D": {"item": "minecraft:diamond"},
+    "H": {"item": "defying-the-heavens:high_spirit_stone"},
+    "F": {"item": "defying-the-heavens:mid_yin_gathering_formation"},
+    "I": {"item": "minecraft:iron_block"}
+  },
+  "result": {"item": "defying-the-heavens:high_yin_gathering_formation"}
+}

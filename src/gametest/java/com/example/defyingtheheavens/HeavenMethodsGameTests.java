@@ -169,13 +169,13 @@ public class HeavenMethodsGameTests implements FabricGameTest {
 		c.setState(Realm.NASCENT_SOUL, Stage.EARLY, 0);
 		helper.assertTrue(HeavenMethods.methodFactor(c, woodInForest, false) > HeavenMethods.methodFactor(c, woodInDesert, false) * 1.3,
 				"Wood cultivates a third faster or more in a forest than in a desert");
-		helper.assertTrue(near(HeavenMethods.cultivationFactor(c, null, 0.6, true), HeavenMethods.NO_METHOD_FACTOR),
-				"With no method, a cultivator's pace: three quarters, wherever one sits");
+		helper.assertTrue(near(HeavenMethods.cultivationFactor(c, null, 0.6, true), 0),
+				"With no method, nothing, wherever one sits (no method, no gain: the methods overhaul, 2026-10-31)");
 		c.setQiBoost(0.5);
 		c.setGearQiBonus(0.6);
 		helper.assertTrue(near(HeavenMethods.methodFactor(c, 0.2, true), 1.25 * 1.5 * 1.6),
 				"By its stele x1.25, a Qi Gathering Pill's +50% and clothing's +60% on top (" + HeavenMethods.methodFactor(c, 0.2, true) + ")");
-		helper.assertTrue(near(HeavenMethods.cultivationFactor(c, null, 0, false), 0.75 * 1.5 * 1.6), "...the boosts with no method too");
+		helper.assertTrue(near(HeavenMethods.cultivationFactor(c, null, 0, false), 0), "...and with no method, nothing for all the boosts");
 		// A stage's layers cost what the stage does (their settling half that), x PlayerCultivation#STAGE_LENGTH since 2026-10-27.
 		double l = PlayerCultivation.STAGE_LENGTH;
 		helper.assertTrue(near(HeavenMethods.layerCost(1) + HeavenMethods.layerCost(2), 130 * l) && near(HeavenMethods.layerCost(3) + HeavenMethods.layerCost(4)
@@ -196,18 +196,21 @@ public class HeavenMethodsGameTests implements FabricGameTest {
 		c.setHeavensLeave(true);
 		helper.assertTrue(c.addCultivation(0) && c.getStage() == Stage.LATE, "The leave granted, a full Mid steps into Late");
 		c.addCultivation(10_000);
-		helper.assertTrue(c.getStage() == Stage.GRAND_PERFECTION && c.isAtBottleneck() && c.isHeldByMethod() && !c.canBreakthrough()
-				&& HeavenMethods.gateLine(c) != null, "At Grand Perfection's bottleneck the breakthrough waits on a Foundation Building method");
+		// The methods overhaul (2026-10-31): no scripture holds a breakthrough below True Immortal; without one, the realm ahead
+		// (and this one) gathers nothing.
+		helper.assertTrue(c.getStage() == Stage.GRAND_PERFECTION && c.isAtBottleneck() && !c.isHeldByMethod() && c.isMissingBreakthroughPill()
+				&& !c.canBreakthrough() && !HeavenMethods.canGain(c) && !HeavenMethods.hasVolume(c, Realm.FOUNDATION_BUILDING) && HeavenMethods.gateLine(c) != null,
+				"At Grand Perfection's bottleneck no method holds the breakthrough (only the pill), though none gathers here or ahead");
 		HeavenState s = c.heaven();
 		HeavenMethod fire = HeavenMethod.of(QiElement.FIRE, Realm.QI_REFINING);
 		s.setMethod(fire, 9, 0);
-		helper.assertTrue(c.isHeldByMethod() && !HeavenMethods.opensWay(c, Realm.FOUNDATION_BUILDING) && HeavenMethods.opensWay(c, Realm.QI_REFINING),
-				"A Qi Refining method opens no way past Qi Refining");
+		helper.assertTrue(HeavenMethods.canGain(c) && HeavenMethods.hasVolume(c, Realm.QI_REFINING) && !HeavenMethods.hasVolume(c, Realm.FOUNDATION_BUILDING)
+				&& HeavenMethods.opensWay(c, Realm.FOUNDATION_BUILDING), "A Qi Refining scripture carries Qi Refining's volume, not Foundation Building's");
 		HeavenMethod woodFb = HeavenMethod.of(QiElement.WOOD, Realm.FOUNDATION_BUILDING);
 		s.setMethod(woodFb, 9, 0);
-		helper.assertTrue(!c.isHeldByMethod() && HeavenMethods.opensWay(c, Realm.FOUNDATION_BUILDING) && !HeavenMethods.opensWay(c, Realm.CORE_FORMATION)
+		helper.assertTrue(!c.isHeldByMethod() && HeavenMethods.hasVolume(c, Realm.FOUNDATION_BUILDING) && !HeavenMethods.hasVolume(c, Realm.CORE_FORMATION)
 				&& HeavenMethods.deepestRealm(s) == Realm.FOUNDATION_BUILDING && !c.canBreakthrough(),
-				"A Foundation Building method (any element's) opens the way: only the pill is wanting");
+				"A Foundation Building scripture (any element's) carries its volume; only the pill is wanting");
 		c.prepareBreakthrough(Realm.FOUNDATION_BUILDING, 0.5);
 		helper.assertTrue(c.canBreakthrough() && c.breakthrough() && c.getRealm() == Realm.FOUNDATION_BUILDING && c.getStage() == Stage.EARLY
 				&& near(c.getCultivation(), PlayerCultivation.required(Realm.FOUNDATION_BUILDING, Stage.EARLY) * 0.5),
@@ -222,16 +225,18 @@ public class HeavenMethodsGameTests implements FabricGameTest {
 		soul.heaven().setMethod(fire, 9, 0);
 		soul.addCultivation(soul.cultivationRequired());
 		helper.assertTrue(soul.isAtBottleneck() && !soul.isHeldByMethod() && soul.canBreakthrough(), "Nascent Soul Early's tribulation: no method wanted");
+		helper.assertTrue(!HeavenMethods.canGain(soul), "...though with only a Qi Refining scripture it gathers nothing in Nascent Soul");
 		// A failed tribulation's fall takes the stage's cultivation, and the methods' layers past it.
 		s.setMethod(woodFb, 14, 0);
 		c.fallOneStage();
 		helper.assertTrue(c.getRealm() == Realm.FOUNDATION_BUILDING && c.getStage() == Stage.EARLY && c.getCultivation() == 0
 				&& s.layer(woodFb) == 11 && s.layer(fire) == 9, "Fallen to Early: Mid's layers lost, to settle in again (" + s.layer(woodFb) + ")");
-		// A pill's qi is refined with or without a method, never past the bottleneck.
+		// A pill's qi, refined, goes onto the bar, never past the bottleneck (meditation refines it only with a volume of the realm:
+		// MeditationManager, the overhaul of 2026-10-31).
 		PlayerCultivation sick = new PlayerCultivation();
 		sick.setState(Realm.QI_REFINING, Stage.EARLY, 0);
 		sick.setMedicinalQi(50);
-		helper.assertTrue(sick.refine(10) == 10 && near(sick.getMedicinalQi(), 40), "No method: the pill's qi is refined all the same");
+		helper.assertTrue(sick.refine(10) == 10 && near(sick.getMedicinalQi(), 40), "The pill's qi refined");
 		// A save from before: its cultivation as it was, its methods understood as far as the realm (deeper set back, behind brought up).
 		PlayerCultivation old = new PlayerCultivation();
 		old.setState(Realm.QI_REFINING, Stage.MID, 60);
@@ -438,8 +443,17 @@ public class HeavenMethodsGameTests implements FabricGameTest {
 			helper.assertTrue(s.layer(method) == upTo - 2 && c.getCultivation() == 0, "...once a day");
 			rogue.regardEntry(player).guidanceDay = -1;
 			TalkSystem.teachHeaven(player, rogue);
-			helper.assertTrue(s.layer(method) >= upTo && (c.getStage() != Stage.MID || c.getCultivation() > 0),
-					"Another day: its layers settled at once, and ten minutes' cultivation (" + s.layer(method) + ", " + c.getStage() + ")");
+			// The ten minutes' cultivation only with Circulation's volume of the realm (the methods overhaul, 2026-10-31).
+			boolean volume = HeavenMethods.canGain(c);
+			helper.assertTrue(s.layer(method) >= upTo && (volume ? c.getStage() != Stage.MID || c.getCultivation() > 0 : c.getCultivation() == 0),
+					"Another day: its layers settled at once, and ten minutes' cultivation only with a volume of the realm (" + s.layer(method) + ", "
+					+ c.getStage() + ", " + volume + ")");
+			if (!volume) {
+				s.setMethod(HeavenMethod.of(QiElement.EARTH, Realm.CORE_FORMATION), 1, 0); // Core Formation's volume, any element's
+				rogue.regardEntry(player).guidanceDay = -1;
+				TalkSystem.teachHeaven(player, rogue);
+				helper.assertTrue(c.getStage() != Stage.MID || c.getCultivation() > 0, "With a Core Formation scripture, its ten minutes (" + c.getCultivation() + ")");
+			}
 			ServerPlayer mortal = helper.makeMockServerPlayerInLevel();
 			rogue.regardEntry(mortal).value = Regard.WARM;
 			TalkSystem.teachHeaven(mortal, rogue);

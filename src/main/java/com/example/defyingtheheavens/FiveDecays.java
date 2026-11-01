@@ -20,7 +20,8 @@ import java.util.UUID;
 
 /**
  * The Five Decays of Heaven and Man (phase 3 of the realm plan, 2026-10-26; the user's picks: a weathered Decay's Law chosen by the
- * player, a failed judgement a stage lost and the life kept): what comes for every True Immortal player and those past them, once in
+ * player, a failed judgement a stage lost and the life kept): what comes for every True Immortal player and those past them (an immortal
+ * body too, the Indestructible Body and past it: BodyPath#immortal, its judgement its body's and a stage of the body lost), once in
  * {@link #PERIOD} (ten days), told a day before ({@link #WARNING}). Its five signs come a minute apart ({@link #SIGN_TICKS}), each staying
  * till the Decay ends:
  * <ol>
@@ -224,7 +225,8 @@ public final class FiveDecays {
 
 	/** The fifth sign's minute is out: the judgement comes on {@code p}. */
 	private static void startJudgement(ServerPlayer p, PlayerCultivation c, long now) {
-		int rank = TwoPaths.higherRank(c, false);
+		// The higher of its qi paths and an immortal body (BodyPath#immortal): its strikes the tribulation's into the stage after that one.
+		int rank = Math.max(TwoPaths.higherRank(c, false), BodyPath.immortal(c) ? BodyPath.rank(c) : -1);
 		int target = Math.min(PlayerCultivation.LAST_RANK, rank + 1);
 		int stages = Stage.values().length;
 		Realm realm = Realm.byIndex(target / stages);
@@ -389,12 +391,17 @@ public final class FiveDecays {
 	}
 
 	/**
-	 * The judgement failed: {@code p} falls a stage on the highest of its paths (as one devoured does, Physiques#devoured), the Decay over.
+	 * The judgement failed: {@code p} falls a stage on the highest of its paths (as one devoured does, Physiques#devoured), the Decay over; an
+	 * immortal body standing above every qi path, a stage of the body (BodyPath#fallOneStage). Package-private for the game tests.
 	 * @return the rank it stands at now, named
 	 */
-	private static Component fall(ServerPlayer p) {
+	static Component fall(ServerPlayer p) {
 		PlayerCultivation c = CultivationManager.get(p);
 		end(p, c.laws(), p.level().getGameTime());
+		if (BodyPath.immortal(c) && BodyPath.rank(c) > TwoPaths.higherRank(c, false)) {
+			BodyPath.fallOneStage(c);
+			return BodyPath.rankName(BodyPath.rank(c));
+		}
 		int demon = TwoPaths.demonRank(c, false);
 		if (demon >= 0 && demon > TwoPaths.ghostRank(c, false) && demon > TwoPaths.heavenRank(c, false)) {
 			DemonPath.fallOneStage(c);

@@ -537,11 +537,13 @@ public final class CultivatorGoals {
 				return;
 			}
 			Vec3 into = Vec3.atCenterOf(rift);
-			if (npc.position().distanceToSqr(into) < 4.0) {
+			double sideways = Math.sqrt(Math.pow(into.x - npc.getX(), 2) + Math.pow(into.z - npc.getZ(), 2));
+			// A body cultivator, who can't fly up to it, leaps in from the ground beneath (CultivatorNpc#isBodyCultivator).
+			boolean leapsIn = npc.isBodyCultivator() && npc.onGround() && sideways < 2.5 && into.y - npc.getY() < 8;
+			if (npc.position().distanceToSqr(into) < 4.0 || leapsIn) {
 				npc.arrive(level);
 				return;
 			}
-			double sideways = Math.sqrt(Math.pow(into.x - npc.getX(), 2) + Math.pow(into.z - npc.getZ(), 2));
 			if (sideways > 24) {
 				travel(level, rift, 0);
 			} else {

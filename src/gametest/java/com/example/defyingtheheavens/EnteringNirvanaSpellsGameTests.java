@@ -623,7 +623,9 @@ public class EnteringNirvanaSpellsGameTests implements FabricGameTest {
 		BlockPos at = floor.centre();
 		CultivatorNpc npc = helper.spawn(ModEntities.CULTIVATOR, helper.relativePos(at));
 		npc.setNoAi(true);
-		npc.setRank(PlayerCultivation.rank(Realm.ENTERING_NIRVANA, Stage.EARLY));
+		// Past the world's census (HighRealms: no Entering Nirvana in the Overworld, one Sacred Vessel): capped by it, the caster stood at
+		// whatever an earlier batch's leftover left room for, and failed to pay (2026-11-01, once new batches reordered the run).
+		npc.setRank(PlayerCultivation.rank(Realm.ENTERING_NIRVANA, Stage.EARLY), true);
 		npc.setHealth(npc.getMaxHealth());
 		npc.cultivation().setQi(npc.cultivation().maxQi());
 		spawned.add(npc);

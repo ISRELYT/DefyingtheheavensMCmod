@@ -63,6 +63,50 @@ public final class GhostPalaces extends SavedData {
 		return best;
 	}
 
+	// --- A player king's palace (Court of the Dead: CourtOfTheDead) ---
+
+	/** The throne {@code king} holds, or null. */
+	static BlockPos heldBy(ServerLevel level, UUID king) {
+		for (Map.Entry<BlockPos, UUID> entry : get(level).thrones.entrySet()) if (king.equals(entry.getValue())) return entry.getKey();
+		return null;
+	}
+
+	/** An empty throne within {@code reach} of {@code at}, or null. */
+	static BlockPos vacantNear(ServerLevel level, BlockPos at, double reach) {
+		for (Map.Entry<BlockPos, UUID> entry : get(level).thrones.entrySet()) {
+			if (entry.getValue() == null && entry.getKey().distSqr(at) <= reach * reach) return entry.getKey();
+		}
+		return null;
+	}
+
+	/** {@code king} takes the throne at {@code throne} (it was empty: {@link #vacantNear}); no NPC king rises to it while it holds it. */
+	static void claim(ServerLevel level, BlockPos throne, UUID king) {
+		GhostPalaces palaces = get(level);
+		palaces.thrones.put(throne.immutable(), king);
+		palaces.setDirty();
+	}
+
+	/** The king of the palace a court's post {@code post} stands in (the nearest throne within {@code reach}), or null for none or an empty throne. */
+	static UUID kingOf(ServerLevel level, BlockPos post, double reach) {
+		BlockPos best = null;
+		UUID king = null;
+		for (Map.Entry<BlockPos, UUID> entry : get(level).thrones.entrySet()) {
+			BlockPos throne = entry.getKey();
+			if (throne.distSqr(post) > reach * reach || best != null && throne.distSqr(post) >= best.distSqr(post)) continue;
+			best = throne;
+			king = entry.getValue();
+		}
+		return king;
+	}
+
+	/** A throne forgotten altogether (the game tests' own, taken out of the kept test world). */
+	static void forget(ServerLevel level, BlockPos throne) {
+		GhostPalaces palaces = get(level);
+		if (!palaces.thrones.containsKey(throne)) return;
+		palaces.thrones.remove(throne);
+		palaces.setDirty();
+	}
+
 	/** Every throne known, and its king or null (the game tests). */
 	Map<BlockPos, UUID> thrones() {
 		return thrones;

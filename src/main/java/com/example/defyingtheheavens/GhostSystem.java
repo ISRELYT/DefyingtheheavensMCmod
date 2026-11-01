@@ -197,6 +197,8 @@ public final class GhostSystem {
 		// A Ghost King's forms start from its true one, the King's: a Form Shift left on from life would show it human at once.
 		CultivationManager.get(p).setAbilityEnabled(Ability.FORM_SHIFT, false);
 		if (isKing(p)) s.setReignedKing(true); // a king from its death (its form kept when born again: TwoPaths#hasKingForm)
+		// No ghost is left without a method: one with no foundation is taught Netherworld Breathing's first volume (GhostMethods#teachTheDead).
+		GhostMethods.teachTheDead(p);
 		CultivationStats.apply(p, CultivationManager.get(p)); // the dead's body: the ghost path's whole, the heaven path's half
 		applyBody(p);
 		p.setHealth(p.getMaxHealth());

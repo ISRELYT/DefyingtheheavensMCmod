@@ -45,11 +45,19 @@ public final class Obsession {
 	 */
 	public static void name(ServerPlayer player, FourAxis.Axis obsession, boolean ghost) {
 		if (obsession == null || !player.isAlive()) return;
+		// A soul out of its body, or in another's (Possession), breaks through nothing (TribulationManager#start): nor names the body's
+		// obsession for it first (it was named so, for good, before the sweep of 2026-11-01).
+		if (SoulProjection.isActive(player.getUUID())) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_SOUL_BUSY), true);
+			return;
+		}
 		PlayerCultivation c = CultivationManager.get(player);
-		boolean demon = !ghost && TwoPaths.cultivatesDemon(c);
+		boolean demon = !ghost && TwoPaths.cultivatesDemon(c), body = !ghost && !demon && TwoPaths.cultivatesBody(c);
 		if (c.obsession() == null) {
-			int from = ghost ? GhostMethods.ghostRank(c.netherworld()) : demon ? DemonPath.rank(c) : PlayerCultivation.rank(c.getRealm(), c.getStage());
-			boolean ready = ghost ? GhostMethods.canBreakthrough(c) : demon ? DemonPath.canBreakthrough(c) : !c.isMortal() && c.canBreakthrough();
+			int from = ghost ? GhostMethods.ghostRank(c.netherworld()) : demon ? DemonPath.rank(c) : body ? BodyPath.rank(c)
+					: PlayerCultivation.rank(c.getRealm(), c.getStage());
+			boolean ready = ghost ? GhostMethods.canBreakthrough(c) : demon ? DemonPath.canBreakthrough(c) : body ? BodyPath.canBreakthrough(c)
+					: !c.isMortal() && c.canBreakthrough();
 			if (!asks(c, from) || !ready) return;
 			c.setObsession(obsession);
 			CultivationManager.markDirty(player.server);
@@ -60,6 +68,7 @@ public final class Obsession {
 		}
 		if (ghost) TribulationManager.startGhost(player);
 		else if (demon) TribulationManager.startDemon(player);
+		else if (body) TribulationManager.startBody(player);
 		else TribulationManager.start(player);
 	}
 

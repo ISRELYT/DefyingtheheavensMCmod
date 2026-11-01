@@ -133,10 +133,12 @@ public final class SparSystem {
 			// The player's realm as its body is wielded, on any path (TwoPaths#wieldedRank; a mortal's none): by the heaven path's alone
 			// before the sweep of 2026-10-23, so a ghost or demon path elder beat a "senior" it stood far above.
 			int wielded = TwoPaths.wieldedRank(CultivationManager.get(player));
+			// A body cultivator weighs a body tempered on the Body Path as its body ranks (CultivatorNpc#weighs).
+			if (NpcAddress.knowsTheBody(player, npc)) wielded = Math.max(wielded, npc.weighs(player));
 			int yours = wielded < 0 ? -1 : wielded / Stage.values().length;
 			this.senior = theirs > yours;
 			this.junior = theirs < yours;
-			this.stronger = npc.sustainedRank() > CultivatorNpc.rankOf(player);
+			this.stronger = npc.sustainedRank() > npc.weighs(player);
 			this.sect = npc.getSectId();
 		}
 	}
@@ -286,7 +288,7 @@ public final class SparSystem {
 		spar.duel = duel;
 		AFTER.remove(spar.npc);
 		// A stronger cultivator holds back to the player's realm, unless told not to.
-		int yours = CultivatorNpc.rankOf(player);
+		int yours = npc.weighs(player); // a body cultivator holds back to a Body Path body's own realm, not a mortal's
 		boolean holdBack = !terms.full && npc.sustainedRank() > yours;
 		npc.endTalk(player);
 		npc.beginSpar(player, holdBack ? Math.max(0, yours) : CultivatorNpc.NO_HOLD_BACK);
@@ -428,6 +430,7 @@ public final class SparSystem {
 	private static void end(Spar spar, Outcome outcome, ServerPlayer player, CultivatorNpc npc) {
 		BY_PLAYER.remove(spar.player);
 		BY_NPC.remove(spar.npc);
+		int fought = npc == null ? CultivatorNpc.MORTAL : npc.fightingRank(); // the strength it fought at, held back or not (HundredBattles#won)
 		if (npc != null) npc.endSpar(player);
 		if (npc != null && player != null) AFTER.put(spar.npc, new Aftermath(spar.player, npc.level().getGameTime() + AFTERMATH_TICKS, spar.sect));
 		// The cultivator's own stake is only ever what it puts up to be won (CultivatorLoot#stakeFor makes it, at the wager): only the
@@ -444,7 +447,10 @@ public final class SparSystem {
 			give(player, spar.playerStake);
 			return;
 		}
-		if (outcome == Outcome.WON) Milestones.award(player, Milestones.SPAR_WON);
+		if (outcome == Outcome.WON) {
+			Milestones.award(player, Milestones.SPAR_WON);
+			HundredBattles.won(player, fought); // a spar won tempers a body of Hundred Battles
+		}
 		int delta = switch (outcome) {
 			case WON -> spar.terms.full && spar.stronger ? Regard.SPAR_WIN_FULL : spar.senior ? Regard.SPAR_WIN_SENIOR : Regard.SPAR_WIN;
 			case LOST -> spar.junior ? Regard.SPAR_LOSS_BADLY : Regard.SPAR_LOSS;

@@ -26,7 +26,7 @@ import java.util.UUID;
  *   <li>Screen games, anywhere (drawn and judged by the client's QiSurgeHud, which reports back through
  *   MeditationManager#onCirculation): the Small Heavenly Circuit, the Five Elements cycle and Breath rhythm.</li>
  *   <li>Inner Realm games, played on foot on the island and run here: Qi wisps, the Leyline sequence and, from Nascent
- *   Soul, the Heart demon.</li>
+ *   Soul, the Heart demon (Heart Demon Tempering's meditation calls it up again and again, and nothing else: HeartDemonTempering).</li>
  * </ul>
  */
 public final class QiSurges {
@@ -69,7 +69,8 @@ public final class QiSurges {
 	public static final double DEMON_QI_LOSS = 0.3;
 
 	private static final class State {
-		int nextAt = FIRST_SURGE;
+		/** When the next surge comes (session ticks); unset till the first tick (Heart Demon Tempering's come sooner: HeartDemonTempering). */
+		int nextAt = -1;
 		Game active;
 		Game last;
 		int startedAt;
@@ -99,6 +100,7 @@ public final class QiSurges {
 	public static void tick(ServerPlayer p, int ticks, boolean settled) {
 		State s = STATES.computeIfAbsent(p.getUUID(), id -> new State());
 		if (s.active == null) {
+			if (s.nextAt < 0) s.nextAt = HeartDemonTempering.tempers(p) ? HeartDemonTempering.FIRST : FIRST_SURGE;
 			if (ticks >= s.nextAt && settled) begin(p, s, pick(p, s, ticks), ticks);
 			return;
 		}
@@ -119,6 +121,7 @@ public final class QiSurges {
 	}
 
 	private static Game pick(ServerPlayer p, State s, int ticks) {
+		if (HeartDemonTempering.tempers(p) && InnerRealm.isInside(p)) return Game.HEART_DEMON; // called up again and again, no cooldown
 		List<Game> pool = new ArrayList<>();
 		for (Game g : Game.values()) {
 			if (g == s.last) continue; // never the same twice running
@@ -193,7 +196,9 @@ public final class QiSurges {
 		s.wisps.clear();
 		s.wispBorn.clear();
 		s.tiles.clear();
-		s.nextAt = ticks + INTERVAL_MIN + RANDOM.nextInt(INTERVAL_MAX - INTERVAL_MIN + 1);
+		s.nextAt = HeartDemonTempering.tempers(p)
+				? ticks + HeartDemonTempering.INTERVAL_MIN + RANDOM.nextInt(HeartDemonTempering.INTERVAL_MAX - HeartDemonTempering.INTERVAL_MIN + 1)
+				: ticks + INTERVAL_MIN + RANDOM.nextInt(INTERVAL_MAX - INTERVAL_MIN + 1);
 	}
 
 	/** Meditation ended: whatever was running goes, and the next session starts the clock afresh. */
@@ -346,7 +351,9 @@ public final class QiSurges {
 		s.demon = null;
 		p.serverLevel().playSound(null, p.blockPosition(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.0f, 0.8f);
 		p.displayClientMessage(Component.translatable(ModLang.MSG_DEMON_WIN), true);
-		MeditationManager.addBonusSeconds(p, DEMON_SECONDS);
+		// Heart Demon Tempering's gain is the demon's defeat itself (its meditation gathers nothing, so no seconds of it).
+		if (HeartDemonTempering.tempers(p)) HeartDemonTempering.won(p);
+		else MeditationManager.addBonusSeconds(p, DEMON_SECONDS);
 		MeditationManager.harmony(p);
 		finish(p, s, MeditationManager.sessionTicks(p));
 	}
@@ -366,6 +373,7 @@ public final class QiSurges {
 		p.setHealth(Math.max(1.0f, p.getMaxHealth() * 0.2f));
 		p.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 120, 0));
 		p.displayClientMessage(Component.translatable(ModLang.MSG_DEMON_LOSE), true);
+		if (HeartDemonTempering.tempers(p)) HeartDemonTempering.lost(p); // a tempering's defeat costs it a share of its stage besides
 		MeditationManager.stop(p, true);
 		CultivationManager.sync(p);
 		return false;

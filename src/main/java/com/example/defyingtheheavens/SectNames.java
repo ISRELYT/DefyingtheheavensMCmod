@@ -47,6 +47,35 @@ public final class SectNames {
 		return a + " " + b + " " + k;
 	}
 
+	/**
+	 * A body sect's words (Sect#body; the user's "Go, with body sects", 2026-11-01), by its path: the body, the bone and the fist, the metal
+	 * and the mountain they are tempered toward, before its kind ("Iron Bone Hall", "Vajra Fist Gate", "Blood Sinew Temple").
+	 */
+	private static final String[][] BODY_FIRST = {
+			{"Iron", "Vajra", "Golden", "Bronze", "Diamond", "Jade", "Mountain", "Thunder", "Stone", "Heavenly", "Steel", "Immovable"},
+			{"Blood", "Savage", "Bone", "Iron", "Crimson", "Black", "Beast", "Wild", "Ashen", "Hungry", "Scarred", "Raging"},
+			{"Stone", "Bronze", "Iron", "Thousand Pound", "Hidden", "Ancient", "River", "Mountain", "Silent", "Copper", "Granite", "Oak"}};
+	private static final String[][] BODY_SECOND = {
+			{"Bone", "Fist", "Body", "Bell", "Sinew", "Palm", "Skin", "Marrow", "Arhat", "Pillar"},
+			{"Sinew", "Fang", "Fist", "Bone", "Hide", "Claw", "Marrow", "Blood", "Flesh", "Talon"},
+			{"Fist", "Bone", "Body", "Palm", "Sinew", "Skin", "Root", "Pillar", "Stance", "Hand"}};
+	private static final String[][] BODY_KIND = {
+			{"Hall", "Gate", "Temple", "Monastery", "Sect", "School"},
+			{"Hall", "Gate", "Temple", "Cult", "Den", "Sect"},
+			{"Hall", "Gate", "Sect", "School", "Manor", "Valley"}};
+
+	/** A body sect's name: a word of its path's for what it tempers toward, one for what it tempers, then its kind. */
+	public static String body(RandomSource random, Alignment.Faction faction) {
+		int f = faction == Alignment.Faction.RIGHTEOUS ? 0 : faction == Alignment.Faction.DEVILISH ? 1 : 2;
+		String a = BODY_FIRST[f][random.nextInt(BODY_FIRST[f].length)];
+		String b = BODY_SECOND[f][random.nextInt(BODY_SECOND[f].length)];
+		// Never two words of one stem ("Bone Bone", "Iron Iron").
+		for (int i = 0; i < 6 && a.regionMatches(true, 0, b, 0, Math.min(4, Math.min(a.length(), b.length()))); i++) {
+			b = BODY_SECOND[f][random.nextInt(BODY_SECOND[f].length)];
+		}
+		return a + " " + b + " " + BODY_KIND[f][random.nextInt(BODY_KIND[f].length)];
+	}
+
 	/** A Holy Land's two words, by its path, before "Holy Land" (HolyLands): "Primordial Sun Holy Land", "Nine Nether Holy Land", "Hidden Moon Holy Land". */
 	private static final String[][] HOLY_FIRST = {
 			{"Primordial", "Myriad", "Supreme", "Boundless", "Radiant", "Eternal", "Heavenly", "Azure", "Golden", "Starlit", "Pure", "Profound"},

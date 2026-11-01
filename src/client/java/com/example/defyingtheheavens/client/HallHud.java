@@ -29,6 +29,8 @@ public final class HallHud {
 	public static final int SOUL = 0xFF9457E0, SOUL_LIGHT = 0xFFB57BFF;
 	public static final int GHOST = 0xFF1F8F86, GHOST_LIGHT = 0xFF2FB5B0;
 	public static final int ESSENCE = 0xFFD9A62B, ESSENCE_LIGHT = 0xFFF0C75A;
+	/** The Body Path's vigor (BodyTechniques): its bronze, as its rung on the ladder. */
+	public static final int VIGOR = 0xFFB0642A, VIGOR_LIGHT = 0xFFE0A060;
 	public static final int YIN = 0xFF2A6488, YIN_LIGHT = 0xFF3E8AA6;
 	public static final int PRESSURE = 0xFFFF6A6A, PRESSURE_TEXT = 0xFFFF8A8A;
 

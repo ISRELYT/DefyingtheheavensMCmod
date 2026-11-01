@@ -283,7 +283,12 @@ public class SpellConstruct extends Entity implements GeoEntity {
 		// how far round it grows, its value how high the land heaves; and the earth heaving up round a being it buries, of the world's own earth (Form
 		// BLOCKS: EarthMasses), held on that being, its size its round and its value its height; crumbling as it lets go.
 		XIRANG_BLOOM("xirang_bloom", Form.DRAWN, "settle"),
-		BURIAL_MASS("burial_mass", Form.BLOCKS, "crumble");
+		BURIAL_MASS("burial_mass", Form.BLOCKS, "crumble"),
+		// The Body Path's Dharma Body of Heaven and Earth (BodyTechniques#dharmaBody; the user's "Go, all three parts", 2026-11-01): its user's own
+		// body grown as tall as heaven and earth, of gold, standing behind them, drawn as the Heaven-Demon Avatar's projection is (Form GHOSTS:
+		// SpellGhosts), its size its height in men, its target its user (whose body it is); its arms raised and brought down as its fists fall
+		// (an AVATAR_HAND of gold where its user's blow lands), a leg lifted and stamped as it stomps.
+		DHARMA_BODY("dharma_body", Form.GHOSTS, "strike_right", "strike_left", "stomp");
 
 		public final String id, enter, loop;
 		public final float scale;

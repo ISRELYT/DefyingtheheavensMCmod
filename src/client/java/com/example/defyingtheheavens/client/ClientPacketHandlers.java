@@ -146,7 +146,15 @@ public final class ClientPacketHandlers {
 			String epithet = buf.readUtf(com.example.defyingtheheavens.PlayerTitles.MAX_LENGTH * 4);
 			int[] mastery = new int[com.example.defyingtheheavens.CraftMastery.Craft.values().length];
 			for (int i = 0; i < mastery.length; i++) mastery[i] = buf.readVarInt();
+			int bodyRank = buf.readVarInt();
+			double bodyCultivation = buf.readDouble();
+			boolean bodyDrawn = buf.readBoolean();
+			double vigor = buf.readDouble();
 			client.execute(() -> {
+				// The Body Path (BodyPath): the Cultivation tab's card, switch and Begin button; the vigor bar (BodyTechniques, QiHud).
+				ClientCultivationData.get().body().set(bodyRank, bodyCultivation);
+				ClientCultivationData.get().body().setCultivating(bodyDrawn);
+				ClientCultivationData.get().body().setVigor(vigor);
 				// The title they have taken (PlayerTitles): the Cultivation tab's field.
 				ClientCultivationData.get().setEpithet(epithet);
 				// The crafts' mastery (CraftMastery): the Stats tab's Crafts page.
@@ -386,8 +394,9 @@ public final class ClientPacketHandlers {
 			int faction = buf.readVarInt();
 			int regard = buf.readInt();
 			int intents = buf.readVarInt();
+			boolean body = buf.readBoolean();
 			Alignment.Faction path = Alignment.Faction.values()[Math.max(0, Math.min(Alignment.Faction.values().length - 1, faction))];
-			TalkSession session = new TalkSession(entity, name, title, sect, rank, path, regard, intents);
+			TalkSession session = new TalkSession(entity, name, title, sect, rank, path, regard, intents, body);
 			client.execute(() -> TalkSession.open(session));
 		});
 

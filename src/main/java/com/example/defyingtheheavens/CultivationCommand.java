@@ -161,6 +161,16 @@ public final class CultivationCommand {
 					source.sendSuccess(() -> Component.literal("A mortal's ghost path lies dormant: your meridians were opened (heaven path at Qi Refining Early)."), false);
 				}
 			}
+			case BODY -> {
+				// The Body Path (BodyPath), begun and drawn in by it if it wasn't; nothing past its last rank.
+				if (BodyPath.rank(c) < 0) BodyPath.drawIn(c);
+				int to = Math.min(rank, BodyPath.LAST_RANK);
+				c.body().set(to, 0);
+				CultivationManager.markDirty(p.server);
+				CultivationManager.refresh(p);
+				Spells.sync(p);
+				source.sendSuccess(() -> Component.literal("Body Path set: ").append(BodyPath.rankName(to)), false);
+			}
 			case DEMON -> {
 				int before = DemonPath.rank(c);
 				if (before < 0) throw NO_DEMON_PATH.create();
@@ -208,6 +218,20 @@ public final class CultivationCommand {
 			}
 			case GHOST -> {
 				return NetherworldCommand.progress(p, amount);
+			}
+			case BODY -> {
+				int before = BodyPath.rank(c);
+				if (before < 0) {
+					source.sendFailure(Component.literal("No Body Path: begin it first (the Cultivation tab, or /cultivation set body <realm> <stage>)."));
+					return 0;
+				}
+				if (BodyPath.addCultivation(c, amount) > 0) BodyPath.afterRank(p, before);
+				else {
+					CultivationManager.markDirty(p.server);
+					CultivationManager.sync(p);
+				}
+				source.sendSuccess(() -> Component.literal("Body Path: ").append(BodyPath.rankName(BodyPath.rank(c)))
+						.append(", " + Math.round(c.body().cultivation()) + " / " + Math.round(BodyPath.required(BodyPath.rank(c))) + "."), false);
 			}
 			case DEMON -> {
 				int before = DemonPath.rank(c);

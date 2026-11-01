@@ -44,39 +44,73 @@ public final class Tempering {
 	private static final Map<UUID, Long> lastSync = new HashMap<>();
 
 	public static void register() {
+		// Each deed tempers a mortal's body below Peak (gain), and the Body Path while it is drawn in (BodyPath#deed): the same deeds.
 		AttackEntityCallback.EVENT.register((player, level, hand, target, hit) -> {
 			if (player instanceof ServerPlayer sp && target instanceof LivingEntity living && living.isAlive()
 					&& player.getAttackStrengthScale(0.5f) > 0.9f) {
 				gain(sp, CHARGED_HIT);
+				BodyPath.deed(sp, BodyPath.CHARGED_HIT);
 			}
 			return InteractionResult.PASS;
 		});
 		ServerEntityCombatEvents.AFTER_KILLED_OTHER_ENTITY.register((level, killer, killed) -> {
-			if (killer instanceof ServerPlayer sp) gain(sp, killed instanceof Enemy ? HOSTILE_KILL : OTHER_KILL);
+			if (!(killer instanceof ServerPlayer sp)) return;
+			gain(sp, killed instanceof Enemy ? HOSTILE_KILL : OTHER_KILL);
+			BodyPath.deed(sp, (killed instanceof Enemy ? BodyPath.HOSTILE_KILL : BodyPath.OTHER_KILL)
+					* BodyPath.killFactor(slainRank(killed), BodyPath.rank(CultivationManager.get(sp))));
 		});
 		PlayerBlockBreakEvents.AFTER.register((level, player, pos, state, blockEntity) -> {
 			if (!(player instanceof ServerPlayer sp)) return;
-			if (isOre(state)) gain(sp, ORE_MINED);
-			else if (state.is(BlockTags.BASE_STONE_OVERWORLD) || state.is(BlockTags.BASE_STONE_NETHER)) gain(sp, STONE_MINED);
+			if (isOre(state)) {
+				gain(sp, ORE_MINED);
+				BodyPath.deed(sp, BodyPath.ORE_MINED);
+			} else if (state.is(BlockTags.BASE_STONE_OVERWORLD) || state.is(BlockTags.BASE_STONE_NETHER)) {
+				gain(sp, STONE_MINED);
+				BodyPath.deed(sp, BodyPath.STONE_MINED);
+			}
 		});
 	}
+
+	/** The rank the slain stood at, for what its death tempers (BodyPath#killFactor): a cultivator's, a demon beast's, a player's mightier path; -1 else. */
+	private static int slainRank(net.minecraft.world.entity.Entity killed) {
+		if (killed instanceof CultivatorNpc npc) return npc.getRank();
+		if (killed instanceof DemonBeast beast) return beast.getRank();
+		if (killed instanceof ServerPlayer player) {
+			PlayerCultivation c = CultivationManager.get(player);
+			return Math.max(TwoPaths.higherRank(c, false), BodyPath.rank(c));
+		}
+		return -1;
+	}
+
+	/** Each player's health as it was the tick before: what it has lost since is harm taken, which tempers the Body Path (BodyPath#deed). */
+	private static final Map<UUID, Float> lastHealth = new HashMap<>();
 
 	private static boolean isOre(BlockState state) {
 		return state.is(ConventionalBlockTags.ORES) || state.getBlock() instanceof DropExperienceBlock
 				|| state.getBlock() instanceof RedStoneOreBlock;
 	}
 
-	/** Every tick: sprinting on the ground tempers too. */
+	/** Every tick: sprinting on the ground tempers too; and harm taken, the Body Path (the whole health {@link BodyPath#WHOLE_HEALTH_TAKEN} s). */
 	public static void tick(MinecraftServer server) {
 		for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-			if (player.isSprinting() && player.onGround()) gain(player, SPRINT_PER_SECOND / 20);
+			if (player.isSprinting() && player.onGround()) {
+				gain(player, SPRINT_PER_SECOND / 20);
+				BodyPath.deed(player, BodyPath.SPRINT_PER_SECOND / 20);
+			}
+			float health = player.getHealth();
+			Float was = lastHealth.put(player.getUUID(), health);
+			if (was != null && health < was && player.isAlive() && player.getMaxHealth() > 0) {
+				BodyPath.deed(player, BodyPath.WHOLE_HEALTH_TAKEN * (was - health) / player.getMaxHealth());
+			}
 		}
 	}
 
-	/** Food eaten (see PlayerMixin): half a point of tempering per food point. */
+	/** Food eaten (see PlayerMixin): half a point of tempering per food point; and the Body Path's vigor refilled (BodyTechniques#ate). */
 	public static void onEat(ServerPlayer player, ItemStack stack) {
 		FoodProperties food = stack.getItem().getFoodProperties();
-		if (food != null) gain(player, food.getNutrition() * PER_FOOD_POINT);
+		if (food == null) return;
+		gain(player, food.getNutrition() * PER_FOOD_POINT);
+		BodyTechniques.ate(player, food.getNutrition());
 	}
 
 	/** Tempering from a herb eaten raw. */
@@ -106,6 +140,7 @@ public final class Tempering {
 			player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.6f, 0.8f);
 			CultivationManager.refresh(player); // the tempered body's stats
 			lastSync.put(player.getUUID(), player.level().getGameTime());
+			BodyPath.shatteredBegin(player); // Shattered Meridians at Peak: the Body Path theirs from here, as their body refining was
 			return true;
 		}
 		CultivationManager.markDirty(player.server);
@@ -118,7 +153,11 @@ public final class Tempering {
 		return true;
 	}
 
-	public static void forget(UUID player) { lastSync.remove(player); }
+	public static void forget(UUID player) {
+		lastSync.remove(player);
+		lastHealth.remove(player);
+		BodyPath.forget(player);
+	}
 
 	private Tempering() {}
 }

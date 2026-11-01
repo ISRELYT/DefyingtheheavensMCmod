@@ -124,6 +124,8 @@ public class PlayerCultivation {
 	private final HeavenState heaven = new HeavenState();
 	/** The Demon Path, the demon races' (DemonPath), and the blood the record is of. Saved when begun. */
 	private final DemonState demon = new DemonState();
+	/** The Body Path, the body's own (BodyPath, 2026-11-01). Saved when begun. */
+	private final BodyState body = new BodyState();
 	/** An immortal's Laws (Laws, phase 3) and the Five Decays' reckoning with it (FiveDecays). Saved once any of it is. */
 	private final LawState laws = new LawState();
 	/** Synced but not saved: re-evaluated from the player's dimension on every join. */
@@ -442,6 +444,38 @@ public class PlayerCultivation {
 	public void setObsession(FourAxis.Axis obsession) { this.obsession = obsession; }
 
 	/**
+	 * The methods learned from Method Manuals (CultivationMethod#fromManual): how far each one's volumes reach (a realm's ordinal); and
+	 * the method each path practises (CultivationMethods#practised: none chosen, its orthodox one). The methods overhaul's phase 2.
+	 */
+	private final java.util.EnumMap<CultivationMethod, Integer> methodReach = new java.util.EnumMap<>(CultivationMethod.class);
+	private final java.util.EnumMap<TwoPaths.Path, CultivationMethod> practising = new java.util.EnumMap<>(TwoPaths.Path.class);
+
+	/** How far {@code method}'s volumes learned reach (a realm's ordinal), or -1 if none are known. */
+	public int methodReach(CultivationMethod method) { return methodReach.getOrDefault(method, -1); }
+
+	public void setMethodReach(CultivationMethod method, int realm) {
+		if (realm < 0) methodReach.remove(method);
+		else methodReach.put(method, realm);
+	}
+
+	/** The methods with volumes learned from manuals. */
+	public java.util.Set<CultivationMethod> methodsLearned() { return java.util.Collections.unmodifiableSet(methodReach.keySet()); }
+
+	/** The method {@code path} practises as chosen, or null: its orthodox one. */
+	public CultivationMethod practising(TwoPaths.Path path) { return practising.get(path); }
+
+	public void setPractising(TwoPaths.Path path, CultivationMethod method) {
+		if (method == null || method.path() != path) practising.remove(path);
+		else practising.put(path, method);
+	}
+
+	/** The demon beast bound to it (Spirit Beast Bond: SpiritBonds), or null: one at a time. */
+	private java.util.UUID spiritBeast;
+
+	public java.util.UUID spiritBeast() { return spiritBeast; }
+	public void setSpiritBeast(java.util.UUID beast) { this.spiritBeast = beast; }
+
+	/**
 	 * The title one has taken (PlayerTitles; the user's ask, 2026-10-27: "from void shattering onwards ... name themselves or give themselves
 	 * a title"), "" for none. Kept below Void Shattering, only not shown or used there.
 	 */
@@ -550,14 +584,15 @@ public class PlayerCultivation {
 	/** No more cultivation fits: at a tribulation's bottleneck or at the Ritual to the Heavens' gate. */
 	public boolean isStalled() { return isAtBottleneck() || isAtRitualGate(); }
 
-	// --- The heaven method's gate (see HeavenMethods#opensWay) ---
+	// --- The Laws' gate (see HeavenMethods#opensWay) ---
 
 	/**
-	 * At Grand Perfection's bottleneck with no heaven method known of the realm ahead or deeper: the breakthrough waits on finding one
-	 * (minor stages never do).
+	 * At Grand Perfection's bottleneck with the realm ahead past True Immortal and the Laws it wants not yet comprehended (Laws#opensWay).
+	 * Below it no scripture holds a breakthrough back (the user's rule, 2026-10-31): one breaks through without Circulation's volume for
+	 * the realm ahead, and gathers nothing there until one is found (HeavenMethods#canGain).
 	 */
 	public boolean isHeldByMethod() {
-		return isAtBottleneck() && stage.isLast() && !isMaxed() && !HeavenMethods.opensWay(this, realm.next());
+		return isAtBottleneck() && stage.isLast() && !isMaxed() && realm.next().isPastTrueImmortal() && !HeavenMethods.opensWay(this, realm.next());
 	}
 
 	// --- The mortal path ---
@@ -570,15 +605,17 @@ public class PlayerCultivation {
 
 	public double getTempering() { return tempering; }
 
-	/** Tempering the current mortal stage needs to reach the next (0 at Peak; past it, Shattered Meridians' body refining). */
+	/** Tempering the current mortal stage needs to reach the next (0 at Peak: past it, the Body Path's, BodyPath). */
 	public double temperingRequired() {
-		if (mortalStage.isLast() && hasShatteredMeridians()) return BodyRefining.toNext(bodyRefining);
 		return mortalStage.getTemperingToNext();
 	}
 
-	/** Whether tempering can still take this body further: a mortal below Peak, or Shattered Meridians below the last refining. */
+	/**
+	 * Whether a mortal's tempering can still take this body further: a mortal below Peak. Past it the body is the Body Path's (BodyPath; the
+	 * user's ask of 2026-11-01: anyone's, Shattered Meridians' body refining with it).
+	 */
 	public boolean canTemper() {
-		return mortal && (!mortalStage.isLast() || hasShatteredMeridians() && bodyRefining < BodyRefining.LAST);
+		return mortal && !mortalStage.isLast();
 	}
 
 	public void setMortalState(MortalStage stage, double tempering) {
@@ -601,8 +638,7 @@ public class PlayerCultivation {
 		tempering += amount;
 		while (canTemper() && tempering >= temperingRequired()) {
 			tempering -= temperingRequired();
-			if (!mortalStage.isLast()) mortalStage = mortalStage.next();
-			else bodyRefining++;
+			mortalStage = mortalStage.next();
 			advanced = true;
 		}
 		if (!canTemper()) tempering = 0;
@@ -910,9 +946,12 @@ public class PlayerCultivation {
 	/** Whether one of {@code rank} (its higher path's true rank) is beyond the lower realms' hold: {@link #FREE_OF_LOWER_REALMS} or above. */
 	public static boolean beyondLowerRealms(int rank) { return rank >= FREE_RANK; }
 
-	/** In a lower realm and held by it: below {@link #FREE_OF_LOWER_REALMS} on both paths (TwoPaths#higherRank, true ranks). */
+	/**
+	 * In a lower realm and held by it: below {@link #FREE_OF_LOWER_REALMS} on every path, the body's too (TwoPaths#travelRank, true ranks: a
+	 * Star-Forged Body is as free there as a Void Shattering cultivator, 2026-11-01; it was held to the cap while the qi paths weren't).
+	 */
 	private boolean heldBelow() {
-		return lowerRealmBound && !beyondLowerRealms(TwoPaths.higherRank(this, false));
+		return lowerRealmBound && !beyondLowerRealms(TwoPaths.travelRank(this));
 	}
 
 	/**
@@ -1280,8 +1319,8 @@ public class PlayerCultivation {
 	public boolean isAtBottleneck() { return !mortal && needsTribulation() && cultivation >= cultivationRequired(); }
 
 	/**
-	 * Ready for the tribulation: at the bottleneck, not sealed by the lower realm, any pill the next realm needs taken, and into a new
-	 * realm, a heaven method of it or deeper known ({@link #isHeldByMethod}).
+	 * Ready for the tribulation: at the bottleneck, not sealed by the lower realm, any pill the next realm needs taken, and past True
+	 * Immortal the Laws it wants ({@link #isHeldByMethod}).
 	 */
 	public boolean canBreakthrough() {
 		return isAtBottleneck() && !isMaxed() && !isBreakthroughLocked() && !isMissingBreakthroughPill() && !isHeldByMethod() && !isHeldByAxis();
@@ -1396,6 +1435,11 @@ public class PlayerCultivation {
 		for (int i : old.statPointOrder) setStatPoints(StatPoints.Stat.byIndex(i), statPoints[i] + 1); // in the order they were put in
 		System.arraycopy(old.axisProgress, 0, axisProgress, 0, axisProgress.length);
 		obsession = old.obsession;
+		methodReach.clear();
+		methodReach.putAll(old.methodReach);
+		practising.clear();
+		practising.putAll(old.practising);
+		spiritBeast = old.spiritBeast;
 		selectedAbility = old.selectedAbility;
 		disabledAbilities.clear();
 		disabledAbilities.addAll(old.disabledAbilities);
@@ -1404,6 +1448,7 @@ public class PlayerCultivation {
 		heaven.load(old.heaven.save());
 		netherworld.carryOver(old.netherworld);
 		demon.carryOver(old.demon); // and the Demon Path
+		body.carryOver(old.body); // and the Body Path
 		laws.carryOver(old.laws); // and the Laws comprehended (the Decays' reckoning begins anew)
 		techniques.addAll(old.techniques); // and the techniques and spells learned from manuals
 		manualSpells.addAll(old.manualSpells);
@@ -1516,6 +1561,15 @@ public class PlayerCultivation {
 			break;
 		}
 		if (obsession != null) tag.putString("Obsession", obsession.getId());
+		if (!methodReach.isEmpty() || !practising.isEmpty() || spiritBeast != null) {
+			CompoundTag methods = new CompoundTag(), reach = new CompoundTag(), practise = new CompoundTag();
+			methodReach.forEach((method, realm) -> reach.putInt(method.getId(), realm));
+			practising.forEach((path, method) -> practise.putString(path.name(), method.getId()));
+			methods.put("Reach", reach);
+			methods.put("Practise", practise);
+			if (spiritBeast != null) methods.putUUID("SpiritBeast", spiritBeast);
+			tag.put("CultivationMethods", methods);
+		}
 		if (!epithet.isEmpty()) tag.putString("Epithet", epithet);
 		if (extraYears > 0) tag.putDouble("ExtraYears", extraYears);
 		if (fortuneOwed > 0) {
@@ -1532,6 +1586,8 @@ public class PlayerCultivation {
 		if (!methods.isEmpty()) tag.put("HeavenMethods", methods);
 		CompoundTag demonPath = demon.save();
 		if (!demonPath.isEmpty()) tag.put("Demon", demonPath);
+		CompoundTag bodyPath = body.save();
+		if (!bodyPath.isEmpty()) tag.put("Body", bodyPath);
 		CompoundTag lawsTag = laws.save();
 		if (!lawsTag.isEmpty()) tag.put("Laws", lawsTag);
 		tag.putInt("PathModel", PATH_MODEL);
@@ -1652,6 +1708,14 @@ public class PlayerCultivation {
 		c.longevityPills = Math.max(0, tag.getInt("LongevityPills"));
 		c.setMeditationSpeed(tag.contains("MeditationSpeed") ? tag.getInt("MeditationSpeed") : 1);
 		c.obsession = FourAxis.Axis.byId(tag.getString("Obsession"));
+		CompoundTag methods = tag.getCompound("CultivationMethods");
+		CompoundTag reach = methods.getCompound("Reach"), practise = methods.getCompound("Practise");
+		for (String key : reach.getAllKeys()) {
+			CultivationMethod method = CultivationMethod.byId(key);
+			if (method != null) c.methodReach.put(method, reach.getInt(key));
+		}
+		for (TwoPaths.Path path : TwoPaths.Path.values()) c.setPractising(path, CultivationMethod.byId(practise.getString(path.name())));
+		c.spiritBeast = methods.hasUUID("SpiritBeast") ? methods.getUUID("SpiritBeast") : null;
 		c.epithet = PlayerTitles.clean(tag.getString("Epithet"));
 		if (tag.contains("AxisProgress", Tag.TAG_INT_ARRAY)) {
 			int[] progress = tag.getIntArray("AxisProgress");
@@ -1666,6 +1730,16 @@ public class PlayerCultivation {
 		c.netherworld.load(tag.getCompound("Netherworld")); // an empty compound when missing: every default
 		c.heaven.load(tag.getCompound("HeavenMethods"));
 		c.demon.load(tag.getCompound("Demon"));
+		c.body.load(tag.getCompound("Body"));
+		// Shattered Meridians' body refining from before the Body Path (2026-11-01) is the Body Path's now: each of its stages the rank it was
+		// as strong as (BodyRefining#rank), what it had tempered toward the next kept as its share of the stage, drawn in (no other path is).
+		if (!c.body.begun() && c.bodyRefining > 0) {
+			int rank = BodyRefining.rank(c.bodyRefining);
+			double next = BodyRefining.toNext(c.bodyRefining), toward = next <= 0 ? 0 : Math.min(1, tag.getDouble("Tempering") / next);
+			c.body.set(rank, toward * BodyPath.required(rank));
+			c.body.setCultivating(true);
+			c.bodyRefining = 0;
+		}
 		c.laws.load(tag.getCompound("Laws"));
 		// Saves from before: every method known understood as far as the realm, none behind it or past it.
 		if (tag.getInt("PathModel") < PATH_MODEL && !c.mortal) HeavenMethods.alignTo(c.heaven, rank(c.realm, c.stage));
@@ -1685,6 +1759,11 @@ public class PlayerCultivation {
 	/** The Demon Path, and the blood this record is of (see DemonPath). */
 	public DemonState demon() {
 		return demon;
+	}
+
+	/** The Body Path (see BodyPath). */
+	public BodyState body() {
+		return body;
 	}
 
 	/** The Laws this immortal holds, and the Five Decays' reckoning (see Laws, FiveDecays). */

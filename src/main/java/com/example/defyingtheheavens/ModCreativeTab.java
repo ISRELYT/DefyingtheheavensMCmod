@@ -50,6 +50,11 @@ public final class ModCreativeTab {
 					ModBlocks.ALCHEMY_CAULDRON, ModBlocks.FORMATION_CORE, ModItems.INSCRIPTION_BRUSH, ModItems.RING_OF_POWER,
 					ModItems.RING_OF_TRANSCENDENCE);
 			for (StorageFormations.Tier tier : StorageFormations.Tier.values()) add(StorageFormationItem.of(tier));
+			add(ModBlocks.gatheringFormations()); // the gathering formations, Qi's three then Yin's (GatheringFormations)
+			// The Method Manuals (CultivationMethod#fromManual): each method to its last realm (its first, for the heaven and ghost ones'
+			// volumes one a realm: MethodManualItem)
+			for (CultivationMethod method : CultivationMethod.values()) if (method.fromManual()) add(MethodManualItem.of(method, method.last()));
+			add(ModBlocks.SHRINE, ModItems.INCENSE); // a shrine and its incense (Shrines)
 			// The Artifact Forge and its artifacts, every kind at every grade it is forged at (a banner of each of the five elements)
 			add(ModBlocks.ARTIFACT_FORGE);
 			for (ArtifactKind kind : ArtifactKind.values()) {

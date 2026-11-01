@@ -68,7 +68,7 @@ import java.util.UUID;
  * Void (BloodPools) and keeps to it ({@link #guard}: it ranges no further than {@link #GUARD_ROAM} from it but to give chase, and goes
  * back to it), never wandering off; slain, it leaves its core and, one time in {@link #ELDER_BLOOD_CHANCE}, its race's blood of its realm.
  */
-public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
+public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity, net.minecraft.world.entity.OwnableEntity {
 	private static final EntityDataAccessor<Integer> DATA_RANK = SynchedEntityData.defineId(DemonBeast.class, EntityDataSerializers.INT);
 	/** Flags of what it is doing, for its look: in its shell, charging, coiled round its prey, breathing fire. */
 	private static final EntityDataAccessor<Byte> DATA_ACT = SynchedEntityData.defineId(DemonBeast.class, EntityDataSerializers.BYTE);
@@ -289,7 +289,60 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 	/** An elder never leaves the world for want of anyone near (it would leave its pool unguarded), nor a primordial beast its lair. */
 	@Override
 	public boolean requiresCustomPersistence() {
-		return kind().isElder() || kind().isPrimordial() || super.requiresCustomPersistence();
+		return kind().isElder() || kind().isPrimordial() || bondOwner != null || super.requiresCustomPersistence();
+	}
+
+	// --- Bound (Spirit Beast Bond: SpiritBonds) ---
+
+	/** Who it is bound to (Spirit Beast Bond), or null: a wild beast. */
+	private UUID bondOwner;
+
+	@Override
+	public UUID getOwnerUUID() { return bondOwner; }
+
+	/** Bound to {@code owner} (or set free, null): it follows and defends them, and is never lost to the dark or the distance. */
+	void bindTo(UUID owner) {
+		bondOwner = owner;
+		if (owner != null) setPersistenceRequired();
+	}
+
+	/** Bound, it never fades away: peaceful's purge and the distance pass it by. */
+	@Override
+	public void checkDespawn() {
+		if (bondOwner != null) {
+			noActionTime = 0;
+			return;
+		}
+		super.checkDespawn();
+	}
+
+	/** Its owner is never its prey, nor anything its owner's. */
+	@Override
+	public boolean canAttack(LivingEntity target) {
+		if (bondOwner != null && (bondOwner.equals(target.getUUID())
+				|| target instanceof net.minecraft.world.entity.OwnableEntity pet && bondOwner.equals(pet.getOwnerUUID()))) return false;
+		return super.canAttack(target);
+	}
+
+	@Override
+	protected net.minecraft.world.InteractionResult mobInteract(Player player, net.minecraft.world.InteractionHand hand) {
+		if (player instanceof ServerPlayer sp) {
+			net.minecraft.world.InteractionResult result = SpiritBonds.interact(this, sp, hand);
+			if (result != net.minecraft.world.InteractionResult.PASS) return result;
+		}
+		return super.mobInteract(player, hand);
+	}
+
+	@Override
+	public boolean killedEntity(ServerLevel level, LivingEntity killed) {
+		if (bondOwner != null) SpiritBonds.killed(this, killed);
+		return super.killedEntity(level, killed);
+	}
+
+	@Override
+	public void die(DamageSource source) {
+		super.die(source);
+		if (bondOwner != null && level() instanceof ServerLevel level) SpiritBonds.died(level, this);
 	}
 
 	// --- What it is doing ---
@@ -329,6 +382,7 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 	 * A sect mission's quarry (SectMissions) goes for the one who took the mission on, and no one else.
 	 */
 	public boolean hunts(LivingEntity target) {
+		if (bondOwner != null) return false; // bound (Spirit Beast Bond): it fights its owner's foes, and seeks none of its own
 		if (SectMissions.isFoe(this)) return target instanceof Player player && player.isAlive() && player.getUUID().equals(SectMissions.takerOf(this));
 		if (!kind().territorial || target instanceof DemonBeast || !target.isAlive()) return false;
 		if (target instanceof Player player && (player.isCreative() || player.isSpectator())) return false;
@@ -519,12 +573,14 @@ public class DemonBeast extends Monster implements CultivatorEntity, GeoEntity {
 		tag.putInt("Rank", getRank());
 		if (guards != null) tag.putLong("Guards", guards.asLong());
 		if (boundless()) tag.putBoolean("Boundless", true);
+		if (bondOwner != null) tag.putUUID("BondOwner", bondOwner);
 	}
 
 	@Override
 	public void readAdditionalSaveData(CompoundTag tag) {
 		super.readAdditionalSaveData(tag);
 		entityData.set(DATA_BOUNDLESS, tag.getBoolean("Boundless"));
+		bondOwner = tag.hasUUID("BondOwner") ? tag.getUUID("BondOwner") : null;
 		if (tag.contains("Guards")) guard(BlockPos.of(tag.getLong("Guards")));
 		if (tag.contains("Rank") && tag.getInt("Rank") >= 0) {
 			float health = getHealth();

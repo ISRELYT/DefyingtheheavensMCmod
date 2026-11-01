@@ -31,7 +31,9 @@ import java.util.UUID;
  *   <li>Then the heavens answer: their leave (and, for a Generous offering or better, Heaven's Favour), or silence, and no
  *   new ritual until the next dawn.</li>
  * </ol>
- * Every path performs the same ritual. Sect cultivators perform it too, at their sect's Altar of Heaven (see NpcLife).
+ * Every path performs the same ritual. Sect cultivators perform it too, at their sect's Altar of Heaven (see NpcLife). The heavens, granting
+ * it, teach the first volume of their rites (Heaven-Petitioning Rites); one practising them petitions here the same way, the leave had,
+ * for a share of its stage (HeavenRites: the right hour, one rite an altar a day, the offering weighed by its realm, a rebuke refused).
  */
 public final class HeavenRitual {
 	/** Fifteen seconds. */
@@ -48,8 +50,11 @@ public final class HeavenRitual {
 		final long start, end;
 		final double chance;
 		final HeavenAltar.Offering offering;
+		/** A Heaven-Petitioning Rite (HeavenRites), not the Ritual to the Heavens. */
+		final boolean rite;
 
-		Ritual(ResourceKey<Level> dimension, BlockPos altar, double x, double y, double z, long start, double chance, HeavenAltar.Offering offering) {
+		Ritual(ResourceKey<Level> dimension, BlockPos altar, double x, double y, double z, long start, double chance, HeavenAltar.Offering offering,
+				boolean rite) {
 			this.dimension = dimension;
 			this.altar = altar;
 			this.x = x;
@@ -59,6 +64,7 @@ public final class HeavenRitual {
 			this.end = start + DURATION;
 			this.chance = chance;
 			this.offering = offering;
+			this.rite = rite;
 		}
 	}
 
@@ -80,8 +86,8 @@ public final class HeavenRitual {
 	/** Why {@code player} can't begin a ritual now (a message key), or null if they can. */
 	static String refusal(ServerPlayer player, PlayerCultivation c) {
 		if (ModDimensions.isUnseenByHeaven(player.level().dimension())) return ModLang.MSG_HEAVENS_BLIND;
-		if (c.isMortal() || !c.needsHeavensLeave()) return ModLang.MSG_RITUAL_NOT_NOW;
-		if (c.getRitualFailedDay() >= today(player.server)) return ModLang.MSG_RITUAL_DAWN;
+		if (c.isMortal() || !c.needsHeavensLeave() && !HeavenRites.practises(c)) return ModLang.MSG_RITUAL_NOT_NOW;
+		if (c.needsHeavensLeave() && c.getRitualFailedDay() >= today(player.server)) return ModLang.MSG_RITUAL_DAWN;
 		if (isActive(player.getUUID()) || TribulationManager.isActive(player.getUUID()) || SoulProjection.isActive(player.getUUID())) {
 			return ModLang.MSG_RITUAL_BUSY;
 		}
@@ -107,8 +113,19 @@ public final class HeavenRitual {
 			player.displayClientMessage(Component.translatable(ModLang.ALTAR_NO_SKY), true);
 			return;
 		}
-		HeavenAltar.Offering offering = HeavenAltar.Offering.of(HeavenAltar.worth(altar));
+		// A rite (HeavenRites): at the right hour, the altar's first today, the bar not full, its volume held; its offering weighed by the
+		// realm, its chance by one's virtue too.
+		boolean rite = HeavenRites.practises(c);
+		if (rite) {
+			Component why = HeavenRites.refusal(player, c, altar);
+			if (why != null) {
+				player.displayClientMessage(why, true);
+				return;
+			}
+		}
+		HeavenAltar.Offering offering = HeavenAltar.Offering.of(HeavenAltar.worth(altar) / (rite ? HeavenRites.scale(c.getRealm()) : 1));
 		double chance = HeavenAltar.chance(offering, judgement.grandeur(), HeavenAltar.heightBonus(level, pos));
+		if (rite) chance = Math.min(0.95, chance * HeavenRites.virtue(c));
 		// The offerings are the heavens' now, whatever comes of it.
 		boolean offered = !altar.isEmpty();
 		altar.clearContent();
@@ -119,7 +136,7 @@ public final class HeavenRitual {
 		if (MeditationManager.isMeditating(player.getUUID())) MeditationManager.stop(player, false);
 		player.closeContainer();
 		ACTIVE.put(player.getUUID(), new Ritual(level.dimension(), pos.immutable(), player.getX(), player.getY(), player.getZ(),
-				level.getGameTime(), chance, offering));
+				level.getGameTime(), chance, offering, rite));
 		ModPackets.broadcastMeditation(player, true); // kneeling before the altar
 		level.playSound(null, pos, SoundEvents.BEACON_ACTIVATE, SoundSource.BLOCKS, 0.7f, 0.7f);
 		player.sendSystemMessage(Component.translatable(ModLang.MSG_RITUAL_BEGIN, offering.displayName(), HeavenAltar.percent(chance))
@@ -176,10 +193,20 @@ public final class HeavenRitual {
 	private static void answer(ServerPlayer player, Ritual r, boolean granted) {
 		ServerLevel level = player.serverLevel();
 		PlayerCultivation c = CultivationManager.get(player);
+		if (r.rite) {
+			answerRite(player, r, granted);
+			return;
+		}
 		if (granted) {
 			Milestones.award(player, Milestones.RITUAL);
 			c.setHeavensLeave(true);
 			if (r.offering.favour > c.getFavour()) c.setFavour(r.offering.favour);
+			// Granting their leave, the heavens teach their rites' first volume (Heaven-Petitioning Rites: HeavenRites).
+			if (c.methodReach(CultivationMethod.HEAVEN_RITES) < 0) {
+				c.setMethodReach(CultivationMethod.HEAVEN_RITES, Realm.QI_REFINING.ordinal());
+				player.sendSystemMessage(Component.translatable(ModLang.MSG_RITES_TAUGHT, CultivationMethod.HEAVEN_RITES.getDisplayName())
+						.withStyle(ChatFormatting.GOLD));
+			}
 			boolean advanced = c.addCultivation(0); // a full Qi Refining Mid steps straight into Late
 			CultivationManager.refresh(player);
 			for (int i = 0; i < 40; i++) {
@@ -202,6 +229,29 @@ public final class HeavenRitual {
 			title(player, Component.translatable(ModLang.RITUAL_TITLE_FAIL).withStyle(ChatFormatting.GRAY), null);
 			player.displayClientMessage(Component.translatable(ModLang.MSG_RITUAL_FAIL).withStyle(ChatFormatting.GRAY), true);
 		}
+	}
+
+	/**
+	 * The heavens' answer to a rite (HeavenRites): granted, a quarter of the heaven path's stage (CultivationMethods#grant); refused, their
+	 * rebuke. Either way the altar has had its rite today.
+	 */
+	private static void answerRite(ServerPlayer player, Ritual r, boolean granted) {
+		ServerLevel level = player.serverLevel();
+		if (level.getBlockEntity(r.altar) instanceof HeavenAltarBlockEntity altar) altar.setRiteDay(today(player.server));
+		if (granted) {
+			CultivationMethods.grant(player, TwoPaths.Path.HEAVEN, CultivationMethod.HEAVEN_RITES, HeavenRites.SHARE);
+			for (int i = 0; i < 30; i++) {
+				level.sendParticles(ParticleTypes.END_ROD, r.altar.getX() + 0.5, r.altar.getY() + 1 + i * 0.6, r.altar.getZ() + 0.5, 2, 0.15, 0.2, 0.15, 0.01);
+			}
+			level.playSound(null, r.altar, SoundEvents.BEACON_POWER_SELECT, SoundSource.BLOCKS, 1.0f, 1.3f);
+			title(player, Component.translatable(ModLang.RITE_TITLE_SUCCESS).withStyle(ChatFormatting.GOLD), null);
+		} else {
+			HeavenRites.rebuke(player);
+			level.playSound(null, r.altar, SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 0.8f, 0.8f);
+			title(player, Component.translatable(ModLang.RITE_TITLE_FAIL).withStyle(ChatFormatting.DARK_RED), null);
+			player.displayClientMessage(Component.translatable(ModLang.MSG_RITE_REBUKED).withStyle(ChatFormatting.RED), true);
+		}
+		CultivationManager.markDirty(player.server);
 	}
 
 	private static void title(ServerPlayer player, Component title, Component subtitle) {

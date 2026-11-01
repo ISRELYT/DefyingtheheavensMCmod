@@ -2,11 +2,71 @@ import java.awt.image.BufferedImage;
 
 /**
  * The techniques' icons for the ability wheel and the Abilities tab (textures/gui/ability/<id>.png, 32 x 32, in the Law domains' gold
- * trim): Universe in a Sleeve's (Sleeves). {@code java BeastArt.java <assets> techniques} writes these alone.
+ * trim): Universe in a Sleeve's (Sleeves); the secret realms' war arts', Sword Intent's and Blood Battle's (WarArts: drawn 2026-11-01, they
+ * had none). {@code java BeastArt.java <assets> techniques} writes these alone.
  */
 public class Techniques {
 	static void writeAll(java.nio.file.Path assets) throws java.io.IOException {
 		BeastArt.write(assets.resolve("textures/gui/ability/sleeve.png"), sleeve());
+		BeastArt.write(assets.resolve("textures/gui/ability/sword_intent.png"), swordIntent());
+		BeastArt.write(assets.resolve("textures/gui/ability/blood_battle.png"), bloodBattle());
+	}
+
+	/** One blade of a sword along (x1, y1) to its point (x2, y2): steel lit along one edge, a guard of gold and a dark grip behind it. */
+	private static void sword(java.awt.Graphics2D g, double x1, double y1, double x2, double y2) {
+		double dx = x2 - x1, dy = y2 - y1, d = Math.hypot(dx, dy);
+		dx /= d;
+		dy /= d;
+		double nx = -dy, ny = dx;
+		java.awt.geom.GeneralPath blade = new java.awt.geom.GeneralPath();
+		blade.moveTo(x1 + nx * 1.2, y1 + ny * 1.2);
+		blade.lineTo(x2 - dx * 2.2 + nx * 1.2, y2 - dy * 2.2 + ny * 1.2);
+		blade.lineTo(x2, y2);
+		blade.lineTo(x2 - dx * 2.2 - nx * 1.2, y2 - dy * 2.2 - ny * 1.2);
+		blade.lineTo(x1 - nx * 1.2, y1 - ny * 1.2);
+		blade.closePath();
+		BodyArts.fill(g, blade, x1 + nx * 2, y1 + ny * 2, 0xF6F9FF, x1 - nx * 2, y1 - ny * 2, 0x8A98AE, 0x1A2030, 0.7f);
+		BodyArts.line(g, x1 + dx * 1.5, y1 + dy * 1.5, x2 - dx * 3.5, y2 - dy * 3.5, 0.5f, BodyArts.c(0x5A6A84));
+		BodyArts.line(g, x1 - dx * 0.4 + nx * 3, y1 - dy * 0.4 + ny * 3, x1 - dx * 0.4 - nx * 3, y1 - dy * 0.4 - ny * 3, 1.8f, BodyArts.c(0xE8B840));
+		BodyArts.line(g, x1 - dx * 1.2, y1 - dy * 1.2, x1 - dx * 4.4, y1 - dy * 4.4, 1.6f, BodyArts.c(0x3A2A1A));
+		g.setColor(BodyArts.c(0xE8B840));
+		g.fill(new java.awt.geom.Ellipse2D.Double(x1 - dx * 5.2 - 1.1, y1 - dy * 5.2 - 1.1, 2.2, 2.2));
+	}
+
+	/** Sword Intent: a sword point up to the right on a night of deep blue, three streaks of pale intent running beside its blade. */
+	static BufferedImage swordIntent() {
+		BufferedImage img = BodyArts.disc(0x0E1630, 0x1E2E5E);
+		java.awt.Graphics2D g = BodyArts.inside(img);
+		for (double off : new double[] {-3.4, 3.0, 5.6}) {
+			BodyArts.line(g, 8.6 + off * 0.7, 21.0 + off * 0.7, 22.0 + off * 0.7, 7.6 + off * 0.7, off > 4 ? 0.6f : 0.9f,
+					BodyArts.c(0xA8E8FF, off > 4 ? 0.35 : 0.6));
+		}
+		sword(g, 11.4, 20.6, 24.6, 7.4);
+		BodyArts.glint(g, 24.6, 7.4, 2.4, BodyArts.c(0xE8FAFF));
+		g.dispose();
+		return img;
+	}
+
+	/** Blood Battle: two blades crossed on a field of dark red, blood dripping from where they meet. */
+	static BufferedImage bloodBattle() {
+		BufferedImage img = BodyArts.disc(0x1E0808, 0x3E1010);
+		java.awt.Graphics2D g = BodyArts.inside(img);
+		sword(g, 10.4, 22.0, 23.6, 8.4);
+		sword(g, 21.6, 22.0, 8.4, 8.4);
+		java.awt.geom.GeneralPath drop = new java.awt.geom.GeneralPath();
+		drop.moveTo(16, 17.0);
+		drop.curveTo(16, 17.0, 19.4, 21.2, 19.4, 23.2);
+		drop.curveTo(19.4, 25.2, 17.9, 26.6, 16, 26.6);
+		drop.curveTo(14.1, 26.6, 12.6, 25.2, 12.6, 23.2);
+		drop.curveTo(12.6, 21.2, 16, 17.0, 16, 17.0);
+		drop.closePath();
+		BodyArts.fill(g, drop, 13, 19, 0xE8262E, 19, 26, 0x6A0408, 0x220204, 0.8f);
+		g.setColor(BodyArts.c(0xFFFFFF, 0.6));
+		g.fill(new java.awt.geom.Ellipse2D.Double(13.9, 21.4, 1.2, 2.4));
+		g.setColor(BodyArts.c(0xC81820));
+		g.fill(new java.awt.geom.Ellipse2D.Double(15.3, 13.6, 1.4, 2.0));
+		g.dispose();
+		return img;
 	}
 
 	/**

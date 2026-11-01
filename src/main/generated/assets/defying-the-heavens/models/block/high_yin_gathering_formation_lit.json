@@ -1,0 +1,11 @@
+{
+  "parent": "defying-the-heavens:block/gathering_formation_lit",
+  "textures": {
+    "array": "defying-the-heavens:block/yin_gathering_array_high",
+    "band": "defying-the-heavens:block/yin_jade_block",
+    "base": "minecraft:block/polished_blackstone",
+    "cap": "minecraft:block/iron_block",
+    "orb": "defying-the-heavens:block/yin_gathering_orb",
+    "pillar": "minecraft:block/polished_blackstone_bricks"
+  }
+}

@@ -179,6 +179,9 @@ public final class ModBlocks {
 	public static final Block HEAVEN_ALTAR = registerWithItem("heaven_altar", new HeavenAltarBlock(
 			BlockBehaviour.Properties.of().mapColor(MapColor.QUARTZ).requiresCorrectToolForDrops().strength(2.0f, 6.0f)
 					.sound(SoundType.POLISHED_DEEPSLATE).lightLevel(state -> 4).noOcclusion()));
+	/** A shrine to its placer (Shrines: the methods overhaul's phase 3): a statue, an ancestral tablet or a beast idol, prayed at. */
+	public static final Block SHRINE = registerWithItem("shrine", new ShrineBlock(
+			BlockBehaviour.Properties.of().mapColor(MapColor.STONE).strength(2.0f, 6.0f).sound(SoundType.STONE).lightLevel(state -> 5).noOcclusion()));
 
 	/** Ginseng, aging in the ground (see GinsengBlock). Planted from its seeds; dug up as the ginseng root, keeping its age. */
 	public static final Block GINSENG = register("ginseng", new GinsengBlock(() -> ModItems.GINSENG, () -> ModItems.GINSENG_SEEDS,
@@ -373,6 +376,36 @@ public final class ModBlocks {
 
 	public static Block storageFormation(StorageFormations.Tier tier) {
 		return STORAGE_FORMATIONS.get(tier);
+	}
+
+	/**
+	 * The gathering formations (GatheringFormations; the methods overhaul's phase 2), a block to a kind and tier ("low_qi_gathering_formation"),
+	 * each its own item; lit, they shine.
+	 */
+	private static final java.util.Map<String, Block> GATHERING_FORMATIONS = new java.util.LinkedHashMap<>();
+
+	static {
+		for (GatheringFormations.Kind kind : GatheringFormations.Kind.values()) {
+			for (GatheringFormations.Tier tier : GatheringFormations.Tier.values()) {
+				GATHERING_FORMATIONS.put(gatheringId(kind, tier), registerWithItem(gatheringId(kind, tier), new GatheringFormationBlock(kind, tier,
+						BlockBehaviour.Properties.of().mapColor(kind == GatheringFormations.Kind.QI ? MapColor.GOLD : MapColor.COLOR_CYAN).strength(2.0f, 6.0f)
+								.sound(SoundType.AMETHYST).noOcclusion().lightLevel(state -> state.getValue(GatheringFormationBlock.LIT) ? 9 : 2))));
+			}
+		}
+	}
+
+	/** "low_qi_gathering_formation". */
+	public static String gatheringId(GatheringFormations.Kind kind, GatheringFormations.Tier tier) {
+		return tier.getId() + "_" + kind.getId() + "_gathering_formation";
+	}
+
+	public static Block gatheringFormation(GatheringFormations.Kind kind, GatheringFormations.Tier tier) {
+		return GATHERING_FORMATIONS.get(gatheringId(kind, tier));
+	}
+
+	/** Every gathering formation, Qi's three then Yin's. */
+	public static Block[] gatheringFormations() {
+		return GATHERING_FORMATIONS.values().toArray(Block[]::new);
 	}
 
 	private static BlockBehaviour.Properties ginsengProperties(MapColor colour) {

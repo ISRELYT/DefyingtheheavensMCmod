@@ -10,24 +10,26 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.LightLayer;
 
 /**
- * Cultivating the heaven methods (see HeavenMethod): who may, how they speed cultivation, how far they are understood, and what the
- * layers bring.
+ * Cultivating the heaven path's scriptures (see HeavenMethod): who may, how they carry cultivation, how far they are understood, and
+ * what the layers bring.
  * <p>
- * <b>Cultivation is its own; the methods ride on it.</b> The heaven methods are the living's techniques, cultivated on the five
- * elements' qi: a method of a realm spans Qi Refining up to it, nine layers a realm (MethodLayers). One's cultivation is the bar
- * (PlayerCultivation#addCultivation): meditation fills it and the stages step on by themselves, a method or none. A method known is
- * understood as far as one's cultivation has come ({@link #understoodTo}): learned, at once; and each time the realm reaches a new
- * stage, the layers standing for it settle in over meditation ({@link #settle}: half the stage's own cultivation, gathered by the
- * method's element), each told as it does. A method goes no further than its own realm.
+ * <b>Method and Art</b> (the user's overhaul, 2026-10-31: "you need a method to cultivate at all"; a method is HOW one cultivates, and
+ * each of its volumes lasts for one realm). Each scripture (HeavenMethod) is a volume of its element's Art (its spells and passive) and
+ * carries the chapters of the heaven path's orthodox method, <b>Qi Circulation</b>, for every realm from Qi Refining up to its own
+ * ({@link #hasVolume}). Without Circulation's volume for one's realm, meditation gathers nothing on the heaven path
+ * ({@link #canGain}); one may still break through into the next realm (no scripture holds a breakthrough back: only the Laws, past True
+ * Immortal), and gather nothing there until a scripture of it is found. Four Axis has no volume of any method: its axes are everyone's
+ * method there (FourAxis#fillBars). Past True Immortal the Laws carry it, as before.
  * <p>
- * <b>The gate.</b> The methods hold back no minor stage; only a major breakthrough waits on one: breaking into a realm wants a heaven
- * method of that realm or deeper, of any element ({@link #opensWay}). Qi Refining wants none.
+ * A scripture known is understood as far as one's cultivation has come ({@link #understoodTo}): learned, at once; and each time the
+ * realm reaches a new stage, the layers standing for it settle in over meditation ({@link #settle}: half the stage's own cultivation,
+ * gathered by the scripture's element), each told as it does. A scripture goes no further than its own realm.
  * <p>
- * <b>The rate.</b> Meditation's cultivation is multiplied by the method practised ({@link #cultivationFactor}): the element's share of
- * the qi where one sits ({@link #elementFactor}: x{@link #SHARE_FLOOR} where there is none of it, x1 at an even fifth, up to
- * x{@link #FACTOR_CAP} where it runs thick) x {@link #STELE_BONUS} beside a Dao Stele of its element x a Qi Gathering Pill's and
- * cultivator clothing's boost to gathering. With no method practised, x{@link #NO_METHOD_FACTOR}: a cultivator without a technique.
- * The dead can't cultivate them (their meridians are the ghost path's now), nor a mortal (closed meridians).
+ * <b>The rate.</b> Circulation's gathering is multiplied by the Art one is attuned to ({@link #practised}, {@link #cultivationFactor}):
+ * the element's share of the qi where one sits ({@link #elementFactor}: x{@link #SHARE_FLOOR} where there is none of it, x1 at an even
+ * fifth, up to x{@link #FACTOR_CAP} where it runs thick) x {@link #STELE_BONUS} beside a Dao Stele of its element x a Qi Gathering
+ * Pill's and cultivator clothing's boost to gathering. The dead can't cultivate them (their meridians are the ghost path's now), nor a
+ * mortal (closed meridians).
  * <p>
  * <b>Learning.</b> A Dao Stele (DaoSteleBlock) teaches its method to one who meditates beside it for {@link #STELE_LEARN_SECONDS};
  * a Jade Slip, read, at once; a cultivator who is Warm to you may teach theirs (TalkSystem).
@@ -40,8 +42,6 @@ import net.minecraft.world.level.LightLayer;
 public final class HeavenMethods {
 	/** The element's share of the qi: x{@code SHARE_FLOOR + SHARE_GAIN x share}, no more than {@code FACTOR_CAP}; an even fifth is x1. */
 	public static final double SHARE_FLOOR = 0.75, SHARE_GAIN = 1.25, FACTOR_CAP = 1.5;
-	/** Meditation with no heaven method practised. */
-	public static final double NO_METHOD_FACTOR = 0.75;
 	public static final double STELE_BONUS = 1.25;
 	public static final double STELE_LEARN_RADIUS = 4, STELE_BONUS_RADIUS = 8;
 	public static final double STELE_LEARN_SECONDS = 15;
@@ -152,7 +152,29 @@ public final class HeavenMethods {
 		for (HeavenMethod method : java.util.List.copyOf(s.known())) s.setMethod(method, Math.min(method.layers(), deepest), 0);
 	}
 
-	// --- The gate: major breakthroughs ---
+	// --- Qi Circulation's volumes ---
+
+	/**
+	 * Whether {@code c} has Qi Circulation's volume for {@code realm}: a scripture of it or deeper known (every scripture carries the
+	 * chapters from Qi Refining up to its own realm). Four Axis has none (its axes are the method there); past True Immortal the Laws carry
+	 * it, so there is nothing to have.
+	 */
+	public static boolean hasVolume(PlayerCultivation c, Realm realm) {
+		if (realm == Realm.FOUR_AXIS) return false;
+		if (realm.isPastTrueImmortal()) return true;
+		Realm deepest = deepestRealm(c.heaven());
+		return deepest != null && deepest.ordinal() >= realm.ordinal();
+	}
+
+	/**
+	 * Whether {@code c}'s heaven path can gather where it stands: one of the living, the method it practises holding its volume of the realm
+	 * (CultivationMethods#holdsVolume: Qi Circulation's by the scriptures known). How it gathers is the method's own (CultivationMethods#whyNoGain).
+	 */
+	public static boolean canGain(PlayerCultivation c) {
+		return canLearn(c) && CultivationMethods.holdsVolume(c, TwoPaths.Path.HEAVEN);
+	}
+
+	// --- How far the scriptures reach ---
 
 	/** The deepest realm {@code s}'s heaven methods reach (of any element), or null with none known. */
 	public static Realm deepestRealm(HeavenState s) {
@@ -164,20 +186,23 @@ public final class HeavenMethods {
 	}
 
 	/**
-	 * Whether {@code c}'s heaven methods open the way into {@code realm}: one of it or deeper known. Qi Refining wants none; the ladder past
-	 * True Immortal, which no method carries, wants the Laws instead (Laws#opensWay, phase 3).
+	 * Whether the heaven path's way into {@code realm} is open: up to True Immortal, always (since the overhaul of 2026-10-31 no scripture
+	 * holds a breakthrough back: without one, the new realm only gathers nothing, {@link #hasVolume}); the ladder past it, which no
+	 * scripture carries, wants the Laws (Laws#opensWay, phase 3): the one breakthrough still held (PlayerCultivation#isHeldByMethod).
 	 */
 	public static boolean opensWay(PlayerCultivation c, Realm realm) {
-		if (realm == Realm.QI_REFINING) return true;
-		if (realm.isPastTrueImmortal()) return Laws.opensWay(c, realm);
-		Realm deepest = deepestRealm(c.heaven());
-		return deepest != null && deepest.ordinal() >= realm.ordinal();
+		return !realm.isPastTrueImmortal() || Laws.opensWay(c, realm);
 	}
 
-	/** Why {@code c}'s breakthrough waits on a heaven method (PlayerCultivation#isHeldByMethod): one of the realm ahead is wanted (past True Immortal, the Laws). */
+	/**
+	 * What waits on what, at the heaven path's Grand Perfection: past True Immortal, the Laws a breakthrough wants
+	 * (PlayerCultivation#isHeldByMethod); below it nothing holds the breakthrough, and this says the realm ahead will gather nothing
+	 * until a scripture of it is found (Four Axis: its axes fill it).
+	 */
 	public static Component gateLine(PlayerCultivation c) {
 		Realm ahead = c.getRealm().next();
 		if (ahead.isPastTrueImmortal()) return Laws.gateLine(c, ahead);
+		if (ahead == Realm.FOUR_AXIS) return Component.translatable(ModLang.METHOD_GATE_AXES);
 		return Component.translatable(ModLang.HEAVEN_GATE_NONE, ahead.getDisplayName());
 	}
 
@@ -225,11 +250,11 @@ public final class HeavenMethods {
 	}
 
 	/**
-	 * What meditation's cultivation is multiplied by with {@code method} practised ({@link #practised}), where {@code share} of the qi
-	 * is its element's: {@link #methodFactor}; with none, {@link #NO_METHOD_FACTOR} and the boosts to gathering.
+	 * What Qi Circulation makes of meditation's cultivation, attuned to {@code method}'s Art ({@link #practised}), where {@code share} of
+	 * the qi is its element's: {@link #methodFactor}; with no scripture known, nothing (no method, no cultivation).
 	 */
 	public static double cultivationFactor(PlayerCultivation c, HeavenMethod method, double share, boolean byStele) {
-		return method == null ? NO_METHOD_FACTOR * boosts(c) : methodFactor(c, share, byStele);
+		return method == null ? 0 : methodFactor(c, share, byStele);
 	}
 
 	/** A Qi Gathering Pill's and cultivator clothing's boosts to gathering. */
@@ -333,11 +358,17 @@ public final class HeavenMethods {
 		PlayerCultivation c = CultivationManager.get(player);
 		HeavenState s = c.heaven();
 		if (s.knows(method)) return;
+		Realm reachedBefore = deepestRealm(s);
 		int layer = Math.max(1, understoodTo(c, method));
 		s.setMethod(method, layer, 0);
 		HeavenMethod active = s.activeMethod();
 		if (active == null || active.element() == method.element() && method.tier() > active.tier()) s.setActiveMethod(method);
 		player.sendSystemMessage(Component.translatable(ModLang.MSG_HEAVEN_LEARNED, method.getDisplayName(), layer, method.layers()).withStyle(ChatFormatting.GOLD));
+		// Its Qi Circulation chapters carry the method further than any scripture known did.
+		Realm reach = FourAxis.volumeReach(method.realm());
+		if (reachedBefore == null || reach.ordinal() > FourAxis.volumeReach(reachedBefore).ordinal()) {
+			player.sendSystemMessage(Component.translatable(ModLang.MSG_CIRCULATION_VOLUMES, reach.getDisplayName()).withStyle(ChatFormatting.GOLD));
+		}
 		player.playNotifySound(SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.PLAYERS, 1.0f, 1.1f);
 		Journal.note(player, "heaven_method:" + method.getId(), ModLang.JOURNAL_HEAVEN_METHOD, Component.translatable(ModLang.JOURNAL_HEAVEN_METHOD_TEXT,
 				method.getDisplayName(), method.element().getDisplayName(), method.getGains()));

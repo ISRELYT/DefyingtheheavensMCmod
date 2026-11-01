@@ -12,11 +12,11 @@ import net.minecraft.world.entity.LivingEntity;
 /**
  * The Laws (phase 3 of the realm plan, 2026-10-26; the user's picks: the five elements' Laws and three greater ones, a weathered Decay's
  * level chosen by the player): what the realms past True Immortal are built on, comprehended level by level ({@link #MAX_LEVEL} each,
- * LawState) by True Immortals and those past them.
+ * LawState) by True Immortals and those past them, and by a body of the Indestructible Body or past it (BodyPath#immortal, 2026-11-01).
  * <ul>
  *   <li><b>The way up.</b> Each of the ladder's breakthroughs, Earth Immortal to Heavenly Lord, wants so many levels of the Laws together
  *       ({@link #needed}: 3, 7, 12, 18, 25, 35), on whichever path it is cultivated (HeavenMethods#opensWay, GhostMethods#opensWay,
- *       DemonPath#heldByLaws): no method or blood carries one past True Immortal.</li>
+ *       DemonPath#heldByLaws, BodyPath#heldByLaws): no method, blood or tempering carries one past True Immortal.</li>
  *   <li><b>Comprehended</b> by meditating in the Immortal Realm with a Law in focus ({@link #meditate}: the realm keeps no steles, the
  *       user's rule), level L wanting L x {@link #INSIGHT_SECONDS} of it at the meditation's pace (in the First Flame's light, FirstFlame,
  *       {@link FirstFlame#INSIGHT_PACE} times as fast); in a rare glimpse, a foe of Entering Nirvana or above slain by an element's spell
@@ -65,19 +65,36 @@ public final class Laws {
 
 	/** Why a breakthrough into {@code realm} waits on the Laws: so many levels wanted, so many held. */
 	public static Component gateLine(PlayerCultivation c, Realm realm) {
-		return Component.translatable(ModLang.LAW_GATE, realm.getDisplayName(), needed(realm), c.laws().total());
+		return gateLine(c, realm, realm.getDisplayName());
+	}
+
+	/** {@link #gateLine} with the realm ahead named {@code name} (the Body Path's own names: BodyPath#lawGateLine). */
+	public static Component gateLine(PlayerCultivation c, Realm realm, Component name) {
+		return Component.translatable(ModLang.LAW_GATE, name, needed(realm), c.laws().total());
 	}
 
 	// --- Who comprehends them ---
 
-	/** Whether {@code c} stands where the Laws are comprehended: a True Immortal or past it, on its higher path. */
+	/**
+	 * Whether {@code c} stands where the Laws are comprehended: a True Immortal or past it on its higher qi path ({@link #isQiImmortal}), or a
+	 * body of the Indestructible Body or past it (BodyPath#immortal, the user's "Go, all three parts", 2026-11-01).
+	 */
 	public static boolean isImmortal(PlayerCultivation c) {
+		return isQiImmortal(c) || BodyPath.immortal(c);
+	}
+
+	/**
+	 * Whether {@code c} is a True Immortal or past it on its higher qi path: what has immortal essence to spend (a Law domain: LawDomains; a small
+	 * world refined: SmallWorlds). A body has none.
+	 */
+	public static boolean isQiImmortal(PlayerCultivation c) {
 		return !c.isMortal() && TwoPaths.higherRank(c, false) >= PlayerCultivation.rank(Realm.TRUE_IMMORTAL, Stage.EARLY);
 	}
 
-	/** Whether the greater Laws are open to {@code c}: from {@link #GREATER_FROM} on. */
+	/** Whether the greater Laws are open to {@code c}: from {@link #GREATER_FROM} on, its qi path's or its body's (the Imperishable Gold Body). */
 	public static boolean greaterOpen(PlayerCultivation c) {
-		return !c.isMortal() && TwoPaths.higherRank(c, false) >= PlayerCultivation.rank(GREATER_FROM, Stage.EARLY);
+		int greater = PlayerCultivation.rank(GREATER_FROM, Stage.EARLY);
+		return !c.isMortal() && TwoPaths.higherRank(c, false) >= greater || BodyPath.immortal(c) && BodyPath.rank(c) >= greater;
 	}
 
 	/** Whether {@code c} can comprehend {@code law} further: an immortal, the Law not complete, a greater one only from Golden Immortal. */
@@ -162,10 +179,12 @@ public final class Laws {
 		p.sendSystemMessage(Component.translatable(ModLang.MSG_LAW_LEVEL, law.getDisplayName(), c.laws().level(law), MAX_LEVEL).withStyle(ChatFormatting.GOLD));
 		p.serverLevel().playSound(null, p.blockPosition(), SoundEvents.BEACON_POWER_SELECT, SoundSource.PLAYERS, 1.0f, 0.7f);
 		p.serverLevel().sendParticles(ParticleTypes.END_ROD, p.getX(), p.getY() + 1.0, p.getZ(), 40, 0.6, 0.9, 0.6, 0.08);
-		int rank = TwoPaths.higherRank(c, false);
-		Realm ahead = Realm.byIndex(rank / Stage.values().length + 1);
+		// The realm ahead on the higher of its qi paths and its body, named that path's way (a body's realms have their own names: BodyPath).
+		int qi = TwoPaths.higherRank(c, false), body = BodyPath.immortal(c) ? BodyPath.rank(c) : -1;
+		Realm ahead = Realm.byIndex(Math.max(qi, body) / Stage.values().length + 1);
 		if (ahead.isPastTrueImmortal() && c.laws().total() == needed(ahead)) {
-			p.sendSystemMessage(Component.translatable(ModLang.MSG_LAW_WAY_OPEN, ahead.getDisplayName()).withStyle(ChatFormatting.GOLD));
+			Component name = body > qi ? BodyPath.realmName(ahead) : ahead.getDisplayName();
+			p.sendSystemMessage(Component.translatable(ModLang.MSG_LAW_WAY_OPEN, name).withStyle(ChatFormatting.GOLD));
 		}
 		CultivationManager.sync(p);
 	}
@@ -186,6 +205,11 @@ public final class Laws {
 
 	/** The Methods tab's Laws page (C2S law_choose): one of the levels owed for a weathered Decay spent on {@code law}. */
 	public static void choose(ServerPlayer p, Law law) {
+		// Not a body's levels owed spent by the soul in it (Possession): they are its owner's to spend (CultivationMethods#practise).
+		if (Possession.inhabits(p.getUUID())) {
+			p.displayClientMessage(Component.translatable(ModLang.MSG_SOUL_BUSY), true);
+			return;
+		}
 		PlayerCultivation c = CultivationManager.get(p);
 		LawState s = c.laws();
 		if (law == null || s.choices() <= 0) return;

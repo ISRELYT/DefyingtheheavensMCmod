@@ -1,0 +1,43 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "minecraft:block/polished_blackstone",
+    "base": "minecraft:block/polished_blackstone",
+    "altar": "minecraft:block/dark_oak_planks",
+    "tablet": "minecraft:block/black_concrete",
+    "gold": "minecraft:block/gold_block",
+    "bronze": "defying-the-heavens:block/formation_core_bronze",
+    "candle": "minecraft:block/white_wool",
+    "incense": "minecraft:block/red_terracotta"
+  },
+  "elements": [
+    {"name": "platform", "from": [1, 0, 1], "to": [15, 3, 15],
+      "faces": {"down": {"texture": "#base", "cullface": "down"}, "up": {"texture": "#base"}, "north": {"texture": "#base"},
+        "south": {"texture": "#base"}, "west": {"texture": "#base"}, "east": {"texture": "#base"}}},
+    {"name": "altar", "from": [3, 3, 3], "to": [13, 6, 13],
+      "faces": {"up": {"texture": "#altar"}, "north": {"texture": "#altar"}, "south": {"texture": "#altar"}, "west": {"texture": "#altar"},
+        "east": {"texture": "#altar"}}},
+    {"name": "stand", "from": [4.5, 6, 6.5], "to": [11.5, 7, 9.5],
+      "faces": {"up": {"texture": "#gold"}, "north": {"texture": "#gold"}, "south": {"texture": "#gold"}, "west": {"texture": "#gold"},
+        "east": {"texture": "#gold"}}},
+    {"name": "tablet", "from": [5, 7, 7], "to": [11, 14, 9],
+      "faces": {"north": {"texture": "#tablet"}, "south": {"texture": "#tablet"}, "west": {"texture": "#tablet"}, "east": {"texture": "#tablet"}}},
+    {"name": "inscription", "from": [7.5, 8, 6.9], "to": [8.5, 13, 7],
+      "faces": {"north": {"texture": "#gold"}}},
+    {"name": "cap", "from": [4.5, 14, 6.5], "to": [11.5, 15, 9.5],
+      "faces": {"down": {"texture": "#gold"}, "up": {"texture": "#gold"}, "north": {"texture": "#gold"}, "south": {"texture": "#gold"},
+        "west": {"texture": "#gold"}, "east": {"texture": "#gold"}}},
+    {"name": "candle", "from": [3.5, 6, 3.5], "to": [4.5, 8.5, 4.5],
+      "faces": {"up": {"texture": "#candle"}, "north": {"texture": "#candle"}, "south": {"texture": "#candle"}, "west": {"texture": "#candle"},
+        "east": {"texture": "#candle"}}},
+    {"name": "candle", "from": [11.5, 6, 3.5], "to": [12.5, 8.5, 4.5],
+      "faces": {"up": {"texture": "#candle"}, "north": {"texture": "#candle"}, "south": {"texture": "#candle"}, "west": {"texture": "#candle"},
+        "east": {"texture": "#candle"}}},
+    {"name": "burner", "from": [6.5, 6, 3], "to": [9.5, 7.5, 5.5],
+      "faces": {"up": {"texture": "#bronze"}, "north": {"texture": "#bronze"}, "south": {"texture": "#bronze"}, "west": {"texture": "#bronze"},
+        "east": {"texture": "#bronze"}}},
+    {"name": "incense", "from": [7.75, 7.5, 4], "to": [8.25, 10, 4.5],
+      "faces": {"up": {"texture": "#incense"}, "north": {"texture": "#incense"}, "south": {"texture": "#incense"}, "west": {"texture": "#incense"},
+        "east": {"texture": "#incense"}}}
+  ]
+}

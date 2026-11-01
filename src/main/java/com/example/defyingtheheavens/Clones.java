@@ -330,6 +330,7 @@ public final class Clones {
 			place(next, p.serverLevel(), p.position(), p.getYRot());
 			next.put("Body", cloneBody);
 			next.putDouble("Qi", cloneQi);
+			if (tag.contains(CloneSeclusion.BANKED)) next.putDouble(CloneSeclusion.BANKED, tag.getDouble(CloneSeclusion.BANKED)); // what its seclusion gathered
 		}
 		own.setClone(next);
 		if (mainLevel == null) mainLevel = server.overworld(); // its world gone (a mod removed): back at least
@@ -346,6 +347,7 @@ public final class Clones {
 	private static void absorb(ServerPlayer p) {
 		PlayerCultivation own = CultivationManager.own(p);
 		CompoundTag tag = own.getClone();
+		double banked = tag.getDouble(CloneSeclusion.BANKED);
 		CompoundTag things;
 		double qi;
 		if (inClone(p)) {
@@ -368,6 +370,7 @@ public final class Clones {
 		level.sendParticles(ParticleTypes.END_ROD, p.getX(), p.getY() + 1.0, p.getZ(), 40, 0.4, 0.8, 0.4, 0.05);
 		level.playSound(null, p.blockPosition(), SoundEvents.ILLUSIONER_MIRROR_MOVE, SoundSource.PLAYERS, 1.0f, 0.6f);
 		p.displayClientMessage(Component.translatable(ModLang.MSG_CLONE_ABSORBED).withStyle(ChatFormatting.LIGHT_PURPLE), true);
+		CloneSeclusion.drawnIn(p, banked); // what its seclusion gathered, its maker's now
 	}
 
 	// --- Qi ---
@@ -425,6 +428,7 @@ public final class Clones {
 			drop(level, body.position(), tag.getCompound("Body"));
 			level.sendParticles(ParticleTypes.POOF, body.getX(), body.getY() + 1.0, body.getZ(), 30, 0.3, 0.6, 0.3, 0.05);
 			if (p != null) p.displayClientMessage(Component.translatable(ModLang.MSG_CLONE_SLAIN, REFORM_TICKS / 1200).withStyle(ChatFormatting.RED), true);
+			if (p != null) CloneSeclusion.slain(p, tag.getDouble(CloneSeclusion.BANKED)); // and what its seclusion gathered, lost with it
 			return;
 		}
 		// The main body: its player dies, the clone with them.
@@ -656,12 +660,12 @@ public final class Clones {
 		return id == null ? null : ResourceKey.create(Registries.DIMENSION, id);
 	}
 
-	private static ServerLevel levelOf(MinecraftServer server, CompoundTag tag) {
+	static ServerLevel levelOf(MinecraftServer server, CompoundTag tag) {
 		ResourceKey<Level> key = dimensionOf(tag);
 		return key == null ? null : server.getLevel(key);
 	}
 
-	private static Vec3 posOf(CompoundTag tag) {
+	static Vec3 posOf(CompoundTag tag) {
 		return new Vec3(tag.getDouble("X"), tag.getDouble("Y"), tag.getDouble("Z"));
 	}
 

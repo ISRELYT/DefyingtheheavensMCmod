@@ -21,6 +21,15 @@ import net.minecraft.world.level.block.state.BlockState;
 public class HeavenAltarBlockEntity extends BaseContainerBlockEntity {
 	public static final int SLOTS = 9;
 	private NonNullList<ItemStack> items = NonNullList.withSize(SLOTS, ItemStack.EMPTY);
+	/** The game day of the last Heaven-Petitioning Rite here (HeavenRites: one an altar a day), -1 for none yet. */
+	private long riteDay = -1;
+
+	public long riteDay() { return riteDay; }
+
+	public void setRiteDay(long day) {
+		riteDay = day;
+		setChanged();
+	}
 
 	public HeavenAltarBlockEntity(BlockPos pos, BlockState state) {
 		super(ModBlockEntities.HEAVEN_ALTAR, pos, state);
@@ -80,6 +89,7 @@ public class HeavenAltarBlockEntity extends BaseContainerBlockEntity {
 	protected void saveAdditional(CompoundTag tag) {
 		super.saveAdditional(tag);
 		ContainerHelper.saveAllItems(tag, items);
+		if (riteDay >= 0) tag.putLong("RiteDay", riteDay);
 	}
 
 	@Override
@@ -87,5 +97,6 @@ public class HeavenAltarBlockEntity extends BaseContainerBlockEntity {
 		super.load(tag);
 		items = NonNullList.withSize(SLOTS, ItemStack.EMPTY);
 		ContainerHelper.loadAllItems(tag, items);
+		riteDay = tag.contains("RiteDay") ? tag.getLong("RiteDay") : -1;
 	}
 }

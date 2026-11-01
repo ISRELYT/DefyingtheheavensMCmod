@@ -131,8 +131,19 @@ public class GhostCultivatorNpc extends CultivatorNpc implements Ghostly {
 	@Override
 	public boolean isAlly(Entity other) {
 		if (super.isAlly(other)) return true;
+		// A player Ghost King holding this retainer's palace is its king (Court of the Dead: CourtOfTheDead).
+		if (getRole() == Role.COURTIER && post != null && other instanceof net.minecraft.world.entity.player.Player player
+				&& level() instanceof ServerLevel level && player.getUUID().equals(GhostPalaces.kingOf(level, post, COURT_REACH))) return true;
 		return getRole().isCourt() && post != null && other instanceof GhostCultivatorNpc ghost && ghost.getRole().isCourt()
 				&& ghost.post != null && ghost.post.closerThan(post, COURT_REACH);
+	}
+
+	/** Where it keeps its post (a king its throne, a retainer its place in the court), or null. */
+	public BlockPos post() { return post; }
+
+	/** Whether {@code throne} is the throne of the palace its post stands in (a court's own: within a court's reach). */
+	public boolean servesThrone(BlockPos throne) {
+		return getRole() == Role.COURTIER && post != null && post.closerThan(throne, COURT_REACH);
 	}
 
 	/** Which of the Gate's keepers it is, if any (synced, for its look: GhostlyRenderers). */

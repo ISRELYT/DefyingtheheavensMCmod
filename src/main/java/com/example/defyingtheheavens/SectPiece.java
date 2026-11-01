@@ -35,6 +35,9 @@ import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
 import net.minecraft.world.level.material.Fluids;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * One building of a sect (see {@link SectStructure}): the grounds themselves (grass, ways, footpaths, lanterns, trees and
  * bamboo, as SectLayout planned them), the gate, the torii on the side ways, the Formation plaza at the heart of the sect, the
@@ -88,6 +91,8 @@ public class SectPiece extends StructurePiece {
 	public static final ResourceLocation LIBRARY_LOOT = DefyingTheHeavens.id("chests/sect_library");
 	/** The master's own chests in the main hall: an elder's riches, and now and then a technique's manual (TechniqueManualItem). */
 	public static final ResourceLocation MASTER_HALL_LOOT = DefyingTheHeavens.id("chests/sect_master_hall");
+	/** A body sect's library (Sect#body): the library's own, with no heaven path's slips (the body's manuals go in by hand, {@link #chest}). */
+	public static final ResourceLocation BODY_LIBRARY_LOOT = DefyingTheHeavens.id("chests/body_sect_library");
 
 	/** How far a building's base may be filled down to meet the ground before it is left to stand on its own. */
 	private static final int MAX_FOUNDATION = 12;
@@ -100,6 +105,8 @@ public class SectPiece extends StructurePiece {
 	private final CompoundTag extra;
 	/** Whose it is: a sect of men's (HUMAN), or a demon clan's den, built in its race's way (SectPalette#ofRace, DenPieces). */
 	final Bloodline race;
+	/** A body sect's (Sect#body, set by its plan: SectStructure): its library and master's hall keep the body's manuals ({@link #chest}). */
+	boolean body;
 
 	public SectPiece(Kind kind, BoundingBox box, Direction orientation, long seed, Alignment.Faction faction, boolean upper, CompoundTag extra) {
 		this(kind, box, orientation, seed, faction, upper, extra, Bloodline.HUMAN);
@@ -131,6 +138,7 @@ public class SectPiece extends StructurePiece {
 		this.upper = tag.getBoolean("Upper");
 		this.extra = tag.getCompound("Extra");
 		this.race = tag.contains("Race") ? Bloodline.byId(tag.getString("Race")) : Bloodline.HUMAN;
+		this.body = tag.getBoolean("Body");
 	}
 
 	@Override
@@ -141,6 +149,7 @@ public class SectPiece extends StructurePiece {
 		tag.putBoolean("Upper", upper);
 		tag.put("Extra", extra);
 		if (race.isBeast()) tag.putString("Race", race.getId());
+		if (body) tag.putBoolean("Body", true);
 	}
 
 	public Kind kind() { return kind; }
@@ -362,7 +371,23 @@ public class SectPiece extends StructurePiece {
 		if (!blood.isEmpty() && level.getBlockEntity(pos) instanceof RandomizableContainerBlockEntity box) {
 			box.setItem(random.nextInt(box.getContainerSize()), blood);
 		}
-		RandomizableContainerBlockEntity.setLootTable(level, rand(x, z, y), pos, loot);
+		// A library's or a master's hall's: now and then a Method Manual of the methods this place keeps (MethodManualItem#kept: by its
+		// faction, a den's by its race), in a slot of its own, put in as the blood is. A body sect's keeps the body's manuals instead
+		// (MethodManualItem#keptBody: its library always, in place of the heaven path's slips, BODY_LIBRARY_LOOT).
+		boolean library = LIBRARY_LOOT.equals(loot), hall = MASTER_HALL_LOOT.equals(loot);
+		List<ItemStack> manuals = new ArrayList<>();
+		RandomSource manualRandom = rand(x, z, y + 211);
+		if (body && (library || hall)) manuals.addAll(MethodManualItem.keptBody(faction, upper, hall, manualRandom));
+		else if (library || hall) manuals.add(MethodManualItem.kept(faction, race, upper, hall, manualRandom));
+		if (level.getBlockEntity(pos) instanceof RandomizableContainerBlockEntity box) {
+			for (ItemStack manual : manuals) {
+				if (manual.isEmpty()) continue;
+				int slot = random.nextInt(box.getContainerSize());
+				for (int i = 0; i < box.getContainerSize() && !box.getItem(slot).isEmpty(); i++) slot = (slot + 1) % box.getContainerSize();
+				box.setItem(slot, manual);
+			}
+		}
+		RandomizableContainerBlockEntity.setLootTable(level, rand(x, z, y), pos, body && library ? BODY_LIBRARY_LOOT : loot);
 	}
 
 	/** A Spirit Pedestal showing {@code treasure}. */

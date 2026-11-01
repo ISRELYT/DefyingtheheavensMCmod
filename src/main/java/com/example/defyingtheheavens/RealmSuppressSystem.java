@@ -282,12 +282,16 @@ public final class RealmSuppressSystem {
 	private static boolean canBePressed(LivingEntity target, Entity suppressor, UUID leaving) {
 		if (!target.isAlive() || target.isRemoved() || target instanceof ArmorStand || target.getUUID().equals(leaving)) return false;
 		if (suppressor instanceof ServerPlayer player && released(player, target)) return false; // let up off (Release pressure)
-		if (target instanceof ServerPlayer player) return !player.isSpectator() && !player.isCreative() && !Incorporeal.untouchable(player);
+		// Nor one whose heart is diamond (BodyTechniques: Diamond Will) while it holds.
+		if (target instanceof ServerPlayer player) return !player.isSpectator() && !player.isCreative() && !Incorporeal.untouchable(player)
+				&& !BodyTechniques.unshaken(player);
 		// A player's body left sitting or standing (a projected soul's, a clone's or the main body's, an Inner Realm meditator's) isn't
 		// a mortal's to press: weighed as one, its health was halved, and its owner came back into it so (the sweep of 2026-10-23).
 		if (target instanceof SoulBodyEntity || target instanceof CloneBodyEntity || target instanceof InnerBodyEntity) return false;
 		// Map makers' invulnerable NPCs stay as they are, and a cultivator's own companions are spared.
 		if (target.isInvulnerable()) return false;
+		// A body cultivator's diamond heart too (BodyTechniques#npcAct).
+		if (BodyTechniques.unshaken(target)) return false;
 		return !(target instanceof OwnableEntity pet) || !suppressor.getUUID().equals(pet.getOwnerUUID());
 	}
 
@@ -295,7 +299,7 @@ public final class RealmSuppressSystem {
 	private static int rankOf(LivingEntity entity) {
 		if (entity instanceof ServerPlayer player) {
 			PlayerCultivation c = CultivationManager.get(player);
-			return c.isMortal() ? -1 : TwoPaths.weighedRank(c); // a player who hasn't begun cultivating is weighed as a mortal
+			return TwoPaths.weighedRank(c); // a mortal off the Body Path is weighed as a mortal, one on it by its body
 		}
 		if (entity instanceof CultivatorEntity npc && !npc.isMortal()) return PlayerCultivation.rank(npc.getCultivationRealm(), npc.getCultivationStage());
 		return -1;

@@ -465,6 +465,20 @@ public final class NpcLines {
 		talk("chat.road.commoner", "The harvest's good this year.", "Thank the heavens. And the immortals, for chasing off the beasts.");
 		talk("chat.road.commoner", "My son wants to become an immortal.", "Mine too.", "They'll grow out of it.", "Or they'll fly.");
 		talk("chat.road.ghost", "I met someone on the bridge who remembered their whole life.", "Lucky.", "They were weeping.", "...Lucky, still.");
+		// Body cultivators (BodyCultivators: the user's "Go, with body sects", 2026-11-01), who talk of the body's tempering where others
+		// talk of qi. The one who starts it is the body cultivator; the other answers as anyone would.
+		talk("chat.body.righteous", "%1$s, I carried the stones up the mountain twice this morning.", "And your legs?", "Iron. Almost.");
+		talk("chat.body.righteous", "The medicinal bath stung like fire today.", "Then the herbs were good.", "Or my skin is still too soft.");
+		talk("chat.body.righteous", "No qi, no flying sword. Only this body.", "And it has never failed you, %1$s.", "Not yet. I temper it so it never will.");
+		talk("chat.body.righteous", "I broke a training post with my bare hand.", "The steward will make you carve a new one.", "Worth it.");
+		talk("chat.body.neutral", "Lift the weights with me, %1$s?", "My arms are still dead from yesterday.", "Good. Dead arms grow back stronger.");
+		talk("chat.body.neutral", "My bones ached all night.", "Growing pains?", "Tempering pains. Same thing, for us.");
+		talk("chat.body.neutral", "They say the qi cultivators can fly.", "Let them. We can still punch them out of the sky.", "Only if they come down.");
+		talk("chat.body.neutral", "Ate a whole boar today.", "You'll need it. The flesh burns what you give it.");
+		talk("chat.body.devilish", "I bathed in a demon beast's blood last night, %1$s.", "And?", "It burned. I want more.");
+		talk("chat.body.devilish", "Hit me. Hard as you can.", "...", "Ha! I barely felt it.");
+		talk("chat.body.devilish", "Qi is for cowards who won't be struck.", "And the body?", "The body is the weapon.");
+		talk("chat.body.devilish", "My skin turned to iron in the fight today.", "Did it hurt them?", "It broke their sword. Then I broke them.");
 
 		// --- Practice (%s: the other's name; for those watching, %1$s and %2$s: the two sparring) ---
 		lines("spar.begin.righteous", "%s, a friendly bout?", "Shall we test our swords, %s?");

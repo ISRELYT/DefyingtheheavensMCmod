@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "JDJ",
+    "HFH",
+    "GGG"
+  ],
+  "key": {
+    "J": {"item": "defying-the-heavens:jade_stone"},
+    "D": {"item": "minecraft:diamond"},
+    "H": {"item": "defying-the-heavens:high_spirit_stone"},
+    "F": {"item": "defying-the-heavens:mid_qi_gathering_formation"},
+    "G": {"item": "minecraft:gold_block"}
+  },
+  "result": {"item": "defying-the-heavens:high_qi_gathering_formation"}
+}

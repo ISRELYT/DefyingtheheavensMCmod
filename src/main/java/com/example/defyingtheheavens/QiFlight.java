@@ -56,6 +56,13 @@ public final class QiFlight {
 	private static final Map<UUID, Boolean> REALM_ALLOWED_SWORD = new HashMap<>();
 	/** The dimension each online player was in last tick: a change means their client's flight must be told again (see {@link #tick}). */
 	private static final Map<UUID, net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>> DIMENSION = new HashMap<>();
+	/** Players whose flight this tick is the body's Cloud-Treading Steps (BodyTechniques#treads): no qi, its vigor paid by the second. */
+	private static final Set<UUID> TREADING = new HashSet<>();
+
+	/** Whether {@code p} is in the air on Cloud-Treading Steps now (its vigor burns: BodyTechniques#second; the clouds under its strides). */
+	public static boolean treading(ServerPlayer p) {
+		return TREADING.contains(p.getUUID()) && p.getAbilities().flying;
+	}
 
 	/**
 	 * Called every tick by {@link QiManager} for each living player, before the pool gathers.
@@ -73,6 +80,7 @@ public final class QiFlight {
 	/** {@link #tick}'s flight: granted or not, at what speed, and what it costs a second at Qi Flight's own rate. */
 	private static double fly(ServerPlayer p, PlayerCultivation c) {
 		UUID id = p.getUUID();
+		TREADING.remove(id); // set again below if it is the body's flight this tick
 		// Carried into another dimension by a teleport (ServerPlayer#teleportTo: the rifts, the Soul River, the Netherworld's ways, a
 		// ghost's return to the living world), the client rebuilds its player with no right to fly, and nothing tells it otherwise
 		// (vanilla's portals do, its teleports don't): the flight owned here (mayfly) would stay refused until something about it
@@ -164,6 +172,15 @@ public final class QiFlight {
 		// At most one of these is switched on (Ability#exclusiveWith); a rider without a sword in hand has no flight.
 		boolean onSword = SwordFlight.canRide(p, c);
 		boolean onQi = !onSword && c.canFlyOnQi() && c.isAbilityEnabled(Ability.QI_FLIGHT);
+		// The Body Path's Cloud-Treading Steps (BodyTechniques#treads, 2026-11-01): the body striding on the air where no qi or sword carries it
+		// (the Spatial Gap, the Jade Firmament's islands, the Immortal Realm's clouds), at its own pace, on vigor (paid by the second).
+		if (!onQi && !onSword && !carried && BodyTechniques.treads(c)) {
+			SwordFlight.update(p, false);
+			EXHAUSTED.remove(id);
+			setFlight(p, true, BodyTechniques.TREAD_SPEED);
+			TREADING.add(id);
+			return 0;
+		}
 		// Neither (switched off on the Abilities tab, no sword in hand): no flight, and one in progress ends.
 		if (!onQi && !onSword || carried) {
 			land(p);
@@ -323,7 +340,7 @@ public final class QiFlight {
 	 * still known after a relog.
 	 */
 	private static boolean isOurs(UUID id, float speed) {
-		if (speed == SwordFlight.SWORD_SPEED || speed == GHOST_SPEED || Float.valueOf(speed).equals(SPEED_SET.get(id))) return true;
+		if (speed == SwordFlight.SWORD_SPEED || speed == GHOST_SPEED || speed == BodyTechniques.TREAD_SPEED || Float.valueOf(speed).equals(SPEED_SET.get(id))) return true;
 		for (Realm realm : Realm.values()) {
 			for (Stage stage : Stage.values()) {
 				float flight = formerSpeed(realm, stage), space = AstralRealm.spaceSpeed(realm, stage);
@@ -377,6 +394,7 @@ public final class QiFlight {
 
 	public static void forget(UUID id) {
 		EXHAUSTED.remove(id);
+		TREADING.remove(id);
 		WEIGHED.remove(id);
 		SPEED_SET.remove(id);
 		REALM_ALLOWED.remove(id);

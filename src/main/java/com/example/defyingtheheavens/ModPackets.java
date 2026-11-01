@@ -180,6 +180,17 @@ public final class ModPackets {
 	public static final ResourceLocation PRACTISE_METHOD = new ResourceLocation(DefyingTheHeavens.MOD_ID, "practise_method");
 	/** C2S: practise this heaven method (its id): the one meditation cultivates (HeavenMethods#practise). */
 	public static final ResourceLocation PRACTISE_HEAVEN_METHOD = new ResourceLocation(DefyingTheHeavens.MOD_ID, "practise_heaven_method");
+	/** C2S: cultivate a path by this method (its id: CultivationMethods#practise, the path's stages in its realm the price of a switch). */
+	public static final ResourceLocation PRACTISE_CULTIVATION_METHOD = new ResourceLocation(DefyingTheHeavens.MOD_ID, "practise_cultivation_method");
+	/** C2S: mark one's territory where one stands (Territories#mark: Territorial Dominion). */
+	public static final ResourceLocation MARK_TERRITORY = new ResourceLocation(DefyingTheHeavens.MOD_ID, "mark_territory");
+	/** C2S: begin the Body Path (the Cultivation tab's button: BodyPath#begin). */
+	public static final ResourceLocation BEGIN_BODY_PATH = new ResourceLocation(DefyingTheHeavens.MOD_ID, "begin_body_path");
+	/**
+	 * C2S: the Circulate key pressed outside a surge: seize the nearest drifting soul (on the Soul River the Feast's, SoulRiverFeast#seize;
+	 * elsewhere a rift's, RiftHaunting#seize; the server judges whether either is practised).
+	 */
+	public static final ResourceLocation SEIZE_SOUL = new ResourceLocation(DefyingTheHeavens.MOD_ID, "seize_soul");
 	/** C2S: the Cultivation tab's switch: draw in the other qi, cultivating the other path (TwoPaths#switchPath). */
 	public static final ResourceLocation SWITCH_PATH = new ResourceLocation(DefyingTheHeavens.MOD_ID, "switch_path");
 	/** C2S: ready this spell for the cast key (its ordinal plus one; 0 clears it). */
@@ -378,6 +389,16 @@ public final class ModPackets {
 			HeavenMethod method = HeavenMethod.byId(buf.readUtf(64));
 			server.execute(() -> HeavenMethods.practise(player, method));
 		});
+		ServerPlayNetworking.registerGlobalReceiver(PRACTISE_CULTIVATION_METHOD, (server, player, handler, buf, responseSender) -> {
+			CultivationMethod method = CultivationMethod.byId(buf.readUtf(64));
+			server.execute(() -> CultivationMethods.practise(player, method));
+		});
+		ServerPlayNetworking.registerGlobalReceiver(MARK_TERRITORY, (server, player, handler, buf, responseSender) -> server.execute(() -> Territories.mark(player)));
+		ServerPlayNetworking.registerGlobalReceiver(BEGIN_BODY_PATH, (server, player, handler, buf, responseSender) -> server.execute(() -> BodyPath.begin(player)));
+		ServerPlayNetworking.registerGlobalReceiver(SEIZE_SOUL, (server, player, handler, buf, responseSender) -> server.execute(() -> {
+			if (SoulRiver.isTravelling(player.getUUID())) SoulRiverFeast.seize(player);
+			else RiftHaunting.seize(player);
+		}));
 		ServerPlayNetworking.registerGlobalReceiver(READY_SPELL, (server, player, handler, buf, responseSender) -> {
 			Spell spell = Spell.byIndex(buf.readVarInt() - 1);
 			server.execute(() -> Spells.ready(player, spell));
@@ -642,6 +663,11 @@ public final class ModPackets {
 		buf.writeUtf(own.epithet(), PlayerTitles.MAX_LENGTH * 4);
 		// The practice gathered in each craft (CraftMastery), their own, by the craft's place: the Stats tab's Crafts page.
 		for (CraftMastery.Craft craft : CraftMastery.Craft.values()) buf.writeVarInt(own.getMastery(craft));
+		// The Body Path (BodyPath): its rank (-1 not begun), its stage's tempering, whether it is drawn in, the vigor its techniques spend.
+		buf.writeVarInt(c.body().rank());
+		buf.writeDouble(c.body().cultivation());
+		buf.writeBoolean(c.body().cultivating());
+		buf.writeDouble(c.body().vigor());
 		ServerPlayNetworking.send(player, SYNC, buf);
 	}
 
@@ -712,6 +738,7 @@ public final class ModPackets {
 		buf.writeVarInt(npc.getFaction().ordinal());
 		buf.writeInt(regard);
 		buf.writeVarInt(intents);
+		buf.writeBoolean(npc.isBodyCultivator()); // its rank the Body Path's, named as that path names it
 		ServerPlayNetworking.send(player, TALK_OPEN, buf);
 	}
 
@@ -813,6 +840,17 @@ public final class ModPackets {
 		buf.writeBoolean(HeavenSpells.griefs(player.serverLevel()));
 		buf.writeBoolean(ModGameRules.mayChange(player));
 		buf.writeByte(s.lifeMode().ordinal());
+		// The methods (CultivationMethods): how far each manual's volumes reach, each path's choice, the blood's taint, the territory held.
+		PlayerCultivation c = CultivationManager.get(player);
+		buf.writeVarInt(c.methodsLearned().size());
+		for (CultivationMethod method : c.methodsLearned()) {
+			buf.writeUtf(method.getId());
+			buf.writeVarInt(c.methodReach(method));
+		}
+		for (TwoPaths.Path path : TwoPaths.Path.values()) buf.writeUtf(c.practising(path) == null ? "" : c.practising(path).getId());
+		buf.writeDouble(c.demon().taint());
+		buf.writeUtf(c.demon().territoryDimension());
+		buf.writeLong(c.demon().territory().asLong());
 		ServerPlayNetworking.send(player, METHODS, buf);
 	}
 

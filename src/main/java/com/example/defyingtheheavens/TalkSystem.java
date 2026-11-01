@@ -92,7 +92,9 @@ public final class TalkSystem {
 		/** The primordial beasts (PrimordialBeasts), asked of a Heavenly Venerable: the way to each, or when the next comes. Appended. */
 		BEASTS("beasts"),
 		/** A sect mission's sealed letter (SectMissions), handed to any of the people of the sect it is for. Appended. */
-		DELIVER("deliver");
+		DELIVER("deliver"),
+		/** The basics ({@link TalkSystem#teachBasics}): a first heaven scripture, from any living cultivator, to one who knows none. Appended. */
+		BASICS("basics");
 
 		private final String id;
 
@@ -112,9 +114,9 @@ public final class TalkSystem {
 
 	public static Standing standing(ServerPlayer player, CultivatorNpc npc) {
 		PlayerCultivation c = CultivationManager.get(player);
-		if (c.isMortal()) return npc.isMortal() ? Standing.PEER : Standing.MORTAL;
-		int theirs = npc.isMortal() ? -1 : npc.getDisplayedRealm().ordinal();
-		int gap = theirs - TwoPaths.wieldedRealm(c).ordinal(); // the player's body, either path (TwoPaths#wieldedRank)
+		// One with no qi is a mortal to a cultivator: but to a body cultivator, a body on the Body Path is what it is (NpcAddress#knowsTheBody).
+		if (c.isMortal() && !NpcAddress.knowsTheBody(player, npc)) return npc.isMortal() ? Standing.PEER : Standing.MORTAL;
+		int gap = -NpcAddress.gap(player, npc); // the player's body, either path (TwoPaths#wieldedRank)
 		if (gap >= 2) return Standing.FAR_ABOVE;
 		if (gap == 1) return Standing.ABOVE;
 		if (gap == 0) return Standing.PEER;
@@ -547,7 +549,7 @@ public final class TalkSystem {
 	/** Run down by someone two realms above it (a player), a cultivator that can't get away begs rather than fight. */
 	public static boolean wouldBeg(CultivatorNpc npc, ServerPlayer player) {
 		if (player.isCreative() || player.isSpectator() || npc.makesLastStand() || npc.isBegging() || npc.owesLife(player)) return false;
-		return CultivatorNpc.rankOf(player) >= Math.max(0, npc.sustainedRank()) + 2 * Stage.values().length;
+		return npc.weighs(player) >= Math.max(0, npc.sustainedRank()) + 2 * Stage.values().length;
 	}
 
 	/** It throws itself down before {@code player} and begs for its life; right-clicking it answers (Spare or Leave). */
@@ -605,6 +607,8 @@ public final class TalkSystem {
 				replies.add(gated(Topic.METHOD, regard >= (fellow ? Regard.COURTEOUS : Regard.WARM), fellow ? "courteous" : "warm"));
 			}
 		}
+		// The basics from any living cultivator, to one of the living who knows no heaven scripture yet (teachBasics).
+		if (offersBasics(player, npc)) replies.add(topic(Topic.BASICS));
 		// The Celestial Court, of one of its Heavenly Venerables: taken into it, or told where you stand in it.
 		if (npc.getTitle() == NpcTitle.HEAVENLY_VENERABLE && CelestialCourt.isCourtier(npc) && !GhostSystem.isGhost(player)) {
 			replies.add(topic(Topic.COURT));
@@ -712,7 +716,7 @@ public final class TalkSystem {
 	/** A realm or more above the player (as it shows itself). */
 	private static boolean isSenior(ServerPlayer player, CultivatorNpc npc) {
 		PlayerCultivation c = CultivationManager.get(player);
-		return !npc.isMortal() && (c.isMortal() || npc.getDisplayedRealm().ordinal() > TwoPaths.wieldedRealm(c).ordinal());
+		return !npc.isMortal() && (c.isMortal() && !NpcAddress.knowsTheBody(player, npc) || NpcAddress.gap(player, npc) < 0);
 	}
 
 	private static Reply topic(Topic topic) {
@@ -771,6 +775,7 @@ public final class TalkSystem {
 			case COURT -> CelestialCourt.ask(player, npc);
 			case BEASTS -> primordialBeasts(npc);
 			case DELIVER -> SectMissions.deliver(player, npc);
+			case BASICS -> teachBasics(player, npc);
 		};
 		if (answer == null) return; // the trial began: the talk is over (SparSystem#start closed it)
 		List<Reply> after = new ArrayList<>(replies(player, npc, standing));
@@ -797,14 +802,16 @@ public final class TalkSystem {
 					? Component.translatable(ModLang.talkLine("self.court.venerable"), name, npc.courtElement().getDisplayName(), npc.rankLabel())
 					: Component.translatable(ModLang.talkLine("self.court"), name, title, npc.rankLabel());
 		}
-		Component realm = PlayerCultivation.rankName(npc.getDisplayedRealm(), npc.getDisplayedStage());
+		Component realm = npc.rankLabel(); // a body cultivator's as the Body Path names it
 		Sect sect = npc.sect();
 		String path = npc.getFaction().getId();
+		// A body cultivator says what it is: no qi in it, the body its way (CultivatorNpc#isBodyCultivator); a rogue one, in its own words.
 		Component who = sect != null
 				? Component.translatable(ModLang.talkLine("self.sect", path), name, npc.getTitle().getDisplayName(sect.isClan(), sect.isHoly(), sect.isImmortal()), sect.name, realm)
-				: Component.translatable(ModLang.talkLine("self.rogue", path), name, realm);
-		MutableComponent answer = Component.empty().append(who).append(" ")
-				.append(Component.translatable(ModLang.talkLine("self.years"), npc.yearsCultivated()));
+				: Component.translatable(ModLang.talkLine(npc.isBodyCultivator() ? "self.body_rogue" : "self.rogue", path), name, realm);
+		MutableComponent answer = Component.empty().append(who).append(" ");
+		if (npc.isBodyCultivator() && sect != null) answer.append(Component.translatable(ModLang.talkLine("self.body", path))).append(" ");
+		answer.append(Component.translatable(ModLang.talkLine("self.years"), npc.yearsCultivated()));
 		// To a senior, a junior says how far along its stage it is.
 		if (freely) answer.append(" ").append(Component.translatable(ModLang.talkLine("self.progress"), npc.stageProgressPercent()));
 		// One of the dead says how it died (always the same: picked from who it is).
@@ -836,13 +843,16 @@ public final class TalkSystem {
 		int ghostPathBefore = GhostMethods.ghostRank(s);
 		int upTo = GhostMethods.understoodTo(s, method);
 		if (s.layer(method) < upTo) s.setMethod(method, upTo, 0);
-		GhostMethods.addCultivation(s, TEACHING_PROGRESS);
+		// No method, no gain: without Breathing's volume for the path's realm the guidance settles what is held, and carries nothing.
+		boolean gains = GhostMethods.canGain(CultivationManager.get(player));
+		if (gains) GhostMethods.addCultivation(s, TEACHING_PROGRESS);
 		GhostMethods.afterLayer(player, s);
 		GhostMethods.afterRank(player, ghostPathBefore);
 		CultivationManager.markDirty(player.server);
 		Spells.sync(player);
 		NetherworldManager.refresh(player);
 		player.level().playSound(null, player.blockPosition(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.0f, 0.7f);
+		if (!gains) return Component.translatable(ModLang.TALK_TEACH_NO_VOLUME, method.getDisplayName());
 		return Component.translatable(ModLang.TALK_TEACH_PROGRESS, method.getDisplayName(), (int) (TEACHING_PROGRESS / 60));
 	}
 
@@ -870,7 +880,9 @@ public final class TalkSystem {
 		}
 		int upTo = HeavenMethods.understoodTo(c, method);
 		if (s.layer(method) < upTo) s.setMethod(method, upTo, 0);
-		boolean advanced = c.addCultivation(HeavenMethods.teachingProgress(c));
+		// No method, no gain: without Circulation's volume for the realm the guidance settles what is held, and carries nothing.
+		boolean gains = HeavenMethods.canGain(c);
+		boolean advanced = gains && c.addCultivation(HeavenMethods.teachingProgress(c));
 		CultivationManager.refresh(player);
 		if (advanced) {
 			player.displayClientMessage(Component.translatable(ModLang.MSG_STAGE_UP, c.getRealm().getDisplayName(), c.getStage().getDisplayName()), true);
@@ -878,7 +890,36 @@ public final class TalkSystem {
 		}
 		HeavenMethods.afterLayer(player);
 		player.level().playSound(null, player.blockPosition(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.0f, 1.0f);
+		if (!gains) return Component.translatable(ModLang.TALK_TEACH_NO_VOLUME, method.getDisplayName());
 		return Component.translatable(ModLang.TALK_TEACH_HEAVEN_PROGRESS, method.getDisplayName(), (int) (HeavenMethods.TEACHING_SECONDS / 60));
+	}
+
+	/**
+	 * Whether {@code npc} offers {@code player} the basics ({@link #teachBasics}): any living cultivator (one with a heaven method of its
+	 * own: CultivatorNpc#heavenMethod), to one of the living whose meridians are open and who knows no heaven scripture yet.
+	 */
+	private static boolean offersBasics(ServerPlayer player, CultivatorNpc npc) {
+		PlayerCultivation c = CultivationManager.get(player);
+		return npc.heavenMethod() != null && !GhostSystem.isGhost(player) && HeavenMethods.canLearn(c) && !c.heaven().knowsAny();
+	}
+
+	/**
+	 * The basics (the user's overhaul, 2026-10-31: a first method on every path, guaranteed): any living cultivator teaches one who
+	 * knows no heaven scripture the Qi Refining scripture of its own element, Qi Circulation's first volume in it; where the learner's roots
+	 * can't read that element (Physique), the first element they can. Free, and no day's guidance spent: a beginner is no burden.
+	 */
+	static Component teachBasics(ServerPlayer player, CultivatorNpc npc) {
+		PlayerCultivation c = CultivationManager.get(player);
+		Component refusal = HeavenMethods.refusal(c);
+		if (refusal != null) return refusal;
+		HeavenMethod own = npc.heavenMethod();
+		QiElement element = own != null && c.rootsAllow(own.element()) ? own.element() : null;
+		for (QiElement root : QiElement.five()) if (element == null && c.rootsAllow(root)) element = root;
+		if (element == null) return line("guidance.again", npc);
+		HeavenMethod basics = HeavenMethod.of(element, Realm.QI_REFINING);
+		if (!HeavenMethods.learn(player, basics)) return line("guidance.again", npc);
+		player.level().playSound(null, player.blockPosition(), SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.PLAYERS, 1.0f, 1.2f);
+		return Component.translatable(ModLang.TALK_TEACH_BASICS, basics.getDisplayName(), element.getDisplayName());
 	}
 
 	private static Component aboutSect(CultivatorNpc npc) {
@@ -890,7 +931,9 @@ public final class TalkSystem {
 		Component about;
 		if (master == null) about = Component.translatable(ModLang.talkLine("sect.no_master"), sect.name, count, path);
 		else if (master.id.equals(npc.getUUID())) about = Component.translatable(ModLang.talkLine("sect.self_master"), sect.name, count, path);
-		else about = Component.translatable(ModLang.talkLine("sect"), sect.name, count, path, NpcNames.of(master.id), rankName(master.rank));
+		else about = Component.translatable(ModLang.talkLine("sect"), sect.name, count, path, NpcNames.of(master.id), rankName(sect, master.rank));
+		// A body sect says what it is: the body tempered there, not qi (Sect#body).
+		if (sect.body) about = Component.empty().append(about).append(" ").append(Component.translatable(ModLang.talkLine("sect.body")));
 		// Its mission board (SectMissions), set up on its plaza.
 		if (sect.board != null) about = Component.empty().append(about).append(" ").append(Component.translatable(ModLang.talkLine("sect.board")));
 		// And the enemies of its path nearest to it.
@@ -910,7 +953,7 @@ public final class TalkSystem {
 			if ((member.title == NpcTitle.GRAND_ELDER || member.title == NpcTitle.ELDER) && !member.id.equals(npc.getUUID())) {
 				Component named = Component.translatable(ModLang.TALK_TITLED, member.title.getDisplayName(), NpcNames.of(member.id));
 				// A junior also says how strong each is.
-				elders.add(freely ? Component.translatable(ModLang.TALK_AT_REALM, named, rankName(member.rank)) : named);
+				elders.add(freely ? Component.translatable(ModLang.TALK_AT_REALM, named, rankName(sect, member.rank)) : named);
 			}
 		}
 		Component answer;
@@ -1022,7 +1065,7 @@ public final class TalkSystem {
 			return terms;
 		}
 		boolean stake = !SparSystem.stakeInHand(player).isEmpty();
-		boolean stronger = npc.sustainedRank() > CultivatorNpc.rankOf(player);
+		boolean stronger = npc.sustainedRank() > npc.weighs(player);
 		terms.add(term(SparSystem.Terms.FRIENDLY, true, null));
 		if (SparSystem.beneath(player, npc)) terms.add(term(SparSystem.Terms.WAGER, false, Component.translatable(ModLang.SPAR_FRIENDLY_ONLY)));
 		else terms.add(term(SparSystem.Terms.WAGER, stake, stake ? null : Component.translatable(ModLang.SPAR_HOLD_STAKE)));
@@ -1063,6 +1106,11 @@ public final class TalkSystem {
 
 	private static Component rankName(int rank) {
 		return rank < 0 ? Component.translatable(ModLang.TALK_MORTAL) : PlayerCultivation.rankName(CultivatorNpc.realmOf(rank), CultivatorNpc.stageOf(rank));
+	}
+
+	/** A member of {@code sect}'s rank: a body sect's as the Body Path names it (Sect#body). */
+	private static Component rankName(Sect sect, int rank) {
+		return sect.body && rank >= 0 ? BodyPath.rankName(rank) : rankName(rank);
 	}
 
 	/** "A, B and C". */

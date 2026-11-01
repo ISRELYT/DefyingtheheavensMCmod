@@ -1,0 +1,40 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "minecraft:block/smooth_stone",
+    "base": "minecraft:block/smooth_stone",
+    "altar": "minecraft:block/quartz_block_bottom",
+    "jade": "defying-the-heavens:block/jade_stone",
+    "gold": "minecraft:block/gold_block",
+    "bronze": "defying-the-heavens:block/formation_core_bronze",
+    "incense": "minecraft:block/red_terracotta"
+  },
+  "elements": [
+    {"name": "platform", "from": [1, 0, 1], "to": [15, 3, 15],
+      "faces": {"down": {"texture": "#base", "cullface": "down"}, "up": {"texture": "#base"}, "north": {"texture": "#base"},
+        "south": {"texture": "#base"}, "west": {"texture": "#base"}, "east": {"texture": "#base"}}},
+    {"name": "altar", "from": [3, 3, 3], "to": [13, 6, 13],
+      "faces": {"up": {"texture": "#altar"}, "north": {"texture": "#altar"}, "south": {"texture": "#altar"}, "west": {"texture": "#altar"},
+        "east": {"texture": "#altar"}}},
+    {"name": "gold band", "from": [2.75, 5, 2.75], "to": [13.25, 5.5, 13.25],
+      "faces": {"north": {"texture": "#gold"}, "south": {"texture": "#gold"}, "west": {"texture": "#gold"}, "east": {"texture": "#gold"}}},
+    {"name": "burner", "from": [6.5, 6, 3], "to": [9.5, 7.5, 5.5],
+      "faces": {"up": {"texture": "#bronze"}, "north": {"texture": "#bronze"}, "south": {"texture": "#bronze"}, "west": {"texture": "#bronze"},
+        "east": {"texture": "#bronze"}}},
+    {"name": "incense", "from": [7.75, 7.5, 4], "to": [8.25, 10, 4.5],
+      "faces": {"up": {"texture": "#incense"}, "north": {"texture": "#incense"}, "south": {"texture": "#incense"}, "west": {"texture": "#incense"},
+        "east": {"texture": "#incense"}}},
+    {"name": "robe", "from": [6, 6, 7], "to": [10, 11, 11],
+      "faces": {"up": {"texture": "#jade"}, "north": {"texture": "#jade"}, "south": {"texture": "#jade"}, "west": {"texture": "#jade"},
+        "east": {"texture": "#jade"}}},
+    {"name": "sleeves", "from": [5, 8.5, 7.5], "to": [11, 10.5, 10.5],
+      "faces": {"down": {"texture": "#jade"}, "up": {"texture": "#jade"}, "north": {"texture": "#jade"}, "south": {"texture": "#jade"},
+        "west": {"texture": "#jade"}, "east": {"texture": "#jade"}}},
+    {"name": "head", "from": [6.75, 11, 7.75], "to": [9.25, 13.5, 10.25],
+      "faces": {"up": {"texture": "#jade"}, "north": {"texture": "#jade"}, "south": {"texture": "#jade"}, "west": {"texture": "#jade"},
+        "east": {"texture": "#jade"}}},
+    {"name": "topknot", "from": [7.5, 13.5, 8.5], "to": [8.5, 14.5, 9.5],
+      "faces": {"up": {"texture": "#gold"}, "north": {"texture": "#gold"}, "south": {"texture": "#gold"}, "west": {"texture": "#gold"},
+        "east": {"texture": "#gold"}}}
+  ]
+}

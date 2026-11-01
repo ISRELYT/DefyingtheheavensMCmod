@@ -58,6 +58,7 @@ final class DemonBeastGoals {
 		Goal signature = signature(beast, kind.signature);
 		if (signature != null) goals.addGoal(1, signature);
 		if (kind.moves != BeastKind.Moves.FLYING) goals.addGoal(2, new MeleeAttackGoal(beast, 1.2, false));
+		goals.addGoal(3, new SpiritBonds.FollowGoal(beast)); // bound (Spirit Beast Bond): keeping by its owner
 		if (kind.isElder()) goals.addGoal(4, new MoveTowardsRestrictionGoal(beast, 1.0));
 		switch (kind.moves) {
 			case FLYING -> goals.addGoal(5, new WaterAvoidingRandomFlyingGoal(beast, 1.0));
@@ -67,6 +68,7 @@ final class DemonBeastGoals {
 		}
 		goals.addGoal(6, new LookAtPlayerGoal(beast, Player.class, 8.0f));
 		goals.addGoal(7, new RandomLookAroundGoal(beast));
+		targets.addGoal(0, new SpiritBonds.DefendGoal(beast)); // bound: its owner's foes first
 		targets.addGoal(1, new HurtByTargetGoal(beast));
 		targets.addGoal(2, new NearestAttackableTargetGoal<>(beast, Player.class, 10, true, false, t -> near(beast, t) && beast.hunts(t)));
 		targets.addGoal(3, new NearestAttackableTargetGoal<>(beast, CultivatorNpc.class, 10, true, false, t -> near(beast, t) && beast.hunts(t)));

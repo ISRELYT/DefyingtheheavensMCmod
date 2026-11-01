@@ -202,15 +202,17 @@ public class NewRealmsGameTests implements FabricGameTest {
 		for (int layer = 1; layer <= MethodLayers.layers(Realm.TRUE_IMMORTAL); layer++) {
 			helper.assertTrue(MethodLayers.cost(layer) > 0 && HeavenMethods.layerCost(layer) > 0, "Layer " + layer + " has its cost");
 		}
-		// The gate: Dao Integration's way wants a method of it; Four Axis's carries no further.
+		// The volumes (the methods overhaul, 2026-10-31): Dao Integration gathers with a scripture of it; Four Axis's carries none there,
+		// nor of Four Axis itself (the axes fill it). The way into it is open either way.
 		PlayerCultivation c = new PlayerCultivation();
 		c.awaken(0);
 		c.setState(Realm.FOUR_AXIS, Stage.GRAND_PERFECTION, 0);
 		c.heaven().setMethod(HeavenMethod.FIRE_FOUR_AXIS, HeavenMethod.FIRE_FOUR_AXIS.layers(), 0);
-		helper.assertTrue(!HeavenMethods.opensWay(c, Realm.DAO_INTEGRATION), "A Four Axis method opens no way into Dao Integration");
+		helper.assertTrue(!HeavenMethods.hasVolume(c, Realm.DAO_INTEGRATION) && !HeavenMethods.hasVolume(c, Realm.FOUR_AXIS) && HeavenMethods.hasVolume(c, Realm.HEAVENLY_BEING)
+				&& HeavenMethods.opensWay(c, Realm.DAO_INTEGRATION), "A Four Axis scripture carries volumes to Heavenly Being: none of Four Axis, none of Dao Integration");
 		c.heaven().setMethod(HeavenMethod.WATER_DAO_INTEGRATION, 1, 0);
-		helper.assertTrue(HeavenMethods.opensWay(c, Realm.DAO_INTEGRATION) && !HeavenMethods.opensWay(c, Realm.VOID_SHATTERING)
-				&& HeavenMethods.deepestRealm(c.heaven()) == Realm.DAO_INTEGRATION, "...a Dao Integration method does, and no further");
+		helper.assertTrue(HeavenMethods.hasVolume(c, Realm.DAO_INTEGRATION) && !HeavenMethods.hasVolume(c, Realm.VOID_SHATTERING)
+				&& HeavenMethods.deepestRealm(c.heaven()) == Realm.DAO_INTEGRATION, "...a Dao Integration scripture carries its own, and no further");
 		// The ghost path to the last realm's Grand Perfection (Heavenly Lord's since phase 3), as the heaven path's.
 		NetherworldState s = c.netherworld();
 		GhostMethods.setPath(s, PlayerCultivation.LAST_RANK);

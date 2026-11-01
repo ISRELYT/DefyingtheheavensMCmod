@@ -18,18 +18,22 @@ import java.util.UUID;
  * one's ordinary realm neither opens a ghost method nor speeds it. Since 2026-10-19 (the user's ask) it is cultivated as the
  * heaven path is: <b>its own bar</b> ({@link #ghostRank}, NetherworldState#pathRank), filled by meditating on ghostly qi, its
  * stages stepping on by themselves; the methods ride on it as the heaven methods ride on the heaven path's. It begins (at Qi
- * Refining Early) with the first foundation learned, or for one of the dead with its first meditation on ghostly qi, method or
- * none ({@link #begin}: the user's ask, 2026-10-19), and stays begun when it is born again. A meditation draws in one qi or the
- * other (NetherworldState#cultivatingGhost, the Cultivation tab's switch), so the two paths are never cultivated at once; the
- * dead draw in only ghostly qi.
+ * Refining Early) with the first foundation learned (the dead are taught the first at the Ghost Gate: {@link #teachTheDead}), and
+ * stays begun when it is born again. A meditation draws in one qi or the other (NetherworldState#cultivatingGhost, the Cultivation
+ * tab's switch), so the two paths are never cultivated at once; the dead draw in only ghostly qi.
+ * <p>
+ * <b>Method and Art</b> (the user's overhaul, 2026-10-31). The ghost path's orthodox method is <b>Netherworld Breathing</b>; each
+ * foundation (GhostMethod#isFoundation) carries its volumes from Qi Refining up to its own realm ({@link #hasVolume}) and teaches its
+ * own spells, a volume of the Netherworld Scripture. Without Breathing's volume for the path's realm it gathers nothing
+ * ({@link #ratePerSecond}); it may still break through (only the Laws hold one back, past True Immortal), and gathers nothing in the
+ * new realm until a foundation of it is found. At Four Axis the axes are the method (FourAxis#fillBars).
  * <p>
  * <b>The rate.</b> Meditating wherever ghostly qi flows, the bar fills at {@link #BASE_RATE} (a second a second, for a ghost
  * path of Nascent Soul, living, in a Soul Sand Valley) x the density / {@link GhostQi#SOUL_SAND_VALLEY} (so x10 in the Netherworld,
  * x12 on the Nine Nether Peaks, x0.5 in the rest of the Nether, x0.25 in the Overworld) x the ghost path's factor
  * ({@link #realmFactor}: -10% a realm below Nascent Soul, +10% above) x Qi Harmony x a Yin Gathering Pill x {@link #GHOST_FACTOR}
- * for the dead (made of yin) x {@link #STELE_BONUS} by a stele of the method practised x a possessor's guidance (Possession);
- * with no foundation known, x {@link #NO_METHOD_FACTOR}, as the heaven path without a method; x Insight (StatPoints#cultivationFactor,
- * every path's).
+ * for the dead (made of yin) x {@link #STELE_BONUS} by a stele of the method practised x a possessor's guidance (Possession) x
+ * Insight (StatPoints#cultivationFactor, every path's); with no Breathing volume for the path's realm, nothing.
  * <p>
  * <b>The bar.</b> Every stage takes longer than the one before, as on the heaven path, and by the same steps (the user's ask,
  * 2026-10-19): each realm 1.6 times the one before ({@link #REALM_TIME_STEP}, the heaven path's eight times the cultivation for
@@ -38,8 +42,8 @@ import java.util.UUID;
  * by themselves, but for the bottlenecks: the <b>ghost path's tribulation</b> at every Grand Perfection and at every stage from
  * Nascent Soul on (TribulationManager, the Netherworld's own: the user's ask, 2026-10-19), as on the heaven path.
  * <p>
- * <b>The gate.</b> Breaking into a ghost realm wants a foundation of that realm or deeper known ({@link #opensWay}): the Breathing
- * Art carries the path no further than Qi Refining's Grand Perfection, and only a deeper foundation, found, opens the way on.
+ * <b>The volumes.</b> The Breathing Art carries the path no further than Qi Refining: broken through into Foundation Building, it
+ * gathers nothing there until a deeper foundation is found ({@link #hasVolume}).
  * <p>
  * <b>The methods are understood as far as the path has come</b> ({@link #understoodTo}): a foundation to the layer standing for the
  * stage (its realm's nine, as MethodLayers lays them out), the fire and the steps three layers a ghost realm (all nine from Core
@@ -64,8 +68,6 @@ public final class GhostMethods {
 	public static final double STELE_BONUS = 1.25;
 	public static final double STELE_LEARN_RADIUS = 4, STELE_BONUS_RADIUS = 8;
 	public static final double STELE_LEARN_SECONDS = 15;
-	/** The ghost path cultivated with no foundation known (one of the dead, or one born again who began it so): the heaven path's pace without a method. */
-	public static final double NO_METHOD_FACTOR = HeavenMethods.NO_METHOD_FACTOR;
 	/** A new stage's layers settle in over this share of their own cost, gathered on the ghost path (as the heaven methods'). */
 	public static final double SETTLE_SHARE = 0.5;
 	/** Each layer of Wandering Soul Steps quickens a ghost this much; each of Ghost Fire Scripture strengthens its blows this much. */
@@ -144,6 +146,15 @@ public final class GhostMethods {
 		return deepest;
 	}
 
+	/** The deepest realm of the foundations {@code s} knows (each carries Breathing's chapters up to it), or null with none known. */
+	public static Realm foundationReach(NetherworldState s) {
+		Realm deepest = null;
+		for (GhostMethod method : s.knownMethods()) {
+			if (method.isFoundation() && (deepest == null || method.realm().ordinal() > deepest.ordinal())) deepest = method.realm();
+		}
+		return deepest;
+	}
+
 	/** The deepest layer of any foundation {@code s} knows: 0 if it knows none. */
 	public static int foundationDepth(NetherworldState s) {
 		GhostMethod deepest = deepestFoundation(s);
@@ -210,19 +221,37 @@ public final class GhostMethods {
 	}
 
 	/**
-	 * Whether {@code c}'s foundations open the ghost path's way into {@code realm}: one of it or deeper known. Qi Refining wants none;
-	 * the ladder past True Immortal, which no foundation carries, wants the Laws instead (Laws#opensWay, phase 3).
+	 * Whether the ghost path's way into {@code realm} is open: up to True Immortal, always (since the overhaul of 2026-10-31 no foundation
+	 * holds a breakthrough back: without one, the new realm only gathers nothing, {@link #hasVolume}); the ladder past it, which no
+	 * foundation carries, wants the Laws (Laws#opensWay, phase 3).
 	 */
 	public static boolean opensWay(PlayerCultivation c, Realm realm) {
-		if (realm == Realm.QI_REFINING) return true;
-		if (realm.isPastTrueImmortal()) return Laws.opensWay(c, realm);
+		return !realm.isPastTrueImmortal() || Laws.opensWay(c, realm);
+	}
+
+	/**
+	 * Whether {@code c} has Netherworld Breathing's volume for {@code realm}: a foundation of it or deeper known (each carries the chapters
+	 * from Qi Refining up to its own realm). Four Axis has none (its axes are the method there, FourAxis#fillBars); past True Immortal the
+	 * Laws carry the path, so there is nothing to have. A path not begun ({@code realm} null) has none.
+	 */
+	public static boolean hasVolume(PlayerCultivation c, Realm realm) {
+		if (realm == null || realm == Realm.FOUR_AXIS) return false;
+		if (realm.isPastTrueImmortal()) return true;
 		for (GhostMethod method : c.netherworld().knownMethods()) {
 			if (method.isFoundation() && method.realm().ordinal() >= realm.ordinal()) return true;
 		}
 		return false;
 	}
 
-	/** At Grand Perfection's bottleneck with no foundation known of the realm ahead: the breakthrough waits on finding one. */
+	/**
+	 * Whether {@code c}'s ghost path can gather where it stands: begun, not a mortal's, the method it practises holding its volume of its realm
+	 * (CultivationMethods#holdsVolume: Netherworld Breathing's by the foundations known).
+	 */
+	public static boolean canGain(PlayerCultivation c) {
+		return !c.isMortal() && CultivationMethods.holdsVolume(c, TwoPaths.Path.GHOST);
+	}
+
+	/** At Grand Perfection's bottleneck with the realm ahead past True Immortal and the Laws it wants not yet comprehended. */
 	public static boolean heldByMethod(PlayerCultivation c) {
 		NetherworldState s = c.netherworld();
 		int rank = ghostRank(s);
@@ -249,11 +278,16 @@ public final class GhostMethods {
 		return atBottleneck(c) && FourAxis.holds(c, ghostRank(c.netherworld()));
 	}
 
-	/** Why the ghost path's breakthrough waits on a foundation ({@link #heldByMethod}): one of the realm ahead is wanted (past True Immortal, the Laws). */
+	/**
+	 * What waits on what, at the ghost path's Grand Perfection: past True Immortal, the Laws a breakthrough wants ({@link #heldByMethod});
+	 * below it nothing holds the breakthrough, and this says the realm ahead will gather nothing until a foundation of it is found (Four
+	 * Axis: its axes fill it).
+	 */
 	public static Component gateLine(PlayerCultivation c) {
 		int rank = ghostRank(c.netherworld());
 		Realm ahead = Realm.byIndex(Math.min(Realm.values().length - 1, Math.max(0, rank) / Stage.values().length + 1));
 		if (ahead.isPastTrueImmortal()) return Laws.gateLine(c, ahead);
+		if (ahead == Realm.FOUR_AXIS) return Component.translatable(ModLang.METHOD_GATE_AXES);
 		return Component.translatable(ModLang.GHOST_GATE_NONE, ahead.getDisplayName());
 	}
 
@@ -436,29 +470,30 @@ public final class GhostMethods {
 	}
 
 	/**
-	 * The bar's gain a second at {@code density} (a Soul Sand Valley's the baseline, the Netherworld's ten times it), every factor but
-	 * harmony, pill, stele and a possessor's guidance (which the caller multiplies in).
+	 * What Netherworld Breathing draws in a second at {@code density} (a Soul Sand Valley's the baseline, the Netherworld's ten times it),
+	 * every factor but harmony, pill, stele and a possessor's guidance (which the caller multiplies in). It is the flow the methods' layers
+	 * settle on; the bar gains it only with Breathing's volume for the path's realm ({@link #canGain}, MeditationManager#ghostMethods).
 	 */
 	public static double ratePerSecond(PlayerCultivation c, double density) {
 		return BASE_RATE * density / GhostQi.SOUL_SAND_VALLEY * realmFactor(c) * (c.netherworld().ghost() ? GHOST_FACTOR : 1.0)
 				* c.physiqueGhostFactor() // a Ghost Devil Body's, a Fallen True Immortal's, a Yin Soul's, a Nine Yang's (Physique)
-				* (deepestFoundation(c.netherworld()) == null ? NO_METHOD_FACTOR : 1.0)
 				* StatPoints.cultivationFactor(c); // Insight, every path's alike
 	}
 
 	/**
-	 * One of the dead, meditating on ghostly qi with no ghost path yet, begins it (at Qi Refining Early) without a method, as the
-	 * living may the heaven path: it is told so, and the path stays its own if it is born again (MeditationManager#ghostMethods).
+	 * One of the dead with no foundation known (GhostSystem#become; or meditating, in a world saved before 2026-10-31, when the dead began
+	 * the path with none) is taught Netherworld Breathing's first volume, the breath every soul draws in below, so no ghost is left
+	 * without a method; the path begins with it (Qi Refining Early). Not a mortal's: its meridians are closed, alive or dead.
 	 */
-	static void begin(ServerPlayer player) {
-		NetherworldState s = CultivationManager.get(player).netherworld();
-		if (ghostRank(s) >= 0) return;
-		s.setPath(0, 0);
-		player.sendSystemMessage(Component.translatable(ModLang.MSG_GHOST_PATH_BEGINS, rankName(0)).withStyle(ChatFormatting.AQUA));
+	static void teachTheDead(ServerPlayer player) {
+		PlayerCultivation c = CultivationManager.get(player);
+		NetherworldState s = c.netherworld();
+		if (!s.ghost() || c.isMortal() || deepestFoundation(s) != null) return;
+		player.sendSystemMessage(Component.translatable(ModLang.MSG_GHOST_TAUGHT_BREATHING, GhostMethod.NETHERWORLD_BREATHING.getDisplayName())
+				.withStyle(ChatFormatting.AQUA));
 		player.playNotifySound(SoundEvents.SOUL_ESCAPE, SoundSource.PLAYERS, 1.0f, 0.8f);
-		CultivationManager.markDirty(player.server);
+		give(player, GhostMethod.NETHERWORLD_BREATHING);
 		CultivationManager.refresh(player);
-		Spells.sync(player); // the Cultivation tab's ghost column (ModPackets#sendMethods carries the path)
 	}
 
 	// --- Learning ---
@@ -507,6 +542,10 @@ public final class GhostMethods {
 		NetherworldState s = c.netherworld();
 		if (s.knows(method)) return;
 		int before = ghostRank(s);
+		// Its Breathing chapters carry the path further than any foundation known did.
+		Realm reachedBefore = foundationReach(s);
+		boolean reaches = method.isFoundation() && (reachedBefore == null
+				|| FourAxis.volumeReach(method.realm()).ordinal() > FourAxis.volumeReach(reachedBefore).ordinal());
 		if (method.isFoundation() && before < 0) s.setPath(0, 0); // the ghost path begins
 		// A Ghost Devil Body (Physique) finding a foundation of Core Formation or deeper leaps to its realm's Early.
 		if (method.isFoundation() && c.hasPhysique(Physique.GHOST_DEVIL_BODY) && method.realm().ordinal() >= Realm.CORE_FORMATION.ordinal()) {
@@ -522,6 +561,10 @@ public final class GhostMethods {
 		if (active == null || method.isFoundation() && active.isFoundation() && method.tier() > active.tier()) s.setActiveMethod(method);
 		player.sendSystemMessage((layer > 1 ? Component.translatable(ModLang.MSG_METHOD_LEARNED_AT, method.getDisplayName(), layer)
 				: Component.translatable(ModLang.MSG_METHOD_LEARNED, method.getDisplayName())).withStyle(ChatFormatting.AQUA));
+		if (reaches) {
+			player.sendSystemMessage(Component.translatable(ModLang.MSG_BREATHING_VOLUMES, FourAxis.volumeReach(method.realm()).getDisplayName())
+					.withStyle(ChatFormatting.AQUA));
+		}
 		player.playNotifySound(SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.PLAYERS, 1.0f, 0.7f);
 		afterLayer(player, s);
 		afterRank(player, before);

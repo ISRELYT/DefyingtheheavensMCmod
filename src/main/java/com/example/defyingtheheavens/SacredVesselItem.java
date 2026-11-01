@@ -2,8 +2,11 @@ package com.example.defyingtheheavens;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -16,7 +19,8 @@ import java.util.List;
  * A Sacred Vessel (2026-10-25): a relic of the ancients, found still on its altar in the Great Void (SacredRelicFeature), one for each
  * of the five elements: the Jianmu Bough Vase (wood), the Heaven Furnace Censer (fire), the Nine Provinces Ding (earth), the
  * Immortal-Forging Bell (metal) and the Sealed Ocean Gourd (water). Held in either hand it is a vessel of its element's law: its
- * holder's spells of that element strike {@link #STRENGTH} times as hard (HeavenSpells#strike), on top of what a Dao field gives.
+ * holder's arts of that element strike {@link #STRENGTH} times as hard (HeavenSpells#strike), on top of what a Dao field gives. Used
+ * sneaking by one practising Vessel Nurturing, its qi is poured in and drawn back refined (VesselNurturing).
  */
 public class SacredVesselItem extends Item {
 	/** What a vessel in hand makes its element's spells worth. */
@@ -45,9 +49,19 @@ public class SacredVesselItem extends Item {
 		return true; // a relic's sheen
 	}
 
+	/** Sneaking, Vessel Nurturing's qi poured in and drawn back refined (VesselNurturing: the server judges); else it is only held. */
+	@Override
+	public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+		ItemStack stack = player.getItemInHand(hand);
+		if (!player.isShiftKeyDown()) return InteractionResultHolder.pass(stack);
+		if (player instanceof ServerPlayer sp) return VesselNurturing.pour(sp, stack) ? InteractionResultHolder.consume(stack) : InteractionResultHolder.pass(stack);
+		return InteractionResultHolder.pass(stack);
+	}
+
 	@Override
 	public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
 		tooltip.add(Component.translatable(ModLang.SACRED_VESSEL_USE, element.getDisplayName(), Math.round((STRENGTH - 1) * 100)).withStyle(ChatFormatting.GOLD));
+		tooltip.add(Component.translatable(ModLang.SACRED_VESSEL_NURTURE).withStyle(ChatFormatting.DARK_AQUA));
 		tooltip.add(Component.translatable(ModLang.SACRED_VESSEL_LORE).withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
 	}
 }

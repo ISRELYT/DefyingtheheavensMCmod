@@ -315,10 +315,13 @@ public final class Possession {
 			record = npc.cultivation();
 			record.setAlignment(npc.getAlignment()); // its path is its own: what it is to the people it meets
 			knowOwnMethod(npc, record);
+			// A body cultivator's body has no qi in it: the soul in it lives it as a mortal on the Body Path at its rank (BodyCultivators#asBody).
+			if (npc.isBodyCultivator()) BodyCultivators.asBody(npc, record);
 			sect = npc.getSectId();
 		}
-		// A soul mighty enough forces a mortal body's meridians open as it goes in: theirs to keep (OPENS_MERIDIANS).
-		boolean opened = record.isMortal() && !record.hasShatteredMeridians() && soulRank(own) >= OPENS_MERIDIANS;
+		// A soul mighty enough forces a mortal body's meridians open as it goes in: theirs to keep (OPENS_MERIDIANS). Not a body cultivator's,
+		// whose way is the body's (it would have made it a Qi Refining disciple of qi, its realm lost).
+		boolean opened = (npc == null || !npc.isBodyCultivator()) && record.isMortal() && !record.hasShatteredMeridians() && soulRank(own) >= OPENS_MERIDIANS;
 		if (opened) {
 			record.awaken(0);
 			if (npc != null) npc.setRank(PlayerCultivation.rank(Realm.QI_REFINING, Stage.EARLY)); // its record is the one awoken
@@ -462,8 +465,11 @@ public final class Possession {
 					npc.setVacant(false);
 					// A stage its cultivation came to while borrowed is its own now, and its way into the next (setRank starts a new
 					// rank's afresh); and so is the path its deeds turned it to.
-					int rank = t.record.isMortal() ? CultivatorNpc.MORTAL : PlayerCultivation.rank(t.record.getRealm(), t.record.getStage());
-					double progress = t.record.getCultivation();
+					// A body cultivator's, the Body Path's (BodyCultivators#asBody).
+					boolean bodily = npc.isBodyCultivator();
+					int rank = bodily ? Math.min(BodyPath.LAST_RANK, Math.max(0, BodyPath.rank(t.record)))
+							: t.record.isMortal() ? CultivatorNpc.MORTAL : PlayerCultivation.rank(t.record.getRealm(), t.record.getStage());
+					double progress = bodily ? t.record.body().cultivation() : t.record.getCultivation();
 					if (rank != npc.getRank()) npc.setRank(rank, true); // what a player's soul cultivated, whatever room its world has (HighRealms)
 					if (rank >= 0) npc.cultivation().setState(npc.cultivation().getRealm(), npc.cultivation().getStage(), progress);
 					npc.setAlignment(t.record.getAlignment());
@@ -486,6 +492,7 @@ public final class Possession {
 		NetherworldManager.refresh(soul);
 		RealmSuppressSystem.refreshNow();
 		lookAll(soul, null);
+		BorrowedLife.left(soul); // what it drew off the body (Borrowed Life) settles in the soul, its own record again
 	}
 
 	/**

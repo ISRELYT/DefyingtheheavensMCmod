@@ -329,7 +329,10 @@ public final class ConsciousnessRenderer {
 			float x = (clip.x / clip.w * 0.5f + 0.5f) * width;
 			float y = (0.5f - clip.y / clip.w * 0.5f) * height;
 			if (x < -50 || x > width + 50 || y < -20 || y > height + 20) continue;
-			Component text = PlayerCultivation.rankName(sensed.realm(), sensed.stage());
+			// A body cultivator's realm as the Body Path names it (CultivatorNpc#isBodyCultivator: synced).
+			Component text = entity instanceof com.example.defyingtheheavens.CultivatorNpc npc && npc.isBodyCultivator()
+					? com.example.defyingtheheavens.BodyPath.rankName(PlayerCultivation.rank(sensed.realm(), sensed.stage()))
+					: PlayerCultivation.rankName(sensed.realm(), sensed.stage());
 			int textWidth = font.width(text);
 			int left = Math.round(x - textWidth / 2f);
 			int top = Math.round(y) - 20; // above the name tag

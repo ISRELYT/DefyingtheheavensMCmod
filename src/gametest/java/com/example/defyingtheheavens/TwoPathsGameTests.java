@@ -109,12 +109,15 @@ public class TwoPathsGameTests implements FabricGameTest {
 		helper.assertTrue(!s.cultivatingGhost(), "...and no turning to a ghost path not begun");
 		ghostPath(player, Realm.QI_REFINING, Stage.EARLY);
 		helper.assertTrue(TwoPaths.walksBoth(c) && !TwoPaths.cultivatesGhost(c), "On both paths, the heaven path's qi until switched");
+		c.heaven().setMethod(HeavenMethod.of(QiElement.FIRE, Realm.QI_REFINING), 2, 0); // a scripture to gather by (no method, no gain: 2026-10-31)
 		player.setOnGround(true);
 		MeditationManager.start(player);
 		helper.assertTrue(MeditationManager.isMeditating(player.getUUID()), "Sat down to meditate");
 		helper.runAfterDelay(60, () -> {
 			helper.assertTrue(c.getCultivation() > 0 && s.pathCultivation() == 0,
-					"Drawing in the heavens' qi, only the heaven path's bar fills (" + c.getCultivation() + ", " + s.pathCultivation() + ")");
+					"Drawing in the heavens' qi, only the heaven path's bar fills (" + c.getCultivation() + ", " + s.pathCultivation() + "; meditating "
+							+ MeditationManager.isMeditating(player.getUUID()) + ", gathers " + CultivationMethods.whyNoGain(player, c, TwoPaths.Path.HEAVEN)
+							+ ", the place's qi " + c.getPlaceQi() + ")");
 			double heaven = c.getCultivation();
 			TwoPaths.switchPath(player);
 			helper.assertTrue(TwoPaths.cultivatesGhost(c) && MeditationManager.isMeditating(player.getUUID()), "Switched, the meditation goes on");

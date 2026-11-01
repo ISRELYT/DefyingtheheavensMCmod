@@ -101,7 +101,9 @@ public final class Milestones {
 	static void sweep(ServerPlayer p) {
 		PlayerCultivation c = CultivationManager.own(p);
 		NetherworldState s = c.netherworld();
-		int rank = c.isMortal() ? -1 : TwoPaths.higherRank(c, false);
+		// The ladder's realms by the highest of one's paths, the Body Path's too (2026-11-01: a pure body cultivator was shut out of the Codex
+		// chapters these open, the worlds it now travels and the Laws and Decays it now meets).
+		int rank = Math.max(c.isMortal() ? -1 : TwoPaths.higherRank(c, false), s.ghost() ? -1 : BodyPath.rank(c));
 		for (Realm realm : Realm.values()) {
 			if (rank < PlayerCultivation.rank(realm, Stage.EARLY)) break;
 			award(p, realm(realm));

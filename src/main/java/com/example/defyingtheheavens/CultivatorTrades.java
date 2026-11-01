@@ -223,7 +223,19 @@ public final class CultivatorTrades {
 		if (heaven != null && heaven.realm().taughtInTheWorld() && (npc.getTitle().isElderOrAbove() || npc.getTitle() == NpcTitle.ROGUE)) {
 			goods.add(new Goods(JadeSlipItem.of(heaven), heavenSlipPrice(heaven), 1, npc.getTitle().isElderOrAbove() ? Regard.WARM : Regard.COURTEOUS));
 		}
+		// A body cultivator's, in its place: the manual of the body's way it walks (CultivatorNpc#bodyManual), on the same terms.
+		ItemStack manual = npc.bodyManual();
+		if (!manual.isEmpty() && (npc.getTitle().isElderOrAbove() || npc.getTitle() == NpcTitle.ROGUE)) {
+			goods.add(new Goods(manual, manualPrice(MethodManualItem.realm(manual)), 1, npc.getTitle().isElderOrAbove() ? Regard.WARM : Regard.COURTEOUS));
+		}
 		return goods;
+	}
+
+	/** A Method Manual's price (Low stones), as a slip's of its realm's ({@link #heavenSlipPrice}): sixty for a Qi Refining volume, three times again each realm deeper. */
+	public static int manualPrice(Realm realm) {
+		int price = GHOST_SLIP_PRICE;
+		for (int t = 0; t < realm.ordinal(); t++) price *= 3;
+		return price;
 	}
 
 	/**

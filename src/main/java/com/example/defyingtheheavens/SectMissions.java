@@ -302,9 +302,9 @@ public final class SectMissions {
 
 	// --- The postings ---
 
-	/** The rank a disciple's missions are measured by: theirs as cultivators weigh it (either path's). */
-	static int rankOf(ServerPlayer player) {
-		return Math.max(0, CultivatorNpc.rankOf(player));
+	/** The rank a disciple's missions are measured by: theirs as cultivators weigh it (either path's; a body sect's, their body's: SectMembership#strength). */
+	static int rankOf(ServerPlayer player, Sect sect) {
+		return Math.max(0, SectMembership.strength(sect, player));
 	}
 
 	/** {@code d}'s postings on {@code sect}'s board: put up afresh each game day (the missions they have taken stay theirs). */
@@ -314,12 +314,12 @@ public final class SectMissions {
 		if (d.postedDay != today) {
 			d.postedDay = today;
 			d.postings.clear();
-			if (level != null) d.postings.addAll(post(level, sect, d, rankOf(player), player.getRandom()));
+			if (level != null) d.postings.addAll(post(level, sect, d, rankOf(player, sect), player.getRandom()));
 			SectManager.dirty(player.server);
 		}
 		// A secret realm near the sect stirring or standing open: its posting goes up too, the moment it stirs (not the day after).
 		boolean realmPosted = d.postings.stream().anyMatch(SectMissions::forSecretRealm) || d.taken.stream().anyMatch(SectMissions::forSecretRealm);
-		Mission realm = realmPosted || level == null ? null : secretRealmPosting(level, sect, d, rankOf(player));
+		Mission realm = realmPosted || level == null ? null : secretRealmPosting(level, sect, d, rankOf(player, sect));
 		if (realm != null) {
 			d.postings.add(realm);
 			SectManager.dirty(player.server);

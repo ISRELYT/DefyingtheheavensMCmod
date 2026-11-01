@@ -170,6 +170,8 @@ public final class Regard {
 	 * race {@link #OWN_BLOOD}. A man's regard minds no one's blood.
 	 */
 	public static final int WARY_OF_MEN = -20, DEMON_KIN = 10, OWN_BLOOD = 20;
+	/** A body cultivator's warmth to one who walks the Body Path too (CultivatorNpc#regard; the user's "Go, with body sects", 2026-11-01). */
+	public static final int BODY_KIN = 15;
 
 	public static int bloodShift(Bloodline npc, Bloodline player) {
 		if (!npc.isBeast()) return 0;

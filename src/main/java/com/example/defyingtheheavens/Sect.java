@@ -121,6 +121,12 @@ public final class Sect {
 	 * 2026-10-23), in its den (DenStructure), cultivating the Demon Path, its element its race's.
 	 */
 	public Bloodline race = Bloodline.HUMAN;
+	/**
+	 * A body sect (the user's "Go, with body sects", 2026-11-01: one new sect of men in BodyCultivators#SECT_IN): every member of it a body
+	 * cultivator (CultivatorNpc#isBodyCultivator), its library and master's hall keeping the body's manuals, its door open only to those who walk
+	 * the Body Path (SectMembership#refusal). Decided with its plan (SectStructure), never after.
+	 */
+	public boolean body;
 	public int capacity;
 	public boolean extinct;
 	/** The barrier is down against the sect's will (out of qi, shattered or its core destroyed) since this game time; -1 if up. */
@@ -374,6 +380,7 @@ public final class Sect {
 		tag.putInt("BarrierRadius", barrierRadius);
 		tag.putInt("Alignment", alignment);
 		if (isClan()) tag.putString("Race", race.getId());
+		if (body) tag.putBoolean("Body", true);
 		tag.putInt("Capacity", capacity);
 		tag.putBoolean("Extinct", extinct);
 		tag.putLong("BarrierDownSince", barrierDownSince);
@@ -468,6 +475,7 @@ public final class Sect {
 		sect.barrierRadius = tag.getInt("BarrierRadius");
 		sect.alignment = tag.getInt("Alignment");
 		if (tag.contains("Race")) sect.race = Bloodline.byId(tag.getString("Race"));
+		sect.body = tag.getBoolean("Body") && !sect.isClan();
 		sect.capacity = tag.getInt("Capacity");
 		sect.extinct = tag.getBoolean("Extinct");
 		sect.barrierDownSince = tag.getLong("BarrierDownSince");

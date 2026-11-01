@@ -68,6 +68,20 @@ public final class NetherworldManager {
 		GhostMethods.applyModifiers(player);
 		HeavenPassives.apply(player); // the heaven methods' elements, here for the same second's tick
 		HeavenMethods.watchSpells(player); // and their spells, which come as the realm reaches them
+		// A territory held (Territorial Dominion): left while a challenger lives, it is lost (Territories#second).
+		Territories.second(player);
+		// A palace held or taken, its tribute brought (Court of the Dead); the dead among the living by night, sent back by day (Haunting).
+		CourtOfTheDead.second(player);
+		Haunting.second(player);
+		// The Yellow Springs soaked in (Yellow Springs Immersion); a rift haunted, its souls slipping out (Rift Haunting).
+		YellowSpringsImmersion.second(player);
+		RiftHaunting.second(player);
+		// At Four Axis the axes fill every path's bar, not meditation (FourAxis#fillBars: the axes are everyone's method there).
+		if (FourAxis.fillBars(c)) {
+			CultivationManager.markDirty(player.server);
+			CultivationManager.sync(player);
+			Spells.sync(player); // the ghost path's bar rides with the methods (ModPackets#sendMethods)
+		}
 		double corruption = s.yinCorruption();
 		int trend = YinCorruption.second(player, c, now);
 		TREND.put(player.getUUID(), trend);

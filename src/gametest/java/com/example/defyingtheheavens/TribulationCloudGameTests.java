@@ -15,7 +15,7 @@ public class TribulationCloudGameTests implements FabricGameTest {
         ServerPlayer player = isolated(helper);
         try {
             PlayerCultivation cultivation = CultivationManager.get(player);
-            TestMethods.carryAll(cultivation); // a heaven method opening the way into new realms (HeavenMethods#opensWay)
+            TestMethods.carryAll(cultivation); // a scripture whose volumes the new realms gather by (HeavenMethods#canGain)
             cultivation.setState(Realm.QI_REFINING, Stage.GRAND_PERFECTION, 0);
             cultivation.addCultivation(cultivation.cultivationRequired());
             cultivation.prepareBreakthrough(Realm.FOUNDATION_BUILDING, 0); // Foundation Building takes a Foundation Pill

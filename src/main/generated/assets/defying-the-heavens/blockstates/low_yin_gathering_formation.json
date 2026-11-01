@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "defying-the-heavens:block/low_yin_gathering_formation"
+    },
+    "lit=true": {
+      "model": "defying-the-heavens:block/low_yin_gathering_formation_lit"
+    }
+  }
+}

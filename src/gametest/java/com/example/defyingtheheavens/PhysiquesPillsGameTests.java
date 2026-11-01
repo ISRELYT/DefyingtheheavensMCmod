@@ -162,15 +162,15 @@ public class PhysiquesPillsGameTests implements FabricGameTest {
 		helper.assertTrue(StatPoints.earned(refined) == plain + PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.MID),
 				"Hundred Refinements: a point more for each of its breakthroughs (" + plain + " -> " + StatPoints.earned(refined) + ")");
 
-		// Body refining lives as long as the cultivator it is as strong as.
+		// A body tempered (the Body Path, Shattered Meridians' body refining with it) lives as long as the cultivator its rank stands beside.
 		PlayerCultivation body = new PlayerCultivation();
 		body.setPhysique(Physique.SHATTERED_MERIDIANS);
 		body.setMortalState(MortalStage.PEAK, 0);
 		helper.assertTrue(Lifespan.span(body) == 100, "A mortal's Peak: a mortal's hundred years");
-		body.setBodyRefining(4);
-		helper.assertTrue(Lifespan.span(body) == 300, "Jade Bone: Foundation Building's years (" + Lifespan.span(body) + ")");
-		body.setBodyRefining(BodyRefining.LAST);
-		helper.assertTrue(Lifespan.span(body) == 700, "The Indestructible Body: Core Formation's (" + Lifespan.span(body) + ")");
+		body.body().set(PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.EARLY), 0);
+		helper.assertTrue(Lifespan.span(body) == 300, "Iron Flesh: Foundation Building's years (" + Lifespan.span(body) + ")");
+		body.body().set(PlayerCultivation.rank(Realm.CORE_FORMATION, Stage.EARLY), 0);
+		helper.assertTrue(Lifespan.span(body) == 700, "Steel Sinew: Core Formation's (" + Lifespan.span(body) + ")");
 		helper.succeed();
 	}
 

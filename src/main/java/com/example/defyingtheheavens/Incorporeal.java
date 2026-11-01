@@ -55,8 +55,8 @@ public final class Incorporeal {
 	 * slip to read, a Ghost Jade Slip or a heaven method's Jade Slip (the dead take up no heaven method: HeavenMethods#refusal says so).
 	 */
 	public static boolean mayUse(Player player, net.minecraft.world.item.ItemStack stack) {
-		return GhostSystem.isGhost(player) && !SoulProjection.isSoul(player)
-				&& (stack.is(ModItems.MARROW_CLEANSING_ELIXIR) || stack.is(ModItems.GHOST_JADE_SLIP) || stack.is(ModItems.JADE_SLIP));
+		return GhostSystem.isGhost(player) && !SoulProjection.isSoul(player) && (stack.is(ModItems.MARROW_CLEANSING_ELIXIR)
+				|| stack.is(ModItems.GHOST_JADE_SLIP) || stack.is(ModItems.JADE_SLIP) || stack.is(ModItems.METHOD_MANUAL));
 	}
 
 	/**

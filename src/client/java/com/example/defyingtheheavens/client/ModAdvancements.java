@@ -197,16 +197,16 @@ public final class ModAdvancements {
 				ModItems.IMMORTAL_SPIRIT_STONE));
 		beginning.putAll(milestone(Milestones.HEAVEN_METHOD));
 		beginning.putAll(milestone(Milestones.SPELL));
-		root("arts/root", ModItems.LOW_SPIRIT_STONE, "blue_spirit_planks", "Arts and Treasures", "Hold a spirit stone, learn a heaven method or cast a spell",
+		root("arts/root", ModItems.LOW_SPIRIT_STONE, "blue_spirit_planks", "Arts and Treasures", "Hold a spirit stone, learn a heaven scripture or cast an art",
 				beginning);
 		add("arts/immortal_stone", "arts/root", ModItems.IMMORTAL_SPIRIT_STONE, FrameType.GOAL, "An Immortal Treasure", "Obtain an Immortal Spirit Stone",
 				holding(ModItems.IMMORTAL_SPIRIT_STONE));
-		add("arts/first_spell", "arts/root", Items.BLAZE_POWDER, FrameType.TASK, "The First Spell", "Cast a spell", milestone(Milestones.SPELL));
+		add("arts/first_spell", "arts/root", Items.BLAZE_POWDER, FrameType.TASK, "The First Art", "Cast an art", milestone(Milestones.SPELL));
 		Map<String, CriterionTriggerInstance> five = new LinkedHashMap<>();
 		for (QiElement element : QiElement.five()) five.putAll(milestone(Milestones.spell(element)));
 		add("arts/five_phases", "arts/first_spell", ModItems.HEAVEN_FURNACE_CENSER, FrameType.GOAL, "The Five Phases",
-				"Cast a heaven spell of each of the five elements", five);
-		add("arts/heaven_demon", "arts/first_spell", Items.DRAGON_BREATH, FrameType.GOAL, "Heaven and Demon as One", "Cast a spell of both paths",
+				"Cast a heaven art of each of the five elements", five);
+		add("arts/heaven_demon", "arts/first_spell", Items.DRAGON_BREATH, FrameType.GOAL, "Heaven and Demon as One", "Cast an art of both paths",
 				milestone(Milestones.SPELL_HEAVEN_DEMON));
 		add("arts/qi_sense", "arts/root", Items.SPYGLASS, FrameType.TASK, "Eyes of Qi", "Open your Qi Sense and see the world's qi",
 				milestone(Milestones.QI_SENSE));
@@ -325,7 +325,7 @@ public final class ModAdvancements {
 				one("hungry_ghost", KilledTrigger.TriggerInstance.playerKilledEntity(EntityPredicate.Builder.entity().of(ModEntities.HUNGRY_GHOST))));
 		add("springs/ghost_path", "springs/root", ModItems.GHOST_JADE_SLIP, FrameType.TASK, "The Ghost Path", "Begin the ghost path",
 				milestone(Milestones.GHOST_PATH));
-		add("springs/ghost_spell", "springs/ghost_path", Items.SOUL_TORCH, FrameType.TASK, "A Spell of the Dead", "Cast a ghost spell",
+		add("springs/ghost_spell", "springs/ghost_path", Items.SOUL_TORCH, FrameType.TASK, "An Art of the Dead", "Cast a ghost art",
 				milestone(Milestones.SPELL_GHOST));
 		add("springs/both_paths", "springs/ghost_path", ModItems.YIN_GATHERING_PILL, FrameType.GOAL, "Two Paths, One Body",
 				"Walk the heaven path and the ghost path both, among the living", milestone(Milestones.BOTH_PATHS));

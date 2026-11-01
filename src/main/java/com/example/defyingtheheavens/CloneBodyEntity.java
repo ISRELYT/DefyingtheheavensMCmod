@@ -36,6 +36,8 @@ public class CloneBodyEntity extends LivingEntity {
 	private static final EntityDataAccessor<Optional<UUID>> OWNER = SynchedEntityData.defineId(CloneBodyEntity.class, EntityDataSerializers.OPTIONAL_UUID);
 	/** The main body, sitting in meditation (else the clone, standing). */
 	private static final EntityDataAccessor<Boolean> SITTING = SynchedEntityData.defineId(CloneBodyEntity.class, EntityDataSerializers.BOOLEAN);
+	/** The clone in seclusion (CloneSeclusion), sitting in meditation as the main body does; not saved (its maker's next second sets it). */
+	private static final EntityDataAccessor<Boolean> SECLUDING = SynchedEntityData.defineId(CloneBodyEntity.class, EntityDataSerializers.BOOLEAN);
 	private final NonNullList<ItemStack> armor = NonNullList.withSize(4, ItemStack.EMPTY);
 	private final NonNullList<ItemStack> hands = NonNullList.withSize(2, ItemStack.EMPTY);
 	/** The body's armour and toughness as it was left (what its own attributes miss: the cultivation's share). */
@@ -116,6 +118,7 @@ public class CloneBodyEntity extends LivingEntity {
 		super.defineSynchedData();
 		entityData.define(OWNER, Optional.empty());
 		entityData.define(SITTING, false);
+		entityData.define(SECLUDING, false);
 	}
 
 	public UUID getOwnerId() { return entityData.get(OWNER).orElse(null); }
@@ -123,16 +126,23 @@ public class CloneBodyEntity extends LivingEntity {
 	/** The main body, sitting in meditation (else the clone, standing). */
 	public boolean isSitting() { return entityData.get(SITTING); }
 
-	/** Sitting, it is as low as a body left in meditation is (SoulBodyEntity's 1.2); standing, a player's height. */
+	/** The clone in seclusion, sitting in meditation (CloneSeclusion). */
+	public boolean isSecluding() { return entityData.get(SECLUDING); }
+
+	public void setSecluding(boolean secluding) {
+		if (isSecluding() != secluding) entityData.set(SECLUDING, secluding);
+	}
+
+	/** Sitting (or in seclusion), it is as low as a body left in meditation is (SoulBodyEntity's 1.2); standing, a player's height. */
 	@Override
 	public net.minecraft.world.entity.EntityDimensions getDimensions(net.minecraft.world.entity.Pose pose) {
-		return isSitting() ? net.minecraft.world.entity.EntityDimensions.scalable(0.6f, 1.2f) : super.getDimensions(pose);
+		return isSitting() || isSecluding() ? net.minecraft.world.entity.EntityDimensions.scalable(0.6f, 1.2f) : super.getDimensions(pose);
 	}
 
 	@Override
 	public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
 		super.onSyncedDataUpdated(key);
-		if (SITTING.equals(key)) refreshDimensions();
+		if (SITTING.equals(key) || SECLUDING.equals(key)) refreshDimensions();
 	}
 
 	@Override

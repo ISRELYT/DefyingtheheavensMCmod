@@ -73,6 +73,10 @@ public final class CultivationManager {
 			TribulationManager.startDemon(player);
 			return;
 		}
+		if (TwoPaths.cultivatesBody(get(player))) { // the Body Path's: the heavens' lightning on the flesh (BodyPath)
+			TribulationManager.startBody(player);
+			return;
+		}
 		if (GhostSystem.isGhost(player)) { // a mortal's ghost: no path to break through on
 			player.displayClientMessage(Component.translatable(ModLang.MSG_GHOST_CANNOT), true);
 			return;
@@ -121,6 +125,11 @@ public final class CultivationManager {
 		// And one's sleeve (Sleeves): a place in it offered to the one looked at, or (sneaking) everyone in it let out.
 		if (ability == Ability.SLEEVE) {
 			Sleeves.act(player);
+			return;
+		}
+		// And the Body Path's techniques (BodyTechniques): its acts done for vigor, Blood Frenzy switched on or off.
+		if (BodyTechniques.isTechnique(ability)) {
+			BodyTechniques.act(player, ability);
 			return;
 		}
 		c.setAbilityEnabled(ability, !c.isAbilityEnabled(ability));

@@ -1,20 +1,21 @@
 package com.example.defyingtheheavens;
 
 /**
- * For game tests not about the heaven methods whose cultivators must break into new realms: a breakthrough into a realm wants a heaven
- * method of it or deeper (HeavenMethods#opensWay), so they are given one that opens every realm. Fire's, whose passive (attack speed)
- * touches nothing those tests measure.
+ * For game tests not about the methods whose cultivators must gather as they climb (the methods overhaul, 2026-10-31: without a method's
+ * volume of one's realm, no gain, HeavenMethods#canGain; before, a breakthrough waited on a scripture of the realm ahead): they are given
+ * a Four Axis scripture, whose Qi Circulation volumes reach every realm up to Heavenly Being (Four Axis itself has none: its axes fill
+ * it). Fire's, whose passive (attack speed) touches nothing those tests measure.
  */
 final class TestMethods {
-	/** A Four Axis fire method, every layer understood: every breakthrough's way open, to Four Axis Grand Perfection. */
+	/** A Four Axis fire scripture, every layer understood: Circulation's volumes to Heavenly Being. */
 	static void carryAll(PlayerCultivation c) {
 		HeavenMethod fire = HeavenMethod.of(QiElement.FIRE, Realm.FOUR_AXIS);
 		c.heaven().setMethod(fire, fire.layers(), 0);
 	}
 
 	/**
-	 * {@code c} set to {@code realm} {@code stage} with none of it cultivated, a Four Axis fire method practised and understood as far
-	 * as the stage (HeavenMethods#understoodTo): every breakthrough's way open, nothing left to settle.
+	 * {@code c} set to {@code realm} {@code stage} with none of it cultivated, a Four Axis fire scripture practised and understood as far
+	 * as the stage (HeavenMethods#understoodTo): Circulation's volumes to Heavenly Being, nothing left to settle.
 	 */
 	static void setAt(PlayerCultivation c, Realm realm, Stage stage) {
 		c.setState(realm, stage, 0);

@@ -32,6 +32,8 @@ public final class TalkSession {
 	public final Alignment.Faction faction;
 	public int regard;
 	public final List<TalkIntent> intents = new ArrayList<>();
+	/** A body cultivator (CultivatorNpc#isBodyCultivator): its rank the Body Path's. */
+	public final boolean body;
 
 	/** One reply in the dialogue box. */
 	public record Reply(int id, Component label, boolean enabled, Component note) {}
@@ -39,7 +41,8 @@ public final class TalkSession {
 	/** What the dialogue box shows: under which intent, what they say, and the replies on offer. */
 	public record Dialogue(TalkIntent intent, Component line, List<Reply> replies) {}
 
-	public TalkSession(int entityId, String name, NpcTitle title, String sectName, int rank, Alignment.Faction faction, int regard, int intentMask) {
+	public TalkSession(int entityId, String name, NpcTitle title, String sectName, int rank, Alignment.Faction faction, int regard, int intentMask,
+			boolean body) {
 		this.entityId = entityId;
 		this.name = name;
 		this.title = title;
@@ -47,15 +50,16 @@ public final class TalkSession {
 		this.rank = rank;
 		this.faction = faction;
 		this.regard = regard;
+		this.body = body;
 		for (TalkIntent intent : TalkIntent.values()) {
 			if ((intentMask & intent.bit()) != 0) intents.add(intent);
 		}
 	}
 
-	/** "Nascent Soul - Mid", or "Mortal". */
+	/** "Nascent Soul - Mid" ("Jade Bone - Mid", a body cultivator's), or "Mortal". */
 	public Component realmName() {
-		return rank < 0 ? Component.translatable(ModLang.TALK_MORTAL)
-				: PlayerCultivation.rankName(CultivatorNpc.realmOf(rank), CultivatorNpc.stageOf(rank));
+		if (rank < 0) return Component.translatable(ModLang.TALK_MORTAL);
+		return body ? com.example.defyingtheheavens.BodyPath.rankName(rank) : PlayerCultivation.rankName(CultivatorNpc.realmOf(rank), CultivatorNpc.stageOf(rank));
 	}
 
 	/** The cultivator, if still loaded and in reach. */

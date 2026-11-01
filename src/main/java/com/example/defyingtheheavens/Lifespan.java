@@ -112,8 +112,28 @@ public final class Lifespan {
 	 * {@code saving} what saves years where it sits ({@link #saving}).
 	 */
 	public static double seclusionYears(PlayerCultivation c, Realm realm, Stage stage, double fraction, double saving) {
+		return seclusionYears(c, realm, stage, fraction, saving, CultivationMethod.QI_CIRCULATION);
+	}
+
+	/**
+	 * {@link #seclusionYears(PlayerCultivation, Realm, Stage, double, double)} by {@code method} (the methods overhaul's phase 2): talent
+	 * divides the years only as far as the method's weight lets it (CultivationMethod#talentDivisor: the whole, its square root, or none),
+	 * and the method costs its own share of them (CultivationMethod#yearsFactor). The orthodox ways are as before.
+	 */
+	public static double seclusionYears(PlayerCultivation c, Realm realm, Stage stage, double fraction, double saving, CultivationMethod method) {
 		if (fraction <= 0) return 0;
-		return fraction * stageSeclusion(realm, stage) * pacePrice(c.meditationSpeed()) / (talent(c) * Math.max(1.0, saving));
+		return fraction * stageSeclusion(realm, stage) * pacePrice(c.meditationSpeed()) * method.yearsFactor()
+				/ (method.talentDivisor(talent(c)) * Math.max(1.0, saving));
+	}
+
+	/**
+	 * The years winning {@code fraction} of a stage of {@code realm} costs {@code c} by {@code method} in its own way (a rite, a strike, a
+	 * corpse's yin, a phial, a core: CultivationMethods#grant): as meditation's, by the method's weight and share, but with no pace to
+	 * price nor boost to save them.
+	 */
+	public static double methodYears(PlayerCultivation c, Realm realm, Stage stage, double fraction, CultivationMethod method) {
+		if (fraction <= 0) return 0;
+		return fraction * stageSeclusion(realm, stage) * method.yearsFactor() / method.talentDivisor(talent(c));
 	}
 
 	/**
@@ -162,6 +182,12 @@ public final class Lifespan {
 	 */
 	public static void seclude(ServerPlayer p, int fromRank, double from, int toRank, double to, IntToDoubleFunction required, double saving,
 			double share) {
+		seclude(p, fromRank, from, toRank, to, required, saving, share, CultivationMethod.QI_CIRCULATION);
+	}
+
+	/** {@link #seclude(ServerPlayer, int, double, int, double, IntToDoubleFunction, double, double)} meditating by {@code method}. */
+	public static void seclude(ServerPlayer p, int fromRank, double from, int toRank, double to, IntToDoubleFunction required, double saving,
+			double share, CultivationMethod method) {
 		if (fromRank < 0 || toRank < fromRank || share <= 0 || p.isCreative() || p.isSpectator()) return;
 		PlayerCultivation own = CultivationManager.own(p);
 		int stages = Stage.values().length;
@@ -171,9 +197,29 @@ public final class Lifespan {
 			if (need <= 0) continue;
 			double start = rank == fromRank ? from : 0, end = rank == toRank ? to : need;
 			years += seclusionYears(own, Realm.byIndex(Math.min(rank / stages, Realm.values().length - 1)), Stage.byIndex(rank % stages),
-					Math.max(0, end - start) / need, saving);
+					Math.max(0, end - start) / need, saving, method);
 		}
 		if (years > 0) age(p, years * share);
+	}
+
+	/**
+	 * A gain won by {@code method} in its own way (CultivationMethods#grant), from {@code fromRank} with {@code from} of its stage to
+	 * {@code toRank} with {@code to}: its years paid ({@link #methodYears}), stage by stage. Creative and spectating players pay nothing.
+	 */
+	public static void secludeBy(ServerPlayer p, int fromRank, double from, int toRank, double to, IntToDoubleFunction required,
+			CultivationMethod method) {
+		if (fromRank < 0 || toRank < fromRank || p.isCreative() || p.isSpectator()) return;
+		PlayerCultivation own = CultivationManager.own(p);
+		int stages = Stage.values().length;
+		double years = 0;
+		for (int rank = fromRank; rank <= toRank; rank++) {
+			double need = required.applyAsDouble(rank);
+			if (need <= 0) continue;
+			double start = rank == fromRank ? from : 0, end = rank == toRank ? to : need;
+			years += methodYears(own, Realm.byIndex(Math.min(rank / stages, Realm.values().length - 1)), Stage.byIndex(rank % stages),
+					Math.max(0, end - start) / need, method);
+		}
+		if (years > 0) age(p, years);
 	}
 
 	/**
@@ -259,12 +305,12 @@ public final class Lifespan {
 		return years * Obsession.lifespanFactor(c);
 	}
 
-	/** The rank whose realms' years {@code c}'s span counts: the higher path's, or a body refined past a mortal's Peak's; -1 a mortal's. */
+	/**
+	 * The rank whose realms' years {@code c}'s span counts: the highest of its qi paths' and its Body Path's (BodyPath: a tempered body lives as
+	 * long as the cultivator its rank stands beside; Shattered Meridians' body refining is the Body Path's now); -1 a mortal's.
+	 */
 	static int spanRank(PlayerCultivation c) {
-		int rank = TwoPaths.higherRank(c, false);
-		// A body refined past a mortal's Peak lives as long as the cultivator it is as strong as.
-		if (rank < 0 && c.hasShatteredMeridians() && c.getBodyRefining() > 0) rank = BodyRefining.rank(c.getBodyRefining());
-		return rank;
+		return Math.max(TwoPaths.higherRank(c, false), BodyPath.rank(c));
 	}
 
 	/** The years {@code c} has used of it: its age, alive or dead. */

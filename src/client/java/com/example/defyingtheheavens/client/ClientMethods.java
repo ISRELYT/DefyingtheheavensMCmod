@@ -33,6 +33,23 @@ public final class ClientMethods {
 		return ClientCultivationData.get().netherworld();
 	}
 
+	/** A path to cultivate by {@code method} (the Methods tab's Practise, a switch confirmed): CultivationMethods#practise, on the server. */
+	static void practiseMethod(com.example.defyingtheheavens.CultivationMethod method) {
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeUtf(method.getId());
+		ClientPlayNetworking.send(ModPackets.PRACTISE_CULTIVATION_METHOD, buf);
+	}
+
+	/** One's territory marked where one stands (the Methods tab's Mark Territory: Territories#mark, on the server). */
+	static void markTerritory() {
+		ClientPlayNetworking.send(ModPackets.MARK_TERRITORY, PacketByteBufs.create());
+	}
+
+	/** The Body Path begun (the Cultivation tab's Begin button: BodyPath#begin, on the server). */
+	static void beginBodyPath() {
+		ClientPlayNetworking.send(ModPackets.BEGIN_BODY_PATH, PacketByteBufs.create());
+	}
+
 	/** Life Force Drain and Gain's next mode (WoodSpells.LifeMode), asked of the server (the Spells tab's switch). */
 	static void nextLifeMode() {
 		net.minecraft.network.FriendlyByteBuf buf = net.fabricmc.fabric.api.networking.v1.PacketByteBufs.create();
@@ -75,7 +92,28 @@ public final class ClientMethods {
 		boolean cultivatingGhost = buf.readBoolean();
 		boolean griefs = buf.readBoolean(), mayGrief = buf.readBoolean();
 		com.example.defyingtheheavens.WoodSpells.LifeMode lifeMode = com.example.defyingtheheavens.WoodSpells.LifeMode.byIndex(buf.readByte());
+		// The methods (CultivationMethods): the manuals' reach, each path's choice, the blood's taint, the territory held.
+		int learned = buf.readVarInt();
+		Map<com.example.defyingtheheavens.CultivationMethod, Integer> reach = new EnumMap<>(com.example.defyingtheheavens.CultivationMethod.class);
+		for (int i = 0; i < learned; i++) {
+			com.example.defyingtheheavens.CultivationMethod method = com.example.defyingtheheavens.CultivationMethod.byId(buf.readUtf(64));
+			int realm = buf.readVarInt();
+			if (method != null) reach.put(method, realm);
+		}
+		com.example.defyingtheheavens.TwoPaths.Path[] paths = com.example.defyingtheheavens.TwoPaths.Path.values();
+		com.example.defyingtheheavens.CultivationMethod[] chosen = new com.example.defyingtheheavens.CultivationMethod[paths.length];
+		for (int i = 0; i < paths.length; i++) chosen[i] = com.example.defyingtheheavens.CultivationMethod.byId(buf.readUtf(64));
+		double taint = buf.readDouble();
+		String territoryDimension = buf.readUtf();
+		net.minecraft.core.BlockPos territory = net.minecraft.core.BlockPos.of(buf.readLong());
 		return () -> {
+			com.example.defyingtheheavens.PlayerCultivation c = ClientCultivationData.get();
+			for (com.example.defyingtheheavens.CultivationMethod method : com.example.defyingtheheavens.CultivationMethod.values()) {
+				c.setMethodReach(method, reach.getOrDefault(method, -1));
+			}
+			for (int i = 0; i < paths.length; i++) c.setPractising(paths[i], chosen[i]);
+			c.demon().setTaint(taint);
+			c.demon().setTerritory(territoryDimension, territory);
 			state().setLifeMode(lifeMode);
 			griefing = griefs;
 			mayChangeGriefing = mayGrief;

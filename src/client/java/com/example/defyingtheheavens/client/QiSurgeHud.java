@@ -41,9 +41,13 @@ public final class QiSurgeHud {
 	private static final long FADE_MS = 700;
 	private static final int WRONG_FOR_DEVIATION = 3;
 
-	// Five Elements, in generating order: wood feeds fire, fire makes earth, earth bears metal, metal carries water...
-	private static final String[] ELEMENT = {"木", "火", "土", "金", "水"};
-	private static final int[] ELEMENT_COLOUR = {0x66BB6A, 0xEF5350, 0xD4A055, 0xF5E6A8, 0x4FC3F7};
+	// Five Elements, in generating order: wood feeds fire, fire makes earth, earth bears metal, metal carries water... Drawn as the Codex's
+	// five elements diagram draws them (CodexDiagrams: a sapling, blaze powder, earth, iron, water), no written characters (the UI's rule;
+	// phase 3 of the methods overhaul, its Five Elements Cycling, made this game a method's own).
+	private static final net.minecraft.world.item.ItemStack[] ELEMENT_ITEM = {
+			new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.OAK_SAPLING), new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BLAZE_POWDER),
+			new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIRT), new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_INGOT),
+			new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.WATER_BUCKET)};
 
 	private static QiSurges.Game game;
 	private static long startMs, windowMs, engagedMs, endedMs = -1;
@@ -90,7 +94,10 @@ public final class QiSurgeHud {
 			boolean meditating = mc.player != null && ClientCultivationData.isMeditating() && !c.isMortal();
 			if (!meditating || game == null) {
 				game = null;
-				while (ModKeybinds.CIRCULATE.consumeClick()) { } // presses outside a surge do nothing
+				// Presses outside a surge seize a drifting soul: the Soul River's (Soul River Feast) or a rift's (Rift Haunting); the server
+				// judges whether either is practised and a soul near (SoulRiverFeast#seize, RiftHaunting#seize), else nothing comes of it.
+				boolean seizes = mc.player != null && mc.screen == null;
+				while (ModKeybinds.CIRCULATE.consumeClick()) if (seizes) ClientPlayNetworking.send(ModPackets.SEIZE_SOUL, PacketByteBufs.create());
 				return;
 			}
 			long now = Util.getMillis();
@@ -272,23 +279,29 @@ public final class QiSurgeHud {
 	}
 
 	private static void renderElements(GuiGraphics g, Minecraft mc, int cx, int cy, float alpha) {
-		int a = Math.round(alpha * 255);
-		// The cycle round the crosshair: the current element bright, those already passed in colour, the rest grey.
+		// The cycle round the crosshair: the current element bright, those already passed in full colour, the rest dimmed.
 		for (int i = 0; i < 5; i++) {
 			double ang = angle(i / 5.0);
 			int x = cx + (int) Math.round(Math.cos(ang) * RADIUS);
 			int y = cy + (int) Math.round(Math.sin(ang) * RADIUS);
 			boolean lit = (current - i + 5) % 5 <= done; // the current element and those passed through this time
-			int colour = won || lit ? ELEMENT_COLOUR[i] : 0x808080;
-			int glyphAlpha = i == current ? a : a * 3 / 4;
-			g.drawString(mc.font, ELEMENT[i], x - mc.font.width(ELEMENT[i]) / 2, y - 4, glyphAlpha << 24 | colour, false);
+			elementIcon(g, i, x, y, 0.75f, Math.max(won || lit ? 0 : 0.6f, 1 - (i == current ? alpha : alpha * 0.75f)));
 		}
 		if (won) return;
 		// The flash in the centre, large.
+		elementIcon(g, shown, cx, cy, 1.5f, 1 - alpha);
+	}
+
+	/** An element's icon at {@code scale} of an item's size, centred on {@code x}, {@code y}, shaded {@code dark} (0 none, 1 black). */
+	private static void elementIcon(GuiGraphics g, int element, int x, int y, float scale, float dark) {
 		g.pose().pushPose();
-		g.pose().translate(cx, cy, 0);
-		g.pose().scale(2.0f, 2.0f, 1.0f);
-		g.drawString(mc.font, ELEMENT[shown], -mc.font.width(ELEMENT[shown]) / 2, -4, Math.max(a, 4) << 24 | ELEMENT_COLOUR[shown], false);
+		g.pose().translate(x, y, 0);
+		g.pose().scale(scale, scale, 1);
+		g.renderItem(ELEMENT_ITEM[element], -8, -8);
+		if (dark > 0.01f) {
+			g.pose().translate(0, 0, 250); // over the item's own depth
+			g.fill(-8, -8, 8, 8, Math.round(Mth.clamp(dark, 0, 1) * 210) << 24);
+		}
 		g.pose().popPose();
 	}
 

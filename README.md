@@ -722,9 +722,10 @@ slips teach demons if they are studying heaven path."
   from the wild beasts of its kin, as often as their cores (the bloodfang tiger's tiger blood, the ember fox's fox blood, the jade
   viper's, jade-scaled python's and iron-jaw crocodile's lizard blood, the flood dragon's dragon blood); the creative tab has all 44.
   - **A demon** drinks its own race's alone. Its blood is awake to Qi Refining from birth; at a realm's Grand Perfection its Demon
-    Path breaks through into the next realm only once it has drunk its race's blood of that realm or higher (as the heaven path
-    waits on a method of the realm ahead), the Cultivation tab saying so. Blood it already holds is refused, not wasted. A demon
-    from before blood has its blood awake as far as its Demon Path came.
+    Path breaks through into the next realm only once it has drunk its race's blood of that realm or higher (unlike the heaven
+    and ghost paths, which break through without their method's volume and only gather nothing in the new realm: Methods, below),
+    the Cultivation tab saying so. Blood it already holds is refused, not wasted. A demon from before blood has its blood awake as
+    far as its Demon Path came.
   - **A human** drinks it and a demon core forms: a **half-blood**, its Demon Path begun at Qi Refining Early and its blood's
     element spells coming as it climbs. It still looks human (no tells: the user's word), lives a human's span and is a human to
     every sect and clan, but has its race's gifts at **half strength** (below). Each drink makes its blood purer: 4% for blood below
@@ -743,7 +744,9 @@ slips teach demons if they are studying heaven path."
   banked into its new stage. Failing it costs a stage of the Demon Path (none for one whose physique holds its stage). A
   surge's reward (wisps, a sequence, a heart demon) counts at the drawn path's rate, the ghost path's too; the heart demon
   comes from Nascent Soul on any path, once in five minutes however often one logs in again.
-- **What it teaches:** no methods (its blood opens its realms: above). Its blood teaches the spells of its element as the Demon Path reaches each one's realm (onto
+- **Its method** is **Bloodline Purification** (the methods overhaul, 2026-10-31): the blood is its volume, so every realm the
+  Demon Path has reached gathers, except Four Axis, where the axes are every path's method (`DemonPath#canGain`, Methods below).
+- **What it teaches:** no scriptures (its blood opens its realms: above). Its blood teaches the spells of its element as the Demon Path reaches each one's realm (onto
   the spell wheel): **Tiger Metal, Lizard Earth, Fox Fire, Dragon Wood**. The heaven path's jade slips and methods teach a demon
   as they teach a man, for the heaven path. **With the heaven path beside it**, it opens the **spells of both paths**, one a
   realm from Foundation Building, heaven's gold light and a demon's crimson qi as one (since 2026-10-24; see The two paths).
@@ -1514,11 +1517,495 @@ Humble (0-9 points) +0%, Modest (10-19) +10%, Grand (20-29) +20%, Magnificent (3
   - Code: `QiSurges.java` (timing, the Inner Realm games, `FIRST_SURGE`, `INTERVAL_*`), `client/QiSurgeHud.java` (the
     screen games), `MeditationManager#harmony` / `#onCirculation` (`CIRCULATION_BONUS`, `CIRCULATION_LASTS`, `DEVIATION_*`).
 
+## Methods: how you cultivate
+
+The methods overhaul (the user's design, 2026-10-31, built in phases; phase 1 is the core). **A method is how you cultivate,
+and without one you can't cultivate at all**: one may awaken to Qi Refining Early, but meditation gathers nothing on a path with
+no method. What used to be called methods splits in two: the **method** (how a path gathers) and the **Arts** (the spells and
+passives the scriptures teach).
+- **Volumes.** A method comes in volumes, **one a realm**, and a path gathers only in a realm whose volume it holds
+  (`HeavenMethods#canGain`, `GhostMethods#canGain`, `DemonPath#canGain`). Without one it gathers nothing: meditation, a
+  teacher's guidance and the refining of pill and fruit qi all stop (the qi waits unrefined), told once a login and again in
+  each new realm ("Your scriptures hold no Qi Circulation volume for Core Formation..."), and the Cultivation tab's card says
+  "no method: gathers nothing". The layers of the scriptures and foundations still settle in as you meditate (understanding
+  what one holds isn't cultivating).
+- **Breakthroughs don't wait on a method** on the heaven and ghost paths: without the next realm's volume you may still break
+  through, and then gather nothing there until you find one (the Cultivation tab says so in grey at Grand Perfection). Only the
+  Laws still hold a breakthrough, past True Immortal. **The Demon Path can't break through without its race's blood** of the
+  realm ahead: the blood is its gate and its volume both.
+- **Each path's orthodox method** (phase 1's only one; the others below):
+  - the heaven path's **Qi Circulation**: every heaven scripture carries its volumes from Qi Refining up to its own realm
+    (`HeavenMethods#hasVolume`), and is a volume of its element's **Art**; Circulation follows the Art you practise, by its
+    element's share of the qi where you sit (The rate, below);
+  - the ghost path's **Netherworld Breathing**: every ghost foundation carries its volumes up to its own realm
+    (`GhostMethods#hasVolume`), and teaches its spells (the Netherworld Scripture);
+  - the Demon Path's **Bloodline Purification**: its blood (above).
+- **Four Axis** has no volume of any method: **the four axes are everyone's method there** (`FourAxis#fillBars`). Meditation
+  gathers nothing at Four Axis on any path; each Four Axis stage's bar is how far its axis is filled, on every path that stands
+  there (one shared set of axes: a lower path rides those its higher one completed), so the bar is full when the axis is
+  complete and its tribulation waits as before. A scripture or foundation of Four Axis carries volumes up to Heavenly Being.
+- **A first method on every path, guaranteed:** any living cultivator teaches one of the living who knows no heaven scripture
+  **the basics** (a new talk topic, "I have no method. Will you teach me the basics?"): the Qi Refining scripture of its own
+  element (or the first element the learner's roots can read), free, no day's guidance spent (`TalkSystem#teachBasics`). The
+  dead are taught **Netherworld Breathing**'s first volume as they die (`GhostMethods#teachTheDead`; a world saved before,
+  when the dead began the ghost path with none, is taught it at its next meditation on ghostly qi). A demon's blood is its own.
+- **Old saves** need no conversion: the volumes are read from the scriptures, foundations and blood already held. A cultivator
+  who climbed with no scripture under the old rules (at three quarters' pace) gathers nothing now until it finds one of its realm.
+
+**Terminology** (phase 2, the user's ask): in the game the spells are now **arts** (the Arts tab, the art wheel, "New art: ...",
+the Codex's "Methods and Arts"); scriptures and foundations carry a method's volumes and teach arts, and "method" means only how
+a path cultivates. This README and the code (`Spell`, `Spells`, `spellCooldowns`) still say spells in places: the same things.
+
+### More methods, switching, manuals and formations (phase 2)
+
+- **One method a path at a time** (`CultivationMethod`, `CultivationMethods`): its orthodox one, or another it knows, chosen on
+  the Methods tab (each path's page lists the methods known, the one practised first and marked Practising, a Practise button
+  on the others; the Demon Path has a page of its own, with its taint and its territory). A switch takes a second click to
+  confirm, and **re-lays the path's foundation**: the path falls to its realm's Early, its cultivation in the realm lost, never
+  the realm (`CultivationMethods#restart`: the user's rule). Free at Four Axis (the axes are the method there) and before a path
+  begins; going on into the next realm with the same method is free. Saved a path (`PlayerCultivation#practising`), with each
+  manual's reach (`#methodReach`). `CultivationMethods#whyNoGain` says why meditation gathers nothing (no volume, a method of its
+  own way, Turtle Breath out of seclusion, Territorial Dominion out of its territory).
+- **Talent acts on years** (`Lifespan#seclusionYears`): talent divides a gain's years by the method's weight, the whole
+  (`FULL`), its square root (`HALF`) or not at all (`NONE`), and each method costs its own share of them
+  (`CultivationMethod#yearsFactor`). A gain won a method's own way (`CultivationMethods#grant`: a rite, a strike, a body's yin, a
+  phial, a core) costs years too, with no pace to price nor aid to save them (`Lifespan#methodYears`).
+
+| Method | Path | Realms | Talent | Years | How it gathers |
+|---|---|---|---|---|---|
+| Qi Circulation | heaven | QR..TI | full | x1 | meditation; its volumes in the scriptures |
+| Heaven-Petitioning Rites | heaven | QR..HB | none | x1/16 | a rite at a Heaven Altar: a quarter of the stage |
+| Turtle Breath | heaven | FB..SV | full | x1/3, no aid's saving | meditation in deep seclusion, at half the pace |
+| Thunder Tempering | heaven | CF..TI | half | x1/12 | lightning called down on oneself (Heavenly Thunder Body only) |
+| Netherworld Breathing | ghost | QR..TI | full | x1 | meditation; its volumes in the foundations |
+| Corpse Yin Refining | ghost | QR..HB | half | x1/12 | a body's yin drawn out, once a body |
+| Bloodline Purification | demon | QR..TI | full | x1 | meditation; cleanses the blood's taint |
+| Kin Blood Hoarding | demon | QR..SV | half | x1/12 | phials of its own race's blood drunk |
+| Core Devouring | demon | FB..EN | half | x1/12 | demon cores eaten |
+| Territorial Dominion | demon | QR..CF | half | x1/3 | meditation in a territory marked in its blood, x1.5 |
+
+- **Heaven-Petitioning Rites** (`HeavenRites`; `HeavenRitual`'s rite): made as the Ritual to the Heavens is (offerings, a sneaking
+  empty hand, kneeling still), once the heavens' leave is had: only at dawn (22,800 to 1,200), on a full moon's night or in a
+  thunderstorm; one rite an altar a day (`HeavenAltarBlockEntity#riteDay`), granted or not; the offering weighed down nine times
+  a realm (a Proper one is 9 Low stones' worth at Qi Refining, 59,049 at Heavenly Being); the chance x1.5 at the most righteous
+  to x0.5 at the most devilish (at most 95 in a hundred). Granted, a quarter of the stage; refused, a lightning rebuke (30% of
+  one's health, never a death). Granting the leave teaches its Qi Refining volume (`MSG_RITES_TAUGHT`).
+- **Turtle Breath** (`TurtleBreath`): only in the Inner Realm, or where no sky light reaches the eyes and a solid block closes
+  round within 6 blocks above and on all four sides. Half Qi Circulation's pace (`CultivationMethods#TURTLE_PACE`), a third of
+  the years, and only denser qi saves more: mats, pedestals, clothes, a stone in hand and the Inner Realm still speed it but
+  save it nothing (`MeditationManager`).
+- **Thunder Tempering** (`ThunderTempering`): the Heavenly Thunder Body's, known from birth, chosen only if it will. Meditating
+  under the open sky, a visual bolt strikes it every 30 s (every 10 s in a thunderstorm) for 15% of its max health (a strike
+  that finds it weaker kills it), each worth 60 s of its plain meditation (x1.5 in a storm).
+- **Corpse Yin Refining** (`CorpseYin`, `Corpses#use`): an empty hand to a body, once a body (`CorpseBlockEntity#yinDrawn`):
+  15% of the ghost path's stage for a body of its realm, x2 a realm above and /2 a realm below, at most 50%; rotting x0.6, bones
+  x0.25, a mortal's 2%. Its price: alignment -3, yin corruption +0.08 for the living, and the dead's sect (`CorpseBlockEntity`
+  remembers it) within 32 blocks turns hostile on whoever it sees drain its dead.
+- **Kin Blood Hoarding** (`DemonBlood#hoards`, `#kinShare`): its own race's blood, even blood held already, is 20% of the Demon
+  Path's stage, x2 a realm above, /2 below, at most 75%, besides any awakening.
+- **Core Devouring** (`DemonCoreItem#devour`): a core eaten is 15% of the stage, x2 a realm above, /2 below, at most 60%. A core
+  of another element than the race's adds 0.04 taint (`DemonState#taint`, at most 0.6): every Demon Path gain is that share
+  smaller, until Bloodline Purification's meditation cleanses it (0.5 a whole stage gathered: `DemonPath#cleanse`).
+- **Territorial Dominion** (`Territories`): Mark Territory on the Demon Path page pours out a phial of its own race's blood (none
+  needed in creative) and marks 24 blocks round where it stands (`DemonState#territory`; one a cultivator). Meditating within
+  it gathers x1.5 for a third of the years, outside it nothing; every 4 minutes of meditation there a challenger comes, a wild
+  beast of its rank at the edge, hunting it. Dying within it, or leaving it while a challenger lives, loses the territory.
+- **Method Manuals** (`MethodManualItem`, `method_manual`): a method and the realm it is written to (its NBT). Read, it teaches
+  the volumes from the method's first realm up to that one (`CultivationMethods#learn`); a Demon Path manual its whole method
+  (the blood is the volume) and only to one with a demon core; the dead can't take up the heaven path's; never Thunder
+  Tempering. Kept in sect chests (`SectPiece`, `MethodManualItem#kept`): a library one in five, a master's hall one in three
+  (35%); demon clans keep Kin Blood, Core Devouring and Territorial Dominion, devilish sects Corpse Yin and Turtle Breath, the
+  rest the Rites and Turtle Breath; the lower realms' sects up to Core Formation, the Upper Realm's Core Formation to Sacred
+  Vessel. The creative tab has one of each at its last realm.
+- **Gathering formations** (`GatheringFormations`, `GatheringFormationBlock`, `GatheringFormationBlockEntity`): six blocks,
+  `<low|mid|high>_<qi|yin>_gathering_formation`, x1.25 / x1.5 / x2 within 8 / 12 / 16 blocks while lit (a lit orb risen over its
+  array, motes drawn in). Fed spirit stones by hand (one; sneaking, the stack): a Low stone burns 10 minutes in a Low one, a Mid
+  9 in a Mid, a High 9 in a High. Only Qi Circulation (Qi kind) and Netherworld Breathing (Yin kind) gather by them, the best
+  one reaching the cultivator's body counting (in the Inner Realm, the body's). **They speed the gain only**: the years it
+  costs stay as they were. Recipes: a Low one from jade (yin jade), an amethyst shard, three Low stones and copper ingots
+  (polished blackstone); a Mid from a Low, two Mid stones, an amethyst block, jade and gold (iron) ingots; a High from a Mid,
+  two High stones, a diamond, jade stone (yin jade blocks) and gold (iron) blocks.
+- **The talent retune** (scratchpad `reach.ps1`): the user's lines of 2026-10-27 hold. Qi Circulation is untouched: a Low
+  talent with everything still ends in Core Formation's Grand Perfection, and a red mat in the Inner Realm still takes a High
+  talent to Void Shattering, a Supreme to Sacred Vessel, an Immortal to True Immortal. A formation saving years as well would
+  have taken that Low talent to Dao Integration, and Turtle Breath's third on top of every aid to Void Shattering, so the
+  formations only speed and Turtle Breath's third is its own. With Longevity Pills' years: the rites take a Low or Mid talent
+  into Heavenly Being's Grand Perfection; the half-weight ways a Low talent to the end of Nascent Soul, a Mid into Dao
+  Integration, a High into Sacred Vessel, a Supreme into Entering Nirvana; a territory carries a Low demon through Core
+  Formation and on to Heavenly Being; Turtle Breath alone a Mid into Core Formation's Grand Perfection, a High to Sacred
+  Vessel; Thunder Tempering its Immortal-grade body to True Immortal.
+
+Tests: `MethodsPhaseTwoGameTests`.
+
+### The shrines and the methods of others (phase 3)
+
+| Method | Path | Realms | Talent | Years | How it gathers |
+|---|---|---|---|---|---|
+| Five Elements Cycling | heaven | QR..EN | half | x1/12 | the five elements taken in as offerings, in the order each gives rise to the next |
+| Incense and Faith | heaven | FB..TI | none | x1/16 | prayer at one's shrines (a jade statue) |
+| Spirit Beast Bond | heaven | CF..TI | half | x1/12 | a demon beast bound: cores fed it, foes it slays |
+| Ancestral Incense | ghost | QR..TI | none | x1/16 | prayer and incense at one's ancestral tablets |
+| Haunting | ghost | QR..NS | none | x1/16 | the living's villages frightened by night |
+| Soul River Feast | ghost | FB..SV | none | x1/16 | souls seized as they drift past on the Soul River |
+| Court of the Dead | ghost | CF..TI | half | x1/12 | a ghost palace held, its retainers' tribute |
+| Beast Deity Worship | demon | CF..TI | none | x1/16 | mortals' prayer at one's idol (its volume the blood) |
+
+- **Five Elements Cycling** (`FiveElementsCycling`; remade 2026-11-01, the user's "it feels like qi circulation but with a
+  minigame": it was meditation whose surges were all the Five Elements game, x1 to x2 by the cycles answered). Now a resource
+  way that gathers nothing by meditation: an offering sneak-used into the air (`UseItemCallback`, `FiveElementsCycling#use`; the
+  client only sends it on) is taken in as the next link of the generating cycle wood > fire > earth > metal > water > wood,
+  beginning anywhere. Offerings (`#element`): saplings, logs, sticks and the living world's herbs (`GinsengItem`, not the
+  Netherworld's two); blaze powder and rods, coal, charcoal, fire charges, magma cream; clay balls, bricks, dirt; iron, gold and
+  copper ingots, iron and gold nuggets; a water bucket (an empty bucket left), prismarine shards and crystals, snowballs; a demon
+  core of one of the five. Their realm (`#grade`): mortal things QR; herbs by `GinsengItem#grade` (FB, CF from 100 years, NS from
+  500, HB from 1,000, DI from 5,000; the rarer kinds a realm higher); cores their own. The fifth closes the cycle: each link 0.1 of the stage x2 per realm its grade stands above the
+  heaven realm (at most x4), /2 per realm below (`#worth`), granted together (`CultivationMethods#grant`, its years a twelfth
+  at half weight); then `REST` 2,400 ticks the five circle the body (dust in their colours) and offerings are refused. Out of
+  order: a deviation (the cycle lost, 5% of the stage, meditation's qi loss, nausea and blow); the same element twice only
+  refused; refused too with the stage full (`PlayerCultivation#isStalled`). Practising it, an offering's tooltip names its
+  element and realm (client `FiveElementsTooltip`). Not saved: a logout loses the cycle. The Five Elements surge game stays one
+  of every meditator's screen games (its elements drawn as the Codex's element icons: a sapling, blaze powder, dirt, iron, a
+  water bucket in `QiSurgeHud`).
+- **The shrines** (`Shrines`, `ShrineBlock`, `ShrineBlockEntity`; `shrine` block, `incense` item): its placer its owner, its look
+  (`kind` heaven/ghost/demon) by the method the placer practises (else knows). Every 600 ticks the villagers within 12 add 1 faith
+  each and cultivator NPCs 2^realm (mortals 1; an idol only mortals'), times the devotion (x0.25 to x1.5); others' incense 4 x
+  2^realm (the owner's own nothing). Every 1,200 ticks the faith flows to the owner, online and practising the shrine's method with
+  its volume: 0.004 of the stage a faith, halved a realm, at most a quarter of the stage a flow (`CultivationMethods#grant`);
+  at most 4,000 laid up. A request once a game day (bread, wheat, honey, iron, candles, gold; candles, paper, gold nuggets, bone meal,
+  soul torches; beef, pork, mutton, bones, rabbit hide): brought, devotion +0.25 and 40 faith; unanswered at the next, devotion
+  -0.25. Broken by another (or blown up): the owner loses a quarter of its health, told who. Recipes: a shrine from a candle, two
+  jade, a gold ingot and three smooth stone; four incense from two sticks and sugar.
+- **Spirit Beast Bond** (`SpiritBonds`; `DemonBeast` is an `OwnableEntity` now): a wild beast at a quarter of its health or less, of
+  no higher rank, no elder/primordial/Chaos Fiend, bound with an empty hand (one at a time: `PlayerCultivation#spiritBeast`). Bound
+  it follows (within 6, teleporting from past 24), takes on its owner's attacker or target, never hunts or harms its owner, never
+  despawns. A core fed: 0.15 x2/realm of the core against the owner (at most 0.6) and a stage of growth if the core is of its rank
+  or above (to the owner's rank, past its kind boundless). Its kills: 0.05 x2/realm of the slain (at most 0.3). Dead: the owner's
+  heaven path re-laid at the realm's Early (`CultivationMethods#restart`), online or not.
+- **Court of the Dead** (`CourtOfTheDead`; `GhostPalaces#claim`/`#heldBy`/`#kingOf`): a player Ghost King practising it stands within
+  4 of an empty throne for 5 s: claimed; the palace's retainers are its allies (`GhostCultivatorNpc#isAlly`), their grudge dropped.
+  Every 60 s within its palace, each living retainer pays max(0.0025, 0.02 x 2^(its realm - the king's)). No longer a king: the
+  throne is given up.
+- **Soul River Feast** (`SoulRiverFeast`; C2S `seize_soul` from the Circulate key on the river): a soul every 120 ticks, 6 to 9 blocks
+  ahead near the traveller's line (lasting 100, its particles the feaster's alone), of the path's realm minus 3 (30%), 2 (30%), 1 (25%),
+  0 (10%) or plus 1 (5%). Seized within 4.5: 0.05 x2/realm (at most 0.5); one above fights back: 20% of its health (ghostly), half the time it escapes,
+  one in four a memory taken (a random foundation of layer 2 or more loses its top layer).
+- **Haunting** (`Haunting`): the common dead practising it may take the Soul River down and portals (`Haunting#crosses`; SoulRiver,
+  SoulEntityMixin) and come out where they died (else the world's spawn); at dawn a ruled ghost in a living world is sent back to the
+  Ghost Gate. By night every 200 ticks, villagers within 12 not frightened in the last 1,200 panic: 0.02 of the stage each, halved a
+  realm. Each village square (64 blocks; `Haunting.Villages`, saved) counts frights, halving every 12,000 ticks: past 20 an exorcist
+  comes (a rogue two stages over the ghost, a Peach Wood Sword, tag `dth_exorcist`; one a day), whose rite burns a haunting ghost
+  within 24 for 10% of its health every 2 s; past 60, one fright in four drives a villager away for good.
+- **Beast Deity Worship**: the shrine as an idol; only mortal villagers and mortal NPCs count; its volume the blood, as every demon
+  method's.
+- Manuals (`MethodManualItem#kinds`): righteous sects the rites, Turtle Breath, Five Elements Cycling, Incense and Faith, Spirit
+  Beast Bond; neutral the same but Ancestral Incense for Incense and Faith; devilish Corpse Yin, Turtle Breath, Haunting, the Soul
+  River Feast, Court of the Dead, Ancestral Incense; demon clans kin blood, cores, territory, Beast Deity Worship. The dead may read
+  a manual (`Incorporeal#mayUse`).
+
+Tests: `MethodsPhaseThreeGameTests`.
+
+### The ways of one realm, and of a few (phase 4)
+
+| Method | Path | Realms | Talent | Years | How it gathers |
+|---|---|---|---|---|---|
+| Heart Demon Tempering | heaven | NS | none | x1/16 | the heart demon, called up again and again in the Inner Realm |
+| Dao Field Attunement | heaven | DI | half | x1/4 | meditation in the Great Void's Dao field of the stage |
+| Rift Walking | heaven | VS | half | x1/12 | Void Breaches climbed, gap storms' bolts borne |
+| Vessel Nurturing | heaven | SV | half | x1/12 | qi poured into a Sacred Vessel and drawn back |
+| Nirvana Rebirth | heaven | EN | none | x1/16 | a death on the Shore of Nirvana, risen from |
+| Immortal Essence Refining | heaven | TI | full | x1/2 | meditation in the Immortal Realm burning immortal essence |
+| Yellow Springs Immersion | ghost | NS..HB | half | x1/4 | soaking in the Yellow Springs' waters |
+| Judgement Hall Service | ghost | HB..DI | half | x1/12 | wandering ghosts led to the Wheel of Reincarnation |
+| Rift Haunting | ghost | VS | none | x1/16 | souls seized as they slip out of space's rifts |
+| Soul Furnace Refining | ghost | EN | half | x1/12 | meditation in one's own ghost fire |
+| Ten Thousand Ghosts Union | ghost | TI | half | x1/12 | ghosts slain by one's hand taken in (devilish) |
+| Ancestral Communion | demon | NS..HB | half | x1/4 | meditation among the primeval dragon's bones |
+| Bloodline Nirvana | demon | EN | none | x1/16 | one's race's blood of EN+ drunk, the blood remade or burnt |
+| Primordial Return | demon | TI | half | x1/4 | meditation near a living primordial beast |
+
+- **The places' meditations** (`MethodGrounds`, by where the body sits: `InnerRealm#bodyPos`): Dao Field Attunement in its stage's field
+  (`QiElement#daoField`: Early wood, Mid fire, Late earth, GP metal or water), x2 a scripture in no element's lands; Ancestral Communion in
+  the Primeval Beast Graveyard (`SecretRealm#at`) with 4 bone blocks within 8, x3 Purification's pace (open 20 minutes in 6 years);
+  Primordial Return within 48 of a living `PrimordialBeast`, x2; Immortal Essence Refining in immortal qi (`ModDimensions#hasImmortalQi`),
+  burning a 60th of the essence pool a second (`MethodGrounds#burn`; what there is of it) for x2, nothing with none. Elsewhere
+  `CultivationMethods#whyNoGain` says why. (`ImmortalEssence` now fills by the body's world too: turned inward in the Immortal Realm it
+  leaked before.)
+- **Heart Demon Tempering** (`HeartDemonTempering`, `QiSurges`): inside the Inner Realm every surge is the heart demon, first at 400 ticks,
+  then every 400 to 600, no cooldown; slain 0.1 of the stage (no bonus seconds), a defeat 0.1 lost (`CultivationMethods#lose`) on top of
+  the usual.
+- **Rift Walking** (`RiftWalking`): `VoidBreach#arrive` 0.1; each `SpatialStorms` bolt lived through 0.05.
+- **Vessel Nurturing** (`VesselNurturing`; `SacredVesselItem#use` sneaking): half the heaven qi pool for 0.1, a 600-tick item cooldown, 1
+  in 20 the vessel shrinks away (not in creative).
+- **Nirvana Rebirth** (`NirvanaRebirth`, ALLOW_DEATH after spars and clones): on `SHORE_OF_NIRVANA`, not the void, /kill, old age or under
+  a tribulation: 3 in 4 risen whole (health, effects, fire) with 0.5; else the death goes ahead.
+- **Yellow Springs Immersion** (`YellowSpringsImmersion`, each second from `NetherworldManager#second`): in water in `YELLOW_SPRINGS`,
+  0.0025 of the stage a second at NS, / 1.6 a realm past it (quietly: `CultivationMethods#grant(.., false)`); each full minute 1 in 10
+  `SoulRiverFeast#forgetMemory`.
+- **Judgement Hall Service** (`JudgementHallService`; `CultivatorNpc#mobInteract` sneaking, `EscortedGoal`): a wandering
+  `GhostCultivatorNpc` led (2 at once; again lets it go), walking after its guide within 16 and drifting (teleporting) after it past 16;
+  within 8 of a `WHEEL_OF_REINCARNATION` it is discarded, 0.08 of the stage. Past 48, another world, or the guide gone: let go.
+- **Rift Haunting** (`RiftHaunting`; C2S `seize_soul` now sent on any Circulate press outside a surge, routed by the river): within 8 of a
+  `SPATIAL_RIFT`/`YELLOW_SPRINGS_RIFT` block or a `SpatialTearEntity`, a soul every 400 ticks drifting off the rift (lasting 200), rolled
+  and fought as the Feast's (`SoulRiverFeast#take` with its method) at half the Feast's worth.
+- **Soul Furnace Refining** (`SoulFurnace`, `MeditationManager#ghostMethods`): its gain replaces the yin drawn, second n of the meditation
+  0.002 x (1 + n/30) of the stage (n no further than 95 s, where the harm tops out: `SoulFurnace#HOTTEST`), the harm 1% + 0.2% x n of max
+  health a second (at most 20%), taken straight off health so the meditation
+  goes on (not in creative); out of health it breaks: the meditation stopped, the stage's cultivation lost, a ghost dispersed, the living
+  killed (ghostly harm).
+- **Ten Thousand Ghosts Union** (`TenThousandGhosts`, AFTER_DEATH): a `HungryGhost` 0.004, a `GhostCultivatorNpc` 0.02 x2 per realm above
+  the path's minus 5 (at most 0.5); alignment -2 each.
+- **Bloodline Nirvana** (`BloodlineNirvana`, `DemonBlood#judge`/`#drink`): own-race blood of EN+ is drunk even when held; 7 in 10 the taint
+  cleared and 0.5 of the stage, else the stage's cultivation lost and 40% of max health (magic).
+- **Devilish NPCs drain bodies** (`CorpseYin.DrainGoal`, `Corpses#lyingNear`): a devilish cultivator with no target looks every 2 s for a
+  fresh or rotting body within 16 whose yin is undrawn (not its own sect's), walks to it and draws for 60 of its goal's ticks (some 6 s: a
+  mob's goals tick every other tick), soul particles streaming, the body marked drawn.
+- Manuals: `MethodManualItem#kept` takes only methods whose first realm the world's manuals reach (lower to CF, Upper to SV); the EN and
+  TI ways come from `MethodManualItem#ancient`: the Fallen Holy Land's vaults (35% each) and the Fallen Immortal's Tomb's halls (8% each).
+  Righteous sects add Heart Demon Tempering, Dao Field Attunement, Vessel Nurturing and Judgement Hall Service; neutral Heart Demon
+  Tempering, Dao Field Attunement, Rift Walking, Yellow Springs Immersion and Judgement Hall Service; devilish Yellow Springs Immersion and
+  Rift Haunting; demon clans Ancestral Communion.
+
+Tests: `MethodsPhaseFourGameTests`.
+
+### Herbs, a clone's seclusion, a life borrowed (2026-11-01)
+
+The user's picks from the second brainstorm (methods that gather by doing something no other method does):
+
+| Method | Path | Realms | Talent | Years | How it gathers |
+|---|---|---|---|---|---|
+| Spirit Herb Refining | heaven | QR..DI | half | x1/12 | herbs eaten for their essence |
+| Clone Seclusion | heaven | NS..EN | half | x1/4 | one's clone left meditating, drawn back in |
+| Borrowed Life | ghost | NS..VS | half | x1/12 | a living cultivator possessed, its life drawn off |
+
+- **Spirit Herb Refining** (`SpiritHerbRefining`; "absorb cultivation from any herb ... a method for getting more out of herbs really"):
+  practised, a herb (`GinsengItem`, every kind, the Netherworld's too) is eaten as food (`GinsengItem#use`, 32 ticks) and its essence
+  granted: 0.1 of the stage x2 per realm its grade stands above the heaven realm (at most x4), /2 per realm below. `GinsengItem#grade`
+  (shared with Five Elements Cycling's herbs): FB under 100 years, CF from 100, NS from 500, HB from 1,000, DI from 5,000; any but the
+  common ginseng/lingzhi/huangjing a realm higher (FA passed over). Then every herb item rests 600 ticks (`ItemCooldowns`). Refused with
+  no volume or the stage stalled. Practising it, a herb's tooltip names its realm (client `MethodTooltips`, which also has Five Elements
+  Cycling's offering lines).
+- **Clone Seclusion** (`CloneSeclusion`): its maker online and practising it, the clone standing unplayed (`Clones#bodyNotPlayed`) sits
+  in the lotus pose (`CloneBodyEntity#isSecluding`, a synced flag, not saved; `LotusPose`) and banks each second 0.5 x the stage's own
+  gain where the realm's qi is at home (`cultivationPerSecond x qiNeed / required`), at most a whole stage, in the clone tag's `Banked`
+  (carried across `Clones#back`). A region ticket (radius 2) holds its chunk while it secludes. Drawn back in (`Clones#absorb`): granted
+  (`CloneSeclusion#drawnIn`). Every 6,000 ticks a beast of the maker's heaven rank spawns 12 blocks off, persistent, targeting it (a
+  kind whose tier holds the rank; else a rare-tier kind grown to it, `DemonBeast#setBoundlessRank`). Slain (`Clones#onStandInDied`): the
+  bank is lost (told). Every tenth banked is told on the action bar; a full stage once in chat.
+- **Borrowed Life** (`BorrowedLife`): a soul inhabiting a living cultivator (`Possession#inhabits`, an NPC's or a player's body; Soul
+  Projection from NS, possession as ever) with its ghost path practising it draws every 100 ticks 0.012 of the ghost path's stage x2 per
+  realm the host's higher rank stands above the ghost realm, /2 below (at most 0.05), the host losing the same share of its own stage on its
+  mightier path (heaven or demon, never a stage: `#drain`; an NPC's borrowed record goes back to it as the body is given back). Held for
+  1,200 ticks x2 per realm the host stands below (/2 above), 400 to 3,600; then thrown out (`SoulProjection#letGo`): Slowness IV and
+  Nausea 5 s, an NPC host's regard at its lowest. What is drawn is granted as the soul leaves the body, however it leaves
+  (`Possession#leave` calls `BorrowedLife#left`).
+- Manuals: righteous and neutral sects add Spirit Herb Refining and Clone Seclusion (the latter only in the Upper Realm's, first realm
+  NS); devilish sects Borrowed Life (Upper Realm's).
+
+Tests: `MethodsHerbsClonesSoulsGameTests`.
+
+## The Body Path (phase 1, 2026-11-01)
+
+The user's ask: "lets begin to expand on body cultivation ... to make it an actually viable method (and you dont need shattered
+meridians to practice it either)". Their calls: a separate, fourth path; phase 1 its realms and the body's strength only (no physical
+techniques yet); its realms their own names.
+
+| Beside | Body realm | | Beside | Body realm |
+|---|---|---|---|---|
+| Qi Refining | Copper Skin | | Dao Integration | Diamond Heart |
+| Foundation Building | Iron Flesh | | Void Shattering | Star-Forged Body |
+| Core Formation | Steel Sinew | | Sacred Vessel | Heaven-Bone Body |
+| Nascent Soul | Jade Bone | | Entering Nirvana | Undying Body |
+| Heavenly Being | Silver Marrow | | True Immortal | Indestructible Body |
+| Four Axis | Golden Blood | | | |
+
+- **State** (`BodyState`, `PlayerCultivation#body`, saved under "Body"): rank (-1 not begun), the stage's tempering, drawn in, in
+  tribulation; synced at the end of the sync packet. `TwoPaths.Path.BODY` (added last), `TwoPaths#bodyRank`, `#cultivatesBody`,
+  `#drawable`/`#drawnIn`/`#switchPath` with it. `TwoPaths#higherRank` and `#awakens` leave it out: it is no qi path (no pools,
+  abilities, arts); possession, tethers and the like go by the qi paths.
+- **Begun** (`BodyPath#begin`, C2S `begin_body_path`: the Cultivation tab's path button reads "Begin Body" while `BodyPath#available`,
+  the living whose mortal body is at Peak or awakened): at Copper Skin Early, drawn in. Shattered Meridians at Peak begin it by themselves
+  (`BodyPath#shatteredBegin`, on join and at Peak in `Tempering#gain`); their old body refining (8 stages) is migrated on load (stage s ->
+  rank s, its tempering's share kept). `PlayerCultivation#canTemper` is a mortal below Peak only now.
+- **Tempered** (`CultivationMethod#BODY_TEMPERING`, orthodox, QR..TI, full weight, years x1, the body its own volume): drawn in,
+  meditation circulates blood (`MeditationManager#bodyPath`, the heaven path's own pace and boosts: `BodyPath#perSecond`, an Ancient
+  Holy Body x2; mortals may meditate for it); deeds (`Tempering`, `BodyPath#deed`, each in seconds of that pace): charged hit 0.5, hostile
+  kill 5 / other 1 x2^(slain realm - body realm) within x8 (`#killFactor`: cultivators, beasts, players), stone 0.2, ore 3, sprinting 0.1/s,
+  harm taken 20 s for the whole health (health lost tick to tick). Years paid as meditation's (`Lifespan#seclude`).
+- **Gates**: the Demon Path's: a tribulation at every Grand Perfection and every stage from Jade Bone (`TribulationManager#startBody`,
+  `Trial#body`, ordinary harm; success `succeedBody`, failure a stage down, walked out of = failed on join), the lower realms' cap
+  (`BodyPath#locked`), the axes at Golden Blood (`FourAxis#fillBars`), Name Your Obsession as every path's. Nothing past TI GP yet.
+- **What it gives**: `TwoPaths#body` takes it where `might(rank) x pathShare x BodyPath.BODY (1.5)` beats every other path's; its years
+  (`Lifespan#spanRank` = max of the qi paths' and the body's). The Cultivation tab: a bronze card, ladder diamond, status lines
+  (`bodyNext`), the panel for mortals on it too; `/cultivation set body <realm> <stage>` and `addcultivation body`.
+- Not yet (later phases): more body methods (baths, beast blood, weights), NPC body cultivators and sects.
+
+Tests: `BodyPathGameTests`.
+
+### Phase 2: body techniques (2026-11-01)
+
+The user's "Go" to six techniques, a pool of their own (vigor) and unlocks by realm; then "Go" to five for the realms above and the pool
+growing with the body. `BodyTechniques`; eleven `Ability` entries at the end of the enum (`IRON_SKIN` .. `GOLDEN_BODY`, `DIAMOND_WILL` ..
+`HEAVEN_SHATTERING_FIST`), awakened by the body realm alone (`BodyTechniques#has`: the living, a mortal on the Body Path
+too, an exception in `Ability#isUnlocked`), used from the wheel or the Abilities tab (`CultivationManager#toggleAbility` ->
+`BodyTechniques#act`).
+
+- **Vigor** (`BodyState#vigor`, saved "Vigor" when short of whole, synced at the end of the sync packet; a bronze thin bar at the top of
+  `QiHud`'s stack, right under the health where a mortal has no qi bar): `#maxVigor` 100 at Copper Skin +10 a realm (200 at the
+  Indestructible Body). Eating 3% of the pool a food point (`Tempering#onEat` -> `#ate`); rest 1%/s (no blow given or taken for 5 s, not
+  sprinting: `#resting`), x3 meditating; none while Blood Frenzy burns. Each technique also leaves 0.1 exhaustion per vigor spent.
+- **The techniques** (act cost / cooldown; growth per body realm past the one it awakens at, `#realmsPast`):
+
+| Realm | Technique | Effect | Vigor | Cooldown |
+|---|---|---|---|---|
+| Copper Skin | Iron Skin | 8 s: blows 40% less (+3%/realm, at most 70%), knockback resistance 1 | 25 | 20 s |
+| Iron Flesh | Mountain Stomp | on the ground: foes within 5 (+0.5/realm) blocks take 100% of one's attack damage (`BODY_ART`), knockback 1, Slowness II 3 s | 30 | 8 s |
+| Steel Sinew | Ground-Splitting Leap | on the ground: thrown 1.4 (+0.12) forward, 0.8 (+0.04) up; no fall damage till landing; landing shockwave 3 (+0.3) blocks, 60% | 15 | 3 s |
+| Jade Bone | Thousand-Pound Fist | the next blow of the hand within 5 s: x3 (+0.25), hurled 2.0 (+0.2) at the tick's end | 20 | 6 s |
+| Silver Marrow | Blood Frenzy | switch: blows of the hand and `BODY_ART` +30% (+5%), speed +30%, 6 vigor/s, out at 0 | 6/s | - |
+| Golden Blood | Golden Body | 3 s (+0.5 s): every blow (harm with a source entity, or an explosion) refused outright | 40 | 45 s |
+| Diamond Heart | Diamond Will | 10 s (+1 s): harmful effects cleared and refused (`#allowEffect`, canBeAffected), knockback resistance 1, no Realm Suppress (`#unshaken` in `RealmSuppressSystem#canBePressed`) | 35 | 40 s |
+| Star-Forged Body | Comet Charge | on the ground: thrown along it about 12 (+1) blocks (2.9 x blocks/12 forward, 0.25 up: measured in game); each foe within 1.5 struck once for 150% and thrown aside; safe fall till down | 30 | 10 s |
+| Heaven-Bone Body | Rebounding Bones | 6 s (+0.5 s): 50% (+5%, at most 80%) of each blow struck back on its dealer within 32 as `BODY_ART` (never bounced again) | 35 | 30 s |
+| Undying Body | Flesh Reborn | heal 30% (+5%) of max health, fire and harmful effects gone, then 50% more over 10 s | 50 | 60 s |
+| Indestructible Body | Heaven-Shattering Fist | foes within 16 blocks in a 45-degree half-cone of the look (or within 2.5 before one) take 300%, hurled 2.5; sonic rings along it | 60 | 30 s |
+
+- **Weighed by the body**: `TwoPaths#weighedRank` counts a mortal's Body Path (it read every mortal as -1, so a Golden Blood body was
+  pressed as a mortal by any Qi Refining cultivator); `RealmSuppressSystem#rankOf` uses it. NPC address and sect titles keep their own
+  mortal checks (no qi to read).
+- **Hooks**: `HeavenSpells#incoming` (after the tribulation and Pangu checks) -> `#guard` (Golden Body 0 = warded off, Iron Skin's cut);
+  `SoulLivingEntityMixin` -> `#outgoing` (Frenzy, the fist); `CultivationEvents` fall ALLOW_DAMAGE -> `#fallIsSafe` (on a leap till it
+  lands: a landing counts only once the server has seen the player off the ground); `#end` on death and logout (Frenzy out, knockback and
+  speed modifiers off); cooldowns outlast a logout. Acts show "on" on the wheel while they hold (`#second` turns a stale one off).
+- **Damage type** `defying-the-heavens:body_art` (datagen; "was crushed by X's body technique"): not a blow of the hand, so no Sword
+  Intent, Ghost Fire, venom or charged-hit tempering follows it.
+- Also: the HUD's corner names the Body Path's realm where it stands highest (a mortal's too); the client's reset of the off-by-default
+  abilities used an int shift (ability 32 and up wrapped onto the first ones), a long now.
+
+Tests: `BodyTechniquesGameTests`.
+
+### Phase 3: body methods (2026-11-01)
+
+The user's "Go, all four". Four `CultivationMethod`s on the Body Path besides Body Tempering, all from Method Manuals (`MethodManualItem#kinds`:
+the bath, weights and spars righteous; all four neutral; blood and weights devilish), half weight, a twelfth of the years, no meditation,
+each tempering only while the Body Path is drawn in by it (`BodyPath#practises`, `BodyPath#temperBy`: seconds of the path's own pace
+`BodyPath#perSecond` into `CultivationMethods#grant`). Worth by realm everywhere: x2 a realm above the body (at most x4), /2 below (at
+least /8).
+
+| Method | Realms | Way |
+|---|---|---|
+| Medicinal Bath (`MedicinalBath`) | QR..HB | a spirit herb (GinsengItem, not the Netherworld's flowers) used on a water cauldron steeps it (UseBlockCallback): +60 s, at most 600, the strongest herb's grade (`GinsengItem#grade`); standing in it: 2 s of pace a second x worth, a second of the bath spent; in memory only |
+| Beast Blood Bathing (`BeastBlood`) | QR..NS | a `DemonBeast`'s death (AFTER_DEATH) spills a pool on the ground for 60 s (at most 64 pools); standing within 1.6 of one: 3 s of pace a second x worth of the richest; not used up |
+| Weighted Training (`WeightedTraining`) | QR..NS | each tick's own step (horizontal, plus climbing; not riding, flying, gliding; none past 0.8 a tick) x armour load ((defence + toughness) / 15, at most 2.5; none under 0.2): 0.4 s of pace a block, granted once a second, told every 10 s |
+| Hundred Battles (`HundredBattles`) | FB..HB | every blow that lands between spar partners (`Physiques#onHurt`, `SparSystem#areSparring`), given or taken: 4 s x worth (the partner's `fightingRank`: held back, an equal; it read `sustainedRank` before the NPC phase, so a held-back elder counted at its full realm); a spar won (`SparSystem#end`, the rank it fought at taken before it lets go): 60 s x worth |
+
+Also: `BodyPath#deed` (Body Tempering's deeds) only under Body Tempering; `CultivationMethods#refusal` lets a mortal read a Body Path manual
+(the Body Path begun), every other still sealed to mortals; the Methods tab has a Body Path page (`CultivationScreen#renderBodyMethods`,
+`PAGE_BODY`: where it stands and its methods, Practise on them), where before no body method could be chosen anywhere; a switch's
+warning names the body's own realm ("Iron Flesh - Early", it said the qi realm's). Codex page `body_methods`. Tests: `BodyMethodsGameTests`.
+
+### Phase 4: body cultivators and body sects (2026-11-01)
+
+The user's "Go, with body sects". `CultivatorNpc#isBodyCultivator` (synced `DATA_BODY`, saved "Body"; men only, never a ghost, demon or
+mortal: `setBodyCultivator` refuses them, `setRace` to a beast clears it): its rank is the Body Path's (capped at `BodyPath#LAST_RANK`),
+named so (`rankLabel`, the talk window via `TALK_OPEN`'s last boolean, the consciousness domain's labels, the Sect tab via `sect_info`'s
+`body`), its body `BodyPath#BODY` x its realm's in everything (`CultivationStats#applyNpc` might with `wholeBody`: armour, toughness,
+footing and speed too, as a Body Path player's share does), Heaven's Leave set (no Ritual to the Heavens). No qi:
+`canFlySustainably`, `canSuppressSustainably`, the domain flag, `domainRadius`, `heavenMethod` (so no spells, slips or teaching), Qi Sense's
+inflow and `CorpseYin.DrainGoal` all refuse it; it walks wherever others fly (every flight site already falls back to walking).
+
+| Where | What |
+|---|---|
+| Rogues | `NpcSpawner#rollsBody`: 1 in `BODY_IN` (5) living men, lower realms and the Upper Realm (after the demon roll); also eggs/commands (`finalizeSpawn`) |
+| Body sects | `SectStructure#bodySect(seed)`: 1 in `BodyCultivators#SECT_IN` (6) of the lower/Upper Realm sects of men, by the plan's seed apart from its draws (other sects lay out as before); blueprint "Body", every `SectPiece#body` (saved "Body"); `SectManager#found` sets `Sect#body` (saved), names it `SectNames#body` ("Iron Bone Hall", "Vajra Fist Gate"), `spawnMember` makes every member a body cultivator; `findOpening` matches body to body |
+| Chests | library: `chests/body_sect_library` (no heaven slips; herbs for the bath) + 1-2 body manuals always; master's hall: one now and then (`MethodManualItem#keptBody`, `HALL_CHANCE`) |
+| Fighting | `BodyCultivators.TechniqueGoal` (priority 2, no flags, like `SpellGoal`): own cooldowns (the players'), a technique every 1.5-3 s: Flesh Reborn < 35 health share, Golden Body struck < 50, Diamond Will harried/pressed, Iron Skin struck, Rebounding Bones struck within 4, Heaven-Shattering Fist foe in sight within 12.8, Comet Charge 6..blocks+2, Leap 5..reach, Stomp 2+ foes or one within 3, Fist within 4, Blood Frenzy after 8 s (15 s, rests 30 s); at the rank it fights at (`fightingRank`: a spar's hold-back) |
+| Techniques | `BodyTechniques` takes any `LivingEntity` user (`#user`: the player list, else `NPCS` of those who acted; `forgetGone` each second); `#npcAct` (no vigor; leap scaled to the foe's distance by `LEAP_BLOCKS_PER_FORWARD` 5.5, measured in game; the charge thrown as a player's is for the distance, `COMET_SPEED` per `COMET_BLOCKS`, to 2 blocks past its foe; shatter faces the foe); NPC frenzy timed (`FRENZY`, `NPC_FRENZY_TICKS`); `#guard`/`#outgoing` (a body cultivator's hand blow is its `MOB_ATTACK`)/`#allowEffect`/`#unshaken` (also `RealmSuppressSystem#canBePressed` for anyone)/`#fallIsSafe` (ALLOW_DAMAGE for anyone) all generic |
+| Talk | `Regard#BODY_KIN` (+15) to Body Path players; `NpcAddress#knowsTheBody`: address, `TalkSystem#standing`, `isSenior`, spars (`CultivatorNpc#weighs`: hold-back, stronger, begging) by the player's body (`TwoPaths#weighedRank`), where others see a mortal (so a Body Path mortal can spar a body cultivator); "self.body"/"self.body_rogue"/"sect.body" lines; `NpcLines` "chat.body.*" in place of "chat.progress" |
+| Goods | `CultivatorNpc#bodyManual` (a body way its path keeps, by UUID, at its realm): sold by elders/rogues (`CultivatorTrades#manualPrice`), dropped as a slip is (`HEAVEN_SLIP_CHANCE`/`_SECT`); a body sect's exchange sells its ways' manuals (Inner Disciple) instead of spells and another element's method |
+| Joining | `SectMembership#refusal`: a body sect takes only Body Path walkers ("join.not_body"), mortals too; `#strength` (titles, too strong, the member list, `SectMissions#rankOf(player, sect)`) by the body in a body sect |
+| Possession | a nascent soul in a body cultivator lives it as a mortal at Peak on the Body Path at its rank (`BodyCultivators#asBody`: no qi, its meridians never forced open); given back, its rank is the Body Path's it came to |
+| Ascending | a body cultivator can't fly up into the rift at 0, 0: standing under it, it leaps in (`CultivatorGoals.JourneyGoal#ascend`) |
+
+Codex page `body_cultivators`. Tests: `BodyCultivatorsGameTests`.
+
+### Phase 5: the body's way up the worlds (2026-11-01)
+
+The user's "Go, all three parts" (the way up, the ladder past True Immortal, its techniques), part one. A pure Body Path cultivator could
+not leave the lower realms: the Spatial Gap is flown, and the Void Breach and the Immortal Gate read only the qi paths
+(`TwoPaths#higherRank`).
+
+- **Cloud-Treading Steps** (`Ability#CLOUD_TREADING`, Silver Marrow): a switch, off to begin with (`BodyTechniques#treadOn`, refused
+  short of a second's vigor; `#treadOff`). While it is on and neither Qi Flight nor a sword carries the player, `QiFlight#fly` grants
+  flight at `BodyTechniques#TREAD_SPEED` (two thirds of Qi Flight's: 5 blocks a second up; `#isOurs` knows it), never where a current
+  carries one (the Soul River, a Void Breach, the Immortal Passage). `TREAD_PER_SECOND` (2) vigor a second while actually aloft
+  (`QiFlight#treading`: flying this tick), paid in `BodyTechniques#second`; no rest refill aloft (eating still fills it); off when it runs
+  dry ("the clouds give way"). Clouds at the feet every 3 ticks, a soft step every 18 while moving. Players only: NPC body cultivators
+  still walk, so fliers stay safe from them. The gap's climb from the rift's way in (Y 128) to its crossing (360) is ~46 s; Silver
+  Marrow's 140 vigor carries one 70 s (3 a second, as proposed, gave 46.7 s: no margin at all).
+- **The gates count the body**: `TwoPaths#travelRank` (the higher of the qi paths' rank and the Body Path's; a ghost's body doesn't
+  travel) in `VoidBreach#mayPass`/`#mightFor` (a Diamond Heart rides a breach) and `ImmortalGate#mayPass`/`#carriedShare` (an Undying
+  Body passes, the climb's pressure share by its body).
+- **Comet Charge tears the void**: from the Star-Forged Body, in the Upper Realm at `VoidBreach#TEAR_Y` (448) and up
+  (`VoidBreach#bodyTears`), Comet Charge opens a Void Breach before one (`VoidBreach#open`) in place of the charge, ground or none, for
+  the charge's vigor and cooldown.
+
+Codex pages `body_path` (its way up) and `body_techniques`. Tests: `BodyWayUpGameTests`.
+
+### Phase 6: the ladder past the Indestructible Body (2026-11-01)
+
+Part two of "Go, all three parts". `BodyPath#LAST_RANK` is every path's now (`PlayerCultivation#LAST_RANK`, Heavenly Lord's Grand
+Perfection); its six new realms have their own names beside the ladder's: the **Earth-Bearing Body** (Earth Immortal), **Sky-Pillar Body**,
+**Imperishable Gold Body**, **Primordial Saint Body**, **Chaos-Tempered Body** and the **Body of Heaven and Earth** (Heavenly Lord).
+
+- **Its gates**, as every path's past True Immortal: `BodyPath#heldByLaws` (a realm's Grand Perfection with the Laws short of
+  `Laws#needed`: 3, 7, 12, 18, 25, 35; `#lawGateLine` names the realm the body's way through `Laws#gateLine(c, realm, name)`) in
+  `#canBreakthrough`, `#tellBottleneck`, `TribulationManager#startBody` and the Cultivation tab (`CultivationScreen#bodyNext`); breakthroughs
+  only in the Immortal Realm as before (`BodyPath#locked`), told by `BodyPath#lockLine` in the body's names (it named the qi realm).
+- **An immortal body** (`BodyPath#immortal`: the Indestructible Body or past it, one of the living) is an immortal to `Laws#isImmortal`:
+  it comprehends the Laws meditating in the Immortal Realm (`MeditationManager`'s mortal branch now calls `Laws#meditate` too) and from Dao
+  Fragments, the greater ones from the Imperishable Gold Body (`Laws#greaterOpen`), the Laws page shows for it, and the Five Decays come for it
+  (`FiveDecays#decays`): its judgement's strikes by the higher of its qi paths and its body, and a judgement failed costs a stage of the body
+  where the body stands highest (`FiveDecays#fall`, package-private now for the tests). `Laws#isQiImmortal` (the old test) keeps what burns
+  immortal essence to the qi paths: `LawDomains#unlocked`, `SmallWorlds` (refining a seed, the door), `Ability#SMALL_WORLD`.
+- **The Laws' gifts**: Time cuts body techniques' cooldowns as it cuts spells' (`BodyTechniques#cooldown(c, technique)`: 3% a level; the
+  Law of Time's lines say so); Life and Death's healing was every player's already (`Laws#healed`).
+- **Up the ladder**: Body Tempering goes on past the Indestructible Body as every orthodox way does (`CultivationMethod#spans`: the Laws
+  carry them past True Immortal; setting its last realm to Heavenly Lord would break that); vigor 100 + 10 a realm, 260 at
+  the top; the body's stats are its rank's (the ladder's doubling) x1.5; its years endless from the Indestructible Body on (`Lifespan`, as
+  before); tribulations of the ladder's realms (`Trial` by the body's target realm).
+- **No body cultivator of the world's** climbs past the Indestructible Body: `BodyCultivators#LAST_RANK` (True Immortal's Grand
+  Perfection) in `CultivatorNpc#setBodyCultivator`, its advance cap and `BodyTechniques#rankOf`.
+- **Fixes**: the lower realms held a body to their cap (Heavenly Being's Grand Perfection) even past Void Shattering, where the qi paths go
+  free; `PlayerCultivation#heldBelow` reads `TwoPaths#travelRank` now, so a Star-Forged Body is as free there as a Void Shattering
+  cultivator. And the ladder's realm milestones ("the highest of one's paths reaching it") read the qi paths alone, so a pure body cultivator
+  never opened the Codex chapters keyed to them (the worlds it now travels, the Laws and Five Decays it now meets): `Milestones#sweep` counts
+  the Body Path's rank too (seen in game: an Indestructible Body's Codex said of the Laws "Only immortals know of this").
+
+Codex pages `body_path`, `body_techniques`, `laws`, `decays`. Tests: `BodyLadderGameTests`.
+
+### Phase 7: the ladder's techniques (2026-11-01)
+
+Part three of "Go, all three parts": six `Ability` entries at the end (`EARTHSHAKER` .. `DHARMA_BODY`), one for each realm past the
+Indestructible Body, in `BodyTechniques` like the rest (vigor, cooldowns that the Law of Time cuts, "on" on the wheel while they hold or
+run, `#holding`); players' alone (no body cultivator of the world's reaches those realms).
+
+| Realm | Technique | Effect | Vigor | Cooldown |
+|---|---|---|---|---|
+| Earth-Bearing Body | Earthshaker | on the ground: 3 rings 8 ticks apart out to 15 (+1/realm) blocks from where one stood (`#shakes`, `#earthRing`): every foe a ring passes under (within 3 up or down) takes 150%, tossed up 1.1; Dharma Body stamps along | 70 | 20 s |
+| Sky-Pillar Body | Sky-Pillar Strike | on the ground: thrown up 1.7 and toward where one looks (within 24); 16 ticks on (`PILLAR_APEX`: a player's own motion isn't the server's to read) hurled down at 3.2 onto that place; landing (`#pillarSlam`): foes within 6 (+0.5) take 250%, flung out and tossed; safe fall till down | 60 | 12 s |
+| Imperishable Gold Body | Imperishable Gold | 8 s (+0.5 s): every blow refused (`#guard`, counted in `TURNED`), harmful effects refused (`#allowEffect`), knockback resistance; at its end (`#imperishables`, `#goldBurst`) the harm turned aside (at most 10 blows) strikes every foe within 8 | 90 | 60 s |
+| Primordial Saint Body | Primordial Roar | foes within 16 (+1): `#stripWards` (SpellAuras wards: Golden Bell, Vajra Body, Black Tortoise...; the body's Iron Skin, Golden Body, Diamond Will, Imperishable Gold, Rebounding Bones), `#stun` 3 s (Slowness X, Weakness III, Mining Fatigue III, a mob's path stopped), thrown back 0.6 | 70 | 40 s |
+| Chaos-Tempered Body | Myriad Fists | 10 blows 4 ticks apart (`#myriads`, `#flurryBlow`): foes within 5 in a 50-degree half-cone (or 1.8 before one) take 60% (+5%) each (invulnerability frames reset per blow), the last hurled 4 | 80 | 25 s |
+| Body of Heaven and Earth | Dharma Body of Heaven and Earth | 20 s: SpellConstruct `DHARMA_BODY` (Form GHOSTS, `SpellGhosts#dharma`: one's own skin in gold, 30 blocks, growing up from a man's height, halo, clouds at its feet) 6 behind one, striding after one (1.2 a tick, snaps from 40) and turning as one looks (`#dharmas`); a blow of one's hand (`#outgoing`) -> it turns, raises an arm (`strike_right`/`strike_left`) and an `AVATAR_HAND` of gold falls on the mark, landing `HeavenDemonSpells#AVATAR_FALL` ticks on: foes within 4.5 take 200% of that blow (at most one fist every 14 ticks); Mountain Stomp / Earthshaker -> it `stomp`s, 12 ticks on foes within 14 of its feet take 150%, tossed | 150 | 120 s |
+
+The Dharma Body is drawn as the Heaven-Demon Avatar's projection is (the user had that one's GeckoLib model redone into their own body,
+2026-10-25), not a model of its own. Codex page `body_techniques`. Tests: `BodyHeavenTechniquesGameTests`.
+
 ## Heaven methods
 
-The heaven methods are the living's techniques, cultivated on the qi of the five elements (wood, water, fire, earth and
-metal, the motes Qi Sense shows). Your cultivation is **its own bar**, as it always was: the methods speed it, bring spells
-and passives as it climbs, and open the way into new realms. There are **fifty-five**: one of each element for each realm, Qi
+The heaven methods are the living's scriptures, cultivated on the qi of the five elements (wood, water, fire, earth and
+metal, the motes Qi Sense shows). Your cultivation is **its own bar**, as it always was: the scriptures carry Qi Circulation's
+volumes (Methods, above), and bring spells and passives as it climbs. There are **fifty-five**: one of each element for each realm, Qi
 Refining to True Immortal (the twenty-five of the realms after Four Axis since 2026-10-22, the user's ask: their methods then;
 Dao Integration's and Void Shattering's own spells since 2026-10-24, the realms after them still to come). Each has its own layers and a passive that grows with them, and teaches its element's **spells** of
 its realm and every realm before it. The dead can't take one up (their meridians belong to the ghost path now), nor a mortal,
@@ -1540,19 +2027,20 @@ them; the fury and the ward a little a realm), so a True Immortal method's last 
 **Layers.** A method of a realm spans **Qi Refining up to that realm**, nine layers a realm (`MethodLayers`, the same layout as
 the ghost foundations): a Qi Refining method has 9 layers, a Four Axis method 54, a True Immortal one 99. Within each realm's nine, layers 1-2 stand
 for Early, 3-5 Mid, 6-8 Late and 9 Grand Perfection.
-- **Cultivation needs no method.** Meditation fills the bar, the stages step on by themselves, and the gates are the realm's:
-  the Ritual to the Heavens at Qi Refining Mid, a tribulation at every Grand Perfection (and every stage from Nascent Soul),
-  Foundation and Core Pills, the lower realm's cap. Without a method you cultivate at **three quarters' pace**.
+- **Cultivation needs a method** (since 2026-10-31: Methods, above; before, none was needed and one without cultivated at three
+  quarters' pace). Meditation fills the bar, the stages step on by themselves, and the gates are the realm's: the Ritual to the
+  Heavens at Qi Refining Mid, a tribulation at every Grand Perfection (and every stage from Nascent Soul), Foundation and Core
+  Pills, the lower realm's cap.
 - **A method is understood as far as your cultivation has come** (`HeavenMethods#understoodTo`): learned, its layers up to
   your stage are yours at once. Each time you reach a new stage, **its layers settle in** while you meditate
   (`HeavenMethods#settle`), on half the stage's own cultivation, gathered by the method's element (so half as long as the
   stage takes at a plain pace: under a minute at Qi Refining, several minutes in the highest realms), each told as it does
   ("layer 3 settles in", with the spell it brings). Every method you know settles at once, each by its own element. A
   method's layers never run ahead of your realm.
-- **Methods open the way into realms**, and nothing else waits on them: breaking into a realm wants a heaven method **of that
-  realm or deeper**, of any element (`HeavenMethods#opensWay`). A Qi Refining method takes you no further than Qi Refining
-  Grand Perfection; for Foundation Building you need a Foundation Building method (or deeper). Minor stages, and the stage
-  tribulations from Nascent Soul, never wait on one.
+- **Scriptures carry the realms' volumes**: a scripture of a realm carries Qi Circulation's volumes up to it, of any element
+  (`HeavenMethods#hasVolume`). A Qi Refining scripture gathers no further than Qi Refining; broken through into Foundation
+  Building without a deeper one, you gather nothing there until you find one. (Before 2026-10-31 the breakthrough itself waited
+  on it.)
 - **A fall takes the layers past it**: a failed tribulation (a stage down, its cultivation lost), the nascent soul lost (back to
   Core Formation Grand Perfection), the Chief Judge's gaze (back to Qi Refining Early) leave every method understood no deeper
   than the stage you fall to (`HeavenMethods#clampTo`); they settle in again as you climb back.
@@ -1577,10 +2065,11 @@ bar x `HeavenMethods#cultivationFactor`, the method you practise's:
 - x1.25 within 8 blocks of a **Dao Stele** of the same element (`STELE_BONUS`);
 - and a **Qi Gathering Pill**'s and cultivator **clothing**'s boost to qi gathering.
 
-With no method, x0.75 (and the pill's and clothing's boosts). Refined pill and fruit qi goes onto the bar as it is, whatever
-the method. The layers settle in by the same factor, each method by its own element. While the realm is suppressed (Four Axis
-in the lower realms), nothing gains. Choose which method to practise on the Methods tab's **Heaven Path** page (the Ghost Path
-and Heaven Path buttons at its top switch pages): the deepest realm your methods open the way into, each method's layer, its
+With no scripture, or none with Circulation's volume of your realm, nothing (Methods, above). Refined pill and fruit qi goes onto
+the bar as it is, whatever the scripture, but only while there is a volume. The layers settle in by the same factor, each
+scripture by its own element. While the realm is suppressed (Four Axis in the lower realms), nothing gains. Choose which
+scripture Circulation follows on the Methods tab's **Heaven Path** page (the Ghost Path and Heaven Path buttons at its top switch
+pages): how far your Circulation volumes reach (and that your realm gathers nothing, if it doesn't), each scripture's layer, its
 realms as pips, its next layer settling (how far, and how long here) or the stage it opens at, the element's share here, and a
 **Practise** button.
 
@@ -3393,14 +3882,14 @@ and spells.
 **The ghost path.** A path of its own beside ordinary cultivation, and **neither builds on the other**: your ordinary realm
 neither opens a ghost method nor speeds it, and a Four Axis cultivator who comes down starts the ghost path at Qi Refining
 like anyone else. It **begins**, at Qi Refining Early (`GhostMethods#ghostRank`, saved as `NetherworldState`'s "PathRank"
-and "PathCultivation"), with the first foundation you learn; or, **among the dead, with your first meditation on ghostly qi,
-method or none** (`GhostMethods#begin`; the user's ask, 2026-10-19), as the living need no method for the heaven path. A
-ghost path begun in death **stays yours when you are born again**: alive, the Path button draws in ghostly qi and you go on
-with it, method or none. With no foundation known it goes at the heaven path's no-method pace, **three quarters**
-(`GhostMethods#NO_METHOD_FACTOR`; "No ghost method" on the Cultivation tab), and no further than Qi Refining's Grand
-Perfection until a foundation of Foundation Building or deeper is found (the gate below). Mortals, alive or dead, still
-have no ghost path until their meridians are opened. But walking both paths makes you stronger than walking either
-(see **The two paths** below).
+and "PathCultivation"), with the first foundation you learn; **the dead are taught the first, the Netherworld Breathing Art,
+as they die** (`GhostMethods#teachTheDead`, since 2026-10-31; before, the dead began the path with none at their first
+meditation on ghostly qi, at three quarters' pace). A ghost path begun in death **stays yours when you are born again**:
+alive, the Path button draws in ghostly qi and you go on with it. Its method is **Netherworld Breathing** (Methods, above):
+each foundation carries its volumes up to its own realm, and **without the volume of the path's realm it gathers nothing**;
+it may break through into Foundation Building with only the Breathing Art, and gathers nothing there until a deeper foundation
+is found. Mortals, alive or dead, still have no ghost path until their meridians are opened. But walking both paths makes you
+stronger than walking either (see **The two paths** below).
 
 **One qi or the other.** A meditation draws in **either** the heavens' qi **or** ghostly qi, never both: on both paths, the
 Cultivation tab's **Path** button (between Meditate and Breakthrough) switches which, and the path drawn in has a short rule
@@ -3437,12 +3926,12 @@ quicker by its own stele), every method you know at once, each told as it settle
 **The foundations** carry the ghost path **from Qi Refining up to their own realm**, nine layers to each realm they span
 (`MethodLayers`): the Netherworld Breathing Art has 9 layers (Qi Refining alone), the Yellow Springs Marrow Art 18 (Qi
 Refining, then Foundation Building), and so on to the Six Paths Reincarnation Canon's 54 (Qi Refining all the way through
-Four Axis). The deeper the foundation, the further it opens the way and the rarer it is. Each foundation's spells come in its
+Four Axis). The deeper the foundation, the further its Breathing volumes reach and the rarer it is. Each foundation's spells come in its
 own realm (its last nine layers):
 
 | Foundation | Carries the ghost path | Layers | Spells (layer) | Where it is found |
 |---|---|---|---|---|
-| **Netherworld Breathing Art** | Qi Refining | 9 | Ghostly Wail (5); abilities Ghost Eye (3), Netherworld Veil (6) | **only** the stele on the Ghost Gate's plaza (none out in the realm); ghost cultivators teach it and sell its slip |
+| **Netherworld Breathing Art** | Qi Refining | 9 | Ghostly Wail (5); abilities Ghost Eye (3), Netherworld Veil (6) | **only** the stele on the Ghost Gate's plaza (none out in the realm); ghost cultivators teach it and sell its slip; the dead are taught it as they die (since 2026-10-31) |
 | **Yellow Springs Marrow Art** | to Foundation Building | 18 | Yellow Springs Tide (12), Marrow Ward (16) | steles everywhere (uncommon); Foundation Building ghosts teach it, sell its slip (180 stones) and now and then drop it |
 | **Ghost Core Canon** | to Core Formation | 27 | Ghost Core Burst (21), King's Decree (25) | Core Formation Ghost Kings (most palaces); now and then a stele anywhere, more often on the Nine Nether Peaks |
 | **Nine Nether Soul Sutra** | to Nascent Soul | 36 | Soul Rend (30), Nine Nether Step (34) | Nascent Soul kings (about one palace in four); Nine Nether Peaks steles |

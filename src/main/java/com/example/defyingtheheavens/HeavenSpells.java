@@ -433,6 +433,12 @@ public final class HeavenSpells {
 			WARDED_OFF.add(target);
 			return 0;
 		}
+		// The body's own guard (BodyTechniques): Golden Body turns every blow aside, Iron Skin takes the sting out of it.
+		amount = BodyTechniques.guard(target, source, amount);
+		if (amount <= 0) {
+			WARDED_OFF.add(target);
+			return 0;
+		}
 		// First the auras:a ward of the element that overcomes the blow's, a Golden Bell, a polished blade (SpellAuras).
 		amount = SpellAuras.incoming(target, source, amount);
 		if (amount <= 0) {

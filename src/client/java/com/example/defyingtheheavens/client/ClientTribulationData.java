@@ -19,7 +19,16 @@ public final class ClientTribulationData {
 
 	public static boolean isActive() { return active; }
 	public static int getStrikesLeft() { return strikesLeft; }
-	public static Component getTargetName() { return PlayerCultivation.rankName(targetRealm, targetStage); }
+	/**
+	 * The stage the tribulation is for: the Body Path's own name when it is the path drawn in (its tribulation begins only so:
+	 * TribulationManager#startBody), else the realm's.
+	 */
+	public static Component getTargetName() {
+		if (!ghost && com.example.defyingtheheavens.TwoPaths.cultivatesBody(ClientCultivationData.get())) {
+			return com.example.defyingtheheavens.BodyPath.rankName(PlayerCultivation.rank(targetRealm, targetStage));
+		}
+		return PlayerCultivation.rankName(targetRealm, targetStage);
+	}
 	public static boolean isGhost() { return ghost; }
 
 	public static void update(boolean active, int strikesLeft, int realmIndex, int stageIndex, boolean ghost) {

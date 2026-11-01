@@ -115,32 +115,32 @@ public class PhysiqueGameTests implements FabricGameTest {
 
 	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
 	public void shatteredMeridiansRefineTheBody(GameTestHelper helper) {
+		// Since the Body Path (2026-11-01): their body refining is the Body Path's, begun by itself at Peak, through all its realms.
 		ServerPlayer player = player(helper);
 		PlayerCultivation c = CultivationManager.get(player);
 		c.setPhysique(Physique.SHATTERED_MERIDIANS);
 		c.setMortalState(MortalStage.PEAK, 0);
-		helper.assertTrue(c.canTemper() && HeavenMethods.refusal(c) != null, "Shattered: no methods, but Peak is no end to tempering");
-		helper.assertTrue(BodyRefining.meditationPerSecond(c) > 0, "Meditation tempers it");
+		helper.assertTrue(!c.canTemper() && HeavenMethods.refusal(c) != null, "Shattered: no methods; a mortal's tempering ends at Peak");
+		BodyPath.shatteredBegin(player);
+		helper.assertTrue(BodyPath.rank(c) == 0 && TwoPaths.cultivatesBody(c), "At Peak their Body Path begins by itself, drawn in");
 
 		ItemStack elixir = PillItem.create(ModItems.MARROW_CLEANSING_ELIXIR, PillGrade.LOW, 1);
 		player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, elixir);
 		elixir.finishUsingItem(player.level(), player);
 		helper.assertTrue(c.isMortal() && !elixir.isEmpty(), "No elixir opens shattered meridians");
 
-		Tempering.gain(player, BodyRefining.toNext(0));
+		BodyPath.addCultivation(c, BodyPath.required(0));
 		TwoPaths.Body body = TwoPaths.body(c, false);
-		helper.assertTrue(c.getBodyRefining() == 1 && body.realm() == Realm.QI_REFINING && body.stage() == Stage.MID,
-				"Copper Skin: a body as strong as Qi Refining Mid's");
+		helper.assertTrue(BodyPath.rank(c) == 1 && body.realm() == Realm.QI_REFINING && body.stage() == Stage.MID && near(body.share(), BodyPath.BODY),
+				"Copper Skin Mid: a body half again as strong as Qi Refining Mid's");
 		CultivationManager.refresh(player);
-		helper.assertTrue(near(player.getMaxHealth(), 20 + CultivationStats.maxHealth(Realm.QI_REFINING, Stage.MID)), "...in its health too");
+		helper.assertTrue(near(player.getMaxHealth(), (20 + CultivationStats.maxHealth(Realm.QI_REFINING, Stage.MID)) * BodyPath.BODY), "...in its health too");
 
-		Tempering.gain(player, 1e7);
-		body = TwoPaths.body(c, false);
-		helper.assertTrue(c.getBodyRefining() == BodyRefining.LAST && body.realm() == Realm.CORE_FORMATION && body.stage() == Stage.EARLY,
-				"The Indestructible Body: Core Formation Early's strength");
-		helper.assertTrue(!c.canTemper() && !Tempering.gain(player, 10), "Nothing past the last refining");
+		BodyPath.addCultivation(c, 1e12);
+		helper.assertTrue(BodyPath.rank(c) == PlayerCultivation.rank(Realm.QI_REFINING, Stage.GRAND_PERFECTION) && BodyPath.atBottleneck(c),
+				"Its stages step on by themselves to Copper Skin's Grand Perfection, where the heavens wait");
 		PlayerCultivation saved = PlayerCultivation.load(c.save());
-		helper.assertTrue(saved.getBodyRefining() == BodyRefining.LAST && saved.hasShatteredMeridians(), "Body refining is saved");
+		helper.assertTrue(BodyPath.rank(saved) == BodyPath.rank(c) && saved.hasShatteredMeridians(), "The Body Path is saved");
 		helper.succeed();
 	}
 

@@ -82,6 +82,8 @@ public final class QuickAbilities {
 		buf.writeVarInt(ability.ordinal());
 		ClientPlayNetworking.send(ModPackets.TOGGLE_ABILITY, buf);
 		mc.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+		// The body's acts (BodyTechniques) show "on" while they hold, but say their own word: it isn't written over here.
+		if (com.example.defyingtheheavens.BodyTechniques.isTechnique(ability) && ability != Ability.BLOOD_FRENZY) return;
 		pending = ability;
 		pendingWas = ClientCultivationData.get().isAbilityEnabled(ability);
 		pendingTicks = 40;

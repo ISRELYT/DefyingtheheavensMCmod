@@ -229,10 +229,11 @@ public final class QiSenseClientHandler {
 		}
 		INFLOW_CARRY.keySet().retainAll(ABSORBING.keySet());
 
-		// NPC cultivators meditating nearby draw the land's qi in just the same (at a tenth of a player's rate, so less of it).
+		// NPC cultivators meditating nearby draw the land's qi in just the same (at a tenth of a player's rate, so less of it); a body
+		// cultivator draws in none (it tempers the body: CultivatorNpc#isBodyCultivator).
 		java.util.Set<Integer> seen = new java.util.HashSet<>();
 		for (Entity entity : mc.level.entitiesForRendering()) {
-			if (!(entity instanceof CultivatorNpc npc) || !npc.isMeditating() || npc.isMortal() || !npc.isAlive()
+			if (!(entity instanceof CultivatorNpc npc) || !npc.isMeditating() || npc.isMortal() || npc.isBodyCultivator() || !npc.isAlive()
 					|| npc.distanceToSqr(eye) > ABSORPTION_RANGE * ABSORPTION_RANGE) continue;
 			seen.add(npc.getId());
 			Realm realm = npc.getDisplayedRealm();

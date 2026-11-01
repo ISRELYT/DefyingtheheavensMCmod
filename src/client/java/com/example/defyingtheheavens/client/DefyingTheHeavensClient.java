@@ -94,6 +94,7 @@ public class DefyingTheHeavensClient implements ClientModInitializer {
 		}, com.example.defyingtheheavens.ModBlocks.ALCHEMY_CAULDRON, com.example.defyingtheheavens.ModBlocks.PILL_SAGE_CAULDRON);
 		ModKeybinds.register();
 		BaublePanel.register();
+		MethodTooltips.register(); // an offering's element and realm, a herb's realm, while their methods are practised
 		TooltipWrap.register(); // the mod's long tooltip lines kept on the screen
 		ClientPacketHandlers.register();
 		VitalsHud.register(); // the name, realm, health and qi in the top-left corner (vanilla's hearts held to ten: GuiHeartsMixin)

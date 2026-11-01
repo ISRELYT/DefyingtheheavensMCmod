@@ -77,13 +77,23 @@ public final class TwoPaths {
 		return wielded ? c.wielded(rank) : rank;
 	}
 
+	/**
+	 * The Body Path's rank (BodyPath), or -1: not begun. A body's own, whatever its meridians (so a mortal's too). It gives the body
+	 * ({@link #body}) and its years, never a qi path's abilities, pools or arts ({@link #awakens} and {@link #higherRank} leave it out).
+	 * {@code wielded}: as Realm Suppression and pressure leave it.
+	 */
+	public static int bodyRank(PlayerCultivation c, boolean wielded) {
+		int rank = BodyPath.rank(c);
+		return wielded ? c.wielded(rank) : rank;
+	}
+
 	// --- The realm's abilities, from any path ---
 
 	/**
 	 * The paths, for which of them awakens one of the realm's abilities, and so pays for it: the heaven path and the Demon Path from
 	 * the qi pool (DemonPath shares it), the ghost path from its ghostly qi. Saved and synced nowhere by ordinal; add new ones at the end.
 	 */
-	public enum Path { HEAVEN, GHOST, DEMON }
+	public enum Path { HEAVEN, GHOST, DEMON, BODY }
 
 	/**
 	 * Which path awakens an ability of {@code realm} (Ability): the heaven path if it stands there, else the ghost path if it does;
@@ -105,12 +115,26 @@ public final class TwoPaths {
 			case HEAVEN -> heavenRank(c, wielded);
 			case GHOST -> ghostRank(c, wielded);
 			case DEMON -> demonRank(c, wielded);
+			case BODY -> bodyRank(c, wielded);
 		};
 	}
 
-	/** The highest of the paths' ranks, or -1 on none: where the cultivator stands, for what any path brings alike. */
+	/**
+	 * The highest of the qi paths' ranks, or -1 on none: where the cultivator stands, for what any qi path brings alike (the Body Path is no
+	 * qi path: its rank gives the body and its years alone, {@link #bodyRank}).
+	 */
 	public static int higherRank(PlayerCultivation c, boolean wielded) {
 		return Math.max(Math.max(heavenRank(c, wielded), ghostRank(c, wielded)), demonRank(c, wielded));
+	}
+
+	/**
+	 * The rank {@code c} travels the worlds' ways by (a Void Breach, the Immortal Gate): its higher path's ({@link #higherRank}), or its body's on
+	 * the Body Path (one of the living's), whichever stands higher: a Diamond Heart rides a breach as a Dao Integration does, an Undying Body
+	 * passes the Gate as an Entering Nirvana does (the user's "Go, all three parts", 2026-11-01: before it a body with no qi could never leave
+	 * the realms below).
+	 */
+	public static int travelRank(PlayerCultivation c) {
+		return Math.max(higherRank(c, false), c.netherworld().ghost() ? -1 : BodyPath.rank(c));
 	}
 
 	/** {@code path}'s pool now: qi, or the ghostly qi (GhostQi). */
@@ -171,19 +195,28 @@ public final class TwoPaths {
 		return !c.netherworld().ghost() && c.demon().cultivating() && DemonPath.rank(c) >= 0 && !cultivatesGhost(c);
 	}
 
-	/** The paths {@code c}'s meditation may draw in, in the switch's turn: heaven, Demon, ghost (the living's; the dead have the ghost path's). */
+	/**
+	 * Whether {@code c}'s meditation and deeds temper the Body Path (BodyPath) now: the living with it begun, by the Cultivation tab's switch
+	 * (BodyState#cultivating), neither the ghost path's qi nor the Demon Path drawn in.
+	 */
+	public static boolean cultivatesBody(PlayerCultivation c) {
+		return !c.netherworld().ghost() && c.body().cultivating() && BodyPath.rank(c) >= 0 && !cultivatesGhost(c) && !cultivatesDemon(c);
+	}
+
+	/** The paths {@code c}'s meditation may draw in, in the switch's turn: heaven, Demon, ghost, body (the living's; the dead have the ghost path's). */
 	public static java.util.List<Path> drawable(PlayerCultivation c) {
 		java.util.List<Path> paths = new java.util.ArrayList<>();
 		if (c.netherworld().ghost()) return paths;
 		if (!c.isMortal()) paths.add(Path.HEAVEN);
 		if (DemonPath.rank(c) >= 0) paths.add(Path.DEMON);
 		if (!c.isMortal() && GhostMethods.ghostRank(c.netherworld()) >= 0) paths.add(Path.GHOST);
+		if (BodyPath.rank(c) >= 0) paths.add(Path.BODY);
 		return paths;
 	}
 
 	/** The path {@code c}'s meditation draws in now. */
 	public static Path drawnIn(PlayerCultivation c) {
-		return cultivatesGhost(c) ? Path.GHOST : cultivatesDemon(c) ? Path.DEMON : Path.HEAVEN;
+		return cultivatesGhost(c) ? Path.GHOST : cultivatesDemon(c) ? Path.DEMON : cultivatesBody(c) ? Path.BODY : Path.HEAVEN;
 	}
 
 	/**
@@ -205,11 +238,14 @@ public final class TwoPaths {
 		Path next = paths.get((Math.max(0, paths.indexOf(drawnIn(c))) + 1) % paths.size());
 		s.setCultivatingGhost(next == Path.GHOST);
 		c.demon().setCultivating(next == Path.DEMON);
+		c.body().setCultivating(next == Path.BODY);
 		CultivationManager.markDirty(p.server);
 		Spells.sync(p); // the Cultivation tab's switch and columns (ModPackets#sendMethods carries it)
 		CultivationManager.sync(p);
 		p.displayClientMessage(Component.translatable(next == Path.GHOST ? ModLang.MSG_PATH_GHOST : next == Path.DEMON ? ModLang.MSG_PATH_DEMON
-				: ModLang.MSG_PATH_HEAVEN).withStyle(next == Path.GHOST ? ChatFormatting.AQUA : next == Path.DEMON ? ChatFormatting.RED : ChatFormatting.GOLD), true);
+				: next == Path.BODY ? ModLang.MSG_PATH_BODY : ModLang.MSG_PATH_HEAVEN)
+				.withStyle(next == Path.GHOST ? ChatFormatting.AQUA : next == Path.DEMON ? ChatFormatting.RED : next == Path.BODY ? ChatFormatting.WHITE
+						: ChatFormatting.GOLD), true);
 	}
 
 	/**
@@ -289,9 +325,19 @@ public final class TwoPaths {
 			int rank = Math.max(0, ghost);
 			return new Body(Realm.byIndex(rank / stages), Stage.byIndex(rank % stages), ghost < 0 ? 0.5 : scale, true, rank, 1.0);
 		}
-		// A demon's Demon Path, mightier than the others for its share (its body the mightier still: DemonPath#BODY), gives the body.
 		int demon = demonRank(c, wielded);
 		double demonShare = (whole ? 1 : pathShare(c, Path.DEMON)) * DemonPath.BODY;
+		// The Body Path (BodyPath), mightier than the others for its share (its body BodyPath#BODY times its rank's), gives the body.
+		int tempered = bodyRank(c, wielded);
+		double bodyShare = (whole ? 1 : pathShare(c, Path.BODY)) * BodyPath.BODY;
+		if (tempered >= 0) {
+			double mightiest = might(tempered) * bodyShare;
+			if ((heaven < 0 || mightiest > might(heaven) * heavenShare) && (ghost < 0 || mightiest > might(ghost) * ghostShare)
+					&& (demon < 0 || mightiest > might(demon) * demonShare)) {
+				return new Body(Realm.byIndex(tempered / stages), Stage.byIndex(tempered % stages), scale, false, tempered, bodyShare);
+			}
+		}
+		// A demon's Demon Path, mightier than the others for its share (its body the mightier still: DemonPath#BODY), gives the body.
 		if (demon >= 0) {
 			double mightiest = might(demon) * demonShare;
 			if ((heaven < 0 || mightiest > might(heaven) * heavenShare) && (ghost < 0 || mightiest > might(ghost) * ghostShare)) {
@@ -301,10 +347,6 @@ public final class TwoPaths {
 		if (ghost >= 0 && (heaven < 0 || might(ghost) * ghostShare > might(heaven) * heavenShare
 				|| might(ghost) * ghostShare == might(heaven) * heavenShare && ghostShare > heavenShare)) {
 			return new Body(Realm.byIndex(ghost / stages), Stage.byIndex(ghost % stages), scale, true, ghost, ghostShare);
-		}
-		if (heaven < 0 && c.getBodyRefining() > 0) { // shattered meridians' body refining: a cultivator's body, a stage higher for each
-			int rank = BodyRefining.rank(c.getBodyRefining());
-			return new Body(Realm.byIndex(rank / stages), Stage.byIndex(rank % stages), 1.0, false, -1, heavenShare);
 		}
 		if (heaven < 0) return new Body(Realm.QI_REFINING, Stage.EARLY, c.getMortalStage().bodyShare(), false, -1, heavenShare);
 		return new Body(Realm.byIndex(heaven / stages), Stage.byIndex(heaven % stages), scale, false, heaven, heavenShare);
@@ -365,9 +407,11 @@ public final class TwoPaths {
 	 * sizing it up, a sect's titles): its body's rank ({@link #body}, the path mightier for its share), as the land it stands in lets it
 	 * be wielded but before another's pressure (so a pressed presser presses on: no chains), or -1 for a mortal. Both paths alike (the
 	 * user's rule, 2026-10-18: both are ways to the same heights), where only the heaven path was weighed before (the 2026-10-20 sweep).
+	 * A mortal on the Body Path is weighed by its body (2026-11-01: a Golden Blood body was pressed as a mortal by any Qi Refining
+	 * cultivator); those who only read realms (an NPC's address, a sect's titles) still see no cultivator in one with no qi.
 	 */
 	public static int weighedRank(PlayerCultivation c) {
-		return c.isMortal() ? -1 : c.sustained(body(c, false).rank());
+		return c.isMortal() && BodyPath.rank(c) < 0 ? -1 : c.sustained(body(c, false).rank());
 	}
 
 	/** The rank {@code c}'s body is wielded at now ({@link #body}: the land and another's pressure included), or -1 for a mortal: what others sense of it. */

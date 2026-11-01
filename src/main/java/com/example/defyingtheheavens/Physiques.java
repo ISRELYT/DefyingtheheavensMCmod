@@ -218,6 +218,7 @@ public final class Physiques {
 	public static void onHurt(LivingEntity victim, DamageSource source, float lost) {
 		if (lost > 0) RaceGifts.onHurt(victim); // a lizard's Shed Skin
 		LawDomains.onHurt(victim, source, lost); // a share back to a Life and Death domain's owner
+		HundredBattles.onHurt(victim, source, lost); // a blow traded in a spar tempers a body of Hundred Battles
 		if (lost <= 0 || !(source.getEntity() instanceof ServerPlayer attacker) || attacker == victim || !attacker.isAlive()) return;
 		RaceGifts.breakIllusion(attacker); // a fox's Illusion broken by any harm it does
 		if (CultivationManager.get(attacker).hasPhysique(Physique.BLOOD_DEMON_BODY)) attacker.heal(lost * BLOOD_SHARE);

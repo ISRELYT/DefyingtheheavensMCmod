@@ -4,11 +4,14 @@ import com.example.defyingtheheavens.ArtifactGrade;
 import com.example.defyingtheheavens.ArtifactKind;
 import com.example.defyingtheheavens.DaoSteleBlock;
 import com.example.defyingtheheavens.DefyingTheHeavens;
+import com.example.defyingtheheavens.GatheringFormationBlock;
+import com.example.defyingtheheavens.GatheringFormations;
 import com.example.defyingtheheavens.GhostMethod;
 import com.example.defyingtheheavens.QiElement;
 import com.example.defyingtheheavens.MethodSteleBlock;
 import com.example.defyingtheheavens.ModBlocks;
 import com.example.defyingtheheavens.ModItems;
+import com.example.defyingtheheavens.ShrineBlock;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
@@ -74,6 +77,51 @@ public class ModModelProvider extends FabricModelProvider {
 		blocks.createNonTemplateModelBlock(ModBlocks.SMALL_WORLD_GATE, Blocks.OBSIDIAN);
 		// A body is drawn by its renderer (CorpseRenderer) at every stage; the model only supplies the bone dust it breaks into.
 		blocks.createNonTemplateModelBlock(ModBlocks.CORPSE, Blocks.BONE_BLOCK);
+		gatheringFormations(blocks);
+		// A shrine (Shrines): its kind's hand-made model (models/block/shrine_<kind>: a statue, a tablet, an idol), turned to face its way;
+		// its item the statue's.
+		blocks.blockStateOutput.accept(MultiVariantGenerator.multiVariant(ModBlocks.SHRINE)
+				.with(PropertyDispatch.properties(ShrineBlock.KIND, ShrineBlock.FACING)
+						.generate((kind, facing) -> Variant.variant()
+								.with(VariantProperties.MODEL, DefyingTheHeavens.id("block/shrine_" + kind.getSerializedName()))
+								.with(VariantProperties.Y_ROT, switch (facing) {
+									case EAST -> VariantProperties.Rotation.R90;
+									case SOUTH -> VariantProperties.Rotation.R180;
+									case WEST -> VariantProperties.Rotation.R270;
+									default -> VariantProperties.Rotation.R0;
+								}))));
+		blocks.delegateItemModel(ModBlocks.SHRINE, DefyingTheHeavens.id("block/shrine_heaven"));
+	}
+
+	/**
+	 * The gathering formations (GatheringFormationBlock): each kind and tier on the hand-made shapes (models/block/gathering_formation, and
+	 * _lit with its array unshaded and its orb risen and shining), its tier's array on top; a Qi one in bronze, jade and gold, a Yin one in
+	 * blackstone, yin jade and iron. Their items are their unlit models.
+	 */
+	private static void gatheringFormations(BlockModelGenerators blocks) {
+		TextureSlot array = TextureSlot.create("array"), orb = TextureSlot.create("orb"), base = TextureSlot.create("base"),
+				band = TextureSlot.create("band"), pillar = TextureSlot.create("pillar"), cap = TextureSlot.create("cap");
+		ModelTemplate unlit = new ModelTemplate(Optional.of(DefyingTheHeavens.id("block/gathering_formation")), Optional.empty(),
+				array, orb, base, band, pillar, cap);
+		ModelTemplate lit = new ModelTemplate(Optional.of(DefyingTheHeavens.id("block/gathering_formation_lit")), Optional.of("_lit"),
+				array, orb, base, band, pillar, cap);
+		for (GatheringFormations.Kind kind : GatheringFormations.Kind.values()) {
+			boolean qi = kind == GatheringFormations.Kind.QI;
+			for (GatheringFormations.Tier tier : GatheringFormations.Tier.values()) {
+				net.minecraft.world.level.block.Block block = ModBlocks.gatheringFormation(kind, tier);
+				TextureMapping textures = new TextureMapping()
+						.put(array, DefyingTheHeavens.id("block/" + kind.getId() + "_gathering_array_" + tier.getId()))
+						.put(orb, DefyingTheHeavens.id("block/" + kind.getId() + "_gathering_orb"))
+						.put(base, qi ? DefyingTheHeavens.id("block/formation_core_bronze") : new ResourceLocation("minecraft", "block/polished_blackstone"))
+						.put(band, qi ? DefyingTheHeavens.id("block/formation_core_jade") : DefyingTheHeavens.id("block/yin_jade_block"))
+						.put(pillar, qi ? DefyingTheHeavens.id("block/formation_core_pillar") : new ResourceLocation("minecraft", "block/polished_blackstone_bricks"))
+						.put(cap, qi ? DefyingTheHeavens.id("block/formation_core_gold") : new ResourceLocation("minecraft", "block/iron_block"));
+				ResourceLocation off = unlit.create(block, textures, blocks.modelOutput);
+				ResourceLocation on = lit.create(block, textures, blocks.modelOutput);
+				blocks.blockStateOutput.accept(MultiVariantGenerator.multiVariant(block)
+						.with(BlockModelGenerators.createBooleanModelDispatch(GatheringFormationBlock.LIT, on, off)));
+			}
+		}
 	}
 
 	/**
@@ -158,6 +206,9 @@ public class ModModelProvider extends FabricModelProvider {
 				TextureMapping.layered(TextureMapping.getItemTexture(ModItems.JADE_SLIP), TextureMapping.getItemTexture(ModItems.JADE_SLIP, "_ink")),
 				items.output);
 		items.generateFlatItem(ModItems.CULTIVATORS_BLOOD, ModelTemplates.FLAT_ITEM);
+		// A Method Manual (MethodManualItem: the methods overhaul's phase 2), and incense for a shrine (Shrines: phase 3).
+		items.generateFlatItem(ModItems.METHOD_MANUAL, ModelTemplates.FLAT_ITEM);
+		items.generateFlatItem(ModItems.INCENSE, ModelTemplates.FLAT_ITEM);
 		// The secret realms' (SecretRealms): the Departure Jade, Ancient Essence, the Spring of the Ancients, the Pill Sage's Notes and a page.
 		items.generateFlatItem(ModItems.DEPARTURE_JADE, ModelTemplates.FLAT_ITEM);
 		items.generateFlatItem(ModItems.ANCIENT_ESSENCE, ModelTemplates.FLAT_ITEM);

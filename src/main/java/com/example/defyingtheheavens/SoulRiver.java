@@ -102,7 +102,8 @@ public final class SoulRiver {
 		if (player == null || !player.isAlive() || player.isSpectator() || player.getServer() == null) return false;
 		// A soul is bound to its body's realm, unless a person's body it is in carries it (Possession).
 		if (SoulProjection.isAwayFromBody(player.getUUID())) return false;
-		if (Incorporeal.isRuledGhost(player)) return false; // the dead take no rift: the Wheel is their way back
+		// The dead take no rift (the Wheel is their way back), but one haunting the living (Haunting#crosses) takes the river as kings do.
+		if (Incorporeal.isRuledGhost(player) && !Haunting.crosses(player)) return false;
 		if (ACTIVE.containsKey(player.getUUID()) || SpatialTrialHandler.isInTrial(player.getUUID())) return false;
 		if (checkCooldown) {
 			long left = CultivationManager.get(player).netherworld().riverCooldownUntil() - player.level().getGameTime();
@@ -191,6 +192,7 @@ public final class SoulRiver {
 		keepCarried(p);
 		JudgeEye.tick(p); // the Chief Judge's eye, for anyone who looks at it
 		if (!p.isAlive()) return; // it unmade them; AFTER_DEATH cleans up
+		SoulRiverFeast.travelling(p, j.tick); // the souls it carries drift past one who feasts on them
 
 		boolean up = j.route == Route.ASCEND;
 		double progress = SoulRiverCourse.progress(p.getX(), up);
@@ -243,11 +245,16 @@ public final class SoulRiver {
 			settle(p);
 			p.playNotifySound(SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1.0f, 0.8f);
 			p.sendSystemMessage(Component.translatable(ModLang.MSG_ARRIVE_NETHERWORLD, (int) GhostQi.NETHERWORLD).withStyle(ChatFormatting.DARK_AQUA));
+		} else if (Haunting.crosses(p)) {
+			// One of the dead going down to haunt the living comes out among them, where it died (Haunting#arrive).
+			s.setRiverCooldownUntil(p.level().getGameTime() + COOLDOWN_TICKS);
+			Haunting.arrive(server, p);
 		} else {
 			s.setRiverCooldownUntil(p.level().getGameTime() + COOLDOWN_TICKS);
 			NetherRift.land(server, p, s.riverFromX(), s.riverFromZ());
 			p.displayClientMessage(Component.translatable(ModLang.MSG_ARRIVE_NETHER), true);
 		}
+		SoulRiverFeast.forget(p.getUUID());
 		CultivationManager.markDirty(server);
 	}
 

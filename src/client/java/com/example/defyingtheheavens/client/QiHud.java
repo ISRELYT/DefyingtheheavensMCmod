@@ -11,15 +11,16 @@ import net.minecraft.network.chat.Component;
 /**
  * The thin bars of the top-left stack, under the health and qi (VitalsHud), as the mockups' "G" draws them (in the artifact's pixels,
  * HallArt): each 334 by 22 in a thin dark-gold frame, its label and what it holds written across it ("Ghost Qi 23.9M / 270.4M"), a
- * glint flowing along it while it fills. Here, in a person's body (Possession), the soul's own pool, in violet, and a True Immortal's
- * immortal essence (ImmortalEssence), in pale gold, while it holds any or the land fills it (an empty one out in the lower worlds says
- * nothing); under them the ghostly qi pool, where there is one, and the rest of the Netherworld's (see NetherworldHud), all drawn by the
- * same {@link Pool}.
+ * glint flowing along it while it fills. Here, first, the Body Path's vigor (BodyTechniques), in bronze, right under the health where a
+ * mortal has no qi bar; in a person's body (Possession), the soul's own pool, in violet, and a True Immortal's immortal essence
+ * (ImmortalEssence), in pale gold, while it holds any or the land fills it (an empty one out in the lower worlds says nothing); under them
+ * the ghostly qi pool, where there is one, and the rest of the Netherworld's (see NetherworldHud), all drawn by the same {@link Pool}.
  */
 public final class QiHud {
 	/** From one thin bar's top to the next one's, in the artifact's pixels. */
 	static final int ROW = 26;
 
+	private static final Pool VIGOR = new Pool(HallHud.VIGOR, HallHud.VIGOR_LIGHT);
 	private static final Pool OWN = new Pool(HallHud.SOUL, HallHud.SOUL_LIGHT);
 	private static final Pool ESSENCE = new Pool(HallHud.ESSENCE, HallHud.ESSENCE_LIGHT);
 
@@ -29,9 +30,18 @@ public final class QiHud {
 			if (mc.level == null || mc.player == null || mc.options.hideGui || mc.options.renderDebug || mc.player.isSpectator()) return;
 			HallArt.beginHud(graphics);
 			try {
+				float y = top();
+				// The body's vigor, its glint flowing while rest or food refills it (not while Blood Frenzy burns it).
+				if (vigorShowing()) {
+					com.example.defyingtheheavens.PlayerCultivation c = ClientCultivationData.get();
+					VIGOR.draw(graphics, y, Component.translatable(ModLang.HUD_VIGOR_LABEL), c.body().vigor(),
+							com.example.defyingtheheavens.BodyTechniques.maxVigor(c), !c.isAbilityEnabled(com.example.defyingtheheavens.Ability.BLOOD_FRENZY));
+					y += ROW;
+				} else {
+					VIGOR.reset();
+				}
 				// In a person's body the qi bar above is the body's (its spells and abilities draw on it); the soul's own pool, which its
 				// upkeep and its own tear come out of, under it.
-				float y = top();
 				if (ownShowing()) {
 					OWN.draw(graphics, y, Component.translatable(ownLabel()), ClientSoul.ownQi(), ClientSoul.ownMax(), ClientSoul.ownRising());
 					y += ROW;
@@ -56,6 +66,12 @@ public final class QiHud {
 		return VitalsHud.bottom();
 	}
 
+	/** True when the vigor bar shows: the Body Path begun (BodyTechniques), for one of the living (the dead have no flesh to spend). */
+	static boolean vigorShowing() {
+		com.example.defyingtheheavens.PlayerCultivation c = ClientCultivationData.get();
+		return c.body().begun() && !c.netherworld().ghost() && VitalsHud.visible();
+	}
+
 	/** True when the soul's own pool shows: in a person's body (Possession). */
 	static boolean ownShowing() {
 		return ClientSoul.isInside() && ClientSoul.ownMax() > 0;
@@ -74,9 +90,12 @@ public final class QiHud {
 		return mc.level != null && ModDimensions.hasImmortalQi(mc.level.dimension());
 	}
 
-	/** The thin bars it draws at the top of the stack: the soul's own pool while in a person's body, and a True Immortal's essence. */
+	/**
+	 * The thin bars it draws at the top of the stack: the body's vigor, the soul's own pool while in a person's body, and a True Immortal's
+	 * essence.
+	 */
 	static int rows() {
-		return (ownShowing() ? 1 : 0) + (essenceShowing() ? 1 : 0);
+		return (vigorShowing() ? 1 : 0) + (ownShowing() ? 1 : 0) + (essenceShowing() ? 1 : 0);
 	}
 
 	/** Under the health and qi, where the whole stack of thin bars ends (this one's and the Netherworld's), in the artifact's pixels. */

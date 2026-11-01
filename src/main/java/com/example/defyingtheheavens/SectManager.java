@@ -68,6 +68,8 @@ public final class SectManager {
 		sect.alignment = Alignment.clamp(blueprint.getInt("Alignment"));
 		// A demon clan's blueprint names its race (DenStructure): all its people of it.
 		if (blueprint.contains("Race")) sect.race = Bloodline.byId(blueprint.getString("Race"));
+		// A body sect's plan says so (SectStructure#bodySect): all its people body cultivators, its name the body's.
+		sect.body = blueprint.getBoolean("Body") && !sect.isClan();
 		// The Great Void's sects are its Holy Lands (HolyLands), its clans its Demon Palaces (DemonPalaces): named as such, and of their
 		// own twenty.
 		boolean holy = HolyLands.isHolyLand(level.dimension());
@@ -75,7 +77,8 @@ public final class SectManager {
 		boolean immortal = ImmortalSects.isImmortalSect(level.dimension());
 		sect.name = sect.isClan() ? holy ? SectNames.palace(random, sect.race) : SectNames.clan(random, sect.race)
 				: immortal ? SectNames.immortal(random, Alignment.factionOf(sect.alignment))
-				: holy ? SectNames.holy(random, Alignment.factionOf(sect.alignment)) : SectNames.generate(random, Alignment.factionOf(sect.alignment));
+				: holy ? SectNames.holy(random, Alignment.factionOf(sect.alignment))
+				: sect.body ? SectNames.body(random, Alignment.factionOf(sect.alignment)) : SectNames.generate(random, Alignment.factionOf(sect.alignment));
 		sect.dimension = level.dimension();
 		sect.core = core.getBlockPos();
 		sect.barrierRadius = Math.max(Formations.MIN_RADIUS, Math.min(Formations.maxRadius(level), blueprint.getInt("Radius")));
@@ -159,6 +162,7 @@ public final class SectManager {
 		npc.randomizeSkin(random);
 		npc.setRank(rank);
 		if (sect.isClan()) npc.setRace(sect.race, random.nextInt(3)); // of the clan's race, in any of its colourings
+		if (sect.body) npc.setBodyCultivator(true); // a body sect's: every one of them tempers the body
 		npc.joinSect(sect, home);
 		Sect.Member member = new Sect.Member(npc.getUUID(), rank, home);
 		sect.members.put(member.id, member);
@@ -281,6 +285,8 @@ public final class SectManager {
 		for (Sect sect : SectData.get(level.getServer()).all()) {
 			if (sect.extinct || sect.dimension != level.dimension() || !sect.canTakeIn(npc.getRank()) || Alignment.factionOf(sect.alignment) != faction) continue;
 			if (sect.isClan() != npc.isDemon()) continue;
+			// A body cultivator to a body sect, one of qi to a sect of qi (Sect#body).
+			if (sect.body != npc.isBodyCultivator()) continue;
 			double dx = sect.core.getX() - npc.getX(), dz = sect.core.getZ() - npc.getZ();
 			double distance = dx * dx + dz * dz;
 			if (distance <= bestDistance) {

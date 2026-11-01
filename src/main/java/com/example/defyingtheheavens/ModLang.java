@@ -33,6 +33,8 @@ public final class ModLang {
 	public static final String METHOD_LINE_NAME = k("method_line.name");
 	public static final String METHOD_LINE_SHORT = k("method_line.short");
 	public static final String METHOD_LINE_NONE = k("method_line.none");
+	/** The scripture practised, with no Qi Circulation volume of the realm among those known: nothing gathered (HeavenMethods#canGain). */
+	public static final String METHOD_LINE_NO_VOLUME = k("method_line.no_volume");
 	/** A heaven method's layer settling in (HeavenMethods#settle), and how far. */
 	public static final String SETTLING_LINE = k("settling_line");
 	/** The Upper Realm's dense qi, among the Cultivation tab's details. */
@@ -415,6 +417,7 @@ public final class ModLang {
 	public static final String MSG_PASS_REVOKED = k("message.sect_pass.revoked");
 	// A Sacred Vessel (SacredVesselItem): what it does in hand, and what it is
 	public static final String SACRED_VESSEL_USE = k("sacred_vessel.use");
+	public static final String SACRED_VESSEL_NURTURE = k("sacred_vessel.nurture");
 	public static final String SACRED_VESSEL_LORE = k("sacred_vessel.lore");
 	// The menu's Journal tab (see Journal)
 	public static final String TAB_JOURNAL = k("tab.journal");
@@ -832,6 +835,9 @@ public final class ModLang {
 	public static final String HALL_CULT = k("hall.cult");
 	public static final String HALL_CULT_MAX = k("hall.cult_max");
 	public static final String HALL_PER_SECOND = k("hall.per_second");
+	/** A path's card, drawn in but gathering nothing: no method's volume of its realm, or Four Axis, whose axes fill it (the methods overhaul). */
+	public static final String HALL_NO_METHOD = k("hall.no_method");
+	public static final String HALL_AXES_FILL = k("hall.axes_fill");
 	public static final String HALL_RESTING = k("hall.resting");
 	/** The Hall's Meditate button while meditating ("Stop Meditating" left the row no room). */
 	public static final String HALL_STOP = k("hall.stop");
@@ -950,10 +956,18 @@ public final class ModLang {
 	/** A layer settled in (HeavenMethods#settle); with the spell it brings. */
 	public static final String MSG_HEAVEN_LAYER = k("message.heaven_method.layer");
 	public static final String MSG_HEAVEN_LAYER_SPELL = k("message.heaven_method.layer_spell");
-	/** Meditating with no heaven method known (MeditationManager), once a login. */
+	/** Meditating with no heaven scripture known (MeditationManager#tellNoGain), once a login: no method, no gain. */
 	public static final String MSG_HEAVEN_NONE_KNOWN = k("message.heaven_method.none_known");
-	/** A breakthrough into a realm waiting on a heaven method of it (HeavenMethods#gateLine). */
+	/** Meditating in a realm no scripture known carries Qi Circulation's volume of (HeavenMethods#canGain): nothing gathered. */
+	public static final String MSG_HEAVEN_NO_VOLUME = k("message.heaven_method.no_volume");
+	/** The realm ahead, which no scripture known carries Circulation's volume of, will gather nothing (HeavenMethods#gateLine). */
 	public static final String HEAVEN_GATE_NONE = k("heaven_method.gate.none");
+	/** A scripture learned carries Qi Circulation's volumes further (HeavenMethods#give). */
+	public static final String MSG_CIRCULATION_VOLUMES = k("message.method.circulation_volumes");
+	/** The realm ahead is Four Axis, whose axes are every path's method (HeavenMethods#gateLine, GhostMethods#gateLine). */
+	public static final String METHOD_GATE_AXES = k("method.gate.axes");
+	/** Meditating at Four Axis on any path (MeditationManager#tellNoGain): the axes fill its stages, not meditation (FourAxis#fillBars). */
+	public static final String MSG_AXES_ARE_THE_METHOD = k("message.method.axes");
 	public static final String JOURNAL_HEAVEN_METHOD = k("journal.heaven_method");
 	public static final String JOURNAL_HEAVEN_METHOD_TEXT = k("journal.heaven_method.text");
 	public static final String MSG_SPELL_NO_HEAVEN_QI = k("message.spell.no_heaven_qi");
@@ -1503,8 +1517,6 @@ public final class ModLang {
 	 */
 	public static final String GHOST_COLUMN_PACE = k("two_paths.ghost.pace");
 	public static final String GHOST_COLUMN_PACE_SHORT = k("two_paths.ghost.pace_short");
-	/** The ghost path cultivated with no foundation known (GhostMethods#NO_METHOD_FACTOR), as the heaven column's METHOD_LINE_NONE. */
-	public static final String GHOST_COLUMN_PACE_NONE = k("two_paths.ghost.pace_none");
 	/** Either path's column, its qi not drawn in. */
 	public static final String COLUMN_RESTING = k("two_paths.resting");
 	public static final String GHOST_BOTTLENECK = k("two_paths.ghost.bottleneck");
@@ -1521,8 +1533,12 @@ public final class ModLang {
 	public static final String MSG_GHOST_LAYER = k("message.ghost_method.layer");
 	public static final String MSG_GHOST_LAYER_SPELL = k("message.ghost_method.layer_spell");
 	public static final String MSG_GHOST_PATH_RISES = k("message.ghost_path.rises");
-	/** One of the dead begins the ghost path with no method (GhostMethods#begin). */
-	public static final String MSG_GHOST_PATH_BEGINS = k("message.ghost_path.begins");
+	/** One of the dead with no foundation is taught Netherworld Breathing's first volume (GhostMethods#teachTheDead). */
+	public static final String MSG_GHOST_TAUGHT_BREATHING = k("message.ghost_path.taught_breathing");
+	/** A foundation learned carries Netherworld Breathing's volumes further (GhostMethods#give). */
+	public static final String MSG_BREATHING_VOLUMES = k("message.method.breathing_volumes");
+	/** Meditating on a ghost path whose realm no foundation known carries Breathing's volume of (GhostMethods#canGain): nothing gathered. */
+	public static final String MSG_GHOST_NO_VOLUME = k("message.ghost_method.no_volume");
 	public static final String MSG_GHOST_BOTTLENECK = k("message.ghost_path.bottleneck");
 	public static final String MSG_GHOST_TRIB_START = k("message.ghost_tribulation.start");
 	public static final String MSG_GHOST_TRIB_START_SINGLE = k("message.ghost_tribulation.start_single");
@@ -1603,6 +1619,10 @@ public final class ModLang {
 	public static final String TALK_SOUP_LIVING = k("talk.soup.living");
 	public static final String TALK_TEACH_LEARN = k("talk.teach.learn");
 	public static final String TALK_TEACH_PROGRESS = k("talk.teach.progress");
+	/** A teacher's guidance on a method one holds no volume of for one's realm: its layers settled, no cultivation (TalkSystem). */
+	public static final String TALK_TEACH_NO_VOLUME = k("talk.teach.no_volume");
+	/** The basics (TalkSystem#teachBasics): a first heaven scripture from any living cultivator. */
+	public static final String TALK_TEACH_BASICS = k("talk.teach.basics");
 	// The Ghost-Quelling Talisman
 	public static final String TOOLTIP_GHOST_QUELLING_TALISMAN = k("tooltip.ghost_quelling_talisman");
 	public static final String MSG_QUELLED = k("message.quelled");
@@ -2016,6 +2036,216 @@ public final class ModLang {
 	public static final String MSG_IMMORTAL_TOMB_LEGACY = k("message.fallen_immortal_tomb.legacy");
 	public static final String MSG_IMMORTAL_TOMB_SILENT = k("message.fallen_immortal_tomb.silent");
 	public static final String ITEM_FALLEN_IMMORTAL_GLAIVE = k("item.fallen_immortal_glaive");
+
+	// --- The methods overhaul, phase 2 (CultivationMethod, CultivationMethods; the gathering formations; the manuals) ---
+
+	/** A cultivation method's name ("cultivation_method.defying-the-heavens.<id>"), with ".description" and ".how" (how it gathers). */
+	public static String cultivationMethodKey(String id) { return "cultivation_method." + DefyingTheHeavens.MOD_ID + "." + id; }
+
+	/** A path's name, as the Methods tab's pages name them. */
+	public static String pathName(TwoPaths.Path path) {
+		return switch (path) {
+			case HEAVEN -> METHODS_PAGE_HEAVEN;
+			case GHOST -> METHODS_PAGE_GHOST;
+			case DEMON -> METHODS_PAGE_DEMON;
+			case BODY -> METHODS_PAGE_BODY;
+		};
+	}
+
+	public static final String MSG_METHOD_NO_VOLUME = k("message.method.no_volume");
+	public static final String MSG_METHOD_NOT_BY_MEDITATION = k("message.method.not_by_meditation");
+	public static final String MSG_TURTLE_NOT_SECLUDED = k("message.method.turtle_not_secluded");
+	public static final String MSG_TERRITORY_OUTSIDE = k("message.method.territory_outside");
+	public static final String MSG_METHOD_UNKNOWN = k("message.method.unknown");
+	public static final String MSG_METHOD_SWITCH_COST = k("message.method.switch_cost");
+	public static final String MSG_CULTIVATION_METHOD_PRACTISED = k("message.cultivation_method.practised");
+	public static final String MSG_METHOD_KNOWN = k("message.method.known");
+	public static final String MSG_CULTIVATION_METHOD_LEARNED = k("message.cultivation_method.learned");
+	public static final String MSG_METHOD_LEARNED_BLOOD = k("message.method.learned_blood");
+	public static final String MSG_METHOD_NOT_TAUGHT = k("message.method.not_taught");
+	public static final String MSG_METHOD_NEEDS_CORE = k("message.method.needs_core");
+	public static final String MSG_METHOD_GAIN = k("message.method.gain");
+	public static final String JOURNAL_CULTIVATION_METHOD = k("journal.cultivation_method");
+	public static final String JOURNAL_CULTIVATION_METHOD_TEXT = k("journal.cultivation_method.text");
+	public static final String MSG_CORPSE_YIN = k("message.corpse_yin.drawn");
+	public static final String MSG_CORPSE_YIN_DRAWN = k("message.corpse_yin.already");
+	public static final String MSG_THUNDER_CALLED = k("message.thunder_tempering.called");
+	public static final String MSG_TERRITORY_NEEDS_BLOOD = k("message.territory.needs_blood");
+	public static final String MSG_TERRITORY_MARKED = k("message.territory.marked");
+	public static final String MSG_TERRITORY_CHALLENGED = k("message.territory.challenged");
+	public static final String MSG_TERRITORY_HELD = k("message.territory.held");
+	public static final String MSG_TERRITORY_LOST = k("message.territory.lost");
+	public static final String MSG_CORE_NOT_DEVOURED = k("message.core.not_devoured");
+	public static final String MSG_CORE_TAINT = k("message.core.taint");
+	public static final String MSG_RITE_HOUR = k("message.rite.hour");
+	public static final String MSG_RITE_ALTAR_TODAY = k("message.rite.altar_today");
+	public static final String MSG_RITE_FULL = k("message.rite.full");
+	public static final String MSG_RITES_TAUGHT = k("message.rite.taught");
+	public static final String MSG_RITE_REBUKED = k("message.rite.rebuked");
+	public static final String RITE_TITLE_SUCCESS = k("rite.title.success");
+	public static final String RITE_TITLE_FAIL = k("rite.title.fail");
+	public static final String MSG_GATHERING_STATUS = k("message.gathering.status");
+	public static final String GATHERING_OUT = k("gathering.out");
+	public static final String GATHERING_HOURS = k("gathering.hours");
+	public static final String GATHERING_MINUTES = k("gathering.minutes");
+	public static final String TOOLTIP_QI_GATHERING = k("tooltip.gathering.qi");
+	public static final String TOOLTIP_YIN_GATHERING = k("tooltip.gathering.yin");
+	public static final String TOOLTIP_GATHERING_FUEL = k("tooltip.gathering.fuel");
+	public static final String ITEM_METHOD_MANUAL_OF = k("item.method_manual.of");
+	public static final String TOOLTIP_MANUAL_BLOOD = k("tooltip.method_manual.blood");
+	public static final String TOOLTIP_MANUAL_VOLUMES = k("tooltip.method_manual.volumes");
+	public static final String TOOLTIP_MANUAL_VOLUME = k("tooltip.method_manual.volume");
+	public static final String TOOLTIP_MANUAL_READ = k("tooltip.method_manual.read");
+	/** The Methods tab's methods: each path's, the one practised, a switch's confirmation, what each reaches; the Demon Path's page. */
+	public static final String METHODS_SECTION = k("methods.section");
+	public static final String METHODS_PRACTISING = k("methods.practising");
+	public static final String BTN_PRACTISE_METHOD = k("button.practise_method");
+	public static final String BTN_CONFIRM_SWITCH = k("button.confirm_switch");
+	public static final String METHODS_SWITCH_WARNING = k("methods.switch_warning");
+	public static final String METHODS_SWITCH_FREE = k("methods.switch_free");
+	public static final String METHODS_METHOD_REACH = k("methods.method_reach");
+	public static final String METHODS_METHOD_ONE = k("methods.method_one");
+	public static final String METHODS_METHOD_BLOOD = k("methods.method_blood");
+	public static final String METHODS_METHOD_BLOOD_ONE = k("methods.method_blood_one");
+	public static final String METHODS_METHOD_REALMS = k("methods.method_realms");
+	public static final String METHODS_DEMON_TAINT = k("methods.demon_taint");
+	public static final String METHODS_TERRITORY = k("methods.territory");
+	public static final String METHODS_TERRITORY_NONE = k("methods.territory_none");
+	public static final String BTN_MARK_TERRITORY = k("button.mark_territory");
+	public static final String METHODS_DEMON_EMPTY = k("methods.demon_empty");
+	public static final String METHODS_DEMON_HINT = k("methods.demon_hint");
+
+	// --- The methods overhaul, phase 3 (the shrines; Five Elements Cycling, Spirit Beast Bond, Court of the Dead, Soul River Feast, Haunting) ---
+
+	public static final String MSG_CYCLE_LINK = k("message.cycle.link");
+	public static final String MSG_CYCLE_COMPLETE = k("message.cycle.complete");
+	public static final String MSG_CYCLE_DEVIATION = k("message.cycle.deviation");
+	public static final String MSG_CYCLE_SAME = k("message.cycle.same");
+	public static final String MSG_CYCLE_CIRCULATING = k("message.cycle.circulating");
+	public static final String MSG_CYCLE_SETTLED = k("message.cycle.settled");
+	public static final String MSG_CYCLE_STALLED = k("message.cycle.stalled");
+	public static final String TOOLTIP_CYCLE_OFFERING = k("tooltip.cycle.offering");
+	// Spirit Herb Refining, Clone Seclusion, Borrowed Life (2026-11-01)
+	public static final String MSG_HERB_STALLED = k("message.herb.stalled");
+	public static final String TOOLTIP_HERB_ESSENCE = k("tooltip.herb.essence");
+	public static final String MSG_CLONE_SECLUSION_BANKED = k("message.clone_seclusion.banked");
+	public static final String MSG_CLONE_SECLUSION_FULL = k("message.clone_seclusion.full");
+	public static final String MSG_CLONE_SECLUSION_CHALLENGED = k("message.clone_seclusion.challenged");
+	public static final String MSG_CLONE_SECLUSION_LOST = k("message.clone_seclusion.lost");
+	public static final String MSG_BORROWED_DRAW = k("message.borrowed.draw");
+	public static final String MSG_BORROWED_THROWN_OUT = k("message.borrowed.thrown_out");
+	// The Body Path (BodyPath, 2026-11-01)
+	public static final String MSG_BODY_NOT_PEAK = k("message.body.not_peak");
+	public static final String MSG_BODY_BEGUN = k("message.body.begun");
+	public static final String MSG_BODY_STAGE_UP = k("message.body.stage_up");
+	public static final String MSG_BODY_BOTTLENECK = k("message.body.bottleneck");
+	public static final String MSG_PATH_BODY = k("message.path.body");
+	public static final String MSG_BODY_TRIB_START = k("message.body.trib_start");
+	public static final String MSG_BODY_TRIB_START_SINGLE = k("message.body.trib_start_single");
+	public static final String MSG_BODY_TRIB_PASSED = k("message.body.trib_passed");
+	public static final String MSG_BODY_TRIB_FAILED = k("message.body.trib_failed");
+	public static final String METHODS_PAGE_BODY = k("methods.page_body");
+	public static final String BTN_BEGIN_BODY = k("button.begin_body");
+	public static final String BODY_BEGIN_HINT = k("body.begin_hint");
+	public static final String BODY_PINNACLE = k("body.pinnacle");
+	public static final String BODY_BOTTLENECK = k("body.bottleneck");
+	public static final String BODY_BOTTLENECK_SWITCH = k("body.bottleneck_switch");
+	public static final String BODY_DEEDS = k("body.deeds");
+	public static final String BTN_PATH_BODY = k("button.path_body");
+	// The Body Path's techniques (BodyTechniques, 2026-11-01)
+	public static final String MSG_VIGOR_SHORT = k("message.body.vigor_short");
+	public static final String MSG_BODY_NEEDS_GROUND = k("message.body.needs_ground");
+	public static final String MSG_IRON_SKIN = k("message.body.iron_skin");
+	public static final String MSG_STOMPED = k("message.body.stomped");
+	public static final String MSG_FIST_PRIMED = k("message.body.fist_primed");
+	public static final String MSG_FRENZY_ON = k("message.body.frenzy_on");
+	public static final String MSG_FRENZY_SPENT = k("message.body.frenzy_spent");
+	public static final String MSG_GOLDEN_BODY = k("message.body.golden_body");
+	public static final String MSG_DIAMOND_WILL = k("message.body.diamond_will");
+	public static final String MSG_REBOUNDING_BONES = k("message.body.rebounding_bones");
+	public static final String MSG_FLESH_REBORN = k("message.body.flesh_reborn");
+	public static final String MSG_SHATTERED = k("message.body.shattered");
+	// Cloud-Treading Steps (the body's way up, 2026-11-01)
+	public static final String MSG_TREAD_ON = k("message.body.tread_on");
+	public static final String MSG_TREAD_SPENT = k("message.body.tread_spent");
+	// The ladder's techniques (2026-11-01)
+	public static final String MSG_EARTHSHAKER = k("message.body.earthshaker");
+	public static final String MSG_SKY_PILLAR = k("message.body.sky_pillar");
+	public static final String MSG_IMPERISHABLE = k("message.body.imperishable");
+	public static final String MSG_GOLD_BURST = k("message.body.gold_burst");
+	public static final String MSG_PRIMORDIAL_ROAR = k("message.body.primordial_roar");
+	public static final String MSG_MYRIAD = k("message.body.myriad");
+	public static final String MSG_DHARMA = k("message.body.dharma");
+	// The Body Path's other ways (MedicinalBath, BeastBlood, WeightedTraining, HundredBattles, 2026-11-01)
+	public static final String MSG_METHOD_NEEDS_BODY_PATH = k("message.method.needs_body_path");
+	public static final String MSG_BATH_STEEPED = k("message.bath.steeped");
+	public static final String MSG_BATH_FULL = k("message.bath.full");
+	public static final String MSG_BATH_SOAKING = k("message.bath.soaking");
+	public static final String MSG_BATH_SPENT = k("message.bath.spent");
+	public static final String MSG_BLOOD_BATHING = k("message.body.blood_bathing");
+	public static final String MSG_WEIGHTS_TRAINING = k("message.body.weights_training");
+	public static final String MSG_WEIGHTS_NONE = k("message.body.weights_none");
+	public static final String MSG_HUNDRED_BATTLES = k("message.body.hundred_battles");
+	public static final String MSG_HUNDRED_BATTLES_WON = k("message.body.hundred_battles_won");
+	public static final String HUD_VIGOR_LABEL = k("hud.vigor_label");
+	public static final String MSG_SHRINE_REQUEST = k("message.shrine.request");
+	public static final String MSG_SHRINE_ANSWERED = k("message.shrine.answered");
+	public static final String MSG_SHRINE_OWN_INCENSE = k("message.shrine.own_incense");
+	public static final String MSG_SHRINE_INCENSE = k("message.shrine.incense");
+	public static final String MSG_SHRINE_STATUS = k("message.shrine.status");
+	public static final String MSG_SHRINE_OF = k("message.shrine.of");
+	public static final String SHRINE_NO_REQUEST = k("shrine.no_request");
+	public static final String SHRINE_ASKS = k("shrine.asks");
+	public static final String MSG_SHRINE_DESECRATED = k("message.shrine.desecrated");
+	public static final String MSG_SHRINE_DESECRATED_BY = k("message.shrine.desecrated_by");
+	public static final String MSG_BOND_TOO_GREAT = k("message.bond.too_great");
+	public static final String MSG_BOND_TOO_STRONG = k("message.bond.too_strong");
+	public static final String MSG_BOND_NOT_SUBDUED = k("message.bond.not_subdued");
+	public static final String MSG_BOND_ALREADY = k("message.bond.already");
+	public static final String MSG_BOND_BOUND = k("message.bond.bound");
+	public static final String MSG_BOND_FED = k("message.bond.fed");
+	public static final String MSG_BOND_DIED = k("message.bond.died");
+	public static final String MSG_BOND_DIED_LOST = k("message.bond.died_lost");
+	public static final String MSG_COURT_CLAIMED = k("message.court.claimed");
+	public static final String MSG_COURT_LOST = k("message.court.lost");
+	public static final String MSG_COURT_EMPTY = k("message.court.empty");
+	public static final String MSG_FEAST_NONE = k("message.feast.none");
+	public static final String MSG_FEAST_ESCAPED = k("message.feast.escaped");
+	public static final String MSG_FEAST_MEMORY = k("message.feast.memory");
+	public static final String MSG_HAUNT_ARRIVE = k("message.haunt.arrive");
+	public static final String MSG_HAUNT_DAWN = k("message.haunt.dawn");
+	public static final String MSG_HAUNT_FLED = k("message.haunt.fled");
+	public static final String MSG_HAUNT_EXORCIST = k("message.haunt.exorcist");
+	public static final String MSG_HAUNT_RITE = k("message.haunt.rite");
+
+	// --- The methods overhaul, phase 4 (the ways of one realm, and of a few; devilish cultivators draining bodies) ---
+
+	public static final String MSG_DAO_FIELD_OUTSIDE = k("message.method.dao_field_outside");
+	public static final String DAO_FIELD_OF = k("method.dao_field_of");
+	public static final String DAO_FIELDS_OF = k("method.dao_fields_of");
+	public static final String MSG_COMMUNION_OUTSIDE = k("message.method.communion_outside");
+	public static final String MSG_PRIMORDIAL_FAR = k("message.method.primordial_far");
+	public static final String MSG_ESSENCE_REFINING_OUTSIDE = k("message.method.essence_refining_outside");
+	public static final String MSG_ESSENCE_REFINING_EMPTY = k("message.method.essence_refining_empty");
+	public static final String MSG_TEMPERING_LOST = k("message.tempering.lost");
+	public static final String MSG_VESSEL_LOW_QI = k("message.vessel.low_qi");
+	public static final String MSG_VESSEL_CRACKED = k("message.vessel.cracked");
+	public static final String MSG_NIRVANA_RISEN = k("message.nirvana.risen");
+	public static final String MSG_NIRVANA_FAILED = k("message.nirvana.failed");
+	public static final String MSG_SPRINGS_SOAKING = k("message.springs.soaking");
+	public static final String MSG_SPRINGS_MEMORY = k("message.springs.memory");
+	public static final String MSG_ESCORT_TAKEN = k("message.escort.taken");
+	public static final String MSG_ESCORT_LET_GO = k("message.escort.let_go");
+	public static final String MSG_ESCORT_LED_ALREADY = k("message.escort.led_already");
+	public static final String MSG_ESCORT_NOT_WANDERING = k("message.escort.not_wandering");
+	public static final String MSG_ESCORT_FULL = k("message.escort.full");
+	public static final String MSG_ESCORT_PASSED = k("message.escort.passed");
+	public static final String MSG_ESCORT_LOST = k("message.escort.lost");
+	public static final String MSG_RIFT_SOUL_NONE = k("message.rift_haunting.none");
+	public static final String MSG_FURNACE_BURNING = k("message.furnace.burning");
+	public static final String MSG_FURNACE_BREAKS = k("message.furnace.breaks");
+	public static final String MSG_BLOOD_NIRVANA_RISEN = k("message.blood_nirvana.risen");
+	public static final String MSG_BLOOD_NIRVANA_BURNT = k("message.blood_nirvana.burnt");
 
 	private ModLang() {}
 }

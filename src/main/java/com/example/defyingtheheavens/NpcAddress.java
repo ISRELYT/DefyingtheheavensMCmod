@@ -48,18 +48,31 @@ public final class NpcAddress {
 		public boolean above() { return ordinal() >= SENIOR.ordinal() && this != MORTAL; }
 	}
 
-	/** How many realms {@code player} stands above {@code npc} (below it, less than 0), as each shows itself; a mortal at one below Qi Refining. */
+	/**
+	 * How many realms {@code player} stands above {@code npc} (below it, less than 0), as each shows itself; a mortal at one below Qi Refining.
+	 * To a body cultivator a body tempered on the Body Path shows itself for what it is ({@link #knowsTheBody}): one with no qi stands where
+	 * its body does.
+	 */
 	public static int gap(ServerPlayer player, CultivatorNpc npc) {
 		PlayerCultivation c = CultivationManager.get(player);
 		int theirs = npc.isMortal() ? -1 : npc.getDisplayedRealm().ordinal();
 		int yours = c.isMortal() ? -1 : TwoPaths.wieldedRealm(c).ordinal();
+		if (knowsTheBody(player, npc)) yours = Math.max(yours, TwoPaths.weighedRank(c) / Stage.values().length);
 		return yours - theirs;
+	}
+
+	/**
+	 * Whether {@code npc} is a body cultivator and {@code player} walks the Body Path (the user's "Go, with body sects", 2026-11-01): it calls
+	 * them by their body's realm, where any other cultivator sees no cultivator in one with no qi.
+	 */
+	public static boolean knowsTheBody(ServerPlayer player, CultivatorNpc npc) {
+		return npc.isBodyCultivator() && !npc.isMortal() && BodyPath.rank(CultivationManager.get(player)) >= 0;
 	}
 
 	/** The rung {@code player} stands on before {@code npc}. */
 	public static Rung rung(ServerPlayer player, CultivatorNpc npc) {
 		PlayerCultivation c = CultivationManager.get(player);
-		if (c.isMortal() && !npc.isMortal()) return Rung.MORTAL;
+		if (c.isMortal() && !npc.isMortal() && !knowsTheBody(player, npc)) return Rung.MORTAL;
 		int gap = gap(player, npc);
 		if (gap >= 6) return Rung.ANCESTOR;
 		if (gap >= KNEEL_GAP) return Rung.REVERED;

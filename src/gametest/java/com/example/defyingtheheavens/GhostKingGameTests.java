@@ -124,9 +124,11 @@ public class GhostKingGameTests implements FabricGameTest {
 					&& GhostMethods.atBottleneck(c) && s.pathCultivation() == GhostMethods.required(GhostMethods.ghostRank(s)),
 					"Its stages step on by themselves, to Grand Perfection's bottleneck, the bar full (the Netherworld's tribulation's)");
 			helper.assertTrue(c.getRealm() == Realm.QI_REFINING && c.getStage() == Stage.EARLY, "...and the ordinary cultivation untouched");
-			helper.assertTrue(GhostMethods.heldByMethod(c) && !GhostMethods.canBreakthrough(c), "The Breathing Art opens no way into Foundation Building");
+			// The methods overhaul (2026-10-31): no foundation holds the breakthrough; without one of the realm ahead, it gathers nothing there.
+			helper.assertTrue(!GhostMethods.heldByMethod(c) && GhostMethods.canBreakthrough(c) && !GhostMethods.hasVolume(c, Realm.FOUNDATION_BUILDING),
+					"The tribulation can be faced with the Breathing Art alone, though it carries no volume of Foundation Building");
 			GhostMethods.give(ghost, GhostMethod.YELLOW_SPRINGS_MARROW);
-			helper.assertTrue(!GhostMethods.heldByMethod(c) && GhostMethods.canBreakthrough(c), "The Marrow Art opens it: the tribulation can be faced");
+			helper.assertTrue(GhostMethods.hasVolume(c, Realm.FOUNDATION_BUILDING) && GhostMethods.canBreakthrough(c), "The Marrow Art carries it");
 			helper.assertTrue(GhostMethods.breakthrough(s) && GhostMethods.ghostRealm(s) == Realm.FOUNDATION_BUILDING && !GhostSystem.isKing(ghost)
 					&& s.pathCultivation() == 0, "Through: Foundation Building, the bar empty, no king");
 			GhostMethods.give(ghost, GhostMethod.GHOST_CORE_CANON);

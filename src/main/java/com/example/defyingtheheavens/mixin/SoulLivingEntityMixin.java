@@ -63,13 +63,14 @@ public abstract class SoulLivingEntityMixin {
 	}
 
 	/**
-	 * A heaven spell's ward against effects: the dawn's light, a severed fate (HeavenSpells#allowEffect); and a Jade Poison Body's,
-	 * against poison and wither (Physiques#allowEffect).
+	 * A heaven spell's ward against effects: the dawn's light, a severed fate (HeavenSpells#allowEffect); a Jade Poison Body's, against
+	 * poison and wither (Physiques#allowEffect); and Diamond Will's, against every harmful one (BodyTechniques#allowEffect).
 	 */
 	@Inject(method = "canBeAffected", at = @At("HEAD"), cancellable = true)
 	private void dth$heavenWardsEffects(net.minecraft.world.effect.MobEffectInstance effect, CallbackInfoReturnable<Boolean> cir) {
 		LivingEntity self = (LivingEntity) (Object) this;
-		if (!self.level().isClientSide && (!HeavenSpells.allowEffect(self, effect) || !Physiques.allowEffect(self, effect))) cir.setReturnValue(false);
+		if (!self.level().isClientSide && (!HeavenSpells.allowEffect(self, effect) || !Physiques.allowEffect(self, effect)
+				|| !com.example.defyingtheheavens.BodyTechniques.allowEffect(self, effect))) cir.setReturnValue(false);
 	}
 
 	/** The health before a blow, for what it took (a Blood Demon Body heals by a share of it: Physiques#onHurt). */
@@ -90,10 +91,12 @@ public abstract class SoulLivingEntityMixin {
 		// The lifespan tribulation's strike lands whole: no ward, aura or passive of the mod's turns it (LifespanTribulation).
 		if (!self.level().isClientSide && com.example.defyingtheheavens.LifespanTribulation.isStriking(self)) return amount;
 		// First what the blow is as dealt: a Primordial Chaos Body's spells harder (Physiques#outgoing); a Law's spell on a foe in its owner's
-		// domain harder, a foe's fire in a Water domain doused (LawDomains#outgoing).
+		// domain harder, a foe's fire in a Water domain doused (LawDomains#outgoing); a primed Thousand-Pound Fist's blow, and those of Blood
+		// Frenzy, harder (BodyTechniques#outgoing).
 		if (!self.level().isClientSide) {
 			amount = Physiques.outgoing(source, amount);
 			amount = com.example.defyingtheheavens.LawDomains.outgoing(self, source, amount);
+			amount = com.example.defyingtheheavens.BodyTechniques.outgoing(self, source, amount);
 		}
 		// A ghost takes only what reaches the dead, the living's blows by how clearly they see it (see GhostSystem).
 		float scaled = self instanceof ServerPlayer ghost && GhostSystem.isGhost(ghost) ? GhostSystem.scaleDamage(ghost, source, amount)

@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "facing=east,kind=demon": {
+      "model": "defying-the-heavens:block/shrine_demon",
+      "y": 90
+    },
+    "facing=east,kind=ghost": {
+      "model": "defying-the-heavens:block/shrine_ghost",
+      "y": 90
+    },
+    "facing=east,kind=heaven": {
+      "model": "defying-the-heavens:block/shrine_heaven",
+      "y": 90
+    },
+    "facing=north,kind=demon": {
+      "model": "defying-the-heavens:block/shrine_demon",
+      "y": 0
+    },
+    "facing=north,kind=ghost": {
+      "model": "defying-the-heavens:block/shrine_ghost",
+      "y": 0
+    },
+    "facing=north,kind=heaven": {
+      "model": "defying-the-heavens:block/shrine_heaven",
+      "y": 0
+    },
+    "facing=south,kind=demon": {
+      "model": "defying-the-heavens:block/shrine_demon",
+      "y": 180
+    },
+    "facing=south,kind=ghost": {
+      "model": "defying-the-heavens:block/shrine_ghost",
+      "y": 180
+    },
+    "facing=south,kind=heaven": {
+      "model": "defying-the-heavens:block/shrine_heaven",
+      "y": 180
+    },
+    "facing=west,kind=demon": {
+      "model": "defying-the-heavens:block/shrine_demon",
+      "y": 270
+    },
+    "facing=west,kind=ghost": {
+      "model": "defying-the-heavens:block/shrine_ghost",
+      "y": 270
+    },
+    "facing=west,kind=heaven": {
+      "model": "defying-the-heavens:block/shrine_heaven",
+      "y": 270
+    }
+  }
+}

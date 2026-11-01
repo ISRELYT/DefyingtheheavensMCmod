@@ -49,7 +49,7 @@ public final class SectExchange {
 		int years = new int[] {20, 60, 200, 600}[tier];
 		ArtifactGrade forged = new ArtifactGrade[] {ArtifactGrade.SPIRIT, ArtifactGrade.EARTH, ArtifactGrade.HEAVEN, ArtifactGrade.IMMORTAL}[tier];
 		QiElement element = sect.element();
-		Realm realm = CultivatorNpc.realmOf(SectMissions.rankOf(player));
+		Realm realm = CultivatorNpc.realmOf(SectMissions.rankOf(player, sect));
 		List<Ware> wares = new ArrayList<>();
 		// Outer Disciples and up
 		wares.add(new Ware("qi_pill", PillItem.create(ModItems.QI_GATHERING_PILL, pills, years), 8 * p, 4, NpcTitle.OUTER_DISCIPLE));
@@ -71,9 +71,18 @@ public final class SectExchange {
 		wares.add(new Ware("core_pill", PillItem.create(ModItems.CORE_PILL, pills, years), 80 * p, 1, NpcTitle.INNER_DISCIPLE));
 		// The way out of a secret realm before it closes (SecretRealms).
 		wares.add(new Ware("departure_jade", new ItemStack(ModItems.DEPARTURE_JADE), 30 * p, 1, NpcTitle.INNER_DISCIPLE));
+		// A body sect's (Sect#body) keeps the body's manuals where another's keeps its element's spells and another element's method: each of
+		// the Body Path's ways its path keeps (MethodManualItem#kinds), written to the disciple's realm.
+		if (sect.body) {
+			for (CultivationMethod way : MethodManualItem.kinds(Alignment.factionOf(sect.alignment), Bloodline.HUMAN)) {
+				if (way.path() != TwoPaths.Path.BODY) continue;
+				ItemStack manual = MethodManualItem.of(way, realm);
+				wares.add(new Ware("manual:" + way.getId(), manual, 30 + 30 * MethodManualItem.realm(manual).ordinal(), 1, NpcTitle.INNER_DISCIPLE));
+			}
+		}
 		List<Spell> spells = new ArrayList<>();
 		for (Spell spell : Spell.values()) {
-			if (spell.isHeaven() && spell.element() == element && spell.heavenRealm().ordinal() <= realm.ordinal()) spells.add(spell);
+			if (!sect.body && spell.isHeaven() && spell.element() == element && spell.heavenRealm().ordinal() <= realm.ordinal()) spells.add(spell);
 		}
 		// The day's two of them (two different ones while there are two to have).
 		if (!spells.isEmpty()) {
@@ -90,7 +99,7 @@ public final class SectExchange {
 		wares.add(new Ware("storage", StorageFormationItem.of(StorageFormations.Tier.values()[tier]), 50 * p, 1, NpcTitle.INNER_DISCIPLE));
 		// Elders and up
 		wares.add(new Ware("weapon", Artifacts.create(ArtifactKind.madeOf(element), forged, Artifacts.Quality.NORMAL, null), 150 * p, 1, NpcTitle.ELDER));
-		HeavenMethod method = otherMethod(sect, element, realm, day);
+		HeavenMethod method = sect.body ? null : otherMethod(sect, element, realm, day);
 		if (method != null) wares.add(new Ware("method", JadeSlipItem.of(method), 120 * p, 1, NpcTitle.ELDER));
 		for (Technique technique : Technique.values()) {
 			if (realm.ordinal() >= technique.realm().ordinal()) {

@@ -329,7 +329,10 @@ public final class ImmortalTombWorks extends RealmWorks {
 		for (BlockPos at : sanctumDoor(t)) if (!level.getBlockState(at).is(ModBlocks.TRIAL_BARRIER)) put(level, at, ModBlocks.TRIAL_BARRIER.defaultBlockState());
 	}
 
-	/** Each hall's vault sealed anew for the ancients: its Law's Dao Fragments and immortal spirit stones. */
+	/**
+	 * Each hall's vault sealed anew for the ancients: its Law's Dao Fragments and immortal spirit stones; now and then an Immortal Jade, or a
+	 * manual of one of True Immortal's ways, which no sect keeps (MethodManualItem#ancient).
+	 */
 	static void renewVaults(ServerLevel level, ImmortalTomb.Shape s, BlockPos c) {
 		RandomSource random = level.getRandom();
 		for (int k = 0; k < HALLS; k++) {
@@ -342,6 +345,7 @@ public final class ImmortalTombWorks extends RealmWorks {
 			hoard.add(fragments);
 			hoard.add(new ItemStack(ModItems.IMMORTAL_SPIRIT_STONE, 1 + random.nextInt(2)));
 			if (random.nextFloat() < 0.25f) hoard.add(new ItemStack(ModItems.IMMORTAL_JADE));
+			if (random.nextFloat() < 0.08f) hoard.add(MethodManualItem.ancient(Realm.TRUE_IMMORTAL, random));
 			if (level.getBlockEntity(at) instanceof StorageFormationBlockEntity vault) vault.sealForAncients(level, hoard);
 		}
 	}

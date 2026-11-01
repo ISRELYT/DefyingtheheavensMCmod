@@ -90,7 +90,15 @@ public final class SectMembership {
 	/** {@code player}'s title in their sect now, by their strength among its members ({@link Sect#titleAmong}). */
 	public static NpcTitle titleOf(Sect sect, ServerPlayer player) {
 		PlayerCultivation c = CultivationManager.get(player);
-		return sect.titleAmong(CultivatorNpc.rankOf(player), c.getCultivation());
+		return sect.titleAmong(strength(sect, player), c.getCultivation());
+	}
+
+	/**
+	 * {@code player}'s strength as {@code sect} weighs it (CultivatorNpc#rankOf, either path's); a body sect's (Sect#body) by their body on the
+	 * Body Path, qi or none (TwoPaths#weighedRank): a body cultivator knows a body for what it is.
+	 */
+	public static int strength(Sect sect, ServerPlayer player) {
+		return sect.body ? TwoPaths.weighedRank(CultivationManager.get(player)) : CultivatorNpc.rankOf(player);
 	}
 
 	/** An Elder or above of their sect: the treasury is theirs to open. */
@@ -112,7 +120,9 @@ public final class SectMembership {
 		if (GhostSystem.isGhost(player)) return "join.ghost";
 		// A demon clan takes only the demon races (the user's pick, 2026-10-23: any of them), wary of men.
 		if (sect.isClan() && !DemonPath.isDemon(c)) return "join.human";
-		if (c.isMortal()) return "join.mortal";
+		// A body sect takes only those who walk the Body Path (the user's "Go, with body sects", 2026-11-01), qi or none; no other takes one with no qi.
+		if (sect.body && BodyPath.rank(c) < 0) return "join.not_body";
+		if (c.isMortal() && !sect.body) return "join.mortal";
 		Sect other = sectOf(player.server, player.getUUID());
 		if (other != null) {
 			arg[0] = other.name;
@@ -127,7 +137,7 @@ public final class SectMembership {
 		// Loathed (a thief of its treasury, a killer of its people): no waiting mends that.
 		if (sect.standing(player.getUUID()) <= Regard.HOSTILE || npc.regard(player) <= Regard.HOSTILE) return "join.hated";
 		Sect.Member master = sect.master();
-		if (master != null && CultivatorNpc.rankOf(player) > master.rank) return "join.too_strong";
+		if (master != null && strength(sect, player) > master.rank) return "join.too_strong";
 		return null;
 	}
 
@@ -297,7 +307,7 @@ public final class SectMembership {
 		ServerPlayer tenant = Possession.tenantOf(id);
 		if (tenant != null) return titleOf(sect, tenant); // their body played by another's soul: its strength as it is now
 		PlayerCultivation c = CultivationManager.own(server, id);
-		return sect.titleAmong(c.isMortal() ? CultivatorNpc.MORTAL : TwoPaths.weighedRank(c), c.getCultivation());
+		return sect.titleAmong(c.isMortal() && !sect.body ? CultivatorNpc.MORTAL : TwoPaths.weighedRank(c), c.getCultivation());
 	}
 
 	/**
@@ -499,6 +509,7 @@ public final class SectMembership {
 			buf.writeBoolean(sect.isClan()); // a demon clan's master its Clan Head (NpcTitle#getDisplayName(boolean))
 			buf.writeBoolean(sect.isHoly()); // a Holy Land's its Patriarch (NpcTitle#getDisplayName(boolean, boolean))
 			buf.writeBoolean(sect.isImmortal()); // an immortal sect's its Sect Lord (NpcTitle#getDisplayName(boolean, boolean, boolean))
+			buf.writeBoolean(sect.body); // a body sect's: its ranks the Body Path's (ClientSect.Info#body)
 			java.util.List<Sect.Member> members = new java.util.ArrayList<>(sect.members.values());
 			members.sort(Sect.SENIORITY);
 			buf.writeVarInt(members.size() + sect.disciples.size());
@@ -514,7 +525,7 @@ public final class SectMembership {
 				ServerPlayer online = player.server.getPlayerList().getPlayer(d.id);
 				buf.writeUtf(d.name);
 				buf.writeVarInt(online != null ? titleOf(sect, online).ordinal() + 1 : 0);
-				buf.writeVarInt(online != null ? CultivatorNpc.rankOf(online) + 1 : 0);
+				buf.writeVarInt(online != null ? strength(sect, online) + 1 : 0);
 				buf.writeBoolean(true);
 				buf.writeUUID(d.id);
 				buf.writeBoolean(mayBanish(seat, d.id, discipleTitle(player.server, sect, d.id)));

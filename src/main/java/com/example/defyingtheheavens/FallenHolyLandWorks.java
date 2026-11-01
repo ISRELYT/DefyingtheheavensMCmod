@@ -359,7 +359,10 @@ public final class FallenHolyLandWorks extends RealmWorks {
 		}
 	}
 
-	/** A hoard of the holy land: supreme spirit stones, now and then an immortal one, a Heaven-grade artifact, a Departure Jade. */
+	/**
+	 * A hoard of the holy land: supreme spirit stones, now and then an immortal one, a Heaven-grade artifact, a Departure Jade, a manual of
+	 * one of Entering Nirvana's ways, which no sect keeps (MethodManualItem#ancient).
+	 */
 	static List<ItemStack> vaultTreasures(RandomSource random) {
 		List<ItemStack> out = new ArrayList<>();
 		out.add(new ItemStack(ModItems.SUPREME_SPIRIT_STONE, 1 + random.nextInt(3)));
@@ -367,6 +370,7 @@ public final class FallenHolyLandWorks extends RealmWorks {
 		if (random.nextFloat() < 0.15f) out.add(new ItemStack(ModItems.IMMORTAL_SPIRIT_STONE));
 		if (random.nextFloat() < 0.3f) out.add(Artifacts.any(random, ArtifactGrade.HEAVEN, null));
 		if (random.nextFloat() < 0.3f) out.add(new ItemStack(ModItems.DEPARTURE_JADE));
+		if (random.nextFloat() < 0.35f) out.add(MethodManualItem.ancient(Realm.ENTERING_NIRVANA, random));
 		return out;
 	}
 

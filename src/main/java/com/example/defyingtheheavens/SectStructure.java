@@ -557,6 +557,7 @@ public class SectStructure extends Structure {
 			CityPlanner.Ground ground, int floor) {
 		long seed = random.nextLong();
 		int alignment = Alignment.randomSect(random);
+		boolean body = bodySect(seed);
 		Alignment.Faction faction = Alignment.factionOf(alignment);
 		int w = size.w, d = size.d, cu = size.a, cv = size.b, r = SectPiece.PLAZA_RADIUS;
 		Direction back = frame.facing();
@@ -777,9 +778,20 @@ public class SectStructure extends Structure {
 			postTag.put(entry.getKey().name(), new LongArrayTag(entry.getValue().stream().mapToLong(BlockPos::asLong).toArray()));
 		}
 		blueprint.put("Posts", postTag);
+		if (body) blueprint.putBoolean("Body", true);
 		plazaData.put("Blueprint", blueprint);
 		pieces.add(plaza);
+		// A body sect's every building knows it: its library's and master's hall's chests keep the body's manuals (SectPiece#chest).
+		if (body) for (SectPiece piece : pieces) piece.body = true;
 
 		for (SectPiece piece : pieces) builder.addPiece(piece);
+	}
+
+	/**
+	 * Whether the sect laid out from {@code seed} is a body sect (Sect#body): one in BodyCultivators#SECT_IN (the user's "Go, with body sects",
+	 * 2026-11-01). By its own seed and apart from the plan's draws, so every other sect lays out as it did before.
+	 */
+	public static boolean bodySect(long seed) {
+		return new java.util.Random(seed * 0x9E3779B97F4A7C15L + 0xB0D7L).nextInt(BodyCultivators.SECT_IN) == 0;
 	}
 }

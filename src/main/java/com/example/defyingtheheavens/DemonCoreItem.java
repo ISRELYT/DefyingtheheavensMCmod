@@ -22,15 +22,58 @@ import java.util.List;
  * formed at (PlayerCultivation#rank: its realm and stage), its element (the beast's, the race's) and what it was taken from. It looks
  * its realm ({@link #look}: five looks, Qi Refining to Heavenly Being and beyond), glowing in its element ({@link #glow}).
  * <p>
- * No use yet: it is to be essential to crafting and artifact forging, later (the user's word).
+ * Eaten by one whose Demon Path practises Core Devouring ({@link #devour}; the methods overhaul's phase 2): a share of the path's stage by
+ * the core's realm ({@link #SHARE}), a foreign element's core tainting the blood (DemonState#taint). It is to be essential to crafting and
+ * artifact forging too, later (the user's word).
  */
 public class DemonCoreItem extends Item {
 	private static final String RANK = "CoreRank", ELEMENT = "CoreElement", FROM = "CoreFrom";
 	/** Its looks, by realm: Qi Refining, Foundation Building, Core Formation, Nascent Soul, Heavenly Being and above. */
 	public static final int LOOKS = 5;
+	/** Core Devouring: a core is this share of the Demon Path's stage, twice as much a realm above, half a realm below, the most {@link #MOST}. */
+	public static final double SHARE = 0.15, MOST = 0.6;
 
 	public DemonCoreItem(Properties properties) {
 		super(properties);
+	}
+
+	/** Right-clicked: eaten, if its holder practises Core Devouring ({@link #devour}); told why not. */
+	@Override
+	public net.minecraft.world.InteractionResultHolder<ItemStack> use(Level level, Player player, net.minecraft.world.InteractionHand hand) {
+		ItemStack stack = player.getItemInHand(hand);
+		if (level.isClientSide) return net.minecraft.world.InteractionResultHolder.success(stack);
+		if (player instanceof ServerPlayer sp && devour(sp, stack)) {
+			if (!sp.getAbilities().instabuild) stack.shrink(1);
+			return net.minecraft.world.InteractionResultHolder.consume(stack);
+		}
+		return net.minecraft.world.InteractionResultHolder.fail(stack);
+	}
+
+	/**
+	 * {@code player} eats {@code core} by Core Devouring (CultivationMethod#CORE_DEVOURING): a share of its Demon Path's stage by the core's
+	 * realm against the path's ({@link #SHARE}: CultivationMethods#grant), and a core of another element than its race's taints its blood
+	 * (DemonPath#TAINT_PER_CORE: every Demon Path gain slower until Bloodline Purification cleanses it). Not practising it, told so.
+	 * @return whether it was eaten
+	 */
+	static boolean devour(ServerPlayer player, ItemStack core) {
+		PlayerCultivation c = CultivationManager.get(player);
+		if (DemonPath.rank(c) < 0 || CultivationMethods.practised(c, TwoPaths.Path.DEMON) != CultivationMethod.CORE_DEVOURING) {
+			player.displayClientMessage(Component.translatable(ModLang.MSG_CORE_NOT_DEVOURED).withStyle(ChatFormatting.GRAY), true);
+			return false;
+		}
+		int path = DemonPath.realm(DemonPath.rank(c)).ordinal();
+		double share = Math.min(MOST, SHARE * Math.pow(2, realm(core).ordinal() - path));
+		if (CultivationMethods.grant(player, TwoPaths.Path.DEMON, CultivationMethod.CORE_DEVOURING, share) <= 0) return false;
+		QiElement element = element(core), own = DemonPath.element(DemonPath.race(c));
+		if (element != null && element != own) {
+			c.demon().setTaint(c.demon().taint() + DemonPath.TAINT_PER_CORE);
+			player.displayClientMessage(Component.translatable(ModLang.MSG_CORE_TAINT, element.getDisplayName(), Math.round(c.demon().taint() * 100))
+					.withStyle(ChatFormatting.DARK_RED), true);
+		}
+		player.serverLevel().playSound(null, player.blockPosition(), net.minecraft.sounds.SoundEvents.GENERIC_EAT, net.minecraft.sounds.SoundSource.PLAYERS,
+				1.0f, 0.7f);
+		CultivationManager.markDirty(player.server);
+		return true;
 	}
 
 	/** A core formed at {@code rank}, of {@code element} (null: none known), taken from {@code from}. */

@@ -229,12 +229,27 @@ public final class NpcSpawner {
 				Bloodline race = upper || greatVoid || immortal ? DenStructure.upperRace(random) : DenStructure.raceOfLand(level.getBiome(spot));
 				if (race != null) npc.setRace(race, random.nextInt(3));
 			}
+			// And now and then one of men who tempers the body (the user's "Go, with body sects", 2026-11-01).
+			if (rollsBody(npc, random)) npc.setBodyCultivator(true);
 		}
 		level.addFreshEntity(npc);
 	}
 
 	/** One wandering cultivator in this many is a demon, where its race's land is (DenStructure#raceOfLand). */
 	public static final int DEMON_IN = 8;
+	/** One wandering cultivator of men in this many is a body cultivator (CultivatorNpc#isBodyCultivator), in the lower realms and the Upper Realm. */
+	public static final int BODY_IN = 5;
+
+	/**
+	 * Whether a new wandering cultivator, {@code npc}, is to be a body cultivator: one of the living men, no mortal, in the lower realms or the
+	 * Upper Realm (where the land is walked: the realms above are crossed in the air, which the body can't do), one in {@link #BODY_IN}.
+	 */
+	public static boolean rollsBody(CultivatorNpc npc, RandomSource random) {
+		ResourceKey<Level> dimension = npc.level().dimension();
+		if (npc.isMortal() || npc.isDemon() || npc.isGhost()) return false;
+		if (!ModDimensions.isLowerRealm(dimension) && !ModDimensions.isUpperRealm(dimension)) return false;
+		return random.nextInt(BODY_IN) == 0;
+	}
 
 	/** A spot 40-80 blocks from the player, in any direction. */
 	private static BlockPos findSpot(ServerLevel level, ServerPlayer player, RandomSource random, boolean mortal) {

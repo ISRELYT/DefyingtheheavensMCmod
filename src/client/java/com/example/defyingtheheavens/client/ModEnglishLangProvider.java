@@ -11,6 +11,8 @@ import com.example.defyingtheheavens.ClothingTier;
 import com.example.defyingtheheavens.Codex;
 import com.example.defyingtheheavens.CodexMap;
 import com.example.defyingtheheavens.CraftMastery;
+import com.example.defyingtheheavens.CultivationMethod;
+import com.example.defyingtheheavens.GatheringFormations;
 import com.example.defyingtheheavens.GhostMethod;
 import com.example.defyingtheheavens.Spell;
 import com.example.defyingtheheavens.ModBlocks;
@@ -98,10 +100,10 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		// The rest, named (the bug sweep of 2026-10-27: a death message falls back on the harm's own name when its caster is gone, and
 		// these showed as raw keys there and wherever else an entity is named).
 		t.add(ModEntities.TRIBULATION_CLOUD, "Tribulation Cloud");
-		t.add(ModEntities.SPELL_PROJECTILE, "Spell");
-		t.add(ModEntities.SPELL_FIELD, "Spell Field");
-		t.add(ModEntities.SPELL_CONSTRUCT, "Spell Construct");
-		t.add(ModEntities.SPELL_BLOCK, "Spell Block");
+		t.add(ModEntities.SPELL_PROJECTILE, "Art");
+		t.add(ModEntities.SPELL_FIELD, "Art Field");
+		t.add(ModEntities.SPELL_CONSTRUCT, "Art Construct");
+		t.add(ModEntities.SPELL_BLOCK, "Art Block");
 		t.add(ModEntities.EARTH_GOLEM, "Earth Golem");
 		t.add(ModEntities.SWORD_SPIRIT, "Sword Spirit");
 		t.add(ModEntities.COLOSSUS, "Legend Made Vast");
@@ -281,7 +283,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.METHOD_LINE, "%s, layer %s of %s: +%s/s");
 		t.add(ModLang.METHOD_LINE_NAME, "%s: +%s/s");
 		t.add(ModLang.METHOD_LINE_SHORT, "Layer %s of %s: +%s/s");
-		t.add(ModLang.METHOD_LINE_NONE, "No heaven method: +%s/s");
+		t.add(ModLang.METHOD_LINE_NONE, "No heaven scripture: you gather nothing");
+		t.add(ModLang.METHOD_LINE_NO_VOLUME, "%s, layer %s of %s: no volume");
 		t.add(ModLang.SETTLING_LINE, "Layer %s settling: %s%%");
 		t.add(ModLang.UPPER_REALM_LINE, "Jade Firmament: qi x%s");
 		t.add(ModLang.GREAT_VOID_LINE, "Great Void: qi x%s");
@@ -294,7 +297,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.TAB_STATS, "Stats");
 		t.add(ModLang.TAB_ABILITIES, "Abilities");
 		t.add(ModLang.TAB_METHODS, "Methods");
-		t.add(ModLang.TAB_SPELLS, "Spells");
+		t.add(ModLang.TAB_SPELLS, "Arts");
 		t.add(ModLang.STATS_SUPPRESSED, "is suppressed to");
 		t.add(ModLang.STATS_COL_STAT, "Stat");
 		t.add(ModLang.STATS_COL_BASE, "Base");
@@ -363,6 +366,24 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case SLEEVE -> "Universe in a Sleeve";
 				case SWORD_INTENT -> "Sword Intent";
 				case BLOOD_BATTLE -> "Blood Battle";
+				case IRON_SKIN -> "Iron Skin";
+				case MOUNTAIN_STOMP -> "Mountain Stomp";
+				case GROUND_SPLITTING_LEAP -> "Ground-Splitting Leap";
+				case THOUSAND_POUND_FIST -> "Thousand-Pound Fist";
+				case BLOOD_FRENZY -> "Blood Frenzy";
+				case GOLDEN_BODY -> "Golden Body";
+				case DIAMOND_WILL -> "Diamond Will";
+				case COMET_CHARGE -> "Comet Charge";
+				case REBOUNDING_BONES -> "Rebounding Bones";
+				case FLESH_REBORN -> "Flesh Reborn";
+				case HEAVEN_SHATTERING_FIST -> "Heaven-Shattering Fist";
+				case CLOUD_TREADING -> "Cloud-Treading Steps";
+				case EARTHSHAKER -> "Earthshaker";
+				case SKY_PILLAR_STRIKE -> "Sky-Pillar Strike";
+				case IMPERISHABLE_GOLD -> "Imperishable Gold";
+				case PRIMORDIAL_ROAR -> "Primordial Roar";
+				case MYRIAD_FISTS -> "Myriad Fists";
+				case DHARMA_BODY -> "Dharma Body of Heaven and Earth";
 			});
 			t.add(key + ".description", switch (ability) {
 				case QI_SUSTENANCE -> "Qi keeps you fed. Hunger stays full.";
@@ -391,11 +412,11 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 						+ "Costs %s%% of your qi to tear in, %s%% to tear out. From Void Shattering on, torn high in the Jade Firmament's sky "
 						+ "(Y 448 and up) it opens a Void Breach into the Great Void Realm instead, for half your qi, held open while you stay "
 						+ "by it; torn in the Great Void, a way down onto the Jade Firmament.";
-				case BURN_LIFESPAN -> "Set your own years alight for strength: while it burns, your blows and spells strike %2$s%% harder and you move "
+				case BURN_LIFESPAN -> "Set your own years alight for strength: while it burns, your blows and arts strike %2$s%% harder and you move "
 						+ "%3$s%% faster, for %1$s%% of your whole lifespan a second (the same share at every realm). It goes out by itself before "
 						+ "it would leave you fewer than %4$s years, and when you die or log out.";
 				case CLONE -> "A technique (from its manual). Use it to split a clone off your body, at your own realm with your abilities and "
-						+ "spells but %1$s%% of your strength (health, blows, armour, qi pool); splitting it off takes %2$s%% of your qi. Use it "
+						+ "arts but %1$s%% of your strength (health, blows, armour, qi pool); splitting it off takes %2$s%% of your qi. Use it "
 						+ "again to go into the clone (your body sits down in meditation where it was) and again to come back (the clone stays "
 						+ "standing). Sneak and use it within %3$s blocks of the other body to draw the clone back in, its qi and its things "
 						+ "with it. It needs no tether and nothing to stay out; what it spends comes from your own pool. Slain, it dissolves and "
@@ -409,37 +430,37 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case TIGERS_ROAR -> "Your tiger blood's roar: everything within %1$s blocks standing %2$s stages or more below you is weakened and "
 						+ "slowed for %3$s s. Every %4$s s, for %5$s%% of your qi.";
 				case ILLUSION -> "Your fox blood's illusion: unseen for %1$s s, until you strike. Every %2$s s, for %3$s%% of your qi.";
-				case IMMORTAL_ESSENCE -> "Set your immortal essence to work: while it's on, your blows and spells strike %1$s%% harder, and a full "
+				case IMMORTAL_ESSENCE -> "Set your immortal essence to work: while it's on, your blows and arts strike %1$s%% harder, and a full "
 						+ "pool lasts %2$s s. Your pool holds %3$s, and fills only in the Immortal Realm (or your small world): empty to full in %4$s minutes, %5$s times "
 						+ "as fast meditating. Anywhere else it leaks away, a full pool in %6$s minutes: below the Gate an immortal keeps the might "
 						+ "of its realm, but not its essence. It goes out when the pool runs dry, and when you die or log out.";
 				case METAL_DOMAIN -> "Unfurl the domain of your Law of Metal, %1$s blocks round you. Each second every foe in it (monsters, whatever "
 						+ "attacks you, those you're fighting) is cut for %4$s%% of your blow as metal qi, and its armour is cut by %5$s%% while it stays. "
-						+ "Your metal spells strike foes in it %3$s%% harder." + DOMAIN_TAIL;
+						+ "Your metal arts strike foes in it %3$s%% harder." + DOMAIN_TAIL;
 				case WOOD_DOMAIN -> "Unfurl the domain of your Law of Wood, %1$s blocks round you. Each second its roots drain every foe in it "
 						+ "(monsters, whatever attacks you, those you're fighting) for %4$s%% of your blow as wood qi, %6$s%% of it back to you as "
-						+ "life, and hold them slowed (Slowness %5$s). Your wood spells strike foes in it %3$s%% harder." + DOMAIN_TAIL;
+						+ "life, and hold them slowed (Slowness %5$s). Your wood arts strike foes in it %3$s%% harder." + DOMAIN_TAIL;
 				case WATER_DOMAIN -> "Unfurl the domain of your Law of Water, %1$s blocks round you. Each second its waters crush every foe in it "
 						+ "(monsters, whatever attacks you, those you're fighting) for %4$s%% of your blow as water qi and slow them (Slowness %5$s); "
-						+ "what burns on them goes out, and the fire they deal is %6$s%% weaker. Your water spells strike foes in it %3$s%% harder."
+						+ "what burns on them goes out, and the fire they deal is %6$s%% weaker. Your water arts strike foes in it %3$s%% harder."
 						+ DOMAIN_TAIL;
 				case FIRE_DOMAIN -> "Unfurl the domain of your Law of Fire, %1$s blocks round you. Each second its true fire burns every foe in it "
 						+ "(monsters, whatever attacks you, those you're fighting) for %4$s%% of your blow as fire qi, past any resistance or "
-						+ "immunity to fire, and sets them alight. Your fire spells strike foes in it %3$s%% harder." + DOMAIN_TAIL;
+						+ "immunity to fire, and sets them alight. Your fire arts strike foes in it %3$s%% harder." + DOMAIN_TAIL;
 				case EARTH_DOMAIN -> "Unfurl the domain of your Law of Earth, %1$s blocks round you. Each second its weight crushes every foe in it "
 						+ "(monsters, whatever attacks you, those you're fighting) for %4$s%% of your blow as earth qi and slows them (Slowness %5$s); "
-						+ "fliers are dragged down out of the air and can't fly in it, though spared the fall. Your earth spells strike foes in it "
+						+ "fliers are dragged down out of the air and can't fly in it, though spared the fall. Your earth arts strike foes in it "
 						+ "%3$s%% harder." + DOMAIN_TAIL;
 				case SPACE_DOMAIN -> "Unfurl the domain of your Law of Space, %1$s blocks round you. Space is locked on every foe in it (monsters, "
 						+ "whatever attacks you, those you're fighting): none can step or tear through it, nothing it catches can leave it (it is held "
-						+ "to its edge as you go), and all are slowed (Slowness %4$s). Your spells of space strike foes in it %3$s%% harder."
+						+ "to its edge as you go), and all are slowed (Slowness %4$s). Your arts of space strike foes in it %3$s%% harder."
 						+ DOMAIN_TAIL;
 				case TIME_DOMAIN -> "Unfurl the domain of your Law of Time, %1$s blocks round you. Time runs slow for every foe in it (monsters, "
-						+ "whatever attacks you, those you're fighting): they move (Slowness %3$s) and strike more slowly, and their spells cool "
+						+ "whatever attacks you, those you're fighting): they move (Slowness %3$s) and strike more slowly, and their arts cool"
 						+ "%4$s%% more slowly." + DOMAIN_TAIL;
 				case LIFE_AND_DEATH_DOMAIN -> "Unfurl the domain of your Law of Life and Death, %1$s blocks round you. No foe in it (monsters, "
 						+ "whatever attacks you, those you're fighting) can heal at all, and %4$s%% of the harm you deal them comes back to you as "
-						+ "life. Your ghost path spells strike foes in it %3$s%% harder." + DOMAIN_TAIL;
+						+ "life. Your ghost path arts strike foes in it %3$s%% harder." + DOMAIN_TAIL;
 				case SMALL_WORLD -> "Open the door to your small world before you, for %1$s s: walk through it, and so may those on its guest list "
 						+ "(/smallworld guest add). Its qi is the Immortal Realm's: your essence fills there, and meditating there comprehends your "
 						+ "Law in focus (its breakthroughs are still the Immortal Realm's alone). Inside, use this again, or walk through its gate, to "
@@ -460,6 +481,58 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case BLOOD_BATTLE -> "A technique (from its manual), the Ancient Battlefield's. Switched on, battle feeds you: every blow you land "
 						+ "heals you %1$s%% of it, and with more than one foe set on you within %4$s blocks their blows harm you %2$s%% less for each "
 						+ "one past the first (at most %3$s%% less). Costs %5$s qi/s while on; it goes out when your qi runs short.";
+				case IRON_SKIN -> "A Body Path technique (Copper Skin). Your skin turns to iron for %1$s s: blows harm you %2$s%% less, and "
+						+ "nothing knocks you back. %3$s vigor, every %4$s s.";
+				case MOUNTAIN_STOMP -> "A Body Path technique (Iron Flesh). Stomp the ground: every foe within %1$s blocks takes %2$s%% of your "
+						+ "blow, is flung back and slowed for %3$s s. Needs ground under your feet. %4$s vigor, every %5$s s.";
+				case GROUND_SPLITTING_LEAP -> "A Body Path technique (Steel Sinew). Leap far ahead where you look, and the fall does you no harm; "
+						+ "where you land, a shockwave strikes every foe within %1$s blocks for %2$s%% of your blow. Needs ground under your feet. "
+						+ "%3$s vigor, every %4$s s.";
+				case THOUSAND_POUND_FIST -> "A Body Path technique (Jade Bone). Gather a thousand pounds into your fist: your next blow of the "
+						+ "hand within %1$s s strikes %2$s times as hard and hurls its foe away. %3$s vigor, every %4$s s.";
+				case BLOOD_FRENZY -> "A Body Path technique (Silver Marrow). Switched on, your blood boils: your blows and body techniques strike "
+						+ "%1$s%% harder and you move %2$s%% faster, for %3$s vigor a second. Vigor doesn't refill while it burns, and it goes out "
+						+ "when your vigor runs dry.";
+				case GOLDEN_BODY -> "A Body Path technique (Golden Blood). Your body turns to gold for %1$s s: every blow is turned aside, "
+						+ "without harm or knockback (a tribulation's lightning still strikes). %2$s vigor, every %3$s s.";
+				case DIAMOND_WILL -> "A Body Path technique (Diamond Heart). Your heart turns to diamond for %1$s s: every harmful effect on "
+						+ "you is cleared and none can take hold, nothing knocks you back, and no cultivator's Realm Suppress weighs on you. "
+						+ "%2$s vigor, every %3$s s.";
+				case COMET_CHARGE -> "A Body Path technique (Star-Forged Body). Hurl yourself about %1$s blocks along the ground where you look, "
+						+ "like a falling star: every foe you pass through takes %2$s%% of your blow and is thrown aside. Walls stop you, and "
+						+ "the charge does you no harm from a fall. Needs ground under your feet. From Star-Forged Body on, high in the Jade "
+						+ "Firmament's sky (Y 448 and up), it tears the void instead: a Void Breach opens before you, ground or no ground. "
+						+ "%3$s vigor, every %4$s s.";
+				case REBOUNDING_BONES -> "A Body Path technique (Heaven-Bone Body). For %1$s s your bones throw blows back: %2$s%% of every "
+						+ "blow you take strikes whoever dealt it (within %3$s blocks), though you still take it. %4$s vigor, every %5$s s.";
+				case FLESH_REBORN -> "A Body Path technique (Undying Body). Your flesh is reborn: %1$s%% of your health back at once, fire and "
+						+ "every harmful effect gone, and another %2$s%% over %3$s s. %4$s vigor, every %5$s s.";
+				case HEAVEN_SHATTERING_FIST -> "A Body Path technique (Indestructible Body). One colossal blow where you look: every foe "
+						+ "within %1$s blocks before you, in a wide cone, takes %2$s%% of your blow and is hurled away. %3$s vigor, every %4$s s.";
+				case CLOUD_TREADING -> "A Body Path technique (Silver Marrow). Switched on, you stride on the air as on clouds: double-tap jump "
+						+ "to rise wherever no qi or sword carries you, at %2$s%% of Qi Flight's pace. It burns %1$s vigor a second while you are "
+						+ "aloft, vigor doesn't refill in the air, and the clouds give way when your vigor runs dry. It carries the body up the "
+						+ "Spatial Gap; beyond it, a Diamond Heart rides a Void Breach, a Star-Forged Body tears one with Comet Charge, and an "
+						+ "Undying Body passes the Immortal Gate.";
+				case EARTHSHAKER -> "A Body Path technique (Earth-Bearing Body). Strike the ground and the earth heaves out round you in %1$s rings, "
+						+ "the last %2$s blocks out: every foe a ring passes under takes %3$s%% of your blow and is tossed into the air. Needs "
+						+ "ground under your feet. %4$s vigor, every %5$s s.";
+				case SKY_PILLAR_STRIKE -> "A Body Path technique (Sky-Pillar Body). Spring up as a pillar into the sky and come slamming down "
+						+ "where you look, up to %1$s blocks off: where you land every foe within %2$s blocks takes %3$s%% of your blow and is "
+						+ "flung out, and the fall does you no harm. Needs ground under your feet. %4$s vigor, every %5$s s.";
+				case IMPERISHABLE_GOLD -> "A Body Path technique (Imperishable Gold Body). For %1$s s your body is imperishable gold: every "
+						+ "blow turned aside, every harmful effect refused, nothing knocks you back (a tribulation's lightning still strikes). As "
+						+ "it ends, all the harm it turned aside bursts out on every foe within %2$s blocks, at most %3$s times your blow. "
+						+ "%4$s vigor, every %5$s s.";
+				case PRIMORDIAL_ROAR -> "A Body Path technique (Primordial Saint Body). A roar from before the world: every foe within %1$s "
+						+ "blocks has its wards stripped away (an element's ward, a Golden Bell, a body's own guard) and stands stunned for "
+						+ "%2$s s, rooted, its blows weak and slow. %3$s vigor, every %4$s s.";
+				case MYRIAD_FISTS -> "A Body Path technique (Chaos-Tempered Body). A flurry of %1$s blows in %2$s s before you: each strikes "
+						+ "every foe close before you for %3$s%% of your blow, and the last hurls them far. %4$s vigor, every %5$s s.";
+				case DHARMA_BODY -> "A Body Path technique (Body of Heaven and Earth). For %1$s s your own body stands behind you as tall as "
+						+ "heaven and earth, %2$s blocks of gold. Where a blow of your hand lands, its fist comes down out of the sky on it for "
+						+ "%3$s%% of your blow; when you stomp (Mountain Stomp, Earthshaker) it stamps its foot, striking all round it for "
+						+ "%4$s%%. %5$s vigor, every %6$s s.";
 			});
 		}
 		// Clone while playing the clone (Clones): the way back.
@@ -500,11 +573,11 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				+ "Breach into the Great Void Realm instead, for half your ghost qi, held open while you stay by it; torn in the Great Void, a way "
 				+ "down onto the Jade Firmament.");
 		t.add(ModLang.METHODS_TITLE, "Cultivation Methods");
-		t.add(ModLang.METHODS_EMPTY, "No cultivation methods learned yet.");
-		t.add(ModLang.METHODS_HINT, "Methods you learn will appear here.");
-		t.add(ModLang.SPELLS_TITLE, "Spells");
-		t.add(ModLang.SPELLS_EMPTY, "No spells learned yet.");
-		t.add(ModLang.SPELLS_HINT, "Spells you learn will appear here.");
+		t.add(ModLang.METHODS_EMPTY, "No ghost foundations or arts learned yet.");
+		t.add(ModLang.METHODS_HINT, "The foundations and arts you learn will appear here.");
+		t.add(ModLang.SPELLS_TITLE, "Arts");
+		t.add(ModLang.SPELLS_EMPTY, "No arts learned yet.");
+		t.add(ModLang.SPELLS_HINT, "Arts you learn will appear here.");
 		// The ghost methods and their spells
 		for (GhostMethod method : GhostMethod.values()) {
 			t.add(ModLang.methodKey(method.getId()), switch (method) {
@@ -636,7 +709,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 						+ "moment after.";
 				case YAMA_VERDICT -> "Judge the being you look at, up to 32 blocks: 10 hearts of ghostly harm, twice that if it is below half "
 						+ "its health.";
-				case HELL_CHAINS -> "A way to hell tears open at your feet and chains of black iron lash out of it to every foe within 12 blocks (with none, the nearest living thing your spells may take), haul them to you and hold them fast for 3 seconds.";
+				case HELL_CHAINS -> "A way to hell tears open at your feet and chains of black iron lash out of it to every foe within 12 blocks (with none, the nearest living thing your arts may take), haul them to you and hold them fast for 3 seconds.";
 				case SAMSARA_WHEEL -> "The six paths turn: your health is made whole, your harmful effects are gone, and half your yin "
 						+ "corruption with them.";
 				case SIX_PATHS_ANNIHILATION -> "Six pillars of cold fire rise round you: everything within 12 blocks takes 20 hearts of ghostly "
@@ -648,17 +721,17 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				case GATE_OF_TEN_THOUSAND_GHOSTS -> "A gate of the dead, bone-white mist and ghost fire, opens where you look, up to 82 blocks, "
 						+ "for 8 s: every foe within 18 blocks of it is dragged toward it and takes 30 ghostly harm a second. Then it slams shut: 120 "
 						+ "ghostly harm to everything within 18 blocks. A quarter of all the harm it does mends you.";
-				case HEAVEN_DEMON_PALM -> "A spell of both paths, heaven and demon. A palm of gold light, a demon's crimson claw within it, strikes "
+				case HEAVEN_DEMON_PALM -> "An art of both paths, heaven and demon. A palm of gold light, a demon's crimson claw within it, strikes "
 						+ "the first being within 16 blocks: 5 hearts of harm, and it is thrown back. A quarter of the harm mends you.";
-				case HEAVEN_DEMON_MANTLE -> "A spell of both paths, heaven and demon. Gold light and crimson demon scales wrap you for 10 seconds: "
+				case HEAVEN_DEMON_MANTLE -> "An art of both paths, heaven and demon. Gold light and crimson demon scales wrap you for 10 seconds: "
 						+ "arrows and fireballs shot at you are turned back on whoever shot them, and you have Resistance I.";
-				case DEVOURING_SEAL -> "A spell of both paths, heaven and demon. Seal the being you look at, up to 32 blocks: heaven's seal holds "
+				case DEVOURING_SEAL -> "An art of both paths, heaven and demon. Seal the being you look at, up to 32 blocks: heaven's seal holds "
 						+ "it while a demon's maw devours it, for 8 seconds. It loses 2 hearts a second and is slowed, and half of it comes to you.";
-				case HEAVEN_DEMON_CLAW -> "A spell of both paths, heaven and demon. A great claw of gold light and crimson demon qi rakes down where "
+				case HEAVEN_DEMON_CLAW -> "An art of both paths, heaven and demon. A great claw of gold light and crimson demon qi rakes down where "
 						+ "you look, up to 32 blocks: everything within 5 blocks takes 15 hearts of harm, is thrown up and weakened for 5 seconds.";
-				case HEAVEN_AND_DEMON_AS_ONE -> "A spell of both paths, heaven and demon made one. Everything within 16 blocks is dragged in and "
+				case HEAVEN_AND_DEMON_AS_ONE -> "An art of both paths, heaven and demon made one. Everything within 16 blocks is dragged in and "
 						+ "takes 25 hearts of harm; a tenth of all of it mends you, and you have Strength II for 10 seconds.";
-				case HEAVEN_DEMON_AVATAR -> "A spell of both paths, heaven and demon. A colossal projection of your own body, 41 blocks tall, rises out of a cloud of gold "
+				case HEAVEN_DEMON_AVATAR -> "An art of both paths, heaven and demon. A colossal projection of your own body, 41 blocks tall, rises out of a cloud of gold "
 						+ "and crimson behind you for 8 s: its right side heaven's gold, haloed, its hand held up in heaven's sign; its left the demon's "
 						+ "crimson, horned in fire, clawed; a seam of fire burning down it where the two meet. Twice it raises a hand and that hand comes "
 						+ "down out of the sky where you look, up to 82 blocks: heaven's palm, then the demon's claw. Each strikes everything within 14 "
@@ -674,7 +747,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 						+ "look, span after span, 118 blocks: everything within 6 blocks of it as it rises takes 300 ghostly harm and forgets every "
 						+ "blessing on it (its good effects are gone). Then for 5 s whoever is on or under it is slowed and pays its toll, 50 ghostly "
 						+ "harm a second. The dead take half as much again.";
-				case HEAVEN_DEMON_VOID_SHATTER -> "A spell of both paths, heaven and demon. A colossal fist, heaven's gauntlet of gold plates round a "
+				case HEAVEN_DEMON_VOID_SHATTER -> "An art of both paths, heaven and demon. A colossal fist, heaven's gauntlet of gold plates round a "
 						+ "demon's crimson claws, forms over your shoulder and punches out to where you look, up to 118 blocks: where it lands, space "
 						+ "itself shatters like glass. Everything within 18 blocks takes 520 harm, through armour, and is thrown out; the shattered "
 						+ "space hangs there for 5 s, cutting whoever stays in it for 60 harm a second. The land under it is smashed into a crater 28 "
@@ -690,7 +763,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 						+ "within 15 blocks of it is locked in it for 6 s: it can't leave (it is brought back to its walls) and takes 120 ghostly harm "
 						+ "a second, ghost fire pouring from the eaves. Then it seals: 500 ghostly harm to all locked in it, and Weakness II for 10 s. "
 						+ "The dead take half as much again. The land is left as it was.";
-				case HEAVEN_DEMON_BELL -> "A spell of both paths, heaven and demon. A colossal bell, heaven's gold on one side and the demon's "
+				case HEAVEN_DEMON_BELL -> "An art of both paths, heaven and demon. A colossal bell, heaven's gold on one side and the demon's "
 						+ "crimson bronze on the other, falls out of the sky over where you look, up to 136 blocks, its rim pressing a crater 19 blocks "
 						+ "round into the land, and tolls three times, a second apart: each toll strikes everything under it, within 19 blocks, for 500 "
 						+ "harm, through armour, and its wave runs out over the land to 38 blocks, striking everything there for 200 and throwing it "
@@ -706,7 +779,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 						+ "marked, shown glowing wherever it is, and for 3 s takes 250 ghostly harm a second. Then the brush strikes their names out: "
 						+ "900 ghostly harm to each, and any left with less than a quarter of its whole health is struck out of life (a great one of "
 						+ "the world, the Ender Dragon, the Wither, the Warden, takes 2000 more instead). The dead take half as much again.";
-				case HEAVEN_DEMON_ECLIPSE -> "A spell of both paths, heaven and demon. Heaven's sun and the demon's moon come together 58 blocks over where you look, up to "
+				case HEAVEN_DEMON_ECLIPSE -> "An art of both paths, heaven and demon. Heaven's sun and the demon's moon come together 58 blocks over where you look, up to "
 						+ "154 blocks, the black moon sliding across the blazing sun until it covers it, its corona flaring out round them; then a beam of "
 						+ "darkness edged with crimson and gold pours straight down from the moon's face to the ground, as wide as its harm reaches, and "
 						+ "pulses three times, three quarters of a second apart: each strikes everything under it, within 22 blocks, for 1200, then 600, "
@@ -723,7 +796,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 						+ "they climb. For 5 s every foe within 34 blocks is drawn in to it, and those within 14 carried up round it as high as 20 (a great "
 						+ "beast only drawn, slowly), the souls tearing at them, 1000 ghostly harm every half second. Then it is dragged back down into the "
 						+ "dark, dragging them down with it: 5000 ghostly harm to each. The dead take half as much again.";
-				case PRIMORDIAL_CHAOS -> "A spell of both paths, heaven and demon. A sphere of the chaos before heaven and earth were parted, heaven's "
+				case PRIMORDIAL_CHAOS -> "An art of both paths, heaven and demon. A sphere of the chaos before heaven and earth were parted, heaven's "
 						+ "gold and the demon's crimson swirled together, swells out of a point 24 blocks over where you look, up to 218 blocks "
 						+ "away, and churns for 5 s: everything within 54 blocks is drawn in toward it, and every half second everything within 27 "
 						+ "blocks of its heart takes 1000 harm, through armour. Then it bursts: 15000 harm to everything within 34 blocks, through "
@@ -734,7 +807,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		}
 		t.add(ModLang.SPELLS_QI_COST, "%s qi");
 		t.add(ModLang.SPELLS_LOCKED_BOTH, "Heaven and Demon Paths at %s");
-		t.add(ModLang.MSG_SPELL_BOTH_PATHS, "New spell: %2$s (the heaven path and the Demon Path at %1$s).");
+		t.add(ModLang.MSG_SPELL_BOTH_PATHS, "New art: %2$s (the heaven path and the Demon Path at %1$s).");
 		t.add(ModLang.STATS_GHOST_BODY, "Ghost path: %s");
 		t.add(ModLang.STATS_HARMONY, ", harmony +%s%%");
 		t.add(ModLang.TWO_PATHS_LINE, "Paths in harmony: +%s%%");
@@ -753,22 +826,23 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.GHOST_COLUMN_NO_QI, "No ghost qi here");
 		t.add(ModLang.GHOST_COLUMN_PACE, "%s: +%s/s");
 		t.add(ModLang.GHOST_COLUMN_PACE_SHORT, "+%s/s");
-		t.add(ModLang.GHOST_COLUMN_PACE_NONE, "No ghost method: +%s/s");
 		t.add(ModLang.COLUMN_RESTING, "Resting (not drawn in)");
 		t.add(ModLang.GHOST_BOTTLENECK, "Your ghost path's bottleneck: break through to %s (the Netherworld's tribulation).");
 		t.add(ModLang.GHOST_BOTTLENECK_SWITCH, "Your ghost path's bottleneck: draw in ghostly qi (Path: Ghost) to break through to %s.");
 		t.add(ModLang.BOTTLENECK_SWITCH, "Heaven path's bottleneck! Draw in the heavens' qi (Path: Heaven) to break through.");
 		t.add(ModLang.GHOST_PINNACLE, "Your ghost path stands at its pinnacle.");
-		t.add(ModLang.GHOST_GATE_NONE, "Your ghost path needs a foundation of %s or deeper: seek a Method Stele, a Ghost Jade Slip or a ghost who teaches.");
+		t.add(ModLang.GHOST_GATE_NONE, "No Netherworld Breathing volume for %s yet: you can break through, but your ghost path will gather nothing there until you find a foundation of it.");
+		t.add(ModLang.MSG_GHOST_NO_VOLUME, "Your foundations hold no Netherworld Breathing volume for %s: your ghost path gathers nothing until you find one (a Method Stele, a Ghost Jade Slip, a ghost who teaches).");
+		t.add(ModLang.MSG_GHOST_TAUGHT_BREATHING, "Death teaches every soul its first breath: you know the %s, the method of the dead.");
+		t.add(ModLang.MSG_BREATHING_VOLUMES, "Netherworld Breathing: your volumes now reach %s.");
 		t.add(ModLang.BTN_PATH_HEAVEN, "Path: Heaven");
 		t.add(ModLang.BTN_PATH_GHOST, "Path: Ghost");
 		t.add(ModLang.MSG_PATH_HEAVEN, "You draw in the heavens' qi: meditating cultivates your heaven path.");
 		t.add(ModLang.MSG_PATH_GHOST, "You draw in ghostly qi: meditating cultivates your ghost path.");
-		t.add(ModLang.MSG_PATH_NO_GHOST, "You have no ghost path to cultivate: learn a ghost foundation first, or begin it among the dead.");
+		t.add(ModLang.MSG_PATH_NO_GHOST, "You have no ghost path to cultivate: learn a ghost foundation first (the dead are taught one).");
 		t.add(ModLang.MSG_GHOST_LAYER, "%s: layer %s settles in.");
-		t.add(ModLang.MSG_GHOST_LAYER_SPELL, "New spell: %3$s (%1$s, layer %2$s).");
+		t.add(ModLang.MSG_GHOST_LAYER_SPELL, "New art: %3$s (%1$s, layer %2$s).");
 		t.add(ModLang.MSG_GHOST_PATH_RISES, "Your ghost path rises: %s!");
-		t.add(ModLang.MSG_GHOST_PATH_BEGINS, "Drawing in ghostly qi, your ghost path begins: %s. It stays yours, even if you return to the living.");
 		t.add(ModLang.MSG_GHOST_BOTTLENECK, "Your ghost path is at its bottleneck: break through in the cultivation menu to face the Netherworld's tribulation.");
 		t.add(ModLang.MSG_GHOST_TRIB_START, "The Netherworld answers your ghost path's rise to %s! Survive %s strikes of yin lightning!");
 		t.add(ModLang.MSG_GHOST_TRIB_START_SINGLE, "The Netherworld answers your ghost path's rise to %s! Survive its strike of yin lightning!");
@@ -776,9 +850,9 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_GHOST_TRIB_FALL, "Backlash! Your ghost path falls to %s.");
 		t.add(ModLang.MSG_GHOST_TRIB_FLED, "You fled the Netherworld's tribulation. Backlash! Your ghost path falls to %s.");
 		t.add(ModLang.TRIB_HUD_GHOST, "The Netherworld's Tribulation (%s) - strikes left: %s");
-		t.add(ModLang.METHODS_GHOST_RESTING, "You draw in the heavens' qi: your ghost path and its methods rest. Switch to ghostly qi on the Cultivation tab to cultivate them.");
+		t.add(ModLang.METHODS_GHOST_RESTING, "You draw in the heavens' qi: your ghost path and its foundations rest. Switch to ghostly qi on the Cultivation tab to cultivate them.");
 		t.add(ModLang.METHODS_GHOST_NEXT, "The %s is understood as far as your ghost path: its next layer opens at %s.");
-		t.add(ModLang.METHODS_GHOST_REACH, "Your foundations open the ghost path's way as far as %s.");
+		t.add(ModLang.METHODS_GHOST_REACH, "Your method, Netherworld Breathing: its volumes reach %s.");
 		t.add(ModLang.DEATH_YIN_LIGHTNING, "%1$s was struck down by the Netherworld's tribulation");
 		t.add(ModLang.DEATH_YIN_LIGHTNING + ".player", "%1$s was struck down by the Netherworld's tribulation while fighting %2$s");
 		t.add(ModLang.DEATH_YIN_TRIBULATION, "%1$s was unmade by the Netherworld's yin");
@@ -799,8 +873,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				+ "soul fire. While I live, the form of whichever path stands higher is my true one, and the other I can take at will "
 				+ "(Form Shift); in the Ghost King's, outside the Netherworld only those who perceive souls see me. Dead, as a Ghost King, "
 				+ "it is my human form I take.");
-		t.add(ModLang.KEY_SPELL_WHEEL, "Spell Wheel (hold)");
-		t.add(ModLang.KEY_CAST_SPELL, "Cast Readied Spell");
+		t.add(ModLang.KEY_SPELL_WHEEL, "Art Wheel (hold)");
+		t.add(ModLang.KEY_CAST_SPELL, "Cast Readied Art");
 		t.add(ModLang.MSG_METHOD_LEARNED, "Learned the %s.");
 		t.add(ModLang.MSG_METHOD_LEARNED_AT, "Learned the %s, understood to layer %s.");
 		t.add(ModLang.MSG_METHOD_PRACTISED, "Your meditation now leans on the %s.");
@@ -810,25 +884,25 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_STELE_READING, "You read the %s carved in the stele...");
 		t.add(ModLang.MSG_SLIP_KNOWN, "You already know the %s.");
 		t.add(ModLang.ITEM_GHOST_JADE_SLIP_OF, "Ghost Jade Slip: %s");
-		t.add(ModLang.TOOLTIP_GHOST_JADE_SLIP, "Read it to learn the method");
+		t.add(ModLang.TOOLTIP_GHOST_JADE_SLIP, "Read it to learn what it holds");
 		t.add(ModItems.GHOST_JADE_SLIP, "Ghost Jade Slip");
 		t.add(ModBlocks.METHOD_STELE, "Method Stele");
 		t.add(ModBlocks.LEGEND_STONE, "Legend's Stone");
 		t.add(ModBlocks.SEA_PILLAR, "Sea-Fixing Pillar");
 		t.add(ModBlocks.BURIED_BLADE, "Buried Blade");
 		t.add(ModEffects.GHOST_FIRE, "Ghost Fire");
-		t.add(ModLang.MSG_SPELL_NONE_READY, "No spell readied. Hold the spell wheel key and click one.");
-		t.add(ModLang.MSG_SPELL_NOT_HERE, "The river's flow won't let you shape a spell.");
+		t.add(ModLang.MSG_SPELL_NONE_READY, "No art readied. Hold the art wheel key and click one.");
+		t.add(ModLang.MSG_SPELL_NOT_HERE, "The river's flow won't let you shape an art.");
 		t.add(ModLang.MSG_SPELL_COOLING, "%s: ready again in %s s.");
 		t.add(ModLang.MSG_SPELL_NO_QI, "Not enough ghost qi for %s.");
 		t.add(ModLang.MSG_SPELL_READIED, "%s readied.");
 		t.add(ModLang.MSG_GHOST_FIRE_ARMED, "Ghost fire wreathes your hands: your next %s blows set what they strike burning.");
-		t.add(ModLang.METHODS_KNOWN, "%s of %s methods known");
+		t.add(ModLang.METHODS_KNOWN, "%s of %s ghost foundations and arts known");
 		t.add(ModLang.METHODS_LAYER, "Layer %s of %s");
 		t.add(ModLang.METHODS_LAYER_REALM, "Layer %s of %s: %s, %s of 9");
 		t.add(ModLang.METHODS_PERFECTED, "Perfected");
 		t.add(ModLang.METHODS_NO_QI, "There is no ghostly qi here to cultivate with. It flows faintest in the Overworld, thicker in the Nether (thickest in its Soul Sand Valleys), and ten times as dense in the Netherworld.");
-		t.add(ModLang.BTN_SPELL_LIST, "Spell List");
+		t.add(ModLang.BTN_SPELL_LIST, "Art List");
 		t.add(ModLang.LIFE_MODE_HEALTH, "Moves: Health");
 		t.add(ModLang.LIFE_MODE_QI, "Moves: Qi");
 		t.add(ModLang.LIFE_MODE_YEARS, "Moves: Years");
@@ -842,16 +916,16 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_BOUGH_HUNG, "%s Cultivation Fruit returned to the bough: they ripen on from %s years.");
 		t.add(ModLang.BTN_GRIEFING_ON, "Grief: On");
 		t.add(ModLang.BTN_GRIEFING_OFF, "Grief: Off");
-		t.add(ModLang.TIP_GRIEFING, "Whether spells change the land for good. On: craters, cuts, lakes and floods, ice, and fire that spreads. Off: the land is left as it was; spell fire catches nothing and puts itself out, and the water they pour drains away. (The gamerule spellGriefing.)");
-		t.add(ModLang.TIP_GRIEFING_LOCKED, "Whether spells change the land for good (the gamerule spellGriefing). Only an operator or the world's host may change it.");
-		t.add(ModLang.MSG_GRIEFING_ON, "%s turned spell grief on: spells change the land for good.");
-		t.add(ModLang.MSG_GRIEFING_OFF, "%s turned spell grief off: spells leave the land as it was.");
+		t.add(ModLang.TIP_GRIEFING, "Whether arts change the land for good. On: craters, cuts, lakes and floods, ice, and fire that spreads. Off: the land is left as it was; the arts' fire catches nothing and puts itself out, and the water they pour drains away. (The gamerule spellGriefing.)");
+		t.add(ModLang.TIP_GRIEFING_LOCKED, "Whether arts change the land for good (the gamerule spellGriefing). Only an operator or the world's host may change it.");
+		t.add(ModLang.MSG_GRIEFING_ON, "%s let the arts change the land: they leave their mark for good.");
+		t.add(ModLang.MSG_GRIEFING_OFF, "%s kept the arts from changing the land: they leave it as it was.");
 		t.add(ModLang.METHODS_GHOST_PATH, "Ghost path: %s");
 		t.add(ModLang.METHODS_GHOST_PATH_NONE, "Ghost path: not yet begun");
 		t.add(ModLang.METHODS_GHOST_PATH_SEALED, "Ghost path: sealed, your meridians not yet opened (a Marrow Cleansing Elixir)");
-		t.add(ModLang.METHODS_UNKNOWN_DEEP, "Unknown method. It is seldom carved in stone, and seldom taught.");
+		t.add(ModLang.METHODS_UNKNOWN_DEEP, "Not yet learned. It is seldom carved in stone, and seldom taught.");
 		t.add(ModLang.METHODS_ACTIVE, "Practising");
-		t.add(ModLang.METHODS_UNKNOWN, "Unknown method. Its stele stands somewhere in the Netherworld.");
+		t.add(ModLang.METHODS_UNKNOWN, "Not yet learned. Its stele stands somewhere in the Netherworld.");
 		t.add(ModLang.METHODS_GAINS, "What its layers bring");
 		t.add(ModLang.BTN_PRACTISE, "Practise");
 		t.add(ModLang.SPELLS_COST, "%s ghost qi");
@@ -862,12 +936,12 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.SPELLS_READY, "Ready");
 		t.add(ModLang.SPELLS_READIED, "Readied");
 		t.add(ModLang.SPELLS_COOLING, "Ready in %s s");
-		t.add(ModLang.SPELLS_ON_WHEEL, "Spell wheel");
-		t.add(ModLang.SPELLS_ARRANGE_HINT, "Drag a spell onto a slot of the wheel. Drag a slot off the wheel, or right-click it, to empty it. Hold %s for the wheel, press %s to cast.");
-		t.add(ModLang.SPELL_WHEEL_TITLE, "Spell Wheel");
+		t.add(ModLang.SPELLS_ON_WHEEL, "Art wheel");
+		t.add(ModLang.SPELLS_ARRANGE_HINT, "Drag an art onto a slot of the wheel. Drag a slot off the wheel, or right-click it, to empty it. Hold %s for the wheel, press %s to cast.");
+		t.add(ModLang.SPELL_WHEEL_TITLE, "Art Wheel");
 		t.add(ModLang.SPELL_WHEEL_HINT, "Click: ready (cast with %s). Right-click: cast now.");
-		t.add(ModLang.SPELL_WHEEL_EMPTY, "No spells on the wheel yet. Learn them from the heaven or ghost methods.");
-		t.add(ModLang.HUD_READIED_SPELL, "Spell: %s");
+		t.add(ModLang.SPELL_WHEEL_EMPTY, "No arts on the wheel yet. The heaven scriptures and the ghost foundations teach them.");
+		t.add(ModLang.HUD_READIED_SPELL, "Art: %s");
 		// The heaven methods (the names, lore, gains and spells are with HeavenMethodText)
 		for (QiElement element : QiElement.five()) {
 			t.add(ModLang.ELEMENT_PREFIX + element.name().toLowerCase(java.util.Locale.ROOT), switch (element) {
@@ -897,22 +971,26 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				default -> "+%s melee harm";
 			});
 		}
-		t.add(ModLang.MSG_HEAVEN_METHOD_MERIDIANS, "Your meridians are sealed: no heaven method takes hold until a Marrow Cleansing Elixir has opened them.");
-		t.add(ModLang.MSG_HEAVEN_METHOD_DEAD, "The heaven methods are the living's. The dead cultivate the ghost methods alone.");
+		t.add(ModLang.MSG_HEAVEN_METHOD_MERIDIANS, "Your meridians are sealed: no heaven scripture takes hold until a Marrow Cleansing Elixir has opened them.");
+		t.add(ModLang.MSG_HEAVEN_METHOD_DEAD, "The heaven scriptures are the living's. The dead cultivate the ghost path alone.");
 		t.add(ModLang.MSG_HEAVEN_LEARNED, "Learned the %s: layer %s of %s.");
-		t.add(ModLang.MSG_HEAVEN_PRACTISED, "Your meditation now cultivates the %s.");
+		t.add(ModLang.MSG_HEAVEN_PRACTISED, "Your Qi Circulation now follows the %s.");
 		t.add(ModLang.MSG_HEAVEN_LAYER, "%s: layer %s settles in.");
-		t.add(ModLang.MSG_HEAVEN_LAYER_SPELL, "New spell: %3$s (%1$s, layer %2$s).");
-		t.add(ModLang.MSG_HEAVEN_NONE_KNOWN, "No heaven method: you cultivate at 3/4 pace. Seek a Dao Stele, a Jade Slip or a sect elder.");
-		t.add(ModLang.HEAVEN_GATE_NONE, "You need a heaven method of %s or deeper: seek a Dao Stele, a Jade Slip or a sect elder.");
-		t.add(ModLang.JOURNAL_HEAVEN_METHOD, "A heaven method");
-		t.add(ModLang.JOURNAL_HEAVEN_METHOD_TEXT, "I learned the %s, a method of %s qi. %s");
+		t.add(ModLang.MSG_HEAVEN_LAYER_SPELL, "New art: %3$s (%1$s, layer %2$s).");
+		t.add(ModLang.MSG_HEAVEN_NONE_KNOWN, "No method, no cultivation: without a heaven scripture your meditation gathers nothing. Any cultivator will teach you the basics; or seek a Dao Stele or a Jade Slip.");
+		t.add(ModLang.MSG_HEAVEN_NO_VOLUME, "Your scriptures hold no Qi Circulation volume for %s: your meditation gathers nothing until you find a scripture of it (a Dao Stele, a Jade Slip, a sect elder).");
+		t.add(ModLang.HEAVEN_GATE_NONE, "No Qi Circulation volume for %s yet: you can break through, but you will gather nothing there until you find a scripture of it.");
+		t.add(ModLang.MSG_CIRCULATION_VOLUMES, "Qi Circulation: your volumes now reach %s.");
+		t.add(ModLang.METHOD_GATE_AXES, "Four Axis lies ahead: no method has a volume of it. Your four axes of virtue are your method there, and fill its stages.");
+		t.add(ModLang.MSG_AXES_ARE_THE_METHOD, "At Four Axis your axes of virtue are your method: meditation fills nothing, each axis fills its stage.");
+		t.add(ModLang.JOURNAL_HEAVEN_METHOD, "A heaven scripture");
+		t.add(ModLang.JOURNAL_HEAVEN_METHOD_TEXT, "I learned the %s, a scripture of %s qi. %s");
 		t.add(ModLang.MSG_SPELL_NO_HEAVEN_QI, "Not enough qi for %s.");
-		t.add(ModLang.MSG_SPELL_NO_HOLD, "Nothing there for the spell to take hold of.");
-		t.add(ModLang.MSG_YANG_BOMB_SET, "A ball of yang fire waits where you left it. Cast the spell again to set it off.");
+		t.add(ModLang.MSG_SPELL_NO_HOLD, "Nothing there for the art to take hold of.");
+		t.add(ModLang.MSG_YANG_BOMB_SET, "A ball of yang fire waits where you left it. Cast the art again to set it off.");
 		t.add(ModLang.MSG_YANG_BOMB_FAR, "Your yang fire is too far away to answer you.");
 		t.add(ModLang.MSG_YANG_BOMB_GONE, "Your yang fire gutters out.");
-		t.add(ModLang.MSG_NO_EARTH, "There is no earth here for the spell to draw on.");
+		t.add(ModLang.MSG_NO_EARTH, "There is no earth here for the art to draw on.");
 		t.add(ModLang.MSG_ORES_FOUND, "Your consciousness draws %s ores out of the rock.");
 		t.add(ModLang.MSG_NO_ORES, "Your consciousness finds no ore within its reach.");
 		t.add(ModLang.MSG_PHOENIX_REBORN, "You rise again from your own flames!");
@@ -925,21 +1003,21 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.physiqueGradeKey("supreme"), "Supreme");
 		t.add(ModLang.physiqueGradeKey("immortal"), "Immortal");
 		physique(t, "five_element_spiritual_roots", "Five Elements Spiritual Roots",
-				"Roots of all five elements: any element's methods may be learned, at the ordinary pace.");
+				"Roots of all five elements: any element's scriptures may be learned, at the ordinary pace.");
 		physique(t, "cursed_meridian_body", "Cursed Meridian Body", "Meridians that leak: qi gathers 0.8 times as fast into a pool 0.8 times as deep.");
 		physique(t, "shattered_meridians", "Shattered Meridians",
-				"Meridians that will never hold qi: no cultivation, no heaven methods, no spells. The body can be tempered on past a mortal's Peak instead, "
-						+ "eight stages of body refining, the last as strong as a Core Formation cultivator's. Meditation tempers it too. "
+				"Meridians that will never hold qi: no qi cultivation, no heaven scriptures, no arts. The Body Path is theirs instead: at a "
+						+ "mortal's Peak it begins by itself, and the body can be tempered on through all its realms, by meditation and by deeds. "
 						+ "It is never the lot of one already cultivating.");
 		physique(t, "three_element_spiritual_roots", "Three Elements Spiritual Roots",
-				"Roots of three elements only: methods of those three alone, cultivated 1.5 times as fast.");
+				"Roots of three elements only: scriptures of those three alone, cultivated 1.5 times as fast.");
 		physique(t, "yin_soul_body", "Yin Soul Body",
 				"A soul at home in yin: yin corruption never takes hold of it, and the ghost path is cultivated 1.2 times as fast.");
 		physique(t, "heaven_sacred_body", "Heaven Sacred Body",
-				"The heavens favour it: no Ritual to the Heavens is wanted at Qi Refining Mid, and heaven methods are cultivated 1.2 times as fast.");
+				"The heavens favour it: no Ritual to the Heavens is wanted at Qi Refining Mid, and the heaven path is cultivated 1.2 times as fast.");
 		physique(t, "innate_alchemy_body", "Innate Alchemy Body", "Pills and elixirs brewed by its hands work twice as strongly.");
 		physique(t, "true_element_spiritual_root", "True Element Spiritual Root",
-				"A single pure root: one element's methods alone, cultivated twice as fast.");
+				"A single pure root: one element's scriptures alone, cultivated twice as fast.");
 		physique(t, "innate_consciousness_body", "Innate Consciousness Body",
 				"A Consciousness Domain as wide as a Four Axis cultivator's the day it opens. It never grows past that.");
 		physique(t, "blessed_meridian_body", "Blessed Meridian Body",
@@ -948,18 +1026,18 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 				"No medicinal toxicity ever builds up, and the qi of pills and spirit fruit is refined the moment it is taken. No poison nor wither "
 						+ "takes hold of it, and its blows poison what they strike, the more strongly the higher its realm.");
 		physique(t, "fallen_true_immortal", "Fallen True Immortal",
-				"An immortal reborn in a mortal body: any element, five times the pace on both paths, and a method's new layers need no settling.");
+				"An immortal reborn in a mortal body: any element, five times the pace on both paths, and a scripture's or foundation's new layers need no settling.");
 		physique(t, "ghost_devil_body", "Ghost Devil Body",
 				"Half the dead's already: the ghost path at twice the pace, and a Ghost King's form of its own anywhere, even among the living, "
-						+ "as strong as its ghost methods allow. In that form it has the whole of its ghost path's strength, as the dead do; in its "
-						+ "human form, half, as any living cultivator's ghost path gives. Find a ghost method of a deeper realm and the ghost path leaps to it.");
+						+ "as strong as its ghost path allows. In that form it has the whole of its ghost path's strength, as the dead do; in its "
+						+ "human form, half, as any living cultivator's ghost path gives. Find a ghost foundation of a deeper realm and the ghost path leaps to it.");
 		physique(t, "heavenly_thunder_body", "Heavenly Thunder Body",
 				"A tribulation's lightning feeds it instead of harming it: every bolt taken becomes cultivation and qi.");
 		physique(t, "spirit_eye_body", "Spirit-Eye Body",
 				"Eyes open to what others can't see: from its first day, as if the Ghost Eye were always open, it sees souls and the dead clearly, "
 						+ "and the dead and the Method Steles even through walls within 32 blocks, for nothing.");
 		physique(t, "nine_yang_body", "Nine Yang Body",
-				"A body of the blazing sun: fire and lava never burn it. Heaven methods are cultivated 1.3 times as fast; the ghost path, yin to its "
+				"A body of the blazing sun: fire and lava never burn it. The heaven path is cultivated 1.3 times as fast; the ghost path, yin to its "
 						+ "yang, at half the pace.");
 		physique(t, "starborn_body", "Starborn Body",
 				"Born under the stars: the void bears it from Core Formation, a realm before anyone else. A star's heat never burns it, space's thin qi "
@@ -971,11 +1049,11 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		physique(t, "hundred_refinements_body", "Hundred Refinements Body", "Refined in a hundred fires: one stat point more at every breakthrough.");
 		physique(t, "primordial_chaos_body", "Primordial Chaos Body",
 				"The chaos from before heaven and earth parted: meditation feeds both paths at once, each at its full pace, no element is barred to it, "
-						+ "and its spells strike a quarter harder. The heavens hate it: every tribulation strikes half as many times again.");
+						+ "and its arts strike a quarter harder. The heavens hate it: every tribulation strikes half as many times again.");
 		physique(t, "heaven_defying_body", "Heaven-Defying Body",
 				"The heavens can't strike it down: a tribulation's killing strike leaves it one heart, and the tribulation fails instead. No failed "
 						+ "tribulation costs it a stage or its cultivation: it may face the heavens again at once. It asks no leave of the heavens (no "
-						+ "Ritual to the Heavens), but heaven methods come to it at 0.75 times the pace, and the righteous sense something wrong in it "
+						+ "Ritual to the Heavens), but the heaven path comes to it at 0.75 times the pace, and the righteous sense something wrong in it "
 						+ "(-15 regard).");
 		physique(t, "soul_devouring_body", "Soul-Devouring Body",
 				"It feeds on souls: every cultivator it slays, players too, gives it a tenth of what the victim's stage takes, on the path it "
@@ -983,7 +1061,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 						+ "(-20 regard).");
 		physique(t, "eternal_reincarnation_body", "Eternal Reincarnation Body",
 				"The rarest of all, and no gift to cultivation: a Low grade's talent and pace. A soul that never forgets: when its life is spent "
-						+ "or its soul scatters, it is born again with this same body and all its cultivation, every realm, stage and method on each "
+						+ "or its soul scatters, it is born again with this same body and all its cultivation, every realm, stage, scripture and art on each"
 						+ "path, its years begun anew (a Rebirth Pill has no hold on it). Whoever keeps at it reaches True Immortal in the end.");
 		physique(t, "myriad_form_body", "Myriad Form Body",
 				"As rare as the Eternal Reincarnation Body: born with two more physiques at once, of Mid to Supreme grade and never two that clash, "
@@ -996,10 +1074,20 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.bodyRefiningKey("silver_marrow"), "Silver Marrow");
 		t.add(ModLang.bodyRefiningKey("golden_blood"), "Golden Blood");
 		t.add(ModLang.bodyRefiningKey("diamond_heart"), "Diamond Heart");
+		t.add(ModLang.bodyRefiningKey("star_forged_body"), "Star-Forged Body");
+		t.add(ModLang.bodyRefiningKey("heaven_bone_body"), "Heaven-Bone Body");
+		t.add(ModLang.bodyRefiningKey("undying_body"), "Undying Body");
 		t.add(ModLang.bodyRefiningKey("indestructible_body"), "Indestructible Body");
+		// The Body Path's ladder past the Indestructible Body (BodyPath, the user's "Go, all three parts", 2026-11-01): beside Earth Immortal to Heavenly Lord.
+		t.add(ModLang.bodyRefiningKey("earth_bearing_body"), "Earth-Bearing Body");
+		t.add(ModLang.bodyRefiningKey("sky_pillar_body"), "Sky-Pillar Body");
+		t.add(ModLang.bodyRefiningKey("imperishable_gold_body"), "Imperishable Gold Body");
+		t.add(ModLang.bodyRefiningKey("primordial_saint_body"), "Primordial Saint Body");
+		t.add(ModLang.bodyRefiningKey("chaos_tempered_body"), "Chaos-Tempered Body");
+		t.add(ModLang.bodyRefiningKey("body_of_heaven_and_earth"), "Body of Heaven and Earth");
 		t.add(ModLang.MSG_PHYSIQUE_BORN, "You were born with a %s (%s grade).");
 		t.add(ModLang.MSG_PHYSIQUE_ROOTS, "Your roots are of %s.");
-		t.add(ModLang.MSG_PHYSIQUE_WRONG_ELEMENT, "Your roots won't take %s qi: only %s methods can be learned with your body.");
+		t.add(ModLang.MSG_PHYSIQUE_WRONG_ELEMENT, "Your roots won't take %s qi: only %s scriptures can be learned with your body.");
 		t.add(ModLang.MSG_PHYSIQUE_SHATTERED, "Your meridians are shattered: they will never hold qi. Temper your body instead.");
 		t.add(ModLang.MSG_BODY_REFINED, "Your body is refined: %s!");
 		t.add(ModLang.MSG_THUNDER_ABSORBED, "Your body drinks in the lightning (+%s cultivation)");
@@ -1119,7 +1207,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.SPEAR_PERK, "Pierces: each blow also hits up to %s foes behind the target, for %s%% of it");
 		t.add(ModLang.GLAIVE_PERK, "Sweeps: each blow also hits everyone within %s blocks of you, for %s%% of it");
 		t.add(ModLang.BANNER_NAMED, "%s Banner of %s");
-		t.add(ModLang.BANNER_PERK, "Held in either hand: your %s spells strike %s%% harder (a Sacred Vessel's power doesn't add to it)");
+		t.add(ModLang.BANNER_PERK, "Held in either hand: your %s arts strike %s%% harder (a Sacred Vessel's power doesn't add to it)");
 		t.add(ModLang.BANNER_NO_ELEMENT, "It bears no element, so it strengthens nothing");
 		t.add(ModLang.GOURD_HOLDS, "Holds %s / %s qi");
 		t.add(ModLang.GOURD_USE, "Sneak + right-click to pour your qi in, right-click to drink it back");
@@ -1373,6 +1461,9 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_EXCHANGE_LOCKED, "That is kept for %s and above.");
 		t.add(ModLang.SECT_TAB_CONTRIBUTION, "Contribution: %s (earned %s) - missions: %s of %s");
 		t.add(ModLang.talkTopic("deliver"), "I carry a sealed letter for your sect.");
+		t.add(ModLang.talkTopic("basics"), "I have no method. Will you teach me the basics?");
+		t.add(ModLang.TALK_TEACH_BASICS, "Everyone begins somewhere. This is the %s, the first volume of Qi Circulation within it. Breathe with %s qi, and keep at it.");
+		t.add(ModLang.TALK_TEACH_NO_VOLUME, "Your %s, then... I can settle what you hold, but no guidance carries you where your method has no volume.");
 		t.add(ModLang.talkLine("deliver", "righteous"), "A letter from %s? You have our thanks, courier. I will see it reaches the elders.");
 		t.add(ModLang.talkLine("deliver", "neutral"), "From %s. Fine. I'll pass it on.");
 		t.add(ModLang.talkLine("deliver", "devilish"), "A letter from %s... Let's see what they want. You may go, courier.");
@@ -1505,19 +1596,19 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		// Techniques and their manuals (Technique, TechniqueManualItem), and writing them out
 		t.add(ModLang.techniqueKey(Technique.CLONE.getId()), "Clone");
 		t.add(ModLang.techniqueKey(Technique.CLONE.getId()) + ".description", "Split a clone off your body and walk in it as yourself: your "
-				+ "realm, abilities and spells, half your strength.");
+				+ "realm, abilities and arts, half your strength.");
 		t.add(ModLang.techniqueKey(Technique.SLEEVE.getId()), "Universe in a Sleeve");
 		t.add(ModLang.techniqueKey(Technique.SLEEVE.getId()) + ".description", "Carry others in your sleeve, whatever their realm, up through "
 				+ "the Spatial Gap, the Void Breach and the Immortal Gate. The spatial pressure on you doubles for each one.");
 		t.add(ModItems.TECHNIQUE_MANUAL, "Technique Manual");
 		t.add(ModLang.ITEM_TECHNIQUE_MANUAL_OF, "Technique Manual: %s");
-		t.add(ModLang.ITEM_SPELL_MANUAL_OF, "Spell Manual: %s");
+		t.add(ModLang.ITEM_SPELL_MANUAL_OF, "Art Manual: %s");
 		t.add(ModLang.TOOLTIP_MANUAL, "Read it to learn what it holds (it isn't used up)");
 		t.add(ModLang.TOOLTIP_MANUAL_REALM, "Wants %s");
 		t.add(ModLang.TOOLTIP_MANUAL_GHOST, "%s (ghost path)");
 		t.add(ModLang.TOOLTIP_MANUAL_AUTHOR, "Written out by %s");
 		t.add(ModItems.BLANK_MANUAL, "Blank Manual");
-		t.add(ModLang.TOOLTIP_BLANK_MANUAL, "Hold it in one hand and an Inscription Brush in the other, and use the brush to write out a technique or a spell you know");
+		t.add(ModLang.TOOLTIP_BLANK_MANUAL, "Hold it in one hand and an Inscription Brush in the other, and use the brush to write out a technique or an art you know");
 		t.add(ModLang.MSG_MANUAL_LEARNED, "You have learned %s.");
 		t.add(ModLang.MSG_MANUAL_KNOWN, "You already know %s.");
 		t.add(ModLang.MSG_MANUAL_TOO_LOW, "You can't grasp %s yet: it wants %s.");
@@ -1577,24 +1668,24 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.HUD_CLONE_IN, "In your clone");
 		t.add(ModLang.HUD_CLONE_MAIN, "Body %s / %s");
 		t.add(ModLang.ITEM_JADE_SLIP_OF, "Jade Slip: %s");
-		t.add(ModLang.TOOLTIP_JADE_SLIP, "Read it to learn the method");
-		t.add(ModLang.TOOLTIP_JADE_SLIP_ELEMENT, "A %s method, to %s");
+		t.add(ModLang.TOOLTIP_JADE_SLIP, "Read it to learn the scripture");
+		t.add(ModLang.TOOLTIP_JADE_SLIP_ELEMENT, "A %s scripture, to %s");
 		t.add(ModItems.JADE_SLIP, "Jade Slip");
 		t.add(ModBlocks.DAO_STELE, "Dao Stele");
 		t.add(ModLang.METHODS_PAGE_GHOST, "Ghost Path");
 		t.add(ModLang.METHODS_PAGE_HEAVEN, "Heaven Path");
-		t.add(ModLang.METHODS_HEAVEN_KNOWN, "%s of %s heaven methods known");
-		t.add(ModLang.METHODS_HEAVEN_EMPTY, "No heaven methods learned yet.");
-		t.add(ModLang.METHODS_HEAVEN_HINT, "Without one you cultivate at three quarters' pace and break through no further than Qi Refining. Dao Steles stand where an element's qi runs thick; cultivators carry jade slips; a sect's elders teach its element.");
-		t.add(ModLang.METHODS_HEAVEN_DEAD, "The heaven methods are the living's: the dead cultivate the ghost methods alone.");
-		t.add(ModLang.METHODS_HEAVEN_SEALED, "Heaven methods: sealed, your meridians not yet opened (a Marrow Cleansing Elixir)");
+		t.add(ModLang.METHODS_HEAVEN_KNOWN, "%s of %s heaven scriptures known");
+		t.add(ModLang.METHODS_HEAVEN_EMPTY, "No heaven scriptures learned yet.");
+		t.add(ModLang.METHODS_HEAVEN_HINT, "Without one you can't cultivate at all: each scripture carries Qi Circulation's volumes up to its realm, and your meditation gathers nothing without one for your realm. Any cultivator will teach you the basics (talk to them); Dao Steles stand where an element's qi runs thick; cultivators carry jade slips.");
+		t.add(ModLang.METHODS_HEAVEN_DEAD, "The heaven scriptures are the living's: the dead cultivate the ghost path alone.");
+		t.add(ModLang.METHODS_HEAVEN_SEALED, "Heaven scriptures: sealed, your meridians not yet opened (a Marrow Cleansing Elixir)");
 		t.add(ModLang.METHODS_HEAVEN_RATE, "Meditating here, layer %s of the %s settles in about %s min.");
 		t.add(ModLang.METHODS_HEAVEN_NEXT, "The %s is understood as far as your cultivation: its next layer opens at %s.");
 		t.add(ModLang.METHODS_HEAVEN_OPENS, "Layer %s opens at %s");
 		t.add(ModLang.METHODS_HEAVEN_OPENS_SHORT, "Layer %s: %s");
 		t.add(ModLang.METHODS_HEAVEN_SHARE, "%s qi here: %s%% of all (x%s)");
-		t.add(ModLang.METHODS_HEAVEN_REACH, "Your heaven methods open the way as far as %s.");
-		t.add(ModLang.METHODS_HEAVEN_UNKNOWN, "%s of the %s %s methods unknown. Their Dao Steles stand where their qi runs thick; the deepest are "
+		t.add(ModLang.METHODS_HEAVEN_REACH, "Your method, Qi Circulation: its volumes reach %s.");
+		t.add(ModLang.METHODS_HEAVEN_UNKNOWN, "%s of the %s %s scriptures unknown. Their Dao Steles stand where their qi runs thick; the deepest are "
 				+ "seldom carved below the Jade Firmament, the deepest of all in the Great Void.");
 		t.add(ModLang.METHODS_HEAVEN_PASSIVE, "%s: %s");
 		t.add(ModLang.TALK_TEACH_HEAVEN, "Then listen. This is the %s, as my teachers gave it to me... Sit with it where %s qi runs thick.");
@@ -1836,7 +1927,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.CORE_RANK, "Formed at %s");
 		t.add(ModLang.CORE_ELEMENT, "Element: %s");
 		t.add(ModLang.CORE_FROM, "Taken from: %s");
-		t.add(ModLang.CORE_USE, "A demon's whole cultivation, condensed: prized for crafting and artifact forging");
+		t.add(ModLang.CORE_USE, "A demon's whole cultivation, condensed: prized for crafting and artifact forging, and eaten by those who practise Core Devouring");
 		t.add(ModItems.DEMON_BLOOD, "Demon Blood");
 		// The bodies of the dead (Corpses) and their blood
 		t.add(ModBlocks.CORPSE, "Body");
@@ -1852,9 +1943,13 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_CORPSE_MORTAL_BLOOD, "A mortal's blood holds no qi.");
 		t.add(ModLang.GAMERULE_LEAVE_CORPSES, "The dead leave their bodies");
 		t.add(ModLang.GAMERULE_LEAVE_CORPSES + ".description", "Players and cultivators lie where they fall with everything they carried, rotting to bones. Off, what they carried drops as usual.");
-		t.add("gamerule.spellCooldowns", "Spells wait out their cooldowns");
-		t.add("gamerule.spellGriefing", "Spells change the land for good");
+		t.add("gamerule.spellCooldowns", "Arts wait out their cooldowns");
+		t.add("gamerule.spellGriefing", "Arts change the land for good");
 		secretRealms(t);
+		cultivationMethods(t);
+		cultivationMethodsPhaseThree(t);
+		cultivationMethodsPhaseFour(t);
+		cultivationMethodsSecondRound(t);
 		t.add(ModLang.BLOOD_NAME, "%s %s Blood");
 		t.add(ModLang.BLOOD_UNKNOWN, "Blood of no race known");
 		t.add(ModLang.BLOOD_USE, "Drink it: a %1$s awakens its blood to %2$s, and its Demon Path may break through into that realm; a human forms a demon core of it, a half-blood of the %1$s");
@@ -1871,7 +1966,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_BLOOD_PURITY, "The %s's blood in you grows purer: %s%%.");
 		t.add(ModLang.MSG_BLOOD_TURNED, "The blood overwhelms you: you are a %s now, wholly.");
 		t.add(ModLang.JOURNAL_HALF_BLOOD, "A Half-Blood");
-		t.add(ModLang.JOURNAL_HALF_BLOOD_TEXT, "You drank the %s's blood and a demon core formed in you. You are still human to look at, and to every sect and clan, but you walk the Demon Path now, and your blood gives you its race's gifts at half their strength and its inheritance's spells, %s. The more you drink, the purer it grows: at the whole, or drinking blood far above your other paths, you will become one of them, with no way back.");
+		t.add(ModLang.JOURNAL_HALF_BLOOD_TEXT, "You drank the %s's blood and a demon core formed in you. You are still human to look at, and to every sect and clan, but you walk the Demon Path now, and your blood gives you its race's gifts at half their strength and its inheritance's arts, %s. The more you drink, the purer it grows: at the whole, or drinking blood far above your other paths, you will become one of them, with no way back.");
 		t.add(ModLang.JOURNAL_TURNED, "Turned by Blood");
 		t.add(ModLang.JOURNAL_TURNED_TEXT, "The blood you drank has made you a %s, wholly: your body and your look, its gifts at their full strength. Your Demon Path is as it was. There is no going back.");
 		t.add(ModLang.HALF_BLOOD_LINE, "%s half-blood · blood purity %s%%");
@@ -1890,7 +1985,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModItems.NINE_PROVINCES_DING, "Nine Provinces Ding");
 		t.add(ModItems.IMMORTAL_FORGING_BELL, "Immortal-Forging Bell");
 		t.add(ModItems.SEALED_OCEAN_GOURD, "Sealed Ocean Gourd");
-		t.add(ModLang.SACRED_VESSEL_USE, "A Sacred Vessel of %s: held in either hand, your spells of it strike %s%% harder");
+		t.add(ModLang.SACRED_VESSEL_USE, "A Sacred Vessel of %s: held in either hand, your arts of it strike %s%% harder");
+		t.add(ModLang.SACRED_VESSEL_NURTURE, "Vessel Nurturing: use it sneaking to pour half your qi in and draw it back refined");
 		t.add(ModLang.SACRED_VESSEL_LORE, "A relic of the ancients, found still on its altar in the Great Void");
 		t.add(ModLang.officialName("ox_head"), "Ox-Head");
 		t.add(ModLang.officialName("horse_face"), "Horse-Face");
@@ -1907,7 +2003,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.TERRACE_PLACE, "the place you died: %s, near %s, %s, %s");
 		t.add(ModLang.JOURNAL_TERRACE, "The Terrace for Gazing Homeward");
 		t.add(ModLang.JOURNAL_TERRACE_TEXT, "I looked homeward, and saw %s.");
-		t.add(ModLang.JOURNAL_METHOD, "A ghost method");
+		t.add(ModLang.JOURNAL_METHOD, "Of the ghost path");
 		t.add(ModLang.JOURNAL_METHOD_TEXT, "I learned the %s. %s");
 		t.add(ModLang.DIMENSION_OVERWORLD, "the Overworld");
 		t.add(ModLang.DIMENSION_NETHER, "the Nether");
@@ -2143,6 +2239,14 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add("cultivation.defying-the-heavens.talk.line.self.sect.devilish", "%1$s, %2$s of the %3$s, at %4$s. Remember the name. It may be the last one you learn.");
 		t.add("cultivation.defying-the-heavens.talk.line.self.sect.neutral", "%1$s, %2$s of the %3$s. %4$s. That's all there is to say.");
 		t.add("cultivation.defying-the-heavens.talk.line.self.sect.righteous", "I am %1$s, %2$s of the %3$s, at %4$s. I walk the righteous path.");
+		// Body cultivators (BodyCultivators, CultivatorNpc#isBodyCultivator): their own words of themselves, and of a body sect.
+		t.add(ModLang.talkLine("self.body", "righteous"), "I walk the Body Path: no qi in me, only flesh tempered past what mortals bear.");
+		t.add(ModLang.talkLine("self.body", "neutral"), "No qi. Only this body, tempered.");
+		t.add(ModLang.talkLine("self.body", "devilish"), "Qi is for those who fear being struck. I am the weapon.");
+		t.add(ModLang.talkLine("self.body_rogue", "righteous"), "I am %1$s, a wandering body cultivator at %2$s. No sect, no qi: only the road and this body.");
+		t.add(ModLang.talkLine("self.body_rogue", "neutral"), "%1$s. %2$s. I temper the body, and go where the fighting is.");
+		t.add(ModLang.talkLine("self.body_rogue", "devilish"), "%1$s, at %2$s. No qi, no sect, no master. Strike me and see what that means.");
+		t.add(ModLang.talkLine("sect.body"), "We temper the body here, not qi: no flying swords, only flesh made harder than iron.");
 		t.add("cultivation.defying-the-heavens.talk.list", ", ");
 		t.add("cultivation.defying-the-heavens.talk.mortal", "Mortal");
 		t.add("cultivation.defying-the-heavens.talk.occupied", "%s is speaking with someone else.");
@@ -2331,7 +2435,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add("cultivation.defying-the-heavens.talk.topic.people", "Who leads it?");
 		t.add("cultivation.defying-the-heavens.talk.topic.sect", "Tell me about your sect.");
 		t.add("cultivation.defying-the-heavens.talk.topic.self", "Who are you?");
-		t.add("cultivation.defying-the-heavens.talk.topic.method", "Will you teach me your method?");
+		t.add("cultivation.defying-the-heavens.talk.topic.method", "Will you teach me your scripture?");
 		t.add(ModLang.MSG_SECLUSION_REPULSE, "A concealment barrier pushes you back. Disturbing a secluded cultivator would be unwise.");
 
 		// Cultivator clothing
@@ -2510,7 +2614,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_BURN_OFF, "Your lifespan stops burning.");
 		t.add(ModLang.MSG_BURN_OUT, "Too little of your life is left to burn: the flame goes out.");
 		t.add(ModLang.MSG_BURN_TOO_FEW, "Too little of your life is left to burn.");
-		t.add(ModLang.MSG_ESSENCE_ON, "Your immortal essence flows: your blows and spells strike %s%% harder, for %s seconds of it.");
+		t.add(ModLang.MSG_ESSENCE_ON, "Your immortal essence flows: your blows and arts strike %s%% harder, for %s seconds of it.");
 		t.add(ModLang.MSG_ESSENCE_OFF, "Your immortal essence settles.");
 		t.add(ModLang.MSG_ESSENCE_SPENT, "Your immortal essence is spent. Only the Immortal Realm (or a small world) fills it again.");
 		t.add(ModLang.MSG_ESSENCE_TOO_LITTLE, "Too little immortal essence is left in you. Only the Immortal Realm (or a small world) fills it again.");
@@ -2615,24 +2719,24 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.lawKey("life_and_death"), "Law of Life and Death");
 		for (String element : new String[]{"metal", "wood", "water", "fire", "earth"}) {
 			String name = Character.toUpperCase(element.charAt(0)) + element.substring(1);
-			t.add(ModLang.lawKey(element) + ".gains", "Each level: your " + name + " spells strike 10% harder and reach 5% farther.");
-			t.add(ModLang.lawKey(element) + ".now", "Now: your " + name + " spells +%s%% harm, +%s%% reach.");
+			t.add(ModLang.lawKey(element) + ".gains", "Each level: your " + name + " arts strike 10% harder and reach 5% farther.");
+			t.add(ModLang.lawKey(element) + ".now", "Now: your " + name + " arts +%s%% harm, +%s%% reach.");
 		}
-		t.add(ModLang.lawKey("space") + ".gains", "Each level: Void Shattering's spells strike 10% harder and reach 5% farther, as do Nine Nether Step and Soul Dash; the Spatial Tear is ready 3% sooner.");
-		t.add(ModLang.lawKey("space") + ".now", "Now: Void Shattering's spells and the steps +%s%% harm, +%s%% reach; the Spatial Tear %s%% sooner.");
-		t.add(ModLang.lawKey("time") + ".gains", "Each level: every spell's cooldown 3% shorter.");
-		t.add(ModLang.lawKey("time") + ".now", "Now: every spell's cooldown %s%% shorter.");
-		t.add(ModLang.lawKey("life_and_death") + ".gains", "Each level: the ghost path's spells strike 10% harder, and all healing you take is 10% greater.");
-		t.add(ModLang.lawKey("life_and_death") + ".now", "Now: the ghost path's spells +%s%% harm; your healing +%s%%.");
+		t.add(ModLang.lawKey("space") + ".gains", "Each level: Void Shattering's arts strike 10% harder and reach 5% farther, as do Nine Nether Step and Soul Dash; the Spatial Tear is ready 3% sooner.");
+		t.add(ModLang.lawKey("space") + ".now", "Now: Void Shattering's arts and the steps +%s%% harm, +%s%% reach; the Spatial Tear %s%% sooner.");
+		t.add(ModLang.lawKey("time") + ".gains", "Each level: every art's and body technique's cooldown 3% shorter.");
+		t.add(ModLang.lawKey("time") + ".now", "Now: every art's and body technique's cooldown %s%% shorter.");
+		t.add(ModLang.lawKey("life_and_death") + ".gains", "Each level: the ghost path's arts strike 10% harder, and all healing you take is 10% greater.");
+		t.add(ModLang.lawKey("life_and_death") + ".now", "Now: the ghost path's arts +%s%% harm; your healing +%s%%.");
 		t.add(ModLang.LAW_GATE, "Breaking into %s wants %s levels of the Laws comprehended (you hold %s). Meditate on a Law in the Immortal Realm: the Methods tab's Laws page.");
 		t.add(ModLang.MSG_LAW_LEVEL, "You comprehend the %s to its level %s of %s.");
 		t.add(ModLang.MSG_LAW_WAY_OPEN, "The Laws you hold open the way into %s.");
 		t.add(ModLang.MSG_LAW_GLIMPSE, "In the blow that fells it, a glimpse of the %s.");
 		t.add(ModLang.MSG_LAW_FOCUSED, "Your meditation in the Immortal Realm turns to the %s.");
 		t.add(ModLang.MSG_LAW_UNFOCUSED, "No Law in your meditation's focus.");
-		t.add(ModLang.MSG_LAW_GREATER_SHUT, "The %s opens to comprehension only at Golden Immortal.");
+		t.add(ModLang.MSG_LAW_GREATER_SHUT, "The %s opens to comprehension only at Golden Immortal (a body's Imperishable Gold Body).");
 		t.add(ModLang.MSG_LAW_COMPLETE, "You comprehend the %s whole already.");
-		t.add(ModLang.MSG_LAW_NOT_IMMORTAL, "The %s is comprehended only by a True Immortal and those past it.");
+		t.add(ModLang.MSG_LAW_NOT_IMMORTAL, "The %s is comprehended only by a True Immortal and those past it (or an Indestructible Body and past it).");
 		t.add(ModLang.METHODS_PAGE_LAWS, "Laws");
 		t.add(ModLang.LAWS_TITLE, "The Laws");
 		t.add(ModLang.LAWS_SEALED, "The Laws are comprehended only by a True Immortal and those past it: past True Immortal, no method carries a cultivator on, but the Laws do.");
@@ -2656,7 +2760,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_DECAY_SIGN[0], "The first of the Five Decays: your robes stain, and your body's armour wanes.");
 		t.add(ModLang.MSG_DECAY_SIGN[1], "The second: the flowers in your hair wither. Nothing mends you now.");
 		t.add(ModLang.MSG_DECAY_SIGN[2], "The third: your qi falters, gathering at half, and your immortal essence drains away.");
-		t.add(ModLang.MSG_DECAY_SIGN[3], "The fourth: your body sweats, and your blows and spells weaken.");
+		t.add(ModLang.MSG_DECAY_SIGN[3], "The fourth: your body sweats, and your blows and arts weaken.");
 		t.add(ModLang.MSG_DECAY_SIGN[4], "The fifth: your mind can find no rest. In a minute the heavens judge you.");
 		t.add(ModLang.MSG_DECAY_JUDGEMENT, "The heavens' judgement falls: %s strikes in thirty seconds, and nothing mends you. Weather it!");
 		t.add(ModLang.MSG_DECAY_JUDGEMENT_BROADCAST, "%s faces the judgement of the Five Decays.");
@@ -2807,7 +2911,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		// The Demon Path.
 		t.add(ModLang.MSG_DEMON_CORE, "A demon core burns in you, as in every %s born: your Demon Path begins at Qi Refining Early. Your blood's inheritance is %s.");
 		t.add(ModLang.JOURNAL_DEMON_PATH, "The Demon Path");
-		t.add(ModLang.JOURNAL_DEMON_PATH_TEXT, "Born of the %s race with a demon core, you walk the Demon Path beside the heavens' own: the same realms, its own bar. No method, pill or ritual carries it; your blood does, and as it climbs it teaches you your inheritance's spells, %s. Its body is the mightier and its life the longer, but the heavens strike it the harder. Switch the Cultivation tab's Path to Demon to cultivate it.");
+		t.add(ModLang.JOURNAL_DEMON_PATH_TEXT, "Born of the %s race with a demon core, you walk the Demon Path beside the heavens' own: the same realms, its own bar. No scripture, pill or ritual carries it; your blood does (Bloodline Purification, its method), and as it climbs it teaches you your inheritance's arts, %s. Its body is the mightier and its life the longer, but the heavens strike it the harder. Switch the Cultivation tab's Path to Demon to cultivate it.");
 		t.add(ModLang.MSG_DEMON_STAGE_UP, "Demon Path: %s");
 		t.add(ModLang.MSG_DEMON_INHERITS, "Your blood remembers: you have inherited %s.");
 		t.add(ModLang.MSG_DEMON_BOTTLENECK, "Your Demon Path is at its bottleneck: break through in the cultivation menu to face the heavens' tribulation.");
@@ -2861,6 +2965,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.talkLine("join.friend"), "You have long been a friend to us. Welcome to the %s: from today you are %s.");
 		t.add(ModLang.talkLine("join.kin"), "Our own blood runs in you: there is nothing to test. Welcome to the %s: from today you are %s.");
 		t.add(ModLang.talkLine("join.human"), "You smell of men. A clan of our blood takes no one without a beast's blood in them. Go.");
+		t.add(ModLang.talkLine("join.not_body"), "We temper the body here, not qi. Begin on the Body Path, then come back to us.");
 		t.add(ModLang.talkLine("join.passed"), "Well fought. From today you are one of us. Our gates are open to you.");
 		t.add(ModLang.talkLine("join.failed"), "Not yet. Train, and come back tomorrow.");
 		t.add(ModLang.talkLine("leave.disciple"), "Only an elder can release you from the sect.");
@@ -2999,7 +3104,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.HUD_SOUL_OUT, "Soul out");
 		t.add(ModLang.HUD_SOUL_BODY_HEADER, "Body");
 		t.add(ModLang.HUD_PRESSED_TO, "Pressed to %s: -%s%%");
-		t.add(ModLang.HUD_SLOT_SPELL, "Spell");
+		t.add(ModLang.HUD_SLOT_SPELL, "Art");
 		t.add(ModLang.HUD_SLOT_ABILITY, "Ability");
 		t.add(ModLang.HALL_LADDER, "Ladder of Realms");
 		t.add(ModLang.HALL_DRAWN_IN, "Drawn in");
@@ -3009,6 +3114,8 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.HALL_CULT, "Cultivation: %s / %s (%s%%)");
 		t.add(ModLang.HALL_CULT_MAX, "Cultivation: Maximum");
 		t.add(ModLang.HALL_PER_SECOND, "+%s a second");
+		t.add(ModLang.HALL_NO_METHOD, "gathers nothing");
+		t.add(ModLang.HALL_AXES_FILL, "filled by your axes");
 		t.add(ModLang.HALL_RESTING, "Resting");
 		t.add(ModLang.HALL_STOP, "Stop");
 
@@ -3347,7 +3454,7 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_MIRAGE_SILENT, "The altar is silent: its legacy for this opening has been taken.");
 		t.add(ModLang.MSG_MIRROR_RAISED, "You raise the Jade Lake Mirror.");
 		t.add(ModLang.MSG_MIRROR_RESTS, "The Jade Lake Mirror dims: it must rest.");
-		t.add(ModLang.TOOLTIP_JADE_LAKE_MIRROR, "Raised, it turns the next %s blows or spells that strike you back on whoever struck them, for %s seconds. "
+		t.add(ModLang.TOOLTIP_JADE_LAKE_MIRROR, "Raised, it turns the next %s blows or arts that strike you back on whoever struck them, for %s seconds. "
 				+ "Then it rests %s seconds.");
 		t.add(ModLang.NAME_REFLECTION, "Reflection of %s");
 		t.add(ModLang.MSG_HOLY_TRIALS, "The ancestral hall stands under its formation. Four eyes on the shards about it hold the formation up, each kept by a "
@@ -3378,6 +3485,476 @@ public class ModEnglishLangProvider extends FabricLanguageProvider {
 		t.add(ModLang.MSG_IMMORTAL_TOMB_LEGACY, "The immortal's coffin grants you a lesser legacy. His Great Inheritance went to %s.");
 		t.add(ModLang.MSG_IMMORTAL_TOMB_SILENT, "The coffin is silent: its legacy for this opening has been taken.");
 		t.add(ModLang.ITEM_FALLEN_IMMORTAL_GLAIVE, "Glaive of the Fallen Immortal");
+	}
+
+	/**
+	 * The methods overhaul's phase 2: the cultivation methods (CultivationMethod: each one's name, what it is, and how it gathers when not by
+	 * meditation), switching, the Method Manuals, the gathering formations, and the Methods tab's methods and Demon Path page.
+	 */
+	private static void cultivationMethods(TranslationBuilder t) {
+		method(t, CultivationMethod.QI_CIRCULATION, "Qi Circulation", "The heaven path's orthodox method: the heavens' qi drawn in by meditation "
+				+ "and circulated through the meridians. Its volumes are in your scriptures, one a realm. Your talent counts in full.",
+				"meditating, with its volume of your realm in a scripture you know");
+		method(t, CultivationMethod.HEAVEN_RITES, "Heaven-Petitioning Rites", "Petition the heavens at a Heaven Altar instead of meditating, as the "
+				+ "Ritual to the Heavens is made: only at dawn, on a night of the full moon or in a thunderstorm, one rite an altar a day. Granted, a "
+				+ "quarter of your stage; refused, their lightning. The offering it wants grows ninefold a realm, and the heavens hear the virtuous "
+				+ "more often. Talent counts for nothing; its years are a sixteenth. Qi Refining to Heavenly Being: the heavens' leave teaches its first volume.",
+				"petitioning the heavens at a Heaven Altar, at dawn, under a full moon or in a storm");
+		method(t, CultivationMethod.TURTLE_BREATH, "Turtle Breath", "Breath slowed to a turtle's in deep seclusion: it gathers only in your Inner "
+				+ "Realm, or shut away where no light of the sky reaches you, with walls and a roof within 6 blocks. Half Qi Circulation's pace, for a "
+				+ "third of its years; nothing outside you saves it more (a mat, pedestals, a stone in hand), only denser qi. Your talent counts in "
+				+ "full. Foundation Building to Sacred Vessel.",
+				"meditating in deep seclusion");
+		method(t, CultivationMethod.THUNDER_TEMPERING, "Thunder Tempering", "The Heavenly Thunder Body's own method, known from birth: meditating "
+				+ "under the open sky, you call the lightning down on yourself, a strike every 30 seconds (every 10 in a thunderstorm). Each takes "
+				+ "15%% of your health, and can kill; each wins what a minute of meditation would, half again in a storm. Talent counts by its square "
+				+ "root; its years are a twelfth. Core Formation to True Immortal.",
+				"calling the lightning down on yourself as you meditate under the open sky");
+		method(t, CultivationMethod.NETHERWORLD_BREATHING, "Netherworld Breathing", "The ghost path's orthodox method: the ghostly qi breathed in "
+				+ "by meditation. Its volumes are in your foundations, one a realm. Your talent counts in full.",
+				"meditating, with its volume of your realm in a foundation you know");
+		method(t, CultivationMethod.CORPSE_YIN, "Corpse Yin Refining", "Draw the yin out of the bodies of the dead instead of meditating: an "
+				+ "empty hand to a body, once a body. The mightier the dead against your ghost path, the more, up to half a stage: a fresh body the "
+				+ "most, bones the least, a mortal's next to nothing. It darkens your path and fills the living with yin, and the dead's own sect "
+				+ "turns on whoever drains their dead. Talent counts by its square root; its years are a twelfth. Qi Refining to Heavenly Being.",
+				"drawing the yin out of the bodies of the dead, an empty hand to them");
+		method(t, CultivationMethod.BLOODLINE_PURIFICATION, "Bloodline Purification", "The Demon Path's orthodox method: meditation refining your "
+				+ "blood toward its ancestors'. Its volumes are your blood itself, in every realm it has reached or awakened to. Your talent counts in "
+				+ "full, and it cleanses any taint in your blood as it gathers.",
+				"meditating");
+		method(t, CultivationMethod.KIN_BLOOD, "Kin Blood Hoarding", "Drink your own race's blood instead of meditating, even blood yours already "
+				+ "holds: a phial is a fifth of your Demon Path's stage, twice as much for each realm the blood stands above your path and half for "
+				+ "each below, at most three quarters. Talent counts by its square root; its years are a twelfth. Qi Refining to Sacred Vessel.",
+				"drinking phials of your own race's blood");
+		method(t, CultivationMethod.CORE_DEVOURING, "Core Devouring", "Eat the demon cores of slain beasts instead of meditating: a core is a "
+				+ "share of your Demon Path's stage, twice as much for each realm it stands above your path and half for each below. A core of "
+				+ "another element than your race's taints your blood, every gain slower until Bloodline Purification's meditation cleanses it. "
+				+ "Talent counts by its square root; its years are a twelfth. Foundation Building to Entering Nirvana.",
+				"eating demon cores");
+		method(t, CultivationMethod.TERRITORIAL_DOMINION, "Territorial Dominion", "Mark a territory with a phial of your own race's blood (the "
+				+ "Methods tab's Demon Path page) and meditate within it: half again Bloodline Purification's pace for a third of its years, and "
+				+ "nothing outside it. While you meditate there a challenger comes every few minutes, a wild beast of your realm: die in your "
+				+ "territory, or leave it while a challenger lives, and it is lost. Talent counts by its square root. Qi Refining to Core Formation.",
+				"meditating within a territory marked with your blood");
+		method(t, CultivationMethod.FOUR_AXES, "The Four Axes", "Four Axis's method, everyone's: your four axes of virtue fill its stages, each in "
+				+ "its own way, and meditation gathers nothing there. The method you have chosen waits for the realm beyond.",
+				"filling your four axes of virtue");
+		// Gathering and switching
+		t.add(ModLang.MSG_METHOD_NO_VOLUME, "You hold no volume of %s for %s: practised, it gathers nothing in this realm. Find more of it, or practise another method.");
+		t.add(ModLang.MSG_METHOD_NOT_BY_MEDITATION, "You practise %s: meditation gathers nothing on its path. It gathers by %s.");
+		t.add(ModLang.MSG_TURTLE_NOT_SECLUDED, "Turtle Breath gathers only in deep seclusion: shut away from the sky, walls and a roof within 6 blocks, or in your Inner Realm.");
+		t.add(ModLang.MSG_TERRITORY_OUTSIDE, "Territorial Dominion gathers only within your territory: go back to it, or mark one on the Methods tab.");
+		t.add(ModLang.MSG_METHOD_UNKNOWN, "You don't know %s.");
+		t.add(ModLang.MSG_METHOD_SWITCH_COST, "You re-lay your foundation for %s: the path falls to %s, its cultivation there lost. Your realm is kept.");
+		t.add(ModLang.MSG_CULTIVATION_METHOD_PRACTISED, "You now cultivate by %s.");
+		t.add(ModLang.MSG_METHOD_KNOWN, "This manual teaches you nothing new of %s.");
+		t.add(ModLang.MSG_CULTIVATION_METHOD_LEARNED, "You learn %s, its volumes to %s. Practise it from the Methods tab.");
+		t.add(ModLang.MSG_METHOD_LEARNED_BLOOD, "You learn %s: your blood is its volume. Practise it from the Methods tab's Demon Path page.");
+		t.add(ModLang.MSG_METHOD_NOT_TAUGHT, "%s is not learned from a manual.");
+		t.add(ModLang.MSG_METHOD_NEEDS_CORE, "%s is a Demon Path method: without a demon core it finds nothing in you to take hold of.");
+		t.add(ModLang.MSG_METHOD_GAIN, "%s: +%s%% of your stage");
+		t.add(ModLang.JOURNAL_CULTIVATION_METHOD, "A method of cultivation");
+		t.add(ModLang.JOURNAL_CULTIVATION_METHOD_TEXT, "I learned %s. %s");
+		// The unorthodox methods' own ways
+		t.add(ModLang.MSG_CORPSE_YIN, "You draw the yin out of the body of %s.");
+		t.add(ModLang.MSG_CORPSE_YIN_DRAWN, "The body of %s holds no more yin.");
+		t.add(ModLang.MSG_THUNDER_CALLED, "You call the heavens' lightning down on yourself...");
+		t.add(ModLang.MSG_TERRITORY_NEEDS_BLOOD, "A territory is marked in your own race's blood: you carry no phial of %s blood.");
+		t.add(ModLang.MSG_TERRITORY_MARKED, "You pour out your blood and mark your territory, %s blocks round. Meditate within it: challengers will come.");
+		t.add(ModLang.MSG_TERRITORY_CHALLENGED, "A challenger comes for your territory: %s!");
+		t.add(ModLang.MSG_TERRITORY_HELD, "Your territory is held: no challenger is left.");
+		t.add(ModLang.MSG_TERRITORY_LOST, "Your territory is lost. Mark another with your blood.");
+		t.add(ModLang.MSG_CORE_NOT_DEVOURED, "Only one whose Demon Path practises Core Devouring can eat a demon core.");
+		t.add(ModLang.MSG_CORE_TAINT, "Its %s qi is foreign to your blood: your blood is tainted (%s%% of every gain lost). Bloodline Purification cleanses it.");
+		t.add(ModLang.MSG_RITE_HOUR, "The heavens hear rites only at dawn, on a night of the full moon, or in a thunderstorm.");
+		t.add(ModLang.MSG_RITE_ALTAR_TODAY, "This altar has had its rite today: come back tomorrow, or seek another altar.");
+		t.add(ModLang.MSG_RITE_FULL, "Your stage is full: break through before you petition again.");
+		t.add(ModLang.MSG_RITES_TAUGHT, "Granting their leave, the heavens teach you their rites: you learn the first volume of %s.");
+		t.add(ModLang.MSG_RITE_REBUKED, "The heavens refuse your rite, and rebuke you!");
+		t.add(ModLang.RITE_TITLE_SUCCESS, "The Heavens Hear You");
+		t.add(ModLang.RITE_TITLE_FAIL, "The Heavens Refuse");
+		// The gathering formations (GatheringFormations)
+		for (GatheringFormations.Kind kind : GatheringFormations.Kind.values()) {
+			for (GatheringFormations.Tier tier : GatheringFormations.Tier.values()) {
+				String grade = switch (tier) {
+					case LOW -> "Low";
+					case MID -> "Mid";
+					case HIGH -> "High";
+				};
+				t.add(ModBlocks.gatheringFormation(kind, tier), grade + (kind == GatheringFormations.Kind.QI ? " Qi" : " Yin") + "-Gathering Formation");
+			}
+		}
+		t.add(ModLang.MSG_GATHERING_STATUS, "%1$s: %2$s%% within %3$s blocks. Fuel left: %4$s.");
+		t.add(ModLang.GATHERING_OUT, "none (feed it spirit stones)");
+		t.add(ModLang.GATHERING_HOURS, "%s h %s min");
+		t.add(ModLang.GATHERING_MINUTES, "%s min");
+		t.add(ModLang.TOOLTIP_QI_GATHERING, "Lit, it thickens the heavens' qi to %s%% within %s blocks: Qi Circulation gathers that much faster there");
+		t.add(ModLang.TOOLTIP_YIN_GATHERING, "Lit, it thickens the ghostly qi to %s%% within %s blocks: Netherworld Breathing gathers that much faster there");
+		t.add(ModLang.TOOLTIP_GATHERING_FUEL, "Burns spirit stones: a %s keeps it lit %s min (sneak to feed it the whole stack)");
+		// The Method Manuals (MethodManualItem)
+		t.add(ModItems.METHOD_MANUAL, "Method Manual");
+		t.add(ModLang.ITEM_METHOD_MANUAL_OF, "Method Manual: %s");
+		t.add(ModLang.TOOLTIP_MANUAL_BLOOD, "A Demon Path method: your blood is its volume, in every realm it has reached");
+		t.add(ModLang.TOOLTIP_MANUAL_VOLUMES, "Its volumes: %s to %s");
+		t.add(ModLang.TOOLTIP_MANUAL_VOLUME, "Its one volume: %s");
+		t.add(ModLang.TOOLTIP_MANUAL_READ, "Use it to read it and learn its method");
+		// The Methods tab's methods, and its Demon Path page
+		t.add(ModLang.METHODS_SECTION, "Cultivation Methods");
+		t.add(ModLang.METHODS_PRACTISING, "Practising");
+		t.add(ModLang.BTN_PRACTISE_METHOD, "Practise");
+		t.add(ModLang.BTN_CONFIRM_SWITCH, "Confirm");
+		t.add(ModLang.METHODS_SWITCH_WARNING, "Switching re-lays this path's foundation: it falls to its realm's Early, its cultivation there lost (never the realm). Click Confirm to switch.");
+		t.add(ModLang.METHODS_SWITCH_FREE, "At Four Axis, or before the path begins, switching costs nothing. Click Confirm to switch.");
+		t.add(ModLang.METHODS_METHOD_REACH, "Your volumes reach %1$s (it has %2$s to %3$s)");
+		t.add(ModLang.METHODS_METHOD_ONE, "Its one volume: %s");
+		t.add(ModLang.METHODS_METHOD_BLOOD, "Your blood is its volume (it has %s to %s)");
+		t.add(ModLang.METHODS_METHOD_BLOOD_ONE, "Your blood is its volume (it has %s alone)");
+		t.add(ModLang.METHODS_METHOD_REALMS, "It has %s to %s");
+		t.add(ModLang.METHODS_DEMON_TAINT, "Blood tainted: %s%% of every gain lost (Bloodline Purification cleanses it)");
+		t.add(ModLang.METHODS_TERRITORY, "Territory: %s blocks round %s");
+		t.add(ModLang.METHODS_TERRITORY_NONE, "No territory marked: mark one where you stand, with a phial of your own race's blood.");
+		t.add(ModLang.BTN_MARK_TERRITORY, "Mark Territory");
+		t.add(ModLang.METHODS_DEMON_EMPTY, "No demon core yet.");
+		t.add(ModLang.METHODS_DEMON_HINT, "A demon core forms when a beast's blood takes hold in you: drink the blood of a demon race. Its methods will appear here.");
+	}
+
+	/**
+	 * The methods overhaul's phase 3: the shrine system's three methods (Incense and Faith, Ancestral Incense, Beast Deity Worship), Five
+	 * Elements Cycling, Spirit Beast Bond, Court of the Dead, Soul River Feast and Haunting; the shrine, incense, and their messages.
+	 */
+	private static void cultivationMethodsPhaseThree(TranslationBuilder t) {
+		method(t, CultivationMethod.FIVE_ELEMENTS, "Five Elements Cycling", "Take the five elements into yourself, one offering at a time, in "
+				+ "the order each gives rise to the next: wood, fire, earth, metal, water, and round to wood again. Sneak and use an offering "
+				+ "into the air to take it in: saplings, logs, sticks or herbs for wood; blaze powder, coal or magma cream for fire; clay, bricks "
+				+ "or dirt for earth; ingots or nuggets for metal; a water bucket, prismarine or snowballs for water; or a demon core of the "
+				+ "element. When the fifth closes the cycle, each offering is a tenth of your stage at your own realm, twice as much for each "
+				+ "realm it stands above yours (at most two), half for each below: mortal things stand at Qi Refining, herbs higher with their "
+				+ "age, cores at their own realm. Then the elements circulate in you for two minutes. An element out of order is a qi "
+				+ "deviation that loses the cycle and a twentieth of your stage. Meditation gathers nothing. Talent counts by its square root; "
+				+ "its years are a twelfth. Qi Refining to Entering Nirvana.",
+				"taking the five elements in as offerings, in the order each gives rise to the next");
+		method(t, CultivationMethod.INCENSE_FAITH, "Incense and Faith", "Set down shrines to yourself (a jade statue) in villages, sects and "
+				+ "cities, and the people about them pray there: their faith flows to you instead of meditation. Villagers' prayers are worth "
+				+ "little, cultivators' far more; others may burn incense to you. Once a day your worshippers ask something of you: bring it, or "
+				+ "their devotion thins. A shrine desecrated by another's hand wounds you. Talent counts for nothing; its years are a sixteenth. "
+				+ "Foundation Building to True Immortal.",
+				"the faith of those who pray at your shrines");
+		method(t, CultivationMethod.SPIRIT_BEAST_BOND, "Spirit Beast Bond", "Subdue a wild demon beast (bring it down to a quarter of its health, "
+				+ "one of no higher rank than yours) and bind it with an empty hand. It follows you and fights your foes, and you grow as it "
+				+ "grows: each demon core you feed it, and each foe it slays, is a share of your stage, and cores raise its rank toward yours. If "
+				+ "it dies, the realm's progress it carried goes with it. Talent counts by its square root; its years are a twelfth. Core "
+				+ "Formation to True Immortal.",
+				"feeding your bound beast demon cores and fighting beside it");
+		method(t, CultivationMethod.ANCESTRAL_INCENSE, "Ancestral Incense", "The shrine as the dead's ancestral tablet: set one down where the "
+				+ "living gather, and the incense they burn and the prayers they say feed your ghost path. Its people ask things of you as a "
+				+ "statue's do, and a tablet broken by another's hand wounds you. Talent counts for nothing; its years are a sixteenth. Qi "
+				+ "Refining to True Immortal.",
+				"the prayers and incense offered at your ancestral tablets");
+		method(t, CultivationMethod.HAUNTING, "Haunting", "One of the dead haunting the living: practising it, you may go down the Soul River as a "
+				+ "Ghost King may, and come out among the living where you died. By night the villagers about you take fright, and their fear "
+				+ "feeds you; by day the light drives you back to the Ghost Gate. A village haunted too often sends for an exorcist, whose rite "
+				+ "burns you, and in the end its people flee. Talent counts for nothing; its years are a sixteenth. Qi Refining to Nascent Soul.",
+				"frightening the living's villages by night");
+		method(t, CultivationMethod.SOUL_RIVER_FEAST, "Soul River Feast", "On the Soul River, the souls it carries drift past you; press "
+				+ "Circulate to seize the nearest and feed on it. The river carries the common dead, mostly far below you; one above you fights "
+				+ "back, tearing at you, breaks free half the time, and in the struggle the river may take a memory: a layer of one of your "
+				+ "foundations. Talent counts for nothing; its years are a sixteenth. Foundation Building to Sacred Vessel.",
+				"seizing the souls that drift past you on the Soul River");
+		method(t, CultivationMethod.COURT_OF_THE_DEAD, "Court of the Dead", "A Ghost King's way: stand at the throne of a ghost palace whose king "
+				+ "is slain, and the palace is yours, its retainers your subjects. Holding court within it, each brings you tribute every "
+				+ "minute, the stronger the more. Born again, or no longer a king, you give the throne up. Talent counts by its square root; its "
+				+ "years are a twelfth. Core Formation to True Immortal.",
+				"your subjects' tribute, holding court in your palace");
+		method(t, CultivationMethod.BEAST_DEITY, "Beast Deity Worship", "Mortals worship you as their mountain god: set down your idol (a "
+				+ "shrine) where they live, and their prayers feed your Demon Path, cultivators' counting for nothing. Its people ask things of "
+				+ "you, and an idol broken by another's hand wounds you. Your blood is its volume. Talent counts for nothing; its years are a "
+				+ "sixteenth. Core Formation to True Immortal.",
+				"mortals' worship of you as their mountain god");
+		t.add(ModLang.MSG_CYCLE_LINK, "%1$s taken in (%2$s of %3$s): %4$s comes next");
+		t.add(ModLang.MSG_CYCLE_COMPLETE, "The five elements close their cycle: +%1$s%% of your stage. They circulate in you for %2$s seconds.");
+		t.add(ModLang.MSG_CYCLE_DEVIATION, "%1$s can't follow %2$s: your qi deviates, the cycle is lost, and a twentieth of your stage with it.");
+		t.add(ModLang.MSG_CYCLE_SAME, "%1$s is taken in already: %2$s comes next");
+		t.add(ModLang.MSG_CYCLE_CIRCULATING, "The elements still circulate in you: %s seconds more");
+		t.add(ModLang.MSG_CYCLE_SETTLED, "The elements have settled: a new cycle may begin");
+		t.add(ModLang.MSG_CYCLE_STALLED, "Your stage is full: the elements have nowhere to go until you break through");
+		t.add(ModLang.TOOLTIP_CYCLE_OFFERING, "Five Elements offering: %1$s, at %2$s");
+		// The shrines (Shrines)
+		t.add(ModBlocks.SHRINE, "Shrine");
+		t.add(ModItems.INCENSE, "Incense");
+		t.add(ModLang.MSG_SHRINE_REQUEST, "Your worshippers pray for %s %s, at your shrine at %s.");
+		t.add(ModLang.MSG_SHRINE_ANSWERED, "Their prayer answered, your worshippers' devotion rises to x%s.");
+		t.add(ModLang.MSG_SHRINE_OWN_INCENSE, "Incense burned to yourself is worth nothing to you.");
+		t.add(ModLang.MSG_SHRINE_INCENSE, "You burn incense at %s's shrine.");
+		t.add(ModLang.MSG_SHRINE_STATUS, "Your shrine (%s): %s faith laid up, devotion x%s; %s");
+		t.add(ModLang.MSG_SHRINE_OF, "A shrine to %s (%s).");
+		t.add(ModLang.SHRINE_NO_REQUEST, "they ask nothing of you now.");
+		t.add(ModLang.SHRINE_ASKS, "they pray for %s %s.");
+		t.add(ModLang.MSG_SHRINE_DESECRATED, "Your shrine at %s has been desecrated: the blow wounds you.%s");
+		t.add(ModLang.MSG_SHRINE_DESECRATED_BY, "Your shrine at %s has been desecrated by %s: the blow wounds you.");
+		// Spirit Beast Bond (SpiritBonds)
+		t.add(ModLang.MSG_BOND_TOO_GREAT, "%s is too great a beast to be bound.");
+		t.add(ModLang.MSG_BOND_TOO_STRONG, "%s stands above you: you can't bind it.");
+		t.add(ModLang.MSG_BOND_NOT_SUBDUED, "%s is not subdued: bring it down to a quarter of its health first.");
+		t.add(ModLang.MSG_BOND_ALREADY, "You are bound to %s already.");
+		t.add(ModLang.MSG_BOND_BOUND, "You bind %s to you: it will follow you and fight your foes.");
+		t.add(ModLang.MSG_BOND_FED, "%s eats the core and grows, but you practise no Spirit Beast Bond to grow with it.");
+		t.add(ModLang.MSG_BOND_DIED, "Your bound beast, %s, has died.");
+		t.add(ModLang.MSG_BOND_DIED_LOST, "Your bound beast, %s, has died, and the realm's progress it carried goes with it: you fall back to %s.");
+		// Court of the Dead (CourtOfTheDead)
+		t.add(ModLang.MSG_COURT_CLAIMED, "You take the empty throne: the palace is yours, and its %s retainers your subjects.");
+		t.add(ModLang.MSG_COURT_LOST, "No longer a Ghost King, you give your palace's throne up.");
+		t.add(ModLang.MSG_COURT_EMPTY, "Your palace has no subjects left to bring you tribute.");
+		// Soul River Feast (SoulRiverFeast)
+		t.add(ModLang.MSG_FEAST_NONE, "No soul drifts within reach.");
+		t.add(ModLang.MSG_FEAST_ESCAPED, "The soul fights back and breaks free.");
+		t.add(ModLang.MSG_FEAST_MEMORY, "In the struggle the river takes a memory: a layer of your %s is gone, to settle in again.");
+		// Haunting (Haunting)
+		t.add(ModLang.MSG_HAUNT_ARRIVE, "The river lets you out among the living, where you died. Haunt their villages by night: by day the light will drive you back.");
+		t.add(ModLang.MSG_HAUNT_DAWN, "Dawn breaks: the light drives you back down to the Ghost Gate.");
+		t.add(ModLang.MSG_HAUNT_FLED, "A villager flees the haunted village for good.");
+		t.add(ModLang.MSG_HAUNT_EXORCIST, "The village has sent for an exorcist.");
+		t.add(ModLang.MSG_HAUNT_RITE, "An exorcist's rite burns you!");
+	}
+
+	/**
+	 * The methods overhaul's phase 4: the ways of one realm (and of a few): Heart Demon Tempering, Dao Field Attunement, Rift Walking, Vessel
+	 * Nurturing, Nirvana Rebirth, Immortal Essence Refining; Yellow Springs Immersion, Judgement Hall Service, Rift Haunting, Soul Furnace
+	 * Refining, Ten Thousand Ghosts Union; Ancestral Communion, Bloodline Nirvana, Primordial Return; and their messages.
+	 */
+	private static void cultivationMethodsPhaseFour(TranslationBuilder t) {
+		method(t, CultivationMethod.HEART_DEMON_TEMPERING, "Heart Demon Tempering", "Your heart demon called up again and again: meditate until "
+				+ "you turn inward to your Inner Realm, and there it comes for you every twenty to thirty seconds, with no other qi surge. Each one "
+				+ "you slay is a tenth of your stage; each defeat throws you back to your body, shaken and drained of qi as ever, and costs you a "
+				+ "tenth of your stage besides. Meditation itself gathers nothing. Talent counts for nothing; its years are a sixteenth. Nascent "
+				+ "Soul alone.",
+				"besting the heart demon that comes for you again and again in your Inner Realm (meditate on the ground to turn inward)");
+		method(t, CultivationMethod.DAO_FIELD_ATTUNEMENT, "Dao Field Attunement", "Meditation attuned to the law of a Great Void Dao field, "
+				+ "whatever your own element: the wood field for Early, the fire field for Mid, the earth field for Late, the metal or the water "
+				+ "field for Grand Perfection. In your stage's field it gathers twice as fast; anywhere else, nothing. Talent counts by its square "
+				+ "root; its years are a quarter. Dao Integration alone.",
+				"meditating in the Great Void's Dao field of your stage");
+		method(t, CultivationMethod.RIFT_WALKING, "Rift Walking", "Walk through space's tears instead of meditating: each Void Breach you climb "
+				+ "through into the Great Void is a tenth of your stage, and each bolt of a Spatial Gap storm you live through a twentieth. The way "
+				+ "down costs nothing, and counts for nothing. Talent counts by its square root; its years are a twelfth. Void Shattering alone.",
+				"climbing Void Breaches and bearing the Spatial Gap's storms");
+		method(t, CultivationMethod.VESSEL_NURTURING, "Vessel Nurturing", "Pour your qi into a Sacred Vessel and draw it back refined: use a vessel "
+				+ "sneaking, and half your qi pool flows into it and returns as a tenth of your stage. The vessel rests half a minute after; and "
+				+ "one time in twenty the relic cracks under it and is gone. Talent counts by its square root; its years are a twelfth. Sacred "
+				+ "Vessel alone.",
+				"pouring your qi into a Sacred Vessel, sneaking, and drawing it back refined");
+		method(t, CultivationMethod.NIRVANA_REBIRTH, "Nirvana Rebirth", "Death on the Shore of Nirvana as your cultivation: struck down there, "
+				+ "three times in four you rise again from your own ashes, whole, with half a stage won; the fourth time the death is real. Falling "
+				+ "into the void beyond the shore, or a tribulation's lightning, is no death it rises from. Talent counts for nothing; its years "
+				+ "are a sixteenth. Entering Nirvana alone.",
+				"dying on the Shore of Nirvana and rising again from your ashes");
+		method(t, CultivationMethod.IMMORTAL_ESSENCE_REFINING, "Immortal Essence Refining", "Meditation that burns immortal essence: in the "
+				+ "Immortal Realm, each second of it burns a sixtieth of your essence pool, and gathers twice as fast while the essence lasts; with "
+				+ "none left, nothing, until the pool fills again. Outside the Immortal Realm, nothing. Your talent counts in full; its years are "
+				+ "half. True Immortal alone.",
+				"meditating in the Immortal Realm, burning immortal essence");
+		method(t, CultivationMethod.YELLOW_SPRINGS_IMMERSION, "Yellow Springs Immersion", "Soak in the waters of the Yellow Springs, the "
+				+ "Netherworld's golden riverlands, instead of meditating: each second in them is a share of your ghost path's stage, a little less "
+				+ "in each realm past Nascent Soul. Their waters are Meng Po's own: each minute you soak, one time in ten, a memory is lost, a "
+				+ "layer of one of your foundations. Talent counts by its square root; its years are a quarter. Nascent Soul to Heavenly Being.",
+				"soaking in the waters of the Yellow Springs");
+		method(t, CultivationMethod.JUDGEMENT_HALL_SERVICE, "Judgement Hall Service", "Run the Judgement Hall's errand: lead the wandering dead "
+				+ "to the Wheel of Reincarnation. Right-click a wandering ghost while sneaking and it follows you (two at once, at most; again, and "
+				+ "you let it go); bring it within eight blocks of the Wheel at the Ghost Gate and it passes on, a share of your ghost path's stage. "
+				+ "Leave it far behind, and it wanders off. Talent counts by its square root; its years are a twelfth. Heavenly Being to Dao "
+				+ "Integration.",
+				"leading wandering ghosts to the Wheel of Reincarnation");
+		method(t, CultivationMethod.RIFT_HAUNTING, "Rift Haunting", "Haunt the rifts in space: near a spatial rift, the Yellow Springs' rift or a "
+				+ "Spatial Tear, the souls lost between the worlds slip out to you, one every twenty seconds; press Circulate to seize the nearest "
+				+ "and feed on it, as on the Soul River. One above you fights back, and may break free. Talent counts for nothing; its years are a "
+				+ "sixteenth. Void Shattering alone.",
+				"seizing the souls that slip out of space's rifts");
+		method(t, CultivationMethod.SOUL_FURNACE, "Soul Furnace Refining", "Meditation in your own ghost fire, in place of the yin drawn in: each "
+				+ "second burns hotter, its gain growing and its harm with it, from a hundredth of your health a second to a fifth at most. The "
+				+ "burning never breaks the meditation: stand up to end it, and sit down to a cold furnace. Run out of health and the furnace "
+				+ "breaks: the stage's cultivation burns away, and the dead scatter, the living die. Talent counts by its square root; its years "
+				+ "are a twelfth. Entering Nirvana alone.",
+				"meditating in your own ghost fire for as long as you can bear it");
+		method(t, CultivationMethod.TEN_THOUSAND_GHOSTS, "Ten Thousand Ghosts Union", "A devilish way: take in the ghosts you slay by your own "
+				+ "hand. A Hungry Ghost is a little of your ghost path's stage; one of the dead's cultivators more, the more the mightier, up to "
+				+ "half a stage. Each one taken in darkens your path. Talent counts by its square root; its years are a twelfth. True Immortal "
+				+ "alone.",
+				"slaying ghosts and taking them into yourself");
+		method(t, CultivationMethod.ANCESTRAL_COMMUNION, "Ancestral Communion", "Meditation among the ancestors' bones: in the Primeval Beast "
+				+ "Graveyard, where the primeval dragon's bones lie (four bone blocks within eight of you), it gathers three times as fast as "
+				+ "Bloodline Purification, and anywhere else nothing. The graveyard stands open only twenty minutes in six years. Your blood is its "
+				+ "volume. Talent counts by its square root; its years are a quarter. Nascent Soul to Heavenly Being.",
+				"meditating among the primeval dragon's bones, in the Primeval Beast Graveyard");
+		method(t, CultivationMethod.BLOODLINE_NIRVANA, "Bloodline Nirvana", "Drink your own race's blood of Entering Nirvana or above, even blood "
+				+ "yours already holds, to burn your blood down and be remade: seven times in ten it is reborn, any taint burnt out of it and half "
+				+ "a stage won; else it burns and doesn't rise, the stage's cultivation lost and much of your health with it. Your blood is its "
+				+ "volume. Talent counts for nothing; its years are a sixteenth. Entering Nirvana alone.",
+				"drinking your own race's blood of Entering Nirvana or above");
+		method(t, CultivationMethod.PRIMORDIAL_RETURN, "Primordial Return", "Meditation beside the primordial beasts, your blood's first "
+				+ "ancestors: within 48 blocks of a living one it gathers twice as fast as Bloodline Purification, and anywhere else nothing. Your "
+				+ "blood is its volume. Talent counts by its square root; its years are a quarter. True Immortal alone.",
+				"meditating near a living primordial beast");
+		// Where the places' ways gather (MethodGrounds)
+		t.add(ModLang.MSG_DAO_FIELD_OUTSIDE, "Dao Field Attunement gathers only in the Great Void's %s, your stage's.");
+		t.add(ModLang.DAO_FIELD_OF, "%s Dao field");
+		t.add(ModLang.DAO_FIELDS_OF, "%s or %s Dao field");
+		t.add(ModLang.MSG_COMMUNION_OUTSIDE, "Ancestral Communion gathers only among the primeval dragon's bones, in the Primeval Beast Graveyard.");
+		t.add(ModLang.MSG_PRIMORDIAL_FAR, "Primordial Return gathers only within %s blocks of a living primordial beast.");
+		t.add(ModLang.MSG_ESSENCE_REFINING_OUTSIDE, "Immortal Essence Refining gathers only in the Immortal Realm.");
+		t.add(ModLang.MSG_ESSENCE_REFINING_EMPTY, "You have no immortal essence left to burn: Immortal Essence Refining gathers nothing until your pool fills.");
+		// The ways' own messages
+		t.add(ModLang.MSG_TEMPERING_LOST, "Your heart demon's victory costs you a share of your stage.");
+		t.add(ModLang.MSG_VESSEL_LOW_QI, "The vessel wants %s%% of your qi pool: you haven't that much.");
+		t.add(ModLang.MSG_VESSEL_CRACKED, "%s cracks under the qi and crumbles away!");
+		t.add(ModLang.MSG_NIRVANA_RISEN, "You rise again from your own ashes on the Shore of Nirvana!");
+		t.add(ModLang.MSG_NIRVANA_FAILED, "The flames of Nirvana take you, and you do not rise.");
+		t.add(ModLang.MSG_SPRINGS_SOAKING, "Soaking in the Yellow Springs: %s s");
+		t.add(ModLang.MSG_SPRINGS_MEMORY, "Meng Po's waters take a memory: a layer of your %s is gone, to settle in again.");
+		t.add(ModLang.MSG_ESCORT_TAKEN, "%s follows you to the Wheel.");
+		t.add(ModLang.MSG_ESCORT_LET_GO, "You let %s go.");
+		t.add(ModLang.MSG_ESCORT_LED_ALREADY, "%s is led to the Wheel already.");
+		t.add(ModLang.MSG_ESCORT_NOT_WANDERING, "%s is no wandering soul: it won't go with you.");
+		t.add(ModLang.MSG_ESCORT_FULL, "You lead %s souls already.");
+		t.add(ModLang.MSG_ESCORT_PASSED, "%s passes on into the Wheel of Reincarnation.");
+		t.add(ModLang.MSG_ESCORT_LOST, "Left behind, %s wanders off.");
+		t.add(ModLang.MSG_RIFT_SOUL_NONE, "No lost soul within reach.");
+		t.add(ModLang.MSG_FURNACE_BURNING, "The ghost fire burns: %s s, %s%% of your health a second");
+		t.add(ModLang.MSG_FURNACE_BREAKS, "Your soul furnace breaks: the stage's cultivation burns away!");
+		t.add(ModLang.MSG_BLOOD_NIRVANA_RISEN, "Your blood burns down and is reborn, its taint burnt out of it!");
+		t.add(ModLang.MSG_BLOOD_NIRVANA_BURNT, "Your blood burns, and doesn't rise again: the stage's cultivation is lost.");
+	}
+
+	/** A cultivation method's name, what it is, and how it gathers (CultivationMethod; MSG_METHOD_NOT_BY_MEDITATION). */
+	/** The methods of the user's second brainstorm (2026-11-01): Spirit Herb Refining, Clone Seclusion, Borrowed Life; and their messages. */
+	private static void cultivationMethodsSecondRound(TranslationBuilder t) {
+		method(t, CultivationMethod.SPIRIT_HERB_REFINING, "Spirit Herb Refining", "Eat spirit herbs for their essence: practising it, "
+				+ "right-click any herb and hold it to eat it, and its essence is refined into your stage. A herb of your own realm is a tenth of "
+				+ "your stage, twice as much for each realm it stands above yours (at most two), half for each below. A herb's realm is its "
+				+ "age's: Foundation Building under a hundred years, Core Formation from a hundred, Nascent Soul from five hundred, Heavenly "
+				+ "Being from a thousand, Dao Integration from five thousand; the rarer kinds a realm higher. After each, your herbs rest "
+				+ "thirty seconds while the essence settles. Meditation gathers nothing. Talent counts by its square root; its years are a "
+				+ "twelfth. Qi Refining to Dao Integration.",
+				"eating spirit herbs for their essence");
+		method(t, CultivationMethod.CLONE_SECLUSION, "Clone Seclusion", "Leave your clone in seclusion: while it stands where you left it "
+				+ "and you are in the world, it sits in meditation and gathers for you, at half your realm's own pace with no aids, holding at "
+				+ "most a whole stage. Draw it back in, and what it gathered is yours. Every five minutes a wild beast of your realm comes for "
+				+ "it: go into it to fight, or hurry back; if it is slain, all it gathered is lost with it. You need the Clone technique. Your "
+				+ "own meditation gathers nothing. Talent counts by its square root; its years are a quarter. Nascent Soul to Entering Nirvana.",
+				"your clone's seclusion, drawn back into you");
+		method(t, CultivationMethod.BORROWED_LIFE, "Borrowed Life", "Feed on the living from inside them: practising it, while your soul is "
+				+ "in a living cultivator's body (possessed with Soul Projection), every five seconds you draw off a little of its life, more "
+				+ "from a host above your ghost path, less from one below, and the host loses as much of its own stage. What you draw settles in "
+				+ "you when you leave the body. The host's soul fights back: you hold it a minute, less if it stands above you, longer if below; "
+				+ "then it throws you out, reeling, and a cultivator remembers you. Meditation gathers nothing. Talent counts by its square "
+				+ "root; its years are a twelfth. Nascent Soul to Void Shattering.",
+				"drawing off the life of the living bodies you possess");
+		t.add(ModLang.MSG_HERB_STALLED, "Your stage is full: the herb's essence has nowhere to go until you break through");
+		t.add(ModLang.TOOLTIP_HERB_ESSENCE, "Spirit Herb Refining: a herb of %s");
+		t.add(ModLang.MSG_CLONE_SECLUSION_BANKED, "Your clone in seclusion has gathered %s%% of your stage");
+		t.add(ModLang.MSG_CLONE_SECLUSION_FULL, "Your clone in seclusion holds a whole stage: draw it back in to take it.");
+		t.add(ModLang.MSG_CLONE_SECLUSION_CHALLENGED, "%s comes for your clone in seclusion!");
+		t.add(ModLang.MSG_CLONE_SECLUSION_LOST, "What your clone had gathered in seclusion (%s%% of your stage) is lost with it.");
+		t.add(ModLang.MSG_BORROWED_DRAW, "You draw on %1$s's life: %2$s%% of your stage held (its soul stirs: %3$s%%)");
+		t.add(ModLang.MSG_BORROWED_THROWN_OUT, "%s's soul throws you out! You reel from it, and it will remember you.");
+		bodyPath(t);
+	}
+
+	/** The Body Path (BodyPath, 2026-11-01): its method, its buttons and lines, its messages. */
+	private static void bodyPath(TranslationBuilder t) {
+		method(t, CultivationMethod.BODY_TEMPERING, "Body Tempering", "The Body Path's own way: with the Body Path drawn in, meditation "
+				+ "circulates your blood instead of any qi, at your stage's own pace, and your deeds temper the body too, meditating or not: "
+				+ "charged blows, harm you take, foes you slay (more the stronger they are), stone and ore you mine, ground you sprint. The body "
+				+ "is its own volume, every realm of it. Talent counts in full. Copper Skin to the Indestructible Body.",
+				"circulating the blood, and the body's own deeds");
+		t.add(ModLang.MSG_BODY_NOT_PEAK, "Your mortal body must reach Peak before the Body Path can begin");
+		t.add(ModLang.MSG_BODY_BEGUN, "You begin the Body Path: %s. Your meditation circulates blood now, and your deeds temper the body.");
+		t.add(ModLang.MSG_BODY_STAGE_UP, "Body Path: %s");
+		t.add(ModLang.MSG_BODY_BOTTLENECK, "Your Body Path's bottleneck: break through to %s (the heavens' lightning on the flesh).");
+		t.add(ModLang.MSG_PATH_BODY, "You turn to your body: meditating and your deeds temper the Body Path.");
+		t.add(ModLang.MSG_BODY_TRIB_START, "The heavens test your flesh for %s: %s strikes. Endure them!");
+		t.add(ModLang.MSG_BODY_TRIB_START_SINGLE, "The heavens test your flesh for %s: one strike. Endure it!");
+		t.add(ModLang.MSG_BODY_TRIB_PASSED, "Your flesh endured the heavens: Body Path %s.");
+		t.add(ModLang.MSG_BODY_TRIB_FAILED, "The heavens broke your flesh. Your Body Path falls to %s.");
+		t.add(ModLang.METHODS_PAGE_BODY, "Body Path");
+		t.add(ModLang.BTN_BEGIN_BODY, "Begin Body");
+		t.add(ModLang.BTN_PATH_BODY, "Path: Body");
+		t.add(ModLang.BODY_BEGIN_HINT, "Begin the Body Path: temper your body beside your qi, or alone. Drawn in, your meditation and your deeds "
+				+ "temper it; where it is your mightiest path, your body is half again as strong as its rank. It gives no qi.");
+		t.add(ModLang.BODY_PINNACLE, "Your Body Path stands at its very pinnacle.");
+		t.add(ModLang.BODY_BOTTLENECK, "Your Body Path's bottleneck: break through to %s (the heavens' lightning on the flesh).");
+		t.add(ModLang.BODY_BOTTLENECK_SWITCH, "Your Body Path's bottleneck: turn to your body (Path: Body) to break through to %s.");
+		t.add(ModLang.BODY_DEEDS, "Tempering: meditation, charged blows, harm taken, foes slain, mining and sprinting all temper your body.");
+		// Its techniques (BodyTechniques): vigor, their messages, the harm they deal.
+		t.add(ModLang.MSG_VIGOR_SHORT, "Not enough vigor: it takes %1$s, you have %2$s. Eat, or rest.");
+		t.add(ModLang.MSG_BODY_NEEDS_GROUND, "You need solid ground under your feet.");
+		t.add(ModLang.MSG_IRON_SKIN, "Your skin turns to iron (%s s).");
+		t.add(ModLang.MSG_STOMPED, "Mountain Stomp! %s struck.");
+		t.add(ModLang.MSG_FIST_PRIMED, "A thousand pounds gather in your fist: strike within %s s.");
+		t.add(ModLang.MSG_FRENZY_ON, "Your blood boils: Blood Frenzy.");
+		t.add(ModLang.MSG_FRENZY_SPENT, "Your vigor is spent: Blood Frenzy fades.");
+		t.add(ModLang.MSG_GOLDEN_BODY, "Your body turns to gold (%s s): every blow is turned aside.");
+		t.add(ModLang.MSG_DIAMOND_WILL, "Your heart turns to diamond (%s s): nothing binds you, nothing weighs on you.");
+		t.add(ModLang.MSG_REBOUNDING_BONES, "Your bones ring hard (%s s): blows come back on those who strike you.");
+		t.add(ModLang.MSG_FLESH_REBORN, "Your flesh is reborn.");
+		t.add(ModLang.MSG_SHATTERED, "Heaven-Shattering Fist! %s struck.");
+		t.add(ModLang.MSG_TREAD_ON, "Cloud-Treading Steps: double-tap jump to stride on the air (%s vigor a second aloft).");
+		t.add(ModLang.MSG_TREAD_SPENT, "Your vigor is spent: the clouds give way under you.");
+		t.add(ModLang.MSG_EARTHSHAKER, "Earthshaker! %s struck.");
+		t.add(ModLang.MSG_SKY_PILLAR, "Sky-Pillar Strike! %s struck.");
+		t.add(ModLang.MSG_IMPERISHABLE, "Your body is imperishable gold (%s s): nothing touches you.");
+		t.add(ModLang.MSG_GOLD_BURST, "The gold bursts: %s harm turned back on %s foes.");
+		t.add(ModLang.MSG_PRIMORDIAL_ROAR, "Primordial Roar! %s stunned.");
+		t.add(ModLang.MSG_MYRIAD, "Myriad Fists!");
+		t.add(ModLang.MSG_DHARMA, "Dharma Body of Heaven and Earth (%s s): your body towers over the land.");
+		// Its other ways (MedicinalBath, BeastBlood, WeightedTraining, HundredBattles).
+		method(t, CultivationMethod.MEDICINAL_BATH, "Medicinal Bath", "Soak your body in a bath of spirit herbs: right-click a water cauldron "
+				+ "with a spirit herb to steep it (each herb a minute of soaking at its own strength, the strongest soaked first; ten minutes "
+				+ "at most), then "
+				+ "stand in the cauldron. Each second tempers your body at twice your meditation's pace, twice again for each realm the "
+				+ "herbs stand above your body (at most two), half for each below. A herb's realm is its age's: Foundation Building under a "
+				+ "hundred years, Core Formation from a hundred, Nascent Soul from five hundred, Heavenly Being from a thousand; the rarer "
+				+ "kinds a realm higher. Anyone may steep a bath; emptying the cauldron loses it. Needs the Body Path drawn in; meditation "
+				+ "tempers nothing. Talent counts by its square root; its years are a twelfth. Copper Skin to Silver Marrow.",
+				"soaking in a cauldron steeped with spirit herbs");
+		method(t, CultivationMethod.BEAST_BLOOD_BATHING, "Beast Blood Bathing", "Bathe your body in the blood of demon beasts: a demon "
+				+ "beast that dies spills its blood where it falls, a pool that soaks away in a minute. Stand in it, and each second tempers "
+				+ "your body at three times your meditation's pace, twice again for each realm the beast stood above your body (at most two), "
+				+ "half for each below. Bathing doesn't use a pool up, and anyone's kill spills one. Needs the Body Path drawn in; meditation "
+				+ "tempers nothing. Talent counts by its square root; its years are a twelfth. Copper Skin to Jade Bone.",
+				"bathing in the blood of slain demon beasts");
+		method(t, CultivationMethod.WEIGHTED_TRAINING, "Weighted Training", "Train your body under the weight of heavy armour: every block "
+				+ "you cover on your own feet, walking, running, jumping or swimming (in water only swimming counts: a current carries you for "
+				+ "nothing), and every block you climb, tempers it, more the heavier "
+				+ "your armour (by its defence and toughness: full iron is a weight of 1, diamond nearly 2, netherite past 2). Sprinting in "
+				+ "full iron tempers at about twice your meditation's pace. Without armour, nothing; riding, flying and gliding don't count. "
+				+ "Needs the Body Path drawn in; meditation tempers nothing. Talent counts by its square root; its years are a twelfth. "
+				+ "Copper Skin to Jade Bone.",
+				"moving on your own feet under heavy armour");
+		method(t, CultivationMethod.HUNDRED_BATTLES, "Hundred Battles", "Temper your body in the trading of blows: spar with a cultivator "
+				+ "(talk to one and ask for a spar), and every blow traded that lands, given or taken, tempers your body by four seconds of "
+				+ "your meditation's pace, twice for each realm your partner fights at above your body (at most two; one holding back fights "
+				+ "at your own realm), half for each below. Winning the spar is worth a minute more, the same way. Needs the Body Path drawn "
+				+ "in; meditation tempers nothing. Talent counts by its square root; its years are a twelfth. Iron Flesh to Silver Marrow.",
+				"blows traded in a spar with a cultivator");
+		t.add(ModLang.MSG_METHOD_NEEDS_BODY_PATH, "%s is a Body Path way: begin the Body Path first (the Cultivation tab's Begin Body).");
+		t.add(ModLang.MSG_BATH_STEEPED, "The bath is steeped: a %2$s herb's minute of soaking, %1$s s in all.");
+		t.add(ModLang.MSG_BATH_FULL, "The bath can take no more herbs: it holds %s s of soaking at most.");
+		t.add(ModLang.MSG_BATH_SOAKING, "Soaking: +%1$s%% of your stage (%2$s s of the bath left).");
+		t.add(ModLang.MSG_BATH_SPENT, "The bath's herbs are spent.");
+		t.add(ModLang.MSG_BLOOD_BATHING, "Bathing in a %1$s beast's blood: +%2$s%% of your stage.");
+		t.add(ModLang.MSG_WEIGHTS_TRAINING, "Weighted Training under a weight of %1$s: +%2$s%% of your stage.");
+		t.add(ModLang.MSG_WEIGHTS_NONE, "Weighted Training wants heavy armour on you.");
+		t.add(ModLang.MSG_HUNDRED_BATTLES, "Hundred Battles: +%s%% of your stage.");
+		t.add(ModLang.MSG_HUNDRED_BATTLES_WON, "The spar is won: Hundred Battles tempers your body +%s%% of your stage.");
+		t.add(ModLang.HUD_VIGOR_LABEL, "Vigor");
+		String death = "death.attack." + com.example.defyingtheheavens.DefyingTheHeavens.MOD_ID + ".body_art";
+		t.add(death, "%1$s was crushed by a body technique");
+		t.add(death + ".player", "%1$s was crushed by %2$s's body technique");
+	}
+
+	private static void method(TranslationBuilder t, CultivationMethod method, String name, String description, String how) {
+		t.add(ModLang.cultivationMethodKey(method.getId()), name);
+		t.add(ModLang.cultivationMethodKey(method.getId()) + ".description", description);
+		t.add(ModLang.cultivationMethodKey(method.getId()) + ".how", how);
 	}
 
 	/** A physique's name and description (Physique). */

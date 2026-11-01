@@ -122,6 +122,7 @@ final class SpellGhosts {
 					case WHITE_WUCHANG, BLACK_WUCHANG -> wuchang(c, pose, cam, partial);
 					case AVATAR_PROJECTION -> avatar(c, pose, cam, partial);
 					case AVATAR_HAND -> avatarHand(c, pose, cam, partial);
+					case DHARMA_BODY -> dharma(c, pose, cam, partial);
 					default -> {}
 				}
 			} catch (RuntimeException e) {
@@ -633,6 +634,96 @@ final class SpellGhosts {
 				}
 				pose.popPose();
 			}
+		} finally {
+			SpellBuffers.end();
+		}
+		SenseOverlay.layerState();
+	}
+
+	/** The Dharma Body's gold (the spirit shader's colours): a deep gold body, its light pale gold, its edge bright. */
+	private static final Spirit DHARMA_GOLD = new Spirit(new float[] {1.0f, 0.72f, 0.18f}, new float[] {1.0f, 0.96f, 0.72f}, new float[] {1.0f, 0.88f, 0.42f}, false);
+	/**
+	 * How long it takes to grow to its full height (ticks); its arm's rise and swing as a fist of it falls (the Avatar's hand's fall:
+	 * HeavenDemonSpells#AVATAR_FALL) and its way back; its foot's lift and stamp (BodyTechniques#DHARMA_STOMP_DELAY) and its settling after.
+	 */
+	private static final float DHARMA_GROW = 24, DHARMA_RAISE = 7, DHARMA_SWING = 14, DHARMA_BACK = 30, DHARMA_LIFT = 8, DHARMA_STAMP = 12, DHARMA_SETTLE = 26;
+
+	/**
+	 * Dharma Body of Heaven and Earth (DHARMA_BODY; BodyTechniques#dharmaBody, the user's "Go, all three parts", 2026-11-01): its user's own body
+	 * (their skin) grown as tall as heaven and earth, of gold, standing whole behind them, growing up from a man's height as it comes; a halo of
+	 * gold behind its head, light about it and about its feet. Feet planted apart, arms a little out from its sides, breathing. As a fist of it
+	 * falls ({@code strike_right}, {@code strike_left}: an AVATAR_HAND of gold coming down where its user's blow landed) it raises that arm high
+	 * and brings it down before it, leaning into the blow; as it stomps ({@code stomp}) it lifts its right foot high, arms out, and stamps it down.
+	 */
+	private static void dharma(SpellConstruct c, PoseStack pose, Vec3 cam, float partial) {
+		Entity owner = c.target() != null ? c.target() : c.owner();
+		if (owner == null) return;
+		float age = c.tickCount + partial, fade = fade(c, age);
+		float full = Math.max(1, c.size());
+		float scale = 1 + (full - 1) * SpellRender.easeOut(Math.min(1, age / DHARMA_GROW));
+		Vec3 feet = c.getPosition(partial);
+		float yaw = c.drawnYaw(partial);
+		String move = c.phase();
+		float moving = c.phaseAge(partial);
+		Posing posing = (model, x) -> {
+			model.head.xRot = 0.08f + Mth.sin(x * 0.04f) * 0.03f;
+			model.rightArm.xRot = -0.1f + Mth.sin(x * 0.05f) * 0.04f;
+			model.leftArm.xRot = -0.1f + Mth.sin(x * 0.05f + 1) * 0.04f;
+			model.rightArm.zRot = 0.22f;
+			model.leftArm.zRot = -0.22f;
+			model.rightLeg.zRot = 0.07f;
+			model.leftLeg.zRot = -0.07f;
+			if ("strike_right".equals(move) || "strike_left".equals(move)) {
+				ModelPart arm = "strike_right".equals(move) ? model.rightArm : model.leftArm;
+				float up = SpellRender.ease(moving / DHARMA_RAISE), down = SpellRender.ease((moving - DHARMA_RAISE) / (DHARMA_SWING - DHARMA_RAISE));
+				float back = SpellRender.ease((moving - DHARMA_SWING - 4) / (DHARMA_BACK - DHARMA_SWING - 4));
+				// Up high over its head, then down before it at the blow's mark; back to its side after.
+				float raised = -3.0f * up + 2.0f * down;
+				arm.xRot = moving < DHARMA_SWING + 4 ? Mth.lerp(up, -0.1f, raised) : Mth.lerp(back, raised, -0.1f);
+				arm.zRot = arm == model.rightArm ? 0.08f : -0.08f;
+				model.body.xRot = 0.3f * down * (1 - back);
+				model.head.xRot += 0.25f * down * (1 - back);
+			}
+			if ("stomp".equals(move)) {
+				float lift = SpellRender.ease(moving / DHARMA_LIFT), stamp = SpellRender.ease((moving - DHARMA_LIFT) / (DHARMA_STAMP - DHARMA_LIFT));
+				float settle = SpellRender.ease((moving - DHARMA_STAMP - 2) / (DHARMA_SETTLE - DHARMA_STAMP - 2));
+				model.rightLeg.xRot = -1.3f * lift * (1 - stamp);
+				// Arms out for its balance as the foot comes up, down again as it settles.
+				model.rightArm.zRot = 0.22f + 0.7f * lift * (1 - settle);
+				model.leftArm.zRot = -0.22f - 0.7f * lift * (1 - settle);
+				model.body.xRot = -0.08f * lift * (1 - stamp) + 0.14f * stamp * (1 - settle);
+			}
+		};
+		person(pose, cam, feet, yaw, 0, 0, scale, skinOf(owner), slimOf(owner), posing, age, 0.92f * fade, DHARMA_GOLD, null);
+		MultiBufferSource.BufferSource source = Minecraft.getInstance().renderBuffers().bufferSource();
+		MultiBufferSource buffers = SpellBuffers.begin(source);
+		try {
+			Quaternionf facing = Minecraft.getInstance().gameRenderer.getMainCamera().rotation();
+			// Its halo behind its head, and a glow about its whole height.
+			Vec3 head = feet.add(0, scale * 1.62, 0).add(com.example.defyingtheheavens.SpellAnchor.turned(new Vec3(0, 0, -scale * 0.2), yaw));
+			pose.pushPose();
+			pose.translate(head.x - cam.x, head.y - cam.y, head.z - cam.z);
+			VertexConsumer ring = buffers.getBuffer(SpellRender.glow(SpellRender.RING));
+			SpellRender.billboard(ring, pose, facing, 0, 0, 0, scale * 1.1f, age * 0.01f, DHARMA_GOLD.edge(), 0.85f * fade, 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+			SpellRender.billboard(ring, pose, facing, 0, 0, 0, scale * 1.35f, -age * 0.008f, DHARMA_GOLD.core(), 0.45f * fade, 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+			pose.popPose();
+			Vec3 middle = feet.add(0, scale * 0.95, 0);
+			pose.pushPose();
+			pose.translate(middle.x - cam.x, middle.y - cam.y, middle.z - cam.z);
+			VertexConsumer glow = buffers.getBuffer(SpellRender.glow(SpellRender.GLOW));
+			SpellRender.billboard(glow, pose, facing, 0, 0, 0, scale * 2.6f, 0, DHARMA_GOLD.pale(), 0.18f * fade, 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+			pose.popPose();
+			// Light about its feet: a ring of gold clouds where it stands on the land.
+			VertexConsumer cloud = buffers.getBuffer(SpellRender.clear(SpellRender.CLOUD));
+			pose.pushPose();
+			pose.translate(feet.x - cam.x, feet.y + scale * 0.05 - cam.y, feet.z - cam.z);
+			for (int i = 0; i < 12; i++) {
+				double a = Math.PI * 2 * i / 12 + age * 0.004;
+				float r = scale * (0.32f + 0.18f * hash(c.getId(), i + 20));
+				SpellRender.billboard(cloud, pose, facing, (float) Math.cos(a) * r, (hash(c.getId(), i + 40) - 0.5f) * scale * 0.08f, (float) Math.sin(a) * r,
+						scale * (0.35f + 0.15f * hash(c.getId(), i + 60)), age * 0.003f + i, DHARMA_GOLD.pale(), 0.55f * fade, 0, 0, 1, 1, SpellRender.FULL_BRIGHT);
+			}
+			pose.popPose();
 		} finally {
 			SpellBuffers.end();
 		}

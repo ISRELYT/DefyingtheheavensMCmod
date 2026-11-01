@@ -91,7 +91,8 @@ public final class ImmortalEssence {
 		}
 		boolean lit = isLit(p), domain = LawDomains.lit(c) != null;
 		double before = c.essence();
-		double flow = perSecond(c, ModDimensions.hasImmortalQi(p.level().dimension()), MeditationManager.isMeditating(p.getUUID())); // a small world's too
+		// Where the body is (turned inward to the Inner Realm, it sits on in the Immortal Realm: InnerRealm#bodyDimension); a small world's too.
+		double flow = perSecond(c, ModDimensions.hasImmortalQi(InnerRealm.bodyDimension(p)), MeditationManager.isMeditating(p.getUUID()));
 		if (FiveDecays.drains(c)) flow = -max / FiveDecays.ESSENCE_DRAIN_SECONDS; // the qi faltering under the Five Decays: it drains wherever it is
 		double burnt = p.isCreative() ? 0 : (lit ? max / BURN_SECONDS : 0) + (domain ? max / LawDomains.BURN_SECONDS : 0);
 		double next = Math.max(0, Math.min(max, before + flow - burnt));

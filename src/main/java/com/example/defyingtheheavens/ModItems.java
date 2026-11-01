@@ -264,6 +264,10 @@ public final class ModItems {
 	}
 	/** Mined from Jade Ore. */
 	public static final Item JADE = register("jade", new Item(new Item.Properties()));
+	/** A Method Manual: one of the methods learned apart from a path's own teaching (MethodManualItem; the methods overhaul's phase 2). */
+	public static final Item METHOD_MANUAL = register("method_manual", new MethodManualItem(new Item.Properties().stacksTo(1)));
+	/** Incense, burned at another's shrine (Shrines: the methods overhaul's phase 3). */
+	public static final Item INCENSE = register("incense", new Item(new Item.Properties()));
 
 	/** Spirit stones, the cultivators' money and a store of qi, in five grades nine apart (see SpiritStoneItem). */
 	public static final Item LOW_SPIRIT_STONE = register("low_spirit_stone", new SpiritStoneItem(SpiritStoneItem.Grade.LOW, new Item.Properties()));

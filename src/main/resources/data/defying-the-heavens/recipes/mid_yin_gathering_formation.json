@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "JAJ",
+    "MFM",
+    "III"
+  ],
+  "key": {
+    "J": {"item": "defying-the-heavens:yin_jade"},
+    "A": {"item": "minecraft:amethyst_block"},
+    "M": {"item": "defying-the-heavens:mid_spirit_stone"},
+    "F": {"item": "defying-the-heavens:low_yin_gathering_formation"},
+    "I": {"item": "minecraft:iron_ingot"}
+  },
+  "result": {"item": "defying-the-heavens:mid_yin_gathering_formation"}
+}

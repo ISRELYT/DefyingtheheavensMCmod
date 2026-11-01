@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    " C ",
+    "JGJ",
+    "SSS"
+  ],
+  "key": {
+    "C": {"item": "minecraft:candle"},
+    "J": {"item": "defying-the-heavens:jade"},
+    "G": {"item": "minecraft:gold_ingot"},
+    "S": {"item": "minecraft:smooth_stone"}
+  },
+  "result": {"item": "defying-the-heavens:shrine"}
+}

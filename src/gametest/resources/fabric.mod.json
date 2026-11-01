@@ -108,7 +108,19 @@
       "com.example.defyingtheheavens.SecretRealmGameTests",
       "com.example.defyingtheheavens.SecretRealmPhaseTwoGameTests",
       "com.example.defyingtheheavens.SecretRealmPhaseThreeGameTests",
-      "com.example.defyingtheheavens.SecretRealmPhaseFourGameTests"
+      "com.example.defyingtheheavens.SecretRealmPhaseFourGameTests",
+      "com.example.defyingtheheavens.MethodVolumesGameTests",
+      "com.example.defyingtheheavens.MethodsPhaseTwoGameTests",
+      "com.example.defyingtheheavens.MethodsPhaseThreeGameTests",
+      "com.example.defyingtheheavens.MethodsPhaseFourGameTests",
+      "com.example.defyingtheheavens.MethodsHerbsClonesSoulsGameTests",
+      "com.example.defyingtheheavens.BodyPathGameTests",
+      "com.example.defyingtheheavens.BodyTechniquesGameTests",
+      "com.example.defyingtheheavens.BodyMethodsGameTests",
+      "com.example.defyingtheheavens.BodyCultivatorsGameTests",
+      "com.example.defyingtheheavens.BodyWayUpGameTests",
+      "com.example.defyingtheheavens.BodyLadderGameTests",
+      "com.example.defyingtheheavens.BodyHeavenTechniquesGameTests"
     ]
   }
 }

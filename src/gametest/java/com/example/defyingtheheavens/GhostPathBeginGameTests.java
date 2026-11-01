@@ -12,17 +12,14 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 
 /**
- * The user's asks of 2026-10-19: the dead begin the ghost path with no method, at the heaven path's no-method pace, and keep it
- * if born again (GhostMethods#begin); and a badly hurt cultivator runs from its pursuer for as long as the pursuer is near, not
- * only for the five seconds vanilla remembers who struck it (CultivatorNpc#getPursuer).
+ * The dead and the ghost path (the user's asks of 2026-10-19, and the methods overhaul of 2026-10-31): the dead are taught Netherworld
+ * Breathing as they die, which begins the path, and keep it if born again (GhostMethods#teachTheDead; before, they began it with no
+ * method at all); and a badly hurt cultivator runs from its pursuer for as long as the pursuer is near, not only for the five seconds
+ * vanilla remembers who struck it (CultivatorNpc#getPursuer).
  */
 public class GhostPathBeginGameTests implements FabricGameTest {
-	private static boolean near(double a, double b) {
-		return Math.abs(a - b) < 1.0e-9;
-	}
-
 	@GameTest(template = EMPTY_STRUCTURE, timeoutTicks = 200)
-	public void theDeadBeginTheGhostPathWithNoMethodAndKeepIt(GameTestHelper helper) {
+	public void theDeadAreTaughtBreathingAndKeepThePath(GameTestHelper helper) {
 		ServerPlayer player = helper.makeMockServerPlayerInLevel();
 		player.setGameMode(GameType.SURVIVAL);
 		player.getAbilities().invulnerable = true; // out of the other tests' fights (a blow ends a meditation)
@@ -30,30 +27,26 @@ public class GhostPathBeginGameTests implements FabricGameTest {
 		NetherworldState s = c.netherworld();
 		c.awaken(0); // meridians open: a mortal's ghost still has no ghost path (TwoPathsGameTests)
 		GhostSystem.makeGhost(player);
-		helper.assertTrue(GhostSystem.isGhost(player) && !s.knowsAnyMethod() && GhostMethods.ghostRank(s) < 0, "One of the dead, no method, no ghost path yet");
-		// The pace with no foundation known: three quarters of one's with one, as the heaven path's without a method.
-		double none = GhostMethods.ratePerSecond(c, GhostQi.SOUL_SAND_VALLEY);
-		s.setMethod(GhostMethod.NETHERWORLD_BREATHING, 1, 0);
-		double known = GhostMethods.ratePerSecond(c, GhostQi.SOUL_SAND_VALLEY);
-		s.setMethod(GhostMethod.NETHERWORLD_BREATHING, 0, 0);
-		helper.assertTrue(near(none, known * GhostMethods.NO_METHOD_FACTOR) && near(GhostMethods.NO_METHOD_FACTOR, HeavenMethods.NO_METHOD_FACTOR),
-				"No method: the heaven path's no-method pace (" + none + " of " + known + ")");
+		helper.assertTrue(GhostSystem.isGhost(player) && s.knows(GhostMethod.NETHERWORLD_BREATHING) && GhostMethods.ghostRank(s) == 0,
+				"One of the dead, taught Netherworld Breathing as it died: its ghost path begun at Qi Refining Early");
+		helper.assertTrue(GhostMethods.canGain(c) && !GhostMethods.hasVolume(c, Realm.FOUNDATION_BUILDING), "...its first volume Qi Refining's alone");
 		s.setDensity(GhostQi.NETHERWORLD); // as among the dead
 		player.setOnGround(true);
 		MeditationManager.start(player);
-		helper.assertTrue(MeditationManager.isMeditating(player.getUUID()), "It sits down to meditate all the same");
+		helper.assertTrue(MeditationManager.isMeditating(player.getUUID()), "It sits down to meditate");
 		helper.runAfterDelay(40, () -> {
 			try {
-				helper.assertTrue(GhostMethods.ghostRank(s) == 0 && s.pathCultivation() > 0 && !s.knowsAnyMethod(),
-						"Its ghost path begun at Qi Refining Early, and filling (" + s.pathCultivation() + ")");
+				helper.assertTrue(GhostMethods.ghostRank(s) == 0 && s.pathCultivation() > 0, "Its ghost path filling (" + s.pathCultivation() + ")");
 				// Born again (the Wheel copies its cultivation across): the path is still its own, to go on with in life.
 				MeditationManager.forget(player.getUUID());
 				s.setGhost(false);
 				helper.assertTrue(TwoPaths.ghostRank(c, false) == 0 && TwoPaths.walksBoth(c) && GhostQi.poolMax(c) > 0, "Alive again: on both paths, with a pool");
 				TwoPaths.switchPath(player);
-				helper.assertTrue(TwoPaths.cultivatesGhost(c), "...and may draw in ghostly qi to go on with it, still with no method");
-				helper.assertTrue(GhostMethods.heldByMethod(c) || !GhostMethods.opensWay(c, Realm.FOUNDATION_BUILDING),
-						"Foundation Building still wants a foundation of it");
+				helper.assertTrue(TwoPaths.cultivatesGhost(c), "...and may draw in ghostly qi to go on with it");
+				// Foundation Building: free to break into, but it gathers nothing there until a foundation of it is found.
+				GhostMethods.setPath(s, PlayerCultivation.rank(Realm.FOUNDATION_BUILDING, Stage.EARLY));
+				helper.assertTrue(!GhostMethods.heldByMethod(c) && GhostMethods.opensWay(c, Realm.FOUNDATION_BUILDING) && !GhostMethods.canGain(c),
+						"In Foundation Building with only the Breathing Art: no gain");
 				helper.succeed();
 			} finally {
 				MeditationManager.forget(player.getUUID());
@@ -74,6 +67,8 @@ public class GhostPathBeginGameTests implements FabricGameTest {
 		try {
 			TwoPaths.switchPath(player);
 			helper.assertTrue(GhostMethods.ghostRank(s) < 0 && !TwoPaths.cultivatesGhost(c), "Alive and never dead: no ghost path to draw in");
+			GhostMethods.teachTheDead(player);
+			helper.assertTrue(!s.knowsAnyMethod(), "The living aren't taught the dead's breath");
 			GhostMethods.give(player, GhostMethod.NETHERWORLD_BREATHING);
 			helper.assertTrue(GhostMethods.ghostRank(s) == 0, "A foundation learned begins it, as ever");
 		} finally {

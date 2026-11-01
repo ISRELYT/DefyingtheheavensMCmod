@@ -112,9 +112,12 @@ public final class ClientCultivationData {
 		essence(0, 0);
 		DATA.setAlignment(0);
 		DATA.setGearQiBonus(0);
-		int offByDefault = 0;
-		for (Ability ability : Ability.offByDefault()) offByDefault |= 1 << ability.ordinal();
+		long offByDefault = 0; // a long, as the server's: past the 32nd ability an int's shift wrapped round onto the first ones
+		for (Ability ability : Ability.offByDefault()) offByDefault |= 1L << ability.ordinal();
 		DATA.setDisabledAbilityMask(offByDefault);
+		DATA.body().set(-1, 0); // no Body Path, its vigor whole
+		DATA.body().setCultivating(false);
+		DATA.body().setVigor(com.example.defyingtheheavens.BodyTechniques.VIGOR);
 		for (int i = 0; i < PlayerCultivation.WHEEL_SLOTS; i++) DATA.setWheelSlot(i, Ability.byIndex(i));
 		DATA.setLowerRealmBound(false);
 		DATA.setInUpperRealm(false);

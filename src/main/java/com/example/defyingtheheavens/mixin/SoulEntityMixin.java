@@ -1,6 +1,7 @@
 package com.example.defyingtheheavens.mixin;
 
 import com.example.defyingtheheavens.GhostSystem;
+import com.example.defyingtheheavens.Haunting;
 import com.example.defyingtheheavens.Incorporeal;
 import com.example.defyingtheheavens.SoulProjection;
 import net.minecraft.core.BlockPos;
@@ -36,7 +37,8 @@ public abstract class SoulEntityMixin {
 
 	@Inject(method = "canChangeDimensions", at = @At("HEAD"), cancellable = true)
 	private void dth$soulKeepsToItsRealm(CallbackInfoReturnable<Boolean> cir) {
-		if ((Object) this instanceof Player player && Incorporeal.is(player)) cir.setReturnValue(false);
+		// (One of the dead haunting the living crosses as a king does: Haunting#crosses.)
+		if ((Object) this instanceof Player player && Incorporeal.is(player) && !Haunting.crosses(player)) cir.setReturnValue(false);
 	}
 
 	@Shadow

@@ -265,6 +265,7 @@ public final class SpatialStorms {
 			}
 		}
 		target.invulnerableTime = 0;
+		RiftWalking.struck(target); // borne, Rift Walking's gain
 	}
 
 	/** To every player within range of the bolt. */

@@ -58,6 +58,17 @@ public final class CultivationEvents {
 		ConsciousnessDomainHandler.forget(player.getUUID());
 		QiSense.forget(player.getUUID());
 		MeditationManager.forget(player.getUUID());
+		ThunderTempering.forget(player.getUUID());
+		Territories.forget(player.getUUID());
+		CourtOfTheDead.forget(player.getUUID());
+		SoulRiverFeast.forget(player.getUUID());
+		Haunting.forget(player.getUUID());
+		YellowSpringsImmersion.forget(player.getUUID());
+		RiftHaunting.forget(player.getUUID());
+		FiveElementsCycling.forget(player.getUUID());
+		CloneSeclusion.forget(player.getUUID());
+		BorrowedLife.forget(player.getUUID());
+		JudgementHallService.onDisconnect(player); // the souls it led wander on
 		TribulationManager.forget(player.getUUID());
 		SpatialTrialHandler.forget(player.getUUID());
 		VoidBreach.forget(player.getUUID());
@@ -72,6 +83,8 @@ public final class CultivationEvents {
 		PortalRestrictionHandler.forget(player.getUUID());
 		QiFlight.forget(player.getUUID());
 		RaceGifts.onDisconnect(player); // an Illusion up ends (the gifts' cooldowns outlast a logout)
+		BodyTechniques.end(player); // the body's techniques under way end, Blood Frenzy goes out (their cooldowns outlast a logout)
+		WeightedTraining.forget(player.getUUID());
 		Tempering.forget(player.getUUID());
 		HeavenRitual.forget(player.getUUID());
 		Lifespan.forget(player.getUUID());
@@ -101,6 +114,10 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(PrimordialBeasts::tick); // the primordial beasts come to their lairs
 		ServerTickEvents.END_SERVER_TICK.register(VoidCurrents::tick); // the Great Void's drifting currents
 		ServerTickEvents.END_SERVER_TICK.register(SoulRiver::tick);
+		ServerTickEvents.END_SERVER_TICK.register(RiftHaunting::tick); // the souls slipping out of a rift to one who haunts it
+		ServerTickEvents.END_SERVER_TICK.register(FiveElementsCycling::tick); // the five circling one whose cycle has closed
+		ServerTickEvents.END_SERVER_TICK.register(CloneSeclusion::tick); // clones in seclusion, banking their makers' stages
+		ServerTickEvents.END_SERVER_TICK.register(BorrowedLife::tick); // souls drawing on the living bodies they are in
 		ServerTickEvents.END_SERVER_TICK.register(NetherworldManager::tick);
 		ServerTickEvents.END_SERVER_TICK.register(GhostSystem::tick);
 		ServerTickEvents.END_SERVER_TICK.register(Lifespan::tick);
@@ -147,6 +164,10 @@ public final class CultivationEvents {
 		ServerTickEvents.END_SERVER_TICK.register(HermitSites::tick);
 		ServerTickEvents.END_SERVER_TICK.register(SectSites::tick);
 		ServerTickEvents.END_SERVER_TICK.register(Tempering::tick);
+		ServerTickEvents.END_SERVER_TICK.register(BodyTechniques::tick); // the body's techniques: vigor, what holds running out, leaps landing
+		ServerTickEvents.END_SERVER_TICK.register(MedicinalBath::tick); // the Body Path's other ways: baths soaked in,
+		ServerTickEvents.END_SERVER_TICK.register(BeastBlood::tick); // beasts' blood bathed in,
+		ServerTickEvents.END_SERVER_TICK.register(WeightedTraining::tick); // steps under weight
 		ServerTickEvents.END_SERVER_TICK.register(InnerRealm::tick);
 		ServerTickEvents.END_SERVER_TICK.register(SoulProjection::tick);
 		ServerTickEvents.END_SERVER_TICK.register(SoulProjection::mendSouls); // a wounded soul resting in a body mends
@@ -217,6 +238,11 @@ public final class CultivationEvents {
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> SpatialStorms.clear());
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
 			Corpses.clear();
+			RiftHaunting.clear();
+			FiveElementsCycling.clear();
+			CloneSeclusion.clear();
+			BorrowedLife.clear();
+			JudgementHallService.clear();
 			Formations.clear();
 			CultivatorNpc.clearLoaded();
 			SoulProjection.clear();
@@ -229,6 +255,7 @@ public final class CultivationEvents {
 			NpcLedger.clear();
 			NpcLife.clear();
 			HeavenRitual.clear();
+			GatheringFormations.clear();
 			NetherworldManager.clear();
 			GhostSystem.clear();
 			PalaceTreasury.clear();
@@ -245,6 +272,10 @@ public final class CultivationEvents {
 			Wishes.clear();
 			Legends.clear();
 			RaceGifts.clear();
+			BodyTechniques.clear();
+			MedicinalBath.clear();
+			BeastBlood.clear();
+			WeightedTraining.clear();
 			LawDomains.clear();
 			ChaosFrontier.clear();
 			SmallWorlds.clear();
@@ -340,6 +371,7 @@ public final class CultivationEvents {
 			Physiques.onJoin(player); // the body they were born with, the first time
 			Bloodlines.onJoin(player); // everyone's bloodline told; theirs chosen, the first time
 			DemonPath.born(player); // a demon's demon core, from birth (and its blood on its record)
+			BodyPath.shatteredBegin(player); // Shattered Meridians at their mortal Peak: the Body Path begun (a world from before it)
 			CoreDetonation.onJoin(player); // no act's switch left on from a server that stopped mid-way
 			FiveDecays.onJoin(player); // the Decays' time stood still while they were away
 			SmallWorlds.onJoin(player); // their own small world's door, and out of one not theirs to be in
@@ -401,9 +433,11 @@ public final class CultivationEvents {
 			return true;
 		});
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
+			// A body cultivator's leap or charge under way: its fall does it no harm, as a player's does them none (BodyTechniques).
+			if (!(entity instanceof ServerPlayer) && source.is(DamageTypeTags.IS_FALL) && BodyTechniques.fallIsSafe(entity)) return false;
 			if (!(entity instanceof ServerPlayer sp)) return true;
-			// Just after a Soul Dash, or on Yin Wind Steps, a fall does no harm (Spells#fallIsSafe).
-			if (source.is(DamageTypeTags.IS_FALL) && Spells.fallIsSafe(sp)) return false;
+			// Just after a Soul Dash, or on Yin Wind Steps, a fall does no harm (Spells#fallIsSafe); nor on a Ground-Splitting Leap (BodyTechniques).
+			if (source.is(DamageTypeTags.IS_FALL) && (Spells.fallIsSafe(sp) || BodyTechniques.fallIsSafe(sp))) return false;
 			// A projected soul is harmed only by cultivators who see it, by their own hand (see SoulProjection#allowSoulDamage).
 			if (SoulProjection.isSoul(sp)) return SoulProjection.allowSoulDamage(sp, source);
 			// A ghost, only by what reaches the dead (see GhostSystem#allowDamage). One turned inward (made a ghost there: the yin) fights
@@ -451,6 +485,8 @@ public final class CultivationEvents {
 			if (!SparSystem.allowDeath(entity, source)) return false;
 			// A clone slain doesn't kill its player: it dissolves, and they wake in their main body (Clones).
 			if (entity instanceof ServerPlayer cloned && !Clones.allowDeath(cloned, source)) return false;
+			// Struck down on the Shore of Nirvana, Nirvana Rebirth may rise again from its ashes (NirvanaRebirth); not a soul in another's body.
+			if (entity instanceof ServerPlayer reborn && !Possession.inhabits(reborn.getUUID()) && !NirvanaRebirth.allowDeath(reborn, source)) return false;
 			// A body held by a soul (Possession) dies as its owner's, by this blow, and the soul is thrown out: never the soul's own
 			// death. A totem in its hands holds death off as it would for anyone (vanilla's, next), but not from what nothing stops.
 			if (entity instanceof ServerPlayer sp && Possession.inhabits(sp.getUUID())) {
@@ -467,10 +503,14 @@ public final class CultivationEvents {
 
 		ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> {
 			Laws.onDeath(entity, source); // a mighty foe slain by an element's spell: a glimpse of its Law, perhaps
+			TenThousandGhosts.onDeath(entity, source); // a ghost slain, taken in by Ten Thousand Ghosts Union
+			BeastBlood.spilled(entity, source); // a demon beast's blood spilled where it fell, for Beast Blood Bathing
 			if (entity instanceof ServerPlayer sp) {
 				FiveDecays.onDeath(sp); // a death nothing held off fails the Decays' judgement all the same
 				// A demon slain by another player leaves its demon core (DemonCoreItem), read from its record before anything changes it.
 				DemonCoreItem.onPlayerDeath(sp, source);
+				// A death within one's own territory loses it (Territories: Territorial Dominion).
+				Territories.died(sp);
 				// A death under the lifespan tribulation, of anything, ends the life whole (made anew at the respawn): first, so a
 				// breakthrough's tribulation under way goes with it unremarked.
 				boolean spent = LifespanTribulation.onDeath(sp);
@@ -487,6 +527,7 @@ public final class CultivationEvents {
 				SoulProjection.onDeath(sp); // nothing of a soul's journey outlives a death
 				Clones.onDeath(sp); // nor a clone: it dissolves where it stands
 				SparSystem.abandon(sp); // killed mid-spar by something else: the spar is forfeit
+				BodyTechniques.end(sp); // the body's techniques under way end with it, Blood Frenzy goes out
 				RealmSuppressSystem.refreshNow(); // a fallen suppressor's pressure lifts at once
 			}
 		});
@@ -519,6 +560,10 @@ public final class CultivationEvents {
 		// opened in death as in life (a mortal's ghost has no ghost path without it: GhostMethods#refusal), and read a slip.
 		UseItemCallback.EVENT.register((player, world, hand) -> Incorporeal.is(player) && !Incorporeal.mayUse(player, player.getItemInHand(hand))
 				? InteractionResultHolder.fail(player.getItemInHand(hand)) : InteractionResultHolder.pass(player.getItemInHand(hand)));
+		// Five Elements Cycling's offerings, sneak-used into the air: taken in, not used (FiveElementsCycling#use).
+		UseItemCallback.EVENT.register(FiveElementsCycling::use);
+		// A spirit herb used on a water cauldron steeps a Medicinal Bath (MedicinalBath#use), not eaten.
+		UseBlockCallback.EVENT.register(MedicinalBath::use);
 		UseEntityCallback.EVENT.register((player, world, hand, entity, hit) -> {
 			// Nothing to ride or use; only cultivators to talk with, the living and the dead (TalkSystem keeps the talk to what the
 			// dead may do).

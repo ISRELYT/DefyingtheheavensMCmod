@@ -12,6 +12,10 @@ public class ModBlockLootProvider extends FabricBlockLootTableProvider {
 
 	@Override
 	public void generate() {
+		// The gathering formations (GatheringFormations) are taken up whole; their fuel left burning is lost.
+		for (net.minecraft.world.level.block.Block formation : ModBlocks.gatheringFormations()) dropSelf(formation);
+		dropSelf(ModBlocks.SHRINE); // a shrine (Shrines) comes up whole; its faith is lost with it
+
 		dropSelf(ModBlocks.JADE_STONE);
 		dropSelf(ModBlocks.MEDITATION_MAT);
 		dropSelf(ModBlocks.RED_MEDITATION_MAT);

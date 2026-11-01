@@ -932,7 +932,8 @@ public final class NpcLife {
 		Object subject = "";
 		String voice = NpcLines.voice(a);
 		if (sect == null) {
-			topic = "chat.road";
+			// A body cultivator on the road talks of the body's tempering as often as of the road (BodyCultivators).
+			topic = a.isBodyCultivator() && random.nextBoolean() ? "chat.body" : "chat.road";
 			if (random.nextInt(3) == 0) {
 				Component rumour = rumour(a);
 				if (rumour != null) {
@@ -946,6 +947,8 @@ public final class NpcLife {
 			topic = "chat.whisper";
 		} else {
 			List<String> topics = new ArrayList<>(List.of("chat.progress", "chat.progress", "chat.duty", "chat.life", "chat.life"));
+			// A body sect's people talk of the body's tempering where others talk of qi (BodyCultivators).
+			if (a.isBodyCultivator()) topics.replaceAll(t -> t.equals("chat.progress") ? "chat.body" : t);
 			String elder = elderName(sect, random);
 			if (elder != null) topics.add("chat.elder");
 			if (day != null && day.visitor != null && now - day.visitorAt < DAY_LENGTH) topics.add("chat.visitor");

@@ -179,6 +179,9 @@ public final class Corpses {
 	 */
 	static InteractionResult use(ServerPlayer player, InteractionHand hand, CorpseBlockEntity body, BlockState state) {
 		ItemStack held = player.getItemInHand(hand);
+		// One whose ghost path practises Corpse Yin Refining draws the body's yin with an empty hand (CorpseYin); sneaking, it asks whose
+		// it was, as anyone does.
+		if (held.isEmpty() && hand == InteractionHand.MAIN_HAND && !player.isShiftKeyDown() && CorpseYin.draws(player)) return CorpseYin.draw(player, body, state);
 		if (!held.is(Items.GLASS_BOTTLE)) {
 			player.displayClientMessage(body.rank() < 0 ? Component.translatable(ModLang.MSG_CORPSE_WHO_MORTAL, body.name())
 					: Component.translatable(ModLang.MSG_CORPSE_WHO, body.name(), PlayerCultivation.rankName(
@@ -251,6 +254,23 @@ public final class Corpses {
 			}
 		}
 		return count;
+	}
+
+	/** The bodies lying within {@code radius} of {@code pos}, the nearest first. */
+	static List<BlockPos> lyingNear(ServerLevel level, BlockPos pos, int radius) {
+		List<BlockPos> found = new ArrayList<>();
+		Long2ObjectMap<Map<BlockPos, Integer>> chunks = LYING.get(level.dimension());
+		if (chunks == null || chunks.isEmpty()) return found;
+		int reach = (radius >> 4) + 1, cx = pos.getX() >> 4, cz = pos.getZ() >> 4;
+		for (int dx = -reach; dx <= reach; dx++) {
+			for (int dz = -reach; dz <= reach; dz++) {
+				Map<BlockPos, Integer> here = chunks.get(ChunkPos.asLong(cx + dx, cz + dz));
+				if (here == null) continue;
+				for (BlockPos body : here.keySet()) if (body.distSqr(pos) <= (double) radius * radius) found.add(body);
+			}
+		}
+		found.sort(java.util.Comparator.comparingDouble(body -> body.distSqr(pos)));
+		return found;
 	}
 
 	/** A body lies in loaded land (CorpseBlockEntity#setLevel). */

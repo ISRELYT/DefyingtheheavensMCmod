@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "JAJ",
+    "LLL",
+    "BBB"
+  ],
+  "key": {
+    "J": {"item": "defying-the-heavens:yin_jade"},
+    "A": {"item": "minecraft:amethyst_shard"},
+    "L": {"item": "defying-the-heavens:low_spirit_stone"},
+    "B": {"item": "minecraft:polished_blackstone"}
+  },
+  "result": {"item": "defying-the-heavens:low_yin_gathering_formation"}
+}

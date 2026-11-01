@@ -8,7 +8,11 @@ import com.example.defyingtheheavens.ModItems;
 import com.example.defyingtheheavens.PillItem;
 import com.example.defyingtheheavens.CultivationBoost;
 import com.example.defyingtheheavens.CultivationStats;
+import com.example.defyingtheheavens.CultivationMethod;
+import com.example.defyingtheheavens.CultivationMethods;
+import com.example.defyingtheheavens.BodyPath;
 import com.example.defyingtheheavens.DemonPath;
+import net.minecraft.core.BlockPos;
 import com.example.defyingtheheavens.GhostMethod;
 import com.example.defyingtheheavens.GhostMethods;
 import com.example.defyingtheheavens.HeavenMethod;
@@ -210,9 +214,14 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 	private final List<RowButton<Spell>> lifeModeButtons = new ArrayList<>();
 	/** The Methods tab's heaven page's Practise buttons, and the pages' own buttons (their {@link #methodPage}). */
 	private final List<RowButton<HeavenMethod>> heavenPractiseButtons = new ArrayList<>();
+	/** The methods sections' Practise buttons (CultivationMethods), and the Demon Path page's Mark Territory, as drawn this frame. */
+	private final List<RowButton<CultivationMethod>> methodPractiseButtons = new ArrayList<>();
+	private final List<RowButton<Integer>> territoryButtons = new ArrayList<>();
+	/** The method whose switch waits on its Confirm (it costs the path its stages in its realm), or null. */
+	private static CultivationMethod confirmSwitch;
 	private final List<RowButton<Integer>> methodPageButtons = new ArrayList<>();
 	/** Which page the Methods tab shows (kept on reopening): the ghost path's methods, the heaven path's, or the Laws (phase 3). */
-	private static final int PAGE_GHOST = 0, PAGE_HEAVEN = 1, PAGE_LAWS = 2;
+	private static final int PAGE_GHOST = 0, PAGE_HEAVEN = 1, PAGE_LAWS = 2, PAGE_DEMON = 3, PAGE_BODY = 4;
 	private static int methodPage = PAGE_GHOST;
 	/** The Laws page's Focus and +1 buttons, as drawn this frame (the Law they act on). */
 	private final List<RowButton<com.example.defyingtheheavens.Law>> lawFocusButtons = new ArrayList<>();
@@ -288,6 +297,7 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 
 	public CultivationScreen() {
 		super(Component.translatable(ModLang.TITLE));
+		confirmSwitch = null; // a switch asked for before is asked again: opened anew, one click never costs the stages
 	}
 
 	@Override
@@ -316,9 +326,13 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 						b -> ClientPlayNetworking.send(ModPackets.BREAKTHROUGH, PacketByteBufs.create()))
 				.bounds(cultX + cultW - 124, cultY + cultH - 32, 112, 20).build());
 
-		pathButton = addRenderableWidget(HallButton.of(Component.empty(), b -> ClientMethods.switchPath())
+		// The path switch; or, for one who may begin the Body Path and hasn't (BodyPath#available), its Begin button in the switch's place.
+		pathButton = addRenderableWidget(HallButton.of(Component.empty(), b -> {
+					if (bodyToBegin(ClientCultivationData.get())) ClientMethods.beginBodyPath();
+					else ClientMethods.switchPath();
+				})
 				.bounds(cultX + (cultW - 112) / 2, cultY + cultH - 32, 112, 20).build());
-		pathButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable(ModLang.HALL_PATH_TIP)));
+		pathTipBegin = null;
 
 		paceButton = addRenderableWidget(HallButton.of(Component.empty(),
 						b -> ClientPlayNetworking.send(ModPackets.MEDITATION_SPEED, PacketByteBufs.create()))
@@ -425,10 +439,11 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		// heavens' harder one (the Demon Path's).
 		TwoPaths.Path drawn = TwoPaths.drawnIn(c);
 		breakthroughButton.active = (drawn == TwoPaths.Path.GHOST ? GhostMethods.canBreakthrough(c) : drawn == TwoPaths.Path.DEMON ? DemonPath.canBreakthrough(c)
-				: c.canBreakthrough()) && !ClientTribulationData.isActive();
-		meditateButton.active = !c.isMortal() || DemonPath.rank(c) >= 0; // a mortal has no qi to gather (a demon's core has)
-		// The pace, for whoever can meditate to some end (a body refined, a shattered one too), right of Meditate.
-		boolean pace = progressTab && (!c.isMortal() || c.hasShatteredMeridians());
+				: drawn == TwoPaths.Path.BODY ? BodyPath.canBreakthrough(c) : c.canBreakthrough()) && !ClientTribulationData.isActive();
+		// A mortal has no qi to gather (a demon's core has, and a Body Path drawn in its blood to circulate).
+		meditateButton.active = !c.isMortal() || DemonPath.rank(c) >= 0 || TwoPaths.cultivatesBody(c);
+		// The pace, for whoever can meditate to some end (a body tempered, a shattered one too), right of Meditate.
+		boolean pace = progressTab && (!c.isMortal() || c.hasShatteredMeridians() || BodyPath.rank(c) >= 0);
 		paceButton.visible = pace;
 		paceButton.setMessage(Component.translatable(ModLang.BTN_PACE, c.meditationSpeed()));
 		if (paceShown != c.meditationSpeed()) {
@@ -436,10 +451,23 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 			paceButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable(ModLang.TIP_PACE[paceShown - 1])));
 		}
 		// The switch, for the living on both paths (the dead draw in only ghostly qi), between the two: then three share the row.
-		pathButton.visible = progressTab && TwoPaths.drawable(c).size() >= 2 && !c.netherworld().ghost();
-		// The mockup's row (its places fixed in init: HallButton#art): "Path: Heaven" as it has it.
-		pathButton.setMessage(Component.translatable(drawn == TwoPaths.Path.GHOST ? ModLang.BTN_PATH_GHOST
-				: drawn == TwoPaths.Path.DEMON ? ModLang.BTN_PATH_DEMON : ModLang.BTN_PATH_HEAVEN));
+		boolean begin = bodyToBegin(c);
+		pathButton.visible = progressTab && (begin || TwoPaths.drawable(c).size() >= 2) && !c.netherworld().ghost();
+		// The mockup's row (its places fixed in init: HallButton#art): "Path: Heaven" as it has it; "Begin Body" while the Body Path may be begun.
+		pathButton.setMessage(Component.translatable(begin ? ModLang.BTN_BEGIN_BODY : drawn == TwoPaths.Path.GHOST ? ModLang.BTN_PATH_GHOST
+				: drawn == TwoPaths.Path.DEMON ? ModLang.BTN_PATH_DEMON : drawn == TwoPaths.Path.BODY ? ModLang.BTN_PATH_BODY : ModLang.BTN_PATH_HEAVEN));
+		if (pathTipBegin == null || pathTipBegin != begin) {
+			pathTipBegin = begin;
+			pathButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable(begin ? ModLang.BODY_BEGIN_HINT : ModLang.HALL_PATH_TIP)));
+		}
+	}
+
+	/** The tooltip the path button wears now: the Begin button's (true) or the switch's; null till first set. */
+	private Boolean pathTipBegin;
+
+	/** Whether {@code c} may begin the Body Path and hasn't (BodyPath#available): the path button is its Begin button then. */
+	private static boolean bodyToBegin(PlayerCultivation c) {
+		return BodyPath.rank(c) < 0 && BodyPath.available(c);
 	}
 
 	/** The pace button's width before its place in the mockup's row is set (HallButton#art), and the gap before it. */
@@ -504,6 +532,8 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		readyButtons.clear();
 		lifeModeButtons.clear();
 		heavenPractiseButtons.clear();
+		methodPractiseButtons.clear();
+		territoryButtons.clear();
 		methodPageButtons.clear();
 		lawFocusButtons.clear();
 		lawChooseButtons.clear();
@@ -540,12 +570,16 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 
 	// --- Cultivation: realm, stage, cultivation progress and what comes next (the Hall's panel: renderCultivationHall) ---
 
-	/** The paths the Cultivation tab shows, in their order: the heaven path, a demon's Demon Path, the ghost path once begun. */
+	/**
+	 * The paths the Cultivation tab shows, in their order: the heaven path (a cultivator's), a demon's Demon Path, the ghost path once begun,
+	 * the Body Path once begun (a mortal's too).
+	 */
 	private static List<TwoPaths.Path> columns(PlayerCultivation c) {
 		List<TwoPaths.Path> columns = new ArrayList<>();
-		columns.add(TwoPaths.Path.HEAVEN);
+		if (!c.isMortal()) columns.add(TwoPaths.Path.HEAVEN);
 		if (DemonPath.rank(c) >= 0) columns.add(TwoPaths.Path.DEMON);
 		if (TwoPaths.ghostRank(c, false) >= 0) columns.add(TwoPaths.Path.GHOST);
+		if (BodyPath.rank(c) >= 0) columns.add(TwoPaths.Path.BODY);
 		return columns;
 	}
 
@@ -599,8 +633,9 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 	private List<Line> cultivationStatus(PlayerCultivation c, int width) {
 		List<Line> status = heldStatus(c, width);
 		if (status.isEmpty()) {
-			status = heavenNext(c, width);
+			status = c.isMortal() ? new ArrayList<>() : heavenNext(c, width);
 			status.addAll(demonNext(c, width));
+			status.addAll(bodyNext(c, width));
 			if (TwoPaths.ghostRank(c, false) >= 0 && TwoPaths.heavenRank(c, false) >= 0) {
 				// What the heaven path's has said already (an axis of virtue both paths stand at: FourAxis) is said once; its bar framed
 				// in amber if either path's breakthrough waits on it.
@@ -657,8 +692,11 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		float h = height * 3f, first = 79, last = h - 31, step = (last - first) / (realms - 1);
 		HallArt.text(g, Component.translatable(ModLang.HALL_LADDER).getString(), 288 + ox, 26, 20, 22, 0x8C7A55, false);
 		HallArt.rect(g, 493 + ox, 80, 497 + ox, h - 28, 0xFFB8860B);
-		int[] ranks = c.isMortal() ? new int[] {-1, -1, -1} : new int[] {TwoPaths.heavenRank(c, false), TwoPaths.ghostRank(c, false), TwoPaths.demonRank(c, false)};
-		int[] marks = {0xFFFFD54F, 0xFF5FE6DC, 0xFFFF6A6A}, rims = {0xFF8C6A1E, 0xFF1A7A78, 0xFF7A2020}, names = {0xFFD54F, 0x8FEAE4, 0xFF8A8A};
+		// The Body Path's rung bronze (BodyPath), a mortal's too.
+		int[] ranks = c.isMortal() ? new int[] {-1, -1, -1, BodyPath.rank(c)}
+				: new int[] {TwoPaths.heavenRank(c, false), TwoPaths.ghostRank(c, false), TwoPaths.demonRank(c, false), BodyPath.rank(c)};
+		int[] marks = {0xFFFFD54F, 0xFF5FE6DC, 0xFFFF6A6A, 0xFFD8954A}, rims = {0xFF8C6A1E, 0xFF1A7A78, 0xFF7A2020, 0xFF6B3E12},
+				names = {0xFFD54F, 0x8FEAE4, 0xFF8A8A, 0xE0A060};
 		int[] litBy = new int[realms];
 		java.util.Arrays.fill(litBy, -1);
 		for (int i = 0; i < ranks.length; i++) {
@@ -672,13 +710,14 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 			HallArt.rect(g, 482 + ox, t, 508 + ox, t + 3, path < 0 ? HALL_FRAME : marks[path]);
 			HallArt.textRight(g, Realm.byIndex(r).getDisplayName().getString(), 476 + ox, t - 8, 17, 18, path < 0 ? 0x7D776A : names[path], false);
 		}
-		// Side by side 26 apart, or 20 where all three share a rung (so the third keeps clear of the panel at 580).
+		// Side by side 26 apart, 20 where three share a rung, 15 where all four do (so the last keeps clear of the panel at 580).
 		int[] onRung = new int[realms], sharing = new int[realms];
 		for (int rank : ranks) if (rank >= 0) sharing[Math.min(realms - 1, rank / stages)]++;
 		for (int i = 0; i < ranks.length; i++) {
 			if (ranks[i] < 0) continue;
 			int r = Math.min(realms - 1, ranks[i] / stages);
-			HallArt.diamond(g, 516 + (sharing[r] > 2 ? 20 : 26) * onRung[r]++ + ox, last - r * step - 7, 17, 3, rims[i], marks[i]);
+			int apart = sharing[r] > 3 ? 15 : sharing[r] > 2 ? 20 : 26;
+			HallArt.diamond(g, 516 + apart * onRung[r]++ + ox, last - r * step - 7, 17, 3, rims[i], marks[i]);
 		}
 	}
 
@@ -695,11 +734,12 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		try {
 			renderLadder(g, c);
 			HallArt.box(g, px, A_PANEL_Y, A_PANEL_W, h - 2 * A_PANEL_Y, 3, HALL_FRAME, NAV_INK);
-			if (!c.isMortal()) cultivationPanel(g, player, c, px, h);
+			// A mortal walking the Body Path has a panel as a cultivator does: its card (BodyPath).
+			if (!c.isMortal() || BodyPath.rank(c) >= 0) cultivationPanel(g, player, c, px, h);
 		} finally {
 			HallArt.end(g);
 		}
-		if (c.isMortal()) renderMortal(g, cultX + cultW / 2, cultY + 12);
+		if (c.isMortal() && BodyPath.rank(c) < 0) renderMortal(g, cultX + cultW / 2, cultY + 12);
 	}
 
 	/**
@@ -716,7 +756,11 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 			HallArt.box(g, px + 92, 36, 564, 42, 3, titleBox.isFocused() ? 0xFFB8860B : HALL_FRAME, 0xFF0B0E12);
 		}
 		int rank = Math.max(0, TwoPaths.higherRank(c, false)), stages = Stage.values().length;
-		HallArt.text(g, HallArt.fit(Realm.byIndex(rank / stages).getDisplayName().getString(), 632, 36), px + 24, 94 + dy, 36, 38, 0xFFD54F, false);
+		// The Body Path standing above every qi path (a mortal's, or a body tempered past them): its realm's own name heads the panel.
+		boolean byBody = BodyPath.rank(c) > TwoPaths.higherRank(c, false);
+		if (byBody) rank = BodyPath.rank(c);
+		String realmTitle = byBody ? BodyPath.realmName(BodyPath.realm(rank)).getString() : Realm.byIndex(rank / stages).getDisplayName().getString();
+		HallArt.text(g, HallArt.fit(realmTitle, 632, 36), px + 24, 94 + dy, 36, 38, byBody ? 0xE0A060 : 0xFFD54F, false);
 		boolean stronger = TwoPaths.strongerThanRank(c);
 		String under = stronger ? Component.translatable(ModLang.EFFECTIVE_LINE, TwoPaths.effectiveLabel(TwoPaths.effective(c, true))).getString()
 				: Stage.byIndex(rank % stages).getDisplayName().getString();
@@ -728,9 +772,9 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		float y = top + 6 - cultScroll, x = ax + 4;
 		HeavenMethod method = HeavenMethods.practised(c.heaven());
 		double boost = meditationBoost(player);
-		// The mockup's order: the heaven path, the ghost path, the Demon Path.
+		// The mockup's order: the heaven path, the ghost path, the Demon Path; the Body Path last.
 		List<TwoPaths.Path> walked = columns(c);
-		for (TwoPaths.Path path : List.of(TwoPaths.Path.HEAVEN, TwoPaths.Path.GHOST, TwoPaths.Path.DEMON)) {
+		for (TwoPaths.Path path : List.of(TwoPaths.Path.HEAVEN, TwoPaths.Path.GHOST, TwoPaths.Path.DEMON, TwoPaths.Path.BODY)) {
 			if (walked.contains(path)) y = pathCard(g, player, c, path, method, boost, x, y) + 12;
 		}
 		y += 4;
@@ -817,12 +861,17 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		HallArt.text(g, HallArt.fit(text, w - 22, 20), x + 22, y, 20, 22, color == 0x7D776A ? 0x9E9886 : 0xE6D3A3, false);
 	}
 
-	/** The heaven method practised and its layers, or that there is none, and what meditating on the heavens' qi adds a second. */
+	/**
+	 * The heaven scripture practised and its layers, or that there is none, and what meditating on the heavens' qi adds a second (nothing
+	 * without Qi Circulation's volume of the realm: HeavenMethods#canGain).
+	 */
 	private Detail methodFact(Player player, PlayerCultivation c, HeavenMethod method, double boost) {
 		if (TwoPaths.heavenRank(c, false) < 0) return null;
-		double rate = heavenRate(player, c, method, boost);
-		Component line = method == null ? Component.translatable(ModLang.METHOD_LINE_NONE, one(rate))
+		boolean gains = HeavenMethods.canGain(c);
+		double rate = gains ? heavenRate(player, c, method, boost) : 0;
+		Component line = method == null ? Component.translatable(ModLang.METHOD_LINE_NONE)
 				: c.isMaxed() ? Component.translatable(ModLang.METHOD_BAR, method.getDisplayName(), c.heaven().layer(method), method.layers())
+				: !gains ? Component.translatable(ModLang.METHOD_LINE_NO_VOLUME, method.getDisplayName(), c.heaven().layer(method), method.layers())
 				: Component.translatable(ModLang.METHOD_LINE, method.getDisplayName(), c.heaven().layer(method), method.layers(), one(rate));
 		return new Detail(line, boost > 1.0 && rate > 0 ? 0x7FE0A0 : 0xF0D78C);
 	}
@@ -842,9 +891,10 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 	 */
 	private float pathCard(GuiGraphics g, Player player, PlayerCultivation c, TwoPaths.Path path, HeavenMethod method, double boost, float x, float y) {
 		int stages = Stage.values().length;
-		boolean drawing, maxed, held;
+		boolean drawing, maxed, held, gains;
 		int color, fill, light, rim;
 		Component name, realm, stage;
+		Realm at;
 		double ratio, done, required, rate;
 		switch (path) {
 			case GHOST -> {
@@ -856,7 +906,8 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 				light = 0xFF5FE6DC;
 				rim = 0xFF1A7A78;
 				name = Component.translatable(ModLang.METHODS_PAGE_GHOST);
-				realm = Realm.byIndex(rank / stages).getDisplayName();
+				at = Realm.byIndex(rank / stages);
+				realm = at.getDisplayName();
 				stage = Stage.byIndex(rank % stages).getDisplayName();
 				done = s.pathCultivation();
 				required = GhostMethods.required(rank);
@@ -864,7 +915,8 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 				maxed = GhostMethods.isMaxed(s);
 				held = GhostMethods.atBottleneck(c);
 				double density = ClientNetherworldData.density();
-				rate = density <= 0 ? 0 : GhostMethods.ratePerSecond(c, density) * c.meditationSpeed();
+				gains = GhostMethods.canGain(c);
+				rate = density <= 0 || !gains ? 0 : GhostMethods.ratePerSecond(c, density) * c.meditationSpeed();
 			}
 			case DEMON -> {
 				int rank = Math.max(0, DemonPath.rank(c));
@@ -874,14 +926,35 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 				light = 0xFFE05A5A;
 				rim = 0xFF7A2020;
 				name = Component.translatable(ModLang.METHODS_PAGE_DEMON);
-				realm = DemonPath.realm(rank).getDisplayName();
+				at = DemonPath.realm(rank);
+				realm = at.getDisplayName();
 				stage = DemonPath.stage(rank).getDisplayName();
 				done = c.demon().cultivation();
 				required = DemonPath.required(rank);
 				ratio = DemonPath.stageProgress(c);
 				maxed = DemonPath.isMaxed(c);
 				held = DemonPath.atBottleneck(c);
-				rate = DemonPath.perSecond(c, 0) * c.meditationSpeed();
+				gains = DemonPath.canGain(c);
+				rate = gains ? DemonPath.perSecond(c, 0) * c.meditationSpeed() : 0;
+			}
+			case BODY -> {
+				int rank = Math.max(0, BodyPath.rank(c));
+				drawing = TwoPaths.cultivatesBody(c);
+				color = 0xE0A060;
+				fill = 0xFFB0702A;
+				light = 0xFFD8954A;
+				rim = 0xFF6B3E12;
+				name = Component.translatable(ModLang.METHODS_PAGE_BODY);
+				at = BodyPath.realm(rank);
+				realm = BodyPath.realmName(at);
+				stage = BodyPath.stage(rank).getDisplayName();
+				done = c.body().cultivation();
+				required = BodyPath.required(rank);
+				ratio = BodyPath.stageProgress(c);
+				maxed = BodyPath.isMaxed(c);
+				held = BodyPath.atBottleneck(c);
+				gains = BodyPath.canGain(c);
+				rate = gains ? BodyPath.perSecond(c, 0) * c.meditationSpeed() : 0;
 			}
 			default -> {
 				drawing = TwoPaths.drawnIn(c) == TwoPaths.Path.HEAVEN;
@@ -890,17 +963,19 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 				light = 0xFFF0C75A;
 				rim = 0xFF8C6A1E;
 				name = Component.translatable(ModLang.METHODS_PAGE_HEAVEN);
-				realm = c.getRealm().getDisplayName();
+				at = c.getRealm();
+				realm = at.getDisplayName();
 				stage = c.getStage().getDisplayName();
 				done = c.getCultivation();
 				required = c.cultivationRequired();
 				ratio = required <= 0 ? 0 : Math.min(1.0, done / required);
 				maxed = c.isMaxed();
 				held = c.isStalled();
-				rate = heavenRate(player, c, method, boost);
+				gains = HeavenMethods.canGain(c);
+				rate = gains ? heavenRate(player, c, method, boost) : 0;
 			}
 		}
-		boolean pool = path != TwoPaths.Path.DEMON;
+		boolean pool = path != TwoPaths.Path.DEMON && path != TwoPaths.Path.BODY; // (the Body Path has no qi at all)
 		float h = pool ? 124 : 92;
 		HallArt.box(g, x, y, 612, h, 3, rim, CARD);
 		HallArt.diamond(g, x + 20, y + 16, 12, 0xFF000000 | color);
@@ -937,6 +1012,8 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		String text = maxed ? Component.translatable(ModLang.HALL_CULT_MAX).getString()
 				: Component.translatable(ModLang.HALL_CULT, big(done), big(required), (int) Math.floor(ratio * 100)).getString();
 		if (drawing && rate > 0) text += "   " + Component.translatable(ModLang.HALL_PER_SECOND, one(rate)).getString();
+		// No method, no gain (the methods' volumes: HeavenMethods#canGain): nothing gathered here, or the axes fill it at Four Axis.
+		else if (drawing && !gains && !maxed) text += "   " + Component.translatable(at == Realm.FOUR_AXIS ? ModLang.HALL_AXES_FILL : ModLang.HALL_NO_METHOD).getString();
 		HallArt.textCentred(g, HallArt.fit(text, 560, 21), bx + 290, by + 7, 21, 22, HallArt.WHITE, true);
 		if (pool) {
 			// Its pool: the qi, the ghostly qi (the Demon Path draws on the qi: TwoPaths#pool).
@@ -952,10 +1029,10 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		return y + h;
 	}
 
-	/** The realm {@code c} stands at by the higher of its paths ("" for a mortal). */
+	/** The realm {@code c} stands at by the higher of its paths, its Body Path's own name where that stands highest ("" for a mortal on none). */
 	private static String standingName(PlayerCultivation c) {
-		if (c.isMortal()) return "";
-		int rank = TwoPaths.higherRank(c, false);
+		int rank = c.isMortal() ? -1 : TwoPaths.higherRank(c, false), body = BodyPath.rank(c);
+		if (body > rank) return BodyPath.realmName(BodyPath.realm(body)).getString();
 		return rank < 0 ? "" : Realm.byIndex(rank / Stage.values().length).getDisplayName().getString();
 	}
 
@@ -977,20 +1054,24 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 	private Detail seclusionDetail(PlayerCultivation c, Player player, HeavenMethod method, double boost) {
 		if (Double.isInfinite(ClientCultivationData.lifeSpan())) return null; // a True Immortal's cultivation costs no years
 		int stages = Stage.values().length;
-		boolean ghost = TwoPaths.cultivatesGhost(c), demon = TwoPaths.cultivatesDemon(c);
-		int rank = ghost ? GhostMethods.ghostRank(c.netherworld()) : demon ? DemonPath.rank(c) : PlayerCultivation.rank(c.getRealm(), c.getStage());
+		boolean ghost = TwoPaths.cultivatesGhost(c), demon = TwoPaths.cultivatesDemon(c), body = TwoPaths.cultivatesBody(c);
+		int rank = ghost ? GhostMethods.ghostRank(c.netherworld()) : demon ? DemonPath.rank(c) : body ? BodyPath.rank(c)
+				: c.isMortal() ? -1 : PlayerCultivation.rank(c.getRealm(), c.getStage());
 		if (rank < 0) return null;
+		// Gathering nothing here (no method's volume of the realm; Four Axis's axes), there are no years to reckon.
+		if (!(ghost ? GhostMethods.canGain(c) : demon ? DemonPath.canGain(c) : body ? BodyPath.canGain(c) : HeavenMethods.canGain(c))) return null;
 		double stone = player == null ? 1.0 : com.example.defyingtheheavens.SpiritStoneItem.meditationMultiplier(player);
 		double saving = ghost ? com.example.defyingtheheavens.Lifespan.saving(boost, 1, com.example.defyingtheheavens.Lifespan.ghostPlaceSaving(ClientNetherworldData.density()), stone)
 				: demon ? com.example.defyingtheheavens.Lifespan.saving(boost, 1, com.example.defyingtheheavens.Lifespan.placeSaving(c, DemonPath.realm(rank)), stone)
+				: body ? com.example.defyingtheheavens.Lifespan.saving(boost, 1, com.example.defyingtheheavens.Lifespan.placeSaving(c, BodyPath.realm(rank)), stone)
 				: com.example.defyingtheheavens.Lifespan.saving(boost, method == null ? 1 : HeavenMethods.elementFactor(shareHere(method.element())),
 						com.example.defyingtheheavens.Lifespan.placeSaving(c), stone);
-		double cultivated = ghost ? c.netherworld().pathCultivation() : demon ? c.demon().cultivation() : c.getCultivation();
+		double cultivated = ghost ? c.netherworld().pathCultivation() : demon ? c.demon().cultivation() : body ? c.body().cultivation() : c.getCultivation();
 		double years = 0;
 		for (int r = rank; r < (rank / stages + 1) * stages; r++) {
 			Realm realm = Realm.byIndex(r / stages);
 			Stage stage = Stage.byIndex(r % stages);
-			double need = ghost ? GhostMethods.required(r) : demon ? DemonPath.required(r) : PlayerCultivation.required(realm, stage);
+			double need = ghost ? GhostMethods.required(r) : demon ? DemonPath.required(r) : body ? BodyPath.required(r) : PlayerCultivation.required(realm, stage);
 			if (need <= 0) continue;
 			years += com.example.defyingtheheavens.Lifespan.seclusionYears(c, realm, stage, r == rank ? Math.max(0, 1 - cultivated / need) : 1, saving);
 		}
@@ -1031,10 +1112,36 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		return lines;
 	}
 
+	/**
+	 * What stands next on the Body Path (BodyPath), wrapped to {@code width}: how it is tempered while drawn in; its pinnacle, the lower realms'
+	 * cap or the Immortal Realm, an axis of virtue, the Laws past the Indestructible Body, or its tribulation waiting.
+	 */
+	private List<Line> bodyNext(PlayerCultivation c, int width) {
+		List<Line> lines = new ArrayList<>();
+		int rank = BodyPath.rank(c);
+		if (rank < 0) return lines;
+		if (TwoPaths.cultivatesBody(c) && !BodyPath.atBottleneck(c)) addStatus(lines, Component.translatable(ModLang.BODY_DEEDS), 0xC8A070, width);
+		if (BodyPath.isMaxed(c)) {
+			addStatus(lines, Component.translatable(ModLang.BODY_PINNACLE), 0xFFD700, width);
+		} else if (BodyPath.heldByLaws(c)) { // the ladder past the Indestructible Body shut for want of the Laws
+			addStatus(lines, BodyPath.lawGateLine(c), 0xFFC107, width);
+		} else if (BodyPath.atBottleneck(c) && BodyPath.locked(c)) {
+			addStatus(lines, BodyPath.lockLine(c), 0xFFC107, width);
+		} else if (FourAxis.holds(c, rank)) {
+			addAxis(lines, FourAxis.wanted(rank), BodyPath.heldByAxis(c), width);
+		} else if (BodyPath.canBreakthrough(c)) {
+			addStatus(lines, Component.translatable(TwoPaths.cultivatesBody(c) ? ModLang.BODY_BOTTLENECK : ModLang.BODY_BOTTLENECK_SWITCH,
+					BodyPath.rankName(rank + 1)), 0xE0A060, width);
+		}
+		return lines;
+	}
+
 
 	/**
-	 * What stands next on the ghost path, wrapped to {@code width}: its pinnacle; a foundation the breakthrough waits on (said ahead
-	 * in grey at Grand Perfection, amber once the bar is full); or the Netherworld's tribulation waiting at its bottleneck.
+	 * What stands next on the ghost path, wrapped to {@code width}: that it gathers nothing in its realm, wanting Breathing's volume of it;
+	 * its pinnacle; the Laws a breakthrough past True Immortal waits on (said ahead in grey at Grand Perfection, amber once the bar is
+	 * full); or the Netherworld's tribulation waiting at its bottleneck; and at Grand Perfection, that the realm ahead will gather nothing
+	 * without a foundation of it (or that its axes fill Four Axis).
 	 */
 	private List<Line> ghostNext(PlayerCultivation c, int width) {
 		List<Line> lines = new ArrayList<>();
@@ -1042,12 +1149,17 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		int rank = GhostMethods.ghostRank(s);
 		if (rank < 0 || c.isMortal()) return lines;
 		int stages = Stage.values().length;
+		Realm here = Realm.byIndex(rank / stages);
+		// No method, no gain: this realm wants a foundation of it (GhostMethods#canGain); Four Axis's axes are told below.
+		if (!GhostMethods.canGain(c) && here != Realm.FOUR_AXIS && !GhostMethods.isMaxed(s)) {
+			addStatus(lines, Component.translatable(ModLang.MSG_GHOST_NO_VOLUME, here.getDisplayName()), 0xFFC107, width);
+		}
 		if (GhostMethods.isMaxed(s)) {
 			addStatus(lines, Component.translatable(ModLang.GHOST_PINNACLE), 0xFFD700, width);
 		} else if (GhostMethods.heldByPlace(c)) { // into True Immortal and past it: the Immortal Realm wanted
 			addStatus(lines, c.lockLine(rank + 1), 0xFF6E6E, width);
-		} else if (Stage.byIndex(rank % stages).isLast() && !GhostMethods.opensWay(c, Realm.byIndex(rank / stages + 1))) {
-			addStatus(lines, GhostMethods.gateLine(c), GhostMethods.heldByMethod(c) ? 0xFFC107 : 0xA0A0A0, width);
+		} else if (GhostMethods.heldByMethod(c)) { // past True Immortal, the Laws wanted
+			addStatus(lines, GhostMethods.gateLine(c), 0xFFC107, width);
 		} else if (FourAxis.holds(c, rank)) {
 			// A Four Axis stage: its axis of virtue (FourAxis, the cultivator's), and how it is filled once the bar is full.
 			addAxis(lines, FourAxis.wanted(rank), GhostMethods.heldByAxis(c), width);
@@ -1055,6 +1167,11 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 			// The Breakthrough button breaks through on the path drawn in: with the heavens' qi drawn in, the switch first.
 			addStatus(lines, Component.translatable(TwoPaths.cultivatesGhost(c) ? ModLang.GHOST_BOTTLENECK : ModLang.GHOST_BOTTLENECK_SWITCH,
 					GhostMethods.rankName(rank + 1)), 0x6FE8D8, width);
+		}
+		// Grand Perfection: what the realm ahead wants (grey: the breakthrough is free below the Laws), said ahead.
+		if (Stage.byIndex(rank % stages).isLast() && !GhostMethods.isMaxed(s) && !GhostMethods.heldByMethod(c)) {
+			Realm ahead = Realm.byIndex(rank / stages + 1);
+			if (ahead.isPastTrueImmortal() ? !GhostMethods.opensWay(c, ahead) : !GhostMethods.hasVolume(c, ahead)) addStatus(lines, GhostMethods.gateLine(c), 0xA0A0A0, width);
 		}
 		return lines;
 	}
@@ -1074,9 +1191,19 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		return status;
 	}
 
-	/** What stands next on the heaven path, wrapped to {@code width}: the pinnacle, or what the breakthrough ahead waits on. */
+	/**
+	 * What stands next on the heaven path, wrapped to {@code width}: that it gathers nothing in its realm, wanting a scripture (Qi
+	 * Circulation's volume of it); the pinnacle, or what the breakthrough ahead waits on; and at Grand Perfection, that the realm ahead
+	 * will gather nothing without a scripture of it (or that its axes fill Four Axis; past True Immortal, the Laws it wants).
+	 */
 	private List<Line> heavenNext(PlayerCultivation c, int width) {
 		List<Line> status = new ArrayList<>();
+		boolean living = !c.netherworld().ghost() && !c.isMortal();
+		// No method, no gain: no scripture at all, or none with Circulation's volume of this realm (Four Axis's axes are told below).
+		if (living && !HeavenMethods.canGain(c) && c.getRealm() != Realm.FOUR_AXIS && !c.isMaxed()) {
+			addStatus(status, c.heaven().knowsAny() ? Component.translatable(ModLang.MSG_HEAVEN_NO_VOLUME, c.getRealm().getDisplayName())
+					: Component.translatable(ModLang.MSG_HEAVEN_NONE_KNOWN), 0xFFC107, width);
+		}
 		if (c.isMaxed()) {
 			// Heavenly Lord Grand Perfection since phase 3 (True Immortal's before; Four Axis's, with its last axis of virtue, before the
 			// realms after it: 2026-10-22).
@@ -1089,17 +1216,14 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 			var pill = PillItem.breakthroughPillFor(c.breakthroughRealm());
 			addStatus(status, Component.translatable(ModLang.NEED_PILL, pill.getDescription(), c.breakthroughRealm().getDisplayName()), 0xFFC107, width);
 			addStatus(status, Component.translatable(ModLang.PILL_RECIPE, AlchemyRecipes.describe(pill)), 0xA0A0A0, width);
-			// ...and a heaven method of the realm, if none is known.
-			if (c.isHeldByMethod()) addStatus(status, HeavenMethods.gateLine(c), 0xFFC107, width);
 		} else if (c.needsHeavensLeave()) {
 			// Qi Refining Mid: Late takes the heavens' leave (the Ritual to the Heavens at a Heaven Altar).
 			boolean full = c.isAtRitualGate();
 			addStatus(status, Component.translatable(full ? ModLang.RITUAL_GATE : ModLang.RITUAL_AHEAD), full ? 0xFFC107 : 0xA0A0A0, width);
 			if (full) addStatus(status, Component.translatable(ModLang.RITUAL_HOW), 0xA0A0A0, width);
-		} else if (!c.netherworld().ghost() && c.getStage().isLast() && !c.isMaxed() && !HeavenMethods.opensWay(c, c.getRealm().next())) {
-			// Grand Perfection with no heaven method known of the realm ahead: one wanted, said ahead in grey, in amber once the
-			// stage is full (the breakthrough waits on it).
-			addStatus(status, HeavenMethods.gateLine(c), c.isHeldByMethod() ? 0xFFC107 : 0xA0A0A0, width);
+		} else if (c.isHeldByMethod()) {
+			// Grand Perfection's bottleneck with the realm ahead past True Immortal: the Laws it wants (HeavenMethods#gateLine).
+			addStatus(status, HeavenMethods.gateLine(c), 0xFFC107, width);
 		} else if (c.getRealm() == Realm.FOUR_AXIS && FourAxis.wanted(PlayerCultivation.rank(c.getRealm(), c.getStage())) != null
 				&& (!c.isMaxed() || !FourAxis.allComplete(c)) && !FourAxis.complete(c, FourAxis.wanted(PlayerCultivation.rank(c.getRealm(), c.getStage())))) {
 			// A Four Axis stage: its axis of virtue (FourAxis), and how it is filled once the stage is full and the breakthrough waits on it.
@@ -1113,6 +1237,11 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		} else if (c.getPreparedRealm() != null) {
 			// A breakthrough pill already taken, waiting for the bar to fill.
 			addStatus(status, Component.translatable(ModLang.PILL_PREPARED, c.getPreparedRealm().getDisplayName()), 0x7FE0A0, width);
+		}
+		// Grand Perfection: what the realm ahead wants (grey: the breakthrough is free below the Laws), said ahead.
+		if (living && c.getStage().isLast() && !c.isMaxed() && !c.isHeldByMethod()) {
+			Realm ahead = c.getRealm().next();
+			if (ahead.isPastTrueImmortal() ? !HeavenMethods.opensWay(c, ahead) : !HeavenMethods.hasVolume(c, ahead)) addStatus(status, HeavenMethods.gateLine(c), 0xA0A0A0, width);
 		}
 		return status;
 	}
@@ -1195,8 +1324,9 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		MortalStage stage = c.getMortalStage();
 		g.drawCenteredString(font, Component.translatable(ModLang.REALM, stage.getDisplayName()), cx, y, 0x7FDBFF);
 		y += 18;
-		int x = left + 14;
-		int barW = WIDTH - 28;
+		// Within the Hall's Cultivation panel (cultX, cultW: the old panel's left and WIDTH ran it across the ladder since the redesign).
+		int x = cultX + 8;
+		int barW = cultW - 16;
 		double ratio = stage.isLast() ? 1 : Math.min(1, c.getTempering() / c.temperingRequired());
 		g.fill(x - 1, y - 1, x + barW + 1, y + 11, 0xFF000000);
 		g.fill(x, y, x + barW, y + 10, 0xFF2A2A3A);
@@ -1206,20 +1336,20 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 			g.drawCenteredString(font, Component.translatable(ModLang.TEMPERING, Math.round(c.getTempering()),
 					Math.round(c.temperingRequired())), cx, y, 0xE0E0E0);
 			y += 16;
-			for (FormattedCharSequence line : font.split(Component.translatable(ModLang.MORTAL_HOW), WIDTH - 28)) {
+			for (FormattedCharSequence line : font.split(Component.translatable(ModLang.MORTAL_HOW), barW)) {
 				g.drawCenteredString(font, line, cx, y, 0xB0B0B0);
 				y += 11;
 			}
 		} else {
 			y += 4;
-			for (FormattedCharSequence line : font.split(Component.translatable(ModLang.MORTAL_DETAIL), WIDTH - 28)) {
+			for (FormattedCharSequence line : font.split(Component.translatable(ModLang.MORTAL_DETAIL), barW)) {
 				g.drawCenteredString(font, line, cx, y, 0xB0B0B0);
 				y += 11;
 			}
 		}
 		y += 8;
 		for (FormattedCharSequence line : font.split(Component.translatable(ModLang.MORTAL_RECIPE,
-				ModItems.MARROW_CLEANSING_ELIXIR.getDescription(), AlchemyRecipes.describe(ModItems.MARROW_CLEANSING_ELIXIR)), WIDTH - 28)) {
+				ModItems.MARROW_CLEANSING_ELIXIR.getDescription(), AlchemyRecipes.describe(ModItems.MARROW_CLEANSING_ELIXIR)), barW)) {
 			g.drawCenteredString(font, line, cx, y, 0xFFC107);
 			y += 11;
 		}
@@ -1239,8 +1369,8 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		Component name = refining ? BodyRefining.name(c.getBodyRefining()) : c.getMortalStage().getDisplayName();
 		g.drawCenteredString(font, Component.translatable(ModLang.REALM, name), cx, y, 0xFFB74D);
 		y += 18;
-		int x = left + 14;
-		int barW = WIDTH - 28;
+		int x = cultX + 8;
+		int barW = cultW - 16;
 		boolean done = !c.canTemper();
 		double ratio = done ? 1 : Math.min(1, c.getTempering() / Math.max(1, c.temperingRequired()));
 		g.fill(x - 1, y - 1, x + barW + 1, y + 11, 0xFF000000);
@@ -1252,7 +1382,7 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 					Math.round(c.temperingRequired())), cx, y, 0xE0E0E0);
 			y += 16;
 		}
-		for (FormattedCharSequence line : font.split(c.physique().getDescription(), WIDTH - 28)) {
+		for (FormattedCharSequence line : font.split(c.physique().getDescription(), barW)) {
 			g.drawCenteredString(font, line, cx, y, 0xB0B0B0);
 			y += 11;
 		}
@@ -1748,6 +1878,7 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 				row.append(member.player() ? Component.translatable(ModLang.SECT_TAB_PLAYER, member.name()) : Component.literal(member.name()));
 				int colour = member.title() == null ? 0x8A8A8A : member.title().getColor();
 				Component realm = member.rank() < 0 ? Component.translatable(ModLang.SECT_TAB_OFFLINE)
+						: info.body() ? BodyPath.rankName(member.rank()) // a body sect's ranks are the Body Path's
 						: PlayerCultivation.rankName(CultivatorNpc.realmOf(member.rank()), CultivatorNpc.stageOf(member.rank()));
 				right(g, realm, left + LIST_RIGHT, ry + textOffset, 0x9E9E9E);
 				// The name gets what the realm (and a Banish button) leaves, cut short with an ellipsis if it must be.
@@ -2221,6 +2352,24 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 				if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
 				return true;
 			}
+			// A method to practise (CultivationMethods#practise): a switch that costs the path's stages asks first; the second click, its Confirm.
+			for (RowButton<CultivationMethod> practise : methodPractiseButtons) {
+				if (!practise.contains(mouseX, mouseY)) continue;
+				if (confirmSwitch == practise.value() || !switchCosts(practise.value())) {
+					ClientMethods.practiseMethod(practise.value());
+					confirmSwitch = null;
+				} else {
+					confirmSwitch = practise.value();
+				}
+				if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+				return true;
+			}
+			for (RowButton<Integer> mark : territoryButtons) {
+				if (!mark.contains(mouseX, mouseY)) continue;
+				ClientMethods.markTerritory();
+				if (minecraft != null) minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+				return true;
+			}
 			for (RowButton<Spell> mode : lifeModeButtons) {
 				if (!mode.contains(mouseX, mouseY)) continue;
 				ClientMethods.nextLifeMode();
@@ -2384,26 +2533,199 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 	 * one, and what its layers bring. Methods not yet learned show only that they exist. Scrolls like the Abilities tab.
 	 */
 	private void renderMethods(GuiGraphics g, int mouseX, int mouseY) {
-		// The pages, side by side at the top: the ghost path's methods and the heaven path's, and an immortal's Laws (phase 3).
+		// The pages, side by side at the top: the ghost path's methods and the heaven path's, a demon core's Demon Path (the methods
+		// overhaul's phase 2), the Body Path's (2026-11-01, its own ways), and an immortal's Laws (phase 3).
 		PlayerCultivation c = ClientCultivationData.get();
 		boolean laws = com.example.defyingtheheavens.Laws.isImmortal(c) || c.laws().total() > 0 || c.laws().choices() > 0;
-		if (methodPage == PAGE_LAWS && !laws) methodPage = PAGE_GHOST;
+		boolean demon = DemonPath.rank(c) >= 0;
+		boolean body = BodyPath.rank(c) >= 0;
+		if (methodPage == PAGE_LAWS && !laws || methodPage == PAGE_DEMON && !demon || methodPage == PAGE_BODY && !body) methodPage = PAGE_GHOST;
 		int y = top + CONTENT_Y;
 		int x = left + 14;
-		for (int page = PAGE_GHOST; page <= (laws ? PAGE_LAWS : PAGE_HEAVEN); page++) {
-			Component label = Component.translatable(page == PAGE_LAWS ? ModLang.METHODS_PAGE_LAWS : page == PAGE_HEAVEN ? ModLang.METHODS_PAGE_HEAVEN : ModLang.METHODS_PAGE_GHOST);
+		List<Integer> pages = new ArrayList<>(List.of(PAGE_GHOST, PAGE_HEAVEN));
+		if (demon) pages.add(PAGE_DEMON);
+		if (body) pages.add(PAGE_BODY);
+		if (laws) pages.add(PAGE_LAWS);
+		for (int page : pages) {
+			Component label = Component.translatable(page == PAGE_LAWS ? ModLang.METHODS_PAGE_LAWS : page == PAGE_HEAVEN ? ModLang.METHODS_PAGE_HEAVEN
+					: page == PAGE_DEMON ? ModLang.METHODS_PAGE_DEMON : page == PAGE_BODY ? ModLang.METHODS_PAGE_BODY : ModLang.METHODS_PAGE_GHOST);
 			int w = font.width(label) + 12;
 			RowButton<Integer> button = new RowButton<>(page, x, y, w);
 			methodPageButtons.add(button);
 			boolean chosen = methodPage == page;
-			int color = page == PAGE_LAWS ? LAWS_COLOR : page == PAGE_HEAVEN ? 0xFFD700 : 0x8FEAE4;
+			int color = page == PAGE_LAWS ? LAWS_COLOR : page == PAGE_HEAVEN ? 0xFFD700 : page == PAGE_DEMON ? DEMON_COLOR : page == PAGE_BODY ? BODY_COLOR : 0x8FEAE4;
 			drawRowButton(g, button, label, button.contains(mouseX, mouseY), chosen ? color : 0x9E9E9E, chosen);
 			x += w + 4;
 		}
 		int viewTop = top + CONTENT_Y + METHOD_PAGE_ROW;
 		if (methodPage == PAGE_LAWS) renderLaws(g, mouseX, mouseY, viewTop);
 		else if (methodPage == PAGE_HEAVEN) renderHeavenMethods(g, mouseX, mouseY, viewTop);
+		else if (methodPage == PAGE_DEMON) renderDemonMethods(g, mouseX, mouseY, viewTop);
+		else if (methodPage == PAGE_BODY) renderBodyMethods(g, mouseX, mouseY, viewTop);
 		else renderGhostMethods(g, mouseX, mouseY, viewTop);
+	}
+
+	/** The Body Path page's colour: the body's bronze, as its card's. */
+	private static final int BODY_COLOR = 0xE0A060;
+
+	/**
+	 * The Body Path's page (2026-11-01: its own ways besides Body Tempering, MedicinalBath and the rest): where it stands, then its methods
+	 * (methodsSection), the one practised the only one that tempers it. Scrolls as the other pages do.
+	 */
+	private void renderBodyMethods(GuiGraphics g, int mouseX, int mouseY, int viewTop) {
+		PlayerCultivation c = ClientCultivationData.get();
+		int x = left + 14;
+		int rightEdge = left + LIST_RIGHT;
+		int width = rightEdge - x;
+		int viewBottom = top + HEIGHT - 8;
+		List<FormattedCharSequence> topLines = new ArrayList<>(font.split(BodyPath.rankName(BodyPath.rank(c)), width));
+		int contentHeight = 6 + topLines.size() * 10 + 6 + methodsSection(g, TwoPaths.Path.BODY, x, 0, rightEdge, viewTop, viewBottom, mouseX, mouseY, false);
+		methodMaxScroll = Math.max(0, contentHeight - (viewBottom - viewTop));
+		methodScroll = Mth.clamp(methodScroll, 0, methodMaxScroll);
+		g.enableScissor(left + 1, viewTop, left + WIDTH - 1, viewBottom);
+		int y = viewTop + 3 - methodScroll;
+		for (FormattedCharSequence line : topLines) {
+			g.drawString(font, line, x, y, BODY_COLOR);
+			y += 10;
+		}
+		y += 6;
+		methodsSection(g, TwoPaths.Path.BODY, x, y, rightEdge, viewTop, viewBottom, mouseX, mouseY, true);
+		g.disableScissor();
+		scrollbar(g, viewTop, viewBottom, contentHeight, methodScroll, methodMaxScroll, mouseX, mouseY);
+	}
+
+	/** The Demon Path page's colour: the demon's crimson, as its card's. */
+	private static final int DEMON_COLOR = 0xFF6A6A;
+
+	/** Whether practising {@code method} now costs its path's stages (CultivationMethods#practise): another than the one chosen, out of Four Axis. */
+	private static boolean switchCosts(CultivationMethod method) {
+		PlayerCultivation c = ClientCultivationData.get();
+		TwoPaths.Path path = method.path();
+		Realm realm = CultivationMethods.realmOf(c, path);
+		return path != null && CultivationMethods.chosen(c, path) != method && realm != null && realm != Realm.FOUR_AXIS;
+	}
+
+	/**
+	 * A path's methods (CultivationMethods; the methods overhaul's phase 2), from {@code y}: a header, then each method of the path the
+	 * cultivator knows, the one practising first, its name (gold when practised), "Practising" or a Practise button (Confirm, with the
+	 * warning under it, when a switch would cost the path's stages), what its volumes reach, and what it is. {@code draw} false only
+	 * measures. @return the y under it
+	 */
+	private int methodsSection(GuiGraphics g, TwoPaths.Path path, int x, int y, int rightEdge, int viewTop, int viewBottom, int mouseX, int mouseY,
+			boolean draw) {
+		PlayerCultivation c = ClientCultivationData.get();
+		int width = rightEdge - x;
+		Component header = Component.translatable(ModLang.METHODS_SECTION);
+		if (draw) {
+			g.drawString(font, header, x, y, 0xE6D3A3);
+			g.fill(x + font.width(header) + 4, y + 4, rightEdge, y + 5, HallHud.RULE);
+		}
+		y += 13;
+		CultivationMethod practised = CultivationMethods.practised(c, path), chosen = CultivationMethods.chosen(c, path);
+		List<CultivationMethod> known = new ArrayList<>();
+		for (CultivationMethod method : CultivationMethod.values()) if (method.path() == path && CultivationMethods.knows(c, method)) known.add(method);
+		known.sort((a, b) -> Boolean.compare(b == chosen, a == chosen));
+		if (practised == CultivationMethod.FOUR_AXES) known.add(0, CultivationMethod.FOUR_AXES);
+		for (CultivationMethod method : known) {
+			boolean current = method == practised || method == chosen && practised != CultivationMethod.FOUR_AXES;
+			if (draw) {
+				g.drawString(font, method.getDisplayName(), x, y, current ? 0xFFD700 : 0xE0E0E0);
+				if (method == CultivationMethod.FOUR_AXES || current) {
+					right(g, Component.translatable(ModLang.METHODS_PRACTISING), rightEdge, y, 0x69F0AE);
+				} else {
+					boolean confirming = confirmSwitch == method;
+					Component label = Component.translatable(confirming ? ModLang.BTN_CONFIRM_SWITCH : ModLang.BTN_PRACTISE_METHOD);
+					int w = font.width(label) + 10;
+					RowButton<CultivationMethod> button = new RowButton<>(method, rightEdge - w, y - 3, w);
+					boolean visible = button.y() >= viewTop && button.y() + SWITCH_H <= viewBottom;
+					if (visible) methodPractiseButtons.add(button);
+					drawRowButton(g, button, label, visible && button.contains(mouseX, mouseY), confirming ? 0xFF8A65 : 0xE0E0E0);
+				}
+			}
+			y += 13;
+			List<FormattedCharSequence> lines = new ArrayList<>();
+			if (confirmSwitch == method && !current) {
+				lines.addAll(font.split(Component.translatable(switchCosts(method) ? ModLang.METHODS_SWITCH_WARNING : ModLang.METHODS_SWITCH_FREE), width));
+			}
+			Realm reach = CultivationMethods.reach(c, method);
+			// A way of one realm (phase 4) has the one volume: no span to tell.
+			boolean one = method.first() == method.last();
+			Component reachLine = method == CultivationMethod.FOUR_AXES ? null
+					: path == TwoPaths.Path.DEMON ? (one ? Component.translatable(ModLang.METHODS_METHOD_BLOOD_ONE, method.first().getDisplayName())
+							: Component.translatable(ModLang.METHODS_METHOD_BLOOD, method.first().getDisplayName(), method.last().getDisplayName()))
+					: one ? Component.translatable(ModLang.METHODS_METHOD_ONE, method.first().getDisplayName())
+					: Component.translatable(ModLang.METHODS_METHOD_REACH, reach == null ? "-" : reach.getDisplayName(), method.first().getDisplayName(),
+							FourAxis.volumeReach(method.last()).getDisplayName());
+			if (reachLine != null) lines.addAll(font.split(reachLine, width));
+			List<FormattedCharSequence> about = font.split(method.getDescription(), width);
+			for (int i = 0; i < lines.size(); i++) {
+				if (draw) g.drawString(font, lines.get(i), x, y, i == 0 && confirmSwitch == method && !current ? 0xFF8A65 : 0xC8B88A);
+				y += 10;
+			}
+			for (FormattedCharSequence line : about) {
+				if (draw) g.drawString(font, line, x, y, 0x8A8A8A);
+				y += 10;
+			}
+			y += 5;
+		}
+		return y + 3;
+	}
+
+	/**
+	 * The Demon Path's page (the methods overhaul's phase 2): its stand, the blood's taint (Core Devouring) and the territory held (Territorial
+	 * Dominion, with Mark Territory), then its methods (methodsSection). Scrolls as the other pages do.
+	 */
+	private void renderDemonMethods(GuiGraphics g, int mouseX, int mouseY, int viewTop) {
+		PlayerCultivation c = ClientCultivationData.get();
+		if (DemonPath.rank(c) < 0) {
+			methodMaxScroll = 0;
+			renderPlaceholder(g, ModLang.METHODS_TITLE, ModLang.METHODS_DEMON_EMPTY, ModLang.METHODS_DEMON_HINT);
+			return;
+		}
+		int x = left + 14;
+		int rightEdge = left + LIST_RIGHT;
+		int width = rightEdge - x;
+		int viewBottom = top + HEIGHT - 8;
+		List<FormattedCharSequence> topLines = new ArrayList<>();
+		List<Integer> topColors = new ArrayList<>();
+		java.util.function.BiConsumer<Component, Integer> addTop = (line, color) -> {
+			for (FormattedCharSequence part : font.split(line, width)) {
+				topLines.add(part);
+				topColors.add(color);
+			}
+		};
+		addTop.accept(DemonPath.rankName(DemonPath.rank(c)), DEMON_COLOR);
+		if (c.demon().taint() > 0) addTop.accept(Component.translatable(ModLang.METHODS_DEMON_TAINT, Math.round(c.demon().taint() * 100)), 0xD06060);
+		boolean territorial = CultivationMethods.knows(c, CultivationMethod.TERRITORIAL_DOMINION);
+		if (territorial) {
+			BlockPos at = c.demon().territory();
+			addTop.accept(c.demon().hasTerritory() ? Component.translatable(ModLang.METHODS_TERRITORY, com.example.defyingtheheavens.Territories.RADIUS,
+					at.getX() + ", " + at.getY() + ", " + at.getZ()) : Component.translatable(ModLang.METHODS_TERRITORY_NONE), 0xC8B88A);
+		}
+		int contentHeight = 6 + topLines.size() * 10 + (territorial ? SWITCH_H + 6 : 0) + 6
+				+ methodsSection(g, TwoPaths.Path.DEMON, x, 0, rightEdge, viewTop, viewBottom, mouseX, mouseY, false);
+		methodMaxScroll = Math.max(0, contentHeight - (viewBottom - viewTop));
+		methodScroll = Mth.clamp(methodScroll, 0, methodMaxScroll);
+		g.enableScissor(left + 1, viewTop, left + WIDTH - 1, viewBottom);
+		int y = viewTop + 3 - methodScroll;
+		for (int i = 0; i < topLines.size(); i++) {
+			g.drawString(font, topLines.get(i), x, y, topColors.get(i));
+			y += 10;
+		}
+		if (territorial) {
+			y += 3;
+			Component label = Component.translatable(ModLang.BTN_MARK_TERRITORY);
+			int w = font.width(label) + 10;
+			RowButton<Integer> button = new RowButton<>(0, x, y, w);
+			boolean visible = button.y() >= viewTop && button.y() + SWITCH_H <= viewBottom;
+			if (visible) territoryButtons.add(button);
+			drawRowButton(g, button, label, visible && button.contains(mouseX, mouseY), DEMON_COLOR);
+			y += SWITCH_H + 3;
+		}
+		y += 6;
+		methodsSection(g, TwoPaths.Path.DEMON, x, y, rightEdge, viewTop, viewBottom, mouseX, mouseY, true);
+		g.disableScissor();
+		scrollbar(g, viewTop, viewBottom, contentHeight, methodScroll, methodMaxScroll, mouseX, mouseY);
 	}
 
 	/** The Laws page's own colour: a pale violet, between the heavens' gold and the void's dark. */
@@ -2607,13 +2929,16 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 			}
 			rateLines = font.split(rate, width);
 		}
-		// How far the foundations known open the ghost path's way (GhostMethods#opensWay): the deepest realm a breakthrough may lead into.
+		// Its method, Netherworld Breathing: the deepest realm its volumes reach (GhostMethods#hasVolume), and whether the path's realm gathers.
 		List<FormattedCharSequence> floorLines = new ArrayList<>();
-		GhostMethod foundation = GhostMethods.deepestFoundation(s);
-		if (foundation != null && !sealed) {
-			Realm reach = Realm.QI_REFINING;
-			for (GhostMethod method : s.knownMethods()) if (method.isFoundation() && method.realm().ordinal() > reach.ordinal()) reach = method.realm();
-			floorLines = font.split(Component.translatable(ModLang.METHODS_GHOST_REACH, reach.getDisplayName()), width);
+		Realm reach = GhostMethods.foundationReach(s);
+		if (reach != null && !sealed) {
+			floorLines = new ArrayList<>(font.split(Component.translatable(ModLang.METHODS_GHOST_REACH, FourAxis.volumeReach(reach).getDisplayName()), width));
+			Realm here = GhostMethods.ghostRealm(s);
+			if (here != null && !GhostMethods.canGain(c)) {
+				floorLines.addAll(font.split(here == Realm.FOUR_AXIS ? Component.translatable(ModLang.MSG_AXES_ARE_THE_METHOD)
+						: Component.translatable(ModLang.MSG_GHOST_NO_VOLUME, here.getDisplayName()), width));
+			}
 		}
 		List<List<FormattedCharSequence>> gains = new ArrayList<>();
 		int ghostPath = GhostMethods.ghostRank(s);
@@ -2621,7 +2946,10 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		Component pathLine = sealed ? Component.translatable(ModLang.METHODS_GHOST_PATH_SEALED)
 				: ghostPath < 0 ? Component.translatable(ModLang.METHODS_GHOST_PATH_NONE)
 				: Component.translatable(ModLang.METHODS_GHOST_PATH, GhostMethods.rankName(ghostPath));
-		int contentHeight = 6 + 12 + 11 + rateLines.size() * 10 + floorLines.size() * 10 + 6;
+		// The ghost path's methods (the methods overhaul's phase 2), under the top lines: once it is begun, not a mortal's.
+		boolean showMethods = ghostPath >= 0 && !sealed;
+		int contentHeight = 6 + 12 + 11 + rateLines.size() * 10 + floorLines.size() * 10 + 6
+				+ (showMethods ? methodsSection(g, TwoPaths.Path.GHOST, x, 0, rightEdge, viewTop, viewBottom, mouseX, mouseY, false) : 0);
 		for (GhostMethod method : GhostMethod.values()) {
 			List<FormattedCharSequence> lines = s.knows(method) ? font.split(method.getGains(), width) : font.split(Component.translatable(method.tier() >= 3 ? ModLang.METHODS_UNKNOWN_DEEP : ModLang.METHODS_UNKNOWN), width - 20);
 			gains.add(lines);
@@ -2648,6 +2976,7 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 			y += 10;
 		}
 		y += 6;
+		if (showMethods) y = methodsSection(g, TwoPaths.Path.GHOST, x, y, rightEdge, viewTop, viewBottom, mouseX, mouseY, true);
 		GhostMethod[] methods = GhostMethod.values();
 		for (int i = 0; i < methods.length; i++) {
 			GhostMethod method = methods[i];
@@ -2758,8 +3087,12 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		} else if (c.isMortal()) {
 			addTop.accept(Component.translatable(ModLang.METHODS_HEAVEN_SEALED), 0x9E9E9E);
 		} else {
-			// The deepest realm a breakthrough may lead into (HeavenMethods#opensWay).
-			addTop.accept(Component.translatable(ModLang.METHODS_HEAVEN_REACH, HeavenMethods.deepestRealm(h).getDisplayName()), 0xC8B88A);
+			// Its method, Qi Circulation: the deepest realm its volumes reach (HeavenMethods#hasVolume), and whether this realm gathers.
+			addTop.accept(Component.translatable(ModLang.METHODS_HEAVEN_REACH, FourAxis.volumeReach(HeavenMethods.deepestRealm(h)).getDisplayName()), 0xC8B88A);
+			if (!HeavenMethods.canGain(c)) {
+				addTop.accept(c.getRealm() == Realm.FOUR_AXIS ? Component.translatable(ModLang.MSG_AXES_ARE_THE_METHOD)
+						: Component.translatable(ModLang.MSG_HEAVEN_NO_VOLUME, c.getRealm().getDisplayName()), 0xFFC107);
+			}
 		}
 		if (!dead && !c.isMortal() && active != null) {
 			int layer = h.layer(active);
@@ -2789,7 +3122,10 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 		// Each element: its header, the methods of it known, then how many are not.
 		List<HeavenMethod> known = new ArrayList<>();
 		Map<HeavenMethod, List<FormattedCharSequence>> gains = new java.util.EnumMap<>(HeavenMethod.class);
-		int contentHeight = 6 + topLines.size() * 10 + 4;
+		// The heaven path's methods (the methods overhaul's phase 2), under the top lines: the living's, their meridians open.
+		boolean showMethods = !dead && !c.isMortal();
+		int contentHeight = 6 + topLines.size() * 10 + 4
+				+ (showMethods ? methodsSection(g, TwoPaths.Path.HEAVEN, x, 0, rightEdge, viewTop, viewBottom, mouseX, mouseY, false) : 0);
 		for (QiElement element : QiElement.five()) {
 			contentHeight += 14;
 			int unknown = 0;
@@ -2818,6 +3154,7 @@ public class CultivationScreen extends Screen implements HallFrame.Framed {
 			y += 10;
 		}
 		y += 4;
+		if (showMethods) y = methodsSection(g, TwoPaths.Path.HEAVEN, x, y, rightEdge, viewTop, viewBottom, mouseX, mouseY, true);
 		for (QiElement element : QiElement.five()) {
 			// The element's header: its name in its colour, a rule after it.
 			Component name = element.getDisplayName();

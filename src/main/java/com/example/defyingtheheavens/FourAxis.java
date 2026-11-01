@@ -16,6 +16,9 @@ import java.util.UUID;
  * the user's ask, 2026-10-20), all of it won through the wishes of the lower realms' people, mortals and lesser cultivators, in the
  * Astral Realm's settlements (Wishes): each axis by wishes of its own kind, and only the axis one stands at, in order. The axes are
  * the cultivator's, not one path's: saved on the record (PlayerCultivation#axisProgress), and lost with a spent life (Lifespan#wipe).
+ * <p>
+ * <b>The axes are the method</b> (the user's rule, 2026-10-31): at Four Axis no method has a volume, and meditation fills nothing; each
+ * stage's bar is how far its axis is filled ({@link #fillBars}), on every path that stands there.
  */
 public final class FourAxis {
 	/** The four axes, in order: each a Four Axis stage's, with what completes it in its own measure. Saved by place: new ones never. */
@@ -143,10 +146,12 @@ public final class FourAxis {
 		int after = Math.min(need, before + amount);
 		if (after <= before) return 0;
 		c.setAxisProgress(axis, after);
+		fillBars(c);
 		CultivationManager.markDirty(server);
 		ServerPlayer player = server.getPlayerList().getPlayer(id);
 		if (player == null) return after - before;
 		CultivationManager.sync(player);
+		Spells.sync(player); // the ghost path's bar rides with the methods (ModPackets#sendMethods)
 		if (after >= need) {
 			player.sendSystemMessage(Component.translatable(ModLang.MSG_AXIS_COMPLETE, axis.getDisplayName()).withStyle(ChatFormatting.GOLD));
 			player.playNotifySound(SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 0.8f, 1.0f);
@@ -155,6 +160,65 @@ public final class FourAxis {
 					.withStyle(ChatFormatting.YELLOW), true);
 		}
 		return after - before;
+	}
+
+	/**
+	 * Every path of {@code c} standing in Four Axis has its bar set to how far the axis of its stage is filled ({@link #wanted}): the axes
+	 * are everyone's method there, so a stage's bar is full when its axis is complete (its tribulation waits then, as before), and a lower
+	 * path rides the axes its higher one has completed. Once a second (NetherworldManager#second), and as an axis moves ({@link #add}).
+	 * @return whether any bar moved
+	 */
+	public static boolean fillBars(PlayerCultivation c) {
+		boolean moved = false;
+		int heaven = PlayerCultivation.rank(c.getRealm(), c.getStage());
+		if (!c.isMortal() && wanted(heaven) != null) {
+			double want = filled(c, heaven) * c.cultivationRequired();
+			if (Math.abs(c.getCultivation() - want) > 1.0e-6) {
+				c.setState(c.getRealm(), c.getStage(), want);
+				moved = true;
+			}
+		}
+		NetherworldState s = c.netherworld();
+		int ghost = GhostMethods.ghostRank(s);
+		if (wanted(ghost) != null) {
+			double want = filled(c, ghost) * GhostMethods.required(ghost);
+			if (Math.abs(s.pathCultivation() - want) > 1.0e-6) {
+				s.setPath(ghost, want);
+				moved = true;
+			}
+		}
+		int demon = DemonPath.rank(c);
+		if (wanted(demon) != null) {
+			double want = filled(c, demon) * DemonPath.required(demon);
+			if (Math.abs(c.demon().cultivation() - want) > 1.0e-6) {
+				c.demon().set(demon, want);
+				moved = true;
+			}
+		}
+		int body = BodyPath.rank(c); // the Body Path's Golden Blood, its Four Axis (BodyPath)
+		if (wanted(body) != null) {
+			double want = filled(c, body) * BodyPath.required(body);
+			if (Math.abs(c.body().cultivation() - want) > 1.0e-6) {
+				c.body().set(body, want);
+				moved = true;
+			}
+		}
+		return moved;
+	}
+
+	/**
+	 * The deepest realm a scripture or foundation of {@code realm} gives its method's volume of (each carries the chapters from Qi Refining
+	 * up to its own realm): its own, but Four Axis's, which no method has, gives the realm before's.
+	 */
+	public static Realm volumeReach(Realm realm) {
+		return realm == Realm.FOUR_AXIS ? Realm.HEAVENLY_BEING : realm;
+	}
+
+	/** How far the axis the stage {@code rank} stands for is filled, 0 to 1 (a complete one whole); 0 outside Four Axis. */
+	public static double filled(PlayerCultivation c, int rank) {
+		Axis axis = wanted(rank);
+		if (axis == null) return 0;
+		return complete(c, axis) ? 1 : Math.min(1, progress(c, axis) / (double) Math.max(1, need(c, axis)));
 	}
 
 	/**

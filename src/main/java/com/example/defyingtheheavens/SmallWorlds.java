@@ -121,10 +121,10 @@ public final class SmallWorlds {
 
 	// --- A seed refined ---
 
-	/** Why {@code p} can't refine a World Seed, or null if they can: a True Immortal or past it, with no world yet. */
+	/** Why {@code p} can't refine a World Seed, or null if they can: a True Immortal or past it on a qi path (not a body's), with no world yet. */
 	public static Component whyNotRefine(ServerPlayer p) {
 		PlayerCultivation c = CultivationManager.get(p);
-		if (!Laws.isImmortal(c)) return Component.translatable(ModLang.MSG_SEED_NOT_IMMORTAL);
+		if (!Laws.isQiImmortal(c)) return Component.translatable(ModLang.MSG_SEED_NOT_IMMORTAL);
 		if (Data.get(p.server).of(p.getUUID()) != null) return Component.translatable(ModLang.MSG_SEED_HAVE_ONE);
 		return null;
 	}
@@ -180,7 +180,7 @@ public final class SmallWorlds {
 	public static Component whyNotOpen(ServerPlayer p) {
 		PlayerCultivation c = CultivationManager.get(p);
 		if (Data.get(p.server).of(p.getUUID()) == null) return Component.translatable(ModLang.CMD_WORLD_NONE);
-		if (!Laws.isImmortal(c)) return Component.translatable(ModLang.MSG_DOOR_NOT_IMMORTAL);
+		if (!Laws.isQiImmortal(c)) return Component.translatable(ModLang.MSG_DOOR_NOT_IMMORTAL);
 		ResourceKey<Level> dimension = p.level().dimension();
 		// (Nor in a secret realm: its space is sealed, SecretRealms.)
 		boolean place = ModDimensions.isPassage(dimension) || ModDimensions.isInnerRealm(dimension) || ModDimensions.isSmallWorld(dimension)

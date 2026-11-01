@@ -121,9 +121,12 @@ public final class LawDomains {
 
 	// --- Who holds one, and how far it reaches ---
 
-	/** Whether {@code c} has awakened {@code law}'s domain: an immortal (Laws#isImmortal) with a level of it comprehended. */
+	/**
+	 * Whether {@code c} has awakened {@code law}'s domain: an immortal of a qi path (Laws#isQiImmortal: a domain burns immortal essence, which a
+	 * body has none of) with a level of it comprehended.
+	 */
 	public static boolean unlocked(PlayerCultivation c, Law law) {
-		return Laws.isImmortal(c) && c.laws().level(law) >= 1;
+		return Laws.isQiImmortal(c) && c.laws().level(law) >= 1;
 	}
 
 	/** The domain switched on in {@code c}'s abilities (awakened or not), or null. */

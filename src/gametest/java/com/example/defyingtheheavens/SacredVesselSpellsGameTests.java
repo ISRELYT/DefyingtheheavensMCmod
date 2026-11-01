@@ -644,7 +644,8 @@ public class SacredVesselSpellsGameTests implements FabricGameTest {
 		BlockPos at = floor.centre();
 		CultivatorNpc npc = helper.spawn(ModEntities.CULTIVATOR, helper.relativePos(at));
 		npc.setNoAi(true);
-		npc.setRank(PlayerCultivation.rank(Realm.SACRED_VESSEL, Stage.EARLY));
+		// Past the world's census (HighRealms: one Sacred Vessel in the Overworld), as EnteringNirvanaSpellsGameTests' caster.
+		npc.setRank(PlayerCultivation.rank(Realm.SACRED_VESSEL, Stage.EARLY), true);
 		npc.setHealth(npc.getMaxHealth());
 		npc.cultivation().setQi(npc.cultivation().maxQi());
 		spawned.add(npc);

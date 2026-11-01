@@ -29,12 +29,33 @@ public class GinsengItem extends Item {
         return FruitAge.clamp(stack.hasTag() ? stack.getTag().getInt("HerbAge") : 1);
     }
 
-    /** Only a mortal below Peak eats herbs raw; for a cultivator they're for alchemy and pedestals. */
+    /**
+     * The realm a herb stands at, for the methods that take one in (SpiritHerbRefining, FiveElementsCycling): by its age, Foundation
+     * Building under a hundred years, Core Formation from a hundred, Nascent Soul from five hundred, Heavenly Being from a thousand, Dao
+     * Integration from five thousand; a rarer kind (all but the plain ginseng, lingzhi and huangjing) a realm higher, Four Axis passed over.
+     */
+    public static Realm grade(ItemStack stack) {
+        int age = age(stack);
+        Realm realm = age >= FruitAge.HEAVENLY_TIER ? Realm.DAO_INTEGRATION : age >= FruitAge.THOUSAND_YEAR_TIER ? Realm.HEAVENLY_BEING
+                : age >= FruitAge.FIVE_HUNDRED_YEAR_TIER ? Realm.NASCENT_SOUL : age >= FruitAge.HUNDRED_YEAR_TIER ? Realm.CORE_FORMATION
+                : Realm.FOUNDATION_BUILDING;
+        if (stack.getRarity() == net.minecraft.world.item.Rarity.COMMON) return realm;
+        return realm.next() == Realm.FOUR_AXIS ? Realm.DAO_INTEGRATION : realm.next();
+    }
+
+    /**
+     * A mortal below Peak eats herbs raw; a cultivator refining herbs (SpiritHerbRefining) eats them for their essence; for any other
+     * cultivator they're for alchemy and pedestals.
+     */
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         PlayerCultivation c = CultivationManager.forPlayer(player);
-        if (!c.isMortal()) return InteractionResultHolder.pass(stack);
+        if (!c.isMortal()) {
+            if (!SpiritHerbRefining.practises(c)) return InteractionResultHolder.pass(stack);
+            player.startUsingItem(hand);
+            return InteractionResultHolder.consume(stack);
+        }
         if (!c.canTemper()) { // Peak, or the last body refining of shattered meridians
             if (!level.isClientSide) player.displayClientMessage(Component.translatable(ModLang.MSG_TEMPER_FULL), true);
             return InteractionResultHolder.fail(stack);
@@ -50,6 +71,10 @@ public class GinsengItem extends Item {
     public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entity) {
         if (!(entity instanceof ServerPlayer player)) return stack;
         PlayerCultivation c = CultivationManager.get(player);
+        if (!c.isMortal()) { // its essence refined into the stage, if it can be (told why not)
+            if (SpiritHerbRefining.practises(c) && SpiritHerbRefining.refine(player, stack) && !player.getAbilities().instabuild) stack.shrink(1);
+            return stack;
+        }
         MortalStage was = c.getMortalStage();
         int wasRefined = c.getBodyRefining();
         double amount = Tempering.herb(stack);

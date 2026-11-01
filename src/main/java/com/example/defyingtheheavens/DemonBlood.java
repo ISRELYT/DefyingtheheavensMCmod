@@ -59,13 +59,34 @@ public final class DemonBlood {
 		if (mine.isBeast() && mine != race) return Outcome.refuse(Component.translatable(ModLang.MSG_BLOOD_OTHER, mine.getDisplayName()));
 		int awake = c.demon().bloodRealm();
 		if (DemonPath.isDemon(c)) {
-			if (realm.ordinal() <= awake) return Outcome.refuse(Component.translatable(ModLang.MSG_BLOOD_HELD, Realm.byIndex(awake).getDisplayName()));
+			// Kin Blood Hoarding takes in blood it holds already: as cultivation (hoards), not as an awakening; Bloodline Nirvana its blood of
+			// Entering Nirvana and above, to burn and be remade (BloodlineNirvana).
+			if (realm.ordinal() <= awake && !hoards(c) && !BloodlineNirvana.takes(c, realm)) {
+				return Outcome.refuse(Component.translatable(ModLang.MSG_BLOOD_HELD, Realm.byIndex(awake).getDisplayName()));
+			}
 			return new Outcome(Verdict.DRINK, null, 0, false);
 		}
 		double gain = gain(c, realm);
 		boolean turns = realm.ordinal() - otherPaths(c) >= TURNS_ABOVE || c.demon().purity() + gain >= 1 - 1.0e-9;
 		if (turns && !sneaking) return new Outcome(Verdict.WARN, Component.translatable(ModLang.MSG_BLOOD_WARN, race.getDisplayName()), gain, true);
 		return new Outcome(Verdict.DRINK, null, gain, turns);
+	}
+
+	/**
+	 * Kin Blood Hoarding (CultivationMethod#KIN_BLOOD; the methods overhaul's phase 2): a phial of its own race's blood is this share of the
+	 * Demon Path's stage, twice as much for each realm the blood stands above the path, half for each below, the most {@link #KIN_MOST}.
+	 */
+	public static final double KIN_SHARE = 0.2, KIN_MOST = 0.75;
+
+	/** Whether {@code c}'s Demon Path hoards its kin's blood now: practising Kin Blood Hoarding, holding its volume. */
+	public static boolean hoards(PlayerCultivation c) {
+		return CultivationMethods.practised(c, TwoPaths.Path.DEMON) == CultivationMethod.KIN_BLOOD && CultivationMethods.holdsVolume(c, TwoPaths.Path.DEMON);
+	}
+
+	/** The share of its Demon Path's stage a phial of {@code realm} gives {@code c} by Kin Blood Hoarding ({@link #KIN_SHARE}). */
+	public static double kinShare(PlayerCultivation c, Realm realm) {
+		int path = DemonPath.realm(Math.max(0, DemonPath.rank(c))).ordinal();
+		return Math.min(KIN_MOST, KIN_SHARE * Math.pow(2, realm.ordinal() - path));
 	}
 
 	/** How much purer a human's blood grows drinking blood of {@code realm}: by the realm against its other paths', or blood it already held. */
@@ -117,6 +138,10 @@ public final class DemonBlood {
 				30, 0.4, 0.7, 0.4, 0.02);
 		player.serverLevel().playSound(null, player.blockPosition(), SoundEvents.WARDEN_HEARTBEAT, SoundSource.PLAYERS, 1.2f, 0.8f);
 		if (outcome.turns()) turn(player, c, race);
+		// Kin Blood Hoarding (CultivationMethod#KIN_BLOOD): its own race's blood taken in as cultivation, by the blood's realm.
+		if (hoards(c)) CultivationMethods.grant(player, TwoPaths.Path.DEMON, CultivationMethod.KIN_BLOOD, kinShare(c, realm));
+		// Bloodline Nirvana: blood of Entering Nirvana and above burns the blood down to be remade, or not (BloodlineNirvana).
+		if (BloodlineNirvana.takes(c, realm)) BloodlineNirvana.drunk(player, c);
 		CultivationManager.markDirty(player.server);
 		if (DemonPath.rank(c) > before) DemonPath.afterRank(player, before); // the inheritance's first spells, for a core just formed
 		else {

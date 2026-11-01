@@ -26,6 +26,16 @@ public final class ModBlockEntities {
 			DefyingTheHeavens.id("heaven_altar"),
 			BlockEntityType.Builder.of(HeavenAltarBlockEntity::new, ModBlocks.HEAVEN_ALTAR).build(null));
 
+	/** A shrine's owner, faith, devotion and request (Shrines). */
+	public static final BlockEntityType<ShrineBlockEntity> SHRINE = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
+			DefyingTheHeavens.id("shrine"),
+			BlockEntityType.Builder.of(ShrineBlockEntity::new, ModBlocks.SHRINE).build(null));
+
+	/** The gathering formations' fuel (GatheringFormations). */
+	public static final BlockEntityType<GatheringFormationBlockEntity> GATHERING_FORMATION = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
+			DefyingTheHeavens.id("gathering_formation"),
+			BlockEntityType.Builder.of(GatheringFormationBlockEntity::new, ModBlocks.gatheringFormations()).build(null));
+
 	/**
 	 * A growing herb's age clock; shared by every aging herb (ginseng, lingzhi, huangjing, Spirit Lotus, and the Netherworld's
 	 * Other-Shore Flower and Netherworld Lotus).
